@@ -1,0 +1,37 @@
+From stable-bounces@linux.kernel.org Fri Apr  1 12:44:10 2005
+To: linux-kernel@vger.kernel.org
+From: blaisorblade@yahoo.it
+Date: Fri, 01 Apr 2005 22:40:56 +0200
+Cc: blaisorblade@yahoo.it, stable@kernel.org
+Subject: [stable] [patch 1/1] uml: va_copy fix
+
+Uses __va_copy instead of va_copy since some old versions of gcc (2.95.4
+for instance) don't accept va_copy.
+
+Signed-off-by: Paolo 'Blaisorblade' Giarrusso <blaisorblade@yahoo.it>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+ clean-linux-2.6.11-paolo/arch/um/kernel/skas/uaccess.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletion(-)
+
+diff -puN arch/um/kernel/skas/uaccess.c~uml-va_copy_fix arch/um/kernel/skas/uaccess.c
+--- clean-linux-2.6.11/arch/um/kernel/skas/uaccess.c~uml-va_copy_fix	2005-04-01 22:37:11.000000000 +0200
++++ clean-linux-2.6.11-paolo/arch/um/kernel/skas/uaccess.c	2005-04-01 22:37:11.000000000 +0200
+@@ -61,7 +61,8 @@ static void do_buffer_op(void *jmpbuf, v
+ 	void *arg;
+ 	int *res;
+ 
+-	va_copy(args, *(va_list *)arg_ptr);
++	/* Some old gccs recognize __va_copy, but not va_copy */
++	__va_copy(args, *(va_list *)arg_ptr);
+ 	addr = va_arg(args, unsigned long);
+ 	len = va_arg(args, int);
+ 	is_write = va_arg(args, int);
+_
+
+_______________________________________________
+stable mailing list
+stable@linux.kernel.org
+http://linux.kernel.org/mailman/listinfo/stable
+
