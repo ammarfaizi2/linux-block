@@ -1,0 +1,33 @@
+From: Paul Mackerras <paulus@au1.ibm.com>
+To: Martin Schulze <joey@infodrom.org>
+Cc: Free Software Distribution Vendors <vendor-sec@lst.de>,
+        Marcelo Tosatti <marcelo.tosatti@cyclades.com>
+Subject: [PATCH] CAN-2005-0384: Remote Linux DoS on ppp servers
+Date: Fri, 25 Feb 2005 13:48:50 +1100
+
+Martin Schulze writes:
+
+> Ben Martel and Stephen Blackheath have discovered a denial-of-service attack
+> that a client of pppd can make that can hang the server machine.  The bug is
+> in the Linux kernel 2.6 (tested on 2.6.9), but it looks like it also exists
+> in the 2.4 series.
+
+Yes, this is my bug. :(
+
+I would just do this instead:
+
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -urN linux-2.5/drivers/net/ppp_async.c test/drivers/net/ppp_async.c
+--- linux-2.5/drivers/net/ppp_async.c	2005-01-21 16:02:12.000000000 +1100
++++ test/drivers/net/ppp_async.c	2005-02-25 10:38:05.000000000 +1100
+@@ -1000,7 +1000,7 @@
+ 	data += 4;
+ 	dlen -= 4;
+ 	/* data[0] is code, data[1] is length */
+-	while (dlen >= 2 && dlen >= data[1]) {
++	while (dlen >= 2 && dlen >= data[1] && data[1] >= 2) {
+ 		switch (data[0]) {
+ 		case LCP_MRU:
+ 			val = (data[2] << 8) + data[3];
+

@@ -1,0 +1,30 @@
+Date: Tue, 15 Mar 2005 14:30:46 -0800
+From: akpm@osdl.org
+To: torvalds@osdl.org
+Cc: akpm@osdl.org, pmeda@akamai.com
+Subject: [patch] use strncpy in get_task_comm
+
+From: Prasanna Meda <pmeda@akamai.com>
+
+Set_task_comm uses strlcpy, so get_task_comm must use strncpy.
+
+Signed-Off-by: Prasanna Meda <pmeda@akamai.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+ 25-akpm/fs/exec.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
+
+diff -puN fs/exec.c~use-strncpy-in-get_task_comm fs/exec.c
+--- 25/fs/exec.c~use-strncpy-in-get_task_comm	Tue Mar 15 14:30:28 2005
++++ 25-akpm/fs/exec.c	Tue Mar 15 14:30:28 2005
+@@ -815,7 +815,7 @@ void get_task_comm(char *buf, struct tas
+ {
+ 	/* buf must be at least sizeof(tsk->comm) in size */
+ 	task_lock(tsk);
+-	memcpy(buf, tsk->comm, sizeof(tsk->comm));
++	strncpy(buf, tsk->comm, sizeof(tsk->comm));
+ 	task_unlock(tsk);
+ }
+ 
