@@ -1,0 +1,53 @@
+Date: Wed, 9 Mar 2005 17:14:31 -0800
+From: "David S. Miller" <davem@davemloft.net>
+To: stable@kernel.org
+Cc: 
+Subject: [PATCH] Fix busted TCP symbol export
+Lines: 47
+
+
+This wrecks the ipv6 modular build for a lot of people.
+In fact, since I always build ipv6 modular I am surprised
+I never hit this.  My best guess is that my compiler is
+optimizing the reference away, but that can never be
+depended upon and the symbol export really is needed.
+
+Thanks.
+
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/03/02 21:36:48-08:00 yoshfuji@linux-ipv6.org 
+#   [TCP]: Put back tcp_timer_bug_msg[] symbol export.
+#   
+#   It is needed for tcp_reset_xmit_timer(), which is invoked by
+#   tcp_prequeue() which is invoked from tcp_ipv6.c
+#   
+#   Signed-off-by: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+# net/ipv4/tcp_timer.c
+#   2005/03/02 21:36:38-08:00 yoshfuji@linux-ipv6.org +1 -0
+#   [TCP]: Put back tcp_timer_bug_msg[] symbol export.
+#   
+#   It is needed for tcp_reset_xmit_timer(), which is invoked by
+#   tcp_prequeue() which is invoked from tcp_ipv6.c
+#   
+#   Signed-off-by: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Nru a/net/ipv4/tcp_timer.c b/net/ipv4/tcp_timer.c
+--- a/net/ipv4/tcp_timer.c	2005-03-09 17:20:38 -08:00
++++ b/net/ipv4/tcp_timer.c	2005-03-09 17:20:38 -08:00
+@@ -38,6 +38,7 @@
+ 
+ #ifdef TCP_DEBUG
+ const char tcp_timer_bug_msg[] = KERN_DEBUG "tcpbug: unknown timer value\n";
++EXPORT_SYMBOL(tcp_timer_bug_msg);
+ #endif
+ 
+ /*
+
+
