@@ -1,0 +1,25 @@
+From: Krzysztof Halasa <khc@pm.waw.pl>
+To: Chris Wright <chrisw@osdl.org>
+Cc: Greg KH <greg@kroah.com>, linux-kernel@vger.kernel.org, stable@kernel.org
+Subject: [PATCH] Fix kernel panic on receive with WAN Hitachi SCA HD6457x
+
+Another patch for 2.6.11.x: already in main tree, fixes kernel panic on
+receive with WAN cards based on Hitachi SCA/SCA-II: N2, C101, PCI200SYN.
+The attached patch fixes NULL pointer dereference on RX.
+
+Signed-off-by: Krzysztof Halasa <khc@pm.waw.pl>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+--- linux/drivers/net/wan/hd6457x.c	28 Oct 2004 06:16:08 -0000	1.15
++++ linux/drivers/net/wan/hd6457x.c	1 Mar 2005 00:58:08 -0000
+@@ -315,7 +315,7 @@
+ #endif
+ 	stats->rx_packets++;
+ 	stats->rx_bytes += skb->len;
+-	skb->dev->last_rx = jiffies;
++	dev->last_rx = jiffies;
+ 	skb->protocol = hdlc_type_trans(skb, dev);
+ 	netif_rx(skb);
+ }
+
+
