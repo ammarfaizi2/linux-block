@@ -15,6 +15,7 @@ This is wrong and confuses IPSEC daemons to no end.
 
 Signed-off-by: Patrick McHardy <kaber@trash.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -Nru a/net/xfrm/xfrm_state.c b/net/xfrm/xfrm_state.c
 --- a/net/xfrm/xfrm_state.c	2005-03-16 14:27:04 -08:00

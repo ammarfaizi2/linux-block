@@ -13,6 +13,7 @@ Subject: [PATCH][IPV4] Fix crash while reading /proc/net/route
 Signed-off-by: Patrick McHardy <kaber@trash.net>
 Signed-off-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -Nru a/net/ipv4/fib_hash.c b/net/ipv4/fib_hash.c
 --- a/net/ipv4/fib_hash.c	2005-03-17 00:58:42 +01:00
