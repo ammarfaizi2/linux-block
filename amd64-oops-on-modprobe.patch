@@ -93,6 +93,7 @@ particular, merely pointing out what I think is a serious problem.)
 So here is my patch:
 
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 --- linux-2.6.11-bk3/drivers/media/video/saa7110.c.orig	Tue Mar  8 10:27:15 2005
 +++ linux-2.6.11-bk3/drivers/media/video/saa7110.c	Tue Mar  8 12:02:45 2005

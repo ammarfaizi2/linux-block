@@ -13,6 +13,7 @@ crashes...
 From: Egbert Eich <eich@pdx.freedesktop.org>
 Signed-off-by: Dave Airlie <airlied@linux.ie>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -Nru a/drivers/char/drm/drm_ioctl.c b/drivers/char/drm/drm_ioctl.c
 --- a/drivers/char/drm/drm_ioctl.c	2005-03-09 10:53:42 +11:00

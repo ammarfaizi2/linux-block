@@ -23,6 +23,7 @@ can see, all Zoran-based boards are broken in 2.6.11 without this patch.
 
 Signed-off-by: Jean Delvare <khali@linux-fr.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -u -rN linux-2.6.11-bk3/drivers/media/video.orig/adv7170.c linux-2.6.11-bk3/drivers/media/video/adv7170.c
 --- linux-2.6.11-bk3/drivers/media/video.orig/adv7170.c	Tue Mar  8 10:27:14 2005
