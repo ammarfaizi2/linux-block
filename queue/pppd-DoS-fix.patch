@@ -1,3 +1,4 @@
+From foo@baz Tue Apr  9 12:12:43 2002
 From: Paul Mackerras <paulus@au1.ibm.com>
 To: Martin Schulze <joey@infodrom.org>
 Cc: Free Software Distribution Vendors <vendor-sec@lst.de>,
@@ -17,6 +18,7 @@ Yes, this is my bug. :(
 I would just do this instead:
 
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -urN linux-2.5/drivers/net/ppp_async.c test/drivers/net/ppp_async.c
 --- linux-2.5/drivers/net/ppp_async.c	2005-01-21 16:02:12.000000000 +1100

@@ -1,3 +1,4 @@
+From foo@baz Tue Apr  9 12:12:43 2002
 Date: Tue, 15 Mar 2005 14:30:46 -0800
 From: akpm@osdl.org
 To: torvalds@osdl.org
@@ -11,10 +12,8 @@ Set_task_comm uses strlcpy, so get_task_comm must use strncpy.
 Signed-Off-by: Prasanna Meda <pmeda@akamai.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
----
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
- 25-akpm/fs/exec.c |    2 +-
- 1 files changed, 1 insertion(+), 1 deletion(-)
 
 diff -puN fs/exec.c~use-strncpy-in-get_task_comm fs/exec.c
 --- 25/fs/exec.c~use-strncpy-in-get_task_comm	Tue Mar 15 14:30:28 2005
