@@ -1,0 +1,40 @@
+From stable-bounces@linux.kernel.org  Sat Mar 19 01:23:27 2005
+Date: Sat, 19 Mar 2005 10:23:26 +0100
+From: Jean Delvare <khali@linux-fr.org>
+To: stable@kernel.org
+Cc: 
+Subject: [PATCH 2.6] I2C: Fix oops in eeprom driver
+
+This fixes an oops in the eeprom driver. It was first reported here:
+  http://bugzilla.kernel.org/show_bug.cgi?id=4347
+
+It was additionally discussed here (while tracking a completely
+different bug):
+  http://archives.andrew.net.au/lm-sensors/msg30021.html
+
+The patch is already in 2.6.12-rc1:
+  http://linux.bkbits.net:8080/linux-2.5/cset@1.2227
+
+The oops happens when one reads data from the sysfs interface file such
+that (off < 16) and (count < 16 - off). For example "sensors" from
+lm_sensors 2.9.0 does this, and causes the oops.
+
+Signed-off-by: Jean Delvare <khali@linux-fr.org>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+--- linux-2.6.11.4/drivers/i2c/chips/eeprom.c.orig	2005-03-13 10:00:01.000000000 +0100
++++ linux-2.6.11.4/drivers/i2c/chips/eeprom.c	2005-03-17 19:54:07.000000000 +0100
+@@ -130,7 +130,8 @@
+ 
+ 	/* Hide Vaio security settings to regular users (16 first bytes) */
+ 	if (data->nature == VAIO && off < 16 && !capable(CAP_SYS_ADMIN)) {
+-		int in_row1 = 16 - off;
++		size_t in_row1 = 16 - off;
++		in_row1 = min(in_row1, count);
+ 		memset(buf, 0, in_row1);
+ 		if (count - in_row1 > 0)
+ 			memcpy(buf + in_row1, &data->data[16], count - in_row1);
+
+

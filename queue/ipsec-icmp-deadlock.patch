@@ -1,0 +1,73 @@
+From stable-bounces@linux.kernel.org  Sun Mar 20 07:59:10 2005
+Date: Sun, 20 Mar 2005 16:58:50 +0100
+From: Patrick McHardy <kaber@trash.net>
+To: stable@kernel.org
+Cc: 
+Subject: [IPSEC]: Do not hold state lock while checking size
+
+This patch from Herbert Xu fixes a deadlock with IPsec.
+When an ICMP frag. required is sent and the ICMP message
+needs the same SA as the packet that caused it the state
+will be locked twice.
+
+[IPSEC]: Do not hold state lock while checking size.
+
+This can elicit ICMP message output and thus result in a
+deadlock.
+
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Nru a/net/ipv4/xfrm4_output.c b/net/ipv4/xfrm4_output.c
+--- a/net/ipv4/xfrm4_output.c	2005-03-20 16:53:05 +01:00
++++ b/net/ipv4/xfrm4_output.c	2005-03-20 16:53:05 +01:00
+@@ -103,16 +103,16 @@
+ 			goto error_nolock;
+ 	}
+ 
+-	spin_lock_bh(&x->lock);
+-	err = xfrm_state_check(x, skb);
+-	if (err)
+-		goto error;
+-
+ 	if (x->props.mode) {
+ 		err = xfrm4_tunnel_check_size(skb);
+ 		if (err)
+-			goto error;
++			goto error_nolock;
+ 	}
++
++	spin_lock_bh(&x->lock);
++	err = xfrm_state_check(x, skb);
++	if (err)
++		goto error;
+ 
+ 	xfrm4_encap(skb);
+ 
+diff -Nru a/net/ipv6/xfrm6_output.c b/net/ipv6/xfrm6_output.c
+--- a/net/ipv6/xfrm6_output.c	2005-03-20 16:53:05 +01:00
++++ b/net/ipv6/xfrm6_output.c	2005-03-20 16:53:05 +01:00
+@@ -103,16 +103,16 @@
+ 			goto error_nolock;
+ 	}
+ 
+-	spin_lock_bh(&x->lock);
+-	err = xfrm_state_check(x, skb);
+-	if (err)
+-		goto error;
+-
+ 	if (x->props.mode) {
+ 		err = xfrm6_tunnel_check_size(skb);
+ 		if (err)
+-			goto error;
++			goto error_nolock;
+ 	}
++
++	spin_lock_bh(&x->lock);
++	err = xfrm_state_check(x, skb);
++	if (err)
++		goto error;
+ 
+ 	xfrm6_encap(skb);
+ 
