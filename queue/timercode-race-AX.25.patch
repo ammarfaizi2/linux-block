@@ -1,3 +1,4 @@
+From foo@baz Tue Apr  9 12:12:43 2002
 Date: Fri, 11 Mar 2005 21:46:29 +0000
 From: Ralf Baechle DL5RB <ralf@linux-mips.org>
 To: stable@kernel.org
@@ -15,9 +16,8 @@ regular calls to del_timer_sync.
 
 Signed-off-by: Ralf Baechle DL5RB <ralf@linux-mips.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-Index: bk-afu/net/ax25/ax25_timer.c
-===================================================================
 --- bk-afu.orig/net/ax25/ax25_timer.c	2005-03-08 13:54:06.000000000 +0000
 +++ bk-afu/net/ax25/ax25_timer.c	2005-03-08 16:43:34.790532976 +0000
 @@ -106,7 +106,7 @@

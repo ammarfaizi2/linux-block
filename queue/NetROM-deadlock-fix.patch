@@ -1,3 +1,4 @@
+From foo@baz Tue Apr  9 12:12:43 2002
 Date: Fri, 11 Mar 2005 21:10:05 +0000
 From: Ralf Baechle <ralf@linux-mips.org>
 To: stable@kernel.org
@@ -9,9 +10,8 @@ It's accepted by DaveM - but just too late to make it into 2.6.11.
 
 Signed-off-by: Ralf Baechle <ralf@linux-mips.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-Index: bk-afu/net/netrom/nr_in.c
-===================================================================
 --- bk-afu.orig/net/netrom/nr_in.c	2005-02-05 22:16:25.553987776 +0000
 +++ bk-afu/net/netrom/nr_in.c	2005-02-05 22:16:25.555987472 +0000
 @@ -74,7 +74,6 @@

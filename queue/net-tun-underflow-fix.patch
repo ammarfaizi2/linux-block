@@ -1,3 +1,4 @@
+From foo@baz Tue Apr  9 12:12:43 2002
 Date: Fri, 11 Mar 2005 09:52:05 -0800
 From: Stephen Hemminger <shemminger@osdl.org>
 To: Greg KH <greg@kroah.com>, Chris Wright <chrisw@osdl.org>
@@ -20,6 +21,7 @@ skb_put.
 
 Signed-off-by: Patrick McHardy <kaber@trash.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -Nru a/drivers/net/tun.c b/drivers/net/tun.c
 --- a/drivers/net/tun.c	2005-03-04 19:41:56 +01:00

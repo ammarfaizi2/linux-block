@@ -1,3 +1,4 @@
+From foo@baz Tue Apr  9 12:12:43 2002
 From: Krzysztof Halasa <khc@pm.waw.pl>
 To: Chris Wright <chrisw@osdl.org>
 Cc: Greg KH <greg@kroah.com>, linux-kernel@vger.kernel.org, stable@kernel.org
@@ -9,6 +10,7 @@ The attached patch fixes NULL pointer dereference on RX.
 
 Signed-off-by: Krzysztof Halasa <khc@pm.waw.pl>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 --- linux/drivers/net/wan/hd6457x.c	28 Oct 2004 06:16:08 -0000	1.15
 +++ linux/drivers/net/wan/hd6457x.c	1 Mar 2005 00:58:08 -0000

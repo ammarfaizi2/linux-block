@@ -1,3 +1,4 @@
+From foo@baz Tue Apr  9 12:12:43 2002
 Date: Fri, 11 Mar 2005 04:29:49 -0500
 From: Andres Salomon <dilinger@debian.org>
 To: stable@kernel.org
@@ -8,13 +9,12 @@ not be freed in case the alloc_ring() function fails. alloc_ring()
 can fail with a ENOMEM return value because of possible
 pci_alloc_consistent() failures.
    
-Signed-off-by: Jeff Garzik <jgarzik@pobox.com>
-
 Updated to CodingStyle.
 
+Signed-off-by: Jeff Garzik <jgarzik@pobox.com>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-===== drivers/net/via-rhine.c 1.89 vs edited =====
 --- 1.89/drivers/net/via-rhine.c	2005-01-10 08:52:27 -08:00
 +++ edited/drivers/net/via-rhine.c	2005-03-11 15:18:25 -08:00
 @@ -1197,8 +1197,10 @@ static int rhine_open(struct net_device 
