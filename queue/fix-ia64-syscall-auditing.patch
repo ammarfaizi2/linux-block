@@ -21,9 +21,8 @@ I have tested this patch and have seen no problems with it.
 From: Amy Griffis <amy.griffis@hp.com>
 From: David Woodhouse <dwmw2@infradead.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
----
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-===== arch/ia64/kernel/fsys.S 1.34 vs edited =====
 --- 1.34/arch/ia64/kernel/fsys.S	2005-01-22 22:19:11 +00:00
 +++ edited/arch/ia64/kernel/fsys.S	2005-04-01 00:20:32 +01:00
 @@ -611,8 +611,10 @@

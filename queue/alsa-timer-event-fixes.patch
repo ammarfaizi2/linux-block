@@ -12,6 +12,7 @@ used in the recent ALSA dmix plugin.
 
 Signed-off-by: Takashi Iwai <tiwai@suse.de>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 --- linux/sound/core/timer.c	20 Jan 2005 17:37:00 -0000	1.50
 +++ linux/sound/core/timer.c	14 Mar 2005 22:07:32 -0000

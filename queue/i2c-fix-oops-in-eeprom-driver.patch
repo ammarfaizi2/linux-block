@@ -23,6 +23,7 @@ Signed-off-by: Jean Delvare <khali@linux-fr.org>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 --- linux-2.6.11.4/drivers/i2c/chips/eeprom.c.orig	2005-03-13 10:00:01.000000000 +0100
 +++ linux-2.6.11.4/drivers/i2c/chips/eeprom.c	2005-03-17 19:54:07.000000000 +0100
