@@ -56,7 +56,7 @@ Index: bk-afu/net/netrom/nr_in.c
  	switch (frametype) {
  	case NR_CONNREQ:
  		nr_write_internal(sk, NR_CONNACK);
-@@ -265,12 +258,10 @@
+@@ -265,8 +258,6 @@
  	default:
  		break;
  	}
@@ -65,14 +65,3 @@ Index: bk-afu/net/netrom/nr_in.c
  	return queued;
  }
  
--/* Higher level upcall for a LAPB frame */
-+/* Higher level upcall for a LAPB frame - called with sk locked */
- int nr_process_rx_frame(struct sock *sk, struct sk_buff *skb)
- {
- 	nr_cb *nr = nr_sk(sk);
-
-_______________________________________________
-stable mailing list
-stable@linux.kernel.org
-http://linux.kernel.org/mailman/listinfo/stable
-
