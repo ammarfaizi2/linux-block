@@ -1,0 +1,35 @@
+Date: Fri, 11 Mar 2005 09:52:05 -0800
+From: Stephen Hemminger <shemminger@osdl.org>
+To: Greg KH <greg@kroah.com>, Chris Wright <chrisw@osdl.org>
+Subject: [TUN]: Fix check for underflow
+
+http://bugme.osdl.org/show_bug.cgi?id=4279
+Summary: When I try to start vpnc the net/core/skbuff.c:91 crash
+
+This check is wrong, gcc optimizes it away:
+
+                if ((len -= sizeof(pi)) > len)
+			return -EINVAL;
+
+This could be responsible for the BUG. If len is 2 or 3 and TUN_NO_PI
+isn't set it underflows. alloc_skb() allocates len + 2, which is 0 or
+1 byte. skb_reserve tries to reserve 2 bytes and things explode in
+skb_put.
+
+[TUN]: Fix check for underflow
+
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Nru a/drivers/net/tun.c b/drivers/net/tun.c
+--- a/drivers/net/tun.c	2005-03-04 19:41:56 +01:00
++++ b/drivers/net/tun.c	2005-03-04 19:41:56 +01:00
+@@ -229,7 +229,7 @@
+ 	size_t len = count;
+ 
+ 	if (!(tun->flags & TUN_NO_PI)) {
+-		if ((len -= sizeof(pi)) > len)
++		if ((len -= sizeof(pi)) > count)
+ 			return -EINVAL;
+ 
+ 		if(memcpy_fromiovec((void *)&pi, iv, sizeof(pi)))
