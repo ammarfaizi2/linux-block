@@ -1,0 +1,30 @@
+From security-bounces@linux.kernel.org  Tue Mar 15 16:25:33 2005
+From: Chris Wright <chrisw@osdl.org>
+Subject: [PATCH] isofs: more defensive checks against corrupt isofs images
+
+Michal Zalewski <lcamtuf@dione.ids.pl> discovers range checking flaws in
+iso9660 filesystem.
+
+http://marc.theaimsgroup.com/?l=bugtraq&m=111110067304783&w=2
+
+CAN-2005-0815 is assigned to this issue.
+
+Some more defensive checks to keep corrupt isofs images from corrupting
+memory or causing Oops.
+
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+===== fs/isofs/rock.c 1.23 vs edited =====
+--- 1.23/fs/isofs/rock.c	2005-03-16 16:12:52 -08:00
++++ edited/fs/isofs/rock.c	2005-03-24 00:41:31 -08:00
+@@ -74,6 +74,10 @@
+     offset1 = 0; \
+     pbh = sb_bread(DEV->i_sb, block); \
+     if(pbh){       \
++      if (offset > pbh->b_size || offset + cont_size > pbh->b_size){	\
++	brelse(pbh); \
++	goto out; \
++      } \
+       memcpy(buffer + offset1, pbh->b_data + offset, cont_size - offset1); \
+       brelse(pbh); \
+       chr = (unsigned char *) buffer; \

@@ -1,0 +1,34 @@
+From security-bounces@linux.kernel.org  Wed Mar 16 09:53:38 2005
+Date: Wed, 16 Mar 2005 18:49:43 +0100
+From: "Mathieu Lafon" <mlafon@arkoon.net>
+To: security@kernel.org
+Cc: rfrancoise@arkoon.net
+Subject: [PATCH] Suspected information leak (mem pages) in ext2
+
+From: "Mathieu Lafon" <mlafon@arkoon.net>
+
+I think I have discovered a potential security problem in ext2: when a
+new directory is created, the ext2 block written to disk is not 
+initialized.
+
+Included is a proposed patch for Linux 2.6 (ext2_make_empty() function):
+
+CAN-2005-0400 is assigned to this issue.
+
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -rN -U 5 linux-2.6.10/fs/ext2/dir.c linux-2.6.10-ext2-info-leak-fix/fs/ext2/dir.c
+--- linux-2.6.10/fs/ext2/dir.c  Wed Mar 16 18:16:51 2005
++++ linux-2.6.10-ext2-info-leak-fix/fs/ext2/dir.c       Wed Mar 16 18:17:01 2005
+@@ -590,10 +590,11 @@
+ 	if (err) {
+ 		unlock_page(page);
+ 		goto fail;
+ 	}
+ 	kaddr = kmap_atomic(page, KM_USER0);
++       memset(kaddr, 0, chunk_size);
+ 	de = (struct ext2_dir_entry_2 *)kaddr;
+ 	de->name_len = 1;
+ 	de->rec_len = cpu_to_le16(EXT2_DIR_REC_LEN(1));
+ 	memcpy (de->name, ".\0\0", 4);
+ 	de->inode = cpu_to_le32(inode->i_ino);

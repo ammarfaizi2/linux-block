@@ -1,0 +1,49 @@
+From foo@baz.org  Fri Mar 25 03:24:48 2005
+From: Marcus Meissner <meissner@suse.de>
+To: security@kernel.org
+Subject: [PATCH][Bluetooth] Fix signedness problem at socket creation
+
+From: Marcel Holtmann <marcel@holtmann.org>
+
+CAN-2005-0750 is assigned to this issue
+
+ilja <ilja@suresec.org> discovered potential local root exploit in
+bluetooth socket creation.
+
+This patch fixes a small signedness problem when creating the
+socket.
+
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Nru a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c
+--- a/net/bluetooth/af_bluetooth.c	2005-03-25 00:39:07 +01:00
++++ b/net/bluetooth/af_bluetooth.c	2005-03-25 00:39:07 +01:00
+@@ -62,7 +62,7 @@
+ 
+ int bt_sock_register(int proto, struct net_proto_family *ops)
+ {
+-	if (proto >= BT_MAX_PROTO)
++	if (proto < 0 || proto >= BT_MAX_PROTO)
+ 		return -EINVAL;
+ 
+ 	if (bt_proto[proto])
+@@ -75,7 +75,7 @@
+ 
+ int bt_sock_unregister(int proto)
+ {
+-	if (proto >= BT_MAX_PROTO)
++	if (proto < 0 || proto >= BT_MAX_PROTO)
+ 		return -EINVAL;
+ 
+ 	if (!bt_proto[proto])
+@@ -90,7 +90,7 @@
+ {
+ 	int err = 0;
+ 
+-	if (proto >= BT_MAX_PROTO)
++	if (proto < 0 || proto >= BT_MAX_PROTO)
+ 		return -EINVAL;
+ 
+ #if defined(CONFIG_KMOD)
+
