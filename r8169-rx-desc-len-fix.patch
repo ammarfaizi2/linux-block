@@ -2,13 +2,14 @@ Date: Thu, 10 Mar 2005 10:51:39 -0800
 From: Stephen Hemminger <shemminger@osdl.org>
 To: Greg KH <greg@kroah.com>, Chris Wright <chrisw@osdl.org>
 Cc: Jeff Garzik <jgarzik@pobox.com>, Francois Romieu <romieu@fr.zoreil.com>
-Subject: {PATCH] r8169: receive descriptor length fix
+Subject: [PATCH] r8169: receive descriptor length fix
 
 The status and received packets indication in the Rx descriptor ring
 are not correctly reset when a descriptor is recycled.
 
 Signed-off-by: Francois Romieu <romieu@fr.zoreil.com>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -puN drivers/net/r8169.c~r8169-490 drivers/net/r8169.c
 --- a/drivers/net/r8169.c~r8169-490	2005-03-08 00:01:26.000000000 +0100
