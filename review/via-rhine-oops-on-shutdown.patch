@@ -1,3 +1,4 @@
+From akpm@osdl.org Fri Mar  4 13:22:08 2005
 Subject: [PATCH] [VIA RHINE] older chips oops on shutdown
 Date: Sat, 5 Mar 2005 12:40:56 -0600
 From: olof@austin.ibm.com (Olof Johansson)

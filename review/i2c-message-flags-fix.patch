@@ -1,4 +1,5 @@
-Date: 	Tue, 8 Mar 2005 20:25:30 +0100
+From akpm@osdl.org Fri Mar  4 13:22:08 2005
+Date: Tue, 8 Mar 2005 20:25:30 +0100
 From: Jean Delvare <khali@linux-fr.org>
 To: "Randy.Dunlap" <rddunlap@osdl.org>
 Cc: Daniel Staaf <dst@bostream.nu>, LKML <linux-kernel@vger.kernel.org>,
