@@ -1,0 +1,23 @@
+Date: Wed, 16 Mar 2005 19:37:45 +0000 (GMT)
+From: Hugh Dickins <hugh@veritas.com>
+To: stable@kernel.org
+Cc: Andrew Morton <akpm@osdl.org>, Roland McGrath <roland@redhat.com>
+Subject: [PATCH] tasklist left locked
+
+On 4-way SMP, about one reboot in twenty hangs while killing processes:
+exit needs exclusive tasklist_lock, but something still holds read_lock.
+do_signal_stop race case misses unlock, and fixing it fixes the symptom.
+
+Signed-off-by: Hugh Dickins <hugh@veritas.com>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+--- 2.6.11/kernel/signal.c	2005-03-02 07:38:56.000000000 +0000
++++ linux/kernel/signal.c	2005-03-16 18:10:17.000000000 +0000
+@@ -1728,6 +1728,7 @@ do_signal_stop(int signr)
+ 			 * with another processor delivering a stop signal,
+ 			 * then the SIGCONT that wakes us up should clear it.
+ 			 */
++			read_unlock(&tasklist_lock);
+ 			return 0;
+ 		}
+ 
