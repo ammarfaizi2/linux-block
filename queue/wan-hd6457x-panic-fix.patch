@@ -9,6 +9,7 @@ receive with WAN cards based on Hitachi SCA/SCA-II: N2, C101, PCI200SYN.
 The attached patch fixes NULL pointer dereference on RX.
 
 Signed-off-by: Krzysztof Halasa <khc@pm.waw.pl>
+Acked-by: Jeff Garzik <jgarzik@pobox.com>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
