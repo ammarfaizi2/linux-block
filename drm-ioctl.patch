@@ -1,18 +1,17 @@
-From airlied@linux.ie Tue Mar  8 16:02:10 2005
-Date: Tue, 8 Mar 2005 23:58:37 +0000 (GMT)
+Date: Wed, 9 Mar 2005 22:20:02 +0000 (GMT)
 From: Dave Airlie <airlied@linux.ie>
-To: greg@kroah.com, chrisw@osdl.org
-Cc: Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org
-Subject: [PATCH] drm missing memset can crash X server...
-Status: RO
-Content-Length: 632
-Lines: 17
+To: stable@kernel.org
+Cc: linux-kernel@vger.kernel.org
+Subject: [patch] drm missing memset can crash X server..
+Lines: 25
 
 
 Egbert Eich reported a bug 2673 on bugs.freedesktop.org and tracked it
 down to a missing memset in the setversion ioctl, this causes X server
-crashes so I would like to see the fix in a 2.6.11.x tree if possible..
+crashes...
 
+From: Egbert Eich <eich@pdx.freedesktop.org>
+Signed-off-by: Dave Airlie <airlied@linux.ie>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 diff -Nru a/drivers/char/drm/drm_ioctl.c b/drivers/char/drm/drm_ioctl.c
