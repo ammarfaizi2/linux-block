@@ -1,0 +1,44 @@
+Date: Thu, 17 Mar 2005 01:13:28 +0100
+From kaber@trash.net  Wed Mar 16 16:14:04 2005
+From: Patrick McHardy <kaber@trash.net>
+To: Chris Wright <chrisw@osdl.org>
+CC: linux-kernel@vger.kernel.org, stable@kernel.org, shemminger@osdl.org,
+        torvalds@osdl.org, akpm@osdl.org, alan@lxorguk.ukuu.org.uk,
+	jmforbes@linuxtx.org, zwane@arm.linux.org.uk, cliffw@osdl.org,
+	tytso@mit.edu, rddunlap@osdl.org
+Subject: [PATCH][IPV4] Fix crash while reading /proc/net/route
+
+[IPV4]: Fix crash while reading /proc/net/route caused by stale pointers
+
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Nru a/net/ipv4/fib_hash.c b/net/ipv4/fib_hash.c
+--- a/net/ipv4/fib_hash.c	2005-03-17 00:58:42 +01:00
++++ b/net/ipv4/fib_hash.c	2005-03-17 00:58:42 +01:00
+@@ -919,13 +919,23 @@
+ 	return fa;
+ }
+ 
++static struct fib_alias *fib_get_idx(struct seq_file *seq, loff_t pos)
++{
++	struct fib_alias *fa = fib_get_first(seq);
++
++	if (fa)
++		while (pos && (fa = fib_get_next(seq)))
++			--pos;
++	return pos ? NULL : fa;
++}
++
+ static void *fib_seq_start(struct seq_file *seq, loff_t *pos)
+ {
+ 	void *v = NULL;
+ 
+ 	read_lock(&fib_hash_lock);
+ 	if (ip_fib_main_table)
+-		v = *pos ? fib_get_next(seq) : SEQ_START_TOKEN;
++		v = *pos ? fib_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+ 	return v;
+ }
+ 

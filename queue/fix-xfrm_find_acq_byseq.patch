@@ -1,0 +1,29 @@
+Date: Wed, 16 Mar 2005 14:20:11 -0800
+From: "David S. Miller" <davem@davemloft.net>
+To: stable@kernel.org
+Subject: [PATCH] [IPSEC]: Fix __xfrm_find_acq_byseq()
+
+This function, as it's name implies, is supposed to only
+return IPSEC objects which are in the XFRM_STATE_ACQ
+("acquire") state.  But it returns any object with the
+matching sequence number.
+
+This is wrong and confuses IPSEC daemons to no end.
+
+[XFRM]: xfrm_find_acq_byseq should only return XFRM_STATE_ACQ states.
+
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Nru a/net/xfrm/xfrm_state.c b/net/xfrm/xfrm_state.c
+--- a/net/xfrm/xfrm_state.c	2005-03-16 14:27:04 -08:00
++++ b/net/xfrm/xfrm_state.c	2005-03-16 14:27:04 -08:00
+@@ -609,7 +609,7 @@
+ 
+ 	for (i = 0; i < XFRM_DST_HSIZE; i++) {
+ 		list_for_each_entry(x, xfrm_state_bydst+i, bydst) {
+-			if (x->km.seq == seq) {
++			if (x->km.seq == seq && x->km.state == XFRM_STATE_ACQ) {
+ 				xfrm_state_hold(x);
+ 				return x;
+ 			}
