@@ -26,8 +26,8 @@ Backport of fix described below.
   one of those printk's may be called after register_netdev as well.
 
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-===== drivers/net/sis900.c 1.62 vs edited =====
 --- 1.62/drivers/net/sis900.c	2005-01-10 08:52:27 -08:00
 +++ edited/drivers/net/sis900.c	2005-03-10 12:23:49 -08:00
 @@ -236,7 +236,7 @@ static int __devinit sis900_get_mac_addr
