@@ -13,6 +13,8 @@ Egbert Eich reported a bug 2673 on bugs.freedesktop.org and tracked it
 down to a missing memset in the setversion ioctl, this causes X server
 crashes so I would like to see the fix in a 2.6.11.x tree if possible..
 
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
 diff -Nru a/drivers/char/drm/drm_ioctl.c b/drivers/char/drm/drm_ioctl.c
 --- a/drivers/char/drm/drm_ioctl.c	2005-03-09 10:53:42 +11:00
 +++ b/drivers/char/drm/drm_ioctl.c	2005-03-09 10:53:43 +11:00
