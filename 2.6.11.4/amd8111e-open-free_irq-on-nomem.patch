@@ -1,0 +1,33 @@
+Date: Fri, 11 Mar 2005 04:36:18 -0500
+From: Andres Salomon <dilinger@debian.org>
+To: stable@kernel.org
+Subject: [PATCH] Possible AMD8111e free irq issue
+
+It seems to me that if in the amd8111e_open() fuction dev->irq isn't
+zero and the irq request succeeds it might not get released anymore.
+
+Specifically, on failure of the amd8111e_restart() call the function
+returns -ENOMEM without releasing the irq. The amd8111e_restart()
+function can fail because of various pci_alloc_consistent() and
+dev_alloc_skb() calls in amd8111e_init_ring() which is being
+called by amd8111e_restart.
+
+1374     if(dev->irq ==0 || request_irq(dev->irq, amd8111e_interrupt, SA_SHIRQ,
+1375                      dev->name, dev))
+1376         return -EAGAIN;
+
+Signed-off-by: Jeff Garzik <jgarzik@pobox.com>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Naru a/drivers/net/amd8111e.c b/drivers/net/amd8111e.c
+--- a/drivers/net/amd8111e.c	2005-03-09 20:29:47 -08:00
++++ b/drivers/net/amd8111e.c	2005-03-09 20:29:47 -08:00
+@@ -1381,6 +1381,8 @@
+ 
+ 	if(amd8111e_restart(dev)){
+ 		spin_unlock_irq(&lp->lock);
++		if (dev->irq)
++			free_irq(dev->irq, dev);
+ 		return -ENOMEM;
+ 	}
+ 	/* Start ipg timer */
