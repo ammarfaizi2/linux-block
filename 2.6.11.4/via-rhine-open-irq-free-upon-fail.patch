@@ -1,0 +1,32 @@
+Date: Fri, 11 Mar 2005 04:29:49 -0500
+From: Andres Salomon <dilinger@debian.org>
+To: stable@kernel.org
+Subject: [PATCH] Possible VIA-Rhine free irq issue
+
+It seems to me that in the VIA Rhine device driver the requested irq might
+not be freed in case the alloc_ring() function fails. alloc_ring()
+can fail with a ENOMEM return value because of possible
+pci_alloc_consistent() failures.
+   
+Signed-off-by: Jeff Garzik <jgarzik@pobox.com>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -Naru a/drivers/net/via-rhine.c b/drivers/net/via-rhine.c
+--- a/drivers/net/via-rhine.c	2005-03-09 18:44:47 -08:00
++++ b/drivers/net/via-rhine.c	2005-03-09 18:44:47 -08:00
+@@ -1198,7 +1198,10 @@
+ 
+ 	rc = alloc_ring(dev);
+ 	if (rc)
++	{
++		free_irq(rp->pdev->irq, dev);
+ 		return rc;
++	}
+ 	alloc_rbufs(dev);
+ 	alloc_tbufs(dev);
+ 	rhine_chip_reset(dev);
+# 
+# drivers/net/via-rhine.c
+#   2005/02/28 07:44:31-05:00 takis@lumumba.luc.ac.be +3 -0
+#   Possible VIA-Rhine free irq issue
+# 
