@@ -1,7 +1,8 @@
-Date: Thu, 10 Mar 2005 19:43:42 +0100
+Date: Fri, 11 Mar 2005 10:13:58 +0100
 From: Jean Delvare <khali@linux-fr.org>
-To: Chris Wright <chrisw@osdl.org>
-Cc: Randy Dunlap <rddunlap@osdl.org>, stable@kernel.org
+To: Greg KH <greg@kroah.com>
+Cc: stable@kernel.org, Gred Knorr <kraxel@bytesex.org>,
+        linux-kernel@vger.kernel.org, Josh Boyer <jdub@us.ibm.com>
 Subject: [PATCH] fix amd64 2.6.11 oops on modprobe (saa7110)
 
 This is a rewrite of the saa7110_write_block function, which was plain
@@ -13,17 +14,14 @@ Signed-off-by: Jean Delvare <khali@linux-fr.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
---- linux-2.6.11-bk3/drivers/media/video/saa7110.c.orig	Tue Mar  8 10:27:15 2005
-+++ linux-2.6.11-bk3/drivers/media/video/saa7110.c	Tue Mar  8 12:02:45 2005
-@@ -58,10 +58,12 @@
- #define SAA7110_MAX_INPUT	9	/* 6 CVBS, 3 SVHS */
- #define SAA7110_MAX_OUTPUT	0	/* its a decoder only */
+--- linux-2.6.11/drivers/media/video/saa7110.c.orig	2005-03-03 08:01:14.000000000 +0100
++++ linux-2.6.11/drivers/media/video/saa7110.c	2005-03-11 10:06:09.000000000 +0100
+@@ -60,8 +60,10 @@
  
--#define	I2C_SAA7110		0x9C	/* or 0x9E */
-+#define I2C_SAA7110		0x9C	/* or 0x9E */
-+
+ #define	I2C_SAA7110		0x9C	/* or 0x9E */
+ 
 +#define SAA7110_NR_REG		0x35
- 
++
  struct saa7110 {
 -	unsigned char reg[54];
 +	u8 reg[SAA7110_NR_REG];
