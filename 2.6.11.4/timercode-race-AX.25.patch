@@ -1,0 +1,31 @@
+Date: Fri, 11 Mar 2005 21:46:29 +0000
+From: Ralf Baechle DL5RB <ralf@linux-mips.org>
+To: stable@kernel.org
+Subject: [PATCH] Timercode race in AX.25
+
+When destroying a socket ax25_destroy_socket tries to stop the protocol's
+T1 timer before freeing the memory.  If things are just right using the
+non-sync variant of del_timer means the timer will continue to run even
+after the del_timer because it's adding itself again which is likely to
+result in a crash when the timer is executed again a few seconds later.
+
+del_timer_sync can be expensive, so I don't want this one to go into 2.6
+mainline where I'll try to cook something that is less intrusive than
+regular calls to del_timer_sync.
+
+Signed-off-by: Ralf Baechle DL5RB <ralf@linux-mips.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+Index: bk-afu/net/ax25/ax25_timer.c
+===================================================================
+--- bk-afu.orig/net/ax25/ax25_timer.c	2005-03-08 13:54:06.000000000 +0000
++++ bk-afu/net/ax25/ax25_timer.c	2005-03-08 16:43:34.790532976 +0000
+@@ -106,7 +106,7 @@
+ 
+ void ax25_stop_t1timer(ax25_cb *ax25)
+ {
+-	del_timer(&ax25->t1timer);
++	del_timer_sync(&ax25->t1timer);
+ }
+ 
+ void ax25_stop_t2timer(ax25_cb *ax25)
