@@ -1,0 +1,22 @@
+From: Greg KH <gregkh@suse.de>
+To: linux-kernel@vger.kernel.org, stable@kernel.org
+Bcc: torvalds@osdl.org, akpm@osdl.org, alan@lxorguk.ukuu.org.uk, jmforbes@linuxtx.org
+Subject: [00/11] -stable review 
+
+This is the start of the stable review cycle for the 2.6.11.3 release.  There
+are 11 patches in this series, all will be posted as a response to this one.
+If anyone has any issues with these being applied, please let us know.  If
+anyone is a maintainer of the proper subsystem, and wants to add a
+signed-off-by: line to the patch, please respond with it.
+
+These patches are sent out with a number of different people on the Bcc: line.
+If you wish to be a reviewer, please email stable@linux.com to add your name to
+the list.  If you want to be off the reviewer list, also email us.
+
+Responses should be made by Sat, March 12, 23:00 UTC.  Anything received after
+that time, might be too late.
+
+thanks,
+
+the -stable release team (i.e. the ones wearing the joker hat in the corner...)
+
