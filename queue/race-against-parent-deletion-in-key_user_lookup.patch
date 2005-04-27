@@ -27,6 +27,7 @@ Signed-off-by: Alexander Nyberg <alexn@dsv.su.se>
 Cc: David Howells <dhowells@redhat.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
  25-akpm/security/keys/key.c |    3 ++-

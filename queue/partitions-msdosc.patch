@@ -40,6 +40,7 @@ probably live in -mm for a while to see if anybody complains.
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
 ===== fs/partitions/msdos.c 1.26 vs 1.27 =====

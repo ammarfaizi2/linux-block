@@ -17,6 +17,7 @@ This should be merged currently in both 2.6.11-stable and the current tree.
 
 Signed-off-by: Paolo 'Blaisorblade' Giarrusso <blaisorblade@yahoo.it>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
  clean-linux-2.6.11-paolo/arch/um/kernel/sys_call_table.c |    8 +-------
