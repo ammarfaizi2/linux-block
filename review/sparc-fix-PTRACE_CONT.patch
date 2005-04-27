@@ -26,7 +26,7 @@ Signed-off-by: Chris Wright <chrisw@osdl.org>
 ===== arch/sparc/kernel/ptrace.c 1.22 vs edited =====
 --- 1.22/arch/sparc/kernel/ptrace.c	2005-03-13 15:29:55 -08:00
 +++ edited/arch/sparc/kernel/ptrace.c	2005-04-13 22:37:33 -07:00
-@@ -530,18 +530,6 @@
+@@ -531,18 +531,6 @@
  			pt_error_return(regs, EIO);
  			goto out_tsk;
  		}
