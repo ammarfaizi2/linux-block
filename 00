@@ -1,7 +1,12 @@
 From: Greg KH <gregkh@suse.de>
 To: linux-kernel@vger.kernel.org, stable@kernel.org
-Bcc: torvalds@osdl.org, akpm@osdl.org, alan@lxorguk.ukuu.org.uk, jmforbes@linuxtx.org
-Subject: [00/11] -stable review 
+Cc: Justin Forbes <jmforbes@linuxtx.org>,
+	Zwane Mwaikambo <zwane@arm.linux.org.uk>,
+	Cliff White <cliffw@osdl.org>,
+	Theodore Ts'o <tytso@mit.edu>,
+	Randy.Dunlap <rddunlap@osdl.org>,
+	Chuck Wolber <chuckw@quantumlinux.com>, torvalds@osdl.org, akpm@osdl.org, alan@lxorguk.ukuu.org.uk
+Subject: [00/11] -stable review
 
 This is the start of the stable review cycle for the 2.6.11.3 release.  There
 are 11 patches in this series, all will be posted as a response to this one.
