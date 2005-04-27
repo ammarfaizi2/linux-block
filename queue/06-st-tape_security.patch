@@ -1,0 +1,49 @@
+From stable-bounces@linux.kernel.org  Tue Apr 12 10:45:24 2005
+To: foo.foo.org
+From: Kai.Makisara@kolumbus.fi
+Date: Tue, 12 Apr 2005 19:52:08 +0200
+Cc: James.Bottomley@SteelEye.com
+Subject: [PATCH] SCSI tape security: require CAP_ADMIN for SG_IO etc.
+
+The kernel currently allows any user permitted to access the tape device file
+to send the tape drive commands that may either make the tape drivers internal
+state inconsistent or to change the drive parameters so that other users find
+the drive to be unusable. This patch changes ioctl handling so that SG_IO,
+SCSI_IOCTL_COMMAND, etc. require CAP_ADMIN. This solves the consistency
+problems for SCSI tapes. The st driver provides user-accessible commands to
+change the drive parameters that users may need to access.
+
+The SCSI command permissions were discussed widely on the linux lists but this
+did not result in any useful refinement of the permissions. It may very well
+be that the tape drives are the only devices that users are sometimes given
+permissions to access and that have security problems with the current command
+filtering. This patch solves the problem for tapes and no more elaborate
+patches are needed.
+
+Signed-off-by: Kai Makisara <kai.makisara@kolumbus.fi>
+Signed-off-by: James Bottomley <James.Bottomley@SteelEye.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+
+diff -Naru a/drivers/scsi/st.c b/drivers/scsi/st.c
+--- a/drivers/scsi/st.c	2005-04-27 09:50:24 -07:00
++++ b/drivers/scsi/st.c	2005-04-27 09:50:24 -07:00
+@@ -3461,11 +3461,17 @@
+ 		case SCSI_IOCTL_GET_BUS_NUMBER:
+ 			break;
+ 		default:
+-			i = scsi_cmd_ioctl(file, STp->disk, cmd_in, p);
++			if (!capable(CAP_SYS_ADMIN))
++				i = -EPERM;
++			else
++				i = scsi_cmd_ioctl(file, STp->disk, cmd_in, p);
+ 			if (i != -ENOTTY)
+ 				return i;
+ 			break;
+ 	}
++	if (!capable(CAP_SYS_ADMIN) &&
++	    (cmd_in == SCSI_IOCTL_START_UNIT || cmd_in == SCSI_IOCTL_STOP_UNIT))
++		return -EPERM;
+ 	return scsi_ioctl(STp->device, cmd_in, p);
+ 
+  out:
