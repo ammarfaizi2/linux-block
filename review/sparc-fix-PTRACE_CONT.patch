@@ -1,0 +1,78 @@
+From stable-bounces@linux.kernel.org  Sun Apr 17 17:12:13 2005
+Date: Sun, 17 Apr 2005 17:06:41 -0700
+From: "David S. Miller" <davem@davemloft.net>
+To: stable@kernel.org
+Subject: [PATCH] sparc: Fix PTRACE_CONT bogosity
+
+SunOS aparently had this weird PTRACE_CONT semantic which
+we copied.  If the addr argument is something other than
+1, it sets the process program counter to whatever that
+value is.
+
+This is different from every other Linux architecture, which
+don't do anything with the addr and data args.
+
+This difference in particular breaks the Linux native GDB support
+for fork and vfork tracing on sparc and sparc64.
+
+There is no interest in running SunOS binaries using this weird
+PTRACE_CONT behavior, so just delete it so we behave like other
+platforms do.
+
+From: "David S. Miller" <davem@davemloft.net>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+===== arch/sparc/kernel/ptrace.c 1.22 vs edited =====
+--- 1.22/arch/sparc/kernel/ptrace.c	2005-03-13 15:29:55 -08:00
++++ edited/arch/sparc/kernel/ptrace.c	2005-04-13 22:37:33 -07:00
+@@ -530,18 +530,6 @@
+ 			pt_error_return(regs, EIO);
+ 			goto out_tsk;
+ 		}
+-		if (addr != 1) {
+-			if (addr & 3) {
+-				pt_error_return(regs, EINVAL);
+-				goto out_tsk;
+-			}
+-#ifdef DEBUG_PTRACE
+-			printk ("Original: %08lx %08lx\n", child->thread.kregs->pc, child->thread.kregs->npc);
+-			printk ("Continuing with %08lx %08lx\n", addr, addr+4);
+-#endif
+-			child->thread.kregs->pc = addr;
+-			child->thread.kregs->npc = addr + 4;
+-		}
+ 
+ 		if (request == PTRACE_SYSCALL)
+ 			set_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
+===== arch/sparc64/kernel/ptrace.c 1.24 vs edited =====
+--- 1.24/arch/sparc64/kernel/ptrace.c	2005-02-10 19:06:44 -08:00
++++ edited/arch/sparc64/kernel/ptrace.c	2005-04-16 20:52:21 -07:00
+@@ -514,25 +563,6 @@
+ 			pt_error_return(regs, EIO);
+ 			goto out_tsk;
+ 		}
+-		if (addr != 1) {
+-			unsigned long pc_mask = ~0UL;
+-
+-			if ((child->thread_info->flags & _TIF_32BIT) != 0)
+-				pc_mask = 0xffffffff;
+-
+-			if (addr & 3) {
+-				pt_error_return(regs, EINVAL);
+-				goto out_tsk;
+-			}
+-#ifdef DEBUG_PTRACE
+-			printk ("Original: %016lx %016lx\n",
+-				child->thread_info->kregs->tpc,
+-				child->thread_info->kregs->tnpc);
+-			printk ("Continuing with %016lx %016lx\n", addr, addr+4);
+-#endif
+-			child->thread_info->kregs->tpc = (addr & pc_mask);
+-			child->thread_info->kregs->tnpc = ((addr + 4) & pc_mask);
+-		}
+ 
+ 		if (request == PTRACE_SYSCALL) {
+ 			set_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
+
+

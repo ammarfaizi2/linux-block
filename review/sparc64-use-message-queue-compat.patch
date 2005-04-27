@@ -1,0 +1,27 @@
+From stable-bounces@linux.kernel.org  Sun Apr 17 17:11:32 2005
+Date: Sun, 17 Apr 2005 17:05:59 -0700
+From: "David S. Miller" <davem@davemloft.net>
+To: stable@kernel.org
+Subject: [PATCH]: sparc64: use message queue compat syscalls
+
+A couple message queue system call entries for compat tasks
+were not using the necessary compat_sys_*() functions, causing
+some glibc test cases to fail.
+
+From: "David S. Miller" <davem@davemloft.net>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+===== arch/sparc64/kernel/systbls.S 1.69 vs edited =====
+--- 1.69/arch/sparc64/kernel/systbls.S	2005-01-14 11:56:05 -08:00
++++ edited/arch/sparc64/kernel/systbls.S	2005-04-11 15:09:49 -07:00
+@@ -75,7 +75,7 @@
+ /*260*/	.word compat_sys_sched_getaffinity, compat_sys_sched_setaffinity, sys32_timer_settime, compat_sys_timer_gettime, sys_timer_getoverrun
+ 	.word sys_timer_delete, sys32_timer_create, sys_ni_syscall, compat_sys_io_setup, sys_io_destroy
+ /*270*/	.word sys32_io_submit, sys_io_cancel, compat_sys_io_getevents, sys32_mq_open, sys_mq_unlink
+-	.word sys_mq_timedsend, sys_mq_timedreceive, compat_sys_mq_notify, compat_sys_mq_getsetattr, compat_sys_waitid
++	.word compat_sys_mq_timedsend, compat_sys_mq_timedreceive, compat_sys_mq_notify, compat_sys_mq_getsetattr, compat_sys_waitid
+ /*280*/	.word sys_ni_syscall, sys_add_key, sys_request_key, sys_keyctl
+ 
+ #endif /* CONFIG_COMPAT */
+
