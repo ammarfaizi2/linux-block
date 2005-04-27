@@ -1,6 +1,12 @@
 From: Greg KH <gregkh@suse.de>
 To: 
-Cc: linux-kernel@vger.kernel.org, stable@kernel.org
+Cc: linux-kernel@vger.kernel.org, stable@kernel.org,
+	Justin Forbes <jmforbes@linuxtx.org>,
+	Zwane Mwaikambo <zwane@arm.linux.org.uk>,
+	Cliff White <cliffw@osdl.org>,
+	Theodore Ts'o <tytso@mit.edu>,
+	Randy.Dunlap <rddunlap@osdl.org>,
+	Chuck Wolber <chuckw@quantumlinux.com>, torvalds@osdl.org, akpm@osdl.org, alan@lxorguk.ukuu.org.uk
 Subject: [XX/XX]
 
 
