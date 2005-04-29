@@ -21,6 +21,7 @@ platforms do.
 
 From: "David S. Miller" <davem@davemloft.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
 ===== arch/sparc/kernel/ptrace.c 1.22 vs edited =====

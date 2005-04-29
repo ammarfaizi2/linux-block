@@ -10,6 +10,7 @@ some glibc test cases to fail.
 
 From: "David S. Miller" <davem@davemloft.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
 ===== arch/sparc64/kernel/systbls.S 1.69 vs edited =====
