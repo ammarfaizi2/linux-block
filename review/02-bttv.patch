@@ -10,18 +10,14 @@ Lines: 27
 Here's a patch that fixes
 http://bugme.osdl.org/show_bug.cgi?id=4395.
 
-In case there's a 2.6.11.7 before 2.6.12 is released it would
-be nice to include this patch there, too.
-
-Johannes
-
----
 Patch by Manu Abraham and Gerd Knorr:
 Remove redundant bttv_reset_audio() which caused the computer to
 freeze with some bt8xx based DVB cards when loading the bttv driver.
 
 Signed-off-by: Johannes Stezenbach <js@linuxtv.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Gerd Knorr <kraxel@bytesex.org>
+
 
 --- linux-2.6.12-rc2.orig/drivers/media/video/bttv-cards.c	2005-04-05 02:35:41.000000000 +0200
 +++ linux-2.6.12-rc2/drivers/media/video/bttv-cards.c	2005-04-05 02:37:31.000000000 +0200
