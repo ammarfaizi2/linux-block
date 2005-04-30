@@ -1,0 +1,32 @@
+From stable-bounces@linux.kernel.org  Fri Apr 29 19:07:08 2005
+Date: Fri, 29 Apr 2005 19:06:26 -0700
+From: Andrew Morton <akpm@osdl.org>
+To: stable@kernel.org
+Subject: [PATCH] Remove bogus BUG() in kernel/exit.c
+
+Remove bogus BUG() in kernel/exit.c
+
+It's old sanity checking that may have been useful for debugging, but
+is just bogus these days.
+
+Noticed by Mattia Belletti.
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+ exit.c |    2 --
+ 1 files changed, 2 deletions(-)
+
+Index: kernel/exit.c
+===================================================================
+--- c5b67100cde9769c56f6872a5675d67f0e5f0df5/kernel/exit.c  (mode:100644 sha1:39d35935b3718a6a8161ea6043692168f81f127e)
++++ 074874a0f975d7d776b7a789f3fc1715f1fa9300/kernel/exit.c  (mode:100644 sha1:93851bcd9584597daac893eee17559c02d8b4a96)
+@@ -517,8 +517,6 @@ static inline void choose_new_parent(tas
+ 	 */
+ 	BUG_ON(p == reaper || reaper->exit_state >= EXIT_ZOMBIE);
+ 	p->real_parent = reaper;
+-	if (p->parent == p->real_parent)
+-		BUG();
+ }
+ 
+ static inline void reparent_thread(task_t *p, task_t *father, int traced)
+-
