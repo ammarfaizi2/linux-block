@@ -1,3 +1,7 @@
+From stable-bounces@linux.kernel.org  Fri Apr 29 19:07:08 2005
+Date: Fri, 29 Apr 2005 19:06:26 -0700
+From: Greg KH <gregkh@suse.de>
+To: stable@kernel.org
 Subject: fix Linux kernel ELF core dump privilege elevation
 
 As reported by Paul Starzetz <ihaquer@isec.pl>
