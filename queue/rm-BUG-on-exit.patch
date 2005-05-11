@@ -11,6 +11,7 @@ is just bogus these days.
 
 Noticed by Mattia Belletti.
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
  exit.c |    2 --
