@@ -1,0 +1,31 @@
+Subject: fix Linux kernel ELF core dump privilege elevation
+
+As reported by Paul Starzetz <ihaquer@isec.pl>
+
+Reference: CAN-2005-1263
+
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ fs/binfmt_elf.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+--- gregkh-2.6.orig/fs/binfmt_elf.c	2005-05-11 11:15:48.000000000 -0700
++++ gregkh-2.6/fs/binfmt_elf.c	2005-05-11 11:15:50.000000000 -0700
+@@ -251,7 +251,7 @@
+ 	}
+ 
+ 	/* Populate argv and envp */
+-	p = current->mm->arg_start;
++	p = current->mm->arg_end = current->mm->arg_start;
+ 	while (argc-- > 0) {
+ 		size_t len;
+ 		__put_user((elf_addr_t)p, argv++);
+@@ -1301,7 +1301,7 @@
+ static int fill_psinfo(struct elf_prpsinfo *psinfo, struct task_struct *p,
+ 		       struct mm_struct *mm)
+ {
+-	int i, len;
++	unsigned int i, len;
+ 	
+ 	/* first copy the parameters from user space */
+ 	memset(psinfo, 0, sizeof(struct elf_prpsinfo));
