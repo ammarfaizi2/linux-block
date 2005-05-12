@@ -20,9 +20,8 @@ Signed-off-by: Karsten Wiese <annabellesgarden@yahoo.de>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 
-diff -u -r1.119 -r1.120
---- sound/usb/usbaudio.c	2005/03/24 07:17:17	1.119
-+++ sound/usb/usbaudio.c	2005/04/20 09:12:35	1.120
+--- a/sound/usb/usbaudio.c	2005/03/24 07:17:17	1.119
++++ b/sound/usb/usbaudio.c	2005/04/20 09:12:35	1.120
 @@ -3289,7 +3289,7 @@
  		}
  		usb_chip[chip->index] = NULL;

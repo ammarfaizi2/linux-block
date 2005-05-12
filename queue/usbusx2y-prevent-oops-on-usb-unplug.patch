@@ -20,9 +20,8 @@ Signed-off-by: Karsten Wiese <annabellesgarden@yahoo.de>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 
-diff -u -r1.9 -r1.10
---- sound/usb/usx2y/usbusx2y.c	2005/01/28 10:21:48	1.9
-+++ sound/usb/usx2y/usbusx2y.c	2005/04/20 09:12:35	1.10
+--- a/sound/usb/usx2y/usbusx2y.c	2005/01/28 10:21:48	1.9
++++ b/sound/usb/usx2y/usbusx2y.c	2005/04/20 09:12:35	1.10
 @@ -1,6 +1,11 @@
  /*
   * usbusy2y.c - ALSA USB US-428 Driver
