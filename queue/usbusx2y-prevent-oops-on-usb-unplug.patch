@@ -14,7 +14,10 @@ keyboard, when the usx2y's kobjects were freed.
 The patch ensures the correct sequence.
 Tested ok on kernel 2.6.12-rc2.
 
+Present in ALSA cvs
+
 Signed-off-by: Karsten Wiese <annabellesgarden@yahoo.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 
 diff -u -r1.9 -r1.10
