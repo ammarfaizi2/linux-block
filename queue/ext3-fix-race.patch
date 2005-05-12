@@ -1,0 +1,82 @@
+From foo@baz Tue Apr  9 12:12:43 2002
+To: linux-kernel@vger.kernel.org
+Date: 10 Mar 2005 08:44:10 -08:00
+From: cmm@us.ibm.com
+Subject: [PATCH] ext3: fix race between ext3 make block reservation and reservation window discard
+
+This patch fixed a race between ext3_discard_reservation() and
+ext3_try_to_allocate_with_rsv().
+
+There is a window where ext3_discard_reservation will remove an already
+unlinked reservation window node from the filesystem reservation tree:
+It thinks the reservation is still linked in the filesystem reservation
+tree, but it is actually temperately removed from the tree by
+allocate_new_reservation() when it failed to make a new reservation from
+the current group and try to make a new reservation from next block
+group.
+
+Here is how it could happen:
+
+CPU 1
+try to allocate a block in group1 with given reservation window my_rsv
+ext3_try_to_allocate_with_rsv(group
+	----copy reservation window my_rsv into local rsv_copy
+	ext3_try_to_allocate(...rsv_copy) 
+		----no free block in existing reservation window, 
+		----need a new reservation window
+	spin_lock(&rsv_lock);
+
+CPU 2
+
+ext3_discard_reservation
+	if (!rsv_is_empty()
+		----this is true
+	spin_lock(&rsv_lock)
+		----waiting for thread 1
+
+CPU 1:
+
+	allocate_new_reservation
+		failed to reserve blocks in this group
+		remove the window from the tree
+		rsv_window_remove(my_rsv)
+			----window node is unlinked from the tree here
+		return -1
+	spin_unlock(&rsv_lock)
+ext3_try_to_allocate_with_rsv() failed in this group
+group++
+
+CPU 2
+	spin_lock(&rsv_lock) succeed
+	rsv_remove_window ()
+		---------------break, trying to remove a unlinked node from the tree
+	....
+	
+
+CPU 1:
+ext3_try_to_allocate_with_rsv(group, my_rsv)
+	rsv_is_empty is true, need a new reservation window
+	spin_lock(&rsv_lock);
+		^--------------- spinning forever
+
+We need to re-check whether the reservation window is still linked to
+the tree after grab the rsv_lock spin lock in ext3_discard_reservation,
+to prevent panic in rsv_remove_window->rb_erase.
+
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+diff -Nru a/fs/ext3/balloc.c b/fs/ext3/balloc.c
+--- a/fs/ext3/balloc.c	2005-05-11 21:18:50 -07:00
++++ b/fs/ext3/balloc.c	2005-05-11 21:18:50 -07:00
+@@ -268,7 +268,8 @@
+ 
+ 	if (!rsv_is_empty(&rsv->rsv_window)) {
+ 		spin_lock(rsv_lock);
+-		rsv_window_remove(inode->i_sb, rsv);
++		if (!rsv_is_empty(&rsv->rsv_window))
++			rsv_window_remove(inode->i_sb, rsv);
+ 		spin_unlock(rsv_lock);
+ 	}
+ }
