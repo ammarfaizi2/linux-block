@@ -1,0 +1,32 @@
+From akpm@osdl.org Fri Mar  4 13:22:03 2005
+Subject: [patch 1/5] cramfs: small stat(2) fix
+To: greg@kroah.com
+Cc: linux-kernel@vger.kernel.org, akpm@osdl.org, eric@lammerts.org
+From: akpm@osdl.org
+Date: Fri, 04 Mar 2005 13:16:54 -0800
+Lines: 23
+
+From: Eric Lammerts <eric@lammerts.org>
+
+When I stat(2) a device node on a cramfs, the st_blocks field is bogus
+(it's derived from the size field which in this case holds the major/minor
+numbers).  This makes du(1) output completely wrong.
+
+Signed-off-by: Eric Lammerts <eric@lammerts.org>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+
+diff -puN fs/cramfs/inode.c~cramfs-small-stat2-fix fs/cramfs/inode.c
+--- 25/fs/cramfs/inode.c~cramfs-small-stat2-fix	2005-03-04 13:15:57.000000000 -0800
++++ 25-akpm/fs/cramfs/inode.c	2005-03-04 13:15:57.000000000 -0800
+@@ -70,6 +70,7 @@ static struct inode *get_cramfs_inode(st
+ 			inode->i_data.a_ops = &cramfs_aops;
+ 		} else {
+ 			inode->i_size = 0;
++			inode->i_blocks = 0;
+ 			init_special_inode(inode, inode->i_mode,
+ 				old_decode_dev(cramfs_inode->size));
+ 		}
+_
+

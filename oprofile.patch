@@ -1,0 +1,35 @@
+From galak@freescale.com Fri Mar  4 11:14:53 2005
+Date: Fri, 4 Mar 2005 13:09:18 -0600 (CST)
+From: Kumar Gala <galak@freescale.com>
+To: akpm@osdl.org, greg@kroah.com
+cc: linuxppc-embedded@ozlabs.org, linux-kernel@vger.kernel.org
+Subject: [PATCH] ppc32: trivial fix for e500 oprofile build
+Lines: 26
+
+Fix for trivial fix for 2.6.11 oprofile compilation on e500 based ppc.
+
+Signed-off-by: Andy Fleming <afleming@freescale.com>
+Signed-off-by: Kumar Gala <kumar.gala@freescale.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+diff -Nru a/arch/ppc/oprofile/op_model_fsl_booke.c b/arch/ppc/oprofile/op_model_fsl_booke.c
+--- a/arch/ppc/oprofile/op_model_fsl_booke.c	2005-03-04 13:02:52 -06:00
++++ b/arch/ppc/oprofile/op_model_fsl_booke.c	2005-03-04 13:02:52 -06:00
+@@ -150,7 +150,6 @@
+ 	int is_kernel;
+ 	int val;
+ 	int i;
+-	unsigned int cpu = smp_processor_id();
+ 
+ 	/* set the PMM bit (see comment below) */
+ 	mtmsr(mfmsr() | MSR_PMM);
+@@ -162,7 +161,7 @@
+ 		val = ctr_read(i);
+ 		if (val < 0) {
+ 			if (oprofile_running && ctr[i].enabled) {
+-				oprofile_add_sample(pc, is_kernel, i, cpu);
++				oprofile_add_pc(pc, is_kernel, i);
+ 				ctr_write(i, reset_value[i]);
+ 			} else {
+ 				ctr_write(i, 0);
+
