@@ -1,0 +1,31 @@
+From foo@baz Tue Apr  9 12:12:43 2002
+To: linux-kernel@vger.kernel.org
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Shaun Reitan <mailinglists@unix-scripts.com>
+Date: 14 Mar 2005 21:22:31 -08:00
+From: bdschuym@pandora.be
+Subject: [EBTABLES]: Fix smp race.
+
+The patch below fixes an smp race that happens on such systems under
+heavy load.
+This bug was reported and solved by Steve Herrell
+<steve_herrell@yahoo.ca>
+
+Signed-off-by: Bart De Schuymer <bdschuym@pandora.be>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+diff -Nru a/net/bridge/netfilter/ebtables.c b/net/bridge/netfilter/ebtables.c
+--- a/net/bridge/netfilter/ebtables.c	2005-05-11 21:24:50 -07:00
++++ b/net/bridge/netfilter/ebtables.c	2005-05-11 21:24:50 -07:00
+@@ -179,9 +179,10 @@
+ 	struct ebt_chainstack *cs;
+ 	struct ebt_entries *chaininfo;
+ 	char *base;
+-	struct ebt_table_info *private = table->private;
++	struct ebt_table_info *private;
+ 
+ 	read_lock_bh(&table->lock);
++	private = table->private;
+ 	cb_base = COUNTER_BASE(private->counters, private->nentries,
+ 	   smp_processor_id());
+ 	if (private->chainstack)

@@ -1,0 +1,67 @@
+From stable-bounces@linux.kernel.org Thu Apr 28 00:35:13 2005
+From: Gregor Jasny <gjasny@web.de>
+To: stable@kernel.org
+Date: Thu, 28 Apr 2005 09:24:08 +0200
+Subject: [stable] [PATCH] usbusx2y: prevent oops & dead keyboard on usb
+	unplugging while the device is being used
+
+Summary: prevent oops & dead keyboard on usb unplugging while the device is being used
+
+Without this patch, some usb kobjects, which are parents to
+the usx2y's kobjects can be freed before the usx2y's.
+This led to an oops in get_kobj_path_length() and a dead
+keyboard, when the usx2y's kobjects were freed.
+The patch ensures the correct sequence.
+Tested ok on kernel 2.6.12-rc2.
+
+Signed-off-by: Karsten Wiese <annabellesgarden@yahoo.de>
+
+
+diff -u -r1.9 -r1.10
+--- sound/usb/usx2y/usbusx2y.c	2005/01/28 10:21:48	1.9
++++ sound/usb/usx2y/usbusx2y.c	2005/04/20 09:12:35	1.10
+@@ -1,6 +1,11 @@
+ /*
+  * usbusy2y.c - ALSA USB US-428 Driver
+  *
++2005-04-14 Karsten Wiese
++	Version 0.8.7.2:
++	Call snd_card_free() instead of snd_card_free_in_thread() to prevent oops with dead keyboard symptom.
++	Tested ok with kernel 2.6.12-rc2.
++
+ 2004-12-14 Karsten Wiese
+ 	Version 0.8.7.1:
+ 	snd_pcm_open for rawusb pcm-devices now returns -EBUSY if called without rawusb's hwdep device being open.
+@@ -143,7 +148,7 @@
+ 
+ 
+ MODULE_AUTHOR("Karsten Wiese <annabellesgarden@yahoo.de>");
+-MODULE_DESCRIPTION("TASCAM "NAME_ALLCAPS" Version 0.8.7.1");
++MODULE_DESCRIPTION("TASCAM "NAME_ALLCAPS" Version 0.8.7.2");
+ MODULE_LICENSE("GPL");
+ MODULE_SUPPORTED_DEVICE("{{TASCAM(0x1604), "NAME_ALLCAPS"(0x8001)(0x8005)(0x8007) }}");
+ 
+@@ -430,8 +435,6 @@
+ 	if (ptr) {
+ 		usX2Ydev_t* usX2Y = usX2Y((snd_card_t*)ptr);
+ 		struct list_head* p;
+-		if (usX2Y->chip_status == USX2Y_STAT_CHIP_HUP)	// on 2.6.1 kernel snd_usbmidi_disconnect()
+-			return;					// calls us back. better leave :-) .
+ 		usX2Y->chip.shutdown = 1;
+ 		usX2Y->chip_status = USX2Y_STAT_CHIP_HUP;
+ 		usX2Y_unlinkSeq(&usX2Y->AS04);
+@@ -443,7 +446,7 @@
+ 		}
+ 		if (usX2Y->us428ctls_sharedmem) 
+ 			wake_up(&usX2Y->us428ctls_wait_queue_head);
+-		snd_card_free_in_thread((snd_card_t*)ptr);
++		snd_card_free((snd_card_t*)ptr);
+ 	}
+ }
+ 
+
+_______________________________________________
+stable mailing list
+stable@linux.kernel.org
+http://linux.kernel.org/mailman/listinfo/stable
+

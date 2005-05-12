@@ -1,0 +1,37 @@
+From stable-bounces@linux.kernel.org Thu Apr 28 00:35:07 2005
+From: Gregor Jasny <gjasny@web.de>
+To: stable@kernel.org
+Date: Thu, 28 Apr 2005 09:26:48 +0200
+Subject: [stable] [PATCH] usbaudio: prevent oops & dead keyboard on usb
+	unplugging while the device is being used
+
+Summary: prevent oops & dead keyboard on usb unplugging while the device is being used
+
+Without this patch, some usb kobjects, which are parents to
+the usx2y's kobjects can be freed before the usx2y's.
+This led to an oops in get_kobj_path_length() and a dead
+keyboard, when the usx2y's kobjects were freed.
+The patch ensures the correct sequence.
+Tested ok on kernel 2.6.12-rc2.
+
+Signed-off-by: Karsten Wiese <annabellesgarden@yahoo.de>
+
+
+diff -u -r1.119 -r1.120
+--- sound/usb/usbaudio.c	2005/03/24 07:17:17	1.119
++++ sound/usb/usbaudio.c	2005/04/20 09:12:35	1.120
+@@ -3289,7 +3289,7 @@
+ 		}
+ 		usb_chip[chip->index] = NULL;
+ 		up(&register_mutex);
+-		snd_card_free_in_thread(card);
++		snd_card_free(card);
+ 	} else {
+ 		up(&register_mutex);
+ 	}
+
+_______________________________________________
+stable mailing list
+stable@linux.kernel.org
+http://linux.kernel.org/mailman/listinfo/stable
+
