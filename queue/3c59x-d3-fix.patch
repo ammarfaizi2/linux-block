@@ -1,0 +1,52 @@
+[PATCH] 3c59x: only put the device into D3 when we're actually using WOL
+
+During a warm boot the device is in D3 and has troubles coming out of it.
+
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+
+---
+commit 3c8fad1829cc33e903500b41d989fa50ab196378
+tree 1e958eebf19fb59b67e51d6bb51303fbee2b84e9
+parent 1922163c8dfe717c089bdcc18ade4a65350a09c8
+author Daniel Ritz <daniel.ritz@gmx.ch> Thu, 05 May 2005 16:15:44 -0700
+committer Linus Torvalds <torvalds@ppc970.osdl.org> Thu, 05 May 2005 16:36:40 -0700
+
+ drivers/net/3c59x.c |    9 ++++++---
+ 1 files changed, 6 insertions(+), 3 deletions(-)
+
+Index: drivers/net/3c59x.c
+===================================================================
+--- be95a8f0df16e71f41dce26e8e530a900a4173a2/drivers/net/3c59x.c  (mode:100644)
++++ 1e958eebf19fb59b67e51d6bb51303fbee2b84e9/drivers/net/3c59x.c  (mode:100644)
+@@ -1581,7 +1581,8 @@
+ 
+ 	if (VORTEX_PCI(vp)) {
+ 		pci_set_power_state(VORTEX_PCI(vp), PCI_D0);	/* Go active */
+-		pci_restore_state(VORTEX_PCI(vp));
++		if (vp->pm_state_valid)
++			pci_restore_state(VORTEX_PCI(vp));
+ 		pci_enable_device(VORTEX_PCI(vp));
+ 	}
+ 
+@@ -2741,6 +2742,7 @@
+ 		outl(0, ioaddr + DownListPtr);
+ 
+ 	if (final_down && VORTEX_PCI(vp)) {
++		vp->pm_state_valid = 1;
+ 		pci_save_state(VORTEX_PCI(vp));
+ 		acpi_set_WOL(dev);
+ 	}
+@@ -3243,9 +3245,10 @@
+ 		outw(RxEnable, ioaddr + EL3_CMD);
+ 
+ 		pci_enable_wake(VORTEX_PCI(vp), 0, 1);
++
++		/* Change the power state to D3; RxEnable doesn't take effect. */
++		pci_set_power_state(VORTEX_PCI(vp), PCI_D3hot);
+ 	}
+-	/* Change the power state to D3; RxEnable doesn't take effect. */
+-	pci_set_power_state(VORTEX_PCI(vp), PCI_D3hot);
+ }
+ 
+ 

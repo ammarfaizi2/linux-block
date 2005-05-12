@@ -1,0 +1,26 @@
+From foo@baz Tue Apr  9 12:12:43 2002
+To: Greg KH <greg@kroah.com>
+Date: 10 Mar 2005 19:47:08 -08:00
+From: ralf@linux-mips.org
+Cc: dsd@gentoo.org, davem@davemloft.net
+Subject: [ROSE]: Fix minor security hole
+
+ROSE wasn't verifying the ndigis argument of a new route resulting in a
+minor security hole.
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+diff -Nru a/net/rose/rose_route.c b/net/rose/rose_route.c
+--- a/net/rose/rose_route.c	2005-05-12 09:20:45 -07:00
++++ b/net/rose/rose_route.c	2005-05-12 09:20:45 -07:00
+@@ -727,7 +727,8 @@
+ 		}
+ 		if (rose_route.mask > 10) /* Mask can't be more than 10 digits */
+ 			return -EINVAL;
+-
++		if (rose_route.ndigis > 8) /* No more than 8 digipeats */
++			return -EINVAL;
+ 		err = rose_add_node(&rose_route, dev);
+ 		dev_put(dev);
+ 		return err;

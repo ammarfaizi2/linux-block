@@ -1,0 +1,74 @@
+From foo@baz Tue Apr  9 12:12:43 2002
+To: Greg KH <greg@kroah.com>
+Date: 31 Mar 2005 08:48:52 -08:00
+From: vandrove@vc.cvut.cz
+Cc: dsd@gentoo.org
+Subject: [PATCH] Fix matroxfb on big-endian hardware
+
+There was too much/too few byteswapping done by driver and hardware in
+matroxfb on big endian hardware.  Change fixes mirrored/split/corrupted
+letters seen on screen when using accelerated matroxfb mode.
+
+Patch was tested on Mips (by Peter) and x86-64 (by Petr).
+
+Signed-off-by: Peter 'p2' De Schrijver <p2@mind.be>
+Signed-off-by: Petr Vandrovec <vandrove@vc.cvut.cz>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+
+diff -Nru a/drivers/video/matrox/matroxfb_accel.c b/drivers/video/matrox/matroxfb_accel.c
+--- a/drivers/video/matrox/matroxfb_accel.c	2005-05-12 09:26:38 -07:00
++++ b/drivers/video/matrox/matroxfb_accel.c	2005-05-12 09:26:38 -07:00
+@@ -438,13 +438,21 @@
+ 		} else if (step == 1) {
+ 			/* Special case for 1..8bit widths */
+ 			while (height--) {
+-				mga_writel(mmio, 0, *chardata);
++#if defined(__BIG_ENDIAN)
++				fb_writel((*chardata) << 24, mmio.vaddr);
++#else
++				fb_writel(*chardata, mmio.vaddr);
++#endif
+ 				chardata++;
+ 			}
+ 		} else if (step == 2) {
+ 			/* Special case for 9..15bit widths */
+ 			while (height--) {
+-				mga_writel(mmio, 0, *(u_int16_t*)chardata);
++#if defined(__BIG_ENDIAN)
++				fb_writel((*(u_int16_t*)chardata) << 16, mmio.vaddr);
++#else
++				fb_writel(*(u_int16_t*)chardata, mmio.vaddr);
++#endif
+ 				chardata += 2;
+ 			}
+ 		} else {
+@@ -454,7 +462,7 @@
+ 				
+ 				for (i = 0; i < step; i += 4) {
+ 					/* Hope that there are at least three readable bytes beyond the end of bitmap */
+-					mga_writel(mmio, 0, get_unaligned((u_int32_t*)(chardata + i)));
++					fb_writel(get_unaligned((u_int32_t*)(chardata + i)),mmio.vaddr);
+ 				}
+ 				chardata += step;
+ 			}
+diff -Nru a/drivers/video/matrox/matroxfb_base.h b/drivers/video/matrox/matroxfb_base.h
+--- a/drivers/video/matrox/matroxfb_base.h	2005-05-12 09:26:38 -07:00
++++ b/drivers/video/matrox/matroxfb_base.h	2005-05-12 09:26:38 -07:00
+@@ -170,14 +170,14 @@
+ 
+ 	if ((unsigned long)src & 3) {
+ 		while (len >= 4) {
+-			writel(get_unaligned((u32 *)src), addr);
++			fb_writel(get_unaligned((u32 *)src), addr);
+ 			addr++;
+ 			len -= 4;
+ 			src += 4;
+ 		}
+ 	} else {
+ 		while (len >= 4) {
+-			writel(*(u32 *)src, addr);
++			fb_writel(*(u32 *)src, addr);
+ 			addr++;
+ 			len -= 4;
+ 			src += 4;

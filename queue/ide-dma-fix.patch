@@ -1,0 +1,40 @@
+From stable-bounces@linux.kernel.org Thu May 12 04:34:43 2005
+Date: Thu, 12 May 2005 12:31:27 +0100
+From: Daniel Drake <dsd@gentoo.org>
+To: stable@kernel.org
+Cc: 
+Subject: [stable] [PATCH] ide-disk: Fix LBA8 DMA
+
+This is from Gentoo's 2.6.11 patchset. A problem was introduced in 2.6.10
+where some users could not enable DMA on their disks (particularly ALi15x3
+users). This was a small mistake with the no_lba48_dma flag.
+
+I can't find the exact commit but this is definately included in 2.6.12-rc4.
+
+
+From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+
+diff -urNpX dontdiff linux-2.6.11-gentoo-r8/drivers/ide/ide-disk.c linux-dsd/drivers/ide/ide-disk.c
+--- linux-2.6.11-gentoo-r8/drivers/ide/ide-disk.c	2005-03-02 07:38:07.000000000 +0000
++++ linux-dsd/drivers/ide/ide-disk.c	2005-05-09 01:29:49.000000000 +0100
+@@ -133,6 +133,8 @@ static ide_startstop_t __ide_do_rw_disk(
+ 	if (hwif->no_lba48_dma && lba48 && dma) {
+ 		if (block + rq->nr_sectors > 1ULL << 28)
+ 			dma = 0;
++               else
++                       lba48 = 0;
+ 	}
+ 
+ 	if (!dma) {
+@@ -146,7 +148,7 @@ static ide_startstop_t __ide_do_rw_disk(
+ 	/* FIXME: SELECT_MASK(drive, 0) ? */
+ 
+ 	if (drive->select.b.lba) {
+-		if (drive->addressing == 1) {
++               if (lba48) {
+ 			task_ioreg_t tasklets[10];
+ 
+ 			pr_debug("%s: LBA=0x%012llx\n", drive->name, block);
+
