@@ -1,9 +1,14 @@
-[PATCH] 3c59x: only put the device into D3 when we're actually using WOL
+From foo@baz Tue Apr  9 12:12:43 2002
+To: linux-kernel@vger.kernel.org
+Date: 05 May 2005 16:36:40 -0700
+From: daniel.ritz@gmx.ch
+Subject:  3c59x: only put the device into D3 when we're actually using WOL
 
 During a warm boot the device is in D3 and has troubles coming out of it.
 
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 ---
 commit 3c8fad1829cc33e903500b41d989fa50ab196378
