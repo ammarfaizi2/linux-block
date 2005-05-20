@@ -17,9 +17,13 @@ Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-diff -Nru a/drivers/video/matrox/matroxfb_accel.c b/drivers/video/matrox/matroxfb_accel.c
---- a/drivers/video/matrox/matroxfb_accel.c	2005-05-12 09:26:38 -07:00
-+++ b/drivers/video/matrox/matroxfb_accel.c	2005-05-12 09:26:38 -07:00
+---
+ drivers/video/matrox/matroxfb_accel.c |   14 +++++++++++---
+ drivers/video/matrox/matroxfb_base.h  |    4 ++--
+ 2 files changed, 13 insertions(+), 5 deletions(-)
+
+--- linux-2.6.11.10.orig/drivers/video/matrox/matroxfb_accel.c	2005-05-16 10:50:40.000000000 -0700
++++ linux-2.6.11.10/drivers/video/matrox/matroxfb_accel.c	2005-05-20 09:36:29.666663808 -0700
 @@ -438,13 +438,21 @@
  		} else if (step == 1) {
  			/* Special case for 1..8bit widths */
@@ -53,9 +57,8 @@ diff -Nru a/drivers/video/matrox/matroxfb_accel.c b/drivers/video/matrox/matroxf
  				}
  				chardata += step;
  			}
-diff -Nru a/drivers/video/matrox/matroxfb_base.h b/drivers/video/matrox/matroxfb_base.h
---- a/drivers/video/matrox/matroxfb_base.h	2005-05-12 09:26:38 -07:00
-+++ b/drivers/video/matrox/matroxfb_base.h	2005-05-12 09:26:38 -07:00
+--- linux-2.6.11.10.orig/drivers/video/matrox/matroxfb_base.h	2005-05-16 10:50:40.000000000 -0700
++++ linux-2.6.11.10/drivers/video/matrox/matroxfb_base.h	2005-05-20 09:36:29.680661680 -0700
 @@ -170,14 +170,14 @@
  
  	if ((unsigned long)src & 3) {

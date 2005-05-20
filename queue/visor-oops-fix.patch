@@ -8,9 +8,12 @@ Thanks to Mark Lord <mlord@pobox.com> for reporting this and helping with testin
 
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-diff -Nru a/drivers/usb/serial/visor.c b/drivers/usb/serial/visor.c
---- a/drivers/usb/serial/visor.c	2005-05-11 00:52:29 -07:00
-+++ b/drivers/usb/serial/visor.c	2005-05-11 00:52:29 -07:00
+---
+ drivers/usb/serial/visor.c |   38 +++++++++++++++++++++++++++-----------
+ 1 files changed, 27 insertions(+), 11 deletions(-)
+
+--- linux-2.6.11.10.orig/drivers/usb/serial/visor.c	2005-05-16 10:50:37.000000000 -0700
++++ linux-2.6.11.10/drivers/usb/serial/visor.c	2005-05-20 09:36:44.139463608 -0700
 @@ -386,6 +386,7 @@
  	int bytes_in;
  	int bytes_out;

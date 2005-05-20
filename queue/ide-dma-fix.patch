@@ -16,10 +16,13 @@ From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 
-diff -urNpX dontdiff linux-2.6.11-gentoo-r8/drivers/ide/ide-disk.c linux-dsd/drivers/ide/ide-disk.c
---- linux-2.6.11-gentoo-r8/drivers/ide/ide-disk.c	2005-03-02 07:38:07.000000000 +0000
-+++ linux-dsd/drivers/ide/ide-disk.c	2005-05-09 01:29:49.000000000 +0100
-@@ -133,6 +133,8 @@ static ide_startstop_t __ide_do_rw_disk(
+---
+ drivers/ide/ide-disk.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletion(-)
+
+--- linux-2.6.11.10.orig/drivers/ide/ide-disk.c	2005-05-16 10:50:31.000000000 -0700
++++ linux-2.6.11.10/drivers/ide/ide-disk.c	2005-05-20 09:36:31.933319224 -0700
+@@ -133,6 +133,8 @@
  	if (hwif->no_lba48_dma && lba48 && dma) {
  		if (block + rq->nr_sectors > 1ULL << 28)
  			dma = 0;
@@ -28,7 +31,7 @@ diff -urNpX dontdiff linux-2.6.11-gentoo-r8/drivers/ide/ide-disk.c linux-dsd/dri
  	}
  
  	if (!dma) {
-@@ -146,7 +148,7 @@ static ide_startstop_t __ide_do_rw_disk(
+@@ -146,7 +148,7 @@
  	/* FIXME: SELECT_MASK(drive, 0) ? */
  
  	if (drive->select.b.lba) {
@@ -37,4 +40,3 @@ diff -urNpX dontdiff linux-2.6.11-gentoo-r8/drivers/ide/ide-disk.c linux-dsd/dri
  			task_ioreg_t tasklets[10];
  
  			pr_debug("%s: LBA=0x%012llx\n", drive->name, block);
-

@@ -21,8 +21,8 @@ CPU 1
 try to allocate a block in group1 with given reservation window my_rsv
 ext3_try_to_allocate_with_rsv(group
 	----copy reservation window my_rsv into local rsv_copy
-	ext3_try_to_allocate(...rsv_copy) 
-		----no free block in existing reservation window, 
+	ext3_try_to_allocate(...rsv_copy)
+		----no free block in existing reservation window,
 		----need a new reservation window
 	spin_lock(&rsv_lock);
 
@@ -51,7 +51,7 @@ CPU 2
 	rsv_remove_window ()
 		---------------break, trying to remove a unlinked node from the tree
 	....
-	
+
 
 CPU 1:
 ext3_try_to_allocate_with_rsv(group, my_rsv)
@@ -67,9 +67,12 @@ Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-diff -Nru a/fs/ext3/balloc.c b/fs/ext3/balloc.c
---- a/fs/ext3/balloc.c	2005-05-11 21:18:50 -07:00
-+++ b/fs/ext3/balloc.c	2005-05-11 21:18:50 -07:00
+---
+ fs/ext3/balloc.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletion(-)
+
+--- linux-2.6.11.10.orig/fs/ext3/balloc.c	2005-05-16 10:50:46.000000000 -0700
++++ linux-2.6.11.10/fs/ext3/balloc.c	2005-05-20 09:36:22.628733736 -0700
 @@ -268,7 +268,8 @@
  
  	if (!rsv_is_empty(&rsv->rsv_window)) {

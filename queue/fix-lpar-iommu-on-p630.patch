@@ -16,10 +16,13 @@ Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-diff -Nru a/arch/ppc64/kernel/pSeries_iommu.c b/arch/ppc64/kernel/pSeries_iommu.c
---- a/arch/ppc64/kernel/pSeries_iommu.c	2005-05-12 09:31:21 -07:00
-+++ b/arch/ppc64/kernel/pSeries_iommu.c	2005-05-12 09:31:21 -07:00
-@@ -402,6 +402,8 @@
+---
+ arch/ppc64/kernel/pSeries_iommu.c |   55 +++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 54 insertions(+), 1 deletion(-)
+
+--- linux-2.6.11.10.orig/arch/ppc64/kernel/pSeries_iommu.c	2005-05-16 10:50:31.000000000 -0700
++++ linux-2.6.11.10/arch/ppc64/kernel/pSeries_iommu.c	2005-05-20 09:36:25.091359360 -0700
+@@ -401,6 +401,8 @@
  	struct device_node *dn, *pdn;
  	unsigned int *dma_window = NULL;
  
@@ -28,9 +31,9 @@ diff -Nru a/arch/ppc64/kernel/pSeries_iommu.c b/arch/ppc64/kernel/pSeries_iommu.
  	dn = pci_bus_to_OF_node(bus);
  
  	/* Find nearest ibm,dma-window, walking up the device tree */
-@@ -478,6 +480,56 @@
- 	.notifier_call = iommu_reconfig_notifier,
- };
+@@ -455,6 +457,56 @@
+ 	}
+ }
  
 +static void iommu_dev_setup_pSeriesLP(struct pci_dev *dev)
 +{
@@ -85,7 +88,7 @@ diff -Nru a/arch/ppc64/kernel/pSeries_iommu.c b/arch/ppc64/kernel/pSeries_iommu.
  static void iommu_bus_setup_null(struct pci_bus *b) { }
  static void iommu_dev_setup_null(struct pci_dev *d) { }
  
-@@ -502,13 +554,14 @@
+@@ -479,13 +531,14 @@
  			ppc_md.tce_free	 = tce_free_pSeriesLP;
  		}
  		ppc_md.iommu_bus_setup = iommu_bus_setup_pSeriesLP;
@@ -99,5 +102,5 @@ diff -Nru a/arch/ppc64/kernel/pSeries_iommu.c b/arch/ppc64/kernel/pSeries_iommu.
  
 -	ppc_md.iommu_dev_setup = iommu_dev_setup_pSeries;
  
- 	pSeries_reconfig_notifier_register(&iommu_reconfig_nb);
- 
+ 	pci_iommu_init();
+ }

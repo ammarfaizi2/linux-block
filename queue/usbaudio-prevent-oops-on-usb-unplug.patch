@@ -20,9 +20,13 @@ Signed-off-by: Karsten Wiese <annabellesgarden@yahoo.de>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 
---- a/sound/usb/usbaudio.c	2005/03/24 07:17:17	1.119
-+++ b/sound/usb/usbaudio.c	2005/04/20 09:12:35	1.120
-@@ -3289,7 +3289,7 @@
+---
+ sound/usb/usbaudio.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
+
+--- linux-2.6.11.10.orig/sound/usb/usbaudio.c	2005-05-16 10:52:18.000000000 -0700
++++ linux-2.6.11.10/sound/usb/usbaudio.c	2005-05-20 09:36:37.396488696 -0700
+@@ -3276,7 +3276,7 @@
  		}
  		usb_chip[chip->index] = NULL;
  		up(&register_mutex);
@@ -31,9 +35,3 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
  	} else {
  		up(&register_mutex);
  	}
-
-_______________________________________________
-stable mailing list
-stable@linux.kernel.org
-http://linux.kernel.org/mailman/listinfo/stable
-

@@ -20,8 +20,12 @@ Signed-off-by: Karsten Wiese <annabellesgarden@yahoo.de>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 
---- a/sound/usb/usx2y/usbusx2y.c	2005/01/28 10:21:48	1.9
-+++ b/sound/usb/usx2y/usbusx2y.c	2005/04/20 09:12:35	1.10
+---
+ sound/usb/usx2y/usbusx2y.c |   11 +++++++----
+ 1 files changed, 7 insertions(+), 4 deletions(-)
+
+--- linux-2.6.11.10.orig/sound/usb/usx2y/usbusx2y.c	2005-05-16 10:52:18.000000000 -0700
++++ linux-2.6.11.10/sound/usb/usx2y/usbusx2y.c	2005-05-20 09:36:42.067778552 -0700
 @@ -1,6 +1,11 @@
  /*
   * usbusy2y.c - ALSA USB US-428 Driver
@@ -61,9 +65,3 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
  	}
  }
  
-
-_______________________________________________
-stable mailing list
-stable@linux.kernel.org
-http://linux.kernel.org/mailman/listinfo/stable
-
