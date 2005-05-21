@@ -1,0 +1,51 @@
+[PATCH] x86_64: When checking vmalloc mappings don't use pte_page
+
+The PTEs can point to ioremap mappings too, and these are often outside
+mem_map.  The NUMA hash page lookup functions cannot handle out of bounds
+accesses properly.
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+ fault.c |   11 +++++++++--
+ 1 files changed, 9 insertions(+), 2 deletions(-)
+
+Index: release-2.6.11/arch/x86_64/mm/fault.c
+===================================================================
+--- release-2.6.11.orig/arch/x86_64/mm/fault.c
++++ release-2.6.11/arch/x86_64/mm/fault.c
+@@ -236,6 +236,8 @@ static noinline void pgtable_bad(unsigne
+ 
+ /*
+  * Handle a fault on the vmalloc or module mapping area
++ *
++ * This assumes no large pages in there.
+  */
+ static int vmalloc_fault(unsigned long address)
+ {
+@@ -274,7 +276,10 @@ static int vmalloc_fault(unsigned long a
+ 	if (!pte_present(*pte_ref))
+ 		return -1;
+ 	pte = pte_offset_kernel(pmd, address);
+-	if (!pte_present(*pte) || pte_page(*pte) != pte_page(*pte_ref))
++	/* Don't use pte_page here, because the mappings can point
++	   outside mem_map, and the NUMA hash lookup cannot handle
++	   that. */
++	if (!pte_present(*pte) || pte_pfn(*pte) != pte_pfn(*pte_ref))
+ 		BUG();
+ 	__flush_tlb_all();
+ 	return 0;
+@@ -348,7 +353,9 @@ asmlinkage void do_page_fault(struct pt_
+ 	 * protection error (error_code & 1) == 0.
+ 	 */
+ 	if (unlikely(address >= TASK_SIZE)) {
+-		if (!(error_code & 5)) {
++		if (!(error_code & 5) &&
++		      ((address >= VMALLOC_START && address < VMALLOC_END) ||
++		       (address >= MODULES_VADDR && address < MODULES_END))) {
+ 			if (vmalloc_fault(address) < 0)
+ 				goto bad_area_nosemaphore;
+ 			return;

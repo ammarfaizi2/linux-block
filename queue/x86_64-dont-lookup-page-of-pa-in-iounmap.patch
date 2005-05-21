@@ -1,0 +1,29 @@
+[PATCH] x86_64: Don't look up struct page pointer of physical address in iounmap
+
+It could be in a memory hole not mapped in mem_map and that causes the hash
+lookup to go off to nirvana.
+
+Back port to -stable tree by Chris Wright
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+ ioremap.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
+
+Index: release-2.6.11/arch/x86_64/mm/ioremap.c
+===================================================================
+--- release-2.6.11.orig/arch/x86_64/mm/ioremap.c
++++ release-2.6.11/arch/x86_64/mm/ioremap.c
+@@ -266,7 +266,7 @@ void iounmap(volatile void __iomem *addr
+ 	if ((p->flags >> 20) &&
+ 		p->phys_addr + p->size - 1 < virt_to_phys(high_memory)) {
+ 		/* p->size includes the guard page, but cpa doesn't like that */
+-		change_page_attr(virt_to_page(__va(p->phys_addr)),
++		change_page_attr_addr((unsigned long)(__va(p->phys_addr)),
+ 				 (p->size - PAGE_SIZE) >> PAGE_SHIFT,
+ 				 PAGE_KERNEL); 				 
+ 		global_flush_tlb();

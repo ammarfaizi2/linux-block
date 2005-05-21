@@ -9,3 +9,8 @@ rose-minor-security-fix.patch
 usbaudio-prevent-oops-on-usb-unplug.patch
 usbusx2y-prevent-oops-on-usb-unplug.patch
 visor-oops-fix.patch
+x86_64-ptrace-RIP-is-canonical.patch
+x86_64-fix-canonical-checking.patch
+x86_64-add-guard-page.patch
+x86_64-vmalloc-mapping-dont-use-pte_page.patch
+x86_64-dont-lookup-page-of-pa-in-iounmap.patch

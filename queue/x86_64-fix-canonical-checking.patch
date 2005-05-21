@@ -1,0 +1,40 @@
+[PATCH] x86_64: Fix canonical checking for segment registers in ptrace
+
+Allowed user programs to set a non canonical segment base, which would cause
+oopses in the kernel later.
+
+Credit-to: Alexander Nyberg <alexn@dsv.su.se>
+
+ For identifying and reporting this bug.
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+ ptrace.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
+
+Index: release-2.6.11/arch/x86_64/kernel/ptrace.c
+===================================================================
+--- release-2.6.11.orig/arch/x86_64/kernel/ptrace.c
++++ release-2.6.11/arch/x86_64/kernel/ptrace.c
+@@ -129,13 +129,13 @@ static int putreg(struct task_struct *ch
+ 			value &= 0xffff;
+ 			return 0;
+ 		case offsetof(struct user_regs_struct,fs_base):
+-			if (!((value >> 48) == 0 || (value >> 48) == 0xffff))
+-				return -EIO; 
++			if (value >= TASK_SIZE)
++				return -EIO;
+ 			child->thread.fs = value;
+ 			return 0;
+ 		case offsetof(struct user_regs_struct,gs_base):
+-			if (!((value >> 48) == 0 || (value >> 48) == 0xffff))
+-				return -EIO; 
++			if (value >= TASK_SIZE)
++				return -EIO;
+ 			child->thread.gs = value;
+ 			return 0;
+ 		case offsetof(struct user_regs_struct, eflags):

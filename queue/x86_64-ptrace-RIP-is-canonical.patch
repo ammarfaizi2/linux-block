@@ -1,0 +1,29 @@
+[PATCH] x86_64: check if ptrace RIP is canonical
+
+This works around an AMD Erratum.
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+---
+
+ ptrace.c |    5 +++++
+ 1 files changed, 5 insertions(+)
+
+Index: release-2.6.11/arch/x86_64/kernel/ptrace.c
+===================================================================
+--- release-2.6.11.orig/arch/x86_64/kernel/ptrace.c
++++ release-2.6.11/arch/x86_64/kernel/ptrace.c
+@@ -149,6 +149,11 @@ static int putreg(struct task_struct *ch
+ 				return -EIO;
+ 			value &= 0xffff;
+ 			break;
++		case offsetof(struct user_regs_struct, rip):
++			/* Check if the new RIP address is canonical */
++			if (value >= TASK_SIZE)
++				return -EIO;
++			break;
+ 	}
+ 	put_stack_long(child, regno - sizeof(struct pt_regs), value);
+ 	return 0;
