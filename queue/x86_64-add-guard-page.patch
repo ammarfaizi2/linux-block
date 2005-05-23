@@ -1,3 +1,9 @@
+From ak@suse.de  Mon May 23 09:16:11 2005
+Date: Tue, 17 May 2005 04:53:20 +0000
+From: Andi Kleen <ak@suse.de>
+To: stable@kernel.org
+Subject: [PATCH] x86_64: Add a guard page at the end of the 47bit address space
+
 [PATCH] x86_64: Add a guard page at the end of the 47bit address space
 
 This works around a bug in the AMD K8 CPUs.

@@ -1,3 +1,9 @@
+From ak@suse.de  Mon May 23 09:16:11 2005
+Date: Tue, 17 May 2005 04:53:24 +0000
+From: Andi Kleen <ak@suse.de>
+To: stable@kernel.org
+Subject: [PATCH] x86_64: Don't look up struct page pointer of physical address in iounmap
+
 [PATCH] x86_64: Don't look up struct page pointer of physical address in iounmap
 
 It could be in a memory hole not mapped in mem_map and that causes the hash
