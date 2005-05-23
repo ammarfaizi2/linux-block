@@ -2,26 +2,24 @@ From: Greg KH <gregkh@suse.de>
 To: linux-kernel@vger.kernel.org, stable@kernel.org
 Cc: Justin Forbes <jmforbes@linuxtx.org>,
 	Zwane Mwaikambo <zwane@arm.linux.org.uk>,
-	Cliff White <cliffw@osdl.org>,
 	Theodore Ts'o <tytso@mit.edu>,
-	Randy.Dunlap <rddunlap@osdl.org>,
+	Randy Dunlap <rdunlap@xenotime.net>,
 	Chuck Wolber <chuckw@quantumlinux.com>, torvalds@osdl.org, akpm@osdl.org, alan@lxorguk.ukuu.org.uk
-Subject: [00/11] -stable review
+Subject: [00/@num@] -stable review
 
-This is the start of the stable review cycle for the 2.6.11.3 release.  There
-are 11 patches in this series, all will be posted as a response to this one.
+This is the start of the stable review cycle for the 2.6.11.@rel@ release.  There
+are @num@ patches in this series, all will be posted as a response to this one.
 If anyone has any issues with these being applied, please let us know.  If
 anyone is a maintainer of the proper subsystem, and wants to add a
 signed-off-by: line to the patch, please respond with it.
 
-These patches are sent out with a number of different people on the Bcc: line.
-If you wish to be a reviewer, please email stable@linux.com to add your name to
+These patches are sent out with a number of different people on the Cc: line.
+If you wish to be a reviewer, please email stable@kernel.org to add your name to
 the list.  If you want to be off the reviewer list, also email us.
 
-Responses should be made by Sat, March 12, 23:00 UTC.  Anything received after
+Responses should be made by @date (day, month date, time)@ UTC.  Anything received after
 that time, might be too late.
 
 thanks,
 
 the -stable release team (i.e. the ones wearing the joker hat in the corner...)
-
