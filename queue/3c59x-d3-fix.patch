@@ -6,9 +6,11 @@ Subject:  3c59x: only put the device into D3 when we're actually using WOL
 
 During a warm boot the device is in D3 and has troubles coming out of it.
 
+Signed-off-by: Daniel Ritz <daniel.ritz@gmx.ch>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 ---
  drivers/net/3c59x.c |    9 ++++++---
