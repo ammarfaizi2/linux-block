@@ -7,6 +7,7 @@ Subject: USB: fix bug in visor driver with throttle/unthrottle causing oopses.
 Thanks to Mark Lord <mlord@pobox.com> for reporting this and helping with testing.
 
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 ---
  drivers/usb/serial/visor.c |   38 +++++++++++++++++++++++++++-----------

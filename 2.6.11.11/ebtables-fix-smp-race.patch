@@ -13,6 +13,7 @@ This bug was reported and solved by Steve Herrell
 Signed-off-by: Bart De Schuymer <bdschuym@pandora.be>
 Signed-off-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 ---
  net/bridge/netfilter/ebtables.c |    3 ++-

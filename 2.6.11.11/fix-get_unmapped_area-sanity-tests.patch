@@ -12,6 +12,7 @@ slightly to do the sanity checks unconditionally.
 
 
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 ---
  include/linux/err.h |    4 ++-

@@ -16,6 +16,7 @@ Signed-off-by: Petr Vandrovec <vandrove@vc.cvut.cz>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 ---
  drivers/video/matrox/matroxfb_accel.c |   14 +++++++++++---
