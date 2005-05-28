@@ -1,0 +1,66 @@
+From stable-bounces@linux.kernel.org Thu May 26 22:52:42 2005
+Date: Thu, 26 May 2005 22:43:11 -0700
+From: William Lee Irwin III <wli@holomorphy.com>
+To: stable@kernel.org
+Subject: try_to_unmap_cluster() passes out-of-bounds pte to pte_unmap()
+
+[PATCH] try_to_unmap_cluster() passes out-of-bounds pte to pte_unmap()
+
+try_to_unmap_cluster() does:
+        for (pte = pte_offset_map(pmd, address);
+                        address < end; pte++, address += PAGE_SIZE) {
+		...
+	}
+
+	pte_unmap(pte);
+
+It may take a little staring to notice, but pte can actually fall off the
+end of the pte page in this iteration, which makes life difficult for
+kmap_atomic() and the users not expecting it to BUG().  Of course, we're
+somewhat lucky in that arithmetic elsewhere in the function guarantees that
+at least one iteration is made, lest this force larger rearrangements to be
+made.  This issue and patch also apply to non-mm mainline and with trivial
+adjustments, at least two related kernels.
+
+Discovered during internal testing at Oracle.
+
+Signed-off-by: William Irwin <wli@holomorphy.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+--- gregkh-2.6.11.10.orig/mm/rmap.c	2005-05-16 10:51:55.000000000 -0700
++++ gregkh-2.6.11.10/mm/rmap.c	2005-05-26 22:01:49.000000000 -0700
+@@ -641,7 +641,7 @@
+ 	pgd_t *pgd;
+ 	pud_t *pud;
+ 	pmd_t *pmd;
+-	pte_t *pte;
++	pte_t *pte, *original_pte;
+ 	pte_t pteval;
+ 	struct page *page;
+ 	unsigned long address;
+@@ -673,7 +673,7 @@
+ 	if (!pmd_present(*pmd))
+ 		goto out_unlock;
+ 
+-	for (pte = pte_offset_map(pmd, address);
++	for (original_pte = pte = pte_offset_map(pmd, address);
+ 			address < end; pte++, address += PAGE_SIZE) {
+ 
+ 		if (!pte_present(*pte))
+@@ -710,7 +710,7 @@
+ 		(*mapcount)--;
+ 	}
+ 
+-	pte_unmap(pte);
++	pte_unmap(original_pte);
+ 
+ out_unlock:
+ 	spin_unlock(&mm->page_table_lock);
+
+_______________________________________________
+stable mailing list
+stable@linux.kernel.org
+http://linux.kernel.org/mailman/listinfo/stable
+
