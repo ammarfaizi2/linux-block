@@ -1,2 +1,3 @@
 fix-pte_unmap.patch
 netfilter-ip_queue-deadlock-fix.patch
+hfsplus-oops-hfs-leak-fix.patch
