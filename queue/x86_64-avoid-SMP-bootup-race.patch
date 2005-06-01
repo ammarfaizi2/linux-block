@@ -1,0 +1,58 @@
+From stable-bounces@linux.kernel.org  Tue May 31 07:08:57 2005
+Date: Tue, 31 May 2005 16:08:47 +0200
+From: Andi Kleen <ak@suse.de>
+To: stable@kernel.org
+ubject: [PATCH]  x86_64: avoid SMP boot up race 
+
+Keep interrupts disabled during smp bootup
+
+This avoids a race that breaks SMP bootup on some machines.
+The race is not fully plugged (that is only done with much
+more changes in 2.6.12), but should be good enough
+for most people.
+
+Keeping the interrupts disabled here is ok because we
+don't rely on the timer interrupt for local APIC
+timer setup, but always read the timer registers
+directly.
+
+(originally from Rusty Russell iirc) 
+
+Signed-off-by: ak@suse.de
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -u linux/arch/x86_64/kernel/apic.c-o linux/arch/x86_64/kernel/apic.c
+--- linux/arch/x86_64/kernel/apic.c-o	2005-05-31 16:40:01.000000000 +0200
++++ linux/arch/x86_64/kernel/apic.c	2005-05-31 16:44:05.000000000 +0200
+@@ -775,9 +775,7 @@
+ 
+ void __init setup_secondary_APIC_clock(void)
+ {
+-	local_irq_disable(); /* FIXME: Do we need this? --RR */
+ 	setup_APIC_timer(calibration_result);
+-	local_irq_enable();
+ }
+ 
+ void __init disable_APIC_timer(void)
+diff -u linux/arch/x86_64/kernel/smpboot.c-o linux-2.6.11/arch/x86_64/kernel/smpboot.c
+--- linux/arch/x86_64/kernel/smpboot.c-o	2005-03-21 14:04:11.000000000 +0100
++++ linux/arch/x86_64/kernel/smpboot.c	2005-05-31 16:44:07.000000000 +0200
+@@ -309,8 +309,6 @@
+ 	Dprintk("CALLIN, before setup_local_APIC().\n");
+ 	setup_local_APIC();
+ 
+-	local_irq_enable();
+-
+ 	/*
+ 	 * Get our bogomips.
+ 	 */
+@@ -324,8 +322,6 @@
+ 	 */
+  	smp_store_cpu_info(cpuid);
+ 
+-	local_irq_disable();
+-
+ 	/*
+ 	 * Allow the master to continue.
+ 	 */
+
