@@ -3,3 +3,4 @@ netfilter-ip_queue-deadlock-fix.patch
 hfsplus-oops-hfs-leak-fix.patch
 x86_64-avoid-SMP-bootup-race.patch
 x86_64-fix-ptrace-boundary-check.patch
+bttv-vc100.patch
