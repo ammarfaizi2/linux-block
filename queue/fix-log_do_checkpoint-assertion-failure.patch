@@ -1,0 +1,34 @@
+From linux-kernel-owner+chrisw=40osdl.org-S261317AbVFAHlL@vger.kernel.org  Wed Jun  1 00:42:56 2005
+Date: 	Wed, 1 Jun 2005 09:40:59 +0200
+From: Jan Kara <jack@suse.cz>
+To: akpm@osdl.org
+Cc: sct@redhat.com, linux-kernel@vger.kernel.org
+Subject: [PATCH] ext3: fix log_do_checkpoint() assertion failure
+
+Fix possible false assertion failure in log_do_checkpoint(). We might fail
+to detect that we actually made a progress when cleaning up the checkpoint
+lists if we don't retry after writing something to disk. The patch was
+confirmed to fix observed assertion failures for several users.
+
+When we flushed some buffers we need to retry scanning the list.
+Otherwise we can fail to detect our progress.
+
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+diff -rupX /home/jack/.kerndiffexclude linux-2.6.12-rc5/fs/jbd/checkpoint.c linux-2.6.12-rc5-1-checkretry/fs/jbd/checkpoint.c
+--- linux-2.6.12-rc5/fs/jbd/checkpoint.c	2005-03-03 18:58:29.000000000 +0100
++++ linux-2.6.12-rc5-1-checkretry/fs/jbd/checkpoint.c	2005-05-27 11:15:31.000000000 +0200
+@@ -339,8 +339,10 @@ int log_do_checkpoint(journal_t *journal
+ 			}
+ 		} while (jh != last_jh && !retry);
+ 
+-		if (batch_count)
++		if (batch_count) {
+ 			__flush_batch(journal, bhs, &batch_count);
++			retry = 1;
++		}
+ 
+ 		/*
+ 		 * If someone cleaned up this transaction while we slept, we're
