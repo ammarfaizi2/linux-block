@@ -6,3 +6,4 @@ x86_64-fix-ptrace-boundary-check.patch
 bttv-vc100.patch
 fix-log_do_checkpoint-assertion-failure.patch
 bridge-fdb-postfilter.patch
+netem-duplication-fix.patch
