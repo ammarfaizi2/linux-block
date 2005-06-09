@@ -13,11 +13,14 @@ Signed-off-by: Stephen Hemminger <shemminger@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-Index: 2.6.11.11-net/net/bridge/br_input.c
-===================================================================
---- 2.6.11.11-net.orig/net/bridge/br_input.c
-+++ 2.6.11.11-net/net/bridge/br_input.c
-@@ -54,6 +54,9 @@ int br_handle_frame_finish(struct sk_buf
+---
+ net/bridge/br_input.c    |    6 ++++--
+ net/bridge/br_stp_bpdu.c |    3 +++
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+--- linux-2.6.11.10.orig/net/bridge/br_input.c	2005-05-16 10:51:56.000000000 -0700
++++ linux-2.6.11.10/net/bridge/br_input.c	2005-06-08 22:40:37.000000000 -0700
+@@ -54,6 +54,9 @@
  	struct net_bridge_fdb_entry *dst;
  	int passedup = 0;
  
@@ -27,7 +30,7 @@ Index: 2.6.11.11-net/net/bridge/br_input.c
  	if (br->dev->flags & IFF_PROMISC) {
  		struct sk_buff *skb2;
  
-@@ -108,8 +111,7 @@ int br_handle_frame(struct net_bridge_po
+@@ -108,8 +111,7 @@
  	if (eth_hdr(skb)->h_source[0] & 1)
  		goto err;
  
@@ -37,11 +40,9 @@ Index: 2.6.11.11-net/net/bridge/br_input.c
  		br_fdb_insert(p->br, p, eth_hdr(skb)->h_source, 0);
  
  	if (p->br->stp_enabled &&
-Index: 2.6.11.11-net/net/bridge/br_stp_bpdu.c
-===================================================================
---- 2.6.11.11-net.orig/net/bridge/br_stp_bpdu.c
-+++ 2.6.11.11-net/net/bridge/br_stp_bpdu.c
-@@ -140,6 +140,9 @@ int br_stp_handle_bpdu(struct sk_buff *s
+--- linux-2.6.11.10.orig/net/bridge/br_stp_bpdu.c	2005-05-16 10:51:56.000000000 -0700
++++ linux-2.6.11.10/net/bridge/br_stp_bpdu.c	2005-06-08 22:40:37.000000000 -0700
+@@ -140,6 +140,9 @@
  	struct net_bridge *br = p->br;
  	unsigned char *buf;
  

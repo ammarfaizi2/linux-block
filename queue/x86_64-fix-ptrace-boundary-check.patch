@@ -14,14 +14,13 @@ Signed-off-by: Andi Kleen <ak@suse.de>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
+---
  arch/x86_64/kernel/ptrace.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-Index: release-2.6.11/arch/x86_64/kernel/ptrace.c
-===================================================================
---- release-2.6.11.orig/arch/x86_64/kernel/ptrace.c
-+++ release-2.6.11/arch/x86_64/kernel/ptrace.c
-@@ -252,7 +252,7 @@ asmlinkage long sys_ptrace(long request,
+--- linux-2.6.11.10.orig/arch/x86_64/kernel/ptrace.c	2005-05-16 10:50:31.000000000 -0700
++++ linux-2.6.11.10/arch/x86_64/kernel/ptrace.c	2005-06-08 22:40:26.000000000 -0700
+@@ -247,7 +247,7 @@
  			break;
  
  		switch (addr) { 
@@ -30,7 +29,7 @@ Index: release-2.6.11/arch/x86_64/kernel/ptrace.c
  			tmp = getreg(child, addr);
  			break;
  		case offsetof(struct user, u_debugreg[0]):
-@@ -297,7 +297,7 @@ asmlinkage long sys_ptrace(long request,
+@@ -292,7 +292,7 @@
  			break;
  
  		switch (addr) { 

@@ -22,9 +22,13 @@ Signed-off-by: ak@suse.de
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-diff -u linux/arch/x86_64/kernel/apic.c-o linux/arch/x86_64/kernel/apic.c
---- linux/arch/x86_64/kernel/apic.c-o	2005-05-31 16:40:01.000000000 +0200
-+++ linux/arch/x86_64/kernel/apic.c	2005-05-31 16:44:05.000000000 +0200
+---
+ arch/x86_64/kernel/apic.c    |    2 --
+ arch/x86_64/kernel/smpboot.c |    4 ----
+ 2 files changed, 6 deletions(-)
+
+--- linux-2.6.11.10.orig/arch/x86_64/kernel/apic.c	2005-05-16 10:50:31.000000000 -0700
++++ linux-2.6.11.10/arch/x86_64/kernel/apic.c	2005-06-08 22:40:23.000000000 -0700
 @@ -775,9 +775,7 @@
  
  void __init setup_secondary_APIC_clock(void)
@@ -35,9 +39,8 @@ diff -u linux/arch/x86_64/kernel/apic.c-o linux/arch/x86_64/kernel/apic.c
  }
  
  void __init disable_APIC_timer(void)
-diff -u linux/arch/x86_64/kernel/smpboot.c-o linux-2.6.11/arch/x86_64/kernel/smpboot.c
---- linux/arch/x86_64/kernel/smpboot.c-o	2005-03-21 14:04:11.000000000 +0100
-+++ linux/arch/x86_64/kernel/smpboot.c	2005-05-31 16:44:07.000000000 +0200
+--- linux-2.6.11.10.orig/arch/x86_64/kernel/smpboot.c	2005-05-16 10:50:31.000000000 -0700
++++ linux-2.6.11.10/arch/x86_64/kernel/smpboot.c	2005-06-08 22:40:23.000000000 -0700
 @@ -309,8 +309,6 @@
  	Dprintk("CALLIN, before setup_local_APIC().\n");
  	setup_local_APIC();
@@ -56,4 +59,3 @@ diff -u linux/arch/x86_64/kernel/smpboot.c-o linux-2.6.11/arch/x86_64/kernel/smp
  	/*
  	 * Allow the master to continue.
  	 */
-

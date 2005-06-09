@@ -11,11 +11,13 @@ Signed-off-by: Stephen Hemminger <shemminger@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-Index: 2.6.11.11-net/net/sched/sch_netem.c
-===================================================================
---- 2.6.11.11-net.orig/net/sched/sch_netem.c
-+++ 2.6.11.11-net/net/sched/sch_netem.c
-@@ -184,10 +184,15 @@ static int netem_enqueue(struct sk_buff 
+---
+ net/sched/sch_netem.c |   13 +++++++++----
+ 1 files changed, 9 insertions(+), 4 deletions(-)
+
+--- linux-2.6.11.10.orig/net/sched/sch_netem.c	2005-05-16 10:52:03.000000000 -0700
++++ linux-2.6.11.10/net/sched/sch_netem.c	2005-06-08 22:40:40.000000000 -0700
+@@ -184,10 +184,15 @@
  	/* Random duplication */
  	if (q->duplicate && q->duplicate >= get_crandom(&q->dup_cor)) {
  		struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
@@ -25,7 +27,7 @@ Index: 2.6.11.11-net/net/sched/sch_netem.c
 -			delay_skb(sch, skb2);
 +		if (skb2) {
 +			struct Qdisc *rootq = sch->dev->qdisc;
-+			u32 dupsave = q->duplicate; 
++			u32 dupsave = q->duplicate;
 +
 +			/* prevent duplicating a dup... */
 +			q->duplicate = 0;

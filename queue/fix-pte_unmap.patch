@@ -29,8 +29,12 @@ Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
---- gregkh-2.6.11.10.orig/mm/rmap.c	2005-05-16 10:51:55.000000000 -0700
-+++ gregkh-2.6.11.10/mm/rmap.c	2005-05-26 22:01:49.000000000 -0700
+---
+ mm/rmap.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+--- linux-2.6.11.10.orig/mm/rmap.c	2005-05-16 10:51:55.000000000 -0700
++++ linux-2.6.11.10/mm/rmap.c	2005-06-08 22:38:26.000000000 -0700
 @@ -641,7 +641,7 @@
  	pgd_t *pgd;
  	pud_t *pud;
@@ -58,9 +62,3 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
  
  out_unlock:
  	spin_unlock(&mm->page_table_lock);
-
-_______________________________________________
-stable mailing list
-stable@linux.kernel.org
-http://linux.kernel.org/mailman/listinfo/stable
-

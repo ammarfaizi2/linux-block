@@ -18,10 +18,13 @@ Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-diff -rupX /home/jack/.kerndiffexclude linux-2.6.12-rc5/fs/jbd/checkpoint.c linux-2.6.12-rc5-1-checkretry/fs/jbd/checkpoint.c
---- linux-2.6.12-rc5/fs/jbd/checkpoint.c	2005-03-03 18:58:29.000000000 +0100
-+++ linux-2.6.12-rc5-1-checkretry/fs/jbd/checkpoint.c	2005-05-27 11:15:31.000000000 +0200
-@@ -339,8 +339,10 @@ int log_do_checkpoint(journal_t *journal
+---
+ fs/jbd/checkpoint.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletion(-)
+
+--- linux-2.6.11.10.orig/fs/jbd/checkpoint.c	2005-05-16 10:50:47.000000000 -0700
++++ linux-2.6.11.10/fs/jbd/checkpoint.c	2005-06-08 22:40:33.000000000 -0700
+@@ -339,8 +339,10 @@
  			}
  		} while (jh != last_jh && !retry);
  

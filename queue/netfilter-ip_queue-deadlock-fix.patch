@@ -23,8 +23,12 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
---- 1/net/ipv4/netfilter/ip_queue.c	2005-05-27 09:44:32.000000000 +0200
-+++ 2/net/ipv4/netfilter/ip_queue.c	2005-05-27 09:47:13.000000000 +0200
+---
+ net/ipv4/netfilter/ip_queue.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+)
+
+--- linux-2.6.11.10.orig/net/ipv4/netfilter/ip_queue.c	2005-05-16 10:51:59.000000000 -0700
++++ linux-2.6.11.10/net/ipv4/netfilter/ip_queue.c	2005-06-08 22:40:10.000000000 -0700
 @@ -3,6 +3,7 @@
   * communicating with userspace via netlink.
   *
