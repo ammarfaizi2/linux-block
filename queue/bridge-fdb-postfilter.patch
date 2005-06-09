@@ -11,6 +11,7 @@ risk.
 
 Signed-off-by: Stephen Hemminger <shemminger@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 Index: 2.6.11.11-net/net/bridge/br_input.c
 ===================================================================

@@ -2,16 +2,8 @@ From stable-bounces@linux.kernel.org  Mon May 30 15:38:33 2005
 Date: Mon, 30 May 2005 15:38:14 -0700 (PDT)
 Message-Id: <20050530.153814.112623060.davem@davemloft.net>
 To: stable@kernel.org
-From: "David S. Miller" <davem@davemloft.net>
-Cc: 
-Subject: [PATCH] Netfilter deadlock bug fix
-
-Please add this netfilter deadlock fix from Harald
-Welte to the 2.6.x stable patch queue.
-
-Thanks a lot.
-
-[NETFILTER]: Fix deadlock with ip_queue and tcp local input path.
+From: Harald Welte <laforge@netfilter.org>
+Subject: [NETFILTER]: Fix deadlock with ip_queue and tcp local input path.
 
 When we have ip_queue being used from LOCAL_IN, then we end up with a
 situation where the verdicts coming back from userspace traverse the TCP
@@ -29,6 +21,7 @@ simply use local_bh_{en,dis}able().
 Signed-off-by: Harald Welte <laforge@netfilter.org>
 Signed-off-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 --- 1/net/ipv4/netfilter/ip_queue.c	2005-05-27 09:44:32.000000000 +0200
 +++ 2/net/ipv4/netfilter/ip_queue.c	2005-05-27 09:47:13.000000000 +0200

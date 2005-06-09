@@ -6,12 +6,13 @@ Subject: [PATCH] x86_64: Fix ptrace boundary check
 
 Don't allow accesses below register frame in ptrace
 
-There was a "off by one quad word" error in there. 
+There was a "off by one quad word" error in there.
 
 Found and fixed by John Blackwood
 
 Signed-off-by: Andi Kleen <ak@suse.de>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
  arch/x86_64/kernel/ptrace.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)

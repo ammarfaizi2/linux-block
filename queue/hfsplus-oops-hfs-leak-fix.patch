@@ -17,6 +17,7 @@ http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a
 Signed-off-by: Roman Zippel <zippel@linux-m68k.org>
 Signed-off-by: Colin Leroy <colin@colino.net>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
  fs/hfs/mdb.c       |    5 +++++
  fs/hfs/super.c     |    8 +++-----

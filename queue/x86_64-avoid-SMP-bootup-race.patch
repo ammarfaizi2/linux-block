@@ -2,7 +2,7 @@ From stable-bounces@linux.kernel.org  Tue May 31 07:08:57 2005
 Date: Tue, 31 May 2005 16:08:47 +0200
 From: Andi Kleen <ak@suse.de>
 To: stable@kernel.org
-ubject: [PATCH]  x86_64: avoid SMP boot up race 
+ubject: [PATCH] x86_64: avoid SMP boot up race
 
 Keep interrupts disabled during smp bootup
 
@@ -20,6 +20,7 @@ directly.
 
 Signed-off-by: ak@suse.de
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 diff -u linux/arch/x86_64/kernel/apic.c-o linux/arch/x86_64/kernel/apic.c
 --- linux/arch/x86_64/kernel/apic.c-o	2005-05-31 16:40:01.000000000 +0200

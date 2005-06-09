@@ -9,6 +9,7 @@ because the qlen of the parent qdisc is not affected by the duplication.
 
 Signed-off-by: Stephen Hemminger <shemminger@osdl.org>
 Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 Index: 2.6.11.11-net/net/sched/sch_netem.c
 ===================================================================
