@@ -28,6 +28,7 @@ simply use local_bh_{en,dis}able().
 
 Signed-off-by: Harald Welte <laforge@netfilter.org>
 Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 --- 1/net/ipv4/netfilter/ip_queue.c	2005-05-27 09:44:32.000000000 +0200
 +++ 2/net/ipv4/netfilter/ip_queue.c	2005-05-27 09:47:13.000000000 +0200
