@@ -28,6 +28,7 @@ Signed-off-by: William Irwin <wli@holomorphy.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
 
 ---
  mm/rmap.c |    6 +++---
