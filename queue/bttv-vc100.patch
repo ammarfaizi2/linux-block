@@ -1,11 +1,11 @@
 From stable-bounces@linux.kernel.org  Wed Jun  1 12:54:20 2005
 Date: Wed, 01 Jun 2005 21:16:04 +0200
-From: Pete Jewell <pete@phraxos.nildram.co.uk>
 From: Marin Glibic <zhilla@bigfoot.com>
 To: stable@kernel.org
 Cc: Greg KH <gregkh@suse.de>
 Subject: [PATCH] Fix for bttv driver (v0.9.15) for Leadtek WinFast VC100 XP capture cards
 
+From: Pete Jewell <pete@phraxos.nildram.co.uk>
 Cc: kraxel@bytesex.org
 
 This is a tiny patch that fixes bttv-cards.c so that Leadtek WinFast

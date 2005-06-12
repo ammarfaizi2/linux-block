@@ -2,9 +2,7 @@ From stable-bounces@linux.kernel.org Thu May 26 22:52:42 2005
 Date: Thu, 26 May 2005 22:43:11 -0700
 From: William Lee Irwin III <wli@holomorphy.com>
 To: stable@kernel.org
-Subject: try_to_unmap_cluster() passes out-of-bounds pte to pte_unmap()
-
-[PATCH] try_to_unmap_cluster() passes out-of-bounds pte to pte_unmap()
+Subject: [PATCH] try_to_unmap_cluster() passes out-of-bounds pte to pte_unmap()
 
 try_to_unmap_cluster() does:
         for (pte = pte_offset_map(pmd, address);
