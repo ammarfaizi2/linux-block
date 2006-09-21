@@ -2819,12 +2819,10 @@ static void init_request_from_bio(struct request *req, struct bio *bio)
 	 */
 	if (bio_rw_ahead(bio) || bio_failfast(bio))
 		req->flags |= REQ_FAILFAST;
-
-	/*
-	 * REQ_BARRIER implies no merging, but lets make it explicit
-	 */
 	if (unlikely(bio_barrier(bio)))
-		req->flags |= (REQ_HARDBARRIER | REQ_NOMERGE);
+		req->flags |= REQ_HARDBARRIER;
+	if (!bio_mergeable(bio))
+		req->flags |= REQ_NOMERGE;
 
 	if (bio_sync(bio))
 		req->flags |= REQ_RW_SYNC;
@@ -2875,7 +2873,7 @@ static int __make_request(request_queue_t *q, struct bio *bio)
 
 	spin_lock_irq(q->queue_lock);
 
-	if (unlikely(barrier) || elv_queue_empty(q))
+	if (!bio_mergeable(bio) || elv_queue_empty(q))
 		goto get_rq;
 
 	el_ret = elv_merge(q, &req, bio);
@@ -3114,6 +3112,7 @@ void submit_bio(int rw, struct bio *bio)
 
 	BIO_BUG_ON(!bio->bi_size);
 	BIO_BUG_ON(!bio->bi_io_vec);
+	BIO_BUG_ON(bio->bi_next);
 	bio->bi_rw |= rw;
 	if (rw & WRITE)
 		count_vm_events(PGPGOUT, count);

@@ -467,4 +467,19 @@ config ATA_OVER_ETH
 	This driver provides Support for ATA over Ethernet block
 	devices like the Coraid EtherDrive (R) Storage Blade.
 
+config BLK_FCACHE
+	bool "Frontend block device cache driver"
+	help
+	This driver monitors file system read activity on a partition
+	and logs that to a separate cache device. The intention is to
+	reduce a mostly repeatable seeky read workload to a much faster
+	sequential access pattern from the cache device. The primary
+	intended application for fcache is to reduce boot time by attaching
+	it to the root file system.
+
+	There is a simple userspace consistency checker available through
+	git at:
+
+	git://brick.kernel.dk/data/git/fcache.git
+
 endmenu

@@ -1940,5 +1940,21 @@ static inline void free_secdata(void *secdata)
 { }
 #endif	/* CONFIG_SECURITY */
 
+#ifdef CONFIG_BLK_FCACHE
+extern int fcache_dev_open(struct block_device *, unsigned long, int, int);
+extern void fcache_dev_close(struct block_device *, int);
+#else
+static inline int fcache_dev_open(struct block_device *bdev,
+				  unsigned long cache_dev,
+				  int priming, int serial)
+{
+	return 0;
+}
+
+static inline void fcache_dev_close(struct block_device *bdev, int serial)
+{
+}
+#endif /* FCACHE */
+
 #endif /* __KERNEL__ */
 #endif /* _LINUX_FS_H */

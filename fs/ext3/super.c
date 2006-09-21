@@ -383,11 +383,40 @@ static void dump_orphan_list(struct super_block *sb, struct ext3_sb_info *sbi)
 	}
 }
 
+static void ext3_close_fcache(struct super_block *sb)
+{
+	struct ext3_sb_info *sbi = EXT3_SB(sb);
+	struct ext3_super_block *es = sbi->s_es;
+	int serial = le16_to_cpu(es->s_mnt_count);
+
+	fcache_dev_close(sb->s_bdev, serial);
+}
+
+static int ext3_open_fcache(struct super_block *sb, unsigned long cachedev)
+{
+	struct ext3_sb_info *sbi = EXT3_SB(sb);
+	struct ext3_super_block *es = sbi->s_es;
+	int priming = test_opt(sb, FCACHEPRIME);
+	int serial = le16_to_cpu(es->s_mnt_count);
+	int ret;
+
+	ret = fcache_dev_open(sb->s_bdev, cachedev, priming, serial);
+	if (!ret) {
+		set_opt(sbi->s_mount_opt, FCACHE);
+		return 0;
+	}
+
+	printk(KERN_ERR "ext3: failed to open fcache (err=%d)\n", ret);
+	return ret;
+}
+
 static void ext3_put_super (struct super_block * sb)
 {
 	struct ext3_sb_info *sbi = EXT3_SB(sb);
 	struct ext3_super_block *es = sbi->s_es;
-	int i;
+	int i, has_fcache;
+
+	has_fcache = test_opt(sb, FCACHE);
 
 	ext3_xattr_put_super(sb);
 	journal_destroy(sbi->s_journal);
@@ -430,6 +459,8 @@ static void ext3_put_super (struct super_block * sb)
 		invalidate_bdev(sbi->journal_bdev, 0);
 		ext3_blkdev_remove(sbi);
 	}
+	if (has_fcache)
+		ext3_close_fcache(sb);
 	sb->s_fs_info = NULL;
 	kfree(sbi);
 	return;
@@ -677,7 +708,7 @@ enum {
 	Opt_usrjquota, Opt_grpjquota, Opt_offusrjquota, Opt_offgrpjquota,
 	Opt_jqfmt_vfsold, Opt_jqfmt_vfsv0, Opt_quota, Opt_noquota,
 	Opt_ignore, Opt_barrier, Opt_err, Opt_resize, Opt_usrquota,
-	Opt_grpquota
+	Opt_grpquota, Opt_fcache_dev, Opt_fcache_prime,
 };
 
 static match_table_t tokens = {
@@ -727,6 +758,8 @@ static match_table_t tokens = {
 	{Opt_quota, "quota"},
 	{Opt_usrquota, "usrquota"},
 	{Opt_barrier, "barrier=%u"},
+	{Opt_fcache_dev, "fdev=%s"},
+	{Opt_fcache_prime, "fprime"},
 	{Opt_err, NULL},
 	{Opt_resize, "resize"},
 };
@@ -754,6 +787,7 @@ static ext3_fsblk_t get_sb_block(void **data)
 
 static int parse_options (char *options, struct super_block *sb,
 			  unsigned long *inum, unsigned long *journal_devnum,
+			  unsigned long *fcache_devnum,
 			  ext3_fsblk_t *n_blocks_count, int is_remount)
 {
 	struct ext3_sb_info *sbi = EXT3_SB(sb);
@@ -765,6 +799,8 @@ static int parse_options (char *options, struct super_block *sb,
 	int qtype;
 	char *qname;
 #endif
+
+	clear_opt(sbi->s_mount_opt, FCACHEPRIME);
 
 	if (!options)
 		return 1;
@@ -1058,6 +1094,24 @@ clear_qf_name:
 			break;
 		case Opt_bh:
 			clear_opt(sbi->s_mount_opt, NOBH);
+			break;
+		case Opt_fcache_dev: {
+			int maj, min;
+			char *p, *pm;
+
+			if (!fcache_devnum)
+				break;
+			p = match_strdup(&args[0]);
+			if (!p)
+				return 0;
+			maj = simple_strtol(p, &pm, 10);
+			min = simple_strtol(pm + 1, NULL, 10);
+			*fcache_devnum = maj << MINORBITS | min;
+			kfree(p);
+			break;
+			}
+		case Opt_fcache_prime:
+			set_opt(sbi->s_mount_opt, FCACHEPRIME);
 			break;
 		default:
 			printk (KERN_ERR
@@ -1392,6 +1446,7 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	unsigned long offset = 0;
 	unsigned long journal_inum = 0;
 	unsigned long journal_devnum = 0;
+	unsigned long fcache_devnum = 0;
 	unsigned long def_mount_opts;
 	struct inode *root;
 	int blocksize;
@@ -1399,6 +1454,7 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	int db_count;
 	int i;
 	int needs_recovery;
+	int fcache = 0;
 	__le32 features;
 
 	sbi = kmalloc(sizeof(*sbi), GFP_KERNEL);
@@ -1473,7 +1529,7 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	set_opt(sbi->s_mount_opt, RESERVATION);
 
 	if (!parse_options ((char *) data, sb, &journal_inum, &journal_devnum,
-			    NULL, 0))
+			    &fcache_devnum, NULL, 0))
 		goto failed_mount;
 
 	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
@@ -1712,6 +1768,9 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 		goto failed_mount3;
 	}
 
+	if (fcache_devnum)
+		fcache = ext3_open_fcache(sb, fcache_devnum);
+
 	/* We have now updated the journal if required, so we can
 	 * validate the data journaling mode. */
 	switch (test_opt(sb, DATA_FLAGS)) {
@@ -1794,6 +1853,8 @@ cantfind_ext3:
 	goto failed_mount;
 
 failed_mount4:
+	if (!fcache)
+		ext3_close_fcache(sb);
 	journal_destroy(sbi->s_journal);
 failed_mount3:
 	percpu_counter_destroy(&sbi->s_freeblocks_counter);
@@ -2263,6 +2324,7 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 	struct ext3_sb_info *sbi = EXT3_SB(sb);
 	ext3_fsblk_t n_blocks_count = 0;
 	unsigned long old_sb_flags;
+	unsigned long fcache_devnum = 0;
 	struct ext3_mount_options old_opts;
 	int err;
 #ifdef CONFIG_QUOTA
@@ -2284,7 +2346,7 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 	/*
 	 * Allow the "check" option to be passed as a remount option.
 	 */
-	if (!parse_options(data, sb, NULL, NULL, &n_blocks_count, 1)) {
+	if (!parse_options(data, sb, NULL, NULL, &fcache_devnum, &n_blocks_count, 1)) {
 		err = -EINVAL;
 		goto restore_opts;
 	}
@@ -2298,6 +2360,11 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 	es = sbi->s_es;
 
 	ext3_init_journal_params(sb, sbi->s_journal);
+
+	if (fcache_devnum) {
+		ext3_close_fcache(sb);
+		ext3_open_fcache(sb, fcache_devnum);
+	}
 
 	if ((*flags & MS_RDONLY) != (sb->s_flags & MS_RDONLY) ||
 		n_blocks_count > le32_to_cpu(es->s_blocks_count)) {

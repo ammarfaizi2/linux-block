@@ -5,6 +5,7 @@
 # Rewritten to use lists instead of if-statements.
 # 
 
+obj-$(CONFIG_BLK_FCACHE)	+= fcache.o
 obj-$(CONFIG_MAC_FLOPPY)	+= swim3.o
 obj-$(CONFIG_BLK_DEV_FD)	+= floppy.o
 obj-$(CONFIG_AMIGA_FLOPPY)	+= amiflop.o
