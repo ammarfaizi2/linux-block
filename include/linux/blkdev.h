@@ -793,6 +793,13 @@ static inline struct request *blk_map_queue_find_tag(struct blk_queue_tag *bqt,
 extern void blk_rq_bio_prep(request_queue_t *, struct request *, struct bio *);
 extern int blkdev_issue_flush(struct block_device *, sector_t *);
 
+/*
+ * command filter functions
+ */
+extern int blk_cmd_verify(struct file *file, unsigned char *cmd);
+extern int blk_register_filter(struct gendisk *disk);
+extern void blk_unregister_filter(struct gendisk *disk);
+
 #define MAX_PHYS_SEGMENTS 128
 #define MAX_HW_SEGMENTS 128
 #define SAFE_MAX_SECTORS 255

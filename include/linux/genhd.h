@@ -103,7 +103,16 @@ struct disk_stats {
 	unsigned long io_ticks;
 	unsigned long time_in_queue;
 };
-	
+
+#define BLK_SCSI_MAX_CMDS	(256)
+#define BLK_SCSI_CMD_PER_LONG	(BLK_SCSI_MAX_CMDS / (sizeof(long) * 8))
+
+struct blk_scsi_cmd_filter {
+	unsigned long read_ok[BLK_SCSI_CMD_PER_LONG];
+	unsigned long write_ok[BLK_SCSI_CMD_PER_LONG];
+	struct kobject kobj;
+};
+
 struct gendisk {
 	int major;			/* major number of driver */
 	int first_minor;
@@ -114,6 +123,7 @@ struct gendisk {
 	int part_uevent_suppress;
 	struct block_device_operations *fops;
 	struct request_queue *queue;
+	struct blk_scsi_cmd_filter cmd_filter;
 	void *private_data;
 	sector_t capacity;
 
