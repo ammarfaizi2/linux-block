@@ -21,6 +21,7 @@
 #include <linux/genhd.h>
 #include <linux/spinlock.h>
 #include <linux/parser.h>
+#include <linux/capability.h>
 #include <asm/bitops.h>
 
 #include <scsi/scsi.h>
