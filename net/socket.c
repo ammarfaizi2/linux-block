@@ -344,11 +344,11 @@ static struct dentry_operations sockfs_dentry_operations = {
  *	but we take care of internal coherence yet.
  */
 
-static int sock_alloc_fd(struct file **filep)
+static int sock_alloc_fd(struct file **filep, int flags)
 {
 	int fd;
 
-	fd = get_unused_fd();
+	fd = get_unused_fd_flags(flags);
 	if (likely(fd >= 0)) {
 		struct file *file = get_empty_filp();
 
@@ -391,10 +391,10 @@ static int sock_attach_fd(struct socket *sock, struct file *file)
 	return 0;
 }
 
-int sock_map_fd(struct socket *sock)
+static int sock_map_fd_flags(struct socket *sock, int flags)
 {
 	struct file *newfile;
-	int fd = sock_alloc_fd(&newfile);
+	int fd = sock_alloc_fd(&newfile, flags);
 
 	if (likely(fd >= 0)) {
 		int err = sock_attach_fd(sock, newfile);
@@ -407,6 +407,11 @@ int sock_map_fd(struct socket *sock)
 		fd_install(fd, newfile);
 	}
 	return fd;
+}
+
+int sock_map_fd(struct socket *sock)
+{
+	return sock_map_fd_flags(sock, 0);
 }
 
 static struct socket *sock_from_file(struct file *file, int *err)
@@ -1208,7 +1213,7 @@ asmlinkage long sys_socket(int family, int type, int protocol)
 	if (retval < 0)
 		goto out;
 
-	retval = sock_map_fd(sock);
+	retval = sock_map_fd_flags(sock, INDIRECT_PARAM(file_flags, flags));
 	if (retval < 0)
 		goto out_release;
 
@@ -1249,13 +1254,13 @@ asmlinkage long sys_socketpair(int family, int type, int protocol,
 	if (err < 0)
 		goto out_release_both;
 
-	fd1 = sock_alloc_fd(&newfile1);
+	fd1 = sock_alloc_fd(&newfile1, INDIRECT_PARAM(file_flags, flags));
 	if (unlikely(fd1 < 0)) {
 		err = fd1;
 		goto out_release_both;
 	}
 
-	fd2 = sock_alloc_fd(&newfile2);
+	fd2 = sock_alloc_fd(&newfile2, INDIRECT_PARAM(file_flags, flags));
 	if (unlikely(fd2 < 0)) {
 		err = fd2;
 		put_filp(newfile1);
@@ -1411,7 +1416,7 @@ asmlinkage long sys_accept(int fd, struct sockaddr __user *upeer_sockaddr,
 	 */
 	__module_get(newsock->ops->owner);
 
-	newfd = sock_alloc_fd(&newfile);
+	newfd = sock_alloc_fd(&newfile, INDIRECT_PARAM(file_flags, flags));
 	if (unlikely(newfd < 0)) {
 		err = newfd;
 		sock_release(newsock);

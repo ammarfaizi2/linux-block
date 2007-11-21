@@ -12,6 +12,7 @@
 #define __NR_ia32_exit		  1
 #define __NR_ia32_read		  3
 #define __NR_ia32_write		  4
+#define __NR_ia32_socketcall	102
 #define __NR_ia32_sigreturn	119
 #define __NR_ia32_rt_sigreturn	173
 

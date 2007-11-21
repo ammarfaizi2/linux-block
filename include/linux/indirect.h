@@ -1,3 +1,4 @@
+#ifndef INDSYSCALL
 #ifndef _LINUX_INDIRECT_H
 #define _LINUX_INDIRECT_H
 
@@ -10,8 +11,34 @@
    fixed-size types or types which are known to not vary in size across
    architectures.  */
 union indirect_params {
+  struct {
+    int flags;
+  } file_flags;
 };
 
 #define INDIRECT_PARAM(set, name) current->indirect_params.set.name
+
+#endif
+#else
+
+/* Here comes the list of system calls which can be called through
+   sys_indirect.  When the list if support system calls is needed the
+   file including this header is supposed to define a macro "INDSYSCALL"
+   which adds a prefix fitting to the use.  If the resulting macro is
+   defined we generate a line
+	case MACRO:
+   */
+#if INDSYSCALL(accept)
+  case INDSYSCALL(accept):
+#endif
+#if INDSYSCALL(socket)
+  case INDSYSCALL(socket):
+#endif
+#if INDSYSCALL(socketcall)
+  case INDSYSCALL(socketcall):
+#endif
+#if INDSYSCALL(socketpair)
+  case INDSYSCALL(socketpair):
+#endif
 
 #endif
