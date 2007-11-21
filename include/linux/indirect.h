@@ -40,5 +40,8 @@ union indirect_params {
 #if INDSYSCALL(socketpair)
   case INDSYSCALL(socketpair):
 #endif
+  case INDSYSCALL(eventfd):
+  case INDSYSCALL(signalfd):
+  case INDSYSCALL(timerfd):
 
 #endif

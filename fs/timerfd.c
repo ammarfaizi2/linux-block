@@ -182,8 +182,10 @@ asmlinkage long sys_timerfd(int ufd, int clockid, int flags,
 		 * When we call this, the initialization must be complete, since
 		 * anon_inode_getfd() will install the fd.
 		 */
-		error = anon_inode_getfd(&ufd, &inode, &file, "[timerfd]",
-					 &timerfd_fops, ctx);
+		error = anon_inode_getfd_flags(&ufd, &inode, &file, "[timerfd]",
+					       &timerfd_fops, ctx,
+					       INDIRECT_PARAM(file_flags,
+							      flags));
 		if (error)
 			goto err_tmrcancel;
 	} else {

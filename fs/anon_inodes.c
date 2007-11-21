@@ -70,9 +70,9 @@ static struct dentry_operations anon_inodefs_dentry_operations = {
  * hence saving memory and avoiding code duplication for the file/inode/dentry
  * setup.
  */
-int anon_inode_getfd(int *pfd, struct inode **pinode, struct file **pfile,
-		     const char *name, const struct file_operations *fops,
-		     void *priv)
+int anon_inode_getfd_flags(int *pfd, struct inode **pinode, struct file **pfile,
+			   const char *name, const struct file_operations *fops,
+			   void *priv, int flags)
 {
 	struct qstr this;
 	struct dentry *dentry;
@@ -85,7 +85,7 @@ int anon_inode_getfd(int *pfd, struct inode **pinode, struct file **pfile,
 	if (!file)
 		return -ENFILE;
 
-	error = get_unused_fd();
+	error = get_unused_fd_flags(flags);
 	if (error < 0)
 		goto err_put_filp;
 	fd = error;
@@ -137,6 +137,13 @@ err_put_unused_fd:
 err_put_filp:
 	put_filp(file);
 	return error;
+}
+
+int anon_inode_getfd(int *pfd, struct inode **pinode, struct file **pfile,
+		     const char *name, const struct file_operations *fops,
+		     void *priv)
+{
+	return anon_inode_getfd_flags(pfd, pinode, pfile, name, fops, priv, 0);
 }
 EXPORT_SYMBOL_GPL(anon_inode_getfd);
 

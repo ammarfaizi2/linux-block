@@ -15,5 +15,8 @@
 #define __NR_ia32_socketcall	102
 #define __NR_ia32_sigreturn	119
 #define __NR_ia32_rt_sigreturn	173
+#define __NR_ia32_signalfd	321
+#define __NR_ia32_timerfd	322
+#define __NR_ia32_eventfd	323
 
 #endif /* _ASM_X86_64_IA32_UNISTD_H_ */

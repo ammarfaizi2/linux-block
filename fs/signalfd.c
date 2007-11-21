@@ -224,8 +224,10 @@ asmlinkage long sys_signalfd(int ufd, sigset_t __user *user_mask, size_t sizemas
 		 * When we call this, the initialization must be complete, since
 		 * anon_inode_getfd() will install the fd.
 		 */
-		error = anon_inode_getfd(&ufd, &inode, &file, "[signalfd]",
-					 &signalfd_fops, ctx);
+		error = anon_inode_getfd_flags(&ufd, &inode, &file,
+					       "[signalfd]", &signalfd_fops,
+					       ctx, INDIRECT_PARAM(file_flags,
+								   flags));
 		if (error)
 			goto err_fdalloc;
 	} else {
