@@ -400,6 +400,7 @@ END(ia32_ptregs_common)
 
 	.section .rodata,"a"
 	.align 8
+	.globl ia32_sys_call_table
 ia32_sys_call_table:
 	.quad sys_restart_syscall
 	.quad sys_exit
@@ -726,4 +727,5 @@ ia32_sys_call_table:
 	.quad compat_sys_timerfd
 	.quad sys_eventfd
 	.quad sys32_fallocate
+	.quad sys32_indirect		/* 325  */
 ia32_syscall_end:

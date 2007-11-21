@@ -116,6 +116,8 @@ config ARCH_SUPPORTS_OPROFILE
 	bool
 	default y
 
+config ARCH_HAS_INDIRECT_SYSCALLS
+	def_bool y
 
 config ZONE_DMA32
 	bool

@@ -887,3 +887,42 @@ asmlinkage long sys32_fallocate(int fd, int mode, unsigned offset_lo,
 	return sys_fallocate(fd, mode, ((u64)offset_hi << 32) | offset_lo,
 			     ((u64)len_hi << 32) | len_lo);
 }
+
+
+asmlinkage long sys32_indirect(struct indirect_registers32 __user *userregs,
+			       void __user *userparams, size_t paramslen,
+			       int flags)
+{
+	extern long (*ia32_sys_call_table[])(u32, u32, u32, u32, u32, u32);
+
+	struct indirect_registers32 regs;
+	long result;
+
+	if (flags != 0)
+		return -EINVAL;
+
+	if (copy_from_user(&regs, userregs, sizeof(regs)))
+		return -EFAULT;
+
+	switch (INDIRECT_SYSCALL32(&regs))
+	{
+#define INDSYSCALL(name) __NR_ia32_##name
+#include <linux/indirect.h>
+		break;
+
+	default:
+		return -EINVAL;
+	}
+
+	if (paramslen > sizeof(union indirect_params))
+		return -EINVAL;
+	result = -EFAULT;
+	if (!copy_from_user(&current->indirect_params, userparams, paramslen))
+		result = ia32_sys_call_table[regs.eax](regs.ebx, regs.ecx,
+						       regs.edx, regs.esi,
+						       regs.edi, regs.ebp);
+
+	memset(&current->indirect_params, '\0', paramslen);
+
+	return result;
+}
