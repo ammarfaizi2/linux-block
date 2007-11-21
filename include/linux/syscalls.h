@@ -54,6 +54,7 @@ struct compat_stat;
 struct compat_timeval;
 struct robust_list_head;
 struct getcpu_cache;
+struct indirect_registers;
 
 #include <linux/types.h>
 #include <linux/aio_abi.h>
@@ -611,6 +612,9 @@ asmlinkage long sys_timerfd(int ufd, int clockid, int flags,
 			    const struct itimerspec __user *utmr);
 asmlinkage long sys_eventfd(unsigned int count);
 asmlinkage long sys_fallocate(int fd, int mode, loff_t offset, loff_t len);
+asmlinkage long sys_indirect(struct indirect_registers __user *userregs,
+			     void __user *userparams, size_t paramslen,
+			     int flags);
 
 int kernel_execve(const char *filename, char *const argv[], char *const envp[]);
 

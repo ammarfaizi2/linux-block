@@ -80,6 +80,7 @@ struct sched_param {
 #include <linux/rcupdate.h>
 #include <linux/futex.h>
 #include <linux/rtmutex.h>
+#include <linux/indirect.h>
 
 #include <linux/time.h>
 #include <linux/param.h>
@@ -1178,6 +1179,9 @@ struct task_struct {
 	int make_it_fail;
 #endif
 	struct prop_local_single dirties;
+
+	/* Additional system call parameters.  */
+	union indirect_params indirect_params;
 };
 
 /*
