@@ -636,7 +636,9 @@ __SYSCALL(__NR_eventfd, sys_eventfd)
 #define __NR_fallocate				285
 __SYSCALL(__NR_fallocate, sys_fallocate)
 #define __NR_indirect				286
-__SYSCALL(__NR_indirect, sys_indirect)
+__SYSCALL(__NR_indirect, stub_indirect)
+#define __NR_syslet_ring_wait			287
+__SYSCALL(__NR_syslet_ring_wait, sys_syslet_ring_wait)
 
 #ifndef __NO_STUBS
 #define __ARCH_WANT_OLD_READDIR

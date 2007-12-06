@@ -412,6 +412,7 @@ END(\label)
 	PTREGSCALL stub_rt_sigsuspend, sys_rt_sigsuspend, %rdx
 	PTREGSCALL stub_sigaltstack, sys_sigaltstack, %rdx
 	PTREGSCALL stub_iopl, sys_iopl, %rsi
+	PTREGSCALL stub_indirect, sys_indirect, %r8
 
 ENTRY(ptregscall_common)
 	popq %r11
@@ -992,6 +993,71 @@ child_rip:
 	call do_exit
 	CFI_ENDPROC
 ENDPROC(child_rip)
+
+/*
+ * Create a syslet kernel thread.  This differs from a thread created with
+ * kernel_thread() in that it returns to userspace after it finishes executing
+ * its given kernel function.
+ *
+ * C extern interface:
+ *	extern long create_syslet_thread(int (*fn)(void *),
+ *					 void * arg, unsigned long flags)
+ *
+ * asm input arguments:
+ *	rdi: fn, rsi: arg, rdx: flags
+ */
+ENTRY(create_syslet_thread)
+	CFI_STARTPROC
+	FAKE_STACK_FRAME $syslet_child_rip
+	SAVE_ALL
+
+	# rdi: flags, rsi: usp, rdx: will be &pt_regs
+	movq %rdx,%rdi
+	movq $-1, %rsi
+	movq %rsp, %rdx
+
+	xorl %r8d,%r8d
+	xorl %r9d,%r9d
+
+	# clone now
+	call do_fork
+	movq %rax,RAX(%rsp)
+	xorl %edi,%edi
+
+	/*
+	 * It isn't worth to check for reschedule here,
+	 * so internally to the x86_64 port you can rely on kernel_thread()
+	 * not to reschedule the child before returning, this avoids the need
+	 * of hacks for example to fork off the per-CPU idle tasks.
+         * [Hopefully no generic code relies on the reschedule -AK]
+	 */
+	RESTORE_ALL
+	UNFAKE_STACK_FRAME
+	ret
+	CFI_ENDPROC
+ENDPROC(syslet_kernel_thread)
+
+syslet_child_rip:
+	CFI_STARTPROC
+
+	movq %rdi, %rax
+	movq %rsi, %rdi
+	call *%rax
+
+	/*
+	 * Fix up the PDA - we might return with sysexit:
+	 */
+	RESTORE_TOP_OF_STACK %r11
+
+	/*
+	 * return to user-space:
+	 */
+	movq %rax, RAX(%rsp)
+	RESTORE_REST
+	jmp int_ret_from_sys_call
+
+	CFI_ENDPROC
+ENDPROC(syslet_child_rip)
 
 /*
  * execve(). This function needs to use IRET, not SYSRET, to set up all state properly.

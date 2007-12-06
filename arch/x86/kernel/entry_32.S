@@ -1025,6 +1025,30 @@ ENTRY(kernel_thread_helper)
 	CFI_ENDPROC
 ENDPROC(kernel_thread_helper)
 
+ENTRY(syslet_thread_helper)
+	CFI_STARTPROC
+	/*
+	 * Allocate space on the stack for pt-regs.
+	 * sizeof(struct pt_regs) == 64, and we've got 8 bytes on the
+	 * kernel stack already:
+	 */
+	subl $64-8, %esp
+	CFI_ADJUST_CFA_OFFSET 64-8
+	movl %edx,%eax
+	push %edx
+	CFI_ADJUST_CFA_OFFSET 4
+	call *%ebx
+	addl $4, %esp
+	CFI_ADJUST_CFA_OFFSET -4
+
+	movl %eax, PT_EAX(%esp)
+
+	GET_THREAD_INFO(%ebp)
+
+	jmp syscall_exit
+	CFI_ENDPROC
+ENDPROC(syslet_thread_helper)
+
 #ifdef CONFIG_XEN
 ENTRY(xen_hypervisor_callback)
 	CFI_STARTPROC

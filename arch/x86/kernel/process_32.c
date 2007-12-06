@@ -405,6 +405,39 @@ int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
 EXPORT_SYMBOL(kernel_thread);
 
 /*
+ * This gets run with %ebx containing the
+ * function to call, and %edx containing
+ * the "args".
+ */
+void syslet_thread_helper(void);
+
+/*
+ * Create a syslet kernel thread.  This differs from a thread created with
+ * kernel_thread() in that it returns to userspace after it finishes executing
+ * its given kernel function.
+ */
+int create_syslet_thread(long (*fn)(void *), void *arg, unsigned long flags)
+{
+	struct pt_regs regs;
+
+	memset(&regs, 0, sizeof(regs));
+
+	regs.ebx = (unsigned long)fn;
+	regs.edx = (unsigned long)arg;
+
+	regs.xds = __USER_DS;
+	regs.xes = __USER_DS;
+	regs.xfs = __KERNEL_PERCPU;
+	regs.orig_eax = -1;
+	regs.eip = (unsigned long)syslet_thread_helper;
+	regs.xcs = __KERNEL_CS | get_kernel_rpl();
+	regs.eflags = X86_EFLAGS_IF | X86_EFLAGS_SF | X86_EFLAGS_PF | 0x2;
+
+	/* Ok, create the new task.. */
+	return do_fork(flags, 0, &regs, 0, NULL, NULL);
+}
+
+/*
  * Free current thread data structures etc..
  */
 void exit_thread(void)
@@ -860,6 +893,32 @@ unsigned long get_wchan(struct task_struct *p)
 		ebp = *(unsigned long *) ebp;
 	} while (count++ < 16);
 	return 0;
+}
+
+/*
+ * This expensive hack will go away once thread->i387 is allocated instead of
+ * embedded in task_struct.  Intel is working on it.
+ */
+static union i387_union i387_tmp[NR_CPUS] __cacheline_aligned_in_smp;
+
+/*
+ * Move user-space context from one kernel thread to another.
+ * This includes registers and FPU state. Callers must make
+ * sure that neither task is running user context at the moment:
+ */
+void move_user_context(struct task_struct *dest, struct task_struct *src)
+{
+	struct pt_regs *old_regs = task_pt_regs(src);
+	struct pt_regs *new_regs = task_pt_regs(dest);
+	union i387_union *tmp;
+
+	*new_regs = *old_regs;
+
+	tmp = &i387_tmp[get_cpu()];
+	*tmp = dest->thread.i387;
+	dest->thread.i387 = src->thread.i387;
+	src->thread.i387 = *tmp;
+	put_cpu();
 }
 
 /*

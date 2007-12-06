@@ -447,6 +447,16 @@ void release_thread(struct task_struct *dead_task)
 	}
 }
 
+/*
+ * Move user-space context from one kernel thread to another.
+ * Callers must make sure that neither task is running user context
+ * at the moment:
+ */
+void move_user_context(struct task_struct *dest, struct task_struct *src)
+{
+	*task_pt_regs(dest) = *task_pt_regs(src);
+}
+
 static inline void set_32bit_tls(struct task_struct *t, int tls, u32 addr)
 {
 	struct user_desc ud = { 
