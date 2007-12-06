@@ -51,6 +51,7 @@
 #include <linux/tsacct_kern.h>
 #include <linux/cn_proc.h>
 #include <linux/audit.h>
+#include <linux/syslet.h>
 
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
@@ -1613,6 +1614,8 @@ static int coredump_wait(int exit_code)
 		tsk->vfork_done = NULL;
 		complete(vfork_done);
 	}
+
+	kill_syslet_tasks(tsk);
 
 	if (core_waiters)
 		wait_for_completion(&startup_done);

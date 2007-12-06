@@ -1182,6 +1182,13 @@ struct task_struct {
 
 	/* Additional system call parameters.  */
 	union indirect_params indirect_params;
+
+	/* task waiting to return to userspace if we block as a syslet */
+	spinlock_t		syslet_lock;
+	struct list_head	syslet_tasks;
+	unsigned		syslet_ready:1,
+				syslet_return:1,
+				syslet_exit:1;
 };
 
 /*

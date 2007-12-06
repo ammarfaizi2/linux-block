@@ -106,4 +106,7 @@
 #define	EOWNERDEAD	130	/* Owner died */
 #define	ENOTRECOVERABLE	131	/* State not recoverable */
 
+/* for syslets */
+#define	ESYSLETPENDING	132	/* syslet syscall now pending */
+
 #endif

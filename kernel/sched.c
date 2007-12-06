@@ -63,6 +63,7 @@
 #include <linux/reciprocal_div.h>
 #include <linux/unistd.h>
 #include <linux/pagemap.h>
+#include <linux/syslet.h>
 
 #include <asm/tlb.h>
 #include <asm/irq_regs.h>
@@ -3622,6 +3623,14 @@ asmlinkage void __sched schedule(void)
 	long *switch_count;
 	struct rq *rq;
 	int cpu;
+
+	prev = current;
+	if (unlikely(prev->syslet_ready)) {
+		if (prev->state && !(preempt_count() & PREEMPT_ACTIVE) &&
+			(!(prev->state & TASK_INTERRUPTIBLE) ||
+				!signal_pending(prev)))
+			syslet_schedule(prev);
+	}
 
 need_resched:
 	preempt_disable();

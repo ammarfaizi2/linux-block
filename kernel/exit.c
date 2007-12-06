@@ -44,6 +44,7 @@
 #include <linux/resource.h>
 #include <linux/blkdev.h>
 #include <linux/task_io_accounting_ops.h>
+#include <linux/syslet.h>
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
@@ -948,6 +949,12 @@ fastcall NORET_TYPE void do_exit(long code)
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
 	}
+
+	/*
+	 * syslet threads have to exit their context before the MM exit (due to
+	 * the coredumping wait).
+	 */
+	kill_syslet_tasks(tsk);
 
 	tsk->flags |= PF_EXITING;
 	/*
