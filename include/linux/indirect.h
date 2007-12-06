@@ -3,6 +3,7 @@
 #define _LINUX_INDIRECT_H
 
 #include <asm/indirect.h>
+#include <linux/syslet-abi.h>
 
 
 /* IMPORTANT:
@@ -14,6 +15,7 @@ union indirect_params {
   struct {
     int flags;
   } file_flags;
+  struct syslet_args syslet;
 };
 
 #define INDIRECT_PARAM(set, name) current->indirect_params.set.name
