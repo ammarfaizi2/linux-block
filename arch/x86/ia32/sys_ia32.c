@@ -67,6 +67,7 @@
 #include <asm/semaphore.h>
 #include <asm/atomic.h>
 #include <asm/ldt.h>
+#include <asm/ia32_unistd.h>
 
 #include <net/scm.h>
 #include <net/sock.h>
