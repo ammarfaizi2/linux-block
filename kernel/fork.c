@@ -804,7 +804,6 @@ static int copy_io(struct task_struct *tsk)
 		if (unlikely(!tsk->io_context))
 			return -ENOMEM;
 
-		tsk->io_context->task = tsk;
 		tsk->io_context->ioprio = ioc->ioprio;
 	}
 

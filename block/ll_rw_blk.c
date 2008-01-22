@@ -3834,10 +3834,10 @@ int __init blk_dev_init(void)
 /*
  * IO Context helper functions
  */
-void put_io_context(struct io_context *ioc)
+int put_io_context(struct io_context *ioc)
 {
 	if (ioc == NULL)
-		return;
+		return 1;
 
 	BUG_ON(atomic_read(&ioc->refcount) == 0);
 
@@ -3856,7 +3856,9 @@ void put_io_context(struct io_context *ioc)
 		rcu_read_unlock();
 
 		kmem_cache_free(iocontext_cachep, ioc);
+		return 1;
 	}
+	return 0;
 }
 EXPORT_SYMBOL(put_io_context);
 
@@ -3871,15 +3873,17 @@ void exit_io_context(void)
 	current->io_context = NULL;
 	task_unlock(current);
 
-	ioc->task = NULL;
-	if (ioc->aic && ioc->aic->exit)
-		ioc->aic->exit(ioc->aic);
-	if (ioc->cic_root.rb_node != NULL) {
-		cic = rb_entry(rb_first(&ioc->cic_root), struct cfq_io_context, rb_node);
-		cic->exit(ioc);
-	}
+	if (atomic_dec_and_test(&ioc->nr_tasks)) {
+		if (ioc->aic && ioc->aic->exit)
+			ioc->aic->exit(ioc->aic);
+		if (ioc->cic_root.rb_node != NULL) {
+			cic = rb_entry(rb_first(&ioc->cic_root),
+				struct cfq_io_context, rb_node);
+			cic->exit(ioc);
+		}
 
-	put_io_context(ioc);
+		put_io_context(ioc);
+	}
 }
 
 struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
@@ -3889,7 +3893,8 @@ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
 	ret = kmem_cache_alloc_node(iocontext_cachep, gfp_flags, node);
 	if (ret) {
 		atomic_set(&ret->refcount, 1);
-		ret->task = current;
+		atomic_set(&ret->nr_tasks, 1);
+		spin_lock_init(&ret->lock);
 		ret->ioprio_changed = 0;
 		ret->ioprio = 0;
 		ret->last_waited = jiffies; /* doesn't matter... */
