@@ -15,7 +15,7 @@ struct indirect_registers {
 
 static inline long call_indirect(struct indirect_registers *regs)
 {
-	extern asmlinkage long (*sys_call_table[])(long, long, long,
+	extern long (asmlinkage *sys_call_table[])(long, long, long,
 						   long, long, long);
   return sys_call_table[INDIRECT_SYSCALL(regs)](regs->ebx, regs->ecx,
 						regs->edx, regs->esi,
