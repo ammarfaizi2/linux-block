@@ -112,6 +112,8 @@ static int read_pages(struct address_space *mapping, struct file *filp,
 	unsigned page_idx;
 	int ret;
 
+	blk_plug_current();
+
 	if (mapping->a_ops->readpages) {
 		ret = mapping->a_ops->readpages(filp, mapping, pages, nr_pages);
 		/* Clean up the remaining pages */
@@ -129,7 +131,10 @@ static int read_pages(struct address_space *mapping, struct file *filp,
 		page_cache_release(page);
 	}
 	ret = 0;
+
 out:
+	blk_unplug_current();
+
 	return ret;
 }
 
