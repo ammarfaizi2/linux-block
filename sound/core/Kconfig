@@ -205,3 +205,7 @@ config SND_PCM_XRUN_DEBUG
 
 config SND_VMASTER
 	bool
+
+config SND_NONCOHERENT_DMA
+	def_bool n
+	depends on (PPC32 && NOT_COHERENT_CACHE) || ARM || MIPS || PARISC || SPARC32
