@@ -367,3 +367,16 @@ void dma_cache_sync(struct device *dev, void *vaddr, size_t size,
 }
 
 EXPORT_SYMBOL(dma_cache_sync);
+
+int dma_mmap_coherent(struct device *dev, struct vm_area_struct *vma,
+		      void *cpu_addr, dma_addr_t handle, size_t size)
+{
+	struct page *pg;
+	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+	cpu_addr = (void *)dma_addr_to_virt(handle);
+	pg = virt_to_page(cpu_addr);
+	return remap_pfn_range(vma, vma->vm_start,
+			       page_to_pfn(pg) + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
+}
+EXPORT_SYMBOL(dma_mmap_coherent);
