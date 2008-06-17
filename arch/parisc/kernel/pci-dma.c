@@ -539,6 +539,20 @@ static void pa11_dma_sync_sg_for_device(struct device *dev, struct scatterlist *
 		flush_kernel_dcache_range(sg_virt_addr(sglist), sglist->length);
 }
 
+static int pa11_dma_mmap_coherent(struct device *dev,
+				  struct vm_area_struct *vma,
+				  void *cpu_addr, dma_addr_t handle,
+				  size_t size)
+{
+	struct page *pg;
+	pgprot_val(vma->vm_page_prot) |= _PAGE_NO_CACHE;
+	cpu_addr = __va(handle);
+	pg = virt_to_page(cpu_addr);
+	return remap_pfn_range(vma, vma->vm_start,
+			       page_to_pfn(pg) + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
+}
+
 struct hppa_dma_ops pcxl_dma_ops = {
 	.dma_supported =	pa11_dma_supported,
 	.alloc_consistent =	pa11_dma_alloc_consistent,
@@ -552,6 +566,7 @@ struct hppa_dma_ops pcxl_dma_ops = {
 	.dma_sync_single_for_device = pa11_dma_sync_single_for_device,
 	.dma_sync_sg_for_cpu = pa11_dma_sync_sg_for_cpu,
 	.dma_sync_sg_for_device = pa11_dma_sync_sg_for_device,
+	.mmap_coherent =	pa11_dma_mmap_coherent,
 };
 
 static void *fail_alloc_consistent(struct device *dev, size_t size,
@@ -592,4 +607,5 @@ struct hppa_dma_ops pcx_dma_ops = {
 	.dma_sync_single_for_device =	pa11_dma_sync_single_for_device,
 	.dma_sync_sg_for_cpu =		pa11_dma_sync_sg_for_cpu,
 	.dma_sync_sg_for_device =	pa11_dma_sync_sg_for_device,
+	.mmap_coherent =	pa11_dma_mmap_coherent,
 };

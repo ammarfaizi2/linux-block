@@ -19,6 +19,9 @@ struct hppa_dma_ops {
 	void (*dma_sync_single_for_device)(struct device *dev, dma_addr_t iova, unsigned long offset, size_t size, enum dma_data_direction direction);
 	void (*dma_sync_sg_for_cpu)(struct device *dev, struct scatterlist *sg, int nelems, enum dma_data_direction direction);
 	void (*dma_sync_sg_for_device)(struct device *dev, struct scatterlist *sg, int nelems, enum dma_data_direction direction);
+	int (*mmap_coherent)(struct device *dev, struct vm_area_struct *vma,
+			     void *cpu_addr, dma_addr_t handle, size_t size);
+
 };
 
 /*
@@ -202,6 +205,16 @@ dma_cache_sync(struct device *dev, void *vaddr, size_t size,
 {
 	if(hppa_dma_ops->dma_sync_single_for_cpu)
 		flush_kernel_dcache_range((unsigned long)vaddr, size);
+}
+
+#define ARCH_HAS_DMA_MMAP_COHERENT
+static inline int
+dma_mmap_coherent(struct device *dev, struct vm_area_struct *vma,
+		  void *cpu_addr, dma_addr_t handle, size_t size)
+{
+	if (!hppa_dma_ops->mmap_coherent)
+		return -ENXIO;
+	return hppa_dma_ops->mmap_coherent(dev, vma, cpu_addr, handle, size);
 }
 
 static inline void *
