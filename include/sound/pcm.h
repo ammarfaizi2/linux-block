@@ -974,6 +974,7 @@ int snd_pcm_lib_preallocate_pages_for_all(struct snd_pcm *pcm,
 int snd_pcm_lib_malloc_pages(struct snd_pcm_substream *substream, size_t size);
 int snd_pcm_lib_free_pages(struct snd_pcm_substream *substream);
 
+#ifndef CONFIG_SND_NONCOHERENT_DMA
 /*
  * SG-buffer handling
  */
@@ -998,6 +999,28 @@ struct page *snd_pcm_sgbuf_ops_page(struct snd_pcm_substream *substream,
 				    unsigned long offset);
 unsigned int snd_pcm_sgbuf_get_chunk_size(struct snd_pcm_substream *substream,
 					  unsigned int ofs, unsigned int size);
+
+#else /* SND_NONCOHERENT_DMA */
+/*
+ * fake using a continuous buffer
+ */
+static inline dma_addr_t
+snd_pcm_sgbuf_get_addr(struct snd_pcm_substream *substream, unsigned int ofs)
+{
+	return substream->runtime->dma_addr + ofs;
+}
+
+static inline void *
+snd_pcm_sgbuf_get_ptr(struct snd_pcm_substream *substream, unsigned int ofs)
+{
+	return substream->runtime->dma_area + ofs;
+}
+
+#define snd_pcm_sgbuf_ops_page	NULL
+
+#define snd_pcm_sgbuf_get_chunk_size(subs, ofs, size)	(size)
+
+#endif /* !SND_NONCOHERENT_DMA */
 
 /* handle mmap counter - PCM mmap callback should handle this counter properly */
 static inline void snd_pcm_mmap_data_open(struct vm_area_struct *area)

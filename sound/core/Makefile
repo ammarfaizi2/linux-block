@@ -13,7 +13,9 @@ snd-pcm-objs := pcm.o pcm_native.o pcm_lib.o pcm_timer.o pcm_misc.o \
 		pcm_memory.o
 
 snd-page-alloc-y := memalloc.o
-snd-page-alloc-$(CONFIG_HAS_DMA) += sgbuf.o
+ifndef CONFIG_SND_NONCOHERNT_DMA
+snd-page-alloc-y += sgbuf.o
+endif
 
 snd-rawmidi-objs  := rawmidi.o
 snd-timer-objs    := timer.o
