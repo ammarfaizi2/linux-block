@@ -174,3 +174,19 @@ iommu_coalesce_chunks(struct ioc *ioc, struct device *dev,
 	return n_mappings;
 }
 
+/* dma_mmap_coherent callback function */
+/* Note that this is no inline function -- this function is eventually
+ * included in ccio_ops in both ccio-dma.c and sba_iommu.c
+ */
+static int iommu_dma_mmap_coherent(struct device *dev,
+				   struct vm_area_struct *vma,
+				   void *cpu_addr, dma_addr_t handle,
+				   size_t size)
+{
+	struct page *pg;
+	pgprot_val(vma->vm_page_prot) |= _PAGE_NO_CACHE;
+	pg = virt_to_page(cpu_addr);
+	return remap_pfn_range(vma, vma->vm_start,
+			       page_to_pfn(pg) + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
+}

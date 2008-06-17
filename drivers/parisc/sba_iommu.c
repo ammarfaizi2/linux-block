@@ -1070,6 +1070,7 @@ static struct hppa_dma_ops sba_ops = {
 	.dma_sync_single_for_device =	NULL,
 	.dma_sync_sg_for_cpu =		NULL,
 	.dma_sync_sg_for_device =	NULL,
+	.mmap_coherent =	iommu_dma_mmap_coherent,
 };
 
 
