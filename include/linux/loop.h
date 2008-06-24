@@ -18,6 +18,7 @@
 #include <linux/blkdev.h>
 #include <linux/spinlock.h>
 #include <linux/mutex.h>
+#include <linux/rbtree.h>
 
 /* Possible states of device */
 enum {
@@ -50,21 +51,30 @@ struct loop_device {
 
 	struct file *	lo_backing_file;
 	struct block_device *lo_device;
+	struct block_device *fs_bdev;
 	unsigned	lo_blocksize;
 	void		*key_data; 
+	unsigned int	lo_switch;
 
 	gfp_t		old_gfp_mask;
 
 	spinlock_t		lo_lock;
 	struct bio_list		lo_bio_list;
+	unsigned int		lo_bio_cnt;
 	int			lo_state;
 	struct mutex		lo_ctl_mutex;
 	struct task_struct	*lo_thread;
 	wait_queue_head_t	lo_event;
+	wait_queue_head_t	lo_bio_wait;
+	struct timer_list	lo_bio_timer;
 
 	struct request_queue	*lo_queue;
 	struct gendisk		*lo_disk;
 	struct list_head	lo_list;
+
+	struct rb_root		lo_rb_root;
+	struct rb_node		*last_lookup;
+	unsigned int		lo_blkbits;
 };
 
 #endif /* __KERNEL__ */
@@ -76,6 +86,7 @@ enum {
 	LO_FLAGS_READ_ONLY	= 1,
 	LO_FLAGS_USE_AOPS	= 2,
 	LO_FLAGS_AUTOCLEAR	= 4,
+	LO_FLAGS_FASTFS		= 8,
 };
 
 #include <asm/posix_types.h>	/* for __kernel_old_dev_t */
@@ -160,5 +171,12 @@ int loop_unregister_transfer(int number);
 #define LOOP_GET_STATUS64	0x4C05
 #define LOOP_CHANGE_FD		0x4C06
 #define LOOP_SET_CAPACITY	0x4C07
+#define LOOP_SET_FASTFS		0x4C08
+
+enum {
+	LOOP_EXTENT_RW_MAGIC =	0x19283746,
+	LOOP_SWITCH_RW_MAGIC = 	0xfeedbeef,
+	LOOP_PCACHE_RW_MAGIC =	0xdead1231,
+};
 
 #endif

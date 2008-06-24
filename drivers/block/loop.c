@@ -467,12 +467,17 @@ lo_receive(struct loop_device *lo, struct bio *bio, int bsize, loff_t pos)
 	return ret;
 }
 
+static inline u64 lo_bio_offset(struct loop_device *lo, struct bio *bio)
+{
+	return (u64)lo->lo_offset + ((u64)bio->bi_sector << 9);
+}
+
 static int do_bio_filebacked(struct loop_device *lo, struct bio *bio)
 {
 	loff_t pos;
 	int ret;
 
-	pos = ((loff_t) bio->bi_sector << 9) + lo->lo_offset;
+	pos = lo_bio_offset(lo, bio);
 
 	if (bio_rw(bio) == WRITE) {
 		int barrier = bio_barrier(bio);
@@ -505,12 +510,62 @@ out:
 	return ret;
 }
 
+#define __lo_throttle(wq, lock, condition)				\
+do {									\
+	DEFINE_WAIT(__wait);						\
+	for (;;) {							\
+		prepare_to_wait((wq), &__wait, TASK_UNINTERRUPTIBLE);	\
+		if (condition)						\
+			break;						\
+		spin_unlock_irq((lock));				\
+		wake_up(&lo->lo_event);					\
+		io_schedule();						\
+		spin_lock_irq((lock));					\
+	}								\
+	finish_wait((wq), &__wait);					\
+} while (0)								\
+
+#define LO_BIO_THROTTLE		128
+#define LO_BIO_THROTTLE_LOW	(LO_BIO_THROTTLE / 2)
+
 /*
- * Add bio to back of pending list
+ * A normal block device will throttle on request allocation. Do the same
+ * for loop to prevent millions of bio's queued internally.
+ */
+static void loop_bio_throttle(struct loop_device *lo, struct bio *bio)
+{
+	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock,
+				lo->lo_bio_cnt < LO_BIO_THROTTLE);
+}
+
+static void loop_bio_timer(unsigned long data)
+{
+	struct loop_device *lo = (struct loop_device *) data;
+
+	wake_up(&lo->lo_event);
+}
+
+/*
+ * Add bio to back of pending list and wakeup thread
  */
 static void loop_add_bio(struct loop_device *lo, struct bio *bio)
 {
+	loop_bio_throttle(lo, bio);
+
 	bio_list_add(&lo->lo_bio_list, bio);
+
+	smp_mb();
+	if (lo->lo_bio_cnt > 8 || !bio->bi_bdev || bio_sync(bio) ||
+	    bio_data_dir(bio) == READ) {
+		if (timer_pending(&lo->lo_bio_timer))
+			del_timer(&lo->lo_bio_timer);
+
+		if (waitqueue_active(&lo->lo_event))
+			wake_up(&lo->lo_event);
+	} else if (!timer_pending(&lo->lo_bio_timer)) {
+		lo->lo_bio_timer.expires = jiffies + 1;
+		add_timer(&lo->lo_bio_timer);
+	}
 }
 
 /*
@@ -518,7 +573,408 @@ static void loop_add_bio(struct loop_device *lo, struct bio *bio)
  */
 static struct bio *loop_get_bio(struct loop_device *lo)
 {
-	return bio_list_pop(&lo->lo_bio_list);
+	struct bio *bio;
+
+	bio = bio_list_pop(&lo->lo_bio_list);
+	if (bio) {
+		if (bio == lo->lo_biotail)
+			lo->lo_biotail = NULL;
+		lo->lo_bio = bio->bi_next;
+		bio->bi_next = NULL;
+
+		lo->lo_bio_cnt--;
+		if (lo->lo_bio_cnt < LO_BIO_THROTTLE_LOW || !lo->lo_bio)
+			wake_up(&lo->lo_bio_wait);
+	}
+
+	return bio;
+}
+
+struct loop_file_extent {
+	struct rb_node rb_node;
+	u64 disk_start, file_start;
+	unsigned int size;
+	unsigned int pcache;
+};
+
+#define node_to_lfe(n)	rb_entry((n), struct loop_file_extent, rb_node)
+
+static void loop_remove_node(struct loop_device *lo,
+			     struct loop_file_extent *lfe)
+{
+	if (lo->last_lookup == &lfe->rb_node)
+		lo->last_lookup = NULL;
+
+	rb_erase(&lfe->rb_node, &lo->lo_rb_root);
+}
+
+/*
+ * Drop and free all stored extents
+ */
+static void loop_drop_extents(struct loop_device *lo)
+{
+	struct rb_node *node;
+	unsigned int exts = 0;
+
+	spin_lock_irq(&lo->lo_lock);
+
+	while ((node = rb_first(&lo->lo_rb_root)) != NULL) {
+		struct loop_file_extent *lfe = node_to_lfe(node);
+
+		loop_remove_node(lo, lfe);
+		kfree(lfe);
+		exts++;
+	}
+
+	spin_unlock_irq(&lo->lo_lock);
+	printk(KERN_INFO "loop%d: dropped %u extents\n", lo->lo_number, exts);
+}
+
+static int loop_flush_invalidate(struct loop_device *lo)
+{
+	struct address_space *mapping = lo->lo_backing_file->f_mapping;
+	int ret;
+
+	ret = filemap_write_and_wait(mapping);
+	ret |= invalidate_inode_pages2(mapping);
+
+	if (ret)
+		printk(KERN_ERR "loop%d: cache flush fail\n", lo->lo_number);
+
+	return ret;
+}
+
+static void loop_exit_fastfs(struct loop_device *lo)
+{
+	struct inode *inode = lo->lo_backing_file->f_mapping->host;
+
+	loop_drop_extents(lo);
+
+	/*
+	 * drop what page cache we instantiated filling holes
+	 */
+	loop_flush_invalidate(lo);
+
+	blk_queue_ordered(lo->lo_queue, QUEUE_ORDERED_NONE, NULL);
+
+	mutex_lock(&inode->i_mutex);
+	inode->i_flags &= ~S_SWAPFILE;
+	mutex_unlock(&inode->i_mutex);
+}
+
+/*
+ * Most lookups are for the same extent a number of times, before switching
+ * to a new one. This happens for bio page adds, for instance. So cache
+ * the last lookup to prevent doing a full rb_tree lookup if we are within
+ * the range of the current 'last_lookup'
+ */
+static inline int loop_check_last_node(struct loop_device *lo, u64 offset)
+{
+	struct loop_file_extent *lfe;
+
+	if (!lo->last_lookup)
+		return 0;
+
+	lfe = node_to_lfe(lo->last_lookup);
+
+	return (offset >= lfe->disk_start) &&
+	       (offset < (lfe->disk_start + lfe->size));
+}
+
+static struct rb_node *loop_tree_find(struct loop_device *lo, u64 start)
+{
+	struct rb_node *node = lo->lo_rb_root.rb_node;
+	struct loop_file_extent *lfe;
+
+	while (node) {
+		lfe = node_to_lfe(node);
+
+		if (start < lfe->disk_start)
+			node = node->rb_left;
+		else if (start >= lfe->disk_start + lfe->size)
+			node = node->rb_right;
+		else
+			return &lfe->rb_node;
+	}
+
+	return NULL;
+}
+
+static int lfe_merge(struct loop_file_extent *lfe,
+		     struct loop_file_extent *__lfe)
+{
+	u64 lfe_end = lfe->disk_start + lfe->size;
+	u64 __lfe_end = __lfe->disk_start + __lfe->size;
+
+	if (__lfe->disk_start < lfe->disk_start) {
+		lfe->size += lfe->disk_start - __lfe->disk_start;
+		lfe->disk_start = __lfe->disk_start;
+		lfe->file_start = __lfe->file_start;
+		return 1;
+	} else if (__lfe_end > lfe_end) {
+		lfe->size += __lfe_end - lfe_end;
+		return 1;
+	}
+
+	return 0;
+}
+
+
+static int node_merge(struct loop_device *lo, struct loop_file_extent *prv,
+		      struct loop_file_extent *nxt)
+{
+	if ((prv->disk_start + prv->size >= nxt->disk_start) &&
+	    (prv->disk_start + prv->size < nxt->disk_start + nxt->size) &&
+	    (((prv->file_start + prv->size >= nxt->file_start) &&
+	    (prv->file_start + prv->size < nxt->file_start + nxt->size)) ||
+	    (!prv->file_start && !nxt->file_start))) {
+		if (lfe_merge(prv, nxt)) {
+			if (nxt->pcache)
+				prv->pcache = 1;
+			loop_remove_node(lo, nxt);
+			kfree(nxt);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+static void __loop_tree_insert(struct loop_device *lo,
+			       struct loop_file_extent *lfe, int *new)
+{
+	struct rb_node **p, *parent;
+	struct loop_file_extent *__lfe;
+
+	if (new)
+		*new = 0;
+
+restart:
+	p = &lo->lo_rb_root.rb_node;
+	parent = NULL;
+	while (*p) {
+		parent = *p;
+		__lfe = node_to_lfe(parent);
+
+		if (lfe->disk_start < __lfe->disk_start)
+			p = &(*p)->rb_left;
+		else if (lfe->disk_start >= __lfe->disk_start + __lfe->size)
+			p = &(*p)->rb_right;
+		else {
+			loop_remove_node(lo, __lfe);
+			lfe_merge(lfe, __lfe);
+			kfree(__lfe);
+			goto restart;
+		}
+	}
+
+	rb_link_node(&lfe->rb_node, parent, p);
+	rb_insert_color(&lfe->rb_node, &lo->lo_rb_root);
+
+	/*
+	 * See if we can merge with the next or previous extent
+	 */
+	parent = rb_next(&lfe->rb_node);
+	if (parent && node_merge(lo, lfe, node_to_lfe(parent)))
+		return;
+	parent = rb_prev(&lfe->rb_node);
+	if (parent && node_merge(lo, node_to_lfe(parent), lfe))
+		return;
+
+	if (new)
+		*new = 1;
+}
+
+/*
+ * Find extent mapping this lo device block to the file block on the real
+ * device
+ */
+static struct loop_file_extent *loop_lookup_extent(struct loop_device *lo,
+						   u64 offset)
+{
+	if (!loop_check_last_node(lo, offset))
+		lo->last_lookup = loop_tree_find(lo, offset);
+
+	if (lo->last_lookup)
+		return node_to_lfe(lo->last_lookup);
+
+	return NULL;
+}
+
+static void loop_do_file_backed(struct loop_device *lo, struct bio *bio, int);
+
+static void loop_handle_extent_hole(struct loop_device *lo, struct bio *bio,
+				    int sync)
+{
+	/*
+	 * for a read, just zero the data and end the io
+	 */
+	if (bio_data_dir(bio) == READ) {
+		struct bio_vec *bvec;
+		unsigned long flags;
+		int i;
+
+		bio_for_each_segment(bvec, bio, i) {
+			char *dst = bvec_kmap_irq(bvec, &flags);
+
+			memset(dst, 0, bvec->bv_len);
+			bvec_kunmap_irq(dst, &flags);
+		}
+		bio_endio(bio, 0);
+	} else {
+		/*
+		 * let the page cache handling path do this bio, and then
+		 * lookup the mapped blocks after the io has been issued to
+		 * instantiate extents.
+		 */
+		if (!sync)
+			loop_add_bio(lo, bio);
+		else {
+			spin_unlock_irq(&lo->lo_lock);
+			loop_do_file_backed(lo, bio, 1);
+			spin_lock_irq(&lo->lo_lock);
+		}
+	}
+}
+
+static inline int lo_is_switch_bio(struct bio *bio)
+{
+	return !bio->bi_bdev && bio->bi_rw == LOOP_SWITCH_RW_MAGIC;
+}
+
+static inline int lo_is_map_bio(struct bio *bio)
+{
+	return !bio->bi_bdev && bio->bi_rw == LOOP_EXTENT_RW_MAGIC;
+}
+
+static inline int lo_is_pcache_bio(struct bio *bio)
+{
+	return !bio->bi_bdev && bio->bi_rw == LOOP_PCACHE_RW_MAGIC;
+}
+
+static void loop_bio_destructor(struct bio *bio)
+{
+	complete((struct completion *) bio->bi_flags);
+}
+
+static void loop_send_special_bio(struct loop_device *lo, struct bio *old_bio,
+				  unsigned int magic)
+{
+	DECLARE_COMPLETION_ONSTACK(comp);
+	struct bio *bio, stackbio;
+	int do_sync = 0;
+
+	bio = bio_alloc(GFP_ATOMIC, 0);
+	if (!bio) {
+		bio = &stackbio;
+		bio_init(bio);
+		bio->bi_destructor = loop_bio_destructor;
+		bio->bi_flags = (unsigned long) &comp;
+		do_sync = 1;
+	}
+
+	bio->bi_rw = magic;
+	bio->bi_private = old_bio;
+
+	loop_add_bio(lo, bio);
+
+	if (do_sync) {
+		spin_unlock_irq(&lo->lo_lock);
+		wait_for_completion(&comp);
+		spin_lock_irq(&lo->lo_lock);
+	}
+}
+
+/*
+ * Alloc a hint bio to tell the loop thread to read file blocks for a given
+ * range
+ */
+static void loop_schedule_extent_mapping(struct loop_device *lo,
+					 struct bio *old_bio)
+{
+	loop_send_special_bio(lo, old_bio, LOOP_EXTENT_RW_MAGIC);
+}
+
+static void loop_schedule_pcache_io(struct loop_device *lo, struct bio *old_bio)
+{
+	loop_send_special_bio(lo, old_bio, LOOP_PCACHE_RW_MAGIC);
+}
+
+static int __loop_redirect_bio(struct loop_device *lo,
+			       struct loop_file_extent *lfe, struct bio *bio,
+			       int sync)
+{
+	u64 extent_off, disk_start;
+
+	/*
+	 * handle sparse io
+	 */
+	if (!lfe->file_start) {
+		loop_handle_extent_hole(lo, bio, sync);
+		return 0;
+	}
+
+	/*
+	 * not a hole, redirect
+	 */
+	disk_start = lfe->file_start;
+	extent_off = lo_bio_offset(lo, bio) - lfe->disk_start;
+	BUG_ON(disk_start + extent_off + bio->bi_size > lfe->file_start + lfe->size);
+	bio->bi_bdev = lo->fs_bdev;
+	bio->bi_sector = (disk_start + extent_off) >> 9;
+	return 1;
+}
+
+static inline int __lfe_holds_bio(struct loop_device *lo,
+				  struct loop_file_extent *lfe, u64 bio_start,
+				  unsigned int bio_size)
+{
+	u64 bio_end = bio_start + bio_size;
+	u64 lfe_end = lfe->disk_start + lfe->size;
+
+	return bio_end <= lfe_end;
+}
+
+static inline int lfe_holds_bio(struct loop_device *lo,
+				struct loop_file_extent *lfe, struct bio *bio)
+{
+	return __lfe_holds_bio(lo, lfe, lo_bio_offset(lo, bio), bio->bi_size);
+}
+
+/*
+ * Change mapping of the bio, so that it points to the real bdev and offset
+ */
+static int loop_redirect_bio(struct loop_device *lo, struct bio *bio)
+{
+	u64 offset = lo_bio_offset(lo, bio);
+	struct loop_file_extent *lfe;
+
+	lfe = loop_lookup_extent(lo, offset);
+	if (!lfe || !lfe_holds_bio(lo, lfe, bio)) {
+		loop_schedule_extent_mapping(lo, bio);
+		return 0;
+	}
+
+	if (lfe->pcache) {
+		loop_schedule_pcache_io(lo, bio);
+		return 0;
+	}
+
+	return __loop_redirect_bio(lo, lfe, bio, 0);
+}
+
+/*
+ * Wait on bio's on our list to complete before sending a barrier bio
+ * to the below device. Called with lo_lock held.
+ */
+static void loop_wait_on_bios(struct loop_device *lo)
+{
+	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock, !lo->lo_bio);
+}
+
+static void loop_wait_on_switch(struct loop_device *lo)
+{
+	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock, !lo->lo_switch);
 }
 
 static int loop_make_request(struct request_queue *q, struct bio *old_bio)
@@ -536,15 +992,39 @@ static int loop_make_request(struct request_queue *q, struct bio *old_bio)
 		goto out;
 	if (unlikely(rw == WRITE && (lo->lo_flags & LO_FLAGS_READ_ONLY)))
 		goto out;
+	if (lo->lo_flags & LO_FLAGS_FASTFS) {
+		/*
+		 * If we get a barrier bio, then we just need to wait for
+		 * existing bio's to be complete. This can only happen
+		 * on the 'new' extent mapped loop, since that is the only
+		 * one that supports barriers.
+		 */
+		if (bio_barrier(old_bio))
+			loop_wait_on_bios(lo);
+
+		/*
+		 * if file switch is in progress, wait for it to complete
+		 */
+		if (!lo_is_switch_bio(old_bio) && lo->lo_switch)
+			loop_wait_on_switch(lo);
+
+		if (loop_redirect_bio(lo, old_bio))
+			goto out_redir;
+
+		goto out_end;
+	}
 	loop_add_bio(lo, old_bio);
-	wake_up(&lo->lo_event);
 	spin_unlock_irq(&lo->lo_lock);
 	return 0;
 
 out:
-	spin_unlock_irq(&lo->lo_lock);
 	bio_io_error(old_bio);
+out_end:
+	spin_unlock_irq(&lo->lo_lock);
 	return 0;
+out_redir:
+	spin_unlock_irq(&lo->lo_lock);
+	return 1;
 }
 
 /*
@@ -558,22 +1038,210 @@ static void loop_unplug(struct request_queue *q)
 	blk_run_address_space(lo->lo_backing_file->f_mapping);
 }
 
+static void loop_unplug_fastfs(struct request_queue *q)
+{
+	struct loop_device *lo = q->queuedata;
+	struct request_queue *rq = bdev_get_queue(lo->fs_bdev);
+	unsigned long flags;
+
+	local_irq_save(flags);
+
+	if (blk_remove_plug(q)) {
+		if (rq->unplug_fn)
+			rq->unplug_fn(rq);
+	}
+
+	local_irq_restore(flags);
+}
+
 struct switch_request {
 	struct file *file;
 	struct completion wait;
 };
 
 static void do_loop_switch(struct loop_device *, struct switch_request *);
+static int loop_init_fastfs(struct loop_device *);
+static int loop_read_bmap(struct loop_device *, u64, unsigned int);
+static void loop_hole_filled(struct loop_device *, struct bio *);
+
+static void loop_drop_bad_lfe(struct loop_device *lo, loff_t offset)
+{
+	struct loop_file_extent *lfe;
+
+	printk(KERN_ERR "lo%d: dropping extent due to IO error\n", lo->lo_number);
+
+	spin_lock_irq(&lo->lo_lock);
+	lfe = loop_lookup_extent(lo, offset);
+	if (lfe) {
+		loop_remove_node(lo, lfe);
+		kfree(lfe);
+	}
+	spin_unlock_irq(&lo->lo_lock);
+}
+
+static void lo_invalidate_range(struct loop_device *lo, loff_t start,
+				loff_t end)
+{
+	struct address_space *mapping = lo->lo_backing_file->f_mapping;
+	pgoff_t pgs = start >> PAGE_CACHE_SHIFT;
+	pgoff_t pge = end >> PAGE_CACHE_SHIFT;
+
+	if (invalidate_inode_pages2_range(mapping, pgs, pge)) {
+		struct loop_file_extent *lfe;
+
+		/*
+		 * if invalidate fails, turn on pcache only flag
+		 */
+		spin_lock_irq(&lo->lo_lock);
+
+		lfe = loop_lookup_extent(lo, start);
+		if (lfe)
+			lfe->pcache = 1;
+
+		spin_unlock_irq(&lo->lo_lock);
+	}
+}
+
+static void loop_do_file_backed(struct loop_device *lo, struct bio *bio,
+				int hole)
+{
+	struct address_space *mapping = lo->lo_backing_file->f_mapping;
+	const int fastfs = lo->lo_flags & LO_FLAGS_FASTFS;
+	loff_t start = lo_bio_offset(lo, bio);
+	loff_t end = start + (loff_t) bio->bi_size;
+	int ret;
+
+	ret = do_bio_filebacked(lo, bio);
+
+	/*
+	 * must be filling a hole. kick off writeback of the pages
+	 * so that we know they have a disk mapping. lookup the new
+	 * disk blocks and update our rb tree, splitting the extent
+	 * covering the old hole and adding new extents for the new
+	 * blocks.
+	 */
+	if (!ret && fastfs) {
+		if (bio_data_dir(bio) == WRITE) {
+			ret = filemap_write_and_wait_range(mapping, start, end);
+			if (ret)
+				loop_drop_bad_lfe(lo, start);
+			else if (hole)
+				loop_hole_filled(lo, bio);
+		}
+		lo_invalidate_range(lo, start, end);
+	}
+
+	if (ret)
+		ret = -EIO;
+
+	bio_endio(bio, ret);
+}
+
+static struct bio_pair *loop_clone_submit(struct loop_device *lo,
+					  struct bio *org_bio,
+					  unsigned int size,
+					  struct loop_file_extent *lfe)
+{
+	struct bio_pair *bp;
+	int ret;
+
+	/*
+	 * clone part of the original bio and submit it
+	 */
+	bp = bio_split(org_bio, bio_split_pool, size >> 9);
+
+	spin_lock_irq(&lo->lo_lock);
+	ret = __loop_redirect_bio(lo, lfe, &bp->bio1, 1);
+	spin_unlock_irq(&lo->lo_lock);
+
+	if (ret)
+		generic_make_request(&bp->bio1);
+
+	return bp;
+}
 
 static inline void loop_handle_bio(struct loop_device *lo, struct bio *bio)
 {
-	if (unlikely(!bio->bi_bdev)) {
+	if (lo_is_map_bio(bio)) {
+		struct bio *org_bio = bio->bi_private;
+		struct loop_file_extent *lfe;
+		struct bio_pair *bp = NULL;
+		u64 disk_start;
+
+restart:
+		disk_start = lo_bio_offset(lo, org_bio);
+lookup:
+		spin_lock_irq(&lo->lo_lock);
+		lfe = loop_lookup_extent(lo, disk_start);
+		if (!lfe) {
+			spin_unlock_irq(&lo->lo_lock);
+			loop_read_bmap(lo, disk_start, org_bio->bi_size);
+			goto lookup;
+		} else if (!lfe_holds_bio(lo, lfe, org_bio)) {
+			u64 this_size;
+
+			this_size = (lfe->disk_start + lfe->size) - disk_start;
+			spin_unlock_irq(&lo->lo_lock);
+			if (bp)
+				bio_pair_release(bp);
+			bp = loop_clone_submit(lo, org_bio, this_size, lfe);
+			org_bio = &bp->bio2;
+			goto restart;
+		} else {
+			int ret = __loop_redirect_bio(lo, lfe, org_bio, 1);
+
+			spin_unlock_irq(&lo->lo_lock);
+			if (ret)
+				generic_make_request(org_bio);
+		}
+		if (bp)
+			bio_pair_release(bp);
+		bio_put(bio);
+	} else if (lo_is_pcache_bio(bio)) {
+		struct address_space *mapping = lo->lo_backing_file->f_mapping;
+		struct bio *org_bio = bio->bi_private;
+		struct loop_file_extent *lfe;
+		loff_t file_start, file_size;
+		pgoff_t pgs, pge;
+		loff_t start;
+		int ret;
+
+		start = lo_bio_offset(lo, org_bio);
+
+		/*
+		 * do page cache backed bio and then lookup the extent
+		 * and see if we can clear the pcache flag
+		 */
+		loop_do_file_backed(lo, org_bio, 0);
+
+		spin_lock_irq(&lo->lo_lock);
+		lfe = loop_lookup_extent(lo, start);
+		if (lfe) {
+			file_start = lfe->file_start;
+			file_size = lfe->size;
+		} else {
+			file_start = start;
+			file_size = org_bio->bi_size;
+		}
+		spin_unlock_irq(&lo->lo_lock);
+
+		pgs = file_start >> PAGE_CACHE_SHIFT;
+		pge = (file_start + file_size) >> PAGE_CACHE_SHIFT;
+		ret = invalidate_inode_pages2_range(mapping, pgs, pge);
+		if (!ret) {
+			spin_lock_irq(&lo->lo_lock);
+			lfe = loop_lookup_extent(lo, start);
+			if (lfe && lfe->file_start == file_start &&
+			    lfe->size == file_size)
+				lfe->pcache = 0;
+			spin_unlock_irq(&lo->lo_lock);
+		}
+		bio_put(bio);
+	} else if (lo_is_switch_bio(bio)) {
 		do_loop_switch(lo, bio->bi_private);
 		bio_put(bio);
-	} else {
-		int ret = do_bio_filebacked(lo, bio);
-		bio_endio(bio, ret);
-	}
+	} else
+		loop_do_file_backed(lo, bio, 1);
 }
 
 /*
@@ -629,6 +1297,8 @@ static int loop_switch(struct loop_device *lo, struct file *file)
 	w.file = file;
 	bio->bi_private = &w;
 	bio->bi_bdev = NULL;
+	bio->bi_rw = LOOP_SWITCH_RW_MAGIC;
+	lo->lo_switch = 1;
 	loop_make_request(lo->lo_queue, bio);
 	wait_for_completion(&w.wait);
 	return 0;
@@ -654,10 +1324,14 @@ static void do_loop_switch(struct loop_device *lo, struct switch_request *p)
 	struct file *file = p->file;
 	struct file *old_file = lo->lo_backing_file;
 	struct address_space *mapping;
+	const int fastfs = lo->lo_flags & LO_FLAGS_FASTFS;
 
 	/* if no new file, only flush of queued bios requested */
 	if (!file)
 		goto out;
+
+	if (fastfs)
+		loop_exit_fastfs(lo);
 
 	mapping = file->f_mapping;
 	mapping_set_gfp_mask(old_file->f_mapping, lo->old_gfp_mask);
@@ -666,7 +1340,13 @@ static void do_loop_switch(struct loop_device *lo, struct switch_request *p)
 		mapping->host->i_bdev->bd_block_size : PAGE_SIZE;
 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
+
+	if (fastfs)
+		loop_init_fastfs(lo);
+
 out:
+	lo->lo_switch = 0;
+	wake_up(&lo->lo_bio_wait);
 	complete(&p->wait);
 }
 
@@ -728,6 +1408,272 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
 	return error;
 }
 
+/*
+ * Add an extent starting at 'disk_block' loop block and 'file_block'
+ * fs block, spanning 'nr_blocks'. file_block may be 0, in which case
+ * this extent describes a hole in the file.
+ */
+static int loop_tree_insert(struct loop_device *lo, sector_t disk_block,
+			    sector_t file_block, unsigned int size, int *new)
+{
+	struct inode *inode = lo->lo_backing_file->f_mapping->host;
+	struct loop_file_extent *lfe;
+
+	lfe = kmalloc(sizeof(*lfe), GFP_NOIO);
+	if (unlikely(!lfe))
+		return -ENOMEM;
+
+	RB_CLEAR_NODE(&lfe->rb_node);
+	lfe->disk_start = disk_block << lo->lo_blkbits;
+	lfe->file_start = file_block << inode->i_blkbits;
+	lfe->size = size << lo->lo_blkbits;
+	lfe->pcache = 0;
+
+	spin_lock_irq(&lo->lo_lock);
+	__loop_tree_insert(lo, lfe, new);
+	spin_unlock_irq(&lo->lo_lock);
+	return 0;
+}
+
+/*
+ * See if adding this bvec would cause us to spill into a new extent. If so,
+ * disallow the add to start a new bio. This ensures that the bio we receive
+ * in loop_make_request() never spans two extents or more.
+ */
+static int loop_merge_bvec(struct request_queue *q, struct bio *bio,
+			   struct bio_vec *bvec)
+{
+	struct loop_device *lo = q->queuedata;
+	struct loop_file_extent *lfe;
+	unsigned int len, ret;
+	unsigned long flags;
+	u64 start;
+
+	if (!bio->bi_size)
+		return bvec->bv_len;
+
+	start = lo_bio_offset(lo, bio);
+	len = bio->bi_size + bvec->bv_len;
+	ret = bvec->bv_len;
+
+	spin_lock_irqsave(&lo->lo_lock, flags);
+
+	lfe = loop_lookup_extent(lo, start);
+	if (lfe) {
+		/*
+		 * have extent, disallow if outside that extent
+		 */
+		if (start + len > lfe->disk_start + lfe->size)
+			ret = 0;
+	} else
+		ret = 0;
+
+	spin_unlock_irqrestore(&lo->lo_lock, flags);
+	return ret;
+}
+
+/*
+ * Read and populate the rb tree starting from 'disk_start' disk offset
+ * and 'size' forward, unless we hit 'max_ext' first.
+ */
+static int loop_read_bmap(struct loop_device *lo, u64 disk_start,
+			  unsigned int size)
+{
+	struct inode *inode = lo->lo_backing_file->f_mapping->host;
+	sector_t expected_block, diskb, fileb, block;
+	unsigned int blocks, nr_extents, fill_size;
+	int new, nr_blocks, mask;
+
+	mask = (1 << inode->i_blkbits) - 1;
+	nr_blocks = (size + mask) >> inode->i_blkbits;
+	block = disk_start >> lo->lo_blkbits;
+	expected_block = block + 1;
+	blocks = nr_extents = 0;
+	fileb = diskb = -1;
+	fill_size = 0;
+
+	/*
+	 * read in blocks and add extents for the requested size
+	 */
+	while (nr_blocks--) {
+		sector_t file_block = bmap(inode, block);
+
+		if (diskb == -1) {
+start_extent:
+			if (fill_size >= size)
+				break;
+			diskb = block;
+			fileb = file_block;
+			blocks = 1;
+		} else if (expected_block == file_block)
+			blocks++;
+		else {
+			sector_t __diskb = diskb;
+
+			diskb = -1;
+			if (loop_tree_insert(lo, __diskb, fileb, blocks, &new))
+				break;
+
+			fill_size += blocks << inode->i_blkbits;
+			if (new)
+				nr_extents++;
+			goto start_extent;
+		}
+
+		if (file_block)
+			expected_block = fileb + 1;
+		else
+			expected_block = 0;
+
+		if (inode->i_blkbits >= lo->lo_blkbits)
+			block += 1 << (inode->i_blkbits - lo->lo_blkbits);
+		else
+			block++;
+	}
+
+	if (diskb != -1 && !loop_tree_insert(lo, diskb, fileb, blocks, &new)) {
+		fill_size += blocks << inode->i_blkbits;
+		if (new)
+			nr_extents++;
+	}
+
+	BUG_ON(fill_size < size);
+
+	return nr_extents;
+}
+
+/*
+ * Initialize the members pertaining to extent mapping. We will populate
+ * the tree lazily on demand, as a full scan of a big file can take some
+ * time.
+ */
+static int loop_init_fastfs(struct loop_device *lo)
+{
+	struct file *file = lo->lo_backing_file;
+	struct inode *inode = file->f_mapping->host;
+	struct request_queue *fs_q;
+
+	if (!S_ISREG(inode->i_mode))
+		return -EINVAL;
+
+	/*
+	 * Need a working bmap. TODO: use the same optimization that
+	 * direct-io.c does for get_block() mapping more than one block
+	 * at the time.
+	 */
+	if (inode->i_mapping->a_ops->bmap == NULL)
+		return -EINVAL;
+
+	/*
+	 * invalidate all page cache belonging to this file, it could become
+	 * stale when we directly overwrite blocks.
+	 */
+	if (loop_flush_invalidate(lo))
+		return -EIO;
+
+	/*
+	 * disable truncate on this file
+	 */
+	mutex_lock(&inode->i_mutex);
+	inode->i_flags |= S_SWAPFILE;
+	mutex_unlock(&inode->i_mutex);
+
+	lo->lo_rb_root = RB_ROOT;
+	lo->lo_blkbits = inode->i_blkbits;
+	lo->fs_bdev = file->f_mapping->host->i_sb->s_bdev;
+	lo->lo_flags |= LO_FLAGS_FASTFS;
+	lo->lo_queue->unplug_fn = loop_unplug_fastfs;
+
+	blk_queue_merge_bvec(lo->lo_queue, loop_merge_bvec);
+	blk_queue_ordered(lo->lo_queue, QUEUE_ORDERED_DRAIN, NULL);
+
+	fs_q = bdev_get_queue(lo->fs_bdev);
+	blk_queue_stack_limits(lo->lo_queue, fs_q);
+
+	printk(KERN_INFO "loop%d: fast redirect\n", lo->lo_number);
+	return 0;
+}
+
+/*
+ * We filled the hole at the location specified by bio. Lookup the extent
+ * covering this hole, and either split it into two or shorten it depending
+ * on what part the bio covers. After that we need to lookup the new blocks
+ * and add extents for those.
+ */
+static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
+{
+	struct loop_file_extent *lfe, *lfe_e;
+	u64 disk_start;
+	unsigned int size;
+
+	lfe_e = NULL;
+	disk_start = lo_bio_offset(lo, bio);
+
+	spin_lock_irq(&lo->lo_lock);
+	lfe = loop_lookup_extent(lo, disk_start);
+
+	/*
+	 * Remove extent from tree and trim or split it
+	 */
+	if (lfe)
+		loop_remove_node(lo, lfe);
+
+	spin_unlock_irq(&lo->lo_lock);
+
+	size = bio->bi_size;
+	if (unlikely(!lfe || size > lfe->size))
+		goto bmap;
+
+	/*
+	 * Either we need to trim at the front, at the end, or split
+	 * it into two if the write is in the middle
+	 */
+	if (disk_start == lfe->disk_start) {
+		/*
+		 * Trim front
+		 */
+		lfe->disk_start += size;
+		lfe->size -= size;
+	} else if (disk_start + size == lfe->disk_start + lfe->size) {
+		/*
+		 * Trim end
+		 */
+		lfe->size -= size;
+	} else {
+		unsigned int total_size = lfe->size;
+
+		/*
+		 * Split extent in two
+		 */
+		lfe->size = disk_start - lfe->disk_start;
+
+		lfe_e = kmalloc(sizeof(*lfe_e), GFP_NOIO | __GFP_NOFAIL);
+		RB_CLEAR_NODE(&lfe_e->rb_node);
+		lfe_e->disk_start = disk_start + size;
+		lfe_e->file_start = 0;
+		lfe_e->size = total_size - size - lfe->size;
+	}
+
+	if (!lfe->size) {
+		kfree(lfe);
+		lfe = NULL;
+	}
+
+	spin_lock_irq(&lo->lo_lock);
+
+	/*
+	 * Re-add hole extent(s)
+	 */
+	if (lfe)
+		__loop_tree_insert(lo, lfe, NULL);
+	if (lfe_e)
+		__loop_tree_insert(lo, lfe_e, NULL);
+
+	spin_unlock_irq(&lo->lo_lock);
+bmap:
+	loop_read_bmap(lo, disk_start, size);
+}
+
 static inline int is_loop_device(struct file *file)
 {
 	struct inode *i = file->f_mapping->host;
@@ -776,6 +1722,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
 
 	mapping = file->f_mapping;
 	inode = mapping->host;
+	lo->lo_flags = 0;
 
 	if (!(file->f_mode & FMODE_WRITE))
 		lo_flags |= LO_FLAGS_READ_ONLY;
@@ -836,6 +1783,12 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
 	bd_set_size(bdev, size << 9);
 
 	set_blocksize(bdev, lo_blocksize);
+
+	/*
+	 * This needs to be done after setup with another ioctl,
+	 * not automatically like this.
+	 */
+	loop_init_fastfs(lo);
 
 	lo->lo_thread = kthread_create(loop_thread, lo, "loop%d",
 						lo->lo_number);
@@ -924,6 +1877,9 @@ static int loop_clr_fd(struct loop_device *lo, struct block_device *bdev)
 
 	kthread_stop(lo->lo_thread);
 
+	if (lo->lo_flags & LO_FLAGS_FASTFS)
+		loop_exit_fastfs(lo);
+
 	lo->lo_queue->unplug_fn = NULL;
 	lo->lo_backing_file = NULL;
 
@@ -985,6 +1941,9 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 	if (info->lo_encrypt_type) {
 		unsigned int type = info->lo_encrypt_type;
 
+		if (lo->lo_flags & LO_FLAGS_FASTFS)
+			return -EINVAL;
+
 		if (type >= MAX_LO_CRYPT)
 			return -EINVAL;
 		xfer = xfer_funcs[type];
@@ -992,6 +1951,13 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 			return -EINVAL;
 	} else
 		xfer = NULL;
+
+	/*
+	 * for remaps, offset must be a multiple of full blocks
+	 */
+	if ((lo->lo_flags & LO_FLAGS_FASTFS) &&
+	    (((1 << lo->lo_blkbits) - 1) & info->lo_offset))
+		return -EINVAL;
 
 	err = loop_init_xfer(lo, xfer, info);
 	if (err)
@@ -1230,6 +2196,9 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
 		err = -EPERM;
 		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
 			err = loop_set_capacity(lo, bdev);
+		break;
+	case LOOP_SET_FASTFS:
+		err = loop_init_fastfs(lo);
 		break;
 	default:
 		err = lo->ioctl ? lo->ioctl(lo, cmd, arg) : -EINVAL;
@@ -1516,6 +2485,8 @@ static struct loop_device *loop_alloc(int i)
 	lo->lo_number		= i;
 	lo->lo_thread		= NULL;
 	init_waitqueue_head(&lo->lo_event);
+	init_waitqueue_head(&lo->lo_bio_wait);
+	setup_timer(&lo->lo_bio_timer, loop_bio_timer, (unsigned long) lo);
 	spin_lock_init(&lo->lo_lock);
 	disk->major		= LOOP_MAJOR;
 	disk->first_minor	= i << part_shift;
