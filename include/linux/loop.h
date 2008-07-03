@@ -174,9 +174,9 @@ int loop_unregister_transfer(int number);
 #define LOOP_SET_FASTFS		0x4C08
 
 enum {
-	LOOP_EXTENT_RW_MAGIC =	0x19283746,
-	LOOP_SWITCH_RW_MAGIC = 	0xfeedbeef,
-	LOOP_PCACHE_RW_MAGIC =	0xdead1231,
+	LOOP_EXTENT_RW_MAGIC =	0x19283744,
+	LOOP_SWITCH_RW_MAGIC = 	0xfeedbeec,
+	LOOP_PCACHE_RW_MAGIC =	0xdead1230,
 };
 
 #endif

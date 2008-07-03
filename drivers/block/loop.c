@@ -1299,7 +1299,9 @@ static int loop_switch(struct loop_device *lo, struct file *file)
 	bio->bi_bdev = NULL;
 	bio->bi_rw = LOOP_SWITCH_RW_MAGIC;
 	lo->lo_switch = 1;
-	loop_make_request(lo->lo_queue, bio);
+	spin_lock_irq(&lo->lo_lock);
+	loop_add_bio(lo, bio);
+	spin_unlock_irq(&lo->lo_lock);
 	wait_for_completion(&w.wait);
 	return 0;
 }
@@ -1440,7 +1442,7 @@ static int loop_tree_insert(struct loop_device *lo, sector_t disk_block,
  * disallow the add to start a new bio. This ensures that the bio we receive
  * in loop_make_request() never spans two extents or more.
  */
-static int loop_merge_bvec(struct request_queue *q, struct bio *bio,
+static int loop_merge_bvec(struct request_queue *q, struct bvec_merge_data *bvm,
 			   struct bio_vec *bvec)
 {
 	struct loop_device *lo = q->queuedata;
@@ -1449,11 +1451,11 @@ static int loop_merge_bvec(struct request_queue *q, struct bio *bio,
 	unsigned long flags;
 	u64 start;
 
-	if (!bio->bi_size)
+	if (!bvm->bi_size)
 		return bvec->bv_len;
 
-	start = lo_bio_offset(lo, bio);
-	len = bio->bi_size + bvec->bv_len;
+	start = (u64) lo->lo_offset + ((u64)bvm->bi_sector << 9);
+	len = bvm->bi_size + bvec->bv_len;
 	ret = bvec->bv_len;
 
 	spin_lock_irqsave(&lo->lo_lock, flags);
