@@ -26,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/pm.h>
 #include <linux/bitops.h>
+#include <linux/debugfs.h>
 #include <linux/platform_device.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
@@ -33,14 +34,6 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/initval.h>
-
-/* debug */
-#define SOC_DEBUG 0
-#if SOC_DEBUG
-#define dbg(format, arg...) printk(format, ## arg)
-#else
-#define dbg(format, arg...)
-#endif
 
 static DEFINE_MUTEX(pcm_mutex);
 static DEFINE_MUTEX(io_mutex);
@@ -228,12 +221,12 @@ static int soc_pcm_open(struct snd_pcm_substream *substream)
 		goto machine_err;
 	}
 
-	dbg("asoc: %s <-> %s info:\n", codec_dai->name, cpu_dai->name);
-	dbg("asoc: rate mask 0x%x\n", runtime->hw.rates);
-	dbg("asoc: min ch %d max ch %d\n", runtime->hw.channels_min,
-		runtime->hw.channels_max);
-	dbg("asoc: min rate %d max rate %d\n", runtime->hw.rate_min,
-		runtime->hw.rate_max);
+	pr_debug("asoc: %s <-> %s info:\n", codec_dai->name, cpu_dai->name);
+	pr_debug("asoc: rate mask 0x%x\n", runtime->hw.rates);
+	pr_debug("asoc: min ch %d max ch %d\n", runtime->hw.channels_min,
+		 runtime->hw.channels_max);
+	pr_debug("asoc: min rate %d max rate %d\n", runtime->hw.rate_min,
+		 runtime->hw.rate_max);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		cpu_dai->playback.active = codec_dai->playback.active = 1;
@@ -278,18 +271,18 @@ static void close_delayed_work(struct work_struct *work)
 	for (i = 0; i < codec->num_dai; i++) {
 		codec_dai = &codec->dai[i];
 
-		dbg("pop wq checking: %s status: %s waiting: %s\n",
-			codec_dai->playback.stream_name,
-			codec_dai->playback.active ? "active" : "inactive",
-			codec_dai->pop_wait ? "yes" : "no");
+		pr_debug("pop wq checking: %s status: %s waiting: %s\n",
+			 codec_dai->playback.stream_name,
+			 codec_dai->playback.active ? "active" : "inactive",
+			 codec_dai->pop_wait ? "yes" : "no");
 
 		/* are we waiting on this codec DAI stream */
 		if (codec_dai->pop_wait == 1) {
 
 			/* Reduce power if no longer active */
 			if (codec->active == 0) {
-				dbg("pop wq D1 %s %s\n", codec->name,
-					codec_dai->playback.stream_name);
+				pr_debug("pop wq D1 %s %s\n", codec->name,
+					 codec_dai->playback.stream_name);
 				snd_soc_dapm_set_bias_level(socdev,
 					SND_SOC_BIAS_PREPARE);
 			}
@@ -301,8 +294,8 @@ static void close_delayed_work(struct work_struct *work)
 
 			/* Fall into standby if no longer active */
 			if (codec->active == 0) {
-				dbg("pop wq D3 %s %s\n", codec->name,
-					codec_dai->playback.stream_name);
+				pr_debug("pop wq D3 %s %s\n", codec->name,
+					 codec_dai->playback.stream_name);
 				snd_soc_dapm_set_bias_level(socdev,
 					SND_SOC_BIAS_STANDBY);
 			}
@@ -428,51 +421,42 @@ static int soc_pcm_prepare(struct snd_pcm_substream *substream)
 		}
 	}
 
-	/* we only want to start a DAPM playback stream if we are not waiting
-	 * on an existing one stopping */
-	if (codec_dai->pop_wait) {
-		/* we are waiting for the delayed work to start */
-		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-				snd_soc_dapm_stream_event(socdev->codec,
+	/* cancel any delayed stream shutdown that is pending */
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    codec_dai->pop_wait) {
+		codec_dai->pop_wait = 0;
+		cancel_delayed_work(&socdev->delayed_work);
+	}
+
+	/* do we need to power up codec */
+	if (codec->bias_level != SND_SOC_BIAS_ON) {
+		snd_soc_dapm_set_bias_level(socdev,
+					    SND_SOC_BIAS_PREPARE);
+
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			snd_soc_dapm_stream_event(codec,
+					codec_dai->playback.stream_name,
+					SND_SOC_DAPM_STREAM_START);
+		else
+			snd_soc_dapm_stream_event(codec,
 					codec_dai->capture.stream_name,
 					SND_SOC_DAPM_STREAM_START);
-		else {
-			codec_dai->pop_wait = 0;
-			cancel_delayed_work(&socdev->delayed_work);
-			snd_soc_dai_digital_mute(codec_dai, 0);
-		}
+
+		snd_soc_dapm_set_bias_level(socdev, SND_SOC_BIAS_ON);
+		snd_soc_dai_digital_mute(codec_dai, 0);
+
 	} else {
-		/* no delayed work - do we need to power up codec */
-		if (codec->bias_level != SND_SOC_BIAS_ON) {
-
-			snd_soc_dapm_set_bias_level(socdev,
-						    SND_SOC_BIAS_PREPARE);
-
-			if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-				snd_soc_dapm_stream_event(codec,
+		/* codec already powered - power on widgets */
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			snd_soc_dapm_stream_event(codec,
 					codec_dai->playback.stream_name,
 					SND_SOC_DAPM_STREAM_START);
-			else
-				snd_soc_dapm_stream_event(codec,
+		else
+			snd_soc_dapm_stream_event(codec,
 					codec_dai->capture.stream_name,
 					SND_SOC_DAPM_STREAM_START);
 
-			snd_soc_dapm_set_bias_level(socdev, SND_SOC_BIAS_ON);
-			snd_soc_dai_digital_mute(codec_dai, 0);
-
-		} else {
-			/* codec already powered - power on widgets */
-			if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-				snd_soc_dapm_stream_event(codec,
-					codec_dai->playback.stream_name,
-					SND_SOC_DAPM_STREAM_START);
-			else
-				snd_soc_dapm_stream_event(codec,
-					codec_dai->capture.stream_name,
-					SND_SOC_DAPM_STREAM_START);
-
-			snd_soc_dai_digital_mute(codec_dai, 0);
-		}
+		snd_soc_dai_digital_mute(codec_dai, 0);
 	}
 
 out:
@@ -961,10 +945,8 @@ static int soc_new_pcm(struct snd_soc_device *socdev,
 }
 
 /* codec register dump */
-static ssize_t codec_reg_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
+static ssize_t soc_codec_reg_show(struct snd_soc_device *devdata, char *buf)
 {
-	struct snd_soc_device *devdata = dev_get_drvdata(dev);
 	struct snd_soc_codec *codec = devdata->codec;
 	int i, step = 1, count = 0;
 
@@ -1001,7 +983,116 @@ static ssize_t codec_reg_show(struct device *dev,
 
 	return count;
 }
+static ssize_t codec_reg_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct snd_soc_device *devdata = dev_get_drvdata(dev);
+	return soc_codec_reg_show(devdata, buf);
+}
+
 static DEVICE_ATTR(codec_reg, 0444, codec_reg_show, NULL);
+
+#ifdef CONFIG_DEBUG_FS
+static int codec_reg_open_file(struct inode *inode, struct file *file)
+{
+	file->private_data = inode->i_private;
+	return 0;
+}
+
+static ssize_t codec_reg_read_file(struct file *file, char __user *user_buf,
+			       size_t count, loff_t *ppos)
+{
+	ssize_t ret;
+	struct snd_soc_device *devdata = file->private_data;
+	char *buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+	ret = soc_codec_reg_show(devdata, buf);
+	if (ret >= 0)
+		ret = simple_read_from_buffer(user_buf, count, ppos, buf, ret);
+	kfree(buf);
+	return ret;
+}
+
+static ssize_t codec_reg_write_file(struct file *file,
+		const char __user *user_buf, size_t count, loff_t *ppos)
+{
+	char buf[32];
+	int buf_size;
+	char *start = buf;
+	unsigned long reg, value;
+	int step = 1;
+	struct snd_soc_device *devdata = file->private_data;
+	struct snd_soc_codec *codec = devdata->codec;
+
+	buf_size = min(count, (sizeof(buf)-1));
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
+	buf[buf_size] = 0;
+
+	if (codec->reg_cache_step)
+		step = codec->reg_cache_step;
+
+	while (*start == ' ')
+		start++;
+	reg = simple_strtoul(start, &start, 16);
+	if ((reg >= codec->reg_cache_size) || (reg % step))
+		return -EINVAL;
+	while (*start == ' ')
+		start++;
+	if (strict_strtoul(start, 16, &value))
+		return -EINVAL;
+	codec->write(codec, reg, value);
+	return buf_size;
+}
+
+static const struct file_operations codec_reg_fops = {
+	.open = codec_reg_open_file,
+	.read = codec_reg_read_file,
+	.write = codec_reg_write_file,
+};
+
+static void soc_init_debugfs(struct snd_soc_device *socdev)
+{
+	struct dentry *root, *file;
+	struct snd_soc_codec *codec = socdev->codec;
+	root = debugfs_create_dir(dev_name(socdev->dev), NULL);
+	if (IS_ERR(root) || !root)
+		goto exit1;
+
+	file = debugfs_create_file("codec_reg", 0644,
+			root, socdev, &codec_reg_fops);
+	if (!file)
+		goto exit2;
+
+	file = debugfs_create_u32("dapm_pop_time", 0744,
+			root, &codec->pop_time);
+	if (!file)
+		goto exit2;
+	socdev->debugfs_root = root;
+	return;
+exit2:
+	debugfs_remove_recursive(root);
+exit1:
+	dev_err(socdev->dev, "debugfs is not available\n");
+}
+
+static void soc_cleanup_debugfs(struct snd_soc_device *socdev)
+{
+	debugfs_remove_recursive(socdev->debugfs_root);
+	socdev->debugfs_root = NULL;
+}
+
+#else
+
+static inline void soc_init_debugfs(struct snd_soc_device *socdev)
+{
+}
+
+static inline void soc_cleanup_debugfs(struct snd_soc_device *socdev)
+{
+}
+#endif
 
 /**
  * snd_soc_new_ac97_codec - initailise AC97 device
@@ -1216,6 +1307,7 @@ int snd_soc_register_card(struct snd_soc_device *socdev)
 	if (err < 0)
 		printk(KERN_WARNING "asoc: failed to add codec sysfs files\n");
 
+	soc_init_debugfs(socdev);
 	mutex_unlock(&codec->mutex);
 
 out:
@@ -1239,6 +1331,7 @@ void snd_soc_free_pcms(struct snd_soc_device *socdev)
 #endif
 
 	mutex_lock(&codec->mutex);
+	soc_cleanup_debugfs(socdev);
 #ifdef CONFIG_SND_SOC_AC97_BUS
 	for (i = 0; i < codec->num_dai; i++) {
 		codec_dai = &codec->dai[i];
