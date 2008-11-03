@@ -130,6 +130,7 @@ enum {
 	ALC269_QUANTA_FL1,
 	ALC269_ASUS_EEEPC_P703,
 	ALC269_ASUS_EEEPC_P901,
+	ALC269_FUJITSU,
 	ALC269_AUTO,
 	ALC269_MODEL_LAST /* last tag */
 };
@@ -1726,6 +1727,7 @@ static const char *alc_slave_vols[] = {
 	"Speaker Playback Volume",
 	"Mono Playback Volume",
 	"Line-Out Playback Volume",
+	"PCM Playback Volume",
 	NULL,
 };
 
@@ -5616,6 +5618,19 @@ static int patch_alc260(struct hda_codec *codec)
 	spec->stream_digital_playback = &alc260_pcm_digital_playback;
 	spec->stream_digital_capture = &alc260_pcm_digital_capture;
 
+	if (!spec->adc_nids && spec->input_mux) {
+		/* check whether NID 0x04 is valid */
+		unsigned int wcap = get_wcaps(codec, 0x04);
+		wcap = (wcap & AC_WCAP_TYPE) >> AC_WCAP_TYPE_SHIFT;
+		/* get type */
+		if (wcap != AC_WID_AUD_IN || spec->input_mux->num_items == 1) {
+			spec->adc_nids = alc260_adc_nids_alt;
+			spec->num_adc_nids = ARRAY_SIZE(alc260_adc_nids_alt);
+		} else {
+			spec->adc_nids = alc260_adc_nids;
+			spec->num_adc_nids = ARRAY_SIZE(alc260_adc_nids);
+		}
+	}
 	set_capture_mixer(spec);
 
 	spec->vmaster_nid = 0x08;
@@ -11663,6 +11678,15 @@ static struct snd_kcontrol_new alc269_eeepc_mixer[] = {
 static struct snd_kcontrol_new alc269_epc_capture_mixer[] = {
 	HDA_CODEC_VOLUME("Capture Volume", 0x08, 0x0, HDA_INPUT),
 	HDA_CODEC_MUTE("Capture Switch", 0x08, 0x0, HDA_INPUT),
+	HDA_CODEC_VOLUME("Mic Boost", 0x18, 0, HDA_INPUT),
+	{ } /* end */
+};
+
+/* FSC amilo */
+static struct snd_kcontrol_new alc269_fujitsu_mixer[] = {
+	HDA_CODEC_MUTE("Speaker Playback Switch", 0x14, 0x0, HDA_OUTPUT),
+	HDA_CODEC_MUTE("Headphone Playback Switch", 0x15, 0x0, HDA_OUTPUT),
+	HDA_BIND_VOL("PCM Playback Volume", &alc269_epc_bind_vol),
 	{ } /* end */
 };
 
@@ -12085,7 +12109,8 @@ static const char *alc269_models[ALC269_MODEL_LAST] = {
 	[ALC269_BASIC]			= "basic",
 	[ALC269_QUANTA_FL1]		= "quanta",
 	[ALC269_ASUS_EEEPC_P703]	= "eeepc-p703",
-	[ALC269_ASUS_EEEPC_P901]	= "eeepc-p901"
+	[ALC269_ASUS_EEEPC_P901]	= "eeepc-p901",
+	[ALC269_FUJITSU]		= "fujitsu"
 };
 
 static struct snd_pci_quirk alc269_cfg_tbl[] = {
@@ -12096,6 +12121,7 @@ static struct snd_pci_quirk alc269_cfg_tbl[] = {
 		      ALC269_ASUS_EEEPC_P901),
 	SND_PCI_QUIRK(0x1043, 0x834a, "ASUS Eeepc S101",
 		      ALC269_ASUS_EEEPC_P901),
+	SND_PCI_QUIRK(0x1734, 0x115d, "FSC Amilo", ALC269_FUJITSU),
 	{}
 };
 
@@ -12138,6 +12164,20 @@ static struct alc_config_preset alc269_presets[] = {
 	},
 	[ALC269_ASUS_EEEPC_P901] = {
 		.mixers = { alc269_eeepc_mixer },
+		.cap_mixer = alc269_epc_capture_mixer,
+		.init_verbs = { alc269_init_verbs,
+				alc269_eeepc_dmic_init_verbs },
+		.num_dacs = ARRAY_SIZE(alc269_dac_nids),
+		.dac_nids = alc269_dac_nids,
+		.hp_nid = 0x03,
+		.num_channel_mode = ARRAY_SIZE(alc269_modes),
+		.channel_mode = alc269_modes,
+		.input_mux = &alc269_eeepc_dmic_capture_source,
+		.unsol_event = alc269_eeepc_dmic_unsol_event,
+		.init_hook = alc269_eeepc_dmic_inithook,
+	},
+	[ALC269_FUJITSU] = {
+		.mixers = { alc269_fujitsu_mixer, alc269_beep_mixer },
 		.cap_mixer = alc269_epc_capture_mixer,
 		.init_verbs = { alc269_init_verbs,
 				alc269_eeepc_dmic_init_verbs },
