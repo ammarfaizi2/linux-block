@@ -78,6 +78,7 @@ struct cs5535audio_dma {
 	unsigned int buf_addr, buf_bytes;
 	unsigned int period_bytes, periods;
 	u32 saved_prd;
+	int pcm_open_flag;
 };
 
 struct cs5535audio {
@@ -93,8 +94,11 @@ struct cs5535audio {
 	struct cs5535audio_dma dmas[NUM_CS5535AUDIO_DMAS];
 };
 
+#ifdef CONFIG_PM
 int snd_cs5535audio_suspend(struct pci_dev *pci, pm_message_t state);
 int snd_cs5535audio_resume(struct pci_dev *pci);
+#endif
+
 int __devinit snd_cs5535audio_pcm(struct cs5535audio *cs5535audio);
 
 #endif /* __SOUND_CS5535AUDIO_H */
