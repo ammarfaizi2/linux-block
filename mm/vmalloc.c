@@ -178,7 +178,7 @@ static int vmap_page_range(unsigned long addr, unsigned long end,
 static inline int is_vmalloc_or_module_addr(const void *x)
 {
 	/*
-	 * x86-64 and sparc64 put modules in a special place,
+	 * ARM, x86-64 and sparc64 put modules in a special place,
 	 * and fall back on vmalloc() if that fails. Others
 	 * just put it in the vmalloc space.
 	 */
@@ -897,7 +897,8 @@ EXPORT_SYMBOL(vm_unmap_ram);
  * @count: number of pages
  * @node: prefer to allocate data structures on this node
  * @prot: memory protection to use. PAGE_KERNEL for regular RAM
- * @returns: a pointer to the address that has been mapped, or NULL on failure
+ *
+ * Returns: a pointer to the address that has been mapped, or %NULL on failure
  */
 void *vm_map_ram(struct page **pages, unsigned int count, int node, pgprot_t prot)
 {
