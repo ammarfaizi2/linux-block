@@ -501,6 +501,7 @@ config SND_HDA_INTEL
 	tristate "Intel HD Audio"
 	select SND_PCM
 	select SND_VMASTER
+	select SND_JACK if INPUT=y || INPUT=SND
 	help
 	  Say Y here to include support for Intel "High Definition
 	  Audio" (Azalia) motherboard devices.
@@ -572,6 +573,14 @@ config SND_HDA_CODEC_NVHDMI
 	help
 	  Say Y here to include NVIDIA HDMI HD-audio codec support in
 	  snd-hda-intel driver, such as NVIDIA MCP78 HDMI.
+
+config SND_HDA_CODEC_INTELHDMI
+	bool "Build INTEL HDMI HD-audio codec support"
+	depends on SND_HDA_INTEL
+	default y
+	help
+	  Say Y here to include INTEL HDMI HD-audio codec support in
+	  snd-hda-intel driver, such as Eaglelake integrated HDMI.
 
 config SND_HDA_CODEC_CONEXANT
 	bool "Build Conexant HD-audio codec support"
