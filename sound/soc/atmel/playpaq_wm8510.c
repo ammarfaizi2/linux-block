@@ -22,7 +22,6 @@
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
-#include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/clk.h>
@@ -40,8 +39,8 @@
 #include <mach/portmux.h>
 
 #include "../codecs/wm8510.h"
-#include "at32-pcm.h"
-#include "at32-ssc.h"
+#include "atmel-pcm.h"
+#include "atmel_ssc_dai.h"
 
 
 /*-------------------------------------------------------------------------*\
