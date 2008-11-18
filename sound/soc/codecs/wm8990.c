@@ -106,6 +106,7 @@ static const u16 wm8990_reg[] = {
 	0x0008,     /* R60 - PLL1 */
 	0x0031,     /* R61 - PLL2 */
 	0x0026,     /* R62 - PLL3 */
+	0x0000,	    /* R63 - Driver internal */
 };
 
 /*
@@ -126,10 +127,9 @@ static inline void wm8990_write_reg_cache(struct snd_soc_codec *codec,
 	unsigned int reg, unsigned int value)
 {
 	u16 *cache = codec->reg_cache;
-	BUG_ON(reg > (ARRAY_SIZE(wm8990_reg)) - 1);
 
-	/* Reset register is uncached */
-	if (reg == 0)
+	/* Reset register and reserved registers are uncached */
+	if (reg == 0 || reg > ARRAY_SIZE(wm8990_reg) - 1)
 		return;
 
 	cache[reg] = value;
@@ -1222,8 +1222,14 @@ static int wm8990_set_bias_level(struct snd_soc_codec *codec,
 	switch (level) {
 	case SND_SOC_BIAS_ON:
 		break;
+
 	case SND_SOC_BIAS_PREPARE:
+		/* VMID=2*50k */
+		val = wm8990_read_reg_cache(codec, WM8990_POWER_MANAGEMENT_1) &
+			~WM8990_VMID_MODE_MASK;
+		wm8990_write(codec, WM8990_POWER_MANAGEMENT_1, val | 0x2);
 		break;
+
 	case SND_SOC_BIAS_STANDBY:
 		if (codec->bias_level == SND_SOC_BIAS_OFF) {
 			/* Enable all output discharge bits */
@@ -1272,10 +1278,17 @@ static int wm8990_set_bias_level(struct snd_soc_codec *codec,
 
 			/* disable POBCTRL, SOFT_ST and BUFDCOPEN */
 			wm8990_write(codec, WM8990_ANTIPOP2, WM8990_BUFIOEN);
-		} else {
-			/* ON -> standby */
 
+			/* Enable workaround for ADC clocking issue. */
+			wm8990_write(codec, WM8990_EXT_ACCESS_ENA, 0x2);
+			wm8990_write(codec, WM8990_EXT_CTL1, 0xa003);
+			wm8990_write(codec, WM8990_EXT_ACCESS_ENA, 0);
 		}
+
+		/* VMID=2*250k */
+		val = wm8990_read_reg_cache(codec, WM8990_POWER_MANAGEMENT_1) &
+			~WM8990_VMID_MODE_MASK;
+		wm8990_write(codec, WM8990_POWER_MANAGEMENT_1, val | 0x4);
 		break;
 
 	case SND_SOC_BIAS_OFF:
