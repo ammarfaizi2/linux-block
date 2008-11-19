@@ -118,7 +118,7 @@ static char *cea_audio_coding_type_names[] = {
 	/*  6 */ "AAC-LC",
 	/*  7 */ "DTS",
 	/*  8 */ "ATRAC",
-	/*  9 */ "DSD (1-bit audio)",
+	/*  9 */ "DSD (One Bit Audio)",
 	/* 10 */ "E-AC-3/DD+ (Dolby Digital Plus)",
 	/* 11 */ "DTS-HD",
 	/* 12 */ "MLP (Dolby TrueHD)",
@@ -132,7 +132,7 @@ static char *cea_audio_coding_type_names[] = {
 /*
  * The following two lists are shared between
  * 	- HDMI audio InfoFrame (source to sink)
- * 	- CEA E-EDID extension (sink to source)
+ * 	- CEA E-EDID Extension (sink to source)
  */
 
 /*
@@ -267,8 +267,8 @@ static void hdmi_update_short_audio_desc(struct cea_sad *a,
 /*
  * Be careful, ELD buf could be totally rubbish!
  */
-static int hdmi_update_sink_eld(struct sink_eld *e,
-				const unsigned char *buf, int size)
+static int hdmi_update_eld(struct hdmi_eld *e,
+			   const unsigned char *buf, int size)
 {
 	int mnl;
 	int i;
@@ -351,7 +351,7 @@ int snd_hdmi_get_eld_size(struct hda_codec *codec, hda_nid_t nid)
 						 AC_DIPSIZE_ELD_BUF);
 }
 
-int snd_hdmi_get_eld(struct sink_eld *eld,
+int snd_hdmi_get_eld(struct hdmi_eld *eld,
 		     struct hda_codec *codec, hda_nid_t nid)
 {
 	int i;
@@ -380,7 +380,7 @@ int snd_hdmi_get_eld(struct sink_eld *eld,
 	for (i = 0; i < size; i++)
 		buf[i] = hdmi_get_eld_byte(codec, nid, i);
 
-	ret = hdmi_update_sink_eld(eld, buf, size);
+	ret = hdmi_update_eld(eld, buf, size);
 
 	kfree(buf);
 	return ret;
@@ -389,22 +389,27 @@ int snd_hdmi_get_eld(struct sink_eld *eld,
 static void hdmi_show_short_audio_desc(struct cea_sad *a)
 {
 	char buf[SND_PRINT_RATES_ADVISED_BUFSIZE];
+	char buf2[8 + SND_PRINT_BITS_ADVISED_BUFSIZE] = ", bits =";
 
-	printk(KERN_INFO "coding type: %s\n",
-					cea_audio_coding_type_names[a->format]);
-	printk(KERN_INFO "channels: %d\n", a->channels);
+	if (!a->format)
+		return;
 
 	snd_print_pcm_rates(a->rates, buf, sizeof(buf));
-	printk(KERN_INFO "sampling frequencies: %s\n", buf);
 
 	if (a->format == AUDIO_CODING_TYPE_LPCM)
-		printk(KERN_INFO "sample bits: 0x%x\n", a->sample_bits);
+		snd_print_pcm_rates(a->sample_bits, buf2 + 8, sizeof(buf2 - 8));
+	else if (a->max_bitrate)
+		snprintf(buf2, sizeof(buf2),
+				", max bitrate = %d", a->max_bitrate);
+	else
+		buf2[0] = '\0';
 
-	if (a->max_bitrate)
-		printk(KERN_INFO "max bitrate: %d\n", a->max_bitrate);
-
-	if (a->profile)
-		printk(KERN_INFO "profile: %d\n", a->profile);
+	printk(KERN_INFO "supports coding type %s:"
+			" channels = %d, rates =%s%s\n",
+			cea_audio_coding_type_names[a->format],
+			a->channels,
+			buf,
+			buf2);
 }
 
 void snd_print_channel_allocation(int spk_alloc, char *buf, int buflen)
@@ -413,40 +418,25 @@ void snd_print_channel_allocation(int spk_alloc, char *buf, int buflen)
 
 	for (i = 0, j = 0; i < ARRAY_SIZE(cea_speaker_allocation_names); i++) {
 		if (spk_alloc & (1 << i))
-			j += snprintf(buf + j, buflen - j,  "%s ",
+			j += snprintf(buf + j, buflen - j,  " %s",
 					cea_speaker_allocation_names[i]);
 	}
-	if (j)
-		j--;	/* skip last space */
 	buf[j] = '\0';	/* necessary when j == 0 */
 }
 
-void snd_hdmi_show_eld(struct sink_eld *e)
+void snd_hdmi_show_eld(struct hdmi_eld *e)
 {
 	int i;
-	char buf[SND_PRINT_CHANNEL_ALLOCATION_ADVISED_BUFSIZE];
 
-	printk(KERN_INFO "ELD buffer size  is %d\n", e->eld_size);
-	printk(KERN_INFO "ELD baseline len is %d*4\n", e->baseline_len);
-	printk(KERN_INFO "vendor block len is %d\n",
-					e->eld_size - e->baseline_len * 4 - 4);
-	printk(KERN_INFO "ELD version      is %s\n",
-					eld_versoin_names[e->eld_ver]);
-	printk(KERN_INFO "CEA EDID version is %s\n",
-				cea_edid_version_names[e->cea_edid_ver]);
-	printk(KERN_INFO "manufacture id   is 0x%x\n", e->manufacture_id);
-	printk(KERN_INFO "product id       is 0x%x\n", e->product_id);
-	printk(KERN_INFO "port id          is 0x%llx\n", (long long)e->port_id);
-	printk(KERN_INFO "HDCP support     is %d\n", e->support_hdcp);
-	printk(KERN_INFO "AI support       is %d\n", e->support_ai);
-	printk(KERN_INFO "SAD count        is %d\n", e->sad_count);
-	printk(KERN_INFO "audio sync delay is %x\n", e->aud_synch_delay);
-	printk(KERN_INFO "connection type  is %s\n",
-				eld_connection_type_names[e->conn_type]);
-	printk(KERN_INFO "monitor name     is %s\n", e->monitor_name);
+	printk(KERN_INFO "detected monitor %s at connection type %s\n",
+			e->monitor_name,
+			eld_connection_type_names[e->conn_type]);
 
-	snd_print_channel_allocation(e->spk_alloc, buf, sizeof(buf));
-	printk(KERN_INFO "speaker allocations: (0x%x)%s\n", e->spk_alloc, buf);
+	if (e->spk_alloc) {
+		char buf[SND_PRINT_CHANNEL_ALLOCATION_ADVISED_BUFSIZE];
+		snd_print_channel_allocation(e->spk_alloc, buf, sizeof(buf));
+		printk(KERN_INFO "available speakers:%s\n", buf);
+	}
 
 	for (i = 0; i < e->sad_count; i++)
 		hdmi_show_short_audio_desc(e->sad + i);
@@ -457,19 +447,20 @@ void snd_hdmi_show_eld(struct sink_eld *e)
 static void hdmi_print_sad_info(int i, struct cea_sad *a,
 				struct snd_info_buffer *buffer)
 {
-	char buf[80];
+	char buf[SND_PRINT_RATES_ADVISED_BUFSIZE];
 
 	snd_iprintf(buffer, "sad%d_coding_type\t[0x%x] %s\n",
 			i, a->format, cea_audio_coding_type_names[a->format]);
 	snd_iprintf(buffer, "sad%d_channels\t\t%d\n", i, a->channels);
 
 	snd_print_pcm_rates(a->rates, buf, sizeof(buf));
-	snd_iprintf(buffer, "sad%d_sampling_rates\t[0x%x] %s\n",
-			i, a->rates, buf);
+	snd_iprintf(buffer, "sad%d_rates\t\t[0x%x]%s\n", i, a->rates, buf);
 
-	if (a->format == AUDIO_CODING_TYPE_LPCM)
-		snd_iprintf(buffer, "sad%d_sample_bits\t0x%x\n",
-							i, a->sample_bits);
+	if (a->format == AUDIO_CODING_TYPE_LPCM) {
+		snd_print_pcm_bits(a->sample_bits, buf, sizeof(buf));
+		snd_iprintf(buffer, "sad%d_bits\t\t[0x%x]%s\n",
+							i, a->sample_bits, buf);
+	}
 
 	if (a->max_bitrate)
 		snd_iprintf(buffer, "sad%d_max_bitrate\t%d\n",
@@ -482,7 +473,7 @@ static void hdmi_print_sad_info(int i, struct cea_sad *a,
 static void hdmi_print_eld_info(struct snd_info_entry *entry,
 				struct snd_info_buffer *buffer)
 {
-	struct sink_eld *e = entry->private_data;
+	struct hdmi_eld *e = entry->private_data;
 	char buf[SND_PRINT_CHANNEL_ALLOCATION_ADVISED_BUFSIZE];
 	int i;
 
@@ -501,7 +492,7 @@ static void hdmi_print_eld_info(struct snd_info_entry *entry,
 	snd_iprintf(buffer, "audio_sync_delay\t%d\n", e->aud_synch_delay);
 
 	snd_print_channel_allocation(e->spk_alloc, buf, sizeof(buf));
-	snd_iprintf(buffer, "speakers\t\t[0x%x] %s\n", e->spk_alloc, buf);
+	snd_iprintf(buffer, "speakers\t\t[0x%x]%s\n", e->spk_alloc, buf);
 
 	snd_iprintf(buffer, "sad_count\t\t%d\n", e->sad_count);
 
@@ -509,7 +500,7 @@ static void hdmi_print_eld_info(struct snd_info_entry *entry,
 		hdmi_print_sad_info(i, e->sad + i, buffer);
 }
 
-int snd_hda_eld_proc_new(struct hda_codec *codec, struct sink_eld *eld)
+int snd_hda_eld_proc_new(struct hda_codec *codec, struct hdmi_eld *eld)
 {
 	char name[32];
 	struct snd_info_entry *entry;
