@@ -38,7 +38,8 @@
 #include "../codecs/twl4030.h"
 
 static int omap2evm_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params)
+	struct snd_pcm_hw_params *params,
+	struct snd_soc_dai *dai)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_dai *codec_dai = rtd->dai->codec_dai;
@@ -90,7 +91,7 @@ static struct snd_soc_dai_link omap2evm_dai = {
 };
 
 /* Audio machine driver */
-static struct snd_soc_machine snd_soc_machine_omap2evm = {
+static struct snd_soc_card snd_soc_omap2evm = {
 	.name = "omap2evm",
 	.dai_link = &omap2evm_dai,
 	.num_links = 1,
@@ -98,7 +99,7 @@ static struct snd_soc_machine snd_soc_machine_omap2evm = {
 
 /* Audio subsystem */
 static struct snd_soc_device omap2evm_snd_devdata = {
-	.machine = &snd_soc_machine_omap2evm,
+	.card = &snd_soc_omap2evm,
 	.platform = &omap_soc_platform,
 	.codec_dev = &soc_codec_dev_twl4030,
 };
