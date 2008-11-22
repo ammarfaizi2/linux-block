@@ -32,28 +32,12 @@ enum eld_versions {
 	ELD_VER_PARTIAL		= 31,
 };
 
-static char *eld_versoin_names[32] = {
-	"reserved",
-	"reserved",
-	"CEA-861D or below",
-	[3 ... 30] = "reserved",
-	[31] = "partial"
-};
-
 enum cea_edid_versions {
 	CEA_EDID_VER_NONE	= 0,
 	CEA_EDID_VER_CEA861	= 1,
 	CEA_EDID_VER_CEA861A	= 2,
 	CEA_EDID_VER_CEA861BCD	= 3,
 	CEA_EDID_VER_RESERVED	= 4,
-};
-
-static char *cea_edid_version_names[8] = {
-	"no CEA EDID Timing Extension block present",
-	"CEA-861",
-	"CEA-861-A",
-	"CEA-861-B, C or D",
-	[4 ... 7] = "reserved"
 };
 
 static char *cea_speaker_allocation_names[] = {
@@ -72,7 +56,7 @@ static char *cea_speaker_allocation_names[] = {
 
 static char *eld_connection_type_names[4] = {
 	"HDMI",
-	"Display Port",
+	"DisplayPort",
 	"2-reserved",
 	"3-reserved"
 };
@@ -168,11 +152,11 @@ static unsigned char hdmi_get_eld_byte(struct hda_codec *codec, hda_nid_t nid,
 					AC_VERB_GET_HDMI_ELDD, byte_index);
 
 #ifdef BE_PARANOID
-	printk(KERN_INFO "ELD data byte %d: 0x%x\n", byte_index, val);
+	printk(KERN_INFO "HDMI: ELD data byte %d: 0x%x\n", byte_index, val);
 #endif
 
 	if ((val & AC_ELDD_ELD_VALID) == 0) {
-		snd_printd(KERN_INFO "Invalid ELD data byte %d\n",
+		snd_printd(KERN_INFO "HDMI: invalid ELD data byte %d\n",
 								byte_index);
 		val = 0;
 	}
@@ -208,7 +192,7 @@ static void hdmi_update_short_audio_desc(struct cea_sad *a,
 	switch (a->format) {
 	case AUDIO_CODING_TYPE_REF_STREAM_HEADER:
 		snd_printd(KERN_INFO
-				"audio coding type 0 not expected in ELD\n");
+				"HDMI: audio coding type 0 not expected\n");
 		break;
 
 	case AUDIO_CODING_TYPE_LPCM:
@@ -254,7 +238,7 @@ static void hdmi_update_short_audio_desc(struct cea_sad *a,
 		if (a->format == AUDIO_CODING_XTYPE_HE_REF_CT ||
 		    a->format >= AUDIO_CODING_XTYPE_FIRST_RESERVED) {
 			snd_printd(KERN_INFO
-				"audio coding xtype %d not expected in ELD\n",
+				"HDMI: audio coding xtype %d not expected\n",
 				a->format);
 			a->format = 0;
 		} else
@@ -276,7 +260,8 @@ static int hdmi_update_eld(struct hdmi_eld *e,
 	e->eld_ver = GRAB_BITS(buf, 0, 3, 5);
 	if (e->eld_ver != ELD_VER_CEA_861D &&
 	    e->eld_ver != ELD_VER_PARTIAL) {
-		snd_printd(KERN_INFO "Unknown ELD version %d\n", e->eld_ver);
+		snd_printd(KERN_INFO "HDMI: Unknown ELD version %d\n",
+								e->eld_ver);
 		goto out_fail;
 	}
 
@@ -300,17 +285,17 @@ static int hdmi_update_eld(struct hdmi_eld *e,
 	e->product_id	  = get_unaligned_le16(buf + 18);
 
 	if (mnl > ELD_MAX_MNL) {
-		snd_printd(KERN_INFO "MNL is reserved value %d\n", mnl);
+		snd_printd(KERN_INFO "HDMI: MNL is reserved value %d\n", mnl);
 		goto out_fail;
 	} else if (ELD_FIXED_BYTES + mnl > size) {
-		snd_printd(KERN_INFO "out of range MNL %d\n", mnl);
+		snd_printd(KERN_INFO "HDMI: out of range MNL %d\n", mnl);
 		goto out_fail;
 	} else
 		strlcpy(e->monitor_name, buf + ELD_FIXED_BYTES, mnl);
 
 	for (i = 0; i < e->sad_count; i++) {
 		if (ELD_FIXED_BYTES + mnl + 3 * (i + 1) > size) {
-			snd_printd(KERN_INFO "out of range SAD %d\n", i);
+			snd_printd(KERN_INFO "HDMI: out of range SAD %d\n", i);
 			goto out_fail;
 		}
 		hdmi_update_short_audio_desc(e->sad + i,
@@ -339,7 +324,8 @@ static int hdmi_eld_valid(struct hda_codec *codec, hda_nid_t nid)
 	present = (present & AC_PINSENSE_PRESENCE);
 
 #ifdef CONFIG_SND_DEBUG_VERBOSE
-	printk(KERN_INFO "pinp = %d, eldv = %d\n", !!present, !!eldv);
+	printk(KERN_INFO "HDMI: sink_present = %d, eld_valid = %d\n",
+			!!present, !!eldv);
 #endif
 
 	return eldv && present;
@@ -365,11 +351,11 @@ int snd_hdmi_get_eld(struct hdmi_eld *eld,
 	size = snd_hdmi_get_eld_size(codec, nid);
 	if (size == 0) {
 		/* wfg: workaround for ASUS P5E-VM HDMI board */
-		snd_printd(KERN_INFO "ELD buf size is 0, force 128\n");
+		snd_printd(KERN_INFO "HDMI: ELD buf size is 0, force 128\n");
 		size = 128;
 	}
 	if (size < ELD_FIXED_BYTES || size > PAGE_SIZE) {
-		snd_printd(KERN_INFO "Invalid ELD buf size %d\n", size);
+		snd_printd(KERN_INFO "HDMI: invalid ELD buf size %d\n", size);
 		return -ERANGE;
 	}
 
@@ -404,7 +390,7 @@ static void hdmi_show_short_audio_desc(struct cea_sad *a)
 	else
 		buf2[0] = '\0';
 
-	printk(KERN_INFO "supports coding type %s:"
+	printk(KERN_INFO "HDMI: supports coding type %s:"
 			" channels = %d, rates =%s%s\n",
 			cea_audio_coding_type_names[a->format],
 			a->channels,
@@ -428,14 +414,14 @@ void snd_hdmi_show_eld(struct hdmi_eld *e)
 {
 	int i;
 
-	printk(KERN_INFO "detected monitor %s at connection type %s\n",
+	printk(KERN_INFO "HDMI: detected monitor %s at connection type %s\n",
 			e->monitor_name,
 			eld_connection_type_names[e->conn_type]);
 
 	if (e->spk_alloc) {
 		char buf[SND_PRINT_CHANNEL_ALLOCATION_ADVISED_BUFSIZE];
 		snd_print_channel_allocation(e->spk_alloc, buf, sizeof(buf));
-		printk(KERN_INFO "available speakers:%s\n", buf);
+		printk(KERN_INFO "HDMI: available speakers:%s\n", buf);
 	}
 
 	for (i = 0; i < e->sad_count; i++)
@@ -476,6 +462,20 @@ static void hdmi_print_eld_info(struct snd_info_entry *entry,
 	struct hdmi_eld *e = entry->private_data;
 	char buf[SND_PRINT_CHANNEL_ALLOCATION_ADVISED_BUFSIZE];
 	int i;
+	static char *eld_versoin_names[32] = {
+		"reserved",
+		"reserved",
+		"CEA-861D or below",
+		[3 ... 30] = "reserved",
+		[31] = "partial"
+	};
+	static char *cea_edid_version_names[8] = {
+		"no CEA EDID Timing Extension block present",
+		"CEA-861",
+		"CEA-861-A",
+		"CEA-861-B, C or D",
+		[4 ... 7] = "reserved"
+	};
 
 	snd_iprintf(buffer, "monitor_name\t\t%s\n", e->monitor_name);
 	snd_iprintf(buffer, "connection_type\t\t%s\n",
@@ -500,7 +500,7 @@ static void hdmi_print_eld_info(struct snd_info_entry *entry,
 		hdmi_print_sad_info(i, e->sad + i, buffer);
 }
 
-static void hdmi_write_eld_item(struct snd_info_entry *entry,
+static void hdmi_write_eld_info(struct snd_info_entry *entry,
 				struct snd_info_buffer *buffer)
 {
 	struct hdmi_eld *e = entry->private_data;
@@ -513,6 +513,11 @@ static void hdmi_write_eld_item(struct snd_info_entry *entry,
 	while (!snd_info_get_line(buffer, line, sizeof(line))) {
 		if (sscanf(line, "%s %llx", name, &val) != 2)
 			continue;
+		/*
+		 * We don't allow modification to these fields:
+		 * 	monitor_name manufacture_id product_id
+		 * 	eld_version edid_version
+		 */
 		if (!strcmp(name, "connection_type"))
 			e->conn_type = val;
 		else if (!strcmp(name, "port_id"))
@@ -546,6 +551,8 @@ static void hdmi_write_eld_item(struct snd_info_entry *entry,
 				e->sad[n].sample_bits = val;
 			else if (!strcmp(sname, "_max_bitrate"))
 				e->sad[n].max_bitrate = val;
+			else if (!strcmp(sname, "_profile"))
+				e->sad[n].profile = val;
 			if (n >= e->sad_count)
 				e->sad_count = n + 1;
 		}
@@ -565,7 +572,7 @@ int snd_hda_eld_proc_new(struct hda_codec *codec, struct hdmi_eld *eld)
 		return err;
 
 	snd_info_set_text_ops(entry, eld, hdmi_print_eld_info);
-	entry->c.text.write = hdmi_write_eld_item;
+	entry->c.text.write = hdmi_write_eld_info;
 	entry->mode |= S_IWUSR;
 	eld->proc_entry = entry;
 

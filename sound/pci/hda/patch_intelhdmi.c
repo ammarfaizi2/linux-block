@@ -286,7 +286,7 @@ static void hdmi_set_channel_count(struct hda_codec *codec, int chs)
 					AC_VERB_SET_CVT_CHAN_COUNT, chs - 1);
 
 	if (chs != hdmi_get_channel_count(codec))
-		snd_printd(KERN_INFO "Channel count expect=%d, real=%d\n",
+		snd_printd(KERN_INFO "HDMI channel count: expect %d, get %d\n",
 					chs, hdmi_get_channel_count(codec));
 }
 
@@ -299,7 +299,7 @@ static void hdmi_debug_channel_mapping(struct hda_codec *codec)
 	for (i = 0; i < 8; i++) {
 		slot = snd_hda_codec_read(codec, CVT_NID, 0,
 						AC_VERB_GET_HDMI_CHAN_SLOT, i);
-		printk(KERN_DEBUG "ASP channel %d => slot %d\n",
+		printk(KERN_DEBUG "HDMI: ASP channel %d => slot %d\n",
 						slot >> 4, slot & 0x7);
 	}
 #endif
@@ -326,12 +326,12 @@ static void hdmi_debug_dip_size(struct hda_codec *codec)
 	int size;
 
 	size = snd_hdmi_get_eld_size(codec, PIN_NID);
-	printk(KERN_DEBUG "ELD buf size is %d\n", size);
+	printk(KERN_DEBUG "HDMI: ELD buf size is %d\n", size);
 
 	for (i = 0; i < 8; i++) {
 		size = snd_hda_codec_read(codec, PIN_NID, 0,
 						AC_VERB_GET_HDMI_DIP_SIZE, i);
-		printk(KERN_DEBUG "DIP GP[%d] buf size is %d\n", i, size);
+		printk(KERN_DEBUG "HDMI: DIP GP[%d] buf size is %d\n", i, size);
 	}
 #endif
 }
@@ -359,8 +359,8 @@ static void hdmi_clear_dip_buffers(struct hda_codec *codec)
 				break;
 		}
 		snd_printd(KERN_INFO
-				"DIP GP[%d] buf reported size=%d, written=%d\n",
-				i, size, j);
+			"HDMI: DIP GP[%d] buf reported size=%d, written=%d\n",
+			i, size, j);
 	}
 #endif
 }
@@ -431,7 +431,7 @@ static int hdmi_setup_channel_allocation(struct hda_codec *codec,
 	 * expand ELD's speaker allocation mask
 	 *
 	 * ELD tells the speaker mask in a compact(paired) form,
-	 * expand ELD's notions to match the ones used by audio infoframe.
+	 * expand ELD's notions to match the ones used by Audio InfoFrame.
 	 */
 	for (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) {
 		if (eld->spk_alloc & (1 << i))
@@ -444,14 +444,16 @@ static int hdmi_setup_channel_allocation(struct hda_codec *codec,
 		    (spk_mask & channel_allocations[i].spk_mask) ==
 				channel_allocations[i].spk_mask) {
 			ai->CA = channel_allocations[i].ca_index;
-			return 0;
+			break;
 		}
 	}
 
 	snd_print_channel_allocation(eld->spk_alloc, buf, sizeof(buf));
-	snd_printd(KERN_INFO "failed to setup channel allocation: %d of %s\n",
-			channels, buf);
-	return -1;
+	snd_printdd(KERN_INFO
+			"HDMI: select CA 0x%x for %d-channel allocation: %s\n",
+			ai->CA, channels, buf);
+
+	return ai->CA;
 }
 
 static void hdmi_setup_channel_mapping(struct hda_codec *codec,
@@ -496,7 +498,9 @@ static void hdmi_intrinsic_event(struct hda_codec *codec, unsigned int res)
 	int pind = !!(res & AC_UNSOL_RES_PD);
 	int eldv = !!(res & AC_UNSOL_RES_ELDV);
 
-	printk(KERN_INFO "HDMI intrinsic event: PD=%d ELDV=%d\n", pind, eldv);
+	printk(KERN_INFO
+		"HDMI hot plug event: Presence_Detect=%d ELD_Valid=%d\n",
+		pind, eldv);
 
 	if (pind && eldv) {
 		hdmi_parse_eld(codec);
@@ -510,13 +514,13 @@ static void hdmi_non_intrinsic_event(struct hda_codec *codec, unsigned int res)
 	int cp_state = !!(res & AC_UNSOL_RES_CP_STATE);
 	int cp_ready = !!(res & AC_UNSOL_RES_CP_READY);
 
-	printk(KERN_INFO "HDMI non-intrinsic event: "
-			"SUBTAG=0x%x CP_STATE=%d CP_READY=%d\n",
-			subtag,
-			cp_state,
-			cp_ready);
+	printk(KERN_INFO
+		"HDMI content protection event: SUBTAG=0x%x CP_STATE=%d CP_READY=%d\n",
+		subtag,
+		cp_state,
+		cp_ready);
 
-	/* who cares? */
+	/* TODO */
 	if (cp_state)
 		;
 	if (cp_ready)
@@ -530,9 +534,7 @@ static void intel_hdmi_unsol_event(struct hda_codec *codec, unsigned int res)
 	int subtag = (res & AC_UNSOL_RES_SUBTAG) >> AC_UNSOL_RES_SUBTAG_SHIFT;
 
 	if (tag != INTEL_HDMI_EVENT_TAG) {
-		snd_printd(KERN_INFO
-				"Unexpected HDMI unsolicited event tag 0x%x\n",
-				tag);
+		snd_printd(KERN_INFO "Unexpected HDMI event tag 0x%x\n", tag);
 		return;
 	}
 
@@ -592,8 +594,8 @@ static struct hda_pcm_stream intel_hdmi_pcm_playback = {
 	.channels_max = 8,
 	.nid = CVT_NID, /* NID to query formats and rates and setup streams */
 	.ops = {
-		.open = intel_hdmi_playback_pcm_open,
-		.close = intel_hdmi_playback_pcm_close,
+		.open    = intel_hdmi_playback_pcm_open,
+		.close   = intel_hdmi_playback_pcm_close,
 		.prepare = intel_hdmi_playback_pcm_prepare
 	},
 };
