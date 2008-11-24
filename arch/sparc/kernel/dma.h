@@ -12,3 +12,6 @@ void sbus_dma_sync_single_for_cpu(struct device *dev, dma_addr_t ba,
 				  size_t size, int direction);
 void sbus_dma_sync_single_for_device(struct device *dev, dma_addr_t ba,
 				     size_t size, int direction);
+
+int dma32_mmap_coherent(struct device *dev, struct vm_area_struct *vma,
+			void *cpu_addr, dma_addr_t handle, size_t size);

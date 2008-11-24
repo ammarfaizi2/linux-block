@@ -172,6 +172,7 @@ static const struct dma_ops dma32_dma_ops = {
 	.sync_single_for_device	= dma32_sync_single_for_device,
 	.sync_sg_for_cpu	= dma32_sync_sg_for_cpu,
 	.sync_sg_for_device	= dma32_sync_sg_for_device,
+	.mmap_coherent		= dma32_mmap_coherent,
 };
 
 const struct dma_ops *dma_ops = &dma32_dma_ops;

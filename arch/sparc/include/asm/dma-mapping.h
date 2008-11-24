@@ -41,6 +41,8 @@ struct dma_ops {
 	void (*sync_sg_for_device)(struct device *dev,
 				   struct scatterlist *sg, int nents,
 				   enum dma_data_direction dir);
+	int (*mmap_coherent)(struct device *dev, struct vm_area_struct *vma,
+			     void *cpu_addr, dma_addr_t handle, size_t size);
 };
 extern const struct dma_ops *dma_ops;
 
@@ -146,6 +148,21 @@ static inline void dma_sync_single_range_for_device(struct device *dev,
 						    enum dma_data_direction dir)
 {
 	dma_sync_single_for_device(dev, dma_handle+offset, size, dir);
+}
+
+#define ARCH_HAS_DMA_MMAP_COHERENT
+static inline int dma_mmap_coherent(struct device *dev,
+				    struct vm_area_struct *vma,
+				    void *cpu_addr, dma_addr_t handle,
+				    size_t size)
+{
+	unsigned long pfn;
+
+	if (dma_ops->mmap_coherent)
+		return dma_ops->mmap_coherent(dev, vma, cpu_addr, handle, size);
+	pfn = page_to_pfn(virt_to_page(cpu_addr));
+	return remap_pfn_range(vma, vma->vm_start, pfn + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
 }
 
 

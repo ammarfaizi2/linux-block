@@ -661,6 +661,22 @@ void pci_dma_sync_sg_for_device(struct pci_dev *hwdev, struct scatterlist *sgl, 
 EXPORT_SYMBOL(pci_dma_sync_sg_for_device);
 #endif /* CONFIG_PCI */
 
+/* used in dma.c */
+int dma32_mmap_coherent(struct device *dev, struct vm_area_struct *vma,
+			void *cpu_addr, dma_addr_t handle, size_t size)
+{
+	struct resource *res;
+	struct page *pg;
+
+	res = _sparc_find_resource(&_sparc_dvma, (unsigned long)cpu_addr);
+	if (!res)
+		return -ENXIO;
+	pg = virt_to_page(res->start);
+	return remap_pfn_range(vma, vma->vm_start,
+			       page_to_pfn(pg) + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
+}
+
 #ifdef CONFIG_PROC_FS
 
 static int
