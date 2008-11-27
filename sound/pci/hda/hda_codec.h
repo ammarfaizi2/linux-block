@@ -585,6 +585,7 @@ struct hda_bus_template {
 	void *private_data;
 	struct pci_dev *pci;
 	const char *modelname;
+	int *power_save;
 	struct hda_bus_ops ops;
 };
 
@@ -601,6 +602,7 @@ struct hda_bus {
 	void *private_data;
 	struct pci_dev *pci;
 	const char *modelname;
+	int *power_save;
 	struct hda_bus_ops ops;
 
 	/* codec linked list */
@@ -852,8 +854,6 @@ unsigned int snd_hda_calc_stream_format(unsigned int rate,
 					unsigned int channels,
 					unsigned int format,
 					unsigned int maxbps);
-int snd_hda_query_supported_pcm(struct hda_codec *codec, hda_nid_t nid,
-				u32 *ratesp, u64 *formatsp, unsigned int *bpsp);
 int snd_hda_is_supported_format(struct hda_codec *codec, hda_nid_t nid,
 				unsigned int format);
 
@@ -884,12 +884,10 @@ const char *snd_hda_get_jack_location(u32 cfg);
 void snd_hda_power_up(struct hda_codec *codec);
 void snd_hda_power_down(struct hda_codec *codec);
 #define snd_hda_codec_needs_resume(codec) codec->power_count
-int snd_hda_codecs_inuse(struct hda_bus *bus);
 #else
 static inline void snd_hda_power_up(struct hda_codec *codec) {}
 static inline void snd_hda_power_down(struct hda_codec *codec) {}
 #define snd_hda_codec_needs_resume(codec) 1
-#define snd_hda_codecs_inuse(bus) 1
 #endif
 
 #endif /* __SOUND_HDA_CODEC_H */

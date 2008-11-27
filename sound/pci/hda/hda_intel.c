@@ -83,7 +83,10 @@ module_param(enable_msi, int, 0444);
 MODULE_PARM_DESC(enable_msi, "Enable Message Signaled Interrupt (MSI)");
 
 #ifdef CONFIG_SND_HDA_POWER_SAVE
-/* power_save option is defined in hda_codec.c */
+static int power_save = CONFIG_SND_HDA_POWER_SAVE_DEFAULT;
+module_param(power_save, int, 0644);
+MODULE_PARM_DESC(power_save, "Automatic power-saving timeout "
+		 "(in second, 0 = disable).");
 
 /* reset the HD-audio controller in power save mode.
  * this may give more power-saving, but will take longer time to
@@ -1230,6 +1233,7 @@ static int __devinit azx_codec_create(struct azx *chip, const char *model,
 	memset(&bus_temp, 0, sizeof(bus_temp));
 	bus_temp.private_data = chip;
 	bus_temp.modelname = model;
+	bus_temp.power_save = &power_save;
 	bus_temp.pci = chip->pci;
 	bus_temp.ops.command = azx_send_cmd;
 	bus_temp.ops.get_response = azx_get_response;
@@ -1896,6 +1900,19 @@ static void azx_power_notify(struct hda_bus *bus)
 	else if (chip->running && power_save_controller)
 		azx_stop_chip(chip);
 }
+
+static int snd_hda_codecs_inuse(struct hda_bus *bus)
+{
+	struct hda_codec *codec;
+
+	list_for_each_entry(codec, &bus->codec_list, list) {
+		if (snd_hda_codec_needs_resume(codec))
+			return 1;
+	}
+	return 0;
+}
+#else /* !CONFIG_SND_HDA_POWER_SAVE */
+#define snd_hda_codecs_inuse(bus) 1
 #endif /* CONFIG_SND_HDA_POWER_SAVE */
 
 #ifdef CONFIG_PM
