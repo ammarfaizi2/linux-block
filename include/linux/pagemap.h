@@ -354,6 +354,8 @@ static inline void lock_page_nosync(struct page *page)
  */
 extern void wait_on_page_bit(struct page *page, int bit_nr);
 
+wait_queue_head_t *page_waitqueue(struct page *page);
+
 /* 
  * Wait for a page to be unlocked.
  *

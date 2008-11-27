@@ -1066,6 +1066,8 @@ struct sched_rt_entity {
 	/* rq "owned" by this entity/group: */
 	struct rt_rq		*my_q;
 #endif
+	/* XXX can we avoid adding this to task_struct? */
+	u64 acall_cookie;
 };
 
 struct task_struct {

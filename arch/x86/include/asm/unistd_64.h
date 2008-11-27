@@ -653,7 +653,12 @@ __SYSCALL(__NR_dup3, sys_dup3)
 __SYSCALL(__NR_pipe2, sys_pipe2)
 #define __NR_inotify_init1			294
 __SYSCALL(__NR_inotify_init1, sys_inotify_init1)
-
+#define __NR_acall_submit			295
+__SYSCALL(__NR_acall_submit, sys_acall_submit)
+#define __NR_acall_wait				296
+__SYSCALL(__NR_acall_wait, sys_acall_wait)
+#define __NR_acall_cancel			297
+__SYSCALL(__NR_acall_cancel, sys_acall_cancel)
 
 #ifndef __NO_STUBS
 #define __ARCH_WANT_OLD_READDIR
