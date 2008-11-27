@@ -140,7 +140,12 @@ static long call_syscall(struct acall_submission *sub)
 						long);
 	extern syscall_fn_t sys_call_table[];
 
-	if (sub->nr >= 290) /* hee, x86-64 */
+	/*
+	 * Obviously this needs some real way of checking for a valid
+	 * syscall number. Aditionally, we also want to do some syscalls
+	 * always sync
+	 */
+	if (sub->nr >= 295) /* hee, x86-64 */
 		return -ENOSYS;
 	else
 		return sys_call_table[sub->nr](sub->args[0], sub->args[1],
