@@ -46,6 +46,7 @@
 #include <linux/blkdev.h>
 #include <linux/task_io_accounting_ops.h>
 #include <linux/tracehook.h>
+#include <linux/syslet.h>
 #include <trace/sched.h>
 
 #include <asm/uaccess.h>
@@ -1107,6 +1108,12 @@ NORET_TYPE void do_exit(long code)
 	 * Make sure we are holding no locks:
 	 */
 	debug_check_no_locks_held(tsk);
+
+	/*
+	 * syslet threads have to exit their context before mm exit
+	 */
+	kill_syslet_tasks(tsk);
+
 	/*
 	 * We can do this unlocked here. The futex code uses this flag
 	 * just to verify whether the pi state cleanup has been done

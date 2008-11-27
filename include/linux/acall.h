@@ -1,12 +1,15 @@
 #ifndef __LINUX_ACALL_H
 #define __LINUX_ACALL_H
 
+#include <linux/syslet-abi.h>
+
 struct acall_submission {
 	u16 flags;
 	u16 nr;
 	u32 id;
 	u64 cookie;
 	u64 args[6];
+	struct syslet_args syslet;
 };
 
 struct acall_result {

@@ -88,6 +88,7 @@ struct sched_param {
 #include <linux/kobject.h>
 #include <linux/latencytop.h>
 #include <linux/cred.h>
+#include <linux/acall.h>
 
 #include <asm/processor.h>
 
@@ -1355,6 +1356,13 @@ struct task_struct {
 
 	/* XXX can we avoid adding this to task_struct? */
 	u64 acall_cookie;
+
+	struct acall_submission acall;
+
+	/* task waiting to return to userspace if we block as a syslet */
+	spinlock_t		syslet_lock;
+	struct list_head	syslet_tasks;
+	unsigned syslet_ready:1, syslet_return:1, syslet_exit:1;
 };
 
 /*

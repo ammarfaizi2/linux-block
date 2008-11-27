@@ -72,6 +72,7 @@
 #include <linux/debugfs.h>
 #include <linux/ctype.h>
 #include <linux/ftrace.h>
+#include <linux/syslet.h>
 #include <trace/sched.h>
 
 #include <asm/tlb.h>
@@ -4442,6 +4443,14 @@ asmlinkage void __sched schedule(void)
 	unsigned long *switch_count;
 	struct rq *rq;
 	int cpu;
+
+	prev = current;
+	if (prev->syslet_ready) {
+		if (prev->state && (!preempt_count() & PREEMPT_ACTIVE) &&
+		    (!(prev->state & TASK_INTERRUPTIBLE) ||
+		     !signal_pending(prev)))
+			syslet_schedule(prev);
+	}
 
 need_resched:
 	preempt_disable();

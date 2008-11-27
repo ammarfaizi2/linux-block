@@ -106,4 +106,6 @@
 #define	EOWNERDEAD	130	/* Owner died */
 #define	ENOTRECOVERABLE	131	/* State not recoverable */
 
+#define	ESYSLETPENDING	132	/* will complete async */
+
 #endif
