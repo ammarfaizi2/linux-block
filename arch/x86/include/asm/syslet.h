@@ -17,8 +17,8 @@ static inline int syslet_frame_valid(struct syslet_frame *frame)
 static inline void set_user_frame(struct task_struct *task,
 				  struct syslet_frame *frame)
 {
-	task_pt_regs(task)->eip = frame->ip;
-	task_pt_regs(task)->esp = frame->sp;
+	task_pt_regs(task)->ip = frame->ip;
+	task_pt_regs(task)->sp = frame->sp;
 }
 #else
 static inline void set_user_frame(struct task_struct *task,

@@ -243,16 +243,16 @@ int create_syslet_thread(long (*fn)(void *), void *arg, unsigned long flags)
 
 	memset(&regs, 0, sizeof(regs));
 
-	regs.ebx = (unsigned long)fn;
-	regs.edx = (unsigned long)arg;
+	regs.bx = (unsigned long)fn;
+	regs.dx = (unsigned long)arg;
 
-	regs.xds = __USER_DS;
-	regs.xes = __USER_DS;
-	regs.xfs = __KERNEL_PERCPU;
-	regs.orig_eax = -1;
-	regs.eip = (unsigned long)syslet_thread_helper;
-	regs.xcs = __KERNEL_CS | get_kernel_rpl();
-	regs.eflags = X86_EFLAGS_IF | X86_EFLAGS_SF | X86_EFLAGS_PF | 0x2;
+	regs.ds = __USER_DS;
+	regs.es = __USER_DS;
+	regs.fs = __KERNEL_PERCPU;
+	regs.orig_ax = -1;
+	regs.ip = (unsigned long)syslet_thread_helper;
+	regs.cs = __KERNEL_CS | get_kernel_rpl();
+	regs.flags = X86_EFLAGS_IF | X86_EFLAGS_SF | X86_EFLAGS_PF | 0x2;
 
 	/* Ok, create the new task.. */
 	return do_fork(flags, 0, &regs, 0, NULL, NULL);
@@ -774,13 +774,11 @@ void move_user_context(struct task_struct *dest, struct task_struct *src)
 {
 	struct pt_regs *old_regs = task_pt_regs(src);
 	struct pt_regs *new_regs = task_pt_regs(dest);
-	union i387_union *tmp;
+	union thread_xstate *tmp;
 
 	*new_regs = *old_regs;
 
-	tmp = &i387_tmp[get_cpu()];
-	*tmp = dest->thread.i387;
-	dest->thread.i387 = src->thread.i387;
-	src->thread.i387 = *tmp;
-	put_cpu();
+	tmp = dest->thread.xstate;
+	dest->thread.xstate = src->thread.xstate;
+	src->thread.xstate = tmp;
 }

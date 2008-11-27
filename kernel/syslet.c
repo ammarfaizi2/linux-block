@@ -51,20 +51,20 @@ static wait_queue_head_t *ring_waitqueue(struct syslet_ring __user *ring)
 {
 	u32 group;
 
-	if (get_user(group, &ring->wait_group))
-		return ERR_PTR(-EFAULT);
-	else
+	if (!get_user(group, &ring->wait_group))
 		return &syslet_waitqs[jhash_1word(group, 0) & SYSLET_HASH_MASK];
+
+	return ERR_PTR(-EFAULT);
 }
 
 static struct mutex *ring_mutex(struct syslet_ring __user *ring)
 {
 	u32 group;
 
-	if (get_user(group, (u32 __user *)&ring->wait_group))
-		return ERR_PTR(-EFAULT);
-	else
+	if (!get_user(group, (u32 __user *)&ring->wait_group))
 		return &syslet_muts[jhash_1word(group, 0) & SYSLET_HASH_MASK];
+
+	return ERR_PTR(-EFAULT);
 }
 
 /*
@@ -92,8 +92,9 @@ static struct task_struct *first_syslet_task(struct task_struct *parent)
 		entry = list_first_entry(&parent->syslet_tasks,
 					 struct syslet_task_entry, item);
 		return entry->task;
-	} else
-		return NULL;
+	}
+
+	return NULL;
 }
 
 /*
@@ -200,7 +201,7 @@ static int create_new_syslet_task(struct task_struct *cur)
 	ret = create_syslet_thread(syslet_thread, &args,
 				   CLONE_VM | CLONE_FS | CLONE_FILES |
 				   CLONE_SIGHAND | CLONE_THREAD |
-				   CLONE_SYSVSEM);
+				   CLONE_SYSVSEM | CLONE_IO);
 	if (ret >= 0) {
 		wait_for_completion(&comp);
 		ret = 0;

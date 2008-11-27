@@ -219,7 +219,7 @@ asmlinkage long sys_acall_submit(struct acall_submission __user **submissions,
 				 unsigned long nr)
 {
 	struct acall_submission __user *sub_ptr;
-	struct acall_thread_args *args;
+	struct acall_thread_args *args = NULL;
 	struct acall_results *res;
 	unsigned long i = 0;
 	pid_t pid;
@@ -309,10 +309,17 @@ static int wait_for_cookie(u64 __user *addr)
 	int ret;
 
 	do {
+#if 0
 		if (__get_user(cookie, addr)) {
 			ret = -EFAULT;
 			break;
 		}
+#else
+		if (__copy_from_user(&cookie, addr, sizeof(addr))) {
+			ret = -EFAULT;
+			break;
+		}
+#endif
 
 		if (cookie) {
 			ret = 0;
