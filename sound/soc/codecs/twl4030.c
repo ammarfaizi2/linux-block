@@ -351,25 +351,75 @@ static int snd_soc_put_volsw_r2_twl4030(struct snd_kcontrol *kcontrol,
  * FGAIN volume control:
  * from -62 to 0 dB in 1 dB steps (mute instead of -63 dB)
  */
-static DECLARE_TLV_DB_SCALE(master_tlv, -6300, 100, 1);
+static DECLARE_TLV_DB_SCALE(digital_fine_tlv, -6300, 100, 1);
 
 /*
  * CGAIN volume control:
  * 0 dB to 12 dB in 6 dB steps
  * value 2 and 3 means 12 dB
  */
-static DECLARE_TLV_DB_SCALE(master_coarse_tlv, 0, 600, 0);
+static DECLARE_TLV_DB_SCALE(digital_coarse_tlv, 0, 600, 0);
+
+/*
+ * Analog playback gain
+ * -24 dB to 12 dB in 2 dB steps
+ */
+static DECLARE_TLV_DB_SCALE(analog_tlv, -2400, 200, 0);
+
+/*
+ * Gain controls tied to outputs
+ * -6 dB to 6 dB in 6 dB steps (mute instead of -12)
+ */
+static DECLARE_TLV_DB_SCALE(output_tvl, -1200, 600, 1);
+
+/*
+ * Capture gain after the ADCs
+ * from 0 dB to 31 dB in 1 dB steps
+ */
+static DECLARE_TLV_DB_SCALE(digital_capture_tlv, 0, 100, 0);
 
 static const struct snd_kcontrol_new twl4030_snd_controls[] = {
-	SOC_DOUBLE_R_TLV("Master Playback Volume",
-		 TWL4030_REG_ARXL2PGA, TWL4030_REG_ARXR2PGA,
-		0, 0x3f, 0, master_tlv),
-	SOC_DOUBLE_R_TLV("Master PCM Playback Volume",
-		 TWL4030_REG_ARXL2PGA, TWL4030_REG_ARXR2PGA,
-		6, 0x2, 0, master_coarse_tlv),
-	SOC_DOUBLE_R("Capture Volume",
-		 TWL4030_REG_ATXL1PGA, TWL4030_REG_ATXR1PGA,
-		0, 0x1f, 0),
+	/* Common playback gain controls */
+	SOC_DOUBLE_R_TLV("DAC1 Digital Fine Playback Volume",
+		TWL4030_REG_ARXL1PGA, TWL4030_REG_ARXR1PGA,
+		0, 0x3f, 0, digital_fine_tlv),
+	SOC_DOUBLE_R_TLV("DAC2 Digital Fine Playback Volume",
+		TWL4030_REG_ARXL2PGA, TWL4030_REG_ARXR2PGA,
+		0, 0x3f, 0, digital_fine_tlv),
+
+	SOC_DOUBLE_R_TLV("DAC1 Digital Coarse Playback Volume",
+		TWL4030_REG_ARXL1PGA, TWL4030_REG_ARXR1PGA,
+		6, 0x2, 0, digital_coarse_tlv),
+	SOC_DOUBLE_R_TLV("DAC2 Digital Coarse Playback Volume",
+		TWL4030_REG_ARXL2PGA, TWL4030_REG_ARXR2PGA,
+		6, 0x2, 0, digital_coarse_tlv),
+
+	SOC_DOUBLE_R_TLV("DAC1 Analog Playback Volume",
+		TWL4030_REG_ARXL1_APGA_CTL, TWL4030_REG_ARXR1_APGA_CTL,
+		3, 0x12, 1, analog_tlv),
+	SOC_DOUBLE_R_TLV("DAC2 Analog Playback Volume",
+		TWL4030_REG_ARXL2_APGA_CTL, TWL4030_REG_ARXR2_APGA_CTL,
+		3, 0x12, 1, analog_tlv),
+
+	/* Separate output gain controls */
+	SOC_DOUBLE_R_TLV_TWL4030("PreDriv Playback Volume",
+		TWL4030_REG_PREDL_CTL, TWL4030_REG_PREDR_CTL,
+		4, 3, 0, output_tvl),
+
+	SOC_DOUBLE_TLV_TWL4030("Headset Playback Volume",
+		TWL4030_REG_HS_GAIN_SET, 0, 2, 3, 0, output_tvl),
+
+	SOC_DOUBLE_R_TLV_TWL4030("Carkit Playback Volume",
+		TWL4030_REG_PRECKL_CTL, TWL4030_REG_PRECKR_CTL,
+		4, 3, 0, output_tvl),
+
+	SOC_SINGLE_TLV_TWL4030("Earpiece Playback Volume",
+		TWL4030_REG_EAR_CTL, 4, 3, 0, output_tvl),
+
+	/* Common capture gain controls */
+	SOC_DOUBLE_R_TLV("Capture Volume",
+		TWL4030_REG_ATXL1PGA, TWL4030_REG_ATXR1PGA,
+		0, 0x1f, 0, digital_capture_tlv),
 };
 
 /* add non dapm controls */
@@ -764,7 +814,7 @@ static int twl4030_init(struct snd_soc_device *socdev)
 	twl4030_add_controls(codec);
 	twl4030_add_widgets(codec);
 
-	ret = snd_soc_register_card(socdev);
+	ret = snd_soc_init_card(socdev);
 	if (ret < 0) {
 		printk(KERN_ERR "twl4030: failed to register card\n");
 		goto card_err;
