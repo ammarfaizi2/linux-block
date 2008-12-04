@@ -1806,8 +1806,10 @@ static struct pci_driver driver = {
 	.id_table = snd_ca0106_ids,
 	.probe = snd_ca0106_probe,
 	.remove = __devexit_p(snd_ca0106_remove),
+#ifdef CONFIG_PM
 	.suspend = snd_ca0106_suspend,
 	.resume = snd_ca0106_resume,
+#endif
 };
 
 // initialization of the module
