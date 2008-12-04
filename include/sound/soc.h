@@ -152,7 +152,6 @@ struct snd_soc_dai;
 struct snd_soc_codec;
 struct soc_enum;
 struct snd_soc_ac97_ops;
-struct snd_soc_clock_info;
 
 typedef int (*hw_write_t)(void *,const char* ,int);
 typedef int (*hw_read_t)(void *,char* ,int);
@@ -279,6 +278,11 @@ struct snd_soc_codec {
 	/* codec DAI's */
 	struct snd_soc_dai *dai;
 	unsigned int num_dai;
+
+#ifdef CONFIG_DEBUG_FS
+	struct dentry *debugfs_reg;
+	struct dentry *debugfs_pop_time;
+#endif
 };
 
 /* codec device */
@@ -295,10 +299,8 @@ struct snd_soc_platform {
 
 	int (*probe)(struct platform_device *pdev);
 	int (*remove)(struct platform_device *pdev);
-	int (*suspend)(struct platform_device *pdev,
-		struct snd_soc_dai *dai);
-	int (*resume)(struct platform_device *pdev,
-		struct snd_soc_dai *dai);
+	int (*suspend)(struct snd_soc_dai *dai);
+	int (*resume)(struct snd_soc_dai *dai);
 
 	/* pcm creation and destruction */
 	int (*pcm_new)(struct snd_card *, struct snd_soc_dai *,
@@ -364,9 +366,6 @@ struct snd_soc_device {
 	struct snd_soc_codec *codec;
 	struct snd_soc_codec_device *codec_dev;
 	void *codec_data;
-#ifdef CONFIG_DEBUG_FS
-	struct dentry	*debugfs_root;
-#endif
 };
 
 /* runtime channel data */
