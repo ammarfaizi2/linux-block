@@ -43,6 +43,14 @@ static DECLARE_WAIT_QUEUE_HEAD(soc_pm_waitq);
 static struct dentry *debugfs_root;
 #endif
 
+static DEFINE_MUTEX(client_mutex);
+static LIST_HEAD(card_list);
+static LIST_HEAD(dai_list);
+static LIST_HEAD(platform_list);
+
+static int snd_soc_register_card(struct snd_soc_card *card);
+static int snd_soc_unregister_card(struct snd_soc_card *card);
+
 /*
  * This is a timeout to do a DAPM powerdown after a stream is closed().
  * It can be used to eliminate pops between different playback streams, e.g.
@@ -772,22 +780,79 @@ static int soc_resume(struct platform_device *pdev)
 #define soc_resume	NULL
 #endif
 
-/* probes a new socdev */
-static int soc_probe(struct platform_device *pdev)
+static void snd_soc_instantiate_card(struct snd_soc_card *card)
 {
-	int ret = 0, i;
-	struct snd_soc_device *socdev = platform_get_drvdata(pdev);
-	struct snd_soc_card *card = socdev->card;
-	struct snd_soc_platform *platform = card->platform;
-	struct snd_soc_codec_device *codec_dev = socdev->codec_dev;
+	struct platform_device *pdev = container_of(card->dev,
+						    struct platform_device,
+						    dev);
+	struct snd_soc_codec_device *codec_dev = card->socdev->codec_dev;
+	struct snd_soc_platform *platform;
+	struct snd_soc_dai *dai;
+	int i, found, ret, ac97;
 
-	/* Bodge while we push things out of socdev */
-	card->socdev = socdev;
+	if (card->instantiated)
+		return;
 
+	found = 0;
+	list_for_each_entry(platform, &platform_list, list)
+		if (card->platform == platform) {
+			found = 1;
+			break;
+		}
+	if (!found) {
+		dev_dbg(card->dev, "Platform %s not registered\n",
+			card->platform->name);
+		return;
+	}
+
+	ac97 = 0;
+	for (i = 0; i < card->num_links; i++) {
+		found = 0;
+		list_for_each_entry(dai, &dai_list, list)
+			if (card->dai_link[i].cpu_dai == dai) {
+				found = 1;
+				break;
+			}
+		if (!found) {
+			dev_dbg(card->dev, "DAI %s not registered\n",
+				card->dai_link[i].cpu_dai->name);
+			return;
+		}
+
+		if (card->dai_link[i].cpu_dai->ac97_control)
+			ac97 = 1;
+	}
+
+	/* If we have AC97 in the system then don't wait for the
+	 * codec.  This will need revisiting if we have to handle
+	 * systems with mixed AC97 and non-AC97 parts.  Only check for
+	 * DAIs currently; we can't do this per link since some AC97
+	 * codecs have non-AC97 DAIs.
+	 */
+	if (!ac97)
+		for (i = 0; i < card->num_links; i++) {
+			found = 0;
+			list_for_each_entry(dai, &dai_list, list)
+				if (card->dai_link[i].codec_dai == dai) {
+					found = 1;
+					break;
+				}
+			if (!found) {
+				dev_dbg(card->dev, "DAI %s not registered\n",
+					card->dai_link[i].codec_dai->name);
+				return;
+			}
+		}
+
+	/* Note that we do not current check for codec components */
+
+	dev_dbg(card->dev, "All components present, instantiating\n");
+
+	/* Found everything, bring it up */
 	if (card->probe) {
 		ret = card->probe(pdev);
 		if (ret < 0)
-			return ret;
+			return;
 	}
 
 	for (i = 0; i < card->num_links; i++) {
@@ -818,7 +883,9 @@ static int soc_probe(struct platform_device *pdev)
 	INIT_WORK(&card->deferred_resume_work, soc_resume_deferred);
 #endif
 
-	return 0;
+	card->instantiated = 1;
+
+	return;
 
 platform_err:
 	if (codec_dev->remove)
@@ -833,8 +900,38 @@ cpu_dai_err:
 
 	if (card->remove)
 		card->remove(pdev);
+}
 
-	return ret;
+/*
+ * Attempt to initialise any uninitalised cards.  Must be called with
+ * client_mutex.
+ */
+static void snd_soc_instantiate_cards(void)
+{
+	struct snd_soc_card *card;
+	list_for_each_entry(card, &card_list, list)
+		snd_soc_instantiate_card(card);
+}
+
+/* probes a new socdev */
+static int soc_probe(struct platform_device *pdev)
+{
+	int ret = 0;
+	struct snd_soc_device *socdev = platform_get_drvdata(pdev);
+	struct snd_soc_card *card = socdev->card;
+
+	/* Bodge while we push things out of socdev */
+	card->socdev = socdev;
+
+	/* Bodge while we unpick instantiation */
+	card->dev = &pdev->dev;
+	ret = snd_soc_register_card(card);
+	if (ret != 0) {
+		dev_err(&pdev->dev, "Failed to register card\n");
+		return ret;
+	}
+
+	return 0;
 }
 
 /* removes a socdev */
@@ -862,6 +959,8 @@ static int soc_remove(struct platform_device *pdev)
 
 	if (card->remove)
 		card->remove(pdev);
+
+	snd_soc_unregister_card(card);
 
 	return 0;
 }
@@ -1956,6 +2055,174 @@ int snd_soc_dai_digital_mute(struct snd_soc_dai *dai, int mute)
 		return -EINVAL;
 }
 EXPORT_SYMBOL_GPL(snd_soc_dai_digital_mute);
+
+/**
+ * snd_soc_register_card - Register a card with the ASoC core
+ *
+ * @param card Card to register
+ *
+ * Note that currently this is an internal only function: it will be
+ * exposed to machine drivers after further backporting of ASoC v2
+ * registration APIs.
+ */
+static int snd_soc_register_card(struct snd_soc_card *card)
+{
+	if (!card->name || !card->dev)
+		return -EINVAL;
+
+	INIT_LIST_HEAD(&card->list);
+	card->instantiated = 0;
+
+	mutex_lock(&client_mutex);
+	list_add(&card->list, &card_list);
+	snd_soc_instantiate_cards();
+	mutex_unlock(&client_mutex);
+
+	dev_dbg(card->dev, "Registered card '%s'\n", card->name);
+
+	return 0;
+}
+
+/**
+ * snd_soc_unregister_card - Unregister a card with the ASoC core
+ *
+ * @param card Card to unregister
+ *
+ * Note that currently this is an internal only function: it will be
+ * exposed to machine drivers after further backporting of ASoC v2
+ * registration APIs.
+ */
+static int snd_soc_unregister_card(struct snd_soc_card *card)
+{
+	mutex_lock(&client_mutex);
+	list_del(&card->list);
+	mutex_unlock(&client_mutex);
+
+	dev_dbg(card->dev, "Unregistered card '%s'\n", card->name);
+
+	return 0;
+}
+
+/**
+ * snd_soc_register_dai - Register a DAI with the ASoC core
+ *
+ * @param dai DAI to register
+ */
+int snd_soc_register_dai(struct snd_soc_dai *dai)
+{
+	if (!dai->name)
+		return -EINVAL;
+
+	/* The device should become mandatory over time */
+	if (!dai->dev)
+		printk(KERN_WARNING "No device for DAI %s\n", dai->name);
+
+	INIT_LIST_HEAD(&dai->list);
+
+	mutex_lock(&client_mutex);
+	list_add(&dai->list, &dai_list);
+	snd_soc_instantiate_cards();
+	mutex_unlock(&client_mutex);
+
+	pr_debug("Registered DAI '%s'\n", dai->name);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(snd_soc_register_dai);
+
+/**
+ * snd_soc_unregister_dai - Unregister a DAI from the ASoC core
+ *
+ * @param dai DAI to unregister
+ */
+void snd_soc_unregister_dai(struct snd_soc_dai *dai)
+{
+	mutex_lock(&client_mutex);
+	list_del(&dai->list);
+	mutex_unlock(&client_mutex);
+
+	pr_debug("Unregistered DAI '%s'\n", dai->name);
+}
+EXPORT_SYMBOL_GPL(snd_soc_unregister_dai);
+
+/**
+ * snd_soc_register_dais - Register multiple DAIs with the ASoC core
+ *
+ * @param dai Array of DAIs to register
+ * @param count Number of DAIs
+ */
+int snd_soc_register_dais(struct snd_soc_dai *dai, size_t count)
+{
+	int i, ret;
+
+	for (i = 0; i < count; i++) {
+		ret = snd_soc_register_dai(&dai[i]);
+		if (ret != 0)
+			goto err;
+	}
+
+	return 0;
+
+err:
+	for (i--; i >= 0; i--)
+		snd_soc_unregister_dai(&dai[i]);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(snd_soc_register_dais);
+
+/**
+ * snd_soc_unregister_dais - Unregister multiple DAIs from the ASoC core
+ *
+ * @param dai Array of DAIs to unregister
+ * @param count Number of DAIs
+ */
+void snd_soc_unregister_dais(struct snd_soc_dai *dai, size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		snd_soc_unregister_dai(&dai[i]);
+}
+EXPORT_SYMBOL_GPL(snd_soc_unregister_dais);
+
+/**
+ * snd_soc_register_platform - Register a platform with the ASoC core
+ *
+ * @param platform platform to register
+ */
+int snd_soc_register_platform(struct snd_soc_platform *platform)
+{
+	if (!platform->name)
+		return -EINVAL;
+
+	INIT_LIST_HEAD(&platform->list);
+
+	mutex_lock(&client_mutex);
+	list_add(&platform->list, &platform_list);
+	snd_soc_instantiate_cards();
+	mutex_unlock(&client_mutex);
+
+	pr_debug("Registered platform '%s'\n", platform->name);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(snd_soc_register_platform);
+
+/**
+ * snd_soc_unregister_platform - Unregister a platform from the ASoC core
+ *
+ * @param platform platform to unregister
+ */
+void snd_soc_unregister_platform(struct snd_soc_platform *platform)
+{
+	mutex_lock(&client_mutex);
+	list_del(&platform->list);
+	mutex_unlock(&client_mutex);
+
+	pr_debug("Unregistered platform '%s'\n", platform->name);
+}
+EXPORT_SYMBOL_GPL(snd_soc_unregister_platform);
 
 static int __devinit snd_soc_init(void)
 {
