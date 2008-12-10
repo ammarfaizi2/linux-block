@@ -192,8 +192,7 @@ static void twl4030_init_chip(struct snd_soc_codec *codec)
 
 /* Earpiece */
 static const char *twl4030_earpiece_texts[] =
-		{"Off", "DACL1", "DACL2", "Invalid",
-		"DACR1"};
+		{"Off", "DACL1", "DACL2", "Invalid", "DACR1"};
 
 static const struct soc_enum twl4030_earpiece_enum =
 	SOC_ENUM_SINGLE(TWL4030_REG_EAR_CTL, 1,
@@ -205,8 +204,7 @@ SOC_DAPM_ENUM("Route", twl4030_earpiece_enum);
 
 /* PreDrive Left */
 static const char *twl4030_predrivel_texts[] =
-		{"Off", "DACL1", "DACL2", "Invalid",
-		"DACR2"};
+		{"Off", "DACL1", "DACL2", "Invalid", "DACR2"};
 
 static const struct soc_enum twl4030_predrivel_enum =
 	SOC_ENUM_SINGLE(TWL4030_REG_PREDL_CTL, 1,
@@ -218,8 +216,7 @@ SOC_DAPM_ENUM("Route", twl4030_predrivel_enum);
 
 /* PreDrive Right */
 static const char *twl4030_predriver_texts[] =
-		{"Off", "DACR1", "DACR2", "Invalid",
-		"DACL2"};
+		{"Off", "DACR1", "DACR2", "Invalid", "DACL2"};
 
 static const struct soc_enum twl4030_predriver_enum =
 	SOC_ENUM_SINGLE(TWL4030_REG_PREDR_CTL, 1,
@@ -761,17 +758,19 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("PREDRIVER"),
 	SND_SOC_DAPM_OUTPUT("HSOL"),
 	SND_SOC_DAPM_OUTPUT("HSOR"),
+	SND_SOC_DAPM_OUTPUT("CARKITL"),
+	SND_SOC_DAPM_OUTPUT("CARKITR"),
 	SND_SOC_DAPM_OUTPUT("HFL"),
 	SND_SOC_DAPM_OUTPUT("HFR"),
 
 	/* DACs */
-	SND_SOC_DAPM_DAC("DACR1", "Right Front Playback",
+	SND_SOC_DAPM_DAC("DAC Right1", "Right Front Playback",
 			TWL4030_REG_AVDAC_CTL, 0, 0),
-	SND_SOC_DAPM_DAC("DACL1", "Left Front Playback",
+	SND_SOC_DAPM_DAC("DAC Left1", "Left Front Playback",
 			TWL4030_REG_AVDAC_CTL, 1, 0),
-	SND_SOC_DAPM_DAC("DACR2", "Right Rear Playback",
+	SND_SOC_DAPM_DAC("DAC Right2", "Right Rear Playback",
 			TWL4030_REG_AVDAC_CTL, 2, 0),
-	SND_SOC_DAPM_DAC("DACL2", "Left Rear Playback",
+	SND_SOC_DAPM_DAC("DAC Left2", "Left Rear Playback",
 			TWL4030_REG_AVDAC_CTL, 3, 0),
 
 	/* Analog PGAs */
@@ -817,10 +816,10 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 };
 
 static const struct snd_soc_dapm_route intercon[] = {
-	{"ARXL1_APGA", NULL, "DACL1"},
-	{"ARXR1_APGA", NULL, "DACR1"},
-	{"ARXL2_APGA", NULL, "DACL2"},
-	{"ARXR2_APGA", NULL, "DACR2"},
+	{"ARXL1_APGA", NULL, "DAC Left1"},
+	{"ARXR1_APGA", NULL, "DAC Right1"},
+	{"ARXL2_APGA", NULL, "DAC Left2"},
+	{"ARXR2_APGA", NULL, "DAC Right2"},
 
 	/* Internal playback routings */
 	/* Earpiece */
