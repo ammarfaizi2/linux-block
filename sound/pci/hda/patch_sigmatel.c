@@ -2102,9 +2102,6 @@ static struct snd_pci_quirk stac927x_cfg_tbl[] = {
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 		      "DFI LanParty", STAC_D965_REF),
-	/* D975 (without jack-detection in front panel) */
-	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0419, "Intel D975",
-		      STAC_D965_REF_NO_JD),
 	 /* Intel 946 based systems */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x3d01, "Intel D946", STAC_D965_3ST),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0xa301, "Intel D946", STAC_D965_3ST),
