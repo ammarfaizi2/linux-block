@@ -69,6 +69,7 @@ enum {
 };
 
 enum {
+	STAC_92HD73XX_NO_JD, /* no jack-detection */
 	STAC_92HD73XX_REF,
 	STAC_DELL_M6_AMIC,
 	STAC_DELL_M6_DMIC,
@@ -1665,6 +1666,7 @@ static unsigned int *stac92hd73xx_brd_tbl[STAC_92HD73XX_MODELS] = {
 };
 
 static const char *stac92hd73xx_models[STAC_92HD73XX_MODELS] = {
+	[STAC_92HD73XX_NO_JD] = "no-jd",
 	[STAC_92HD73XX_REF] = "ref",
 	[STAC_DELL_M6_AMIC] = "dell-m6-amic",
 	[STAC_DELL_M6_DMIC] = "dell-m6-dmic",
@@ -1694,6 +1696,8 @@ static struct snd_pci_quirk stac92hd73xx_cfg_tbl[] = {
 				"unknown Dell", STAC_DELL_M6_DMIC),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x029f,
 				"Dell Studio 1537", STAC_DELL_M6_DMIC),
+	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x02a0,
+				"Dell Studio 17", STAC_DELL_M6_DMIC),
 	{} /* terminator */
 };
 
@@ -4548,14 +4552,17 @@ again:
 
 	switch (spec->multiout.num_dacs) {
 	case 0x3: /* 6 Channel */
+		spec->multiout.hp_nid = 0x17;
 		spec->mixer = stac92hd73xx_6ch_mixer;
 		spec->init = stac92hd73xx_6ch_core_init;
 		break;
 	case 0x4: /* 8 Channel */
+		spec->multiout.hp_nid = 0x18;
 		spec->mixer = stac92hd73xx_8ch_mixer;
 		spec->init = stac92hd73xx_8ch_core_init;
 		break;
 	case 0x5: /* 10 Channel */
+		spec->multiout.hp_nid = 0x19;
 		spec->mixer = stac92hd73xx_10ch_mixer;
 		spec->init = stac92hd73xx_10ch_core_init;
 	};
@@ -4644,6 +4651,9 @@ again:
 		stac92xx_free(codec);
 		return err;
 	}
+
+	if (spec->board_config == STAC_92HD73XX_NO_JD)
+		spec->hp_detect = 0;
 
 	codec->patch_ops = stac92xx_patch_ops;
 
