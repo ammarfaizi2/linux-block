@@ -200,88 +200,132 @@ static int davinci_i2s_startup(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+#define DEFAULT_BITPERSAMPLE	16
+
 static int davinci_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 				   unsigned int fmt)
 {
 	struct davinci_mcbsp_dev *dev = cpu_dai->private_data;
-	u32 w;
+	unsigned int pcr;
+	unsigned int srgr;
+	unsigned int rcr;
+	unsigned int xcr;
+	srgr = DAVINCI_MCBSP_SRGR_FSGM |
+		DAVINCI_MCBSP_SRGR_FPER(DEFAULT_BITPERSAMPLE * 2 - 1) |
+		DAVINCI_MCBSP_SRGR_FWID(DEFAULT_BITPERSAMPLE - 1);
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBS_CFS:
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_PCR_REG,
-					DAVINCI_MCBSP_PCR_FSXM |
-					DAVINCI_MCBSP_PCR_FSRM |
-					DAVINCI_MCBSP_PCR_CLKXM |
-					DAVINCI_MCBSP_PCR_CLKRM);
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_SRGR_REG,
-					DAVINCI_MCBSP_SRGR_FSGM);
+		/* cpu is master */
+		pcr = DAVINCI_MCBSP_PCR_FSXM |
+			DAVINCI_MCBSP_PCR_FSRM |
+			DAVINCI_MCBSP_PCR_CLKXM |
+			DAVINCI_MCBSP_PCR_CLKRM;
 		break;
 	case SND_SOC_DAIFMT_CBM_CFS:
 		/* McBSP CLKR pin is the input for the Sample Rate Generator.
 		 * McBSP FSR and FSX are driven by the Sample Rate Generator. */
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_PCR_REG,
-					DAVINCI_MCBSP_PCR_SCLKME |
-					DAVINCI_MCBSP_PCR_FSXM |
-					DAVINCI_MCBSP_PCR_FSRM);
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_SRGR_REG,
-					DAVINCI_MCBSP_SRGR_FSGM);
+		pcr = DAVINCI_MCBSP_PCR_SCLKME |
+			DAVINCI_MCBSP_PCR_FSXM |
+			DAVINCI_MCBSP_PCR_FSRM;
 		break;
 	case SND_SOC_DAIFMT_CBM_CFM:
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_PCR_REG, 0);
+		/* codec is master */
+		pcr = 0;
 		break;
 	default:
+		printk(KERN_ERR "%s:bad master\n", __func__);
+		return -EINVAL;
+	}
+
+	rcr = DAVINCI_MCBSP_RCR_RFRLEN1(1);
+	xcr = DAVINCI_MCBSP_XCR_XFIG | DAVINCI_MCBSP_XCR_XFRLEN1(1);
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_B:
+		break;
+	case SND_SOC_DAIFMT_I2S:
+		/* Davinci doesn't support TRUE I2S, but some codecs will have
+		 * the left and right channels contiguous. This allows
+		 * dsp_a mode to be used with an inverted normal frame clk.
+		 * If your codec is master and does not have contiguous
+		 * channels, then you will have sound on only one channel.
+		 * Try using a different mode, or codec as slave.
+		 *
+		 * The TLV320AIC33 is an example of a codec where this works.
+		 * It has a variable bit clock frequency allowing it to have
+		 * valid data on every bit clock.
+		 *
+		 * The TLV320AIC23 is an example of a codec where this does not
+		 * work. It has a fixed bit clock frequency with progressively
+		 * more empty bit clock slots between channels as the sample
+		 * rate is lowered.
+		 */
+		fmt ^= SND_SOC_DAIFMT_NB_IF;
+	case SND_SOC_DAIFMT_DSP_A:
+		rcr |= DAVINCI_MCBSP_RCR_RDATDLY(1);
+		xcr |= DAVINCI_MCBSP_XCR_XDATDLY(1);
+		break;
+	default:
+		printk(KERN_ERR "%s:bad format\n", __func__);
 		return -EINVAL;
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_IB_NF:
-		w = davinci_mcbsp_read_reg(dev, DAVINCI_MCBSP_PCR_REG);
-		MOD_REG_BIT(w, DAVINCI_MCBSP_PCR_CLKXP |
-			       DAVINCI_MCBSP_PCR_CLKRP, 1);
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_PCR_REG, w);
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
-		w = davinci_mcbsp_read_reg(dev, DAVINCI_MCBSP_PCR_REG);
-		MOD_REG_BIT(w, DAVINCI_MCBSP_PCR_FSXP |
-			       DAVINCI_MCBSP_PCR_FSRP, 1);
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_PCR_REG, w);
+	case SND_SOC_DAIFMT_NB_NF:
+		/* CLKRP Receive clock polarity,
+		 *	1 - sampled on rising edge of CLKR
+		 *	valid on rising edge
+		 * CLKXP Transmit clock polarity,
+		 *	1 - clocked on falling edge of CLKX
+		 *	valid on rising edge
+		 * FSRP  Receive frame sync pol, 0 - active high
+		 * FSXP  Transmit frame sync pol, 0 - active high
+		 */
+		pcr |= (DAVINCI_MCBSP_PCR_CLKXP | DAVINCI_MCBSP_PCR_CLKRP);
 		break;
 	case SND_SOC_DAIFMT_IB_IF:
-		w = davinci_mcbsp_read_reg(dev, DAVINCI_MCBSP_PCR_REG);
-		MOD_REG_BIT(w, DAVINCI_MCBSP_PCR_CLKXP |
-			       DAVINCI_MCBSP_PCR_CLKRP |
-			       DAVINCI_MCBSP_PCR_FSXP |
-			       DAVINCI_MCBSP_PCR_FSRP, 1);
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_PCR_REG, w);
+		/* CLKRP Receive clock polarity,
+		 *	0 - sampled on falling edge of CLKR
+		 *	valid on falling edge
+		 * CLKXP Transmit clock polarity,
+		 *	0 - clocked on rising edge of CLKX
+		 *	valid on falling edge
+		 * FSRP  Receive frame sync pol, 1 - active low
+		 * FSXP  Transmit frame sync pol, 1 - active low
+		 */
+		pcr |= (DAVINCI_MCBSP_PCR_FSXP | DAVINCI_MCBSP_PCR_FSRP);
 		break;
-	case SND_SOC_DAIFMT_NB_NF:
+	case SND_SOC_DAIFMT_NB_IF:
+		/* CLKRP Receive clock polarity,
+		 *	1 - sampled on rising edge of CLKR
+		 *	valid on rising edge
+		 * CLKXP Transmit clock polarity,
+		 *	1 - clocked on falling edge of CLKX
+		 *	valid on rising edge
+		 * FSRP  Receive frame sync pol, 1 - active low
+		 * FSXP  Transmit frame sync pol, 1 - active low
+		 */
+		pcr |= (DAVINCI_MCBSP_PCR_CLKXP | DAVINCI_MCBSP_PCR_CLKRP |
+			DAVINCI_MCBSP_PCR_FSXP | DAVINCI_MCBSP_PCR_FSRP);
+		break;
+	case SND_SOC_DAIFMT_IB_NF:
+		/* CLKRP Receive clock polarity,
+		 *	0 - sampled on falling edge of CLKR
+		 *	valid on falling edge
+		 * CLKXP Transmit clock polarity,
+		 *	0 - clocked on rising edge of CLKX
+		 *	valid on falling edge
+		 * FSRP  Receive frame sync pol, 0 - active high
+		 * FSXP  Transmit frame sync pol, 0 - active high
+		 */
 		break;
 	default:
 		return -EINVAL;
 	}
-
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_RIGHT_J:
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_RCR_REG,
-					DAVINCI_MCBSP_RCR_RFRLEN1(1) |
-					DAVINCI_MCBSP_RCR_RDATDLY(0));
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_XCR_REG,
-					DAVINCI_MCBSP_XCR_XFRLEN1(1) |
-					DAVINCI_MCBSP_XCR_XDATDLY(0) |
-					DAVINCI_MCBSP_XCR_XFIG);
-		break;
-	case SND_SOC_DAIFMT_I2S:
-	default:
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_RCR_REG,
-					DAVINCI_MCBSP_RCR_RFRLEN1(1) |
-					DAVINCI_MCBSP_RCR_RDATDLY(1));
-		davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_XCR_REG,
-					DAVINCI_MCBSP_XCR_XFRLEN1(1) |
-					DAVINCI_MCBSP_XCR_XDATDLY(1) |
-					DAVINCI_MCBSP_XCR_XFIG);
-		break;
-	}
-
+	davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_SRGR_REG, srgr);
+	davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_PCR_REG, pcr);
+	davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_RCR_REG, rcr);
+	davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_XCR_REG, xcr);
 	return 0;
 }
 
@@ -307,12 +351,10 @@ static int davinci_i2s_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	i = hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS);
-	w = davinci_mcbsp_read_reg(dev, DAVINCI_MCBSP_SRGR_REG);
+	w = DAVINCI_MCBSP_SRGR_FSGM;
 	MOD_REG_BIT(w, DAVINCI_MCBSP_SRGR_FWID(snd_interval_value(i) - 1), 1);
-	davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_SRGR_REG, w);
 
 	i = hw_param_interval(params, SNDRV_PCM_HW_PARAM_FRAME_BITS);
-	w = davinci_mcbsp_read_reg(dev, DAVINCI_MCBSP_SRGR_REG);
 	MOD_REG_BIT(w, DAVINCI_MCBSP_SRGR_FPER(snd_interval_value(i) - 1), 1);
 	davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_SRGR_REG, w);
 
