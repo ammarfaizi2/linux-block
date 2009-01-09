@@ -76,6 +76,11 @@
 	 wcontrols, wncontrols)\
 {	.id = snd_soc_dapm_mixer, .name = wname, .reg = wreg, .shift = wshift, \
 	.invert = winvert, .kcontrols = wcontrols, .num_kcontrols = wncontrols}
+#define SND_SOC_DAPM_MIXER_NAMED_CTL(wname, wreg, wshift, winvert, \
+	 wcontrols, wncontrols)\
+{       .id = snd_soc_dapm_mixer_named_ctl, .name = wname, .reg = wreg, \
+	.shift = wshift, .invert = winvert, .kcontrols = wcontrols, \
+	.num_kcontrols = wncontrols}
 #define SND_SOC_DAPM_MICBIAS(wname, wreg, wshift, winvert) \
 {	.id = snd_soc_dapm_micbias, .name = wname, .reg = wreg, .shift = wshift, \
 	.invert = winvert, .kcontrols = NULL, .num_kcontrols = 0}
@@ -101,6 +106,11 @@
 {	.id = snd_soc_dapm_mixer, .name = wname, .reg = wreg, .shift = wshift, \
 	.invert = winvert, .kcontrols = wcontrols, .num_kcontrols = wncontrols, \
 	.event = wevent, .event_flags = wflags}
+#define SND_SOC_DAPM_MIXER_NAMED_CTL_E(wname, wreg, wshift, winvert, \
+	wcontrols, wncontrols, wevent, wflags) \
+{       .id = snd_soc_dapm_mixer, .name = wname, .reg = wreg, .shift = wshift, \
+	.invert = winvert, .kcontrols = wcontrols, \
+	.num_kcontrols = wncontrols, .event = wevent, .event_flags = wflags}
 #define SND_SOC_DAPM_MICBIAS_E(wname, wreg, wshift, winvert, wevent, wflags) \
 {	.id = snd_soc_dapm_micbias, .name = wname, .reg = wreg, .shift = wshift, \
 	.invert = winvert, .kcontrols = NULL, .num_kcontrols = 0, \
@@ -250,10 +260,10 @@ int snd_soc_dapm_set_bias_level(struct snd_soc_device *socdev,
 int snd_soc_dapm_sys_add(struct device *dev);
 
 /* dapm audio pin control and status */
-int snd_soc_dapm_enable_pin(struct snd_soc_codec *codec, char *pin);
-int snd_soc_dapm_disable_pin(struct snd_soc_codec *codec, char *pin);
-int snd_soc_dapm_nc_pin(struct snd_soc_codec *codec, char *pin);
-int snd_soc_dapm_get_pin_status(struct snd_soc_codec *codec, char *pin);
+int snd_soc_dapm_enable_pin(struct snd_soc_codec *codec, const char *pin);
+int snd_soc_dapm_disable_pin(struct snd_soc_codec *codec, const char *pin);
+int snd_soc_dapm_nc_pin(struct snd_soc_codec *codec, const char *pin);
+int snd_soc_dapm_get_pin_status(struct snd_soc_codec *codec, const char *pin);
 int snd_soc_dapm_sync(struct snd_soc_codec *codec);
 
 /* dapm widget types */
@@ -263,6 +273,7 @@ enum snd_soc_dapm_type {
 	snd_soc_dapm_mux,			/* selects 1 analog signal from many inputs */
 	snd_soc_dapm_value_mux,			/* selects 1 analog signal from many inputs */
 	snd_soc_dapm_mixer,			/* mixes several analog signals together */
+	snd_soc_dapm_mixer_named_ctl,		/* mixer with named controls */
 	snd_soc_dapm_pga,			/* programmable gain/attenuation (volume) */
 	snd_soc_dapm_adc,			/* analog to digital converter */
 	snd_soc_dapm_dac,			/* digital to analog converter */
