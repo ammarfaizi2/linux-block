@@ -700,7 +700,10 @@ static ssize_t aio_run_iocb(struct kiocb *iocb)
 	ret = retry(iocb);
 	current->io_wait = NULL;
 
-	if (ret != -EIOCBRETRY && ret != -EIOCBQUEUED) {
+	if (ret == -EIOCBRETRY) {
+		if (list_empty(&iocb->ki_wq.wait.task_list))
+			kiocbSetKicked(iocb);
+	} else if (ret != -EIOCBQUEUED) {
 		BUG_ON(!list_empty(&iocb->ki_wq.wait.task_list));
 		aio_complete(iocb, ret, 0);
 	}
@@ -724,10 +727,10 @@ out:
 			__queue_kicked_iocb(iocb);
 
 			/*
-			 * __queue_kicked_iocb will always return 1 here, because
-			 * iocb->ki_run_list is empty at this point so it should
-			 * be safe to unconditionally queue the context into the
-			 * work queue.
+			 * __queue_kicked_iocb will always return 1 here,
+			 * because iocb->ki_run_list is empty at this point so
+			 * it should be safe to unconditionally queue the
+			 * context into the work queue.
 			 */
 			aio_queue_work(ctx);
 		}

@@ -410,7 +410,10 @@ static inline int is_sync_wait(wait_queue_t *wait)
 
 static inline int is_sync_wait_bit_queue(struct wait_bit_queue *wq)
 {
-	return is_sync_wait(&wq->wait);
+	if (wq)
+		return is_sync_wait(&wq->wait);
+
+	return 1;
 }
 
 #define in_aio(tsk)	is_sync_wait_bit_queue((tsk)->io_wait)
