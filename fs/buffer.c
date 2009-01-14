@@ -1923,8 +1923,10 @@ static int __block_prepare_write(struct inode *inode, struct page *page,
 		int ret;
 
 		ret = wait_on_buffer_async(*--wait_bh, current->io_wait);
-		if (ret && !err)
+		if (ret && !err) {
+			WARN(1, "%s: ret\n", __FUNCTION__);
 			err = ret;
+		}
 		if (!buffer_uptodate(*wait_bh))
 			err = -EIO;
 	}
@@ -2596,8 +2598,10 @@ int nobh_write_begin(struct file *file, struct address_space *mapping,
 			int err;
 	
 			err = wait_on_buffer_async(bh, current->io_wait);
-			if (err && !ret)
+			if (err && !ret) {
+				WARN(1, "%s: ret\n", __FUNCTION__);
 				ret = err;
+			}
 			if (!buffer_uptodate(bh))
 				ret = -EIO;
 		}
@@ -2859,6 +2863,10 @@ int block_truncate_page(struct address_space *mapping,
 	if (!buffer_uptodate(bh) && !buffer_delay(bh) && !buffer_unwritten(bh)) {
 		ll_rw_block(READ, 1, &bh);
 		err = wait_on_buffer_async(bh, current->io_wait);
+		if (err) {
+			WARN(1, "err=%d\n", err);
+			goto out;
+		}
 		/* Uhhuh. Read error. Complain and punt. */
 		err = -EIO;
 		if (!buffer_uptodate(bh))
@@ -3361,8 +3369,10 @@ int bh_submit_read(struct buffer_head *bh)
 	get_bh(bh);
 	bh->b_end_io = end_buffer_read_sync;
 	submit_bh(READ, bh);
-	if (wait_on_buffer_async(bh, current->io_wait))
+	if (wait_on_buffer_async(bh, current->io_wait)) {
+		WARN(1, "%s: err\n", __FUNCTION__);
 		return -EIOCBRETRY;
+	}
 	if (buffer_uptodate(bh))
 		return 0;
 	return -EIO;

@@ -348,7 +348,7 @@ static inline int lock_page_async(struct page *page, struct wait_bit_queue *wq)
  */
 static inline void lock_page(struct page *page)
 {
-	WARN_ON(current->io_wait);
+	WARN_ON(in_aio(current));
 	lock_page_async(page, NULL);
 }
 

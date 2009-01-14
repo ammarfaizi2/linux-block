@@ -669,7 +669,7 @@ static void __rpc_execute(struct rpc_task *task)
 		dprintk("RPC: %5u sync task going to sleep\n", task->tk_pid);
 		status = out_of_line_wait_on_bit(&task->tk_runstate,
 				RPC_TASK_QUEUED, rpc_wait_bit_killable,
-				TASK_KILLABLE);
+				TASK_KILLABLE, NULL);
 		if (status == -ERESTARTSYS) {
 			/*
 			 * When a sync task receives a signal, it exits with

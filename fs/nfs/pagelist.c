@@ -191,7 +191,7 @@ nfs_wait_on_request(struct nfs_page *req)
 	if (!test_bit(PG_BUSY, &req->wb_flags))
 		goto out;
 	ret = out_of_line_wait_on_bit(&req->wb_flags, PG_BUSY,
-			nfs_wait_bit_killable, TASK_KILLABLE);
+			nfs_wait_bit_killable, TASK_KILLABLE, NULL);
 out:
 	return ret;
 }
