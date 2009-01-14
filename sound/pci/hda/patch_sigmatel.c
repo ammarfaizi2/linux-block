@@ -336,6 +336,10 @@ static unsigned int stac92hd83xxx_pwr_mapping[4] = {
 	0x03, 0x0c, 0x10, 0x40,
 };
 
+static unsigned int stac92hd83xxx_amp_nids[1] = {
+	0xc,
+};
+
 static hda_nid_t stac92hd71bxx_pwr_nids[3] = {
 	0x0a, 0x0d, 0x0f
 };
@@ -4221,8 +4225,19 @@ static void stac92xx_hp_detect(struct hda_codec *codec)
 			continue;
 		if (presence)
 			stac92xx_set_pinctl(codec, cfg->hp_pins[i], val);
+#if 0 /* FIXME */
+/* Resetting the pinctl like below may lead to (a sort of) regressions
+ * on some devices since they use the HP pin actually for line/speaker
+ * outs although the default pin config shows a different pin (that is
+ * wrong and useless).
+ *
+ * So, it's basically a problem of default pin configs, likely a BIOS issue.
+ * But, disabling the code below just works around it, and I'm too tired of
+ * bug reports with such devices... 
+ */
 		else
 			stac92xx_reset_pinctl(codec, cfg->hp_pins[i], val);
+#endif /* FIXME */
 	}
 } 
 
@@ -4466,6 +4481,12 @@ static int patch_stac9200(struct hda_codec *codec)
 		stac92xx_free(codec);
 		return err;
 	}
+
+	/* CF-74 has no headphone detection, and the driver should *NOT*
+	 * do detection and HP/speaker toggle because the hardware does it.
+	 */
+	if (spec->board_config == STAC_9200_PANASONIC)
+		spec->hp_detect = 0;
 
 	codec->patch_ops = stac92xx_patch_ops;
 
@@ -4741,6 +4762,7 @@ static int patch_stac92hd83xxx(struct hda_codec *codec)
 	spec->dmux_nids = stac92hd83xxx_dmux_nids;
 	spec->adc_nids = stac92hd83xxx_adc_nids;
 	spec->pwr_nids = stac92hd83xxx_pwr_nids;
+	spec->amp_nids = stac92hd83xxx_amp_nids;
 	spec->pwr_mapping = stac92hd83xxx_pwr_mapping;
 	spec->num_pwrs = ARRAY_SIZE(stac92hd83xxx_pwr_nids);
 	spec->multiout.dac_nids = spec->dac_nids;
@@ -4758,6 +4780,7 @@ static int patch_stac92hd83xxx(struct hda_codec *codec)
 	spec->num_pins = ARRAY_SIZE(stac92hd83xxx_pin_nids);
 	spec->num_dmuxes = ARRAY_SIZE(stac92hd83xxx_dmux_nids);
 	spec->num_adcs = ARRAY_SIZE(stac92hd83xxx_adc_nids);
+	spec->num_amps = ARRAY_SIZE(stac92hd83xxx_amp_nids);
 	spec->num_dmics = STAC92HD83XXX_NUM_DMICS;
 	spec->dinput_mux = &stac92hd83xxx_dmux;
 	spec->pin_nids = stac92hd83xxx_pin_nids;
