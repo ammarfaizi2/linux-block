@@ -548,6 +548,8 @@ int wait_on_page_bit_async(struct page *page, int bit_nr,
 							TASK_UNINTERRUPTIBLE);
 	}
 
+	if (ret)
+		printk("%s: ret=%d\n", __FUNCTION__, ret);
 	return ret;
 }
 EXPORT_SYMBOL(wait_on_page_bit_async);
@@ -1017,6 +1019,7 @@ static void do_generic_file_read(struct file *filp, loff_t *ppos,
 	pgoff_t last_index;
 	pgoff_t prev_index;
 	unsigned long offset;      /* offset into pagecache page */
+	unsigned long foo;
 	unsigned int prev_offset;
 	int error;
 
@@ -1033,6 +1036,7 @@ static void do_generic_file_read(struct file *filp, loff_t *ppos,
 		unsigned long nr, ret;
 
 		cond_resched();
+		foo = index;
 find_page:
 		page = find_get_page(mapping, index);
 		if (!page) {
@@ -1126,8 +1130,10 @@ page_ok:
 page_not_up_to_date:
 		/* Get exclusive access to the page ... */
 		error = lock_page_async(page, current->io_wait);
-		if (unlikely(error))
+		if (unlikely(error)) {
+			//WARN(1, "%s: %d on index %lu, page %p\n", current->comm, error, foo, page);
 			goto readpage_error;
+		}
 
 page_not_up_to_date_locked:
 		/* Did it get truncated before we got the lock? */

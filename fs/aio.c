@@ -681,6 +681,7 @@ static ssize_t aio_run_iocb(struct kiocb *iocb)
 	 * queue this on the run list yet)
 	 */
 	iocb->ki_run_list.next = iocb->ki_run_list.prev = NULL;
+	iocb->ki_retry = NULL;
 	spin_unlock_irq(&ctx->ctx_lock);
 
 	/* Quit retrying if the i/o has been cancelled */
@@ -695,7 +696,7 @@ static ssize_t aio_run_iocb(struct kiocb *iocb)
 	 * Now we are all set to call the retry method in async
 	 * context.
 	 */
-	BUG_ON(current->io_wait != NULL);
+	BUG_ON(current->io_wait);
 	current->io_wait = &iocb->ki_wq;
 	ret = retry(iocb);
 	current->io_wait = NULL;
@@ -710,7 +711,7 @@ static ssize_t aio_run_iocb(struct kiocb *iocb)
 out:
 	spin_lock_irq(&ctx->ctx_lock);
 
-	if (-EIOCBRETRY == ret) {
+	if (ret == -EIOCBRETRY) {
 		/*
 		 * OK, now that we are done with this iteration
 		 * and know that there is more left to go,
@@ -735,6 +736,7 @@ out:
 			aio_queue_work(ctx);
 		}
 	}
+
 	return ret;
 }
 
@@ -1615,11 +1617,13 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 
 	spin_lock_irq(&ctx->ctx_lock);
 	aio_run_iocb(req);
+#if 0
 	if (!list_empty(&ctx->run_list)) {
 		/* drain the run list */
 		while (__aio_run_iocbs(ctx))
 			;
 	}
+#endif
 	spin_unlock_irq(&ctx->ctx_lock);
 	aio_put_req(req);	/* drop extra ref to req */
 	return 0;
