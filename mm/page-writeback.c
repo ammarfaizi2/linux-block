@@ -886,7 +886,9 @@ retry:
 
 			done_index = page->index + 1;
 
-			lock_page(page);
+			ret = lock_page_async(page, current->io_wait);
+			if (ret)
+				break;
 
 			/*
 			 * Page truncated or invalidated. We can freely skip it

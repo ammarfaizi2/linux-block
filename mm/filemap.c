@@ -693,6 +693,35 @@ repeat:
 }
 EXPORT_SYMBOL(find_get_page);
 
+struct page *find_lock_page_async(struct address_space *mapping, pgoff_t offset,
+				  struct wait_bit_queue *wait)
+{
+	struct page *page;
+
+repeat:
+	page = find_get_page(mapping, offset);
+	if (page) {
+		int ret;
+
+		ret = lock_page_async(page, wait);
+		if (ret) {
+			page_cache_release(page);
+			page = ERR_PTR(ret);
+			goto out;
+		}
+		/* Has the page been truncated? */
+		if (unlikely(page->mapping != mapping)) {
+			unlock_page(page);
+			page_cache_release(page);
+			goto repeat;
+		}
+		VM_BUG_ON(page->index != offset);
+	}
+out:
+	return page;
+}
+EXPORT_SYMBOL(find_lock_page_async);
+
 /**
  * find_lock_page - locate, pin and lock a pagecache page
  * @mapping: the address_space to search
@@ -705,21 +734,8 @@ EXPORT_SYMBOL(find_get_page);
  */
 struct page *find_lock_page(struct address_space *mapping, pgoff_t offset)
 {
-	struct page *page;
 
-repeat:
-	page = find_get_page(mapping, offset);
-	if (page) {
-		lock_page(page);
-		/* Has the page been truncated? */
-		if (unlikely(page->mapping != mapping)) {
-			unlock_page(page);
-			page_cache_release(page);
-			goto repeat;
-		}
-		VM_BUG_ON(page->index != offset);
-	}
-	return page;
+	return find_lock_page_async(mapping, offset, NULL);
 }
 EXPORT_SYMBOL(find_lock_page);
 
@@ -2183,8 +2199,8 @@ struct page *grab_cache_page_write_begin(struct address_space *mapping,
 	if (flags & AOP_FLAG_NOFS)
 		gfp_notmask = __GFP_FS;
 repeat:
-	page = find_lock_page(mapping, index);
-	if (likely(page))
+	page = find_lock_page_async(mapping, index, current->io_wait);
+	if (page || IS_ERR(page))
 		return page;
 
 	page = __page_cache_alloc(mapping_gfp_mask(mapping) & ~gfp_notmask);

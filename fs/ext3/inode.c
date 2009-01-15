@@ -1171,6 +1171,8 @@ retry:
 	page = grab_cache_page_write_begin(mapping, index, flags);
 	if (!page)
 		return -ENOMEM;
+	else if (IS_ERR(page))
+		return PTR_ERR(page);
 	*pagep = page;
 
 	handle = ext3_journal_start(inode, needed_blocks);

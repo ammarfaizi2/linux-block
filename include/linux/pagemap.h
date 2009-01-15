@@ -224,6 +224,8 @@ extern struct page * find_get_page(struct address_space *mapping,
 				pgoff_t index);
 extern struct page * find_lock_page(struct address_space *mapping,
 				pgoff_t index);
+extern struct page *find_lock_page_async(struct address_space *mapping,
+				pgoff_t index, struct wait_bit_queue *wait);
 extern struct page * find_or_create_page(struct address_space *mapping,
 				pgoff_t index, gfp_t gfp_mask);
 unsigned find_get_pages(struct address_space *mapping, pgoff_t start,

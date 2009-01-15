@@ -3369,10 +3369,7 @@ int bh_submit_read(struct buffer_head *bh)
 	get_bh(bh);
 	bh->b_end_io = end_buffer_read_sync;
 	submit_bh(READ, bh);
-	if (wait_on_buffer_async(bh, current->io_wait)) {
-		WARN(1, "%s: err\n", __FUNCTION__);
-		return -EIOCBRETRY;
-	}
+	wait_on_buffer(bh);
 	if (buffer_uptodate(bh))
 		return 0;
 	return -EIO;
