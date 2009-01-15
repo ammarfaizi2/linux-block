@@ -642,7 +642,7 @@ static inline int __queue_kicked_iocb(struct kiocb *iocb)
  * simplifies the coding of individual aio operations as
  * it avoids various potential races.
  */
-static ssize_t aio_run_iocb(struct kiocb *iocb)
+static ssize_t aio_run_iocb(struct kiocb *iocb, int do_sync)
 {
 	struct kioctx	*ctx = iocb->ki_ctx;
 	ssize_t (*retry)(struct kiocb *);
@@ -696,12 +696,20 @@ static ssize_t aio_run_iocb(struct kiocb *iocb)
 	 * Now we are all set to call the retry method in async
 	 * context.
 	 */
-	BUG_ON(current->io_wait);
-	current->io_wait = &iocb->ki_wq;
+	if (!do_sync) {
+		BUG_ON(current->io_wait);
+		current->io_wait = &iocb->ki_wq;
+	}
+
 	ret = retry(iocb);
 	current->io_wait = NULL;
 
 	if (ret == -EIOCBRETRY) {
+		/*
+		 * We should not get retries, if blocking is allowed
+		 */
+		WARN_ON(do_sync);
+
 		if (list_empty(&iocb->ki_wq.wait.task_list))
 			kiocbSetKicked(iocb);
 	} else if (ret != -EIOCBQUEUED) {
@@ -747,7 +755,7 @@ out:
  * Assumes it is operating within the aio issuer's mm
  * context.
  */
-static int __aio_run_iocbs(struct kioctx *ctx)
+static int __aio_run_iocbs(struct kioctx *ctx, int do_sync)
 {
 	struct kiocb *iocb;
 	struct list_head run_list;
@@ -763,7 +771,7 @@ static int __aio_run_iocbs(struct kioctx *ctx)
 		 * Hold an extra reference while retrying i/o.
 		 */
 		iocb->ki_users++;       /* grab extra reference */
-		aio_run_iocb(iocb);
+		aio_run_iocb(iocb, do_sync);
 		__aio_put_req(ctx, iocb);
  	}
 	if (!list_empty(&ctx->run_list))
@@ -800,7 +808,7 @@ static inline void aio_run_iocbs(struct kioctx *ctx)
 
 	spin_lock_irq(&ctx->ctx_lock);
 
-	requeue = __aio_run_iocbs(ctx);
+	requeue = __aio_run_iocbs(ctx, 0);
 	spin_unlock_irq(&ctx->ctx_lock);
 	if (requeue)
 		aio_queue_work(ctx);
@@ -813,7 +821,7 @@ static inline void aio_run_iocbs(struct kioctx *ctx)
 static inline void aio_run_all_iocbs(struct kioctx *ctx)
 {
 	spin_lock_irq(&ctx->ctx_lock);
-	while (__aio_run_iocbs(ctx))
+	while (__aio_run_iocbs(ctx, 1))
 		;
 	spin_unlock_irq(&ctx->ctx_lock);
 }
@@ -837,7 +845,7 @@ static void aio_kick_handler(struct work_struct *work)
 	set_fs(USER_DS);
 	use_mm(ctx->mm);
 	spin_lock_irq(&ctx->ctx_lock);
-	requeue =__aio_run_iocbs(ctx);
+	requeue =__aio_run_iocbs(ctx, 1);
 	mm = ctx->mm;
 	spin_unlock_irq(&ctx->ctx_lock);
  	unuse_mm(mm);
@@ -1616,15 +1624,9 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 		goto out_put_req;
 
 	spin_lock_irq(&ctx->ctx_lock);
-	aio_run_iocb(req);
-#if 0
-	if (!list_empty(&ctx->run_list)) {
-		/* drain the run list */
-		while (__aio_run_iocbs(ctx))
-			;
-	}
-#endif
+	aio_run_iocb(req, 0);
 	spin_unlock_irq(&ctx->ctx_lock);
+
 	aio_put_req(req);	/* drop extra ref to req */
 	return 0;
 
