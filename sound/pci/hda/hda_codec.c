@@ -3390,9 +3390,11 @@ int snd_hda_parse_pin_def_config(struct hda_codec *codec,
 			cfg->input_pins[AUTO_PIN_AUX] = nid;
 			break;
 		case AC_JACK_SPDIF_OUT:
+		case AC_JACK_DIG_OTHER_OUT:
 			cfg->dig_out_pin = nid;
 			break;
 		case AC_JACK_SPDIF_IN:
+		case AC_JACK_DIG_OTHER_IN:
 			cfg->dig_in_pin = nid;
 			break;
 		}
@@ -3499,6 +3501,8 @@ int snd_hda_parse_pin_def_config(struct hda_codec *codec,
 		   cfg->hp_pins[1], cfg->hp_pins[2],
 		   cfg->hp_pins[3], cfg->hp_pins[4]);
 	snd_printd("   mono: mono_out=0x%x\n", cfg->mono_out_pin);
+	if (cfg->dig_out_pin)
+		snd_printd("   dig-out=0x%x\n", cfg->dig_out_pin);
 	snd_printd("   inputs: mic=0x%x, fmic=0x%x, line=0x%x, fline=0x%x,"
 		   " cd=0x%x, aux=0x%x\n",
 		   cfg->input_pins[AUTO_PIN_MIC],
@@ -3507,6 +3511,8 @@ int snd_hda_parse_pin_def_config(struct hda_codec *codec,
 		   cfg->input_pins[AUTO_PIN_FRONT_LINE],
 		   cfg->input_pins[AUTO_PIN_CD],
 		   cfg->input_pins[AUTO_PIN_AUX]);
+	if (cfg->dig_out_pin)
+		snd_printd("   dig-in=0x%x\n", cfg->dig_in_pin);
 
 	return 0;
 }
