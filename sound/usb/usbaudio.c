@@ -108,6 +108,7 @@ MODULE_PARM_DESC(ignore_ctl_error,
 #define MAX_URBS	8
 #define SYNC_URBS	4	/* always four urbs for sync */
 #define MIN_PACKS_URB	1	/* minimum 1 packet per urb */
+#define MAX_QUEUE	24	/* try not to exceed this queue length, in ms */
 
 struct audioformat {
 	struct list_head list;
@@ -525,7 +526,7 @@ static int snd_usb_audio_next_packet_size(struct snd_usb_substream *subs)
 /*
  * Prepare urb for streaming before playback starts or when paused.
  *
- * We don't have any data, so we send a frame of silence.
+ * We don't have any data, so we send silence.
  */
 static int prepare_nodata_playback_urb(struct snd_usb_substream *subs,
 				       struct snd_pcm_runtime *runtime,
@@ -537,13 +538,13 @@ static int prepare_nodata_playback_urb(struct snd_usb_substream *subs,
 
 	offs = 0;
 	urb->dev = ctx->subs->dev;
-	urb->number_of_packets = subs->packs_per_ms;
-	for (i = 0; i < subs->packs_per_ms; ++i) {
+	for (i = 0; i < ctx->packets; ++i) {
 		counts = snd_usb_audio_next_packet_size(subs);
 		urb->iso_frame_desc[i].offset = offs * stride;
 		urb->iso_frame_desc[i].length = counts * stride;
 		offs += counts;
 	}
+	urb->number_of_packets = ctx->packets;
 	urb->transfer_buffer_length = offs * stride;
 	memset(urb->transfer_buffer,
 	       subs->cur_audiofmt->format == SNDRV_PCM_FORMAT_U8 ? 0x80 : 0,
@@ -1034,9 +1035,9 @@ static void release_substream_urbs(struct snd_usb_substream *subs, int force)
 static int init_substream_urbs(struct snd_usb_substream *subs, unsigned int period_bytes,
 			       unsigned int rate, unsigned int frame_bits)
 {
-	unsigned int maxsize, n, i;
+	unsigned int maxsize, i;
 	int is_playback = subs->direction == SNDRV_PCM_STREAM_PLAYBACK;
-	unsigned int npacks[MAX_URBS], urb_packs, total_packs, packs_per_ms;
+	unsigned int urb_packs, total_packs, packs_per_ms;
 
 	/* calculate the frequency in 16.16 format */
 	if (snd_usb_get_speed(subs->dev) == USB_SPEED_FULL)
@@ -1079,7 +1080,7 @@ static int init_substream_urbs(struct snd_usb_substream *subs, unsigned int peri
 
 	/* decide how many packets to be used */
 	if (is_playback) {
-		unsigned int minsize;
+		unsigned int minsize, maxpacks;
 		/* determine how small a packet can be */
 		minsize = (subs->freqn >> (16 - subs->datainterval))
 			  * (frame_bits >> 3);
@@ -1094,6 +1095,12 @@ static int init_substream_urbs(struct snd_usb_substream *subs, unsigned int peri
 		/* we need at least two URBs for queueing */
 		if (total_packs < 2 * MIN_PACKS_URB * packs_per_ms)
 			total_packs = 2 * MIN_PACKS_URB * packs_per_ms;
+		else {
+			/* and we don't want too long a queue either */
+			maxpacks = max((unsigned int)MAX_QUEUE, urb_packs * 2);
+			if (total_packs > maxpacks * packs_per_ms)
+				total_packs = maxpacks * packs_per_ms;
+		}
 	} else {
 		total_packs = MAX_URBS * urb_packs;
 	}
@@ -1102,31 +1109,11 @@ static int init_substream_urbs(struct snd_usb_substream *subs, unsigned int peri
 		/* too much... */
 		subs->nurbs = MAX_URBS;
 		total_packs = MAX_URBS * urb_packs;
-	}
-	n = total_packs;
-	for (i = 0; i < subs->nurbs; i++) {
-		npacks[i] = n > urb_packs ? urb_packs : n;
-		n -= urb_packs;
-	}
-	if (subs->nurbs <= 1) {
+	} else if (subs->nurbs < 2) {
 		/* too little - we need at least two packets
 		 * to ensure contiguous playback/capture
 		 */
 		subs->nurbs = 2;
-		npacks[0] = (total_packs + 1) / 2;
-		npacks[1] = total_packs - npacks[0];
-	} else if (npacks[subs->nurbs-1] < MIN_PACKS_URB * packs_per_ms) {
-		/* the last packet is too small.. */
-		if (subs->nurbs > 2) {
-			/* merge to the first one */
-			npacks[0] += npacks[subs->nurbs - 1];
-			subs->nurbs--;
-		} else {
-			/* divide to two */
-			subs->nurbs = 2;
-			npacks[0] = (total_packs + 1) / 2;
-			npacks[1] = total_packs - npacks[0];
-		}
 	}
 
 	/* allocate and initialize data urbs */
@@ -1134,7 +1121,8 @@ static int init_substream_urbs(struct snd_usb_substream *subs, unsigned int peri
 		struct snd_urb_ctx *u = &subs->dataurb[i];
 		u->index = i;
 		u->subs = subs;
-		u->packets = npacks[i];
+		u->packets = (i + 1) * total_packs / subs->nurbs
+			- i * total_packs / subs->nurbs;
 		u->buffer_size = maxsize * u->packets;
 		if (subs->fmt_type == USB_FORMAT_TYPE_II)
 			u->packets++; /* for transfer delimiter */
