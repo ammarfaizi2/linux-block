@@ -1167,7 +1167,7 @@ static struct bio_pair *loop_clone_submit(struct loop_device *lo,
 	/*
 	 * clone part of the original bio and submit it
 	 */
-	bp = bio_split(org_bio, bio_split_pool, size >> 9);
+	bp = bio_split(org_bio, size >> 9);
 
 	spin_lock_irq(&lo->lo_lock);
 	ret = __loop_redirect_bio(lo, lfe, &bp->bio1, 1);
