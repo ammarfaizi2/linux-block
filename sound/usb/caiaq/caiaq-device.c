@@ -42,7 +42,7 @@
 #endif
 
 MODULE_AUTHOR("Daniel Mack <daniel@caiaq.de>");
-MODULE_DESCRIPTION("caiaq USB audio, version 1.3.11");
+MODULE_DESCRIPTION("caiaq USB audio, version 1.3.12");
 MODULE_LICENSE("GPL");
 MODULE_SUPPORTED_DEVICE("{{Native Instruments, RigKontrol2},"
 			 "{Native Instruments, RigKontrol3},"
@@ -311,6 +311,12 @@ static void __devinit setup_card(struct snd_usb_caiaqdev *dev)
 				EP1_CMD_WRITE_IO, dev->control_state, 6);
 		}
 
+		break;
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AUDIO4DJ):
+		/* Audio 4 DJ - default input mode to phono */
+		dev->control_state[0] = 2;
+		snd_usb_caiaq_send_command(dev, EP1_CMD_WRITE_IO,
+			dev->control_state, 1);
 		break;
 	}
 	
