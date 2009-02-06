@@ -255,6 +255,7 @@ struct alc_spec {
 	struct snd_kcontrol_new *mixers[5];	/* mixer arrays */
 	unsigned int num_mixers;
 	struct snd_kcontrol_new *cap_mixer;	/* capture mixer */
+	unsigned int beep_amp;	/* beep amp value, set via set_beep_amp() */
 
 	const struct hda_verb *init_verbs[5];	/* initialization verbs
 						 * don't forget NULL
@@ -937,7 +938,7 @@ static void alc_mic_automute(struct hda_codec *codec)
 			 HDA_AMP_MUTE, present ? HDA_AMP_MUTE : 0);
 }
 #else
-#define alc_mic_automute(codec) /* NOP */
+#define alc_mic_automute(codec) do {} while(0) /* NOP */
 #endif /* disabled */
 
 /* unsolicited event for HP jack sensing */
@@ -1391,8 +1392,6 @@ static struct snd_kcontrol_new alc888_base_mixer[] = {
 	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Boost", 0x18, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -1499,8 +1498,6 @@ static struct snd_kcontrol_new alc880_three_stack_mixer[] = {
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x3, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x3, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	HDA_CODEC_MUTE("Headphone Playback Switch", 0x19, 0x0, HDA_OUTPUT),
 	{
 		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
@@ -1722,8 +1719,6 @@ static struct snd_kcontrol_new alc880_six_stack_mixer[] = {
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{
 		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Channel Mode",
@@ -1900,13 +1895,6 @@ static struct snd_kcontrol_new alc880_asus_w1v_mixer[] = {
 	{ } /* end */
 };
 
-/* additional mixers to alc880_asus_mixer */
-static struct snd_kcontrol_new alc880_pcbeep_mixer[] = {
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
-	{ } /* end */
-};
-
 /* TCL S700 */
 static struct snd_kcontrol_new alc880_tcl_s700_mixer[] = {
 	HDA_CODEC_VOLUME("Front Playback Volume", 0x0c, 0x0, HDA_OUTPUT),
@@ -1939,8 +1927,6 @@ static struct snd_kcontrol_new alc880_uniwill_mixer[] = {
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{
 		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Channel Mode",
@@ -2015,6 +2001,13 @@ static const char *alc_slave_sws[] = {
 
 static void alc_free_kctls(struct hda_codec *codec);
 
+/* additional beep mixers; the actual parameters are overwritten at build */
+static struct snd_kcontrol_new alc_beep_mixer[] = {
+	HDA_CODEC_VOLUME("Beep Playback Volume", 0, 0, HDA_INPUT),
+	HDA_CODEC_MUTE("Beep Playback Switch", 0, 0, HDA_INPUT),
+	{ } /* end */
+};
+
 static int alc_build_controls(struct hda_codec *codec)
 {
 	struct alc_spec *spec = codec->spec;
@@ -2048,6 +2041,21 @@ static int alc_build_controls(struct hda_codec *codec)
 		err = snd_hda_create_spdif_in_ctls(codec, spec->dig_in_nid);
 		if (err < 0)
 			return err;
+	}
+
+	/* create beep controls if needed */
+	if (spec->beep_amp) {
+		struct snd_kcontrol_new *knew;
+		for (knew = alc_beep_mixer; knew->name; knew++) {
+			struct snd_kcontrol *kctl;
+			kctl = snd_ctl_new1(knew, codec);
+			if (!kctl)
+				return -ENOMEM;
+			kctl->private_value = spec->beep_amp;
+			err = snd_hda_ctl_add(codec, kctl);
+			if (err < 0)
+				return err;
+		}
 	}
 
 	/* if we have no master control, let's create it */
@@ -3814,7 +3822,7 @@ static struct alc_config_preset alc880_presets[] = {
 		.input_mux = &alc880_capture_source,
 	},
 	[ALC880_UNIWILL_DIG] = {
-		.mixers = { alc880_asus_mixer, alc880_pcbeep_mixer },
+		.mixers = { alc880_asus_mixer },
 		.init_verbs = { alc880_volume_init_verbs,
 				alc880_pin_asus_init_verbs },
 		.num_dacs = ARRAY_SIZE(alc880_asus_dac_nids),
@@ -3852,8 +3860,7 @@ static struct alc_config_preset alc880_presets[] = {
 		.init_hook = alc880_uniwill_p53_hp_automute,
 	},
 	[ALC880_FUJITSU] = {
-		.mixers = { alc880_fujitsu_mixer,
-			    alc880_pcbeep_mixer, },
+		.mixers = { alc880_fujitsu_mixer },
 		.init_verbs = { alc880_volume_init_verbs,
 				alc880_uniwill_p53_init_verbs,
 	       			alc880_beep_init_verbs },
@@ -4312,10 +4319,6 @@ static void alc880_auto_init(struct hda_codec *codec)
 		alc_inithook(codec);
 }
 
-/*
- * OK, here we have finally the patch for ALC880
- */
-
 static void set_capture_mixer(struct alc_spec *spec)
 {
 	static struct snd_kcontrol_new *caps[3] = {
@@ -4326,6 +4329,13 @@ static void set_capture_mixer(struct alc_spec *spec)
 	if (spec->num_adc_nids > 0 && spec->num_adc_nids <= 3)
 		spec->cap_mixer = caps[spec->num_adc_nids - 1];
 }
+
+#define set_beep_amp(spec, nid, idx, dir) \
+	((spec)->beep_amp = HDA_COMPOSE_AMP_VAL(nid, 3, idx, dir))
+
+/*
+ * OK, here we have finally the patch for ALC880
+ */
 
 static int patch_alc880(struct hda_codec *codec)
 {
@@ -4394,6 +4404,7 @@ static int patch_alc880(struct hda_codec *codec)
 		}
 	}
 	set_capture_mixer(spec);
+	set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
 
 	spec->vmaster_nid = 0x0c;
 
@@ -4540,12 +4551,6 @@ static struct snd_kcontrol_new alc260_input_mixer[] = {
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x07, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x07, 0x01, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x07, 0x01, HDA_INPUT),
-	{ } /* end */
-};
-
-static struct snd_kcontrol_new alc260_pc_beep_mixer[] = {
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x07, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x07, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -4740,8 +4745,6 @@ static struct snd_kcontrol_new alc260_fujitsu_mixer[] = {
 	HDA_CODEC_VOLUME("Mic/Line Playback Volume", 0x07, 0x0, HDA_INPUT),
 	HDA_CODEC_MUTE("Mic/Line Playback Switch", 0x07, 0x0, HDA_INPUT),
 	ALC_PIN_MODE("Mic/Line Jack Mode", 0x12, ALC_PIN_DIR_IN),
-	HDA_CODEC_VOLUME("Beep Playback Volume", 0x07, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("Beep Playback Switch", 0x07, 0x05, HDA_INPUT),
 	HDA_CODEC_VOLUME("Speaker Playback Volume", 0x09, 0x0, HDA_OUTPUT),
 	HDA_BIND_MUTE("Speaker Playback Switch", 0x09, 2, HDA_INPUT),
 	{ } /* end */
@@ -4786,8 +4789,6 @@ static struct snd_kcontrol_new alc260_acer_mixer[] = {
 	HDA_CODEC_VOLUME("Line Playback Volume", 0x07, 0x02, HDA_INPUT),
 	HDA_CODEC_MUTE("Line Playback Switch", 0x07, 0x02, HDA_INPUT),
 	ALC_PIN_MODE("Line Jack Mode", 0x14, ALC_PIN_DIR_INOUT),
-	HDA_CODEC_VOLUME("Beep Playback Volume", 0x07, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("Beep Playback Switch", 0x07, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -4805,8 +4806,6 @@ static struct snd_kcontrol_new alc260_will_mixer[] = {
 	ALC_PIN_MODE("Line Jack Mode", 0x14, ALC_PIN_DIR_INOUT),
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x07, 0x04, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x07, 0x04, HDA_INPUT),
-	HDA_CODEC_VOLUME("Beep Playback Volume", 0x07, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("Beep Playback Switch", 0x07, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -5310,8 +5309,6 @@ static struct snd_kcontrol_new alc260_test_mixer[] = {
 	HDA_CODEC_MUTE("LINE2 Playback Switch", 0x07, 0x03, HDA_INPUT),
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x07, 0x04, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x07, 0x04, HDA_INPUT),
-	HDA_CODEC_VOLUME("Beep Playback Volume", 0x07, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("Beep Playback Switch", 0x07, 0x05, HDA_INPUT),
 	HDA_CODEC_VOLUME("LINE-OUT loopback Playback Volume", 0x07, 0x06, HDA_INPUT),
 	HDA_CODEC_MUTE("LINE-OUT loopback Playback Switch", 0x07, 0x06, HDA_INPUT),
 	HDA_CODEC_VOLUME("HP-OUT loopback Playback Volume", 0x07, 0x7, HDA_INPUT),
@@ -5739,8 +5736,7 @@ static struct snd_pci_quirk alc260_cfg_tbl[] = {
 static struct alc_config_preset alc260_presets[] = {
 	[ALC260_BASIC] = {
 		.mixers = { alc260_base_output_mixer,
-			    alc260_input_mixer,
-			    alc260_pc_beep_mixer },
+			    alc260_input_mixer },
 		.init_verbs = { alc260_init_verbs },
 		.num_dacs = ARRAY_SIZE(alc260_dac_nids),
 		.dac_nids = alc260_dac_nids,
@@ -5926,6 +5922,7 @@ static int patch_alc260(struct hda_codec *codec)
 		}
 	}
 	set_capture_mixer(spec);
+	set_beep_amp(spec, 0x07, 0x05, HDA_INPUT);
 
 	spec->vmaster_nid = 0x08;
 
@@ -6097,8 +6094,6 @@ static struct snd_kcontrol_new alc882_base_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x19, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -6125,8 +6120,6 @@ static struct snd_kcontrol_new alc882_w2jc_mixer[] = {
 	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Boost", 0x18, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -6178,8 +6171,6 @@ static struct snd_kcontrol_new alc882_asus_a7m_mixer[] = {
 	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Boost", 0x18, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -6288,8 +6279,10 @@ static struct snd_kcontrol_new alc882_macpro_mixer[] = {
 	HDA_CODEC_MUTE("Headphone Playback Switch", 0x18, 0x0, HDA_OUTPUT),
 	HDA_CODEC_VOLUME("Line Playback Volume", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_MUTE("Line Playback Switch", 0x0b, 0x01, HDA_INPUT),
+	/* FIXME: this looks suspicious...
 	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x02, HDA_INPUT),
 	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x02, HDA_INPUT),
+	*/
 	{ } /* end */
 };
 
@@ -7155,6 +7148,7 @@ static int patch_alc882(struct hda_codec *codec)
 		}
 	}
 	set_capture_mixer(spec);
+	set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
 
 	spec->vmaster_nid = 0x0c;
 
@@ -7431,8 +7425,6 @@ static struct snd_kcontrol_new alc883_base_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x19, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -7495,8 +7487,6 @@ static struct snd_kcontrol_new alc883_3ST_2ch_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x19, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -7520,8 +7510,6 @@ static struct snd_kcontrol_new alc883_3ST_6ch_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x19, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -7546,8 +7534,6 @@ static struct snd_kcontrol_new alc883_3ST_6ch_intel_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x18, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -7571,8 +7557,6 @@ static struct snd_kcontrol_new alc883_fivestack_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x19, 0, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -9185,6 +9169,7 @@ static int patch_alc883(struct hda_codec *codec)
 
 	if (!spec->cap_mixer)
 		set_capture_mixer(spec);
+	set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
 
 	spec->vmaster_nid = 0x0c;
 
@@ -9237,8 +9222,6 @@ static struct snd_kcontrol_new alc262_base_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x19, 0, HDA_INPUT),
-	/* HDA_CODEC_VOLUME("PC Beep Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	   HDA_CODEC_MUTE("PC Beep Playback Switch", 0x0b, 0x05, HDA_INPUT), */
 	HDA_CODEC_VOLUME("Headphone Playback Volume", 0x0D, 0x0, HDA_OUTPUT),
 	HDA_CODEC_MUTE("Headphone Playback Switch", 0x15, 0x0, HDA_OUTPUT),
 	HDA_CODEC_VOLUME_MONO("Mono Playback Volume", 0x0e, 2, 0x0, HDA_OUTPUT),
@@ -9259,8 +9242,6 @@ static struct snd_kcontrol_new alc262_hippo1_mixer[] = {
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Boost", 0x19, 0, HDA_INPUT),
-	/* HDA_CODEC_VOLUME("PC Beep Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	   HDA_CODEC_MUTE("PC Beep Playback Switch", 0x0b, 0x05, HDA_INPUT), */
 	/*HDA_CODEC_VOLUME("Headphone Playback Volume", 0x0D, 0x0, HDA_OUTPUT),*/
 	HDA_CODEC_MUTE("Headphone Playback Switch", 0x1b, 0x0, HDA_OUTPUT),
 	{ } /* end */
@@ -9369,8 +9350,6 @@ static struct snd_kcontrol_new alc262_HP_BPC_mixer[] = {
 	HDA_CODEC_MUTE("Line Playback Switch", 0x0b, 0x02, HDA_INPUT),
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x0b, 0x04, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x0b, 0x04, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Beep Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Beep Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	HDA_CODEC_VOLUME("AUX IN Playback Volume", 0x0b, 0x06, HDA_INPUT),
 	HDA_CODEC_MUTE("AUX IN Playback Switch", 0x0b, 0x06, HDA_INPUT),
 	{ } /* end */
@@ -9399,8 +9378,6 @@ static struct snd_kcontrol_new alc262_HP_BPC_WildWest_mixer[] = {
 	HDA_CODEC_MUTE("Line Playback Switch", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x0b, 0x04, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x0b, 0x04, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Beep Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Beep Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -10075,8 +10052,6 @@ static struct snd_kcontrol_new alc262_fujitsu_mixer[] = {
 	},
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x0b, 0x04, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x0b, 0x04, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Switch", 0x0b, 0x05, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Boost", 0x18, 0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
@@ -11087,6 +11062,7 @@ static int patch_alc262(struct hda_codec *codec)
 	}
 	if (!spec->cap_mixer && !spec->no_analog)
 		set_capture_mixer(spec);
+	set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
 
 	spec->vmaster_nid = 0x0c;
 
@@ -12207,8 +12183,6 @@ static struct snd_kcontrol_new alc269_base_mixer[] = {
 	HDA_CODEC_MUTE("Line Playback Switch", 0x0b, 0x02, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
-	HDA_CODEC_VOLUME("Beep Playback Volume", 0x0b, 0x4, HDA_INPUT),
-	HDA_CODEC_MUTE("Beep Playback Switch", 0x0b, 0x4, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Boost", 0x18, 0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x01, HDA_INPUT),
@@ -12235,8 +12209,6 @@ static struct snd_kcontrol_new alc269_quanta_fl1_mixer[] = {
 	HDA_CODEC_VOLUME("Internal Mic Playback Volume", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_MUTE("Internal Mic Playback Switch", 0x0b, 0x01, HDA_INPUT),
 	HDA_CODEC_VOLUME("Internal Mic Boost", 0x19, 0, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x04, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x04, HDA_INPUT),
 	{ }
 };
 
@@ -12260,8 +12232,6 @@ static struct snd_kcontrol_new alc269_lifebook_mixer[] = {
 	HDA_CODEC_VOLUME("Dock Mic Playback Volume", 0x0b, 0x03, HDA_INPUT),
 	HDA_CODEC_MUTE("Dock Mic Playback Switch", 0x0b, 0x03, HDA_INPUT),
 	HDA_CODEC_VOLUME("Dock Mic Boost", 0x1b, 0, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x04, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x04, HDA_INPUT),
 	{ }
 };
 
@@ -12295,13 +12265,6 @@ static struct snd_kcontrol_new alc269_fujitsu_mixer[] = {
 	HDA_CODEC_MUTE("Speaker Playback Switch", 0x14, 0x0, HDA_OUTPUT),
 	HDA_CODEC_MUTE("Headphone Playback Switch", 0x15, 0x0, HDA_OUTPUT),
 	HDA_BIND_VOL("PCM Playback Volume", &alc269_epc_bind_vol),
-	{ } /* end */
-};
-
-/* beep control */
-static struct snd_kcontrol_new alc269_beep_mixer[] = {
-	HDA_CODEC_VOLUME("Beep Playback Volume", 0x0b, 0x4, HDA_INPUT),
-	HDA_CODEC_MUTE("Beep Playback Switch", 0x0b, 0x4, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -12751,13 +12714,6 @@ static int alc269_parse_auto_config(struct hda_codec *codec)
 	if (spec->kctls.list)
 		add_mixer(spec, spec->kctls.list);
 
-	/* create a beep mixer control if the pin 0x1d isn't assigned */
-	for (i = 0; i < ARRAY_SIZE(spec->autocfg.input_pins); i++)
-		if (spec->autocfg.input_pins[i] == 0x1d)
-			break;
-	if (i >= ARRAY_SIZE(spec->autocfg.input_pins))
-		add_mixer(spec, alc269_beep_mixer);
-
 	add_verb(spec, alc269_init_verbs);
 	spec->num_mux_defs = 1;
 	spec->input_mux = &spec->private_imux[0];
@@ -12870,7 +12826,7 @@ static struct alc_config_preset alc269_presets[] = {
 		.init_hook = alc269_eeepc_dmic_inithook,
 	},
 	[ALC269_FUJITSU] = {
-		.mixers = { alc269_fujitsu_mixer, alc269_beep_mixer },
+		.mixers = { alc269_fujitsu_mixer },
 		.cap_mixer = alc269_epc_capture_mixer,
 		.init_verbs = { alc269_init_verbs,
 				alc269_eeepc_dmic_init_verbs },
@@ -12957,6 +12913,7 @@ static int patch_alc269(struct hda_codec *codec)
 	spec->capsrc_nids = alc269_capsrc_nids;
 	if (!spec->cap_mixer)
 		set_capture_mixer(spec);
+	set_beep_amp(spec, 0x0b, 0x04, HDA_INPUT);
 
 	codec->patch_ops = alc_patch_ops;
 	if (board_config == ALC269_AUTO)
@@ -13207,8 +13164,6 @@ static struct snd_kcontrol_new alc861_asus_mixer[] = {
 static struct snd_kcontrol_new alc861_asus_laptop_mixer[] = {
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x15, 0x0, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x15, 0x0, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Beep Playback Volume", 0x23, 0x0, HDA_OUTPUT),
-	HDA_CODEC_MUTE("PC Beep Playback Switch", 0x23, 0x0, HDA_OUTPUT),
 	{ }
 };
 
@@ -14051,6 +14006,8 @@ static int patch_alc861(struct hda_codec *codec)
 	spec->stream_digital_playback = &alc861_pcm_digital_playback;
 	spec->stream_digital_capture = &alc861_pcm_digital_capture;
 
+	set_beep_amp(spec, 0x23, 0, HDA_OUTPUT);
+
 	spec->vmaster_nid = 0x03;
 
 	codec->patch_ops = alc_patch_ops;
@@ -14207,9 +14164,6 @@ static struct snd_kcontrol_new alc861vd_6st_mixer[] = {
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x0b, 0x04, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x0b, 0x04, HDA_INPUT),
 
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
-
 	{ } /* end */
 };
 
@@ -14232,9 +14186,6 @@ static struct snd_kcontrol_new alc861vd_3st_mixer[] = {
 
 	HDA_CODEC_VOLUME("CD Playback Volume", 0x0b, 0x04, HDA_INPUT),
 	HDA_CODEC_MUTE("CD Playback Switch", 0x0b, 0x04, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 
 	{ } /* end */
 };
@@ -14274,8 +14225,6 @@ static struct snd_kcontrol_new alc861vd_dallas_mixer[] = {
 	HDA_CODEC_VOLUME("Int Mic Boost", 0x19, 0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Int Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_MUTE("Int Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Beep Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Beep Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -15017,6 +14966,7 @@ static int patch_alc861vd(struct hda_codec *codec)
 	spec->capture_style = CAPT_MIX;
 
 	set_capture_mixer(spec);
+	set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
 
 	spec->vmaster_nid = 0x02;
 
@@ -15205,8 +15155,6 @@ static struct snd_kcontrol_new alc662_3ST_2ch_mixer[] = {
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -15228,8 +15176,6 @@ static struct snd_kcontrol_new alc662_3ST_6ch_mixer[] = {
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_VOLUME("PC Speaker Playback Volume", 0x0b, 0x05, HDA_INPUT),
-	HDA_CODEC_MUTE("PC Speaker Playback Switch", 0x0b, 0x05, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -16834,6 +16780,7 @@ static int patch_alc662(struct hda_codec *codec)
 
 	if (!spec->cap_mixer)
 		set_capture_mixer(spec);
+	set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
 
 	spec->vmaster_nid = 0x02;
 
