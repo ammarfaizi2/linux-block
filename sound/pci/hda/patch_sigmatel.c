@@ -2108,6 +2108,8 @@ static struct snd_pci_quirk stac922x_cfg_tbl[] = {
 		      "ECS/PC chips", STAC_ECS_202),
 	SND_PCI_QUIRK(0x1019, 0x2820,
 		      "ECS/PC chips", STAC_ECS_202),
+	SND_PCI_QUIRK(0x1019, 0x2950,
+		      "ECS/PC chips", STAC_ECS_202),
 	{} /* terminator */
 };
 
@@ -5070,6 +5072,8 @@ again:
 	switch (codec->vendor_id) {
 	case 0x111d76b6: /* 4 Port without Analog Mixer */
 	case 0x111d76b7:
+		unmute_init++;
+		/* fallthru */
 	case 0x111d76b4: /* 6 Port without Analog Mixer */
 	case 0x111d76b5:
 		memcpy(&spec->private_dimux, &stac92hd71bxx_dmux_nomixer,
