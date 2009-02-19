@@ -26,7 +26,7 @@
  * SPI 0 -> 1st PCM1796 (front)
  * SPI 1 -> 2nd PCM1796 (surround)
  * SPI 2 -> 3rd PCM1796 (center/LFE)
- * SPI 4 -> 4th PCM1796 (back) and EEPROM self-destruct (do not use!)
+ * SPI 4 -> 4th PCM1796 (back)
  *
  * GPIO 2 -> M0 of CS5381
  * GPIO 3 -> M1 of CS5381
@@ -160,6 +160,7 @@ static struct pci_device_id xonar_ids[] __devinitdata = {
 	{ OXYGEN_PCI_SUBID(0x1043, 0x82b7), .driver_data = MODEL_D2X },
 	{ OXYGEN_PCI_SUBID(0x1043, 0x8314), .driver_data = MODEL_HDAV },
 	{ OXYGEN_PCI_SUBID(0x1043, 0x834f), .driver_data = MODEL_D1 },
+	{ OXYGEN_PCI_SUBID_BROKEN_EEPROM },
 	{ }
 };
 MODULE_DEVICE_TABLE(pci, xonar_ids);
@@ -188,7 +189,6 @@ MODULE_DEVICE_TABLE(pci, xonar_ids);
 #define I2C_DEVICE_CS4362A	0x30	/* 001100, AD0=0, /W=0 */
 
 struct xonar_data {
-	unsigned int model;
 	unsigned int anti_pop_delay;
 	unsigned int dacs;
 	u16 output_enable_bit;
@@ -207,12 +207,6 @@ static void xonar_gpio_changed(struct oxygen *chip);
 static inline void pcm1796_write_spi(struct oxygen *chip, unsigned int codec,
 				     u8 reg, u8 value)
 {
-	/*
-	 * We don't want to do writes on SPI 4 because the EEPROM, which shares
-	 * the same pin, might get confused and broken.  We'd better take care
-	 * that the driver works with the default register values ...
-	 */
-#if 0
 	/* maps ALSA channel pair number to SPI output */
 	static const u8 codec_map[4] = {
 		0, 1, 2, 4
@@ -223,7 +217,6 @@ static inline void pcm1796_write_spi(struct oxygen *chip, unsigned int codec,
 			 (codec_map[codec] << OXYGEN_SPI_CODEC_SHIFT) |
 			 OXYGEN_SPI_CEN_LATCH_CLOCK_HI,
 			 (reg << 8) | value);
-#endif
 }
 
 static inline void pcm1796_write_i2c(struct oxygen *chip, unsigned int codec,
@@ -341,15 +334,9 @@ static void xonar_d2_init(struct oxygen *chip)
 	struct xonar_data *data = chip->model_data;
 
 	data->anti_pop_delay = 300;
+	data->dacs = 4;
 	data->output_enable_bit = GPIO_D2_OUTPUT_ENABLE;
 	data->pcm1796_oversampling = PCM1796_OS_64;
-	if (data->model == MODEL_D2X) {
-		data->ext_power_reg = OXYGEN_GPIO_DATA;
-		data->ext_power_int_reg = OXYGEN_GPIO_INTERRUPT_MASK;
-		data->ext_power_bit = GPIO_D2X_EXT_POWER;
-		oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL,
-				    GPIO_D2X_EXT_POWER);
-	}
 
 	pcm1796_init(chip);
 
@@ -360,6 +347,18 @@ static void xonar_d2_init(struct oxygen *chip)
 
 	snd_component_add(chip->card, "PCM1796");
 	snd_component_add(chip->card, "CS5381");
+}
+
+static void xonar_d2x_init(struct oxygen *chip)
+{
+	struct xonar_data *data = chip->model_data;
+
+	data->ext_power_reg = OXYGEN_GPIO_DATA;
+	data->ext_power_int_reg = OXYGEN_GPIO_INTERRUPT_MASK;
+	data->ext_power_bit = GPIO_D2X_EXT_POWER;
+	oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_D2X_EXT_POWER);
+
+	xonar_d2_init(chip);
 }
 
 static void update_cs4362a_volumes(struct oxygen *chip)
@@ -429,11 +428,6 @@ static void xonar_d1_init(struct oxygen *chip)
 	data->cs4398_fm = CS4398_FM_SINGLE | CS4398_DEM_NONE | CS4398_DIF_LJUST;
 	data->cs4362a_fm = CS4362A_FM_SINGLE |
 		CS4362A_ATAPI_B_R | CS4362A_ATAPI_A_L;
-	if (data->model == MODEL_DX) {
-		data->ext_power_reg = OXYGEN_GPI_DATA;
-		data->ext_power_int_reg = OXYGEN_GPI_INTERRUPT_MASK;
-		data->ext_power_bit = GPI_DX_EXT_POWER;
-	}
 
 	oxygen_write16(chip, OXYGEN_2WIRE_BUS_STATUS,
 		       OXYGEN_2WIRE_LENGTH_8 |
@@ -454,6 +448,17 @@ static void xonar_d1_init(struct oxygen *chip)
 	snd_component_add(chip->card, "CS5361");
 }
 
+static void xonar_dx_init(struct oxygen *chip)
+{
+	struct xonar_data *data = chip->model_data;
+
+	data->ext_power_reg = OXYGEN_GPI_DATA;
+	data->ext_power_int_reg = OXYGEN_GPI_INTERRUPT_MASK;
+	data->ext_power_bit = GPI_DX_EXT_POWER;
+
+	xonar_d1_init(chip);
+}
+
 static void xonar_hdav_init(struct oxygen *chip)
 {
 	struct xonar_data *data = chip->model_data;
@@ -465,6 +470,7 @@ static void xonar_hdav_init(struct oxygen *chip)
 		       OXYGEN_2WIRE_SPEED_FAST);
 
 	data->anti_pop_delay = 100;
+	data->dacs = chip->model.private_data == MODEL_HDAV_H6 ? 4 : 1;
 	data->output_enable_bit = GPIO_DX_OUTPUT_ENABLE;
 	data->ext_power_reg = OXYGEN_GPI_DATA;
 	data->ext_power_int_reg = OXYGEN_GPI_INTERRUPT_MASK;
@@ -757,9 +763,6 @@ static const DECLARE_TLV_DB_SCALE(cs4362a_db_scale, -12700, 100, 0);
 
 static int xonar_d2_control_filter(struct snd_kcontrol_new *template)
 {
-	if (!strncmp(template->name, "Master Playback ", 16))
-		/* disable volume/mute because they would require SPI writes */
-		return 1;
 	if (!strncmp(template->name, "CD Capture ", 11))
 		/* CD in is actually connected to the video in pin */
 		template->private_value ^= AC97_CD ^ AC97_VIDEO;
@@ -783,51 +786,9 @@ static int xonar_d1_mixer_init(struct oxygen *chip)
 	return snd_ctl_add(chip->card, snd_ctl_new1(&front_panel_switch, chip));
 }
 
-static int xonar_model_probe(struct oxygen *chip, unsigned long driver_data)
-{
-	static const char *const names[] = {
-		[MODEL_D1]	= "Xonar D1",
-		[MODEL_DX]	= "Xonar DX",
-		[MODEL_D2]	= "Xonar D2",
-		[MODEL_D2X]	= "Xonar D2X",
-		[MODEL_HDAV]	= "Xonar HDAV1.3",
-		[MODEL_HDAV_H6]	= "Xonar HDAV1.3+H6",
-	};
-	static const u8 dacs[] = {
-		[MODEL_D1]	= 2,
-		[MODEL_DX]	= 2,
-		[MODEL_D2]	= 4,
-		[MODEL_D2X]	= 4,
-		[MODEL_HDAV]	= 1,
-		[MODEL_HDAV_H6]	= 4,
-	};
-	struct xonar_data *data = chip->model_data;
-
-	data->model = driver_data;
-	if (data->model == MODEL_HDAV) {
-		oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL,
-				    GPIO_HDAV_DB_MASK);
-		switch (oxygen_read16(chip, OXYGEN_GPIO_DATA) &
-			GPIO_HDAV_DB_MASK) {
-		case GPIO_HDAV_DB_H6:
-			data->model = MODEL_HDAV_H6;
-			break;
-		case GPIO_HDAV_DB_XX:
-			snd_printk(KERN_ERR "unknown daughterboard\n");
-			return -ENODEV;
-		}
-	}
-
-	data->dacs = dacs[data->model];
-	chip->model.shortname = names[data->model];
-	return 0;
-}
-
 static const struct oxygen_model model_xonar_d2 = {
 	.longname = "Asus Virtuoso 200",
 	.chip = "AV200",
-	.owner = THIS_MODULE,
-	.probe = xonar_model_probe,
 	.init = xonar_d2_init,
 	.control_filter = xonar_d2_control_filter,
 	.mixer_init = xonar_d2_mixer_init,
@@ -850,16 +811,15 @@ static const struct oxygen_model model_xonar_d2 = {
 	.dac_volume_min = 0x0f,
 	.dac_volume_max = 0xff,
 	.misc_flags = OXYGEN_MISC_MIDI,
-	.function_flags = OXYGEN_FUNCTION_SPI,
-	.dac_i2s_format = OXYGEN_I2S_FORMAT_I2S,
+	.function_flags = OXYGEN_FUNCTION_SPI |
+			  OXYGEN_FUNCTION_ENABLE_SPI_4_5,
+	.dac_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
 	.adc_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
 };
 
 static const struct oxygen_model model_xonar_d1 = {
 	.longname = "Asus Virtuoso 100",
 	.chip = "AV200",
-	.owner = THIS_MODULE,
-	.probe = xonar_model_probe,
 	.init = xonar_d1_init,
 	.control_filter = xonar_d1_control_filter,
 	.mixer_init = xonar_d1_mixer_init,
@@ -887,8 +847,6 @@ static const struct oxygen_model model_xonar_d1 = {
 static const struct oxygen_model model_xonar_hdav = {
 	.longname = "Asus Virtuoso 200",
 	.chip = "AV200",
-	.owner = THIS_MODULE,
-	.probe = xonar_model_probe,
 	.init = xonar_hdav_init,
 	.cleanup = xonar_hdav_cleanup,
 	.suspend = xonar_hdav_suspend,
@@ -914,8 +872,8 @@ static const struct oxygen_model model_xonar_hdav = {
 	.adc_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
 };
 
-static int __devinit xonar_probe(struct pci_dev *pci,
-				 const struct pci_device_id *pci_id)
+static int __devinit get_xonar_model(struct oxygen *chip,
+				     const struct pci_device_id *id)
 {
 	static const struct oxygen_model *const models[] = {
 		[MODEL_D1]	= &model_xonar_d1,
@@ -924,6 +882,50 @@ static int __devinit xonar_probe(struct pci_dev *pci,
 		[MODEL_D2X]	= &model_xonar_d2,
 		[MODEL_HDAV]	= &model_xonar_hdav,
 	};
+	static const char *const names[] = {
+		[MODEL_D1]	= "Xonar D1",
+		[MODEL_DX]	= "Xonar DX",
+		[MODEL_D2]	= "Xonar D2",
+		[MODEL_D2X]	= "Xonar D2X",
+		[MODEL_HDAV]	= "Xonar HDAV1.3",
+		[MODEL_HDAV_H6]	= "Xonar HDAV1.3+H6",
+	};
+	unsigned int model = id->driver_data;
+
+	if (model >= ARRAY_SIZE(models) || !models[model])
+		return -EINVAL;
+	chip->model = *models[model];
+
+	switch (model) {
+	case MODEL_D2X:
+		chip->model.init = xonar_d2x_init;
+		break;
+	case MODEL_DX:
+		chip->model.init = xonar_dx_init;
+		break;
+	case MODEL_HDAV:
+		oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL,
+				    GPIO_HDAV_DB_MASK);
+		switch (oxygen_read16(chip, OXYGEN_GPIO_DATA) &
+			GPIO_HDAV_DB_MASK) {
+		case GPIO_HDAV_DB_H6:
+			model = MODEL_HDAV_H6;
+			break;
+		case GPIO_HDAV_DB_XX:
+			snd_printk(KERN_ERR "unknown daughterboard\n");
+			return -ENODEV;
+		}
+		break;
+	}
+
+	chip->model.shortname = names[model];
+	chip->model.private_data = model;
+	return 0;
+}
+
+static int __devinit xonar_probe(struct pci_dev *pci,
+				 const struct pci_device_id *pci_id)
+{
 	static int dev;
 	int err;
 
@@ -933,10 +935,8 @@ static int __devinit xonar_probe(struct pci_dev *pci,
 		++dev;
 		return -ENOENT;
 	}
-	BUG_ON(pci_id->driver_data >= ARRAY_SIZE(models));
-	err = oxygen_pci_probe(pci, index[dev], id[dev],
-			       models[pci_id->driver_data],
-			       pci_id->driver_data);
+	err = oxygen_pci_probe(pci, index[dev], id[dev], THIS_MODULE,
+			       xonar_ids, get_xonar_model);
 	if (err >= 0)
 		++dev;
 	return err;
