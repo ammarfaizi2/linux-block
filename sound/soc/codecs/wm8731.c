@@ -574,9 +574,14 @@ static int wm8731_register(struct wm8731_priv *wm8731)
 
 	memcpy(codec->reg_cache, wm8731_reg, sizeof(wm8731_reg));
 
+	ret = wm8731_reset(codec);
+	if (ret < 0) {
+		dev_err(codec->dev, "Failed to issue reset\n");
+		return ret;
+	}
+
 	wm8731_dai.dev = codec->dev;
 
-	wm8731_reset(codec);
 	wm8731_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
 
 	/* Latch the update bits */
@@ -588,6 +593,10 @@ static int wm8731_register(struct wm8731_priv *wm8731)
 	wm8731_write(codec, WM8731_LINVOL, reg & ~0x0100);
 	reg = wm8731_read_reg_cache(codec, WM8731_RINVOL);
 	wm8731_write(codec, WM8731_RINVOL, reg & ~0x0100);
+
+	/* Disable bypass path by default */
+	reg = wm8731_read_reg_cache(codec, WM8731_APANA);
+	wm8731_write(codec, WM8731_APANA, reg & ~0x4);
 
 	wm8731_codec = codec;
 
@@ -681,8 +690,8 @@ static struct spi_driver wm8731_spi_driver = {
 #endif /* CONFIG_SPI_MASTER */
 
 #if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
-static int wm8731_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
+static __devinit int wm8731_i2c_probe(struct i2c_client *i2c,
+				      const struct i2c_device_id *id)
 {
 	struct wm8731_priv *wm8731;
 	struct snd_soc_codec *codec;
@@ -702,7 +711,7 @@ static int wm8731_i2c_probe(struct i2c_client *i2c,
 	return wm8731_register(wm8731);
 }
 
-static int wm8731_i2c_remove(struct i2c_client *client)
+static __devexit int wm8731_i2c_remove(struct i2c_client *client)
 {
 	struct wm8731_priv *wm8731 = i2c_get_clientdata(client);
 	wm8731_unregister(wm8731);
@@ -721,7 +730,7 @@ static struct i2c_driver wm8731_i2c_driver = {
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8731_i2c_probe,
-	.remove =   wm8731_i2c_remove,
+	.remove =   __devexit_p(wm8731_i2c_remove),
 	.id_table = wm8731_i2c_id,
 };
 #endif
