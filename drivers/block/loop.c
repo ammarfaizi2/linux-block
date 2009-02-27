@@ -613,20 +613,32 @@ static void loop_remove_node(struct loop_device *lo,
  */
 static void loop_drop_extents(struct loop_device *lo)
 {
+	struct rb_root root;
 	struct rb_node *node;
 	unsigned int exts = 0;
 
-	spin_lock_irq(&lo->lo_lock);
+	BUG_ON(lo->lo_flags & LO_FLAGS_FASTFS);
 
-	while ((node = rb_first(&lo->lo_rb_root)) != NULL) {
+	/*
+	 * fastfs must be turned off now, so just clear our root and
+	 * prune the tree locally.
+	 */
+	spin_lock_irq(&lo->lo_lock);
+	root.rb_node = lo->lo_rb_root.rb_node;
+	lo->lo_rb_root.rb_node = NULL;
+	lo->last_lookup = NULL;
+	spin_unlock_irq(&lo->lo_lock);
+
+	while ((node = root.rb_node) != NULL) {
 		struct loop_file_extent *lfe = node_to_lfe(node);
 
-		loop_remove_node(lo, lfe);
+		rb_erase(node, &root);
 		kfree(lfe);
 		exts++;
+		if (!(exts % 1024))
+			cond_resched();
 	}
 
-	spin_unlock_irq(&lo->lo_lock);
 	printk(KERN_INFO "loop%d: dropped %u extents\n", lo->lo_number, exts);
 }
 
@@ -648,6 +660,10 @@ static void loop_exit_fastfs(struct loop_device *lo)
 {
 	struct inode *inode = lo->lo_backing_file->f_mapping->host;
 
+	spin_lock_irq(&lo->lo_lock);
+	lo->lo_flags &= ~LO_FLAGS_FASTFS;
+	spin_unlock_irq(&lo->lo_lock);
+
 	loop_drop_extents(lo);
 
 	/*
@@ -660,10 +676,6 @@ static void loop_exit_fastfs(struct loop_device *lo)
 	mutex_lock(&inode->i_mutex);
 	inode->i_flags &= ~S_SWAPFILE;
 	mutex_unlock(&inode->i_mutex);
-
-	spin_lock_irq(&lo->lo_lock);
-	lo->lo_flags &= ~LO_FLAGS_FASTFS;
-	spin_unlock_irq(&lo->lo_lock);
 }
 
 /*
@@ -725,8 +737,7 @@ static int lfe_merge(struct loop_file_extent *lfe,
 	return 0;
 }
 
-
-static int node_merge(struct loop_device *lo, struct loop_file_extent *prv,
+static int __node_merge(struct loop_device *lo, struct loop_file_extent *prv,
 		      struct loop_file_extent *nxt)
 {
 	/*
@@ -743,15 +754,21 @@ static int node_merge(struct loop_device *lo, struct loop_file_extent *prv,
 	    (prv->disk_start + prv->size < nxt->disk_start + nxt->size) &&
 	    (((prv->file_start + prv->size >= nxt->file_start) &&
 	    (prv->file_start + prv->size < nxt->file_start + nxt->size)) ||
-	    (!prv->file_start && !nxt->file_start))) {
-		if (lfe_merge(prv, nxt)) {
-			loop_remove_node(lo, nxt);
-			kfree(nxt);
-			return 1;
-		}
-	}
+	    (!prv->file_start && !nxt->file_start)))
+		return lfe_merge(prv, nxt);
 
 	return 0;
+}
+
+static int node_merge(struct loop_device *lo, struct loop_file_extent *prv,
+			struct loop_file_extent *nxt)
+{
+	if (!__node_merge(lo, prv, nxt))
+		return 0;
+
+	loop_remove_node(lo, nxt);
+	kfree(nxt);
+	return 1;
 }
 
 static void __loop_tree_insert(struct loop_device *lo,
@@ -795,16 +812,29 @@ restart:
 
 /*
  * Find extent mapping this lo device block to the file block on the real
- * device
+ * device.Only cache non-hole extents, as those are known to be
+ * persistent across lo->lo_lock drops.
  */
 static struct loop_file_extent *loop_lookup_extent(struct loop_device *lo,
 						   u64 offset)
 {
-	if (!loop_check_last_node(lo, offset))
-		lo->last_lookup = loop_tree_find(lo, offset);
+	struct loop_file_extent *lfe = NULL;
 
-	if (lo->last_lookup)
-		return node_to_lfe(lo->last_lookup);
+	if (loop_check_last_node(lo, offset))
+		lfe = node_to_lfe(lo->last_lookup);
+	else {
+		struct rb_node *n;
+
+		n = loop_tree_find(lo, offset);
+		if (n) {
+			lfe = node_to_lfe(n);
+			if (lfe->file_start)
+				lo->last_lookup = n;
+		}
+	}
+
+	if (lfe)
+		return lfe;
 
 	return NULL;
 }
@@ -895,15 +925,34 @@ static void loop_schedule_pcache_io(struct loop_device *lo, struct bio *old_bio)
 static int lo_inval_pgcache(struct loop_device *lo, u64 start, u64 size)
 {
 	struct address_space *mapping = lo->lo_backing_file->f_mapping;
-	u64 end = start + size;
+	u64 end = start + size - 1;
 	pgoff_t pgs, pge;
-	int ret = 0;
+	int ret, iter;
 
 	pgs = start >> PAGE_CACHE_SHIFT;
 	pge = (end + PAGE_CACHE_SIZE - 1) >> PAGE_CACHE_SHIFT;
 
-	ret |= filemap_write_and_wait_range(mapping, start, end);
-	ret |= invalidate_inode_pages2_range(mapping, pgs, pge);
+	ret = iter = 0;
+	do {
+		if (iter++ > 4)
+			break;
+		ret = filemap_write_and_wait_range(mapping, start, end);
+		ret |= invalidate_inode_pages2_range(mapping, pgs, pge);
+		/*
+		 * if we fail, give the fs a chance to get the commit out
+		 * of the way.
+		 */
+		if (ret) {
+			struct file *f = lo->lo_backing_file;
+
+			mark_inode_dirty_sync(mapping->host);
+
+			mutex_lock(&mapping->host->i_mutex);
+			f->f_op->fsync(f, f->f_dentry, 0);
+			mutex_unlock(&mapping->host->i_mutex);
+		}
+	} while (ret);
+
 	return ret;
 }
 
@@ -1118,11 +1167,18 @@ static void loop_do_file_backed(struct loop_device *lo, struct bio *bio,
 	struct address_space *mapping = lo->lo_backing_file->f_mapping;
 	const int fastfs = lo->lo_flags & LO_FLAGS_FASTFS;
 	loff_t start = lo_bio_offset(lo, bio);
-	loff_t end = start + (loff_t) bio->bi_size;
+	loff_t end = start + (loff_t) bio->bi_size - 1;
 	int ret;
 
-	if (fastfs && bio_data_dir(bio) == READ)
-		lo_inval_pgcache(lo, start, bio->bi_size);
+	/*
+ 	 * Never trust the page cache, always prune this range before
+	 * using it. For writes of full pages we don't have to do this,
+	 * but instead of adding a check just always do it
+	 */
+	if (fastfs) {
+		int __e = lo_inval_pgcache(lo, start, bio->bi_size);
+		WARN_ON(__e);
+	}
 
 	ret = do_bio_filebacked(lo, bio);
 
@@ -1181,8 +1237,9 @@ static struct bio_pair *loop_clone_submit(struct loop_device *lo,
 
 static inline void loop_handle_bio(struct loop_device *lo, struct bio *bio)
 {
+	struct bio *org_bio = bio->bi_private;
+
 	if (lo_is_map_bio(bio)) {
-		struct bio *org_bio = bio->bi_private;
 		struct loop_file_extent *lfe;
 		struct bio_pair *bp = NULL;
 		u64 disk_start;
@@ -1206,6 +1263,7 @@ lookup:
 			bp = loop_clone_submit(lo, org_bio, this_size, lfe);
 			if (!bp) {
 				lfe->pcache = 1;
+				org_bio = bio->bi_private;
 				goto do_pgcache;
 			}
 			org_bio = &bp->bio2;
@@ -1222,14 +1280,12 @@ lookup:
 		bio_put(bio);
 	} else if (lo_is_pcache_bio(bio)) {
 		struct address_space *mapping;
-		struct bio *org_bio;
 		struct loop_file_extent *lfe;
 		u64 start, file_start, file_size;
 		unsigned int bio_size;
 
 do_pgcache:
 		mapping = lo->lo_backing_file->f_mapping;
-		org_bio = bio->bi_private;
 		start = lo_bio_offset(lo, org_bio);
 		bio_size = org_bio->bi_size;
 		file_start = -1ULL;
@@ -1682,8 +1738,6 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 		loop_remove_node(lo, lfe);
 	}
 
-	spin_unlock_irq(&lo->lo_lock);
-
 	if (!lfe || lfe->file_start)
 		goto bmap;
 
@@ -1716,12 +1770,18 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 		 */
 		lfe->size = disk_start - lfe->disk_start;
 
-		lfe_e = kmalloc(sizeof(*lfe_e), GFP_NOIO | __GFP_NOFAIL);
-		RB_CLEAR_NODE(&lfe_e->rb_node);
-		lfe_e->disk_start = disk_start + size;
-		lfe_e->file_start = 0;
-		lfe_e->size = total_size - size - lfe->size;
-		lfe_e->pcache = 0;
+		/*
+		 * if kmalloc() should fail, it's not critical. we'll just
+		 * lose that part of the hole.
+		 */
+		lfe_e = kmalloc(sizeof(*lfe_e), GFP_ATOMIC);
+		if (lfe_e) {
+			RB_CLEAR_NODE(&lfe_e->rb_node);
+			lfe_e->disk_start = disk_start + size;
+			lfe_e->file_start = 0;
+			lfe_e->size = total_size - size - lfe->size;
+			lfe_e->pcache = 0;
+		}
 	}
 
 	if (!lfe->size) {
@@ -1729,20 +1789,17 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 		lfe = NULL;
 	}
 
-	spin_lock_irq(&lo->lo_lock);
-
 	/*
 	 * Re-add hole extent(s)
 	 */
 	if (lfe)
 		__loop_tree_insert(lo, lfe);
-	if (lfe_e) 
+	if (lfe_e)
 		__loop_tree_insert(lo, lfe_e);
 
-	spin_unlock_irq(&lo->lo_lock);
 bmap:
+	spin_unlock_irq(&lo->lo_lock);
 	loop_read_bmap(lo, disk_start, size, 1);
-
 }
 
 static inline int is_loop_device(struct file *file)
