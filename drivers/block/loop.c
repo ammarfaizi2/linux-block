@@ -83,6 +83,8 @@ static DEFINE_MUTEX(loop_devices_mutex);
 static int max_part;
 static int part_shift;
 
+static struct kmem_cache *loop_lfe_slab;
+
 /*
  * Transfer functions
  */
@@ -633,7 +635,7 @@ static void loop_drop_extents(struct loop_device *lo)
 		struct loop_file_extent *lfe = node_to_lfe(node);
 
 		rb_erase(node, &root);
-		kfree(lfe);
+		kmem_cache_free(loop_lfe_slab, lfe);
 		exts++;
 		if (!(exts % 1024))
 			cond_resched();
@@ -767,7 +769,7 @@ static int node_merge(struct loop_device *lo, struct loop_file_extent *prv,
 		return 0;
 
 	loop_remove_node(lo, nxt);
-	kfree(nxt);
+	kmem_cache_free(loop_lfe_slab, nxt);
 	return 1;
 }
 
@@ -791,7 +793,7 @@ restart:
 		else {
 			loop_remove_node(lo, __lfe);
 			lfe_merge(lfe, __lfe);
-			kfree(__lfe);
+			kmem_cache_free(loop_lfe_slab, __lfe);
 			goto restart;
 		}
 	}
@@ -1130,7 +1132,7 @@ static void loop_drop_bad_lfe(struct loop_device *lo, loff_t offset)
 	lfe = loop_lookup_extent(lo, offset);
 	if (lfe) {
 		loop_remove_node(lo, lfe);
-		kfree(lfe);
+		kmem_cache_free(loop_lfe_slab, lfe);
 	}
 	spin_unlock_irq(&lo->lo_lock);
 }
@@ -1506,7 +1508,7 @@ static int loop_tree_insert(struct loop_device *lo, sector_t disk_block,
 	struct inode *inode = lo->lo_backing_file->f_mapping->host;
 	struct loop_file_extent *lfe;
 
-	lfe = kmalloc(sizeof(*lfe), GFP_NOIO);
+	lfe = kmem_cache_alloc(loop_lfe_slab, GFP_NOIO);
 	if (unlikely(!lfe)) {
 		printk(KERN_ERR "lo%d: OOM in loop_tree_insert\n", lo->lo_number);
 		return -ENOMEM;
@@ -1771,10 +1773,10 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 		lfe->size = disk_start - lfe->disk_start;
 
 		/*
-		 * if kmalloc() should fail, it's not critical. we'll just
+		 * if slab alloc should fail, it's not critical. we'll just
 		 * lose that part of the hole.
 		 */
-		lfe_e = kmalloc(sizeof(*lfe_e), GFP_ATOMIC);
+		lfe_e = kmem_cache_alloc(loop_lfe_slab, GFP_ATOMIC);
 		if (lfe_e) {
 			RB_CLEAR_NODE(&lfe_e->rb_node);
 			lfe_e->disk_start = disk_start + size;
@@ -1785,7 +1787,7 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 	}
 
 	if (!lfe->size) {
-		kfree(lfe);
+		kmem_cache_free(loop_lfe_slab, lfe);
 		lfe = NULL;
 	}
 
@@ -2719,6 +2721,12 @@ static int __init loop_init(void)
 	if (register_blkdev(LOOP_MAJOR, "loop"))
 		return -EIO;
 
+	loop_lfe_slab = kmem_cache_create("loop-lfe",
+					  sizeof(struct loop_file_extent), 0,
+					  0, NULL);
+	if (!loop_lfe_slab)
+		goto Enomem;
+
 	for (i = 0; i < nr; i++) {
 		lo = loop_alloc(i);
 		if (!lo)
@@ -2744,6 +2752,10 @@ Enomem:
 		loop_free(lo);
 
 	unregister_blkdev(LOOP_MAJOR, "loop");
+
+	if (loop_lfe_slab)
+		kmem_cache_destroy(loop_lfe_slab);
+
 	return -ENOMEM;
 }
 
@@ -2757,6 +2769,7 @@ static void __exit loop_exit(void)
 	list_for_each_entry_safe(lo, next, &loop_devices, lo_list)
 		loop_del_one(lo);
 
+	kmem_cache_destroy(loop_lfe_slab);
 	blk_unregister_region(MKDEV(LOOP_MAJOR, 0), range);
 	unregister_blkdev(LOOP_MAJOR, "loop");
 }
