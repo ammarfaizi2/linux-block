@@ -1434,7 +1434,6 @@ int snd_hda_ctl_add(struct hda_codec *codec, struct snd_kcontrol *kctl)
 }
 EXPORT_SYMBOL_HDA(snd_hda_ctl_add);
 
-#ifdef CONFIG_SND_HDA_RECONFIG
 /* Clear all controls assigned to the given codec */
 void snd_hda_ctls_clear(struct hda_codec *codec)
 {
@@ -1519,6 +1518,9 @@ int snd_hda_codec_reset(struct hda_codec *codec)
 	codec->num_pcms = 0;
 	codec->pcm_info = NULL;
 	codec->preset = NULL;
+	memset(&codec->patch_ops, 0, sizeof(codec->patch_ops));
+	codec->slave_dig_outs = NULL;
+	codec->spdif_status_reset = 0;
 	module_put(codec->owner);
 	codec->owner = NULL;
 
@@ -1526,7 +1528,6 @@ int snd_hda_codec_reset(struct hda_codec *codec)
 	hda_unlock_devices(card);
 	return 0;
 }
-#endif /* CONFIG_SND_HDA_RECONFIG */
 
 /* create a virtual master control and add slaves */
 int snd_hda_add_vmaster(struct hda_codec *codec, char *name,
@@ -2389,8 +2390,16 @@ int /*__devinit*/ snd_hda_build_controls(struct hda_bus *bus)
 
 	list_for_each_entry(codec, &bus->codec_list, list) {
 		int err = snd_hda_codec_build_controls(codec);
-		if (err < 0)
-			return err;
+		if (err < 0) {
+			printk(KERN_ERR "hda_codec: cannot build controls"
+			       "for #%d (error %d)\n", codec->addr, err); 
+			err = snd_hda_codec_reset(codec);
+			if (err < 0) {
+				printk(KERN_ERR
+				       "hda_codec: cannot revert codec\n");
+				return err;
+			}
+		}
 	}
 	return 0;
 }
@@ -2824,8 +2833,16 @@ int snd_hda_codec_build_pcms(struct hda_codec *codec)
 		if (!codec->patch_ops.build_pcms)
 			return 0;
 		err = codec->patch_ops.build_pcms(codec);
-		if (err < 0)
-			return err;
+		if (err < 0) {
+			printk(KERN_ERR "hda_codec: cannot build PCMs"
+			       "for #%d (error %d)\n", codec->addr, err); 
+			err = snd_hda_codec_reset(codec);
+			if (err < 0) {
+				printk(KERN_ERR
+				       "hda_codec: cannot revert codec\n");
+				return err;
+			}
+		}
 	}
 	for (pcm = 0; pcm < codec->num_pcms; pcm++) {
 		struct hda_pcm *cpcm = &codec->pcm_info[pcm];
@@ -2837,11 +2854,15 @@ int snd_hda_codec_build_pcms(struct hda_codec *codec)
 		if (!cpcm->pcm) {
 			dev = get_empty_pcm_device(codec->bus, cpcm->pcm_type);
 			if (dev < 0)
-				return 0;
+				continue; /* no fatal error */
 			cpcm->device = dev;
 			err = snd_hda_attach_pcm(codec, cpcm);
-			if (err < 0)
-				return err;
+			if (err < 0) {
+				printk(KERN_ERR "hda_codec: cannot attach "
+				       "PCM stream %d for codec #%d\n",
+				       dev, codec->addr);
+				continue; /* no fatal error */
+			}
 		}
 	}
 	return 0;
