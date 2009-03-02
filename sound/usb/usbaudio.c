@@ -1095,9 +1095,8 @@ static int init_substream_urbs(struct snd_usb_substream *subs, unsigned int peri
 			total_packs = 2 * packs_per_ms;
 		} else {
 			/* and we don't want too long a queue either */
-			maxpacks = max((unsigned int)MAX_QUEUE, urb_packs * 2);
-			if (total_packs > maxpacks * packs_per_ms)
-				total_packs = maxpacks * packs_per_ms;
+			maxpacks = max(MAX_QUEUE * packs_per_ms, urb_packs * 2);
+			total_packs = min(total_packs, maxpacks);
 		}
 	} else {
 		total_packs = MAX_URBS * urb_packs;
@@ -1783,7 +1782,7 @@ static int check_hw_params_convention(struct snd_usb_substream *subs)
 			if (rates[f->format] && rates[f->format] != f->rates)
 				goto __out;
 		}
-		channels[f->format] |= (1 << f->channels);
+		channels[f->format] |= 1 << (f->channels - 1);
 		rates[f->format] |= f->rates;
 		/* needs knot? */
 		if (f->rates & SNDRV_PCM_RATE_KNOT)
@@ -1810,7 +1809,7 @@ static int check_hw_params_convention(struct snd_usb_substream *subs)
 			continue;
 		for (i = 0; i < 32; i++) {
 			if (f->rates & (1 << i))
-				channels[i] |= (1 << f->channels);
+				channels[i] |= 1 << (f->channels - 1);
 		}
 	}
 	cmaster = 0;
