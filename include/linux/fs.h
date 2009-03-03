@@ -531,6 +531,15 @@ struct address_space_operations {
 	int (*launder_page) (struct page *);
 	int (*is_partially_uptodate) (struct page *, read_descriptor_t *,
 					unsigned long);
+
+	/* raw extent mapping to the disk */
+	struct extent_map *(*map_extent)(struct address_space *mapping,
+					 struct page *page,
+					 size_t page_offset,
+					 loff_t start, u64 len, int create,
+					 gfp_t gfp_mask);
+	int (*extent_io_complete)(struct address_space *mapping, loff_t start,
+				  u64 len);
 };
 
 /*
