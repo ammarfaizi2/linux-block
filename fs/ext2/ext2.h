@@ -1,5 +1,6 @@
 #include <linux/fs.h>
 #include <linux/ext2_fs.h>
+#include <linux/extent_map.h>
 
 /*
  * ext2 mount options
@@ -62,6 +63,8 @@ struct ext2_inode_info {
 	struct mutex truncate_mutex;
 	struct inode	vfs_inode;
 	struct list_head i_orphan;	/* unlinked but open inodes */
+
+	struct extent_map_tree extent_tree;
 };
 
 /*

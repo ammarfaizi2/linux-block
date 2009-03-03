@@ -157,6 +157,7 @@ static struct inode *ext2_alloc_inode(struct super_block *sb)
 
 static void ext2_destroy_inode(struct inode *inode)
 {
+	remove_extent_mappings(&EXT2_I(inode)->extent_tree, 0, (u64)-1);
 	kmem_cache_free(ext2_inode_cachep, EXT2_I(inode));
 }
 
@@ -169,6 +170,7 @@ static void init_once(void *foo)
 	init_rwsem(&ei->xattr_sem);
 #endif
 	mutex_init(&ei->truncate_mutex);
+	extent_map_tree_init(&ei->extent_tree);
 	inode_init_once(&ei->vfs_inode);
 }
 

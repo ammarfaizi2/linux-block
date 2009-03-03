@@ -30,6 +30,7 @@
 #include <linux/module.h>
 #include <linux/writeback.h>
 #include <linux/buffer_head.h>
+#include <linux/extent_map.h>
 #include <linux/mpage.h>
 #include <linux/fiemap.h>
 #include <linux/namei.h>
@@ -72,9 +73,11 @@ void ext2_delete_inode (struct inode * inode)
 	if (inode->i_blocks)
 		ext2_truncate (inode);
 	ext2_free_inode (inode);
+	remove_extent_mappings(&EXT2_I(inode)->extent_tree, 0, (u64)-1);
 
 	return;
 no_delete:
+	remove_extent_mappings(&EXT2_I(inode)->extent_tree, 0, (u64)-1);
 	clear_inode(inode);	/* We must guarantee clearing of inode... */
 }
 
@@ -711,6 +714,16 @@ int ext2_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 				    ext2_get_block);
 }
 
+static struct extent_map *ext2_map_extent(struct address_space *mapping,
+					  struct page *page,
+					  size_t page_offset, loff_t start,
+					  u64 len, int create, gfp_t gfp_mask)
+{
+	return map_extent_get_block(&EXT2_I(mapping->host)->extent_tree,
+				    mapping, start, len, create, gfp_mask,
+				    ext2_get_block);
+}
+
 static int ext2_writepage(struct page *page, struct writeback_control *wbc)
 {
 	return block_write_full_page(page, ext2_get_block, wbc);
@@ -817,6 +830,7 @@ const struct address_space_operations ext2_nobh_aops = {
 	.direct_IO		= ext2_direct_IO,
 	.writepages		= ext2_writepages,
 	.migratepage		= buffer_migrate_page,
+	.map_extent		= ext2_map_extent,
 };
 
 /*
@@ -1257,6 +1271,7 @@ struct inode *ext2_iget (struct super_block *sb, unsigned long ino)
 	ei->i_state = 0;
 	ei->i_block_group = (ino - 1) / EXT2_INODES_PER_GROUP(inode->i_sb);
 	ei->i_dir_start_lookup = 0;
+	extent_map_tree_init(&ei->extent_tree);
 
 	/*
 	 * NOTE! The in-memory inode i_data array is in little-endian order
