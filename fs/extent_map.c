@@ -52,7 +52,7 @@ void free_extent_map(struct extent_map *em)
 }
 EXPORT_SYMBOL(free_extent_map);
 
-static struct rb_node *tree_insert(struct rb_root *root, u64 offset,
+static struct rb_node *tree_insert(struct rb_root *root, loff_t offset,
 				   struct rb_node *node)
 {
 	struct rb_node ** p = &root->rb_node;
@@ -77,7 +77,7 @@ static struct rb_node *tree_insert(struct rb_root *root, u64 offset,
 	return NULL;
 }
 
-static struct rb_node *__tree_search(struct rb_root *root, u64 offset,
+static struct rb_node *__tree_search(struct rb_root *root, loff_t offset,
 				   struct rb_node **prev_ret)
 {
 	struct rb_node * n = root->rb_node;
@@ -107,7 +107,7 @@ static struct rb_node *__tree_search(struct rb_root *root, u64 offset,
 	return NULL;
 }
 
-static inline struct rb_node *tree_search(struct rb_root *root, u64 offset)
+static inline struct rb_node *tree_search(struct rb_root *root, loff_t offset)
 {
 	struct rb_node *prev;
 	struct rb_node *ret;
@@ -117,7 +117,7 @@ static inline struct rb_node *tree_search(struct rb_root *root, u64 offset)
 	return ret;
 }
 
-static int tree_delete(struct rb_root *root, u64 offset)
+static int tree_delete(struct rb_root *root, loff_t offset)
 {
 	struct rb_node *node;
 	struct extent_map *entry;
@@ -201,7 +201,7 @@ EXPORT_SYMBOL(add_extent_mapping);
  * returned carefully to make sure you don't need additional lookups.
  */
 struct extent_map *lookup_extent_mapping(struct extent_map_tree *tree,
-					 u64 start, u64 len)
+					 loff_t start, u64 len)
 {
 	struct extent_map *em;
 	struct extent_map *last;
@@ -257,7 +257,7 @@ EXPORT_SYMBOL(remove_extent_mapping);
 
 static struct extent_map *__map_extent(struct extent_map_tree *tree,
 				       struct address_space *mapping,
-				       u64 start, u64 len, int create,
+				       loff_t start, u64 len, int create,
 				       gfp_t gfp_mask, get_block_t get_block)
 {
 	struct inode *inode = mapping->host;
@@ -321,7 +321,7 @@ again:
 	}
 
 	if (buffer_mapped(&result))
-		em->block_start = (u64)result.b_blocknr << inode->i_blkbits;
+		em->block_start = (loff_t)result.b_blocknr << inode->i_blkbits;
 	else {
 		em->block_start = EXTENT_MAP_HOLE;
 		if (create) {
@@ -339,11 +339,11 @@ again:
 
 struct extent_map *map_extent_get_block(struct extent_map_tree *tree,
 					struct address_space *mapping,
-					u64 start, u64 len, int create,
+					loff_t start, u64 len, int create,
 					gfp_t gfp_mask, get_block_t get_block)
 {
 	struct extent_map *em;
-	u64 last;
+	loff_t last;
 	u64 map_ahead_len = 0;
 
 	em = __map_extent(tree, mapping, start, len, create,
@@ -383,8 +383,7 @@ struct extent_map *map_extent_get_block(struct extent_map_tree *tree,
 }
 EXPORT_SYMBOL(map_extent_get_block);
 
-int remove_extent_mappings(struct extent_map_tree *tree,
-			   u64 start, u64 len)
+int remove_extent_mappings(struct extent_map_tree *tree, loff_t start, u64 len)
 {
 	struct extent_map *em;
 
