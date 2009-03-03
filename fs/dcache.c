@@ -24,6 +24,7 @@
 #include <linux/init.h>
 #include <linux/hash.h>
 #include <linux/cache.h>
+#include <linux/extent_map.h>
 #include <linux/module.h>
 #include <linux/mount.h>
 #include <linux/file.h>
@@ -2333,6 +2334,7 @@ void __init vfs_caches_init(unsigned long mempages)
 
 	dcache_init();
 	inode_init();
+	extent_map_init();
 	files_init(mempages);
 	mnt_init();
 	bdev_cache_init();
