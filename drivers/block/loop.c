@@ -75,6 +75,7 @@
 #include <linux/gfp.h>
 #include <linux/kthread.h>
 #include <linux/splice.h>
+#include <linux/extent_map.h>
 
 #include <asm/uaccess.h>
 
@@ -482,16 +483,67 @@ static int do_bio_filebacked(struct loop_device *lo, struct bio *bio)
 	return ret;
 }
 
+#define __lo_throttle(wq, lock, condition)				\
+do {									\
+	DEFINE_WAIT(__wait);						\
+	for (;;) {							\
+		prepare_to_wait((wq), &__wait, TASK_UNINTERRUPTIBLE);	\
+		if (condition)						\
+			break;						\
+		spin_unlock_irq((lock));				\
+		wake_up(&lo->lo_event);					\
+		io_schedule();						\
+		spin_lock_irq((lock));					\
+	}								\
+	finish_wait((wq), &__wait);					\
+} while (0)								\
+
+#define LO_BIO_THROTTLE		128
+#define LO_BIO_THROTTLE_LOW	(LO_BIO_THROTTLE / 2)
+
 /*
- * Add bio to back of pending list
+ * A normal block device will throttle on request allocation. Do the same
+ * for loop to prevent millions of bio's queued internally.
+ */
+static void loop_bio_throttle(struct loop_device *lo, struct bio *bio)
+{
+	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock,
+				lo->lo_bio_cnt < LO_BIO_THROTTLE);
+}
+
+static void loop_bio_timer(unsigned long data)
+{
+	struct loop_device *lo = (struct loop_device *) data;
+
+	wake_up(&lo->lo_event);
+}
+
+/*
+ * Add bio to back of pending list and wakeup thread
  */
 static void loop_add_bio(struct loop_device *lo, struct bio *bio)
 {
+	loop_bio_throttle(lo, bio);
+
 	if (lo->lo_biotail) {
 		lo->lo_biotail->bi_next = bio;
 		lo->lo_biotail = bio;
 	} else
 		lo->lo_bio = lo->lo_biotail = bio;
+
+	lo->lo_bio_cnt++;
+
+	smp_mb();
+	if (lo->lo_bio_cnt > 8) {
+		if (timer_pending(&lo->lo_bio_timer))
+			del_timer(&lo->lo_bio_timer);
+
+		if (waitqueue_active(&lo->lo_event))
+			wake_up(&lo->lo_event);
+	} else if (!timer_pending(&lo->lo_bio_timer)) {
+		lo->lo_bio_timer.expires = jiffies + 1;
+		add_timer(&lo->lo_bio_timer);
+	}
 }
 
 /*
@@ -511,6 +563,241 @@ static struct bio *loop_get_bio(struct loop_device *lo)
 	return bio;
 }
 
+static void loop_exit_fastfs(struct loop_device *lo)
+{
+	struct inode *inode = lo->lo_backing_file->f_mapping->host;
+
+	/*
+	 * drop what page cache we instantiated filling holes
+	 */
+	invalidate_inode_pages2(lo->lo_backing_file->f_mapping);
+
+	blk_queue_ordered(lo->lo_queue, QUEUE_ORDERED_NONE, NULL);
+
+	mutex_lock(&inode->i_mutex);
+	inode->i_flags &= ~S_SWAPFILE;
+	mutex_unlock(&inode->i_mutex);
+}
+
+static inline u64 lo_bio_offset(struct loop_device *lo, struct bio *bio)
+{
+	return (u64)lo->lo_offset + ((u64)bio->bi_sector << 9);
+}
+
+/*
+ * Find extent mapping this lo device block to the file block on the real
+ * device
+ */
+static struct extent_map *loop_lookup_extent(struct loop_device *lo,
+					     u64 offset, gfp_t gfp_mask)
+{
+	struct address_space *mapping = lo->lo_backing_file->f_mapping;
+	u64 len = 1 << lo->blkbits;
+
+	return mapping->a_ops->map_extent(mapping, NULL, 0, offset, len, 0,
+						gfp_mask);
+}
+
+static void end_bio_hole_filling(struct bio *bio, int err)
+{
+	struct address_space *mapping = bio->bi_bdev->bd_inode->i_mapping;
+	struct bio *orig_bio = bio->bi_private;
+
+	if (mapping->a_ops->extent_io_complete) {
+		u64 start = orig_bio->bi_sector << 9;
+		u64 len = bio->bi_size;
+
+		mapping->a_ops->extent_io_complete(mapping, start, len);
+	}
+
+	bio_put(bio);
+	bio_endio(orig_bio, err);
+}
+
+static void fill_extent_hole(struct loop_device *lo, struct bio *bio)
+{
+	struct address_space *mapping = lo->lo_backing_file->f_mapping;
+	struct bio *new_bio;
+	struct extent_map *em;
+	u64 len = bio->bi_size;
+	u64 start = lo_bio_offset(lo, bio);
+	u64 disk_block;
+	u64 extent_off;
+
+	/*
+	 * change the sector so we can find the correct file offset in our
+	 * endio
+	 */
+	bio->bi_sector = start >> 9;
+
+	mutex_lock(&mapping->host->i_mutex);
+
+	em = mapping->a_ops->map_extent(mapping, NULL, 0,
+					start, len, 1, GFP_KERNEL);
+	mark_inode_dirty(mapping->host);
+	mutex_unlock(&mapping->host->i_mutex);
+
+	if (em && !IS_ERR(em)) {
+		disk_block = em->block_start;
+		extent_off = start - em->start;
+
+		/*
+		 * bio_clone() is mempool backed, so if __GFP_WAIT is set
+		 * it wont ever fail
+		 */
+		new_bio = bio_clone(bio, GFP_NOIO);
+		new_bio->bi_sector = (disk_block + extent_off) >> 9;
+		new_bio->bi_bdev = em->bdev;
+		new_bio->bi_private = bio;
+		new_bio->bi_size = bio->bi_size;
+		new_bio->bi_end_io = end_bio_hole_filling;
+		free_extent_map(em);
+
+		generic_make_request(new_bio);
+	} else
+		bio_endio(bio, -EIO);
+}
+
+static void loop_bio_destructor(struct bio *bio)
+{
+	struct completion *c = (struct completion *) bio->bi_flags;
+
+	complete(c);
+}
+
+/*
+ * Alloc a hint bio to tell the loop thread to read file blocks for a given
+ * range
+ */
+static void loop_schedule_extent_mapping(struct loop_device *lo,
+					 struct bio *old_bio)
+{
+	DECLARE_COMPLETION_ONSTACK(comp);
+	struct bio *bio, stackbio;
+	int do_sync = 0;
+
+	bio = bio_alloc(GFP_ATOMIC, 0);
+	if (!bio) {
+		bio = &stackbio;
+		bio_init(bio);
+		bio->bi_destructor = loop_bio_destructor;
+		bio->bi_flags = (unsigned long) &comp;
+		do_sync = 1;
+	}
+
+	bio->bi_rw = LOOP_EXTENT_RW_MAGIC;
+	bio->bi_private = old_bio;
+
+	loop_add_bio(lo, bio);
+
+	if (do_sync) {
+		spin_unlock_irq(&lo->lo_lock);
+		wait_for_completion(&comp);
+		spin_lock_irq(&lo->lo_lock);
+	}
+}
+
+static void loop_handle_extent_hole(struct loop_device *lo, struct bio *bio,
+				    int sync)
+{
+	/*
+	 * for a read, just zero the data and end the io
+	 */
+	if (bio_data_dir(bio) == READ) {
+		struct bio_vec *bvec;
+		unsigned long flags;
+		int i;
+
+		bio_for_each_segment(bvec, bio, i) {
+			char *dst = bvec_kmap_irq(bvec, &flags);
+
+			memset(dst, 0, bvec->bv_len);
+			bvec_kunmap_irq(dst, &flags);
+		}
+		bio_endio(bio, 0);
+	} else {
+		/*
+		 * let the page cache handling path do this bio, and then
+		 * lookup the mapped blocks after the io has been issued to
+		 * instantiate extents.
+		 */
+		if (!sync)
+			loop_add_bio(lo, bio);
+		else
+			fill_extent_hole(lo, bio);
+	}
+}
+
+static inline int lo_is_switch_bio(struct bio *bio)
+{
+	return !bio->bi_bdev && bio->bi_rw == LOOP_SWITCH_RW_MAGIC;
+}
+
+static inline int lo_is_map_bio(struct bio *bio)
+{
+	return !bio->bi_bdev && bio->bi_rw == LOOP_EXTENT_RW_MAGIC;
+}
+
+static int __loop_redirect_bio(struct loop_device *lo, struct extent_map *em,
+			       struct bio *bio, int sync)
+{
+	u64 extent_off;
+	u64 disk_block;
+
+	/*
+	 * handle sparse io
+	 */
+	if (em->block_start == EXTENT_MAP_HOLE) {
+		loop_handle_extent_hole(lo, bio, sync);
+		free_extent_map(em);
+		return 0;
+	}
+
+	/*
+	 * not a hole, redirect
+	 */
+	disk_block = em->block_start;
+	extent_off = lo_bio_offset(lo, bio) - em->start;
+	bio->bi_bdev = em->bdev;
+	bio->bi_sector = (disk_block + extent_off) >> 9;
+	free_extent_map(em);
+	return 1;
+}
+
+/*
+ * Change mapping of the bio, so that it points to the real bdev and offset
+ */
+static int loop_redirect_bio(struct loop_device *lo, struct bio *bio)
+{
+	u64 start = lo_bio_offset(lo, bio);
+	struct extent_map *em;
+
+	em = loop_lookup_extent(lo, start, GFP_ATOMIC);
+	if (IS_ERR(em)) {
+		bio_endio(bio, PTR_ERR(em));
+		return 0;
+	} else if (!em) {
+		loop_schedule_extent_mapping(lo, bio);
+		return 0;
+	}
+
+	return __loop_redirect_bio(lo, em, bio, 0);
+}
+
+/*
+ * Wait on bio's on our list to complete before sending a barrier bio
+ * to the below device. Called with lo_lock held.
+ */
+static void loop_wait_on_bios(struct loop_device *lo)
+{
+	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock, !lo->lo_bio);
+}
+
+static void loop_wait_on_switch(struct loop_device *lo)
+{
+	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock, !lo->lo_switch);
+}
+
 static int loop_make_request(struct request_queue *q, struct bio *old_bio)
 {
 	struct loop_device *lo = q->queuedata;
@@ -526,15 +813,39 @@ static int loop_make_request(struct request_queue *q, struct bio *old_bio)
 		goto out;
 	if (unlikely(rw == WRITE && (lo->lo_flags & LO_FLAGS_READ_ONLY)))
 		goto out;
+	if (lo->lo_flags & LO_FLAGS_FASTFS) {
+		/*
+		 * If we get a barrier bio, then we just need to wait for
+		 * existing bio's to be complete. This can only happen
+		 * on the 'new' extent mapped loop, since that is the only
+		 * one that supports barriers.
+		 */
+		if (bio_barrier(old_bio))
+			loop_wait_on_bios(lo);
+
+		/*
+		 * if file switch is in progress, wait for it to complete
+		 */
+		if (!lo_is_switch_bio(old_bio) && lo->lo_switch)
+			loop_wait_on_switch(lo);
+
+		if (loop_redirect_bio(lo, old_bio))
+			goto out_redir;
+		goto out_end;
+	}
 	loop_add_bio(lo, old_bio);
-	wake_up(&lo->lo_event);
 	spin_unlock_irq(&lo->lo_lock);
 	return 0;
 
 out:
-	spin_unlock_irq(&lo->lo_lock);
 	bio_io_error(old_bio);
+out_end:
+	spin_unlock_irq(&lo->lo_lock);
 	return 0;
+
+out_redir:
+	spin_unlock_irq(&lo->lo_lock);
+	return 1;
 }
 
 /*
@@ -548,21 +859,53 @@ static void loop_unplug(struct request_queue *q)
 	blk_run_address_space(lo->lo_backing_file->f_mapping);
 }
 
+static void loop_unplug_fastfs(struct request_queue *q)
+{
+	struct loop_device *lo = q->queuedata;
+	struct request_queue *rq = bdev_get_queue(lo->fs_bdev);
+	unsigned long flags;
+
+	local_irq_save(flags);
+
+	if (blk_remove_plug(q) && rq->unplug_fn)
+		rq->unplug_fn(rq);
+
+	local_irq_restore(flags);
+}
+
 struct switch_request {
 	struct file *file;
 	struct completion wait;
 };
 
 static void do_loop_switch(struct loop_device *, struct switch_request *);
+static int loop_init_fastfs(struct loop_device *);
 
 static inline void loop_handle_bio(struct loop_device *lo, struct bio *bio)
 {
-	if (unlikely(!bio->bi_bdev)) {
+	if (lo_is_map_bio(bio)) {
+		struct bio *org_bio = bio->bi_private;
+		struct extent_map *em;
+
+		em = loop_lookup_extent(lo, lo_bio_offset(lo, org_bio),
+					 GFP_KERNEL);
+
+		if (__loop_redirect_bio(lo, em, org_bio, 1))
+			generic_make_request(org_bio);
+
+		bio_put(bio);
+	} else if (lo_is_switch_bio(bio)) {
 		do_loop_switch(lo, bio->bi_private);
 		bio_put(bio);
 	} else {
-		int ret = do_bio_filebacked(lo, bio);
-		bio_endio(bio, ret);
+		if (lo->lo_flags & LO_FLAGS_FASTFS) {
+			/* we only get here when filling holes */
+			fill_extent_hole(lo, bio);
+		} else {
+			int ret = do_bio_filebacked(lo, bio);
+
+			bio_endio(bio, ret);
+		}
 	}
 }
 
@@ -589,7 +932,6 @@ static int loop_thread(void *data)
 
 		wait_event_interruptible(lo->lo_event,
 				lo->lo_bio || kthread_should_stop());
-
 		if (!lo->lo_bio)
 			continue;
 		spin_lock_irq(&lo->lo_lock);
@@ -597,7 +939,13 @@ static int loop_thread(void *data)
 		spin_unlock_irq(&lo->lo_lock);
 
 		BUG_ON(!bio);
+
 		loop_handle_bio(lo, bio);
+
+		spin_lock_irq(&lo->lo_lock);
+		if (--lo->lo_bio_cnt < LO_BIO_THROTTLE_LOW || !lo->lo_bio)
+			wake_up(&lo->lo_bio_wait);
+		spin_unlock_irq(&lo->lo_lock);
 	}
 
 	return 0;
@@ -618,6 +966,8 @@ static int loop_switch(struct loop_device *lo, struct file *file)
 	w.file = file;
 	bio->bi_private = &w;
 	bio->bi_bdev = NULL;
+	bio->bi_rw = LOOP_SWITCH_RW_MAGIC;
+	lo->lo_switch = 1;
 	loop_make_request(lo->lo_queue, bio);
 	wait_for_completion(&w.wait);
 	return 0;
@@ -643,11 +993,15 @@ static void do_loop_switch(struct loop_device *lo, struct switch_request *p)
 	struct file *file = p->file;
 	struct file *old_file = lo->lo_backing_file;
 	struct address_space *mapping;
+	const int fastfs = lo->lo_flags & LO_FLAGS_FASTFS;
 
 	/* if no new file, only flush of queued bios requested */
 	if (!file)
 		goto out;
 
+	if (fastfs)
+		loop_exit_fastfs(lo);
+ 
 	mapping = file->f_mapping;
 	mapping_set_gfp_mask(old_file->f_mapping, lo->old_gfp_mask);
 	lo->lo_backing_file = file;
@@ -655,6 +1009,12 @@ static void do_loop_switch(struct loop_device *lo, struct switch_request *p)
 		mapping->host->i_bdev->bd_block_size : PAGE_SIZE;
 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
+
+	if (fastfs)
+		loop_init_fastfs(lo);
+
+	lo->lo_switch = 0;
+	wake_up(&lo->lo_bio_wait);
 out:
 	complete(&p->wait);
 }
@@ -721,6 +1081,92 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
 	return error;
 }
 
+/*
+ * See if adding this bvec would cause us to spill into a new extent. If so,
+ * disallow the add to start a new bio. This ensures that the bio we receive
+ * in loop_make_request() never spans two extents or more.
+ */
+static int loop_merge_bvec(struct request_queue *q, struct bvec_merge_data *bvm,
+			   struct bio_vec *bvec)
+{
+	struct loop_device *lo = q->queuedata;
+	struct extent_map *em;
+	unsigned int ret;
+	u64 start;
+	u64 len;
+
+	if (!bvm->bi_size)
+		return bvec->bv_len;
+
+	start = (u64) lo->lo_offset + ((u64)bvm->bi_sector << 9);
+	len = bvm->bi_size + bvec->bv_len;
+	ret = bvec->bv_len;
+
+	em = loop_lookup_extent(lo, start, GFP_ATOMIC);
+	if (em && !IS_ERR(em)) {
+		/*
+		 * have extent, disallow if outside that extent
+		 */
+		if (start + len > em->start + em->len || start < em->start)
+			ret = 0;
+
+		free_extent_map(em);
+	} else
+		ret = 0;
+
+	return ret;
+}
+
+/*
+ * Initialize the members pertaining to extent mapping. We will populate
+ * the tree lazily on demand, as a full scan of a big file can take some
+ * time.
+ */
+static int loop_init_fastfs(struct loop_device *lo)
+{
+	struct file *file = lo->lo_backing_file;
+	struct inode *inode = file->f_mapping->host;
+	struct request_queue *fs_q;
+	int ret;
+
+	if (!S_ISREG(inode->i_mode))
+		return -EINVAL;
+
+	/*
+	 * Need a working extent_map
+	 */
+	if (inode->i_mapping->a_ops->map_extent == NULL)
+		return -EINVAL;
+	/*
+	 * invalidate all page cache belonging to this file, it could become
+	 * stale when we directly overwrite blocks.
+	 */
+	ret = invalidate_inode_pages2(file->f_mapping);
+	if (unlikely(ret))
+		return ret;
+
+	/*
+	 * disable truncate on this file
+	 */
+	mutex_lock(&inode->i_mutex);
+	inode->i_flags |= S_SWAPFILE;
+	mutex_unlock(&inode->i_mutex);
+
+	lo->blkbits = inode->i_blkbits;
+	lo->fs_bdev = file->f_mapping->host->i_sb->s_bdev;
+	lo->lo_flags |= LO_FLAGS_FASTFS;
+	lo->lo_queue->unplug_fn = loop_unplug_fastfs;
+
+	blk_queue_merge_bvec(lo->lo_queue, loop_merge_bvec);
+	blk_queue_ordered(lo->lo_queue, QUEUE_ORDERED_DRAIN, NULL);
+
+	fs_q = bdev_get_queue(lo->fs_bdev);
+	blk_queue_stack_limits(lo->lo_queue, fs_q);
+
+	printk(KERN_INFO "loop%d: fast redirect\n", lo->lo_number);
+	return 0;
+}
+
 static inline int is_loop_device(struct file *file)
 {
 	struct inode *i = file->f_mapping->host;
@@ -769,6 +1215,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
 
 	mapping = file->f_mapping;
 	inode = mapping->host;
+	lo->lo_flags = 0;
 
 	if (!(file->f_mode & FMODE_WRITE))
 		lo_flags |= LO_FLAGS_READ_ONLY;
@@ -831,6 +1278,12 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
 	bd_set_size(bdev, size << 9);
 
 	set_blocksize(bdev, lo_blocksize);
+
+	/*
+	 * This needs to be done after setup with another ioctl,
+	 * not automatically like this.
+	 */
+	loop_init_fastfs(lo);
 
 	lo->lo_thread = kthread_create(loop_thread, lo, "loop%d",
 						lo->lo_number);
@@ -919,6 +1372,9 @@ static int loop_clr_fd(struct loop_device *lo, struct block_device *bdev)
 
 	kthread_stop(lo->lo_thread);
 
+	if (lo->lo_flags & LO_FLAGS_FASTFS)
+		loop_exit_fastfs(lo);
+
 	lo->lo_queue->unplug_fn = NULL;
 	lo->lo_backing_file = NULL;
 
@@ -973,6 +1429,9 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 	if (info->lo_encrypt_type) {
 		unsigned int type = info->lo_encrypt_type;
 
+		if (lo->lo_flags & LO_FLAGS_FASTFS)
+			return -EINVAL;
+
 		if (type >= MAX_LO_CRYPT)
 			return -EINVAL;
 		xfer = xfer_funcs[type];
@@ -980,6 +1439,13 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 			return -EINVAL;
 	} else
 		xfer = NULL;
+
+	/*
+	 * for remaps, offset must be a multiple of full blocks
+	 */
+	if ((lo->lo_flags & LO_FLAGS_FASTFS) &&
+	    (((1 << lo->blkbits) - 1) & info->lo_offset))
+		return -EINVAL;
 
 	err = loop_init_xfer(lo, xfer, info);
 	if (err)
@@ -1186,6 +1652,9 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
 		break;
 	case LOOP_GET_STATUS64:
 		err = loop_get_status64(lo, (struct loop_info64 __user *) arg);
+		break;
+	case LOOP_SET_FASTFS:
+		err = loop_init_fastfs(lo);
 		break;
 	default:
 		err = lo->ioctl ? lo->ioctl(lo, cmd, arg) : -EINVAL;
@@ -1466,6 +1935,8 @@ static struct loop_device *loop_alloc(int i)
 	lo->lo_number		= i;
 	lo->lo_thread		= NULL;
 	init_waitqueue_head(&lo->lo_event);
+	init_waitqueue_head(&lo->lo_bio_wait);
+	setup_timer(&lo->lo_bio_timer, loop_bio_timer, (unsigned long) lo);
 	spin_lock_init(&lo->lo_lock);
 	disk->major		= LOOP_MAJOR;
 	disk->first_minor	= i << part_shift;
