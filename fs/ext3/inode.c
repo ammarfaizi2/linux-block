@@ -34,6 +34,7 @@
 #include <linux/buffer_head.h>
 #include <linux/writeback.h>
 #include <linux/mpage.h>
+#include <linux/extent_map.h>
 #include <linux/uio.h>
 #include <linux/bio.h>
 #include <linux/fiemap.h>
@@ -229,9 +230,11 @@ void ext3_delete_inode (struct inode * inode)
 		clear_inode(inode);
 	else
 		ext3_free_inode(handle, inode);
+	remove_extent_mappings(&EXT3_I(inode)->extent_tree, 0, (u64) -1);
 	ext3_journal_stop(handle);
 	return;
 no_delete:
+	remove_extent_mappings(&EXT3_I(inode)->extent_tree, 0, (u64) -1);
 	clear_inode(inode);	/* We must guarantee clearing of inode... */
 }
 
@@ -988,6 +991,29 @@ int ext3_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 {
 	return generic_block_fiemap(inode, fieinfo, start, len,
 				    ext3_get_block);
+}
+
+static struct extent_map *ext3_map_extent(struct address_space *mapping,
+					  struct page *page, size_t page_offset,
+					  loff_t start, u64 len, int create,
+					  gfp_t gfp_mask)
+{
+	struct extent_map_tree *tree = &EXT3_I(mapping->host)->extent_tree;
+	handle_t *handle = NULL;
+	struct extent_map *ret;
+
+	if (create) {
+		handle = ext3_journal_start(mapping->host, len >> 9);
+		if (IS_ERR(handle))
+			return (struct extent_map *) handle;
+	}
+
+	ret = map_extent_get_block(tree, mapping, start, len, create, gfp_mask,
+					ext3_get_block);
+	if (handle)
+		ext3_journal_stop(handle);
+
+	return ret;
 }
 
 /*
@@ -1795,6 +1821,7 @@ static const struct address_space_operations ext3_ordered_aops = {
 	.direct_IO		= ext3_direct_IO,
 	.migratepage		= buffer_migrate_page,
 	.is_partially_uptodate  = block_is_partially_uptodate,
+	.map_extent		= ext3_map_extent,
 };
 
 static const struct address_space_operations ext3_writeback_aops = {
@@ -1810,6 +1837,7 @@ static const struct address_space_operations ext3_writeback_aops = {
 	.direct_IO		= ext3_direct_IO,
 	.migratepage		= buffer_migrate_page,
 	.is_partially_uptodate  = block_is_partially_uptodate,
+	.map_extent		= ext3_map_extent,
 };
 
 static const struct address_space_operations ext3_journalled_aops = {
@@ -1824,6 +1852,7 @@ static const struct address_space_operations ext3_journalled_aops = {
 	.invalidatepage		= ext3_invalidatepage,
 	.releasepage		= ext3_releasepage,
 	.is_partially_uptodate  = block_is_partially_uptodate,
+	.map_extent		= ext3_map_extent,
 };
 
 void ext3_set_aops(struct inode *inode)
@@ -2835,6 +2864,7 @@ struct inode *ext3_iget(struct super_block *sb, unsigned long ino)
 			init_special_inode(inode, inode->i_mode,
 			   new_decode_dev(le32_to_cpu(raw_inode->i_block[1])));
 	}
+	extent_map_tree_init(&ei->extent_tree);
 	brelse (iloc.bh);
 	ext3_set_inode_flags(inode);
 	unlock_new_inode(inode);

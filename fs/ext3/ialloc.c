@@ -23,6 +23,7 @@
 #include <linux/buffer_head.h>
 #include <linux/random.h>
 #include <linux/bitops.h>
+#include <linux/extent_map.h>
 
 #include <asm/byteorder.h>
 
@@ -571,6 +572,7 @@ got:
 	ei->i_dtime = 0;
 	ei->i_block_alloc_info = NULL;
 	ei->i_block_group = group;
+	extent_map_tree_init(&ei->extent_tree);
 
 	ext3_set_inode_flags(inode);
 	if (IS_DIRSYNC(inode))

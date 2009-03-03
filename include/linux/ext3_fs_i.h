@@ -20,6 +20,7 @@
 #include <linux/rbtree.h>
 #include <linux/seqlock.h>
 #include <linux/mutex.h>
+#include <linux/extent_map.h>
 
 /* data type for block offset of block group */
 typedef int ext3_grpblk_t;
@@ -142,6 +143,8 @@ struct ext3_inode_info {
 	 */
 	struct mutex truncate_mutex;
 	struct inode vfs_inode;
+
+	struct extent_map_tree extent_tree;
 };
 
 #endif	/* _LINUX_EXT3_FS_I */

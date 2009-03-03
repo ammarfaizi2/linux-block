@@ -475,6 +475,7 @@ static void ext3_destroy_inode(struct inode *inode)
 				false);
 		dump_stack();
 	}
+	remove_extent_mappings(&EXT3_I(inode)->extent_tree, 0, (u64) -1);
 	kmem_cache_free(ext3_inode_cachep, EXT3_I(inode));
 }
 
@@ -487,6 +488,7 @@ static void init_once(void *foo)
 	init_rwsem(&ei->xattr_sem);
 #endif
 	mutex_init(&ei->truncate_mutex);
+	extent_map_tree_init(&ei->extent_tree);
 	inode_init_once(&ei->vfs_inode);
 }
 
