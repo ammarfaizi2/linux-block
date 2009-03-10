@@ -99,6 +99,7 @@ enum {
 	STAC_DELL_M4_3,
 	STAC_HP_M4,
 	STAC_HP_DV5,
+	STAC_HP_HDX,
 	STAC_92HD71BXX_MODELS
 };
 
@@ -1828,6 +1829,7 @@ static unsigned int *stac92hd71bxx_brd_tbl[STAC_92HD71BXX_MODELS] = {
 	[STAC_DELL_M4_3]	= dell_m4_3_pin_configs,
 	[STAC_HP_M4]		= NULL,
 	[STAC_HP_DV5]		= NULL,
+	[STAC_HP_HDX]           = NULL,
 };
 
 static const char *stac92hd71bxx_models[STAC_92HD71BXX_MODELS] = {
@@ -1838,6 +1840,7 @@ static const char *stac92hd71bxx_models[STAC_92HD71BXX_MODELS] = {
 	[STAC_DELL_M4_3] = "dell-m4-3",
 	[STAC_HP_M4] = "hp-m4",
 	[STAC_HP_DV5] = "hp-dv5",
+	[STAC_HP_HDX] = "hp-hdx",
 };
 
 static struct snd_pci_quirk stac92hd71bxx_cfg_tbl[] = {
@@ -1850,8 +1853,12 @@ static struct snd_pci_quirk stac92hd71bxx_cfg_tbl[] = {
 		      "HP dv4-7", STAC_HP_DV5),
 	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_HP, 0xfff0, 0x3600,
 		      "HP dv4-7", STAC_HP_DV5),
+	SND_PCI_QUIRK(PCI_VENDOR_ID_HP, 0x3610,
+		      "HP HDX", STAC_HP_HDX),  /* HDX18 */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_HP, 0x361a,
 		      "HP mini 1000", STAC_HP_M4),
+	SND_PCI_QUIRK(PCI_VENDOR_ID_HP, 0x361b,
+		      "HP HDX", STAC_HP_HDX),  /* HDX16 */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x0233,
 				"unknown Dell", STAC_DELL_M4_1),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x0234,
@@ -4472,6 +4479,37 @@ static int stac92xx_resume(struct hda_codec *codec)
 	return 0;
 }
 
+
+/*
+ * using power check for controlling mute led of HP HDX notebooks
+ * check for mute state only on Speakers (nid = 0x10)
+ *
+ * For this feature CONFIG_SND_HDA_POWER_SAVE is needed, otherwise
+ * the LED is NOT working properly !
+ */
+
+#ifdef CONFIG_SND_HDA_POWER_SAVE
+static int stac92xx_hp_hdx_check_power_status(struct hda_codec *codec,
+					      hda_nid_t nid)
+{
+	struct sigmatel_spec *spec = codec->spec;
+
+	if (nid == 0x10) {
+		if (snd_hda_codec_amp_read(codec, nid, 0, HDA_OUTPUT, 0) &
+		    HDA_AMP_MUTE)
+			spec->gpio_data &= ~0x08;  /* orange */
+		else
+			spec->gpio_data |= 0x08;   /* white */
+
+		stac_gpio_set(codec, spec->gpio_mask,
+			      spec->gpio_dir,
+			      spec->gpio_data);
+	}
+
+	return 0;
+}
+#endif
+
 static int stac92xx_suspend(struct hda_codec *codec, pm_message_t state)
 {
 	struct sigmatel_spec *spec = codec->spec;
@@ -5142,6 +5180,25 @@ again:
 	case STAC_HP_DV5:
 		snd_hda_codec_set_pincfg(codec, 0x0d, 0x90170010);
 		stac92xx_auto_set_pinctl(codec, 0x0d, AC_PINCTL_OUT_EN);
+		break;
+	case STAC_HP_HDX:
+		spec->num_dmics = 1;
+		spec->num_dmuxes = 1;
+		spec->num_smuxes = 1;
+		/*
+		 * For controlling MUTE LED on HP HDX16/HDX18 notebooks,
+		 * the CONFIG_SND_HDA_POWER_SAVE is needed to be set.
+		 */
+#ifdef CONFIG_SND_HDA_POWER_SAVE
+		/* orange/white mute led on GPIO3, orange=0, white=1 */
+		spec->gpio_mask |= 0x08;
+		spec->gpio_dir  |= 0x08;
+		spec->gpio_data |= 0x08;  /* set to white */
+
+		/* register check_power_status callback. */
+		codec->patch_ops.check_power_status =
+		    stac92xx_hp_hdx_check_power_status;
+#endif	
 		break;
 	};
 
