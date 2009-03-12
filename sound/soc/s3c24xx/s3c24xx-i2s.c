@@ -83,7 +83,7 @@ static void s3c24xx_snd_txctrl(int on)
 	iiscon  = readl(s3c24xx_i2s.regs + S3C2410_IISCON);
 	iismod  = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
 
-	pr_debug("r: IISCON: %lx IISMOD: %lx IISFCON: %lx\n", iiscon, iismod, iisfcon);
+	pr_debug("r: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
 
 	if (on) {
 		iisfcon |= S3C2410_IISFCON_TXDMA | S3C2410_IISFCON_TXENABLE;
@@ -113,7 +113,7 @@ static void s3c24xx_snd_txctrl(int on)
 		writel(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
 	}
 
-	pr_debug("w: IISCON: %lx IISMOD: %lx IISFCON: %lx\n", iiscon, iismod, iisfcon);
+	pr_debug("w: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
 }
 
 static void s3c24xx_snd_rxctrl(int on)
@@ -128,7 +128,7 @@ static void s3c24xx_snd_rxctrl(int on)
 	iiscon  = readl(s3c24xx_i2s.regs + S3C2410_IISCON);
 	iismod  = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
 
-	pr_debug("r: IISCON: %lx IISMOD: %lx IISFCON: %lx\n", iiscon, iismod, iisfcon);
+	pr_debug("r: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
 
 	if (on) {
 		iisfcon |= S3C2410_IISFCON_RXDMA | S3C2410_IISFCON_RXENABLE;
@@ -158,7 +158,7 @@ static void s3c24xx_snd_rxctrl(int on)
 		writel(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
 	}
 
-	pr_debug("w: IISCON: %lx IISMOD: %lx IISFCON: %lx\n", iiscon, iismod, iisfcon);
+	pr_debug("w: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
 }
 
 /*
@@ -206,7 +206,7 @@ static int s3c24xx_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 	pr_debug("Entered %s\n", __func__);
 
 	iismod = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
-	pr_debug("hw_params r: IISMOD: %lx \n", iismod);
+	pr_debug("hw_params r: IISMOD: %x \n", iismod);
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBM_CFM:
@@ -231,7 +231,7 @@ static int s3c24xx_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 	}
 
 	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
-	pr_debug("hw_params w: IISMOD: %lx \n", iismod);
+	pr_debug("hw_params w: IISMOD: %x \n", iismod);
 	return 0;
 }
 
@@ -251,7 +251,7 @@ static int s3c24xx_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	/* Working copies of register */
 	iismod = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
-	pr_debug("hw_params r: IISMOD: %lx\n", iismod);
+	pr_debug("hw_params r: IISMOD: %x\n", iismod);
 
 	switch (params_format(params)) {
 	case SNDRV_PCM_FORMAT_S8:
@@ -269,7 +269,7 @@ static int s3c24xx_i2s_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
-	pr_debug("hw_params w: IISMOD: %lx\n", iismod);
+	pr_debug("hw_params w: IISMOD: %x\n", iismod);
 	return 0;
 }
 
@@ -449,6 +449,14 @@ static int s3c24xx_i2s_resume(struct snd_soc_dai *cpu_dai)
 	SNDRV_PCM_RATE_22050 | SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 | \
 	SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000)
 
+static struct snd_soc_dai_ops s3c24xx_i2s_dai_ops = {
+	.trigger	= s3c24xx_i2s_trigger,
+	.hw_params	= s3c24xx_i2s_hw_params,
+	.set_fmt	= s3c24xx_i2s_set_fmt,
+	.set_clkdiv	= s3c24xx_i2s_set_clkdiv,
+	.set_sysclk	= s3c24xx_i2s_set_sysclk,
+};
+
 struct snd_soc_dai s3c24xx_i2s_dai = {
 	.name = "s3c24xx-i2s",
 	.id = 0,
@@ -465,13 +473,7 @@ struct snd_soc_dai s3c24xx_i2s_dai = {
 		.channels_max = 2,
 		.rates = S3C24XX_I2S_RATES,
 		.formats = SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE,},
-	.ops = {
-		.trigger = s3c24xx_i2s_trigger,
-		.hw_params = s3c24xx_i2s_hw_params,
-		.set_fmt = s3c24xx_i2s_set_fmt,
-		.set_clkdiv = s3c24xx_i2s_set_clkdiv,
-		.set_sysclk = s3c24xx_i2s_set_sysclk,
-	},
+	.ops = &s3c24xx_i2s_dai_ops,
 };
 EXPORT_SYMBOL_GPL(s3c24xx_i2s_dai);
 
