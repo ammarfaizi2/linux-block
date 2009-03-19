@@ -49,6 +49,9 @@ static struct regulator_bulk_data power[] = {
 		.supply = "DCVDD",
 	},
 	{
+		.supply = "AVDD",
+	},
+	{
 		.supply = "FLLVDD",
 	},
 	{
@@ -67,6 +70,7 @@ struct wm8400_priv {
 	unsigned int sysclk;
 	unsigned int pcmclk;
 	struct work_struct work;
+	int fll_in, fll_out;
 };
 
 static inline unsigned int wm8400_read(struct snd_soc_codec *codec,
@@ -928,6 +932,133 @@ static int wm8400_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	return 0;
 }
 
+struct fll_factors {
+	u16 n;
+	u16 k;
+	u16 outdiv;
+	u16 fratio;
+	u16 freq_ref;
+};
+
+#define FIXED_FLL_SIZE ((1 << 16) * 10)
+
+static int fll_factors(struct wm8400_priv *wm8400, struct fll_factors *factors,
+		       unsigned int Fref, unsigned int Fout)
+{
+	u64 Kpart;
+	unsigned int K, Nmod, target;
+
+	factors->outdiv = 2;
+	while (Fout * factors->outdiv <  90000000 ||
+	       Fout * factors->outdiv > 100000000) {
+		factors->outdiv *= 2;
+		if (factors->outdiv > 32) {
+			dev_err(wm8400->wm8400->dev,
+				"Unsupported FLL output frequency %dHz\n",
+				Fout);
+			return -EINVAL;
+		}
+	}
+	target = Fout * factors->outdiv;
+	factors->outdiv = factors->outdiv >> 2;
+
+	if (Fref < 48000)
+		factors->freq_ref = 1;
+	else
+		factors->freq_ref = 0;
+
+	if (Fref < 1000000)
+		factors->fratio = 9;
+	else
+		factors->fratio = 0;
+
+	/* Ensure we have a fractional part */
+	do {
+		if (Fref < 1000000)
+			factors->fratio--;
+		else
+			factors->fratio++;
+
+		if (factors->fratio < 1 || factors->fratio > 8) {
+			dev_err(wm8400->wm8400->dev,
+				"Unable to calculate FRATIO\n");
+			return -EINVAL;
+		}
+
+		factors->n = target / (Fref * factors->fratio);
+		Nmod = target % (Fref * factors->fratio);
+	} while (Nmod == 0);
+
+	/* Calculate fractional part - scale up so we can round. */
+	Kpart = FIXED_FLL_SIZE * (long long)Nmod;
+
+	do_div(Kpart, (Fref * factors->fratio));
+
+	K = Kpart & 0xFFFFFFFF;
+
+	if ((K % 10) >= 5)
+		K += 5;
+
+	/* Move down to proper range now rounding is done */
+	factors->k = K / 10;
+
+	dev_dbg(wm8400->wm8400->dev,
+		"FLL: Fref=%d Fout=%d N=%x K=%x, FRATIO=%x OUTDIV=%x\n",
+		Fref, Fout,
+		factors->n, factors->k, factors->fratio, factors->outdiv);
+
+	return 0;
+}
+
+static int wm8400_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
+			      unsigned int freq_in, unsigned int freq_out)
+{
+	struct snd_soc_codec *codec = codec_dai->codec;
+	struct wm8400_priv *wm8400 = codec->private_data;
+	struct fll_factors factors;
+	int ret;
+	u16 reg;
+
+	if (freq_in == wm8400->fll_in && freq_out == wm8400->fll_out)
+		return 0;
+
+	if (freq_out != 0) {
+		ret = fll_factors(wm8400, &factors, freq_in, freq_out);
+		if (ret != 0)
+			return ret;
+	}
+
+	wm8400->fll_out = freq_out;
+	wm8400->fll_in = freq_in;
+
+	/* We *must* disable the FLL before any changes */
+	reg = wm8400_read(codec, WM8400_POWER_MANAGEMENT_2);
+	reg &= ~WM8400_FLL_ENA;
+	wm8400_write(codec, WM8400_POWER_MANAGEMENT_2, reg);
+
+	reg = wm8400_read(codec, WM8400_FLL_CONTROL_1);
+	reg &= ~WM8400_FLL_OSC_ENA;
+	wm8400_write(codec, WM8400_FLL_CONTROL_1, reg);
+
+	if (freq_out == 0)
+		return 0;
+
+	reg &= ~(WM8400_FLL_REF_FREQ | WM8400_FLL_FRATIO_MASK);
+	reg |= WM8400_FLL_FRAC | factors.fratio;
+	reg |= factors.freq_ref << WM8400_FLL_REF_FREQ_SHIFT;
+	wm8400_write(codec, WM8400_FLL_CONTROL_1, reg);
+
+	wm8400_write(codec, WM8400_FLL_CONTROL_2, factors.k);
+	wm8400_write(codec, WM8400_FLL_CONTROL_3, factors.n);
+
+	reg = wm8400_read(codec, WM8400_FLL_CONTROL_4);
+	reg &= WM8400_FLL_OUTDIV_MASK;
+	reg |= factors.outdiv;
+	wm8400_write(codec, WM8400_FLL_CONTROL_4, reg);
+
+	return 0;
+}
+
 /*
  * Sets ADC and Voice DAC format.
  */
@@ -1096,44 +1227,21 @@ static int wm8400_set_bias_level(struct snd_soc_codec *codec,
 			wm8400_write(codec, WM8400_POWER_MANAGEMENT_1,
 				     WM8400_CODEC_ENA | WM8400_SYSCLK_ENA);
 
-			/* Enable all output discharge bits */
-			wm8400_write(codec, WM8400_ANTIPOP1, WM8400_DIS_LLINE |
-				WM8400_DIS_RLINE | WM8400_DIS_OUT3 |
-				WM8400_DIS_OUT4 | WM8400_DIS_LOUT |
-				WM8400_DIS_ROUT);
-
 			/* Enable POBCTRL, SOFT_ST, VMIDTOG and BUFDCOPEN */
 			wm8400_write(codec, WM8400_ANTIPOP2, WM8400_SOFTST |
 				     WM8400_BUFDCOPEN | WM8400_POBCTRL);
 
-			msleep(500);
-
-			/* Enable outputs */
-			val = wm8400_read(codec, WM8400_POWER_MANAGEMENT_1);
-			val |= WM8400_SPK_ENA | WM8400_OUT3_ENA |
-				WM8400_OUT4_ENA | WM8400_LOUT_ENA |
-				WM8400_ROUT_ENA;
-			wm8400_write(codec, WM8400_POWER_MANAGEMENT_1, val);
-
-			/* disable all output discharge bits */
-			wm8400_write(codec, WM8400_ANTIPOP1, 0);
+			msleep(50);
 
 			/* Enable VREF & VMID at 2x50k */
+			val = wm8400_read(codec, WM8400_POWER_MANAGEMENT_1);
 			val |= 0x2 | WM8400_VREF_ENA;
 			wm8400_write(codec, WM8400_POWER_MANAGEMENT_1, val);
-
-			msleep(600);
 
 			/* Enable BUFIOEN */
 			wm8400_write(codec, WM8400_ANTIPOP2, WM8400_SOFTST |
 				     WM8400_BUFDCOPEN | WM8400_POBCTRL |
 				     WM8400_BUFIOEN);
-
-			/* Disable outputs */
-			val &= ~(WM8400_SPK_ENA | WM8400_OUT3_ENA |
-				 WM8400_OUT4_ENA | WM8400_LOUT_ENA |
-				 WM8400_ROUT_ENA);
-			wm8400_write(codec, WM8400_POWER_MANAGEMENT_1, val);
 
 			/* disable POBCTRL, SOFT_ST and BUFDCOPEN */
 			wm8400_write(codec, WM8400_ANTIPOP2, WM8400_BUFIOEN);
@@ -1208,6 +1316,7 @@ static struct snd_soc_dai_ops wm8400_dai_ops = {
 	.set_fmt = wm8400_set_dai_fmt,
 	.set_clkdiv = wm8400_set_dai_clkdiv,
 	.set_sysclk = wm8400_set_dai_sysclk,
+	.set_pll = wm8400_set_dai_pll,
 };
 
 /*
