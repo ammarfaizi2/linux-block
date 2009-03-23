@@ -770,7 +770,7 @@ static void alc_set_input_pin(struct hda_codec *codec, hda_nid_t nid,
 
 	if (auto_pin_type <= AUTO_PIN_FRONT_MIC) {
 		unsigned int pincap;
-		pincap = snd_hda_param_read(codec, nid, AC_PAR_PIN_CAP);
+		pincap = snd_hda_query_pin_caps(codec, nid);
 		pincap = (pincap & AC_PINCAP_VREF) >> AC_PINCAP_VREF_SHIFT;
 		if (pincap & AC_PINCAP_VREF_80)
 			val = PIN_VREF80;
@@ -16746,8 +16746,14 @@ static int alc662_input_pin_idx(struct hda_codec *codec, hda_nid_t nid,
 
 static int alc662_is_input_pin(struct hda_codec *codec, hda_nid_t nid)
 {
-	unsigned int pincap = snd_hda_param_read(codec, nid, AC_PAR_PIN_CAP);
+	unsigned int pincap = snd_hda_query_pin_caps(codec, nid);
 	return (pincap & AC_PINCAP_IN) != 0;
+}
+
+static int alc662_is_output_pin(struct hda_codec *codec, hda_nid_t nid)
+{
+	unsigned int pincap = snd_hda_query_pin_caps(codec, nid);
+	return (pincap & AC_PINCAP_OUT) != 0;
 }
 
 /* create playback/capture controls for input pins */
@@ -16837,7 +16843,8 @@ static void alc662_auto_init_analog_input(struct hda_codec *codec)
 		hda_nid_t nid = spec->autocfg.input_pins[i];
 		if (alc662_is_input_pin(codec, nid)) {
 			alc_set_input_pin(codec, nid, i);
-			if (nid != ALC662_PIN_CD_NID)
+			if (nid != ALC662_PIN_CD_NID &&
+			    alc662_is_output_pin(codec, nid))
 				snd_hda_codec_write(codec, nid, 0,
 						    AC_VERB_SET_AMP_GAIN_MUTE,
 						    AMP_OUT_MUTE);
