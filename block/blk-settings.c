@@ -463,6 +463,19 @@ void blk_queue_update_dma_alignment(struct request_queue *q, int mask)
 }
 EXPORT_SYMBOL(blk_queue_update_dma_alignment);
 
+void blk_queue_set_noflush(struct block_device *bdev)
+{
+	struct request_queue *q = bdev_get_queue(bdev);
+	char b[BDEVNAME_SIZE];
+
+	if (test_and_set_bit(QUEUE_FLAG_NOFLUSH, &q->queue_flags))
+		return;
+
+	printk(KERN_ERR "Device %s does not appear to honor cache flushes. "	
+			"This may mean that file system ordering guarantees "
+			"are not met.", bdevname(bdev, b));
+}
+
 static int __init blk_settings_init(void)
 {
 	blk_max_low_pfn = max_low_pfn - 1;

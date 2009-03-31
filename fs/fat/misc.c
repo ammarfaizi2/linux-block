@@ -269,10 +269,7 @@ int fat_sync_bhs(struct buffer_head **bhs, int nr_bhs)
 	ll_rw_block(SWRITE, nr_bhs, bhs);
 	for (i = 0; i < nr_bhs; i++) {
 		wait_on_buffer(bhs[i]);
-		if (buffer_eopnotsupp(bhs[i])) {
-			clear_buffer_eopnotsupp(bhs[i]);
-			err = -EOPNOTSUPP;
-		} else if (!err && !buffer_uptodate(bhs[i]))
+		if (!err && !buffer_uptodate(bhs[i]))
 			err = -EIO;
 	}
 	return err;

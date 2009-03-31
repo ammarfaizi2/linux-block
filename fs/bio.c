@@ -1380,7 +1380,17 @@ void bio_check_pages_dirty(struct bio *bio)
  **/
 void bio_endio(struct bio *bio, int error)
 {
-	if (error)
+	/*
+	 * Special case here - hide the -EOPNOTSUPP from the driver or
+	 * block layer, dump a warning the first time this happens so that
+	 * the admin knows that we may not provide the ordering guarantees
+	 * that are needed. Don't clear the uptodate bit.
+	 */
+	if (error == -EOPNOTSUPP && bio_barrier(bio)) {
+		set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
+		blk_queue_set_noflush(bio->bi_bdev);
+		error = 0;
+	} else if (error)
 		clear_bit(BIO_UPTODATE, &bio->bi_flags);
 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
 		error = -EIO;

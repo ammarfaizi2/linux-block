@@ -406,7 +406,6 @@ xfs_submit_ioend_bio(
 	bio->bi_end_io = xfs_end_bio;
 
 	submit_bio(WRITE, bio);
-	ASSERT(!bio_flagged(bio, BIO_EOPNOTSUPP));
 	bio_put(bio);
 }
 

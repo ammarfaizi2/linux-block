@@ -1834,7 +1834,6 @@ extent_bio_alloc(struct block_device *bdev, u64 first_sector, int nr_vecs,
 static int submit_one_bio(int rw, struct bio *bio, int mirror_num,
 			  unsigned long bio_flags)
 {
-	int ret = 0;
 	struct bio_vec *bvec = bio->bi_io_vec + bio->bi_vcnt - 1;
 	struct page *page = bvec->bv_page;
 	struct extent_io_tree *tree = bio->bi_private;
@@ -1846,17 +1845,13 @@ static int submit_one_bio(int rw, struct bio *bio, int mirror_num,
 
 	bio->bi_private = NULL;
 
-	bio_get(bio);
-
 	if (tree->ops && tree->ops->submit_bio_hook)
 		tree->ops->submit_bio_hook(page->mapping->host, rw, bio,
 					   mirror_num, bio_flags);
 	else
 		submit_bio(rw, bio);
-	if (bio_flagged(bio, BIO_EOPNOTSUPP))
-		ret = -EOPNOTSUPP;
-	bio_put(bio);
-	return ret;
+
+	return 0;
 }
 
 static int submit_extent_page(int rw, struct extent_io_tree *tree,
