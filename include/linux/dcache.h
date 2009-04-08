@@ -188,6 +188,8 @@ d_iput:		no		no		no       yes
 
 #define DCACHE_CANT_MOUNT	0x0100
 
+#define DCACHE_WHITEOUT		0x0200	/* Stop lookup in a unioned file system */
+
 extern spinlock_t dcache_lock;
 extern seqlock_t rename_lock;
 
@@ -372,6 +374,11 @@ static inline void dont_mount(struct dentry *dentry)
 	spin_lock(&dentry->d_lock);
 	dentry->d_flags |= DCACHE_CANT_MOUNT;
 	spin_unlock(&dentry->d_lock);
+}
+
+static inline int d_is_whiteout(struct dentry *dentry)
+{
+	return (dentry->d_flags & DCACHE_WHITEOUT);
 }
 
 static inline struct dentry *dget_parent(struct dentry *dentry)

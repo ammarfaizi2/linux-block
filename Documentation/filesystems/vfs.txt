@@ -308,7 +308,7 @@ struct inode_operations
 -----------------------
 
 This describes how the VFS can manipulate an inode in your
-filesystem. As of kernel 2.6.22, the following members are defined:
+filesystem. As of kernel 2.6.34, the following members are defined:
 
 struct inode_operations {
 	int (*create) (struct inode *,struct dentry *,int, struct nameidata *);
@@ -319,6 +319,7 @@ struct inode_operations {
 	int (*mkdir) (struct inode *,struct dentry *,int);
 	int (*rmdir) (struct inode *,struct dentry *);
 	int (*mknod) (struct inode *,struct dentry *,int,dev_t);
+	int (*whiteout) (struct inode *, struct dentry *, struct dentry *);
 	int (*rename) (struct inode *, struct dentry *,
 			struct inode *, struct dentry *);
 	int (*readlink) (struct dentry *, char __user *,int);
@@ -381,6 +382,13 @@ otherwise noted.
 	if you want to support creating these types of inodes. You
 	will probably need to call d_instantiate() just as you would
 	in the create() method
+
+  whiteout: called by the rmdir(2) and unlink(2) system calls on a
+        layered file system.  Only required if you want to support
+        whiteouts.  The first dentry passed in is that for the old
+        dentry if it exists, and a negative dentry otherwise.  The
+        second is the dentry for the whiteout itself.  This method
+        must unlink() or rmdir() the original entry if it exists.
 
   rename: called by the rename(2) system call to rename the object to
 	have the parent and name given by the second inode and dentry.
