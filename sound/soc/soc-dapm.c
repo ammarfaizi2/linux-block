@@ -357,8 +357,9 @@ static int dapm_new_mixer(struct snd_soc_codec *codec,
 				path->long_name);
 			ret = snd_ctl_add(codec->card, path->kcontrol);
 			if (ret < 0) {
-				printk(KERN_ERR "asoc: failed to add dapm kcontrol %s\n",
-						path->long_name);
+				printk(KERN_ERR "asoc: failed to add dapm kcontrol %s: %d\n",
+				       path->long_name,
+				       ret);
 				kfree(path->long_name);
 				path->long_name = NULL;
 				return ret;
@@ -521,6 +522,65 @@ int dapm_reg_event(struct snd_soc_dapm_widget *w,
 }
 EXPORT_SYMBOL_GPL(dapm_reg_event);
 
+/* Standard power change method, used to apply power changes to most
+ * widgets.
+ */
+static int dapm_generic_apply_power(struct snd_soc_dapm_widget *w)
+{
+	int ret;
+
+	/* call any power change event handlers */
+	if (w->event)
+		pr_debug("power %s event for %s flags %x\n",
+			 w->power ? "on" : "off",
+			 w->name, w->event_flags);
+
+	/* power up pre event */
+	if (w->power && w->event &&
+	    (w->event_flags & SND_SOC_DAPM_PRE_PMU)) {
+		ret = w->event(w, NULL, SND_SOC_DAPM_PRE_PMU);
+		if (ret < 0)
+			return ret;
+	}
+
+	/* power down pre event */
+	if (!w->power && w->event &&
+	    (w->event_flags & SND_SOC_DAPM_PRE_PMD)) {
+		ret = w->event(w, NULL, SND_SOC_DAPM_PRE_PMD);
+		if (ret < 0)
+			return ret;
+	}
+
+	/* Lower PGA volume to reduce pops */
+	if (w->id == snd_soc_dapm_pga && !w->power)
+		dapm_set_pga(w, w->power);
+
+	dapm_update_bits(w);
+
+	/* Raise PGA volume to reduce pops */
+	if (w->id == snd_soc_dapm_pga && w->power)
+		dapm_set_pga(w, w->power);
+
+	/* power up post event */
+	if (w->power && w->event &&
+	    (w->event_flags & SND_SOC_DAPM_POST_PMU)) {
+		ret = w->event(w,
+			       NULL, SND_SOC_DAPM_POST_PMU);
+		if (ret < 0)
+			return ret;
+	}
+
+	/* power down post event */
+	if (!w->power && w->event &&
+	    (w->event_flags & SND_SOC_DAPM_POST_PMD)) {
+		ret = w->event(w, NULL, SND_SOC_DAPM_POST_PMD);
+		if (ret < 0)
+			return ret;
+	}
+
+	return 0;
+}
+
 /*
  * Scan a single DAPM widget for a complete audio path and update the
  * power status appropriately.
@@ -538,18 +598,22 @@ static int dapm_power_widget(struct snd_soc_codec *codec, int event,
 	if (w->id == snd_soc_dapm_adc && w->active) {
 		in = is_connected_input_ep(w);
 		dapm_clear_walk(w->codec);
-		w->power = (in != 0) ? 1 : 0;
-		dapm_update_bits(w);
-		return 0;
+		power = (in != 0) ? 1 : 0;
+		if (power == w->power)
+			return 0;
+		w->power = power;
+		return dapm_generic_apply_power(w);
 	}
 
 	/* active DAC */
 	if (w->id == snd_soc_dapm_dac && w->active) {
 		out = is_connected_output_ep(w);
 		dapm_clear_walk(w->codec);
-		w->power = (out != 0) ? 1 : 0;
-		dapm_update_bits(w);
-		return 0;
+		power = (out != 0) ? 1 : 0;
+		if (power == w->power)
+			return 0;
+		w->power = power;
+		return dapm_generic_apply_power(w);
 	}
 
 	/* pre and post event widgets */
@@ -600,56 +664,7 @@ static int dapm_power_widget(struct snd_soc_codec *codec, int event,
 	if (!power_change)
 		return 0;
 
-	/* call any power change event handlers */
-	if (w->event)
-		pr_debug("power %s event for %s flags %x\n",
-			 w->power ? "on" : "off",
-			 w->name, w->event_flags);
-
-	/* power up pre event */
-	if (power && w->event &&
-	    (w->event_flags & SND_SOC_DAPM_PRE_PMU)) {
-		ret = w->event(w, NULL, SND_SOC_DAPM_PRE_PMU);
-		if (ret < 0)
-			return ret;
-	}
-
-	/* power down pre event */
-	if (!power && w->event &&
-	    (w->event_flags & SND_SOC_DAPM_PRE_PMD)) {
-		ret = w->event(w, NULL, SND_SOC_DAPM_PRE_PMD);
-		if (ret < 0)
-			return ret;
-	}
-
-	/* Lower PGA volume to reduce pops */
-	if (w->id == snd_soc_dapm_pga && !power)
-		dapm_set_pga(w, power);
-
-	dapm_update_bits(w);
-
-	/* Raise PGA volume to reduce pops */
-	if (w->id == snd_soc_dapm_pga && power)
-		dapm_set_pga(w, power);
-
-	/* power up post event */
-	if (power && w->event &&
-	    (w->event_flags & SND_SOC_DAPM_POST_PMU)) {
-		ret = w->event(w,
-			       NULL, SND_SOC_DAPM_POST_PMU);
-		if (ret < 0)
-			return ret;
-	}
-
-	/* power down post event */
-	if (!power && w->event &&
-	    (w->event_flags & SND_SOC_DAPM_POST_PMD)) {
-		ret = w->event(w, NULL, SND_SOC_DAPM_POST_PMD);
-		if (ret < 0)
-			return ret;
-	}
-
-	return 0;
+	return dapm_generic_apply_power(w);
 }
 
 /*
