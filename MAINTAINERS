@@ -3680,6 +3680,7 @@ L:	microblaze-uclinux@itee.uq.edu.au
 W:	http://www.monstr.eu/fdt/
 T:	git git://git.monstr.eu/linux-2.6-microblaze.git
 S:	Supported
+F:	arch/microblaze/
 
 MICROTEK X6 SCANNER
 P:	Oliver Neukum
@@ -5313,7 +5314,9 @@ L:	linux-sh@vger.kernel.org
 W:	http://www.linux-sh.org
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/lethal/sh-2.6.git
 S:	Supported
+F:	Documentation/sh/
 F:	arch/sh/
+F:	drivers/sh/
 
 SUSPEND TO RAM
 P:	Len Brown
