@@ -125,6 +125,11 @@ struct twl4030_priv {
 
 	struct snd_pcm_substream *master_substream;
 	struct snd_pcm_substream *slave_substream;
+
+	unsigned int configured;
+	unsigned int rate;
+	unsigned int sample_bits;
+	unsigned int channels;
 };
 
 /*
@@ -1220,6 +1225,36 @@ static int twl4030_set_bias_level(struct snd_soc_codec *codec,
 	return 0;
 }
 
+static void twl4030_constraints(struct twl4030_priv *twl4030,
+				struct snd_pcm_substream *mst_substream)
+{
+	struct snd_pcm_substream *slv_substream;
+
+	/* Pick the stream, which need to be constrained */
+	if (mst_substream == twl4030->master_substream)
+		slv_substream = twl4030->slave_substream;
+	else if (mst_substream == twl4030->slave_substream)
+		slv_substream = twl4030->master_substream;
+	else /* This should not happen.. */
+		return;
+
+	/* Set the constraints according to the already configured stream */
+	snd_pcm_hw_constraint_minmax(slv_substream->runtime,
+				SNDRV_PCM_HW_PARAM_RATE,
+				twl4030->rate,
+				twl4030->rate);
+
+	snd_pcm_hw_constraint_minmax(slv_substream->runtime,
+				SNDRV_PCM_HW_PARAM_SAMPLE_BITS,
+				twl4030->sample_bits,
+				twl4030->sample_bits);
+
+	snd_pcm_hw_constraint_minmax(slv_substream->runtime,
+				SNDRV_PCM_HW_PARAM_CHANNELS,
+				twl4030->channels,
+				twl4030->channels);
+}
+
 static int twl4030_startup(struct snd_pcm_substream *substream,
 			   struct snd_soc_dai *dai)
 {
@@ -1228,26 +1263,16 @@ static int twl4030_startup(struct snd_pcm_substream *substream,
 	struct snd_soc_codec *codec = socdev->card->codec;
 	struct twl4030_priv *twl4030 = codec->private_data;
 
-	/* If we already have a playback or capture going then constrain
-	 * this substream to match it.
-	 */
 	if (twl4030->master_substream) {
-		struct snd_pcm_runtime *master_runtime;
-		master_runtime = twl4030->master_substream->runtime;
-
-		snd_pcm_hw_constraint_minmax(substream->runtime,
-					     SNDRV_PCM_HW_PARAM_RATE,
-					     master_runtime->rate,
-					     master_runtime->rate);
-
-		snd_pcm_hw_constraint_minmax(substream->runtime,
-					     SNDRV_PCM_HW_PARAM_SAMPLE_BITS,
-					     master_runtime->sample_bits,
-					     master_runtime->sample_bits);
-
 		twl4030->slave_substream = substream;
-	} else
+		/* The DAI has one configuration for playback and capture, so
+		 * if the DAI has been already configured then constrain this
+		 * substream to match it. */
+		if (twl4030->configured)
+			twl4030_constraints(twl4030, twl4030->master_substream);
+	} else {
 		twl4030->master_substream = substream;
+	}
 
 	return 0;
 }
@@ -1264,6 +1289,13 @@ static void twl4030_shutdown(struct snd_pcm_substream *substream,
 		twl4030->master_substream = twl4030->slave_substream;
 
 	twl4030->slave_substream = NULL;
+
+	/* If all streams are closed, or the remaining stream has not yet
+	 * been configured than set the DAI as not configured. */
+	if (!twl4030->master_substream)
+		twl4030->configured = 0;
+	 else if (!twl4030->master_substream->runtime->channels)
+		twl4030->configured = 0;
 }
 
 static int twl4030_hw_params(struct snd_pcm_substream *substream,
@@ -1276,8 +1308,8 @@ static int twl4030_hw_params(struct snd_pcm_substream *substream,
 	struct twl4030_priv *twl4030 = codec->private_data;
 	u8 mode, old_mode, format, old_format;
 
-	if (substream == twl4030->slave_substream)
-		/* Ignoring hw_params for slave substream */
+	if (twl4030->configured)
+		/* Ignoring hw_params for already configured DAI */
 		return 0;
 
 	/* bit rate */
@@ -1357,6 +1389,21 @@ static int twl4030_hw_params(struct snd_pcm_substream *substream,
 		/* set CODECPDZ afterwards */
 		twl4030_codec_enable(codec, 1);
 	}
+
+	/* Store the important parameters for the DAI configuration and set
+	 * the DAI as configured */
+	twl4030->configured = 1;
+	twl4030->rate = params_rate(params);
+	twl4030->sample_bits = hw_param_interval(params,
+					SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min;
+	twl4030->channels = params_channels(params);
+
+	/* If both playback and capture streams are open, and one of them
+	 * is setting the hw parameters right now (since we are here), set
+	 * constraints to the other stream to match the current one. */
+	if (twl4030->slave_substream)
+		twl4030_constraints(twl4030, substream);
+
 	return 0;
 }
 
@@ -1437,6 +1484,144 @@ static int twl4030_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	return 0;
 }
 
+static int twl4030_voice_startup(struct snd_pcm_substream *substream,
+		struct snd_soc_dai *dai)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_device *socdev = rtd->socdev;
+	struct snd_soc_codec *codec = socdev->card->codec;
+	u8 infreq;
+	u8 mode;
+
+	/* If the system master clock is not 26MHz, the voice PCM interface is
+	 * not avilable.
+	 */
+	infreq = twl4030_read_reg_cache(codec, TWL4030_REG_APLL_CTL)
+		& TWL4030_APLL_INFREQ;
+
+	if (infreq != TWL4030_APLL_INFREQ_26000KHZ) {
+		printk(KERN_ERR "TWL4030 voice startup: "
+			"MCLK is not 26MHz, call set_sysclk() on init\n");
+		return -EINVAL;
+	}
+
+	/* If the codec mode is not option2, the voice PCM interface is not
+	 * avilable.
+	 */
+	mode = twl4030_read_reg_cache(codec, TWL4030_REG_CODEC_MODE)
+		& TWL4030_OPT_MODE;
+
+	if (mode != TWL4030_OPTION_2) {
+		printk(KERN_ERR "TWL4030 voice startup: "
+			"the codec mode is not option2\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int twl4030_voice_hw_params(struct snd_pcm_substream *substream,
+		struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_device *socdev = rtd->socdev;
+	struct snd_soc_codec *codec = socdev->card->codec;
+	u8 old_mode, mode;
+
+	/* bit rate */
+	old_mode = twl4030_read_reg_cache(codec, TWL4030_REG_CODEC_MODE)
+		& ~(TWL4030_CODECPDZ);
+	mode = old_mode;
+
+	switch (params_rate(params)) {
+	case 8000:
+		mode &= ~(TWL4030_SEL_16K);
+		break;
+	case 16000:
+		mode |= TWL4030_SEL_16K;
+		break;
+	default:
+		printk(KERN_ERR "TWL4030 voice hw params: unknown rate %d\n",
+			params_rate(params));
+		return -EINVAL;
+	}
+
+	if (mode != old_mode) {
+		/* change rate and set CODECPDZ */
+		twl4030_codec_enable(codec, 0);
+		twl4030_write(codec, TWL4030_REG_CODEC_MODE, mode);
+		twl4030_codec_enable(codec, 1);
+	}
+
+	return 0;
+}
+
+static int twl4030_voice_set_dai_sysclk(struct snd_soc_dai *codec_dai,
+		int clk_id, unsigned int freq, int dir)
+{
+	struct snd_soc_codec *codec = codec_dai->codec;
+	u8 infreq;
+
+	switch (freq) {
+	case 26000000:
+		infreq = TWL4030_APLL_INFREQ_26000KHZ;
+		break;
+	default:
+		printk(KERN_ERR "TWL4030 voice set sysclk: unknown rate %d\n",
+			freq);
+		return -EINVAL;
+	}
+
+	infreq |= TWL4030_APLL_EN;
+	twl4030_write(codec, TWL4030_REG_APLL_CTL, infreq);
+
+	return 0;
+}
+
+static int twl4030_voice_set_dai_fmt(struct snd_soc_dai *codec_dai,
+		unsigned int fmt)
+{
+	struct snd_soc_codec *codec = codec_dai->codec;
+	u8 old_format, format;
+
+	/* get format */
+	old_format = twl4030_read_reg_cache(codec, TWL4030_REG_VOICE_IF);
+	format = old_format;
+
+	/* set master/slave audio interface */
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFM:
+		format &= ~(TWL4030_VIF_SLAVE_EN);
+		break;
+	case SND_SOC_DAIFMT_CBS_CFS:
+		format |= TWL4030_VIF_SLAVE_EN;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	/* clock inversion */
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_IB_NF:
+		format &= ~(TWL4030_VIF_FORMAT);
+		break;
+	case SND_SOC_DAIFMT_NB_IF:
+		format |= TWL4030_VIF_FORMAT;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	if (format != old_format) {
+		/* change format and set CODECPDZ */
+		twl4030_codec_enable(codec, 0);
+		twl4030_write(codec, TWL4030_REG_VOICE_IF, format);
+		twl4030_codec_enable(codec, 1);
+	}
+
+	return 0;
+}
+
 #define TWL4030_RATES	 (SNDRV_PCM_RATE_8000_48000)
 #define TWL4030_FORMATS	 (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FORMAT_S24_LE)
 
@@ -1448,7 +1633,15 @@ static struct snd_soc_dai_ops twl4030_dai_ops = {
 	.set_fmt	= twl4030_set_dai_fmt,
 };
 
-struct snd_soc_dai twl4030_dai = {
+static struct snd_soc_dai_ops twl4030_dai_voice_ops = {
+	.startup	= twl4030_voice_startup,
+	.hw_params	= twl4030_voice_hw_params,
+	.set_sysclk	= twl4030_voice_set_dai_sysclk,
+	.set_fmt	= twl4030_voice_set_dai_fmt,
+};
+
+struct snd_soc_dai twl4030_dai[] = {
+{
 	.name = "twl4030",
 	.playback = {
 		.stream_name = "Playback",
@@ -1463,6 +1656,23 @@ struct snd_soc_dai twl4030_dai = {
 		.rates = TWL4030_RATES,
 		.formats = TWL4030_FORMATS,},
 	.ops = &twl4030_dai_ops,
+},
+{
+	.name = "twl4030 Voice",
+	.playback = {
+		.stream_name = "Playback",
+		.channels_min = 1,
+		.channels_max = 1,
+		.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
+	.capture = {
+		.stream_name = "Capture",
+		.channels_min = 1,
+		.channels_max = 2,
+		.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
+	.ops = &twl4030_dai_voice_ops,
+},
 };
 EXPORT_SYMBOL_GPL(twl4030_dai);
 
@@ -1503,8 +1713,8 @@ static int twl4030_init(struct snd_soc_device *socdev)
 	codec->read = twl4030_read_reg_cache;
 	codec->write = twl4030_write;
 	codec->set_bias_level = twl4030_set_bias_level;
-	codec->dai = &twl4030_dai;
-	codec->num_dai = 1;
+	codec->dai = twl4030_dai;
+	codec->num_dai = ARRAY_SIZE(twl4030_dai),
 	codec->reg_cache_size = sizeof(twl4030_reg);
 	codec->reg_cache = kmemdup(twl4030_reg, sizeof(twl4030_reg),
 					GFP_KERNEL);
@@ -1598,13 +1808,13 @@ EXPORT_SYMBOL_GPL(soc_codec_dev_twl4030);
 
 static int __init twl4030_modinit(void)
 {
-	return snd_soc_register_dai(&twl4030_dai);
+	return snd_soc_register_dais(&twl4030_dai[0], ARRAY_SIZE(twl4030_dai));
 }
 module_init(twl4030_modinit);
 
 static void __exit twl4030_exit(void)
 {
-	snd_soc_unregister_dai(&twl4030_dai);
+	snd_soc_unregister_dais(&twl4030_dai[0], ARRAY_SIZE(twl4030_dai));
 }
 module_exit(twl4030_exit);
 
