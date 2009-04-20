@@ -309,7 +309,7 @@ static int ca0110_build_pcms(struct hda_codec *codec)
 	info->stream[SNDRV_PCM_STREAM_PLAYBACK] = ca0110_pcm_analog_playback;
 	info->stream[SNDRV_PCM_STREAM_PLAYBACK].nid = spec->dacs[0];
 	info->stream[SNDRV_PCM_STREAM_PLAYBACK].channels_max =
-		spec->multiout.num_dacs * 2;
+		spec->multiout.max_channels;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE] = ca0110_pcm_analog_capture;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].substreams = spec->num_inputs;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].nid = spec->adcs[0];
@@ -408,8 +408,7 @@ static void parse_line_outs(struct hda_codec *codec)
 	n = 0;
 	for (i = 0; i < cfg->line_outs; i++) {
 		nid = cfg->line_out_pins[i];
-		def_conf = snd_hda_codec_read(codec, nid, 0,
-					      AC_VERB_GET_CONFIG_DEFAULT, 0);
+		def_conf = snd_hda_codec_get_pincfg(codec, nid);
 		if (!def_conf)
 			continue; /* invalid pin */
 		if (snd_hda_get_connections(codec, nid, &spec->dacs[i], 1) != 1)
@@ -418,6 +417,7 @@ static void parse_line_outs(struct hda_codec *codec)
 	}
 	spec->multiout.dac_nids = spec->dacs;
 	spec->multiout.num_dacs = n;
+	spec->multiout.max_channels = n * 2;
 }
 
 static void parse_hp_out(struct hda_codec *codec)
@@ -431,8 +431,7 @@ static void parse_hp_out(struct hda_codec *codec)
 	if (!cfg->hp_outs)
 		return;
 	nid = cfg->hp_pins[0];
-	def_conf = snd_hda_codec_read(codec, nid, 0,
-				      AC_VERB_GET_CONFIG_DEFAULT, 0);
+	def_conf = snd_hda_codec_get_pincfg(codec, nid);
 	if (!def_conf) {
 		cfg->hp_outs = 0;
 		return;
