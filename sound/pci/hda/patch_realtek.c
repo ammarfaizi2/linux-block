@@ -1026,7 +1026,7 @@ static void alc_subsystem_id(struct hda_codec *codec,
 	ass = snd_hda_codec_get_pincfg(codec, nid);
 	snd_printd("realtek: No valid SSID, "
 		   "checking pincfg 0x%08x for NID 0x%x\n",
-		   nid, ass);
+		   ass, nid);
 	if (!(ass & 1) && !(ass & 0x100000))
 		return;
 	if ((ass >> 30) != 1)	/* no physical connection */
@@ -16469,6 +16469,7 @@ static struct snd_pci_quirk alc662_cfg_tbl[] = {
 	SND_PCI_QUIRK(0x1458, 0xa002, "Gigabyte 945GCM-S2L",
 		      ALC662_3ST_6ch_DIG),
 	SND_PCI_QUIRK(0x1565, 0x820f, "Biostar TA780G M2+", ALC662_3ST_6ch_DIG),
+	SND_PCI_QUIRK(0x1631, 0xc10c, "PB RS65", ALC663_ASUS_M51VA),
 	SND_PCI_QUIRK(0x17aa, 0x101e, "Lenovo", ALC662_LENOVO_101E),
 	SND_PCI_QUIRK(0x1849, 0x3662, "ASROCK K10N78FullHD-hSLI R3.0",
 					ALC662_3ST_6ch_DIG),
