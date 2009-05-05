@@ -108,14 +108,13 @@ static int s3c64xx_i2s_set_sysclk(struct snd_soc_dai *cpu_dai,
 	return 0;
 }
 
-
-unsigned long s3c64xx_i2s_get_clockrate(struct snd_soc_dai *dai)
+struct clk *s3c64xx_i2s_get_clock(struct snd_soc_dai *dai)
 {
 	struct s3c_i2sv2_info *i2s = to_info(dai);
 
-	return clk_get_rate(i2s->iis_cclk);
+	return i2s->iis_cclk;
 }
-EXPORT_SYMBOL_GPL(s3c64xx_i2s_get_clockrate);
+EXPORT_SYMBOL_GPL(s3c64xx_i2s_get_clock);
 
 static int s3c64xx_i2s_probe(struct platform_device *pdev,
 			     struct snd_soc_dai *dai)
@@ -147,7 +146,8 @@ static int s3c64xx_i2s_probe(struct platform_device *pdev,
 	SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000)
 
 #define S3C64XX_I2S_FMTS \
-	(SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE)
+	(SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE |\
+	 SNDRV_PCM_FMTBIT_S24_LE)
 
 static struct snd_soc_dai_ops s3c64xx_i2s_dai_ops = {
 	.set_sysclk	= s3c64xx_i2s_set_sysclk,	
@@ -215,13 +215,12 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 
 	i2s->iis_cclk = clk_get(&pdev->dev, "audio-bus");
 	if (IS_ERR(i2s->iis_cclk)) {
-		dev_err(&pdev->dev, "failed to get audio-bus");
+		dev_err(&pdev->dev, "failed to get audio-bus\n");
 		ret = PTR_ERR(i2s->iis_cclk);
 		goto err;
 	}
 
-	ret = s3c_i2sv2_probe(pdev, dai, i2s,
-			      dai->id ? S3C64XX_PA_IIS1 : S3C64XX_PA_IIS0);
+	ret = s3c_i2sv2_probe(pdev, dai, i2s, 0);
 	if (ret)
 		goto err_clk;
 

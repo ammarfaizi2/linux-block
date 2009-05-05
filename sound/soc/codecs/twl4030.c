@@ -396,6 +396,31 @@ static const struct soc_enum twl4030_handsfreer_enum =
 static const struct snd_kcontrol_new twl4030_dapm_handsfreer_control =
 SOC_DAPM_ENUM("Route", twl4030_handsfreer_enum);
 
+/* Vibra */
+/* Vibra audio path selection */
+static const char *twl4030_vibra_texts[] =
+		{"AudioL1", "AudioR1", "AudioL2", "AudioR2"};
+
+static const struct soc_enum twl4030_vibra_enum =
+	SOC_ENUM_SINGLE(TWL4030_REG_VIBRA_CTL, 2,
+			ARRAY_SIZE(twl4030_vibra_texts),
+			twl4030_vibra_texts);
+
+static const struct snd_kcontrol_new twl4030_dapm_vibra_control =
+SOC_DAPM_ENUM("Route", twl4030_vibra_enum);
+
+/* Vibra path selection: local vibrator (PWM) or audio driven */
+static const char *twl4030_vibrapath_texts[] =
+		{"Local vibrator", "Audio"};
+
+static const struct soc_enum twl4030_vibrapath_enum =
+	SOC_ENUM_SINGLE(TWL4030_REG_VIBRA_CTL, 4,
+			ARRAY_SIZE(twl4030_vibrapath_texts),
+			twl4030_vibrapath_texts);
+
+static const struct snd_kcontrol_new twl4030_dapm_vibrapath_control =
+SOC_DAPM_ENUM("Route", twl4030_vibrapath_enum);
+
 /* Left analog microphone selection */
 static const char *twl4030_analoglmic_texts[] =
 		{"Off", "Main mic", "Headset mic", "AUXL", "Carkit mic"};
@@ -468,6 +493,10 @@ static const struct snd_kcontrol_new twl4030_dapm_abypassr2_control =
 static const struct snd_kcontrol_new twl4030_dapm_abypassl2_control =
 	SOC_DAPM_SINGLE("Switch", TWL4030_REG_ARXL2_APGA_CTL, 2, 1, 0);
 
+/* Analog bypass for Voice */
+static const struct snd_kcontrol_new twl4030_dapm_abypassv_control =
+	SOC_DAPM_SINGLE("Switch", TWL4030_REG_VDL_APGA_CTL, 2, 1, 0);
+
 /* Digital bypass gain, 0 mutes the bypass */
 static const unsigned int twl4030_dapm_dbypass_tlv[] = {
 	TLV_DB_RANGE_HEAD(2),
@@ -486,6 +515,18 @@ static const struct snd_kcontrol_new twl4030_dapm_dbypassr_control =
 	SOC_DAPM_SINGLE_TLV("Volume",
 			TWL4030_REG_ATX2ARXPGA, 0, 7, 0,
 			twl4030_dapm_dbypass_tlv);
+
+/*
+ * Voice Sidetone GAIN volume control:
+ * from -51 to -10 dB in 1 dB steps (mute instead of -51 dB)
+ */
+static DECLARE_TLV_DB_SCALE(twl4030_dapm_dbypassv_tlv, -5100, 100, 1);
+
+/* Digital bypass voice: sidetone (VUL -> VDL)*/
+static const struct snd_kcontrol_new twl4030_dapm_dbypassv_control =
+	SOC_DAPM_SINGLE_TLV("Volume",
+			TWL4030_REG_VSTPGA, 0, 0x29, 0,
+			twl4030_dapm_dbypassv_tlv);
 
 static int micpath_event(struct snd_soc_dapm_widget *w,
 	struct snd_kcontrol *kcontrol, int event)
@@ -585,7 +626,7 @@ static int bypass_event(struct snd_soc_dapm_widget *w,
 	struct soc_mixer_control *m =
 		(struct soc_mixer_control *)w->kcontrols->private_value;
 	struct twl4030_priv *twl4030 = w->codec->private_data;
-	unsigned char reg;
+	unsigned char reg, misc;
 
 	reg = twl4030_read_reg_cache(w->codec, m->reg);
 
@@ -597,13 +638,33 @@ static int bypass_event(struct snd_soc_dapm_widget *w,
 		else
 			twl4030->bypass_state &=
 				~(1 << (m->reg - TWL4030_REG_ARXL1_APGA_CTL));
+	} else if (m->reg == TWL4030_REG_VDL_APGA_CTL) {
+		/* Analog voice bypass */
+		if (reg & (1 << m->shift))
+			twl4030->bypass_state |= (1 << 4);
+		else
+			twl4030->bypass_state &= ~(1 << 4);
+	} else if (m->reg == TWL4030_REG_VSTPGA) {
+		/* Voice digital bypass */
+		if (reg)
+			twl4030->bypass_state |= (1 << 5);
+		else
+			twl4030->bypass_state &= ~(1 << 5);
 	} else {
 		/* Digital bypass */
 		if (reg & (0x7 << m->shift))
-			twl4030->bypass_state |= (1 << (m->shift ? 5 : 4));
+			twl4030->bypass_state |= (1 << (m->shift ? 7 : 6));
 		else
-			twl4030->bypass_state &= ~(1 << (m->shift ? 5 : 4));
+			twl4030->bypass_state &= ~(1 << (m->shift ? 7 : 6));
 	}
+
+	/* Enable master analog loopback mode if any analog switch is enabled*/
+	misc = twl4030_read_reg_cache(w->codec, TWL4030_REG_MISC_SET_1);
+	if (twl4030->bypass_state & 0x1F)
+		misc |= TWL4030_FMLOOP_EN;
+	else
+		misc &= ~TWL4030_FMLOOP_EN;
+	twl4030_write(w->codec, TWL4030_REG_MISC_SET_1, misc);
 
 	if (w->codec->bias_level == SND_SOC_BIAS_STANDBY) {
 		if (twl4030->bypass_state)
@@ -831,6 +892,26 @@ static const struct soc_enum twl4030_rampdelay_enum =
 			ARRAY_SIZE(twl4030_rampdelay_texts),
 			twl4030_rampdelay_texts);
 
+/* Vibra H-bridge direction mode */
+static const char *twl4030_vibradirmode_texts[] = {
+	"Vibra H-bridge direction", "Audio data MSB",
+};
+
+static const struct soc_enum twl4030_vibradirmode_enum =
+	SOC_ENUM_SINGLE(TWL4030_REG_VIBRA_CTL, 5,
+			ARRAY_SIZE(twl4030_vibradirmode_texts),
+			twl4030_vibradirmode_texts);
+
+/* Vibra H-bridge direction */
+static const char *twl4030_vibradir_texts[] = {
+	"Positive polarity", "Negative polarity",
+};
+
+static const struct soc_enum twl4030_vibradir_enum =
+	SOC_ENUM_SINGLE(TWL4030_REG_VIBRA_CTL, 1,
+			ARRAY_SIZE(twl4030_vibradir_texts),
+			twl4030_vibradir_texts);
+
 static const struct snd_kcontrol_new twl4030_snd_controls[] = {
 	/* Common playback gain controls */
 	SOC_DOUBLE_R_TLV("DAC1 Digital Fine Playback Volume",
@@ -897,6 +978,9 @@ static const struct snd_kcontrol_new twl4030_snd_controls[] = {
 		0, 3, 5, 0, input_gain_tlv),
 
 	SOC_ENUM("HS ramp delay", twl4030_rampdelay_enum),
+
+	SOC_ENUM("Vibra H-bridge mode", twl4030_vibradirmode_enum),
+	SOC_ENUM("Vibra H-bridge direction", twl4030_vibradir_enum),
 };
 
 static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
@@ -924,6 +1008,7 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("CARKITR"),
 	SND_SOC_DAPM_OUTPUT("HFL"),
 	SND_SOC_DAPM_OUTPUT("HFR"),
+	SND_SOC_DAPM_OUTPUT("VIBRA"),
 
 	/* DACs */
 	SND_SOC_DAPM_DAC("DAC Right1", "Right Front Playback",
@@ -935,7 +1020,7 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 	SND_SOC_DAPM_DAC("DAC Left2", "Left Rear Playback",
 			SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_DAC("DAC Voice", "Voice Playback",
-			TWL4030_REG_AVDAC_CTL, 4, 0),
+			SND_SOC_NOPM, 0, 0),
 
 	/* Analog PGAs */
 	SND_SOC_DAPM_PGA("ARXR1_APGA", TWL4030_REG_ARXR1_APGA_CTL,
@@ -962,6 +1047,9 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 	SND_SOC_DAPM_SWITCH_E("Left2 Analog Loopback", SND_SOC_NOPM, 0, 0,
 			&twl4030_dapm_abypassl2_control,
 			bypass_event, SND_SOC_DAPM_POST_REG),
+	SND_SOC_DAPM_SWITCH_E("Voice Analog Loopback", SND_SOC_NOPM, 0, 0,
+			&twl4030_dapm_abypassv_control,
+			bypass_event, SND_SOC_DAPM_POST_REG),
 
 	/* Digital bypasses */
 	SND_SOC_DAPM_SWITCH_E("Left Digital Loopback", SND_SOC_NOPM, 0, 0,
@@ -969,6 +1057,9 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 			SND_SOC_DAPM_POST_REG),
 	SND_SOC_DAPM_SWITCH_E("Right Digital Loopback", SND_SOC_NOPM, 0, 0,
 			&twl4030_dapm_dbypassr_control, bypass_event,
+			SND_SOC_DAPM_POST_REG),
+	SND_SOC_DAPM_SWITCH_E("Voice Digital Loopback", SND_SOC_NOPM, 0, 0,
+			&twl4030_dapm_dbypassv_control, bypass_event,
 			SND_SOC_DAPM_POST_REG),
 
 	SND_SOC_DAPM_MIXER("Analog R1 Playback Mixer", TWL4030_REG_AVDAC_CTL,
@@ -979,6 +1070,8 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 			2, 0, NULL, 0),
 	SND_SOC_DAPM_MIXER("Analog L2 Playback Mixer", TWL4030_REG_AVDAC_CTL,
 			3, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("Analog Voice Playback Mixer", TWL4030_REG_AVDAC_CTL,
+			4, 0, NULL, 0),
 
 	/* Output MIXER controls */
 	/* Earpiece */
@@ -1016,6 +1109,11 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 	SND_SOC_DAPM_MUX_E("HandsfreeR Mux", TWL4030_REG_HFR_CTL, 5, 0,
 		&twl4030_dapm_handsfreer_control, handsfree_event,
 		SND_SOC_DAPM_POST_PMU|SND_SOC_DAPM_POST_PMD),
+	/* Vibra */
+	SND_SOC_DAPM_MUX("Vibra Mux", TWL4030_REG_VIBRA_CTL, 0, 0,
+		&twl4030_dapm_vibra_control),
+	SND_SOC_DAPM_MUX("Vibra Route", SND_SOC_NOPM, 0, 0,
+		&twl4030_dapm_vibrapath_control),
 
 	/* Introducing four virtual ADC, since TWL4030 have four channel for
 	   capture */
@@ -1067,13 +1165,13 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"Analog R1 Playback Mixer", NULL, "DAC Right1"},
 	{"Analog L2 Playback Mixer", NULL, "DAC Left2"},
 	{"Analog R2 Playback Mixer", NULL, "DAC Right2"},
+	{"Analog Voice Playback Mixer", NULL, "DAC Voice"},
 
 	{"ARXL1_APGA", NULL, "Analog L1 Playback Mixer"},
 	{"ARXR1_APGA", NULL, "Analog R1 Playback Mixer"},
 	{"ARXL2_APGA", NULL, "Analog L2 Playback Mixer"},
 	{"ARXR2_APGA", NULL, "Analog R2 Playback Mixer"},
-
-	{"VDL_APGA", NULL, "DAC Voice"},
+	{"VDL_APGA", NULL, "Analog Voice Playback Mixer"},
 
 	/* Internal playback routings */
 	/* Earpiece */
@@ -1117,6 +1215,11 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"HandsfreeR Mux", "AudioR1", "ARXR1_APGA"},
 	{"HandsfreeR Mux", "AudioR2", "ARXR2_APGA"},
 	{"HandsfreeR Mux", "AudioL2", "ARXL2_APGA"},
+	/* Vibra */
+	{"Vibra Mux", "AudioL1", "DAC Left1"},
+	{"Vibra Mux", "AudioR1", "DAC Right1"},
+	{"Vibra Mux", "AudioL2", "DAC Left2"},
+	{"Vibra Mux", "AudioR2", "DAC Right2"},
 
 	/* outputs */
 	{"OUTL", NULL, "ARXL2_APGA"},
@@ -1130,6 +1233,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"CARKITR", NULL, "CarkitR Mixer"},
 	{"HFL", NULL, "HandsfreeL Mux"},
 	{"HFR", NULL, "HandsfreeR Mux"},
+	{"Vibra Route", "Audio", "Vibra Mux"},
+	{"VIBRA", NULL, "Vibra Route"},
 
 	/* Capture path */
 	{"Analog Left Capture Route", "Main mic", "MAINMIC"},
@@ -1169,18 +1274,22 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"Left1 Analog Loopback", "Switch", "Analog Left Capture Route"},
 	{"Right2 Analog Loopback", "Switch", "Analog Right Capture Route"},
 	{"Left2 Analog Loopback", "Switch", "Analog Left Capture Route"},
+	{"Voice Analog Loopback", "Switch", "Analog Left Capture Route"},
 
 	{"Analog R1 Playback Mixer", NULL, "Right1 Analog Loopback"},
 	{"Analog L1 Playback Mixer", NULL, "Left1 Analog Loopback"},
 	{"Analog R2 Playback Mixer", NULL, "Right2 Analog Loopback"},
 	{"Analog L2 Playback Mixer", NULL, "Left2 Analog Loopback"},
+	{"Analog Voice Playback Mixer", NULL, "Voice Analog Loopback"},
 
 	/* Digital bypass routes */
 	{"Right Digital Loopback", "Volume", "TX1 Capture Route"},
 	{"Left Digital Loopback", "Volume", "TX1 Capture Route"},
+	{"Voice Digital Loopback", "Volume", "TX2 Capture Route"},
 
 	{"Analog R2 Playback Mixer", NULL, "Right Digital Loopback"},
 	{"Analog L2 Playback Mixer", NULL, "Left Digital Loopback"},
+	{"Analog Voice Playback Mixer", NULL, "Voice Digital Loopback"},
 
 };
 
