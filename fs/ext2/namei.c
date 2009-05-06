@@ -345,6 +345,7 @@ static int ext2_whiteout(struct inode *dir, struct dentry *dentry,
 		goto out;
 
 	spin_lock(&new_dentry->d_lock);
+	new_dentry->d_flags &= ~DCACHE_FALLTHRU;
 	new_dentry->d_flags |= DCACHE_WHITEOUT;
 	spin_unlock(&new_dentry->d_lock);
 	d_add(new_dentry, NULL);
@@ -361,6 +362,26 @@ static int ext2_whiteout(struct inode *dir, struct dentry *dentry,
 	err = 0;
 out:
 	return err;
+}
+
+/*
+ * Create a fallthru entry.
+ */
+static int ext2_fallthru (struct inode *dir, struct dentry *dentry)
+{
+	int err;
+
+	dquot_initialize(dir);
+
+	err = ext2_fallthru_entry(dentry);
+	if (err)
+		return err;
+
+	d_instantiate(dentry, NULL);
+	spin_lock(&dentry->d_lock);
+	dentry->d_flags |= DCACHE_FALLTHRU;
+	spin_unlock(&dentry->d_lock);
+	return 0;
 }
 
 static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
@@ -466,6 +487,7 @@ const struct inode_operations ext2_dir_inode_operations = {
 	.rmdir		= ext2_rmdir,
 	.mknod		= ext2_mknod,
 	.whiteout	= ext2_whiteout,
+	.fallthru	= ext2_fallthru,
 	.rename		= ext2_rename,
 #ifdef CONFIG_EXT2_FS_XATTR
 	.setxattr	= generic_setxattr,

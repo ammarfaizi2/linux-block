@@ -1083,6 +1083,8 @@ static int ext2_fill_super(struct super_block *sb, void *data, int silent)
 
 	if (EXT2_HAS_INCOMPAT_FEATURE(sb, EXT2_FEATURE_INCOMPAT_WHITEOUT))
 		sb->s_flags |= MS_WHITEOUT;
+	if (EXT2_HAS_INCOMPAT_FEATURE(sb, EXT2_FEATURE_INCOMPAT_FALLTHRU))
+		sb->s_flags |= MS_FALLTHRU;
 
 	if (ext2_setup_super (sb, es, sb->s_flags & MS_RDONLY))
 		sb->s_flags |= MS_RDONLY;

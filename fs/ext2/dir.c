@@ -212,7 +212,8 @@ fail:
 static inline int ext2_dirent_in_use(struct ext2_dir_entry_2 *de)
 {
 	return (de->inode ||
-		(de->file_type == EXT2_FT_WHT));
+		(de->file_type == EXT2_FT_WHT) ||
+		(de->file_type == EXT2_FT_FALLTHRU));
 }
 
 /*
@@ -262,6 +263,7 @@ static unsigned char ext2_filetype_table[EXT2_FT_MAX] = {
 	[EXT2_FT_SOCK]		= DT_SOCK,
 	[EXT2_FT_SYMLINK]	= DT_LNK,
 	[EXT2_FT_WHT]		= DT_WHT,
+	[EXT2_FT_FALLTHRU]	= DT_UNKNOWN,
 };
 
 #define S_SHIFT 12
@@ -344,6 +346,18 @@ ext2_readdir (struct file * filp, void * dirent, filldir_t filldir)
 				over = filldir(dirent, de->name, de->name_len,
 						(n<<PAGE_CACHE_SHIFT) | offset,
 						le32_to_cpu(de->inode), d_type);
+				if (over) {
+					ext2_put_page(page);
+					return 0;
+				}
+			} else if (de->file_type == EXT2_FT_FALLTHRU) {
+				int over;
+
+				offset = (char *)de - kaddr;
+				/* XXX placeholder until generic_readdir_fallthru() arrives */
+				over = filldir(dirent, de->name, de->name_len,
+					       (n<<PAGE_CACHE_SHIFT) | offset,
+					       1, DT_UNKNOWN); /* XXX */
 				if (over) {
 					ext2_put_page(page);
 					return 0;
@@ -474,6 +488,10 @@ ino_t ext2_inode_by_dentry(struct inode *dir, struct dentry *dentry)
 			spin_lock(&dentry->d_lock);
 			dentry->d_flags |= DCACHE_WHITEOUT;
 			spin_unlock(&dentry->d_lock);
+		} else if(!res && de->file_type == EXT2_FT_FALLTHRU) {
+			spin_lock(&dentry->d_lock);
+			dentry->d_flags |= DCACHE_FALLTHRU;
+			spin_unlock(&dentry->d_lock);
 		}
 		ext2_put_page(page);
 	}
@@ -572,15 +590,18 @@ got_it:
 	/*
 	 * Pre-existing entries with the same name are allowable
 	 * depending on the type of the entry being created.  Regular
-	 * entries replace whiteouts.  Whiteouts replace regular
-	 * entries.
+	 * entries replace whiteouts and fallthrus.  Whiteouts replace
+	 * regular entries.  Fallthrus replace nothing.
 	 */
 	err = -EEXIST;
 	if (ext2_match(namelen, name, de)) {
 		if (new_file_type == EXT2_FT_WHT) {
 			if (de->file_type == EXT2_FT_WHT)
 				goto out_unlock;
-		} else if (de->file_type != EXT2_FT_WHT) {
+		} else if (new_file_type == EXT2_FT_FALLTHRU) {
+			goto out_unlock;
+		} else if ((de->file_type != EXT2_FT_WHT) &&
+			   (de->file_type != EXT2_FT_FALLTHRU)) {
 			goto out_unlock;
 		}
 	}
@@ -628,6 +649,16 @@ int ext2_add_link (struct dentry *dentry, struct inode *inode)
 int ext2_whiteout_entry (struct dentry *dentry, ext2_dirent *de, struct page *page)
 {
 	return ext2_add_entry(dentry, NULL, de, page, EXT2_FT_WHT);
+}
+
+/*
+ * Create a fallthru entry.
+ */
+int ext2_fallthru_entry (struct dentry *dentry)
+{
+	ext2_dirent *de = NULL;
+	struct page *page = NULL;
+	return ext2_add_entry(dentry, NULL, de, page, EXT2_FT_FALLTHRU);
 }
 
 /*
