@@ -339,6 +339,7 @@ struct snd_soc_codec {
 	struct module *owner;
 	struct mutex mutex;
 	struct device *dev;
+	struct snd_soc_device *socdev;
 
 	struct list_head list;
 
@@ -372,6 +373,8 @@ struct snd_soc_codec {
 	enum snd_soc_bias_level bias_level;
 	enum snd_soc_bias_level suspend_bias_level;
 	struct delayed_work delayed_work;
+	struct list_head up_list;
+	struct list_head down_list;
 
 	/* codec DAI's */
 	struct snd_soc_dai *dai;

@@ -67,10 +67,6 @@ static int dapm_down_seq[] = {
 	snd_soc_dapm_post
 };
 
-static int dapm_status = 1;
-module_param(dapm_status, int, 0);
-MODULE_PARM_DESC(dapm_status, "enable DPM sysfs entries");
-
 static void pop_wait(u32 pop_time)
 {
 	if (pop_time)
@@ -96,6 +92,48 @@ static inline struct snd_soc_dapm_widget *dapm_cnew_widget(
 	const struct snd_soc_dapm_widget *_widget)
 {
 	return kmemdup(_widget, sizeof(*_widget), GFP_KERNEL);
+}
+
+/**
+ * snd_soc_dapm_set_bias_level - set the bias level for the system
+ * @socdev: audio device
+ * @level: level to configure
+ *
+ * Configure the bias (power) levels for the SoC audio device.
+ *
+ * Returns 0 for success else error.
+ */
+static int snd_soc_dapm_set_bias_level(struct snd_soc_device *socdev,
+				       enum snd_soc_bias_level level)
+{
+	struct snd_soc_card *card = socdev->card;
+	struct snd_soc_codec *codec = socdev->card->codec;
+	int ret = 0;
+
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		dev_dbg(socdev->dev, "Setting full bias\n");
+		break;
+	case SND_SOC_BIAS_PREPARE:
+		dev_dbg(socdev->dev, "Setting bias prepare\n");
+		break;
+	case SND_SOC_BIAS_STANDBY:
+		dev_dbg(socdev->dev, "Setting standby bias\n");
+		break;
+	case SND_SOC_BIAS_OFF:
+		dev_dbg(socdev->dev, "Setting bias off\n");
+		break;
+	default:
+		dev_err(socdev->dev, "Setting invalid bias %d\n", level);
+		return -EINVAL;
+	}
+
+	if (card->set_bias_level)
+		ret = card->set_bias_level(card, level);
+	if (ret == 0 && codec->set_bias_level)
+		ret = codec->set_bias_level(codec, level);
+
+	return ret;
 }
 
 /* set up initial codec paths */
@@ -658,7 +696,7 @@ static int dapm_supply_check_power(struct snd_soc_dapm_widget *w)
 static int dapm_power_widget(struct snd_soc_codec *codec, int event,
 			     struct snd_soc_dapm_widget *w)
 {
-	int power, ret;
+	int ret;
 
 	switch (w->id) {
 	case snd_soc_dapm_pre:
@@ -696,18 +734,8 @@ static int dapm_power_widget(struct snd_soc_codec *codec, int event,
 		return 0;
 
 	default:
-		break;
+		return dapm_generic_apply_power(w);
 	}
-
-	if (!w->power_check)
-		return 0;
-
-	power = w->power_check(w);
-	if (w->power == power)
-		return 0;
-	w->power = power;
-
-	return dapm_generic_apply_power(w);
 }
 
 /*
@@ -721,29 +749,100 @@ static int dapm_power_widget(struct snd_soc_codec *codec, int event,
  */
 static int dapm_power_widgets(struct snd_soc_codec *codec, int event)
 {
+	struct snd_soc_device *socdev = codec->socdev;
 	struct snd_soc_dapm_widget *w;
-	int i, c = 1, *seq = NULL, ret = 0;
+	int ret = 0;
+	int i, power;
+	int sys_power = 0;
 
-	/* do we have a sequenced stream event */
-	if (event == SND_SOC_DAPM_STREAM_START) {
-		c = ARRAY_SIZE(dapm_up_seq);
-		seq = dapm_up_seq;
-	} else if (event == SND_SOC_DAPM_STREAM_STOP) {
-		c = ARRAY_SIZE(dapm_down_seq);
-		seq = dapm_down_seq;
+	INIT_LIST_HEAD(&codec->up_list);
+	INIT_LIST_HEAD(&codec->down_list);
+
+	/* Check which widgets we need to power and store them in
+	 * lists indicating if they should be powered up or down.
+	 */
+	list_for_each_entry(w, &codec->dapm_widgets, list) {
+		switch (w->id) {
+		case snd_soc_dapm_pre:
+			list_add_tail(&codec->down_list, &w->power_list);
+			break;
+		case snd_soc_dapm_post:
+			list_add_tail(&codec->up_list, &w->power_list);
+			break;
+
+		default:
+			if (!w->power_check)
+				continue;
+
+			power = w->power_check(w);
+			if (power)
+				sys_power = 1;
+
+			if (w->power == power)
+				continue;
+
+			if (power)
+				list_add_tail(&w->power_list, &codec->up_list);
+			else
+				list_add_tail(&w->power_list,
+					      &codec->down_list);
+
+			w->power = power;
+			break;
+		}
 	}
 
-	for (i = 0; i < c; i++) {
-		list_for_each_entry(w, &codec->dapm_widgets, list) {
+	/* If we're changing to all on or all off then prepare */
+	if ((sys_power && codec->bias_level == SND_SOC_BIAS_STANDBY) ||
+	    (!sys_power && codec->bias_level == SND_SOC_BIAS_ON)) {
+		ret = snd_soc_dapm_set_bias_level(socdev,
+						  SND_SOC_BIAS_PREPARE);
+		if (ret != 0)
+			pr_err("Failed to prepare bias: %d\n", ret);
+	}
 
+	/* Power down widgets first; try to avoid amplifying pops. */
+	for (i = 0; i < ARRAY_SIZE(dapm_down_seq); i++) {
+		list_for_each_entry(w, &codec->down_list, power_list) {
 			/* is widget in stream order */
-			if (seq && seq[i] && w->id != seq[i])
+			if (w->id != dapm_down_seq[i])
 				continue;
 
 			ret = dapm_power_widget(codec, event, w);
 			if (ret != 0)
-				return ret;
+				pr_err("Failed to power down %s: %d\n",
+				       w->name, ret);
 		}
+	}
+
+	/* Now power up. */
+	for (i = 0; i < ARRAY_SIZE(dapm_up_seq); i++) {
+		list_for_each_entry(w, &codec->up_list, power_list) {
+			/* is widget in stream order */
+			if (w->id != dapm_up_seq[i])
+				continue;
+
+			ret = dapm_power_widget(codec, event, w);
+			if (ret != 0)
+				pr_err("Failed to power up %s: %d\n",
+				       w->name, ret);
+		}
+	}
+
+	/* If we just powered the last thing off drop to standby bias */
+	if (codec->bias_level == SND_SOC_BIAS_PREPARE && !sys_power) {
+		ret = snd_soc_dapm_set_bias_level(socdev,
+						  SND_SOC_BIAS_STANDBY);
+		if (ret != 0)
+			pr_err("Failed to apply standby bias: %d\n", ret);
+	}
+
+	/* If we just powered up then move to active bias */
+	if (codec->bias_level == SND_SOC_BIAS_PREPARE && sys_power) {
+		ret = snd_soc_dapm_set_bias_level(socdev,
+						  SND_SOC_BIAS_ON);
+		if (ret != 0)
+			pr_err("Failed to apply active bias: %d\n", ret);
 	}
 
 	return 0;
@@ -943,16 +1042,12 @@ static DEVICE_ATTR(dapm_widget, 0444, dapm_widget_show, NULL);
 
 int snd_soc_dapm_sys_add(struct device *dev)
 {
-	if (!dapm_status)
-		return 0;
 	return device_create_file(dev, &dev_attr_dapm_widget);
 }
 
 static void snd_soc_dapm_sys_remove(struct device *dev)
 {
-	if (dapm_status) {
-		device_remove_file(dev, &dev_attr_dapm_widget);
-	}
+	device_remove_file(dev, &dev_attr_dapm_widget);
 }
 
 /* free all dapm widgets and resources */
@@ -1696,30 +1791,6 @@ int snd_soc_dapm_stream_event(struct snd_soc_codec *codec,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(snd_soc_dapm_stream_event);
-
-/**
- * snd_soc_dapm_set_bias_level - set the bias level for the system
- * @socdev: audio device
- * @level: level to configure
- *
- * Configure the bias (power) levels for the SoC audio device.
- *
- * Returns 0 for success else error.
- */
-int snd_soc_dapm_set_bias_level(struct snd_soc_device *socdev,
-				enum snd_soc_bias_level level)
-{
-	struct snd_soc_card *card = socdev->card;
-	struct snd_soc_codec *codec = socdev->card->codec;
-	int ret = 0;
-
-	if (card->set_bias_level)
-		ret = card->set_bias_level(card, level);
-	if (ret == 0 && codec->set_bias_level)
-		ret = codec->set_bias_level(codec, level);
-
-	return ret;
-}
 
 /**
  * snd_soc_dapm_enable_pin - enable pin.
