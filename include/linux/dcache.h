@@ -190,6 +190,8 @@ d_iput:		no		no		no       yes
 
 #define DCACHE_WHITEOUT		0x0200	/* Stop lookup in a unioned file system */
 
+#define DCACHE_FALLTHRU		0x0400	/* Continue lookup below an opaque dir */
+
 extern spinlock_t dcache_lock;
 extern seqlock_t rename_lock;
 
@@ -379,6 +381,11 @@ static inline void dont_mount(struct dentry *dentry)
 static inline int d_is_whiteout(struct dentry *dentry)
 {
 	return (dentry->d_flags & DCACHE_WHITEOUT);
+}
+
+static inline int d_is_fallthru(struct dentry *dentry)
+{
+	return (dentry->d_flags & DCACHE_FALLTHRU);
 }
 
 static inline struct dentry *dget_parent(struct dentry *dentry)

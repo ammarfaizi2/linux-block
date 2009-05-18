@@ -320,6 +320,7 @@ struct inode_operations {
 	int (*rmdir) (struct inode *,struct dentry *);
 	int (*mknod) (struct inode *,struct dentry *,int,dev_t);
 	int (*whiteout) (struct inode *, struct dentry *, struct dentry *);
+	int (*fallthru) (struct inode *, struct dentry *);
 	int (*rename) (struct inode *, struct dentry *,
 			struct inode *, struct dentry *);
 	int (*readlink) (struct dentry *, char __user *,int);
@@ -389,6 +390,11 @@ otherwise noted.
         dentry if it exists, and a negative dentry otherwise.  The
         second is the dentry for the whiteout itself.  This method
         must unlink() or rmdir() the original entry if it exists.
+
+  fallthru: called by the readdir(2) system call on a layered file
+        system.  Only required if you want to support fallthrus.
+        Fallthrus are place-holders for directory entries visible from
+        a lower level file system.
 
   rename: called by the rename(2) system call to rename the object to
 	have the parent and name given by the second inode and dentry.

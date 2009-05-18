@@ -994,7 +994,7 @@ EXPORT_SYMBOL(d_alloc_name);
 static void __d_instantiate(struct dentry *dentry, struct inode *inode)
 {
 	if (inode) {
-		dentry->d_flags &= ~DCACHE_WHITEOUT;
+		dentry->d_flags &= ~(DCACHE_WHITEOUT|DCACHE_FALLTHRU);
 		list_add(&dentry->d_alias, &inode->i_dentry);
 	}
 	dentry->d_inode = inode;
