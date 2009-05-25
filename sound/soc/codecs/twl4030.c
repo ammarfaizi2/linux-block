@@ -115,6 +115,7 @@ static const u8 twl4030_reg[TWL4030_CACHEREGNUM] = {
 	0x00, /* REG_VIBRA_PWM_SET	(0x47)	*/
 	0x00, /* REG_ANAMIC_GAIN	(0x48)	*/
 	0x00, /* REG_MISC_SET_2		(0x49)	*/
+	0x00, /* REG_SW_SHADOW		(0x4A)	- Shadow, non HW register */
 };
 
 /* codec private data */
@@ -172,7 +173,11 @@ static int twl4030_write(struct snd_soc_codec *codec,
 			unsigned int reg, unsigned int value)
 {
 	twl4030_write_reg_cache(codec, reg, value);
-	return twl4030_i2c_write_u8(TWL4030_MODULE_AUDIO_VOICE, value, reg);
+	if (likely(reg < TWL4030_REG_SW_SHADOW))
+		return twl4030_i2c_write_u8(TWL4030_MODULE_AUDIO_VOICE, value,
+					    reg);
+	else
+		return 0;
 }
 
 static void twl4030_codec_enable(struct snd_soc_codec *codec, int enable)
@@ -390,6 +395,10 @@ static const struct soc_enum twl4030_handsfreel_enum =
 static const struct snd_kcontrol_new twl4030_dapm_handsfreel_control =
 SOC_DAPM_ENUM("Route", twl4030_handsfreel_enum);
 
+/* Handsfree Left virtual mute */
+static const struct snd_kcontrol_new twl4030_dapm_handsfreelmute_control =
+	SOC_DAPM_SINGLE("Switch", TWL4030_REG_SW_SHADOW, 0, 1, 0);
+
 /* Handsfree Right */
 static const char *twl4030_handsfreer_texts[] =
 		{"Voice", "AudioR1", "AudioR2", "AudioL2"};
@@ -401,6 +410,10 @@ static const struct soc_enum twl4030_handsfreer_enum =
 
 static const struct snd_kcontrol_new twl4030_dapm_handsfreer_control =
 SOC_DAPM_ENUM("Route", twl4030_handsfreer_enum);
+
+/* Handsfree Right virtual mute */
+static const struct snd_kcontrol_new twl4030_dapm_handsfreermute_control =
+	SOC_DAPM_SINGLE("Switch", TWL4030_REG_SW_SHADOW, 1, 1, 0);
 
 /* Vibra */
 /* Vibra audio path selection */
@@ -546,27 +559,61 @@ static int micpath_event(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static int handsfree_event(struct snd_soc_dapm_widget *w,
-		struct snd_kcontrol *kcontrol, int event)
+static void handsfree_ramp(struct snd_soc_codec *codec, int reg, int ramp)
 {
-	struct soc_enum *e = (struct soc_enum *)w->kcontrols->private_value;
 	unsigned char hs_ctl;
 
-	hs_ctl = twl4030_read_reg_cache(w->codec, e->reg);
+	hs_ctl = twl4030_read_reg_cache(codec, reg);
 
-	if (hs_ctl & TWL4030_HF_CTL_REF_EN) {
+	if (ramp) {
+		/* HF ramp-up */
+		hs_ctl |= TWL4030_HF_CTL_REF_EN;
+		twl4030_write(codec, reg, hs_ctl);
+		udelay(10);
 		hs_ctl |= TWL4030_HF_CTL_RAMP_EN;
-		twl4030_write(w->codec, e->reg, hs_ctl);
+		twl4030_write(codec, reg, hs_ctl);
+		udelay(40);
 		hs_ctl |= TWL4030_HF_CTL_LOOP_EN;
-		twl4030_write(w->codec, e->reg, hs_ctl);
 		hs_ctl |= TWL4030_HF_CTL_HB_EN;
-		twl4030_write(w->codec, e->reg, hs_ctl);
+		twl4030_write(codec, reg, hs_ctl);
 	} else {
-		hs_ctl &= ~(TWL4030_HF_CTL_RAMP_EN | TWL4030_HF_CTL_LOOP_EN
-				| TWL4030_HF_CTL_HB_EN);
-		twl4030_write(w->codec, e->reg, hs_ctl);
+		/* HF ramp-down */
+		hs_ctl &= ~TWL4030_HF_CTL_LOOP_EN;
+		hs_ctl &= ~TWL4030_HF_CTL_HB_EN;
+		twl4030_write(codec, reg, hs_ctl);
+		hs_ctl &= ~TWL4030_HF_CTL_RAMP_EN;
+		twl4030_write(codec, reg, hs_ctl);
+		udelay(40);
+		hs_ctl &= ~TWL4030_HF_CTL_REF_EN;
+		twl4030_write(codec, reg, hs_ctl);
 	}
+}
 
+static int handsfreelpga_event(struct snd_soc_dapm_widget *w,
+		struct snd_kcontrol *kcontrol, int event)
+{
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		handsfree_ramp(w->codec, TWL4030_REG_HFL_CTL, 1);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		handsfree_ramp(w->codec, TWL4030_REG_HFL_CTL, 0);
+		break;
+	}
+	return 0;
+}
+
+static int handsfreerpga_event(struct snd_soc_dapm_widget *w,
+		struct snd_kcontrol *kcontrol, int event)
+{
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		handsfree_ramp(w->codec, TWL4030_REG_HFR_CTL, 1);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		handsfree_ramp(w->codec, TWL4030_REG_HFR_CTL, 0);
+		break;
+	}
 	return 0;
 }
 
@@ -1190,12 +1237,20 @@ static const struct snd_soc_dapm_widget twl4030_dapm_widgets[] = {
 
 	/* Output MUX controls */
 	/* HandsfreeL/R */
-	SND_SOC_DAPM_MUX_E("HandsfreeL Mux", TWL4030_REG_HFL_CTL, 5, 0,
-		&twl4030_dapm_handsfreel_control, handsfree_event,
-		SND_SOC_DAPM_POST_PMU|SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MUX_E("HandsfreeR Mux", TWL4030_REG_HFR_CTL, 5, 0,
-		&twl4030_dapm_handsfreer_control, handsfree_event,
-		SND_SOC_DAPM_POST_PMU|SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MUX("HandsfreeL Mux", SND_SOC_NOPM, 0, 0,
+		&twl4030_dapm_handsfreel_control),
+	SND_SOC_DAPM_SWITCH("HandsfreeL Switch", SND_SOC_NOPM, 0, 0,
+			&twl4030_dapm_handsfreelmute_control),
+	SND_SOC_DAPM_PGA_E("HandsfreeL PGA", SND_SOC_NOPM,
+			0, 0, NULL, 0, handsfreelpga_event,
+			SND_SOC_DAPM_POST_PMU|SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MUX("HandsfreeR Mux", SND_SOC_NOPM, 5, 0,
+		&twl4030_dapm_handsfreer_control),
+	SND_SOC_DAPM_SWITCH("HandsfreeR Switch", SND_SOC_NOPM, 0, 0,
+			&twl4030_dapm_handsfreermute_control),
+	SND_SOC_DAPM_PGA_E("HandsfreeR PGA", SND_SOC_NOPM,
+			0, 0, NULL, 0, handsfreerpga_event,
+			SND_SOC_DAPM_POST_PMU|SND_SOC_DAPM_POST_PMD),
 	/* Vibra */
 	SND_SOC_DAPM_MUX("Vibra Mux", TWL4030_REG_VIBRA_CTL, 0, 0,
 		&twl4030_dapm_vibra_control),
@@ -1303,11 +1358,15 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"HandsfreeL Mux", "AudioL1", "Analog L1 Playback Mixer"},
 	{"HandsfreeL Mux", "AudioL2", "Analog L2 Playback Mixer"},
 	{"HandsfreeL Mux", "AudioR2", "Analog R2 Playback Mixer"},
+	{"HandsfreeL Switch", "Switch", "HandsfreeL Mux"},
+	{"HandsfreeL PGA", NULL, "HandsfreeL Switch"},
 	/* HandsfreeR */
 	{"HandsfreeR Mux", "Voice", "Analog Voice Playback Mixer"},
 	{"HandsfreeR Mux", "AudioR1", "Analog R1 Playback Mixer"},
 	{"HandsfreeR Mux", "AudioR2", "Analog R2 Playback Mixer"},
 	{"HandsfreeR Mux", "AudioL2", "Analog L2 Playback Mixer"},
+	{"HandsfreeR Switch", "Switch", "HandsfreeR Mux"},
+	{"HandsfreeR PGA", NULL, "HandsfreeR Switch"},
 	/* Vibra */
 	{"Vibra Mux", "AudioL1", "DAC Left1"},
 	{"Vibra Mux", "AudioR1", "DAC Right1"},
@@ -1324,8 +1383,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"HSOR", NULL, "HeadsetR PGA"},
 	{"CARKITL", NULL, "CarkitL Mixer"},
 	{"CARKITR", NULL, "CarkitR Mixer"},
-	{"HFL", NULL, "HandsfreeL Mux"},
-	{"HFR", NULL, "HandsfreeR Mux"},
+	{"HFL", NULL, "HandsfreeL PGA"},
+	{"HFR", NULL, "HandsfreeR PGA"},
 	{"Vibra Route", "Audio", "Vibra Mux"},
 	{"VIBRA", NULL, "Vibra Route"},
 
