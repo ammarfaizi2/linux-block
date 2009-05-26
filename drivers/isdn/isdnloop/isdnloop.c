@@ -15,7 +15,7 @@
 #include <linux/sched.h>
 #include "isdnloop.h"
 
-static char *revision = "$Revision: 1.11.6.7 $";
+static char revision[] = "$Revision: 1.11.6.7 $";
 static char *isdnloop_id = "loop0";
 
 MODULE_DESCRIPTION("ISDN4Linux: Pseudo Driver that simulates an ISDN card");
@@ -1494,7 +1494,7 @@ static int __init
 isdnloop_init(void)
 {
 	char *p;
-	char rev[10];
+	char rev[sizeof(revision)];
 
 	if ((p = strchr(revision, ':'))) {
 		strcpy(rev, p + 1);
