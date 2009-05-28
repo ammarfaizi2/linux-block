@@ -126,20 +126,24 @@ void snd_pcm_playback_silence(struct snd_pcm_substream *substream, snd_pcm_ufram
 }
 
 #ifdef CONFIG_SND_PCM_XRUN_DEBUG
-#define xrun_debug(substream)	((substream)->pstr->xrun_debug)
+#define xrun_debug(substream, mask)	((substream)->pstr->xrun_debug & (mask))
 #else
-#define xrun_debug(substream)	0
+#define xrun_debug(substream, mask)	0
 #endif
 
-#define dump_stack_on_xrun(substream) do {	\
-		if (xrun_debug(substream) > 1)	\
-			dump_stack();		\
+#define dump_stack_on_xrun(substream) do {		\
+		if (xrun_debug(substream, 2))		\
+			dump_stack();			\
 	} while (0)
 
 static void xrun(struct snd_pcm_substream *substream)
 {
+	struct snd_pcm_runtime *runtime = substream->runtime;
+
+	if (runtime->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE)
+		snd_pcm_gettime(runtime, (struct timespec *)&runtime->status->tstamp);
 	snd_pcm_stop(substream, SNDRV_PCM_STATE_XRUN);
-	if (xrun_debug(substream)) {
+	if (xrun_debug(substream, 1)) {
 		snd_printd(KERN_DEBUG "XRUN: pcmC%dD%d%c\n",
 			   substream->pcm->card->number,
 			   substream->pcm->device,
@@ -154,8 +158,6 @@ snd_pcm_update_hw_ptr_pos(struct snd_pcm_substream *substream,
 {
 	snd_pcm_uframes_t pos;
 
-	if (runtime->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE)
-		snd_pcm_gettime(runtime, (struct timespec *)&runtime->status->tstamp);
 	pos = substream->ops->pointer(substream);
 	if (pos == SNDRV_PCM_POS_XRUN)
 		return pos; /* XRUN */
@@ -197,7 +199,7 @@ static int snd_pcm_update_hw_ptr_post(struct snd_pcm_substream *substream,
 
 #define hw_ptr_error(substream, fmt, args...)				\
 	do {								\
-		if (xrun_debug(substream)) {				\
+		if (xrun_debug(substream, 1)) {				\
 			if (printk_ratelimit()) {			\
 				snd_printd("PCM: " fmt, ##args);	\
 			}						\
@@ -251,7 +253,7 @@ static int snd_pcm_update_hw_ptr_interrupt(struct snd_pcm_substream *substream)
 	}
 
 	/* Do jiffies check only in xrun_debug mode */
-	if (!xrun_debug(substream))
+	if (!xrun_debug(substream, 4))
 		goto no_jiffies_check;
 
 	/* Skip the jiffies check for hardwares with BATCH flag.
@@ -261,6 +263,9 @@ static int snd_pcm_update_hw_ptr_interrupt(struct snd_pcm_substream *substream)
 	if (runtime->hw.info & SNDRV_PCM_INFO_BATCH)
 		goto no_jiffies_check;
 	hdelta = new_hw_ptr - old_hw_ptr;
+	if (hdelta < runtime->delay)
+		goto no_jiffies_check;
+	hdelta -= runtime->delay;
 	jdelta = jiffies - runtime->hw_ptr_jiffies;
 	if (((hdelta * HZ) / runtime->rate) > jdelta + HZ/100) {
 		delta = jdelta /
@@ -298,10 +303,15 @@ static int snd_pcm_update_hw_ptr_interrupt(struct snd_pcm_substream *substream)
 	    runtime->silence_size > 0)
 		snd_pcm_playback_silence(substream, new_hw_ptr);
 
+	if (runtime->status->hw_ptr == new_hw_ptr)
+		return 0;
+
 	runtime->hw_ptr_base = hw_base;
 	runtime->status->hw_ptr = new_hw_ptr;
 	runtime->hw_ptr_jiffies = jiffies;
 	runtime->hw_ptr_interrupt = hw_ptr_interrupt;
+	if (runtime->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE)
+		snd_pcm_gettime(runtime, (struct timespec *)&runtime->status->tstamp);
 
 	return snd_pcm_update_hw_ptr_post(substream, runtime);
 }
@@ -342,8 +352,12 @@ int snd_pcm_update_hw_ptr(struct snd_pcm_substream *substream)
 		new_hw_ptr = hw_base + pos;
 	}
 	/* Do jiffies check only in xrun_debug mode */
-	if (xrun_debug(substream) &&
-	    ((delta * HZ) / runtime->rate) > jdelta + HZ/100) {
+	if (!xrun_debug(substream, 4))
+		goto no_jiffies_check;
+	if (delta < runtime->delay)
+		goto no_jiffies_check;
+	delta -= runtime->delay;
+	if (((delta * HZ) / runtime->rate) > jdelta + HZ/100) {
 		hw_ptr_error(substream,
 			     "hw_ptr skipping! "
 			     "(pos=%ld, delta=%ld, period=%ld, jdelta=%lu/%lu)\n",
@@ -352,13 +366,19 @@ int snd_pcm_update_hw_ptr(struct snd_pcm_substream *substream)
 			     ((delta * HZ) / runtime->rate));
 		return 0;
 	}
+ no_jiffies_check:
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
 	    runtime->silence_size > 0)
 		snd_pcm_playback_silence(substream, new_hw_ptr);
 
+	if (runtime->status->hw_ptr != new_hw_ptr)
+		return 0;
+
 	runtime->hw_ptr_base = hw_base;
 	runtime->status->hw_ptr = new_hw_ptr;
 	runtime->hw_ptr_jiffies = jiffies;
+	if (runtime->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE)
+		snd_pcm_gettime(runtime, (struct timespec *)&runtime->status->tstamp);
 
 	return snd_pcm_update_hw_ptr_post(substream, runtime);
 }
@@ -1524,6 +1544,23 @@ static int snd_pcm_lib_ioctl_channel_info(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+static int snd_pcm_lib_ioctl_fifo_size(struct snd_pcm_substream *substream,
+				       void *arg)
+{
+	struct snd_pcm_hw_params *params = arg;
+	snd_pcm_format_t format;
+	int channels, width;
+
+	params->fifo_size = substream->runtime->hw.fifo_size;
+	if (!(substream->runtime->hw.info & SNDRV_PCM_INFO_FIFO_IN_FRAMES)) {
+		format = params_format(params);
+		channels = params_channels(params);
+		width = snd_pcm_format_physical_width(format);
+		params->fifo_size /= width * channels;
+	}
+	return 0;
+}
+
 /**
  * snd_pcm_lib_ioctl - a generic PCM ioctl callback
  * @substream: the pcm substream instance
@@ -1545,6 +1582,8 @@ int snd_pcm_lib_ioctl(struct snd_pcm_substream *substream,
 		return snd_pcm_lib_ioctl_reset(substream, arg);
 	case SNDRV_PCM_IOCTL1_CHANNEL_INFO:
 		return snd_pcm_lib_ioctl_channel_info(substream, arg);
+	case SNDRV_PCM_IOCTL1_FIFO_SIZE:
+		return snd_pcm_lib_ioctl_fifo_size(substream, arg);
 	}
 	return -ENXIO;
 }
