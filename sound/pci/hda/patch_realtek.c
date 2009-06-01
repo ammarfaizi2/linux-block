@@ -6266,6 +6266,34 @@ static struct hda_channel_mode alc885_mbp_6ch_modes[2] = {
 	{ 6, alc885_mbp_ch6_init },
 };
 
+/*
+ * 2ch
+ * Speakers/Woofer/HP = Front
+ * LineIn = Input
+ */
+static struct hda_verb alc885_mb5_ch2_init[] = {
+	{0x15, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_IN},
+	{0x15, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE},
+	{ } /* end */
+};
+
+/*
+ * 6ch mode
+ * Speakers/HP = Front
+ * Woofer = LFE
+ * LineIn = Surround
+ */
+static struct hda_verb alc885_mb5_ch6_init[] = {
+	{0x15, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
+	{0x15, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
+	{0x15, AC_VERB_SET_CONNECT_SEL, 0x01},
+	{ } /* end */
+};
+
+static struct hda_channel_mode alc885_mb5_6ch_modes[2] = {
+	{ 2, alc885_mb5_ch2_init },
+	{ 6, alc885_mb5_ch6_init },
+};
 
 /* Pin assignment: Front=0x14, Rear=0x15, CLFE=0x16, Side=0x17
  *                 Mic=0x18, Front Mic=0x19, Line-In=0x1a, HP=0x1b
@@ -6310,10 +6338,14 @@ static struct snd_kcontrol_new alc885_mbp3_mixer[] = {
 };
 
 static struct snd_kcontrol_new alc885_mb5_mixer[] = {
-	HDA_CODEC_VOLUME("Front Playback Volume", 0x0d, 0x00, HDA_OUTPUT),
-	HDA_BIND_MUTE   ("Front Playback Switch", 0x0d, 0x02, HDA_INPUT),
-	HDA_CODEC_VOLUME("Line-Out Playback Volume", 0x0c, 0x00, HDA_OUTPUT),
-	HDA_BIND_MUTE   ("Line-Out Playback Switch", 0x0c, 0x02, HDA_INPUT),
+	HDA_CODEC_VOLUME("Front Playback Volume", 0x0c, 0x00, HDA_OUTPUT),
+	HDA_BIND_MUTE   ("Front Playback Switch", 0x0c, 0x02, HDA_INPUT),
+	HDA_CODEC_VOLUME("Surround Playback Volume", 0x0d, 0x00, HDA_OUTPUT),
+	HDA_BIND_MUTE   ("Surround Playback Switch", 0x0d, 0x02, HDA_INPUT),
+	HDA_CODEC_VOLUME("LFE Playback Volume", 0x0e, 0x00, HDA_OUTPUT),
+	HDA_BIND_MUTE   ("LFE Playback Switch", 0x0e, 0x02, HDA_INPUT),
+	HDA_CODEC_VOLUME("HP Playback Volume", 0x0f, 0x00, HDA_OUTPUT),
+	HDA_BIND_MUTE   ("HP Playback Switch", 0x0f, 0x02, HDA_INPUT),
 	HDA_CODEC_VOLUME("Line Playback Volume", 0x0b, 0x02, HDA_INPUT),
 	HDA_CODEC_MUTE  ("Line Playback Switch", 0x0b, 0x02, HDA_INPUT),
 	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x01, HDA_INPUT),
@@ -6322,6 +6354,7 @@ static struct snd_kcontrol_new alc885_mb5_mixer[] = {
 	HDA_CODEC_VOLUME("Mic Boost", 0x19, 0x00, HDA_INPUT),
 	{ } /* end */
 };
+
 static struct snd_kcontrol_new alc882_w2jc_mixer[] = {
 	HDA_CODEC_VOLUME("Front Playback Volume", 0x0c, 0x0, HDA_OUTPUT),
 	HDA_BIND_MUTE("Front Playback Switch", 0x0c, 2, HDA_INPUT),
@@ -6551,22 +6584,39 @@ static struct hda_verb alc882_macpro_init_verbs[] = {
 
 /* Macbook 5,1 */
 static struct hda_verb alc885_mb5_init_verbs[] = {
+	/* DACs */
+	{0x02, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
+	{0x03, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
+	{0x04, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
+	{0x05, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
 	/* Front mixer */
-	{0x0d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_ZERO},
-	{0x0d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(0)},
-	{0x0d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)},
-	/* LineOut mixer */
 	{0x0c, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_ZERO},
 	{0x0c, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(0)},
 	{0x0c, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)},
-	/* Front Pin: output 0 (0x0d) */
+	/* Surround mixer */
+	{0x0d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_ZERO},
+	{0x0d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(0)},
+	{0x0d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)},
+	/* LFE mixer */
+	{0x0e, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_ZERO},
+	{0x0e, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(0)},
+	{0x0e, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)},
+	/* HP mixer */
+	{0x0f, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_ZERO},
+	{0x0f, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(0)},
+	{0x0f, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)},
+	/* Front Pin (0x0c) */
 	{0x18, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT | 0x01},
 	{0x18, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
-	{0x18, AC_VERB_SET_CONNECT_SEL, 0x01},
-	/* HP Pin: output 0 (0x0c) */
+	{0x18, AC_VERB_SET_CONNECT_SEL, 0x00},
+	/* LFE Pin (0x0e) */
+	{0x1a, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT | 0x01},
+	{0x1a, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
+	{0x1a, AC_VERB_SET_CONNECT_SEL, 0x02},
+	/* HP Pin (0x0f) */
 	{0x14, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
 	{0x14, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE},
-	{0x14, AC_VERB_SET_CONNECT_SEL, 0x00},
+	{0x14, AC_VERB_SET_CONNECT_SEL, 0x03},
 	/* Front Mic pin: input vref at 80% */
 	{0x19, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_VREF80},
 	{0x19, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE},
@@ -6986,13 +7036,13 @@ static struct alc_config_preset alc882_presets[] = {
 		.init_hook = alc885_mbp3_init_hook,
 	},
 	[ALC885_MB5] = {
-		.mixers = { alc885_mb5_mixer },
+		.mixers = { alc885_mb5_mixer, alc882_chmode_mixer },
 		.init_verbs = { alc885_mb5_init_verbs,
 				alc880_gpio1_init_verbs },
 		.num_dacs = ARRAY_SIZE(alc882_dac_nids),
 		.dac_nids = alc882_dac_nids,
-		.channel_mode = alc885_mbp_6ch_modes,
-		.num_channel_mode = ARRAY_SIZE(alc885_mbp_6ch_modes),
+		.channel_mode = alc885_mb5_6ch_modes,
+		.num_channel_mode = ARRAY_SIZE(alc885_mb5_6ch_modes),
 		.input_mux = &mb5_capture_source,
 		.dig_out_nid = ALC882_DIGOUT_NID,
 		.dig_in_nid = ALC882_DIGIN_NID,
@@ -12061,16 +12111,16 @@ static struct snd_pci_quirk alc268_cfg_tbl[] = {
 						ALC268_ACER_ASPIRE_ONE),
 	SND_PCI_QUIRK(0x1028, 0x0253, "Dell OEM", ALC268_DELL),
 	SND_PCI_QUIRK(0x1028, 0x02b0, "Dell Inspiron Mini9", ALC268_DELL),
-	SND_PCI_QUIRK(0x103c, 0x30cc, "TOSHIBA", ALC268_TOSHIBA),
-	SND_PCI_QUIRK(0x103c, 0x30f1, "HP TX25xx series", ALC268_TOSHIBA),
+	SND_PCI_QUIRK_MASK(0x103c, 0xff00, 0x3000, "HP TX25xx series",
+			   ALC268_TOSHIBA),
 	SND_PCI_QUIRK(0x1043, 0x1205, "ASUS W7J", ALC268_3ST),
-	SND_PCI_QUIRK(0x1179, 0xff10, "TOSHIBA A205", ALC268_TOSHIBA),
-	SND_PCI_QUIRK(0x1179, 0xff50, "TOSHIBA A305", ALC268_TOSHIBA),
-	SND_PCI_QUIRK(0x1179, 0xff64, "TOSHIBA L305", ALC268_TOSHIBA),
+	SND_PCI_QUIRK(0x1170, 0x0040, "ZEPTO", ALC268_ZEPTO),
+	SND_PCI_QUIRK_MASK(0x1179, 0xff00, 0xff00, "TOSHIBA A/Lx05",
+			   ALC268_TOSHIBA),
 	SND_PCI_QUIRK(0x14c0, 0x0025, "COMPAL IFL90/JFL-92", ALC268_TOSHIBA),
 	SND_PCI_QUIRK(0x152d, 0x0763, "Diverse (CPR2000)", ALC268_ACER),
 	SND_PCI_QUIRK(0x152d, 0x0771, "Quanta IL1", ALC267_QUANTA_IL1),
-	SND_PCI_QUIRK(0x1170, 0x0040, "ZEPTO", ALC268_ZEPTO),
+	SND_PCI_QUIRK(0x1854, 0x1775, "LG R510", ALC268_DELL),
 	{}
 };
 
