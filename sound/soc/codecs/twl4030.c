@@ -145,7 +145,6 @@ struct twl4030_priv {
 static inline unsigned int twl4030_read_reg_cache(struct snd_soc_codec *codec,
 	unsigned int reg)
 {
-	u8 *cache = codec->reg_cache;
 
 	if (reg >= TWL4030_CACHEREGNUM)
 		return -EIO;
@@ -204,6 +203,7 @@ static void twl4030_codec_enable(struct snd_soc_codec *codec, int enable)
 
 static void twl4030_init_chip(struct snd_soc_codec *codec)
 {
+	u8 *cache = codec->reg_cache;
 	int i;
 
 	/* clear CODECPDZ prior to setting register defaults */
@@ -211,7 +211,7 @@ static void twl4030_init_chip(struct snd_soc_codec *codec)
 
 	/* set all audio section registers to reasonable defaults */
 	for (i = TWL4030_REG_OPTION; i <= TWL4030_REG_MISC_SET_2; i++)
-		twl4030_write(codec, i,	twl4030_reg[i]);
+		twl4030_write(codec, i,	cache[i]);
 
 }
 
@@ -1608,9 +1608,15 @@ static int twl4030_hw_params(struct snd_pcm_substream *substream,
 
 	 /* If the substream has 4 channel, do the necessary setup */
 	if (params_channels(params) == 4) {
-		/* Safety check: are we in the correct operating mode? */
-		if ((twl4030_read_reg_cache(codec, TWL4030_REG_CODEC_MODE) &
-			TWL4030_OPTION_1))
+		u8 format, mode;
+
+		format = twl4030_read_reg_cache(codec, TWL4030_REG_AUDIO_IF);
+		mode = twl4030_read_reg_cache(codec, TWL4030_REG_CODEC_MODE);
+
+		/* Safety check: are we in the correct operating mode and
+		 * the interface is in TDM mode? */
+		if ((mode & TWL4030_OPTION_1) &&
+		    ((format & TWL4030_AIF_FORMAT) == TWL4030_AIF_FORMAT_TDM))
 			twl4030_tdm_enable(codec, substream->stream, 1);
 		else
 			return -EINVAL;
