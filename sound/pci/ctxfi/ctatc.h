@@ -59,16 +59,15 @@ struct ct_atc_chip_details {
 };
 
 struct ct_atc;
+struct ct_timer;
+struct ct_timer_instance;
 
 /* alsa pcm stream descriptor */
 struct ct_atc_pcm {
 	struct snd_pcm_substream *substream;
 	void (*interrupt)(struct ct_atc_pcm *apcm);
+	struct ct_timer_instance *timer;
 	unsigned int started:1;
-	unsigned int stop_timer:1;
-	struct timer_list timer;
-	spinlock_t timer_lock;
-	unsigned int position;
 
 	/* Only mono and interleaved modes are supported now. */
 	struct ct_vm_block *vm_block;
@@ -92,8 +91,6 @@ struct ct_atc {
 
 	const struct ct_atc_chip_details *chip_details;
 	enum CTCARDS model;
-	/* Create all alsa devices */
-	int (*create_alsa_devs)(struct ct_atc *atc);
 
 	struct ct_vm *vm; /* device virtual memory manager for this card */
 	int (*map_audio_buffer)(struct ct_atc *atc, struct ct_atc_pcm *apcm);
@@ -144,11 +141,14 @@ struct ct_atc {
 	unsigned char n_src;
 	unsigned char n_srcimp;
 	unsigned char n_pcm;
+
+	struct ct_timer *timer;
 };
 
 
 int __devinit ct_atc_create(struct snd_card *card, struct pci_dev *pci,
 			    unsigned int rsr, unsigned int msr,
 			    struct ct_atc **ratc);
+int __devinit ct_atc_create_alsa_devs(struct ct_atc *atc);
 
 #endif /* CTATC_H */

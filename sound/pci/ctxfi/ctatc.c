@@ -22,6 +22,7 @@
 #include "ctsrc.h"
 #include "ctamixer.h"
 #include "ctdaio.h"
+#include "cttimer.h"
 #include <linux/delay.h>
 #include <sound/pcm.h>
 #include <sound/control.h>
@@ -307,6 +308,8 @@ static int atc_pcm_playback_prepare(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 			src = apcm->src;
 	}
 
+	ct_timer_prepare(apcm->timer);
+
 	return 0;
 
 error1:
@@ -389,6 +392,7 @@ static int atc_pcm_playback_start(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 	src->ops->set_state(src, SRC_STATE_INIT);
 	src->ops->commit_write(src);
 
+	ct_timer_start(apcm->timer);
 	return 0;
 }
 
@@ -396,6 +400,8 @@ static int atc_pcm_stop(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 {
 	struct src *src = NULL;
 	int i = 0;
+
+	ct_timer_stop(apcm->timer);
 
 	src = apcm->src;
 	src->ops->set_bm(src, 0);
@@ -701,6 +707,8 @@ static int atc_pcm_capture_prepare(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 		}
 	}
 
+	ct_timer_prepare(apcm->timer);
+
 	return 0;
 }
 
@@ -749,6 +757,7 @@ static int atc_pcm_capture_start(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 	/* Enable relevant SRCs synchronously */
 	src_mgr->commit_write(src_mgr);
 
+	ct_timer_start(apcm->timer);
 	return 0;
 }
 
@@ -905,6 +914,8 @@ spdif_passthru_playback_prepare(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 	amixer = apcm->amixers[1];
 	dao->ops->set_right_input(dao, &amixer->rsc);
 	spin_unlock_irqrestore(&atc->atc_lock, flags);
+
+	ct_timer_prepare(apcm->timer);
 
 	return 0;
 }
@@ -1100,6 +1111,11 @@ static int ct_atc_destroy(struct ct_atc *atc)
 	if (NULL == atc)
 		return 0;
 
+	if (atc->timer) {
+		ct_timer_free(atc->timer);
+		atc->timer = NULL;
+	}
+
 	/* Stop hardware and disable all interrupts */
 	if (NULL != atc->hw)
 		((struct hw *)atc->hw)->card_stop(atc->hw);
@@ -1186,7 +1202,7 @@ static int atc_dev_free(struct snd_device *dev)
 	return ct_atc_destroy(atc);
 }
 
-static int atc_identify_card(struct ct_atc *atc)
+static int __devinit atc_identify_card(struct ct_atc *atc)
 {
 	u16 subsys;
 	u8 revision;
@@ -1227,7 +1243,7 @@ static int atc_identify_card(struct ct_atc *atc)
 	return 0;
 }
 
-static int ct_create_alsa_devs(struct ct_atc *atc)
+int __devinit ct_atc_create_alsa_devs(struct ct_atc *atc)
 {
 	enum CTALSADEVS i;
 	struct hw *hw = atc->hw;
@@ -1261,7 +1277,7 @@ static int ct_create_alsa_devs(struct ct_atc *atc)
 	return 0;
 }
 
-static int atc_create_hw_devs(struct ct_atc *atc)
+static int __devinit atc_create_hw_devs(struct ct_atc *atc)
 {
 	struct hw *hw = NULL;
 	struct card_conf info = {0};
@@ -1297,7 +1313,7 @@ static int atc_create_hw_devs(struct ct_atc *atc)
 	return 0;
 }
 
-static int atc_get_resources(struct ct_atc *atc)
+static int __devinit atc_get_resources(struct ct_atc *atc)
 {
 	struct daio_desc da_desc = {0};
 	struct daio_mgr *daio_mgr = NULL;
@@ -1407,7 +1423,7 @@ static int atc_get_resources(struct ct_atc *atc)
 	return 0;
 }
 
-static void
+static void __devinit
 atc_connect_dai(struct src_mgr *src_mgr, struct dai *dai,
 		struct src **srcs, struct srcimp **srcimps)
 {
@@ -1446,7 +1462,7 @@ atc_connect_dai(struct src_mgr *src_mgr, struct dai *dai,
 	src_mgr->commit_write(src_mgr); /* Synchronously enable SRCs */
 }
 
-static void atc_connect_resources(struct ct_atc *atc)
+static void __devinit atc_connect_resources(struct ct_atc *atc)
 {
 	struct dai *dai = NULL;
 	struct dao *dao = NULL;
@@ -1492,37 +1508,35 @@ static void atc_connect_resources(struct ct_atc *atc)
 	}
 }
 
-static void atc_set_ops(struct ct_atc *atc)
-{
-	/* Set operations */
-	atc->map_audio_buffer = ct_map_audio_buffer;
-	atc->unmap_audio_buffer = ct_unmap_audio_buffer;
-	atc->pcm_playback_prepare = atc_pcm_playback_prepare;
-	atc->pcm_release_resources = atc_pcm_release_resources;
-	atc->pcm_playback_start = atc_pcm_playback_start;
-	atc->pcm_playback_stop = atc_pcm_stop;
-	atc->pcm_playback_position = atc_pcm_playback_position;
-	atc->pcm_capture_prepare = atc_pcm_capture_prepare;
-	atc->pcm_capture_start = atc_pcm_capture_start;
-	atc->pcm_capture_stop = atc_pcm_stop;
-	atc->pcm_capture_position = atc_pcm_capture_position;
-	atc->spdif_passthru_playback_prepare = spdif_passthru_playback_prepare;
-	atc->get_ptp_phys = atc_get_ptp_phys;
-	atc->select_line_in = atc_select_line_in;
-	atc->select_mic_in = atc_select_mic_in;
-	atc->select_digit_io = atc_select_digit_io;
-	atc->line_front_unmute = atc_line_front_unmute;
-	atc->line_surround_unmute = atc_line_surround_unmute;
-	atc->line_clfe_unmute = atc_line_clfe_unmute;
-	atc->line_rear_unmute = atc_line_rear_unmute;
-	atc->line_in_unmute = atc_line_in_unmute;
-	atc->spdif_out_unmute = atc_spdif_out_unmute;
-	atc->spdif_in_unmute = atc_spdif_in_unmute;
-	atc->spdif_out_get_status = atc_spdif_out_get_status;
-	atc->spdif_out_set_status = atc_spdif_out_set_status;
-	atc->spdif_out_passthru = atc_spdif_out_passthru;
-	atc->have_digit_io_switch = atc_have_digit_io_switch;
-}
+static struct ct_atc atc_preset __devinitdata = {
+	.map_audio_buffer = ct_map_audio_buffer,
+	.unmap_audio_buffer = ct_unmap_audio_buffer,
+	.pcm_playback_prepare = atc_pcm_playback_prepare,
+	.pcm_release_resources = atc_pcm_release_resources,
+	.pcm_playback_start = atc_pcm_playback_start,
+	.pcm_playback_stop = atc_pcm_stop,
+	.pcm_playback_position = atc_pcm_playback_position,
+	.pcm_capture_prepare = atc_pcm_capture_prepare,
+	.pcm_capture_start = atc_pcm_capture_start,
+	.pcm_capture_stop = atc_pcm_stop,
+	.pcm_capture_position = atc_pcm_capture_position,
+	.spdif_passthru_playback_prepare = spdif_passthru_playback_prepare,
+	.get_ptp_phys = atc_get_ptp_phys,
+	.select_line_in = atc_select_line_in,
+	.select_mic_in = atc_select_mic_in,
+	.select_digit_io = atc_select_digit_io,
+	.line_front_unmute = atc_line_front_unmute,
+	.line_surround_unmute = atc_line_surround_unmute,
+	.line_clfe_unmute = atc_line_clfe_unmute,
+	.line_rear_unmute = atc_line_rear_unmute,
+	.line_in_unmute = atc_line_in_unmute,
+	.spdif_out_unmute = atc_spdif_out_unmute,
+	.spdif_in_unmute = atc_spdif_in_unmute,
+	.spdif_out_get_status = atc_spdif_out_get_status,
+	.spdif_out_set_status = atc_spdif_out_set_status,
+	.spdif_out_passthru = atc_spdif_out_passthru,
+	.have_digit_io_switch = atc_have_digit_io_switch,
+};
 
 /**
  *  ct_atc_create - create and initialize a hardware manager
@@ -1536,7 +1550,7 @@ static void atc_set_ops(struct ct_atc *atc)
  *  Returns 0 if suceeds, or negative error code if fails.
  */
 
-int ct_atc_create(struct snd_card *card, struct pci_dev *pci,
+int __devinit ct_atc_create(struct snd_card *card, struct pci_dev *pci,
 		  unsigned int rsr, unsigned int msr, struct ct_atc **ratc)
 {
 	struct ct_atc *atc = NULL;
@@ -1551,13 +1565,13 @@ int ct_atc_create(struct snd_card *card, struct pci_dev *pci,
 	if (NULL == atc)
 		return -ENOMEM;
 
+	/* Set operations */
+	*atc = atc_preset;
+
 	atc->card = card;
 	atc->pci = pci;
 	atc->rsr = rsr;
 	atc->msr = msr;
-
-	/* Set operations */
-	atc_set_ops(atc);
 
 	spin_lock_init(&atc->atc_lock);
 
@@ -1586,7 +1600,9 @@ int ct_atc_create(struct snd_card *card, struct pci_dev *pci,
 	/* Build topology */
 	atc_connect_resources(atc);
 
-	atc->create_alsa_devs = ct_create_alsa_devs;
+	atc->timer = ct_timer_new(atc);
+	if (!atc->timer)
+		goto error1;
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, atc, &ops);
 	if (err < 0)
@@ -1602,4 +1618,3 @@ error1:
 	printk(KERN_ERR "ctxfi: Something wrong!!!\n");
 	return err;
 }
-
