@@ -26,7 +26,11 @@
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 
-#define CT_XFI_DMA_MASK		DMA_BIT_MASK(32) /* 32 bits */
+#if BITS_PER_LONG == 32
+#define CT_XFI_DMA_MASK		DMA_BIT_MASK(32) /* 32 bit PTE */
+#else
+#define CT_XFI_DMA_MASK		DMA_BIT_MASK(64) /* 64 bit PTE */
+#endif
 
 static u32 hw_read_20kx(struct hw *hw, u32 reg);
 static void hw_write_20kx(struct hw *hw, u32 reg, u32 data);
@@ -164,7 +168,7 @@ static int src_get_rsc_ctrl_blk(void **rblk)
 
 static int src_put_rsc_ctrl_blk(void *blk)
 {
-	kfree((struct src_rsc_ctrl_blk *)blk);
+	kfree(blk);
 
 	return 0;
 }
@@ -355,7 +359,7 @@ static unsigned int src_param_pitch_mixer(unsigned int src_idx)
 static int src_commit_write(struct hw *hw, unsigned int idx, void *blk)
 {
 	struct src_rsc_ctrl_blk *ctl = blk;
-	int i = 0;
+	int i;
 
 	if (ctl->dirty.bf.czbfs) {
 		/* Clear Z-Buffer registers */
@@ -454,8 +458,8 @@ static int src_mgr_dsb_src(void *blk, unsigned int idx)
 static int src_mgr_commit_write(struct hw *hw, void *blk)
 {
 	struct src_mgr_ctrl_blk *ctl = blk;
-	int i = 0;
-	unsigned int ret = 0;
+	int i;
+	unsigned int ret;
 
 	if (ctl->dirty.bf.enbsa) {
 		do {
@@ -490,7 +494,7 @@ static int src_mgr_get_ctrl_blk(void **rblk)
 
 static int src_mgr_put_ctrl_blk(void *blk)
 {
-	kfree((struct src_mgr_ctrl_blk *)blk);
+	kfree(blk);
 
 	return 0;
 }
@@ -511,7 +515,7 @@ static int srcimp_mgr_get_ctrl_blk(void **rblk)
 
 static int srcimp_mgr_put_ctrl_blk(void *blk)
 {
-	kfree((struct srcimp_mgr_ctrl_blk *)blk);
+	kfree(blk);
 
 	return 0;
 }
@@ -700,7 +704,7 @@ static int amixer_rsc_get_ctrl_blk(void **rblk)
 
 static int amixer_rsc_put_ctrl_blk(void *blk)
 {
-	kfree((struct amixer_rsc_ctrl_blk *)blk);
+	kfree(blk);
 
 	return 0;
 }
@@ -889,7 +893,7 @@ static int dai_get_ctrl_blk(void **rblk)
 
 static int dai_put_ctrl_blk(void *blk)
 {
-	kfree((struct dai_ctrl_blk *)blk);
+	kfree(blk);
 
 	return 0;
 }
@@ -939,7 +943,7 @@ static int dao_get_ctrl_blk(void **rblk)
 
 static int dao_put_ctrl_blk(void *blk)
 {
-	kfree((struct dao_ctrl_blk *)blk);
+	kfree(blk);
 
 	return 0;
 }
@@ -1047,8 +1051,8 @@ static int daio_mgr_set_imapaddr(void *blk, unsigned int addr)
 static int daio_mgr_commit_write(struct hw *hw, void *blk)
 {
 	struct daio_mgr_ctrl_blk *ctl = blk;
-	unsigned int data = 0;
-	int i = 0;
+	unsigned int data;
+	int i;
 
 	for (i = 0; i < 8; i++) {
 		if ((ctl->dirty.bf.atxctl & (0x1 << i))) {
@@ -1076,7 +1080,7 @@ static int daio_mgr_commit_write(struct hw *hw, void *blk)
 static int daio_mgr_get_ctrl_blk(struct hw *hw, void **rblk)
 {
 	struct daio_mgr_ctrl_blk *blk;
-	int i = 0;
+	int i;
 
 	*rblk = NULL;
 	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
@@ -1095,7 +1099,7 @@ static int daio_mgr_get_ctrl_blk(struct hw *hw, void **rblk)
 
 static int daio_mgr_put_ctrl_blk(void *blk)
 {
-	kfree((struct daio_mgr_ctrl_blk *)blk);
+	kfree(blk);
 
 	return 0;
 }
@@ -1121,7 +1125,7 @@ struct trn_conf {
 
 static int hw_daio_init(struct hw *hw, const struct daio_conf *info)
 {
-	u32 dwData = 0;
+	u32 dwData;
 	int i;
 
 	/* Program I2S with proper sample rate and enable the correct I2S
@@ -1191,9 +1195,9 @@ static int hw_daio_init(struct hw *hw, const struct daio_conf *info)
 /* TRANSPORT operations */
 static int hw_trn_init(struct hw *hw, const struct trn_conf *info)
 {
-	u32 vmctl = 0, data = 0;
-	unsigned long ptp_phys_low = 0, ptp_phys_high = 0;
-	int i = 0;
+	u32 vmctl, data;
+	u32 ptp_phys_low, ptp_phys_high;
+	int i;
 
 	/* Set up device page table */
 	if ((~0UL) == info->vm_pgt_phys) {
@@ -1429,7 +1433,7 @@ static int I2CLockChip(struct hw *hw)
 
 static int I2CInit(struct hw *hw, u8 bDeviceID, u8 bAddressSize, u8 bDataSize)
 {
-	int err = 0;
+	int err;
 	unsigned int RegI2CStatus;
 	unsigned int RegI2CAddress;
 
@@ -1477,7 +1481,7 @@ static int I2CUninit(struct hw *hw)
 static int I2CWaitDataReady(struct hw *hw)
 {
 	int i = 0x400000;
-	unsigned int ret = 0;
+	unsigned int ret;
 
 	do {
 		ret = hw_read_20kx(hw, I2C_IF_STATUS);
@@ -1537,9 +1541,9 @@ static int I2CWrite(struct hw *hw, u16 wAddress, u32 dwData)
 
 static int hw_dac_init(struct hw *hw, const struct dac_conf *info)
 {
-	int err = 0;
-	u32 dwData = 0;
-	int i = 0;
+	int err;
+	u32 dwData;
+	int i;
 	struct REGS_CS4382 cs4382_Read = {0};
 	struct REGS_CS4382 cs4382_Def = {
 				   0x00000001,  /* Mode Control 1 */
@@ -1692,7 +1696,7 @@ End:
 
 static int hw_is_adc_input_selected(struct hw *hw, enum ADCSRC type)
 {
-	u32 data = 0;
+	u32 data;
 
 	data = hw_read_20kx(hw, GPIO_DATA);
 	switch (type) {
@@ -1710,7 +1714,7 @@ static int hw_is_adc_input_selected(struct hw *hw, enum ADCSRC type)
 
 static int hw_adc_input_select(struct hw *hw, enum ADCSRC type)
 {
-	u32 data = 0;
+	u32 data;
 
 	data = hw_read_20kx(hw, GPIO_DATA);
 	switch (type) {
@@ -1743,8 +1747,8 @@ static int hw_adc_input_select(struct hw *hw, enum ADCSRC type)
 
 static int hw_adc_init(struct hw *hw, const struct adc_conf *info)
 {
-	int err = 0;
-	u32 dwMux = 2, dwData = 0, dwCtl = 0;
+	int err;
+	u32 dwMux = 2, dwData, dwCtl;
 
 	/*  Set ADC reset bit as output */
 	dwData = hw_read_20kx(hw, GPIO_CTRL);
@@ -1834,18 +1838,16 @@ static int hw_card_start(struct hw *hw)
 	int err = 0;
 	struct pci_dev *pci = hw->pci;
 	unsigned int gctl;
-	unsigned int dma_mask = 0;
 
 	err = pci_enable_device(pci);
 	if (err < 0)
 		return err;
 
 	/* Set DMA transfer mask */
-	dma_mask = CT_XFI_DMA_MASK;
-	if (pci_set_dma_mask(pci, dma_mask) < 0 ||
-	    pci_set_consistent_dma_mask(pci, dma_mask) < 0) {
+	if (pci_set_dma_mask(pci, CT_XFI_DMA_MASK) < 0 ||
+	    pci_set_consistent_dma_mask(pci, CT_XFI_DMA_MASK) < 0) {
 		printk(KERN_ERR "ctxfi: architecture does not support PCI "
-		"busmaster DMA with mask 0x%x\n", dma_mask);
+		"busmaster DMA with mask 0x%llx\n", CT_XFI_DMA_MASK);
 		err = -ENXIO;
 		goto error1;
 	}
