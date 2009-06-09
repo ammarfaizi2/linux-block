@@ -392,6 +392,10 @@ static int atc_pcm_playback_start(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 	unsigned int max_cisz;
 	struct src *src = apcm->src;
 
+	if (apcm->started)
+		return 0;
+	apcm->started = 1;
+
 	max_cisz = src->multi * src->rsc.msr;
 	max_cisz = 0x80 * (max_cisz < 8 ? max_cisz : 8);
 
@@ -441,6 +445,8 @@ atc_pcm_playback_position(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 	u32 size, max_cisz;
 	int position;
 
+	if (!src)
+		return 0;
 	position = src->ops->get_ca(src);
 
 	size = apcm->vm_block->size;
@@ -517,7 +523,7 @@ atc_pcm_capture_get_resources(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 	struct src_node_conf_t src_node_conf[2] = {{0} };
 
 	/* first release old resources */
-	atc->pcm_release_resources(atc, apcm);
+	atc_pcm_release_resources(atc, apcm);
 
 	/* The numbers of converting SRCs and SRCIMPs should be determined
 	 * by pitch value. */
@@ -778,6 +784,8 @@ atc_pcm_capture_position(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 {
 	struct src *src = apcm->src;
 
+	if (!src)
+		return 0;
 	return src->ops->get_ca(src) - apcm->vm_block->addr;
 }
 
@@ -794,7 +802,7 @@ static int spdif_passthru_playback_get_resources(struct ct_atc *atc,
 	unsigned int pitch, rsr = atc->pll_rate;
 
 	/* first release old resources */
-	atc->pcm_release_resources(atc, apcm);
+	atc_pcm_release_resources(atc, apcm);
 
 	/* Get SRC resource */
 	desc.multi = apcm->substream->runtime->channels;
