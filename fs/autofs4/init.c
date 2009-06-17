@@ -17,7 +17,16 @@
 static int autofs_get_sb(struct file_system_type *fs_type,
 	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
 {
-	return get_sb_nodev(fs_type, flags, data, autofs4_fill_super, mnt);
+	struct autofs_sb_info *sbi;
+	int ret;
+
+	ret = get_sb_nodev(fs_type, flags, data, autofs4_fill_super, mnt);
+	if (ret)
+		return ret;
+
+	sbi = autofs4_sbi(mnt->mnt_sb);
+	sbi->mnt = mnt;
+	return 0;
 }
 
 static struct file_system_type autofs_fs_type = {
