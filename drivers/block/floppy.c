@@ -249,8 +249,8 @@ static int irqdma_allocated;
 #include <linux/completion.h>
 
 static struct request *current_req;
-static struct request_queue *floppy_queue;
 static void do_fd_request(struct request_queue * q);
+static int set_next_request(void);
 
 #ifndef fd_get_dma_residue
 #define fd_get_dma_residue() get_dma_residue(FLOPPY_DMA)
@@ -412,6 +412,7 @@ static struct gendisk *disks[N_DRIVE];
 static struct block_device *opened_bdev[N_DRIVE];
 static DEFINE_MUTEX(open_lock);
 static struct floppy_raw_cmd *raw_cmd, default_raw_cmd;
+static int fdc_queue;
 
 /*
  * This struct defines the different floppy types.
@@ -931,8 +932,8 @@ static inline void unlock_fdc(void)
 	del_timer(&fd_timeout);
 	cont = NULL;
 	clear_bit(0, &fdc_busy);
-	if (current_req || blk_peek_request(floppy_queue))
-		do_fd_request(floppy_queue);
+	if (current_req || set_next_request())
+		do_fd_request(current_req->q);
 	spin_unlock_irqrestore(&floppy_lock, flags);
 	wake_up(&fdc_wait);
 }
@@ -2316,8 +2317,8 @@ static void floppy_end_request(struct request *req, int error)
  * logical buffer */
 static void request_done(int uptodate)
 {
-	struct request_queue *q = floppy_queue;
 	struct request *req = current_req;
+	struct request_queue *q;
 	unsigned long flags;
 	int block;
 
@@ -2328,6 +2329,8 @@ static void request_done(int uptodate)
 		printk("floppy.c: no request in request_done\n");
 		return;
 	}
+
+	q = req->q;
 
 	if (uptodate) {
 		/* maintain values for invalidation on geometry
@@ -2897,6 +2900,32 @@ static int make_raw_rw_request(void)
 	return 2;
 }
 
+/*
+ * Round-robin between our available drives, doing one request from each
+ */
+static int set_next_request(void)
+{
+	struct request_queue *q;
+	int old_pos = fdc_queue;
+
+	spin_lock_irq(&floppy_lock);
+
+	old_pos = fdc_queue;
+	do {
+		q = disks[fdc_queue]->queue;
+		if (++fdc_queue == N_DRIVE)
+			fdc_queue = 0;
+		if (q) {
+			current_req = blk_fetch_request(q);
+			if (current_req)
+				break;
+		}
+	} while (fdc_queue != old_pos);
+
+	spin_unlock_irq(&floppy_lock);
+	return current_req != NULL;
+}
+
 static void redo_fd_request(void)
 {
 #define REPEAT {request_done(0); continue; }
@@ -2909,17 +2938,17 @@ static void redo_fd_request(void)
 
 	for (;;) {
 		if (!current_req) {
-			struct request *req;
+			int pending;
 
-			spin_lock_irq(floppy_queue->queue_lock);
-			req = blk_fetch_request(floppy_queue);
-			spin_unlock_irq(floppy_queue->queue_lock);
-			if (!req) {
+			spin_lock_irq(&floppy_lock);
+			pending = set_next_request();
+			spin_unlock_irq(&floppy_lock);
+
+			if (!pending) {
 				do_floppy = NULL;
 				unlock_fdc();
 				return;
 			}
-			current_req = req;
 		}
 		drive = (long)current_req->rq_disk->private_data;
 		set_fdc(drive);
@@ -4200,6 +4229,13 @@ static int __init floppy_init(void)
 			goto out_put_disk;
 		}
 
+		disks[dr]->queue = blk_init_queue(do_fd_request, &floppy_lock);
+		if (!disks[dr]->queue) {
+			err = -ENOMEM;
+			goto out_put_disk;
+		}
+
+		blk_queue_max_sectors(disks[dr]->queue, 64);
 		disks[dr]->major = FLOPPY_MAJOR;
 		disks[dr]->first_minor = TOMINOR(dr);
 		disks[dr]->fops = &floppy_fops;
@@ -4217,13 +4253,6 @@ static int __init floppy_init(void)
 	err = platform_driver_register(&floppy_driver);
 	if (err)
 		goto out_unreg_blkdev;
-
-	floppy_queue = blk_init_queue(do_fd_request, &floppy_lock);
-	if (!floppy_queue) {
-		err = -ENOMEM;
-		goto out_unreg_driver;
-	}
-	blk_queue_max_sectors(floppy_queue, 64);
 
 	blk_register_region(MKDEV(FLOPPY_MAJOR, 0), 256, THIS_MODULE,
 			    floppy_find, NULL, NULL);
@@ -4351,7 +4380,6 @@ static int __init floppy_init(void)
 
 		/* to be cleaned up... */
 		disks[drive]->private_data = (void *)(long)drive;
-		disks[drive]->queue = floppy_queue;
 		disks[drive]->flags |= GENHD_FL_REMOVABLE;
 		disks[drive]->driverfs_dev = &floppy_device[drive].dev;
 		add_disk(disks[drive]);
@@ -4367,8 +4395,6 @@ out_flush_work:
 		floppy_release_irq_and_dma();
 out_unreg_region:
 	blk_unregister_region(MKDEV(FLOPPY_MAJOR, 0), 256);
-	blk_cleanup_queue(floppy_queue);
-out_unreg_driver:
 	platform_driver_unregister(&floppy_driver);
 out_unreg_blkdev:
 	unregister_blkdev(FLOPPY_MAJOR, "fd");
@@ -4376,6 +4402,8 @@ out_put_disk:
 	while (dr--) {
 		del_timer(&motor_off_timer[dr]);
 		put_disk(disks[dr]);
+		if (disks[dr]->queue)
+			blk_cleanup_queue(disks[dr]->queue);
 	}
 	return err;
 }
@@ -4602,11 +4630,11 @@ static void __exit floppy_module_exit(void)
 			platform_device_unregister(&floppy_device[drive]);
 		}
 		put_disk(disks[drive]);
+		blk_cleanup_queue(disks[drive]->queue);
 	}
 
 	del_timer_sync(&fd_timeout);
 	del_timer_sync(&fd_timer);
-	blk_cleanup_queue(floppy_queue);
 
 	if (usage_count)
 		floppy_release_irq_and_dma();
