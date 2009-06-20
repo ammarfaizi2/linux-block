@@ -1,5 +1,6 @@
 /*
  * k8temp.c - Linux kernel module for hardware monitoring
+ * 	      for AMD K8 and derivatives
  *
  * Copyright (C) 2006 Rudolf Marek <r.marek@assembler.cz>
  *
@@ -33,7 +34,7 @@
 #include <linux/mutex.h>
 #include <asm/processor.h>
 
-#define TEMP_FROM_REG(val)	(((((val) >> 16) & 0xff) - 49) * 1000)
+#define REG_TCTL	0xa4
 #define REG_TEMP	0xe4
 #define SEL_PLACE	0x40
 #define SEL_CORE	0x04
@@ -52,6 +53,14 @@ struct k8temp_data {
 	u32 temp_offset;
 };
 
+static unsigned long temp_from_reg(unsigned long val)
+{
+	if (boot_cpu_data.x86 > 0xf)
+		return ((val) >> 21) * 125;
+	else
+		return ((((val) >> 16) & 0xff) - 49) * 1000;
+}
+
 static struct k8temp_data *k8temp_update_device(struct device *dev)
 {
 	struct k8temp_data *data = dev_get_drvdata(dev);
@@ -62,6 +71,11 @@ static struct k8temp_data *k8temp_update_device(struct device *dev)
 
 	if (!data->valid
 	    || time_after(jiffies, data->last_updated + HZ)) {
+		if (boot_cpu_data.x86 > 0xf) {
+			pci_read_config_dword(pdev, REG_TCTL,
+					      &data->temp[0][0]);
+			goto update_done;
+		}
 		pci_read_config_byte(pdev, REG_TEMP, &tmp);
 		tmp &= ~(SEL_PLACE | SEL_CORE);		/* Select sensor 0, core0 */
 		pci_write_config_byte(pdev, REG_TEMP, tmp);
@@ -89,6 +103,7 @@ static struct k8temp_data *k8temp_update_device(struct device *dev)
 			}
 		}
 
+update_done:
 		data->last_updated = jiffies;
 		data->valid = 1;
 	}
@@ -123,7 +138,7 @@ static ssize_t show_temp(struct device *dev,
 	if (data->swap_core_select)
 		core = core ? 0 : 1;
 
-	temp = TEMP_FROM_REG(data->temp[core][place]) + data->temp_offset;
+	temp = temp_from_reg(data->temp[core][place]) + data->temp_offset;
 
 	return sprintf(buf, "%d\n", temp);
 }
@@ -138,6 +153,14 @@ static DEVICE_ATTR(name, S_IRUGO, show_name, NULL);
 
 static struct pci_device_id k8temp_ids[] = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_K8_NB_MISC) },
+	/*
+	 * AMD 10H cpus reports Inaccurate Temperature Measurement :
+	 * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41322.pdf
+	 *     Errata #319
+	 * So skipping 10H
+	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_10H_NB_MISC) },
+	 */
+	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_11H_NB_MISC) },
 	{ 0 },
 };
 
@@ -156,6 +179,9 @@ static int __devinit k8temp_probe(struct pci_dev *pdev,
 		err = -ENOMEM;
 		goto exit;
 	}
+
+	if (boot_cpu_data.x86 > 0xf)
+		goto probe_done;
 
 	model = boot_cpu_data.x86_model;
 	stepping = boot_cpu_data.x86_mask;
@@ -226,6 +252,7 @@ static int __devinit k8temp_probe(struct pci_dev *pdev,
 			data->sensorsp &= ~SEL_CORE;
 	}
 
+probe_done:
 	data->name = "k8temp";
 	mutex_init(&data->update_lock);
 	dev_set_drvdata(&pdev->dev, data);
