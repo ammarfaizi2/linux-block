@@ -679,9 +679,9 @@ unsigned int ata_sff_data_xfer_noirq(struct ata_queued_cmd *qc, unsigned char *b
 	unsigned long flags;
 	unsigned int consumed;
 
-	local_irq_save(flags);
+	local_irq_save_nort(flags);
 	consumed = ata_sff_data_xfer32(qc, buf, buflen, rw);
-	local_irq_restore(flags);
+	local_irq_restore_nort(flags);
 
 	return consumed;
 }
@@ -720,7 +720,7 @@ static void ata_pio_sector(struct ata_queued_cmd *qc)
 		unsigned long flags;
 
 		/* FIXME: use a bounce buffer */
-		local_irq_save(flags);
+		local_irq_save_nort(flags);
 		buf = kmap_atomic(page);
 
 		/* do the actual data transfer */
@@ -728,7 +728,7 @@ static void ata_pio_sector(struct ata_queued_cmd *qc)
 				       do_write);
 
 		kunmap_atomic(buf);
-		local_irq_restore(flags);
+		local_irq_restore_nort(flags);
 	} else {
 		buf = page_address(page);
 		ap->ops->sff_data_xfer(qc, buf + offset, qc->sect_size,
@@ -865,7 +865,7 @@ next_sg:
 		unsigned long flags;
 
 		/* FIXME: use bounce buffer */
-		local_irq_save(flags);
+		local_irq_save_nort(flags);
 		buf = kmap_atomic(page);
 
 		/* do the actual data transfer */
@@ -873,7 +873,7 @@ next_sg:
 								count, rw);
 
 		kunmap_atomic(buf);
-		local_irq_restore(flags);
+		local_irq_restore_nort(flags);
 	} else {
 		buf = page_address(page);
 		consumed = ap->ops->sff_data_xfer(qc, buf + offset,
