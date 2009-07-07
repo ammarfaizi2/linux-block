@@ -620,6 +620,9 @@ static int handsfreerpga_event(struct snd_soc_dapm_widget *w,
 
 static void headset_ramp(struct snd_soc_codec *codec, int ramp)
 {
+	struct snd_soc_device *socdev = codec->socdev;
+	struct twl4030_setup_data *setup = socdev->codec_data;
+
 	unsigned char hs_gain, hs_pop;
 	struct twl4030_priv *twl4030 = codec->private_data;
 	/* Base values for ramp delay calculation: 2^19 - 2^26 */
@@ -629,6 +632,17 @@ static void headset_ramp(struct snd_soc_codec *codec, int ramp)
 	hs_gain = twl4030_read_reg_cache(codec, TWL4030_REG_HS_GAIN_SET);
 	hs_pop = twl4030_read_reg_cache(codec, TWL4030_REG_HS_POPN_SET);
 
+	/* Enable external mute control, this dramatically reduces
+	 * the pop-noise */
+	if (setup && setup->hs_extmute) {
+		if (setup->set_hs_extmute) {
+			setup->set_hs_extmute(1);
+		} else {
+			hs_pop |= TWL4030_EXTMUTE;
+			twl4030_write(codec, TWL4030_REG_HS_POPN_SET, hs_pop);
+		}
+	}
+
 	if (ramp) {
 		/* Headset ramp-up according to the TRM */
 		hs_pop |= TWL4030_VMID_EN;
@@ -636,6 +650,9 @@ static void headset_ramp(struct snd_soc_codec *codec, int ramp)
 		twl4030_write(codec, TWL4030_REG_HS_GAIN_SET, hs_gain);
 		hs_pop |= TWL4030_RAMP_EN;
 		twl4030_write(codec, TWL4030_REG_HS_POPN_SET, hs_pop);
+		/* Wait ramp delay time + 1, so the VMID can settle */
+		mdelay((ramp_base[(hs_pop & TWL4030_RAMP_DELAY) >> 2] /
+			twl4030->sysclk) + 1);
 	} else {
 		/* Headset ramp-down _not_ according to
 		 * the TRM, but in a way that it is working */
@@ -651,6 +668,16 @@ static void headset_ramp(struct snd_soc_codec *codec, int ramp)
 
 		hs_pop &= ~TWL4030_VMID_EN;
 		twl4030_write(codec, TWL4030_REG_HS_POPN_SET, hs_pop);
+	}
+
+	/* Disable external mute */
+	if (setup && setup->hs_extmute) {
+		if (setup->set_hs_extmute) {
+			setup->set_hs_extmute(0);
+		} else {
+			hs_pop &= ~TWL4030_EXTMUTE;
+			twl4030_write(codec, TWL4030_REG_HS_POPN_SET, hs_pop);
+		}
 	}
 }
 
@@ -1822,6 +1849,19 @@ static int twl4030_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	return 0;
 }
 
+static int twl4030_set_tristate(struct snd_soc_dai *dai, int tristate)
+{
+	struct snd_soc_codec *codec = dai->codec;
+	u8 reg = twl4030_read_reg_cache(codec, TWL4030_REG_AUDIO_IF);
+
+	if (tristate)
+		reg |= TWL4030_AIF_TRI_EN;
+	else
+		reg &= ~TWL4030_AIF_TRI_EN;
+
+	return twl4030_write(codec, TWL4030_REG_AUDIO_IF, reg);
+}
+
 /* In case of voice mode, the RX1 L(VRX) for downlink and the TX2 L/R
  * (VTXL, VTXR) for uplink has to be enabled/disabled. */
 static void twl4030_voice_enable(struct snd_soc_codec *codec, int direction,
@@ -1996,6 +2036,19 @@ static int twl4030_voice_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	return 0;
 }
 
+static int twl4030_voice_set_tristate(struct snd_soc_dai *dai, int tristate)
+{
+	struct snd_soc_codec *codec = dai->codec;
+	u8 reg = twl4030_read_reg_cache(codec, TWL4030_REG_VOICE_IF);
+
+	if (tristate)
+		reg |= TWL4030_VIF_TRI_EN;
+	else
+		reg &= ~TWL4030_VIF_TRI_EN;
+
+	return twl4030_write(codec, TWL4030_REG_VOICE_IF, reg);
+}
+
 #define TWL4030_RATES	 (SNDRV_PCM_RATE_8000_48000)
 #define TWL4030_FORMATS	 (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FORMAT_S24_LE)
 
@@ -2005,6 +2058,7 @@ static struct snd_soc_dai_ops twl4030_dai_ops = {
 	.hw_params	= twl4030_hw_params,
 	.set_sysclk	= twl4030_set_dai_sysclk,
 	.set_fmt	= twl4030_set_dai_fmt,
+	.set_tristate	= twl4030_set_tristate,
 };
 
 static struct snd_soc_dai_ops twl4030_dai_voice_ops = {
@@ -2013,6 +2067,7 @@ static struct snd_soc_dai_ops twl4030_dai_voice_ops = {
 	.hw_params	= twl4030_voice_hw_params,
 	.set_sysclk	= twl4030_voice_set_dai_sysclk,
 	.set_fmt	= twl4030_voice_set_dai_fmt,
+	.set_tristate	= twl4030_voice_set_tristate,
 };
 
 struct snd_soc_dai twl4030_dai[] = {
