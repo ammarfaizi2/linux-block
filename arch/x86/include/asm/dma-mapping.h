@@ -139,4 +139,20 @@ static inline void dma_free_coherent(struct device *dev, size_t size,
 		ops->free_coherent(dev, size, vaddr, bus);
 }
 
+#define ARCH_HAS_DMA_MMAP_COHERENT
+static inline int dma_mmap_coherent(struct device *dev,
+				    struct vm_area_struct *vma,
+				    void *cpu_addr, dma_addr_t handle,
+				    size_t size)
+{
+	struct dma_map_ops *ops = get_dma_ops(dev);
+	unsigned long pfn;
+
+	if (ops->mmap_coherent)
+		return ops->mmap_coherent(dev, vma, cpu_addr, handle, size);
+	pfn = page_to_pfn(virt_to_page(cpu_addr));
+	return remap_pfn_range(vma, vma->vm_start, pfn + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
+}
+
 #endif
