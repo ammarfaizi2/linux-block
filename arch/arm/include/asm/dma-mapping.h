@@ -157,6 +157,7 @@ extern void *dma_alloc_coherent(struct device *, size_t, dma_addr_t *, gfp_t);
  */
 extern void dma_free_coherent(struct device *, size_t, void *, dma_addr_t);
 
+#define ARCH_HAS_DMA_MMAP_COHERENT
 /**
  * dma_mmap_coherent - map a coherent DMA allocation into user space
  * @dev: valid struct device pointer, or NULL for ISA and EISA-like devices
