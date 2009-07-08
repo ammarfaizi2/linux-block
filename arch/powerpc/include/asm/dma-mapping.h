@@ -105,6 +105,10 @@ struct dma_mapping_ops {
 				struct scatterlist *sg, int nelems,
 				enum dma_data_direction direction);
 #endif
+	int		(*mmap_coherent)(struct device *hwdev,
+					 struct vm_area_struct *vma,
+					 void *cpu_addr, dma_addr_t dma_handle,
+					 size_t size);
 };
 
 /*
@@ -414,6 +418,24 @@ static inline void dma_sync_single_range_for_device(struct device *dev,
 {
 }
 #endif
+
+#define ARCH_HAS_DMA_MMAP_COHERENT
+static inline int dma_mmap_coherent(struct device *dev,
+				    struct vm_area_struct *vma,
+				    void *cpu_addr, dma_addr_t dma_handle,
+				    size_t size)
+{
+	struct dma_mapping_ops *dma_ops = get_dma_ops(dev);
+
+	BUG_ON(!dma_ops);
+
+	if (dma_ops->mmap_coherent)
+		return dma_ops->mmap_coherent(dev, vma, cpu_addr, dma_handle,
+					      size);
+	else
+		return dma_direct_ops.mmap_coherent(dev, vma, cpu_addr,
+						    dma_handle, size);
+}
 
 static inline int dma_mapping_error(struct device *dev, dma_addr_t dma_addr)
 {

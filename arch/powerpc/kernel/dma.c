@@ -140,6 +140,26 @@ static inline void dma_direct_sync_single_range(struct device *dev,
 }
 #endif
 
+static int dma_direct_mmap_coherent(struct device *dev,
+				    struct vm_area_struct *vma,
+				    void *cpu_addr, dma_addr_t dma_handle,
+				    size_t size)
+{
+	unsigned long pfn;
+#ifdef CONFIG_NOT_COHERENT_CACHE
+	dma_handle -= get_dma_direct_offset(dev);
+	/* assume dma_handle set via pfn_to_phys() in
+	 * mm/dma-noncoherent.c
+	 */
+	pfn = dma_handle >> PAGE_SHIFT;
+#else
+	pfn = page_to_pfn(virt_to_page(cpu_addr));
+#endif
+	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+	return remap_pfn_range(vma, vma->vm_start, pfn + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
+}
+
 struct dma_mapping_ops dma_direct_ops = {
 	.alloc_coherent	= dma_direct_alloc_coherent,
 	.free_coherent	= dma_direct_free_coherent,
@@ -154,5 +174,6 @@ struct dma_mapping_ops dma_direct_ops = {
 	.sync_sg_for_cpu 		= dma_direct_sync_sg,
 	.sync_sg_for_device 		= dma_direct_sync_sg,
 #endif
+	.mmap_coherent	= dma_direct_mmap_coherent,
 };
 EXPORT_SYMBOL(dma_direct_ops);
