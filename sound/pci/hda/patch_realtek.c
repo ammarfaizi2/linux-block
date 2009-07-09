@@ -7166,9 +7166,6 @@ static struct hda_verb alc882_targa_verbs[] = {
 	{0x1b, AC_VERB_SET_CONNECT_SEL, 0x00}, /* HP */
 
 	{0x14, AC_VERB_SET_UNSOLICITED_ENABLE, ALC880_HP_EVENT | AC_USRSP_EN},
-	{0x01, AC_VERB_SET_GPIO_MASK, 0x03},
-	{0x01, AC_VERB_SET_GPIO_DIRECTION, 0x03},
-	{0x01, AC_VERB_SET_GPIO_DATA, 0x03},
 	{ } /* end */
 };
 
@@ -8691,7 +8688,8 @@ static struct alc_config_preset alc882_presets[] = {
 	},
 	[ALC883_TARGA_DIG] = {
 		.mixers = { alc883_targa_mixer, alc883_chmode_mixer },
-		.init_verbs = { alc883_init_verbs, alc883_targa_verbs},
+		.init_verbs = { alc883_init_verbs, alc880_gpio3_init_verbs,
+				alc883_targa_verbs},
 		.num_dacs = ARRAY_SIZE(alc883_dac_nids),
 		.dac_nids = alc883_dac_nids,
 		.dig_out_nid = ALC883_DIGOUT_NID,
@@ -8704,7 +8702,8 @@ static struct alc_config_preset alc882_presets[] = {
 	},
 	[ALC883_TARGA_2ch_DIG] = {
 		.mixers = { alc883_targa_2ch_mixer},
-		.init_verbs = { alc883_init_verbs, alc883_targa_verbs},
+		.init_verbs = { alc883_init_verbs, alc880_gpio3_init_verbs,
+				alc883_targa_verbs},
 		.num_dacs = ARRAY_SIZE(alc883_dac_nids),
 		.dac_nids = alc883_dac_nids,
 		.adc_nids = alc883_adc_nids_alt,
