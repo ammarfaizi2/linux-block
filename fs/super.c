@@ -126,6 +126,7 @@ static inline void destroy_super(struct super_block *s)
 #ifdef CONFIG_SMP
 	free_percpu(s->s_files);
 #endif
+	BUG_ON(s->s_hard_readonly_users);
 	security_sb_free(s);
 	kfree(s->s_subtype);
 	kfree(s->s_options);
@@ -577,6 +578,9 @@ int do_remount_sb(struct super_block *sb, int flags, void *data, int force)
 			return -EBUSY;
 	}
 
+	if (!(flags & MS_RDONLY) && sb->s_hard_readonly_users)
+		return -EROFS;
+
 	if (sb->s_op->remount_fs) {
 		retval = sb->s_op->remount_fs(sb, &flags, data);
 		if (retval)
@@ -962,6 +966,10 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void 
 	 */
 	WARN((mnt->mnt_sb->s_maxbytes < 0), "%s set sb->s_maxbytes to "
 		"negative value (%lld)\n", type->name, mnt->mnt_sb->s_maxbytes);
+
+	error = -EROFS;
+	if (!(flags & MS_RDONLY) && mnt->mnt_sb->s_hard_readonly_users)
+		goto out_sb;
 
 	mnt->mnt_mountpoint = mnt->mnt_root;
 	mnt->mnt_parent = mnt;

@@ -1388,6 +1388,13 @@ struct super_block {
 	 * generic_show_options()
 	 */
 	char *s_options;
+
+	/*
+	 * Number of mounts requiring that the underlying file system
+	 * never transition to read-write.  Protected by s_umount.
+	 * Decremented by free_vfsmnt() if MNT_HARD_READONLY is set.
+	 */
+	int s_hard_readonly_users;
 };
 
 extern struct timespec current_fs_time(struct super_block *sb);
