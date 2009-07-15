@@ -997,6 +997,9 @@ static int dapm_power_widgets(struct snd_soc_codec *codec, int event)
 			pr_err("Failed to apply active bias: %d\n", ret);
 	}
 
+	pop_dbg(codec->pop_time, "DAPM sequencing finished, waiting %dms\n",
+		codec->pop_time);
+
 	return 0;
 }
 
@@ -1290,8 +1293,8 @@ static int snd_soc_dapm_add_route(struct snd_soc_codec *codec,
 	if (wsink->id == snd_soc_dapm_input) {
 		if (wsource->id == snd_soc_dapm_micbias ||
 			wsource->id == snd_soc_dapm_mic ||
-			wsink->id == snd_soc_dapm_line ||
-			wsink->id == snd_soc_dapm_output)
+			wsource->id == snd_soc_dapm_line ||
+			wsource->id == snd_soc_dapm_output)
 			wsink->ext = 1;
 	}
 	if (wsource->id == snd_soc_dapm_output) {
