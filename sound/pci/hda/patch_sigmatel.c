@@ -4796,7 +4796,8 @@ static int patch_stac9200(struct hda_codec *codec)
 							stac9200_models,
 							stac9200_cfg_tbl);
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for STAC9200, using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 					 stac9200_brd_tbl[spec->board_config]);
@@ -4868,8 +4869,8 @@ static int patch_stac925x(struct hda_codec *codec)
 							stac925x_cfg_tbl);
  again:
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for STAC925x,"
-				      "using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 					 stac925x_brd_tbl[spec->board_config]);
@@ -4951,8 +4952,8 @@ static int patch_stac92hd73xx(struct hda_codec *codec)
 							stac92hd73xx_cfg_tbl);
 again:
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for"
-			" STAC92HD73XX, using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 				stac92hd73xx_brd_tbl[spec->board_config]);
@@ -5127,8 +5128,8 @@ static int patch_stac92hd83xxx(struct hda_codec *codec)
 							stac92hd83xxx_cfg_tbl);
 again:
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for"
-			" STAC92HD83XXX, using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 				stac92hd83xxx_brd_tbl[spec->board_config]);
@@ -5293,8 +5294,8 @@ static int patch_stac92hd71bxx(struct hda_codec *codec)
 							stac92hd71bxx_cfg_tbl);
 again:
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for"
-			" STAC92HD71BXX, using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 				stac92hd71bxx_brd_tbl[spec->board_config]);
@@ -5549,8 +5550,8 @@ static int patch_stac922x(struct hda_codec *codec)
 
  again:
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for STAC922x, "
-			"using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 				stac922x_brd_tbl[spec->board_config]);
@@ -5612,8 +5613,8 @@ static int patch_stac927x(struct hda_codec *codec)
 							stac927x_cfg_tbl);
  again:
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for"
-			    "STAC927x, using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 				stac927x_brd_tbl[spec->board_config]);
@@ -5740,7 +5741,8 @@ static int patch_stac9205(struct hda_codec *codec)
 							stac9205_cfg_tbl);
  again:
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for STAC9205, using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 					 stac9205_brd_tbl[spec->board_config]);
@@ -5892,8 +5894,8 @@ static int patch_stac9872(struct hda_codec *codec)
 							stac9872_models,
 							stac9872_cfg_tbl);
 	if (spec->board_config < 0)
-		snd_printdd(KERN_INFO "hda_codec: Unknown model for STAC9872, "
-			    "using BIOS defaults\n");
+		snd_printdd(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
+			    codec->chip_name);
 	else
 		stac92xx_set_config_regs(codec,
 					 stac9872_brd_tbl[spec->board_config]);
