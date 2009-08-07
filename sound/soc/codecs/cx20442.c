@@ -138,9 +138,7 @@ static int cx20442_pm_to_v253_vls(u8 value)
 	case 0:
 		return V253_VLS_T;
 	case (1 << CX20442_SPKOUT):
-		return V253_VLS_S1;
 	case (1 << CX20442_MIC):
-		return V253_VLS_M1;
 	case (1 << CX20442_SPKOUT) | (1 << CX20442_MIC):
 		return V253_VLS_M1S1;
 	case (1 << CX20442_TELOUT):
@@ -203,6 +201,7 @@ static int cx20442_write(struct snd_soc_codec *codec, unsigned int reg,
 	if (unlikely(len > (ARRAY_SIZE(buf) - 1)))
 		return -ENOMEM;
 
+	dev_dbg(codec->dev, "%s: %s\n", __func__, buf);
 	if (codec->hw_write(codec->control_data, buf, len) != len)
 		return -EIO;
 
