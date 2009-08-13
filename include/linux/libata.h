@@ -37,6 +37,7 @@
 #include <scsi/scsi_host.h>
 #include <linux/acpi.h>
 #include <linux/cdrom.h>
+#include <linux/blk-iopoll.h>
 
 /*
  * Define if arch has non-standard setup.  This is a _PCI_ standard
@@ -779,6 +780,7 @@ struct ata_port {
 #endif
 	/* owned by EH */
 	u8			sector_buf[ATA_SECT_SIZE] ____cacheline_aligned;
+	struct blk_iopoll	iopoll;
 };
 
 /* The following initializer overrides a method to NULL whether one of
