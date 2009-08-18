@@ -99,11 +99,23 @@ static const struct snd_soc_dapm_widget ad1938_dapm_widgets[] = {
 	SND_SOC_DAPM_DAC("DAC", "Playback", AD1938_DAC_CTRL0, 0, 1),
 	SND_SOC_DAPM_ADC("ADC", "Capture", SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_SUPPLY("ADC_PWR", AD1938_ADC_CTRL0, 0, 1, NULL, 0),
+	SND_SOC_DAPM_OUTPUT("DAC1OUT"),
+	SND_SOC_DAPM_OUTPUT("DAC2OUT"),
+	SND_SOC_DAPM_OUTPUT("DAC3OUT"),
+	SND_SOC_DAPM_OUTPUT("DAC4OUT"),
+	SND_SOC_DAPM_INPUT("ADC1IN"),
+	SND_SOC_DAPM_INPUT("ADC2IN"),
 };
 
 static const struct snd_soc_dapm_route audio_paths[] = {
 	{ "DAC", NULL, "ADC_PWR" },
 	{ "ADC", NULL, "ADC_PWR" },
+	{ "DAC1OUT", "DAC1 Switch", "DAC" },
+	{ "DAC2OUT", "DAC2 Switch", "DAC" },
+	{ "DAC3OUT", "DAC3 Switch", "DAC" },
+	{ "DAC4OUT", "DAC4 Switch", "DAC" },
+	{ "ADC", "ADC1 Switch", "ADC1IN" },
+	{ "ADC", "ADC2 Switch", "ADC2IN" },
 };
 
 /*
@@ -444,7 +456,7 @@ static int __devexit ad1938_spi_remove(struct spi_device *spi)
 
 static struct spi_driver ad1938_spi_driver = {
 	.driver = {
-		.name	= "ad1938-spi",
+		.name	= "ad1938",
 		.bus	= &spi_bus_type,
 		.owner	= THIS_MODULE,
 	},
@@ -531,6 +543,7 @@ static int ad1938_register(struct ad1938_priv *ad1938)
 	ret = snd_soc_register_codec(codec);
 	if (ret != 0) {
 		dev_err(codec->dev, "Failed to register codec: %d\n", ret);
+		kfree(ad1938);
 		return ret;
 	}
 
@@ -538,6 +551,7 @@ static int ad1938_register(struct ad1938_priv *ad1938)
 	if (ret != 0) {
 		dev_err(codec->dev, "Failed to register DAI: %d\n", ret);
 		snd_soc_unregister_codec(codec);
+		kfree(ad1938);
 		return ret;
 	}
 

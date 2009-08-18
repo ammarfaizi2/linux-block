@@ -64,15 +64,15 @@ static int dapm_up_seq[] = {
 	[snd_soc_dapm_pga] = 7,
 	[snd_soc_dapm_adc] = 8,
 	[snd_soc_dapm_hp] = 9,
-	[snd_soc_dapm_spk] = 10,
-	[snd_soc_dapm_post] = 11,
+	[snd_soc_dapm_spk] = 9,
+	[snd_soc_dapm_post] = 10,
 };
 
 static int dapm_down_seq[] = {
 	[snd_soc_dapm_pre] = 0,
 	[snd_soc_dapm_adc] = 1,
 	[snd_soc_dapm_hp] = 2,
-	[snd_soc_dapm_spk] = 3,
+	[snd_soc_dapm_spk] = 2,
 	[snd_soc_dapm_pga] = 4,
 	[snd_soc_dapm_mixer_named_ctl] = 5,
 	[snd_soc_dapm_mixer] = 5,
@@ -962,6 +962,22 @@ static int dapm_power_widgets(struct snd_soc_codec *codec, int event)
 				dapm_seq_insert(w, &down_list, dapm_down_seq);
 
 			w->power = power;
+			break;
+		}
+	}
+
+	/* If there are no DAPM widgets then try to figure out power from the
+	 * event type.
+	 */
+	if (list_empty(&codec->dapm_widgets)) {
+		switch (event) {
+		case SND_SOC_DAPM_STREAM_START:
+		case SND_SOC_DAPM_STREAM_RESUME:
+			sys_power = 1;
+			break;
+		case SND_SOC_DAPM_STREAM_NOP:
+			sys_power = codec->bias_level != SND_SOC_BIAS_STANDBY;
+		default:
 			break;
 		}
 	}
