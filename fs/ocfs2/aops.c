@@ -668,11 +668,7 @@ static int ocfs2_releasepage(struct page *page, gfp_t wait)
 	return jbd2_journal_try_to_free_buffers(journal, page, wait);
 }
 
-static ssize_t ocfs2_direct_IO(int rw,
-			       struct kiocb *iocb,
-			       const struct iovec *iov,
-			       loff_t offset,
-			       unsigned long nr_segs)
+static ssize_t ocfs2_direct_IO(struct kiocb *iocb, struct dio_args *args)
 {
 	struct file *file = iocb->ki_filp;
 	struct inode *inode = file->f_path.dentry->d_inode->i_mapping->host;
@@ -687,9 +683,8 @@ static ssize_t ocfs2_direct_IO(int rw,
 	if (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL)
 		return 0;
 
-	ret = blockdev_direct_IO_no_locking(rw, iocb, inode,
-					    inode->i_sb->s_bdev, iov, offset,
-					    nr_segs, 
+	ret = blockdev_direct_IO_no_locking(iocb, inode,
+					    inode->i_sb->s_bdev, args,
 					    ocfs2_direct_IO_get_blocks,
 					    ocfs2_dio_end_io);
 

@@ -1532,11 +1532,8 @@ xfs_end_io_direct(
 
 STATIC ssize_t
 xfs_vm_direct_IO(
-	int			rw,
 	struct kiocb		*iocb,
-	const struct iovec	*iov,
-	loff_t			offset,
-	unsigned long		nr_segs)
+	struct dio_args		*args)
 {
 	struct file	*file = iocb->ki_filp;
 	struct inode	*inode = file->f_mapping->host;
@@ -1545,18 +1542,14 @@ xfs_vm_direct_IO(
 
 	bdev = xfs_find_bdev_for_inode(XFS_I(inode));
 
-	if (rw == WRITE) {
+	if (args->rw == WRITE) {
 		iocb->private = xfs_alloc_ioend(inode, IOMAP_UNWRITTEN);
-		ret = blockdev_direct_IO_own_locking(rw, iocb, inode,
-			bdev, iov, offset, nr_segs,
-			xfs_get_blocks_direct,
-			xfs_end_io_direct);
+		ret = blockdev_direct_IO_own_locking(iocb, inode, bdev, args,
+				xfs_get_blocks_direct, xfs_end_io_direct);
 	} else {
 		iocb->private = xfs_alloc_ioend(inode, IOMAP_READ);
-		ret = blockdev_direct_IO_no_locking(rw, iocb, inode,
-			bdev, iov, offset, nr_segs,
-			xfs_get_blocks_direct,
-			xfs_end_io_direct);
+		ret = blockdev_direct_IO_no_locking(iocb, inode,
+			bdev, args, xfs_get_blocks_direct, xfs_end_io_direct);
 	}
 
 	if (unlikely(ret != -EIOCBQUEUED && iocb->private))

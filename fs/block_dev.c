@@ -166,14 +166,13 @@ blkdev_get_blocks(struct inode *inode, sector_t iblock,
 }
 
 static ssize_t
-blkdev_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
-			loff_t offset, unsigned long nr_segs)
+blkdev_direct_IO(struct kiocb *iocb, struct dio_args *args)
 {
 	struct file *file = iocb->ki_filp;
 	struct inode *inode = file->f_mapping->host;
 
-	return blockdev_direct_IO_no_locking(rw, iocb, inode, I_BDEV(inode),
-				iov, offset, nr_segs, blkdev_get_blocks, NULL);
+	return blockdev_direct_IO_no_locking(iocb, inode, I_BDEV(inode),
+				args, blkdev_get_blocks, NULL);
 }
 
 int __sync_blockdev(struct block_device *bdev, int wait)

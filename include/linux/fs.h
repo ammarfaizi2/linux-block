@@ -560,6 +560,7 @@ typedef struct {
 typedef int (*read_actor_t)(read_descriptor_t *, struct page *,
 		unsigned long, unsigned long);
 
+struct dio_args;
 struct address_space_operations {
 	int (*writepage)(struct page *page, struct writeback_control *wbc);
 	int (*readpage)(struct file *, struct page *);
@@ -585,8 +586,7 @@ struct address_space_operations {
 	sector_t (*bmap)(struct address_space *, sector_t);
 	void (*invalidatepage) (struct page *, unsigned long);
 	int (*releasepage) (struct page *, gfp_t);
-	ssize_t (*direct_IO)(int, struct kiocb *, const struct iovec *iov,
-			loff_t offset, unsigned long nr_segs);
+	ssize_t (*direct_IO)(struct kiocb *, struct dio_args *);
 	int (*get_xip_mem)(struct address_space *, pgoff_t, int,
 						void **, unsigned long *);
 	/* migrate the contents of a page to the specified target */
@@ -2241,10 +2241,24 @@ static inline int xip_truncate_page(struct address_space *mapping, loff_t from)
 #endif
 
 #ifdef CONFIG_BLOCK
-ssize_t __blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
-	struct block_device *bdev, const struct iovec *iov, loff_t offset,
-	unsigned long nr_segs, get_block_t get_block, dio_iodone_t end_io,
-	int lock_type);
+
+/*
+ * Arguments passwed to aops->direct_IO()
+ */
+struct dio_args {
+	int rw;
+	const struct iovec *iov;
+	unsigned long length;
+	loff_t offset;
+	unsigned long nr_segs;
+};
+
+ssize_t __blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
+	struct block_device *bdev, struct dio_args *args, get_block_t get_block,
+	dio_iodone_t end_io, int lock_type);
+
+ssize_t generic_file_direct_IO(int, struct address_space *, struct kiocb *,
+				const struct iovec *, loff_t, unsigned long);
 
 enum {
 	DIO_LOCKING = 1, /* need locking between buffered and direct access */
@@ -2252,31 +2266,28 @@ enum {
 	DIO_OWN_LOCKING, /* filesystem locks buffered and direct internally */
 };
 
-static inline ssize_t blockdev_direct_IO(int rw, struct kiocb *iocb,
-	struct inode *inode, struct block_device *bdev, const struct iovec *iov,
-	loff_t offset, unsigned long nr_segs, get_block_t get_block,
-	dio_iodone_t end_io)
+static inline ssize_t blockdev_direct_IO(struct kiocb *iocb,
+	struct inode *inode, struct block_device *bdev, struct dio_args *args,
+	get_block_t get_block, dio_iodone_t end_io)
 {
-	return __blockdev_direct_IO(rw, iocb, inode, bdev, iov, offset,
-				nr_segs, get_block, end_io, DIO_LOCKING);
+	return __blockdev_direct_IO(iocb, inode, bdev, args,
+					get_block, end_io, DIO_LOCKING);
 }
 
-static inline ssize_t blockdev_direct_IO_no_locking(int rw, struct kiocb *iocb,
-	struct inode *inode, struct block_device *bdev, const struct iovec *iov,
-	loff_t offset, unsigned long nr_segs, get_block_t get_block,
-	dio_iodone_t end_io)
+static inline ssize_t blockdev_direct_IO_no_locking(struct kiocb *iocb,
+	struct inode *inode, struct block_device *bdev, struct dio_args *args,
+	get_block_t get_block, dio_iodone_t end_io)
 {
-	return __blockdev_direct_IO(rw, iocb, inode, bdev, iov, offset,
-				nr_segs, get_block, end_io, DIO_NO_LOCKING);
+	return __blockdev_direct_IO(iocb, inode, bdev, args,
+					get_block, end_io, DIO_NO_LOCKING);
 }
 
-static inline ssize_t blockdev_direct_IO_own_locking(int rw, struct kiocb *iocb,
-	struct inode *inode, struct block_device *bdev, const struct iovec *iov,
-	loff_t offset, unsigned long nr_segs, get_block_t get_block,
-	dio_iodone_t end_io)
+static inline ssize_t blockdev_direct_IO_own_locking(struct kiocb *iocb,
+	struct inode *inode, struct block_device *bdev, struct dio_args *args,
+	get_block_t get_block, dio_iodone_t end_io)
 {
-	return __blockdev_direct_IO(rw, iocb, inode, bdev, iov, offset,
-				nr_segs, get_block, end_io, DIO_OWN_LOCKING);
+	return __blockdev_direct_IO(iocb, inode, bdev, args,
+					get_block, end_io, DIO_OWN_LOCKING);
 }
 #endif
 

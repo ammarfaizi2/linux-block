@@ -4315,9 +4315,7 @@ out:
 	return em;
 }
 
-static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
-			const struct iovec *iov, loff_t offset,
-			unsigned long nr_segs)
+static ssize_t btrfs_direct_IO(struct kiocb *iocb, struct dio_args *args)
 {
 	return -EINVAL;
 }

@@ -1345,8 +1345,9 @@ generic_file_aio_read(struct kiocb *iocb, const struct iovec *iov,
 			retval = filemap_write_and_wait_range(mapping, pos,
 					pos + iov_length(iov, nr_segs) - 1);
 			if (!retval) {
-				retval = mapping->a_ops->direct_IO(READ, iocb,
-							iov, pos, nr_segs);
+				retval = generic_file_direct_IO(READ, mapping,
+								iocb, iov,
+								pos, nr_segs);
 			}
 			if (retval > 0)
 				*ppos = pos + retval;
@@ -2144,7 +2145,8 @@ generic_file_direct_write(struct kiocb *iocb, const struct iovec *iov,
 		}
 	}
 
-	written = mapping->a_ops->direct_IO(WRITE, iocb, iov, pos, *nr_segs);
+	written = generic_file_direct_IO(WRITE, mapping, iocb, iov, pos,
+						*nr_segs);
 
 	/*
 	 * Finally, try again to invalidate clean pages which might have been

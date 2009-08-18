@@ -929,14 +929,14 @@ out:
  * Releases both i_mutex and i_alloc_sem
  */
 static ssize_t
-direct_io_worker(int rw, struct kiocb *iocb, struct inode *inode, 
-	const struct iovec *iov, loff_t offset, unsigned long nr_segs, 
-	unsigned blkbits, get_block_t get_block, dio_iodone_t end_io,
-	struct dio *dio)
+direct_io_worker(struct kiocb *iocb, struct inode *inode, 
+	struct dio_args *args, unsigned blkbits, get_block_t get_block,
+	dio_iodone_t end_io, struct dio *dio)
 {
-	unsigned long user_addr; 
+	const struct iovec *iov = args->iov;
+	unsigned long user_addr;
 	unsigned long flags;
-	int seg;
+	int seg, rw = args->rw;
 	ssize_t ret = 0;
 	ssize_t ret2;
 	size_t bytes;
@@ -945,7 +945,7 @@ direct_io_worker(int rw, struct kiocb *iocb, struct inode *inode,
 	dio->rw = rw;
 	dio->blkbits = blkbits;
 	dio->blkfactor = inode->i_blkbits - blkbits;
-	dio->block_in_file = offset >> blkbits;
+	dio->block_in_file = args->offset >> blkbits;
 
 	dio->get_block = get_block;
 	dio->end_io = end_io;
@@ -965,14 +965,14 @@ direct_io_worker(int rw, struct kiocb *iocb, struct inode *inode,
 	if (unlikely(dio->blkfactor))
 		dio->pages_in_io = 2;
 
-	for (seg = 0; seg < nr_segs; seg++) {
-		user_addr = (unsigned long)iov[seg].iov_base;
+	for (seg = 0; seg < args->nr_segs; seg++) {
+		user_addr = (unsigned long) iov[seg].iov_base;
 		dio->pages_in_io +=
 			((user_addr+iov[seg].iov_len +PAGE_SIZE-1)/PAGE_SIZE
 				- user_addr/PAGE_SIZE);
 	}
 
-	for (seg = 0; seg < nr_segs; seg++) {
+	for (seg = 0; seg < args->nr_segs; seg++) {
 		user_addr = (unsigned long)iov[seg].iov_base;
 		dio->size += bytes = iov[seg].iov_len;
 
@@ -1076,7 +1076,7 @@ direct_io_worker(int rw, struct kiocb *iocb, struct inode *inode,
 	spin_unlock_irqrestore(&dio->bio_lock, flags);
 
 	if (ret2 == 0) {
-		ret = dio_complete(dio, offset, ret);
+		ret = dio_complete(dio, args->offset, ret);
 		kfree(dio);
 	} else
 		BUG_ON(ret != -EIOCBQUEUED);
@@ -1106,10 +1106,9 @@ direct_io_worker(int rw, struct kiocb *iocb, struct inode *inode,
  * Additional i_alloc_sem locking requirements described inline below.
  */
 ssize_t
-__blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
-	struct block_device *bdev, const struct iovec *iov, loff_t offset, 
-	unsigned long nr_segs, get_block_t get_block, dio_iodone_t end_io,
-	int dio_lock_type)
+__blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
+	struct block_device *bdev, struct dio_args *args, get_block_t get_block,
+	dio_iodone_t end_io, int dio_lock_type)
 {
 	int seg;
 	size_t size;
@@ -1118,10 +1117,11 @@ __blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 	unsigned bdev_blkbits = 0;
 	unsigned blocksize_mask = (1 << blkbits) - 1;
 	ssize_t retval = -EINVAL;
-	loff_t end = offset;
+	loff_t end = args->offset;
 	struct dio *dio;
 	int release_i_mutex = 0;
 	int acquire_i_mutex = 0;
+	int rw = args->rw;
 
 	if (rw & WRITE)
 		rw = WRITE_ODIRECT;
@@ -1129,18 +1129,18 @@ __blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 	if (bdev)
 		bdev_blkbits = blksize_bits(bdev_logical_block_size(bdev));
 
-	if (offset & blocksize_mask) {
+	if (args->offset & blocksize_mask) {
 		if (bdev)
 			 blkbits = bdev_blkbits;
 		blocksize_mask = (1 << blkbits) - 1;
-		if (offset & blocksize_mask)
+		if (args->offset & blocksize_mask)
 			goto out;
 	}
 
 	/* Check the memory alignment.  Blocks cannot straddle pages */
-	for (seg = 0; seg < nr_segs; seg++) {
-		addr = (unsigned long)iov[seg].iov_base;
-		size = iov[seg].iov_len;
+	for (seg = 0; seg < args->nr_segs; seg++) {
+		addr = (unsigned long) args->iov[seg].iov_base;
+		size = args->iov[seg].iov_len;
 		end += size;
 		if ((addr & blocksize_mask) || (size & blocksize_mask))  {
 			if (bdev)
@@ -1168,7 +1168,7 @@ __blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 	dio->lock_type = dio_lock_type;
 	if (dio_lock_type != DIO_NO_LOCKING) {
 		/* watch out for a 0 len io from a tricksy fs */
-		if (rw == READ && end > offset) {
+		if (rw == READ && end > args->offset) {
 			struct address_space *mapping;
 
 			mapping = iocb->ki_filp->f_mapping;
@@ -1177,8 +1177,8 @@ __blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 				release_i_mutex = 1;
 			}
 
-			retval = filemap_write_and_wait_range(mapping, offset,
-							      end - 1);
+			retval = filemap_write_and_wait_range(mapping,
+							args->offset, end - 1);
 			if (retval) {
 				kfree(dio);
 				goto out;
@@ -1204,8 +1204,8 @@ __blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 	dio->is_async = !is_sync_kiocb(iocb) && !((rw & WRITE) &&
 		(end > i_size_read(inode)));
 
-	retval = direct_io_worker(rw, iocb, inode, iov, offset,
-				nr_segs, blkbits, get_block, end_io, dio);
+	retval = direct_io_worker(iocb, inode, args, blkbits, get_block, end_io,
+					dio);
 
 	/*
 	 * In case of error extending write may have instantiated a few
@@ -1231,3 +1231,21 @@ out:
 	return retval;
 }
 EXPORT_SYMBOL(__blockdev_direct_IO);
+
+ssize_t generic_file_direct_IO(int rw, struct address_space *mapping,
+			       struct kiocb *iocb, const struct iovec *iov,
+			       loff_t offset, unsigned long nr_segs)
+{
+	struct dio_args args = {
+		.rw		= rw,
+		.iov		= iov,
+		.length		= iov_length(iov, nr_segs),
+		.offset		= offset,
+		.nr_segs	= nr_segs,
+	};
+
+	if (mapping->a_ops->direct_IO)
+		return mapping->a_ops->direct_IO(iocb, &args);
+
+	return -EINVAL;
+}
