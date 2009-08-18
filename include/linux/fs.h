@@ -2247,18 +2247,27 @@ static inline int xip_truncate_page(struct address_space *mapping, loff_t from)
  */
 struct dio_args {
 	int rw;
-	const struct iovec *iov;
+	struct page **pages;
+	unsigned int first_page_off;
+	unsigned long nr_segs;
 	unsigned long length;
 	loff_t offset;
-	unsigned long nr_segs;
+
+	/*
+	 * Original user pointer, we'll get rid of this
+	 */
+	unsigned long user_addr;
 };
 
 ssize_t __blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	struct block_device *bdev, struct dio_args *args, get_block_t get_block,
 	dio_iodone_t end_io, int lock_type);
 
+typedef ssize_t (dio_io_actor)(struct kiocb *, struct dio_args *);
+
 ssize_t generic_file_direct_IO(int, struct address_space *, struct kiocb *,
-				const struct iovec *, loff_t, unsigned long);
+				const struct iovec *, loff_t, unsigned long,
+				dio_io_actor);
 
 enum {
 	DIO_LOCKING = 1, /* need locking between buffered and direct access */

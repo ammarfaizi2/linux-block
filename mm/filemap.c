@@ -1346,8 +1346,8 @@ generic_file_aio_read(struct kiocb *iocb, const struct iovec *iov,
 					pos + iov_length(iov, nr_segs) - 1);
 			if (!retval) {
 				retval = generic_file_direct_IO(READ, mapping,
-								iocb, iov,
-								pos, nr_segs);
+						iocb, iov, pos, nr_segs,
+						mapping->a_ops->direct_IO);
 			}
 			if (retval > 0)
 				*ppos = pos + retval;
@@ -2146,7 +2146,7 @@ generic_file_direct_write(struct kiocb *iocb, const struct iovec *iov,
 	}
 
 	written = generic_file_direct_IO(WRITE, mapping, iocb, iov, pos,
-						*nr_segs);
+					*nr_segs, mapping->a_ops->direct_IO);
 
 	/*
 	 * Finally, try again to invalidate clean pages which might have been

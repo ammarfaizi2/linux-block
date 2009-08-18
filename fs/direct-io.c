@@ -38,12 +38,6 @@
 #include <asm/atomic.h>
 
 /*
- * How many user pages to map in one call to get_user_pages().  This determines
- * the size of a structure on the stack.
- */
-#define DIO_PAGES	64
-
-/*
  * This code generally works in units of "dio_blocks".  A dio_block is
  * somewhere between the hard sector size and the filesystem block size.  it
  * is determined on a per-invocation basis.   When talking to the filesystem
@@ -105,20 +99,13 @@ struct dio {
 	sector_t cur_page_block;	/* Where it starts */
 
 	/*
-	 * Page fetching state. These variables belong to dio_refill_pages().
-	 */
-	int curr_page;			/* changes */
-	int total_pages;		/* doesn't change */
-	unsigned long curr_user_address;/* changes */
-
-	/*
 	 * Page queue.  These variables belong to dio_refill_pages() and
 	 * dio_get_page().
 	 */
-	struct page *pages[DIO_PAGES];	/* page buffer */
-	unsigned head;			/* next page to process */
-	unsigned tail;			/* last valid page + 1 */
-	int page_errors;		/* errno from get_user_pages() */
+	struct page **pages;		/* page buffer */
+	unsigned int head_page;		/* next page to process */
+	unsigned int total_pages;	/* last valid page + 1 */
+	unsigned int first_page_off;	/* offset into first page in map */
 
 	/* BIO completion state */
 	spinlock_t bio_lock;		/* protects BIO fields below */
@@ -134,57 +121,6 @@ struct dio {
 };
 
 /*
- * How many pages are in the queue?
- */
-static inline unsigned dio_pages_present(struct dio *dio)
-{
-	return dio->tail - dio->head;
-}
-
-/*
- * Go grab and pin some userspace pages.   Typically we'll get 64 at a time.
- */
-static int dio_refill_pages(struct dio *dio)
-{
-	int ret;
-	int nr_pages;
-
-	nr_pages = min(dio->total_pages - dio->curr_page, DIO_PAGES);
-	ret = get_user_pages_fast(
-		dio->curr_user_address,		/* Where from? */
-		nr_pages,			/* How many pages? */
-		dio->rw == READ,		/* Write to memory? */
-		&dio->pages[0]);		/* Put results here */
-
-	if (ret < 0 && dio->blocks_available && (dio->rw & WRITE)) {
-		struct page *page = ZERO_PAGE(0);
-		/*
-		 * A memory fault, but the filesystem has some outstanding
-		 * mapped blocks.  We need to use those blocks up to avoid
-		 * leaking stale data in the file.
-		 */
-		if (dio->page_errors == 0)
-			dio->page_errors = ret;
-		page_cache_get(page);
-		dio->pages[0] = page;
-		dio->head = 0;
-		dio->tail = 1;
-		ret = 0;
-		goto out;
-	}
-
-	if (ret >= 0) {
-		dio->curr_user_address += ret * PAGE_SIZE;
-		dio->curr_page += ret;
-		dio->head = 0;
-		dio->tail = ret;
-		ret = 0;
-	}
-out:
-	return ret;	
-}
-
-/*
  * Get another userspace page.  Returns an ERR_PTR on error.  Pages are
  * buffered inside the dio so that we can call get_user_pages() against a
  * decent number of pages, less frequently.  To provide nicer use of the
@@ -192,15 +128,10 @@ out:
  */
 static struct page *dio_get_page(struct dio *dio)
 {
-	if (dio_pages_present(dio) == 0) {
-		int ret;
+	if (dio->head_page < dio->total_pages)
+		return dio->pages[dio->head_page++];
 
-		ret = dio_refill_pages(dio);
-		if (ret)
-			return ERR_PTR(ret);
-		BUG_ON(dio_pages_present(dio) == 0);
-	}
-	return dio->pages[dio->head++];
+	return NULL;
 }
 
 /**
@@ -244,8 +175,6 @@ static int dio_complete(struct dio *dio, loff_t offset, int ret)
 		/* lockdep: non-owner release */
 		up_read_non_owner(&dio->inode->i_alloc_sem);
 
-	if (ret == 0)
-		ret = dio->page_errors;
 	if (ret == 0)
 		ret = dio->io_error;
 	if (ret == 0)
@@ -351,8 +280,10 @@ static void dio_bio_submit(struct dio *dio)
  */
 static void dio_cleanup(struct dio *dio)
 {
-	while (dio_pages_present(dio))
-		page_cache_release(dio_get_page(dio));
+	struct page *page;
+
+	while ((page = dio_get_page(dio)) != NULL)
+		page_cache_release(page);
 }
 
 /*
@@ -490,7 +421,6 @@ static int dio_bio_reap(struct dio *dio)
  */
 static int get_more_blocks(struct dio *dio)
 {
-	int ret;
 	struct buffer_head *map_bh = &dio->map_bh;
 	sector_t fs_startblk;	/* Into file, in filesystem-sized blocks */
 	unsigned long fs_count;	/* Number of filesystem-sized blocks */
@@ -502,38 +432,33 @@ static int get_more_blocks(struct dio *dio)
 	 * If there was a memory error and we've overwritten all the
 	 * mapped blocks then we can now return that memory error
 	 */
-	ret = dio->page_errors;
-	if (ret == 0) {
-		BUG_ON(dio->block_in_file >= dio->final_block_in_request);
-		fs_startblk = dio->block_in_file >> dio->blkfactor;
-		dio_count = dio->final_block_in_request - dio->block_in_file;
-		fs_count = dio_count >> dio->blkfactor;
-		blkmask = (1 << dio->blkfactor) - 1;
-		if (dio_count & blkmask)	
-			fs_count++;
+	BUG_ON(dio->block_in_file >= dio->final_block_in_request);
+	fs_startblk = dio->block_in_file >> dio->blkfactor;
+	dio_count = dio->final_block_in_request - dio->block_in_file;
+	fs_count = dio_count >> dio->blkfactor;
+	blkmask = (1 << dio->blkfactor) - 1;
+	if (dio_count & blkmask)
+		fs_count++;
 
-		map_bh->b_state = 0;
-		map_bh->b_size = fs_count << dio->inode->i_blkbits;
+	map_bh->b_state = 0;
+	map_bh->b_size = fs_count << dio->inode->i_blkbits;
 
-		create = dio->rw & WRITE;
-		if (dio->lock_type == DIO_LOCKING) {
-			if (dio->block_in_file < (i_size_read(dio->inode) >>
-							dio->blkbits))
-				create = 0;
-		} else if (dio->lock_type == DIO_NO_LOCKING) {
+	create = dio->rw & WRITE;
+	if (dio->lock_type == DIO_LOCKING) {
+		if (dio->block_in_file < (i_size_read(dio->inode) >>
+						dio->blkbits))
 			create = 0;
-		}
-
-		/*
-		 * For writes inside i_size we forbid block creations: only
-		 * overwrites are permitted.  We fall back to buffered writes
-		 * at a higher level for inside-i_size block-instantiating
-		 * writes.
-		 */
-		ret = (*dio->get_block)(dio->inode, fs_startblk,
-						map_bh, create);
+	} else if (dio->lock_type == DIO_NO_LOCKING) {
+		create = 0;
 	}
-	return ret;
+
+	/*
+	 * For writes inside i_size we forbid block creations: only
+	 * overwrites are permitted.  We fall back to buffered writes
+	 * at a higher level for inside-i_size block-instantiating
+	 * writes.
+	 */
+	return dio->get_block(dio->inode, fs_startblk, map_bh, create);
 }
 
 /*
@@ -567,8 +492,8 @@ static int dio_bio_add_page(struct dio *dio)
 {
 	int ret;
 
-	ret = bio_add_page(dio->bio, dio->cur_page,
-			dio->cur_page_len, dio->cur_page_offset);
+	ret = bio_add_page(dio->bio, dio->cur_page, dio->cur_page_len,
+				dio->cur_page_offset);
 	if (ret == dio->cur_page_len) {
 		/*
 		 * Decrement count only, if we are done with this page
@@ -804,6 +729,9 @@ static int do_direct_IO(struct dio *dio)
 			unsigned this_chunk_blocks;	/* # of blocks */
 			unsigned u;
 
+			offset_in_page += dio->first_page_off;
+			dio->first_page_off = 0;
+
 			if (dio->blocks_available == 0) {
 				/*
 				 * Need to go and map some more disk
@@ -933,13 +861,10 @@ direct_io_worker(struct kiocb *iocb, struct inode *inode,
 	struct dio_args *args, unsigned blkbits, get_block_t get_block,
 	dio_iodone_t end_io, struct dio *dio)
 {
-	const struct iovec *iov = args->iov;
-	unsigned long user_addr;
 	unsigned long flags;
-	int seg, rw = args->rw;
+	int rw = args->rw;
 	ssize_t ret = 0;
 	ssize_t ret2;
-	size_t bytes;
 
 	dio->inode = inode;
 	dio->rw = rw;
@@ -965,46 +890,25 @@ direct_io_worker(struct kiocb *iocb, struct inode *inode,
 	if (unlikely(dio->blkfactor))
 		dio->pages_in_io = 2;
 
-	for (seg = 0; seg < args->nr_segs; seg++) {
-		user_addr = (unsigned long) iov[seg].iov_base;
-		dio->pages_in_io +=
-			((user_addr+iov[seg].iov_len +PAGE_SIZE-1)/PAGE_SIZE
-				- user_addr/PAGE_SIZE);
-	}
+	dio->pages_in_io += args->nr_segs;
+	dio->size = args->length;
+	if (args->user_addr) {
+		dio->first_page_off = args->user_addr & ~PAGE_MASK;
+		dio->first_block_in_page = dio->first_page_off >> blkbits;
+		if (dio->first_block_in_page)
+			dio->first_page_off -= 1 << blkbits;
+	} else
+		dio->first_page_off = args->first_page_off;
 
-	for (seg = 0; seg < args->nr_segs; seg++) {
-		user_addr = (unsigned long)iov[seg].iov_base;
-		dio->size += bytes = iov[seg].iov_len;
+	dio->final_block_in_request = dio->block_in_file + (dio->size >> blkbits);
+	dio->head_page = 0;
+	dio->total_pages = args->nr_segs;
 
-		/* Index into the first page of the first block */
-		dio->first_block_in_page = (user_addr & ~PAGE_MASK) >> blkbits;
-		dio->final_block_in_request = dio->block_in_file +
-						(bytes >> blkbits);
-		/* Page fetching state */
-		dio->head = 0;
-		dio->tail = 0;
-		dio->curr_page = 0;
+	ret = do_direct_IO(dio);
 
-		dio->total_pages = 0;
-		if (user_addr & (PAGE_SIZE-1)) {
-			dio->total_pages++;
-			bytes -= PAGE_SIZE - (user_addr & (PAGE_SIZE - 1));
-		}
-		dio->total_pages += (bytes + PAGE_SIZE - 1) / PAGE_SIZE;
-		dio->curr_user_address = user_addr;
-	
-		ret = do_direct_IO(dio);
-
-		dio->result += iov[seg].iov_len -
+	dio->result += args->length -
 			((dio->final_block_in_request - dio->block_in_file) <<
 					blkbits);
-
-		if (ret) {
-			dio_cleanup(dio);
-			break;
-		}
-	} /* end iovec loop */
-
 	if (ret == -ENOTBLK && (rw & WRITE)) {
 		/*
 		 * The remaining part of the request will be
@@ -1110,9 +1014,6 @@ __blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	struct block_device *bdev, struct dio_args *args, get_block_t get_block,
 	dio_iodone_t end_io, int dio_lock_type)
 {
-	int seg;
-	size_t size;
-	unsigned long addr;
 	unsigned blkbits = inode->i_blkbits;
 	unsigned bdev_blkbits = 0;
 	unsigned blocksize_mask = (1 << blkbits) - 1;
@@ -1138,23 +1039,22 @@ __blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	}
 
 	/* Check the memory alignment.  Blocks cannot straddle pages */
-	for (seg = 0; seg < args->nr_segs; seg++) {
-		addr = (unsigned long) args->iov[seg].iov_base;
-		size = args->iov[seg].iov_len;
-		end += size;
-		if ((addr & blocksize_mask) || (size & blocksize_mask))  {
-			if (bdev)
-				 blkbits = bdev_blkbits;
-			blocksize_mask = (1 << blkbits) - 1;
-			if ((addr & blocksize_mask) || (size & blocksize_mask))  
-				goto out;
-		}
+	if ((args->user_addr & blocksize_mask) ||
+	    (args->length & blocksize_mask))  {
+		if (bdev)
+			 blkbits = bdev_blkbits;
+		blocksize_mask = (1 << blkbits) - 1;
+		if ((args->user_addr & blocksize_mask) ||
+		    (args->length & blocksize_mask))
+			goto out;
 	}
 
 	dio = kzalloc(sizeof(*dio), GFP_KERNEL);
 	retval = -ENOMEM;
 	if (!dio)
 		goto out;
+
+	dio->pages = args->pages;
 
 	/*
 	 * For block device access DIO_NO_LOCKING is used,
@@ -1232,20 +1132,70 @@ out:
 }
 EXPORT_SYMBOL(__blockdev_direct_IO);
 
-ssize_t generic_file_direct_IO(int rw, struct address_space *mapping,
-			       struct kiocb *iocb, const struct iovec *iov,
-			       loff_t offset, unsigned long nr_segs)
+static ssize_t __generic_file_direct_IO(int rw, struct address_space *mapping,
+					struct kiocb *iocb,
+					const struct iovec *iov, loff_t offset,
+					dio_io_actor *actor)
 {
+	struct page *stack_pages[UIO_FASTIOV];
+	unsigned long nr_pages, start, end;
 	struct dio_args args = {
-		.rw		= rw,
-		.iov		= iov,
-		.length		= iov_length(iov, nr_segs),
+		.pages		= stack_pages,
+		.length		= iov->iov_len,
+		.user_addr	= (unsigned long) iov->iov_base,
 		.offset		= offset,
-		.nr_segs	= nr_segs,
 	};
+	ssize_t ret;
 
-	if (mapping->a_ops->direct_IO)
-		return mapping->a_ops->direct_IO(iocb, &args);
+	end = (args.user_addr + iov->iov_len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	start = args.user_addr >> PAGE_SHIFT;
+	nr_pages = end - start;
 
-	return -EINVAL;
+	if (nr_pages >= UIO_FASTIOV) {
+		args.pages = kzalloc(nr_pages * sizeof(struct page *),
+					GFP_KERNEL);
+		if (!args.pages)
+			return -ENOMEM;
+	}
+
+	ret = get_user_pages_fast(args.user_addr, nr_pages, rw == READ,
+					args.pages);
+	if (ret > 0) {
+		args.nr_segs = ret;
+		ret = actor(iocb, &args);
+	}
+
+	if (args.pages != stack_pages)
+		kfree(args.pages);
+
+	return ret;
 }
+
+/*
+ * Transform the iov into a page based structure for passing into the lower
+ * parts of O_DIRECT handling
+ */
+ssize_t generic_file_direct_IO(int rw, struct address_space *mapping,
+			       struct kiocb *kiocb, const struct iovec *iov,
+			       loff_t offset, unsigned long nr_segs,
+			       dio_io_actor *actor)
+{
+	ssize_t ret = 0, ret2;
+	unsigned long i;
+
+	for (i = 0; i < nr_segs; i++) {
+		ret2 = __generic_file_direct_IO(rw, mapping, kiocb, iov, offset,
+							actor);
+		if (ret2 < 0) {
+			if (!ret)
+				ret = ret2;
+			break;
+		}
+		iov++;
+		offset += ret2;
+		ret += ret2;
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(generic_file_direct_IO);
