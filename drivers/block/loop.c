@@ -82,6 +82,9 @@ static DEFINE_MUTEX(loop_devices_mutex);
 
 static int max_part;
 static int part_shift;
+static int odirect = 1;
+
+#define LOOP_MAX_DIRECT_SEGMENTS	32
 
 /*
  * Transfer functions
@@ -199,6 +202,124 @@ lo_do_transfer(struct loop_device *lo, int cmd,
 		return 0;
 
 	return lo->transfer(lo, cmd, rpage, roffs, lpage, loffs, size, rblock);
+}
+
+static int direct_fill_pages(struct bio *bio, struct page **pages)
+{
+	unsigned int i, pidx = 0;
+	struct bio_vec *bvec;
+
+	bio_for_each_segment(bvec, bio, i)
+		pages[pidx++] = bvec->bv_page;
+
+	return pidx;
+}
+
+/*
+ * Use the O_DIRECT IO path for this read
+ */
+static int lo_direct_read(struct loop_device *lo, struct bio *bio, loff_t pos)
+{
+	struct file *file = lo->lo_backing_file;
+	struct address_space *mapping = file->f_mapping;
+	struct inode *inode = mapping->host;
+	struct page *pages[LOOP_MAX_DIRECT_SEGMENTS];
+	struct kiocb iocb;
+	loff_t size;
+	int ret = 0;
+	struct dio_args args = {
+		.rw		= READ,
+		.pages		= pages,
+		.length		= bio->bi_size,
+		.user_addr	= 0,
+		.offset		= pos,
+	};
+
+	init_sync_kiocb(&iocb, file);
+	iocb.ki_pos = pos;
+	iocb.ki_left = bio->bi_size;
+	kiocbSetKernel(&iocb);
+
+	args.nr_segs = direct_fill_pages(bio, pages);
+	args.first_page_off = bio->bi_io_vec[0].bv_offset;
+
+	size = i_size_read(inode);
+	if (pos >= size)
+		return 0;
+
+	ret = filemap_write_and_wait_range(mapping, pos, pos + bio->bi_size-1);
+	if (ret)
+		return ret;
+
+	ret = mapping->a_ops->direct_IO(&iocb, &args);
+	if (ret > 0) {
+		file_accessed(file);
+		ret = 0;
+	}
+
+	return ret;
+}
+
+/*
+ * Use the O_DIRECT IO path for this write
+ */
+static int lo_direct_write(struct loop_device *lo, struct bio *bio, loff_t pos)
+{
+	struct file *file = lo->lo_backing_file;
+	struct address_space *mapping = file->f_mapping;
+	struct inode *inode = mapping->host;
+	struct page *pages[LOOP_MAX_DIRECT_SEGMENTS];
+	struct kiocb iocb;
+	int ret = 0;
+	pgoff_t end;
+	struct dio_args args = {
+		.rw		= WRITE,
+		.pages		= pages,
+		.length		= bio->bi_size,
+		.user_addr	= 0,
+		.offset		= pos,
+	};
+
+	ret = filemap_write_and_wait_range(mapping, pos, pos + bio->bi_size-1);
+	if (ret)
+		goto out;
+
+	end = (pos + bio->bi_size - 1) >> PAGE_CACHE_SHIFT;
+	if (mapping->nrpages) {
+		ret = invalidate_inode_pages2_range(mapping,
+						pos >> PAGE_CACHE_SHIFT, end);
+		if (ret) {
+			if (ret == -EBUSY)
+				ret = 0;
+			goto out;
+		}
+	}
+
+	init_sync_kiocb(&iocb, file);
+	iocb.ki_pos = pos;
+	iocb.ki_left = bio->bi_size;
+	kiocbSetKernel(&iocb);
+
+	args.nr_segs = direct_fill_pages(bio, pages);
+	args.first_page_off = bio->bi_io_vec[0].bv_offset;
+
+	ret = mapping->a_ops->direct_IO(&iocb, &args);
+
+	if (mapping->nrpages) {
+		invalidate_inode_pages2_range(mapping,
+					pos >> PAGE_CACHE_SHIFT, end);
+	}
+
+	if (ret > 0) {
+		loff_t end = pos + ret;
+		if (end > i_size_read(inode) && !S_ISBLK(inode->i_mode)) {
+			i_size_write(inode, end);
+			mark_inode_dirty(inode);
+		}
+		ret = 0;
+	}
+out:
+	return ret;
 }
 
 /**
@@ -347,6 +468,9 @@ static int lo_send(struct loop_device *lo, struct bio *bio, loff_t pos)
 	struct page *page = NULL;
 	int i, ret = 0;
 
+	if (lo->lo_flags & LO_FLAGS_ODIRECT)
+		return lo_direct_write(lo, bio, pos);
+
 	do_lo_send = do_lo_send_aops;
 	if (!(lo->lo_flags & LO_FLAGS_USE_AOPS)) {
 		do_lo_send = do_lo_send_direct_write;
@@ -457,6 +581,9 @@ lo_receive(struct loop_device *lo, struct bio *bio, int bsize, loff_t pos)
 {
 	struct bio_vec *bvec;
 	int i, ret = 0;
+
+	if (lo->lo_flags & LO_FLAGS_ODIRECT)
+		return lo_direct_read(lo, bio, pos);
 
 	bio_for_each_segment(bvec, bio, i) {
 		ret = do_lo_receive(lo, bvec, bsize, pos);
@@ -784,7 +911,11 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
 	if (S_ISREG(inode->i_mode) || S_ISBLK(inode->i_mode)) {
 		const struct address_space_operations *aops = mapping->a_ops;
 
-		if (aops->write_begin)
+		if (odirect) {
+			if (!aops->direct_IO)
+				goto out_putf;
+			lo_flags |= LO_FLAGS_ODIRECT;
+		} else if (aops->write_begin)
 			lo_flags |= LO_FLAGS_USE_AOPS;
 		if (!(lo_flags & LO_FLAGS_USE_AOPS) && !file->f_op->write)
 			lo_flags |= LO_FLAGS_READ_ONLY;
@@ -831,6 +962,10 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
 
 	if (!(lo_flags & LO_FLAGS_READ_ONLY) && file->f_op->fsync)
 		blk_queue_ordered(lo->lo_queue, QUEUE_ORDERED_DRAIN, NULL);
+	if (odirect) {
+		blk_queue_max_phys_segments(lo->lo_queue, LOOP_MAX_DIRECT_SEGMENTS);
+		blk_queue_max_hw_segments(lo->lo_queue, LOOP_MAX_DIRECT_SEGMENTS);
+	}
 
 	set_capacity(lo->lo_disk, size);
 	bd_set_size(bdev, size << 9);
@@ -1456,6 +1591,8 @@ module_param(max_loop, int, 0);
 MODULE_PARM_DESC(max_loop, "Maximum number of loop devices");
 module_param(max_part, int, 0);
 MODULE_PARM_DESC(max_part, "Maximum number of partitions per loop device");
+module_param(odirect, int, 0);
+MODULE_PARM_DESC(odirect, "Use O_DIRECT for IO");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_BLOCKDEV_MAJOR(LOOP_MAJOR);
 
