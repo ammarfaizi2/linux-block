@@ -117,6 +117,7 @@ struct dio {
 	struct kiocb *iocb;		/* kiocb */
 	int is_async;			/* is IO async ? */
 	int io_error;			/* IO error in completion path */
+	int is_kernel;
 	ssize_t result;                 /* IO result */
 };
 
@@ -336,13 +337,21 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
 
 	if (dio->is_async && dio->rw == READ) {
 		bio_check_pages_dirty(bio);	/* transfers ownership */
-	} else {
+	} else if (!dio->is_kernel) {
 		for (page_no = 0; page_no < bio->bi_vcnt; page_no++) {
 			struct page *page = bvec[page_no].bv_page;
 
 			if (dio->rw == READ && !PageCompound(page))
 				set_page_dirty_lock(page);
 			page_cache_release(page);
+		}
+		bio_put(bio);
+	} else {
+		for (page_no = 0; page_no < bio->bi_vcnt; page_no++) {
+			struct page *page = bvec[page_no].bv_page;
+
+			if (!dio->io_error)
+				SetPageUptodate(page);
 		}
 		bio_put(bio);
 	}
@@ -1103,6 +1112,7 @@ __blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	 */
 	dio->is_async = !is_sync_kiocb(iocb) && !((rw & WRITE) &&
 		(end > i_size_read(inode)));
+	dio->is_kernel = kiocbIsKernel(iocb);
 
 	retval = direct_io_worker(iocb, inode, args, blkbits, get_block, end_io,
 					dio);
