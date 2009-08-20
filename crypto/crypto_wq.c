@@ -20,7 +20,7 @@ EXPORT_SYMBOL_GPL(kcrypto_wq);
 
 static int __init crypto_wq_init(void)
 {
-	kcrypto_wq = create_workqueue("crypto");
+	kcrypto_wq = create_lazy_workqueue("crypto");
 	if (unlikely(!kcrypto_wq))
 		return -ENOMEM;
 	return 0;
