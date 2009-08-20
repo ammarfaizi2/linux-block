@@ -165,12 +165,17 @@ struct execute_work {
 
 
 extern struct workqueue_struct *
-__create_workqueue_key(const char *name, int singlethread,
-		       int freezeable, int rt, struct lock_class_key *key,
-		       const char *lock_name);
+__create_workqueue_key(const char *name, unsigned int flags,
+		       struct lock_class_key *key, const char *lock_name);
+
+enum {
+	WQ_F_SINGLETHREAD	= 1,
+	WQ_F_FREEZABLE		= 2,
+	WQ_F_RT			= 4,
+};
 
 #ifdef CONFIG_LOCKDEP
-#define __create_workqueue(name, singlethread, freezeable, rt)	\
+#define __create_workqueue(name, flags)				\
 ({								\
 	static struct lock_class_key __key;			\
 	const char *__lock_name;				\
@@ -180,20 +185,19 @@ __create_workqueue_key(const char *name, int singlethread,
 	else							\
 		__lock_name = #name;				\
 								\
-	__create_workqueue_key((name), (singlethread),		\
-			       (freezeable), (rt), &__key,	\
-			       __lock_name);			\
+	__create_workqueue_key((name), (flags), &__key, __lock_name);	\
 })
 #else
-#define __create_workqueue(name, singlethread, freezeable, rt)	\
-	__create_workqueue_key((name), (singlethread), (freezeable), (rt), \
-			       NULL, NULL)
+#define __create_workqueue(name, flags)				\
+	__create_workqueue_key((name), (flags), NULL, NULL)
 #endif
 
-#define create_workqueue(name) __create_workqueue((name), 0, 0, 0)
-#define create_rt_workqueue(name) __create_workqueue((name), 0, 0, 1)
-#define create_freezeable_workqueue(name) __create_workqueue((name), 1, 1, 0)
-#define create_singlethread_workqueue(name) __create_workqueue((name), 1, 0, 0)
+#define create_workqueue(name)		__create_workqueue((name), 0)
+#define create_rt_workqueue(name)	__create_workqueue((name), WQ_F_RT)
+#define create_freezeable_workqueue(name)	\
+	__create_workqueue((name), WQ_F_SINGLETHREAD | WQ_F_FREEZABLE)
+#define create_singlethread_workqueue(name)	\
+	__create_workqueue((name), WQ_F_SINGLETHREAD)
 
 extern void destroy_workqueue(struct workqueue_struct *wq);
 
