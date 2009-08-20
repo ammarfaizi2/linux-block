@@ -6580,7 +6580,7 @@ static int __init ata_init(void)
 {
 	ata_parse_force_param();
 
-	ata_wq = create_workqueue("ata");
+	ata_wq = create_lazy_workqueue("ata");
 	if (!ata_wq)
 		goto free_force_tbl;
 
