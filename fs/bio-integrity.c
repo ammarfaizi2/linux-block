@@ -780,7 +780,7 @@ void __init bio_integrity_init(void)
 {
 	unsigned int i;
 
-	kintegrityd_wq = create_workqueue("kintegrityd");
+	kintegrityd_wq = create_lazy_workqueue("kintegrityd");
 	if (!kintegrityd_wq)
 		panic("Failed to create kintegrityd\n");
 
