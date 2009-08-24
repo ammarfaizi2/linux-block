@@ -32,6 +32,7 @@ struct work_struct {
 #ifdef CONFIG_LOCKDEP
 	struct lockdep_map lockdep_map;
 #endif
+	unsigned int cpu;
 };
 
 #define WORK_DATA_INIT()	ATOMIC_LONG_INIT(0)
@@ -172,6 +173,7 @@ enum {
 	WQ_F_SINGLETHREAD	= 1,
 	WQ_F_FREEZABLE		= 2,
 	WQ_F_RT			= 4,
+	WQ_F_LAZY		= 8,
 };
 
 #ifdef CONFIG_LOCKDEP
@@ -198,6 +200,7 @@ enum {
 	__create_workqueue((name), WQ_F_SINGLETHREAD | WQ_F_FREEZABLE)
 #define create_singlethread_workqueue(name)	\
 	__create_workqueue((name), WQ_F_SINGLETHREAD)
+#define create_lazy_workqueue(name)	__create_workqueue((name), WQ_F_LAZY)
 
 extern void destroy_workqueue(struct workqueue_struct *wq);
 
@@ -211,6 +214,8 @@ extern int queue_delayed_work_on(int cpu, struct workqueue_struct *wq,
 
 extern void flush_workqueue(struct workqueue_struct *wq);
 extern void flush_scheduled_work(void);
+extern void workqueue_set_lazy_timeout(struct workqueue_struct *wq,
+			unsigned long timeout);
 
 extern int schedule_work(struct work_struct *work);
 extern int schedule_work_on(int cpu, struct work_struct *work);
