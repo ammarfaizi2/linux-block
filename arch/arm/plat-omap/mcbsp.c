@@ -529,11 +529,13 @@ void omap_mcbsp_start(unsigned int id, int tx, int rx)
 	}
 
 	/* Enable transmitter and receiver */
+	tx &= 1;
 	w = OMAP_MCBSP_READ(io_base, SPCR2);
-	OMAP_MCBSP_WRITE(io_base, SPCR2, w | (tx & 1));
+	OMAP_MCBSP_WRITE(io_base, SPCR2, w | tx);
 
+	rx &= 1;
 	w = OMAP_MCBSP_READ(io_base, SPCR1);
-	OMAP_MCBSP_WRITE(io_base, SPCR1, w | (rx & 1));
+	OMAP_MCBSP_WRITE(io_base, SPCR1, w | rx);
 
 	/*
 	 * Worst case: CLKSRG*2 = 8000khz: (1/8000) * 2 * 2 usec
@@ -547,6 +549,16 @@ void omap_mcbsp_start(unsigned int id, int tx, int rx)
 		/* Start frame sync */
 		w = OMAP_MCBSP_READ(io_base, SPCR2);
 		OMAP_MCBSP_WRITE(io_base, SPCR2, w | (1 << 7));
+	}
+
+	if (cpu_is_omap2430() || cpu_is_omap34xx()) {
+		/* Release the transmitter and receiver */
+		w = OMAP_MCBSP_READ(io_base, XCCR);
+		w &= ~(tx ? XDISABLE : 0);
+		OMAP_MCBSP_WRITE(io_base, XCCR, w);
+		w = OMAP_MCBSP_READ(io_base, RCCR);
+		w &= ~(rx ? RDISABLE : 0);
+		OMAP_MCBSP_WRITE(io_base, RCCR, w);
 	}
 
 	/* Dump McBSP Regs */
@@ -570,12 +582,24 @@ void omap_mcbsp_stop(unsigned int id, int tx, int rx)
 	io_base = mcbsp->io_base;
 
 	/* Reset transmitter */
+	tx &= 1;
+	if (cpu_is_omap2430() || cpu_is_omap34xx()) {
+		w = OMAP_MCBSP_READ(io_base, XCCR);
+		w |= (tx ? XDISABLE : 0);
+		OMAP_MCBSP_WRITE(io_base, XCCR, w);
+	}
 	w = OMAP_MCBSP_READ(io_base, SPCR2);
-	OMAP_MCBSP_WRITE(io_base, SPCR2, w & ~(tx & 1));
+	OMAP_MCBSP_WRITE(io_base, SPCR2, w & ~tx);
 
 	/* Reset receiver */
+	rx &= 1;
+	if (cpu_is_omap2430() || cpu_is_omap34xx()) {
+		w = OMAP_MCBSP_READ(io_base, RCCR);
+		w |= (tx ? RDISABLE : 0);
+		OMAP_MCBSP_WRITE(io_base, RCCR, w);
+	}
 	w = OMAP_MCBSP_READ(io_base, SPCR1);
-	OMAP_MCBSP_WRITE(io_base, SPCR1, w & ~(rx & 1));
+	OMAP_MCBSP_WRITE(io_base, SPCR1, w & ~rx);
 
 	idle = !((OMAP_MCBSP_READ(io_base, SPCR2) |
 		  OMAP_MCBSP_READ(io_base, SPCR1)) & 1);
@@ -587,58 +611,6 @@ void omap_mcbsp_stop(unsigned int id, int tx, int rx)
 	}
 }
 EXPORT_SYMBOL(omap_mcbsp_stop);
-
-void omap_mcbsp_xmit_enable(unsigned int id, u8 enable)
-{
-	struct omap_mcbsp *mcbsp;
-	void __iomem *io_base;
-	u16 w;
-
-	if (!(cpu_is_omap2430() || cpu_is_omap34xx()))
-		return;
-
-	if (!omap_mcbsp_check_valid_id(id)) {
-		printk(KERN_ERR "%s: Invalid id (%d)\n", __func__, id + 1);
-		return;
-	}
-
-	mcbsp = id_to_mcbsp_ptr(id);
-	io_base = mcbsp->io_base;
-
-	w = OMAP_MCBSP_READ(io_base, XCCR);
-
-	if (enable)
-		OMAP_MCBSP_WRITE(io_base, XCCR, w & ~(XDISABLE));
-	else
-		OMAP_MCBSP_WRITE(io_base, XCCR, w | XDISABLE);
-}
-EXPORT_SYMBOL(omap_mcbsp_xmit_enable);
-
-void omap_mcbsp_recv_enable(unsigned int id, u8 enable)
-{
-	struct omap_mcbsp *mcbsp;
-	void __iomem *io_base;
-	u16 w;
-
-	if (!(cpu_is_omap2430() || cpu_is_omap34xx()))
-		return;
-
-	if (!omap_mcbsp_check_valid_id(id)) {
-		printk(KERN_ERR "%s: Invalid id (%d)\n", __func__, id + 1);
-		return;
-	}
-
-	mcbsp = id_to_mcbsp_ptr(id);
-	io_base = mcbsp->io_base;
-
-	w = OMAP_MCBSP_READ(io_base, RCCR);
-
-	if (enable)
-		OMAP_MCBSP_WRITE(io_base, RCCR, w & ~(RDISABLE));
-	else
-		OMAP_MCBSP_WRITE(io_base, RCCR, w | RDISABLE);
-}
-EXPORT_SYMBOL(omap_mcbsp_recv_enable);
 
 /* polled mcbsp i/o operations */
 int omap_mcbsp_pollwrite(unsigned int id, u16 buf)
@@ -1161,25 +1133,31 @@ static DEVICE_ATTR(prop, 0644, prop##_show, prop##_store);
 THRESHOLD_PROP_BUILDER(max_tx_thres);
 THRESHOLD_PROP_BUILDER(max_rx_thres);
 
+static const char *dma_op_modes[] = {
+	"element", "threshold", "frame",
+};
+
 static ssize_t dma_op_mode_show(struct device *dev,
 			struct device_attribute *attr, char *buf)
 {
 	struct omap_mcbsp *mcbsp = dev_get_drvdata(dev);
-	int dma_op_mode;
+	int dma_op_mode, i = 0;
+	ssize_t len = 0;
+	const char * const *s;
 
 	spin_lock_irq(&mcbsp->lock);
 	dma_op_mode = mcbsp->dma_op_mode;
 	spin_unlock_irq(&mcbsp->lock);
 
-	return sprintf(buf, "current mode: %d\n"
-			"possible mode values are:\n"
-			"%d - %s\n"
-			"%d - %s\n"
-			"%d - %s\n",
-			dma_op_mode,
-			MCBSP_DMA_MODE_ELEMENT, "element mode",
-			MCBSP_DMA_MODE_THRESHOLD, "threshold mode",
-			MCBSP_DMA_MODE_FRAME, "frame mode");
+	for (s = &dma_op_modes[i]; i < ARRAY_SIZE(dma_op_modes); s++, i++) {
+		if (dma_op_mode == i)
+			len += sprintf(buf + len, "[%s] ", *s);
+		else
+			len += sprintf(buf + len, "%s ", *s);
+	}
+	len += sprintf(buf + len, "\n");
+
+	return len;
 }
 
 static ssize_t dma_op_mode_store(struct device *dev,
@@ -1187,26 +1165,22 @@ static ssize_t dma_op_mode_store(struct device *dev,
 				const char *buf, size_t size)
 {
 	struct omap_mcbsp *mcbsp = dev_get_drvdata(dev);
-	unsigned long val;
-	int status;
+	const char * const *s;
+	int i = 0;
 
-	status = strict_strtoul(buf, 0, &val);
-	if (status)
-		return status;
+	for (s = &dma_op_modes[i]; i < ARRAY_SIZE(dma_op_modes); s++, i++)
+		if (sysfs_streq(buf, *s))
+			break;
+
+	if (i == ARRAY_SIZE(dma_op_modes))
+		return -EINVAL;
 
 	spin_lock_irq(&mcbsp->lock);
-
 	if (!mcbsp->free) {
 		size = -EBUSY;
 		goto unlock;
 	}
-
-	if (val > MCBSP_DMA_MODE_FRAME || val < MCBSP_DMA_MODE_ELEMENT) {
-		size = -EINVAL;
-		goto unlock;
-	}
-
-	mcbsp->dma_op_mode = val;
+	mcbsp->dma_op_mode = i;
 
 unlock:
 	spin_unlock_irq(&mcbsp->lock);
