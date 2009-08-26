@@ -36,6 +36,7 @@
 #include <mach/dma.h>
 
 #include "s3c-i2s-v2.h"
+#include "s3c24xx-pcm.h"
 
 #undef S3C_IIS_V2_SUPPORTED
 
@@ -387,6 +388,8 @@ static int s3c2412_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 	int capture = (substream->stream == SNDRV_PCM_STREAM_CAPTURE);
 	unsigned long irqs;
 	int ret = 0;
+	int channel = ((struct s3c24xx_pcm_dma_params *)
+		  rtd->dai->cpu_dai->dma_data)->channel;
 
 	pr_debug("Entered %s\n", __func__);
 
@@ -416,6 +419,14 @@ static int s3c2412_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 			s3c2412_snd_txctrl(i2s, 1);
 
 		local_irq_restore(irqs);
+
+		/*
+		 * Load the next buffer to DMA to meet the reqirement
+		 * of the auto reload mechanism of S3C24XX.
+		 * This call won't bother S3C64XX.
+		 */
+		s3c2410_dma_ctrl(channel, S3C2410_DMAOP_STARTED);
+
 		break;
 
 	case SNDRV_PCM_TRIGGER_STOP:
