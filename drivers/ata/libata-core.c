@@ -95,7 +95,6 @@ static void ata_dev_xfermask(struct ata_device *dev);
 static unsigned long ata_dev_blacklisted(const struct ata_device *dev);
 
 unsigned int ata_print_id = 1;
-static struct workqueue_struct *ata_wq;
 
 struct workqueue_struct *ata_aux_wq;
 
@@ -1700,7 +1699,7 @@ void ata_pio_queue_task(struct ata_port *ap, void *data, unsigned long delay)
 	ap->port_task_data = data;
 
 	/* may fail if ata_port_flush_task() in progress */
-	queue_delayed_work(ata_wq, &ap->port_task, msecs_to_jiffies(delay));
+	delayed_slow_work_enqueue(&ap->port_task, msecs_to_jiffies(delay));
 }
 
 /**
@@ -1717,7 +1716,7 @@ void ata_port_flush_task(struct ata_port *ap)
 {
 	DPRINTK("ENTER\n");
 
-	cancel_rearming_delayed_work(&ap->port_task);
+	cancel_delayed_slow_work(&ap->port_task);
 
 	if (ata_msg_ctl(ap))
 		ata_port_printk(ap, KERN_DEBUG, "%s: EXIT\n", __func__);
@@ -5600,6 +5599,14 @@ int sata_link_init_spd(struct ata_link *link)
 	return 0;
 }
 
+static const struct slow_work_ops ata_work_ops_sff = {
+	.execute	= ata_pio_task,
+};
+
+static const struct slow_work_ops ata_work_ops = {
+	.execute	= NULL,	/* what's the point of this?! */
+};
+
 /**
  *	ata_port_alloc - allocate and initialize basic ATA port resources
  *	@host: ATA host this allocated port belongs to
@@ -5641,9 +5648,9 @@ struct ata_port *ata_port_alloc(struct ata_host *host)
 #endif
 
 #ifdef CONFIG_ATA_SFF
-	INIT_DELAYED_WORK(&ap->port_task, ata_pio_task);
+	delayed_slow_work_init(&ap->port_task, &ata_work_ops_sff);
 #else
-	INIT_DELAYED_WORK(&ap->port_task, NULL);
+	delayed_slow_work_init(&ap->port_task, &ata_work_ops);
 #endif
 	INIT_DELAYED_WORK(&ap->hotplug_task, ata_scsi_hotplug);
 	INIT_WORK(&ap->scsi_rescan_task, ata_scsi_dev_rescan);
@@ -6580,19 +6587,15 @@ static int __init ata_init(void)
 {
 	ata_parse_force_param();
 
-	ata_wq = create_workqueue("ata");
-	if (!ata_wq)
-		goto free_force_tbl;
-
 	ata_aux_wq = create_singlethread_workqueue("ata_aux");
 	if (!ata_aux_wq)
-		goto free_wq;
+		goto free_force_tbl;
+
+	slow_work_register_user(THIS_MODULE);
 
 	printk(KERN_DEBUG "libata version " DRV_VERSION " loaded.\n");
 	return 0;
 
-free_wq:
-	destroy_workqueue(ata_wq);
 free_force_tbl:
 	kfree(ata_force_tbl);
 	return -ENOMEM;
@@ -6601,8 +6604,8 @@ free_force_tbl:
 static void __exit ata_exit(void)
 {
 	kfree(ata_force_tbl);
-	destroy_workqueue(ata_wq);
 	destroy_workqueue(ata_aux_wq);
+	slow_work_unregister_user(THIS_MODULE);
 }
 
 subsys_initcall(ata_init);

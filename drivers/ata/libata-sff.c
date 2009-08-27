@@ -1454,7 +1454,7 @@ fsm_start:
 }
 EXPORT_SYMBOL_GPL(ata_sff_hsm_move);
 
-void ata_pio_task(struct work_struct *work)
+void ata_pio_task(struct slow_work *work)
 {
 	struct ata_port *ap =
 		container_of(work, struct ata_port, port_task.work);

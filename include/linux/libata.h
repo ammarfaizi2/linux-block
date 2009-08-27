@@ -34,6 +34,7 @@
 #include <linux/io.h>
 #include <linux/ata.h>
 #include <linux/workqueue.h>
+#include <linux/slow-work.h>
 #include <scsi/scsi_host.h>
 #include <linux/acpi.h>
 #include <linux/cdrom.h>
@@ -734,7 +735,7 @@ struct ata_port {
 	struct device 		*dev;
 
 	void			*port_task_data;
-	struct delayed_work	port_task;
+	struct delayed_slow_work	port_task;
 	struct delayed_work	hotplug_task;
 	struct work_struct	scsi_rescan_task;
 
