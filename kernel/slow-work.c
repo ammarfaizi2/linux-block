@@ -371,6 +371,64 @@ cant_get_ref:
 }
 EXPORT_SYMBOL(slow_work_enqueue);
 
+static void delayed_slow_work_timer(unsigned long data)
+{
+	struct slow_work *work = (struct slow_work *) data;
+	unsigned long flags;
+
+	spin_lock_irqsave(&slow_work_queue_lock, flags);
+	if (test_bit(SLOW_WORK_VERY_SLOW, &work->flags))
+		list_add_tail(&work->link, &vslow_work_queue);
+	else
+		list_add_tail(&work->link, &slow_work_queue);
+	spin_unlock_irqrestore(&slow_work_queue_lock, flags);
+
+	wake_up(&slow_work_thread_wq);
+}
+
+/**
+ * delayed_slow_work_enqueue - Schedule a delayed slow work item for processing
+ * @dwork: The delayed work item to queue
+ * @delay: When to start executing the work
+ *
+ * See slow_work_enqueue(), this functions adds a delay before the work
+ * is actually started. The act of queuing the work is not delayed.
+ */
+int delayed_slow_work_enqueue(struct delayed_slow_work *dwork,
+			      unsigned long delay)
+{
+	struct slow_work *work = &dwork->work;
+	unsigned long flags;
+
+	BUG_ON(slow_work_user_count <= 0);
+	BUG_ON(!work);
+	BUG_ON(!work->ops);
+
+	if (!test_and_set_bit_lock(SLOW_WORK_PENDING, &work->flags)) {
+		spin_lock_irqsave(&slow_work_queue_lock, flags);
+
+		if (test_bit(SLOW_WORK_EXECUTING, &work->flags)) {
+			set_bit(SLOW_WORK_ENQ_DEFERRED, &work->flags);
+		} else {
+			if (work->ops->get_ref(work) < 0)
+				goto cant_get_ref;
+		}
+
+		spin_unlock_irqrestore(&slow_work_queue_lock, flags);
+		dwork->timer.expires = jiffies + delay;
+		dwork->timer.data = (unsigned long) work;
+		dwork->timer.function = delayed_slow_work_timer;
+		add_timer(&dwork->timer);
+	}
+
+	return 0;
+
+cant_get_ref:
+	spin_unlock_irqrestore(&slow_work_queue_lock, flags);
+	return -EAGAIN;
+}
+EXPORT_SYMBOL(delayed_slow_work_enqueue);
+
 /*
  * Schedule a cull of the thread pool at some time in the near future
  */

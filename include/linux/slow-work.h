@@ -55,6 +55,11 @@ struct slow_work {
 	struct list_head	link;	/* link in queue */
 };
 
+struct delayed_slow_work {
+	struct timer_list timer;
+	struct slow_work work;
+};
+
 /**
  * slow_work_init - Initialise a slow work item
  * @work: The work item to initialise
@@ -68,6 +73,13 @@ static inline void slow_work_init(struct slow_work *work,
 	work->flags = 0;
 	work->ops = ops;
 	INIT_LIST_HEAD(&work->link);
+}
+
+static inline void delayed_slow_work_init(struct delayed_slow_work *dwork,
+					  const struct slow_work_ops *ops)
+{
+	init_timer(&dwork->timer);
+	slow_work_init(&dwork->work, ops);
 }
 
 /**
@@ -90,6 +102,9 @@ static inline void vslow_work_init(struct slow_work *work,
 extern int slow_work_enqueue(struct slow_work *work);
 extern int slow_work_register_user(struct module *owner);
 extern void slow_work_unregister_user(struct module *owner);
+
+extern int delayed_slow_work_enqueue(struct delayed_slow_work *dwork,
+					unsigned long delay);
 
 #ifdef CONFIG_SYSCTL
 extern ctl_table slow_work_sysctls[];

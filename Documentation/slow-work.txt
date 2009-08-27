@@ -95,6 +95,10 @@ Slow work items may then be set up by:
 
      or:
 
+	delayed_slow_work_init(&myitem, &myitem_ops);
+
+     or:
+
 	vslow_work_init(&myitem, &myitem_ops);
 
      depending on its class.
@@ -104,7 +108,9 @@ A suitably set up work item can then be enqueued for processing:
 	int ret = slow_work_enqueue(&myitem);
 
 This will return a -ve error if the thread pool is unable to gain a reference
-on the item, 0 otherwise.
+on the item, 0 otherwise, or (for delayed work):
+
+	int ret = delayed_slow_work_enqueue(&myitem, my_jiffy_delay);
 
 
 The items are reference counted, so there ought to be no need for a flush
