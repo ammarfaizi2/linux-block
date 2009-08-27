@@ -236,11 +236,20 @@ static bool slow_work_execute(int id)
 	if (!test_and_clear_bit(SLOW_WORK_PENDING, &work->flags))
 		BUG();
 
-	work->ops->execute(work);
+	/*
+	 * Don't execute if the work was cancelled after being added
+	 */
+	if (!test_bit(SLOW_WORK_CANCEL, &work->flags))
+		work->ops->execute(work);
 
 	if (very_slow)
 		atomic_dec(&vslow_work_executing_count);
 	clear_bit_unlock(SLOW_WORK_EXECUTING, &work->flags);
+
+	/*
+	 * Wake anyone waiting for this work to not be pending anymore
+	 */
+	wake_up_bit(&work->flags, SLOW_WORK_PENDING);
 
 	/* if someone tried to enqueue the item whilst we were executing it,
 	 * then it'll be left unenqueued to avoid multiple threads trying to
@@ -314,11 +323,15 @@ auto_requeue:
  * allowed to pick items to execute.  This ensures that very slow items won't
  * overly block ones that are just ordinarily slow.
  *
- * Returns 0 if successful, -EAGAIN if not.
+ * Returns 0 if successful, -EAGAIN if not (or -ECANCELED if cancelled work is
+ * attempted queued)
  */
 int slow_work_enqueue(struct slow_work *work)
 {
 	unsigned long flags;
+
+	if (test_bit(SLOW_WORK_CANCEL, &work->flags))
+		return -ECANCELED;
 
 	BUG_ON(slow_work_user_count <= 0);
 	BUG_ON(!work);
@@ -400,6 +413,9 @@ int delayed_slow_work_enqueue(struct delayed_slow_work *dwork,
 	struct slow_work *work = &dwork->work;
 	unsigned long flags;
 
+	if (test_bit(SLOW_WORK_CANCEL, &work->flags))
+		return -ECANCELED;
+
 	BUG_ON(slow_work_user_count <= 0);
 	BUG_ON(!work);
 	BUG_ON(!work->ops);
@@ -428,6 +444,46 @@ cant_get_ref:
 	return -EAGAIN;
 }
 EXPORT_SYMBOL(delayed_slow_work_enqueue);
+
+static int slow_work_wait(void *word)
+{
+	schedule();
+	return 0;
+}
+
+/**
+ * cancel_slow_work - Cancel a slow work item
+ * @work: The work item to cancel
+ *
+ * This function will cancel a previously enqueued work item. If we cannot
+ * cancel the work item, it is guarenteed to have run when this function
+ * returns.
+ */
+void cancel_slow_work(struct slow_work *work)
+{
+	set_bit(SLOW_WORK_CANCEL, &work->flags);
+	wait_on_bit(&work->flags, SLOW_WORK_PENDING, slow_work_wait,
+				TASK_UNINTERRUPTIBLE);
+	wait_on_bit(&work->flags, SLOW_WORK_EXECUTING, slow_work_wait,
+				TASK_UNINTERRUPTIBLE);
+	clear_bit(SLOW_WORK_CANCEL, &work->flags);
+}
+EXPORT_SYMBOL(cancel_slow_work);
+
+/**
+ * cancel_delayed_slow_work - Cancel a delayed slow work item
+ * @dwork: The delayed work item to cancel
+ *
+ * This function will cancel a previously enqueued work item. If we cannot
+ * cancel the work item, it is guarenteed to have run when this function
+ * returns.
+ */
+void cancel_delayed_slow_work(struct delayed_slow_work *dwork)
+{
+	del_timer_sync(&dwork->timer);
+	cancel_slow_work(&dwork->work);
+}
+EXPORT_SYMBOL(cancel_delayed_slow_work);
 
 /*
  * Schedule a cull of the thread pool at some time in the near future
