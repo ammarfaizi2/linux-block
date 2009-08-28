@@ -558,8 +558,8 @@ static void loop_bio_timer(unsigned long data)
 static void loop_add_bio(struct loop_device *lo, struct bio *bio)
 {
 	loop_bio_throttle(lo, bio);
-
 	bio_list_add(&lo->lo_bio_list, bio);
+	lo->lo_bio_cnt++;
 
 #if 0
 	smp_mb();
@@ -574,6 +574,8 @@ static void loop_add_bio(struct loop_device *lo, struct bio *bio)
 		lo->lo_bio_timer.expires = jiffies + 1;
 		add_timer(&lo->lo_bio_timer);
 	}
+#else
+	wake_up(&lo->lo_event);
 #endif
 }
 
@@ -1222,14 +1224,14 @@ static void loop_unplug_fastfs(struct request_queue *q)
 	struct request_queue *rq = bdev_get_queue(lo->fs_bdev);
 	unsigned long flags;
 
-	local_irq_save(flags);
+	spin_lock_irqsave(rq->queue_lock, flags);
 
 	if (blk_remove_plug(q)) {
 		if (rq->unplug_fn)
 			rq->unplug_fn(rq);
 	}
 
-	local_irq_restore(flags);
+	spin_unlock_irqrestore(rq->queue_lock, flags);
 }
 
 struct switch_request {
