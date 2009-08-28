@@ -75,6 +75,8 @@ struct loop_device {
 	struct rb_root		lo_rb_root;
 	struct rb_node		*last_lookup;
 	unsigned int		lo_blkbits;
+	struct list_head	lo_lru;
+	unsigned long		lo_lru_entries;
 };
 
 #endif /* __KERNEL__ */

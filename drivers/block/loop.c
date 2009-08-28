@@ -74,6 +74,8 @@
 #include <linux/gfp.h>
 #include <linux/kthread.h>
 #include <linux/splice.h>
+#include <linux/blktrace_api.h>
+#include <linux/mm.h>
 
 #include <asm/uaccess.h>
 
@@ -84,6 +86,9 @@ static int max_part;
 static int part_shift;
 
 static struct kmem_cache *loop_lfe_slab;
+
+#define lo_trace(lo, fmt, ...)	\
+	blk_add_trace_msg((lo)->lo_queue, fmt, ##__VA_ARGS__)
 
 /*
  * Transfer functions
@@ -556,6 +561,7 @@ static void loop_add_bio(struct loop_device *lo, struct bio *bio)
 
 	bio_list_add(&lo->lo_bio_list, bio);
 
+#if 0
 	smp_mb();
 	if (lo->lo_bio_cnt > 8 || !bio->bi_bdev || bio_sync(bio) ||
 	    bio_data_dir(bio) == READ) {
@@ -568,6 +574,7 @@ static void loop_add_bio(struct loop_device *lo, struct bio *bio)
 		lo->lo_bio_timer.expires = jiffies + 1;
 		add_timer(&lo->lo_bio_timer);
 	}
+#endif
 }
 
 /*
@@ -579,13 +586,9 @@ static struct bio *loop_get_bio(struct loop_device *lo)
 
 	bio = bio_list_pop(&lo->lo_bio_list);
 	if (bio) {
-		if (bio == lo->lo_biotail)
-			lo->lo_biotail = NULL;
-		lo->lo_bio = bio->bi_next;
-		bio->bi_next = NULL;
-
 		lo->lo_bio_cnt--;
-		if (lo->lo_bio_cnt < LO_BIO_THROTTLE_LOW || !lo->lo_bio)
+		if (lo->lo_bio_cnt < LO_BIO_THROTTLE_LOW ||
+		    bio_list_empty(&lo->lo_bio_list))
 			wake_up(&lo->lo_bio_wait);
 	}
 
@@ -594,9 +597,10 @@ static struct bio *loop_get_bio(struct loop_device *lo)
 
 struct loop_file_extent {
 	struct rb_node rb_node;
+	struct list_head lru;
 	u64 disk_start, file_start;
 	u64 size;
-	unsigned int pcache;
+	unsigned long last_access;
 };
 
 #define node_to_lfe(n)	rb_entry((n), struct loop_file_extent, rb_node)
@@ -604,11 +608,18 @@ struct loop_file_extent {
 static void loop_remove_node(struct loop_device *lo,
 			     struct loop_file_extent *lfe)
 {
+	lo_trace(lo, "remove node disk=%llu,file=%llu,size=%llu", (unsigned long long) lfe->disk_start, (unsigned long long) lfe->file_start, (unsigned long long) lfe->size);
+
 	if (lo->last_lookup == &lfe->rb_node)
 		lo->last_lookup = NULL;
 
 	rb_erase(&lfe->rb_node, &lo->lo_rb_root);
+	list_del_init(&lfe->lru);
+	lo->lo_lru_entries--;
 }
+
+static int __node_merge(struct loop_file_extent *prv,
+			struct loop_file_extent *nxt);
 
 /*
  * Drop and free all stored extents
@@ -635,6 +646,7 @@ static void loop_drop_extents(struct loop_device *lo)
 		struct loop_file_extent *lfe = node_to_lfe(node);
 
 		rb_erase(node, &root);
+		list_del(&lfe->lru);
 		kmem_cache_free(loop_lfe_slab, lfe);
 		exts++;
 		if (!(exts % 1024))
@@ -648,6 +660,8 @@ static int loop_flush_invalidate(struct loop_device *lo)
 {
 	struct address_space *mapping = lo->lo_backing_file->f_mapping;
 	int ret;
+
+	lo_trace(lo, "flush_invalidate mapping");
 
 	ret = filemap_write_and_wait(mapping);
 	ret |= invalidate_inode_pages2(mapping);
@@ -718,6 +732,59 @@ static struct rb_node *loop_tree_find(struct loop_device *lo, u64 start)
 	return NULL;
 }
 
+static inline unsigned long lfe_pcache(struct loop_file_extent *lfe)
+{
+	return lfe->last_access & 1UL;
+}
+
+static inline void lfe_set_pcache(struct loop_file_extent *lfe)
+{
+	lfe->last_access |= 1UL;
+}
+
+static inline void lfe_clear_pcache(struct loop_file_extent *lfe)
+{
+	lfe->last_access &= ~1UL;
+}
+
+static inline unsigned long lfe_access_time(struct loop_file_extent *lfe)
+{
+	return lfe->last_access & ~1UL;
+}
+
+static inline void lfe_set_access_time(struct loop_file_extent *lfe)
+{
+	const int pcache = lfe_pcache(lfe);
+
+	lfe->last_access = (jiffies & ~1UL) | pcache;
+}
+
+/*
+ * Hit on the LRU, move to the front of the list
+ */
+static void lo_lru_hit(struct loop_device *lo, struct loop_file_extent *lfe)
+{
+	lfe_set_access_time(lfe);
+
+	if (lo->lo_lru.next != &lfe->lru) {
+		list_del(&lfe->lru);
+		list_add(&lfe->lru, &lo->lo_lru);
+	}
+}
+
+/*
+ * Add lfe to LRU list, trim off entries at the end if necessary
+ */
+static void lo_lru_add(struct loop_device *lo, struct loop_file_extent *lfe)
+{
+	/*
+ 	 * Add and account entry
+	 */
+	list_add(&lfe->lru, &lo->lo_lru);
+	lfe_set_access_time(lfe);
+	lo->lo_lru_entries++;
+}
+
 static int lfe_merge(struct loop_file_extent *lfe,
 		     struct loop_file_extent *__lfe)
 {
@@ -728,19 +795,23 @@ static int lfe_merge(struct loop_file_extent *lfe,
 		lfe->size += lfe->disk_start - __lfe->disk_start;
 		lfe->disk_start = __lfe->disk_start;
 		lfe->file_start = __lfe->file_start;
-		lfe->pcache |= __lfe->pcache;
+		lfe_clear_pcache(lfe);
+		if (lfe_pcache(__lfe))
+			lfe_set_pcache(lfe);
 		return 1;
 	} else if (__lfe_end > lfe_end) {
 		lfe->size += __lfe_end - lfe_end;
-		lfe->pcache |= __lfe->pcache;
+		lfe_clear_pcache(lfe);
+		if (lfe_pcache(__lfe))
+			lfe_set_pcache(lfe);
 		return 1;
 	}
 
 	return 0;
 }
 
-static int __node_merge(struct loop_device *lo, struct loop_file_extent *prv,
-		      struct loop_file_extent *nxt)
+static int __node_merge(struct loop_file_extent *prv,
+			struct loop_file_extent *nxt)
 {
 	/*
 	 * don't merge hole and non-hole
@@ -765,12 +836,27 @@ static int __node_merge(struct loop_device *lo, struct loop_file_extent *prv,
 static int node_merge(struct loop_device *lo, struct loop_file_extent *prv,
 			struct loop_file_extent *nxt)
 {
-	if (!__node_merge(lo, prv, nxt))
+	if (!__node_merge(prv, nxt))
 		return 0;
 
 	loop_remove_node(lo, nxt);
 	kmem_cache_free(loop_lfe_slab, nxt);
 	return 1;
+}
+
+static inline int __node_overlap(struct loop_file_extent *lfe,
+				 struct loop_file_extent *__lfe)
+{
+	return (lfe->disk_start >= __lfe->disk_start &&
+		lfe->disk_start < __lfe->disk_start + __lfe->size) ||
+               (lfe->disk_start + lfe->size > __lfe->disk_start &&
+		lfe->disk_start + lfe->size <= __lfe->disk_start + __lfe->size);
+}
+
+static inline int node_overlap(struct loop_file_extent *lfe,
+			       struct loop_file_extent *__lfe)
+{
+	return __node_overlap(lfe, __lfe) || __node_overlap(__lfe, lfe);
 }
 
 static void __loop_tree_insert(struct loop_device *lo,
@@ -786,20 +872,23 @@ restart:
 		parent = *p;
 		__lfe = node_to_lfe(parent);
 
-		if (lfe->disk_start + lfe->size <= __lfe->disk_start)
-			p = &(*p)->rb_left;
-		else if (lfe->disk_start >= __lfe->disk_start + __lfe->size)
-			p = &(*p)->rb_right;
-		else {
+		if (node_overlap(lfe, __lfe)) {
 			loop_remove_node(lo, __lfe);
 			lfe_merge(lfe, __lfe);
 			kmem_cache_free(loop_lfe_slab, __lfe);
 			goto restart;
 		}
+
+		if (lfe->disk_start + lfe->size <= __lfe->disk_start)
+			p = &(*p)->rb_left;
+		else if (lfe->disk_start >= __lfe->disk_start + __lfe->size)
+			p = &(*p)->rb_right;
 	}
 
 	rb_link_node(&lfe->rb_node, parent, p);
 	rb_insert_color(&lfe->rb_node, &lo->lo_rb_root);
+
+	lo_lru_add(lo, lfe);
 
 	/*
 	 * See if we can merge with the next or previous extent
@@ -916,11 +1005,13 @@ static void loop_send_special_bio(struct loop_device *lo, struct bio *old_bio,
 static void loop_schedule_extent_mapping(struct loop_device *lo,
 					 struct bio *old_bio)
 {
+	lo_trace(lo, "schedule_extent_mapping rw=%d, sector=%llu/len=%lu", bio_data_dir(old_bio), (unsigned long long) old_bio->bi_sector, (unsigned long) old_bio->bi_size);
 	loop_send_special_bio(lo, old_bio, LOOP_EXTENT_RW_MAGIC);
 }
 
 static void loop_schedule_pcache_io(struct loop_device *lo, struct bio *old_bio)
 {
+	lo_trace(lo, "schedule_pcache_io rw=%d, sector=%llu/len=%lu", bio_data_dir(old_bio), (unsigned long long) old_bio->bi_sector, (unsigned long) old_bio->bi_size);
 	loop_send_special_bio(lo, old_bio, LOOP_PCACHE_RW_MAGIC);
 }
 
@@ -931,12 +1022,14 @@ static int lo_inval_pgcache(struct loop_device *lo, u64 start, u64 size)
 	pgoff_t pgs, pge;
 	int ret, iter;
 
+	lo_trace(lo, "inval_pgcache %llu->%llu", (unsigned long long) start, (unsigned long long) end);
+
 	pgs = start >> PAGE_CACHE_SHIFT;
 	pge = (end + PAGE_CACHE_SIZE - 1) >> PAGE_CACHE_SHIFT;
 
 	ret = iter = 0;
 	do {
-		if (iter++ > 4)
+		if (iter++ > 50)
 			break;
 		ret = filemap_write_and_wait_range(mapping, start, end);
 		ret |= invalidate_inode_pages2_range(mapping, pgs, pge);
@@ -975,6 +1068,7 @@ static int __loop_redirect_bio(struct loop_device *lo,
 	/*
 	 * not a hole, redirect
 	 */
+	lo_trace(lo, "redirect sector=%llu/%lu -> off=%llu", (unsigned long long) bio->bi_sector, (unsigned long) bio->bi_size, lfe->file_start + lo_bio_offset(lo, bio) - lfe->disk_start);
 	disk_start = lfe->file_start;
 	extent_off = lo_bio_offset(lo, bio) - lfe->disk_start;
 	BUG_ON(disk_start + extent_off + bio->bi_size > lfe->file_start + lfe->size);
@@ -1013,12 +1107,35 @@ static int loop_redirect_bio(struct loop_device *lo, struct bio *bio)
 		return 0;
 	}
 
-	if (lfe->file_start && lfe->pcache) {
+	lo_lru_hit(lo, lfe);
+
+	if (lfe->file_start && lfe_pcache(lfe)) {
 		loop_schedule_pcache_io(lo, bio);
 		return 0;
 	}
 
 	return __loop_redirect_bio(lo, lfe, bio, 0);
+}
+
+static char zeroes[PAGE_SIZE];
+
+static int bio_all_zeroes(struct bio *bio)
+{
+	struct bio_vec *bvec;
+	unsigned int i;
+
+	bio_for_each_segment(bvec, bio, i) {
+		char *ptr = kmap_atomic(bvec->bv_page, KM_USER0);
+		int ret;
+
+		ret = memcmp(ptr + bvec->bv_offset, zeroes, bvec->bv_len);
+		kunmap_atomic(ptr, KM_USER0);
+
+		if (ret)
+			return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -1027,7 +1144,7 @@ static int loop_redirect_bio(struct loop_device *lo, struct bio *bio)
  */
 static void loop_wait_on_bios(struct loop_device *lo)
 {
-	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock, !lo->lo_bio);
+	__lo_throttle(&lo->lo_bio_wait, &lo->lo_lock, bio_list_empty(&lo->lo_bio_list));
 }
 
 static void loop_wait_on_switch(struct loop_device *lo)
@@ -1042,6 +1159,9 @@ static int loop_make_request(struct request_queue *q, struct bio *old_bio)
 
 	if (rw == READA)
 		rw = READ;
+
+	if ((rw & WRITE) && bio_all_zeroes(old_bio))
+		lo_trace(lo, "All zeroes at sector=%llu/%u", (unsigned long long) old_bio->bi_sector, old_bio->bi_size);
 
 	BUG_ON(!lo || (rw != READ && rw != WRITE));
 
@@ -1144,8 +1264,12 @@ static void lo_invalidate_range(struct loop_device *lo, loff_t start,
 	pgoff_t pgs = start >> PAGE_CACHE_SHIFT;
 	pgoff_t pge = (end + PAGE_CACHE_SIZE - 1) >> PAGE_CACHE_SHIFT;
 
+	lo_trace(lo, "invalidate_range %llu -> %llu (pgoff %llu->%llu)", (unsigned long long) start, (unsigned long long) end, (unsigned long long) pgs, (unsigned long long) pge);
+
 	if (invalidate_inode_pages2_range(mapping, pgs, pge)) {
 		struct loop_file_extent *lfe;
+
+		lo_trace(lo, "invalidate_range failed");
 
 		/*
 		 * if invalidate fails, turn on pcache only flag
@@ -1154,10 +1278,10 @@ static void lo_invalidate_range(struct loop_device *lo, loff_t start,
 
 		lfe = loop_lookup_extent(lo, start);
 		if (lfe)
-			lfe->pcache = 1;
+			lfe_set_pcache(lfe);
 		lfe = loop_lookup_extent(lo, end - 1);
 		if (lfe)
-			lfe->pcache = 1;
+			lfe_set_pcache(lfe);
 
 		spin_unlock_irq(&lo->lo_lock);
 	}
@@ -1171,6 +1295,8 @@ static void loop_do_file_backed(struct loop_device *lo, struct bio *bio,
 	loff_t start = lo_bio_offset(lo, bio);
 	loff_t end = start + (loff_t) bio->bi_size - 1;
 	int ret;
+
+	lo_trace(lo, "do_file_backed rw=%d, sector=%llu/%lu (hole=%d)", bio_data_dir(bio), (unsigned long long) bio->bi_sector, (unsigned long) bio->bi_size, hole);
 
 	/*
  	 * Never trust the page cache, always prune this range before
@@ -1193,6 +1319,7 @@ static void loop_do_file_backed(struct loop_device *lo, struct bio *bio,
 	 */
 	if (!ret && fastfs) {
 		if (bio_data_dir(bio) == WRITE) {
+			lo_trace(lo, "write_and_wait_range %llu -> %llu", start, end);
 			ret = filemap_write_and_wait_range(mapping, start, end);
 			if (ret)
 				loop_drop_bad_lfe(lo, start);
@@ -1240,6 +1367,8 @@ static struct bio_pair *loop_clone_submit(struct loop_device *lo,
 static inline void loop_handle_bio(struct loop_device *lo, struct bio *bio)
 {
 	struct bio *org_bio = bio->bi_private;
+	struct loop_file_extent slfe;
+	int is_hole = 0;
 
 	if (lo_is_map_bio(bio)) {
 		struct loop_file_extent *lfe;
@@ -1255,16 +1384,36 @@ lookup:
 			spin_unlock_irq(&lo->lo_lock);
 			loop_read_bmap(lo, disk_start, org_bio->bi_size, 0);
 			goto lookup;
-		} else if (!lfe_holds_bio(lo, lfe, org_bio)) {
-			u64 this_size;
-
-			this_size = (lfe->disk_start + lfe->size) - disk_start;
+		} else if (!lfe->file_start) {
+			lfe_set_pcache(lfe);
+			is_hole = 1;
+			lo_lru_hit(lo, lfe);
 			spin_unlock_irq(&lo->lo_lock);
 			if (bp)
 				bio_pair_release(bp);
-			bp = loop_clone_submit(lo, org_bio, this_size, lfe);
+			goto do_pgcache;
+		} else if (!lfe_holds_bio(lo, lfe, org_bio)) {
+			u64 this_size;
+
+			lo_lru_hit(lo, lfe);
+			this_size = (lfe->disk_start + lfe->size) - disk_start;
+			/*
+			 * Pass a copy of the lfe, in the extremely unlikely
+			 * even that this entry reaches the end of the LRU
+			 * and gets pruned before loop_clone_submit()
+			 * dereferences it
+			 */
+			slfe = *lfe;
+			spin_unlock_irq(&lo->lo_lock);
+			if (bp)
+				bio_pair_release(bp);
+			bp = loop_clone_submit(lo, org_bio, this_size, &slfe);
 			if (!bp) {
-				lfe->pcache = 1;
+				spin_lock_irq(&lo->lo_lock);
+				lfe = loop_lookup_extent(lo, slfe.disk_start);
+				if (lfe)
+					lfe_set_pcache(lfe);
+				spin_unlock_irq(&lo->lo_lock);
 				org_bio = bio->bi_private;
 				goto do_pgcache;
 			}
@@ -1273,6 +1422,7 @@ lookup:
 		} else {
 			int ret = __loop_redirect_bio(lo, lfe, org_bio, 1);
 
+			lo_lru_hit(lo, lfe);
 			spin_unlock_irq(&lo->lo_lock);
 			if (ret)
 				generic_make_request(org_bio);
@@ -1297,7 +1447,7 @@ do_pgcache:
 		 * do page cache backed bio and then lookup the extent
 		 * and see if we can clear the pcache flag
 		 */
-		loop_do_file_backed(lo, org_bio, 0);
+		loop_do_file_backed(lo, org_bio, is_hole);
 
 		bio_put(bio);
 
@@ -1320,8 +1470,10 @@ do_pgcache:
 			spin_lock_irq(&lo->lo_lock);
 			lfe = loop_lookup_extent(lo, file_start);
 			if (lfe && file_start == lfe->disk_start &&
-			    file_size == lfe->size)
-				lfe->pcache = 0;
+			    file_size == lfe->size) {
+				lo_trace(lo, "clear pcache on %llu/%llu", (unsigned long long) lfe->disk_start, (unsigned long long) lfe->size);
+				lfe_clear_pcache(lfe);
+			}
 			spin_unlock_irq(&lo->lo_lock);
 		}
 	} else if (lo_is_switch_bio(bio)) {
@@ -1515,10 +1667,15 @@ static int loop_tree_insert(struct loop_device *lo, sector_t disk_block,
 	}
 
 	RB_CLEAR_NODE(&lfe->rb_node);
+	INIT_LIST_HEAD(&lfe->lru);
 	lfe->disk_start = disk_block << lo->lo_blkbits;
 	lfe->file_start = file_block << inode->i_blkbits;
 	lfe->size = size;
-	lfe->pcache = pcache;
+	lfe->last_access = 0;
+	if (pcache)
+		lfe_set_pcache(lfe);
+
+	lo_trace(lo, "insert extent disk=%llu, file=%llu, size=%u, pcache=%d", (unsigned long long) lfe->disk_start, (unsigned long long) lfe->file_start, size, pcache);
 
 	spin_lock_irq(&lo->lo_lock);
 	__loop_tree_insert(lo, lfe);
@@ -1581,7 +1738,7 @@ static void loop_read_bmap(struct loop_device *lo, u64 disk_start, u64 size,
 	 * nr_blocks is in inode blkbits and counts the underlying 
 	 * FS blocks
 	 */
-	u64 nr_blocks;
+	u64 nr_blocks, total_blocks;
 	u64 mask;
 	u64 disk_end;
 
@@ -1594,7 +1751,6 @@ static void loop_read_bmap(struct loop_device *lo, u64 disk_start, u64 size,
 	 * total_size is in bytes and has been masked off to block boundaries
 	 */
 	u64 total_size;
-	u64 fill_size;
 	u64 this_fill;
 
 	mask = (1 << inode->i_blkbits) - 1;
@@ -1606,15 +1762,18 @@ static void loop_read_bmap(struct loop_device *lo, u64 disk_start, u64 size,
 	expected_block = 0;
 	blocks = 0;
 	fileb = diskb = -1;
-	fill_size = 0;
+	total_blocks = 0;
+
+	lo_trace(lo, "read_bmap: %llu/%llu, pcache=%d", (unsigned long long) disk_start, (unsigned long long) size, pcache);
 
 	/*
 	 * read in blocks and add extents for the requested size
 	 */
-	while (fill_size < total_size) {
+	while (total_blocks < nr_blocks) {
 		sector_t file_block = bmap(inode, offset_to_bmap >>
 					   inode->i_blkbits);
 
+new_extent:
 		if (diskb == -1) {
 			diskb = offset_to_bmap >> lo->lo_blkbits;
 			fileb = file_block;
@@ -1628,6 +1787,7 @@ static void loop_read_bmap(struct loop_device *lo, u64 disk_start, u64 size,
 			this_fill = blocks << inode->i_blkbits;
 			if (loop_tree_insert(lo, __diskb, fileb, this_fill, pcache))
 				break;
+			goto new_extent;
 		}
 
 		if (file_block)
@@ -1636,7 +1796,7 @@ static void loop_read_bmap(struct loop_device *lo, u64 disk_start, u64 size,
 			expected_block = 0;
 
 		offset_to_bmap += 1 << inode->i_blkbits;
-		fill_size += 1 << inode->i_blkbits;
+		total_blocks++;
 	}
 
 	if (diskb != -1) {
@@ -1644,7 +1804,58 @@ static void loop_read_bmap(struct loop_device *lo, u64 disk_start, u64 size,
 		loop_tree_insert(lo, diskb, fileb, this_fill, pcache);
 	}
 
-	BUG_ON(fill_size < total_size);
+	BUG_ON(total_blocks < nr_blocks);
+}
+
+/*
+ * Remove 'nr' (or at least 1, if zero) lru entries. Don't prune entries
+ * that were recently used. Recently here is 5 minutes.
+ */
+static void __lo_shrink_lru(struct loop_device *lo, int nr)
+{
+	unsigned long now = jiffies;
+
+	lo_trace(lo, "lfe lru shrink %d", nr);
+
+	spin_lock_irq(&lo->lo_lock);
+
+	while (!list_empty(&lo->lo_lru)) {
+		struct loop_file_extent *lfe;
+
+		lfe = list_entry(lo->lo_lru.prev, struct loop_file_extent, lru);
+		if (time_before(now, lfe_access_time(lfe) + 5 * 60 * HZ))
+			break;
+
+		loop_remove_node(lo, lfe);
+		kmem_cache_free(loop_lfe_slab, lfe);
+		if (!nr)
+			break;
+		nr--;
+	}
+
+	spin_unlock_irq(&lo->lo_lock);
+}
+
+static int lo_shrink_lru(int nr, gfp_t gfp_mask)
+{
+	int total = 0, has_lru = 0;
+	struct loop_device *lo;
+	
+	list_for_each_entry(lo, &loop_devices, lo_list)
+		if (lo->lo_lru_entries)
+			has_lru++;
+
+	if (!has_lru)
+		return 0;
+
+	list_for_each_entry(lo, &loop_devices, lo_list) {
+		if (nr)
+			__lo_shrink_lru(lo, nr / has_lru);
+
+		total += lo->lo_lru_entries;
+	}
+
+	return total;
 }
 
 /*
@@ -1684,6 +1895,8 @@ static int loop_init_fastfs(struct loop_device *lo)
 	mutex_unlock(&inode->i_mutex);
 
 	lo->lo_rb_root = RB_ROOT;
+	INIT_LIST_HEAD(&lo->lo_lru);
+	lo->lo_lru_entries = 0;
 	lo->lo_blkbits = inode->i_blkbits;
 	lo->fs_bdev = file->f_mapping->host->i_sb->s_bdev;
 	lo->lo_flags |= LO_FLAGS_FASTFS;
@@ -1723,6 +1936,8 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 	size = bio->bi_size;
 	size = (size + mask) & ~mask;
 
+	lo_trace(lo, "hole_filled: disk=%llu/%lu", (unsigned long long) disk_start, (unsigned long long) size);
+
 	if (!lfe)
 		lfe = loop_lookup_extent(lo, disk_start + size - 1);
 
@@ -1740,8 +1955,12 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 		loop_remove_node(lo, lfe);
 	}
 
-	if (!lfe || lfe->file_start)
+	if (!lfe)
 		goto bmap;
+	if (lfe->file_start) {
+		kmem_cache_free(loop_lfe_slab, lfe);
+		goto bmap;
+	}
 
 	/*
 	 * Either we need to trim at the front, at the end, or split
@@ -1773,16 +1992,17 @@ static void loop_hole_filled(struct loop_device *lo, struct bio *bio)
 		lfe->size = disk_start - lfe->disk_start;
 
 		/*
-		 * if slab alloc should fail, it's not critical. we'll just
-		 * lose that part of the hole.
+		 * if slab allocation should fail, it's not critical. we'll just
+		 * lose that part of the hole
 		 */
 		lfe_e = kmem_cache_alloc(loop_lfe_slab, GFP_ATOMIC);
 		if (lfe_e) {
 			RB_CLEAR_NODE(&lfe_e->rb_node);
+			INIT_LIST_HEAD(&lfe_e->lru);
 			lfe_e->disk_start = disk_start + size;
 			lfe_e->file_start = 0;
 			lfe_e->size = total_size - size - lfe->size;
-			lfe_e->pcache = 0;
+			lfe_e->last_access = 0;
 		}
 	}
 
@@ -2682,6 +2902,11 @@ static struct kobject *loop_probe(dev_t dev, int *part, void *data)
 	return kobj;
 }
 
+static struct shrinker lo_shrinker = {
+	.shrink		= lo_shrink_lru,
+	.seeks		= DEFAULT_SEEKS,
+};
+
 static int __init loop_init(void)
 {
 	int i, nr;
@@ -2727,6 +2952,8 @@ static int __init loop_init(void)
 	if (!loop_lfe_slab)
 		goto Enomem;
 
+	register_shrinker(&lo_shrinker);
+
 	for (i = 0; i < nr; i++) {
 		lo = loop_alloc(i);
 		if (!lo)
@@ -2753,8 +2980,10 @@ Enomem:
 
 	unregister_blkdev(LOOP_MAJOR, "loop");
 
-	if (loop_lfe_slab)
+	if (loop_lfe_slab) {
+		unregister_shrinker(&lo_shrinker);
 		kmem_cache_destroy(loop_lfe_slab);
+	}
 
 	return -ENOMEM;
 }
@@ -2769,6 +2998,7 @@ static void __exit loop_exit(void)
 	list_for_each_entry_safe(lo, next, &loop_devices, lo_list)
 		loop_del_one(lo);
 
+	unregister_shrinker(&lo_shrinker);
 	kmem_cache_destroy(loop_lfe_slab);
 	blk_unregister_region(MKDEV(LOOP_MAJOR, 0), range);
 	unregister_blkdev(LOOP_MAJOR, "loop");
