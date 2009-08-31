@@ -1752,13 +1752,11 @@ static void loop_read_bmap(struct loop_device *lo, u64 disk_start, u64 size,
 	/*
 	 * total_size is in bytes and has been masked off to block boundaries
 	 */
-	u64 total_size;
 	u64 this_fill;
 
 	mask = (1 << inode->i_blkbits) - 1;
 	disk_end = (disk_start + size + mask) & ~mask;
 	nr_blocks = (disk_end - (disk_start & ~mask)) >> inode->i_blkbits;
-	total_size = nr_blocks << inode->i_blkbits;
 
 	offset_to_bmap = disk_start & ~mask;
 	expected_block = 0;
@@ -1807,6 +1805,9 @@ new_extent:
 	}
 
 	BUG_ON(total_blocks < nr_blocks);
+
+	if (!pcache)
+		lo_inval_pgcache(lo, disk_start, total_blocks << inode->i_blkbits);
 }
 
 /*
