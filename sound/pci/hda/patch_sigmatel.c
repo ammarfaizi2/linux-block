@@ -228,7 +228,6 @@ struct sigmatel_spec {
 
 	/* playback */
 	struct hda_input_mux *mono_mux;
-	struct hda_input_mux *amp_mux;
 	unsigned int cur_mmux;
 	struct hda_multi_out multiout;
 	hda_nid_t dac_nids[5];
@@ -281,7 +280,6 @@ struct sigmatel_spec {
 	unsigned int cur_smux[2];
 	unsigned int cur_amux;
 	hda_nid_t *amp_nids;
-	unsigned int num_amps;
 	unsigned int powerdown_adcs;
 
 	/* i/o switches */
@@ -300,7 +298,6 @@ struct sigmatel_spec {
 	struct hda_input_mux private_dimux;
 	struct hda_input_mux private_imux;
 	struct hda_input_mux private_smux;
-	struct hda_input_mux private_amp_mux;
 	struct hda_input_mux private_mono_mux;
 };
 
@@ -329,11 +326,6 @@ static hda_nid_t stac92hd73xx_adc_nids[2] = {
 	0x1a, 0x1b
 };
 
-#define DELL_M6_AMP 2
-static hda_nid_t stac92hd73xx_amp_nids[3] = {
-	0x0b, 0x0c, 0x0e
-};
-
 #define STAC92HD73XX_NUM_DMICS	2
 static hda_nid_t stac92hd73xx_dmic_nids[STAC92HD73XX_NUM_DMICS + 1] = {
 	0x13, 0x14, 0
@@ -341,8 +333,8 @@ static hda_nid_t stac92hd73xx_dmic_nids[STAC92HD73XX_NUM_DMICS + 1] = {
 
 #define STAC92HD73_DAC_COUNT 5
 
-static hda_nid_t stac92hd73xx_mux_nids[4] = {
-	0x28, 0x29, 0x2a, 0x2b,
+static hda_nid_t stac92hd73xx_mux_nids[2] = {
+	0x20, 0x21,
 };
 
 static hda_nid_t stac92hd73xx_dmux_nids[2] = {
@@ -595,34 +587,6 @@ static hda_nid_t stac9205_pin_nids[12] = {
 	0x21, 0x22,
 };
 
-#define stac92xx_amp_volume_info snd_hda_mixer_amp_volume_info
-
-static int stac92xx_amp_volume_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	hda_nid_t nid = spec->amp_nids[spec->cur_amux];
-
-	kcontrol->private_value ^= get_amp_nid(kcontrol);
-	kcontrol->private_value |= nid;
-
-	return snd_hda_mixer_amp_volume_get(kcontrol, ucontrol);
-}
-
-static int stac92xx_amp_volume_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	hda_nid_t nid = spec->amp_nids[spec->cur_amux];
-
-	kcontrol->private_value ^= get_amp_nid(kcontrol);
-	kcontrol->private_value |= nid;
-
-	return snd_hda_mixer_amp_volume_put(kcontrol, ucontrol);
-}
-
 static int stac92xx_dmux_enum_info(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_info *uinfo)
 {
@@ -818,41 +782,6 @@ static int stac92xx_mono_mux_enum_put(struct snd_kcontrol *kcontrol,
 				     spec->mono_nid, &spec->cur_mmux);
 }
 
-static int stac92xx_amp_mux_enum_info(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_info *uinfo)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	return snd_hda_input_mux_info(spec->amp_mux, uinfo);
-}
-
-static int stac92xx_amp_mux_enum_get(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-
-	ucontrol->value.enumerated.item[0] = spec->cur_amux;
-	return 0;
-}
-
-static int stac92xx_amp_mux_enum_put(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	struct snd_kcontrol *ctl =
-		snd_hda_find_mixer_ctl(codec, "Amp Capture Volume");
-	if (!ctl)
-		return -EINVAL;
-
-	snd_ctl_notify(codec->bus->card, SNDRV_CTL_EVENT_MASK_VALUE |
-		SNDRV_CTL_EVENT_MASK_INFO, &ctl->id);
-
-	return snd_hda_input_mux_put(codec, spec->amp_mux, ucontrol,
-				     0, &spec->cur_amux);
-}
-
 #define stac92xx_aloopback_info snd_ctl_boolean_mono_info
 
 static int stac92xx_aloopback_get(struct snd_kcontrol *kcontrol,
@@ -920,84 +849,16 @@ static struct hda_verb stac9200_eapd_init[] = {
 	{}
 };
 
-static struct hda_verb stac92hd73xx_6ch_core_init[] = {
-	/* set master volume and direct control */
-	{ 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
-	/* setup adcs to point to mixer */
-	{ 0x20, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x21, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x0f, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	{ 0x10, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	{ 0x11, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	/* setup import muxs */
-	{ 0x28, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x29, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2a, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2b, AC_VERB_SET_CONNECT_SEL, 0x00},
-	{}
-};
-
 static struct hda_verb dell_eq_core_init[] = {
 	/* set master volume to max value without distortion
 	 * and direct control */
 	{ 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xec},
-	/* setup adcs to point to mixer */
-	{ 0x20, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x21, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	/* setup import muxs */
-	{ 0x28, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x29, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2a, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2b, AC_VERB_SET_CONNECT_SEL, 0x00},
 	{}
 };
 
-static struct hda_verb dell_m6_core_init[] = {
-	{ 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
-	/* setup adcs to point to mixer */
-	{ 0x20, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x21, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	/* setup import muxs */
-	{ 0x28, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x29, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2a, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2b, AC_VERB_SET_CONNECT_SEL, 0x00},
-	{}
-};
-
-static struct hda_verb stac92hd73xx_8ch_core_init[] = {
+static struct hda_verb stac92hd73xx_core_init[] = {
 	/* set master volume and direct control */
 	{ 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
-	/* setup adcs to point to mixer */
-	{ 0x20, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x21, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x0f, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	{ 0x10, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	{ 0x11, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	/* setup import muxs */
-	{ 0x28, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x29, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2a, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2b, AC_VERB_SET_CONNECT_SEL, 0x03},
-	{}
-};
-
-static struct hda_verb stac92hd73xx_10ch_core_init[] = {
-	/* set master volume and direct control */
-	{ 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
-	/* dac3 is connected to import3 mux */
-	{ 0x18, AC_VERB_SET_AMP_GAIN_MUTE, 0xb07f},
-	/* setup adcs to point to mixer */
-	{ 0x20, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x21, AC_VERB_SET_CONNECT_SEL, 0x0b},
-	{ 0x0f, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	{ 0x10, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	{ 0x11, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
-	/* setup import muxs */
-	{ 0x28, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x29, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2a, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{ 0x2b, AC_VERB_SET_CONNECT_SEL, 0x03},
 	{}
 };
 
@@ -1075,31 +936,6 @@ static struct hda_verb stac9205_core_init[] = {
 		.put = stac92xx_mono_mux_enum_put, \
 	}
 
-#define STAC_AMP_MUX \
-	{ \
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
-		.name = "Amp Selector Capture Switch", \
-		.count = 1, \
-		.info = stac92xx_amp_mux_enum_info, \
-		.get = stac92xx_amp_mux_enum_get, \
-		.put = stac92xx_amp_mux_enum_put, \
-	}
-
-#define STAC_AMP_VOL(xname, nid, chs, idx, dir) \
-	{ \
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
-		.name = xname, \
-		.index = 0, \
-		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE | \
-			SNDRV_CTL_ELEM_ACCESS_TLV_READ | \
-			SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK, \
-		.info = stac92xx_amp_volume_info, \
-		.get = stac92xx_amp_volume_get, \
-		.put = stac92xx_amp_volume_put, \
-		.tlv = { .c = snd_hda_mixer_amp_tlv }, \
-		.private_value = HDA_COMPOSE_AMP_VAL(nid, chs, idx, dir) \
-	}
-
 #define STAC_ANALOG_LOOPBACK(verb_read, verb_write, cnt) \
 	{ \
 		.iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
@@ -1130,28 +966,6 @@ static struct snd_kcontrol_new stac9200_mixer[] = {
 	{ } /* end */
 };
 
-#define DELL_M6_MIXER 6
-static struct snd_kcontrol_new stac92hd73xx_6ch_mixer[] = {
-	/* start of config #1 */
-	HDA_CODEC_VOLUME("Front Mic Mixer Capture Volume", 0x1d, 0, HDA_INPUT),
-	HDA_CODEC_MUTE("Front Mic Mixer Capture Switch", 0x1d, 0, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("Line In Mixer Capture Volume", 0x1d, 0x2, HDA_INPUT),
-	HDA_CODEC_MUTE("Line In Mixer Capture Switch", 0x1d, 0x2, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("CD Mixer Capture Volume", 0x1d, 0x4, HDA_INPUT),
-	HDA_CODEC_MUTE("CD Mixer Capture Switch", 0x1d, 0x4, HDA_INPUT),
-
-	/* start of config #2 */
-	HDA_CODEC_VOLUME("Mic Mixer Capture Volume", 0x1d, 0x1, HDA_INPUT),
-	HDA_CODEC_MUTE("Mic Mixer Capture Switch", 0x1d, 0x1, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("DAC Mixer Capture Volume", 0x1d, 0x3, HDA_INPUT),
-	HDA_CODEC_MUTE("DAC Mixer Capture Switch", 0x1d, 0x3, HDA_INPUT),
-
-	{ } /* end */
-};
-
 static struct snd_kcontrol_new stac92hd73xx_6ch_loopback[] = {
 	STAC_ANALOG_LOOPBACK(0xFA0, 0x7A1, 3),
 	{}
@@ -1165,42 +979,6 @@ static struct snd_kcontrol_new stac92hd73xx_8ch_loopback[] = {
 static struct snd_kcontrol_new stac92hd73xx_10ch_loopback[] = {
 	STAC_ANALOG_LOOPBACK(0xFA0, 0x7A1, 5),
 	{}
-};
-
-static struct snd_kcontrol_new stac92hd73xx_8ch_mixer[] = {
-	HDA_CODEC_VOLUME("Front Mic Mixer Capture Volume", 0x1d, 0, HDA_INPUT),
-	HDA_CODEC_MUTE("Front Mic Mixer Capture Switch", 0x1d, 0, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("Mic Mixer Capture Volume", 0x1d, 0x1, HDA_INPUT),
-	HDA_CODEC_MUTE("Mic Mixer Capture Switch", 0x1d, 0x1, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("Line In Mixer Capture Volume", 0x1d, 0x2, HDA_INPUT),
-	HDA_CODEC_MUTE("Line In Mixer Capture Switch", 0x1d, 0x2, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("DAC Mixer Capture Volume", 0x1d, 0x3, HDA_INPUT),
-	HDA_CODEC_MUTE("DAC Mixer Capture Switch", 0x1d, 0x3, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("CD Mixer Capture Volume", 0x1d, 0x4, HDA_INPUT),
-	HDA_CODEC_MUTE("CD Mixer Capture Switch", 0x1d, 0x4, HDA_INPUT),
-	{ } /* end */
-};
-
-static struct snd_kcontrol_new stac92hd73xx_10ch_mixer[] = {
-	HDA_CODEC_VOLUME("Front Mic Mixer Capture Volume", 0x1d, 0, HDA_INPUT),
-	HDA_CODEC_MUTE("Front Mic Mixer Capture Switch", 0x1d, 0, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("Mic Mixer Capture Volume", 0x1d, 0x1, HDA_INPUT),
-	HDA_CODEC_MUTE("Mic Mixer Capture Switch", 0x1d, 0x1, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("Line In Mixer Capture Volume", 0x1d, 0x2, HDA_INPUT),
-	HDA_CODEC_MUTE("Line In Mixer Capture Switch", 0x1d, 0x2, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("DAC Mixer Capture Volume", 0x1d, 0x3, HDA_INPUT),
-	HDA_CODEC_MUTE("DAC Mixer Capture Switch", 0x1d, 0x3, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("CD Mixer Capture Volume", 0x1d, 0x4, HDA_INPUT),
-	HDA_CODEC_MUTE("CD Mixer Capture Switch", 0x1d, 0x4, HDA_INPUT),
-	{ } /* end */
 };
 
 
@@ -2829,8 +2607,6 @@ enum {
 	STAC_CTL_WIDGET_VOL,
 	STAC_CTL_WIDGET_MUTE,
 	STAC_CTL_WIDGET_MONO_MUX,
-	STAC_CTL_WIDGET_AMP_MUX,
-	STAC_CTL_WIDGET_AMP_VOL,
 	STAC_CTL_WIDGET_HP_SWITCH,
 	STAC_CTL_WIDGET_IO_SWITCH,
 	STAC_CTL_WIDGET_CLFE_SWITCH,
@@ -2841,8 +2617,6 @@ static struct snd_kcontrol_new stac92xx_control_templates[] = {
 	HDA_CODEC_VOLUME(NULL, 0, 0, 0),
 	HDA_CODEC_MUTE(NULL, 0, 0, 0),
 	STAC_MONO_MUX,
-	STAC_AMP_MUX,
-	STAC_AMP_VOL(NULL, 0, 0, 0, 0),
 	STAC_CODEC_HP_SWITCH(NULL),
 	STAC_CODEC_IO_SWITCH(NULL, 0),
 	STAC_CODEC_CLFE_SWITCH(NULL, 0),
@@ -3398,37 +3172,6 @@ static int stac92xx_auto_create_mono_output_ctls(struct hda_codec *codec)
 	return stac92xx_add_control(spec, STAC_CTL_WIDGET_MONO_MUX,
 				"Mono Mux", spec->mono_nid);
 }
-
-/* labels for amp mux outputs */
-static const char *stac92xx_amp_labels[3] = {
-	"Front Microphone", "Microphone", "Line In",
-};
-
-/* create amp out controls mux on capable codecs */
-static int stac92xx_auto_create_amp_output_ctls(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	struct hda_input_mux *amp_mux = &spec->private_amp_mux;
-	int i, err;
-
-	for (i = 0; i < spec->num_amps; i++) {
-		amp_mux->items[amp_mux->num_items].label =
-					stac92xx_amp_labels[i];
-		amp_mux->items[amp_mux->num_items].index = i;
-		amp_mux->num_items++;
-	}
-
-	if (spec->num_amps > 1) {
-		err = stac92xx_add_control(spec, STAC_CTL_WIDGET_AMP_MUX,
-			"Amp Selector Capture Switch", 0);
-		if (err < 0)
-			return err;
-	}
-	return stac92xx_add_control(spec, STAC_CTL_WIDGET_AMP_VOL,
-		"Amp Capture Volume",
-		HDA_COMPOSE_AMP_VAL(spec->amp_nids[0], 3, 0, HDA_INPUT));
-}
-
 
 /* create PC beep volume controls */
 static int stac92xx_auto_create_beep_ctls(struct hda_codec *codec,
@@ -4000,11 +3743,6 @@ static int stac92xx_parse_auto_config(struct hda_codec *codec, hda_nid_t dig_out
 		if (err < 0)
 			return err;
 	}
-	if (spec->num_amps > 0) {
-		err = stac92xx_auto_create_amp_output_ctls(codec);
-		if (err < 0)
-			return err;
-	}
 	if (spec->num_dmics > 0 && !spec->dinput_mux)
 		if ((err = stac92xx_auto_create_dmic_input_ctls(codec,
 						&spec->autocfg)) < 0)
@@ -4041,7 +3779,6 @@ static int stac92xx_parse_auto_config(struct hda_codec *codec, hda_nid_t dig_out
 		spec->dinput_mux = &spec->private_dimux;
 	spec->sinput_mux = &spec->private_smux;
 	spec->mono_mux = &spec->private_mono_mux;
-	spec->amp_mux = &spec->private_amp_mux;
 	return 1;
 }
 
@@ -5188,20 +4925,15 @@ again:
 		       "number of channels defaulting to DAC count\n");
 		num_dacs = STAC92HD73_DAC_COUNT;
 	}
+	spec->init = stac92hd73xx_core_init;
 	switch (num_dacs) {
 	case 0x3: /* 6 Channel */
-		spec->mixer = stac92hd73xx_6ch_mixer;
-		spec->init = stac92hd73xx_6ch_core_init;
 		spec->aloopback_ctl = stac92hd73xx_6ch_loopback;
 		break;
 	case 0x4: /* 8 Channel */
-		spec->mixer = stac92hd73xx_8ch_mixer;
-		spec->init = stac92hd73xx_8ch_core_init;
 		spec->aloopback_ctl = stac92hd73xx_8ch_loopback;
 		break;
 	case 0x5: /* 10 Channel */
-		spec->mixer = stac92hd73xx_10ch_mixer;
-		spec->init = stac92hd73xx_10ch_core_init;
 		spec->aloopback_ctl = stac92hd73xx_10ch_loopback;
 		break;
 	}
@@ -5216,8 +4948,6 @@ again:
 	spec->dmic_nids = stac92hd73xx_dmic_nids;
 	spec->dmux_nids = stac92hd73xx_dmux_nids;
 	spec->smux_nids = stac92hd73xx_smux_nids;
-	spec->amp_nids = stac92hd73xx_amp_nids;
-	spec->num_amps = ARRAY_SIZE(stac92hd73xx_amp_nids);
 
 	spec->num_muxes = ARRAY_SIZE(stac92hd73xx_mux_nids);
 	spec->num_adcs = ARRAY_SIZE(stac92hd73xx_adc_nids);
@@ -5235,13 +4965,8 @@ again:
 	case STAC_DELL_M6_DMIC:
 	case STAC_DELL_M6_BOTH:
 		spec->num_smuxes = 0;
-		spec->mixer = &stac92hd73xx_6ch_mixer[DELL_M6_MIXER];
-		spec->amp_nids = &stac92hd73xx_amp_nids[DELL_M6_AMP];
 		spec->eapd_switch = 0;
-		spec->num_amps = 1;
 
-		if (spec->board_config != STAC_DELL_EQ)
-			spec->init = dell_m6_core_init;
 		switch (spec->board_config) {
 		case STAC_DELL_M6_AMIC: /* Analog Mics */
 			snd_hda_codec_set_pincfg(codec, 0x0b, 0x90A70170);
