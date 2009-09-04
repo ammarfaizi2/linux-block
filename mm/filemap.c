@@ -933,6 +933,8 @@ static void do_generic_file_read(struct file *filp, loff_t *ppos,
 	last_index = (*ppos + desc->count + PAGE_CACHE_SIZE-1) >> PAGE_CACHE_SHIFT;
 	offset = *ppos & ~PAGE_CACHE_MASK;
 
+	blk_plug_current();
+
 	for (;;) {
 		struct page *page;
 		pgoff_t end_index;
@@ -1126,6 +1128,7 @@ out:
 
 	*ppos = ((loff_t)index << PAGE_CACHE_SHIFT) + offset;
 	file_accessed(filp);
+	blk_unplug_current();
 }
 
 int file_read_actor(read_descriptor_t *desc, struct page *page,
