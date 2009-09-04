@@ -2267,7 +2267,10 @@ generic_file_buffered_write(struct kiocb *iocb, const struct iovec *iov,
 	struct iov_iter i;
 
 	iov_iter_init(&i, iov, nr_segs, count, written);
+
+	blk_plug_current();
 	status = generic_perform_write(file, &i, pos);
+	blk_unplug_current();
 
 	if (likely(status >= 0)) {
 		written += status;
