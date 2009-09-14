@@ -1690,6 +1690,8 @@ static struct snd_pci_quirk stac92hd71bxx_cfg_tbl[] = {
 		      "HP mini 1000", STAC_HP_M4),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_HP, 0x361b,
 		      "HP HDX", STAC_HP_HDX),  /* HDX16 */
+	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_HP, 0xfff0, 0x3620,
+		      "HP dv6", STAC_HP_DV5),
 	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_HP, 0xfff0, 0x7010,
 		      "HP", STAC_HP_DV5),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x0233,
@@ -4166,7 +4168,10 @@ static int stac92xx_init(struct hda_codec *codec)
 		stac92xx_auto_set_pinctl(codec, spec->autocfg.line_out_pins[0],
 				AC_PINCTL_OUT_EN);
 		/* fake event to set up pins */
-		stac_issue_unsol_event(codec, spec->autocfg.hp_pins[0]);
+		if (cfg->hp_pins[0])
+			stac_issue_unsol_event(codec, cfg->hp_pins[0]);
+		else if (cfg->line_out_pins[0])
+			stac_issue_unsol_event(codec, cfg->line_out_pins[0]);
 	} else {
 		stac92xx_auto_init_multi_out(codec);
 		stac92xx_auto_init_hp_out(codec);
@@ -4688,8 +4693,13 @@ static int stac92xx_resume(struct hda_codec *codec)
 	snd_hda_codec_resume_amp(codec);
 	snd_hda_codec_resume_cache(codec);
 	/* fake event to set up pins again to override cached values */
-	if (spec->hp_detect)
-		stac_issue_unsol_event(codec, spec->autocfg.hp_pins[0]);
+	if (spec->hp_detect) {
+		if (spec->autocfg.hp_pins[0])
+			stac_issue_unsol_event(codec, spec->autocfg.hp_pins[0]);
+		else if (spec->autocfg.line_out_pins[0])
+			stac_issue_unsol_event(codec,
+					       spec->autocfg.line_out_pins[0]);
+	}
 	return 0;
 }
 
@@ -5242,7 +5252,7 @@ again:
 		stac92xx_set_config_regs(codec,
 				stac92hd71bxx_brd_tbl[spec->board_config]);
 
-	if (spec->board_config > STAC_92HD71BXX_REF) {
+	if (spec->board_config != STAC_92HD71BXX_REF) {
 		/* GPIO0 = EAPD */
 		spec->gpio_mask = 0x01;
 		spec->gpio_dir = 0x01;
@@ -5375,6 +5385,11 @@ again:
 	case STAC_HP_DV5:
 		snd_hda_codec_set_pincfg(codec, 0x0d, 0x90170010);
 		stac92xx_auto_set_pinctl(codec, 0x0d, AC_PINCTL_OUT_EN);
+		/* HP dv6 gives the headphone pin as a line-out.  Thus we
+		 * need to set hp_detect flag here to force to enable HP
+		 * detection.
+		 */
+		spec->hp_detect = 1;
 		break;
 	case STAC_HP_HDX:
 		spec->num_dmics = 1;
