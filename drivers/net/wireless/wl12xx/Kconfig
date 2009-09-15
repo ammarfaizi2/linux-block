@@ -7,7 +7,7 @@ menuconfig WL12XX
 
 config WL1251
 	tristate "TI wl1251 support"
-	depends on WL12XX && GENERIC_HARDIRQS
+	depends on MAC80211 && WL12XX && GENERIC_HARDIRQS
 	select FW_LOADER
 	select CRC7
 	---help---
