@@ -1,13 +1,14 @@
 menuconfig WL12XX
 	tristate "TI wl12xx driver support"
 	depends on MAC80211 && WLAN_80211 && EXPERIMENTAL
+	depends on 0
 	---help---
 	  This will enable TI wl12xx driver support. The drivers make
 	  use of the mac80211 stack.
 
 config WL1251
 	tristate "TI wl1251 support"
-	depends on MAC80211 && WL12XX && GENERIC_HARDIRQS
+	depends on WL12XX && GENERIC_HARDIRQS
 	select FW_LOADER
 	select CRC7
 	---help---
