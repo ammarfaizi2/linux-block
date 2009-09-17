@@ -28,6 +28,7 @@ config DEVTMPFS
 config DEVTMPFS_MOUNT
 	bool "Automount devtmpfs at /dev"
 	depends on DEVTMPFS
+	depends on 0
 	help
 	  This will mount devtmpfs at /dev if the kernel mounts the root
 	  filesystem. It will not affect initramfs based mounting.
