@@ -395,6 +395,7 @@ config SC520_WDT
 config SBC_FITPC2_WATCHDOG
 	tristate "Compulab SBC-FITPC2 watchdog"
 	depends on X86
+	depends on 0
 	---help---
 	  This is the driver for the built-in watchdog timer on the fit-PC2
 	  Single-board computer made by Compulab.
