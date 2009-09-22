@@ -70,6 +70,7 @@ config DVB_USB_DIBUSB_MC
 config DVB_USB_DIB0700
 	tristate "DiBcom DiB0700 USB DVB devices (see help for supported devices)"
 	depends on DVB_USB
+	depends on 0
 	select DVB_DIB7000P if !DVB_FE_CUSTOMISE
 	select DVB_DIB7000M if !DVB_FE_CUSTOMISE
 	select DVB_DIB8000 if !DVB_FE_CUSTOMISE
