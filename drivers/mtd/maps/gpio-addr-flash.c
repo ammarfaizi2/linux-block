@@ -22,8 +22,7 @@
 #include <linux/mtd/physmap.h>
 #include <linux/platform_device.h>
 #include <linux/types.h>
-
-#include <asm/gpio.h>
+#include <linux/gpio.h>
 #include <asm/io.h>
 
 #define pr_devinit(fmt, args...) ({ static const __devinitconst char __fmt[] = fmt; printk(__fmt, ## args); })
