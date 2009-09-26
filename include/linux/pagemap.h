@@ -288,9 +288,8 @@ static inline pgoff_t linear_page_index(struct vm_area_struct *vma,
 }
 
 extern void __lock_page(struct page *page);
-extern int __lock_page_killable(struct page *page);
 extern void __lock_page_nosync(struct page *page);
-extern int __lock_page_wq(struct page *page, struct wait_bit_queue *);
+extern int __lock_page_async(struct page *page, struct wait_bit_queue *);
 extern void unlock_page(struct page *page);
 
 static inline void __set_page_locked(struct page *page)
@@ -319,19 +318,6 @@ static inline void lock_page(struct page *page)
 }
 
 /*
- * lock_page_killable is like lock_page but can be interrupted by fatal
- * signals.  It returns 0 if it locked the page and -EINTR if it was
- * killed while waiting.
- */
-static inline int lock_page_killable(struct page *page)
-{
-	might_sleep();
-	if (!trylock_page(page))
-		return __lock_page_killable(page);
-	return 0;
-}
-
-/*
  * lock_page_nosync should only be used if we can't pin the page's inode.
  * Doesn't play quite so well with block device plugging.
  */
@@ -342,15 +328,27 @@ static inline void lock_page_nosync(struct page *page)
 		__lock_page_nosync(page);
 }
 
-static inline int lock_page_wq(struct page *page, struct wait_bit_queue *wq)
+/*
+ * This is like lock_page(), except that it wont schedule away waiting for
+ * the page to become unlocked by IO. Instead it registers a callback
+ * in the wait_queue and returns -EIOCBRETRY. This happens if the current
+ * process has registered an "async" wait queue, if not this just blocks like
+ * lock_page(). If that happens, this helper may also return fatal signals
+ * terminating the wait, even if the page isn't locked yet.
+ */
+static inline int lock_page_async(struct page *page)
 {
+	might_sleep();
+
 	if (!trylock_page(page)) {
+		struct wait_bit_queue *wq;
 		DEFINE_WAIT_BIT(wq_stack, &page->flags, PG_locked);
 		
+		wq = current->io_wait;
 		if (!wq)
 			wq = &wq_stack;
 
-		return __lock_page_wq(page, wq);
+		return __lock_page_async(page, wq);
 	}
 
 	return 0;

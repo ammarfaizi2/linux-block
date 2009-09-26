@@ -152,7 +152,7 @@ void remove_from_page_cache(struct page *page)
 	mem_cgroup_uncharge_cache_page(page);
 }
 
-static int sync_page_no_sched(void *word)
+static int sync_page(void *word)
 {
 	struct address_space *mapping;
 	struct page *page;
@@ -185,21 +185,20 @@ static int sync_page_no_sched(void *word)
 	if (mapping && mapping->a_ops && mapping->a_ops->sync_page)
 		mapping->a_ops->sync_page(page);
 
+	if (!in_aio(current))
+		io_schedule();
+
 	return 0;
-}
-
-static int sync_page(void *word)
-{
-	int ret = sync_page_no_sched(word);
-
-	io_schedule();
-	return ret;
 }
 
 static int sync_page_killable(void *word)
 {
-	sync_page(word);
-	return fatal_signal_pending(current) ? -EINTR : 0;
+	int ret = sync_page(word);
+
+	if (!ret && fatal_signal_pending(current))
+		ret = -EINTR;
+
+	return ret;
 }
 
 /**
@@ -536,7 +535,7 @@ int wait_on_page_bit_wq(struct page *page, int bit_nr,
 		int (*fn)(void *) = sync_page;
 
 		if (!is_sync_wait(&wq->wait)) {
-			fn = sync_page_no_sched;
+			fn = sync_page_killable;
 			ret = -EIOCBRETRY;
 		}
 
@@ -613,18 +612,6 @@ void end_page_writeback(struct page *page)
 }
 EXPORT_SYMBOL(end_page_writeback);
 
-int __lock_page_wq(struct page *page, struct wait_bit_queue *wq)
-{
-	if (wq) {
-		wq->key.flags = &page->flags;
-		wq->key.bit_nr = PG_locked;
-	}
-
-	return __wait_on_bit_lock(page_waitqueue(page), wq, sync_page_no_sched,
-							TASK_UNINTERRUPTIBLE);
-}
-EXPORT_SYMBOL(__lock_page_wq);
-
 /**
  * __lock_page - get a lock on the page, assuming we need to sleep to get it
  * @page: the page to lock
@@ -643,14 +630,17 @@ void __lock_page(struct page *page)
 }
 EXPORT_SYMBOL(__lock_page);
 
-int __lock_page_killable(struct page *page)
+int __lock_page_async(struct page *page, struct wait_bit_queue *wq)
 {
-	DEFINE_WAIT_BIT(wait, &page->flags, PG_locked);
+	if (wq) {
+		wq->key.flags = &page->flags;
+		wq->key.bit_nr = PG_locked;
+	}
 
-	return __wait_on_bit_lock(page_waitqueue(page), &wait,
-					sync_page_killable, TASK_KILLABLE);
-}
-EXPORT_SYMBOL_GPL(__lock_page_killable);
+	return __wait_on_bit_lock(page_waitqueue(page), wq, sync_page_killable,
+ 							TASK_UNINTERRUPTIBLE);
+ }
+EXPORT_SYMBOL(__lock_page_async);
 
 /**
  * __lock_page_nosync - get a lock on the page, without calling sync_page()
@@ -1141,7 +1131,7 @@ page_ok:
 
 page_not_up_to_date:
 		/* Get exclusive access to the page ... */
-		error = lock_page_wq(page, current->io_wait);
+		error = lock_page_async(page);
 		if (unlikely(error))
 			goto readpage_error;
 
@@ -1172,7 +1162,7 @@ readpage:
 		}
 
 		if (!PageUptodate(page)) {
-			error = lock_page_wq(page, current->io_wait);
+			error = lock_page_async(page);
 			if (unlikely(error))
 				goto readpage_error;
 			if (!PageUptodate(page)) {

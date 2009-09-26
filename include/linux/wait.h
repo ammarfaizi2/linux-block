@@ -405,8 +405,15 @@ do {									\
 
 static inline int is_sync_wait(wait_queue_t *wait)
 {
-	return wait->private != NULL;
+	return !wait || wait->private != NULL;
 }
+
+static inline int is_sync_wait_bit_queue(struct wait_bit_queue *wq)
+{
+	return is_sync_wait(&wq->wait);
+}
+
+#define in_aio(tsk)	is_sync_wait_bit_queue((tsk)->io_wait)
 
 /*
  * Must be called with the spinlock in the wait_queue_head_t held.
