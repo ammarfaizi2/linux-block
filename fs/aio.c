@@ -695,7 +695,10 @@ static ssize_t aio_run_iocb(struct kiocb *iocb)
 	 * Now we are all set to call the retry method in async
 	 * context.
 	 */
+	BUG_ON(current->io_wait != NULL);
+	current->io_wait = &iocb->ki_wait;
 	ret = retry(iocb);
+	current->io_wait = NULL;
 
 	if (ret != -EIOCBRETRY && ret != -EIOCBQUEUED) {
 		BUG_ON(!list_empty(&iocb->ki_wait.task_list));

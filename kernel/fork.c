@@ -1075,6 +1075,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	p->real_start_time = p->start_time;
 	monotonic_to_bootbased(&p->real_start_time);
 	p->io_context = NULL;
+	p->io_wait = NULL;
 	p->audit_context = NULL;
 	cgroup_fork(p);
 #ifdef CONFIG_NUMA

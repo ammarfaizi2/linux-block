@@ -1455,6 +1455,7 @@ struct task_struct {
 	struct backing_dev_info *backing_dev_info;
 
 	struct io_context *io_context;
+	wait_queue_t *io_wait;
 
 	unsigned long ptrace_message;
 	siginfo_t *last_siginfo; /* For ptrace use.  */
