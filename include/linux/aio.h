@@ -102,7 +102,7 @@ struct kiocb {
 	} ki_obj;
 
 	__u64			ki_user_data;	/* user's data for completion */
-	wait_queue_t		ki_wait;
+	struct wait_bit_queue	ki_wq;
 	loff_t			ki_pos;
 
 	void			*private;
@@ -140,7 +140,7 @@ struct kiocb {
 		(x)->ki_dtor = NULL;			\
 		(x)->ki_obj.tsk = tsk;			\
 		(x)->ki_user_data = 0;                  \
-		init_wait((&(x)->ki_wait));             \
+		init_wait((&(x)->ki_wq.wait));		\
 	} while (0)
 
 #define AIO_RING_MAGIC			0xa10a10a1
@@ -222,8 +222,6 @@ static inline int aio_complete(struct kiocb *iocb, long res, long res2) { return
 struct mm_struct;
 static inline void exit_aio(struct mm_struct *mm) { }
 #endif /* CONFIG_AIO */
-
-#define io_wait_to_kiocb(wait) container_of(wait, struct kiocb, ki_wait)
 
 static inline struct kiocb *list_kiocb(struct list_head *h)
 {

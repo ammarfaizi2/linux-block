@@ -615,6 +615,11 @@ EXPORT_SYMBOL(end_page_writeback);
 
 int __lock_page_wq(struct page *page, struct wait_bit_queue *wq)
 {
+	if (wq) {
+		wq->key.flags = &page->flags;
+		wq->key.bit_nr = PG_locked;
+	}
+
 	return __wait_on_bit_lock(page_waitqueue(page), wq, sync_page_no_sched,
 							TASK_UNINTERRUPTIBLE);
 }
@@ -1136,7 +1141,7 @@ page_ok:
 
 page_not_up_to_date:
 		/* Get exclusive access to the page ... */
-		error = lock_page_killable(page);
+		error = lock_page_wq(page, current->io_wait);
 		if (unlikely(error))
 			goto readpage_error;
 
@@ -1167,7 +1172,7 @@ readpage:
 		}
 
 		if (!PageUptodate(page)) {
-			error = lock_page_killable(page);
+			error = lock_page_wq(page, current->io_wait);
 			if (unlikely(error))
 				goto readpage_error;
 			if (!PageUptodate(page)) {

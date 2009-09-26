@@ -696,12 +696,12 @@ static ssize_t aio_run_iocb(struct kiocb *iocb)
 	 * context.
 	 */
 	BUG_ON(current->io_wait != NULL);
-	current->io_wait = &iocb->ki_wait;
+	current->io_wait = &iocb->ki_wq;
 	ret = retry(iocb);
 	current->io_wait = NULL;
 
 	if (ret != -EIOCBRETRY && ret != -EIOCBQUEUED) {
-		BUG_ON(!list_empty(&iocb->ki_wait.task_list));
+		BUG_ON(!list_empty(&iocb->ki_wq.wait.task_list));
 		aio_complete(iocb, ret, 0);
 	}
 out:
@@ -714,6 +714,7 @@ out:
 		 * this is where we let go so that a subsequent
 		 * "kick" can start the next iteration
 		 */
+		iocb->ki_retry = retry;
 
 		/* will make __queue_kicked_iocb succeed from here on */
 		INIT_LIST_HEAD(&iocb->ki_run_list);
@@ -860,7 +861,7 @@ static void try_queue_kicked_iocb(struct kiocb *iocb)
 	 * than retry has happened before we could queue the iocb.  This also
 	 * means that the retry could have completed and freed our iocb, no
 	 * good. */
-	BUG_ON((!list_empty(&iocb->ki_wait.task_list)));
+	BUG_ON((!list_empty(&iocb->ki_wq.wait.task_list)));
 
 	spin_lock_irqsave(&ctx->ctx_lock, flags);
 	/* set this inside the lock so that we can't race with aio_run_iocb()
@@ -1525,9 +1526,16 @@ static ssize_t aio_setup_iocb(struct kiocb *kiocb)
  * are nested inside ioctx lock (i.e. ctx->wait)
  */
 static int aio_wake_function(wait_queue_t *wait, unsigned mode,
-			     int sync, void *key)
+			     int sync, void *arg)
 {
-	struct kiocb *iocb = container_of(wait, struct kiocb, ki_wait);
+	struct wait_bit_key *key = arg;
+	struct wait_bit_queue *wb
+		= container_of(wait, struct wait_bit_queue, wait);
+	struct kiocb *iocb = container_of(wb, struct kiocb, ki_wq);
+
+	if (wb->key.flags != key->flags || wb->key.bit_nr != key->bit_nr ||
+			test_bit(key->bit_nr, key->flags))
+		return 0;
 
 	list_del_init(&wait->task_list);
 	kick_iocb(iocb);
@@ -1595,8 +1603,8 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 	req->ki_buf = (char __user *)(unsigned long)iocb->aio_buf;
 	req->ki_left = req->ki_nbytes = iocb->aio_nbytes;
 	req->ki_opcode = iocb->aio_lio_opcode;
-	init_waitqueue_func_entry(&req->ki_wait, aio_wake_function);
-	INIT_LIST_HEAD(&req->ki_wait.task_list);
+	init_waitqueue_func_entry(&req->ki_wq.wait, aio_wake_function);
+	INIT_LIST_HEAD(&req->ki_wq.wait.task_list);
 
 	ret = aio_setup_iocb(req);
 

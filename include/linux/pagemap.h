@@ -344,8 +344,14 @@ static inline void lock_page_nosync(struct page *page)
 
 static inline int lock_page_wq(struct page *page, struct wait_bit_queue *wq)
 {
-	if (!trylock_page(page))
+	if (!trylock_page(page)) {
+		DEFINE_WAIT_BIT(wq_stack, &page->flags, PG_locked);
+		
+		if (!wq)
+			wq = &wq_stack;
+
 		return __lock_page_wq(page, wq);
+	}
 
 	return 0;
 }
