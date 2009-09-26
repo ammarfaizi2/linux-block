@@ -290,7 +290,7 @@ static inline pgoff_t linear_page_index(struct vm_area_struct *vma,
 }
 
 extern void __lock_page_nosync(struct page *page);
-extern int __lock_page_async(struct page *page, struct wait_bit_queue *);
+extern int __lock_page_async(struct page *page, struct wait_bit_queue *, int);
 extern void unlock_page(struct page *page);
 
 static inline void __set_page_locked(struct page *page)
@@ -329,18 +329,8 @@ static inline void lock_page_nosync(struct page *page)
  */
 static inline int lock_page_async(struct page *page, struct wait_bit_queue *wq)
 {
-	if (!trylock_page(page)) {
-		DEFINE_WAIT_BIT(wq_stack, &page->flags, PG_locked);
-		
-		if (!wq)
-			wq = &wq_stack;
-		else {
-			wq->key.flags = &page->flags;
-			wq->key.bit_nr = PG_locked;
-		}
-
-		return __lock_page_async(page, wq);
-	}
+	if (!trylock_page(page))
+		return __lock_page_async(page, wq, TASK_KILLABLE);
 
 	return 0;
 }
@@ -351,7 +341,9 @@ static inline int lock_page_async(struct page *page, struct wait_bit_queue *wq)
 static inline void lock_page(struct page *page)
 {
 	WARN_ON(in_aio(current));
-	lock_page_async(page, NULL);
+
+	if (!trylock_page(page))
+		__lock_page_async(page, NULL, TASK_UNINTERRUPTIBLE);
 }
 
 /*

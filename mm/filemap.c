@@ -535,21 +535,18 @@ int wait_on_page_bit_async(struct page *page, int bit_nr,
 		DEFINE_WAIT_BIT(stack_wait, &page->flags, bit_nr);
 		int (*fn)(void *) = sync_page;
 
-		if (!wait) {
-			fn = sync_page;
+		if (!wait)
 			wait = &stack_wait;
-		} else {
-			fn = sync_page_killable;
+		else {
 			wait->key.flags = &page->flags;
 			wait->key.bit_nr = bit_nr;
+			fn = sync_page_killable;
 		}
 
 		ret = __wait_on_bit(page_waitqueue(page), wait, fn,
 							TASK_UNINTERRUPTIBLE);
 	}
 
-	if (ret)
-		printk("%s: ret=%d\n", __FUNCTION__, ret);
 	return ret;
 }
 EXPORT_SYMBOL(wait_on_page_bit_async);
@@ -626,16 +623,35 @@ EXPORT_SYMBOL(end_page_writeback);
  * chances are that on the second loop, the block layer's plug list is empty,
  * so sync_page() will then return in state TASK_UNINTERRUPTIBLE.
  */
-int __lock_page_async(struct page *page, struct wait_bit_queue *wq)
+int __lock_page_async(struct page *page, struct wait_bit_queue *wq, int mode)
 {
+	DEFINE_WAIT_BIT(wq_stack, &page->flags, PG_locked);
 	int (*fn)(void *) = sync_page;
+	int ret;
 
-	if (!is_sync_wait_bit_queue(wq))
+	if (!wq)
+		wq = &wq_stack;
+	else {
+		wq->key.flags = &page->flags;
+		wq->key.bit_nr = PG_locked;
+	}
+
+	if (!is_sync_wait_bit_queue(wq) || mode == TASK_KILLABLE)
 		fn = sync_page_killable;
 
-	return __wait_on_bit_lock(page_waitqueue(page), wq, fn,
- 							TASK_UNINTERRUPTIBLE);
- }
+	/*
+	 * wait_on_bit_lock uses prepare_to_wait_exclusive, so if multiple
+	 * procs were waiting on this page, we were the only proc woken up.
+	 *
+	 * if ret != 0, we didn't actually get the lock.  We need to
+	 * make sure any other waiters don't sleep forever.
+	 */
+	ret = __wait_on_bit_lock(page_waitqueue(page), wq, fn, mode);
+	if (ret == -EINTR)
+		wake_up_page(page, PG_locked);
+
+	return ret;
+}
 EXPORT_SYMBOL(__lock_page_async);
 
 /**
