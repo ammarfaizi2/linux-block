@@ -457,6 +457,16 @@ void abort_exclusive_wait(wait_queue_head_t *q, wait_queue_t *wait,
 int autoremove_wake_function(wait_queue_t *wait, unsigned mode, int sync, void *key);
 int wake_bit_function(wait_queue_t *wait, unsigned mode, int sync, void *key);
 
+static inline int wait_bit_cleared(struct wait_bit_queue *wb,
+				   struct wait_bit_key *key)
+{
+	if (wb->key.flags != key->flags || wb->key.bit_nr != key->bit_nr ||
+	    test_bit(key->bit_nr, key->flags))
+		return 0;
+
+	return 1;
+}
+
 #define DEFINE_WAIT_FUNC(name, function)				\
 	wait_queue_t name = {						\
 		.private	= current,				\

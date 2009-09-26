@@ -1533,8 +1533,7 @@ static int aio_wake_function(wait_queue_t *wait, unsigned mode,
 		= container_of(wait, struct wait_bit_queue, wait);
 	struct kiocb *iocb = container_of(wb, struct kiocb, ki_wq);
 
-	if (wb->key.flags != key->flags || wb->key.bit_nr != key->bit_nr ||
-			test_bit(key->bit_nr, key->flags))
+	if (!wait_bit_cleared(wb, key))
 		return 0;
 
 	list_del_init(&wait->task_list);
