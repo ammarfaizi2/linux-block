@@ -212,12 +212,21 @@ __wait_on_bit(wait_queue_head_t *wq, struct wait_bit_queue *q,
 EXPORT_SYMBOL(__wait_on_bit);
 
 int __sched out_of_line_wait_on_bit(void *word, int bit,
-					int (*action)(void *), unsigned mode)
+				    int (*action)(void *), unsigned mode,
+				    struct wait_bit_queue *wait)
+					
 {
 	wait_queue_head_t *wq = bit_waitqueue(word, bit);
-	DEFINE_WAIT_BIT(wait, word, bit);
+	DEFINE_WAIT_BIT(stack_wait, word, bit);
 
-	return __wait_on_bit(wq, &wait, action, mode);
+	if (!wait)
+		wait = &stack_wait;
+	else {
+		wait->key.flags = word;
+		wait->key.bit_nr = bit;
+	}
+
+	return __wait_on_bit(wq, wait, action, mode);
 }
 EXPORT_SYMBOL(out_of_line_wait_on_bit);
 
@@ -247,12 +256,20 @@ __wait_on_bit_lock(wait_queue_head_t *wq, struct wait_bit_queue *q,
 EXPORT_SYMBOL(__wait_on_bit_lock);
 
 int __sched out_of_line_wait_on_bit_lock(void *word, int bit,
-					int (*action)(void *), unsigned mode)
+					int (*action)(void *), unsigned mode,
+					struct wait_bit_queue *wait)
 {
 	wait_queue_head_t *wq = bit_waitqueue(word, bit);
-	DEFINE_WAIT_BIT(wait, word, bit);
+	DEFINE_WAIT_BIT(stack_wait, word, bit);
 
-	return __wait_on_bit_lock(wq, &wait, action, mode);
+	if (!wait)
+		wait = &stack_wait;
+	else {
+		wait->key.flags = word;
+		wait->key.bit_nr = bit;
+	}
+
+	return __wait_on_bit_lock(wq, wait, action, mode);
 }
 EXPORT_SYMBOL(out_of_line_wait_on_bit_lock);
 

@@ -167,6 +167,7 @@ void unmap_underlying_metadata(struct block_device *bdev, sector_t block);
 
 void mark_buffer_async_write(struct buffer_head *bh);
 void __wait_on_buffer(struct buffer_head *);
+int __wait_on_buffer_async(struct buffer_head *, struct wait_bit_queue *);
 wait_queue_head_t *bh_waitq_head(struct buffer_head *bh);
 struct buffer_head *__find_get_block(struct block_device *bdev, sector_t block,
 			unsigned size);
@@ -315,6 +316,15 @@ static inline void wait_on_buffer(struct buffer_head *bh)
 	might_sleep();
 	if (buffer_locked(bh) || atomic_read(&bh->b_count) == 0)
 		__wait_on_buffer(bh);
+}
+
+static inline int wait_on_buffer_async(struct buffer_head *bh,
+					struct wait_bit_queue *wait)
+{
+	if (buffer_locked(bh) || atomic_read(&bh->b_count) == 0)
+		return __wait_on_buffer_async(bh, wait);
+
+	return 0;
 }
 
 static inline int trylock_buffer(struct buffer_head *bh)

@@ -327,8 +327,6 @@ static inline void lock_page_nosync(struct page *page)
  */
 static inline int lock_page_async(struct page *page, struct wait_bit_queue *wq)
 {
-	might_sleep();
-
 	if (!trylock_page(page)) {
 		DEFINE_WAIT_BIT(wq_stack, &page->flags, PG_locked);
 		
@@ -373,13 +371,14 @@ static inline void wait_on_page_locked(struct page *page)
 		wait_on_page_bit(page, PG_locked);
 }
 
-extern int wait_on_page_bit_wq(struct page *, int, struct wait_bit_queue *);
+extern int wait_on_page_bit_async(struct page *page, int bit_nr,
+					struct wait_bit_queue *);
 
-static inline int wait_on_page_locked_wq(struct page *page,
-					 struct wait_bit_queue *wait)
+static inline int wait_on_page_locked_async(struct page *page,
+					    struct wait_bit_queue *wait)
 {
 	if (PageLocked(page))
-		return wait_on_page_bit_wq(page, PG_locked, wait);
+		return wait_on_page_bit_async(page, PG_locked, wait);
 
 	return 0;
 }

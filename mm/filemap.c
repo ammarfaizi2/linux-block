@@ -526,32 +526,35 @@ static inline void wake_up_page(struct page *page, int bit)
 	__wake_up_bit(page_waitqueue(page), &page->flags, bit);
 }
 
-int wait_on_page_bit_wq(struct page *page, int bit_nr,
-			struct wait_bit_queue *wq)
+int wait_on_page_bit_async(struct page *page, int bit_nr,
+			   struct wait_bit_queue *wait)
 {
 	int ret = 0;
 
 	if (test_bit(bit_nr, &page->flags)) {
+		DEFINE_WAIT_BIT(stack_wait, &page->flags, bit_nr);
 		int (*fn)(void *) = sync_page;
 
-		if (!is_sync_wait(&wq->wait)) {
+		if (!wait) {
+			fn = sync_page;
+			wait = &stack_wait;
+		} else {
 			fn = sync_page_killable;
-			ret = -EIOCBRETRY;
+			wait->key.flags = &page->flags;
+			wait->key.bit_nr = bit_nr;
 		}
 
-		__wait_on_bit(page_waitqueue(page), wq, fn,
+		ret = __wait_on_bit(page_waitqueue(page), wait, fn,
 							TASK_UNINTERRUPTIBLE);
 	}
 
 	return ret;
 }
-EXPORT_SYMBOL(wait_on_page_bit_wq);
+EXPORT_SYMBOL(wait_on_page_bit_async);
 
 void wait_on_page_bit(struct page *page, int bit_nr)
 {
-	DEFINE_WAIT_BIT(wait, &page->flags, bit_nr);
-
-	wait_on_page_bit_wq(page, bit_nr, &wait);
+	wait_on_page_bit_async(page, bit_nr, NULL);
 }
 EXPORT_SYMBOL(wait_on_page_bit);
 
@@ -1772,11 +1775,16 @@ struct page *read_cache_page(struct address_space *mapping,
 				void *data)
 {
 	struct page *page;
+	int err;
 
 	page = read_cache_page_async(mapping, index, filler, data);
 	if (IS_ERR(page))
 		goto out;
-	wait_on_page_locked(page);
+	err = wait_on_page_locked_async(page, current->io_wait);
+	if (err) {
+		page = ERR_PTR(err);
+		goto out;
+	}
 	if (!PageUptodate(page)) {
 		page_cache_release(page);
 		page = ERR_PTR(-EIO);

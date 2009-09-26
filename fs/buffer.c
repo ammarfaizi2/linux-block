@@ -64,7 +64,8 @@ static int sync_buffer(void *word)
 	bd = bh->b_bdev;
 	if (bd)
 		blk_run_address_space(bd->bd_inode->i_mapping);
-	io_schedule();
+	if (!in_aio(current))
+		io_schedule();
 	return 0;
 }
 
@@ -93,6 +94,13 @@ void __wait_on_buffer(struct buffer_head * bh)
 	wait_on_bit(&bh->b_state, BH_Lock, sync_buffer, TASK_UNINTERRUPTIBLE);
 }
 EXPORT_SYMBOL(__wait_on_buffer);
+
+int __wait_on_buffer_async(struct buffer_head *bh, struct wait_bit_queue *wait)
+{
+	return wait_on_bit_async(&bh->b_state, BH_Lock, sync_buffer,
+						TASK_UNINTERRUPTIBLE, wait);
+}
+EXPORT_SYMBOL(__wait_on_buffer_async);
 
 static void
 __clear_page_buffers(struct page *page)
@@ -1912,7 +1920,11 @@ static int __block_prepare_write(struct inode *inode, struct page *page,
 	 * If we issued read requests - let them complete.
 	 */
 	while(wait_bh > wait) {
-		wait_on_buffer(*--wait_bh);
+		int ret;
+
+		ret = wait_on_buffer_async(*--wait_bh, current->io_wait);
+		if (ret && !err)
+			err = ret;
 		if (!buffer_uptodate(*wait_bh))
 			err = -EIO;
 	}
@@ -2581,7 +2593,11 @@ int nobh_write_begin(struct file *file, struct address_space *mapping,
 		 * for the buffer_head refcounts.
 		 */
 		for (bh = head; bh; bh = bh->b_this_page) {
-			wait_on_buffer(bh);
+			int err;
+	
+			err = wait_on_buffer_async(bh, current->io_wait);
+			if (err && !ret)
+				ret = err;
 			if (!buffer_uptodate(bh))
 				ret = -EIO;
 		}
@@ -2841,10 +2857,10 @@ int block_truncate_page(struct address_space *mapping,
 		set_buffer_uptodate(bh);
 
 	if (!buffer_uptodate(bh) && !buffer_delay(bh) && !buffer_unwritten(bh)) {
-		err = -EIO;
 		ll_rw_block(READ, 1, &bh);
-		wait_on_buffer(bh);
+		err = wait_on_buffer_async(bh, current->io_wait);
 		/* Uhhuh. Read error. Complain and punt. */
+		err = -EIO;
 		if (!buffer_uptodate(bh))
 			goto unlock;
 	}
@@ -3345,7 +3361,8 @@ int bh_submit_read(struct buffer_head *bh)
 	get_bh(bh);
 	bh->b_end_io = end_buffer_read_sync;
 	submit_bh(READ, bh);
-	wait_on_buffer(bh);
+	if (wait_on_buffer_async(bh, current->io_wait))
+		return -EIOCBRETRY;
 	if (buffer_uptodate(bh))
 		return 0;
 	return -EIO;

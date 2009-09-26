@@ -149,8 +149,8 @@ void __wake_up_bit(wait_queue_head_t *, void *, int);
 int __wait_on_bit(wait_queue_head_t *, struct wait_bit_queue *, int (*)(void *), unsigned);
 int __wait_on_bit_lock(wait_queue_head_t *, struct wait_bit_queue *, int (*)(void *), unsigned);
 void wake_up_bit(void *, int);
-int out_of_line_wait_on_bit(void *, int, int (*)(void *), unsigned);
-int out_of_line_wait_on_bit_lock(void *, int, int (*)(void *), unsigned);
+int out_of_line_wait_on_bit(void *, int, int (*)(void *), unsigned, struct wait_bit_queue *);
+int out_of_line_wait_on_bit_lock(void *, int, int (*)(void *), unsigned, struct wait_bit_queue *);
 wait_queue_head_t *bit_waitqueue(void *, int);
 
 #define wake_up(x)			__wake_up(x, TASK_NORMAL, 1, NULL)
@@ -516,7 +516,16 @@ static inline int wait_on_bit(void *word, int bit,
 {
 	if (!test_bit(bit, word))
 		return 0;
-	return out_of_line_wait_on_bit(word, bit, action, mode);
+	return out_of_line_wait_on_bit(word, bit, action, mode, NULL);
+}
+
+static inline int wait_on_bit_async(void *word, int bit,
+				    int (*action)(void *), unsigned mode,
+				    struct wait_bit_queue *wait)
+{
+	if (!test_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit(word, bit, action, mode, wait);
 }
 
 /**
@@ -540,7 +549,16 @@ static inline int wait_on_bit_lock(void *word, int bit,
 {
 	if (!test_and_set_bit(bit, word))
 		return 0;
-	return out_of_line_wait_on_bit_lock(word, bit, action, mode);
+	return out_of_line_wait_on_bit_lock(word, bit, action, mode, NULL);
+}
+	
+static inline int wait_on_bit_lock_async(void *word, int bit,
+					 int (*action)(void *), unsigned mode,
+					 struct wait_bit_queue *wait)
+{
+	if (!test_and_set_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit_lock(word, bit, action, mode, wait);
 }
 	
 #endif /* __KERNEL__ */
