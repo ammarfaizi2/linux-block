@@ -287,7 +287,6 @@ static inline pgoff_t linear_page_index(struct vm_area_struct *vma,
 	return pgoff >> (PAGE_CACHE_SHIFT - PAGE_SHIFT);
 }
 
-extern void __lock_page(struct page *page);
 extern void __lock_page_nosync(struct page *page);
 extern int __lock_page_async(struct page *page, struct wait_bit_queue *);
 extern void unlock_page(struct page *page);
@@ -305,16 +304,6 @@ static inline void __clear_page_locked(struct page *page)
 static inline int trylock_page(struct page *page)
 {
 	return (likely(!test_and_set_bit_lock(PG_locked, &page->flags)));
-}
-
-/*
- * lock_page may only be called if we have the page's inode pinned.
- */
-static inline void lock_page(struct page *page)
-{
-	might_sleep();
-	if (!trylock_page(page))
-		__lock_page(page);
 }
 
 /*
@@ -353,7 +342,20 @@ static inline int lock_page_async(struct page *page)
 
 	return 0;
 }
-	
+
+/*
+ * lock_page may only be called if we have the page's inode pinned.
+ */
+static inline void lock_page(struct page *page)
+{
+	might_sleep();
+
+	if (!trylock_page(page)) {
+		int ret = __lock_page_async(page, NULL);
+		WARN_ON(ret);
+	}
+}
+
 /*
  * This is exported only for wait_on_page_locked/wait_on_page_writeback.
  * Never use this directly!

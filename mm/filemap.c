@@ -613,7 +613,7 @@ void end_page_writeback(struct page *page)
 EXPORT_SYMBOL(end_page_writeback);
 
 /**
- * __lock_page - get a lock on the page, assuming we need to sleep to get it
+ * __lock_page_async - get a lock on the page, assuming we need to sleep to get it
  * @page: the page to lock
  *
  * Ugly. Running sync_page() in state TASK_UNINTERRUPTIBLE is scary.  If some
@@ -621,23 +621,18 @@ EXPORT_SYMBOL(end_page_writeback);
  * chances are that on the second loop, the block layer's plug list is empty,
  * so sync_page() will then return in state TASK_UNINTERRUPTIBLE.
  */
-void __lock_page(struct page *page)
-{
-	DEFINE_WAIT_BIT(wait, &page->flags, PG_locked);
-
-	__wait_on_bit_lock(page_waitqueue(page), &wait, sync_page,
-							TASK_UNINTERRUPTIBLE);
-}
-EXPORT_SYMBOL(__lock_page);
-
 int __lock_page_async(struct page *page, struct wait_bit_queue *wq)
 {
+	int (*fn)(void *);
+
 	if (wq) {
 		wq->key.flags = &page->flags;
 		wq->key.bit_nr = PG_locked;
-	}
+		fn = sync_page_killable;
+	} else
+		fn = sync_page;
 
-	return __wait_on_bit_lock(page_waitqueue(page), wq, sync_page_killable,
+	return __wait_on_bit_lock(page_waitqueue(page), wq, fn,
  							TASK_UNINTERRUPTIBLE);
  }
 EXPORT_SYMBOL(__lock_page_async);
