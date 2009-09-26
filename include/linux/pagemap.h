@@ -325,17 +325,19 @@ static inline void lock_page_nosync(struct page *page)
  * lock_page(). If that happens, this helper may also return fatal signals
  * terminating the wait, even if the page isn't locked yet.
  */
-static inline int lock_page_async(struct page *page)
+static inline int lock_page_async(struct page *page, struct wait_bit_queue *wq)
 {
 	might_sleep();
 
 	if (!trylock_page(page)) {
-		struct wait_bit_queue *wq;
 		DEFINE_WAIT_BIT(wq_stack, &page->flags, PG_locked);
 		
-		wq = current->io_wait;
 		if (!wq)
 			wq = &wq_stack;
+		else {
+			wq->key.flags = &page->flags;
+			wq->key.bit_nr = PG_locked;
+		}
 
 		return __lock_page_async(page, wq);
 	}
@@ -348,12 +350,8 @@ static inline int lock_page_async(struct page *page)
  */
 static inline void lock_page(struct page *page)
 {
-	might_sleep();
-
-	if (!trylock_page(page)) {
-		int ret = __lock_page_async(page, NULL);
-		WARN_ON(ret);
-	}
+	WARN_ON(current->io_wait);
+	lock_page_async(page, NULL);
 }
 
 /*
