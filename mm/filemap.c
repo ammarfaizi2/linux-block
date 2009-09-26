@@ -152,7 +152,7 @@ void remove_from_page_cache(struct page *page)
 	mem_cgroup_uncharge_cache_page(page);
 }
 
-static int sync_page(void *word)
+static int sync_page_no_sched(void *word)
 {
 	struct address_space *mapping;
 	struct page *page;
@@ -184,8 +184,16 @@ static int sync_page(void *word)
 	mapping = page_mapping(page);
 	if (mapping && mapping->a_ops && mapping->a_ops->sync_page)
 		mapping->a_ops->sync_page(page);
-	io_schedule();
+
 	return 0;
+}
+
+static int sync_page(void *word)
+{
+	int ret = sync_page_no_sched(word);
+
+	io_schedule();
+	return ret;
 }
 
 static int sync_page_killable(void *word)
@@ -519,15 +527,35 @@ static inline void wake_up_page(struct page *page, int bit)
 	__wake_up_bit(page_waitqueue(page), &page->flags, bit);
 }
 
+int wait_on_page_bit_wq(struct page *page, int bit_nr,
+			struct wait_bit_queue *wq)
+{
+	int ret = 0;
+
+	if (test_bit(bit_nr, &page->flags)) {
+		int (*fn)(void *) = sync_page;
+
+		if (!is_sync_wait(&wq->wait)) {
+			fn = sync_page_no_sched;
+			ret = -EIOCBRETRY;
+		}
+
+		__wait_on_bit(page_waitqueue(page), wq, fn,
+							TASK_UNINTERRUPTIBLE);
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(wait_on_page_bit_wq);
+
 void wait_on_page_bit(struct page *page, int bit_nr)
 {
 	DEFINE_WAIT_BIT(wait, &page->flags, bit_nr);
 
-	if (test_bit(bit_nr, &page->flags))
-		__wait_on_bit(page_waitqueue(page), &wait, sync_page,
-							TASK_UNINTERRUPTIBLE);
+	wait_on_page_bit_wq(page, bit_nr, &wait);
 }
 EXPORT_SYMBOL(wait_on_page_bit);
+
 
 /**
  * add_page_wait_queue - Add an arbitrary waiter to a page's wait queue
@@ -584,6 +612,13 @@ void end_page_writeback(struct page *page)
 	wake_up_page(page, PG_writeback);
 }
 EXPORT_SYMBOL(end_page_writeback);
+
+int __lock_page_wq(struct page *page, struct wait_bit_queue *wq)
+{
+	return __wait_on_bit_lock(page_waitqueue(page), wq, sync_page_no_sched,
+							TASK_UNINTERRUPTIBLE);
+}
+EXPORT_SYMBOL(__lock_page_wq);
 
 /**
  * __lock_page - get a lock on the page, assuming we need to sleep to get it

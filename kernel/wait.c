@@ -73,7 +73,8 @@ prepare_to_wait(wait_queue_head_t *q, wait_queue_t *wait, int state)
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&wait->task_list))
 		__add_wait_queue(q, wait);
-	set_current_state(state);
+	if (is_sync_wait(wait))
+		set_current_state(state);
 	spin_unlock_irqrestore(&q->lock, flags);
 }
 EXPORT_SYMBOL(prepare_to_wait);
@@ -87,7 +88,8 @@ prepare_to_wait_exclusive(wait_queue_head_t *q, wait_queue_t *wait, int state)
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&wait->task_list))
 		__add_wait_queue_tail(q, wait);
-	set_current_state(state);
+	if (is_sync_wait(wait))
+		set_current_state(state);
 	spin_unlock_irqrestore(&q->lock, flags);
 }
 EXPORT_SYMBOL(prepare_to_wait_exclusive);
@@ -198,8 +200,13 @@ __wait_on_bit(wait_queue_head_t *wq, struct wait_bit_queue *q,
 
 	do {
 		prepare_to_wait(wq, &q->wait, mode);
-		if (test_bit(q->key.bit_nr, q->key.flags))
+		if (test_bit(q->key.bit_nr, q->key.flags)) {
 			ret = (*action)(q->key.flags);
+			if (ret)
+				break;
+		}
+		if (!is_sync_wait(&q->wait))
+			ret = -EIOCBRETRY;
 	} while (test_bit(q->key.bit_nr, q->key.flags) && !ret);
 	finish_wait(wq, &q->wait);
 	return ret;
@@ -227,8 +234,12 @@ __wait_on_bit_lock(wait_queue_head_t *wq, struct wait_bit_queue *q,
 		if (!test_bit(q->key.bit_nr, q->key.flags))
 			continue;
 		ret = action(q->key.flags);
-		if (!ret)
-			continue;
+		if (!ret) {
+			if (!is_sync_wait(&q->wait))
+				ret = -EIOCBRETRY;
+			else
+				continue;
+		}
 		abort_exclusive_wait(wq, &q->wait, mode, &q->key);
 		return ret;
 	} while (test_and_set_bit(q->key.bit_nr, q->key.flags));

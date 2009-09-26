@@ -403,6 +403,11 @@ do {									\
 	__ret;								\
 })
 
+static inline int is_sync_wait(wait_queue_t *wait)
+{
+	return wait->private != NULL;
+}
+
 /*
  * Must be called with the spinlock in the wait_queue_head_t held.
  */
