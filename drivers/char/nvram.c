@@ -267,7 +267,15 @@ static ssize_t nvram_write(struct file *file, const char __user *buf,
 	unsigned char *tmp;
 	int len;
 
-	len = (NVRAM_BYTES - i) < count ? (NVRAM_BYTES - i) : count;
+	len = count;
+	if (count > NVRAM_BYTES - i)
+		len = NVRAM_BYTES - i;
+
+	if (len > NVRAM_BYTES)
+		len = NVRAM_BYTES;
+	if (len < 0)
+		return -EINVAL;
+
 	if (copy_from_user(contents, buf, len))
 		return -EFAULT;
 
