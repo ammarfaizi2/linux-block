@@ -130,7 +130,8 @@ static int ext3_readdir(struct file * filp,
 		struct buffer_head *bh = NULL;
 
 		map_bh.b_state = 0;
-		err = ext3_get_blocks_handle(NULL, inode, blk, 1, &map_bh, 0);
+		err = ext3_get_blocks_handle(NULL, inode, blk, 1, &map_bh, 0,
+						NULL);
 		if (err > 0) {
 			pgoff_t index = map_bh.b_blocknr >>
 					(PAGE_CACHE_SHIFT - inode->i_blkbits);

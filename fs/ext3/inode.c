@@ -365,7 +365,8 @@ static int ext3_block_to_path(struct inode *inode,
  *	the whole chain, all way to the data (returns %NULL, *err == 0).
  */
 static Indirect *ext3_get_branch(struct inode *inode, int depth, int *offsets,
-				 Indirect chain[4], int *err)
+				 Indirect chain[4], int *err,
+				 struct wait_bit_queue *wait)
 {
 	struct super_block *sb = inode->i_sb;
 	Indirect *p = chain;
@@ -377,8 +378,8 @@ static Indirect *ext3_get_branch(struct inode *inode, int depth, int *offsets,
 	if (!p->key)
 		goto no_block;
 	while (--depth) {
-		bh = sb_bread(sb, le32_to_cpu(p->key));
-		if (!bh)
+		bh = sb_bread_async(sb, le32_to_cpu(p->key), wait);
+		if (!bh || IS_ERR(bh))
 			goto failure;
 		/* Reader: pointers */
 		if (!verify_chain(chain, p))
@@ -395,7 +396,10 @@ changed:
 	*err = -EAGAIN;
 	goto no_block;
 failure:
-	*err = -EIO;
+	if (IS_ERR(bh))
+		*err = PTR_ERR(bh);
+	else
+		*err = -EIO;
 no_block:
 	return p;
 }
@@ -799,7 +803,7 @@ err_out:
 int ext3_get_blocks_handle(handle_t *handle, struct inode *inode,
 		sector_t iblock, unsigned long maxblocks,
 		struct buffer_head *bh_result,
-		int create)
+		int create, struct wait_bit_queue *wait)
 {
 	int err = -EIO;
 	int offsets[4];
@@ -820,7 +824,7 @@ int ext3_get_blocks_handle(handle_t *handle, struct inode *inode,
 	if (depth == 0)
 		goto out;
 
-	partial = ext3_get_branch(inode, depth, offsets, chain, &err);
+	partial = ext3_get_branch(inode, depth, offsets, chain, &err, wait);
 
 	/* Simplest case - block found, no allocation needed */
 	if (!partial) {
@@ -855,7 +859,7 @@ int ext3_get_blocks_handle(handle_t *handle, struct inode *inode,
 	}
 
 	/* Next simple case - plain lookup or failed read of indirect block */
-	if (!create || err == -EIO)
+	if (!create || err == -EIO || err == -EIOCBRETRY)
 		goto cleanup;
 
 	mutex_lock(&ei->truncate_mutex);
@@ -877,7 +881,8 @@ int ext3_get_blocks_handle(handle_t *handle, struct inode *inode,
 			brelse(partial->bh);
 			partial--;
 		}
-		partial = ext3_get_branch(inode, depth, offsets, chain, &err);
+		partial = ext3_get_branch(inode, depth, offsets, chain, &err,
+					  wait);
 		if (!partial) {
 			count++;
 			mutex_unlock(&ei->truncate_mutex);
@@ -956,8 +961,9 @@ out:
  */
 #define DIO_CREDITS 25
 
-static int ext3_get_block(struct inode *inode, sector_t iblock,
-			struct buffer_head *bh_result, int create)
+static int __ext3_get_block(struct inode *inode, sector_t iblock,
+			    struct buffer_head *bh_result, int create,
+			    struct wait_bit_queue *wait)
 {
 	handle_t *handle = ext3_journal_current_handle();
 	int ret = 0, started = 0;
@@ -976,7 +982,7 @@ static int ext3_get_block(struct inode *inode, sector_t iblock,
 	}
 
 	ret = ext3_get_blocks_handle(handle, inode, iblock,
-					max_blocks, bh_result, create);
+					max_blocks, bh_result, create, wait);
 	if (ret > 0) {
 		bh_result->b_size = (ret << inode->i_blkbits);
 		ret = 0;
@@ -985,6 +991,20 @@ static int ext3_get_block(struct inode *inode, sector_t iblock,
 		ext3_journal_stop(handle);
 out:
 	return ret;
+}
+
+static int ext3_get_block(struct inode *inode, sector_t iblock,
+			  struct buffer_head *bh_result, int create)
+{
+	return __ext3_get_block(inode, iblock, bh_result, create, NULL);
+}
+
+static int ext3_get_block_async(struct inode *inode, sector_t iblock,
+			struct buffer_head *bh_result, int create)
+{
+	struct wait_bit_queue *wait = current->io_wait;
+
+	return __ext3_get_block(inode, iblock, bh_result, create, wait);
 }
 
 int ext3_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
@@ -1009,7 +1029,7 @@ struct buffer_head *ext3_getblk(handle_t *handle, struct inode *inode,
 	dummy.b_blocknr = -1000;
 	buffer_trace_init(&dummy.b_history);
 	err = ext3_get_blocks_handle(handle, inode, block, 1,
-					&dummy, create);
+					&dummy, create, NULL);
 	/*
 	 * ext3_get_blocks_handle() returns number of blocks
 	 * mapped. 0 in case of a HOLE.
@@ -1183,7 +1203,7 @@ retry:
 		goto out;
 	}
 	ret = block_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
-							ext3_get_block);
+							ext3_get_block_async);
 	if (ret)
 		goto write_begin_failed;
 
@@ -1684,14 +1704,14 @@ out_unlock:
 
 static int ext3_readpage(struct file *file, struct page *page)
 {
-	return mpage_readpage(page, ext3_get_block);
+	return mpage_readpage(page, ext3_get_block_async);
 }
 
 static int
 ext3_readpages(struct file *file, struct address_space *mapping,
 		struct list_head *pages, unsigned nr_pages)
 {
-	return mpage_readpages(mapping, pages, nr_pages, ext3_get_block);
+	return mpage_readpages(mapping, pages, nr_pages, ext3_get_block_async);
 }
 
 static void ext3_invalidatepage(struct page *page, unsigned long offset)
@@ -2031,7 +2051,7 @@ static Indirect *ext3_find_shared(struct inode *inode, int depth,
 	/* Make k index the deepest non-null offest + 1 */
 	for (k = depth; k > 1 && !offsets[k-1]; k--)
 		;
-	partial = ext3_get_branch(inode, k, offsets, chain, &err);
+	partial = ext3_get_branch(inode, k, offsets, chain, &err, NULL);
 	/* Writer: pointers */
 	if (!partial)
 		partial = chain + k-1;
