@@ -176,12 +176,13 @@ struct buffer_head *__getblk(struct block_device *bdev, sector_t block,
 void __brelse(struct buffer_head *);
 void __bforget(struct buffer_head *);
 void __breadahead(struct block_device *, sector_t block, unsigned int size);
-struct buffer_head *__bread(struct block_device *, sector_t block, unsigned size);
+struct buffer_head *__bread_async(struct block_device *, sector_t block, unsigned size, struct wait_bit_queue *);
 void invalidate_bh_lrus(void);
 struct buffer_head *alloc_buffer_head(gfp_t gfp_flags);
 void free_buffer_head(struct buffer_head * bh);
 void unlock_buffer(struct buffer_head *bh);
 void __lock_buffer(struct buffer_head *bh);
+int __lock_buffer_async(struct buffer_head *bh, struct wait_bit_queue *wait);
 void ll_rw_block(int, int, struct buffer_head * bh[]);
 int sync_dirty_buffer(struct buffer_head *bh);
 int submit_bh(int, struct buffer_head *);
@@ -273,10 +274,22 @@ static inline void bforget(struct buffer_head *bh)
 		__bforget(bh);
 }
 
+static inline struct buffer_head *__bread(struct block_device *bdev,
+					  sector_t block, unsigned size)
+{
+	return __bread_async(bdev, block, size, NULL);
+}
+
 static inline struct buffer_head *
 sb_bread(struct super_block *sb, sector_t block)
 {
-	return __bread(sb->s_bdev, block, sb->s_blocksize);
+	return __bread_async(sb->s_bdev, block, sb->s_blocksize, NULL);
+}
+
+static inline struct buffer_head *
+sb_bread_async(struct super_block *sb, sector_t block, struct wait_bit_queue *w)
+{
+	return __bread_async(sb->s_bdev, block, sb->s_blocksize, w);
 }
 
 static inline void
@@ -337,6 +350,25 @@ static inline void lock_buffer(struct buffer_head *bh)
 	might_sleep();
 	if (!trylock_buffer(bh))
 		__lock_buffer(bh);
+}
+
+static inline int lock_buffer_async(struct buffer_head *bh,
+				    struct wait_bit_queue *wait)
+{
+	if (!trylock_buffer(bh)) {
+		DEFINE_WAIT_BIT(wq_stack, &bh->b_state, BH_Lock);
+
+		if (!wait)
+			wait = &wq_stack;
+		else {
+			wait->key.flags = &bh->b_state;
+			wait->key.bit_nr = BH_Lock;
+		}
+
+		return __lock_buffer_async(bh, wait);
+	}
+
+	return 0;
 }
 
 extern int __set_page_dirty_buffers(struct page *page);

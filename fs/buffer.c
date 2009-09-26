@@ -76,6 +76,13 @@ void __lock_buffer(struct buffer_head *bh)
 }
 EXPORT_SYMBOL(__lock_buffer);
 
+int __lock_buffer_async(struct buffer_head *bh, struct wait_bit_queue *wait)
+{
+	return wait_on_bit_lock_async(&bh->b_state, BH_Lock, sync_buffer,
+						TASK_UNINTERRUPTIBLE, wait);
+}
+EXPORT_SYMBOL(__lock_buffer_async);
+
 void unlock_buffer(struct buffer_head *bh)
 {
 	clear_bit_unlock(BH_Lock, &bh->b_state);
@@ -1225,9 +1232,11 @@ void __bforget(struct buffer_head *bh)
 }
 EXPORT_SYMBOL(__bforget);
 
-static struct buffer_head *__bread_slow(struct buffer_head *bh)
+static struct buffer_head *__bread_slow(struct buffer_head *bh,
+					struct wait_bit_queue *wait)
 {
-	lock_buffer(bh);
+	if (lock_buffer_async(bh, wait))
+		return ERR_PTR(-EIOCBRETRY);
 	if (buffer_uptodate(bh)) {
 		unlock_buffer(bh);
 		return bh;
@@ -1235,7 +1244,8 @@ static struct buffer_head *__bread_slow(struct buffer_head *bh)
 		get_bh(bh);
 		bh->b_end_io = end_buffer_read_sync;
 		submit_bh(READ, bh);
-		wait_on_buffer(bh);
+		if (wait_on_buffer_async(bh, wait))
+			return ERR_PTR(-EIOCBRETRY);
 		if (buffer_uptodate(bh))
 			return bh;
 	}
@@ -1424,15 +1434,16 @@ EXPORT_SYMBOL(__breadahead);
  *  It returns NULL if the block was unreadable.
  */
 struct buffer_head *
-__bread(struct block_device *bdev, sector_t block, unsigned size)
+__bread_async(struct block_device *bdev, sector_t block, unsigned size,
+	      struct wait_bit_queue *wait)
 {
 	struct buffer_head *bh = __getblk(bdev, block, size);
 
 	if (likely(bh) && !buffer_uptodate(bh))
-		bh = __bread_slow(bh);
+		bh = __bread_slow(bh, wait);
 	return bh;
 }
-EXPORT_SYMBOL(__bread);
+EXPORT_SYMBOL(__bread_async);
 
 /*
  * invalidate_bh_lrus() is called rarely - but not only at unmount.

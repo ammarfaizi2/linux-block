@@ -194,11 +194,9 @@ static int ext2_block_to_path(struct inode *inode,
  *	or when it reads all @depth-1 indirect blocks successfully and finds
  *	the whole chain, all way to the data (returns %NULL, *err == 0).
  */
-static Indirect *ext2_get_branch(struct inode *inode,
-				 int depth,
-				 int *offsets,
-				 Indirect chain[4],
-				 int *err)
+static Indirect *ext2_get_branch(struct inode *inode, int depth,
+				 int *offsets, Indirect chain[4],
+				 int *err, struct wait_bit_queue *wait)
 {
 	struct super_block *sb = inode->i_sb;
 	Indirect *p = chain;
@@ -210,8 +208,8 @@ static Indirect *ext2_get_branch(struct inode *inode,
 	if (!p->key)
 		goto no_block;
 	while (--depth) {
-		bh = sb_bread(sb, le32_to_cpu(p->key));
-		if (!bh)
+		bh = sb_bread_async(sb, le32_to_cpu(p->key), wait);
+		if (!bh || IS_ERR(bh))
 			goto failure;
 		read_lock(&EXT2_I(inode)->i_meta_lock);
 		if (!verify_chain(chain, p))
@@ -229,7 +227,10 @@ changed:
 	*err = -EAGAIN;
 	goto no_block;
 failure:
-	*err = -EIO;
+	if (IS_ERR(bh))
+		*err = PTR_ERR(bh);
+	else
+		*err = -EIO;
 no_block:
 	return p;
 }
@@ -567,10 +568,10 @@ static void ext2_splice_branch(struct inode *inode,
  * return = 0, if plain lookup failed.
  * return < 0, error case.
  */
-static int ext2_get_blocks(struct inode *inode,
-			   sector_t iblock, unsigned long maxblocks,
-			   struct buffer_head *bh_result,
-			   int create)
+static int ext2_get_blocks(struct inode *inode, sector_t iblock,
+			   unsigned long maxblocks,
+			   struct buffer_head *bh_result, int create,
+			   struct wait_bit_queue *wait)
 {
 	int err = -EIO;
 	int offsets[4];
@@ -589,7 +590,7 @@ static int ext2_get_blocks(struct inode *inode,
 	if (depth == 0)
 		return (err);
 
-	partial = ext2_get_branch(inode, depth, offsets, chain, &err);
+	partial = ext2_get_branch(inode, depth, offsets, chain, &err, wait);
 	/* Simplest case - block found, no allocation needed */
 	if (!partial) {
 		first_block = le32_to_cpu(chain[depth - 1].key);
@@ -621,7 +622,7 @@ static int ext2_get_blocks(struct inode *inode,
 	}
 
 	/* Next simple case - plain lookup or failed read of indirect block */
-	if (!create || err == -EIO)
+	if (!create || err == -EIO || err == -EIOCBRETRY)
 		goto cleanup;
 
 	mutex_lock(&ei->truncate_mutex);
@@ -642,7 +643,8 @@ static int ext2_get_blocks(struct inode *inode,
 			brelse(partial->bh);
 			partial--;
 		}
-		partial = ext2_get_branch(inode, depth, offsets, chain, &err);
+		partial = ext2_get_branch(inode, depth, offsets, chain, &err,
+						wait);
 		if (!partial) {
 			count++;
 			mutex_unlock(&ei->truncate_mutex);
@@ -715,7 +717,7 @@ int ext2_get_block(struct inode *inode, sector_t iblock, struct buffer_head *bh_
 {
 	unsigned max_blocks = bh_result->b_size >> inode->i_blkbits;
 	int ret = ext2_get_blocks(inode, iblock, max_blocks,
-			      bh_result, create);
+			      bh_result, create, NULL);
 	if (ret > 0) {
 		bh_result->b_size = (ret << inode->i_blkbits);
 		ret = 0;
@@ -724,6 +726,19 @@ int ext2_get_block(struct inode *inode, sector_t iblock, struct buffer_head *bh_
 
 }
 
+int ext2_get_block_async(struct inode *inode, sector_t iblock,
+			 struct buffer_head *bh_result, int create)
+{
+	unsigned max_blocks = bh_result->b_size >> inode->i_blkbits;
+	int ret = ext2_get_blocks(inode, iblock, max_blocks,
+			      bh_result, create, current->io_wait);
+	if (ret > 0) {
+		bh_result->b_size = (ret << inode->i_blkbits);
+		ret = 0;
+	}
+	return ret;
+
+}
 int ext2_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 		u64 start, u64 len)
 {
@@ -753,7 +768,7 @@ int __ext2_write_begin(struct file *file, struct address_space *mapping,
 		struct page **pagep, void **fsdata)
 {
 	return block_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
-							ext2_get_block);
+							ext2_get_block_async);
 }
 
 static int
@@ -776,7 +791,7 @@ ext2_nobh_write_begin(struct file *file, struct address_space *mapping,
 	 * pages in order to make this work easily.
 	 */
 	return nobh_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
-							ext2_get_block);
+							ext2_get_block_async);
 }
 
 static int ext2_nobh_writepage(struct page *page,
@@ -900,7 +915,7 @@ static Indirect *ext2_find_shared(struct inode *inode,
 	*top = 0;
 	for (k = depth; k > 1 && !offsets[k-1]; k--)
 		;
-	partial = ext2_get_branch(inode, k, offsets, chain, &err);
+	partial = ext2_get_branch(inode, k, offsets, chain, &err, NULL);
 	if (!partial)
 		partial = chain + k-1;
 	/*
