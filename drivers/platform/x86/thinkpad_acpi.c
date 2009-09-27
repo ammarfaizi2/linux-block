@@ -2216,6 +2216,7 @@ static int hotkey_user_mask_set(const u32 mask)
 	return rc;
 }
 
+#ifdef CONFIG_THINKPAD_ACPI_HOTKEY_POLL
 /*
  * Sets the driver hotkey mask.
  *
@@ -2246,6 +2247,7 @@ static int tpacpi_hotkey_driver_mask_set(const u32 mask)
 
 	return rc;
 }
+#endif
 
 static int hotkey_status_get(int *status)
 {
