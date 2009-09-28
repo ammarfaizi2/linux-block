@@ -73,6 +73,10 @@ extern int dma_is_consistent(struct device *dev, dma_addr_t dma_addr);
 extern void dma_cache_sync(struct device *dev, void *vaddr, size_t size,
 	       enum dma_data_direction direction);
 
+#define ARCH_HAS_DMA_MMAP_COHERENT
+extern int dma_mmap_coherent(struct device *dev, struct vm_area_struct *vma,
+			     void *cpu_addr, dma_addr_t handle, size_t size);
+
 #if 0
 #define ARCH_HAS_DMA_DECLARE_COHERENT_MEMORY
 
