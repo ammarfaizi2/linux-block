@@ -510,6 +510,24 @@ static void pci32_free_coherent(struct device *dev, size_t n, void *p,
 	free_pages(pgp, get_order(n));
 }
 
+/* dma_mmap_coherent() backend for PCI device;
+ * need to retrieve the real page via _sparc_find_resource()
+ */
+static int pci32_mmap_coherent(struct device *dev, struct vm_area_struct *vma,
+			       void *cpu_addr, dma_addr_t handle, size_t size)
+{
+	struct resource *res;
+	struct page *pg;
+
+	res = _sparc_find_resource(&_sparc_dvma, (unsigned long)cpu_addr);
+	if (!res)
+		return -ENXIO;
+	pg = virt_to_page(res->start);
+	return remap_pfn_range(vma, vma->vm_start,
+			       page_to_pfn(pg) + vma->vm_pgoff,
+			       size, vma->vm_page_prot);
+}
+
 /*
  * Same as pci_map_single, but with pages.
  */
@@ -650,6 +668,7 @@ struct dma_map_ops pci32_dma_ops = {
 	.sync_single_for_device	= pci32_sync_single_for_device,
 	.sync_sg_for_cpu	= pci32_sync_sg_for_cpu,
 	.sync_sg_for_device	= pci32_sync_sg_for_device,
+	.mmap_coherent		= pci32_mmap_coherent,
 };
 EXPORT_SYMBOL(pci32_dma_ops);
 
