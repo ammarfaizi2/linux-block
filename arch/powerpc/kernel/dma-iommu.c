@@ -97,5 +97,6 @@ struct dma_map_ops dma_iommu_ops = {
 	.dma_supported	= dma_iommu_dma_supported,
 	.map_page	= dma_iommu_map_page,
 	.unmap_page	= dma_iommu_unmap_page,
+	.mmap_coherent  = dma_direct_mmap_coherent,
 };
 EXPORT_SYMBOL(dma_iommu_ops);

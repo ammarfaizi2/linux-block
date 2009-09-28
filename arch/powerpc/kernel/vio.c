@@ -608,6 +608,7 @@ struct dma_map_ops vio_dma_mapping_ops = {
 	.unmap_sg       = vio_dma_iommu_unmap_sg,
 	.map_page       = vio_dma_iommu_map_page,
 	.unmap_page     = vio_dma_iommu_unmap_page,
+	.mmap_coherent  = dma_direct_mmap_coherent,
 
 };
 

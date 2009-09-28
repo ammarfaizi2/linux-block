@@ -702,6 +702,7 @@ static struct dma_map_ops ps3_sb_dma_ops = {
 	.dma_supported = ps3_dma_supported,
 	.map_page = ps3_sb_map_page,
 	.unmap_page = ps3_unmap_page,
+	.mmap_coherent = dma_direct_mmap_coherent,
 };
 
 static struct dma_map_ops ps3_ioc0_dma_ops = {
@@ -712,6 +713,7 @@ static struct dma_map_ops ps3_ioc0_dma_ops = {
 	.dma_supported = ps3_dma_supported,
 	.map_page = ps3_ioc0_map_page,
 	.unmap_page = ps3_unmap_page,
+	.mmap_coherent = dma_direct_mmap_coherent,
 };
 
 /**

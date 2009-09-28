@@ -135,6 +135,7 @@ static struct dma_map_ops ibmebus_dma_ops = {
 	.dma_supported  = ibmebus_dma_supported,
 	.map_page       = ibmebus_map_page,
 	.unmap_page     = ibmebus_unmap_page,
+	.mmap_coherent  = dma_direct_mmap_coherent,
 };
 
 static int ibmebus_match_path(struct device *dev, void *data)

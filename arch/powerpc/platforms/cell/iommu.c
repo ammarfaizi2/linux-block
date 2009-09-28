@@ -651,6 +651,7 @@ struct dma_map_ops dma_iommu_fixed_ops = {
 	.set_dma_mask   = dma_set_mask_and_switch,
 	.map_page       = dma_fixed_map_page,
 	.unmap_page     = dma_fixed_unmap_page,
+	.mmap_coherent  = dma_direct_mmap_coherent,
 };
 
 static void cell_dma_dev_setup_fixed(struct device *dev);

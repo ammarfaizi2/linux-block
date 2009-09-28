@@ -25,7 +25,10 @@ extern void *dma_direct_alloc_coherent(struct device *dev, size_t size,
 				       dma_addr_t *dma_handle, gfp_t flag);
 extern void dma_direct_free_coherent(struct device *dev, size_t size,
 				     void *vaddr, dma_addr_t dma_handle);
-
+extern int dma_direct_mmap_coherent(struct device *dev,
+				    struct vm_area_struct *vma,
+				    void *cpu_addr, dma_addr_t dma_handle,
+				    size_t size);
 
 #ifdef CONFIG_NOT_COHERENT_CACHE
 /*
@@ -169,6 +172,22 @@ static inline void dma_free_coherent(struct device *dev, size_t size,
 	debug_dma_free_coherent(dev, size, cpu_addr, dma_handle);
 
 	dma_ops->free_coherent(dev, size, cpu_addr, dma_handle);
+}
+
+#define ARCH_HAS_DMA_MMAP_COHERENT
+static inline int dma_mmap_coherent(struct device *dev,
+				    struct vm_area_struct *vma,
+				    void *cpu_addr, dma_addr_t dma_handle,
+				    size_t size)
+{
+	struct dma_map_ops *dma_ops = get_dma_ops(dev);
+
+	BUG_ON(!dma_ops);
+
+	if (dma_ops->mmap_coherent)
+		return dma_ops->mmap_coherent(dev, vma, cpu_addr, dma_handle,
+					      size);
+	return -EIO;
 }
 
 static inline int dma_mapping_error(struct device *dev, dma_addr_t dma_addr)
