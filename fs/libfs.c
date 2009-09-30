@@ -130,6 +130,7 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
 	struct dentry *cursor = filp->private_data;
 	struct list_head *p, *q = &cursor->d_u.d_child;
 	ino_t ino;
+	char d_type;
 	int i = filp->f_pos;
 
 	switch (i) {
@@ -155,14 +156,22 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
 			for (p=q->next; p != &dentry->d_subdirs; p=p->next) {
 				struct dentry *next;
 				next = list_entry(p, struct dentry, d_u.d_child);
-				if (d_unhashed(next) || !next->d_inode)
+				if (d_unhashed(next) || (!next->d_inode && !d_is_fallthru(next)))
 					continue;
 
 				spin_unlock(&dcache_lock);
+				if (d_is_fallthru(next)) {
+					/* XXX placeholder until generic_readdir_fallthru() arrives */
+					ino = 1;
+					d_type = DT_UNKNOWN;
+				} else {
+					ino = next->d_inode->i_ino;
+					d_type = dt_type(next->d_inode);
+				}
+
 				if (filldir(dirent, next->d_name.name, 
 					    next->d_name.len, filp->f_pos, 
-					    next->d_inode->i_ino, 
-					    dt_type(next->d_inode)) < 0)
+					    ino, d_type) < 0)
 					return 0;
 				spin_lock(&dcache_lock);
 				/* next is still alive */

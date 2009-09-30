@@ -2348,7 +2348,8 @@ resume:
 		 * we can evict it.
 		 */
 		if (d_unhashed(dentry)||(!dentry->d_inode &&
-					 !d_is_whiteout(dentry)))
+					 !d_is_whiteout(dentry) &&
+					 !d_is_fallthru(dentry)))
 			continue;
 		if (!list_empty(&dentry->d_subdirs)) {
 			this_parent = dentry;
