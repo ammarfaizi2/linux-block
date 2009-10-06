@@ -963,8 +963,6 @@ localver = $(subst $(space),, $(string) \
 # .scmversion is used when generating rpm packages so we do not loose
 # the version information from the SCM when we do the build of the kernel
 # from the copied source
-ifdef CONFIG_LOCALVERSION_AUTO
-
 ifeq ($(wildcard .scmversion),)
         _localver-auto = $(shell $(CONFIG_SHELL) \
                          $(srctree)/scripts/setlocalversion $(srctree))
@@ -972,7 +970,14 @@ else
         _localver-auto = $(shell cat .scmversion 2> /dev/null)
 endif
 
+ifdef CONFIG_LOCALVERSION_AUTO
 	localver-auto  = $(LOCALVERSION)$(_localver-auto)
+else
+	ifeq ($_localver-auto,)
+		localver-auto = $(LOCALVERSION)
+	else
+		localver-auto = $(LOCALVERSION)+
+	endif
 endif
 
 localver-full = $(localver)$(localver-auto)
