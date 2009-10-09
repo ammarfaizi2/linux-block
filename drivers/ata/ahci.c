@@ -2887,6 +2887,7 @@ static bool ahci_broken_online(struct pci_dev *pdev)
 #ifdef CONFIG_ATA_ACPI
 static void ahci_gtf_filter_workaround(struct ata_host *host)
 {
+#ifdef CONFIG_ATA_ACPI
 	static const struct dmi_system_id sysids[] = {
 		/*
 		 * Aspire 3810T issues a bunch of SATA enable commands
@@ -2927,6 +2928,7 @@ static void ahci_gtf_filter_workaround(struct ata_host *host)
 			ata_for_each_dev(dev, link, ALL)
 				dev->gtf_filter |= filter;
 	}
+#endif
 }
 #else
 static inline void ahci_gtf_filter_workaround(struct ata_host *host)
