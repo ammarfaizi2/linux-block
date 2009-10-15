@@ -2615,6 +2615,7 @@ L:	linux1394-devel@lists.sourceforge.net
 W:	http://www.linux1394.org/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/ieee1394/linux1394-2.6.git
 S:	Maintained
+F:	Documentation/debugging-via-ohci1394.txt
 F:	drivers/ieee1394/
 
 IEEE 1394 RAW I/O DRIVER
@@ -4076,6 +4077,13 @@ M:	Peter Zijlstra <a.p.zijlstra@chello.nl>
 M:	Paul Mackerras <paulus@samba.org>
 M:	Ingo Molnar <mingo@elte.hu>
 S:	Supported
+F:	kernel/perf_event.c
+F:	include/linux/perf_event.h
+F:	arch/*/*/kernel/perf_event.c
+F:	arch/*/include/asm/perf_event.h
+F:	arch/*/lib/perf_event.c
+F:	arch/*/kernel/perf_callchain.c
+F:	tools/perf/
 
 PERSONALITY HANDLING
 M:	Christoph Hellwig <hch@infradead.org>
