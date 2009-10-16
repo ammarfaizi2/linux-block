@@ -88,6 +88,8 @@
 #define JFFS2_INO_FLAG_USERCOMPR  2	/* User has requested a specific
 					   compression type */
 
+#define JFFS2_INO_FLAG_OPAQUE     4	/* Directory is opaque (for union mounts) */
+
 
 /* These can go once we've made sure we've caught all uses without
    byteswapping */

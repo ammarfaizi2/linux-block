@@ -35,6 +35,8 @@ static int jffs2_mknod (struct inode *,struct dentry *,int,dev_t);
 static int jffs2_rename (struct inode *, struct dentry *,
 			 struct inode *, struct dentry *);
 
+static int jffs2_whiteout (struct inode *, struct dentry *, struct dentry *);
+
 const struct file_operations jffs2_dir_operations =
 {
 	.read =		generic_read_dir,
@@ -57,6 +59,7 @@ const struct inode_operations jffs2_dir_inode_operations =
 	.mknod =	jffs2_mknod,
 	.rename =	jffs2_rename,
 	.check_acl =	jffs2_check_acl,
+	.whiteout =     jffs2_whiteout,
 	.setattr =	jffs2_setattr,
 	.setxattr =	jffs2_setxattr,
 	.getxattr =	jffs2_getxattr,
@@ -99,8 +102,14 @@ static struct dentry *jffs2_lookup(struct inode *dir_i, struct dentry *target,
 			fd = fd_list;
 		}
 	}
-	if (fd)
-		ino = fd->ino;
+	if (fd) {
+		spin_lock(&target->d_lock);
+		if (fd->type == DT_WHT)
+			target->d_flags |= DCACHE_WHITEOUT;
+		else
+			ino = fd->ino;
+		spin_unlock(&target->d_lock);
+	}
 	mutex_unlock(&dir_f->sem);
 	if (ino) {
 		inode = jffs2_iget(dir_i->i_sb, ino);
@@ -499,6 +508,11 @@ static int jffs2_mkdir (struct inode *dir_i, struct dentry *dentry, int mode)
 		return PTR_ERR(inode);
 	}
 
+	if (dentry->d_flags & DCACHE_WHITEOUT) {
+		inode->i_flags |= S_OPAQUE;
+		ri->flags = cpu_to_je16(JFFS2_INO_FLAG_OPAQUE);
+	}
+
 	inode->i_op = &jffs2_dir_inode_operations;
 	inode->i_fop = &jffs2_dir_operations;
 
@@ -775,6 +789,60 @@ static int jffs2_mknod (struct inode *dir_i, struct dentry *dentry, int mode, de
  fail:
 	iget_failed(inode);
 	return ret;
+}
+
+static int jffs2_whiteout (struct inode *dir, struct dentry *old_dentry,
+			   struct dentry *new_dentry)
+{
+	struct jffs2_sb_info *c = JFFS2_SB_INFO(dir->i_sb);
+	struct jffs2_inode_info *victim_f = NULL;
+	uint32_t now;
+	int ret;
+
+	/* If it's a directory, then check whether it is really empty */
+	if (new_dentry->d_inode) {
+		victim_f = JFFS2_INODE_INFO(old_dentry->d_inode);
+		if (S_ISDIR(old_dentry->d_inode->i_mode)) {
+			struct jffs2_full_dirent *fd;
+
+			mutex_lock(&victim_f->sem);
+			for (fd = victim_f->dents; fd; fd = fd->next) {
+				if (fd->ino) {
+					mutex_unlock(&victim_f->sem);
+					return -ENOTEMPTY;
+				}
+			}
+			mutex_unlock(&victim_f->sem);
+		}
+	}
+
+	now = get_seconds();
+	ret = jffs2_do_link(c, JFFS2_INODE_INFO(dir), 0, DT_WHT,
+			    new_dentry->d_name.name, new_dentry->d_name.len, now);
+	if (ret)
+		return ret;
+
+	spin_lock(&new_dentry->d_lock);
+	new_dentry->d_flags |= DCACHE_WHITEOUT;
+	spin_unlock(&new_dentry->d_lock);
+	d_add(new_dentry, NULL);
+
+	if (victim_f) {
+		/* There was a victim. Kill it off nicely */
+		drop_nlink(old_dentry->d_inode);
+		/* Don't oops if the victim was a dirent pointing to an
+		   inode which didn't exist. */
+		if (victim_f->inocache) {
+			mutex_lock(&victim_f->sem);
+			if (S_ISDIR(old_dentry->d_inode->i_mode))
+				victim_f->inocache->pino_nlink = 0;
+			else
+				victim_f->inocache->pino_nlink--;
+			mutex_unlock(&victim_f->sem);
+		}
+	}
+
+	return 0;
 }
 
 static int jffs2_rename (struct inode *old_dir_i, struct dentry *old_dentry,
