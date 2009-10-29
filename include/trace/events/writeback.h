@@ -87,6 +87,26 @@ TRACE_EVENT(writeback_exec,
 			__entry->range_cyclic, __entry->for_background)
 );
 
+TRACE_EVENT(writeback_done,
+
+	TP_PROTO(struct bdi_work *work, long pages),
+
+	TP_ARGS(work, pages),
+
+	TP_STRUCT__entry(
+		__field(unsigned int,	work)
+		__field(long,		pages)
+	),
+
+	TP_fast_assign(
+		__entry->work		= (unsigned long) work & 0xffff;
+		__entry->pages		= pages;
+
+	),
+
+	TP_printk("work=%x pages=%ld", __entry->work, __entry->pages)
+);
+
 TRACE_EVENT(writeback_clear,
 
 	TP_PROTO(struct bdi_work *work),
@@ -159,6 +179,60 @@ TRACE_EVENT(writeback_bdi_register,
 
 	TP_printk("%s: %s", __entry->name,
 			__entry->start ? "registered" : "unregistered")
+);
+
+TRACE_EVENT(writeback_inode_wait,
+
+	TP_PROTO(int start),
+
+	TP_ARGS(start),
+
+	TP_STRUCT__entry(
+		__field(int,	start)
+	),
+
+	TP_fast_assign(
+		__entry->start = start;
+	),
+
+	TP_printk("%s", __entry->start ? "start" : "end")
+);
+
+TRACE_EVENT(writeback_bdp_start,
+
+	TP_PROTO(unsigned long reclaim, unsigned long thresh),
+
+	TP_ARGS(reclaim, thresh),
+
+	TP_STRUCT__entry(
+		__field(unsigned long,		reclaim)
+		__field(unsigned long,		thresh)
+	),
+
+	TP_fast_assign(
+		__entry->reclaim	= reclaim;
+		__entry->thresh		= thresh;
+	),
+
+	TP_printk("reclaimable=%lu, threshold=%lu", __entry->reclaim,
+						    __entry->thresh)
+);
+
+TRACE_EVENT(writeback_bdp_end,
+
+	TP_PROTO(unsigned long wrote),
+
+	TP_ARGS(wrote),
+
+	TP_STRUCT__entry(
+		__field(unsigned long,		wrote)
+	),
+
+	TP_fast_assign(
+		__entry->wrote		= wrote;
+	),
+
+	TP_printk("wrote=%lu", __entry->wrote)
 );
 
 #endif /* _TRACE_WRITEBACK_H */

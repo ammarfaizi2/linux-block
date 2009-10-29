@@ -34,6 +34,7 @@
 #include <linux/syscalls.h>
 #include <linux/buffer_head.h>
 #include <linux/pagevec.h>
+#include <trace/events/writeback.h>
 
 /*
  * After a CPU has dirtied this many pages, balance_dirty_pages_ratelimited
@@ -537,8 +538,14 @@ static void balance_dirty_pages(struct address_space *mapping,
 		 * up.
 		 */
 		if (bdi_nr_reclaimable > bdi_thresh) {
+			unsigned long wrote;
+
+			trace_writeback_bdp_start(bdi_nr_reclaimable,
+							bdi_thresh);
 			writeback_inodes_wbc(&wbc);
-			pages_written += write_chunk - wbc.nr_to_write;
+			wrote = write_chunk - wbc.nr_to_write;
+			trace_writeback_bdp_end(wrote);
+			pages_written += wrote;
 			get_dirty_limits(&background_thresh, &dirty_thresh,
 				       &bdi_thresh, bdi);
 		}

@@ -775,7 +775,9 @@ static long wb_writeback(struct bdi_writeback *wb,
 		if (!list_empty(&wb->b_more_io))  {
 			inode = list_entry(wb->b_more_io.prev,
 						struct inode, i_list);
+			trace_writeback_inode_wait(1);
 			inode_wait_for_writeback(inode);
+			trace_writeback_inode_wait(0);
 		}
 		spin_unlock(&inode_lock);
 	}
@@ -851,6 +853,7 @@ long wb_do_writeback(struct bdi_writeback *wb, int force_wait)
 
 	while ((work = get_next_work_item(bdi, wb)) != NULL) {
 		struct wb_writeback_args args = work->args;
+		long pgs;
 
 		/*
 		 * Override sync mode, in case we must wait for completion
@@ -867,7 +870,10 @@ long wb_do_writeback(struct bdi_writeback *wb, int force_wait)
 		if (args.sync_mode == WB_SYNC_NONE)
 			wb_clear_pending(wb, work);
 
-		wrote += wb_writeback(wb, &args);
+		pgs = wb_writeback(wb, &args);
+		wrote += pgs;
+
+		trace_writeback_done(work, pgs);
 
 		/*
 		 * This is a data integrity writeback, so only do the
