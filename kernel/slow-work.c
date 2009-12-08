@@ -16,7 +16,7 @@
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 #include <linux/wait.h>
-#include <linux/proc_fs.h>
+#include <linux/debugfs.h>
 #include "slow-work.h"
 
 static void slow_work_cull_timeout(unsigned long);
@@ -49,7 +49,6 @@ static const int slow_work_max_vslow = 99;
 
 ctl_table slow_work_sysctls[] = {
 	{
-		.ctl_name	= CTL_UNNUMBERED,
 		.procname	= "min-threads",
 		.data		= &slow_work_min_threads,
 		.maxlen		= sizeof(unsigned),
@@ -59,7 +58,6 @@ ctl_table slow_work_sysctls[] = {
 		.extra2		= &slow_work_max_threads,
 	},
 	{
-		.ctl_name	= CTL_UNNUMBERED,
 		.procname	= "max-threads",
 		.data		= &slow_work_max_threads,
 		.maxlen		= sizeof(unsigned),
@@ -69,16 +67,15 @@ ctl_table slow_work_sysctls[] = {
 		.extra2		= (void *) &slow_work_max_max_threads,
 	},
 	{
-		.ctl_name	= CTL_UNNUMBERED,
 		.procname	= "vslow-percentage",
 		.data		= &vslow_work_proportion,
 		.maxlen		= sizeof(unsigned),
 		.mode		= 0644,
-		.proc_handler	= &proc_dointvec_minmax,
+		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= (void *) &slow_work_min_vslow,
 		.extra2		= (void *) &slow_work_max_vslow,
 	},
-	{ .ctl_name = 0 }
+	{}
 };
 #endif
 
@@ -138,7 +135,7 @@ static void slow_work_clear_thread_processing(int id) {}
 /*
  * Data for tracking currently executing items for indication through /proc
  */
-#ifdef CONFIG_SLOW_WORK_PROC
+#ifdef CONFIG_SLOW_WORK_DEBUG
 struct slow_work *slow_work_execs[SLOW_WORK_THREAD_LIMIT];
 pid_t slow_work_pids[SLOW_WORK_THREAD_LIMIT];
 DEFINE_RWLOCK(slow_work_execs_lock);
@@ -823,7 +820,7 @@ static void slow_work_new_thread_execute(struct slow_work *work)
 static const struct slow_work_ops slow_work_new_thread_ops = {
 	.owner		= THIS_MODULE,
 	.execute	= slow_work_new_thread_execute,
-#ifdef CONFIG_SLOW_WORK_PROC
+#ifdef CONFIG_SLOW_WORK_DEBUG
 	.desc		= slow_work_new_thread_desc,
 #endif
 };
@@ -1055,9 +1052,15 @@ static int __init init_slow_work(void)
 	if (slow_work_max_max_threads < nr_cpus * 2)
 		slow_work_max_max_threads = nr_cpus * 2;
 #endif
-#ifdef CONFIG_SLOW_WORK_PROC
-	proc_create("slow_work_rq", S_IFREG | 0400, NULL,
-		    &slow_work_runqueue_fops);
+#ifdef CONFIG_SLOW_WORK_DEBUG
+	{
+		struct dentry *dbdir;
+
+		dbdir = debugfs_create_dir("slow_work", NULL);
+		if (dbdir && !IS_ERR(dbdir))
+			debugfs_create_file("runqueue", S_IFREG | 0400, dbdir,
+					    NULL, &slow_work_runqueue_fops);
+	}
 #endif
 	return 0;
 }
