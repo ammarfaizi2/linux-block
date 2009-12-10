@@ -175,6 +175,8 @@ config MEDIA_TUNER_MC44S803
 config MEDIA_TUNER_MAX2165
 	tristate "Maxim MAX2165 silicon tuner"
 	depends on VIDEO_MEDIA && I2C
+	# build breakage on 32-bit
+	depends on 0
 	default m if MEDIA_TUNER_CUSTOMISE
 	help
 	  A driver for the silicon tuner MAX2165 from Maxim.
