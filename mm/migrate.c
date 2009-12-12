@@ -1044,15 +1044,11 @@ static int do_pages_stat(struct mm_struct *mm, unsigned long nr_pages,
 	int err;
 
 	for (i = 0; i < nr_pages; i += chunk_nr) {
-		unsigned int copy;
 		if (chunk_nr + i > nr_pages)
 			chunk_nr = nr_pages - i;
 
-		copy = chunk_nr * sizeof(*chunk_pages);
-		if (copy > DO_PAGES_STAT_CHUNK_NR)
-			return -EFAULT;
-
-		err = copy_from_user(chunk_pages, &pages[i], copy);
+		err = copy_from_user(chunk_pages, &pages[i],
+				     chunk_nr * sizeof(*chunk_pages));
 		if (err) {
 			err = -EFAULT;
 			goto out;
