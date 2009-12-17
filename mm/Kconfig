@@ -243,6 +243,8 @@ config ARCH_SUPPORTS_MEMORY_FAILURE
 config MEMORY_FAILURE
 	depends on MMU
 	depends on ARCH_SUPPORTS_MEMORY_FAILURE
+	depends on PROC_FS
+	select PROC_PAGE_MONITOR
 	bool "Enable recovery from hardware memory errors"
 	help
 	  Enables code to recover from some memory failures on systems
