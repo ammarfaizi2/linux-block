@@ -66,23 +66,23 @@ static int bdi_debug_stats_show(struct seq_file *m, void *v)
 	unsigned long background_thresh;
 	unsigned long dirty_thresh;
 	unsigned long bdi_thresh;
-	unsigned long nr_dirty, nr_io, nr_more_io, nr_wb;
-	struct inode *inode;
+	unsigned long nr_dirty, nr_wb;
 
 	/*
 	 * inode lock is enough here, the bdi->wb_list is protected by
 	 * RCU on the reader side
 	 */
-	nr_wb = nr_dirty = nr_io = nr_more_io = 0;
+	nr_wb = nr_dirty = 0;
 	spin_lock(&inode_lock);
 	list_for_each_entry(wb, &bdi->wb_list, list) {
+		struct rb_node *n;
+
 		nr_wb++;
-		list_for_each_entry(inode, &wb->b_dirty, i_list)
+		n = rb_first(&wb->flush_tree);
+		while (n) {
 			nr_dirty++;
-		list_for_each_entry(inode, &wb->b_io, i_list)
-			nr_io++;
-		list_for_each_entry(inode, &wb->b_more_io, i_list)
-			nr_more_io++;
+			n = rb_next(n);
+		}
 	}
 	spin_unlock(&inode_lock);
 
@@ -97,8 +97,6 @@ static int bdi_debug_stats_show(struct seq_file *m, void *v)
 		   "BackgroundThresh: %8lu kB\n"
 		   "WritebackThreads: %8lu\n"
 		   "b_dirty:          %8lu\n"
-		   "b_io:             %8lu\n"
-		   "b_more_io:        %8lu\n"
 		   "bdi_list:         %8u\n"
 		   "state:            %8lx\n"
 		   "wb_mask:          %8lx\n"
@@ -107,7 +105,7 @@ static int bdi_debug_stats_show(struct seq_file *m, void *v)
 		   (unsigned long) K(bdi_stat(bdi, BDI_WRITEBACK)),
 		   (unsigned long) K(bdi_stat(bdi, BDI_RECLAIMABLE)),
 		   K(bdi_thresh), K(dirty_thresh),
-		   K(background_thresh), nr_wb, nr_dirty, nr_io, nr_more_io,
+		   K(background_thresh), nr_wb, nr_dirty,
 		   !list_empty(&bdi->bdi_list), bdi->state, bdi->wb_mask,
 		   !list_empty(&bdi->wb_list), bdi->wb_cnt);
 #undef K
@@ -261,9 +259,7 @@ static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info *bdi)
 
 	wb->bdi = bdi;
 	wb->last_old_flush = jiffies;
-	INIT_LIST_HEAD(&wb->b_dirty);
-	INIT_LIST_HEAD(&wb->b_io);
-	INIT_LIST_HEAD(&wb->b_more_io);
+	wb->flush_tree = RB_ROOT;
 }
 
 static void bdi_task_init(struct backing_dev_info *bdi,
@@ -326,7 +322,7 @@ static int bdi_start_fn(void *ptr)
 	return ret;
 }
 
-int bdi_has_dirty_io(struct backing_dev_info *bdi)
+bool bdi_has_dirty_io(struct backing_dev_info *bdi)
 {
 	return wb_has_dirty_io(&bdi->wb);
 }
@@ -693,19 +689,7 @@ void bdi_destroy(struct backing_dev_info *bdi)
 {
 	int i;
 
-	/*
-	 * Splice our entries to the default_backing_dev_info, if this
-	 * bdi disappears
-	 */
-	if (bdi_has_dirty_io(bdi)) {
-		struct bdi_writeback *dst = &default_backing_dev_info.wb;
-
-		spin_lock(&inode_lock);
-		list_splice(&bdi->wb.b_dirty, &dst->b_dirty);
-		list_splice(&bdi->wb.b_io, &dst->b_io);
-		list_splice(&bdi->wb.b_more_io, &dst->b_more_io);
-		spin_unlock(&inode_lock);
-	}
+	BUG_ON(bdi_has_dirty_io(bdi));
 
 	bdi_unregister(bdi);
 

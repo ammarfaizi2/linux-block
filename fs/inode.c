@@ -26,6 +26,7 @@
 #include <linux/mount.h>
 #include <linux/async.h>
 #include <linux/posix_acl.h>
+#include "flushtree.h"
 
 /*
  * This is needed for the following functions:
@@ -153,6 +154,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	inode->i_cdev = NULL;
 	inode->i_rdev = 0;
 	inode->dirtied_when = 0;
+	RB_CLEAR_NODE(&inode->i_flush_node);
 
 	if (security_inode_alloc(inode))
 		goto out;
@@ -1199,6 +1201,11 @@ EXPORT_SYMBOL(remove_inode_hash);
 void generic_delete_inode(struct inode *inode)
 {
 	const struct super_operations *op = inode->i_sb->s_op;
+
+	if ((inode->i_state & I_DIRTY)) {
+		flush_tree_remove(inode);
+		inode->i_state &= ~I_DIRTY;
+	}
 
 	list_del_init(&inode->i_list);
 	list_del_init(&inode->i_sb_list);

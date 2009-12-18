@@ -937,12 +937,10 @@ static struct inode * get_pipe_inode(void)
 	inode->i_fop = &rdwr_pipefifo_fops;
 
 	/*
-	 * Mark the inode dirty from the very beginning,
-	 * that way it will never be moved to the dirty
-	 * list because "mark_inode_dirty()" will think
-	 * that it already _is_ on the dirty list.
+	 * Mark the inode "never dirty" from the very beginning,
+	 * that way it will never be written back.
 	 */
-	inode->i_state = I_DIRTY;
+	inode->i_state = I_DIRTY_NEVER;
 	inode->i_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	inode->i_uid = current_fsuid();
 	inode->i_gid = current_fsgid();

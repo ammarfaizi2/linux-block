@@ -52,9 +52,8 @@ struct bdi_writeback {
 	unsigned long last_old_flush;		/* last old data flush */
 
 	struct task_struct	*task;		/* writeback task */
-	struct list_head	b_dirty;	/* dirty inodes */
-	struct list_head	b_io;		/* parked for writeback */
-	struct list_head	b_more_io;	/* parked for more writeback */
+
+	struct rb_root		flush_tree;
 };
 
 struct backing_dev_info {
@@ -104,16 +103,14 @@ void bdi_unregister(struct backing_dev_info *bdi);
 void bdi_start_writeback(struct backing_dev_info *bdi, struct super_block *sb,
 				long nr_pages);
 int bdi_writeback_task(struct bdi_writeback *wb);
-int bdi_has_dirty_io(struct backing_dev_info *bdi);
+bool bdi_has_dirty_io(struct backing_dev_info *bdi);
 
 extern spinlock_t bdi_lock;
 extern struct list_head bdi_list;
 
-static inline int wb_has_dirty_io(struct bdi_writeback *wb)
+static inline bool wb_has_dirty_io(struct bdi_writeback *wb)
 {
-	return !list_empty(&wb->b_dirty) ||
-	       !list_empty(&wb->b_io) ||
-	       !list_empty(&wb->b_more_io);
+	return !RB_EMPTY_ROOT(&wb->flush_tree);
 }
 
 static inline void __add_bdi_stat(struct backing_dev_info *bdi,
