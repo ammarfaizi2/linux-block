@@ -1600,10 +1600,8 @@ static long do_ioctl_trans(int fd, unsigned int cmd,
 	case KDSKBMETA:
 	case KDSKBLED:
 	case KDSETLED:
-#ifdef CONFIG_BLOCK
 	/* SG stuff */
 	case SG_SET_TRANSFORM:
-#endif
 	/* AUTOFS */
 	case AUTOFS_IOC_READY:
 	case AUTOFS_IOC_FAIL:
