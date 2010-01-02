@@ -319,6 +319,6 @@ struct pci_dev_reset_methods {
 	int (*reset)(struct pci_dev *dev, int probe);
 };
 
-extern int pci_dev_specific_reset(struct pci_dev *dev, int probe);
+extern struct pci_dev_reset_methods pci_dev_reset_methods[];
 
 #endif /* DRIVERS_PCI_H */
