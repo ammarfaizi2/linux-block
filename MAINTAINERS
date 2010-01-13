@@ -3873,7 +3873,7 @@ F:	drivers/net/ni5010.*
 
 NILFS2 FILESYSTEM
 M:	KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
-L:	users@nilfs.org
+L:	linux-nilfs@vger.kernel.org
 W:	http://www.nilfs.org/en/
 S:	Supported
 F:	Documentation/filesystems/nilfs2.txt
@@ -3940,28 +3940,19 @@ S:	Maintained
 F:	sound/soc/omap/
 
 OMAP FRAMEBUFFER SUPPORT
-M:	Imre Deak <imre.deak@nokia.com>
+M:	Tomi Valkeinen <tomi.valkeinen@nokia.com>
 L:	linux-fbdev@vger.kernel.org
 L:	linux-omap@vger.kernel.org
 S:	Maintained
 F:	drivers/video/omap/
 
-OMAP DISPLAY SUBSYSTEM SUPPORT (DSS2)
+OMAP DISPLAY SUBSYSTEM and FRAMEBUFFER SUPPORT (DSS2)
 M:	Tomi Valkeinen <tomi.valkeinen@nokia.com>
 L:	linux-omap@vger.kernel.org
-L:	linux-fbdev@vger.kernel.org (moderated for non-subscribers)
+L:	linux-fbdev@vger.kernel.org
 S:	Maintained
-F:	drivers/video/omap2/dss/
-F:	drivers/video/omap2/vrfb.c
-F:	drivers/video/omap2/vram.c
+F:	drivers/video/omap2/
 F:	Documentation/arm/OMAP/DSS
-
-OMAP FRAMEBUFFER SUPPORT (FOR DSS2)
-M:	Tomi Valkeinen <tomi.valkeinen@nokia.com>
-L:	linux-omap@vger.kernel.org
-L:	linux-fbdev@vger.kernel.org (moderated for non-subscribers)
-S:	Maintained
-F:	drivers/video/omap2/omapfb/
 
 OMAP MMC SUPPORT
 M:	Jarkko Lavinen <jarkko.lavinen@nokia.com>
