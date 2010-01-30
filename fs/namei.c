@@ -591,6 +591,17 @@ loop:
 	return err;
 }
 
+/*
+ * follow_up - Find the mountpoint of path's vfsmount
+ *
+ * Given a path, find the mountpoint of its source file system.
+ * Replace @path with the path of the mountpoint in the parent mount.
+ * Up is towards /.
+ *
+ * Return 1 if we went up a level and 0 if we were already at the
+ * root.
+ */
+
 int follow_up(struct path *path)
 {
 	struct vfsmount *parent;
@@ -612,8 +623,22 @@ int follow_up(struct path *path)
 	return 1;
 }
 
-/* no need for dcache_lock, as serialization is taken care in
- * namespace.c
+/*
+ * __follow_mount - Return the most recent mount at this mountpoint
+ *
+ * Given a mountpoint, find the most recently mounted file system at
+ * this mountpoint and return the path to its root dentry.  This is
+ * the file system that is visible, and it is in the direction of VFS
+ * "down" - away from the root of the mount tree.  See comments to
+ * lookup_mnt() for an example of "down."
+ *
+ * Does not decrement the refcount on the given mount even if it
+ * follows it to another mount and returns that path instead.
+ *
+ * Returns 0 if path was unchanged, 1 if we followed it to another mount.
+ *
+ * No need for dcache_lock, as serialization is taken care in
+ * namespace.c.
  */
 static int __follow_mount(struct path *path)
 {
@@ -632,6 +657,12 @@ static int __follow_mount(struct path *path)
 	return res;
 }
 
+/*
+ * Like __follow_mount, but no return value and drops references to
+ * both mnt and dentry of the given path if it follows to another
+ * mount.
+ */
+
 static void follow_mount(struct path *path)
 {
 	while (d_mountpoint(path->dentry)) {
@@ -645,8 +676,12 @@ static void follow_mount(struct path *path)
 	}
 }
 
-/* no need for dcache_lock, as serialization is taken care in
- * namespace.c
+/*
+ * Like follow_mount(), but traverses only one layer instead of
+ * continuing until it runs out.
+ *
+ * No need for dcache_lock, as serialization is taken care in
+ * namespace.c.
  */
 int follow_down(struct path *path)
 {
