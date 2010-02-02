@@ -114,6 +114,14 @@ module_param_call(mpt_fwfault_debug, param_set_int, param_get_int,
 MODULE_PARM_DESC(mpt_fwfault_debug, "Enable detection of Firmware fault"
 	" and halt Firmware on fault - (default=0)");
 
+static int mpt_iopoll = 1;
+module_param(mpt_iopoll, int, 0);
+MODULE_PARM_DESC(mpt_iopoll, " Use blk-iopoll (default=1)");
+
+
+static int mpt_iopoll_w = 8;
+module_param(mpt_iopoll_w, int, 0);
+MODULE_PARM_DESC(mpt_iopoll_w, " blk iopoll budget (default=8");
 
 
 #ifdef MFCNT
@@ -516,6 +524,44 @@ mpt_reply(MPT_ADAPTER *ioc, u32 pa)
 	mb();
 }
 
+static void mpt_irq_disable(MPT_ADAPTER *ioc)
+{
+	CHIPREG_WRITE32(&ioc->chip->IntMask, 0xFFFFFFFF);
+	CHIPREG_WRITE32(&ioc->chip->IntStatus, 0);
+	CHIPREG_READ32(&ioc->chip->IntStatus);
+}
+
+static void mpt_irq_enable(MPT_ADAPTER *ioc)
+{
+	CHIPREG_WRITE32(&ioc->chip->IntMask, MPI_HIM_DIM);
+}
+
+static inline void __mpt_handle_irq(MPT_ADAPTER *ioc, u32 pa)
+{
+	if (pa & MPI_ADDRESS_REPLY_A_BIT)
+		mpt_reply(ioc, pa);
+	else
+		mpt_turbo_reply(ioc, pa);
+}
+
+static int mpt_handle_irq(MPT_ADAPTER *ioc, unsigned int budget)
+{
+	int nr = 0;
+	u32 pa;
+
+	/*
+	 *  Drain the reply FIFO!
+	 */
+	while ((pa = CHIPREG_READ32_dmasync(&ioc->chip->ReplyFifo)) != 0xffffffff) {
+		nr++;
+		__mpt_handle_irq(ioc, pa);
+		if (nr == budget)
+			break;
+	}
+
+	return nr;
+}
+
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
  *	mpt_interrupt - MPT adapter (IOC) specific interrupt handler.
@@ -537,23 +583,48 @@ static irqreturn_t
 mpt_interrupt(int irq, void *bus_id)
 {
 	MPT_ADAPTER *ioc = bus_id;
-	u32 pa = CHIPREG_READ32_dmasync(&ioc->chip->ReplyFifo);
+	int nr = 0;
 
-	if (pa == 0xFFFFFFFF)
-		return IRQ_NONE;
+	if (!blk_iopoll_enabled || !ioc->using_iopoll)
+		nr = mpt_handle_irq(ioc, -1U);
+	else if (!blk_iopoll_sched_prep(&ioc->iopoll)) {
+		mpt_irq_disable(ioc);
+		ioc->iopoll.data =CHIPREG_READ32_dmasync(&ioc->chip->ReplyFifo);
+		blk_iopoll_sched(&ioc->iopoll);
+		nr = 1;
+	} else {
+		/*
+		 * Not really handled, but it will be by iopoll.
+		 */
+		nr = 1;
+	}
 
-	/*
-	 *  Drain the reply FIFO!
-	 */
-	do {
-		if (pa & MPI_ADDRESS_REPLY_A_BIT)
-			mpt_reply(ioc, pa);
-		else
-			mpt_turbo_reply(ioc, pa);
-		pa = CHIPREG_READ32_dmasync(&ioc->chip->ReplyFifo);
-	} while (pa != 0xFFFFFFFF);
+	if (nr)
+		return IRQ_HANDLED;
 
-	return IRQ_HANDLED;
+	return IRQ_NONE;
+}
+
+static int mpt_iopoll_fn(struct blk_iopoll *iop, int budget)
+{
+	MPT_ADAPTER *ioc = container_of(iop, MPT_ADAPTER, iopoll);
+	int ret = 0;
+	u32 pa;
+
+	pa = iop->data;
+	iop->data = 0xffffffff;
+	if (pa != 0xffffffff) {
+		__mpt_handle_irq(ioc, pa);
+		ret = 1;
+	}
+
+	ret += mpt_handle_irq(ioc, budget - ret);
+	if (ret < budget) {
+		blk_iopoll_complete(iop);
+		mpt_irq_enable(ioc);
+	}
+
+	return ret;
 }
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -2054,6 +2125,91 @@ mpt_detach(struct pci_dev *pdev)
 	pci_set_drvdata(pdev, NULL);
 }
 
+static void mpt_disable_iopoll(MPT_ADAPTER *ioc)
+{
+	blk_iopoll_disable(&ioc->iopoll);
+	ioc->using_iopoll = 0;
+}
+
+/*
+ * Disable adapter interrupt coalescing and turn on iopoll
+ */
+static void mpt_enable_iopoll(MPT_ADAPTER *ioc)
+{
+	IOCPage1_t		*pIoc1 = NULL;
+	CONFIGPARMS		 cfg;
+	ConfigPageHeader_t	 header;
+	dma_addr_t		 ioc1_dma;
+	int			 iocpage1sz = 0;
+	u32			 tmp;
+
+	blk_iopoll_enable(&ioc->iopoll);
+	ioc->using_iopoll = 1;
+
+	printk(MYIOC_s_INFO_FMT "blk-iopoll enabled\n", ioc->name);
+
+	/* Check the Coalescing Timeout in IOC Page 1
+	 */
+	header.PageVersion = 0;
+	header.PageLength = 0;
+	header.PageNumber = 1;
+	header.PageType = MPI_CONFIG_PAGETYPE_IOC;
+	cfg.cfghdr.hdr = &header;
+	cfg.physAddr = -1;
+	cfg.pageAddr = 0;
+	cfg.action = MPI_CONFIG_ACTION_PAGE_HEADER;
+	cfg.dir = 0;
+	cfg.timeout = 0;
+	if (mpt_config(ioc, &cfg))
+		goto done;
+
+	if (header.PageLength == 0)
+		goto done;
+
+	/* Read Header good, alloc memory
+	 */
+	iocpage1sz = header.PageLength * 4;
+	pIoc1 = pci_alloc_consistent(ioc->pcidev, iocpage1sz, &ioc1_dma);
+	if (!pIoc1)
+		goto done;
+
+	/* Read the Page and check coalescing timeout
+	 */
+	cfg.physAddr = ioc1_dma;
+	cfg.action = MPI_CONFIG_ACTION_PAGE_READ_CURRENT;
+	if (mpt_config(ioc, &cfg))
+		goto done;
+
+	tmp = le32_to_cpu(pIoc1->Flags) & MPI_IOCPAGE1_REPLY_COALESCING;
+
+	/*
+	 * Coalescing already disabled, nothing to do
+	 */
+	if (tmp != MPI_IOCPAGE1_REPLY_COALESCING)
+		goto done;
+
+	/*
+	 * If IOC is currently enabled, switch it off and store settings
+	 */
+	if (pIoc1->CoalescingTimeout) {
+		pIoc1->CoalescingTimeout = 0;
+		pIoc1->CoalescingDepth = 0;
+
+		cfg.dir = 1;
+		cfg.action = MPI_CONFIG_ACTION_PAGE_WRITE_CURRENT;
+		if (mpt_config(ioc, &cfg))
+			goto done;
+
+		cfg.action = MPI_CONFIG_ACTION_PAGE_WRITE_NVRAM;
+		if (mpt_config(ioc, &cfg))
+			goto done;
+	}
+
+	printk(MYIOC_s_INFO_FMT "IRQ coalescing disabled\n", ioc->name);
+done:
+	pci_free_consistent(ioc->pcidev, iocpage1sz, pIoc1, ioc1_dma);
+}
+
 /**************************************************************************
  * Power Management
  */
@@ -2088,6 +2244,7 @@ mpt_suspend(struct pci_dev *pdev, pm_message_t state)
 	/* Clear any lingering interrupt */
 	CHIPREG_WRITE32(&ioc->chip->IntStatus, 0);
 
+	mpt_disable_iopoll(ioc);
 	free_irq(ioc->pci_irq, ioc);
 	if (ioc->msi_enable)
 		pci_disable_msi(ioc->pcidev);
@@ -2543,6 +2700,10 @@ mpt_do_ioc_recovery(MPT_ADAPTER *ioc, u32 reason, int sleepFlag)
 		mpt_get_manufacturing_pg_0(ioc);
 	}
 
+	if (!ret && mpt_iopoll) {
+		blk_iopoll_init(&ioc->iopoll, mpt_iopoll_w, mpt_iopoll_fn);
+		mpt_enable_iopoll(ioc);
+	}
  out:
 	if ((ret != 0) && irq_allocated) {
 		free_irq(ioc->pci_irq, ioc);
@@ -2753,6 +2914,7 @@ mpt_adapter_dispose(MPT_ADAPTER *ioc)
 	mpt_adapter_disable(ioc);
 
 	if (ioc->pci_irq != -1) {
+		mpt_disable_iopoll(ioc);
 		free_irq(ioc->pci_irq, ioc);
 		if (ioc->msi_enable)
 			pci_disable_msi(ioc->pcidev);

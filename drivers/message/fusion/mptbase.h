@@ -52,6 +52,7 @@
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/mutex.h>
+#include <linux/blk-iopoll.h>
 
 #include "lsi/mpi_type.h"
 #include "lsi/mpi.h"		/* Fusion MPI(nterface) basic defs */
@@ -763,6 +764,9 @@ typedef struct _MPT_ADAPTER
 	char			 reset_work_q_name[MPT_KOBJ_NAME_LEN];
 	struct workqueue_struct *reset_work_q;
 	struct delayed_work	 fault_reset_work;
+
+	struct blk_iopoll	iopoll;
+	unsigned int		using_iopoll;
 
 	u8			sg_addr_size;
 	u8			in_rescan;
