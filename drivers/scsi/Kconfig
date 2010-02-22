@@ -1,12 +1,5 @@
 menu "SCSI device support"
 
-config RAID_ATTRS
-	tristate "RAID Transport Class"
-	default n
-	depends on BLOCK
-	---help---
-	  Provides RAID
-
 config SCSI
 	tristate "SCSI device support"
 	depends on BLOCK
@@ -33,6 +26,13 @@ config SCSI
 config SCSI_DMA
 	bool
 	default n
+
+config RAID_ATTRS
+	tristate "RAID Transport Class"
+	default n
+	depends on BLOCK && SCSI
+	---help---
+	  Provides RAID
 
 config SCSI_TGT
 	tristate "SCSI target support"
