@@ -32,11 +32,14 @@ static DEFINE_PER_CPU(struct list_head, blk_cpu_iopoll);
  **/
 void blk_iopoll_sched(struct blk_iopoll *iop)
 {
+	struct list_head *list;
 	unsigned long flags;
 
 	local_irq_save(flags);
-	list_add_tail(&iop->list, &__get_cpu_var(blk_cpu_iopoll));
-	__raise_softirq_irqoff(BLOCK_IOPOLL_SOFTIRQ);
+	list = &__get_cpu_var(blk_cpu_iopoll);
+	list_add_tail(&iop->list, list);
+	if (list->next == &iop->list)
+		__raise_softirq_irqoff(BLOCK_IOPOLL_SOFTIRQ);
 	local_irq_restore(flags);
 }
 EXPORT_SYMBOL(blk_iopoll_sched);
