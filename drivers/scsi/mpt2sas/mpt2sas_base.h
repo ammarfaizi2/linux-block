@@ -63,6 +63,8 @@
 #include <scsi/scsi_dbg.h>
 #include <scsi/scsi_eh.h>
 
+#include <linux/blk-iopoll.h>
+
 #include "mpt2sas_debug.h"
 
 /* driver versioning info */
@@ -584,6 +586,8 @@ struct MPT2SAS_ADAPTER {
 	struct Scsi_Host *shost;
 	u8		id;
 	u32		pci_irq;
+	struct blk_iopoll iopoll;
+	unsigned int using_iopoll;
 	char		name[MPT_NAME_LENGTH];
 	char		tmp_string[MPT_STRING_LENGTH];
 	struct pci_dev	*pdev;
@@ -653,6 +657,7 @@ struct MPT2SAS_ADAPTER {
 	Mpi2ManufacturingPage0_t manu_pg0;
 	Mpi2BiosPage2_t	bios_pg2;
 	Mpi2BiosPage3_t	bios_pg3;
+	Mpi2IOCPage1_t ioc_pg1;
 	Mpi2IOCPage8_t ioc_pg8;
 	Mpi2IOUnitPage0_t iounit_pg0;
 	Mpi2IOUnitPage1_t iounit_pg1;
@@ -855,6 +860,10 @@ int mpt2sas_config_get_sas_iounit_pg1(struct MPT2SAS_ADAPTER *ioc, Mpi2ConfigRep
     *mpi_reply, Mpi2SasIOUnitPage1_t *config_page, u16 sz);
 int mpt2sas_config_set_sas_iounit_pg1(struct MPT2SAS_ADAPTER *ioc,
     Mpi2ConfigReply_t *mpi_reply, Mpi2SasIOUnitPage1_t *config_page, u16 sz);
+int mpt2sas_config_get_ioc_pg1(struct MPT2SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+    *mpi_reply, Mpi2IOCPage1_t *config_page);
+int mpt2sas_config_set_ioc_pg1(struct MPT2SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+    *mpi_reply, Mpi2IOCPage1_t *config_page);
 int mpt2sas_config_get_ioc_pg8(struct MPT2SAS_ADAPTER *ioc, Mpi2ConfigReply_t
     *mpi_reply, Mpi2IOCPage8_t *config_page);
 int mpt2sas_config_get_expander_pg0(struct MPT2SAS_ADAPTER *ioc, Mpi2ConfigReply_t

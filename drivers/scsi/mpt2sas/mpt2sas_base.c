@@ -94,6 +94,15 @@ int mpt2sas_fwfault_debug;
 MODULE_PARM_DESC(mpt2sas_fwfault_debug, " enable detection of firmware fault "
     "and halt firmware - (default=0)");
 
+static int mpt2sas_iopoll = 1;
+module_param(mpt2sas_iopoll, int, 0);
+MODULE_PARM_DESC(mpt2sas_iopoll, " Use blk-iopoll (default=1)");
+
+static int mpt2sas_iopoll_w = 8;
+module_param(mpt2sas_iopoll_w, int, 0);
+MODULE_PARM_DESC(mpt2sas_iopoll_w, " blk iopoll budget (default=32");
+
+
 /**
  * _scsih_set_fwfault_debug - global setting of ioc->fwfault_debug.
  *
@@ -798,42 +807,29 @@ union reply_descriptor {
 	} u;
 };
 
-/**
- * _base_interrupt - MPT adapter (IOC) specific interrupt handler.
- * @irq: irq number (not used)
- * @bus_id: bus identifier cookie == pointer to MPT_ADAPTER structure
- * @r: pt_regs pointer (not used)
- *
- * Return IRQ_HANDLE if processed, else IRQ_NONE.
- */
-static irqreturn_t
-_base_interrupt(int irq, void *bus_id)
+static int _base_complete_commands(struct MPT2SAS_ADAPTER *ioc,
+				   unsigned int budget)
 {
+	Mpi2ReplyDescriptorsUnion_t *rpf;
 	union reply_descriptor rd;
-	u32 completed_cmds;
+	u32 completed_cmds = 0;
 	u8 request_desript_type;
+	u8 msix_index;
 	u16 smid;
 	u8 cb_idx;
 	u32 reply;
-	u8 msix_index;
-	struct MPT2SAS_ADAPTER *ioc = bus_id;
-	Mpi2ReplyDescriptorsUnion_t *rpf;
 	u8 rc;
-
-	if (ioc->mask_interrupts)
-		return IRQ_NONE;
 
 	rpf = &ioc->reply_post_free[ioc->reply_post_host_index];
 	request_desript_type = rpf->Default.ReplyFlags
 	     & MPI2_RPY_DESCRIPT_FLAGS_TYPE_MASK;
 	if (request_desript_type == MPI2_RPY_DESCRIPT_FLAGS_UNUSED)
-		return IRQ_NONE;
+		return 0;
 
-	completed_cmds = 0;
 	do {
 		rd.word = rpf->Words;
 		if (rd.u.low == UINT_MAX || rd.u.high == UINT_MAX)
-			goto out;
+			break;
 		reply = 0;
 		cb_idx = 0xFF;
 		smid = le16_to_cpu(rpf->Default.DescriptorTypeDependent1);
@@ -875,8 +871,7 @@ _base_interrupt(int irq, void *bus_id)
 			    &ioc->chip->ReplyFreeHostIndex);
 		}
 
- next:
-
+next:
 		rpf->Words = ULLONG_MAX;
 		ioc->reply_post_host_index = (ioc->reply_post_host_index ==
 		    (ioc->reply_post_queue_depth - 1)) ? 0 :
@@ -886,21 +881,109 @@ _base_interrupt(int irq, void *bus_id)
 		    ReplyFlags & MPI2_RPY_DESCRIPT_FLAGS_TYPE_MASK;
 		completed_cmds++;
 		if (request_desript_type == MPI2_RPY_DESCRIPT_FLAGS_UNUSED)
-			goto out;
+			break;
 		if (!ioc->reply_post_host_index)
 			rpf = ioc->reply_post_free;
 		else
 			rpf++;
-	} while (1);
-
- out:
+	} while (completed_cmds < budget);
 
 	if (!completed_cmds)
-		return IRQ_NONE;
+		return 0;
 
 	wmb();
 	writel(ioc->reply_post_host_index, &ioc->chip->ReplyPostHostIndex);
-	return IRQ_HANDLED;
+	return completed_cmds;
+}
+
+/**
+ * _base_interrupt - MPT adapter (IOC) specific interrupt handler.
+ * @irq: irq number (not used)
+ * @bus_id: bus identifier cookie == pointer to MPT_ADAPTER structure
+ * @r: pt_regs pointer (not used)
+ *
+ * Return IRQ_HANDLE if processed, else IRQ_NONE.
+ */
+static irqreturn_t
+_base_interrupt(int irq, void *bus_id)
+{
+	struct MPT2SAS_ADAPTER *ioc = bus_id;
+	int nr;
+
+	if (ioc->mask_interrupts)
+		return IRQ_NONE;
+
+	if (!blk_iopoll_enabled || !ioc->using_iopoll)
+		nr = _base_complete_commands(ioc, -1U);
+	else if (!blk_iopoll_sched_prep(&ioc->iopoll)) {
+		_base_mask_interrupts(ioc);
+		blk_iopoll_sched(&ioc->iopoll);
+		nr = 1;
+	} else {
+		/*
+		 * Not really handled, but it will be by an iopoll
+		 * instance that was already scheduled
+		 */
+		nr = 1;
+	}
+
+	if (nr)
+		return IRQ_HANDLED;
+
+	return IRQ_NONE;
+}
+
+static int mpt2sas_iopoll_fn(struct blk_iopoll *iop, int budget)
+{
+	struct MPT2SAS_ADAPTER *ioc;
+	int ret = 0;
+
+	ioc = container_of(iop, struct MPT2SAS_ADAPTER, iopoll);
+
+	ret = _base_complete_commands(ioc, budget);
+	if (ret < budget) {
+		blk_iopoll_complete(iop);
+		_base_unmask_interrupts(ioc);
+	}
+
+	return ret;
+}
+
+/*
+ * Disable blk-iopoll. Turn command completion coalescing back on.
+ */
+static void mpt2sas_disable_iopoll(struct MPT2SAS_ADAPTER *ioc)
+{
+	Mpi2ConfigReply_t mpi_reply;
+	u32 flags;
+
+	blk_iopoll_disable(&ioc->iopoll);
+	ioc->using_iopoll = 0;
+
+	flags = le32_to_cpu(ioc->ioc_pg1.Flags);
+	flags |= MPI2_IOCPAGE1_REPLY_COALESCING;
+	ioc->ioc_pg1.Flags = cpu_to_le32(flags);
+	mpt2sas_config_set_ioc_pg1(ioc, &mpi_reply, &ioc->ioc_pg1);
+}
+
+/*
+ * Enable blk-iopoll. If command completion coalescing is enabled on the
+ * controller, turn it off.
+ */
+static void mpt2sas_enable_iopoll(struct MPT2SAS_ADAPTER *ioc)
+{
+	Mpi2ConfigReply_t mpi_reply;
+	u32 flags;
+
+	blk_iopoll_enable(&ioc->iopoll);
+	ioc->using_iopoll = 1;
+
+	flags = le32_to_cpu(ioc->ioc_pg1.Flags);
+	if (flags & MPI2_IOCPAGE1_REPLY_COALESCING) {
+		flags &= ~MPI2_IOCPAGE1_REPLY_COALESCING;
+		ioc->ioc_pg1.Flags = cpu_to_le32(flags);
+		mpt2sas_config_set_ioc_pg1(ioc, &mpi_reply, &ioc->ioc_pg1);
+	}
 }
 
 /**
@@ -1808,6 +1891,7 @@ _base_static_config_pages(struct MPT2SAS_ADAPTER *ioc)
 		    &ioc->manu_pg10);
 	mpt2sas_config_get_bios_pg2(ioc, &mpi_reply, &ioc->bios_pg2);
 	mpt2sas_config_get_bios_pg3(ioc, &mpi_reply, &ioc->bios_pg3);
+	mpt2sas_config_get_ioc_pg1(ioc, &mpi_reply, &ioc->ioc_pg1);
 	mpt2sas_config_get_ioc_pg8(ioc, &mpi_reply, &ioc->ioc_pg8);
 	mpt2sas_config_get_iounit_pg0(ioc, &mpi_reply, &ioc->iounit_pg0);
 	mpt2sas_config_get_iounit_pg1(ioc, &mpi_reply, &ioc->iounit_pg1);
@@ -3515,6 +3599,9 @@ mpt2sas_base_free_resources(struct MPT2SAS_ADAPTER *ioc)
 	dexitprintk(ioc, printk(MPT2SAS_DEBUG_FMT "%s\n", ioc->name,
 	    __func__));
 
+	if (ioc->using_iopoll)
+		mpt2sas_disable_iopoll(ioc);
+
 	_base_mask_interrupts(ioc);
 	_base_make_ioc_ready(ioc, CAN_SLEEP, SOFT_RESET);
 	if (ioc->pci_irq) {
@@ -3625,6 +3712,13 @@ mpt2sas_base_attach(struct MPT2SAS_ADAPTER *ioc)
 	r = _base_make_ioc_operational(ioc, CAN_SLEEP);
 	if (r)
 		goto out_free_resources;
+
+	if (mpt2sas_iopoll) {
+		blk_iopoll_init(&ioc->iopoll, mpt2sas_iopoll_w,
+					mpt2sas_iopoll_fn);
+		mpt2sas_enable_iopoll(ioc);
+		printk(MPT2SAS_INFO_FMT "enabled blk-iopoll\n", ioc->name);
+	}
 
 	mpt2sas_base_start_watchdog(ioc);
 	if (diag_buffer_enable != 0)
