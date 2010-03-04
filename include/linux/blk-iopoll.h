@@ -8,9 +8,8 @@ struct blk_iopoll {
 	struct list_head list;
 	unsigned long state;
 	unsigned long data;
-	int weight;
-	int max;
 	blk_iopoll_fn *poll;
+	int weight;
 };
 
 enum {
