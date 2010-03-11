@@ -1583,8 +1583,10 @@ void pci_pm_init(struct pci_dev *dev)
 	int pm;
 	u16 pmc;
 
+	pm_runtime_forbid(&dev->dev);
 	device_enable_async_suspend(&dev->dev);
 	dev->wakeup_prepared = false;
+
 	dev->pm_cap = 0;
 
 	/* find PCI PM capability in list */
@@ -2486,7 +2488,7 @@ static int pci_dev_reset(struct pci_dev *dev, int probe)
 	if (!probe) {
 		pci_block_user_cfg_access(dev);
 		/* block PM suspend, driver probe, etc. */
-		down(&dev->dev.sem);
+		device_lock(&dev->dev);
 	}
 
 	rc = pci_dev_specific_reset(dev, probe);
@@ -2508,7 +2510,7 @@ static int pci_dev_reset(struct pci_dev *dev, int probe)
 	rc = pci_parent_bus_reset(dev, probe);
 done:
 	if (!probe) {
-		up(&dev->dev.sem);
+		device_unlock(&dev->dev);
 		pci_unblock_user_cfg_access(dev);
 	}
 

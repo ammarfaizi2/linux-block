@@ -285,7 +285,7 @@ static ssize_t kobj_pkt_store(struct kobject *kobj,
 	return len;
 }
 
-static struct sysfs_ops kobj_pkt_ops = {
+static const struct sysfs_ops kobj_pkt_ops = {
 	.show = kobj_pkt_show,
 	.store = kobj_pkt_store
 };
@@ -338,7 +338,9 @@ static void class_pktcdvd_release(struct class *cls)
 {
 	kfree(cls);
 }
-static ssize_t class_pktcdvd_show_map(struct class *c, char *data)
+static ssize_t class_pktcdvd_show_map(struct class *c,
+					struct class_attribute *attr,
+					char *data)
 {
 	int n = 0;
 	int idx;
@@ -357,7 +359,9 @@ static ssize_t class_pktcdvd_show_map(struct class *c, char *data)
 	return n;
 }
 
-static ssize_t class_pktcdvd_store_add(struct class *c, const char *buf,
+static ssize_t class_pktcdvd_store_add(struct class *c,
+					struct class_attribute *attr,
+					const char *buf,
 					size_t count)
 {
 	unsigned int major, minor;
@@ -377,7 +381,9 @@ static ssize_t class_pktcdvd_store_add(struct class *c, const char *buf,
 	return -EINVAL;
 }
 
-static ssize_t class_pktcdvd_store_remove(struct class *c, const char *buf,
+static ssize_t class_pktcdvd_store_remove(struct class *c,
+					  struct class_attribute *attr,
+					  const char *buf,
 					size_t count)
 {
 	unsigned int major, minor;
