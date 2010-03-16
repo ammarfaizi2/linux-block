@@ -605,6 +605,73 @@ static struct rcu_torture_ops srcu_expedited_ops = {
 };
 
 /*
+ * Definitions for qrcu torture testing.
+ */
+
+static struct qrcu_struct qrcu_ctl;
+
+static void qrcu_torture_init(void)
+{
+	init_qrcu_struct(&qrcu_ctl);
+	rcu_sync_torture_init();
+}
+
+static void qrcu_torture_cleanup(void)
+{
+	synchronize_qrcu(&qrcu_ctl);
+	cleanup_qrcu_struct(&qrcu_ctl);
+}
+
+static int qrcu_torture_read_lock(void) __acquires(&qrcu_ctl)
+{
+	return qrcu_read_lock(&qrcu_ctl);
+}
+
+static void qrcu_torture_read_unlock(int idx) __releases(&qrcu_ctl)
+{
+	qrcu_read_unlock(&qrcu_ctl, idx);
+}
+
+static int qrcu_torture_completed(void)
+{
+	return qrcu_ctl.completed;
+}
+
+static void qrcu_torture_synchronize(void)
+{
+	synchronize_qrcu(&qrcu_ctl);
+}
+
+static int qrcu_torture_stats(char *page)
+{
+	int cnt = 0;
+	int idx = qrcu_ctl.completed & 0x1;
+
+	cnt += sprintf(&page[cnt], "%s%s per-CPU(idx=%d):",
+			torture_type, TORTURE_FLAG, idx);
+
+	cnt += sprintf(&page[cnt], " (%d,%d)",
+			atomic_read(qrcu_ctl.ctr + 0),
+			atomic_read(qrcu_ctl.ctr + 1));
+
+	cnt += sprintf(&page[cnt], "\n");
+	return cnt;
+}
+
+static struct rcu_torture_ops qrcu_ops = {
+	.init		= qrcu_torture_init,
+	.cleanup	= qrcu_torture_cleanup,
+	.readlock	= qrcu_torture_read_lock,
+	.read_delay	= srcu_read_delay,
+	.readunlock	= qrcu_torture_read_unlock,
+	.completed	= qrcu_torture_completed,
+	.deferred_free	= rcu_sync_torture_deferred_free,
+	.sync		= qrcu_torture_synchronize,
+	.stats		= qrcu_torture_stats,
+	.name		= "qrcu"
+};
+
+/*
  * Definitions for sched torture testing.
  */
 
@@ -1202,7 +1269,8 @@ rcu_torture_init(void)
 		{ &rcu_ops, &rcu_sync_ops, &rcu_expedited_ops,
 		  &rcu_bh_ops, &rcu_bh_sync_ops,
 		  &srcu_ops, &srcu_expedited_ops,
-		  &sched_ops, &sched_sync_ops, &sched_expedited_ops, };
+		  &qrcu_ops, &sched_ops, &sched_sync_ops,
+		  &sched_expedited_ops, };
 
 	mutex_lock(&fullstop_mutex);
 

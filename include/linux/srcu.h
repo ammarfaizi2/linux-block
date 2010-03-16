@@ -157,8 +157,8 @@ struct qrcu_struct {
 };
 
 int init_qrcu_struct(struct qrcu_struct *qp);
-int qrcu_read_lock(struct qrcu_struct *qp);
-void qrcu_read_unlock(struct qrcu_struct *qp, int idx);
+int qrcu_read_lock(struct qrcu_struct *qp) __acquires(qp);
+void qrcu_read_unlock(struct qrcu_struct *qp, int idx) __releases(qp);
 void synchronize_qrcu(struct qrcu_struct *qp);
 
 static inline void cleanup_qrcu_struct(struct qrcu_struct *qp)
