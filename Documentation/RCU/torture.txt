@@ -54,7 +54,8 @@ nfakewriters	This is the number of RCU fake writer threads to run.  Fake
 		different numbers of writers running in parallel.
 		nfakewriters defaults to 4, which provides enough parallelism
 		to trigger special cases caused by multiple writers, such as
-		the synchronize_srcu() early return optimization.
+		the synchronize_srcu() and synchronize_qrcu() early return
+		optimizations.
 
 nreaders	This is the number of RCU reading threads supported.
 		The default is twice the number of CPUs.  Why twice?
@@ -90,7 +91,8 @@ torture_type	The type of RCU to test: "rcu" for the rcu_read_lock() API,
 		rcu_read_lock_bh() with synchronous reclamation, "srcu" for
 		the "srcu_read_lock()" API, "sched" for the use of
 		preempt_disable() together with synchronize_sched(),
-		and "sched_expedited" for the use of preempt_disable()
+		"qrcu" for the "qrcu_read_lock()" "quick grace period" form
+		of SRCU, and "sched_expedited" for the use of preempt_disable()
 		with synchronize_sched_expedited().
 
 verbose		Enable debug printk()s.  Default is disabled.

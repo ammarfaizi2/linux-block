@@ -840,6 +840,11 @@ SRCU:	Initialization/cleanup
 	init_srcu_struct
 	cleanup_srcu_struct
 
+QRCU:	Critical sections	Grace period		Barrier
+
+	qrcu_read_lock		synchronize_qrcu	N/A
+	qrcu_read_unlock
+
 All:  lockdep-checked RCU-protected pointer access
 
 	rcu_dereference_check

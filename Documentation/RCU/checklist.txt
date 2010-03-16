@@ -348,7 +348,20 @@ over a rather long period of time, but improvements are always welcome!
 	Note that, rcu_assign_pointer() relates to SRCU just as they do
 	to other forms of RCU.
 
-15.	The whole point of call_rcu(), synchronize_rcu(), and friends
+15.	QRCU is very similar to SRCU, but features very fast grace-period
+	processing at the expense of heavier-weight read-side operations.
+	The correspondance between QRCU and SRCU is as follows:
+
+		QRCU			SRCU
+
+		struct qrcu_struct	struct srcu_struct
+		init_qrcu_struct()	init_srcu_struct()
+		cleanup_qrcu_struct()	cleanup_srcu_struct()
+		qrcu_read_lock()	srcu_read_lock()
+		qrcu_read_unlock()	srcu_read_unlock()
+		synchronize_qrcu()	synchronize_srcu()
+
+16.	The whole point of call_rcu(), synchronize_rcu(), and friends
 	is to wait until all pre-existing readers have finished before
 	carrying out some otherwise-destructive operation.  It is
 	therefore critically important to -first- remove any path

@@ -53,7 +53,8 @@ o	How can I see where RCU is currently used in the Linux kernel?
 
 	Search for "rcu_read_lock", "rcu_read_unlock", "call_rcu",
 	"rcu_read_lock_bh", "rcu_read_unlock_bh", "call_rcu_bh",
-	"srcu_read_lock", "srcu_read_unlock", "synchronize_rcu",
+	"qrcu_read_lock", qrcu_read_unlock", "srcu_read_lock",
+	"srcu_read_unlock", "synchronize_rcu", "synchronize_qrcu",
 	"synchronize_net", "synchronize_srcu", and the other RCU
 	primitives.  Or grab one of the cscope databases from:
 
