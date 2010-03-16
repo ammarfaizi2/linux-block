@@ -28,6 +28,7 @@
 #define _LINUX_SRCU_H
 
 #include <linux/mutex.h>
+#include <linux/wait.h>
 
 struct srcu_struct_array {
 	int c[2];
@@ -142,6 +143,26 @@ static inline void srcu_read_unlock(struct srcu_struct *sp, int idx)
 {
 	srcu_read_release(sp);
 	__srcu_read_unlock(sp, idx);
+}
+
+/*
+ * fully compatible with srcu, but optimized for writers.
+ */
+
+struct qrcu_struct {
+	int completed;
+	atomic_t ctr[2];
+	wait_queue_head_t wq;
+	struct mutex mutex;
+};
+
+int init_qrcu_struct(struct qrcu_struct *qp);
+int qrcu_read_lock(struct qrcu_struct *qp);
+void qrcu_read_unlock(struct qrcu_struct *qp, int idx);
+void synchronize_qrcu(struct qrcu_struct *qp);
+
+static inline void cleanup_qrcu_struct(struct qrcu_struct *qp)
+{
 }
 
 #endif
