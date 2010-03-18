@@ -159,7 +159,8 @@ static int snd_soc_8_8_write(struct snd_soc_codec *codec, unsigned int reg,
 
 	BUG_ON(codec->volatile_register);
 
-	data[0] = reg & 0xff;
+	reg &= 0xff;
+	data[0] = reg;
 	data[1] = value & 0xff;
 
 	if (reg < codec->reg_cache_size)
@@ -180,6 +181,7 @@ static unsigned int snd_soc_8_8_read(struct snd_soc_codec *codec,
 				     unsigned int reg)
 {
 	u8 *cache = codec->reg_cache;
+	reg &= 0xff;
 	if (reg >= codec->reg_cache_size)
 		return -1;
 	return cache[reg];
@@ -224,6 +226,40 @@ static unsigned int snd_soc_8_16_read(struct snd_soc_codec *codec,
 		return cache[reg];
 	}
 }
+
+#if defined(CONFIG_I2C) || (defined(CONFIG_I2C_MODULE) && defined(MODULE))
+static unsigned int snd_soc_8_8_read_i2c(struct snd_soc_codec *codec,
+					  unsigned int r)
+{
+	struct i2c_msg xfer[2];
+	u8 reg = r;
+	u8 data;
+	int ret;
+	struct i2c_client *client = codec->control_data;
+
+	/* Write register */
+	xfer[0].addr = client->addr;
+	xfer[0].flags = 0;
+	xfer[0].len = 1;
+	xfer[0].buf = &reg;
+
+	/* Read data */
+	xfer[1].addr = client->addr;
+	xfer[1].flags = I2C_M_RD;
+	xfer[1].len = 1;
+	xfer[1].buf = &data;
+
+	ret = i2c_transfer(client->adapter, xfer, 2);
+	if (ret != 2) {
+		dev_err(&client->dev, "i2c_transfer() returned %d\n", ret);
+		return 0;
+	}
+
+	return data;
+}
+#else
+#define snd_soc_8_8_read_i2c NULL
+#endif
 
 #if defined(CONFIG_I2C) || (defined(CONFIG_I2C_MODULE) && defined(MODULE))
 static unsigned int snd_soc_8_16_read_i2c(struct snd_soc_codec *codec,
@@ -466,6 +502,7 @@ static struct {
 	{
 		.addr_bits = 8, .data_bits = 8,
 		.write = snd_soc_8_8_write, .read = snd_soc_8_8_read,
+		.i2c_read = snd_soc_8_8_read_i2c,
 	},
 	{
 		.addr_bits = 8, .data_bits = 16,
