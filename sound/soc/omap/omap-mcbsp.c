@@ -322,7 +322,9 @@ static int omap_mcbsp_dai_hw_params(struct snd_pcm_substream *substream,
 	omap_mcbsp_dai_dma_params[id][substream->stream].sync_mode = sync_mode;
 	omap_mcbsp_dai_dma_params[id][substream->stream].data_type =
 							OMAP_DMA_DATA_TYPE_S16;
-	cpu_dai->dma_data = &omap_mcbsp_dai_dma_params[id][substream->stream];
+
+	snd_soc_dai_set_dma_data(cpu_dai, substream,
+		&omap_mcbsp_dai_dma_params[id][substream->stream]);
 
 	if (mcbsp_data->configured) {
 		/* McBSP already configured by another stream */
@@ -331,7 +333,8 @@ static int omap_mcbsp_dai_hw_params(struct snd_pcm_substream *substream,
 
 	format = mcbsp_data->fmt & SND_SOC_DAIFMT_FORMAT_MASK;
 	wpf = channels = params_channels(params);
-	if (channels == 2 && format == SND_SOC_DAIFMT_I2S) {
+	if (channels == 2 && (format == SND_SOC_DAIFMT_I2S ||
+			      format == SND_SOC_DAIFMT_LEFT_J)) {
 		/* Use dual-phase frames */
 		regs->rcr2	|= RPHASE;
 		regs->xcr2	|= XPHASE;
@@ -376,6 +379,7 @@ static int omap_mcbsp_dai_hw_params(struct snd_pcm_substream *substream,
 	/* Set FS period and length in terms of bit clock periods */
 	switch (format) {
 	case SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_LEFT_J:
 		regs->srgr2	|= FPER(framesize - 1);
 		regs->srgr1	|= FWID((framesize >> 1) - 1);
 		break;
@@ -426,6 +430,14 @@ static int omap_mcbsp_dai_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		/* 1-bit data delay */
 		regs->rcr2	|= RDATDLY(1);
 		regs->xcr2	|= XDATDLY(1);
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
+		/* 0-bit data delay */
+		regs->rcr2	|= RDATDLY(0);
+		regs->xcr2	|= XDATDLY(0);
+		regs->spcr1	|= RJUST(2);
+		/* Invert FS polarity configuration */
+		temp_fmt ^= SND_SOC_DAIFMT_NB_IF;
 		break;
 	case SND_SOC_DAIFMT_DSP_A:
 		/* 1-bit data delay */
