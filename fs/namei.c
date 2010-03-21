@@ -241,29 +241,20 @@ int generic_permission(struct inode *inode, int mask,
 }
 
 /**
- * inode_permission  -  check for access rights to a given inode
+ * __inode_permission  -  check for access rights to a given inode
  * @inode:	inode to check permission on
  * @mask:	right to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
  *
  * Used to check for read/write/execute permissions on an inode.
- * We use "fsuid" for this, letting us set arbitrary permissions
- * for filesystem access without changing the "normal" uids which
- * are used for other things.
+ *
+ * This does not check for a read-only file system.  You probably want
+ * inode_permission().
  */
-int inode_permission(struct inode *inode, int mask)
+static int __inode_permission(struct inode *inode, int mask)
 {
 	int retval;
 
 	if (mask & MAY_WRITE) {
-		umode_t mode = inode->i_mode;
-
-		/*
-		 * Nobody gets write access to a read-only fs.
-		 */
-		if (IS_RDONLY(inode) &&
-		    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)))
-			return -EROFS;
-
 		/*
 		 * Nobody gets write access to an immutable file.
 		 */
@@ -284,6 +275,79 @@ int inode_permission(struct inode *inode, int mask)
 		return retval;
 
 	return security_inode_permission(inode, mask);
+}
+
+/**
+ * sb_permission  -  check superblock-level permissions
+ * @sb: superblock of inode to check permission on
+ * @mask: right to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
+ *
+ * Separate out file-system wide checks from inode-specific permission
+ * checks.  In particular, union mounts want to check the read-only
+ * status of the top-level file system, not the lower.
+ */
+int sb_permission(struct super_block *sb, struct inode *inode, int mask)
+{
+	if (mask & MAY_WRITE) {
+		umode_t mode = inode->i_mode;
+
+		/*
+		 * Nobody gets write access to a read-only fs.
+		 */
+		if ((sb->s_flags & MS_RDONLY) &&
+		    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)))
+			return -EROFS;
+	}
+	return 0;
+}
+
+/**
+ * inode_permission  -  check for access rights to a given inode
+ * @inode:	inode to check permission on
+ * @mask:	right to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
+ *
+ * Used to check for read/write/execute permissions on an inode.
+ * We use "fsuid" for this, letting us set arbitrary permissions
+ * for filesystem access without changing the "normal" uids which
+ * are used for other things.
+ */
+int inode_permission(struct inode *inode, int mask)
+{
+	int retval;
+
+	retval = sb_permission(inode->i_sb, inode, mask);
+	if (retval)
+		return retval;
+	return __inode_permission(inode, mask);
+}
+
+/**
+ * path_permission - check for inode access rights depending on path
+ * @path: path of inode to check
+ * @parent_path: path of inode's parent
+ * @mask: right to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
+ *
+ * Like inode_permission, but used to check for permission when the
+ * file may potentially be copied up between union layers.
+ */
+
+int path_permission(struct path *path, struct path *parent_path, int mask)
+{
+	struct vfsmount *mnt;
+	int retval;
+
+	/* Catch some reversal of args */
+	BUG_ON(!S_ISDIR(parent_path->dentry->d_inode->i_mode));
+
+	if (IS_MNT_UNION(parent_path->mnt))
+		mnt = parent_path->mnt;
+	else
+		mnt = path->mnt;
+
+	retval = sb_permission(mnt->mnt_sb, path->dentry->d_inode, mask);
+	if (retval)
+		return retval;
+	return __inode_permission(path->dentry->d_inode, mask);
 }
 
 /**
