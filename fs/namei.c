@@ -1581,6 +1581,37 @@ static int user_path_parent(int dfd, const char __user *path,
 	return error;
 }
 
+int user_path_nd(int dfd, const char __user *filename,
+			 unsigned flags, struct nameidata *parent_nd,
+			 struct path *child, char **tmp)
+{
+	struct nameidata child_nd;
+	char *s = getname(filename);
+	int error;
+
+	if (IS_ERR(s))
+		return PTR_ERR(s);
+
+	/* Lookup parent */
+	error = do_path_lookup(dfd, s, LOOKUP_PARENT, parent_nd);
+	if (error)
+		goto out_putname;
+
+	/* Lookup child - XXX optimize, racy */
+	error = do_path_lookup(dfd, s, flags, &child_nd);
+	if (error)
+		goto out_path_put;
+	*child = child_nd.path;
+	*tmp = s;
+	return 0;
+
+out_path_put:
+	path_put(&parent_nd->path);
+out_putname:
+	putname(s);
+	return error;
+}
+
 /*
  * It's inline, so penalty for filesystems that don't use sticky bit is
  * minimal.
