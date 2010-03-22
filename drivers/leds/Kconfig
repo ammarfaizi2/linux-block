@@ -254,6 +254,7 @@ config LEDS_BD2802
 config LEDS_INTEL_SS4200
 	tristate "LED driver for Intel NAS SS4200 series"
 	depends on PCI && DMI
+	depends on 0
 	help
 	  This option enables support for the Intel SS4200 series of
 	  Network Attached Storage servers.  You may control the hard
