@@ -3193,6 +3193,7 @@ SYSCALL_DEFINE4(renameat, int, olddfd, const char __user *, oldname,
 {
 	struct dentry *old_dir, *new_dir;
 	struct path old, new;
+	struct path to_whiteout = {NULL, NULL};
 	struct dentry *trap;
 	struct nameidata oldnd, newnd;
 	char *from;
@@ -3210,13 +3211,6 @@ SYSCALL_DEFINE4(renameat, int, olddfd, const char __user *, oldname,
 	error = -EXDEV;
 	if (oldnd.path.mnt != newnd.path.mnt)
 		goto exit2;
-
-	/* rename() on union mounts not implemented yet */
-	error = -EXDEV;
-	if (IS_DIR_UNIONED(oldnd.path.dentry) ||
-	    IS_DIR_UNIONED(newnd.path.dentry))
-		goto exit2;
-
 	old_dir = oldnd.path.dentry;
 	error = -EBUSY;
 	if (oldnd.last_type != LAST_NORM)
@@ -3251,6 +3245,11 @@ SYSCALL_DEFINE4(renameat, int, olddfd, const char __user *, oldname,
 	error = -EINVAL;
 	if (old.dentry == trap)
 		goto exit4;
+	error = -EXDEV;
+	/* Can't rename a directory from a lower layer */
+	if (IS_DIR_UNIONED(oldnd.path.dentry) &&
+	    IS_DIR_UNIONED(old.dentry))
+		goto exit4;
 	error = lookup_hash(&newnd, &newnd.last, &new);
 	if (error)
 		goto exit4;
@@ -3258,6 +3257,48 @@ SYSCALL_DEFINE4(renameat, int, olddfd, const char __user *, oldname,
 	error = -ENOTEMPTY;
 	if (new.dentry == trap)
 		goto exit5;
+	error = -EXDEV;
+	/* Can't rename over directories on the lower layer */
+	if (IS_DIR_UNIONED(newnd.path.dentry) &&
+	    IS_DIR_UNIONED(new.dentry))
+		goto exit5;
+
+	/* If source is on lower layer, copy up */
+	if (IS_DIR_UNIONED(oldnd.path.dentry) &&
+	    (old.mnt != oldnd.path.mnt)) {
+		/* Save the lower path to avoid a second lookup for whiteout */
+		to_whiteout.mnt = mntget(old.mnt);
+		to_whiteout.dentry = dget(old.dentry);
+		error = __union_copyup(&oldnd, &old);
+		if (error)
+			goto exit5;
+	}
+
+	/* If target is on lower layer, get negative dentry for topmost */
+	if (IS_DIR_UNIONED(newnd.path.dentry) &&
+	    (new.mnt != newnd.path.mnt)) {
+		struct dentry *dentry;
+		/*
+		 * At this point, source and target are both files,
+		 * the source is on the topmost layer, and the target
+		 * is on a lower layer.  We want the target dentry to
+		 * disappear from the namespace, and give vfs_rename a
+		 * negative dentry from the topmost layer.
+		 */
+		/* We already did lookup once, no need to check perm */
+		dentry = __lookup_hash(&newnd.last, newnd.path.dentry, &newnd);
+		if (IS_ERR(dentry)) {
+			error = PTR_ERR(dentry);
+			goto exit5;
+		}
+		/* We no longer need the lower target dentry.  It
+		 * definitely should be removed from the hash table */
+		/* XXX what about failure case? */
+		d_delete(new.dentry);
+		mntput(new.mnt);
+		new.mnt = mntget(newnd.path.mnt);
+		new.dentry = dentry;
+	}
 
 	error = mnt_want_write(oldnd.path.mnt);
 	if (error)
@@ -3268,6 +3309,26 @@ SYSCALL_DEFINE4(renameat, int, olddfd, const char __user *, oldname,
 		goto exit6;
 	error = vfs_rename(old_dir->d_inode, old.dentry,
 				   new_dir->d_inode, new.dentry);
+	if (error)
+		goto exit6;
+	/* Now whiteout the source */
+	if (IS_DIR_UNIONED(oldnd.path.dentry)) {
+		if (!to_whiteout.dentry) {
+			struct dentry *dentry;
+			/* We could have exposed a lower level entry */
+			dentry = __lookup_hash(&oldnd.last, oldnd.path.dentry, &oldnd);
+			if (IS_ERR(dentry)) {
+				error = PTR_ERR(dentry);
+				goto exit6;
+			}
+			to_whiteout.dentry = dentry;
+			to_whiteout.mnt = mntget(oldnd.path.mnt);
+		}
+
+		if (to_whiteout.dentry->d_inode)
+			error = do_whiteout(&oldnd, &to_whiteout, 0);
+		path_put(&to_whiteout);
+	}
 exit6:
 	mnt_drop_write(oldnd.path.mnt);
 exit5:
