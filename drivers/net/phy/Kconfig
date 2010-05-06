@@ -90,6 +90,7 @@ config LSI_ET1011C_PHY
 
 config MICREL_PHY
 	tristate "Driver for Micrel PHYs"
+	depends on 0
 	---help---
 	  Supports the KSZ9021, VSC8201, KS8001 PHYs.
 
