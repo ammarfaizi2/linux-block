@@ -26,6 +26,7 @@
 #include <linux/namei.h>
 #include <linux/log2.h>
 #include <linux/kmemleak.h>
+#include <linux/splice.h>
 #include <asm/uaccess.h>
 #include "internal.h"
 
@@ -1469,6 +1470,398 @@ static int blkdev_releasepage(struct page *page, gfp_t wait)
 	return try_to_free_buffers(page);
 }
 
+/*
+ * A bit of state data, to allow us to make larger bios
+ */
+struct block_splice_data {
+	struct file *file;
+	struct bio *bio;
+	atomic_t pending_bios;
+	wait_queue_head_t waitq;
+	int err;
+};
+
+
+static void block_splice_write_end_io(struct bio *bio, int err)
+{
+	struct block_splice_data *bsd = bio->bi_private;
+	struct bio_vec *bv;
+	unsigned int i;
+
+	if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+		bsd->err = -EIO;
+	if (atomic_dec_and_test(&bsd->pending_bios))
+		wake_up(&bsd->waitq);
+
+	__bio_for_each_segment(bv, bio, i, 0)
+		__free_page(bv->bv_page);
+
+	bio_put(bio);
+}
+
+/*
+ * No need going above pipe->buffers, as we cannot fill that anyway
+ */
+static inline unsigned len_to_max_pages(struct pipe_inode_info *pipe,
+					unsigned int len)
+{
+	unsigned int pages = (len + PAGE_SIZE - 1) / PAGE_SIZE;
+
+	return min(pages, pipe->buffers);
+}
+
+static int pipe_to_disk(struct pipe_inode_info *pipe, struct pipe_buffer *buf,
+			struct splice_desc *sd)
+{
+	struct block_splice_data *bsd = sd->u.data;
+	struct block_device *bdev = I_BDEV(bsd->file->f_mapping->host);
+	unsigned int mask;
+	struct bio *bio;
+	int ret;
+
+	mask = bdev_physical_block_size(bdev) - 1;
+	if ((sd->pos & mask) || (buf->len & mask) || (buf->offset & mask))
+		return -EINVAL;
+
+	ret = buf->ops->confirm(pipe, buf);
+	if (unlikely(ret))
+		return ret;
+
+	get_page(buf->page);
+
+	bio = bsd->bio;
+	if (!bio) {
+		unsigned int max_pages;
+new_bio:
+		max_pages = len_to_max_pages(pipe, sd->total_len);
+		bio = bio_alloc(GFP_KERNEL, max_pages);
+		bio->bi_sector = sd->pos;
+		do_div(bio->bi_sector, mask + 1);
+		bio->bi_bdev = bdev;
+		bio->bi_private = bsd;
+		bio->bi_end_io = block_splice_write_end_io;
+		bsd->bio = bio;
+	}
+
+	if (bio_add_page(bio, buf->page, buf->len, buf->offset) != buf->len) {
+		atomic_inc(&bsd->pending_bios);
+		submit_bio(WRITE_SYNC, bio);
+		bsd->bio = NULL;
+		goto new_bio;
+	}
+
+	return buf->len;
+}
+
+/*
+ * Splice to file opened with O_DIRECT. Bypass caching completely and
+ * just go direct-to-bio
+ */
+static ssize_t __block_splice_write(struct pipe_inode_info *pipe,
+				    struct file *out, loff_t *ppos, size_t len,
+				    unsigned int flags)
+{
+	struct block_splice_data bsd;
+	struct splice_desc sd = {
+		.total_len = len,
+		.flags = flags,
+		.pos = *ppos,
+		.u.data = &bsd,
+	};
+	ssize_t ret;
+
+	if (unlikely(*ppos & 511))
+		return -EINVAL;
+
+	bsd.file = out;
+	bsd.bio = NULL;
+	atomic_set(&bsd.pending_bios, 0);
+	init_waitqueue_head(&bsd.waitq);
+	bsd.err = 0;
+
+	mutex_lock(&pipe->inode->i_mutex);
+	ret = __splice_from_pipe(pipe, &sd, pipe_to_disk);
+	mutex_unlock(&pipe->inode->i_mutex);
+
+	/*
+	 * submit a potential in-progress bio
+	 */
+	if (bsd.bio) {
+		atomic_inc(&bsd.pending_bios);
+		submit_bio(WRITE_SYNC, bsd.bio);
+	}
+
+	/*
+	 * wait for all bios to complete, that is required for O_DIRECT
+	 * semantics
+	 */
+	wait_event(bsd.waitq, !atomic_read(&bsd.pending_bios));
+
+	if (ret > 0) {
+		if (bsd.err)
+			ret = bsd.err;
+		else
+			*ppos += ret;
+	}
+
+	return ret;
+}
+
+static ssize_t block_splice_write(struct pipe_inode_info *pipe,
+				  struct file *out, loff_t *ppos, size_t len,
+				  unsigned int flags)
+{
+	ssize_t ret;
+
+	if (out->f_flags & O_DIRECT)
+		ret = __block_splice_write(pipe, out, ppos, len, flags);
+	else
+		ret = generic_file_splice_write(pipe, out, ppos, len, flags);
+
+	return ret;
+}
+
+/*
+ * Free the pipe page and put the pipe_buffer reference to the bio. Note
+ * that we need to wait for IO completion first, otherwise we could be
+ * freeing pages that the device is already DMA'ing to (or will be).
+ */
+static void block_drop_buf_ref(struct page *page, unsigned long data)
+{
+	struct bio *bio = (struct bio *) data;
+
+	if (bio) {
+		struct completion *comp = bio->bi_private;
+
+		if (comp) {
+			blk_run_queue(bdev_get_queue(bio->bi_bdev));
+			wait_for_completion(comp);
+		}
+
+		bio_put(bio);
+	}
+
+	__free_page(page);
+}
+
+static void block_pipe_buf_release(struct pipe_inode_info *pipe,
+				   struct pipe_buffer *buf)
+{
+	block_drop_buf_ref(buf->page, buf->private);
+}
+
+/*
+ * Wait for IO to be done on the bio that this buf belongs to
+ */
+static int block_pipe_buf_confirm(struct pipe_inode_info *pipe,
+				  struct pipe_buffer *buf)
+{
+	struct bio *bio = (struct bio *) buf->private;
+	struct completion *comp = bio->bi_private;
+
+	blk_run_queue(bdev_get_queue(bio->bi_bdev));
+	wait_for_completion(comp);
+
+	if (test_bit(BIO_UPTODATE, &bio->bi_flags))
+		return 0;
+
+	return -EIO;
+}
+
+static void block_pipe_buf_get(struct pipe_inode_info *pipe, struct pipe_buffer *buf)
+{
+	struct bio *bio;
+
+	bio = (struct bio *) buf->private;
+	if (bio)
+		bio_get(bio);
+
+	get_page(buf->page);
+}
+
+static const struct pipe_buf_operations block_pipe_buf_ops = {
+	.can_merge = 0,
+	.map = generic_pipe_buf_map,
+	.unmap = generic_pipe_buf_unmap,
+	.confirm = block_pipe_buf_confirm,
+	.release = block_pipe_buf_release,
+	.steal = generic_pipe_buf_steal,
+	.get = block_pipe_buf_get,
+};
+
+/*
+ * Free the pipe page and put the pipe_buffer reference to the bio
+ */
+static void block_release_page(struct splice_pipe_desc *spd, unsigned int i)
+{
+	block_drop_buf_ref(spd->pages[i], spd->partial[i].private);
+}
+
+/*
+ * READ end io handling completes the bio, so that we can wakeup
+ * anyone waiting in ->confirm().
+ */
+static void block_splice_read_end_io(struct bio *bio, int err)
+{
+	struct completion *comp = bio->bi_private;
+
+	/*
+	 * IO done, so complete to wake up potential waiters. Put our
+	 * allocation reference to the bio
+	 */
+	complete_all(comp);
+	bio_put(bio);
+}
+
+/*
+ * Overload the default destructor, so we can safely free our completion too
+ */
+static void block_splice_bio_destructor(struct bio *bio)
+{
+	kfree(bio->bi_private);
+	bio_free(bio, fs_bio_set);
+}
+
+/*
+ * Bypass the page cache and allocate pages for IO directly
+ */
+static ssize_t __block_splice_read(struct pipe_inode_info *pipe,
+				    struct file *in, loff_t *ppos, size_t len,
+				    unsigned int flags)
+{
+	struct page *pages[PIPE_DEF_BUFFERS];
+	struct partial_page partial[PIPE_DEF_BUFFERS];
+	struct splice_pipe_desc spd = {
+		.pages = pages,
+		.partial = partial,
+		.nr_pages = 0,
+		.flags = flags,
+		.ops = &block_pipe_buf_ops,
+		.spd_release = block_release_page,
+	};
+	struct inode *inode = in->f_mapping->host;
+	struct block_device *bdev = I_BDEV(inode);
+	struct bio *bio;
+	sector_t sector;
+	loff_t isize, left;
+	int bs, err;
+
+	/*
+	 * First to alignment and length sanity checks
+	 */
+	bs = bdev_physical_block_size(bdev);
+	if (*ppos & (bs - 1))
+		return -EINVAL;
+
+	isize = i_size_read(inode);
+	if (unlikely(*ppos >= isize))
+		return 0;
+
+	if (splice_grow_spd(pipe, &spd))
+		return -ENOMEM;
+
+	left = isize - *ppos;
+	if (unlikely(left < len))
+		len = left;
+
+	err = 0;
+	sector = *ppos;
+	do_div(sector, bs);
+	bio = NULL;
+	while (len && spd.nr_pages < pipe->buffers) {
+		unsigned int this_len = min_t(unsigned int, len, PAGE_SIZE);
+		struct completion *comp;
+		struct page *page;
+
+		page = alloc_page(GFP_KERNEL);
+		if (!page) {
+			err = -ENOMEM;
+			break;
+		}
+
+		if (!bio) {
+			unsigned int max_pages;
+alloc_new_bio:
+			comp = kmalloc(sizeof(*comp), GFP_KERNEL);
+			if (!comp) {
+				__free_page(page);
+				err = -ENOMEM;
+				break;
+			}
+
+			init_completion(comp);
+
+			max_pages = len_to_max_pages(pipe, len);
+			bio = bio_alloc(GFP_KERNEL, max_pages);
+			bio->bi_sector = sector;
+			bio->bi_bdev = bdev;
+			bio->bi_private = comp;
+			bio->bi_end_io = block_splice_read_end_io;
+
+			/*
+			 * Not too nice...
+			 */
+			bio->bi_destructor = block_splice_bio_destructor;
+		}
+
+		/*
+		 * if we fail adding the page, then submit this bio and go
+		 * fetch a new one
+		 */
+		if (bio_add_page(bio, page, this_len, 0) != this_len) {
+			submit_bio(READ, bio);
+			bio = NULL;
+			goto alloc_new_bio;
+		}
+
+		/*
+		 * The pipe buffer needs to hang on to the bio, so that we
+		 * can reuse it in the ->confirm() part of the pipe ops
+		 */
+		bio_get(bio);
+
+		sector += (this_len / bs);
+		len -= this_len;
+		spd.partial[spd.nr_pages].offset = 0;
+		spd.partial[spd.nr_pages].len = this_len;
+		spd.partial[spd.nr_pages].private = (unsigned long) bio;
+		spd.pages[spd.nr_pages] = page;
+		spd.nr_pages++;
+	}
+
+	/*
+	 * submit the current bio, if any
+	 */
+	if (bio)
+		submit_bio(READ, bio);
+
+	/*
+	 * if we succeeded in adding some pages, fill them into the pipe
+	 */
+	if (spd.nr_pages)
+		err = splice_to_pipe(pipe, &spd);
+
+	if (err > 0)
+		*ppos += err;
+
+	splice_shrink_spd(pipe, &spd);
+	return err;
+}
+
+static ssize_t block_splice_read(struct file *in, loff_t *ppos,
+				 struct pipe_inode_info *pipe, size_t len,
+				 unsigned int flags)
+{
+	ssize_t ret;
+
+	if (in->f_flags & O_DIRECT)
+		ret = __block_splice_read(pipe, in, ppos, len, flags);
+	else
+		ret = generic_file_splice_read(in, ppos, pipe, len, flags);
+
+	return ret;
+}
+
 static const struct address_space_operations def_blk_aops = {
 	.readpage	= blkdev_readpage,
 	.writepage	= blkdev_writepage,
@@ -1494,8 +1887,8 @@ const struct file_operations def_blk_fops = {
 #ifdef CONFIG_COMPAT
 	.compat_ioctl	= compat_blkdev_ioctl,
 #endif
-	.splice_read	= generic_file_splice_read,
-	.splice_write	= generic_file_splice_write,
+	.splice_read	= block_splice_read,
+	.splice_write	= block_splice_write,
 };
 
 int ioctl_by_bdev(struct block_device *bdev, unsigned cmd, unsigned long arg)
