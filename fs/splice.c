@@ -31,6 +31,7 @@
 #include <linux/uio.h>
 #include <linux/security.h>
 #include <linux/gfp.h>
+#include <linux/mman.h>
 
 /*
  * Attempt to steal a page from a pipe buffer. This should perhaps go into
@@ -275,14 +276,23 @@ int splice_grow_spd(struct pipe_inode_info *pipe, struct splice_pipe_desc *spd)
 		return 0;
 
 	spd->pages = kmalloc(pipe->buffers * sizeof(struct page *), GFP_KERNEL);
-	spd->partial = kmalloc(pipe->buffers * sizeof(struct partial_page), GFP_KERNEL);
+	if (!spd->pages)
+		return -ENOMEM;
 
-	if (spd->pages && spd->partial)
+	/*
+	 * We need not carry ->partial, vmsplice() does not need it.
+	 */
+	if (!spd->partial)
 		return 0;
 
-	kfree(spd->pages);
-	kfree(spd->partial);
-	return -ENOMEM;
+	spd->partial = kmalloc(pipe->buffers * sizeof(struct partial_page),
+				GFP_KERNEL);
+	if (!spd->partial) {
+		kfree(spd->pages);
+		return -ENOMEM;
+	}
+
+	return 0;
 }
 
 void splice_shrink_spd(struct pipe_inode_info *pipe,
@@ -1413,6 +1423,229 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 }
 
 /*
+ * Just copy the data to user space
+ */
+static int pipe_to_user_copy(struct pipe_inode_info *pipe,
+			     struct pipe_buffer *buf, struct splice_desc *sd)
+{
+	char *src;
+	int ret;
+
+	ret = buf->ops->confirm(pipe, buf);
+	if (unlikely(ret))
+		return ret;
+
+	/*
+	 * See if we can use the atomic maps, by prefaulting in the
+	 * pages and doing an atomic copy
+	 */
+	if (!fault_in_pages_writeable(sd->u.userptr, sd->len)) {
+		src = buf->ops->map(pipe, buf, 1);
+		ret = __copy_to_user_inatomic(sd->u.userptr, src + buf->offset,
+							sd->len);
+		buf->ops->unmap(pipe, buf, src);
+		if (!ret) {
+			ret = sd->len;
+			goto out;
+		}
+	}
+
+	/*
+	 * No dice, use slow non-atomic map and copy
+	 */
+	src = buf->ops->map(pipe, buf, 0);
+
+	ret = sd->len;
+	if (copy_to_user(sd->u.userptr, src + buf->offset, sd->len))
+		ret = -EFAULT;
+
+	buf->ops->unmap(pipe, buf, src);
+out:
+	if (ret > 0)
+		sd->u.userptr += ret;
+	return ret;
+}
+
+/*
+ * This actor doesn't really do anything interesting, it merely settles
+ * the pipe page and adds it to the work list for insertion when the entire
+ * pipe has been processed.
+ */
+static int pipe_to_user_map(struct pipe_inode_info *pipe,
+			    struct pipe_buffer *buf, struct splice_desc *sd)
+{
+	struct splice_pipe_desc *spd = sd->u.data;
+	int error;
+
+	if (buf->len & ~PAGE_MASK)
+		return -EINVAL;
+
+	error = buf->ops->confirm(pipe, buf);
+	if (!error) {
+		spd->pages[spd->nr_pages++] = buf->page;
+		return buf->len;
+	}
+
+	return error;
+}
+
+/*
+ * Find the vma for this address range, and let pipe_to_user_map() insert
+ * pages into that.
+ */
+static int vmsplice_pipe_map(struct pipe_inode_info *pipe,
+			     struct splice_desc *sd)
+{
+	struct mm_struct *mm = current->mm;
+	struct page *pages[PIPE_DEF_BUFFERS];
+	struct splice_pipe_desc spd = {
+		.pages = pages,
+	};
+	struct vm_area_struct *vma;
+	unsigned long addr;
+	int ret, i, err;
+
+	/*
+	 * We can only deal with full pages, not partial ones
+	 */
+	if (sd->total_len & ~PAGE_MASK)
+		return -EINVAL;
+
+	if (splice_grow_spd(pipe, &spd))
+		return -ENOMEM;
+
+	/*
+	 * Run through the pipe buffers and settle the contents. The number
+	 * of processed pages will be put in spd.nr_pages.
+	 */
+	ret = 0;
+	addr = (unsigned long) sd->u.userptr;
+	sd->pos = 0;
+	sd->u.data = &spd;
+	err = __splice_from_pipe(pipe, sd, pipe_to_user_map);
+	if (unlikely(err <= 0))
+		goto out;
+	else if (unlikely(!spd.nr_pages))
+		return 0;
+
+	/*
+	 * We have a non-zero number of pages available. Now find the
+	 * associated vma so we can establish pages mappings there.
+	 */
+	down_read(&mm->mmap_sem);
+
+	ret = -EINVAL;
+	vma = find_vma(mm, addr);
+	if (vma) {
+		ret = err = 0;
+		for (i = 0; i < spd.nr_pages; i++) {
+			err = vm_insert_page(vma, addr, spd.pages[i]);
+			if (unlikely(err))
+				break;
+
+			addr += PAGE_SIZE;
+			ret += PAGE_SIZE;
+		}
+	}
+
+	up_read(&mm->mmap_sem);
+
+out:
+	if (err && !ret)
+		ret = err;
+
+	splice_shrink_spd(pipe, &spd);
+	return ret;
+}
+
+/*
+ * vmsplice a pipe to user memory. If SPLICE_F_MOVE is set, we will attempt
+ * to move the pipe pages to the user address space. Otherwise a simple
+ * copy is done.
+ */
+static long vmsplice_to_user(struct file *file, const struct iovec __user *iov,
+			     unsigned long nr_segs, unsigned int flags)
+{
+	struct pipe_inode_info *pipe;
+	struct splice_desc sd;
+	long spliced, ret;
+
+	pipe = pipe_info(file->f_path.dentry->d_inode);
+	if (!pipe)
+		return -EBADF;
+
+	pipe_lock(pipe);
+
+	spliced = ret = 0;
+	while (nr_segs) {
+		void __user *base;
+		size_t len;
+
+		/*
+		 * Get user address base and length for this iovec.
+		 */
+		ret = get_user(base, &iov->iov_base);
+		if (unlikely(ret))
+			break;
+		ret = get_user(len, &iov->iov_len);
+		if (unlikely(ret))
+			break;
+
+		/*
+		 * Sanity check this iovec. 0 read succeeds.
+		 */
+		if (unlikely(!len))
+			break;
+		if (unlikely(!base)) {
+			ret = -EFAULT;
+			break;
+		}
+
+		if (unlikely(!access_ok(VERIFY_WRITE, base, len))) {
+			ret = -EFAULT;
+			break;
+		}
+
+		sd.len = 0;
+		sd.total_len = len;
+		sd.flags = flags;
+		sd.u.userptr = base;
+		sd.pos = 0;
+
+		/*
+		 * SPLICE_F_MOVE is set, don't copy the data but attempt
+		 * to map it into the app address space.
+		 */
+		if (flags & SPLICE_F_MOVE)
+			ret = vmsplice_pipe_map(pipe, &sd);
+		else
+			ret = __splice_from_pipe(pipe, &sd, pipe_to_user_copy);
+
+		if (ret < 0)
+			break;
+
+		spliced += ret;
+
+		/*
+		 * If we transferred less than a pipe buffer length, break
+		 * out of the loop and let the caller retry.
+		 */
+		if (ret < len)
+			break;
+
+		nr_segs--;
+		iov++;
+	}
+
+	pipe_unlock(pipe);
+
+	if (!spliced)
+		spliced = ret;
+
+	return spliced;
+}
+
+/*
  * Map an iov into an array of pages and offset/length tupples. With the
  * partial_page structure, we can map several non-contiguous ranges into
  * our ones pages[] map instead of splitting that operation into pieces.
@@ -1512,127 +1745,6 @@ static int get_iovec_page_array(const struct iovec __user *iov,
 		return buffers;
 
 	return error;
-}
-
-static int pipe_to_user(struct pipe_inode_info *pipe, struct pipe_buffer *buf,
-			struct splice_desc *sd)
-{
-	char *src;
-	int ret;
-
-	ret = buf->ops->confirm(pipe, buf);
-	if (unlikely(ret))
-		return ret;
-
-	/*
-	 * See if we can use the atomic maps, by prefaulting in the
-	 * pages and doing an atomic copy
-	 */
-	if (!fault_in_pages_writeable(sd->u.userptr, sd->len)) {
-		src = buf->ops->map(pipe, buf, 1);
-		ret = __copy_to_user_inatomic(sd->u.userptr, src + buf->offset,
-							sd->len);
-		buf->ops->unmap(pipe, buf, src);
-		if (!ret) {
-			ret = sd->len;
-			goto out;
-		}
-	}
-
-	/*
-	 * No dice, use slow non-atomic map and copy
- 	 */
-	src = buf->ops->map(pipe, buf, 0);
-
-	ret = sd->len;
-	if (copy_to_user(sd->u.userptr, src + buf->offset, sd->len))
-		ret = -EFAULT;
-
-	buf->ops->unmap(pipe, buf, src);
-out:
-	if (ret > 0)
-		sd->u.userptr += ret;
-	return ret;
-}
-
-/*
- * For lack of a better implementation, implement vmsplice() to userspace
- * as a simple copy of the pipes pages to the user iov.
- */
-static long vmsplice_to_user(struct file *file, const struct iovec __user *iov,
-			     unsigned long nr_segs, unsigned int flags)
-{
-	struct pipe_inode_info *pipe;
-	struct splice_desc sd;
-	ssize_t size;
-	int error;
-	long ret;
-
-	pipe = pipe_info(file->f_path.dentry->d_inode);
-	if (!pipe)
-		return -EBADF;
-
-	pipe_lock(pipe);
-
-	error = ret = 0;
-	while (nr_segs) {
-		void __user *base;
-		size_t len;
-
-		/*
-		 * Get user address base and length for this iovec.
-		 */
-		error = get_user(base, &iov->iov_base);
-		if (unlikely(error))
-			break;
-		error = get_user(len, &iov->iov_len);
-		if (unlikely(error))
-			break;
-
-		/*
-		 * Sanity check this iovec. 0 read succeeds.
-		 */
-		if (unlikely(!len))
-			break;
-		if (unlikely(!base)) {
-			error = -EFAULT;
-			break;
-		}
-
-		if (unlikely(!access_ok(VERIFY_WRITE, base, len))) {
-			error = -EFAULT;
-			break;
-		}
-
-		sd.len = 0;
-		sd.total_len = len;
-		sd.flags = flags;
-		sd.u.userptr = base;
-		sd.pos = 0;
-
-		size = __splice_from_pipe(pipe, &sd, pipe_to_user);
-		if (size < 0) {
-			if (!ret)
-				ret = size;
-
-			break;
-		}
-
-		ret += size;
-
-		if (size < len)
-			break;
-
-		nr_segs--;
-		iov++;
-	}
-
-	pipe_unlock(pipe);
-
-	if (!ret)
-		ret = error;
-
-	return ret;
 }
 
 /*
