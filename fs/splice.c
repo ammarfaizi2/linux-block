@@ -992,6 +992,61 @@ ssize_t splice_from_pipe(struct pipe_inode_info *pipe, struct file *out,
 }
 
 /**
+ * generic_file_splice_write_file_nolock - splice data from a pipe to a file
+ * @pipe:	pipe info
+ * @out:	file to write to
+ * @ppos:	position in @out
+ * @len:	number of bytes to splice
+ * @flags:	splice modifier flags
+ *
+ * Description:
+ *    Will either move or copy pages (determined by @flags options) from
+ *    the given pipe inode to the given block device.
+ *    Note: this is like @generic_file_splice_write, except that we
+ *    don't bother locking the output file. Useful for splicing directly
+ *    to a block device.
+ */
+ssize_t generic_file_splice_write_file_nolock(struct pipe_inode_info *pipe,
+					      struct file *out, loff_t *ppos,
+					      size_t len, unsigned int flags)
+{
+	struct address_space *mapping = out->f_mapping;
+	struct inode *inode = mapping->host;
+	struct splice_desc sd = {
+		.total_len = len,
+		.flags = flags,
+		.pos = *ppos,
+		.u.file = out,
+	};
+	ssize_t ret;
+
+	mutex_lock(&pipe->inode->i_mutex);
+	ret = __splice_from_pipe(pipe, &sd, pipe_to_file);
+	mutex_unlock(&pipe->inode->i_mutex);
+
+	if (ret > 0) {
+		unsigned long nr_pages;
+		loff_t pos = *ppos;
+
+		*ppos += ret;
+		nr_pages = (ret + PAGE_CACHE_SIZE - 1) >> PAGE_CACHE_SHIFT;
+
+		if (unlikely((out->f_flags & O_SYNC) || IS_SYNC(inode))) {
+			int er;
+
+			er = filemap_write_and_wait_range(mapping, pos,
+							  pos + ret - 1);
+			if (er)
+				ret = er;
+		}
+		balance_dirty_pages_ratelimited_nr(mapping, nr_pages);
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(generic_file_splice_write_file_nolock);
+
+/**
  * generic_file_splice_write - splice data from a pipe to a file
  * @pipe:	pipe info
  * @out:	file to write to

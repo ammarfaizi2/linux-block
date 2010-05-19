@@ -1557,7 +1557,7 @@ new_bio:
  * Splice to file opened with O_DIRECT. Bypass caching completely and
  * just go direct-to-bio
  */
-static ssize_t __block_splice_write(struct pipe_inode_info *pipe,
+static ssize_t __block_splice_direct_write(struct pipe_inode_info *pipe,
 				    struct file *out, loff_t *ppos, size_t len,
 				    unsigned int flags)
 {
@@ -1614,9 +1614,10 @@ static ssize_t block_splice_write(struct pipe_inode_info *pipe,
 	ssize_t ret;
 
 	if (out->f_flags & O_DIRECT)
-		ret = __block_splice_write(pipe, out, ppos, len, flags);
+		ret = __block_splice_direct_write(pipe, out, ppos, len, flags);
 	else
-		ret = generic_file_splice_write(pipe, out, ppos, len, flags);
+		ret = generic_file_splice_write_file_nolock(pipe, out, ppos,
+								len, flags);
 
 	return ret;
 }
