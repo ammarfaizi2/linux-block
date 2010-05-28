@@ -750,13 +750,14 @@ unsigned long apply_slack(struct timer_list *timer, unsigned long expires)
 	unsigned long expires_limit, mask;
 	int bit;
 
-	expires_limit = expires + timer->slack;
+	expires_limit = expires;
 
-	if (timer->slack < 0) /* auto slack: use 0.4% */
+	if (timer->slack > -1)
+		expires_limit = expires + timer->slack;
+	else if (time_after(expires, jiffies)) /* auto slack: use 0.4% */
 		expires_limit = expires + (expires - jiffies)/256;
 
 	mask = expires ^ expires_limit;
-
 	if (mask == 0)
 		return expires;
 
@@ -1679,11 +1680,14 @@ static int __cpuinit timer_cpu_notify(struct notifier_block *self,
 				unsigned long action, void *hcpu)
 {
 	long cpu = (long)hcpu;
+	int err;
+
 	switch(action) {
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
-		if (init_timers_cpu(cpu) < 0)
-			return NOTIFY_BAD;
+		err = init_timers_cpu(cpu);
+		if (err < 0)
+			return notifier_from_errno(err);
 		break;
 #ifdef CONFIG_HOTPLUG_CPU
 	case CPU_DEAD:
