@@ -1213,12 +1213,16 @@ int kblockd_schedule_work(struct request_queue *q, struct work_struct *work);
 #ifdef CONFIG_BLK_CGROUP
 static inline void set_start_time_ns(struct request *req)
 {
+	preempt_disable();
 	req->start_time_ns = sched_clock();
+	preempt_enable();
 }
 
 static inline void set_io_start_time_ns(struct request *req)
 {
+	preempt_disable();
 	req->io_start_time_ns = sched_clock();
+	preempt_enable();
 }
 
 static inline uint64_t rq_start_time_ns(struct request *req)
