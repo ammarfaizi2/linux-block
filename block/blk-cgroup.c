@@ -135,9 +135,7 @@ static void blkio_set_start_group_wait_time(struct blkio_group *blkg,
 		return;
 	if (blkg == curr_blkg)
 		return;
-	preempt_disable();
 	blkg->stats.start_group_wait_time = sched_clock();
-	preempt_enable();
 	blkio_mark_blkg_waiting(&blkg->stats);
 }
 
@@ -149,9 +147,7 @@ static void blkio_update_group_wait_time(struct blkio_group_stats *stats)
 	if (!blkio_blkg_waiting(stats))
 		return;
 
-	preempt_disable();
 	now = sched_clock();
-	preempt_enable();
 	if (time_after64(now, stats->start_group_wait_time))
 		stats->group_wait_time += now - stats->start_group_wait_time;
 	blkio_clear_blkg_waiting(stats);
@@ -165,9 +161,7 @@ static void blkio_end_empty_time(struct blkio_group_stats *stats)
 	if (!blkio_blkg_empty(stats))
 		return;
 
-	preempt_disable();
 	now = sched_clock();
-	preempt_enable();
 	if (time_after64(now, stats->start_empty_time))
 		stats->empty_time += now - stats->start_empty_time;
 	blkio_clear_blkg_empty(stats);
@@ -320,10 +314,9 @@ void blkiocg_update_completion_stats(struct blkio_group *blkg,
 {
 	struct blkio_group_stats *stats;
 	unsigned long flags;
-	unsigned long long now;
+	unsigned long long now = sched_clock();
 
 	spin_lock_irqsave(&blkg->stats_lock, flags);
-	now = sched_clock();
 	stats = &blkg->stats;
 	if (time_after64(now, io_start_time))
 		blkio_add_stat(stats->stat_arr[BLKIO_STAT_SERVICE_TIME],
@@ -471,7 +464,7 @@ blkiocg_reset_stats(struct cgroup *cgroup, struct cftype *cftype, u64 val)
 	int i;
 #ifdef CONFIG_DEBUG_BLK_CGROUP
 	bool idling, waiting, empty;
-	unsigned long long now;
+	unsigned long long now = sched_clock();
 #endif
 
 	blkcg = cgroup_to_blkio_cgroup(cgroup);
@@ -490,7 +483,6 @@ blkiocg_reset_stats(struct cgroup *cgroup, struct cftype *cftype, u64 val)
 		for (i = 0; i < BLKIO_STAT_TOTAL; i++)
 			stats->stat_arr[BLKIO_STAT_QUEUED][i] = queued[i];
 #ifdef CONFIG_DEBUG_BLK_CGROUP
-		now = sched_clock();
 		if (idling) {
 			blkio_mark_blkg_idling(stats);
 			stats->start_idle_time = now;
