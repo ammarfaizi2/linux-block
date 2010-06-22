@@ -34,6 +34,26 @@ struct sg_io_hdr;
 #define BLKDEV_MIN_RQ	4
 #define BLKDEV_MAX_RQ	128	/* Default maximum */
 
+void blk_plug_current(void);
+void blk_unplug_current(void);
+int blk_unplug_current_nested(void);
+
+static inline void blk_plug_current_nested(int depth)
+{
+	struct io_context *ioc;
+
+	ioc = current->io_context;
+	if (ioc) {
+		atomic_set(&ioc->plugged, depth);
+		ioc->plugged_queue = NULL;
+	}
+}
+
+static inline void blk_replug_current_nested(void)
+{
+	blk_plug_current_nested(blk_unplug_current_nested());
+}
+
 struct request;
 typedef void (rq_end_io_fn)(struct request *, int);
 
@@ -264,7 +284,6 @@ struct request_pm_state
 typedef void (request_fn_proc) (struct request_queue *q);
 typedef int (make_request_fn) (struct request_queue *q, struct bio *bio);
 typedef int (prep_rq_fn) (struct request_queue *, struct request *);
-typedef void (unplug_fn) (struct request_queue *);
 
 struct bio_vec;
 struct bvec_merge_data {
@@ -346,7 +365,6 @@ struct request_queue
 	request_fn_proc		*request_fn;
 	make_request_fn		*make_request_fn;
 	prep_rq_fn		*prep_rq_fn;
-	unplug_fn		*unplug_fn;
 	merge_bvec_fn		*merge_bvec_fn;
 	prepare_flush_fn	*prepare_flush_fn;
 	softirq_done_fn		*softirq_done_fn;
@@ -361,12 +379,11 @@ struct request_queue
 	struct request		*boundary_rq;
 
 	/*
-	 * Auto-unplugging state
+	 * This replaces the part of the old plugging mechanism that was
+	 * responsible for re-invoking ->request_fn() after a little nap.
+	 * This is needed to handle temporary resource starvation.
 	 */
-	struct timer_list	unplug_timer;
-	int			unplug_thresh;	/* After this many requests */
-	unsigned long		unplug_delay;	/* After this many jiffies */
-	struct work_struct	unplug_work;
+	struct delayed_work	delay_work;;
 
 	struct backing_dev_info	backing_dev_info;
 
@@ -441,6 +458,11 @@ struct request_queue
 	struct request		pre_flush_rq, bar_rq, post_flush_rq;
 	struct request		*orig_bar_rq;
 
+	/*
+	 * plug synchronization
+	 */
+	struct qrcu_struct	qrcu;
+
 	struct mutex		sysfs_lock;
 
 #if defined(CONFIG_BLK_DEV_BSG)
@@ -455,18 +477,17 @@ struct request_queue
 #define QUEUE_FLAG_ASYNCFULL	4	/* write queue has been filled */
 #define QUEUE_FLAG_DEAD		5	/* queue being torn down */
 #define QUEUE_FLAG_REENTER	6	/* Re-entrancy avoidance */
-#define QUEUE_FLAG_PLUGGED	7	/* queue is plugged */
-#define QUEUE_FLAG_ELVSWITCH	8	/* don't use elevator, just do FIFO */
-#define QUEUE_FLAG_BIDI		9	/* queue supports bidi requests */
-#define QUEUE_FLAG_NOMERGES    10	/* disable merge attempts */
-#define QUEUE_FLAG_SAME_COMP   11	/* force complete on same CPU */
-#define QUEUE_FLAG_FAIL_IO     12	/* fake timeout */
-#define QUEUE_FLAG_STACKABLE   13	/* supports request stacking */
-#define QUEUE_FLAG_NONROT      14	/* non-rotational device (SSD) */
+#define QUEUE_FLAG_ELVSWITCH	7	/* don't use elevator, just do FIFO */
+#define QUEUE_FLAG_BIDI		8	/* queue supports bidi requests */
+#define QUEUE_FLAG_NOMERGES     9	/* disable merge attempts */
+#define QUEUE_FLAG_SAME_COMP   10	/* force complete on same CPU */
+#define QUEUE_FLAG_FAIL_IO     11	/* fake timeout */
+#define QUEUE_FLAG_STACKABLE   12	/* supports request stacking */
+#define QUEUE_FLAG_NONROT      13	/* non-rotational device (SSD) */
 #define QUEUE_FLAG_VIRT        QUEUE_FLAG_NONROT /* paravirt device */
-#define QUEUE_FLAG_IO_STAT     15	/* do IO stats */
-#define QUEUE_FLAG_DISCARD     16	/* supports DISCARD */
-#define QUEUE_FLAG_NOXMERGES   17	/* No extended merges */
+#define QUEUE_FLAG_IO_STAT     14	/* do IO stats */
+#define QUEUE_FLAG_DISCARD     15	/* supports DISCARD */
+#define QUEUE_FLAG_NOXMERGES   16	/* No extended merges */
 
 #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
 				 (1 << QUEUE_FLAG_CLUSTER) |		\
@@ -588,7 +609,6 @@ enum {
 	QUEUE_ORDSEQ_DONE	= 0x20,
 };
 
-#define blk_queue_plugged(q)	test_bit(QUEUE_FLAG_PLUGGED, &(q)->queue_flags)
 #define blk_queue_tagged(q)	test_bit(QUEUE_FLAG_QUEUED, &(q)->queue_flags)
 #define blk_queue_stopped(q)	test_bit(QUEUE_FLAG_STOPPED, &(q)->queue_flags)
 #define blk_queue_nomerges(q)	test_bit(QUEUE_FLAG_NOMERGES, &(q)->queue_flags)
@@ -790,9 +810,7 @@ extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
 extern void blk_rq_unprep_clone(struct request *rq);
 extern int blk_insert_cloned_request(struct request_queue *q,
 				     struct request *rq);
-extern void blk_plug_device(struct request_queue *);
-extern void blk_plug_device_unlocked(struct request_queue *);
-extern int blk_remove_plug(struct request_queue *);
+extern void blk_delay_queue(struct request_queue *, unsigned long);
 extern void blk_recount_segments(struct request_queue *, struct bio *);
 extern int scsi_cmd_ioctl(struct request_queue *, struct gendisk *, fmode_t,
 			  unsigned int, void __user *);
@@ -836,7 +854,6 @@ extern int blk_execute_rq(struct request_queue *, struct gendisk *,
 			  struct request *, int);
 extern void blk_execute_rq_nowait(struct request_queue *, struct gendisk *,
 				  struct request *, int, rq_end_io_fn *);
-extern void blk_unplug(struct request_queue *q);
 
 static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 {
@@ -974,7 +991,6 @@ extern bool blk_ordered_complete_seq(struct request_queue *, unsigned, int);
 
 extern int blk_rq_map_sg(struct request_queue *, struct request *, struct scatterlist *);
 extern void blk_dump_rq_flags(struct request *, char *);
-extern void generic_unplug_device(struct request_queue *);
 extern long nr_blockdev_pages(void);
 
 int blk_get_queue(struct request_queue *);
@@ -1358,6 +1374,27 @@ extern int __blkdev_driver_ioctl(struct block_device *, fmode_t, unsigned int,
 static inline long nr_blockdev_pages(void)
 {
 	return 0;
+}
+
+static inline void blk_replug_current_nested(void)
+{
+}
+
+static inline void blk_plug_current(void)
+{
+}
+
+static inline void blk_unplug_current(void)
+{
+}
+
+static inline int blk_unplug_current_nested(void)
+{
+	return 0;
+}
+
+static inline void blk_plug_current_nested(int depth)
+{
 }
 
 #endif /* CONFIG_BLOCK */

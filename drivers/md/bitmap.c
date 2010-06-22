@@ -1322,8 +1322,7 @@ int bitmap_startwrite(struct bitmap *bitmap, sector_t offset, unsigned long sect
 			prepare_to_wait(&bitmap->overflow_wait, &__wait,
 					TASK_UNINTERRUPTIBLE);
 			spin_unlock_irq(&bitmap->lock);
-			blk_unplug(bitmap->mddev->queue);
-			schedule();
+			io_schedule();
 			finish_wait(&bitmap->overflow_wait, &__wait);
 			continue;
 		}
@@ -1332,7 +1331,6 @@ int bitmap_startwrite(struct bitmap *bitmap, sector_t offset, unsigned long sect
 		case 0:
 			bitmap_file_set_bit(bitmap, offset);
 			bitmap_count_page(bitmap,offset, 1);
-			blk_plug_device_unlocked(bitmap->mddev->queue);
 			/* fall through */
 		case 1:
 			*bmc = 2;

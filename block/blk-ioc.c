@@ -97,6 +97,11 @@ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
 		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
 		INIT_HLIST_HEAD(&ret->cic_list);
 		ret->ioc_data = NULL;
+		ret->qrcu_idx = -1;
+		spin_lock_init(&ret->plug_lock);
+		INIT_LIST_HEAD(&ret->plugged_list);
+		atomic_set(&ret->plugged, 0);
+
 	}
 
 	return ret;

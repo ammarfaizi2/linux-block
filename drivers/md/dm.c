@@ -1729,20 +1729,6 @@ static int dm_lld_busy(struct request_queue *q)
 	return r;
 }
 
-static void dm_unplug_all(struct request_queue *q)
-{
-	struct mapped_device *md = q->queuedata;
-	struct dm_table *map = dm_get_live_table(md);
-
-	if (map) {
-		if (dm_request_based(md))
-			generic_unplug_device(q);
-
-		dm_table_unplug_all(map);
-		dm_table_put(map);
-	}
-}
-
 static int dm_any_congested(void *congested_data, int bdi_bits)
 {
 	int r = bdi_bits;
@@ -1907,7 +1893,6 @@ static struct mapped_device *alloc_dev(int minor)
 	md->queue->backing_dev_info.congested_data = md;
 	blk_queue_make_request(md->queue, dm_request);
 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
-	md->queue->unplug_fn = dm_unplug_all;
 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
 	blk_queue_softirq_done(md->queue, dm_softirq_done);
 	blk_queue_prep_rq(md->queue, dm_prep_fn);
@@ -2211,8 +2196,6 @@ static int dm_wait_for_completion(struct mapped_device *md, int interruptible)
 {
 	int r = 0;
 	DECLARE_WAITQUEUE(wait, current);
-
-	dm_unplug_all(md->queue);
 
 	add_wait_queue(&md->wait, &wait);
 

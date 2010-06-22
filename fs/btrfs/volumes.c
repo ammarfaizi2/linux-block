@@ -161,7 +161,6 @@ static noinline int run_scheduled_bios(struct btrfs_device *device)
 	struct bio *cur;
 	int again = 0;
 	unsigned long num_run;
-	unsigned long num_sync_run;
 	unsigned long batch_run = 0;
 	unsigned long limit;
 	unsigned long last_waited = 0;
@@ -171,11 +170,6 @@ static noinline int run_scheduled_bios(struct btrfs_device *device)
 	fs_info = device->dev_root->fs_info;
 	limit = btrfs_async_submit_limit(fs_info);
 	limit = limit * 2 / 3;
-
-	/* we want to make sure that every time we switch from the sync
-	 * list to the normal list, we unplug
-	 */
-	num_sync_run = 0;
 
 loop:
 	spin_lock(&device->io_lock);
@@ -222,15 +216,6 @@ loop_lock:
 
 	spin_unlock(&device->io_lock);
 
-	/*
-	 * if we're doing the regular priority list, make sure we unplug
-	 * for any high prio bios we've sent down
-	 */
-	if (pending_bios == &device->pending_bios && num_sync_run > 0) {
-		num_sync_run = 0;
-		blk_run_backing_dev(bdi, NULL);
-	}
-
 	while (pending) {
 
 		rmb();
@@ -258,19 +243,11 @@ loop_lock:
 
 		BUG_ON(atomic_read(&cur->bi_cnt) == 0);
 
-		if (bio_rw_flagged(cur, BIO_RW_SYNCIO))
-			num_sync_run++;
-
 		submit_bio(cur->bi_rw, cur);
 		num_run++;
 		batch_run++;
-		if (need_resched()) {
-			if (num_sync_run) {
-				blk_run_backing_dev(bdi, NULL);
-				num_sync_run = 0;
-			}
+		if (need_resched())
 			cond_resched();
-		}
 
 		/*
 		 * we made progress, there is more work to do and the bdi
@@ -303,13 +280,8 @@ loop_lock:
 				 * against it before looping
 				 */
 				last_waited = ioc->last_waited;
-				if (need_resched()) {
-					if (num_sync_run) {
-						blk_run_backing_dev(bdi, NULL);
-						num_sync_run = 0;
-					}
+				if (need_resched())
 					cond_resched();
-				}
 				continue;
 			}
 			spin_lock(&device->io_lock);
@@ -321,22 +293,6 @@ loop_lock:
 			goto done;
 		}
 	}
-
-	if (num_sync_run) {
-		num_sync_run = 0;
-		blk_run_backing_dev(bdi, NULL);
-	}
-	/*
-	 * IO has already been through a long path to get here.  Checksumming,
-	 * async helper threads, perhaps compression.  We've done a pretty
-	 * good job of collecting a batch of IO and should just unplug
-	 * the device right away.
-	 *
-	 * This will help anyone who is waiting on the IO, they might have
-	 * already unplugged, but managed to do so before the bio they
-	 * cared about found its way down here.
-	 */
-	blk_run_backing_dev(bdi, NULL);
 
 	cond_resched();
 	if (again)
@@ -2635,7 +2591,7 @@ static int find_live_mirror(struct map_lookup *map, int first, int num,
 static int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 			     u64 logical, u64 *length,
 			     struct btrfs_multi_bio **multi_ret,
-			     int mirror_num, struct page *unplug_page)
+			     int mirror_num)
 {
 	struct extent_map *em;
 	struct map_lookup *map;
@@ -2666,11 +2622,6 @@ again:
 	read_lock(&em_tree->lock);
 	em = lookup_extent_mapping(em_tree, logical, *length);
 	read_unlock(&em_tree->lock);
-
-	if (!em && unplug_page) {
-		kfree(multi);
-		return 0;
-	}
 
 	if (!em) {
 		printk(KERN_CRIT "unable to find logical %llu len %llu\n",
@@ -2727,13 +2678,13 @@ again:
 		*length = em->len - offset;
 	}
 
-	if (!multi_ret && !unplug_page)
+	if (!multi_ret)
 		goto out;
 
 	num_stripes = 1;
 	stripe_index = 0;
 	if (map->type & BTRFS_BLOCK_GROUP_RAID1) {
-		if (unplug_page || (rw & (1 << BIO_RW)))
+		if ((rw & (1 << BIO_RW)))
 			num_stripes = map->num_stripes;
 		else if (mirror_num)
 			stripe_index = mirror_num - 1;
@@ -2755,7 +2706,7 @@ again:
 		stripe_index = do_div(stripe_nr, factor);
 		stripe_index *= map->sub_stripes;
 
-		if (unplug_page || (rw & (1 << BIO_RW)))
+		if ((rw & (1 << BIO_RW)))
 			num_stripes = map->sub_stripes;
 		else if (mirror_num)
 			stripe_index += mirror_num - 1;
@@ -2775,22 +2726,10 @@ again:
 	BUG_ON(stripe_index >= map->num_stripes);
 
 	for (i = 0; i < num_stripes; i++) {
-		if (unplug_page) {
-			struct btrfs_device *device;
-			struct backing_dev_info *bdi;
-
-			device = map->stripes[stripe_index].dev;
-			if (device->bdev) {
-				bdi = blk_get_backing_dev_info(device->bdev);
-				if (bdi->unplug_io_fn)
-					bdi->unplug_io_fn(bdi, unplug_page);
-			}
-		} else {
-			multi->stripes[i].physical =
-				map->stripes[stripe_index].physical +
-				stripe_offset + stripe_nr * map->stripe_len;
-			multi->stripes[i].dev = map->stripes[stripe_index].dev;
-		}
+		multi->stripes[i].physical =
+			map->stripes[stripe_index].physical +
+			stripe_offset + stripe_nr * map->stripe_len;
+		multi->stripes[i].dev = map->stripes[stripe_index].dev;
 		stripe_index++;
 	}
 	if (multi_ret) {
@@ -2808,7 +2747,7 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		      struct btrfs_multi_bio **multi_ret, int mirror_num)
 {
 	return __btrfs_map_block(map_tree, rw, logical, length, multi_ret,
-				 mirror_num, NULL);
+				 mirror_num);
 }
 
 int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
@@ -2874,14 +2813,6 @@ int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
 
 	free_extent_map(em);
 	return 0;
-}
-
-int btrfs_unplug_page(struct btrfs_mapping_tree *map_tree,
-		      u64 logical, struct page *page)
-{
-	u64 length = PAGE_CACHE_SIZE;
-	return __btrfs_map_block(map_tree, READ, logical, &length,
-				 NULL, 0, page);
 }
 
 static void end_bio_multi_stripe(struct bio *bio, int err)

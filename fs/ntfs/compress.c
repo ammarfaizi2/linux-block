@@ -698,7 +698,7 @@ lock_retry_remap:
 					"uptodate! Unplugging the disk queue "
 					"and rescheduling.");
 			get_bh(tbh);
-			blk_run_address_space(mapping);
+			blk_replug_current_nested();
 			schedule();
 			put_bh(tbh);
 			if (unlikely(!buffer_uptodate(tbh)))

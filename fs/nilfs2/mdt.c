@@ -432,7 +432,6 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
 
 static const struct address_space_operations def_mdt_aops = {
 	.writepage		= nilfs_mdt_write_page,
-	.sync_page		= block_sync_page,
 };
 
 static const struct inode_operations def_mdt_iops;

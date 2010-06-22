@@ -52,23 +52,16 @@
 #define	NR_RAID1_BIOS 256
 
 
-static void unplug_slaves(mddev_t *mddev);
-
 static void allow_barrier(conf_t *conf);
 static void lower_barrier(conf_t *conf);
 
 static void * r1bio_pool_alloc(gfp_t gfp_flags, void *data)
 {
 	struct pool_info *pi = data;
-	r1bio_t *r1_bio;
 	int size = offsetof(r1bio_t, bios[pi->raid_disks]);
 
 	/* allocate a r1bio with room for raid_disks entries in the bios array */
-	r1_bio = kzalloc(size, gfp_flags);
-	if (!r1_bio && pi->mddev)
-		unplug_slaves(pi->mddev);
-
-	return r1_bio;
+	return kzalloc(size, gfp_flags);
 }
 
 static void r1bio_pool_free(void *r1_bio, void *data)
@@ -91,10 +84,8 @@ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
 	int i, j;
 
 	r1_bio = r1bio_pool_alloc(gfp_flags, pi);
-	if (!r1_bio) {
-		unplug_slaves(pi->mddev);
+	if (!r1_bio)
 		return NULL;
-	}
 
 	/*
 	 * Allocate bios : 1 for reading, n-1 for writing
@@ -541,37 +532,6 @@ static int read_balance(conf_t *conf, r1bio_t *r1_bio)
 	return new_disk;
 }
 
-static void unplug_slaves(mddev_t *mddev)
-{
-	conf_t *conf = mddev->private;
-	int i;
-
-	rcu_read_lock();
-	for (i=0; i<mddev->raid_disks; i++) {
-		mdk_rdev_t *rdev = rcu_dereference(conf->mirrors[i].rdev);
-		if (rdev && !test_bit(Faulty, &rdev->flags) && atomic_read(&rdev->nr_pending)) {
-			struct request_queue *r_queue = bdev_get_queue(rdev->bdev);
-
-			atomic_inc(&rdev->nr_pending);
-			rcu_read_unlock();
-
-			blk_unplug(r_queue);
-
-			rdev_dec_pending(rdev, mddev);
-			rcu_read_lock();
-		}
-	}
-	rcu_read_unlock();
-}
-
-static void raid1_unplug(struct request_queue *q)
-{
-	mddev_t *mddev = q->queuedata;
-
-	unplug_slaves(mddev);
-	md_wakeup_thread(mddev->thread);
-}
-
 static int raid1_congested(void *data, int bits)
 {
 	mddev_t *mddev = data;
@@ -601,20 +561,17 @@ static int raid1_congested(void *data, int bits)
 }
 
 
-static int flush_pending_writes(conf_t *conf)
+static void flush_pending_writes(conf_t *conf)
 {
 	/* Any writes that have been queued but are awaiting
 	 * bitmap updates get flushed here.
-	 * We return 1 if any requests were actually submitted.
 	 */
-	int rv = 0;
 
 	spin_lock_irq(&conf->device_lock);
 
 	if (conf->pending_bio_list.head) {
 		struct bio *bio;
 		bio = bio_list_get(&conf->pending_bio_list);
-		blk_remove_plug(conf->mddev->queue);
 		spin_unlock_irq(&conf->device_lock);
 		/* flush any pending bitmap writes to
 		 * disk before proceeding w/ I/O */
@@ -626,10 +583,14 @@ static int flush_pending_writes(conf_t *conf)
 			generic_make_request(bio);
 			bio = next;
 		}
-		rv = 1;
 	} else
 		spin_unlock_irq(&conf->device_lock);
-	return rv;
+}
+
+static void md_kick_device(mddev_t *mddev)
+{
+	blk_replug_current_nested();
+	md_wakeup_thread(mddev->thread);
 }
 
 /* Barriers....
@@ -661,8 +622,7 @@ static void raise_barrier(conf_t *conf)
 
 	/* Wait until no block IO is waiting */
 	wait_event_lock_irq(conf->wait_barrier, !conf->nr_waiting,
-			    conf->resync_lock,
-			    raid1_unplug(conf->mddev->queue));
+			    conf->resync_lock, md_kick_device(conf->mddev));
 
 	/* block any new IO from starting */
 	conf->barrier++;
@@ -670,8 +630,7 @@ static void raise_barrier(conf_t *conf)
 	/* No wait for all pending IO to complete */
 	wait_event_lock_irq(conf->wait_barrier,
 			    !conf->nr_pending && conf->barrier < RESYNC_DEPTH,
-			    conf->resync_lock,
-			    raid1_unplug(conf->mddev->queue));
+			    conf->resync_lock, md_kick_device(conf->mddev));
 
 	spin_unlock_irq(&conf->resync_lock);
 }
@@ -693,7 +652,7 @@ static void wait_barrier(conf_t *conf)
 		conf->nr_waiting++;
 		wait_event_lock_irq(conf->wait_barrier, !conf->barrier,
 				    conf->resync_lock,
-				    raid1_unplug(conf->mddev->queue));
+				    md_kick_device(conf->mddev));
 		conf->nr_waiting--;
 	}
 	conf->nr_pending++;
@@ -730,7 +689,7 @@ static void freeze_array(conf_t *conf)
 			    conf->nr_pending == conf->nr_queued+1,
 			    conf->resync_lock,
 			    ({ flush_pending_writes(conf);
-			       raid1_unplug(conf->mddev->queue); }));
+			       md_kick_device(conf->mddev); }));
 	spin_unlock_irq(&conf->resync_lock);
 }
 static void unfreeze_array(conf_t *conf)
@@ -1008,13 +967,12 @@ static int make_request(mddev_t *mddev, struct bio * bio)
 	bio_list_merge(&conf->pending_bio_list, &bl);
 	bio_list_init(&bl);
 
-	blk_plug_device(mddev->queue);
 	spin_unlock_irqrestore(&conf->device_lock, flags);
 
 	/* In case raid1d snuck into freeze_array */
 	wake_up(&conf->wait_barrier);
 
-	if (do_sync)
+	if (do_sync || !bitmap)
 		md_wakeup_thread(mddev->thread);
 #if 0
 	while ((bio = bio_list_pop(&bl)) != NULL)
@@ -1607,7 +1565,6 @@ static void raid1d(mddev_t *mddev)
 	unsigned long flags;
 	conf_t *conf = mddev->private;
 	struct list_head *head = &conf->retry_list;
-	int unplug=0;
 	mdk_rdev_t *rdev;
 
 	md_check_recovery(mddev);
@@ -1615,7 +1572,7 @@ static void raid1d(mddev_t *mddev)
 	for (;;) {
 		char b[BDEVNAME_SIZE];
 
-		unplug += flush_pending_writes(conf);
+		flush_pending_writes(conf);
 
 		spin_lock_irqsave(&conf->device_lock, flags);
 		if (list_empty(head)) {
@@ -1629,10 +1586,9 @@ static void raid1d(mddev_t *mddev)
 
 		mddev = r1_bio->mddev;
 		conf = mddev->private;
-		if (test_bit(R1BIO_IsSync, &r1_bio->state)) {
+		if (test_bit(R1BIO_IsSync, &r1_bio->state))
 			sync_request_write(mddev, r1_bio);
-			unplug = 1;
-		} else if (test_bit(R1BIO_BarrierRetry, &r1_bio->state)) {
+		else if (test_bit(R1BIO_BarrierRetry, &r1_bio->state)) {
 			/* some requests in the r1bio were BIO_RW_BARRIER
 			 * requests which failed with -EOPNOTSUPP.  Hohumm..
 			 * Better resubmit without the barrier.
@@ -1717,14 +1673,11 @@ static void raid1d(mddev_t *mddev)
 				bio->bi_end_io = raid1_end_read_request;
 				bio->bi_rw = READ | (do_sync << BIO_RW_SYNCIO);
 				bio->bi_private = r1_bio;
-				unplug = 1;
 				generic_make_request(bio);
 			}
 		}
 		cond_resched();
 	}
-	if (unplug)
-		unplug_slaves(mddev);
 }
 
 
@@ -2147,7 +2100,6 @@ static int run(mddev_t *mddev)
 
 	md_set_array_sectors(mddev, raid1_size(mddev, 0, 0));
 
-	mddev->queue->unplug_fn = raid1_unplug;
 	mddev->queue->backing_dev_info.congested_fn = raid1_congested;
 	mddev->queue->backing_dev_info.congested_data = mddev;
 	md_integrity_register(mddev);

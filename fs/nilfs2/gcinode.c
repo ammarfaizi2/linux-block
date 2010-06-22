@@ -54,7 +54,6 @@
 #include "ifile.h"
 
 static const struct address_space_operations def_gcinode_aops = {
-	.sync_page		= block_sync_page,
 };
 
 /*

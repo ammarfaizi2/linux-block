@@ -2368,7 +2368,6 @@ const struct address_space_operations cifs_addr_ops = {
 	.write_begin = cifs_write_begin,
 	.write_end = cifs_write_end,
 	.set_page_dirty = __set_page_dirty_nobuffers,
-	/* .sync_page = cifs_sync_page, */
 	/* .direct_IO = */
 };
 
@@ -2384,6 +2383,5 @@ const struct address_space_operations cifs_addr_ops_smallbuf = {
 	.write_begin = cifs_write_begin,
 	.write_end = cifs_write_end,
 	.set_page_dirty = __set_page_dirty_nobuffers,
-	/* .sync_page = cifs_sync_page, */
 	/* .direct_IO = */
 };

@@ -193,136 +193,45 @@ void blk_dump_rq_flags(struct request *rq, char *msg)
 }
 EXPORT_SYMBOL(blk_dump_rq_flags);
 
-/*
- * "plug" the device if there are no outstanding requests: this will
- * force the transfer to start only after we have put all the requests
- * on the list.
- *
- * This is called with interrupts off and no requests on the queue and
- * with the queue lock held.
- */
-void blk_plug_device(struct request_queue *q)
+void blk_delay_work(struct work_struct *work)
 {
-	WARN_ON(!irqs_disabled());
+	struct request_queue *q;
 
-	/*
-	 * don't plug a stopped queue, it must be paired with blk_start_queue()
-	 * which will restart the queueing
-	 */
-	if (blk_queue_stopped(q))
-		return;
-
-	if (!queue_flag_test_and_set(QUEUE_FLAG_PLUGGED, q)) {
-		mod_timer(&q->unplug_timer, jiffies + q->unplug_delay);
-		trace_block_plug(q);
-	}
-}
-EXPORT_SYMBOL(blk_plug_device);
-
-/**
- * blk_plug_device_unlocked - plug a device without queue lock held
- * @q:    The &struct request_queue to plug
- *
- * Description:
- *   Like @blk_plug_device(), but grabs the queue lock and disables
- *   interrupts.
- **/
-void blk_plug_device_unlocked(struct request_queue *q)
-{
-	unsigned long flags;
-
-	spin_lock_irqsave(q->queue_lock, flags);
-	blk_plug_device(q);
-	spin_unlock_irqrestore(q->queue_lock, flags);
-}
-EXPORT_SYMBOL(blk_plug_device_unlocked);
-
-/*
- * remove the queue from the plugged list, if present. called with
- * queue lock held and interrupts disabled.
- */
-int blk_remove_plug(struct request_queue *q)
-{
-	WARN_ON(!irqs_disabled());
-
-	if (!queue_flag_test_and_clear(QUEUE_FLAG_PLUGGED, q))
-		return 0;
-
-	del_timer(&q->unplug_timer);
-	return 1;
-}
-EXPORT_SYMBOL(blk_remove_plug);
-
-/*
- * remove the plug and let it rip..
- */
-void __generic_unplug_device(struct request_queue *q)
-{
-	if (unlikely(blk_queue_stopped(q)))
-		return;
-	if (!blk_remove_plug(q) && !blk_queue_nonrot(q))
-		return;
-
+	q = container_of(work, struct request_queue, delay_work.work);
+	spin_lock_irq(q->queue_lock);
 	q->request_fn(q);
+	spin_unlock_irq(q->queue_lock);
+}
+
+/*
+ * Make sure that plugs that were pending when this function was entered,
+ * are now complete and requests pushed to the queue.
+*/
+static inline void queue_sync_plugs(struct request_queue *q)
+{
+	/*
+	 * If the current process is plugged and has barriers submitted,
+	 * we will livelock if we don't unplug first.
+	 */
+	blk_replug_current_nested();
+	synchronize_qrcu(&q->qrcu);
 }
 
 /**
- * generic_unplug_device - fire a request queue
+ * blk_delay_queue - restart queueing after defined interval
  * @q:    The &struct request_queue in question
+ * @delay: delay in msecs
  *
  * Description:
- *   Linux uses plugging to build bigger requests queues before letting
- *   the device have at them. If a queue is plugged, the I/O scheduler
- *   is still adding and merging requests on the queue. Once the queue
- *   gets unplugged, the request_fn defined for the queue is invoked and
- *   transfers started.
- **/
-void generic_unplug_device(struct request_queue *q)
+ *   Sometimes queueing needs to be postponed for a little while, to allow
+ *   resources to come back. This function will make sure that queueing is
+ *   restarted around the specified time.
+ */
+void blk_delay_queue(struct request_queue *q, unsigned long msecs)
 {
-	if (blk_queue_plugged(q)) {
-		spin_lock_irq(q->queue_lock);
-		__generic_unplug_device(q);
-		spin_unlock_irq(q->queue_lock);
-	}
+	schedule_delayed_work(&q->delay_work, msecs_to_jiffies(msecs));
 }
-EXPORT_SYMBOL(generic_unplug_device);
-
-static void blk_backing_dev_unplug(struct backing_dev_info *bdi,
-				   struct page *page)
-{
-	struct request_queue *q = bdi->unplug_io_data;
-
-	blk_unplug(q);
-}
-
-void blk_unplug_work(struct work_struct *work)
-{
-	struct request_queue *q =
-		container_of(work, struct request_queue, unplug_work);
-
-	trace_block_unplug_io(q);
-	q->unplug_fn(q);
-}
-
-void blk_unplug_timeout(unsigned long data)
-{
-	struct request_queue *q = (struct request_queue *)data;
-
-	trace_block_unplug_timer(q);
-	kblockd_schedule_work(q, &q->unplug_work);
-}
-
-void blk_unplug(struct request_queue *q)
-{
-	/*
-	 * devices don't necessarily have an ->unplug_fn defined
-	 */
-	if (q->unplug_fn) {
-		trace_block_unplug_io(q);
-		q->unplug_fn(q);
-	}
-}
-EXPORT_SYMBOL(blk_unplug);
+EXPORT_SYMBOL(blk_delay_queue);
 
 /**
  * blk_start_queue - restart a previously stopped queue
@@ -358,7 +267,7 @@ EXPORT_SYMBOL(blk_start_queue);
  **/
 void blk_stop_queue(struct request_queue *q)
 {
-	blk_remove_plug(q);
+	cancel_delayed_work(&q->delay_work);
 	queue_flag_set(QUEUE_FLAG_STOPPED, q);
 }
 EXPORT_SYMBOL(blk_stop_queue);
@@ -379,9 +288,9 @@ EXPORT_SYMBOL(blk_stop_queue);
  */
 void blk_sync_queue(struct request_queue *q)
 {
-	del_timer_sync(&q->unplug_timer);
 	del_timer_sync(&q->timeout);
-	cancel_work_sync(&q->unplug_work);
+	queue_sync_plugs(q);
+	cancel_delayed_work_sync(&q->delay_work);
 }
 EXPORT_SYMBOL(blk_sync_queue);
 
@@ -396,12 +305,7 @@ EXPORT_SYMBOL(blk_sync_queue);
  */
 void __blk_run_queue(struct request_queue *q)
 {
-	blk_remove_plug(q);
-
 	if (unlikely(blk_queue_stopped(q)))
-		return;
-
-	if (elv_queue_empty(q))
 		return;
 
 	/*
@@ -411,10 +315,8 @@ void __blk_run_queue(struct request_queue *q)
 	if (!queue_flag_test_and_set(QUEUE_FLAG_REENTER, q)) {
 		q->request_fn(q);
 		queue_flag_clear(QUEUE_FLAG_REENTER, q);
-	} else {
-		queue_flag_set(QUEUE_FLAG_PLUGGED, q);
-		kblockd_schedule_work(q, &q->unplug_work);
-	}
+	} else
+		queue_delayed_work(kblockd_workqueue, &q->delay_work, 0);
 }
 EXPORT_SYMBOL(__blk_run_queue);
 
@@ -501,8 +403,6 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 	if (!q)
 		return NULL;
 
-	q->backing_dev_info.unplug_io_fn = blk_backing_dev_unplug;
-	q->backing_dev_info.unplug_io_data = q;
 	q->backing_dev_info.ra_pages =
 			(VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE;
 	q->backing_dev_info.state = 0;
@@ -515,9 +415,15 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 		return NULL;
 	}
 
+	if (init_qrcu_struct(&q->qrcu)) {
+		bdi_destroy(&q->backing_dev_info);
+		kmem_cache_free(blk_requestq_cachep, q);
+		return NULL;
+	}
+
 	setup_timer(&q->backing_dev_info.laptop_mode_wb_timer,
 		    laptop_mode_timer_fn, (unsigned long) q);
-	init_timer(&q->unplug_timer);
+
 	setup_timer(&q->timeout, blk_rq_timed_out_timer, (unsigned long) q);
 	INIT_LIST_HEAD(&q->timeout_list);
 	INIT_WORK(&q->unplug_work, blk_unplug_work);
@@ -608,7 +514,6 @@ blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
 
 	q->request_fn		= rfn;
 	q->prep_rq_fn		= NULL;
-	q->unplug_fn		= generic_unplug_device;
 	q->queue_flags		= QUEUE_FLAG_DEFAULT;
 	q->queue_lock		= lock;
 
@@ -843,8 +748,8 @@ out:
 }
 
 /*
- * No available requests for this queue, unplug the device and wait for some
- * requests to become available.
+ * No available requests for this queue, wait for some requests to become
+ * available.
  *
  * Called with q->queue_lock held, and returns with it unlocked.
  */
@@ -865,7 +770,6 @@ static struct request *get_request_wait(struct request_queue *q, int rw_flags,
 
 		trace_block_sleeprq(q, bio, rw_flags & 1);
 
-		__generic_unplug_device(q);
 		spin_unlock_irq(q->queue_lock);
 		io_schedule();
 
@@ -1030,7 +934,7 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
 		blk_queue_end_tag(q, rq);
 
 	drive_stat_acct(rq, 1);
-	__elv_add_request(q, rq, where, 0);
+	__elv_add_request(q, rq, where);
 	__blk_run_queue(q);
 	spin_unlock_irqrestore(q->queue_lock, flags);
 }
@@ -1049,7 +953,7 @@ static inline void add_request(struct request_queue *q, struct request *req)
 	 * elevator indicated where it wants this request to be
 	 * inserted at elevator_merge time
 	 */
-	__elv_add_request(q, req, ELEVATOR_INSERT_SORT, 0);
+	__elv_add_request(q, req, ELEVATOR_INSERT_SORT);
 }
 
 static void part_round_stats_single(int cpu, struct hd_struct *part,
@@ -1135,6 +1039,102 @@ void blk_put_request(struct request *req)
 }
 EXPORT_SYMBOL(blk_put_request);
 
+static int bio_attempt_back_merge(struct request_queue *q, struct request *req,
+				  struct bio *bio)
+{
+	const int ff = bio->bi_rw & REQ_FAILFAST_MASK;
+
+	BUG_ON(!rq_mergeable(req));
+
+	if (!ll_back_merge_fn(q, req, bio))
+		return 0;
+
+	trace_block_bio_backmerge(q, bio);
+
+	if ((req->cmd_flags & REQ_FAILFAST_MASK) != ff)
+		blk_rq_set_mixed_merge(req);
+
+	req->biotail->bi_next = bio;
+	req->biotail = bio;
+	req->__data_len += bio->bi_size;
+	req->ioprio = ioprio_best(req->ioprio, bio_prio(bio));
+
+	drive_stat_acct(req, 0);
+	return 1;
+}
+
+static int bio_attempt_front_merge(struct request_queue *q, struct request *req,
+				   struct bio *bio)
+{
+	const int ff = bio->bi_rw & REQ_FAILFAST_MASK;
+	sector_t sector;
+
+	BUG_ON(!rq_mergeable(req));
+
+	if (!ll_front_merge_fn(q, req, bio))
+		return 0;
+
+	trace_block_bio_frontmerge(q, bio);
+
+	if ((req->cmd_flags & REQ_FAILFAST_MASK) != ff)
+		blk_rq_set_mixed_merge(req);
+
+	sector = bio->bi_sector;
+
+	bio->bi_next = req->bio;
+	req->bio = bio;
+
+	/*
+	 * may not be valid. if the low level driver said
+	 * it didn't need a bounce buffer then it better
+	 * not touch req->buffer either...
+	 */
+	req->buffer = bio_data(bio);
+	req->__sector = bio->bi_sector;
+	req->__data_len += bio->bi_size;
+	req->ioprio = ioprio_best(req->ioprio, bio_prio(bio));
+
+	drive_stat_acct(req, 0);
+	return 1;
+}
+
+/*
+ * Attempts to merge with the plugged list in the current process.
+ */
+static int check_plug_merge(struct request_queue *q, struct io_context *ioc,
+			    struct bio *bio)
+{
+	struct request *rq;
+	int ret = 1;
+
+	if (unlikely(!ioc))
+		return 1;
+
+	if (!atomic_read(&ioc->plugged))
+		return 1;
+
+	spin_lock_irq(&ioc->plug_lock);
+	list_for_each_entry_reverse(rq, &ioc->plugged_list, queuelist) {
+		int el_ret;
+
+		el_ret = elv_try_merge(rq, bio);
+		if (el_ret == ELEVATOR_BACK_MERGE) {
+			if (bio_attempt_back_merge(q, rq, bio)) {
+				ret = 0;
+				break;
+			}
+		} else if (el_ret == ELEVATOR_FRONT_MERGE) {
+			if (bio_attempt_front_merge(q, rq, bio)) {
+				ret = 0;
+				break;
+			}
+		}
+	}
+
+	spin_unlock_irq(&ioc->plug_lock);
+	return ret;
+}
+
 void init_request_from_bio(struct request *req, struct bio *bio)
 {
 	req->cpu = bio->bi_comp_cpu;
@@ -1180,20 +1180,27 @@ static inline bool queue_should_plug(struct request_queue *q)
 
 static int __make_request(struct request_queue *q, struct bio *bio)
 {
-	struct request *req;
-	int el_ret;
-	unsigned int bytes = bio->bi_size;
-	const unsigned short prio = bio_prio(bio);
+	struct io_context *ioc = current_io_context(GFP_ATOMIC, q->node);
 	const bool sync = bio_rw_flagged(bio, BIO_RW_SYNCIO);
-	const bool unplug = bio_rw_flagged(bio, BIO_RW_UNPLUG);
-	const unsigned int ff = bio->bi_rw & REQ_FAILFAST_MASK;
-	int rw_flags;
+	int el_ret, rw_flags;
+	struct request *req;
 
-	if (bio_rw_flagged(bio, BIO_RW_BARRIER) &&
-	    (q->next_ordered == QUEUE_ORDERED_NONE)) {
-		bio_endio(bio, -EOPNOTSUPP);
-		return 0;
-	}
+	if (bio_rw_flagged(bio, BIO_RW_BARRIER)) {
+		if (bio_has_data(bio) &&
+		    (q->next_ordered == QUEUE_ORDERED_NONE)) {
+			bio_endio(bio, -EOPNOTSUPP);
+			return 0;
+		}
+		/*
+		 * When we encounter a barrier, we need to make sure that
+		 * the processes that have this queue privately plugged have
+		 * finished.
+		 */
+		queue_sync_plugs(q);
+		spin_lock_irq(q->queue_lock);
+		goto get_rq;
+ 	}
+
 	/*
 	 * low level driver can indicate that it wants pages above a
 	 * certain limit bounced to low memory (ie for highmem, or even
@@ -1201,73 +1208,28 @@ static int __make_request(struct request_queue *q, struct bio *bio)
 	 */
 	blk_queue_bounce(q, &bio);
 
+	/*
+	 * Check if we can merge with the plugged list before grabbing
+	 * any locks.
+	 */
+	if (!check_plug_merge(q, ioc, bio))
+		goto out;
+
 	spin_lock_irq(q->queue_lock);
 
-	if (unlikely(bio_rw_flagged(bio, BIO_RW_BARRIER)) || elv_queue_empty(q))
-		goto get_rq;
-
 	el_ret = elv_merge(q, &req, bio);
-	switch (el_ret) {
-	case ELEVATOR_BACK_MERGE:
-		BUG_ON(!rq_mergeable(req));
-
-		if (!ll_back_merge_fn(q, req, bio))
-			break;
-
-		trace_block_bio_backmerge(q, bio);
-
-		if ((req->cmd_flags & REQ_FAILFAST_MASK) != ff)
-			blk_rq_set_mixed_merge(req);
-
-		req->biotail->bi_next = bio;
-		req->biotail = bio;
-		req->__data_len += bytes;
-		req->ioprio = ioprio_best(req->ioprio, prio);
-		if (!blk_rq_cpu_valid(req))
-			req->cpu = bio->bi_comp_cpu;
-		drive_stat_acct(req, 0);
-		elv_bio_merged(q, req, bio);
-		if (!attempt_back_merge(q, req))
-			elv_merged_request(q, req, el_ret);
-		goto out;
-
-	case ELEVATOR_FRONT_MERGE:
-		BUG_ON(!rq_mergeable(req));
-
-		if (!ll_front_merge_fn(q, req, bio))
-			break;
-
-		trace_block_bio_frontmerge(q, bio);
-
-		if ((req->cmd_flags & REQ_FAILFAST_MASK) != ff) {
-			blk_rq_set_mixed_merge(req);
-			req->cmd_flags &= ~REQ_FAILFAST_MASK;
-			req->cmd_flags |= ff;
+	if (el_ret == ELEVATOR_BACK_MERGE) {
+		if (bio_attempt_back_merge(q, req, bio)) {
+			if (!attempt_back_merge(q, req))
+				elv_merged_request(q, req, el_ret);
+			goto out_unlock;
 		}
-
-		bio->bi_next = req->bio;
-		req->bio = bio;
-
-		/*
-		 * may not be valid. if the low level driver said
-		 * it didn't need a bounce buffer then it better
-		 * not touch req->buffer either...
-		 */
-		req->buffer = bio_data(bio);
-		req->__sector = bio->bi_sector;
-		req->__data_len += bytes;
-		req->ioprio = ioprio_best(req->ioprio, prio);
-		if (!blk_rq_cpu_valid(req))
-			req->cpu = bio->bi_comp_cpu;
-		drive_stat_acct(req, 0);
-		elv_bio_merged(q, req, bio);
-		if (!attempt_front_merge(q, req))
-			elv_merged_request(q, req, el_ret);
-		goto out;
-
-	/* ELV_NO_MERGE: elevator says don't/can't merge. */
-	default:
-		;
+	} else if (el_ret == ELEVATOR_FRONT_MERGE) {
+		if (bio_attempt_front_merge(q, req, bio)) {
+			if (!attempt_front_merge(q, req))
+				elv_merged_request(q, req, el_ret);
+			goto out_unlock;
+		}
 	}
 
 get_rq:
@@ -1294,19 +1256,151 @@ get_rq:
 	 */
 	init_request_from_bio(req, bio);
 
-	spin_lock_irq(q->queue_lock);
 	if (test_bit(QUEUE_FLAG_SAME_COMP, &q->queue_flags) ||
 	    bio_flagged(bio, BIO_CPU_AFFINE))
 		req->cpu = blk_cpu_to_group(smp_processor_id());
-	if (queue_should_plug(q) && elv_queue_empty(q))
-		blk_plug_device(q);
-	add_request(q, req);
+
+	if (!ioc || bio_rw_flagged(bio, BIO_RW_SYNCIO) ||
+	    !atomic_read(&ioc->plugged)) {
+		spin_lock_irq(q->queue_lock);
+		add_request(q, req);
+		q->request_fn(q);
+out_unlock:
+		spin_unlock_irq(q->queue_lock);
+	} else {
+		if (ioc->plugged_queue && ioc->plugged_queue != q)
+			blk_replug_current_nested();
+		spin_lock_irq(&ioc->plug_lock);
+		if (!ioc->plugged_queue) {
+			trace_block_plug(q);
+			ioc->plugged_queue = q;
+		}
+		if (bio_data_dir(bio) == WRITE && ioc->qrcu_idx == -1)
+			ioc->qrcu_idx = qrcu_read_lock(&q->qrcu);
+		list_add_tail(&req->queuelist, &ioc->plugged_list);
+		ioc->plugged_list_len++;
+		spin_unlock_irq(&ioc->plug_lock);
+	}
+
 out:
-	if (unplug || !queue_should_plug(q))
-		__generic_unplug_device(q);
-	spin_unlock_irq(q->queue_lock);
 	return 0;
 }
+
+/**
+ * blk_plug_current - plug the current task
+ *
+ * Description:
+ *   When a process is about to submit multiple pieces of IO, it may first
+ *   call this function to enable better batching of these requests. Any
+ *   request queued after this call will be stored in a lockless manner
+ *   local to the process. The IO will not be sent to the IO scheduler until
+ *   a call to @blk_unplug_current is made. A call to this function must
+ *   be paired with a later call to @blk_unplug_current.
+ *
+ **/
+void blk_plug_current(void)
+{
+	struct io_context *ioc = current_io_context(GFP_NOIO, -1);
+
+	if (ioc)
+		atomic_inc(&ioc->plugged);
+}
+EXPORT_SYMBOL(blk_plug_current);
+
+/*
+ * Called with ioc->plug_lock held
+ */
+static void __blk_unplug_current(struct request_queue *q,
+				 struct io_context *ioc)
+{
+	struct list_head local_list;
+	struct request *req;
+
+	list_replace_init(&ioc->plugged_list, &local_list);
+	spin_unlock(&ioc->plug_lock);
+
+	trace_block_unplug_io(q);
+
+	spin_lock(q->queue_lock);
+	while (!list_empty(&local_list)) {
+		req = list_entry_rq(local_list.next);
+		list_del_init(&req->queuelist);
+		add_request(q, req);
+	}
+	spin_unlock(q->queue_lock);
+
+	spin_lock(&ioc->plug_lock);
+	ioc->plugged_list_len = 0;
+
+	/*
+	 * This process is now done with the plug and has committed it's
+	 * pending io, notify QRCU.
+	 */
+	if (ioc->qrcu_idx != -1) {
+		qrcu_read_unlock(&q->qrcu, ioc->qrcu_idx);
+		ioc->qrcu_idx = -1;
+	}
+
+	/*
+	 * FIXME: see if we can get rid of the unplug hack from sched.c and
+	 * then call request_fn() directly here
+	 */
+	queue_delayed_work(kblockd_workqueue, &q->delay_work, 0);
+}
+
+/**
+ * blk_unplug_current - unplug the current task
+ *
+ * Description:
+ *   Also see description of @blk_plug_current. When a process is done
+ *   submitting IO, it calls this function to send those requests off to
+ *   the IO scheduler.
+ *
+ **/
+void blk_unplug_current(void)
+{
+	struct io_context *ioc = current->io_context;
+	struct request_queue *q;
+
+	if (ioc) {
+		BUG_ON(!atomic_read(&ioc->plugged));
+
+		if (atomic_dec_and_test(&ioc->plugged)) {
+			spin_lock_irq(&ioc->plug_lock);
+			q = ioc->plugged_queue;
+			ioc->plugged_queue = NULL;
+
+			if (!list_empty(&ioc->plugged_list))
+				__blk_unplug_current(q, ioc);
+			spin_unlock_irq(&ioc->plug_lock);
+		}
+	}
+}
+EXPORT_SYMBOL(blk_unplug_current);
+
+int blk_unplug_current_nested(void)
+{
+	struct io_context *ioc = current->io_context;
+	int ret = 0;
+
+	if (ioc) {
+		spin_lock_irq(&ioc->plug_lock);
+		ret = atomic_read(&ioc->plugged);
+		if (ret) {
+			atomic_set(&ioc->plugged, 0);
+			if (ioc->plugged_queue && ioc->plugged_list_len) {
+				struct request_queue *q = ioc->plugged_queue;
+
+				ioc->plugged_queue = NULL;
+				__blk_unplug_current(q, ioc);
+			}
+		}
+		spin_unlock_irq(&ioc->plug_lock);
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(blk_unplug_current_nested);
 
 /*
  * If bio->bi_dev is a partition, remap the location
@@ -1680,7 +1774,7 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 	BUG_ON(blk_queued_rq(rq));
 
 	drive_stat_acct(rq, 1);
-	__elv_add_request(q, rq, ELEVATOR_INSERT_BACK, 0);
+	__elv_add_request(q, rq, ELEVATOR_INSERT_BACK);
 
 	spin_unlock_irqrestore(q->queue_lock, flags);
 

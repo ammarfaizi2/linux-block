@@ -291,7 +291,6 @@ static inline pgoff_t linear_page_index(struct vm_area_struct *vma,
 
 extern void __lock_page(struct page *page);
 extern int __lock_page_killable(struct page *page);
-extern void __lock_page_nosync(struct page *page);
 extern void unlock_page(struct page *page);
 
 static inline void __set_page_locked(struct page *page)
@@ -332,17 +331,6 @@ static inline int lock_page_killable(struct page *page)
 	return 0;
 }
 
-/*
- * lock_page_nosync should only be used if we can't pin the page's inode.
- * Doesn't play quite so well with block device plugging.
- */
-static inline void lock_page_nosync(struct page *page)
-{
-	might_sleep();
-	if (!trylock_page(page))
-		__lock_page_nosync(page);
-}
-	
 /*
  * This is exported only for wait_on_page_locked/wait_on_page_writeback.
  * Never use this directly!

@@ -108,7 +108,7 @@ int elv_rq_merge_ok(struct request *rq, struct bio *bio)
 }
 EXPORT_SYMBOL(elv_rq_merge_ok);
 
-static inline int elv_try_merge(struct request *__rq, struct bio *bio)
+int elv_try_merge(struct request *__rq, struct bio *bio)
 {
 	int ret = ELEVATOR_NO_MERGE;
 
@@ -613,7 +613,6 @@ void elv_insert(struct request_queue *q, struct request *rq, int where)
 {
 	struct list_head *pos;
 	unsigned ordseq;
-	int unplug_it = 1;
 
 	trace_block_rq_insert(q, rq);
 
@@ -669,12 +668,6 @@ void elv_insert(struct request_queue *q, struct request *rq, int where)
 		 */
 		rq->cmd_flags |= REQ_SOFTBARRIER;
 
-		/*
-		 * Most requeues happen because of a busy condition,
-		 * don't force unplug of the queue for that case.
-		 */
-		unplug_it = 0;
-
 		if (q->ordseq == 0) {
 			list_add(&rq->queuelist, &q->queue_head);
 			break;
@@ -696,18 +689,9 @@ void elv_insert(struct request_queue *q, struct request *rq, int where)
 		       __func__, where);
 		BUG();
 	}
-
-	if (unplug_it && blk_queue_plugged(q)) {
-		int nrq = q->rq.count[BLK_RW_SYNC] + q->rq.count[BLK_RW_ASYNC]
-				- queue_in_flight(q);
-
-		if (nrq >= q->unplug_thresh)
-			__generic_unplug_device(q);
-	}
 }
 
-void __elv_add_request(struct request_queue *q, struct request *rq, int where,
-		       int plug)
+void __elv_add_request(struct request_queue *q, struct request *rq, int where)
 {
 	if (q->ordcolor)
 		rq->cmd_flags |= REQ_ORDERED_COLOR;
@@ -737,37 +721,19 @@ void __elv_add_request(struct request_queue *q, struct request *rq, int where,
 		    where == ELEVATOR_INSERT_SORT)
 		where = ELEVATOR_INSERT_BACK;
 
-	if (plug)
-		blk_plug_device(q);
-
 	elv_insert(q, rq, where);
 }
 EXPORT_SYMBOL(__elv_add_request);
 
-void elv_add_request(struct request_queue *q, struct request *rq, int where,
-		     int plug)
+void elv_add_request(struct request_queue *q, struct request *rq, int where)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(q->queue_lock, flags);
-	__elv_add_request(q, rq, where, plug);
+	__elv_add_request(q, rq, where);
 	spin_unlock_irqrestore(q->queue_lock, flags);
 }
 EXPORT_SYMBOL(elv_add_request);
-
-int elv_queue_empty(struct request_queue *q)
-{
-	struct elevator_queue *e = q->elevator;
-
-	if (!list_empty(&q->queue_head))
-		return 0;
-
-	if (e->ops->elevator_queue_empty_fn)
-		return e->ops->elevator_queue_empty_fn(q);
-
-	return 1;
-}
-EXPORT_SYMBOL(elv_queue_empty);
 
 struct request *elv_latter_request(struct request_queue *q, struct request *rq)
 {

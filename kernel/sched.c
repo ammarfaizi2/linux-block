@@ -3593,6 +3593,11 @@ need_resched:
 
 	release_kernel_lock(prev);
 need_resched_nonpreemptible:
+#ifdef CONFIG_BLOCK
+	if (unlikely(current->io_context &&
+			current->io_context->plugged_list_len))
+		blk_replug_current_nested();
+#endif
 
 	schedule_debug(prev);
 
@@ -4941,6 +4946,7 @@ void __sched io_schedule(void)
 {
 	struct rq *rq = raw_rq();
 
+	blk_replug_current_nested();
 	delayacct_blkio_start();
 	atomic_inc(&rq->nr_iowait);
 	current->in_iowait = 1;
@@ -4956,6 +4962,7 @@ long __sched io_schedule_timeout(long timeout)
 	struct rq *rq = raw_rq();
 	long ret;
 
+	blk_replug_current_nested();
 	delayacct_blkio_start();
 	atomic_inc(&rq->nr_iowait);
 	current->in_iowait = 1;

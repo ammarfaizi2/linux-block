@@ -46,6 +46,16 @@ struct io_context {
 #endif
 
 	/*
+	 * Per-process queue plugging
+	 */
+	spinlock_t plug_lock;
+	atomic_t plugged;
+	int qrcu_idx;
+	unsigned int plugged_list_len;
+	struct list_head plugged_list;
+	struct request_queue *plugged_queue;
+
+	/*
 	 * For request batching
 	 */
 	int nr_batch_requests;     /* Number of requests left in the batch */

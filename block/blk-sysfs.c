@@ -472,6 +472,7 @@ static void blk_release_queue(struct kobject *kobj)
 
 	blk_trace_shutdown(q);
 
+	cleanup_qrcu_struct(&q->qrcu);
 	bdi_destroy(&q->backing_dev_info);
 	kmem_cache_free(blk_requestq_cachep, q);
 }
