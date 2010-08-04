@@ -2337,7 +2337,18 @@ resume:
 		struct list_head *tmp = next;
 		struct dentry *dentry = list_entry(tmp, struct dentry, d_u.d_child);
 		next = tmp->next;
-		if (d_unhashed(dentry)||!dentry->d_inode)
+		/*
+		 * Skip unhashed and negative dentries, but process
+		 * positive dentries and whiteouts.  A whiteout looks
+		 * kind of like a negative dentry for purposes of
+		 * lookup, but it has an extra pinning ref count
+		 * because it can't be evicted like a negative dentry
+		 * can.  What we care about here is ref counts - and
+		 * we need to drop the ref count on a whiteout before
+		 * we can evict it.
+		 */
+		if (d_unhashed(dentry)||(!dentry->d_inode &&
+					 !d_is_whiteout(dentry)))
 			continue;
 		if (!list_empty(&dentry->d_subdirs)) {
 			this_parent = dentry;
