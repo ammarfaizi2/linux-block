@@ -57,6 +57,8 @@ extern int union_add_dir(struct path *, struct path *, unsigned int);
 extern int union_create_topmost_dir(struct path *, struct qstr *, struct path *,
 				    struct path *);
 extern int union_copyup_dir(struct path *);
+extern int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+				    int namlen, ino_t *ino, unsigned char *d_type);
 
 static inline int needs_lookup_union(struct path *parent_path, struct path *path)
 {
@@ -90,6 +92,7 @@ static inline struct path *union_find_dir(struct dentry *dentry,
 #define union_create_topmost_dir(w, x, y, z)	({ BUG(); (0); })
 #define needs_lookup_union(x, y)	({ (0); })
 #define union_copyup_dir(x)		({ BUG(); (0); })
+#define generic_readdir_fallthru(w, x, y, z)	({ BUG(); (0); })
 
 #endif	/* CONFIG_UNION_MOUNT */
 #endif	/* __KERNEL__ */

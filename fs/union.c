@@ -335,3 +335,58 @@ out_fput:
 	mnt_drop_write(topmost_path->mnt);
 	return error;
 }
+
+/* Relationship between i_mode and the DT_xxx types */
+static inline unsigned char dt_type(struct inode *inode)
+{
+	return (inode->i_mode >> 12) & 15;
+}
+
+/**
+ * generic_readdir_fallthru - Helper to lookup target of a fallthru
+ *
+ * @topmost_dentry: dentry for the topmost dentry of the dir being read
+ * @name: name of fallthru dirent
+ * @namelen: length of @name
+ * @ino: return inode number of target, if found
+ * @d_type: return directory type of target, if found
+ *
+ * In readdir(), client file systems need to lookup the target of a
+ * fallthru in a lower layer for three reasons: (1) fill in d_ino, (2)
+ * fill in d_type, (2) make sure there is something to fall through to
+ * (and if not, don't return this dentry).  Upon detecting a fallthru
+ * dentry in readdir(), the client file system should call this function.
+ *
+ * Returns 0 on success and -ENOENT if no matching directory entry was
+ * found (which can happen when the topmost file system is unmounted
+ * and remounted over a different file system than).  Any other errors
+ * are unexpected.
+ */
+
+int
+generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+			 int namlen, ino_t *ino, unsigned char *d_type)
+{
+	struct path *parent;
+	struct dentry *dentry;
+	unsigned int i, layers = topmost_dentry->d_sb->s_union_count;
+
+	BUG_ON(!mutex_is_locked(&topmost_dentry->d_inode->i_mutex));
+
+	for (i = 0; i < layers; i++) {
+		parent = union_find_dir(topmost_dentry, i);
+		mutex_lock(&parent->dentry->d_inode->i_mutex);
+		dentry = lookup_one_len(name, parent->dentry, namlen);
+		mutex_unlock(&parent->dentry->d_inode->i_mutex);
+		if (IS_ERR(dentry))
+			return PTR_ERR(dentry);
+		if (dentry->d_inode) {
+			*ino = dentry->d_inode->i_ino;
+			*d_type = dt_type(dentry->d_inode);
+			dput(dentry);
+			return 0;
+		}
+		dput(dentry);
+	}
+	return -ENOENT;
+}

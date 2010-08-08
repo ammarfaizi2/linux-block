@@ -2403,6 +2403,21 @@ extern ssize_t simple_write_to_buffer(void *to, size_t available, loff_t *ppos,
 
 extern int generic_file_fsync(struct file *, int);
 
+#ifdef CONFIG_UNION_MOUNT
+extern int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+				    int namlen, ino_t *ino, unsigned char *d_type);
+#else
+static inline int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+					   int namlen, ino_t *ino, unsigned char *d_type)
+{
+	/*
+	 * Found a fallthru on a kernel without union support.
+	 * There's nothing to fall through to, so return -ENOENT.
+	 */
+	return -ENOENT;
+}
+#endif
+
 #ifdef CONFIG_MIGRATION
 extern int buffer_migrate_page(struct address_space *,
 				struct page *, struct page *);
