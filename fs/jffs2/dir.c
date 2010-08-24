@@ -174,9 +174,14 @@ static int jffs2_readdir(struct file *filp, void *dirent, filldir_t filldir)
 			continue;
 		}
 		if (fd->type == JFFS2_DT_FALLTHRU) {
-			/* XXX placeholder until generic_readdir_fallthru() arrives */
-			ino = 1;
-			d_type = DT_UNKNOWN;
+			int err;
+			err = generic_readdir_fallthru(filp->f_path.dentry, fd->name, strlen(fd->name),
+						       &ino, &d_type);
+			if (err) {
+				D2(printk(KERN_DEBUG "Skipping fallthru dirent \"%s\"\n", fd->name));
+				offset++;
+				continue;
+			}
 		} else if (!fd->ino && (fd->type != DT_WHT)) {
 			D2(printk(KERN_DEBUG "Skipping deletion dirent \"%s\"\n", fd->name));
 			offset++;
