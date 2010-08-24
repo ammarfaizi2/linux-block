@@ -279,12 +279,13 @@ probe_done:
 				   &sensor_dev_attr_temp3_input.dev_attr);
 		if (err)
 			goto exit_remove;
-		if (data->sensorsp & SEL_PLACE)
+		if (data->sensorsp & SEL_PLACE) {
 			err = device_create_file(&pdev->dev,
 					   &sensor_dev_attr_temp4_input.
 					   dev_attr);
 			if (err)
 				goto exit_remove;
+		}
 	}
 
 	err = device_create_file(&pdev->dev, &dev_attr_name);
