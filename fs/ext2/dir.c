@@ -352,15 +352,21 @@ ext2_readdir (struct file * filp, void * dirent, filldir_t filldir)
 				}
 			} else if (de->file_type == EXT2_FT_FALLTHRU) {
 				int over;
+				unsigned char d_type = DT_UNKNOWN;
+				ino_t ino;
+				int err;
 
 				offset = (char *)de - kaddr;
-				/* XXX placeholder until generic_readdir_fallthru() arrives */
-				over = filldir(dirent, de->name, de->name_len,
-					       (n<<PAGE_CACHE_SHIFT) | offset,
-					       1, DT_UNKNOWN); /* XXX */
-				if (over) {
-					ext2_put_page(page);
-					return 0;
+				err = generic_readdir_fallthru(filp->f_path.dentry, de->name,
+							       de->name_len, &ino, &d_type);
+				if (!err) {
+					over = filldir(dirent, de->name, de->name_len,
+						       (n<<PAGE_CACHE_SHIFT) | offset,
+						       ino, d_type);
+					if (over) {
+						ext2_put_page(page);
+						return 0;
+					}
 				}
 			}
 			filp->f_pos += ext2_rec_len_from_disk(de->rec_len);
