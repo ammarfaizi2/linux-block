@@ -132,6 +132,7 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
 	ino_t ino;
 	char d_type;
 	int i = filp->f_pos;
+	int err = 0;
 
 	switch (i) {
 		case 0:
@@ -161,9 +162,13 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
 
 				spin_unlock(&dcache_lock);
 				if (d_is_fallthru(next)) {
-					/* XXX placeholder until generic_readdir_fallthru() arrives */
-					ino = 1;
-					d_type = DT_UNKNOWN;
+					/* On tmpfs, should only fail with ENOMEM, EIO, etc. */
+					err = generic_readdir_fallthru(filp->f_path.dentry,
+								       next->d_name.name,
+								       next->d_name.len,
+								       &ino, &d_type);
+					if (err)
+						return err;
 				} else {
 					ino = next->d_inode->i_ino;
 					d_type = dt_type(next->d_inode);
