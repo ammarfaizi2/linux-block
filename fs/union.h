@@ -49,6 +49,16 @@ struct union_stack {
 	struct path u_dirs[0];
 };
 
+static inline struct path *union_find_dir(struct dentry *dentry,
+					  unsigned int layer) {
+	BUG_ON(layer >= dentry->d_sb->s_union_count);
+	return &(dentry->d_union_stack->u_dirs[layer]);
+}
+
+#else /* CONFIG_UNION_MOUNT */
+
+#define union_find_dir(x, y)		({ BUG(); (NULL); })
+
 #endif	/* CONFIG_UNION_MOUNT */
 #endif	/* __KERNEL__ */
 #endif	/* __LINUX_UNION_H */
