@@ -1396,6 +1396,18 @@ struct super_block {
 	 * Decremented by free_vfsmnt() if MNT_HARD_READONLY is set.
 	 */
 	int s_hard_readonly_users;
+
+	/*
+	 * Root of the private cloned vfsmount tree of the read-only
+	 * mounts in this union (set in topmost vfsmount only)
+	 */
+	struct vfsmount *s_union_lower_mnts;
+
+	/*
+	 * Number of layers in this union, not counting the topmost or
+	 * submounts.
+	 */
+	unsigned int s_union_count;
 };
 
 extern struct timespec current_fs_time(struct super_block *sb);
