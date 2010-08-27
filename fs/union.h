@@ -56,6 +56,7 @@ extern void d_free_unions(struct dentry *);
 extern int union_add_dir(struct path *, struct path *, unsigned int);
 extern int union_create_topmost_dir(struct path *, struct qstr *, struct path *,
 				    struct path *);
+extern int union_copyup_dir(struct path *);
 
 static inline int needs_lookup_union(struct path *parent_path, struct path *path)
 {
@@ -88,6 +89,7 @@ static inline struct path *union_find_dir(struct dentry *dentry,
 #define union_find_dir(x, y)		({ BUG(); (NULL); })
 #define union_create_topmost_dir(w, x, y, z)	({ BUG(); (0); })
 #define needs_lookup_union(x, y)	({ (0); })
+#define union_copyup_dir(x)		({ BUG(); (0); })
 
 #endif	/* CONFIG_UNION_MOUNT */
 #endif	/* __KERNEL__ */
