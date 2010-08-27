@@ -961,6 +961,9 @@ struct dentry *d_alloc(struct dentry * parent, const struct qstr *name)
 	INIT_LIST_HEAD(&dentry->d_lru);
 	INIT_LIST_HEAD(&dentry->d_subdirs);
 	INIT_LIST_HEAD(&dentry->d_alias);
+#ifdef CONFIG_UNION_MOUNT
+	dentry->d_union_stack = NULL;
+#endif
 
 	if (parent) {
 		dentry->d_parent = dget(parent);

@@ -79,12 +79,28 @@ full_name_hash(const unsigned char *name, unsigned int len)
  * Try to keep struct dentry aligned on 64 byte cachelines (this will
  * give reasonable cacheline footprint with larger lines without the
  * large memory footprint increase).
+ *
+ * XXX DNAME_INLINE_LEN_MIN is kind of pitiful on 64bit + union
+ * mounts.  May be worth tuning up, but either we go to 256 bytes and
+ * a wasteful 88 bytes of d_iname, or we lose 64-byte aligment.
  */
 #ifdef CONFIG_64BIT
+
+#ifdef CONFIG_UNION_MOUNT
+#define DNAME_INLINE_LEN_MIN 24 /* 192 bytes */
+#else
 #define DNAME_INLINE_LEN_MIN 32 /* 192 bytes */
+#endif /* CONFIG_UNION_MOUNT */
+
+#else
+
+#ifdef CONFIG_UNION_MOUNT
+#define DNAME_INLINE_LEN_MIN 36 /* 128 bytes */
 #else
 #define DNAME_INLINE_LEN_MIN 40 /* 128 bytes */
-#endif
+#endif /* CONFIG_UNION_MOUNT */
+
+#endif /* CONFIG_64BIT */
 
 struct dentry {
 	atomic_t d_count;
@@ -100,7 +116,9 @@ struct dentry {
 	struct hlist_node d_hash;	/* lookup hash list */
 	struct dentry *d_parent;	/* parent directory */
 	struct qstr d_name;
-
+#ifdef CONFIG_UNION_MOUNT
+	struct union_stack *d_union_stack;	/* dirs in union stack */
+#endif
 	struct list_head d_lru;		/* LRU list */
 	/*
 	 * d_child and d_rcu can share memory
