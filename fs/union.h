@@ -53,6 +53,8 @@ struct union_stack {
 
 extern void d_free_unions(struct dentry *);
 extern int union_add_dir(struct path *, struct path *, unsigned int);
+extern int union_create_topmost_dir(struct path *, struct qstr *, struct path *,
+				    struct path *);
 
 static inline struct path *union_find_dir(struct dentry *dentry,
 					  unsigned int layer) {
@@ -67,6 +69,7 @@ static inline struct path *union_find_dir(struct dentry *dentry,
 #define d_free_unions(x)		do { } while (0)
 #define union_add_dir(x, y, z)		({ BUG(); (0); })
 #define union_find_dir(x, y)		({ BUG(); (NULL); })
+#define union_create_topmost_dir(w, x, y, z)	({ BUG(); (0); })
 
 #endif	/* CONFIG_UNION_MOUNT */
 #endif	/* __KERNEL__ */
