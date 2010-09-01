@@ -209,6 +209,7 @@ d_iput:		no		no		no       yes
 #define DCACHE_WHITEOUT		0x0200	/* Stop lookup in a unioned file system */
 
 #define DCACHE_FALLTHRU		0x0400	/* Continue lookup below an opaque dir */
+#define DCACHE_UNION_LOOKUP_DONE	0x0800	/* Union lookup was called on this dentry */
 
 extern spinlock_t dcache_lock;
 extern seqlock_t rename_lock;

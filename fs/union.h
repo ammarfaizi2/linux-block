@@ -57,6 +57,21 @@ extern int union_add_dir(struct path *, struct path *, unsigned int);
 extern int union_create_topmost_dir(struct path *, struct qstr *, struct path *,
 				    struct path *);
 
+static inline int needs_lookup_union(struct path *parent_path, struct path *path)
+{
+	if (!IS_DIR_UNIONED(parent_path->dentry))
+		return 0;
+
+	/* Either already built or crossed a mountpoint to not-unioned mnt */
+	/* XXX are bind mounts root? think not */
+	if (IS_ROOT(path->dentry))
+		return 0;
+
+	/* It's okay not to have the lock; will recheck in lookup_union() */
+	/* XXX set for root dentry at mount? */
+	return !(path->dentry->d_flags & DCACHE_UNION_LOOKUP_DONE);
+}
+
 static inline struct path *union_find_dir(struct dentry *dentry,
 					  unsigned int layer) {
 	BUG_ON(layer >= dentry->d_sb->s_union_count);
@@ -72,6 +87,7 @@ static inline struct path *union_find_dir(struct dentry *dentry,
 #define union_add_dir(x, y, z)		({ BUG(); (0); })
 #define union_find_dir(x, y)		({ BUG(); (NULL); })
 #define union_create_topmost_dir(w, x, y, z)	({ BUG(); (0); })
+#define needs_lookup_union(x, y)	({ (0); })
 
 #endif	/* CONFIG_UNION_MOUNT */
 #endif	/* __KERNEL__ */
