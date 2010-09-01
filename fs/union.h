@@ -49,6 +49,7 @@ struct union_stack {
 	struct path u_dirs[0];
 };
 
+#define IS_MNT_UNION(mnt)	((mnt)->mnt_flags & MNT_UNION)
 #define IS_DIR_UNIONED(dentry)	((dentry)->d_union_stack)
 
 extern void d_free_unions(struct dentry *);
@@ -64,6 +65,7 @@ static inline struct path *union_find_dir(struct dentry *dentry,
 
 #else /* CONFIG_UNION_MOUNT */
 
+#define IS_MNT_UNION(x)			(0)
 #define IS_DIR_UNIONED(x)		(0)
 
 #define d_free_unions(x)		do { } while (0)
