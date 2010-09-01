@@ -1555,6 +1555,49 @@ out:
 	return err;
 }
 
+/**
+ * prepare_mnt_union - do setup necessary for a union mount
+ *
+ * @topmost_mnt: vfsmount of topmost layer
+ * @mntpnt: path of requested mountpoint
+ *
+ * We union every underlying file system that is mounted on the same
+ * mountpoint (well, pathname), read-only, and not shared.  If we get
+ * at least one layer, we don't return an error, although we will
+ * complain in the kernel log if we hit a mount that can't be
+ * unioned.
+ *
+ * Caller needs namespace_sem, but can't have vfsmount_lock.
+ */
+
+static int prepare_mnt_union(struct vfsmount *topmost_mnt, struct path *mntpnt)
+{
+	int err;
+
+	err = check_topmost_union_mnt(topmost_mnt, topmost_mnt->mnt_flags);
+	if (err)
+		return err;
+
+	err = clone_union_tree(topmost_mnt, mntpnt);
+	if (err)
+		return err;
+
+	err = build_root_union(topmost_mnt);
+	if (err)
+		goto out;
+
+	return 0;
+out:
+	put_union_sb(topmost_mnt->mnt_sb);
+	return err;
+}
+
+static void cleanup_mnt_union(struct vfsmount *topmost_mnt)
+{
+	d_free_unions(topmost_mnt->mnt_root);
+	put_union_sb(topmost_mnt->mnt_sb);
+}
+
 /*
  *  @source_mnt : mount tree to be attached
  *  @nd         : place the mount tree @source_mnt is attached
