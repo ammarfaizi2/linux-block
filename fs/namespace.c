@@ -2044,6 +2044,11 @@ int do_add_mount(struct vfsmount *newmnt, struct path *path,
 	if (S_ISLNK(newmnt->mnt_root->d_inode->i_mode))
 		goto unlock;
 
+	/* Top layers of union mounts can't be mounted elsewhere */
+	err = -EBUSY;
+	if (newmnt->mnt_sb->s_union_lower_mnts)
+		goto unlock;
+
 	newmnt->mnt_flags = mnt_flags;
 	if ((err = graft_tree(newmnt, path)))
 		goto unlock;
