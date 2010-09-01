@@ -141,4 +141,6 @@ extern void mark_mounts_for_expiry(struct list_head *mounts);
 
 extern dev_t name_to_dev_t(char *name);
 
+extern void put_union_sb(struct super_block *sb);
+
 #endif /* _LINUX_MOUNT_H */
