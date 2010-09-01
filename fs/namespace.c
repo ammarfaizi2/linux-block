@@ -1870,6 +1870,18 @@ static int do_remount(struct path *path, int flags, int mnt_flags,
 	if (!check_mnt(path->mnt))
 		return -EINVAL;
 
+	if ((path->mnt->mnt_flags & MNT_UNION) &&
+	    !(mnt_flags & MNT_UNION))
+		return -EINVAL;
+
+	if ((mnt_flags & MNT_UNION) &&
+	    !(path->mnt->mnt_flags & MNT_UNION))
+		return -EINVAL;
+
+	if ((path->mnt->mnt_flags & MNT_UNION) &&
+	    (mnt_flags & MNT_READONLY))
+		return -EINVAL;
+
 	if (path->dentry != path->mnt->mnt_root)
 		return -EINVAL;
 
