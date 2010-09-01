@@ -1396,6 +1396,46 @@ static int invent_group_ids(struct vfsmount *mnt, bool recurse)
 	return 0;
 }
 
+/**
+ * check_topmost_union_mnt - mount-time checks for union mount
+ *
+ * @topmost_mnt: vfsmount of the topmost union filed system
+ * @mnt_flags: mount flags for the topmost mount
+ *
+ * Our readdir() solution of copying up directory entries requires
+ * that the topmost layer be writeable and support whiteouts and
+ * fallthrus.  The topmost file system can't be mounted elsewhere
+ * because it's Too Hard(tm).
+ */
+
+static int check_topmost_union_mnt(struct vfsmount *topmost_mnt, int mnt_flags)
+{
+	struct super_block *sb = topmost_mnt->mnt_sb;
+#ifndef CONFIG_UNION_MOUNT
+	printk(KERN_INFO "union mount: not supported by the kernel\n");
+	return -EINVAL;
+#endif
+	if (mnt_flags & MNT_READONLY)
+		return -EROFS;
+
+	if (atomic_read(&sb->s_active) != 1) {
+		printk(KERN_INFO "union mount: topmost fs mounted elsewhere\n");
+		return -EBUSY;
+	}
+
+	if (!(sb->s_flags & MS_WHITEOUT)) {
+		printk(KERN_INFO "union mount: whiteouts not supported by fs\n");
+		return -EINVAL;
+	}
+
+	if (!(sb->s_flags & MS_FALLTHRU)) {
+		printk(KERN_INFO "union mount: fallthrus not supported by fs\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /*
  *  @source_mnt : mount tree to be attached
  *  @nd         : place the mount tree @source_mnt is attached
