@@ -21,6 +21,7 @@
 #include <linux/mount.h>
 #include <linux/fs_struct.h>
 #include <linux/slab.h>
+#include <linux/namei.h>
 
 #include "union.h"
 
@@ -39,4 +40,28 @@ static struct union_stack *union_alloc(struct path *topmost)
 	BUG_ON(!S_ISDIR(topmost->dentry->d_inode->i_mode));
 
 	return kzalloc(sizeof(struct path) * layers, GFP_KERNEL);
+}
+
+/**
+ * d_free_unions - free all unions for this dentry
+ *
+ * @dentry - topmost dentry in the union stack to remove
+ *
+ * This must be called when freeing a dentry.
+ */
+void d_free_unions(struct dentry *topmost)
+{
+	struct path *path;
+	unsigned int i, layers = topmost->d_sb->s_union_count;
+
+	if (!IS_DIR_UNIONED(topmost))
+		return;
+
+	for (i = 0; i < layers; i++) {
+		path = union_find_dir(topmost, i);
+		if (path->mnt)
+			path_put(path);
+	}
+	kfree(topmost->d_union_stack);
+	topmost->d_union_stack = NULL;
 }

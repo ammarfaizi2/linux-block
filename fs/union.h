@@ -49,6 +49,10 @@ struct union_stack {
 	struct path u_dirs[0];
 };
 
+#define IS_DIR_UNIONED(dentry)	((dentry)->d_union_stack)
+
+extern void d_free_unions(struct dentry *);
+
 static inline struct path *union_find_dir(struct dentry *dentry,
 					  unsigned int layer) {
 	BUG_ON(layer >= dentry->d_sb->s_union_count);
@@ -57,6 +61,9 @@ static inline struct path *union_find_dir(struct dentry *dentry,
 
 #else /* CONFIG_UNION_MOUNT */
 
+#define IS_DIR_UNIONED(x)		(0)
+
+#define d_free_unions(x)		do { } while (0)
 #define union_find_dir(x, y)		({ BUG(); (NULL); })
 
 #endif	/* CONFIG_UNION_MOUNT */
