@@ -36,6 +36,7 @@
 #include <asm/unistd.h>
 #include "pnode.h"
 #include "internal.h"
+#include "union.h"
 
 #define HASH_SHIFT ilog2(PAGE_SIZE / sizeof(struct list_head))
 #define HASH_SIZE (1UL << HASH_SHIFT)
@@ -1108,6 +1109,7 @@ void umount_tree(struct vfsmount *mnt, int propagate, struct list_head *kill)
 		propagate_umount(kill);
 
 	list_for_each_entry(p, kill, mnt_hash) {
+		d_free_unions(p->mnt_root);
 		list_del_init(&p->mnt_expire);
 		list_del_init(&p->mnt_list);
 		__touch_mnt_namespace(p->mnt_ns);
