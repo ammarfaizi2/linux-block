@@ -178,6 +178,7 @@ void deactivate_locked_super(struct super_block *s)
 	if (atomic_dec_and_test(&s->s_active)) {
 		fs->kill_sb(s);
 		put_filesystem(fs);
+		put_union_sb(s);
 		put_super(s);
 	} else {
 		up_write(&s->s_umount);

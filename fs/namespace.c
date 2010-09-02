@@ -1675,9 +1675,17 @@ static int attach_recursive_mnt(struct vfsmount *source_mnt,
 		if (err)
 			goto out;
 	}
+
+	/* parent_path means we are moving an existing unioned mount */
+	if (!parent_path && IS_MNT_UNION(source_mnt)) {
+		err = prepare_mnt_union(source_mnt, path);
+		if (err)
+			goto out_cleanup_ids;
+	}
+
 	err = propagate_mnt(dest_mnt, dest_dentry, source_mnt, &tree_list);
 	if (err)
-		goto out_cleanup_ids;
+		goto out_cleanup_union;
 
 	br_write_lock(vfsmount_lock);
 
@@ -1702,6 +1710,9 @@ static int attach_recursive_mnt(struct vfsmount *source_mnt,
 
 	return 0;
 
+ out_cleanup_union:
+	if (!parent_path && IS_MNT_UNION(source_mnt))
+		cleanup_mnt_union(source_mnt);
  out_cleanup_ids:
 	if (IS_MNT_SHARED(dest_mnt))
 		cleanup_group_ids(source_mnt, NULL);
