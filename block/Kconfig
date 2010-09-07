@@ -65,6 +65,11 @@ config BLK_DEV_BSG
 
 	  If unsure, say Y.
 
+config BLK_DEV_BINJECT
+	tristate "Block injection support"
+	help
+	  Test module to directly inject BIOs into a queue.
+
 config BLK_DEV_INTEGRITY
 	bool "Block layer data integrity support"
 	---help---
