@@ -599,6 +599,9 @@ static struct vfsmount *clone_mnt(struct vfsmount *old, struct dentry *root,
 	if ((flag & CL_NO_SHARED) && (IS_MNT_SHARED(old)))
 		return ERR_PTR(-EINVAL);
 
+	if ((flag & CL_NO_SLAVE) && (IS_MNT_SLAVE(old)))
+		return ERR_PTR(-EINVAL);
+
 	mnt = alloc_vfsmnt(old->mnt_devname);
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
