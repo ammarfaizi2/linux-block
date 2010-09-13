@@ -45,6 +45,7 @@ struct mnt_namespace;
 
 
 #define MNT_INTERNAL	0x4000
+#define MNT_HARD_READONLY	0x8000	/* has a hard read-only ref on the sb */
 
 struct vfsmount {
 	struct list_head mnt_hash;

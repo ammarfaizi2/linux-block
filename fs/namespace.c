@@ -417,6 +417,12 @@ EXPORT_SYMBOL(simple_set_mnt);
 void free_vfsmnt(struct vfsmount *mnt)
 {
 	kfree(mnt->mnt_devname);
+	if (mnt->mnt_flags & MNT_HARD_READONLY) {
+		BUG_ON(mnt->mnt_sb->s_hard_readonly_users <= 0);
+		down_write(&mnt->mnt_sb->s_umount);
+		mnt->mnt_sb->s_hard_readonly_users--;
+		up_write(&mnt->mnt_sb->s_umount);
+	}
 	mnt_free_id(mnt);
 #ifdef CONFIG_SMP
 	free_percpu(mnt->mnt_writers);
@@ -602,6 +608,16 @@ static struct vfsmount *clone_mnt(struct vfsmount *old, struct dentry *root,
 	if ((flag & CL_NO_SLAVE) && (IS_MNT_SLAVE(old)))
 		return ERR_PTR(-EINVAL);
 
+	if (flag & CL_MAKE_HARD_READONLY) {
+		down_write(&sb->s_umount);
+		if (!(sb->s_flags & MS_RDONLY)) {
+			up_write(&sb->s_umount);
+			return ERR_PTR(-EBUSY);
+		}
+		sb->s_hard_readonly_users++;
+		up_write(&sb->s_umount);
+	}
+
 	mnt = alloc_vfsmnt(old->mnt_devname);
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
@@ -637,6 +653,8 @@ static struct vfsmount *clone_mnt(struct vfsmount *old, struct dentry *root,
 	}
 	if (flag & CL_MAKE_SHARED)
 		set_mnt_shared(mnt);
+	if (flag & CL_MAKE_HARD_READONLY)
+		mnt->mnt_flags |= MNT_HARD_READONLY;
 
 	/* stick the duplicate mount on the same expiry list
 	 * as the original if that was on one */
