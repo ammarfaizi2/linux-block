@@ -859,6 +859,56 @@ out_err:
 }
 
 /*
+ * lookup_union - Lookup and/or build union stack if needed
+ *
+ * @nd - nameidata for the parent of @topmost
+ * @name - name of target
+ * @topmost - path of the target on the topmost file system
+ *
+ * Check if we need to do a union lookup on this target.  Mark dentry
+ * to show lookup union has been performed.
+ *
+ * We borrow the nameidata struct from the topmost layer to do the
+ * revalidation on lower dentries, replacing the topmost parent
+ * directory's path with that of the matching parent dir in each lower
+ * layer.  This wrapper for __lookup_union() saves the topmost layer's
+ * path and restores it when we are done.
+ *
+ * Caller must hold parent i_mutex.
+ */
+static int lookup_union(struct nameidata *nd, struct qstr *name,
+			struct path *topmost)
+{
+	struct path saved_path;
+	int err = 0;
+
+	BUG_ON(!IS_MNT_UNION(nd->path.mnt) && !IS_MNT_UNION(topmost->mnt));
+	BUG_ON(!mutex_is_locked(&nd->path.dentry->d_inode->i_mutex));
+
+	/*
+	 * Initial test done outside of parent i_mutex lock, recheck
+	 * it.  We only set this flag inside parent i_mutex so it's
+	 * safe to check it here (only need d_lock when setting to
+	 * avoid squashing other flags).
+	 */
+	if (topmost->dentry->d_flags & DCACHE_UNION_LOOKUP_DONE)
+		return 0;
+
+	saved_path = nd->path;
+
+	err = __lookup_union(nd, name, topmost);
+
+	nd->path = saved_path;
+
+	/* XXX move into dcache.h */
+	spin_lock(&topmost->dentry->d_lock);
+	topmost->dentry->d_flags |= DCACHE_UNION_LOOKUP_DONE;
+	spin_unlock(&topmost->dentry->d_lock);
+
+	return err;
+}
+
+/*
  * Allocate a dentry with name and parent, and perform a parent
  * directory ->lookup on it. Returns the new dentry, or ERR_PTR
  * on error. parent->d_inode->i_mutex must be held. d_lookup must
