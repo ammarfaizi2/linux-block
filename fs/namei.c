@@ -787,9 +787,30 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 			err = PTR_ERR(lower.dentry);
 			goto out_err;
 		}
-		/* XXX - do nothing, lookup rule processing in later patches */
+
+		/*
+		 * A negative dentry can mean several things.  A plain
+		 * negative dentry is ignored and lookup continues to
+		 * the next layer.  But a whiteout or a non-fallthru
+		 * in an opaque dir covers everything below it.
+		 */
+		if (!lower.dentry->d_inode) {
+			if (d_is_whiteout(lower.dentry))
+				goto out_lookup_done;
+			if (IS_OPAQUE(nd->path.dentry->d_inode) &&
+			    !d_is_fallthru(lower.dentry))
+				goto out_lookup_done;
+			path_put(&lower);
+			continue;
+		}
+
+		/* XXX - do nothing, more in later patches */
 		path_put(&lower);
 	}
+	return 0;
+
+out_lookup_done:
+	path_put(&lower);
 	return 0;
 
 out_err:
