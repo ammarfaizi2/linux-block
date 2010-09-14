@@ -995,6 +995,11 @@ done:
 	path->mnt = mnt;
 	path->dentry = dentry;
 	__follow_mount(path);
+	if (needs_lookup_union(&nd->path, path)) {
+		int err = do_lookup_union(nd, name, path);
+		if (err < 0)
+			return err;
+	}
 	return 0;
 
 need_lookup:
@@ -1417,8 +1422,13 @@ static int lookup_hash(struct nameidata *nd, struct qstr *name,
 		err = PTR_ERR(path->dentry);
 		path->dentry = NULL;
 		path->mnt = NULL;
+		return err;
 	}
+
+	if (needs_lookup_union(&nd->path, path))
+		err = lookup_union(nd, name, path);
 	return err;
+
 }
 
 static int __lookup_one_len(const char *name, struct qstr *this,
