@@ -817,8 +817,22 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 			goto out_found_file;
 		}
 
-		/* XXX - do nothing, more in later patches */
-		path_put(&lower);
+		/*
+		 * Now we know the target is a directory.  Create a
+		 * matching topmost directory if one doesn't already
+		 * exist, and add this layer's directory to the union
+		 * stack for the topmost directory.
+		 */
+		if (!topmost->dentry->d_inode) {
+			err = union_create_topmost_dir(&parent, name, topmost,
+						       &lower);
+			if (err)
+				goto out_err;
+		}
+
+		err = union_add_dir(topmost, &lower, i);
+		if (err)
+			goto out_err;
 	}
 	return 0;
 
