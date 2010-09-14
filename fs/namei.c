@@ -817,6 +817,8 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 			goto out_found_file;
 		}
 
+		follow_mount(&lower);
+
 		/*
 		 * Now we know the target is a directory.  Create a
 		 * matching topmost directory if one doesn't already
