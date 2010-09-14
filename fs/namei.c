@@ -909,6 +909,28 @@ static int lookup_union(struct nameidata *nd, struct qstr *name,
 }
 
 /*
+ * do_union_lookup - union mount-aware part of do_lookup
+ *
+ * do_lookup()-style wrapper for lookup_union().  Follows mounts.
+ */
+
+static int do_lookup_union(struct nameidata *nd, struct qstr *name,
+			   struct path *topmost)
+{
+	struct dentry *parent = nd->path.dentry;
+	struct inode *dir = parent->d_inode;
+	int err;
+
+	mutex_lock(&dir->i_mutex);
+	err = lookup_union(nd, name, topmost);
+	mutex_unlock(&dir->i_mutex);
+
+	__follow_mount(topmost);
+
+	return err;
+}
+
+/*
  * Allocate a dentry with name and parent, and perform a parent
  * directory ->lookup on it. Returns the new dentry, or ERR_PTR
  * on error. parent->d_inode->i_mutex must be held. d_lookup must
