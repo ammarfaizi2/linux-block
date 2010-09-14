@@ -329,6 +329,8 @@ static struct bio *map_uc_to_bio(struct b_dev *bd, struct b_user_cmd *uc)
 			bio->bi_bdev = bd->bdev;
 			if (ucm->todevice)
 				bio->bi_rw |= REQ_WRITE;
+			if (uc->type == B_TYPE_DISCARD)
+				bio->bi_rw |= REQ_DISCARD;
 			if (ucm->map_zero && uc->len) {
 				int err;
 
