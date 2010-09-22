@@ -2543,12 +2543,12 @@ static void cfq_put_queue(struct cfq_queue *cfqq)
 		cfq_put_cfqg(orig_cfqg);
 }
 
+typedef void (cic_call_fn)(struct io_context *, struct cfq_io_context *);
+
 /*
  * Must always be called with the rcu_read_lock() held
  */
-static void
-__call_for_each_cic(struct io_context *ioc,
-		    void (*func)(struct io_context *, struct cfq_io_context *))
+static void __call_for_each_cic(struct io_context *ioc, cic_call_fn *func)
 {
 	struct cfq_io_context *cic;
 	struct hlist_node *n;
@@ -2560,9 +2560,7 @@ __call_for_each_cic(struct io_context *ioc,
 /*
  * Call func for each cic attached to this ioc.
  */
-static void
-call_for_each_cic(struct io_context *ioc,
-		  void (*func)(struct io_context *, struct cfq_io_context *))
+static void call_for_each_cic(struct io_context *ioc, cic_call_fn *func)
 {
 	rcu_read_lock();
 	__call_for_each_cic(ioc, func);
@@ -2787,12 +2785,9 @@ static void changed_ioprio(struct io_context *ioc, struct cfq_io_context *cic)
 {
 	struct cfq_data *cfqd = cic_to_cfqd(cic);
 	struct cfq_queue *cfqq;
-	unsigned long flags;
 
 	if (unlikely(!cfqd))
 		return;
-
-	spin_lock_irqsave(cfqd->queue->queue_lock, flags);
 
 	cfqq = cic->cfqq[BLK_RW_ASYNC];
 	if (cfqq) {
@@ -2808,8 +2803,6 @@ static void changed_ioprio(struct io_context *ioc, struct cfq_io_context *cic)
 	cfqq = cic->cfqq[BLK_RW_SYNC];
 	if (cfqq)
 		cfq_mark_cfqq_prio_changed(cfqq);
-
-	spin_unlock_irqrestore(cfqd->queue->queue_lock, flags);
 }
 
 static void cfq_ioc_set_ioprio(struct io_context *ioc)
@@ -3057,11 +3050,8 @@ static int cfq_cic_link(struct cfq_data *cfqd, struct io_context *ioc,
 
 		radix_tree_preload_end();
 
-		if (!ret) {
-			spin_lock_irqsave(cfqd->queue->queue_lock, flags);
+		if (!ret)
 			list_add(&cic->queue_list, &cfqd->cic_list);
-			spin_unlock_irqrestore(cfqd->queue->queue_lock, flags);
-		}
 	}
 
 	if (ret)
@@ -3080,8 +3070,6 @@ cfq_get_io_context(struct cfq_data *cfqd, gfp_t gfp_mask)
 {
 	struct io_context *ioc = NULL;
 	struct cfq_io_context *cic;
-
-	might_sleep_if(gfp_mask & __GFP_WAIT);
 
 	ioc = get_io_context(gfp_mask, cfqd->queue->node);
 	if (!ioc)
@@ -3633,14 +3621,10 @@ cfq_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
 	const int rw = rq_data_dir(rq);
 	const bool is_sync = rq_is_sync(rq);
 	struct cfq_queue *cfqq;
-	unsigned long flags;
 
 	might_sleep_if(gfp_mask & __GFP_WAIT);
 
 	cic = cfq_get_io_context(cfqd, gfp_mask);
-
-	spin_lock_irqsave(q->queue_lock, flags);
-
 	if (!cic)
 		goto queue_fail;
 
@@ -3673,8 +3657,6 @@ new_queue:
 	cfqq->allocated[rw]++;
 	atomic_inc(&cfqq->ref);
 
-	spin_unlock_irqrestore(q->queue_lock, flags);
-
 	rq->elevator_private = cic;
 	rq->elevator_private2 = cfqq;
 	rq->elevator_private3 = cfq_ref_get_cfqg(cfqq->cfqg);
@@ -3685,7 +3667,6 @@ queue_fail:
 		put_io_context(cic->ioc);
 
 	cfq_schedule_dispatch(cfqd);
-	spin_unlock_irqrestore(q->queue_lock, flags);
 	cfq_log(cfqd, "set_request fail");
 	return 1;
 }
