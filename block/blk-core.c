@@ -471,7 +471,6 @@ static int blk_init_free_list(struct request_queue *q)
 		return 0;
 
 	rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
-	rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
 	rl->elvpriv = 0;
 	init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
 	init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
@@ -711,9 +710,6 @@ static void freed_request(struct request_queue *q, int sync, int priv)
 		rl->elvpriv--;
 
 	__freed_request(q, sync);
-
-	if (unlikely(rl->starved[sync ^ 1]))
-		__freed_request(q, sync ^ 1);
 }
 
 /*
@@ -731,10 +727,9 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
 
 	may_queue = elv_may_queue(q, rw_flags);
 	if (may_queue == ELV_MQUEUE_NO)
-		goto rq_starved;
+		goto out;
 
 	rl->count[is_sync]++;
-	rl->starved[is_sync] = 0;
 
 	priv = !test_bit(QUEUE_FLAG_ELVSWITCH, &q->queue_flags);
 	if (priv)
@@ -755,18 +750,6 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
 		 */
 		spin_lock_irq(q->queue_lock);
 		freed_request(q, is_sync, priv);
-
-		/*
-		 * in the very unlikely event that allocation failed and no
-		 * requests for this direction was pending, mark us starved
-		 * so that freeing of a request in the other direction will
-		 * notice us. another possible fix would be to split the
-		 * rq mempool into READ and WRITE
-		 */
-rq_starved:
-		if (unlikely(rl->count[is_sync] == 0))
-			rl->starved[is_sync] = 1;
-
 		goto out;
 	}
 

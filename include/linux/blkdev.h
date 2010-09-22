@@ -39,11 +39,10 @@ typedef void (rq_end_io_fn)(struct request *, int);
 
 struct request_list {
 	/*
-	 * count[], starved[], and wait[] are indexed by
+	 * count[], and wait[] are indexed by
 	 * BLK_RW_SYNC/BLK_RW_ASYNC
 	 */
 	int count[2];
-	int starved[2];
 	int elvpriv;
 	mempool_t *rq_pool[2];
 	wait_queue_head_t wait[2];
