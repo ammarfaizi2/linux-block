@@ -164,7 +164,6 @@ static noinline int run_scheduled_bios(struct btrfs_device *device)
 	unsigned long num_sync_run;
 	unsigned long batch_run = 0;
 	unsigned long limit;
-	unsigned long last_waited = 0;
 	int force_reg = 0;
 
 	bdi = blk_get_backing_dev_info(device->bdev);
@@ -279,39 +278,6 @@ loop_lock:
 		 */
 		if (pending && bdi_write_congested(bdi) && batch_run > 8 &&
 		    fs_info->fs_devices->open_devices > 1) {
-			struct io_context *ioc;
-
-			ioc = current->io_context;
-
-			/*
-			 * the main goal here is that we don't want to
-			 * block if we're going to be able to submit
-			 * more requests without blocking.
-			 *
-			 * This code does two great things, it pokes into
-			 * the elevator code from a filesystem _and_
-			 * it makes assumptions about how batching works.
-			 */
-			if (ioc && ioc->nr_batch_requests > 0 &&
-			    time_before(jiffies, ioc->last_waited + HZ/50UL) &&
-			    (last_waited == 0 ||
-			     ioc->last_waited == last_waited)) {
-				/*
-				 * we want to go through our batch of
-				 * requests and stop.  So, we copy out
-				 * the ioc->last_waited time and test
-				 * against it before looping
-				 */
-				last_waited = ioc->last_waited;
-				if (need_resched()) {
-					if (num_sync_run) {
-						blk_run_backing_dev(bdi, NULL);
-						num_sync_run = 0;
-					}
-					cond_resched();
-				}
-				continue;
-			}
 			spin_lock(&device->io_lock);
 			requeue_list(pending_bios, pending, tail);
 			device->running_pending = 1;
