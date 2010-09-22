@@ -460,8 +460,10 @@ static void blk_release_queue(struct kobject *kobj)
 
 	blk_sync_queue(q);
 
-	if (rl->rq_pool)
-		mempool_destroy(rl->rq_pool);
+	if (rl->rq_pool[0])
+		mempool_destroy(rl->rq_pool[0]);
+	if (rl->rq_pool[1])
+		mempool_destroy(rl->rq_pool[1]);
 
 	if (q->queue_tags)
 		__blk_queue_free_tags(q);

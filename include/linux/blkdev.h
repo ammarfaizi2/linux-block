@@ -45,7 +45,7 @@ struct request_list {
 	int count[2];
 	int starved[2];
 	int elvpriv;
-	mempool_t *rq_pool;
+	mempool_t *rq_pool[2];
 	wait_queue_head_t wait[2];
 };
 

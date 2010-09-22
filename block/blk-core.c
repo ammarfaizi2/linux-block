@@ -467,7 +467,7 @@ static int blk_init_free_list(struct request_queue *q)
 {
 	struct request_list *rl = &q->rq;
 
-	if (unlikely(rl->rq_pool))
+	if (unlikely(rl->rq_pool[0]))
 		return 0;
 
 	rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
@@ -476,11 +476,17 @@ static int blk_init_free_list(struct request_queue *q)
 	init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
 	init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
 
-	rl->rq_pool = mempool_create_node(BLKDEV_MIN_RQ, mempool_alloc_slab,
+	rl->rq_pool[0] = mempool_create_node(BLKDEV_MIN_RQ, mempool_alloc_slab,
 				mempool_free_slab, request_cachep, q->node);
-
-	if (!rl->rq_pool)
+	if (!rl->rq_pool[0])
 		return -ENOMEM;
+
+	rl->rq_pool[1] = mempool_create_node(BLKDEV_MIN_RQ, mempool_alloc_slab,
+				mempool_free_slab, request_cachep, q->node);
+	if (!rl->rq_pool[1]) {
+		mempool_destroy(rl->rq_pool[0]);
+		return -ENOMEM;
+	}
 
 	return 0;
 }
@@ -644,16 +650,21 @@ int blk_get_queue(struct request_queue *q)
 
 static inline void blk_free_request(struct request_queue *q, struct request *rq)
 {
+	const bool is_sync = rq_is_sync(rq) != 0;
+
 	if (rq->cmd_flags & REQ_ELVPRIV)
 		elv_put_request(q, rq);
-	mempool_free(rq, q->rq.rq_pool);
+
+	mempool_free(rq, q->rq.rq_pool[is_sync]);
 }
 
 static struct request *
 blk_alloc_request(struct request_queue *q, int flags, int priv, gfp_t gfp_mask)
 {
-	struct request *rq = mempool_alloc(q->rq.rq_pool, gfp_mask);
+	const bool is_sync = rw_is_sync(flags) != 0;
+	struct request *rq;
 
+	rq = mempool_alloc(q->rq.rq_pool[is_sync], gfp_mask);
 	if (!rq)
 		return NULL;
 
@@ -663,7 +674,7 @@ blk_alloc_request(struct request_queue *q, int flags, int priv, gfp_t gfp_mask)
 
 	if (priv) {
 		if (unlikely(elv_set_request(q, rq, gfp_mask))) {
-			mempool_free(rq, q->rq.rq_pool);
+			mempool_free(rq, q->rq.rq_pool[is_sync]);
 			return NULL;
 		}
 		rq->cmd_flags |= REQ_ELVPRIV;
