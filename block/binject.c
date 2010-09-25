@@ -264,13 +264,15 @@ static void b_cmd_endio(struct bio *bio, int error)
 	wake_up(&bd->wq_done);
 }
 
+#define len_to_pages(len)	((len + PAGE_SIZE - 1) / PAGE_SIZE)
+
 static int zero_map_bio(struct request_queue *q, struct bio *bio,
 			const struct uc_map *ucm, unsigned int len)
 {
 	unsigned int i, nr_pages, this_len, ret, err;
 	struct page *page;
 
-	nr_pages = len / PAGE_SIZE;
+	nr_pages = len_to_pages(len);
 	for (i = 0; i < nr_pages; i++) {
 		if (ucm->todevice)
 			page = ZERO_PAGE(0);
@@ -324,7 +326,7 @@ static struct bio *map_uc_to_bio(struct b_dev *bd, struct b_user_cmd *uc)
 		bio = bio_map_user(q, bd->bdev, uc->buf, uc->len,
 					!ucm->todevice, GFP_KERNEL);
 	} else {
-		bio = bio_alloc(GFP_KERNEL, uc->len / PAGE_SIZE);
+		bio = bio_alloc(GFP_KERNEL, len_to_pages(uc->len));
 		if (bio) {
 			bio->bi_bdev = bd->bdev;
 			if (ucm->todevice)
