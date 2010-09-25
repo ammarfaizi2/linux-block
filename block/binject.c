@@ -288,8 +288,8 @@ static int zero_map_bio(struct request_queue *q, struct bio *bio,
 		if (this_len > len)
 			this_len = len;
 
-		ret = bio_add_pc_page(q, bio, page, len, 0);
-		if (ret < len) {
+		ret = bio_add_pc_page(q, bio, page, this_len, 0);
+		if (ret < this_len) {
 			err = -E2BIG;
 			goto oom;
 		}
