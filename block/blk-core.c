@@ -491,6 +491,12 @@ struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
 }
 EXPORT_SYMBOL(blk_alloc_queue);
 
+static void blk_init_ctx(struct request_queue *q, struct blk_queue_ctx *ctx)
+{
+	spin_lock_init(&ctx->lock);
+	INIT_LIST_HEAD(&ctx->timeout_list);
+}
+
 struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 {
 	struct request_queue *q;
@@ -500,6 +506,8 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 				gfp_mask | __GFP_ZERO, node_id);
 	if (!q)
 		return NULL;
+
+	blk_init_ctx(q, &q->queue_ctx);
 
 	q->backing_dev_info.unplug_io_fn = blk_backing_dev_unplug;
 	q->backing_dev_info.unplug_io_data = q;
@@ -524,7 +532,6 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 		    laptop_mode_timer_fn, (unsigned long) q);
 	init_timer(&q->unplug_timer);
 	setup_timer(&q->timeout, blk_rq_timed_out_timer, (unsigned long) q);
-	INIT_LIST_HEAD(&q->queue_ctx.timeout_list);
 	INIT_LIST_HEAD(&q->pending_flushes);
 	INIT_WORK(&q->unplug_work, blk_unplug_work);
 
