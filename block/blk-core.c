@@ -690,40 +690,6 @@ static struct request *blk_alloc_request(struct blk_queue_ctx *ctx, int flags,
 	return rq;
 }
 
-/*
- * ioc_batching returns true if the ioc is a valid batching request and
- * should be given priority access to a request.
- */
-static inline int ioc_batching(struct request_queue *q, struct io_context *ioc)
-{
-	if (!ioc)
-		return 0;
-
-	/*
-	 * Make sure the process is able to allocate at least 1 request
-	 * even if the batch times out, otherwise we could theoretically
-	 * lose wakeups.
-	 */
-	return ioc->nr_batch_requests == q->nr_batching ||
-		(ioc->nr_batch_requests > 0
-		&& time_before(jiffies, ioc->last_waited + BLK_BATCH_TIME));
-}
-
-/*
- * ioc_set_batching sets ioc to be a new "batcher" if it is not one. This
- * will cause the process to be a "batcher" on all queues in the system. This
- * is the behaviour we want though - once it gets a wakeup it should be given
- * a nice run.
- */
-static void ioc_set_batching(struct request_queue *q, struct io_context *ioc)
-{
-	if (!ioc || ioc_batching(q, ioc))
-		return;
-
-	ioc->nr_batch_requests = q->nr_batching;
-	ioc->last_waited = jiffies;
-}
-
 static void __freed_request(struct blk_queue_ctx *ctx, int sync)
 {
 	struct request_queue *q = blk_ctx_to_queue(ctx);
@@ -769,7 +735,6 @@ static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 	struct request_queue *q = blk_ctx_to_queue(ctx);
 	struct request *rq = NULL;
 	struct request_list *rl = &ctx->rl;
-	struct io_context *ioc = NULL;
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
 	int may_queue, priv;
 
@@ -778,30 +743,11 @@ static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 		goto rq_starved;
 
 	if (rl->count[is_sync]+1 >= queue_congestion_on_threshold(q)) {
-		if (rl->count[is_sync]+1 >= q->nr_requests) {
-			ioc = current_io_context(GFP_ATOMIC, q->node);
-			/*
-			 * The queue will fill after this allocation, so set
-			 * it as full, and mark this process as "batching".
-			 * This process will be allowed to complete a batch of
-			 * requests, others will be blocked.
-			 */
-			if (!blk_queue_full(q, is_sync)) {
-				ioc_set_batching(q, ioc);
-				blk_set_queue_full(q, is_sync);
-			} else {
-				if (may_queue != ELV_MQUEUE_MUST
-						&& !ioc_batching(q, ioc)) {
-					/*
-					 * The queue is full and the allocating
-					 * process is not a "batcher", and not
-					 * exempted by the IO scheduler
-					 */
-					goto out;
-				}
-			}
-		}
 		blk_set_queue_congested(q, is_sync);
+
+		if (rl->count[is_sync]+1 >= q->nr_requests)
+			if (may_queue != ELV_MQUEUE_MUST)
+				goto out;
 	}
 
 	/*
@@ -849,15 +795,6 @@ rq_starved:
 		goto out;
 	}
 
-	/*
-	 * ioc may be NULL here, and ioc_batching will be false. That's
-	 * OK, if the queue is under the request limit then requests need
-	 * not count toward the nr_batch_requests limit. There will always
-	 * be some limit enforced by BLK_BATCH_TIME.
-	 */
-	if (ioc_batching(q, ioc))
-		ioc->nr_batch_requests--;
-
 	trace_block_getrq(q, bio, rw_flags & 1);
 out:
 	return rq;
@@ -879,7 +816,6 @@ static struct request *get_request_wait(struct blk_queue_ctx *ctx, int rw_flags,
 	rq = get_request(ctx, rw_flags, bio, GFP_NOIO);
 	while (!rq) {
 		DEFINE_WAIT(wait);
-		struct io_context *ioc;
 		struct request_list *rl = &ctx->rl;
 
 		prepare_to_wait_exclusive(&rl->wait[is_sync], &wait,
@@ -890,15 +826,6 @@ static struct request *get_request_wait(struct blk_queue_ctx *ctx, int rw_flags,
 		__generic_unplug_device(q);
 		spin_unlock_irq(q->queue_lock);
 		io_schedule();
-
-		/*
-		 * After sleeping, we become a "batching" process and
-		 * will be able to allocate at least one request, and
-		 * up to a big batch of them for a small period time.
-		 * See ioc_batching, ioc_set_batching
-		 */
-		ioc = current_io_context(GFP_NOIO, q->node);
-		ioc_set_batching(q, ioc);
 
 		spin_lock_irq(q->queue_lock);
 		finish_wait(&rl->wait[is_sync], &wait);

@@ -345,7 +345,6 @@ struct request_queue
 	unsigned long		nr_requests;	/* Max # of requests */
 	unsigned int		nr_congestion_on;
 	unsigned int		nr_congestion_off;
-	unsigned int		nr_batching;
 
 	void			*dma_drain_buffer;
 	unsigned int		dma_drain_size;
