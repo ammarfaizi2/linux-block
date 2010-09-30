@@ -37,7 +37,7 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(block_remap);
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
 
-static int __make_request(struct request_queue *q, struct bio *bio);
+static int queue_bio(struct request_queue *q, struct bio *bio);
 
 /*
  * For the allocated request tables
@@ -622,7 +622,7 @@ blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
 	/*
 	 * This also sets hw/phys segments, boundary and size
 	 */
-	blk_queue_make_request(q, __make_request);
+	blk_queue_make_request(q, queue_bio);
 
 	q->sg_reserved_size = INT_MAX;
 
@@ -1182,7 +1182,7 @@ static inline bool queue_should_plug(struct request_queue *q)
 	return !(blk_queue_nonrot(q) && blk_queue_tagged(q));
 }
 
-static int __make_request(struct request_queue *q, struct bio *bio)
+static int queue_bio(struct request_queue *q, struct bio *bio)
 {
 	struct request *req;
 	int el_ret;
