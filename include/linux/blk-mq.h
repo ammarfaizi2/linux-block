@@ -60,28 +60,29 @@ static inline struct blk_queue_ctx *blk_get_ctx(struct request_queue *q, int nr)
 	for (i = 0, ctx = &(q)->queue_ctx[0];				\
 		i < (q)->nr_queues; i++, ctx++)				\
 
+#define blk_ctx_sum(q, sum)						\
+({									\
+	struct blk_queue_ctx *__ctx;					\
+	unsigned int __ret = 0, __i;					\
+									\
+	queue_for_each_ctx((q), __ctx, __i)				\
+		__ret += sum;						\
+	__ret;								\
+})
+
 static inline int __queue_in_flight(struct request_queue *q, int index)
 {
-	struct blk_queue_ctx *ctx;
-	int i, ret;
-
-	ret = 0;
-	queue_for_each_ctx(q, ctx, i)
-		ret += ctx->in_flight[index];
-
-	return ret;
+	return blk_ctx_sum(q, __ctx->in_flight[index]);
 }
 
 static inline int queue_in_flight(struct request_queue *q)
 {
-	struct blk_queue_ctx *ctx;
-	int i, ret;
+	return blk_ctx_sum(q, __ctx->in_flight[0] + __ctx->in_flight[1]);
+}
 
-	ret = 0;
-	queue_for_each_ctx(q, ctx, i)
-		ret += ctx->in_flight[0] + ctx->in_flight[1];
-
-	return ret;
+static inline int queue_rq_queued(struct request_queue *q)
+{
+	return blk_ctx_sum(q, __ctx->rl.count[0] + __ctx->rl.count[1]);
 }
 
 #endif

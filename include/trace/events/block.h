@@ -6,6 +6,7 @@
 
 #include <linux/blktrace_api.h>
 #include <linux/blkdev.h>
+#include <linux/blk-mq.h>
 #include <linux/tracepoint.h>
 
 DECLARE_EVENT_CLASS(block_rq_with_error,
@@ -409,13 +410,8 @@ DECLARE_EVENT_CLASS(block_unplug,
 	),
 
 	TP_fast_assign(
-#if 0
-		__entry->nr_rq	= q->queue_ctx.rl.count[READ] +
-				  q->queue_ctx.rl.count[WRITE];
-#else
+		__entry->nr_rq	= queue_rq_queued(q);
 
-		__entry->nr_rq	= 0;
-#endif
 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
 	),
 
