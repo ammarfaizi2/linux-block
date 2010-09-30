@@ -256,6 +256,8 @@ struct queue_limits {
 struct blk_queue_ctx {
 	spinlock_t		lock;
 	struct elevator_queue	*elevator;
+	void			*elevator_data;
+
 	struct request		*last_merge;
 
 	/*
@@ -395,6 +397,16 @@ struct request_queue
 static inline struct request_queue *blk_ctx_to_queue(struct blk_queue_ctx *ctx)
 {
 	return container_of(ctx, struct request_queue, queue_ctx);
+}
+
+/*
+ * Elevator per-context data. Again, this will map to the proper queue
+ * when we do support more than 1 context per queue
+ */
+static inline struct blk_queue_ctx *blk_get_ctx(struct request_queue *q, int nr)
+{
+	BUG_ON(nr);
+	return &q->queue_ctx;
 }
 
 #define QUEUE_FLAG_CLUSTER	0	/* cluster several segments into 1 */

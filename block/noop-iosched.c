@@ -20,7 +20,7 @@ static void noop_merged_requests(struct blk_queue_ctx *ctx, struct request *rq,
 
 static int noop_dispatch(struct request_queue *q, int force)
 {
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct noop_data *nd = blk_get_ctx(q, 0)->elevator_data;
 
 	if (!list_empty(&nd->queue)) {
 		struct request *rq;
@@ -35,15 +35,14 @@ static int noop_dispatch(struct request_queue *q, int force)
 
 static void noop_add_request(struct blk_queue_ctx *ctx, struct request *rq)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct noop_data *nd = ctx->elevator_data;
 
 	list_add_tail(&rq->queuelist, &nd->queue);
 }
 
 static int noop_queue_empty(struct request_queue *q)
 {
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct noop_data *nd = q->queue_ctx.elevator_data;
 
 	return list_empty(&nd->queue);
 }
@@ -51,8 +50,7 @@ static int noop_queue_empty(struct request_queue *q)
 static struct request *
 noop_former_request(struct blk_queue_ctx *ctx, struct request *rq)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct noop_data *nd = ctx->elevator_data;
 
 	if (rq->queuelist.prev == &nd->queue)
 		return NULL;
@@ -62,31 +60,48 @@ noop_former_request(struct blk_queue_ctx *ctx, struct request *rq)
 static struct request *
 noop_latter_request(struct blk_queue_ctx *ctx, struct request *rq)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct noop_data *nd = ctx->elevator_data;
 
 	if (rq->queuelist.next == &nd->queue)
 		return NULL;
 	return list_entry(rq->queuelist.next, struct request, queuelist);
 }
 
-static void *noop_init_queue(struct request_queue *q)
+static int noop_init_queue(struct request_queue *q, unsigned int nr_queues)
 {
 	struct noop_data *nd;
+	unsigned int i;
 
-	nd = kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
-	if (!nd)
-		return NULL;
-	INIT_LIST_HEAD(&nd->queue);
-	return nd;
+	for (i = 0; i < nr_queues; i++) {
+		nd = kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
+		if (!nd)
+			goto cleanup;
+
+		INIT_LIST_HEAD(&nd->queue);
+		blk_get_ctx(q, i)->elevator_data = nd;
+	}
+
+	return 0;
+
+cleanup:
+	while (i--)
+		kfree(blk_get_ctx(q, i)->elevator_data);
+
+	return -ENOMEM;
 }
 
-static void noop_exit_queue(struct elevator_queue *e)
+static void noop_exit_queue(struct request_queue *q, struct elevator_queue *e,
+			    unsigned int nr_queues)
 {
-	struct noop_data *nd = e->elevator_data;
+	struct noop_data *nd;
+	unsigned int i;
 
-	BUG_ON(!list_empty(&nd->queue));
-	kfree(nd);
+	for (i = 0; i < nr_queues; i++) {
+		nd = blk_get_ctx(q, i)->elevator_data;
+
+		BUG_ON(!list_empty(&nd->queue));
+		kfree(nd);
+	}
 }
 
 static struct elevator_type elevator_noop = {

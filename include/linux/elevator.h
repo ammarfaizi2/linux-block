@@ -32,8 +32,8 @@ typedef void (elevator_put_req_fn) (struct request *);
 typedef void (elevator_activate_req_fn) (struct request_queue *, struct request *);
 typedef void (elevator_deactivate_req_fn) (struct request_queue *, struct request *);
 
-typedef void *(elevator_init_fn) (struct request_queue *);
-typedef void (elevator_exit_fn) (struct elevator_queue *);
+typedef int (elevator_init_fn) (struct request_queue *, unsigned int);
+typedef void (elevator_exit_fn) (struct request_queue *, struct elevator_queue *, unsigned int);
 
 struct elevator_ops
 {
@@ -138,7 +138,7 @@ extern ssize_t elv_iosched_show(struct request_queue *, char *);
 extern ssize_t elv_iosched_store(struct request_queue *, const char *, size_t);
 
 extern int elevator_init(struct request_queue *, char *);
-extern void elevator_exit(struct elevator_queue *);
+extern void elevator_exit(struct request_queue *, struct elevator_queue *);
 extern int elevator_change(struct request_queue *, const char *);
 extern int elv_rq_merge_ok(struct request *, struct bio *);
 

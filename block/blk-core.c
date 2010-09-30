@@ -457,7 +457,7 @@ void blk_cleanup_queue(struct request_queue *q)
 	mutex_unlock(&q->sysfs_lock);
 
 	if (q->elevator)
-		elevator_exit(q->elevator);
+		elevator_exit(q, q->elevator);
 
 	blk_put_queue(q);
 }

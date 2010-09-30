@@ -174,17 +174,15 @@ static struct elevator_type *elevator_get(const char *name)
 	return e;
 }
 
-static void *elevator_init_queue(struct request_queue *q,
-				 struct elevator_queue *eq)
+static int elevator_init_queue(struct request_queue *q,
+			       struct elevator_queue *eq)
 {
-	return eq->ops->elevator_init_fn(q);
+	return eq->ops->elevator_init_fn(q, 1);
 }
 
-static void elevator_attach(struct request_queue *q, struct elevator_queue *eq,
-			   void *data)
+static void elevator_attach(struct request_queue *q, struct elevator_queue *eq)
 {
 	q->elevator = eq;
-	eq->elevator_data = data;
 }
 
 static char chosen_elevator[16];
@@ -247,7 +245,6 @@ int elevator_init(struct request_queue *q, char *name)
 {
 	struct elevator_type *e = NULL;
 	struct elevator_queue *eq;
-	void *data;
 
 	if (unlikely(q->elevator))
 		return 0;
@@ -283,22 +280,21 @@ int elevator_init(struct request_queue *q, char *name)
 	if (!eq)
 		return -ENOMEM;
 
-	data = elevator_init_queue(q, eq);
-	if (!data) {
+	if (elevator_init_queue(q, eq)) {
 		kobject_put(&eq->kobj);
 		return -ENOMEM;
 	}
 
-	elevator_attach(q, eq, data);
+	elevator_attach(q, eq);
 	return 0;
 }
 EXPORT_SYMBOL(elevator_init);
 
-void elevator_exit(struct elevator_queue *e)
+void elevator_exit(struct request_queue *q, struct elevator_queue *e)
 {
 	mutex_lock(&e->sysfs_lock);
 	if (e->ops->elevator_exit_fn)
-		e->ops->elevator_exit_fn(e);
+		e->ops->elevator_exit_fn(q, e, 1);
 	e->ops = NULL;
 	mutex_unlock(&e->sysfs_lock);
 
@@ -967,7 +963,6 @@ EXPORT_SYMBOL_GPL(elv_unregister);
 static int elevator_switch(struct request_queue *q, struct elevator_type *new_e)
 {
 	struct elevator_queue *old_elevator, *e;
-	void *data;
 	int err;
 
 	/*
@@ -977,8 +972,7 @@ static int elevator_switch(struct request_queue *q, struct elevator_type *new_e)
 	if (!e)
 		return -ENOMEM;
 
-	data = elevator_init_queue(q, e);
-	if (!data) {
+	if (elevator_init_queue(q, e)) {
 		kobject_put(&e->kobj);
 		return -ENOMEM;
 	}
@@ -997,7 +991,7 @@ static int elevator_switch(struct request_queue *q, struct elevator_type *new_e)
 	/*
 	 * attach and start new elevator
 	 */
-	elevator_attach(q, e, data);
+	elevator_attach(q, e);
 
 	spin_unlock_irq(q->queue_lock);
 
@@ -1012,7 +1006,7 @@ static int elevator_switch(struct request_queue *q, struct elevator_type *new_e)
 	/*
 	 * finally exit old elevator and turn off BYPASS.
 	 */
-	elevator_exit(old_elevator);
+	elevator_exit(q, old_elevator);
 	spin_lock_irq(q->queue_lock);
 	elv_quiesce_end(q);
 	spin_unlock_irq(q->queue_lock);
@@ -1026,7 +1020,7 @@ fail_register:
 	 * switch failed, exit the new io scheduler and reattach the old
 	 * one again (along with re-adding the sysfs dir)
 	 */
-	elevator_exit(e);
+	elevator_exit(q, e);
 	q->elevator = old_elevator;
 	elv_register_queue(q);
 
