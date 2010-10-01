@@ -90,7 +90,6 @@ struct elevator_type
 struct elevator_queue
 {
 	struct elevator_ops *ops;
-	void *elevator_data;
 	struct kobject kobj;
 	struct elevator_type *elevator_type;
 	struct mutex sysfs_lock;

@@ -473,12 +473,15 @@ static int blk_init_queue_ctx(struct request_queue *q, unsigned int nr_queues)
 		struct request_list *rl = &ctx->rl;
 
 		spin_lock_init(&ctx->lock);
+		ctx->queue = q;
 
 		rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
 		rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
 		rl->elvpriv = 0;
 		init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
 		init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
+
+		INIT_LIST_HEAD(&ctx->timeout_list);
 	}
 
 	return 0;

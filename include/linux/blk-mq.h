@@ -16,7 +16,6 @@ struct request_list {
 
 struct blk_queue_ctx {
 	spinlock_t		lock;
-	struct elevator_queue	*elevator;
 	void			*elevator_data;
 	struct request_queue	*queue;
 	struct hlist_head	*hash;
@@ -83,6 +82,11 @@ static inline int queue_in_flight(struct request_queue *q)
 static inline int queue_rq_queued(struct request_queue *q)
 {
 	return blk_ctx_sum(q, __ctx->rl.count[0] + __ctx->rl.count[1]);
+}
+
+static inline int queue_elvpriv(struct request_queue *q)
+{
+	return blk_ctx_sum(q, __ctx->rl.elvpriv);
 }
 
 #endif

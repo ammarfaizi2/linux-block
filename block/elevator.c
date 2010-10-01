@@ -60,7 +60,7 @@ static const int elv_hash_shift = 6;
 static int elv_iosched_allow_merge(struct request *rq, struct bio *bio)
 {
 	struct blk_queue_ctx *ctx = rq->queue_ctx;
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_allow_merge_fn)
 		return e->ops->elevator_allow_merge_fn(ctx, rq, bio);
@@ -498,7 +498,7 @@ EXPORT_SYMBOL(elv_dispatch_add_tail);
 
 int elv_merge(struct blk_queue_ctx *ctx, struct request **req, struct bio *bio)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 	struct request_queue *q = blk_ctx_to_queue(ctx);
 	struct request *__rq;
 	int ret;
@@ -543,7 +543,7 @@ int elv_merge(struct blk_queue_ctx *ctx, struct request **req, struct bio *bio)
 
 void elv_merged_request(struct blk_queue_ctx *ctx, struct request *rq, int type)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_merged_fn)
 		e->ops->elevator_merged_fn(ctx, rq, type);
@@ -557,7 +557,7 @@ void elv_merged_request(struct blk_queue_ctx *ctx, struct request *rq, int type)
 void elv_merge_requests(struct blk_queue_ctx *ctx, struct request *rq,
 			struct request *next)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_merge_req_fn)
 		e->ops->elevator_merge_req_fn(ctx, rq, next);
@@ -572,7 +572,7 @@ void elv_merge_requests(struct blk_queue_ctx *ctx, struct request *rq,
 void elv_bio_merged(struct blk_queue_ctx *ctx, struct request *rq,
 		    struct bio *bio)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_bio_merged_fn)
 		e->ops->elevator_bio_merged_fn(ctx, rq, bio);
@@ -615,21 +615,8 @@ void elv_drain_elevator(struct request_queue *q)
 	if (printed++ < 10) {
 		printk(KERN_ERR "%s: forced dispatching is broken "
 		       "(nr_sorted=%u), please report this\n",
-			q->elevator->elevator_type->elevator_name,
-			ctx->nr_sorted);
+			q->elevator->elevator_type->elevator_name, nr_sorted);
 	}
-}
-
-static int count_elvpriv(struct request_queue *q)
-{
-	struct blk_queue_ctx *ctx;
-	int elpriv, i;
-
-	elpriv = 0;
-	queue_for_each_ctx(q, ctx, i)
-		elpriv += ctx->rl.elvpriv;
-
-	return elpriv;
 }
 
 /*
@@ -646,7 +633,7 @@ void elv_quiesce_start(struct request_queue *q)
 	 * make sure we don't have any requests in flight
 	 */
 	elv_drain_elevator(q);
-	while (count_elvpriv(q)) {
+	while (queue_elvpriv(q)) {
 		__blk_run_queue(q);
 		spin_unlock_irq(q->queue_lock);
 		msleep(10);
@@ -716,7 +703,7 @@ void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 		 * rq cannot be accessed after calling
 		 * elevator_add_req_fn.
 		 */
-		ctx->elevator->ops->elevator_add_req_fn(ctx, rq);
+		ctx->queue->elevator->ops->elevator_add_req_fn(ctx, rq);
 		break;
 
 	default:
@@ -782,7 +769,7 @@ EXPORT_SYMBOL(elv_queue_empty);
 struct request *elv_latter_request(struct blk_queue_ctx *ctx,
 				   struct request *rq)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_latter_req_fn)
 		return e->ops->elevator_latter_req_fn(ctx, rq);
@@ -792,7 +779,7 @@ struct request *elv_latter_request(struct blk_queue_ctx *ctx,
 struct request *elv_former_request(struct blk_queue_ctx *ctx,
 				   struct request *rq)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_former_req_fn)
 		return e->ops->elevator_former_req_fn(ctx, rq);
@@ -803,7 +790,7 @@ struct request *elv_former_request(struct blk_queue_ctx *ctx,
 int elv_set_request(struct blk_queue_ctx *ctx, struct request *rq,
 		    gfp_t gfp_mask)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_set_req_fn)
 		return e->ops->elevator_set_req_fn(ctx, rq, gfp_mask);
@@ -814,7 +801,7 @@ int elv_set_request(struct blk_queue_ctx *ctx, struct request *rq,
 
 void elv_put_request(struct blk_queue_ctx *ctx, struct request *rq)
 {
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	if (e->ops->elevator_put_req_fn)
 		e->ops->elevator_put_req_fn(rq);
@@ -851,7 +838,7 @@ EXPORT_SYMBOL(elv_abort_queue);
 void elv_completed_request(struct request *rq)
 {
 	struct blk_queue_ctx *ctx = rq->queue_ctx;
-	struct elevator_queue *e = ctx->elevator;
+	struct elevator_queue *e = ctx->queue->elevator;
 
 	/*
 	 * request is released from the driver, io must be done
