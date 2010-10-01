@@ -327,6 +327,7 @@ EXPORT_SYMBOL(elevator_exit);
 
 static inline void __elv_rqhash_del(struct request *rq)
 {
+	assert_spin_locked(&rq->queue_ctx->lock);
 	hlist_del_init(&rq->hash);
 }
 
@@ -338,12 +339,14 @@ static void elv_rqhash_del(struct request *rq)
 
 static void elv_rqhash_add(struct blk_queue_ctx *ctx, struct request *rq)
 {
+	assert_spin_locked(&ctx->lock);
 	BUG_ON(ELV_ON_HASH(rq));
 	hlist_add_head(&rq->hash, &ctx->hash[ELV_HASH_FN(rq_hash_key(rq))]);
 }
 
 static void elv_rqhash_reposition(struct blk_queue_ctx *ctx, struct request *rq)
 {
+	assert_spin_locked(&ctx->lock);
 	__elv_rqhash_del(rq);
 	elv_rqhash_add(ctx, rq);
 }
@@ -357,6 +360,8 @@ static struct request *elv_rqhash_find(struct blk_queue_ctx *ctx,
 	struct hlist_head *hash_list = &ctx->hash[ELV_HASH_FN(offset)];
 	struct hlist_node *entry, *next;
 	struct request *rq;
+
+	assert_spin_locked(&ctx->lock);
 
 	hlist_for_each_entry_safe(rq, entry, next, hash_list, hash) {
 		BUG_ON(!ELV_ON_HASH(rq));
@@ -382,6 +387,8 @@ struct request *elv_rb_add(struct rb_root *root, struct request *rq)
 	struct rb_node **p = &root->rb_node;
 	struct rb_node *parent = NULL;
 	struct request *__rq;
+
+	assert_spin_locked(&rq->queue_ctx->lock);
 
 	while (*p) {
 		parent = *p;
@@ -441,6 +448,9 @@ void elv_dispatch_sort(struct request_queue *q, struct blk_queue_ctx *ctx,
 	struct list_head *entry;
 	int stop_flags;
 
+	assert_spin_locked(&ctx->lock);
+	assert_spin_locked(&ctx->lock);
+
 	if (ctx->last_merge == rq)
 		ctx->last_merge = NULL;
 
@@ -483,6 +493,9 @@ EXPORT_SYMBOL(elv_dispatch_sort);
 void elv_dispatch_add_tail(struct request_queue *q, struct blk_queue_ctx *ctx,
 			   struct request *rq)
 {
+	assert_spin_locked(q->queue_lock);
+	assert_spin_locked(&ctx->lock);
+
 	if (ctx->last_merge == rq)
 		ctx->last_merge = NULL;
 
@@ -502,6 +515,8 @@ int elv_merge(struct blk_queue_ctx *ctx, struct request **req, struct bio *bio)
 	struct elevator_queue *e = q->elevator;
 	struct request *__rq;
 	int ret;
+
+	assert_spin_locked(&ctx->lock);
 
 	/*
 	 * Levels of merges:
@@ -545,6 +560,8 @@ void elv_merged_request(struct blk_queue_ctx *ctx, struct request *rq, int type)
 {
 	struct elevator_queue *e = ctx->queue->elevator;
 
+	assert_spin_locked(&ctx->lock);
+
 	if (e->ops->elevator_merged_fn)
 		e->ops->elevator_merged_fn(ctx, rq, type);
 
@@ -560,6 +577,7 @@ void elv_merge_requests(struct blk_queue_ctx *ctx, struct request *rq,
 	struct elevator_queue *e = ctx->queue->elevator;
 
 	BUG_ON(rq->queue_ctx != next->queue_ctx);
+	assert_spin_locked(&ctx->lock);
 
 	if (e->ops->elevator_merge_req_fn)
 		e->ops->elevator_merge_req_fn(ctx, rq, next);
@@ -577,6 +595,7 @@ void elv_bio_merged(struct blk_queue_ctx *ctx, struct request *rq,
 	struct elevator_queue *e = ctx->queue->elevator;
 
 	BUG_ON(ctx != rq->queue_ctx);
+	assert_spin_locked(&ctx->lock);
 
 	if (e->ops->elevator_bio_merged_fn)
 		e->ops->elevator_bio_merged_fn(ctx, rq, bio);
@@ -585,6 +604,8 @@ void elv_bio_merged(struct blk_queue_ctx *ctx, struct request *rq,
 void elv_requeue_request(struct request_queue *q, struct request *rq)
 {
 	struct blk_queue_ctx *ctx = rq->queue_ctx;
+
+	assert_spin_locked(&ctx->lock);
 
 	/*
 	 * it already went through dequeue, we need to decrement the
@@ -747,12 +768,11 @@ EXPORT_SYMBOL(__elv_add_request);
 void elv_add_request(struct blk_queue_ctx *ctx, struct request *rq, int where,
 		     int plug)
 {
-	struct request_queue *q = ctx->queue;
 	unsigned long flags;
 
-	spin_lock_irqsave(q->queue_lock, flags);
+	spin_lock_irqsave(&ctx->lock, flags);
 	__elv_add_request(ctx, rq, where, plug);
-	spin_unlock_irqrestore(q->queue_lock, flags);
+	spin_unlock_irqrestore(&ctx->lock, flags);
 }
 EXPORT_SYMBOL(elv_add_request);
 

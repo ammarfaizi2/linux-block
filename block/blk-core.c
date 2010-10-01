@@ -790,7 +790,7 @@ static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 		rw_flags |= REQ_IO_STAT;
 
 	if (drop_lock)
-		spin_unlock_irq(q->queue_lock);
+		spin_unlock_irq(&ctx->lock);
 
 	rq = blk_alloc_request(ctx, rw_flags, priv, gfp_mask);
 	if (unlikely(!rq)) {
@@ -802,7 +802,7 @@ static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 		 * wait queue, but this is pretty rare.
 		 */
 		if (drop_lock)
-			spin_lock_irq(q->queue_lock);
+			spin_lock_irq(&ctx->lock);
 
 		freed_request(ctx, is_sync, priv);
 
@@ -823,7 +823,7 @@ rq_starved:
 	trace_block_getrq(q, bio, rw_flags & 1);
 
 	if (drop_lock)
-		spin_lock_irq(q->queue_lock);
+		spin_lock_irq(&ctx->lock);
 out:
 	return rq;
 }
@@ -851,11 +851,20 @@ static struct request *get_request_wait(struct blk_queue_ctx *ctx, int rw_flags,
 
 		trace_block_sleeprq(q, bio, rw_flags & 1);
 
+		/*
+		 * Drop context lock, grab queue lock. After unplugging,
+		 * drop reshuffle again.
+		 */
+		spin_unlock(&ctx->lock);
+		spin_lock(q->queue_lock);
+
 		__generic_unplug_device(q);
+
 		spin_unlock_irq(q->queue_lock);
+
 		io_schedule();
 
-		spin_lock_irq(q->queue_lock);
+		spin_lock_irq(&ctx->lock);
 		finish_wait(&rl->wait[is_sync], &wait);
 
 		rq = get_request(ctx, rw_flags, bio, GFP_NOIO);
@@ -871,14 +880,14 @@ struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
 
 	BUG_ON(rw != READ && rw != WRITE);
 
-	spin_lock_irq(q->queue_lock);
+	spin_lock_irq(&ctx->lock);
 
 	if (gfp_mask & __GFP_WAIT)
 		rq = get_request_wait(ctx, rw, NULL);
 	else
 		rq = get_request(ctx, rw, NULL, gfp_mask);
 
-	spin_unlock_irq(q->queue_lock);
+	spin_unlock_irq(&ctx->lock);
 	return rq;
 }
 EXPORT_SYMBOL(blk_get_request);
@@ -986,6 +995,7 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
 			int at_head, void *data)
 {
 	int where = at_head ? ELEVATOR_INSERT_FRONT : ELEVATOR_INSERT_BACK;
+	struct blk_queue_ctx *ctx = rq->queue_ctx;
 	unsigned long flags;
 
 	/*
@@ -997,7 +1007,7 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
 
 	rq->special = data;
 
-	spin_lock_irqsave(q->queue_lock, flags);
+	spin_lock_irqsave(&ctx->lock, flags);
 
 	/*
 	 * If command is tagged, release the tag
@@ -1007,6 +1017,10 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
 
 	drive_stat_acct(rq, 1);
 	__elv_add_request(rq->queue_ctx, rq, where, 0);
+
+	spin_unlock(&ctx->lock);
+	spin_lock(q->queue_lock);
+
 	__blk_run_queue(q);
 	spin_unlock_irqrestore(q->queue_lock, flags);
 }
@@ -1088,12 +1102,12 @@ EXPORT_SYMBOL_GPL(__blk_put_request);
 
 void blk_put_request(struct request *req)
 {
-	struct request_queue *q = req->queue_ctx->queue;
+	struct blk_queue_ctx *ctx = req->queue_ctx;
 	unsigned long flags;
 
-	spin_lock_irqsave(q->queue_lock, flags);
+	spin_lock_irqsave(&ctx->lock, flags);
 	__blk_put_request(req);
-	spin_unlock_irqrestore(q->queue_lock, flags);
+	spin_unlock_irqrestore(&ctx->lock, flags);
 }
 EXPORT_SYMBOL(blk_put_request);
 
@@ -1173,7 +1187,7 @@ static int queue_bio(struct request_queue *q, struct bio *bio)
 	 */
 	blk_queue_bounce(q, &bio);
 
-	spin_lock_irq(q->queue_lock);
+	spin_lock_irq(&ctx->lock);
 
 	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA)) {
 		where = ELEVATOR_INSERT_FRONT;
@@ -1280,6 +1294,7 @@ get_rq:
 	drive_stat_acct(req, 1);
 	__elv_add_request(ctx, req, where, 0);
 out:
+	spin_unlock_irq(&ctx->lock);
 	if (unplug || !queue_should_plug(q))
 		__generic_unplug_device(q);
 	spin_unlock_irq(q->queue_lock);
@@ -1666,6 +1681,7 @@ EXPORT_SYMBOL_GPL(blk_rq_check_limits);
  */
 int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 {
+	struct blk_queue_ctx *ctx = rq->queue_ctx;
 	unsigned long flags;
 
 	if (blk_rq_check_limits(q, rq))
@@ -1677,7 +1693,7 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 		return -EIO;
 #endif
 
-	spin_lock_irqsave(q->queue_lock, flags);
+	spin_lock_irqsave(&ctx->lock, flags);
 
 	/*
 	 * Submitting request must be dequeued before calling this function
@@ -1686,9 +1702,9 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 	BUG_ON(blk_queued_rq(rq));
 
 	drive_stat_acct(rq, 1);
-	__elv_add_request(rq->queue_ctx, rq, ELEVATOR_INSERT_BACK, 0);
+	__elv_add_request(ctx, rq, ELEVATOR_INSERT_BACK, 0);
 
-	spin_unlock_irqrestore(q->queue_lock, flags);
+	spin_unlock_irqrestore(&ctx->lock, flags);
 
 	return 0;
 }
@@ -2203,15 +2219,15 @@ static void blk_finish_request(struct request *req, int error)
 static bool blk_end_bidi_request(struct request *rq, int error,
 				 unsigned int nr_bytes, unsigned int bidi_bytes)
 {
-	struct request_queue *q = rq->queue_ctx->queue;
+	struct blk_queue_ctx *ctx = rq->queue_ctx;
 	unsigned long flags;
 
 	if (blk_update_bidi_request(rq, error, nr_bytes, bidi_bytes))
 		return true;
 
-	spin_lock_irqsave(q->queue_lock, flags);
+	spin_lock_irqsave(&ctx->lock, flags);
 	blk_finish_request(rq, error);
-	spin_unlock_irqrestore(q->queue_lock, flags);
+	spin_unlock_irqrestore(&ctx->lock, flags);
 
 	return false;
 }

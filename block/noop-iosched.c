@@ -16,6 +16,8 @@ struct noop_data {
 static void noop_merged_requests(struct blk_queue_ctx *ctx, struct request *rq,
 				 struct request *next)
 {
+	assert_spin_locked(&ctx->lock);
+
 	list_del_init(&next->queuelist);
 }
 
@@ -35,10 +37,13 @@ static int noop_dispatch(struct request_queue *q, int force)
 		if (list_empty(&nd->queue))
 			continue;
 
+		spin_lock(&ctx->lock);
 		rq = list_entry(nd->queue.next, struct request, queuelist);
 		list_del_init(&rq->queuelist);
+
 		BUG_ON(rq->queue_ctx != ctx);
 		elv_dispatch_sort(q, ctx, rq);
+		spin_unlock(&ctx->lock);
 		dispatched++;
 	}
 
@@ -48,6 +53,8 @@ static int noop_dispatch(struct request_queue *q, int force)
 static void noop_add_request(struct blk_queue_ctx *ctx, struct request *rq)
 {
 	struct noop_data *nd = ctx->elevator_data;
+
+	assert_spin_locked(&ctx->lock);
 
 	list_add_tail(&rq->queuelist, &nd->queue);
 }
