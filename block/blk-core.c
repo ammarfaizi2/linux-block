@@ -748,8 +748,6 @@ static void freed_request(struct blk_queue_ctx *ctx, int sync, int priv)
 
 /*
  * Get a free request, queue_lock must be held.
- * Returns NULL on failure, with queue_lock held.
- * Returns !NULL on success, with queue_lock *not held*.
  */
 static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 				   struct bio *bio, gfp_t gfp_mask)
@@ -758,6 +756,7 @@ static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 	struct request *rq = NULL;
 	struct request_list *rl = &ctx->rl;
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
+	const bool drop_lock = (gfp_mask & __GFP_WAIT) != 0;
 	int may_queue, priv;
 
 	may_queue = elv_may_queue(q, rw_flags);
@@ -789,7 +788,9 @@ static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 
 	if (blk_queue_io_stat(q))
 		rw_flags |= REQ_IO_STAT;
-	spin_unlock_irq(q->queue_lock);
+
+	if (drop_lock)
+		spin_unlock_irq(q->queue_lock);
 
 	rq = blk_alloc_request(ctx, rw_flags, priv, gfp_mask);
 	if (unlikely(!rq)) {
@@ -800,7 +801,9 @@ static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 		 * Allocating task should really be put onto the front of the
 		 * wait queue, but this is pretty rare.
 		 */
-		spin_lock_irq(q->queue_lock);
+		if (drop_lock)
+			spin_lock_irq(q->queue_lock);
+
 		freed_request(ctx, is_sync, priv);
 
 		/*
@@ -818,6 +821,9 @@ rq_starved:
 	}
 
 	trace_block_getrq(q, bio, rw_flags & 1);
+
+	if (drop_lock)
+		spin_lock_irq(q->queue_lock);
 out:
 	return rq;
 }
@@ -826,7 +832,7 @@ out:
  * No available requests for this queue, unplug the device and wait for some
  * requests to become available.
  *
- * Called with q->queue_lock held, and returns with it unlocked.
+ * Called with q->queue_lock held.
  */
 static struct request *get_request_wait(struct blk_queue_ctx *ctx, int rw_flags,
 					struct bio *bio)
@@ -835,7 +841,7 @@ static struct request *get_request_wait(struct blk_queue_ctx *ctx, int rw_flags,
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
 	struct request *rq;
 
-	rq = get_request(ctx, rw_flags, bio, GFP_NOIO);
+	rq = get_request(ctx, rw_flags, bio, GFP_ATOMIC);
 	while (!rq) {
 		DEFINE_WAIT(wait);
 		struct request_list *rl = &ctx->rl;
@@ -866,15 +872,13 @@ struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
 	BUG_ON(rw != READ && rw != WRITE);
 
 	spin_lock_irq(q->queue_lock);
-	if (gfp_mask & __GFP_WAIT) {
-		rq = get_request_wait(ctx, rw, NULL);
-	} else {
-		rq = get_request(ctx, rw, NULL, gfp_mask);
-		if (!rq)
-			spin_unlock_irq(q->queue_lock);
-	}
-	/* q->queue_lock is unlocked at this point */
 
+	if (gfp_mask & __GFP_WAIT)
+		rq = get_request_wait(ctx, rw, NULL);
+	else
+		rq = get_request(ctx, rw, NULL, gfp_mask);
+
+	spin_unlock_irq(q->queue_lock);
 	return rq;
 }
 EXPORT_SYMBOL(blk_get_request);
@@ -1254,8 +1258,7 @@ get_rq:
 		rw_flags |= REQ_SYNC;
 
 	/*
-	 * Grab a free request. This is might sleep but can not fail.
-	 * Returns with the queue unlocked.
+	 * Grab a free request.
 	 */
 	req = get_request_wait(ctx, rw_flags, bio);
 
@@ -1267,7 +1270,6 @@ get_rq:
 	 */
 	init_request_from_bio(req, bio);
 
-	spin_lock_irq(q->queue_lock);
 	if (test_bit(QUEUE_FLAG_SAME_COMP, &q->queue_flags) ||
 	    bio_flagged(bio, BIO_CPU_AFFINE))
 		req->cpu = blk_cpu_to_group(smp_processor_id());
