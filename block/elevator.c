@@ -559,6 +559,8 @@ void elv_merge_requests(struct blk_queue_ctx *ctx, struct request *rq,
 {
 	struct elevator_queue *e = ctx->queue->elevator;
 
+	BUG_ON(rq->queue_ctx != next->queue_ctx);
+
 	if (e->ops->elevator_merge_req_fn)
 		e->ops->elevator_merge_req_fn(ctx, rq, next);
 
@@ -573,6 +575,8 @@ void elv_bio_merged(struct blk_queue_ctx *ctx, struct request *rq,
 		    struct bio *bio)
 {
 	struct elevator_queue *e = ctx->queue->elevator;
+
+	BUG_ON(ctx != rq->queue_ctx);
 
 	if (e->ops->elevator_bio_merged_fn)
 		e->ops->elevator_bio_merged_fn(ctx, rq, bio);
@@ -652,9 +656,9 @@ void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 	struct request_queue *q = blk_ctx_to_queue(ctx);
 	int unplug_it = 1;
 
-	trace_block_rq_insert(q, rq);
+	BUG_ON(ctx != rq->queue_ctx);
 
-	rq->queue_ctx = ctx;
+	trace_block_rq_insert(q, rq);
 
 	switch (where) {
 	case ELEVATOR_INSERT_REQUEUE:

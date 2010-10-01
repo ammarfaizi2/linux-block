@@ -472,15 +472,11 @@ static int blk_init_queue_ctx(struct request_queue *q, unsigned int nr_queues)
 	queue_for_each_ctx(q, ctx, i) {
 		struct request_list *rl = &ctx->rl;
 
+		memset(ctx, 0, sizeof(*ctx));
 		spin_lock_init(&ctx->lock);
 		ctx->queue = q;
-
-		rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
-		rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
-		rl->elvpriv = 0;
 		init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
 		init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
-
 		INIT_LIST_HEAD(&ctx->timeout_list);
 	}
 
@@ -986,7 +982,6 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
 			int at_head, void *data)
 {
 	int where = at_head ? ELEVATOR_INSERT_FRONT : ELEVATOR_INSERT_BACK;
-	struct blk_queue_ctx *ctx = blk_get_ctx(q, 0);
 	unsigned long flags;
 
 	/*
@@ -1007,7 +1002,7 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
 		blk_queue_end_tag(q, rq);
 
 	drive_stat_acct(rq, 1);
-	__elv_add_request(ctx, rq, where, 0);
+	__elv_add_request(rq->queue_ctx, rq, where, 0);
 	__blk_run_queue(q);
 	spin_unlock_irqrestore(q->queue_lock, flags);
 }
@@ -1689,7 +1684,7 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 	BUG_ON(blk_queued_rq(rq));
 
 	drive_stat_acct(rq, 1);
-	__elv_add_request(blk_get_ctx(q, 0), rq, ELEVATOR_INSERT_BACK, 0);
+	__elv_add_request(rq->queue_ctx, rq, ELEVATOR_INSERT_BACK, 0);
 
 	spin_unlock_irqrestore(q->queue_lock, flags);
 

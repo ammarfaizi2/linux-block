@@ -37,6 +37,7 @@ static int noop_dispatch(struct request_queue *q, int force)
 
 		rq = list_entry(nd->queue.next, struct request, queuelist);
 		list_del_init(&rq->queuelist);
+		BUG_ON(rq->queue_ctx != ctx);
 		elv_dispatch_sort(q, ctx, rq);
 		dispatched++;
 	}
