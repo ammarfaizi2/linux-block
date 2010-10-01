@@ -54,13 +54,14 @@ static void noop_add_request(struct blk_queue_ctx *ctx, struct request *rq)
 static int noop_queue_empty(struct request_queue *q)
 {
 	struct blk_queue_ctx *ctx;
-	int i, is_empty;
+	int i, is_empty = 1;
 
-	is_empty = 0;
 	queue_for_each_ctx(q, ctx, i) {
 		struct noop_data *nd = ctx->elevator_data;
 
-		is_empty |= list_empty(&nd->queue);
+		is_empty &= list_empty(&nd->queue);
+		if (!is_empty)
+			break;
 	}
 
 	return is_empty;
