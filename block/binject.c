@@ -412,13 +412,12 @@ static struct b_dev *b_dev_lookup(int minor)
 	struct b_dev *bd;
 
 	rcu_read_lock();
-	bd = idr_find(&b_minor_idr, minor);
-	if (bd) {
-		if (!atomic_inc_not_zero(&bd->ref))
-			bd = NULL;
-	}
-	rcu_read_unlock();
 
+	bd = idr_find(&b_minor_idr, minor);
+	if (bd && !atomic_inc_not_zero(&bd->ref))
+		bd = NULL;
+
+	rcu_read_unlock();
 	return bd;
 }
 
@@ -438,6 +437,7 @@ static ssize_t b_dev_write(struct file *file, const char __user *buf,
 			   size_t count, loff_t *ppos)
 {
 	struct b_dev *bd = file->private_data;
+	struct b_cmd *bc = NULL;
 	unsigned int total;
 	ssize_t done = 0;
 	int err = 0;
@@ -447,11 +447,10 @@ static ssize_t b_dev_write(struct file *file, const char __user *buf,
 
 	total = count / sizeof(struct b_user_cmd);
 	while (total) {
-		struct b_cmd *bc;
-
 		bc = get_free_command(bd);
 		if (IS_ERR(bc)) {
 			err = PTR_ERR(bc);
+			bc = NULL;
 			break;
 		}
 
@@ -461,21 +460,20 @@ static ssize_t b_dev_write(struct file *file, const char __user *buf,
 		}
 
 		err = b_dev_validate_command(&bc->cmd);
-		if (err) {
-			b_dev_free_command(bd, bc);
+		if (err)
 			break;
-		}
 
 		err = b_dev_add_command(bd, bc);
-		if (err) {
-			b_dev_free_command(bd, bc);
+		if (err)
 			break;
-		}
 
 		done += sizeof(struct b_user_cmd);
 		buf += sizeof(struct b_user_cmd);
 		total--;
 	}
+
+	if (bc)
+		b_dev_free_command(bd, bc);
 
 	*ppos = done;
 	if (!done)
