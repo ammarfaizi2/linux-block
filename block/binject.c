@@ -67,6 +67,7 @@ struct uc_map {
 	unsigned int data_transfer : 1;
 	unsigned int todevice : 1;
 	unsigned int map_zero : 1;
+	unsigned long rw_flags;
 };
 
 static const struct uc_map uc_map[B_TYPE_NR] = {
@@ -81,12 +82,14 @@ static const struct uc_map uc_map[B_TYPE_NR] = {
 		.data_transfer	= 1,
 		.todevice	= 1,
 		.map_zero	= 0,
+		.rw_flags	= REQ_WRITE,
 	},
 	{
 		.type		= B_TYPE_DISCARD,
 		.data_transfer	= 0,
 		.todevice	= 0,
 		.map_zero	= 0,
+		.rw_flags	= REQ_DISCARD | REQ_WRITE,
 	},
 	{
 		.type		= B_TYPE_READVOID,
@@ -99,6 +102,21 @@ static const struct uc_map uc_map[B_TYPE_NR] = {
 		.data_transfer	= 1,
 		.todevice	= 1,
 		.map_zero	= 1,
+		.rw_flags	= REQ_WRITE,
+	},
+	{
+		.type		= B_TYPE_READBARRIER,
+		.data_transfer	= 1,
+		.todevice	= 0,
+		.map_zero	= 0,
+		.rw_flags	= REQ_HARDBARRIER,
+	},
+	{
+		.type		= B_TYPE_WRITEBARRIER,
+		.data_transfer	= 1,
+		.todevice	= 1,
+		.map_zero	= 0,
+		.rw_flags	= REQ_HARDBARRIER | REQ_FLUSH | REQ_WRITE,
 	}
 };
 
@@ -329,10 +347,6 @@ static struct bio *map_uc_to_bio(struct b_dev *bd, struct b_user_cmd *uc)
 		bio = bio_alloc(GFP_KERNEL, len_to_pages(uc->len));
 		if (bio) {
 			bio->bi_bdev = bd->bdev;
-			if (ucm->todevice)
-				bio->bi_rw |= REQ_WRITE;
-			if (uc->type == B_TYPE_DISCARD)
-				bio->bi_rw |= REQ_DISCARD;
 			if (ucm->map_zero && uc->len) {
 				int err;
 
@@ -353,6 +367,7 @@ static struct bio *map_uc_to_bio(struct b_dev *bd, struct b_user_cmd *uc)
 		bio->bi_sector = uc->offset / queue_physical_block_size(q);
 	}
 
+	bio->bi_rw |= ucm->rw_flags;
 	return bio;
 }
 
