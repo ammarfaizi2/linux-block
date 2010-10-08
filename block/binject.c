@@ -631,6 +631,7 @@ static int b_add_dev(struct b_ioctl_cmd *bic)
 		goto out_idr;
 
 	list_add_tail(&bd->device_list, &b_dev_list);
+	bic->minor = bd->minor;
 	spin_unlock(&b_dev_lock);
 	return 0;
 out_idr:
@@ -648,20 +649,27 @@ static long b_misc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int __user *uarg = (int __user *) arg;
 	struct b_ioctl_cmd bic;
+	int ret = -ENOTTY;
 
 	if (copy_from_user(&bic, uarg, sizeof(bic)))
 		return -EFAULT;
 
 	switch (cmd) {
 	case 0:
-		return b_add_dev(&bic);
+		ret = b_add_dev(&bic);
+		if (!ret && copy_to_user(uarg, &bic, sizeof(bic))) {
+			b_del_dev(&bic);
+			ret = -EFAULT;
+		}
+		break;
 	case 1:
-		return b_del_dev(&bic);
+		ret = b_del_dev(&bic);
+		break;
 	default:
 		break;
 	}
 
-	return -ENOTTY;
+	return ret;
 }
 
 static const struct file_operations b_misc_fops = {
