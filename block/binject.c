@@ -159,8 +159,6 @@ static struct b_cmd *get_free_command(struct b_dev *bd)
 
 	bc = kmem_cache_alloc(b_slab, GFP_KERNEL);
 	if (bc) {
-		memset(bc, 0, sizeof(*bc));
-		INIT_LIST_HEAD(&bc->list);
 		bc->bd = bd;
 		return bc;
 	}
@@ -176,7 +174,7 @@ static struct b_cmd *get_completed_command(struct b_dev *bd)
 	if (!list_empty(&bd->done_list)) {
 		bc = list_entry(bd->done_list.next, struct b_cmd, list);
 		bd->done_cmds--;
-		list_del(&bc->list);
+		list_del_init(&bc->list);
 	}
 	spin_unlock_irq(&bd->lock);
 	return bc;
@@ -395,6 +393,7 @@ static int b_dev_add_command(struct b_dev *bd, struct b_cmd *bc)
 
 static void b_dev_free_command(struct b_dev *bd, struct b_cmd *bc)
 {
+	BUG_ON(!list_empty(&bc->list));
 	kmem_cache_free(b_slab, bc);
 }
 
@@ -692,11 +691,19 @@ static void __exit b_exit(void)
 	misc_deregister(&b_misc_dev);
 }
 
+static void b_cmd_init_once(void *data)
+{
+	struct b_cmd *bc = data;
+
+	INIT_LIST_HEAD(&bc->list);
+}
+
 static int __init b_init(void)
 {
 	int ret;
 
-	b_slab = kmem_cache_create("binject", sizeof(struct b_cmd), 0, 0, NULL);
+	b_slab = kmem_cache_create("binject", sizeof(struct b_cmd), 0,
+					SLAB_HWCACHE_ALIGN, b_cmd_init_once);
 	if (!b_slab) {
 		printk(KERN_ERR "binject: failed to create cmd slab\n");
 		return -ENOMEM;
