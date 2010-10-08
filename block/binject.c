@@ -30,7 +30,6 @@ static int b_major;
 struct b_dev_cpu {
 	spinlock_t lock;
 	struct list_head done_list;
-	unsigned int done_cmds;
 };
 
 struct b_dev {
@@ -198,7 +197,6 @@ ret_one:
 		spin_lock_irq(&bdc->lock);
 		if (!list_empty(&bdc->done_list)) {
 			list_splice_init(&bdc->done_list, &bd->reaped_done);
-			bdc->done_cmds = 0;
 			spliced++;
 		}
 		spin_unlock_irq(&bdc->lock);
@@ -211,20 +209,18 @@ ret_one:
 	return NULL;
 }
 
-static int bd_done_count(struct b_dev *bd)
+static int bd_pending_done(struct b_dev *bd)
 {
-	int cpu, done;
+	int cpu;
 
-	done = 0;
 	for_each_possible_cpu(cpu) {
 		struct b_dev_cpu *bdc = per_cpu_ptr(bd->cpu_queue, cpu);
 
-		spin_lock_irq(&bdc->lock);
-		done += bdc->done_cmds;
-		spin_unlock_irq(&bdc->lock);
+		if (!list_empty_careful(&bdc->done_list))
+			return 1;
 	}
 
-	return done;
+	return 0;
 }
 
 static struct b_cmd *get_done_command(struct b_dev *bd, int block)
@@ -240,7 +236,7 @@ static struct b_cmd *get_done_command(struct b_dev *bd, int block)
 		if (!block)
 			break;
 
-		ret = wait_event_interruptible(bd->wq_done, bd_done_count(bd));
+		ret = wait_event_interruptible(bd->wq_done, bd_pending_done(bd));
 		if (ret) {
 			bc = ERR_PTR(-ERESTARTSYS);
 			break;
@@ -325,7 +321,6 @@ static void b_cmd_endio(struct bio *bio, int error)
 
 	spin_lock(&bdc->lock);
 	list_add_tail(&bc->list, &bdc->done_list);
-	bdc->done_cmds++;
 	spin_unlock_irqrestore(&bdc->lock, flags);
 
 	atomic_dec(&bd->in_flight);
@@ -457,18 +452,11 @@ static unsigned int b_dev_poll(struct file *file, poll_table *wait)
 {
 	struct b_dev *bd = file->private_data;
 	unsigned int mask = POLLOUT;
-	int cpu;
 
 	poll_wait(file, &bd->wq_done, wait);
 
-	for_each_possible_cpu(cpu) {
-		struct b_dev_cpu *bdc = per_cpu_ptr(bd->cpu_queue, cpu);
-
-		if (!list_empty_careful(&bdc->done_list)) {
-			mask |= POLLIN | POLLRDNORM;
-			break;
-		}
-	}
+	if (bd_pending_done(bd))
+		mask |= POLLIN | POLLRDNORM;
 
 	return mask;
 }
@@ -673,7 +661,6 @@ static int b_add_dev(struct b_ioctl_cmd *bic)
 
 		bdc = per_cpu_ptr(bd->cpu_queue, cpu);
 		INIT_LIST_HEAD(&bdc->done_list);
-		bdc->done_cmds = 0;
 		spin_lock_init(&bdc->lock);
 	}
 
