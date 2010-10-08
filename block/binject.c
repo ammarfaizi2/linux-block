@@ -365,9 +365,9 @@ static struct bio *map_uc_to_bio(struct b_dev *bd, struct b_user_cmd *uc)
 	else if (!IS_ERR(bio)) {
 		map_uc_to_bio_flags(bio, uc);
 		bio->bi_sector = uc->offset / queue_physical_block_size(q);
+		bio->bi_rw |= ucm->rw_flags;
 	}
 
-	bio->bi_rw |= ucm->rw_flags;
 	return bio;
 }
 
@@ -487,6 +487,7 @@ static ssize_t b_dev_write(struct file *file, const char __user *buf,
 		done += sizeof(struct b_user_cmd);
 		buf += sizeof(struct b_user_cmd);
 		total--;
+		bc = NULL;
 	}
 
 	if (bc)
