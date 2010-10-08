@@ -289,21 +289,23 @@ static void b_dev_complete_commands(struct b_dev *bd)
 
 static int b_dev_validate_command(struct b_user_cmd *buc)
 {
+	int i;
+
 	if (!binject_buc_check_magic(buc))
 		return -EINVAL;
 
-	switch (buc->type) {
-	case B_TYPE_WRITE:
-	case B_TYPE_READ:
-	case B_TYPE_DISCARD:
-	case B_TYPE_READVOID:
-	case B_TYPE_WRITEZERO:
-		if (buc->len)
-			return 0;
-		return -EINVAL;
-	default:
-		return -EINVAL;
+	for (i = 0; i < B_TYPE_NR; i++) {
+		const struct uc_map *ucm = &uc_map[i];
+
+		if (ucm->type != buc->type)
+			continue;
+		if (ucm->data_transfer && !buc->len)
+			break;
+
+		return 0;
 	}
+
+	return -EINVAL;
 }
 
 static void b_cmd_endio(struct bio *bio, int error)
