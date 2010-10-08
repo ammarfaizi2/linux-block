@@ -325,7 +325,9 @@ static void b_cmd_endio(struct bio *bio, int error)
 
 	atomic_dec(&bd->in_flight);
 
-	wake_up(&bd->wq_done);
+	smp_mb();
+	if (waitqueue_active(&bd->wq_done))
+		wake_up(&bd->wq_done);
 }
 
 #define len_to_pages(len)	((len + PAGE_SIZE - 1) / PAGE_SIZE)
