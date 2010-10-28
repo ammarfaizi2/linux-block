@@ -197,6 +197,7 @@ int ext4_sync_file(struct file *file, int datasync)
 	if (ext4_should_journal_data(inode))
 		return ext4_force_commit(inode->i_sb);
 
+	mutex_unlock(&inode->i_mutex);
 	commit_tid = datasync ? ei->i_datasync_tid : ei->i_sync_tid;
 	if (jbd2_log_start_commit(journal, commit_tid)) {
 		/*
@@ -215,5 +216,7 @@ int ext4_sync_file(struct file *file, int datasync)
 		ret = jbd2_log_wait_commit(journal, commit_tid);
 	} else if (journal->j_flags & JBD2_BARRIER)
 		blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
+
+	mutex_lock(&inode->i_mutex);
 	return ret;
 }
