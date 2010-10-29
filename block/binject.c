@@ -39,6 +39,7 @@ struct b_dev {
 	atomic_t in_flight;
 	wait_queue_head_t wq_done;
 	struct block_device *bdev;
+	unsigned int bs;
 	atomic_t ref;
 	struct file *file;
 	struct device *dev;
@@ -283,7 +284,7 @@ static void b_dev_complete_commands(struct b_dev *bd)
 		complete_and_free_bio(bc);
 }
 
-static int b_dev_validate_command(struct b_user_cmd *buc)
+static int b_dev_validate_command(struct b_dev *bd, struct b_user_cmd *buc)
 {
 	int i;
 
@@ -295,8 +296,16 @@ static int b_dev_validate_command(struct b_user_cmd *buc)
 
 		if (ucm->type != buc->type)
 			continue;
-		if (ucm->data_transfer && !buc->len)
-			break;
+		if (ucm->data_transfer) {
+			unsigned int mask = bd->bs - 1;
+
+			if (!buc->len)
+				break;
+			if (!ucm->map_zero &&
+			    ((buc->len & mask) || (buc->buf & mask) ||
+			     (buc->offset & mask)))
+				break;
+		}
 
 		return 0;
 	}
@@ -412,7 +421,7 @@ static struct bio *map_uc_to_bio(struct b_dev *bd, struct b_user_cmd *uc)
 		bio = ERR_PTR(-ENOMEM);
 	else if (!IS_ERR(bio)) {
 		map_uc_to_bio_flags(bio, uc);
-		bio->bi_sector = uc->offset / queue_physical_block_size(q);
+		bio->bi_sector = uc->offset / bd->bs;
 		bio->bi_rw |= ucm->rw_flags;
 	}
 
@@ -523,7 +532,7 @@ static ssize_t b_dev_write(struct file *file, const char __user *buf,
 			break;
 		}
 
-		err = b_dev_validate_command(&bc->cmd);
+		err = b_dev_validate_command(bd, &bc->cmd);
 		if (err)
 			break;
 
@@ -672,6 +681,7 @@ static int b_add_dev(struct b_ioctl_cmd *bic)
 	init_waitqueue_head(&bd->wq_done);
 	bd->file = file;
 	bd->bdev = inode->i_bdev;;
+	bd->bs = queue_physical_block_size(bdev_get_queue(bd->bdev));
 
 	spin_lock(&b_dev_lock);
 
@@ -719,14 +729,14 @@ static long b_misc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		return -EFAULT;
 
 	switch (cmd) {
-	case 0:
+	case B_IOCTL_ADD:
 		ret = b_add_dev(&bic);
 		if (!ret && copy_to_user(uarg, &bic, sizeof(bic))) {
 			b_del_dev(&bic);
 			ret = -EFAULT;
 		}
 		break;
-	case 1:
+	case B_IOCTL_DEL:
 		ret = b_del_dev(&bic);
 		break;
 	default:
