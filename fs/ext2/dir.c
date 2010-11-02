@@ -209,6 +209,11 @@ fail:
 	return ERR_PTR(-EIO);
 }
 
+static inline int ext2_dirent_in_use(struct ext2_dir_entry_2 *de)
+{
+	return (de->inode);
+}
+
 /*
  * NOTE! unlike strncmp, ext2_match returns 1 for success, 0 for failure.
  *
@@ -219,7 +224,7 @@ static inline int ext2_match (int len, const char * const name,
 {
 	if (len != de->name_len)
 		return 0;
-	if (!de->inode)
+	if (!ext2_dirent_in_use(de))
 		return 0;
 	return !memcmp(name, de->name, len);
 }
@@ -518,6 +523,7 @@ int ext2_add_link (struct dentry *dentry, struct inode *inode)
 				rec_len = chunk_size;
 				de->rec_len = ext2_rec_len_to_disk(chunk_size);
 				de->inode = 0;
+				de->file_type = 0;
 				goto got_it;
 			}
 			if (de->rec_len == 0) {
@@ -531,7 +537,7 @@ int ext2_add_link (struct dentry *dentry, struct inode *inode)
 				goto out_unlock;
 			name_len = EXT2_DIR_REC_LEN(de->name_len);
 			rec_len = ext2_rec_len_from_disk(de->rec_len);
-			if (!de->inode && rec_len >= reclen)
+			if (!ext2_dirent_in_use(de) && rec_len >= reclen)
 				goto got_it;
 			if (rec_len >= name_len + reclen)
 				goto got_it;
@@ -549,7 +555,7 @@ got_it:
 	err = ext2_prepare_chunk(page, pos, rec_len);
 	if (err)
 		goto out_unlock;
-	if (de->inode) {
+	if (ext2_dirent_in_use(de)) {
 		ext2_dirent *de1 = (ext2_dirent *) ((char *) de + name_len);
 		de1->rec_len = ext2_rec_len_to_disk(rec_len - name_len);
 		de->rec_len = ext2_rec_len_to_disk(name_len);
