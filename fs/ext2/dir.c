@@ -211,7 +211,8 @@ fail:
 
 static inline int ext2_dirent_in_use(struct ext2_dir_entry_2 *de)
 {
-	return (de->inode);
+	return (de->inode ||
+		(de->file_type == EXT2_FT_WHT));
 }
 
 /*
@@ -260,6 +261,7 @@ static unsigned char ext2_filetype_table[EXT2_FT_MAX] = {
 	[EXT2_FT_FIFO]		= DT_FIFO,
 	[EXT2_FT_SOCK]		= DT_SOCK,
 	[EXT2_FT_SYMLINK]	= DT_LNK,
+	[EXT2_FT_WHT]		= DT_WHT,
 };
 
 #define S_SHIFT 12
@@ -458,6 +460,26 @@ static int ext2_prepare_chunk(struct page *page, loff_t pos, unsigned len)
 	return __block_write_begin(page, pos, len, ext2_get_block);
 }
 
+/* Special version for filetype based whiteout support */
+ino_t ext2_inode_by_dentry(struct inode *dir, struct dentry *dentry)
+{
+	ino_t res = 0;
+	struct ext2_dir_entry_2 *de;
+	struct page *page;
+
+	de = ext2_find_entry (dir, &dentry->d_name, &page);
+	if (de) {
+		res = le32_to_cpu(de->inode);
+		if (!res && de->file_type == EXT2_FT_WHT) {
+			spin_lock(&dentry->d_lock);
+			dentry->d_flags |= DCACHE_WHITEOUT;
+			spin_unlock(&dentry->d_lock);
+		}
+		ext2_put_page(page);
+	}
+	return res;
+}
+
 /* Releases the page */
 void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
 		   struct page *page, struct inode *inode, int update_times)
@@ -480,7 +502,9 @@ void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
 	mark_inode_dirty(dir);
 }
 
-int ext2_add_entry (struct dentry *dentry, struct inode *inode)
+int ext2_add_entry (struct dentry *dentry, struct inode *inode,
+		    ext2_dirent *de, struct page *page,
+		    int new_file_type)
 {
 	struct inode *dir = dentry->d_parent->d_inode;
 	const char *name = dentry->d_name.name;
@@ -488,8 +512,6 @@ int ext2_add_entry (struct dentry *dentry, struct inode *inode)
 	unsigned chunk_size = ext2_chunk_size(dir);
 	unsigned reclen = EXT2_DIR_REC_LEN(namelen);
 	unsigned short rec_len, name_len;
-	struct page *page = NULL;
-	ext2_dirent * de;
 	unsigned long npages = dir_pages(dir);
 	unsigned long n;
 	char *kaddr;
@@ -547,12 +569,27 @@ int ext2_add_entry (struct dentry *dentry, struct inode *inode)
 	return -EINVAL;
 
 got_it:
+	/*
+	 * Pre-existing entries with the same name are allowable
+	 * depending on the type of the entry being created.  Regular
+	 * entries replace whiteouts.  Whiteouts replace regular
+	 * entries.
+	 */
+	err = -EEXIST;
+	if (ext2_match(namelen, name, de)) {
+		if (new_file_type == EXT2_FT_WHT) {
+			if (de->file_type == EXT2_FT_WHT)
+				goto out_unlock;
+		} else if (de->file_type != EXT2_FT_WHT) {
+			goto out_unlock;
+		}
+	}
 	pos = page_offset(page) +
 		(char*)de - (char*)page_address(page);
 	err = ext2_prepare_chunk(page, pos, rec_len);
 	if (err)
 		goto out_unlock;
-	if (ext2_dirent_in_use(de)) {
+	if (ext2_dirent_in_use(de) && !ext2_match (namelen, name, de)) {
 		ext2_dirent *de1 = (ext2_dirent *) ((char *) de + name_len);
 		de1->rec_len = ext2_rec_len_to_disk(rec_len - name_len);
 		de->rec_len = ext2_rec_len_to_disk(name_len);
@@ -560,8 +597,13 @@ got_it:
 	}
 	de->name_len = namelen;
 	memcpy(de->name, name, namelen);
-	de->inode = cpu_to_le32(inode->i_ino);
-	ext2_set_de_type (de, inode);
+	if (inode) {
+		de->inode = cpu_to_le32(inode->i_ino);
+		ext2_set_de_type (de, inode);
+	} else {
+		de->inode = 0;
+		de->file_type = new_file_type;
+	}
 	err = ext2_commit_chunk(page, pos, rec_len);
 	dir->i_mtime = dir->i_ctime = CURRENT_TIME_SEC;
 	EXT2_I(dir)->i_flags &= ~EXT2_BTREE_FL;
@@ -578,7 +620,14 @@ out_unlock:
 
 int ext2_add_link (struct dentry *dentry, struct inode *inode)
 {
-	return ext2_add_entry(dentry, inode);
+	ext2_dirent *de = NULL;
+	struct page *page = NULL;
+	return ext2_add_entry(dentry, inode, de, page, 0);
+}
+
+int ext2_whiteout_entry (struct dentry *dentry, ext2_dirent *de, struct page *page)
+{
+	return ext2_add_entry(dentry, NULL, de, page, EXT2_FT_WHT);
 }
 
 /*

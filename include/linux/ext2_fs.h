@@ -189,6 +189,7 @@ struct ext2_group_desc
 #define EXT2_NOTAIL_FL			FS_NOTAIL_FL	/* file tail should not be merged */
 #define EXT2_DIRSYNC_FL			FS_DIRSYNC_FL	/* dirsync behaviour (directories only) */
 #define EXT2_TOPDIR_FL			FS_TOPDIR_FL	/* Top of directory hierarchies*/
+#define EXT2_OPAQUE_FL			FS_OPAQUE_FL	/* Dir is opaque */
 #define EXT2_RESERVED_FL		FS_RESERVED_FL	/* reserved for ext2 lib */
 
 #define EXT2_FL_USER_VISIBLE		FS_FL_USER_VISIBLE	/* User visible flags */
@@ -503,10 +504,12 @@ struct ext2_super_block {
 #define EXT3_FEATURE_INCOMPAT_RECOVER		0x0004
 #define EXT3_FEATURE_INCOMPAT_JOURNAL_DEV	0x0008
 #define EXT2_FEATURE_INCOMPAT_META_BG		0x0010
+#define EXT2_FEATURE_INCOMPAT_WHITEOUT		0x0020
 #define EXT2_FEATURE_INCOMPAT_ANY		0xffffffff
 
 #define EXT2_FEATURE_COMPAT_SUPP	EXT2_FEATURE_COMPAT_EXT_ATTR
 #define EXT2_FEATURE_INCOMPAT_SUPP	(EXT2_FEATURE_INCOMPAT_FILETYPE| \
+					 EXT2_FEATURE_INCOMPAT_WHITEOUT| \
 					 EXT2_FEATURE_INCOMPAT_META_BG)
 #define EXT2_FEATURE_RO_COMPAT_SUPP	(EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER| \
 					 EXT2_FEATURE_RO_COMPAT_LARGE_FILE| \
@@ -573,6 +576,7 @@ enum {
 	EXT2_FT_FIFO		= 5,
 	EXT2_FT_SOCK		= 6,
 	EXT2_FT_SYMLINK		= 7,
+	EXT2_FT_WHT		= 8,
 	EXT2_FT_MAX
 };
 

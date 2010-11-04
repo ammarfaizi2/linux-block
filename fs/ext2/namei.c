@@ -55,15 +55,16 @@ static inline int ext2_add_nondir(struct dentry *dentry, struct inode *inode)
  * Methods themselves.
  */
 
-static struct dentry *ext2_lookup(struct inode * dir, struct dentry *dentry, struct nameidata *nd)
+static struct dentry *ext2_lookup(struct inode * dir, struct dentry *dentry,
+				  struct nameidata *nd)
 {
 	struct inode * inode;
 	ino_t ino;
-	
+
 	if (dentry->d_name.len > EXT2_NAME_LEN)
 		return ERR_PTR(-ENAMETOOLONG);
 
-	ino = ext2_inode_by_name(dir, &dentry->d_name);
+	ino = ext2_inode_by_dentry(dir, dentry);
 	inode = NULL;
 	if (ino) {
 		inode = ext2_iget(dir->i_sb, ino);
@@ -307,6 +308,61 @@ static int ext2_rmdir (struct inode * dir, struct dentry *dentry)
 	return err;
 }
 
+/*
+ * Create a whiteout for the dentry
+ */
+static int ext2_whiteout(struct inode *dir, struct dentry *dentry,
+			 struct dentry *new_dentry)
+{
+	struct inode * inode = dentry->d_inode;
+	struct ext2_dir_entry_2 * de = NULL;
+	struct page * page;
+	int err = -ENOTEMPTY;
+
+	if (!EXT2_HAS_INCOMPAT_FEATURE(dir->i_sb,
+				       EXT2_FEATURE_INCOMPAT_FILETYPE)) {
+		ext2_error (dir->i_sb, "ext2_whiteout",
+			    "can't set whiteout filetype");
+		err = -EPERM;
+		goto out;
+	}
+
+	dquot_initialize(dir);
+
+	if (inode) {
+		if (S_ISDIR(inode->i_mode) && !ext2_empty_dir(inode))
+			goto out;
+
+		err = -ENOENT;
+		de = ext2_find_entry(dir, &dentry->d_name, &page);
+		if (!de)
+			goto out;
+		lock_page(page);
+	}
+
+	err = ext2_whiteout_entry(dentry, de, page);
+	if (err)
+		goto out;
+
+	spin_lock(&new_dentry->d_lock);
+	new_dentry->d_flags |= DCACHE_WHITEOUT;
+	spin_unlock(&new_dentry->d_lock);
+	d_add(new_dentry, NULL);
+
+	if (inode) {
+		inode->i_ctime = dir->i_ctime;
+		inode_dec_link_count(inode);
+		if (S_ISDIR(inode->i_mode)) {
+			inode->i_size = 0;
+			inode_dec_link_count(inode);
+			inode_dec_link_count(dir);
+		}
+	}
+	err = 0;
+out:
+	return err;
+}
+
 static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
 	struct inode * new_dir,	struct dentry * new_dentry )
 {
@@ -409,6 +465,7 @@ const struct inode_operations ext2_dir_inode_operations = {
 	.mkdir		= ext2_mkdir,
 	.rmdir		= ext2_rmdir,
 	.mknod		= ext2_mknod,
+	.whiteout	= ext2_whiteout,
 	.rename		= ext2_rename,
 #ifdef CONFIG_EXT2_FS_XATTR
 	.setxattr	= generic_setxattr,
