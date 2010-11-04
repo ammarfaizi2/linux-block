@@ -480,10 +480,7 @@ void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
 	mark_inode_dirty(dir);
 }
 
-/*
- *	Parent is locked.
- */
-int ext2_add_link (struct dentry *dentry, struct inode *inode)
+int ext2_add_entry (struct dentry *dentry, struct inode *inode)
 {
 	struct inode *dir = dentry->d_parent->d_inode;
 	const char *name = dentry->d_name.name;
@@ -577,6 +574,11 @@ out:
 out_unlock:
 	unlock_page(page);
 	goto out_put;
+}
+
+int ext2_add_link (struct dentry *dentry, struct inode *inode)
+{
+	return ext2_add_entry(dentry, inode);
 }
 
 /*
