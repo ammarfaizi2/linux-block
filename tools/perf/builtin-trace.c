@@ -6,6 +6,7 @@
 #include "util/symbol.h"
 #include "util/thread.h"
 #include "util/header.h"
+#include "util/color.h"
 
 #include "util/parse-options.h"
 #include "util/trace-event.h"
@@ -153,8 +154,7 @@ static void pagefault_enter(void *data,
 			    u64 timestamp __used,
 			    struct thread *thread __used)
 {
-	printf("pagefault_enter %llu\n",
-	       raw_field_value(event, "address", data));
+	color_fprintf(stdout, PERF_COLOR_RED, "pagefault_enter %llu\n", raw_field_value(event, "address", data));
 }
 
 static void pagefault_exit(void *data,
