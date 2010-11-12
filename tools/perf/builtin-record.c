@@ -42,7 +42,7 @@ static u64			default_interval		=      0;
 
 static unsigned int		page_size;
 static unsigned int		mmap_pages			= UINT_MAX;
-static unsigned int		user_freq 			= UINT_MAX;
+static unsigned int		user_freq			= UINT_MAX;
 static int			freq				=   1000;
 static int			output;
 static int			pipe_output			=      0;
@@ -369,7 +369,7 @@ static int process_buildids(void)
 
 static void atexit_header(void)
 {
-	if (!pipe_output) {
+	if (!pipe_output && session) {
 		session->header.data_size += bytes_written;
 
 		if (!no_buildid)
@@ -379,6 +379,7 @@ static void atexit_header(void)
 		perf_evlist__delete(evsel_list);
 		symbol__exit();
 	}
+	session = NULL;
 }
 
 static void perf_event__synthesize_guest_os(struct machine *machine, void *data)
@@ -722,10 +723,14 @@ static int __cmd_record(int argc, const char **argv)
 		output_name,
 		bytes_written / 24);
 
+
+	atexit_header();
+
 	return 0;
 
 out_delete_session:
 	perf_session__delete(session);
+
 	return err;
 }
 
