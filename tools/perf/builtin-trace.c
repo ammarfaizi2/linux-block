@@ -101,31 +101,41 @@ static void parse_syscalls(void)
 		free(buf);
 }
 
+static int entry_pending;
+static char entry_str[1000];
+
 static void process_sys_enter(void *data,
 			      struct event *event __used,
 			      int cpu __used,
 			      u64 timestamp __used,
-			      struct thread *thread __used)
+			      struct thread *thread)
 {
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
 	unsigned int pid = thread->pid;
 	unsigned long *args = raw_field_ptr(event, "args", data);
+	char *tmp = entry_str;
 	unsigned int i;
 
 	if (!syscall_descr[id].name)
 		return;
 
 	syscall_descr[id].entry_time[pid] = timestamp;
-	printf("[%05u] %s(", pid, syscall_descr[id].name);
+	tmp += sprintf(tmp, "%s(", syscall_descr[id].name);
 	if (!syscall_descr[id].entry_arg[0]) {
-		for (i = 0; i < 6; i++)
-			printf("0x%lx ", args[i]);
+		for (i = 0; i < 6; i++) {
+			if (i)
+				tmp += sprintf(tmp, ", ");
+			tmp += sprintf(tmp, "0x%lx", args[i]);
+		}
 	} else {
-		for (i = 0; i < syscall_descr[id].argc; i++)
-			printf("%s: 0x%lx ", syscall_descr[id].entry_arg[i],
-			       args[i]);
+		for (i = 0; i < syscall_descr[id].argc; i++) {
+			if (i)
+				tmp += sprintf(tmp, ",");
+			tmp += sprintf(tmp, "%s: 0x%lx", syscall_descr[id].entry_arg[i], args[i]);
+		}
 	}
-	printf(") ...\n");
+	tmp += sprintf(tmp, ")");
+	entry_pending = 1;
 }
 
 static void process_sys_exit(void *data,
@@ -137,6 +147,7 @@ static void process_sys_exit(void *data,
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
 	unsigned int pid = thread->pid;
 	unsigned long res = (unsigned long) raw_field_value(event, "ret", data);
+	double duration;
 	u64 t = 0;
 
 	if (!syscall_descr[id].name)
@@ -145,8 +156,25 @@ static void process_sys_exit(void *data,
 	if (syscall_descr[id].entry_time[pid])
 		t = timestamp - syscall_descr[id].entry_time[pid];
 
-	printf("[%05d] %s returned 0x%lx %lluus\n", thread->pid,
-	       syscall_descr[id].name, res, (unsigned long long) t / 1000);
+	duration = (double)t / 1000000.0;
+	printf("%s/%d (", thread->comm, pid);
+	if (duration >= 1.0)
+		color_fprintf(stdout, PERF_COLOR_RED, "%.3f ms", duration);
+	else if (duration >= 0.01)
+		color_fprintf(stdout, PERF_COLOR_YELLOW, "%.3f ms", duration);
+	else
+		color_fprintf(stdout, PERF_COLOR_NORMAL, "%.3f ms", duration);
+	printf("): ");
+
+	if (entry_pending) {
+		printf("%-70s", entry_str);
+		entry_pending = 0;
+	} else {
+		printf(" ... [");
+		color_fprintf(stdout, PERF_COLOR_YELLOW, "continued");
+		printf("]: %s()", syscall_descr[id].name);
+	}
+	printf(" => 0x%lx\n", res);
 }
 
 static int my_event__preprocess_sample(union perf_event *self,
@@ -222,17 +250,33 @@ static void pagefault_enter(union perf_event *self,
 	if (al.map && al.sym)
 		sym = al.sym->name;
 
-	color_fprintf(stdout, PERF_COLOR_RED, "%s: pagefault_enter [%016lx, %ld]\n", sym, address, error_code);
+	if (entry_pending) {
+		entry_pending = 0;
+		printf(" %s ... [", entry_str);
+		color_fprintf(stdout, PERF_COLOR_YELLOW, "unfinished");
+		printf("]\n");
+	}
+	color_fprintf(stdout, PERF_COLOR_NORMAL, "     #PF: [");
+	color_fprintf(stdout, PERF_COLOR_GREEN, "%30s", sym, address, error_code);
+	color_fprintf(stdout, PERF_COLOR_NORMAL, "]: => %016lx (", address);
+	if (error_code & 2)
+		color_fprintf(stdout, PERF_COLOR_RED, "W");
+	else
+		color_fprintf(stdout, PERF_COLOR_GREEN, "R");
+	if (error_code & 4)
+		color_fprintf(stdout, PERF_COLOR_NORMAL, ".U");
+	else
+		color_fprintf(stdout, PERF_COLOR_NORMAL, ".K");
+	color_fprintf(stdout, PERF_COLOR_NORMAL, ")");
 }
 
-static void pagefault_exit(void *data,
+static void pagefault_exit(void *data __used,
 			   struct event *event __used,
 			   int cpu __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
 {
-	printf("pagefault_exit %llx\n",
-	       raw_field_value(event, "address", data));
+	color_fprintf(stdout, PERF_COLOR_NORMAL, "\n");
 }
 
 static void
@@ -284,7 +328,7 @@ static struct perf_event_ops eops = {
 };
 
 static char const *input_name = "perf.data";
-static bool pagefaults;
+static bool pagefaults = true;
 
 static int read_events(void)
 {
