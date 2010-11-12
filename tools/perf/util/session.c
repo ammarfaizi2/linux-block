@@ -13,7 +13,7 @@
 #include "sort.h"
 #include "util.h"
 
-static int perf_session__open(struct perf_session *self, bool force)
+static int perf_session__open(struct perf_session *self, bool force, int warn)
 {
 	struct stat input_stat;
 
@@ -31,10 +31,14 @@ static int perf_session__open(struct perf_session *self, bool force)
 	if (self->fd < 0) {
 		int err = errno;
 
-		pr_err("failed to open %s: %s", self->filename, strerror(err));
-		if (err == ENOENT && !strcmp(self->filename, "perf.data"))
-			pr_err("  (try 'perf record' first)");
-		pr_err("\n");
+		if (warn) {
+			pr_err("failed to open %s: %s", self->filename, strerror(err));
+			if (err == ENOENT && !strcmp(self->filename, "perf.data"))
+				pr_err("  (try 'perf record' first)");
+			if (err == ENOENT && !strcmp(self->filename, "trace.data"))
+				pr_err("  (try 'perf trace record' first)");
+			pr_err("\n");
+		}
 		return -errno;
 	}
 
@@ -116,8 +120,8 @@ static void perf_session__destroy_kernel_maps(struct perf_session *self)
 	machines__destroy_guest_kernel_maps(&self->machines);
 }
 
-struct perf_session *perf_session__new(const char *filename, int mode,
-				       bool force, bool repipe,
+static struct perf_session *__perf_session__new(const char *filename, int mode,
+				       bool force, bool repipe, bool warn,
 				       struct perf_event_ops *ops)
 {
 	size_t len = filename ? strlen(filename) + 1 : 0;
@@ -147,7 +151,7 @@ struct perf_session *perf_session__new(const char *filename, int mode,
 	machine__init(&self->host_machine, "", HOST_KERNEL_ID);
 
 	if (mode == O_RDONLY) {
-		if (perf_session__open(self, force) < 0)
+		if (perf_session__open(self, force, warn) < 0)
 			goto out_delete;
 		perf_session__update_sample_type(self);
 	} else if (mode == O_WRONLY) {
@@ -170,6 +174,18 @@ out:
 out_delete:
 	perf_session__delete(self);
 	return NULL;
+}
+
+struct perf_session *perf_session__new(const char *filename, int mode, bool force, bool repipe,
+				       struct perf_event_ops *ops)
+{
+	return __perf_session__new(filename, mode, force, repipe, 1, ops);
+}
+
+struct perf_session *perf_session__new_nowarn(const char *filename, int mode, bool force, bool repipe,
+					      struct perf_event_ops *ops)
+{
+	return __perf_session__new(filename, mode, force, repipe, 0, ops);
 }
 
 static void perf_session__delete_dead_threads(struct perf_session *self)

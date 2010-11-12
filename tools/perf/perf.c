@@ -436,9 +436,6 @@ int main(int argc, const char **argv)
 	if (!cmd)
 		cmd = "perf-help";
 
-	if (!prefixcmp(cmd, "trace"))
-		return cmd_trace(argc, argv, NULL);
-
 	/* get debugfs mount point from /proc/mounts */
 	get_debugfs_mntpt();
 	/*
@@ -465,6 +462,11 @@ int main(int argc, const char **argv)
 	commit_pager_choice();
 	set_debugfs_path();
 	set_buildid_dir();
+
+	if (!prefixcmp(cmd, "trace")) {
+		setup_path();
+		return cmd_trace(argc, argv, NULL);
+	}
 
 	if (argc > 0) {
 		if (!prefixcmp(argv[0], "--"))

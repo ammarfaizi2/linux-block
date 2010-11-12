@@ -89,6 +89,10 @@ struct perf_event_ops {
 struct perf_session *perf_session__new(const char *filename, int mode,
 				       bool force, bool repipe,
 				       struct perf_event_ops *ops);
+struct perf_session *perf_session__new_nowarn(const char *filename, int mode,
+				       bool force, bool repipe,
+				       struct perf_event_ops *ops);
+
 void perf_session__delete(struct perf_session *self);
 
 void perf_event_header__bswap(struct perf_event_header *self);

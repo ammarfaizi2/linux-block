@@ -377,7 +377,9 @@ static void atexit_header(void)
 		perf_session__write_header(session, evsel_list, output, true);
 		perf_session__delete(session);
 		perf_evlist__delete(evsel_list);
-		symbol__exit();
+		/* FIXME: repeated reinit of symbols causes crashes - so leave it around: */
+//		symbol__exit();
+		close(output);
 	}
 	session = NULL;
 }
@@ -722,9 +724,6 @@ static int __cmd_record(int argc, const char **argv)
 		(double)bytes_written / 1024.0 / 1024.0,
 		output_name,
 		bytes_written / 24);
-
-
-	atexit_header();
 
 	return 0;
 

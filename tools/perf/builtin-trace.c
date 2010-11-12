@@ -332,9 +332,11 @@ static bool pagefaults = true;
 
 static int read_events(void)
 {
-	session = perf_session__new(input_name, O_RDONLY, 0, false, &eops);
-	if (!session)
-		die("Initializing perf session failed\n");
+	session = perf_session__new_nowarn(input_name, O_RDONLY, 0, false, &eops);
+	if (!session) {
+		fprintf(stderr, "\n No perf.data file yet - to create it run: 'perf trace record <command>'\n\n");
+		exit(0);
+	}
 
 	return perf_session__process_events(session, &eops);
 }
@@ -387,7 +389,7 @@ static int __cmd_record(int argc, const char **argv)
 	unsigned int rec_argc, i, j;
 	const char **rec_argv;
 
-	rec_argc = ARRAY_SIZE(record_args) + argc - 1;
+	rec_argc = ARRAY_SIZE(record_args) + argc;
 	if (pagefaults)
 		rec_argc += ARRAY_SIZE(record_args_pf);
 	rec_argv = calloc(rec_argc + 1, sizeof(char *));
@@ -400,18 +402,12 @@ static int __cmd_record(int argc, const char **argv)
 			rec_argv[i] = strdup(record_args_pf[j]);
 	}
 
-	for (j = 1; j < (unsigned int)argc; j++, i++)
+	for (j = 0; j < (unsigned int)argc; j++, i++)
 		rec_argv[i] = argv[j];
 
 	BUG_ON(i != rec_argc);
 
 	return cmd_record(i, rec_argv, NULL);
-}
-
-static void cmd_trace_report(int argc, const char **argv)
-{
-	parse_options(argc, argv, report_options, report_usage, 0);
-	__cmd_report();
 }
 
 int cmd_trace(int argc, const char **argv, const char *prefix __used)
@@ -420,20 +416,13 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 
 	parse_syscalls();
 
-	argc = parse_options(argc, argv, trace_options, trace_usage,
-			     PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!argc)
-		usage_with_options(trace_usage, trace_options);
-
-	if (!strncmp(argv[0], "rec", 3)) {
+	if (argc) {
 		ret = __cmd_record(argc, argv);
 		if (!ret)
-			cmd_trace_report(argc, argv);
+			__cmd_report();
 		return ret;
-	} else if (!strncmp(argv[0], "report", 6)) {
-		cmd_trace_report(argc, argv);
 	} else {
-		usage_with_options(trace_usage, trace_options);
+		__cmd_report();
 	}
 	return 0;
 }
