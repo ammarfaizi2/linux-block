@@ -11,6 +11,7 @@
 #include "util/trace-event.h"
 
 #include "util/debug.h"
+#include "util/debugfs.h"
 #include "util/session.h"
 
 #include <sys/types.h>
@@ -19,11 +20,84 @@
 #include <pthread.h>
 #include <math.h>
 #include <limits.h>
+#include <libaudit.h>
 
 #include <linux/list.h>
 #include <linux/hash.h>
 
 static struct perf_session *session;
+
+struct syscall_descr {
+	const char	*name;
+	char		*entry_arg[6];
+	char		*entry_fmt[6];
+	char		*exit_fmt;
+	unsigned int	argc;
+	u64		entry_time[65536];
+};
+
+#define MAX_SYSCALLS		1024
+
+static struct syscall_descr syscall_descr[MAX_SYSCALLS];
+
+static void parse_syscalls(void)
+{
+	const char *dbgfs_path = debugfs_find_mountpoint();
+	int i, fd, fmtcnt, machine = audit_detect_machine();
+	char fmt_path[MAXPATHLEN];
+	char last, *p, *b, *buf = malloc(65536);
+	size_t len;
+
+	for (i = 0; i < MAX_SYSCALLS; i++) {
+		syscall_descr[i].name = audit_syscall_to_name(i, machine);
+		if (!syscall_descr[i].name)
+			break;
+		if (!strcmp(syscall_descr[i].name, "arch_prctl"))
+			syscall_descr[i].name = "prctl";
+
+		if (!dbgfs_path || !buf)
+			continue;
+
+		snprintf(fmt_path, MAXPATHLEN,
+			 "%s/tracing/events/syscalls/sys_enter_%s/format",
+			 dbgfs_path, syscall_descr[i].name);
+
+		fd = open(fmt_path, O_RDONLY);
+		if (fd < 0)
+			continue;
+		len = read(fd, buf, 65536);
+		close(fd);
+		buf[len] = 0;
+
+		for (p = buf; p < buf + len; p++) {
+			if (strncmp(p, "print fmt:", 10))
+			    continue;
+			for (; *p != '\"'; p++);
+			fmtcnt = 0;
+			p++;
+			while (p < buf + len) {
+				for (b = p; *p != ':' && *p != '\"'; p++);
+				last = *p;
+				*p++ = 0;
+				syscall_descr[i].entry_arg[fmtcnt] = strdup(b);
+
+				if (last == '\"')
+					break;
+
+				for (b = p; *p != ',' && *p !='\"'; p++);
+				last = *p;
+				*p++ = 0;
+				syscall_descr[i].entry_fmt[fmtcnt++] = strdup(b);
+				if (last == '\"')
+					break;
+			}
+			syscall_descr[i].argc = fmtcnt;
+			break;
+		}
+	}
+	if (buf)
+		free(buf);
+}
 
 static void process_sys_enter(void *data,
 			      struct event *event __used,
@@ -31,7 +105,25 @@ static void process_sys_enter(void *data,
 			      u64 timestamp __used,
 			      struct thread *thread __used)
 {
-	printf("sys_enter %llu\n", raw_field_value(event, "id", data));
+	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
+	unsigned int pid = thread->pid;
+	unsigned long *args = raw_field_ptr(event, "args", data);
+	unsigned int i;
+
+	if (!syscall_descr[id].name)
+		return;
+
+	syscall_descr[id].entry_time[pid] = timestamp;
+	printf("[%05u] %s(", pid, syscall_descr[id].name);
+	if (!syscall_descr[id].entry_arg[0]) {
+		for (i = 0; i < 6; i++)
+			printf("0x%lx ", args[i]);
+	} else {
+		for (i = 0; i < syscall_descr[id].argc; i++)
+			printf("%s: 0x%lx ", syscall_descr[id].entry_arg[i],
+			       args[i]);
+	}
+	printf(") ...\n");
 }
 
 static void process_sys_exit(void *data,
@@ -40,7 +132,19 @@ static void process_sys_exit(void *data,
 			     u64 timestamp __used,
 			     struct thread *thread __used)
 {
-	printf("sys_exit %llu\n", raw_field_value(event, "id", data));
+	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
+	unsigned int pid = thread->pid;
+	unsigned long res = (unsigned long) raw_field_value(event, "ret", data);
+	u64 t = 0;
+
+	if (!syscall_descr[id].name)
+		return;
+
+	if (syscall_descr[id].entry_time[pid])
+		t = timestamp - syscall_descr[id].entry_time[pid];
+
+	printf("[%05d] %s returned 0x%lx %lluus\n", thread->pid,
+	       syscall_descr[id].name, res, (unsigned long long) t / 1000);
 }
 
 static void pagefault_enter(void *data,
@@ -166,10 +270,8 @@ static int __cmd_record(int argc, const char **argv)
 	const char **rec_argv;
 
 	rec_argc = ARRAY_SIZE(record_args) + argc - 1;
-	printf("rec_argc %u\n", rec_argc);
 	if (pagefaults)
 		rec_argc += ARRAY_SIZE(record_args_pf);
-	printf("rec_argc %u\n", rec_argc);
 	rec_argv = calloc(rec_argc + 1, sizeof(char *));
 
 	for (i = 0; i < ARRAY_SIZE(record_args); i++)
@@ -197,6 +299,8 @@ static void cmd_trace_report(int argc, const char **argv)
 int cmd_trace(int argc, const char **argv, const char *prefix __used)
 {
 	int ret;
+
+	parse_syscalls();
 
 	argc = parse_options(argc, argv, trace_options, trace_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
