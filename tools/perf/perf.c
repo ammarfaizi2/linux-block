@@ -435,6 +435,10 @@ int main(int argc, const char **argv)
 	cmd = perf_extract_argv0_path(argv[0]);
 	if (!cmd)
 		cmd = "perf-help";
+
+	if (!prefixcmp(cmd, "trace"))
+		return cmd_trace(argc, argv, NULL);
+
 	/* get debugfs mount point from /proc/mounts */
 	get_debugfs_mntpt();
 	/*
