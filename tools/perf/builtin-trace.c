@@ -122,6 +122,7 @@ static int read_events(void)
 
 static void __cmd_report(void)
 {
+	setup_pager();
 	read_events();
 }
 
