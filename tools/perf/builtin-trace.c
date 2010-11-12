@@ -141,12 +141,7 @@ static int __cmd_record(int argc, const char **argv)
 
 static void cmd_trace_report(int argc, const char **argv)
 {
-	if (argc) {
-		argc = parse_options(argc, argv,
-				     report_options, report_usage, 0);
-		if (argc)
-			usage_with_options(report_usage, report_options);
-	}
+	parse_options(argc, argv, report_options, report_usage, 0);
 	__cmd_report();
 }
 
@@ -161,8 +156,6 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 
 	if (!strncmp(argv[0], "rec", 3)) {
 		ret = __cmd_record(argc, argv);
-
-		/* FIXME: Needs tweaking ! */
 		if (!ret)
 			cmd_trace_report(argc, argv);
 		return ret;
