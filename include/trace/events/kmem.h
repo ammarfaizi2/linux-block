@@ -302,6 +302,47 @@ TRACE_EVENT(mm_page_alloc_extfrag,
 		__entry->alloc_migratetype == __entry->fallback_migratetype)
 );
 
+
+TRACE_EVENT(mm_pagefault_start,
+
+	TP_PROTO(unsigned long address, int error_code, unsigned long ip),
+
+	TP_ARGS(address, error_code, ip),
+
+	TP_STRUCT__entry(
+		__field(unsigned long, address)
+		__field(unsigned long, error_code)
+		__field(unsigned long, ip)
+	),
+
+	TP_fast_assign(
+		__entry->address	= address;
+		__entry->error_code	= error_code;
+		__entry->ip		= ip;
+	),
+
+	TP_printk("address=%lx, error code=%lx, ip=%lx",
+		__entry->address, __entry->error_code, __entry->ip)
+);
+
+
+TRACE_EVENT(mm_pagefault_end,
+
+        TP_PROTO(unsigned long address),
+
+        TP_ARGS(address),
+
+        TP_STRUCT__entry(
+                __field(unsigned long, address)
+        ),
+
+	TP_fast_assign(
+                __entry->address = address;
+        ),
+
+	TP_printk("address=%lx", __entry->address)
+);
+
 #endif /* _TRACE_KMEM_H */
 
 /* This part must be outside protection */
