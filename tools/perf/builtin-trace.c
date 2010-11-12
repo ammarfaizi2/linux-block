@@ -7,6 +7,7 @@
 #include "util/thread.h"
 #include "util/header.h"
 #include "util/color.h"
+#include "util/strlist.h"
 
 #include "util/parse-options.h"
 #include "util/trace-event.h"
@@ -148,13 +149,80 @@ static void process_sys_exit(void *data,
 	       syscall_descr[id].name, res, (unsigned long long) t / 1000);
 }
 
-static void pagefault_enter(void *data,
+static int my_event__preprocess_sample(union perf_event *self,
+			     struct addr_location *al, struct perf_sample *data, unsigned long ip)
+{
+	struct thread *thread;
+
+	perf_event__parse_sample(self, session->sample_type, session->sample_id_all, data);
+
+	thread = perf_session__findnew(session, self->ip.pid);
+	if (thread == NULL)
+		return -1;
+
+//	map_groups__fprintf(&thread->mg, 1, stdout);
+	/*
+	 * Have we already created the kernel maps for the host machine?
+	 *
+	 * This should have happened earlier, when we processed the kernel MMAP
+	 * events, but for older perf.data files there was no such thing, so do
+	 * it now.
+	 */
+	if (session->host_machine.vmlinux_maps[MAP__FUNCTION] == NULL)
+		machine__create_kernel_maps(&session->host_machine);
+
+	thread__find_addr_map(thread, session, PERF_RECORD_MISC_USER, MAP__FUNCTION,
+			      self->ip.pid, ip, al);
+	if (!al->map) {
+		thread__find_addr_map(thread, session, PERF_RECORD_MISC_KERNEL, MAP__FUNCTION,
+			      self->ip.pid, ip, al);
+	}
+
+	al->sym = NULL;
+	al->cpu = data->cpu;
+	al->cpumode = PERF_RECORD_MISC_USER;
+
+	if (al->map) {
+		al->addr = al->map->map_ip(al->map, ip);
+		al->sym = map__find_symbol(al->map, al->addr, NULL);
+	} else {
+		const unsigned int unresolved_col_width = BITS_PER_LONG / 4;
+
+		if (hists__col_len(&session->hists, HISTC_DSO) < unresolved_col_width &&
+		    !symbol_conf.col_width_list_str && !symbol_conf.field_sep &&
+		    !symbol_conf.dso_list)
+			hists__set_col_len(&session->hists, HISTC_DSO,
+					   unresolved_col_width);
+	}
+
+	return 0;
+}
+
+static void pagefault_enter(union perf_event *self,
+			    void *data,
 			    struct event *event __used,
 			    int cpu __used,
 			    u64 timestamp __used,
-			    struct thread *thread __used)
+			    struct thread *thread)
 {
-	color_fprintf(stdout, PERF_COLOR_RED, "pagefault_enter %llu\n", raw_field_value(event, "address", data));
+	unsigned long address		= raw_field_value(event, "address", data);
+	unsigned long error_code	= raw_field_value(event, "error_code", data);
+	unsigned long ip		= raw_field_value(event, "ip", data);
+	struct perf_sample sdata = { .period = 1, };
+	struct addr_location al;
+	char *sym;
+
+	al.map = NULL;
+	my_event__preprocess_sample(self, &al, &sdata, ip);
+
+	if (!thread)
+		die("thread not found\n");
+
+	sym = NULL;
+	if (al.map && al.sym)
+		sym = al.sym->name;
+
+	color_fprintf(stdout, PERF_COLOR_RED, "%s: pagefault_enter [%016lx, %ld]\n", sym, address, error_code);
 }
 
 static void pagefault_exit(void *data,
@@ -163,12 +231,12 @@ static void pagefault_exit(void *data,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
 {
-	printf("pagefault_exit %llu\n",
+	printf("pagefault_exit %llx\n",
 	       raw_field_value(event, "address", data));
 }
 
 static void
-process_raw_event(void *data, int cpu, u64 timestamp, struct thread *thread)
+process_raw_event(union perf_event *self, void *data, int cpu, u64 timestamp, struct thread *thread)
 {
 	struct event *event;
 	int type;
@@ -181,7 +249,7 @@ process_raw_event(void *data, int cpu, u64 timestamp, struct thread *thread)
 	if (!strcmp(event->name, "sys_exit"))
 		process_sys_exit(data, event, cpu, timestamp, thread);
 	if (!strcmp(event->name, "mm_pagefault_start"))
-		pagefault_enter(data, event, cpu, timestamp, thread);
+		pagefault_enter(self, data, event, cpu, timestamp, thread);
 	if (!strcmp(event->name, "mm_pagefault_end"))
 		pagefault_exit(data, event, cpu, timestamp, thread);
 }
@@ -201,7 +269,7 @@ static int process_sample_event(union perf_event *self, struct perf_sample *samp
 		return -1;
 	}
 
-	process_raw_event(data.raw_data, data.cpu, data.time, thread);
+	process_raw_event(self, data.raw_data, data.cpu, data.time, thread);
 
 	return 0;
 }
@@ -209,6 +277,9 @@ static int process_sample_event(union perf_event *self, struct perf_sample *samp
 static struct perf_event_ops eops = {
 	.sample			= process_sample_event,
 	.comm			= perf_event__process_comm,
+	.mmap			= perf_event__process_mmap,
+	.exit			= perf_event__process_task,
+	.fork			= perf_event__process_task,
 	.ordered_samples	= true,
 };
 
@@ -227,6 +298,9 @@ static int read_events(void)
 static void __cmd_report(void)
 {
 	setup_pager();
+	if (symbol__init() < 0)
+		die("symbol initialization failure");
+
 	read_events();
 }
 

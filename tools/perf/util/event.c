@@ -607,7 +607,8 @@ int perf_event__process_task(union perf_event *event,
 		    event->fork.ppid, event->fork.ptid);
 
 	if (event->header.type == PERF_RECORD_EXIT) {
-		perf_session__remove_thread(session, thread);
+		/* FIXME - we are losing threads here: */
+		// perf_session__remove_thread(session, thread);
 		return 0;
 	}
 
