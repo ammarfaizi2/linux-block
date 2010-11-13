@@ -35,12 +35,22 @@ struct syscall_descr {
 	char		*entry_fmt[6];
 	char		*exit_fmt;
 	unsigned int	argc;
-	u64		entry_time[65536];
 };
 
 #define MAX_SYSCALLS		1024
 
 static struct syscall_descr syscall_descr[MAX_SYSCALLS];
+
+struct thread_data {
+	u64		entry_time;
+	char		*entry_str;
+	bool		entry_pending;
+};
+
+
+#define MAX_PID			65536
+
+static struct thread_data thread_data[MAX_PID];
 
 static void parse_syscalls(void)
 {
@@ -101,9 +111,6 @@ static void parse_syscalls(void)
 		free(buf);
 }
 
-static int entry_pending;
-static char entry_str[1000];
-
 static void process_sys_enter(void *data,
 			      struct event *event __used,
 			      int cpu __used,
@@ -113,13 +120,20 @@ static void process_sys_enter(void *data,
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
 	unsigned int pid = thread->pid;
 	unsigned long *args = raw_field_ptr(event, "args", data);
-	char *tmp = entry_str;
+	char *tmp;
 	unsigned int i;
 
 	if (!syscall_descr[id].name)
 		return;
 
-	syscall_descr[id].entry_time[pid] = timestamp;
+	if (!thread_data[pid].entry_str) {
+		thread_data[pid].entry_str = malloc(1024);
+		if (!thread_data[pid].entry_str)
+			return;
+	}
+	tmp = thread_data[pid].entry_str;
+
+	thread_data[pid].entry_time = timestamp;
 	tmp += sprintf(tmp, "%s(", syscall_descr[id].name);
 	if (!syscall_descr[id].entry_arg[0]) {
 		for (i = 0; i < 6; i++) {
@@ -135,7 +149,7 @@ static void process_sys_enter(void *data,
 		}
 	}
 	tmp += sprintf(tmp, ")");
-	entry_pending = 1;
+	thread_data[pid].entry_pending = true;
 }
 
 static void process_sys_exit(void *data,
@@ -153,8 +167,8 @@ static void process_sys_exit(void *data,
 	if (!syscall_descr[id].name)
 		return;
 
-	if (syscall_descr[id].entry_time[pid])
-		t = timestamp - syscall_descr[id].entry_time[pid];
+	if (thread_data[pid].entry_time)
+		t = timestamp - thread_data[pid].entry_time;
 
 	duration = (double)t / 1000000.0;
 	printf("%s/%d (", thread->comm, pid);
@@ -166,9 +180,9 @@ static void process_sys_exit(void *data,
 		color_fprintf(stdout, PERF_COLOR_NORMAL, "%.3f ms", duration);
 	printf("): ");
 
-	if (entry_pending) {
-		printf("%-70s", entry_str);
-		entry_pending = 0;
+	if (thread_data[pid].entry_pending) {
+		printf("%-70s",thread_data[pid].entry_str);
+		thread_data[pid].entry_pending = false;
 	} else {
 		printf(" ... [");
 		color_fprintf(stdout, PERF_COLOR_YELLOW, "continued");
@@ -238,6 +252,7 @@ static void pagefault_enter(union perf_event *self,
 	unsigned long ip		= raw_field_value(event, "ip", data);
 	struct perf_sample sdata = { .period = 1, };
 	struct addr_location al;
+	unsigned int pid = thread->pid;
 	char *sym;
 
 	al.map = NULL;
@@ -250,9 +265,9 @@ static void pagefault_enter(union perf_event *self,
 	if (al.map && al.sym)
 		sym = al.sym->name;
 
-	if (entry_pending) {
-		entry_pending = 0;
-		printf(" %s ... [", entry_str);
+	if (thread_data[pid].entry_pending) {
+		thread_data[pid].entry_pending = false;
+		printf(" %s ... [", thread_data[pid].entry_str);
 		color_fprintf(stdout, PERF_COLOR_YELLOW, "unfinished");
 		printf("]\n");
 	}
@@ -328,7 +343,7 @@ static struct perf_event_ops eops = {
 };
 
 static char const *input_name = "perf.data";
-static bool pagefaults = true;
+static bool pagefaults = false;
 
 static int read_events(void)
 {
