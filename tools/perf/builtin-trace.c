@@ -123,6 +123,9 @@ static void process_sys_enter(void *data,
 	char *tmp;
 	unsigned int i;
 
+	if (id >= MAX_SYSCALLS)
+		return;
+
 	if (!syscall_descr[id].name)
 		return;
 
@@ -164,6 +167,8 @@ static void process_sys_exit(void *data,
 	double duration;
 	u64 t = 0;
 
+	if (id >= MAX_SYSCALLS)
+		return;
 	if (!syscall_descr[id].name)
 		return;
 
@@ -343,7 +348,7 @@ static struct perf_event_ops eops = {
 };
 
 static char const *input_name = "perf.data";
-static bool pagefaults = false;
+static bool pagefaults = true;
 
 static int read_events(void)
 {
