@@ -36,6 +36,9 @@
 
 #include "internal.h"
 
+#define CREATE_TRACE_POINTS
+#include <trace/events/vfs.h>
+
 /* [Feb-1997 T. Schoebel-Theuer]
  * Fundamental changes in the pathname lookup mechanisms (namei)
  * were necessary because of omirr.  The reason is that omirr needs
@@ -128,8 +131,10 @@ static int do_getname(const char __user *filename, char *page)
 
 	retval = strncpy_from_user(page, filename, len);
 	if (retval > 0) {
-		if (retval < len)
+		if (retval < len) {
+			trace_vfs_getname(page);
 			return 0;
+		}
 		return -ENAMETOOLONG;
 	} else if (!retval)
 		retval = -ENOENT;
