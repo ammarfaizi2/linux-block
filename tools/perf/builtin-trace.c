@@ -28,6 +28,9 @@
 #include <linux/hash.h>
 
 static struct perf_session *session;
+static char const *input_name = "perf.data";
+static bool pagefaults = false;
+static bool followchilds = false;
 
 struct syscall_descr {
 	const char	*name;
@@ -45,8 +48,8 @@ struct thread_data {
 	u64		entry_time;
 	char		*entry_str;
 	bool		entry_pending;
+	unsigned int	last_syscall;
 };
-
 
 #define MAX_PID			65536
 
@@ -129,6 +132,8 @@ static void process_sys_enter(void *data,
 	if (!syscall_descr[id].name)
 		return;
 
+	thread_data[pid].last_syscall = id;
+
 	if (!thread_data[pid].entry_str) {
 		thread_data[pid].entry_str = malloc(1024);
 		if (!thread_data[pid].entry_str)
@@ -176,7 +181,9 @@ static void process_sys_exit(void *data,
 		t = timestamp - thread_data[pid].entry_time;
 
 	duration = (double)t / 1000000.0;
-	printf("%s/%d (", thread->comm, pid);
+	if (followchilds)
+		printf("%s/%d ", thread->comm, pid);
+	printf("(");
 	if (duration >= 1.0)
 		color_fprintf(stdout, PERF_COLOR_RED, "%.3f ms", duration);
 	else if (duration >= 0.01)
@@ -186,7 +193,7 @@ static void process_sys_exit(void *data,
 	printf("): ");
 
 	if (thread_data[pid].entry_pending) {
-		printf("%-70s",thread_data[pid].entry_str);
+		printf("%-70s", thread_data[pid].entry_str);
 		thread_data[pid].entry_pending = false;
 	} else {
 		printf(" ... [");
@@ -194,6 +201,30 @@ static void process_sys_exit(void *data,
 		printf("]: %s()", syscall_descr[id].name);
 	}
 	printf(" => 0x%lx\n", res);
+}
+
+static void vfs_getname(void *data,
+			struct event *event __used,
+			int cpu __used,
+			u64 timestamp __used,
+			struct thread *thread __used)
+{
+	char *filename = raw_field_ptr(event, "filename", data);
+	unsigned int pid = thread->pid;
+	unsigned int id = thread_data[pid].last_syscall;
+
+	if (id >= MAX_SYSCALLS || !syscall_descr[id].name)
+		return;
+
+	if (thread_data[pid].entry_pending) {
+		strcat(thread_data[pid].entry_str, " fpath: ");
+		strcat(thread_data[pid].entry_str, filename);
+		strcat(thread_data[pid].entry_str, " ");
+	} else {
+		if (followchilds)
+			printf("%s/%d", thread->comm, pid);
+		printf(" ... %s(%s)\n", syscall_descr[id].name, filename);
+	}
 }
 
 static int my_event__preprocess_sample(union perf_event *self,
@@ -272,10 +303,14 @@ static void pagefault_enter(union perf_event *self,
 
 	if (thread_data[pid].entry_pending) {
 		thread_data[pid].entry_pending = false;
+		if (followchilds)
+			printf("%s/%d", thread->comm, pid);
 		printf(" %s ... [", thread_data[pid].entry_str);
 		color_fprintf(stdout, PERF_COLOR_YELLOW, "unfinished");
 		printf("]\n");
 	}
+	if (followchilds)
+		printf("%s/%d", thread->comm, pid);
 	color_fprintf(stdout, PERF_COLOR_NORMAL, "     #PF: [");
 	color_fprintf(stdout, PERF_COLOR_GREEN, "%30s", sym, address, error_code);
 	color_fprintf(stdout, PERF_COLOR_NORMAL, "]: => %016lx (", address);
@@ -316,6 +351,8 @@ process_raw_event(union perf_event *self, void *data, int cpu, u64 timestamp, st
 		pagefault_enter(self, data, event, cpu, timestamp, thread);
 	if (!strcmp(event->name, "mm_pagefault_end"))
 		pagefault_exit(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "vfs_getname"))
+		vfs_getname(data, event, cpu, timestamp, thread);
 }
 
 static int process_sample_event(union perf_event *self, struct perf_sample *sample __used, struct perf_evsel *evsel __used, struct perf_session *s)
@@ -346,9 +383,6 @@ static struct perf_event_ops eops = {
 	.fork			= perf_event__process_task,
 	.ordered_samples	= true,
 };
-
-static char const *input_name = "perf.data";
-static bool pagefaults = true;
 
 static int read_events(void)
 {
@@ -385,7 +419,8 @@ static const char * const trace_usage[] = {
 };
 
 static const struct option trace_options[] = {
-	OPT_BOOLEAN('P', "pagefaults", &pagefaults, "record pagefaults"),
+	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
+	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
 	OPT_END()
 };
 
@@ -397,6 +432,7 @@ static const char *record_args[] = {
 	"-c", "1",
 	"-e", "raw_syscalls:sys_enter:r",
 	"-e", "raw_syscalls:sys_exit:r",
+	"-e", "vfs:vfs_getname:r",
 };
 
 static const char *record_args_pf[] = {
@@ -412,6 +448,9 @@ static int __cmd_record(int argc, const char **argv)
 	rec_argc = ARRAY_SIZE(record_args) + argc;
 	if (pagefaults)
 		rec_argc += ARRAY_SIZE(record_args_pf);
+	if (!followchilds)
+		rec_argc++;
+
 	rec_argv = calloc(rec_argc + 1, sizeof(char *));
 
 	for (i = 0; i < ARRAY_SIZE(record_args); i++)
@@ -421,6 +460,8 @@ static int __cmd_record(int argc, const char **argv)
 		for (j = 0; j < ARRAY_SIZE(record_args_pf); j++, i++)
 			rec_argv[i] = strdup(record_args_pf[j]);
 	}
+	if (!followchilds)
+		rec_argv[i++] = strdup("-i");
 
 	for (j = 0; j < (unsigned int)argc; j++, i++)
 		rec_argv[i] = argv[j];
@@ -437,6 +478,11 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 	parse_syscalls();
 
 	if (argc) {
+		argc = parse_options(argc, argv, trace_options, trace_usage,
+				     PARSE_OPT_STOP_AT_NON_OPTION);
+		if (!argc)
+			usage_with_options(trace_usage, trace_options);
+
 		ret = __cmd_record(argc, argv);
 		if (!ret)
 			__cmd_report();
