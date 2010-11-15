@@ -78,7 +78,7 @@ void blk_delete_timer(struct request *req)
 
 static void blk_rq_timed_out(struct request *req)
 {
-	struct request_queue *q = req->q;
+	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
 	enum blk_eh_timer_return ret;
 
 	ret = q->rq_timed_out_fn(req);
@@ -107,13 +107,14 @@ static void blk_rq_timed_out(struct request *req)
 void blk_rq_timed_out_timer(unsigned long data)
 {
 	struct request_queue *q = (struct request_queue *) data;
+	struct blk_queue_ctx *ctx = &q->queue_ctx;
 	unsigned long flags, next = 0;
 	struct request *rq, *tmp;
 	int next_set = 0;
 
 	spin_lock_irqsave(q->queue_lock, flags);
 
-	list_for_each_entry_safe(rq, tmp, &q->timeout_list, timeout_list) {
+	list_for_each_entry_safe(rq, tmp, &ctx->timeout_list, timeout_list) {
 		if (time_after_eq(jiffies, rq->deadline)) {
 			list_del_init(&rq->timeout_list);
 
@@ -163,7 +164,7 @@ EXPORT_SYMBOL_GPL(blk_abort_request);
  */
 void blk_add_timer(struct request *req)
 {
-	struct request_queue *q = req->q;
+	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
 	unsigned long expiry;
 
 	if (!q->rq_timed_out_fn)
@@ -180,7 +181,7 @@ void blk_add_timer(struct request *req)
 		req->timeout = q->rq_timeout;
 
 	req->deadline = jiffies + req->timeout;
-	list_add_tail(&req->timeout_list, &q->timeout_list);
+	list_add_tail(&req->timeout_list, &req->queue_ctx->timeout_list);
 
 	/*
 	 * If the timer isn't already pending or this timeout is earlier
@@ -201,6 +202,7 @@ void blk_add_timer(struct request *req)
  */
 void blk_abort_queue(struct request_queue *q)
 {
+	struct blk_queue_ctx *ctx = &q->queue_ctx;
 	unsigned long flags;
 	struct request *rq, *tmp;
 	LIST_HEAD(list);
@@ -219,7 +221,7 @@ void blk_abort_queue(struct request_queue *q)
 	 * Splice entries to local list, to avoid deadlocking if entries
 	 * get readded to the timeout list by error handling
 	 */
-	list_splice_init(&q->timeout_list, &list);
+	list_splice_init(&ctx->timeout_list, &list);
 
 	list_for_each_entry_safe(rq, tmp, &list, timeout_list)
 		blk_abort_request(rq);
@@ -229,7 +231,7 @@ void blk_abort_queue(struct request_queue *q)
 	 * deleting the element from the list. Make sure we add those back
 	 * instead of leaving them on the local stack list.
 	 */
-	list_splice(&list, &q->timeout_list);
+	list_splice(&list, &ctx->timeout_list);
 
 	spin_unlock_irqrestore(q->queue_lock, flags);
 

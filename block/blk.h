@@ -73,16 +73,18 @@ static inline struct request *__elv_next_request(struct request_queue *q)
 	}
 }
 
-static inline void elv_activate_rq(struct request_queue *q, struct request *rq)
+static inline void elv_activate_rq(struct request *rq)
 {
+	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
 	struct elevator_queue *e = q->elevator;
 
 	if (e->ops->elevator_activate_req_fn)
 		e->ops->elevator_activate_req_fn(q, rq);
 }
 
-static inline void elv_deactivate_rq(struct request_queue *q, struct request *rq)
+static inline void elv_deactivate_rq(struct request *rq)
 {
+	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
 	struct elevator_queue *e = q->elevator;
 
 	if (e->ops->elevator_deactivate_req_fn)
@@ -103,12 +105,12 @@ static inline int blk_should_fake_timeout(struct request_queue *q)
 
 struct io_context *current_io_context(gfp_t gfp_flags, int node);
 
-int ll_back_merge_fn(struct request_queue *q, struct request *req,
+int ll_back_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 		     struct bio *bio);
-int ll_front_merge_fn(struct request_queue *q, struct request *req, 
+int ll_front_merge_fn(struct blk_queue_ctx *ctx, struct request *req, 
 		      struct bio *bio);
-int attempt_back_merge(struct request_queue *q, struct request *rq);
-int attempt_front_merge(struct request_queue *q, struct request *rq);
+int attempt_back_merge(struct blk_queue_ctx *ctx, struct request *rq);
+int attempt_front_merge(struct blk_queue_ctx *ctx, struct request *rq);
 void blk_recalc_rq_segments(struct request *rq);
 void blk_rq_set_mixed_merge(struct request *rq);
 

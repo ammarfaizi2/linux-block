@@ -45,7 +45,6 @@ struct request_list {
 	int count[2];
 	int starved[2];
 	int elvpriv;
-	mempool_t *rq_pool;
 	wait_queue_head_t wait[2];
 };
 
@@ -80,7 +79,7 @@ struct request {
 	struct list_head queuelist;
 	struct call_single_data csd;
 
-	struct request_queue *q;
+	struct blk_queue_ctx *queue_ctx;
 
 	unsigned int cmd_flags;
 	enum rq_cmd_type_bits cmd_type;
@@ -254,19 +253,32 @@ struct queue_limits {
 	signed char		discard_zeroes_data;
 };
 
+struct blk_queue_ctx {
+	spinlock_t		lock;
+	struct elevator_queue	*elevator;
+	struct request		*last_merge;
+
+	/*
+	 * the queue request freelist, one for reads and one for writes
+	 */
+	struct request_list	rl;
+
+	unsigned int		nr_sorted;
+	unsigned int		in_flight[2];
+
+	struct list_head	timeout_list;
+};
+
 struct request_queue
 {
 	/*
 	 * Together with queue_head for cacheline sharing
 	 */
 	struct list_head	queue_head;
-	struct request		*last_merge;
 	struct elevator_queue	*elevator;
 
-	/*
-	 * the queue request freelist, one for reads and one for writes
-	 */
-	struct request_list	rq;
+	struct blk_queue_ctx	queue_ctx;
+	mempool_t		*rq_pool;
 
 	request_fn_proc		*request_fn;
 	make_request_fn		*make_request_fn;
@@ -340,12 +352,8 @@ struct request_queue
 	struct blk_queue_tag	*queue_tags;
 	struct list_head	tag_busy_list;
 
-	unsigned int		nr_sorted;
-	unsigned int		in_flight[2];
-
 	unsigned int		rq_timeout;
 	struct timer_list	timeout;
-	struct list_head	timeout_list;
 
 	struct queue_limits	limits;
 
@@ -379,6 +387,15 @@ struct request_queue
 	struct throtl_data *td;
 #endif
 };
+
+/*
+ * For this initial patch, the mapping will be 1:1 between the queue
+ * and the context queues
+ */
+static inline struct request_queue *blk_ctx_to_queue(struct blk_queue_ctx *ctx)
+{
+	return container_of(ctx, struct request_queue, queue_ctx);
+}
 
 #define QUEUE_FLAG_CLUSTER	0	/* cluster several segments into 1 */
 #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
@@ -462,9 +479,18 @@ static inline void queue_flag_clear_unlocked(unsigned int flag,
 	__clear_bit(flag, &q->queue_flags);
 }
 
+static inline int __queue_in_flight(struct request_queue *q, int index)
+{
+	struct blk_queue_ctx *ctx = &q->queue_ctx;
+
+	return ctx->in_flight[index];
+}
+
 static inline int queue_in_flight(struct request_queue *q)
 {
-	return q->in_flight[0] + q->in_flight[1];
+	struct blk_queue_ctx *ctx = &q->queue_ctx;
+
+	return ctx->in_flight[0] + ctx->in_flight[1];
 }
 
 static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
@@ -645,9 +671,9 @@ extern int blk_register_queue(struct gendisk *disk);
 extern void blk_unregister_queue(struct gendisk *disk);
 extern void register_disk(struct gendisk *dev);
 extern void generic_make_request(struct bio *bio);
-extern void blk_rq_init(struct request_queue *q, struct request *rq);
+extern void blk_rq_init(struct blk_queue_ctx *ctx, struct request *rq);
 extern void blk_put_request(struct request *);
-extern void __blk_put_request(struct request_queue *, struct request *);
+extern void __blk_put_request(struct request *);
 extern struct request *blk_get_request(struct request_queue *, int, gfp_t);
 extern struct request *blk_make_request(struct request_queue *, struct bio *,
 					gfp_t);

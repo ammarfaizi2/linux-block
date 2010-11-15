@@ -409,7 +409,8 @@ DECLARE_EVENT_CLASS(block_unplug,
 	),
 
 	TP_fast_assign(
-		__entry->nr_rq	= q->rq.count[READ] + q->rq.count[WRITE];
+		__entry->nr_rq	= q->queue_ctx.rl.count[READ] +
+				  q->queue_ctx.rl.count[WRITE];
 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
 	),
 

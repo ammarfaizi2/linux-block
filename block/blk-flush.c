@@ -74,20 +74,26 @@ static void blk_flush_complete_seq_end_io(struct request_queue *q,
 
 static void pre_flush_end_io(struct request *rq, int error)
 {
-	elv_completed_request(rq->q, rq);
-	blk_flush_complete_seq_end_io(rq->q, QUEUE_FSEQ_PREFLUSH, error);
+	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+
+	elv_completed_request(rq);
+	blk_flush_complete_seq_end_io(q, QUEUE_FSEQ_PREFLUSH, error);
 }
 
 static void flush_data_end_io(struct request *rq, int error)
 {
-	elv_completed_request(rq->q, rq);
-	blk_flush_complete_seq_end_io(rq->q, QUEUE_FSEQ_DATA, error);
+	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+
+	elv_completed_request(rq);
+	blk_flush_complete_seq_end_io(q, QUEUE_FSEQ_DATA, error);
 }
 
 static void post_flush_end_io(struct request *rq, int error)
 {
-	elv_completed_request(rq->q, rq);
-	blk_flush_complete_seq_end_io(rq->q, QUEUE_FSEQ_POSTFLUSH, error);
+	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+
+	elv_completed_request(rq);
+	blk_flush_complete_seq_end_io(q, QUEUE_FSEQ_POSTFLUSH, error);
 }
 
 static void init_flush_request(struct request *rq, struct gendisk *disk)
@@ -102,7 +108,7 @@ static struct request *queue_next_fseq(struct request_queue *q)
 	struct request *orig_rq = q->orig_flush_rq;
 	struct request *rq = &q->flush_rq;
 
-	blk_rq_init(q, rq);
+	blk_rq_init(&q->queue_ctx, rq);
 
 	switch (blk_flush_cur_seq(q)) {
 	case QUEUE_FSEQ_PREFLUSH:
@@ -130,7 +136,7 @@ static struct request *queue_next_fseq(struct request_queue *q)
 		BUG();
 	}
 
-	elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+	elv_insert(&q->queue_ctx, rq, ELEVATOR_INSERT_FRONT);
 	return rq;
 }
 

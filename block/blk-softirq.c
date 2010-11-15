@@ -20,6 +20,7 @@ static DEFINE_PER_CPU(struct list_head, blk_cpu_done);
 static void blk_done_softirq(struct softirq_action *h)
 {
 	struct list_head *cpu_list, local_list;
+	struct request_queue *q;
 
 	local_irq_disable();
 	cpu_list = &__get_cpu_var(blk_cpu_done);
@@ -31,7 +32,8 @@ static void blk_done_softirq(struct softirq_action *h)
 
 		rq = list_entry(local_list.next, struct request, csd.list);
 		list_del_init(&rq->csd.list);
-		rq->q->softirq_done_fn(rq);
+		q = blk_ctx_to_queue(rq->queue_ctx);
+		q->softirq_done_fn(rq);
 	}
 }
 
@@ -103,7 +105,7 @@ static struct notifier_block __cpuinitdata blk_cpu_notifier = {
 
 void __blk_complete_request(struct request *req)
 {
-	struct request_queue *q = req->q;
+	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
 	unsigned long flags;
 	int ccpu, cpu, group_cpu;
 
@@ -154,7 +156,9 @@ do_local:
  **/
 void blk_complete_request(struct request *req)
 {
-	if (unlikely(blk_should_fake_timeout(req->q)))
+	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+
+	if (unlikely(blk_should_fake_timeout(q)))
 		return;
 	if (!blk_mark_rq_complete(req))
 		__blk_complete_request(req);

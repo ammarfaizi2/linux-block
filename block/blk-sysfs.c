@@ -39,7 +39,8 @@ static ssize_t queue_requests_show(struct request_queue *q, char *page)
 static ssize_t
 queue_requests_store(struct request_queue *q, const char *page, size_t count)
 {
-	struct request_list *rl = &q->rq;
+	struct blk_queue_ctx *ctx = &q->queue_ctx;
+	struct request_list *rl = &ctx->rl;
 	unsigned long nr;
 	int ret;
 
@@ -467,14 +468,13 @@ static void blk_release_queue(struct kobject *kobj)
 {
 	struct request_queue *q =
 		container_of(kobj, struct request_queue, kobj);
-	struct request_list *rl = &q->rq;
 
 	blk_sync_queue(q);
 
 	blk_throtl_exit(q);
 
-	if (rl->rq_pool)
-		mempool_destroy(rl->rq_pool);
+	if (q->rq_pool)
+		mempool_destroy(q->rq_pool);
 
 	if (q->queue_tags)
 		__blk_queue_free_tags(q);
