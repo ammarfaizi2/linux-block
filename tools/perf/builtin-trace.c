@@ -710,11 +710,11 @@ process_sched_wakeup_event(void *data,
 	FILL_FIELD(wakeup_event, success, event, data);
 	FILL_FIELD(wakeup_event, cpu, event, data);
 
-	printf("sched wakeup event\n");
+//	printf("sched wakeup event\n");
 }
 
 static void
-process_sched_switch_event(void *data,
+process_sched_switch_out_event(void *data,
 			   struct event *event,
 			   int this_cpu __used,
 			   u64 timestamp __used,
@@ -732,7 +732,33 @@ process_sched_switch_event(void *data,
 	FILL_FIELD(switch_event, next_pid, event, data);
 	FILL_FIELD(switch_event, next_prio, event, data);
 
-	printf("sched switch event\n");
+	printf("# sched switch out: %s/%d -> %s/%d\n",
+		switch_event.prev_comm, switch_event.prev_pid,
+		switch_event.next_comm, switch_event.next_pid);
+}
+
+static void
+process_sched_switch_in_event(void *data,
+			   struct event *event,
+			   int this_cpu __used,
+			   u64 timestamp __used,
+			   struct thread *thread __used)
+{
+	struct trace_switch_event switch_event;
+
+	FILL_COMMON_FIELDS(switch_event, event, data);
+
+	FILL_ARRAY(switch_event, prev_comm, event, data);
+	FILL_FIELD(switch_event, prev_pid, event, data);
+	FILL_FIELD(switch_event, prev_prio, event, data);
+	FILL_FIELD(switch_event, prev_state, event, data);
+	FILL_ARRAY(switch_event, next_comm, event, data);
+	FILL_FIELD(switch_event, next_pid, event, data);
+	FILL_FIELD(switch_event, next_prio, event, data);
+
+	printf("# sched switch in: %s/%d -> %s/%d\n",
+		switch_event.prev_comm, switch_event.prev_pid,
+		switch_event.next_comm, switch_event.next_pid);
 }
 
 static void
@@ -743,13 +769,16 @@ process_sched_runtime_event(void *data,
 			   struct thread *thread __used)
 {
 	struct trace_runtime_event runtime_event;
+	double runtime_ms;
 
 	FILL_ARRAY(runtime_event, comm, event, data);
 	FILL_FIELD(runtime_event, pid, event, data);
 	FILL_FIELD(runtime_event, runtime, event, data);
 	FILL_FIELD(runtime_event, vruntime, event, data);
 
-	printf("sched runtime event\n");
+	runtime_ms = runtime_event.runtime / 1000000.0;
+
+	printf("[ sched timeslice consumed: %.3f msecs ]\n", runtime_ms);
 }
 
 static void
@@ -768,7 +797,7 @@ process_sched_fork_event(void *data,
 	FILL_ARRAY(fork_event, child_comm, event, data);
 	FILL_FIELD(fork_event, child_pid, event, data);
 
-	printf("sched fork event\n");
+//	printf("sched fork event\n");
 }
 
 static void
@@ -777,7 +806,7 @@ process_sched_exit_event(struct event *event __used,
 			 u64 timestamp __used,
 			 struct thread *thread __used)
 {
-	printf("sched exit event\n");
+//	printf("sched exit event\n");
 }
 
 static void
@@ -796,7 +825,7 @@ process_sched_migrate_task_event(void *data,
 	FILL_FIELD(migrate_task_event, prio, event, data);
 	FILL_FIELD(migrate_task_event, cpu, event, data);
 
-	printf("sched migrate event\n");
+//	printf("sched migrate event\n");
 }
 
 static void
@@ -808,8 +837,10 @@ process_raw_sched_event(union perf_event *raw_event __used, void *data, int cpu,
 	type = trace_parse_common_type(data);
 	event = trace_find_event(type);
 
-	if (!strcmp(event->name, "sched_switch"))
-		process_sched_switch_event(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_switch_in"))
+		process_sched_switch_in_event(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_switch_out"))
+		process_sched_switch_out_event(data, event, cpu, timestamp, thread);
 	if (!strcmp(event->name, "sched_stat_runtime"))
 		process_sched_runtime_event(data, event, cpu, timestamp, thread);
 	if (!strcmp(event->name, "sched_wakeup"))
@@ -925,7 +956,7 @@ static const char *record_args[] = {
 	"record",
 	"-R",
 	"-f",
-	"-m", "1024",
+	"-m", "4096",
 	"-c", "1",
 	"-d",
 	"-e", "raw_syscalls:sys_enter:r",
@@ -933,7 +964,8 @@ static const char *record_args[] = {
 	"-e", "vfs:vfs_getname:r",
 	"-e", "kmem:mm_pagefault_start:r",
 	"-e", "kmem:mm_pagefault_end:r",
-	"-e", "sched:sched_switch:r",
+	"-e", "sched:sched_switch_out:r",
+	"-e", "sched:sched_switch_in:r",
 	"-e", "sched:sched_stat_wait:r",
 	"-e", "sched:sched_stat_sleep:r",
 	"-e", "sched:sched_stat_iowait:r",
