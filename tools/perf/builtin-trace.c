@@ -137,7 +137,7 @@ static void apply_thread_filter(void)
 	}
 
 	if (!cnt)
-		thread_data[first_pid]->enabled = true;
+		die("Invalid thread filter. No matching pid/comm");
 
 	followchilds = cnt > 1;
 	free(str);
