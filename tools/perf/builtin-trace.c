@@ -187,6 +187,13 @@ static void apply_syscall_filters(void)
 	if (!filter_str)
 		return;
 
+	printf("# (restricting syscalls to: %s)\n", filter_str);
+	/* Do the obvious thing for all or *: */
+	if (!strcasecmp(filter_str, "all"))
+		return;
+	if (!strcasecmp(filter_str, "*"))
+		return;
+
 	tokenize_filter();
 
 	for (i = 0; i < MAX_SYSCALLS && sdesc->name; i++, sdesc++) {
@@ -1145,6 +1152,12 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 	if (argc) {
 		argc = parse_options(argc, argv, trace_options, trace_usage,
 				     PARSE_OPT_STOP_AT_NON_OPTION);
+		/*
+		 * Use leftover arguments as the subsys filter - a shortcut for
+		 * the most common parameter usage:
+		 */
+		if (argc)
+			filter_str = argv[0];
 	}
 
 	if (duration_filter_str)
