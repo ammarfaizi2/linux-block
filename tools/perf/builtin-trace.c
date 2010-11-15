@@ -1133,7 +1133,8 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 		argc--;
 		ret = __cmd_record(argc, argv);
 
-		printf(" # (use 'trace report' to see the trace)\n #\n\n");
+		color_fprintf(stderr, PERF_COLOR_YELLOW,
+			"# trace record: Use 'trace report' to see the trace\n");
 
 		return ret;
 	}

@@ -13,6 +13,7 @@
 
 #include "util/build-id.h"
 #include "util/util.h"
+#include "util/color.h"
 #include "util/parse-options.h"
 #include "util/parse-events.h"
 
@@ -717,8 +718,8 @@ static int __cmd_record(int argc, const char **argv)
 	/*
 	 * Approximate RIP event size: 24 bytes.
 	 */
-	fprintf(stderr,
-		"\n #\n # perf record: Captured and wrote %.3f MB %s (~%" PRIu64 " samples) ]\n #\n",
+	color_fprintf(stderr, PERF_COLOR_YELLOW,
+		"#  perf record: Captured and wrote %.3f MB %s (~%" PRIu64 " samples)\n",
 		(double)bytes_written / 1024.0 / 1024.0,
 		output_name,
 		bytes_written / 24);
