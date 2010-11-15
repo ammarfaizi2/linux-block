@@ -70,7 +70,7 @@ struct thread_data {
 
 	int			open_syscall;
 	char			*open_filename;
-	char			*fd_name[MAX_FDS];
+	const char		*fd_name[MAX_FDS];
 
 	char			*comm;
 
@@ -336,6 +336,9 @@ static struct thread_data *get_thread_data(struct thread *thread)
 
 	if (!tdata) {
 		tdata = calloc(1, sizeof(*tdata));
+		tdata->fd_name[0] = "<parent::stdin>";
+		tdata->fd_name[1] = "<parent::stdout>";
+		tdata->fd_name[2] = "<parent::stderr>";
 		thread_data[thread->pid] = tdata;
 	}
 
