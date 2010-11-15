@@ -111,10 +111,11 @@ int map__load(struct map *self, symbol_filter_t filter)
 					  sbuild_id);
 			pr_warning("%s with build id %s not found",
 				   name, sbuild_id);
-		} else
-			pr_warning("Failed to open %s", name);
-
-		pr_warning(", continuing without symbols\n");
+			pr_warning(", continuing without symbols\n");
+		} else {
+			pr_debug("Failed to open %s", name);
+			pr_debug(", continuing without symbols\n");
+		}
 		return -1;
 	} else if (nr == 0) {
 		const size_t len = strlen(name);

@@ -33,6 +33,8 @@ static bool			pagefaults		= false;
 static bool			followchilds		= false;
 static bool			print_syscalls_flag	= false;
 static unsigned int		page_size;
+static unsigned int		duration_filter;
+static unsigned int		nr_threads;
 
 struct syscall_desc {
 	const char	*name;
@@ -248,17 +250,22 @@ static void parse_syscalls(void)
 	apply_syscall_filters();
 }
 
+static bool filter_duration(unsigned long t)
+{
+	return t < (duration_filter * 1000000);
+}
+
 static void print_duration(unsigned long t)
 {
 	double duration = (double)t / 1000000.0;
 
 	printf("(");
 	if (duration >= 1.0)
-		color_fprintf(stdout, PERF_COLOR_RED, "%.3f ms", duration);
+		color_fprintf(stdout, PERF_COLOR_RED, "%6.3f ms", duration);
 	else if (duration >= 0.01)
-		color_fprintf(stdout, PERF_COLOR_YELLOW, "%.3f ms", duration);
+		color_fprintf(stdout, PERF_COLOR_YELLOW, "%6.3f ms", duration);
 	else
-		color_fprintf(stdout, PERF_COLOR_NORMAL, "%.3f ms", duration);
+		color_fprintf(stdout, PERF_COLOR_NORMAL, "%6.3f ms", duration);
 	printf("): ");
 }
 
@@ -266,6 +273,10 @@ static void print_pagefault(int pid, u64 timestamp)
 {
 	struct thread_data *tdata = thread_data[pid];
 	struct pf_data *pfd = tdata->pf_data + tdata->pf_pending - 1;
+
+	if (duration_filter &&
+	    (!timestamp || filter_duration(timestamp - pfd->entry_time)))
+		return;
 
 	if (followchilds)
 		printf("%20s/%5d ", tdata->comm, pid);
@@ -340,6 +351,7 @@ static struct thread_data *get_thread_data(struct thread *thread)
 		tdata->fd_name[1] = "<parent::stdout>";
 		tdata->fd_name[2] = "<parent::stderr>";
 		thread_data[thread->pid] = tdata;
+		nr_threads++;
 	}
 
 	if (!tdata->comm)
@@ -408,6 +420,14 @@ static void process_sys_enter(void *data,
 	}
 	tmp += sprintf(tmp, ")");
 	tdata->entry_pending = true;
+
+	if (!strcmp(sdesc->name, "exit_group") || !strcmp(sdesc->name, "exit")) {
+		if (!duration_filter) {
+			print_comm(thread);
+			print_duration(1);
+			printf("%-70s\n", tdata->entry_str);
+		}
+	}
 }
 
 static void process_sys_exit(void *data,
@@ -439,8 +459,11 @@ static void process_sys_exit(void *data,
 		tdata->open_filename = 0;
 	}
 
-	if (tdata->entry_time)
+	if (tdata->entry_time) {
 		t = timestamp - tdata->entry_time;
+		if (filter_duration(t))
+			return;
+	}
 
 	print_comm(thread);
 	print_duration(t);
@@ -592,8 +615,10 @@ static void pagefault_exit(void *data __used,
 	if (pf_pending_pid != thread->pid)
 		print_pending_pf();
 
-	print_pagefault(thread->pid, timestamp);
-	tdata->pf_pending--;
+	if (tdata->pf_pending) {
+		print_pagefault(thread->pid, timestamp);
+		tdata->pf_pending--;
+	}
 	pf_pending_pid = 0;
 }
 
@@ -735,9 +760,9 @@ process_sched_switch_out_event(void *data,
 	FILL_FIELD(switch_event, next_pid, event, data);
 	FILL_FIELD(switch_event, next_prio, event, data);
 
-	printf("# sched switch out: %s/%d -> %s/%d\n",
-		switch_event.prev_comm, switch_event.prev_pid,
-		switch_event.next_comm, switch_event.next_pid);
+	//printf("# sched switch out: %s/%d -> %s/%d\n",
+	//	switch_event.prev_comm, switch_event.prev_pid,
+	//	switch_event.next_comm, switch_event.next_pid);
 }
 
 static void
@@ -759,9 +784,9 @@ process_sched_switch_in_event(void *data,
 	FILL_FIELD(switch_event, next_pid, event, data);
 	FILL_FIELD(switch_event, next_prio, event, data);
 
-	printf("# sched switch in: %s/%d -> %s/%d\n",
-		switch_event.prev_comm, switch_event.prev_pid,
-		switch_event.next_comm, switch_event.next_pid);
+	//printf("# sched switch in: %s/%d -> %s/%d\n",
+	//	switch_event.prev_comm, switch_event.prev_pid,
+	//	switch_event.next_comm, switch_event.next_pid);
 }
 
 static void
@@ -781,7 +806,7 @@ process_sched_runtime_event(void *data,
 
 	runtime_ms = runtime_event.runtime / 1000000.0;
 
-	printf("[ sched timeslice consumed: %.3f msecs ]\n", runtime_ms);
+	//printf("[ sched timeslice consumed: %.3f msecs ]\n", runtime_ms);
 }
 
 static void
@@ -913,12 +938,47 @@ static struct perf_event_ops eops = {
 static int read_events(void)
 {
 	session = perf_session__new_nowarn(input_name, O_RDONLY, 0, false, &eops);
+	return perf_session__process_events(session, &eops);
+}
+
+static int process_prep_event(union perf_event *self, struct perf_sample *sample __used, struct perf_evsel *evsel __used, struct perf_session *s)
+{
+	struct perf_sample data;
+	struct thread *thread;
+
+	bzero(&data, sizeof(data));
+	perf_event__parse_sample(self, s->sample_type, s->sample_id_all, &data);
+
+	thread = perf_session__findnew(s, data.tid);
+	if (thread == NULL) {
+		pr_debug("problem processing %d event, skipping it.\n",
+			self->header.type);
+		return -1;
+	}
+
+	get_thread_data(thread);
+
+	return 0;
+}
+
+static struct perf_event_ops eops_prep = {
+	.sample			= process_prep_event,
+	.comm			= perf_event__process_comm,
+	.mmap			= perf_event__process_mmap,
+	.exit			= perf_event__process_task,
+	.fork			= perf_event__process_task,
+	.ordered_samples	= true,
+};
+
+static int read_events_prep(void)
+{
+	session = perf_session__new_nowarn(input_name, O_RDONLY, 0, false, &eops);
 	if (!session) {
 		fprintf(stderr, "\n No perf.data file yet - to create it run: 'perf trace record <command>'\n\n");
 		exit(0);
 	}
 
-	return perf_session__process_events(session, &eops);
+	return perf_session__process_events(session, &eops_prep);
 }
 
 static void __cmd_report(void)
@@ -927,6 +987,8 @@ static void __cmd_report(void)
 	if (symbol__init() < 0)
 		die("symbol initialization failure");
 
+	read_events_prep();
+	followchilds = nr_threads > 1;
 	read_events();
 }
 
@@ -948,10 +1010,10 @@ static const struct option trace_options[] = {
 	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag,
 		    "print syscall names and arguments"),
 	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
-	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
 	OPT_STRING ('F', "filter", &filter_str, "subsystem[,subsystem...]",
 		    "only consider symbols in these subsystems"),
-	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
+	OPT_UINTEGER('d', "duration", &duration_filter,
+		     "show only events with duration > N ms"),
 	OPT_END()
 };
 
