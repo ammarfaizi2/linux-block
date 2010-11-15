@@ -571,11 +571,12 @@ static const char * const trace_usage[] = {
 };
 
 static const struct option trace_options[] = {
-	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag, "print syscall names and arguments"),
+	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag,
+		    "print syscall names and arguments"),
 	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
 	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
 	OPT_STRING ('F', "filter", &filter_str, "subsystem[,subsystem...]",
-		                   "only consider symbols in these subsystems"),
+		    "only consider symbols in these subsystems"),
 	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
 	OPT_END()
 };
@@ -589,9 +590,6 @@ static const char *record_args[] = {
 	"-e", "raw_syscalls:sys_enter:r",
 	"-e", "raw_syscalls:sys_exit:r",
 	"-e", "vfs:vfs_getname:r",
-};
-
-static const char *record_args_pf[] = {
 	"-e", "kmem:mm_pagefault_start:r",
 	"-e", "kmem:mm_pagefault_end:r"
 };
@@ -602,22 +600,10 @@ static int __cmd_record(int argc, const char **argv)
 	const char **rec_argv;
 
 	rec_argc = ARRAY_SIZE(record_args) + argc;
-	if (pagefaults)
-		rec_argc += ARRAY_SIZE(record_args_pf);
-	if (!followchilds)
-		rec_argc++;
-
 	rec_argv = calloc(rec_argc + 1, sizeof(char *));
 
 	for (i = 0; i < ARRAY_SIZE(record_args); i++)
 		rec_argv[i] = strdup(record_args[i]);
-
-	if (pagefaults) {
-		for (j = 0; j < ARRAY_SIZE(record_args_pf); j++, i++)
-			rec_argv[i] = strdup(record_args_pf[j]);
-	}
-	if (!followchilds)
-		rec_argv[i++] = strdup("-i");
 
 	for (j = 0; j < (unsigned int)argc; j++, i++)
 		rec_argv[i] = argv[j];
