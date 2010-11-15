@@ -37,17 +37,6 @@ struct sg_io_hdr;
 struct request;
 typedef void (rq_end_io_fn)(struct request *, int);
 
-struct request_list {
-	/*
-	 * count[], starved[], and wait[] are indexed by
-	 * BLK_RW_SYNC/BLK_RW_ASYNC
-	 */
-	int count[2];
-	int starved[2];
-	int elvpriv;
-	wait_queue_head_t wait[2];
-};
-
 /*
  * request command types
  */
@@ -253,25 +242,6 @@ struct queue_limits {
 	signed char		discard_zeroes_data;
 };
 
-struct blk_queue_ctx {
-	spinlock_t		lock;
-	struct elevator_queue	*elevator;
-	void			*elevator_data;
-	struct hlist_head	*hash;
-
-	struct request		*last_merge;
-
-	/*
-	 * the queue request freelist, one for reads and one for writes
-	 */
-	struct request_list	rl;
-
-	unsigned int		nr_sorted;
-	unsigned int		in_flight[2];
-
-	struct list_head	timeout_list;
-};
-
 struct request_queue
 {
 	/*
@@ -280,7 +250,9 @@ struct request_queue
 	struct list_head	queue_head;
 	struct elevator_queue	*elevator;
 
-	struct blk_queue_ctx	queue_ctx;
+	struct blk_queue_ctx	*queue_ctx;
+	unsigned int		nr_queues;
+
 	mempool_t		*rq_pool;
 
 	request_fn_proc		*request_fn;
@@ -390,25 +362,6 @@ struct request_queue
 #endif
 };
 
-/*
- * For this initial patch, the mapping will be 1:1 between the queue
- * and the context queues
- */
-static inline struct request_queue *blk_ctx_to_queue(struct blk_queue_ctx *ctx)
-{
-	return container_of(ctx, struct request_queue, queue_ctx);
-}
-
-/*
- * Elevator per-context data. Again, this will map to the proper queue
- * when we do support more than 1 context per queue
- */
-static inline struct blk_queue_ctx *blk_get_ctx(struct request_queue *q, int nr)
-{
-	BUG_ON(nr);
-	return &q->queue_ctx;
-}
-
 #define QUEUE_FLAG_CLUSTER	0	/* cluster several segments into 1 */
 #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
 #define QUEUE_FLAG_STOPPED	2	/* queue is stopped */
@@ -489,20 +442,6 @@ static inline void queue_flag_clear_unlocked(unsigned int flag,
 					     struct request_queue *q)
 {
 	__clear_bit(flag, &q->queue_flags);
-}
-
-static inline int __queue_in_flight(struct request_queue *q, int index)
-{
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
-
-	return ctx->in_flight[index];
-}
-
-static inline int queue_in_flight(struct request_queue *q)
-{
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
-
-	return ctx->in_flight[0] + ctx->in_flight[1];
 }
 
 static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
@@ -833,7 +772,8 @@ extern void blk_unprep_request(struct request *);
  * Access functions for manipulating queue properties
  */
 extern struct request_queue *blk_init_queue_node(request_fn_proc *rfn,
-					spinlock_t *lock, int node_id);
+					spinlock_t *lock, int node_id,
+					unsigned int nr_queues);
 extern struct request_queue *blk_init_allocated_queue_node(struct request_queue *,
 							   request_fn_proc *,
 							   spinlock_t *, int node_id);
@@ -889,7 +829,7 @@ extern long nr_blockdev_pages(void);
 
 int blk_get_queue(struct request_queue *);
 struct request_queue *blk_alloc_queue(gfp_t);
-struct request_queue *blk_alloc_queue_node(gfp_t, int);
+struct request_queue *blk_alloc_queue_node(gfp_t, int, unsigned int);
 extern void blk_put_queue(struct request_queue *);
 
 /*

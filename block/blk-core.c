@@ -463,11 +463,29 @@ void blk_cleanup_queue(struct request_queue *q)
 }
 EXPORT_SYMBOL(blk_cleanup_queue);
 
+static int blk_init_queue_ctx(struct request_queue *q, unsigned int nr_queues)
+{
+	struct blk_queue_ctx *ctx;
+	unsigned int i;
+
+	q->nr_queues = nr_queues;
+	queue_for_each_ctx(q, ctx, i) {
+		struct request_list *rl = &ctx->rl;
+
+		spin_lock_init(&ctx->lock);
+
+		rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
+		rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
+		rl->elvpriv = 0;
+		init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
+		init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
+	}
+
+	return 0;
+}
+
 static int blk_init_free_list(struct request_queue *q)
 {
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
-	struct request_list *rl;
-
 	if (unlikely(q->rq_pool))
 		return 0;
 
@@ -476,28 +494,17 @@ static int blk_init_free_list(struct request_queue *q)
 	if (!q->rq_pool)
 		return -ENOMEM;
 
-	rl = &ctx->rl;
-	rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
-	rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
-	rl->elvpriv = 0;
-	init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
-	init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
 	return 0;
 }
 
 struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
 {
-	return blk_alloc_queue_node(gfp_mask, -1);
+	return blk_alloc_queue_node(gfp_mask, -1, 1);
 }
 EXPORT_SYMBOL(blk_alloc_queue);
 
-static void blk_init_ctx(struct request_queue *q, struct blk_queue_ctx *ctx)
-{
-	spin_lock_init(&ctx->lock);
-	INIT_LIST_HEAD(&ctx->timeout_list);
-}
-
-struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id,
+					   unsigned int nr_queues)
 {
 	struct request_queue *q;
 	int err;
@@ -507,7 +514,14 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 	if (!q)
 		return NULL;
 
-	blk_init_ctx(q, &q->queue_ctx);
+	q->queue_ctx = kmalloc_node(nr_queues * sizeof(struct blk_queue_ctx),
+					GFP_KERNEL, node_id);
+	if (!q->queue_ctx) {
+		kmem_cache_free(blk_requestq_cachep, q);
+		return NULL;
+	}
+
+	blk_init_queue_ctx(q, nr_queues);
 
 	q->backing_dev_info.unplug_io_fn = blk_backing_dev_unplug;
 	q->backing_dev_info.unplug_io_data = q;
@@ -519,6 +533,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 
 	err = bdi_init(&q->backing_dev_info);
 	if (err) {
+		kfree(q->queue_ctx);
 		kmem_cache_free(blk_requestq_cachep, q);
 		return NULL;
 	}
@@ -579,16 +594,24 @@ EXPORT_SYMBOL(blk_alloc_queue_node);
 
 struct request_queue *blk_init_queue(request_fn_proc *rfn, spinlock_t *lock)
 {
-	return blk_init_queue_node(rfn, lock, -1);
+	return blk_init_queue_node(rfn, lock, -1, 1);
 }
 EXPORT_SYMBOL(blk_init_queue);
 
+struct request_queue *blk_init_queue_mq(request_fn_proc *rfn, spinlock_t *lock,
+					unsigned int nr_queues)
+{
+	return blk_init_queue_node(rfn, lock, -1, nr_queues);
+}
+EXPORT_SYMBOL(blk_init_queue_mq);
+
 struct request_queue *
-blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
+blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id,
+		    unsigned int nr_queues)
 {
 	struct request_queue *uninit_q, *q;
 
-	uninit_q = blk_alloc_queue_node(GFP_KERNEL, node_id);
+	uninit_q = blk_alloc_queue_node(GFP_KERNEL, node_id, nr_queues);
 	if (!uninit_q)
 		return NULL;
 
@@ -838,7 +861,7 @@ static struct request *get_request_wait(struct blk_queue_ctx *ctx, int rw_flags,
 
 struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
 {
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
+	struct blk_queue_ctx *ctx = blk_get_ctx(q, 0);
 	struct request *rq;
 
 	BUG_ON(rw != READ && rw != WRITE);
@@ -960,7 +983,7 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
 			int at_head, void *data)
 {
 	int where = at_head ? ELEVATOR_INSERT_FRONT : ELEVATOR_INSERT_BACK;
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
+	struct blk_queue_ctx *ctx = blk_get_ctx(q, 0);
 	unsigned long flags;
 
 	/*
@@ -1130,7 +1153,7 @@ static inline bool queue_should_plug(struct request_queue *q)
 
 static int queue_bio(struct request_queue *q, struct bio *bio)
 {
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
+	struct blk_queue_ctx *ctx = blk_get_ctx(q, 0);
 	struct request *req;
 	int el_ret;
 	unsigned int bytes = bio->bi_size;
@@ -1663,7 +1686,7 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 	BUG_ON(blk_queued_rq(rq));
 
 	drive_stat_acct(rq, 1);
-	__elv_add_request(&q->queue_ctx, rq, ELEVATOR_INSERT_BACK, 0);
+	__elv_add_request(blk_get_ctx(q, 0), rq, ELEVATOR_INSERT_BACK, 0);
 
 	spin_unlock_irqrestore(q->queue_lock, flags);
 

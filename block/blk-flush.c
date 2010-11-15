@@ -106,9 +106,10 @@ static void init_flush_request(struct request *rq, struct gendisk *disk)
 static struct request *queue_next_fseq(struct request_queue *q)
 {
 	struct request *orig_rq = q->orig_flush_rq;
+	struct blk_queue_ctx *ctx = orig_rq->queue_ctx;
 	struct request *rq = &q->flush_rq;
 
-	blk_rq_init(&q->queue_ctx, rq);
+	blk_rq_init(ctx, rq);
 
 	switch (blk_flush_cur_seq(q)) {
 	case QUEUE_FSEQ_PREFLUSH:
@@ -136,7 +137,7 @@ static struct request *queue_next_fseq(struct request_queue *q)
 		BUG();
 	}
 
-	elv_insert(&q->queue_ctx, rq, ELEVATOR_INSERT_FRONT);
+	elv_insert(ctx, rq, ELEVATOR_INSERT_FRONT);
 	return rq;
 }
 

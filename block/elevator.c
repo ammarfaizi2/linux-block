@@ -187,9 +187,7 @@ static int elevator_init_queue(struct request_queue *q,
 		return ret;
 
 	hash_size = sizeof(struct hlist_head) * ELV_HASH_ENTRIES;
-	for (i = 0; i < nr_queues; i++) {
-		ctx = blk_get_ctx(q, i);
-
+	queue_for_each_ctx(q, ctx, i) {
 		ctx->hash = kmalloc_node(hash_size, GFP_KERNEL, q->node);
 		if (!ctx->hash)
 			goto err;
@@ -198,6 +196,7 @@ static int elevator_init_queue(struct request_queue *q,
 			INIT_HLIST_HEAD(&ctx->hash[j]);
 	}
 
+	q->nr_queues = i;
 	return 0;
 err:
 	while (i--) {
@@ -307,27 +306,22 @@ int elevator_init(struct request_queue *q, char *name)
 }
 EXPORT_SYMBOL(elevator_init);
 
-static void __elevator_exit(struct request_queue *q, struct elevator_queue *e,
-			    unsigned int nr_queues)
+void elevator_exit(struct request_queue *q, struct elevator_queue *e)
 {
+	struct blk_queue_ctx *ctx;
 	unsigned int i;
 
 	mutex_lock(&e->sysfs_lock);
 	if (e->ops->elevator_exit_fn)
-		e->ops->elevator_exit_fn(q, e, nr_queues);
+		e->ops->elevator_exit_fn(q, e);
 
-	for (i = 0; i < nr_queues; i++)
-		kfree(blk_get_ctx(q, i)->hash);
+	queue_for_each_ctx(q, ctx, i)
+		kfree(ctx->hash);
 
 	e->ops = NULL;
 	mutex_unlock(&e->sysfs_lock);
 
 	kobject_put(&e->kobj);
-}
-
-void elevator_exit(struct request_queue *q, struct elevator_queue *e)
-{
-	__elevator_exit(q, e, 1);
 }
 EXPORT_SYMBOL(elevator_exit);
 
@@ -605,13 +599,19 @@ void elv_requeue_request(struct request_queue *q, struct request *rq)
 
 void elv_drain_elevator(struct request_queue *q)
 {
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
+	struct blk_queue_ctx *ctx;
 	static int printed;
+	int nr_sorted, i;
 
 	while (q->elevator->ops->elevator_dispatch_fn(q, 1))
 		;
-	if (ctx->nr_sorted == 0)
+
+	nr_sorted = 0;
+	queue_for_each_ctx(q, ctx, i)
+		nr_sorted += ctx->nr_sorted;
+	if (!nr_sorted)
 		return;
+
 	if (printed++ < 10) {
 		printk(KERN_ERR "%s: forced dispatching is broken "
 		       "(nr_sorted=%u), please report this\n",
@@ -620,13 +620,23 @@ void elv_drain_elevator(struct request_queue *q)
 	}
 }
 
+static int count_elvpriv(struct request_queue *q)
+{
+	struct blk_queue_ctx *ctx;
+	int elpriv, i;
+
+	elpriv = 0;
+	queue_for_each_ctx(q, ctx, i)
+		elpriv += ctx->rl.elvpriv;
+
+	return elpriv;
+}
+
 /*
  * Call with queue lock held, interrupts disabled
  */
 void elv_quiesce_start(struct request_queue *q)
 {
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
-
 	if (!q->elevator)
 		return;
 
@@ -636,7 +646,7 @@ void elv_quiesce_start(struct request_queue *q)
 	 * make sure we don't have any requests in flight
 	 */
 	elv_drain_elevator(q);
-	while (ctx->rl.elvpriv) {
+	while (count_elvpriv(q)) {
 		__blk_run_queue(q);
 		spin_unlock_irq(q->queue_lock);
 		msleep(10);

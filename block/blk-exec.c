@@ -49,12 +49,13 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
 			   rq_end_io_fn *done)
 {
 	int where = at_head ? ELEVATOR_INSERT_FRONT : ELEVATOR_INSERT_BACK;
+	struct blk_queue_ctx *ctx = blk_get_ctx(q, 0);
 
 	rq->rq_disk = bd_disk;
 	rq->end_io = done;
 	WARN_ON(irqs_disabled());
 	spin_lock_irq(q->queue_lock);
-	__elv_add_request(&q->queue_ctx, rq, where, 1);
+	__elv_add_request(ctx, rq, where, 1);
 	__generic_unplug_device(q);
 	/* the queue is stopped so it won't be plugged+unplugged */
 	if (rq->cmd_type == REQ_TYPE_PM_RESUME)

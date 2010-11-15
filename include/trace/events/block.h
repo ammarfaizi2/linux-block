@@ -409,8 +409,13 @@ DECLARE_EVENT_CLASS(block_unplug,
 	),
 
 	TP_fast_assign(
+#if 0
 		__entry->nr_rq	= q->queue_ctx.rl.count[READ] +
 				  q->queue_ctx.rl.count[WRITE];
+#else
+
+		__entry->nr_rq	= 0;
+#endif
 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
 	),
 

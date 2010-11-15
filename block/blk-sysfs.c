@@ -39,7 +39,10 @@ static ssize_t queue_requests_show(struct request_queue *q, char *page)
 static ssize_t
 queue_requests_store(struct request_queue *q, const char *page, size_t count)
 {
-	struct blk_queue_ctx *ctx = &q->queue_ctx;
+	/*
+	 * This is total crap...
+	 */
+	struct blk_queue_ctx *ctx = blk_get_ctx(q, 0);
 	struct request_list *rl = &ctx->rl;
 	unsigned long nr;
 	int ret;
@@ -475,6 +478,8 @@ static void blk_release_queue(struct kobject *kobj)
 
 	if (q->rq_pool)
 		mempool_destroy(q->rq_pool);
+	if (q->queue_ctx)
+		kfree(q->queue_ctx);
 
 	if (q->queue_tags)
 		__blk_queue_free_tags(q);

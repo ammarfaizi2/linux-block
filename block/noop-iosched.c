@@ -2,6 +2,7 @@
  * elevator noop
  */
 #include <linux/blkdev.h>
+#include <linux/blk-mq.h>
 #include <linux/elevator.h>
 #include <linux/bio.h>
 #include <linux/module.h>
@@ -20,17 +21,27 @@ static void noop_merged_requests(struct blk_queue_ctx *ctx, struct request *rq,
 
 static int noop_dispatch(struct request_queue *q, int force)
 {
-	struct noop_data *nd = blk_get_ctx(q, 0)->elevator_data;
+	struct blk_queue_ctx *ctx;
+	struct noop_data *nd;
+	unsigned int i, dispatched = 0;
 
-	if (!list_empty(&nd->queue)) {
+	/*
+	 * This obviously needs to me made more clever...
+	 */
+	queue_for_each_ctx(q, ctx, i) {
 		struct request *rq;
+
+		nd = ctx->elevator_data;
+		if (list_empty(&nd->queue))
+			continue;
 
 		rq = list_entry(nd->queue.next, struct request, queuelist);
 		list_del_init(&rq->queuelist);
-		elv_dispatch_sort(q, &q->queue_ctx, rq);
-		return 1;
+		elv_dispatch_sort(q, ctx, rq);
+		dispatched++;
 	}
-	return 0;
+
+	return dispatched;
 }
 
 static void noop_add_request(struct blk_queue_ctx *ctx, struct request *rq)
@@ -42,9 +53,17 @@ static void noop_add_request(struct blk_queue_ctx *ctx, struct request *rq)
 
 static int noop_queue_empty(struct request_queue *q)
 {
-	struct noop_data *nd = q->queue_ctx.elevator_data;
+	struct blk_queue_ctx *ctx;
+	int i, is_empty;
 
-	return list_empty(&nd->queue);
+	is_empty = 0;
+	queue_for_each_ctx(q, ctx, i) {
+		struct noop_data *nd = ctx->elevator_data;
+
+		is_empty |= list_empty(&nd->queue);
+	}
+
+	return is_empty;
 }
 
 static struct request *
@@ -90,14 +109,13 @@ cleanup:
 	return -ENOMEM;
 }
 
-static void noop_exit_queue(struct request_queue *q, struct elevator_queue *e,
-			    unsigned int nr_queues)
+static void noop_exit_queue(struct request_queue *q, struct elevator_queue *e)
 {
-	struct noop_data *nd;
+	struct blk_queue_ctx *ctx;
 	unsigned int i;
 
-	for (i = 0; i < nr_queues; i++) {
-		nd = blk_get_ctx(q, i)->elevator_data;
+	queue_for_each_ctx(q, ctx, i) {
+		struct noop_data *nd = ctx->elevator_data;
 
 		BUG_ON(!list_empty(&nd->queue));
 		kfree(nd);
