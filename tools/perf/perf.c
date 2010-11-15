@@ -455,18 +455,21 @@ int main(int argc, const char **argv)
 		die("cannot handle %s internally", cmd);
 	}
 
+	if (!prefixcmp(cmd, "trace")) {
+		set_debugfs_path();
+		set_buildid_dir();
+		setup_path();
+		return cmd_trace(argc, argv, NULL);
+	}
+
 	/* Look for flags.. */
 	argv++;
 	argc--;
+
 	handle_options(&argv, &argc, NULL);
 	commit_pager_choice();
 	set_debugfs_path();
 	set_buildid_dir();
-
-	if (!prefixcmp(cmd, "trace")) {
-		setup_path();
-		return cmd_trace(argc, argv, NULL);
-	}
 
 	if (argc > 0) {
 		if (!prefixcmp(argv[0], "--"))

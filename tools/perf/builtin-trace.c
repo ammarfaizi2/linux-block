@@ -98,9 +98,9 @@ static void parse_syscalls(void)
 {
 	const char *dbgfs_path = debugfs_find_mountpoint();
 	int i, fd, fmtcnt, machine = audit_detect_machine();
-	char fmt_path[MAXPATHLEN];
 	char last, *p, *b, *buf = malloc(65536);
 	struct syscall_desc *sdesc;
+	char fmt_path[MAXPATHLEN];
 	size_t len;
 
 	for (i = 0; i < MAX_SYSCALLS; i++) {
@@ -560,6 +560,7 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 
 	if (argc)
 		argc = parse_options(argc, argv, trace_options, trace_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+
 	parse_syscalls();
 	print_syscalls();
 
