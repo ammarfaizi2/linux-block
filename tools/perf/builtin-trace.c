@@ -284,11 +284,13 @@ static void process_sys_enter(void *data,
 
 				fd = args[i];
 				if (fd < MAX_FDS && tdata->fd_name[fd])
-					tmp += sprintf(tmp, "%d:<%s>", fd, tdata->fd_name[fd]);
+					tmp += sprintf(tmp, "%d:<%s>", fd,
+						       tdata->fd_name[fd]);
 				else
 					tmp += sprintf(tmp, "%d:<...>", fd);
 			} else
-				tmp += sprintf(tmp, "%s: 0x%lx", arg_name, args[i]);
+				tmp += sprintf(tmp, "%s: 0x%lx", arg_name,
+					       args[i]);
 		}
 	}
 	tmp += sprintf(tmp, ")");
@@ -308,6 +310,8 @@ static void process_sys_exit(void *data,
 	double duration;
 	u64 t = 0;
 
+	tdata->last_syscall = MAX_SYSCALLS;
+
 	if (id >= MAX_SYSCALLS)
 		return;
 	if (!sdesc->name)
@@ -320,6 +324,7 @@ static void process_sys_exit(void *data,
 			tdata->fd_name[fd] = tdata->open_filename;
 			tdata->open_filename = NULL;
 		}
+		tdata->open_filename = 0;
 	}
 
 	if (tdata->entry_time)
