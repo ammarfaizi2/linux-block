@@ -175,9 +175,37 @@ static struct elevator_type *elevator_get(const char *name)
 }
 
 static int elevator_init_queue(struct request_queue *q,
-			       struct elevator_queue *eq)
+			       struct elevator_queue *eq,
+			       unsigned int nr_queues)
 {
-	return eq->ops->elevator_init_fn(q, 1);
+	unsigned int i, j, hash_size;
+	struct blk_queue_ctx *ctx;
+	int ret;
+
+	ret = eq->ops->elevator_init_fn(q, nr_queues);
+	if (ret)
+		return ret;
+
+	hash_size = sizeof(struct hlist_head) * ELV_HASH_ENTRIES;
+	for (i = 0; i < nr_queues; i++) {
+		ctx = blk_get_ctx(q, i);
+
+		ctx->hash = kmalloc_node(hash_size, GFP_KERNEL, q->node);
+		if (!ctx->hash)
+			goto err;
+
+		for (j = 0; j < ELV_HASH_ENTRIES; j++)
+			INIT_HLIST_HEAD(&ctx->hash[j]);
+	}
+
+	return 0;
+err:
+	while (i--) {
+		ctx = blk_get_ctx(q, i);
+		kfree(ctx->hash);
+	}
+
+	return -ENOMEM;
 }
 
 static void elevator_attach(struct request_queue *q, struct elevator_queue *eq)
@@ -205,27 +233,17 @@ static struct elevator_queue *elevator_alloc(struct request_queue *q,
 				  struct elevator_type *e)
 {
 	struct elevator_queue *eq;
-	int i;
 
 	eq = kmalloc_node(sizeof(*eq), GFP_KERNEL | __GFP_ZERO, q->node);
-	if (unlikely(!eq))
-		goto err;
+	if (eq) {
+		eq->ops = &e->ops;
+		eq->elevator_type = e;
+		kobject_init(&eq->kobj, &elv_ktype);
+		mutex_init(&eq->sysfs_lock);
 
-	eq->ops = &e->ops;
-	eq->elevator_type = e;
-	kobject_init(&eq->kobj, &elv_ktype);
-	mutex_init(&eq->sysfs_lock);
+		return eq;
+	}
 
-	eq->hash = kmalloc_node(sizeof(struct hlist_head) * ELV_HASH_ENTRIES,
-					GFP_KERNEL, q->node);
-	if (!eq->hash)
-		goto err;
-
-	for (i = 0; i < ELV_HASH_ENTRIES; i++)
-		INIT_HLIST_HEAD(&eq->hash[i]);
-
-	return eq;
-err:
 	kfree(eq);
 	elevator_put(e);
 	return NULL;
@@ -237,7 +255,6 @@ static void elevator_release(struct kobject *kobj)
 
 	e = container_of(kobj, struct elevator_queue, kobj);
 	elevator_put(e->elevator_type);
-	kfree(e->hash);
 	kfree(e);
 }
 
@@ -280,7 +297,7 @@ int elevator_init(struct request_queue *q, char *name)
 	if (!eq)
 		return -ENOMEM;
 
-	if (elevator_init_queue(q, eq)) {
+	if (elevator_init_queue(q, eq, 1)) {
 		kobject_put(&eq->kobj);
 		return -ENOMEM;
 	}
@@ -290,15 +307,27 @@ int elevator_init(struct request_queue *q, char *name)
 }
 EXPORT_SYMBOL(elevator_init);
 
-void elevator_exit(struct request_queue *q, struct elevator_queue *e)
+static void __elevator_exit(struct request_queue *q, struct elevator_queue *e,
+			    unsigned int nr_queues)
 {
+	unsigned int i;
+
 	mutex_lock(&e->sysfs_lock);
 	if (e->ops->elevator_exit_fn)
-		e->ops->elevator_exit_fn(q, e, 1);
+		e->ops->elevator_exit_fn(q, e, nr_queues);
+
+	for (i = 0; i < nr_queues; i++)
+		kfree(blk_get_ctx(q, i)->hash);
+
 	e->ops = NULL;
 	mutex_unlock(&e->sysfs_lock);
 
 	kobject_put(&e->kobj);
+}
+
+void elevator_exit(struct request_queue *q, struct elevator_queue *e)
+{
+	__elevator_exit(q, e, 1);
 }
 EXPORT_SYMBOL(elevator_exit);
 
@@ -315,10 +344,8 @@ static void elv_rqhash_del(struct request *rq)
 
 static void elv_rqhash_add(struct blk_queue_ctx *ctx, struct request *rq)
 {
-	struct elevator_queue *e = ctx->elevator;
-
 	BUG_ON(ELV_ON_HASH(rq));
-	hlist_add_head(&rq->hash, &e->hash[ELV_HASH_FN(rq_hash_key(rq))]);
+	hlist_add_head(&rq->hash, &ctx->hash[ELV_HASH_FN(rq_hash_key(rq))]);
 }
 
 static void elv_rqhash_reposition(struct blk_queue_ctx *ctx, struct request *rq)
@@ -333,8 +360,7 @@ static void elv_rqhash_reposition(struct blk_queue_ctx *ctx, struct request *rq)
 static struct request *elv_rqhash_find(struct blk_queue_ctx *ctx,
 				       sector_t offset)
 {
-	struct elevator_queue *e = ctx->elevator;
-	struct hlist_head *hash_list = &e->hash[ELV_HASH_FN(offset)];
+	struct hlist_head *hash_list = &ctx->hash[ELV_HASH_FN(offset)];
 	struct hlist_node *entry, *next;
 	struct request *rq;
 
@@ -972,7 +998,7 @@ static int elevator_switch(struct request_queue *q, struct elevator_type *new_e)
 	if (!e)
 		return -ENOMEM;
 
-	if (elevator_init_queue(q, e)) {
+	if (elevator_init_queue(q, e, 1)) {
 		kobject_put(&e->kobj);
 		return -ENOMEM;
 	}

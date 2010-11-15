@@ -257,6 +257,7 @@ struct blk_queue_ctx {
 	spinlock_t		lock;
 	struct elevator_queue	*elevator;
 	void			*elevator_data;
+	struct hlist_head	*hash;
 
 	struct request		*last_merge;
 
