@@ -62,7 +62,7 @@ struct thread_data {
 
 static struct thread_data thread_data[MAX_PID];
 
-static bool			print_syscalls_flag;
+static bool			print_syscalls_flag = false;
 
 static void print_syscalls(void)
 {
@@ -72,16 +72,26 @@ static void print_syscalls(void)
 	if (!print_syscalls_flag)
 		return;
 
+	setup_pager();
+
 	for (i = 0; i < MAX_SYSCALLS; i++) {
 		sdesc = syscall_desc + i;
 
-		printf("%20s (%d): ", sdesc->name, sdesc->argc);
+		if (!sdesc->name)
+			continue;
+
+		printf("%25s (%d)", sdesc->name, sdesc->argc);
 
 		for (j = 0; j < sdesc->argc; j++) {
-			printf("%s ", sdesc->entry_fmt[j]);
+			if (!j)
+				printf(": ");
+			else
+				printf(", ");
+			printf("%20s", sdesc->entry_arg[j]);
 		}
 		printf("\n");
 	}
+	exit(0);
 }
 
 static void parse_syscalls(void)
@@ -491,9 +501,9 @@ static const char * const trace_usage[] = {
 };
 
 static const struct option trace_options[] = {
+	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag, "print syscall names and arguments"),
 	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
 	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
-	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag, "print syscall names and arguments"),
 	OPT_END()
 };
 
@@ -548,10 +558,11 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 {
 	int ret;
 
+	if (argc)
+		argc = parse_options(argc, argv, trace_options, trace_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 	parse_syscalls();
 	print_syscalls();
 
-	argc = parse_options(argc, argv, trace_options, trace_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 	if (argc) {
 		if (!argc)
 			usage_with_options(trace_usage, trace_options);
