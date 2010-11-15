@@ -32,6 +32,7 @@ static char const		*input_name		= "perf.data";
 static bool			pagefaults		= false;
 static bool			followchilds		= false;
 static bool			print_syscalls_flag	= false;
+static unsigned int		page_size;
 
 struct syscall_desc {
 	const char	*name;
@@ -47,7 +48,7 @@ struct syscall_desc {
 static struct syscall_desc syscall_desc[MAX_SYSCALLS];
 
 #define MAX_FDS			1024
-#define MAX_PF_PENDING		16
+#define MAX_PF_PENDING		1024
 
 static int pf_pending_pid;
 
@@ -57,7 +58,8 @@ struct pf_data {
 	unsigned long		address;
 	unsigned long		error_code;
 	unsigned long		ip;
-	struct addr_location	al;
+	struct addr_location	al_ip;
+	struct addr_location	al_pf;
 };
 
 struct thread_data {
@@ -79,7 +81,7 @@ struct thread_data {
 
 #define MAX_PID			65536
 
-static struct thread_data thread_data[MAX_PID];
+static struct thread_data *thread_data[MAX_PID];
 
 struct syscall_attr {
 	const char		*syscall_name;
@@ -262,9 +264,8 @@ static void print_duration(unsigned long t)
 
 static void print_pagefault(int pid, u64 timestamp)
 {
-	struct thread_data *tdata = thread_data + pid;
+	struct thread_data *tdata = thread_data[pid];
 	struct pf_data *pfd = tdata->pf_data + tdata->pf_pending - 1;
-	char *sym = NULL;
 
 	if (followchilds)
 		printf("%20s/%5d ", tdata->comm, pid);
@@ -272,14 +273,25 @@ static void print_pagefault(int pid, u64 timestamp)
 	if (timestamp)
 		print_duration(timestamp - pfd->entry_time);
 
-	if (pfd->al.map && pfd->al.sym)
-		sym = pfd->al.sym->name;
-
 	color_fprintf(stdout, PERF_COLOR_NORMAL, "     #PF %10llu: [",
 		      (unsigned long long) pfd->nr);
-	color_fprintf(stdout, PERF_COLOR_GREEN, "%30s", sym);
-	color_fprintf(stdout, PERF_COLOR_NORMAL, "]: => %016lx (",
-		      pfd->address);
+
+	if (pfd->al_ip.map && pfd->al_ip.sym)
+		color_fprintf(stdout, PERF_COLOR_GREEN, "%30s]:",
+			      pfd->al_ip.sym->name);
+	else
+		color_fprintf(stdout, PERF_COLOR_GREEN, "%30lx]:", pfd->ip);
+
+	if (pfd->al_pf.map && pfd->al_pf.map->dso) {
+		u64 offset = pfd->address - pfd->al_pf.map->start;
+
+		printf(" => %s ", pfd->al_pf.map->dso->long_name);
+		printf("offset: 0x%llx page: %llu (", offset,
+		       offset / page_size);
+	} else
+		color_fprintf(stdout, PERF_COLOR_NORMAL, " => %016lx (",
+			      pfd->address);
+
 	if (pfd->error_code & 2)
 		color_fprintf(stdout, PERF_COLOR_RED, "W");
 	else
@@ -312,7 +324,12 @@ static void print_comm(struct thread *thread)
 
 static struct thread_data *get_thread_data(struct thread *thread)
 {
-	struct thread_data *tdata = thread_data + thread->pid;
+	struct thread_data *tdata = thread_data[thread->pid];
+
+	if (!tdata) {
+		tdata = calloc(1, sizeof(*tdata));
+		thread_data[thread->pid] = tdata;
+	}
 
 	if (!tdata->comm)
 		tdata->comm = strdup(thread->comm);
@@ -479,11 +496,11 @@ static int pagefault_preprocess_sample(union perf_event *self,
 	if (session->host_machine.vmlinux_maps[MAP__FUNCTION] == NULL)
 		machine__create_kernel_maps(&session->host_machine);
 
-	thread__find_addr_map(thread, session, PERF_RECORD_MISC_USER, MAP__FUNCTION,
-			      self->ip.pid, ip, al);
+	thread__find_addr_map(thread, session, PERF_RECORD_MISC_USER,
+			      MAP__FUNCTION, self->ip.pid, ip, al);
 	if (!al->map) {
-		thread__find_addr_map(thread, session, PERF_RECORD_MISC_KERNEL, MAP__FUNCTION,
-			      self->ip.pid, ip, al);
+		thread__find_addr_map(thread, session, PERF_RECORD_MISC_KERNEL,
+				      MAP__FUNCTION, self->ip.pid, ip, al);
 	}
 
 	al->sym = NULL;
@@ -513,7 +530,6 @@ static void pagefault_enter(union perf_event *self,
 			    u64 timestamp __used,
 			    struct thread *thread)
 {
-	unsigned long ip = raw_field_value(event, "ip", data);
 	struct thread_data *tdata = get_thread_data(thread);
 	struct perf_sample sdata = { .period = 1, };
 	struct pf_data *pfd;
@@ -538,12 +554,14 @@ static void pagefault_enter(union perf_event *self,
 	pfd = tdata->pf_data + tdata->pf_pending;
 	memset(pfd, 0, sizeof(*pfd));
 
-	pagefault_preprocess_sample(self, &pfd->al, &sdata, ip);
-
+	pfd->ip = raw_field_value(event, "ip", data);
 	pfd->address = raw_field_value(event, "address", data);
 	pfd->error_code = raw_field_value(event, "error_code", data);
 	pfd->entry_time = timestamp;
 	pfd->nr = tdata->pf_count;
+
+	pagefault_preprocess_sample(self, &pfd->al_ip, &sdata, pfd->ip);
+	pagefault_preprocess_sample(self, &pfd->al_pf, &sdata, pfd->address);
 
 	tdata->pf_pending++;
 	pf_pending_pid = thread->pid;
@@ -703,6 +721,7 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 		argc = parse_options(argc, argv, trace_options, trace_usage,
 				     PARSE_OPT_STOP_AT_NON_OPTION);
 
+	page_size = sysconf(_SC_PAGE_SIZE);
 	parse_syscalls();
 	print_syscalls();
 
