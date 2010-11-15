@@ -2867,6 +2867,7 @@ static void finish_task_switch(struct rq *rq, struct task_struct *prev)
 	local_irq_disable();
 #endif /* __ARCH_WANT_INTERRUPTS_ON_CTXSW */
 	perf_event_task_sched_in(current);
+	trace_sched_switch_in(prev, current);
 #ifdef __ARCH_WANT_INTERRUPTS_ON_CTXSW
 	local_irq_enable();
 #endif /* __ARCH_WANT_INTERRUPTS_ON_CTXSW */
@@ -4136,6 +4137,8 @@ need_resched:
 	rq->skip_clock_update = 0;
 
 	if (likely(prev != next)) {
+		trace_sched_switch_out(prev, next);
+
 		rq->nr_switches++;
 		rq->curr = next;
 		++*switch_count;
