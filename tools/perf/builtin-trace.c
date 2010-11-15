@@ -53,6 +53,7 @@ static struct syscall_desc syscall_desc[MAX_SYSCALLS];
 #define MAX_PF_PENDING		1024
 
 static int pf_pending_pid;
+static int first_pid;
 
 struct pf_data {
 	u64			nr;
@@ -65,6 +66,7 @@ struct pf_data {
 };
 
 struct thread_data {
+	bool			enabled;
 	u64			entry_time;
 	char			*entry_str;
 	bool			entry_pending;
@@ -84,6 +86,45 @@ struct thread_data {
 #define MAX_PID			65536
 
 static struct thread_data *thread_data[MAX_PID];
+
+static const char *filter_threads;
+
+static void apply_thread_filter(void)
+{
+	char *tmp, *tok, *str;
+	int cnt = 0, pid;
+
+	if (!filter_threads || nr_threads == 1) {
+		followchilds = nr_threads > 1;
+		return;
+	}
+
+	for (pid = 0; pid < MAX_PID; pid++) {
+		if (thread_data[pid])
+			thread_data[pid]->enabled = false;
+	}
+
+	str = strdup(filter_threads);
+
+	for (tok = strtok_r(str, ", ", &tmp);
+			tok; tok = strtok_r(NULL, ", ", &tmp)) {
+		if (sscanf(tok, "%d", &pid) != 1)
+			continue;
+		if (!pid)
+			pid = first_pid;
+		if (!thread_data[pid])
+			continue;
+		thread_data[pid]->enabled = true;
+		cnt++;
+	}
+
+	if (!cnt)
+		thread_data[first_pid]->enabled = true;
+
+	followchilds = cnt > 1;
+	free(str);
+}
+
 
 struct syscall_attr {
 	const char		*syscall_name;
@@ -350,6 +391,7 @@ static struct thread_data *get_thread_data(struct thread *thread)
 		tdata->fd_name[0] = "<parent::stdin>";
 		tdata->fd_name[1] = "<parent::stdout>";
 		tdata->fd_name[2] = "<parent::stderr>";
+		tdata->enabled = true;
 		thread_data[thread->pid] = tdata;
 		nr_threads++;
 	}
@@ -372,7 +414,7 @@ static void process_sys_enter(void *data,
 	char *tmp;
 	unsigned int i;
 
-	if (id >= MAX_SYSCALLS || !sdesc->name)
+	if (id >= MAX_SYSCALLS || !sdesc->name || !tdata->enabled)
 		return;
 
 	tdata->last_syscall = id;
@@ -444,7 +486,7 @@ static void process_sys_exit(void *data,
 
 	tdata->last_syscall = MAX_SYSCALLS;
 
-	if (id >= MAX_SYSCALLS || !sdesc->name)
+	if (id >= MAX_SYSCALLS || !sdesc->name || !tdata->enabled)
 		return;
 
 	print_pending_pf();
@@ -490,7 +532,7 @@ static void vfs_getname(void *data,
 	unsigned int id = tdata->last_syscall;
 	struct syscall_desc *sdesc = syscall_desc + id;
 
-	if (id >= MAX_SYSCALLS || !sdesc->name)
+	if (id >= MAX_SYSCALLS || !sdesc->name || !tdata->enabled)
 		return;
 
 	if (tdata->open_syscall)
@@ -568,7 +610,7 @@ static void pagefault_enter(union perf_event *self,
 	struct perf_sample sdata = { .period = 1, };
 	struct pf_data *pfd;
 
-	if (!pagefaults)
+	if (!pagefaults || !tdata->enabled)
 		return;
 
 	tdata->pf_count++;
@@ -609,7 +651,7 @@ static void pagefault_exit(void *data __used,
 {
 	struct thread_data *tdata = get_thread_data(thread);
 
-	if (!pagefaults)
+	if (!pagefaults || !tdata->enabled)
 		return;
 
 	if (pf_pending_pid != thread->pid)
@@ -956,6 +998,9 @@ static int process_prep_event(union perf_event *self, struct perf_sample *sample
 		return -1;
 	}
 
+	if (!first_pid)
+		first_pid = thread->pid;
+
 	get_thread_data(thread);
 
 	return 0;
@@ -988,7 +1033,7 @@ static void __cmd_report(void)
 		die("symbol initialization failure");
 
 	read_events_prep();
-	followchilds = nr_threads > 1;
+	apply_thread_filter();
 	read_events();
 }
 
@@ -1014,6 +1059,8 @@ static const struct option trace_options[] = {
 		    "only consider symbols in these subsystems"),
 	OPT_UINTEGER('d', "duration", &duration_filter,
 		     "show only events with duration > N ms"),
+	OPT_STRING('t', "threadfilter", &filter_threads, "pid[,pid...]",
+		     "show only threads with matching pid (0 = group leader)"),
 	OPT_END()
 };
 
