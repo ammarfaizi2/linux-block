@@ -30,7 +30,7 @@
 static struct perf_session *session;
 static char const *input_name = "perf.data";
 static bool pagefaults = false;
-static bool followchilds = false;
+static bool followchilds = true;
 
 struct syscall_descr {
 	const char	*name;
@@ -44,11 +44,17 @@ struct syscall_descr {
 
 static struct syscall_descr syscall_descr[MAX_SYSCALLS];
 
+#define MAX_FDS			1024
+
 struct thread_data {
 	u64		entry_time;
 	char		*entry_str;
 	bool		entry_pending;
 	unsigned int	last_syscall;
+
+	int		open_syscall;
+	char		*open_filename;
+	char		*fd_name[MAX_FDS];
 };
 
 #define MAX_PID			65536
@@ -123,41 +129,62 @@ static void process_sys_enter(void *data,
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
 	unsigned int pid = thread->pid;
 	unsigned long *args = raw_field_ptr(event, "args", data);
+	struct thread_data *tdata = thread_data + pid;
+	struct syscall_descr *sdesc = syscall_descr + id;
 	char *tmp;
 	unsigned int i;
 
 	if (id >= MAX_SYSCALLS)
 		return;
 
-	if (!syscall_descr[id].name)
+	if (!sdesc->name)
 		return;
 
-	thread_data[pid].last_syscall = id;
+	tdata->last_syscall = id;
 
-	if (!thread_data[pid].entry_str) {
-		thread_data[pid].entry_str = malloc(1024);
-		if (!thread_data[pid].entry_str)
+	if (!tdata->entry_str) {
+		tdata->entry_str = malloc(1024);
+		if (!tdata->entry_str)
 			return;
 	}
-	tmp = thread_data[pid].entry_str;
+	tmp = tdata->entry_str;
 
-	thread_data[pid].entry_time = timestamp;
-	tmp += sprintf(tmp, "%s(", syscall_descr[id].name);
-	if (!syscall_descr[id].entry_arg[0]) {
+	tdata->entry_time = timestamp;
+	tmp += sprintf(tmp, "%s(", sdesc->name);
+
+	tdata->open_syscall = 0;
+	if (!strcmp(sdesc->name, "open")) {
+		tdata->open_syscall = 1;
+		printf("open_syscall\n");
+	}
+
+	if (!sdesc->entry_arg[0]) {
 		for (i = 0; i < 6; i++) {
 			if (i)
 				tmp += sprintf(tmp, ", ");
 			tmp += sprintf(tmp, "0x%lx", args[i]);
 		}
 	} else {
-		for (i = 0; i < syscall_descr[id].argc; i++) {
+		for (i = 0; i < sdesc->argc; i++) {
+			char *arg_name = sdesc->entry_arg[i];
+
 			if (i)
 				tmp += sprintf(tmp, ",");
-			tmp += sprintf(tmp, "%s: 0x%lx", syscall_descr[id].entry_arg[i], args[i]);
+
+			if (!strcmp(arg_name, "fd")) {
+				int fd;
+
+				fd = args[i];
+				if (fd < MAX_FDS && tdata->fd_name[fd])
+					tmp += sprintf(tmp, "%d:<%s>", fd, tdata->fd_name[fd]);
+				else
+					tmp += sprintf(tmp, "%d:<...>", fd);
+			} else
+				tmp += sprintf(tmp, "%s: 0x%lx", arg_name, args[i]);
 		}
 	}
 	tmp += sprintf(tmp, ")");
-	thread_data[pid].entry_pending = true;
+	tdata->entry_pending = true;
 }
 
 static void process_sys_exit(void *data,
@@ -169,16 +196,30 @@ static void process_sys_exit(void *data,
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
 	unsigned int pid = thread->pid;
 	unsigned long res = (unsigned long) raw_field_value(event, "ret", data);
+	struct thread_data *tdata = thread_data + pid;
+	struct syscall_descr *sdesc = syscall_descr + id;
+	int open_syscall;
 	double duration;
 	u64 t = 0;
 
 	if (id >= MAX_SYSCALLS)
 		return;
-	if (!syscall_descr[id].name)
+	if (!sdesc->name)
 		return;
 
-	if (thread_data[pid].entry_time)
-		t = timestamp - thread_data[pid].entry_time;
+	open_syscall = 0;
+	if (!strcmp(sdesc->name, "open")) {
+		int fd = res;
+
+		open_syscall = 1;
+		if (fd < MAX_FDS) {
+			tdata->fd_name[fd] = tdata->open_filename;
+			tdata->open_filename = NULL;
+		}
+	}
+
+	if (tdata->entry_time)
+		t = timestamp - tdata->entry_time;
 
 	duration = (double)t / 1000000.0;
 	if (followchilds)
@@ -192,13 +233,13 @@ static void process_sys_exit(void *data,
 		color_fprintf(stdout, PERF_COLOR_NORMAL, "%.3f ms", duration);
 	printf("): ");
 
-	if (thread_data[pid].entry_pending) {
-		printf("%-70s", thread_data[pid].entry_str);
-		thread_data[pid].entry_pending = false;
+	if (tdata->entry_pending) {
+		printf("%-70s", tdata->entry_str);
+		tdata->entry_pending = false;
 	} else {
 		printf(" ... [");
 		color_fprintf(stdout, PERF_COLOR_YELLOW, "continued");
-		printf("]: %s()", syscall_descr[id].name);
+		printf("]: %s()", sdesc->name);
 	}
 	printf(" => 0x%lx\n", res);
 }
@@ -211,19 +252,24 @@ static void vfs_getname(void *data,
 {
 	char *filename = raw_field_ptr(event, "filename", data);
 	unsigned int pid = thread->pid;
-	unsigned int id = thread_data[pid].last_syscall;
+	struct thread_data *tdata = thread_data + pid;
+	unsigned int id = tdata->last_syscall;
+	struct syscall_descr *sdesc = syscall_descr + id;
 
-	if (id >= MAX_SYSCALLS || !syscall_descr[id].name)
+	if (id >= MAX_SYSCALLS || !sdesc->name)
 		return;
 
-	if (thread_data[pid].entry_pending) {
-		strcat(thread_data[pid].entry_str, " fpath: ");
+	if (tdata->open_syscall)
+		tdata->open_filename = strdup(filename);
+
+	if (tdata->entry_pending) {
+		strcat(thread_data[pid].entry_str, " (fpath: ");
 		strcat(thread_data[pid].entry_str, filename);
-		strcat(thread_data[pid].entry_str, " ");
+		strcat(thread_data[pid].entry_str, ") ");
 	} else {
 		if (followchilds)
 			printf("%s/%d", thread->comm, pid);
-		printf(" ... %s(%s)\n", syscall_descr[id].name, filename);
+		printf(" => %s(%s)\n", sdesc->name, filename);
 	}
 }
 
