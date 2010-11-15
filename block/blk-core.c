@@ -134,7 +134,7 @@ EXPORT_SYMBOL(blk_rq_init);
 static void req_bio_endio(struct request *rq, struct bio *bio,
 			  unsigned int nbytes, int error)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 
 	if (&q->flush_rq != rq) {
 		if (error)
@@ -680,7 +680,7 @@ int blk_get_queue(struct request_queue *q)
 static inline void blk_free_request(struct blk_queue_ctx *ctx,
 				    struct request *rq)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 
 	if (rq->cmd_flags & REQ_ELVPRIV)
 		elv_put_request(ctx, rq);
@@ -690,7 +690,7 @@ static inline void blk_free_request(struct blk_queue_ctx *ctx,
 static struct request *blk_alloc_request(struct blk_queue_ctx *ctx, int flags,
 					 int priv, gfp_t gfp_mask)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	struct request *rq;
 
 	rq = mempool_alloc(q->rq_pool, gfp_mask);
@@ -714,7 +714,7 @@ static struct request *blk_alloc_request(struct blk_queue_ctx *ctx, int flags,
 
 static void __freed_request(struct blk_queue_ctx *ctx, int sync)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	struct request_list *rl = &ctx->rl;
 
 	if (rl->count[sync] < queue_congestion_off_threshold(q))
@@ -754,7 +754,7 @@ static void freed_request(struct blk_queue_ctx *ctx, int sync, int priv)
 static struct request *get_request(struct blk_queue_ctx *ctx, int rw_flags,
 				   struct bio *bio, gfp_t gfp_mask)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	struct request *rq = NULL;
 	struct request_list *rl = &ctx->rl;
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
@@ -831,7 +831,7 @@ out:
 static struct request *get_request_wait(struct blk_queue_ctx *ctx, int rw_flags,
 					struct bio *bio)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
 	struct request *rq;
 
@@ -1084,7 +1084,7 @@ EXPORT_SYMBOL_GPL(__blk_put_request);
 
 void blk_put_request(struct request *req)
 {
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 	unsigned long flags;
 
 	spin_lock_irqsave(q->queue_lock, flags);
@@ -1137,7 +1137,7 @@ void init_request_from_bio(struct request *req, struct bio *bio)
 	req->errors = 0;
 	req->__sector = bio->bi_sector;
 	req->ioprio = bio_prio(bio);
-	blk_rq_bio_prep(blk_ctx_to_queue(req->queue_ctx), req, bio);
+	blk_rq_bio_prep(req->queue_ctx->queue, req, bio);
 }
 
 /*
@@ -1759,7 +1759,7 @@ static void blk_account_io_done(struct request *req)
 	 * normal IO on queueing nor completion.  Accounting the
 	 * containing request is enough.
 	 */
-	if (blk_do_io_stat(req) && req != &blk_ctx_to_queue(ctx)->flush_rq) {
+	if (blk_do_io_stat(req) && req != &ctx->queue->flush_rq) {
 		unsigned long duration = jiffies - req->start_time;
 		const int rw = rq_data_dir(req);
 		struct hd_struct *part;
@@ -1983,7 +1983,7 @@ bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
 	if (!req->bio)
 		return false;
 
-	trace_block_rq_complete(blk_ctx_to_queue(req->queue_ctx), req);
+	trace_block_rq_complete(req->queue_ctx->queue, req);
 
 	/*
 	 * For fs requests, rq is just carrier of independent bio's
@@ -2121,7 +2121,7 @@ static bool blk_update_bidi_request(struct request *rq, int error,
 	    blk_update_request(rq->next_rq, error, bidi_bytes))
 		return true;
 
-	if (blk_queue_add_random(blk_ctx_to_queue(rq->queue_ctx)))
+	if (blk_queue_add_random(rq->queue_ctx->queue))
 		add_disk_randomness(rq->rq_disk);
 
 	return false;
@@ -2139,7 +2139,7 @@ static bool blk_update_bidi_request(struct request *rq, int error,
  */
 void blk_unprep_request(struct request *req)
 {
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 
 	req->cmd_flags &= ~REQ_DONTPREP;
 	if (q->unprep_rq_fn)
@@ -2153,7 +2153,7 @@ EXPORT_SYMBOL_GPL(blk_unprep_request);
 static void blk_finish_request(struct request *req, int error)
 {
 	struct blk_queue_ctx *ctx = req->queue_ctx;
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 
 	if (blk_rq_tagged(req))
 		blk_queue_end_tag(q, req);
@@ -2201,7 +2201,7 @@ static void blk_finish_request(struct request *req, int error)
 static bool blk_end_bidi_request(struct request *rq, int error,
 				 unsigned int nr_bytes, unsigned int bidi_bytes)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 	unsigned long flags;
 
 	if (blk_update_bidi_request(rq, error, nr_bytes, bidi_bytes))

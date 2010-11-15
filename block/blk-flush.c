@@ -74,7 +74,7 @@ static void blk_flush_complete_seq_end_io(struct request_queue *q,
 
 static void pre_flush_end_io(struct request *rq, int error)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 
 	elv_completed_request(rq);
 	blk_flush_complete_seq_end_io(q, QUEUE_FSEQ_PREFLUSH, error);
@@ -82,7 +82,7 @@ static void pre_flush_end_io(struct request *rq, int error)
 
 static void flush_data_end_io(struct request *rq, int error)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 
 	elv_completed_request(rq);
 	blk_flush_complete_seq_end_io(q, QUEUE_FSEQ_DATA, error);
@@ -90,7 +90,7 @@ static void flush_data_end_io(struct request *rq, int error)
 
 static void post_flush_end_io(struct request *rq, int error)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 
 	elv_completed_request(rq);
 	blk_flush_complete_seq_end_io(q, QUEUE_FSEQ_POSTFLUSH, error);

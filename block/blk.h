@@ -71,7 +71,7 @@ static inline struct request *__elv_next_request(struct request_queue *q)
 
 static inline void elv_activate_rq(struct request *rq)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 	struct elevator_queue *e = q->elevator;
 
 	if (e->ops->elevator_activate_req_fn)
@@ -80,7 +80,7 @@ static inline void elv_activate_rq(struct request *rq)
 
 static inline void elv_deactivate_rq(struct request *rq)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 	struct elevator_queue *e = q->elevator;
 
 	if (e->ops->elevator_deactivate_req_fn)

@@ -78,7 +78,7 @@ void blk_delete_timer(struct request *req)
 
 static void blk_rq_timed_out(struct request *req)
 {
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 	enum blk_eh_timer_return ret;
 
 	ret = q->rq_timed_out_fn(req);
@@ -174,7 +174,7 @@ EXPORT_SYMBOL_GPL(blk_abort_request);
  */
 void blk_add_timer(struct request *req)
 {
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 	unsigned long expiry;
 
 	if (!q->rq_timed_out_fn)

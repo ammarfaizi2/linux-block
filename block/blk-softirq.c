@@ -32,7 +32,7 @@ static void blk_done_softirq(struct softirq_action *h)
 
 		rq = list_entry(local_list.next, struct request, csd.list);
 		list_del_init(&rq->csd.list);
-		q = blk_ctx_to_queue(rq->queue_ctx);
+		q = rq->queue_ctx->queue;
 		q->softirq_done_fn(rq);
 	}
 }
@@ -105,7 +105,7 @@ static struct notifier_block __cpuinitdata blk_cpu_notifier = {
 
 void __blk_complete_request(struct request *req)
 {
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 	unsigned long flags;
 	int ccpu, cpu, group_cpu;
 
@@ -156,7 +156,7 @@ do_local:
  **/
 void blk_complete_request(struct request *req)
 {
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 
 	if (unlikely(blk_should_fake_timeout(q)))
 		return;

@@ -932,7 +932,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
 static int scsi_init_sgtable(struct request *req, struct scsi_data_buffer *sdb,
 			     gfp_t gfp_mask)
 {
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 	int count;
 
 	/*

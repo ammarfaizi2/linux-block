@@ -3635,7 +3635,7 @@ static int
 fc_bsg_map_buffer(struct fc_bsg_buffer *buf, struct request *req)
 {
 	size_t sz = (sizeof(struct scatterlist) * req->nr_phys_segments);
-	struct request_queue *q = blk_ctx_to_queue(req->queue_ctx);
+	struct request_queue *q = req->queue_ctx->queue;
 
 	BUG_ON(!req->nr_phys_segments);
 

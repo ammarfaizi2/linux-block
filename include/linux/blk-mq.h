@@ -34,25 +34,11 @@ struct blk_queue_ctx {
 };
 
 
-/*
- * For this initial patch, the mapping will be 1:1 between the queue
- * and the context queues
- */
-static inline struct request_queue *blk_ctx_to_queue(struct blk_queue_ctx *ctx)
-{
-	return ctx->queue;
-}
-
-/*
- * Elevator per-context data. Again, this will map to the proper queue
- * when we do support more than 1 context per queue
- */
 static inline struct blk_queue_ctx *blk_get_ctx(struct request_queue *q, int nr)
 {
-	if (nr < q->nr_queues)
-		return &q->queue_ctx[nr];
+	BUG_ON(nr >= q->nr_queues);
 
-	BUG();
+	return &q->queue_ctx[nr];
 }
 
 #define queue_for_each_ctx(q, ctx, i)					\

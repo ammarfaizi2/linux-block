@@ -498,8 +498,8 @@ EXPORT_SYMBOL(elv_dispatch_add_tail);
 
 int elv_merge(struct blk_queue_ctx *ctx, struct request **req, struct bio *bio)
 {
-	struct elevator_queue *e = ctx->queue->elevator;
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
+	struct elevator_queue *e = q->elevator;
 	struct request *__rq;
 	int ret;
 
@@ -653,7 +653,7 @@ void elv_quiesce_end(struct request_queue *q)
 
 void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	int unplug_it = 1;
 
 	BUG_ON(ctx != rq->queue_ctx);
@@ -724,7 +724,7 @@ void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 void __elv_add_request(struct blk_queue_ctx *ctx, struct request *rq, int where,
 		       int plug)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 
 	if (rq->cmd_flags & REQ_SOFTBARRIER) {
 		/* barriers are scheduling boundary, update end_sector */
@@ -747,7 +747,7 @@ EXPORT_SYMBOL(__elv_add_request);
 void elv_add_request(struct blk_queue_ctx *ctx, struct request *rq, int where,
 		     int plug)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	unsigned long flags;
 
 	spin_lock_irqsave(q->queue_lock, flags);

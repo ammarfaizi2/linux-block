@@ -70,7 +70,7 @@ new_segment:
 
 void blk_recalc_rq_segments(struct request *rq)
 {
-	struct request_queue *q = blk_ctx_to_queue(rq->queue_ctx);
+	struct request_queue *q = rq->queue_ctx->queue;
 
 	rq->nr_phys_segments = __blk_recalc_rq_segments(q, rq->bio);
 }
@@ -231,7 +231,7 @@ no_merge:
 int ll_back_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 		     struct bio *bio)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	unsigned short max_sectors;
 
 	if (unlikely(req->cmd_type == REQ_TYPE_BLOCK_PC))
@@ -256,7 +256,7 @@ int ll_back_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 int ll_front_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 		      struct bio *bio)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	unsigned short max_sectors;
 
 	if (unlikely(req->cmd_type == REQ_TYPE_BLOCK_PC))
@@ -282,7 +282,7 @@ int ll_front_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 static int ll_merge_requests_fn(struct blk_queue_ctx *ctx, struct request *req,
 				struct request *next)
 {
-	struct request_queue *q = blk_ctx_to_queue(ctx);
+	struct request_queue *q = ctx->queue;
 	int total_phys_segments;
 	unsigned int seg_size =
 		req->biotail->bi_seg_back_size + next->bio->bi_seg_front_size;
