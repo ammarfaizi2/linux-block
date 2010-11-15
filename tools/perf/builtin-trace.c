@@ -594,6 +594,236 @@ static void pagefault_exit(void *data __used,
 	pf_pending_pid = 0;
 }
 
+#define FILL_FIELD(ptr, field, event, data)	\
+	ptr.field = (typeof(ptr.field)) raw_field_value(event, #field, data)
+
+#define FILL_ARRAY(ptr, array, event, data)			\
+do {								\
+	void *__array = raw_field_ptr(event, #array, data);	\
+	memcpy(ptr.array, __array, sizeof(ptr.array));	\
+} while(0)
+
+#define FILL_COMMON_FIELDS(ptr, event, data)			\
+do {								\
+	FILL_FIELD(ptr, common_type, event, data);		\
+	FILL_FIELD(ptr, common_flags, event, data);		\
+	FILL_FIELD(ptr, common_preempt_count, event, data);	\
+	FILL_FIELD(ptr, common_pid, event, data);		\
+	FILL_FIELD(ptr, common_tgid, event, data);		\
+} while (0)
+
+struct trace_switch_event {
+	u32 size;
+
+	u16 common_type;
+	u8 common_flags;
+	u8 common_preempt_count;
+	u32 common_pid;
+	u32 common_tgid;
+
+	char prev_comm[16];
+	u32 prev_pid;
+	u32 prev_prio;
+	u64 prev_state;
+	char next_comm[16];
+	u32 next_pid;
+	u32 next_prio;
+};
+
+struct trace_runtime_event {
+	u32 size;
+
+	u16 common_type;
+	u8 common_flags;
+	u8 common_preempt_count;
+	u32 common_pid;
+	u32 common_tgid;
+
+	char comm[16];
+	u32 pid;
+	u64 runtime;
+	u64 vruntime;
+};
+
+struct trace_wakeup_event {
+	u32 size;
+
+	u16 common_type;
+	u8 common_flags;
+	u8 common_preempt_count;
+	u32 common_pid;
+	u32 common_tgid;
+
+	char comm[16];
+	u32 pid;
+
+	u32 prio;
+	u32 success;
+	u32 cpu;
+};
+
+struct trace_fork_event {
+	u32 size;
+
+	u16 common_type;
+	u8 common_flags;
+	u8 common_preempt_count;
+	u32 common_pid;
+	u32 common_tgid;
+
+	char parent_comm[16];
+	u32 parent_pid;
+	char child_comm[16];
+	u32 child_pid;
+};
+
+struct trace_migrate_task_event {
+	u32 size;
+
+	u16 common_type;
+	u8 common_flags;
+	u8 common_preempt_count;
+	u32 common_pid;
+	u32 common_tgid;
+
+	char comm[16];
+	u32 pid;
+
+	u32 prio;
+	u32 cpu;
+};
+
+static void
+process_sched_wakeup_event(void *data,
+			   struct event *event,
+			   int cpu __used,
+			   u64 timestamp __used,
+			   struct thread *thread __used)
+{
+	struct trace_wakeup_event wakeup_event;
+
+	FILL_COMMON_FIELDS(wakeup_event, event, data);
+
+	FILL_ARRAY(wakeup_event, comm, event, data);
+	FILL_FIELD(wakeup_event, pid, event, data);
+	FILL_FIELD(wakeup_event, prio, event, data);
+	FILL_FIELD(wakeup_event, success, event, data);
+	FILL_FIELD(wakeup_event, cpu, event, data);
+
+	printf("sched wakeup event\n");
+}
+
+static void
+process_sched_switch_event(void *data,
+			   struct event *event,
+			   int this_cpu __used,
+			   u64 timestamp __used,
+			   struct thread *thread __used)
+{
+	struct trace_switch_event switch_event;
+
+	FILL_COMMON_FIELDS(switch_event, event, data);
+
+	FILL_ARRAY(switch_event, prev_comm, event, data);
+	FILL_FIELD(switch_event, prev_pid, event, data);
+	FILL_FIELD(switch_event, prev_prio, event, data);
+	FILL_FIELD(switch_event, prev_state, event, data);
+	FILL_ARRAY(switch_event, next_comm, event, data);
+	FILL_FIELD(switch_event, next_pid, event, data);
+	FILL_FIELD(switch_event, next_prio, event, data);
+
+	printf("sched switch event\n");
+}
+
+static void
+process_sched_runtime_event(void *data,
+			   struct event *event,
+			   int cpu __used,
+			   u64 timestamp __used,
+			   struct thread *thread __used)
+{
+	struct trace_runtime_event runtime_event;
+
+	FILL_ARRAY(runtime_event, comm, event, data);
+	FILL_FIELD(runtime_event, pid, event, data);
+	FILL_FIELD(runtime_event, runtime, event, data);
+	FILL_FIELD(runtime_event, vruntime, event, data);
+
+	printf("sched runtime event\n");
+}
+
+static void
+process_sched_fork_event(void *data,
+			 struct event *event,
+			 int cpu __used,
+			 u64 timestamp __used,
+			 struct thread *thread __used)
+{
+	struct trace_fork_event fork_event;
+
+	FILL_COMMON_FIELDS(fork_event, event, data);
+
+	FILL_ARRAY(fork_event, parent_comm, event, data);
+	FILL_FIELD(fork_event, parent_pid, event, data);
+	FILL_ARRAY(fork_event, child_comm, event, data);
+	FILL_FIELD(fork_event, child_pid, event, data);
+
+	printf("sched fork event\n");
+}
+
+static void
+process_sched_exit_event(struct event *event __used,
+			 int cpu __used,
+			 u64 timestamp __used,
+			 struct thread *thread __used)
+{
+	printf("sched exit event\n");
+}
+
+static void
+process_sched_migrate_task_event(void *data,
+			   struct event *event,
+			   int cpu __used,
+			   u64 timestamp __used,
+			   struct thread *thread __used)
+{
+	struct trace_migrate_task_event migrate_task_event;
+
+	FILL_COMMON_FIELDS(migrate_task_event, event, data);
+
+	FILL_ARRAY(migrate_task_event, comm, event, data);
+	FILL_FIELD(migrate_task_event, pid, event, data);
+	FILL_FIELD(migrate_task_event, prio, event, data);
+	FILL_FIELD(migrate_task_event, cpu, event, data);
+
+	printf("sched migrate event\n");
+}
+
+static void
+process_raw_sched_event(union perf_event *raw_event __used, void *data, int cpu, u64 timestamp, struct thread *thread)
+{
+	struct event *event;
+	int type;
+
+	type = trace_parse_common_type(data);
+	event = trace_find_event(type);
+
+	if (!strcmp(event->name, "sched_switch"))
+		process_sched_switch_event(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_stat_runtime"))
+		process_sched_runtime_event(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_wakeup"))
+		process_sched_wakeup_event(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_wakeup_new"))
+		process_sched_wakeup_event(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_process_fork"))
+		process_sched_fork_event(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_process_exit"))
+		process_sched_exit_event(event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_migrate_task"))
+		process_sched_migrate_task_event(data, event, cpu, timestamp, thread);
+}
+
 static void
 process_raw_event(union perf_event *self, void *data, int cpu, u64 timestamp, struct thread *thread)
 {
@@ -613,6 +843,8 @@ process_raw_event(union perf_event *self, void *data, int cpu, u64 timestamp, st
 		pagefault_exit(data, event, cpu, timestamp, thread);
 	if (!strcmp(event->name, "vfs_getname"))
 		vfs_getname(data, event, cpu, timestamp, thread);
+
+	process_raw_sched_event(self, data, cpu, timestamp, thread);
 }
 
 static int process_sample_event(union perf_event *self, struct perf_sample *sample __used, struct perf_evsel *evsel __used, struct perf_session *s)
@@ -700,7 +932,16 @@ static const char *record_args[] = {
 	"-e", "raw_syscalls:sys_exit:r",
 	"-e", "vfs:vfs_getname:r",
 	"-e", "kmem:mm_pagefault_start:r",
-	"-e", "kmem:mm_pagefault_end:r"
+	"-e", "kmem:mm_pagefault_end:r",
+	"-e", "sched:sched_switch:r",
+	"-e", "sched:sched_stat_wait:r",
+	"-e", "sched:sched_stat_sleep:r",
+	"-e", "sched:sched_stat_iowait:r",
+	"-e", "sched:sched_stat_runtime:r",
+	"-e", "sched:sched_process_exit:r",
+	"-e", "sched:sched_process_fork:r",
+	"-e", "sched:sched_wakeup:r",
+	"-e", "sched:sched_migrate_task:r",
 };
 
 static int __cmd_record(int argc, const char **argv)
