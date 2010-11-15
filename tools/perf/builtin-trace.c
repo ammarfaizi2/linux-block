@@ -136,8 +136,11 @@ static void apply_thread_filter(void)
 		cnt++;
 	}
 
-	if (!cnt)
-		die("Invalid thread filter. No matching pid/comm");
+	if (!cnt) {
+		color_fprintf(stderr, PERF_COLOR_YELLOW,
+			"No matching pid/comm found for: %s", filter_threads);
+		exit(-1);
+	}
 
 	followchilds = cnt > 1;
 	free(str);
