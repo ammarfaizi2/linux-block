@@ -75,4 +75,18 @@ static inline int queue_elvpriv(struct request_queue *q)
 	return blk_ctx_sum(q, __ctx->rl.elvpriv);
 }
 
+static inline void queue_ctx_lock_queue(struct request_queue *q,
+					struct blk_queue_ctx *ctx)
+{
+	spin_unlock(&ctx->lock);
+	spin_lock(q->queue_lock);
+}
+
+static inline void queue_ctx_unlock_queue(struct request_queue *q,
+					  struct blk_queue_ctx *ctx)
+{
+	spin_unlock(q->queue_lock);
+	spin_lock(&ctx->lock);
+}
+
 #endif

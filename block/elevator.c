@@ -692,7 +692,13 @@ void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 
 	case ELEVATOR_INSERT_FRONT:
 		rq->cmd_flags |= REQ_SOFTBARRIER;
+		queue_ctx_lock_queue(q, ctx);
+
 		list_add(&rq->queuelist, &q->queue_head);
+		if (unplug_it && blk_queue_plugged(q) && !queue_in_flight(q))
+			__generic_unplug_device(q);
+
+		queue_ctx_unlock_queue(q, ctx);
 		break;
 
 	case ELEVATOR_INSERT_BACK:
@@ -709,7 +715,9 @@ void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 		 *   with anything.  There's no point in delaying queue
 		 *   processing.
 		 */
+		queue_ctx_lock_queue(q, ctx);
 		__blk_run_queue(q);
+		queue_ctx_unlock_queue(q, ctx);
 		break;
 
 	case ELEVATOR_INSERT_SORT:
@@ -729,6 +737,12 @@ void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 		 * elevator_add_req_fn.
 		 */
 		ctx->queue->elevator->ops->elevator_add_req_fn(ctx, rq);
+
+		if (unplug_it && blk_queue_plugged(q) && !queue_in_flight(q)) {
+			queue_ctx_lock_queue(q, ctx);
+			__generic_unplug_device(q);
+			queue_ctx_unlock_queue(q, ctx);
+		}
 		break;
 
 	default:
@@ -736,16 +750,14 @@ void elv_insert(struct blk_queue_ctx *ctx, struct request *rq, int where)
 		       __func__, where);
 		BUG();
 	}
-
-
-	if (unplug_it && blk_queue_plugged(q) && !queue_in_flight(q))
-		__generic_unplug_device(q);
 }
 
 void __elv_add_request(struct blk_queue_ctx *ctx, struct request *rq, int where,
 		       int plug)
 {
 	struct request_queue *q = ctx->queue;
+
+	assert_spin_locked(&ctx->lock);
 
 	if (rq->cmd_flags & REQ_SOFTBARRIER) {
 		/* barriers are scheduling boundary, update end_sector */
@@ -758,8 +770,11 @@ void __elv_add_request(struct blk_queue_ctx *ctx, struct request *rq, int where,
 		    where == ELEVATOR_INSERT_SORT)
 		where = ELEVATOR_INSERT_BACK;
 
-	if (plug)
+	if (plug) {
+		queue_ctx_lock_queue(q, ctx);
 		blk_plug_device(q);
+		queue_ctx_unlock_queue(q, ctx);
+	}
 
 	elv_insert(ctx, rq, where);
 }

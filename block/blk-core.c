@@ -396,6 +396,8 @@ EXPORT_SYMBOL(blk_sync_queue);
  */
 void __blk_run_queue(struct request_queue *q)
 {
+	assert_spin_locked(q->queue_lock);
+
 	blk_remove_plug(q);
 
 	if (unlikely(blk_queue_stopped(q)))
@@ -1295,9 +1297,11 @@ get_rq:
 	__elv_add_request(ctx, req, where, 0);
 out:
 	spin_unlock_irq(&ctx->lock);
-	if (unplug || !queue_should_plug(q))
+	if (unplug || !queue_should_plug(q)) {
+		spin_lock_irq(q->queue_lock);
 		__generic_unplug_device(q);
-	spin_unlock_irq(q->queue_lock);
+		spin_unlock_irq(q->queue_lock);
+	}
 	return 0;
 }
 
