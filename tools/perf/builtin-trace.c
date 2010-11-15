@@ -118,7 +118,8 @@ static void apply_syscall_filters(void)
 			continue;
 
 		for (j = 0; j < nr_subsys_filters; j++) {
-			if (strcasecmp(sdesc->subsys, subsys_filter_str[j]) == 0)
+			if (sdesc->subsys &&
+			    strcasecmp(sdesc->subsys, subsys_filter_str[j]) == 0)
 				match = 1;
 		}
 		if (!match)
