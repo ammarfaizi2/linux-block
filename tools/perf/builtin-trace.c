@@ -27,10 +27,11 @@
 #include <linux/list.h>
 #include <linux/hash.h>
 
-static struct perf_session *session;
-static char const *input_name = "perf.data";
-static bool pagefaults = false;
-static bool followchilds = true;
+static struct perf_session	*session;
+static char const		*input_name		= "perf.data";
+static bool			pagefaults		= false;
+static bool			followchilds		= false;
+static bool			print_syscalls_flag	= false;
 
 struct syscall_desc {
 	const char	*name;
@@ -61,8 +62,6 @@ struct thread_data {
 #define MAX_PID			65536
 
 static struct thread_data thread_data[MAX_PID];
-
-static bool			print_syscalls_flag = false;
 
 struct syscall_attr {
 	const char		*syscall_name;
@@ -101,7 +100,7 @@ static void tokenize_filter(void)
 
 static void apply_syscall_filters(void)
 {
-	struct syscall_desc *sdesc;
+	struct syscall_desc *sdesc = syscall_desc;
 	unsigned int i, j;
 
 	if (!filter_str)
@@ -109,13 +108,8 @@ static void apply_syscall_filters(void)
 
 	tokenize_filter();
 
-	for (i = 0; i < MAX_SYSCALLS; i++) {
+	for (i = 0; i < MAX_SYSCALLS && sdesc->name; i++, sdesc++) {
 		int match = 0;
-
-		sdesc = syscall_desc + i;
-
-		if (!sdesc->name)
-			continue;
 
 		for (j = 0; j < nr_subsys_filters; j++) {
 			if (sdesc->subsys &&
@@ -129,16 +123,11 @@ static void apply_syscall_filters(void)
 
 static void parse_syscall_attrs(void)
 {
-	struct syscall_desc *sdesc;
+	struct syscall_desc *sdesc = syscall_desc;
 	struct syscall_attr *sattr;
 	unsigned int i, j;
 
-	for (i = 0; i < MAX_SYSCALLS; i++) {
-		sdesc = syscall_desc + i;
-
-		if (!sdesc->name)
-			continue;
-
+	for (i = 0; i < MAX_SYSCALLS && sdesc->name; i++, sdesc++) {
 		for (j = 0; j < MAX_SYSCALL_ATTRS; j++) {
 			sattr = syscall_attrs + j;
 
@@ -151,7 +140,7 @@ static void parse_syscall_attrs(void)
 
 static void print_syscalls(void)
 {
-	struct syscall_desc *sdesc;
+	struct syscall_desc *sdesc = syscall_desc;
 	unsigned int i, j;
 
 	if (!print_syscalls_flag)
@@ -159,12 +148,7 @@ static void print_syscalls(void)
 
 	setup_pager();
 
-	for (i = 0; i < MAX_SYSCALLS; i++) {
-		sdesc = syscall_desc + i;
-
-		if (!sdesc->name)
-			continue;
-
+	for (i = 0; i < MAX_SYSCALLS && sdesc->name; i++, sdesc++) {
 		printf("%25s (%12s, #%d)", sdesc->name, sdesc->subsys, sdesc->argc);
 
 		for (j = 0; j < sdesc->argc; j++) {
@@ -244,6 +228,12 @@ static void parse_syscalls(void)
 	apply_syscall_filters();
 }
 
+static void print_comm(struct thread *thread)
+{
+	if (followchilds)
+		printf("%s/%d ", thread->comm, thread->pid);
+}
+
 static void process_sys_enter(void *data,
 			      struct event *event __used,
 			      int cpu __used,
@@ -251,17 +241,13 @@ static void process_sys_enter(void *data,
 			      struct thread *thread)
 {
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
-	unsigned int pid = thread->pid;
 	unsigned long *args = raw_field_ptr(event, "args", data);
-	struct thread_data *tdata = thread_data + pid;
+	struct thread_data *tdata = thread_data + thread->pid;
 	struct syscall_desc *sdesc = syscall_desc + id;
 	char *tmp;
 	unsigned int i;
 
-	if (id >= MAX_SYSCALLS)
-		return;
-
-	if (!sdesc->name)
+	if (id >= MAX_SYSCALLS || !sdesc->name)
 		return;
 
 	tdata->last_syscall = id;
@@ -277,10 +263,8 @@ static void process_sys_enter(void *data,
 	tmp += sprintf(tmp, "%s(", sdesc->name);
 
 	tdata->open_syscall = 0;
-	if (!strcmp(sdesc->name, "open")) {
+	if (!strcmp(sdesc->name, "open"))
 		tdata->open_syscall = 1;
-		printf("open_syscall\n");
-	}
 
 	if (!sdesc->entry_arg[0]) {
 		for (i = 0; i < 6; i++) {
@@ -318,11 +302,9 @@ static void process_sys_exit(void *data,
 			     struct thread *thread __used)
 {
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
-	unsigned int pid = thread->pid;
 	unsigned long res = (unsigned long) raw_field_value(event, "ret", data);
-	struct thread_data *tdata = thread_data + pid;
+	struct thread_data *tdata = thread_data + thread->pid;
 	struct syscall_desc *sdesc = syscall_desc + id;
-	int open_syscall;
 	double duration;
 	u64 t = 0;
 
@@ -331,12 +313,10 @@ static void process_sys_exit(void *data,
 	if (!sdesc->name)
 		return;
 
-	open_syscall = 0;
 	if (!strcmp(sdesc->name, "open")) {
 		int fd = res;
 
-		open_syscall = 1;
-		if (fd < MAX_FDS) {
+		if (fd >= 0 && fd < MAX_FDS) {
 			tdata->fd_name[fd] = tdata->open_filename;
 			tdata->open_filename = NULL;
 		}
@@ -344,10 +324,9 @@ static void process_sys_exit(void *data,
 
 	if (tdata->entry_time)
 		t = timestamp - tdata->entry_time;
-
 	duration = (double)t / 1000000.0;
-	if (followchilds)
-		printf("%s/%d ", thread->comm, pid);
+
+	print_comm(thread);
 	printf("(");
 	if (duration >= 1.0)
 		color_fprintf(stdout, PERF_COLOR_RED, "%.3f ms", duration);
@@ -375,8 +354,7 @@ static void vfs_getname(void *data,
 			struct thread *thread __used)
 {
 	char *filename = raw_field_ptr(event, "filename", data);
-	unsigned int pid = thread->pid;
-	struct thread_data *tdata = thread_data + pid;
+	struct thread_data *tdata = thread_data + thread->pid;
 	unsigned int id = tdata->last_syscall;
 	struct syscall_desc *sdesc = syscall_desc + id;
 
@@ -387,18 +365,19 @@ static void vfs_getname(void *data,
 		tdata->open_filename = strdup(filename);
 
 	if (tdata->entry_pending) {
-		strcat(thread_data[pid].entry_str, " (fpath: ");
-		strcat(thread_data[pid].entry_str, filename);
-		strcat(thread_data[pid].entry_str, ") ");
+		strcat(tdata->entry_str, " (fpath: ");
+		strcat(tdata->entry_str, filename);
+		strcat(tdata->entry_str, ") ");
 	} else {
-		if (followchilds)
-			printf("%s/%d", thread->comm, pid);
+		print_comm(thread);
 		printf(" => %s(%s)\n", sdesc->name, filename);
 	}
 }
 
-static int my_event__preprocess_sample(union perf_event *self,
-			     struct addr_location *al, struct perf_sample *data, unsigned long ip)
+static int pagefault_preprocess_sample(union perf_event *self,
+				       struct addr_location *al,
+				       struct perf_sample *data,
+				       unsigned long ip)
 {
 	struct thread *thread;
 
@@ -408,7 +387,6 @@ static int my_event__preprocess_sample(union perf_event *self,
 	if (thread == NULL)
 		return -1;
 
-//	map_groups__fprintf(&thread->mg, 1, stdout);
 	/*
 	 * Have we already created the kernel maps for the host machine?
 	 *
@@ -456,13 +434,16 @@ static void pagefault_enter(union perf_event *self,
 	unsigned long address		= raw_field_value(event, "address", data);
 	unsigned long error_code	= raw_field_value(event, "error_code", data);
 	unsigned long ip		= raw_field_value(event, "ip", data);
+	struct thread_data *tdata = thread_data + thread->pid;
 	struct perf_sample sdata = { .period = 1, };
 	struct addr_location al;
-	unsigned int pid = thread->pid;
 	char *sym;
 
+	if (!pagefaults)
+		return;
+
 	al.map = NULL;
-	my_event__preprocess_sample(self, &al, &sdata, ip);
+	pagefault_preprocess_sample(self, &al, &sdata, ip);
 
 	if (!thread)
 		die("thread not found\n");
@@ -471,16 +452,14 @@ static void pagefault_enter(union perf_event *self,
 	if (al.map && al.sym)
 		sym = al.sym->name;
 
-	if (thread_data[pid].entry_pending) {
-		thread_data[pid].entry_pending = false;
-		if (followchilds)
-			printf("%s/%d", thread->comm, pid);
-		printf(" %s ... [", thread_data[pid].entry_str);
+	if (tdata->entry_pending) {
+		tdata->entry_pending = false;
+		print_comm(thread);
+		printf(" %s ... [", tdata->entry_str);
 		color_fprintf(stdout, PERF_COLOR_YELLOW, "unfinished");
 		printf("]\n");
 	}
-	if (followchilds)
-		printf("%s/%d", thread->comm, pid);
+	print_comm(thread);
 	color_fprintf(stdout, PERF_COLOR_NORMAL, "     #PF: [");
 	color_fprintf(stdout, PERF_COLOR_GREEN, "%30s", sym, address, error_code);
 	color_fprintf(stdout, PERF_COLOR_NORMAL, "]: => %016lx (", address);
@@ -501,6 +480,9 @@ static void pagefault_exit(void *data __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
 {
+	if (!pagefaults)
+		return;
+
 	color_fprintf(stdout, PERF_COLOR_NORMAL, "\n");
 }
 
@@ -650,7 +632,8 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 	int ret;
 
 	if (argc)
-		argc = parse_options(argc, argv, trace_options, trace_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+		argc = parse_options(argc, argv, trace_options, trace_usage,
+				     PARSE_OPT_STOP_AT_NON_OPTION);
 
 	parse_syscalls();
 	print_syscalls();
