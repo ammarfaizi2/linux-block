@@ -1065,7 +1065,7 @@ static const struct option trace_options[] = {
 		    "print syscall names and arguments"),
 	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
 	OPT_STRING ('F', "filter", &filter_str, "subsystem[,subsystem...]",
-		    "only consider symbols in these subsystems"),
+		    "only consider syscalls of these subsystems. (aio, arch-x86, events, fd, fs, fs-attr, IO, IO-locking, IPC-locking, IPC-mm, IPC-net, locking, misc, mm, net, process, sched, security, signal, stat, system, task, timer, tty)"),
 	OPT_STRING('d', "duration", &duration_filter_str, "float",
 		     "show only events with duration > N.M ms"),
 	OPT_STRING('t', "threadfilter", &filter_threads, "pid/comm[,pid/comm...]",
