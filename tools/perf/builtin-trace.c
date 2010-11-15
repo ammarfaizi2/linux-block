@@ -90,6 +90,21 @@ static struct thread_data *thread_data[MAX_PID];
 
 static const char *filter_threads;
 
+static int enable_comm(char *comm)
+{
+	int pid, cnt = 0;
+
+	for (pid = 0; pid < MAX_PID; pid++) {
+		if (!thread_data[pid])
+			continue;
+		if (strcmp(thread_data[pid]->comm, comm))
+			continue;
+		thread_data[pid]->enabled = true;
+		cnt++;
+	}
+	return cnt;
+}
+
 static void apply_thread_filter(void)
 {
 	char *tmp, *tok, *str;
@@ -109,8 +124,10 @@ static void apply_thread_filter(void)
 
 	for (tok = strtok_r(str, ", ", &tmp);
 			tok; tok = strtok_r(NULL, ", ", &tmp)) {
-		if (sscanf(tok, "%d", &pid) != 1)
+		if (sscanf(tok, "%d", &pid) != 1) {
+			cnt += enable_comm(tok);
 			continue;
+		}
 		if (!pid)
 			pid = first_pid;
 		if (!thread_data[pid])
@@ -1060,7 +1077,7 @@ static const struct option trace_options[] = {
 		    "only consider symbols in these subsystems"),
 	OPT_STRING('d', "duration", &duration_filter_str, "float",
 		     "show only events with duration > N.M ms"),
-	OPT_STRING('t', "threadfilter", &filter_threads, "pid[,pid...]",
+	OPT_STRING('t', "threadfilter", &filter_threads, "pid/comm[,pid/comm...]",
 		     "show only threads with matching pid (0 = group leader)"),
 	OPT_END()
 };
