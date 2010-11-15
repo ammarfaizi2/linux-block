@@ -34,22 +34,13 @@ void map__init(struct map *self, enum map_type type,
 }
 
 struct map *map__new(struct list_head *dsos__list, u64 start, u64 len,
-		     u64 pgoff, u32 pid, char *filename,
+		     u64 pgoff, u32 pid __used, char *filename,
 		     enum map_type type)
 {
 	struct map *self = malloc(sizeof(*self));
 
 	if (self != NULL) {
-		char newfilename[PATH_MAX];
 		struct dso *dso;
-		int anon;
-
-		anon = is_anon_memory(filename);
-
-		if (anon) {
-			snprintf(newfilename, sizeof(newfilename), "/tmp/perf-%d.map", pid);
-			filename = newfilename;
-		}
 
 		dso = __dsos__findnew(dsos__list, filename);
 		if (dso == NULL)
@@ -57,7 +48,7 @@ struct map *map__new(struct list_head *dsos__list, u64 start, u64 len,
 
 		map__init(self, type, start, start + len, pgoff, dso);
 
-		if (anon) {
+		if (is_anon_memory(filename)) {
 set_identity:
 			self->map_ip = self->unmap_ip = identity__map_ip;
 		} else if (strcmp(filename, "[vdso]") == 0) {
@@ -105,6 +96,10 @@ int map__load(struct map *self, symbol_filter_t filter)
 
 	if (dso__loaded(self->dso, self->type))
 		return 0;
+
+	if (!strcmp(name, "[stack]") || !strcmp(name, "[heap]") ||
+	    !strcmp(name, "//anon"))
+		return -1;
 
 	nr = dso__load(self->dso, self, filter);
 	if (nr < 0) {

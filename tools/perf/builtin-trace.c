@@ -285,7 +285,15 @@ static void print_pagefault(int pid, u64 timestamp)
 	if (pfd->al_pf.map && pfd->al_pf.map->dso) {
 		u64 offset = pfd->address - pfd->al_pf.map->start;
 
-		printf(" => %s ", pfd->al_pf.map->dso->long_name);
+		if (!strcmp(pfd->al_pf.map->dso->long_name, "//anon"))
+			printf(" => [anon 0x%llx] ", pfd->al_pf.map->start);
+		else if (!strcmp(pfd->al_pf.map->dso->long_name, "[heap]"))
+			printf(" => [heap 0x%llx] ", pfd->al_pf.map->start);
+		else if (!strcmp(pfd->al_pf.map->dso->long_name, "[stack]"))
+			printf(" => [stack 0x%llx] ", pfd->al_pf.map->start);
+		else
+			printf(" => %s ", pfd->al_pf.map->dso->long_name);
+
 		printf("offset: 0x%llx page: %llu (", offset,
 		       offset / page_size);
 	} else
@@ -687,6 +695,7 @@ static const char *record_args[] = {
 	"-f",
 	"-m", "1024",
 	"-c", "1",
+	"-d",
 	"-e", "raw_syscalls:sys_enter:r",
 	"-e", "raw_syscalls:sys_exit:r",
 	"-e", "vfs:vfs_getname:r",
