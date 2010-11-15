@@ -73,6 +73,27 @@ struct syscall_attr {
 
 #define MAX_SYSCALL_ATTRS		ARRAY_SIZE(syscall_attrs)
 
+const char *filter_str;
+
+static void apply_syscall_filters(void)
+{
+	struct syscall_desc *sdesc;
+	unsigned int i;
+
+	if (!filter_str)
+		return;
+
+	for (i = 0; i < MAX_SYSCALLS; i++) {
+		sdesc = syscall_desc + i;
+
+		if (!sdesc->name)
+			continue;
+
+		if (strcmp(sdesc->subsys, filter_str))
+			sdesc->name = NULL;
+	}
+}
+
 static void parse_syscall_attrs(void)
 {
 	struct syscall_desc *sdesc;
@@ -187,6 +208,7 @@ static void parse_syscalls(void)
 		free(buf);
 
 	parse_syscall_attrs();
+	apply_syscall_filters();
 }
 
 static void process_sys_enter(void *data,
@@ -536,6 +558,9 @@ static const char * const trace_usage[] = {
 static const struct option trace_options[] = {
 	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag, "print syscall names and arguments"),
 	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
+	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
+	OPT_STRING ('F', "filter", &filter_str, "subsystem[,subsystem...]",
+		                   "only consider symbols in these subsystems"),
 	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
 	OPT_END()
 };
