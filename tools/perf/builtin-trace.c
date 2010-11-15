@@ -47,6 +47,18 @@ struct syscall_desc {
 static struct syscall_desc syscall_desc[MAX_SYSCALLS];
 
 #define MAX_FDS			1024
+#define MAX_PF_PENDING		16
+
+static int pf_pending_pid;
+
+struct pf_data {
+	u64			nr;
+	u64			entry_time;
+	unsigned long		address;
+	unsigned long		error_code;
+	unsigned long		ip;
+	struct addr_location	al;
+};
 
 struct thread_data {
 	u64			entry_time;
@@ -57,6 +69,12 @@ struct thread_data {
 	int			open_syscall;
 	char			*open_filename;
 	char			*fd_name[MAX_FDS];
+
+	char			*comm;
+
+	u64			pf_count;
+	unsigned int		pf_pending;
+	struct pf_data		pf_data[MAX_PF_PENDING];
 };
 
 #define MAX_PID			65536
@@ -228,10 +246,77 @@ static void parse_syscalls(void)
 	apply_syscall_filters();
 }
 
+static void print_duration(unsigned long t)
+{
+	double duration = (double)t / 1000000.0;
+
+	printf("(");
+	if (duration >= 1.0)
+		color_fprintf(stdout, PERF_COLOR_RED, "%.3f ms", duration);
+	else if (duration >= 0.01)
+		color_fprintf(stdout, PERF_COLOR_YELLOW, "%.3f ms", duration);
+	else
+		color_fprintf(stdout, PERF_COLOR_NORMAL, "%.3f ms", duration);
+	printf("): ");
+}
+
+static void print_pagefault(int pid, u64 timestamp)
+{
+	struct thread_data *tdata = thread_data + pid;
+	struct pf_data *pfd = tdata->pf_data + tdata->pf_pending - 1;
+	char *sym = NULL;
+
+	if (followchilds)
+		printf("%20s/%5d ", tdata->comm, pid);
+
+	if (timestamp)
+		print_duration(timestamp - pfd->entry_time);
+
+	if (pfd->al.map && pfd->al.sym)
+		sym = pfd->al.sym->name;
+
+	color_fprintf(stdout, PERF_COLOR_NORMAL, "     #PF %10llu: [",
+		      (unsigned long long) pfd->nr);
+	color_fprintf(stdout, PERF_COLOR_GREEN, "%30s", sym);
+	color_fprintf(stdout, PERF_COLOR_NORMAL, "]: => %016lx (",
+		      pfd->address);
+	if (pfd->error_code & 2)
+		color_fprintf(stdout, PERF_COLOR_RED, "W");
+	else
+		color_fprintf(stdout, PERF_COLOR_GREEN, "R");
+	if (pfd->error_code & 4)
+		color_fprintf(stdout, PERF_COLOR_NORMAL, ".U");
+	else
+		color_fprintf(stdout, PERF_COLOR_NORMAL, ".K");
+	color_fprintf(stdout, PERF_COLOR_NORMAL, ")");
+
+	if (!timestamp)
+		printf(" ... [unfinished]");
+	printf("\n");
+}
+
+static void print_pending_pf(void)
+{
+	if (!pf_pending_pid)
+		return;
+
+	print_pagefault(pf_pending_pid, 0);
+	pf_pending_pid = 0;
+}
+
 static void print_comm(struct thread *thread)
 {
 	if (followchilds)
-		printf("%s/%d ", thread->comm, thread->pid);
+		printf("%20s/%5d ", thread->comm, thread->pid);
+}
+
+static struct thread_data *get_thread_data(struct thread *thread)
+{
+	struct thread_data *tdata = thread_data + thread->pid;
+
+	if (!tdata->comm)
+		tdata->comm = strdup(thread->comm);
+	return tdata;
 }
 
 static void process_sys_enter(void *data,
@@ -242,7 +327,7 @@ static void process_sys_enter(void *data,
 {
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
 	unsigned long *args = raw_field_ptr(event, "args", data);
-	struct thread_data *tdata = thread_data + thread->pid;
+	struct thread_data *tdata = get_thread_data(thread);
 	struct syscall_desc *sdesc = syscall_desc + id;
 	char *tmp;
 	unsigned int i;
@@ -305,17 +390,16 @@ static void process_sys_exit(void *data,
 {
 	unsigned int id = (unsigned int) raw_field_value(event, "id", data);
 	unsigned long res = (unsigned long) raw_field_value(event, "ret", data);
-	struct thread_data *tdata = thread_data + thread->pid;
+	struct thread_data *tdata = get_thread_data(thread);
 	struct syscall_desc *sdesc = syscall_desc + id;
-	double duration;
 	u64 t = 0;
 
 	tdata->last_syscall = MAX_SYSCALLS;
 
-	if (id >= MAX_SYSCALLS)
+	if (id >= MAX_SYSCALLS || !sdesc->name)
 		return;
-	if (!sdesc->name)
-		return;
+
+	print_pending_pf();
 
 	if (!strcmp(sdesc->name, "open")) {
 		int fd = res;
@@ -329,17 +413,9 @@ static void process_sys_exit(void *data,
 
 	if (tdata->entry_time)
 		t = timestamp - tdata->entry_time;
-	duration = (double)t / 1000000.0;
 
 	print_comm(thread);
-	printf("(");
-	if (duration >= 1.0)
-		color_fprintf(stdout, PERF_COLOR_RED, "%.3f ms", duration);
-	else if (duration >= 0.01)
-		color_fprintf(stdout, PERF_COLOR_YELLOW, "%.3f ms", duration);
-	else
-		color_fprintf(stdout, PERF_COLOR_NORMAL, "%.3f ms", duration);
-	printf("): ");
+	print_duration(t);
 
 	if (tdata->entry_pending) {
 		printf("%-70s", tdata->entry_str);
@@ -359,7 +435,7 @@ static void vfs_getname(void *data,
 			struct thread *thread __used)
 {
 	char *filename = raw_field_ptr(event, "filename", data);
-	struct thread_data *tdata = thread_data + thread->pid;
+	struct thread_data *tdata = get_thread_data(thread);
 	unsigned int id = tdata->last_syscall;
 	struct syscall_desc *sdesc = syscall_desc + id;
 
@@ -374,6 +450,7 @@ static void vfs_getname(void *data,
 		strcat(tdata->entry_str, filename);
 		strcat(tdata->entry_str, ") ");
 	} else {
+		print_pending_pf();
 		print_comm(thread);
 		printf(" => %s(%s)\n", sdesc->name, filename);
 	}
@@ -436,26 +513,17 @@ static void pagefault_enter(union perf_event *self,
 			    u64 timestamp __used,
 			    struct thread *thread)
 {
-	unsigned long address		= raw_field_value(event, "address", data);
-	unsigned long error_code	= raw_field_value(event, "error_code", data);
-	unsigned long ip		= raw_field_value(event, "ip", data);
-	struct thread_data *tdata = thread_data + thread->pid;
+	unsigned long ip = raw_field_value(event, "ip", data);
+	struct thread_data *tdata = get_thread_data(thread);
 	struct perf_sample sdata = { .period = 1, };
-	struct addr_location al;
-	char *sym;
+	struct pf_data *pfd;
 
 	if (!pagefaults)
 		return;
 
-	al.map = NULL;
-	pagefault_preprocess_sample(self, &al, &sdata, ip);
-
-	if (!thread)
-		die("thread not found\n");
-
-	sym = NULL;
-	if (al.map && al.sym)
-		sym = al.sym->name;
+	tdata->pf_count++;
+	if (tdata->pf_pending == MAX_PF_PENDING)
+		return;
 
 	if (tdata->entry_pending) {
 		tdata->entry_pending = false;
@@ -464,19 +532,21 @@ static void pagefault_enter(union perf_event *self,
 		color_fprintf(stdout, PERF_COLOR_YELLOW, "unfinished");
 		printf("]\n");
 	}
-	print_comm(thread);
-	color_fprintf(stdout, PERF_COLOR_NORMAL, "     #PF: [");
-	color_fprintf(stdout, PERF_COLOR_GREEN, "%30s", sym, address, error_code);
-	color_fprintf(stdout, PERF_COLOR_NORMAL, "]: => %016lx (", address);
-	if (error_code & 2)
-		color_fprintf(stdout, PERF_COLOR_RED, "W");
-	else
-		color_fprintf(stdout, PERF_COLOR_GREEN, "R");
-	if (error_code & 4)
-		color_fprintf(stdout, PERF_COLOR_NORMAL, ".U");
-	else
-		color_fprintf(stdout, PERF_COLOR_NORMAL, ".K");
-	color_fprintf(stdout, PERF_COLOR_NORMAL, ")");
+
+	print_pending_pf();
+
+	pfd = tdata->pf_data + tdata->pf_pending;
+	memset(pfd, 0, sizeof(*pfd));
+
+	pagefault_preprocess_sample(self, &pfd->al, &sdata, ip);
+
+	pfd->address = raw_field_value(event, "address", data);
+	pfd->error_code = raw_field_value(event, "error_code", data);
+	pfd->entry_time = timestamp;
+	pfd->nr = tdata->pf_count;
+
+	tdata->pf_pending++;
+	pf_pending_pid = thread->pid;
 }
 
 static void pagefault_exit(void *data __used,
@@ -485,10 +555,17 @@ static void pagefault_exit(void *data __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
 {
+	struct thread_data *tdata = get_thread_data(thread);
+
 	if (!pagefaults)
 		return;
 
-	color_fprintf(stdout, PERF_COLOR_NORMAL, "\n");
+	if (pf_pending_pid != thread->pid)
+		print_pending_pf();
+
+	print_pagefault(thread->pid, timestamp);
+	tdata->pf_pending--;
+	pf_pending_pid = 0;
 }
 
 static void
