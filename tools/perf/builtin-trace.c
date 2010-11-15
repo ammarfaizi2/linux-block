@@ -32,17 +32,18 @@ static char const *input_name = "perf.data";
 static bool pagefaults = false;
 static bool followchilds = true;
 
-struct syscall_descr {
+struct syscall_desc {
 	const char	*name;
 	char		*entry_arg[6];
 	char		*entry_fmt[6];
 	char		*exit_fmt;
 	unsigned int	argc;
+	char		*subsystem;
 };
 
 #define MAX_SYSCALLS		1024
 
-static struct syscall_descr syscall_descr[MAX_SYSCALLS];
+static struct syscall_desc syscall_desc[MAX_SYSCALLS];
 
 #define MAX_FDS			1024
 
@@ -70,18 +71,18 @@ static void parse_syscalls(void)
 	size_t len;
 
 	for (i = 0; i < MAX_SYSCALLS; i++) {
-		syscall_descr[i].name = audit_syscall_to_name(i, machine);
-		if (!syscall_descr[i].name)
+		syscall_desc[i].name = audit_syscall_to_name(i, machine);
+		if (!syscall_desc[i].name)
 			break;
-		if (!strcmp(syscall_descr[i].name, "arch_prctl"))
-			syscall_descr[i].name = "prctl";
+		if (!strcmp(syscall_desc[i].name, "arch_prctl"))
+			syscall_desc[i].name = "prctl";
 
 		if (!dbgfs_path || !buf)
 			continue;
 
 		snprintf(fmt_path, MAXPATHLEN,
 			 "%s/tracing/events/syscalls/sys_enter_%s/format",
-			 dbgfs_path, syscall_descr[i].name);
+			 dbgfs_path, syscall_desc[i].name);
 
 		fd = open(fmt_path, O_RDONLY);
 		if (fd < 0)
@@ -100,7 +101,7 @@ static void parse_syscalls(void)
 				for (b = p; *p != ':' && *p != '\"'; p++);
 				last = *p;
 				*p++ = 0;
-				syscall_descr[i].entry_arg[fmtcnt] = strdup(b);
+				syscall_desc[i].entry_arg[fmtcnt] = strdup(b);
 
 				if (last == '\"')
 					break;
@@ -108,11 +109,11 @@ static void parse_syscalls(void)
 				for (b = p; *p != ',' && *p !='\"'; p++);
 				last = *p;
 				*p++ = 0;
-				syscall_descr[i].entry_fmt[fmtcnt++] = strdup(b);
+				syscall_desc[i].entry_fmt[fmtcnt++] = strdup(b);
 				if (last == '\"')
 					break;
 			}
-			syscall_descr[i].argc = fmtcnt;
+			syscall_desc[i].argc = fmtcnt;
 			break;
 		}
 	}
@@ -130,7 +131,7 @@ static void process_sys_enter(void *data,
 	unsigned int pid = thread->pid;
 	unsigned long *args = raw_field_ptr(event, "args", data);
 	struct thread_data *tdata = thread_data + pid;
-	struct syscall_descr *sdesc = syscall_descr + id;
+	struct syscall_desc *sdesc = syscall_desc + id;
 	char *tmp;
 	unsigned int i;
 
@@ -197,7 +198,7 @@ static void process_sys_exit(void *data,
 	unsigned int pid = thread->pid;
 	unsigned long res = (unsigned long) raw_field_value(event, "ret", data);
 	struct thread_data *tdata = thread_data + pid;
-	struct syscall_descr *sdesc = syscall_descr + id;
+	struct syscall_desc *sdesc = syscall_desc + id;
 	int open_syscall;
 	double duration;
 	u64 t = 0;
@@ -254,7 +255,7 @@ static void vfs_getname(void *data,
 	unsigned int pid = thread->pid;
 	struct thread_data *tdata = thread_data + pid;
 	unsigned int id = tdata->last_syscall;
-	struct syscall_descr *sdesc = syscall_descr + id;
+	struct syscall_desc *sdesc = syscall_desc + id;
 
 	if (id >= MAX_SYSCALLS || !sdesc->name)
 		return;
