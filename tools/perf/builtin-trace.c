@@ -1120,6 +1120,27 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 {
 	int ret;
 
+	if (argc && !strcmp(argv[0], "trace")) {
+		argv++;
+		argc--;
+	}
+
+	if (!argc)
+		usage_with_options(trace_usage, trace_options);
+
+	if (!strncmp(argv[0], "rec", 3)) {
+		argv++;
+		argc--;
+		ret = __cmd_record(argc, argv);
+
+		printf(" # (use 'trace report' to see the trace)\n #\n\n");
+
+		return ret;
+	}
+
+	if (strncmp(argv[0], "report", 6))
+		usage_with_options(trace_usage, trace_options);
+
 	if (argc) {
 		argc = parse_options(argc, argv, trace_options, trace_usage,
 				     PARSE_OPT_STOP_AT_NON_OPTION);
@@ -1132,16 +1153,7 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 	parse_syscalls();
 	print_syscalls();
 
-	if (argc) {
-		if (!argc)
-			usage_with_options(trace_usage, trace_options);
+	__cmd_report();
 
-		ret = __cmd_record(argc, argv);
-		if (!ret)
-			__cmd_report();
-		return ret;
-	} else {
-		__cmd_report();
-	}
 	return 0;
 }

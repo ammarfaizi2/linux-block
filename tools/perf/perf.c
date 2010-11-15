@@ -459,6 +459,7 @@ int main(int argc, const char **argv)
 		set_debugfs_path();
 		set_buildid_dir();
 		setup_path();
+		argv[0] = "trace";
 		return cmd_trace(argc, argv, NULL);
 	}
 

@@ -714,13 +714,11 @@ static int __cmd_record(int argc, const char **argv)
 	if (quiet || signr == SIGUSR1)
 		return 0;
 
-	fprintf(stderr, "[ perf record: Woken up %ld times to write data ]\n", waking);
-
 	/*
 	 * Approximate RIP event size: 24 bytes.
 	 */
 	fprintf(stderr,
-		"[ perf record: Captured and wrote %.3f MB %s (~%" PRIu64 " samples) ]\n",
+		"\n #\n # perf record: Captured and wrote %.3f MB %s (~%" PRIu64 " samples) ]\n #\n",
 		(double)bytes_written / 1024.0 / 1024.0,
 		output_name,
 		bytes_written / 24);
