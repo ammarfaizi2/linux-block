@@ -48,19 +48,41 @@ static struct syscall_desc syscall_desc[MAX_SYSCALLS];
 #define MAX_FDS			1024
 
 struct thread_data {
-	u64		entry_time;
-	char		*entry_str;
-	bool		entry_pending;
-	unsigned int	last_syscall;
+	u64			entry_time;
+	char			*entry_str;
+	bool			entry_pending;
+	unsigned int		last_syscall;
 
-	int		open_syscall;
-	char		*open_filename;
-	char		*fd_name[MAX_FDS];
+	int			open_syscall;
+	char			*open_filename;
+	char			*fd_name[MAX_FDS];
 };
 
 #define MAX_PID			65536
 
 static struct thread_data thread_data[MAX_PID];
+
+static bool			print_syscalls_flag;
+
+static void print_syscalls(void)
+{
+	struct syscall_desc *sdesc;
+	unsigned int i, j;
+
+	if (!print_syscalls_flag)
+		return;
+
+	for (i = 0; i < MAX_SYSCALLS; i++) {
+		sdesc = syscall_desc + i;
+
+		printf("%20s (%d): ", sdesc->name, sdesc->argc);
+
+		for (j = 0; j < sdesc->argc; j++) {
+			printf("%s ", sdesc->entry_fmt[j]);
+		}
+		printf("\n");
+	}
+}
 
 static void parse_syscalls(void)
 {
@@ -68,21 +90,24 @@ static void parse_syscalls(void)
 	int i, fd, fmtcnt, machine = audit_detect_machine();
 	char fmt_path[MAXPATHLEN];
 	char last, *p, *b, *buf = malloc(65536);
+	struct syscall_desc *sdesc;
 	size_t len;
 
 	for (i = 0; i < MAX_SYSCALLS; i++) {
-		syscall_desc[i].name = audit_syscall_to_name(i, machine);
-		if (!syscall_desc[i].name)
+		sdesc = syscall_desc + i;
+
+		sdesc->name = audit_syscall_to_name(i, machine);
+		if (!sdesc->name)
 			break;
-		if (!strcmp(syscall_desc[i].name, "arch_prctl"))
-			syscall_desc[i].name = "prctl";
+		if (!strcmp(sdesc->name, "arch_prctl"))
+			sdesc->name = "prctl";
 
 		if (!dbgfs_path || !buf)
 			continue;
 
 		snprintf(fmt_path, MAXPATHLEN,
 			 "%s/tracing/events/syscalls/sys_enter_%s/format",
-			 dbgfs_path, syscall_desc[i].name);
+			 dbgfs_path, sdesc->name);
 
 		fd = open(fmt_path, O_RDONLY);
 		if (fd < 0)
@@ -101,7 +126,7 @@ static void parse_syscalls(void)
 				for (b = p; *p != ':' && *p != '\"'; p++);
 				last = *p;
 				*p++ = 0;
-				syscall_desc[i].entry_arg[fmtcnt] = strdup(b);
+				sdesc->entry_arg[fmtcnt] = strdup(b);
 
 				if (last == '\"')
 					break;
@@ -109,11 +134,11 @@ static void parse_syscalls(void)
 				for (b = p; *p != ',' && *p !='\"'; p++);
 				last = *p;
 				*p++ = 0;
-				syscall_desc[i].entry_fmt[fmtcnt++] = strdup(b);
+				sdesc->entry_fmt[fmtcnt++] = strdup(b);
 				if (last == '\"')
 					break;
 			}
-			syscall_desc[i].argc = fmtcnt;
+			sdesc->argc = fmtcnt;
 			break;
 		}
 	}
@@ -468,6 +493,7 @@ static const char * const trace_usage[] = {
 static const struct option trace_options[] = {
 	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
 	OPT_BOOLEAN('f', "follow", &followchilds, "follow childs"),
+	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag, "print syscall names and arguments"),
 	OPT_END()
 };
 
@@ -523,10 +549,10 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 	int ret;
 
 	parse_syscalls();
+	print_syscalls();
 
+	argc = parse_options(argc, argv, trace_options, trace_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 	if (argc) {
-		argc = parse_options(argc, argv, trace_options, trace_usage,
-				     PARSE_OPT_STOP_AT_NON_OPTION);
 		if (!argc)
 			usage_with_options(trace_usage, trace_options);
 
