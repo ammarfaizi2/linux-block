@@ -33,7 +33,8 @@ static bool			pagefaults		= false;
 static bool			followchilds		= false;
 static bool			print_syscalls_flag	= false;
 static unsigned int		page_size;
-static unsigned int		duration_filter;
+static double			duration_filter;
+static char const		*duration_filter_str;
 static unsigned int		nr_threads;
 
 struct syscall_desc {
@@ -291,9 +292,9 @@ static void parse_syscalls(void)
 	apply_syscall_filters();
 }
 
-static bool filter_duration(unsigned long t)
+static bool filter_duration(double t)
 {
-	return t < (duration_filter * 1000000);
+	return t < (duration_filter * 1000000.0);
 }
 
 static void print_duration(unsigned long t)
@@ -1057,8 +1058,8 @@ static const struct option trace_options[] = {
 	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
 	OPT_STRING ('F', "filter", &filter_str, "subsystem[,subsystem...]",
 		    "only consider symbols in these subsystems"),
-	OPT_UINTEGER('d', "duration", &duration_filter,
-		     "show only events with duration > N ms"),
+	OPT_STRING('d', "duration", &duration_filter_str, "float",
+		     "show only events with duration > N.M ms"),
 	OPT_STRING('t', "threadfilter", &filter_threads, "pid[,pid...]",
 		     "show only threads with matching pid (0 = group leader)"),
 	OPT_END()
@@ -1111,9 +1112,13 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 {
 	int ret;
 
-	if (argc)
+	if (argc) {
 		argc = parse_options(argc, argv, trace_options, trace_usage,
 				     PARSE_OPT_STOP_AT_NON_OPTION);
+	}
+
+	if (duration_filter_str)
+		duration_filter = atof(duration_filter_str);
 
 	page_size = sysconf(_SC_PAGE_SIZE);
 	parse_syscalls();
