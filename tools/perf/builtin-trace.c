@@ -71,25 +71,57 @@ struct syscall_attr {
 
 #include "syscall-attr.h"
 
-#define MAX_SYSCALL_ATTRS		ARRAY_SIZE(syscall_attrs)
+#define MAX_SYSCALL_ATTRS	ARRAY_SIZE(syscall_attrs)
 
-const char *filter_str;
+static const char *filter_str;
+
+#define MAX_SUBSYS_FILTERS	32
+
+static unsigned int		nr_subsys_filters;
+
+static const char		*subsys_filter_str[MAX_SUBSYS_FILTERS];
+
+static void tokenize_filter(void)
+{
+	char *tmp, *tok, *str = strdup(filter_str);
+
+	for (tok = strtok_r(str, ", ", &tmp);
+			tok; tok = strtok_r(NULL, ", ", &tmp)) {
+
+		if (nr_subsys_filters == MAX_SUBSYS_FILTERS) {
+			perror("MAX_SUBSYS_FILTERS full");
+			return;
+		}
+		subsys_filter_str[nr_subsys_filters] = strdup(tok);
+		nr_subsys_filters++;
+	}
+
+	free(str);
+}
 
 static void apply_syscall_filters(void)
 {
 	struct syscall_desc *sdesc;
-	unsigned int i;
+	unsigned int i, j;
 
 	if (!filter_str)
 		return;
 
+	tokenize_filter();
+
 	for (i = 0; i < MAX_SYSCALLS; i++) {
+		int match = 0;
+
 		sdesc = syscall_desc + i;
 
 		if (!sdesc->name)
 			continue;
 
-		if (strcmp(sdesc->subsys, filter_str))
+		for (j = 0; j < nr_subsys_filters; j++) {
+			if (strcasecmp(sdesc->subsys, subsys_filter_str[j]) == 0)
+				match = 1;
+		}
+		if (!match)
 			sdesc->name = NULL;
 	}
 }
