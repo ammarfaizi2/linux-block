@@ -465,17 +465,15 @@ static void process_sys_enter(void *data,
 				tmp += sprintf(tmp, ",");
 
 			if (!strcmp(arg_name, "fd")) {
-				int fd;
+				unsigned int fd;
 
 				fd = args[i];
 				if (fd < MAX_FDS && tdata->fd_name[fd])
-					tmp += sprintf(tmp, "%d:<%s>", fd,
-						       tdata->fd_name[fd]);
+					tmp += sprintf(tmp, "%d:<%s>", fd, tdata->fd_name[fd]);
 				else
 					tmp += sprintf(tmp, "%d:<...>", fd);
 			} else
-				tmp += sprintf(tmp, "%s: 0x%lx", arg_name,
-					       args[i]);
+				tmp += sprintf(tmp, "%s: 0x%lx", arg_name, args[i]);
 		}
 	}
 	tmp += sprintf(tmp, ")");
