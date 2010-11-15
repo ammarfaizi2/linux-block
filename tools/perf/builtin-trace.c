@@ -521,7 +521,8 @@ static void process_sys_exit(void *data,
 		t = timestamp - tdata->entry_time;
 		if (filter_duration(t))
 			return;
-	}
+	} else if (duration_filter)
+		return;
 
 	print_comm(thread);
 	print_duration(t);
@@ -632,14 +633,6 @@ static void pagefault_enter(union perf_event *self,
 	tdata->pf_count++;
 	if (tdata->pf_pending == MAX_PF_PENDING)
 		return;
-
-	if (tdata->entry_pending) {
-		tdata->entry_pending = false;
-		print_comm(thread);
-		printf(" %s ... [", tdata->entry_str);
-		color_fprintf(stdout, PERF_COLOR_YELLOW, "unfinished");
-		printf("]\n");
-	}
 
 	print_pending_pf();
 
