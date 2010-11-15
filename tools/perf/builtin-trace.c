@@ -38,7 +38,7 @@ struct syscall_desc {
 	char		*entry_fmt[6];
 	char		*exit_fmt;
 	unsigned int	argc;
-	char		*subsystem;
+	const char	*subsys;
 };
 
 #define MAX_SYSCALLS		1024
@@ -64,6 +64,37 @@ static struct thread_data thread_data[MAX_PID];
 
 static bool			print_syscalls_flag = false;
 
+struct syscall_attr {
+	const char		*syscall_name;
+	const char		*subsys_name;
+};
+
+#include "syscall-attr.h"
+
+#define MAX_SYSCALL_ATTRS		ARRAY_SIZE(syscall_attrs)
+
+static void parse_syscall_attrs(void)
+{
+	struct syscall_desc *sdesc;
+	struct syscall_attr *sattr;
+	unsigned int i, j;
+
+	for (i = 0; i < MAX_SYSCALLS; i++) {
+		sdesc = syscall_desc + i;
+
+		if (!sdesc->name)
+			continue;
+
+		for (j = 0; j < MAX_SYSCALL_ATTRS; j++) {
+			sattr = syscall_attrs + j;
+
+			if (strcmp(sdesc->name, sattr->syscall_name))
+				continue;
+			sdesc->subsys = sattr->subsys_name;
+		}
+	}
+}
+
 static void print_syscalls(void)
 {
 	struct syscall_desc *sdesc;
@@ -80,7 +111,7 @@ static void print_syscalls(void)
 		if (!sdesc->name)
 			continue;
 
-		printf("%25s (%d)", sdesc->name, sdesc->argc);
+		printf("%25s (%12s, #%d)", sdesc->name, sdesc->subsys, sdesc->argc);
 
 		for (j = 0; j < sdesc->argc; j++) {
 			if (!j)
@@ -154,6 +185,8 @@ static void parse_syscalls(void)
 	}
 	if (buf)
 		free(buf);
+
+	parse_syscall_attrs();
 }
 
 static void process_sys_enter(void *data,
