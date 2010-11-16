@@ -1160,7 +1160,12 @@ static const struct option report_options[] = {
 };
 
 static const char * const trace_usage[] = {
-	"perf trace [<options>] {record|report|summary|check}",
+	"perf trace [<options>] {record|report|summary|check}\n\n"
+	" The most commonly used trace commands are:\n"
+	"   record          Record a trace\n"
+	"   report          Show a trace\n"
+	"   summary         Show trace summary\n"
+	"   check           Check how suitable the system is for tracing",
 	NULL
 };
 
