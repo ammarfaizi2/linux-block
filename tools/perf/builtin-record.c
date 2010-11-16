@@ -725,7 +725,7 @@ static int __cmd_record(int argc, const char **argv)
 
 		mmap_read_all();
 
-		if (hits == samples) {
+		if (1 || hits == samples) {
 			if (done)
 				break;
 			err = poll(evsel_list->pollfd, evsel_list->nr_fds, -1);
@@ -737,11 +737,8 @@ static int __cmd_record(int argc, const char **argv)
 				struct perf_evsel *pos;
 
 				list_for_each_entry(pos, &evsel_list->entries, node) {
-					for (thread = 0;
-						thread < evsel_list->threads->nr;
-						thread++)
-						ioctl(FD(pos, i, thread),
-							PERF_EVENT_IOC_DISABLE);
+					for (thread = 0; thread < evsel_list->threads->nr; thread++)
+						ioctl(FD(pos, i, thread), PERF_EVENT_IOC_DISABLE);
 				}
 			}
 		}

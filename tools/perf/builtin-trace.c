@@ -44,6 +44,7 @@ static u64			base_time;
 static u64			start_time;
 static u64			stop_time		= (u64)(~0LL);
 static u64			cpu_mask		= (u64)(~0LL);
+static bool			system_wide		= false;
 
 struct syscall_desc {
 	const char	*name;
@@ -1148,6 +1149,7 @@ static const struct option trace_options[] = {
 	OPT_BOOLEAN('t', "timestamps", &print_timestamps, "print timestamps"),
 	OPT_STRING('T', "timefilter", &filter_time, "starttime[,endtime]",
 		     "show only events after starttime up to endtime [N.M ms]"),
+        OPT_BOOLEAN('a', "all-cpus", &system_wide, "system-wide collection from all CPUs"),
 	OPT_END()
 };
 
@@ -1179,7 +1181,8 @@ static int __cmd_record(int argc, const char **argv)
 	const char **rec_argv;
 
 	rec_argc = ARRAY_SIZE(record_args) + argc;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	/* one extra for potential -a (system_wide) */
+	rec_argv = calloc(rec_argc + 2, sizeof(char *));
 
 	for (i = 0; i < ARRAY_SIZE(record_args); i++)
 		rec_argv[i] = strdup(record_args[i]);
@@ -1188,6 +1191,9 @@ static int __cmd_record(int argc, const char **argv)
 		rec_argv[i] = argv[j];
 
 	BUG_ON(i != rec_argc);
+
+	if (system_wide)
+		argv[rec_argc] = "-a";
 
 	return cmd_record(i, rec_argv, NULL);
 }
