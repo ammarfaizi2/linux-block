@@ -99,6 +99,8 @@ struct thread_data {
 	double			runtime_ms;
 
 	u64			sched_in_time;
+	u64			sched_out_time;
+	unsigned long		sched_out_state;
 };
 
 #define MAX_PID			65536
@@ -447,6 +449,10 @@ static void print_pagefault(int pid, u64 timestamp, bool finished)
 		return;
 
 	if (cpu_filtered(pfd->cpu))
+		return;
+
+	/* FIXME: Happens with -d filter applied */
+	if (!tdata->pf_pending || !pfd->nr)
 		return;
 
 	print_timestamp(timestamp);
@@ -900,6 +906,9 @@ static void sched_switch_out(void *data,
 	FILL_FIELD(switch_event, next_pid, event, data);
 	FILL_FIELD(switch_event, next_prio, event, data);
 
+	tdata->sched_out_time = timestamp;
+	tdata->sched_out_state = (unsigned long) switch_event.prev_state;
+
 	if (time_filtered(timestamp))
 		return;
 	if (cpu_filtered(cpu))
@@ -941,16 +950,34 @@ static void sched_switch_out(void *data,
 
 static void sched_switch_in(void *data __used,
 			    struct event *event __used,
-			    int this_cpu __used,
+			    int cpu __used,
 			    u64 timestamp __used,
 			    struct thread *thread __used)
 {
 	struct thread_data *tdata = get_thread_data(thread);
+	u64 t;
 
 	if (!tdata->enabled)
 		return;
 
 	tdata->sched_in_time = timestamp;
+
+	if (time_filtered(timestamp))
+		return;
+	if (cpu_filtered(cpu))
+		return;
+
+	t = tdata->sched_out_time ? timestamp - tdata->sched_out_time : 0;
+	if (filter_duration(t))
+		return;
+
+	if (!tdata->sched_out_state && !scheduler_all_events)
+		return;
+
+	print_entry_head(thread, timestamp, t, cpu);
+
+	printf("=> %s [PF: %d]\n", tdata->sched_out_state ? "unblock" : "run",
+	       tdata->pf_pending);
 }
 
 static void
