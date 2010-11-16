@@ -31,11 +31,19 @@ static struct perf_session	*session;
 static char const		*input_name		= "perf.data";
 static bool			pagefaults		= false;
 static bool			followchilds		= false;
+static bool			scheduler_events	= false;
+static bool			scheduler_all_events	= false;
+static bool			print_timestamps	= false;
+static bool			print_cpu		= false;
 static bool			print_syscalls_flag	= false;
 static unsigned int		page_size;
 static double			duration_filter;
 static char const		*duration_filter_str;
 static unsigned int		nr_threads;
+static u64			base_time;
+static u64			start_time;
+static u64			stop_time		= (u64)(~0LL);
+static u64			cpu_mask		= (u64)(~0LL);
 
 struct syscall_desc {
 	const char	*name;
@@ -52,13 +60,15 @@ static struct syscall_desc syscall_desc[MAX_SYSCALLS];
 
 #define MAX_FDS			1024
 #define MAX_PF_PENDING		1024
+#define MAX_CPUS		4096
 
-static int pf_pending_pid;
+static int pf_pending_pid[MAX_CPUS];
 static int first_pid;
 
 struct pf_data {
 	u64			nr;
 	u64			entry_time;
+	int			cpu;
 	unsigned long		address;
 	unsigned long		error_code;
 	unsigned long		ip;
@@ -69,6 +79,7 @@ struct pf_data {
 struct thread_data {
 	bool			enabled;
 	u64			entry_time;
+	u64			exit_time;
 	char			*entry_str;
 	bool			entry_pending;
 	unsigned int		last_syscall;
@@ -85,6 +96,8 @@ struct thread_data {
 
 	unsigned long		nr_events;
 	double			runtime_ms;
+
+	u64			sched_in_time;
 };
 
 #define MAX_PID			65536
@@ -149,6 +162,72 @@ static void apply_thread_filter(void)
 	free(str);
 }
 
+static const char *filter_time;
+
+static void parse_time_filter(void)
+{
+	char *tmp, *tok, *str;
+	int cnt = 0;
+	double t[2];
+
+	if (!filter_time)
+		return;
+
+	str = strdup(filter_time);
+
+	for (tok = strtok_r(str, ", ", &tmp);
+			tok; tok = strtok_r(NULL, ", ", &tmp)) {
+		if (sscanf(tok, "%lf", &t[cnt]) != 1) {
+			printf("Invalid time filter %s, skipping\n", tok);
+			goto out;
+		}
+		cnt++;
+	}
+
+	if (cnt == 2 && t[1] <= t[0]) {
+		printf("Invalid time filter start >= end, skipping\n");
+		goto out;
+	}
+
+	start_time = (u64) (t[0] * 1000000.0);
+	if (cnt > 1)
+		stop_time =  (u64) (t[1] * 1000000.0);
+out:
+	free(str);
+}
+
+static bool time_filtered(u64 timestamp)
+{
+	timestamp -= base_time;
+
+	return timestamp < start_time || timestamp > stop_time;
+}
+
+static const char *cpu_filter_str;
+
+static void parse_cpu_filter(void)
+{
+	u64 mask;
+
+	if (!cpu_filter_str)
+		return;
+
+	if (sscanf(cpu_filter_str, "%llx", &mask) != 1) {
+		printf("Invalid cpu filter %s, skipping\n", cpu_filter_str);
+		return;
+	}
+
+	if (!mask) {
+		printf("Invalid zero cpu filter, skipping\n");
+		return;
+	}
+	cpu_mask = mask;
+}
+
+static bool cpu_filtered(int cpu)
+{
+	return (cpu_mask & (1ULL << cpu)) == 0;
+}
 
 struct syscall_attr {
 	const char		*syscall_name;
@@ -341,20 +420,43 @@ static void print_duration(unsigned long t)
 	printf("): ");
 }
 
-static void print_pagefault(int pid, u64 timestamp)
+static void print_timestamp(u64 timestamp)
+{
+	double ts = (double)(timestamp - base_time) / 1000000.0;
+
+	if (print_timestamps)
+		printf("%10.3f ", ts);
+}
+
+static void print_event_cpu(int cpu)
+{
+	if (print_cpu)
+		printf("CPU %d: ", cpu);
+}
+
+static void print_pagefault(int pid, u64 timestamp, bool finished)
 {
 	struct thread_data *tdata = thread_data[pid];
 	struct pf_data *pfd = tdata->pf_data + tdata->pf_pending - 1;
 
-	if (duration_filter &&
-	    (!timestamp || filter_duration(timestamp - pfd->entry_time)))
+	if (duration_filter && filter_duration(timestamp - pfd->entry_time))
 		return;
+
+	if (time_filtered(timestamp))
+		return;
+
+	if (cpu_filtered(pfd->cpu))
+		return;
+
+	print_timestamp(timestamp);
 
 	if (followchilds)
 		printf("%20s/%5d ", tdata->comm, pid);
 
-	if (timestamp)
-		print_duration(timestamp - pfd->entry_time);
+	print_duration(timestamp - pfd->entry_time);
+
+	if (print_cpu)
+		print_event_cpu(pfd->cpu);
 
 	color_fprintf(stdout, PERF_COLOR_NORMAL, "     #PF %10llu: [",
 		      (unsigned long long) pfd->nr);
@@ -393,24 +495,33 @@ static void print_pagefault(int pid, u64 timestamp)
 		color_fprintf(stdout, PERF_COLOR_NORMAL, ".K");
 	color_fprintf(stdout, PERF_COLOR_NORMAL, ")");
 
-	if (!timestamp)
+	if (!finished)
 		printf(" ... [unfinished]");
 	printf("\n");
 }
 
-static void print_pending_pf(void)
+static void print_pending_pf(int cpu, u64 timestamp)
 {
-	if (!pf_pending_pid)
+	if (!pf_pending_pid[cpu])
 		return;
 
-	print_pagefault(pf_pending_pid, 0);
-	pf_pending_pid = 0;
+	print_pagefault(pf_pending_pid[cpu], timestamp, false);
+	pf_pending_pid[cpu] = 0;
 }
 
 static void print_comm(struct thread *thread)
 {
 	if (followchilds)
 		printf("%20s/%5d ", thread->comm, thread->pid);
+}
+
+static void
+print_entry_head(struct thread *thread, u64 timestamp, u64 duration, int cpu)
+{
+	print_timestamp(timestamp);
+	print_comm(thread);
+	print_duration(duration);
+	print_event_cpu(cpu);
 }
 
 static struct thread_data *get_thread_data(struct thread *thread)
@@ -490,15 +601,15 @@ static void process_sys_enter(void *data,
 		}
 	}
 	tmp += sprintf(tmp, ")");
-	tdata->entry_pending = true;
 
 	if (!strcmp(sdesc->name, "exit_group") || !strcmp(sdesc->name, "exit")) {
-		if (!duration_filter) {
-			print_comm(thread);
-			print_duration(1);
+		if (!time_filtered(timestamp) && !duration_filter &&
+		    !cpu_filtered(cpu)) {
+			print_entry_head(thread, timestamp, 1, cpu);
 			printf("%-70s\n", tdata->entry_str);
 		}
-	}
+	} else
+		tdata->entry_pending = true;
 }
 
 static void process_sys_exit(void *data,
@@ -514,11 +625,12 @@ static void process_sys_exit(void *data,
 	u64 t = 0;
 
 	tdata->last_syscall = MAX_SYSCALLS;
+	tdata->exit_time = timestamp;
 
 	if (id >= MAX_SYSCALLS || !sdesc->name || !tdata->enabled)
 		return;
 
-	print_pending_pf();
+	print_pending_pf(cpu, timestamp);
 
 	if (!strcmp(sdesc->name, "open")) {
 		int fd = res;
@@ -533,22 +645,29 @@ static void process_sys_exit(void *data,
 	if (tdata->entry_time) {
 		t = timestamp - tdata->entry_time;
 		if (filter_duration(t))
-			return;
+			goto out;
 	} else if (duration_filter)
-		return;
+		goto out;
 
-	print_comm(thread);
-	print_duration(t);
+	if (time_filtered(timestamp))
+		goto out;
+
+	if (cpu_filtered(cpu))
+		goto out;
+
+	print_entry_head(thread, timestamp, t, cpu);
 
 	if (tdata->entry_pending) {
 		printf("%-70s", tdata->entry_str);
-		tdata->entry_pending = false;
 	} else {
 		printf(" ... [");
 		color_fprintf(stdout, PERF_COLOR_YELLOW, "continued");
 		printf("]: %s()", sdesc->name);
 	}
 	printf(" => 0x%lx\n", res);
+
+out:
+	tdata->entry_pending = false;
 }
 
 static void vfs_getname(void *data,
@@ -573,8 +692,14 @@ static void vfs_getname(void *data,
 		strcat(tdata->entry_str, filename);
 		strcat(tdata->entry_str, ") ");
 	} else {
-		print_pending_pf();
+		if (time_filtered(timestamp))
+			return;
+		if (cpu_filtered(cpu))
+			return;
+		print_pending_pf(cpu, timestamp);
+		print_timestamp(timestamp);
 		print_comm(thread);
+		print_event_cpu(cpu);
 		printf(" => %s(%s)\n", sdesc->name, filename);
 	}
 }
@@ -647,7 +772,7 @@ static void pagefault_enter(union perf_event *self,
 	if (tdata->pf_pending == MAX_PF_PENDING)
 		return;
 
-	print_pending_pf();
+	print_pending_pf(cpu, timestamp);
 
 	pfd = tdata->pf_data + tdata->pf_pending;
 	memset(pfd, 0, sizeof(*pfd));
@@ -657,12 +782,13 @@ static void pagefault_enter(union perf_event *self,
 	pfd->error_code = raw_field_value(event, "error_code", data);
 	pfd->entry_time = timestamp;
 	pfd->nr = tdata->pf_count;
+	pfd->cpu = cpu;
 
 	pagefault_preprocess_sample(self, &pfd->al_ip, &sdata, pfd->ip);
 	pagefault_preprocess_sample(self, &pfd->al_pf, &sdata, pfd->address);
 
 	tdata->pf_pending++;
-	pf_pending_pid = thread->pid;
+	pf_pending_pid[cpu] = thread->pid;
 }
 
 static void pagefault_exit(void *data __used,
@@ -676,14 +802,14 @@ static void pagefault_exit(void *data __used,
 	if (!pagefaults || !tdata->enabled)
 		return;
 
-	if (pf_pending_pid != thread->pid)
-		print_pending_pf();
+	if (pf_pending_pid[cpu] != thread->pid)
+		print_pending_pf(cpu, timestamp);
 
 	if (tdata->pf_pending) {
-		print_pagefault(thread->pid, timestamp);
+		print_pagefault(thread->pid, timestamp, true);
 		tdata->pf_pending--;
 	}
-	pf_pending_pid = 0;
+	pf_pending_pid[cpu] = 0;
 }
 
 #define FILL_FIELD(ptr, field, event, data)	\
@@ -737,85 +863,22 @@ struct trace_runtime_event {
 	u64 vruntime;
 };
 
-struct trace_wakeup_event {
-	u32 size;
-
-	u16 common_type;
-	u8 common_flags;
-	u8 common_preempt_count;
-	u32 common_pid;
-	u32 common_tgid;
-
-	char comm[16];
-	u32 pid;
-
-	u32 prio;
-	u32 success;
-	u32 cpu;
-};
-
-struct trace_fork_event {
-	u32 size;
-
-	u16 common_type;
-	u8 common_flags;
-	u8 common_preempt_count;
-	u32 common_pid;
-	u32 common_tgid;
-
-	char parent_comm[16];
-	u32 parent_pid;
-	char child_comm[16];
-	u32 child_pid;
-};
-
-struct trace_migrate_task_event {
-	u32 size;
-
-	u16 common_type;
-	u8 common_flags;
-	u8 common_preempt_count;
-	u32 common_pid;
-	u32 common_tgid;
-
-	char comm[16];
-	u32 pid;
-
-	u32 prio;
-	u32 cpu;
-};
-
-static void
-process_sched_wakeup_event(void *data,
-			   struct event *event,
-			   int cpu __used,
-			   u64 timestamp __used,
-			   struct thread *thread __used)
+static void sched_switch_out(void *data,
+			     struct event *event,
+			     int cpu __used,
+			     u64 timestamp __used,
+			     struct thread *thread __used)
 {
-	struct trace_wakeup_event wakeup_event;
-
-	FILL_COMMON_FIELDS(wakeup_event, event, data);
-
-	FILL_ARRAY(wakeup_event, comm, event, data);
-	FILL_FIELD(wakeup_event, pid, event, data);
-	FILL_FIELD(wakeup_event, prio, event, data);
-	FILL_FIELD(wakeup_event, success, event, data);
-	FILL_FIELD(wakeup_event, cpu, event, data);
-
-//	printf("sched wakeup event\n");
-}
-
-static void
-process_sched_switch_out_event(void *data,
-			   struct event *event,
-			   int this_cpu __used,
-			   u64 timestamp __used,
-			   struct thread *thread __used)
-{
+	struct thread_data *tdata = get_thread_data(thread);
 	struct trace_switch_event switch_event;
+	bool blocking = false;
+	double cputime;
+	u64 t = 0;
+
+	if (!tdata->enabled)
+		return;
 
 	FILL_COMMON_FIELDS(switch_event, event, data);
-
 	FILL_ARRAY(switch_event, prev_comm, event, data);
 	FILL_FIELD(switch_event, prev_pid, event, data);
 	FILL_FIELD(switch_event, prev_prio, event, data);
@@ -824,53 +887,57 @@ process_sched_switch_out_event(void *data,
 	FILL_FIELD(switch_event, next_pid, event, data);
 	FILL_FIELD(switch_event, next_prio, event, data);
 
-	//printf("# sched switch out: %s/%d -> %s/%d\n",
-	//	switch_event.prev_comm, switch_event.prev_pid,
-	//	switch_event.next_comm, switch_event.next_pid);
+	if (time_filtered(timestamp))
+		return;
+	if (cpu_filtered(cpu))
+		return;
+
+	if (tdata->entry_pending) {
+		if (tdata->entry_time)
+			t = timestamp - tdata->entry_time;
+	} else if (tdata->pf_pending) {
+		struct pf_data *pfd = tdata->pf_data + tdata->pf_pending - 1;
+
+		t = timestamp - pfd->entry_time;
+	} else {
+		t = timestamp - tdata->exit_time;
+	}
+
+	if (filter_duration(t))
+		return;
+
+	/* Scheduling away with a state != running */
+	if (switch_event.prev_state)
+		blocking = true;
+	else if (!scheduler_all_events)
+		  return;
+
+	if (pf_pending_pid[cpu] == thread->pid)
+		print_pending_pf(cpu, timestamp);
+
+	print_entry_head(thread, timestamp, t, cpu);
+
+	t = timestamp - tdata->sched_in_time;
+	cputime = (double)t / 1000000.0;
+	printf("   %s [state: 0x%02x cputime: %.3f ms #PF: %d] %s\n",
+	       blocking ? "blocking" : "preemption",
+	       (unsigned int) switch_event.prev_state, cputime,
+	       tdata->pf_pending,
+	       tdata->entry_pending ? tdata->entry_str : "");
 }
 
-static void
-process_sched_switch_in_event(void *data,
-			   struct event *event,
-			   int this_cpu __used,
-			   u64 timestamp __used,
-			   struct thread *thread __used)
+static void sched_switch_in(void *data __used,
+			    struct event *event __used,
+			    int this_cpu __used,
+			    u64 timestamp __used,
+			    struct thread *thread __used)
 {
-	struct trace_switch_event switch_event;
+	struct thread_data *tdata = get_thread_data(thread);
 
-	FILL_COMMON_FIELDS(switch_event, event, data);
+	if (!tdata->enabled)
+		return;
 
-	FILL_ARRAY(switch_event, prev_comm, event, data);
-	FILL_FIELD(switch_event, prev_pid, event, data);
-	FILL_FIELD(switch_event, prev_prio, event, data);
-	FILL_FIELD(switch_event, prev_state, event, data);
-	FILL_ARRAY(switch_event, next_comm, event, data);
-	FILL_FIELD(switch_event, next_pid, event, data);
-	FILL_FIELD(switch_event, next_prio, event, data);
-
-	//printf("# sched switch in: %s/%d -> %s/%d\n",
-	//	switch_event.prev_comm, switch_event.prev_pid,
-	//	switch_event.next_comm, switch_event.next_pid);
-}
-
-static void
-process_sched_runtime_event(void *data,
-			   struct event *event,
-			   int cpu __used,
-			   u64 timestamp __used,
-			   struct thread *thread __used)
-{
-	struct trace_runtime_event runtime_event;
-	double runtime_ms;
-
-	FILL_ARRAY(runtime_event, comm, event, data);
-	FILL_FIELD(runtime_event, pid, event, data);
-	FILL_FIELD(runtime_event, runtime, event, data);
-	FILL_FIELD(runtime_event, vruntime, event, data);
-
-	runtime_ms = runtime_event.runtime / 1000000.0;
-
-//	printf("[ sched timeslice consumed: %.3f msecs ]\n", runtime_ms);
+	tdata->sched_in_time = timestamp;
 }
 
 static void
@@ -896,88 +963,20 @@ process_sched_sum_runtime_event(void *data,
 }
 
 static void
-process_sched_fork_event(void *data,
-			 struct event *event,
-			 int cpu __used,
-			 u64 timestamp __used,
-			 struct thread *thread __used)
-{
-	struct trace_fork_event fork_event;
-
-	FILL_COMMON_FIELDS(fork_event, event, data);
-
-	FILL_ARRAY(fork_event, parent_comm, event, data);
-	FILL_FIELD(fork_event, parent_pid, event, data);
-	FILL_ARRAY(fork_event, child_comm, event, data);
-	FILL_FIELD(fork_event, child_pid, event, data);
-
-//	printf("sched fork event\n");
-}
-
-static void
-process_sched_exit_event(struct event *event __used,
-			 int cpu __used,
-			 u64 timestamp __used,
-			 struct thread *thread __used)
-{
-//	printf("sched exit event\n");
-}
-
-static void
-process_sched_migrate_task_event(void *data,
-			   struct event *event,
-			   int cpu __used,
-			   u64 timestamp __used,
-			   struct thread *thread __used)
-{
-	struct trace_migrate_task_event migrate_task_event;
-
-	FILL_COMMON_FIELDS(migrate_task_event, event, data);
-
-	FILL_ARRAY(migrate_task_event, comm, event, data);
-	FILL_FIELD(migrate_task_event, pid, event, data);
-	FILL_FIELD(migrate_task_event, prio, event, data);
-	FILL_FIELD(migrate_task_event, cpu, event, data);
-
-//	printf("sched migrate event\n");
-}
-
-static void
-process_raw_sched_event(union perf_event *raw_event __used, void *data, int cpu,
-			u64 timestamp, struct thread *thread)
-{
-	struct event *event;
-	int type;
-
-	type = trace_parse_common_type(data);
-	event = trace_find_event(type);
-
-	if (!strcmp(event->name, "sched_switch_in"))
-		process_sched_switch_in_event(data, event, cpu, timestamp, thread);
-	if (!strcmp(event->name, "sched_switch_out"))
-		process_sched_switch_out_event(data, event, cpu, timestamp, thread);
-	if (!strcmp(event->name, "sched_stat_runtime"))
-		process_sched_runtime_event(data, event, cpu, timestamp, thread);
-	if (!strcmp(event->name, "sched_wakeup"))
-		process_sched_wakeup_event(data, event, cpu, timestamp, thread);
-	if (!strcmp(event->name, "sched_wakeup_new"))
-		process_sched_wakeup_event(data, event, cpu, timestamp, thread);
-	if (!strcmp(event->name, "sched_process_fork"))
-		process_sched_fork_event(data, event, cpu, timestamp, thread);
-	if (!strcmp(event->name, "sched_process_exit"))
-		process_sched_exit_event(event, cpu, timestamp, thread);
-	if (!strcmp(event->name, "sched_migrate_task"))
-		process_sched_migrate_task_event(data, event, cpu, timestamp, thread);
-}
-
-static void
 process_raw_event(union perf_event *self, void *data, int cpu, u64 timestamp, struct thread *thread)
 {
+	struct thread_data *tdata = get_thread_data(thread);
 	struct event *event;
 	int type;
 
 	type = trace_parse_common_type(data);
 	event = trace_find_event(type);
+
+	/*
+	 * Make sure sched_in_time gets initialized with the first event
+	 */
+	if (!tdata->sched_in_time)
+		tdata->sched_in_time = timestamp;
 
 	if (!strcmp(event->name, "sys_enter"))
 		process_sys_enter(data, event, cpu, timestamp, thread);
@@ -990,7 +989,13 @@ process_raw_event(union perf_event *self, void *data, int cpu, u64 timestamp, st
 	if (!strcmp(event->name, "vfs_getname"))
 		vfs_getname(data, event, cpu, timestamp, thread);
 
-	process_raw_sched_event(self, data, cpu, timestamp, thread);
+	if (!scheduler_events && !scheduler_all_events)
+		return;
+
+	if (!strcmp(event->name, "sched_switch_in"))
+		sched_switch_in(data, event, cpu, timestamp, thread);
+	if (!strcmp(event->name, "sched_switch_out"))
+		sched_switch_out(data, event, cpu, timestamp, thread);
 }
 
 static int process_sample_event(union perf_event *self, struct perf_sample *sample __used, struct perf_evsel *evsel __used, struct perf_session *s)
@@ -1043,6 +1048,9 @@ static int process_prep_event(union perf_event *self, struct perf_sample *sample
 	bzero(&data, sizeof(data));
 	perf_event__parse_sample(self, s->sample_type, s->sample_id_all, &data);
 
+	if (!base_time)
+		base_time = data.time;
+
 	thread = perf_session__findnew(s, data.tid);
 	if (thread == NULL) {
 		pr_debug("problem processing %d event, skipping it.\n", self->header.type);
@@ -1093,6 +1101,8 @@ static void __cmd_report(void)
 
 	read_events_prep();
 	apply_thread_filter();
+	parse_time_filter();
+	parse_cpu_filter();
 	read_events();
 }
 
@@ -1111,15 +1121,29 @@ static const char * const trace_usage[] = {
 };
 
 static const struct option trace_options[] = {
-	OPT_BOOLEAN('P', "print-syscalls", &print_syscalls_flag,
+	OPT_BOOLEAN('c', "cpu", &print_cpu, "print cpu"),
+	OPT_STRING('C', "cpufilter", &cpu_filter_str, "cpumask",
+		     "show only events on cpu(s) in cpumask [0xN]"),
+	OPT_BOOLEAN(0, "print-syscalls", &print_syscalls_flag,
 		    "print syscall names and arguments"),
-	OPT_BOOLEAN('p', "pagefaults", &pagefaults, "record pagefaults"),
-	OPT_STRING ('F', "filter", &filter_str, "subsystem[,subsystem...]",
-		    "only consider syscalls of these subsystems. (aio, arch-x86, events, fd, fs, fs-attr, IO, IO-locking, IPC-locking, IPC-mm, IPC-net, locking, misc, mm, net, process, sched, security, signal, stat, system, task, timer, tty)"),
 	OPT_STRING('d', "duration", &duration_filter_str, "float",
 		     "show only events with duration > N.M ms"),
-	OPT_STRING('t', "threadfilter", &filter_threads, "pid/comm[,pid/comm...]",
+	OPT_STRING ('F', "filter", &filter_str, "subsystem[,subsystem...]",
+		    "only consider syscalls of these subsystems:\n"
+		    "\t\t\taio, arch-x86, events, fd, fs, fs-attr, IO, IO-locking\n"
+		    "\t\t\tIPC-locking, IPC-mm, IPC-net, locking, misc, mm, net\n"
+		    "\t\t\tprocess, sched, security, signal, stat, system, task\n"
+		    "\t\t\ttimer, tty"),
+	OPT_STRING('f', "threadfilter", &filter_threads, "pid/comm[,pid/comm...]",
 		     "show only threads with matching pid (0 = group leader)"),
+	OPT_BOOLEAN('P', "pagefaults", &pagefaults, "show pagefaults"),
+	OPT_BOOLEAN('s', "scheduler", &scheduler_events,
+		    "show blocking scheduler events"),
+	OPT_BOOLEAN('S', "schedall", &scheduler_all_events,
+		    "show all scheduler events"),
+	OPT_BOOLEAN('t', "timestamps", &print_timestamps, "print timestamps"),
+	OPT_STRING('T', "timefilter", &filter_time, "starttime[,endtime]",
+		     "show only events after starttime up to endtime [N.M ms]"),
 	OPT_END()
 };
 
@@ -1142,10 +1166,6 @@ static const char *record_args[] = {
 	"-e", "sched:sched_stat_sleep:r",
 	"-e", "sched:sched_stat_iowait:r",
 	"-e", "sched:sched_stat_runtime:r",
-	"-e", "sched:sched_process_exit:r",
-	"-e", "sched:sched_process_fork:r",
-	"-e", "sched:sched_wakeup:r",
-	"-e", "sched:sched_migrate_task:r",
 };
 
 static int __cmd_record(int argc, const char **argv)
@@ -1267,10 +1287,6 @@ static const char *required_events[] = {
 	"sched:sched_stat_sleep:r",
 	"sched:sched_stat_iowait:r",
 	"sched:sched_stat_runtime:r",
-	"sched:sched_process_exit:r",
-	"sched:sched_process_fork:r",
-	"sched:sched_wakeup:r",
-	"sched:sched_migrate_task:r",
 	NULL
 };
 
