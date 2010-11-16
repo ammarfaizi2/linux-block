@@ -45,6 +45,7 @@ static u64			start_time;
 static u64			stop_time		= (u64)(~0LL);
 static u64			cpu_mask		= (u64)(~0LL);
 static bool			system_wide		= false;
+static pid_t			target_pid		= -1;
 
 struct syscall_desc {
 	const char	*name;
@@ -1201,6 +1202,7 @@ static const struct option trace_options[] = {
 	OPT_STRING('T', "timefilter", &filter_time, "starttime[,endtime]",
 		     "show only events after starttime up to endtime [N.M ms]"),
         OPT_BOOLEAN('a', "all-cpus", &system_wide, "system-wide collection from all CPUs"),
+	OPT_INTEGER('p', "pid", &target_pid, "record events on existing process id"),
 	OPT_END()
 };
 
@@ -1232,8 +1234,11 @@ static int __cmd_record(int argc, const char **argv)
 	const char **rec_argv;
 
 	rec_argc = ARRAY_SIZE(record_args) + argc;
-	/* one extra for potential -a (system_wide) */
-	rec_argv = calloc(rec_argc + 2, sizeof(char *));
+	/*
+	 * one extra for potential -a (system_wide)
+	 * two extra for potential -p <target_pid>
+	 */
+	rec_argv = calloc(rec_argc + 1 + 1 + 2, sizeof(char *));
 
 	for (i = 0; i < ARRAY_SIZE(record_args); i++)
 		rec_argv[i] = strdup(record_args[i]);
@@ -1243,8 +1248,24 @@ static int __cmd_record(int argc, const char **argv)
 
 	BUG_ON(i != rec_argc);
 
-	if (system_wide)
+	if (system_wide) {
 		argv[rec_argc] = "-a";
+		rec_argc++;
+	}
+
+	if (target_pid != -1) {
+		char *pid = malloc(30);
+
+		if (!pid)
+			return -1;
+
+		argv[rec_argc] = "-p";
+		rec_argc++;
+
+		sprintf(pid, "%d", target_pid);
+		argv[rec_argc] = pid;
+		rec_argc++;
+	}
 
 	return cmd_record(i, rec_argv, NULL);
 }
