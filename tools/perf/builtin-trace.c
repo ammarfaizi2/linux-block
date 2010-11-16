@@ -1104,7 +1104,7 @@ static const struct option report_options[] = {
 };
 
 static const char * const trace_usage[] = {
-	"perf trace [<options>] {record|report}",
+	"perf trace [<options>] {record|report|summary|check}",
 	NULL
 };
 
@@ -1253,6 +1253,59 @@ static int __cmd_summary(int argc __used, const char **argv __used)
 	return 0;
 }
 
+static const char *required_events[] = {
+	"raw_syscalls:sys_enter:r",
+	"raw_syscalls:sys_exit:r",
+	"vfs:vfs_getname:r",
+	"kmem:mm_pagefault_start:r",
+	"kmem:mm_pagefault_end:r",
+	"sched:sched_switch_out:r",
+	"sched:sched_switch_in:r",
+	"sched:sched_stat_wait:r",
+	"sched:sched_stat_sleep:r",
+	"sched:sched_stat_iowait:r",
+	"sched:sched_stat_runtime:r",
+	"sched:sched_process_exit:r",
+	"sched:sched_process_fork:r",
+	"sched:sched_wakeup:r",
+	"sched:sched_migrate_task:r",
+	NULL
+};
+
+static int __cmd_check(int argc __used, const char **argv __used)
+{
+	const char **str;
+	int failed = 0;
+
+	printf("\nChecking whether the kernel has all required events ...\n");
+
+	str = required_events;
+
+	while (*str) {
+		int ret = __parse_events(NULL, *str, 0, 0);
+
+		printf(" ... Checking event  %30s: %s\n",
+			*str, ret == 0 ? "ok" : "Not available!");
+
+		if (ret)
+			failed++;
+		str++;
+	}
+
+	printf("\n");
+	if (failed) {
+		printf("Warning: some event types are not supported by this kernel.\n");
+		printf("The 'trace' utility will work but there may be missing features.\n");
+		printf("Please upgrade your kernel\n");
+	} else {
+		printf("Good: all required event types are supported by this kernel.\n");
+		printf("The 'trace' utility will be fully functional.\n");
+	}
+	printf("\n");
+
+	return 0;
+}
+
 int cmd_trace(int argc, const char **argv, const char *prefix __used)
 {
 	int ret;
@@ -1287,7 +1340,11 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 		argc--;
 		return __cmd_summary(argc, argv);
 	}
-
+	if (!strncmp(argv[0], "check", 3)) {
+		argv++;
+		argc--;
+		return __cmd_check(argc, argv);
+	}
 
 	if (strncmp(argv[0], "report", 6))
 		usage_with_options(trace_usage, trace_options);

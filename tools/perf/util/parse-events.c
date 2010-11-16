@@ -776,7 +776,7 @@ parse_event_modifier(const char **strp, struct perf_event_attr *attr)
  */
 static enum event_result
 parse_event_symbols(const struct option *opt, const char **str,
-		    struct perf_event_attr *attr)
+		    struct perf_event_attr *attr, int verbose)
 {
 	enum event_result ret;
 
@@ -804,8 +804,11 @@ parse_event_symbols(const struct option *opt, const char **str,
 	if (ret != EVT_FAILED)
 		goto modifier;
 
-	fprintf(stderr, "invalid or unsupported event: '%s'\n", *str);
-	fprintf(stderr, "Run 'perf list' for a list of valid events\n");
+	if (verbose) {
+		fprintf(stderr, "invalid or unsupported event: '%s'\n", *str);
+		fprintf(stderr, "Run 'perf list' for a list of valid events\n");
+	}
+
 	return EVT_FAILED;
 
 modifier:
@@ -819,7 +822,7 @@ modifier:
 	return ret;
 }
 
-int parse_events(const struct option *opt, const char *str, int unset __used)
+int __parse_events(const struct option *opt, const char *str, int unset __used, int verbose)
 {
 	struct perf_evlist *evlist = *(struct perf_evlist **)opt->value;
 	struct perf_event_attr attr;
@@ -829,7 +832,7 @@ int parse_events(const struct option *opt, const char *str, int unset __used)
 	for (;;) {
 		ostr = str;
 		memset(&attr, 0, sizeof(attr));
-		ret = parse_event_symbols(opt, &str, &attr);
+		ret = parse_event_symbols(opt, &str, &attr, verbose);
 		if (ret == EVT_FAILED)
 			return -1;
 
@@ -858,6 +861,11 @@ int parse_events(const struct option *opt, const char *str, int unset __used)
 	}
 
 	return 0;
+}
+
+int parse_events(const struct option *opt, const char *str, int unset)
+{
+	return __parse_events(opt, str, unset, 1);
 }
 
 int parse_filter(const struct option *opt, const char *str,

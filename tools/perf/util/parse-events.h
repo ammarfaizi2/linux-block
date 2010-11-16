@@ -25,6 +25,8 @@ const char *event_name(struct perf_evsel *event);
 extern const char *__event_name(int type, u64 config);
 
 extern int parse_events(const struct option *opt, const char *str, int unset);
+
+extern int __parse_events(const struct option *opt, const char *str, int unset, int verbose);
 extern int parse_filter(const struct option *opt, const char *str, int unset);
 
 #define EVENTS_HELP_MAX (128*1024)

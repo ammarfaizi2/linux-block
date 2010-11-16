@@ -774,7 +774,7 @@ static bool force, append_file;
 
 static int record_parse_events(const struct option *opt, const char *str, int unset)
 {
-	int ret = parse_events(opt, str, unset);
+	int ret = __parse_events(opt, str, unset, !quiet);
 
 	/*
 	 * Ignore missing events, etc. when the quiet flag is specified:
