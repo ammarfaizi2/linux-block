@@ -1346,7 +1346,7 @@ static void print_threads(void)
 	} else {
 		printf("\n");
 	}
-	printf(" # Try 'trace report' to see the whole trace, or 'trace report -t <task>' to see one of these tasks\n\n");
+	printf(" # Try 'trace report' to see the whole trace, or 'trace report -f <task>' to see one of these tasks\n\n");
 }
 
 
