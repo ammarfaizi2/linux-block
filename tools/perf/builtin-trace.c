@@ -637,6 +637,13 @@ static void process_sys_exit(void *data,
 	if (id >= MAX_SYSCALLS || !sdesc->name || !tdata->enabled)
 		return;
 
+	if (tdata->pf_pending) {
+		/*
+		 * CHECKME: We seem to miss some of the pagefault_exit events
+		 */
+		tdata->pf_pending = 0;
+	}
+
 	print_pending_pf(cpu, timestamp);
 
 	if (!strcmp(sdesc->name, "open")) {
