@@ -740,10 +740,24 @@ static const char * const record_usage[] = {
 
 static bool force, append_file;
 
+static int record_parse_events(const struct option *opt, const char *str, int unset)
+{
+	int ret = parse_events(opt, str, unset);
+
+	/*
+	 * Ignore missing events, etc. when the quiet flag is specified:
+	 */
+	if (quiet)
+		return 0;
+
+	return ret;
+}
+
 const struct option record_options[] = {
-	OPT_CALLBACK('e', "event", &evsel_list, "event",
+	OPT_BOOLEAN('q', "quiet", &quiet, "don't print any message"),
+	OPT_CALLBACK('e', "event", NULL, "event",
 		     "event selector. use 'perf list' to list available events",
-		     parse_events),
+		     record_parse_events),
 	OPT_CALLBACK(0, "filter", &evsel_list, "filter",
 		     "event filter", parse_filter),
 	OPT_INTEGER('p', "pid", &target_pid,
@@ -775,7 +789,6 @@ const struct option record_options[] = {
 		    "do call-graph (stack chain/backtrace) recording"),
 	OPT_INCR('v', "verbose", &verbose,
 		    "be more verbose (show counter open errors, etc)"),
-	OPT_BOOLEAN('q', "quiet", &quiet, "don't print any message"),
 	OPT_BOOLEAN('s', "stat", &inherit_stat,
 		    "per thread counts"),
 	OPT_BOOLEAN('d', "data", &sample_address,

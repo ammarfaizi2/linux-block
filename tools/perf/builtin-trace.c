@@ -1125,6 +1125,7 @@ static const char *record_args[] = {
 	"-m", "4096",
 	"-c", "1",
 	"-d",
+	"-q",
 	"-e", "raw_syscalls:sys_enter:r",
 	"-e", "raw_syscalls:sys_exit:r",
 	"-e", "vfs:vfs_getname:r",
@@ -1255,8 +1256,15 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 		argc--;
 		ret = __cmd_record(argc, argv);
 
+		session = perf_session__new_nowarn(input_name, O_RDONLY, 0, false, &eops);
+		if (!session) {
+			color_fprintf(stderr, PERF_COLOR_RED, "# trace record: No trace recorded\n");
+			return ret;
+
+		}
 		color_fprintf(stderr, PERF_COLOR_YELLOW,
-			"# trace record: Use 'trace summary' to check out the trace\n");
+			"# trace recorded [%.3f MB] - try 'trace summary' to get an overview\n",
+			(double)session->header.data_size / 1024 / 1024);
 
 		return ret;
 	}
