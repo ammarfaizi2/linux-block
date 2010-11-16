@@ -1139,7 +1139,7 @@ static void print_threads(void)
 	printf("\n ----------------------------\n");
 	printf(" | Summary of tasks traced: |\n");
 	printf(" ---------------------------------------------------\n");
-	printf(" |                    task  |    events    | ratio |\n");
+	printf(" |                    task  |     events   | ratio |\n");
 	printf(" ---------------------------------------------------\n");
 
 	/*
@@ -1160,21 +1160,25 @@ static void print_threads(void)
 	 */
 	for (pid = 0; pid < MAX_PID; pid++) {
 		struct thread_data *tdata = thread_data[pid];
+		const char *color;
 		double ratio;
 
 		if (!tdata)
 			continue;
 
 		ratio = (double)tdata->nr_events / nr_events * 100.0;
-		printf("%20s/%5d  : %10lu   (", tdata->comm, pid, tdata->nr_events);
+
+		color = PERF_COLOR_NORMAL;
 		if (ratio > 50.0)
-			color_fprintf(stdout, PERF_COLOR_RED, "%5.1f%%", ratio);
+			color = PERF_COLOR_RED;
 		else if (ratio > 25.0)
-			color_fprintf(stdout, PERF_COLOR_GREEN, "%5.1f%%", ratio);
+			color = PERF_COLOR_GREEN;
 		else if (ratio > 5.0)
-			color_fprintf(stdout, PERF_COLOR_YELLOW, "%5.1f%%", ratio);
-		else
-			color_fprintf(stdout, PERF_COLOR_NORMAL, "%5.1f%%", ratio);
+			color = PERF_COLOR_YELLOW;
+
+		color_fprintf(stdout, color, "%20s", tdata->comm);
+		printf("/%5d  : %10lu   (", pid, tdata->nr_events);
+		color_fprintf(stdout, color, "%5.1f%%", ratio);
 		printf(" )\n");
 	}
 	printf(" ---------------------------------------------------\n");
