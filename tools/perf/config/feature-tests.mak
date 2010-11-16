@@ -23,6 +23,24 @@ int main(void)
 endef
 endif
 
+ifndef NO_AUDIT
+define SOURCE_AUDIT
+#include <libaudit.h>
+#include <version.h>
+#ifndef _ELFUTILS_PREREQ
+#error
+#endif
+
+int main(void)
+{
+	int machine = audit_detect_machine();
+
+	return (long)machine;
+}
+endef
+endif
+
+
 define SOURCE_LIBELF
 #include <libelf.h>
 

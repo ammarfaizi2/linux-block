@@ -395,6 +395,16 @@ PYRF_OBJS += $(OUTPUT)util/xyarray.o
 -include config.mak.autogen
 -include config.mak
 
+ifndef NO_AUDIT
+FLAGS_AUDIT=$(ALL_CFLAGS) -I/usr/include/elfutils -laudit $(ALL_LDFLAGS) $(EXTLIBS)
+ifneq ($(call try-cc,$(SOURCE_AUDIT),$(FLAGS_AUDIT)),y)
+	msg := $(error No libaudit found. Please install audit-libs-dev/audit-libs-devel);
+	NO_AUDIT := 1
+endif # Audit support
+endif # NO_AUDIT
+
+
+
 ifndef NO_DWARF
 FLAGS_DWARF=$(ALL_CFLAGS) -ldw -lelf $(ALL_LDFLAGS) $(EXTLIBS)
 ifneq ($(call try-cc,$(SOURCE_DWARF),$(FLAGS_DWARF)),y)
