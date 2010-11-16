@@ -1,0 +1,27 @@
+perf-trace(1)
+=============
+
+NAME
+----
+perf-trace - Tracing tool to record and analyse traces
+
+SYNOPSIS
+--------
+[verse]
+'perf trace' [<options>]
+'perf trace' [<options>] record [<record-options>] <command>
+'perf trace' [<options>] report [<report-options>]
+
+DESCRIPTION
+-----------
+This command records traces of session and provides filtered analysis
+of the recorded trace
+
+OPTIONS
+-------
+<command>...::
+	Any command you can specify in a shell.
+
+SEE ALSO
+--------
+linkperf:perf-record[1], linkperf:perf-report[1]
