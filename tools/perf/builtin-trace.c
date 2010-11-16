@@ -28,7 +28,7 @@
 #include <linux/hash.h>
 
 static struct perf_session	*session;
-static char const		*input_name		= "perf.data";
+static char const		*input_name		= "trace.data";
 static bool			pagefaults		= false;
 static bool			followchilds		= false;
 static bool			scheduler_events	= false;
@@ -721,7 +721,7 @@ static int pagefault_preprocess_sample(union perf_event *self,
 	 * Have we already created the kernel maps for the host machine?
 	 *
 	 * This should have happened earlier, when we processed the kernel MMAP
-	 * events, but for older perf.data files there was no such thing, so do
+	 * events, but for older trace.data files there was no such thing, so do
 	 * it now.
 	 */
 	if (session->host_machine.vmlinux_maps[MAP__FUNCTION] == NULL)
@@ -1091,7 +1091,7 @@ static int read_events_prep(void)
 {
 	session = perf_session__new_nowarn(input_name, O_RDONLY, 0, false, &eops);
 	if (!session) {
-		fprintf(stderr, "\n No perf.data file yet - to create it run: 'perf trace record <command>'\n\n");
+		fprintf(stderr, "\n No trace.data file yet - to create it run: 'perf trace record <command>'\n\n");
 		exit(0);
 	}
 
@@ -1159,6 +1159,7 @@ static const char *record_args[] = {
 	"-c", "1",
 	"-d",
 	"-q",
+	"-o", "trace.data",
 	"-e", "raw_syscalls:sys_enter:r",
 	"-e", "raw_syscalls:sys_exit:r",
 	"-e", "vfs:vfs_getname:r",
