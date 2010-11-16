@@ -82,6 +82,8 @@ struct thread_data {
 	u64			pf_count;
 	unsigned int		pf_pending;
 	struct pf_data		pf_data[MAX_PF_PENDING];
+
+	unsigned long		nr_events;
 };
 
 #define MAX_PID			65536
@@ -1006,6 +1008,7 @@ static int process_prep_event(union perf_event *self, struct perf_sample *sample
 {
 	struct perf_sample data;
 	struct thread *thread;
+	struct thread_data *tdata;
 
 	bzero(&data, sizeof(data));
 	perf_event__parse_sample(self, s->sample_type, s->sample_id_all, &data);
@@ -1020,7 +1023,9 @@ static int process_prep_event(union perf_event *self, struct perf_sample *sample
 	if (!first_pid)
 		first_pid = thread->pid;
 
-	get_thread_data(thread);
+	tdata = get_thread_data(thread);
+	if (tdata)
+		tdata->nr_events++;
 
 	return 0;
 }
@@ -1126,6 +1131,70 @@ static int __cmd_record(int argc, const char **argv)
 	return cmd_record(i, rec_argv, NULL);
 }
 
+static void print_threads(void)
+{
+	unsigned long nr_events;
+	int pid;
+
+	printf("\n ----------------------------\n");
+	printf(" | Summary of tasks traced: |\n");
+	printf(" ---------------------------------------------------\n");
+	printf(" |                    task  |    events    | ratio |\n");
+	printf(" ---------------------------------------------------\n");
+
+	/*
+	 * First establish nr_events:
+	 */
+	nr_events = 0;
+	for (pid = 0; pid < MAX_PID; pid++) {
+		struct thread_data *tdata = thread_data[pid];
+
+		if (!tdata)
+			continue;
+
+		nr_events += tdata->nr_events;
+	}
+
+	/*
+	 * Then print out the tasks, with percentages:
+	 */
+	for (pid = 0; pid < MAX_PID; pid++) {
+		struct thread_data *tdata = thread_data[pid];
+		double ratio;
+
+		if (!tdata)
+			continue;
+
+		ratio = (double)tdata->nr_events / nr_events * 100.0;
+		printf("%20s/%5d  : %10lu   (", tdata->comm, pid, tdata->nr_events);
+		if (ratio > 50.0)
+			color_fprintf(stdout, PERF_COLOR_RED, "%5.1f%%", ratio);
+		else if (ratio > 25.0)
+			color_fprintf(stdout, PERF_COLOR_GREEN, "%5.1f%%", ratio);
+		else if (ratio > 5.0)
+			color_fprintf(stdout, PERF_COLOR_YELLOW, "%5.1f%%", ratio);
+		else
+			color_fprintf(stdout, PERF_COLOR_NORMAL, "%5.1f%%", ratio);
+		printf(" )\n");
+	}
+	printf(" ---------------------------------------------------\n");
+	printf(" |                     SUM  : %10lu   |\n", nr_events);
+	printf(" -------------------------------------------\n\n");
+}
+
+
+static int __cmd_summary(int argc __used, const char **argv __used)
+{
+	setup_pager();
+	if (symbol__init() < 0)
+		die("symbol initialization failure");
+
+	read_events_prep();
+	print_threads();
+
+	return 0;
+}
+
 int cmd_trace(int argc, const char **argv, const char *prefix __used)
 {
 	int ret;
@@ -1148,6 +1217,12 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 
 		return ret;
 	}
+	if (!strncmp(argv[0], "sum", 3)) {
+		argv++;
+		argc--;
+		return __cmd_summary(argc, argv);
+	}
+
 
 	if (strncmp(argv[0], "report", 6))
 		usage_with_options(trace_usage, trace_options);
