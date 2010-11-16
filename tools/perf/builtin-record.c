@@ -378,8 +378,11 @@ static void atexit_header(void)
 		perf_session__write_header(session, evsel_list, output, true);
 		perf_session__delete(session);
 		perf_evlist__delete(evsel_list);
-		/* FIXME: repeated reinit of symbols causes crashes - so leave it around: */
-//		symbol__exit();
+		/*
+		 * FIXME: repeated reinit of symbols causes crashes
+		 *
+		 * symbol__exit();
+		 */
 		close(output);
 	}
 	session = NULL;
@@ -785,6 +788,11 @@ static int record_parse_events(const struct option *opt, const char *str, int un
 	return ret;
 }
 
+/*
+ * Note the options order:
+ *
+ * q must be parsed first as it affects the event parsing
+ */
 const struct option record_options[] = {
 	OPT_BOOLEAN('q', "quiet", &quiet, "don't print any message"),
 	OPT_CALLBACK('e', "event", NULL, "event",

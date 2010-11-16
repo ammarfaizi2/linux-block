@@ -943,7 +943,8 @@ process_sched_migrate_task_event(void *data,
 }
 
 static void
-process_raw_sched_event(union perf_event *raw_event __used, void *data, int cpu, u64 timestamp, struct thread *thread)
+process_raw_sched_event(union perf_event *raw_event __used, void *data, int cpu,
+			u64 timestamp, struct thread *thread)
 {
 	struct event *event;
 	int type;
@@ -1059,7 +1060,8 @@ static int process_prep_event(union perf_event *self, struct perf_sample *sample
 	event = trace_find_event(type);
 
 	if (!strcmp(event->name, "sched_stat_runtime"))
-		process_sched_sum_runtime_event(data.raw_data, event, data.cpu, data.time, thread);
+		process_sched_sum_runtime_event(data.raw_data, event, data.cpu,
+						data.time, thread);
 
 	return 0;
 }
