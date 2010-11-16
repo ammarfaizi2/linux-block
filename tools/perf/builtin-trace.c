@@ -140,7 +140,7 @@ static void apply_thread_filter(void)
 	}
 
 	if (!cnt) {
-		color_fprintf(stderr, PERF_COLOR_YELLOW,
+		color_fprintf(stdout, PERF_COLOR_YELLOW,
 			"No matching pid/comm found for: %s", filter_threads);
 		exit(-1);
 	}
@@ -193,7 +193,7 @@ static void apply_syscall_filters(void)
 	if (!filter_str)
 		return;
 
-	printf("# (restricting syscalls to: %s)\n", filter_str);
+	printf("# (restricting events to: %s)\n", filter_str);
 	/* Do the obvious thing for all or *: */
 	if (!strcasecmp(filter_str, "all"))
 		return;
@@ -1082,7 +1082,6 @@ static int read_events_prep(void)
 
 static void __cmd_report(void)
 {
-	setup_pager();
 	if (symbol__init() < 0)
 		die("symbol initialization failure");
 
@@ -1275,6 +1274,8 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 
 	if (strncmp(argv[0], "report", 6))
 		usage_with_options(trace_usage, trace_options);
+
+	setup_pager();
 
 	if (argc) {
 		argc = parse_options(argc, argv, trace_options, trace_usage,
