@@ -1169,11 +1169,10 @@ static void print_threads(void)
 	unsigned long nr_tasks;
 	int pid;
 
-	printf("\n .----------------------------.\n");
-	printf(" |  Summary of tasks traced   |\n");
-	printf(" --------------------------------------------------------------------\n");
-	printf("                task - pid    |    events   | ratio |    runtime\n");
-	printf(" --------------------------------------------------------------------\n");
+	printf("\n   .----------------------------------.\n");
+	printf(" __)         Summary of tasks         (_______________________________\n\n");
+	printf("              [ task - pid ]     [ events ] [ ratio ]  [ runtime ]\n");
+	printf(" _____________________________________________________________________\n\n");
 
 	/*
 	 * First establish nr_events:
@@ -1215,14 +1214,13 @@ static void print_threads(void)
 			color = PERF_COLOR_YELLOW;
 
 		color_fprintf(stdout, color, "%20s", tdata->comm);
-		printf(" - %-5d  :%10lu   [", pid, tdata->nr_events);
+		printf(" - %-5d :%11lu   [", pid, tdata->nr_events);
 		color_fprintf(stdout, color, "%5.1f%%", ratio);
 		printf(" ] %10.3f ms\n", tdata->runtime_ms);
 	}
-	printf(" --------------------------------------------------------------------\n");
-	printf("               %5lu   tasks  :%10lu   [100.0%% ] %10.3f ms\n",
+	printf(" _____________________________________________________________________\n\n");
+	printf("               %5lu   tasks  :%10lu   [100.0%% ] %10.3f ms\n\n",
 		nr_tasks, nr_events, total_runtime_ms);
-	printf(" --------------------------------------------------------------------\n\n");
 	printf(" # Try 'trace report' to see the whole trace, or 'trace report -t <task>' to see one of these tasks\n\n");
 }
 
