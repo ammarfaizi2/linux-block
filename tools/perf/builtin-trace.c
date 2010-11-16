@@ -763,8 +763,9 @@ static void pagefault_enter(union perf_event *self,
 			    struct thread *thread)
 {
 	struct thread_data *tdata = get_thread_data(thread);
-	struct perf_sample sdata = { .period = 1, };
-	struct pf_data *pfd;
+	struct perf_sample sdata1 = { .period = 1, };
+	struct perf_sample sdata2 = { .period = 1, };
+	struct pf_data *pfd, *pfd_prev;
 
 	if (!pagefaults || !tdata->enabled)
 		return;
@@ -772,8 +773,6 @@ static void pagefault_enter(union perf_event *self,
 	tdata->pf_count++;
 	if (tdata->pf_pending == MAX_PF_PENDING)
 		return;
-
-	print_pending_pf(cpu, timestamp);
 
 	pfd = tdata->pf_data + tdata->pf_pending;
 	memset(pfd, 0, sizeof(*pfd));
@@ -785,8 +784,21 @@ static void pagefault_enter(union perf_event *self,
 	pfd->nr = tdata->pf_count;
 	pfd->cpu = cpu;
 
-	pagefault_preprocess_sample(self, &pfd->al_ip, &sdata, pfd->ip);
-	pagefault_preprocess_sample(self, &pfd->al_pf, &sdata, pfd->address);
+	/*
+	 * FIXME: Weird double pagefault_entry events which lack an exit
+	 */
+	if (tdata->pf_pending) {
+		pfd_prev = pfd - 1;
+		if (pfd_prev->ip == pfd->ip &&
+		    pfd_prev->address == pfd->address &&
+		    pfd_prev->error_code == pfd->error_code)
+			return;
+	}
+
+	print_pending_pf(cpu, timestamp);
+
+	pagefault_preprocess_sample(self, &pfd->al_ip, &sdata1, pfd->ip);
+	pagefault_preprocess_sample(self, &pfd->al_pf, &sdata2, pfd->address);
 
 	tdata->pf_pending++;
 	pf_pending_pid[cpu] = thread->pid;
@@ -893,13 +905,13 @@ static void sched_switch_out(void *data,
 	if (cpu_filtered(cpu))
 		return;
 
-	if (tdata->entry_pending) {
-		if (tdata->entry_time)
-			t = timestamp - tdata->entry_time;
-	} else if (tdata->pf_pending) {
+	if (tdata->pf_pending) {
 		struct pf_data *pfd = tdata->pf_data + tdata->pf_pending - 1;
 
 		t = timestamp - pfd->entry_time;
+	} else if (tdata->entry_pending) {
+		if (tdata->entry_time)
+			t = timestamp - tdata->entry_time;
 	} else {
 		t = timestamp - tdata->exit_time;
 	}
