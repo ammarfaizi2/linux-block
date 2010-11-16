@@ -1134,6 +1134,7 @@ static int __cmd_record(int argc, const char **argv)
 static void print_threads(void)
 {
 	unsigned long nr_events;
+	unsigned long nr_tasks;
 	int pid;
 
 	printf("\n ----------------------------\n");
@@ -1146,12 +1147,15 @@ static void print_threads(void)
 	 * First establish nr_events:
 	 */
 	nr_events = 0;
+	nr_tasks = 0;
+
 	for (pid = 0; pid < MAX_PID; pid++) {
 		struct thread_data *tdata = thread_data[pid];
 
 		if (!tdata)
 			continue;
 
+		nr_tasks++;
 		nr_events += tdata->nr_events;
 	}
 
@@ -1182,7 +1186,7 @@ static void print_threads(void)
 		printf(" )\n");
 	}
 	printf(" ---------------------------------------------------\n");
-	printf(" |                     SUM  : %10lu   |\n", nr_events);
+	printf(" |             %5lu tasks  : %10lu   |\n", nr_tasks, nr_events);
 	printf(" -------------------------------------------\n\n");
 }
 
