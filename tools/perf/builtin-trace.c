@@ -1339,9 +1339,13 @@ static void print_threads(void)
 		color_fprintf(stdout, color, "%5.1f%%", ratio);
 		printf(" ] %10.3f ms\n", tdata->runtime_ms);
 	}
-	printf(" _____________________________________________________________________\n\n");
-	printf("               %5lu   tasks  :%10lu   [100.0%% ] %10.3f ms\n\n",
-		nr_tasks, nr_events, total_runtime_ms);
+	if (nr_tasks > 1) {
+		printf(" _____________________________________________________________________\n\n");
+		printf("               %5lu   tasks  :%10lu   [100.0%% ] %10.3f ms\n\n",
+			nr_tasks, nr_events, total_runtime_ms);
+	} else {
+		printf("\n");
+	}
 	printf(" # Try 'trace report' to see the whole trace, or 'trace report -t <task>' to see one of these tasks\n\n");
 }
 
