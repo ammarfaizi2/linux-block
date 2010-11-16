@@ -1024,6 +1024,10 @@ static struct perf_event_ops eops = {
 static int read_events(void)
 {
 	session = perf_session__new_nowarn(input_name, O_RDONLY, 0, false, &eops);
+
+	printf("#\n");
+	printf("# trace events of '%s':\n", session->command_line);
+	printf("#\n");
 	return perf_session__process_events(session, &eops);
 }
 
@@ -1161,6 +1165,23 @@ static int __cmd_record(int argc, const char **argv)
 	return cmd_record(i, rec_argv, NULL);
 }
 
+static void print_threads_header(void)
+{
+	const char *string = session->command_line;
+	int len;
+	int i;
+
+	len = strlen(string);
+
+	printf("\n   .----------------------------");
+	for (i = 0; i < len; i++)
+		printf("-");
+	printf(".\n");
+	printf(" __)    Summary of '%s' events    (__\n\n", string);
+	printf("              [ task - pid ]     [ events ] [ ratio ]  [ runtime ]\n");
+	printf(" _____________________________________________________________________\n\n");
+}
+
 static void print_threads(void)
 {
 	double total_runtime_ms;
@@ -1168,11 +1189,7 @@ static void print_threads(void)
 	unsigned long nr_tasks;
 	int pid;
 
-	printf("\n   .----------------------------------.\n");
-	printf(" __)         Summary of tasks         (_______________________________\n\n");
-	printf("              [ task - pid ]     [ events ] [ ratio ]  [ runtime ]\n");
-	printf(" _____________________________________________________________________\n\n");
-
+	print_threads_header();
 	/*
 	 * First establish nr_events:
 	 */

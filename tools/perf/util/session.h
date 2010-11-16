@@ -52,6 +52,10 @@ struct perf_session {
 	char			*cwd;
 	struct ordered_samples	ordered_samples;
 	struct callchain_cursor	callchain_cursor;
+
+	/* The command line used when recording: */
+	const char		*command_line;
+
 	char			filename[0];
 };
 

@@ -440,6 +440,34 @@ static void mmap_read_all(void)
 		write_output(&finished_round_event, sizeof(finished_round_event));
 }
 
+static void comm__construct(int argc, const char **argv)
+{
+	char *comm, *tmp;
+	size_t size;
+	int i;
+
+	size = 1;
+	for (i = 0; i < argc; i++) {
+		if (i)
+			size++;
+		size += strlen(argv[i]);
+	}
+
+	if ((long)size < 0)
+		return;
+
+	comm = calloc(1, size);
+
+	tmp = comm;
+	for (i = 0; i < argc; i++) {
+		if (i)
+			tmp = strcat(tmp, " ");
+		tmp = strcat(tmp, argv[i]);
+	}
+
+	session->command_line = comm;
+}
+
 static int __cmd_record(int argc, const char **argv)
 {
 	int i;
@@ -511,6 +539,8 @@ static int __cmd_record(int argc, const char **argv)
 	if (!no_buildid)
 		perf_header__set_feat(&session->header, HEADER_BUILD_ID);
 
+	comm__construct(argc, argv);
+
 	if (!file_new) {
 		err = perf_session__read_header(session, output);
 		if (err < 0)
@@ -579,6 +609,8 @@ static int __cmd_record(int argc, const char **argv)
 	}
 
 	open_counters(evsel_list);
+
+	perf_header__set_feat(&session->header, HEADER_COMMAND_LINE);
 
 	/*
 	 * perf_session__delete(session) will be called at atexit_header()

@@ -116,15 +116,14 @@ static int write_padded(int fd, const void *bf, size_t count,
 			continue;		\
 		else
 
-static int __dsos__write_buildid_table(struct list_head *head, pid_t pid,
-				u16 misc, int fd)
+static int __dsos__write_buildid_table(struct list_head *head, pid_t pid, u16 misc, int fd)
 {
 	struct dso *pos;
 
 	dsos__for_each_with_build_id(pos, head) {
-		int err;
 		struct build_id_event b;
 		size_t len;
+		int err;
 
 		if (!pos->hit)
 			continue;
@@ -138,8 +137,7 @@ static int __dsos__write_buildid_table(struct list_head *head, pid_t pid,
 		err = do_write(fd, &b, sizeof(b));
 		if (err < 0)
 			return err;
-		err = write_padded(fd, pos->long_name,
-				   pos->long_name_len + 1, len);
+		err = write_padded(fd, pos->long_name, pos->long_name_len + 1, len);
 		if (err < 0)
 			return err;
 	}
@@ -158,18 +156,15 @@ static int machine__write_buildid_table(struct machine *machine, int fd)
 		umisc = PERF_RECORD_MISC_GUEST_USER;
 	}
 
-	err = __dsos__write_buildid_table(&machine->kernel_dsos, machine->pid,
-					  kmisc, fd);
+	err = __dsos__write_buildid_table(&machine->kernel_dsos, machine->pid, kmisc, fd);
 	if (err == 0)
-		err = __dsos__write_buildid_table(&machine->user_dsos,
-						  machine->pid, umisc, fd);
+		err = __dsos__write_buildid_table(&machine->user_dsos, machine->pid, umisc, fd);
 	return err;
 }
 
 static int dsos__write_buildid_table(struct perf_header *header, int fd)
 {
-	struct perf_session *session = container_of(header,
-			struct perf_session, header);
+	struct perf_session *session = container_of(header, struct perf_session, header);
 	struct rb_node *nd;
 	int err = machine__write_buildid_table(&session->host_machine, fd);
 
@@ -178,6 +173,7 @@ static int dsos__write_buildid_table(struct perf_header *header, int fd)
 
 	for (nd = rb_first(&session->machines); nd; nd = rb_next(nd)) {
 		struct machine *pos = rb_entry(nd, struct machine, rb_node);
+
 		err = machine__write_buildid_table(pos, fd);
 		if (err)
 			break;
@@ -352,6 +348,21 @@ static bool perf_session__read_build_ids(struct perf_session *session, bool with
 	return ret;
 }
 
+static int comm__write_command_line_table(struct perf_header *header, int fd)
+{
+	struct perf_session *session;
+	const char *string;
+	int err;
+
+	session = container_of(header, struct perf_session, header);
+	string = session->command_line;
+	if (!string)
+		return -1;
+
+	err = do_write(fd, string, strlen(string)+1);
+	return err;
+}
+
 static int perf_header__adds_write(struct perf_header *header,
 				   struct perf_evlist *evlist, int fd)
 {
@@ -404,11 +415,26 @@ static int perf_header__adds_write(struct perf_header *header,
 			pr_debug("failed to write buildid table\n");
 			goto out_free;
 		}
-		buildid_sec->size = lseek(fd, 0, SEEK_CUR) -
-					  buildid_sec->offset;
+		buildid_sec->size = lseek(fd, 0, SEEK_CUR) - buildid_sec->offset;
 		if (!no_buildid_cache)
 			perf_session__cache_build_ids(session);
 	}
+
+	if (perf_header__has_feat(header, HEADER_COMMAND_LINE)) {
+		struct perf_file_section *comm_sec;
+
+		comm_sec = &feat_sec[idx++];
+
+		/* Write the command line array */
+		comm_sec->offset = lseek(fd, 0, SEEK_CUR);
+		err = comm__write_command_line_table(header, fd);
+		if (err < 0) {
+			pr_debug("failed to write command line table\n");
+			goto out_free;
+		}
+		comm_sec->size = lseek(fd, 0, SEEK_CUR) - comm_sec->offset;
+	}
+
 
 	lseek(fd, sec_start, SEEK_SET);
 	err = do_write(fd, feat_sec, sec_size);
@@ -781,6 +807,25 @@ out:
 	return err;
 }
 
+static int perf_header__read_command_line(struct perf_header *header, int fd, u64 offset __used, u64 size)
+{
+	struct perf_session *session = container_of(header, struct perf_session, header);
+	char *string;
+	u64 res;
+
+	string = calloc(1, size);
+	if (!string)
+		return -1;
+
+	res = read(fd, string, size);
+	if (res != size)
+		return -1;
+
+	session->command_line = string;
+
+	return 0;
+}
+
 static int perf_file_section__process(struct perf_file_section *section,
 				      struct perf_header *ph,
 				      int feat, int fd)
@@ -799,6 +844,10 @@ static int perf_file_section__process(struct perf_file_section *section,
 	case HEADER_BUILD_ID:
 		if (perf_header__read_build_ids(ph, fd, section->offset, section->size))
 			pr_debug("Failed to read buildids, continuing...\n");
+		break;
+	case HEADER_COMMAND_LINE:
+		if (perf_header__read_command_line(ph, fd, section->offset, section->size))
+			pr_debug("Failed to command line data, continuing...\n");
 		break;
 	default:
 		pr_debug("unknown feature %d, continuing...\n", feat);
