@@ -84,6 +84,7 @@ struct thread_data {
 	struct pf_data		pf_data[MAX_PF_PENDING];
 
 	unsigned long		nr_events;
+	double			runtime_ms;
 };
 
 #define MAX_PID			65536
@@ -869,7 +870,29 @@ process_sched_runtime_event(void *data,
 
 	runtime_ms = runtime_event.runtime / 1000000.0;
 
-	//printf("[ sched timeslice consumed: %.3f msecs ]\n", runtime_ms);
+//	printf("[ sched timeslice consumed: %.3f msecs ]\n", runtime_ms);
+}
+
+static void
+process_sched_sum_runtime_event(void *data,
+			   struct event *event,
+			   int cpu __used,
+			   u64 timestamp __used,
+			   struct thread *thread __used)
+{
+	struct trace_runtime_event runtime_event;
+	struct thread_data *tdata;
+	double runtime_ms;
+
+	FILL_ARRAY(runtime_event, comm, event, data);
+	FILL_FIELD(runtime_event, pid, event, data);
+	FILL_FIELD(runtime_event, runtime, event, data);
+	FILL_FIELD(runtime_event, vruntime, event, data);
+
+	runtime_ms = runtime_event.runtime / 1000000.0;
+
+	tdata = get_thread_data(thread);
+	tdata->runtime_ms += runtime_ms;
 }
 
 static void
@@ -1009,14 +1032,15 @@ static int process_prep_event(union perf_event *self, struct perf_sample *sample
 	struct perf_sample data;
 	struct thread *thread;
 	struct thread_data *tdata;
+	struct event *event;
+	int type;
 
 	bzero(&data, sizeof(data));
 	perf_event__parse_sample(self, s->sample_type, s->sample_id_all, &data);
 
 	thread = perf_session__findnew(s, data.tid);
 	if (thread == NULL) {
-		pr_debug("problem processing %d event, skipping it.\n",
-			self->header.type);
+		pr_debug("problem processing %d event, skipping it.\n", self->header.type);
 		return -1;
 	}
 
@@ -1026,6 +1050,12 @@ static int process_prep_event(union perf_event *self, struct perf_sample *sample
 	tdata = get_thread_data(thread);
 	if (tdata)
 		tdata->nr_events++;
+
+	type = trace_parse_common_type(data.raw_data);
+	event = trace_find_event(type);
+
+	if (!strcmp(event->name, "sched_stat_runtime"))
+		process_sched_sum_runtime_event(data.raw_data, event, data.cpu, data.time, thread);
 
 	return 0;
 }
@@ -1133,21 +1163,23 @@ static int __cmd_record(int argc, const char **argv)
 
 static void print_threads(void)
 {
+	double total_runtime_ms;
 	unsigned long nr_events;
 	unsigned long nr_tasks;
 	int pid;
 
-	printf("\n ----------------------------\n");
-	printf(" | Summary of tasks traced: |\n");
-	printf(" ---------------------------------------------------\n");
-	printf(" |                    task  |     events   | ratio |\n");
-	printf(" ---------------------------------------------------\n");
+	printf("\n .----------------------------.\n");
+	printf(" |  Summary of tasks traced   |\n");
+	printf(" --------------------------------------------------------------------\n");
+	printf("                task - pid    |    events   | ratio |    runtime\n");
+	printf(" --------------------------------------------------------------------\n");
 
 	/*
 	 * First establish nr_events:
 	 */
 	nr_events = 0;
 	nr_tasks = 0;
+	total_runtime_ms = 0.0;
 
 	for (pid = 0; pid < MAX_PID; pid++) {
 		struct thread_data *tdata = thread_data[pid];
@@ -1157,6 +1189,7 @@ static void print_threads(void)
 
 		nr_tasks++;
 		nr_events += tdata->nr_events;
+		total_runtime_ms += tdata->runtime_ms;
 	}
 
 	/*
@@ -1181,13 +1214,14 @@ static void print_threads(void)
 			color = PERF_COLOR_YELLOW;
 
 		color_fprintf(stdout, color, "%20s", tdata->comm);
-		printf("/%5d  : %10lu   (", pid, tdata->nr_events);
+		printf(" - %-5d  :%10lu   [", pid, tdata->nr_events);
 		color_fprintf(stdout, color, "%5.1f%%", ratio);
-		printf(" )\n");
+		printf(" ] %10.3f ms\n", tdata->runtime_ms);
 	}
-	printf(" ---------------------------------------------------\n");
-	printf(" |             %5lu tasks  : %10lu   |\n", nr_tasks, nr_events);
-	printf(" -------------------------------------------\n\n");
+	printf(" --------------------------------------------------------------------\n");
+	printf("               %5lu   tasks  :%10lu   [100.0%% ] %10.3f ms\n",
+		nr_tasks, nr_events, total_runtime_ms);
+	printf(" --------------------------------------------------------------------\n\n");
 	printf(" # Try 'trace report' to see the whole trace, or 'trace report -t <task>' to see one of these tasks\n\n");
 }
 
