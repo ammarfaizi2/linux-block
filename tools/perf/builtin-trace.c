@@ -1033,6 +1033,10 @@ static int read_events(void)
 
 	printf("#\n");
 	printf("# trace events of '%s':\n", session->command_line);
+	if (duration_filter) {
+		printf("# (duration filter: %.3f msecs)\n",
+			duration_filter);
+	}
 	printf("#\n");
 	return perf_session__process_events(session, &eops);
 }
@@ -1383,8 +1387,9 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 			filter_str = argv[0];
 	}
 
-	if (duration_filter_str)
+	if (duration_filter_str) {
 		duration_filter = atof(duration_filter_str);
+	}
 
 	page_size = sysconf(_SC_PAGE_SIZE);
 	parse_syscalls();
