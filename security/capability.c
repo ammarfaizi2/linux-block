@@ -18,6 +18,11 @@ static int cap_sysctl(ctl_table *table, int op)
 	return 0;
 }
 
+static int cap_syslog(int type)
+{
+	return 0;
+}
+
 static int cap_quotactl(int cmds, int type, int id, struct super_block *sb)
 {
 	return 0;
