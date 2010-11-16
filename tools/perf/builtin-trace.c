@@ -919,8 +919,8 @@ static void sched_switch_out(void *data,
 
 	t = timestamp - tdata->sched_in_time;
 	cputime = (double)t / 1000000.0;
-	printf("   %s [state: 0x%02x cputime: %.3f ms #PF: %d] %s\n",
-	       blocking ? "blocking" : "preemption",
+	printf("=> %s [state: 0x%02x cputime: %.3f ms #PF: %d] %s\n",
+	       blocking ? "blocked" : "preempted",
 	       (unsigned int) switch_event.prev_state, cputime,
 	       tdata->pf_pending,
 	       tdata->entry_pending ? tdata->entry_str : "");
