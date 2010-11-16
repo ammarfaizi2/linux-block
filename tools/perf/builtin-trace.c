@@ -1277,28 +1277,31 @@ static int __cmd_check(int argc __used, const char **argv __used)
 	const char **str;
 	int failed = 0;
 
-	printf("\nChecking whether the kernel has all required events ...\n");
+	printf("\nChecking whether the kernel has all required events ...\n\n");
 
 	str = required_events;
 
 	while (*str) {
 		int ret = __parse_events(NULL, *str, 0, 0);
 
-		printf(" ... Checking event  %30s: %s\n",
-			*str, ret == 0 ? "ok" : "Not available!");
-
-		if (ret)
+		printf(" ... Checking event  %-30s: ", *str);
+		if (ret) {
+			color_fprintf(stdout, PERF_COLOR_RED, "not available!");
 			failed++;
+		} else  {
+			color_fprintf(stdout, PERF_COLOR_GREEN, "ok");
+		}
+		printf("\n");
 		str++;
 	}
 
 	printf("\n");
 	if (failed) {
-		printf("Warning: some event types are not supported by this kernel.\n");
+		color_fprintf(stdout, PERF_COLOR_RED, "Warning: some event types are not supported by this kernel.\n");
 		printf("The 'trace' utility will work but there may be missing features.\n");
 		printf("Please upgrade your kernel\n");
 	} else {
-		printf("Good: all required event types are supported by this kernel.\n");
+		color_fprintf(stdout, PERF_COLOR_GREEN, "Good: all required event types are supported by this kernel.\n");
 		printf("The 'trace' utility will be fully functional.\n");
 	}
 	printf("\n");
