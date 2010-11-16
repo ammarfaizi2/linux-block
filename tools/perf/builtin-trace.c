@@ -1188,6 +1188,7 @@ static void print_threads(void)
 	printf(" ---------------------------------------------------\n");
 	printf(" |             %5lu tasks  : %10lu   |\n", nr_tasks, nr_events);
 	printf(" -------------------------------------------\n\n");
+	printf(" # Try 'trace report' to see the whole trace, or 'trace report -t <task>' to see one of these tasks\n\n");
 }
 
 
@@ -1221,7 +1222,7 @@ int cmd_trace(int argc, const char **argv, const char *prefix __used)
 		ret = __cmd_record(argc, argv);
 
 		color_fprintf(stderr, PERF_COLOR_YELLOW,
-			"# trace record: Use 'trace report' to see the trace\n");
+			"# trace record: Use 'trace summary' to check out the trace\n");
 
 		return ret;
 	}
