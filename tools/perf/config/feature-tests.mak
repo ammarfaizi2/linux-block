@@ -12,7 +12,7 @@ define SOURCE_DWARF
 #include <elfutils/libdw.h>
 #include <elfutils/version.h>
 #ifndef _ELFUTILS_PREREQ
-#error
+#error No _ELFUTILS_PREREQ
 #endif
 
 int main(void)
@@ -26,10 +26,6 @@ endif
 ifndef NO_AUDIT
 define SOURCE_AUDIT
 #include <libaudit.h>
-#include <version.h>
-#ifndef _ELFUTILS_PREREQ
-#error
-#endif
 
 int main(void)
 {

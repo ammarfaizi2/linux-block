@@ -396,7 +396,7 @@ PYRF_OBJS += $(OUTPUT)util/xyarray.o
 -include config.mak
 
 ifndef NO_AUDIT
-FLAGS_AUDIT=$(ALL_CFLAGS) -I/usr/include/elfutils -laudit $(ALL_LDFLAGS) $(EXTLIBS)
+FLAGS_AUDIT=$(ALL_CFLAGS) -laudit $(ALL_LDFLAGS) $(EXTLIBS)
 ifneq ($(call try-cc,$(SOURCE_AUDIT),$(FLAGS_AUDIT)),y)
 	msg := $(error No libaudit found. Please install audit-libs-dev/audit-libs-devel);
 	NO_AUDIT := 1
