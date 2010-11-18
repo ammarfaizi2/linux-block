@@ -526,6 +526,17 @@ void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
 	mark_inode_dirty(dir);
 }
 
+/*
+ * Called from three settings:
+ *
+ * - Creating a regular entry - de/page NULL, doesn't exist
+ * - Creating a fallthru - de/page NULL, doesn't exist
+ * - Creating a whiteout - de/page set if it exists
+ *
+ * @new_file_type is either EXT2_FT_WHT, EXT2_FT_FALLTHRU, or 0.  If
+ * 0, file type is determined by inode->i_mode.
+ */
+
 int ext2_add_entry (struct dentry *dentry, struct inode *inode,
 		    ext2_dirent *de, struct page *page,
 		    int new_file_type)
@@ -541,6 +552,13 @@ int ext2_add_entry (struct dentry *dentry, struct inode *inode,
 	char *kaddr;
 	loff_t pos;
 	int err;
+
+	if (de) {
+		name_len = EXT2_DIR_REC_LEN(de->name_len);
+		rec_len = ext2_rec_len_from_disk(de->rec_len);
+		printk("%s: given de\n", dentry->d_name.name);
+		goto got_it;
+	}
 
 	/*
 	 * We take care of directory expansion in the same loop.
@@ -567,6 +585,7 @@ int ext2_add_entry (struct dentry *dentry, struct inode *inode,
 				de->rec_len = ext2_rec_len_to_disk(chunk_size);
 				de->inode = 0;
 				de->file_type = 0;
+				printk("%s: allocated new de\n", dentry->d_name.name);
 				goto got_it;
 			}
 			if (de->rec_len == 0) {
@@ -575,15 +594,24 @@ int ext2_add_entry (struct dentry *dentry, struct inode *inode,
 				err = -EIO;
 				goto out_unlock;
 			}
-			err = -EEXIST;
-			if (ext2_match (namelen, name, de))
-				goto out_unlock;
 			name_len = EXT2_DIR_REC_LEN(de->name_len);
 			rec_len = ext2_rec_len_from_disk(de->rec_len);
-			if (!ext2_dirent_in_use(de) && rec_len >= reclen)
+			if (ext2_match(namelen, name, de)) {
+				err = -EEXIST;
+				/* XXX handle whiteouts here too */
+				if (de->file_type != EXT2_FT_FALLTHRU)
+					goto out_unlock;
+				printk("%s: found existing de\n", dentry->d_name.name);
 				goto got_it;
-			if (rec_len >= name_len + reclen)
+			}
+			if (!ext2_dirent_in_use(de) && rec_len >= reclen) {
+				printk("%s: reusing empty de\n", dentry->d_name.name);
 				goto got_it;
+			}
+			if (rec_len >= name_len + reclen) {
+				printk("%s: carving off end of in-use de\n", dentry->d_name.name);
+				goto got_it;
+			}
 			de = (ext2_dirent *) ((char *) de + rec_len);
 		}
 		unlock_page(page);
@@ -594,22 +622,18 @@ int ext2_add_entry (struct dentry *dentry, struct inode *inode,
 
 got_it:
 	/*
-	 * Pre-existing entries with the same name are allowable
-	 * depending on the type of the entry being created.  Regular
-	 * entries replace whiteouts and fallthrus.  Whiteouts replace
-	 * regular entries.  Fallthrus replace nothing.
+	 * Sanity check what we got.  Not allowed:
+	 *  - fallthru replaced by fallthru
+	 *  - whiteout replaced by whiteout or fallthru
+	 *  - not-fallthru replaced by fallthru
 	 */
-	err = -EEXIST;
 	if (ext2_match(namelen, name, de)) {
-		if (new_file_type == EXT2_FT_WHT) {
-			if (de->file_type == EXT2_FT_WHT)
-				goto out_unlock;
-		} else if (new_file_type == EXT2_FT_FALLTHRU) {
-			goto out_unlock;
-		} else if ((de->file_type != EXT2_FT_WHT) &&
-			   (de->file_type != EXT2_FT_FALLTHRU)) {
-			goto out_unlock;
-		}
+		BUG_ON((de->file_type == EXT2_FT_FALLTHRU) &&
+		       (new_file_type == EXT2_FT_FALLTHRU));
+		BUG_ON((de->file_type == EXT2_FT_WHT) &&
+		       (new_file_type == EXT2_FT_FALLTHRU));
+		BUG_ON((de->file_type == EXT2_FT_WHT) &&
+		       (new_file_type = EXT2_FT_WHT));
 	}
 	pos = page_offset(page) +
 		(char*)de - (char*)page_address(page);
