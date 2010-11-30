@@ -329,16 +329,8 @@ static int ext2_whiteout(struct inode *dir, struct dentry *dentry,
 
 	dquot_initialize(dir);
 
-	if (inode) {
-		if (S_ISDIR(inode->i_mode) && !ext2_empty_dir(inode))
-			goto out;
-
-		err = -ENOENT;
-		de = ext2_find_entry(dir, &dentry->d_name, &page);
-		if (!de)
-			goto out;
-		lock_page(page);
-	}
+	if (inode && S_ISDIR(inode->i_mode) && !ext2_empty_dir(inode))
+		goto out;
 
 	err = ext2_whiteout_entry(dentry, de, page);
 	if (err)

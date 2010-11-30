@@ -277,13 +277,19 @@ static unsigned char ext2_type_by_mode[S_IFMT >> S_SHIFT] = {
 	[S_IFLNK >> S_SHIFT]	= EXT2_FT_SYMLINK,
 };
 
-static inline void ext2_set_de_type(ext2_dirent *de, struct inode *inode)
+static inline void ext2_set_de_type(ext2_dirent *de, struct inode *inode,
+				    unsigned char file_type)
 {
 	mode_t mode = inode->i_mode;
-	if (EXT2_HAS_INCOMPAT_FEATURE(inode->i_sb, EXT2_FEATURE_INCOMPAT_FILETYPE))
-		de->file_type = ext2_type_by_mode[(mode & S_IFMT)>>S_SHIFT];
-	else
+	if (!EXT2_HAS_INCOMPAT_FEATURE(inode->i_sb, EXT2_FEATURE_INCOMPAT_FILETYPE)) {
 		de->file_type = 0;
+		return;
+	}
+
+	if (file_type)
+		de->file_type = file_type;
+	else
+		de->file_type = ext2_type_by_mode[(mode & S_IFMT)>>S_SHIFT];
 }
 
 static int
@@ -517,7 +523,7 @@ void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
 	err = ext2_prepare_chunk(page, pos, len);
 	BUG_ON(err);
 	de->inode = cpu_to_le32(inode->i_ino);
-	ext2_set_de_type(de, inode);
+	ext2_set_de_type(de, inode, 0);
 	err = ext2_commit_chunk(page, pos, len);
 	ext2_put_page(page);
 	if (update_times)
@@ -538,7 +544,6 @@ void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
  */
 
 int ext2_add_entry (struct dentry *dentry, struct inode *inode,
-		    ext2_dirent *de, struct page *page,
 		    int new_file_type)
 {
 	struct inode *dir = dentry->d_parent->d_inode;
@@ -549,16 +554,11 @@ int ext2_add_entry (struct dentry *dentry, struct inode *inode,
 	unsigned short rec_len, name_len;
 	unsigned long npages = dir_pages(dir);
 	unsigned long n;
+	ext2_dirent *de;
+	struct page *page;
 	char *kaddr;
 	loff_t pos;
 	int err;
-
-	if (de) {
-		name_len = EXT2_DIR_REC_LEN(de->name_len);
-		rec_len = ext2_rec_len_from_disk(de->rec_len);
-		printk("%s: given de\n", dentry->d_name.name);
-		goto got_it;
-	}
 
 	/*
 	 * We take care of directory expansion in the same loop.
@@ -648,13 +648,8 @@ got_it:
 	}
 	de->name_len = namelen;
 	memcpy(de->name, name, namelen);
-	if (inode) {
-		de->inode = cpu_to_le32(inode->i_ino);
-		ext2_set_de_type (de, inode);
-	} else {
-		de->inode = 0;
-		de->file_type = new_file_type;
-	}
+	de->inode = cpu_to_le32(ino);
+	ext2_set_de_type(de, inode, new_file_type);
 	err = ext2_commit_chunk(page, pos, rec_len);
 	dir->i_mtime = dir->i_ctime = CURRENT_TIME_SEC;
 	EXT2_I(dir)->i_flags &= ~EXT2_BTREE_FL;
@@ -671,24 +666,17 @@ out_unlock:
 
 int ext2_add_link (struct dentry *dentry, struct inode *inode)
 {
-	ext2_dirent *de = NULL;
-	struct page *page = NULL;
-	return ext2_add_entry(dentry, inode, de, page, 0);
+	return ext2_add_entry(dentry, inode->i_ino, 0);
 }
 
-int ext2_whiteout_entry (struct dentry *dentry, ext2_dirent *de, struct page *page)
+int ext2_whiteout_entry (struct dentry *dentry)
 {
-	return ext2_add_entry(dentry, NULL, de, page, EXT2_FT_WHT);
+	return ext2_add_entry(dentry, 0, EXT2_FT_WHT);
 }
 
-/*
- * Create a fallthru entry.
- */
 int ext2_fallthru_entry (struct dentry *dentry)
 {
-	ext2_dirent *de = NULL;
-	struct page *page = NULL;
-	return ext2_add_entry(dentry, NULL, de, page, EXT2_FT_FALLTHRU);
+	return ext2_add_entry(dentry, 0, EXT2_FT_FALLTHRU);
 }
 
 /*
