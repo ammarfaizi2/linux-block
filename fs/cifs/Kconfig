@@ -86,6 +86,8 @@ config CIFS_UPCALL
 config CIFS_XATTR
         bool "CIFS extended attributes"
         depends on CIFS
+	# disable for now, due to build breakage:
+	depends on BROKEN
         help
           Extended attributes are name:value pairs associated with inodes by
           the kernel or by users (see the attr(5) manual page, or visit
