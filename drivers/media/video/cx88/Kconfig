@@ -1,14 +1,11 @@
 config VIDEO_CX88
 	tristate "Conexant 2388x (bt878 successor) support"
-	depends on VIDEO_DEV && PCI && I2C && INPUT
-	# build failure, see config-Mon_Oct_20_13_45_14_CEST_2008.bad
-	depends on BROKEN
+	depends on VIDEO_DEV && PCI && I2C && RC_CORE
 	select I2C_ALGOBIT
 	select VIDEO_BTCX
 	select VIDEOBUF_DMA_SG
 	select VIDEO_TUNER
 	select VIDEO_TVEEPROM
-	depends on VIDEO_IR
 	select VIDEO_WM8775 if VIDEO_HELPER_CHIPS_AUTO
 	---help---
 	  This is a video4linux driver for Conexant 2388x based

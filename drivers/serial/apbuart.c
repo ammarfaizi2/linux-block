@@ -26,6 +26,7 @@
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/of_platform.h>
+#include <linux/of_irq.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/serial_core.h>
@@ -520,11 +521,12 @@ static struct console grlib_apbuart_console = {
 };
 
 
-static void grlib_apbuart_configure(void);
+static int grlib_apbuart_configure(void);
 
 static int __init apbuart_console_init(void)
 {
-	grlib_apbuart_configure();
+	if (grlib_apbuart_configure())
+		return -ENODEV;
 	register_console(&grlib_apbuart_console);
 	return 0;
 }
@@ -573,12 +575,14 @@ static int __devinit apbuart_probe(struct platform_device *op,
 	printk(KERN_INFO "grlib-apbuart at 0x%llx, irq %d\n",
 	       (unsigned long long) port->mapbase, port->irq);
 	return 0;
-
 }
 
 static struct of_device_id __initdata apbuart_match[] = {
 	{
 	 .name = "GAISLER_APBUART",
+	 },
+	{
+	 .name = "01_00c",
 	 },
 	{},
 };
@@ -612,29 +616,36 @@ static int grlib_apbuart_configure(void)
 	freq_khz = *prop;
 
 	for_each_matching_node(np, apbuart_match) {
-		const int *irqs = of_get_property(np, "interrupts", NULL);
+		const int *irqs, *ampopts;
 		const struct amba_prom_registers *regs;
 		struct uart_port *port;
+		unsigned long addr;
 
+		ampopts = of_get_property(np, "ampopts", NULL);
+		if (ampopts && (*ampopts == 0))
+			continue; /* Ignore if used by another OS instance */
+
+		irqs = of_get_property(np, "interrupts", NULL);
 		regs = of_get_property(np, "reg", NULL);
 
 		if (!irqs || !regs)
-			return -ENODEV;
+			continue;
 
 		grlib_apbuart_nodes[line] = np;
 
+		addr = regs->phys_addr;
+
 		port = &grlib_apbuart_ports[line];
-		port->mapbase = regs->phys_addr;
-		port->membase = ioremap(regs->phys_addr,
-					sizeof(struct grlib_apbuart_regs_map));
+
+		port->mapbase = addr;
+		port->membase = ioremap(addr, sizeof(struct grlib_apbuart_regs_map));
 		port->irq = *irqs;
 		port->iotype = UPIO_MEM;
 		port->ops = &grlib_apbuart_ops;
 		port->flags = UPF_BOOT_AUTOCONF;
 		port->line = line;
 		port->uartclk = freq_khz * 1000;
-		port->fifosize =
-			apbuart_scan_fifo_size((struct uart_port *) port, line);
+		port->fifosize = apbuart_scan_fifo_size((struct uart_port *) port, line);
 		line++;
 
 		/* We support maximum UART_NR uarts ... */
