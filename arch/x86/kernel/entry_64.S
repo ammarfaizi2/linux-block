@@ -69,9 +69,16 @@
 
 #ifdef CONFIG_FUNCTION_TRACER
 #ifdef CONFIG_DYNAMIC_FTRACE
+
+#ifdef CC_USING_FENTRY
+ENTRY(__fentry__)
+	retq
+END(__fentry__)
+#else
 ENTRY(mcount)
 	retq
 END(mcount)
+#endif
 
 /* skip is set if stack has been adjusted */
 .macro ftrace_caller_setup skip=0
@@ -84,7 +91,11 @@ END(mcount)
 	movq RIP(%rsp), %rdi
 	subq $MCOUNT_INSN_SIZE, %rdi
 	/* Load the parent_ip into the second parameter */
+#ifdef CC_USING_FENTRY
+	movq SS+16(%rsp), %rsi
+#else
 	movq 8(%rbp), %rsi
+#endif
 .endm
 
 ENTRY(ftrace_caller)
@@ -215,9 +226,14 @@ END(mcount)
 ENTRY(ftrace_graph_caller)
 	MCOUNT_SAVE_FRAME
 
+#ifdef CC_USING_FENTRY
+	leaq SS+16(%rsp), %rdi
+	movq $0, %rdx	/* No framepointers needed */
+#else
 	leaq 8(%rbp), %rdi
-	movq RIP(%rsp), %rsi
 	movq (%rbp), %rdx
+#endif
+	movq RIP(%rsp), %rsi
 	subq $MCOUNT_INSN_SIZE, %rsi
 
 	call	prepare_ftrace_return
