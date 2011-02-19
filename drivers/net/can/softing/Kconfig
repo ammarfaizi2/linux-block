@@ -1,6 +1,5 @@
 config CAN_SOFTING
 	tristate "Softing Gmbh CAN generic support"
-	depends on BROKEN
 	depends on CAN_DEV && HAS_IOMEM
 	---help---
 	  Support for CAN cards from Softing Gmbh & some cards
@@ -19,7 +18,6 @@ config CAN_SOFTING
 config CAN_SOFTING_CS
 	tristate "Softing Gmbh CAN pcmcia cards"
 	depends on PCMCIA
-	depends on BROKEN
 	select CAN_SOFTING
 	---help---
 	  Support for PCMCIA cards from Softing Gmbh & some cards
