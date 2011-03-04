@@ -105,11 +105,15 @@ int attempt_back_merge(struct request_queue *q, struct request *rq);
 int attempt_front_merge(struct request_queue *q, struct request *rq);
 void blk_recalc_rq_segments(struct request *rq);
 void blk_rq_set_mixed_merge(struct request *rq);
+void blk_slab_free_request(struct request *rq);
 
 int blk_dev_init(void);
 
 void elv_quiesce_start(struct request_queue *q);
 void elv_quiesce_end(struct request_queue *q);
+
+struct request *blk_ioc_get_cached_request(struct io_context *ioc);
+bool blk_ioc_cache_request(struct request_queue *q, struct io_context *ioc, struct request *rq);
 
 static inline int blk_cpu_to_group(int cpu)
 {

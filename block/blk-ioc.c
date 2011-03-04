@@ -16,6 +16,47 @@
  */
 static struct kmem_cache *iocontext_cachep;
 
+struct request *blk_ioc_get_cached_request(struct io_context *ioc)
+{
+	struct request *rq = NULL;
+
+	/*
+	 * See if there are available cached requests
+	 */
+	if (!list_empty_careful(&ioc->free_list)) {
+		spin_lock_irq(&ioc->lock);
+		if (!list_empty(&ioc->free_list)) {
+			rq = list_entry(ioc->free_list.next, struct request,
+					queuelist);
+			list_del_init(&rq->queuelist);
+		}
+		spin_unlock_irq(&ioc->lock);
+	}
+
+	return rq;
+}
+
+bool blk_ioc_cache_request(struct request_queue *q, struct io_context *ioc,
+			   struct request *rq)
+{
+	/*
+	 * Don't cache something that came from the emergency pool
+	 */
+	if (rq->cmd_flags & REQ_MEMPOOL)
+		return false;
+
+	/*
+	 * cache this request for reuse
+	 */
+	if ((rq->cmd_flags & REQ_ALLOCED) &&
+	    (ioc->free_requests < 2 * q->nr_requests)) {
+		list_add(&rq->queuelist, &ioc->free_list);
+		return true;
+	}
+
+	return false;
+}
+
 static void cfq_dtor(struct io_context *ioc)
 {
 	if (!hlist_empty(&ioc->cic_list)) {
@@ -42,6 +83,20 @@ int put_io_context(struct io_context *ioc)
 		rcu_read_lock();
 		cfq_dtor(ioc);
 		rcu_read_unlock();
+
+		/*
+		 * free cached requests, if any. this is safe without the
+		 * lock, since we are the only ones that are still holding
+		 * a reference to it and others cannot grab a ref to it now.
+		 */
+		while (!list_empty(&ioc->free_list)) {
+			struct request *rq;
+
+			rq = list_entry(ioc->free_list.next, struct request,
+					queuelist);
+			list_del(&rq->queuelist);
+			blk_slab_free_request(rq);
+		}
 
 		kmem_cache_free(iocontext_cachep, ioc);
 		return 1;
@@ -93,6 +148,8 @@ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
 		ret->ioprio = 0;
 		init_waitqueue_head(&ret->wait[BLK_RW_SYNC]);
 		init_waitqueue_head(&ret->wait[BLK_RW_ASYNC]);
+		INIT_LIST_HEAD(&ret->free_list);
+		ret->free_requests = 0;
 		ret->count[BLK_RW_SYNC] = ret->count[BLK_RW_ASYNC] = 0;
 		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
 		INIT_HLIST_HEAD(&ret->cic_list);

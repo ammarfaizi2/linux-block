@@ -660,8 +660,6 @@ static inline void blk_free_request(struct request_queue *q,struct request *rq)
 		atomic_dec(&q->elvpriv);
 	}
 
-	blk_slab_free_request(rq);
-
 	if (ioc) {
 		bool do_wakeup = false;
 		unsigned long flags;
@@ -670,6 +668,10 @@ static inline void blk_free_request(struct request_queue *q,struct request *rq)
 		ioc->count[is_sync]--;
 		if (waitqueue_active(&ioc->wait[is_sync]))
 			do_wakeup = true;
+
+		if (blk_ioc_cache_request(q, ioc, rq))
+			rq = NULL;
+
 		spin_unlock_irqrestore(&ioc->lock, flags);
 
 		if (do_wakeup)
@@ -677,16 +679,26 @@ static inline void blk_free_request(struct request_queue *q,struct request *rq)
 
 		put_io_context(ioc);
 	}
+
+	/*
+	 * rq will only be NULL if we decided to move it into the ioc cache
+	 */
+	if (rq)
+		blk_slab_free_request(rq);
 }
 
-static struct request *blk_alloc_request(struct request_queue *q, int flags,
+static struct request *blk_alloc_request(struct request_queue *q,
+					 struct io_context *ioc, int flags,
 					 int priv, gfp_t gfp_mask)
 {
-	struct request *rq;
+	struct request *rq = NULL;
 
-	if (!(flags & REQ_MEMPOOL))
-		rq = kmem_cache_alloc_node(request_cachep, gfp_mask, q->node);
-	else
+	if (!(flags & REQ_MEMPOOL)) {
+		rq = blk_ioc_get_cached_request(ioc);
+		if (!rq)
+			rq = kmem_cache_alloc_node(request_cachep, gfp_mask,
+							q->node);
+	} else
 		rq = mempool_alloc(q->rq_pool, gfp_mask);
 
 	if (!rq)
@@ -736,7 +748,7 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
 	if (blk_queue_io_stat(q))
 		rw_flags |= REQ_IO_STAT;
 
-	rq = blk_alloc_request(q, rw_flags, priv, gfp_mask);
+	rq = blk_alloc_request(q, ioc, rw_flags, priv, gfp_mask);
 	if (!rq) {
 		/*
 		 * If there's no ioc or it doesn't have requests in
@@ -746,7 +758,7 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
 		if ((gfp_mask & __GFP_WAIT) &&
 		    (!ioc || !(ioc->count[0] + ioc->count[1]))) {
 			rw_flags |= REQ_MEMPOOL;
-			rq = blk_alloc_request(q, rw_flags, priv, gfp_mask);
+			rq = blk_alloc_request(q, ioc,rw_flags, priv, gfp_mask);
 		}
 
 		if (!rq) {

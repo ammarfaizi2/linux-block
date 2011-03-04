@@ -49,6 +49,8 @@ struct io_context {
 	 */
 	int count[2];
 	wait_queue_head_t wait[2];
+	struct list_head free_list;
+	unsigned int free_requests;
 
 	struct radix_tree_root radix_root;
 	struct hlist_head cic_list;
