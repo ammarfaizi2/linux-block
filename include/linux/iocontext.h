@@ -51,6 +51,7 @@ struct io_context {
 	wait_queue_head_t wait[2];
 	struct list_head free_list;
 	unsigned int free_requests;
+	struct timer_list request_timer;
 
 	struct radix_tree_root radix_root;
 	struct hlist_head cic_list;

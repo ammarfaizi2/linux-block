@@ -16,6 +16,8 @@
  */
 static struct kmem_cache *iocontext_cachep;
 
+#define IOC_RQ_FREE_TIMEOUT	(5 * HZ)
+
 struct request *blk_ioc_get_cached_request(struct io_context *ioc)
 {
 	struct request *rq = NULL;
@@ -36,9 +38,16 @@ struct request *blk_ioc_get_cached_request(struct io_context *ioc)
 	return rq;
 }
 
+/*
+ * We abuse the stat_time of the request for knowing when this was
+ * cached. This is completely safe, since the request is unused at
+ * this point.
+ */
 bool blk_ioc_cache_request(struct request_queue *q, struct io_context *ioc,
 			   struct request *rq)
 {
+	unsigned long now = jiffies;
+
 	/*
 	 * Don't cache something that came from the emergency pool
 	 */
@@ -50,7 +59,15 @@ bool blk_ioc_cache_request(struct request_queue *q, struct io_context *ioc,
 	 */
 	if ((rq->cmd_flags & REQ_ALLOCED) &&
 	    (ioc->free_requests < 2 * q->nr_requests)) {
+		rq->start_time = now + IOC_RQ_FREE_TIMEOUT;
 		list_add(&rq->queuelist, &ioc->free_list);
+
+		if (!timer_pending(&ioc->request_timer) &&
+	    	    atomic_long_inc_not_zero(&ioc->refcount)) {
+			mod_timer(&ioc->request_timer,
+				  round_jiffies_up(now + IOC_RQ_FREE_TIMEOUT));
+		}
+
 		return true;
 	}
 
@@ -83,6 +100,8 @@ int put_io_context(struct io_context *ioc)
 		rcu_read_lock();
 		cfq_dtor(ioc);
 		rcu_read_unlock();
+
+		BUG_ON(timer_pending(&ioc->request_timer));
 
 		/*
 		 * free cached requests, if any. this is safe without the
@@ -119,6 +138,51 @@ static void cfq_exit(struct io_context *ioc)
 	rcu_read_unlock();
 }
 
+/*
+ * Check if we need to prune requests from the cache
+ */
+static void ioc_request_timer(unsigned long data)
+{
+	struct io_context *ioc = (struct io_context *) data;
+	unsigned long flags, now;
+	bool put_ioc = false;
+
+	/*
+	 * We can wait, if someone else is holding the lock at the moment
+	 */
+	if (!spin_trylock_irqsave(&ioc->lock, flags))
+		return;
+
+	now = jiffies;
+
+	while (!list_empty(&ioc->free_list)) {
+		struct request *rq;
+
+		rq = list_entry(ioc->free_list.prev, struct request,
+				queuelist);
+		if (!time_after_eq(rq->start_time, now))
+			break;
+
+		list_del(&rq->queuelist);
+		blk_slab_free_request(rq);
+	}
+
+	/*
+	 * We already have a ref to this ioc. Drop it, if there are no more
+	 * requests left
+	 */
+	if (!list_empty(&ioc->free_list))
+		mod_timer(&ioc->request_timer,
+				round_jiffies_up(now + IOC_RQ_FREE_TIMEOUT));
+	else
+		put_ioc = true;
+
+	spin_unlock_irqrestore(&ioc->lock, flags);
+
+	if (put_ioc)
+		put_io_context(ioc);
+}
+
 /* Called by the exiting task */
 void exit_io_context(struct task_struct *task)
 {
@@ -151,6 +215,9 @@ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
 		INIT_LIST_HEAD(&ret->free_list);
 		ret->free_requests = 0;
 		ret->count[BLK_RW_SYNC] = ret->count[BLK_RW_ASYNC] = 0;
+		setup_timer(&ret->request_timer, ioc_request_timer,
+				(unsigned long) ret);
+		init_timer(&ret->request_timer);
 		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
 		INIT_HLIST_HEAD(&ret->cic_list);
 		ret->ioc_data = NULL;
