@@ -601,7 +601,7 @@ void elv_quiesce_start(struct request_queue *q)
 	 * make sure we don't have any requests in flight
 	 */
 	elv_drain_elevator(q);
-	while (q->rq.elvpriv) {
+	while (atomic_read(&q->elvpriv)) {
 		__blk_run_queue(q);
 		spin_unlock_irq(q->queue_lock);
 		msleep(10);
@@ -679,13 +679,8 @@ void elv_insert(struct request_queue *q, struct request *rq, int where)
 		BUG();
 	}
 
-	if (unplug_it && blk_queue_plugged(q)) {
-		int nrq = q->rq.count[BLK_RW_SYNC] + q->rq.count[BLK_RW_ASYNC]
-				- queue_in_flight(q);
-
-		if (nrq >= q->unplug_thresh)
-			__generic_unplug_device(q);
-	}
+	if (unplug_it && blk_queue_plugged(q))
+		__generic_unplug_device(q);
 }
 
 void __elv_add_request(struct request_queue *q, struct request *rq, int where,
@@ -774,11 +769,15 @@ void elv_put_request(struct request_queue *q, struct request *rq)
 int elv_may_queue(struct request_queue *q, int rw)
 {
 	struct elevator_queue *e = q->elevator;
+	int ret = ELV_MQUEUE_MAY;
 
-	if (e->ops->elevator_may_queue_fn)
-		return e->ops->elevator_may_queue_fn(q, rw);
+	if (e->ops->elevator_may_queue_fn) {
+		spin_lock_irq(q->queue_lock);
+		ret = e->ops->elevator_may_queue_fn(q, rw);
+		spin_unlock_irq(q->queue_lock);
+	}
 
-	return ELV_MQUEUE_MAY;
+	return ret;
 }
 
 void elv_abort_queue(struct request_queue *q)

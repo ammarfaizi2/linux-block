@@ -90,21 +90,6 @@ static void drive_stat_acct(struct request *rq, int new_io)
 	part_stat_unlock();
 }
 
-void blk_queue_congestion_threshold(struct request_queue *q)
-{
-	int nr;
-
-	nr = q->nr_requests - (q->nr_requests / 8) + 1;
-	if (nr > q->nr_requests)
-		nr = q->nr_requests;
-	q->nr_congestion_on = nr;
-
-	nr = q->nr_requests - (q->nr_requests / 8) - (q->nr_requests / 16) - 1;
-	if (nr < 1)
-		nr = 1;
-	q->nr_congestion_off = nr;
-}
-
 /**
  * blk_get_backing_dev_info - get the address of a queue's backing_dev_info
  * @bdev:	device
@@ -480,21 +465,13 @@ EXPORT_SYMBOL(blk_cleanup_queue);
 
 static int blk_init_free_list(struct request_queue *q)
 {
-	struct request_list *rl = &q->rq;
-
-	if (unlikely(rl->rq_pool))
+	if (unlikely(q->rq_pool))
 		return 0;
 
-	rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
-	rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
-	rl->elvpriv = 0;
-	init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
-	init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
-
-	rl->rq_pool = mempool_create_node(BLKDEV_MIN_RQ, mempool_alloc_slab,
+	q->rq_pool = mempool_create_node(BLKDEV_MIN_RQ, mempool_alloc_slab,
 				mempool_free_slab, request_cachep, q->node);
 
-	if (!rl->rq_pool)
+	if (!q->rq_pool)
 		return -ENOMEM;
 
 	return 0;
@@ -547,6 +524,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 
 	mutex_init(&q->sysfs_lock);
 	spin_lock_init(&q->__queue_lock);
+	atomic_set(&q->elvpriv, 0);
 
 	return q;
 }
@@ -644,10 +622,8 @@ blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
 	/*
 	 * all done
 	 */
-	if (!elevator_init(q, NULL)) {
-		blk_queue_congestion_threshold(q);
+	if (!elevator_init(q, NULL))
 		return q;
-	}
 
 	return NULL;
 }
@@ -663,17 +639,55 @@ int blk_get_queue(struct request_queue *q)
 	return 1;
 }
 
-static inline void blk_free_request(struct request_queue *q, struct request *rq)
+void blk_slab_free_request(struct request *rq)
 {
-	if (rq->cmd_flags & REQ_ELVPRIV)
-		elv_put_request(q, rq);
-	mempool_free(rq, q->rq.rq_pool);
+	if (!(rq->cmd_flags & REQ_MEMPOOL))
+		kmem_cache_free(request_cachep, rq);
+	else {
+		struct request_queue *q = rq->q;
+
+		mempool_free(rq, q->rq_pool);
+	}
 }
 
-static struct request *
-blk_alloc_request(struct request_queue *q, int flags, int priv, gfp_t gfp_mask)
+static inline void blk_free_request(struct request_queue *q,struct request *rq)
 {
-	struct request *rq = mempool_alloc(q->rq.rq_pool, gfp_mask);
+	struct io_context *ioc = rq->ioc;
+	bool is_sync = rq_is_sync(rq);
+
+	if (rq->cmd_flags & REQ_ELVPRIV) {
+		elv_put_request(q, rq);
+		atomic_dec(&q->elvpriv);
+	}
+
+	blk_slab_free_request(rq);
+
+	if (ioc) {
+		bool do_wakeup = false;
+		unsigned long flags;
+
+		spin_lock_irqsave(&ioc->lock, flags);
+		ioc->count[is_sync]--;
+		if (waitqueue_active(&ioc->wait[is_sync]))
+			do_wakeup = true;
+		spin_unlock_irqrestore(&ioc->lock, flags);
+
+		if (do_wakeup)
+			wake_up(&ioc->wait[is_sync]);
+
+		put_io_context(ioc);
+	}
+}
+
+static struct request *blk_alloc_request(struct request_queue *q, int flags,
+					 int priv, gfp_t gfp_mask)
+{
+	struct request *rq;
+
+	if (!(flags & REQ_MEMPOOL))
+		rq = kmem_cache_alloc_node(request_cachep, gfp_mask, q->node);
+	else
+		rq = mempool_alloc(q->rq_pool, gfp_mask);
 
 	if (!rq)
 		return NULL;
@@ -684,7 +698,7 @@ blk_alloc_request(struct request_queue *q, int flags, int priv, gfp_t gfp_mask)
 
 	if (priv) {
 		if (unlikely(elv_set_request(q, rq, gfp_mask))) {
-			mempool_free(rq, q->rq.rq_pool);
+			blk_slab_free_request(rq);
 			return NULL;
 		}
 		rq->cmd_flags |= REQ_ELVPRIV;
@@ -693,95 +707,65 @@ blk_alloc_request(struct request_queue *q, int flags, int priv, gfp_t gfp_mask)
 	return rq;
 }
 
-static void __freed_request(struct request_queue *q, int sync)
-{
-	struct request_list *rl = &q->rq;
-
-	if (rl->count[sync] < queue_congestion_off_threshold(q))
-		blk_clear_queue_congested(q, sync);
-
-	if (rl->count[sync] + 1 <= q->nr_requests) {
-		if (waitqueue_active(&rl->wait[sync]))
-			wake_up(&rl->wait[sync]);
-
-		blk_clear_queue_full(q, sync);
-	}
-}
-
 /*
- * A request has just been released.  Account for it, update the full and
- * congestion status, wake up any waiters.   Called under q->queue_lock.
- */
-static void freed_request(struct request_queue *q, int sync, int priv)
-{
-	struct request_list *rl = &q->rq;
-
-	rl->count[sync]--;
-	if (priv)
-		rl->elvpriv--;
-
-	__freed_request(q, sync);
-
-	if (unlikely(rl->starved[sync ^ 1]))
-		__freed_request(q, sync ^ 1);
-}
-
-/*
- * Get a free request, queue_lock must be held.
- * Returns NULL on failure, with queue_lock held.
- * Returns !NULL on success, with queue_lock *not held*.
+ * Get a free request, queue_lock is not held.
  */
 static struct request *get_request(struct request_queue *q, int rw_flags,
 				   struct bio *bio, gfp_t gfp_mask)
 {
+	struct io_context *ioc;
 	struct request *rq = NULL;
-	struct request_list *rl = &q->rq;
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
 	int may_queue, priv;
 
+	/*
+	 * This isn't race free, but it should not matter.
+	 */
+	ioc = get_io_context(gfp_mask, q->node);
+	if (ioc && ioc->count[is_sync] > q->nr_requests)
+		goto out;
+
 	may_queue = elv_may_queue(q, rw_flags);
 	if (may_queue == ELV_MQUEUE_NO)
-		goto rq_starved;
-
-	rl->count[is_sync]++;
-	rl->starved[is_sync] = 0;
+		goto out;
 
 	priv = !test_bit(QUEUE_FLAG_ELVSWITCH, &q->queue_flags);
 	if (priv)
-		rl->elvpriv++;
+		atomic_inc(&q->elvpriv);
 
 	if (blk_queue_io_stat(q))
 		rw_flags |= REQ_IO_STAT;
-	spin_unlock_irq(q->queue_lock);
 
 	rq = blk_alloc_request(q, rw_flags, priv, gfp_mask);
-	if (unlikely(!rq)) {
+	if (!rq) {
 		/*
-		 * Allocation failed presumably due to memory. Undo anything
-		 * we might have messed up.
-		 *
-		 * Allocating task should really be put onto the front of the
-		 * wait queue, but this is pretty rare.
+		 * If there's no ioc or it doesn't have requests in
+		 * flight, punt to our backup mempool to avoid deadlocks.
+		 * Only do this for allocations that may block.
 		 */
-		spin_lock_irq(q->queue_lock);
-		freed_request(q, is_sync, priv);
+		if ((gfp_mask & __GFP_WAIT) &&
+		    (!ioc || !(ioc->count[0] + ioc->count[1]))) {
+			rw_flags |= REQ_MEMPOOL;
+			rq = blk_alloc_request(q, rw_flags, priv, gfp_mask);
+		}
 
-		/*
-		 * in the very unlikely event that allocation failed and no
-		 * requests for this direction was pending, mark us starved
-		 * so that freeing of a request in the other direction will
-		 * notice us. another possible fix would be to split the
-		 * rq mempool into READ and WRITE
-		 */
-rq_starved:
-		if (unlikely(rl->count[is_sync] == 0))
-			rl->starved[is_sync] = 1;
-
-		goto out;
+		if (!rq) {
+			atomic_dec(&q->elvpriv);
+			goto out;
+		}
 	}
 
+	if (ioc) {
+		spin_lock_irq(&ioc->lock);
+		ioc->count[is_sync]++;
+		spin_unlock_irq(&ioc->lock);
+	}
+
+	rq->ioc = ioc;
 	trace_block_getrq(q, bio, rw_flags & 1);
 out:
+	if (!rq)
+		put_io_context(ioc);
 	return rq;
 }
 
@@ -794,26 +778,29 @@ out:
 static struct request *get_request_wait(struct request_queue *q, int rw_flags,
 					struct bio *bio)
 {
+	struct io_context *ioc = current_io_context(GFP_ATOMIC, q->node);
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
 	struct request *rq;
 
 	rq = get_request(q, rw_flags, bio, GFP_NOIO);
 	while (!rq) {
 		DEFINE_WAIT(wait);
-		struct request_list *rl = &q->rq;
 
-		prepare_to_wait_exclusive(&rl->wait[is_sync], &wait,
+		/*
+		 * Note that ioc cannot be NULL here, even though we could
+		 * have ioc == NULL above. We never get to the ioc wait
+		 * if that is the case, since we will have punted to the
+		 * backup mempool in that case.
+		 */
+		prepare_to_wait_exclusive(&ioc->wait[is_sync], &wait,
 				TASK_UNINTERRUPTIBLE);
 
 		trace_block_sleeprq(q, bio, rw_flags & 1);
 
-		__generic_unplug_device(q);
-		spin_unlock_irq(q->queue_lock);
+		generic_unplug_device(q);
 		io_schedule();
 
-		spin_lock_irq(q->queue_lock);
-		finish_wait(&rl->wait[is_sync], &wait);
-
+		finish_wait(&ioc->wait[is_sync], &wait);
 		rq = get_request(q, rw_flags, bio, GFP_NOIO);
 	};
 
@@ -826,15 +813,10 @@ struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
 
 	BUG_ON(rw != READ && rw != WRITE);
 
-	spin_lock_irq(q->queue_lock);
-	if (gfp_mask & __GFP_WAIT) {
+	if (gfp_mask & __GFP_WAIT)
 		rq = get_request_wait(q, rw, NULL);
-	} else {
+	else
 		rq = get_request(q, rw, NULL, gfp_mask);
-		if (!rq)
-			spin_unlock_irq(q->queue_lock);
-	}
-	/* q->queue_lock is unlocked at this point */
 
 	return rq;
 }
@@ -1025,18 +1007,14 @@ void __blk_put_request(struct request_queue *q, struct request *req)
 	WARN_ON(req->bio != NULL);
 
 	/*
-	 * Request may not have originated from ll_rw_blk. if not,
+	 * Request may not have originated from blk-core. if not,
 	 * it didn't come out of our reserved rq pools
 	 */
 	if (req->cmd_flags & REQ_ALLOCED) {
-		int is_sync = rq_is_sync(req) != 0;
-		int priv = req->cmd_flags & REQ_ELVPRIV;
-
 		BUG_ON(!list_empty(&req->queuelist));
 		BUG_ON(!hlist_unhashed(&req->hash));
 
 		blk_free_request(q, req);
-		freed_request(q, is_sync, priv);
 	}
 }
 EXPORT_SYMBOL_GPL(__blk_put_request);
@@ -1211,9 +1189,10 @@ get_rq:
 	if (sync)
 		rw_flags |= REQ_SYNC;
 
+	spin_unlock_irq(q->queue_lock);
+
 	/*
 	 * Grab a free request. This is might sleep but can not fail.
-	 * Returns with the queue unlocked.
 	 */
 	req = get_request_wait(q, rw_flags, bio);
 

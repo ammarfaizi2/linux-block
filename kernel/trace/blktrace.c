@@ -862,7 +862,7 @@ static void blk_add_trace_unplug_io(void *ignore, struct request_queue *q)
 	struct blk_trace *bt = q->blk_trace;
 
 	if (bt) {
-		unsigned int pdu = q->rq.count[READ] + q->rq.count[WRITE];
+		unsigned int pdu = atomic_read(&q->elvpriv);
 		__be64 rpdu = cpu_to_be64(pdu);
 
 		__blk_add_trace(bt, 0, 0, 0, BLK_TA_UNPLUG_IO, 0,
@@ -875,7 +875,7 @@ static void blk_add_trace_unplug_timer(void *ignore, struct request_queue *q)
 	struct blk_trace *bt = q->blk_trace;
 
 	if (bt) {
-		unsigned int pdu = q->rq.count[READ] + q->rq.count[WRITE];
+		unsigned int pdu = atomic_read(&q->elvpriv);
 		__be64 rpdu = cpu_to_be64(pdu);
 
 		__blk_add_trace(bt, 0, 0, 0, BLK_TA_UNPLUG_TIMER, 0,

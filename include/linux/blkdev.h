@@ -37,18 +37,6 @@ struct sg_io_hdr;
 struct request;
 typedef void (rq_end_io_fn)(struct request *, int);
 
-struct request_list {
-	/*
-	 * count[], starved[], and wait[] are indexed by
-	 * BLK_RW_SYNC/BLK_RW_ASYNC
-	 */
-	int count[2];
-	int starved[2];
-	int elvpriv;
-	mempool_t *rq_pool;
-	wait_queue_head_t wait[2];
-};
-
 /*
  * request command types
  */
@@ -117,6 +105,9 @@ struct request {
 	struct gendisk *rq_disk;
 	struct hd_struct *part;
 	unsigned long start_time;
+
+	struct io_context *ioc;
+
 #ifdef CONFIG_BLK_CGROUP
 	unsigned long long start_time_ns;
 	unsigned long long io_start_time_ns;    /* when passed to hardware */
@@ -267,7 +258,12 @@ struct request_queue
 	/*
 	 * the queue request freelist, one for reads and one for writes
 	 */
-	struct request_list	rq;
+	mempool_t *rq_pool;
+
+	/*
+	 * Total number of requests allocated
+	 */
+	atomic_t elvpriv;
 
 	request_fn_proc		*request_fn;
 	make_request_fn		*make_request_fn;
@@ -674,25 +670,6 @@ extern int scsi_cmd_ioctl(struct request_queue *, struct gendisk *, fmode_t,
 			  unsigned int, void __user *);
 extern int sg_scsi_ioctl(struct request_queue *, struct gendisk *, fmode_t,
 			 struct scsi_ioctl_command __user *);
-
-/*
- * A queue has just exitted congestion.  Note this in the global counter of
- * congested queues, and wake up anyone who was waiting for requests to be
- * put back.
- */
-static inline void blk_clear_queue_congested(struct request_queue *q, int sync)
-{
-	clear_bdi_congested(&q->backing_dev_info, sync);
-}
-
-/*
- * A queue has just entered congestion.  Flag that in the queue's VM-visible
- * state flags and increment the global gounter of congested queues.
- */
-static inline void blk_set_queue_congested(struct request_queue *q, int sync)
-{
-	set_bdi_congested(&q->backing_dev_info, sync);
-}
 
 extern void blk_start_queue(struct request_queue *q);
 extern void blk_stop_queue(struct request_queue *q);

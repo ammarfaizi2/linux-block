@@ -44,6 +44,11 @@ struct io_context {
 #if defined(CONFIG_BLK_CGROUP) || defined(CONFIG_BLK_CGROUP_MODULE)
 	unsigned short cgroup_changed;
 #endif
+	/*
+	 * Request allocation tracking
+	 */
+	int count[2];
+	wait_queue_head_t wait[2];
 
 	struct radix_tree_root radix_root;
 	struct hlist_head cic_list;

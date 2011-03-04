@@ -4123,9 +4123,8 @@ fc_bsg_remove(struct request_queue *q)
 			 * this may fetch the same reqeust as the previous pass
 			 */
 			req = blk_fetch_request(q);
-			/* save requests in use and starved */
-			counts = q->rq.count[0] + q->rq.count[1] +
-				q->rq.starved[0] + q->rq.starved[1];
+			/* this whole thing needs to be rewritten, irk */
+			counts = atomic_read(&q->elvpriv);
 			spin_unlock_irq(q->queue_lock);
 			/* any requests still outstanding? */
 			if (counts == 0)

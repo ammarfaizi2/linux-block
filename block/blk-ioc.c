@@ -91,6 +91,9 @@ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
 		spin_lock_init(&ret->lock);
 		ret->ioprio_changed = 0;
 		ret->ioprio = 0;
+		init_waitqueue_head(&ret->wait[BLK_RW_SYNC]);
+		init_waitqueue_head(&ret->wait[BLK_RW_ASYNC]);
+		ret->count[BLK_RW_SYNC] = ret->count[BLK_RW_ASYNC] = 0;
 		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
 		INIT_HLIST_HEAD(&ret->cic_list);
 		ret->ioc_data = NULL;

@@ -106,31 +106,10 @@ int attempt_front_merge(struct request_queue *q, struct request *rq);
 void blk_recalc_rq_segments(struct request *rq);
 void blk_rq_set_mixed_merge(struct request *rq);
 
-void blk_queue_congestion_threshold(struct request_queue *q);
-
 int blk_dev_init(void);
 
 void elv_quiesce_start(struct request_queue *q);
 void elv_quiesce_end(struct request_queue *q);
-
-
-/*
- * Return the threshold (number of used requests) at which the queue is
- * considered to be congested.  It include a little hysteresis to keep the
- * context switch rate down.
- */
-static inline int queue_congestion_on_threshold(struct request_queue *q)
-{
-	return q->nr_congestion_on;
-}
-
-/*
- * The threshold at which a queue is considered to be uncongested
- */
-static inline int queue_congestion_off_threshold(struct request_queue *q)
-{
-	return q->nr_congestion_off;
-}
 
 static inline int blk_cpu_to_group(int cpu)
 {
