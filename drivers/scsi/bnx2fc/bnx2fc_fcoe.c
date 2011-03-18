@@ -1436,12 +1436,6 @@ static int bnx2fc_destroy(struct net_device *netdev)
 		return restart_syscall();
 
 	mutex_lock(&bnx2fc_dev_lock);
-#ifdef CONFIG_SCSI_BNX2X_FCOE_MODULE
-	if (THIS_MODULE->state != MODULE_STATE_LIVE) {
-		rc = -ENODEV;
-		goto netdev_err;
-	}
-#endif
 	/* obtain physical netdev */
 	if (netdev->priv_flags & IFF_802_1Q_VLAN)
 		phys_dev = vlan_dev_real_dev(netdev);
@@ -1812,11 +1806,6 @@ static int bnx2fc_disable(struct net_device *netdev)
 
 	mutex_lock(&bnx2fc_dev_lock);
 
-	if (THIS_MODULE->state != MODULE_STATE_LIVE) {
-		rc = -ENODEV;
-		goto nodev;
-	}
-
 	/* obtain physical netdev */
 	if (netdev->priv_flags & IFF_802_1Q_VLAN)
 		phys_dev = vlan_dev_real_dev(netdev);
@@ -1874,11 +1863,6 @@ static int bnx2fc_enable(struct net_device *netdev)
 
 	BNX2FC_MISC_DBG("Entered %s\n", __func__);
 	mutex_lock(&bnx2fc_dev_lock);
-
-	if (THIS_MODULE->state != MODULE_STATE_LIVE) {
-		rc = -ENODEV;
-		goto nodev;
-	}
 
 	/* obtain physical netdev */
 	if (netdev->priv_flags & IFF_802_1Q_VLAN)
@@ -1947,13 +1931,6 @@ static int bnx2fc_create(struct net_device *netdev, enum fip_state fip_mode)
 		return -EIO;
 	}
 	mutex_lock(&bnx2fc_dev_lock);
-
-#ifdef CONFIG_SCSI_BNX2X_FCOE_MODULE
-	if (THIS_MODULE->state != MODULE_STATE_LIVE) {
-		rc = -ENODEV;
-		goto mod_err;
-	}
-#endif
 
 	if (!try_module_get(THIS_MODULE)) {
 		rc = -EINVAL;
