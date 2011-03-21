@@ -779,7 +779,7 @@ static int shmem_notify_change(struct dentry *dentry, struct iattr *attr)
 			 * If truncating down to a partial page, then
 			 * if that page is already allocated, hold it
 			 * in memory until the truncation is over, so
-			 * truncate_partial_page cannnot miss it were
+			 * truncate_partial_page cannot miss it were
 			 * it assigned to swap.
 			 */
 			if (newsize & (PAGE_CACHE_SIZE-1)) {
@@ -1843,8 +1843,9 @@ shmem_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t dev)
 
 	inode = shmem_get_inode(dir->i_sb, dir, mode, dev, VM_NORESERVE);
 	if (inode) {
-		error = security_inode_init_security(inode, dir, NULL, NULL,
-						     NULL);
+		error = security_inode_init_security(inode, dir,
+						     &dentry->d_name, NULL,
+						     NULL, NULL);
 		if (error) {
 			if (error != -EOPNOTSUPP) {
 				iput(inode);
@@ -1983,8 +1984,8 @@ static int shmem_symlink(struct inode *dir, struct dentry *dentry, const char *s
 	if (!inode)
 		return -ENOSPC;
 
-	error = security_inode_init_security(inode, dir, NULL, NULL,
-					     NULL);
+	error = security_inode_init_security(inode, dir, &dentry->d_name, NULL,
+					     NULL, NULL);
 	if (error) {
 		if (error != -EOPNOTSUPP) {
 			iput(inode);

@@ -13,11 +13,6 @@
 #include <linux/security.h>
 #include <net/sock.h>
 
-static int cap_sysctl(ctl_table *table, int op)
-{
-	return 0;
-}
-
 static int cap_syslog(int type)
 {
 	return 0;
@@ -56,6 +51,11 @@ static void cap_sb_free_security(struct super_block *sb)
 }
 
 static int cap_sb_copy_data(char *orig, char *copy)
+{
+	return 0;
+}
+
+static int cap_sb_remount(struct super_block *sb, void *data)
 {
 	return 0;
 }
@@ -119,7 +119,8 @@ static void cap_inode_free_security(struct inode *inode)
 }
 
 static int cap_inode_init_security(struct inode *inode, struct inode *dir,
-				   char **name, void **value, size_t *len)
+				   const struct qstr *qstr, char **name,
+				   void **value, size_t *len)
 {
 	return -EOPNOTSUPP;
 }
@@ -764,7 +765,7 @@ static int cap_xfrm_policy_lookup(struct xfrm_sec_ctx *ctx, u32 sk_sid, u8 dir)
 
 static int cap_xfrm_state_pol_flow_match(struct xfrm_state *x,
 					 struct xfrm_policy *xp,
-					 struct flowi *fl)
+					 const struct flowi *fl)
 {
 	return 1;
 }
@@ -884,7 +885,6 @@ void __init security_fixup_ops(struct security_operations *ops)
 	set_to_cap_if_null(ops, capable);
 	set_to_cap_if_null(ops, quotactl);
 	set_to_cap_if_null(ops, quota_on);
-	set_to_cap_if_null(ops, sysctl);
 	set_to_cap_if_null(ops, syslog);
 	set_to_cap_if_null(ops, settime);
 	set_to_cap_if_null(ops, vm_enough_memory);
@@ -896,6 +896,7 @@ void __init security_fixup_ops(struct security_operations *ops)
 	set_to_cap_if_null(ops, sb_alloc_security);
 	set_to_cap_if_null(ops, sb_free_security);
 	set_to_cap_if_null(ops, sb_copy_data);
+	set_to_cap_if_null(ops, sb_remount);
 	set_to_cap_if_null(ops, sb_kern_mount);
 	set_to_cap_if_null(ops, sb_show_options);
 	set_to_cap_if_null(ops, sb_statfs);
