@@ -1,6 +1,7 @@
 config SCSI_BNX2X_FCOE
 	tristate "Broadcom NetXtreme II FCoE support"
 	depends on PCI
+	depends on BROKEN
 	select NETDEVICES
 	select NETDEV_1000
 	select LIBFC
