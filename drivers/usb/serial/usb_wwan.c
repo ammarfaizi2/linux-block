@@ -698,7 +698,8 @@ static void play_delayed(struct usb_serial_port *port)
 			/* we have to throw away the rest */
 			do {
 				unbusy_queued_urb(urb, portdata);
-				pm_runtime_put_noidle(&port->serial->interface->dev);
+				//extremely dirty
+				atomic_dec(&port->serial->interface->dev.power.usage_count);
 			} while ((urb = usb_get_from_anchor(&portdata->delayed)));
 			break;
 		}
