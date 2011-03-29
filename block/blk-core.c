@@ -2163,7 +2163,8 @@ bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
 	 * size, something has gone terribly wrong.
 	 */
 	if (blk_rq_bytes(req) < blk_rq_cur_bytes(req)) {
-		printk(KERN_ERR "blk: request botched\n");
+		blk_dump_rq_flags(req, "request botched");
+		WARN_ON(1);
 		req->__data_len = blk_rq_cur_bytes(req);
 	}
 
