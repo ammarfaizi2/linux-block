@@ -216,7 +216,7 @@ static void parse_cpu_filter(void)
 	if (!cpu_filter_str)
 		return;
 
-	if (sscanf(cpu_filter_str, "%llx", &mask) != 1) {
+	if (sscanf(cpu_filter_str, "%" PRIx64, &mask) != 1) {
 		printf("Invalid cpu filter %s, skipping\n", cpu_filter_str);
 		return;
 	}
@@ -479,15 +479,15 @@ static void print_pagefault(int pid, u64 timestamp, bool finished)
 		u64 offset = pfd->address - pfd->al_pf.map->start;
 
 		if (!strcmp(pfd->al_pf.map->dso->long_name, "//anon"))
-			printf(" => [anon 0x%llx] ", pfd->al_pf.map->start);
+			printf(" => [anon 0x%"PRIx64"] ", pfd->al_pf.map->start);
 		else if (!strcmp(pfd->al_pf.map->dso->long_name, "[heap]"))
-			printf(" => [heap 0x%llx] ", pfd->al_pf.map->start);
+			printf(" => [heap 0x%"PRIx64"] ", pfd->al_pf.map->start);
 		else if (!strcmp(pfd->al_pf.map->dso->long_name, "[stack]"))
-			printf(" => [stack 0x%llx] ", pfd->al_pf.map->start);
+			printf(" => [stack 0x%"PRIx64"] ", pfd->al_pf.map->start);
 		else
 			printf(" => %s ", pfd->al_pf.map->dso->long_name);
 
-		printf("offset: 0x%llx page: %llu (", offset,
+		printf("offset: 0x%"PRIx64" page: %"PRIu64" (", offset,
 		       offset / page_size);
 	} else
 		color_fprintf(stdout, PERF_COLOR_NORMAL, " => %016lx (",
