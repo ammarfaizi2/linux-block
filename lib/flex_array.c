@@ -88,8 +88,11 @@ struct flex_array *flex_array_alloc(int element_size, unsigned int total,
 					gfp_t flags)
 {
 	struct flex_array *ret;
-	int max_size = FLEX_ARRAY_NR_BASE_PTRS *
-				FLEX_ARRAY_ELEMENTS_PER_PART(element_size);
+	int max_size = 0;
+
+	if (element_size)
+		max_size = FLEX_ARRAY_NR_BASE_PTRS *
+			   FLEX_ARRAY_ELEMENTS_PER_PART(element_size);
 
 	/* max_size will end up 0 if element_size > PAGE_SIZE */
 	if (total > max_size)
@@ -183,15 +186,18 @@ __fa_get_part(struct flex_array *fa, int part_nr, gfp_t flags)
 int flex_array_put(struct flex_array *fa, unsigned int element_nr, void *src,
 			gfp_t flags)
 {
-	int part_nr = fa_element_to_part_nr(fa, element_nr);
+	int part_nr;
 	struct flex_array_part *part;
 	void *dst;
 
 	if (element_nr >= fa->total_nr_elements)
 		return -ENOSPC;
+	if (!fa->element_size)
+		return 0;
 	if (elements_fit_in_base(fa))
 		part = (struct flex_array_part *)&fa->parts[0];
 	else {
+		part_nr = fa_element_to_part_nr(fa, element_nr);
 		part = __fa_get_part(fa, part_nr, flags);
 		if (!part)
 			return -ENOMEM;
@@ -211,15 +217,18 @@ EXPORT_SYMBOL(flex_array_put);
  */
 int flex_array_clear(struct flex_array *fa, unsigned int element_nr)
 {
-	int part_nr = fa_element_to_part_nr(fa, element_nr);
+	int part_nr;
 	struct flex_array_part *part;
 	void *dst;
 
 	if (element_nr >= fa->total_nr_elements)
 		return -ENOSPC;
+	if (!fa->element_size)
+		return 0;
 	if (elements_fit_in_base(fa))
 		part = (struct flex_array_part *)&fa->parts[0];
 	else {
+		part_nr = fa_element_to_part_nr(fa, element_nr);
 		part = fa->parts[part_nr];
 		if (!part)
 			return -EINVAL;
@@ -232,10 +241,10 @@ EXPORT_SYMBOL(flex_array_clear);
 
 /**
  * flex_array_prealloc - guarantee that array space exists
- * @fa:		the flex array for which to preallocate parts
- * @start:	index of first array element for which space is allocated
- * @end:	index of last (inclusive) element for which space is allocated
- * @flags:	page allocation flags
+ * @fa:			the flex array for which to preallocate parts
+ * @start:		index of first array element for which space is allocated
+ * @nr_elements:	number of elements for which space is allocated
+ * @flags:		page allocation flags
  *
  * This will guarantee that no future calls to flex_array_put()
  * will allocate memory.  It can be used if you are expecting to
@@ -245,15 +254,27 @@ EXPORT_SYMBOL(flex_array_clear);
  * Locking must be provided by the caller.
  */
 int flex_array_prealloc(struct flex_array *fa, unsigned int start,
-			unsigned int end, gfp_t flags)
+			unsigned int nr_elements, gfp_t flags)
 {
 	int start_part;
 	int end_part;
 	int part_nr;
+	unsigned int end;
 	struct flex_array_part *part;
 
-	if (start >= fa->total_nr_elements || end >= fa->total_nr_elements)
+	if (!start && !nr_elements)
+		return 0;
+	if (start >= fa->total_nr_elements)
 		return -ENOSPC;
+	if (!nr_elements)
+		return 0;
+
+	end = start + nr_elements - 1;
+
+	if (end >= fa->total_nr_elements)
+		return -ENOSPC;
+	if (!fa->element_size)
+		return 0;
 	if (elements_fit_in_base(fa))
 		return 0;
 	start_part = fa_element_to_part_nr(fa, start);
@@ -281,14 +302,17 @@ EXPORT_SYMBOL(flex_array_prealloc);
  */
 void *flex_array_get(struct flex_array *fa, unsigned int element_nr)
 {
-	int part_nr = fa_element_to_part_nr(fa, element_nr);
+	int part_nr;
 	struct flex_array_part *part;
 
+	if (!fa->element_size)
+		return NULL;
 	if (element_nr >= fa->total_nr_elements)
 		return NULL;
 	if (elements_fit_in_base(fa))
 		part = (struct flex_array_part *)&fa->parts[0];
 	else {
+		part_nr = fa_element_to_part_nr(fa, element_nr);
 		part = fa->parts[part_nr];
 		if (!part)
 			return NULL;
@@ -343,6 +367,8 @@ int flex_array_shrink(struct flex_array *fa)
 	int part_nr;
 	int ret = 0;
 
+	if (!fa->total_nr_elements || !fa->element_size)
+		return 0;
 	if (elements_fit_in_base(fa))
 		return ret;
 	for (part_nr = 0; part_nr < FLEX_ARRAY_NR_BASE_PTRS; part_nr++) {
