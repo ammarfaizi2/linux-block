@@ -1882,7 +1882,8 @@ debug:
 	page->inuse++;
 	page->freelist = get_freepointer(s, object);
 	c->node = NUMA_NO_NODE;
-	goto unlock_out;
+	local_irq_restore(flags);
+	return object;
 }
 
 /*
