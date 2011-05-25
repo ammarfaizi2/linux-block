@@ -1881,8 +1881,6 @@ debug:
 
 	page->inuse++;
 	page->freelist = get_freepointer(s, object);
-	deactivate_slab(s, c);
-	c->page = NULL;
 	c->node = NUMA_NO_NODE;
 	goto unlock_out;
 }
@@ -2114,7 +2112,7 @@ redo:
 	tid = c->tid;
 	barrier();
 
-	if (likely(page == c->page)) {
+	if (likely(page == c->page && c->node != NUMA_NO_NODE)) {
 		set_freepointer(s, object, c->freelist);
 
 		if (unlikely(!irqsafe_cpu_cmpxchg_double(
