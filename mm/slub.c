@@ -1881,6 +1881,8 @@ debug:
 
 	page->inuse++;
 	page->freelist = get_freepointer(s, object);
+	deactivate_slab(s, c);
+	c->page = NULL;
 	c->node = NUMA_NO_NODE;
 	local_irq_restore(flags);
 	return object;
@@ -2113,7 +2115,7 @@ redo:
 	tid = c->tid;
 	barrier();
 
-	if (likely(page == c->page && c->node != NUMA_NO_NODE)) {
+	if (likely(page == c->page)) {
 		set_freepointer(s, object, c->freelist);
 
 		if (unlikely(!irqsafe_cpu_cmpxchg_double(
