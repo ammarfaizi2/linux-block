@@ -10,6 +10,7 @@
 #include <linux/swap.h>
 #include <linux/writeback.h>
 #include <linux/pagevec.h>
+#include <linux/prefetch.h>
 #include "extent_io.h"
 #include "extent_map.h"
 #include "compat.h"
@@ -2681,7 +2682,7 @@ int extent_readpages(struct extent_io_tree *tree,
 		prefetchw(&page->flags);
 		list_del(&page->lru);
 		if (!add_to_page_cache_lru(page, mapping,
-					page->index, GFP_KERNEL)) {
+					page->index, GFP_NOFS)) {
 			__extent_read_full_page(tree, page, get_extent,
 						&bio, 0, &bio_flags);
 		}

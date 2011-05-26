@@ -83,13 +83,6 @@ extern struct group_info init_groups;
 #define INIT_IDS
 #endif
 
-/*
- * Because of the reduced scope of CAP_SETPCAP when filesystem
- * capabilities are in effect, it is safe to allow CAP_SETPCAP to
- * be available in the default configuration.
- */
-# define CAP_INIT_BSET  CAP_FULL_SET
-
 #ifdef CONFIG_RCU_BOOST
 #define INIT_TASK_RCU_BOOST()						\
 	.rcu_boost_mutex = NULL,
@@ -134,7 +127,6 @@ extern struct cred init_cred;
 	.stack		= &init_thread_info,				\
 	.usage		= ATOMIC_INIT(2),				\
 	.flags		= PF_KTHREAD,					\
-	.lock_depth	= -1,						\
 	.prio		= MAX_PRIO-20,					\
 	.static_prio	= MAX_PRIO-20,					\
 	.normal_prio	= MAX_PRIO-20,					\
