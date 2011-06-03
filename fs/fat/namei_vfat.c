@@ -824,6 +824,8 @@ static int vfat_rmdir(struct inode *dir, struct dentry *dentry)
 	struct fat_slot_info sinfo;
 	int err;
 
+	dentry_unhash(dentry);
+
 	lock_super(sb);
 
 	err = fat_dir_empty(inode);
@@ -930,6 +932,9 @@ static int vfat_rename(struct inode *old_dir, struct dentry *old_dentry,
 	loff_t dotdot_i_pos, new_i_pos;
 	int err, is_dir, update_dotdot, corrupt = 0;
 	struct super_block *sb = old_dir->i_sb;
+
+	if (new_dentry->d_inode && S_ISDIR(new_dentry->d_inode->i_mode))
+		dentry_unhash(new_dentry);
 
 	old_sinfo.bh = sinfo.bh = dotdot_bh = NULL;
 	old_inode = old_dentry->d_inode;
@@ -1065,6 +1070,7 @@ static const struct inode_operations vfat_dir_inode_operations = {
 
 static void setup(struct super_block *sb)
 {
+	MSDOS_SB(sb)->dir_ops = &vfat_dir_inode_operations;
 	if (MSDOS_SB(sb)->options.name_check != 's')
 		sb->s_d_op = &vfat_ci_dentry_ops;
 	else
@@ -1073,8 +1079,7 @@ static void setup(struct super_block *sb)
 
 static int vfat_fill_super(struct super_block *sb, void *data, int silent)
 {
-	return fat_fill_super(sb, data, silent, &vfat_dir_inode_operations,
-			     1, setup);
+	return fat_fill_super(sb, data, silent, 1, setup);
 }
 
 static struct dentry *vfat_mount(struct file_system_type *fs_type,

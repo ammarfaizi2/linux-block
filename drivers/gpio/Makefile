@@ -1,8 +1,4 @@
-# generic gpio support: dedicated expander chips, etc
-#
-# NOTE: platform-specific GPIO drivers don't belong in the
-# drivers/gpio directory; put them with other platform setup
-# code, IRQ controllers, board init, etc.
+# generic gpio support: platform drivers, dedicated expander chips, etc
 
 ccflags-$(CONFIG_DEBUG_GPIO)	+= -DDEBUG
 
@@ -10,6 +6,7 @@ obj-$(CONFIG_GPIOLIB)		+= gpiolib.o
 
 obj-$(CONFIG_GPIO_ADP5520)	+= adp5520-gpio.o
 obj-$(CONFIG_GPIO_ADP5588)	+= adp5588-gpio.o
+obj-$(CONFIG_GPIO_BASIC_MMIO_CORE)	+= basic_mmio_gpio.o
 obj-$(CONFIG_GPIO_BASIC_MMIO)	+= basic_mmio_gpio.o
 obj-$(CONFIG_GPIO_LANGWELL)	+= langwell_gpio.o
 obj-$(CONFIG_GPIO_MAX730X)	+= max730x.o
@@ -43,3 +40,4 @@ obj-$(CONFIG_GPIO_SX150X)	+= sx150x.o
 obj-$(CONFIG_GPIO_VX855)	+= vx855_gpio.o
 obj-$(CONFIG_GPIO_ML_IOH)	+= ml_ioh_gpio.o
 obj-$(CONFIG_AB8500_GPIO)       += ab8500-gpio.o
+obj-$(CONFIG_GPIO_TPS65910)	+= tps65910-gpio.o

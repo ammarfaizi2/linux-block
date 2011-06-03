@@ -326,6 +326,8 @@ static int msdos_rmdir(struct inode *dir, struct dentry *dentry)
 	struct fat_slot_info sinfo;
 	int err;
 
+	dentry_unhash(dentry);
+
 	lock_super(sb);
 	/*
 	 * Check whether the directory is not in use, then check
@@ -456,6 +458,9 @@ static int do_msdos_rename(struct inode *old_dir, unsigned char *old_name,
 	old_sinfo.bh = sinfo.bh = dotdot_bh = NULL;
 	old_inode = old_dentry->d_inode;
 	new_inode = new_dentry->d_inode;
+
+	if (new_inode && S_ISDIR(new_inode->i_mode))
+		dentry_unhash(new_dentry);
 
 	err = fat_scan(old_dir, old_name, &old_sinfo);
 	if (err) {
@@ -659,14 +664,14 @@ static const struct inode_operations msdos_dir_inode_operations = {
 
 static void setup(struct super_block *sb)
 {
+	MSDOS_SB(sb)->dir_ops = &msdos_dir_inode_operations;
 	sb->s_d_op = &msdos_dentry_operations;
 	sb->s_flags |= MS_NOATIME;
 }
 
 static int msdos_fill_super(struct super_block *sb, void *data, int silent)
 {
-	return fat_fill_super(sb, data, silent, &msdos_dir_inode_operations,
-			     0, setup);
+	return fat_fill_super(sb, data, silent, 0, setup);
 }
 
 static struct dentry *msdos_mount(struct file_system_type *fs_type,
