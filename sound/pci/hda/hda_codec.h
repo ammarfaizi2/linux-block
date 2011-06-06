@@ -829,8 +829,7 @@ struct hda_codec {
 
 	struct mutex spdif_mutex;
 	struct mutex control_mutex;
-	unsigned int spdif_status;	/* IEC958 status bits */
-	unsigned short spdif_ctls;	/* SPDIF control bits */
+	struct snd_array spdif_out;
 	unsigned int spdif_in_enable;	/* SPDIF input enable? */
 	const hda_nid_t *slave_dig_outs; /* optional digital out slave widgets */
 	struct snd_array init_pins;	/* initial (BIOS) pin configurations */
@@ -904,6 +903,8 @@ int snd_hda_get_sub_nodes(struct hda_codec *codec, hda_nid_t nid,
 			  hda_nid_t *start_id);
 int snd_hda_get_connections(struct hda_codec *codec, hda_nid_t nid,
 			    hda_nid_t *conn_list, int max_conns);
+int snd_hda_query_supported_pcm(struct hda_codec *codec, hda_nid_t nid,
+				u32 *ratesp, u64 *formatsp, unsigned int *bpsp);
 
 struct hda_verb {
 	hda_nid_t nid;
@@ -946,6 +947,17 @@ int snd_hda_codec_set_pincfg(struct hda_codec *codec, hda_nid_t nid,
 int snd_hda_add_pincfg(struct hda_codec *codec, struct snd_array *list,
 		       hda_nid_t nid, unsigned int cfg); /* for hwdep */
 void snd_hda_shutup_pins(struct hda_codec *codec);
+
+/* SPDIF controls */
+struct hda_spdif_out {
+	hda_nid_t nid;		/* Converter nid values relate to */
+	unsigned int status;	/* IEC958 status bits */
+	unsigned short ctls;	/* SPDIF control bits */
+};
+struct hda_spdif_out *snd_hda_spdif_out_of_nid(struct hda_codec *codec,
+					       hda_nid_t nid);
+void snd_hda_spdif_ctls_unassign(struct hda_codec *codec, int idx);
+void snd_hda_spdif_ctls_assign(struct hda_codec *codec, int idx, hda_nid_t nid);
 
 /*
  * Mixer
