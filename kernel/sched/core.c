@@ -7471,6 +7471,7 @@ void migrate_disable(void)
 	/* get_online_cpus(); */
 
 	preempt_disable();
+	pin_current_cpu();
 	p->migrate_disable = 1;
 
 	p->cpus_ptr = cpumask_of(smp_processor_id());
@@ -7535,13 +7536,16 @@ void migrate_enable(void)
 			arg.task = p;
 			arg.dest_cpu = dest_cpu;
 
+			unpin_current_cpu();
 			preempt_enable();
 			stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
 			tlb_migrate_finish(p->mm);
 			/* put_online_cpus(); */
+
 			return;
 		}
 	}
+	unpin_current_cpu();
 	/* put_online_cpus(); */
 	preempt_enable();
 }
