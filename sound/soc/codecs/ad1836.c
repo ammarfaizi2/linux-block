@@ -1,19 +1,10 @@
-/*
- * File:         sound/soc/codecs/ad1836.c
- * Author:       Barry Song <Barry.Song@analog.com>
+ /*
+ * Audio Codec driver supporting:
+ *  AD1835A, AD1836, AD1837A, AD1838A, AD1839A
  *
- * Created:      Aug 04 2009
- * Description:  Driver for AD1836 sound chip
+ * Copyright 2009-2011 Analog Devices Inc.
  *
- * Modified:
- *               Copyright 2009 Analog Devices Inc.
- *
- * Bugs:         Enter bugs at http://blackfin.uclinux.org/
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Licensed under the GPL-2 or later.
  */
 
 #include <linux/init.h>
@@ -198,26 +189,6 @@ static int ad1836_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-#ifdef CONFIG_PM
-static int ad1836_soc_suspend(struct snd_soc_codec *codec,
-		pm_message_t state)
-{
-	/* reset clock control mode */
-	return snd_soc_update_bits(codec, AD1836_ADC_CTRL2,
-		AD1836_ADC_SERFMT_MASK, 0);
-}
-
-static int ad1836_soc_resume(struct snd_soc_codec *codec)
-{
-	/* restore clock control mode */
-	return snd_soc_update_bits(codec, AD1836_ADC_CTRL2,
-		AD1836_ADC_SERFMT_MASK, AD1836_ADC_AUX);
-}
-#else
-#define ad1836_soc_suspend NULL
-#define ad1836_soc_resume  NULL
-#endif
-
 static struct snd_soc_dai_ops ad1836_dai_ops = {
 	.hw_params = ad1836_hw_params,
 	.set_fmt = ad1836_set_dai_fmt,
@@ -250,6 +221,25 @@ static struct snd_soc_dai_driver ad183x_dais[] = {
 	[AD1836] = AD183X_DAI("ad1836", 3, 2),
 	[AD1838] = AD183X_DAI("ad1838", 3, 1),
 };
+
+#ifdef CONFIG_PM
+static int ad1836_suspend(struct snd_soc_codec *codec, pm_message_t state)
+{
+	/* reset clock control mode */
+	return snd_soc_update_bits(codec, AD1836_ADC_CTRL2,
+		AD1836_ADC_SERFMT_MASK, 0);
+}
+
+static int ad1836_resume(struct snd_soc_codec *codec)
+{
+	/* restore clock control mode */
+	return snd_soc_update_bits(codec, AD1836_ADC_CTRL2,
+		AD1836_ADC_SERFMT_MASK, AD1836_ADC_AUX);
+}
+#else
+#define ad1836_suspend NULL
+#define ad1836_resume  NULL
+#endif
 
 static int ad1836_probe(struct snd_soc_codec *codec)
 {
@@ -331,10 +321,10 @@ static int ad1836_remove(struct snd_soc_codec *codec)
 }
 
 static struct snd_soc_codec_driver soc_codec_dev_ad1836 = {
-	.probe = 	ad1836_probe,
-	.remove = 	ad1836_remove,
-	.suspend =      ad1836_soc_suspend,
-	.resume =       ad1836_soc_resume,
+	.probe = ad1836_probe,
+	.remove = ad1836_remove,
+	.suspend = ad1836_suspend,
+	.resume = ad1836_resume,
 	.reg_cache_size = AD1836_NUM_REGS,
 	.reg_word_size = sizeof(u16),
 
@@ -384,7 +374,7 @@ MODULE_DEVICE_TABLE(spi, ad1836_ids);
 
 static struct spi_driver ad1836_spi_driver = {
 	.driver = {
-		.name	= "ad1836-codec",
+		.name	= "ad1836",
 		.owner	= THIS_MODULE,
 	},
 	.probe		= ad1836_spi_probe,
@@ -394,15 +384,7 @@ static struct spi_driver ad1836_spi_driver = {
 
 static int __init ad1836_init(void)
 {
-	int ret;
-
-	ret = spi_register_driver(&ad1836_spi_driver);
-	if (ret != 0) {
-		printk(KERN_ERR "Failed to register ad1836 SPI driver: %d\n",
-				ret);
-	}
-
-	return ret;
+	return spi_register_driver(&ad1836_spi_driver);
 }
 module_init(ad1836_init);
 

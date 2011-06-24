@@ -1,19 +1,10 @@
 /*
- * File:         sound/soc/codecs/ad1836.h
- * Based on:
- * Author:       Barry Song <Barry.Song@analog.com>
+ * Audio Codec driver supporting:
+ *  AD1835A, AD1836, AD1837A, AD1838A, AD1839A
  *
- * Created:      Aug 04, 2009
- * Description:  definitions for AD1836 registers
+ * Copyright 2009-2011 Analog Devices Inc.
  *
- * Modified:
- *
- * Bugs:         Enter bugs at http://blackfin.uclinux.org/
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Licensed under the GPL-2 or later.
  */
 
 #ifndef __AD1836_H__
@@ -21,7 +12,7 @@
 
 #define AD1836_DAC_CTRL1               0
 #define AD1836_DAC_POWERDOWN           2
-#define AD1836_DAC_SERFMT_MASK	       0xE0
+#define AD1836_DAC_SERFMT_MASK         0xE0
 #define AD1836_DAC_SERFMT_PCK256       (0x4 << 5)
 #define AD1836_DAC_SERFMT_PCK128       (0x5 << 5)
 #define AD1836_DAC_WORD_LEN_MASK       0x18
@@ -44,7 +35,7 @@
 #define AD1836_ADC_CTRL2               13
 #define AD1836_ADC_WORD_LEN_MASK       0x30
 #define AD1836_ADC_WORD_OFFSET         5
-#define AD1836_ADC_SERFMT_MASK	       (7 << 6)
+#define AD1836_ADC_SERFMT_MASK         (7 << 6)
 #define AD1836_ADC_SERFMT_PCK256       (0x4 << 6)
 #define AD1836_ADC_SERFMT_PCK128       (0x5 << 6)
 #define AD1836_ADC_AUX                 (0x6 << 6)

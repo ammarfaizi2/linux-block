@@ -42,6 +42,7 @@ config SND_SOC_ALL_CODECS
 	select SND_SOC_SN95031 if INTEL_SCU_IPC
 	select SND_SOC_SPDIF
 	select SND_SOC_SSM2602 if SND_SOC_I2C_AND_SPI
+	select SND_SOC_STA32X if I2C
 	select SND_SOC_STAC9766 if SND_SOC_AC97_BUS
 	select SND_SOC_TLV320AIC23 if I2C
 	select SND_SOC_TLV320AIC26 if SPI_MASTER
@@ -71,6 +72,7 @@ config SND_SOC_ALL_CODECS
 	select SND_SOC_WM8753 if SND_SOC_I2C_AND_SPI
 	select SND_SOC_WM8770 if SPI_MASTER
 	select SND_SOC_WM8776 if SND_SOC_I2C_AND_SPI
+	select SND_SOC_WM8782
 	select SND_SOC_WM8804 if SND_SOC_I2C_AND_SPI
 	select SND_SOC_WM8900 if I2C
 	select SND_SOC_WM8903 if I2C
@@ -130,7 +132,11 @@ config SND_SOC_AD1980
 
 config SND_SOC_AD73311
 	tristate
-	
+
+config SND_SOC_ADAU1701
+	select SIGMA
+	tristate
+
 config SND_SOC_ADS117X
 	tristate
 
@@ -216,6 +222,9 @@ config SND_SOC_SPDIF
 config SND_SOC_SSM2602
 	tristate
 
+config SND_SOC_STA32X
+	tristate
+
 config SND_SOC_STAC9766
 	tristate
 
@@ -297,6 +306,9 @@ config SND_SOC_WM8770
 	tristate
 
 config SND_SOC_WM8776
+	tristate
+
+config SND_SOC_WM8782
 	tristate
 
 config SND_SOC_WM8804
