@@ -211,6 +211,9 @@ struct drm_i915_display_funcs {
 	void (*fdi_link_train)(struct drm_crtc *crtc);
 	void (*init_clock_gating)(struct drm_device *dev);
 	void (*init_pch_clock_gating)(struct drm_device *dev);
+	int (*queue_flip)(struct drm_device *dev, struct drm_crtc *crtc,
+			  struct drm_framebuffer *fb,
+			  struct drm_i915_gem_object *obj);
 	/* clock updates for mode set */
 	/* cursor updates */
 	/* render clock increase/decrease */
@@ -716,6 +719,7 @@ typedef struct drm_i915_private {
 	struct intel_fbdev *fbdev;
 
 	struct drm_property *broadcast_rgb_property;
+	struct drm_property *force_audio_property;
 
 	atomic_t forcewake_count;
 } drm_i915_private_t;
@@ -907,13 +911,6 @@ struct drm_i915_file_private {
 		struct spinlock lock;
 		struct list_head request_list;
 	} mm;
-};
-
-enum intel_chip_family {
-	CHIP_I8XX = 0x01,
-	CHIP_I9XX = 0x02,
-	CHIP_I915 = 0x04,
-	CHIP_I965 = 0x08,
 };
 
 #define INTEL_INFO(dev)	(((struct drm_i915_private *) (dev)->dev_private)->info)

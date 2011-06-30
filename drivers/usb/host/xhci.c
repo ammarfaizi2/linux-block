@@ -430,12 +430,19 @@ int xhci_run(struct usb_hcd *hcd)
 		free_irq(hcd->irq, hcd);
 	hcd->irq = -1;
 
+	/* Some Fresco Logic host controllers advertise MSI, but fail to
+	 * generate interrupts.  Don't even try to enable MSI.
+	 */
+	if (xhci->quirks & XHCI_BROKEN_MSI)
+		goto legacy_irq;
+
 	ret = xhci_setup_msix(xhci);
 	if (ret)
 		/* fall back to msi*/
 		ret = xhci_setup_msi(xhci);
 
 	if (ret) {
+legacy_irq:
 		/* fall back to legacy interrupt*/
 		ret = request_irq(pdev->irq, &usb_hcd_irq, IRQF_SHARED,
 					hcd->irq_descr, hcd);
@@ -752,6 +759,8 @@ int xhci_resume(struct xhci_hcd *xhci, bool hibernated)
 		msleep(100);
 
 	spin_lock_irq(&xhci->lock);
+	if (xhci->quirks & XHCI_RESET_ON_RESUME)
+		hibernated = true;
 
 	if (!hibernated) {
 		/* step 1: restore register */
@@ -1314,8 +1323,10 @@ int xhci_drop_endpoint(struct usb_hcd *hcd, struct usb_device *udev,
 	if (ret <= 0)
 		return ret;
 	xhci = hcd_to_xhci(hcd);
-	xhci_dbg(xhci, "%s called for udev %p\n", __func__, udev);
+	if (xhci->xhc_state & XHCI_STATE_DYING)
+		return -ENODEV;
 
+	xhci_dbg(xhci, "%s called for udev %p\n", __func__, udev);
 	drop_flag = xhci_get_endpoint_flag(&ep->desc);
 	if (drop_flag == SLOT_FLAG || drop_flag == EP0_FLAG) {
 		xhci_dbg(xhci, "xHCI %s - can't drop slot or ep 0 %#x\n",
@@ -1392,6 +1403,7 @@ int xhci_add_endpoint(struct usb_hcd *hcd, struct usb_device *udev,
 	u32 added_ctxs;
 	unsigned int last_ctx;
 	u32 new_add_flags, new_drop_flags, new_slot_info;
+	struct xhci_virt_device *virt_dev;
 	int ret = 0;
 
 	ret = xhci_check_args(hcd, udev, ep, 1, true, __func__);
@@ -1401,6 +1413,8 @@ int xhci_add_endpoint(struct usb_hcd *hcd, struct usb_device *udev,
 		return ret;
 	}
 	xhci = hcd_to_xhci(hcd);
+	if (xhci->xhc_state & XHCI_STATE_DYING)
+		return -ENODEV;
 
 	added_ctxs = xhci_get_endpoint_flag(&ep->desc);
 	last_ctx = xhci_last_valid_endpoint(added_ctxs);
@@ -1414,11 +1428,25 @@ int xhci_add_endpoint(struct usb_hcd *hcd, struct usb_device *udev,
 		return 0;
 	}
 
-	in_ctx = xhci->devs[udev->slot_id]->in_ctx;
-	out_ctx = xhci->devs[udev->slot_id]->out_ctx;
+	virt_dev = xhci->devs[udev->slot_id];
+	in_ctx = virt_dev->in_ctx;
+	out_ctx = virt_dev->out_ctx;
 	ctrl_ctx = xhci_get_input_control_ctx(xhci, in_ctx);
 	ep_index = xhci_get_endpoint_index(&ep->desc);
 	ep_ctx = xhci_get_ep_ctx(xhci, out_ctx, ep_index);
+
+	/* If this endpoint is already in use, and the upper layers are trying
+	 * to add it again without dropping it, reject the addition.
+	 */
+	if (virt_dev->eps[ep_index].ring &&
+			!(le32_to_cpu(ctrl_ctx->drop_flags) &
+				xhci_get_endpoint_flag(&ep->desc))) {
+		xhci_warn(xhci, "Trying to add endpoint 0x%x "
+				"without dropping it.\n",
+				(unsigned int) ep->desc.bEndpointAddress);
+		return -EINVAL;
+	}
+
 	/* If the HCD has already noted the endpoint is enabled,
 	 * ignore this request.
 	 */
@@ -1434,8 +1462,7 @@ int xhci_add_endpoint(struct usb_hcd *hcd, struct usb_device *udev,
 	 * process context, not interrupt context (or so documenation
 	 * for usb_set_interface() and usb_set_configuration() claim).
 	 */
-	if (xhci_endpoint_init(xhci, xhci->devs[udev->slot_id],
-				udev, ep, GFP_NOIO) < 0) {
+	if (xhci_endpoint_init(xhci, virt_dev, udev, ep, GFP_NOIO) < 0) {
 		dev_dbg(&udev->dev, "%s - could not initialize ep %#x\n",
 				__func__, ep->desc.bEndpointAddress);
 		return -ENOMEM;
@@ -1526,6 +1553,11 @@ static int xhci_configure_endpoint_result(struct xhci_hcd *xhci,
 				"and endpoint is not disabled.\n");
 		ret = -EINVAL;
 		break;
+	case COMP_DEV_ERR:
+		dev_warn(&udev->dev, "ERROR: Incompatible device for endpoint "
+				"configure command.\n");
+		ret = -ENODEV;
+		break;
 	case COMP_SUCCESS:
 		dev_dbg(&udev->dev, "Successful Endpoint Configure command\n");
 		ret = 0;
@@ -1560,6 +1592,11 @@ static int xhci_evaluate_context_result(struct xhci_hcd *xhci,
 		xhci_dbg_ctx(xhci, virt_dev->out_ctx, 1);
 		ret = -EINVAL;
 		break;
+	case COMP_DEV_ERR:
+		dev_warn(&udev->dev, "ERROR: Incompatible device for evaluate "
+				"context command.\n");
+		ret = -ENODEV;
+		break;
 	case COMP_MEL_ERR:
 		/* Max Exit Latency too large error */
 		dev_warn(&udev->dev, "WARN: Max Exit Latency too large\n");
@@ -1576,6 +1613,113 @@ static int xhci_evaluate_context_result(struct xhci_hcd *xhci,
 		break;
 	}
 	return ret;
+}
+
+static u32 xhci_count_num_new_endpoints(struct xhci_hcd *xhci,
+		struct xhci_container_ctx *in_ctx)
+{
+	struct xhci_input_control_ctx *ctrl_ctx;
+	u32 valid_add_flags;
+	u32 valid_drop_flags;
+
+	ctrl_ctx = xhci_get_input_control_ctx(xhci, in_ctx);
+	/* Ignore the slot flag (bit 0), and the default control endpoint flag
+	 * (bit 1).  The default control endpoint is added during the Address
+	 * Device command and is never removed until the slot is disabled.
+	 */
+	valid_add_flags = ctrl_ctx->add_flags >> 2;
+	valid_drop_flags = ctrl_ctx->drop_flags >> 2;
+
+	/* Use hweight32 to count the number of ones in the add flags, or
+	 * number of endpoints added.  Don't count endpoints that are changed
+	 * (both added and dropped).
+	 */
+	return hweight32(valid_add_flags) -
+		hweight32(valid_add_flags & valid_drop_flags);
+}
+
+static unsigned int xhci_count_num_dropped_endpoints(struct xhci_hcd *xhci,
+		struct xhci_container_ctx *in_ctx)
+{
+	struct xhci_input_control_ctx *ctrl_ctx;
+	u32 valid_add_flags;
+	u32 valid_drop_flags;
+
+	ctrl_ctx = xhci_get_input_control_ctx(xhci, in_ctx);
+	valid_add_flags = ctrl_ctx->add_flags >> 2;
+	valid_drop_flags = ctrl_ctx->drop_flags >> 2;
+
+	return hweight32(valid_drop_flags) -
+		hweight32(valid_add_flags & valid_drop_flags);
+}
+
+/*
+ * We need to reserve the new number of endpoints before the configure endpoint
+ * command completes.  We can't subtract the dropped endpoints from the number
+ * of active endpoints until the command completes because we can oversubscribe
+ * the host in this case:
+ *
+ *  - the first configure endpoint command drops more endpoints than it adds
+ *  - a second configure endpoint command that adds more endpoints is queued
+ *  - the first configure endpoint command fails, so the config is unchanged
+ *  - the second command may succeed, even though there isn't enough resources
+ *
+ * Must be called with xhci->lock held.
+ */
+static int xhci_reserve_host_resources(struct xhci_hcd *xhci,
+		struct xhci_container_ctx *in_ctx)
+{
+	u32 added_eps;
+
+	added_eps = xhci_count_num_new_endpoints(xhci, in_ctx);
+	if (xhci->num_active_eps + added_eps > xhci->limit_active_eps) {
+		xhci_dbg(xhci, "Not enough ep ctxs: "
+				"%u active, need to add %u, limit is %u.\n",
+				xhci->num_active_eps, added_eps,
+				xhci->limit_active_eps);
+		return -ENOMEM;
+	}
+	xhci->num_active_eps += added_eps;
+	xhci_dbg(xhci, "Adding %u ep ctxs, %u now active.\n", added_eps,
+			xhci->num_active_eps);
+	return 0;
+}
+
+/*
+ * The configure endpoint was failed by the xHC for some other reason, so we
+ * need to revert the resources that failed configuration would have used.
+ *
+ * Must be called with xhci->lock held.
+ */
+static void xhci_free_host_resources(struct xhci_hcd *xhci,
+		struct xhci_container_ctx *in_ctx)
+{
+	u32 num_failed_eps;
+
+	num_failed_eps = xhci_count_num_new_endpoints(xhci, in_ctx);
+	xhci->num_active_eps -= num_failed_eps;
+	xhci_dbg(xhci, "Removing %u failed ep ctxs, %u now active.\n",
+			num_failed_eps,
+			xhci->num_active_eps);
+}
+
+/*
+ * Now that the command has completed, clean up the active endpoint count by
+ * subtracting out the endpoints that were dropped (but not changed).
+ *
+ * Must be called with xhci->lock held.
+ */
+static void xhci_finish_resource_reservation(struct xhci_hcd *xhci,
+		struct xhci_container_ctx *in_ctx)
+{
+	u32 num_dropped_eps;
+
+	num_dropped_eps = xhci_count_num_dropped_endpoints(xhci, in_ctx);
+	xhci->num_active_eps -= num_dropped_eps;
+	if (num_dropped_eps)
+		xhci_dbg(xhci, "Removing %u dropped ep ctxs, %u now active.\n",
+				num_dropped_eps,
+				xhci->num_active_eps);
 }
 
 /* Issue a configure endpoint command or evaluate context command
@@ -1598,6 +1742,15 @@ static int xhci_configure_endpoint(struct xhci_hcd *xhci,
 	virt_dev = xhci->devs[udev->slot_id];
 	if (command) {
 		in_ctx = command->in_ctx;
+		if ((xhci->quirks & XHCI_EP_LIMIT_QUIRK) &&
+				xhci_reserve_host_resources(xhci, in_ctx)) {
+			spin_unlock_irqrestore(&xhci->lock, flags);
+			xhci_warn(xhci, "Not enough host resources, "
+					"active endpoint contexts = %u\n",
+					xhci->num_active_eps);
+			return -ENOMEM;
+		}
+
 		cmd_completion = command->completion;
 		cmd_status = &command->status;
 		command->command_trb = xhci->cmd_ring->enqueue;
@@ -1613,6 +1766,14 @@ static int xhci_configure_endpoint(struct xhci_hcd *xhci,
 		list_add_tail(&command->cmd_list, &virt_dev->cmd_list);
 	} else {
 		in_ctx = virt_dev->in_ctx;
+		if ((xhci->quirks & XHCI_EP_LIMIT_QUIRK) &&
+				xhci_reserve_host_resources(xhci, in_ctx)) {
+			spin_unlock_irqrestore(&xhci->lock, flags);
+			xhci_warn(xhci, "Not enough host resources, "
+					"active endpoint contexts = %u\n",
+					xhci->num_active_eps);
+			return -ENOMEM;
+		}
 		cmd_completion = &virt_dev->cmd_completion;
 		cmd_status = &virt_dev->cmd_status;
 	}
@@ -1627,6 +1788,8 @@ static int xhci_configure_endpoint(struct xhci_hcd *xhci,
 	if (ret < 0) {
 		if (command)
 			list_del(&command->cmd_list);
+		if ((xhci->quirks & XHCI_EP_LIMIT_QUIRK))
+			xhci_free_host_resources(xhci, in_ctx);
 		spin_unlock_irqrestore(&xhci->lock, flags);
 		xhci_dbg(xhci, "FIXME allocate a new ring segment\n");
 		return -ENOMEM;
@@ -1649,8 +1812,22 @@ static int xhci_configure_endpoint(struct xhci_hcd *xhci,
 	}
 
 	if (!ctx_change)
-		return xhci_configure_endpoint_result(xhci, udev, cmd_status);
-	return xhci_evaluate_context_result(xhci, udev, cmd_status);
+		ret = xhci_configure_endpoint_result(xhci, udev, cmd_status);
+	else
+		ret = xhci_evaluate_context_result(xhci, udev, cmd_status);
+
+	if ((xhci->quirks & XHCI_EP_LIMIT_QUIRK)) {
+		spin_lock_irqsave(&xhci->lock, flags);
+		/* If the command failed, remove the reserved resources.
+		 * Otherwise, clean up the estimate to include dropped eps.
+		 */
+		if (ret)
+			xhci_free_host_resources(xhci, in_ctx);
+		else
+			xhci_finish_resource_reservation(xhci, in_ctx);
+		spin_unlock_irqrestore(&xhci->lock, flags);
+	}
+	return ret;
 }
 
 /* Called after one or more calls to xhci_add_endpoint() or
@@ -1676,6 +1853,8 @@ int xhci_check_bandwidth(struct usb_hcd *hcd, struct usb_device *udev)
 	if (ret <= 0)
 		return ret;
 	xhci = hcd_to_xhci(hcd);
+	if (xhci->xhc_state & XHCI_STATE_DYING)
+		return -ENODEV;
 
 	xhci_dbg(xhci, "%s called for udev %p\n", __func__, udev);
 	virt_dev = xhci->devs[udev->slot_id];
@@ -1703,8 +1882,8 @@ int xhci_check_bandwidth(struct usb_hcd *hcd, struct usb_device *udev)
 
 	/* Free any rings that were dropped, but not changed. */
 	for (i = 1; i < 31; ++i) {
-		if ((ctrl_ctx->drop_flags & (1 << (i + 1))) &&
-				!(ctrl_ctx->add_flags & (1 << (i + 1))))
+		if ((le32_to_cpu(ctrl_ctx->drop_flags) & (1 << (i + 1))) &&
+		    !(le32_to_cpu(ctrl_ctx->add_flags) & (1 << (i + 1))))
 			xhci_free_or_cache_endpoint_ring(xhci, virt_dev, i);
 	}
 	xhci_zero_in_ctx(xhci, virt_dev);
@@ -2266,6 +2445,34 @@ int xhci_free_streams(struct usb_hcd *hcd, struct usb_device *udev,
 }
 
 /*
+ * Deletes endpoint resources for endpoints that were active before a Reset
+ * Device command, or a Disable Slot command.  The Reset Device command leaves
+ * the control endpoint intact, whereas the Disable Slot command deletes it.
+ *
+ * Must be called with xhci->lock held.
+ */
+void xhci_free_device_endpoint_resources(struct xhci_hcd *xhci,
+	struct xhci_virt_device *virt_dev, bool drop_control_ep)
+{
+	int i;
+	unsigned int num_dropped_eps = 0;
+	unsigned int drop_flags = 0;
+
+	for (i = (drop_control_ep ? 0 : 1); i < 31; i++) {
+		if (virt_dev->eps[i].ring) {
+			drop_flags |= 1 << i;
+			num_dropped_eps++;
+		}
+	}
+	xhci->num_active_eps -= num_dropped_eps;
+	if (num_dropped_eps)
+		xhci_dbg(xhci, "Dropped %u ep ctxs, flags = 0x%x, "
+				"%u now active.\n",
+				num_dropped_eps, drop_flags,
+				xhci->num_active_eps);
+}
+
+/*
  * This submits a Reset Device Command, which will set the device state to 0,
  * set the device address to 0, and disable all the endpoints except the default
  * control endpoint.  The USB core should come back and call
@@ -2293,6 +2500,7 @@ int xhci_discover_or_reset_device(struct usb_hcd *hcd, struct usb_device *udev)
 	struct xhci_command *reset_device_cmd;
 	int timeleft;
 	int last_freed_endpoint;
+	struct xhci_slot_ctx *slot_ctx;
 
 	ret = xhci_check_args(hcd, udev, NULL, 0, false, __func__);
 	if (ret <= 0)
@@ -2324,6 +2532,12 @@ int xhci_discover_or_reset_device(struct usb_hcd *hcd, struct usb_device *udev)
 		else
 			return -EINVAL;
 	}
+
+	/* If device is not setup, there is no point in resetting it */
+	slot_ctx = xhci_get_slot_ctx(xhci, virt_dev->out_ctx);
+	if (GET_SLOT_STATE(le32_to_cpu(slot_ctx->dev_state)) ==
+						SLOT_STATE_DISABLED)
+		return 0;
 
 	xhci_dbg(xhci, "Resetting device with slot ID %u\n", slot_id);
 	/* Allocate the command structure that holds the struct completion.
@@ -2406,6 +2620,14 @@ int xhci_discover_or_reset_device(struct usb_hcd *hcd, struct usb_device *udev)
 		goto command_cleanup;
 	}
 
+	/* Free up host controller endpoint resources */
+	if ((xhci->quirks & XHCI_EP_LIMIT_QUIRK)) {
+		spin_lock_irqsave(&xhci->lock, flags);
+		/* Don't delete the default control endpoint resources */
+		xhci_free_device_endpoint_resources(xhci, virt_dev, false);
+		spin_unlock_irqrestore(&xhci->lock, flags);
+	}
+
 	/* Everything but endpoint 0 is disabled, so free or cache the rings. */
 	last_freed_endpoint = 1;
 	for (i = 1; i < 31; ++i) {
@@ -2479,6 +2701,27 @@ void xhci_free_dev(struct usb_hcd *hcd, struct usb_device *udev)
 }
 
 /*
+ * Checks if we have enough host controller resources for the default control
+ * endpoint.
+ *
+ * Must be called with xhci->lock held.
+ */
+static int xhci_reserve_host_control_ep_resources(struct xhci_hcd *xhci)
+{
+	if (xhci->num_active_eps + 1 > xhci->limit_active_eps) {
+		xhci_dbg(xhci, "Not enough ep ctxs: "
+				"%u active, need to add 1, limit is %u.\n",
+				xhci->num_active_eps, xhci->limit_active_eps);
+		return -ENOMEM;
+	}
+	xhci->num_active_eps += 1;
+	xhci_dbg(xhci, "Adding 1 ep ctx, %u now active.\n",
+			xhci->num_active_eps);
+	return 0;
+}
+
+
+/*
  * Returns 0 if the xHC ran out of device slots, the Enable Slot command
  * timed out, or allocating memory failed.  Returns 1 on success.
  */
@@ -2513,24 +2756,39 @@ int xhci_alloc_dev(struct usb_hcd *hcd, struct usb_device *udev)
 		xhci_err(xhci, "Error while assigning device slot ID\n");
 		return 0;
 	}
-	/* xhci_alloc_virt_device() does not touch rings; no need to lock.
-	 * Use GFP_NOIO, since this function can be called from
+
+	if ((xhci->quirks & XHCI_EP_LIMIT_QUIRK)) {
+		spin_lock_irqsave(&xhci->lock, flags);
+		ret = xhci_reserve_host_control_ep_resources(xhci);
+		if (ret) {
+			spin_unlock_irqrestore(&xhci->lock, flags);
+			xhci_warn(xhci, "Not enough host resources, "
+					"active endpoint contexts = %u\n",
+					xhci->num_active_eps);
+			goto disable_slot;
+		}
+		spin_unlock_irqrestore(&xhci->lock, flags);
+	}
+	/* Use GFP_NOIO, since this function can be called from
 	 * xhci_discover_or_reset_device(), which may be called as part of
 	 * mass storage driver error handling.
 	 */
 	if (!xhci_alloc_virt_device(xhci, xhci->slot_id, udev, GFP_NOIO)) {
-		/* Disable slot, if we can do it without mem alloc */
 		xhci_warn(xhci, "Could not allocate xHCI USB device data structures\n");
-		spin_lock_irqsave(&xhci->lock, flags);
-		if (!xhci_queue_slot_control(xhci, TRB_DISABLE_SLOT, udev->slot_id))
-			xhci_ring_cmd_db(xhci);
-		spin_unlock_irqrestore(&xhci->lock, flags);
-		return 0;
+		goto disable_slot;
 	}
 	udev->slot_id = xhci->slot_id;
 	/* Is this a LS or FS device under a HS hub? */
 	/* Hub or peripherial? */
 	return 1;
+
+disable_slot:
+	/* Disable slot, if we can do it without mem alloc */
+	spin_lock_irqsave(&xhci->lock, flags);
+	if (!xhci_queue_slot_control(xhci, TRB_DISABLE_SLOT, udev->slot_id))
+		xhci_ring_cmd_db(xhci);
+	spin_unlock_irqrestore(&xhci->lock, flags);
+	return 0;
 }
 
 /*
@@ -2620,6 +2878,11 @@ int xhci_address_device(struct usb_hcd *hcd, struct usb_device *udev)
 	case COMP_TX_ERR:
 		dev_warn(&udev->dev, "Device not responding to set address.\n");
 		ret = -EPROTO;
+		break;
+	case COMP_DEV_ERR:
+		dev_warn(&udev->dev, "ERROR: Incompatible device for address "
+				"device command.\n");
+		ret = -ENODEV;
 		break;
 	case COMP_SUCCESS:
 		xhci_dbg(xhci, "Successful Address Device command\n");
