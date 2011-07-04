@@ -107,6 +107,8 @@ struct via_input {
 	const char *label;	/* input-source label */
 };
 
+#define VIA_MAX_ADCS	3
+
 struct via_spec {
 	/* codec parameterization */
 	const struct snd_kcontrol_new *mixers[6];
@@ -130,16 +132,17 @@ struct via_spec {
 	hda_nid_t hp_dac_nid;
 	bool hp_indep_shared;	/* indep HP-DAC is shared with side ch */
 	int num_active_streams;
+	int dac_mixer_idx;
 
-	struct nid_path out_path[4];
+	struct nid_path out_path[HDA_SIDE + 1];
 	struct nid_path hp_path;
 	struct nid_path hp_dep_path;
 	struct nid_path speaker_path;
 
 	/* capture */
 	unsigned int num_adc_nids;
-	hda_nid_t adc_nids[3];
-	hda_nid_t mux_nids[3];
+	hda_nid_t adc_nids[VIA_MAX_ADCS];
+	hda_nid_t mux_nids[VIA_MAX_ADCS];
 	hda_nid_t aa_mix_nid;
 	hda_nid_t dig_in_nid;
 
@@ -147,7 +150,7 @@ struct via_spec {
 	bool dyn_adc_switch;
 	int num_inputs;
 	struct via_input inputs[AUTO_CFG_MAX_INS + 1];
-	unsigned int cur_mux[3];
+	unsigned int cur_mux[VIA_MAX_ADCS];
 
 	/* dynamic ADC switching */
 	hda_nid_t cur_adc;
@@ -451,8 +454,9 @@ static void activate_output_path(struct hda_codec *codec, struct nid_path *path,
 		if (enable && path->multi[i])
 			snd_hda_codec_write(codec, dst, 0,
 					    AC_VERB_SET_CONNECT_SEL, idx);
-		if (get_wcaps_type(get_wcaps(codec, src)) == AC_WID_AUD_OUT &&
-		    get_wcaps_type(get_wcaps(codec, dst)) == AC_WID_AUD_MIX)
+		if (!force
+		    && get_wcaps_type(get_wcaps(codec, src)) == AC_WID_AUD_OUT
+		    && get_wcaps_type(get_wcaps(codec, dst)) == AC_WID_AUD_MIX)
 			continue;
 		if (have_mute(codec, dst, HDA_INPUT)) {
 			int val = enable ? AMP_IN_UNMUTE(idx) :
@@ -489,8 +493,8 @@ static void via_auto_init_output(struct hda_codec *codec,
 {
 	struct via_spec *spec = codec->spec;
 	unsigned int caps;
-	hda_nid_t pin, nid;
-	int i, idx;
+	hda_nid_t pin, nid, pre_nid;
+	int i, idx, j, num;
 
 	if (!path->depth)
 		return;
@@ -512,12 +516,26 @@ static void via_auto_init_output(struct hda_codec *codec,
 		return;
 	for (i = path->depth - 1; i > 0; i--) {
 		nid = path->path[i];
+		pre_nid = path->path[i - 1];
 		idx = get_connection_index(codec, nid, spec->aa_mix_nid);
 		if (idx >= 0) {
-			if (have_mute(codec, nid, HDA_INPUT))
+			if (have_mute(codec, nid, HDA_INPUT)) {
 				snd_hda_codec_write(codec, nid, 0,
 						    AC_VERB_SET_AMP_GAIN_MUTE,
 						    AMP_IN_UNMUTE(idx));
+				if (pre_nid == spec->multiout.dac_nids[0]) {
+					num = snd_hda_get_conn_list(codec, nid,
+								    NULL);
+					for (j = 0; j < num; j++) {
+						if (j == idx)
+							continue;
+						snd_hda_codec_write(codec,
+						    nid, 0,
+						    AC_VERB_SET_AMP_GAIN_MUTE,
+						    AMP_IN_MUTE(j));
+					}
+				}
+			}
 			break;
 		}
 	}
@@ -1810,6 +1828,8 @@ static int via_auto_create_multi_out_ctls(struct hda_codec *codec)
 
 	idx = get_connection_index(codec, spec->aa_mix_nid,
 				   spec->multiout.dac_nids[0]);
+	if (idx < 0 && spec->dac_mixer_idx)
+		idx = spec->dac_mixer_idx;
 	if (idx >= 0) {
 		/* add control to mixer */
 		err = via_add_control(spec, VIA_CTL_WIDGET_VOL,
@@ -2959,6 +2979,7 @@ static int patch_vt1718S(struct hda_codec *codec)
 	spec->aa_mix_nid = 0x21;
 	override_mic_boost(codec, 0x2b, 0, 3, 40);
 	override_mic_boost(codec, 0x29, 0, 3, 40);
+	spec->dac_mixer_idx = 5;
 
 	/* automatic parse from the BIOS config */
 	err = via_parse_auto_config(codec);
