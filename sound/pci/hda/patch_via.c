@@ -615,6 +615,7 @@ static void via_auto_init_speaker_out(struct hda_codec *codec)
 }
 
 static bool is_smart51_pins(struct hda_codec *codec, hda_nid_t pin);
+static void via_hp_automute(struct hda_codec *codec);
 
 static void via_auto_init_analog_input(struct hda_codec *codec)
 {
@@ -801,6 +802,7 @@ static int via_independent_hp_put(struct snd_kcontrol *kcontrol,
 
 	/* update jack power state */
 	set_widgets_power_state(codec);
+	via_hp_automute(codec);
 	return 1;
 }
 
@@ -1507,10 +1509,18 @@ static void toggle_output_mutes(struct hda_codec *codec, int num_pins,
 				hda_nid_t *pins, bool mute)
 {
 	int i;
-	for (i = 0; i < num_pins; i++)
+	for (i = 0; i < num_pins; i++) {
+		unsigned int parm = snd_hda_codec_read(codec, pins[i], 0,
+					  AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
+		if (parm & AC_PINCTL_IN_EN)
+			continue;
+		if (mute)
+			parm &= ~AC_PINCTL_OUT_EN;
+		else
+			parm |= AC_PINCTL_OUT_EN;
 		snd_hda_codec_write(codec, pins[i], 0,
-				    AC_VERB_SET_PIN_WIDGET_CONTROL,
-				    mute ? 0 : PIN_OUT);
+				    AC_VERB_SET_PIN_WIDGET_CONTROL, parm);
+	}
 }
 
 /* mute internal speaker if line-out is plugged */
@@ -1532,19 +1542,18 @@ static void via_line_automute(struct hda_codec *codec, int present)
 static void via_hp_automute(struct hda_codec *codec)
 {
 	int present = 0;
+	int nums;
 	struct via_spec *spec = codec->spec;
 
-	if (!spec->hp_independent_mode && spec->autocfg.hp_pins[0]) {
-		int nums;
+	if (!spec->hp_independent_mode && spec->autocfg.hp_pins[0])
 		present = snd_hda_jack_detect(codec, spec->autocfg.hp_pins[0]);
-		if (spec->smart51_enabled)
-			nums = spec->autocfg.line_outs + spec->smart51_nums;
-		else
-			nums = spec->autocfg.line_outs;
-		toggle_output_mutes(codec, nums,
-				    spec->autocfg.line_out_pins,
-				    present);
-	}
+
+	if (spec->smart51_enabled)
+		nums = spec->autocfg.line_outs + spec->smart51_nums;
+	else
+		nums = spec->autocfg.line_outs;
+	toggle_output_mutes(codec, nums, spec->autocfg.line_out_pins, present);
+
 	via_line_automute(codec, present);
 }
 
@@ -1606,12 +1615,10 @@ static void via_unsol_event(struct hda_codec *codec,
 
 	res &= ~VIA_JACK_EVENT;
 
-	if (res == VIA_HP_EVENT)
+	if (res == VIA_HP_EVENT || res == VIA_LINE_EVENT)
 		via_hp_automute(codec);
 	else if (res == VIA_GPIO_EVENT)
 		via_gpio_control(codec);
-	else if (res == VIA_LINE_EVENT)
-		via_line_automute(codec, false);
 }
 
 #ifdef SND_HDA_NEEDS_RESUME
@@ -2535,7 +2542,6 @@ static int via_init(struct hda_codec *codec)
 	via_auto_init_unsol_event(codec);
 
 	via_hp_automute(codec);
-	via_line_automute(codec, false);
 
 	return 0;
 }
