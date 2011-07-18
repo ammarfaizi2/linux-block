@@ -63,8 +63,10 @@ static const struct soc_enum speaker_mode =
 
 static void wait_for_dc_servo(struct snd_soc_codec *codec, unsigned int op)
 {
+	struct wm_hubs_data *hubs = snd_soc_codec_get_drvdata(codec);
 	unsigned int reg;
 	int count = 0;
+	int timeout;
 	unsigned int val;
 
 	val = op | WM8993_DCS_ENA_CHAN_0 | WM8993_DCS_ENA_CHAN_1;
@@ -74,17 +76,38 @@ static void wait_for_dc_servo(struct snd_soc_codec *codec, unsigned int op)
 
 	dev_dbg(codec->dev, "Waiting for DC servo...\n");
 
+	if (hubs->dcs_done_irq)
+		timeout = 4;
+	else
+		timeout = 400;
+
 	do {
 		count++;
-		msleep(1);
+
+		if (hubs->dcs_done_irq)
+			wait_for_completion_timeout(&hubs->dcs_done,
+						    msecs_to_jiffies(250));
+		else
+			msleep(1);
+
 		reg = snd_soc_read(codec, WM8993_DC_SERVO_0);
 		dev_dbg(codec->dev, "DC servo: %x\n", reg);
-	} while (reg & op && count < 400);
+	} while (reg & op && count < timeout);
 
 	if (reg & op)
 		dev_err(codec->dev, "Timed out waiting for DC Servo %x\n",
 			op);
 }
+
+irqreturn_t wm_hubs_dcs_done(int irq, void *data)
+{
+	struct wm_hubs_data *hubs = data;
+
+	complete(&hubs->dcs_done);
+
+	return IRQ_HANDLED;
+}
+EXPORT_SYMBOL_GPL(wm_hubs_dcs_done);
 
 /*
  * Startup calibration of the DC servo
@@ -598,9 +621,6 @@ SND_SOC_DAPM_MIXER("IN2L PGA", WM8993_POWER_MANAGEMENT_2, 7, 0,
 SND_SOC_DAPM_MIXER("IN2R PGA", WM8993_POWER_MANAGEMENT_2, 5, 0,
 		   in2r_pga, ARRAY_SIZE(in2r_pga)),
 
-/* Dummy widgets to represent differential paths */
-SND_SOC_DAPM_PGA("Direct Voice", SND_SOC_NOPM, 0, 0, NULL, 0),
-
 SND_SOC_DAPM_MIXER("MIXINL", WM8993_POWER_MANAGEMENT_2, 9, 0,
 		   mixinl, ARRAY_SIZE(mixinl)),
 SND_SOC_DAPM_MIXER("MIXINR", WM8993_POWER_MANAGEMENT_2, 8, 0,
@@ -866,7 +886,10 @@ EXPORT_SYMBOL_GPL(wm_hubs_add_analogue_controls);
 int wm_hubs_add_analogue_routes(struct snd_soc_codec *codec,
 				int lineout1_diff, int lineout2_diff)
 {
+	struct wm_hubs_data *hubs = snd_soc_codec_get_drvdata(codec);
 	struct snd_soc_dapm_context *dapm = &codec->dapm;
+
+	init_completion(&hubs->dcs_done);
 
 	snd_soc_dapm_add_routes(dapm, analogue_routes,
 				ARRAY_SIZE(analogue_routes));
