@@ -5,7 +5,7 @@
  * Copyright (C) 2006 Applied Data Systems
  *
  * Rewritten for the SoC audio subsystem (Based on PXA2xx code):
- *   Copyright (c) 2008 Ryan Mallon <ryan@bluewatersys.com>
+ *   Copyright (c) 2008 Ryan Mallon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -283,9 +283,11 @@ static void ep93xx_pcm_free_dma_buffers(struct snd_pcm *pcm)
 
 static u64 ep93xx_pcm_dmamask = 0xffffffff;
 
-static int ep93xx_pcm_new(struct snd_card *card, struct snd_soc_dai *dai,
-			  struct snd_pcm *pcm)
+static int ep93xx_pcm_new(struct snd_soc_pcm_runtime *rtd)
 {
+	struct snd_card *card = rtd->card->snd_card;
+	struct snd_soc_dai *dai = rtd->cpu_dai;
+	struct snd_pcm *pcm = rtd->pcm;
 	int ret = 0;
 
 	if (!card->dev->dma_mask)
@@ -350,6 +352,6 @@ static void __exit ep93xx_soc_platform_exit(void)
 module_init(ep93xx_soc_platform_init);
 module_exit(ep93xx_soc_platform_exit);
 
-MODULE_AUTHOR("Ryan Mallon <ryan@bluewatersys.com>");
+MODULE_AUTHOR("Ryan Mallon");
 MODULE_DESCRIPTION("EP93xx ALSA PCM interface");
 MODULE_LICENSE("GPL");

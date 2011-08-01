@@ -390,12 +390,21 @@ config X86_INTEL_CE
 	  This option compiles in support for the CE4100 SOC for settop
 	  boxes and media devices.
 
+config X86_INTEL_MID
+	bool "Intel MID platform support"
+	depends on X86_32
+	depends on X86_EXTENDED_PLATFORM
+	---help---
+	  Select to build a kernel capable of supporting Intel MID platform
+	  systems which do not have the PCI legacy interfaces (Moorestown,
+	  Medfield). If you are building for a PC class system say N here.
+
+if X86_INTEL_MID
+
 config X86_MRST
        bool "Moorestown MID platform"
 	depends on PCI
 	depends on PCI_GOANY
-	depends on X86_32
-	depends on X86_EXTENDED_PLATFORM
 	depends on X86_IO_APIC
 	select APB_TIMER
 	select I2C
@@ -409,6 +418,8 @@ config X86_MRST
 	  Unlike standard x86 PCs, Moorestown does not have many legacy devices
 	  nor standard legacy replacement devices/features. e.g. Moorestown does
 	  not contain i8259, i8254, HPET, legacy BIOS, most of the io ports.
+
+endif
 
 config X86_RDC321X
 	bool "RDC R-321x SoC"
@@ -518,6 +529,18 @@ menuconfig PARAVIRT_GUEST
 
 if PARAVIRT_GUEST
 
+config PARAVIRT_TIME_ACCOUNTING
+	bool "Paravirtual steal time accounting"
+	select PARAVIRT
+	default n
+	---help---
+	  Select this option to enable fine granularity task steal time
+	  accounting. Time spent executing other tasks in parallel with
+	  the current vCPU is discounted from the vCPU power. To account for
+	  that, there can be a small performance impact.
+
+	  If in doubt, say N here.
+
 source "arch/x86/xen/Kconfig"
 
 config KVM_CLOCK
@@ -623,6 +646,7 @@ config HPET_EMULATE_RTC
 config APB_TIMER
        def_bool y if MRST
        prompt "Langwell APB Timer Support" if X86_MRST
+       select DW_APB_TIMER
        help
          APB timer is the replacement for 8254, HPET on X86 MID platforms.
          The APBT provides a stable time base on SMP
@@ -1713,8 +1737,8 @@ menuconfig APM
 	  machines with more than one CPU.
 
 	  In order to use APM, you will need supporting software. For location
-	  and more information, read <file:Documentation/power/pm.txt> and the
-	  Battery Powered Linux mini-HOWTO, available from
+	  and more information, read <file:Documentation/power/apm-acpi.txt>
+	  and the Battery Powered Linux mini-HOWTO, available from
 	  <http://www.tldp.org/docs.html#howto>.
 
 	  This driver does not spin down disk drives (see the hdparm(8)
@@ -1881,7 +1905,7 @@ config PCI_BIOS
 # x86-64 doesn't support PCI BIOS access from long mode so always go direct.
 config PCI_DIRECT
 	def_bool y
-	depends on PCI && (X86_64 || (PCI_GODIRECT || PCI_GOANY || PCI_GOOLPC))
+	depends on PCI && (X86_64 || (PCI_GODIRECT || PCI_GOANY || PCI_GOOLPC || PCI_GOMMCONFIG))
 
 config PCI_MMCONFIG
 	def_bool y
@@ -2000,11 +2024,44 @@ config OLPC
 	  Add support for detecting the unique features of the OLPC
 	  XO hardware.
 
-config OLPC_XO1
-	tristate "OLPC XO-1 support"
-	depends on OLPC && MFD_CS5535
+config OLPC_XO1_PM
+	bool "OLPC XO-1 Power Management"
+	depends on OLPC && MFD_CS5535 && PM_SLEEP
+	select MFD_CORE
 	---help---
-	  Add support for non-essential features of the OLPC XO-1 laptop.
+	  Add support for poweroff and suspend of the OLPC XO-1 laptop.
+
+config OLPC_XO1_RTC
+	bool "OLPC XO-1 Real Time Clock"
+	depends on OLPC_XO1_PM && RTC_DRV_CMOS
+	---help---
+	  Add support for the XO-1 real time clock, which can be used as a
+	  programmable wakeup source.
+
+config OLPC_XO1_SCI
+	bool "OLPC XO-1 SCI extras"
+	depends on OLPC && OLPC_XO1_PM
+	select POWER_SUPPLY
+	select GPIO_CS5535
+	select MFD_CORE
+	---help---
+	  Add support for SCI-based features of the OLPC XO-1 laptop:
+	   - EC-driven system wakeups
+	   - Power button
+	   - Ebook switch
+	   - Lid switch
+	   - AC adapter status updates
+	   - Battery status updates
+
+config OLPC_XO15_SCI
+	bool "OLPC XO-1.5 SCI extras"
+	depends on OLPC && ACPI
+	select POWER_SUPPLY
+	---help---
+	  Add support for SCI-based features of the OLPC XO-1.5 laptop:
+	   - EC-driven system wakeups
+	   - AC adapter status updates
+	   - Battery status updates
 
 endif # X86_32
 
