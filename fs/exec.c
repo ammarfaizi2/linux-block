@@ -770,6 +770,7 @@ EXPORT_SYMBOL(setup_arg_pages);
  */
 struct file *open_exec(const char *name, struct linux_binprm *bprm)
 {
+	const struct cred *saved_cred;
 	struct file *file;
 	int err;
 	struct filename tmp = { .name = name };
@@ -780,7 +781,9 @@ struct file *open_exec(const char *name, struct linux_binprm *bprm)
 		.lookup_flags = LOOKUP_FOLLOW,
 	};
 
+	saved_cred = override_creds(bprm->cred);
 	file = do_filp_open(AT_FDCWD, &tmp, &open_exec_flags);
+	revert_creds(saved_cred);
 	if (IS_ERR(file))
 		goto out;
 
@@ -1295,11 +1298,64 @@ static int check_unsafe_exec(struct linux_binprm *bprm)
 	return res;
 }
 
-/* 
- * Fill the binprm structure from the inode. 
- * Check permissions, then read the first 128 (BINPRM_BUF_SIZE) bytes
+/*
+ * Reopen the file currently held by bprm->file with the newly calculated
+ * credentials.
  *
- * This may be called multiple times for binary chains (scripts for example).
+ * It's possible we should use open_exec() here instead, but that requires at
+ * least one additional SELinux rule.
+ */
+static int reopen_exec(struct linux_binprm *bprm)
+{
+	struct file *file;
+	int retval;
+
+	dget(bprm->file->f_path.dentry);
+	mntget(bprm->file->f_path.mnt);
+	file = dentry_open(&bprm->file->f_path,
+			   bprm->file->f_flags,
+			   bprm->cred);
+
+	if (IS_ERR(file))
+		return PTR_ERR(file);
+
+	fsnotify_open(file);
+	retval = deny_write_access(file);
+	if (retval < 0) {
+		fput(file);
+		return retval;
+	}
+
+	allow_write_access(bprm->file);
+	fput(bprm->file);
+	bprm->file = file;
+	return 0;
+}
+
+/**
+ * prepare_binprm - Set up the program execution state.
+ * @bprm: The exec state
+ *
+ * Set up the execution state for this particular iteration of the program
+ * execution procedure (there may be multiple iterations due to scripts and
+ * other interpreted executables).
+ *
+ * The proposed new credentials for the process are generated at this stage and
+ * may not be modified thereafter until and unless prepare_binprm() is called
+ * again - say for a script interpreter.
+ *
+ * The permissions on the file to be read (previously opened and attached to
+ * bprm->file) are checked at this point and credential transitions, such as
+ * SGID, SUID, capability escalations and LSM label changes are handled here
+ * too.
+ *
+ * bprm->file will be reopened with the new credentials so that mappings made
+ * with it will belong to the same security context as the new program and
+ * bprm->file->f_cred will refer to the new creds and not the old creds.
+ *
+ * The first chunk of the file to be executed is read and placed in bprm->buf
+ * for the binfmt drivers to examine.  It is presumed that this will be
+ * sufficient to provide the magic number and script interpreter filename.
  */
 int prepare_binprm(struct linux_binprm *bprm)
 {
@@ -1360,14 +1416,18 @@ int prepare_binprm(struct linux_binprm *bprm)
 	bprm->cred_prepared = 1;
 	put_cred(old);
 
-	/* TODO: Reopen the executable image file if any significant security
-	 * data changed during calculation of the new credentials
+	/* Reopen the executable image file if any significant security data
+	 * changed during calculation of the new credentials
 	 */
+	if (reopen_file) {
+		retval = reopen_exec(bprm);
+		if (retval < 0)
+			return retval;
+	}
 
 	memset(bprm->buf, 0, BINPRM_BUF_SIZE);
 	return exec_read_header(bprm, bprm->file);
 }
-
 EXPORT_SYMBOL(prepare_binprm);
 
 /*
