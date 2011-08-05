@@ -210,9 +210,10 @@ int security_vm_enough_memory_mm(struct mm_struct *mm, long pages)
 	return security_ops->vm_enough_memory(mm, pages);
 }
 
-int security_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
+int security_bprm_set_creds(struct linux_binprm *bprm, struct cred *new,
+			    bool *_reopen_file)
 {
-	return security_ops->bprm_set_creds(bprm, new);
+	return security_ops->bprm_set_creds(bprm, new, _reopen_file);
 }
 
 int security_bprm_check(struct linux_binprm *bprm)

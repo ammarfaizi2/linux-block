@@ -473,12 +473,14 @@ out:
  * cap_bprm_set_creds - Set up the proposed credentials for execve().
  * @bprm: The execution parameters, including the proposed creds
  * @new: The credentials being constructed
+ * *@_reopen_file: Set to reopen bprm->file with the new creds
  *
  * Set up the proposed credentials for a new execution context being
  * constructed by execve().  The proposed creds in @bprm->cred is altered,
  * which won't take effect immediately.  Returns 0 if successful, -ve on error.
  */
-int cap_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
+int cap_bprm_set_creds(struct linux_binprm *bprm, struct cred *new,
+		       bool *_reopen_file)
 {
 	const struct cred *old = current_cred();
 	bool effective, has_cap = false;

@@ -1288,6 +1288,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 	struct cred *cred;
 	umode_t mode;
 	struct inode * inode = file_inode(bprm->file);
+	bool reopen_file = false;
 	int retval;
 
 	mode = inode->i_mode;
@@ -1310,6 +1311,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 		if (mode & S_ISUID) {
 			bprm->per_clear |= PER_CLEAR_ON_SETID;
 			cred->euid = inode->i_uid;
+			reopen_file = true;
 		}
 
 		/* Set-gid? */
@@ -1321,11 +1323,12 @@ int prepare_binprm(struct linux_binprm *bprm)
 		if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) {
 			bprm->per_clear |= PER_CLEAR_ON_SETID;
 			cred->egid = inode->i_gid;
+			reopen_file = true;
 		}
 	}
 
 	/* fill in binprm security blob */
-	retval = security_bprm_set_creds(bprm, cred);
+	retval = security_bprm_set_creds(bprm, cred, &reopen_file);
 	if (retval) {
 		abort_creds(cred);
 		return retval;
@@ -1337,6 +1340,10 @@ int prepare_binprm(struct linux_binprm *bprm)
 	bprm->cred = cred;
 	bprm->cred_prepared = 1;
 	put_cred(old);
+
+	/* TODO: Reopen the executable image file if any significant security
+	 * data changed during calculation of the new credentials
+	 */
 
 	memset(bprm->buf, 0, BINPRM_BUF_SIZE);
 	return exec_read_header(bprm, bprm->file);

@@ -2004,7 +2004,13 @@ static int selinux_vm_enough_memory(struct mm_struct *mm, long pages)
 
 /* binprm security operations */
 
-static int selinux_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
+/*
+ * Calculate the new security data for the exec'd process and store it in the
+ * creds provided.  If the task sid is to be changed, then the caller is asked
+ * to reopen bprm->file with the new creds.
+ */
+static int selinux_bprm_set_creds(struct linux_binprm *bprm, struct cred *new,
+				  bool *_reopen_file)
 {
 	const struct task_security_struct *old_tsec;
 	struct task_security_struct *new_tsec;
@@ -2013,7 +2019,7 @@ static int selinux_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 	struct inode *inode = file_inode(bprm->file);
 	int rc;
 
-	rc = cap_bprm_set_creds(bprm, new);
+	rc = cap_bprm_set_creds(bprm, new, _reopen_file);
 	if (rc)
 		return rc;
 
@@ -2115,6 +2121,9 @@ static int selinux_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 
 		/* Clear any possibly unsafe personality bits on exec: */
 		bprm->per_clear |= PER_CLEAR_ON_SETID;
+
+		/* The file needs reopening with the new SID */
+		*_reopen_file = true;
 	}
 
 	return 0;

@@ -23,7 +23,8 @@ struct aa_domain {
 	char **table;
 };
 
-int apparmor_bprm_set_creds(struct linux_binprm *bprm, struct cred *cred);
+int apparmor_bprm_set_creds(struct linux_binprm *bprm, struct cred *cred,
+			    bool *_reopen_file);
 int apparmor_bprm_secureexec(struct linux_binprm *bprm);
 void apparmor_bprm_committing_creds(struct linux_binprm *bprm);
 void apparmor_bprm_committed_creds(struct linux_binprm *bprm);

@@ -478,17 +478,19 @@ static int smack_sb_umount(struct vfsmount *mnt, int flags)
  * smack_bprm_set_creds - set creds for exec
  * @bprm: the exec information
  * @new: the credentials under construction
+ * *@_reopen_file: set to true to reopen bprm->file under the new creds
  *
  * Returns 0 if it gets a blob, -ENOMEM otherwise
  */
-static int smack_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
+static int smack_bprm_set_creds(struct linux_binprm *bprm, struct cred *new,
+				bool *_reopen_file)
 {
 	struct inode *inode = file_inode(bprm->file);
 	struct task_smack *bsp = new->security;
 	struct inode_smack *isp;
 	int rc;
 
-	rc = cap_bprm_set_creds(bprm, new);
+	rc = cap_bprm_set_creds(bprm, new, _reopen_file);
 	if (rc != 0)
 		return rc;
 
@@ -502,6 +504,8 @@ static int smack_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 	if (bprm->unsafe)
 		return -EPERM;
 
+	if (bsp->smk_task != isp->smk_task)
+		*_reopen_file = true;
 	bsp->smk_task = isp->smk_task;
 	bprm->per_clear |= PER_CLEAR_ON_SETID;
 

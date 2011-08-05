@@ -334,10 +334,12 @@ static struct aa_profile *x_to_profile(struct aa_profile *profile,
  * apparmor_bprm_set_creds - set the new creds on the bprm struct
  * @bprm: binprm for the exec  (NOT NULL)
  * @new: the credentials under construction.
+ * *@_reopen_file: set to true to reopen bprm->file under the new creds
  *
  * Returns: %0 or error on failure
  */
-int apparmor_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
+int apparmor_bprm_set_creds(struct linux_binprm *bprm, struct cred *new,
+			    bool *_reopen_file)
 {
 	struct aa_task_cxt *cxt;
 	struct aa_profile *profile, *new_profile = NULL;
@@ -350,7 +352,7 @@ int apparmor_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 		file_inode(bprm->file)->i_mode
 	};
 	const char *name = NULL, *target = NULL, *info = NULL;
-	int error = cap_bprm_set_creds(bprm, new);
+	int error = cap_bprm_set_creds(bprm, new, _reopen_file);
 	if (error)
 		return error;
 
@@ -511,6 +513,7 @@ x_clear:
 	aa_put_profile(cxt->profile);
 	/* transfer new profile reference will be released when cxt is freed */
 	cxt->profile = new_profile;
+	*_reopen_file = true;
 
 	/* clear out all temporary/transitional state from the context */
 	aa_clear_task_cxt_trans(cxt);

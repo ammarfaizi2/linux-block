@@ -68,14 +68,16 @@ static void tomoyo_cred_free(struct cred *cred)
  *
  * @bprm: Pointer to "struct linux_binprm".
  * @new: The credentials to be filled in.
+ * *@_reopen_file: set to true to reopen bprm->file under the new creds
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
+static int tomoyo_bprm_set_creds(struct linux_binprm *bprm, struct cred *new,
+				 bool *_reopen_file)
 {
 	int rc, idx, err;
 
-	rc = cap_bprm_set_creds(bprm, new);
+	rc = cap_bprm_set_creds(bprm, new, _reopen_file);
 	if (rc)
 		return rc;
 
@@ -106,7 +108,7 @@ static int tomoyo_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 	 * credentials being constructed.
 	 */
 	idx = tomoyo_read_lock();
-	err = tomoyo_find_next_domain(bprm, new);
+	err = tomoyo_find_next_domain(bprm, new, _reopen_file);
 	tomoyo_read_unlock(idx);
 	return err;
 }
