@@ -787,22 +787,31 @@ exit:
 }
 EXPORT_SYMBOL(open_exec);
 
-int kernel_read(struct file *file, loff_t offset,
-		char *addr, unsigned long count)
+/**
+ * bprm_read - Read data from an executable
+ * @bprm: Execution state (or NULL if after the point of no return)
+ * @file: File to read from
+ * @offset: File offset to read from
+ * @addr: The buffer to read into
+ * @count: The amount of data to read
+ *
+ * Read some data from an executable.
+ */
+int bprm_read(struct linux_binprm *bprm,
+	      struct file *file, loff_t offset,
+	      void *addr, unsigned long count)
 {
-	mm_segment_t old_fs;
-	loff_t pos = offset;
-	int result;
+	const struct cred *saved_cred = NULL;
+	ssize_t result;
 
-	old_fs = get_fs();
-	set_fs(get_ds());
-	/* The cast to a user pointer is valid due to the set_fs() */
-	result = vfs_read(file, (void __user *)addr, count, &pos);
-	set_fs(old_fs);
+	if (bprm->cred)
+		saved_cred = override_creds(bprm->cred);
+	result = kernel_read(file, offset, addr, count);
+	if (saved_cred)
+		revert_creds(saved_cred);
 	return result;
 }
-
-EXPORT_SYMBOL(kernel_read);
+EXPORT_SYMBOL(bprm_read);
 
 ssize_t read_code(struct file *file, unsigned long addr, loff_t pos, size_t len)
 {
@@ -1330,7 +1339,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 	put_cred(old);
 
 	memset(bprm->buf, 0, BINPRM_BUF_SIZE);
-	return kernel_read(bprm->file, 0, bprm->buf, BINPRM_BUF_SIZE);
+	return exec_read_header(bprm, bprm->file);
 }
 
 EXPORT_SYMBOL(prepare_binprm);

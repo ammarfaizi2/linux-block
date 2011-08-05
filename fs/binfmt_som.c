@@ -206,8 +206,8 @@ load_som_binary(struct linux_binprm * bprm)
 	if (!hpuxhdr)
 		goto out;
 
-	retval = kernel_read(bprm->file, som_ex->aux_header_location,
-			(char *) hpuxhdr, size);
+	retval = bprm_read(bprm, bprm->file, som_ex->aux_header_location,
+			   hpuxhdr, size);
 	if (retval != size) {
 		if (retval >= 0)
 			retval = -EIO;

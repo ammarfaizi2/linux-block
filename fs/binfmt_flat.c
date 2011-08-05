@@ -207,7 +207,7 @@ static int decompress_exec(
 
 	/* Read in first chunk of data and parse gzip header. */
 	fpos = offset;
-	ret = kernel_read(bprm->file, offset, buf, LBUFSIZE);
+	ret = bprm_read(bprm, bprm->file, offset, buf, LBUFSIZE);
 
 	strm.next_in = buf;
 	strm.avail_in = ret;
@@ -278,7 +278,7 @@ static int decompress_exec(
 	}
 
 	while ((ret = zlib_inflate(&strm, Z_NO_FLUSH)) == Z_OK) {
-		ret = kernel_read(bprm->file, fpos, buf, LBUFSIZE);
+		ret = bprm_read(bprm, bprm->file, fpos, buf, LBUFSIZE);
 		if (ret <= 0)
 			break;
 		len -= ret;

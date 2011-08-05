@@ -387,7 +387,8 @@ static unsigned long total_mapping_size(struct elf_phdr *cmds, int nr)
    is only provided so that we can read a.out libraries that have
    an ELF header */
 
-static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
+static unsigned long load_elf_interp(struct linux_binprm *bprm,
+		struct elfhdr *interp_elf_ex,
 		struct file *interpreter, unsigned long *interp_map_addr,
 		unsigned long no_base)
 {
@@ -428,7 +429,7 @@ static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
 		goto out;
 
 	retval = kernel_read(interpreter, interp_elf_ex->e_phoff,
-			     (char *)elf_phdata, size);
+			     elf_phdata, size);
 	error = -EIO;
 	if (retval != size) {
 		if (retval < 0)
@@ -622,8 +623,8 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	if (!elf_phdata)
 		goto out;
 
-	retval = kernel_read(bprm->file, loc->elf_ex.e_phoff,
-			     (char *)elf_phdata, size);
+	retval = bprm_read(bprm, bprm->file, loc->elf_ex.e_phoff,
+			   elf_phdata, size);
 	if (retval != size) {
 		if (retval >= 0)
 			retval = -EIO;
@@ -656,9 +657,10 @@ static int load_elf_binary(struct linux_binprm *bprm)
 			if (!elf_interpreter)
 				goto out_free_ph;
 
-			retval = kernel_read(bprm->file, elf_ppnt->p_offset,
-					     elf_interpreter,
-					     elf_ppnt->p_filesz);
+			retval = bprm_read(bprm, bprm->file,
+					   elf_ppnt->p_offset,
+					   elf_interpreter,
+					   elf_ppnt->p_filesz);
 			if (retval != elf_ppnt->p_filesz) {
 				if (retval >= 0)
 					retval = -EIO;
@@ -681,8 +683,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 			 */
 			would_dump(bprm, interpreter);
 
-			retval = kernel_read(interpreter, 0, bprm->buf,
-					     BINPRM_BUF_SIZE);
+			retval = exec_read_header(bprm, interpreter);
 			if (retval != BINPRM_BUF_SIZE) {
 				if (retval >= 0)
 					retval = -EIO;
@@ -901,7 +902,8 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	if (elf_interpreter) {
 		unsigned long interp_map_addr = 0;
 
-		elf_entry = load_elf_interp(&loc->interp_elf_ex,
+		elf_entry = load_elf_interp(bprm,
+					    &loc->interp_elf_ex,
 					    interpreter,
 					    &interp_map_addr,
 					    load_bias);
@@ -1022,7 +1024,7 @@ static int load_elf_library(struct file *file)
 	struct elfhdr elf_ex;
 
 	error = -ENOEXEC;
-	retval = kernel_read(file, 0, (char *)&elf_ex, sizeof(elf_ex));
+	retval = kernel_read(file, 0, &elf_ex, sizeof(elf_ex));
 	if (retval != sizeof(elf_ex))
 		goto out;
 
@@ -1046,7 +1048,7 @@ static int load_elf_library(struct file *file)
 
 	eppnt = elf_phdata;
 	error = -ENOEXEC;
-	retval = kernel_read(file, elf_ex.e_phoff, (char *)eppnt, j);
+	retval = kernel_read(file, elf_ex.e_phoff, eppnt, j);
 	if (retval != j)
 		goto out_free_ph;
 

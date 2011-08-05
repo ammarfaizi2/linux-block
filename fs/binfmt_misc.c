@@ -190,7 +190,7 @@ static int load_misc_binary(struct linux_binprm *bprm)
 		 * done.  bprm->buf is stale, update from interp_file.
 		 */
 		memset(bprm->buf, 0, BINPRM_BUF_SIZE);
-		retval = kernel_read(bprm->file, 0, bprm->buf, BINPRM_BUF_SIZE);
+		retval = exec_read_header(bprm, bprm->file);
 	} else
 		retval = prepare_binprm (bprm);
 

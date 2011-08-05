@@ -57,7 +57,8 @@ typedef char *elf_caddr_t;
 MODULE_LICENSE("GPL");
 
 static int load_elf_fdpic_binary(struct linux_binprm *);
-static int elf_fdpic_fetch_phdrs(struct elf_fdpic_params *, struct file *);
+static int elf_fdpic_fetch_phdrs(struct linux_binprm *,
+				 struct elf_fdpic_params *, struct file *);
 static int elf_fdpic_map_file(struct elf_fdpic_params *, struct file *,
 			      struct mm_struct *, const char *);
 
@@ -120,7 +121,8 @@ static int is_elf_fdpic(struct elfhdr *hdr, struct file *file)
 /*
  * read the program headers table into memory
  */
-static int elf_fdpic_fetch_phdrs(struct elf_fdpic_params *params,
+static int elf_fdpic_fetch_phdrs(struct linux_binprm *bprm,
+				 struct elf_fdpic_params *params,
 				 struct file *file)
 {
 	struct elf32_phdr *phdr;
@@ -137,8 +139,7 @@ static int elf_fdpic_fetch_phdrs(struct elf_fdpic_params *params,
 	if (!params->phdrs)
 		return -ENOMEM;
 
-	retval = kernel_read(file, params->hdr.e_phoff,
-			     (char *) params->phdrs, size);
+	retval = bprm_read(bprm, file, params->hdr.e_phoff, params->phdrs, size);
 	if (unlikely(retval != size))
 		return retval < 0 ? retval : -ENOEXEC;
 
@@ -195,7 +196,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 		goto error;
 
 	/* read the program header table */
-	retval = elf_fdpic_fetch_phdrs(&exec_params, bprm->file);
+	retval = elf_fdpic_fetch_phdrs(bprm, &exec_params, bprm->file);
 	if (retval < 0)
 		goto error;
 
@@ -217,10 +218,10 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 			if (!interpreter_name)
 				goto error;
 
-			retval = kernel_read(bprm->file,
-					     phdr->p_offset,
-					     interpreter_name,
-					     phdr->p_filesz);
+			retval = bprm_read(bprm, bprm->file,
+					   phdr->p_offset,
+					   interpreter_name,
+					   phdr->p_filesz);
 			if (unlikely(retval != phdr->p_filesz)) {
 				if (retval >= 0)
 					retval = -ENOEXEC;
@@ -248,8 +249,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 			 */
 			would_dump(bprm, interpreter);
 
-			retval = kernel_read(interpreter, 0, bprm->buf,
-					     BINPRM_BUF_SIZE);
+			retval = exec_read_header(bprm, interpreter);
 			if (unlikely(retval != BINPRM_BUF_SIZE)) {
 				if (retval >= 0)
 					retval = -ENOEXEC;
@@ -281,7 +281,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 		interp_params.flags = ELF_FDPIC_FLAG_PRESENT;
 
 		/* read the interpreter's program header table */
-		retval = elf_fdpic_fetch_phdrs(&interp_params, interpreter);
+		retval = elf_fdpic_fetch_phdrs(bprm, &interp_params, interpreter);
 		if (retval < 0)
 			goto error;
 	}

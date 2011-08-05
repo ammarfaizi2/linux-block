@@ -120,4 +120,12 @@ extern void set_binfmt(struct linux_binfmt *new);
 extern void free_bprm(struct linux_binprm *);
 extern ssize_t read_code(struct file *, unsigned long, loff_t, size_t);
 
+extern int bprm_read(struct linux_binprm *, struct file *,
+		       loff_t, void *, unsigned long);
+static inline int exec_read_header(struct linux_binprm *bprm, struct file *file)
+{
+	return bprm_read(bprm, file, 0, bprm->buf, BINPRM_BUF_SIZE);
+
+}
+
 #endif /* _LINUX_BINFMTS_H */
