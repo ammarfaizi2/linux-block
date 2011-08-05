@@ -749,7 +749,26 @@ EXPORT_SYMBOL(setup_arg_pages);
 
 #endif /* CONFIG_MMU */
 
-struct file *open_exec(const char *name)
+/**
+ * open_exec - Open an executable binary, loader, script or interpreter file
+ * @name: The path of the file to open
+ * @bprm: The exec state
+ *
+ * Open an executable binary, loader, script or interpreter file for program
+ * execution to process.
+ *
+ * The file is opened with the currently proposed credentials for execution.
+ * This means that the file specified to execve() is opened with the caller's
+ * current credentials, but files opened after that - such as binary loaders
+ * (e.g. ld-config.so) and script interpreters (e.g. /bin/sh) - will be opened
+ * with the credentials that will be installed if that executable is the thing
+ * actually run.
+ *
+ * Note that each iteration through prepare_binprm() may further modify the
+ * credentials to be.  The credentials at the time the returned file is opened
+ * will remain attached to file->f_cred until the file is closed.
+ */
+struct file *open_exec(const char *name, struct linux_binprm *bprm)
 {
 	struct file *file;
 	int err;
@@ -1531,7 +1550,7 @@ static int do_execve_common(const char *filename,
 	clear_in_exec = retval;
 	current->in_execve = 1;
 
-	file = open_exec(filename);
+	file = open_exec(filename, bprm);
 	retval = PTR_ERR(file);
 	if (IS_ERR(file))
 		goto out_unmark;

@@ -178,7 +178,7 @@ static int load_misc_binary(struct linux_binprm *bprm)
 	if (retval < 0)
 		goto _error;
 
-	interp_file = open_exec (iname);
+	interp_file = open_exec (iname, bprm);
 	retval = PTR_ERR (interp_file);
 	if (IS_ERR (interp_file))
 		goto _error;

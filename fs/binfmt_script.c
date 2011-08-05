@@ -87,7 +87,7 @@ static int load_script(struct linux_binprm *bprm)
 	/*
 	 * OK, now restart the process with the interpreter's dentry.
 	 */
-	file = open_exec(interp);
+	file = open_exec(interp, bprm);
 	if (IS_ERR(file))
 		return PTR_ERR(file);
 

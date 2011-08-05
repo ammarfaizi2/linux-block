@@ -817,17 +817,7 @@ static int load_flat_shared_library(int id, struct lib_info *libs)
 	/* Create the file name */
 	sprintf(buf, "/lib/lib%d.so", id);
 
-	/* Open the file up */
-	bprm.filename = buf;
-	bprm.file = open_exec(bprm.filename);
-	res = PTR_ERR(bprm.file);
-	if (IS_ERR(bprm.file))
-		return res;
-
-	bprm.cred = prepare_exec_creds();
-	res = -ENOMEM;
-	if (!bprm.cred)
-		goto out;
+	bprm.cred = (struct cred *)get_current_cred();
 
 	/* We don't really care about recalculating credentials at this point
 	 * as we're past the point of no return and are dealing with shared
@@ -835,17 +825,22 @@ static int load_flat_shared_library(int id, struct lib_info *libs)
 	 */
 	bprm.cred_prepared = 1;
 
+	/* Open the file up */
+	bprm.filename = buf;
+	bprm.file = open_exec(bprm.filename, bprm);
+	res = PTR_ERR(bprm.file);
+	if (IS_ERR(bprm.file))
+		goto out_cred;
+
 	res = prepare_binprm(&bprm);
 
 	if (!IS_ERR_VALUE(res))
 		res = load_flat_file(&bprm, libs, id, NULL);
 
-	abort_creds(bprm.cred);
-
-out:
 	allow_write_access(bprm.file);
 	fput(bprm.file);
-
+out_cred:
+	put_creds(bprm.cred);
 	return(res);
 }
 

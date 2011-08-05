@@ -24,7 +24,7 @@ static int load_binary(struct linux_binprm *bprm)
 
 	loader = bprm->vma->vm_end - sizeof(void *);
 
-	file = open_exec("/sbin/loader");
+	file = open_exec("/sbin/loader", bprm);
 	retval = PTR_ERR(file);
 	if (IS_ERR(file))
 		return retval;

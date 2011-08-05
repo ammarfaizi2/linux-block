@@ -79,7 +79,7 @@ static int load_em86(struct linux_binprm *bprm)
 	 * Note that we use open_exec() as the name is now in kernel
 	 * space, and we don't need to copy it.
 	 */
-	file = open_exec(interp);
+	file = open_exec(interp, bprm);
 	if (IS_ERR(file))
 		return PTR_ERR(file);
 
