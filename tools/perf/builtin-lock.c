@@ -355,25 +355,25 @@ struct trace_release_event {
 
 struct trace_lock_handler {
 	void (*acquire_event)(struct trace_acquire_event *,
-			      struct event *,
+			      struct event_format *,
 			      int cpu,
 			      u64 timestamp,
 			      struct thread *thread);
 
 	void (*acquired_event)(struct trace_acquired_event *,
-			       struct event *,
+			       struct event_format *,
 			       int cpu,
 			       u64 timestamp,
 			       struct thread *thread);
 
 	void (*contended_event)(struct trace_contended_event *,
-				struct event *,
+				struct event_format *,
 				int cpu,
 				u64 timestamp,
 				struct thread *thread);
 
 	void (*release_event)(struct trace_release_event *,
-			      struct event *,
+			      struct event_format *,
 			      int cpu,
 			      u64 timestamp,
 			      struct thread *thread);
@@ -415,7 +415,7 @@ enum acquire_flags {
 
 static void
 report_lock_acquire_event(struct trace_acquire_event *acquire_event,
-			struct event *__event __used,
+			struct event_format *__event __used,
 			int cpu __used,
 			u64 timestamp __used,
 			struct thread *thread __used)
@@ -479,7 +479,7 @@ end:
 
 static void
 report_lock_acquired_event(struct trace_acquired_event *acquired_event,
-			 struct event *__event __used,
+			 struct event_format *__event __used,
 			 int cpu __used,
 			 u64 timestamp __used,
 			 struct thread *thread __used)
@@ -535,7 +535,7 @@ end:
 
 static void
 report_lock_contended_event(struct trace_contended_event *contended_event,
-			  struct event *__event __used,
+			  struct event_format *__event __used,
 			  int cpu __used,
 			  u64 timestamp __used,
 			  struct thread *thread __used)
@@ -582,7 +582,7 @@ end:
 
 static void
 report_lock_release_event(struct trace_release_event *release_event,
-			struct event *__event __used,
+			struct event_format *__event __used,
 			int cpu __used,
 			u64 timestamp __used,
 			struct thread *thread __used)
@@ -646,7 +646,7 @@ static struct trace_lock_handler *trace_handler;
 
 static void
 process_lock_acquire_event(void *data,
-			   struct event *event __used,
+			   struct event_format *event __used,
 			   int cpu __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
@@ -665,7 +665,7 @@ process_lock_acquire_event(void *data,
 
 static void
 process_lock_acquired_event(void *data,
-			    struct event *event __used,
+			    struct event_format *event __used,
 			    int cpu __used,
 			    u64 timestamp __used,
 			    struct thread *thread __used)
@@ -683,7 +683,7 @@ process_lock_acquired_event(void *data,
 
 static void
 process_lock_contended_event(void *data,
-			     struct event *event __used,
+			     struct event_format *event __used,
 			     int cpu __used,
 			     u64 timestamp __used,
 			     struct thread *thread __used)
@@ -701,7 +701,7 @@ process_lock_contended_event(void *data,
 
 static void
 process_lock_release_event(void *data,
-			   struct event *event __used,
+			   struct event_format *event __used,
 			   int cpu __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
@@ -720,7 +720,7 @@ process_lock_release_event(void *data,
 static void
 process_raw_event(void *data, int cpu, u64 timestamp, struct thread *thread)
 {
-	struct event *event;
+	struct event_format *event;
 	int type;
 
 	type = trace_parse_common_type(data);
