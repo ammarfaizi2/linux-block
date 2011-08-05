@@ -724,34 +724,34 @@ struct trace_migrate_task_event {
 struct trace_sched_handler {
 	void (*switch_event)(struct trace_switch_event *,
 			     struct perf_session *,
-			     struct event *,
+			     struct event_format *,
 			     int cpu,
 			     u64 timestamp,
 			     struct thread *thread);
 
 	void (*runtime_event)(struct trace_runtime_event *,
 			      struct perf_session *,
-			      struct event *,
+			      struct event_format *,
 			      int cpu,
 			      u64 timestamp,
 			      struct thread *thread);
 
 	void (*wakeup_event)(struct trace_wakeup_event *,
 			     struct perf_session *,
-			     struct event *,
+			     struct event_format *,
 			     int cpu,
 			     u64 timestamp,
 			     struct thread *thread);
 
 	void (*fork_event)(struct trace_fork_event *,
-			   struct event *,
+			   struct event_format *,
 			   int cpu,
 			   u64 timestamp,
 			   struct thread *thread);
 
 	void (*migrate_task_event)(struct trace_migrate_task_event *,
 			   struct perf_session *session,
-			   struct event *,
+			   struct event_format *,
 			   int cpu,
 			   u64 timestamp,
 			   struct thread *thread);
@@ -761,7 +761,7 @@ struct trace_sched_handler {
 static void
 replay_wakeup_event(struct trace_wakeup_event *wakeup_event,
 		    struct perf_session *session __used,
-		    struct event *event,
+		    struct event_format *event,
 		    int cpu __used,
 		    u64 timestamp __used,
 		    struct thread *thread __used)
@@ -788,7 +788,7 @@ static u64 cpu_last_switched[MAX_CPUS];
 static void
 replay_switch_event(struct trace_switch_event *switch_event,
 		    struct perf_session *session __used,
-		    struct event *event,
+		    struct event_format *event,
 		    int cpu,
 		    u64 timestamp,
 		    struct thread *thread __used)
@@ -831,7 +831,7 @@ replay_switch_event(struct trace_switch_event *switch_event,
 
 static void
 replay_fork_event(struct trace_fork_event *fork_event,
-		  struct event *event,
+		  struct event_format *event,
 		  int cpu __used,
 		  u64 timestamp __used,
 		  struct thread *thread __used)
@@ -940,7 +940,7 @@ static void thread_atoms_insert(struct thread *thread)
 
 static void
 latency_fork_event(struct trace_fork_event *fork_event __used,
-		   struct event *event __used,
+		   struct event_format *event __used,
 		   int cpu __used,
 		   u64 timestamp __used,
 		   struct thread *thread __used)
@@ -1022,7 +1022,7 @@ add_sched_in_event(struct work_atoms *atoms, u64 timestamp)
 static void
 latency_switch_event(struct trace_switch_event *switch_event,
 		     struct perf_session *session,
-		     struct event *event __used,
+		     struct event_format *event __used,
 		     int cpu,
 		     u64 timestamp,
 		     struct thread *thread __used)
@@ -1075,7 +1075,7 @@ latency_switch_event(struct trace_switch_event *switch_event,
 static void
 latency_runtime_event(struct trace_runtime_event *runtime_event,
 		     struct perf_session *session,
-		     struct event *event __used,
+		     struct event_format *event __used,
 		     int cpu,
 		     u64 timestamp,
 		     struct thread *this_thread __used)
@@ -1098,7 +1098,7 @@ latency_runtime_event(struct trace_runtime_event *runtime_event,
 static void
 latency_wakeup_event(struct trace_wakeup_event *wakeup_event,
 		     struct perf_session *session,
-		     struct event *__event __used,
+		     struct event_format *__event __used,
 		     int cpu __used,
 		     u64 timestamp,
 		     struct thread *thread __used)
@@ -1146,7 +1146,7 @@ latency_wakeup_event(struct trace_wakeup_event *wakeup_event,
 static void
 latency_migrate_task_event(struct trace_migrate_task_event *migrate_task_event,
 		     struct perf_session *session,
-		     struct event *__event __used,
+		     struct event_format *__event __used,
 		     int cpu __used,
 		     u64 timestamp,
 		     struct thread *thread __used)
@@ -1357,7 +1357,7 @@ static struct trace_sched_handler *trace_handler;
 
 static void
 process_sched_wakeup_event(void *data, struct perf_session *session,
-			   struct event *event,
+			   struct event_format *event,
 			   int cpu __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
@@ -1393,7 +1393,7 @@ static char next_shortname2 = '0';
 static void
 map_switch_event(struct trace_switch_event *switch_event,
 		 struct perf_session *session,
-		 struct event *event __used,
+		 struct event_format *event __used,
 		 int this_cpu,
 		 u64 timestamp,
 		 struct thread *thread __used)
@@ -1472,7 +1472,7 @@ map_switch_event(struct trace_switch_event *switch_event,
 
 static void
 process_sched_switch_event(void *data, struct perf_session *session,
-			   struct event *event,
+			   struct event_format *event,
 			   int this_cpu,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
@@ -1506,7 +1506,7 @@ process_sched_switch_event(void *data, struct perf_session *session,
 
 static void
 process_sched_runtime_event(void *data, struct perf_session *session,
-			   struct event *event,
+			   struct event_format *event,
 			   int cpu __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
@@ -1524,7 +1524,7 @@ process_sched_runtime_event(void *data, struct perf_session *session,
 
 static void
 process_sched_fork_event(void *data,
-			 struct event *event,
+			 struct event_format *event,
 			 int cpu __used,
 			 u64 timestamp __used,
 			 struct thread *thread __used)
@@ -1544,7 +1544,7 @@ process_sched_fork_event(void *data,
 }
 
 static void
-process_sched_exit_event(struct event *event,
+process_sched_exit_event(struct event_format *event,
 			 int cpu __used,
 			 u64 timestamp __used,
 			 struct thread *thread __used)
@@ -1555,7 +1555,7 @@ process_sched_exit_event(struct event *event,
 
 static void
 process_sched_migrate_task_event(void *data, struct perf_session *session,
-			   struct event *event,
+			   struct event_format *event,
 			   int cpu __used,
 			   u64 timestamp __used,
 			   struct thread *thread __used)
@@ -1578,7 +1578,7 @@ static void process_raw_event(union perf_event *raw_event __used,
 			      struct perf_session *session, void *data, int cpu,
 			      u64 timestamp, struct thread *thread)
 {
-	struct event *event;
+	struct event_format *event;
 	int type;
 
 
