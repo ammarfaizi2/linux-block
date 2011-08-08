@@ -64,12 +64,19 @@
 
 #define FL_GLOBAL_CONTROL_MASK (FTRACE_OPS_FL_GLOBAL | FTRACE_OPS_FL_CONTROL)
 
+static struct ftrace_ops ftrace_list_end __read_mostly = {
+	.func		= ftrace_stub,
+};
+
 /* ftrace_enabled is a method to turn ftrace on or off */
 int ftrace_enabled __read_mostly;
 static int last_ftrace_enabled;
 
 /* Quick disabling of function tracer. */
-int function_trace_stop;
+int function_trace_stop __read_mostly;
+
+/* Current function tracing op */
+struct ftrace_ops *function_trace_op __read_mostly = &ftrace_list_end;
 
 /* List for set_ftrace_pid's pids. */
 LIST_HEAD(ftrace_pids);
@@ -86,10 +93,6 @@ static int ftrace_disabled __read_mostly;
 
 static DEFINE_MUTEX(ftrace_lock);
 
-static struct ftrace_ops ftrace_list_end __read_mostly = {
-	.func		= ftrace_stub,
-};
-
 static struct ftrace_ops *ftrace_global_list __read_mostly = &ftrace_list_end;
 static struct ftrace_ops *ftrace_control_list __read_mostly = &ftrace_list_end;
 static struct ftrace_ops *ftrace_ops_list __read_mostly = &ftrace_list_end;
@@ -100,8 +103,8 @@ ftrace_func_t ftrace_pid_function __read_mostly = ftrace_stub;
 static struct ftrace_ops global_ops;
 static struct ftrace_ops control_ops;
 
-static void
-ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip);
+static void ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
+				 struct ftrace_ops *op);
 
 /*
  * Traverse the ftrace_global_list, invoking all entries.  The reason that we
@@ -112,29 +115,29 @@ ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip);
  *
  * Silly Alpha and silly pointer-speculation compiler optimizations!
  */
-static void ftrace_global_list_func(unsigned long ip,
-				    unsigned long parent_ip)
+static void
+ftrace_global_list_func(unsigned long ip, unsigned long parent_ip,
+			struct ftrace_ops *op)
 {
-	struct ftrace_ops *op;
-
 	if (unlikely(trace_recursion_test(TRACE_GLOBAL_BIT)))
 		return;
 
 	trace_recursion_set(TRACE_GLOBAL_BIT);
 	op = rcu_dereference_raw(ftrace_global_list); /*see above*/
 	while (op != &ftrace_list_end) {
-		op->func(ip, parent_ip);
+		op->func(ip, parent_ip, op);
 		op = rcu_dereference_raw(op->next); /*see above*/
 	};
 	trace_recursion_clear(TRACE_GLOBAL_BIT);
 }
 
-static void ftrace_pid_func(unsigned long ip, unsigned long parent_ip)
+static void ftrace_pid_func(unsigned long ip, unsigned long parent_ip,
+			    struct ftrace_ops *op)
 {
 	if (!test_tsk_trace_trace(current))
 		return;
 
-	ftrace_pid_function(ip, parent_ip);
+	ftrace_pid_function(ip, parent_ip, op);
 }
 
 static void set_ftrace_pid_function(ftrace_func_t func)
@@ -163,12 +166,13 @@ void clear_ftrace_function(void)
  * For those archs that do not test ftrace_trace_stop in their
  * mcount call site, we need to do it from C.
  */
-static void ftrace_test_stop_func(unsigned long ip, unsigned long parent_ip)
+static void ftrace_test_stop_func(unsigned long ip, unsigned long parent_ip,
+				  struct ftrace_ops *op)
 {
 	if (function_trace_stop)
 		return;
 
-	__ftrace_trace_function(ip, parent_ip);
+	__ftrace_trace_function(ip, parent_ip, op);
 }
 #endif
 
@@ -230,15 +234,24 @@ static void update_ftrace_function(void)
 
 	/*
 	 * If we are at the end of the list and this ops is
-	 * not dynamic, then have the mcount trampoline call
-	 * the function directly
+	 * not dynamic and the arch supports passing ops, then have the
+	 * mcount trampoline call the function directly.
 	 */
 	if (ftrace_ops_list == &ftrace_list_end ||
 	    (ftrace_ops_list->next == &ftrace_list_end &&
-	     !(ftrace_ops_list->flags & FTRACE_OPS_FL_DYNAMIC)))
+	     !(ftrace_ops_list->flags & FTRACE_OPS_FL_DYNAMIC) &&
+	     ARCH_SUPPORTS_FTRACE_OPS)) {
+		/* Set the ftrace_ops that the arch callback uses */
+		if (ftrace_ops_list == &global_ops)
+			function_trace_op = ftrace_global_list;
+		else
+			function_trace_op = ftrace_ops_list;
 		func = ftrace_ops_list->func;
-	else
+	} else {
+		/* Just use the default ftrace_ops */
+		function_trace_op = &ftrace_list_end;
 		func = ftrace_ops_list_func;
+	}
 
 #ifdef CONFIG_HAVE_FUNCTION_TRACE_MCOUNT_TEST
 	ftrace_trace_function = func;
@@ -2812,8 +2825,8 @@ static int __init ftrace_mod_cmd_init(void)
 }
 device_initcall(ftrace_mod_cmd_init);
 
-static void
-function_trace_probe_call(unsigned long ip, unsigned long parent_ip)
+static void function_trace_probe_call(unsigned long ip, unsigned long parent_ip,
+				      struct ftrace_ops *op)
 {
 	struct ftrace_func_probe *entry;
 	struct hlist_head *hhd;
@@ -3964,10 +3977,9 @@ ftrace_ops_test(struct ftrace_ops *ops, unsigned long ip)
 #endif /* CONFIG_DYNAMIC_FTRACE */
 
 static void
-ftrace_ops_control_func(unsigned long ip, unsigned long parent_ip)
+ftrace_ops_control_func(unsigned long ip, unsigned long parent_ip,
+			struct ftrace_ops *op)
 {
-	struct ftrace_ops *op;
-
 	if (unlikely(trace_recursion_test(TRACE_CONTROL_BIT)))
 		return;
 
@@ -3981,7 +3993,7 @@ ftrace_ops_control_func(unsigned long ip, unsigned long parent_ip)
 	while (op != &ftrace_list_end) {
 		if (!ftrace_function_local_disabled(op) &&
 		    ftrace_ops_test(op, ip))
-			op->func(ip, parent_ip);
+			op->func(ip, parent_ip, op);
 
 		op = rcu_dereference_raw(op->next);
 	};
@@ -3994,10 +4006,9 @@ static struct ftrace_ops control_ops = {
 };
 
 static void
-ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip)
+ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
+		     struct ftrace_ops *op)
 {
-	struct ftrace_ops *op;
-
 	if (unlikely(trace_recursion_test(TRACE_INTERNAL_BIT)))
 		return;
 
@@ -4010,7 +4021,7 @@ ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip)
 	op = rcu_dereference_raw(ftrace_ops_list);
 	while (op != &ftrace_list_end) {
 		if (ftrace_ops_test(op, ip))
-			op->func(ip, parent_ip);
+			op->func(ip, parent_ip, op);
 		op = rcu_dereference_raw(op->next);
 	};
 	preempt_enable_notrace();
