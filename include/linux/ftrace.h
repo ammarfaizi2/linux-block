@@ -10,6 +10,8 @@
 #include <linux/kallsyms.h>
 #include <linux/linkage.h>
 #include <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/ptrace.h>
 #include <linux/ktime.h>
 #include <linux/sched.h>
 #include <linux/types.h>
@@ -27,6 +29,14 @@
 #define ARCH_SUPPORTS_FTRACE_OPS 0
 #endif
 
+/*
+ * If the arch supports saving the regs to the ftrace_ops
+ * then it should set this to 1.
+ */
+#ifndef ARCH_SUPPORTS_FTRACE_SAVE_REGS
+#define ARCH_SUPPORTS_FTRACE_SAVE_REGS 0
+#endif
+
 struct module;
 struct ftrace_hash;
 
@@ -41,7 +51,7 @@ ftrace_enable_sysctl(struct ctl_table *table, int write,
 struct ftrace_ops;
 
 typedef void (*ftrace_func_t)(unsigned long ip, unsigned long parent_ip,
-			      struct ftrace_ops *op);
+			      struct ftrace_ops *op, struct pt_regs *pt_regs);
 
 /*
  * FTRACE_OPS_FL_* bits denote the state of ftrace_ops struct and are
@@ -63,6 +73,7 @@ enum {
 	FTRACE_OPS_FL_GLOBAL		= 1 << 1,
 	FTRACE_OPS_FL_DYNAMIC		= 1 << 2,
 	FTRACE_OPS_FL_CONTROL		= 1 << 3,
+	FTRACE_OPS_FL_SAVE_REGS		= 1 << 4,
 };
 
 struct ftrace_ops {
@@ -175,7 +186,8 @@ static inline int ftrace_function_local_disabled(struct ftrace_ops *ops)
 	return *this_cpu_ptr(ops->disabled);
 }
 
-extern void ftrace_stub(unsigned long a0, unsigned long a1, struct ftrace_ops *op);
+extern void ftrace_stub(unsigned long a0, unsigned long a1,
+			struct ftrace_ops *op, struct pt_regs *pt_regs);
 
 #else /* !CONFIG_FUNCTION_TRACER */
 /*

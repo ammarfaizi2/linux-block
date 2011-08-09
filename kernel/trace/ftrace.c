@@ -78,6 +78,9 @@ int function_trace_stop __read_mostly;
 /* Current function tracing op */
 struct ftrace_ops *function_trace_op __read_mostly = &ftrace_list_end;
 
+/* If the arch supports it, return pt_regs to caller */
+int ftrace_save_regs __read_mostly;
+
 /* List for set_ftrace_pid's pids. */
 LIST_HEAD(ftrace_pids);
 struct ftrace_pid {
@@ -104,7 +107,7 @@ static struct ftrace_ops global_ops;
 static struct ftrace_ops control_ops;
 
 static void ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
-				 struct ftrace_ops *op);
+				 struct ftrace_ops *op, struct pt_regs *pt_regs);
 
 /*
  * Traverse the ftrace_global_list, invoking all entries.  The reason that we
@@ -117,7 +120,7 @@ static void ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
  */
 static void
 ftrace_global_list_func(unsigned long ip, unsigned long parent_ip,
-			struct ftrace_ops *op)
+			struct ftrace_ops *op, struct pt_regs *pt_regs)
 {
 	if (unlikely(trace_recursion_test(TRACE_GLOBAL_BIT)))
 		return;
@@ -125,19 +128,19 @@ ftrace_global_list_func(unsigned long ip, unsigned long parent_ip,
 	trace_recursion_set(TRACE_GLOBAL_BIT);
 	op = rcu_dereference_raw(ftrace_global_list); /*see above*/
 	while (op != &ftrace_list_end) {
-		op->func(ip, parent_ip, op);
+		op->func(ip, parent_ip, op, pt_regs);
 		op = rcu_dereference_raw(op->next); /*see above*/
 	};
 	trace_recursion_clear(TRACE_GLOBAL_BIT);
 }
 
 static void ftrace_pid_func(unsigned long ip, unsigned long parent_ip,
-			    struct ftrace_ops *op)
+			    struct ftrace_ops *op, struct pt_regs *pt_regs)
 {
 	if (!test_tsk_trace_trace(current))
 		return;
 
-	ftrace_pid_function(ip, parent_ip, op);
+	ftrace_pid_function(ip, parent_ip, op, pt_regs);
 }
 
 static void set_ftrace_pid_function(ftrace_func_t func)
@@ -167,12 +170,12 @@ void clear_ftrace_function(void)
  * mcount call site, we need to do it from C.
  */
 static void ftrace_test_stop_func(unsigned long ip, unsigned long parent_ip,
-				  struct ftrace_ops *op)
+				  struct ftrace_ops *op, struct pt_regs *pt_regs)
 {
 	if (function_trace_stop)
 		return;
 
-	__ftrace_trace_function(ip, parent_ip, op);
+	__ftrace_trace_function(ip, parent_ip, op, pt_regs);
 }
 #endif
 
@@ -341,6 +344,9 @@ static int __register_ftrace_function(struct ftrace_ops *ops)
 	if (!core_kernel_data((unsigned long)ops))
 		ops->flags |= FTRACE_OPS_FL_DYNAMIC;
 
+	if (ops->flags & FTRACE_OPS_FL_SAVE_REGS)
+		ftrace_save_regs++;
+
 	if (ops->flags & FTRACE_OPS_FL_GLOBAL) {
 		add_ftrace_list_ops(&ftrace_global_list, &global_ops, ops);
 		ops->flags |= FTRACE_OPS_FL_ENABLED;
@@ -369,6 +375,9 @@ static int __unregister_ftrace_function(struct ftrace_ops *ops)
 
 	if (FTRACE_WARN_ON(ops == &global_ops))
 		return -EINVAL;
+
+	if (ops->flags & FTRACE_OPS_FL_SAVE_REGS)
+		ftrace_save_regs--;
 
 	if (ops->flags & FTRACE_OPS_FL_GLOBAL) {
 		ret = remove_ftrace_list_ops(&ftrace_global_list,
@@ -2826,7 +2835,7 @@ static int __init ftrace_mod_cmd_init(void)
 device_initcall(ftrace_mod_cmd_init);
 
 static void function_trace_probe_call(unsigned long ip, unsigned long parent_ip,
-				      struct ftrace_ops *op)
+				      struct ftrace_ops *op, struct pt_regs *pt_regs)
 {
 	struct ftrace_func_probe *entry;
 	struct hlist_head *hhd;
@@ -3978,7 +3987,7 @@ ftrace_ops_test(struct ftrace_ops *ops, unsigned long ip)
 
 static void
 ftrace_ops_control_func(unsigned long ip, unsigned long parent_ip,
-			struct ftrace_ops *op)
+			struct ftrace_ops *op, struct pt_regs *pt_regs)
 {
 	if (unlikely(trace_recursion_test(TRACE_CONTROL_BIT)))
 		return;
@@ -3993,7 +4002,7 @@ ftrace_ops_control_func(unsigned long ip, unsigned long parent_ip,
 	while (op != &ftrace_list_end) {
 		if (!ftrace_function_local_disabled(op) &&
 		    ftrace_ops_test(op, ip))
-			op->func(ip, parent_ip, op);
+			op->func(ip, parent_ip, op, pt_regs);
 
 		op = rcu_dereference_raw(op->next);
 	};
@@ -4007,7 +4016,7 @@ static struct ftrace_ops control_ops = {
 
 static void
 ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
-		     struct ftrace_ops *op)
+		     struct ftrace_ops *op, struct pt_regs *pt_regs)
 {
 	if (unlikely(trace_recursion_test(TRACE_INTERNAL_BIT)))
 		return;
@@ -4021,7 +4030,7 @@ ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
 	op = rcu_dereference_raw(ftrace_ops_list);
 	while (op != &ftrace_list_end) {
 		if (ftrace_ops_test(op, ip))
-			op->func(ip, parent_ip, op);
+			op->func(ip, parent_ip, op, pt_regs);
 		op = rcu_dereference_raw(op->next);
 	};
 	preempt_enable_notrace();
