@@ -80,7 +80,11 @@ ENTRY(ftrace_caller)
 	MCOUNT_SAVE_FRAME
 
 	leaq function_trace_op, %rdx
-	movq 0x38(%rsp), %rdi
+
+	/* regs go into 4th parameter (but make it NULL) */
+	movq $0, %rcx
+
+	movq RIP(%rsp), %rdi
 	movq 8(%rbp), %rsi
 	subq $MCOUNT_INSN_SIZE, %rdi
 
@@ -120,7 +124,7 @@ GLOBAL(ftrace_stub)
 trace:
 	MCOUNT_SAVE_FRAME
 
-	movq 0x38(%rsp), %rdi
+	movq RIP(%rsp), %rdi
 	movq 8(%rbp), %rsi
 	subq $MCOUNT_INSN_SIZE, %rdi
 
@@ -141,7 +145,7 @@ ENTRY(ftrace_graph_caller)
 	MCOUNT_SAVE_FRAME
 
 	leaq 8(%rbp), %rdi
-	movq 0x38(%rsp), %rsi
+	movq RIP(%rsp), %rsi
 	movq (%rbp), %rdx
 	subq $MCOUNT_INSN_SIZE, %rsi
 
