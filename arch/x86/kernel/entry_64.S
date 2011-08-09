@@ -79,7 +79,16 @@ ENTRY(ftrace_caller)
 	MCOUNT_SAVE_FRAME
 
 	leaq function_trace_op, %rdx
-	movq 0x38(%rsp), %rdi
+
+	cmpl $0, ftrace_save_regs
+	jne  save_all_regs
+
+call_func:
+
+	/* regs go into 4th parameter */
+	leaq (%rsp), %rcx
+
+	movq RIP(%rsp), %rdi
 	movq 8(%rbp), %rsi
 	subq $MCOUNT_INSN_SIZE, %rdi
 
@@ -96,6 +105,18 @@ GLOBAL(ftrace_graph_call)
 GLOBAL(ftrace_stub)
 	retq
 END(ftrace_caller)
+
+save_all_regs:
+	/* Save the rest of pt_regs */
+	movq %r15, R15(%rsp)
+	movq %r14, R14(%rsp)
+	movq %r13, R13(%rsp)
+	movq %r12, R12(%rsp)
+	movq %r10, R10(%rsp)
+	movq %rbp, RBP(%rsp)
+	movq %rbx, RBX(%rsp)
+	jmp call_func
+
 
 #else /* ! CONFIG_DYNAMIC_FTRACE */
 ENTRY(mcount)
@@ -140,7 +161,7 @@ ENTRY(ftrace_graph_caller)
 	MCOUNT_SAVE_FRAME
 
 	leaq 8(%rbp), %rdi
-	movq 0x38(%rsp), %rsi
+	movq RIP(%rsp), %rsi
 	movq (%rbp), %rdx
 	subq $MCOUNT_INSN_SIZE, %rsi
 
