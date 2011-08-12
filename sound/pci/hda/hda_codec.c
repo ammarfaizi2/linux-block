@@ -34,6 +34,9 @@
 #include "hda_beep.h"
 #include <sound/hda_hwdep.h>
 
+#define CREATE_TRACE_POINTS
+#include "hda_trace.h"
+
 /*
  * vendor / preset table
  */
@@ -208,15 +211,19 @@ static int codec_exec_verb(struct hda_codec *codec, unsigned int cmd,
  again:
 	snd_hda_power_up(codec);
 	mutex_lock(&bus->cmd_mutex);
+	trace_hda_send_cmd(codec, cmd);
 	err = bus->ops.command(bus, cmd);
-	if (!err && res)
+	if (!err && res) {
 		*res = bus->ops.get_response(bus, codec->addr);
+		trace_hda_get_response(codec, *res);
+	}
 	mutex_unlock(&bus->cmd_mutex);
 	snd_hda_power_down(codec);
 	if (res && *res == -1 && bus->rirb_error) {
 		if (bus->response_reset) {
 			snd_printd("hda_codec: resetting BUS due to "
 				   "fatal communication error\n");
+			trace_hda_bus_reset(bus);
 			bus->ops.bus_reset(bus);
 		}
 		goto again;
@@ -603,6 +610,7 @@ int snd_hda_queue_unsol_event(struct hda_bus *bus, u32 res, u32 res_ex)
 	struct hda_bus_unsolicited *unsol;
 	unsigned int wp;
 
+	trace_hda_unsol_event(bus, res, res_ex);
 	unsol = bus->unsol;
 	if (!unsol)
 		return 0;
@@ -4083,6 +4091,7 @@ static void hda_power_work(struct work_struct *work)
 		return;
 	}
 
+	trace_hda_power_down(codec);
 	hda_call_codec_suspend(codec);
 	if (bus->ops.pm_notify)
 		bus->ops.pm_notify(bus);
@@ -4121,6 +4130,7 @@ void snd_hda_power_up(struct hda_codec *codec)
 	if (codec->power_on || codec->power_transition)
 		return;
 
+	trace_hda_power_up(codec);
 	snd_hda_update_power_acct(codec);
 	codec->power_on = 1;
 	codec->power_jiffies = jiffies;
