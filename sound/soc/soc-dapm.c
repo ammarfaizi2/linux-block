@@ -2584,7 +2584,7 @@ static void soc_dapm_stream_event(struct snd_soc_dapm_context *dapm,
 	{
 		if (!w->sname || w->dapm != dapm)
 			continue;
-		dev_dbg(w->dapm->dev, "widget %s\n %s stream %s event %d\n",
+		dev_vdbg(w->dapm->dev, "widget %s\n %s stream %s event %d\n",
 			w->name, w->sname, stream, event);
 		if (strstr(w->sname, stream)) {
 			switch(event) {
@@ -2604,6 +2604,10 @@ static void soc_dapm_stream_event(struct snd_soc_dapm_context *dapm,
 	}
 
 	dapm_power_widgets(dapm, event);
+
+	/* do we need to notify any clients that DAPM stream is complete */
+	if (dapm->stream_event)
+		dapm->stream_event(dapm, event);
 }
 
 /**

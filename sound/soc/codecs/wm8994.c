@@ -107,6 +107,7 @@ static int wm8994_volatile(struct snd_soc_codec *codec, unsigned int reg)
 	case WM8994_LDO_2:
 	case WM8958_DSP2_EXECCONTROL:
 	case WM8958_MIC_DETECT_3:
+	case WM8994_DC_SERVO_4E:
 		return 1;
 	default:
 		return 0;
@@ -2972,13 +2973,14 @@ static int wm8994_codec_probe(struct snd_soc_codec *codec)
 		switch (wm8994->revision) {
 		case 2:
 		case 3:
-			wm8994->hubs.dcs_codes = -5;
+			wm8994->hubs.dcs_codes_l = -5;
+			wm8994->hubs.dcs_codes_r = -5;
 			wm8994->hubs.hp_startup_mode = 1;
 			wm8994->hubs.dcs_readback_mode = 1;
 			wm8994->hubs.series_startup = 1;
 			break;
 		default:
-			wm8994->hubs.dcs_readback_mode = 1;
+			wm8994->hubs.dcs_readback_mode = 2;
 			break;
 		}
 		break;
