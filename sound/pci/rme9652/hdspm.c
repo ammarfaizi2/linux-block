@@ -1241,10 +1241,30 @@ static int hdspm_external_sample_rate(struct hdspm *hdspm)
 	return rate;
 }
 
+/* return latency in samples per period */
+static int hdspm_get_latency(struct hdspm *hdspm)
+{
+	int n;
+
+	n = hdspm_decode_latency(hdspm->control_register);
+
+	/* Special case for new RME cards with 32 samples period size.
+	 * The three latency bits in the control register
+	 * (HDSP_LatencyMask) encode latency values of 64 samples as
+	 * 0, 128 samples as 1 ... 4096 samples as 6. For old cards, 7
+	 * denotes 8192 samples, but on new cards like RayDAT or AIO,
+	 * it corresponds to 32 samples.
+	 */
+	if ((7 == n) && (RayDAT == hdspm->io_type || AIO == hdspm->io_type))
+		n = -1;
+
+	return 1 << (n + 6);
+}
+
 /* Latency function */
 static inline void hdspm_compute_period_size(struct hdspm *hdspm)
 {
-	hdspm->period_bytes = 1 << ((hdspm_decode_latency(hdspm->control_register) + 8));
+	hdspm->period_bytes = 4 * hdspm_get_latency(hdspm);
 }
 
 
@@ -1303,12 +1323,27 @@ static int hdspm_set_interrupt_interval(struct hdspm *s, unsigned int frames)
 
 	spin_lock_irq(&s->lock);
 
-	frames >>= 7;
-	n = 0;
-	while (frames) {
-		n++;
-		frames >>= 1;
+	if (32 == frames) {
+		/* Special case for new RME cards like RayDAT/AIO which
+		 * support period sizes of 32 samples. Since latency is
+		 * encoded in the three bits of HDSP_LatencyMask, we can only
+		 * have values from 0 .. 7. While 0 still means 64 samples and
+		 * 6 represents 4096 samples on all cards, 7 represents 8192
+		 * on older cards and 32 samples on new cards.
+		 *
+		 * In other words, period size in samples is calculated by
+		 * 2^(n+6) with n ranging from 0 .. 7.
+		 */
+		n = 7;
+	} else {
+		frames >>= 7;
+		n = 0;
+		while (frames) {
+			n++;
+			frames >>= 1;
+		}
 	}
+
 	s->control_register &= ~HDSPM_LatencyMask;
 	s->control_register |= hdspm_encode_latency(n);
 
@@ -4801,8 +4836,7 @@ snd_hdspm_proc_read_madi(struct snd_info_entry * entry,
 
 	snd_iprintf(buffer, "--- Settings ---\n");
 
-	x = 1 << (6 + hdspm_decode_latency(hdspm->control_register &
-							HDSPM_LatencyMask));
+	x = hdspm_get_latency(hdspm);
 
 	snd_iprintf(buffer,
 		"Size (Latency): %d samples (2 periods of %lu bytes)\n",
@@ -4965,8 +4999,7 @@ snd_hdspm_proc_read_aes32(struct snd_info_entry * entry,
 
 	snd_iprintf(buffer, "--- Settings ---\n");
 
-	x = 1 << (6 + hdspm_decode_latency(hdspm->control_register &
-				HDSPM_LatencyMask));
+	x = hdspm_get_latency(hdspm);
 
 	snd_iprintf(buffer,
 		    "Size (Latency): %d samples (2 periods of %lu bytes)\n",
@@ -5673,11 +5706,11 @@ static int snd_hdspm_prepare(struct snd_pcm_substream *substream)
 }
 
 static unsigned int period_sizes_old[] = {
-	64, 128, 256, 512, 1024, 2048, 4096
+	64, 128, 256, 512, 1024, 2048, 4096, 8192
 };
 
 static unsigned int period_sizes_new[] = {
-	32, 64, 128, 256, 512, 1024, 2048, 4096
+	64, 128, 256, 512, 1024, 2048, 4096, 32
 };
 
 /* RayDAT and AIO always have a buffer of 16384 samples per channel */
@@ -5703,7 +5736,7 @@ static struct snd_pcm_hardware snd_hdspm_playback_subinfo = {
 	.channels_max = HDSPM_MAX_CHANNELS,
 	.buffer_bytes_max =
 	    HDSPM_CHANNEL_BUFFER_BYTES * HDSPM_MAX_CHANNELS,
-	.period_bytes_min = (64 * 4),
+	.period_bytes_min = (32 * 4),
 	.period_bytes_max = (4096 * 4) * HDSPM_MAX_CHANNELS,
 	.periods_min = 2,
 	.periods_max = 512,
@@ -5728,7 +5761,7 @@ static struct snd_pcm_hardware snd_hdspm_capture_subinfo = {
 	.channels_max = HDSPM_MAX_CHANNELS,
 	.buffer_bytes_max =
 	    HDSPM_CHANNEL_BUFFER_BYTES * HDSPM_MAX_CHANNELS,
-	.period_bytes_min = (64 * 4),
+	.period_bytes_min = (32 * 4),
 	.period_bytes_max = (4096 * 4) * HDSPM_MAX_CHANNELS,
 	.periods_min = 2,
 	.periods_max = 512,
