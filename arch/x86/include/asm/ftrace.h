@@ -50,6 +50,9 @@ struct dyn_arch_ftrace {
 	/* No extra data needed for x86 */
 };
 
+int ftrace_int3_handler(int cmd, const char *str,
+		struct pt_regs *regs, long err, int trap, int sig);
+
 #endif /*  CONFIG_DYNAMIC_FTRACE */
 #endif /* __ASSEMBLY__ */
 #endif /* CONFIG_FUNCTION_TRACER */
