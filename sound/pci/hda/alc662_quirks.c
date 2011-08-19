@@ -10,14 +10,11 @@ enum {
 	ALC662_3ST_6ch_DIG,
 	ALC662_3ST_6ch,
 	ALC662_5ST_DIG,
-	ALC662_LENOVO_101E,
-	ALC662_ASUS_EEEPC_P701,
 	ALC662_ASUS_EEEPC_EP20,
 	ALC663_ASUS_M51VA,
 	ALC663_ASUS_G71V,
 	ALC663_ASUS_H13,
 	ALC663_ASUS_G50V,
-	ALC662_ECS,
 	ALC663_ASUS_MODE1,
 	ALC662_ASUS_MODE2,
 	ALC663_ASUS_MODE3,
@@ -206,33 +203,6 @@ static const struct snd_kcontrol_new alc662_3ST_6ch_mixer[] = {
 	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
 	HDA_CODEC_VOLUME("Front Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
 	HDA_CODEC_MUTE("Front Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	{ } /* end */
-};
-
-static const struct snd_kcontrol_new alc662_lenovo_101e_mixer[] = {
-	HDA_CODEC_VOLUME("Front Playback Volume", 0x02, 0x0, HDA_OUTPUT),
-	HDA_BIND_MUTE("Front Playback Switch", 0x02, 2, HDA_INPUT),
-	HDA_CODEC_VOLUME("Speaker Playback Volume", 0x03, 0x0, HDA_OUTPUT),
-	HDA_BIND_MUTE("Speaker Playback Switch", 0x03, 2, HDA_INPUT),
-	HDA_CODEC_MUTE("Headphone Playback Switch", 0x1b, 0x0, HDA_OUTPUT),
-	HDA_CODEC_VOLUME("Line Playback Volume", 0x0b, 0x02, HDA_INPUT),
-	HDA_CODEC_MUTE("Line Playback Switch", 0x0b, 0x02, HDA_INPUT),
-	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
-	{ } /* end */
-};
-
-static const struct snd_kcontrol_new alc662_eeepc_p701_mixer[] = {
-	HDA_CODEC_VOLUME("Master Playback Volume", 0x02, 0x0, HDA_OUTPUT),
-	ALC262_HIPPO_MASTER_SWITCH,
-
-	HDA_CODEC_VOLUME("Mic Boost Volume", 0x18, 0, HDA_INPUT),
-	HDA_CODEC_VOLUME("Mic Playback Volume", 0x0b, 0x0, HDA_INPUT),
-	HDA_CODEC_MUTE("Mic Playback Switch", 0x0b, 0x0, HDA_INPUT),
-
-	HDA_CODEC_VOLUME("Internal Mic Boost Volume", 0x19, 0, HDA_INPUT),
-	HDA_CODEC_VOLUME("Internal Mic Playback Volume", 0x0b, 0x1, HDA_INPUT),
-	HDA_CODEC_MUTE("Internal Mic Playback Switch", 0x0b, 0x1, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -508,18 +478,6 @@ static const struct hda_verb alc662_eapd_init_verbs[] = {
 	{ }
 };
 
-static const struct hda_verb alc662_sue_init_verbs[] = {
-	{0x14, AC_VERB_SET_UNSOLICITED_ENABLE, AC_USRSP_EN|ALC_FRONT_EVENT},
-	{0x1b, AC_VERB_SET_UNSOLICITED_ENABLE, AC_USRSP_EN|ALC_HP_EVENT},
-	{}
-};
-
-static const struct hda_verb alc662_eeepc_sue_init_verbs[] = {
-	{0x18, AC_VERB_SET_UNSOLICITED_ENABLE, AC_USRSP_EN | ALC_MIC_EVENT},
-	{0x1b, AC_VERB_SET_UNSOLICITED_ENABLE, AC_USRSP_EN | ALC_HP_EVENT},
-	{}
-};
-
 /* Set Unsolicited Event*/
 static const struct hda_verb alc662_eeepc_ep20_sue_init_verbs[] = {
 	{0x1b, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
@@ -689,29 +647,6 @@ static const struct snd_kcontrol_new alc272_auto_capture_mixer[] = {
 	HDA_CODEC_MUTE("Capture Switch", 0x08, 0x0, HDA_INPUT),
 	{ } /* end */
 };
-
-static void alc662_lenovo_101e_setup(struct hda_codec *codec)
-{
-	struct alc_spec *spec = codec->spec;
-
-	spec->autocfg.hp_pins[0] = 0x1b;
-	spec->autocfg.line_out_pins[0] = 0x14;
-	spec->autocfg.speaker_pins[0] = 0x15;
-	spec->automute = 1;
-	spec->detect_line = 1;
-	spec->automute_lines = 1;
-	spec->automute_mode = ALC_AUTOMUTE_AMP;
-}
-
-static void alc662_eeepc_setup(struct hda_codec *codec)
-{
-	struct alc_spec *spec = codec->spec;
-
-	alc262_hippo1_setup(codec);
-	spec->ext_mic_pin = 0x18;
-	spec->int_mic_pin = 0x19;
-	spec->auto_mic = 1;
-}
 
 static void alc662_eeepc_ep20_setup(struct hda_codec *codec)
 {
@@ -893,10 +828,7 @@ static const char * const alc662_models[ALC662_MODEL_LAST] = {
 	[ALC662_3ST_6ch_DIG]	= "3stack-6ch-dig",
 	[ALC662_3ST_6ch]	= "3stack-6ch",
 	[ALC662_5ST_DIG]	= "5stack-dig",
-	[ALC662_LENOVO_101E]	= "lenovo-101e",
-	[ALC662_ASUS_EEEPC_P701] = "eeepc-p701",
 	[ALC662_ASUS_EEEPC_EP20] = "eeepc-ep20",
-	[ALC662_ECS] = "ecs",
 	[ALC663_ASUS_M51VA] = "m51va",
 	[ALC663_ASUS_G71V] = "g71v",
 	[ALC663_ASUS_H13] = "h13",
@@ -913,7 +845,6 @@ static const char * const alc662_models[ALC662_MODEL_LAST] = {
 };
 
 static const struct snd_pci_quirk alc662_cfg_tbl[] = {
-	SND_PCI_QUIRK(0x1019, 0x9087, "ECS", ALC662_ECS),
 	SND_PCI_QUIRK(0x1043, 0x1000, "ASUS N50Vm", ALC663_ASUS_MODE1),
 	SND_PCI_QUIRK(0x1043, 0x1092, "ASUS NB", ALC663_ASUS_MODE3),
 	SND_PCI_QUIRK(0x1043, 0x1173, "ASUS K73Jn", ALC663_ASUS_MODE1),
@@ -971,9 +902,7 @@ static const struct snd_pci_quirk alc662_cfg_tbl[] = {
 	SND_PCI_QUIRK(0x1043, 0x19e3, "ASUS NB", ALC663_ASUS_MODE1),
 	SND_PCI_QUIRK(0x1043, 0x19f3, "ASUS NB", ALC663_ASUS_MODE4),
 	SND_PCI_QUIRK(0x1043, 0x8290, "ASUS P5GC-MX", ALC662_3ST_6ch_DIG),
-	SND_PCI_QUIRK(0x1043, 0x82a1, "ASUS Eeepc", ALC662_ASUS_EEEPC_P701),
 	SND_PCI_QUIRK(0x1043, 0x82d1, "ASUS Eeepc EP20", ALC662_ASUS_EEEPC_EP20),
-	SND_PCI_QUIRK(0x105b, 0x0cd6, "Foxconn", ALC662_ECS),
 	SND_PCI_QUIRK(0x105b, 0x0d47, "Foxconn 45CMX/45GMX/45CMX-K",
 		      ALC662_3ST_6ch_DIG),
 	SND_PCI_QUIRK(0x1179, 0xff6e, "Toshiba NB20x", ALC662_AUTO),
@@ -982,12 +911,10 @@ static const struct snd_pci_quirk alc662_cfg_tbl[] = {
 	SND_PCI_QUIRK(0x152d, 0x2304, "Quanta WH1", ALC663_ASUS_H13),
 	SND_PCI_QUIRK(0x1565, 0x820f, "Biostar TA780G M2+", ALC662_3ST_6ch_DIG),
 	SND_PCI_QUIRK(0x1631, 0xc10c, "PB RS65", ALC663_ASUS_M51VA),
-	SND_PCI_QUIRK(0x17aa, 0x101e, "Lenovo", ALC662_LENOVO_101E),
 	SND_PCI_QUIRK(0x1849, 0x3662, "ASROCK K10N78FullHD-hSLI R3.0",
 					ALC662_3ST_6ch_DIG),
 	SND_PCI_QUIRK_MASK(0x1854, 0xf000, 0x2000, "ASUS H13-200x",
 			   ALC663_ASUS_H13),
-	SND_PCI_QUIRK(0x1991, 0x5628, "Ordissimo EVE", ALC662_LENOVO_101E),
 	{}
 };
 
@@ -1036,33 +963,6 @@ static const struct alc_config_preset alc662_presets[] = {
 		.channel_mode = alc662_5stack_modes,
 		.input_mux = &alc662_capture_source,
 	},
-	[ALC662_LENOVO_101E] = {
-		.mixers = { alc662_lenovo_101e_mixer },
-		.init_verbs = { alc662_init_verbs,
-				alc662_eapd_init_verbs,
-				alc662_sue_init_verbs },
-		.num_dacs = ARRAY_SIZE(alc662_dac_nids),
-		.dac_nids = alc662_dac_nids,
-		.num_channel_mode = ARRAY_SIZE(alc662_3ST_2ch_modes),
-		.channel_mode = alc662_3ST_2ch_modes,
-		.input_mux = &alc662_lenovo_101e_capture_source,
-		.unsol_event = alc_sku_unsol_event,
-		.setup = alc662_lenovo_101e_setup,
-		.init_hook = alc_inithook,
-	},
-	[ALC662_ASUS_EEEPC_P701] = {
-		.mixers = { alc662_eeepc_p701_mixer },
-		.init_verbs = { alc662_init_verbs,
-				alc662_eapd_init_verbs,
-				alc662_eeepc_sue_init_verbs },
-		.num_dacs = ARRAY_SIZE(alc662_dac_nids),
-		.dac_nids = alc662_dac_nids,
-		.num_channel_mode = ARRAY_SIZE(alc662_3ST_2ch_modes),
-		.channel_mode = alc662_3ST_2ch_modes,
-		.unsol_event = alc_sku_unsol_event,
-		.setup = alc662_eeepc_setup,
-		.init_hook = alc_inithook,
-	},
 	[ALC662_ASUS_EEEPC_EP20] = {
 		.mixers = { alc662_eeepc_ep20_mixer,
 			    alc662_chmode_mixer },
@@ -1076,19 +976,6 @@ static const struct alc_config_preset alc662_presets[] = {
 		.input_mux = &alc662_lenovo_101e_capture_source,
 		.unsol_event = alc_sku_unsol_event,
 		.setup = alc662_eeepc_ep20_setup,
-		.init_hook = alc_inithook,
-	},
-	[ALC662_ECS] = {
-		.mixers = { alc662_ecs_mixer },
-		.init_verbs = { alc662_init_verbs,
-				alc662_eapd_init_verbs,
-				alc662_ecs_init_verbs },
-		.num_dacs = ARRAY_SIZE(alc662_dac_nids),
-		.dac_nids = alc662_dac_nids,
-		.num_channel_mode = ARRAY_SIZE(alc662_3ST_2ch_modes),
-		.channel_mode = alc662_3ST_2ch_modes,
-		.unsol_event = alc_sku_unsol_event,
-		.setup = alc662_eeepc_setup,
 		.init_hook = alc_inithook,
 	},
 	[ALC663_ASUS_M51VA] = {

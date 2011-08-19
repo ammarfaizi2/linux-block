@@ -73,10 +73,7 @@ ALC662/663/272
   3stack-6ch	 3-stack (6-channel)
   3stack-6ch-dig 3-stack (6-channel) with SPDIF
   5stack-dig	 5-stack with SPDIF
-  lenovo-101e	 Lenovo laptop
-  eeepc-p701	ASUS Eeepc P701
   eeepc-ep20	ASUS Eeepc EP20
-  ecs		ECS/Foxconn mobo
   m51va		ASUS M51VA
   g71v		ASUS G71V
   h13		ASUS H13
@@ -93,8 +90,7 @@ ALC662/663/272
 
 ALC680
 ======
-  base		Base model (ASUS NX90)
-  auto		auto-config reading BIOS (default)
+  N/A
 
 ALC882/883/885/888/889
 ======================
@@ -154,10 +150,6 @@ ALC861/660
   3stack-dig	3-jack with SPDIF I/O
   6stack-dig	6-jack with SPDIF I/O
   3stack-660	3-jack (for ALC660)
-  uniwill-m31	Uniwill M31 laptop
-  toshiba	Toshiba laptop support
-  asus		Asus laptop support
-  asus-laptop	ASUS F2/F3 laptops
   auto		auto-config reading BIOS (default)
 
 ALC861VD/660VD
@@ -167,10 +159,6 @@ ALC861VD/660VD
   6stack-dig	6-jack with SPDIF OUT
   3stack-660	3-jack (for ALC660VD)
   3stack-660-digout 3-jack with SPDIF OUT (for ALC660VD)
-  lenovo	Lenovo 3000 C200
-  dallas	Dallas laptops
-  hp		HP TX1000
-  asus-v1s	ASUS V1Sn
   auto		auto-config reading BIOS (default)
 
 CMI9880
