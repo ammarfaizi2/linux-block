@@ -177,6 +177,7 @@ struct alc_spec {
 	unsigned int dyn_adc_switch:1; /* switch ADCs (for ALC275) */
 	unsigned int single_input_src:1;
 	unsigned int vol_in_capsrc:1; /* use capsrc volume (ADC has no vol) */
+	unsigned int parse_flags; /* passed to snd_hda_parse_pin_defcfg() */
 
 	/* auto-mute control */
 	int automute_mode;
@@ -2813,7 +2814,7 @@ static hda_nid_t alc_auto_look_for_dac(struct hda_codec *codec, hda_nid_t pin)
 		if (found_in_nid_list(nid, spec->multiout.dac_nids,
 				      spec->multiout.num_dacs))
 			continue;
-		if (spec->multiout.hp_nid == nid)
+		if (spec->multiout.hp_out_nid[0] == nid)
 			continue;
 		if (found_in_nid_list(nid, spec->multiout.extra_out_nid,
 				      ARRAY_SIZE(spec->multiout.extra_out_nid)))
@@ -2842,7 +2843,7 @@ static int alc_auto_fill_dac_nids(struct hda_codec *codec)
  again:
 	/* set num_dacs once to full for alc_auto_look_for_dac() */
 	spec->multiout.num_dacs = cfg->line_outs;
-	spec->multiout.hp_nid = 0;
+	spec->multiout.hp_out_nid[0] = 0;
 	spec->multiout.extra_out_nid[0] = 0;
 	memset(spec->private_dac_nids, 0, sizeof(spec->private_dac_nids));
 	spec->multiout.dac_nids = spec->private_dac_nids;
@@ -2853,7 +2854,7 @@ static int alc_auto_fill_dac_nids(struct hda_codec *codec)
 			spec->private_dac_nids[i] =
 				get_dac_if_single(codec, cfg->line_out_pins[i]);
 		if (cfg->hp_outs)
-			spec->multiout.hp_nid =
+			spec->multiout.hp_out_nid[0] =
 				get_dac_if_single(codec, cfg->hp_pins[0]);
 		if (cfg->speaker_outs)
 			spec->multiout.extra_out_nid[0] =
@@ -2885,8 +2886,8 @@ static int alc_auto_fill_dac_nids(struct hda_codec *codec)
 				sizeof(hda_nid_t) * (cfg->line_outs - i - 1));
 	}
 
-	if (cfg->hp_outs && !spec->multiout.hp_nid)
-		spec->multiout.hp_nid =
+	if (cfg->hp_outs && !spec->multiout.hp_out_nid[0])
+		spec->multiout.hp_out_nid[0] =
 			alc_auto_look_for_dac(codec, cfg->hp_pins[0]);
 	if (cfg->speaker_outs && !spec->multiout.extra_out_nid[0])
 		spec->multiout.extra_out_nid[0] =
@@ -3155,9 +3156,10 @@ static int alc_auto_create_extra_outs(struct hda_codec *codec, int num_pins,
 static int alc_auto_create_hp_out(struct hda_codec *codec)
 {
 	struct alc_spec *spec = codec->spec;
-	return alc_auto_create_extra_out(codec, spec->autocfg.hp_pins[0],
-					 spec->multiout.hp_nid,
-					 "Headphone");
+	return alc_auto_create_extra_outs(codec, spec->autocfg.hp_outs,
+					  spec->autocfg.hp_pins,
+					  spec->multiout.hp_out_nid,
+					  "Headphone");
 }
 
 static int alc_auto_create_speaker_out(struct hda_codec *codec)
@@ -3226,11 +3228,17 @@ static void alc_auto_init_extra_out(struct hda_codec *codec)
 	int i;
 	hda_nid_t pin, dac;
 
-	pin = spec->autocfg.hp_pins[0];
-	if (pin) {
-		dac = spec->multiout.hp_nid;
-		if (!dac)
-			dac = spec->multiout.dac_nids[0];
+	for (i = 0; i < spec->autocfg.speaker_outs; i++) {
+		pin = spec->autocfg.hp_pins[i];
+		if (!pin)
+			break;
+		dac = spec->multiout.hp_out_nid[i];
+		if (!dac) {
+			if (i > 0 && spec->multiout.hp_out_nid[0])
+				dac = spec->multiout.hp_out_nid[0];
+			else
+				dac = spec->multiout.dac_nids[0];
+		}
 		alc_auto_set_output_and_unmute(codec, pin, PIN_HP, dac);
 	}
 	for (i = 0; i < spec->autocfg.speaker_outs; i++) {
@@ -3684,7 +3692,8 @@ static int alc_parse_auto_config(struct hda_codec *codec,
 	struct auto_pin_cfg *cfg = &spec->autocfg;
 	int err;
 
-	err = snd_hda_parse_pin_def_config(codec, cfg, ignore_nids);
+	err = snd_hda_parse_pin_defcfg(codec, cfg, ignore_nids,
+				       spec->parse_flags);
 	if (err < 0)
 		return err;
 	if (!cfg->line_outs) {
@@ -3696,7 +3705,7 @@ static int alc_parse_auto_config(struct hda_codec *codec,
 		return 0; /* can't find valid BIOS pin config */
 	}
 
-	if (cfg->line_out_type == AUTO_PIN_SPEAKER_OUT && cfg->hp_outs == 1) {
+	if (cfg->line_out_type == AUTO_PIN_SPEAKER_OUT && cfg->hp_outs > 0) {
 		/* use HP as primary out */
 		cfg->speaker_outs = cfg->line_outs;
 		memcpy(cfg->speaker_pins, cfg->line_out_pins,
@@ -4987,14 +4996,9 @@ static const struct snd_pci_quirk alc861_fixup_tbl[] = {
 
 /*
  */
-#ifdef CONFIG_SND_HDA_ENABLE_REALTEK_QUIRKS
-#include "alc861_quirks.c"
-#endif
-
 static int patch_alc861(struct hda_codec *codec)
 {
 	struct alc_spec *spec;
-	int board_config;
 	int err;
 
 	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
@@ -5005,39 +5009,15 @@ static int patch_alc861(struct hda_codec *codec)
 
 	spec->mixer_nid = 0x15;
 
-        board_config = alc_board_config(codec, ALC861_MODEL_LAST,
-					alc861_models, alc861_cfg_tbl);
+	alc_pick_fixup(codec, NULL, alc861_fixup_tbl, alc861_fixups);
+	alc_apply_fixup(codec, ALC_FIXUP_ACT_PRE_PROBE);
 
-	if (board_config < 0) {
-		printk(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
-		       codec->chip_name);
-		board_config = ALC_MODEL_AUTO;
+	/* automatic parse from the BIOS config */
+	err = alc861_parse_auto_config(codec);
+	if (err < 0) {
+		alc_free(codec);
+		return err;
 	}
-
-	if (board_config == ALC_MODEL_AUTO) {
-		alc_pick_fixup(codec, NULL, alc861_fixup_tbl, alc861_fixups);
-		alc_apply_fixup(codec, ALC_FIXUP_ACT_PRE_PROBE);
-	}
-
-	if (board_config == ALC_MODEL_AUTO) {
-		/* automatic parse from the BIOS config */
-		err = alc861_parse_auto_config(codec);
-		if (err < 0) {
-			alc_free(codec);
-			return err;
-		}
-#ifdef CONFIG_SND_HDA_ENABLE_REALTEK_QUIRKS
-		else if (!err) {
-			printk(KERN_INFO
-			       "hda_codec: Cannot set up configuration "
-			       "from BIOS.  Using base mode...\n");
-		   board_config = ALC861_3ST_DIG;
-		}
-#endif
-	}
-
-	if (board_config != ALC_MODEL_AUTO)
-		setup_preset(codec, &alc861_presets[board_config]);
 
 	if (!spec->no_analog && !spec->adc_nids) {
 		alc_auto_fill_adc_caps(codec);
@@ -5062,13 +5042,9 @@ static int patch_alc861(struct hda_codec *codec)
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
 
 	codec->patch_ops = alc_patch_ops;
-	if (board_config == ALC_MODEL_AUTO) {
-		spec->init_hook = alc_auto_init_std;
+	spec->init_hook = alc_auto_init_std;
 #ifdef CONFIG_SND_HDA_POWER_SAVE
-		spec->power_hook = alc_power_eapd;
-#endif
-	}
-#ifdef CONFIG_SND_HDA_POWER_SAVE
+	spec->power_hook = alc_power_eapd;
 	if (!spec->loopback.amplist)
 		spec->loopback.amplist = alc861_loopbacks;
 #endif
@@ -5095,24 +5071,41 @@ static int alc861vd_parse_auto_config(struct hda_codec *codec)
 }
 
 enum {
-	ALC660VD_FIX_ASUS_GPIO1
+	ALC660VD_FIX_ASUS_GPIO1,
+	ALC861VD_FIX_DALLAS,
 };
 
-/* reset GPIO1 */
+/* exclude VREF80 */
+static void alc861vd_fixup_dallas(struct hda_codec *codec,
+				  const struct alc_fixup *fix, int action)
+{
+	if (action == ALC_FIXUP_ACT_PRE_PROBE) {
+		snd_hda_override_pin_caps(codec, 0x18, 0x00001714);
+		snd_hda_override_pin_caps(codec, 0x19, 0x0000171c);
+	}
+}
+
 static const struct alc_fixup alc861vd_fixups[] = {
 	[ALC660VD_FIX_ASUS_GPIO1] = {
 		.type = ALC_FIXUP_VERBS,
 		.v.verbs = (const struct hda_verb[]) {
+			/* reset GPIO1 */
 			{0x01, AC_VERB_SET_GPIO_MASK, 0x03},
 			{0x01, AC_VERB_SET_GPIO_DIRECTION, 0x01},
 			{0x01, AC_VERB_SET_GPIO_DATA, 0x01},
 			{ }
 		}
 	},
+	[ALC861VD_FIX_DALLAS] = {
+		.type = ALC_FIXUP_FUNC,
+		.v.func = alc861vd_fixup_dallas,
+	},
 };
 
 static const struct snd_pci_quirk alc861vd_fixup_tbl[] = {
+	SND_PCI_QUIRK(0x103c, 0x30bf, "HP TX1000", ALC861VD_FIX_DALLAS),
 	SND_PCI_QUIRK(0x1043, 0x1339, "ASUS A7-K", ALC660VD_FIX_ASUS_GPIO1),
+	SND_PCI_QUIRK(0x1179, 0xff31, "Toshiba L30-149", ALC861VD_FIX_DALLAS),
 	{}
 };
 
@@ -5124,14 +5117,10 @@ static const struct hda_verb alc660vd_eapd_verbs[] = {
 
 /*
  */
-#ifdef CONFIG_SND_HDA_ENABLE_REALTEK_QUIRKS
-#include "alc861vd_quirks.c"
-#endif
-
 static int patch_alc861vd(struct hda_codec *codec)
 {
 	struct alc_spec *spec;
-	int err, board_config;
+	int err;
 
 	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
 	if (spec == NULL)
@@ -5141,39 +5130,15 @@ static int patch_alc861vd(struct hda_codec *codec)
 
 	spec->mixer_nid = 0x0b;
 
-	board_config = alc_board_config(codec, ALC861VD_MODEL_LAST,
-					alc861vd_models, alc861vd_cfg_tbl);
+	alc_pick_fixup(codec, NULL, alc861vd_fixup_tbl, alc861vd_fixups);
+	alc_apply_fixup(codec, ALC_FIXUP_ACT_PRE_PROBE);
 
-	if (board_config < 0) {
-		printk(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
-		       codec->chip_name);
-		board_config = ALC_MODEL_AUTO;
+	/* automatic parse from the BIOS config */
+	err = alc861vd_parse_auto_config(codec);
+	if (err < 0) {
+		alc_free(codec);
+		return err;
 	}
-
-	if (board_config == ALC_MODEL_AUTO) {
-		alc_pick_fixup(codec, NULL, alc861vd_fixup_tbl, alc861vd_fixups);
-		alc_apply_fixup(codec, ALC_FIXUP_ACT_PRE_PROBE);
-	}
-
-	if (board_config == ALC_MODEL_AUTO) {
-		/* automatic parse from the BIOS config */
-		err = alc861vd_parse_auto_config(codec);
-		if (err < 0) {
-			alc_free(codec);
-			return err;
-		}
-#ifdef CONFIG_SND_HDA_ENABLE_REALTEK_QUIRKS
-		else if (!err) {
-			printk(KERN_INFO
-			       "hda_codec: Cannot set up configuration "
-			       "from BIOS.  Using base mode...\n");
-			board_config = ALC861VD_3ST;
-		}
-#endif
-	}
-
-	if (board_config != ALC_MODEL_AUTO)
-		setup_preset(codec, &alc861vd_presets[board_config]);
 
 	if (codec->vendor_id == 0x10ec0660) {
 		/* always turn on EAPD */
@@ -5204,8 +5169,7 @@ static int patch_alc861vd(struct hda_codec *codec)
 
 	codec->patch_ops = alc_patch_ops;
 
-	if (board_config == ALC_MODEL_AUTO)
-		spec->init_hook = alc_auto_init_std;
+	spec->init_hook = alc_auto_init_std;
 	spec->shutup = alc_eapd_shutup;
 #ifdef CONFIG_SND_HDA_POWER_SAVE
 	if (!spec->loopback.amplist)
@@ -5270,7 +5234,14 @@ enum {
 	ALC662_FIXUP_CZC_P10T,
 	ALC662_FIXUP_SKU_IGNORE,
 	ALC662_FIXUP_HP_RP5800,
-	ALC662_FIXUP_ECS,
+	ALC662_FIXUP_ASUS_MODE1,
+	ALC662_FIXUP_ASUS_MODE2,
+	ALC662_FIXUP_ASUS_MODE3,
+	ALC662_FIXUP_ASUS_MODE4,
+	ALC662_FIXUP_ASUS_MODE5,
+	ALC662_FIXUP_ASUS_MODE6,
+	ALC662_FIXUP_ASUS_MODE7,
+	ALC662_FIXUP_ASUS_MODE8,
 };
 
 static const struct alc_fixup alc662_fixups[] = {
@@ -5312,7 +5283,19 @@ static const struct alc_fixup alc662_fixups[] = {
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
 	},
-	[ALC662_FIXUP_ECS] = {
+	[ALC662_FIXUP_ASUS_MODE1] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x18, 0x01a19c20 }, /* mic */
+			{ 0x19, 0x99a3092f }, /* int-mic */
+			{ 0x21, 0x0121401f }, /* HP out */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
+	},
+	[ALC662_FIXUP_ASUS_MODE2] = {
 		.type = ALC_FIXUP_PINS,
 		.v.pins = (const struct alc_pincfg[]) {
 			{ 0x14, 0x99130110 }, /* speaker */
@@ -5321,25 +5304,173 @@ static const struct alc_fixup alc662_fixups[] = {
 			{ 0x1b, 0x0121401f }, /* HP out */
 			{ }
 		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
+	},
+	[ALC662_FIXUP_ASUS_MODE3] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0121441f }, /* HP */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x21, 0x01211420 }, /* HP2 */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
+	},
+	[ALC662_FIXUP_ASUS_MODE4] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x16, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x21, 0x0121441f }, /* HP */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
+	},
+	[ALC662_FIXUP_ASUS_MODE5] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0121441f }, /* HP */
+			{ 0x16, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
+	},
+	[ALC662_FIXUP_ASUS_MODE6] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x01211420 }, /* HP2 */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x1b, 0x0121441f }, /* HP */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
+	},
+	[ALC662_FIXUP_ASUS_MODE7] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x17, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x1b, 0x01214020 }, /* HP */
+			{ 0x21, 0x0121401f }, /* HP */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
+	},
+	[ALC662_FIXUP_ASUS_MODE8] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x12, 0x99a30970 }, /* int-mic */
+			{ 0x15, 0x01214020 }, /* HP */
+			{ 0x17, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x21, 0x0121401f }, /* HP */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC662_FIXUP_SKU_IGNORE
 	},
 };
 
 static const struct snd_pci_quirk alc662_fixup_tbl[] = {
-	SND_PCI_QUIRK(0x1019, 0x9087, "ECS", ALC662_FIXUP_ECS),
+	SND_PCI_QUIRK(0x1019, 0x9087, "ECS", ALC662_FIXUP_ASUS_MODE2),
 	SND_PCI_QUIRK(0x1025, 0x0308, "Acer Aspire 8942G", ALC662_FIXUP_ASPIRE),
 	SND_PCI_QUIRK(0x1025, 0x031c, "Gateway NV79", ALC662_FIXUP_SKU_IGNORE),
 	SND_PCI_QUIRK(0x1025, 0x038b, "Acer Aspire 8943G", ALC662_FIXUP_ASPIRE),
 	SND_PCI_QUIRK(0x103c, 0x1632, "HP RP5800", ALC662_FIXUP_HP_RP5800),
-	SND_PCI_QUIRK(0x105b, 0x0cd6, "Foxconn", ALC662_FIXUP_ECS),
+	SND_PCI_QUIRK(0x105b, 0x0cd6, "Foxconn", ALC662_FIXUP_ASUS_MODE2),
 	SND_PCI_QUIRK(0x144d, 0xc051, "Samsung R720", ALC662_FIXUP_IDEAPAD),
 	SND_PCI_QUIRK(0x17aa, 0x38af, "Lenovo Ideapad Y550P", ALC662_FIXUP_IDEAPAD),
 	SND_PCI_QUIRK(0x17aa, 0x3a0d, "Lenovo Ideapad Y550", ALC662_FIXUP_IDEAPAD),
 	SND_PCI_QUIRK(0x1b35, 0x2206, "CZC P10T", ALC662_FIXUP_CZC_P10T),
+
+#if 0
+	/* Below is a quirk table taken from the old code.
+	 * Basically the device should work as is without the fixup table.
+	 * If BIOS doesn't give a proper info, enable the corresponding
+	 * fixup entry.
+	 */ 
+	SND_PCI_QUIRK(0x1043, 0x1000, "ASUS N50Vm", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1092, "ASUS NB", ALC662_FIXUP_ASUS_MODE3),
+	SND_PCI_QUIRK(0x1043, 0x1173, "ASUS K73Jn", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x11c3, "ASUS M70V", ALC662_FIXUP_ASUS_MODE3),
+	SND_PCI_QUIRK(0x1043, 0x11d3, "ASUS NB", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x11f3, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1203, "ASUS NB", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1303, "ASUS G60J", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1333, "ASUS G60Jx", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1339, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x13e3, "ASUS N71JA", ALC662_FIXUP_ASUS_MODE7),
+	SND_PCI_QUIRK(0x1043, 0x1463, "ASUS N71", ALC662_FIXUP_ASUS_MODE7),
+	SND_PCI_QUIRK(0x1043, 0x14d3, "ASUS G72", ALC662_FIXUP_ASUS_MODE8),
+	SND_PCI_QUIRK(0x1043, 0x1563, "ASUS N90", ALC662_FIXUP_ASUS_MODE3),
+	SND_PCI_QUIRK(0x1043, 0x15d3, "ASUS N50SF F50SF", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x16c3, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x16f3, "ASUS K40C K50C", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1733, "ASUS N81De", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1753, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1763, "ASUS NB", ALC662_FIXUP_ASUS_MODE6),
+	SND_PCI_QUIRK(0x1043, 0x1765, "ASUS NB", ALC662_FIXUP_ASUS_MODE6),
+	SND_PCI_QUIRK(0x1043, 0x1783, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1793, "ASUS F50GX", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x17b3, "ASUS F70SL", ALC662_FIXUP_ASUS_MODE3),
+	SND_PCI_QUIRK(0x1043, 0x17f3, "ASUS X58LE", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1813, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1823, "ASUS NB", ALC662_FIXUP_ASUS_MODE5),
+	SND_PCI_QUIRK(0x1043, 0x1833, "ASUS NB", ALC662_FIXUP_ASUS_MODE6),
+	SND_PCI_QUIRK(0x1043, 0x1843, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1853, "ASUS F50Z", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1864, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1876, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1893, "ASUS M50Vm", ALC662_FIXUP_ASUS_MODE3),
+	SND_PCI_QUIRK(0x1043, 0x1894, "ASUS X55", ALC662_FIXUP_ASUS_MODE3),
+	SND_PCI_QUIRK(0x1043, 0x18b3, "ASUS N80Vc", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x18c3, "ASUS VX5", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x18d3, "ASUS N81Te", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x18f3, "ASUS N505Tp", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1903, "ASUS F5GL", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1913, "ASUS NB", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1933, "ASUS F80Q", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x1943, "ASUS Vx3V", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1953, "ASUS NB", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1963, "ASUS X71C", ALC662_FIXUP_ASUS_MODE3),
+	SND_PCI_QUIRK(0x1043, 0x1983, "ASUS N5051A", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x1993, "ASUS N20", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x19b3, "ASUS F7Z", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x19c3, "ASUS F5Z/F6x", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1043, 0x19e3, "ASUS NB", ALC662_FIXUP_ASUS_MODE1),
+	SND_PCI_QUIRK(0x1043, 0x19f3, "ASUS NB", ALC662_FIXUP_ASUS_MODE4),
+#endif
 	{}
 };
 
 static const struct alc_model_fixup alc662_fixup_models[] = {
 	{.id = ALC272_FIXUP_MARIO, .name = "mario"},
+	{.id = ALC662_FIXUP_ASUS_MODE1, .name = "asus-mode1"},
+	{.id = ALC662_FIXUP_ASUS_MODE2, .name = "asus-mode2"},
+	{.id = ALC662_FIXUP_ASUS_MODE3, .name = "asus-mode3"},
+	{.id = ALC662_FIXUP_ASUS_MODE4, .name = "asus-mode4"},
+	{.id = ALC662_FIXUP_ASUS_MODE5, .name = "asus-mode5"},
+	{.id = ALC662_FIXUP_ASUS_MODE6, .name = "asus-mode6"},
+	{.id = ALC662_FIXUP_ASUS_MODE7, .name = "asus-mode7"},
+	{.id = ALC662_FIXUP_ASUS_MODE8, .name = "asus-mode8"},
 	{}
 };
 
@@ -5363,6 +5494,9 @@ static int patch_alc662(struct hda_codec *codec)
 	codec->spec = spec;
 
 	spec->mixer_nid = 0x0b;
+
+	/* handle multiple HPs as is */
+	spec->parse_flags = HDA_PINCFG_NO_HP_FIXUP;
 
 	alc_auto_parse_customize_define(codec);
 
