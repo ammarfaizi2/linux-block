@@ -37,11 +37,7 @@ static inline void isync(void)
 #endif
 
 #ifdef CONFIG_SMP
-#define __PPC_ACQUIRE_BARRIER				\
-	START_LWSYNC_SECTION(97);			\
-	isync;						\
-	MAKE_LWSYNC_SECTION_ENTRY(97, __lwsync_fixup);
-#define PPC_ACQUIRE_BARRIER	"\n" stringify_in_c(__PPC_ACQUIRE_BARRIER)
+#define PPC_ACQUIRE_BARRIER	"\n" stringify_in_c(sync;)
 #define PPC_RELEASE_BARRIER	stringify_in_c(LWSYNC) "\n"
 #else
 #define PPC_ACQUIRE_BARRIER
