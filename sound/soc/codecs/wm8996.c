@@ -414,6 +414,7 @@ static const DECLARE_TLV_DB_SCALE(out_digital_tlv, -1200, 150, 0);
 static const DECLARE_TLV_DB_SCALE(out_tlv, -900, 75, 0);
 static const DECLARE_TLV_DB_SCALE(spk_tlv, -900, 150, 0);
 static const DECLARE_TLV_DB_SCALE(eq_tlv, -1200, 100, 0);
+static const DECLARE_TLV_DB_SCALE(threedstereo_tlv, -1600, 183, 1);
 
 static const char *sidetone_hpf_text[] = {
 	"2.9kHz", "1.5kHz", "735Hz", "403Hz", "196Hz", "98Hz", "49Hz"
@@ -607,6 +608,14 @@ SOC_SINGLE("DAC High Performance Switch", WM8996_OVERSAMPLING, 0, 1, 0),
 
 SOC_SINGLE("DAC Soft Mute Switch", WM8996_DAC_SOFTMUTE, 1, 1, 0),
 SOC_SINGLE("DAC Slow Soft Mute Switch", WM8996_DAC_SOFTMUTE, 0, 1, 0),
+
+SOC_SINGLE("DSP1 3D Stereo Switch", WM8996_DSP1_RX_FILTERS_2, 8, 1, 0),
+SOC_SINGLE("DSP2 3D Stereo Switch", WM8996_DSP2_RX_FILTERS_2, 8, 1, 0),
+
+SOC_SINGLE_TLV("DSP1 3D Stereo Volume", WM8996_DSP1_RX_FILTERS_2, 10, 15,
+		0, threedstereo_tlv),
+SOC_SINGLE_TLV("DSP2 3D Stereo Volume", WM8996_DSP2_RX_FILTERS_2, 10, 15,
+		0, threedstereo_tlv),
 
 SOC_DOUBLE_TLV("Digital Output 1 Volume", WM8996_DAC1_HPOUT1_VOLUME, 0, 4,
 	       8, 0, out_digital_tlv),
@@ -2045,7 +2054,7 @@ static int wm8996_set_fll(struct snd_soc_codec *codec, int fll_id, int source,
 	struct i2c_client *i2c = to_i2c_client(codec->dev);
 	struct _fll_div fll_div;
 	unsigned long timeout;
-	int ret, reg;
+	int ret, reg, retry;
 
 	/* Any change? */
 	if (source == wm8996->fll_src && Fref == wm8996->fll_fref &&
@@ -2132,17 +2141,29 @@ static int wm8996_set_fll(struct snd_soc_codec *codec, int fll_id, int source,
 	else
 		timeout = msecs_to_jiffies(2);
 
-	/* Allow substantially longer if we've actually got the IRQ */
+	/* Allow substantially longer if we've actually got the IRQ, poll
+	 * at a slightly higher rate if we don't.
+	 */
 	if (i2c->irq)
-		timeout *= 1000;
+		timeout *= 10;
+	else
+		timeout /= 2;
 
-	ret = wait_for_completion_timeout(&wm8996->fll_lock, timeout);
+	for (retry = 0; retry < 10; retry++) {
+		ret = wait_for_completion_timeout(&wm8996->fll_lock,
+						  timeout);
+		if (ret != 0) {
+			WARN_ON(!i2c->irq);
+			break;
+		}
 
-	if (ret == 0 && i2c->irq) {
+		ret = snd_soc_read(codec, WM8996_INTERRUPT_RAW_STATUS_2);
+		if (ret & WM8996_FLL_LOCK_STS)
+			break;
+	}
+	if (retry == 10) {
 		dev_err(codec->dev, "Timed out waiting for FLL\n");
 		ret = -ETIMEDOUT;
-	} else {
-		ret = 0;
 	}
 
 	dev_dbg(codec->dev, "FLL configured for %dHz->%dHz\n", Fref, Fout);
