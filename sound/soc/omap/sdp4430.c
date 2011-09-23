@@ -32,7 +32,7 @@
 #include <plat/hardware.h>
 #include <plat/mux.h>
 
-#include "mcpdm.h"
+#include "omap-mcpdm.h"
 #include "omap-pcm.h"
 #include "../codecs/twl6040.h"
 
@@ -165,8 +165,8 @@ static int sdp4430_twl6040_init(struct snd_soc_pcm_runtime *rtd)
 static struct snd_soc_dai_link sdp4430_dai = {
 	.name = "TWL6040",
 	.stream_name = "TWL6040",
-	.cpu_dai_name ="omap-mcpdm-dai",
-	.codec_dai_name = "twl6040-hifi",
+	.cpu_dai_name = "omap-mcpdm",
+	.codec_dai_name = "twl6040-legacy",
 	.platform_name = "omap-pcm-audio",
 	.codec_name = "twl6040-codec",
 	.init = sdp4430_twl6040_init,
