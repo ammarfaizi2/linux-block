@@ -16,6 +16,8 @@
 
 #include "../codecs/wm8962.h"
 
+static int sample_rate = 44100;
+
 static int speyside_wm8962_set_bias_level(struct snd_soc_card *card,
 					  struct snd_soc_dapm_context *dapm,
 					  enum snd_soc_bias_level level)
@@ -31,13 +33,13 @@ static int speyside_wm8962_set_bias_level(struct snd_soc_card *card,
 		if (dapm->bias_level == SND_SOC_BIAS_STANDBY) {
 			ret = snd_soc_dai_set_pll(codec_dai, WM8962_FLL,
 						  WM8962_FLL_MCLK, 32768,
-						  44100 * 512);
+						  sample_rate * 512);
 			if (ret < 0)
 				pr_err("Failed to start FLL: %d\n", ret);
 
 			ret = snd_soc_dai_set_sysclk(codec_dai,
 						     WM8962_SYSCLK_FLL,
-						     44100 * 512,
+						     sample_rate * 512,
 						     SND_SOC_CLOCK_IN);
 			if (ret < 0) {
 				pr_err("Failed to set SYSCLK: %d\n", ret);
@@ -109,6 +111,8 @@ static int speyside_wm8962_hw_params(struct snd_pcm_substream *substream,
 	if (ret < 0)
 		return ret;
 
+	sample_rate = params_rate(params);
+
 	return 0;
 }
 
@@ -130,6 +134,7 @@ static struct snd_soc_dai_link speyside_wm8962_dai[] = {
 
 static const struct snd_kcontrol_new controls[] = {
 	SOC_DAPM_PIN_SWITCH("Main Speaker"),
+	SOC_DAPM_PIN_SWITCH("DMIC"),
 };
 
 static struct snd_soc_dapm_widget widgets[] = {
@@ -137,6 +142,7 @@ static struct snd_soc_dapm_widget widgets[] = {
 	SND_SOC_DAPM_MIC("Headset Mic", NULL),
 
 	SND_SOC_DAPM_MIC("DMIC", NULL),
+	SND_SOC_DAPM_MIC("AMIC", NULL),
 
 	SND_SOC_DAPM_SPK("Main Speaker", NULL),
 };
@@ -148,12 +154,16 @@ static struct snd_soc_dapm_route audio_paths[] = {
 	{ "Main Speaker", NULL, "SPKOUTL" },
 	{ "Main Speaker", NULL, "SPKOUTR" },
 
-	{ "MICBIAS", NULL, "Headset Mic" },
-	{ "IN4L", NULL, "MICBIAS" },
-	{ "IN4R", NULL, "MICBIAS" },
+	{ "Headset Mic", NULL, "MICBIAS" },
+	{ "IN4L", NULL, "Headset Mic" },
+	{ "IN4R", NULL, "Headset Mic" },
 
-	{ "MICBIAS", NULL, "DMIC" },
-	{ "DMICDAT", NULL, "MICBIAS" },
+	{ "AMIC", NULL, "MICBIAS" },
+	{ "IN1L", NULL, "AMIC" },
+	{ "IN1R", NULL, "AMIC" },
+
+	{ "DMIC", NULL, "MICBIAS" },
+	{ "DMICDAT", NULL, "DMIC" },
 };
 
 static struct snd_soc_jack speyside_wm8962_headset;
