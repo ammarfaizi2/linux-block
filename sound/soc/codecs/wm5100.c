@@ -1755,7 +1755,7 @@ static int wm5100_set_sysclk(struct snd_soc_codec *codec, int clk_id,
 		fval = 1;
 		break;
 	case 22579200:
-	case 2457600:
+	case 24576000:
 		fval = 2;
 		break;
 	default:
@@ -1772,7 +1772,7 @@ static int wm5100_set_sysclk(struct snd_soc_codec *codec, int clk_id,
 
 	case 6144000:
 	case 12288000:
-	case 2457600:
+	case 24576000:
 		audio_rate = 48000;
 		break;
 
@@ -2284,8 +2284,6 @@ static int wm5100_probe(struct snd_soc_codec *codec)
 	int ret, i, irq_flags;
 
 	wm5100->codec = codec;
-
-	codec->dapm.bias_level = SND_SOC_BIAS_OFF;
 
 	ret = snd_soc_codec_set_cache_io(codec, 16, 16, SND_SOC_I2C);
 	if (ret != 0) {

@@ -343,20 +343,6 @@ static int check_dacr_to_spkmixr(struct snd_soc_dapm_widget *source,
 	return !(reg & RT5631_M_DAC_R_TO_SPKMIXER_R);
 }
 
-static int check_vdac_to_outmix(struct snd_soc_dapm_widget *source,
-			 struct snd_soc_dapm_widget *sink)
-{
-	unsigned int reg, ret = 1;
-
-	reg = snd_soc_read(source->codec, RT5631_OUTMIXER_L_CTRL);
-	if (reg & RT5631_M_VDAC_TO_OUTMIXER_L) {
-		reg = snd_soc_read(source->codec, RT5631_OUTMIXER_R_CTRL);
-		if (reg & RT5631_M_VDAC_TO_OUTMIXER_R)
-			ret = 0;
-	}
-	return ret;
-}
-
 static int check_adcl_select(struct snd_soc_dapm_widget *source,
 			 struct snd_soc_dapm_widget *sink)
 {
@@ -1308,7 +1294,7 @@ static const struct pll_div codec_slave_pll_div[] = {
 	{3072000,  12288000,  0x0a90},
 };
 
-struct coeff_clk_div coeff_div[] = {
+static struct coeff_clk_div coeff_div[] = {
 	/* sysclk is 256fs */
 	{2048000,  8000 * 32,  8000, 0x1000},
 	{2048000,  8000 * 64,  8000, 0x0000},
@@ -1680,7 +1666,7 @@ static int rt5631_resume(struct snd_soc_codec *codec)
 			SNDRV_PCM_FMTBIT_S24_LE | \
 			SNDRV_PCM_FMTBIT_S8)
 
-struct snd_soc_dai_ops rt5631_ops = {
+static struct snd_soc_dai_ops rt5631_ops = {
 	.hw_params = rt5631_hifi_pcm_params,
 	.set_fmt = rt5631_hifi_codec_set_dai_fmt,
 	.set_sysclk = rt5631_hifi_codec_set_dai_sysclk,
@@ -1762,7 +1748,7 @@ static __devexit int rt5631_i2c_remove(struct i2c_client *client)
 	return 0;
 }
 
-struct i2c_driver rt5631_i2c_driver = {
+static struct i2c_driver rt5631_i2c_driver = {
 	.driver = {
 		.name = "rt5631",
 		.owner = THIS_MODULE,

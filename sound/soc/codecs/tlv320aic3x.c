@@ -76,7 +76,6 @@ struct aic3x_priv {
 	struct aic3x_disable_nb disable_nb[AIC3X_NUM_SUPPLIES];
 	enum snd_soc_control_type control_type;
 	struct aic3x_setup_data *setup;
-	void *control_data;
 	unsigned int sysclk;
 	struct list_head list;
 	int master;
@@ -1383,7 +1382,6 @@ static int aic3x_probe(struct snd_soc_codec *codec)
 	int ret, i;
 
 	INIT_LIST_HEAD(&aic3x->list);
-	codec->control_data = aic3x->control_data;
 	aic3x->codec = codec;
 	codec->dapm.idle_bias_off = 1;
 
@@ -1495,9 +1493,9 @@ static struct snd_soc_codec_driver soc_codec_dev_aic3x = {
  */
 
 static const struct i2c_device_id aic3x_i2c_id[] = {
-	[AIC3X_MODEL_3X] = { "tlv320aic3x", 0 },
-	[AIC3X_MODEL_33] = { "tlv320aic33", 0 },
-	[AIC3X_MODEL_3007] = { "tlv320aic3007", 0 },
+	{ "tlv320aic3x", AIC3X_MODEL_3X },
+	{ "tlv320aic33", AIC3X_MODEL_33 },
+	{ "tlv320aic3007", AIC3X_MODEL_3007 },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, aic3x_i2c_id);
@@ -1512,7 +1510,6 @@ static int aic3x_i2c_probe(struct i2c_client *i2c,
 	struct aic3x_pdata *pdata = i2c->dev.platform_data;
 	struct aic3x_priv *aic3x;
 	int ret;
-	const struct i2c_device_id *tbl;
 
 	aic3x = kzalloc(sizeof(struct aic3x_priv), GFP_KERNEL);
 	if (aic3x == NULL) {
@@ -1520,7 +1517,6 @@ static int aic3x_i2c_probe(struct i2c_client *i2c,
 		return -ENOMEM;
 	}
 
-	aic3x->control_data = i2c;
 	aic3x->control_type = SND_SOC_I2C;
 
 	i2c_set_clientdata(i2c, aic3x);
@@ -1531,11 +1527,7 @@ static int aic3x_i2c_probe(struct i2c_client *i2c,
 		aic3x->gpio_reset = -1;
 	}
 
-	for (tbl = aic3x_i2c_id; tbl->name[0]; tbl++) {
-		if (!strcmp(tbl->name, id->name))
-			break;
-	}
-	aic3x->model = tbl - aic3x_i2c_id;
+	aic3x->model = id->driver_data;
 
 	ret = snd_soc_register_codec(&i2c->dev,
 			&soc_codec_dev_aic3x, &aic3x_dai, 1);
