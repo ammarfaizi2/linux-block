@@ -34,13 +34,14 @@
 #include <linux/delay.h>
 #include <linux/srcu.h>
 
-static int init_srcu_struct_fields(struct srcu_struct *sp)
+int init_srcu_struct_fields(struct srcu_struct *sp)
 {
 	sp->completed = 0;
 	mutex_init(&sp->mutex);
 	sp->per_cpu_ref = alloc_percpu(struct srcu_struct_array);
 	return sp->per_cpu_ref ? 0 : -ENOMEM;
 }
+EXPORT_SYMBOL_GPL(init_srcu_struct_fields);
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 
