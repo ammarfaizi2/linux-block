@@ -181,4 +181,54 @@ static inline void srcu_read_unlock(struct srcu_struct *sp, int idx)
 	__srcu_read_unlock(sp, idx);
 }
 
+/* Definitions for bulkref_t, currently defined in terms of SRCU. */
+
+typedef struct srcu_struct bulkref_t;
+int init_srcu_struct_fields(struct srcu_struct *sp);
+
+static inline int init_bulkref(bulkref_t *brp)
+{
+	return init_srcu_struct_fields(brp);
+}
+
+static inline void cleanup_bulkref(bulkref_t *brp)
+{
+	cleanup_srcu_struct(brp);
+}
+
+static inline int bulkref_get(bulkref_t *brp)
+{
+	unsigned long flags;
+	int ret;
+
+	local_irq_save(flags);
+	ret =  __srcu_read_lock(brp);
+	local_irq_restore(flags);
+	return ret;
+}
+
+static inline void bulkref_put(bulkref_t *brp, int idx)
+{
+	unsigned long flags;
+
+	local_irq_save(flags);
+	__srcu_read_unlock(brp, idx);
+	local_irq_restore(flags);
+}
+
+static inline void bulkref_wait_old(bulkref_t *brp)
+{
+	synchronize_srcu(brp);
+}
+
+static inline void bulkref_wait_old_expedited(bulkref_t *brp)
+{
+	synchronize_srcu_expedited(brp);
+}
+
+static inline long bulkref_batches_completed(bulkref_t *brp)
+{
+	return srcu_batches_completed(brp);
+}
+
 #endif
