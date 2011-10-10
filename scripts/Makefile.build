@@ -258,6 +258,15 @@ cmd_modversions =								\
 	fi;
 endif
 
+ifdef BUILD_UPDATE_JUMP_LABEL
+update_jump_label_source := $(srctree)/scripts/update_jump_label.c \
+			$(srctree)/scripts/update_jump_label.h
+cmd_update_jump_label =						\
+	if [ $(@) != "scripts/mod/empty.o" ]; then		\
+		$(objtree)/scripts/update_jump_label "$(@)";	\
+	fi;
+endif
+
 ifdef CONFIG_FTRACE_MCOUNT_RECORD
 ifdef BUILD_C_RECORDMCOUNT
 ifeq ("$(origin RECORDMCOUNT_WARN)", "command line")
@@ -294,6 +303,7 @@ define rule_cc_o_c
 	$(cmd_modversions)						  \
 	$(call echo-cmd,record_mcount)					  \
 	$(cmd_record_mcount)						  \
+	$(cmd_update_jump_label)					  \
 	scripts/basic/fixdep $(depfile) $@ '$(call make-cmd,cc_o_c)' >    \
 	                                              $(dot-target).tmp;  \
 	rm -f $(depfile);						  \
@@ -301,13 +311,14 @@ define rule_cc_o_c
 endef
 
 # Built-in and composite module parts
-$(obj)/%.o: $(src)/%.c $(recordmcount_source) FORCE
+$(obj)/%.o: $(src)/%.c $(recordmcount_source) $(update_jump_label_source) FORCE
 	$(call cmd,force_checksrc)
 	$(call if_changed_rule,cc_o_c)
 
 # Single-part modules are special since we need to mark them in $(MODVERDIR)
 
-$(single-used-m): $(obj)/%.o: $(src)/%.c $(recordmcount_source) FORCE
+$(single-used-m): $(obj)/%.o: $(src)/%.c $(recordmcount_source) \
+		  $(update_jump_label_source) FORCE
 	$(call cmd,force_checksrc)
 	$(call if_changed_rule,cc_o_c)
 	@{ echo $(@:.o=.ko); echo $@; } > $(MODVERDIR)/$(@F:.o=.mod)

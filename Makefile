@@ -611,6 +611,13 @@ ifdef CONFIG_DYNAMIC_FTRACE
 endif
 endif
 
+ifdef CONFIG_JUMP_LABEL
+	ifdef CONFIG_HAVE_BUILD_TIME_JUMP_LABEL
+		BUILD_UPDATE_JUMP_LABEL := y
+		export BUILD_UPDATE_JUMP_LABEL
+	endif
+endif
+
 # We trigger additional mismatches with less inlining
 ifdef CONFIG_DEBUG_SECTION_MISMATCH
 KBUILD_CFLAGS += $(call cc-option, -fno-inline-functions-called-once)
