@@ -20,6 +20,7 @@ hostprogs-$(CONFIG_ASN1)	 += asn1_compiler
 
 HOSTCFLAGS_sortextable.o = -I$(srctree)/tools/include
 HOSTCFLAGS_asn1_compiler.o = -I$(srctree)/include
+hostprogs-$(BUILD_UPDATE_JUMP_LABEL) += update_jump_label
 
 always		:= $(hostprogs-y) $(hostprogs-m)
 

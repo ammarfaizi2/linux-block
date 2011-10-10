@@ -283,6 +283,12 @@ config HAVE_PERF_USER_STACK_DUMP
 	  access to the user stack pointer which is not unified across
 	  architectures.
 
+config HAVE_BUILD_TIME_JUMP_LABEL
+       bool
+       help
+	If an arch uses scripts/update_jump_label to patch in jump nops
+	at build time, then it must enable this option.
+
 config HAVE_ARCH_JUMP_LABEL
 	bool
 
