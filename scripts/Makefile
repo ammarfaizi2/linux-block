@@ -13,6 +13,7 @@ hostprogs-$(CONFIG_LOGO)         += pnmtologo
 hostprogs-$(CONFIG_VT)           += conmakehash
 hostprogs-$(CONFIG_IKCONFIG)     += bin2c
 hostprogs-$(BUILD_C_RECORDMCOUNT) += recordmcount
+hostprogs-$(BUILD_UPDATE_JUMP_LABEL) += update_jump_label
 
 always		:= $(hostprogs-y) $(hostprogs-m)
 

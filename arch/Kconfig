@@ -169,6 +169,12 @@ config HAVE_PERF_EVENTS_NMI
 	  subsystem.  Also has support for calculating CPU cycle events
 	  to determine how many clock cycles in a given period.
 
+config HAVE_BUILD_TIME_JUMP_LABEL
+       bool
+       help
+	If an arch uses scripts/update_jump_label to patch in jump nops
+	at build time, then it must enable this option.
+
 config HAVE_ARCH_JUMP_LABEL
 	bool
 
