@@ -87,7 +87,6 @@ struct twl6040_data {
 	int plug_irq;
 	int codec_powered;
 	int pll;
-	int non_lp;
 	int pll_power_mode;
 	int hs_power_mode;
 	int hs_power_mode_locked;
@@ -588,10 +587,6 @@ static int out_drv_event(struct snd_soc_dapm_widget *w,
 		out->left_step = priv->hf_left_step;
 		out->right_step = priv->hf_right_step;
 		out->step_delay = 5;	/* 5 ms between volume ramp steps */
-		if (SND_SOC_DAPM_EVENT_ON(event))
-			priv->non_lp++;
-		else
-			priv->non_lp--;
 		break;
 	default:
 		return -1;
@@ -678,7 +673,7 @@ static int twl6040_hs_dac_event(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static int twl6040_power_mode_event(struct snd_soc_dapm_widget *w,
+static int twl6040_ep_drv_event(struct snd_soc_dapm_widget *w,
 			struct snd_kcontrol *kcontrol, int event)
 {
 	struct snd_soc_codec *codec = w->codec;
@@ -686,18 +681,12 @@ static int twl6040_power_mode_event(struct snd_soc_dapm_widget *w,
 	int ret = 0;
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
-		priv->non_lp++;
-		if (!strcmp(w->name, "Earphone Driver")) {
-			/* Earphone doesn't support low power mode */
-			priv->hs_power_mode_locked = 1;
-			ret = headset_power_mode(codec, 1);
-		}
+		/* Earphone doesn't support low power mode */
+		priv->hs_power_mode_locked = 1;
+		ret = headset_power_mode(codec, 1);
 	} else {
-		priv->non_lp--;
-		if (!strcmp(w->name, "Earphone Driver")) {
-			priv->hs_power_mode_locked = 0;
-			ret = headset_power_mode(codec, priv->hs_power_mode);
-		}
+		priv->hs_power_mode_locked = 0;
+		ret = headset_power_mode(codec, priv->hs_power_mode);
 	}
 
 	msleep(1);
@@ -1125,14 +1114,10 @@ static const struct snd_soc_dapm_widget twl6040_dapm_widgets[] = {
 	/* DACs */
 	SND_SOC_DAPM_DAC("HSDAC Left", "Headset Playback", SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_DAC("HSDAC Right", "Headset Playback", SND_SOC_NOPM, 0, 0),
-	SND_SOC_DAPM_DAC_E("HFDAC Left", "Handsfree Playback",
-			TWL6040_REG_HFLCTL, 0, 0,
-			twl6040_power_mode_event,
-			SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_DAC_E("HFDAC Right", "Handsfree Playback",
-			TWL6040_REG_HFRCTL, 0, 0,
-			twl6040_power_mode_event,
-			SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_DAC("HFDAC Left", "Handsfree Playback",
+			 TWL6040_REG_HFLCTL, 0, 0),
+	SND_SOC_DAPM_DAC("HFDAC Right", "Handsfree Playback",
+			 TWL6040_REG_HFRCTL, 0, 0),
 	/* Virtual DAC for vibra path (DL4 channel) */
 	SND_SOC_DAPM_DAC("VIBRA DAC", "Vibra Playback",
 			SND_SOC_NOPM, 0, 0),
@@ -1178,8 +1163,8 @@ static const struct snd_soc_dapm_widget twl6040_dapm_widgets[] = {
 			SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 	SND_SOC_DAPM_OUT_DRV_E("Earphone Driver",
 			TWL6040_REG_EARCTL, 0, 0, NULL, 0,
-			twl6040_power_mode_event,
-			SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
+			twl6040_ep_drv_event,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_OUT_DRV("Vibra Left Driver",
 			TWL6040_REG_VIBCTLL, 0, 0, NULL, 0),
 	SND_SOC_DAPM_OUT_DRV("Vibra Right Driver",
@@ -1351,13 +1336,6 @@ static int twl6040_hw_params(struct snd_pcm_substream *substream,
 				rate);
 			return -EINVAL;
 		}
-		/* Capture is not supported with 17.64MHz sysclk */
-		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-			dev_err(codec->dev,
-				"capture mode is not supported at %dHz\n",
-				rate);
-			return -EINVAL;
-		}
 		priv->sysclk = 17640000;
 		break;
 	case 8000:
@@ -1388,13 +1366,6 @@ static int twl6040_prepare(struct snd_pcm_substream *substream,
 		dev_err(codec->dev,
 			"no mclk configured, call set_sysclk() on init\n");
 		return -EINVAL;
-	}
-
-	if ((priv->sysclk == 17640000) && priv->non_lp) {
-			dev_err(codec->dev,
-				"some enabled paths aren't supported at %dHz\n",
-				priv->sysclk);
-			return -EPERM;
 	}
 
 	ret = twl6040_set_pll(twl6040, priv->pll, priv->clk_in, priv->sysclk);
@@ -1533,6 +1504,7 @@ static int twl6040_probe(struct snd_soc_codec *codec)
 
 	priv->codec = codec;
 	codec->control_data = dev_get_drvdata(codec->dev->parent);
+	codec->ignore_pmdown_time = 1;
 
 	if (pdata && pdata->hs_left_step && pdata->hs_right_step) {
 		priv->hs_left_step = pdata->hs_left_step;

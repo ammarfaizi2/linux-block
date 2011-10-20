@@ -173,6 +173,7 @@ static int wm9081_volatile_register(struct snd_soc_codec *codec, unsigned int re
 {
 	switch (reg) {
 	case WM9081_SOFTWARE_RESET:
+	case WM9081_INTERRUPT_STATUS:
 		return 1;
 	default:
 		return 0;
@@ -1248,8 +1249,6 @@ static int wm9081_probe(struct snd_soc_codec *codec)
 	snd_soc_write(codec, WM9081_ANALOGUE_SPEAKER_PGA,
 		     reg | WM9081_SPKPGAZC);
 
-	snd_soc_add_controls(codec, wm9081_snd_controls,
-			     ARRAY_SIZE(wm9081_snd_controls));
 	if (!wm9081->pdata.num_retune_configs) {
 		dev_dbg(codec->dev,
 			"No ReTune Mobile data, using normal EQ\n");
@@ -1309,6 +1308,8 @@ static struct snd_soc_codec_driver soc_codec_dev_wm9081 = {
 	.reg_cache_default = wm9081_reg_defaults,
 	.volatile_register = wm9081_volatile_register,
 
+	.controls         = wm9081_snd_controls,
+	.num_controls     = ARRAY_SIZE(wm9081_snd_controls),
 	.dapm_widgets	  = wm9081_dapm_widgets,
 	.num_dapm_widgets = ARRAY_SIZE(wm9081_dapm_widgets),
 	.dapm_routes     = wm9081_audio_paths,
