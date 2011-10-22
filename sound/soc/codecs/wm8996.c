@@ -1113,9 +1113,9 @@ SND_SOC_DAPM_AIF_IN("AIF2RX1", "AIF2 Playback", 0,
 SND_SOC_DAPM_AIF_IN("AIF2RX0", "AIF2 Playback", 1,
 		    WM8996_POWER_MANAGEMENT_4, 8, 0),
 
-SND_SOC_DAPM_AIF_IN("AIF2TX1", "AIF2 Capture", 0,
+SND_SOC_DAPM_AIF_OUT("AIF2TX1", "AIF2 Capture", 0,
 		    WM8996_POWER_MANAGEMENT_6, 9, 0),
-SND_SOC_DAPM_AIF_IN("AIF2TX0", "AIF2 Capture", 1,
+SND_SOC_DAPM_AIF_OUT("AIF2TX0", "AIF2 Capture", 1,
 		    WM8996_POWER_MANAGEMENT_6, 8, 0),
 
 SND_SOC_DAPM_AIF_IN("AIF1RX5", "AIF1 Playback", 5,
@@ -1920,7 +1920,7 @@ static int wm8996_hw_params(struct snd_pcm_substream *substream,
 	snd_soc_update_bits(codec, lrclk_reg, WM8996_AIF1RX_RATE_MASK,
 			    lrclk);
 	snd_soc_update_bits(codec, WM8996_AIF_CLOCKING_2,
-			    WM8996_DSP1_DIV_SHIFT << dsp_shift, dsp);
+			    WM8996_DSP1_DIV_MASK << dsp_shift, dsp);
 
 	return 0;
 }

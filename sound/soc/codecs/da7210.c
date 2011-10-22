@@ -29,6 +29,8 @@
 #define DA7210_CONTROL			0x01
 #define DA7210_STATUS			0x02
 #define DA7210_STARTUP1			0x03
+#define DA7210_STARTUP2			0x04
+#define DA7210_STARTUP3			0x05
 #define DA7210_MIC_L			0x07
 #define DA7210_MIC_R			0x08
 #define DA7210_AUX1_L			0x09
@@ -52,6 +54,9 @@
 #define DA7210_DAC_EQ5			0x1B
 #define DA7210_OUTMIX_L			0x1C
 #define DA7210_OUTMIX_R			0x1D
+#define DA7210_OUT1_L			0x1E
+#define DA7210_OUT1_R			0x1F
+#define DA7210_OUT2			0x20
 #define DA7210_HP_L_VOL			0x21
 #define DA7210_HP_R_VOL			0x22
 #define DA7210_HP_CFG			0x23
@@ -184,6 +189,17 @@
 #define DA7210_INPGA_MIN_VOL_NS		0x0A  /* 10.5dB */
 #define DA7210_AUX1_MIN_VOL_NS		0x35  /* 6dB */
 
+/* OUT1_L bit fields */
+#define DA7210_OUT1_L_EN		(1 << 7)
+
+/* OUT1_R bit fields */
+#define DA7210_OUT1_R_EN		(1 << 7)
+
+/* OUT2 bit fields */
+#define DA7210_OUT2_OUTMIX_R		(1 << 5)
+#define DA7210_OUT2_OUTMIX_L		(1 << 6)
+#define DA7210_OUT2_EN			(1 << 7)
+
 #define DA7210_VERSION "0.0.1"
 
 /*
@@ -204,8 +220,23 @@ static const unsigned int hp_out_tlv[] = {
 	0x11, 0x3f, TLV_DB_SCALE_ITEM(-5400, 150, 0),
 };
 
+static const unsigned int lineout_vol_tlv[] = {
+	TLV_DB_RANGE_HEAD(2),
+	0x0, 0x10, TLV_DB_SCALE_ITEM(TLV_DB_GAIN_MUTE, 0, 1),
+	/* -54dB to 15dB */
+	0x11, 0x3f, TLV_DB_SCALE_ITEM(-5400, 150, 0)
+};
+
+static const unsigned int mono_vol_tlv[] = {
+	TLV_DB_RANGE_HEAD(2),
+	0x0, 0x2, TLV_DB_SCALE_ITEM(-1800, 0, 1),
+	/* -18dB to 6dB */
+	0x3, 0x7, TLV_DB_SCALE_ITEM(-1800, 600, 0)
+};
+
 static const DECLARE_TLV_DB_SCALE(eq_gain_tlv, -1050, 150, 0);
 static const DECLARE_TLV_DB_SCALE(adc_eq_master_gain_tlv, -1800, 600, 1);
+static const DECLARE_TLV_DB_SCALE(dac_gain_tlv, -7725, 75, 0);
 
 /* ADC and DAC high pass filter f0 value */
 static const char const *da7210_hpf_cutoff_txt[] = {
@@ -304,6 +335,14 @@ static const struct snd_kcontrol_new da7210_snd_controls[] = {
 	SOC_DOUBLE_R_TLV("HeadPhone Playback Volume",
 			 DA7210_HP_L_VOL, DA7210_HP_R_VOL,
 			 0, 0x3F, 0, hp_out_tlv),
+	SOC_DOUBLE_R_TLV("Digital Playback Volume",
+			 DA7210_DAC_L, DA7210_DAC_R,
+			 0, 0x77, 1, dac_gain_tlv),
+	SOC_DOUBLE_R_TLV("Lineout Playback Volume",
+			 DA7210_OUT1_L, DA7210_OUT1_R,
+			 0, 0x3f, 0, lineout_vol_tlv),
+	SOC_SINGLE_TLV("Mono Playback Volume", DA7210_OUT2, 0, 0x7, 0,
+		       mono_vol_tlv),
 
 	/* DAC Equalizer  controls */
 	SOC_SINGLE("DAC EQ Switch", DA7210_DAC_EQ5, 7, 1, 0),
@@ -372,6 +411,148 @@ static const struct snd_kcontrol_new da7210_snd_controls[] = {
 		       0, snd_soc_get_volsw, da7210_put_noise_sup_sw),
 };
 
+/*
+ * DAPM Controls
+ *
+ * Current DAPM implementation covers almost all codec components e.g. IOs,
+ * mixers, PGAs,ADC and DAC.
+ */
+/* In Mixer Left */
+static const struct snd_kcontrol_new da7210_dapm_inmixl_controls[] = {
+	SOC_DAPM_SINGLE("Mic Left Switch", DA7210_INMIX_L, 0, 1, 0),
+	SOC_DAPM_SINGLE("Mic Right Switch", DA7210_INMIX_L, 1, 1, 0),
+};
+
+/* In Mixer Right */
+static const struct snd_kcontrol_new da7210_dapm_inmixr_controls[] = {
+	SOC_DAPM_SINGLE("Mic Right Switch", DA7210_INMIX_R, 0, 1, 0),
+	SOC_DAPM_SINGLE("Mic Left Switch", DA7210_INMIX_R, 1, 1, 0),
+};
+
+/* Out Mixer Left */
+static const struct snd_kcontrol_new da7210_dapm_outmixl_controls[] = {
+	SOC_DAPM_SINGLE("DAC Left Switch", DA7210_OUTMIX_L, 4, 1, 0),
+};
+
+/* Out Mixer Right */
+static const struct snd_kcontrol_new da7210_dapm_outmixr_controls[] = {
+	SOC_DAPM_SINGLE("DAC Right Switch", DA7210_OUTMIX_R, 4, 1, 0),
+};
+
+/* Mono Mixer */
+static const struct snd_kcontrol_new da7210_dapm_monomix_controls[] = {
+	SOC_DAPM_SINGLE("Outmix Right Switch", DA7210_OUT2, 5, 1, 0),
+	SOC_DAPM_SINGLE("Outmix Left Switch", DA7210_OUT2, 6, 1, 0),
+};
+
+/* DAPM widgets */
+static const struct snd_soc_dapm_widget da7210_dapm_widgets[] = {
+	/* Input Side */
+	/* Input Lines */
+	SND_SOC_DAPM_INPUT("MICL"),
+	SND_SOC_DAPM_INPUT("MICR"),
+
+	/* Input PGAs */
+	SND_SOC_DAPM_PGA("Mic Left", DA7210_STARTUP3, 0, 1, NULL, 0),
+	SND_SOC_DAPM_PGA("Mic Right", DA7210_STARTUP3, 1, 1, NULL, 0),
+
+	SND_SOC_DAPM_PGA("INPGA Left", DA7210_INMIX_L, 7, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("INPGA Right", DA7210_INMIX_R, 7, 0, NULL, 0),
+
+	/* Input Mixers */
+	SND_SOC_DAPM_MIXER("In Mixer Left", SND_SOC_NOPM, 0, 0,
+		&da7210_dapm_inmixl_controls[0],
+		ARRAY_SIZE(da7210_dapm_inmixl_controls)),
+
+	SND_SOC_DAPM_MIXER("In Mixer Right", SND_SOC_NOPM, 0, 0,
+		&da7210_dapm_inmixr_controls[0],
+		ARRAY_SIZE(da7210_dapm_inmixr_controls)),
+
+	/* ADCs */
+	SND_SOC_DAPM_ADC("ADC Left", "Capture", DA7210_STARTUP3, 5, 1),
+	SND_SOC_DAPM_ADC("ADC Right", "Capture", DA7210_STARTUP3, 6, 1),
+
+	/* Output Side */
+	/* DACs */
+	SND_SOC_DAPM_DAC("DAC Left", "Playback", DA7210_STARTUP2, 5, 1),
+	SND_SOC_DAPM_DAC("DAC Right", "Playback", DA7210_STARTUP2, 6, 1),
+
+	/* Output Mixers */
+	SND_SOC_DAPM_MIXER("Out Mixer Left", SND_SOC_NOPM, 0, 0,
+		&da7210_dapm_outmixl_controls[0],
+		ARRAY_SIZE(da7210_dapm_outmixl_controls)),
+
+	SND_SOC_DAPM_MIXER("Out Mixer Right", SND_SOC_NOPM, 0, 0,
+		&da7210_dapm_outmixr_controls[0],
+		ARRAY_SIZE(da7210_dapm_outmixr_controls)),
+
+	SND_SOC_DAPM_MIXER("Mono Mixer", SND_SOC_NOPM, 0, 0,
+		&da7210_dapm_monomix_controls[0],
+		ARRAY_SIZE(da7210_dapm_monomix_controls)),
+
+	/* Output PGAs */
+	SND_SOC_DAPM_PGA("OUTPGA Left Enable", DA7210_OUTMIX_L, 7, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("OUTPGA Right Enable", DA7210_OUTMIX_R, 7, 0, NULL, 0),
+
+	SND_SOC_DAPM_PGA("Out1 Left", DA7210_STARTUP2, 0, 1, NULL, 0),
+	SND_SOC_DAPM_PGA("Out1 Right", DA7210_STARTUP2, 1, 1, NULL, 0),
+	SND_SOC_DAPM_PGA("Out2 Mono", DA7210_STARTUP2, 2, 1, NULL, 0),
+	SND_SOC_DAPM_PGA("Headphone Left", DA7210_STARTUP2, 3, 1, NULL, 0),
+	SND_SOC_DAPM_PGA("Headphone Right", DA7210_STARTUP2, 4, 1, NULL, 0),
+
+	/* Output Lines */
+	SND_SOC_DAPM_OUTPUT("OUT1L"),
+	SND_SOC_DAPM_OUTPUT("OUT1R"),
+	SND_SOC_DAPM_OUTPUT("HPL"),
+	SND_SOC_DAPM_OUTPUT("HPR"),
+	SND_SOC_DAPM_OUTPUT("OUT2"),
+};
+
+/* DAPM audio route definition */
+static const struct snd_soc_dapm_route da7210_audio_map[] = {
+	/* Dest       Connecting Widget    source */
+	/* Input path */
+	{"Mic Left", NULL, "MICL"},
+	{"Mic Right", NULL, "MICR"},
+
+	{"In Mixer Left", "Mic Left Switch", "Mic Left"},
+	{"In Mixer Left", "Mic Right Switch", "Mic Right"},
+
+	{"In Mixer Right", "Mic Right Switch", "Mic Right"},
+	{"In Mixer Right", "Mic Left Switch", "Mic Left"},
+
+	{"INPGA Left", NULL, "In Mixer Left"},
+	{"ADC Left", NULL, "INPGA Left"},
+
+	{"INPGA Right", NULL, "In Mixer Right"},
+	{"ADC Right", NULL, "INPGA Right"},
+
+	/* Output path */
+	{"Out Mixer Left", "DAC Left Switch", "DAC Left"},
+	{"Out Mixer Right", "DAC Right Switch", "DAC Right"},
+
+	{"Mono Mixer", "Outmix Right Switch", "Out Mixer Right"},
+	{"Mono Mixer", "Outmix Left Switch", "Out Mixer Left"},
+
+	{"OUTPGA Left Enable", NULL, "Out Mixer Left"},
+	{"OUTPGA Right Enable", NULL, "Out Mixer Right"},
+
+	{"Out1 Left", NULL, "OUTPGA Left Enable"},
+	{"OUT1L", NULL, "Out1 Left"},
+
+	{"Out1 Right", NULL, "OUTPGA Right Enable"},
+	{"OUT1R", NULL, "Out1 Right"},
+
+	{"Headphone Left", NULL, "OUTPGA Left Enable"},
+	{"HPL", NULL, "Headphone Left"},
+
+	{"Headphone Right", NULL, "OUTPGA Right Enable"},
+	{"HPR", NULL, "Headphone Right"},
+
+	{"Out2 Mono", NULL, "Mono Mixer"},
+	{"OUT2", NULL, "Out2 Mono"},
+};
+
 /* Codec private data */
 struct da7210_priv {
 	enum snd_soc_control_type control_type;
@@ -410,29 +591,6 @@ static int da7210_volatile_register(struct snd_soc_codec *codec,
 	default:
 		return 0;
 	}
-}
-static int da7210_startup(struct snd_pcm_substream *substream,
-			  struct snd_soc_dai *dai)
-{
-	int is_play = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
-	struct snd_soc_codec *codec = dai->codec;
-
-	if (is_play) {
-		/* Enable Out */
-		snd_soc_update_bits(codec, DA7210_OUTMIX_L, 0x1F, 0x10);
-		snd_soc_update_bits(codec, DA7210_OUTMIX_R, 0x1F, 0x10);
-
-	} else {
-		/* Volume 7 */
-		snd_soc_update_bits(codec, DA7210_MIC_L, 0x7, 0x7);
-		snd_soc_update_bits(codec, DA7210_MIC_R, 0x7, 0x7);
-
-		/* Enable Mic */
-		snd_soc_update_bits(codec, DA7210_INMIX_L, 0x1F, 0x1);
-		snd_soc_update_bits(codec, DA7210_INMIX_R, 0x1F, 0x1);
-	}
-
-	return 0;
 }
 
 /*
@@ -603,7 +761,6 @@ static int da7210_mute(struct snd_soc_dai *dai, int mute)
 
 /* DAI operations */
 static struct snd_soc_dai_ops da7210_dai_ops = {
-	.startup	= da7210_startup,
 	.hw_params	= da7210_hw_params,
 	.set_fmt	= da7210_set_dai_fmt,
 	.digital_mute	= da7210_mute,
@@ -699,6 +856,37 @@ static int da7210_probe(struct snd_soc_codec *codec)
 	/* Enable ramp mode for DAC gain update */
 	snd_soc_write(codec, DA7210_SOFTMUTE, DA7210_RAMP_EN);
 
+	/*
+	 * For DA7210 codec, there are two ways to enable/disable analog IOs
+	 * and ADC/DAC,
+	 * (1) Using "Enable Bit" of register associated with that IO
+	 * (or ADC/DAC)
+	 *	e.g. Mic Left can be enabled using bit 7 of MIC_L(0x7) reg
+	 *
+	 * (2) Using "Standby Bit" of STARTUP2 or STARTUP3 register
+	 *	e.g. Mic left can be put to STANDBY using bit 0 of STARTUP3(0x5)
+	 *
+	 * Out of these two methods, the one using STANDBY bits is preferred
+	 * way to enable/disable individual blocks. This is because STANDBY
+	 * registers are part of system controller which allows system power
+	 * up/down in a controlled, pop-free manner. Also, as per application
+	 * note of DA7210, STANDBY register bits are only effective if a
+	 * particular IO (or ADC/DAC) is already enabled using enable/disable
+	 * register bits. Keeping these things in mind, current DAPM
+	 * implementation manipulates only STANDBY bits.
+	 *
+	 * Overall implementation can be outlined as below,
+	 *
+	 * - "Enable bit" of an IO or ADC/DAC is used to enable it in probe()
+	 * - "STANDBY bit" is controlled by DAPM
+	 */
+
+	/* Enable Line out amplifiers */
+	snd_soc_write(codec, DA7210_OUT1_L, DA7210_OUT1_L_EN);
+	snd_soc_write(codec, DA7210_OUT1_R, DA7210_OUT1_R_EN);
+	snd_soc_write(codec, DA7210_OUT2, DA7210_OUT2_EN |
+		     DA7210_OUT2_OUTMIX_L | DA7210_OUT2_OUTMIX_R);
+
 	/* Diable PLL and bypass it */
 	snd_soc_write(codec, DA7210_PLL, DA7210_PLL_FS_48000);
 
@@ -742,6 +930,11 @@ static struct snd_soc_codec_driver soc_codec_dev_da7210 = {
 
 	.controls		= da7210_snd_controls,
 	.num_controls		= ARRAY_SIZE(da7210_snd_controls),
+
+	.dapm_widgets		= da7210_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(da7210_dapm_widgets),
+	.dapm_routes		= da7210_audio_map,
+	.num_dapm_routes	= ARRAY_SIZE(da7210_audio_map),
 };
 
 #if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
