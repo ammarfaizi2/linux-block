@@ -2270,6 +2270,7 @@ static int alc_build_pcms(struct hda_codec *codec)
 	struct alc_spec *spec = codec->spec;
 	struct hda_pcm *info = spec->pcm_rec;
 	const struct hda_pcm_stream *p;
+	bool have_multi_adcs;
 	int i;
 
 	codec->num_pcms = 1;
@@ -2348,8 +2349,11 @@ static int alc_build_pcms(struct hda_codec *codec)
 	/* If the use of more than one ADC is requested for the current
 	 * model, configure a second analog capture-only PCM.
 	 */
+	have_multi_adcs = (spec->num_adc_nids > 1) &&
+		!spec->dyn_adc_switch && !spec->auto_mic &&
+		(!spec->input_mux || spec->input_mux->num_items > 1);
 	/* Additional Analaog capture for index #2 */
-	if (spec->alt_dac_nid || spec->num_adc_nids > 1) {
+	if (spec->alt_dac_nid || have_multi_adcs) {
 		codec->num_pcms = 3;
 		info = spec->pcm_rec + 2;
 		info->name = spec->stream_name_analog;
@@ -2365,7 +2369,7 @@ static int alc_build_pcms(struct hda_codec *codec)
 				alc_pcm_null_stream;
 			info->stream[SNDRV_PCM_STREAM_PLAYBACK].nid = 0;
 		}
-		if (spec->num_adc_nids > 1) {
+		if (have_multi_adcs) {
 			p = spec->stream_analog_alt_capture;
 			if (!p)
 				p = &alc_pcm_analog_alt_capture;
@@ -2657,7 +2661,6 @@ static int alc_auto_fill_adc_caps(struct hda_codec *codec)
 	hda_nid_t *adc_nids = spec->private_adc_nids;
 	hda_nid_t *cap_nids = spec->private_capsrc_nids;
 	int max_nums = ARRAY_SIZE(spec->private_adc_nids);
-	bool indep_capsrc = false;
 	int i, nums = 0;
 
 	nid = codec->start_nid;
@@ -2679,13 +2682,11 @@ static int alc_auto_fill_adc_caps(struct hda_codec *codec)
 				break;
 			if (type == AC_WID_AUD_SEL) {
 				cap_nids[nums] = src;
-				indep_capsrc = true;
 				break;
 			}
 			n = snd_hda_get_conn_list(codec, src, &list);
 			if (n > 1) {
 				cap_nids[nums] = src;
-				indep_capsrc = true;
 				break;
 			} else if (n != 1)
 				break;
