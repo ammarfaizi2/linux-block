@@ -154,7 +154,7 @@ void *raw_field_ptr(struct event_format *event, const char *name, void *data)
 
 int trace_parse_common_type(void *data)
 {
-	struct record record;
+	struct pevent_record record;
 
 	record.data = data;
 	return pevent_data_type(pevent, &record);
@@ -162,7 +162,7 @@ int trace_parse_common_type(void *data)
 
 int trace_parse_common_pid(void *data)
 {
-	struct record record;
+	struct pevent_record record;
 
 	record.data = data;
 	return pevent_data_pid(pevent, &record);
@@ -182,7 +182,7 @@ struct event_format *trace_find_event(int type)
 void print_trace_event(int cpu, void *data, int size)
 {
 	struct event_format *event;
-	struct record record;
+	struct pevent_record record;
 	struct trace_seq s;
 	int type;
 	int pid;
@@ -211,7 +211,7 @@ void print_trace_event(int cpu, void *data, int size)
 void print_event(int cpu, void *data, int size, unsigned long long nsecs,
 		  char *comm)
 {
-	struct record record;
+	struct pevent_record record;
 	struct trace_seq s;
 	int pid;
 
