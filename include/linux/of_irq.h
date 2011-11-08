@@ -77,6 +77,11 @@ extern struct device_node *of_irq_find_parent(struct device_node *child);
 
 extern void of_irq_init(const struct of_device_id *matches);
 
+/* For archs that don't support NO_IRQ (such as x86), provide a dummy value */
+#ifndef NO_IRQ
+#define NO_IRQ 0
+#endif
+
 #endif /* CONFIG_OF_IRQ */
 #endif /* CONFIG_OF */
 #endif /* __OF_IRQ_H */
