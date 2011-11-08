@@ -2684,6 +2684,8 @@ SND_SOC_DAPM_SUPPLY("TOCLK", WM8962_ADDITIONAL_CONTROL_1, 0, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY_S("DSP2", 1, WM8962_DSP2_POWER_MANAGEMENT,
 		      WM8962_DSP2_ENA_SHIFT, 0, dsp2_event,
 		      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
+SND_SOC_DAPM_SUPPLY("TEMP_HP", WM8962_ADDITIONAL_CONTROL_4, 2, 0, NULL, 0),
+SND_SOC_DAPM_SUPPLY("TEMP_SPK", WM8962_ADDITIONAL_CONTROL_4, 1, 0, NULL, 0),
 
 SND_SOC_DAPM_MIXER("INPGAL", WM8962_LEFT_INPUT_PGA_CONTROL, 4, 0,
 		   inpgal, ARRAY_SIZE(inpgal)),
@@ -2839,6 +2841,9 @@ static const struct snd_soc_dapm_route wm8962_intercon[] = {
 
 	{ "HPOUTL", NULL, "HPOUT" },
 	{ "HPOUTR", NULL, "HPOUT" },
+
+	{ "HPOUTL", NULL, "TEMP_HP" },
+	{ "HPOUTR", NULL, "TEMP_HP" },
 };
 
 static const struct snd_soc_dapm_route wm8962_spk_mono_intercon[] = {
@@ -2855,6 +2860,7 @@ static const struct snd_soc_dapm_route wm8962_spk_mono_intercon[] = {
 	{ "Speaker Output", NULL, "Speaker PGA" },
 	{ "Speaker Output", NULL, "SYSCLK" },
 	{ "Speaker Output", NULL, "TOCLK" },
+	{ "Speaker Output", NULL, "TEMP_SPK" },
 
 	{ "SPKOUT", NULL, "Speaker Output" },
 };
@@ -2883,10 +2889,12 @@ static const struct snd_soc_dapm_route wm8962_spk_stereo_intercon[] = {
 	{ "SPKOUTL Output", NULL, "SPKOUTL PGA" },
 	{ "SPKOUTL Output", NULL, "SYSCLK" },
 	{ "SPKOUTL Output", NULL, "TOCLK" },
+	{ "SPKOUTL Output", NULL, "TEMP_SPK" },
 
 	{ "SPKOUTR Output", NULL, "SPKOUTR PGA" },
 	{ "SPKOUTR Output", NULL, "SYSCLK" },
 	{ "SPKOUTR Output", NULL, "TOCLK" },
+	{ "SPKOUTR Output", NULL, "TEMP_SPK" },
 
 	{ "SPKOUTL", NULL, "SPKOUTL Output" },
 	{ "SPKOUTR", NULL, "SPKOUTR Output" },
@@ -3399,6 +3407,7 @@ static int wm8962_set_fll(struct snd_soc_codec *codec, int fll_id, int source,
 	unsigned long timeout;
 	int ret;
 	int fll1 = snd_soc_read(codec, WM8962_FLL_CONTROL_1) & WM8962_FLL_ENA;
+	int sysclk = snd_soc_read(codec, WM8962_CLOCKING2) & WM8962_SYSCLK_ENA;
 
 	/* Any change? */
 	if (source == wm8962->fll_src && Fref == wm8962->fll_fref &&
@@ -3458,6 +3467,9 @@ static int wm8962_set_fll(struct snd_soc_codec *codec, int fll_id, int source,
 	snd_soc_write(codec, WM8962_FLL_CONTROL_8, fll_div.n);
 
 	try_wait_for_completion(&wm8962->fll_lock);
+
+	if (sysclk)
+		fll1 |= WM8962_FLL_ENA;
 
 	snd_soc_update_bits(codec, WM8962_FLL_CONTROL_1,
 			    WM8962_FLL_FRAC | WM8962_FLL_REFCLK_SRC_MASK |
@@ -3661,6 +3673,14 @@ int wm8962_mic_detect(struct snd_soc_codec *codec, struct snd_soc_jack *jack)
 	/* Send an initial empty report */
 	snd_soc_jack_report(wm8962->jack, 0,
 			    SND_JACK_MICROPHONE | SND_JACK_BTN_0);
+
+	if (jack) {
+		snd_soc_dapm_force_enable_pin(&codec->dapm, "SYSCLK");
+		snd_soc_dapm_force_enable_pin(&codec->dapm, "MICBIAS");
+	} else {
+		snd_soc_dapm_disable_pin(&codec->dapm, "SYSCLK");
+		snd_soc_dapm_disable_pin(&codec->dapm, "MICBIAS");
+	}
 
 	return 0;
 }

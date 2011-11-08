@@ -32,7 +32,9 @@
 #define REG_DIDT	0x0020
 #define REG_DODT	0x0024
 #define REG_MUTE_ST	0x0028
+#define REG_OUT_DMAC	0x002C
 #define REG_OUT_SEL	0x0030
+#define REG_IN_DMAC	0x0038
 
 /* master register */
 #define MST_CLK_RST	0x0210
@@ -235,13 +237,13 @@ static void __fsi_reg_mask_set(u32 __iomem *reg, u32 mask, u32 data)
 }
 
 #define fsi_reg_write(p, r, d)\
-	__fsi_reg_write((u32)(p->base + REG_##r), d)
+	__fsi_reg_write((p->base + REG_##r), d)
 
 #define fsi_reg_read(p, r)\
-	__fsi_reg_read((u32)(p->base + REG_##r))
+	__fsi_reg_read((p->base + REG_##r))
 
 #define fsi_reg_mask_set(p, r, m, d)\
-	__fsi_reg_mask_set((u32)(p->base + REG_##r), m, d)
+	__fsi_reg_mask_set((p->base + REG_##r), m, d)
 
 #define fsi_master_read(p, r) _fsi_master_read(p, MST_##r)
 #define fsi_core_read(p, r)   _fsi_master_read(p, p->core->r)
@@ -886,6 +888,8 @@ static int fsi_hw_startup(struct fsi_priv *fsi,
 			  int is_play,
 			  struct device *dev)
 {
+	struct fsi_master *master = fsi_get_master(fsi);
+	int fsi_ver = master->core->ver;
 	u32 flags = fsi_get_info_flags(fsi);
 	u32 data = 0;
 
@@ -918,6 +922,17 @@ static int fsi_hw_startup(struct fsi_priv *fsi,
 	if (fsi_is_spdif(fsi)) {
 		fsi_spdif_clk_ctrl(fsi, 1);
 		fsi_reg_mask_set(fsi, OUT_SEL, DMMD, DMMD);
+	}
+
+	/*
+	 * FIXME
+	 *
+	 * FSI driver assumed that data package is in-back.
+	 * FSI2 chip can select it.
+	 */
+	if (fsi_ver >= 2) {
+		fsi_reg_write(fsi, OUT_DMAC,	(1 << 4));
+		fsi_reg_write(fsi, IN_DMAC,	(1 << 4));
 	}
 
 	/* irq clear */
