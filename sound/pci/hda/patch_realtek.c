@@ -2974,6 +2974,23 @@ static hda_nid_t alc_auto_look_for_dac(struct hda_codec *codec, hda_nid_t pin)
 	return 0;
 }
 
+/* check whether the DAC is reachable from the pin */
+static bool alc_auto_is_dac_reachable(struct hda_codec *codec,
+				      hda_nid_t pin, hda_nid_t dac)
+{
+	hda_nid_t srcs[5];
+	int i, num;
+
+	pin = alc_go_down_to_selector(codec, pin);
+	num = snd_hda_get_connections(codec, pin, srcs, ARRAY_SIZE(srcs));
+	for (i = 0; i < num; i++) {
+		hda_nid_t nid = alc_auto_mix_to_dac(codec, srcs[i]);
+		if (nid == dac)
+			return true;
+	}
+	return false;
+}
+
 static hda_nid_t get_dac_if_single(struct hda_codec *codec, hda_nid_t pin)
 {
 	hda_nid_t sel = alc_go_down_to_selector(codec, pin);
@@ -3003,13 +3020,15 @@ static int alc_auto_fill_extra_dacs(struct hda_codec *codec, int num_outs,
 }
 
 static int alc_auto_fill_multi_ios(struct hda_codec *codec,
-				   unsigned int location);
+				   unsigned int location, int offset);
 
 /* fill in the dac_nids table from the parsed pin configuration */
 static int alc_auto_fill_dac_nids(struct hda_codec *codec)
 {
 	struct alc_spec *spec = codec->spec;
 	const struct auto_pin_cfg *cfg = &spec->autocfg;
+	unsigned int location, defcfg;
+	int num_pins;
 	bool redone = false;
 	int i;
 
@@ -3061,13 +3080,10 @@ static int alc_auto_fill_dac_nids(struct hda_codec *codec)
 
 	if (cfg->line_outs == 1 && cfg->line_out_type != AUTO_PIN_SPEAKER_OUT) {
 		/* try to fill multi-io first */
-		unsigned int location, defcfg;
-		int num_pins;
-
 		defcfg = snd_hda_codec_get_pincfg(codec, cfg->line_out_pins[0]);
 		location = get_defcfg_location(defcfg);
 
-		num_pins = alc_auto_fill_multi_ios(codec, location);
+		num_pins = alc_auto_fill_multi_ios(codec, location, 0);
 		if (num_pins > 0) {
 			spec->multi_ios = num_pins;
 			spec->ext_channel_count = 2;
@@ -3081,6 +3097,21 @@ static int alc_auto_fill_dac_nids(struct hda_codec *codec)
 	if (cfg->line_out_type != AUTO_PIN_SPEAKER_OUT)
 		alc_auto_fill_extra_dacs(codec, cfg->speaker_outs, cfg->speaker_pins,
 				 spec->multiout.extra_out_nid);
+
+	if (!spec->multi_ios &&
+	    cfg->line_out_type == AUTO_PIN_SPEAKER_OUT &&
+	    cfg->hp_outs) {
+		/* try multi-ios with HP + inputs */
+		defcfg = snd_hda_codec_get_pincfg(codec, cfg->hp_pins[0]);
+		location = get_defcfg_location(defcfg);
+
+		num_pins = alc_auto_fill_multi_ios(codec, location, 1);
+		if (num_pins > 0) {
+			spec->multi_ios = num_pins;
+			spec->ext_channel_count = 2;
+			spec->multiout.num_dacs = num_pins + 1;
+		}
+	}
 
 	return 0;
 }
@@ -3467,17 +3498,19 @@ static void alc_auto_init_extra_out(struct hda_codec *codec)
  * multi-io helper
  */
 static int alc_auto_fill_multi_ios(struct hda_codec *codec,
-				   unsigned int location)
+				   unsigned int location,
+				   int offset)
 {
 	struct alc_spec *spec = codec->spec;
 	struct auto_pin_cfg *cfg = &spec->autocfg;
 	hda_nid_t prime_dac = spec->private_dac_nids[0];
-	int type, i, num_pins = 0;
+	int type, i, dacs, num_pins = 0;
 
+	dacs = spec->multiout.num_dacs;
 	for (type = AUTO_PIN_LINE_IN; type >= AUTO_PIN_MIC; type--) {
 		for (i = 0; i < cfg->num_inputs; i++) {
 			hda_nid_t nid = cfg->inputs[i].pin;
-			hda_nid_t dac;
+			hda_nid_t dac = 0;
 			unsigned int defcfg, caps;
 			if (cfg->inputs[i].type != type)
 				continue;
@@ -3489,7 +3522,13 @@ static int alc_auto_fill_multi_ios(struct hda_codec *codec,
 			caps = snd_hda_query_pin_caps(codec, nid);
 			if (!(caps & AC_PINCAP_OUT))
 				continue;
-			dac = alc_auto_look_for_dac(codec, nid);
+			if (offset && offset + num_pins < dacs) {
+				dac = spec->private_dac_nids[offset + num_pins];
+				if (!alc_auto_is_dac_reachable(codec, nid, dac))
+					dac = 0;
+			}
+			if (!dac)
+				dac = alc_auto_look_for_dac(codec, nid);
 			if (!dac)
 				continue;
 			spec->multi_io[num_pins].pin = nid;
@@ -3498,11 +3537,11 @@ static int alc_auto_fill_multi_ios(struct hda_codec *codec,
 			spec->private_dac_nids[spec->multiout.num_dacs++] = dac;
 		}
 	}
-	spec->multiout.num_dacs = 1;
+	spec->multiout.num_dacs = dacs;
 	if (num_pins < 2) {
 		/* clear up again */
-		memset(spec->private_dac_nids, 0,
-		       sizeof(spec->private_dac_nids));
+		memset(spec->private_dac_nids + dacs, 0,
+		       sizeof(hda_nid_t) * (AUTO_CFG_MAX_OUTS - dacs));
 		spec->private_dac_nids[0] = prime_dac;
 		return 0;
 	}
@@ -4241,6 +4280,9 @@ enum {
 	ALC882_FIXUP_GPIO3,
 	ALC889_FIXUP_COEF,
 	ALC882_FIXUP_ASUS_W2JC,
+	ALC882_FIXUP_ACER_ASPIRE_4930G,
+	ALC882_FIXUP_ACER_ASPIRE_8930G,
+	ALC882_FIXUP_ASPIRE_8930G_VERBS,
 };
 
 static void alc889_fixup_coef(struct hda_codec *codec,
@@ -4343,6 +4385,57 @@ static const struct alc_fixup alc882_fixups[] = {
 		.type = ALC_FIXUP_FUNC,
 		.v.func = alc889_fixup_coef,
 	},
+	[ALC882_FIXUP_ACER_ASPIRE_4930G] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x16, 0x99130111 }, /* CLFE speaker */
+			{ 0x17, 0x99130112 }, /* surround speaker */
+			{ }
+		}
+	},
+	[ALC882_FIXUP_ACER_ASPIRE_8930G] = {
+		.type = ALC_FIXUP_PINS,
+		.v.pins = (const struct alc_pincfg[]) {
+			{ 0x16, 0x99130111 }, /* CLFE speaker */
+			{ 0x1b, 0x99130112 }, /* surround speaker */
+			{ }
+		},
+		.chained = true,
+		.chain_id = ALC882_FIXUP_ASPIRE_8930G_VERBS,
+	},
+	[ALC882_FIXUP_ASPIRE_8930G_VERBS] = {
+		/* additional init verbs for Acer Aspire 8930G */
+		.type = ALC_FIXUP_VERBS,
+		.v.verbs = (const struct hda_verb[]) {
+			/* Enable all DACs */
+			/* DAC DISABLE/MUTE 1? */
+			/*  setting bits 1-5 disables DAC nids 0x02-0x06
+			 *  apparently. Init=0x38 */
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x03 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x0000 },
+			/* DAC DISABLE/MUTE 2? */
+			/*  some bit here disables the other DACs.
+			 *  Init=0x4900 */
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x08 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x0000 },
+			/* DMIC fix
+			 * This laptop has a stereo digital microphone.
+			 * The mics are only 1cm apart which makes the stereo
+			 * useless. However, either the mic or the ALC889
+			 * makes the signal become a difference/sum signal
+			 * instead of standard stereo, which is annoying.
+			 * So instead we flip this bit which makes the
+			 * codec replicate the sum signal to both channels,
+			 * turning it into a normal mono mic.
+			 */
+			/* DMIC_CONTROL? Init value = 0x0001 */
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x0b },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x0003 },
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x3050 },
+			{ }
+		}
+	},
 };
 
 static const struct snd_pci_quirk alc882_fixup_tbl[] = {
@@ -4352,6 +4445,20 @@ static const struct snd_pci_quirk alc882_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1025, 0x0110, "Acer Aspire", ALC883_FIXUP_ACER_EAPD),
 	SND_PCI_QUIRK(0x1025, 0x0112, "Acer Aspire 9303", ALC883_FIXUP_ACER_EAPD),
 	SND_PCI_QUIRK(0x1025, 0x0121, "Acer Aspire 5920G", ALC883_FIXUP_ACER_EAPD),
+	SND_PCI_QUIRK(0x1025, 0x013e, "Acer Aspire 4930G",
+		      ALC882_FIXUP_ACER_ASPIRE_4930G),
+	SND_PCI_QUIRK(0x1025, 0x013f, "Acer Aspire 5930G",
+		      ALC882_FIXUP_ACER_ASPIRE_4930G),
+	SND_PCI_QUIRK(0x1025, 0x0145, "Acer Aspire 8930G",
+		      ALC882_FIXUP_ACER_ASPIRE_8930G),
+	SND_PCI_QUIRK(0x1025, 0x0146, "Acer Aspire 6935G",
+		      ALC882_FIXUP_ACER_ASPIRE_8930G),
+	SND_PCI_QUIRK(0x1025, 0x015e, "Acer Aspire 6930G",
+		      ALC882_FIXUP_ACER_ASPIRE_4930G),
+	SND_PCI_QUIRK(0x1025, 0x0166, "Acer Aspire 6530G",
+		      ALC882_FIXUP_ACER_ASPIRE_4930G),
+	SND_PCI_QUIRK(0x1025, 0x0142, "Acer Aspire 7730G",
+		      ALC882_FIXUP_ACER_ASPIRE_4930G),
 	SND_PCI_QUIRK(0x1025, 0x0155, "Packard-Bell M5120", ALC882_FIXUP_PB_M5210),
 	SND_PCI_QUIRK(0x1025, 0x0296, "Acer Aspire 7736z", ALC882_FIXUP_ACER_ASPIRE_7736),
 	SND_PCI_QUIRK(0x1043, 0x13c2, "Asus A7M", ALC882_FIXUP_EAPD),
@@ -4414,11 +4521,7 @@ static int patch_alc882(struct hda_codec *codec)
 	if (err < 0)
 		goto error;
 
-	board_config = alc_board_config(codec, ALC882_MODEL_LAST,
-					alc882_models, alc882_cfg_tbl);
-
-	if (board_config < 0)
-		board_config = alc_board_codec_sid_config(codec,
+	board_config = alc_board_codec_sid_config(codec,
 			ALC882_MODEL_LAST, alc882_models, alc882_ssid_cfg_tbl);
 
 	if (board_config < 0) {
