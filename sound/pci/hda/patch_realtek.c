@@ -3144,8 +3144,15 @@ static int alc_auto_add_vol_ctl(struct hda_codec *codec,
 				 val);
 }
 
-#define alc_auto_add_stereo_vol(codec, pfx, cidx, nid)	\
-	alc_auto_add_vol_ctl(codec, pfx, cidx, nid, 3)
+static int alc_auto_add_stereo_vol(struct hda_codec *codec,
+				   const char *pfx, int cidx,
+				   hda_nid_t nid)
+{
+	int chs = 1;
+	if (get_wcaps(codec, nid) & AC_WCAP_STEREO)
+		chs = 3;
+	return alc_auto_add_vol_ctl(codec, pfx, cidx, nid, chs);
+}
 
 /* create a mute-switch for the given mixer widget;
  * if it has multiple sources (e.g. DAC and loopback), create a bind-mute
@@ -3177,8 +3184,14 @@ static int alc_auto_add_sw_ctl(struct hda_codec *codec,
 	return __add_pb_sw_ctrl(codec->spec, type, pfx, cidx, val);
 }
 
-#define alc_auto_add_stereo_sw(codec, pfx, cidx, nid)	\
-	alc_auto_add_sw_ctl(codec, pfx, cidx, nid, 3)
+static int alc_auto_add_stereo_sw(struct hda_codec *codec, const char *pfx,
+				  int cidx, hda_nid_t nid)
+{
+	int chs = 1;
+	if (get_wcaps(codec, nid) & AC_WCAP_STEREO)
+		chs = 3;
+	return alc_auto_add_sw_ctl(codec, pfx, cidx, nid, chs);
+}
 
 static hda_nid_t alc_look_for_out_mute_nid(struct hda_codec *codec,
 					   hda_nid_t pin, hda_nid_t dac)
@@ -4283,6 +4296,7 @@ enum {
 	ALC882_FIXUP_ACER_ASPIRE_4930G,
 	ALC882_FIXUP_ACER_ASPIRE_8930G,
 	ALC882_FIXUP_ASPIRE_8930G_VERBS,
+	ALC885_FIXUP_MACPRO_GPIO,
 };
 
 static void alc889_fixup_coef(struct hda_codec *codec,
@@ -4291,6 +4305,49 @@ static void alc889_fixup_coef(struct hda_codec *codec,
 	if (action != ALC_FIXUP_ACT_INIT)
 		return;
 	alc889_coef_init(codec);
+}
+
+/* toggle speaker-output according to the hp-jack state */
+static void alc882_gpio_mute(struct hda_codec *codec, int pin, int muted)
+{
+	unsigned int gpiostate, gpiomask, gpiodir;
+
+	gpiostate = snd_hda_codec_read(codec, codec->afg, 0,
+				       AC_VERB_GET_GPIO_DATA, 0);
+
+	if (!muted)
+		gpiostate |= (1 << pin);
+	else
+		gpiostate &= ~(1 << pin);
+
+	gpiomask = snd_hda_codec_read(codec, codec->afg, 0,
+				      AC_VERB_GET_GPIO_MASK, 0);
+	gpiomask |= (1 << pin);
+
+	gpiodir = snd_hda_codec_read(codec, codec->afg, 0,
+				     AC_VERB_GET_GPIO_DIRECTION, 0);
+	gpiodir |= (1 << pin);
+
+
+	snd_hda_codec_write(codec, codec->afg, 0,
+			    AC_VERB_SET_GPIO_MASK, gpiomask);
+	snd_hda_codec_write(codec, codec->afg, 0,
+			    AC_VERB_SET_GPIO_DIRECTION, gpiodir);
+
+	msleep(1);
+
+	snd_hda_codec_write(codec, codec->afg, 0,
+			    AC_VERB_SET_GPIO_DATA, gpiostate);
+}
+
+/* set up GPIO at initialization */
+static void alc885_fixup_macpro_gpio(struct hda_codec *codec,
+				     const struct alc_fixup *fix, int action)
+{
+	if (action != ALC_FIXUP_ACT_INIT)
+		return;
+	alc882_gpio_mute(codec, 0, 0);
+	alc882_gpio_mute(codec, 1, 0);
 }
 
 static const struct alc_fixup alc882_fixups[] = {
@@ -4436,6 +4493,10 @@ static const struct alc_fixup alc882_fixups[] = {
 			{ }
 		}
 	},
+	[ALC885_FIXUP_MACPRO_GPIO] = {
+		.type = ALC_FIXUP_FUNC,
+		.v.func = alc885_fixup_macpro_gpio,
+	},
 };
 
 static const struct snd_pci_quirk alc882_fixup_tbl[] = {
@@ -4466,7 +4527,14 @@ static const struct snd_pci_quirk alc882_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1043, 0x1971, "Asus W2JC", ALC882_FIXUP_ASUS_W2JC),
 	SND_PCI_QUIRK(0x1043, 0x835f, "Asus Eee 1601", ALC888_FIXUP_EEE1601),
 	SND_PCI_QUIRK(0x104d, 0x9047, "Sony Vaio TT", ALC889_FIXUP_VAIO_TT),
-	SND_PCI_QUIRK(0x106b, 0x3200, "iMac 7,1 Aluminum", ALC882_FIXUP_EAPD), /* codec SSID */
+
+	/* All Apple entries are in codec SSIDs */
+	SND_PCI_QUIRK(0x106b, 0x0c00, "Mac Pro", ALC885_FIXUP_MACPRO_GPIO),
+	SND_PCI_QUIRK(0x106b, 0x1000, "iMac 24", ALC885_FIXUP_MACPRO_GPIO),
+	SND_PCI_QUIRK(0x106b, 0x2800, "AppleTV", ALC885_FIXUP_MACPRO_GPIO),
+	SND_PCI_QUIRK(0x106b, 0x3200, "iMac 7,1 Aluminum", ALC882_FIXUP_EAPD),
+	SND_PCI_QUIRK(0x106b, 0x3e00, "iMac 24 Aluminum", ALC885_FIXUP_MACPRO_GPIO),
+
 	SND_PCI_QUIRK(0x1071, 0x8258, "Evesham Voyaeger", ALC882_FIXUP_EAPD),
 	SND_PCI_QUIRK_VENDOR(0x1462, "MSI", ALC882_FIXUP_GPIO3),
 	SND_PCI_QUIRK(0x147b, 0x107a, "Abit AW9D-MAX", ALC882_FIXUP_ABIT_AW9D_MAX),
@@ -4521,7 +4589,10 @@ static int patch_alc882(struct hda_codec *codec)
 	if (err < 0)
 		goto error;
 
-	board_config = alc_board_codec_sid_config(codec,
+	board_config = alc_board_config(codec, ALC882_MODEL_LAST,
+					alc882_models, NULL);
+	if (board_config < 0)
+		board_config = alc_board_codec_sid_config(codec,
 			ALC882_MODEL_LAST, alc882_models, alc882_ssid_cfg_tbl);
 
 	if (board_config < 0) {
