@@ -677,6 +677,54 @@ err_out:
 	return;
 }
 
+static void virtio_p9_remove(struct p9_dev *p9dev,
+			       struct p9_pdu *pdu, u32 *outlen)
+{
+	int ret;
+	u32 fid_val;
+	struct p9_fid *fid;
+
+	virtio_p9_pdu_readf(pdu, "d", &fid_val);
+	fid = &p9dev->fids[fid_val];
+
+	ret = remove(fid->abs_path);
+	if (ret < 0)
+		goto err_out;
+	*outlen = pdu->write_offset;
+	virtio_p9_set_reply_header(pdu, *outlen);
+	return;
+
+err_out:
+	virtio_p9_error_reply(p9dev, pdu, errno, outlen);
+	return;
+}
+
+static void virtio_p9_rename(struct p9_dev *p9dev,
+			       struct p9_pdu *pdu, u32 *outlen)
+{
+	int ret;
+	u32 fid_val, new_fid_val;
+	struct p9_fid *fid, *new_fid;
+	char full_path[PATH_MAX], *new_name;
+
+	virtio_p9_pdu_readf(pdu, "dds", &fid_val, &new_fid_val, &new_name);
+	fid = &p9dev->fids[fid_val];
+	new_fid = &p9dev->fids[new_fid_val];
+
+	sprintf(full_path, "%s/%s", new_fid->abs_path, new_name);
+	ret = rename(fid->abs_path, full_path);
+	if (ret < 0)
+		goto err_out;
+	close_fid(p9dev, fid_val);
+	*outlen = pdu->write_offset;
+	virtio_p9_set_reply_header(pdu, *outlen);
+	return;
+
+err_out:
+	virtio_p9_error_reply(p9dev, pdu, errno, outlen);
+	return;
+}
+
 static void virtio_p9_readlink(struct p9_dev *p9dev,
 			       struct p9_pdu *pdu, u32 *outlen)
 {
@@ -1048,6 +1096,8 @@ static p9_handler *virtio_9p_dotl_handler [] = {
 	[P9_TSYMLINK]     = virtio_p9_symlink,
 	[P9_TLCREATE]     = virtio_p9_create,
 	[P9_TWRITE]       = virtio_p9_write,
+	[P9_TREMOVE]      = virtio_p9_remove,
+	[P9_TRENAME]      = virtio_p9_rename,
 };
 
 static struct p9_pdu *virtio_p9_pdu_init(struct kvm *kvm, struct virt_queue *vq)
@@ -1112,7 +1162,7 @@ static void virtio_p9_do_io(struct kvm *kvm, void *param)
 
 	while (virt_queue__available(vq)) {
 		virtio_p9_do_io_request(kvm, job);
-		virtio_pci__signal_vq(kvm, &p9dev->vpci, vq - p9dev->vqs);
+		p9dev->vtrans.trans_ops->signal_vq(kvm, &p9dev->vtrans, vq - p9dev->vqs);
 	}
 }
 
@@ -1188,22 +1238,26 @@ static int get_size_vq(struct kvm *kvm, void *dev, u32 vq)
 	return VIRTQUEUE_NUM;
 }
 
+struct virtio_ops p9_dev_virtio_ops = (struct virtio_ops) {
+	.set_config		= set_config,
+	.get_config		= get_config,
+	.get_host_features	= get_host_features,
+	.set_guest_features	= set_guest_features,
+	.init_vq		= init_vq,
+	.notify_vq		= notify_vq,
+	.get_pfn_vq		= get_pfn_vq,
+	.get_size_vq		= get_size_vq,
+};
+
 int virtio_9p__init(struct kvm *kvm)
 {
 	struct p9_dev *p9dev;
 
 	list_for_each_entry(p9dev, &devs, list) {
-		virtio_pci__init(kvm, &p9dev->vpci, p9dev, PCI_DEVICE_ID_VIRTIO_P9, VIRTIO_ID_9P, PCI_CLASS_P9);
-		p9dev->vpci.ops = (struct virtio_pci_ops) {
-			.set_config		= set_config,
-			.get_config		= get_config,
-			.get_host_features	= get_host_features,
-			.set_guest_features	= set_guest_features,
-			.init_vq		= init_vq,
-			.notify_vq		= notify_vq,
-			.get_pfn_vq		= get_pfn_vq,
-			.get_size_vq		= get_size_vq,
-		};
+		virtio_trans_init(&p9dev->vtrans, VIRTIO_PCI);
+		p9dev->vtrans.trans_ops->init(kvm, &p9dev->vtrans, p9dev,
+					PCI_DEVICE_ID_VIRTIO_P9, VIRTIO_ID_9P, PCI_CLASS_P9);
+		p9dev->vtrans.virtio_ops = &p9_dev_virtio_ops;
 	}
 
 	return 0;
