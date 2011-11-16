@@ -1,0 +1,16 @@
+kvm-pause(1)
+================
+
+NAME
+----
+kvm-pause - Pause the virtual machine
+
+SYNOPSIS
+--------
+[verse]
+'kvm pause [instance]'
+
+DESCRIPTION
+-----------
+The command pauses a virtual machine.
+For a list of running instances see 'kvm list'.
