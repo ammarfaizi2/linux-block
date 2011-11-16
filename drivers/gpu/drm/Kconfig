@@ -69,8 +69,6 @@ config DRM_RADEON
 
 	  If M is selected, the module will be called radeon.
 
-source "drivers/gpu/drm/radeon/Kconfig"
-
 config DRM_I810
 	tristate "Intel I810"
 	# !PREEMPT because of missing ioctl locking

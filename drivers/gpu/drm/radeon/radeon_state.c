@@ -2159,6 +2159,7 @@ static int radeon_cp_clear(struct drm_device *dev, void *data, struct drm_file *
 	drm_radeon_sarea_t *sarea_priv = master_priv->sarea_priv;
 	drm_radeon_clear_t *clear = data;
 	drm_radeon_clear_rect_t depth_boxes[RADEON_NR_SAREA_CLIPRECTS];
+	unsigned int copy_size;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
@@ -2168,8 +2169,12 @@ static int radeon_cp_clear(struct drm_device *dev, void *data, struct drm_file *
 	if (sarea_priv->nbox > RADEON_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = RADEON_NR_SAREA_CLIPRECTS;
 
+	copy_size = sarea_priv->nbox * sizeof(depth_boxes[0]);
+	if (copy_size > sizeof(depth_boxes))
+		return -EFAULT;
+
 	if (DRM_COPY_FROM_USER(&depth_boxes, clear->depth_boxes,
-			       sarea_priv->nbox * sizeof(depth_boxes[0])))
+				copy_size))
 		return -EFAULT;
 
 	radeon_cp_dispatch_clear(dev, file_priv->master, clear, depth_boxes);

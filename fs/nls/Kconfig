@@ -4,6 +4,7 @@
 
 menuconfig NLS
 	tristate "Native language support"
+	select NLS_BASE
 	---help---
 	  The base Native Language Support. A number of filesystems
 	  depend on it (e.g. FAT, JOLIET, NT, BEOS filesystems), as well
@@ -16,6 +17,19 @@ menuconfig NLS
 	  will be called nls_base.
 
 if NLS
+
+config NLS_BASE
+	bool "Base NLS functions"
+	depends on ACPI || DMI
+	default y
+	---help---
+	  The base NLS support functions which handle unicode traslations.
+
+	  If unsure, say Y.
+
+	  This config option is selected by ACPI && DMI && NLS as the
+	  functions defined here are needed in vmlinux and if built as
+	  module cause build issues.
 
 config NLS_DEFAULT
 	string "Default NLS Option"

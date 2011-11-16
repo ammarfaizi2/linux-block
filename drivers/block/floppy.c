@@ -3445,6 +3445,9 @@ static int fd_locked_ioctl(struct block_device *bdev, fmode_t mode, unsigned int
 	if (WARN_ON(size < 0 || size > sizeof(inparam)))
 		return -EINVAL;
 
+	if (size < 0 || size > sizeof(inparam))
+		return -EINVAL;
+
 	/* copyin */
 	memset(&inparam, 0, sizeof(inparam));
 	if (_IOC_DIR(cmd) & _IOC_WRITE) {

@@ -7,6 +7,7 @@ config ATH9K
 	tristate "Atheros 802.11n wireless cards support"
 	depends on MAC80211
 	select ATH9K_HW
+	depends on RFKILL || RFKILL=n
 	select MAC80211_LEDS
 	select LEDS_CLASS
 	select NEW_LEDS
