@@ -266,7 +266,6 @@ enum snd_soc_control_type {
 
 enum snd_soc_compress_type {
 	SND_SOC_FLAT_COMPRESSION = 1,
-	SND_SOC_LZO_COMPRESSION,
 	SND_SOC_RBTREE_COMPRESSION
 };
 
@@ -843,7 +842,7 @@ struct snd_soc_card {
 };
 
 /* SoC machine DAI configuration, glues a codec and cpu DAI together */
-struct snd_soc_pcm_runtime  {
+struct snd_soc_pcm_runtime {
 	struct device dev;
 	struct snd_soc_card *card;
 	struct snd_soc_dai_link *dai_link;

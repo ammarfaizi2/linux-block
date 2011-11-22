@@ -453,6 +453,7 @@ static int wm8731_set_bias_level(struct snd_soc_codec *codec,
 		snd_soc_write(codec, WM8731_PWR, 0xffff);
 		regulator_bulk_disable(ARRAY_SIZE(wm8731->supplies),
 				       wm8731->supplies);
+		codec->cache_sync = 1;
 		break;
 	}
 	codec->dapm.bias_level = level;
@@ -553,9 +554,6 @@ static int wm8731_probe(struct snd_soc_codec *codec)
 	/* Disable bypass path by default */
 	snd_soc_update_bits(codec, WM8731_APANA, 0x8, 0);
 
-	snd_soc_add_controls(codec, wm8731_snd_controls,
-			     ARRAY_SIZE(wm8731_snd_controls));
-
 	/* Regulators will have been enabled by bias management */
 	regulator_bulk_disable(ARRAY_SIZE(wm8731->supplies), wm8731->supplies);
 
@@ -595,6 +593,8 @@ static struct snd_soc_codec_driver soc_codec_dev_wm8731 = {
 	.num_dapm_widgets = ARRAY_SIZE(wm8731_dapm_widgets),
 	.dapm_routes = wm8731_intercon,
 	.num_dapm_routes = ARRAY_SIZE(wm8731_intercon),
+	.controls =	wm8731_snd_controls,
+	.num_controls = ARRAY_SIZE(wm8731_snd_controls),
 };
 
 static const struct of_device_id wm8731_of_match[] = {
