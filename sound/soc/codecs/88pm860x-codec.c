@@ -1198,14 +1198,14 @@ static int pm860x_set_bias_level(struct snd_soc_codec *codec,
 	return 0;
 }
 
-static struct snd_soc_dai_ops pm860x_pcm_dai_ops = {
+static const struct snd_soc_dai_ops pm860x_pcm_dai_ops = {
 	.digital_mute	= pm860x_digital_mute,
 	.hw_params	= pm860x_pcm_hw_params,
 	.set_fmt	= pm860x_pcm_set_dai_fmt,
 	.set_sysclk	= pm860x_set_dai_sysclk,
 };
 
-static struct snd_soc_dai_ops pm860x_i2s_dai_ops = {
+static const struct snd_soc_dai_ops pm860x_i2s_dai_ops = {
 	.digital_mute	= pm860x_digital_mute,
 	.hw_params	= pm860x_i2s_hw_params,
 	.set_fmt	= pm860x_i2s_set_dai_fmt,
@@ -1481,17 +1481,7 @@ static struct platform_driver pm860x_codec_driver = {
 	.remove	= __devexit_p(pm860x_codec_remove),
 };
 
-static __init int pm860x_init(void)
-{
-	return platform_driver_register(&pm860x_codec_driver);
-}
-module_init(pm860x_init);
-
-static __exit void pm860x_exit(void)
-{
-	platform_driver_unregister(&pm860x_codec_driver);
-}
-module_exit(pm860x_exit);
+module_platform_driver(pm860x_codec_driver);
 
 MODULE_DESCRIPTION("ASoC 88PM860x driver");
 MODULE_AUTHOR("Haojian Zhuang <haojian.zhuang@marvell.com>");

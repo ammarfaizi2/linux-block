@@ -286,11 +286,11 @@ reset:
 	return 0;
 }
 
-static struct snd_soc_dai_ops stac9766_dai_ops_analog = {
+static const struct snd_soc_dai_ops stac9766_dai_ops_analog = {
 	.prepare = ac97_analog_prepare,
 };
 
-static struct snd_soc_dai_ops stac9766_dai_ops_digital = {
+static const struct snd_soc_dai_ops stac9766_dai_ops_digital = {
 	.prepare = ac97_digital_prepare,
 };
 
@@ -408,17 +408,7 @@ static struct platform_driver stac9766_codec_driver = {
 	.remove = __devexit_p(stac9766_remove),
 };
 
-static int __init stac9766_init(void)
-{
-	return platform_driver_register(&stac9766_codec_driver);
-}
-module_init(stac9766_init);
-
-static void __exit stac9766_exit(void)
-{
-	platform_driver_unregister(&stac9766_codec_driver);
-}
-module_exit(stac9766_exit);
+module_platform_driver(stac9766_codec_driver);
 
 MODULE_DESCRIPTION("ASoC stac9766 driver");
 MODULE_AUTHOR("Jon Smirl <jonsmirl@gmail.com>");

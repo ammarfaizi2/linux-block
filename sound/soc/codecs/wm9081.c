@@ -18,7 +18,6 @@
 #include <linux/device.h>
 #include <linux/pm.h>
 #include <linux/i2c.h>
-#include <linux/platform_device.h>
 #include <linux/regmap.h>
 #include <linux/slab.h>
 #include <sound/core.h>
@@ -1234,7 +1233,7 @@ static int wm9081_set_tdm_slot(struct snd_soc_dai *dai,
 	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
 	 SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-static struct snd_soc_dai_ops wm9081_dai_ops = {
+static const struct snd_soc_dai_ops wm9081_dai_ops = {
 	.hw_params = wm9081_hw_params,
 	.set_fmt = wm9081_set_dai_fmt,
 	.digital_mute = wm9081_digital_mute,
@@ -1362,7 +1361,8 @@ static __devinit int wm9081_i2c_probe(struct i2c_client *i2c,
 	unsigned int reg;
 	int ret;
 
-	wm9081 = kzalloc(sizeof(struct wm9081_priv), GFP_KERNEL);
+	wm9081 = devm_kzalloc(&i2c->dev, sizeof(struct wm9081_priv),
+			      GFP_KERNEL);
 	if (wm9081 == NULL)
 		return -ENOMEM;
 
@@ -1406,7 +1406,6 @@ static __devinit int wm9081_i2c_probe(struct i2c_client *i2c,
 err_regmap:
 	regmap_exit(wm9081->regmap);
 err:
-	kfree(wm9081);
 
 	return ret;
 }
@@ -1417,7 +1416,6 @@ static __devexit int wm9081_i2c_remove(struct i2c_client *client)
 
 	snd_soc_unregister_codec(&client->dev);
 	regmap_exit(wm9081->regmap);
-	kfree(i2c_get_clientdata(client));
 	return 0;
 }
 

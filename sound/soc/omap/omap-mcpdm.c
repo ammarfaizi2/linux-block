@@ -367,7 +367,7 @@ static int omap_mcpdm_prepare(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static struct snd_soc_dai_ops omap_mcpdm_dai_ops = {
+static const struct snd_soc_dai_ops omap_mcpdm_dai_ops = {
 	.startup	= omap_mcpdm_dai_startup,
 	.shutdown	= omap_mcpdm_dai_shutdown,
 	.hw_params	= omap_mcpdm_dai_hw_params,
@@ -520,17 +520,7 @@ static struct platform_driver asoc_mcpdm_driver = {
 	.remove	= __devexit_p(asoc_mcpdm_remove),
 };
 
-static int __init snd_omap_mcpdm_init(void)
-{
-	return platform_driver_register(&asoc_mcpdm_driver);
-}
-module_init(snd_omap_mcpdm_init);
-
-static void __exit snd_omap_mcpdm_exit(void)
-{
-	platform_driver_unregister(&asoc_mcpdm_driver);
-}
-module_exit(snd_omap_mcpdm_exit);
+module_platform_driver(asoc_mcpdm_driver);
 
 MODULE_AUTHOR("Misael Lopez Cruz <misael.lopez@ti.com>");
 MODULE_DESCRIPTION("OMAP PDM SoC Interface");

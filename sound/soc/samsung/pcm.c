@@ -452,7 +452,7 @@ static int s3c_pcm_set_sysclk(struct snd_soc_dai *cpu_dai,
 	return 0;
 }
 
-static struct snd_soc_dai_ops s3c_pcm_dai_ops = {
+static const struct snd_soc_dai_ops s3c_pcm_dai_ops = {
 	.set_sysclk	= s3c_pcm_set_sysclk,
 	.set_clkdiv	= s3c_pcm_set_clkdiv,
 	.trigger	= s3c_pcm_trigger,
@@ -632,17 +632,7 @@ static struct platform_driver s3c_pcm_driver = {
 	},
 };
 
-static int __init s3c_pcm_init(void)
-{
-	return platform_driver_register(&s3c_pcm_driver);
-}
-module_init(s3c_pcm_init);
-
-static void __exit s3c_pcm_exit(void)
-{
-	platform_driver_unregister(&s3c_pcm_driver);
-}
-module_exit(s3c_pcm_exit);
+module_platform_driver(s3c_pcm_driver);
 
 /* Module information */
 MODULE_AUTHOR("Jaswinder Singh, <jassi.brar@samsung.com>");

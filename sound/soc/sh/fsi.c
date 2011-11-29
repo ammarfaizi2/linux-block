@@ -1096,7 +1096,7 @@ static int fsi_dai_hw_params(struct snd_pcm_substream *substream,
 	return ret;
 }
 
-static struct snd_soc_dai_ops fsi_dai_ops = {
+static const struct snd_soc_dai_ops fsi_dai_ops = {
 	.startup	= fsi_dai_startup,
 	.shutdown	= fsi_dai_shutdown,
 	.trigger	= fsi_dai_trigger,
@@ -1468,18 +1468,7 @@ static struct platform_driver fsi_driver = {
 	.id_table	= fsi_id_table,
 };
 
-static int __init fsi_mobile_init(void)
-{
-	return platform_driver_register(&fsi_driver);
-}
-
-static void __exit fsi_mobile_exit(void)
-{
-	platform_driver_unregister(&fsi_driver);
-}
-
-module_init(fsi_mobile_init);
-module_exit(fsi_mobile_exit);
+module_platform_driver(fsi_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SuperH onchip FSI audio driver");

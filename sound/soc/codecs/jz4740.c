@@ -206,7 +206,7 @@ static int jz4740_codec_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static struct snd_soc_dai_ops jz4740_codec_dai_ops = {
+static const struct snd_soc_dai_ops jz4740_codec_dai_ops = {
 	.hw_params = jz4740_codec_hw_params,
 };
 
@@ -424,17 +424,7 @@ static struct platform_driver jz4740_codec_driver = {
 	},
 };
 
-static int __init jz4740_codec_init(void)
-{
-	return platform_driver_register(&jz4740_codec_driver);
-}
-module_init(jz4740_codec_init);
-
-static void __exit jz4740_codec_exit(void)
-{
-	platform_driver_unregister(&jz4740_codec_driver);
-}
-module_exit(jz4740_codec_exit);
+module_platform_driver(jz4740_codec_driver);
 
 MODULE_DESCRIPTION("JZ4740 SoC internal codec driver");
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");

@@ -208,6 +208,7 @@ static struct snd_soc_card speyside_wm8962 = {
 	.num_dapm_widgets = ARRAY_SIZE(widgets),
 	.dapm_routes = audio_paths,
 	.num_dapm_routes = ARRAY_SIZE(audio_paths),
+	.fully_routed = true,
 
 	.late_probe = speyside_wm8962_late_probe,
 };
@@ -248,17 +249,7 @@ static struct platform_driver speyside_wm8962_driver = {
 	.remove = __devexit_p(speyside_wm8962_remove),
 };
 
-static int __init speyside_wm8962_audio_init(void)
-{
-	return platform_driver_register(&speyside_wm8962_driver);
-}
-module_init(speyside_wm8962_audio_init);
-
-static void __exit speyside_wm8962_audio_exit(void)
-{
-	platform_driver_unregister(&speyside_wm8962_driver);
-}
-module_exit(speyside_wm8962_audio_exit);
+module_platform_driver(speyside_wm8962_driver);
 
 MODULE_DESCRIPTION("Speyside WM8962 audio support");
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");

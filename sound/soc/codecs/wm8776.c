@@ -19,7 +19,6 @@
 #include <linux/pm.h>
 #include <linux/i2c.h>
 #include <linux/of_device.h>
-#include <linux/platform_device.h>
 #include <linux/spi/spi.h>
 #include <linux/slab.h>
 #include <sound/core.h>
@@ -327,14 +326,14 @@ static int wm8776_set_bias_level(struct snd_soc_codec *codec,
 #define WM8776_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-static struct snd_soc_dai_ops wm8776_dac_ops = {
+static const struct snd_soc_dai_ops wm8776_dac_ops = {
 	.digital_mute	= wm8776_mute,
 	.hw_params      = wm8776_hw_params,
 	.set_fmt        = wm8776_set_fmt,
 	.set_sysclk     = wm8776_set_sysclk,
 };
 
-static struct snd_soc_dai_ops wm8776_adc_ops = {
+static const struct snd_soc_dai_ops wm8776_adc_ops = {
 	.hw_params      = wm8776_hw_params,
 	.set_fmt        = wm8776_set_fmt,
 	.set_sysclk     = wm8776_set_sysclk,
@@ -392,7 +391,6 @@ static int wm8776_resume(struct snd_soc_codec *codec)
 static int wm8776_probe(struct snd_soc_codec *codec)
 {
 	struct wm8776_priv *wm8776 = snd_soc_codec_get_drvdata(codec);
-	struct snd_soc_dapm_context *dapm = &codec->dapm;
 	int ret = 0;
 
 	ret = snd_soc_codec_set_cache_io(codec, 7, 9, wm8776->control_type);
@@ -414,12 +412,6 @@ static int wm8776_probe(struct snd_soc_codec *codec)
 	snd_soc_update_bits(codec, WM8776_HPRVOL, 0x100, 0x100);
 	snd_soc_update_bits(codec, WM8776_DACRVOL, 0x100, 0x100);
 
-	snd_soc_add_controls(codec, wm8776_snd_controls,
-			     ARRAY_SIZE(wm8776_snd_controls));
-	snd_soc_dapm_new_controls(dapm, wm8776_dapm_widgets,
-				  ARRAY_SIZE(wm8776_dapm_widgets));
-	snd_soc_dapm_add_routes(dapm, routes, ARRAY_SIZE(routes));
-
 	return ret;
 }
 
@@ -439,6 +431,13 @@ static struct snd_soc_codec_driver soc_codec_dev_wm8776 = {
 	.reg_cache_size = ARRAY_SIZE(wm8776_reg),
 	.reg_word_size = sizeof(u16),
 	.reg_cache_default = wm8776_reg,
+
+	.controls = wm8776_snd_controls,
+	.num_controls = ARRAY_SIZE(wm8776_snd_controls),
+	.dapm_widgets = wm8776_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(wm8776_dapm_widgets),
+	.dapm_routes = routes,
+	.num_dapm_routes = ARRAY_SIZE(routes),
 };
 
 static const struct of_device_id wm8776_of_match[] = {

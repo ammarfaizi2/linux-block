@@ -620,7 +620,7 @@ static void davinci_i2s_shutdown(struct snd_pcm_substream *substream,
 
 #define DAVINCI_I2S_RATES	SNDRV_PCM_RATE_8000_96000
 
-static struct snd_soc_dai_ops davinci_i2s_dai_ops = {
+static const struct snd_soc_dai_ops davinci_i2s_dai_ops = {
 	.startup	= davinci_i2s_startup,
 	.shutdown	= davinci_i2s_shutdown,
 	.prepare	= davinci_i2s_prepare,
@@ -774,17 +774,7 @@ static struct platform_driver davinci_mcbsp_driver = {
 	},
 };
 
-static int __init davinci_i2s_init(void)
-{
-	return platform_driver_register(&davinci_mcbsp_driver);
-}
-module_init(davinci_i2s_init);
-
-static void __exit davinci_i2s_exit(void)
-{
-	platform_driver_unregister(&davinci_mcbsp_driver);
-}
-module_exit(davinci_i2s_exit);
+module_platform_driver(davinci_mcbsp_driver);
 
 MODULE_AUTHOR("Vladimir Barinov");
 MODULE_DESCRIPTION("TI DAVINCI I2S (McBSP) SoC Interface");

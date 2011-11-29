@@ -118,11 +118,21 @@ static const struct snd_soc_dapm_route trimslice_audio_map[] = {
 static int trimslice_asoc_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_codec *codec = rtd->codec;
-	struct snd_soc_dapm_context *dapm = &codec->dapm;
+	struct snd_soc_card *card = codec->card;
+	int ret;
 
-	snd_soc_dapm_nc_pin(dapm, "LHPOUT");
-	snd_soc_dapm_nc_pin(dapm, "RHPOUT");
-	snd_soc_dapm_nc_pin(dapm, "MICIN");
+	ret = tegra_das_connect_dap_to_dac(TEGRA_DAS_DAP_ID_1,
+					   TEGRA_DAS_DAP_SEL_DAC1);
+	if (ret) {
+		dev_err(card->dev, "Can't set up DAS DAP connection\n");
+		return ret;
+	}
+	ret = tegra_das_connect_dac_to_dap(TEGRA_DAS_DAC_ID_1,
+					   TEGRA_DAS_DAC_SEL_DAP1);
+	if (ret) {
+		dev_err(card->dev, "Can't set up DAS DAC connection\n");
+		return ret;
+	}
 
 	return 0;
 }
@@ -147,6 +157,7 @@ static struct snd_soc_card snd_soc_trimslice = {
 	.num_dapm_widgets = ARRAY_SIZE(trimslice_dapm_widgets),
 	.dapm_routes = trimslice_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(trimslice_audio_map),
+	.fully_routed = true,
 };
 
 static __devinit int tegra_snd_trimslice_probe(struct platform_device *pdev)
@@ -155,15 +166,17 @@ static __devinit int tegra_snd_trimslice_probe(struct platform_device *pdev)
 	struct tegra_trimslice *trimslice;
 	int ret;
 
-	trimslice = kzalloc(sizeof(struct tegra_trimslice), GFP_KERNEL);
+	trimslice = devm_kzalloc(&pdev->dev, sizeof(struct tegra_trimslice),
+				 GFP_KERNEL);
 	if (!trimslice) {
 		dev_err(&pdev->dev, "Can't allocate tegra_trimslice\n");
-		return -ENOMEM;
+		ret = -ENOMEM;
+		goto err;
 	}
 
 	ret = tegra_asoc_utils_init(&trimslice->util_data, &pdev->dev);
 	if (ret)
-		goto err_free_trimslice;
+		goto err;
 
 	card->dev = &pdev->dev;
 	platform_set_drvdata(pdev, card);
@@ -180,8 +193,7 @@ static __devinit int tegra_snd_trimslice_probe(struct platform_device *pdev)
 
 err_fini_utils:
 	tegra_asoc_utils_fini(&trimslice->util_data);
-err_free_trimslice:
-	kfree(trimslice);
+err:
 	return ret;
 }
 
@@ -194,8 +206,6 @@ static int __devexit tegra_snd_trimslice_remove(struct platform_device *pdev)
 
 	tegra_asoc_utils_fini(&trimslice->util_data);
 
-	kfree(trimslice);
-
 	return 0;
 }
 
@@ -207,18 +217,7 @@ static struct platform_driver tegra_snd_trimslice_driver = {
 	.probe = tegra_snd_trimslice_probe,
 	.remove = __devexit_p(tegra_snd_trimslice_remove),
 };
-
-static int __init snd_tegra_trimslice_init(void)
-{
-	return platform_driver_register(&tegra_snd_trimslice_driver);
-}
-module_init(snd_tegra_trimslice_init);
-
-static void __exit snd_tegra_trimslice_exit(void)
-{
-	platform_driver_unregister(&tegra_snd_trimslice_driver);
-}
-module_exit(snd_tegra_trimslice_exit);
+module_platform_driver(tegra_snd_trimslice_driver);
 
 MODULE_AUTHOR("Mike Rapoport <mike@compulab.co.il>");
 MODULE_DESCRIPTION("Trimslice machine ASoC driver");

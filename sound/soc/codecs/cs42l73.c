@@ -42,7 +42,7 @@ struct  cs42l73_private {
 	u32 mclk;
 };
 
-struct reg_default cs42l73_reg_defaults[] = {
+static const struct reg_default cs42l73_reg_defaults[] = {
 	{ 1, 0x42 },	/* r01	- Device ID A&B */
 	{ 2, 0xA7 },	/* r02	- Device ID C&D */
 	{ 3, 0x30 },	/* r03	- Device ID E */
@@ -979,7 +979,7 @@ static int cs42l73_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs42l73_private *priv = snd_soc_codec_get_drvdata(codec);
 	u8 id = codec_dai->id;
-	u8 inv, format;
+	unsigned int inv, format;
 	u8 spc, mmcc;
 
 	spc = snd_soc_read(codec, CS42L73_SPC(id));
@@ -1028,13 +1028,13 @@ static int cs42l73_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		switch (format) {
 		case SND_SOC_DAIFMT_DSP_B:
 			if (inv == SND_SOC_DAIFMT_IB_IF)
-				spc |= (PCM_MODE0 << 4);
+				spc |= PCM_MODE0;
 			if (inv == SND_SOC_DAIFMT_IB_NF)
-				spc |= (PCM_MODE1 << 4);
+				spc |= PCM_MODE1;
 		break;
 		case SND_SOC_DAIFMT_DSP_A:
 			if (inv == SND_SOC_DAIFMT_IB_IF)
-				spc |= (PCM_MODE1 << 4);
+				spc |= PCM_MODE1;
 			break;
 		default:
 			return -EINVAL;
@@ -1339,7 +1339,8 @@ static __devinit int cs42l73_i2c_probe(struct i2c_client *i2c_client,
 	unsigned int devid = 0;
 	unsigned int reg;
 
-	cs42l73 = kzalloc((sizeof *cs42l73), GFP_KERNEL);
+	cs42l73 = devm_kzalloc(&i2c_client->dev, sizeof(struct cs42l73_private),
+			       GFP_KERNEL);
 	if (!cs42l73) {
 		dev_err(&i2c_client->dev, "could not allocate codec\n");
 		return -ENOMEM;
@@ -1394,8 +1395,6 @@ err_regmap:
 	regmap_exit(cs42l73->regmap);
 
 err:
-	kfree(cs42l73);
-
 	return ret;
 }
 
@@ -1406,7 +1405,6 @@ static __devexit int cs42l73_i2c_remove(struct i2c_client *client)
 	snd_soc_unregister_codec(&client->dev);
 	regmap_exit(cs42l73->regmap);
 
-	kfree(cs42l73);
 	return 0;
 }
 

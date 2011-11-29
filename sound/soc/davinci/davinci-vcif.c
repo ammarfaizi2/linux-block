@@ -183,7 +183,7 @@ static int davinci_vcif_startup(struct snd_pcm_substream *substream,
 
 #define DAVINCI_VCIF_RATES	SNDRV_PCM_RATE_8000_48000
 
-static struct snd_soc_dai_ops davinci_vcif_dai_ops = {
+static const struct snd_soc_dai_ops davinci_vcif_dai_ops = {
 	.startup	= davinci_vcif_startup,
 	.trigger	= davinci_vcif_trigger,
 	.hw_params	= davinci_vcif_hw_params,
@@ -265,17 +265,7 @@ static struct platform_driver davinci_vcif_driver = {
 	},
 };
 
-static int __init davinci_vcif_init(void)
-{
-	return platform_driver_probe(&davinci_vcif_driver, davinci_vcif_probe);
-}
-module_init(davinci_vcif_init);
-
-static void __exit davinci_vcif_exit(void)
-{
-	platform_driver_unregister(&davinci_vcif_driver);
-}
-module_exit(davinci_vcif_exit);
+module_platform_driver(davinci_vcif_driver);
 
 MODULE_AUTHOR("Miguel Aguilar");
 MODULE_DESCRIPTION("Texas Instruments DaVinci ASoC Voice Codec Interface");

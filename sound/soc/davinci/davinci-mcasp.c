@@ -813,7 +813,7 @@ static int davinci_mcasp_startup(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static struct snd_soc_dai_ops davinci_mcasp_dai_ops = {
+static const struct snd_soc_dai_ops davinci_mcasp_dai_ops = {
 	.startup	= davinci_mcasp_startup,
 	.trigger	= davinci_mcasp_trigger,
 	.hw_params	= davinci_mcasp_hw_params,
@@ -991,17 +991,7 @@ static struct platform_driver davinci_mcasp_driver = {
 	},
 };
 
-static int __init davinci_mcasp_init(void)
-{
-	return platform_driver_register(&davinci_mcasp_driver);
-}
-module_init(davinci_mcasp_init);
-
-static void __exit davinci_mcasp_exit(void)
-{
-	platform_driver_unregister(&davinci_mcasp_driver);
-}
-module_exit(davinci_mcasp_exit);
+module_platform_driver(davinci_mcasp_driver);
 
 MODULE_AUTHOR("Steve Chen");
 MODULE_DESCRIPTION("TI DAVINCI McASP SoC Interface");

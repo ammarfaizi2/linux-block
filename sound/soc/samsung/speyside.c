@@ -191,7 +191,7 @@ static int speyside_late_probe(struct snd_soc_card *card)
 	snd_soc_dapm_ignore_suspend(&card->dapm, "Headset Mic");
 	snd_soc_dapm_ignore_suspend(&card->dapm, "Main AMIC");
 	snd_soc_dapm_ignore_suspend(&card->dapm, "Main DMIC");
-	snd_soc_dapm_ignore_suspend(&card->dapm, "Speaker");
+	snd_soc_dapm_ignore_suspend(&card->dapm, "Main Speaker");
 	snd_soc_dapm_ignore_suspend(&card->dapm, "WM1250 Output");
 	snd_soc_dapm_ignore_suspend(&card->dapm, "WM1250 Input");
 
@@ -222,8 +222,6 @@ static struct snd_soc_dai_link speyside_dai[] = {
 
 static int speyside_wm9081_init(struct snd_soc_dapm_context *dapm)
 {
-	snd_soc_dapm_nc_pin(dapm, "LINEOUT");
-
 	/* At any time the WM9081 is active it will have this clock */
 	return snd_soc_codec_set_sysclk(dapm->codec, WM9081_SYSCLK_MCLK, 0,
 					48000 * 256, 0);
@@ -308,6 +306,7 @@ static struct snd_soc_card speyside = {
 	.num_dapm_widgets = ARRAY_SIZE(widgets),
 	.dapm_routes = audio_paths,
 	.num_dapm_routes = ARRAY_SIZE(audio_paths),
+	.fully_routed = true,
 
 	.late_probe = speyside_late_probe,
 };
@@ -348,17 +347,7 @@ static struct platform_driver speyside_driver = {
 	.remove = __devexit_p(speyside_remove),
 };
 
-static int __init speyside_audio_init(void)
-{
-	return platform_driver_register(&speyside_driver);
-}
-module_init(speyside_audio_init);
-
-static void __exit speyside_audio_exit(void)
-{
-	platform_driver_unregister(&speyside_driver);
-}
-module_exit(speyside_audio_exit);
+module_platform_driver(speyside_driver);
 
 MODULE_DESCRIPTION("Speyside audio support");
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");

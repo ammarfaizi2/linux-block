@@ -265,7 +265,7 @@ static int au1xpsc_i2s_startup(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static struct snd_soc_dai_ops au1xpsc_i2s_dai_ops = {
+static const struct snd_soc_dai_ops au1xpsc_i2s_dai_ops = {
 	.startup	= au1xpsc_i2s_startup,
 	.trigger	= au1xpsc_i2s_trigger,
 	.hw_params	= au1xpsc_i2s_hw_params,
@@ -435,18 +435,7 @@ static struct platform_driver au1xpsc_i2s_driver = {
 	.remove		= __devexit_p(au1xpsc_i2s_drvremove),
 };
 
-static int __init au1xpsc_i2s_load(void)
-{
-	return platform_driver_register(&au1xpsc_i2s_driver);
-}
-
-static void __exit au1xpsc_i2s_unload(void)
-{
-	platform_driver_unregister(&au1xpsc_i2s_driver);
-}
-
-module_init(au1xpsc_i2s_load);
-module_exit(au1xpsc_i2s_unload);
+module_platform_driver(au1xpsc_i2s_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Au12x0/Au1550 PSC I2S ALSA ASoC audio driver");
