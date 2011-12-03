@@ -789,6 +789,7 @@ L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 S:	Maintained
 T:	git git://git.pengutronix.de/git/imx/linux-2.6.git
 F:	arch/arm/mach-mx*/
+F:	arch/arm/mach-imx/
 F:	arch/arm/plat-mxc/
 
 ARM/FREESCALE IMX51
@@ -803,6 +804,13 @@ L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 S:	Maintained
 T:	git git://git.linaro.org/people/shawnguo/linux-2.6.git
 F:	arch/arm/mach-imx/*imx6*
+
+ARM/FREESCALE MXS ARM ARCHITECTURE
+M:	Shawn Guo <shawn.guo@linaro.org>
+L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
+S:	Maintained
+T:	git git://git.linaro.org/people/shawnguo/linux-2.6.git
+F:	arch/arm/mach-mxs/
 
 ARM/GLOMATION GESBC9312SX MACHINE SUPPORT
 M:	Lennert Buytenhek <kernel@wantstofly.org>
@@ -1789,6 +1797,14 @@ F:	include/net/cfg80211.h
 F:	net/wireless/*
 X:	net/wireless/wext*
 
+CHAR and MISC DRIVERS
+M:	Arnd Bergmann <arnd@arndb.de>
+M:	Greg Kroah-Hartman <greg@kroah.com>
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/char-misc.git
+S:	Maintained
+F:	drivers/char/*
+F:	drivers/misc/*
+
 CHECKPATCH
 M:	Andy Whitcroft <apw@canonical.com>
 S:	Supported
@@ -1927,10 +1943,11 @@ S:	Maintained
 F:	drivers/connector/
 
 CONTROL GROUPS (CGROUPS)
-M:	Paul Menage <paul@paulmenage.org>
+M:	Tejun Heo <tj@kernel.org>
 M:	Li Zefan <lizf@cn.fujitsu.com>
 L:	containers@lists.linux-foundation.org
 L:	cgroups@vger.kernel.org
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tj/cgroup.git
 S:	Maintained
 F:	include/linux/cgroup*
 F:	kernel/cgroup*
@@ -2585,7 +2602,7 @@ S:	Maintained
 F:	drivers/net/ethernet/i825xx/eexpress.*
 
 ETHERNET BRIDGE
-M:	Stephen Hemminger <shemminger@linux-foundation.org>
+M:	Stephen Hemminger <shemminger@vyatta.com>
 L:	bridge@lists.linux-foundation.org
 L:	netdev@vger.kernel.org
 W:	http://www.linuxfoundation.org/en/Net:Bridge
@@ -3719,7 +3736,7 @@ F:	fs/jbd2/
 F:	include/linux/jbd2.h
 
 JSM Neo PCI based serial card
-M:	Breno Leitao <leitao@linux.vnet.ibm.com>
+M:	Lucas Tavares <lucaskt@linux.vnet.ibm.com>
 L:	linux-serial@vger.kernel.org
 S:	Maintained
 F:	drivers/tty/serial/jsm/
@@ -4480,7 +4497,7 @@ S:	Supported
 F:	drivers/infiniband/hw/nes/
 
 NETEM NETWORK EMULATOR
-M:	Stephen Hemminger <shemminger@linux-foundation.org>
+M:	Stephen Hemminger <shemminger@vyatta.com>
 L:	netem@lists.linux-foundation.org
 S:	Maintained
 F:	net/sched/sch_netem.c
@@ -4957,7 +4974,7 @@ F:	drivers/char/ppdev.c
 F:	include/linux/ppdev.h
 
 PARAVIRT_OPS INTERFACE
-M:	Jeremy Fitzhardinge <jeremy@xensource.com>
+M:	Jeremy Fitzhardinge <jeremy@goop.org>
 M:	Chris Wright <chrisw@sous-sol.org>
 M:	Alok Kataria <akataria@vmware.com>
 M:	Rusty Russell <rusty@rustcorp.com.au>
@@ -5666,7 +5683,6 @@ F:	drivers/media/video/*7146*
 F:	include/media/*7146*
 
 SAMSUNG AUDIO (ASoC) DRIVERS
-M:	Jassi Brar <jassisinghbrar@gmail.com>
 M:	Sangbeom Kim <sbkim73@samsung.com>
 L:	alsa-devel@alsa-project.org (moderated for non-subscribers)
 S:	Supported
@@ -5995,7 +6011,7 @@ S:	Maintained
 F:	drivers/usb/misc/sisusbvga/
 
 SKGE, SKY2 10/100/1000 GIGABIT ETHERNET DRIVERS
-M:	Stephen Hemminger <shemminger@linux-foundation.org>
+M:	Stephen Hemminger <shemminger@vyatta.com>
 L:	netdev@vger.kernel.org
 S:	Maintained
 F:	drivers/net/ethernet/marvell/sk*
@@ -7409,8 +7425,8 @@ S:	Maintained
 F:	arch/x86/kernel/cpu/mcheck/*
 
 XEN HYPERVISOR INTERFACE
-M:	Jeremy Fitzhardinge <jeremy.fitzhardinge@citrix.com>
 M:	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+M:	Jeremy Fitzhardinge <jeremy@goop.org>
 L:	xen-devel@lists.xensource.com (moderated for non-subscribers)
 L:	virtualization@lists.linux-foundation.org
 S:	Supported
@@ -7443,7 +7459,8 @@ F:	drivers/xen/*swiotlb*
 
 XFS FILESYSTEM
 P:	Silicon Graphics Inc
-M:	Alex Elder <aelder@sgi.com>
+M:	Ben Myers <bpm@sgi.com>
+M:	Alex Elder <elder@kernel.org>
 M:	xfs-masters@oss.sgi.com
 L:	xfs@oss.sgi.com
 W:	http://oss.sgi.com/projects/xfs

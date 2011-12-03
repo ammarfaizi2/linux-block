@@ -2037,6 +2037,10 @@ static int __set_regdom(const struct ieee80211_regdomain *rd)
 	}
 
 	request_wiphy = wiphy_idx_to_wiphy(last_request->wiphy_idx);
+	if (!request_wiphy) {
+		reg_set_request_processed();
+		return -ENODEV;
+	}
 
 	if (!last_request->intersect) {
 		int r;
@@ -2264,6 +2268,9 @@ void /* __init_or_exit */ regulatory_exit(void)
 	reset_regdomains();
 
 	kfree(last_request);
+
+	last_request = NULL;
+	dev_set_uevent_suppress(&reg_pdev->dev, true);
 
 	platform_device_unregister(reg_pdev);
 
