@@ -45,6 +45,7 @@
 #define HAS_BOOL
 
 #include <unistd.h>
+#include <sched.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
@@ -245,6 +246,8 @@ int readn(int fd, void *buf, size_t size);
 struct perf_event_attr;
 
 void event_attr_init(struct perf_event_attr *attr);
+
+int sched__isolate_on_first_possible_cpu(pid_t pid);
 
 #define _STR(x) #x
 #define STR(x) _STR(x)

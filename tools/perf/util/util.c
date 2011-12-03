@@ -1,5 +1,5 @@
-#include "../perf.h"
 #include "util.h"
+#include "../perf.h"
 #include <sys/mman.h>
 
 /*
@@ -145,4 +145,42 @@ int readn(int fd, void *buf, size_t n)
 	}
 
 	return buf - buf_start;
+}
+
+int sched__isolate_on_first_possible_cpu(pid_t pid)
+{
+	cpu_set_t *mask;
+	size_t size;
+	int i, cpu = -1, nrcpus = 1024;
+
+realloc_mask:
+	mask = CPU_ALLOC(nrcpus);
+	size = CPU_ALLOC_SIZE(nrcpus);
+	CPU_ZERO_S(size, mask);
+
+	if (sched_getaffinity(pid, size, mask) == -1) {
+		CPU_FREE(mask);
+		if (errno == EINVAL && nrcpus < (1024 << 8)) {
+			nrcpus = nrcpus << 2;
+			goto realloc_mask;
+		}
+		return -1;
+	}
+
+	for (i = 0; i < nrcpus; i++) {
+		if (CPU_ISSET_S(i, size, mask)) {
+			if (cpu == -1)
+				cpu = i;
+			else
+				CPU_CLR_S(i, size, mask);
+		}
+	}
+
+	if (cpu != -1) {
+		if (sched_setaffinity(pid, size, mask) < 0)
+			cpu = -1;
+	}
+
+	CPU_FREE(mask);
+	return cpu;
 }
