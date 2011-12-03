@@ -319,6 +319,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "kvm",	cmd_kvm,	0 },
 		{ "test",	cmd_test,	0 },
 		{ "inject",	cmd_inject,	0 },
+		{ "trace",	cmd_trace,	0 },
 	};
 	unsigned int i;
 	static const char ext[] = STRIP_EXTENSION;
@@ -430,6 +431,10 @@ int main(int argc, const char **argv)
 		cmd = "perf-help";
 	/* get debugfs mount point from /proc/mounts */
 	debugfs_mount(NULL);
+
+	if (!prefixcmp(cmd, "trace"))
+		return cmd_trace(argc, argv, NULL);
+
 	/*
 	 * "perf-xxxx" is the same as "perf xxxx", but we obviously:
 	 *
