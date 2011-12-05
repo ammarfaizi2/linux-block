@@ -102,7 +102,6 @@ struct disk_image_operations ro_ops = {
 
 struct disk_image_operations ro_ops_nowrite = {
 	.read_sector	= raw_image__read_sector,
-	.write_sector	= raw_image__write_sector,
 };
 
 struct disk_image *raw_image__probe(int fd, struct stat *st, bool readonly)
@@ -118,7 +117,6 @@ struct disk_image *raw_image__probe(int fd, struct stat *st, bool readonly)
 
 		disk = disk_image__new(fd, st->st_size, &ro_ops, DISK_IMAGE_MMAP);
 		if (disk == NULL) {
-			ro_ops = raw_image_regular_ops;
 
 			disk = disk_image__new(fd, st->st_size, &ro_ops_nowrite, DISK_IMAGE_REGULAR);
 #ifdef CONFIG_HAS_AIO
