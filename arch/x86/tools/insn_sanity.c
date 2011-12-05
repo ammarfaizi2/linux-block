@@ -59,7 +59,7 @@ static void usage(const char *err)
 	fprintf(stderr, "Usage: %s [-y|-n|-v] [-s seed[,no]] [-m max] [-i input]\n", prog);
 	fprintf(stderr, "\t-y	64bit mode\n");
 	fprintf(stderr, "\t-n	32bit mode\n");
-	fprintf(stderr, "\t-v	Verbose mode\n");
+	fprintf(stderr, "\t-v	Verbosity(-vv dumps any decoded result)\n");
 	fprintf(stderr, "\t-s	Give a random seed (and iteration number)\n");
 	fprintf(stderr, "\t-m	Give a maximum iteration number\n");
 	fprintf(stderr, "\t-i	Give an input file with decoded binary\n");
@@ -102,7 +102,7 @@ static void dump_stream(FILE *fp, const char *msg, unsigned long nr_iter,
 
 	fprintf(fp, "%s:\n", msg);
 
-	dump_insn(stderr, insn);
+	dump_insn(fp, insn);
 
 	fprintf(fp, "You can reproduce this with below command(s);\n");
 
@@ -188,7 +188,7 @@ static void parse_args(int argc, char **argv)
 			x86_64 = 0;
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 		case 'i':
 			if (strcmp("-", optarg) == 0)
@@ -257,15 +257,15 @@ int main(int argc, char **argv)
 		insn_init(&insn, insn_buf, x86_64);
 		insn_get_length(&insn);
 
-		if (verbose && !insn_complete(&insn))
-			dump_stream(stdout, "Info: Found an undecodable input", i, insn_buf, &insn);
-
 		if (insn.next_byte <= insn.kaddr ||
 		    insn.kaddr + MAX_INSN_SIZE < insn.next_byte) {
 			/* Access out-of-range memory */
-			dump_stream(stdout, "Error: Found an access violation", i, insn_buf, &insn);
+			dump_stream(stderr, "Error: Found an access violation", i, insn_buf, &insn);
 			errors++;
-		}
+		} else if (verbose && !insn_complete(&insn))
+			dump_stream(stdout, "Info: Found an undecodable input", i, insn_buf, &insn);
+		else if (verbose >= 2)
+			dump_insn(stdout, &insn);
 		insns++;
 	}
 
