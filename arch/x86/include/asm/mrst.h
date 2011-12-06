@@ -32,18 +32,14 @@ enum mrst_cpu_type {
 
 extern enum mrst_cpu_type __mrst_cpu_chip;
 
-#ifdef CONFIG_X86_INTEL_MID
-
+#ifdef CONFIG_X86_MRST
 static inline enum mrst_cpu_type mrst_identify_cpu(void)
 {
 	return __mrst_cpu_chip;
 }
-
-#else /* !CONFIG_X86_INTEL_MID */
-
+#else
 #define mrst_identify_cpu()    (0)
-
-#endif /* !CONFIG_X86_INTEL_MID */
+#endif
 
 enum mrst_timer_options {
 	MRST_TIMER_DEFAULT,
