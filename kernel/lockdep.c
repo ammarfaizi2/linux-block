@@ -44,6 +44,7 @@
 #include <linux/stringify.h>
 #include <linux/bitops.h>
 #include <linux/gfp.h>
+#include <linux/kmemcheck.h>
 
 #include <asm/sections.h>
 
@@ -430,6 +431,7 @@ unsigned int max_lockdep_depth;
  * about it later on, in lockdep_info().
  */
 static int lockdep_init_error;
+static const char *lock_init_error;
 static unsigned long lockdep_init_trace_data[20];
 static struct stack_trace lockdep_init_trace = {
 	.max_entries = ARRAY_SIZE(lockdep_init_trace_data),
@@ -563,11 +565,12 @@ static void lockdep_print_held_locks(struct task_struct *curr)
 	}
 }
 
-static void print_kernel_version(void)
+static void print_kernel_ident(void)
 {
-	printk("%s %.*s\n", init_utsname()->release,
+	printk("%s %.*s %s\n", init_utsname()->release,
 		(int)strcspn(init_utsname()->version, " "),
-		init_utsname()->version);
+		init_utsname()->version,
+		print_tainted());
 }
 
 static int very_verbose(struct lock_class *class)
@@ -651,6 +654,7 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
 	if (unlikely(!lockdep_initialized)) {
 		lockdep_init();
 		lockdep_init_error = 1;
+		lock_init_error = lock->name;
 		save_stack_trace(&lockdep_init_trace);
 	}
 #endif
@@ -1145,7 +1149,7 @@ print_circular_bug_header(struct lock_list *entry, unsigned int depth,
 	printk("\n");
 	printk("======================================================\n");
 	printk("[ INFO: possible circular locking dependency detected ]\n");
-	print_kernel_version();
+	print_kernel_ident();
 	printk("-------------------------------------------------------\n");
 	printk("%s/%d is trying to acquire lock:\n",
 		curr->comm, task_pid_nr(curr));
@@ -1484,7 +1488,7 @@ print_bad_irq_dependency(struct task_struct *curr,
 	printk("======================================================\n");
 	printk("[ INFO: %s-safe -> %s-unsafe lock order detected ]\n",
 		irqclass, irqclass);
-	print_kernel_version();
+	print_kernel_ident();
 	printk("------------------------------------------------------\n");
 	printk("%s/%d [HC%u[%lu]:SC%u[%lu]:HE%u:SE%u] is trying to acquire:\n",
 		curr->comm, task_pid_nr(curr),
@@ -1713,7 +1717,7 @@ print_deadlock_bug(struct task_struct *curr, struct held_lock *prev,
 	printk("\n");
 	printk("=============================================\n");
 	printk("[ INFO: possible recursive locking detected ]\n");
-	print_kernel_version();
+	print_kernel_ident();
 	printk("---------------------------------------------\n");
 	printk("%s/%d is trying to acquire lock:\n",
 		curr->comm, task_pid_nr(curr));
@@ -2220,7 +2224,7 @@ print_usage_bug(struct task_struct *curr, struct held_lock *this,
 	printk("\n");
 	printk("=================================\n");
 	printk("[ INFO: inconsistent lock state ]\n");
-	print_kernel_version();
+	print_kernel_ident();
 	printk("---------------------------------\n");
 
 	printk("inconsistent {%s} -> {%s} usage.\n",
@@ -2285,7 +2289,7 @@ print_irq_inversion_bug(struct task_struct *curr,
 	printk("\n");
 	printk("=========================================================\n");
 	printk("[ INFO: possible irq lock inversion dependency detected ]\n");
-	print_kernel_version();
+	print_kernel_ident();
 	printk("---------------------------------------------------------\n");
 	printk("%s/%d just changed the state of lock:\n",
 		curr->comm, task_pid_nr(curr));
@@ -2945,7 +2949,12 @@ static int mark_lock(struct task_struct *curr, struct held_lock *this,
 void lockdep_init_map(struct lockdep_map *lock, const char *name,
 		      struct lock_class_key *key, int subclass)
 {
-	memset(lock, 0, sizeof(*lock));
+	int i;
+
+	kmemcheck_mark_initialized(lock, sizeof(*lock));
+
+	for (i = 0; i < NR_LOCKDEP_CACHING_CLASSES; i++)
+		lock->class_cache[i] = NULL;
 
 #ifdef CONFIG_LOCK_STAT
 	lock->cpu = raw_smp_processor_id();
@@ -3166,6 +3175,7 @@ print_unlock_inbalance_bug(struct task_struct *curr, struct lockdep_map *lock,
 	printk("\n");
 	printk("=====================================\n");
 	printk("[ BUG: bad unlock balance detected! ]\n");
+	print_kernel_ident();
 	printk("-------------------------------------\n");
 	printk("%s/%d is trying to release lock (",
 		curr->comm, task_pid_nr(curr));
@@ -3610,6 +3620,7 @@ print_lock_contention_bug(struct task_struct *curr, struct lockdep_map *lock,
 	printk("\n");
 	printk("=================================\n");
 	printk("[ BUG: bad contention detected! ]\n");
+	print_kernel_ident();
 	printk("---------------------------------\n");
 	printk("%s/%d is trying to contend lock (",
 		curr->comm, task_pid_nr(curr));
@@ -3965,7 +3976,8 @@ void __init lockdep_info(void)
 
 #ifdef CONFIG_DEBUG_LOCKDEP
 	if (lockdep_init_error) {
-		printk("WARNING: lockdep init error! Arch code didn't call lockdep_init() early enough?\n");
+		printk("WARNING: lockdep init error! lock-%s was acquired"
+			"before lockdep_init\n", lock_init_error);
 		printk("Call stack leading to lockdep invocation was:\n");
 		print_stack_trace(&lockdep_init_trace, 0);
 	}
@@ -3984,6 +3996,7 @@ print_freed_lock_bug(struct task_struct *curr, const void *mem_from,
 	printk("\n");
 	printk("=========================\n");
 	printk("[ BUG: held lock freed! ]\n");
+	print_kernel_ident();
 	printk("-------------------------\n");
 	printk("%s/%d is freeing memory %p-%p, with a lock still held there!\n",
 		curr->comm, task_pid_nr(curr), mem_from, mem_to-1);
@@ -4041,6 +4054,7 @@ static void print_held_locks_bug(struct task_struct *curr)
 	printk("\n");
 	printk("=====================================\n");
 	printk("[ BUG: lock held at task exit time! ]\n");
+	print_kernel_ident();
 	printk("-------------------------------------\n");
 	printk("%s/%d is exiting with locks still held!\n",
 		curr->comm, task_pid_nr(curr));
@@ -4138,6 +4152,7 @@ void lockdep_sys_exit(void)
 		printk("\n");
 		printk("================================================\n");
 		printk("[ BUG: lock held when returning to user space! ]\n");
+		print_kernel_ident();
 		printk("------------------------------------------------\n");
 		printk("%s/%d is leaving the kernel with locks still held!\n",
 				curr->comm, curr->pid);
@@ -4157,6 +4172,7 @@ void lockdep_rcu_suspicious(const char *file, const int line, const char *s)
 	printk("\n");
 	printk("===============================\n");
 	printk("[ INFO: suspicious RCU usage. ]\n");
+	print_kernel_ident();
 	printk("-------------------------------\n");
 	printk("%s:%d %s!\n", file, line, s);
 	printk("\nother info that might help us debug this:\n\n");
