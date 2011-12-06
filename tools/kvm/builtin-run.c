@@ -568,7 +568,7 @@ static const char *host_kernels[] = {
 
 static const char *default_kernels[] = {
 	"./bzImage",
-	"../../arch/x86/boot/bzImage",
+	"../../arch/" BUILD_ARCH "/boot/bzImage",
 	NULL
 };
 
@@ -856,9 +856,6 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		if (virtio_9p__register(kvm, "/", "hostfs") < 0)
 			die("Unable to initialize virtio 9p");
 		using_rootfs = custom_rootfs = 1;
-
-		if (!strstr(real_cmdline, "init="))
-			strlcat(real_cmdline, " init=/bin/sh ", sizeof(real_cmdline));
 	}
 
 	if (using_rootfs) {
@@ -889,7 +886,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	kvm->vmlinux		= vmlinux_filename;
 
-	ioport__setup_legacy();
+	ioport__setup_arch();
 
 	rtc__init();
 
@@ -934,7 +931,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	kvm__start_timer(kvm);
 
-	kvm__setup_bios(kvm);
+	kvm__arch_setup_firmware(kvm);
 
 	for (i = 0; i < nrcpus; i++) {
 		kvm_cpus[i] = kvm_cpu__init(kvm, i);

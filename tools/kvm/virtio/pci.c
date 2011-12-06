@@ -69,7 +69,7 @@ static bool virtio_pci__specific_io_in(struct kvm *kvm, struct virtio_trans *vtr
 	struct virtio_pci *vpci = vtrans->virtio;
 	int type = virtio__get_dev_specific_field(offset - 20,
 							virtio_pci__msix_enabled(vpci),
-							0, &config_offset);
+							&config_offset);
 	if (type == VIRTIO_PCI_O_MSIX) {
 		switch (offset) {
 		case VIRTIO_MSI_CONFIG_VECTOR:
@@ -115,8 +115,7 @@ static bool virtio_pci__io_in(struct ioport *ioport, struct kvm *kvm, u16 port, 
 		break;
 	case VIRTIO_PCI_QUEUE_NUM:
 		val = vtrans->virtio_ops->get_size_vq(kvm, vpci->dev, vpci->queue_selector);
-		ioport__write32(data, val);
-		break;
+		ioport__write16(data, val);
 		break;
 	case VIRTIO_PCI_STATUS:
 		ioport__write8(data, vpci->status);
@@ -140,7 +139,7 @@ static bool virtio_pci__specific_io_out(struct kvm *kvm, struct virtio_trans *vt
 	struct virtio_pci *vpci = vtrans->virtio;
 	u32 config_offset, gsi, vec;
 	int type = virtio__get_dev_specific_field(offset - 20, virtio_pci__msix_enabled(vpci),
-							0, &config_offset);
+							&config_offset);
 	if (type == VIRTIO_PCI_O_MSIX) {
 		switch (offset) {
 		case VIRTIO_MSI_CONFIG_VECTOR:
