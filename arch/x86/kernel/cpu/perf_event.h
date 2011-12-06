@@ -261,6 +261,11 @@ union perf_capabilities {
 	u64	capabilities;
 };
 
+struct x86_pmu_quirk {
+	struct x86_pmu_quirk *next;
+	void (*func)(void);
+};
+
 /*
  * struct x86_pmu - generic x86 pmu
  */
@@ -285,6 +290,11 @@ struct x86_pmu {
 	int		num_counters_fixed;
 	int		cntval_bits;
 	u64		cntval_mask;
+	union {
+			unsigned long events_maskl;
+			unsigned long events_mask[BITS_TO_LONGS(ARCH_PERFMON_EVENTS_COUNT)];
+	};
+	int		events_mask_len;
 	int		apic;
 	u64		max_period;
 	struct event_constraint *
@@ -294,7 +304,7 @@ struct x86_pmu {
 	void		(*put_event_constraints)(struct cpu_hw_events *cpuc,
 						 struct perf_event *event);
 	struct event_constraint *event_constraints;
-	void		(*quirks)(void);
+	struct x86_pmu_quirk *quirks;
 	int		perfctr_second_write;
 
 	int		(*cpu_prepare)(int cpu);
@@ -334,6 +344,15 @@ struct x86_pmu {
 	 */
 	struct perf_guest_switch_msr *(*guest_get_msrs)(int *nr);
 };
+
+#define x86_add_quirk(func_)						\
+do {									\
+	static struct x86_pmu_quirk __quirk __initdata = {		\
+		.func = func_,						\
+	};								\
+	__quirk.next = x86_pmu.quirks;					\
+	x86_pmu.quirks = &__quirk;					\
+} while (0)
 
 #define ERF_NO_HT_SHARING	1
 #define ERF_HAS_RSP_1		2
