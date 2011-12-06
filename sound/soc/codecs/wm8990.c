@@ -1313,7 +1313,7 @@ static struct snd_soc_dai_driver wm8990_dai = {
 	.ops = &wm8990_dai_ops,
 };
 
-static int wm8990_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8990_suspend(struct snd_soc_codec *codec)
 {
 	wm8990_set_bias_level(codec, SND_SOC_BIAS_OFF);
 	return 0;
@@ -1417,7 +1417,7 @@ MODULE_DEVICE_TABLE(i2c, wm8990_i2c_id);
 
 static struct i2c_driver wm8990_i2c_driver = {
 	.driver = {
-		.name = "wm8990-codec",
+		.name = "wm8990",
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8990_i2c_probe,

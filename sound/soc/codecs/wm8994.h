@@ -70,10 +70,11 @@ struct wm8994_fll_config {
 #define WM8994_NUM_DRC 3
 #define WM8994_NUM_EQ  3
 
+struct wm8994;
+
 struct wm8994_priv {
 	struct wm_hubs_data hubs;
-	enum snd_soc_control_type control_type;
-	void *control_data;
+	struct wm8994 *wm8994;
 	struct snd_soc_codec *codec;
 	int sysclk[2];
 	int sysclk_rate[2];
@@ -84,6 +85,7 @@ struct wm8994_priv {
 	bool fll_locked_irq;
 
 	int vmid_refcount;
+	int active_refcount;
 
 	int dac_rates[2];
 	int lrclk_shared[2];
@@ -125,7 +127,12 @@ struct wm8994_priv {
 	const char **enh_eq_texts;
 	struct soc_enum enh_eq_enum;
 
+	struct mutex accdet_lock;
 	struct wm8994_micdet micdet[2];
+	bool mic_detecting;
+	bool jack_mic;
+	int btn_mask;
+	bool jackdet;
 
 	wm8958_micdet_cb jack_cb;
 	void *jack_cb_data;

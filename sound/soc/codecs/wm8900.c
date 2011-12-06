@@ -1106,7 +1106,7 @@ static int wm8900_set_bias_level(struct snd_soc_codec *codec,
 	return 0;
 }
 
-static int wm8900_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8900_suspend(struct snd_soc_codec *codec)
 {
 	struct wm8900_priv *wm8900 = snd_soc_codec_get_drvdata(codec);
 	int fll_out = wm8900->fll_out;
@@ -1258,7 +1258,7 @@ static int __devexit wm8900_spi_remove(struct spi_device *spi)
 
 static struct spi_driver wm8900_spi_driver = {
 	.driver = {
-		.name	= "wm8900-codec",
+		.name	= "wm8900",
 		.owner	= THIS_MODULE,
 	},
 	.probe		= wm8900_spi_probe,
@@ -1302,7 +1302,7 @@ MODULE_DEVICE_TABLE(i2c, wm8900_i2c_id);
 
 static struct i2c_driver wm8900_i2c_driver = {
 	.driver = {
-		.name = "wm8900-codec",
+		.name = "wm8900",
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8900_i2c_probe,

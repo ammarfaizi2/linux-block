@@ -1038,7 +1038,7 @@ static int wm8961_remove(struct snd_soc_codec *codec)
 }
 
 #ifdef CONFIG_PM
-static int wm8961_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8961_suspend(struct snd_soc_codec *codec)
 {
 	wm8961_set_bias_level(codec, SND_SOC_BIAS_OFF);
 
@@ -1116,7 +1116,7 @@ MODULE_DEVICE_TABLE(i2c, wm8961_i2c_id);
 
 static struct i2c_driver wm8961_i2c_driver = {
 	.driver = {
-		.name = "wm8961-codec",
+		.name = "wm8961",
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8961_i2c_probe,

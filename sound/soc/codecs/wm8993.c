@@ -1544,7 +1544,7 @@ static int wm8993_remove(struct snd_soc_codec *codec)
 }
 
 #ifdef CONFIG_PM
-static int wm8993_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8993_suspend(struct snd_soc_codec *codec)
 {
 	struct wm8993_priv *wm8993 = snd_soc_codec_get_drvdata(codec);
 	int fll_fout = wm8993->fll_fout;
@@ -1641,7 +1641,7 @@ MODULE_DEVICE_TABLE(i2c, wm8993_i2c_id);
 
 static struct i2c_driver wm8993_i2c_driver = {
 	.driver = {
-		.name = "wm8993-codec",
+		.name = "wm8993",
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8993_i2c_probe,

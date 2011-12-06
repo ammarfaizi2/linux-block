@@ -582,7 +582,7 @@ static struct snd_soc_dai_driver wm8974_dai = {
 	.symmetric_rates = 1,
 };
 
-static int wm8974_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8974_suspend(struct snd_soc_codec *codec)
 {
 	wm8974_set_bias_level(codec, SND_SOC_BIAS_OFF);
 	return 0;
@@ -671,7 +671,7 @@ MODULE_DEVICE_TABLE(i2c, wm8974_i2c_id);
 
 static struct i2c_driver wm8974_i2c_driver = {
 	.driver = {
-		.name = "wm8974-codec",
+		.name = "wm8974",
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8974_i2c_probe,

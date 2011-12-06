@@ -25,8 +25,6 @@
 
 #include "wm8960.h"
 
-#define AUDIO_NAME "wm8960"
-
 /* R25 - Power 1 */
 #define WM8960_VMID_MASK 0x180
 #define WM8960_VREF      0x40
@@ -894,7 +892,7 @@ static struct snd_soc_dai_driver wm8960_dai = {
 	.symmetric_rates = 1,
 };
 
-static int wm8960_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8960_suspend(struct snd_soc_codec *codec)
 {
 	struct wm8960_priv *wm8960 = snd_soc_codec_get_drvdata(codec);
 
@@ -994,7 +992,6 @@ static struct snd_soc_codec_driver soc_codec_dev_wm8960 = {
 	.reg_cache_default = wm8960_reg,
 };
 
-#if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
 static __devinit int wm8960_i2c_probe(struct i2c_client *i2c,
 				      const struct i2c_device_id *id)
 {
@@ -1030,34 +1027,29 @@ MODULE_DEVICE_TABLE(i2c, wm8960_i2c_id);
 
 static struct i2c_driver wm8960_i2c_driver = {
 	.driver = {
-		.name = "wm8960-codec",
+		.name = "wm8960",
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8960_i2c_probe,
 	.remove =   __devexit_p(wm8960_i2c_remove),
 	.id_table = wm8960_i2c_id,
 };
-#endif
 
 static int __init wm8960_modinit(void)
 {
 	int ret = 0;
-#if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
 	ret = i2c_add_driver(&wm8960_i2c_driver);
 	if (ret != 0) {
 		printk(KERN_ERR "Failed to register WM8960 I2C driver: %d\n",
 		       ret);
 	}
-#endif
 	return ret;
 }
 module_init(wm8960_modinit);
 
 static void __exit wm8960_exit(void)
 {
-#if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
 	i2c_del_driver(&wm8960_i2c_driver);
-#endif
 }
 module_exit(wm8960_exit);
 

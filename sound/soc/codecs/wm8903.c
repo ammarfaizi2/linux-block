@@ -23,6 +23,7 @@
 #include <linux/gpio.h>
 #include <linux/pm.h>
 #include <linux/i2c.h>
+#include <linux/regmap.h>
 #include <linux/slab.h>
 #include <sound/core.h>
 #include <sound/jack.h>
@@ -37,184 +38,85 @@
 #include "wm8903.h"
 
 /* Register defaults at reset */
-static u16 wm8903_reg_defaults[] = {
-	0x8903,     /* R0   - SW Reset and ID */
-	0x0000,     /* R1   - Revision Number */
-	0x0000,     /* R2 */
-	0x0000,     /* R3 */
-	0x0018,     /* R4   - Bias Control 0 */
-	0x0000,     /* R5   - VMID Control 0 */
-	0x0000,     /* R6   - Mic Bias Control 0 */
-	0x0000,     /* R7 */
-	0x0001,     /* R8   - Analogue DAC 0 */
-	0x0000,     /* R9 */
-	0x0001,     /* R10  - Analogue ADC 0 */
-	0x0000,     /* R11 */
-	0x0000,     /* R12  - Power Management 0 */
-	0x0000,     /* R13  - Power Management 1 */
-	0x0000,     /* R14  - Power Management 2 */
-	0x0000,     /* R15  - Power Management 3 */
-	0x0000,     /* R16  - Power Management 4 */
-	0x0000,     /* R17  - Power Management 5 */
-	0x0000,     /* R18  - Power Management 6 */
-	0x0000,     /* R19 */
-	0x0400,     /* R20  - Clock Rates 0 */
-	0x0D07,     /* R21  - Clock Rates 1 */
-	0x0000,     /* R22  - Clock Rates 2 */
-	0x0000,     /* R23 */
-	0x0050,     /* R24  - Audio Interface 0 */
-	0x0242,     /* R25  - Audio Interface 1 */
-	0x0008,     /* R26  - Audio Interface 2 */
-	0x0022,     /* R27  - Audio Interface 3 */
-	0x0000,     /* R28 */
-	0x0000,     /* R29 */
-	0x00C0,     /* R30  - DAC Digital Volume Left */
-	0x00C0,     /* R31  - DAC Digital Volume Right */
-	0x0000,     /* R32  - DAC Digital 0 */
-	0x0000,     /* R33  - DAC Digital 1 */
-	0x0000,     /* R34 */
-	0x0000,     /* R35 */
-	0x00C0,     /* R36  - ADC Digital Volume Left */
-	0x00C0,     /* R37  - ADC Digital Volume Right */
-	0x0000,     /* R38  - ADC Digital 0 */
-	0x0073,     /* R39  - Digital Microphone 0 */
-	0x09BF,     /* R40  - DRC 0 */
-	0x3241,     /* R41  - DRC 1 */
-	0x0020,     /* R42  - DRC 2 */
-	0x0000,     /* R43  - DRC 3 */
-	0x0085,     /* R44  - Analogue Left Input 0 */
-	0x0085,     /* R45  - Analogue Right Input 0 */
-	0x0044,     /* R46  - Analogue Left Input 1 */
-	0x0044,     /* R47  - Analogue Right Input 1 */
-	0x0000,     /* R48 */
-	0x0000,     /* R49 */
-	0x0008,     /* R50  - Analogue Left Mix 0 */
-	0x0004,     /* R51  - Analogue Right Mix 0 */
-	0x0000,     /* R52  - Analogue Spk Mix Left 0 */
-	0x0000,     /* R53  - Analogue Spk Mix Left 1 */
-	0x0000,     /* R54  - Analogue Spk Mix Right 0 */
-	0x0000,     /* R55  - Analogue Spk Mix Right 1 */
-	0x0000,     /* R56 */
-	0x002D,     /* R57  - Analogue OUT1 Left */
-	0x002D,     /* R58  - Analogue OUT1 Right */
-	0x0039,     /* R59  - Analogue OUT2 Left */
-	0x0039,     /* R60  - Analogue OUT2 Right */
-	0x0100,     /* R61 */
-	0x0139,     /* R62  - Analogue OUT3 Left */
-	0x0139,     /* R63  - Analogue OUT3 Right */
-	0x0000,     /* R64 */
-	0x0000,     /* R65  - Analogue SPK Output Control 0 */
-	0x0000,     /* R66 */
-	0x0010,     /* R67  - DC Servo 0 */
-	0x0100,     /* R68 */
-	0x00A4,     /* R69  - DC Servo 2 */
-	0x0807,     /* R70 */
-	0x0000,     /* R71 */
-	0x0000,     /* R72 */
-	0x0000,     /* R73 */
-	0x0000,     /* R74 */
-	0x0000,     /* R75 */
-	0x0000,     /* R76 */
-	0x0000,     /* R77 */
-	0x0000,     /* R78 */
-	0x000E,     /* R79 */
-	0x0000,     /* R80 */
-	0x0000,     /* R81 */
-	0x0000,     /* R82 */
-	0x0000,     /* R83 */
-	0x0000,     /* R84 */
-	0x0000,     /* R85 */
-	0x0000,     /* R86 */
-	0x0006,     /* R87 */
-	0x0000,     /* R88 */
-	0x0000,     /* R89 */
-	0x0000,     /* R90  - Analogue HP 0 */
-	0x0060,     /* R91 */
-	0x0000,     /* R92 */
-	0x0000,     /* R93 */
-	0x0000,     /* R94  - Analogue Lineout 0 */
-	0x0060,     /* R95 */
-	0x0000,     /* R96 */
-	0x0000,     /* R97 */
-	0x0000,     /* R98  - Charge Pump 0 */
-	0x1F25,     /* R99 */
-	0x2B19,     /* R100 */
-	0x01C0,     /* R101 */
-	0x01EF,     /* R102 */
-	0x2B00,     /* R103 */
-	0x0000,     /* R104 - Class W 0 */
-	0x01C0,     /* R105 */
-	0x1C10,     /* R106 */
-	0x0000,     /* R107 */
-	0x0000,     /* R108 - Write Sequencer 0 */
-	0x0000,     /* R109 - Write Sequencer 1 */
-	0x0000,     /* R110 - Write Sequencer 2 */
-	0x0000,     /* R111 - Write Sequencer 3 */
-	0x0000,     /* R112 - Write Sequencer 4 */
-	0x0000,     /* R113 */
-	0x0000,     /* R114 - Control Interface */
-	0x0000,     /* R115 */
-	0x00A8,     /* R116 - GPIO Control 1 */
-	0x00A8,     /* R117 - GPIO Control 2 */
-	0x00A8,     /* R118 - GPIO Control 3 */
-	0x0220,     /* R119 - GPIO Control 4 */
-	0x01A0,     /* R120 - GPIO Control 5 */
-	0x0000,     /* R121 - Interrupt Status 1 */
-	0xFFFF,     /* R122 - Interrupt Status 1 Mask */
-	0x0000,     /* R123 - Interrupt Polarity 1 */
-	0x0000,     /* R124 */
-	0x0003,     /* R125 */
-	0x0000,     /* R126 - Interrupt Control */
-	0x0000,     /* R127 */
-	0x0005,     /* R128 */
-	0x0000,     /* R129 - Control Interface Test 1 */
-	0x0000,     /* R130 */
-	0x0000,     /* R131 */
-	0x0000,     /* R132 */
-	0x0000,     /* R133 */
-	0x0000,     /* R134 */
-	0x03FF,     /* R135 */
-	0x0007,     /* R136 */
-	0x0040,     /* R137 */
-	0x0000,     /* R138 */
-	0x0000,     /* R139 */
-	0x0000,     /* R140 */
-	0x0000,     /* R141 */
-	0x0000,     /* R142 */
-	0x0000,     /* R143 */
-	0x0000,     /* R144 */
-	0x0000,     /* R145 */
-	0x0000,     /* R146 */
-	0x0000,     /* R147 */
-	0x4000,     /* R148 */
-	0x6810,     /* R149 - Charge Pump Test 1 */
-	0x0004,     /* R150 */
-	0x0000,     /* R151 */
-	0x0000,     /* R152 */
-	0x0000,     /* R153 */
-	0x0000,     /* R154 */
-	0x0000,     /* R155 */
-	0x0000,     /* R156 */
-	0x0000,     /* R157 */
-	0x0000,     /* R158 */
-	0x0000,     /* R159 */
-	0x0000,     /* R160 */
-	0x0000,     /* R161 */
-	0x0000,     /* R162 */
-	0x0000,     /* R163 */
-	0x0028,     /* R164 - Clock Rate Test 4 */
-	0x0004,     /* R165 */
-	0x0000,     /* R166 */
-	0x0060,     /* R167 */
-	0x0000,     /* R168 */
-	0x0000,     /* R169 */
-	0x0000,     /* R170 */
-	0x0000,     /* R171 */
-	0x0000,     /* R172 - Analogue Output Bias 0 */
+static const struct reg_default wm8903_reg_defaults[] = {
+	{ 4,  0x0018 },     /* R4   - Bias Control 0 */
+	{ 5,  0x0000 },     /* R5   - VMID Control 0 */
+	{ 6,  0x0000 },     /* R6   - Mic Bias Control 0 */
+	{ 8,  0x0001 },     /* R8   - Analogue DAC 0 */
+	{ 10, 0x0001 },     /* R10  - Analogue ADC 0 */
+	{ 12, 0x0000 },     /* R12  - Power Management 0 */
+	{ 13, 0x0000 },     /* R13  - Power Management 1 */
+	{ 14, 0x0000 },     /* R14  - Power Management 2 */
+	{ 15, 0x0000 },     /* R15  - Power Management 3 */
+	{ 16, 0x0000 },     /* R16  - Power Management 4 */
+	{ 17, 0x0000 },     /* R17  - Power Management 5 */
+	{ 18, 0x0000 },     /* R18  - Power Management 6 */
+	{ 20, 0x0400 },     /* R20  - Clock Rates 0 */
+	{ 21, 0x0D07 },     /* R21  - Clock Rates 1 */
+	{ 22, 0x0000 },     /* R22  - Clock Rates 2 */
+	{ 24, 0x0050 },     /* R24  - Audio Interface 0 */
+	{ 25, 0x0242 },     /* R25  - Audio Interface 1 */
+	{ 26, 0x0008 },     /* R26  - Audio Interface 2 */
+	{ 27, 0x0022 },     /* R27  - Audio Interface 3 */
+	{ 30, 0x00C0 },     /* R30  - DAC Digital Volume Left */
+	{ 31, 0x00C0 },     /* R31  - DAC Digital Volume Right */
+	{ 32, 0x0000 },     /* R32  - DAC Digital 0 */
+	{ 33, 0x0000 },     /* R33  - DAC Digital 1 */
+	{ 36, 0x00C0 },     /* R36  - ADC Digital Volume Left */
+	{ 37, 0x00C0 },     /* R37  - ADC Digital Volume Right */
+	{ 38, 0x0000 },     /* R38  - ADC Digital 0 */
+	{ 39, 0x0073 },     /* R39  - Digital Microphone 0 */
+	{ 40, 0x09BF },     /* R40  - DRC 0 */
+	{ 41, 0x3241 },     /* R41  - DRC 1 */
+	{ 42, 0x0020 },     /* R42  - DRC 2 */
+	{ 43, 0x0000 },     /* R43  - DRC 3 */
+	{ 44, 0x0085 },     /* R44  - Analogue Left Input 0 */
+	{ 45, 0x0085 },     /* R45  - Analogue Right Input 0 */
+	{ 46, 0x0044 },     /* R46  - Analogue Left Input 1 */
+	{ 47, 0x0044 },     /* R47  - Analogue Right Input 1 */
+	{ 50, 0x0008 },     /* R50  - Analogue Left Mix 0 */
+	{ 51, 0x0004 },     /* R51  - Analogue Right Mix 0 */
+	{ 52, 0x0000 },     /* R52  - Analogue Spk Mix Left 0 */
+	{ 53, 0x0000 },     /* R53  - Analogue Spk Mix Left 1 */
+	{ 54, 0x0000 },     /* R54  - Analogue Spk Mix Right 0 */
+	{ 55, 0x0000 },     /* R55  - Analogue Spk Mix Right 1 */
+	{ 57, 0x002D },     /* R57  - Analogue OUT1 Left */
+	{ 58, 0x002D },     /* R58  - Analogue OUT1 Right */
+	{ 59, 0x0039 },     /* R59  - Analogue OUT2 Left */
+	{ 60, 0x0039 },     /* R60  - Analogue OUT2 Right */
+	{ 62, 0x0139 },     /* R62  - Analogue OUT3 Left */
+	{ 63, 0x0139 },     /* R63  - Analogue OUT3 Right */
+	{ 64, 0x0000 },     /* R65  - Analogue SPK Output Control 0 */
+	{ 67, 0x0010 },     /* R67  - DC Servo 0 */
+	{ 69, 0x00A4 },     /* R69  - DC Servo 2 */
+	{ 90, 0x0000 },     /* R90  - Analogue HP 0 */
+	{ 94, 0x0000 },     /* R94  - Analogue Lineout 0 */
+	{ 98, 0x0000 },     /* R98  - Charge Pump 0 */
+	{ 104, 0x0000 },    /* R104 - Class W 0 */
+	{ 108, 0x0000 },    /* R108 - Write Sequencer 0 */
+	{ 109, 0x0000 },    /* R109 - Write Sequencer 1 */
+	{ 110, 0x0000 },    /* R110 - Write Sequencer 2 */
+	{ 111, 0x0000 },    /* R111 - Write Sequencer 3 */
+	{ 112, 0x0000 },    /* R112 - Write Sequencer 4 */
+	{ 114, 0x0000 },    /* R114 - Control Interface */
+	{ 116, 0x00A8 },    /* R116 - GPIO Control 1 */
+	{ 117, 0x00A8 },    /* R117 - GPIO Control 2 */
+	{ 118, 0x00A8 },    /* R118 - GPIO Control 3 */
+	{ 119, 0x0220 },    /* R119 - GPIO Control 4 */
+	{ 120, 0x01A0 },    /* R120 - GPIO Control 5 */
+	{ 122, 0xFFFF },    /* R122 - Interrupt Status 1 Mask */
+	{ 123, 0x0000 },    /* R123 - Interrupt Polarity 1 */
+	{ 126, 0x0000 },    /* R126 - Interrupt Control */
+	{ 129, 0x0000 },    /* R129 - Control Interface Test 1 */
+	{ 149, 0x6810 },    /* R149 - Charge Pump Test 1 */
+	{ 164, 0x0028 },    /* R164 - Clock Rate Test 4 */
+	{ 172, 0x0000 },    /* R172 - Analogue Output Bias 0 */
 };
 
 struct wm8903_priv {
+	struct wm8903_platform_data *pdata;
 	struct snd_soc_codec *codec;
+	struct regmap *regmap;
 
 	int sysclk;
 	int irq;
@@ -239,7 +141,93 @@ struct wm8903_priv {
 #endif
 };
 
-static int wm8903_volatile_register(struct snd_soc_codec *codec, unsigned int reg)
+static bool wm8903_readable_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case WM8903_SW_RESET_AND_ID:
+	case WM8903_REVISION_NUMBER:
+	case WM8903_BIAS_CONTROL_0:
+	case WM8903_VMID_CONTROL_0:
+	case WM8903_MIC_BIAS_CONTROL_0:
+	case WM8903_ANALOGUE_DAC_0:
+	case WM8903_ANALOGUE_ADC_0:
+	case WM8903_POWER_MANAGEMENT_0:
+	case WM8903_POWER_MANAGEMENT_1:
+	case WM8903_POWER_MANAGEMENT_2:
+	case WM8903_POWER_MANAGEMENT_3:
+	case WM8903_POWER_MANAGEMENT_4:
+	case WM8903_POWER_MANAGEMENT_5:
+	case WM8903_POWER_MANAGEMENT_6:
+	case WM8903_CLOCK_RATES_0:
+	case WM8903_CLOCK_RATES_1:
+	case WM8903_CLOCK_RATES_2:
+	case WM8903_AUDIO_INTERFACE_0:
+	case WM8903_AUDIO_INTERFACE_1:
+	case WM8903_AUDIO_INTERFACE_2:
+	case WM8903_AUDIO_INTERFACE_3:
+	case WM8903_DAC_DIGITAL_VOLUME_LEFT:
+	case WM8903_DAC_DIGITAL_VOLUME_RIGHT:
+	case WM8903_DAC_DIGITAL_0:
+	case WM8903_DAC_DIGITAL_1:
+	case WM8903_ADC_DIGITAL_VOLUME_LEFT:
+	case WM8903_ADC_DIGITAL_VOLUME_RIGHT:
+	case WM8903_ADC_DIGITAL_0:
+	case WM8903_DIGITAL_MICROPHONE_0:
+	case WM8903_DRC_0:
+	case WM8903_DRC_1:
+	case WM8903_DRC_2:
+	case WM8903_DRC_3:
+	case WM8903_ANALOGUE_LEFT_INPUT_0:
+	case WM8903_ANALOGUE_RIGHT_INPUT_0:
+	case WM8903_ANALOGUE_LEFT_INPUT_1:
+	case WM8903_ANALOGUE_RIGHT_INPUT_1:
+	case WM8903_ANALOGUE_LEFT_MIX_0:
+	case WM8903_ANALOGUE_RIGHT_MIX_0:
+	case WM8903_ANALOGUE_SPK_MIX_LEFT_0:
+	case WM8903_ANALOGUE_SPK_MIX_LEFT_1:
+	case WM8903_ANALOGUE_SPK_MIX_RIGHT_0:
+	case WM8903_ANALOGUE_SPK_MIX_RIGHT_1:
+	case WM8903_ANALOGUE_OUT1_LEFT:
+	case WM8903_ANALOGUE_OUT1_RIGHT:
+	case WM8903_ANALOGUE_OUT2_LEFT:
+	case WM8903_ANALOGUE_OUT2_RIGHT:
+	case WM8903_ANALOGUE_OUT3_LEFT:
+	case WM8903_ANALOGUE_OUT3_RIGHT:
+	case WM8903_ANALOGUE_SPK_OUTPUT_CONTROL_0:
+	case WM8903_DC_SERVO_0:
+	case WM8903_DC_SERVO_2:
+	case WM8903_DC_SERVO_READBACK_1:
+	case WM8903_DC_SERVO_READBACK_2:
+	case WM8903_DC_SERVO_READBACK_3:
+	case WM8903_DC_SERVO_READBACK_4:
+	case WM8903_ANALOGUE_HP_0:
+	case WM8903_ANALOGUE_LINEOUT_0:
+	case WM8903_CHARGE_PUMP_0:
+	case WM8903_CLASS_W_0:
+	case WM8903_WRITE_SEQUENCER_0:
+	case WM8903_WRITE_SEQUENCER_1:
+	case WM8903_WRITE_SEQUENCER_2:
+	case WM8903_WRITE_SEQUENCER_3:
+	case WM8903_WRITE_SEQUENCER_4:
+	case WM8903_CONTROL_INTERFACE:
+	case WM8903_GPIO_CONTROL_1:
+	case WM8903_GPIO_CONTROL_2:
+	case WM8903_GPIO_CONTROL_3:
+	case WM8903_GPIO_CONTROL_4:
+	case WM8903_GPIO_CONTROL_5:
+	case WM8903_INTERRUPT_STATUS_1:
+	case WM8903_INTERRUPT_STATUS_1_MASK:
+	case WM8903_INTERRUPT_POLARITY_1:
+	case WM8903_INTERRUPT_CONTROL:
+	case WM8903_CLOCK_RATE_TEST_4:
+	case WM8903_ANALOGUE_OUTPUT_BIAS_0:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static bool wm8903_volatile_register(struct device *dev, unsigned int reg)
 {
 	switch (reg) {
 	case WM8903_SW_RESET_AND_ID:
@@ -255,13 +243,6 @@ static int wm8903_volatile_register(struct snd_soc_codec *codec, unsigned int re
 	default:
 		return 0;
 	}
-}
-
-static void wm8903_reset(struct snd_soc_codec *codec)
-{
-	snd_soc_write(codec, WM8903_SW_RESET_AND_ID, 0);
-	memcpy(codec->reg_cache, wm8903_reg_defaults,
-	       sizeof(wm8903_reg_defaults));
 }
 
 static int wm8903_cp_event(struct snd_soc_dapm_widget *w,
@@ -1758,7 +1739,7 @@ static struct snd_soc_dai_driver wm8903_dai = {
 	.symmetric_rates = 1,
 };
 
-static int wm8903_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8903_suspend(struct snd_soc_codec *codec)
 {
 	wm8903_set_bias_level(codec, SND_SOC_BIAS_OFF);
 
@@ -1767,23 +1748,11 @@ static int wm8903_suspend(struct snd_soc_codec *codec, pm_message_t state)
 
 static int wm8903_resume(struct snd_soc_codec *codec)
 {
-	int i;
-	u16 *reg_cache = codec->reg_cache;
-	u16 *tmp_cache = kmemdup(reg_cache, sizeof(wm8903_reg_defaults),
-				 GFP_KERNEL);
+	struct wm8903_priv *wm8903 = snd_soc_codec_get_drvdata(codec);
 
-	/* Bring the codec back up to standby first to minimise pop/clicks */
+	regcache_sync(wm8903->regmap);
+
 	wm8903_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
-
-	/* Sync back everything else */
-	if (tmp_cache) {
-		for (i = 2; i < ARRAY_SIZE(wm8903_reg_defaults); i++)
-			if (tmp_cache[i] != reg_cache[i])
-				snd_soc_write(codec, i, tmp_cache[i]);
-		kfree(tmp_cache);
-	} else {
-		dev_err(codec->dev, "Failed to allocate temporary cache\n");
-	}
 
 	return 0;
 }
@@ -1866,7 +1835,7 @@ static struct gpio_chip wm8903_template_chip = {
 static void wm8903_init_gpio(struct snd_soc_codec *codec)
 {
 	struct wm8903_priv *wm8903 = snd_soc_codec_get_drvdata(codec);
-	struct wm8903_platform_data *pdata = dev_get_platdata(codec->dev);
+	struct wm8903_platform_data *pdata = wm8903->pdata;
 	int ret;
 
 	wm8903->gpio_chip = wm8903_template_chip;
@@ -1904,43 +1873,31 @@ static void wm8903_free_gpio(struct snd_soc_codec *codec)
 
 static int wm8903_probe(struct snd_soc_codec *codec)
 {
-	struct wm8903_platform_data *pdata = dev_get_platdata(codec->dev);
 	struct wm8903_priv *wm8903 = snd_soc_codec_get_drvdata(codec);
+	struct wm8903_platform_data *pdata = wm8903->pdata;
 	int ret, i;
 	int trigger, irq_pol;
 	u16 val;
 
 	wm8903->codec = codec;
+	codec->control_data = wm8903->regmap;
 
-	ret = snd_soc_codec_set_cache_io(codec, 8, 16, SND_SOC_I2C);
+	ret = snd_soc_codec_set_cache_io(codec, 8, 16, SND_SOC_REGMAP);
 	if (ret != 0) {
 		dev_err(codec->dev, "Failed to set cache I/O: %d\n", ret);
 		return ret;
 	}
-
-	val = snd_soc_read(codec, WM8903_SW_RESET_AND_ID);
-	if (val != wm8903_reg_defaults[WM8903_SW_RESET_AND_ID]) {
-		dev_err(codec->dev,
-			"Device with ID register %x is not a WM8903\n", val);
-		return -ENODEV;
-	}
-
-	val = snd_soc_read(codec, WM8903_REVISION_NUMBER);
-	dev_info(codec->dev, "WM8903 revision %c\n",
-		 (val & WM8903_CHIP_REV_MASK) + 'A');
-
-	wm8903_reset(codec);
 
 	/* Set up GPIOs and microphone detection */
 	if (pdata) {
 		bool mic_gpio = false;
 
 		for (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) {
-			if (pdata->gpio_cfg[i] == WM8903_GPIO_NO_CONFIG)
+			if (pdata->gpio_cfg[i] > 0x7fff)
 				continue;
 
 			snd_soc_write(codec, WM8903_GPIO_CONTROL_1 + i,
-				      pdata->gpio_cfg[i] & 0xffff);
+				      pdata->gpio_cfg[i] & 0x7fff);
 
 			val = (pdata->gpio_cfg[i] & WM8903_GP1_FN_MASK)
 				>> WM8903_GP1_FN_SHIFT;
@@ -2034,9 +1991,6 @@ static int wm8903_probe(struct snd_soc_codec *codec)
 			    WM8903_DAC_MUTEMODE | WM8903_DAC_MUTE,
 			    WM8903_DAC_MUTEMODE | WM8903_DAC_MUTE);
 
-	snd_soc_add_controls(codec, wm8903_snd_controls,
-				ARRAY_SIZE(wm8903_snd_controls));
-
 	wm8903_init_gpio(codec);
 
 	return ret;
@@ -2061,42 +2015,105 @@ static struct snd_soc_codec_driver soc_codec_dev_wm8903 = {
 	.suspend =	wm8903_suspend,
 	.resume =	wm8903_resume,
 	.set_bias_level = wm8903_set_bias_level,
-	.reg_cache_size = ARRAY_SIZE(wm8903_reg_defaults),
-	.reg_word_size = sizeof(u16),
-	.reg_cache_default = wm8903_reg_defaults,
-	.volatile_register = wm8903_volatile_register,
 	.seq_notifier = wm8903_seq_notifier,
+	.controls = wm8903_snd_controls,
+	.num_controls = ARRAY_SIZE(wm8903_snd_controls),
 	.dapm_widgets = wm8903_dapm_widgets,
 	.num_dapm_widgets = ARRAY_SIZE(wm8903_dapm_widgets),
 	.dapm_routes = wm8903_intercon,
 	.num_dapm_routes = ARRAY_SIZE(wm8903_intercon),
 };
 
-#if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
+static const struct regmap_config wm8903_regmap = {
+	.reg_bits = 8,
+	.val_bits = 16,
+
+	.max_register = WM8903_MAX_REGISTER,
+	.volatile_reg = wm8903_volatile_register,
+	.readable_reg = wm8903_readable_register,
+
+	.cache_type = REGCACHE_RBTREE,
+	.reg_defaults = wm8903_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(wm8903_reg_defaults),
+};
+
 static __devinit int wm8903_i2c_probe(struct i2c_client *i2c,
 				      const struct i2c_device_id *id)
 {
+	struct wm8903_platform_data *pdata = dev_get_platdata(&i2c->dev);
 	struct wm8903_priv *wm8903;
+	unsigned int val;
 	int ret;
 
-	wm8903 = kzalloc(sizeof(struct wm8903_priv), GFP_KERNEL);
+	wm8903 = devm_kzalloc(&i2c->dev,  sizeof(struct wm8903_priv),
+			      GFP_KERNEL);
 	if (wm8903 == NULL)
 		return -ENOMEM;
+
+	wm8903->regmap = regmap_init_i2c(i2c, &wm8903_regmap);
+	if (IS_ERR(wm8903->regmap)) {
+		ret = PTR_ERR(wm8903->regmap);
+		dev_err(&i2c->dev, "Failed to allocate register map: %d\n",
+			ret);
+		return ret;
+	}
 
 	i2c_set_clientdata(i2c, wm8903);
 	wm8903->irq = i2c->irq;
 
+	/* If no platform data was supplied, create storage for defaults */
+	if (pdata) {
+		wm8903->pdata = pdata;
+	} else {
+		wm8903->pdata = devm_kzalloc(&i2c->dev,
+					sizeof(struct wm8903_platform_data),
+					GFP_KERNEL);
+		if (wm8903->pdata == NULL) {
+			dev_err(&i2c->dev, "Failed to allocate pdata\n");
+			return -ENOMEM;
+		}
+	}
+
+	ret = regmap_read(wm8903->regmap, WM8903_SW_RESET_AND_ID, &val);
+	if (ret != 0) {
+		dev_err(&i2c->dev, "Failed to read chip ID: %d\n", ret);
+		goto err;
+	}
+	if (val != 0x8903) {
+		dev_err(&i2c->dev, "Device with ID %x is not a WM8903\n", val);
+		ret = -ENODEV;
+		goto err;
+	}
+
+	ret = regmap_read(wm8903->regmap, WM8903_REVISION_NUMBER, &val);
+	if (ret != 0) {
+		dev_err(&i2c->dev, "Failed to read chip revision: %d\n", ret);
+		goto err;
+	}
+	dev_info(&i2c->dev, "WM8903 revision %c\n",
+		 (val & WM8903_CHIP_REV_MASK) + 'A');
+
+	/* Reset the device */
+	regmap_write(wm8903->regmap, WM8903_SW_RESET_AND_ID, 0x8903);
+
 	ret = snd_soc_register_codec(&i2c->dev,
 			&soc_codec_dev_wm8903, &wm8903_dai, 1);
-	if (ret < 0)
-		kfree(wm8903);
+	if (ret != 0)
+		goto err;
+
+	return 0;
+err:
+	regmap_exit(wm8903->regmap);
 	return ret;
 }
 
 static __devexit int wm8903_i2c_remove(struct i2c_client *client)
 {
+	struct wm8903_priv *wm8903 = i2c_get_clientdata(client);
+
+	regmap_exit(wm8903->regmap);
 	snd_soc_unregister_codec(&client->dev);
-	kfree(i2c_get_clientdata(client));
+
 	return 0;
 }
 
@@ -2115,27 +2132,22 @@ static struct i2c_driver wm8903_i2c_driver = {
 	.remove =   __devexit_p(wm8903_i2c_remove),
 	.id_table = wm8903_i2c_id,
 };
-#endif
 
 static int __init wm8903_modinit(void)
 {
 	int ret = 0;
-#if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
 	ret = i2c_add_driver(&wm8903_i2c_driver);
 	if (ret != 0) {
 		printk(KERN_ERR "Failed to register wm8903 I2C driver: %d\n",
 		       ret);
 	}
-#endif
 	return ret;
 }
 module_init(wm8903_modinit);
 
 static void __exit wm8903_exit(void)
 {
-#if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
 	i2c_del_driver(&wm8903_i2c_driver);
-#endif
 }
 module_exit(wm8903_exit);
 

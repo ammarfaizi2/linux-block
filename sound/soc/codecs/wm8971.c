@@ -599,7 +599,7 @@ static void wm8971_work(struct work_struct *work)
 	wm8971_set_bias_level(codec, codec->dapm.bias_level);
 }
 
-static int wm8971_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8971_suspend(struct snd_soc_codec *codec)
 {
 	wm8971_set_bias_level(codec, SND_SOC_BIAS_OFF);
 	return 0;
@@ -724,7 +724,7 @@ MODULE_DEVICE_TABLE(i2c, wm8971_i2c_id);
 
 static struct i2c_driver wm8971_i2c_driver = {
 	.driver = {
-		.name = "wm8971-codec",
+		.name = "wm8971",
 		.owner = THIS_MODULE,
 	},
 	.probe =    wm8971_i2c_probe,

@@ -728,7 +728,7 @@ static struct snd_soc_dai_driver wm8988_dai = {
 	.symmetric_rates = 1,
 };
 
-static int wm8988_suspend(struct snd_soc_codec *codec, pm_message_t state)
+static int wm8988_suspend(struct snd_soc_codec *codec)
 {
 	wm8988_set_bias_level(codec, SND_SOC_BIAS_OFF);
 	return 0;
@@ -822,7 +822,7 @@ static int __devexit wm8988_spi_remove(struct spi_device *spi)
 
 static struct spi_driver wm8988_spi_driver = {
 	.driver = {
-		.name	= "wm8988-codec",
+		.name	= "wm8988",
 		.owner	= THIS_MODULE,
 	},
 	.probe		= wm8988_spi_probe,
