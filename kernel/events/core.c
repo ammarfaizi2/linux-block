@@ -128,7 +128,7 @@ enum event_type_t {
  * perf_sched_events : >0 events exist
  * perf_cgroup_events: >0 per-cpu cgroup events exist on this cpu
  */
-struct jump_label_key perf_sched_events __read_mostly;
+struct jump_label_key_deferred perf_sched_events __read_mostly;
 static DEFINE_PER_CPU(atomic_t, perf_cgroup_events);
 
 static atomic_t nr_mmap_events __read_mostly;
@@ -1130,6 +1130,8 @@ event_sched_out(struct perf_event *event,
 	if (!is_software_event(event))
 		cpuctx->active_oncpu--;
 	ctx->nr_active--;
+	if (event->attr.freq && event->attr.sample_freq)
+		ctx->nr_freq--;
 	if (event->attr.exclusive || !cpuctx->active_oncpu)
 		cpuctx->exclusive = 0;
 }
@@ -1407,6 +1409,8 @@ event_sched_in(struct perf_event *event,
 	if (!is_software_event(event))
 		cpuctx->active_oncpu++;
 	ctx->nr_active++;
+	if (event->attr.freq && event->attr.sample_freq)
+		ctx->nr_freq++;
 
 	if (event->attr.exclusive)
 		cpuctx->exclusive = 1;
@@ -1663,8 +1667,7 @@ retry:
  * Note: this works for group members as well as group leaders
  * since the non-leader members' sibling_lists will be empty.
  */
-static void __perf_event_mark_enabled(struct perf_event *event,
-					struct perf_event_context *ctx)
+static void __perf_event_mark_enabled(struct perf_event *event)
 {
 	struct perf_event *sub;
 	u64 tstamp = perf_event_time(event);
@@ -1702,7 +1705,7 @@ static int __perf_event_enable(void *info)
 	 */
 	perf_cgroup_set_timestamp(current, ctx);
 
-	__perf_event_mark_enabled(event, ctx);
+	__perf_event_mark_enabled(event);
 
 	if (!event_filter_match(event)) {
 		if (is_cgroup_event(event))
@@ -1783,7 +1786,7 @@ void perf_event_enable(struct perf_event *event)
 
 retry:
 	if (!ctx->is_active) {
-		__perf_event_mark_enabled(event, ctx);
+		__perf_event_mark_enabled(event);
 		goto out;
 	}
 
@@ -2329,6 +2332,9 @@ static void perf_ctx_adjust_freq(struct perf_event_context *ctx, u64 period)
 	u64 interrupts, now;
 	s64 delta;
 
+	if (!ctx->nr_freq)
+		return;
+
 	list_for_each_entry_rcu(event, &ctx->event_list, event_entry) {
 		if (event->state != PERF_EVENT_STATE_ACTIVE)
 			continue;
@@ -2384,12 +2390,14 @@ static void perf_rotate_context(struct perf_cpu_context *cpuctx)
 {
 	u64 interval = (u64)cpuctx->jiffies_interval * TICK_NSEC;
 	struct perf_event_context *ctx = NULL;
-	int rotate = 0, remove = 1;
+	int rotate = 0, remove = 1, freq = 0;
 
 	if (cpuctx->ctx.nr_events) {
 		remove = 0;
 		if (cpuctx->ctx.nr_events != cpuctx->ctx.nr_active)
 			rotate = 1;
+		if (cpuctx->ctx.nr_freq)
+			freq = 1;
 	}
 
 	ctx = cpuctx->task_ctx;
@@ -2397,33 +2405,40 @@ static void perf_rotate_context(struct perf_cpu_context *cpuctx)
 		remove = 0;
 		if (ctx->nr_events != ctx->nr_active)
 			rotate = 1;
+		if (ctx->nr_freq)
+			freq = 1;
 	}
+
+	if (!rotate && !freq)
+		goto done;
 
 	perf_ctx_lock(cpuctx, cpuctx->task_ctx);
 	perf_pmu_disable(cpuctx->ctx.pmu);
-	perf_ctx_adjust_freq(&cpuctx->ctx, interval);
-	if (ctx)
-		perf_ctx_adjust_freq(ctx, interval);
 
-	if (!rotate)
-		goto done;
+	if (freq) {
+		perf_ctx_adjust_freq(&cpuctx->ctx, interval);
+		if (ctx)
+			perf_ctx_adjust_freq(ctx, interval);
+	}
 
-	cpu_ctx_sched_out(cpuctx, EVENT_FLEXIBLE);
-	if (ctx)
-		ctx_sched_out(ctx, cpuctx, EVENT_FLEXIBLE);
+	if (rotate) {
+		cpu_ctx_sched_out(cpuctx, EVENT_FLEXIBLE);
+		if (ctx)
+			ctx_sched_out(ctx, cpuctx, EVENT_FLEXIBLE);
 
-	rotate_ctx(&cpuctx->ctx);
-	if (ctx)
-		rotate_ctx(ctx);
+		rotate_ctx(&cpuctx->ctx);
+		if (ctx)
+			rotate_ctx(ctx);
 
-	perf_event_sched_in(cpuctx, ctx, current);
+		perf_event_sched_in(cpuctx, ctx, current);
+	}
+
+	perf_pmu_enable(cpuctx->ctx.pmu);
+	perf_ctx_unlock(cpuctx, cpuctx->task_ctx);
 
 done:
 	if (remove)
 		list_del_init(&cpuctx->rotation_list);
-
-	perf_pmu_enable(cpuctx->ctx.pmu);
-	perf_ctx_unlock(cpuctx, cpuctx->task_ctx);
 }
 
 void perf_event_task_tick(void)
@@ -2450,7 +2465,7 @@ static int event_enable_on_exec(struct perf_event *event,
 	if (event->state >= PERF_EVENT_STATE_INACTIVE)
 		return 0;
 
-	__perf_event_mark_enabled(event, ctx);
+	__perf_event_mark_enabled(event);
 
 	return 1;
 }
@@ -2482,13 +2497,7 @@ static void perf_event_enable_on_exec(struct perf_event_context *ctx)
 	raw_spin_lock(&ctx->lock);
 	task_ctx_sched_out(ctx);
 
-	list_for_each_entry(event, &ctx->pinned_groups, group_entry) {
-		ret = event_enable_on_exec(event, ctx);
-		if (ret)
-			enabled = 1;
-	}
-
-	list_for_each_entry(event, &ctx->flexible_groups, group_entry) {
+	list_for_each_entry(event, &ctx->event_list, event_entry) {
 		ret = event_enable_on_exec(event, ctx);
 		if (ret)
 			enabled = 1;
@@ -2739,7 +2748,7 @@ static void free_event(struct perf_event *event)
 
 	if (!event->parent) {
 		if (event->attach_state & PERF_ATTACH_TASK)
-			jump_label_dec(&perf_sched_events);
+			jump_label_dec_deferred(&perf_sched_events);
 		if (event->attr.mmap || event->attr.mmap_data)
 			atomic_dec(&nr_mmap_events);
 		if (event->attr.comm)
@@ -2750,7 +2759,7 @@ static void free_event(struct perf_event *event)
 			put_callchain_buffers();
 		if (is_cgroup_event(event)) {
 			atomic_dec(&per_cpu(perf_cgroup_events, event->cpu));
-			jump_label_dec(&perf_sched_events);
+			jump_label_dec_deferred(&perf_sched_events);
 		}
 	}
 
@@ -5775,7 +5784,7 @@ done:
 
 	if (!event->parent) {
 		if (event->attach_state & PERF_ATTACH_TASK)
-			jump_label_inc(&perf_sched_events);
+			jump_label_inc(&perf_sched_events.key);
 		if (event->attr.mmap || event->attr.mmap_data)
 			atomic_inc(&nr_mmap_events);
 		if (event->attr.comm)
@@ -6013,7 +6022,7 @@ SYSCALL_DEFINE5(perf_event_open,
 		 * - that may need work on context switch
 		 */
 		atomic_inc(&per_cpu(perf_cgroup_events, event->cpu));
-		jump_label_inc(&perf_sched_events);
+		jump_label_inc(&perf_sched_events.key);
 	}
 
 	/*
@@ -6859,6 +6868,9 @@ void __init perf_event_init(void)
 
 	ret = init_hw_breakpoint();
 	WARN(ret, "hw_breakpoint initialization failed with: %d", ret);
+
+	/* do not patch jump label more than once per second */
+	jump_label_rate_limit(&perf_sched_events, HZ);
 }
 
 static int __init perf_event_sysfs_init(void)
