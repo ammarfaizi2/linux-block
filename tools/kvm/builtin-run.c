@@ -220,6 +220,8 @@ static int set_net_param(struct virtio_net_params *p, const char *param,
 		p->host_ip = strdup(val);
 	} else if (strcmp(param, "vhost") == 0) {
 		p->vhost = atoi(val);
+	} else if (strcmp(param, "fd") == 0) {
+		p->fd = atoi(val);
 	}
 
 	return 0;
@@ -815,7 +817,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	if (nrcpus > max_cpus) {
 		printf("  # Limit the number of CPUs to %d\n", max_cpus);
-		kvm->nrcpus	= max_cpus;
+		nrcpus = max_cpus;
 	} else if (nrcpus > recommended_cpus) {
 		printf("  # Warning: The maximum recommended amount of VCPUs"
 			" is %d\n", recommended_cpus);
