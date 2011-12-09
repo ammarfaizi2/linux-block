@@ -266,7 +266,11 @@ int kvm__recommended_cpus(struct kvm *kvm)
 
 	ret = ioctl(kvm->sys_fd, KVM_CHECK_EXTENSION, KVM_CAP_NR_VCPUS);
 	if (ret <= 0)
-		die_perror("KVM_CAP_NR_VCPUS");
+		/*
+		 * api.txt states that if KVM_CAP_NR_VCPUS does not exist,
+		 * assume 4.
+		 */
+		return 4;
 
 	return ret;
 }
@@ -347,10 +351,11 @@ struct kvm *kvm__init(const char *kvm_dev, u64 ram_size, const char *name)
 /* RFC 1952 */
 #define GZIP_ID1		0x1f
 #define GZIP_ID2		0x8b
-
+#define CPIO_MAGIC		"0707"
+/* initrd may be gzipped, or a plain cpio */
 static bool initrd_check(int fd)
 {
-	unsigned char id[2];
+	unsigned char id[4];
 
 	if (read_in_full(fd, id, ARRAY_SIZE(id)) < 0)
 		return false;
@@ -358,7 +363,8 @@ static bool initrd_check(int fd)
 	if (lseek(fd, 0, SEEK_SET) < 0)
 		die_perror("lseek");
 
-	return id[0] == GZIP_ID1 && id[1] == GZIP_ID2;
+	return (id[0] == GZIP_ID1 && id[1] == GZIP_ID2) ||
+		!memcmp(id, CPIO_MAGIC, 4);
 }
 
 bool kvm__load_kernel(struct kvm *kvm, const char *kernel_filename,
@@ -382,23 +388,25 @@ bool kvm__load_kernel(struct kvm *kvm, const char *kernel_filename,
 
 	ret = load_bzimage(kvm, fd_kernel, fd_initrd, kernel_cmdline, vidmode);
 
-	if (initrd_filename)
-		close(fd_initrd);
-
 	if (ret)
 		goto found_kernel;
 
 	pr_warning("%s is not a bzImage. Trying to load it as a flat binary...", kernel_filename);
 
-	ret = load_flat_binary(kvm, fd_kernel);
+	ret = load_flat_binary(kvm, fd_kernel, fd_initrd, kernel_cmdline);
+
 	if (ret)
 		goto found_kernel;
 
+	if (initrd_filename)
+		close(fd_initrd);
 	close(fd_kernel);
 
 	die("%s is not a valid bzImage or flat binary", kernel_filename);
 
 found_kernel:
+	if (initrd_filename)
+		close(fd_initrd);
 	close(fd_kernel);
 
 	return ret;

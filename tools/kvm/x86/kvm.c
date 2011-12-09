@@ -4,6 +4,8 @@
 #include "kvm/interrupt.h"
 #include "kvm/mptable.h"
 #include "kvm/util.h"
+#include "kvm/8250-serial.h"
+#include "kvm/virtio-console.h"
 
 #include <asm/bootparam.h>
 #include <linux/kvm.h>
@@ -117,6 +119,17 @@ void kvm__init_ram(struct kvm *kvm)
 	}
 }
 
+/* Arch-specific commandline setup */
+void kvm__arch_set_cmdline(char *cmdline, bool video)
+{
+	strcpy(cmdline, "noapic noacpi pci=conf1 reboot=k panic=1 i8042.direct=1 "
+				"i8042.dumbkbd=1 i8042.nopnp=1");
+	if (video) {
+		strcat(cmdline, " video=vesafb console=tty0");
+	} else
+		strcat(cmdline, " console=ttyS0 earlyprintk=serial i8042.noaux=1");
+}
+
 /* Architecture-specific KVM init */
 void kvm__arch_init(struct kvm *kvm, const char *kvm_dev, u64 ram_size, const char *name)
 {
@@ -184,17 +197,24 @@ void kvm__irq_trigger(struct kvm *kvm, int irq)
 #define BOOT_PROTOCOL_REQUIRED	0x206
 #define LOAD_HIGH		0x01
 
-int load_flat_binary(struct kvm *kvm, int fd)
+int load_flat_binary(struct kvm *kvm, int fd_kernel, int fd_initrd, const char *kernel_cmdline)
 {
 	void *p;
 	int nr;
 
-	if (lseek(fd, 0, SEEK_SET) < 0)
+	/*
+	 * Some architectures may support loading an initrd alongside the flat kernel,
+	 * but we do not.
+	 */
+	if (fd_initrd != -1)
+		pr_warning("Loading initrd with flat binary not supported.");
+
+	if (lseek(fd_kernel, 0, SEEK_SET) < 0)
 		die_perror("lseek");
 
 	p = guest_real_to_host(kvm, BOOT_LOADER_SELECTOR, BOOT_LOADER_IP);
 
-	while ((nr = read(fd, p, 65536)) > 0)
+	while ((nr = read(fd_kernel, p, 65536)) > 0)
 		p += nr;
 
 	kvm->boot_selector	= BOOT_LOADER_SELECTOR;
@@ -327,4 +347,10 @@ void kvm__arch_setup_firmware(struct kvm *kvm)
 
 	/* MP table */
 	mptable_setup(kvm, kvm->nrcpus);
+}
+
+void kvm__arch_periodic_poll(struct kvm *kvm)
+{
+	serial8250__inject_interrupt(kvm);
+	virtio_console__inject_interrupt(kvm);
 }

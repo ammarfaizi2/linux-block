@@ -9,7 +9,12 @@ else
 	E = @\#
 	Q =
 endif
-export E Q
+ifneq ($(I), )
+	KINCL_PATH=$(I)
+else
+	KINCL_PATH=../..
+endif
+export E Q KINCL_PATH
 
 include config/utilities.mak
 include config/feature-tests.mak
@@ -77,9 +82,54 @@ OBJS	+= util/strbuf.o
 OBJS	+= virtio/9p.o
 OBJS	+= virtio/9p-pdu.o
 OBJS	+= hw/vesa.o
-OBJS	+= hw/i8042.o
 OBJS	+= hw/pci-shmem.o
 OBJS	+= kvm-ipc.o
+
+# Additional ARCH settings for x86
+ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
+                  -e s/arm.*/arm/ -e s/sa110/arm/ \
+                  -e s/s390x/s390/ -e s/parisc64/parisc/ \
+                  -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+                  -e s/sh[234].*/sh/ )
+
+uname_M      := $(shell uname -m | sed -e s/i.86/i386/)
+ifeq ($(uname_M),i386)
+	ARCH         := x86
+	DEFINES      += -DCONFIG_X86_32
+endif
+ifeq ($(uname_M),x86_64)
+	ARCH         := x86
+	DEFINES      += -DCONFIG_X86_64
+endif
+
+
+### Arch-specific stuff
+
+#x86
+ifeq ($(ARCH),x86)
+	DEFINES += -DCONFIG_X86
+	OBJS	+= x86/cpuid.o
+	OBJS	+= x86/interrupt.o
+	OBJS	+= x86/ioport.o
+	OBJS	+= x86/irq.o
+	OBJS	+= x86/kvm.o
+	OBJS	+= x86/kvm-cpu.o
+	OBJS	+= x86/mptable.o
+	OBJS	+= hw/i8042.o
+# Exclude BIOS object files from header dependencies.
+	OTHEROBJS	+= x86/bios.o
+	OTHEROBJS	+= x86/bios/bios-rom.o
+	ARCH_INCLUDE := x86/include
+endif
+
+###
+
+ifeq (,$(ARCH_INCLUDE))
+	UNSUPP_ERR = @echo "This architecture is not supported in kvmtool." && exit 1
+else
+	UNSUPP_ERR =
+endif
+
 
 FLAGS_BFD := $(CFLAGS) -lbfd
 has_bfd := $(call try-cc,$(SOURCE_BFD),$(FLAGS_BFD))
@@ -123,49 +173,6 @@ LIBS	+= -lrt
 LIBS	+= -lpthread
 LIBS	+= -lutil
 
-# Additional ARCH settings for x86
-ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
-                  -e s/arm.*/arm/ -e s/sa110/arm/ \
-                  -e s/s390x/s390/ -e s/parisc64/parisc/ \
-                  -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
-                  -e s/sh[234].*/sh/ )
-
-uname_M      := $(shell uname -m | sed -e s/i.86/i386/)
-ifeq ($(uname_M),i386)
-	ARCH         := x86
-	DEFINES      += -DCONFIG_X86_32
-endif
-ifeq ($(uname_M),x86_64)
-	ARCH         := x86
-	DEFINES      += -DCONFIG_X86_64
-endif
-
-
-### Arch-specific stuff
-
-#x86
-ifeq ($(ARCH),x86)
-	DEFINES += -DCONFIG_X86
-	OBJS	+= x86/cpuid.o
-	OBJS	+= x86/interrupt.o
-	OBJS	+= x86/ioport.o
-	OBJS	+= x86/irq.o
-	OBJS	+= x86/kvm.o
-	OBJS	+= x86/kvm-cpu.o
-	OBJS	+= x86/mptable.o
-# Exclude BIOS object files from header dependencies.
-	OTHEROBJS	+= x86/bios.o
-	OTHEROBJS	+= x86/bios/bios-rom.o
-	ARCH_INCLUDE := x86/include
-endif
-
-###
-
-ifeq (,$(ARCH_INCLUDE))
-	UNSUPP_ERR = @echo "This architecture is not supported in kvmtool." && exit 1
-else
-	UNSUPP_ERR =
-endif
 
 DEPS	:= $(patsubst %.o,%.d,$(OBJS))
 OBJS	+= $(OTHEROBJS)
@@ -176,7 +183,7 @@ DEFINES	+= -DKVMTOOLS_VERSION='"$(KVMTOOLS_VERSION)"'
 DEFINES	+= -DBUILD_ARCH='"$(ARCH)"'
 
 KVM_INCLUDE := include
-CFLAGS	+= $(CPPFLAGS) $(DEFINES) -I$(KVM_INCLUDE) -I$(ARCH_INCLUDE) -I../../include -I../../arch/$(ARCH)/include/ -Os -g
+CFLAGS	+= $(CPPFLAGS) $(DEFINES) -I$(KVM_INCLUDE) -I$(ARCH_INCLUDE) -I$(KINCL_PATH)/include -I$(KINCL_PATH)/arch/$(ARCH)/include/ -Os -g
 
 ifneq ($(WERROR),0)
 	WARNINGS += -Werror

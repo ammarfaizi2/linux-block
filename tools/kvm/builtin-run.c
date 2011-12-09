@@ -416,7 +416,7 @@ static const struct option options[] = {
 	OPT_BOOLEAN('\0', "rng", &virtio_rng, "Enable virtio Random Number Generator"),
 	OPT_CALLBACK('\0', "9p", NULL, "dir_to_share,tag_name",
 		     "Enable virtio 9p to share files between host and guest", virtio_9p_rootdir_parser),
-	OPT_STRING('\0', "console", &console, "serial or virtio",
+	OPT_STRING('\0', "console", &console, "serial, virtio or hv",
 			"Console to use"),
 	OPT_STRING('\0', "dev", &dev, "device_file", "KVM device file"),
 	OPT_CALLBACK('\0', "tty", NULL, "tty id",
@@ -522,8 +522,7 @@ static void handle_debug(int fd, u32 type, u32 len, u8 *msg)
 
 static void handle_sigalrm(int sig)
 {
-	serial8250__inject_interrupt(kvm);
-	virtio_console__inject_interrupt(kvm);
+	kvm__arch_periodic_poll(kvm);
 }
 
 static void handle_stop(int fd, u32 type, u32 len, u8 *msg)
@@ -777,8 +776,12 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	if (!strncmp(console, "virtio", 6))
 		active_console  = CONSOLE_VIRTIO;
-	else
+	else if (!strncmp(console, "serial", 6))
 		active_console  = CONSOLE_8250;
+	else if (!strncmp(console, "hv", 2))
+		active_console = CONSOLE_HV;
+	else
+		pr_warning("No console!");
 
 	if (!host_ip)
 		host_ip = DEFAULT_HOST_ADDR;
@@ -806,8 +809,6 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	kvm = kvm__init(dev, ram_size, guest_name);
 
-	irq__init(kvm);
-
 	kvm->single_step = single_step;
 
 	ioeventfd__init();
@@ -825,6 +826,10 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	kvm->nrcpus = nrcpus;
 
+	irq__init(kvm);
+
+	pci__init();
+
 	/*
 	 * vidmode should be either specified
 	 * either set by default
@@ -836,13 +841,11 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		vidmode = 0;
 
 	memset(real_cmdline, 0, sizeof(real_cmdline));
-	strcpy(real_cmdline, "noapic noacpi pci=conf1 reboot=k panic=1 i8042.direct=1 "
-				"i8042.dumbkbd=1 i8042.nopnp=1");
-	if (vnc || sdl) {
-		strcat(real_cmdline, " video=vesafb console=tty0");
-	} else
-		strcat(real_cmdline, " console=ttyS0 earlyprintk=serial i8042.noaux=1");
-	strcat(real_cmdline, " ");
+	kvm__arch_set_cmdline(real_cmdline, vnc || sdl);
+
+	if (strlen(real_cmdline) > 0)
+		strcat(real_cmdline, " ");
+
 	if (kernel_cmdline)
 		strlcat(real_cmdline, kernel_cmdline, sizeof(real_cmdline));
 
@@ -894,8 +897,6 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	serial8250__init(kvm);
 
-	pci__init();
-
 	if (active_console == CONSOLE_VIRTIO)
 		virtio_console__init(kvm);
 
@@ -931,19 +932,11 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		virtio_net__init(&net_params);
 	}
 
-	kvm__start_timer(kvm);
-
-	kvm__arch_setup_firmware(kvm);
-
-	for (i = 0; i < nrcpus; i++) {
-		kvm_cpus[i] = kvm_cpu__init(kvm, i);
-		if (!kvm_cpus[i])
-			die("unable to initialize KVM VCPU");
-	}
-
 	kvm__init_ram(kvm);
 
+#ifdef CONFIG_X86
 	kbd__init(kvm);
+#endif
 
 	pci_shmem__init(kvm);
 
@@ -961,6 +954,20 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	}
 
 	fb__start();
+
+	/* Device init all done; firmware init must
+	 * come after this (it may set up device trees etc.)
+	 */
+
+	kvm__start_timer(kvm);
+
+	kvm__arch_setup_firmware(kvm);
+
+	for (i = 0; i < nrcpus; i++) {
+		kvm_cpus[i] = kvm_cpu__init(kvm, i);
+		if (!kvm_cpus[i])
+			die("unable to initialize KVM VCPU");
+	}
 
 	thread_pool__init(nr_online_cpus);
 	ioeventfd__start();
