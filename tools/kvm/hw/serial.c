@@ -18,6 +18,8 @@ struct serial8250_device {
 
 	u16			iobase;
 	u8			irq;
+	u8			irq_state;
+	int			txcnt;
 
 	u8			rbr;		/* receive buffer */
 	u8			dll;
@@ -81,6 +83,41 @@ static struct serial8250_device devices[] = {
 	},
 };
 
+static void serial8250_update_irq(struct kvm *kvm, struct serial8250_device *dev)
+{
+	u8 iir = 0;
+
+	/* Data ready and rcv interrupt enabled ? */
+	if ((dev->ier & UART_IER_RDI) && (dev->lsr & UART_LSR_DR))
+		iir |= UART_IIR_RDI;
+
+	/* Transmitter empty and interrupt enabled ? */
+	if ((dev->ier & UART_IER_THRI) && (dev->lsr & UART_LSR_TEMT))
+		iir |= UART_IIR_THRI;
+
+	/* Now update the irq line, if necessary */
+	if (!iir) {
+		dev->iir = UART_IIR_NO_INT;
+		if (dev->irq_state)
+			kvm__irq_line(kvm, dev->irq, 0);
+	} else {
+		dev->iir = iir;
+		if (!dev->irq_state)
+			kvm__irq_line(kvm, dev->irq, 1);
+	}
+	dev->irq_state = iir;
+
+	/*
+	 * If the kernel disabled the tx interrupt, we know that there
+	 * is nothing more to transmit, so we can reset our tx logic
+	 * here.
+	 */
+	if (!(dev->ier & UART_IER_THRI)) {
+		dev->lsr |= UART_LSR_TEMT | UART_LSR_THRE;
+		dev->txcnt = 0;
+	}
+}
+
 #define SYSRQ_PENDING_NONE		0
 #define SYSRQ_PENDING_BREAK		1
 #define SYSRQ_PENDING_CMD		2
@@ -91,13 +128,13 @@ static void serial8250__sysrq(struct kvm *kvm, struct serial8250_device *dev)
 {
 	switch (sysrq_pending) {
 	case SYSRQ_PENDING_BREAK:
-		dev->lsr	|= UART_LSR_DR | UART_LSR_BI;
+		dev->lsr |= UART_LSR_DR | UART_LSR_BI;
 
-		sysrq_pending	= SYSRQ_PENDING_CMD;
+		sysrq_pending = SYSRQ_PENDING_CMD;
 		break;
 	case SYSRQ_PENDING_CMD:
-		dev->rbr	= 'p';
-		dev->lsr	|= UART_LSR_DR;
+		dev->rbr = 'p';
+		dev->lsr |= UART_LSR_DR;
 
 		sysrq_pending	= SYSRQ_PENDING_NONE;
 		break;
@@ -107,6 +144,15 @@ static void serial8250__sysrq(struct kvm *kvm, struct serial8250_device *dev)
 static void serial8250__receive(struct kvm *kvm, struct serial8250_device *dev)
 {
 	int c;
+
+	/*
+	 * If the guest transmitted 16 chars in a row, we clear the
+	 * TEMT/THRE bits to let the kernel escape from the 8250
+	 * interrupt handler. We come here only once a ms, so that
+	 * should give the kernel the desired pause.
+	 */
+	dev->lsr |= UART_LSR_TEMT | UART_LSR_THRE;
+	dev->txcnt = 0;
 
 	if (dev->lsr & UART_LSR_DR)
 		return;
@@ -124,11 +170,11 @@ static void serial8250__receive(struct kvm *kvm, struct serial8250_device *dev)
 	if (c < 0)
 		return;
 
-	dev->rbr	= c;
-	dev->lsr	|= UART_LSR_DR;
+	dev->rbr = c;
+	dev->lsr |= UART_LSR_DR;
 }
 
-void serial8250__inject_interrupt(struct kvm *kvm)
+void serial8250__update_consoles(struct kvm *kvm)
 {
 	unsigned int i;
 
@@ -139,17 +185,7 @@ void serial8250__inject_interrupt(struct kvm *kvm)
 
 		serial8250__receive(kvm, dev);
 
-		if (dev->ier & UART_IER_RDI && dev->lsr & UART_LSR_DR)
-			dev->iir		= UART_IIR_RDI;
-		else if (dev->ier & UART_IER_THRI)
-			dev->iir		= UART_IIR_THRI;
-		else
-			dev->iir		= UART_IIR_NO_INT;
-
-		if (dev->iir != UART_IIR_NO_INT) {
-			kvm__irq_line(kvm, dev->irq, 0);
-			kvm__irq_line(kvm, dev->irq, 1);
-		}
+		serial8250_update_irq(kvm, dev);
 
 		mutex_unlock(&dev->mutex);
 	}
@@ -179,84 +215,61 @@ static bool serial8250_out(struct ioport *ioport, struct kvm *kvm, u16 port, voi
 	u16 offset;
 	bool ret = true;
 
-	dev		= find_device(port);
+	dev = find_device(port);
 	if (!dev)
 		return false;
 
 	mutex_lock(&dev->mutex);
 
-	offset		= port - dev->iobase;
+	offset = port - dev->iobase;
 
-	if (dev->lcr & UART_LCR_DLAB) {
-		switch (offset) {
-		case UART_DLL:
-			dev->dll	= ioport__read8(data);
-			break;
-		case UART_DLM:
-			dev->dlm	= ioport__read8(data);
-			break;
-		case UART_FCR:
-			dev->fcr	= ioport__read8(data);
-			break;
-		case UART_LCR:
-			dev->lcr	= ioport__read8(data);
-			break;
-		case UART_MCR:
-			dev->mcr	= ioport__read8(data);
-			break;
-		case UART_LSR:
-			/* Factory test */
-			break;
-		case UART_MSR:
-			/* Not used */
-			break;
-		case UART_SCR:
-			dev->scr	= ioport__read8(data);
-			break;
-		default:
-			ret		= false;
-			goto out_unlock;
-		}
-	} else {
-		switch (offset) {
-		case UART_TX: {
+	switch (offset) {
+	case UART_TX:
+		if (!(dev->lcr & UART_LCR_DLAB)) {
 			char *addr = data;
 
 			if (!(dev->mcr & UART_MCR_LOOP))
 				term_putc(CONSOLE_8250, addr, size, dev->id);
+			/* else FIXME: Inject data into rcv path for LOOP */
 
-			dev->iir		= UART_IIR_NO_INT;
+			if (++dev->txcnt == 16)
+				dev->lsr &= ~(UART_LSR_TEMT | UART_LSR_THRE);
 			break;
+		} else {
+			dev->dll = ioport__read8(data);
 		}
-		case UART_FCR:
-			dev->fcr	= ioport__read8(data);
-			break;
-		case UART_IER:
-			dev->ier	= ioport__read8(data) & 0x3f;
-			kvm__irq_line(kvm, dev->irq, dev->ier ? 1 : 0);
-			break;
-		case UART_LCR:
-			dev->lcr	= ioport__read8(data);
-			break;
-		case UART_MCR:
-			dev->mcr	= ioport__read8(data);
-			break;
-		case UART_LSR:
-			/* Factory test */
-			break;
-		case UART_MSR:
-			/* Not used */
-			break;
-		case UART_SCR:
-			dev->scr	= ioport__read8(data);
-			break;
-		default:
-			ret		= false;
-			goto out_unlock;
-		}
+		break;
+	case UART_IER:
+		if (!(dev->lcr & UART_LCR_DLAB))
+			dev->ier = ioport__read8(data) & 0x3f;
+		else
+			dev->dlm = ioport__read8(data);
+		break;
+	case UART_FCR:
+		dev->fcr = ioport__read8(data);
+		break;
+	case UART_LCR:
+		dev->lcr = ioport__read8(data);
+		break;
+	case UART_MCR:
+		dev->mcr = ioport__read8(data);
+		break;
+	case UART_LSR:
+		/* Factory test */
+		break;
+	case UART_MSR:
+		/* Not used */
+		break;
+	case UART_SCR:
+		dev->scr = ioport__read8(data);
+		break;
+	default:
+		ret = false;
+		break;
 	}
 
-out_unlock:
+	serial8250_update_irq(kvm, dev);
+
 	mutex_unlock(&dev->mutex);
 
 	return ret;
@@ -268,54 +281,32 @@ static bool serial8250_in(struct ioport *ioport, struct kvm *kvm, u16 port, void
 	u16 offset;
 	bool ret = true;
 
-	dev		= find_device(port);
+	dev = find_device(port);
 	if (!dev)
 		return false;
 
 	mutex_lock(&dev->mutex);
 
-	offset		= port - dev->iobase;
-
-	if (dev->lcr & UART_LCR_DLAB) {
-		switch (offset) {
-		case UART_DLL:
-			ioport__write8(data, dev->dll);
-			goto out_unlock;
-
-		case UART_DLM:
-			ioport__write8(data, dev->dlm);
-			goto out_unlock;
-
-		default:
-			break;
-		}
-	} else {
-		switch (offset) {
-		case UART_RX:
-			ioport__write8(data, dev->rbr);
-			dev->lsr		&= ~UART_LSR_DR;
-			dev->iir		= UART_IIR_NO_INT;
-			goto out_unlock;
-
-		case UART_IER:
-			ioport__write8(data, dev->ier);
-			goto out_unlock;
-
-		default:
-			break;
-		}
-	}
+	offset = port - dev->iobase;
 
 	switch (offset) {
-	case UART_IIR: {
-		u8 iir = dev->iir;
-
-		if (dev->fcr & UART_FCR_ENABLE_FIFO)
-			iir		|= 0xc0;
-
-		ioport__write8(data, iir);
+	case UART_RX:
+		if (dev->lcr & UART_LCR_DLAB) {
+			ioport__write8(data, dev->dll);
+		} else {
+			ioport__write8(data, dev->rbr);
+			dev->lsr &= ~UART_LSR_DR;
+		}
 		break;
-	}
+	case UART_IER:
+		if (dev->lcr & UART_LCR_DLAB)
+			ioport__write8(data, dev->dlm);
+		else
+			ioport__write8(data, dev->ier);
+		break;
+	case UART_IIR:
+		ioport__write8(data, dev->iir);
+		break;
 	case UART_LCR:
 		ioport__write8(data, dev->lcr);
 		break;
@@ -324,7 +315,6 @@ static bool serial8250_in(struct ioport *ioport, struct kvm *kvm, u16 port, void
 		break;
 	case UART_LSR:
 		ioport__write8(data, dev->lsr);
-		dev->lsr		&= ~(UART_LSR_OE|UART_LSR_PE|UART_LSR_FE|UART_LSR_BI);
 		break;
 	case UART_MSR:
 		ioport__write8(data, dev->msr);
@@ -333,10 +323,12 @@ static bool serial8250_in(struct ioport *ioport, struct kvm *kvm, u16 port, void
 		ioport__write8(data, dev->scr);
 		break;
 	default:
-		ret		= false;
-		goto out_unlock;
+		ret = false;
+		break;
 	}
-out_unlock:
+
+	serial8250_update_irq(kvm, dev);
+
 	mutex_unlock(&dev->mutex);
 
 	return ret;
