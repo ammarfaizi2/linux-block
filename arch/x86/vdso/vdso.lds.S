@@ -17,6 +17,10 @@
 VERSION {
 	LINUX_2.6 {
 	global:
+		/*
+		 * These are the original vsyscalls.  They have weak symbols
+		 * without the __vdso_ prefix for ABI compatibility.
+		 */
 		clock_gettime;
 		__vdso_clock_gettime;
 		gettimeofday;
@@ -25,6 +29,9 @@ VERSION {
 		__vdso_getcpu;
 		time;
 		__vdso_time;
+
+		/* New vsyscalls are just plain functions. */
+		__vdso_clock_gettime_ns;
 	local: *;
 	};
 }
