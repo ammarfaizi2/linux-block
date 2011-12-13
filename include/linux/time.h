@@ -27,6 +27,11 @@ struct timezone {
 	int	tz_dsttime;	/* type of dst correction */
 };
 
+struct timens {
+	u64	ns;		/* nanoseconds since the relevant epoch */
+	u64	padding;	/* for future expansion (UTC offset? sub-ns?) */
+};
+
 #ifdef __KERNEL__
 
 extern struct timezone sys_tz;

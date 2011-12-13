@@ -980,6 +980,36 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
 	return error;
 }
 
+SYSCALL_DEFINE2(clock_gettime_ns, const clockid_t, which_clock,
+		struct timens __user *, tp)
+{
+	/*
+	 * This implementation isn't as fast as it could be, but the syscall
+	 * entry will take much longer than the unnecessary division and
+	 * multiplication.  Arch-specific implementations can be made faster.
+	 */
+
+	struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec kernel_timespec;
+	struct timens timens;
+	int error;
+
+	if (!kc)
+		return -EINVAL;
+
+	error = kc->clock_get(which_clock, &kernel_timespec);
+
+	if (!error) {
+		timens.ns = kernel_timespec.tv_sec * NSEC_PER_SEC
+			+ kernel_timespec.tv_nsec;
+		timens.padding = 0;
+
+		error = copy_to_user(tp, &timens, sizeof(timens));
+	}
+
+	return error;
+}
+
 SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
 		struct timex __user *, utx)
 {
