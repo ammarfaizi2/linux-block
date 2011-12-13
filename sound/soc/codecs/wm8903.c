@@ -25,6 +25,7 @@
 #include <linux/i2c.h>
 #include <linux/regmap.h>
 #include <linux/slab.h>
+#include <linux/irq.h>
 #include <sound/core.h>
 #include <sound/jack.h>
 #include <sound/pcm.h>
@@ -1842,7 +1843,7 @@ static void wm8903_init_gpio(struct snd_soc_codec *codec)
 	wm8903->gpio_chip.ngpio = WM8903_NUM_GPIO;
 	wm8903->gpio_chip.dev = codec->dev;
 
-	if (pdata && pdata->gpio_base)
+	if (pdata->gpio_base)
 		wm8903->gpio_chip.base = pdata->gpio_base;
 	else
 		wm8903->gpio_chip.base = -1;
@@ -1878,6 +1879,7 @@ static int wm8903_probe(struct snd_soc_codec *codec)
 	int ret, i;
 	int trigger, irq_pol;
 	u16 val;
+	bool mic_gpio = false;
 
 	wm8903->codec = codec;
 	codec->control_data = wm8903->regmap;
@@ -1888,51 +1890,49 @@ static int wm8903_probe(struct snd_soc_codec *codec)
 		return ret;
 	}
 
-	/* Set up GPIOs and microphone detection */
-	if (pdata) {
-		bool mic_gpio = false;
+	/* Set up GPIOs, detect if any are MIC detect outputs */
+	for (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) {
+		if ((!pdata->gpio_cfg[i]) ||
+		    (pdata->gpio_cfg[i] > WM8903_GPIO_CONFIG_ZERO))
+			continue;
 
-		for (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) {
-			if (pdata->gpio_cfg[i] > 0x7fff)
-				continue;
+		snd_soc_write(codec, WM8903_GPIO_CONTROL_1 + i,
+				pdata->gpio_cfg[i] & 0x7fff);
 
-			snd_soc_write(codec, WM8903_GPIO_CONTROL_1 + i,
-				      pdata->gpio_cfg[i] & 0x7fff);
+		val = (pdata->gpio_cfg[i] & WM8903_GP1_FN_MASK)
+			>> WM8903_GP1_FN_SHIFT;
 
-			val = (pdata->gpio_cfg[i] & WM8903_GP1_FN_MASK)
-				>> WM8903_GP1_FN_SHIFT;
-
-			switch (val) {
-			case WM8903_GPn_FN_MICBIAS_CURRENT_DETECT:
-			case WM8903_GPn_FN_MICBIAS_SHORT_DETECT:
-				mic_gpio = true;
-				break;
-			default:
-				break;
-			}
+		switch (val) {
+		case WM8903_GPn_FN_MICBIAS_CURRENT_DETECT:
+		case WM8903_GPn_FN_MICBIAS_SHORT_DETECT:
+			mic_gpio = true;
+			break;
+		default:
+			break;
 		}
-
-		snd_soc_write(codec, WM8903_MIC_BIAS_CONTROL_0,
-			      pdata->micdet_cfg);
-
-		/* Microphone detection needs the WSEQ clock */
-		if (pdata->micdet_cfg)
-			snd_soc_update_bits(codec, WM8903_WRITE_SEQUENCER_0,
-					    WM8903_WSEQ_ENA, WM8903_WSEQ_ENA);
-
-		/* If microphone detection is enabled by pdata but
-		 * detected via IRQ then interrupts can be lost before
-		 * the machine driver has set up microphone detection
-		 * IRQs as the IRQs are clear on read.  The detection
-		 * will be enabled when the machine driver configures.
-		 */
-		WARN_ON(!mic_gpio && (pdata->micdet_cfg & WM8903_MICDET_ENA));
-
-		wm8903->mic_delay = pdata->micdet_delay;
 	}
-	
+
+	/* Set up microphone detection */
+	snd_soc_write(codec, WM8903_MIC_BIAS_CONTROL_0,
+			pdata->micdet_cfg);
+
+	/* Microphone detection needs the WSEQ clock */
+	if (pdata->micdet_cfg)
+		snd_soc_update_bits(codec, WM8903_WRITE_SEQUENCER_0,
+				    WM8903_WSEQ_ENA, WM8903_WSEQ_ENA);
+
+	/* If microphone detection is enabled by pdata but
+	    * detected via IRQ then interrupts can be lost before
+	    * the machine driver has set up microphone detection
+	    * IRQs as the IRQs are clear on read.  The detection
+	    * will be enabled when the machine driver configures.
+	    */
+	WARN_ON(!mic_gpio && (pdata->micdet_cfg & WM8903_MICDET_ENA));
+
+	wm8903->mic_delay = pdata->micdet_delay;
+
 	if (wm8903->irq) {
-		if (pdata && pdata->irq_active_low) {
+		if (pdata->irq_active_low) {
 			trigger = IRQF_TRIGGER_LOW;
 			irq_pol = WM8903_IRQ_POL;
 		} else {
@@ -2037,6 +2037,78 @@ static const struct regmap_config wm8903_regmap = {
 	.num_reg_defaults = ARRAY_SIZE(wm8903_reg_defaults),
 };
 
+static int wm8903_set_pdata_irq_trigger(struct i2c_client *i2c,
+					struct wm8903_platform_data *pdata)
+{
+	struct irq_data *irq_data = irq_get_irq_data(i2c->irq);
+	if (!irq_data) {
+		dev_err(&i2c->dev, "Invalid IRQ: %d\n",
+			i2c->irq);
+		return -EINVAL;
+	}
+
+	switch (irqd_get_trigger_type(irq_data)) {
+	case IRQ_TYPE_NONE:
+	default:
+		/*
+		* We assume the controller imposes no restrictions,
+		* so we are able to select active-high
+		*/
+		/* Fall-through */
+	case IRQ_TYPE_LEVEL_HIGH:
+		pdata->irq_active_low = false;
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
+		pdata->irq_active_low = true;
+		break;
+	}
+
+	return 0;
+}
+
+static int wm8903_set_pdata_from_of(struct i2c_client *i2c,
+				    struct wm8903_platform_data *pdata)
+{
+	const struct device_node *np = i2c->dev.of_node;
+	u32 val32;
+	int i;
+
+	if (of_property_read_u32(np, "micdet-cfg", &val32) >= 0)
+		pdata->micdet_cfg = val32;
+
+	if (of_property_read_u32(np, "micdet-delay", &val32) >= 0)
+		pdata->micdet_delay = val32;
+
+	if (of_property_read_u32_array(np, "gpio-cfg", pdata->gpio_cfg,
+				       ARRAY_SIZE(pdata->gpio_cfg)) >= 0) {
+		/*
+		 * In device tree: 0 means "write 0",
+		 * 0xffffffff means "don't touch".
+		 *
+		 * In platform data: 0 means "don't touch",
+		 * 0x8000 means "write 0".
+		 *
+		 * Note: WM8903_GPIO_CONFIG_ZERO == 0x8000.
+		 *
+		 *  Convert from DT to pdata representation here,
+		 * so no other code needs to change.
+		 */
+		for (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) {
+			if (pdata->gpio_cfg[i] == 0) {
+				pdata->gpio_cfg[i] = WM8903_GPIO_CONFIG_ZERO;
+			} else if (pdata->gpio_cfg[i] == 0xffffffff) {
+				pdata->gpio_cfg[i] = 0;
+			} else if (pdata->gpio_cfg[i] > 0x7fff) {
+				dev_err(&i2c->dev, "Invalid gpio-cfg[%d] %x\n",
+					i, pdata->gpio_cfg[i]);
+				return -EINVAL;
+			}
+		}
+	}
+
+	return 0;
+}
+
 static __devinit int wm8903_i2c_probe(struct i2c_client *i2c,
 				      const struct i2c_device_id *id)
 {
@@ -2071,6 +2143,18 @@ static __devinit int wm8903_i2c_probe(struct i2c_client *i2c,
 		if (wm8903->pdata == NULL) {
 			dev_err(&i2c->dev, "Failed to allocate pdata\n");
 			return -ENOMEM;
+		}
+
+		if (i2c->irq) {
+			ret = wm8903_set_pdata_irq_trigger(i2c, wm8903->pdata);
+			if (ret != 0)
+				return ret;
+		}
+
+		if (i2c->dev.of_node) {
+			ret = wm8903_set_pdata_from_of(i2c, wm8903->pdata);
+			if (ret != 0)
+				return ret;
 		}
 	}
 
@@ -2117,6 +2201,12 @@ static __devexit int wm8903_i2c_remove(struct i2c_client *client)
 	return 0;
 }
 
+static const struct of_device_id wm8903_of_match[] = {
+	{ .compatible = "wlf,wm8903", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, wm8903_of_match);
+
 static const struct i2c_device_id wm8903_i2c_id[] = {
 	{ "wm8903", 0 },
 	{ }
@@ -2127,6 +2217,7 @@ static struct i2c_driver wm8903_i2c_driver = {
 	.driver = {
 		.name = "wm8903",
 		.owner = THIS_MODULE,
+		.of_match_table = wm8903_of_match,
 	},
 	.probe =    wm8903_i2c_probe,
 	.remove =   __devexit_p(wm8903_i2c_remove),

@@ -147,12 +147,6 @@ struct regmap *regmap_init(struct device *dev,
 	map->volatile_reg = config->volatile_reg;
 	map->precious_reg = config->precious_reg;
 	map->cache_type = config->cache_type;
-	map->reg_defaults = config->reg_defaults;
-	map->num_reg_defaults = config->num_reg_defaults;
-	map->num_reg_defaults_raw = config->num_reg_defaults_raw;
-	map->reg_defaults_raw = config->reg_defaults_raw;
-	map->cache_size_raw = (config->val_bits / 8) * config->num_reg_defaults_raw;
-	map->cache_word_size = config->val_bits / 8;
 
 	if (config->read_flag_mask || config->write_flag_mask) {
 		map->read_flag_mask = config->read_flag_mask;
@@ -215,7 +209,7 @@ struct regmap *regmap_init(struct device *dev,
 		goto err_map;
 	}
 
-	ret = regcache_init(map);
+	ret = regcache_init(map, config);
 	if (ret < 0)
 		goto err_map;
 
@@ -229,6 +223,39 @@ err:
 	return ERR_PTR(ret);
 }
 EXPORT_SYMBOL_GPL(regmap_init);
+
+/**
+ * regmap_reinit_cache(): Reinitialise the current register cache
+ *
+ * @map: Register map to operate on.
+ * @config: New configuration.  Only the cache data will be used.
+ *
+ * Discard any existing register cache for the map and initialize a
+ * new cache.  This can be used to restore the cache to defaults or to
+ * update the cache configuration to reflect runtime discovery of the
+ * hardware.
+ */
+int regmap_reinit_cache(struct regmap *map, const struct regmap_config *config)
+{
+	int ret;
+
+	mutex_lock(&map->lock);
+
+	regcache_exit(map);
+
+	map->max_register = config->max_register;
+	map->writeable_reg = config->writeable_reg;
+	map->readable_reg = config->readable_reg;
+	map->volatile_reg = config->volatile_reg;
+	map->precious_reg = config->precious_reg;
+	map->cache_type = config->cache_type;
+
+	ret = regcache_init(map, config);
+
+	mutex_unlock(&map->lock);
+
+	return ret;
+}
 
 /**
  * regmap_exit(): Free a previously allocated register map

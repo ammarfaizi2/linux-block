@@ -690,13 +690,13 @@ static const struct of_device_id wm8770_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, wm8770_of_match);
 
-#if defined(CONFIG_SPI_MASTER)
 static int __devinit wm8770_spi_probe(struct spi_device *spi)
 {
 	struct wm8770_priv *wm8770;
 	int ret;
 
-	wm8770 = kzalloc(sizeof(struct wm8770_priv), GFP_KERNEL);
+	wm8770 = devm_kzalloc(&spi->dev, sizeof(struct wm8770_priv),
+			      GFP_KERNEL);
 	if (!wm8770)
 		return -ENOMEM;
 
@@ -705,15 +705,13 @@ static int __devinit wm8770_spi_probe(struct spi_device *spi)
 
 	ret = snd_soc_register_codec(&spi->dev,
 				     &soc_codec_dev_wm8770, &wm8770_dai, 1);
-	if (ret < 0)
-		kfree(wm8770);
+
 	return ret;
 }
 
 static int __devexit wm8770_spi_remove(struct spi_device *spi)
 {
 	snd_soc_unregister_codec(&spi->dev);
-	kfree(spi_get_drvdata(spi));
 	return 0;
 }
 
@@ -726,28 +724,23 @@ static struct spi_driver wm8770_spi_driver = {
 	.probe = wm8770_spi_probe,
 	.remove = __devexit_p(wm8770_spi_remove)
 };
-#endif
 
 static int __init wm8770_modinit(void)
 {
 	int ret = 0;
 
-#if defined(CONFIG_SPI_MASTER)
 	ret = spi_register_driver(&wm8770_spi_driver);
 	if (ret) {
 		printk(KERN_ERR "Failed to register wm8770 SPI driver: %d\n",
 		       ret);
 	}
-#endif
 	return ret;
 }
 module_init(wm8770_modinit);
 
 static void __exit wm8770_exit(void)
 {
-#if defined(CONFIG_SPI_MASTER)
 	spi_unregister_driver(&wm8770_spi_driver);
-#endif
 }
 module_exit(wm8770_exit);
 

@@ -123,105 +123,6 @@ static void wm8958_micd_set_rate(struct snd_soc_codec *codec)
 			    WM8958_MICD_RATE_MASK, val);
 }
 
-static int wm8994_readable(struct snd_soc_codec *codec, unsigned int reg)
-{
-	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(codec);
-	struct wm8994 *control = wm8994->wm8994;
-
-	switch (reg) {
-	case WM8994_GPIO_1:
-	case WM8994_GPIO_2:
-	case WM8994_GPIO_3:
-	case WM8994_GPIO_4:
-	case WM8994_GPIO_5:
-	case WM8994_GPIO_6:
-	case WM8994_GPIO_7:
-	case WM8994_GPIO_8:
-	case WM8994_GPIO_9:
-	case WM8994_GPIO_10:
-	case WM8994_GPIO_11:
-	case WM8994_INTERRUPT_STATUS_1:
-	case WM8994_INTERRUPT_STATUS_2:
-	case WM8994_INTERRUPT_RAW_STATUS_2:
-		return 1;
-
-	case WM8958_DSP2_PROGRAM:
-	case WM8958_DSP2_CONFIG:
-	case WM8958_DSP2_EXECCONTROL:
-		if (control->type == WM8958)
-			return 1;
-		else
-			return 0;
-
-	default:
-		break;
-	}
-
-	if (reg >= WM8994_CACHE_SIZE)
-		return 0;
-	return wm8994_access_masks[reg].readable != 0;
-}
-
-static int wm8994_volatile(struct snd_soc_codec *codec, unsigned int reg)
-{
-	if (reg >= WM8994_CACHE_SIZE)
-		return 1;
-
-	switch (reg) {
-	case WM8994_SOFTWARE_RESET:
-	case WM8994_CHIP_REVISION:
-	case WM8994_DC_SERVO_1:
-	case WM8994_DC_SERVO_READBACK:
-	case WM8994_RATE_STATUS:
-	case WM8994_LDO_1:
-	case WM8994_LDO_2:
-	case WM8958_DSP2_EXECCONTROL:
-	case WM8958_MIC_DETECT_3:
-	case WM8994_DC_SERVO_4E:
-		return 1;
-	default:
-		return 0;
-	}
-}
-
-static int wm8994_write(struct snd_soc_codec *codec, unsigned int reg,
-	unsigned int value)
-{
-	int ret;
-
-	BUG_ON(reg > WM8994_MAX_REGISTER);
-
-	if (!wm8994_volatile(codec, reg)) {
-		ret = snd_soc_cache_write(codec, reg, value);
-		if (ret != 0)
-			dev_err(codec->dev, "Cache write to %x failed: %d\n",
-				reg, ret);
-	}
-
-	return wm8994_reg_write(codec->control_data, reg, value);
-}
-
-static unsigned int wm8994_read(struct snd_soc_codec *codec,
-				unsigned int reg)
-{
-	unsigned int val;
-	int ret;
-
-	BUG_ON(reg > WM8994_MAX_REGISTER);
-
-	if (!wm8994_volatile(codec, reg) && wm8994_readable(codec, reg) &&
-	    reg < codec->driver->reg_cache_size) {
-		ret = snd_soc_cache_read(codec, reg, &val);
-		if (ret >= 0)
-			return val;
-		else
-			dev_err(codec->dev, "Cache read from %x failed: %d\n",
-				reg, ret);
-	}
-
-	return wm8994_reg_read(codec->control_data, reg);
-}
-
 static int configure_aif_clock(struct snd_soc_codec *codec, int aif)
 {
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(codec);
@@ -2188,8 +2089,6 @@ static int wm8994_set_bias_level(struct snd_soc_codec *codec,
 
 	case SND_SOC_BIAS_STANDBY:
 		if (codec->dapm.bias_level == SND_SOC_BIAS_OFF) {
-			pm_runtime_get_sync(codec->dev);
-
 			switch (control->type) {
 			case WM8994:
 				if (wm8994->revision < 4) {
@@ -2256,11 +2155,8 @@ static int wm8994_set_bias_level(struct snd_soc_codec *codec,
 		break;
 
 	case SND_SOC_BIAS_OFF:
-		if (codec->dapm.bias_level == SND_SOC_BIAS_STANDBY) {
+		if (codec->dapm.bias_level == SND_SOC_BIAS_STANDBY)
 			wm8994->cur_fw = NULL;
-
-			pm_runtime_put(codec->dev);
-		}
 		break;
 	}
 	codec->dapm.bias_level = level;
@@ -2844,8 +2740,8 @@ static int wm8994_resume(struct snd_soc_codec *codec)
 
 	if (wm8994->revision < 4) {
 		/* force a HW read */
-		val = wm8994_reg_read(codec->control_data,
-				      WM8994_POWER_MANAGEMENT_5);
+		ret = regmap_read(control->regmap,
+				  WM8994_POWER_MANAGEMENT_5, &val);
 
 		/* modify the cache only */
 		codec->cache_only = 1;
@@ -3460,13 +3356,13 @@ static irqreturn_t wm8994_temp_shut(int irq, void *data)
 
 static int wm8994_codec_probe(struct snd_soc_codec *codec)
 {
-	struct wm8994 *control;
+	struct wm8994 *control = dev_get_drvdata(codec->dev->parent);
 	struct wm8994_priv *wm8994;
 	struct snd_soc_dapm_context *dapm = &codec->dapm;
+	unsigned int reg;
 	int ret, i;
 
-	codec->control_data = dev_get_drvdata(codec->dev->parent);
-	control = codec->control_data;
+	codec->control_data = control->regmap;
 
 	wm8994 = devm_kzalloc(codec->dev, sizeof(struct wm8994_priv),
 			      GFP_KERNEL);
@@ -3474,6 +3370,7 @@ static int wm8994_codec_probe(struct snd_soc_codec *codec)
 		return -ENOMEM;
 	snd_soc_codec_set_drvdata(codec, wm8994);
 
+	snd_soc_codec_set_cache_io(codec, 16, 16, SND_SOC_REGMAP);
 
 	wm8994->wm8994 = dev_get_drvdata(codec->dev->parent);
 	wm8994->pdata = dev_get_platdata(codec->dev->parent);
@@ -3492,25 +3389,6 @@ static int wm8994_codec_probe(struct snd_soc_codec *codec)
 
 	pm_runtime_enable(codec->dev);
 	pm_runtime_resume(codec->dev);
-
-	/* Read our current status back from the chip - we don't want to
-	 * reset as this may interfere with the GPIO or LDO operation. */
-	for (i = 0; i < WM8994_CACHE_SIZE; i++) {
-		if (!wm8994_readable(codec, i) || wm8994_volatile(codec, i))
-			continue;
-
-		ret = wm8994_reg_read(codec->control_data, i);
-		if (ret <= 0)
-			continue;
-
-		ret = snd_soc_cache_write(codec, i, ret);
-		if (ret != 0) {
-			dev_err(codec->dev,
-				"Failed to initialise cache for 0x%x: %d\n",
-				i, ret);
-			goto err;
-		}
-	}
 
 	/* Set revision-specific configuration */
 	wm8994->revision = snd_soc_read(codec, WM8994_CHIP_REVISION);
@@ -3658,24 +3536,24 @@ static int wm8994_codec_probe(struct snd_soc_codec *codec)
 	 * configured on init - if a system wants to do this dynamically
 	 * at runtime we can deal with that then.
 	 */
-	ret = wm8994_reg_read(codec->control_data, WM8994_GPIO_1);
+	ret = regmap_read(control->regmap, WM8994_GPIO_1, &reg);
 	if (ret < 0) {
 		dev_err(codec->dev, "Failed to read GPIO1 state: %d\n", ret);
 		goto err_irq;
 	}
-	if ((ret & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) {
+	if ((reg & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) {
 		wm8994->lrclk_shared[0] = 1;
 		wm8994_dai[0].symmetric_rates = 1;
 	} else {
 		wm8994->lrclk_shared[0] = 0;
 	}
 
-	ret = wm8994_reg_read(codec->control_data, WM8994_GPIO_6);
+	ret = regmap_read(control->regmap, WM8994_GPIO_6, &reg);
 	if (ret < 0) {
 		dev_err(codec->dev, "Failed to read GPIO6 state: %d\n", ret);
 		goto err_irq;
 	}
-	if ((ret & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) {
+	if ((reg & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) {
 		wm8994->lrclk_shared[1] = 1;
 		wm8994_dai[1].symmetric_rates = 1;
 	} else {
@@ -3942,16 +3820,7 @@ static struct snd_soc_codec_driver soc_codec_dev_wm8994 = {
 	.remove =	wm8994_codec_remove,
 	.suspend =	wm8994_suspend,
 	.resume =	wm8994_resume,
-	.read =		wm8994_read,
-	.write =	wm8994_write,
-	.readable_register = wm8994_readable,
-	.volatile_register = wm8994_volatile,
 	.set_bias_level = wm8994_set_bias_level,
-
-	.reg_cache_size = WM8994_CACHE_SIZE,
-	.reg_cache_default = wm8994_reg_defaults,
-	.reg_word_size = 2,
-	.compress_type = SND_SOC_RBTREE_COMPRESSION,
 };
 
 static int __devinit wm8994_probe(struct platform_device *pdev)
