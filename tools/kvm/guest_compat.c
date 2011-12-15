@@ -17,47 +17,42 @@ static int id;
 static DEFINE_MUTEX(compat_mtx);
 static LIST_HEAD(messages);
 
-int compat__add_message(const char *title, const char *desc)
-{
-	struct compat_message *msg;
-
-	mutex_lock(&compat_mtx);
-	msg = malloc(sizeof(*msg));
-	if (msg == NULL)
-		goto cleanup;
-
-	*msg = (struct compat_message) {
-		.id = id,
-		.title = strdup(title),
-		.desc = strdup(desc),
-	};
-
-	if (msg->title == NULL || msg->desc == NULL)
-		goto cleanup;
-
-	list_add_tail(&msg->list, &messages);
-
-	mutex_unlock(&compat_mtx);
-
-	return id++;
-
-cleanup:
-	if (msg) {
-		free(msg->title);
-		free(msg->desc);
-		free(msg);
-	}
-
-	mutex_unlock(&compat_mtx);
-
-	return -ENOMEM;
-}
-
 static void compat__free(struct compat_message *msg)
 {
 	free(msg->title);
 	free(msg->desc);
 	free(msg);
+}
+
+int compat__add_message(const char *title, const char *desc)
+{
+	struct compat_message *msg;
+	int msg_id;
+
+	msg = malloc(sizeof(*msg));
+	if (msg == NULL)
+		goto cleanup;
+
+	msg->title = strdup(title);
+	msg->desc = strdup(desc);
+
+	if (msg->title == NULL || msg->desc == NULL)
+		goto cleanup;
+
+	mutex_lock(&compat_mtx);
+
+	msg->id = msg_id = id++;
+	list_add_tail(&msg->list, &messages);
+
+	mutex_unlock(&compat_mtx);
+
+	return msg_id;
+
+cleanup:
+	if (msg)
+		compat__free(msg);
+
+	return -ENOMEM;
 }
 
 int compat__remove_message(int id)

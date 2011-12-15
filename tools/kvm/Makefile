@@ -51,9 +51,7 @@ OBJS	+= kvm.o
 OBJS	+= main.o
 OBJS	+= mmio.o
 OBJS	+= pci.o
-OBJS	+= read-write.o
 OBJS	+= term.o
-OBJS	+= util.o
 OBJS	+= virtio/blk.o
 OBJS	+= virtio/console.o
 OBJS	+= virtio/core.o
@@ -76,11 +74,13 @@ OBJS	+= net/uip/buf.o
 OBJS	+= net/uip/csum.o
 OBJS	+= net/uip/dhcp.o
 OBJS	+= kvm-cmd.o
-OBJS	+= rbtree.o
-OBJS	+= threadpool.o
+OBJS	+= util/rbtree.o
+OBJS	+= util/threadpool.o
 OBJS	+= util/parse-options.o
 OBJS	+= util/rbtree-interval.o
 OBJS	+= util/strbuf.o
+OBJS	+= util/read-write.o
+OBJS	+= util/util.o
 OBJS	+= virtio/9p.o
 OBJS	+= virtio/9p-pdu.o
 OBJS	+= hw/vesa.o
@@ -123,6 +123,16 @@ ifeq ($(ARCH),x86)
 	OTHEROBJS	+= x86/bios.o
 	OTHEROBJS	+= x86/bios/bios-rom.o
 	ARCH_INCLUDE := x86/include
+endif
+# POWER/ppc:  Actually only support ppc64 currently.
+ifeq ($(uname_M), ppc64)
+	DEFINES += -DCONFIG_PPC
+	OBJS	+= powerpc/ioport.o
+	OBJS	+= powerpc/irq.o
+	OBJS	+= powerpc/kvm.o
+	OBJS	+= powerpc/kvm-cpu.o
+	ARCH_INCLUDE := powerpc/include
+	CFLAGS += -m64
 endif
 
 ###
@@ -245,7 +255,8 @@ builtin-help.d: $(KVM_INCLUDE)/common-cmds.h
 
 $(OBJS):
 
-rbtree.o: ../../lib/rbtree.c
+util/rbtree.o: ../../lib/rbtree.c
+	$(E) "  CC      " $@
 	$(Q) $(CC) -c $(CFLAGS) $< -o $@
 
 %.o: %.c

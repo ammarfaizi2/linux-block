@@ -4,6 +4,11 @@
 
 #include "kvm/util.h"
 
+#include <linux/magic.h>	/* For HUGETLBFS_MAGIC */
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+
 static void report(const char *prefix, const char *err, va_list params)
 {
 	char msg[1024];
@@ -75,27 +80,37 @@ void die_perror(const char *s)
 	exit(1);
 }
 
-/**
- * strlcat - Append a length-limited, %NUL-terminated string to another
- * @dest: The string to be appended to
- * @src: The string to append to it
- * @count: The size of the destination buffer.
- */
-size_t strlcat(char *dest, const char *src, size_t count)
+void *mmap_hugetlbfs(const char *htlbfs_path, u64 size)
 {
-	size_t dsize = strlen(dest);
-	size_t len = strlen(src);
-	size_t res = dsize + len;
+	char mpath[PATH_MAX];
+	int fd;
+	struct statfs sfs;
+	void *addr;
+	unsigned long blk_size;
 
-	DIE_IF(dsize >= count);
+	if (statfs(htlbfs_path, &sfs) < 0)
+		die("Can't stat %s\n", htlbfs_path);
 
-	dest += dsize;
-	count -= dsize;
-	if (len >= count)
-		len = count - 1;
+	if ((unsigned int)sfs.f_type != HUGETLBFS_MAGIC) {
+		die("%s is not hugetlbfs!\n", htlbfs_path);
+	}
 
-	memcpy(dest, src, len);
-	dest[len] = 0;
+	blk_size = (unsigned long)sfs.f_bsize;
+	if (sfs.f_bsize == 0 || blk_size > size) {
+		die("Can't use hugetlbfs pagesize %ld for mem size %lld\n",
+		    blk_size, size);
+	}
 
-	return res;
+	snprintf(mpath, PATH_MAX, "%s/kvmtoolXXXXXX", htlbfs_path);
+	fd = mkstemp(mpath);
+	if (fd < 0)
+		die("Can't open %s for hugetlbfs map\n", mpath);
+	unlink(mpath);
+	if (ftruncate(fd, size) < 0)
+		die("Can't ftruncate for mem mapping size %lld\n",
+		    size);
+	addr = mmap(NULL, size, PROT_RW, MAP_PRIVATE, fd, 0);
+	close(fd);
+
+	return addr;
 }

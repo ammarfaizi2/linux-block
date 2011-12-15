@@ -21,6 +21,7 @@
 #include "kvm/mutex.h"
 #include "kvm/term.h"
 #include "kvm/util.h"
+#include "kvm/strbuf.h"
 #include "kvm/vesa.h"
 #include "kvm/irq.h"
 #include "kvm/kvm.h"
@@ -85,6 +86,7 @@ static const char *host_mac;
 static const char *script;
 static const char *guest_name;
 static const char *sandbox;
+static const char *hugetlbfs_path;
 static struct virtio_net_params *net_params;
 static bool single_step;
 static bool readonly_image[MAX_DISK_IMAGES];
@@ -437,6 +439,7 @@ static const struct option options[] = {
 		     tty_parser),
 	OPT_STRING('\0', "sandbox", &sandbox, "script",
 			"Run this script when booting into custom rootfs"),
+	OPT_STRING('\0', "hugetlbfs", &hugetlbfs_path, "path", "Hugetlbfs path"),
 
 	OPT_GROUP("Kernel options:"),
 	OPT_STRING('k', "kernel", &kernel_filename, "kernel",
@@ -510,11 +513,12 @@ static void handle_pause(int fd, u32 type, u32 len, u8 *msg)
 static void handle_debug(int fd, u32 type, u32 len, u8 *msg)
 {
 	int i;
-	u32 dbg_type = *(u32 *)msg;
-	int vcpu = *(((u32 *)msg) + 1);
+	struct debug_cmd_params *params = (void *)msg;
+	u32 dbg_type = params->dbg_type;
+	u32 vcpu = params->cpu;
 
 	if (dbg_type & KVM_DEBUG_CMD_TYPE_NMI) {
-		if (vcpu >= kvm->nrcpus)
+		if ((int)vcpu >= kvm->nrcpus)
 			return;
 
 		kvm_cpus[vcpu]->needs_nmi = 1;
@@ -924,7 +928,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		guest_name = default_name;
 	}
 
-	kvm = kvm__init(dev, ram_size, guest_name);
+	kvm = kvm__init(dev, hugetlbfs_path, ram_size, guest_name);
 
 	kvm->single_step = single_step;
 

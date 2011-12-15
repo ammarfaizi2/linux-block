@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <linux/types.h>
 
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
@@ -58,16 +59,6 @@ do {								\
 		__stringify(cnd) "\n");				\
 } while (0)
 
-extern size_t strlcat(char *dest, const char *src, size_t count);
-
-/* some inline functions */
-
-static inline const char *skip_prefix(const char *str, const char *prefix)
-{
-	size_t len = strlen(prefix);
-	return strncmp(str, prefix, len) ? NULL : str + len;
-}
-
 #define MSECS_TO_USECS(s) ((s) * 1000)
 
 /* Millisecond sleep */
@@ -75,4 +66,7 @@ static inline void msleep(unsigned int msecs)
 {
 	usleep(MSECS_TO_USECS(msecs));
 }
+
+void *mmap_hugetlbfs(const char *htlbfs_path, u64 size);
+
 #endif /* KVM__UTIL_H */
