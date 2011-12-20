@@ -14,7 +14,6 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <stdbool.h>
-#include <assert.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -55,7 +54,7 @@ const char *kvm_exit_reasons[] = {
 };
 
 extern struct kvm *kvm;
-extern struct kvm_cpu *kvm_cpus[KVM_NR_CPUS];
+extern struct kvm_cpu **kvm_cpus;
 static int pause_event;
 static DEFINE_MUTEX(pause_lock);
 extern struct kvm_ext kvm_req_ext[];
@@ -90,7 +89,7 @@ const char *kvm__get_dir(void)
 	return kvm_dir;
 }
 
-static bool kvm__supports_extension(struct kvm *kvm, unsigned int extension)
+bool kvm__supports_extension(struct kvm *kvm, unsigned int extension)
 {
 	int ret;
 
@@ -109,7 +108,7 @@ static int kvm__check_extensions(struct kvm *kvm)
 		if (!kvm_req_ext[i].name)
 			break;
 		if (!kvm__supports_extension(kvm, kvm_req_ext[i].code)) {
-			pr_error("Unsuppored KVM extension detected: %s",
+			pr_err("Unsuppored KVM extension detected: %s",
 				kvm_req_ext[i].name);
 			return (int)-i;
 		}
@@ -138,8 +137,6 @@ static int kvm__create_socket(struct kvm *kvm)
 	if (!kvm->name)
 		return -1;
 
-	sprintf(full_name, "%s", kvm__get_dir());
-	mkdir(full_name, 0777);
 	sprintf(full_name, "%s/%s.sock", kvm__get_dir(), kvm->name);
 	if (access(full_name, F_OK) == 0)
 		die("Socket file %s already exist", full_name);
@@ -201,16 +198,16 @@ int kvm__get_sock_by_instance(const char *name)
 
 int kvm__enumerate_instances(int (*callback)(const char *name, int fd))
 {
-	char full_name[PATH_MAX];
 	int sock;
 	DIR *dir;
 	struct dirent entry, *result;
 	int ret = 0;
 
-	sprintf(full_name, "%s", kvm__get_dir());
-	dir = opendir(full_name);
+	dir = opendir(kvm__get_dir());
+	if (!dir)
+		return -1;
 
-	while (dir != NULL) {
+	for (;;) {
 		readdir_r(dir, &entry, &result);
 		if (result == NULL)
 			break;

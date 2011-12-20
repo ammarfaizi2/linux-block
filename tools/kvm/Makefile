@@ -231,7 +231,7 @@ KVMTOOLS-VERSION-FILE:
 
 $(PROGRAM): $(DEPS) $(OBJS)
 	$(E) "  LINK    " $@
-	$(Q) $(CC) $(OBJS) $(LIBS) -o $@
+	$(Q) $(CC) $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 $(PROGRAM_ALIAS): $(PROGRAM)
 	$(E) "  LN      " $@
@@ -246,6 +246,9 @@ $(GUEST_INIT_S2): guest/init_stage2.c
 	$(Q) $(CC) -static guest/init_stage2.c -o $@
 
 $(DEPS):
+
+util/rbtree.d: ../../lib/rbtree.c
+	$(Q) $(CC) -M -MT util/rbtree.o $(CFLAGS) $< -o $@
 
 %.d: %.c
 	$(Q) $(CC) -M -MT $(patsubst %.d,%.o,$@) $(CFLAGS) $< -o $@

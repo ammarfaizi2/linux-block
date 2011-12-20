@@ -11,8 +11,6 @@
 #include <signal.h>
 #include <fcntl.h>
 
-#define PROCESS_NAME "kvm"
-
 struct pid_cmd {
 	u32 type;
 	u32 len;
@@ -22,7 +20,7 @@ static bool run;
 static bool rootfs;
 
 static const char * const list_usage[] = {
-	"kvm list",
+	"lkvm list",
 	NULL
 };
 
@@ -71,8 +69,6 @@ static int print_guest(const char *name, int sock)
 		goto cleanup;
 	if (fscanf(fd, "%*u (%as)", &comm) == 0)
 		goto cleanup;
-	if (strncmp(comm, PROCESS_NAME, strlen(PROCESS_NAME)))
-		goto cleanup;
 
 	printf("%5d %-20s %s\n", pid, name, KVM_INSTANCE_RUNNING);
 
@@ -99,12 +95,10 @@ static int kvm_list_running_instances(void)
 
 static int kvm_list_rootfs(void)
 {
-	char name[PATH_MAX];
 	DIR *dir;
 	struct dirent *dirent;
 
-	snprintf(name, PATH_MAX, "%s", kvm__get_dir());
-	dir = opendir(name);
+	dir = opendir(kvm__get_dir());
 	if (dir == NULL)
 		return -1;
 

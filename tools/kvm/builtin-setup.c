@@ -22,7 +22,7 @@
 static const char *instance_name;
 
 static const char * const setup_usage[] = {
-	"kvm setup [name]",
+	"lkvm setup [name]",
 	NULL
 };
 
@@ -46,9 +46,9 @@ static void parse_setup_options(int argc, const char **argv)
 
 void kvm_setup_help(void)
 {
-	printf("\nkvm setup creates a new rootfs under %s.\n"
-		"This can be used later by the '-d' parameter of 'kvm run'.\n",
-		kvm__get_dir());
+	printf("\n%s setup creates a new rootfs under %s.\n"
+		"This can be used later by the '-d' parameter of '%s run'.\n",
+		kvm__get_dir(), KVM_BINARY_NAME, KVM_BINARY_NAME);
 	usage_with_options(setup_usage, setup_options);
 }
 
@@ -153,15 +153,6 @@ static int make_guestfs_symlink(const char *guestfs_name, const char *path)
 	return symlink(target, name);
 }
 
-static void make_root_dir(void)
-{
-	char name[PATH_MAX];
-
-	snprintf(name, PATH_MAX, "%s", kvm__get_dir());
-
-	mkdir(name, 0777);
-}
-
 static int make_dir(const char *dir)
 {
 	char name[PATH_MAX];
@@ -193,8 +184,6 @@ static int do_setup(const char *guestfs_name)
 {
 	unsigned int i;
 	int ret;
-
-	make_root_dir();
 
 	ret = make_dir(guestfs_name);
 	if (ret < 0)
@@ -232,8 +221,9 @@ int kvm_cmd_setup(int argc, const char **argv, const char *prefix)
 	if (r == 0)
 		printf("A new rootfs '%s' has been created in '%s%s'.\n\n"
 			"You can now start it by running the following command:\n\n"
-			"  kvm run -d %s\n",
-			instance_name, kvm__get_dir(), instance_name, instance_name);
+			"  %s run -d %s\n",
+			instance_name, kvm__get_dir(), instance_name,
+			KVM_BINARY_NAME,instance_name);
 	else
 		printf("Unable to create rootfs in %s%s: %s\n",
 			kvm__get_dir(), instance_name, strerror(errno));

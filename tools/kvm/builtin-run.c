@@ -64,7 +64,7 @@ const char *DEFAULT_SANDBOX_FILENAME = "guest/sandbox.sh";
 #define MIN_RAM_SIZE_BYTE	(MIN_RAM_SIZE_MB << MB_SHIFT)
 
 struct kvm *kvm;
-struct kvm_cpu *kvm_cpus[KVM_NR_CPUS];
+struct kvm_cpu **kvm_cpus;
 __thread struct kvm_cpu *current_kvm_cpu;
 
 static u64 ram_size;
@@ -87,6 +87,7 @@ static const char *script;
 static const char *guest_name;
 static const char *sandbox;
 static const char *hugetlbfs_path;
+static const char *custom_rootfs_name = "default";
 static struct virtio_net_params *net_params;
 static bool single_step;
 static bool readonly_image[MAX_DISK_IMAGES];
@@ -108,7 +109,7 @@ static int nrcpus;
 static int vidmode = -1;
 
 static const char * const run_usage[] = {
-	"kvm run [<options>] [<kernel image>]",
+	"lkvm run [<options>] [<kernel image>]",
 	NULL
 };
 
@@ -131,6 +132,9 @@ static int img_name_parser(const struct option *opt, const char *arg, int unset)
 	    S_ISDIR(st.st_mode)) {
 		char tmp[PATH_MAX];
 
+		if (using_rootfs)
+			die("Please use only one rootfs directory atmost");
+
 		if (realpath(arg, tmp) == 0 ||
 		    virtio_9p__register(kvm, tmp, "/dev/root") < 0)
 			die("Unable to initialize virtio 9p");
@@ -144,6 +148,9 @@ static int img_name_parser(const struct option *opt, const char *arg, int unset)
 	    S_ISDIR(st.st_mode)) {
 		char tmp[PATH_MAX];
 
+		if (using_rootfs)
+			die("Please use only one rootfs directory atmost");
+
 		if (realpath(path, tmp) == 0 ||
 		    virtio_9p__register(kvm, tmp, "/dev/root") < 0)
 			die("Unable to initialize virtio 9p");
@@ -151,6 +158,7 @@ static int img_name_parser(const struct option *opt, const char *arg, int unset)
 			die("Unable to initialize virtio 9p");
 		kvm_setup_resolv(arg);
 		using_rootfs = custom_rootfs = 1;
+		custom_rootfs_name = arg;
 		return 0;
 	}
 
@@ -633,7 +641,8 @@ static void kernel_usage_with_options(void)
 		fprintf(stderr, "\t%s\n", kernel);
 		k++;
 	}
-	fprintf(stderr, "\nPlease see 'kvm run --help' for more options.\n\n");
+	fprintf(stderr, "\nPlease see '%s run --help' for more options.\n\n",
+		KVM_BINARY_NAME);
 }
 
 static u64 host_ram_size(void)
@@ -738,17 +747,12 @@ void kvm_run_help(void)
 static int kvm_custom_stage2(void)
 {
 	char tmp[PATH_MAX], dst[PATH_MAX], *src;
-	const char *rootfs;
+	const char *rootfs = custom_rootfs_name;
 	int r;
 
 	src = realpath("guest/init_stage2", NULL);
 	if (src == NULL)
 		return -ENOMEM;
-
-	if (image_filename[0] == NULL)
-		rootfs = "default";
-	else
-		rootfs = image_filename[0];
 
 	snprintf(tmp, PATH_MAX, "%s%s/virt/init_stage2", kvm__get_dir(), rootfs);
 	remove(tmp);
@@ -762,11 +766,8 @@ static int kvm_custom_stage2(void)
 
 static int kvm_run_set_sandbox(void)
 {
-	const char *guestfs_name = "default";
+	const char *guestfs_name = custom_rootfs_name;
 	char path[PATH_MAX], script[PATH_MAX], *tmp;
-
-	if (image_filename[0])
-		guestfs_name = image_filename[0];
 
 	snprintf(path, PATH_MAX, "%s%s/virt/sandbox.sh", kvm__get_dir(), guestfs_name);
 
@@ -785,6 +786,38 @@ static int kvm_run_set_sandbox(void)
 	return symlink(script, path);
 }
 
+static void kvm_write_sandbox_cmd_exactly(int fd, const char *arg)
+{
+	const char *single_quote;
+
+	if (!*arg) { /* zero length string */
+		if (write(fd, "''", 2) <= 0)
+			die("Failed writing sandbox script");
+		return;
+	}
+
+	while (*arg) {
+		single_quote = strchrnul(arg, '\'');
+
+		/* write non-single-quote string as #('string') */
+		if (arg != single_quote) {
+			if (write(fd, "'", 1) <= 0 ||
+			    write(fd, arg, single_quote - arg) <= 0 ||
+			    write(fd, "'", 1) <= 0)
+				die("Failed writing sandbox script");
+		}
+
+		/* write single quote as #("'") */
+		if (*single_quote) {
+			if (write(fd, "\"'\"", 3) <= 0)
+				die("Failed writing sandbox script");
+		} else
+			break;
+
+		arg = single_quote + 1;
+	}
+}
+
 static void kvm_run_write_sandbox_cmd(const char **argv, int argc)
 {
 	const char script_hdr[] = "#! /bin/bash\n\n";
@@ -800,8 +833,7 @@ static void kvm_run_write_sandbox_cmd(const char **argv, int argc)
 		die("Failed writing sandbox script");
 
 	while (argc) {
-		if (write(fd, argv[0], strlen(argv[0])) <= 0)
-			die("Failed writing sandbox script");
+		kvm_write_sandbox_cmd_exactly(fd, argv[0]);
 		if (argc - 1)
 			if (write(fd, " ", 1) <= 0)
 				die("Failed writing sandbox script");
@@ -875,8 +907,6 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	if (nrcpus == 0)
 		nrcpus = nr_online_cpus;
-	else if (nrcpus < 1 || nrcpus > KVM_NR_CPUS)
-		die("Number of CPUs %d is out of [1;%d] range", nrcpus, KVM_NR_CPUS);
 
 	if (!ram_size)
 		ram_size	= get_ram_size(nrcpus);
@@ -932,7 +962,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	kvm->single_step = single_step;
 
-	ioeventfd__init();
+	ioeventfd__init(kvm);
 
 	max_cpus = kvm__max_cpus(kvm);
 	recommended_cpus = kvm__recommended_cpus(kvm);
@@ -946,6 +976,11 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	}
 
 	kvm->nrcpus = nrcpus;
+
+	/* Alloc one pointer too many, so array ends up 0-terminated */
+	kvm_cpus = calloc(nrcpus + 1, sizeof(void *));
+	if (!kvm_cpus)
+		die("Couldn't allocate array for %d CPUs", nrcpus);
 
 	irq__init(kvm);
 
@@ -970,11 +1005,11 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	if (kernel_cmdline)
 		strlcat(real_cmdline, kernel_cmdline, sizeof(real_cmdline));
 
-	if (!using_rootfs && !image_filename[0]) {
+	if (!using_rootfs && !image_filename[0] && !initrd_filename) {
 		char tmp[PATH_MAX];
 
-		kvm_setup_create_new("default");
-		kvm_setup_resolv("default");
+		kvm_setup_create_new(custom_rootfs_name);
+		kvm_setup_resolv(custom_rootfs_name);
 
 		snprintf(tmp, PATH_MAX, "%s%s", kvm__get_dir(), "default");
 		if (virtio_9p__register(kvm, tmp, "/dev/root") < 0)
@@ -1009,7 +1044,8 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		virtio_blk__init_all(kvm);
 	}
 
-	printf("  # kvm run -k %s -m %Lu -c %d --name %s\n", kernel_filename, ram_size / 1024 / 1024, nrcpus, guest_name);
+	printf("  # %s run -k %s -m %Lu -c %d --name %s\n", KVM_BINARY_NAME,
+		kernel_filename, ram_size / 1024 / 1024, nrcpus, guest_name);
 
 	if (!kvm__load_kernel(kvm, kernel_filename, initrd_filename,
 				real_cmdline, vidmode))

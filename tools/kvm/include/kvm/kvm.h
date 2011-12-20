@@ -10,11 +10,10 @@
 
 #define SIGKVMEXIT		(SIGRTMIN + 0)
 #define SIGKVMPAUSE		(SIGRTMIN + 1)
-#define SIGKVMSTOP		(SIGRTMIN + 4)
-#define SIGKVMRESUME		(SIGRTMIN + 5)
 
 #define KVM_PID_FILE_PATH	"/.kvm-tools/"
 #define HOME_DIR		getenv("HOME")
+#define KVM_BINARY_NAME		"lkvm"
 
 #define PAGE_SIZE (sysconf(_SC_PAGE_SIZE))
 
@@ -44,7 +43,9 @@ void kvm__irq_trigger(struct kvm *kvm, int irq);
 bool kvm__emulate_io(struct kvm *kvm, u16 port, void *data, int direction, int size, u32 count);
 bool kvm__emulate_mmio(struct kvm *kvm, u64 phys_addr, u8 *data, u32 len, u8 is_write);
 void kvm__register_mem(struct kvm *kvm, u64 guest_phys, u64 size, void *userspace_addr);
-bool kvm__register_mmio(struct kvm *kvm, u64 phys_addr, u64 phys_addr_len, void (*kvm_mmio_callback_fn)(u64 addr, u8 *data, u32 len, u8 is_write, void *ptr), void *ptr);
+bool kvm__register_mmio(struct kvm *kvm, u64 phys_addr, u64 phys_addr_len, bool coalesce,
+			void (*mmio_fn)(u64 addr, u8 *data, u32 len, u8 is_write, void *ptr),
+			void *ptr);
 bool kvm__deregister_mmio(struct kvm *kvm, u64 phys_addr);
 void kvm__pause(void);
 void kvm__continue(void);
@@ -78,5 +79,7 @@ static inline void *guest_flat_to_host(struct kvm *kvm, unsigned long offset)
 {
 	return kvm->ram_start + offset;
 }
+
+bool kvm__supports_extension(struct kvm *kvm, unsigned int extension);
 
 #endif /* KVM__KVM_H */

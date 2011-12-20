@@ -23,7 +23,7 @@ static int instance;
 static const char *instance_name;
 
 static const char * const stat_usage[] = {
-	"kvm stat [command] [--all] [-n name]",
+	"lkvm stat [command] [--all] [-n name]",
 	NULL
 };
 
@@ -68,7 +68,7 @@ static int do_memstat(const char *name, int sock)
 
 	r = select(1, &fdset, NULL, NULL, &t);
 	if (r < 0) {
-		pr_error("Could not retrieve mem stats from %s", name);
+		pr_err("Could not retrieve mem stats from %s", name);
 		return r;
 	}
 	r = read(sock, &stats, sizeof(stats));
