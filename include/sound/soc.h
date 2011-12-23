@@ -231,6 +231,7 @@ enum snd_soc_bias_level {
 	SND_SOC_BIAS_ON = 3,
 };
 
+struct device_node;
 struct snd_jack;
 struct snd_soc_card;
 struct snd_soc_pcm_stream;
@@ -316,6 +317,7 @@ int snd_soc_platform_read(struct snd_soc_platform *platform,
 					unsigned int reg);
 int snd_soc_platform_write(struct snd_soc_platform *platform,
 					unsigned int reg, unsigned int val);
+int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num);
 
 /* Utility functions to get clock rates from various things */
 int snd_soc_calc_frame_size(int sample_size, int channels, int tdm_slots);
@@ -703,8 +705,11 @@ struct snd_soc_dai_link {
 	const char *name;			/* Codec name */
 	const char *stream_name;		/* Stream name */
 	const char *codec_name;		/* for multi-codec */
+	const struct device_node *codec_of_node;
 	const char *platform_name;	/* for multi-platform */
+	const struct device_node *platform_of_node;
 	const char *cpu_dai_name;
+	const struct device_node *cpu_dai_of_node;
 	const char *codec_dai_name;
 
 	unsigned int dai_fmt;           /* format to set on init */
@@ -960,6 +965,11 @@ static inline bool snd_soc_volsw_is_stereo(struct soc_mixer_control *mc)
 
 int snd_soc_util_init(void);
 void snd_soc_util_exit(void);
+
+int snd_soc_of_parse_card_name(struct snd_soc_card *card,
+			       const char *propname);
+int snd_soc_of_parse_audio_routing(struct snd_soc_card *card,
+				   const char *propname);
 
 #include <sound/soc-dai.h>
 

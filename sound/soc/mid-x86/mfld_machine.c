@@ -281,7 +281,7 @@ static int mfld_init(struct snd_soc_pcm_runtime *runtime)
 	return ret_val;
 }
 
-struct snd_soc_dai_link mfld_msic_dailink[] = {
+static struct snd_soc_dai_link mfld_msic_dailink[] = {
 	{
 		.name = "Medfield Headset",
 		.stream_name = "Headset",
@@ -323,6 +323,7 @@ struct snd_soc_dai_link mfld_msic_dailink[] = {
 /* SoC card */
 static struct snd_soc_card snd_soc_card_mfld = {
 	.name = "medfield_audio",
+	.owner = THIS_MODULE,
 	.dai_link = mfld_msic_dailink,
 	.num_links = ARRAY_SIZE(mfld_msic_dailink),
 };

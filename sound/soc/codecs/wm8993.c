@@ -934,28 +934,6 @@ static const struct snd_soc_dapm_route routes[] = {
 	{ "Right Headphone Mux", "DAC", "DACR" },
 };
 
-static void wm8993_cache_restore(struct snd_soc_codec *codec)
-{
-	u16 *cache = codec->reg_cache;
-	int i;
-
-	if (!codec->cache_sync)
-		return;
-
-	/* Reenable hardware writes */
-	codec->cache_only = 0;
-
-	/* Restore the register settings */
-	for (i = 1; i < WM8993_MAX_REGISTER; i++) {
-		if (cache[i] == wm8993_reg_defaults[i])
-			continue;
-		snd_soc_write(codec, i, cache[i]);
-	}
-
-	/* We're in sync again */
-	codec->cache_sync = 0;
-}
-
 static int wm8993_set_bias_level(struct snd_soc_codec *codec,
 				 enum snd_soc_bias_level level)
 {
@@ -979,7 +957,7 @@ static int wm8993_set_bias_level(struct snd_soc_codec *codec,
 			if (ret != 0)
 				return ret;
 
-			wm8993_cache_restore(codec);
+			snd_soc_cache_sync(codec);
 
 			/* Tune DC servo configuration */
 			snd_soc_write(codec, 0x44, 3);
@@ -1613,7 +1591,8 @@ static __devinit int wm8993_i2c_probe(struct i2c_client *i2c,
 	struct wm8993_priv *wm8993;
 	int ret;
 
-	wm8993 = kzalloc(sizeof(struct wm8993_priv), GFP_KERNEL);
+	wm8993 = devm_kzalloc(&i2c->dev, sizeof(struct wm8993_priv),
+			      GFP_KERNEL);
 	if (wm8993 == NULL)
 		return -ENOMEM;
 
@@ -1621,8 +1600,6 @@ static __devinit int wm8993_i2c_probe(struct i2c_client *i2c,
 
 	ret = snd_soc_register_codec(&i2c->dev,
 			&soc_codec_dev_wm8993, &wm8993_dai, 1);
-	if (ret < 0)
-		kfree(wm8993);
 	return ret;
 }
 
