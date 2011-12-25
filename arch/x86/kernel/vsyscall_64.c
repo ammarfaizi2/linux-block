@@ -91,6 +91,7 @@ void update_vsyscall(struct timespec *wall_time, struct timespec *wtm,
 			struct clocksource *clock, u32 mult)
 {
 	unsigned long flags;
+	struct timespec monotonic;
 
 	write_seqlock_irqsave(&vsyscall_gtod_data.lock, flags);
 
@@ -100,10 +101,32 @@ void update_vsyscall(struct timespec *wall_time, struct timespec *wtm,
 	vsyscall_gtod_data.clock.mask		= clock->mask;
 	vsyscall_gtod_data.clock.mult		= mult;
 	vsyscall_gtod_data.clock.shift		= clock->shift;
+
 	vsyscall_gtod_data.wall_time_sec	= wall_time->tv_sec;
 	vsyscall_gtod_data.wall_time_nsec	= wall_time->tv_nsec;
-	vsyscall_gtod_data.wall_to_monotonic	= *wtm;
+
+	monotonic = timespec_add(*wall_time, *wtm);
+	vsyscall_gtod_data.monotonic_time_sec	= monotonic.tv_sec;
+	vsyscall_gtod_data.monotonic_time_nsec	= monotonic.tv_nsec;
+
 	vsyscall_gtod_data.wall_time_coarse	= __current_kernel_time();
+	vsyscall_gtod_data.monotonic_time_coarse =
+		timespec_add(vsyscall_gtod_data.wall_time_coarse, *wtm);
+
+	/* generate flat data for clock_ns_get */
+	vsyscall_gtod_data.wall_time_flat_ns =
+		vsyscall_gtod_data.wall_time_sec * NSEC_PER_SEC +
+		vsyscall_gtod_data.wall_time_nsec;
+	vsyscall_gtod_data.monotonic_time_flat_ns =
+		vsyscall_gtod_data.monotonic_time_sec * NSEC_PER_SEC +
+		vsyscall_gtod_data.monotonic_time_nsec;
+
+	vsyscall_gtod_data.wall_time_coarse_flat_ns =
+		vsyscall_gtod_data.wall_time_coarse.tv_sec * NSEC_PER_SEC +
+		vsyscall_gtod_data.wall_time_coarse.tv_nsec;
+	vsyscall_gtod_data.monotonic_time_coarse_flat_ns =
+		vsyscall_gtod_data.monotonic_time_coarse.tv_sec * NSEC_PER_SEC +
+		vsyscall_gtod_data.monotonic_time_coarse.tv_nsec;
 
 	write_sequnlock_irqrestore(&vsyscall_gtod_data.lock, flags);
 }

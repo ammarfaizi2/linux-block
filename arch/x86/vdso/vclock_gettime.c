@@ -94,26 +94,36 @@ notrace static noinline void do_realtime(struct timespec *ts)
 	timespec_add_ns(ts, ns);
 }
 
-notrace static noinline void do_monotonic(struct timespec *ts)
+notrace static noinline uint64_t do_realtime_ns(void)
 {
-	unsigned long seq, ns, secs;
+	unsigned long seq, ns;
 	do {
 		seq = read_seqbegin(&gtod->lock);
-		secs = gtod->wall_time_sec;
-		ns = gtod->wall_time_nsec + vgetns();
-		secs += gtod->wall_to_monotonic.tv_sec;
-		ns += gtod->wall_to_monotonic.tv_nsec;
+		ns = gtod->wall_time_flat_ns + vgetns();
 	} while (unlikely(read_seqretry(&gtod->lock, seq)));
+	return ns;
+}
 
-	/* wall_time_nsec, vgetns(), and wall_to_monotonic.tv_nsec
-	 * are all guaranteed to be nonnegative.
-	 */
-	while (ns >= NSEC_PER_SEC) {
-		ns -= NSEC_PER_SEC;
-		++secs;
-	}
-	ts->tv_sec = secs;
-	ts->tv_nsec = ns;
+notrace static noinline void do_monotonic(struct timespec *ts)
+{
+	unsigned long seq, ns;
+	do {
+		seq = read_seqbegin(&gtod->lock);
+		ts->tv_sec = gtod->monotonic_time_sec;
+		ts->tv_nsec = gtod->monotonic_time_nsec;
+		ns = vgetns();
+	} while (unlikely(read_seqretry(&gtod->lock, seq)));
+	timespec_add_ns(ts, ns);
+}
+
+notrace static noinline uint64_t do_monotonic_ns(void)
+{
+	unsigned long seq, ns;
+	do {
+		seq = read_seqbegin(&gtod->lock);
+		ns = gtod->monotonic_time_flat_ns + vgetns();
+	} while (unlikely(read_seqretry(&gtod->lock, seq)));
+	return ns;
 }
 
 notrace static noinline void do_realtime_coarse(struct timespec *ts)
@@ -126,26 +136,26 @@ notrace static noinline void do_realtime_coarse(struct timespec *ts)
 	} while (unlikely(read_seqretry(&gtod->lock, seq)));
 }
 
+notrace static noinline uint64_t do_realtime_coarse_ns(void)
+{
+	/* This is atomic on x86-64. */
+	return ACCESS_ONCE(gtod->wall_time_coarse_flat_ns);
+}
+
 notrace static noinline void do_monotonic_coarse(struct timespec *ts)
 {
-	unsigned long seq, ns, secs;
+	unsigned long seq;
 	do {
 		seq = read_seqbegin(&gtod->lock);
-		secs = gtod->wall_time_coarse.tv_sec;
-		ns = gtod->wall_time_coarse.tv_nsec;
-		secs += gtod->wall_to_monotonic.tv_sec;
-		ns += gtod->wall_to_monotonic.tv_nsec;
+		ts->tv_sec = gtod->monotonic_time_coarse.tv_sec;
+		ts->tv_nsec = gtod->monotonic_time_coarse.tv_nsec;
 	} while (unlikely(read_seqretry(&gtod->lock, seq)));
+}
 
-	/* wall_time_nsec and wall_to_monotonic.tv_nsec are
-	 * guaranteed to be between 0 and NSEC_PER_SEC.
-	 */
-	if (ns >= NSEC_PER_SEC) {
-		ns -= NSEC_PER_SEC;
-		++secs;
-	}
-	ts->tv_sec = secs;
-	ts->tv_nsec = ns;
+notrace static noinline uint64_t do_monotonic_coarse_ns(void)
+{
+	/* This is atomic on x86-64. */
+	return ACCESS_ONCE(gtod->monotonic_time_coarse_flat_ns);
 }
 
 notrace int __vdso_clock_gettime(clockid_t clock, struct timespec *ts)
@@ -178,37 +188,38 @@ int clock_gettime(clockid_t, struct timespec *)
 
 notrace int __vdso_clock_gettime_ns(clockid_t clock, struct timens *t)
 {
-	/* This implementation is slow.  It will be improved later. */
-
 	struct timespec ts;
 	int error;
 
 	switch (clock) {
 	case CLOCK_REALTIME:
 		if (likely(gtod->clock.vclock_mode != VCLOCK_NONE)) {
-			do_realtime(&ts);
-			goto done;
+			t->ns = do_realtime_ns();
+			t->padding = 0;
+			return 0;
 		}
 		break;
 	case CLOCK_MONOTONIC:
 		if (likely(gtod->clock.vclock_mode != VCLOCK_NONE)) {
-			do_monotonic(&ts);
-			goto done;
+			t->ns = do_monotonic_ns();
+			t->padding = 0;
+			return 0;
 		}
 		break;
 	case CLOCK_REALTIME_COARSE:
-		do_realtime_coarse(&ts);
-		goto done;
+		t->ns = do_realtime_coarse_ns();
+		t->padding = 0;
+		return 0;
 	case CLOCK_MONOTONIC_COARSE:
-		do_monotonic_coarse(&ts);
-		goto done;
+		t->ns = do_monotonic_coarse_ns();
+		t->padding = 0;
+		return 0;
 	}
 
 	error = vdso_fallback_gettime(clock, &ts);
 	if (error)
 		return error;
 
-done:
 	t->ns = ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
 	t->padding = 0;
 	return 0;
