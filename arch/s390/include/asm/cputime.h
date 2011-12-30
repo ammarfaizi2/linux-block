@@ -72,6 +72,8 @@ static inline cputime_t usecs_to_cputime(const unsigned int m)
 	return (__force cputime_t)(m * 4096ULL);
 }
 
+#define usecs_to_cputime64(m)		usecs_to_cputime(m)
+
 /*
  * Convert cputime to milliseconds and back.
  */
