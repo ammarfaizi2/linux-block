@@ -142,18 +142,6 @@ static int corgi_hw_params(struct snd_pcm_substream *substream,
 		break;
 	}
 
-	/* set codec DAI configuration */
-	ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_I2S |
-		SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS);
-	if (ret < 0)
-		return ret;
-
-	/* set cpu DAI configuration */
-	ret = snd_soc_dai_set_fmt(cpu_dai, SND_SOC_DAIFMT_I2S |
-		SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS);
-	if (ret < 0)
-		return ret;
-
 	/* set the codec system clock for DAC and ADC */
 	ret = snd_soc_dai_set_sysclk(codec_dai, WM8731_SYSCLK_XTAL, clk,
 		SND_SOC_CLOCK_IN);
@@ -239,7 +227,7 @@ SND_SOC_DAPM_HP("Headset Jack", NULL),
 };
 
 /* Corgi machine audio map (connections to the codec pins) */
-static const struct snd_soc_dapm_route audio_map[] = {
+static const struct snd_soc_dapm_route corgi_audio_map[] = {
 
 	/* headset Jack  - in = micin, out = LHPOUT*/
 	{"Headset Jack", NULL, "LHPOUT"},
@@ -281,23 +269,9 @@ static int corgi_wm8731_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_codec *codec = rtd->codec;
 	struct snd_soc_dapm_context *dapm = &codec->dapm;
-	int err;
 
 	snd_soc_dapm_nc_pin(dapm, "LLINEIN");
 	snd_soc_dapm_nc_pin(dapm, "RLINEIN");
-
-	/* Add corgi specific controls */
-	err = snd_soc_add_controls(codec, wm8731_corgi_controls,
-				ARRAY_SIZE(wm8731_corgi_controls));
-	if (err < 0)
-		return err;
-
-	/* Add corgi specific widgets */
-	snd_soc_dapm_new_controls(dapm, wm8731_dapm_widgets,
-				  ARRAY_SIZE(wm8731_dapm_widgets));
-
-	/* Set up corgi specific audio path audio_map */
-	snd_soc_dapm_add_routes(dapm, audio_map, ARRAY_SIZE(audio_map));
 
 	return 0;
 }
@@ -311,6 +285,8 @@ static struct snd_soc_dai_link corgi_dai = {
 	.platform_name = "pxa-pcm-audio",
 	.codec_name = "wm8731.0-001b",
 	.init = corgi_wm8731_init,
+	.dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
+		   SND_SOC_DAIFMT_CBS_CFS,
 	.ops = &corgi_ops,
 };
 
@@ -320,6 +296,13 @@ static struct snd_soc_card snd_soc_corgi = {
 	.owner = THIS_MODULE,
 	.dai_link = &corgi_dai,
 	.num_links = 1,
+
+	.controls = wm8731_corgi_controls,
+	.num_controls = ARRAY_SIZE(wm8731_corgi_controls),
+	.dapm_widgets = wm8731_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(wm8731_dapm_widgets),
+	.dapm_routes = corgi_audio_map,
+	.num_dapm_routes = ARRAY_SIZE(corgi_audio_map),
 };
 
 static struct platform_device *corgi_snd_device;
