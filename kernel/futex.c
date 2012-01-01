@@ -59,7 +59,6 @@
 #include <linux/magic.h>
 #include <linux/pid.h>
 #include <linux/nsproxy.h>
-#include <linux/mm.h>
 
 #include <asm/futex.h>
 
@@ -237,7 +236,7 @@ get_futex_key(u32 __user *uaddr, int fshared, union futex_key *key, int rw)
 	unsigned long address = (unsigned long)uaddr;
 	struct mm_struct *mm = current->mm;
 	struct page *page, *page_head;
-	int err, ro = 0, no_mapping_tries = 0;
+	int err, ro = 0;
 
 	/*
 	 * The futex address must be "naturally" aligned.
@@ -315,46 +314,29 @@ again:
 #endif
 
 	lock_page(page_head);
+
+	/*
+	 * If page_head->mapping is NULL, then it cannot be a PageAnon
+	 * page; but it might be the ZERO_PAGE or in the gate area or
+	 * in a special mapping (all cases which we are happy to fail);
+	 * or it may have been a good file page when get_user_pages_fast
+	 * found it, but truncated or holepunched or subjected to
+	 * invalidate_complete_page2 before we got the page lock (also
+	 * cases which we are happy to fail).  And we hold a reference,
+	 * so refcount care in invalidate_complete_page's remove_mapping
+	 * prevents drop_caches from setting mapping to NULL beneath us.
+	 *
+	 * The case we do have to guard against is when memory pressure made
+	 * shmem_writepage move it from filecache to swapcache beneath us:
+	 * an unlikely race, but we do need to retry for page_head->mapping.
+	 */
 	if (!page_head->mapping) {
+		int shmem_swizzled = PageSwapCache(page_head);
 		unlock_page(page_head);
 		put_page(page_head);
-
-		/*
-		 * ZERO_PAGE pages don't have a mapping. Avoid a busy loop
-		 * trying to find one. RW mapping would have COW'd (and thus
-		 * have a mapping) so this page is RO and won't ever change.
-		 */
-		if ((page_head == ZERO_PAGE(address)))
-			return -EFAULT;
-
-		/*
-		 * Similar problem for the gate area.
-		 */
-		if (in_gate_area(mm, address))
-			return -EFAULT;
-
-		/*
-		 * There is a special class of pages that will have no mapping
-		 * and yet is perfectly valid and not going anywhere. These
-		 * are the pages from install_special_mapping(). Since looking
-		 * up the vma is expensive, don't do so on the first go round.
-		 */
-		if (no_mapping_tries) {
-			struct vm_area_struct *vma;
-
-			err = 0;
-			down_read(&mm->mmap_sem);
-			vma = find_vma(mm, address);
-			if (vma && is_special_mapping(vma))
-				err = -EFAULT;
-			up_read(&mm->mmap_sem);
-
-			if (err)
-				return err;
-		}
-
-		++no_mapping_tries;
-		goto again;
+		if (shmem_swizzled)
+			goto again;
+		return -EFAULT;
 	}
 
 	/*
