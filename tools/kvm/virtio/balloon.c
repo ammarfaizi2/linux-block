@@ -144,6 +144,9 @@ static void virtio_bln__print_stats(int fd, u32 type, u32 len, u8 *msg)
 {
 	int r;
 
+	if (WARN_ON(type != KVM_IPC_STAT || len))
+		return;
+
 	if (virtio_bln__collect_stats() < 0)
 		return;
 
@@ -154,8 +157,12 @@ static void virtio_bln__print_stats(int fd, u32 type, u32 len, u8 *msg)
 
 static void handle_mem(int fd, u32 type, u32 len, u8 *msg)
 {
-	int mem = *(int *)msg;
+	int mem;
 
+	if (WARN_ON(type != KVM_IPC_BALLOON || len != sizeof(int)))
+		return;
+
+	mem = *(int *)msg;
 	if (mem > 0) {
 		bdev.config.num_pages += 256 * mem;
 	} else if (mem < 0) {

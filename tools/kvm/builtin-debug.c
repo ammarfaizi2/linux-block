@@ -13,7 +13,6 @@
 #define BUFFER_SIZE 100
 
 static bool all;
-static int instance;
 static int nmi = -1;
 static bool dump;
 static const char *instance_name;
@@ -51,18 +50,18 @@ void kvm_debug_help(void)
 static int do_debug(const char *name, int sock)
 {
 	char buff[BUFFER_SIZE];
-	struct debug_cmd cmd = {KVM_IPC_DEBUG, 2 * sizeof(u32)};
+	struct debug_cmd_params cmd = {.dbg_type = 0};
 	int r;
 
 	if (dump)
-		cmd.params.dbg_type |= KVM_DEBUG_CMD_TYPE_DUMP;
+		cmd.dbg_type |= KVM_DEBUG_CMD_TYPE_DUMP;
 
 	if (nmi != -1) {
-		cmd.params.dbg_type |= KVM_DEBUG_CMD_TYPE_NMI;
-		cmd.params.cpu = nmi;
+		cmd.dbg_type |= KVM_DEBUG_CMD_TYPE_NMI;
+		cmd.cpu = nmi;
 	}
 
-	r = xwrite(sock, &cmd, sizeof(cmd));
+	r = kvm_ipc__send_msg(sock, KVM_IPC_DEBUG, sizeof(cmd), (u8 *)&cmd);
 	if (r < 0)
 		return r;
 
@@ -82,19 +81,23 @@ static int do_debug(const char *name, int sock)
 int kvm_cmd_debug(int argc, const char **argv, const char *prefix)
 {
 	parse_debug_options(argc, argv);
+	int instance;
+	int r;
 
 	if (all)
 		return kvm__enumerate_instances(do_debug);
 
-	if (instance_name == NULL &&
-	    instance == 0)
+	if (instance_name == NULL)
 		kvm_debug_help();
 
-	if (instance_name)
-		instance = kvm__get_sock_by_instance(instance_name);
+	instance = kvm__get_sock_by_instance(instance_name);
 
 	if (instance <= 0)
 		die("Failed locating instance");
 
-	return do_debug(instance_name, instance);
+	r = do_debug(instance_name, instance);
+
+	close(instance);
+
+	return r;
 }

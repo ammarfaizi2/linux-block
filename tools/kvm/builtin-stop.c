@@ -9,13 +9,7 @@
 #include <string.h>
 #include <signal.h>
 
-struct stop_cmd {
-	u32 type;
-	u32 len;
-};
-
 static bool all;
-static int instance;
 static const char *instance_name;
 
 static const char * const stop_usage[] = {
@@ -47,32 +41,30 @@ void kvm_stop_help(void)
 
 static int do_stop(const char *name, int sock)
 {
-	struct stop_cmd cmd = {KVM_IPC_STOP, 0};
-	int r;
-
-	r = write(sock, &cmd, sizeof(cmd));
-	if (r < 0)
-		return r;
-
-	return 0;
+	return kvm_ipc__send(sock, KVM_IPC_STOP);
 }
 
 int kvm_cmd_stop(int argc, const char **argv, const char *prefix)
 {
+	int instance;
+	int r;
+
 	parse_stop_options(argc, argv);
 
 	if (all)
 		return kvm__enumerate_instances(do_stop);
 
-	if (instance_name == NULL &&
-	    instance == 0)
+	if (instance_name == NULL)
 		kvm_stop_help();
 
-	if (instance_name)
-		instance = kvm__get_sock_by_instance(instance_name);
+	instance = kvm__get_sock_by_instance(instance_name);
 
 	if (instance <= 0)
 		die("Failed locating instance");
 
-	return do_stop(instance_name, instance);
+	r = do_stop(instance_name, instance);
+
+	close(instance);
+
+	return r;
 }

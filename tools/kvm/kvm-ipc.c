@@ -9,6 +9,11 @@
 #include <sys/socket.h>
 #include <sys/eventfd.h>
 
+struct kvm_ipc_head {
+	u32 type;
+	u32 len;
+};
+
 #define KVM_IPC_MAX_MSGS 16
 
 static void (*msgs[KVM_IPC_MAX_MSGS])(int fd, u32 type, u32 len, u8 *msg);
@@ -28,23 +33,46 @@ int kvm_ipc__register_handler(u32 type, void (*cb)(int fd, u32 type, u32 len, u8
 	return 0;
 }
 
-int kvm_ipc__handle(int fd, struct kvm_ipc_msg *msg)
+int kvm_ipc__send(int fd, u32 type)
+{
+	struct kvm_ipc_head head = {.type = type, .len = 0,};
+
+	if (write_in_full(fd, &head, sizeof(head)) != sizeof(head))
+		return -1;
+
+	return 0;
+}
+
+int kvm_ipc__send_msg(int fd, u32 type, u32 len, u8 *msg)
+{
+	struct kvm_ipc_head head = {.type = type, .len = len,};
+
+	if (write_in_full(fd, &head, sizeof(head)) != sizeof(head))
+		return -1;
+
+	if (write_in_full(fd, msg, len) != len)
+		return -1;
+
+	return 0;
+}
+
+static int kvm_ipc__handle(int fd, u32 type, u32 len, u8 *data)
 {
 	void (*cb)(int fd, u32 type, u32 len, u8 *msg);
 
-	if (msg->type >= KVM_IPC_MAX_MSGS)
+	if (type >= KVM_IPC_MAX_MSGS)
 		return -ENOSPC;
 
 	down_read(&msgs_rwlock);
-	cb = msgs[msg->type];
+	cb = msgs[type];
 	up_read(&msgs_rwlock);
 
 	if (cb == NULL) {
-		pr_warning("No device handles type %u\n", msg->type);
+		pr_warning("No device handles type %u\n", type);
 		return -ENODEV;
 	}
 
-	cb(fd, msg->type, msg->len, msg->data);
+	cb(fd, type, len, data);
 
 	return 0;
 }
@@ -74,31 +102,31 @@ static void kvm_ipc__close_conn(int fd)
 	close(fd);
 }
 
-static void kvm_ipc__new_data(int fd)
+static int kvm_ipc__receive(int fd)
 {
-	struct kvm_ipc_msg *msg;
+	struct kvm_ipc_head head;
+	u8 *msg = NULL;
 	u32 n;
 
-	msg = malloc(sizeof(*msg));
+	n = read(fd, &head, sizeof(head));
+	if (n != sizeof(head))
+		goto done;
+
+	msg = malloc(head.len);
 	if (msg == NULL)
 		goto done;
 
-	n = read(fd, msg, sizeof(*msg));
-	if (n != sizeof(*msg))
+	n = read_in_full(fd, msg, head.len);
+	if (n != head.len)
 		goto done;
 
-	msg = realloc(msg, sizeof(*msg) + msg->len);
-	if (msg == NULL)
-		goto done;
+	kvm_ipc__handle(fd, head.type, head.len, msg);
 
-	n = read_in_full(fd, msg->data, msg->len);
-	if (n != msg->len)
-		goto done;
-
-	kvm_ipc__handle(fd, msg);
+	return 0;
 
 done:
 	free(msg);
+	return -1;
 }
 
 static void *kvm_ipc__thread(void *param)
@@ -115,14 +143,20 @@ static void *kvm_ipc__thread(void *param)
 			if (fd == stop_fd && event.events & EPOLLIN) {
 				break;
 			} else if (fd == server_fd) {
-				int client;
+				int client, r;
 
 				client = kvm_ipc__new_conn(fd);
-				kvm_ipc__new_data(client);
+				/*
+				 * Handle multiple IPC cmd at a time
+				 */
+				do {
+					r = kvm_ipc__receive(client);
+				} while	(r == 0);
+
 			} else if (event.events && (EPOLLERR | EPOLLRDHUP | EPOLLHUP)) {
 				kvm_ipc__close_conn(fd);
 			} else {
-				kvm_ipc__new_data(fd);
+				kvm_ipc__receive(fd);
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 #include <kvm/util.h>
 #include <kvm/kvm-cmd.h>
 #include <kvm/builtin-resume.h>
+#include <kvm/builtin-list.h>
 #include <kvm/kvm.h>
 #include <kvm/parse-options.h>
 #include <kvm/kvm-ipc.h>
@@ -9,13 +10,7 @@
 #include <string.h>
 #include <signal.h>
 
-struct resume_cmd {
-	u32 type;
-	u32 len;
-};
-
 static bool all;
-static int instance;
 static const char *instance_name;
 
 static const char * const resume_usage[] = {
@@ -47,32 +42,47 @@ void kvm_resume_help(void)
 
 static int do_resume(const char *name, int sock)
 {
-	struct resume_cmd cmd = {KVM_IPC_RESUME, 0};
 	int r;
+	int vmstate;
 
-	r = write(sock, &cmd, sizeof(cmd));
-	if (r < 0)
+	vmstate = get_vmstate(sock);
+	if (vmstate < 0)
+		return vmstate;
+	if (vmstate == KVM_VMSTATE_RUNNING) {
+		printf("Guest %s is still running.\n", name);
+		return 0;
+	}
+
+	r = kvm_ipc__send(sock, KVM_IPC_RESUME);
+	if (r)
 		return r;
+
+	printf("Guest %s resumed\n", name);
 
 	return 0;
 }
 
 int kvm_cmd_resume(int argc, const char **argv, const char *prefix)
 {
+	int instance;
+	int r;
+
 	parse_resume_options(argc, argv);
 
 	if (all)
 		return kvm__enumerate_instances(do_resume);
 
-	if (instance_name == NULL &&
-	    instance == 0)
+	if (instance_name == NULL)
 		kvm_resume_help();
 
-	if (instance_name)
-		instance = kvm__get_sock_by_instance(instance_name);
+	instance = kvm__get_sock_by_instance(instance_name);
 
 	if (instance <= 0)
 		die("Failed locating instance");
 
-	return do_resume(instance_name, instance);
+	r = do_resume(instance_name, instance);
+
+	close(instance);
+
+	return r;
 }

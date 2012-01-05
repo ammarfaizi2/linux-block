@@ -29,6 +29,9 @@ void kvm_cpu__run(struct kvm_cpu *vcpu)
 {
 	int err;
 
+	if (!vcpu->is_running)
+		return;
+
 	err = ioctl(vcpu->vcpu_fd, KVM_RUN, 0);
 	if (err < 0 && (errno != EINTR && errno != EAGAIN))
 		die_perror("KVM_RUN failed");
@@ -39,7 +42,7 @@ static void kvm_cpu_signal_handler(int signum)
 	if (signum == SIGKVMEXIT) {
 		if (current_kvm_cpu && current_kvm_cpu->is_running) {
 			current_kvm_cpu->is_running = false;
-			pthread_kill(pthread_self(), SIGKVMEXIT);
+			kvm__continue();
 		}
 	} else if (signum == SIGKVMPAUSE) {
 		current_kvm_cpu->paused = 1;

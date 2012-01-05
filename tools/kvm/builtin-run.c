@@ -507,23 +507,46 @@ static int is_paused;
 
 static void handle_pause(int fd, u32 type, u32 len, u8 *msg)
 {
-	if (type == KVM_IPC_RESUME && is_paused)
-		kvm__continue();
-	else if (type == KVM_IPC_PAUSE && !is_paused)
-		kvm__pause();
-	else
+	if (WARN_ON(len))
 		return;
 
+	if (type == KVM_IPC_RESUME && is_paused) {
+		kvm->vm_state = KVM_VMSTATE_RUNNING;
+		kvm__continue();
+	} else if (type == KVM_IPC_PAUSE && !is_paused) {
+		kvm->vm_state = KVM_VMSTATE_PAUSED;
+		kvm__pause();
+	} else {
+		return;
+	}
+
 	is_paused = !is_paused;
-	pr_info("Guest %s\n", is_paused ? "paused" : "resumed");
+}
+
+static void handle_vmstate(int fd, u32 type, u32 len, u8 *msg)
+{
+	int r = 0;
+
+	if (type == KVM_IPC_VMSTATE)
+		r = write(fd, &kvm->vm_state, sizeof(kvm->vm_state));
+
+	if (r < 0)
+		pr_warning("Failed sending VMSTATE");
 }
 
 static void handle_debug(int fd, u32 type, u32 len, u8 *msg)
 {
 	int i;
-	struct debug_cmd_params *params = (void *)msg;
-	u32 dbg_type = params->dbg_type;
-	u32 vcpu = params->cpu;
+	struct debug_cmd_params *params;
+	u32 dbg_type;
+	u32 vcpu;
+
+	if (WARN_ON(type != KVM_IPC_DEBUG || len != sizeof(*params)))
+		return;
+
+	params = (void *)msg;
+	dbg_type = params->dbg_type;
+	vcpu = params->cpu;
 
 	if (dbg_type & KVM_DEBUG_CMD_TYPE_NMI) {
 		if ((int)vcpu >= kvm->nrcpus)
@@ -567,6 +590,9 @@ static void handle_sigalrm(int sig)
 
 static void handle_stop(int fd, u32 type, u32 len, u8 *msg)
 {
+	if (WARN_ON(type != KVM_IPC_STOP || len))
+		return;
+
 	kvm_cpu__reboot();
 }
 
@@ -576,8 +602,6 @@ static void *kvm_cpu_thread(void *arg)
 
 	if (kvm_cpu__start(current_kvm_cpu))
 		goto panic_kvm;
-
-	kvm_cpu__delete(current_kvm_cpu);
 
 	return (void *) (intptr_t) 0;
 
@@ -594,8 +618,6 @@ panic_kvm:
 	kvm_cpu__show_code(current_kvm_cpu);
 	kvm_cpu__show_page_tables(current_kvm_cpu);
 
-	kvm_cpu__delete(current_kvm_cpu);
-
 	return (void *) (intptr_t) 1;
 }
 
@@ -609,11 +631,13 @@ static const char *host_kernels[] = {
 
 static const char *default_kernels[] = {
 	"./bzImage",
+	"arch/" BUILD_ARCH "/boot/bzImage",
 	"../../arch/" BUILD_ARCH "/boot/bzImage",
 	NULL
 };
 
 static const char *default_vmlinux[] = {
+	"vmlinux",
 	"../../../vmlinux",
 	"../../vmlinux",
 	NULL
@@ -862,6 +886,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	kvm_ipc__register_handler(KVM_IPC_PAUSE, handle_pause);
 	kvm_ipc__register_handler(KVM_IPC_RESUME, handle_pause);
 	kvm_ipc__register_handler(KVM_IPC_STOP, handle_stop);
+	kvm_ipc__register_handler(KVM_IPC_VMSTATE, handle_vmstate);
 
 	nr_online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
@@ -954,8 +979,12 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	term_init();
 
 	if (!guest_name) {
-		sprintf(default_name, "guest-%u", getpid());
-		guest_name = default_name;
+		if (custom_rootfs) {
+			guest_name = custom_rootfs_name;
+		} else {
+			sprintf(default_name, "guest-%u", getpid());
+			guest_name = default_name;
+		}
 	}
 
 	kvm = kvm__init(dev, hugetlbfs_path, ram_size, guest_name);
@@ -1123,7 +1152,9 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 
 	kvm__start_timer(kvm);
 
-	kvm__arch_setup_firmware(kvm);
+	exit_code = kvm__arch_setup_firmware(kvm);
+	if (exit_code)
+		goto err;
 
 	for (i = 0; i < nrcpus; i++) {
 		kvm_cpus[i] = kvm_cpu__init(kvm, i);
@@ -1143,16 +1174,20 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	if (pthread_join(kvm_cpus[0]->thread, &ret) != 0)
 		exit_code = 1;
 
+	kvm_cpu__delete(kvm_cpus[0]);
+
 	for (i = 1; i < nrcpus; i++) {
 		if (kvm_cpus[i]->is_running) {
 			pthread_kill(kvm_cpus[i]->thread, SIGKVMEXIT);
 			if (pthread_join(kvm_cpus[i]->thread, &ret) != 0)
 				die("pthread_join");
+			kvm_cpu__delete(kvm_cpus[i]);
 		}
 		if (ret != NULL)
 			exit_code = 1;
 	}
 
+err:
 	compat__print_all_messages();
 
 	fb__stop();
@@ -1161,6 +1196,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	virtio_rng__delete_all(kvm);
 
 	disk_image__close_all(kvm->disks, image_count);
+	free(kvm_cpus);
 	kvm__delete(kvm);
 
 	if (!exit_code)

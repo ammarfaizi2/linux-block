@@ -142,7 +142,7 @@ static void *mmap_anon_or_hugetlbfs(const char *hugetlbfs_path, u64 size)
 }
 
 /* Architecture-specific KVM init */
-void kvm__arch_init(struct kvm *kvm, const char *kvm_dev, const char *hugetlbfs_path, u64 ram_size, const char *name)
+void kvm__arch_init(struct kvm *kvm, const char *hugetlbfs_path, u64 ram_size)
 {
 	struct kvm_pit_config pit_config = { .flags = 0, };
 	int ret;
@@ -176,6 +176,14 @@ void kvm__arch_init(struct kvm *kvm, const char *kvm_dev, const char *hugetlbfs_
 	ret = ioctl(kvm->vm_fd, KVM_CREATE_IRQCHIP);
 	if (ret < 0)
 		die_perror("KVM_CREATE_IRQCHIP ioctl");
+}
+
+void kvm__arch_delete_ram(struct kvm *kvm)
+{
+	if (kvm->ram_size < KVM_32BIT_GAP_START)
+		munmap(kvm->ram_start, kvm->ram_size);
+	else
+		munmap(kvm->ram_start, kvm->ram_size + KVM_32BIT_GAP_SIZE);
 }
 
 void kvm__irq_line(struct kvm *kvm, int irq, int level)
@@ -348,7 +356,7 @@ bool load_bzimage(struct kvm *kvm, int fd_kernel,
  * This function is a main routine where we poke guest memory
  * and install BIOS there.
  */
-void kvm__arch_setup_firmware(struct kvm *kvm)
+int kvm__arch_setup_firmware(struct kvm *kvm)
 {
 	/* standart minimal configuration */
 	setup_bios(kvm);
@@ -356,7 +364,7 @@ void kvm__arch_setup_firmware(struct kvm *kvm)
 	/* FIXME: SMP, ACPI and friends here */
 
 	/* MP table */
-	mptable_setup(kvm, kvm->nrcpus);
+	return mptable_setup(kvm, kvm->nrcpus);
 }
 
 void kvm__arch_periodic_poll(struct kvm *kvm)

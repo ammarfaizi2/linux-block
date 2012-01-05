@@ -69,7 +69,7 @@ void kvm__arch_set_cmdline(char *cmdline, bool video)
 }
 
 /* Architecture-specific KVM init */
-void kvm__arch_init(struct kvm *kvm, const char *kvm_dev, const char *hugetlbfs_path, u64 ram_size, const char *name)
+void kvm__arch_init(struct kvm *kvm, const char *hugetlbfs_path, u64 ram_size)
 {
 	int cap_ppc_rma;
 
@@ -100,6 +100,11 @@ void kvm__arch_init(struct kvm *kvm, const char *kvm_dev, const char *hugetlbfs_
 	if (cap_ppc_rma == 2)
 		die("Need contiguous RMA allocation on this hardware, "
 		    "which is not yet supported.");
+}
+
+void kvm__arch_delete_ram(struct kvm *kvm)
+{
+	munmap(kvm->ram_start, kvm->ram_size);
 }
 
 void kvm__irq_line(struct kvm *kvm, int irq, int level)
@@ -175,7 +180,7 @@ static void setup_fdt(struct kvm *kvm)
 /**
  * kvm__arch_setup_firmware
  */
-void kvm__arch_setup_firmware(struct kvm *kvm)
+int kvm__arch_setup_firmware(struct kvm *kvm)
 {
 	/* Load RTAS */
 
@@ -183,4 +188,6 @@ void kvm__arch_setup_firmware(struct kvm *kvm)
 
 	/* Init FDT */
 	setup_fdt(kvm);
+
+	return 0;
 }

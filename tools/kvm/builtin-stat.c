@@ -12,14 +12,8 @@
 
 #include <linux/virtio_balloon.h>
 
-struct stat_cmd {
-	u32 type;
-	u32 len;
-};
-
 static bool mem;
 static bool all;
-static int instance;
 static const char *instance_name;
 
 static const char * const stat_usage[] = {
@@ -53,7 +47,6 @@ void kvm_stat_help(void)
 
 static int do_memstat(const char *name, int sock)
 {
-	struct stat_cmd cmd = {KVM_IPC_STAT, 0};
 	struct virtio_balloon_stat stats[VIRTIO_BALLOON_S_NR];
 	fd_set fdset;
 	struct timeval t = { .tv_sec = 1 };
@@ -62,7 +55,7 @@ static int do_memstat(const char *name, int sock)
 
 	FD_ZERO(&fdset);
 	FD_SET(sock, &fdset);
-	r = write(sock, &cmd, sizeof(cmd));
+	r = kvm_ipc__send(sock, KVM_IPC_STAT);
 	if (r < 0)
 		return r;
 
@@ -106,6 +99,9 @@ static int do_memstat(const char *name, int sock)
 
 int kvm_cmd_stat(int argc, const char **argv, const char *prefix)
 {
+	int instance;
+	int r = 0;
+
 	parse_stat_options(argc, argv);
 
 	if (!mem)
@@ -114,18 +110,18 @@ int kvm_cmd_stat(int argc, const char **argv, const char *prefix)
 	if (mem && all)
 		return kvm__enumerate_instances(do_memstat);
 
-	if (instance_name == NULL &&
-	    instance == 0)
+	if (instance_name == NULL)
 		kvm_stat_help();
 
-	if (instance_name)
-		instance = kvm__get_sock_by_instance(instance_name);
+	instance = kvm__get_sock_by_instance(instance_name);
 
 	if (instance <= 0)
 		die("Failed locating instance");
 
 	if (mem)
-		return do_memstat(instance_name, instance);
+		r = do_memstat(instance_name, instance);
 
-	return 0;
+	close(instance);
+
+	return r;
 }
