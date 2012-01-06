@@ -1992,8 +1992,6 @@ static bool do_signal_stop(int signr)
 		 */
 		if (!(sig->flags & SIGNAL_STOP_STOPPED))
 			sig->group_exit_code = signr;
-		else
-			WARN_ON_ONCE(!current->ptrace);
 
 		sig->group_stop_count = 0;
 
