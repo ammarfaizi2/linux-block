@@ -16,12 +16,20 @@
 
 #ifdef HAVE_JUMP_LABEL
 
+/* These are the nops added at compile time */
+static const unsigned char nop_short[] = { P6_NOP2 };
+static const unsigned char default_nop[] = { STATIC_KEY_INIT_NOP };
+
 union jump_code_union {
 	char code[JUMP_LABEL_NOP_SIZE];
 	struct {
 		char jump;
 		int offset;
-	} __attribute__((packed));
+	} __packed;
+	struct {
+		char jump_short;
+		char offset_short;
+	} __packed;
 };
 
 static void bug_at(unsigned char *ip, int line)
@@ -42,19 +50,29 @@ static void __jump_label_transform(struct jump_entry *entry,
 				   int init)
 {
 	union jump_code_union code;
+	unsigned char nop;
+	unsigned char op;
+	unsigned size;
+	void *ip = (void *)entry->code;
 	const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
 
-	if (type == JUMP_LABEL_ENABLE) {
-		/*
-		 * We are enabling this jump label. If it is not a nop
-		 * then something must have gone wrong.
-		 */
-		if (unlikely(memcmp((void *)entry->code, ideal_nop, 5) != 0))
-			bug_at((void *)entry->code, __LINE__);
+	/* Use probe_kernel_read()? */
+	op = *(unsigned char *)ip;
+	nop = ideal_nops[NOP_ATOMIC5][0];
 
-		code.jump = 0xe9;
-		code.offset = entry->target -
-				(entry->code + JUMP_LABEL_NOP_SIZE);
+	if (type == JUMP_LABEL_ENABLE) {
+		if (memcmp(ip, nop_short, 2) == 0) {
+			size = 2;
+			code.jump_short = 0xeb;
+			code.offset = entry->target - (entry->code + 2);
+			/* Check for overflow ? */
+		} else if ((!init && memcmp(ip, ideal_nop, 5) == 0) ||
+			   (init && memcmp(ip, default_nop, 5) == 0)) {
+			size = JUMP_LABEL_NOP_SIZE;
+			code.jump = 0xe9;
+			code.offset = entry->target - (entry->code + size);
+		} else
+			bug_at(ip, __LINE__);
 	} else {
 		/*
 		 * We are disabling this jump label. If it is not what
@@ -63,20 +81,48 @@ static void __jump_label_transform(struct jump_entry *entry,
 		 * are converting the default nop to the ideal nop.
 		 */
 		if (init) {
-			const unsigned char default_nop[] = { STATIC_KEY_INIT_NOP };
-			if (unlikely(memcmp((void *)entry->code, default_nop, 5) != 0))
-				bug_at((void *)entry->code, __LINE__);
-		} else {
+			/* Ignore short nops, we do not change them */
+			if (memcmp(ip, nop_short, 2) == 0)
+				return;
+
+			/* We are initializing from the default nop */
+			if (unlikely(memcmp(ip, default_nop, 5) != 0))
+				bug_at(ip, __LINE__);
+
+			/* Set to the ideal nop */
+			size = JUMP_LABEL_NOP_SIZE;
+			memcpy(&code, ideal_nops[NOP_ATOMIC5], size);
+
+		} else if (op == 0xe9) {
+			/* Replace a 5 byte jmp */
+
+			/* Make sure this is what we expected it to be */
 			code.jump = 0xe9;
 			code.offset = entry->target -
 				(entry->code + JUMP_LABEL_NOP_SIZE);
-			if (unlikely(memcmp((void *)entry->code, &code, 5) != 0))
-				bug_at((void *)entry->code, __LINE__);
-		}
-		memcpy(&code, ideal_nops[NOP_ATOMIC5], JUMP_LABEL_NOP_SIZE);
+
+			if (unlikely(memcmp(ip, &code, 5) != 0))
+				bug_at(ip, __LINE__);
+
+			size = JUMP_LABEL_NOP_SIZE;
+			memcpy(&code, ideal_nops[NOP_ATOMIC5], size);
+		} else if (op == 0xeb) {
+			/* Replace a 2 byte jmp */
+
+			/* Had better be a 2 byte jmp */
+			code.jump_short = 0xeb;
+			code.offset = entry->target - (entry->code + 2);
+			if (unlikely(memcmp(ip, &code, 2) != 0))
+				bug_at(ip, __LINE__);
+
+			size = 2;
+			memcpy(&code, nop_short, size);
+		} else
+			/* The code was not what we expected!  */
+			bug_at(ip, __LINE__);
 	}
 
-	(*poker)((void *)entry->code, &code, JUMP_LABEL_NOP_SIZE);
+	(*poker)(ip, &code, size);
 }
 
 void arch_jump_label_transform(struct jump_entry *entry,
@@ -106,7 +152,6 @@ __init_or_module void arch_jump_label_transform_static(struct jump_entry *entry,
 	 * If it is not, then we need to update the nop to the ideal nop.
 	 */
 	if (jlstate == JL_STATE_START) {
-		const unsigned char default_nop[] = { STATIC_KEY_INIT_NOP };
 		const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
 
 		if (memcmp(ideal_nop, default_nop, 5) != 0)
@@ -117,5 +162,4 @@ __init_or_module void arch_jump_label_transform_static(struct jump_entry *entry,
 	if (jlstate == JL_STATE_UPDATE)
 		__jump_label_transform(entry, type, text_poke_early, 1);
 }
-
 #endif
