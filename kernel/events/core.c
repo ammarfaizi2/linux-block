@@ -3790,6 +3790,31 @@ static void perf_output_read(struct perf_output_handle *handle,
 		perf_output_read_one(handle, event, enabled, running);
 }
 
+static void __perf_event__check_wakeup(struct perf_event *event,
+				       struct perf_output_handle *handle)
+{
+	if (!event->attr.watermark) {
+		int wakeup_events = event->attr.wakeup_events;
+
+		if (wakeup_events) {
+			struct ring_buffer *rb = handle->rb;
+			int events = local_inc_return(&rb->events);
+
+			if (events >= wakeup_events) {
+				local_sub(wakeup_events, &rb->events);
+				local_inc(&rb->wakeup);
+			}
+		}
+	}
+}
+
+static void perf_event__check_wakeup(struct perf_event *event,
+				     struct perf_output_handle *handle)
+{
+	if (event->attr.wakeup_all)
+		__perf_event__check_wakeup(event, handle);
+}
+
 void perf_output_sample(struct perf_output_handle *handle,
 			struct perf_event_header *header,
 			struct perf_sample_data *data,
@@ -3859,19 +3884,7 @@ void perf_output_sample(struct perf_output_handle *handle,
 		}
 	}
 
-	if (!event->attr.watermark) {
-		int wakeup_events = event->attr.wakeup_events;
-
-		if (wakeup_events) {
-			struct ring_buffer *rb = handle->rb;
-			int events = local_inc_return(&rb->events);
-
-			if (events >= wakeup_events) {
-				local_sub(wakeup_events, &rb->events);
-				local_inc(&rb->wakeup);
-			}
-		}
-	}
+	__perf_event__check_wakeup(event, handle);
 }
 
 void perf_prepare_sample(struct perf_event_header *header,
@@ -3975,7 +3988,7 @@ perf_event_read_event(struct perf_event *event,
 	perf_output_put(&handle, read_event);
 	perf_output_read(&handle, event);
 	perf_event__output_id_sample(event, &handle, &sample);
-
+	perf_event__check_wakeup(event, &handle);
 	perf_output_end(&handle);
 }
 
@@ -4024,7 +4037,7 @@ static void perf_event_task_output(struct perf_event *event,
 	perf_output_put(&handle, task_event->event_id);
 
 	perf_event__output_id_sample(event, &handle, &sample);
-
+	perf_event__check_wakeup(event, &handle);
 	perf_output_end(&handle);
 out:
 	task_event->event_id.header.size = size;
@@ -4161,7 +4174,7 @@ static void perf_event_comm_output(struct perf_event *event,
 				   comm_event->comm_size);
 
 	perf_event__output_id_sample(event, &handle, &sample);
-
+	perf_event__check_wakeup(event, &handle);
 	perf_output_end(&handle);
 out:
 	comm_event->event_id.header.size = size;
@@ -4307,7 +4320,7 @@ static void perf_event_mmap_output(struct perf_event *event,
 				   mmap_event->file_size);
 
 	perf_event__output_id_sample(event, &handle, &sample);
-
+	perf_event__check_wakeup(event, &handle);
 	perf_output_end(&handle);
 out:
 	mmap_event->event_id.header.size = size;
@@ -4496,6 +4509,7 @@ static void perf_log_throttle(struct perf_event *event, int enable)
 
 	perf_output_put(&handle, throttle_event);
 	perf_event__output_id_sample(event, &handle, &sample);
+	perf_event__check_wakeup(event, &handle);
 	perf_output_end(&handle);
 }
 

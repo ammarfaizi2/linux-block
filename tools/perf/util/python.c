@@ -524,6 +524,7 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 		"precise_ip",
 		"mmap_data",
 		"sample_id_all",
+		"wakeup_all",
 		"wakeup_events",
 		"bp_type",
 		"bp_addr",
@@ -548,11 +549,12 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 	    watermark = 0,
 	    precise_ip = 0,
 	    mmap_data = 0,
-	    sample_id_all = 1;
+	    sample_id_all = 1,
+	    wakeup_all = 1;
 	int idx = 0;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-					 "|iKiKKiiiiiiiiiiiiiiiiiiiiiKK", kwlist,
+					 "|iKiKKiiiiiiiiiiiiiiiiiiiiiiKK", kwlist,
 					 &attr.type, &attr.config, &attr.sample_freq,
 					 &sample_period, &attr.sample_type,
 					 &attr.read_format, &disabled, &inherit,
@@ -561,6 +563,7 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 					 &mmap, &comm, &freq, &inherit_stat,
 					 &enable_on_exec, &task, &watermark,
 					 &precise_ip, &mmap_data, &sample_id_all,
+					 &wakeup_all,
 					 &attr.wakeup_events, &attr.bp_type,
 					 &attr.bp_addr, &attr.bp_len, &idx))
 		return -1;
@@ -591,6 +594,7 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 	attr.precise_ip	    = precise_ip;
 	attr.mmap_data	    = mmap_data;
 	attr.sample_id_all  = sample_id_all;
+	attr.wakeup_all	    = wakeup_all;
 
 	perf_evsel__init(&pevsel->evsel, &attr, idx);
 	return 0;
