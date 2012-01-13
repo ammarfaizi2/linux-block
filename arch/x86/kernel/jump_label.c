@@ -16,12 +16,20 @@
 
 #ifdef HAVE_JUMP_LABEL
 
+/* These are the nops added at compile time */
+static const unsigned char nop_short[] = { P6_NOP2 };
+static const unsigned char default_nop[] = { JUMP_LABEL_INIT_NOP };
+
 union jump_code_union {
 	char code[JUMP_LABEL_NOP_SIZE];
 	struct {
 		char jump;
 		int offset;
-	} __attribute__((packed));
+	} __packed;
+	struct {
+		char jump_short;
+		char offset_short;
+	} __packed;
 };
 
 static void __jump_label_transform(struct jump_entry *entry,
@@ -30,18 +38,33 @@ static void __jump_label_transform(struct jump_entry *entry,
 				   int init)
 {
 	union jump_code_union code;
+	unsigned char nop;
+	unsigned char op;
+	unsigned size;
+	void *ip = (void *)entry->code;
 	const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
 
-	if (type == JUMP_LABEL_ENABLE) {
-		/*
-		 * We are enabling this jump label. If it is not a nop
-		 * then something must have gone wrong.
-		 */
-		BUG_ON(memcmp((void *)entry->code, ideal_nop, 5) != 0);
+	/* Use probe_kernel_read()? */
+	op = *(unsigned char *)ip;
+	nop = ideal_nops[NOP_ATOMIC5][0];
 
-		code.jump = 0xe9;
-		code.offset = entry->target -
-				(entry->code + JUMP_LABEL_NOP_SIZE);
+	if (type == JUMP_LABEL_ENABLE) {
+		if (memcmp(ip, nop_short, 2) == 0) {
+			size = 2;
+			code.jump_short = 0xeb;
+			code.offset = entry->target - (entry->code + 2);
+			/* Check for overflow ? */
+		} else if (memcmp(ip, ideal_nop, 5) == 0) {
+			size = JUMP_LABEL_NOP_SIZE;
+			code.jump = 0xe9;
+			code.offset = entry->target - (entry->code + size);
+		} else
+			/*
+			 * The location is not a nop that we were expecting,
+			 * something went wrong. Crash the box, as something could be
+			 * corrupting the kernel.
+			 */
+			BUG();
 	} else {
 		/*
 		 * We are disabling this jump label. If it is not what
@@ -50,18 +73,44 @@ static void __jump_label_transform(struct jump_entry *entry,
 		 * are converting the default nop to the ideal nop.
 		 */
 		if (init) {
-			const unsigned char default_nop[] = { JUMP_LABEL_INIT_NOP };
-			BUG_ON(memcmp((void *)entry->code, default_nop, 5) != 0);
-		} else {
+			/* Ignore short nops, we do not change them */
+			if (memcmp(ip, nop_short, 2) == 0)
+				return;
+
+			/* We are initializing from the default nop */
+			BUG_ON(memcmp(ip, default_nop, 5) != 0);
+
+			/* Set to the ideal nop */
+			size = JUMP_LABEL_NOP_SIZE;
+			memcpy(&code, ideal_nops[NOP_ATOMIC5], size);
+
+		} else if (op == 0xe9) {
+			/* Replace a 5 byte jmp */
+
+			/* Make sure this is what we expected it to be */
 			code.jump = 0xe9;
 			code.offset = entry->target -
 				(entry->code + JUMP_LABEL_NOP_SIZE);
-			BUG_ON(memcmp((void *)entry->code, &code, 5) != 0);
-		}
-		memcpy(&code, ideal_nops[NOP_ATOMIC5], JUMP_LABEL_NOP_SIZE);
+			BUG_ON(memcmp(ip, &code, 5) != 0);
+
+			size = JUMP_LABEL_NOP_SIZE;
+			memcpy(&code, ideal_nops[NOP_ATOMIC5], size);
+		} else if (op == 0xeb) {
+			/* Replace a 2 byte jmp */
+
+			/* Had better be a 2 byte jmp */
+			code.jump_short = 0xeb;
+			code.offset = entry->target - (entry->code + 2);
+			BUG_ON(memcmp(ip, &code, 2) != 0);
+
+			size = 2;
+			memcpy(&code, nop_short, size);
+		} else
+			/* The code was not what we expected!  */
+			BUG();
 	}
 
-	(*poker)((void *)entry->code, &code, JUMP_LABEL_NOP_SIZE);
+	(*poker)(ip, &code, size);
 }
 
 void arch_jump_label_transform(struct jump_entry *entry,
@@ -88,7 +137,6 @@ void arch_jump_label_transform_static(struct jump_entry *entry,
 	 * If it is not, then we need to update the nop to the ideal nop.
 	 */
 	if (!once) {
-		const unsigned char default_nop[] = { JUMP_LABEL_INIT_NOP };
 		const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
 		once++;
 		if (memcmp(ideal_nop, default_nop, 5) != 0)
@@ -97,5 +145,4 @@ void arch_jump_label_transform_static(struct jump_entry *entry,
 	if (update)
 		__jump_label_transform(entry, type, text_poke_early, 1);
 }
-
 #endif

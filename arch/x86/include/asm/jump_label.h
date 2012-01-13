@@ -10,6 +10,11 @@
 
 #define JUMP_LABEL_NOP_SIZE 5
 
+/*
+ * The JUMP_LABEL_INIT_NOP must match the nops used in
+ * scripts/update_jump_label.c. Otherwise the boot time checks
+ * will fail and trigger a BUG() on boot up.
+ */
 #ifdef CONFIG_X86_64
 # define JUMP_LABEL_INIT_NOP P6_NOP5_ATOMIC
 #else
@@ -19,7 +24,7 @@
 static __always_inline bool arch_static_branch(struct jump_label_key *key)
 {
 	asm goto("1:"
-		".byte " __stringify(JUMP_LABEL_INIT_NOP) "\n\t"
+		"jmp %l[l_yes]\n"
 		".pushsection __jump_table,  \"aw\" \n\t"
 		_ASM_ALIGN "\n\t"
 		_ASM_PTR "1b, %l[l_yes], %c0 \n\t"
