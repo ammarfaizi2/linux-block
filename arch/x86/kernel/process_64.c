@@ -140,13 +140,9 @@ void cpu_idle(void)
 			/* Don't trace irqs off for idle */
 			stop_critical_timings();
 
-			/* enter_idle() needs rcu for notifiers */
-			rcu_idle_enter();
-
 			if (cpuidle_idle_call())
 				pm_idle();
 
-			rcu_idle_exit();
 			start_critical_timings();
 
 			/* In many cases the interrupt that ended idle

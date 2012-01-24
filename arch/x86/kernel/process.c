@@ -386,17 +386,21 @@ void default_idle(void)
 		 */
 		smp_mb();
 
+		rcu_idle_enter();
 		if (!need_resched())
 			safe_halt();	/* enables interrupts racelessly */
 		else
 			local_irq_enable();
+		rcu_idle_exit();
 		current_thread_info()->status |= TS_POLLING;
 		trace_power_end(smp_processor_id());
 		trace_cpu_idle(PWR_EVENT_EXIT, smp_processor_id());
 	} else {
 		local_irq_enable();
 		/* loop is done by the caller */
+		rcu_idle_enter();
 		cpu_relax();
+		rcu_idle_exit();
 	}
 }
 #ifdef CONFIG_APM_MODULE
@@ -457,14 +461,19 @@ static void mwait_idle(void)
 
 		__monitor((void *)&current_thread_info()->flags, 0, 0);
 		smp_mb();
+		rcu_idle_enter();
 		if (!need_resched())
 			__sti_mwait(0, 0);
 		else
 			local_irq_enable();
+		rcu_idle_exit();
 		trace_power_end(smp_processor_id());
 		trace_cpu_idle(PWR_EVENT_EXIT, smp_processor_id());
-	} else
+	} else {
 		local_irq_enable();
+		rcu_idle_enter();
+		rcu_idle_exit();
+	}
 }
 
 /*
@@ -477,8 +486,10 @@ static void poll_idle(void)
 	trace_power_start(POWER_CSTATE, 0, smp_processor_id());
 	trace_cpu_idle(0, smp_processor_id());
 	local_irq_enable();
+	rcu_idle_enter();
 	while (!need_resched())
 		cpu_relax();
+	rcu_idle_exit();
 	trace_power_end(smp_processor_id());
 	trace_cpu_idle(PWR_EVENT_EXIT, smp_processor_id());
 }

@@ -261,6 +261,7 @@ static int intel_idle(struct cpuidle_device *dev,
 	kt_before = ktime_get_real();
 
 	stop_critical_timings();
+	rcu_idle_enter();
 	if (!need_resched()) {
 
 		__monitor((void *)&current_thread_info()->flags, 0, 0);
@@ -268,6 +269,7 @@ static int intel_idle(struct cpuidle_device *dev,
 		if (!need_resched())
 			__mwait(eax, ecx);
 	}
+	rcu_idle_exit();
 
 	start_critical_timings();
 
