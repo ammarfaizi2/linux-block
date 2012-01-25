@@ -19,6 +19,7 @@
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/err.h>
+#include <linux/rcupdate.h>
 
 #include <asm/pgtable.h>
 #include <asm/hardware/cache-l2x0.h>
@@ -34,6 +35,7 @@ static void imx3_idle(void)
 {
 	unsigned long reg = 0;
 
+	rcu_idle_enter();
 	if (!need_resched())
 		__asm__ __volatile__(
 			/* disable I and D cache */
@@ -58,6 +60,7 @@ static void imx3_idle(void)
 			"orr %0, %0, #0x00000004\n"
 			"mcr p15, 0, %0, c1, c0, 0\n"
 			: "=r" (reg));
+	rcu_idle_exit();
 	local_irq_enable();
 }
 

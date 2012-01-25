@@ -19,6 +19,7 @@
 #include <linux/cpuidle.h>
 #include <linux/io.h>
 #include <linux/export.h>
+#include <linux/rcupdate.h>
 #include <asm/proc-fns.h>
 #include <mach/kirkwood.h>
 
@@ -41,6 +42,7 @@ static int kirkwood_enter_idle(struct cpuidle_device *dev,
 
 	local_irq_disable();
 	do_gettimeofday(&before);
+	rcu_idle_enter();
 	if (index == 0)
 		/* Wait for interrupt state */
 		cpu_do_idle();
@@ -55,6 +57,7 @@ static int kirkwood_enter_idle(struct cpuidle_device *dev,
 		writel(0x7, DDR_OPERATION_BASE);
 		cpu_do_idle();
 	}
+	rcu_idle_exit();
 	do_gettimeofday(&after);
 	local_irq_enable();
 	idle_time = (after.tv_sec - before.tv_sec) * USEC_PER_SEC +

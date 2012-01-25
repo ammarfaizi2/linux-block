@@ -15,16 +15,20 @@
 #include <linux/kernel.h>
 #include <linux/suspend.h>
 #include <linux/io.h>
+#include <linux/rcupdate.h>
 #include <mach/system.h>
 
 static int mxs_suspend_enter(suspend_state_t state)
 {
+	rcu_idle_enter();
 	switch (state) {
 	case PM_SUSPEND_MEM:
 		arch_idle();
+		rcu_idle_exit();
 		break;
 
 	default:
+		rcu_idle_exit();
 		return -EINVAL;
 	}
 	return 0;

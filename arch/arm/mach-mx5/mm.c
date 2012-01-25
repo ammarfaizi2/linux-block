@@ -14,6 +14,7 @@
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/clk.h>
+#include <linux/rcupdate.h>
 
 #include <asm/mach/map.h>
 
@@ -37,7 +38,9 @@ static void imx5_idle(void)
 		mx5_cpu_lp_set(WAIT_UNCLOCKED_POWER_OFF);
 		if (tzic_enable_wake())
 			goto err1;
+		rcu_idle_enter();  /* No tracing until rcu_idle_exit(). */
 		cpu_do_idle();
+		rcu_idle_exit();
 err1:
 		clk_disable(gpc_dvfs_clk);
 	}

@@ -17,6 +17,7 @@
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/suspend.h>
+#include <linux/rcupdate.h>
 
 #include <asm/proc-fns.h>
 #include <asm/smp_scu.h>
@@ -33,11 +34,22 @@ static int highbank_suspend_finish(unsigned long val)
 
 static int highbank_pm_enter(suspend_state_t state)
 {
+	/*
+	 * Some of the functions preceding the cpu_suspend() can
+	 * invoke RCU, but only in case of failure to disable preemption
+	 * or preempt_disable() misnesting.  Assume that these errors
+	 * are not committed in the following code, because RCU just
+	 * doesn't want to run on a CPU that has its caches disabled.
+	 */
+	rcu_idle_enter();
+
 	hignbank_set_pwr_suspend();
 	highbank_set_cpu_jump(0, cpu_resume);
 
 	scu_power_mode(scu_base_addr, SCU_PM_POWEROFF);
 	cpu_suspend(0, highbank_suspend_finish);
+
+	rcu_idle_exit();
 
 	return 0;
 }

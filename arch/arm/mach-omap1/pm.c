@@ -108,11 +108,13 @@ void omap1_pm_idle(void)
 	__u32 use_idlect1 = arm_idlect1_mask;
 	int do_sleep = 0;
 
+	rcu_idle_enter();
 	local_irq_disable();
 	local_fiq_disable();
 	if (need_resched()) {
 		local_fiq_enable();
 		local_irq_enable();
+		rcu_idle_exit();
 		return;
 	}
 
@@ -158,6 +160,7 @@ void omap1_pm_idle(void)
 
 		local_fiq_enable();
 		local_irq_enable();
+		rcu_idle_exit();
 		return;
 	}
 	omap_sram_suspend(omap_readl(ARM_IDLECT1),
@@ -165,6 +168,7 @@ void omap1_pm_idle(void)
 
 	local_fiq_enable();
 	local_irq_enable();
+	rcu_idle_exit();
 }
 
 /*

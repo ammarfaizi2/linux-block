@@ -10,12 +10,14 @@
 #include <linux/kernel.h>
 #include <linux/suspend.h>
 #include <linux/io.h>
+#include <linux/rcupdate.h>
 #include <mach/system.h>
 #include <mach/hardware.h>
 
 static int mx27_suspend_enter(suspend_state_t state)
 {
 	u32 cscr;
+	rcu_idle_enter();
 	switch (state) {
 	case PM_SUSPEND_MEM:
 		/* Clear MPEN and SPEN to disable MPLL/SPLL */
@@ -24,9 +26,11 @@ static int mx27_suspend_enter(suspend_state_t state)
 		__raw_writel(cscr, MX27_IO_ADDRESS(MX27_CCM_BASE_ADDR));
 		/* Executes WFI */
 		arch_idle();
+		rcu_idle_exit();
 		break;
 
 	default:
+		rcu_idle_exit();
 		return -EINVAL;
 	}
 	return 0;

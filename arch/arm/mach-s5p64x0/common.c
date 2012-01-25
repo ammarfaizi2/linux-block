@@ -146,6 +146,7 @@ static void s5p64x0_idle(void)
 {
 	unsigned long val;
 
+	rcu_idle_enter();
 	if (!need_resched()) {
 		val = __raw_readl(S5P64X0_PWR_CFG);
 		val &= ~(0x3 << 5);
@@ -154,6 +155,7 @@ static void s5p64x0_idle(void)
 
 		cpu_do_idle();
 	}
+	rcu_idle_exit();
 	local_irq_enable();
 }
 

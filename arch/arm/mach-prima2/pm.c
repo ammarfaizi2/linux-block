@@ -15,6 +15,7 @@
 #include <linux/of_device.h>
 #include <linux/of_platform.h>
 #include <linux/io.h>
+#include <linux/rcupdate.h>
 #include <linux/rtc/sirfsoc_rtciobrg.h>
 #include <asm/suspend.h>
 #include <asm/hardware/cache-l2x0.h>
@@ -64,6 +65,7 @@ static int sirfsoc_pre_suspend_power_off(void)
 
 static int sirfsoc_pm_enter(suspend_state_t state)
 {
+	rcu_idle_enter(); /* No good place for this: locking->lockdep->RCU. */
 	switch (state) {
 	case PM_SUSPEND_MEM:
 		sirfsoc_pre_suspend_power_off();
@@ -73,8 +75,10 @@ static int sirfsoc_pm_enter(suspend_state_t state)
 		/* go zzz */
 		cpu_suspend(0, sirfsoc_finish_suspend);
 		outer_resume();
+		rcu_idle_exit();
 		break;
 	default:
+		rcu_idle_exit();
 		return -EINVAL;
 	}
 	return 0;

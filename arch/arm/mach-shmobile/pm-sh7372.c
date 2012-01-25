@@ -21,6 +21,7 @@
 #include <linux/irq.h>
 #include <linux/bitrev.h>
 #include <linux/console.h>
+#include <linux/rcupdate.h>
 #include <asm/system.h>
 #include <asm/io.h>
 #include <asm/tlbflush.h>
@@ -520,17 +521,24 @@ static int sh7372_enter_suspend(suspend_state_t suspend_state)
 		    sh7372_a4s.genpd.status == GPD_STATE_POWER_OFF) {
 			/* enter A4S sleep with PLLC0 off */
 			pr_debug("entering A4S\n");
+			rcu_idle_enter();
 			sh7372_enter_a4s_common(0);
+			rcu_idle_exit();
 		} else {
 			/* enter A3SM sleep with PLLC0 off */
 			pr_debug("entering A3SM\n");
+			rcu_idle_enter();
 			sh7372_enter_a3sm_common(0);
+			rcu_idle_exit();
 		}
 	} else {
 		/* default to Core Standby that supports all wakeup sources */
 		pr_debug("entering Core Standby\n");
+		rcu_idle_enter();
 		sh7372_enter_core_standby();
+		rcu_idle_exit();
 	}
+
 	return 0;
 }
 

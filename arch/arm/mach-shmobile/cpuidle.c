@@ -13,6 +13,7 @@
 #include <linux/suspend.h>
 #include <linux/module.h>
 #include <linux/err.h>
+#include <linux/rcupdate.h>
 #include <asm/system.h>
 #include <asm/io.h>
 
@@ -33,6 +34,7 @@ static int shmobile_cpuidle_enter(struct cpuidle_device *dev,
 
 	before = ktime_get();
 
+	rcu_idle_enter();
 	local_irq_disable();
 	local_fiq_disable();
 
@@ -40,6 +42,7 @@ static int shmobile_cpuidle_enter(struct cpuidle_device *dev,
 
 	local_irq_enable();
 	local_fiq_enable();
+	rcu_idle_exit();
 
 	after = ktime_get();
 	dev->last_residency = ktime_to_ns(ktime_sub(after, before)) >> 10;

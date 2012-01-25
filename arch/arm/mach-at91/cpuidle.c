@@ -20,6 +20,7 @@
 #include <asm/proc-fns.h>
 #include <linux/io.h>
 #include <linux/export.h>
+#include <linux/rcupdate.h>
 
 #include "pm.h"
 
@@ -43,6 +44,7 @@ static int at91_enter_idle(struct cpuidle_device *dev,
 
 	local_irq_disable();
 	do_gettimeofday(&before);
+	rcu_idle_enter();
 	if (index == 0)
 		/* Wait for interrupt state */
 		cpu_do_idle();
@@ -53,6 +55,7 @@ static int at91_enter_idle(struct cpuidle_device *dev,
 		cpu_do_idle();
 		sdram_selfrefresh_disable(saved_lpr);
 	}
+	rcu_idle_exit();
 	do_gettimeofday(&after);
 	local_irq_enable();
 	idle_time = (after.tv_sec - before.tv_sec) * USEC_PER_SEC +

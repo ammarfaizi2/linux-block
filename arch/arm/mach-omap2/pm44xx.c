@@ -16,6 +16,7 @@
 #include <linux/list.h>
 #include <linux/err.h>
 #include <linux/slab.h>
+#include <linux/rcupdate.h>
 
 #include "common.h"
 #include "clockdomain.h"
@@ -178,6 +179,7 @@ static int __init pwrdms_setup(struct powerdomain *pwrdm, void *unused)
  */
 static void omap_default_idle(void)
 {
+	rcu_idle_enter();
 	local_irq_disable();
 	local_fiq_disable();
 
@@ -185,6 +187,7 @@ static void omap_default_idle(void)
 
 	local_fiq_enable();
 	local_irq_enable();
+	rcu_idle_exit();
 }
 
 /**

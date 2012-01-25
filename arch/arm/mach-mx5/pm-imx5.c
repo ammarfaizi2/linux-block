@@ -12,6 +12,7 @@
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/err.h>
+#include <linux/rcupdate.h>
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 #include <mach/common.h>
@@ -27,6 +28,7 @@ static int mx5_suspend_prepare(void)
 
 static int mx5_suspend_enter(suspend_state_t state)
 {
+	rcu_idle_enter();
 	switch (state) {
 	case PM_SUSPEND_MEM:
 		mx5_cpu_lp_set(STOP_POWER_OFF);
@@ -47,6 +49,7 @@ static int mx5_suspend_enter(suspend_state_t state)
 		__raw_writel(0, MXC_SRPG_EMPGC1_SRPGCR);
 	}
 	cpu_do_idle();
+	rcu_idle_exit();
 	return 0;
 }
 

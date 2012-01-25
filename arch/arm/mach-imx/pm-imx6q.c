@@ -14,6 +14,7 @@
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/suspend.h>
+#include <linux/rcupdate.h>
 #include <asm/cacheflush.h>
 #include <asm/proc-fns.h>
 #include <asm/suspend.h>
@@ -31,6 +32,7 @@ static int imx6q_suspend_finish(unsigned long val)
 
 static int imx6q_pm_enter(suspend_state_t state)
 {
+	rcu_idle_enter();
 	switch (state) {
 	case PM_SUSPEND_MEM:
 		imx6q_set_lpm(STOP_POWER_OFF);
@@ -40,8 +42,10 @@ static int imx6q_pm_enter(suspend_state_t state)
 		cpu_suspend(0, imx6q_suspend_finish);
 		imx_smp_prepare();
 		imx_gpc_post_resume();
+		rcu_idle_exit();
 		break;
 	default:
+		rcu_idle_exit();
 		return -EINVAL;
 	}
 

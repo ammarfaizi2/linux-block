@@ -102,6 +102,7 @@ static inline void pnx4008_suspend(void)
 
 static int pnx4008_pm_enter(suspend_state_t state)
 {
+	rcu_idle_enter();
 	switch (state) {
 	case PM_SUSPEND_STANDBY:
 		pnx4008_standby();
@@ -110,6 +111,7 @@ static int pnx4008_pm_enter(suspend_state_t state)
 		pnx4008_suspend();
 		break;
 	}
+	rcu_idle_exit();
 	return 0;
 }
 

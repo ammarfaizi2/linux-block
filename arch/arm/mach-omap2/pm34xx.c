@@ -427,7 +427,9 @@ static void omap3_pm_idle(void)
 	trace_power_start(POWER_CSTATE, 1, smp_processor_id());
 	trace_cpu_idle(1, smp_processor_id());
 
+	rcu_idle_enter();
 	omap_sram_idle();
+	rcu_idle_exit();
 
 	trace_power_end(smp_processor_id());
 	trace_cpu_idle(PWR_EVENT_EXIT, smp_processor_id());
