@@ -53,7 +53,25 @@ void arch_jump_label_transform(struct jump_entry *entry,
 void arch_jump_label_transform_static(struct jump_entry *entry,
 				      enum jump_label_type type)
 {
-	__jump_label_transform(entry, type, text_poke_early);
+	static int once;
+	static int update;
+
+	/*
+	 * This function is called at boot up and when modules are
+	 * first loaded. Check if the default nop, the one that is
+	 * inserted at compile time, is the ideal nop. If it is, then
+	 * we do not need to update the nop, and we can leave it as is.
+	 * If it is not, then we need to update the nop to the ideal nop.
+	 */
+	if (!once) {
+		const unsigned char default_nop[] = { JUMP_LABEL_INIT_NOP };
+		const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
+		once++;
+		if (memcmp(ideal_nop, default_nop, 5) != 0)
+			update = 1;
+	}
+	if (update)
+		__jump_label_transform(entry, type, text_poke_early);
 }
 
 #endif
