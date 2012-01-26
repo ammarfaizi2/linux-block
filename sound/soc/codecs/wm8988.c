@@ -317,7 +317,7 @@ static const struct snd_soc_dapm_widget wm8988_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("RINPUT2"),
 };
 
-static const struct snd_soc_dapm_route audio_map[] = {
+static const struct snd_soc_dapm_route wm8988_dapm_routes[] = {
 
 	{ "Left Line Mux", "Line 1", "LINPUT1" },
 	{ "Left Line Mux", "Line 2", "LINPUT2" },
@@ -743,7 +743,6 @@ static int wm8988_resume(struct snd_soc_codec *codec)
 static int wm8988_probe(struct snd_soc_codec *codec)
 {
 	struct wm8988_priv *wm8988 = snd_soc_codec_get_drvdata(codec);
-	struct snd_soc_dapm_context *dapm = &codec->dapm;
 	int ret = 0;
 
 	ret = snd_soc_codec_set_cache_io(codec, 7, 9, wm8988->control_type);
@@ -767,12 +766,6 @@ static int wm8988_probe(struct snd_soc_codec *codec)
 
 	wm8988_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
 
-	snd_soc_add_controls(codec, wm8988_snd_controls,
-				ARRAY_SIZE(wm8988_snd_controls));
-	snd_soc_dapm_new_controls(dapm, wm8988_dapm_widgets,
-				  ARRAY_SIZE(wm8988_dapm_widgets));
-	snd_soc_dapm_add_routes(dapm, audio_map, ARRAY_SIZE(audio_map));
-
 	return 0;
 }
 
@@ -791,6 +784,13 @@ static struct snd_soc_codec_driver soc_codec_dev_wm8988 = {
 	.reg_cache_size = ARRAY_SIZE(wm8988_reg),
 	.reg_word_size = sizeof(u16),
 	.reg_cache_default = wm8988_reg,
+
+	.controls = wm8988_snd_controls,
+	.num_controls = ARRAY_SIZE(wm8988_snd_controls),
+	.dapm_widgets = wm8988_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(wm8988_dapm_widgets),
+	.dapm_routes = wm8988_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(wm8988_dapm_routes),
 };
 
 #if defined(CONFIG_SPI_MASTER)
@@ -799,7 +799,8 @@ static int __devinit wm8988_spi_probe(struct spi_device *spi)
 	struct wm8988_priv *wm8988;
 	int ret;
 
-	wm8988 = kzalloc(sizeof(struct wm8988_priv), GFP_KERNEL);
+	wm8988 = devm_kzalloc(&spi->dev, sizeof(struct wm8988_priv),
+			      GFP_KERNEL);
 	if (wm8988 == NULL)
 		return -ENOMEM;
 
@@ -808,15 +809,13 @@ static int __devinit wm8988_spi_probe(struct spi_device *spi)
 
 	ret = snd_soc_register_codec(&spi->dev,
 			&soc_codec_dev_wm8988, &wm8988_dai, 1);
-	if (ret < 0)
-		kfree(wm8988);
+
 	return ret;
 }
 
 static int __devexit wm8988_spi_remove(struct spi_device *spi)
 {
 	snd_soc_unregister_codec(&spi->dev);
-	kfree(spi_get_drvdata(spi));
 	return 0;
 }
 
@@ -837,7 +836,8 @@ static __devinit int wm8988_i2c_probe(struct i2c_client *i2c,
 	struct wm8988_priv *wm8988;
 	int ret;
 
-	wm8988 = kzalloc(sizeof(struct wm8988_priv), GFP_KERNEL);
+	wm8988 = devm_kzalloc(&i2c->dev, sizeof(struct wm8988_priv),
+			      GFP_KERNEL);
 	if (wm8988 == NULL)
 		return -ENOMEM;
 
@@ -846,15 +846,12 @@ static __devinit int wm8988_i2c_probe(struct i2c_client *i2c,
 
 	ret =  snd_soc_register_codec(&i2c->dev,
 			&soc_codec_dev_wm8988, &wm8988_dai, 1);
-	if (ret < 0)
-		kfree(wm8988);
 	return ret;
 }
 
 static __devexit int wm8988_i2c_remove(struct i2c_client *client)
 {
 	snd_soc_unregister_codec(&client->dev);
-	kfree(i2c_get_clientdata(client));
 	return 0;
 }
 

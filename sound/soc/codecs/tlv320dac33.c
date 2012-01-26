@@ -806,8 +806,6 @@ static int dac33_startup(struct snd_pcm_substream *substream,
 	/* Stream started, save the substream pointer */
 	dac33->substream = substream;
 
-	snd_pcm_hw_constraint_msbits(substream->runtime, 0, 32, 24);
-
 	return 0;
 }
 
@@ -1515,7 +1513,9 @@ static struct snd_soc_dai_driver dac33_dai = {
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = DAC33_RATES,
-		.formats = DAC33_FORMATS,},
+		.formats = DAC33_FORMATS,
+		.sig_bits = 24,
+	},
 	.ops = &dac33_dai_ops,
 };
 
