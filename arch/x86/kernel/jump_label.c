@@ -32,6 +32,18 @@ union jump_code_union {
 	} __packed;
 };
 
+static void bug_at(unsigned char *ip, int line)
+{
+	/*
+	 * The location is not an op that we were expecting.
+	 * Something went wrong. Crash the box, as something could be
+	 * corrupting the kernel.
+	 */
+	printk("Unexpected op at %pS [%p] (%02x %02x %02x %02x %02x) %s:%d\n",
+	       ip, ip, ip[0], ip[1], ip[2], ip[3], ip[4], __FILE__, line);
+	BUG();
+}
+
 static void __jump_label_transform(struct jump_entry *entry,
 				   enum jump_label_type type,
 				   void *(*poker)(void *, const void *, size_t),
@@ -59,12 +71,7 @@ static void __jump_label_transform(struct jump_entry *entry,
 			code.jump = 0xe9;
 			code.offset = entry->target - (entry->code + size);
 		} else
-			/*
-			 * The location is not a nop that we were expecting,
-			 * something went wrong. Crash the box, as something could be
-			 * corrupting the kernel.
-			 */
-			BUG();
+			bug_at(ip, __LINE__);
 	} else {
 		/*
 		 * We are disabling this jump label. If it is not what
@@ -78,7 +85,8 @@ static void __jump_label_transform(struct jump_entry *entry,
 				return;
 
 			/* We are initializing from the default nop */
-			BUG_ON(memcmp(ip, default_nop, 5) != 0);
+			if (unlikely(memcmp(ip, default_nop, 5) != 0))
+				bug_at(ip, __LINE__);
 
 			/* Set to the ideal nop */
 			size = JUMP_LABEL_NOP_SIZE;
@@ -91,7 +99,9 @@ static void __jump_label_transform(struct jump_entry *entry,
 			code.jump = 0xe9;
 			code.offset = entry->target -
 				(entry->code + JUMP_LABEL_NOP_SIZE);
-			BUG_ON(memcmp(ip, &code, 5) != 0);
+
+			if (unlikely(memcmp(ip, &code, 5) != 0))
+				bug_at(ip, __LINE__);
 
 			size = JUMP_LABEL_NOP_SIZE;
 			memcpy(&code, ideal_nops[NOP_ATOMIC5], size);
@@ -101,13 +111,14 @@ static void __jump_label_transform(struct jump_entry *entry,
 			/* Had better be a 2 byte jmp */
 			code.jump_short = 0xeb;
 			code.offset = entry->target - (entry->code + 2);
-			BUG_ON(memcmp(ip, &code, 2) != 0);
+			if (unlikely(memcmp(ip, &code, 2) != 0))
+				bug_at(ip, __LINE__);
 
 			size = 2;
 			memcpy(&code, nop_short, size);
 		} else
 			/* The code was not what we expected!  */
-			BUG();
+			bug_at(ip, __LINE__);
 	}
 
 	(*poker)(ip, &code, size);
