@@ -66,7 +66,8 @@ static void __jump_label_transform(struct jump_entry *entry,
 			code.jump_short = 0xeb;
 			code.offset = entry->target - (entry->code + 2);
 			/* Check for overflow ? */
-		} else if (memcmp(ip, ideal_nop, 5) == 0) {
+		} else if ((!init && memcmp(ip, ideal_nop, 5) == 0) ||
+			   (init && memcmp(ip, default_nop, 5) == 0)) {
 			size = JUMP_LABEL_NOP_SIZE;
 			code.jump = 0xe9;
 			code.offset = entry->target - (entry->code + size);
