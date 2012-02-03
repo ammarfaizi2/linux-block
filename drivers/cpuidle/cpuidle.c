@@ -94,13 +94,17 @@ int cpuidle_idle_call(void)
 
 	target_state = &drv->states[next_state];
 
-	trace_power_start(POWER_CSTATE, next_state, dev->cpu);
-	trace_cpu_idle(next_state, dev->cpu);
+	RCU_NONIDLE(
+		trace_power_start(POWER_CSTATE, next_state, dev->cpu);
+		trace_cpu_idle(next_state, dev->cpu)
+	);
 
 	entered_state = target_state->enter(dev, drv, next_state);
 
-	trace_power_end(dev->cpu);
-	trace_cpu_idle(PWR_EVENT_EXIT, dev->cpu);
+	RCU_NONIDLE(
+		trace_power_end(dev->cpu);
+		trace_cpu_idle(PWR_EVENT_EXIT, dev->cpu);
+	);
 
 	if (entered_state >= 0) {
 		/* Update cpuidle counters */
