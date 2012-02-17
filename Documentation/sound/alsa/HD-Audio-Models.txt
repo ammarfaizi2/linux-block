@@ -8,7 +8,6 @@ ALC880
   5stack-digout	5-jack in back, 2-jack in front, a SPDIF out
   6stack	6-jack in back, 2-jack in front
   6stack-digout	6-jack with a SPDIF out
-  w810		3-jack
   z71v		3-jack (HP shared SPDIF)
   asus		3-jack (ASUS Mobo)
   asus-w1v	ASUS W1V
@@ -17,11 +16,6 @@ ALC880
   uniwill	3-jack
   fujitsu	Fujitsu Laptops (Pi1536)
   F1734		2-jack
-  lg		LG laptop (m1 express dual)
-  lg-lw		LG LW20/LW25 laptop
-  tcl		TCL S700
-  clevo		Clevo laptops (m520G, m665n)
-  medion	Medion Rim 2150
   test		for testing/debugging purpose, almost all controls can be
 		adjusted.  Appearing only when compiled with
 		$CONFIG_SND_DEBUG=y
