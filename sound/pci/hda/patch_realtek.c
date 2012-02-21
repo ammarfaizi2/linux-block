@@ -302,6 +302,9 @@ static int alc_mux_select(struct hda_codec *codec, unsigned int adc_idx,
 	int i, type, num_conns;
 	hda_nid_t nid;
 
+	if (!spec->input_mux)
+		return 0;
+
 	mux_idx = adc_idx >= spec->num_mux_defs ? 0 : adc_idx;
 	imux = &spec->input_mux[mux_idx];
 	if (!imux->num_items && mux_idx > 0)
@@ -3350,7 +3353,11 @@ static int fill_and_eval_dacs(struct hda_codec *codec,
 	}
 	if (cfg->hp_outs && cfg->line_out_type == AUTO_PIN_SPEAKER_OUT) {
 		/* try multi-ios with HP + inputs */
-		err = alc_auto_fill_multi_ios(codec, cfg->hp_pins[0], false, 1);
+		int offset = 0;
+		if (cfg->line_outs >= 3)
+			offset = 1;
+		err = alc_auto_fill_multi_ios(codec, cfg->hp_pins[0], false,
+					      offset);
 		if (err < 0)
 			return err;
 		badness += err;
@@ -3610,14 +3617,17 @@ static int alc_auto_create_multi_out_ctls(struct hda_codec *codec,
 		dac = spec->multiout.dac_nids[i];
 		if (!dac)
 			continue;
-		if (i >= cfg->line_outs)
+		if (i >= cfg->line_outs) {
 			pin = spec->multi_io[i - 1].pin;
-		else
+			index = 0;
+			name = channel_name[i];
+		} else {
 			pin = cfg->line_out_pins[i];
+			name = alc_get_line_out_pfx(spec, i, true, &index);
+		}
 
 		sw = alc_look_for_out_mute_nid(codec, pin, dac);
 		vol = alc_look_for_out_vol_nid(codec, pin, dac);
-		name = alc_get_line_out_pfx(spec, i, true, &index);
 		if (!name || !strcmp(name, "CLFE")) {
 			/* Center/LFE */
 			err = alc_auto_add_vol_ctl(codec, "Center", 0, vol, 1);
@@ -3714,41 +3724,31 @@ static int alc_auto_create_extra_outs(struct hda_codec *codec, int num_pins,
 		return alc_auto_create_extra_out(codec, *pins, dac, pfx, 0);
 	}
 
-	if (dacs[num_pins - 1]) {
-		/* OK, we have a multi-output system with individual volumes */
-		for (i = 0; i < num_pins; i++) {
-			if (num_pins >= 3) {
-				snprintf(name, sizeof(name), "%s %s",
-					 pfx, channel_name[i]);
-				err = alc_auto_create_extra_out(codec, pins[i], dacs[i],
-								name, 0);
-			} else {
-				err = alc_auto_create_extra_out(codec, pins[i], dacs[i],
-								pfx, i);
-			}
-			if (err < 0)
-				return err;
-		}
-		return 0;
-	}
-
-	/* Let's create a bind-controls */
-	ctl = new_bind_ctl(codec, num_pins, &snd_hda_bind_sw);
-	if (!ctl)
-		return -ENOMEM;
-	n = 0;
 	for (i = 0; i < num_pins; i++) {
-		if (get_wcaps(codec, pins[i]) & AC_WCAP_OUT_AMP)
-			ctl->values[n++] =
-				HDA_COMPOSE_AMP_VAL(pins[i], 3, 0, HDA_OUTPUT);
-	}
-	if (n) {
-		snprintf(name, sizeof(name), "%s Playback Switch", pfx);
-		err = add_control(spec, ALC_CTL_BIND_SW, name, 0, (long)ctl);
+		hda_nid_t dac;
+		if (dacs[num_pins - 1])
+			dac = dacs[i]; /* with individual volumes */
+		else
+			dac = 0;
+		if (num_pins == 2 && i == 1 && !strcmp(pfx, "Speaker")) {
+			err = alc_auto_create_extra_out(codec, pins[i], dac,
+							"Bass Speaker", 0);
+		} else if (num_pins >= 3) {
+			snprintf(name, sizeof(name), "%s %s",
+				 pfx, channel_name[i]);
+			err = alc_auto_create_extra_out(codec, pins[i], dac,
+							name, 0);
+		} else {
+			err = alc_auto_create_extra_out(codec, pins[i], dac,
+							pfx, i);
+		}
 		if (err < 0)
 			return err;
 	}
+	if (dacs[num_pins - 1])
+		return 0;
 
+	/* Let's create a bind-controls for volumes */
 	ctl = new_bind_ctl(codec, num_pins, &snd_hda_bind_vol);
 	if (!ctl)
 		return -ENOMEM;
