@@ -200,6 +200,8 @@ struct alc_spec {
 	hda_nid_t vmaster_nid;
 #ifdef CONFIG_SND_HDA_POWER_SAVE
 	struct hda_loopback_check loopback;
+	int num_loopbacks;
+	struct hda_amp_list loopback_list[8];
 #endif
 
 	/* for PLL fix */
@@ -2690,6 +2692,25 @@ static const char *alc_get_line_out_pfx(struct alc_spec *spec, int ch,
 	return channel_name[ch];
 }
 
+#ifdef CONFIG_SND_HDA_POWER_SAVE
+/* add the powersave loopback-list entry */
+static void add_loopback_list(struct alc_spec *spec, hda_nid_t mix, int idx)
+{
+	struct hda_amp_list *list;
+
+	if (spec->num_loopbacks >= ARRAY_SIZE(spec->loopback_list) - 1)
+		return;
+	list = spec->loopback_list + spec->num_loopbacks;
+	list->nid = mix;
+	list->dir = HDA_INPUT;
+	list->idx = idx;
+	spec->num_loopbacks++;
+	spec->loopback.amplist = spec->loopback_list;
+}
+#else
+#define add_loopback_list(spec, mix, idx) /* NOP */
+#endif
+
 /* create input playback/capture controls for the given pin */
 static int new_analog_input(struct alc_spec *spec, hda_nid_t pin,
 			    const char *ctlname, int ctlidx,
@@ -2705,6 +2726,7 @@ static int new_analog_input(struct alc_spec *spec, hda_nid_t pin,
 			  HDA_COMPOSE_AMP_VAL(mix_nid, 3, idx, HDA_INPUT));
 	if (err < 0)
 		return err;
+	add_loopback_list(spec, mix_nid, idx);
 	return 0;
 }
 
@@ -4430,17 +4452,6 @@ static int alc880_parse_auto_config(struct hda_codec *codec)
 	return alc_parse_auto_config(codec, alc880_ignore, alc880_ssids);
 }
 
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-static const struct hda_amp_list alc880_loopbacks[] = {
-	{ 0x0b, HDA_INPUT, 0 },
-	{ 0x0b, HDA_INPUT, 1 },
-	{ 0x0b, HDA_INPUT, 2 },
-	{ 0x0b, HDA_INPUT, 3 },
-	{ 0x0b, HDA_INPUT, 4 },
-	{ } /* end */
-};
-#endif
-
 /*
  * ALC880 fix-ups
  */
@@ -4808,21 +4819,6 @@ static const struct alc_model_fixup alc880_fixup_models[] = {
 
 
 /*
- * board setups
- */
-#ifdef CONFIG_SND_HDA_ENABLE_REALTEK_QUIRKS
-#define alc_board_config \
-	snd_hda_check_board_config
-#define alc_board_codec_sid_config \
-	snd_hda_check_board_codec_sid_config
-#include "alc_quirks.c"
-#else
-#define alc_board_config(codec, nums, models, tbl)	-1
-#define alc_board_codec_sid_config(codec, nums, models, tbl)	-1
-#define setup_preset(codec, x)	/* NOP */
-#endif
-
-/*
  * OK, here we have finally the patch for ALC880
  */
 static int patch_alc880(struct hda_codec *codec)
@@ -4866,10 +4862,6 @@ static int patch_alc880(struct hda_codec *codec)
 
 	codec->patch_ops = alc_patch_ops;
 	spec->init_hook = alc_auto_init_std;
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc880_loopbacks;
-#endif
 
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
 
@@ -4890,17 +4882,6 @@ static int alc260_parse_auto_config(struct hda_codec *codec)
 	static const hda_nid_t alc260_ssids[] = { 0x10, 0x15, 0x0f, 0 };
 	return alc_parse_auto_config(codec, alc260_ignore, alc260_ssids);
 }
-
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-static const struct hda_amp_list alc260_loopbacks[] = {
-	{ 0x07, HDA_INPUT, 0 },
-	{ 0x07, HDA_INPUT, 1 },
-	{ 0x07, HDA_INPUT, 2 },
-	{ 0x07, HDA_INPUT, 3 },
-	{ 0x07, HDA_INPUT, 4 },
-	{ } /* end */
-};
-#endif
 
 /*
  * Pin config fixes
@@ -5047,10 +5028,6 @@ static int patch_alc260(struct hda_codec *codec)
 	codec->patch_ops = alc_patch_ops;
 	spec->init_hook = alc_auto_init_std;
 	spec->shutup = alc_eapd_shutup;
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc260_loopbacks;
-#endif
 
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
 
@@ -5073,9 +5050,6 @@ static int patch_alc260(struct hda_codec *codec)
  * In addition, an independent DAC for the multi-playback (not used in this
  * driver yet).
  */
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-#define alc882_loopbacks	alc880_loopbacks
-#endif
 
 /*
  * Pin config fixes
@@ -5091,6 +5065,8 @@ enum {
 	ALC882_FIXUP_EAPD,
 	ALC883_FIXUP_EAPD,
 	ALC883_FIXUP_ACER_EAPD,
+	ALC882_FIXUP_GPIO1,
+	ALC882_FIXUP_GPIO2,
 	ALC882_FIXUP_GPIO3,
 	ALC889_FIXUP_COEF,
 	ALC882_FIXUP_ASUS_W2JC,
@@ -5099,6 +5075,8 @@ enum {
 	ALC882_FIXUP_ASPIRE_8930G_VERBS,
 	ALC885_FIXUP_MACPRO_GPIO,
 	ALC889_FIXUP_DAC_ROUTE,
+	ALC889_FIXUP_MBP_VREF,
+	ALC889_FIXUP_IMAC91_VREF,
 };
 
 static void alc889_fixup_coef(struct hda_codec *codec,
@@ -5175,6 +5153,51 @@ static void alc889_fixup_dac_route(struct hda_codec *codec,
 		snd_hda_override_conn_list(codec, 0x18, 5, conn);
 		snd_hda_override_conn_list(codec, 0x1a, 5, conn);
 	}
+}
+
+/* Set VREF on HP pin */
+static void alc889_fixup_mbp_vref(struct hda_codec *codec,
+				  const struct alc_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	static hda_nid_t nids[2] = { 0x14, 0x15 };
+	int i;
+
+	if (action != ALC_FIXUP_ACT_INIT)
+		return;
+	for (i = 0; i < ARRAY_SIZE(nids); i++) {
+		unsigned int val = snd_hda_codec_get_pincfg(codec, nids[i]);
+		if (get_defcfg_device(val) != AC_JACK_HP_OUT)
+			continue;
+		val = snd_hda_codec_read(codec, nids[i], 0,
+					 AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
+		val |= AC_PINCTL_VREF_80;
+		snd_hda_codec_write(codec, nids[i], 0,
+				    AC_VERB_SET_PIN_WIDGET_CONTROL, val);
+		spec->keep_vref_in_automute = 1;
+		break;
+	}
+}
+
+/* Set VREF on speaker pins on imac91 */
+static void alc889_fixup_imac91_vref(struct hda_codec *codec,
+				     const struct alc_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	static hda_nid_t nids[2] = { 0x18, 0x1a };
+	int i;
+
+	if (action != ALC_FIXUP_ACT_INIT)
+		return;
+	for (i = 0; i < ARRAY_SIZE(nids); i++) {
+		unsigned int val;
+		val = snd_hda_codec_read(codec, nids[i], 0,
+					 AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
+		val |= AC_PINCTL_VREF_50;
+		snd_hda_codec_write(codec, nids[i], 0,
+				    AC_VERB_SET_PIN_WIDGET_CONTROL, val);
+	}
+	spec->keep_vref_in_automute = 1;
 }
 
 static const struct alc_fixup alc882_fixups[] = {
@@ -5255,6 +5278,14 @@ static const struct alc_fixup alc882_fixups[] = {
 			{ }
 		}
 	},
+	[ALC882_FIXUP_GPIO1] = {
+		.type = ALC_FIXUP_VERBS,
+		.v.verbs = alc_gpio1_init_verbs,
+	},
+	[ALC882_FIXUP_GPIO2] = {
+		.type = ALC_FIXUP_VERBS,
+		.v.verbs = alc_gpio2_init_verbs,
+	},
 	[ALC882_FIXUP_GPIO3] = {
 		.type = ALC_FIXUP_VERBS,
 		.v.verbs = alc_gpio3_init_verbs,
@@ -5328,6 +5359,18 @@ static const struct alc_fixup alc882_fixups[] = {
 		.type = ALC_FIXUP_FUNC,
 		.v.func = alc889_fixup_dac_route,
 	},
+	[ALC889_FIXUP_MBP_VREF] = {
+		.type = ALC_FIXUP_FUNC,
+		.v.func = alc889_fixup_mbp_vref,
+		.chained = true,
+		.chain_id = ALC882_FIXUP_GPIO1,
+	},
+	[ALC889_FIXUP_IMAC91_VREF] = {
+		.type = ALC_FIXUP_FUNC,
+		.v.func = alc889_fixup_imac91_vref,
+		.chained = true,
+		.chain_id = ALC882_FIXUP_GPIO1,
+	},
 };
 
 static const struct snd_pci_quirk alc882_fixup_tbl[] = {
@@ -5361,11 +5404,26 @@ static const struct snd_pci_quirk alc882_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x104d, 0x9047, "Sony Vaio TT", ALC889_FIXUP_VAIO_TT),
 
 	/* All Apple entries are in codec SSIDs */
+	SND_PCI_QUIRK(0x106b, 0x00a0, "MacBookPro 3,1", ALC889_FIXUP_MBP_VREF),
+	SND_PCI_QUIRK(0x106b, 0x00a1, "Macbook", ALC889_FIXUP_MBP_VREF),
+	SND_PCI_QUIRK(0x106b, 0x00a4, "MacbookPro 4,1", ALC889_FIXUP_MBP_VREF),
 	SND_PCI_QUIRK(0x106b, 0x0c00, "Mac Pro", ALC885_FIXUP_MACPRO_GPIO),
 	SND_PCI_QUIRK(0x106b, 0x1000, "iMac 24", ALC885_FIXUP_MACPRO_GPIO),
 	SND_PCI_QUIRK(0x106b, 0x2800, "AppleTV", ALC885_FIXUP_MACPRO_GPIO),
+	SND_PCI_QUIRK(0x106b, 0x2c00, "MacbookPro rev3", ALC889_FIXUP_MBP_VREF),
+	SND_PCI_QUIRK(0x106b, 0x3000, "iMac", ALC889_FIXUP_MBP_VREF),
 	SND_PCI_QUIRK(0x106b, 0x3200, "iMac 7,1 Aluminum", ALC882_FIXUP_EAPD),
+	SND_PCI_QUIRK(0x106b, 0x3400, "MacBookAir 1,1", ALC889_FIXUP_MBP_VREF),
+	SND_PCI_QUIRK(0x106b, 0x3500, "MacBookAir 2,1", ALC889_FIXUP_MBP_VREF),
+	SND_PCI_QUIRK(0x106b, 0x3600, "Macbook 3,1", ALC889_FIXUP_MBP_VREF),
+	SND_PCI_QUIRK(0x106b, 0x3800, "MacbookPro 4,1", ALC889_FIXUP_MBP_VREF),
 	SND_PCI_QUIRK(0x106b, 0x3e00, "iMac 24 Aluminum", ALC885_FIXUP_MACPRO_GPIO),
+	SND_PCI_QUIRK(0x106b, 0x3f00, "Macbook 5,1", ALC889_FIXUP_IMAC91_VREF),
+	SND_PCI_QUIRK(0x106b, 0x4000, "MacbookPro 5,1", ALC889_FIXUP_IMAC91_VREF),
+	SND_PCI_QUIRK(0x106b, 0x4100, "Macmini 3,1", ALC889_FIXUP_IMAC91_VREF),
+	SND_PCI_QUIRK(0x106b, 0x4600, "MacbookPro 5,2", ALC889_FIXUP_IMAC91_VREF),
+	SND_PCI_QUIRK(0x106b, 0x4900, "iMac 9,1 Aluminum", ALC889_FIXUP_IMAC91_VREF),
+	SND_PCI_QUIRK(0x106b, 0x4a00, "Macbook 5,2", ALC889_FIXUP_IMAC91_VREF),
 
 	SND_PCI_QUIRK(0x1071, 0x8258, "Evesham Voyaeger", ALC882_FIXUP_EAPD),
 	SND_PCI_QUIRK_VENDOR(0x1462, "MSI", ALC882_FIXUP_GPIO3),
@@ -5390,14 +5448,10 @@ static int alc882_parse_auto_config(struct hda_codec *codec)
 
 /*
  */
-#ifdef CONFIG_SND_HDA_ENABLE_REALTEK_QUIRKS
-#include "alc882_quirks.c"
-#endif
-
 static int patch_alc882(struct hda_codec *codec)
 {
 	struct alc_spec *spec;
-	int err, board_config;
+	int err;
 
 	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
 	if (spec == NULL)
@@ -5421,36 +5475,15 @@ static int patch_alc882(struct hda_codec *codec)
 	if (err < 0)
 		goto error;
 
-	board_config = alc_board_config(codec, ALC882_MODEL_LAST,
-					alc882_models, NULL);
-	if (board_config < 0)
-		board_config = alc_board_codec_sid_config(codec,
-			ALC882_MODEL_LAST, alc882_models, alc882_ssid_cfg_tbl);
-
-	if (board_config < 0) {
-		printk(KERN_INFO "hda_codec: %s: BIOS auto-probing.\n",
-		       codec->chip_name);
-		board_config = ALC_MODEL_AUTO;
-	}
-
-	if (board_config == ALC_MODEL_AUTO) {
-		alc_pick_fixup(codec, NULL, alc882_fixup_tbl, alc882_fixups);
-		alc_apply_fixup(codec, ALC_FIXUP_ACT_PRE_PROBE);
-	}
+	alc_pick_fixup(codec, NULL, alc882_fixup_tbl, alc882_fixups);
+	alc_apply_fixup(codec, ALC_FIXUP_ACT_PRE_PROBE);
 
 	alc_auto_parse_customize_define(codec);
 
-	if (board_config == ALC_MODEL_AUTO) {
-		/* automatic parse from the BIOS config */
-		err = alc882_parse_auto_config(codec);
-		if (err < 0)
-			goto error;
-	}
-
-	if (board_config != ALC_MODEL_AUTO) {
-		setup_preset(codec, &alc882_presets[board_config]);
-		spec->vmaster_nid = 0x0c;
-	}
+	/* automatic parse from the BIOS config */
+	err = alc882_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
 	if (!spec->no_analog && !spec->adc_nids) {
 		alc_auto_fill_adc_caps(codec);
@@ -5469,15 +5502,7 @@ static int patch_alc882(struct hda_codec *codec)
 	}
 
 	codec->patch_ops = alc_patch_ops;
-	if (board_config == ALC_MODEL_AUTO)
-		spec->init_hook = alc_auto_init_std;
-	else
-		codec->patch_ops.build_controls = __alc_build_controls;
-
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc882_loopbacks;
-#endif
+	spec->init_hook = alc_auto_init_std;
 
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
 
@@ -5575,10 +5600,6 @@ static const struct snd_pci_quirk alc262_fixup_tbl[] = {
 };
 
 
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-#define alc262_loopbacks	alc880_loopbacks
-#endif
-
 /*
  */
 static int patch_alc262(struct hda_codec *codec)
@@ -5637,11 +5658,6 @@ static int patch_alc262(struct hda_codec *codec)
 	codec->patch_ops = alc_patch_ops;
 	spec->init_hook = alc_auto_init_std;
 	spec->shutup = alc_eapd_shutup;
-
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc262_loopbacks;
-#endif
 
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
 
@@ -5760,10 +5776,6 @@ static int patch_alc268(struct hda_codec *codec)
 /*
  * ALC269
  */
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-#define alc269_loopbacks	alc880_loopbacks
-#endif
-
 static const struct hda_pcm_stream alc269_44k_pcm_analog_playback = {
 	.substreams = 1,
 	.channels_min = 2,
@@ -6303,8 +6315,6 @@ static int patch_alc269(struct hda_codec *codec)
 	spec->shutup = alc269_shutup;
 
 #ifdef CONFIG_SND_HDA_POWER_SAVE
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc269_loopbacks;
 	if (alc269_mic2_for_mute_led(codec))
 		codec->patch_ops.check_power_status = alc269_mic2_mute_check_ps;
 #endif
@@ -6328,17 +6338,6 @@ static int alc861_parse_auto_config(struct hda_codec *codec)
 	static const hda_nid_t alc861_ssids[] = { 0x0e, 0x0f, 0x0b, 0 };
 	return alc_parse_auto_config(codec, alc861_ignore, alc861_ssids);
 }
-
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-static const struct hda_amp_list alc861_loopbacks[] = {
-	{ 0x15, HDA_INPUT, 0 },
-	{ 0x15, HDA_INPUT, 1 },
-	{ 0x15, HDA_INPUT, 2 },
-	{ 0x15, HDA_INPUT, 3 },
-	{ } /* end */
-};
-#endif
-
 
 /* Pin config fixes */
 enum {
@@ -6453,8 +6452,6 @@ static int patch_alc861(struct hda_codec *codec)
 	spec->init_hook = alc_auto_init_std;
 #ifdef CONFIG_SND_HDA_POWER_SAVE
 	spec->power_hook = alc_power_eapd;
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc861_loopbacks;
 #endif
 
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
@@ -6473,10 +6470,6 @@ static int patch_alc861(struct hda_codec *codec)
  *
  * In addition, an independent DAC
  */
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-#define alc861vd_loopbacks	alc880_loopbacks
-#endif
-
 static int alc861vd_parse_auto_config(struct hda_codec *codec)
 {
 	static const hda_nid_t alc861vd_ignore[] = { 0x1d, 0 };
@@ -6577,10 +6570,6 @@ static int patch_alc861vd(struct hda_codec *codec)
 
 	spec->init_hook = alc_auto_init_std;
 	spec->shutup = alc_eapd_shutup;
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc861vd_loopbacks;
-#endif
 
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
 
@@ -6602,9 +6591,6 @@ static int patch_alc861vd(struct hda_codec *codec)
  * In addition, an independent DAC for the multi-playback (not used in this
  * driver yet).
  */
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-#define alc662_loopbacks	alc880_loopbacks
-#endif
 
 /*
  * BIOS auto configuration
@@ -6965,11 +6951,6 @@ static int patch_alc662(struct hda_codec *codec)
 	codec->patch_ops = alc_patch_ops;
 	spec->init_hook = alc_auto_init_std;
 	spec->shutup = alc_eapd_shutup;
-
-#ifdef CONFIG_SND_HDA_POWER_SAVE
-	if (!spec->loopback.amplist)
-		spec->loopback.amplist = alc662_loopbacks;
-#endif
 
 	alc_apply_fixup(codec, ALC_FIXUP_ACT_PROBE);
 
