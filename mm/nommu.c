@@ -739,7 +739,6 @@ static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
 	BUG_ON(!vma->vm_region);
 
 	mm->map_count++;
-	vma->vm_mm = mm;
 
 	protect_vma(vma, vma->vm_flags);
 
@@ -1448,6 +1447,7 @@ unsigned long do_mmap_pgoff(struct file *file,
 	current->mm->total_vm += len >> PAGE_SHIFT;
 
 share:
+	vma->vm_mm = current->mm;
 	add_vma_to_mm(current->mm, vma);
 
 	/* we flush the region from the icache only when the first executable
@@ -1605,6 +1605,8 @@ int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
 	add_nommu_region(vma->vm_region);
 	add_nommu_region(new->vm_region);
 	up_write(&nommu_region_sem);
+	vma->vm_mm = mm;
+	new->vm_mm = mm;
 	add_vma_to_mm(mm, vma);
 	add_vma_to_mm(mm, new);
 	return 0;
@@ -1629,6 +1631,7 @@ static int shrink_vma(struct mm_struct *mm,
 		vma->vm_end = from;
 	else
 		vma->vm_start = to;
+	vma->vm_mm = mm;
 	add_vma_to_mm(mm, vma);
 
 	/* cut the backing region down to size */
