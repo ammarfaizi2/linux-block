@@ -675,14 +675,14 @@ static void free_page_series(unsigned long from, unsigned long to)
 
 /*
  * release a reference to a region
- * - the caller must hold the region semaphore for writing, which this releases
  * - the region may not have been added to the tree yet, in which case vm_top
  *   will equal vm_start
  */
-static void __put_nommu_region(struct vm_region *region)
-	__releases(nommu_region_sem)
+static void put_nommu_region(struct vm_region *region)
 {
 	kenter("%p{%d}", region, region->vm_usage);
+
+	down_write(&nommu_region_sem);
 
 	BUG_ON(!nommu_region_tree.rb_node);
 
@@ -704,15 +704,6 @@ static void __put_nommu_region(struct vm_region *region)
 	} else {
 		up_write(&nommu_region_sem);
 	}
-}
-
-/*
- * release a reference to a region
- */
-static void put_nommu_region(struct vm_region *region)
-{
-	down_write(&nommu_region_sem);
-	__put_nommu_region(region);
 }
 
 /*
