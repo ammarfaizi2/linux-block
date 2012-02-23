@@ -67,12 +67,6 @@ typedef pte_t *pte_addr_t;
 #define pgprot_writecombine(prot) __pgprot(0)
 #define pgprot_dmacoherent(prot) __pgprot(0)
 
-
-/*
- * These would be in other places but having them here reduces the diffs.
- */
-extern unsigned int kobjsize(const void *objp);
-
 /*
  * No page table caches to initialise.
  */
