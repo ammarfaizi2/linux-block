@@ -677,7 +677,6 @@ static void vma_link(struct mm_struct *mm, struct vm_area_struct *vma,
 	if (mapping)
 		i_mmap_unlock_write(mapping);
 
-	mm->map_count++;
 	validate_mm(mm);
 }
 
@@ -694,7 +693,6 @@ static void __insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
 			   &prev, &rb_link, &rb_parent))
 		BUG();
 	__vma_link(mm, vma, prev, rb_link, rb_parent);
-	mm->map_count++;
 }
 
 static inline void

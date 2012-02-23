@@ -196,6 +196,8 @@ void __vma_link_list(struct mm_struct *mm, struct vm_area_struct *vma,
 	vma->vm_next = next;
 	if (next)
 		next->vm_prev = vma;
+
+	mm->map_count++;
 }
 
 /* Check if the vma is being used as a stack by this task */

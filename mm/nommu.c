@@ -738,8 +738,6 @@ static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
 
 	BUG_ON(!vma->vm_region);
 
-	mm->map_count++;
-
 	protect_vma(vma, vma->vm_flags);
 
 	/* add the VMA to the mapping */
