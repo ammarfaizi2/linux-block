@@ -434,3 +434,15 @@ out_mm:
 out:
 	return res;
 }
+
+struct vm_area_struct *alloc_vma(struct mm_struct *mm)
+{
+	struct vm_area_struct *vma;
+
+	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
+	if (vma) {
+		vma->vm_mm = mm;
+		INIT_LIST_HEAD(&vma->anon_vma_chain);
+	}
+	return vma;
+}

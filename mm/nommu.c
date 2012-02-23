@@ -1300,7 +1300,7 @@ unsigned long do_mmap_pgoff(struct file *file,
 	if (!region)
 		goto error_getting_region;
 
-	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
+	vma = alloc_vma(current->mm);
 	if (!vma)
 		goto error_getting_vma;
 
@@ -1308,10 +1308,8 @@ unsigned long do_mmap_pgoff(struct file *file,
 	region->vm_flags = vm_flags;
 	region->vm_pgoff = pgoff;
 
-	INIT_LIST_HEAD(&vma->anon_vma_chain);
 	vma->vm_flags = vm_flags;
 	vma->vm_pgoff = pgoff;
-	vma->vm_mm = current->mm;
 
 	if (file) {
 		region->vm_file = get_file(file);
