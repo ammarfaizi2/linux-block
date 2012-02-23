@@ -28,6 +28,8 @@ extern void copy_page(void *to, const void *from);
 #define clear_user_page(page, vaddr, pg)	clear_page(page)
 #define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
 
+#define __HAVE_ARCH_GATE_AREA 1
+
 #undef STRICT_MM_TYPECHECKS
 
 #ifdef STRICT_MM_TYPECHECKS

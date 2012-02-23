@@ -20,6 +20,7 @@
 
 #include <asm/cacheflush.h>
 #include <asm/cpu-single.h>
+#include <asm-generic/mm_hooks.h>
 
 #define init_new_context(tsk, mm)	0
 
@@ -58,29 +59,6 @@ switch_mm(struct mm_struct *prev, struct mm_struct *next,
 #define deactivate_mm(tsk, mm)	do { } while (0)
 #define activate_mm(prev, next)	switch_mm(prev, next, NULL)
 
-/*
- * We are inserting a "fake" vma for the user-accessible vector page so
- * gdb and friends can get to it through ptrace and /proc/<pid>/mem.
- * But we also want to remove it before the generic code gets to see it
- * during process exit or the unmapping of it would  cause total havoc.
- * (the macro is used as remove_vma() is static to mm/mmap.c)
- */
-#define arch_exit_mmap(mm) \
-do { \
-	struct vm_area_struct *high_vma = find_vma(mm, 0xffff0000); \
-	if (high_vma) { \
-		BUG_ON(high_vma->vm_next);  /* it should be last */ \
-		if (high_vma->vm_prev) \
-			high_vma->vm_prev->vm_next = NULL; \
-		else \
-			mm->mmap = NULL; \
-		rb_erase(&high_vma->vm_rb, &mm->mm_rb); \
-		vmacache_invalidate(mm); \
-		mm->map_count--; \
-		remove_vma(high_vma); \
-	} \
-} while (0)
-
 static inline void arch_dup_mmap(struct mm_struct *oldmm,
 				 struct mm_struct *mm)
 {
@@ -96,5 +74,4 @@ static inline void arch_bprm_mm_init(struct mm_struct *mm,
 				     struct vm_area_struct *vma)
 {
 }
-
 #endif
