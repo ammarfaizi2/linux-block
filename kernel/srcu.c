@@ -249,6 +249,10 @@ EXPORT_SYMBOL_GPL(__srcu_read_unlock);
  */
 #define SYNCHRONIZE_SRCU_READER_DELAY 5
 
+/*
+ * Wait until all the readers(which starts before this wait_idx()
+ * with the specified idx) complete.
+ */
 static void wait_idx(struct srcu_struct *sp, int idx, bool expedited)
 {
 	int trycount = 0;
@@ -291,24 +295,9 @@ static void wait_idx(struct srcu_struct *sp, int idx, bool expedited)
 	smp_mb(); /* E */
 }
 
-/*
- * Flip the readers' index by incrementing ->completed, then wait
- * until there are no more readers using the counters referenced by
- * the old index value.  (Recall that the index is the bottom bit
- * of ->completed.)
- *
- * Of course, it is possible that a reader might be delayed for the
- * full duration of flip_idx_and_wait() between fetching the
- * index and incrementing its counter.  This possibility is handled
- * by the next __synchronize_srcu() invoking wait_idx() for such readers
- * before starting a new grace period.
- */
-static void flip_idx_and_wait(struct srcu_struct *sp, bool expedited)
+static void srcu_flip(struct srcu_struct *sp)
 {
-	int idx;
-
-	idx = sp->completed++ & 0x1;
-	wait_idx(sp, idx, expedited);
+	sp->completed++;
 }
 
 /*
@@ -316,6 +305,8 @@ static void flip_idx_and_wait(struct srcu_struct *sp, bool expedited)
  */
 static void __synchronize_srcu(struct srcu_struct *sp, bool expedited)
 {
+	int busy_idx;
+
 	rcu_lockdep_assert(!lock_is_held(&sp->dep_map) &&
 			   !lock_is_held(&rcu_bh_lock_map) &&
 			   !lock_is_held(&rcu_lock_map) &&
@@ -323,8 +314,31 @@ static void __synchronize_srcu(struct srcu_struct *sp, bool expedited)
 			   "Illegal synchronize_srcu() in same-type SRCU (or RCU) read-side critical section");
 
 	mutex_lock(&sp->mutex);
+	busy_idx = sp->completed & 0X1UL;
 
 	/*
+	 * There are some readers start with idx=0, and some others start
+	 * with idx=1. So two wait_idx()s are enough for synchronize:
+	 * __synchronize_srcu() {
+	 * 	wait_idx(sp, 0, expedited);
+	 * 	wait_idx(sp, 1, expedited);
+	 * }
+	 * When it returns, all started readers have complete.
+	 *
+	 * But synchronizer may be starved by the readers, example,
+	 * if sp->complete & 0x1L == 1, wait_idx(sp, 1, expedited)
+	 * may not returns if there are continuous readers start
+	 * with idx=1.
+	 *
+	 * So we need to flip the busy index to keep synchronizer
+	 * from starvation.
+	 */
+
+	/*
+	 * The above comments assume we have readers with all the
+	 * 2 idx. It does have this probability, some readers may
+	 * hold the reader lock with idx=1-busy_idx:
+	 *
 	 * Suppose that during the previous grace period, a reader
 	 * picked up the old value of the index, but did not increment
 	 * its counter until after the previous instance of
@@ -333,31 +347,18 @@ static void __synchronize_srcu(struct srcu_struct *sp, bool expedited)
 	 * not start until after the grace period started, so the grace
 	 * period was not obligated to wait for that reader.
 	 *
-	 * However, the current SRCU grace period does have to wait for
-	 * that reader.  This is handled by invoking wait_idx() on the
-	 * non-active set of counters (hence sp->completed - 1).  Once
-	 * wait_idx() returns, we know that all readers that picked up
-	 * the old value of ->completed and that already incremented their
-	 * counter will have completed.
-	 *
-	 * But what about readers that picked up the old value of
-	 * ->completed, but -still- have not managed to increment their
-	 * counter?  We do not need to wait for those readers, because
-	 * they will have started their SRCU read-side critical section
-	 * after the current grace period starts.
-	 *
-	 * Because it is unlikely that readers will be preempted between
-	 * fetching ->completed and incrementing their counter, wait_idx()
+	 * Because this probability is not high, wait_idx()
 	 * will normally not need to wait.
 	 */
-	wait_idx(sp, (sp->completed - 1) & 0x1, expedited);
+	wait_idx(sp, 1 - busy_idx, expedited);
+
+	/* flip the index to ensure the return of the next wait_idx() */
+	srcu_flip(sp);
 
 	/*
-	 * Now that wait_idx() has waited for the really old readers,
-	 * invoke flip_idx_and_wait() to flip the counter and wait
-	 * for current SRCU readers.
+	 * Now that wait_idx() has waited for the really old readers.
 	 */
-	flip_idx_and_wait(sp, expedited);
+	wait_idx(sp, busy_idx, expedited);
 
 	mutex_unlock(&sp->mutex);
 }
