@@ -841,7 +841,7 @@ static int alc_automute_mode_info(struct snd_kcontrol *kcontrol,
 		"Disabled", "Enabled"
 	};
 	static const char * const texts3[] = {
-		"Disabled", "Speaker Only", "Line-Out+Speaker"
+		"Disabled", "Speaker Only", "Line Out+Speaker"
 	};
 	const char * const *texts;
 
@@ -1856,7 +1856,7 @@ DEFINE_CAPMIX_NOSRC(3);
  */
 static const char * const alc_slave_pfxs[] = {
 	"Front", "Surround", "Center", "LFE", "Side",
-	"Headphone", "Speaker", "Mono", "Line-Out",
+	"Headphone", "Speaker", "Mono", "Line Out",
 	"CLFE", "Bass Speaker", "PCM",
 	NULL,
 };
