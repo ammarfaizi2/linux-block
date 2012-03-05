@@ -1916,6 +1916,7 @@ static struct snd_soc_codec_driver soc_codec_wm2200 = {
 	.probe = wm2200_probe,
 
 	.idle_bias_off = true,
+	.ignore_pmdown_time = true,
 	.set_sysclk = wm2200_set_sysclk,
 	.set_pll = wm2200_set_fll,
 
@@ -2083,7 +2084,7 @@ static __devinit int wm2200_i2c_probe(struct i2c_client *i2c,
 		goto err_reset;
 	}
 
-	wm2200->rev = ret & WM2200_DEVICE_REVISION_MASK;
+	wm2200->rev = reg & WM2200_DEVICE_REVISION_MASK;
 
 	dev_info(&i2c->dev, "revision %c\n", wm2200->rev + 'A');
 
