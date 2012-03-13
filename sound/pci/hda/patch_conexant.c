@@ -70,6 +70,8 @@ struct conexant_spec {
 	const struct snd_kcontrol_new *mixers[5];
 	int num_mixers;
 	hda_nid_t vmaster_nid;
+	struct hda_vmaster_mute_hook vmaster_mute;
+	bool vmaster_mute_led;
 
 	const struct hda_verb *init_verbs[5];	/* initialization verbs
 						 * don't forget NULL
@@ -513,9 +515,10 @@ static int conexant_build_controls(struct hda_codec *codec)
 	}
 	if (spec->vmaster_nid &&
 	    !snd_hda_find_mixer_ctl(codec, "Master Playback Switch")) {
-		err = snd_hda_add_vmaster(codec, "Master Playback Switch",
-					  NULL, slave_pfxs,
-					  "Playback Switch");
+		err = __snd_hda_add_vmaster(codec, "Master Playback Switch",
+					    NULL, slave_pfxs,
+					    "Playback Switch", true,
+					    &spec->vmaster_mute.sw_kctl);
 		if (err < 0)
 			return err;
 	}
@@ -3975,6 +3978,19 @@ static void clear_unsol_on_unused_pins(struct hda_codec *codec)
 	}
 }
 
+/* turn on/off EAPD according to Master switch */
+static void cx_auto_vmaster_hook(void *private_data, int enabled)
+{
+	struct hda_codec *codec = private_data;
+	struct conexant_spec *spec = codec->spec;
+
+	if (enabled && spec->pin_eapd_ctrls) {
+		cx_auto_update_speakers(codec);
+		return;
+	}
+	cx_auto_turn_eapd(codec, spec->num_eapds, spec->eapds, enabled);
+}
+
 static void cx_auto_init_output(struct hda_codec *codec)
 {
 	struct conexant_spec *spec = codec->spec;
@@ -4079,11 +4095,13 @@ static void cx_auto_init_digital(struct hda_codec *codec)
 
 static int cx_auto_init(struct hda_codec *codec)
 {
+	struct conexant_spec *spec = codec->spec;
 	/*snd_hda_sequence_write(codec, cx_auto_init_verbs);*/
 	cx_auto_init_output(codec);
 	cx_auto_init_input(codec);
 	cx_auto_init_digital(codec);
 	snd_hda_jack_report_sync(codec);
+	snd_hda_sync_vmaster_hook(&spec->vmaster_mute);
 	return 0;
 }
 
@@ -4329,6 +4347,13 @@ static int cx_auto_build_controls(struct hda_codec *codec)
 	err = snd_hda_jack_add_kctls(codec, &spec->autocfg);
 	if (err < 0)
 		return err;
+	if (spec->vmaster_mute.sw_kctl) {
+		spec->vmaster_mute.hook = cx_auto_vmaster_hook;
+		err = snd_hda_add_vmaster_hook(codec, &spec->vmaster_mute,
+					       spec->vmaster_mute_led);
+		if (err < 0)
+			return err;
+	}
 	return 0;
 }
 
@@ -4352,7 +4377,6 @@ static int cx_auto_search_adcs(struct hda_codec *codec)
 	spec->adc_nids = spec->private_adc_nids;
 	return 0;
 }
-
 
 static const struct hda_codec_ops cx_auto_patch_ops = {
 	.build_controls = cx_auto_build_controls,
@@ -4454,6 +4478,18 @@ static int patch_conexant_auto(struct hda_codec *codec)
 	}
 
 	apply_pin_fixup(codec, cxt_fixups, cxt_pincfg_tbl);
+
+	/* Show mute-led control only on HP laptops
+	 * This is a sort of white-list: on HP laptops, EAPD corresponds
+	 * only to the mute-LED without actualy amp function.  Meanwhile,
+	 * others may use EAPD really as an amp switch, so it might be
+	 * not good to expose it blindly.
+	 */
+	switch (codec->subsystem_id >> 16) {
+	case 0x103c:
+		spec->vmaster_mute_led = 1;
+		break;
+	}
 
 	err = cx_auto_search_adcs(codec);
 	if (err < 0)
