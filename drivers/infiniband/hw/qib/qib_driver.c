@@ -77,8 +77,6 @@ MODULE_DESCRIPTION("QLogic IB driver");
  */
 #define QIB_MAX_PKT_RECV 64
 
-struct qlogic_ib_stats qib_stats;
-
 const char *qib_get_unit_name(int unit)
 {
 	static char iname[16];

@@ -40,10 +40,6 @@
 
 #include "qib.h"
 
-#define QIBFS_MAGIC 0x726a77
-
-static struct super_block *qib_super;
-
 #define private2dd(file) ((file)->f_dentry->d_inode->i_private)
 
 static int qibfs_mknod(struct inode *dir, struct dentry *dentry,
@@ -90,45 +86,6 @@ static int create_file(const char *name, umode_t mode,
 
 	return error;
 }
-
-static ssize_t driver_stats_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	return simple_read_from_buffer(buf, count, ppos, &qib_stats,
-				       sizeof qib_stats);
-}
-
-/*
- * driver stats field names, one line per stat, single string.  Used by
- * programs like ipathstats to print the stats in a way which works for
- * different versions of drivers, without changing program source.
- * if qlogic_ib_stats changes, this needs to change.  Names need to be
- * 12 chars or less (w/o newline), for proper display by ipathstats utility.
- */
-static const char qib_statnames[] =
-	"KernIntr\n"
-	"ErrorIntr\n"
-	"Tx_Errs\n"
-	"Rcv_Errs\n"
-	"H/W_Errs\n"
-	"NoPIOBufs\n"
-	"CtxtsOpen\n"
-	"RcvLen_Errs\n"
-	"EgrBufFull\n"
-	"EgrHdrFull\n"
-	;
-
-static ssize_t driver_names_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	return simple_read_from_buffer(buf, count, ppos, qib_statnames,
-		sizeof qib_statnames - 1); /* no null */
-}
-
-static const struct file_operations driver_ops[] = {
-	{ .read = driver_stats_read, .llseek = generic_file_llseek, },
-	{ .read = driver_names_read, .llseek = generic_file_llseek, },
-};
 
 /* read the per-device counters */
 static ssize_t dev_counters_read(struct file *file, char __user *buf,
@@ -361,7 +318,7 @@ static const struct file_operations flash_ops = {
 	.llseek = default_llseek,
 };
 
-static int add_cntr_files(struct super_block *sb, struct qib_devdata *dd)
+static int add_cntr_files(struct dentry *root, struct qib_devdata *dd)
 {
 	struct dentry *dir, *tmp;
 	char unit[10];
@@ -369,7 +326,7 @@ static int add_cntr_files(struct super_block *sb, struct qib_devdata *dd)
 
 	/* create the per-unit directory */
 	snprintf(unit, sizeof unit, "%u", dd->unit);
-	ret = create_file(unit, S_IFDIR|S_IRUGO|S_IXUGO, sb->s_root, &dir,
+	ret = create_file(unit, S_IFDIR|S_IRUGO|S_IXUGO, root, &dir,
 			  &simple_dir_operations, dd);
 	if (ret) {
 		printk(KERN_ERR "create_file(%s) failed: %d\n", unit, ret);
@@ -462,14 +419,13 @@ bail:
 	return ret;
 }
 
-static int remove_device_files(struct super_block *sb,
+static int remove_device_files(struct dentry *root,
 			       struct qib_devdata *dd)
 {
-	struct dentry *dir, *root;
+	struct dentry *dir;
 	char unit[10];
 	int ret, i;
 
-	root = dget(sb->s_root);
 	mutex_lock(&root->d_inode->i_mutex);
 	snprintf(unit, sizeof unit, "%u", dd->unit);
 	dir = lookup_one_len(unit, root, strlen(unit));
@@ -499,107 +455,23 @@ static int remove_device_files(struct super_block *sb,
 
 bail:
 	mutex_unlock(&root->d_inode->i_mutex);
-	dput(root);
 	return ret;
-}
-
-/*
- * This fills everything in when the fs is mounted, to handle umount/mount
- * after device init.  The direct add_cntr_files() call handles adding
- * them from the init code, when the fs is already mounted.
- */
-static int qibfs_fill_super(struct super_block *sb, void *data, int silent)
-{
-	struct qib_devdata *dd, *tmp;
-	unsigned long flags;
-	int ret;
-
-	static struct tree_descr files[] = {
-		[2] = {"driver_stats", &driver_ops[0], S_IRUGO},
-		[3] = {"driver_stats_names", &driver_ops[1], S_IRUGO},
-		{""},
-	};
-
-	ret = simple_fill_super(sb, QIBFS_MAGIC, files);
-	if (ret) {
-		printk(KERN_ERR "simple_fill_super failed: %d\n", ret);
-		goto bail;
-	}
-
-	spin_lock_irqsave(&qib_devs_lock, flags);
-
-	list_for_each_entry_safe(dd, tmp, &qib_dev_list, list) {
-		spin_unlock_irqrestore(&qib_devs_lock, flags);
-		ret = add_cntr_files(sb, dd);
-		if (ret)
-			goto bail;
-		spin_lock_irqsave(&qib_devs_lock, flags);
-	}
-
-	spin_unlock_irqrestore(&qib_devs_lock, flags);
-
-bail:
-	return ret;
-}
-
-static struct dentry *qibfs_mount(struct file_system_type *fs_type, int flags,
-			const char *dev_name, void *data)
-{
-	struct dentry *ret;
-	ret = mount_single(fs_type, flags, data, qibfs_fill_super);
-	if (!IS_ERR(ret))
-		qib_super = ret->d_sb;
-	return ret;
-}
-
-static void qibfs_kill_super(struct super_block *s)
-{
-	kill_litter_super(s);
-	qib_super = NULL;
 }
 
 int qibfs_add(struct qib_devdata *dd)
 {
-	int ret;
-
-	/*
-	 * On first unit initialized, qib_super will not yet exist
-	 * because nobody has yet tried to mount the filesystem, so
-	 * we can't consider that to be an error; if an error occurs
-	 * during the mount, that will get a complaint, so this is OK.
-	 * add_cntr_files() for all units is done at mount from
-	 * qibfs_fill_super(), so one way or another, everything works.
-	 */
-	if (qib_super == NULL)
-		ret = 0;
-	else
-		ret = add_cntr_files(qib_super, dd);
+	int ret = qibfs_pin();
+	if (!ret) {
+		ret = add_cntr_files(qibfs_root(), dd);
+		if (ret)
+			qibfs_unpin();
+	}
 	return ret;
 }
 
 int qibfs_remove(struct qib_devdata *dd)
 {
-	int ret = 0;
-
-	if (qib_super)
-		ret = remove_device_files(qib_super, dd);
-
+	int ret = remove_device_files(qibfs_root(), dd);
+	qibfs_unpin();
 	return ret;
-}
-
-static struct file_system_type qibfs_fs_type = {
-	.owner =        THIS_MODULE,
-	.name =         "ipathfs",
-	.mount =        qibfs_mount,
-	.kill_sb =      qibfs_kill_super,
-};
-
-int __init qib_init_qibfs(void)
-{
-	return register_filesystem(&qibfs_fs_type);
-}
-
-int __exit qib_exit_qibfs(void)
-{
-	return unregister_filesystem(&qibfs_fs_type);
 }
