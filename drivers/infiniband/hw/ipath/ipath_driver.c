@@ -2518,17 +2518,7 @@ static int __init infinipath_init(void)
 		goto bail_unit;
 	}
 
-	ret = ipath_init_ipathfs();
-	if (ret < 0) {
-		printk(KERN_ERR IPATH_DRV_NAME ": Unable to create "
-		       "ipathfs: error %d\n", -ret);
-		goto bail_pci;
-	}
-
 	goto bail;
-
-bail_pci:
-	pci_unregister_driver(&ipath_driver);
 
 bail_unit:
 	idr_destroy(&unit_table);
@@ -2539,8 +2529,6 @@ bail:
 
 static void __exit infinipath_cleanup(void)
 {
-	ipath_exit_ipathfs();
-
 	ipath_cdbg(VERBOSE, "Unregistering pci driver\n");
 	pci_unregister_driver(&ipath_driver);
 

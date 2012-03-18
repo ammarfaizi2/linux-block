@@ -33,8 +33,6 @@
 
 #include "ipath_kernel.h"
 
-struct infinipath_stats ipath_stats;
-
 /**
  * ipath_snap_cntr - snapshot a chip counter
  * @dd: the infinipath device

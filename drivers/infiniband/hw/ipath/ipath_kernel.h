@@ -828,6 +828,7 @@ struct ipath_devdata {
 	 */
 	spinlock_t ipath_sdepb_lock;
 	u8 ipath_presets_needed; /* Set if presets to be restored next DOWN */
+	struct dentry *ipathfs_dir;
 };
 
 /* ipath_hol_state values (stopping/starting user proc, send flushing) */
@@ -1290,10 +1291,11 @@ int ipath_device_create_group(struct device *, struct ipath_devdata *);
 void ipath_device_remove_group(struct device *, struct ipath_devdata *);
 int ipath_expose_reset(struct device *);
 
-int ipath_init_ipathfs(void);
-void ipath_exit_ipathfs(void);
 int ipathfs_add_device(struct ipath_devdata *);
 int ipathfs_remove_device(struct ipath_devdata *);
+
+struct dentry *ipathfs_pin(void);
+void ipathfs_unpin(void);
 
 /*
  * dma_addr wrappers - all 0's invalid for hw
