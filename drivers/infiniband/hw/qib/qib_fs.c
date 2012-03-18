@@ -333,6 +333,7 @@ static int add_cntr_files(struct dentry *root, struct qib_devdata *dd)
 		goto bail;
 	}
 
+	dd->qibfs_tree = dir;
 	/* create the files in the new directory */
 	ret = create_file("counters", S_IFREG|S_IRUGO, dir, &tmp,
 			  &cntr_ops[0], dd);
@@ -419,23 +420,17 @@ bail:
 	return ret;
 }
 
-static int remove_device_files(struct dentry *root,
-			       struct qib_devdata *dd)
+static int remove_device_files(struct qib_devdata *dd)
 {
-	struct dentry *dir;
-	char unit[10];
+	struct dentry *dir = dd->qibfs_tree;
+	struct dentry *root;
 	int ret, i;
 
+	if (!dir)
+		return 0;
+
+	root = dir->d_sb->s_root;
 	mutex_lock(&root->d_inode->i_mutex);
-	snprintf(unit, sizeof unit, "%u", dd->unit);
-	dir = lookup_one_len(unit, root, strlen(unit));
-
-	if (IS_ERR(dir)) {
-		ret = PTR_ERR(dir);
-		printk(KERN_ERR "Lookup of %s failed\n", unit);
-		goto bail;
-	}
-
 	remove_file(dir, "counters");
 	remove_file(dir, "counter_names");
 	remove_file(dir, "portcounter_names");
@@ -453,8 +448,15 @@ static int remove_device_files(struct dentry *root,
 	d_delete(dir);
 	ret = simple_rmdir(root->d_inode, dir);
 
-bail:
 	mutex_unlock(&root->d_inode->i_mutex);
+	dd->qibfs_tree = NULL;
+	return ret;
+}
+
+int qibfs_remove(struct qib_devdata *dd)
+{
+	int ret = remove_device_files(dd);
+	qibfs_unpin();
 	return ret;
 }
 
@@ -464,14 +466,7 @@ int qibfs_add(struct qib_devdata *dd)
 	if (!ret) {
 		ret = add_cntr_files(qibfs_root(), dd);
 		if (ret)
-			qibfs_unpin();
+			qibfs_remove(dd);
 	}
-	return ret;
-}
-
-int qibfs_remove(struct qib_devdata *dd)
-{
-	int ret = remove_device_files(qibfs_root(), dd);
-	qibfs_unpin();
 	return ret;
 }

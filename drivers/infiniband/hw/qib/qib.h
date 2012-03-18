@@ -1025,6 +1025,7 @@ struct qib_devdata {
 	u16 psxmitwait_check_rate;
 	/* high volume overflow errors defered to tasklet */
 	struct tasklet_struct error_tasklet;
+	struct dentry *qibfs_tree;
 };
 
 /* hol_state values */
