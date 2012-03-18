@@ -1,7 +1,7 @@
 ccflags-y := -DIPATH_IDSTR='"QLogic kernel.org driver"' \
 	-DIPATH_KERN_TYPE=0
 
-obj-$(CONFIG_INFINIBAND_IPATH) += ib_ipath.o
+obj-$(CONFIG_INFINIBAND_IPATH) += ib_ipath.o ib_ipath_fs.o
 
 ib_ipath-y := \
 	ipath_cq.o \
