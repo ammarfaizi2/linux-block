@@ -1192,9 +1192,6 @@ static int __init qlogic_ib_init(void)
 		goto bail_unit;
 	}
 
-	/* not fatal if it doesn't work */
-	if (qib_init_qibfs())
-		pr_err("Unable to register ipathfs\n");
 	goto bail; /* all OK */
 
 bail_unit:
@@ -1214,14 +1211,6 @@ module_init(qlogic_ib_init);
  */
 static void __exit qlogic_ib_cleanup(void)
 {
-	int ret;
-
-	ret = qib_exit_qibfs();
-	if (ret)
-		pr_err(
-			"Unable to cleanup counter filesystem: error %d\n",
-			-ret);
-
 	pci_unregister_driver(&qib_driver);
 
 	destroy_workqueue(qib_cq_wq);
