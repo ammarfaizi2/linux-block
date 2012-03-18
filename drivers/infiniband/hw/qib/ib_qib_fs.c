@@ -112,9 +112,10 @@ static struct file_system_type qibfs_fs_type = {
 static struct vfsmount *mnt;
 static int count;
 
-int qibfs_pin(void)
+struct dentry *qibfs_pin(void)
 {
-	return simple_pin_fs(&qibfs_fs_type, &mnt, &count);
+	int err = simple_pin_fs(&qibfs_fs_type, &mnt, &count);
+	return err ? ERR_PTR(err) : mnt->mnt_root;
 }
 EXPORT_SYMBOL(qibfs_pin);
 
@@ -123,13 +124,6 @@ void qibfs_unpin(void)
 	simple_release_fs(&mnt, &count);
 }
 EXPORT_SYMBOL(qibfs_unpin);
-
-struct dentry *qibfs_root(void)
-{
-	BUG_ON(!count);
-	return mnt->mnt_root;
-}
-EXPORT_SYMBOL(qibfs_root);
 
 static int __init qib_init_qibfs(void)
 {

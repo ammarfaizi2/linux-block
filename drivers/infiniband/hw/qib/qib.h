@@ -1349,9 +1349,8 @@ extern int qib_qsfp_dump(struct qib_pportdata *ppd, char *buf, int len);
 int qibfs_add(struct qib_devdata *);
 int qibfs_remove(struct qib_devdata *);
 
-int qibfs_pin(void);
+struct dentry *qibfs_pin(void);
 void qibfs_unpin(void);
-struct dentry *qibfs_root(void);
 
 int qib_pcie_init(struct pci_dev *, const struct pci_device_id *);
 int qib_pcie_ddinit(struct qib_devdata *, struct pci_dev *,

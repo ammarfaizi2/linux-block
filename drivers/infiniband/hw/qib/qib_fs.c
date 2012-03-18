@@ -462,9 +462,10 @@ int qibfs_remove(struct qib_devdata *dd)
 
 int qibfs_add(struct qib_devdata *dd)
 {
-	int ret = qibfs_pin();
-	if (!ret) {
-		ret = add_cntr_files(qibfs_root(), dd);
+	struct dentry *root = qibfs_pin();
+	int ret = PTR_ERR(root);
+	if (!IS_ERR(root)) {
+		ret = add_cntr_files(root, dd);
 		if (ret)
 			qibfs_remove(dd);
 	}
