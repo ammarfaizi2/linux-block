@@ -50,19 +50,13 @@ static int qibfs_mknod(struct inode *dir, struct dentry *dentry,
 		       umode_t mode, const struct file_operations *fops,
 		       void *data)
 {
-	int error;
 	struct inode *inode = new_inode(dir->i_sb);
 
-	if (!inode) {
-		error = -EPERM;
-		goto bail;
-	}
+	if (!inode)
+		return -EPERM;
 
 	inode->i_ino = get_next_ino();
 	inode->i_mode = mode;
-	inode->i_uid = 0;
-	inode->i_gid = 0;
-	inode->i_blocks = 0;
 	inode->i_atime = CURRENT_TIME;
 	inode->i_mtime = inode->i_atime;
 	inode->i_ctime = inode->i_atime;
@@ -76,10 +70,7 @@ static int qibfs_mknod(struct inode *dir, struct dentry *dentry,
 	inode->i_fop = fops;
 
 	d_instantiate(dentry, inode);
-	error = 0;
-
-bail:
-	return error;
+	return 0;
 }
 
 static int create_file(const char *name, umode_t mode,
@@ -88,7 +79,6 @@ static int create_file(const char *name, umode_t mode,
 {
 	int error;
 
-	*dentry = NULL;
 	mutex_lock(&parent->d_inode->i_mutex);
 	*dentry = lookup_one_len(name, parent, strlen(name));
 	if (!IS_ERR(*dentry))
