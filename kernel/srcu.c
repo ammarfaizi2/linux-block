@@ -108,7 +108,6 @@ static unsigned long srcu_readers_active_idx(struct srcu_struct *sp, int idx)
 
 static bool srcu_readers_active_idx_check(struct srcu_struct *sp, int idx)
 {
-	int cpu;
 	unsigned long seq;
 
 	seq = srcu_readers_seq_idx(sp, idx);
@@ -186,7 +185,7 @@ static int srcu_readers_active(struct srcu_struct *sp)
 		sum += ACCESS_ONCE(per_cpu_ptr(sp->per_cpu_ref, cpu)->c[0]);
 		sum += ACCESS_ONCE(per_cpu_ptr(sp->per_cpu_ref, cpu)->c[1]);
 	}
-	return sum & SRCU_REF_MASK;
+	return sum;
 }
 
 /**
