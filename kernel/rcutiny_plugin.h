@@ -132,7 +132,7 @@ static struct rcu_preempt_ctrlblk rcu_preempt_ctrlblk = {
 	RCU_TRACE(.rcb.name = "rcu_preempt")
 };
 
-static void rcu_read_unlock_special(struct task_struct *t);
+static void rcu_read_unlock_do_special(struct task_struct *t);
 static int rcu_preempted_readers_exp(void);
 static void rcu_report_exp_done(void);
 
@@ -510,7 +510,7 @@ void rcu_preempt_note_context_switch(void)
 		 * Complete exit from RCU read-side critical section on
 		 * behalf of preempted instance of __rcu_read_unlock().
 		 */
-		rcu_read_unlock_special(t);
+		rcu_read_unlock_do_special(t);
 	}
 
 	/*
@@ -543,7 +543,7 @@ EXPORT_SYMBOL_GPL(__rcu_read_lock);
  * notify RCU core processing or task having blocked during the RCU
  * read-side critical section.
  */
-static noinline void rcu_read_unlock_special(struct task_struct *t)
+static noinline void rcu_read_unlock_do_special(struct task_struct *t)
 {
 	int empty;
 	int empty_exp;
@@ -630,7 +630,7 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
  * Tiny-preemptible RCU implementation for rcu_read_unlock().
  * Decrement ->rcu_read_lock_nesting.  If the result is zero (outermost
  * rcu_read_unlock()) and ->rcu_read_unlock_special is non-zero, then
- * invoke rcu_read_unlock_special() to clean up after a context switch
+ * invoke rcu_read_unlock_do_special() to clean up after a context switch
  * in an RCU read-side critical section and other special cases.
  */
 void __rcu_read_unlock(void)
@@ -644,7 +644,7 @@ void __rcu_read_unlock(void)
 		t->rcu_read_lock_nesting = INT_MIN;
 		barrier();  /* assign before ->rcu_read_unlock_special load */
 		if (unlikely(ACCESS_ONCE(t->rcu_read_unlock_special)))
-			rcu_read_unlock_special(t);
+			rcu_read_unlock_do_special(t);
 		barrier();  /* ->rcu_read_unlock_special load before assign */
 		t->rcu_read_lock_nesting = 0;
 	}

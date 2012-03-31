@@ -145,6 +145,9 @@ extern void synchronize_sched(void);
 
 #ifdef CONFIG_PREEMPT_RCU
 
+DECLARE_PER_CPU(int, rcu_read_lock_nesting);
+DECLARE_PER_CPU(int, rcu_read_unlock_special);
+
 extern void __rcu_read_lock(void);
 extern void __rcu_read_unlock(void);
 void synchronize_rcu(void);
