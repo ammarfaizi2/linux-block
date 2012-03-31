@@ -78,7 +78,7 @@ struct rcu_state rcu_preempt_state = RCU_STATE_INITIALIZER(rcu_preempt);
 DEFINE_PER_CPU(struct rcu_data, rcu_preempt_data);
 static struct rcu_state *rcu_state = &rcu_preempt_state;
 
-static void rcu_read_unlock_special(struct task_struct *t);
+static void rcu_read_unlock_do_special(struct task_struct *t);
 static int rcu_preempted_readers_exp(struct rcu_node *rnp);
 
 /*
@@ -215,7 +215,7 @@ void rcu_preempt_note_context_switch(void)
 		 * Complete exit from RCU read-side critical section on
 		 * behalf of preempted instance of __rcu_read_unlock().
 		 */
-		rcu_read_unlock_special(t);
+		rcu_read_unlock_do_special(t);
 	}
 
 	/*
@@ -310,7 +310,7 @@ static struct list_head *rcu_next_node_entry(struct task_struct *t,
  * notify RCU core processing or task having blocked during the RCU
  * read-side critical section.
  */
-static noinline void rcu_read_unlock_special(struct task_struct *t)
+static noinline void rcu_read_unlock_do_special(struct task_struct *t)
 {
 	int empty;
 	int empty_exp;
@@ -422,7 +422,7 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
  * Tree-preemptible RCU implementation for rcu_read_unlock().
  * Decrement ->rcu_read_lock_nesting.  If the result is zero (outermost
  * rcu_read_unlock()) and ->rcu_read_unlock_special is non-zero, then
- * invoke rcu_read_unlock_special() to clean up after a context switch
+ * invoke rcu_read_unlock_do_special() to clean up after a context switch
  * in an RCU read-side critical section and other special cases.
  */
 void __rcu_read_unlock(void)
@@ -436,7 +436,7 @@ void __rcu_read_unlock(void)
 		t->rcu_read_lock_nesting = INT_MIN;
 		barrier();  /* assign before ->rcu_read_unlock_special load */
 		if (unlikely(ACCESS_ONCE(t->rcu_read_unlock_special)))
-			rcu_read_unlock_special(t);
+			rcu_read_unlock_do_special(t);
 		barrier();  /* ->rcu_read_unlock_special load before assign */
 		t->rcu_read_lock_nesting = 0;
 	}
@@ -573,7 +573,7 @@ static void rcu_preempt_check_blocked_tasks(struct rcu_node *rnp)
  * Handle tasklist migration for case in which all CPUs covered by the
  * specified rcu_node have gone offline.  Move them up to the root
  * rcu_node.  The reason for not just moving them to the immediate
- * parent is to remove the need for rcu_read_unlock_special() to
+ * parent is to remove the need for rcu_read_unlock_do_special() to
  * make more than two attempts to acquire the target rcu_node's lock.
  * Returns true if there were tasks blocking the current RCU grace
  * period.

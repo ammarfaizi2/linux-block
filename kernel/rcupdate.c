@@ -51,6 +51,11 @@
 
 #include "rcu.h"
 
+#ifdef CONFIG_PREEMPT_RCU
+DEFINE_PER_CPU(int, rcu_read_lock_nesting);
+DEFINE_PER_CPU(int, rcu_read_unlock_special);
+#endif /* #ifdef CONFIG_PREEMPT_RCU */
+
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 static struct lock_class_key rcu_lock_key;
 struct lockdep_map rcu_lock_map =
