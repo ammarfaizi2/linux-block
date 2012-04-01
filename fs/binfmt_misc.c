@@ -311,7 +311,7 @@ static Node *create_entry(const char __user *buffer, size_t count)
 	p = buf = (char *)e + sizeof(Node);
 
 	memset(e, 0, sizeof(Node));
-	if (copy_from_user(buf, buffer, count))
+	if (_copy_from_user(buf, buffer, count))
 		goto Efault;
 
 	del = *p++;	/* delimeter */
@@ -419,7 +419,7 @@ static int parse_command(const char __user *buffer, size_t count)
 		return 0;
 	if (count > 3)
 		return -EINVAL;
-	if (copy_from_user(s, buffer, count))
+	if (_copy_from_user(s, buffer, count))
 		return -EFAULT;
 	if (s[count-1] == '\n')
 		count--;
