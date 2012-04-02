@@ -44,6 +44,7 @@
 #include <linux/debugobjects.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>
+#include <linux/percpu.h>
 
 #ifdef CONFIG_RCU_TORTURE_TEST
 extern int rcutorture_runnable; /* for sysctl */
@@ -151,7 +152,17 @@ DECLARE_PER_CPU(int, rcu_read_unlock_special);
 DECLARE_PER_CPU(struct task_struct *, rcu_current_task);
 #endif /* #ifdef CONFIG_PROVE_RCU */
 
-extern void __rcu_read_lock(void);
+/*
+ * Preemptible-RCU implementation for rcu_read_lock().  Just increment
+ * the per-CPU rcu_read_lock_nesting: Shared state and per-task state will
+ * be updated if we block.
+ */
+static inline void __rcu_read_lock(void)
+{
+	__this_cpu_inc(rcu_read_lock_nesting);
+	barrier(); /* Keep code within RCU read-side critical section. */
+}
+
 extern void __rcu_read_unlock(void);
 void synchronize_rcu(void);
 

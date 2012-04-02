@@ -59,18 +59,6 @@ DEFINE_PER_CPU(struct task_struct *, rcu_current_task);
 #endif /* #ifdef CONFIG_PROVE_RCU */
 
 /*
- * Preemptible-RCU implementation for rcu_read_lock().  Just increment
- * the per-CPU rcu_read_lock_nesting: Shared state and per-task state will
- * be updated if we block.
- */
-void __rcu_read_lock(void)
-{
-	__this_cpu_inc(rcu_read_lock_nesting);
-	barrier(); /* Keep code within RCU read-side critical section. */
-}
-EXPORT_SYMBOL_GPL(__rcu_read_lock);
-
-/*
  * Tree-preemptible RCU implementation for rcu_read_unlock().
  * Decrement rcu_read_lock_nesting.  If the result is zero (outermost
  * rcu_read_unlock()) and rcu_read_unlock_special is non-zero, then
