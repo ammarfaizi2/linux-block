@@ -71,19 +71,9 @@ queue_requests_store(struct request_queue *q, const char *page, size_t count)
 	else if (rl->count[BLK_RW_ASYNC] < queue_congestion_off_threshold(q))
 		blk_clear_queue_congested(q, BLK_RW_ASYNC);
 
-	if (rl->count[BLK_RW_SYNC] >= q->nr_requests) {
-		blk_set_queue_full(q, BLK_RW_SYNC);
-	} else {
-		blk_clear_queue_full(q, BLK_RW_SYNC);
-		wake_up(&rl->wait[BLK_RW_SYNC]);
-	}
+	wake_up(&rl->wait[BLK_RW_SYNC]);
+	wake_up(&rl->wait[BLK_RW_ASYNC]);
 
-	if (rl->count[BLK_RW_ASYNC] >= q->nr_requests) {
-		blk_set_queue_full(q, BLK_RW_ASYNC);
-	} else {
-		blk_clear_queue_full(q, BLK_RW_ASYNC);
-		wake_up(&rl->wait[BLK_RW_ASYNC]);
-	}
 	spin_unlock_irq(q->queue_lock);
 	return ret;
 }

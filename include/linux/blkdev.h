@@ -385,8 +385,6 @@ struct request_queue {
 
 #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
 #define QUEUE_FLAG_STOPPED	2	/* queue is stopped */
-#define	QUEUE_FLAG_SYNCFULL	3	/* read queue has been filled */
-#define QUEUE_FLAG_ASYNCFULL	4	/* write queue has been filled */
 #define QUEUE_FLAG_DEAD		5	/* queue being torn down */
 #define QUEUE_FLAG_ELVSWITCH	6	/* don't use elevator, just do FIFO */
 #define QUEUE_FLAG_BIDI		7	/* queue supports bidi requests */
@@ -518,30 +516,6 @@ static inline bool rq_is_sync(struct request *rq)
 {
 	return rw_is_sync(rq->cmd_flags);
 }
-
-static inline int blk_queue_full(struct request_queue *q, int sync)
-{
-	if (sync)
-		return test_bit(QUEUE_FLAG_SYNCFULL, &q->queue_flags);
-	return test_bit(QUEUE_FLAG_ASYNCFULL, &q->queue_flags);
-}
-
-static inline void blk_set_queue_full(struct request_queue *q, int sync)
-{
-	if (sync)
-		queue_flag_set(QUEUE_FLAG_SYNCFULL, q);
-	else
-		queue_flag_set(QUEUE_FLAG_ASYNCFULL, q);
-}
-
-static inline void blk_clear_queue_full(struct request_queue *q, int sync)
-{
-	if (sync)
-		queue_flag_clear(QUEUE_FLAG_SYNCFULL, q);
-	else
-		queue_flag_clear(QUEUE_FLAG_ASYNCFULL, q);
-}
-
 
 /*
  * mergeable request must not have _NOMERGE or _BARRIER bit set, nor may

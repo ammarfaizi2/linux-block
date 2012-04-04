@@ -723,8 +723,6 @@ static void __freed_request(struct blk_queue_ctx *ctx, int sync)
 	if (rl->count[sync] + 1 <= q->nr_requests) {
 		if (waitqueue_active(&rl->wait[sync]))
 			wake_up(&rl->wait[sync]);
-
-		blk_clear_queue_full(q, sync);
 	}
 }
 
