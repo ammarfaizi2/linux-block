@@ -832,7 +832,7 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
         if (cmd->request->cmd_type != REQ_TYPE_BLOCK_PC) {
 		int old_good_bytes = good_bytes;
 		drv = scsi_cmd_to_driver(cmd);
-		if (drv->done)
+		if (drv && drv->done)
 			good_bytes = drv->done(cmd);
 		/*
 		 * USB may not give sense identifying bad sector and
