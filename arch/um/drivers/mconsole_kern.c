@@ -705,8 +705,9 @@ static void stack_proc(void *arg)
 	struct task_struct *from = current, *to = arg;
 
 	to->thread.saved_task = from;
-	rcu_switch_from(from);
+	rcu_switch_from();
 	switch_to(from, to, from);
+	rcu_switch_to();
 }
 
 /*

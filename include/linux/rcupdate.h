@@ -147,6 +147,9 @@ extern void synchronize_sched(void);
 
 DECLARE_PER_CPU(int, rcu_read_lock_nesting);
 DECLARE_PER_CPU(int, rcu_read_unlock_special);
+#ifdef CONFIG_PROVE_RCU
+DECLARE_PER_CPU(struct task_struct *, rcu_current_task);
+#endif /* #ifdef CONFIG_PROVE_RCU */
 
 extern void __rcu_read_lock(void);
 extern void __rcu_read_unlock(void);
@@ -158,7 +161,22 @@ void synchronize_rcu(void);
  * nesting depth, but makes sense only if CONFIG_PREEMPT_RCU -- in other
  * types of kernel builds, the rcu_read_lock() nesting depth is unknowable.
  */
-#define rcu_preempt_depth() (current->rcu_read_lock_nesting)
+#define rcu_preempt_depth() (__this_cpu_read(rcu_read_lock_nesting))
+
+/*
+ * Check for a running RCU reader on the current CPU.  If used from
+ * TINY_PREEMPT_RCU, works globally, as there can be but one running
+ * RCU reader at a time in that case.  ;-)
+ *
+ * Returns zero if there are no running readers.  Returns a positive
+ * number if there is at least one reader within its RCU read-side
+ * critical section.  Returns a negative number if an outermost reader
+ * is in the midst of exiting from its RCU read-side critical section
+ *
+ * This differs from rcu_preempt_depth() in throwing a build error
+ * if used from under !CONFIG_PREEMPT_RCU.
+ */
+#define rcu_preempt_running_reader() (__this_cpu_read(rcu_read_lock_nesting))
 
 #else /* #ifdef CONFIG_PREEMPT_RCU */
 
