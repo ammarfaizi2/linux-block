@@ -54,6 +54,54 @@
 #ifdef CONFIG_PREEMPT_RCU
 DEFINE_PER_CPU(int, rcu_read_lock_nesting);
 DEFINE_PER_CPU(int, rcu_read_unlock_special);
+#ifdef CONFIG_PROVE_RCU
+DEFINE_PER_CPU(struct task_struct *, rcu_current_task);
+#endif /* #ifdef CONFIG_PROVE_RCU */
+
+/*
+ * Preemptible-RCU implementation for rcu_read_lock().  Just increment
+ * the per-CPU rcu_read_lock_nesting: Shared state and per-task state will
+ * be updated if we block.
+ */
+void __rcu_read_lock(void)
+{
+	__this_cpu_inc(rcu_read_lock_nesting);
+	barrier(); /* Keep code within RCU read-side critical section. */
+}
+EXPORT_SYMBOL_GPL(__rcu_read_lock);
+
+/*
+ * Tree-preemptible RCU implementation for rcu_read_unlock().
+ * Decrement rcu_read_lock_nesting.  If the result is zero (outermost
+ * rcu_read_unlock()) and rcu_read_unlock_special is non-zero, then
+ * invoke rcu_read_unlock_do_special() to clean up after a context switch
+ * in an RCU read-side critical section and other special cases.
+ * Set rcu_read_lock_nesting to a large negative value during cleanup
+ * in order to ensure that if rcu_read_unlock_special is non-zero, then
+ * rcu_read_lock_nesting is also non-zero.
+ */
+void __rcu_read_unlock(void)
+{
+	if (__this_cpu_read(rcu_read_lock_nesting) != 1)
+		__this_cpu_dec(rcu_read_lock_nesting);
+	else {
+		barrier();  /* critical section before exit code. */
+		__this_cpu_write(rcu_read_lock_nesting, INT_MIN);
+		barrier();  /* assign before ->rcu_read_unlock_special load */
+		if (unlikely(__this_cpu_read(rcu_read_unlock_special)))
+			rcu_read_unlock_do_special();
+		barrier();  /* ->rcu_read_unlock_special load before assign */
+		__this_cpu_write(rcu_read_lock_nesting, 0);
+	}
+#ifdef CONFIG_PROVE_LOCKING
+	{
+		int rln = __this_cpu_read(rcu_read_lock_nesting);
+
+		WARN_ON_ONCE(rln < 0 && rln > INT_MIN / 2);
+	}
+#endif /* #ifdef CONFIG_PROVE_LOCKING */
+}
+EXPORT_SYMBOL_GPL(__rcu_read_unlock);
 
 /*
  * Check for a task exiting while in a preemptible-RCU read-side
@@ -63,13 +111,11 @@ DEFINE_PER_CPU(int, rcu_read_unlock_special);
  */
 void exit_rcu(void)
 {
-	struct task_struct *t = current;
-
 	if (likely(list_empty(&current->rcu_node_entry)))
 		return;
-	t->rcu_read_lock_nesting = 1;
+	__this_cpu_write(rcu_read_lock_nesting, 1);
 	barrier();
-	t->rcu_read_unlock_special = RCU_READ_UNLOCK_BLOCKED;
+	__this_cpu_write(rcu_read_unlock_special, RCU_READ_UNLOCK_BLOCKED);
 	__rcu_read_unlock();
 }
 
