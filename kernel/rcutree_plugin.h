@@ -2053,6 +2053,7 @@ static bool rcu_cpu_has_nonlazy_callbacks(int cpu)
  */
 static enum hrtimer_restart rcu_idle_gp_timer_func(struct hrtimer *hrtp)
 {
+	WARN_ON_ONCE(1);
 	trace_rcu_prep_idle("Timer");
 	return HRTIMER_NORESTART;
 }
