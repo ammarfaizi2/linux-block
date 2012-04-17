@@ -1937,10 +1937,8 @@ static inline void rcu_copy_process(struct task_struct *p)
  *
  * The caller must have disabled preemption.
  */
-static inline void rcu_switch_from(void)
+static inline void rcu_switch_from(struct task_struct *t)
 {
-	struct task_struct *t = current;
-
 	if (__this_cpu_read(rcu_read_lock_nesting) != 0)
 		rcu_preempt_note_context_switch();
 	t->rcu_read_lock_nesting_save = __this_cpu_read(rcu_read_lock_nesting);
@@ -1991,7 +1989,7 @@ static inline void rcu_copy_process(struct task_struct *p)
 {
 }
 
-static inline void rcu_switch_from(void)
+static inline void rcu_switch_from(struct task_struct *t)
 {
 }
 
