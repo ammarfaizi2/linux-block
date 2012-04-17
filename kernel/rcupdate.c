@@ -53,7 +53,9 @@
 
 #ifdef CONFIG_PREEMPT_RCU
 DEFINE_PER_CPU(int, rcu_read_lock_nesting);
+EXPORT_PER_CPU_SYMBOL_GPL(rcu_read_lock_nesting);
 DEFINE_PER_CPU(int, rcu_read_unlock_special);
+EXPORT_PER_CPU_SYMBOL_GPL(rcu_read_unlock_special);
 #ifdef CONFIG_PROVE_RCU
 DEFINE_PER_CPU(struct task_struct *, rcu_current_task);
 #endif /* #ifdef CONFIG_PROVE_RCU */
