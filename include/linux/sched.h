@@ -1302,8 +1302,8 @@ struct task_struct {
 	cpumask_t cpus_allowed;
 
 #ifdef CONFIG_PREEMPT_RCU
-	int rcu_read_lock_nesting;
-	char rcu_read_unlock_special;
+	int rcu_read_lock_nesting_save;
+	char rcu_read_unlock_special_save;
 	struct list_head rcu_node_entry;
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
 #ifdef CONFIG_TREE_PREEMPT_RCU
@@ -1894,8 +1894,8 @@ extern void task_clear_jobctl_pending(struct task_struct *task,
 
 static inline void rcu_copy_process(struct task_struct *p)
 {
-	p->rcu_read_lock_nesting = 0;
-	p->rcu_read_unlock_special = 0;
+	p->rcu_read_lock_nesting_save = 0;
+	p->rcu_read_unlock_special_save = 0;
 #ifdef CONFIG_TREE_PREEMPT_RCU
 	p->rcu_blocked_node = NULL;
 #endif /* #ifdef CONFIG_TREE_PREEMPT_RCU */
@@ -1905,9 +1905,95 @@ static inline void rcu_copy_process(struct task_struct *p)
 	INIT_LIST_HEAD(&p->rcu_node_entry);
 }
 
+/*
+ * Let preemptible RCU know about a switch away from a task.
+ *
+ * First, if there is an ongoing RCU read-side critical section, invoke
+ * rcu_preempt_note_context_switch() to enqueue the task.
+ *
+ * We need to save both of the __rcu_read_lock() / __rcu_read_unlock()
+ * per-CPU variables in either case so that they can be correctly restored
+ * when this task resumes.
+ *
+ * Subsequent RCU read-side critical sections can occur either in the
+ * architecture switch_to() function or in interrupt handlers.  Both
+ * cases rely on the fact that if rcu_read_unlock_special is zero, then
+ * rcu_read_lock_nesting must also be zero.  Thus, the only way that such
+ * a critical section can enter rcu_read_unlock_special() is if:
+ *
+ * 1.	The per-CPU rcu_read_lock_nesting variable was zero, and:
+ * 2.	The critical section took a scheduling-clock interrupt,
+ *	setting the RCU_READ_UNLOCK_NEED_QS bit.
+ *
+ * This is harmless.  It will cause the CPU to register a quiescent state,
+ * which is OK because the CPU really is in a quiescent state and if the
+ * outgoing task was not in a quiescent state, it has already been queued.
+ * In particular, RCU_READ_UNLOCK_BLOCKED cannot be set because preemption
+ * is disabled.
+ *
+ * If rcu_read_lock_nesting is non-zero, then any subsequent RCU read-side
+ * critical section will act as if nested, thus refusing to enter the
+ * rcu_read_unlock_special() function in the first place.
+ *
+ * The caller must have disabled preemption.
+ */
+static inline void rcu_switch_from(struct task_struct *t)
+{
+	if (__this_cpu_read(rcu_read_lock_nesting) != 0)
+		rcu_preempt_note_context_switch();
+	t->rcu_read_lock_nesting_save = __this_cpu_read(rcu_read_lock_nesting);
+	t->rcu_read_unlock_special_save =
+		__this_cpu_read(rcu_read_unlock_special);
+#ifdef CONFIG_PROVE_RCU
+	barrier();
+	/* Idle tasks can have NULL rcu_current_task at boot time. */
+	BUG_ON(__this_cpu_read(rcu_current_task) != t &&
+	       __this_cpu_read(rcu_current_task) != NULL);
+	__this_cpu_write(rcu_current_task, NULL);
+#endif /* #ifdef CONFIG_PROVE_RCU */
+}
+
+/*
+ * Let preemptible RCU know about a switch to a task.
+ *
+ * This requires some care in order to preserve the invariant
+ * mentioned above.  First zero rcu_read_unlock_special, then
+ * restore the value of rcu_read_lock_nesting, and only then restore
+ * rcu_read_unlock_special_save.  (Yes, there is a check in
+ * rcu_read_unlock_special() that is supposed to prevent interrupt
+ * handlers from getting to far into that function, but this check
+ * are unavoidably heuristic in nature.)
+ *
+ * The caller must have disabled preemption.
+ */
+static inline void rcu_switch_to(void)
+{
+	struct task_struct *t = current;
+
+	__this_cpu_write(rcu_read_unlock_special, 0);
+	barrier(); /* Ensure ordering to maintain invariant. */
+	__this_cpu_write(rcu_read_lock_nesting, t->rcu_read_lock_nesting_save);
+	barrier(); /* Ensure ordering to maintain invariant. */
+	__this_cpu_write(rcu_read_unlock_special,
+		t->rcu_read_unlock_special_save);
+#ifdef CONFIG_PROVE_RCU
+	barrier();
+	BUG_ON(__this_cpu_read(rcu_current_task) != NULL);
+	__this_cpu_write(rcu_current_task, t);
+#endif /* #ifdef CONFIG_PROVE_RCU */
+}
+
 #else
 
 static inline void rcu_copy_process(struct task_struct *p)
+{
+}
+
+static inline void rcu_switch_from(struct task_struct *t)
+{
+}
+
+static inline void rcu_switch_to(void)
 {
 }
 
