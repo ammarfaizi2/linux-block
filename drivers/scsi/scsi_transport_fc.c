@@ -3663,6 +3663,7 @@ static int
 fc_bsg_map_buffer(struct fc_bsg_buffer *buf, struct request *req)
 {
 	size_t sz = (sizeof(struct scatterlist) * req->nr_phys_segments);
+	struct request_queue *q = req->queue_ctx->queue;
 
 	BUG_ON(!req->nr_phys_segments);
 
@@ -3670,7 +3671,7 @@ fc_bsg_map_buffer(struct fc_bsg_buffer *buf, struct request *req)
 	if (!buf->sg_list)
 		return -ENOMEM;
 	sg_init_table(buf->sg_list, req->nr_phys_segments);
-	buf->sg_cnt = blk_rq_map_sg(req->q, req, buf->sg_list);
+	buf->sg_cnt = blk_rq_map_sg(q, req, buf->sg_list);
 	buf->payload_len = blk_rq_bytes(req);
 	return 0;
 }

@@ -19,6 +19,7 @@
 #include <linux/idr.h>
 #include <linux/hdreg.h>
 #include <linux/delay.h>
+#include <linux/blk-mq.h>
 
 #include <trace/events/block.h>
 
@@ -819,7 +820,7 @@ void dm_requeue_unmapped_request(struct request *clone)
 	struct dm_rq_target_io *tio = clone->end_io_data;
 	struct mapped_device *md = tio->md;
 	struct request *rq = tio->orig;
-	struct request_queue *q = rq->q;
+	struct request_queue *q = rq->queue_ctx->queue;
 	unsigned long flags;
 
 	dm_unprep_request(rq);
@@ -941,7 +942,7 @@ static void end_clone_request(struct request *clone, int error)
 	 * The clone is *NOT* freed actually here because it is alloced from
 	 * dm own mempool and REQ_ALLOCED isn't set in clone->cmd_flags.
 	 */
-	__blk_put_request(clone->q, clone);
+	__blk_put_request(clone);
 
 	/*
 	 * Actual request completion is done in a softirq context which doesn't
@@ -1448,11 +1449,11 @@ void dm_dispatch_request(struct request *rq)
 {
 	int r;
 
-	if (blk_queue_io_stat(rq->q))
+	if (blk_queue_io_stat(rq->queue_ctx->queue))
 		rq->cmd_flags |= REQ_IO_STAT;
 
 	rq->start_time = jiffies;
-	r = blk_insert_cloned_request(rq->q, rq);
+	r = blk_insert_cloned_request(rq->queue_ctx->queue, rq);
 	if (r)
 		dm_complete_request(rq, r);
 }
@@ -1583,7 +1584,7 @@ static int map_request(struct dm_target *ti, struct request *clone,
 		break;
 	case DM_MAPIO_REMAPPED:
 		/* The target has remapped the I/O so dispatch it */
-		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
+		trace_block_rq_remap(clone->queue_ctx->queue, clone, disk_devt(dm_disk(md)),
 				     blk_rq_pos(tio->orig));
 		dm_dispatch_request(clone);
 		break;

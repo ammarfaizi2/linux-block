@@ -14,7 +14,7 @@ int blk_rq_append_bio(struct request_queue *q, struct request *rq,
 {
 	if (!rq->bio)
 		blk_rq_bio_prep(q, rq, bio);
-	else if (!ll_back_merge_fn(q, rq, bio))
+	else if (!ll_back_merge_fn(rq->queue_ctx, rq, bio))
 		return -EINVAL;
 	else {
 		rq->biotail->bi_next = bio;

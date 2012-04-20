@@ -14,6 +14,7 @@ config IOSCHED_NOOP
 
 config IOSCHED_DEADLINE
 	tristate "Deadline I/O scheduler"
+	depends on BLK_MQ=n
 	default y
 	---help---
 	  The deadline I/O scheduler is simple and compact. It will provide
@@ -25,6 +26,7 @@ config IOSCHED_CFQ
 	tristate "CFQ I/O scheduler"
 	# If BLK_CGROUP is a module, CFQ has to be built as module.
 	depends on (BLK_CGROUP=m && m) || !BLK_CGROUP || BLK_CGROUP=y
+	depends on BLK_MQ=n
 	default y
 	---help---
 	  The CFQ I/O scheduler tries to distribute bandwidth equally

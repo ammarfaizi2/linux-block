@@ -180,7 +180,6 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
 	q->make_request_fn = mfn;
 	blk_queue_dma_alignment(q, 511);
 	blk_queue_congestion_threshold(q);
-	q->nr_batching = BLK_BATCH_REQ;
 
 	blk_set_default_limits(&q->limits);
 

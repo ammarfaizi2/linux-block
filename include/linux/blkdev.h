@@ -38,18 +38,6 @@ struct bsg_job;
 struct request;
 typedef void (rq_end_io_fn)(struct request *, int);
 
-struct request_list {
-	/*
-	 * count[], starved[], and wait[] are indexed by
-	 * BLK_RW_SYNC/BLK_RW_ASYNC
-	 */
-	int count[2];
-	int starved[2];
-	int elvpriv;
-	mempool_t *rq_pool;
-	wait_queue_head_t wait[2];
-};
-
 /*
  * request command types
  */
@@ -81,7 +69,7 @@ struct request {
 	struct list_head queuelist;
 	struct call_single_data csd;
 
-	struct request_queue *q;
+	struct blk_queue_ctx *queue_ctx;
 
 	unsigned int cmd_flags;
 	enum rq_cmd_type_bits cmd_type;
@@ -272,13 +260,12 @@ struct request_queue {
 	 * Together with queue_head for cacheline sharing
 	 */
 	struct list_head	queue_head;
-	struct request		*last_merge;
 	struct elevator_queue	*elevator;
 
-	/*
-	 * the queue request freelist, one for reads and one for writes
-	 */
-	struct request_list	rq;
+	struct blk_queue_ctx	*queue_ctx;
+	unsigned int		nr_queues;
+
+	mempool_t		*rq_pool;
 
 	request_fn_proc		*request_fn;
 	make_request_fn		*make_request_fn;
@@ -344,7 +331,6 @@ struct request_queue {
 	unsigned long		nr_requests;	/* Max # of requests */
 	unsigned int		nr_congestion_on;
 	unsigned int		nr_congestion_off;
-	unsigned int		nr_batching;
 
 	unsigned int		dma_drain_size;
 	void			*dma_drain_buffer;
@@ -354,12 +340,8 @@ struct request_queue {
 	struct blk_queue_tag	*queue_tags;
 	struct list_head	tag_busy_list;
 
-	unsigned int		nr_sorted;
-	unsigned int		in_flight[2];
-
 	unsigned int		rq_timeout;
 	struct timer_list	timeout;
-	struct list_head	timeout_list;
 
 	struct list_head	icq_list;
 
@@ -474,11 +456,6 @@ static inline void queue_flag_clear_unlocked(unsigned int flag,
 					     struct request_queue *q)
 {
 	__clear_bit(flag, &q->queue_flags);
-}
-
-static inline int queue_in_flight(struct request_queue *q)
-{
-	return q->in_flight[0] + q->in_flight[1];
 }
 
 static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
@@ -663,9 +640,9 @@ static inline void rq_flush_dcache_pages(struct request *rq)
 extern int blk_register_queue(struct gendisk *disk);
 extern void blk_unregister_queue(struct gendisk *disk);
 extern void generic_make_request(struct bio *bio);
-extern void blk_rq_init(struct request_queue *q, struct request *rq);
+extern void blk_rq_init(struct blk_queue_ctx *ctx, struct request *rq);
 extern void blk_put_request(struct request *);
-extern void __blk_put_request(struct request_queue *, struct request *);
+extern void __blk_put_request(struct request *);
 extern struct request *blk_get_request(struct request_queue *, int, gfp_t);
 extern struct request *blk_make_request(struct request_queue *, struct bio *,
 					gfp_t);
@@ -815,7 +792,8 @@ extern void blk_unprep_request(struct request *);
  * Access functions for manipulating queue properties
  */
 extern struct request_queue *blk_init_queue_node(request_fn_proc *rfn,
-					spinlock_t *lock, int node_id);
+					spinlock_t *lock, int node_id,
+					unsigned int nr_queues);
 extern struct request_queue *blk_init_queue(request_fn_proc *, spinlock_t *);
 extern struct request_queue *blk_init_allocated_queue(struct request_queue *,
 						      request_fn_proc *, spinlock_t *);
@@ -864,13 +842,13 @@ extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
 extern void blk_queue_flush_queueable(struct request_queue *q, bool queueable);
 extern struct backing_dev_info *blk_get_backing_dev_info(struct block_device *bdev);
 
-extern int blk_rq_map_sg(struct request_queue *, struct request *, struct scatterlist *);
+extern int blk_rq_map_sg(struct request *, struct scatterlist *);
 extern void blk_dump_rq_flags(struct request *, char *);
 extern long nr_blockdev_pages(void);
 
 bool __must_check blk_get_queue(struct request_queue *);
 struct request_queue *blk_alloc_queue(gfp_t);
-struct request_queue *blk_alloc_queue_node(gfp_t, int);
+struct request_queue *blk_alloc_queue_node(gfp_t, int, unsigned int);
 extern void blk_put_queue(struct request_queue *);
 
 /*

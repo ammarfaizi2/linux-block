@@ -81,7 +81,7 @@ void blk_delete_timer(struct request *req)
 
 static void blk_rq_timed_out(struct request *req)
 {
-	struct request_queue *q = req->q;
+	struct request_queue *q = req->queue_ctx->queue;
 	enum blk_eh_timer_return ret;
 
 	ret = q->rq_timed_out_fn(req);
@@ -107,16 +107,14 @@ static void blk_rq_timed_out(struct request *req)
 	}
 }
 
-void blk_rq_timed_out_timer(unsigned long data)
+static void __blk_rq_timed_out(struct request_queue *q,
+			       struct blk_queue_ctx *ctx,
+			       unsigned long *next, int *next_set)
+
 {
-	struct request_queue *q = (struct request_queue *) data;
-	unsigned long flags, next = 0;
 	struct request *rq, *tmp;
-	int next_set = 0;
 
-	spin_lock_irqsave(q->queue_lock, flags);
-
-	list_for_each_entry_safe(rq, tmp, &q->timeout_list, timeout_list) {
+	list_for_each_entry_safe(rq, tmp, &ctx->timeout_list, timeout_list) {
 		if (time_after_eq(jiffies, rq->deadline)) {
 			list_del_init(&rq->timeout_list);
 
@@ -126,11 +124,24 @@ void blk_rq_timed_out_timer(unsigned long data)
 			if (blk_mark_rq_complete(rq))
 				continue;
 			blk_rq_timed_out(rq);
-		} else if (!next_set || time_after(next, rq->deadline)) {
-			next = rq->deadline;
-			next_set = 1;
+		} else if (!*next_set || time_after(*next, rq->deadline)) {
+			*next = rq->deadline;
+			*next_set = 1;
 		}
 	}
+}
+
+void blk_rq_timed_out_timer(unsigned long data)
+{
+	struct request_queue *q = (struct request_queue *) data;
+	struct blk_queue_ctx *ctx;
+	unsigned long flags, next = 0;
+	int next_set = 0, i;
+
+	spin_lock_irqsave(q->queue_lock, flags);
+
+	queue_for_each_ctx(q, ctx, i)
+		__blk_rq_timed_out(q, ctx, &next, &next_set);
 
 	if (next_set)
 		mod_timer(&q->timeout, round_jiffies_up(next));
@@ -166,7 +177,7 @@ EXPORT_SYMBOL_GPL(blk_abort_request);
  */
 void blk_add_timer(struct request *req)
 {
-	struct request_queue *q = req->q;
+	struct request_queue *q = req->queue_ctx->queue;
 	unsigned long expiry;
 
 	if (!q->rq_timed_out_fn)
@@ -183,7 +194,7 @@ void blk_add_timer(struct request *req)
 		req->timeout = q->rq_timeout;
 
 	req->deadline = jiffies + req->timeout;
-	list_add_tail(&req->timeout_list, &q->timeout_list);
+	list_add_tail(&req->timeout_list, &req->queue_ctx->timeout_list);
 
 	/*
 	 * If the timer isn't already pending or this timeout is earlier
@@ -204,9 +215,11 @@ void blk_add_timer(struct request *req)
  */
 void blk_abort_queue(struct request_queue *q)
 {
+	struct blk_queue_ctx *ctx;
 	unsigned long flags;
 	struct request *rq, *tmp;
 	LIST_HEAD(list);
+	unsigned int i;
 
 	/*
 	 * Not a request based block device, nothing to abort
@@ -222,7 +235,8 @@ void blk_abort_queue(struct request_queue *q)
 	 * Splice entries to local list, to avoid deadlocking if entries
 	 * get readded to the timeout list by error handling
 	 */
-	list_splice_init(&q->timeout_list, &list);
+	queue_for_each_ctx(q, ctx, i)
+		list_splice_init(&ctx->timeout_list, &list);
 
 	list_for_each_entry_safe(rq, tmp, &list, timeout_list)
 		blk_abort_request(rq);
@@ -232,7 +246,8 @@ void blk_abort_queue(struct request_queue *q)
 	 * deleting the element from the list. Make sure we add those back
 	 * instead of leaving them on the local stack list.
 	 */
-	list_splice(&list, &q->timeout_list);
+	list_for_each_entry_safe(rq, tmp, &list, timeout_list)
+		list_move_tail(&rq->timeout_list, &ctx->timeout_list);
 
 	spin_unlock_irqrestore(q->queue_lock, flags);
 

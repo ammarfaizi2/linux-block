@@ -234,7 +234,7 @@ int scsi_execute(struct scsi_device *sdev, const unsigned char *cmd,
 	/*
 	 * head injection *required* here otherwise quiesce won't work
 	 */
-	blk_execute_rq(req->q, NULL, req, 1);
+	blk_execute_rq(sdev->request_queue, NULL, req, 1);
 
 	/*
 	 * Some devices (USB mass-storage in particular) may transfer
@@ -986,7 +986,7 @@ static int scsi_init_sgtable(struct request *req, struct scsi_data_buffer *sdb,
 	 * Next, walk the list, and fill in the addresses and sizes of
 	 * each segment.
 	 */
-	count = blk_rq_map_sg(req->q, req, sdb->table.sgl);
+	count = blk_rq_map_sg(req, sdb->table.sgl);
 	BUG_ON(count > sdb->table.nents);
 	sdb->table.nents = count;
 	sdb->length = blk_rq_bytes(req);
@@ -1028,20 +1028,21 @@ int scsi_init_io(struct scsi_cmnd *cmd, gfp_t gfp_mask)
 
 	if (blk_integrity_rq(rq)) {
 		struct scsi_data_buffer *prot_sdb = cmd->prot_sdb;
+		struct request_queue *q = rq->queue_ctx->queue;
 		int ivecs, count;
 
 		BUG_ON(prot_sdb == NULL);
-		ivecs = blk_rq_count_integrity_sg(rq->q, rq->bio);
+		ivecs = blk_rq_count_integrity_sg(q, rq->bio);
 
 		if (scsi_alloc_sgtable(prot_sdb, ivecs, gfp_mask)) {
 			error = BLKPREP_DEFER;
 			goto err_exit;
 		}
 
-		count = blk_rq_map_integrity_sg(rq->q, rq->bio,
+		count = blk_rq_map_integrity_sg(q, rq->bio,
 						prot_sdb->table.sgl);
 		BUG_ON(unlikely(count > ivecs));
-		BUG_ON(unlikely(count > queue_max_integrity_segments(rq->q)));
+		BUG_ON(unlikely(count > queue_max_integrity_segments(q)));
 
 		cmd->prot_sdb = prot_sdb;
 		cmd->prot_sdb->table.nents = count;

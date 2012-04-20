@@ -39,16 +39,23 @@ static ssize_t queue_requests_show(struct request_queue *q, char *page)
 static ssize_t
 queue_requests_store(struct request_queue *q, const char *page, size_t count)
 {
-	struct request_list *rl = &q->rq;
+	struct blk_queue_ctx *ctx;
+	struct request_list *rl;
 	unsigned long nr;
 	int ret;
 
 	if (!q->request_fn)
 		return -EINVAL;
+	/* just ignore it for now */
+	if (q->nr_queues > 1)
+		return count;
 
 	ret = queue_var_store(&nr, page, count);
 	if (nr < BLKDEV_MIN_RQ)
 		nr = BLKDEV_MIN_RQ;
+
+	ctx = blk_get_ctx(q, 0);
+	rl = &ctx->rl;
 
 	spin_lock_irq(q->queue_lock);
 	q->nr_requests = nr;
@@ -475,7 +482,6 @@ static void blk_release_queue(struct kobject *kobj)
 {
 	struct request_queue *q =
 		container_of(kobj, struct request_queue, kobj);
-	struct request_list *rl = &q->rq;
 
 	blk_sync_queue(q);
 
@@ -483,13 +489,15 @@ static void blk_release_queue(struct kobject *kobj)
 		spin_lock_irq(q->queue_lock);
 		ioc_clear_queue(q);
 		spin_unlock_irq(q->queue_lock);
-		elevator_exit(q->elevator);
+		elevator_exit(q, q->elevator);
 	}
 
 	blk_throtl_exit(q);
 
-	if (rl->rq_pool)
-		mempool_destroy(rl->rq_pool);
+	if (q->rq_pool)
+		mempool_destroy(q->rq_pool);
+	if (q->queue_ctx)
+		kfree(q->queue_ctx);
 
 	if (q->queue_tags)
 		__blk_queue_free_tags(q);

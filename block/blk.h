@@ -3,11 +3,7 @@
 
 #include <linux/idr.h>
 
-/* Amount of time in which a process may batch requests */
-#define BLK_BATCH_TIME	(HZ/50UL)
-
-/* Number of requests a "batching" process may submit */
-#define BLK_BATCH_REQ	32
+#include <linux/blk-mq.h>
 
 extern struct kmem_cache *blk_requestq_cachep;
 extern struct kobj_type blk_queue_ktype;
@@ -99,16 +95,18 @@ static inline struct request *__elv_next_request(struct request_queue *q)
 	}
 }
 
-static inline void elv_activate_rq(struct request_queue *q, struct request *rq)
+static inline void elv_activate_rq(struct request *rq)
 {
+	struct request_queue *q = rq->queue_ctx->queue;
 	struct elevator_queue *e = q->elevator;
 
 	if (e->type->ops.elevator_activate_req_fn)
 		e->type->ops.elevator_activate_req_fn(q, rq);
 }
 
-static inline void elv_deactivate_rq(struct request_queue *q, struct request *rq)
+static inline void elv_deactivate_rq(struct request *rq)
 {
+	struct request_queue *q = rq->queue_ctx->queue;
 	struct elevator_queue *e = q->elevator;
 
 	if (e->type->ops.elevator_deactivate_req_fn)
@@ -127,13 +125,13 @@ static inline int blk_should_fake_timeout(struct request_queue *q)
 }
 #endif
 
-int ll_back_merge_fn(struct request_queue *q, struct request *req,
+int ll_back_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 		     struct bio *bio);
-int ll_front_merge_fn(struct request_queue *q, struct request *req, 
+int ll_front_merge_fn(struct blk_queue_ctx *ctx, struct request *req, 
 		      struct bio *bio);
-int attempt_back_merge(struct request_queue *q, struct request *rq);
-int attempt_front_merge(struct request_queue *q, struct request *rq);
-int blk_attempt_req_merge(struct request_queue *q, struct request *rq,
+int attempt_back_merge(struct blk_queue_ctx *ctx, struct request *rq);
+int attempt_front_merge(struct blk_queue_ctx *ctx, struct request *rq);
+int blk_attempt_req_merge(struct blk_queue_ctx *ctx, struct request *rq,
 				struct request *next);
 void blk_recalc_rq_segments(struct request *rq);
 void blk_rq_set_mixed_merge(struct request *rq);

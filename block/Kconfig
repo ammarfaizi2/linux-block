@@ -23,6 +23,11 @@ menuconfig BLOCK
 
 if BLOCK
 
+config MQ
+	bool "Multiqueue support"
+	help
+	  Help catch build/code dependencies
+
 config LBDAF
 	bool "Support for large (2TB+) block devices and files"
 	depends on !64BIT

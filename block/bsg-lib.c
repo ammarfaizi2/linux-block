@@ -22,6 +22,7 @@
  */
 #include <linux/slab.h>
 #include <linux/blkdev.h>
+#include <linux/blk-mq.h>
 #include <linux/delay.h>
 #include <linux/scatterlist.h>
 #include <linux/bsg-lib.h>
@@ -97,7 +98,7 @@ static int bsg_map_buffer(struct bsg_buffer *buf, struct request *req)
 	if (!buf->sg_list)
 		return -ENOMEM;
 	sg_init_table(buf->sg_list, req->nr_phys_segments);
-	buf->sg_cnt = blk_rq_map_sg(req->q, req, buf->sg_list);
+	buf->sg_cnt = blk_rq_map_sg(req, buf->sg_list);
 	buf->payload_len = blk_rq_bytes(req);
 	return 0;
 }
@@ -110,7 +111,7 @@ static int bsg_map_buffer(struct bsg_buffer *buf, struct request *req)
 static int bsg_create_job(struct device *dev, struct request *req)
 {
 	struct request *rsp = req->next_rq;
-	struct request_queue *q = req->q;
+	struct request_queue *q = req->queue_ctx->queue;
 	struct bsg_job *job;
 	int ret;
 
@@ -270,8 +271,7 @@ void bsg_remove_queue(struct request_queue *q)
 		 */
 		req = blk_fetch_request(q);
 		/* save requests in use and starved */
-		counts = q->rq.count[0] + q->rq.count[1] +
-			 q->rq.starved[0] + q->rq.starved[1];
+		counts = queue_rq_queued(q) + queue_rq_starved(q);
 		spin_unlock_irq(q->queue_lock);
 		/* any requests still outstanding? */
 		if (counts == 0)

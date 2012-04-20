@@ -23,7 +23,7 @@ static void blk_end_sync_rq(struct request *rq, int error)
 	struct completion *waiting = rq->end_io_data;
 
 	rq->end_io_data = NULL;
-	__blk_put_request(rq->q, rq);
+	__blk_put_request(rq);
 
 	/*
 	 * complete last, if this is a stack request the process (and thus
@@ -49,12 +49,14 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
 			   rq_end_io_fn *done)
 {
 	int where = at_head ? ELEVATOR_INSERT_FRONT : ELEVATOR_INSERT_BACK;
+	struct blk_queue_ctx *ctx;
 
 	WARN_ON(irqs_disabled());
-	spin_lock_irq(q->queue_lock);
+
+	/* FIXME */
+	ctx = blk_get_ctx(q, 0);
 
 	if (unlikely(blk_queue_dead(q))) {
-		spin_unlock_irq(q->queue_lock);
 		rq->errors = -ENXIO;
 		if (rq->end_io)
 			rq->end_io(rq, rq->errors);
@@ -63,7 +65,11 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
 
 	rq->rq_disk = bd_disk;
 	rq->end_io = done;
-	__elv_add_request(q, rq, where);
+	spin_lock_irq(&ctx->lock);
+	__elv_add_request(rq, where);
+	spin_unlock(&ctx->lock);
+
+	spin_lock(q->queue_lock);
 	__blk_run_queue(q);
 	/* the queue is stopped so it won't be run */
 	if (rq->cmd_type == REQ_TYPE_PM_RESUME)

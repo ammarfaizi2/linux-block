@@ -15,6 +15,7 @@
 #include <linux/major.h>
 
 #include <linux/blkdev.h>
+#include <linux/blk-mq.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/sched.h>
@@ -104,7 +105,7 @@ static const char *nbdcmd_to_ascii(int cmd)
 static void nbd_end_request(struct request *req)
 {
 	int error = req->errors ? -EIO : 0;
-	struct request_queue *q = req->q;
+	struct request_queue *q = req->queue_ctx->queue;
 	unsigned long flags;
 
 	dprintk(DBG_BLKDEV, "%s: request %p: %s\n", req->rq_disk->disk_name,

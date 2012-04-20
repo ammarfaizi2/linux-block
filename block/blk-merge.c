@@ -70,7 +70,9 @@ new_segment:
 
 void blk_recalc_rq_segments(struct request *rq)
 {
-	rq->nr_phys_segments = __blk_recalc_rq_segments(rq->q, rq->bio);
+	struct request_queue *q = rq->queue_ctx->queue;
+
+	rq->nr_phys_segments = __blk_recalc_rq_segments(q, rq->bio);
 }
 
 void blk_recount_segments(struct request_queue *q, struct bio *bio)
@@ -114,9 +116,9 @@ static int blk_phys_contig_segment(struct request_queue *q, struct bio *bio,
  * map a request to scatterlist, return number of sg entries setup. Caller
  * must make sure sg can hold rq->nr_phys_segments entries
  */
-int blk_rq_map_sg(struct request_queue *q, struct request *rq,
-		  struct scatterlist *sglist)
+int blk_rq_map_sg(struct request *rq, struct scatterlist *sglist)
 {
+	struct request_queue *q = rq->queue_ctx->queue;
 	struct bio_vec *bvec, *bvprv;
 	struct req_iterator iter;
 	struct scatterlist *sg;
@@ -200,6 +202,7 @@ new_segment:
 EXPORT_SYMBOL(blk_rq_map_sg);
 
 static inline int ll_new_hw_segment(struct request_queue *q,
+				    struct blk_queue_ctx *ctx,
 				    struct request *req,
 				    struct bio *bio)
 {
@@ -220,14 +223,15 @@ static inline int ll_new_hw_segment(struct request_queue *q,
 
 no_merge:
 	req->cmd_flags |= REQ_NOMERGE;
-	if (req == q->last_merge)
-		q->last_merge = NULL;
+	if (req == ctx->last_merge)
+		ctx->last_merge = NULL;
 	return 0;
 }
 
-int ll_back_merge_fn(struct request_queue *q, struct request *req,
+int ll_back_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 		     struct bio *bio)
 {
+	struct request_queue *q = ctx->queue;
 	unsigned short max_sectors;
 
 	if (unlikely(req->cmd_type == REQ_TYPE_BLOCK_PC))
@@ -237,8 +241,8 @@ int ll_back_merge_fn(struct request_queue *q, struct request *req,
 
 	if (blk_rq_sectors(req) + bio_sectors(bio) > max_sectors) {
 		req->cmd_flags |= REQ_NOMERGE;
-		if (req == q->last_merge)
-			q->last_merge = NULL;
+		if (req == ctx->last_merge)
+			ctx->last_merge = NULL;
 		return 0;
 	}
 	if (!bio_flagged(req->biotail, BIO_SEG_VALID))
@@ -246,12 +250,13 @@ int ll_back_merge_fn(struct request_queue *q, struct request *req,
 	if (!bio_flagged(bio, BIO_SEG_VALID))
 		blk_recount_segments(q, bio);
 
-	return ll_new_hw_segment(q, req, bio);
+	return ll_new_hw_segment(q, ctx, req, bio);
 }
 
-int ll_front_merge_fn(struct request_queue *q, struct request *req,
+int ll_front_merge_fn(struct blk_queue_ctx *ctx, struct request *req,
 		      struct bio *bio)
 {
+	struct request_queue *q = ctx->queue;
 	unsigned short max_sectors;
 
 	if (unlikely(req->cmd_type == REQ_TYPE_BLOCK_PC))
@@ -259,11 +264,10 @@ int ll_front_merge_fn(struct request_queue *q, struct request *req,
 	else
 		max_sectors = queue_max_sectors(q);
 
-
 	if (blk_rq_sectors(req) + bio_sectors(bio) > max_sectors) {
 		req->cmd_flags |= REQ_NOMERGE;
-		if (req == q->last_merge)
-			q->last_merge = NULL;
+		if (req == ctx->last_merge)
+			ctx->last_merge = NULL;
 		return 0;
 	}
 	if (!bio_flagged(bio, BIO_SEG_VALID))
@@ -271,12 +275,13 @@ int ll_front_merge_fn(struct request_queue *q, struct request *req,
 	if (!bio_flagged(req->bio, BIO_SEG_VALID))
 		blk_recount_segments(q, req->bio);
 
-	return ll_new_hw_segment(q, req, bio);
+	return ll_new_hw_segment(q, ctx, req, bio);
 }
 
-static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
+static int ll_merge_requests_fn(struct blk_queue_ctx *ctx, struct request *req,
 				struct request *next)
 {
+	struct request_queue *q = ctx->queue;
 	int total_phys_segments;
 	unsigned int seg_size =
 		req->biotail->bi_seg_back_size + next->bio->bi_seg_front_size;
@@ -364,8 +369,8 @@ static void blk_account_io_merge(struct request *req)
 /*
  * Has to be called with the request spinlock acquired
  */
-static int attempt_merge(struct request_queue *q, struct request *req,
-			  struct request *next)
+static int attempt_merge(struct blk_queue_ctx *ctx, struct request *req,
+			 struct request *next)
 {
 	if (!rq_mergeable(req) || !rq_mergeable(next))
 		return 0;
@@ -399,7 +404,7 @@ static int attempt_merge(struct request_queue *q, struct request *req,
 	 * will have updated segment counts, update sector
 	 * counts here.
 	 */
-	if (!ll_merge_requests_fn(q, req, next))
+	if (!ll_merge_requests_fn(ctx, req, next))
 		return 0;
 
 	/*
@@ -429,7 +434,7 @@ static int attempt_merge(struct request_queue *q, struct request *req,
 
 	req->__data_len += blk_rq_bytes(next);
 
-	elv_merge_requests(q, req, next);
+	elv_merge_requests(ctx, req, next);
 
 	/*
 	 * 'next' is going away, so update stats accordingly
@@ -442,34 +447,34 @@ static int attempt_merge(struct request_queue *q, struct request *req,
 
 	/* owner-ship of bio passed from next to req */
 	next->bio = NULL;
-	__blk_put_request(q, next);
+	__blk_put_request(next);
 	return 1;
 }
 
-int attempt_back_merge(struct request_queue *q, struct request *rq)
+int attempt_back_merge(struct blk_queue_ctx *ctx, struct request *rq)
 {
-	struct request *next = elv_latter_request(q, rq);
+	struct request *next = elv_latter_request(ctx, rq);
 
 	if (next)
-		return attempt_merge(q, rq, next);
+		return attempt_merge(ctx, rq, next);
 
 	return 0;
 }
 
-int attempt_front_merge(struct request_queue *q, struct request *rq)
+int attempt_front_merge(struct blk_queue_ctx *ctx, struct request *rq)
 {
-	struct request *prev = elv_former_request(q, rq);
+	struct request *prev = elv_former_request(ctx, rq);
 
 	if (prev)
-		return attempt_merge(q, prev, rq);
+		return attempt_merge(ctx, prev, rq);
 
 	return 0;
 }
 
-int blk_attempt_req_merge(struct request_queue *q, struct request *rq,
+int blk_attempt_req_merge(struct blk_queue_ctx *ctx, struct request *rq,
 			  struct request *next)
 {
-	return attempt_merge(q, rq, next);
+	return attempt_merge(ctx, rq, next);
 }
 
 bool blk_rq_merge_ok(struct request *rq, struct bio *bio)

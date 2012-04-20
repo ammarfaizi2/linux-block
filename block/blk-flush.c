@@ -144,7 +144,7 @@ static void blk_flush_restore_request(struct request *rq)
 static bool blk_flush_complete_seq(struct request *rq, unsigned int seq,
 				   int error)
 {
-	struct request_queue *q = rq->q;
+	struct request_queue *q = rq->queue_ctx->queue;
 	struct list_head *pending = &q->flush_queue[q->flush_pending_idx];
 	bool queued = false;
 
@@ -193,7 +193,7 @@ static bool blk_flush_complete_seq(struct request *rq, unsigned int seq,
 
 static void flush_end_io(struct request *flush_rq, int error)
 {
-	struct request_queue *q = flush_rq->q;
+	struct request_queue *q = flush_rq->queue_ctx->queue;
 	struct list_head *running = &q->flush_queue[q->flush_running_idx];
 	bool queued = false;
 	struct request *rq, *n;
@@ -202,7 +202,7 @@ static void flush_end_io(struct request *flush_rq, int error)
 
 	/* account completion of the flush request */
 	q->flush_running_idx ^= 1;
-	elv_completed_request(q, flush_rq);
+	elv_completed_request(flush_rq);
 
 	/* and push the waiting requests to the next stage */
 	list_for_each_entry_safe(rq, n, running, flush.list) {
@@ -246,6 +246,7 @@ static bool blk_kick_flush(struct request_queue *q)
 	struct list_head *pending = &q->flush_queue[q->flush_pending_idx];
 	struct request *first_rq =
 		list_first_entry(pending, struct request, flush.list);
+	struct blk_queue_ctx *ctx = first_rq->queue_ctx;
 
 	/* C1 described at the top of this file */
 	if (q->flush_pending_idx != q->flush_running_idx || list_empty(pending))
@@ -261,7 +262,7 @@ static bool blk_kick_flush(struct request_queue *q)
 	 * Issue flush and toggle pending_idx.  This makes pending_idx
 	 * different from running_idx, which means flush is in flight.
 	 */
-	blk_rq_init(q, &q->flush_rq);
+	blk_rq_init(ctx, &q->flush_rq);
 	q->flush_rq.cmd_type = REQ_TYPE_FS;
 	q->flush_rq.cmd_flags = WRITE_FLUSH | REQ_FLUSH_SEQ;
 	q->flush_rq.rq_disk = first_rq->rq_disk;
@@ -274,7 +275,7 @@ static bool blk_kick_flush(struct request_queue *q)
 
 static void flush_data_end_io(struct request *rq, int error)
 {
-	struct request_queue *q = rq->q;
+	struct request_queue *q = rq->queue_ctx->queue;
 
 	/*
 	 * After populating an empty queue, kick it to avoid stall.  Read
@@ -297,7 +298,7 @@ static void flush_data_end_io(struct request *rq, int error)
  */
 void blk_insert_flush(struct request *rq)
 {
-	struct request_queue *q = rq->q;
+	struct request_queue *q = rq->queue_ctx->queue;
 	unsigned int fflags = q->flush_flags;	/* may change, cache */
 	unsigned int policy = blk_flush_policy(fflags, rq);
 
