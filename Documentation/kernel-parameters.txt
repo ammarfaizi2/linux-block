@@ -2334,6 +2334,10 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			Set maximum number of finished RCU callbacks to process
 			in one batch.
 
+	rcutree.fanout_leaf=	[KNL,BOOT]
+			Set maximum number of finished RCU callbacks to process
+			in one batch.
+
 	rcutree.qhimark=	[KNL,BOOT]
 			Set threshold of queued
 			RCU callbacks over which batch limiting is disabled.
