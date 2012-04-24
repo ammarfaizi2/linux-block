@@ -132,7 +132,6 @@ static struct rcu_preempt_ctrlblk rcu_preempt_ctrlblk = {
 	RCU_TRACE(.rcb.name = "rcu_preempt")
 };
 
-static void rcu_read_unlock_special(struct task_struct *t);
 static int rcu_preempted_readers_exp(void);
 static void rcu_report_exp_done(void);
 
@@ -142,25 +141,6 @@ static void rcu_report_exp_done(void);
 static int rcu_cpu_blocking_cur_gp(void)
 {
 	return rcu_preempt_ctrlblk.gpcpu != rcu_preempt_ctrlblk.gpnum;
-}
-
-/*
- * Check for a running RCU reader.  Because there is only one CPU,
- * there can be but one running RCU reader at a time.  ;-)
- *
- * Returns zero if there are no running readers.  Returns a positive
- * number if there is at least one reader within its RCU read-side
- * critical section.  Returns a negative number if an outermost reader
- * is in the midst of exiting from its RCU read-side critical section
- *
- * Returns zero if there are no running readers.  Returns a positive
- * number if there is at least one reader within its RCU read-side
- * critical section.  Returns a negative number if an outermost reader
- * is in the midst of exiting from its RCU read-side critical section.
- */
-static int rcu_preempt_running_reader(void)
-{
-	return current->rcu_read_lock_nesting;
 }
 
 /*
@@ -395,7 +375,7 @@ static void rcu_preempt_boost_start_gp(void)
  *
  * Unlike the other rcu_*_qs() functions, callers to this function
  * must disable irqs in order to protect the assignment to
- * ->rcu_read_unlock_special.
+ * rcu_read_unlock_special.
  *
  * Because this is a single-CPU implementation, the only way a grace
  * period can end is if the CPU is in a quiescent state.  The reason is
@@ -412,7 +392,7 @@ static void rcu_preempt_cpu_qs(void)
 {
 	/* Record both CPU and task as having responded to current GP. */
 	rcu_preempt_ctrlblk.gpcpu = rcu_preempt_ctrlblk.gpnum;
-	current->rcu_read_unlock_special &= ~RCU_READ_UNLOCK_NEED_QS;
+	__get_cpu_var(rcu_read_unlock_special) &= ~RCU_READ_UNLOCK_NEED_QS;
 
 	/* If there is no GP then there is nothing more to do.  */
 	if (!rcu_preempt_gp_in_progress())
@@ -486,10 +466,12 @@ void rcu_preempt_note_context_switch(void)
 
 	local_irq_save(flags); /* must exclude scheduler_tick(). */
 	if (rcu_preempt_running_reader() > 0 &&
-	    (t->rcu_read_unlock_special & RCU_READ_UNLOCK_BLOCKED) == 0) {
+	    (__this_cpu_read(rcu_read_unlock_special) &
+	     RCU_READ_UNLOCK_BLOCKED) == 0) {
 
 		/* Possibly blocking in an RCU read-side critical section. */
-		t->rcu_read_unlock_special |= RCU_READ_UNLOCK_BLOCKED;
+		__get_cpu_var(rcu_read_unlock_special) |=
+			RCU_READ_UNLOCK_BLOCKED;
 
 		/*
 		 * If this CPU has already checked in, then this task
@@ -505,12 +487,12 @@ void rcu_preempt_note_context_switch(void)
 		if (rcu_cpu_blocking_cur_gp())
 			rcu_preempt_ctrlblk.gp_tasks = &t->rcu_node_entry;
 	} else if (rcu_preempt_running_reader() < 0 &&
-		   t->rcu_read_unlock_special) {
+		   __this_cpu_read(rcu_read_unlock_special)) {
 		/*
 		 * Complete exit from RCU read-side critical section on
 		 * behalf of preempted instance of __rcu_read_unlock().
 		 */
-		rcu_read_unlock_special(t);
+		rcu_read_unlock_do_special();
 	}
 
 	/*
@@ -527,23 +509,11 @@ void rcu_preempt_note_context_switch(void)
 }
 
 /*
- * Tiny-preemptible RCU implementation for rcu_read_lock().
- * Just increment ->rcu_read_lock_nesting, shared state will be updated
- * if we block.
- */
-void __rcu_read_lock(void)
-{
-	current->rcu_read_lock_nesting++;
-	barrier();  /* needed if we ever invoke rcu_read_lock in rcutiny.c */
-}
-EXPORT_SYMBOL_GPL(__rcu_read_lock);
-
-/*
  * Handle special cases during rcu_read_unlock(), such as needing to
  * notify RCU core processing or task having blocked during the RCU
  * read-side critical section.
  */
-static noinline void rcu_read_unlock_special(struct task_struct *t)
+void rcu_read_unlock_do_special(void)
 {
 	int empty;
 	int empty_exp;
@@ -567,7 +537,7 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
 	 * If RCU core is waiting for this CPU to exit critical section,
 	 * let it know that we have done so.
 	 */
-	special = t->rcu_read_unlock_special;
+	special = __this_cpu_read(rcu_read_unlock_special);
 	if (special & RCU_READ_UNLOCK_NEED_QS)
 		rcu_preempt_cpu_qs();
 
@@ -579,7 +549,10 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
 
 	/* Clean up if blocked during RCU read-side critical section. */
 	if (special & RCU_READ_UNLOCK_BLOCKED) {
-		t->rcu_read_unlock_special &= ~RCU_READ_UNLOCK_BLOCKED;
+		struct task_struct *t = current;
+
+		__get_cpu_var(rcu_read_unlock_special) &=
+			~RCU_READ_UNLOCK_BLOCKED;
 
 		/*
 		 * Remove this task from the ->blkd_tasks list and adjust
@@ -614,49 +587,17 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
 		 */
 		if (!empty_exp && rcu_preempt_ctrlblk.exp_tasks == NULL)
 			rcu_report_exp_done();
-	}
 #ifdef CONFIG_RCU_BOOST
-	/* Unboost self if was boosted. */
-	if (t->rcu_boost_mutex != NULL) {
-		rbmp = t->rcu_boost_mutex;
-		t->rcu_boost_mutex = NULL;
-		rt_mutex_unlock(rbmp);
-	}
+		/* Unboost self if was boosted. */
+		if (t->rcu_boost_mutex != NULL) {
+			rbmp = t->rcu_boost_mutex;
+			t->rcu_boost_mutex = NULL;
+			rt_mutex_unlock(rbmp);
+		}
 #endif /* #ifdef CONFIG_RCU_BOOST */
+	}
 	local_irq_restore(flags);
 }
-
-/*
- * Tiny-preemptible RCU implementation for rcu_read_unlock().
- * Decrement ->rcu_read_lock_nesting.  If the result is zero (outermost
- * rcu_read_unlock()) and ->rcu_read_unlock_special is non-zero, then
- * invoke rcu_read_unlock_special() to clean up after a context switch
- * in an RCU read-side critical section and other special cases.
- */
-void __rcu_read_unlock(void)
-{
-	struct task_struct *t = current;
-
-	barrier();  /* needed if we ever invoke rcu_read_unlock in rcutiny.c */
-	if (t->rcu_read_lock_nesting != 1)
-		--t->rcu_read_lock_nesting;
-	else {
-		t->rcu_read_lock_nesting = INT_MIN;
-		barrier();  /* assign before ->rcu_read_unlock_special load */
-		if (unlikely(ACCESS_ONCE(t->rcu_read_unlock_special)))
-			rcu_read_unlock_special(t);
-		barrier();  /* ->rcu_read_unlock_special load before assign */
-		t->rcu_read_lock_nesting = 0;
-	}
-#ifdef CONFIG_PROVE_LOCKING
-	{
-		int rrln = ACCESS_ONCE(t->rcu_read_lock_nesting);
-
-		WARN_ON_ONCE(rrln < 0 && rrln > INT_MIN / 2);
-	}
-#endif /* #ifdef CONFIG_PROVE_LOCKING */
-}
-EXPORT_SYMBOL_GPL(__rcu_read_unlock);
 
 /*
  * Check for a quiescent state from the current CPU.  When a task blocks,
@@ -667,8 +608,6 @@ EXPORT_SYMBOL_GPL(__rcu_read_unlock);
  */
 static void rcu_preempt_check_callbacks(void)
 {
-	struct task_struct *t = current;
-
 	if (rcu_preempt_gp_in_progress() &&
 	    (!rcu_preempt_running_reader() ||
 	     !rcu_cpu_blocking_cur_gp()))
@@ -679,7 +618,8 @@ static void rcu_preempt_check_callbacks(void)
 	if (rcu_preempt_gp_in_progress() &&
 	    rcu_cpu_blocking_cur_gp() &&
 	    rcu_preempt_running_reader() > 0)
-		t->rcu_read_unlock_special |= RCU_READ_UNLOCK_NEED_QS;
+		__get_cpu_var(rcu_read_unlock_special) |=
+			RCU_READ_UNLOCK_NEED_QS;
 }
 
 /*
@@ -849,22 +789,6 @@ int rcu_preempt_needs_cpu(void)
 	if (!rcu_preempt_running_reader())
 		rcu_preempt_cpu_qs();
 	return rcu_preempt_ctrlblk.rcb.rcucblist != NULL;
-}
-
-/*
- * Check for a task exiting while in a preemptible -RCU read-side
- * critical section, clean up if so.  No need to issue warnings,
- * as debug_check_no_locks_held() already does this if lockdep
- * is enabled.
- */
-void exit_rcu(void)
-{
-	struct task_struct *t = current;
-
-	if (t->rcu_read_lock_nesting == 0)
-		return;
-	t->rcu_read_lock_nesting = 1;
-	__rcu_read_unlock();
 }
 
 #else /* #ifdef CONFIG_TINY_PREEMPT_RCU */

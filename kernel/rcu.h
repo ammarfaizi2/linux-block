@@ -109,4 +109,8 @@ static inline bool __rcu_reclaim(char *rn, struct rcu_head *head)
 	}
 }
 
+#ifdef CONFIG_PREEMPT_RCU
+extern void rcu_read_unlock_do_special(void);
+#endif /* #ifdef CONFIG_PREEMPT_RCU */
+
 #endif /* __LINUX_RCU_H */
