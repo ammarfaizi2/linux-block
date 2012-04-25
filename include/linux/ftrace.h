@@ -414,6 +414,8 @@ static inline int ftrace_text_reserved(void *start, void *end)
 #define ftrace_set_notrace(ops, buf, len, reset) ({ -ENODEV; })
 #define ftrace_free_filter(ops) do { } while (0)
 
+static inline unsigned long ftrace_location(unsigned long ip) { return 0; }
+
 static inline ssize_t ftrace_filter_write(struct file *file, const char __user *ubuf,
 			    size_t cnt, loff_t *ppos) { return -ENODEV; }
 static inline ssize_t ftrace_notrace_write(struct file *file, const char __user *ubuf,
