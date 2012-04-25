@@ -128,6 +128,7 @@ struct kprobe {
 				   * NOTE:
 				   * this flag is only for optimized_kprobe.
 				   */
+#define KPROBE_FLAG_MOVED	8 /* probe was moved passed ftrace nop */
 
 /* Has this kprobe gone ? */
 static inline int kprobe_gone(struct kprobe *p)

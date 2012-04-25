@@ -1319,10 +1319,22 @@ int __kprobes register_kprobe(struct kprobe *p)
 	struct kprobe *old_p;
 	struct module *probed_mod;
 	kprobe_opcode_t *addr;
+	unsigned long ftrace_addr;
 
 	addr = kprobe_addr(p);
 	if (IS_ERR(addr))
 		return PTR_ERR(addr);
+
+	/*
+	 * If the address is located on a ftrace nop, set the
+	 * breakpoint to the following instruction.
+	 */
+	ftrace_addr = ftrace_location((unsigned long)addr);
+	if (unlikely(ftrace_addr)) {
+		addr = (kprobe_opcode_t *)(ftrace_addr + MCOUNT_INSN_SIZE);
+		p->flags |= KPROBE_FLAG_MOVED;
+	}
+
 	p->addr = addr;
 
 	ret = check_kprobe_rereg(p);
@@ -1333,7 +1345,6 @@ int __kprobes register_kprobe(struct kprobe *p)
 	preempt_disable();
 	if (!kernel_text_address((unsigned long) p->addr) ||
 	    in_kprobes_functions((unsigned long) p->addr) ||
-	    ftrace_text_reserved(p->addr, p->addr) ||
 	    jump_label_text_reserved(p->addr, p->addr)) {
 		ret = -EINVAL;
 		goto cannot_probe;
