@@ -71,12 +71,19 @@ typedef void (*ftrace_func_t)(unsigned long ip, unsigned long parent_ip,
  *           could be controled by following calls:
  *             ftrace_function_local_enable
  *             ftrace_function_local_disable
+ * SAVE_REGS - The ftrace_ops wants regs saved at each function called
+ *            and passed to the callback. If the arch does not support
+ *            regs passing, the regs parameter will be NULL.
+ *            The ftrace_ops user can either have the callback check if
+ *            regs is NULL, or it may check if ARCH_SUPPORTS_FTRACE_SAVE_REGS
+ *            is defined.
  */
 enum {
 	FTRACE_OPS_FL_ENABLED		= 1 << 0,
 	FTRACE_OPS_FL_GLOBAL		= 1 << 1,
 	FTRACE_OPS_FL_DYNAMIC		= 1 << 2,
 	FTRACE_OPS_FL_CONTROL		= 1 << 3,
+	FTRACE_OPS_FL_SAVE_REGS		= 1 << 4,
 };
 
 struct ftrace_ops {
@@ -254,12 +261,31 @@ extern void unregister_ftrace_function_probe_all(char *glob);
 
 extern int ftrace_text_reserved(void *start, void *end);
 
+/*
+ * The dyn_ftrace record's flags field is split into two parts.
+ * the first part which is '0-FTRACE_REF_MAX' is a counter of
+ * the number of callbacks that have registered the function that
+ * the dyn_ftrace descriptor represents.
+ *
+ * The second part is a mask:
+ *  ENABLED - the function is being traced
+ *  REGS    - the record wants the function to save regs
+ *  REGS_EN - the function is set up to save regs.
+ *
+ * When a new ftrace_ops is registered and wants a function to save
+ * pt_regs, the rec->flag REGS is set. When the function has been
+ * set up to save regs, the REG_EN flag is set. Once a function
+ * starts saving regs it will do so until all ftrace_ops are removed
+ * from tracing that function.
+ */
 enum {
-	FTRACE_FL_ENABLED	= (1 << 30),
+	FTRACE_FL_ENABLED	= (1UL << 29),
+	FTRACE_FL_REGS		= (1UL << 30),
+	FTRACE_FL_REGS_EN	= (1UL << 31)
 };
 
-#define FTRACE_FL_MASK		(0x3UL << 30)
-#define FTRACE_REF_MAX		((1 << 30) - 1)
+#define FTRACE_FL_MASK		(0x7UL << 29)
+#define FTRACE_REF_MAX		((1UL << 29) - 1)
 
 struct dyn_ftrace {
 	union {
@@ -290,9 +316,23 @@ enum {
 	FTRACE_STOP_FUNC_RET		= (1 << 4),
 };
 
+/*
+ * The FTRACE_UPDATE_* enum is used to pass information back
+ * from the ftrace_update_record() and ftrace_test_record()
+ * functions. These are called by the code update routines
+ * to find out what is to be done for a given function.
+ *
+ *  IGNORE           - The function is already what we want it to be
+ *  MAKE_CALL        - Start tracing the function
+ *  MODIFY_CALL      - Stop saving regs for the function
+ *  MODIFY_CALL_REGS - Start saving regs for the function
+ *  MAKE_NOP         - Stop tracing the function
+ */
 enum {
 	FTRACE_UPDATE_IGNORE,
 	FTRACE_UPDATE_MAKE_CALL,
+	FTRACE_UPDATE_MODIFY_CALL,
+	FTRACE_UPDATE_MODIFY_CALL_REGS,
 	FTRACE_UPDATE_MAKE_NOP,
 };
 
@@ -344,7 +384,9 @@ extern int ftrace_dyn_arch_init(void *data);
 extern void ftrace_replace_code(int enable);
 extern int ftrace_update_ftrace_func(ftrace_func_t func);
 extern void ftrace_caller(void);
+extern void ftrace_regs_caller(void);
 extern void ftrace_call(void);
+extern void ftrace_regs_call(void);
 extern void mcount_call(void);
 
 void ftrace_modify_all_code(int command);
@@ -352,6 +394,15 @@ void ftrace_modify_all_code(int command);
 #ifndef FTRACE_ADDR
 #define FTRACE_ADDR ((unsigned long)ftrace_caller)
 #endif
+
+#ifndef FTRACE_REGS_ADDR
+#ifdef ARCH_SUPPORTS_FTRACE_SAVE_REGS
+# define FTRACE_REGS_ADDR ((unsigned long)ftrace_regs_caller)
+#else
+# define FTRACE_REGS_ADDR FTRACE_ADDR
+#endif
+#endif
+
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
 extern void ftrace_graph_caller(void);
 extern int ftrace_enable_ftrace_graph_caller(void);
@@ -406,6 +457,39 @@ extern int ftrace_make_nop(struct module *mod,
  * Any other value will be considered a failure.
  */
 extern int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr);
+
+#ifdef ARCH_SUPPORTS_FTRACE_SAVE_REGS
+/**
+ * ftrace_modify_call - convert from one addr to another (no nop)
+ * @rec: the mcount call site record
+ * @old_addr: the address expected to be currently called to
+ * @addr: the address to change to
+ *
+ * This is a very sensitive operation and great care needs
+ * to be taken by the arch.  The operation should carefully
+ * read the location, check to see if what is read is indeed
+ * what we expect it to be, and then on success of the compare,
+ * it should write to the location.
+ *
+ * The code segment at @rec->ip should be a caller to @old_addr
+ *
+ * Return must be:
+ *  0 on success
+ *  -EFAULT on error reading the location
+ *  -EINVAL on a failed compare of the contents
+ *  -EPERM  on error writing to the location
+ * Any other value will be considered a failure.
+ */
+extern int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+			      unsigned long addr);
+#else
+/* Should never be called */
+static inline int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+				     unsigned long addr)
+{
+	return -EINVAL;
+}
+#endif
 
 /* May be defined in arch */
 extern int ftrace_arch_read_dyn_info(char *buf, int size);

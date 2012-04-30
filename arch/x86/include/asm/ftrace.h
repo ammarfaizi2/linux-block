@@ -3,11 +3,12 @@
 
 #ifdef __ASSEMBLY__
 
-	.macro MCOUNT_SAVE_FRAME
+	/* skip is set if the stack was already partially adjusted */
+	.macro MCOUNT_SAVE_FRAME skip=0
 	 /*
 	  * We add enough stack to save all regs.
 	  */
-	subq $(SS+8), %rsp
+	subq $(SS+8-\skip), %rsp
 	movq %rax, RAX(%rsp)
 	movq %rcx, RCX(%rsp)
 	movq %rdx, RDX(%rsp)
@@ -39,6 +40,9 @@
 
 #ifdef CONFIG_DYNAMIC_FTRACE
 #define ARCH_SUPPORTS_FTRACE_OPS 1
+#ifdef CONFIG_X86_64
+#define ARCH_SUPPORTS_FTRACE_SAVE_REGS
+#endif
 #endif
 
 #ifndef __ASSEMBLY__

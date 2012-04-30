@@ -1109,6 +1109,7 @@ ENTRY(ftrace_caller)
 	pushl %eax
 	pushl %ecx
 	pushl %edx
+	pushl $0	/* Pass NULL as regs pointer */
 	movl 0xc(%esp), %eax
 	movl 0x4(%ebp), %edx
 	leal function_trace_op, %ecx
@@ -1118,6 +1119,7 @@ ENTRY(ftrace_caller)
 ftrace_call:
 	call ftrace_stub
 
+	addl $4,%esp	/* skip NULL pointer */
 	popl %edx
 	popl %ecx
 	popl %eax
