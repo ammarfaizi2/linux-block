@@ -73,24 +73,50 @@ ENTRY(mcount)
 	retq
 END(mcount)
 
-ENTRY(ftrace_caller)
+/*
+ * Breakup the ftrace_caller setup into two parts.
+ *
+ * The first part tests function_trace_stop to see
+ * if function tracing is stopped. Then it saves the
+ * regs for calling a function, and loads the ftrace_ops
+ * into the rdx register (third parameter).
+ *
+ * The second part saves the pt_regs (stack) into rcx
+ * (forth parameter), and puts the ip and parent ip into
+ * rdi and rsi (first and second parameters respectively).
+ *
+ * The reason for the two part setup is to do the same thing
+ * for both the normal ftrace_caller and the ftrace_regs_caller.
+ * The difference is that the ftrace_regs_caller will also save
+ * the rest of the stack frame into pt_regs for the called
+ * function to have a full pt_regs setup.
+ */
+.macro ftrace_caller_setup1
 	cmpl $0, function_trace_stop
 	jne  ftrace_stub
 
 	MCOUNT_SAVE_FRAME
 
 	leaq function_trace_op, %rdx
+.endm
 
+.macro ftrace_caller_setup2
 	/* regs go into 4th parameter */
 	leaq (%rsp), %rcx
 
 	movq RIP(%rsp), %rdi
 	movq 8(%rbp), %rsi
 	subq $MCOUNT_INSN_SIZE, %rdi
+.endm
+
+ENTRY(ftrace_caller)
+	ftrace_caller_setup1
+	ftrace_caller_setup2
 
 GLOBAL(ftrace_call)
 	call ftrace_stub
 
+ftrace_restore:
 	MCOUNT_RESTORE_FRAME
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
@@ -101,6 +127,42 @@ GLOBAL(ftrace_graph_call)
 GLOBAL(ftrace_stub)
 	retq
 END(ftrace_caller)
+
+ENTRY(ftrace_regs_caller)
+	ftrace_caller_setup1
+
+	/* Save the rest of pt_regs */
+	movq %r15, R15(%rsp)
+	movq %r14, R14(%rsp)
+	movq %r13, R13(%rsp)
+	movq %r12, R12(%rsp)
+	movq %r10, R10(%rsp)
+	movq %rbp, RBP(%rsp)
+	movq %rbx, RBX(%rsp)
+	/* add flags to stack */
+	pushfq
+	/* rcx gets clobbered by the finish routine anyway */
+	movq 0(%rsp), %rcx
+	addq $8, %rsp
+	movq %rcx, EFLAGS(%rsp)
+
+	ftrace_caller_setup2
+
+GLOBAL(ftrace_regs_call)
+	call ftrace_stub
+
+	/* restore the rest of pt_regs */
+	movq R15(%rsp), %r15
+	movq R14(%rsp), %r14
+	movq R13(%rsp), %r13
+	movq R12(%rsp), %r12
+	movq R10(%rsp), %r10
+	movq RBP(%rsp), %rbp
+	movq RBX(%rsp), %rbx
+
+	jmp ftrace_restore
+END(ftrace_regs_caller)
+
 
 #else /* ! CONFIG_DYNAMIC_FTRACE */
 ENTRY(mcount)
