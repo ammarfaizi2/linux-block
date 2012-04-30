@@ -77,6 +77,7 @@ enum {
 	FTRACE_OPS_FL_GLOBAL		= 1 << 1,
 	FTRACE_OPS_FL_DYNAMIC		= 1 << 2,
 	FTRACE_OPS_FL_CONTROL		= 1 << 3,
+	FTRACE_OPS_FL_SAVE_REGS		= 1 << 4,
 };
 
 struct ftrace_ops {
@@ -255,11 +256,13 @@ extern void unregister_ftrace_function_probe_all(char *glob);
 extern int ftrace_text_reserved(void *start, void *end);
 
 enum {
-	FTRACE_FL_ENABLED	= (1 << 30),
+	FTRACE_FL_ENABLED	= (1UL << 29),
+	FTRACE_FL_REGS		= (1UL << 30),
+	FTRACE_FL_REGS_EN	= (1UL << 31)
 };
 
-#define FTRACE_FL_MASK		(0x3UL << 30)
-#define FTRACE_REF_MAX		((1 << 30) - 1)
+#define FTRACE_FL_MASK		(0x7UL << 29)
+#define FTRACE_REF_MAX		((1UL << 29) - 1)
 
 struct dyn_ftrace {
 	union {
@@ -293,6 +296,8 @@ enum {
 enum {
 	FTRACE_UPDATE_IGNORE,
 	FTRACE_UPDATE_MAKE_CALL,
+	FTRACE_UPDATE_MODIFY_CALL,
+	FTRACE_UPDATE_MODIFY_CALL_REGS,
 	FTRACE_UPDATE_MAKE_NOP,
 };
 
@@ -344,7 +349,9 @@ extern int ftrace_dyn_arch_init(void *data);
 extern void ftrace_replace_code(int enable);
 extern int ftrace_update_ftrace_func(ftrace_func_t func);
 extern void ftrace_caller(void);
+extern void ftrace_regs_caller(void);
 extern void ftrace_call(void);
+extern void ftrace_regs_call(void);
 extern void mcount_call(void);
 
 void ftrace_modify_all_code(int command);
@@ -352,6 +359,15 @@ void ftrace_modify_all_code(int command);
 #ifndef FTRACE_ADDR
 #define FTRACE_ADDR ((unsigned long)ftrace_caller)
 #endif
+
+#ifndef FTRACE_REGS_ADDR
+#ifdef ARCH_SUPPORTS_FTRACE_SAVE_REGS
+# define FTRACE_REGS_ADDR ((unsigned long)ftrace_regs_caller)
+#else
+# define FTRACE_REGS_ADDR ((unsigned long)ftrace_caller)
+#endif
+#endif
+
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
 extern void ftrace_graph_caller(void);
 extern int ftrace_enable_ftrace_graph_caller(void);
@@ -406,6 +422,39 @@ extern int ftrace_make_nop(struct module *mod,
  * Any other value will be considered a failure.
  */
 extern int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr);
+
+#ifdef ARCH_SUPPORTS_FTRACE_SAVE_REGS
+/**
+ * ftrace_modify_call - convert from one addr to another (no nop)
+ * @rec: the mcount call site record
+ * @old_addr: the address expected to be currently called to
+ * @addr: the address to change to
+ *
+ * This is a very sensitive operation and great care needs
+ * to be taken by the arch.  The operation should carefully
+ * read the location, check to see if what is read is indeed
+ * what we expect it to be, and then on success of the compare,
+ * it should write to the location.
+ *
+ * The code segment at @rec->ip should be a caller to @old_addr
+ *
+ * Return must be:
+ *  0 on success
+ *  -EFAULT on error reading the location
+ *  -EINVAL on a failed compare of the contents
+ *  -EPERM  on error writing to the location
+ * Any other value will be considered a failure.
+ */
+extern int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+			      unsigned long addr);
+#else
+/* Should never be called */
+static inline int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+				     unsigned long addr)
+{
+	return -EINVAL;
+}
+#endif
 
 /* May be defined in arch */
 extern int ftrace_arch_read_dyn_info(char *buf, int size);
