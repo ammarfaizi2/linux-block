@@ -72,29 +72,32 @@ ENTRY(mcount)
 	retq
 END(mcount)
 
-ENTRY(ftrace_caller)
+.macro ftrace_caller_setup
 	cmpl $0, function_trace_stop
 	jne  ftrace_stub
 
 	MCOUNT_SAVE_FRAME
 
 	leaq function_trace_op, %rdx
+.endm
 
-	cmpl $0, ftrace_save_regs
-	jne  save_all_regs
-
-call_func:
-
+.macro ftrace_caller_finish
 	/* regs go into 4th parameter */
 	leaq (%rsp), %rcx
 
 	movq RIP(%rsp), %rdi
 	movq 8(%rbp), %rsi
 	subq $MCOUNT_INSN_SIZE, %rdi
+.endm
+
+ENTRY(ftrace_caller)
+	ftrace_caller_setup
+	ftrace_caller_finish
 
 GLOBAL(ftrace_call)
 	call ftrace_stub
 
+ftrace_restore:
 	MCOUNT_RESTORE_FRAME
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
@@ -106,7 +109,9 @@ GLOBAL(ftrace_stub)
 	retq
 END(ftrace_caller)
 
-save_all_regs:
+ENTRY(ftrace_regs_caller)
+	ftrace_caller_setup
+
 	/* Save the rest of pt_regs */
 	movq %r15, R15(%rsp)
 	movq %r14, R14(%rsp)
@@ -115,7 +120,30 @@ save_all_regs:
 	movq %r10, R10(%rsp)
 	movq %rbp, RBP(%rsp)
 	movq %rbx, RBX(%rsp)
-	jmp call_func
+	/* add flags to stack */
+	pushfq
+	/* rcx gets clobbered by the finish routine anyway */
+	movq 0(%rsp), %rcx
+	addq $8, %rsp
+	movq %rcx, EFLAGS(%rsp)
+
+	ftrace_caller_finish
+
+GLOBAL(ftrace_regs_call)
+	call ftrace_stub
+
+	/* restore the rest of pt_regs */
+	movq R15(%rsp), %r15
+	movq R14(%rsp), %r14
+	movq R13(%rsp), %r13
+	movq R12(%rsp), %r12
+	movq R10(%rsp), %r10
+	movq RBP(%rsp), %rbp
+	movq RBX(%rsp), %rbx
+
+	jmp ftrace_restore
+END(ftrace_regs_caller)
+
 
 
 #else /* ! CONFIG_DYNAMIC_FTRACE */
