@@ -1547,10 +1547,25 @@ static void __ftrace_hash_rec_update(struct ftrace_ops *ops,
 			rec->flags++;
 			if (FTRACE_WARN_ON((rec->flags & ~FTRACE_FL_MASK) == FTRACE_REF_MAX))
 				return;
+			/*
+			 * If any ops wants regs saved for this function
+			 * then all ops will get saved regs.
+			 */
+			if (ops->flags & FTRACE_OPS_FL_SAVE_REGS)
+				rec->flags |= FTRACE_FL_REGS;
 		} else {
 			if (FTRACE_WARN_ON((rec->flags & ~FTRACE_FL_MASK) == 0))
 				return;
 			rec->flags--;
+			/*
+			 * If no more ops are associated with this function,
+			 * or only one ops is, and it doesn't want saved regs
+			 * then don't save regs for this function.
+			 */
+			if (!rec->flags ||
+			    ((rec->flags & ~FTRACE_FL_MASK) == 1 &&
+			     !(ops->flags & FTRACE_OPS_FL_SAVE_REGS)))
+				rec->flags &= ~FTRACE_FL_REGS;
 		}
 		count++;
 		/* Shortcut, if we handled all records, we are done. */
@@ -1638,14 +1653,49 @@ static int ftrace_check_record(struct dyn_ftrace *rec, int enable, int update)
 	if (enable && (rec->flags & ~FTRACE_FL_MASK))
 		flag = FTRACE_FL_ENABLED;
 
+	/*
+	 * If enabling and the REGS flag does not match the REGS_EN, then
+	 * do not ignore this record. Set flags to fail the compare against
+	 * ENABLED.
+	 */
+	if (flag &&
+	    (!(rec->flags & FTRACE_FL_REGS) != !(rec->flags & FTRACE_FL_REGS_EN)))
+		flag |= FTRACE_FL_REGS;
+
 	/* If the state of this record hasn't changed, then do nothing */
 	if ((rec->flags & FTRACE_FL_ENABLED) == flag)
 		return FTRACE_UPDATE_IGNORE;
 
 	if (flag) {
-		if (update)
+		/* Save off if rec is being enabled (for return value) */
+		flag ^= rec->flags & FTRACE_FL_ENABLED;
+
+		if (update) {
 			rec->flags |= FTRACE_FL_ENABLED;
-		return FTRACE_UPDATE_MAKE_CALL;
+			if (flag & FTRACE_FL_REGS) {
+				if (rec->flags & FTRACE_FL_REGS)
+					rec->flags |= FTRACE_FL_REGS;
+				else
+					rec->flags &= ~FTRACE_FL_REGS;
+			}
+		}
+
+		/*
+		 * If this record is being updated from a nop, then
+		 *   return UPDATE_MAKE_CALL.
+		 * Otherwise, if the EN flag is set, then return
+		 *   UPDATE_MODIFY_CALL_REGS to tell the caller to convert
+		 *   from the non-save regs, to a save regs function.
+		 * Otherwise,
+		 *   return UPDATE_MODIFY_CALL to tell the caller to convert
+		 *   from the save regs, to a save non-regs function.
+		 */
+		if (flag & FTRACE_FL_ENABLED)
+			return FTRACE_UPDATE_MAKE_CALL;
+		else if (rec->flags & FTRACE_FL_REGS_EN)
+			return FTRACE_UPDATE_MODIFY_CALL_REGS;
+		else
+			return FTRACE_UPDATE_MODIFY_CALL;
 	}
 
 	if (update)
@@ -1684,12 +1734,16 @@ int ftrace_test_record(struct dyn_ftrace *rec, int enable)
 static int
 __ftrace_replace_code(struct dyn_ftrace *rec, int enable)
 {
+	unsigned long ftrace_old_addr;
 	unsigned long ftrace_addr;
 	int ret;
 
-	ftrace_addr = (unsigned long)FTRACE_ADDR;
-
 	ret = ftrace_update_record(rec, enable);
+
+	if (rec->flags & FTRACE_FL_REGS)
+		ftrace_addr = (unsigned long)FTRACE_REGS_ADDR;
+	else
+		ftrace_addr = (unsigned long)FTRACE_ADDR;
 
 	switch (ret) {
 	case FTRACE_UPDATE_IGNORE:
@@ -1700,6 +1754,15 @@ __ftrace_replace_code(struct dyn_ftrace *rec, int enable)
 
 	case FTRACE_UPDATE_MAKE_NOP:
 		return ftrace_make_nop(NULL, rec, ftrace_addr);
+
+	case FTRACE_UPDATE_MODIFY_CALL_REGS:
+	case FTRACE_UPDATE_MODIFY_CALL:
+		if (rec->flags & FTRACE_FL_REGS)
+			ftrace_old_addr = (unsigned long)FTRACE_ADDR;
+		else
+			ftrace_old_addr = (unsigned long)FTRACE_REGS_ADDR;
+
+		return ftrace_modify_call(rec, ftrace_old_addr, ftrace_addr);
 	}
 
 	return -1; /* unknow ftrace bug */
