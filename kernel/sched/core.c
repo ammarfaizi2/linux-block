@@ -2024,6 +2024,8 @@ asmlinkage void schedule_tail(struct task_struct *prev)
 {
 	struct rq *rq = this_rq();
 
+	rcu_switch_from(prev);
+	rcu_switch_to();
 	finish_task_switch(rq, prev);
 
 	/*
@@ -2083,7 +2085,9 @@ context_switch(struct rq *rq, struct task_struct *prev,
 #endif
 
 	/* Here we just switch the register state and the stack. */
+	rcu_switch_from(current);
 	switch_to(prev, next, prev);
+	rcu_switch_to();
 
 	barrier();
 	/*
