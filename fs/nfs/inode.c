@@ -656,12 +656,20 @@ static bool nfs_need_revalidate_inode(struct inode *inode)
 int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
 {
 	struct inode *inode = d_inode(dentry);
-	int need_atime = NFS_I(inode)->cache_validity & NFS_INO_INVALID_ATIME;
+	unsigned int sync_type = stat->query_flags & AT_STATX_SYNC_TYPE;
+	bool need_atime = NFS_I(inode)->cache_validity & NFS_INO_INVALID_ATIME;
 	int err = 0;
 
 	trace_nfs_getattr_enter(inode);
-	/* Flush out writes to the server in order to update c/mtime.  */
-	if (S_ISREG(inode->i_mode)) {
+
+	/* Flush out writes to the server in order to update c/mtime if the
+	 * user wants them.
+	 */
+	if (sync_type != AT_STATX_DONT_SYNC &&
+	    S_ISREG(inode->i_mode) &&
+	    (sync_type == AT_STATX_FORCE_SYNC ||
+	     (stat->request_mask & (STATX_MTIME | STATX_CTIME)))
+	    ) {
 		err = filemap_write_and_wait(inode->i_mapping);
 		if (err)
 			goto out;
@@ -676,11 +684,15 @@ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
 	 *  - NFS never sets MS_NOATIME or MS_NODIRATIME so there is
 	 *    no point in checking those.
 	 */
- 	if ((mnt->mnt_flags & MNT_NOATIME) ||
- 	    ((mnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode)))
-		need_atime = 0;
+	if (!(stat->request_mask & STATX_ATIME) ||
+	    (mnt->mnt_flags & MNT_NOATIME) ||
+	    ((mnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode)))
+		need_atime = false;
 
-	if (need_atime || nfs_need_revalidate_inode(inode)) {
+	if (sync_type != AT_STATX_DONT_SYNC &&
+	    (sync_type == AT_STATX_FORCE_SYNC ||
+	     need_atime ||
+	     nfs_need_revalidate_inode(inode))) {
 		struct nfs_server *server = NFS_SERVER(inode);
 
 		if (server->caps & NFS_CAP_READDIRPLUS)
@@ -693,6 +705,10 @@ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
 		if (S_ISDIR(inode->i_mode))
 			stat->blksize = NFS_SERVER(inode)->dtsize;
 	}
+
+	generic_fillattr(inode, stat);
+	stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
+
 out:
 	trace_nfs_getattr_exit(inode, err);
 	return err;
