@@ -38,6 +38,7 @@
 #include <linux/spinlock.h>
 #include <linux/rcupdate.h>
 #include <linux/mutex.h>
+#include <linux/ftrace.h>
 
 #ifdef CONFIG_KPROBES
 #include <asm/kprobes.h>
@@ -57,6 +58,15 @@ struct arch_specific_insn {
 };
 #define __kprobes
 #endif /* CONFIG_KPROBES */
+
+/*
+ * If function tracer is enabled and the arch supports full
+ * passing of pt_regs to function tracing, then kprobes can
+ * optimize on top of function tracing.
+ */
+#if defined(CONFIG_FUNCTION_TRACER) && defined(ARCH_SUPPORTS_FTRACE_SAVE_REGS)
+# define KPROBES_CAN_USE_FTRACE
+#endif
 
 struct kprobe;
 struct pt_regs;
@@ -113,6 +123,11 @@ struct kprobe {
 	/* copy of the original instruction */
 	struct arch_specific_insn ainsn;
 
+#ifdef KPROBES_CAN_USE_FTRACE
+	/* If it is possible to use ftrace to probe */
+	struct ftrace_ops fops;
+#endif
+
 	/*
 	 * Indicates various status flags.
 	 * Protected by kprobe_mutex after this kprobe is registered.
@@ -121,14 +136,15 @@ struct kprobe {
 };
 
 /* Kprobe status flags */
-#define KPROBE_FLAG_GONE	1 /* breakpoint has already gone */
-#define KPROBE_FLAG_DISABLED	2 /* probe is temporarily disabled */
-#define KPROBE_FLAG_OPTIMIZED	4 /*
-				   * probe is really optimized.
-				   * NOTE:
-				   * this flag is only for optimized_kprobe.
-				   */
-#define KPROBE_FLAG_MOVED	8 /* probe was moved passed ftrace nop */
+#define KPROBE_FLAG_GONE	1  /* breakpoint has already gone */
+#define KPROBE_FLAG_DISABLED	2  /* probe is temporarily disabled */
+#define KPROBE_FLAG_OPTIMIZED	4  /*
+				    * probe is really optimized.
+				    * NOTE:
+				    * this flag is only for optimized_kprobe.
+				    */
+#define KPROBE_FLAG_MOVED	8  /* probe was moved passed ftrace nop */
+#define KPROBE_FLAG_FTRACE	16 /* probe is using ftrace */
 
 /* Has this kprobe gone ? */
 static inline int kprobe_gone(struct kprobe *p)
