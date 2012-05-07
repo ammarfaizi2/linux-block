@@ -261,8 +261,10 @@ Answers to Quick Quizzes
 
 Quick Quiz #1: Why is there no srcu_barrier()?
 
-Answer: Since there is no call_srcu(), there can be no outstanding SRCU
-	callbacks. Therefore, there is no need to wait for them.
+Answer: There really is an srcu_barrier() now that there is a call_srcu().
+	Before call_srcu(), there were no SRCU callbacks, and there was
+	therefore no need to wait for them, and therefore there was
+	no srcu_barrier().
 
 Quick Quiz #2: Is there any other situation where rcu_barrier() might
 	be required?
