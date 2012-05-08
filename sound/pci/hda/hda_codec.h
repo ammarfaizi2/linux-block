@@ -867,6 +867,7 @@ struct hda_codec {
 	unsigned long power_on_acct;
 	unsigned long power_off_acct;
 	unsigned long power_jiffies;
+	spinlock_t power_lock;
 #endif
 
 	/* codec-specific additional proc output */
@@ -1051,12 +1052,10 @@ const char *snd_hda_get_jack_location(u32 cfg);
 #ifdef CONFIG_SND_HDA_POWER_SAVE
 void snd_hda_power_up(struct hda_codec *codec);
 void snd_hda_power_down(struct hda_codec *codec);
-#define snd_hda_codec_needs_resume(codec) codec->power_count
 void snd_hda_update_power_acct(struct hda_codec *codec);
 #else
 static inline void snd_hda_power_up(struct hda_codec *codec) {}
 static inline void snd_hda_power_down(struct hda_codec *codec) {}
-#define snd_hda_codec_needs_resume(codec) 1
 #endif
 
 #ifdef CONFIG_SND_HDA_PATCH_LOADER
