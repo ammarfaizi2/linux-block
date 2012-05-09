@@ -398,8 +398,9 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
 							 rnp->grphi,
 							 !!rnp->gp_tasks);
 			rcu_report_unblock_qs_rnp(rnp, flags);
-		} else
+		} else {
 			raw_spin_unlock_irqrestore(&rnp->lock, flags);
+		}
 
 #ifdef CONFIG_RCU_BOOST
 		/* Unboost if we were boosted. */
@@ -429,9 +430,9 @@ void __rcu_read_unlock(void)
 {
 	struct task_struct *t = current;
 
-	if (t->rcu_read_lock_nesting != 1)
+	if (t->rcu_read_lock_nesting != 1) {
 		--t->rcu_read_lock_nesting;
-	else {
+	} else {
 		barrier();  /* critical section before exit code. */
 		t->rcu_read_lock_nesting = INT_MIN;
 		barrier();  /* assign before ->rcu_read_unlock_special load */
@@ -824,9 +825,9 @@ sync_rcu_preempt_exp_init(struct rcu_state *rsp, struct rcu_node *rnp)
 	int must_wait = 0;
 
 	raw_spin_lock_irqsave(&rnp->lock, flags);
-	if (list_empty(&rnp->blkd_tasks))
+	if (list_empty(&rnp->blkd_tasks)) {
 		raw_spin_unlock_irqrestore(&rnp->lock, flags);
-	else {
+	} else {
 		rnp->exp_tasks = rnp->blkd_tasks.next;
 		rcu_initiate_boost(rnp, flags);  /* releases rnp->lock */
 		must_wait = 1;
@@ -870,9 +871,9 @@ void synchronize_rcu_expedited(void)
 	 * expedited grace period for us, just leave.
 	 */
 	while (!mutex_trylock(&sync_rcu_preempt_exp_mutex)) {
-		if (trycount++ < 10)
+		if (trycount++ < 10) {
 			udelay(trycount * num_online_cpus());
-		else {
+		} else {
 			synchronize_rcu();
 			return;
 		}
@@ -2213,8 +2214,9 @@ static void rcu_prepare_for_idle(int cpu)
 	if (rcu_cpu_has_callbacks(cpu)) {
 		trace_rcu_prep_idle("More callbacks");
 		invoke_rcu_core();
-	} else
+	} else {
 		trace_rcu_prep_idle("Callbacks drained");
+	}
 }
 
 /*
