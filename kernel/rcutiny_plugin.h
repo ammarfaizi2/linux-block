@@ -351,8 +351,9 @@ static int rcu_initiate_boost(void)
 			rcu_preempt_ctrlblk.boost_tasks =
 				rcu_preempt_ctrlblk.gp_tasks;
 		invoke_rcu_callbacks();
-	} else
+	} else {
 		RCU_TRACE(rcu_initiate_boost_trace());
+	}
 	return 1;
 }
 
