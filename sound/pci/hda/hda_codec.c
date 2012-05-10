@@ -1255,6 +1255,7 @@ int /*__devinit*/ snd_hda_codec_new(struct hda_bus *bus,
 	codec->addr = codec_addr;
 	mutex_init(&codec->spdif_mutex);
 	mutex_init(&codec->control_mutex);
+	mutex_init(&codec->hash_mutex);
 	init_hda_cache(&codec->amp_cache, sizeof(struct hda_amp_info));
 	init_hda_cache(&codec->cmd_cache, sizeof(struct hda_cache_head));
 	snd_array_init(&codec->mixers, sizeof(struct hda_nid_item), 32);
@@ -1605,6 +1606,60 @@ get_alloc_amp_hash(struct hda_codec *codec, u32 key)
 	return (struct hda_amp_info *)get_alloc_hash(&codec->amp_cache, key);
 }
 
+/* overwrite the value with the key in the caps hash */
+static int write_caps_hash(struct hda_codec *codec, u32 key, unsigned int val)
+{
+	struct hda_amp_info *info;
+
+	mutex_lock(&codec->hash_mutex);
+	info = get_alloc_amp_hash(codec, key);
+	if (!info) {
+		mutex_unlock(&codec->hash_mutex);
+		return -EINVAL;
+	}
+	info->amp_caps = val;
+	info->head.val |= INFO_AMP_CAPS;
+	mutex_unlock(&codec->hash_mutex);
+	return 0;
+}
+
+/* query the value from the caps hash; if not found, fetch the current
+ * value from the given function and store in the hash
+ */
+static unsigned int
+query_caps_hash(struct hda_codec *codec, hda_nid_t nid, int dir, u32 key,
+		unsigned int (*func)(struct hda_codec *, hda_nid_t, int))
+{
+	struct hda_amp_info *info;
+	unsigned int val;
+
+	mutex_lock(&codec->hash_mutex);
+	info = get_alloc_amp_hash(codec, key);
+	if (!info) {
+		mutex_unlock(&codec->hash_mutex);
+		return 0;
+	}
+	if (!(info->head.val & INFO_AMP_CAPS)) {
+		mutex_unlock(&codec->hash_mutex); /* for reentrance */
+		val = func(codec, nid, dir);
+		write_caps_hash(codec, key, val);
+	} else {
+		val = info->amp_caps;
+		mutex_unlock(&codec->hash_mutex);
+	}
+	return val;
+}
+
+static unsigned int read_amp_cap(struct hda_codec *codec, hda_nid_t nid,
+				 int direction)
+{
+	if (!(get_wcaps(codec, nid) & AC_WCAP_AMP_OVRD))
+		nid = codec->afg;
+	return snd_hda_param_read(codec, nid,
+				  direction == HDA_OUTPUT ?
+				  AC_PAR_AMP_OUT_CAP : AC_PAR_AMP_IN_CAP);
+}
+
 /**
  * query_amp_caps - query AMP capabilities
  * @codec: the HD-auio codec
@@ -1619,22 +1674,9 @@ get_alloc_amp_hash(struct hda_codec *codec, u32 key)
  */
 u32 query_amp_caps(struct hda_codec *codec, hda_nid_t nid, int direction)
 {
-	struct hda_amp_info *info;
-
-	info = get_alloc_amp_hash(codec, HDA_HASH_KEY(nid, direction, 0));
-	if (!info)
-		return 0;
-	if (!(info->head.val & INFO_AMP_CAPS)) {
-		if (!(get_wcaps(codec, nid) & AC_WCAP_AMP_OVRD))
-			nid = codec->afg;
-		info->amp_caps = snd_hda_param_read(codec, nid,
-						    direction == HDA_OUTPUT ?
-						    AC_PAR_AMP_OUT_CAP :
-						    AC_PAR_AMP_IN_CAP);
-		if (info->amp_caps)
-			info->head.val |= INFO_AMP_CAPS;
-	}
-	return info->amp_caps;
+	return query_caps_hash(codec, nid, direction,
+			       HDA_HASH_KEY(nid, direction, 0),
+			       read_amp_cap);
 }
 EXPORT_SYMBOL_HDA(query_amp_caps);
 
@@ -1654,34 +1696,12 @@ EXPORT_SYMBOL_HDA(query_amp_caps);
 int snd_hda_override_amp_caps(struct hda_codec *codec, hda_nid_t nid, int dir,
 			      unsigned int caps)
 {
-	struct hda_amp_info *info;
-
-	info = get_alloc_amp_hash(codec, HDA_HASH_KEY(nid, dir, 0));
-	if (!info)
-		return -EINVAL;
-	info->amp_caps = caps;
-	info->head.val |= INFO_AMP_CAPS;
-	return 0;
+	return write_caps_hash(codec, HDA_HASH_KEY(nid, dir, 0), caps);
 }
 EXPORT_SYMBOL_HDA(snd_hda_override_amp_caps);
 
-static unsigned int
-query_caps_hash(struct hda_codec *codec, hda_nid_t nid, u32 key,
-		unsigned int (*func)(struct hda_codec *, hda_nid_t))
-{
-	struct hda_amp_info *info;
-
-	info = get_alloc_amp_hash(codec, key);
-	if (!info)
-		return 0;
-	if (!info->head.val) {
-		info->head.val |= INFO_AMP_CAPS;
-		info->amp_caps = func(codec, nid);
-	}
-	return info->amp_caps;
-}
-
-static unsigned int read_pin_cap(struct hda_codec *codec, hda_nid_t nid)
+static unsigned int read_pin_cap(struct hda_codec *codec, hda_nid_t nid,
+				 int dir)
 {
 	return snd_hda_param_read(codec, nid, AC_PAR_PIN_CAP);
 }
@@ -1699,7 +1719,7 @@ static unsigned int read_pin_cap(struct hda_codec *codec, hda_nid_t nid)
  */
 u32 snd_hda_query_pin_caps(struct hda_codec *codec, hda_nid_t nid)
 {
-	return query_caps_hash(codec, nid, HDA_HASH_PINCAP_KEY(nid),
+	return query_caps_hash(codec, nid, 0, HDA_HASH_PINCAP_KEY(nid),
 			       read_pin_cap);
 }
 EXPORT_SYMBOL_HDA(snd_hda_query_pin_caps);
@@ -1717,41 +1737,47 @@ EXPORT_SYMBOL_HDA(snd_hda_query_pin_caps);
 int snd_hda_override_pin_caps(struct hda_codec *codec, hda_nid_t nid,
 			      unsigned int caps)
 {
-	struct hda_amp_info *info;
-	info = get_alloc_amp_hash(codec, HDA_HASH_PINCAP_KEY(nid));
-	if (!info)
-		return -ENOMEM;
-	info->amp_caps = caps;
-	info->head.val |= INFO_AMP_CAPS;
-	return 0;
+	return write_caps_hash(codec, HDA_HASH_PINCAP_KEY(nid), caps);
 }
 EXPORT_SYMBOL_HDA(snd_hda_override_pin_caps);
 
-/*
- * read the current volume to info
- * if the cache exists, read the cache value.
+/* read or sync the hash value with the current value;
+ * call within hash_mutex
  */
-static unsigned int get_vol_mute(struct hda_codec *codec,
-				 struct hda_amp_info *info, hda_nid_t nid,
-				 int ch, int direction, int index)
+static struct hda_amp_info *
+update_amp_hash(struct hda_codec *codec, hda_nid_t nid, int ch,
+		int direction, int index)
 {
-	u32 val, parm;
+	struct hda_amp_info *info;
+	unsigned int parm, val = 0;
+	bool val_read = false;
 
-	if (info->head.val & INFO_AMP_VOL(ch))
-		return info->vol[ch];
-
-	parm = ch ? AC_AMP_GET_RIGHT : AC_AMP_GET_LEFT;
-	parm |= direction == HDA_OUTPUT ? AC_AMP_GET_OUTPUT : AC_AMP_GET_INPUT;
-	parm |= index;
-	val = snd_hda_codec_read(codec, nid, 0,
+ retry:
+	info = get_alloc_amp_hash(codec, HDA_HASH_KEY(nid, direction, index));
+	if (!info)
+		return NULL;
+	if (!(info->head.val & INFO_AMP_VOL(ch))) {
+		if (!val_read) {
+			mutex_unlock(&codec->hash_mutex);
+			parm = ch ? AC_AMP_GET_RIGHT : AC_AMP_GET_LEFT;
+			parm |= direction == HDA_OUTPUT ?
+				AC_AMP_GET_OUTPUT : AC_AMP_GET_INPUT;
+			parm |= index;
+			val = snd_hda_codec_read(codec, nid, 0,
 				 AC_VERB_GET_AMP_GAIN_MUTE, parm);
-	info->vol[ch] = val & 0xff;
-	info->head.val |= INFO_AMP_VOL(ch);
-	return info->vol[ch];
+			val &= 0xff;
+			val_read = true;
+			mutex_lock(&codec->hash_mutex);
+			goto retry;
+		}
+		info->vol[ch] = val;
+		info->head.val |= INFO_AMP_VOL(ch);
+	}
+	return info;
 }
 
 /*
- * write the current volume in info to the h/w and update the cache
+ * write the current volume in info to the h/w
  */
 static void put_vol_mute(struct hda_codec *codec, struct hda_amp_info *info,
 			 hda_nid_t nid, int ch, int direction, int index,
@@ -1768,7 +1794,6 @@ static void put_vol_mute(struct hda_codec *codec, struct hda_amp_info *info,
 	else
 		parm |= val;
 	snd_hda_codec_write(codec, nid, 0, AC_VERB_SET_AMP_GAIN_MUTE, parm);
-	info->vol[ch] = val;
 }
 
 /**
@@ -1785,10 +1810,14 @@ int snd_hda_codec_amp_read(struct hda_codec *codec, hda_nid_t nid, int ch,
 			   int direction, int index)
 {
 	struct hda_amp_info *info;
-	info = get_alloc_amp_hash(codec, HDA_HASH_KEY(nid, direction, index));
-	if (!info)
-		return 0;
-	return get_vol_mute(codec, info, nid, ch, direction, index);
+	unsigned int val = 0;
+
+	mutex_lock(&codec->hash_mutex);
+	info = update_amp_hash(codec, nid, ch, direction, index);
+	if (info)
+		val = info->vol[ch];
+	mutex_unlock(&codec->hash_mutex);
+	return val;
 }
 EXPORT_SYMBOL_HDA(snd_hda_codec_amp_read);
 
@@ -1810,15 +1839,23 @@ int snd_hda_codec_amp_update(struct hda_codec *codec, hda_nid_t nid, int ch,
 {
 	struct hda_amp_info *info;
 
-	info = get_alloc_amp_hash(codec, HDA_HASH_KEY(nid, direction, idx));
-	if (!info)
-		return 0;
 	if (snd_BUG_ON(mask & ~0xff))
 		mask &= 0xff;
 	val &= mask;
-	val |= get_vol_mute(codec, info, nid, ch, direction, idx) & ~mask;
-	if (info->vol[ch] == val)
+
+	mutex_lock(&codec->hash_mutex);
+	info = update_amp_hash(codec, nid, ch, direction, idx);
+	if (!info) {
+		mutex_unlock(&codec->hash_mutex);
 		return 0;
+	}
+	val |= info->vol[ch] & ~mask;
+	if (info->vol[ch] == val) {
+		mutex_unlock(&codec->hash_mutex);
+		return 0;
+	}
+	info->vol[ch] = val;
+	mutex_unlock(&codec->hash_mutex);
 	put_vol_mute(codec, info, nid, ch, direction, idx, val);
 	return 1;
 }
@@ -2864,12 +2901,15 @@ static int snd_hda_spdif_default_get(struct snd_kcontrol *kcontrol,
 {
 	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
 	int idx = kcontrol->private_value;
-	struct hda_spdif_out *spdif = snd_array_elem(&codec->spdif_out, idx);
+	struct hda_spdif_out *spdif;
 
+	mutex_lock(&codec->spdif_mutex);
+	spdif = snd_array_elem(&codec->spdif_out, idx);
 	ucontrol->value.iec958.status[0] = spdif->status & 0xff;
 	ucontrol->value.iec958.status[1] = (spdif->status >> 8) & 0xff;
 	ucontrol->value.iec958.status[2] = (spdif->status >> 16) & 0xff;
 	ucontrol->value.iec958.status[3] = (spdif->status >> 24) & 0xff;
+	mutex_unlock(&codec->spdif_mutex);
 
 	return 0;
 }
@@ -2955,12 +2995,14 @@ static int snd_hda_spdif_default_put(struct snd_kcontrol *kcontrol,
 {
 	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
 	int idx = kcontrol->private_value;
-	struct hda_spdif_out *spdif = snd_array_elem(&codec->spdif_out, idx);
-	hda_nid_t nid = spdif->nid;
+	struct hda_spdif_out *spdif;
+	hda_nid_t nid;
 	unsigned short val;
 	int change;
 
 	mutex_lock(&codec->spdif_mutex);
+	spdif = snd_array_elem(&codec->spdif_out, idx);
+	nid = spdif->nid;
 	spdif->status = ucontrol->value.iec958.status[0] |
 		((unsigned int)ucontrol->value.iec958.status[1] << 8) |
 		((unsigned int)ucontrol->value.iec958.status[2] << 16) |
@@ -2982,9 +3024,12 @@ static int snd_hda_spdif_out_switch_get(struct snd_kcontrol *kcontrol,
 {
 	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
 	int idx = kcontrol->private_value;
-	struct hda_spdif_out *spdif = snd_array_elem(&codec->spdif_out, idx);
+	struct hda_spdif_out *spdif;
 
+	mutex_lock(&codec->spdif_mutex);
+	spdif = snd_array_elem(&codec->spdif_out, idx);
 	ucontrol->value.integer.value[0] = spdif->ctls & AC_DIG1_ENABLE;
+	mutex_unlock(&codec->spdif_mutex);
 	return 0;
 }
 
@@ -3004,12 +3049,14 @@ static int snd_hda_spdif_out_switch_put(struct snd_kcontrol *kcontrol,
 {
 	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
 	int idx = kcontrol->private_value;
-	struct hda_spdif_out *spdif = snd_array_elem(&codec->spdif_out, idx);
-	hda_nid_t nid = spdif->nid;
+	struct hda_spdif_out *spdif;
+	hda_nid_t nid;
 	unsigned short val;
 	int change;
 
 	mutex_lock(&codec->spdif_mutex);
+	spdif = snd_array_elem(&codec->spdif_out, idx);
+	nid = spdif->nid;
 	val = spdif->ctls & ~AC_DIG1_ENABLE;
 	if (ucontrol->value.integer.value[0])
 		val |= AC_DIG1_ENABLE;
@@ -3097,6 +3144,9 @@ int snd_hda_create_spdif_out_ctls(struct hda_codec *codec,
 }
 EXPORT_SYMBOL_HDA(snd_hda_create_spdif_out_ctls);
 
+/* get the hda_spdif_out entry from the given NID
+ * call within spdif_mutex lock
+ */
 struct hda_spdif_out *snd_hda_spdif_out_of_nid(struct hda_codec *codec,
 					       hda_nid_t nid)
 {
@@ -3113,9 +3163,10 @@ EXPORT_SYMBOL_HDA(snd_hda_spdif_out_of_nid);
 
 void snd_hda_spdif_ctls_unassign(struct hda_codec *codec, int idx)
 {
-	struct hda_spdif_out *spdif = snd_array_elem(&codec->spdif_out, idx);
+	struct hda_spdif_out *spdif;
 
 	mutex_lock(&codec->spdif_mutex);
+	spdif = snd_array_elem(&codec->spdif_out, idx);
 	spdif->nid = (u16)-1;
 	mutex_unlock(&codec->spdif_mutex);
 }
@@ -3123,10 +3174,11 @@ EXPORT_SYMBOL_HDA(snd_hda_spdif_ctls_unassign);
 
 void snd_hda_spdif_ctls_assign(struct hda_codec *codec, int idx, hda_nid_t nid)
 {
-	struct hda_spdif_out *spdif = snd_array_elem(&codec->spdif_out, idx);
+	struct hda_spdif_out *spdif;
 	unsigned short val;
 
 	mutex_lock(&codec->spdif_mutex);
+	spdif = snd_array_elem(&codec->spdif_out, idx);
 	if (spdif->nid != nid) {
 		spdif->nid = nid;
 		val = spdif->ctls;
@@ -3678,7 +3730,8 @@ unsigned int snd_hda_calc_stream_format(unsigned int rate,
 }
 EXPORT_SYMBOL_HDA(snd_hda_calc_stream_format);
 
-static unsigned int get_pcm_param(struct hda_codec *codec, hda_nid_t nid)
+static unsigned int get_pcm_param(struct hda_codec *codec, hda_nid_t nid,
+				  int dir)
 {
 	unsigned int val = 0;
 	if (nid != codec->afg &&
@@ -3693,11 +3746,12 @@ static unsigned int get_pcm_param(struct hda_codec *codec, hda_nid_t nid)
 
 static unsigned int query_pcm_param(struct hda_codec *codec, hda_nid_t nid)
 {
-	return query_caps_hash(codec, nid, HDA_HASH_PARPCM_KEY(nid),
+	return query_caps_hash(codec, nid, 0, HDA_HASH_PARPCM_KEY(nid),
 			       get_pcm_param);
 }
 
-static unsigned int get_stream_param(struct hda_codec *codec, hda_nid_t nid)
+static unsigned int get_stream_param(struct hda_codec *codec, hda_nid_t nid,
+				     int dir)
 {
 	unsigned int streams = snd_hda_param_read(codec, nid, AC_PAR_STREAM);
 	if (!streams || streams == -1)
@@ -3709,7 +3763,7 @@ static unsigned int get_stream_param(struct hda_codec *codec, hda_nid_t nid)
 
 static unsigned int query_stream_param(struct hda_codec *codec, hda_nid_t nid)
 {
-	return query_caps_hash(codec, nid, HDA_HASH_PARSTR_KEY(nid),
+	return query_caps_hash(codec, nid, 0, HDA_HASH_PARSTR_KEY(nid),
 			       get_stream_param);
 }
 
@@ -4747,11 +4801,11 @@ int snd_hda_multi_out_analog_prepare(struct hda_codec *codec,
 {
 	const hda_nid_t *nids = mout->dac_nids;
 	int chs = substream->runtime->channels;
-	struct hda_spdif_out *spdif =
-			snd_hda_spdif_out_of_nid(codec, mout->dig_out_nid);
+	struct hda_spdif_out *spdif;
 	int i;
 
 	mutex_lock(&codec->spdif_mutex);
+	spdif = snd_hda_spdif_out_of_nid(codec, mout->dig_out_nid);
 	if (mout->dig_out_nid && mout->share_spdif &&
 	    mout->dig_out_used != HDA_DIG_EXCLUSIVE) {
 		if (chs == 2 &&
