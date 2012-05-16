@@ -1012,10 +1012,11 @@ extern int drm_add_modes_noedid(struct drm_connector *connector,
 				int hdisplay, int vdisplay);
 
 extern int drm_edid_header_is_valid(const u8 *raw_edid);
-extern bool drm_edid_block_valid(u8 *raw_edid);
+extern bool drm_edid_block_valid(u8 *raw_edid, int block);
 extern bool drm_edid_is_valid(struct edid *edid);
 struct drm_display_mode *drm_mode_find_dmt(struct drm_device *dev,
-					   int hsize, int vsize, int fresh);
+					   int hsize, int vsize, int fresh,
+					   bool rb);
 
 extern int drm_mode_create_dumb_ioctl(struct drm_device *dev,
 				      void *data, struct drm_file *file_priv);
@@ -1026,4 +1027,9 @@ extern int drm_mode_destroy_dumb_ioctl(struct drm_device *dev,
 
 extern void drm_fb_get_bpp_depth(uint32_t format, unsigned int *depth,
 				 int *bpp);
+extern int drm_format_num_planes(uint32_t format);
+extern int drm_format_plane_cpp(uint32_t format, int plane);
+extern int drm_format_horz_chroma_subsampling(uint32_t format);
+extern int drm_format_vert_chroma_subsampling(uint32_t format);
+
 #endif /* __DRM_CRTC_H__ */

@@ -227,7 +227,7 @@ static int drm_mode_object_get(struct drm_device *dev,
 again:
 	if (idr_pre_get(&dev->mode_config.crtc_idr, GFP_KERNEL) == 0) {
 		DRM_ERROR("Ran out memory getting a mode number\n");
-		return -EINVAL;
+		return -ENOMEM;
 	}
 
 	mutex_lock(&dev->mode_config.idr_mutex);
@@ -235,6 +235,8 @@ again:
 	mutex_unlock(&dev->mode_config.idr_mutex);
 	if (ret == -EAGAIN)
 		goto again;
+	else if (ret)
+		return ret;
 
 	obj->id = new_id;
 	obj->type = obj_type;
@@ -2102,7 +2104,7 @@ int drm_mode_addfb(struct drm_device *dev,
 
 	fb = dev->mode_config.funcs->fb_create(dev, file_priv, &r);
 	if (IS_ERR(fb)) {
-		DRM_ERROR("could not create framebuffer\n");
+		DRM_DEBUG_KMS("could not create framebuffer\n");
 		ret = PTR_ERR(fb);
 		goto out;
 	}
@@ -2185,6 +2187,47 @@ static int format_check(struct drm_mode_fb_cmd2 *r)
 	}
 }
 
+static int framebuffer_check(struct drm_mode_fb_cmd2 *r)
+{
+	int ret, hsub, vsub, num_planes, i;
+
+	ret = format_check(r);
+	if (ret) {
+		DRM_DEBUG_KMS("bad framebuffer format 0x%08x\n", r->pixel_format);
+		return ret;
+	}
+
+	hsub = drm_format_horz_chroma_subsampling(r->pixel_format);
+	vsub = drm_format_vert_chroma_subsampling(r->pixel_format);
+	num_planes = drm_format_num_planes(r->pixel_format);
+
+	if (r->width == 0 || r->width % hsub) {
+		DRM_DEBUG_KMS("bad framebuffer width %u\n", r->height);
+		return -EINVAL;
+	}
+
+	if (r->height == 0 || r->height % vsub) {
+		DRM_DEBUG_KMS("bad framebuffer height %u\n", r->height);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < num_planes; i++) {
+		unsigned int width = r->width / (i != 0 ? hsub : 1);
+
+		if (!r->handles[i]) {
+			DRM_DEBUG_KMS("no buffer object handle for plane %d\n", i);
+			return -EINVAL;
+		}
+
+		if (r->pitches[i] < drm_format_plane_cpp(r->pixel_format, i) * width) {
+			DRM_DEBUG_KMS("bad pitch %u for plane %d\n", r->pitches[i], i);
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
 /**
  * drm_mode_addfb2 - add an FB to the graphics configuration
  * @inode: inode from the ioctl
@@ -2214,27 +2257,25 @@ int drm_mode_addfb2(struct drm_device *dev,
 		return -EINVAL;
 
 	if ((config->min_width > r->width) || (r->width > config->max_width)) {
-		DRM_ERROR("bad framebuffer width %d, should be >= %d && <= %d\n",
+		DRM_DEBUG_KMS("bad framebuffer width %d, should be >= %d && <= %d\n",
 			  r->width, config->min_width, config->max_width);
 		return -EINVAL;
 	}
 	if ((config->min_height > r->height) || (r->height > config->max_height)) {
-		DRM_ERROR("bad framebuffer height %d, should be >= %d && <= %d\n",
+		DRM_DEBUG_KMS("bad framebuffer height %d, should be >= %d && <= %d\n",
 			  r->height, config->min_height, config->max_height);
 		return -EINVAL;
 	}
 
-	ret = format_check(r);
-	if (ret) {
-		DRM_ERROR("bad framebuffer format 0x%08x\n", r->pixel_format);
+	ret = framebuffer_check(r);
+	if (ret)
 		return ret;
-	}
 
 	mutex_lock(&dev->mode_config.mutex);
 
 	fb = dev->mode_config.funcs->fb_create(dev, file_priv, r);
 	if (IS_ERR(fb)) {
-		DRM_ERROR("could not create framebuffer\n");
+		DRM_DEBUG_KMS("could not create framebuffer\n");
 		ret = PTR_ERR(fb);
 		goto out;
 	}
@@ -3468,3 +3509,140 @@ void drm_fb_get_bpp_depth(uint32_t format, unsigned int *depth,
 	}
 }
 EXPORT_SYMBOL(drm_fb_get_bpp_depth);
+
+/**
+ * drm_format_num_planes - get the number of planes for format
+ * @format: pixel format (DRM_FORMAT_*)
+ *
+ * RETURNS:
+ * The number of planes used by the specified pixel format.
+ */
+int drm_format_num_planes(uint32_t format)
+{
+	switch (format) {
+	case DRM_FORMAT_YUV410:
+	case DRM_FORMAT_YVU410:
+	case DRM_FORMAT_YUV411:
+	case DRM_FORMAT_YVU411:
+	case DRM_FORMAT_YUV420:
+	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_YUV422:
+	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_YUV444:
+	case DRM_FORMAT_YVU444:
+		return 3;
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV21:
+	case DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV61:
+		return 2;
+	default:
+		return 1;
+	}
+}
+EXPORT_SYMBOL(drm_format_num_planes);
+
+/**
+ * drm_format_plane_cpp - determine the bytes per pixel value
+ * @format: pixel format (DRM_FORMAT_*)
+ * @plane: plane index
+ *
+ * RETURNS:
+ * The bytes per pixel value for the specified plane.
+ */
+int drm_format_plane_cpp(uint32_t format, int plane)
+{
+	unsigned int depth;
+	int bpp;
+
+	if (plane >= drm_format_num_planes(format))
+		return 0;
+
+	switch (format) {
+	case DRM_FORMAT_YUYV:
+	case DRM_FORMAT_YVYU:
+	case DRM_FORMAT_UYVY:
+	case DRM_FORMAT_VYUY:
+		return 2;
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV21:
+	case DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV61:
+		return plane ? 2 : 1;
+	case DRM_FORMAT_YUV410:
+	case DRM_FORMAT_YVU410:
+	case DRM_FORMAT_YUV411:
+	case DRM_FORMAT_YVU411:
+	case DRM_FORMAT_YUV420:
+	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_YUV422:
+	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_YUV444:
+	case DRM_FORMAT_YVU444:
+		return 1;
+	default:
+		drm_fb_get_bpp_depth(format, &depth, &bpp);
+		return bpp >> 3;
+	}
+}
+EXPORT_SYMBOL(drm_format_plane_cpp);
+
+/**
+ * drm_format_horz_chroma_subsampling - get the horizontal chroma subsampling factor
+ * @format: pixel format (DRM_FORMAT_*)
+ *
+ * RETURNS:
+ * The horizontal chroma subsampling factor for the
+ * specified pixel format.
+ */
+int drm_format_horz_chroma_subsampling(uint32_t format)
+{
+	switch (format) {
+	case DRM_FORMAT_YUV411:
+	case DRM_FORMAT_YVU411:
+	case DRM_FORMAT_YUV410:
+	case DRM_FORMAT_YVU410:
+		return 4;
+	case DRM_FORMAT_YUYV:
+	case DRM_FORMAT_YVYU:
+	case DRM_FORMAT_UYVY:
+	case DRM_FORMAT_VYUY:
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV21:
+	case DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV61:
+	case DRM_FORMAT_YUV422:
+	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_YUV420:
+	case DRM_FORMAT_YVU420:
+		return 2;
+	default:
+		return 1;
+	}
+}
+EXPORT_SYMBOL(drm_format_horz_chroma_subsampling);
+
+/**
+ * drm_format_vert_chroma_subsampling - get the vertical chroma subsampling factor
+ * @format: pixel format (DRM_FORMAT_*)
+ *
+ * RETURNS:
+ * The vertical chroma subsampling factor for the
+ * specified pixel format.
+ */
+int drm_format_vert_chroma_subsampling(uint32_t format)
+{
+	switch (format) {
+	case DRM_FORMAT_YUV410:
+	case DRM_FORMAT_YVU410:
+		return 4;
+	case DRM_FORMAT_YUV420:
+	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV21:
+		return 2;
+	default:
+		return 1;
+	}
+}
+EXPORT_SYMBOL(drm_format_vert_chroma_subsampling);

@@ -84,6 +84,12 @@ MODULE_PARM_DESC(lvds_downclock,
 		"Use panel (LVDS/eDP) downclocking for power savings "
 		"(default: false)");
 
+int i915_lvds_channel_mode __read_mostly;
+module_param_named(lvds_channel_mode, i915_lvds_channel_mode, int, 0600);
+MODULE_PARM_DESC(lvds_channel_mode,
+		 "Specify LVDS channel mode "
+		 "(0=probe BIOS [default], 1=single-channel, 2=dual-channel)");
+
 int i915_panel_use_ssc __read_mostly = -1;
 module_param_named(lvds_use_ssc, i915_panel_use_ssc, int, 0600);
 MODULE_PARM_DESC(lvds_use_ssc,
@@ -93,8 +99,8 @@ MODULE_PARM_DESC(lvds_use_ssc,
 int i915_vbt_sdvo_panel_type __read_mostly = -1;
 module_param_named(vbt_sdvo_panel_type, i915_vbt_sdvo_panel_type, int, 0600);
 MODULE_PARM_DESC(vbt_sdvo_panel_type,
-		"Override selection of SDVO panel mode in the VBT "
-		"(default: auto)");
+		"Override/Ignore selection of SDVO panel mode in the VBT "
+		"(-2=ignore, -1=auto [default], index in VBT BIOS table)");
 
 static bool i915_try_reset __read_mostly = true;
 module_param_named(reset, i915_try_reset, bool, 0600);
@@ -209,6 +215,7 @@ static const struct intel_device_info intel_ironlake_d_info = {
 	.gen = 5,
 	.need_gfx_hws = 1, .has_hotplug = 1,
 	.has_bsd_ring = 1,
+	.has_pch_split = 1,
 };
 
 static const struct intel_device_info intel_ironlake_m_info = {
@@ -216,6 +223,7 @@ static const struct intel_device_info intel_ironlake_m_info = {
 	.need_gfx_hws = 1, .has_hotplug = 1,
 	.has_fbc = 1,
 	.has_bsd_ring = 1,
+	.has_pch_split = 1,
 };
 
 static const struct intel_device_info intel_sandybridge_d_info = {
@@ -224,6 +232,7 @@ static const struct intel_device_info intel_sandybridge_d_info = {
 	.has_bsd_ring = 1,
 	.has_blt_ring = 1,
 	.has_llc = 1,
+	.has_pch_split = 1,
 };
 
 static const struct intel_device_info intel_sandybridge_m_info = {
@@ -233,6 +242,7 @@ static const struct intel_device_info intel_sandybridge_m_info = {
 	.has_bsd_ring = 1,
 	.has_blt_ring = 1,
 	.has_llc = 1,
+	.has_pch_split = 1,
 };
 
 static const struct intel_device_info intel_ivybridge_d_info = {
@@ -241,6 +251,7 @@ static const struct intel_device_info intel_ivybridge_d_info = {
 	.has_bsd_ring = 1,
 	.has_blt_ring = 1,
 	.has_llc = 1,
+	.has_pch_split = 1,
 };
 
 static const struct intel_device_info intel_ivybridge_m_info = {
@@ -250,6 +261,43 @@ static const struct intel_device_info intel_ivybridge_m_info = {
 	.has_bsd_ring = 1,
 	.has_blt_ring = 1,
 	.has_llc = 1,
+	.has_pch_split = 1,
+};
+
+static const struct intel_device_info intel_valleyview_m_info = {
+	.gen = 7, .is_mobile = 1,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.has_fbc = 0,
+	.has_bsd_ring = 1,
+	.has_blt_ring = 1,
+	.is_valleyview = 1,
+};
+
+static const struct intel_device_info intel_valleyview_d_info = {
+	.gen = 7,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.has_fbc = 0,
+	.has_bsd_ring = 1,
+	.has_blt_ring = 1,
+	.is_valleyview = 1,
+};
+
+static const struct intel_device_info intel_haswell_d_info = {
+	.is_haswell = 1, .gen = 7,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.has_bsd_ring = 1,
+	.has_blt_ring = 1,
+	.has_llc = 1,
+	.has_pch_split = 1,
+};
+
+static const struct intel_device_info intel_haswell_m_info = {
+	.is_haswell = 1, .gen = 7, .is_mobile = 1,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.has_bsd_ring = 1,
+	.has_blt_ring = 1,
+	.has_llc = 1,
+	.has_pch_split = 1,
 };
 
 static const struct pci_device_id pciidlist[] = {		/* aka */
@@ -308,6 +356,7 @@ MODULE_DEVICE_TABLE(pci, pciidlist);
 #define INTEL_PCH_IBX_DEVICE_ID_TYPE	0x3b00
 #define INTEL_PCH_CPT_DEVICE_ID_TYPE	0x1c00
 #define INTEL_PCH_PPT_DEVICE_ID_TYPE	0x1e00
+#define INTEL_PCH_LPT_DEVICE_ID_TYPE	0x8c00
 
 void intel_detect_pch(struct drm_device *dev)
 {
@@ -328,18 +377,41 @@ void intel_detect_pch(struct drm_device *dev)
 
 			if (id == INTEL_PCH_IBX_DEVICE_ID_TYPE) {
 				dev_priv->pch_type = PCH_IBX;
+				dev_priv->num_pch_pll = 2;
 				DRM_DEBUG_KMS("Found Ibex Peak PCH\n");
 			} else if (id == INTEL_PCH_CPT_DEVICE_ID_TYPE) {
 				dev_priv->pch_type = PCH_CPT;
+				dev_priv->num_pch_pll = 2;
 				DRM_DEBUG_KMS("Found CougarPoint PCH\n");
 			} else if (id == INTEL_PCH_PPT_DEVICE_ID_TYPE) {
 				/* PantherPoint is CPT compatible */
 				dev_priv->pch_type = PCH_CPT;
+				dev_priv->num_pch_pll = 2;
 				DRM_DEBUG_KMS("Found PatherPoint PCH\n");
+			} else if (id == INTEL_PCH_LPT_DEVICE_ID_TYPE) {
+				dev_priv->pch_type = PCH_LPT;
+				dev_priv->num_pch_pll = 0;
+				DRM_DEBUG_KMS("Found LynxPoint PCH\n");
 			}
+			BUG_ON(dev_priv->num_pch_pll > I915_NUM_PLLS);
 		}
 		pci_dev_put(pch);
 	}
+}
+
+bool i915_semaphore_is_enabled(struct drm_device *dev)
+{
+	if (INTEL_INFO(dev)->gen < 6)
+		return 0;
+
+	if (i915_semaphores >= 0)
+		return i915_semaphores;
+
+	/* Enable semaphores on SNB when IO remapping is off */
+	if (INTEL_INFO(dev)->gen == 6)
+		return !intel_iommu_enabled;
+
+	return 1;
 }
 
 void __gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
@@ -366,7 +438,7 @@ void __gen6_gt_force_wake_mt_get(struct drm_i915_private *dev_priv)
 	while (count++ < 50 && (I915_READ_NOTRACE(FORCEWAKE_MT_ACK) & 1))
 		udelay(10);
 
-	I915_WRITE_NOTRACE(FORCEWAKE_MT, (1<<16) | 1);
+	I915_WRITE_NOTRACE(FORCEWAKE_MT, _MASKED_BIT_ENABLE(1));
 	POSTING_READ(FORCEWAKE_MT);
 
 	count = 0;
@@ -408,7 +480,7 @@ void __gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
 
 void __gen6_gt_force_wake_mt_put(struct drm_i915_private *dev_priv)
 {
-	I915_WRITE_NOTRACE(FORCEWAKE_MT, (1<<16) | 0);
+	I915_WRITE_NOTRACE(FORCEWAKE_MT, _MASKED_BIT_DISABLE(1));
 	/* The below doubles as a POSTING_READ */
 	gen6_gt_check_fifodbg(dev_priv);
 }
@@ -444,6 +516,31 @@ int __gen6_gt_wait_for_fifo(struct drm_i915_private *dev_priv)
 	dev_priv->gt_fifo_count--;
 
 	return ret;
+}
+
+void vlv_force_wake_get(struct drm_i915_private *dev_priv)
+{
+	int count;
+
+	count = 0;
+
+	/* Already awake? */
+	if ((I915_READ(0x130094) & 0xa1) == 0xa1)
+		return;
+
+	I915_WRITE_NOTRACE(FORCEWAKE_VLV, 0xffffffff);
+	POSTING_READ(FORCEWAKE_VLV);
+
+	count = 0;
+	while (count++ < 50 && (I915_READ_NOTRACE(FORCEWAKE_ACK_VLV) & 1) == 0)
+		udelay(10);
+}
+
+void vlv_force_wake_put(struct drm_i915_private *dev_priv)
+{
+	I915_WRITE_NOTRACE(FORCEWAKE_VLV, 0xffff0000);
+	/* FIXME: confirm VLV behavior with Punit folks */
+	POSTING_READ(FORCEWAKE_VLV);
 }
 
 static int i915_drm_freeze(struct drm_device *dev)
@@ -576,7 +673,7 @@ int i915_resume(struct drm_device *dev)
 	return 0;
 }
 
-static int i8xx_do_reset(struct drm_device *dev, u8 flags)
+static int i8xx_do_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -610,11 +707,12 @@ static int i965_reset_complete(struct drm_device *dev)
 {
 	u8 gdrst;
 	pci_read_config_byte(dev->pdev, I965_GDRST, &gdrst);
-	return gdrst & 0x1;
+	return (gdrst & GRDOM_RESET_ENABLE) == 0;
 }
 
-static int i965_do_reset(struct drm_device *dev, u8 flags)
+static int i965_do_reset(struct drm_device *dev)
 {
+	int ret;
 	u8 gdrst;
 
 	/*
@@ -623,20 +721,43 @@ static int i965_do_reset(struct drm_device *dev, u8 flags)
 	 * triggers the reset; when done, the hardware will clear it.
 	 */
 	pci_read_config_byte(dev->pdev, I965_GDRST, &gdrst);
-	pci_write_config_byte(dev->pdev, I965_GDRST, gdrst | flags | 0x1);
+	pci_write_config_byte(dev->pdev, I965_GDRST,
+			      gdrst | GRDOM_RENDER |
+			      GRDOM_RESET_ENABLE);
+	ret =  wait_for(i965_reset_complete(dev), 500);
+	if (ret)
+		return ret;
+
+	/* We can't reset render&media without also resetting display ... */
+	pci_read_config_byte(dev->pdev, I965_GDRST, &gdrst);
+	pci_write_config_byte(dev->pdev, I965_GDRST,
+			      gdrst | GRDOM_MEDIA |
+			      GRDOM_RESET_ENABLE);
 
 	return wait_for(i965_reset_complete(dev), 500);
 }
 
-static int ironlake_do_reset(struct drm_device *dev, u8 flags)
+static int ironlake_do_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	u32 gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
-	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR, gdrst | flags | 0x1);
+	u32 gdrst;
+	int ret;
+
+	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
+	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
+		   gdrst | GRDOM_RENDER | GRDOM_RESET_ENABLE);
+	ret = wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
+	if (ret)
+		return ret;
+
+	/* We can't reset render&media without also resetting display ... */
+	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
+	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
+		   gdrst | GRDOM_MEDIA | GRDOM_RESET_ENABLE);
 	return wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
 }
 
-static int gen6_do_reset(struct drm_device *dev, u8 flags)
+static int gen6_do_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int	ret;
@@ -671,10 +792,44 @@ static int gen6_do_reset(struct drm_device *dev, u8 flags)
 	return ret;
 }
 
+static int intel_gpu_reset(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	int ret = -ENODEV;
+
+	switch (INTEL_INFO(dev)->gen) {
+	case 7:
+	case 6:
+		ret = gen6_do_reset(dev);
+		break;
+	case 5:
+		ret = ironlake_do_reset(dev);
+		break;
+	case 4:
+		ret = i965_do_reset(dev);
+		break;
+	case 2:
+		ret = i8xx_do_reset(dev);
+		break;
+	}
+
+	/* Also reset the gpu hangman. */
+	if (dev_priv->stop_rings) {
+		DRM_DEBUG("Simulated gpu hang, resetting stop_rings\n");
+		dev_priv->stop_rings = 0;
+		if (ret == -ENODEV) {
+			DRM_ERROR("Reset not implemented, but ignoring "
+				  "error for simulated gpu hangs\n");
+			ret = 0;
+		}
+	}
+
+	return ret;
+}
+
 /**
  * i915_reset - reset chip after a hang
  * @dev: drm device to reset
- * @flags: reset domains
  *
  * Reset the chip.  Useful if a hang is detected. Returns zero on successful
  * reset or otherwise an error code.
@@ -687,14 +842,9 @@ static int gen6_do_reset(struct drm_device *dev, u8 flags)
  *   - re-init interrupt state
  *   - re-init display
  */
-int i915_reset(struct drm_device *dev, u8 flags)
+int i915_reset(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	/*
-	 * We really should only reset the display subsystem if we actually
-	 * need to
-	 */
-	bool need_display = true;
 	int ret;
 
 	if (!i915_try_reset)
@@ -703,26 +853,16 @@ int i915_reset(struct drm_device *dev, u8 flags)
 	if (!mutex_trylock(&dev->struct_mutex))
 		return -EBUSY;
 
+	dev_priv->stop_rings = 0;
+
 	i915_gem_reset(dev);
 
 	ret = -ENODEV;
-	if (get_seconds() - dev_priv->last_gpu_reset < 5) {
+	if (get_seconds() - dev_priv->last_gpu_reset < 5)
 		DRM_ERROR("GPU hanging too fast, declaring wedged!\n");
-	} else switch (INTEL_INFO(dev)->gen) {
-	case 7:
-	case 6:
-		ret = gen6_do_reset(dev, flags);
-		break;
-	case 5:
-		ret = ironlake_do_reset(dev, flags);
-		break;
-	case 4:
-		ret = i965_do_reset(dev, flags);
-		break;
-	case 2:
-		ret = i8xx_do_reset(dev, flags);
-		break;
-	}
+	else
+		ret = intel_gpu_reset(dev);
+
 	dev_priv->last_gpu_reset = get_seconds();
 	if (ret) {
 		DRM_ERROR("Failed to reset chip.\n");
@@ -759,23 +899,14 @@ int i915_reset(struct drm_device *dev, u8 flags)
 		i915_gem_init_ppgtt(dev);
 
 		mutex_unlock(&dev->struct_mutex);
+
+		if (drm_core_check_feature(dev, DRIVER_MODESET))
+			intel_modeset_init_hw(dev);
+
 		drm_irq_uninstall(dev);
-		drm_mode_config_reset(dev);
 		drm_irq_install(dev);
-		mutex_lock(&dev->struct_mutex);
-	}
-
-	mutex_unlock(&dev->struct_mutex);
-
-	/*
-	 * Perform a full modeset as on later generations, e.g. Ironlake, we may
-	 * need to retrain the display link and cannot just restore the register
-	 * values.
-	 */
-	if (need_display) {
-		mutex_lock(&dev->mode_config.mutex);
-		drm_helper_resume_force_mode(dev);
-		mutex_unlock(&dev->mode_config.mutex);
+	} else {
+		mutex_unlock(&dev->struct_mutex);
 	}
 
 	return 0;
@@ -992,6 +1123,13 @@ module_exit(i915_exit);
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL and additional rights");
+
+/* We give fast paths for the really cool registers */
+#define NEEDS_FORCE_WAKE(dev_priv, reg) \
+       (((dev_priv)->info->gen >= 6) && \
+        ((reg) < 0x40000) &&            \
+        ((reg) != FORCEWAKE)) && \
+       (!IS_VALLEYVIEW((dev_priv)->dev))
 
 #define __i915_read(x, y) \
 u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \

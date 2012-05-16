@@ -177,6 +177,37 @@ static void ironlake_write_infoframe(struct drm_encoder *encoder,
 
 	I915_WRITE(reg, VIDEO_DIP_ENABLE | val | flags);
 }
+
+static void vlv_write_infoframe(struct drm_encoder *encoder,
+				     struct dip_infoframe *frame)
+{
+	uint32_t *data = (uint32_t *)frame;
+	struct drm_device *dev = encoder->dev;
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_crtc *crtc = encoder->crtc;
+	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
+	int reg = VLV_TVIDEO_DIP_CTL(intel_crtc->pipe);
+	unsigned i, len = DIP_HEADER_SIZE + frame->len;
+	u32 flags, val = I915_READ(reg);
+
+	intel_wait_for_vblank(dev, intel_crtc->pipe);
+
+	flags = intel_infoframe_index(frame);
+
+	val &= ~(VIDEO_DIP_SELECT_MASK | 0xf); /* clear DIP data offset */
+
+	I915_WRITE(reg, VIDEO_DIP_ENABLE | val | flags);
+
+	for (i = 0; i < len; i += 4) {
+		I915_WRITE(VLV_TVIDEO_DIP_DATA(intel_crtc->pipe), *data);
+		data++;
+	}
+
+	flags |= intel_infoframe_flags(frame);
+
+	I915_WRITE(reg, VIDEO_DIP_ENABLE | val | flags);
+}
+
 static void intel_set_infoframe(struct drm_encoder *encoder,
 				struct dip_infoframe *frame)
 {
@@ -189,13 +220,17 @@ static void intel_set_infoframe(struct drm_encoder *encoder,
 	intel_hdmi->write_infoframe(encoder, frame);
 }
 
-static void intel_hdmi_set_avi_infoframe(struct drm_encoder *encoder)
+static void intel_hdmi_set_avi_infoframe(struct drm_encoder *encoder,
+					 struct drm_display_mode *adjusted_mode)
 {
 	struct dip_infoframe avi_if = {
 		.type = DIP_TYPE_AVI,
 		.ver = DIP_VERSION_AVI,
 		.len = DIP_LEN_AVI,
 	};
+
+	if (adjusted_mode->flags & DRM_MODE_FLAG_DBLCLK)
+		avi_if.body.avi.YQ_CN_PR |= DIP_AVI_PR_2;
 
 	intel_set_infoframe(encoder, &avi_if);
 }
@@ -259,7 +294,7 @@ static void intel_hdmi_mode_set(struct drm_encoder *encoder,
 	I915_WRITE(intel_hdmi->sdvox_reg, sdvox);
 	POSTING_READ(intel_hdmi->sdvox_reg);
 
-	intel_hdmi_set_avi_infoframe(encoder);
+	intel_hdmi_set_avi_infoframe(encoder, adjusted_mode);
 	intel_hdmi_set_spd_infoframe(encoder);
 }
 
@@ -334,7 +369,8 @@ intel_hdmi_detect(struct drm_connector *connector, bool force)
 	intel_hdmi->has_hdmi_sink = false;
 	intel_hdmi->has_audio = false;
 	edid = drm_get_edid(connector,
-			    &dev_priv->gmbus[intel_hdmi->ddc_bus].adapter);
+			    intel_gmbus_get_adapter(dev_priv,
+						    intel_hdmi->ddc_bus));
 
 	if (edid) {
 		if (edid->input & DRM_EDID_INPUT_DIGITAL) {
@@ -367,7 +403,8 @@ static int intel_hdmi_get_modes(struct drm_connector *connector)
 	 */
 
 	return intel_ddc_get_modes(connector,
-				   &dev_priv->gmbus[intel_hdmi->ddc_bus].adapter);
+				   intel_gmbus_get_adapter(dev_priv,
+							   intel_hdmi->ddc_bus));
 }
 
 static bool
@@ -379,7 +416,8 @@ intel_hdmi_detect_audio(struct drm_connector *connector)
 	bool has_audio = false;
 
 	edid = drm_get_edid(connector,
-			    &dev_priv->gmbus[intel_hdmi->ddc_bus].adapter);
+			    intel_gmbus_get_adapter(dev_priv,
+						    intel_hdmi->ddc_bus));
 	if (edid) {
 		if (edid->input & DRM_EDID_INPUT_DIGITAL)
 			has_audio = drm_detect_monitor_audio(edid);
@@ -549,7 +587,11 @@ void intel_hdmi_init(struct drm_device *dev, int sdvox_reg)
 	if (!HAS_PCH_SPLIT(dev)) {
 		intel_hdmi->write_infoframe = i9xx_write_infoframe;
 		I915_WRITE(VIDEO_DIP_CTL, 0);
-	} else {
+	} else if (IS_VALLEYVIEW(dev)) {
+		intel_hdmi->write_infoframe = vlv_write_infoframe;
+		for_each_pipe(i)
+			I915_WRITE(VLV_TVIDEO_DIP_CTL(i), 0);
+	}  else {
 		intel_hdmi->write_infoframe = ironlake_write_infoframe;
 		for_each_pipe(i)
 			I915_WRITE(TVIDEO_DIP_CTL(i), 0);
