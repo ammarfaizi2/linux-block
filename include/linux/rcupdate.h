@@ -513,10 +513,10 @@ static inline void rcu_preempt_sleep_check(void)
 		(_________p1); \
 	})
 #define __rcu_assign_pointer(p, v, space) \
-	({ \
+	do { \
 		smp_wmb(); \
 		(p) = (typeof(*v) __force space *)(v); \
-	})
+	} while (0)
 
 
 /**
@@ -851,7 +851,7 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  *
  * Assigns the specified value to the specified RCU-protected
  * pointer, ensuring that any concurrent RCU readers will see
- * any prior initialization.  Returns the value assigned.
+ * any prior initialization.
  *
  * Inserts memory barriers on architectures that require them
  * (which is most of them), and also prevents the compiler from
@@ -903,7 +903,17 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  * the reader-accessible portions of the linked structure.
  */
 #define RCU_INIT_POINTER(p, v) \
-		p = (typeof(*v) __force __rcu *)(v)
+	do { \
+		p = (typeof(*v) __force __rcu *)(v); \
+	} while (0)
+
+/**
+ * INIT_RCU_POINTER() - statically initialize an RCU protected pointer
+ *
+ * GCC-style initialization for an RCU-protected pointer in a structure field.
+ */
+#define INIT_RCU_POINTER(p, v) \
+		.p = (typeof(*v) __force __rcu *)(v)
 
 static __always_inline bool __is_kfree_rcu_offset(unsigned long offset)
 {
