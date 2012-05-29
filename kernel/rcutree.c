@@ -158,7 +158,6 @@ unsigned long rcutorture_vernum;
 /* State information for rcu_barrier() and friends. */
 
 static DEFINE_MUTEX(rcu_barrier_mutex);
-static struct completion rcu_barrier_completion;
 
 /*
  * Return true if an RCU grace period is in progress.  The ACCESS_ONCE()s
@@ -2273,7 +2272,7 @@ static void rcu_barrier_callback(struct rcu_head *rhp)
 	struct rcu_state *rsp = rdp->rsp;
 
 	if (atomic_dec_and_test(&rsp->barrier_cpu_count))
-		complete(&rcu_barrier_completion);
+		complete(&rsp->barrier_completion);
 }
 
 /*
@@ -2323,7 +2322,7 @@ static void _rcu_barrier(struct rcu_state *rsp)
 	 * 6.	Both rcu_barrier_callback() callbacks are invoked, awakening
 	 *	us -- but before CPU 1's orphaned callbacks are invoked!!!
 	 */
-	init_completion(&rcu_barrier_completion);
+	init_completion(&rsp->barrier_completion);
 	atomic_set(&rsp->barrier_cpu_count, 1);
 	raw_spin_lock_irqsave(&rsp->onofflock, flags);
 	rsp->rcu_barrier_in_progress = current;
@@ -2373,10 +2372,10 @@ static void _rcu_barrier(struct rcu_state *rsp)
 	 * CPU, and thus each counted, remove the initial count.
 	 */
 	if (atomic_dec_and_test(&rsp->barrier_cpu_count))
-		complete(&rcu_barrier_completion);
+		complete(&rsp->barrier_completion);
 
 	/* Wait for all rcu_barrier_callback() callbacks to be invoked. */
-	wait_for_completion(&rcu_barrier_completion);
+	wait_for_completion(&rsp->barrier_completion);
 
 	/* Other rcu_barrier() invocations can now safely proceed. */
 	mutex_unlock(&rcu_barrier_mutex);
