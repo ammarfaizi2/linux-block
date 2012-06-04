@@ -335,6 +335,12 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 					  requirements as needed. This option
 					  does not override iommu=pt
 
+	amd_iommu_dump=	[HW,X86-64]
+			Enable AMD IOMMU driver option to dump the ACPI table
+			for AMD IOMMU. With this option enabled, AMD IOMMU
+			driver will print ACPI tables for AMD IOMMU during
+			IOMMU initialization.
+
 	amijoy.map=	[HW,JOY] Amiga joystick support
 			Map of devices attached to JOY0DAT and JOY1DAT
 			Format: <a>,<b>
@@ -396,8 +402,6 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 
 	atkbd.softrepeat= [HW]
 			Use software keyboard repeat
-
-	autotest	[IA-64]
 
 	baycom_epp=	[HW,AX25]
 			Format: <io>,<mode>
@@ -508,12 +512,21 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			Also note the kernel might malfunction if you disable
 			some critical bits.
 
+	cma=nn[MG]	[ARM,KNL]
+			Sets the size of kernel global memory area for contiguous
+			memory allocations. For more information, see
+			include/linux/dma-contiguous.h
+
 	cmo_free_hint=	[PPC] Format: { yes | no }
 			Specify whether pages are marked as being inactive
 			when they are freed.  This is used in CMO environments
 			to determine OS memory pressure for page stealing by
 			a hypervisor.
 			Default: yes
+
+	coherent_pool=nn[KMG]	[ARM,KNL]
+			Sets the size of memory pool for coherent, atomic dma
+			allocations if Contiguous Memory Allocator (CMA) is used.
 
 	code_bytes	[X86] How many bytes of object code to print
 			in an oops report.
@@ -1443,8 +1456,6 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			of statically allocating a predefined number, loop
 			devices can be requested on-demand with the
 			/dev/loop-control interface.
-
-	mcatest=	[IA-64]
 
 	mce		[X86-32] Machine Check Exception
 
