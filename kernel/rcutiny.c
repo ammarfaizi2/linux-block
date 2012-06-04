@@ -55,6 +55,27 @@ static void __call_rcu(struct rcu_head *head,
 
 static long long rcu_dynticks_nesting = DYNTICK_TASK_EXIT_IDLE;
 
+static void rcu_check_idle_entry(void)
+{
+	struct task_struct *idle;
+	unsigned long flags;
+
+	if (is_idle_task(current))
+		return;
+
+	local_irq_save(flags);
+
+	idle = idle_task(smp_processor_id());
+	RCU_TRACE(trace_rcu_dyntick("Error on entry: not idle task",
+				    rcu_dynticks_nesting, 0));
+	ftrace_dump(DUMP_ORIG);
+	WARN_ONCE(1, "Current pid: %d comm: %s / Idle pid: %d comm: %s",
+		  current->pid, current->comm,
+		  idle->pid, idle->comm); /* must be idle task! */
+
+	local_irq_restore(flags);
+}
+
 /* Common code for rcu_idle_enter() and rcu_irq_exit(), see kernel/rcutree.c. */
 static void rcu_idle_enter_common(long long oldval)
 {
@@ -64,24 +85,15 @@ static void rcu_idle_enter_common(long long oldval)
 		return;
 	}
 	RCU_TRACE(trace_rcu_dyntick("Start", oldval, rcu_dynticks_nesting));
-	if (!is_idle_task(current)) {
-		struct task_struct *idle = idle_task(smp_processor_id());
-
-		RCU_TRACE(trace_rcu_dyntick("Error on entry: not idle task",
-					    oldval, rcu_dynticks_nesting));
-		ftrace_dump(DUMP_ALL);
-		WARN_ONCE(1, "Current pid: %d comm: %s / Idle pid: %d comm: %s",
-			  current->pid, current->comm,
-			  idle->pid, idle->comm); /* must be idle task! */
-	}
 	rcu_sched_qs(0); /* implies rcu_bh_qsctr_inc(0) */
 }
 
 /*
  * Enter idle, which is an extended quiescent state if we have fully
  * entered that mode (i.e., if the new value of dynticks_nesting is zero).
+ * The caller must have carried out any required checks.
  */
-void rcu_idle_enter(void)
+static void __rcu_idle_enter(void)
 {
 	unsigned long flags;
 	long long oldval;
@@ -97,7 +109,24 @@ void rcu_idle_enter(void)
 	rcu_idle_enter_common(oldval);
 	local_irq_restore(flags);
 }
+
+/*
+ * Enter idle from the idle task, complain if some other task tries this.
+ */
+void rcu_idle_enter(void)
+{
+	rcu_check_idle_entry();
+	__rcu_idle_enter();
+}
 EXPORT_SYMBOL_GPL(rcu_idle_enter);
+
+/*
+ * Inform RCU that we are entering userspace and that it should go idle.
+ */
+void rcu_user_enter(void)
+{
+	__rcu_idle_enter();
+}
 
 /*
  * Exit an interrupt handler towards idle.
@@ -115,6 +144,27 @@ void rcu_irq_exit(void)
 	local_irq_restore(flags);
 }
 
+static void rcu_check_idle_exit(long long oldval)
+{
+	struct task_struct *idle;
+	unsigned long flags;
+
+	if (is_idle_task(current))
+		return;
+
+	local_irq_save(flags);
+
+	idle = idle_task(smp_processor_id());
+	RCU_TRACE(trace_rcu_dyntick("Error on exit: not idle task",
+		  oldval, rcu_dynticks_nesting));
+	ftrace_dump(DUMP_ALL);
+	WARN_ONCE(1, "Current pid: %d comm: %s / Idle pid: %d comm: %s",
+		  current->pid, current->comm,
+		  idle->pid, idle->comm); /* must be idle task! */
+
+	local_irq_restore(flags);
+}
+
 /* Common code for rcu_idle_exit() and rcu_irq_enter(), see kernel/rcutree.c. */
 static void rcu_idle_exit_common(long long oldval)
 {
@@ -124,22 +174,13 @@ static void rcu_idle_exit_common(long long oldval)
 		return;
 	}
 	RCU_TRACE(trace_rcu_dyntick("End", oldval, rcu_dynticks_nesting));
-	if (!is_idle_task(current)) {
-		struct task_struct *idle = idle_task(smp_processor_id());
-
-		RCU_TRACE(trace_rcu_dyntick("Error on exit: not idle task",
-			  oldval, rcu_dynticks_nesting));
-		ftrace_dump(DUMP_ALL);
-		WARN_ONCE(1, "Current pid: %d comm: %s / Idle pid: %d comm: %s",
-			  current->pid, current->comm,
-			  idle->pid, idle->comm); /* must be idle task! */
-	}
 }
 
 /*
  * Exit idle, so that we are no longer in an extended quiescent state.
+ * The caller must have done any required checking.
  */
-void rcu_idle_exit(void)
+static long long __rcu_idle_exit(void)
 {
 	unsigned long flags;
 	long long oldval;
@@ -153,8 +194,26 @@ void rcu_idle_exit(void)
 		rcu_dynticks_nesting = DYNTICK_TASK_EXIT_IDLE;
 	rcu_idle_exit_common(oldval);
 	local_irq_restore(flags);
+	return oldval;
+}
+
+/*
+ * Inform RCU that an idle task is entering idle.
+ */
+void rcu_idle_exit(void)
+{
+	long long oldval = __rcu_idle_exit();
+	rcu_check_idle_exit(oldval);
 }
 EXPORT_SYMBOL_GPL(rcu_idle_exit);
+
+/*
+ * Inform RCU that a task is entering usermode, and that RCU should go idle.
+ */
+void rcu_user_exit(void)
+{
+	__rcu_idle_exit();
+}
 
 /*
  * Enter an interrupt handler, moving away from idle.
