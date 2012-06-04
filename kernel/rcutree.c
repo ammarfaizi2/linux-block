@@ -455,6 +455,30 @@ void rcu_user_enter(void)
 }
 
 /**
+ * rcu_user_enter_irq - inform RCU that we are going to resume userspace
+ * after the current irq returns.
+ *
+ * This is similar to rcu_user_enter() but in the context of a non
+ * nesting irq. After this call, RCU enters into idle mode when the
+ * interrupt returns.
+ */
+void rcu_user_enter_irq(void)
+{
+	unsigned long flags;
+	struct rcu_dynticks *rdtp;
+
+	local_irq_save(flags);
+	rdtp = &__get_cpu_var(rcu_dynticks);
+	/*
+	 * Ensure this irq is a non nesting one interrupting
+	 * a non-idle RCU state.
+	 */
+	WARN_ON_ONCE(rdtp->dynticks_nesting != DYNTICK_TASK_EXIT_IDLE + 1);
+	rdtp->dynticks_nesting = 1;
+	local_irq_restore(flags);
+}
+
+/**
  * rcu_irq_exit - inform RCU that current CPU is exiting irq towards idle
  *
  * Exit from an interrupt handler, which might possibly result in entering
@@ -582,6 +606,31 @@ void rcu_idle_exit(void)
 void rcu_user_exit(void)
 {
 	__rcu_idle_exit();
+}
+
+/**
+ * rcu_user_exit_irq - inform RCU that we won't resume to userspace
+ * idle mode after the current irq returns.
+ *
+ * This is similar to rcu_user_exit() but in the context of a non
+ * nesting irq. This is called when the irq has interrupted a userspace
+ * RCU idle mode context. When the interrupt returns after this call,
+ * the CPU won't restore the RCU idle mode.
+ */
+void rcu_user_exit_irq(void)
+{
+	unsigned long flags;
+	struct rcu_dynticks *rdtp;
+
+	local_irq_save(flags);
+	rdtp = &__get_cpu_var(rcu_dynticks);
+	/*
+	 * Ensure this irq is a non-nesting one interrupting
+	 * an RCU idle mode.
+	 */
+	WARN_ON_ONCE(rdtp->dynticks_nesting != 1);
+	rdtp->dynticks_nesting = DYNTICK_TASK_EXIT_IDLE + 1;
+	local_irq_restore(flags);
 }
 
 /**
