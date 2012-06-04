@@ -42,28 +42,28 @@
 #define RCU_FANOUT_4	      (RCU_FANOUT_3 * CONFIG_RCU_FANOUT)
 
 #if NR_CPUS <= RCU_FANOUT_1
-#  define NUM_RCU_LVLS	      1
+#  define RCU_NUM_LVLS	      1
 #  define NUM_RCU_LVL_0	      1
 #  define NUM_RCU_LVL_1	      (NR_CPUS)
 #  define NUM_RCU_LVL_2	      0
 #  define NUM_RCU_LVL_3	      0
 #  define NUM_RCU_LVL_4	      0
 #elif NR_CPUS <= RCU_FANOUT_2
-#  define NUM_RCU_LVLS	      2
+#  define RCU_NUM_LVLS	      2
 #  define NUM_RCU_LVL_0	      1
 #  define NUM_RCU_LVL_1	      DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_1)
 #  define NUM_RCU_LVL_2	      (NR_CPUS)
 #  define NUM_RCU_LVL_3	      0
 #  define NUM_RCU_LVL_4	      0
 #elif NR_CPUS <= RCU_FANOUT_3
-#  define NUM_RCU_LVLS	      3
+#  define RCU_NUM_LVLS	      3
 #  define NUM_RCU_LVL_0	      1
 #  define NUM_RCU_LVL_1	      DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_2)
 #  define NUM_RCU_LVL_2	      DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_1)
 #  define NUM_RCU_LVL_3	      (NR_CPUS)
 #  define NUM_RCU_LVL_4	      0
 #elif NR_CPUS <= RCU_FANOUT_4
-#  define NUM_RCU_LVLS	      4
+#  define RCU_NUM_LVLS	      4
 #  define NUM_RCU_LVL_0	      1
 #  define NUM_RCU_LVL_1	      DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_3)
 #  define NUM_RCU_LVL_2	      DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_2)
@@ -76,6 +76,9 @@
 #define RCU_SUM (NUM_RCU_LVL_0 + NUM_RCU_LVL_1 + NUM_RCU_LVL_2 + NUM_RCU_LVL_3 + NUM_RCU_LVL_4)
 #define NUM_RCU_NODES (RCU_SUM - NR_CPUS)
 
+extern int rcu_num_lvls;
+extern int rcu_num_nodes;
+
 /*
  * Dynticks per-CPU state.
  */
@@ -84,6 +87,20 @@ struct rcu_dynticks {
 				    /* Process level is worth LLONG_MAX/2. */
 	int dynticks_nmi_nesting;   /* Track NMI nesting level. */
 	atomic_t dynticks;	    /* Even value for idle, else odd. */
+#ifdef CONFIG_RCU_FAST_NO_HZ
+	int dyntick_drain;	    /* Prepare-for-idle state variable. */
+	unsigned long dyntick_holdoff;
+				    /* No retries for the jiffy of failure. */
+	struct timer_list idle_gp_timer;
+				    /* Wake up CPU sleeping with callbacks. */
+	unsigned long idle_gp_timer_expires;
+				    /* When to wake up CPU (for repost). */
+	bool idle_first_pass;	    /* First pass of attempt to go idle? */
+	unsigned long nonlazy_posted;
+				    /* # times non-lazy CBs posted to CPU. */
+	unsigned long nonlazy_posted_snap;
+				    /* idle-period nonlazy_posted snapshot. */
+#endif /* #ifdef CONFIG_RCU_FAST_NO_HZ */
 };
 
 /* RCU's kthread states for tracing. */
@@ -192,7 +209,7 @@ struct rcu_node {
  */
 #define rcu_for_each_node_breadth_first(rsp, rnp) \
 	for ((rnp) = &(rsp)->node[0]; \
-	     (rnp) < &(rsp)->node[NUM_RCU_NODES]; (rnp)++)
+	     (rnp) < &(rsp)->node[rcu_num_nodes]; (rnp)++)
 
 /*
  * Do a breadth-first scan of the non-leaf rcu_node structures for the
@@ -201,7 +218,7 @@ struct rcu_node {
  */
 #define rcu_for_each_nonleaf_node_breadth_first(rsp, rnp) \
 	for ((rnp) = &(rsp)->node[0]; \
-	     (rnp) < (rsp)->level[NUM_RCU_LVLS - 1]; (rnp)++)
+	     (rnp) < (rsp)->level[rcu_num_lvls - 1]; (rnp)++)
 
 /*
  * Scan the leaves of the rcu_node hierarchy for the specified rcu_state
@@ -210,8 +227,8 @@ struct rcu_node {
  * It is still a leaf node, even if it is also the root node.
  */
 #define rcu_for_each_leaf_node(rsp, rnp) \
-	for ((rnp) = (rsp)->level[NUM_RCU_LVLS - 1]; \
-	     (rnp) < &(rsp)->node[NUM_RCU_NODES]; (rnp)++)
+	for ((rnp) = (rsp)->level[rcu_num_lvls - 1]; \
+	     (rnp) < &(rsp)->node[rcu_num_nodes]; (rnp)++)
 
 /* Index values for nxttail array in struct rcu_data. */
 #define RCU_DONE_TAIL		0	/* Also RCU_WAIT head. */
@@ -297,6 +314,9 @@ struct rcu_data {
 	unsigned long n_rp_need_fqs;
 	unsigned long n_rp_need_nothing;
 
+	/* 6) _rcu_barrier() callback. */
+	struct rcu_head barrier_head;
+
 	int cpu;
 	struct rcu_state *rsp;
 };
@@ -343,10 +363,12 @@ do {									\
  */
 struct rcu_state {
 	struct rcu_node node[NUM_RCU_NODES];	/* Hierarchy. */
-	struct rcu_node *level[NUM_RCU_LVLS];	/* Hierarchy levels. */
+	struct rcu_node *level[RCU_NUM_LVLS];	/* Hierarchy levels. */
 	u32 levelcnt[MAX_RCU_LVLS + 1];		/* # nodes in each level. */
-	u8 levelspread[NUM_RCU_LVLS];		/* kids/node in each level. */
+	u8 levelspread[RCU_NUM_LVLS];		/* kids/node in each level. */
 	struct rcu_data __percpu *rda;		/* pointer of percu rcu_data. */
+	void (*call)(struct rcu_head *head,	/* call_rcu() flavor. */
+		     void (*func)(struct rcu_head *head));
 
 	/* The following fields are guarded by the root rcu_node's lock. */
 
@@ -378,6 +400,11 @@ struct rcu_state {
 	struct task_struct *rcu_barrier_in_progress;
 						/* Task doing rcu_barrier(), */
 						/*  or NULL if no barrier. */
+	struct mutex barrier_mutex;		/* Guards barrier fields. */
+	atomic_t barrier_cpu_count;		/* # CPUs waiting on. */
+	struct completion barrier_completion;	/* Wake at barrier end. */
+	unsigned long n_barrier_done;		/* ++ at start and end of */
+						/*  _rcu_barrier(). */
 	raw_spinlock_t fqslock;			/* Only one task forcing */
 						/*  quiescent states. */
 	unsigned long jiffies_force_qs;		/* Time at which to invoke */
