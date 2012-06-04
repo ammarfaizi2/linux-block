@@ -193,6 +193,16 @@ extern void rcu_irq_enter(void);
 extern void rcu_irq_exit(void);
 extern void rcu_user_enter(void);
 extern void rcu_user_exit(void);
+extern void rcu_user_enter_after_irq(void);
+extern void rcu_user_exit_after_irq(void);
+extern void rcu_user_hooks_switch(struct task_struct *prev,
+				  struct task_struct *next);
+#else
+static inline void rcu_user_enter(void) { }
+static inline void rcu_user_exit(void) { }
+#endif /* CONFIG_RCU_USER_QS */
+
+
 extern void exit_rcu(void);
 
 /**
