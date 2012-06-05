@@ -129,6 +129,21 @@ void rcu_user_enter(void)
 }
 
 /*
+ * Inform RCU that the current interrupt handler will exit into an
+ * extended quiescent state.
+ */
+void rcu_user_enter_irq(void)
+{
+	unsigned long flags;
+
+	local_irq_save(flags);
+	/* Complain if this is not a singly nested IRQ handler. */
+	WARN_ON_ONCE(rcu_dynticks_nesting != DYNTICK_TASK_EXIT_IDLE + 1);
+	rcu_dynticks_nesting = 1;
+	local_irq_restore(flags);
+}
+
+/*
  * Exit an interrupt handler towards idle.
  */
 void rcu_irq_exit(void)
@@ -213,6 +228,19 @@ EXPORT_SYMBOL_GPL(rcu_idle_exit);
 void rcu_user_exit(void)
 {
 	__rcu_idle_exit();
+}
+
+/*
+ * Inform RCU that the current IRQ handler will exit to a non-quiescent state.
+ */
+void rcu_user_exit_irq(void)
+{
+	unsigned long flags;
+
+	local_irq_save(flags);
+	WARN_ON_ONCE(rcu_dynticks_nesting != 1);
+	rcu_dynticks_nesting = DYNTICK_TASK_EXIT_IDLE + 1;
+	local_irq_restore(flags);
 }
 
 /*
