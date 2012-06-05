@@ -2182,7 +2182,7 @@ static void rcu_prepare_for_idle(int cpu)
 					   jiffies + RCU_IDLE_GP_DELAY;
 		} else {
 			rdtp->idle_gp_timer_expires =
-					   jiffies + RCU_IDLE_LAZY_GP_DELAY;
+				round_jiffies(jiffies + RCU_IDLE_LAZY_GP_DELAY);
 			trace_rcu_prep_idle("Dyntick with lazy callbacks");
 		}
 		tp = &rdtp->idle_gp_timer;
