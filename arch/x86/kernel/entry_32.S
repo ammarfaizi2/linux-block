@@ -1123,6 +1123,7 @@ ftrace_call:
 	popl %edx
 	popl %ecx
 	popl %eax
+ftrace_ret:
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
 .globl ftrace_graph_call
 ftrace_graph_call:
@@ -1134,6 +1135,58 @@ ftrace_stub:
 	ret
 END(ftrace_caller)
 
+ENTRY(ftrace_regs_caller)
+	pushf	/* push flags before compare */
+	cmpl $0, function_trace_stop
+	jne ftrace_exit
+
+	subl $8, %esp	/* skip ip and orig_ax */
+	pushl %gs
+	pushl %fs
+	pushl %es
+	pushl %ds
+	pushl %eax
+	pushl %ebp
+	pushl %edi
+	pushl %esi
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	movl 14*4(%esp), %eax	/* Load return address */
+	pushl %eax		/* Save return address (+4) */
+	subl $MCOUNT_INSN_SIZE, %eax
+	movl %eax, 12*4+4(%esp)	/* Store IP */
+	movl 13*4+4(%esp), %edx	/* Load flags */
+	movl %edx, 14*4+4(%esp)	/* Store flags */
+	movl $__KERNEL_CS, %edx
+	movl %edx, 13*4+4(%esp)	/* Store CS */
+
+	movl 0x4(%ebp), %edx
+	lea  4(%esp), %ecx
+	pushl %ecx		/* Save pt_regs as 4th parameter */
+	leal function_trace_op, %ecx
+
+GLOBAL(ftrace_regs_call)
+	call ftrace_stub
+
+	addl $4,%esp		/* Skip pt_regs */
+	popl %eax
+	movl %eax, 14*4(%esp)	/* Restore return address */
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %esi
+	popl %edi
+	popl %ebp
+	popl %eax
+	popl %ds
+	popl %es
+	popl %fs
+	popl %gs
+	addl $8, %esp
+ftrace_exit:
+	addl $4, %esp		/* Skip eflags */
+	jmp ftrace_ret
 #else /* ! CONFIG_DYNAMIC_FTRACE */
 
 ENTRY(mcount)
