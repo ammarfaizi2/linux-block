@@ -206,7 +206,6 @@ static int
 ftrace_modify_code(unsigned long ip, unsigned const char *old_code,
 		   unsigned const char *new_code);
 
-#ifdef ARCH_SUPPORTS_FTRACE_SAVE_REGS
 /* Should never be called */
 int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
 				 unsigned long addr)
@@ -220,7 +219,6 @@ int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
 
 	return ftrace_modify_code(rec->ip, old, new);
 }
-#endif
 
 int ftrace_update_ftrace_func(ftrace_func_t func)
 {
@@ -236,7 +234,6 @@ int ftrace_update_ftrace_func(ftrace_func_t func)
 
 	ret = ftrace_modify_code(ip, old, new);
 
-#ifdef ARCH_SUPPORTS_FTRACE_SAVE_REGS
 	/* Also update the regs version */
 	if (!ret) {
 		ip = (unsigned long)(&ftrace_regs_call);
@@ -244,7 +241,6 @@ int ftrace_update_ftrace_func(ftrace_func_t func)
 		new = ftrace_call_replace(ip, (unsigned long)func);
 		ret = ftrace_modify_code(ip, old, new);
 	}
-#endif
 
 	atomic_dec(&modifying_ftrace_code);
 
