@@ -426,10 +426,10 @@ static void print_digital_conv(struct snd_info_buffer *buffer,
 
 static const char *get_pwr_state(u32 state)
 {
-	static const char * const buf[4] = {
-		"D0", "D1", "D2", "D3"
+	static const char * const buf[] = {
+		"D0", "D1", "D2", "D3", "D3cold"
 	};
-	if (state < 4)
+	if (state < ARRAY_SIZE(buf))
 		return buf[state];
 	return "UNKNOWN";
 }
@@ -455,10 +455,17 @@ static void print_power_state(struct snd_info_buffer *buffer,
 		snd_iprintf(buffer, "  Power states: %s\n",
 			    bits_names(sup, names, ARRAY_SIZE(names)));
 
-	snd_iprintf(buffer, "  Power: setting=%s, actual=%s\n",
+	snd_iprintf(buffer, "  Power: setting=%s, actual=%s",
 		    get_pwr_state(pwr & AC_PWRST_SETTING),
 		    get_pwr_state((pwr & AC_PWRST_ACTUAL) >>
 				  AC_PWRST_ACTUAL_SHIFT));
+	if (pwr & AC_PWRST_ERROR)
+		snd_iprintf(buffer, ", Error");
+	if (pwr & AC_PWRST_CLK_STOP_OK)
+		snd_iprintf(buffer, ", Clock-stop-OK");
+	if (pwr & AC_PWRST_SETTING_RESET)
+		snd_iprintf(buffer, ", Setting-reset");
+	snd_iprintf(buffer, "\n");
 }
 
 static void print_unsol_cap(struct snd_info_buffer *buffer,
