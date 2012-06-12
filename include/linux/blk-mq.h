@@ -42,7 +42,7 @@ static inline struct blk_queue_ctx *blk_get_ctx(struct request_queue *q, int nr)
 }
 
 #define queue_for_each_ctx(q, ctx, i)					\
-	for (i = 0, ctx = &(q)->queue_ctx[0];				\
+	for (i = 0, ctx = &(q)->queue_ctx[i];				\
 		i < (q)->nr_queues; i++, ctx++)				\
 
 #define blk_ctx_sum(q, sum)						\
