@@ -25,6 +25,7 @@
  */
 
 #include <linux/delay.h>
+#include <linux/oom.h>
 
 #define RCU_KTHREAD_PRIO 1
 
@@ -2243,6 +2244,35 @@ static void rcu_idle_count_callbacks_posted(void)
 {
 	__this_cpu_add(rcu_dynticks.nonlazy_posted, 1);
 }
+
+/*
+ * If low on memory, do a full round of rcu_barrier() calls to ensure
+ * that each CPU has a non-lazy callback.  This will wake up CPUs that
+ * have only lazy callbacks, ensuring that they free up the corresponding
+ * memory in a timely manner.
+ */
+static int rcu_oom_notify(struct notifier_block *self,
+                          unsigned long notused, void *nfreed)
+{
+#ifdef CONFIG_PREEMPT_RCU
+	rcu_barrier();
+#endif /* #ifdef CONFIG_PREEMPT_RCU */
+	rcu_barrier_bh();
+	rcu_barrier_sched();
+	*(unsigned long *)nfreed = 1;
+	return NOTIFY_OK;
+}
+
+static struct notifier_block rcu_oom_nb = {
+	.notifier_call = rcu_oom_notify
+};
+
+static int __init rcu_register_oom_notifier(void)
+{
+	register_oom_notifier(&rcu_oom_nb);
+	return 0;
+}
+early_initcall(rcu_register_oom_notifier);
 
 #endif /* #else #if !defined(CONFIG_RCU_FAST_NO_HZ) */
 
