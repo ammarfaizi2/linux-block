@@ -1415,13 +1415,15 @@ static int simple_playback_init(struct hda_codec *codec)
 	int i;
 
 	for (i = 0; i < spec->num_pins; i++) {
-		snd_hda_codec_write(codec, spec->pins[i].pin_nid, 0,
+		hda_nid_t pin = spec->pins[i].pin_nid;
+		snd_hda_codec_write(codec, pin, 0,
 				    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 		/* some codecs require to unmute the pin */
-		if (get_wcaps(codec, spec->pins[i].pin_nid) & AC_WCAP_OUT_AMP)
-			snd_hda_codec_write(codec, spec->pins[i].pin_nid, 0,
+		if (get_wcaps(codec, pin) & AC_WCAP_OUT_AMP)
+			snd_hda_codec_write(codec, pin, 0,
 					    AC_VERB_SET_AMP_GAIN_MUTE,
 					    AMP_OUT_UNMUTE);
+		snd_hda_jack_detect_enable(codec, pin, pin);
 	}
 	snd_hda_jack_report_sync(codec);
 	return 0;
@@ -1607,7 +1609,7 @@ static int patch_simple_hdmi(struct hda_codec *codec,
 	spec->num_cvts = 1;
 	spec->num_pins = 1;
 	spec->cvts[0].cvt_nid = cvt_nid;
-	spec->cvts[0].cvt_nid = pin_nid;
+	spec->pins[0].pin_nid = pin_nid;
 	spec->pcm_playback = simple_pcm_playback;
 
 	codec->patch_ops = simple_hdmi_patch_ops;
