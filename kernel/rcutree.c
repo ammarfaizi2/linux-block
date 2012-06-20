@@ -1072,10 +1072,10 @@ static int rcu_gp_kthread(void *arg)
 		rsp->fqs_state = RCU_GP_INIT; /* Stop force_quiescent_state. */
 		rsp->jiffies_force_qs = jiffies + RCU_JIFFIES_TILL_FORCE_QS;
 		record_gp_stall_check_time(rsp);
-		raw_spin_unlock(&rnp->lock);  /* leave irqs disabled. */
+		raw_spin_unlock_irqrestore(&rnp->lock, flags);
 
 		/* Exclude any concurrent CPU-hotplug operations. */
-		raw_spin_lock(&rsp->onofflock);  /* irqs already disabled. */
+		get_online_cpus();
 
 		/*
 		 * Set the quiescent-state-needed bits in all the rcu_node
@@ -1095,7 +1095,7 @@ static int rcu_gp_kthread(void *arg)
 		 * due to the fact that we have irqs disabled.
 		 */
 		rcu_for_each_node_breadth_first(rsp, rnp) {
-			raw_spin_lock(&rnp->lock); /* irqs already disabled. */
+			raw_spin_lock_irqsave(&rnp->lock, flags);
 			rcu_preempt_check_blocked_tasks(rnp);
 			rnp->qsmask = rnp->qsmaskinit;
 			rnp->gpnum = rsp->gpnum;
@@ -1106,15 +1106,15 @@ static int rcu_gp_kthread(void *arg)
 			trace_rcu_grace_period_init(rsp->name, rnp->gpnum,
 						    rnp->level, rnp->grplo,
 						    rnp->grphi, rnp->qsmask);
-			raw_spin_unlock(&rnp->lock); /* irqs remain disabled. */
+			raw_spin_unlock_irqrestore(&rnp->lock, flags);
 		}
 
 		rnp = rcu_get_root(rsp);
-		raw_spin_lock(&rnp->lock); /* irqs already disabled. */
+		raw_spin_lock_irqsave(&rnp->lock, flags);
 		/* force_quiescent_state() now OK. */
 		rsp->fqs_state = RCU_SIGNAL_INIT;
-		raw_spin_unlock(&rnp->lock); /* irqs remain disabled. */
-		raw_spin_unlock_irqrestore(&rsp->onofflock, flags);
+		raw_spin_unlock_irqrestore(&rnp->lock, flags);
+		put_online_cpus();
 	}
 	return 0;
 }
