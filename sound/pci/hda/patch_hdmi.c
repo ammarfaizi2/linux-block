@@ -787,7 +787,7 @@ static void hdmi_non_intrinsic_event(struct hda_codec *codec, unsigned int res)
 	int cp_ready = !!(res & AC_UNSOL_RES_CP_READY);
 
 	printk(KERN_INFO
-		"HDMI CP event: CODEC=%d PIN=%d SUBTAG=0x%x CP_STATE=%d CP_READY=%d\n",
+		"HDMI CP event: CODEC=%d TAG=%d SUBTAG=0x%x CP_STATE=%d CP_READY=%d\n",
 		codec->addr,
 		tag,
 		subtag,
@@ -1364,26 +1364,22 @@ static int simple_playback_build_pcms(struct hda_codec *codec)
 {
 	struct hdmi_spec *spec = codec->spec;
 	struct hda_pcm *info = spec->pcm_rec;
-	int i;
+	unsigned int chans;
+	struct hda_pcm_stream *pstr;
 
-	codec->num_pcms = spec->num_cvts;
+	codec->num_pcms = 1;
 	codec->pcm_info = info;
 
-	for (i = 0; i < codec->num_pcms; i++, info++) {
-		unsigned int chans;
-		struct hda_pcm_stream *pstr;
+	chans = get_wcaps(codec, spec->cvts[0].cvt_nid);
+	chans = get_wcaps_channels(chans);
 
-		chans = get_wcaps(codec, spec->cvts[i].cvt_nid);
-		chans = get_wcaps_channels(chans);
-
-		info->name = get_hdmi_pcm_name(i);
-		info->pcm_type = HDA_PCM_TYPE_HDMI;
-		pstr = &info->stream[SNDRV_PCM_STREAM_PLAYBACK];
-		*pstr = spec->pcm_playback;
-		pstr->nid = spec->cvts[i].cvt_nid;
-		if (pstr->channels_max <= 2 && chans && chans <= 16)
-			pstr->channels_max = chans;
-	}
+	info->name = get_hdmi_pcm_name(0);
+	info->pcm_type = HDA_PCM_TYPE_HDMI;
+	pstr = &info->stream[SNDRV_PCM_STREAM_PLAYBACK];
+	*pstr = spec->pcm_playback;
+	pstr->nid = spec->cvts[0].cvt_nid;
+	if (pstr->channels_max <= 2 && chans && chans <= 16)
+		pstr->channels_max = chans;
 
 	return 0;
 }
@@ -1392,7 +1388,7 @@ static int simple_playback_build_pcms(struct hda_codec *codec)
 static void simple_hdmi_unsol_event(struct hda_codec *codec,
 				    unsigned int res)
 {
-	snd_hda_jack_get_action(codec, res >> AC_UNSOL_RES_TAG_SHIFT);
+	snd_hda_jack_set_dirty_all(codec);
 	snd_hda_jack_report_sync(codec);
 }
 
@@ -1405,38 +1401,27 @@ static int simple_playback_build_controls(struct hda_codec *codec)
 {
 	struct hdmi_spec *spec = codec->spec;
 	int err;
-	int i;
 
-	for (i = 0; i < codec->num_pcms; i++) {
-		err = snd_hda_create_spdif_out_ctls(codec,
-						    spec->cvts[i].cvt_nid,
-						    spec->cvts[i].cvt_nid);
-		if (err < 0)
-			return err;
-		err = simple_hdmi_build_jack(codec, i);
-		if (err < 0)
-			return err;
-	}
-
-	return 0;
+	err = snd_hda_create_spdif_out_ctls(codec,
+					    spec->cvts[0].cvt_nid,
+					    spec->cvts[0].cvt_nid);
+	if (err < 0)
+		return err;
+	return simple_hdmi_build_jack(codec, 0);
 }
 
 static int simple_playback_init(struct hda_codec *codec)
 {
 	struct hdmi_spec *spec = codec->spec;
-	int i;
+	hda_nid_t pin = spec->pins[0].pin_nid;
 
-	for (i = 0; i < spec->num_pins; i++) {
-		hda_nid_t pin = spec->pins[i].pin_nid;
-		snd_hda_codec_write(codec, pin, 0,
-				    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
-		/* some codecs require to unmute the pin */
-		if (get_wcaps(codec, pin) & AC_WCAP_OUT_AMP)
-			snd_hda_codec_write(codec, pin, 0,
-					    AC_VERB_SET_AMP_GAIN_MUTE,
-					    AMP_OUT_UNMUTE);
-		snd_hda_jack_detect_enable(codec, pin, pin);
-	}
+	snd_hda_codec_write(codec, pin, 0,
+			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
+	/* some codecs require to unmute the pin */
+	if (get_wcaps(codec, pin) & AC_WCAP_OUT_AMP)
+		snd_hda_codec_write(codec, pin, 0, AC_VERB_SET_AMP_GAIN_MUTE,
+				    AMP_OUT_UNMUTE);
+	snd_hda_jack_detect_enable(codec, pin, pin);
 	snd_hda_jack_report_sync(codec);
 	return 0;
 }
