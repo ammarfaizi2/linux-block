@@ -1128,7 +1128,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
 			flush_signals(current);
 		}
 
-		raw_spin_lock_irqsave(&rnp->lock, flags);
+		raw_spin_lock_irq(&rnp->lock);
 		gp_duration = jiffies - rsp->gp_start;
 		if (gp_duration > rsp->gp_max)
 			rsp->gp_max = gp_duration;
@@ -1149,7 +1149,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
 		 * completed.
 		 */
 		if (*rdp->nxttail[RCU_WAIT_TAIL] == NULL) {
-			raw_spin_unlock(&rnp->lock); /* irqs remain disabled. */
+			raw_spin_unlock_irq(&rnp->lock);
 
 			/*
 			 * Propagate new ->completed value to rcu_node
@@ -1158,14 +1158,13 @@ static int __noreturn rcu_gp_kthread(void *arg)
 			 * to process their callbacks.
 			 */
 			rcu_for_each_node_breadth_first(rsp, rnp) {
-				/* irqs already disabled. */
-				raw_spin_lock(&rnp->lock);
+				raw_spin_lock_irq(&rnp->lock);
 				rnp->completed = rsp->gpnum;
-				/* irqs remain disabled. */
-				raw_spin_unlock(&rnp->lock);
+				raw_spin_unlock_irq(&rnp->lock);
+				cond_resched();
 			}
 			rnp = rcu_get_root(rsp);
-			raw_spin_lock(&rnp->lock); /* irqs already disabled. */
+			raw_spin_lock_irq(&rnp->lock);
 		}
 
 		rsp->completed = rsp->gpnum; /* Declare grace period done. */
@@ -1173,7 +1172,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
 		rsp->fqs_state = RCU_GP_IDLE;
 		if (cpu_needs_another_gp(rsp, rdp))
 			rsp->gp_flags = 1;
-		raw_spin_unlock_irqrestore(&rnp->lock, flags);
+		raw_spin_unlock_irq(&rnp->lock);
 	}
 }
 
