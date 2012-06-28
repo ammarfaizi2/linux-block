@@ -25,6 +25,7 @@
  */
 
 #include <linux/delay.h>
+#include <linux/oom.h>
 
 #define RCU_KTHREAD_PRIO 1
 
@@ -83,7 +84,6 @@ struct rcu_state rcu_preempt_state =
 DEFINE_PER_CPU(struct rcu_data, rcu_preempt_data);
 static struct rcu_state *rcu_state = &rcu_preempt_state;
 
-static void rcu_read_unlock_special(struct task_struct *t);
 static int rcu_preempted_readers_exp(struct rcu_node *rnp);
 
 /*
@@ -238,18 +238,6 @@ void rcu_preempt_note_context_switch(void)
 }
 
 /*
- * Tree-preemptible RCU implementation for rcu_read_lock().
- * Just increment ->rcu_read_lock_nesting, shared state will be updated
- * if we block.
- */
-void __rcu_read_lock(void)
-{
-	current->rcu_read_lock_nesting++;
-	barrier();  /* needed if we ever invoke rcu_read_lock in rcutree.c */
-}
-EXPORT_SYMBOL_GPL(__rcu_read_lock);
-
-/*
  * Check for preempted RCU readers blocking the current grace period
  * for the specified rcu_node structure.  If the caller needs a reliable
  * answer, it must hold the rcu_node's ->lock.
@@ -315,7 +303,7 @@ static struct list_head *rcu_next_node_entry(struct task_struct *t,
  * notify RCU core processing or task having blocked during the RCU
  * read-side critical section.
  */
-static noinline void rcu_read_unlock_special(struct task_struct *t)
+void rcu_read_unlock_special(struct task_struct *t)
 {
 	int empty;
 	int empty_exp;
@@ -422,38 +410,6 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
 		local_irq_restore(flags);
 	}
 }
-
-/*
- * Tree-preemptible RCU implementation for rcu_read_unlock().
- * Decrement ->rcu_read_lock_nesting.  If the result is zero (outermost
- * rcu_read_unlock()) and ->rcu_read_unlock_special is non-zero, then
- * invoke rcu_read_unlock_special() to clean up after a context switch
- * in an RCU read-side critical section and other special cases.
- */
-void __rcu_read_unlock(void)
-{
-	struct task_struct *t = current;
-
-	if (t->rcu_read_lock_nesting != 1)
-		--t->rcu_read_lock_nesting;
-	else {
-		barrier();  /* critical section before exit code. */
-		t->rcu_read_lock_nesting = INT_MIN;
-		barrier();  /* assign before ->rcu_read_unlock_special load */
-		if (unlikely(ACCESS_ONCE(t->rcu_read_unlock_special)))
-			rcu_read_unlock_special(t);
-		barrier();  /* ->rcu_read_unlock_special load before assign */
-		t->rcu_read_lock_nesting = 0;
-	}
-#ifdef CONFIG_PROVE_LOCKING
-	{
-		int rrln = ACCESS_ONCE(t->rcu_read_lock_nesting);
-
-		WARN_ON_ONCE(rrln < 0 && rrln > INT_MIN / 2);
-	}
-#endif /* #ifdef CONFIG_PROVE_LOCKING */
-}
-EXPORT_SYMBOL_GPL(__rcu_read_unlock);
 
 #ifdef CONFIG_RCU_CPU_STALL_VERBOSE
 
@@ -1848,8 +1804,10 @@ static void rcu_idle_count_callbacks_posted(void)
  */
 #define RCU_IDLE_FLUSHES 5		/* Number of dyntick-idle tries. */
 #define RCU_IDLE_OPT_FLUSHES 3		/* Optional dyntick-idle tries. */
-#define RCU_IDLE_GP_DELAY 6		/* Roughly one grace period. */
+#define RCU_IDLE_GP_DELAY 4		/* Roughly one grace period. */
 #define RCU_IDLE_LAZY_GP_DELAY (6 * HZ)	/* Roughly six seconds. */
+
+extern int tick_nohz_enabled;
 
 /*
  * Does the specified flavor of RCU have non-lazy callbacks pending on
@@ -1927,10 +1885,13 @@ int rcu_needs_cpu(int cpu, unsigned long *delta_jiffies)
 		return 1;
 	}
 	/* Set up for the possibility that RCU will post a timer. */
-	if (rcu_cpu_has_nonlazy_callbacks(cpu))
-		*delta_jiffies = RCU_IDLE_GP_DELAY;
-	else
-		*delta_jiffies = RCU_IDLE_LAZY_GP_DELAY;
+	if (rcu_cpu_has_nonlazy_callbacks(cpu)) {
+		*delta_jiffies = round_up(RCU_IDLE_GP_DELAY + jiffies,
+					  RCU_IDLE_GP_DELAY) - jiffies;
+	} else {
+		*delta_jiffies = jiffies + RCU_IDLE_LAZY_GP_DELAY;
+		*delta_jiffies = round_jiffies(*delta_jiffies) - jiffies;
+	}
 	return 0;
 }
 
@@ -1989,6 +1950,7 @@ static void rcu_cleanup_after_idle(int cpu)
 
 	del_timer(&rdtp->idle_gp_timer);
 	trace_rcu_prep_idle("Cleanup after idle");
+	rdtp->tick_nohz_enabled_snap = ACCESS_ONCE(tick_nohz_enabled);
 }
 
 /*
@@ -2014,6 +1976,18 @@ static void rcu_prepare_for_idle(int cpu)
 {
 	struct timer_list *tp;
 	struct rcu_dynticks *rdtp = &per_cpu(rcu_dynticks, cpu);
+	int tne;
+
+	/* Handle nohz enablement switches conservatively. */
+	tne = ACCESS_ONCE(tick_nohz_enabled);
+	if (tne != rdtp->tick_nohz_enabled_snap) {
+		if (rcu_cpu_has_callbacks(cpu))
+			invoke_rcu_core(); /* force nohz to see update. */
+		rdtp->tick_nohz_enabled_snap = tne;
+		return;
+	}
+	if (!tne)
+		return;
 
 	/*
 	 * If this is an idle re-entry, for example, due to use of
@@ -2067,10 +2041,11 @@ static void rcu_prepare_for_idle(int cpu)
 		if (rcu_cpu_has_nonlazy_callbacks(cpu)) {
 			trace_rcu_prep_idle("Dyntick with callbacks");
 			rdtp->idle_gp_timer_expires =
-					   jiffies + RCU_IDLE_GP_DELAY;
+				round_up(jiffies + RCU_IDLE_GP_DELAY,
+					 RCU_IDLE_GP_DELAY);
 		} else {
 			rdtp->idle_gp_timer_expires =
-					   jiffies + RCU_IDLE_LAZY_GP_DELAY;
+				round_jiffies(jiffies + RCU_IDLE_LAZY_GP_DELAY);
 			trace_rcu_prep_idle("Dyntick with lazy callbacks");
 		}
 		tp = &rdtp->idle_gp_timer;
@@ -2128,6 +2103,35 @@ static void rcu_idle_count_callbacks_posted(void)
 	__this_cpu_add(rcu_dynticks.nonlazy_posted, 1);
 }
 
+/*
+ * If low on memory, do a full round of rcu_barrier() calls to ensure
+ * that each CPU has a non-lazy callback.  This will wake up CPUs that
+ * have only lazy callbacks, ensuring that they free up the corresponding
+ * memory in a timely manner.
+ */
+static int rcu_oom_notify(struct notifier_block *self,
+                          unsigned long notused, void *nfreed)
+{
+#ifdef CONFIG_PREEMPT_RCU
+	rcu_barrier();
+#endif /* #ifdef CONFIG_PREEMPT_RCU */
+	rcu_barrier_bh();
+	rcu_barrier_sched();
+	*(unsigned long *)nfreed = 1;
+	return NOTIFY_OK;
+}
+
+static struct notifier_block rcu_oom_nb = {
+	.notifier_call = rcu_oom_notify
+};
+
+static int __init rcu_register_oom_notifier(void)
+{
+	register_oom_notifier(&rcu_oom_nb);
+	return 0;
+}
+early_initcall(rcu_register_oom_notifier);
+
 #endif /* #else #if !defined(CONFIG_RCU_FAST_NO_HZ) */
 
 #ifdef CONFIG_RCU_CPU_STALL_INFO
@@ -2149,6 +2153,7 @@ static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
 
 static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
 {
+	*cp = '\0';
 }
 
 #endif /* #else #ifdef CONFIG_RCU_FAST_NO_HZ */
