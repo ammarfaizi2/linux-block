@@ -367,11 +367,9 @@ static void rcu_eqs_enter_common(struct rcu_dynticks *rdtp, long long oldval,
  */
 static void rcu_eqs_enter(bool user)
 {
-	unsigned long flags;
 	long long oldval;
 	struct rcu_dynticks *rdtp;
 
-	local_irq_save(flags);
 	rdtp = &__get_cpu_var(rcu_dynticks);
 	oldval = rdtp->dynticks_nesting;
 	WARN_ON_ONCE((oldval & DYNTICK_TASK_NEST_MASK) == 0);
@@ -380,7 +378,6 @@ static void rcu_eqs_enter(bool user)
 	else
 		rdtp->dynticks_nesting -= DYNTICK_TASK_NEST_VALUE;
 	rcu_eqs_enter_common(rdtp, oldval, user);
-	local_irq_restore(flags);
 }
 
 /**
@@ -397,7 +394,11 @@ static void rcu_eqs_enter(bool user)
  */
 void rcu_idle_enter(void)
 {
+	unsigned long flags;
+
+	local_irq_save(flags);
 	rcu_eqs_enter(0);
+	local_irq_restore(flags);
 }
 EXPORT_SYMBOL_GPL(rcu_idle_enter);
 
@@ -412,7 +413,18 @@ EXPORT_SYMBOL_GPL(rcu_idle_enter);
  */
 void rcu_user_enter(void)
 {
-	rcu_eqs_enter(1);
+	unsigned long flags;
+	struct rcu_dynticks *rdtp;
+
+	WARN_ON_ONCE(!current->mm);
+
+	local_irq_save(flags);
+	rdtp = &__get_cpu_var(rcu_dynticks);
+	if (!rdtp->in_user) {
+		rdtp->in_user = true;
+		rcu_eqs_enter(1);
+	}
+	local_irq_restore(flags);
 }
 
 /**
@@ -506,11 +518,9 @@ static void rcu_eqs_exit_common(struct rcu_dynticks *rdtp, long long oldval,
  */
 static void rcu_eqs_exit(bool user)
 {
-	unsigned long flags;
 	struct rcu_dynticks *rdtp;
 	long long oldval;
 
-	local_irq_save(flags);
 	rdtp = &__get_cpu_var(rcu_dynticks);
 	oldval = rdtp->dynticks_nesting;
 	WARN_ON_ONCE(oldval < 0);
@@ -519,7 +529,6 @@ static void rcu_eqs_exit(bool user)
 	else
 		rdtp->dynticks_nesting = DYNTICK_TASK_EXIT_IDLE;
 	rcu_eqs_exit_common(rdtp, oldval, user);
-	local_irq_restore(flags);
 }
 
 /**
@@ -535,7 +544,11 @@ static void rcu_eqs_exit(bool user)
  */
 void rcu_idle_exit(void)
 {
+	unsigned long flags;
+
+	local_irq_save(flags);
 	rcu_eqs_exit(0);
+	local_irq_restore(flags);
 }
 EXPORT_SYMBOL_GPL(rcu_idle_exit);
 
@@ -548,7 +561,16 @@ EXPORT_SYMBOL_GPL(rcu_idle_exit);
  */
 void rcu_user_exit(void)
 {
-	rcu_eqs_exit(1);
+	unsigned long flags;
+	struct rcu_dynticks *rdtp;
+
+	local_irq_save(flags);
+	rdtp = &__get_cpu_var(rcu_dynticks);
+	if (rdtp->in_user) {
+		rdtp->in_user = false;
+		rcu_eqs_exit(1);
+	}
+	local_irq_restore(flags);
 }
 
 /**
@@ -2566,6 +2588,9 @@ rcu_boot_init_percpu_data(int cpu, struct rcu_state *rsp)
 	rdp->dynticks = &per_cpu(rcu_dynticks, cpu);
 	WARN_ON_ONCE(rdp->dynticks->dynticks_nesting != DYNTICK_TASK_EXIT_IDLE);
 	WARN_ON_ONCE(atomic_read(&rdp->dynticks->dynticks) != 1);
+#ifdef CONFIG_RCU_USER_QS
+	WARN_ON_ONCE(rdp->dynticks->in_user);
+#endif
 	rdp->cpu = cpu;
 	rdp->rsp = rsp;
 	raw_spin_unlock_irqrestore(&rnp->lock, flags);
