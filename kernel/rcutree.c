@@ -401,6 +401,7 @@ void rcu_idle_enter(void)
 }
 EXPORT_SYMBOL_GPL(rcu_idle_enter);
 
+#ifdef CONFIG_RCU_USER_QS
 /**
  * rcu_user_enter - inform RCU that we are resuming userspace.
  *
@@ -413,7 +414,6 @@ void rcu_user_enter(void)
 {
 	rcu_eqs_enter(1);
 }
-
 
 /**
  * rcu_user_enter_after_irq - inform RCU that we are going to resume userspace
@@ -435,6 +435,7 @@ void rcu_user_enter_after_irq(void)
 	rdtp->dynticks_nesting = 1;
 	local_irq_restore(flags);
 }
+#endif /* CONFIG_RCU_USER_QS */
 
 /**
  * rcu_irq_exit - inform RCU that current CPU is exiting irq towards idle
@@ -538,6 +539,7 @@ void rcu_idle_exit(void)
 }
 EXPORT_SYMBOL_GPL(rcu_idle_exit);
 
+#ifdef CONFIG_RCU_USER_QS
 /**
  * rcu_user_exit - inform RCU that we are exiting userspace.
  *
@@ -570,6 +572,7 @@ void rcu_user_exit_after_irq(void)
 	rdtp->dynticks_nesting += DYNTICK_TASK_EXIT_IDLE;
 	local_irq_restore(flags);
 }
+#endif /* CONFIG_RCU_USER_QS */
 
 /**
  * rcu_irq_enter - inform RCU that current CPU is entering irq away from idle
