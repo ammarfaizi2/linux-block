@@ -43,8 +43,8 @@ static void nlmsvc_release_block(struct nlm_block *block);
 static void	nlmsvc_insert_block(struct nlm_block *block, unsigned long);
 static void	nlmsvc_remove_block(struct nlm_block *block);
 
-static int nlmsvc_setgrantargs(struct nlm_rqst *call, struct nlm_lock *lock);
-static void nlmsvc_freegrantargs(struct nlm_rqst *call);
+static int nlmsvc_setgrantargs(struct nlmsvc_rqst *call, struct nlm_lock *lock);
+static void nlmsvc_freegrantargs(struct nlmsvc_rqst *call);
 static const struct rpc_call_ops nlmsvc_grant_ops;
 
 /*
@@ -217,9 +217,9 @@ nlmsvc_create_block(struct svc_rqst *rqstp, struct nlm_host *host,
 		    struct nlm_cookie *cookie)
 {
 	struct nlm_block	*block;
-	struct nlm_rqst		*call = NULL;
+	struct nlmsvc_rqst		*call = NULL;
 
-	call = nlm_alloc_call(host);
+	call = nlmsvc_alloc_call(host);
 	if (call == NULL)
 		return NULL;
 
@@ -337,7 +337,7 @@ restart:
  * Initialize arguments for GRANTED call. The nlm_rqst structure
  * has been cleared already.
  */
-static int nlmsvc_setgrantargs(struct nlm_rqst *call, struct nlm_lock *lock)
+static int nlmsvc_setgrantargs(struct nlmsvc_rqst *call, struct nlm_lock *lock)
 {
 	locks_copy_lock(&call->a_args.lock.fl, &lock->fl);
 	memcpy(&call->a_args.lock.fh, &lock->fh, sizeof(call->a_args.lock.fh));
@@ -359,7 +359,7 @@ static int nlmsvc_setgrantargs(struct nlm_rqst *call, struct nlm_lock *lock)
 	return 1;
 }
 
-static void nlmsvc_freegrantargs(struct nlm_rqst *call)
+static void nlmsvc_freegrantargs(struct nlmsvc_rqst *call)
 {
 	if (call->a_args.lock.oh.data != call->a_owner)
 		kfree(call->a_args.lock.oh.data);
@@ -835,7 +835,7 @@ callback:
  */
 static void nlmsvc_grant_callback(struct rpc_task *task, void *data)
 {
-	struct nlm_rqst		*call = data;
+	struct nlmsvc_rqst		*call = data;
 	struct nlm_block	*block = call->a_block;
 	unsigned long		timeout;
 
@@ -875,7 +875,7 @@ out:
  */
 static void nlmsvc_grant_release(void *data)
 {
-	struct nlm_rqst		*call = data;
+	struct nlmsvc_rqst		*call = data;
 	nlmsvc_release_block(call->a_block);
 }
 

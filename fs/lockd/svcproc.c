@@ -261,7 +261,31 @@ static void nlmsvc_callback_exit(struct rpc_task *task, void *data)
 			-task->tk_status);
 }
 
-void nlmsvc_release_call(struct nlm_rqst *call)
+/*
+ * Allocate an NLM RPC call struct
+ */
+struct nlmsvc_rqst *nlmsvc_alloc_call(struct nlm_host *host)
+{
+	struct nlmsvc_rqst	*call;
+
+	for(;;) {
+		call = kzalloc(sizeof(*call), GFP_KERNEL);
+		if (call != NULL) {
+			atomic_set(&call->a_count, 1);
+			locks_init_lock(&call->a_args.lock.fl);
+			locks_init_lock(&call->a_res.lock.fl);
+			call->a_host = nlm_get_host(host);
+			return call;
+		}
+		if (signalled())
+			break;
+		printk("nlm_alloc_call: failed, waiting for memory\n");
+		schedule_timeout_interruptible(5*HZ);
+	}
+	return NULL;
+}
+
+void nlmsvc_release_call(struct nlmsvc_rqst *call)
 {
 	if (!atomic_dec_and_test(&call->a_count))
 		return;
@@ -288,7 +312,7 @@ static __be32 nlmsvc_callback(struct svc_rqst *rqstp, u32 proc, struct nlm_args 
 		__be32 (*func)(struct svc_rqst *, struct nlm_args *, struct nlm_res  *))
 {
 	struct nlm_host	*host;
-	struct nlm_rqst	*call;
+	struct nlmsvc_rqst	*call;
 	__be32 stat;
 
 	host = nlmsvc_lookup_host(rqstp,
@@ -297,7 +321,7 @@ static __be32 nlmsvc_callback(struct svc_rqst *rqstp, u32 proc, struct nlm_args 
 	if (host == NULL)
 		return rpc_system_err;
 
-	call = nlm_alloc_call(host);
+	call = nlmsvc_alloc_call(host);
 	nlmsvc_release_host(host);
 	if (call == NULL)
 		return rpc_system_err;

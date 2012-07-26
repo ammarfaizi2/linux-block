@@ -121,7 +121,7 @@ void nlmclnt_finish_block(struct nlm_wait *block)
 /*
  * Block on a lock
  */
-int nlmclnt_block(struct nlm_wait *block, struct nlm_rqst *req, long timeout)
+int nlmclnt_block(struct nlm_wait *block, struct nlmclnt_rqst *req, long timeout)
 {
 	long ret;
 

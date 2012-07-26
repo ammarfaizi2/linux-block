@@ -132,7 +132,18 @@ struct nlm_wait;
  * Memory chunk for NLM client RPC request.
  */
 #define NLMCLNT_OHSIZE		((__NEW_UTS_LEN) + 10u)
-struct nlm_rqst {
+struct nlmclnt_rqst {
+	atomic_t		a_count;
+	unsigned int		a_flags;	/* initial RPC task flags */
+	struct nlm_host *	a_host;		/* host handle */
+	struct nlm_args		a_args;		/* arguments */
+	struct nlm_res		a_res;		/* result */
+	struct nlm_block *	a_block;
+	unsigned int		a_retries;	/* Retry count */
+	u8			a_owner[NLMCLNT_OHSIZE];
+};
+
+struct nlmsvc_rqst {
 	atomic_t		a_count;
 	unsigned int		a_flags;	/* initial RPC task flags */
 	struct nlm_host *	a_host;		/* host handle */
@@ -170,7 +181,7 @@ struct nlm_block {
 	struct kref		b_count;	/* Reference count */
 	struct list_head	b_list;		/* linked list of all blocks */
 	struct list_head	b_flist;	/* linked list (per file) */
-	struct nlm_rqst	*	b_call;		/* RPC args & callback info */
+	struct nlmsvc_rqst *	b_call;		/* RPC args & callback info */
 	struct svc_serv *	b_daemon;	/* NLM service */
 	struct nlm_host *	b_host;		/* host handle for RPC clnt */
 	unsigned long		b_when;		/* next re-xmit */
@@ -202,13 +213,15 @@ extern u32			nsm_local_state;
 /*
  * Lockd client functions
  */
-struct nlm_rqst * nlm_alloc_call(struct nlm_host *host);
-int		  nlm_async_call(struct nlm_rqst *, u32, const struct rpc_call_ops *);
-int		  nlm_async_reply(struct nlm_rqst *, u32, const struct rpc_call_ops *);
-void		  nlmclnt_release_call(struct nlm_rqst *);
+struct nlmclnt_rqst * nlmclnt_alloc_call(struct nlm_host *host);
+struct nlmsvc_rqst * nlmsvc_alloc_call(struct nlm_host *host);
+
+int		  nlm_async_call(struct nlmsvc_rqst *, u32, const struct rpc_call_ops *);
+int		  nlm_async_reply(struct nlmsvc_rqst *, u32, const struct rpc_call_ops *);
+void		  nlmclnt_release_call(struct nlmclnt_rqst *);
 struct nlm_wait * nlmclnt_prepare_block(struct nlm_host *host, struct file_lock *fl);
 void		  nlmclnt_finish_block(struct nlm_wait *block);
-int		  nlmclnt_block(struct nlm_wait *block, struct nlm_rqst *req, long timeout);
+int		  nlmclnt_block(struct nlm_wait *block, struct nlmclnt_rqst *req, long timeout);
 __be32		  nlmclnt_grant(const struct sockaddr *addr,
 				const struct nlm_lock *lock);
 void		  nlmclnt_recovery(struct nlm_host *);
@@ -271,7 +284,7 @@ unsigned long	  nlmsvc_retry_blocked(void);
 void		  nlmsvc_traverse_blocks(struct nlm_host *, struct nlm_file *,
 					nlm_host_match_fn_t match);
 void		  nlmsvc_grant_reply(struct nlm_cookie *, __be32);
-void		  nlmsvc_release_call(struct nlm_rqst *);
+void		  nlmsvc_release_call(struct nlmsvc_rqst *);
 
 /*
  * File handling for the server personality

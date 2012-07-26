@@ -247,7 +247,7 @@ static __be32 nlm4svc_callback(struct svc_rqst *rqstp, u32 proc, struct nlm_args
 		__be32 (*func)(struct svc_rqst *, struct nlm_args *, struct nlm_res  *))
 {
 	struct nlm_host	*host;
-	struct nlm_rqst	*call;
+	struct nlmsvc_rqst	*call;
 	__be32 stat;
 
 	host = nlmsvc_lookup_host(rqstp,
@@ -256,7 +256,7 @@ static __be32 nlm4svc_callback(struct svc_rqst *rqstp, u32 proc, struct nlm_args
 	if (host == NULL)
 		return rpc_system_err;
 
-	call = nlm_alloc_call(host);
+	call = nlmsvc_alloc_call(host);
 	nlmsvc_release_host(host);
 	if (call == NULL)
 		return rpc_system_err;

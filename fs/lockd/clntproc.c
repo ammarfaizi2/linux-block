@@ -23,9 +23,9 @@
 #define NLMCLNT_POLL_TIMEOUT	(30*HZ)
 #define NLMCLNT_MAX_RETRIES	3
 
-static int	nlmclnt_test(struct nlm_rqst *, struct file_lock *);
-static int	nlmclnt_lock(struct nlm_rqst *, struct file_lock *);
-static int	nlmclnt_unlock(struct nlm_rqst *, struct file_lock *);
+static int	nlmclnt_test(struct nlmclnt_rqst *, struct file_lock *);
+static int	nlmclnt_lock(struct nlmclnt_rqst *, struct file_lock *);
+static int	nlmclnt_unlock(struct nlmclnt_rqst *, struct file_lock *);
 static int	nlm_stat_to_errno(__be32 stat);
 static void	nlmclnt_locks_init_private(struct file_lock *fl, struct nlm_host *host);
 static int	nlmclnt_cancel(struct nlm_host *, int , struct file_lock *);
@@ -121,7 +121,7 @@ static struct nlm_lockowner *nlm_find_lockowner(struct nlm_host *host, fl_owner_
 /*
  * Initialize arguments for TEST/LOCK/UNLOCK/CANCEL calls
  */
-static void nlmclnt_setlockargs(struct nlm_rqst *req, struct file_lock *fl)
+static void nlmclnt_setlockargs(struct nlmclnt_rqst *req, struct file_lock *fl)
 {
 	struct nlm_args	*argp = &req->a_args;
 	struct nlm_lock	*lock = &argp->lock;
@@ -139,7 +139,7 @@ static void nlmclnt_setlockargs(struct nlm_rqst *req, struct file_lock *fl)
 	lock->fl.fl_type = fl->fl_type;
 }
 
-static void nlmclnt_release_lockargs(struct nlm_rqst *req)
+static void nlmclnt_release_lockargs(struct nlmclnt_rqst *req)
 {
 	WARN_ON_ONCE(req->a_args.lock.fl.fl_ops != NULL);
 }
@@ -153,10 +153,10 @@ static void nlmclnt_release_lockargs(struct nlm_rqst *req)
  */
 int nlmclnt_proc(struct nlm_host *host, int cmd, struct file_lock *fl)
 {
-	struct nlm_rqst		*call;
+	struct nlmclnt_rqst	*call;
 	int			status;
 
-	call = nlm_alloc_call(host);
+	call = nlmclnt_alloc_call(host);
 	if (call == NULL)
 		return -ENOMEM;
 
@@ -190,9 +190,9 @@ EXPORT_SYMBOL_GPL(nlmclnt_proc);
 /*
  * Allocate an NLM RPC call struct
  */
-struct nlm_rqst *nlm_alloc_call(struct nlm_host *host)
+struct nlmclnt_rqst *nlmclnt_alloc_call(struct nlm_host *host)
 {
-	struct nlm_rqst	*call;
+	struct nlmclnt_rqst	*call;
 
 	for(;;) {
 		call = kzalloc(sizeof(*call), GFP_KERNEL);
@@ -205,13 +205,13 @@ struct nlm_rqst *nlm_alloc_call(struct nlm_host *host)
 		}
 		if (signalled())
 			break;
-		printk("nlm_alloc_call: failed, waiting for memory\n");
+		printk("nlmclnt_alloc_call: failed, waiting for memory\n");
 		schedule_timeout_interruptible(5*HZ);
 	}
 	return NULL;
 }
 
-void nlmclnt_release_call(struct nlm_rqst *call)
+void nlmclnt_release_call(struct nlmclnt_rqst *call)
 {
 	if (!atomic_dec_and_test(&call->a_count))
 		return;
@@ -245,7 +245,7 @@ static int nlm_wait_on_grace(wait_queue_head_t *queue)
  * Generic NLM call
  */
 static int
-nlmclnt_call(struct rpc_cred *cred, struct nlm_rqst *req, u32 proc)
+nlmclnt_call(struct rpc_cred *cred, struct nlmclnt_rqst *req, u32 proc)
 {
 	struct nlm_host	*host = req->a_host;
 	struct rpc_clnt	*clnt;
@@ -323,9 +323,8 @@ in_grace_period:
 /*
  * Generic NLM call, async version.
  */
-static struct rpc_task *__nlm_async_call(struct nlm_rqst *req, u32 proc, struct rpc_message *msg, const struct rpc_call_ops *tk_ops)
+static struct rpc_task *__nlm_async_call(struct nlm_host *host, void *req, u32 proc, struct rpc_message *msg, const struct rpc_call_ops *tk_ops)
 {
-	struct nlm_host	*host = req->a_host;
 	struct rpc_clnt	*clnt;
 	struct rpc_task_setup task_setup_data = {
 		.rpc_message = msg,
@@ -351,11 +350,11 @@ out_err:
 	return ERR_PTR(-ENOLCK);
 }
 
-static int nlm_do_async_call(struct nlm_rqst *req, u32 proc, struct rpc_message *msg, const struct rpc_call_ops *tk_ops)
+static int nlm_do_async_call(struct nlmsvc_rqst *req, u32 proc, struct rpc_message *msg, const struct rpc_call_ops *tk_ops)
 {
 	struct rpc_task *task;
 
-	task = __nlm_async_call(req, proc, msg, tk_ops);
+	task = __nlm_async_call(req->a_host, req, proc, msg, tk_ops);
 	if (IS_ERR(task))
 		return PTR_ERR(task);
 	rpc_put_task(task);
@@ -365,7 +364,7 @@ static int nlm_do_async_call(struct nlm_rqst *req, u32 proc, struct rpc_message 
 /*
  * NLM asynchronous call.
  */
-int nlm_async_call(struct nlm_rqst *req, u32 proc, const struct rpc_call_ops *tk_ops)
+int nlm_async_call(struct nlmsvc_rqst *req, u32 proc, const struct rpc_call_ops *tk_ops)
 {
 	struct rpc_message msg = {
 		.rpc_argp	= &req->a_args,
@@ -374,7 +373,7 @@ int nlm_async_call(struct nlm_rqst *req, u32 proc, const struct rpc_call_ops *tk
 	return nlm_do_async_call(req, proc, &msg, tk_ops);
 }
 
-int nlm_async_reply(struct nlm_rqst *req, u32 proc, const struct rpc_call_ops *tk_ops)
+int nlm_async_reply(struct nlmsvc_rqst *req, u32 proc, const struct rpc_call_ops *tk_ops)
 {
 	struct rpc_message msg = {
 		.rpc_argp	= &req->a_res,
@@ -390,7 +389,7 @@ int nlm_async_reply(struct nlm_rqst *req, u32 proc, const struct rpc_call_ops *t
  *      completion in order to be able to correctly track the lock
  *      state.
  */
-static int nlmclnt_async_call(struct rpc_cred *cred, struct nlm_rqst *req, u32 proc, const struct rpc_call_ops *tk_ops)
+static int nlmclnt_async_call(struct rpc_cred *cred, struct nlmclnt_rqst *req, u32 proc, const struct rpc_call_ops *tk_ops)
 {
 	struct rpc_message msg = {
 		.rpc_argp	= &req->a_args,
@@ -400,7 +399,7 @@ static int nlmclnt_async_call(struct rpc_cred *cred, struct nlm_rqst *req, u32 p
 	struct rpc_task *task;
 	int err;
 
-	task = __nlm_async_call(req, proc, &msg, tk_ops);
+	task = __nlm_async_call(req->a_host, req, proc, &msg, tk_ops);
 	if (IS_ERR(task))
 		return PTR_ERR(task);
 	err = rpc_wait_for_completion_task(task);
@@ -412,7 +411,7 @@ static int nlmclnt_async_call(struct rpc_cred *cred, struct nlm_rqst *req, u32 p
  * TEST for the presence of a conflicting lock
  */
 static int
-nlmclnt_test(struct nlm_rqst *req, struct file_lock *fl)
+nlmclnt_test(struct nlmclnt_rqst *req, struct file_lock *fl)
 {
 	int	status;
 
@@ -508,7 +507,7 @@ static int do_vfs_lock(struct file_lock *fl)
  * they're so soft and squishy you can't really blame HP for doing this.
  */
 static int
-nlmclnt_lock(struct nlm_rqst *req, struct file_lock *fl)
+nlmclnt_lock(struct nlmclnt_rqst *req, struct file_lock *fl)
 {
 	struct rpc_cred *cred = nfs_file_cred(fl->fl_file);
 	struct nlm_host	*host = req->a_host;
@@ -617,7 +616,7 @@ out_unlock:
 int
 nlmclnt_reclaim(struct nlm_host *host, struct file_lock *fl)
 {
-	struct nlm_rqst reqst, *req;
+	struct nlmclnt_rqst reqst, *req;
 	int		status;
 
 	req = &reqst;
@@ -658,7 +657,7 @@ nlmclnt_reclaim(struct nlm_host *host, struct file_lock *fl)
  * UNLOCK: remove an existing lock
  */
 static int
-nlmclnt_unlock(struct nlm_rqst *req, struct file_lock *fl)
+nlmclnt_unlock(struct nlmclnt_rqst *req, struct file_lock *fl)
 {
 	struct nlm_host	*host = req->a_host;
 	struct nlm_res	*resp = &req->a_res;
@@ -701,7 +700,7 @@ out:
 
 static void nlmclnt_unlock_callback(struct rpc_task *task, void *data)
 {
-	struct nlm_rqst	*req = data;
+	struct nlmclnt_rqst	*req = data;
 	u32 status = ntohl(req->a_res.status);
 
 	if (RPC_ASSASSINATED(task))
@@ -743,13 +742,13 @@ static const struct rpc_call_ops nlmclnt_unlock_ops = {
  */
 static int nlmclnt_cancel(struct nlm_host *host, int block, struct file_lock *fl)
 {
-	struct nlm_rqst	*req;
+	struct nlmclnt_rqst	*req;
 	int status;
 
 	dprintk("lockd: blocking lock attempt was interrupted by a signal.\n"
 		"       Attempting to cancel lock.\n");
 
-	req = nlm_alloc_call(host);
+	req = nlmclnt_alloc_call(host);
 	if (!req)
 		return -ENOMEM;
 	req->a_flags = RPC_TASK_ASYNC;
@@ -768,7 +767,7 @@ static int nlmclnt_cancel(struct nlm_host *host, int block, struct file_lock *fl
 
 static void nlmclnt_cancel_callback(struct rpc_task *task, void *data)
 {
-	struct nlm_rqst	*req = data;
+	struct nlmclnt_rqst	*req = data;
 	u32 status = ntohl(req->a_res.status);
 
 	if (RPC_ASSASSINATED(task))
