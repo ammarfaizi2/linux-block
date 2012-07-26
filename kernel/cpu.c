@@ -247,13 +247,18 @@ static int __ref take_cpu_down(void *_param)
 {
 	struct take_cpu_down_param *param = _param;
 	int err;
+	unsigned long flags;
 
 	/* Ensure this CPU doesn't handle any more interrupts. */
+	local_irq_save(flags);
 	err = __cpu_disable();
-	if (err < 0)
+	if (err < 0) {
+		local_irq_restore(flags);
 		return err;
+	}
 
 	cpu_notify(CPU_DYING | param->mod, param->hcpu);
+	local_irq_restore(flags);
 	return 0;
 }
 
@@ -286,7 +291,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 	}
 	smpboot_park_threads(cpu);
 
-	err = __stop_machine(take_cpu_down, &tcd_param, cpumask_of(cpu));
+	err = stop_cpus(cpumask_of(cpu), take_cpu_down, &tcd_param);
 	if (err) {
 		/* CPU didn't die: tell everyone.  Can't complain. */
 		smpboot_unpark_threads(cpu);
