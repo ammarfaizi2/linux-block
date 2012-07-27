@@ -4130,8 +4130,11 @@ void perf_prepare_sample(struct perf_event_header *header,
 
 	if (sample_type & PERF_SAMPLE_CALLCHAIN) {
 		int size = 1;
+		int kernel = !event->attr.exclude_callchain_kernel;
+		int user   = !event->attr.exclude_callchain_user;
 
-		data->callchain = perf_callchain(regs);
+		if (kernel || user)
+			data->callchain = perf_callchain(regs, kernel, user);
 
 		if (data->callchain)
 			size += data->callchain->nr;
