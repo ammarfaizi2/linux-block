@@ -3787,6 +3787,45 @@ static void perf_sample_regs_user(struct perf_regs_user *regs_user,
 	}
 }
 
+static void
+perf_output_sample_ustack(struct perf_output_handle *handle, u64 dump_size,
+			  struct pt_regs *regs)
+{
+	/* Case of a kernel thread, nothing to dump */
+	if (!regs) {
+		u64 size = 0;
+		perf_output_put(handle, size);
+	} else {
+		unsigned long sp;
+		unsigned int rem;
+		u64 dyn_size;
+
+		/*
+		 * We dump:
+		 * static size
+		 *   - the size requested by user or the best one we can fit
+		 *     in to the sample max size
+		 * data
+		 *   - user stack dump data
+		 * dynamic size
+		 *   - the actual dumped size
+		 */
+
+		/* Static size. */
+		perf_output_put(handle, dump_size);
+
+		/* Data. */
+		sp = user_stack_pointer(regs);
+		rem = __output_copy_user(handle, (void *) sp, dump_size);
+		dyn_size = dump_size - rem;
+
+		perf_output_skip(handle, rem);
+
+		/* Dynamic size. */
+		perf_output_put(handle, dyn_size);
+	}
+}
+
 static void __perf_event_header__init_id(struct perf_event_header *header,
 					 struct perf_sample_data *data,
 					 struct perf_event *event)
@@ -4064,6 +4103,11 @@ void perf_output_sample(struct perf_output_handle *handle,
 						mask);
 		}
 	}
+
+	if (sample_type & PERF_SAMPLE_STACK_USER)
+		perf_output_sample_ustack(handle,
+					  data->stack_user_size,
+					  data->regs_user.regs);
 }
 
 void perf_prepare_sample(struct perf_event_header *header,
@@ -4127,6 +4171,66 @@ void perf_prepare_sample(struct perf_event_header *header,
 			size += hweight64(mask) * sizeof(u64);
 		}
 
+		header->size += size;
+	}
+
+	if (sample_type & PERF_SAMPLE_STACK_USER) {
+		/*
+		 * A first field that tells the _static_ size of the
+		 * dump. 0 if there is nothing to dump (ie: we are in
+		 * a kernel thread) otherwise the requested size.
+		 */
+		u16 size = sizeof(u64);
+		u16 stack_size = 0;
+
+		if (!data->regs_user.regs)
+			perf_sample_regs_user(&data->regs_user, regs);
+
+		/*
+		 * If there is something to dump, add space for the
+		 * dump itself and for the field that tells the
+		 * dynamic size, which is how many have been actually
+		 * dumped.
+		 */
+		if (data->regs_user.regs) {
+			/*
+			 * XXX We need to check if we fit in with the
+			 * requested stack size into the sample. If we
+			 * don't, we customize the stack size to fit in.
+			 *
+			 * Either we need PERF_SAMPLE_STACK_USER bit to
+			 * be allways processed as the last one or have
+			 * additional check added in case new sample type
+			 * is added, because we could eat up the rest of
+			 * the sample size.
+			 */
+
+			u16 header_size = header->size;
+
+			stack_size = (u16) event->attr.sample_stack_user;
+
+			/*
+			 * Current header size plus static size and
+			 * dynamic size.
+			 */
+			header_size += 2 * sizeof(u64);
+
+			/* Do we fit in with the current stack dump size? */
+			if ((u16) (header_size + stack_size) < header_size) {
+				/*
+				 * If we overflow the maximum size for the
+				 * sample, we customize the stack dump size
+				 * to fit in.
+				 */
+				stack_size = USHRT_MAX - header_size
+					     - sizeof(u64);
+				stack_size = round_up(stack_size, sizeof(u64));
+			}
+
+			size += sizeof(u64) + stack_size;
+		}
+
+		data->stack_user_size = stack_size;
 		header->size += size;
 	}
 }
@@ -6179,8 +6283,23 @@ static int perf_copy_attr(struct perf_event_attr __user *uattr,
 		}
 	}
 
-	if (attr->sample_type & PERF_SAMPLE_REGS_USER)
+	if (attr->sample_type & PERF_SAMPLE_REGS_USER) {
 		ret = perf_reg_validate(attr->sample_regs_user);
+		if (ret)
+			return ret;
+	}
+
+	if (attr->sample_type & PERF_SAMPLE_STACK_USER) {
+		/*
+		 * We have __u32 type for the size, but so far
+		 * we can only use __u16 as maximum due to the
+		 * __u16 sample size limit.
+		 */
+		if (attr->sample_stack_user >= USHRT_MAX)
+			ret = -EINVAL;
+		else if (!IS_ALIGNED(attr->sample_stack_user, sizeof(u64)))
+			ret = -EINVAL;
+	}
 
 out:
 	return ret;
