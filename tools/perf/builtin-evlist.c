@@ -99,6 +99,8 @@ static int __cmd_evlist(const char *input_name, struct perf_attr_details *detail
 			if_print(wakeup_events);
 			if_print(bp_type);
 			if_print(branch_sample_type);
+			if_print(exclude_callchain_kernel);
+			if_print(exclude_callchain_user);
 		}
 
 		putchar('\n');
