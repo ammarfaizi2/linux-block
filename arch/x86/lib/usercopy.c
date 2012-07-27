@@ -14,16 +14,13 @@
  * best effort, GUP based copy_from_user() that is NMI-safe
  */
 unsigned long
-copy_from_user_nmi(void *to, const void __user *from, unsigned long n)
+copy_from_user_nmi_nochk(void *to, const void __user *from, unsigned long n)
 {
 	unsigned long offset, addr = (unsigned long)from;
 	unsigned long size, len = 0;
 	struct page *page;
 	void *map;
 	int ret;
-
-	if (__range_not_ok(from, n, TASK_SIZE))
-		return len;
 
 	do {
 		ret = __get_user_pages_fast(addr, 1, 0, &page);
@@ -45,5 +42,15 @@ copy_from_user_nmi(void *to, const void __user *from, unsigned long n)
 	} while (len < n);
 
 	return len;
+}
+EXPORT_SYMBOL_GPL(copy_from_user_nmi_nochk);
+
+unsigned long
+copy_from_user_nmi(void *to, const void __user *from, unsigned long n)
+{
+	if (__range_not_ok(from, n, TASK_SIZE) == 0)
+		return 0;
+
+	return copy_from_user_nmi_nochk(to, from, n);
 }
 EXPORT_SYMBOL_GPL(copy_from_user_nmi);

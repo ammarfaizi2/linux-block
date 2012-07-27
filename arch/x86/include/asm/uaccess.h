@@ -562,6 +562,8 @@ struct __large_struct { unsigned long buf[100]; };
 #endif /* CONFIG_X86_WP_WORKS_OK */
 
 extern unsigned long
+copy_from_user_nmi_nochk(void *to, const void __user *from, unsigned long n);
+extern unsigned long
 copy_from_user_nmi(void *to, const void __user *from, unsigned long n);
 extern __must_check long
 strncpy_from_user(char *dst, const char __user *src, long count);
