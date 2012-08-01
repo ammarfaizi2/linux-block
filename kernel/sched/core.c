@@ -5459,7 +5459,7 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
 	int cpu = (long)hcpu;
 	unsigned long flags;
 	struct rq *rq = cpu_rq(cpu);
-	struct rq *rq_dest = cpu_rq(cpumask_any(cpu_active_mask));
+	struct rq __maybe_unused *rq_dest = cpu_rq(cpumask_any(cpu_active_mask));
 
 	switch (action & ~CPU_TASKS_FROZEN) {
 
