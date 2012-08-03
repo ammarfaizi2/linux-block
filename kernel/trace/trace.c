@@ -4885,6 +4885,144 @@ static const struct file_operations rb_simple_fops = {
 	.llseek		= default_llseek,
 };
 
+struct dentry *trace_instance_dir;
+
+static void
+init_tracer_debugfs(struct trace_array *tr, struct dentry *d_tracer);
+
+static ssize_t
+trace_new_instance_read(struct file *filp, char __user *ubuf,
+			size_t cnt, loff_t *ppos)
+{
+	static char text[] =
+		"\nWrite into this file to create a new instance\n\n";
+
+	return simple_read_from_buffer(ubuf, cnt, ppos, text, sizeof(text));
+}
+
+static ssize_t
+trace_new_instance_write(struct file *filp, const char __user *ubuf,
+			 size_t cnt, loff_t *ppos)
+{
+	enum ring_buffer_flags rb_flags;
+	struct trace_array *tr;
+	char *buf;
+	char *name;
+	int ret;
+	int i;
+
+	/* Don't let names be bigger than 1024 */
+	if (cnt > 1024)
+		return -EINVAL;
+
+	name = kmalloc(cnt+1, GFP_KERNEL);
+	if (!name)
+		return -ENOMEM;
+
+	ret = -EFAULT;
+	if (strncpy_from_user(name, ubuf, cnt) < 0)
+		goto out_free_name;
+
+	name[cnt] = '\0';
+
+	/* remove leading and trailing whitespace */
+	buf = strstrip(name);
+	buf = kstrdup(buf, GFP_KERNEL);
+	if (!buf)
+		goto out_free_name;
+	kfree(name);
+	name = buf;
+
+	mutex_lock(&trace_types_lock);
+
+	ret = -EBUSY;
+	list_for_each_entry(tr, &ftrace_trace_arrays, list) {
+		if (tr->name && strcmp(tr->name, name) == 0)
+			goto out_unlock;
+	}
+
+	ret = -ENOMEM;
+	tr = kzalloc(sizeof(*tr), GFP_KERNEL);
+	if (!tr)
+		goto out_unlock;
+
+	tr->name = name;
+
+	raw_spin_lock_init(&tr->start_lock);
+
+	tr->current_trace = &nop_trace;
+
+	INIT_LIST_HEAD(&tr->systems);
+	INIT_LIST_HEAD(&tr->events);
+
+	rb_flags = trace_flags & TRACE_ITER_OVERWRITE ? RB_FL_OVERWRITE : 0;
+
+	tr->buffer = ring_buffer_alloc(trace_buf_size, rb_flags);
+	if (!tr->buffer)
+		goto out_free_tr;
+
+	tr->data = alloc_percpu(struct trace_array_cpu);
+	if (!tr->data)
+		goto out_free_tr;
+
+	for_each_tracing_cpu(i) {
+		memset(per_cpu_ptr(tr->data, i), 0, sizeof(struct trace_array_cpu));
+		per_cpu_ptr(tr->data, i)->trace_cpu.cpu = i;
+		per_cpu_ptr(tr->data, i)->trace_cpu.tr = tr;
+	}
+
+	/* Holder for file callbacks */
+	tr->trace_cpu.cpu = RING_BUFFER_ALL_CPUS;
+	tr->trace_cpu.tr = tr;
+
+	tr->dir = debugfs_create_dir(name, trace_instance_dir);
+	if (!tr->dir)
+		goto out_free_tr;
+
+	ret = event_trace_add_tracer(tr->dir, tr);
+	if (ret)
+		goto out_free_tr;
+
+	init_tracer_debugfs(tr, tr->dir);
+
+	mutex_unlock(&trace_types_lock);
+
+	list_add(&tr->list, &ftrace_trace_arrays);
+
+	(*ppos) += cnt;
+
+	return cnt;
+
+ out_free_tr:
+	if (tr->buffer)
+		ring_buffer_free(tr->buffer);
+	kfree(tr);
+
+ out_unlock:
+	mutex_unlock(&trace_types_lock);
+
+ out_free_name:
+	kfree(name);
+	return ret;
+}
+
+static const struct file_operations trace_new_instance_fops = {
+	.open		= tracing_open_generic,
+	.read		= trace_new_instance_read,
+	.write		= trace_new_instance_write,
+	.llseek		= default_llseek,
+};
+
+static __init void create_trace_instances(struct dentry *d_tracer)
+{
+	trace_instance_dir = debugfs_create_dir("instances", d_tracer);
+	if (WARN_ON(!trace_instance_dir))
+		return;
+
+	trace_create_file("new", 0644, trace_instance_dir, NULL,
+			  &trace_new_instance_fops);
+}
+
 static void
 init_tracer_debugfs(struct trace_array *tr, struct dentry *d_tracer)
 {
@@ -4955,6 +5093,8 @@ static __init int tracer_init_debugfs(void)
 	trace_create_file("dyn_ftrace_total_info", 0444, d_tracer,
 			&ftrace_update_tot_cnt, &tracing_dyn_info_fops);
 #endif
+
+	create_trace_instances(d_tracer);
 
 	create_trace_options_dir(&global_trace);
 
