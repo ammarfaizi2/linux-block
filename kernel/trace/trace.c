@@ -5006,10 +5006,94 @@ trace_new_instance_write(struct file *filp, const char __user *ubuf,
 	return ret;
 }
 
+static ssize_t
+trace_del_instance_read(struct file *filp, char __user *ubuf,
+			size_t cnt, loff_t *ppos)
+{
+	static char text[] =
+		"\nWrite into this file to remove an instance\n\n";
+
+	return simple_read_from_buffer(ubuf, cnt, ppos, text, sizeof(text));
+}
+
+static ssize_t
+trace_del_instance_write(struct file *filp, const char __user *ubuf,
+			 size_t cnt, loff_t *ppos)
+{
+	struct trace_array *tr;
+	char *buf;
+	char *name;
+	int found = 0;
+	int ret;
+
+	/* Don't let names be bigger than 1024 */
+	if (cnt > 1024)
+		return -EINVAL;
+
+	name = kmalloc(cnt+1, GFP_KERNEL);
+	if (!name)
+		return -ENOMEM;
+
+	ret = -EFAULT;
+	if (strncpy_from_user(name, ubuf, cnt) < 0)
+		goto out_free_name;
+
+	name[cnt] = '\0';
+
+	/* remove leading and trailing whitespace */
+	buf = strstrip(name);
+	buf = kstrdup(buf, GFP_KERNEL);
+	if (!buf)
+		goto out_free_name;
+	kfree(name);
+	name = buf;
+
+	mutex_lock(&trace_types_lock);
+
+	ret = -ENODEV;
+	list_for_each_entry(tr, &ftrace_trace_arrays, list) {
+		if (tr->name && strcmp(tr->name, name) == 0) {
+			found = 1;
+			break;
+		}
+	}
+	if (!found)
+		goto out_unlock;
+
+	list_del(&tr->list);
+
+	event_trace_del_tracer(tr);
+	debugfs_remove_recursive(tr->dir);
+	free_percpu(tr->data);
+	ring_buffer_free(tr->buffer);
+
+	kfree(tr->name);
+	kfree(tr);
+	mutex_unlock(&trace_types_lock);
+
+	(*ppos) += cnt;
+
+	return cnt;
+
+ out_unlock:
+	mutex_unlock(&trace_types_lock);
+
+ out_free_name:
+	kfree(name);
+	return ret;
+}
+
 static const struct file_operations trace_new_instance_fops = {
 	.open		= tracing_open_generic,
 	.read		= trace_new_instance_read,
 	.write		= trace_new_instance_write,
+	.llseek		= default_llseek,
+};
+
+static const struct file_operations trace_del_instance_fops = {
+	.open		= tracing_open_generic,
+	.read		= trace_del_instance_read,
+	.write		= trace_del_instance_write,
 	.llseek		= default_llseek,
 };
 
@@ -5021,6 +5105,9 @@ static __init void create_trace_instances(struct dentry *d_tracer)
 
 	trace_create_file("new", 0644, trace_instance_dir, NULL,
 			  &trace_new_instance_fops);
+
+	trace_create_file("free", 0644, trace_instance_dir, NULL,
+			  &trace_del_instance_fops);
 }
 
 static void
