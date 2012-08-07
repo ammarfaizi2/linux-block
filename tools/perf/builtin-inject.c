@@ -15,6 +15,7 @@
 
 #include "util/parse-options.h"
 #include "util/trace-event.h"
+#include "util/build-id.h"
 
 static const char	*input_name	= "-";
 static const char	*output_name	= "-";
@@ -285,10 +286,12 @@ static int perf_event__sched_stat(struct perf_tool *tool,
 		sample_sw.time = sample->time;
 		perf_evsel__synthesize_sample(evsel, event_sw, &sample_sw, false);
 
+		build_id__mark_dso_hit(tool, event_sw, &sample_sw, evsel, machine);
 		perf_event__repipe(tool, event_sw, &sample_sw, machine);
 		return 0;
 	}
 
+	build_id__mark_dso_hit(tool, event, sample, evsel, machine);
 	perf_event__repipe(tool, event, sample, machine);
 
 	return 0;
@@ -323,11 +326,14 @@ static int __cmd_inject(void)
 
 	signal(SIGINT, sig_handler);
 
-	if (inject_build_ids) {
-		perf_inject.sample	 = perf_event__inject_buildid;
+	if (inject_build_ids | inject_sched_stat) {
 		perf_inject.mmap	 = perf_event__repipe_mmap;
 		perf_inject.fork	 = perf_event__repipe_task;
 		perf_inject.tracing_data = perf_event__repipe_tracing_data;
+	}
+
+	if (inject_build_ids) {
+		perf_inject.sample	 = perf_event__inject_buildid;
 	} else if (inject_sched_stat) {
 		perf_inject.sample	 = perf_event__sched_stat;
 		perf_inject.ordered_samples = true;

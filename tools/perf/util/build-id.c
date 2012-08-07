@@ -16,7 +16,7 @@
 #include "session.h"
 #include "tool.h"
 
-static int build_id__mark_dso_hit(struct perf_tool *tool __used,
+int build_id__mark_dso_hit(struct perf_tool *tool __used,
 				  union perf_event *event,
 				  struct perf_sample *sample __used,
 				  struct perf_evsel *evsel __used,
