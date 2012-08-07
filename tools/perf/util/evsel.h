@@ -185,6 +185,11 @@ void hists__init(struct hists *hists);
 int perf_evsel__parse_sample(struct perf_evsel *evsel, union perf_event *event,
 			     struct perf_sample *sample, bool swapped);
 
+int perf_evsel__synthesize_sample(struct perf_evsel *evsel,
+				  union perf_event *event,
+				  const struct perf_sample *sample,
+				  bool swapped);
+
 static inline struct perf_evsel *perf_evsel__next(struct perf_evsel *evsel)
 {
 	return list_entry(evsel->node.next, struct perf_evsel, node);

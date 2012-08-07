@@ -925,10 +925,12 @@ int perf_evsel__parse_sample(struct perf_evsel *evsel, union perf_event *event,
 	return 0;
 }
 
-int perf_event__synthesize_sample(union perf_event *event, u64 type,
+int perf_evsel__synthesize_sample(struct perf_evsel *evsel,
+				  union perf_event *event,
 				  const struct perf_sample *sample,
 				  bool swapped)
 {
+	u64 type = evsel->attr.sample_type;
 	u64 *array;
 
 	/*

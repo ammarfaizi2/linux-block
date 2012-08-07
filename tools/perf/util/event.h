@@ -209,10 +209,6 @@ int perf_event__preprocess_sample(const union perf_event *self,
 
 const char *perf_event__name(unsigned int id);
 
-int perf_event__synthesize_sample(union perf_event *event, u64 type,
-				  const struct perf_sample *sample,
-				  bool swapped);
-
 size_t perf_event__fprintf_comm(union perf_event *event, FILE *fp);
 size_t perf_event__fprintf_mmap(union perf_event *event, FILE *fp);
 size_t perf_event__fprintf_task(union perf_event *event, FILE *fp);
