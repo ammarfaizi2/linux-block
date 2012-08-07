@@ -35,6 +35,10 @@ OPTIONS
 -o::
 --output=::
         Output file name. (default: stdout)
+-s::
+--sched-stat::
+	Merge sched_stat and sched_switch for getting events where and how long
+	tasks slept.
 
 SEE ALSO
 --------

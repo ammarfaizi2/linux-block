@@ -8,11 +8,13 @@
 #include "builtin.h"
 
 #include "perf.h"
+#include "util/evsel.h"
 #include "util/session.h"
 #include "util/tool.h"
 #include "util/debug.h"
 
 #include "util/parse-options.h"
+#include "util/trace-event.h"
 
 static const char	*input_name	= "-";
 static const char	*output_name	= "-";
@@ -21,6 +23,7 @@ static int		output;
 static u64		bytes_written;
 
 static bool		inject_build_ids;
+static bool		inject_sched_stat;
 
 static int perf_event__repipe_synth(struct perf_tool *tool __used,
 				    union perf_event *event,
@@ -213,6 +216,83 @@ repipe:
 	return 0;
 }
 
+struct event_entry {
+	struct list_head node;
+	u32		 pid;
+	union perf_event event[0];
+};
+
+static LIST_HEAD(samples);
+
+static int perf_event__sched_stat(struct perf_tool *tool,
+				      union perf_event *event,
+				      struct perf_sample *sample,
+				      struct perf_evsel *evsel,
+				      struct machine *machine)
+{
+	const char *evname = NULL;
+	uint32_t size;
+	struct event_entry *ent;
+	union perf_event *event_sw = NULL;
+	struct perf_sample sample_sw;
+	int sched_process_exit;
+
+	size = event->header.size;
+
+	evname = evsel->tp_format->name;
+
+	sched_process_exit = !strcmp(evname, "sched_process_exit");
+
+	if (!strcmp(evname, "sched_switch") ||  sched_process_exit) {
+		list_for_each_entry(ent, &samples, node)
+			if (sample->pid == ent->pid)
+				break;
+
+		if (&ent->node != &samples) {
+			list_del(&ent->node);
+			free(ent);
+		}
+
+		if (sched_process_exit)
+			return 0;
+
+		ent = malloc(size + sizeof(struct event_entry));
+		if (ent == NULL)
+			die("malloc");
+		ent->pid = sample->pid;
+		memcpy(&ent->event, event, size);
+		list_add(&ent->node, &samples);
+		return 0;
+
+	} else if (!strncmp(evname, "sched_stat_", 11)) {
+		u32 pid;
+
+		pid = raw_field_value(evsel->tp_format,
+					"pid", sample->raw_data);
+
+		list_for_each_entry(ent, &samples, node) {
+			if (pid == ent->pid)
+				break;
+		}
+
+		if (&ent->node == &samples)
+			return 0;
+
+		event_sw = &ent->event[0];
+		perf_evsel__parse_sample(evsel, event_sw, &sample_sw, false);
+
+		sample_sw.period = sample->period;
+		sample_sw.time = sample->time;
+		perf_evsel__synthesize_sample(evsel, event_sw, &sample_sw, false);
+
+		perf_event__repipe(tool, event_sw, &sample_sw, machine);
+		return 0;
+	}
+
+	perf_event__repipe(tool, event, sample, machine);
+
+	return 0;
+}
 struct perf_tool perf_inject = {
 	.sample		= perf_event__repipe_sample,
 	.mmap		= perf_event__repipe,
@@ -248,6 +328,9 @@ static int __cmd_inject(void)
 		perf_inject.mmap	 = perf_event__repipe_mmap;
 		perf_inject.fork	 = perf_event__repipe_task;
 		perf_inject.tracing_data = perf_event__repipe_tracing_data;
+	} else if (inject_sched_stat) {
+		perf_inject.sample	 = perf_event__sched_stat;
+		perf_inject.ordered_samples = true;
 	}
 
 	session = perf_session__new(input_name, O_RDONLY, false, true, &perf_inject);
@@ -275,6 +358,9 @@ static const char * const report_usage[] = {
 static const struct option options[] = {
 	OPT_BOOLEAN('b', "build-ids", &inject_build_ids,
 		    "Inject build-ids into the output stream"),
+	OPT_BOOLEAN('s', "sched-stat", &inject_sched_stat,
+		    "Merge sched-stat and sched-switch for getting events "
+		    "where and how long tasks slept"),
 	OPT_STRING('i', "input", &input_name, "file",
 		    "input file name"),
 	OPT_STRING('o', "output", &output_name, "file",
