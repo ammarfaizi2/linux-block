@@ -30,5 +30,4 @@ struct syscall_metadata {
 	struct ftrace_event_call *enter_event;
 	struct ftrace_event_call *exit_event;
 };
-
 #endif /* _TRACE_SYSCALL_H */
