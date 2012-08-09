@@ -138,7 +138,7 @@ struct nlmclnt_rqst {
 	struct nlm_host *	a_host;		/* host handle */
 	struct nlm_args		a_args;		/* arguments */
 	struct nlm_res		a_res;		/* result */
-	struct nlm_block *	a_block;
+	//struct nlm_block *	a_block;
 	unsigned int		a_retries;	/* Retry count */
 	u8			a_owner[NLMCLNT_OHSIZE];
 };
@@ -150,7 +150,7 @@ struct nlmsvc_rqst {
 	struct nlm_args		a_args;		/* arguments */
 	struct nlm_res		a_res;		/* result */
 	struct nlm_block *	a_block;
-	unsigned int		a_retries;	/* Retry count */
+	//unsigned int		a_retries;	/* Retry count */
 	u8			a_owner[NLMCLNT_OHSIZE];
 };
 
