@@ -114,25 +114,35 @@ static inline void tracepoint_synchronize_unregister(void)
  * as "(void *, void)". The DECLARE_TRACE_NOARGS() will pass in just
  * "void *data", where as the DECLARE_TRACE() will pass in "void *data, proto".
  */
-#define __DO_TRACE(tp, proto, args, cond, prercu, postrcu)		\
-	do {								\
+#define __DO_TRACE(name, proto, args, data_proto, data_args)		\
+	void __attribute__((section(".text.unlikely")))			\
+	__tracepoint_hook_##name(proto)					\
+	{								\
 		struct tracepoint_func *it_func_ptr;			\
+		struct tracepoint *tp = &__tracepoint_##name;		\
 		void *it_func;						\
 		void *__data;						\
 									\
-		if (!(cond))						\
-			return;						\
-		prercu;							\
 		rcu_read_lock_sched_notrace();				\
 		it_func_ptr = rcu_dereference_sched((tp)->funcs);	\
 		if (it_func_ptr) {					\
 			do {						\
 				it_func = (it_func_ptr)->func;		\
 				__data = (it_func_ptr)->data;		\
-				((void(*)(proto))(it_func))(args);	\
+				((void(*)(data_proto))(it_func))(data_args); \
 			} while ((++it_func_ptr)->func);		\
 		}							\
 		rcu_read_unlock_sched_notrace();			\
+	}
+
+#define __DO_TRACE_HOOK(name, proto, args, cond, prercu, postrcu)	\
+	do {								\
+		extern void __tracepoint_hook_##name(proto);		\
+									\
+		if (!(cond))						\
+			return;						\
+		prercu;							\
+		__tracepoint_hook_##name(args);				\
 		postrcu;						\
 	} while (0)
 
@@ -141,9 +151,9 @@ static inline void tracepoint_synchronize_unregister(void)
 	static inline void trace_##name##_rcuidle(proto)		\
 	{								\
 		if (static_key_false(&__tracepoint_##name.key))		\
-			__DO_TRACE(&__tracepoint_##name,		\
-				TP_PROTO(data_proto),			\
-				TP_ARGS(data_args),			\
+			__DO_TRACE_HOOK(name,				\
+				TP_PROTO(proto),			\
+				TP_ARGS(args),				\
 				TP_CONDITION(cond),			\
 				rcu_irq_enter(),			\
 				rcu_irq_exit());			\
@@ -157,14 +167,14 @@ static inline void tracepoint_synchronize_unregister(void)
  * not add unwanted padding between the beginning of the section and the
  * structure. Force alignment to the same alignment as the section start.
  */
-#define __DECLARE_TRACE(name, proto, args, cond, data_proto, data_args) \
+#define __DECLARE_TRACE(name, proto, args, cond, data_proto)		\
 	extern struct tracepoint __tracepoint_##name;			\
 	static inline void trace_##name(proto)				\
 	{								\
 		if (static_key_false(&__tracepoint_##name.key))		\
-			__DO_TRACE(&__tracepoint_##name,		\
-				TP_PROTO(data_proto),			\
-				TP_ARGS(data_args),			\
+			__DO_TRACE_HOOK(name,				\
+				TP_PROTO(proto),			\
+				TP_ARGS(args),				\
 				TP_CONDITION(cond),,);			\
 	}								\
 	__DECLARE_TRACE_RCU(name, PARAMS(proto), PARAMS(args),		\
@@ -191,26 +201,42 @@ static inline void tracepoint_synchronize_unregister(void)
  * structures, so we create an array of pointers that will be used for iteration
  * on the tracepoints.
  */
-#define DEFINE_TRACE_FN(name, reg, unreg)				 \
-	static const char __tpstrtab_##name[]				 \
-	__attribute__((section("__tracepoints_strings"))) = #name;	 \
-	struct tracepoint __tracepoint_##name				 \
-	__attribute__((section("__tracepoints"))) =			 \
+#define __DEFINE_TRACE_FN(name, proto, args, data_proto, data_args, reg, unreg) \
+	static const char __tpstrtab_##name[]				\
+	__attribute__((section("__tracepoints_strings"))) = #name;	\
+	struct tracepoint __tracepoint_##name				\
+	__attribute__((section("__tracepoints"))) =			\
 		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
-	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
-	__attribute__((section("__tracepoints_ptrs"))) =		 \
-		&__tracepoint_##name;
+	static struct tracepoint * const __tracepoint_ptr_##name __used	\
+	__attribute__((section("__tracepoints_ptrs"))) =		\
+		&__tracepoint_##name;					\
+	__DO_TRACE(name,						\
+		   TP_PROTO(proto),					\
+		   TP_ARGS(args),					\
+		   TP_PROTO(data_proto),				\
+		   TP_ARGS(data_args))
 
-#define DEFINE_TRACE(name)						\
-	DEFINE_TRACE_FN(name, NULL, NULL);
+#define DEFINE_TRACE_FN_NOARGS(name, proto, args)		\
+	__DEFINE_TRACE_FN(name, void, , void *__data, __data, , )
+
+#define DEFINE_TRACE_FN(name, proto, args, reg, unreg)		\
+	__DEFINE_TRACE_FN(name, PARAMS(proto), PARAMS(args),	\
+			  PARAMS(void *__data, proto),		\
+			  PARAMS(__data, args), reg, unreg)
+
+#define DEFINE_TRACE(name, proto, args)					\
+	DEFINE_TRACE_FN(name, PARAMS(proto), PARAMS(args), NULL, NULL);
 
 #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
-	EXPORT_SYMBOL_GPL(__tracepoint_##name)
+	EXPORT_SYMBOL_GPL(__tracepoint_##name);				\
+	EXPORT_SYMBOL_GPL(__tracepoint_hook_##name)
+
 #define EXPORT_TRACEPOINT_SYMBOL(name)					\
-	EXPORT_SYMBOL(__tracepoint_##name)
+	EXPORT_SYMBOL(__tracepoint_##name);				\
+	EXPORT_SYMBOL_GPL(__tracepoint_hook_##name)
 
 #else /* !CONFIG_TRACEPOINTS */
-#define __DECLARE_TRACE(name, proto, args, cond, data_proto, data_args) \
+#define __DECLARE_TRACE(name, proto, args, cond, data_proto)		\
 	static inline void trace_##name(proto)				\
 	{ }								\
 	static inline void trace_##name##_rcuidle(proto)		\
@@ -231,8 +257,8 @@ static inline void tracepoint_synchronize_unregister(void)
 	{								\
 	}
 
-#define DEFINE_TRACE_FN(name, reg, unreg)
-#define DEFINE_TRACE(name)
+#define DEFINE_TRACE_FN(name, proto, args, reg, unreg)
+#define DEFINE_TRACE(name, proto, args)
 #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
 #define EXPORT_TRACEPOINT_SYMBOL(name)
 
@@ -253,17 +279,15 @@ static inline void tracepoint_synchronize_unregister(void)
  * "void *__data, proto" as the callback prototype.
  */
 #define DECLARE_TRACE_NOARGS(name)					\
-		__DECLARE_TRACE(name, void, , 1, void *__data, __data)
+		__DECLARE_TRACE(name, void, , 1, void *__data)
 
 #define DECLARE_TRACE(name, proto, args)				\
 		__DECLARE_TRACE(name, PARAMS(proto), PARAMS(args), 1,	\
-				PARAMS(void *__data, proto),		\
-				PARAMS(__data, args))
+				PARAMS(void *__data, proto))
 
 #define DECLARE_TRACE_CONDITION(name, proto, args, cond)		\
 	__DECLARE_TRACE(name, PARAMS(proto), PARAMS(args), PARAMS(cond), \
-			PARAMS(void *__data, proto),			\
-			PARAMS(__data, args))
+			PARAMS(void *__data, proto))
 
 #define TRACE_EVENT_FLAGS(event, flag)
 
