@@ -629,13 +629,13 @@ __attribute__((section("_ftrace_events"))) *__event_##call = &event_##call
 #define __get_str(field) (char *)__get_dynamic_array(field)
 
 #undef __perf_addr
-#define __perf_addr(a)	(__addr = (a))
+#define __perf_addr(a) (__pe.addr = (a))
 
 #undef __perf_count
-#define __perf_count(c)	(__count = (c))
+#define __perf_count(c) (__pe.count = (c))
 
 #undef __perf_task
-#define __perf_task(t)	(__task = (t))
+#define __perf_task(t)	(__pe.task = (t))
 
 #undef DECLARE_EVENT_CLASS
 #define DECLARE_EVENT_CLASS(call, proto, args, tstruct, assign, print)	\
@@ -645,28 +645,20 @@ perf_trace_##call(void *__data, proto)					\
 	struct ftrace_event_call *event_call = __data;			\
 	struct ftrace_data_offsets_##call __maybe_unused __data_offsets;\
 	struct ftrace_raw_##call *entry;				\
-	struct pt_regs __regs;						\
-	u64 __addr = 0, __count = 1;					\
-	struct task_struct *__task = NULL;				\
-	struct hlist_head *head;					\
-	int __entry_size;						\
+	struct perf_trace_event __pe;					\
 	int __data_size;						\
-	int rctx;							\
+									\
+	__pe.task = NULL;						\
 									\
 	__data_size = ftrace_get_offsets_##call(&__data_offsets, args); \
 									\
-	head = this_cpu_ptr(event_call->perf_events);			\
-	if (__builtin_constant_p(!__task) && !__task &&			\
-				hlist_empty(head))			\
-		return;							\
+	__pe.constant = __builtin_constant_p(!__pe.task) && !__pe.task; \
 									\
-	__entry_size = ALIGN(__data_size + sizeof(*entry) + sizeof(u32),\
-			     sizeof(u64));				\
-	__entry_size -= sizeof(u32);					\
+	__pe.entry_size = __data_size + sizeof(*entry);			\
+	__pe.addr = 0;							\
+	__pe.count = 1;							\
 									\
-	perf_fetch_caller_regs(&__regs);				\
-	entry = perf_trace_buf_prepare(__entry_size,			\
-			event_call->event.type, &__regs, &rctx);	\
+	entry = perf_trace_event_setup(event_call, &__pe);		\
 	if (!entry)							\
 		return;							\
 									\
@@ -674,8 +666,7 @@ perf_trace_##call(void *__data, proto)					\
 									\
 	{ assign; }							\
 									\
-	perf_trace_buf_submit(entry, __entry_size, rctx, __addr,	\
-		__count, &__regs, head, __task);			\
+	perf_trace_event_submit(&__pe);					\
 }
 
 /*

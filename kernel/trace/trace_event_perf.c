@@ -21,6 +21,57 @@ typedef typeof(unsigned long [PERF_MAX_TRACE_SIZE / sizeof(unsigned long)])
 /* Count the events in use (per event id, not per instance) */
 static int	total_ref_count;
 
+/**
+ * perf_trace_event_setup - set up for a perf sw event
+ * @event_call: The sw event that is to be recorded
+ * @pe: The perf event structure to pass to the submit function
+ *
+ * This is a helper function to keep the work to set up a perf sw
+ * event out of the inlined trace code. Since the same work neeeds to
+ * be done for the sw events, having a separate function helps keep
+ * from duplicating that code all over the kernel.
+ *
+ * The use of the perf event structure (@pe) is to store and pass the
+ * data to the perf_trace_event_submit() call and keep the setting
+ * up of the parameters of perf_trace_buf_submit() out of the inlined
+ * trace code.
+ */
+void *perf_trace_event_setup(struct ftrace_event_call *event_call, 
+			     struct perf_trace_event *pe)
+{
+	pe->head = this_cpu_ptr(event_call->perf_events);
+	if (pe->constant && hlist_empty(pe->head))
+		return NULL;
+
+	pe->entry_size = ALIGN(pe->entry_size + sizeof(u32), sizeof(u64));
+	pe->entry_size -= sizeof(u32);
+	pe->event_call = event_call;
+
+	perf_fetch_caller_regs(&pe->regs);
+
+	pe->entry = perf_trace_buf_prepare(pe->entry_size,
+			event_call->event.type, &pe->regs, &pe->rctx);
+	return pe->entry;
+}
+EXPORT_SYMBOL_GPL(perf_trace_event_setup);
+
+/**
+ * perf_trace_event_submit - submit from perf sw event
+ * @pe: perf event structure that holds all the necessary data
+ *
+ * This is a helper function that removes a lot of the setting up of
+ * the function parameters to call perf_trace_buf_submit() from the
+ * inlined code. Using the perf event structure @pe to store the
+ * information passed from perf_trace_event_setup() keeps the overhead
+ * of building the function call paremeters out of the inlined functions.
+ */
+void perf_trace_event_submit(struct perf_trace_event *pe)
+{
+	perf_trace_buf_submit(pe->entry, pe->entry_size, pe->rctx, pe->addr,
+			      pe->count, &pe->regs, pe->head, pe->task);
+}
+EXPORT_SYMBOL_GPL(perf_trace_event_submit);
+
 static int perf_trace_event_perm(struct ftrace_event_call *tp_event,
 				 struct perf_event *p_event)
 {

@@ -450,6 +450,23 @@ struct perf_event;
 
 DECLARE_PER_CPU(struct pt_regs, perf_trace_regs);
 
+struct perf_trace_event {
+	struct pt_regs			regs;
+	struct hlist_head __percpu	*head;
+	struct task_struct		*task;
+	struct ftrace_event_call	*event_call;
+	void				*entry;
+	u64				addr;
+	u64				count;
+	int				entry_size;
+	int				rctx;
+	int				constant;
+};
+
+extern void *perf_trace_event_setup(struct ftrace_event_call *event_call, 
+				    struct perf_trace_event *pe);
+extern void perf_trace_event_submit(struct perf_trace_event *pe);
+
 extern int  perf_trace_init(struct perf_event *event);
 extern void perf_trace_destroy(struct perf_event *event);
 extern int  perf_trace_add(struct perf_event *event, int flags);
