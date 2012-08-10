@@ -491,6 +491,37 @@ int ftrace_event_define_field(struct ftrace_event_call *call,
 }
 EXPORT_SYMBOL_GPL(ftrace_event_define_field);
 
+void *ftrace_event_buffer_reserve(struct ftrace_event_buffer *fbuffer,
+				  struct ftrace_event_file *ftrace_file,
+				  int type, unsigned long len)
+{
+	local_save_flags(fbuffer->flags);
+	fbuffer->pc = preempt_count();
+	fbuffer->ftrace_file = ftrace_file;
+
+	fbuffer->event =
+		trace_event_buffer_lock_reserve(&fbuffer->buffer, ftrace_file,
+						type, len,
+						fbuffer->flags, fbuffer->pc);
+	if (!fbuffer->event)
+		return NULL;
+
+	fbuffer->entry = ring_buffer_event_data(fbuffer->event);
+	return fbuffer->entry;
+}
+EXPORT_SYMBOL_GPL(ftrace_event_buffer_reserve);
+
+void ftrace_event_buffer_commit(struct ftrace_event_buffer *fbuffer,
+				struct ftrace_event_call *event_call)
+{
+	if (!filter_check_discard(fbuffer->ftrace_file, fbuffer->entry,
+				  fbuffer->buffer, fbuffer->event))
+		trace_buffer_unlock_commit(fbuffer->buffer,
+					   fbuffer->event,
+					   fbuffer->flags, fbuffer->pc);
+}
+EXPORT_SYMBOL_GPL(ftrace_event_buffer_commit);
+
 #ifdef CONFIG_KRETPROBES
 static inline const char *kretprobed(const char *name)
 {
