@@ -5303,12 +5303,12 @@ void idle_task_exit(void)
  * While a dead CPU has no uninterruptible tasks queued at this point,
  * it might still have a nonzero ->nr_uninterruptible counter, because
  * for performance reasons the counter is not stricly tracking tasks to
- * their home CPUs. So we just add the counter to another CPU's counter,
+ * their home CPUs. So we just add the counter to the running CPU's counter,
  * to keep the global sum constant after CPU-down:
  */
 static void migrate_nr_uninterruptible(struct rq *rq_src)
 {
-	struct rq *rq_dest = cpu_rq(cpumask_any(cpu_active_mask));
+	struct rq *rq_dest = cpu_rq(smp_processor_id());
 
 	rq_dest->nr_uninterruptible += rq_src->nr_uninterruptible;
 	rq_src->nr_uninterruptible = 0;
@@ -5613,9 +5613,20 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
 		migrate_tasks(cpu);
 		BUG_ON(rq->nr_running != 1); /* the migration thread */
 		raw_spin_unlock_irqrestore(&rq->lock, flags);
+		break;
 
-		migrate_nr_uninterruptible(rq);
-		calc_global_load_remove(rq);
+	case CPU_DEAD:
+		{
+			struct rq *dest_rq;
+
+			local_irq_save(flags);
+			dest_rq = cpu_rq(smp_processor_id());
+			raw_spin_lock(&dest_rq->lock);
+			migrate_nr_uninterruptible(rq);
+			calc_global_load_remove(rq);
+			raw_spin_unlock(&dest_rq->lock);
+			local_irq_restore(flags);
+		}
 		break;
 #endif
 	}
