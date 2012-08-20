@@ -2394,6 +2394,11 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 	ramdisk_size=	[RAM] Sizes of RAM disks in kilobytes
 			See Documentation/blockdev/ramdisk.txt.
 
+	rcu_nocbs=	[KNL,BOOT]
+			Set the specified list of CPUs to be no-callback
+			CPUs.  Invocation of these CPUs' RCU callbacks will
+			be offloaded to kthreads created for that purpose.
+
 	rcutree.blimit=	[KNL,BOOT]
 			Set maximum number of finished RCU callbacks to process
 			in one batch.
