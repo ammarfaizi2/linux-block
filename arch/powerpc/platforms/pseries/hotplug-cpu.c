@@ -137,6 +137,8 @@ static void pseries_mach_cpu_die(void)
 		if (get_preferred_offline_state(cpu) == CPU_STATE_ONLINE) {
 			unregister_slb_shadow(hwcpu);
 
+			__hard_irq_disable();
+
 			/*
 			 * Call to start_secondary_resume() will not return.
 			 * Kernel stack will be reset and start_secondary()
