@@ -55,6 +55,22 @@
 #define DYNTICK_TASK_EXIT_IDLE	   (DYNTICK_TASK_NEST_VALUE + \
 				    DYNTICK_TASK_FLAG)
 
+
+/* Lockdep tracking for extended quiescent state idle entry and exit. */
+static inline void rcu_eqs_enter_lockdep(void)
+{
+#ifdef CONFIG_PROVE_RCU
+	rcu_lock_acquire(&rcu_idle_map);
+#endif /* #ifdef CONFIG_PROVE_RCU */
+}
+static inline void rcu_eqs_exit_lockdep(void)
+{
+#ifdef CONFIG_PROVE_RCU
+	rcu_lock_release(&rcu_idle_map);
+#endif /* #ifdef CONFIG_PROVE_RCU */
+}
+
+
 /*
  * debug_rcu_head_queue()/debug_rcu_head_unqueue() are used internally
  * by call_rcu() and rcu callback execution, and are therefore not part of the

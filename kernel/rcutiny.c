@@ -75,6 +75,7 @@ static void rcu_idle_enter_common(long long newval)
 			  current->pid, current->comm,
 			  idle->pid, idle->comm); /* must be idle task! */
 	}
+	rcu_eqs_enter_lockdep();
 	barrier();
 	rcu_dynticks_nesting = newval;
 	rcu_sched_qs(0); /* implies rcu_bh_qsctr_inc(0) */
@@ -126,6 +127,7 @@ static void rcu_idle_exit_common(long long oldval)
 		return;
 	}
 	RCU_TRACE(trace_rcu_dyntick("End", oldval, rcu_dynticks_nesting));
+	rcu_eqs_exit_lockdep();
 	if (!is_idle_task(current)) {
 		struct task_struct *idle = idle_task(smp_processor_id());
 

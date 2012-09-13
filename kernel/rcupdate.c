@@ -142,6 +142,11 @@ static struct lock_class_key rcu_sched_lock_key;
 struct lockdep_map rcu_sched_lock_map =
 	STATIC_LOCKDEP_MAP_INIT("rcu_read_lock_sched", &rcu_sched_lock_key);
 EXPORT_SYMBOL_GPL(rcu_sched_lock_map);
+
+static struct lock_class_key rcu_idle_key;
+struct lockdep_map rcu_idle_map =
+	STATIC_LOCKDEP_MAP_INIT("rcu_idle", &rcu_idle_key);
+EXPORT_SYMBOL_GPL(rcu_idle_map);
 #endif
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
