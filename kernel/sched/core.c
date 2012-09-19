@@ -2817,8 +2817,10 @@ struct cpuacct root_cpuacct;
 static inline void task_group_account_field(struct task_struct *p, int index,
 					    u64 tmp)
 {
+#ifdef CONFIG_CGROUP_SCHED
+	struct task_group *tg;
+#endif
 #ifdef CONFIG_CGROUP_CPUACCT
-	struct kernel_cpustat *kcpustat;
 	struct cpuacct *ca;
 #endif
 	/*
@@ -2829,6 +2831,20 @@ static inline void task_group_account_field(struct task_struct *p, int index,
 	 */
 	__get_cpu_var(kernel_cpustat).cpustat[index] += tmp;
 
+#ifdef CONFIG_CGROUP_SCHED
+	rcu_read_lock();
+	tg = container_of(task_subsys_state(p, cpu_cgroup_subsys_id),
+			  struct task_group, css);
+
+	while (tg && (tg != &root_task_group)) {
+		struct kernel_cpustat *kcpustat = this_cpu_ptr(tg->cpustat);
+
+		kcpustat->cpustat[index] += tmp;
+		tg = tg->parent;
+	}
+	rcu_read_unlock();
+#endif
+
 #ifdef CONFIG_CGROUP_CPUACCT
 	if (unlikely(!cpuacct_subsys.active))
 		return;
@@ -2836,7 +2852,8 @@ static inline void task_group_account_field(struct task_struct *p, int index,
 	rcu_read_lock();
 	ca = task_ca(p);
 	while (ca && (ca != &root_cpuacct)) {
-		kcpustat = this_cpu_ptr(ca->cpustat);
+		struct kernel_cpustat *kcpustat = this_cpu_ptr(ca->cpustat);
+
 		kcpustat->cpustat[index] += tmp;
 		ca = parent_ca(ca);
 	}
@@ -7253,6 +7270,7 @@ int in_sched_functions(unsigned long addr)
 #ifdef CONFIG_CGROUP_SCHED
 struct task_group root_task_group;
 LIST_HEAD(task_groups);
+static DEFINE_PER_CPU(u64, root_tg_cpuusage);
 #endif
 
 DECLARE_PER_CPU(cpumask_var_t, load_balance_tmpmask);
@@ -7311,6 +7329,8 @@ void __init sched_init(void)
 #endif /* CONFIG_RT_GROUP_SCHED */
 
 #ifdef CONFIG_CGROUP_SCHED
+	root_task_group.cpustat = &kernel_cpustat;
+	root_task_group.cpuusage = &root_tg_cpuusage;
 	list_add(&root_task_group.list, &task_groups);
 	INIT_LIST_HEAD(&root_task_group.children);
 	INIT_LIST_HEAD(&root_task_group.siblings);
@@ -7594,6 +7614,8 @@ static void free_sched_group(struct task_group *tg)
 	free_fair_sched_group(tg);
 	free_rt_sched_group(tg);
 	autogroup_free(tg);
+	free_percpu(tg->cpuusage);
+	free_percpu(tg->cpustat);
 	kfree(tg);
 }
 
@@ -7606,6 +7628,11 @@ struct task_group *sched_create_group(struct task_group *parent)
 	tg = kzalloc(sizeof(*tg), GFP_KERNEL);
 	if (!tg)
 		return ERR_PTR(-ENOMEM);
+
+	tg->cpuusage = alloc_percpu(u64);
+	tg->cpustat = alloc_percpu(struct kernel_cpustat);
+	if (!tg->cpuusage || !tg->cpustat)
+		goto err;
 
 	if (!alloc_fair_sched_group(tg, parent))
 		goto err;
@@ -7697,6 +7724,24 @@ void sched_move_task(struct task_struct *tsk)
 		enqueue_task(rq, tsk, 0);
 
 	task_rq_unlock(rq, tsk, &flags);
+}
+
+void task_group_charge(struct task_struct *tsk, u64 cputime)
+{
+	struct task_group *tg;
+	int cpu = task_cpu(tsk);
+
+	rcu_read_lock();
+
+	tg = container_of(task_subsys_state(tsk, cpu_cgroup_subsys_id),
+			  struct task_group, css);
+
+	for (; tg; tg = tg->parent) {
+		u64 *cpuusage = per_cpu_ptr(tg->cpuusage, cpu);
+		*cpuusage += cputime;
+	}
+
+	rcu_read_unlock();
 }
 #endif /* CONFIG_CGROUP_SCHED */
 
@@ -8054,6 +8099,134 @@ cpu_cgroup_exit(struct cgroup *cgrp, struct cgroup *old_cgrp,
 	sched_move_task(task);
 }
 
+static u64 task_group_cpuusage_read(struct task_group *tg, int cpu)
+{
+	u64 *cpuusage = per_cpu_ptr(tg->cpuusage, cpu);
+	u64 data;
+
+#ifndef CONFIG_64BIT
+	/*
+	 * Take rq->lock to make 64-bit read safe on 32-bit platforms.
+	 */
+	raw_spin_lock_irq(&cpu_rq(cpu)->lock);
+	data = *cpuusage;
+	raw_spin_unlock_irq(&cpu_rq(cpu)->lock);
+#else
+	data = *cpuusage;
+#endif
+
+	return data;
+}
+
+static void task_group_cpuusage_write(struct task_group *tg, int cpu, u64 val)
+{
+	u64 *cpuusage = per_cpu_ptr(tg->cpuusage, cpu);
+
+#ifndef CONFIG_64BIT
+	/*
+	 * Take rq->lock to make 64-bit write safe on 32-bit platforms.
+	 */
+	raw_spin_lock_irq(&cpu_rq(cpu)->lock);
+	*cpuusage = val;
+	raw_spin_unlock_irq(&cpu_rq(cpu)->lock);
+#else
+	*cpuusage = val;
+#endif
+}
+
+/* return total cpu usage (in nanoseconds) of a group */
+static u64 cpucg_cpuusage_read(struct cgroup *cgrp, struct cftype *cft)
+{
+	struct task_group *tg;
+	u64 totalcpuusage = 0;
+	int i;
+
+	tg = container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id),
+			  struct task_group, css);
+
+	for_each_present_cpu(i)
+		totalcpuusage += task_group_cpuusage_read(tg, i);
+
+	return totalcpuusage;
+}
+
+static int cpucg_cpuusage_write(struct cgroup *cgrp, struct cftype *cftype,
+				u64 reset)
+{
+	struct task_group *tg;
+	int err = 0;
+	int i;
+
+	tg = container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id),
+			  struct task_group, css);
+
+	if (reset) {
+		err = -EINVAL;
+		goto out;
+	}
+
+	for_each_present_cpu(i)
+		task_group_cpuusage_write(tg, i, 0);
+
+out:
+	return err;
+}
+
+static int cpucg_percpu_seq_read(struct cgroup *cgrp, struct cftype *cft,
+				 struct seq_file *m)
+{
+	struct task_group *tg;
+	u64 percpu;
+	int i;
+
+	tg = container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id),
+			  struct task_group, css);
+
+	for_each_present_cpu(i) {
+		percpu = task_group_cpuusage_read(tg, i);
+		seq_printf(m, "%llu ", (unsigned long long) percpu);
+	}
+	seq_printf(m, "\n");
+	return 0;
+}
+
+static const char *cpucg_stat_desc[] = {
+	[CPUACCT_STAT_USER] = "user",
+	[CPUACCT_STAT_SYSTEM] = "system",
+};
+
+static int cpucg_stats_show(struct cgroup *cgrp, struct cftype *cft,
+			    struct cgroup_map_cb *cb)
+{
+	struct task_group *tg;
+	int cpu;
+	s64 val = 0;
+
+	tg = container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id),
+			  struct task_group, css);
+
+	for_each_online_cpu(cpu) {
+		struct kernel_cpustat *kcpustat = per_cpu_ptr(tg->cpustat, cpu);
+		val += kcpustat->cpustat[CPUTIME_USER];
+		val += kcpustat->cpustat[CPUTIME_NICE];
+	}
+	val = cputime64_to_clock_t(val);
+	cb->fill(cb, cpucg_stat_desc[CPUACCT_STAT_USER], val);
+
+	val = 0;
+	for_each_online_cpu(cpu) {
+		struct kernel_cpustat *kcpustat = per_cpu_ptr(tg->cpustat, cpu);
+		val += kcpustat->cpustat[CPUTIME_SYSTEM];
+		val += kcpustat->cpustat[CPUTIME_IRQ];
+		val += kcpustat->cpustat[CPUTIME_SOFTIRQ];
+	}
+
+	val = cputime64_to_clock_t(val);
+	cb->fill(cb, cpucg_stat_desc[CPUACCT_STAT_SYSTEM], val);
+
+	return 0;
+}
+
 #ifdef CONFIG_FAIR_GROUP_SCHED
 static int cpu_shares_write_u64(struct cgroup *cgrp, struct cftype *cftype,
 				u64 shareval)
@@ -8360,6 +8533,23 @@ static struct cftype cpu_files[] = {
 		.write_u64 = cpu_rt_period_write_uint,
 	},
 #endif
+	/* cpuacct.* which used to be served by a separate cpuacct controller */
+	{
+		.name = "cpuacct.usage",
+		.flags = CFTYPE_NO_PREFIX,
+		.read_u64 = cpucg_cpuusage_read,
+		.write_u64 = cpucg_cpuusage_write,
+	},
+	{
+		.name = "cpuacct.usage_percpu",
+		.flags = CFTYPE_NO_PREFIX,
+		.read_seq_string = cpucg_percpu_seq_read,
+	},
+	{
+		.name = "cpuacct.stat",
+		.flags = CFTYPE_NO_PREFIX,
+		.read_map = cpucg_stats_show,
+	},
 	{ }	/* terminate */
 };
 

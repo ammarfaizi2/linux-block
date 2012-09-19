@@ -104,6 +104,10 @@ struct cfs_bandwidth {
 struct task_group {
 	struct cgroup_subsys_state css;
 
+	/* statistics */
+	u64 __percpu *cpuusage;
+	struct kernel_cpustat __percpu *cpustat;
+
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	/* schedulable entities of this group on each cpu */
 	struct sched_entity **se;
@@ -575,6 +579,8 @@ static inline void set_task_rq(struct task_struct *p, unsigned int cpu)
 #endif
 }
 
+extern void task_group_charge(struct task_struct *tsk, u64 cputime);
+
 #else /* CONFIG_CGROUP_SCHED */
 
 static inline void set_task_rq(struct task_struct *p, unsigned int cpu) { }
@@ -582,6 +588,7 @@ static inline struct task_group *task_group(struct task_struct *p)
 {
 	return NULL;
 }
+static inline void task_group_charge(struct task_struct *tsk, u64 cputime) { }
 
 #endif /* CONFIG_CGROUP_SCHED */
 

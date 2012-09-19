@@ -1265,6 +1265,19 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
 	/* Consistency checks */
 
 	/*
+	 * cpuacct is deprecated and cpu will serve the same stat files.
+	 * If co-mount with cpu is requested, ignore cpuacct.  Note that
+	 * this creates some discrepancies in /proc/cgroups and
+	 * /proc/PID/cgroup.
+	 *
+	 * https://lkml.org/lkml/2012/9/13/542
+	 */
+#if IS_ENABLED(CONFIG_CGROUP_SCHED) && IS_ENABLED(CONFIG_CGROUP_CPUACCT)
+	if ((opts->subsys_bits & (1 << cpu_cgroup_subsys_id)) &&
+	    (opts->subsys_bits & (1 << cpuacct_subsys_id)))
+		opts->subsys_bits &= ~(1 << cpuacct_subsys_id);
+#endif
+	/*
 	 * Option noprefix was introduced just for backward compatibility
 	 * with the old cpuset, so we allow noprefix only if mounting just
 	 * the cpuset subsystem.
