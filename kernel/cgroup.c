@@ -1157,6 +1157,7 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
 	unsigned long mask = (unsigned long)-1;
 	int i;
 	bool module_pin_failed = false;
+	bool cpuacct_requested = false;
 
 	BUG_ON(!mutex_is_locked(&cgroup_mutex));
 
@@ -1242,8 +1243,13 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
 
 			break;
 		}
-		if (i == CGROUP_SUBSYS_COUNT)
+		/* handle deprecated cpuacct specially, see below */
+		if (!strcmp(token, "cpuacct")) {
+			cpuacct_requested = true;
+			one_ss = true;
+		} else if (i == CGROUP_SUBSYS_COUNT) {
 			return -ENOENT;
+		}
 	}
 
 	/*
@@ -1270,8 +1276,25 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
 	 * this creates some discrepancies in /proc/cgroups and
 	 * /proc/PID/cgroup.
 	 *
+	 * Accept and ignore "cpuacct" option if comounted with "cpu" even
+	 * when cpuacct itself is disabled to allow quick disabling and
+	 * removal of cpuacct.  This will be removed eventually.
+	 *
 	 * https://lkml.org/lkml/2012/9/13/542
 	 */
+	if (cpuacct_requested) {
+		bool comounted = false;
+
+#if IS_ENABLED(CONFIG_CGROUP_SCHED)
+		comounted = opts->subsys_bits & (1 << cpu_cgroup_subsys_id);
+#endif
+		if (!comounted) {
+			pr_warning("cgroup: mounting cpuacct separately from cpu is deprecated\n");
+#if !IS_ENABLED(CONFIG_CGROUP_CPUACCT)
+			return -EINVAL;
+#endif
+		}
+	}
 #if IS_ENABLED(CONFIG_CGROUP_SCHED) && IS_ENABLED(CONFIG_CGROUP_CPUACCT)
 	if ((opts->subsys_bits & (1 << cpu_cgroup_subsys_id)) &&
 	    (opts->subsys_bits & (1 << cpuacct_subsys_id)))
@@ -4678,6 +4701,7 @@ const struct file_operations proc_cgroup_operations = {
 /* Display information about each subsystem and each hierarchy */
 static int proc_cgroupstats_show(struct seq_file *m, void *v)
 {
+	struct cgroup_subsys *ss;
 	int i;
 
 	seq_puts(m, "#subsys_name\thierarchy\tnum_cgroups\tenabled\n");
@@ -4688,7 +4712,7 @@ static int proc_cgroupstats_show(struct seq_file *m, void *v)
 	 */
 	mutex_lock(&cgroup_mutex);
 	for (i = 0; i < CGROUP_SUBSYS_COUNT; i++) {
-		struct cgroup_subsys *ss = subsys[i];
+		ss = subsys[i];
 		if (ss == NULL)
 			continue;
 		seq_printf(m, "%s\t%d\t%d\t%d\n",
@@ -4696,6 +4720,19 @@ static int proc_cgroupstats_show(struct seq_file *m, void *v)
 			   ss->root->number_of_cgroups, !ss->disabled);
 	}
 	mutex_unlock(&cgroup_mutex);
+
+	/*
+	 * Fake /proc/cgroups entry for cpuacct to trick userland into
+	 * cpu,cpuacct comounts.  This is to allow quick disabling and
+	 * removal of cpuacct and will be removed eventually.
+	 */
+#if IS_ENABLED(CONFIG_CGROUP_SCHED) && !IS_ENABLED(CONFIG_CGROUP_CPUACCT)
+	ss = subsys[cpu_cgroup_subsys_id];
+	if (ss) {
+		seq_printf(m, "cpuacct\t%d\t%d\t%d\n", ss->root->hierarchy_id,
+			   ss->root->number_of_cgroups, !ss->disabled);
+	}
+#endif
 	return 0;
 }
 

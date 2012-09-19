@@ -8569,6 +8569,8 @@ struct cgroup_subsys cpu_cgroup_subsys = {
 
 #ifdef CONFIG_CGROUP_CPUACCT
 
+#warning CONFIG_CGROUP_CPUACCT is deprecated, read the Kconfig help message
+
 /*
  * CPU accounting code for task groups.
  *

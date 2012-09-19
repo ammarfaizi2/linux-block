@@ -675,10 +675,19 @@ config PROC_PID_CPUSET
 	default y
 
 config CGROUP_CPUACCT
-	bool "Simple CPU accounting cgroup subsystem"
+	bool "DEPRECATED: Simple CPU accounting cgroup subsystem"
+	default n
 	help
 	  Provides a simple Resource Controller for monitoring the
 	  total CPU consumed by the tasks in a cgroup.
+
+	  This cgroup subsystem is deprecated.  The CPU cgroup
+	  subsystem serves the same accounting files and "cpuacct"
+	  mount option is ignored if specified with "cpu".  As long as
+	  userland co-mounts cpu and cpuacct, disabling this
+	  controller should be mostly unnoticeable - one notable
+	  difference is that /proc/PID/cgroup won't list cpuacct
+	  anymore.
 
 config RESOURCE_COUNTERS
 	bool "Resource counters"
