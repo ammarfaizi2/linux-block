@@ -236,12 +236,17 @@ static inline void check_for_tasks(int cpu)
 struct take_cpu_down_param {
 	unsigned long mod;
 	void *hcpu;
+	int ret;
 };
 
+static struct task_struct *cpu_down_task;
+static DECLARE_COMPLETION(cpu_down_completion);
+static DECLARE_WAIT_QUEUE_HEAD(cpu_down_wq);
+static struct take_cpu_down_param tcd_param = { .hcpu = (void *)-1L };
+
 /* Take this CPU down. */
-static int __ref take_cpu_down(void *_param)
+static int __ref take_cpu_down(struct take_cpu_down_param *param)
 {
-	struct take_cpu_down_param *param = _param;
 	int err;
 
 	/* Ensure this CPU doesn't handle any more interrupts. */
@@ -253,16 +258,80 @@ static int __ref take_cpu_down(void *_param)
 	return 0;
 }
 
+/* kthread that handles CPU_DYING notifiers, replacing __stop_machine(). */
+static int __noreturn cpu_down_kthread(void *unused)
+{
+	int cpu;
+
+	for (;;) {
+		wait_event_interruptible(cpu_down_wq,
+					 (cpu = (long)ACCESS_ONCE(tcd_param.hcpu)) != -1);
+		smp_mb(); /* Ensure tcd_param filled out. */
+		if (cpu == -1) {
+			flush_signals(current);
+			continue;
+		}
+		if (smp_processor_id() != cpu) {
+			tcd_param.ret = set_cpus_allowed_ptr(current,
+							     cpumask_of(cpu));
+			if (tcd_param.ret != 0)
+				pr_alert("cpu_down_kthread: affinity failed errno %d\n",
+					 tcd_param.ret);
+		}
+		if (tcd_param.ret == 0) {
+			local_irq_disable();
+			tcd_param.ret = take_cpu_down(&tcd_param);
+			local_irq_enable();
+		}
+	}
+}
+
+/* Spawn cpu_down_kthread() at boot time. */
+static int __init cpu_down_init(void)
+{
+	struct sched_param sp;
+
+	cpu_down_task = kthread_create(cpu_down_kthread, NULL, "cpudown");
+	if (IS_ERR(cpu_down_task)) {
+		cpu_down_task = NULL;
+		pr_alert("Creating cpu_down_task failed: CPU removal disabled.\n");
+		return 0;
+	}
+	sp.sched_priority = MAX_RT_PRIO;
+	sched_setscheduler_nocheck(cpu_down_task, SCHED_FIFO, &sp);
+	return 0;
+}
+early_initcall(cpu_down_init);
+
+/* Wake up cpu_down_kthread() in order to remove a CPU. */
+static int invoke_cpu_down(int cpu, unsigned long mod)
+{
+	if (cpu_down_task == NULL) {
+		tcd_param.ret = -ENODEV;
+		goto out;
+	}
+	tcd_param.ret = set_cpus_allowed_ptr(cpu_down_task, cpumask_of(cpu));
+	if (tcd_param.ret != 0) {
+		pr_alert("invoke_cpu_down: affinity failed errno %d\n",
+			 tcd_param.ret);
+		goto out;
+	}
+	tcd_param.mod = mod;
+	smp_mb(); /* Order filling out of tcd_param. */
+	ACCESS_ONCE(tcd_param.hcpu) = (void *)cpu;
+	init_completion(&cpu_down_completion);
+	wake_up(&cpu_down_wq);
+	wait_for_completion(&cpu_down_completion);
+out:
+	return tcd_param.ret;
+}
+
 /* Requires cpu_add_remove_lock to be held */
 static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 {
 	int err, nr_calls = 0;
 	void *hcpu = (void *)(long)cpu;
 	unsigned long mod = tasks_frozen ? CPU_TASKS_FROZEN : 0;
-	struct take_cpu_down_param tcd_param = {
-		.mod = mod,
-		.hcpu = hcpu,
-	};
 
 	if (num_online_cpus() == 1)
 		return -EBUSY;
@@ -281,7 +350,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 		goto out_release;
 	}
 
-	err = __stop_machine(take_cpu_down, &tcd_param, cpumask_of(cpu));
+	err = invoke_cpu_down(cpu, mod);
 	if (err) {
 		/* CPU didn't die: tell everyone.  Can't complain. */
 		cpu_notify_nofail(CPU_DOWN_FAILED | mod, hcpu);
