@@ -180,6 +180,7 @@ struct trace_array {
 	cycle_t			time_start;
 	raw_spinlock_t		start_lock;
 	struct dentry		*dir;
+	struct dentry		*options;
 	struct dentry		*percpu_dir;
 	struct dentry		*event_dir;
 	struct list_head	systems;

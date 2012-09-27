@@ -4714,22 +4714,21 @@ struct dentry *trace_create_file(const char *name,
 static struct dentry *trace_options_init_dentry(struct trace_array *tr)
 {
 	struct dentry *d_tracer;
-	static struct dentry *t_options;
 
-	if (t_options)
-		return t_options;
+	if (tr->options)
+		return tr->options;
 
 	d_tracer = tracing_init_dentry_tr(tr);
 	if (!d_tracer)
 		return NULL;
 
-	t_options = debugfs_create_dir("options", d_tracer);
-	if (!t_options) {
+	tr->options = debugfs_create_dir("options", d_tracer);
+	if (!tr->options) {
 		pr_warning("Could not create debugfs directory 'options'\n");
 		return NULL;
 	}
 
-	return t_options;
+	return tr->options;
 }
 
 static void
