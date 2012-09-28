@@ -301,15 +301,15 @@ static void show_one_rcugp(struct seq_file *m, struct rcu_state *rsp)
 	struct rcu_node *rnp = &rsp->node[0];
 
 	raw_spin_lock_irqsave(&rnp->lock, flags);
-	completed = rsp->completed;
-	gpnum = rsp->gpnum;
-	if (rsp->completed == rsp->gpnum)
+	completed = ACCESS_ONCE(rsp->completed);
+	gpnum = ACCESS_ONCE(rsp->gpnum);
+	if (completed == gpnum)
 		gpage = 0;
 	else
 		gpage = jiffies - rsp->gp_start;
 	gpmax = rsp->gp_max;
 	raw_spin_unlock_irqrestore(&rnp->lock, flags);
-	seq_printf(m, "%s: completed=%ld  gpnum=%lu  age=%ld  max=%ld\n",
+	seq_printf(m, "%s: completed=%lu  gpnum=%lu  age=%ld  max=%ld\n",
 		   rsp->name, completed, gpnum, gpage, gpmax);
 }
 
