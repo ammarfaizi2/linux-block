@@ -76,32 +76,7 @@ static void r_stop(struct seq_file *m, void *v)
 {
 }
 
-static int show_rcubarrier(struct seq_file *m, void *unused)
-{
-	struct rcu_state *rsp;
-
-	for_each_rcu_flavor(rsp)
-		seq_printf(m, "%s: bcc: %d nbd: %lu\n",
-			   rsp->name,
-			   atomic_read(&rsp->barrier_cpu_count),
-			   rsp->n_barrier_done);
-	return 0;
-}
-
-static int rcubarrier_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, show_rcubarrier, NULL);
-}
-
-static const struct file_operations rcubarrier_fops = {
-	.owner = THIS_MODULE,
-	.open = rcubarrier_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-};
-
-static int new_show_rcubarrier(struct seq_file *m, void *v)
+static int show_rcubarrier(struct seq_file *m, void *v)
 {
 	struct rcu_state *rsp = (struct rcu_state *)m->private;
 	seq_printf(m, "bcc: %d nbd: %lu\n",
@@ -110,14 +85,14 @@ static int new_show_rcubarrier(struct seq_file *m, void *v)
 	return 0;
 }
 
-static int new_rcubarrier_open(struct inode *inode, struct file *file)
+static int rcubarrier_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, new_show_rcubarrier, inode->i_private);
+	return single_open(file, show_rcubarrier, inode->i_private);
 }
 
-static const struct file_operations new_rcubarrier_fops = {
+static const struct file_operations rcubarrier_fops = {
 	.owner = THIS_MODULE,
-	.open = new_rcubarrier_open,
+	.open = rcubarrier_open,
 	.read = seq_read,
 	.llseek = no_llseek,
 	.release = seq_release,
@@ -243,23 +218,7 @@ static const struct file_operations rcu_node_boost_fops = {
 	.release = single_release,
 };
 
-/*
- * Create the rcuboost debugfs entry.  Standard error return.
- */
-static int rcu_boost_trace_create_file(struct dentry *rcudir)
-{
-	return !debugfs_create_file("rcuboost", 0444, rcudir, NULL,
-				    &rcu_node_boost_fops);
-}
-
-#else /* #ifdef CONFIG_RCU_BOOST */
-
-static int rcu_boost_trace_create_file(struct dentry *rcudir)
-{
-	return 0;  /* There cannot be an error if we didn't create it! */
-}
-
-#endif /* #else #ifdef CONFIG_RCU_BOOST */
+#endif /* #ifdef CONFIG_RCU_BOOST */
 
 static void print_one_rcu_state(struct seq_file *m, struct rcu_state *rsp)
 {
@@ -268,8 +227,8 @@ static void print_one_rcu_state(struct seq_file *m, struct rcu_state *rsp)
 	struct rcu_node *rnp;
 
 	gpnum = rsp->gpnum;
-	seq_printf(m, "%s: c=%lu g=%lu s=%d jfq=%ld j=%x ",
-		   rsp->name, rsp->completed, gpnum, rsp->fqs_state,
+	seq_printf(m, "c=%lu g=%lu s=%d jfq=%ld j=%x ",
+		   rsp->completed, gpnum, rsp->fqs_state,
 		   (long)(rsp->jiffies_force_qs - jiffies),
 		   (int)(jiffies & 0xffff));
 	seq_printf(m, "nfqs=%lu/nfqsng=%lu(%lu) fqlh=%lu oqlen=%ld/%ld\n",
@@ -291,43 +250,21 @@ static void print_one_rcu_state(struct seq_file *m, struct rcu_state *rsp)
 	seq_puts(m, "\n");
 }
 
-static int show_rcuhier(struct seq_file *m, void *unused)
-{
-	struct rcu_state *rsp;
-
-	for_each_rcu_flavor(rsp)
-		print_one_rcu_state(m, rsp);
-	return 0;
-}
-
-static int rcuhier_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, show_rcuhier, NULL);
-}
-
-static const struct file_operations rcuhier_fops = {
-	.owner = THIS_MODULE,
-	.open = rcuhier_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-};
-
-static int new_show_rcuhier(struct seq_file *m, void *v)
+static int show_rcuhier(struct seq_file *m, void *v)
 {
 	struct rcu_state *rsp = (struct rcu_state *)m->private;
 	print_one_rcu_state(m, rsp);
 	return 0;
 }
 
-static int new_rcuhier_open(struct inode *inode, struct file *file)
+static int rcuhier_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, new_show_rcuhier, inode->i_private);
+	return single_open(file, show_rcuhier, inode->i_private);
 }
 
-static const struct file_operations new_rcuhier_fops = {
+static const struct file_operations rcuhier_fops = {
 	.owner = THIS_MODULE,
-	.open = new_rcuhier_open,
+	.open = rcuhier_open,
 	.read = seq_read,
 	.llseek = no_llseek,
 	.release = seq_release,
@@ -351,47 +288,25 @@ static void show_one_rcugp(struct seq_file *m, struct rcu_state *rsp)
 		gpage = jiffies - rsp->gp_start;
 	gpmax = rsp->gp_max;
 	raw_spin_unlock_irqrestore(&rnp->lock, flags);
-	seq_printf(m, "%s: completed=%lu  gpnum=%lu  age=%ld  max=%ld\n",
-		   rsp->name, completed, gpnum, gpage, gpmax);
+	seq_printf(m, "completed=%lu  gpnum=%lu  age=%ld  max=%ld\n",
+		   completed, gpnum, gpage, gpmax);
 }
 
-static int show_rcugp(struct seq_file *m, void *unused)
-{
-	struct rcu_state *rsp;
-
-	for_each_rcu_flavor(rsp)
-		show_one_rcugp(m, rsp);
-	return 0;
-}
-
-static int rcugp_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, show_rcugp, NULL);
-}
-
-static const struct file_operations rcugp_fops = {
-	.owner = THIS_MODULE,
-	.open = rcugp_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-};
-
-static int new_show_rcugp(struct seq_file *m, void *v)
+static int show_rcugp(struct seq_file *m, void *v)
 {
 	struct rcu_state *rsp = (struct rcu_state *)m->private;
 	show_one_rcugp(m, rsp);
 	return 0;
 }
 
-static int new_rcugp_open(struct inode *inode, struct file *file)
+static int rcugp_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, new_show_rcugp, inode->i_private);
+	return single_open(file, show_rcugp, inode->i_private);
 }
 
-static const struct file_operations new_rcugp_fops = {
+static const struct file_operations rcugp_fops = {
 	.owner = THIS_MODULE,
-	.open = new_rcugp_open,
+	.open = rcugp_open,
 	.read = seq_read,
 	.llseek = no_llseek,
 	.release = seq_release,
@@ -493,7 +408,7 @@ static int __init rcutree_trace_init(void)
 				goto free_out;
 
 			retval = debugfs_create_file("rcubarrier", 0444,
-					rspdir, rsp, &new_rcubarrier_fops);
+					rspdir, rsp, &rcubarrier_fops);
 			if (!retval)
 				goto free_out;
 
@@ -507,32 +422,15 @@ static int __init rcutree_trace_init(void)
 #endif
 
 			retval = debugfs_create_file("rcugp", 0444,
-					rspdir, rsp, &new_rcugp_fops);
+					rspdir, rsp, &rcugp_fops);
 			if (!retval)
 				goto free_out;
 
 			retval = debugfs_create_file("rcuhier", 0444,
-					rspdir, rsp, &new_rcuhier_fops);
+					rspdir, rsp, &rcuhier_fops);
 			if (!retval)
 				goto free_out;
 	}
-
-	retval = debugfs_create_file("rcubarrier", 0444, rcudir,
-						NULL, &rcubarrier_fops);
-	if (!retval)
-		goto free_out;
-
-	if (rcu_boost_trace_create_file(rcudir))
-		goto free_out;
-
-	retval = debugfs_create_file("rcugp", 0444, rcudir, NULL, &rcugp_fops);
-	if (!retval)
-		goto free_out;
-
-	retval = debugfs_create_file("rcuhier", 0444, rcudir,
-						NULL, &rcuhier_fops);
-	if (!retval)
-		goto free_out;
 
 	retval = debugfs_create_file("rcutorture", 0444, rcudir,
 						NULL, &rcutorture_fops);
