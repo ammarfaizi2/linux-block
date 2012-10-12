@@ -171,6 +171,45 @@ static const struct file_operations rcudata_fops = {
 	.release = seq_release,
 };
 
+static int show_rcuexp(struct seq_file *m, void *v)
+{
+	struct rcu_state *rsp = (struct rcu_state *)v;
+
+	seq_printf(m, "s=%lu d=%lu w=%lu tf=%lu wd1=%lu wd2=%lu n=%lu sc=%lu dt=%lu dl=%lu dx=%lu",
+		   atomic_long_read(&rsp->expedited_start),
+		   atomic_long_read(&rsp->expedited_done),
+		   atomic_long_read(&rsp->expedited_wrap),
+		   atomic_long_read(&rsp->expedited_tryfail),
+		   atomic_long_read(&rsp->expedited_workdone1),
+		   atomic_long_read(&rsp->expedited_workdone2),
+		   atomic_long_read(&rsp->expedited_normal),
+		   atomic_long_read(&rsp->expedited_stoppedcpus),
+		   atomic_long_read(&rsp->expedited_done_tries),
+		   atomic_long_read(&rsp->expedited_done_lost),
+		   atomic_long_read(&rsp->expedited_done_exit));
+	return 0;
+}
+
+static const struct seq_operations rcuexp_op = {
+	.start = r_start,
+	.next  = r_next,
+	.stop  = r_stop,
+	.show  = show_rcuexp,
+};
+
+static int rcuexp_open(struct inode *inode, struct file *file)
+{
+	return r_open(inode, file, &rcuexp_op);
+}
+
+static const struct file_operations rcuexp_fops = {
+	.owner = THIS_MODULE,
+	.open = rcuexp_open,
+	.read = seq_read,
+	.llseek = no_llseek,
+	.release = seq_release,
+};
+
 #ifdef CONFIG_RCU_BOOST
 
 static void print_one_rcu_node_boost(struct seq_file *m, struct rcu_node *rnp)
@@ -399,6 +438,11 @@ static int __init rcutree_trace_init(void)
 
 			retval = debugfs_create_file("rcudata", 0444,
 					rspdir, rsp, &rcudata_fops);
+			if (!retval)
+				goto free_out;
+
+			retval = debugfs_create_file("rcuexp", 0444,
+					rspdir, rsp, &rcuexp_fops);
 			if (!retval)
 				goto free_out;
 
