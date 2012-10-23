@@ -122,6 +122,11 @@ group_def:
 PE_NAME '{' events '}'
 {
 	struct list_head *list = $3;
+	struct parse_events_data__events *data = _data;
+
+	/* Count groups only have more than 1 members */
+	if (!list_is_last(list->next, list))
+		data->nr_groups++;
 
 	parse_events__set_leader($1, list);
 	$$ = list;
@@ -130,6 +135,11 @@ PE_NAME '{' events '}'
 '{' events '}'
 {
 	struct list_head *list = $2;
+	struct parse_events_data__events *data = _data;
+
+	/* Count groups only have more than 1 members */
+	if (!list_is_last(list->next, list))
+		data->nr_groups++;
 
 	parse_events__set_leader(NULL, list);
 	$$ = list;

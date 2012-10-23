@@ -74,6 +74,10 @@ struct perf_evsel {
 	int			exclude_GH;
 	struct perf_evsel	*leader;
 	char			*group_name;
+	union {
+		int		nr_members;
+		int		group_idx;
+	};
 };
 
 struct cpu_map;
@@ -224,5 +228,11 @@ int perf_evsel__parse_sample(struct perf_evsel *evsel, union perf_event *event,
 static inline struct perf_evsel *perf_evsel__next(struct perf_evsel *evsel)
 {
 	return list_entry(evsel->node.next, struct perf_evsel, node);
+}
+
+/* Treat a non-group event as a leader */
+static inline bool perf_evsel__is_group_leader(struct perf_evsel *evsel)
+{
+	return evsel->leader == NULL;
 }
 #endif /* __PERF_EVSEL_H */
