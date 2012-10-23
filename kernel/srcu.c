@@ -16,8 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  * Copyright (C) IBM Corporation, 2006
+ * Copyright (C) Fujitsu, 2012
  *
  * Author: Paul McKenney <paulmck@us.ibm.com>
+ *	   Lai Jiangshan <laijs@cn.fujitsu.com>
  *
  * For detailed explanation of Read-Copy Update mechanism see -
  * 		Documentation/RCU/ *.txt
@@ -91,9 +93,6 @@ static inline void rcu_batch_move(struct rcu_batch *to, struct rcu_batch *from)
 		rcu_batch_init(from);
 	}
 }
-
-/* single-thread state-machine */
-static void process_srcu(struct work_struct *work);
 
 static int init_srcu_struct_fields(struct srcu_struct *sp)
 {
@@ -637,7 +636,7 @@ static void srcu_reschedule(struct srcu_struct *sp)
 /*
  * This is the work-queue function that handles SRCU grace periods.
  */
-static void process_srcu(struct work_struct *work)
+void process_srcu(struct work_struct *work)
 {
 	struct srcu_struct *sp;
 
@@ -648,3 +647,4 @@ static void process_srcu(struct work_struct *work)
 	srcu_invoke_callbacks(sp);
 	srcu_reschedule(sp);
 }
+EXPORT_SYMBOL_GPL(process_srcu);

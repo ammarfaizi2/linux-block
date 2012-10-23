@@ -670,6 +670,9 @@ EXPORT_SYMBOL_GPL(kfree_call_rcu);
  * concurrently with new RCU read-side critical sections that began while
  * synchronize_rcu() was waiting.  RCU read-side critical sections are
  * delimited by rcu_read_lock() and rcu_read_unlock(), and may be nested.
+ *
+ * See the description of synchronize_sched() for more detailed information
+ * on memory ordering guarantees.
  */
 void synchronize_rcu(void)
 {
@@ -757,7 +760,8 @@ static void rcu_report_exp_rnp(struct rcu_state *rsp, struct rcu_node *rnp,
  * grace period for the specified rcu_node structure.  If there are no such
  * tasks, report it up the rcu_node hierarchy.
  *
- * Caller must hold sync_rcu_preempt_exp_mutex and rsp->onofflock.
+ * Caller must hold sync_rcu_preempt_exp_mutex and must exclude
+ * CPU hotplug operations.
  */
 static void
 sync_rcu_preempt_exp_init(struct rcu_state *rsp, struct rcu_node *rnp)
@@ -875,6 +879,11 @@ EXPORT_SYMBOL_GPL(synchronize_rcu_expedited);
 
 /**
  * rcu_barrier - Wait until all in-flight call_rcu() callbacks complete.
+ *
+ * Note that this primitive will not always wait for an RCU grace period
+ * to complete.  For example, if there are no RCU callbacks queued anywhere
+ * in the system, then rcu_barrier() is within its rights to return
+ * immediately, without waiting for anything, much less an RCU grace period.
  */
 void rcu_barrier(void)
 {
