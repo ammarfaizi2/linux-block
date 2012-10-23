@@ -109,6 +109,8 @@ static inline bool __rcu_reclaim(char *rn, struct rcu_head *head)
 	}
 }
 
+extern int rcu_expedited;
+
 #if defined(CONFIG_SMP) || defined(CONFIG_RCU_TRACE)
 
 extern int rcu_cpu_stall_suppress;
