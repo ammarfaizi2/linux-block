@@ -111,20 +111,26 @@ void perf_evlist__splice_list_tail(struct perf_evlist *evlist,
 void __perf_evlist__set_leader(struct list_head *list)
 {
 	struct perf_evsel *evsel, *leader;
+	int count = 0;
 
 	leader = list_entry(list->next, struct perf_evsel, node);
 	leader->leader = NULL;
 
 	list_for_each_entry(evsel, list, node) {
-		if (evsel != leader)
+		if (evsel != leader) {
 			evsel->leader = leader;
+			evsel->group_idx = count++;
+		}
 	}
+	leader->nr_members = count;
 }
 
 void perf_evlist__set_leader(struct perf_evlist *evlist)
 {
-	if (evlist->nr_entries)
+	if (evlist->nr_entries) {
+		evlist->nr_groups = evlist->nr_entries > 1 ? 1 : 0;
 		__perf_evlist__set_leader(&evlist->entries);
+	}
 }
 
 int perf_evlist__add_default(struct perf_evlist *evlist)
