@@ -4,6 +4,7 @@
 
 cachefiles-y := \
 	bind.o \
+	cull_index.o \
 	daemon.o \
 	interface.o \
 	key.o \

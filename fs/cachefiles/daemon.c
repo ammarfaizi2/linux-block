@@ -40,6 +40,7 @@ static int cachefiles_daemon_brun(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_bcull(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_bstop(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_cull(struct cachefiles_cache *, char *);
+static int cachefiles_daemon_cullslot(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_debug(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_dir(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_inuse(struct cachefiles_cache *, char *);
@@ -59,7 +60,7 @@ const struct file_operations cachefiles_daemon_fops = {
 };
 
 struct cachefiles_daemon_cmd {
-	char name[8];
+	char name[16];
 	int (*handler)(struct cachefiles_cache *cache, char *args);
 };
 
@@ -69,6 +70,7 @@ static const struct cachefiles_daemon_cmd cachefiles_daemon_cmds[] = {
 	{ "bcull",	cachefiles_daemon_bcull		},
 	{ "bstop",	cachefiles_daemon_bstop		},
 	{ "cull",	cachefiles_daemon_cull		},
+	{ "cullslot",	cachefiles_daemon_cullslot	},
 	{ "debug",	cachefiles_daemon_debug		},
 	{ "dir",	cachefiles_daemon_dir		},
 	{ "frun",	cachefiles_daemon_frun		},
@@ -105,9 +107,12 @@ static int cachefiles_daemon_open(struct inode *inode, struct file *file)
 		return -ENOMEM;
 	}
 
+	init_rwsem(&cache->cull_file_sem);
 	mutex_init(&cache->daemon_mutex);
+	cache->cull_bitmap = RB_ROOT;
 	cache->active_nodes = RB_ROOT;
 	rwlock_init(&cache->active_lock);
+	spin_lock_init(&cache->cull_bitmap_lock);
 	init_waitqueue_head(&cache->daemon_pollwq);
 
 	/* set default caching limits
@@ -575,9 +580,6 @@ static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
 	/* extract the directory dentry from the cwd */
 	get_fs_pwd(current->fs, &path);
 
-	if (!S_ISDIR(path.dentry->d_inode->i_mode))
-		goto notdir;
-
 	cachefiles_begin_secure(cache, &saved_cred);
 	ret = cachefiles_cull(cache, path.dentry, args);
 	cachefiles_end_secure(cache, saved_cred);
@@ -586,13 +588,58 @@ static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
 	_leave(" = %d", ret);
 	return ret;
 
-notdir:
-	path_put(&path);
-	kerror("cull command requires dirfd to be a directory");
-	return -ENOTDIR;
+inval:
+	kerror("cull command requires a filename");
+	return -EINVAL;
+}
+
+/*
+ * request a node in the cache be culled (specified by cull index slot number)
+ * - command: "cullslot <number>"
+ */
+static int cachefiles_daemon_cullslot(struct cachefiles_cache *cache,
+				      char *args)
+{
+	const struct cred *saved_cred;
+	unsigned long slot;
+	char *end;
+	int ret;
+
+	_enter(",%s", args);
+
+	slot = simple_strtoul(args, &end, 0);
+	if (*end)
+		goto inval;
+
+	if (!test_bit(CACHEFILES_READY, &cache->flags)) {
+		kerror("cullslot applied to unready cache");
+		return -EIO;
+	}
+
+	if (test_bit(CACHEFILES_DEAD, &cache->flags)) {
+		kerror("cullslot applied to dead cache");
+		return -EIO;
+	}
+
+	if (slot > INT_MAX) {
+		kerror("cullslot given out-of-range slot");
+		return -EIO;
+	}
+
+	if (slot >= cache->cull_nslots) {
+		kerror("cullslot given unallocated slot");
+		return -EIO;
+	}
+
+	cachefiles_begin_secure(cache, &saved_cred);
+	ret = cachefiles_cullslot(cache, slot);
+	cachefiles_end_secure(cache, saved_cred);
+
+	_leave(" = %d", ret);
+	return ret;
 
 inval:
-	kerror("cull command requires dirfd and filename");
+	kerror("cullslot command requires a valid slot number");
 	return -EINVAL;
 }
 
