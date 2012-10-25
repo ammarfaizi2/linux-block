@@ -334,26 +334,6 @@ static void hists__name_resort(struct hists *self, bool sort)
 		self->entries = tmp;
 }
 
-static struct hist_entry *hists__find_entry(struct hists *self,
-					    struct hist_entry *he)
-{
-	struct rb_node *n = self->entries.rb_node;
-
-	while (n) {
-		struct hist_entry *iter = rb_entry(n, struct hist_entry, rb_node);
-		int64_t cmp = hist_entry__cmp(he, iter);
-
-		if (cmp < 0)
-			n = n->rb_left;
-		else if (cmp > 0)
-			n = n->rb_right;
-		else
-			return iter;
-	}
-
-	return NULL;
-}
-
 static void hists__match(struct hists *older, struct hists *newer)
 {
 	struct rb_node *nd;
