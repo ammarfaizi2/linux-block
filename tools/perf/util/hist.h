@@ -103,6 +103,7 @@ size_t hists__fprintf(struct hists *self, bool show_header, int max_rows,
 
 int hist_entry__inc_addr_samples(struct hist_entry *self, int evidx, u64 addr);
 int hist_entry__annotate(struct hist_entry *self, size_t privsize);
+struct hist_entry *hists__find_entry(struct hists *hists, struct hist_entry *he);
 
 void hists__filter_by_dso(struct hists *hists);
 void hists__filter_by_thread(struct hists *hists);
