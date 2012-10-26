@@ -376,6 +376,39 @@ struct hist_entry *__hists__add_entry(struct hists *self,
 	return add_hist_entry(self, &entry, al, period);
 }
 
+static struct hist_entry *hists__add_dummy_entry(struct hists *hists,
+						 struct hist_entry *pair)
+{
+	struct addr_location al = {
+		.thread   = pair->thread,
+		.map	  = pair->ms.map,
+		.sym	  = pair->ms.sym,
+		.addr	  = pair->ip,
+		.level	  = pair->level,
+		.filtered = pair->filtered,
+		.cpu	  = pair->cpu,
+	};
+	struct hist_entry entry = {
+		.thread	= pair->thread,
+		.ms = {
+			.map = pair->ms.map,
+			.sym = pair->ms.sym,
+		},
+		.cpu	 = pair->cpu,
+		.ip	 = pair->ip,
+		.level	 = pair->level,
+		.stat = {
+			.period	   = 0,
+			.nr_events = 0,
+		},
+		.parent	  = pair->parent,
+		.filtered = pair->filtered,
+		.hists	  = hists,
+	};
+
+	return add_hist_entry(hists, &entry, &al, 0);
+}
+
 int64_t
 hist_entry__cmp(struct hist_entry *left, struct hist_entry *right)
 {
@@ -733,4 +766,37 @@ struct hist_entry *hists__find_entry(struct hists *hists, struct hist_entry *he)
 	}
 
 	return NULL;
+}
+
+int hists__link(struct hists *leader, struct hists *other)
+{
+	struct rb_node *nd;
+	struct hist_entry *pos, *pair;
+	/*
+ 	 * First we look for pairs to link to the leader buckets (hist_entries):
+	 */
+	for (nd = rb_first(&leader->entries); nd; nd = rb_next(nd)) {
+		pos  = rb_entry(nd, struct hist_entry, rb_node);
+		pair = hists__find_entry(other, pos);
+
+		if (pair)
+			hist__entry_add_pair(pos, pair);
+	}
+	/*
+ 	 * Now we look for entries in the other hists that are not present
+ 	 * in the leader, if we find them, just add a dummy entry on the leader
+ 	 * hists, with period=0, nr_events=0, to serve as the list header.
+	 */
+	for (nd = rb_first(&other->entries); nd; nd = rb_next(nd)) {
+		pos = rb_entry(nd, struct hist_entry, rb_node),
+
+		if (!hist_entry__has_pairs(pos)) {
+			pair = hists__add_dummy_entry(leader, pos);
+			if (pair == NULL)
+				return -1;
+			hist__entry_add_pair(pair, pos);
+		}
+	}
+
+	return 0;
 }
