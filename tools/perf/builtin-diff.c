@@ -334,19 +334,6 @@ static void hists__name_resort(struct hists *self, bool sort)
 		self->entries = tmp;
 }
 
-static void hists__match(struct hists *older, struct hists *newer)
-{
-	struct rb_node *nd;
-
-	for (nd = rb_first(&newer->entries); nd; nd = rb_next(nd)) {
-		struct hist_entry *pos = rb_entry(nd, struct hist_entry, rb_node),
-				  *pair = hists__find_entry(older, pos);
-
-		if (pair)
-			hist__entry_add_pair(pos, pair);
-	}
-}
-
 static struct perf_evsel *evsel_match(struct perf_evsel *evsel,
 				      struct perf_evlist *evlist)
 {
@@ -500,10 +487,12 @@ static void hists__compute_resort(struct hists *hists)
 
 static void hists__process(struct hists *old, struct hists *new)
 {
-	hists__match(old, new);
+	hists__match(new, old);
 
 	if (show_baseline_only)
 		hists__baseline_only(new);
+	else
+		hists__link(new, old);
 
 	if (sort_compute) {
 		hists__precompute(new);
