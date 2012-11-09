@@ -308,8 +308,8 @@ cpu_needs_another_gp(struct rcu_state *rsp, struct rcu_data *rdp)
 
 	ntp = rdp->nxttail[RCU_DONE_TAIL +
 			   (ACCESS_ONCE(rsp->completed) != rdp->completed)];
-	return rdp->nxttail[RCU_DONE_TAIL] && ntp && *ntp &&
-	       !rcu_gp_in_progress(rsp);
+	return (rdp->nxttail[RCU_DONE_TAIL] && ntp && *ntp &&
+	        !rcu_gp_in_progress(rsp)) || rcu_nocb_needs_gp(rsp);
 }
 
 /*
@@ -1209,6 +1209,7 @@ int rcu_gp_fqs(struct rcu_state *rsp, int fqs_state_in)
 static void rcu_gp_cleanup(struct rcu_state *rsp)
 {
 	unsigned long gp_duration;
+	int nocb = 0;
 	struct rcu_data *rdp;
 	struct rcu_node *rnp = rcu_get_root(rsp);
 
@@ -1239,11 +1240,13 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
 	rcu_for_each_node_breadth_first(rsp, rnp) {
 		raw_spin_lock_irq(&rnp->lock);
 		rnp->completed = rsp->gpnum;
+		nocb += rcu_nocb_gp_cleanup(rsp, rnp);
 		raw_spin_unlock_irq(&rnp->lock);
 		cond_resched();
 	}
 	rnp = rcu_get_root(rsp);
 	raw_spin_lock_irq(&rnp->lock);
+	rcu_nocb_gp_set(rnp, nocb);
 
 	rsp->completed = rsp->gpnum; /* Declare grace period done. */
 	trace_rcu_grace_period(rsp->name, rsp->completed, "end");
@@ -2781,10 +2784,7 @@ static int __cpuinit rcu_cpu_notify(struct notifier_block *self,
 		rcu_boost_kthread_setaffinity(rnp, -1);
 		break;
 	case CPU_DOWN_PREPARE:
-		if (nocb_cpu_expendable(cpu))
-			rcu_boost_kthread_setaffinity(rnp, cpu);
-		else
-			ret = NOTIFY_BAD;
+		rcu_boost_kthread_setaffinity(rnp, cpu);
 		break;
 	case CPU_DYING:
 	case CPU_DYING_FROZEN:
@@ -2939,6 +2939,7 @@ static void __init rcu_init_one(struct rcu_state *rsp,
 			}
 			rnp->level = i;
 			INIT_LIST_HEAD(&rnp->blkd_tasks);
+			rcu_init_one_nocb(rnp);
 		}
 	}
 
@@ -3024,7 +3025,6 @@ void __init rcu_init(void)
 	rcu_init_one(&rcu_sched_state, &rcu_sched_data);
 	rcu_init_one(&rcu_bh_state, &rcu_bh_data);
 	__rcu_init_preempt();
-	rcu_init_nocb();
 	 open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
 
 	/*
