@@ -893,7 +893,7 @@ static void cgroup_diput(struct dentry *dentry, struct inode *inode)
 
 		simple_xattrs_free(&cgrp->xattrs);
 
-		kfree_rcu(cgrp, rcu_head);
+		kfree(cgrp);
 	} else {
 		struct cfent *cfe = __d_cfe(dentry);
 		struct cgroup *cgrp = dentry->d_parent->d_fsdata;
