@@ -22,13 +22,15 @@ With the above step, the initial group acting as the parent accounting group
 becomes visible at '/sys/fs/cgroup/net_prio'.  This group includes all tasks in
 the system. '/sys/fs/cgroup/net_prio/tasks' lists the tasks in this cgroup.
 
-Each net_prio cgroup contains two files that are subsystem specific
+Each net_prio cgroup contains three files that are subsystem specific
 
-net_prio.prioidx
+* net_prio.prioidx
+
 This file is read-only, and is simply informative.  It contains a unique integer
 value that the kernel uses as an internal representation of this cgroup.
 
-net_prio.ifpriomap
+* net_prio.ifpriomap
+
 This file contains a map of the priorities assigned to traffic originating from
 processes in this group and egressing the system on various interfaces. It
 contains a list of tuples in the form <ifname priority>.  Contents of this file
@@ -51,3 +53,16 @@ One usage for the net_prio cgroup is with mqprio qdisc allowing application
 traffic to be steered to hardware/driver based traffic classes. These mappings
 can then be managed by administrators or other networking protocols such as
 DCBX.
+
+If priority is not set for an interface, the parent's priority is inherited.
+For the root cgroup, there's no parent and all unset priorities are zero.
+Priority can be unset by echoing negative value to ifpriomap.  For example,
+the following would undo the configuration done above and make iscsi cgroup
+to inherit prio for eth0 from the root cgroup.
+
+echo "eth0 -1" > /sys/fs/cgroups/net_prio/iscsi/net_prio.ifpriomap
+
+* net_prio.is_local
+
+This file is read-only and shows whether the net_prio cgroup has its own
+priority configured or inherited priority from its parent for each interface.
