@@ -19,8 +19,18 @@
 
 
 #if IS_ENABLED(CONFIG_NETPRIO_CGROUP)
+
+/*
+ * Auxliary per-cgroup-netdev configuration.  Kept separate from priomap[]
+ * so that priomap[] has better spatial locality.
+ */
+struct netprio_aux {
+	bool		is_local:1;	/* cgroup has priority configured */
+};
+
 struct netprio_map {
 	struct rcu_head rcu;
+	struct netprio_aux *aux;	/* auxiliary config array */
 	u32 priomap_len;
 	u32 priomap[];
 };

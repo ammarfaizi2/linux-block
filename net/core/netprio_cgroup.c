@@ -35,6 +35,14 @@ static inline struct cgroup_netprio_state *cgrp_netprio_state(struct cgroup *cgr
 			    struct cgroup_netprio_state, css);
 }
 
+static void free_netprio_map(struct netprio_map *map)
+{
+	if (map) {
+		kfree(map->aux);
+		kfree_rcu(map, rcu);
+	}
+}
+
 /*
  * Extend @dev->priomap so that it's large enough to accomodate
  * @target_idx.  @dev->priomap.priomap_len > @target_idx after successful
@@ -69,38 +77,55 @@ static int extend_netdev_table(struct net_device *dev, u32 target_idx)
 
 	/* allocate & copy */
 	new = kzalloc(new_sz, GFP_KERNEL);
-	if (!new) {
-		pr_warn("Unable to alloc new priomap!\n");
-		return -ENOMEM;
-	}
+	if (!new)
+		goto enomem;
 
-	if (old)
+	new->aux = kzalloc(new_len * sizeof(new->aux[0]), GFP_KERNEL);
+	if (!new->aux)
+		goto enomem;
+
+	if (old) {
 		memcpy(new->priomap, old->priomap,
 		       old->priomap_len * sizeof(old->priomap[0]));
+		memcpy(new->aux, old->aux,
+		       old->priomap_len * sizeof(old->aux[0]));
+	}
 
 	new->priomap_len = new_len;
 
 	/* install the new priomap */
 	rcu_assign_pointer(dev->priomap, new);
-	if (old)
-		kfree_rcu(old, rcu);
+	free_netprio_map(old);
 	return 0;
+
+enomem:
+	free_netprio_map(new);
+	pr_warn("Unable to alloc new priomap!\n");
+	return -ENOMEM;
 }
 
 /**
  * netprio_prio - return the effective netprio of a cgroup-net_device pair
  * @cgrp: cgroup part of the target pair
  * @dev: net_device part of the target pair
+ * @is_local_p: optional out param, %true if @cgrp-@dev has local config
  *
  * Should be called under RCU read or rtnl lock.
  */
-static u32 netprio_prio(struct cgroup *cgrp, struct net_device *dev)
+static u32 netprio_prio(struct cgroup *cgrp, struct net_device *dev,
+			bool *is_local_p)
 {
 	struct netprio_map *map = rcu_dereference_rtnl(dev->priomap);
+	bool is_local = false;
+	u32 prio = 0;
 
-	if (map && cgrp->id < map->priomap_len)
-		return map->priomap[cgrp->id];
-	return 0;
+	if (map && cgrp->id < map->priomap_len) {
+		is_local = map->aux[cgrp->id].is_local;
+		prio = map->priomap[cgrp->id];
+	}
+	if (is_local_p)
+		*is_local_p = is_local;
+	return prio;
 }
 
 /**
@@ -108,19 +133,20 @@ static u32 netprio_prio(struct cgroup *cgrp, struct net_device *dev)
  * @cgrp: cgroup part of the target pair
  * @dev: net_device part of the target pair
  * @prio: prio to set
+ * @is_local: indicates whether @prio is @cgrp's local prio configuration
  *
  * Set netprio to @prio on @cgrp-@dev pair.  Should be called under rtnl
- * lock and may fail under memory pressure for non-zero @prio.
+ * lock and may fail under memory pressure if (@prio || @is_local).
  */
 static int netprio_set_prio(struct cgroup *cgrp, struct net_device *dev,
-			    u32 prio)
+			    u32 prio, bool is_local)
 {
 	struct netprio_map *map;
 	int ret;
 
-	/* avoid extending priomap for zero writes */
+	/* avoid extending priomap for clearing zero writes */
 	map = rtnl_dereference(dev->priomap);
-	if (!prio && (!map || map->priomap_len <= cgrp->id))
+	if (!is_local && !prio && (!map || map->priomap_len <= cgrp->id))
 		return 0;
 
 	ret = extend_netdev_table(dev, cgrp->id);
@@ -128,6 +154,7 @@ static int netprio_set_prio(struct cgroup *cgrp, struct net_device *dev,
 		return ret;
 
 	map = rtnl_dereference(dev->priomap);
+	map->aux[cgrp->id].is_local = is_local;
 	map->priomap[cgrp->id] = prio;
 	return 0;
 }
@@ -153,7 +180,7 @@ static void cgrp_css_free(struct cgroup *cgrp)
 
 	rtnl_lock();
 	for_each_netdev(&init_net, dev)
-		WARN_ON_ONCE(netprio_set_prio(cgrp, dev, 0));
+		WARN_ON_ONCE(netprio_set_prio(cgrp, dev, 0, false));
 	rtnl_unlock();
 	kfree(cs);
 }
@@ -170,7 +197,7 @@ static int read_priomap(struct cgroup *cont, struct cftype *cft,
 
 	rcu_read_lock();
 	for_each_netdev_rcu(&init_net, dev)
-		cb->fill(cb, dev->name, netprio_prio(cont, dev));
+		cb->fill(cb, dev->name, netprio_prio(cont, dev, NULL));
 	rcu_read_unlock();
 	return 0;
 }
@@ -180,11 +207,16 @@ static int write_priomap(struct cgroup *cgrp, struct cftype *cft,
 {
 	char devname[IFNAMSIZ + 1];
 	struct net_device *dev;
+	s64 v;
 	u32 prio;
+	bool is_local;
 	int ret;
 
-	if (sscanf(buffer, "%"__stringify(IFNAMSIZ)"s %u", devname, &prio) != 2)
+	if (sscanf(buffer, "%"__stringify(IFNAMSIZ)"s %lld", devname, &v) != 2)
 		return -EINVAL;
+
+	prio = clamp_val(v, 0, UINT_MAX);
+	is_local = v >= 0;
 
 	dev = dev_get_by_name(&init_net, devname);
 	if (!dev)
@@ -192,11 +224,27 @@ static int write_priomap(struct cgroup *cgrp, struct cftype *cft,
 
 	rtnl_lock();
 
-	ret = netprio_set_prio(cgrp, dev, prio);
+	ret = netprio_set_prio(cgrp, dev, prio, is_local);
 
 	rtnl_unlock();
 	dev_put(dev);
 	return ret;
+}
+
+static int netprio_read_is_local(struct cgroup *cont, struct cftype *cft,
+				 struct seq_file *m)
+{
+	struct net_device *dev;
+
+	rtnl_lock();
+	for_each_netdev(&init_net, dev) {
+		bool is_local;
+
+		netprio_prio(cont, dev, &is_local);
+		seq_printf(m, "%s %d\n", dev->name, is_local);
+	}
+	rtnl_unlock();
+	return 0;
 }
 
 static int update_netprio(const void *v, struct file *file, unsigned n)
@@ -230,6 +278,10 @@ static struct cftype ss_files[] = {
 		.name = "ifpriomap",
 		.read_map = read_priomap,
 		.write_string = write_priomap,
+	},
+	{
+		.name = "is_local",
+		.read_seq_string = netprio_read_is_local,
 	},
 	{ }	/* terminate */
 };
@@ -270,7 +322,7 @@ static int netprio_device_event(struct notifier_block *unused,
 		old = rtnl_dereference(dev->priomap);
 		RCU_INIT_POINTER(dev->priomap, NULL);
 		if (old)
-			kfree_rcu(old, rcu);
+			free_netprio_map(old);
 		break;
 	}
 	return NOTIFY_DONE;
@@ -308,7 +360,7 @@ static void __exit exit_cgroup_netprio(void)
 		old = rtnl_dereference(dev->priomap);
 		RCU_INIT_POINTER(dev->priomap, NULL);
 		if (old)
-			kfree_rcu(old, rcu);
+			free_netprio_map(old);
 	}
 	rtnl_unlock();
 }
