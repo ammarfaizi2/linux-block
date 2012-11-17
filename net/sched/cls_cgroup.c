@@ -70,19 +70,36 @@ static u64 read_classid(struct cgroup *cgrp, struct cftype *cft)
 	return cgrp_cls_state(cgrp)->classid;
 }
 
-static int write_classid(struct cgroup *cgrp, struct cftype *cft, u64 value)
+static int write_classid(struct cgroup *cgrp, struct cftype *cft,
+			 const char *buf)
 {
+	struct cgroup_cls_state *cs = cgrp_cls_state(cgrp);
+	s64 v;
+
+	if (sscanf(buf, "%lld", &v) != 1)
+		return -EINVAL;
+
 	mutex_lock(&netcls_mutex);
-	cgrp_cls_state(cgrp)->classid = (u32) value;
+	cs->classid = clamp_val(v, 0, UINT_MAX);
+	cs->is_local = v >= 0;
 	mutex_unlock(&netcls_mutex);
 	return 0;
+}
+
+static u64 read_is_local(struct cgroup *cgrp, struct cftype *cft)
+{
+	return cgrp_cls_state(cgrp)->is_local;
 }
 
 static struct cftype ss_files[] = {
 	{
 		.name = "classid",
 		.read_u64 = read_classid,
-		.write_u64 = write_classid,
+		.write_string = write_classid,
+	},
+	{
+		.name = "is_local",
+		.read_u64 = read_is_local,
 	},
 	{ }	/* terminate */
 };

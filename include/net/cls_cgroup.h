@@ -22,6 +22,7 @@ struct cgroup_cls_state
 {
 	struct cgroup_subsys_state css;
 	u32 classid;
+	bool is_local;	/* class id is explicitly configured for this cgroup */
 };
 
 extern void sock_update_classid(struct sock *sk);
