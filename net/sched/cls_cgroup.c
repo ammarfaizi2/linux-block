@@ -70,6 +70,44 @@ static u64 read_classid(struct cgroup *cgrp, struct cftype *cft)
 	return cgrp_cls_state(cgrp)->classid;
 }
 
+/**
+ * propagate_classid - proapgate classid configuration downwards
+ * @root: cgroup to propagate classid down from
+ *
+ * Propagate @root's classid to descendants of @root.  Each descendant of
+ * @root re-inherits from its parent in pre-order tree walk.  This should
+ * be called after the classid of @root is changed to keep the descendants
+ * up-to-date.
+ *
+ * This may race with a new cgroup coming online and propagation may happen
+ * before finishing ->css_online() or while being taken offline.  As a
+ * cgroup_cls_state is ready after ->css_alloc() and propagation doesn't
+ * affect the parent, this is safe.
+ *
+ * Should be called with netcls_mutex held.
+ */
+static void propagate_classid(struct cgroup *root)
+{
+	struct cgroup *pos;
+
+	lockdep_assert_held(&netcls_mutex);
+	rcu_read_lock();
+
+	cgroup_for_each_descendant_pre(pos, root) {
+		struct cgroup_cls_state *cs = cgrp_cls_state(pos);
+
+		/*
+		 * Don't propagate if @pos has local configuration.  We can
+		 * skip @pos's subtree but don't have to.  Just propagate
+		 * through for simplicity.
+		 */
+		if (!cs->is_local)
+			cs->classid = cgrp_cls_state(pos->parent)->classid;
+	}
+
+	rcu_read_unlock();
+}
+
 static int write_classid(struct cgroup *cgrp, struct cftype *cft,
 			 const char *buf)
 {
@@ -80,8 +118,19 @@ static int write_classid(struct cgroup *cgrp, struct cftype *cft,
 		return -EINVAL;
 
 	mutex_lock(&netcls_mutex);
-	cs->classid = clamp_val(v, 0, UINT_MAX);
-	cs->is_local = v >= 0;
+
+	if (v >= 0) {
+		cs->classid = clamp_val(v, 0, UINT_MAX);
+		cs->is_local = true;
+	} else {
+		if (cgrp->parent)
+			cs->classid = cgrp_cls_state(cgrp->parent)->classid;
+		else
+			cs->classid = 0;
+		cs->is_local = false;
+	}
+	propagate_classid(cgrp);
+
 	mutex_unlock(&netcls_mutex);
 	return 0;
 }
@@ -112,15 +161,6 @@ struct cgroup_subsys net_cls_subsys = {
 	.subsys_id	= net_cls_subsys_id,
 	.base_cftypes	= ss_files,
 	.module		= THIS_MODULE,
-
-	/*
-	 * While net_cls cgroup has the rudimentary hierarchy support of
-	 * inheriting the parent's classid on cgroup creation, it doesn't
-	 * properly propagates config changes in ancestors to their
-	 * descendents.  A child should follow the parent's configuration
-	 * but be allowed to override it.  Fix it and remove the following.
-	 */
-	.broken_hierarchy = true,
 };
 
 struct cls_cgroup_head {
