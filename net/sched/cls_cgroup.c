@@ -17,10 +17,13 @@
 #include <linux/skbuff.h>
 #include <linux/cgroup.h>
 #include <linux/rcupdate.h>
+#include <linux/mutex.h>
 #include <net/rtnetlink.h>
 #include <net/pkt_cls.h>
 #include <net/sock.h>
 #include <net/cls_cgroup.h>
+
+static DEFINE_MUTEX(netcls_mutex);
 
 static inline struct cgroup_cls_state *cgrp_cls_state(struct cgroup *cgrp)
 {
@@ -42,10 +45,19 @@ static struct cgroup_subsys_state *cgrp_css_alloc(struct cgroup *cgrp)
 	if (!cs)
 		return ERR_PTR(-ENOMEM);
 
-	if (cgrp->parent)
-		cs->classid = cgrp_cls_state(cgrp->parent)->classid;
-
 	return &cs->css;
+}
+
+/* @cgrp coming online, inherit the parent's classid */
+static int cgrp_css_online(struct cgroup *cgrp)
+{
+	if (!cgrp->parent)
+		return 0;
+
+	mutex_lock(&netcls_mutex);
+	cgrp_cls_state(cgrp)->classid = cgrp_cls_state(cgrp->parent)->classid;
+	mutex_unlock(&netcls_mutex);
+	return 0;
 }
 
 static void cgrp_css_free(struct cgroup *cgrp)
@@ -60,7 +72,9 @@ static u64 read_classid(struct cgroup *cgrp, struct cftype *cft)
 
 static int write_classid(struct cgroup *cgrp, struct cftype *cft, u64 value)
 {
+	mutex_lock(&netcls_mutex);
 	cgrp_cls_state(cgrp)->classid = (u32) value;
+	mutex_unlock(&netcls_mutex);
 	return 0;
 }
 
@@ -76,6 +90,7 @@ static struct cftype ss_files[] = {
 struct cgroup_subsys net_cls_subsys = {
 	.name		= "net_cls",
 	.css_alloc	= cgrp_css_alloc,
+	.css_online	= cgrp_css_online,
 	.css_free	= cgrp_css_free,
 	.subsys_id	= net_cls_subsys_id,
 	.base_cftypes	= ss_files,
