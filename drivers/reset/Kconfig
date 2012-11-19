@@ -11,3 +11,16 @@ menuconfig RESET_CONTROLLER
 	  via GPIOs or SoC-internal reset controller modules.
 
 	  If unsure, say no.
+
+if RESET_CONTROLLER
+
+config RESET_GPIO
+	tristate "GPIO reset controller support"
+	depends on GENERIC_GPIO
+	help
+	  This driver provides support for reset lines that are controlled
+	  directly by GPIOs.
+	  The delay between assertion and de-assertion of the reset signal
+	  can be configured.
+
+endif
