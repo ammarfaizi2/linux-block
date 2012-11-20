@@ -2395,7 +2395,7 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
 
 		/* Clean up locking and irq state. */
 		if (rnp != rnp_root)
-			raw_spin_unlock_irqrestore(&rnp_root->lock, flags);
+			raw_spin_unlock_irqrestore(&rnp->lock, flags);
 		else
 			local_irq_restore(flags);
 	}
