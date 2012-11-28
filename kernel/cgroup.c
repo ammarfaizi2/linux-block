@@ -3009,6 +3009,32 @@ struct cgroup *cgroup_next_descendant_pre(struct cgroup *pos,
 }
 EXPORT_SYMBOL_GPL(cgroup_next_descendant_pre);
 
+/**
+ * cgroup_rightmost_descendant - return the rightmost descendant of a cgroup
+ * @cgrp: cgroup of interest
+ *
+ * Return the rightmost descendant of @cgrp.  If there's no descendant,
+ * @cgrp is returned.  This can be used during pre-order traversal to skip
+ * subtree of @cgrp.
+ */
+struct cgroup *cgroup_rightmost_descendant(struct cgroup *pos)
+{
+	struct cgroup *last, *tmp;
+
+	WARN_ON_ONCE(!rcu_read_lock_held());
+
+	do {
+		last = pos;
+		/* ->prev isn't RCU safe, walk ->next till the end */
+		pos = NULL;
+		list_for_each_entry_rcu(tmp, &last->children, sibling)
+			pos = tmp;
+	} while (pos);
+
+	return last;
+}
+EXPORT_SYMBOL_GPL(cgroup_rightmost_descendant);
+
 static struct cgroup *cgroup_leftmost_descendant(struct cgroup *pos)
 {
 	struct cgroup *last;
