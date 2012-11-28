@@ -1365,8 +1365,11 @@ rcu_start_gp(struct rcu_state *rsp, unsigned long flags)
 	 * rcu_node ->lock while holding the root rcu_node ->lock.
 	 */
 	rdp->nxttail[RCU_NEXT_READY_TAIL] = rdp->nxttail[RCU_NEXT_TAIL];
-	if (rdp->completed == rsp->completed)
+	trace_rcu_grace_period(rsp->name, rdp->gpnum, "AccReadyCB");
+	if (rdp->completed == rsp->completed) {
 		rdp->nxttail[RCU_WAIT_TAIL] = rdp->nxttail[RCU_NEXT_TAIL];
+		trace_rcu_grace_period(rsp->name, rdp->gpnum, "AccWaitCB");
+	}
 
 	rsp->gp_flags = RCU_GP_FLAG_INIT;
 	raw_spin_unlock(&rnp->lock); /* Interrupts remain disabled. */
