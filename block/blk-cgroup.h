@@ -156,6 +156,10 @@ u64 __blkg_prfill_rwstat(struct seq_file *sf, struct blkg_policy_data *pd,
 u64 blkg_prfill_stat(struct seq_file *sf, struct blkg_policy_data *pd, int off);
 u64 blkg_prfill_rwstat(struct seq_file *sf, struct blkg_policy_data *pd,
 		       int off);
+u64 blkg_prfill_stat_recursive(struct seq_file *sf,
+			       struct blkg_policy_data *pd, int off);
+u64 blkg_prfill_rwstat_recursive(struct seq_file *sf,
+				 struct blkg_policy_data *pd, int off);
 
 struct blkg_conf_ctx {
 	struct gendisk			*disk;
