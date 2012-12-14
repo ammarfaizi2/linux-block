@@ -51,6 +51,9 @@ struct kioctx;
 #define kiocbIsKicked(iocb)	test_bit(KIF_KICKED, &(iocb)->ki_flags)
 #define kiocbIsCancelled(iocb)	test_bit(KIF_CANCELLED, &(iocb)->ki_flags)
 
+struct kiocb;
+typedef int (iocb_cancel_fn)(struct kiocb *, struct io_event *);
+
 /* is there a better place to document function pointer methods? */
 /**
  * ki_retry	-	iocb forward progress callback
@@ -93,7 +96,7 @@ struct kiocb {
 
 	struct file		*ki_filp;
 	struct kioctx		*ki_ctx;	/* may be NULL for sync ops */
-	int			(*ki_cancel)(struct kiocb *, struct io_event *);
+	iocb_cancel_fn		*ki_cancel;
 	ssize_t			(*ki_retry)(struct kiocb *);
 	void			(*ki_dtor)(struct kiocb *);
 
@@ -244,6 +247,21 @@ static inline long do_io_submit(aio_context_t ctx_id, long nr,
 static inline struct kiocb *list_kiocb(struct list_head *h)
 {
 	return list_entry(h, struct kiocb, ki_list);
+}
+
+static inline void iocb_set_cancel(struct kiocb *req, iocb_cancel_fn *cancel)
+{
+	struct kioctx *ctx = req->ki_ctx;
+
+	/*
+	 * Sync, no need for cancel)
+	 */
+	if (ctx) {
+		req->ki_cancel = cancel;
+		spin_lock_irq(&ctx->ctx_lock);
+		list_add_tail(&req->ki_run_list, &ctx->run_list);
+		spin_unlock_irq(&ctx->ctx_lock);
+	}
 }
 
 /* for sysctl: */
