@@ -6,8 +6,10 @@
 #define __LINUX_BLK_TYPES_H
 
 #ifdef CONFIG_BLOCK
+#ifdef __KERNEL__
 
 #include <linux/types.h>
+#include <linux/llist.h>
 
 struct bio_set;
 struct bio;
@@ -61,7 +63,11 @@ struct bio {
 
 	bio_end_io_t		*bi_end_io;
 
-	void			*bi_private;
+	union {
+		void			*bi_private;
+		struct llist_node	bi_llist_node;
+	};
+
 #ifdef CONFIG_BLK_CGROUP
 	/*
 	 * Optional ioc and css associated with this bio.  Put on bio
@@ -129,6 +135,7 @@ struct bio {
 #define BIO_POOL_MASK		(1UL << BIO_POOL_OFFSET)
 #define BIO_POOL_IDX(bio)	((bio)->bi_flags >> BIO_POOL_OFFSET)
 
+#endif /* __KERNEL__ */
 #endif /* CONFIG_BLOCK */
 
 /*

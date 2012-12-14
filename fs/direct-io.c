@@ -127,8 +127,8 @@ struct dio {
 	int page_errors;		/* errno from get_user_pages() */
 	int is_async;			/* is IO async ? */
 	int io_error;			/* IO error in completion path */
-	unsigned long refcount;		/* direct_io_worker() and bios */
-	struct bio *bio_list;		/* singly linked via bi_private */
+	atomic_t refcount;		/* direct_io_worker() and bios */
+	struct llist_head ____cacheline_aligned_in_smp bio_list;	/* singly linked via bi_private */
 	struct task_struct *waiter;	/* waiting task (NULL if none) */
 
 	/* AIO related stuff */
@@ -142,6 +142,11 @@ struct dio {
 	 */
 	struct page *pages[DIO_PAGES];	/* page buffer */
 } ____cacheline_aligned_in_smp;
+
+/*
+ * We use bi_private as our link node
+ */
+#define dio_bio_llist_node(bio)		((struct llist_node *) &(bio)->bi_private)
 
 static struct kmem_cache *dio_cache __read_mostly;
 
@@ -277,16 +282,13 @@ static void dio_bio_end_aio(struct bio *bio, int error)
 {
 	struct dio *dio = bio->bi_private;
 	unsigned long remaining;
-	unsigned long flags;
 
 	/* cleanup the bio */
 	dio_bio_complete(dio, bio);
 
-	spin_lock_irqsave(&dio->bio_lock, flags);
-	remaining = --dio->refcount;
+	remaining = atomic_dec_return(&dio->refcount);
 	if (remaining == 1 && dio->waiter)
 		wake_up_process(dio->waiter);
-	spin_unlock_irqrestore(&dio->bio_lock, flags);
 
 	if (remaining == 0) {
 		dio_complete(dio, dio->iocb->ki_pos, 0, true);
@@ -304,14 +306,11 @@ static void dio_bio_end_aio(struct bio *bio, int error)
 static void dio_bio_end_io(struct bio *bio, int error)
 {
 	struct dio *dio = bio->bi_private;
-	unsigned long flags;
 
-	spin_lock_irqsave(&dio->bio_lock, flags);
-	bio->bi_private = dio->bio_list;
-	dio->bio_list = bio;
-	if (--dio->refcount == 1 && dio->waiter)
+	llist_add(&bio->bi_llist_node, &dio->bio_list);
+
+	if (atomic_dec_return(&dio->refcount) == 1 && dio->waiter)
 		wake_up_process(dio->waiter);
-	spin_unlock_irqrestore(&dio->bio_lock, flags);
 }
 
 /**
@@ -368,13 +367,10 @@ dio_bio_alloc(struct dio *dio, struct dio_submit *sdio,
 static inline void dio_bio_submit(struct dio *dio, struct dio_submit *sdio)
 {
 	struct bio *bio = sdio->bio;
-	unsigned long flags;
 
 	bio->bi_private = dio;
 
-	spin_lock_irqsave(&dio->bio_lock, flags);
-	dio->refcount++;
-	spin_unlock_irqrestore(&dio->bio_lock, flags);
+	atomic_inc(&dio->refcount);
 
 	if (dio->is_async && dio->rw == READ)
 		bio_set_pages_dirty(bio);
@@ -397,42 +393,6 @@ static inline void dio_cleanup(struct dio *dio, struct dio_submit *sdio)
 {
 	while (dio_pages_present(sdio))
 		page_cache_release(dio_get_page(dio, sdio));
-}
-
-/*
- * Wait for the next BIO to complete.  Remove it and return it.  NULL is
- * returned once all BIOs have been completed.  This must only be called once
- * all bios have been issued so that dio->refcount can only decrease.  This
- * requires that that the caller hold a reference on the dio.
- */
-static struct bio *dio_await_one(struct dio *dio)
-{
-	unsigned long flags;
-	struct bio *bio = NULL;
-
-	spin_lock_irqsave(&dio->bio_lock, flags);
-
-	/*
-	 * Wait as long as the list is empty and there are bios in flight.  bio
-	 * completion drops the count, maybe adds to the list, and wakes while
-	 * holding the bio_lock so we don't need set_current_state()'s barrier
-	 * and can call it after testing our condition.
-	 */
-	while (dio->refcount > 1 && dio->bio_list == NULL) {
-		__set_current_state(TASK_UNINTERRUPTIBLE);
-		dio->waiter = current;
-		spin_unlock_irqrestore(&dio->bio_lock, flags);
-		io_schedule();
-		/* wake up sets us TASK_RUNNING */
-		spin_lock_irqsave(&dio->bio_lock, flags);
-		dio->waiter = NULL;
-	}
-	if (dio->bio_list) {
-		bio = dio->bio_list;
-		dio->bio_list = bio->bi_private;
-	}
-	spin_unlock_irqrestore(&dio->bio_lock, flags);
-	return bio;
 }
 
 /*
@@ -463,6 +423,40 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
 }
 
 /*
+ * Wait for the next BIO to complete.  Remove it and return it.  NULL is
+ * returned once all BIOs have been completed.  This must only be called once
+ * all bios have been issued so that dio->refcount can only decrease.  This
+ * requires that that the caller hold a reference on the dio.
+ */
+static struct llist_node *dio_await_some(struct dio *dio)
+{
+	struct llist_node *ret = NULL;
+
+	/*
+	 * Wait as long as the list is empty and there are bios in flight.  bio
+	 * completion drops the count, maybe adds to the list, and wakes while
+	 * holding the bio_lock so we don't need set_current_state()'s barrier
+	 * and can call it after testing our condition.
+	 */
+	while (atomic_read(&dio->refcount) > 1) {
+		__set_current_state(TASK_UNINTERRUPTIBLE);
+		ret = llist_del_all(&dio->bio_list);
+		if (ret)
+			break;
+		dio->waiter = current;
+		io_schedule();
+		/* wake up sets us TASK_RUNNING */
+		dio->waiter = NULL;
+	}
+
+	if (!ret)
+		ret = llist_del_all(&dio->bio_list);
+
+	__set_current_state(TASK_RUNNING);
+	return ret;
+}
+
+/*
  * Wait on and process all in-flight BIOs.  This must only be called once
  * all bios have been issued so that the refcount can only decrease.
  * This just waits for all bios to make it through dio_bio_complete.  IO
@@ -471,12 +465,15 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
  */
 static void dio_await_completion(struct dio *dio)
 {
+	struct llist_node *llist, *entry, *tmp;
 	struct bio *bio;
-	do {
-		bio = dio_await_one(dio);
-		if (bio)
+
+	while ((llist = dio_await_some(dio)) != NULL) {
+		llist_for_each(entry, tmp, llist) {
+			bio = llist_entry(entry, struct bio, bi_llist_node);
 			dio_bio_complete(dio, bio);
-	} while (bio);
+		}
+	}
 }
 
 /*
@@ -488,24 +485,25 @@ static void dio_await_completion(struct dio *dio)
  */
 static inline int dio_bio_reap(struct dio *dio, struct dio_submit *sdio)
 {
+	struct llist_node *head, *entry, *tmp;
 	int ret = 0;
 
-	if (sdio->reap_counter++ >= 64) {
-		while (dio->bio_list) {
-			unsigned long flags;
-			struct bio *bio;
-			int ret2;
+	if (sdio->reap_counter++ < 64)
+		return 0;
 
-			spin_lock_irqsave(&dio->bio_lock, flags);
-			bio = dio->bio_list;
-			dio->bio_list = bio->bi_private;
-			spin_unlock_irqrestore(&dio->bio_lock, flags);
+	while ((head = llist_del_all(&dio->bio_list)) != NULL) {
+		struct bio *bio;
+		int ret2;
+
+		llist_for_each(entry, tmp, head) {
+			bio = llist_entry(entry, struct bio, bi_llist_node);
 			ret2 = dio_bio_complete(dio, bio);
 			if (ret == 0)
 				ret = ret2;
 		}
-		sdio->reap_counter = 0;
 	}
+
+	sdio->reap_counter = 0;
 	return ret;
 }
 
@@ -1000,9 +998,6 @@ out:
 
 static inline int drop_refcount(struct dio *dio)
 {
-	int ret2;
-	unsigned long flags;
-
 	/*
 	 * Sync will always be dropping the final ref and completing the
 	 * operation.  AIO can if it was a broken operation described above or
@@ -1014,10 +1009,7 @@ static inline int drop_refcount(struct dio *dio)
 	 * completion paths can drop their ref and use the remaining count to
 	 * decide to wake the submission path atomically.
 	 */
-	spin_lock_irqsave(&dio->bio_lock, flags);
-	ret2 = --dio->refcount;
-	spin_unlock_irqrestore(&dio->bio_lock, flags);
-	return ret2;
+	return atomic_dec_return(&dio->refcount);
 }
 
 /*
@@ -1060,7 +1052,7 @@ do_blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 	ssize_t retval = -EINVAL;
 	loff_t end = offset;
 	struct dio *dio;
-	struct dio_submit sdio = { 0, };
+	struct dio_submit sdio;
 	unsigned long user_addr;
 	size_t bytes;
 	struct buffer_head map_bh = { 0, };
@@ -1150,6 +1142,7 @@ do_blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 
 	dio->inode = inode;
 	dio->rw = rw;
+	memset(&sdio, 0, sizeof(sdio));
 	sdio.blkbits = blkbits;
 	sdio.blkfactor = i_blkbits - blkbits;
 	sdio.block_in_file = offset >> blkbits;
@@ -1164,7 +1157,7 @@ do_blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
 	dio->i_size = i_size_read(inode);
 
 	spin_lock_init(&dio->bio_lock);
-	dio->refcount = 1;
+	atomic_set(&dio->refcount, 1);
 
 	/*
 	 * In case of non-aligned buffers, we may need 2 more
