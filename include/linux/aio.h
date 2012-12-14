@@ -91,7 +91,6 @@ typedef int (iocb_cancel_fn)(struct kiocb *, struct io_event *);
 struct kiocb {
 	struct list_head	ki_run_list;
 	unsigned long		ki_flags;
-	int			ki_users;
 	unsigned		ki_key;		/* id of this request */
 
 	struct file		*ki_filp;
@@ -104,6 +103,8 @@ struct kiocb {
 		void __user		*user;
 		struct task_struct	*tsk;
 	} ki_obj;
+
+	atomic_t		ki_users;
 
 	__u64			ki_user_data;	/* user's data for completion */
 	loff_t			ki_pos;
@@ -146,7 +147,7 @@ static inline bool is_sync_kiocb(struct kiocb *kiocb)
 static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
 {
 	*kiocb = (struct kiocb) {
-			.ki_users = 1,
+			.ki_users = ATOMIC_INIT(1),
 			.ki_key = KIOCB_SYNC_KEY,
 			.ki_filp = filp,
 			.ki_obj.tsk = current,
@@ -206,7 +207,7 @@ struct kioctx {
 
 	struct llist_head	____cacheline_aligned_in_smp done_reqs;
 
-	int			reqs_active;
+	atomic_t		reqs_active;
 	struct list_head	active_reqs;	/* used for cancellation */
 	struct list_head	run_list;	/* used for kicked reqs */
 
@@ -243,11 +244,6 @@ static inline long do_io_submit(aio_context_t ctx_id, long nr,
 				struct iocb __user * __user *iocbpp,
 				bool compat) { return 0; }
 #endif /* CONFIG_AIO */
-
-static inline struct kiocb *list_kiocb(struct list_head *h)
-{
-	return list_entry(h, struct kiocb, ki_list);
-}
 
 static inline void iocb_set_cancel(struct kiocb *req, iocb_cancel_fn *cancel)
 {
