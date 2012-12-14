@@ -90,7 +90,8 @@ static inline void init_llist_head(struct llist_head *list)
 /**
  * llist_for_each - iterate over some deleted entries of a lock-less list
  * @pos:	the &struct llist_node to use as a loop cursor
- * @node:	the first entry of deleted list entries
+ * @n:		another &struct llist_node to use as temp storage
+ * @head:	the first entry of deleted list entries
  *
  * In general, some entries of the lock-less list can be traversed
  * safely only after being deleted from list, so start with an entry
@@ -101,8 +102,9 @@ static inline void init_llist_head(struct llist_head *list)
  * you want to traverse from the oldest to the newest, you must
  * reverse the order by yourself before traversing.
  */
-#define llist_for_each(pos, node)			\
-	for ((pos) = (node); pos; (pos) = (pos)->next)
+#define llist_for_each(pos, n, head)			\
+	for ((pos) = (head), n = (pos) ? pos->next : NULL;	\
+		 pos; (pos) = n, n = (pos) ? (pos)->next : NULL)
 
 /**
  * llist_for_each_entry - iterate over some deleted entries of lock-less list of given type
