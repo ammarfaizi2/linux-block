@@ -80,6 +80,7 @@ extern void do_trace_rcu_torture_read(char *rcutorturename,
 #define UINT_CMP_LT(a, b)	(UINT_MAX / 2 < (a) - (b))
 #define ULONG_CMP_GE(a, b)	(ULONG_MAX / 2 >= (a) - (b))
 #define ULONG_CMP_LT(a, b)	(ULONG_MAX / 2 < (a) - (b))
+#define ulong2long(a)		(*(long *)(&(a)))
 
 /* Exported common interfaces */
 
@@ -756,7 +757,7 @@ static inline void rcu_preempt_sleep_check(void)
  * preemptible RCU implementations (TREE_PREEMPT_RCU and TINY_PREEMPT_RCU)
  * in CONFIG_PREEMPT kernel builds, RCU read-side critical sections may
  * be preempted, but explicit blocking is illegal.  Finally, in preemptible
- * RCU implementations in real-time (CONFIG_PREEMPT_RT) kernel builds,
+ * RCU implementations in real-time (with -rt patchset) kernel builds,
  * RCU read-side critical sections may be preempted and they may also
  * block, but only when acquiring spinlocks that are subject to priority
  * inheritance.
