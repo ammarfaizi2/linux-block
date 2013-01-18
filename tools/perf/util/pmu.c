@@ -85,7 +85,7 @@ static int pmu_format(char *name, struct list_head *format)
 
 static int perf_pmu__new_alias(struct list_head *list, char *name, FILE *file)
 {
-	struct perf_pmu__alias *alias;
+	struct perf_pmu_alias *alias;
 	char buf[256];
 	int ret;
 
@@ -172,7 +172,7 @@ static int pmu_aliases(char *name, struct list_head *head)
 	return 0;
 }
 
-static int pmu_alias_terms(struct perf_pmu__alias *alias,
+static int pmu_alias_terms(struct perf_pmu_alias *alias,
 			   struct list_head *terms)
 {
 	struct parse_events_term *term, *clone;
@@ -360,10 +360,10 @@ struct perf_pmu *perf_pmu__find(char *name)
 	return pmu_lookup(name);
 }
 
-static struct perf_pmu__format*
+static struct perf_pmu_format *
 pmu_find_format(struct list_head *formats, char *name)
 {
-	struct perf_pmu__format *format;
+	struct perf_pmu_format *format;
 
 	list_for_each_entry(format, formats, list)
 		if (!strcmp(format->name, name))
@@ -405,7 +405,7 @@ static int pmu_config_term(struct list_head *formats,
 			   struct perf_event_attr *attr,
 			   struct parse_events_term *term)
 {
-	struct perf_pmu__format *format;
+	struct perf_pmu_format *format;
 	__u64 *vp;
 
 	/*
@@ -471,10 +471,10 @@ int perf_pmu__config(struct perf_pmu *pmu, struct perf_event_attr *attr,
 	return perf_pmu__config_terms(&pmu->format, attr, head_terms);
 }
 
-static struct perf_pmu__alias *pmu_find_alias(struct perf_pmu *pmu,
-					      struct parse_events_term *term)
+static struct perf_pmu_alias *pmu_find_alias(struct perf_pmu *pmu,
+					     struct parse_events_term *term)
 {
-	struct perf_pmu__alias *alias;
+	struct perf_pmu_alias *alias;
 	char *name;
 
 	if (parse_events__is_hardcoded_term(term))
@@ -508,7 +508,7 @@ static struct perf_pmu__alias *pmu_find_alias(struct perf_pmu *pmu,
 int perf_pmu__check_alias(struct perf_pmu *pmu, struct list_head *head_terms)
 {
 	struct parse_events_term *term, *h;
-	struct perf_pmu__alias *alias;
+	struct perf_pmu_alias *alias;
 	int ret;
 
 	list_for_each_entry_safe(term, h, head_terms, list) {
@@ -527,7 +527,7 @@ int perf_pmu__check_alias(struct perf_pmu *pmu, struct list_head *head_terms)
 int perf_pmu__new_format(struct list_head *list, char *name,
 			 int config, unsigned long *bits)
 {
-	struct perf_pmu__format *format;
+	struct perf_pmu_format *format;
 
 	format = zalloc(sizeof(*format));
 	if (!format)
@@ -554,14 +554,14 @@ void perf_pmu__set_format(unsigned long *bits, long from, long to)
 }
 
 static char *format_alias(char *buf, int len, struct perf_pmu *pmu,
-			  struct perf_pmu__alias *alias)
+			  struct perf_pmu_alias *alias)
 {
 	snprintf(buf, len, "%s/%s/", pmu->name, alias->name);
 	return buf;
 }
 
 static char *format_alias_or(char *buf, int len, struct perf_pmu *pmu,
-			     struct perf_pmu__alias *alias)
+			     struct perf_pmu_alias *alias)
 {
 	snprintf(buf, len, "%s OR %s/%s/", alias->name, pmu->name, alias->name);
 	return buf;
@@ -577,7 +577,7 @@ static int cmp_string(const void *a, const void *b)
 void print_pmu_events(const char *event_glob, bool name_only)
 {
 	struct perf_pmu *pmu;
-	struct perf_pmu__alias *alias;
+	struct perf_pmu_alias *alias;
 	char buf[1024];
 	int printed = 0;
 	int len, j;
