@@ -30,6 +30,7 @@
 #include <linux/sched.h> /* for spin_unlock_irq() using preempt_count() m68k */
 #include <linux/tick.h>
 #include <linux/kthread.h>
+#include <linux/cpu.h>
 
 void timecounter_init(struct timecounter *tc,
 		      const struct cyclecounter *cc,
@@ -320,11 +321,13 @@ static void clocksource_watchdog(unsigned long data)
 	 * Cycle through CPUs to check if the CPUs stay synchronized
 	 * to each other.
 	 */
+	get_online_cpus_atomic();
 	next_cpu = cpumask_next(raw_smp_processor_id(), cpu_online_mask);
 	if (next_cpu >= nr_cpu_ids)
 		next_cpu = cpumask_first(cpu_online_mask);
 	watchdog_timer.expires += WATCHDOG_INTERVAL;
 	add_timer_on(&watchdog_timer, next_cpu);
+	put_online_cpus_atomic();
 out:
 	spin_unlock(&watchdog_lock);
 }
@@ -336,7 +339,9 @@ static inline void clocksource_start_watchdog(void)
 	init_timer(&watchdog_timer);
 	watchdog_timer.function = clocksource_watchdog;
 	watchdog_timer.expires = jiffies + WATCHDOG_INTERVAL;
+	get_online_cpus_atomic();
 	add_timer_on(&watchdog_timer, cpumask_first(cpu_online_mask));
+	put_online_cpus_atomic();
 	watchdog_running = 1;
 }
 
