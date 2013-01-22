@@ -349,9 +349,11 @@ void send_IPI_allbutself(int irq)
 {
 	cpumask_t cpumask;
 
+	get_online_cpus_atomic();
 	cpumask_copy(&cpumask, cpu_online_mask);
 	cpumask_clear_cpu(smp_processor_id(), &cpumask);
 	send_IPI_mask(&cpumask, irq);
+	put_online_cpus_atomic();
 }
 
 void arch_send_call_function_ipi_mask(const struct cpumask *mask)
