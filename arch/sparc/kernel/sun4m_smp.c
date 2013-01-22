@@ -192,6 +192,7 @@ static void sun4m_cross_call(smpfunc_t func, cpumask_t mask, unsigned long arg1,
 		unsigned long flags;
 
 		spin_lock_irqsave(&cross_call_lock, flags);
+		get_online_cpus_atomic();
 
 		/* Init function glue. */
 		ccall_info.func = func;
@@ -238,6 +239,8 @@ static void sun4m_cross_call(smpfunc_t func, cpumask_t mask, unsigned long arg1,
 					barrier();
 			} while (++i < ncpus);
 		}
+
+		put_online_cpus_atomic();
 		spin_unlock_irqrestore(&cross_call_lock, flags);
 }
 

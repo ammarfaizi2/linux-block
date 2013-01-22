@@ -300,6 +300,7 @@ static void sun4d_cross_call(smpfunc_t func, cpumask_t mask, unsigned long arg1,
 		unsigned long flags;
 
 		spin_lock_irqsave(&cross_call_lock, flags);
+		get_online_cpus_atomic();
 
 		{
 			/*
@@ -356,6 +357,7 @@ static void sun4d_cross_call(smpfunc_t func, cpumask_t mask, unsigned long arg1,
 			} while (++i <= high);
 		}
 
+		put_online_cpus_atomic();
 		spin_unlock_irqrestore(&cross_call_lock, flags);
 	}
 }
