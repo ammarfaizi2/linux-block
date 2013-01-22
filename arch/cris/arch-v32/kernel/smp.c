@@ -15,6 +15,7 @@
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/cpumask.h>
+#include <linux/cpu.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 
@@ -208,9 +209,12 @@ int __cpuinit __cpu_up(unsigned int cpu, struct task_struct *tidle)
 void smp_send_reschedule(int cpu)
 {
 	cpumask_t cpu_mask;
+
+	get_online_cpus_atomic();
 	cpumask_clear(&cpu_mask);
 	cpumask_set_cpu(cpu, &cpu_mask);
 	send_ipi(IPI_SCHEDULE, 0, cpu_mask);
+	put_online_cpus_atomic();
 }
 
 /* TLB flushing
@@ -224,6 +228,7 @@ void flush_tlb_common(struct mm_struct* mm, struct vm_area_struct* vma, unsigned
 	unsigned long flags;
 	cpumask_t cpu_mask;
 
+	get_online_cpus_atomic();
 	spin_lock_irqsave(&tlbstate_lock, flags);
 	cpu_mask = (mm == FLUSH_ALL ? cpu_all_mask : *mm_cpumask(mm));
 	cpumask_clear_cpu(smp_processor_id(), &cpu_mask);
@@ -232,6 +237,7 @@ void flush_tlb_common(struct mm_struct* mm, struct vm_area_struct* vma, unsigned
 	flush_addr = addr;
 	send_ipi(IPI_FLUSH_TLB, 1, cpu_mask);
 	spin_unlock_irqrestore(&tlbstate_lock, flags);
+	put_online_cpus_atomic();
 }
 
 void flush_tlb_all(void)
@@ -312,6 +318,7 @@ int smp_call_function(void (*func)(void *info), void *info, int wait)
 	struct call_data_struct data;
 	int ret;
 
+	get_online_cpus_atomic();
 	cpumask_setall(&cpu_mask);
 	cpumask_clear_cpu(smp_processor_id(), &cpu_mask);
 
@@ -325,6 +332,7 @@ int smp_call_function(void (*func)(void *info), void *info, int wait)
 	call_data = &data;
 	ret = send_ipi(IPI_CALL, wait, cpu_mask);
 	spin_unlock(&call_lock);
+	put_online_cpus_atomic();
 
 	return ret;
 }
