@@ -84,6 +84,10 @@ void percpu_read_lock_irqsafe(struct percpu_rwlock *pcpu_rwlock)
 
 		if (likely(!writer_active(pcpu_rwlock))) {
 			this_cpu_inc(*pcpu_rwlock->reader_refcnt);
+
+			/* Pretend that we take global_rwlock for lockdep */
+			rwlock_acquire_read(&pcpu_rwlock->global_rwlock.dep_map,
+					    0, 0, _RET_IP_);
 		} else {
 			/* Writer is active, so switch to global rwlock. */
 
@@ -108,6 +112,12 @@ void percpu_read_lock_irqsafe(struct percpu_rwlock *pcpu_rwlock)
 			if (!writer_active(pcpu_rwlock)) {
 				this_cpu_inc(*pcpu_rwlock->reader_refcnt);
 				read_unlock(&pcpu_rwlock->global_rwlock);
+
+				/*
+				 * Pretend that we take global_rwlock for lockdep
+				 */
+				rwlock_acquire_read(&pcpu_rwlock->global_rwlock.dep_map,
+						    0, 0, _RET_IP_);
 			}
 		}
 	}
@@ -128,6 +138,14 @@ void percpu_read_unlock_irqsafe(struct percpu_rwlock *pcpu_rwlock)
 	if (reader_nested_percpu(pcpu_rwlock)) {
 		this_cpu_dec(*pcpu_rwlock->reader_refcnt);
 		smp_wmb(); /* Paired with smp_rmb() in sync_reader() */
+
+		/*
+		 * If this is the last decrement, then it is time to pretend
+		 * to lockdep that we are releasing the read lock.
+		 */
+		if (!reader_nested_percpu(pcpu_rwlock))
+			rwlock_release(&pcpu_rwlock->global_rwlock.dep_map,
+				       1, _RET_IP_);
 	} else {
 		read_unlock(&pcpu_rwlock->global_rwlock);
 	}
@@ -205,11 +223,14 @@ void percpu_write_lock_irqsave(struct percpu_rwlock *pcpu_rwlock,
 	announce_writer_active(pcpu_rwlock);
 	sync_all_readers(pcpu_rwlock);
 	write_lock_irqsave(&pcpu_rwlock->global_rwlock, *flags);
+	this_cpu_inc(*pcpu_rwlock->reader_refcnt);
 }
 
 void percpu_write_unlock_irqrestore(struct percpu_rwlock *pcpu_rwlock,
 			 unsigned long *flags)
 {
+	this_cpu_dec(*pcpu_rwlock->reader_refcnt);
+
 	/*
 	 * Inform all readers that we are done, so that they can switch back
 	 * to their per-cpu refcounts. (We don't need to wait for them to
