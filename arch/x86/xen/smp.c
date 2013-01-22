@@ -16,6 +16,7 @@
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/smp.h>
+#include <linux/cpu.h>
 #include <linux/irq_work.h>
 
 #include <asm/paravirt.h>
@@ -487,8 +488,10 @@ static void __xen_send_IPI_mask(const struct cpumask *mask,
 {
 	unsigned cpu;
 
+	get_online_cpus_atomic();
 	for_each_cpu_and(cpu, mask, cpu_online_mask)
 		xen_send_IPI_one(cpu, vector);
+	put_online_cpus_atomic();
 }
 
 static void xen_smp_send_call_function_ipi(const struct cpumask *mask)
@@ -551,8 +554,10 @@ void xen_send_IPI_all(int vector)
 {
 	int xen_vector = xen_map_vector(vector);
 
+	get_online_cpus_atomic();
 	if (xen_vector >= 0)
 		__xen_send_IPI_mask(cpu_online_mask, xen_vector);
+	put_online_cpus_atomic();
 }
 
 void xen_send_IPI_self(int vector)
@@ -572,20 +577,24 @@ void xen_send_IPI_mask_allbutself(const struct cpumask *mask,
 	if (!(num_online_cpus() > 1))
 		return;
 
+	get_online_cpus_atomic();
 	for_each_cpu_and(cpu, mask, cpu_online_mask) {
 		if (this_cpu == cpu)
 			continue;
 
 		xen_smp_send_call_function_single_ipi(cpu);
 	}
+	put_online_cpus_atomic();
 }
 
 void xen_send_IPI_allbutself(int vector)
 {
 	int xen_vector = xen_map_vector(vector);
 
+	get_online_cpus_atomic();
 	if (xen_vector >= 0)
 		xen_send_IPI_mask_allbutself(cpu_online_mask, xen_vector);
+	put_online_cpus_atomic();
 }
 
 static irqreturn_t xen_call_function_interrupt(int irq, void *dev_id)
