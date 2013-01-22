@@ -22,6 +22,7 @@
 #include <linux/sched.h>
 #include <linux/smp.h>
 #include <linux/cpumask.h>
+#include <linux/cpu.h>
 #include <linux/interrupt.h>
 #include <linux/kernel_stat.h>
 #include <linux/module.h>
@@ -1143,6 +1144,7 @@ static irqreturn_t ipi_interrupt(int irq, void *dev_idm)
 	 * for the current TC, so we ought not to have to do it explicitly here.
 	 */
 
+	get_online_cpus_atomic();
 	for_each_online_cpu(cpu) {
 		if (cpu_data[cpu].vpe_id != my_vpe)
 			continue;
@@ -1179,6 +1181,7 @@ static irqreturn_t ipi_interrupt(int irq, void *dev_idm)
 			}
 		}
 	}
+	put_online_cpus_atomic();
 
 	return IRQ_HANDLED;
 }

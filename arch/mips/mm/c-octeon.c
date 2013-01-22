@@ -73,7 +73,7 @@ static void octeon_flush_icache_all_cores(struct vm_area_struct *vma)
 	mb();
 	octeon_local_flush_icache();
 #ifdef CONFIG_SMP
-	preempt_disable();
+	get_online_cpus_atomic();
 	cpu = smp_processor_id();
 
 	/*
@@ -88,7 +88,7 @@ static void octeon_flush_icache_all_cores(struct vm_area_struct *vma)
 	for_each_cpu(cpu, &mask)
 		octeon_send_ipi_single(cpu, SMP_ICACHE_FLUSH);
 
-	preempt_enable();
+	put_online_cpus_atomic();
 #endif
 }
 
