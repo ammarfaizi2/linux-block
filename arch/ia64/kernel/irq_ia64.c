@@ -31,6 +31,7 @@
 #include <linux/ratelimit.h>
 #include <linux/acpi.h>
 #include <linux/sched.h>
+#include <linux/cpu.h>
 
 #include <asm/delay.h>
 #include <asm/intrinsics.h>
@@ -190,9 +191,11 @@ static void clear_irq_vector(int irq)
 {
 	unsigned long flags;
 
+	get_online_cpus_atomic();
 	spin_lock_irqsave(&vector_lock, flags);
 	__clear_irq_vector(irq);
 	spin_unlock_irqrestore(&vector_lock, flags);
+	put_online_cpus_atomic();
 }
 
 int
@@ -204,6 +207,7 @@ ia64_native_assign_irq_vector (int irq)
 
 	vector = -ENOSPC;
 
+	get_online_cpus_atomic();
 	spin_lock_irqsave(&vector_lock, flags);
 	for_each_online_cpu(cpu) {
 		domain = vector_allocation_domain(cpu);
@@ -218,6 +222,7 @@ ia64_native_assign_irq_vector (int irq)
 	BUG_ON(__bind_irq_vector(irq, vector, domain));
  out:
 	spin_unlock_irqrestore(&vector_lock, flags);
+	put_online_cpus_atomic();
 	return vector;
 }
 
@@ -302,9 +307,11 @@ int irq_prepare_move(int irq, int cpu)
 	unsigned long flags;
 	int ret;
 
+	get_online_cpus_atomic();
 	spin_lock_irqsave(&vector_lock, flags);
 	ret = __irq_prepare_move(irq, cpu);
 	spin_unlock_irqrestore(&vector_lock, flags);
+	put_online_cpus_atomic();
 	return ret;
 }
 
@@ -320,11 +327,13 @@ void irq_complete_move(unsigned irq)
 	if (unlikely(cpu_isset(smp_processor_id(), cfg->old_domain)))
 		return;
 
+	get_online_cpus_atomic();
 	cpumask_and(&cleanup_mask, &cfg->old_domain, cpu_online_mask);
 	cfg->move_cleanup_count = cpus_weight(cleanup_mask);
 	for_each_cpu_mask(i, cleanup_mask)
 		platform_send_ipi(i, IA64_IRQ_MOVE_VECTOR, IA64_IPI_DM_INT, 0);
 	cfg->move_in_progress = 0;
+	put_online_cpus_atomic();
 }
 
 static irqreturn_t smp_irq_move_cleanup_interrupt(int irq, void *dev_id)
@@ -409,6 +418,8 @@ int create_irq(void)
 	cpumask_t domain = CPU_MASK_NONE;
 
 	irq = vector = -ENOSPC;
+
+	get_online_cpus_atomic();
 	spin_lock_irqsave(&vector_lock, flags);
 	for_each_online_cpu(cpu) {
 		domain = vector_allocation_domain(cpu);
@@ -424,6 +435,8 @@ int create_irq(void)
 	BUG_ON(__bind_irq_vector(irq, vector, domain));
  out:
 	spin_unlock_irqrestore(&vector_lock, flags);
+	put_online_cpus_atomic();
+
 	if (irq >= 0)
 		dynamic_irq_init(irq);
 	return irq;

@@ -34,6 +34,7 @@
 #include <linux/poll.h>
 #include <linux/vfs.h>
 #include <linux/smp.h>
+#include <linux/cpu.h>
 #include <linux/pagemap.h>
 #include <linux/mount.h>
 #include <linux/bitops.h>
@@ -6485,6 +6486,7 @@ pfm_install_alt_pmu_interrupt(pfm_intr_handler_desc_t *hdl)
 	}
 
 	/* reserve our session */
+	get_online_cpus_atomic();
 	for_each_online_cpu(reserve_cpu) {
 		ret = pfm_reserve_session(NULL, 1, reserve_cpu);
 		if (ret) goto cleanup_reserve;
@@ -6500,6 +6502,7 @@ pfm_install_alt_pmu_interrupt(pfm_intr_handler_desc_t *hdl)
 	/* officially change to the alternate interrupt handler */
 	pfm_alt_intr_handler = hdl;
 
+	put_online_cpus_atomic();
 	spin_unlock(&pfm_alt_install_check);
 
 	return 0;
@@ -6512,6 +6515,7 @@ cleanup_reserve:
 		pfm_unreserve_session(NULL, 1, i);
 	}
 
+	put_online_cpus_atomic();
 	spin_unlock(&pfm_alt_install_check);
 
 	return ret;
@@ -6536,6 +6540,7 @@ pfm_remove_alt_pmu_interrupt(pfm_intr_handler_desc_t *hdl)
 
 	pfm_alt_intr_handler = NULL;
 
+	get_online_cpus_atomic();
 	ret = on_each_cpu(pfm_alt_restore_pmu_state, NULL, 1);
 	if (ret) {
 		DPRINT(("on_each_cpu() failed: %d\n", ret));
@@ -6545,6 +6550,7 @@ pfm_remove_alt_pmu_interrupt(pfm_intr_handler_desc_t *hdl)
 		pfm_unreserve_session(NULL, 1, i);
 	}
 
+	put_online_cpus_atomic();
 	spin_unlock(&pfm_alt_install_check);
 
 	return 0;
