@@ -68,4 +68,14 @@ extern void percpu_free_rwlock(struct percpu_rwlock *);
 	__percpu_init_rwlock(pcpu_rwlock, #pcpu_rwlock, &rwlock_key);	\
 })
 
+#define reader_uses_percpu_refcnt(pcpu_rwlock, cpu)			\
+		(ACCESS_ONCE(per_cpu(*((pcpu_rwlock)->reader_refcnt), cpu)))
+
+#define reader_nested_percpu(pcpu_rwlock)				\
+			(__this_cpu_read(*((pcpu_rwlock)->reader_refcnt)) > 1)
+
+#define writer_active(pcpu_rwlock)					\
+			(__this_cpu_read(*((pcpu_rwlock)->writer_signal)))
+
 #endif
+

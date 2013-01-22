@@ -64,21 +64,145 @@ void percpu_free_rwlock(struct percpu_rwlock *pcpu_rwlock)
 
 void percpu_read_lock(struct percpu_rwlock *pcpu_rwlock)
 {
-	read_lock(&pcpu_rwlock->global_rwlock);
+	preempt_disable();
+
+	/* First and foremost, let the writer know that a reader is active */
+	this_cpu_inc(*pcpu_rwlock->reader_refcnt);
+
+	/*
+	 * If we are already using per-cpu refcounts, it is not safe to switch
+	 * the synchronization scheme. So continue using the refcounts.
+	 */
+	if (reader_nested_percpu(pcpu_rwlock)) {
+		goto out;
+	} else {
+		/*
+		 * The write to 'reader_refcnt' must be visible before we
+		 * read 'writer_signal'.
+		 */
+		smp_mb(); /* Paired with smp_rmb() in sync_reader() */
+
+		if (likely(!writer_active(pcpu_rwlock))) {
+			goto out;
+		} else {
+			/* Writer is active, so switch to global rwlock. */
+			read_lock(&pcpu_rwlock->global_rwlock);
+
+			/*
+			 * We might have raced with a writer going inactive
+			 * before we took the read-lock. So re-evaluate whether
+			 * we still need to hold the rwlock or if we can switch
+			 * back to per-cpu refcounts. (This also helps avoid
+			 * heterogeneous nesting of readers).
+			 */
+			if (writer_active(pcpu_rwlock))
+				this_cpu_dec(*pcpu_rwlock->reader_refcnt);
+			else
+				read_unlock(&pcpu_rwlock->global_rwlock);
+		}
+	}
+
+out:
+	/* Prevent reordering of any subsequent reads */
+	smp_rmb();
 }
 
 void percpu_read_unlock(struct percpu_rwlock *pcpu_rwlock)
 {
-	read_unlock(&pcpu_rwlock->global_rwlock);
+	/*
+	 * We never allow heterogeneous nesting of readers. So it is trivial
+	 * to find out the kind of reader we are, and undo the operation
+	 * done by our corresponding percpu_read_lock().
+	 */
+	if (__this_cpu_read(*pcpu_rwlock->reader_refcnt)) {
+		this_cpu_dec(*pcpu_rwlock->reader_refcnt);
+		smp_wmb(); /* Paired with smp_rmb() in sync_reader() */
+	} else {
+		read_unlock(&pcpu_rwlock->global_rwlock);
+	}
+
+	preempt_enable();
+}
+
+static inline void raise_writer_signal(struct percpu_rwlock *pcpu_rwlock,
+				       unsigned int cpu)
+{
+	per_cpu(*pcpu_rwlock->writer_signal, cpu) = true;
+}
+
+static inline void drop_writer_signal(struct percpu_rwlock *pcpu_rwlock,
+				      unsigned int cpu)
+{
+	per_cpu(*pcpu_rwlock->writer_signal, cpu) = false;
+}
+
+static void announce_writer_active(struct percpu_rwlock *pcpu_rwlock)
+{
+	unsigned int cpu;
+
+	for_each_online_cpu(cpu)
+		raise_writer_signal(pcpu_rwlock, cpu);
+
+	smp_mb(); /* Paired with smp_rmb() in percpu_read_[un]lock() */
+}
+
+static void announce_writer_inactive(struct percpu_rwlock *pcpu_rwlock)
+{
+	unsigned int cpu;
+
+	drop_writer_signal(pcpu_rwlock, smp_processor_id());
+
+	for_each_online_cpu(cpu)
+		drop_writer_signal(pcpu_rwlock, cpu);
+
+	smp_mb(); /* Paired with smp_rmb() in percpu_read_[un]lock() */
+}
+
+/*
+ * Wait for the reader to see the writer's signal and switch from percpu
+ * refcounts to global rwlock.
+ *
+ * If the reader is still using percpu refcounts, wait for him to switch.
+ * Else, we can safely go ahead, because either the reader has already
+ * switched over, or the next reader that comes along on that CPU will
+ * notice the writer's signal and will switch over to the rwlock.
+ */
+static inline void sync_reader(struct percpu_rwlock *pcpu_rwlock,
+			       unsigned int cpu)
+{
+	smp_rmb(); /* Paired with smp_[w]mb() in percpu_read_[un]lock() */
+
+	while (reader_uses_percpu_refcnt(pcpu_rwlock, cpu))
+		cpu_relax();
+}
+
+static void sync_all_readers(struct percpu_rwlock *pcpu_rwlock)
+{
+	unsigned int cpu;
+
+	for_each_online_cpu(cpu)
+		sync_reader(pcpu_rwlock, cpu);
 }
 
 void percpu_write_lock(struct percpu_rwlock *pcpu_rwlock)
 {
+	/*
+	 * Tell all readers that a writer is becoming active, so that they
+	 * start switching over to the global rwlock.
+	 */
+	announce_writer_active(pcpu_rwlock);
+	sync_all_readers(pcpu_rwlock);
 	write_lock(&pcpu_rwlock->global_rwlock);
 }
 
 void percpu_write_unlock(struct percpu_rwlock *pcpu_rwlock)
 {
+	/*
+	 * Inform all readers that we are done, so that they can switch back
+	 * to their per-cpu refcounts. (We don't need to wait for them to
+	 * see it).
+	 */
+	announce_writer_inactive(pcpu_rwlock);
 	write_unlock(&pcpu_rwlock->global_rwlock);
 }
 
