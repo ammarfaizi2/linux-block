@@ -34,11 +34,13 @@ struct percpu_rwlock {
 	rwlock_t		global_rwlock;
 };
 
-extern void percpu_read_lock(struct percpu_rwlock *);
-extern void percpu_read_unlock(struct percpu_rwlock *);
+extern void percpu_read_lock_irqsafe(struct percpu_rwlock *);
+extern void percpu_read_unlock_irqsafe(struct percpu_rwlock *);
 
-extern void percpu_write_lock(struct percpu_rwlock *);
-extern void percpu_write_unlock(struct percpu_rwlock *);
+extern void percpu_write_lock_irqsave(struct percpu_rwlock *,
+				      unsigned long *flags);
+extern void percpu_write_unlock_irqrestore(struct percpu_rwlock *,
+					   unsigned long *flags);
 
 extern int __percpu_init_rwlock(struct percpu_rwlock *,
 				const char *, struct lock_class_key *);
@@ -68,11 +70,14 @@ extern void percpu_free_rwlock(struct percpu_rwlock *);
 	__percpu_init_rwlock(pcpu_rwlock, #pcpu_rwlock, &rwlock_key);	\
 })
 
+#define READER_PRESENT		(1UL << 16)
+#define READER_REFCNT_MASK	(READER_PRESENT - 1)
+
 #define reader_uses_percpu_refcnt(pcpu_rwlock, cpu)			\
 		(ACCESS_ONCE(per_cpu(*((pcpu_rwlock)->reader_refcnt), cpu)))
 
 #define reader_nested_percpu(pcpu_rwlock)				\
-			(__this_cpu_read(*((pcpu_rwlock)->reader_refcnt)) > 1)
+	(__this_cpu_read(*((pcpu_rwlock)->reader_refcnt)) & READER_REFCNT_MASK)
 
 #define writer_active(pcpu_rwlock)					\
 			(__this_cpu_read(*((pcpu_rwlock)->writer_signal)))
