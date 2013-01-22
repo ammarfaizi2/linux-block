@@ -194,6 +194,7 @@ void send_ipi(const struct cpumask *cpumask, enum ipi_message_type msg)
 	struct ipi_data *bfin_ipi_data;
 	unsigned long flags;
 
+	get_online_cpus_atomic();
 	local_irq_save(flags);
 	smp_mb();
 	for_each_cpu(cpu, cpumask) {
@@ -205,6 +206,7 @@ void send_ipi(const struct cpumask *cpumask, enum ipi_message_type msg)
 	}
 
 	local_irq_restore(flags);
+	put_online_cpus_atomic();
 }
 
 void arch_send_call_function_single_ipi(int cpu)
@@ -238,13 +240,13 @@ void smp_send_stop(void)
 {
 	cpumask_t callmap;
 
-	preempt_disable();
+	get_online_cpus_atomic();
 	cpumask_copy(&callmap, cpu_online_mask);
 	cpumask_clear_cpu(smp_processor_id(), &callmap);
 	if (!cpumask_empty(&callmap))
 		send_ipi(&callmap, BFIN_IPI_CPU_STOP);
 
-	preempt_enable();
+	put_online_cpus_atomic();
 
 	return;
 }
