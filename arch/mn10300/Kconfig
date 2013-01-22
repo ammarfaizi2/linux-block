@@ -60,6 +60,7 @@ config ARCH_HAS_ILOG2_U32
 
 config HOTPLUG_CPU
 	def_bool n
+	select PERCPU_RWLOCK
 
 source "init/Kconfig"
 

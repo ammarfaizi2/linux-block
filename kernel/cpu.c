@@ -1,6 +1,18 @@
 /* CPU control.
  * (C) 2001, 2002, 2003, 2004 Rusty Russell
  *
+ * Rework of the CPU hotplug offline mechanism to remove its dependence on
+ * the heavy-weight stop_machine() primitive, by Srivatsa S. Bhat and
+ * Paul E. McKenney.
+ *
+ * Copyright (C) IBM Corporation, 2012-2013
+ * Authors: Srivatsa S. Bhat <srivatsa.bhat@linux.vnet.ibm.com>
+ *          Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+ *
+ * With lots of invaluable suggestions from:
+ *	    Oleg Nesterov <oleg@redhat.com>
+ *	    Tejun Heo <tj@kernel.org>
+ *
  * This code is licenced under the GPL.
  */
 #include <linux/proc_fs.h>
@@ -19,6 +31,7 @@
 #include <linux/mutex.h>
 #include <linux/gfp.h>
 #include <linux/suspend.h>
+#include <linux/percpu-rwlock.h>
 
 #include "smpboot.h"
 
@@ -133,6 +146,38 @@ static void cpu_hotplug_done(void)
 	mutex_unlock(&cpu_hotplug.lock);
 }
 
+/*
+ * Per-CPU Reader-Writer lock to synchronize between atomic hotplug
+ * readers and the CPU offline hotplug writer.
+ */
+DEFINE_STATIC_PERCPU_RWLOCK(hotplug_pcpu_rwlock);
+
+/*
+ * Invoked by atomic hotplug reader (a task which wants to prevent
+ * CPU offline, but which can't afford to sleep), to prevent CPUs from
+ * going offline. So, you can call this function from atomic contexts
+ * (including interrupt handlers).
+ *
+ * Note: This does NOT prevent CPUs from coming online! It only prevents
+ * CPUs from going offline.
+ *
+ * You can call this function recursively.
+ *
+ * Returns with preemption disabled (but interrupts remain as they are;
+ * they are not disabled).
+ */
+void get_online_cpus_atomic(void)
+{
+	percpu_read_lock_irqsafe(&hotplug_pcpu_rwlock);
+}
+EXPORT_SYMBOL_GPL(get_online_cpus_atomic);
+
+void put_online_cpus_atomic(void)
+{
+	percpu_read_unlock_irqsafe(&hotplug_pcpu_rwlock);
+}
+EXPORT_SYMBOL_GPL(put_online_cpus_atomic);
+
 #else /* #if CONFIG_HOTPLUG_CPU */
 static void cpu_hotplug_begin(void) {}
 static void cpu_hotplug_done(void) {}
@@ -246,15 +291,21 @@ struct take_cpu_down_param {
 static int __ref take_cpu_down(void *_param)
 {
 	struct take_cpu_down_param *param = _param;
-	int err;
+	unsigned long flags;
+	int err = 0;
+
+	percpu_write_lock_irqsave(&hotplug_pcpu_rwlock, &flags);
 
 	/* Ensure this CPU doesn't handle any more interrupts. */
 	err = __cpu_disable();
 	if (err < 0)
-		return err;
+		goto out;
 
 	cpu_notify(CPU_DYING | param->mod, param->hcpu);
-	return 0;
+
+out:
+	percpu_write_unlock_irqrestore(&hotplug_pcpu_rwlock, &flags);
+	return err;
 }
 
 /* Requires cpu_add_remove_lock to be held */

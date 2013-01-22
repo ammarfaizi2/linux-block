@@ -378,6 +378,7 @@ config HOTPLUG_CPU
 	bool "Support for hot-pluggable CPUs (EXPERIMENTAL)"
 	depends on SMP && EXPERIMENTAL
 	select HOTPLUG
+	select PERCPU_RWLOCK
 	default n
 	---help---
 	  Say Y here to experiment with turning CPUs off and on.  CPUs

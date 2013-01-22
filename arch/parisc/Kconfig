@@ -226,6 +226,7 @@ config HOTPLUG_CPU
 	bool
 	default y if SMP
 	select HOTPLUG
+	select PERCPU_RWLOCK
 
 config ARCH_SELECT_MEMORY_MODEL
 	def_bool y
