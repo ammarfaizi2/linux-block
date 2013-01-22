@@ -16,6 +16,7 @@
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
+#include <linux/cpu.h>
 #include <linux/task_work.h>
 
 #include "internals.h"
@@ -202,7 +203,9 @@ int irq_set_affinity(unsigned int irq, const struct cpumask *mask)
 		return -EINVAL;
 
 	raw_spin_lock_irqsave(&desc->lock, flags);
+	get_online_cpus_atomic();
 	ret =  __irq_set_affinity_locked(irq_desc_get_irq_data(desc), mask);
+	put_online_cpus_atomic();
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
 	return ret;
 }
@@ -343,7 +346,9 @@ int irq_select_affinity_usr(unsigned int irq, struct cpumask *mask)
 	int ret;
 
 	raw_spin_lock_irqsave(&desc->lock, flags);
+	get_online_cpus_atomic();
 	ret = setup_affinity(irq, desc, mask);
+	put_online_cpus_atomic();
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
 	return ret;
 }
@@ -1126,7 +1131,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
 		}
 
 		/* Set default affinity mask once everything is setup */
+		get_online_cpus_atomic();
 		setup_affinity(irq, desc, mask);
+		put_online_cpus_atomic();
 
 	} else if (new->flags & IRQF_TRIGGER_MASK) {
 		unsigned int nmsk = new->flags & IRQF_TRIGGER_MASK;
