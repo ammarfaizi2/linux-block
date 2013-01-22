@@ -196,6 +196,7 @@ void switch_mmu_context(struct mm_struct *prev, struct mm_struct *next)
 
 	/* No lockless fast path .. yet */
 	raw_spin_lock(&context_lock);
+	get_online_cpus_atomic();
 
 	pr_hard("[%d] activating context for mm @%p, active=%d, id=%d",
 		cpu, next, next->context.active, next->context.id);
@@ -279,6 +280,7 @@ void switch_mmu_context(struct mm_struct *prev, struct mm_struct *next)
 	/* Flick the MMU and release lock */
 	pr_hardcont(" -> %d\n", id);
 	set_context(id, next->pgd);
+	put_online_cpus_atomic();
 	raw_spin_unlock(&context_lock);
 }
 
