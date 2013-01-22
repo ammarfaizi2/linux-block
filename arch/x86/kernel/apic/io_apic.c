@@ -25,6 +25,7 @@
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/sched.h>
+#include <linux/cpu.h>
 #include <linux/pci.h>
 #include <linux/mc146818rtc.h>
 #include <linux/compiler.h>
@@ -1788,13 +1789,13 @@ __apicdebuginit(void) print_local_APICs(int maxcpu)
 	if (!maxcpu)
 		return;
 
-	preempt_disable();
+	get_online_cpus_atomic();
 	for_each_online_cpu(cpu) {
 		if (cpu >= maxcpu)
 			break;
 		smp_call_function_single(cpu, print_local_APIC, NULL, 1);
 	}
-	preempt_enable();
+	put_online_cpus_atomic();
 }
 
 __apicdebuginit(void) print_PIC(void)
@@ -2209,6 +2210,7 @@ void send_cleanup_vector(struct irq_cfg *cfg)
 {
 	cpumask_var_t cleanup_mask;
 
+	get_online_cpus_atomic();
 	if (unlikely(!alloc_cpumask_var(&cleanup_mask, GFP_ATOMIC))) {
 		unsigned int i;
 		for_each_cpu_and(i, cfg->old_domain, cpu_online_mask)
@@ -2219,6 +2221,7 @@ void send_cleanup_vector(struct irq_cfg *cfg)
 		free_cpumask_var(cleanup_mask);
 	}
 	cfg->move_in_progress = 0;
+	put_online_cpus_atomic();
 }
 
 asmlinkage void smp_irq_move_cleanup_interrupt(void)

@@ -11,6 +11,7 @@
 #include <linux/errno.h>
 #include <linux/threads.h>
 #include <linux/cpumask.h>
+#include <linux/cpu.h>
 #include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/ctype.h>
@@ -92,6 +93,8 @@ static void flat_send_IPI_allbutself(int vector)
 #else
 	int hotplug = 0;
 #endif
+
+	get_online_cpus_atomic();
 	if (hotplug || vector == NMI_VECTOR) {
 		if (!cpumask_equal(cpu_online_mask, cpumask_of(cpu))) {
 			unsigned long mask = cpumask_bits(cpu_online_mask)[0];
@@ -105,16 +108,19 @@ static void flat_send_IPI_allbutself(int vector)
 		__default_send_IPI_shortcut(APIC_DEST_ALLBUT,
 					    vector, apic->dest_logical);
 	}
+	put_online_cpus_atomic();
 }
 
 static void flat_send_IPI_all(int vector)
 {
+	get_online_cpus_atomic();
 	if (vector == NMI_VECTOR) {
 		flat_send_IPI_mask(cpu_online_mask, vector);
 	} else {
 		__default_send_IPI_shortcut(APIC_DEST_ALLINC,
 					    vector, apic->dest_logical);
 	}
+	put_online_cpus_atomic();
 }
 
 static unsigned int flat_get_apic_id(unsigned long x)
@@ -255,12 +261,16 @@ static void physflat_send_IPI_mask_allbutself(const struct cpumask *cpumask,
 
 static void physflat_send_IPI_allbutself(int vector)
 {
+	get_online_cpus_atomic();
 	default_send_IPI_mask_allbutself_phys(cpu_online_mask, vector);
+	put_online_cpus_atomic();
 }
 
 static void physflat_send_IPI_all(int vector)
 {
+	get_online_cpus_atomic();
 	physflat_send_IPI_mask(cpu_online_mask, vector);
+	put_online_cpus_atomic();
 }
 
 static int physflat_probe(void)

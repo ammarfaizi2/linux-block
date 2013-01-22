@@ -147,12 +147,12 @@ void flush_tlb_current_task(void)
 {
 	struct mm_struct *mm = current->mm;
 
-	preempt_disable();
+	get_online_cpus_atomic();
 
 	local_flush_tlb();
 	if (cpumask_any_but(mm_cpumask(mm), smp_processor_id()) < nr_cpu_ids)
 		flush_tlb_others(mm_cpumask(mm), mm, 0UL, TLB_FLUSH_ALL);
-	preempt_enable();
+	put_online_cpus_atomic();
 }
 
 /*
@@ -187,7 +187,7 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
 	unsigned long addr;
 	unsigned act_entries, tlb_entries = 0;
 
-	preempt_disable();
+	get_online_cpus_atomic();
 	if (current->active_mm != mm)
 		goto flush_all;
 
@@ -225,21 +225,21 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
 		if (cpumask_any_but(mm_cpumask(mm),
 				smp_processor_id()) < nr_cpu_ids)
 			flush_tlb_others(mm_cpumask(mm), mm, start, end);
-		preempt_enable();
+		put_online_cpus_atomic();
 		return;
 	}
 
 flush_all:
 	if (cpumask_any_but(mm_cpumask(mm), smp_processor_id()) < nr_cpu_ids)
 		flush_tlb_others(mm_cpumask(mm), mm, 0UL, TLB_FLUSH_ALL);
-	preempt_enable();
+	put_online_cpus_atomic();
 }
 
 void flush_tlb_page(struct vm_area_struct *vma, unsigned long start)
 {
 	struct mm_struct *mm = vma->vm_mm;
 
-	preempt_disable();
+	get_online_cpus_atomic();
 
 	if (current->active_mm == mm) {
 		if (current->mm)
@@ -251,7 +251,7 @@ void flush_tlb_page(struct vm_area_struct *vma, unsigned long start)
 	if (cpumask_any_but(mm_cpumask(mm), smp_processor_id()) < nr_cpu_ids)
 		flush_tlb_others(mm_cpumask(mm), mm, start, 0UL);
 
-	preempt_enable();
+	put_online_cpus_atomic();
 }
 
 static void do_flush_tlb_all(void *info)

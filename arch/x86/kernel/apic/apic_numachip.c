@@ -14,6 +14,7 @@
 #include <linux/errno.h>
 #include <linux/threads.h>
 #include <linux/cpumask.h>
+#include <linux/cpu.h>
 #include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -131,15 +132,19 @@ static void numachip_send_IPI_allbutself(int vector)
 	unsigned int this_cpu = smp_processor_id();
 	unsigned int cpu;
 
+	get_online_cpus_atomic();
 	for_each_online_cpu(cpu) {
 		if (cpu != this_cpu)
 			numachip_send_IPI_one(cpu, vector);
 	}
+	put_online_cpus_atomic();
 }
 
 static void numachip_send_IPI_all(int vector)
 {
+	get_online_cpus_atomic();
 	numachip_send_IPI_mask(cpu_online_mask, vector);
+	put_online_cpus_atomic();
 }
 
 static void numachip_send_IPI_self(int vector)

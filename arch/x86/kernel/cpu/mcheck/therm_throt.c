@@ -82,13 +82,13 @@ static ssize_t therm_throt_device_show_##event##_##name(		\
 	unsigned int cpu = dev->id;					\
 	ssize_t ret;							\
 									\
-	preempt_disable();	/* CPU hotplug */			\
+	get_online_cpus_atomic();	/* CPU hotplug */		\
 	if (cpu_online(cpu)) {						\
 		ret = sprintf(buf, "%lu\n",				\
 			      per_cpu(thermal_state, cpu).event.name);	\
 	} else								\
 		ret = 0;						\
-	preempt_enable();						\
+	put_online_cpus_atomic();					\
 									\
 	return ret;							\
 }

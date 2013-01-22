@@ -20,6 +20,7 @@
  * Subject to the GNU Public License, v.2
  */
 
+#include <linux/cpu.h>
 #include <asm/hw_irq.h>
 #include <asm/apic.h>
 #include <asm/smp.h>
@@ -131,18 +132,22 @@ extern int no_broadcast;
 
 static inline void __default_local_send_IPI_allbutself(int vector)
 {
+	get_online_cpus_atomic();
 	if (no_broadcast || vector == NMI_VECTOR)
 		apic->send_IPI_mask_allbutself(cpu_online_mask, vector);
 	else
 		__default_send_IPI_shortcut(APIC_DEST_ALLBUT, vector, apic->dest_logical);
+	put_online_cpus_atomic();
 }
 
 static inline void __default_local_send_IPI_all(int vector)
 {
+	get_online_cpus_atomic();
 	if (no_broadcast || vector == NMI_VECTOR)
 		apic->send_IPI_mask(cpu_online_mask, vector);
 	else
 		__default_send_IPI_shortcut(APIC_DEST_ALLINC, vector, apic->dest_logical);
+	put_online_cpus_atomic();
 }
 
 #ifdef CONFIG_X86_32

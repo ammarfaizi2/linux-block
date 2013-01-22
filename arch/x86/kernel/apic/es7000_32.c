@@ -45,6 +45,7 @@
 #include <linux/gfp.h>
 #include <linux/nmi.h>
 #include <linux/smp.h>
+#include <linux/cpu.h>
 #include <linux/io.h>
 
 #include <asm/apicdef.h>
@@ -412,12 +413,16 @@ static void es7000_send_IPI_mask(const struct cpumask *mask, int vector)
 
 static void es7000_send_IPI_allbutself(int vector)
 {
+	get_online_cpus_atomic();
 	default_send_IPI_mask_allbutself_phys(cpu_online_mask, vector);
+	put_online_cpus_atomic();
 }
 
 static void es7000_send_IPI_all(int vector)
 {
+	get_online_cpus_atomic();
 	es7000_send_IPI_mask(cpu_online_mask, vector);
+	put_online_cpus_atomic();
 }
 
 static int es7000_apic_id_registered(void)
