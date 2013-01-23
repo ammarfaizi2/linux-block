@@ -355,9 +355,8 @@ __be16 wanrouter_type_trans(struct sk_buff *skb, struct net_device *dev)
 
 long wanrouter_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-	struct inode *inode = file->f_path.dentry->d_inode;
 	int err = 0;
-	struct proc_dir_entry *dent;
+	struct proc_dir_entry *dent = PDE(file_inode(file));
 	struct wan_device *wandev;
 	void __user *data = (void __user *)arg;
 
@@ -367,7 +366,6 @@ long wanrouter_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	if ((cmd >> 8) != ROUTER_IOCTL)
 		return -EINVAL;
 
-	dent = PDE(inode);
 	if ((dent == NULL) || (dent->data == NULL))
 		return -EINVAL;
 
