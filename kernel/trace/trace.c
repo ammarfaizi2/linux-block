@@ -287,13 +287,13 @@ static DEFINE_PER_CPU(struct mutex, cpu_access_lock);
 
 static inline void trace_access_lock(int cpu)
 {
-	if (cpu == TRACE_PIPE_ALL_CPU) {
+	if (cpu == RING_BUFFER_ALL_CPUS) {
 		/* gain it for accessing the whole ring buffer. */
 		down_write(&all_cpu_access_lock);
 	} else {
 		/* gain it for accessing a cpu ring buffer. */
 
-		/* Firstly block other trace_access_lock(TRACE_PIPE_ALL_CPU). */
+		/* Firstly block other trace_access_lock(RING_BUFFER_ALL_CPUS). */
 		down_read(&all_cpu_access_lock);
 
 		/* Secondly block other access to this @cpu ring buffer. */
@@ -303,7 +303,7 @@ static inline void trace_access_lock(int cpu)
 
 static inline void trace_access_unlock(int cpu)
 {
-	if (cpu == TRACE_PIPE_ALL_CPU) {
+	if (cpu == RING_BUFFER_ALL_CPUS) {
 		up_write(&all_cpu_access_lock);
 	} else {
 		mutex_unlock(&per_cpu(cpu_access_lock, cpu));
@@ -1822,7 +1822,7 @@ __find_next_entry(struct trace_iterator *iter, int *ent_cpu,
 	 * If we are in a per_cpu trace file, don't bother by iterating over
 	 * all cpu and peek directly.
 	 */
-	if (cpu_file > TRACE_PIPE_ALL_CPU) {
+	if (cpu_file > RING_BUFFER_ALL_CPUS) {
 		if (ring_buffer_empty_cpu(buffer, cpu_file))
 			return NULL;
 		ent = peek_next_entry(iter, cpu_file, ent_ts, missing_events);
@@ -1982,7 +1982,7 @@ static void *s_start(struct seq_file *m, loff_t *pos)
 		iter->cpu = 0;
 		iter->idx = -1;
 
-		if (cpu_file == TRACE_PIPE_ALL_CPU) {
+		if (cpu_file == RING_BUFFER_ALL_CPUS) {
 			for_each_tracing_cpu(cpu)
 				tracing_iter_reset(iter, cpu);
 		} else
@@ -2290,7 +2290,7 @@ int trace_empty(struct trace_iterator *iter)
 	int cpu;
 
 	/* If we are looking at one CPU buffer, only check that one */
-	if (iter->cpu_file != TRACE_PIPE_ALL_CPU) {
+	if (iter->cpu_file != RING_BUFFER_ALL_CPUS) {
 		cpu = iter->cpu_file;
 		buf_iter = trace_buffer_iter(iter, cpu);
 		if (buf_iter) {
@@ -2509,7 +2509,7 @@ __tracing_open(struct inode *inode, struct file *file, bool snapshot)
 	if (!iter->snapshot)
 		tracing_stop();
 
-	if (iter->cpu_file == TRACE_PIPE_ALL_CPU) {
+	if (iter->cpu_file == RING_BUFFER_ALL_CPUS) {
 		for_each_tracing_cpu(cpu) {
 			iter->buffer_iter[cpu] =
 				ring_buffer_read_prepare(iter->tr->buffer, cpu);
@@ -2593,7 +2593,7 @@ static int tracing_open(struct inode *inode, struct file *file)
 	    (file->f_flags & O_TRUNC)) {
 		long cpu = (long) inode->i_private;
 
-		if (cpu == TRACE_PIPE_ALL_CPU)
+		if (cpu == RING_BUFFER_ALL_CPUS)
 			tracing_reset_online_cpus(&global_trace);
 		else
 			tracing_reset(&global_trace, cpu);
@@ -4979,7 +4979,7 @@ static __init int tracer_init_debugfs(void)
 			NULL, &tracing_cpumask_fops);
 
 	trace_create_file("trace", 0644, d_tracer,
-			(void *) TRACE_PIPE_ALL_CPU, &tracing_fops);
+			(void *) RING_BUFFER_ALL_CPUS, &tracing_fops);
 
 	trace_create_file("available_tracers", 0444, d_tracer,
 			&global_trace, &show_traces_fops);
@@ -4999,7 +4999,7 @@ static __init int tracer_init_debugfs(void)
 			NULL, &tracing_readme_fops);
 
 	trace_create_file("trace_pipe", 0444, d_tracer,
-			(void *) TRACE_PIPE_ALL_CPU, &tracing_pipe_fops);
+			(void *) RING_BUFFER_ALL_CPUS, &tracing_pipe_fops);
 
 	trace_create_file("buffer_size_kb", 0644, d_tracer,
 			(void *) RING_BUFFER_ALL_CPUS, &tracing_entries_fops);
@@ -5106,7 +5106,7 @@ void trace_init_global_iter(struct trace_iterator *iter)
 {
 	iter->tr = &global_trace;
 	iter->trace = current_trace;
-	iter->cpu_file = TRACE_PIPE_ALL_CPU;
+	iter->cpu_file = RING_BUFFER_ALL_CPUS;
 }
 
 static void
@@ -5154,7 +5154,7 @@ __ftrace_dump(bool disable_tracing, enum ftrace_dump_mode oops_dump_mode)
 
 	switch (oops_dump_mode) {
 	case DUMP_ALL:
-		iter.cpu_file = TRACE_PIPE_ALL_CPU;
+		iter.cpu_file = RING_BUFFER_ALL_CPUS;
 		break;
 	case DUMP_ORIG:
 		iter.cpu_file = raw_smp_processor_id();
@@ -5163,7 +5163,7 @@ __ftrace_dump(bool disable_tracing, enum ftrace_dump_mode oops_dump_mode)
 		goto out_enable;
 	default:
 		printk(KERN_TRACE "Bad dumping mode, switching to all CPUs dump\n");
-		iter.cpu_file = TRACE_PIPE_ALL_CPU;
+		iter.cpu_file = RING_BUFFER_ALL_CPUS;
 	}
 
 	printk(KERN_TRACE "Dumping ftrace buffer:\n");
