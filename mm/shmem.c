@@ -2877,11 +2877,11 @@ struct file *shmem_file_setup(const char *name, loff_t size, unsigned long flags
 	struct file *file;
 	struct inode *inode;
 	struct path path;
-	struct dentry *root;
+	struct super_block *sb;
 	struct qstr this;
 
 	if (IS_ERR(shm_mnt))
-		return (void *)shm_mnt;
+		return ERR_CAST(shm_mnt);
 
 	if (size < 0 || size > MAX_LFS_FILESIZE)
 		return ERR_PTR(-EINVAL);
@@ -2893,14 +2893,14 @@ struct file *shmem_file_setup(const char *name, loff_t size, unsigned long flags
 	this.name = name;
 	this.len = strlen(name);
 	this.hash = 0; /* will go */
-	root = shm_mnt->mnt_root;
-	path.dentry = d_alloc(root, &this);
+	sb = shm_mnt->mnt_sb;
+	path.dentry = d_alloc_pseudo(sb, &this);
 	if (!path.dentry)
 		goto put_memory;
 	path.mnt = mntget(shm_mnt);
 
 	error = -ENOSPC;
-	inode = shmem_get_inode(root->d_sb, NULL, S_IFREG | S_IRWXUGO, 0, flags);
+	inode = shmem_get_inode(sb, NULL, S_IFREG | S_IRWXUGO, 0, flags);
 	if (!inode)
 		goto put_dentry;
 
