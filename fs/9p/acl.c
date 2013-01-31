@@ -212,7 +212,7 @@ int v9fs_acl_mode(struct inode *dir, umode_t *modep,
 	return 0;
 }
 
-static int v9fs_remote_get_acl(struct dentry *dentry, const char *name,
+static int v9fs_remote_get_acl(struct inode *inode, const char *name,
 			       void *buffer, size_t size, int type)
 {
 	char *full_name;
@@ -227,10 +227,10 @@ static int v9fs_remote_get_acl(struct dentry *dentry, const char *name,
 	default:
 		BUG();
 	}
-	return v9fs_xattr_get(dentry, full_name, buffer, size);
+	return v9fs_xattr_get(inode, full_name, buffer, size);
 }
 
-static int v9fs_xattr_get_acl(struct dentry *dentry, const char *name,
+static int v9fs_xattr_get_acl(struct inode *inode, const char *name,
 			      void *buffer, size_t size, int type)
 {
 	struct v9fs_session_info *v9ses;
@@ -240,14 +240,14 @@ static int v9fs_xattr_get_acl(struct dentry *dentry, const char *name,
 	if (strcmp(name, "") != 0)
 		return -EINVAL;
 
-	v9ses = v9fs_dentry2v9ses(dentry);
+	v9ses = v9fs_inode2v9ses(inode);
 	/*
 	 * We allow set/get/list of acl when access=client is not specified
 	 */
 	if ((v9ses->flags & V9FS_ACCESS_MASK) != V9FS_ACCESS_CLIENT)
-		return v9fs_remote_get_acl(dentry, name, buffer, size, type);
+		return v9fs_remote_get_acl(inode, name, buffer, size, type);
 
-	acl = v9fs_get_cached_acl(dentry->d_inode, type);
+	acl = v9fs_get_cached_acl(inode, type);
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	if (acl == NULL)
@@ -258,7 +258,7 @@ static int v9fs_xattr_get_acl(struct dentry *dentry, const char *name,
 	return error;
 }
 
-static int v9fs_remote_set_acl(struct dentry *dentry, const char *name,
+static int v9fs_remote_set_acl(struct inode *inode, const char *name,
 			      const void *value, size_t size,
 			      int flags, int type)
 {
@@ -274,29 +274,28 @@ static int v9fs_remote_set_acl(struct dentry *dentry, const char *name,
 	default:
 		BUG();
 	}
-	return v9fs_xattr_set(dentry, full_name, value, size, flags);
+	return v9fs_xattr_set(inode, full_name, value, size, flags);
 }
 
 
-static int v9fs_xattr_set_acl(struct dentry *dentry, const char *name,
+static int v9fs_xattr_set_acl(struct inode *inode, const char *name,
 			      const void *value, size_t size,
 			      int flags, int type)
 {
 	int retval;
 	struct posix_acl *acl;
 	struct v9fs_session_info *v9ses;
-	struct inode *inode = dentry->d_inode;
 
 	if (strcmp(name, "") != 0)
 		return -EINVAL;
 
-	v9ses = v9fs_dentry2v9ses(dentry);
+	v9ses = v9fs_inode2v9ses(inode);
 	/*
 	 * set the attribute on the remote. Without even looking at the
 	 * xattr value. We leave it to the server to validate
 	 */
 	if ((v9ses->flags & V9FS_ACCESS_MASK) != V9FS_ACCESS_CLIENT)
-		return v9fs_remote_set_acl(dentry, name,
+		return v9fs_remote_set_acl(inode, name,
 					   value, size, flags, type);
 
 	if (S_ISLNK(inode->i_mode))
@@ -326,6 +325,7 @@ static int v9fs_xattr_set_acl(struct dentry *dentry, const char *name,
 				goto err_out;
 			else {
 				struct iattr iattr;
+				struct dentry *dentry;
 				if (retval == 0) {
 					/*
 					 * ACL can be represented
@@ -344,7 +344,9 @@ static int v9fs_xattr_set_acl(struct dentry *dentry, const char *name,
 				 * What is the following setxattr update the
 				 * mode ?
 				 */
+				dentry = d_find_alias(inode);
 				v9fs_vfs_setattr_dotl(dentry, &iattr);
+				dput(dentry);
 			}
 		}
 		break;
@@ -358,7 +360,7 @@ static int v9fs_xattr_set_acl(struct dentry *dentry, const char *name,
 	default:
 		BUG();
 	}
-	retval = v9fs_xattr_set(dentry, name, value, size, flags);
+	retval = v9fs_xattr_set(inode, name, value, size, flags);
 	if (!retval)
 		set_cached_acl(inode, type, acl);
 err_out:
@@ -369,13 +371,13 @@ err_out:
 const struct xattr_handler v9fs_xattr_acl_access_handler = {
 	.prefix	= POSIX_ACL_XATTR_ACCESS,
 	.flags	= ACL_TYPE_ACCESS,
-	.get	= v9fs_xattr_get_acl,
-	.set	= v9fs_xattr_set_acl,
+	.xattr_get = v9fs_xattr_get_acl,
+	.xattr_set = v9fs_xattr_set_acl,
 };
 
 const struct xattr_handler v9fs_xattr_acl_default_handler = {
 	.prefix	= POSIX_ACL_XATTR_DEFAULT,
 	.flags	= ACL_TYPE_DEFAULT,
-	.get	= v9fs_xattr_get_acl,
-	.set	= v9fs_xattr_set_acl,
+	.xattr_get = v9fs_xattr_get_acl,
+	.xattr_set = v9fs_xattr_set_acl,
 };

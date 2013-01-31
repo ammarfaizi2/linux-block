@@ -319,10 +319,10 @@ int f2fs_acl_chmod(struct inode *inode)
 	return error;
 }
 
-static size_t f2fs_xattr_list_acl(struct dentry *dentry, char *list,
+static size_t f2fs_xattr_list_acl(struct inode *inode, char *list,
 		size_t list_size, const char *name, size_t name_len, int type)
 {
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
+	struct f2fs_sb_info *sbi = F2FS_SB(inode->i_sb);
 	const char *xname = POSIX_ACL_XATTR_DEFAULT;
 	size_t size;
 
@@ -338,10 +338,10 @@ static size_t f2fs_xattr_list_acl(struct dentry *dentry, char *list,
 	return size;
 }
 
-static int f2fs_xattr_get_acl(struct dentry *dentry, const char *name,
+static int f2fs_xattr_get_acl(struct inode *inode, const char *name,
 		void *buffer, size_t size, int type)
 {
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
+	struct f2fs_sb_info *sbi = F2FS_SB(inode->i_sb);
 	struct posix_acl *acl;
 	int error;
 
@@ -350,7 +350,7 @@ static int f2fs_xattr_get_acl(struct dentry *dentry, const char *name,
 	if (!test_opt(sbi, POSIX_ACL))
 		return -EOPNOTSUPP;
 
-	acl = f2fs_get_acl(dentry->d_inode, type);
+	acl = f2fs_get_acl(inode, type);
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	if (!acl)
@@ -361,11 +361,10 @@ static int f2fs_xattr_get_acl(struct dentry *dentry, const char *name,
 	return error;
 }
 
-static int f2fs_xattr_set_acl(struct dentry *dentry, const char *name,
+static int f2fs_xattr_set_acl(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
-	struct inode *inode = dentry->d_inode;
+	struct f2fs_sb_info *sbi = F2FS_SB(inode->i_sb);
 	struct posix_acl *acl = NULL;
 	int error;
 
@@ -399,15 +398,15 @@ release_and_out:
 const struct xattr_handler f2fs_xattr_acl_default_handler = {
 	.prefix = POSIX_ACL_XATTR_DEFAULT,
 	.flags = ACL_TYPE_DEFAULT,
-	.list = f2fs_xattr_list_acl,
-	.get = f2fs_xattr_get_acl,
-	.set = f2fs_xattr_set_acl,
+	.xattr_list = f2fs_xattr_list_acl,
+	.xattr_get = f2fs_xattr_get_acl,
+	.xattr_set = f2fs_xattr_set_acl,
 };
 
 const struct xattr_handler f2fs_xattr_acl_access_handler = {
 	.prefix = POSIX_ACL_XATTR_ACCESS,
 	.flags = ACL_TYPE_ACCESS,
-	.list = f2fs_xattr_list_acl,
-	.get = f2fs_xattr_get_acl,
-	.set = f2fs_xattr_set_acl,
+	.xattr_list = f2fs_xattr_list_acl,
+	.xattr_get = f2fs_xattr_get_acl,
+	.xattr_set = f2fs_xattr_set_acl,
 };

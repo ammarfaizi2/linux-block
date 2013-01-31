@@ -749,7 +749,7 @@ reiserfs_getxattr(struct dentry * dentry, const char *name, void *buffer,
 	if (!handler || get_inode_sd_version(dentry->d_inode) == STAT_DATA_V1)
 		return -EOPNOTSUPP;
 
-	return handler->get(dentry, name, buffer, size, handler->flags);
+	return handler->xattr_get(dentry->d_inode, name, buffer, size, handler->flags);
 }
 
 /*
@@ -768,7 +768,7 @@ reiserfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 	if (!handler || get_inode_sd_version(dentry->d_inode) == STAT_DATA_V1)
 		return -EOPNOTSUPP;
 
-	return handler->set(dentry, name, value, size, flags, handler->flags);
+	return handler->xattr_set(dentry->d_inode, name, value, size, flags, handler->flags);
 }
 
 /*
@@ -784,7 +784,7 @@ int reiserfs_removexattr(struct dentry *dentry, const char *name)
 	if (!handler || get_inode_sd_version(dentry->d_inode) == STAT_DATA_V1)
 		return -EOPNOTSUPP;
 
-	return handler->set(dentry, name, NULL, 0, XATTR_REPLACE, handler->flags);
+	return handler->xattr_set(dentry->d_inode, name, NULL, 0, XATTR_REPLACE, handler->flags);
 }
 
 struct listxattr_buf {
@@ -807,13 +807,13 @@ static int listxattr_filler(void *buf, const char *name, int namelen,
 		if (!handler)	/* Unsupported xattr name */
 			return 0;
 		if (b->buf) {
-			size = handler->list(b->dentry, b->buf + b->pos,
+			size = handler->xattr_list(b->dentry->d_inode, b->buf + b->pos,
 					 b->size, name, namelen,
 					 handler->flags);
 			if (size > b->size)
 				return -ERANGE;
 		} else {
-			size = handler->list(b->dentry, NULL, 0, name,
+			size = handler->xattr_list(b->dentry->d_inode, NULL, 0, name,
 					     namelen, handler->flags);
 		}
 

@@ -325,13 +325,13 @@ xfs_acl_chmod(struct inode *inode)
 }
 
 static int
-xfs_xattr_acl_get(struct dentry *dentry, const char *name,
+xfs_xattr_acl_get(struct inode *inode, const char *name,
 		void *value, size_t size, int type)
 {
 	struct posix_acl *acl;
 	int error;
 
-	acl = xfs_get_acl(dentry->d_inode, type);
+	acl = xfs_get_acl(inode, type);
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	if (acl == NULL)
@@ -344,10 +344,9 @@ xfs_xattr_acl_get(struct dentry *dentry, const char *name,
 }
 
 static int
-xfs_xattr_acl_set(struct dentry *dentry, const char *name,
+xfs_xattr_acl_set(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
-	struct inode *inode = dentry->d_inode;
 	struct posix_acl *acl = NULL;
 	int error = 0;
 
@@ -410,13 +409,13 @@ xfs_xattr_acl_set(struct dentry *dentry, const char *name,
 const struct xattr_handler xfs_xattr_acl_access_handler = {
 	.prefix	= POSIX_ACL_XATTR_ACCESS,
 	.flags	= ACL_TYPE_ACCESS,
-	.get	= xfs_xattr_acl_get,
-	.set	= xfs_xattr_acl_set,
+	.xattr_get = xfs_xattr_acl_get,
+	.xattr_set = xfs_xattr_acl_set,
 };
 
 const struct xattr_handler xfs_xattr_acl_default_handler = {
 	.prefix	= POSIX_ACL_XATTR_DEFAULT,
 	.flags	= ACL_TYPE_DEFAULT,
-	.get	= xfs_xattr_acl_get,
-	.set	= xfs_xattr_acl_set,
+	.xattr_get = xfs_xattr_acl_get,
+	.xattr_set = xfs_xattr_acl_set,
 };

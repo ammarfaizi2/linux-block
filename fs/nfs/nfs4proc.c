@@ -5026,32 +5026,32 @@ int nfs4_release_lockowner(struct nfs4_lock_state *lsp)
 
 #define XATTR_NAME_NFSV4_ACL "system.nfs4_acl"
 
-static int nfs4_xattr_set_nfs4_acl(struct dentry *dentry, const char *key,
+static int nfs4_xattr_set_nfs4_acl(struct inode *inode, const char *key,
 				   const void *buf, size_t buflen,
 				   int flags, int type)
 {
 	if (strcmp(key, "") != 0)
 		return -EINVAL;
 
-	return nfs4_proc_set_acl(dentry->d_inode, buf, buflen);
+	return nfs4_proc_set_acl(inode, buf, buflen);
 }
 
-static int nfs4_xattr_get_nfs4_acl(struct dentry *dentry, const char *key,
+static int nfs4_xattr_get_nfs4_acl(struct inode *inode, const char *key,
 				   void *buf, size_t buflen, int type)
 {
 	if (strcmp(key, "") != 0)
 		return -EINVAL;
 
-	return nfs4_proc_get_acl(dentry->d_inode, buf, buflen);
+	return nfs4_proc_get_acl(inode, buf, buflen);
 }
 
-static size_t nfs4_xattr_list_nfs4_acl(struct dentry *dentry, char *list,
+static size_t nfs4_xattr_list_nfs4_acl(struct inode *inode, char *list,
 				       size_t list_len, const char *name,
 				       size_t name_len, int type)
 {
 	size_t len = sizeof(XATTR_NAME_NFSV4_ACL);
 
-	if (!nfs4_server_supports_acls(NFS_SERVER(dentry->d_inode)))
+	if (!nfs4_server_supports_acls(NFS_SERVER(inode)))
 		return 0;
 
 	if (list && len <= list_len)
@@ -6790,9 +6790,9 @@ const struct nfs_rpc_ops nfs_v4_clientops = {
 
 static const struct xattr_handler nfs4_xattr_nfs4_acl_handler = {
 	.prefix	= XATTR_NAME_NFSV4_ACL,
-	.list	= nfs4_xattr_list_nfs4_acl,
-	.get	= nfs4_xattr_get_nfs4_acl,
-	.set	= nfs4_xattr_set_nfs4_acl,
+	.xattr_list = nfs4_xattr_list_nfs4_acl,
+	.xattr_get = nfs4_xattr_get_nfs4_acl,
+	.xattr_set = nfs4_xattr_set_nfs4_acl,
 };
 
 const struct xattr_handler *nfs4_xattr_handlers[] = {

@@ -15,14 +15,14 @@
 
 
 static size_t
-generic_acl_list(struct dentry *dentry, char *list, size_t list_size,
+generic_acl_list(struct inode *inode, char *list, size_t list_size,
 		const char *name, size_t name_len, int type)
 {
 	struct posix_acl *acl;
 	const char *xname;
 	size_t size;
 
-	acl = get_cached_acl(dentry->d_inode, type);
+	acl = get_cached_acl(inode, type);
 	if (!acl)
 		return 0;
 	posix_acl_release(acl);
@@ -44,7 +44,7 @@ generic_acl_list(struct dentry *dentry, char *list, size_t list_size,
 }
 
 static int
-generic_acl_get(struct dentry *dentry, const char *name, void *buffer,
+generic_acl_get(struct inode *inode, const char *name, void *buffer,
 		     size_t size, int type)
 {
 	struct posix_acl *acl;
@@ -53,7 +53,7 @@ generic_acl_get(struct dentry *dentry, const char *name, void *buffer,
 	if (strcmp(name, "") != 0)
 		return -EINVAL;
 
-	acl = get_cached_acl(dentry->d_inode, type);
+	acl = get_cached_acl(inode, type);
 	if (!acl)
 		return -ENODATA;
 	error = posix_acl_to_xattr(&init_user_ns, acl, buffer, size);
@@ -63,10 +63,9 @@ generic_acl_get(struct dentry *dentry, const char *name, void *buffer,
 }
 
 static int
-generic_acl_set(struct dentry *dentry, const char *name, const void *value,
+generic_acl_set(struct inode *inode, const char *name, const void *value,
 		     size_t size, int flags, int type)
 {
-	struct inode *inode = dentry->d_inode;
 	struct posix_acl *acl = NULL;
 	int error;
 
@@ -170,15 +169,15 @@ generic_acl_chmod(struct inode *inode)
 const struct xattr_handler generic_acl_access_handler = {
 	.prefix = POSIX_ACL_XATTR_ACCESS,
 	.flags	= ACL_TYPE_ACCESS,
-	.list	= generic_acl_list,
-	.get	= generic_acl_get,
-	.set	= generic_acl_set,
+	.xattr_list = generic_acl_list,
+	.xattr_get = generic_acl_get,
+	.xattr_set = generic_acl_set,
 };
 
 const struct xattr_handler generic_acl_default_handler = {
 	.prefix = POSIX_ACL_XATTR_DEFAULT,
 	.flags	= ACL_TYPE_DEFAULT,
-	.list	= generic_acl_list,
-	.get	= generic_acl_get,
-	.set	= generic_acl_set,
+	.xattr_list = generic_acl_list,
+	.xattr_get = generic_acl_get,
+	.xattr_set = generic_acl_set,
 };

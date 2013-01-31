@@ -610,7 +610,7 @@ static int gfs2_initxattrs(struct inode *inode, const struct xattr *xattr_array,
 	int err = 0;
 
 	for (xattr = xattr_array; xattr->name != NULL; xattr++) {
-		err = __gfs2_xattr_set(inode, xattr->name, xattr->value,
+		err = gfs2_xattr_set(inode, xattr->name, xattr->value,
 				       xattr->value_len, 0,
 				       GFS2_EATYPE_SECURITY);
 		if (err < 0)

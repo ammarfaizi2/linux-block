@@ -82,14 +82,16 @@ error:
  * Returns a negative error number on failure, or the number of bytes
  * used / required on success.
  */
-ssize_t v9fs_xattr_get(struct dentry *dentry, const char *name,
+ssize_t v9fs_xattr_get(struct inode *inode, const char *name,
 		       void *buffer, size_t buffer_size)
 {
+	struct dentry *dentry = d_find_alias(inode);
 	struct p9_fid *fid;
 
 	p9_debug(P9_DEBUG_VFS, "name = %s value_len = %zu\n",
 		 name, buffer_size);
 	fid = v9fs_fid_lookup(dentry);
+	dput(dentry);
 	if (IS_ERR(fid))
 		return PTR_ERR(fid);
 
@@ -108,10 +110,12 @@ ssize_t v9fs_xattr_get(struct dentry *dentry, const char *name,
  *
  * Returns 0, or a negative error number on failure.
  */
-int v9fs_xattr_set(struct dentry *dentry, const char *name,
+int v9fs_xattr_set(struct inode *inode, const char *name,
 		   const void *value, size_t value_len, int flags)
 {
+	struct dentry *dentry = d_find_alias(inode);
 	struct p9_fid *fid = v9fs_fid_lookup(dentry);
+	dput(dentry);
 	if (IS_ERR(fid))
 		return PTR_ERR(fid);
 	return v9fs_fid_xattr_set(fid, name, value, value_len, flags);
@@ -162,7 +166,7 @@ int v9fs_fid_xattr_set(struct p9_fid *fid, const char *name,
 
 ssize_t v9fs_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size)
 {
-	return v9fs_xattr_get(dentry, NULL, buffer, buffer_size);
+	return v9fs_xattr_get(dentry->d_inode, NULL, buffer, buffer_size);
 }
 
 const struct xattr_handler *v9fs_xattr_handlers[] = {

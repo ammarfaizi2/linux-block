@@ -23,10 +23,10 @@
 #include "f2fs.h"
 #include "xattr.h"
 
-static size_t f2fs_xattr_generic_list(struct dentry *dentry, char *list,
+static size_t f2fs_xattr_generic_list(struct inode *inode, char *list,
 		size_t list_size, const char *name, size_t name_len, int type)
 {
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
+	struct f2fs_sb_info *sbi = F2FS_SB(inode->i_sb);
 	int total_len, prefix_len = 0;
 	const char *prefix = NULL;
 
@@ -56,10 +56,10 @@ static size_t f2fs_xattr_generic_list(struct dentry *dentry, char *list,
 	return total_len;
 }
 
-static int f2fs_xattr_generic_get(struct dentry *dentry, const char *name,
+static int f2fs_xattr_generic_get(struct inode *inode, const char *name,
 		void *buffer, size_t size, int type)
 {
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
+	struct f2fs_sb_info *sbi = F2FS_SB(inode->i_sb);
 
 	switch (type) {
 	case F2FS_XATTR_INDEX_USER:
@@ -75,14 +75,14 @@ static int f2fs_xattr_generic_get(struct dentry *dentry, const char *name,
 	}
 	if (strcmp(name, "") == 0)
 		return -EINVAL;
-	return f2fs_getxattr(dentry->d_inode, type, name,
+	return f2fs_getxattr(inode, type, name,
 			buffer, size);
 }
 
-static int f2fs_xattr_generic_set(struct dentry *dentry, const char *name,
+static int f2fs_xattr_generic_set(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
+	struct f2fs_sb_info *sbi = F2FS_SB(inode->i_sb);
 
 	switch (type) {
 	case F2FS_XATTR_INDEX_USER:
@@ -99,10 +99,10 @@ static int f2fs_xattr_generic_set(struct dentry *dentry, const char *name,
 	if (strcmp(name, "") == 0)
 		return -EINVAL;
 
-	return f2fs_setxattr(dentry->d_inode, type, name, value, size);
+	return f2fs_setxattr(inode, type, name, value, size);
 }
 
-static size_t f2fs_xattr_advise_list(struct dentry *dentry, char *list,
+static size_t f2fs_xattr_advise_list(struct inode *inode, char *list,
 		size_t list_size, const char *name, size_t name_len, int type)
 {
 	const char *xname = F2FS_SYSTEM_ADVISE_PREFIX;
@@ -117,11 +117,9 @@ static size_t f2fs_xattr_advise_list(struct dentry *dentry, char *list,
 	return size;
 }
 
-static int f2fs_xattr_advise_get(struct dentry *dentry, const char *name,
+static int f2fs_xattr_advise_get(struct inode *inode, const char *name,
 		void *buffer, size_t size, int type)
 {
-	struct inode *inode = dentry->d_inode;
-
 	if (strcmp(name, "") != 0)
 		return -EINVAL;
 
@@ -129,11 +127,9 @@ static int f2fs_xattr_advise_get(struct dentry *dentry, const char *name,
 	return sizeof(char);
 }
 
-static int f2fs_xattr_advise_set(struct dentry *dentry, const char *name,
+static int f2fs_xattr_advise_set(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
-	struct inode *inode = dentry->d_inode;
-
 	if (strcmp(name, "") != 0)
 		return -EINVAL;
 	if (!inode_owner_or_capable(inode))
@@ -148,25 +144,25 @@ static int f2fs_xattr_advise_set(struct dentry *dentry, const char *name,
 const struct xattr_handler f2fs_xattr_user_handler = {
 	.prefix	= XATTR_USER_PREFIX,
 	.flags	= F2FS_XATTR_INDEX_USER,
-	.list	= f2fs_xattr_generic_list,
-	.get	= f2fs_xattr_generic_get,
-	.set	= f2fs_xattr_generic_set,
+	.xattr_list = f2fs_xattr_generic_list,
+	.xattr_get = f2fs_xattr_generic_get,
+	.xattr_set = f2fs_xattr_generic_set,
 };
 
 const struct xattr_handler f2fs_xattr_trusted_handler = {
 	.prefix	= XATTR_TRUSTED_PREFIX,
 	.flags	= F2FS_XATTR_INDEX_TRUSTED,
-	.list	= f2fs_xattr_generic_list,
-	.get	= f2fs_xattr_generic_get,
-	.set	= f2fs_xattr_generic_set,
+	.xattr_list = f2fs_xattr_generic_list,
+	.xattr_get = f2fs_xattr_generic_get,
+	.xattr_set = f2fs_xattr_generic_set,
 };
 
 const struct xattr_handler f2fs_xattr_advise_handler = {
 	.prefix = F2FS_SYSTEM_ADVISE_PREFIX,
 	.flags	= F2FS_XATTR_INDEX_ADVISE,
-	.list   = f2fs_xattr_advise_list,
-	.get    = f2fs_xattr_advise_get,
-	.set    = f2fs_xattr_advise_set,
+	.xattr_list = f2fs_xattr_advise_list,
+	.xattr_get = f2fs_xattr_advise_get,
+	.xattr_set = f2fs_xattr_advise_set,
 };
 
 static const struct xattr_handler *f2fs_xattr_handler_map[] = {
@@ -278,7 +274,7 @@ ssize_t f2fs_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size)
 		if (!handler)
 			continue;
 
-		size = handler->list(dentry, buffer, rest, entry->e_name,
+		size = handler->xattr_list(inode, buffer, rest, entry->e_name,
 				entry->e_name_len, handler->flags);
 		if (buffer && size > rest) {
 			error = -ERANGE;

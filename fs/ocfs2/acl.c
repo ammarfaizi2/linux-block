@@ -399,14 +399,14 @@ cleanup:
 	return ret;
 }
 
-static size_t ocfs2_xattr_list_acl_access(struct dentry *dentry,
+static size_t ocfs2_xattr_list_acl_access(struct inode *inode,
 					  char *list,
 					  size_t list_len,
 					  const char *name,
 					  size_t name_len,
 					  int type)
 {
-	struct ocfs2_super *osb = OCFS2_SB(dentry->d_sb);
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	const size_t size = sizeof(POSIX_ACL_XATTR_ACCESS);
 
 	if (!(osb->s_mount_opt & OCFS2_MOUNT_POSIX_ACL))
@@ -417,14 +417,14 @@ static size_t ocfs2_xattr_list_acl_access(struct dentry *dentry,
 	return size;
 }
 
-static size_t ocfs2_xattr_list_acl_default(struct dentry *dentry,
+static size_t ocfs2_xattr_list_acl_default(struct inode *inode,
 					   char *list,
 					   size_t list_len,
 					   const char *name,
 					   size_t name_len,
 					   int type)
 {
-	struct ocfs2_super *osb = OCFS2_SB(dentry->d_sb);
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	const size_t size = sizeof(POSIX_ACL_XATTR_DEFAULT);
 
 	if (!(osb->s_mount_opt & OCFS2_MOUNT_POSIX_ACL))
@@ -435,10 +435,10 @@ static size_t ocfs2_xattr_list_acl_default(struct dentry *dentry,
 	return size;
 }
 
-static int ocfs2_xattr_get_acl(struct dentry *dentry, const char *name,
+static int ocfs2_xattr_get_acl(struct inode *inode, const char *name,
 		void *buffer, size_t size, int type)
 {
-	struct ocfs2_super *osb = OCFS2_SB(dentry->d_sb);
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	struct posix_acl *acl;
 	int ret;
 
@@ -447,7 +447,7 @@ static int ocfs2_xattr_get_acl(struct dentry *dentry, const char *name,
 	if (!(osb->s_mount_opt & OCFS2_MOUNT_POSIX_ACL))
 		return -EOPNOTSUPP;
 
-	acl = ocfs2_get_acl(dentry->d_inode, type);
+	acl = ocfs2_get_acl(inode, type);
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	if (acl == NULL)
@@ -458,10 +458,9 @@ static int ocfs2_xattr_get_acl(struct dentry *dentry, const char *name,
 	return ret;
 }
 
-static int ocfs2_xattr_set_acl(struct dentry *dentry, const char *name,
+static int ocfs2_xattr_set_acl(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
-	struct inode *inode = dentry->d_inode;
 	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	struct posix_acl *acl;
 	int ret = 0;
@@ -496,15 +495,15 @@ cleanup:
 const struct xattr_handler ocfs2_xattr_acl_access_handler = {
 	.prefix	= POSIX_ACL_XATTR_ACCESS,
 	.flags	= ACL_TYPE_ACCESS,
-	.list	= ocfs2_xattr_list_acl_access,
-	.get	= ocfs2_xattr_get_acl,
-	.set	= ocfs2_xattr_set_acl,
+	.xattr_list = ocfs2_xattr_list_acl_access,
+	.xattr_get = ocfs2_xattr_get_acl,
+	.xattr_set = ocfs2_xattr_set_acl,
 };
 
 const struct xattr_handler ocfs2_xattr_acl_default_handler = {
 	.prefix	= POSIX_ACL_XATTR_DEFAULT,
 	.flags	= ACL_TYPE_DEFAULT,
-	.list	= ocfs2_xattr_list_acl_default,
-	.get	= ocfs2_xattr_get_acl,
-	.set	= ocfs2_xattr_set_acl,
+	.xattr_list = ocfs2_xattr_list_acl_default,
+	.xattr_get = ocfs2_xattr_get_acl,
+	.xattr_set = ocfs2_xattr_set_acl,
 };

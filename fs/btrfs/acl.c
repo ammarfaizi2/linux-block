@@ -76,16 +76,16 @@ struct posix_acl *btrfs_get_acl(struct inode *inode, int type)
 	return acl;
 }
 
-static int btrfs_xattr_acl_get(struct dentry *dentry, const char *name,
+static int btrfs_xattr_acl_get(struct inode *inode, const char *name,
 		void *value, size_t size, int type)
 {
 	struct posix_acl *acl;
 	int ret = 0;
 
-	if (!IS_POSIXACL(dentry->d_inode))
+	if (!IS_POSIXACL(inode))
 		return -EOPNOTSUPP;
 
-	acl = btrfs_get_acl(dentry->d_inode, type);
+	acl = btrfs_get_acl(inode, type);
 
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
@@ -158,16 +158,16 @@ out:
 	return ret;
 }
 
-static int btrfs_xattr_acl_set(struct dentry *dentry, const char *name,
+static int btrfs_xattr_acl_set(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
 	int ret;
 	struct posix_acl *acl = NULL;
 
-	if (!inode_owner_or_capable(dentry->d_inode))
+	if (!inode_owner_or_capable(inode))
 		return -EPERM;
 
-	if (!IS_POSIXACL(dentry->d_inode))
+	if (!IS_POSIXACL(inode))
 		return -EOPNOTSUPP;
 
 	if (value) {
@@ -182,7 +182,7 @@ static int btrfs_xattr_acl_set(struct dentry *dentry, const char *name,
 		}
 	}
 
-	ret = btrfs_set_acl(NULL, dentry->d_inode, acl, type);
+	ret = btrfs_set_acl(NULL, inode, acl, type);
 out:
 	posix_acl_release(acl);
 
@@ -267,13 +267,13 @@ int btrfs_acl_chmod(struct inode *inode)
 const struct xattr_handler btrfs_xattr_acl_default_handler = {
 	.prefix = POSIX_ACL_XATTR_DEFAULT,
 	.flags	= ACL_TYPE_DEFAULT,
-	.get	= btrfs_xattr_acl_get,
-	.set	= btrfs_xattr_acl_set,
+	.xattr_get = btrfs_xattr_acl_get,
+	.xattr_set = btrfs_xattr_acl_set,
 };
 
 const struct xattr_handler btrfs_xattr_acl_access_handler = {
 	.prefix = POSIX_ACL_XATTR_ACCESS,
 	.flags	= ACL_TYPE_ACCESS,
-	.get	= btrfs_xattr_acl_get,
-	.set	= btrfs_xattr_acl_set,
+	.xattr_get = btrfs_xattr_acl_get,
+	.xattr_set = btrfs_xattr_acl_set,
 };

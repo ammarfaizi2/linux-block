@@ -8,7 +8,7 @@
 #include "xattr.h"
 
 static size_t
-ext2_xattr_security_list(struct dentry *dentry, char *list, size_t list_size,
+ext2_xattr_security_list(struct inode *inode, char *list, size_t list_size,
 			 const char *name, size_t name_len, int type)
 {
 	const int prefix_len = XATTR_SECURITY_PREFIX_LEN;
@@ -23,22 +23,22 @@ ext2_xattr_security_list(struct dentry *dentry, char *list, size_t list_size,
 }
 
 static int
-ext2_xattr_security_get(struct dentry *dentry, const char *name,
+ext2_xattr_security_get(struct inode *inode, const char *name,
 		       void *buffer, size_t size, int type)
 {
 	if (strcmp(name, "") == 0)
 		return -EINVAL;
-	return ext2_xattr_get(dentry->d_inode, EXT2_XATTR_INDEX_SECURITY, name,
+	return ext2_xattr_get(inode, EXT2_XATTR_INDEX_SECURITY, name,
 			      buffer, size);
 }
 
 static int
-ext2_xattr_security_set(struct dentry *dentry, const char *name,
+ext2_xattr_security_set(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
 	if (strcmp(name, "") == 0)
 		return -EINVAL;
-	return ext2_xattr_set(dentry->d_inode, EXT2_XATTR_INDEX_SECURITY, name,
+	return ext2_xattr_set(inode, EXT2_XATTR_INDEX_SECURITY, name,
 			      value, size, flags);
 }
 
@@ -68,7 +68,7 @@ ext2_init_security(struct inode *inode, struct inode *dir,
 
 const struct xattr_handler ext2_xattr_security_handler = {
 	.prefix	= XATTR_SECURITY_PREFIX,
-	.list	= ext2_xattr_security_list,
-	.get	= ext2_xattr_security_get,
-	.set	= ext2_xattr_security_set,
+	.xattr_list = ext2_xattr_security_list,
+	.xattr_get = ext2_xattr_security_get,
+	.xattr_set = ext2_xattr_security_set,
 };

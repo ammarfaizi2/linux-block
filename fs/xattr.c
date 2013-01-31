@@ -762,7 +762,7 @@ generic_getxattr(struct dentry *dentry, const char *name, void *buffer, size_t s
 	handler = xattr_resolve_name(dentry->d_sb->s_xattr, &name);
 	if (!handler)
 		return -EOPNOTSUPP;
-	return handler->get(dentry, name, buffer, size, handler->flags);
+	return handler->xattr_get(dentry->d_inode, name, buffer, size, handler->flags);
 }
 
 /*
@@ -777,14 +777,14 @@ generic_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size)
 
 	if (!buffer) {
 		for_each_xattr_handler(handlers, handler) {
-			size += handler->list(dentry, NULL, 0, NULL, 0,
+			size += handler->xattr_list(dentry->d_inode, NULL, 0, NULL, 0,
 					      handler->flags);
 		}
 	} else {
 		char *buf = buffer;
 
 		for_each_xattr_handler(handlers, handler) {
-			size = handler->list(dentry, buf, buffer_size,
+			size = handler->xattr_list(dentry->d_inode, buf, buffer_size,
 					     NULL, 0, handler->flags);
 			if (size > buffer_size)
 				return -ERANGE;
@@ -809,7 +809,7 @@ generic_setxattr(struct dentry *dentry, const char *name, const void *value, siz
 	handler = xattr_resolve_name(dentry->d_sb->s_xattr, &name);
 	if (!handler)
 		return -EOPNOTSUPP;
-	return handler->set(dentry, name, value, size, flags, handler->flags);
+	return handler->xattr_set(dentry->d_inode, name, value, size, flags, handler->flags);
 }
 
 /*
@@ -824,7 +824,7 @@ generic_removexattr(struct dentry *dentry, const char *name)
 	handler = xattr_resolve_name(dentry->d_sb->s_xattr, &name);
 	if (!handler)
 		return -EOPNOTSUPP;
-	return handler->set(dentry, name, NULL, 0,
+	return handler->xattr_set(dentry->d_inode, name, NULL, 0,
 			    XATTR_REPLACE, handler->flags);
 }
 

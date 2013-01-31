@@ -343,7 +343,7 @@ int jffs2_acl_chmod(struct inode *inode)
 	return rc;
 }
 
-static size_t jffs2_acl_access_listxattr(struct dentry *dentry, char *list,
+static size_t jffs2_acl_access_listxattr(struct inode *inode, char *list,
 		size_t list_size, const char *name, size_t name_len, int type)
 {
 	const int retlen = sizeof(POSIX_ACL_XATTR_ACCESS);
@@ -353,7 +353,7 @@ static size_t jffs2_acl_access_listxattr(struct dentry *dentry, char *list,
 	return retlen;
 }
 
-static size_t jffs2_acl_default_listxattr(struct dentry *dentry, char *list,
+static size_t jffs2_acl_default_listxattr(struct inode *inode, char *list,
 		size_t list_size, const char *name, size_t name_len, int type)
 {
 	const int retlen = sizeof(POSIX_ACL_XATTR_DEFAULT);
@@ -363,7 +363,7 @@ static size_t jffs2_acl_default_listxattr(struct dentry *dentry, char *list,
 	return retlen;
 }
 
-static int jffs2_acl_getxattr(struct dentry *dentry, const char *name,
+static int jffs2_acl_getxattr(struct inode *inode, const char *name,
 		void *buffer, size_t size, int type)
 {
 	struct posix_acl *acl;
@@ -372,7 +372,7 @@ static int jffs2_acl_getxattr(struct dentry *dentry, const char *name,
 	if (name[0] != '\0')
 		return -EINVAL;
 
-	acl = jffs2_get_acl(dentry->d_inode, type);
+	acl = jffs2_get_acl(inode, type);
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	if (!acl)
@@ -383,7 +383,7 @@ static int jffs2_acl_getxattr(struct dentry *dentry, const char *name,
 	return rc;
 }
 
-static int jffs2_acl_setxattr(struct dentry *dentry, const char *name,
+static int jffs2_acl_setxattr(struct inode *inode, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
 	struct posix_acl *acl;
@@ -391,7 +391,7 @@ static int jffs2_acl_setxattr(struct dentry *dentry, const char *name,
 
 	if (name[0] != '\0')
 		return -EINVAL;
-	if (!inode_owner_or_capable(dentry->d_inode))
+	if (!inode_owner_or_capable(inode))
 		return -EPERM;
 
 	if (value) {
@@ -406,7 +406,7 @@ static int jffs2_acl_setxattr(struct dentry *dentry, const char *name,
 	} else {
 		acl = NULL;
 	}
-	rc = jffs2_set_acl(dentry->d_inode, type, acl);
+	rc = jffs2_set_acl(inode, type, acl);
  out:
 	posix_acl_release(acl);
 	return rc;
@@ -415,15 +415,15 @@ static int jffs2_acl_setxattr(struct dentry *dentry, const char *name,
 const struct xattr_handler jffs2_acl_access_xattr_handler = {
 	.prefix	= POSIX_ACL_XATTR_ACCESS,
 	.flags	= ACL_TYPE_DEFAULT,
-	.list	= jffs2_acl_access_listxattr,
-	.get	= jffs2_acl_getxattr,
-	.set	= jffs2_acl_setxattr,
+	.xattr_list = jffs2_acl_access_listxattr,
+	.xattr_get = jffs2_acl_getxattr,
+	.xattr_set = jffs2_acl_setxattr,
 };
 
 const struct xattr_handler jffs2_acl_default_xattr_handler = {
 	.prefix	= POSIX_ACL_XATTR_DEFAULT,
 	.flags	= ACL_TYPE_DEFAULT,
-	.list	= jffs2_acl_default_listxattr,
-	.get	= jffs2_acl_getxattr,
-	.set	= jffs2_acl_setxattr,
+	.xattr_list = jffs2_acl_default_listxattr,
+	.xattr_get = jffs2_acl_getxattr,
+	.xattr_set = jffs2_acl_setxattr,
 };

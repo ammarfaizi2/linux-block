@@ -19,7 +19,7 @@
 #include <linux/slab.h>
 #include "xattr.h"
 
-static int v9fs_xattr_user_get(struct dentry *dentry, const char *name,
+static int v9fs_xattr_user_get(struct inode *inode, const char *name,
 			void *buffer, size_t size, int type)
 {
 	int retval;
@@ -41,12 +41,12 @@ static int v9fs_xattr_user_get(struct dentry *dentry, const char *name,
 	memcpy(full_name+prefix_len, name, name_len);
 	full_name[prefix_len + name_len] = '\0';
 
-	retval = v9fs_xattr_get(dentry, full_name, buffer, size);
+	retval = v9fs_xattr_get(inode, full_name, buffer, size);
 	kfree(full_name);
 	return retval;
 }
 
-static int v9fs_xattr_user_set(struct dentry *dentry, const char *name,
+static int v9fs_xattr_user_set(struct inode *inode, const char *name,
 			const void *value, size_t size, int flags, int type)
 {
 	int retval;
@@ -68,13 +68,13 @@ static int v9fs_xattr_user_set(struct dentry *dentry, const char *name,
 	memcpy(full_name + prefix_len, name, name_len);
 	full_name[prefix_len + name_len] = '\0';
 
-	retval = v9fs_xattr_set(dentry, full_name, value, size, flags);
+	retval = v9fs_xattr_set(inode, full_name, value, size, flags);
 	kfree(full_name);
 	return retval;
 }
 
 struct xattr_handler v9fs_xattr_user_handler = {
 	.prefix	= XATTR_USER_PREFIX,
-	.get	= v9fs_xattr_user_get,
-	.set	= v9fs_xattr_user_set,
+	.xattr_get = v9fs_xattr_user_get,
+	.xattr_set = v9fs_xattr_user_set,
 };

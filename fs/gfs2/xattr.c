@@ -582,10 +582,10 @@ out:
  *
  * Returns: actual size of data on success, -errno on error
  */
-static int gfs2_xattr_get(struct dentry *dentry, const char *name,
+static int gfs2_xattr_get(struct inode *inode, const char *name,
 		void *buffer, size_t size, int type)
 {
-	struct gfs2_inode *ip = GFS2_I(dentry->d_inode);
+	struct gfs2_inode *ip = GFS2_I(inode);
 	struct gfs2_ea_location el;
 	int error;
 
@@ -1157,7 +1157,7 @@ static int gfs2_xattr_remove(struct gfs2_inode *ip, int type, const char *name)
 }
 
 /**
- * __gfs2_xattr_set - Set (or remove) a GFS2 extended attribute
+ * gfs2_xattr_set - Set (or remove) a GFS2 extended attribute
  * @ip: The inode
  * @name: The name of the extended attribute
  * @value: The value of the extended attribute (NULL for remove)
@@ -1170,7 +1170,7 @@ static int gfs2_xattr_remove(struct gfs2_inode *ip, int type, const char *name)
  * Returns: 0 or errno on failure
  */
 
-int __gfs2_xattr_set(struct inode *inode, const char *name,
+int gfs2_xattr_set(struct inode *inode, const char *name,
 		   const void *value, size_t size, int flags, int type)
 {
 	struct gfs2_inode *ip = GFS2_I(inode);
@@ -1224,14 +1224,6 @@ int __gfs2_xattr_set(struct inode *inode, const char *name,
 
 	return error;
 }
-
-static int gfs2_xattr_set(struct dentry *dentry, const char *name,
-		const void *value, size_t size, int flags, int type)
-{
-	return __gfs2_xattr_set(dentry->d_inode, name, value,
-				size, flags, type);
-}
-
 
 static int ea_acl_chmod_unstuffed(struct gfs2_inode *ip,
 				  struct gfs2_ea_header *ea, char *data)
@@ -1485,15 +1477,15 @@ out_quota:
 static const struct xattr_handler gfs2_xattr_user_handler = {
 	.prefix = XATTR_USER_PREFIX,
 	.flags  = GFS2_EATYPE_USR,
-	.get    = gfs2_xattr_get,
-	.set    = gfs2_xattr_set,
+	.xattr_get = gfs2_xattr_get,
+	.xattr_set = gfs2_xattr_set,
 };
 
 static const struct xattr_handler gfs2_xattr_security_handler = {
 	.prefix = XATTR_SECURITY_PREFIX,
 	.flags  = GFS2_EATYPE_SECURITY,
-	.get    = gfs2_xattr_get,
-	.set    = gfs2_xattr_set,
+	.xattr_get = gfs2_xattr_get,
+	.xattr_set    = gfs2_xattr_set,
 };
 
 const struct xattr_handler *gfs2_xattr_handlers[] = {

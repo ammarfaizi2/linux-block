@@ -387,7 +387,7 @@ ext4_xattr_list_entries(struct dentry *dentry, struct ext4_xattr_entry *entry,
 			ext4_xattr_handler(entry->e_name_index);
 
 		if (handler) {
-			size_t size = handler->list(dentry, buffer, rest,
+			size_t size = handler->xattr_list(dentry->d_inode, buffer, rest,
 						    entry->e_name,
 						    entry->e_name_len,
 						    handler->flags);
