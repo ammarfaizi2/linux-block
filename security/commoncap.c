@@ -373,9 +373,8 @@ static inline int bprm_caps_from_vfs_caps(struct cpu_vfs_cap_data *caps,
 /*
  * Extract the on-exec-apply capability sets for an executable file.
  */
-int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps)
+int get_vfs_caps_from_disk(struct inode *inode, struct cpu_vfs_cap_data *cpu_caps)
 {
-	struct inode *inode = dentry->d_inode;
 	__u32 magic_etc;
 	unsigned tocopy, i;
 	int size;
@@ -431,7 +430,6 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data 
  */
 static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_cap)
 {
-	struct dentry *dentry;
 	int rc = 0;
 	struct cpu_vfs_cap_data vcaps;
 
@@ -443,9 +441,7 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
 	if (bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID)
 		return 0;
 
-	dentry = dget(bprm->file->f_dentry);
-
-	rc = get_vfs_caps_from_disk(dentry, &vcaps);
+	rc = get_vfs_caps_from_disk(file_inode(bprm->file), &vcaps);
 	if (rc < 0) {
 		if (rc == -EINVAL)
 			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
@@ -461,7 +457,6 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
 		       __func__, rc, bprm->filename);
 
 out:
-	dput(dentry);
 	if (rc)
 		bprm_clear_caps(bprm);
 

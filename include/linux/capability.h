@@ -213,6 +213,6 @@ extern bool nsown_capable(int cap);
 extern bool inode_capable(const struct inode *inode, int cap);
 
 /* audit system wants to get cap info from files as well */
-extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+extern int get_vfs_caps_from_disk(struct inode *inode, struct cpu_vfs_cap_data *cpu_caps);
 
 #endif /* !_LINUX_CAPABILITY_H */
