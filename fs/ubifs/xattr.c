@@ -356,10 +356,10 @@ out_free:
 	return err;
 }
 
-ssize_t ubifs_getxattr(struct dentry *dentry, const char *name, void *buf,
+ssize_t ubifs_getxattr(struct inode *host, const char *name, void *buf,
 		       size_t size)
 {
-	struct inode *inode, *host = dentry->d_inode;
+	struct inode *inode;
 	struct ubifs_info *c = host->i_sb->s_fs_info;
 	struct qstr nm = QSTR_INIT(name, strlen(name));
 	struct ubifs_inode *ui;
@@ -367,8 +367,7 @@ ssize_t ubifs_getxattr(struct dentry *dentry, const char *name, void *buf,
 	union ubifs_key key;
 	int err;
 
-	dbg_gen("xattr '%s', ino %lu ('%.*s'), buf size %zd", name,
-		host->i_ino, dentry->d_name.len, dentry->d_name.name, size);
+	dbg_gen("xattr '%s', ino %lu, buf size %zd", name, host->i_ino, size);
 
 	err = check_namespace(&nm);
 	if (err < 0)

@@ -2581,14 +2581,20 @@ static int cgroup_removexattr(struct dentry *dentry, const char *name)
 	return simple_xattr_remove(__d_xattrs(dentry), name);
 }
 
-static ssize_t cgroup_getxattr(struct dentry *dentry, const char *name,
+static ssize_t cgroup_getxattr(struct inode *inode, const char *name,
 			       void *buf, size_t size)
 {
-	if (!xattr_enabled(dentry))
+	struct dentry *dentry;
+	struct cgroupfs_root *root = inode->i_sb->s_fs_info;
+	ssize_t res;
+	if (!test_bit(ROOT_XATTR, &root->flags))
 		return -EOPNOTSUPP;
 	if (!is_valid_xattr(name))
 		return -EINVAL;
-	return simple_xattr_get(__d_xattrs(dentry), name, buf, size);
+	dentry = d_find_alias(inode);
+	res = simple_xattr_get(__d_xattrs(dentry), name, buf, size);
+	dput(dentry);
+	return res;
 }
 
 static ssize_t cgroup_listxattr(struct dentry *dentry, char *buf, size_t size)

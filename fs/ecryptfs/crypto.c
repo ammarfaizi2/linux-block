@@ -1499,12 +1499,12 @@ out:
  */
 int ecryptfs_read_xattr_region(char *page_virt, struct inode *ecryptfs_inode)
 {
-	struct dentry *lower_dentry =
-		ecryptfs_inode_to_private(ecryptfs_inode)->lower_file->f_dentry;
+	struct inode *lower_inode =
+		file_inode(ecryptfs_inode_to_private(ecryptfs_inode)->lower_file);
 	ssize_t size;
 	int rc = 0;
 
-	size = ecryptfs_getxattr_lower(lower_dentry, ECRYPTFS_XATTR_NAME,
+	size = ecryptfs_getxattr_lower(lower_inode, ECRYPTFS_XATTR_NAME,
 				       page_virt, ECRYPTFS_DEFAULT_EXTENT_SIZE);
 	if (size < 0) {
 		if (unlikely(ecryptfs_verbosity > 0))
@@ -1521,11 +1521,13 @@ out:
 int ecryptfs_read_and_validate_xattr_region(struct dentry *dentry,
 					    struct inode *inode)
 {
+	struct inode *lower_inode =
+		file_inode(ecryptfs_inode_to_private(inode)->lower_file);
 	u8 file_size[ECRYPTFS_SIZE_AND_MARKER_BYTES];
 	u8 *marker = file_size + ECRYPTFS_FILE_SIZE_BYTES;
 	int rc;
 
-	rc = ecryptfs_getxattr_lower(ecryptfs_dentry_to_lower(dentry),
+	rc = ecryptfs_getxattr_lower(lower_inode,
 				     ECRYPTFS_XATTR_NAME, file_size,
 				     ECRYPTFS_SIZE_AND_MARKER_BYTES);
 	if (rc < ECRYPTFS_SIZE_AND_MARKER_BYTES)

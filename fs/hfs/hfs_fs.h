@@ -197,7 +197,7 @@ extern void hfs_delete_inode(struct inode *);
 /* attr.c */
 extern int hfs_setxattr(struct dentry *dentry, const char *name,
 			const void *value, size_t size, int flags);
-extern ssize_t hfs_getxattr(struct dentry *dentry, const char *name,
+extern ssize_t hfs_getxattr(struct inode *inode, const char *name,
 			    void *value, size_t size);
 extern ssize_t hfs_listxattr(struct dentry *dentry, char *buffer, size_t size);
 

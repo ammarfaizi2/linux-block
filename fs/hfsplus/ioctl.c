@@ -196,10 +196,9 @@ out:
 	return res;
 }
 
-ssize_t hfsplus_getxattr(struct dentry *dentry, const char *name,
+ssize_t hfsplus_getxattr(struct inode *inode, const char *name,
 			 void *value, size_t size)
 {
-	struct inode *inode = dentry->d_inode;
 	struct hfs_find_data fd;
 	hfsplus_cat_entry entry;
 	struct hfsplus_cat_file *file;

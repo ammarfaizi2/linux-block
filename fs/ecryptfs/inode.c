@@ -324,12 +324,12 @@ static int ecryptfs_i_size_read(struct dentry *dentry, struct inode *inode)
 		ecryptfs_set_default_sizes(crypt_stat);
 
 	rc = ecryptfs_read_and_validate_header_region(inode);
-	ecryptfs_put_lower_file(inode);
 	if (rc) {
 		rc = ecryptfs_read_and_validate_xattr_region(dentry, inode);
 		if (!rc)
 			crypt_stat->flags |= ECRYPTFS_METADATA_IN_XATTR;
 	}
+	ecryptfs_put_lower_file(inode);
 
 	/* Must return 0 to allow non-eCryptfs files to be looked up, too */
 	return 0;
@@ -1058,29 +1058,32 @@ out:
 }
 
 ssize_t
-ecryptfs_getxattr_lower(struct dentry *lower_dentry, const char *name,
+ecryptfs_getxattr_lower(struct inode *lower_inode, const char *name,
 			void *value, size_t size)
 {
 	int rc = 0;
 
-	if (!lower_dentry->d_inode->i_op->getxattr) {
+	if (!lower_inode->i_op->getxattr) {
 		rc = -EOPNOTSUPP;
 		goto out;
 	}
-	mutex_lock(&lower_dentry->d_inode->i_mutex);
-	rc = lower_dentry->d_inode->i_op->getxattr(lower_dentry, name, value,
-						   size);
-	mutex_unlock(&lower_dentry->d_inode->i_mutex);
+	mutex_lock(&lower_inode->i_mutex);
+	rc = lower_inode->i_op->getxattr(lower_inode, name, value, size);
+	mutex_unlock(&lower_inode->i_mutex);
 out:
 	return rc;
 }
 
 static ssize_t
-ecryptfs_getxattr(struct dentry *dentry, const char *name, void *value,
+ecryptfs_getxattr(struct inode *inode, const char *name, void *value,
 		  size_t size)
 {
-	return ecryptfs_getxattr_lower(ecryptfs_dentry_to_lower(dentry), name,
-				       value, size);
+	struct dentry *dentry = d_find_alias(inode);
+	ssize_t res;
+	res = ecryptfs_getxattr_lower(ecryptfs_dentry_to_lower(dentry)->d_inode,
+				name, value, size);
+	dput(dentry);
+	return res;
 }
 
 static ssize_t

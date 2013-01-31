@@ -49,10 +49,9 @@ ssize_t nfs3_listxattr(struct dentry *dentry, char *buffer, size_t size)
 	return -ERANGE;
 }
 
-ssize_t nfs3_getxattr(struct dentry *dentry, const char *name,
+ssize_t nfs3_getxattr(struct inode *inode, const char *name,
 		void *buffer, size_t size)
 {
-	struct inode *inode = dentry->d_inode;
 	struct posix_acl *acl;
 	int type, error = 0;
 

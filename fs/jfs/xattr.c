@@ -981,7 +981,7 @@ ssize_t __jfs_getxattr(struct inode *inode, const char *name, void *data,
 	return size;
 }
 
-ssize_t jfs_getxattr(struct dentry *dentry, const char *name, void *data,
+ssize_t jfs_getxattr(struct inode *inode, const char *name, void *data,
 		     size_t buf_size)
 {
 	int err;
@@ -999,7 +999,7 @@ ssize_t jfs_getxattr(struct dentry *dentry, const char *name, void *data,
 			return -EOPNOTSUPP;
 	}
 
-	err = __jfs_getxattr(dentry->d_inode, name, data, buf_size);
+	err = __jfs_getxattr(inode, name, data, buf_size);
 
 	return err;
 }

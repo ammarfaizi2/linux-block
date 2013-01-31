@@ -560,10 +560,9 @@ void __ceph_build_xattrs_blob(struct ceph_inode_info *ci)
 	}
 }
 
-ssize_t ceph_getxattr(struct dentry *dentry, const char *name, void *value,
+ssize_t ceph_getxattr(struct inode *inode, const char *name, void *value,
 		      size_t size)
 {
-	struct inode *inode = dentry->d_inode;
 	struct ceph_inode_info *ci = ceph_inode(inode);
 	int err;
 	struct ceph_inode_xattr *xattr;

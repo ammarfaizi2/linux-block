@@ -19,7 +19,7 @@ int reiserfs_permission(struct inode *inode, int mask);
 
 #ifdef CONFIG_REISERFS_FS_XATTR
 #define has_xattr_dir(inode) (REISERFS_I(inode)->i_flags & i_has_xattr_dir)
-ssize_t reiserfs_getxattr(struct dentry *dentry, const char *name,
+ssize_t reiserfs_getxattr(struct inode *inode, const char *name,
 			  void *buffer, size_t size);
 int reiserfs_setxattr(struct dentry *dentry, const char *name,
 		      const void *value, size_t size, int flags);

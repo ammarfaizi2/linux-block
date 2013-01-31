@@ -66,7 +66,7 @@ static char *smk_fetch(const char *name, struct inode *ip, struct dentry *dp)
 	if (buffer == NULL)
 		return NULL;
 
-	rc = ip->i_op->getxattr(dp, name, buffer, SMK_LONGLABEL);
+	rc = ip->i_op->getxattr(ip, name, buffer, SMK_LONGLABEL);
 	if (rc > 0)
 		result = smk_import(buffer, rc);
 
@@ -2607,7 +2607,7 @@ static void smack_d_instantiate(struct dentry *opt_dentry, struct inode *inode)
 					TRANS_TRUE, TRANS_TRUE_SIZE,
 					0);
 			} else {
-				rc = inode->i_op->getxattr(dp,
+				rc = inode->i_op->getxattr(inode,
 					XATTR_NAME_SMACKTRANSMUTE, trattr,
 					TRANS_TRUE_SIZE);
 				if (rc >= 0 && strncmp(trattr, TRANS_TRUE,

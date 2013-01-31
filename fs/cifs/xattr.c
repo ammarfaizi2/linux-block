@@ -227,11 +227,12 @@ set_ea_exit:
 	return rc;
 }
 
-ssize_t cifs_getxattr(struct dentry *direntry, const char *ea_name,
+ssize_t cifs_getxattr(struct inode *inode, const char *ea_name,
 	void *ea_value, size_t buf_size)
 {
 	ssize_t rc = -EOPNOTSUPP;
 #ifdef CONFIG_CIFS_XATTR
+	struct dentry *dentry;
 	unsigned int xid;
 	struct cifs_sb_info *cifs_sb;
 	struct tcon_link *tlink;
@@ -239,13 +240,12 @@ ssize_t cifs_getxattr(struct dentry *direntry, const char *ea_name,
 	struct super_block *sb;
 	char *full_path;
 
-	if (direntry == NULL)
+	if (inode == NULL)
 		return -EIO;
-	if (direntry->d_inode == NULL)
+	dentry = d_find_alias(inode);
+	if (!dentry)
 		return -EIO;
-	sb = direntry->d_inode->i_sb;
-	if (sb == NULL)
-		return -EIO;
+	sb = inode->i_sb;
 
 	cifs_sb = CIFS_SB(sb);
 	tlink = cifs_sb_tlink(cifs_sb);
@@ -255,7 +255,8 @@ ssize_t cifs_getxattr(struct dentry *direntry, const char *ea_name,
 
 	xid = get_xid();
 
-	full_path = build_path_from_dentry(direntry);
+	full_path = build_path_from_dentry(dentry);
+	dput(dentry);
 	if (full_path == NULL) {
 		rc = -ENOMEM;
 		goto get_ea_exit;
@@ -315,7 +316,7 @@ ssize_t cifs_getxattr(struct dentry *direntry, const char *ea_name,
 			u32 acllen;
 			struct cifs_ntsd *pacl;
 
-			pacl = get_cifs_acl(cifs_sb, direntry->d_inode,
+			pacl = get_cifs_acl(cifs_sb, inode,
 						full_path, &acllen);
 			if (IS_ERR(pacl)) {
 				rc = PTR_ERR(pacl);

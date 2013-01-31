@@ -430,7 +430,7 @@ static inline struct rpc_cred *nfs_file_cred(struct file *file)
  */
 #ifdef CONFIG_NFS_V3_ACL
 extern ssize_t nfs3_listxattr(struct dentry *, char *, size_t);
-extern ssize_t nfs3_getxattr(struct dentry *, const char *, void *, size_t);
+extern ssize_t nfs3_getxattr(struct inode *, const char *, void *, size_t);
 extern int nfs3_setxattr(struct dentry *, const char *,
 			const void *, size_t, int);
 extern int nfs3_removexattr (struct dentry *, const char *name);

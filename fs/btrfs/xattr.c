@@ -334,7 +334,7 @@ static bool btrfs_is_valid_xattr(const char *name)
 	       !strncmp(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN);
 }
 
-ssize_t btrfs_getxattr(struct dentry *dentry, const char *name,
+ssize_t btrfs_getxattr(struct inode *inode, const char *name,
 		       void *buffer, size_t size)
 {
 	/*
@@ -343,11 +343,11 @@ ssize_t btrfs_getxattr(struct dentry *dentry, const char *name,
 	 * for it via sb->s_xattr.
 	 */
 	if (!strncmp(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-		return generic_getxattr(dentry, name, buffer, size);
+		return generic_getxattr(inode, name, buffer, size);
 
 	if (!btrfs_is_valid_xattr(name))
 		return -EOPNOTSUPP;
-	return __btrfs_getxattr(dentry->d_inode, name, buffer, size);
+	return __btrfs_getxattr(inode, name, buffer, size);
 }
 
 int btrfs_setxattr(struct dentry *dentry, const char *name, const void *value,

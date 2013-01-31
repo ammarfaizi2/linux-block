@@ -462,30 +462,27 @@ static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
 #define XATTR_SOCKPROTONAME_SUFFIX "sockprotoname"
 #define XATTR_NAME_SOCKPROTONAME (XATTR_SYSTEM_PREFIX XATTR_SOCKPROTONAME_SUFFIX)
 #define XATTR_NAME_SOCKPROTONAME_LEN (sizeof(XATTR_NAME_SOCKPROTONAME)-1)
-static ssize_t sockfs_getxattr(struct dentry *dentry,
+static ssize_t sockfs_getxattr(struct inode *inode,
 			       const char *name, void *value, size_t size)
 {
 	const char *proto_name;
 	size_t proto_size;
-	int error;
-
-	error = -ENODATA;
+	int res = -ENODATA;
 	if (!strncmp(name, XATTR_NAME_SOCKPROTONAME, XATTR_NAME_SOCKPROTONAME_LEN)) {
+		struct dentry *dentry = d_find_any_alias(inode);
 		proto_name = dentry->d_name.name;
 		proto_size = strlen(proto_name);
+		res = proto_size + 1;
 
 		if (value) {
-			error = -ERANGE;
-			if (proto_size + 1 > size)
-				goto out;
-
-			strncpy(value, proto_name, proto_size + 1);
+			if (res <= size)
+				strncpy(value, proto_name, res);
+			else
+				res = -ERANGE;
 		}
-		error = proto_size + 1;
+		dput(dentry);
 	}
-
-out:
-	return error;
+	return res;
 }
 
 static ssize_t sockfs_listxattr(struct dentry *dentry, char *buffer,

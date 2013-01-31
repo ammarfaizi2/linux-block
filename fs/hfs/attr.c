@@ -56,10 +56,9 @@ out:
 	return res;
 }
 
-ssize_t hfs_getxattr(struct dentry *dentry, const char *name,
+ssize_t hfs_getxattr(struct inode *inode, const char *name,
 			 void *value, size_t size)
 {
-	struct inode *inode = dentry->d_inode;
 	struct hfs_find_data fd;
 	hfs_cat_rec rec;
 	struct hfs_cat_file *file;
