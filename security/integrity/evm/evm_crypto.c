@@ -120,13 +120,12 @@ static void hmac_add_misc(struct shash_desc *desc, struct inode *inode,
  * the hmac using the requested xattr value. Don't alloc/free memory for
  * each xattr, but attempt to re-use the previously allocated memory.
  */
-static int evm_calc_hmac_or_hash(struct dentry *dentry,
+static int evm_calc_hmac_or_hash(struct inode *inode,
 				const char *req_xattr_name,
 				const char *req_xattr_value,
 				size_t req_xattr_value_len,
 				char type, char *digest)
 {
-	struct inode *inode = dentry->d_inode;
 	struct shash_desc *desc;
 	char **xattrname;
 	size_t xattr_size = 0;
@@ -170,19 +169,19 @@ out:
 	return error;
 }
 
-int evm_calc_hmac(struct dentry *dentry, const char *req_xattr_name,
+int evm_calc_hmac(struct inode *inode, const char *req_xattr_name,
 		  const char *req_xattr_value, size_t req_xattr_value_len,
 		  char *digest)
 {
-	return evm_calc_hmac_or_hash(dentry, req_xattr_name, req_xattr_value,
+	return evm_calc_hmac_or_hash(inode, req_xattr_name, req_xattr_value,
 				req_xattr_value_len, EVM_XATTR_HMAC, digest);
 }
 
-int evm_calc_hash(struct dentry *dentry, const char *req_xattr_name,
+int evm_calc_hash(struct inode *inode, const char *req_xattr_name,
 		  const char *req_xattr_value, size_t req_xattr_value_len,
 		  char *digest)
 {
-	return evm_calc_hmac_or_hash(dentry, req_xattr_name, req_xattr_value,
+	return evm_calc_hmac_or_hash(inode, req_xattr_name, req_xattr_value,
 				req_xattr_value_len, IMA_XATTR_DIGEST, digest);
 }
 
@@ -198,7 +197,7 @@ int evm_update_evmxattr(struct dentry *dentry, const char *xattr_name,
 	struct evm_ima_xattr_data xattr_data;
 	int rc = 0;
 
-	rc = evm_calc_hmac(dentry, xattr_name, xattr_value,
+	rc = evm_calc_hmac(inode, xattr_name, xattr_value,
 			   xattr_value_len, xattr_data.digest);
 	if (rc == 0) {
 		xattr_data.type = EVM_XATTR_HMAC;
