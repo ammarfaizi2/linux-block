@@ -50,7 +50,7 @@ static int __init evm_set_fixmode(char *str)
 }
 __setup("evm=", evm_set_fixmode);
 
-static int evm_find_protected_xattrs(struct dentry *dentry)
+static int evm_find_protected_xattrs(struct inode *inode)
 {
 	struct inode *inode = dentry->d_inode;
 	char **xattr;
@@ -110,7 +110,7 @@ static enum integrity_status evm_verify_hmac(struct dentry *dentry,
 		if (rc == 0)
 			evm_status = INTEGRITY_FAIL; /* empty */
 		else if (rc == -ENODATA) {
-			rc = evm_find_protected_xattrs(dentry);
+			rc = evm_find_protected_xattrs(inode);
 			if (rc > 0)
 				evm_status = INTEGRITY_NOLABEL;
 			else if (rc == 0)
