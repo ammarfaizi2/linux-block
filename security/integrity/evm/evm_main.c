@@ -95,6 +95,7 @@ static enum integrity_status evm_verify_hmac(struct dentry *dentry,
 	struct evm_ima_xattr_data *xattr_data = NULL;
 	struct evm_ima_xattr_data calc;
 	enum integrity_status evm_status = INTEGRITY_PASS;
+	struct inode *inode = dentry->d_inode;
 	int rc, xattr_len;
 
 	if (iint && iint->evm_status == INTEGRITY_PASS)
@@ -103,7 +104,7 @@ static enum integrity_status evm_verify_hmac(struct dentry *dentry,
 	/* if status is not PASS, try to check again - against -ENOMEM */
 
 	/* first need to know the sig type */
-	rc = vfs_getxattr_alloc(dentry, XATTR_NAME_EVM, (char **)&xattr_data, 0,
+	rc = vfs_getxattr_alloc(inode, XATTR_NAME_EVM, (char **)&xattr_data, 0,
 				GFP_NOFS);
 	if (rc <= 0) {
 		if (rc == 0)

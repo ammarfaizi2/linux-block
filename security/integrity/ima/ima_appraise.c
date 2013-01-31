@@ -77,7 +77,7 @@ int ima_appraise_measurement(struct integrity_iint_cache *iint,
 	if (iint->flags & IMA_APPRAISED)
 		return iint->ima_status;
 
-	rc = vfs_getxattr_alloc(dentry, XATTR_NAME_IMA, (char **)&xattr_value,
+	rc = vfs_getxattr_alloc(inode, XATTR_NAME_IMA, (char **)&xattr_value,
 				0, GFP_NOFS);
 	if (rc <= 0) {
 		if (rc && rc != -ENODATA)

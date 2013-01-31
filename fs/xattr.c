@@ -178,10 +178,9 @@ EXPORT_SYMBOL_GPL(xattr_getsecurity);
  * Returns the result of alloc, if failed, or the getxattr operation.
  */
 ssize_t
-vfs_getxattr_alloc(struct dentry *dentry, const char *name, char **xattr_value,
+vfs_getxattr_alloc(struct inode *inode, const char *name, char **xattr_value,
 		   size_t xattr_size, gfp_t flags)
 {
-	struct inode *inode = dentry->d_inode;
 	char *value = *xattr_value;
 	int error;
 
@@ -215,7 +214,7 @@ int vfs_xattr_cmp(struct dentry *dentry, const char *xattr_name,
 	char *xattr_value = NULL;
 	int rc;
 
-	rc = vfs_getxattr_alloc(dentry, xattr_name, &xattr_value, 0, flags);
+	rc = vfs_getxattr_alloc(dentry->d_inode, xattr_name, &xattr_value, 0, flags);
 	if (rc < 0)
 		return rc;
 
