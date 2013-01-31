@@ -325,7 +325,7 @@ static int ecryptfs_i_size_read(struct dentry *dentry, struct inode *inode)
 
 	rc = ecryptfs_read_and_validate_header_region(inode);
 	if (rc) {
-		rc = ecryptfs_read_and_validate_xattr_region(dentry, inode);
+		rc = ecryptfs_read_and_validate_xattr_region(inode);
 		if (!rc)
 			crypt_stat->flags |= ECRYPTFS_METADATA_IN_XATTR;
 	}

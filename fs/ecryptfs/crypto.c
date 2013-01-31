@@ -1518,8 +1518,7 @@ out:
 	return rc;
 }
 
-int ecryptfs_read_and_validate_xattr_region(struct dentry *dentry,
-					    struct inode *inode)
+int ecryptfs_read_and_validate_xattr_region(struct inode *inode)
 {
 	struct inode *lower_inode =
 		file_inode(ecryptfs_inode_to_private(inode)->lower_file);
