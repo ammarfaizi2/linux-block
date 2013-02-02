@@ -324,7 +324,7 @@ int cap_inode_killpriv(struct dentry *dentry)
 	if (!inode->i_op->removexattr)
 	       return 0;
 
-	return inode->i_op->removexattr(dentry, XATTR_NAME_CAPS);
+	return inode->i_op->removexattr(inode, XATTR_NAME_CAPS);
 }
 
 /*

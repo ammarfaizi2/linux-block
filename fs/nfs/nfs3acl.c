@@ -99,9 +99,8 @@ int nfs3_setxattr(struct inode *inode, const char *name,
 	return error;
 }
 
-int nfs3_removexattr(struct dentry *dentry, const char *name)
+int nfs3_removexattr(struct inode *inode, const char *name)
 {
-	struct inode *inode = dentry->d_inode;
 	int type;
 
 	if (strcmp(name, POSIX_ACL_XATTR_ACCESS) == 0)

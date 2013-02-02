@@ -201,7 +201,7 @@ void ima_inode_post_setattr(struct dentry *dentry)
 			iint->flags &= ~(IMA_APPRAISE | IMA_APPRAISED);
 	}
 	if (!must_appraise)
-		rc = inode->i_op->removexattr(dentry, XATTR_NAME_IMA);
+		rc = inode->i_op->removexattr(inode, XATTR_NAME_IMA);
 	return;
 }
 

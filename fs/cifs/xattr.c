@@ -35,34 +35,32 @@
 
 /* BB need to add server (Samba e.g) support for security and trusted prefix */
 
-int cifs_removexattr(struct dentry *direntry, const char *ea_name)
+int cifs_removexattr(struct inode *inode, const char *ea_name)
 {
 	int rc = -EOPNOTSUPP;
 #ifdef CONFIG_CIFS_XATTR
 	unsigned int xid;
-	struct cifs_sb_info *cifs_sb;
 	struct tcon_link *tlink;
 	struct cifs_tcon *pTcon;
-	struct super_block *sb;
+	struct super_block *sb = inode->i_sb;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
 	char *full_path = NULL;
+	struct dentry *dentry = d_find_alias(inode);
 
-	if (direntry == NULL)
-		return -EIO;
-	if (direntry->d_inode == NULL)
-		return -EIO;
-	sb = direntry->d_inode->i_sb;
-	if (sb == NULL)
-		return -EIO;
+	if (!dentry)
+		return -EINVAL;
 
-	cifs_sb = CIFS_SB(sb);
 	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
+	if (IS_ERR(tlink)) {
+		dput(dentry);
 		return PTR_ERR(tlink);
+	}
 	pTcon = tlink_tcon(tlink);
 
 	xid = get_xid();
 
-	full_path = build_path_from_dentry(direntry);
+	full_path = build_path_from_dentry(dentry);
+	dput(dentry);
 	if (full_path == NULL) {
 		rc = -ENOMEM;
 		goto remove_ea_exit;

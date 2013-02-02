@@ -59,7 +59,7 @@ extern int jfs_setxattr(struct inode *, const char *, const void *, size_t,
 extern ssize_t __jfs_getxattr(struct inode *, const char *, void *, size_t);
 extern ssize_t jfs_getxattr(struct inode *, const char *, void *, size_t);
 extern ssize_t jfs_listxattr(struct dentry *, char *, size_t);
-extern int jfs_removexattr(struct dentry *, const char *);
+extern int jfs_removexattr(struct inode *, const char *);
 
 #ifdef CONFIG_JFS_SECURITY
 extern int jfs_init_security(tid_t, struct inode *, struct inode *,

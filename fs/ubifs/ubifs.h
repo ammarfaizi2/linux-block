@@ -1739,7 +1739,7 @@ int ubifs_setxattr(struct inode *inode, const char *name,
 ssize_t ubifs_getxattr(struct inode *inode, const char *name, void *buf,
 		       size_t size);
 ssize_t ubifs_listxattr(struct dentry *dentry, char *buffer, size_t size);
-int ubifs_removexattr(struct dentry *dentry, const char *name);
+int ubifs_removexattr(struct inode *inode, const char *name);
 
 /* super.c */
 struct inode *ubifs_iget(struct super_block *sb, unsigned long inum);

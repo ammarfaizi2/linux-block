@@ -1106,19 +1106,22 @@ out:
 	return rc;
 }
 
-static int ecryptfs_removexattr(struct dentry *dentry, const char *name)
+static int ecryptfs_removexattr(struct inode *inode, const char *name)
 {
 	int rc = 0;
+	struct dentry *dentry = d_find_alias(inode);
 	struct dentry *lower_dentry;
+	struct inode *lower_inode;
 
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
-	if (!lower_dentry->d_inode->i_op->removexattr) {
+	lower_inode = lower_dentry->d_inode;
+	if (!lower_inode->i_op->removexattr) {
 		rc = -EOPNOTSUPP;
 		goto out;
 	}
-	mutex_lock(&lower_dentry->d_inode->i_mutex);
-	rc = lower_dentry->d_inode->i_op->removexattr(lower_dentry, name);
-	mutex_unlock(&lower_dentry->d_inode->i_mutex);
+	mutex_lock(&lower_inode->i_mutex);
+	rc = lower_inode->i_op->removexattr(lower_inode, name);
+	mutex_unlock(&lower_inode->i_mutex);
 out:
 	return rc;
 }

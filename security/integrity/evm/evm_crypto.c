@@ -206,7 +206,7 @@ int evm_update_evmxattr(struct dentry *dentry, const char *xattr_name,
 					   sizeof(xattr_data), 0);
 	}
 	else if (rc == -ENODATA)
-		rc = inode->i_op->removexattr(dentry, XATTR_NAME_EVM);
+		rc = inode->i_op->removexattr(inode, XATTR_NAME_EVM);
 	return rc;
 }
 

@@ -2260,9 +2260,9 @@ static int shmem_setxattr(struct inode *inode, const char *name,
 	return simple_xattr_set(&info->xattrs, name, value, size, flags);
 }
 
-static int shmem_removexattr(struct dentry *dentry, const char *name)
+static int shmem_removexattr(struct inode *inode, const char *name)
 {
-	struct shmem_inode_info *info = SHMEM_I(dentry->d_inode);
+	struct shmem_inode_info *info = SHMEM_I(inode);
 	int err;
 
 	/*
@@ -2271,7 +2271,7 @@ static int shmem_removexattr(struct dentry *dentry, const char *name)
 	 * for it via sb->s_xattr.
 	 */
 	if (!strncmp(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-		return generic_removexattr(dentry, name);
+		return generic_removexattr(inode, name);
 
 	err = shmem_xattr_validate(name);
 	if (err)

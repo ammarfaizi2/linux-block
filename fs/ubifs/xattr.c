@@ -518,17 +518,16 @@ out_cancel:
 	return err;
 }
 
-int ubifs_removexattr(struct dentry *dentry, const char *name)
+int ubifs_removexattr(struct inode *host, const char *name)
 {
-	struct inode *inode, *host = dentry->d_inode;
+	struct inode *inode;
 	struct ubifs_info *c = host->i_sb->s_fs_info;
 	struct qstr nm = QSTR_INIT(name, strlen(name));
 	struct ubifs_dent_node *xent;
 	union ubifs_key key;
 	int err;
 
-	dbg_gen("xattr '%s', ino %lu ('%.*s')", name,
-		host->i_ino, dentry->d_name.len, dentry->d_name.name);
+	dbg_gen("xattr '%s', ino %lu", name, host->i_ino);
 	ubifs_assert(mutex_is_locked(&host->i_mutex));
 
 	err = check_namespace(&nm);

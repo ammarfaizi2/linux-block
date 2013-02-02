@@ -730,7 +730,7 @@ extern int ceph_setxattr(struct inode *, const char *, const void *,
 			 size_t, int);
 extern ssize_t ceph_getxattr(struct inode *, const char *, void *, size_t);
 extern ssize_t ceph_listxattr(struct dentry *, char *, size_t);
-extern int ceph_removexattr(struct dentry *, const char *);
+extern int ceph_removexattr(struct inode *, const char *);
 extern void __ceph_build_xattrs_blob(struct ceph_inode_info *ci);
 extern void __ceph_destroy_xattrs(struct ceph_inode_info *ci);
 extern void __init ceph_xattr_init(void);

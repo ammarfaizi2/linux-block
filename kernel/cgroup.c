@@ -2578,13 +2578,19 @@ static int cgroup_setxattr(struct inode *inode, const char *name,
 	return res;
 }
 
-static int cgroup_removexattr(struct dentry *dentry, const char *name)
+static int cgroup_removexattr(struct inode *inode, const char *name)
 {
-	if (!xattr_enabled(dentry))
+	struct dentry *dentry;
+	struct cgroupfs_root *root = inode->i_sb->s_fs_info;
+	int res;
+	if (!test_bit(ROOT_XATTR, &root->flags))
 		return -EOPNOTSUPP;
 	if (!is_valid_xattr(name))
 		return -EINVAL;
-	return simple_xattr_remove(__d_xattrs(dentry), name);
+	dentry = d_find_any_alias(inode);
+	res = simple_xattr_remove(__d_xattrs(dentry), name);
+	dput(dentry);
+	return res;
 }
 
 static ssize_t cgroup_getxattr(struct inode *inode, const char *name,

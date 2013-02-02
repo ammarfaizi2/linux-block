@@ -264,7 +264,7 @@ static ssize_t bad_inode_listxattr(struct dentry *dentry, char *buffer,
 	return -EIO;
 }
 
-static int bad_inode_removexattr(struct dentry *dentry, const char *name)
+static int bad_inode_removexattr(struct inode *inode, const char *name)
 {
 	return -EIO;
 }

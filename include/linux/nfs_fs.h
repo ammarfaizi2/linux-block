@@ -433,7 +433,7 @@ extern ssize_t nfs3_listxattr(struct dentry *, char *, size_t);
 extern ssize_t nfs3_getxattr(struct inode *, const char *, void *, size_t);
 extern int nfs3_setxattr(struct inode *, const char *,
 			const void *, size_t, int);
-extern int nfs3_removexattr (struct dentry *, const char *name);
+extern int nfs3_removexattr (struct inode *, const char *name);
 #else
 # define nfs3_listxattr NULL
 # define nfs3_getxattr NULL

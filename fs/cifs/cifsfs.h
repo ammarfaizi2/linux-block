@@ -117,7 +117,7 @@ extern int cifs_readlink(struct dentry *direntry, char __user *buffer,
 			 int buflen);
 extern int cifs_symlink(struct inode *inode, struct dentry *direntry,
 			const char *symname);
-extern int	cifs_removexattr(struct dentry *, const char *);
+extern int	cifs_removexattr(struct inode *, const char *);
 extern int	cifs_setxattr(struct inode *, const char *, const void *,
 			size_t, int);
 extern ssize_t	cifs_getxattr(struct inode *, const char *, void *, size_t);

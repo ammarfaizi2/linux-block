@@ -1748,9 +1748,8 @@ static ssize_t gfs2_getxattr(struct inode *inode, const char *name,
 	return ret;
 }
 
-static int gfs2_removexattr(struct dentry *dentry, const char *name)
+static int gfs2_removexattr(struct inode *inode, const char *name)
 {
-	struct inode *inode = dentry->d_inode;
 	struct gfs2_inode *ip = GFS2_I(inode);
 	struct gfs2_holder gh;
 	int ret;
@@ -1760,7 +1759,7 @@ static int gfs2_removexattr(struct dentry *dentry, const char *name)
 	if (ret == 0) {
 		ret = gfs2_rs_alloc(ip);
 		if (ret == 0)
-			ret = generic_removexattr(dentry, name);
+			ret = generic_removexattr(inode, name);
 		gfs2_glock_dq(&gh);
 	}
 	gfs2_holder_uninit(&gh);

@@ -1642,9 +1642,8 @@ static ssize_t fuse_listxattr(struct dentry *entry, char *list, size_t size)
 	return ret;
 }
 
-static int fuse_removexattr(struct dentry *entry, const char *name)
+static int fuse_removexattr(struct inode *inode, const char *name)
 {
-	struct inode *inode = entry->d_inode;
 	struct fuse_conn *fc = get_fuse_conn(inode);
 	struct fuse_req *req;
 	int err;

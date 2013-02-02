@@ -302,7 +302,7 @@ vfs_removexattr(struct dentry *dentry, const char *name)
 		return error;
 	}
 
-	error = inode->i_op->removexattr(dentry, name);
+	error = inode->i_op->removexattr(inode, name);
 	mutex_unlock(&inode->i_mutex);
 
 	if (!error) {
@@ -816,14 +816,14 @@ generic_setxattr(struct inode *inode, const char *name, const void *value, size_
  * any associated extended attribute.
  */
 int
-generic_removexattr(struct dentry *dentry, const char *name)
+generic_removexattr(struct inode *inode, const char *name)
 {
 	const struct xattr_handler *handler;
 
-	handler = xattr_resolve_name(dentry->d_sb->s_xattr, &name);
+	handler = xattr_resolve_name(inode->i_sb->s_xattr, &name);
 	if (!handler)
 		return -EOPNOTSUPP;
-	return handler->xattr_set(dentry->d_inode, name, NULL, 0,
+	return handler->xattr_set(inode, name, NULL, 0,
 			    XATTR_REPLACE, handler->flags);
 }
 
