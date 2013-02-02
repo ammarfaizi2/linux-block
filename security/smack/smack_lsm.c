@@ -850,7 +850,7 @@ static int smack_inode_setxattr(struct dentry *dentry, const char *name,
 
 /**
  * smack_inode_post_setxattr - Apply the Smack update approved above
- * @dentry: object
+ * @inode: object
  * @name: attribute name
  * @value: attribute value
  * @size: attribute size
@@ -859,11 +859,11 @@ static int smack_inode_setxattr(struct dentry *dentry, const char *name,
  * Set the pointer in the inode blob to the entry found
  * in the master label list.
  */
-static void smack_inode_post_setxattr(struct dentry *dentry, const char *name,
+static void smack_inode_post_setxattr(struct inode *inode, const char *name,
 				      const void *value, size_t size, int flags)
 {
 	char *nsp;
-	struct inode_smack *isp = dentry->d_inode->i_security;
+	struct inode_smack *isp = inode->i_security;
 
 	if (strcmp(name, XATTR_NAME_SMACK) == 0) {
 		nsp = smk_import(value, size);

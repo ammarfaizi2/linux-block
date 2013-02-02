@@ -196,7 +196,7 @@ static int cap_inode_getattr(struct vfsmount *mnt, struct dentry *dentry)
 	return 0;
 }
 
-static void cap_inode_post_setxattr(struct dentry *dentry, const char *name,
+static void cap_inode_post_setxattr(struct inode *inode, const char *name,
 				    const void *value, size_t size, int flags)
 {
 }

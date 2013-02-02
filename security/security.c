@@ -584,7 +584,7 @@ void security_inode_post_setxattr(struct dentry *dentry, const char *name,
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return;
-	security_ops->inode_post_setxattr(dentry, name, value, size, flags);
+	security_ops->inode_post_setxattr(dentry->d_inode, name, value, size, flags);
 	evm_inode_post_setxattr(dentry, name, value, size);
 }
 

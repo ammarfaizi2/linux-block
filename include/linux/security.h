@@ -1471,7 +1471,7 @@ struct security_operations {
 	int (*inode_getattr) (struct vfsmount *mnt, struct dentry *dentry);
 	int (*inode_setxattr) (struct dentry *dentry, const char *name,
 			       const void *value, size_t size, int flags);
-	void (*inode_post_setxattr) (struct dentry *dentry, const char *name,
+	void (*inode_post_setxattr) (struct inode *inode, const char *name,
 				     const void *value, size_t size, int flags);
 	int (*inode_getxattr) (struct dentry *dentry, const char *name);
 	int (*inode_listxattr) (struct dentry *dentry);

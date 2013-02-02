@@ -2795,11 +2795,10 @@ static int selinux_inode_setxattr(struct dentry *dentry, const char *name,
 			    &ad);
 }
 
-static void selinux_inode_post_setxattr(struct dentry *dentry, const char *name,
+static void selinux_inode_post_setxattr(struct inode *inode, const char *name,
 					const void *value, size_t size,
 					int flags)
 {
-	struct inode *inode = dentry->d_inode;
 	struct inode_security_struct *isec = inode->i_security;
 	u32 newsid;
 	int rc;
