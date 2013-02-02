@@ -606,7 +606,7 @@ ssize_t
 ecryptfs_getxattr_lower(struct inode *lower_inode, const char *name,
 			void *value, size_t size);
 int
-ecryptfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+ecryptfs_setxattr(struct inode *inode, const char *name, const void *value,
 		  size_t size, int flags);
 int ecryptfs_read_xattr_region(char *page_virt, struct inode *ecryptfs_inode);
 int ecryptfs_process_response(struct ecryptfs_daemon *daemon,

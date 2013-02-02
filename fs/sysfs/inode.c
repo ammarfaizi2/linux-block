@@ -154,24 +154,29 @@ static int sysfs_sd_setsecdata(struct sysfs_dirent *sd, void **secdata, u32 *sec
 	return 0;
 }
 
-int sysfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+int sysfs_setxattr(struct inode *inode, const char *name, const void *value,
 		size_t size, int flags)
 {
-	struct sysfs_dirent *sd = dentry->d_fsdata;
+	struct dentry *dentry = d_find_any_alias(inode);
+	struct sysfs_dirent *sd;
 	void *secdata;
-	int error;
+	int error = -EINVAL;
 	u32 secdata_len = 0;
 
-	if (!sd)
+	if (!dentry)
 		return -EINVAL;
+
+	sd = dentry->d_fsdata;
+	if (!sd)
+		goto out;
 
 	if (!strncmp(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN)) {
 		const char *suffix = name + XATTR_SECURITY_PREFIX_LEN;
-		error = security_inode_setsecurity(dentry->d_inode, suffix,
+		error = security_inode_setsecurity(inode, suffix,
 						value, size, flags);
 		if (error)
 			goto out;
-		error = security_inode_getsecctx(dentry->d_inode,
+		error = security_inode_getsecctx(inode,
 						&secdata, &secdata_len);
 		if (error)
 			goto out;
@@ -182,9 +187,9 @@ int sysfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 
 		if (secdata)
 			security_release_secctx(secdata, secdata_len);
-	} else
-		return -EINVAL;
+	}
 out:
+	dput(dentry);
 	return error;
 }
 

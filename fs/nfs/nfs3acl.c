@@ -77,10 +77,9 @@ ssize_t nfs3_getxattr(struct inode *inode, const char *name,
 	return error;
 }
 
-int nfs3_setxattr(struct dentry *dentry, const char *name,
+int nfs3_setxattr(struct inode *inode, const char *name,
 	     const void *value, size_t size, int flags)
 {
-	struct inode *inode = dentry->d_inode;
 	struct posix_acl *acl;
 	int type, error;
 

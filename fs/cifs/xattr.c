@@ -94,7 +94,7 @@ remove_ea_exit:
 	return rc;
 }
 
-int cifs_setxattr(struct dentry *direntry, const char *ea_name,
+int cifs_setxattr(struct inode *inode, const char *ea_name,
 		  const void *ea_value, size_t value_size, int flags)
 {
 	int rc = -EOPNOTSUPP;
@@ -103,26 +103,22 @@ int cifs_setxattr(struct dentry *direntry, const char *ea_name,
 	struct cifs_sb_info *cifs_sb;
 	struct tcon_link *tlink;
 	struct cifs_tcon *pTcon;
-	struct super_block *sb;
+	struct super_block *sb = inode->i_sb;
 	char *full_path;
-
-	if (direntry == NULL)
-		return -EIO;
-	if (direntry->d_inode == NULL)
-		return -EIO;
-	sb = direntry->d_inode->i_sb;
-	if (sb == NULL)
-		return -EIO;
+	struct dentry *dentry = d_find_alias(inode);
 
 	cifs_sb = CIFS_SB(sb);
 	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
+	if (IS_ERR(tlink)) {
+		dput(dentry);
 		return PTR_ERR(tlink);
+	}
 	pTcon = tlink_tcon(tlink);
 
 	xid = get_xid();
 
-	full_path = build_path_from_dentry(direntry);
+	full_path = build_path_from_dentry(dentry);
+	dput(dentry);
 	if (full_path == NULL) {
 		rc = -ENOMEM;
 		goto set_ea_exit;
@@ -173,9 +169,9 @@ int cifs_setxattr(struct dentry *direntry, const char *ea_name,
 		} else {
 			memcpy(pacl, ea_value, value_size);
 			rc = set_cifs_acl(pacl, value_size,
-				direntry->d_inode, full_path, CIFS_ACL_DACL);
+				inode, full_path, CIFS_ACL_DACL);
 			if (rc == 0) /* force revalidate of the inode */
-				CIFS_I(direntry->d_inode)->time = 0;
+				CIFS_I(inode)->time = 0;
 			kfree(pacl);
 		}
 #else

@@ -1712,10 +1712,9 @@ static int gfs2_getattr(struct vfsmount *mnt, struct dentry *dentry,
 	return 0;
 }
 
-static int gfs2_setxattr(struct dentry *dentry, const char *name,
+static int gfs2_setxattr(struct inode *inode, const char *name,
 			 const void *data, size_t size, int flags)
 {
-	struct inode *inode = dentry->d_inode;
 	struct gfs2_inode *ip = GFS2_I(inode);
 	struct gfs2_holder gh;
 	int ret;
@@ -1725,7 +1724,7 @@ static int gfs2_setxattr(struct dentry *dentry, const char *name,
 	if (ret == 0) {
 		ret = gfs2_rs_alloc(ip);
 		if (ret == 0)
-			ret = generic_setxattr(dentry, name, data, size, flags);
+			ret = generic_setxattr(inode, name, data, size, flags);
 		gfs2_glock_dq(&gh);
 	}
 	gfs2_holder_uninit(&gh);

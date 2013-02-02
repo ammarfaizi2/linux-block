@@ -1506,10 +1506,9 @@ static int fuse_getattr(struct vfsmount *mnt, struct dentry *entry,
 	return fuse_update_attributes(inode, stat, NULL, NULL);
 }
 
-static int fuse_setxattr(struct dentry *entry, const char *name,
+static int fuse_setxattr(struct inode *inode, const char *name,
 			 const void *value, size_t size, int flags)
 {
-	struct inode *inode = entry->d_inode;
 	struct fuse_conn *fc = get_fuse_conn(inode);
 	struct fuse_req *req;
 	struct fuse_setxattr_in inarg;

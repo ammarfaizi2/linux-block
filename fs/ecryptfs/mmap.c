@@ -418,9 +418,8 @@ static int ecryptfs_write_inode_size_to_xattr(struct inode *ecryptfs_inode)
 {
 	ssize_t size;
 	void *xattr_virt;
-	struct dentry *lower_dentry =
-		ecryptfs_inode_to_private(ecryptfs_inode)->lower_file->f_dentry;
-	struct inode *lower_inode = lower_dentry->d_inode;
+	struct inode *lower_inode =
+		file_inode(ecryptfs_inode_to_private(ecryptfs_inode)->lower_file);
 	int rc;
 
 	if (!lower_inode->i_op->getxattr || !lower_inode->i_op->setxattr) {
@@ -442,7 +441,7 @@ static int ecryptfs_write_inode_size_to_xattr(struct inode *ecryptfs_inode)
 	if (size < 0)
 		size = 8;
 	put_unaligned_be64(i_size_read(ecryptfs_inode), xattr_virt);
-	rc = lower_inode->i_op->setxattr(lower_dentry, ECRYPTFS_XATTR_NAME,
+	rc = lower_inode->i_op->setxattr(lower_inode, ECRYPTFS_XATTR_NAME,
 					 xattr_virt, size, 0);
 	mutex_unlock(&lower_inode->i_mutex);
 	if (rc)

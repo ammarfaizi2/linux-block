@@ -2562,14 +2562,20 @@ static bool is_valid_xattr(const char *name)
 	return false;
 }
 
-static int cgroup_setxattr(struct dentry *dentry, const char *name,
+static int cgroup_setxattr(struct inode *inode, const char *name,
 			   const void *val, size_t size, int flags)
 {
-	if (!xattr_enabled(dentry))
+	struct dentry *dentry;
+	struct cgroupfs_root *root = inode->i_sb->s_fs_info;
+	ssize_t res;
+	if (!test_bit(ROOT_XATTR, &root->flags))
 		return -EOPNOTSUPP;
 	if (!is_valid_xattr(name))
 		return -EINVAL;
-	return simple_xattr_set(__d_xattrs(dentry), name, val, size, flags);
+	dentry = d_find_any_alias(inode);
+	res = simple_xattr_set(__d_xattrs(dentry), name, val, size, flags);
+	dput(dentry);
+	return res;
 }
 
 static int cgroup_removexattr(struct dentry *dentry, const char *name)

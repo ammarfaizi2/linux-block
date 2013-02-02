@@ -1280,7 +1280,7 @@ ecryptfs_write_metadata_to_xattr(struct dentry *ecryptfs_dentry,
 {
 	int rc;
 
-	rc = ecryptfs_setxattr(ecryptfs_dentry, ECRYPTFS_XATTR_NAME, page_virt,
+	rc = ecryptfs_setxattr(ecryptfs_dentry->d_inode, ECRYPTFS_XATTR_NAME, page_virt,
 			       size, 0);
 	return rc;
 }

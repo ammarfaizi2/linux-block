@@ -686,13 +686,13 @@ out:
 	return err;
 }
 
-static int ceph_sync_setxattr(struct dentry *dentry, const char *name,
+static int ceph_sync_setxattr(struct inode *inode, const char *name,
 			      const char *value, size_t size, int flags)
 {
-	struct ceph_fs_client *fsc = ceph_sb_to_client(dentry->d_sb);
-	struct inode *inode = dentry->d_inode;
+	struct ceph_fs_client *fsc = ceph_sb_to_client(inode->i_sb);
 	struct ceph_inode_info *ci = ceph_inode(inode);
 	struct inode *parent_inode;
+	struct dentry *dentry;
 	struct ceph_mds_request *req;
 	struct ceph_mds_client *mdsc = fsc->mdsc;
 	int err;
@@ -740,9 +740,15 @@ static int ceph_sync_setxattr(struct dentry *dentry, const char *name,
 	req->r_data_len = size;
 
 	dout("xattr.ver (before): %lld\n", ci->i_xattrs.version);
-	parent_inode = ceph_get_dentry_parent_inode(dentry);
-	err = ceph_mdsc_do_request(mdsc, parent_inode, req);
-	iput(parent_inode);
+	dentry = d_find_alias(inode);
+	if (dentry) {
+		parent_inode = ceph_get_dentry_parent_inode(dentry);
+		err = ceph_mdsc_do_request(mdsc, parent_inode, req);
+		iput(parent_inode);
+		dput(dentry);
+	} else {
+		err = -EINVAL;
+	}
 	ceph_mdsc_put_request(req);
 	dout("xattr.ver (after): %lld\n", ci->i_xattrs.version);
 
@@ -755,10 +761,9 @@ out:
 	return err;
 }
 
-int ceph_setxattr(struct dentry *dentry, const char *name,
+int ceph_setxattr(struct inode *inode, const char *name,
 		  const void *value, size_t size, int flags)
 {
-	struct inode *inode = dentry->d_inode;
 	struct ceph_vxattr *vxattr;
 	struct ceph_inode_info *ci = ceph_inode(inode);
 	int issued;
@@ -837,7 +842,7 @@ retry:
 
 do_sync:
 	spin_unlock(&ci->i_ceph_lock);
-	err = ceph_sync_setxattr(dentry, name, value, size, flags);
+	err = ceph_sync_setxattr(inode, name, value, size, flags);
 out:
 	kfree(newname);
 	kfree(newval);

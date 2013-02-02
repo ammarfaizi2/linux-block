@@ -350,10 +350,10 @@ ssize_t btrfs_getxattr(struct inode *inode, const char *name,
 	return __btrfs_getxattr(inode, name, buffer, size);
 }
 
-int btrfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+int btrfs_setxattr(struct inode *inode, const char *name, const void *value,
 		   size_t size, int flags)
 {
-	struct btrfs_root *root = BTRFS_I(dentry->d_inode)->root;
+	struct btrfs_root *root = BTRFS_I(inode)->root;
 
 	/*
 	 * The permission on security.* and system.* is not checked
@@ -368,7 +368,7 @@ int btrfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 	 * for it via sb->s_xattr.
 	 */
 	if (!strncmp(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-		return generic_setxattr(dentry, name, value, size, flags);
+		return generic_setxattr(inode, name, value, size, flags);
 
 	if (!btrfs_is_valid_xattr(name))
 		return -EOPNOTSUPP;
@@ -376,8 +376,7 @@ int btrfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 	if (size == 0)
 		value = "";  /* empty EA, do not remove */
 
-	return __btrfs_setxattr(NULL, dentry->d_inode, name, value, size,
-				flags);
+	return __btrfs_setxattr(NULL, inode, name, value, size, flags);
 }
 
 int btrfs_removexattr(struct dentry *dentry, const char *name)

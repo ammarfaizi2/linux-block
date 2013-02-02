@@ -417,7 +417,7 @@ int hfsplus_file_fsync(struct file *file, loff_t start, loff_t end,
 
 /* ioctl.c */
 long hfsplus_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
-int hfsplus_setxattr(struct dentry *dentry, const char *name,
+int hfsplus_setxattr(struct inode *inode, const char *name,
 		     const void *value, size_t size, int flags);
 ssize_t hfsplus_getxattr(struct inode *inode, const char *name,
 			 void *value, size_t size);

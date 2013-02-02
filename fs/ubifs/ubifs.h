@@ -1734,7 +1734,7 @@ int ubifs_getattr(struct vfsmount *mnt, struct dentry *dentry,
 		  struct kstat *stat);
 
 /* xattr.c */
-int ubifs_setxattr(struct dentry *dentry, const char *name,
+int ubifs_setxattr(struct inode *inode, const char *name,
 		   const void *value, size_t size, int flags);
 ssize_t ubifs_getxattr(struct inode *inode, const char *name, void *buf,
 		       size_t size);

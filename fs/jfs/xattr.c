@@ -902,10 +902,9 @@ int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
 	return rc;
 }
 
-int jfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+int jfs_setxattr(struct inode *inode, const char *name, const void *value,
 		 size_t value_len, int flags)
 {
-	struct inode *inode = dentry->d_inode;
 	struct jfs_inode_info *ji = JFS_IP(inode);
 	int rc;
 	tid_t tid;
@@ -920,8 +919,7 @@ int jfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 
 	tid = txBegin(inode->i_sb, 0);
 	mutex_lock(&ji->commit_mutex);
-	rc = __jfs_setxattr(tid, dentry->d_inode, name, value, value_len,
-			    flags);
+	rc = __jfs_setxattr(tid, inode, name, value, value_len, flags);
 	if (!rc)
 		rc = txCommit(tid, 1, &inode, 0);
 	txEnd(tid);

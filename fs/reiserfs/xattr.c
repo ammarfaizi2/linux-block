@@ -758,17 +758,17 @@ reiserfs_getxattr(struct inode *inode, const char *name, void *buffer,
  * dentry->d_inode->i_mutex down
  */
 int
-reiserfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+reiserfs_setxattr(struct inode *inode, const char *name, const void *value,
 		  size_t size, int flags)
 {
 	const struct xattr_handler *handler;
 
-	handler = find_xattr_handler_prefix(dentry->d_sb->s_xattr, name);
+	handler = find_xattr_handler_prefix(inode->i_sb->s_xattr, name);
 
-	if (!handler || get_inode_sd_version(dentry->d_inode) == STAT_DATA_V1)
+	if (!handler || get_inode_sd_version(inode) == STAT_DATA_V1)
 		return -EOPNOTSUPP;
 
-	return handler->xattr_set(dentry->d_inode, name, value, size, flags, handler->flags);
+	return handler->xattr_set(inode, name, value, size, flags, handler->flags);
 }
 
 /*
