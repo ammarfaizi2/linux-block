@@ -689,12 +689,11 @@ int open_check_o_direct(struct file *f)
 	return 0;
 }
 
-static int do_dentry_open(struct file *f,
+static int do_dentry_open(struct file *f, struct inode *inode,
 			  int (*open)(struct inode *, struct file *),
 			  const struct cred *cred)
 {
 	static const struct file_operations empty_fops = {};
-	struct inode *inode;
 	int error;
 
 	f->f_mode = OPEN_FMODE(f->f_flags) | FMODE_LSEEK |
@@ -704,7 +703,7 @@ static int do_dentry_open(struct file *f,
 		f->f_mode = FMODE_PATH;
 
 	path_get(&f->f_path);
-	inode = f->f_inode = f->f_path.dentry->d_inode;
+	f->f_inode = inode;
 	if (f->f_mode & FMODE_WRITE) {
 		error = __get_file_write_access(inode, f->f_path.mnt);
 		if (error)
@@ -782,7 +781,7 @@ cleanup_file:
  * If the open callback is set to NULL, then the standard f_op->open()
  * filesystem callback is substituted.
  */
-int finish_open(struct file *file, struct dentry *dentry,
+int finish_open(struct file *file, struct dentry *dentry, struct inode *inode,
 		int (*open)(struct inode *, struct file *),
 		int *opened)
 {
@@ -790,7 +789,7 @@ int finish_open(struct file *file, struct dentry *dentry,
 	BUG_ON(*opened & FILE_OPENED); /* once it's opened, it's opened */
 
 	file->f_path.dentry = dentry;
-	error = do_dentry_open(file, open, current_cred());
+	error = do_dentry_open(file, inode, open, current_cred());
 	if (!error)
 		*opened |= FILE_OPENED;
 
@@ -829,7 +828,7 @@ struct file *dentry_open(const struct path *path, int flags,
 	if (!IS_ERR(f)) {
 		f->f_flags = flags;
 		f->f_path = *path;
-		error = do_dentry_open(f, NULL, cred);
+		error = do_dentry_open(f, path->dentry->d_inode, NULL, cred);
 		if (!error) {
 			/* from now on we need fput() to dispose of f */
 			error = open_check_o_direct(f);

@@ -477,7 +477,8 @@ static int fuse_create_open(struct inode *dir, struct dentry *entry,
 	d_instantiate(entry, inode);
 	fuse_change_entry_timeout(entry, &outentry);
 	fuse_invalidate_attr(dir);
-	err = finish_open(file, entry, generic_file_open, opened);
+	err = finish_open(file, entry, entry->d_inode,
+			  generic_file_open, opened);
 	if (err) {
 		fuse_sync_release(ff, flags);
 	} else {

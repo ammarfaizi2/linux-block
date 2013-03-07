@@ -2014,6 +2014,7 @@ enum {
 	FILE_OPENED = 2
 };
 extern int finish_open(struct file *file, struct dentry *dentry,
+			struct inode *inode,
 			int (*open)(struct inode *, struct file *),
 			int *opened);
 extern int finish_no_open(struct file *file, struct dentry *dentry);
