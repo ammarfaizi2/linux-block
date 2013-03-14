@@ -2895,8 +2895,10 @@ static void set_tracer_flags(unsigned int mask, int enabled)
 	if (mask == TRACE_ITER_RECORD_CMD)
 		trace_event_enable_cmd_record(enabled);
 
-	if (mask == TRACE_ITER_OVERWRITE)
+	if (mask == TRACE_ITER_OVERWRITE) {
 		ring_buffer_change_overwrite(global_trace.buffer, enabled);
+		ring_buffer_change_overwrite(max_tr.buffer, enabled);
+	}
 
 	if (mask == TRACE_ITER_PRINTK)
 		trace_printk_start_stop_comm(enabled);
