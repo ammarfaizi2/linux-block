@@ -685,6 +685,8 @@ choice
 	default RCU_NOCB_CPU_NONE
 	help
 	  This option allows no-CBs CPUs to be specified at build time.
+	  Additional no-CBs CPUs may be specified by the rcu_nocbs=
+	  boot parameter.
 
 config RCU_NOCB_CPU_NONE
 	bool "No build_forced no-CBs CPUs"
