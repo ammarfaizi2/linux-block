@@ -1287,7 +1287,8 @@ static void note_gp_changes(struct rcu_state *rsp, struct rcu_data *rdp)
 
 	local_irq_save(flags);
 	rnp = rdp->mynode;
-	if (rdp->gpnum == ACCESS_ONCE(rnp->gpnum) || /* outside lock. */
+	if ((rdp->gpnum == ACCESS_ONCE(rnp->gpnum) &&
+	     rdp->completed == ACCESS_ONCE(rnp->completed)) || /* w/out lock. */
 	    !raw_spin_trylock(&rnp->lock)) { /* irqs already off, so later. */
 		local_irq_restore(flags);
 		return;
