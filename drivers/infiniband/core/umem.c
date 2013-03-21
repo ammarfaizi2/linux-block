@@ -89,6 +89,7 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 	int ret;
 	int off;
 	int i;
+	bool gift, writable;
 	DEFINE_DMA_ATTRS(attrs);
 
 	if (dmasync)
@@ -96,6 +97,15 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 
 	if (!can_do_mlock())
 		return ERR_PTR(-EPERM);
+	/*
+	 * We ask for writable memory if any access flags other than
+	 * "remote read" or "gift" are set.  "Local write" and "remote write"
+	 * obviously require write access.  "Remote atomic" can do
+	 * things like fetch and add, which will modify memory, and
+	 * "MW bind" can change permissions by binding a window.
+	 */
+	gift  = access & IB_ACCESS_GIFT;
+	writable = access & ~(IB_ACCESS_REMOTE_READ | IB_ACCESS_GIFT);
 
 	umem = kmalloc(sizeof *umem, GFP_KERNEL);
 	if (!umem)
@@ -105,14 +115,7 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 	umem->length    = size;
 	umem->offset    = addr & ~PAGE_MASK;
 	umem->page_size = PAGE_SIZE;
-	/*
-	 * We ask for writable memory if any access flags other than
-	 * "remote read" are set.  "Local write" and "remote write"
-	 * obviously require write access.  "Remote atomic" can do
-	 * things like fetch and add, which will modify memory, and
-	 * "MW bind" can change permissions by binding a window.
-	 */
-	umem->writable  = !!(access & ~IB_ACCESS_REMOTE_READ);
+	umem->writable  = writable;
 
 	/* We assume the memory is from hugetlb until proved otherwise */
 	umem->hugetlb   = 1;
@@ -152,7 +155,7 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 		ret = get_user_pages(current, current->mm, cur_base,
 				     min_t(unsigned long, npages,
 					   PAGE_SIZE / sizeof (struct page *)),
-				     1, !umem->writable, page_list, vma_list);
+				     !gift, !umem->writable, page_list, vma_list);
 
 		if (ret < 0)
 			goto out;
