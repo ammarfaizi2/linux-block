@@ -794,11 +794,24 @@ static int rcu_implicit_dynticks_qs(struct rcu_data *rdp)
 	if (ULONG_CMP_GE(rdp->rsp->gp_start + 2, jiffies))
 		return 0;  /* Grace period is not old enough. */
 	barrier();
+	get_online_cpus();
 	if (cpu_is_offline(rdp->cpu)) {
 		trace_rcu_fqs(rdp->rsp->name, rdp->gpnum, rdp->cpu, "ofl");
 		rdp->offline_fqs++;
+		put_online_cpus();
 		return 1;
 	}
+	put_online_cpus();
+
+	/*
+	 * There is a possibility that a CPU in adaptive-ticks state
+	 * might run in the kernel with the scheduling-clock tick disabled
+	 * for an extended time period.  Invoke rcu_kick_nohz_cpu() to
+	 * force the CPU to restart the scheduling-clock tick in this
+	 * CPU is in this state.
+	 */
+	rcu_kick_nohz_cpu(rdp->cpu);
+
 	return 0;
 }
 
