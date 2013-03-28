@@ -28,6 +28,8 @@ next/multiplatform
 		patches <1363106816-9603-1-git-send-email-arnd@arndb.de>
 	cns3xxx/multiplatform
 		patches <1363299271-8283-1-git-send-email-arnd@arndb.de>
+	prima2/multiplatform
+		patches <1363779679-16880-1-git-send-email-arnd@arndb.de>
 
 next/dt
 	mvebu/dt
