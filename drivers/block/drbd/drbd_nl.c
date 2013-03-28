@@ -1381,6 +1381,12 @@ int drbd_adm_attach(struct sk_buff *skb, struct genl_info *info)
 		goto fail;
 	}
 
+	write_lock_irq(&global_state_lock);
+	retcode = drbd_resync_after_valid(mdev, new_disk_conf->resync_after);
+	write_unlock_irq(&global_state_lock);
+	if (retcode != NO_ERROR)
+		goto fail;
+
 	rcu_read_lock();
 	nc = rcu_dereference(mdev->tconn->net_conf);
 	if (nc) {
@@ -2198,8 +2204,11 @@ static enum drbd_state_rv conn_try_disconnect(struct drbd_tconn *tconn, bool for
 		return SS_SUCCESS;
 	case SS_PRIMARY_NOP:
 		/* Our state checking code wants to see the peer outdated. */
-		rv = conn_request_state(tconn, NS2(conn, C_DISCONNECTING,
-						pdsk, D_OUTDATED), CS_VERBOSE);
+		rv = conn_request_state(tconn, NS2(conn, C_DISCONNECTING, pdsk, D_OUTDATED), 0);
+
+		if (rv == SS_OUTDATE_WO_CONN) /* lost connection before graceful disconnect succeeded */
+			rv = conn_request_state(tconn, NS(conn, C_DISCONNECTING), CS_VERBOSE);
+
 		break;
 	case SS_CW_FAILED_BY_PEER:
 		/* The peer probably wants to see us outdated. */
@@ -2446,22 +2455,19 @@ int drbd_adm_invalidate(struct sk_buff *skb, struct genl_info *info)
 	wait_event(mdev->misc_wait, !test_bit(BITMAP_IO, &mdev->flags));
 	drbd_flush_workqueue(mdev);
 
-	retcode = _drbd_request_state(mdev, NS(conn, C_STARTING_SYNC_T), CS_ORDERED);
-
-	if (retcode < SS_SUCCESS && retcode != SS_NEED_CONNECTION)
+	/* If we happen to be C_STANDALONE R_SECONDARY, just change to
+	 * D_INCONSISTENT, and set all bits in the bitmap.  Otherwise,
+	 * try to start a resync handshake as sync target for full sync.
+	 */
+	if (mdev->state.conn == C_STANDALONE && mdev->state.role == R_SECONDARY) {
+		retcode = drbd_request_state(mdev, NS(disk, D_INCONSISTENT));
+		if (retcode >= SS_SUCCESS) {
+			if (drbd_bitmap_io(mdev, &drbd_bmio_set_n_write,
+				"set_n_write from invalidate", BM_LOCKED_MASK))
+				retcode = ERR_IO_MD_DISK;
+		}
+	} else
 		retcode = drbd_request_state(mdev, NS(conn, C_STARTING_SYNC_T));
-
-	while (retcode == SS_NEED_CONNECTION) {
-		spin_lock_irq(&mdev->tconn->req_lock);
-		if (mdev->state.conn < C_CONNECTED)
-			retcode = _drbd_set_state(_NS(mdev, disk, D_INCONSISTENT), CS_VERBOSE, NULL);
-		spin_unlock_irq(&mdev->tconn->req_lock);
-
-		if (retcode != SS_NEED_CONNECTION)
-			break;
-
-		retcode = drbd_request_state(mdev, NS(conn, C_STARTING_SYNC_T));
-	}
 	drbd_resume_io(mdev);
 
 out:
@@ -2515,21 +2521,22 @@ int drbd_adm_invalidate_peer(struct sk_buff *skb, struct genl_info *info)
 	wait_event(mdev->misc_wait, !test_bit(BITMAP_IO, &mdev->flags));
 	drbd_flush_workqueue(mdev);
 
-	retcode = _drbd_request_state(mdev, NS(conn, C_STARTING_SYNC_S), CS_ORDERED);
-	if (retcode < SS_SUCCESS) {
-		if (retcode == SS_NEED_CONNECTION && mdev->state.role == R_PRIMARY) {
-			/* The peer will get a resync upon connect anyways.
-			 * Just make that into a full resync. */
-			retcode = drbd_request_state(mdev, NS(pdsk, D_INCONSISTENT));
-			if (retcode >= SS_SUCCESS) {
-				if (drbd_bitmap_io(mdev, &drbd_bmio_set_susp_al,
-						   "set_n_write from invalidate_peer",
-						   BM_LOCKED_SET_ALLOWED))
-					retcode = ERR_IO_MD_DISK;
-			}
-		} else
-			retcode = drbd_request_state(mdev, NS(conn, C_STARTING_SYNC_S));
-	}
+	/* If we happen to be C_STANDALONE R_PRIMARY, just set all bits
+	 * in the bitmap.  Otherwise, try to start a resync handshake
+	 * as sync source for full sync.
+	 */
+	if (mdev->state.conn == C_STANDALONE && mdev->state.role == R_PRIMARY) {
+		/* The peer will get a resync upon connect anyways. Just make that
+		   into a full resync. */
+		retcode = drbd_request_state(mdev, NS(pdsk, D_INCONSISTENT));
+		if (retcode >= SS_SUCCESS) {
+			if (drbd_bitmap_io(mdev, &drbd_bmio_set_susp_al,
+				"set_n_write from invalidate_peer",
+				BM_LOCKED_SET_ALLOWED))
+				retcode = ERR_IO_MD_DISK;
+		}
+	} else
+		retcode = drbd_request_state(mdev, NS(conn, C_STARTING_SYNC_S));
 	drbd_resume_io(mdev);
 
 out:

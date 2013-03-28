@@ -263,8 +263,7 @@ void drbd_req_complete(struct drbd_request *req, struct bio_and_error *m)
 		else
 			root = &mdev->read_requests;
 		drbd_remove_request_interval(root, req);
-	} else if (!(s & RQ_POSTPONED))
-		D_ASSERT((s & (RQ_NET_MASK & ~RQ_NET_DONE)) == 0);
+	}
 
 	/* Before we can signal completion to the upper layers,
 	 * we may need to close the current transfer log epoch.
@@ -755,6 +754,11 @@ int __req_mod(struct drbd_request *req, enum drbd_req_event what,
 		D_ASSERT(req->rq_state & RQ_NET_PENDING);
 		mod_rq_state(req, m, RQ_NET_PENDING, RQ_NET_OK|RQ_NET_DONE);
 		break;
+
+	case QUEUE_AS_DRBD_BARRIER:
+		start_new_tl_epoch(mdev->tconn);
+		mod_rq_state(req, m, 0, RQ_NET_OK|RQ_NET_DONE);
+		break;
 	};
 
 	return rv;
@@ -861,8 +865,10 @@ static void maybe_pull_ahead(struct drbd_conf *mdev)
 	bool congested = false;
 	enum drbd_on_congestion on_congestion;
 
+	rcu_read_lock();
 	nc = rcu_dereference(tconn->net_conf);
 	on_congestion = nc ? nc->on_congestion : OC_BLOCK;
+	rcu_read_unlock();
 	if (on_congestion == OC_BLOCK ||
 	    tconn->agreed_pro_version < 96)
 		return;
@@ -956,14 +962,8 @@ static int drbd_process_write_request(struct drbd_request *req)
 	struct drbd_conf *mdev = req->w.mdev;
 	int remote, send_oos;
 
-	rcu_read_lock();
 	remote = drbd_should_do_remote(mdev->state);
-	if (remote) {
-		maybe_pull_ahead(mdev);
-		remote = drbd_should_do_remote(mdev->state);
-	}
 	send_oos = drbd_should_send_out_of_sync(mdev->state);
-	rcu_read_unlock();
 
 	/* Need to replicate writes.  Unless it is an empty flush,
 	 * which is better mapped to a DRBD P_BARRIER packet,
@@ -975,8 +975,8 @@ static int drbd_process_write_request(struct drbd_request *req)
 		/* The only size==0 bios we expect are empty flushes. */
 		D_ASSERT(req->master_bio->bi_rw & REQ_FLUSH);
 		if (remote)
-			start_new_tl_epoch(mdev->tconn);
-		return 0;
+			_req_mod(req, QUEUE_AS_DRBD_BARRIER);
+		return remote;
 	}
 
 	if (!remote && !send_oos)
@@ -1083,9 +1083,13 @@ static void drbd_send_and_submit(struct drbd_conf *mdev, struct drbd_request *re
 		 * but will re-aquire it before it returns here.
 		 * Needs to be before the check on drbd_suspended() */
 		complete_conflicting_writes(req);
+		/* no more giving up req_lock from now on! */
+
+		/* check for congestion, and potentially stop sending
+		 * full data updates, but start sending "dirty bits" only. */
+		maybe_pull_ahead(mdev);
 	}
 
-	/* no more giving up req_lock from now on! */
 
 	if (drbd_suspended(mdev)) {
 		/* push back and retry: */

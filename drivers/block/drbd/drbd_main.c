@@ -2819,6 +2819,7 @@ void drbd_free_bc(struct drbd_backing_dev *ldev)
 	blkdev_put(ldev->backing_bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
 	blkdev_put(ldev->md_bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
 
+	kfree(ldev->disk_conf);
 	kfree(ldev);
 }
 
@@ -3412,8 +3413,12 @@ static int w_go_diskless(struct drbd_work *w, int unused)
 	 * end up here after a failed attach, before ldev was even assigned.
 	 */
 	if (mdev->bitmap && mdev->ldev) {
+		/* An interrupted resync or similar is allowed to recounts bits
+		 * while we detach.
+		 * Any modifications would not be expected anymore, though.
+		 */
 		if (drbd_bitmap_io_from_worker(mdev, drbd_bm_write,
-					"detach", BM_LOCKED_MASK)) {
+					"detach", BM_LOCKED_TEST_ALLOWED)) {
 			if (test_bit(WAS_READ_ERROR, &mdev->flags)) {
 				drbd_md_set_flag(mdev, MDF_FULL_SYNC);
 				drbd_md_sync(mdev);
