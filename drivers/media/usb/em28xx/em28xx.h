@@ -461,10 +461,17 @@ struct em28xx_fh {
 	enum v4l2_buf_type           type;
 };
 
+enum em28xx_i2c_algo_type {
+	EM28XX_I2C_ALGO_EM28XX = 0,
+	EM28XX_I2C_ALGO_EM2800,
+	EM28XX_I2C_ALGO_EM25XX_BUS_B,
+};
+
 struct em28xx_i2c_bus {
 	struct em28xx *dev;
 
 	unsigned bus;
+	enum em28xx_i2c_algo_type algo_type;
 };
 
 
@@ -475,6 +482,7 @@ struct em28xx {
 	int model;		/* index in the device_data struct */
 	int devno;		/* marks the number of this device */
 	enum em28xx_chip_id chip_id;
+	unsigned int is_em25xx:1;	/* em25xx/em276x/7x/8x family bridge */
 
 	unsigned char disconnected:1;	/* device has been diconnected */
 
@@ -651,7 +659,8 @@ struct em28xx_ops {
 
 /* Provided by em28xx-i2c.c */
 void em28xx_do_i2c_scan(struct em28xx *dev, unsigned bus);
-int  em28xx_i2c_register(struct em28xx *dev, unsigned bus);
+int  em28xx_i2c_register(struct em28xx *dev, unsigned bus,
+			 enum em28xx_i2c_algo_type algo_type);
 int  em28xx_i2c_unregister(struct em28xx *dev, unsigned bus);
 
 /* Provided by em28xx-core.c */

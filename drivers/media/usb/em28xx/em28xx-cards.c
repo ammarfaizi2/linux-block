@@ -3041,6 +3041,12 @@ static int em28xx_init_dev(struct em28xx *dev, struct usb_device *udev,
 		case CHIP_ID_EM2750:
 			chip_name = "em2750";
 			break;
+		case CHIP_ID_EM2765:
+			chip_name = "em2765";
+			dev->wait_after_write = 0;
+			dev->is_em25xx = 1;
+			dev->eeprom_addrwidth_16bit = 1;
+			break;
 		case CHIP_ID_EM2820:
 			chip_name = "em2710/2820";
 			break;
@@ -3139,15 +3145,24 @@ static int em28xx_init_dev(struct em28xx *dev, struct usb_device *udev,
 	rt_mutex_init(&dev->i2c_bus_lock);
 
 	/* register i2c bus 0 */
-	retval = em28xx_i2c_register(dev, 0);
+	if (dev->board.is_em2800)
+		retval = em28xx_i2c_register(dev, 0, EM28XX_I2C_ALGO_EM2800);
+	else
+		retval = em28xx_i2c_register(dev, 0, EM28XX_I2C_ALGO_EM28XX);
 	if (retval < 0) {
 		em28xx_errdev("%s: em28xx_i2c_register bus 0 - error [%d]!\n",
 			__func__, retval);
 		goto unregister_dev;
 	}
 
+	/* register i2c bus 1 */
 	if (dev->def_i2c_bus) {
-		retval = em28xx_i2c_register(dev, 1);
+		if (dev->is_em25xx)
+			retval = em28xx_i2c_register(dev, 1,
+						  EM28XX_I2C_ALGO_EM25XX_BUS_B);
+		else
+			retval = em28xx_i2c_register(dev, 1,
+							EM28XX_I2C_ALGO_EM28XX);
 		if (retval < 0) {
 			em28xx_errdev("%s: em28xx_i2c_register bus 1 - error [%d]!\n",
 				__func__, retval);
@@ -3342,14 +3357,15 @@ static int em28xx_usb_probe(struct usb_interface *interface,
 						dev->analog_ep_bulk =
 							    e->bEndpointAddress;
 					} else {
-						has_dvb = true;
 						if (usb_endpoint_xfer_isoc(e)) {
 							dev->dvb_ep_isoc = e->bEndpointAddress;
 							if (size > dev->dvb_max_pkt_size_isoc) {
+								has_dvb = true; /* see NOTE (~) */
 								dev->dvb_max_pkt_size_isoc = size;
 								dev->dvb_alt_isoc = i;
 							}
 						} else {
+							has_dvb = true;
 							dev->dvb_ep_bulk = e->bEndpointAddress;
 						}
 					}
@@ -3375,6 +3391,12 @@ static int em28xx_usb_probe(struct usb_interface *interface,
 			 * reflects the endpoint configurations we have seen
 			 * so far. But there might be devices for which this
 			 * logic is not sufficient...
+			 */
+			/*
+			 * NOTE (~): some manufacturers (e.g. Terratec) disable
+			 * endpoints by setting wMaxPacketSize to 0 bytes for
+			 * all alt settings. So far, we've seen this for
+			 * DVB isoc endpoints only.
 			 */
 		}
 	}
