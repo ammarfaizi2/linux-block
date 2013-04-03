@@ -68,6 +68,8 @@ next/soc
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-defconfig2-for-v3.10
 	patch
 		"ARM: bcm281xx: Add timer driver (DT portion)"
+	lpc32xx/defconfig
+		  git://git.antcom.de/linux-2.6.git lpc32xx/defconfig
 
 next/drivers
 	samsung/timer
