@@ -62,6 +62,12 @@ next/soc
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-defconfig-for-v3.10
 	renesas/soc
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-soc-for-v3.10
+	at91/soc
+		  git://github.com/at91linux/linux-at91.git tags/at91-soc
+	renesas/defconfig2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-defconfig2-for-v3.10
+	patch
+		"ARM: bcm281xx: Add timer driver (DT portion)"
 
 next/drivers
 	samsung/timer
