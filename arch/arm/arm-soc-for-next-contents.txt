@@ -96,6 +96,12 @@ next/soc2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux2-for-v3.10
 		  depends on renesas/soc2
 
+next/boards2
+	renesas/boards2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards3-for-v3.10
+		  depends on renesas/soc2
+		  depends on renesas/pinmux2
+
 next/renesas-pinctrl
 	renesas/pinctrl
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux-for-v3.10
