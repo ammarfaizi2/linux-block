@@ -26,7 +26,7 @@ gpio_reset: gpio-reset {
 	compatible = "gpio-reset";
 	reset-gpios = <&gpio5 0 1>; /* active-low */
 	reset-delays = <10000>; /* 10 ms */
-	initially-in-reset: <1>;
+	initially-in-reset = <1>;
 	#reset-cells = <1>;
 };
 
