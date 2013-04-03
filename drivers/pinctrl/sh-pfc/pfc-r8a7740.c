@@ -2993,7 +2993,7 @@ static const struct pinmux_data_reg pinmux_data_regs[] = {
 	{ },
 };
 
-static struct pinmux_irq pinmux_irqs[] = {
+static const struct pinmux_irq pinmux_irqs[] = {
 	PINMUX_IRQ(irq_pin(0), GPIO_PORT2,   GPIO_PORT13),	/* IRQ0A */
 	PINMUX_IRQ(irq_pin(1), GPIO_PORT20),		/* IRQ1A */
 	PINMUX_IRQ(irq_pin(2), GPIO_PORT11,  GPIO_PORT12),	/* IRQ2A */

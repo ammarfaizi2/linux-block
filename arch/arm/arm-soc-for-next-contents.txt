@@ -92,6 +92,9 @@ next/soc2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-soc2-for-v3.10
 		  depends on renesas/soc
 		  depends on renesas/intc-eternal-irq
+	renesas/pinmux2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux2-for-v3.10
+		  depends on renesas/soc2
 
 next/renesas-pinctrl
 	renesas/pinctrl
