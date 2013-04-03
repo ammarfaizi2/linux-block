@@ -23,7 +23,6 @@
 #include <linux/spinlock.h>
 #include <linux/io.h>
 #include <linux/delay.h>
-#include <linux/irqchip/arm-gic.h>
 #include <mach/common.h>
 #include <mach/emev2.h>
 #include <asm/smp_plat.h>
@@ -31,9 +30,22 @@
 
 #define EMEV2_SCU_BASE 0x1e000000
 
-static void __cpuinit emev2_secondary_init(unsigned int cpu)
+static DEFINE_SPINLOCK(scu_lock);
+static void __iomem *scu_base;
+
+static void modify_scu_cpu_psr(unsigned long set, unsigned long clr)
 {
-	gic_secondary_init(0);
+	unsigned long tmp;
+
+	/* we assume this code is running on a different cpu
+	 * than the one that is changing coherency setting */
+	spin_lock(&scu_lock);
+	tmp = readl(scu_base + 8);
+	tmp &= ~clr;
+	tmp |= set;
+	writel(tmp, scu_base + 8);
+	spin_unlock(&scu_lock);
+
 }
 
 static int __cpuinit emev2_boot_secondary(unsigned int cpu, struct task_struct *idle)
@@ -69,6 +81,5 @@ static void __init emev2_smp_init_cpus(void)
 struct smp_operations emev2_smp_ops __initdata = {
 	.smp_init_cpus		= emev2_smp_init_cpus,
 	.smp_prepare_cpus	= emev2_smp_prepare_cpus,
-	.smp_secondary_init	= emev2_secondary_init,
 	.smp_boot_secondary	= emev2_boot_secondary,
 };

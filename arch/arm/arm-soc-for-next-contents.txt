@@ -20,6 +20,16 @@ next/cleanup
 		  git://sources.calxeda.com/kernel/linux.git tags/clksrc-cleanup-for-3.10
 	at91/cleanup
 		  git://github.com/at91linux/linux-at91.git tags/at91-soc
+	patch
+		"irqchip: irq-gic: Fix checkpatch errors"
+	gic/cleanup
+		  git://git.kernel.org/pub/scm/linux/kernel/git/cmarinas/linux-aarch64.git gic
+		  + patch "irqchip: vic: add include of linux/irq.h"
+	patch
+		"ARM: irq: Call irqchip_init if no init_irq function is specified"
+	at91/cleanup2
+		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
+		 (minus the topmost patch "ARM: at91: make ATAGS support conditional on CONFIG_ATAGS")
 
 next/multiplatform
 	nomadik/multiplatform
