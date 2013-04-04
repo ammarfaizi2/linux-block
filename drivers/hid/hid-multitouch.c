@@ -668,6 +668,7 @@ static void mt_process_mt_event(struct hid_device *hid, struct hid_field *field,
 {
 	struct mt_device *td = hid_get_drvdata(hid);
 	__s32 quirks = td->mtclass.quirks;
+	struct input_dev *input = field->hidinput->input;
 
 	if (hid->claimed & HID_CLAIMED_INPUT) {
 		switch (usage->hid) {
@@ -717,6 +718,9 @@ static void mt_process_mt_event(struct hid_device *hid, struct hid_field *field,
 			break;
 
 		default:
+			if (usage->type)
+				input_event(input, usage->type, usage->code,
+						value);
 			return;
 		}
 
