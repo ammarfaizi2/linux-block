@@ -1796,13 +1796,13 @@ static int pxa_camera_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static struct dev_pm_ops pxa_camera_pm = {
+static const struct dev_pm_ops pxa_camera_pm = {
 	.suspend	= pxa_camera_suspend,
 	.resume		= pxa_camera_resume,
 };
 
 static struct platform_driver pxa_camera_driver = {
-	.driver 	= {
+	.driver		= {
 		.name	= PXA_CAM_DRV_NAME,
 		.pm	= &pxa_camera_pm,
 	},

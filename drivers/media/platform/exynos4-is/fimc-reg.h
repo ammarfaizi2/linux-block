@@ -52,6 +52,8 @@
 #define FIMC_REG_CIGCTRL_IRQ_CLR		(1 << 19)
 #define FIMC_REG_CIGCTRL_IRQ_ENABLE		(1 << 16)
 #define FIMC_REG_CIGCTRL_SHDW_DISABLE		(1 << 12)
+/* 0 - selects Writeback A (LCD), 1 - selects Writeback B (LCD/ISP) */
+#define FIMC_REG_CIGCTRL_SELWB_A		(1 << 10)
 #define FIMC_REG_CIGCTRL_CAM_JPEG		(1 << 8)
 #define FIMC_REG_CIGCTRL_SELCAM_MIPI_A		(1 << 7)
 #define FIMC_REG_CIGCTRL_CAMIF_SELWB		(1 << 6)
@@ -93,10 +95,10 @@
 /* Output DMA control */
 #define FIMC_REG_CIOCTRL			0x4c
 #define FIMC_REG_CIOCTRL_ORDER422_MASK		(3 << 0)
-#define FIMC_REG_CIOCTRL_ORDER422_CRYCBY	(0 << 0)
-#define FIMC_REG_CIOCTRL_ORDER422_CBYCRY	(1 << 0)
-#define FIMC_REG_CIOCTRL_ORDER422_YCRYCB	(2 << 0)
-#define FIMC_REG_CIOCTRL_ORDER422_YCBYCR	(3 << 0)
+#define FIMC_REG_CIOCTRL_ORDER422_YCBYCR	(0 << 0)
+#define FIMC_REG_CIOCTRL_ORDER422_YCRYCB	(1 << 0)
+#define FIMC_REG_CIOCTRL_ORDER422_CBYCRY	(2 << 0)
+#define FIMC_REG_CIOCTRL_ORDER422_CRYCBY	(3 << 0)
 #define FIMC_REG_CIOCTRL_LASTIRQ_ENABLE		(1 << 2)
 #define FIMC_REG_CIOCTRL_YCBCR_3PLANE		(0 << 3)
 #define FIMC_REG_CIOCTRL_YCBCR_2PLANE		(1 << 3)
@@ -218,10 +220,10 @@
 #define FIMC_REG_MSCTRL_FLIP_180		(3 << 13)
 #define FIMC_REG_MSCTRL_FIFO_CTRL_FULL		(1 << 12)
 #define FIMC_REG_MSCTRL_ORDER422_SHIFT		4
-#define FIMC_REG_MSCTRL_ORDER422_YCBYCR		(0 << 4)
-#define FIMC_REG_MSCTRL_ORDER422_CBYCRY		(1 << 4)
-#define FIMC_REG_MSCTRL_ORDER422_YCRYCB		(2 << 4)
-#define FIMC_REG_MSCTRL_ORDER422_CRYCBY		(3 << 4)
+#define FIMC_REG_MSCTRL_ORDER422_CRYCBY		(0 << 4)
+#define FIMC_REG_MSCTRL_ORDER422_YCRYCB		(1 << 4)
+#define FIMC_REG_MSCTRL_ORDER422_CBYCRY		(2 << 4)
+#define FIMC_REG_MSCTRL_ORDER422_YCBYCR		(3 << 4)
 #define FIMC_REG_MSCTRL_ORDER422_MASK		(3 << 4)
 #define FIMC_REG_MSCTRL_INPUT_EXTCAM		(0 << 3)
 #define FIMC_REG_MSCTRL_INPUT_MEMORY		(1 << 3)
@@ -276,6 +278,14 @@
 /* Output frame buffer sequence mask */
 #define FIMC_REG_CIFCNTSEQ			0x1fc
 
+/* SYSREG ISP Writeback register address offsets */
+#define SYSREG_ISPBLK				0x020c
+#define SYSREG_ISPBLK_FIFORST_CAM_BLK		(1 << 7)
+
+#define SYSREG_CAMBLK				0x0218
+#define SYSREG_CAMBLK_FIFORST_ISP		(1 << 15)
+#define SYSREG_CAMBLK_ISPWB_FULL_EN		(7 << 20)
+
 /*
  * Function declarations
  */
@@ -309,6 +319,7 @@ void fimc_hw_activate_input_dma(struct fimc_dev *dev, bool on);
 void fimc_hw_disable_capture(struct fimc_dev *dev);
 s32 fimc_hw_get_frame_index(struct fimc_dev *dev);
 s32 fimc_hw_get_prev_frame_index(struct fimc_dev *dev);
+int fimc_hw_camblk_cfg_writeback(struct fimc_dev *fimc);
 void fimc_activate_capture(struct fimc_ctx *ctx);
 void fimc_deactivate_capture(struct fimc_dev *fimc);
 

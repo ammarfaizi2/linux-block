@@ -12,8 +12,10 @@
 /*#define DEBUG*/
 
 #include <linux/platform_device.h>
+#include <linux/regmap.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
+#include <linux/mfd/syscon.h>
 #include <linux/types.h>
 #include <linux/videodev2.h>
 #include <linux/io.h>
@@ -42,6 +44,10 @@
 #define FIMC_CAMIF_MAX_HEIGHT	0x2000
 #define FIMC_MAX_JPEG_BUF_SIZE	(10 * SZ_1M)
 #define FIMC_MAX_PLANES		3
+#define FIMC_PIX_LIMITS_MAX	4
+#define FIMC_DEF_MIN_SIZE	16
+#define FIMC_DEF_HEIGHT_ALIGN	2
+#define FIMC_DEF_HOR_OFFS_ALIGN	1
 
 /* indices to the clocks array */
 enum {
@@ -130,36 +136,6 @@ enum fimc_color_fmt {
 #define	FIMC_COLOR_RANGE_WIDE		(0 << 3)
 /* Y (16 ~ 235), Cb/Cr (16 ~ 240) */
 #define	FIMC_COLOR_RANGE_NARROW		(1 << 3)
-
-/**
- * struct fimc_fmt - the driver's internal color format data
- * @mbus_code: Media Bus pixel code, -1 if not applicable
- * @name: format description
- * @fourcc: the fourcc code for this format, 0 if not applicable
- * @color: the corresponding fimc_color_fmt
- * @memplanes: number of physically non-contiguous data planes
- * @colplanes: number of physically contiguous data planes
- * @depth: per plane driver's private 'number of bits per pixel'
- * @mdataplanes: bitmask indicating meta data plane(s), (1 << plane_no)
- * @flags: flags indicating which operation mode format applies to
- */
-struct fimc_fmt {
-	enum v4l2_mbus_pixelcode mbus_code;
-	char	*name;
-	u32	fourcc;
-	u32	color;
-	u16	memplanes;
-	u16	colplanes;
-	u8	depth[VIDEO_MAX_PLANES];
-	u16	mdataplanes;
-	u16	flags;
-#define FMT_FLAGS_CAM		(1 << 0)
-#define FMT_FLAGS_M2M_IN	(1 << 1)
-#define FMT_FLAGS_M2M_OUT	(1 << 2)
-#define FMT_FLAGS_M2M		(1 << 1 | 1 << 2)
-#define FMT_HAS_ALPHA		(1 << 3)
-#define FMT_FLAGS_COMPRESSED	(1 << 4)
-};
 
 /**
  * struct fimc_dma_offset - pixel offset information for DMA
@@ -299,9 +275,10 @@ struct fimc_m2m_device {
 	int			refcnt;
 };
 
-#define FIMC_SD_PAD_SINK	0
-#define FIMC_SD_PAD_SOURCE	1
-#define FIMC_SD_PADS_NUM	2
+#define FIMC_SD_PAD_SINK_CAM	0
+#define FIMC_SD_PAD_SINK_FIFO	1
+#define FIMC_SD_PAD_SOURCE	2
+#define FIMC_SD_PADS_NUM	3
 
 /**
  * struct fimc_vid_cap - camera capture device information
@@ -310,7 +287,9 @@ struct fimc_m2m_device {
  * @subdev: subdev exposing the FIMC processing block
  * @vd_pad: fimc video capture node pad
  * @sd_pads: fimc video processing block pads
- * @mf: media bus format at the FIMC camera input (and the scaler output) pad
+ * @ci_fmt: image format at the FIMC camera input (and the scaler output)
+ * @wb_fmt: image format at the FIMC ISP Writeback input
+ * @source_config: external image source related configuration structure
  * @pending_buf_q: the pending buffer queue head
  * @active_buf_q: the queue head of buffers scheduled in hardware
  * @vbq: the capture am video buffer queue
@@ -329,8 +308,10 @@ struct fimc_vid_cap {
 	struct video_device		vfd;
 	struct v4l2_subdev		subdev;
 	struct media_pad		vd_pad;
-	struct v4l2_mbus_framefmt	mf;
 	struct media_pad		sd_pads[FIMC_SD_PADS_NUM];
+	struct v4l2_mbus_framefmt	ci_fmt;
+	struct v4l2_mbus_framefmt	wb_fmt;
+	struct fimc_source_info		source_config;
 	struct list_head		pending_buf_q;
 	struct list_head		active_buf_q;
 	struct vb2_queue		vbq;
@@ -338,6 +319,7 @@ struct fimc_vid_cap {
 	int				buf_index;
 	unsigned int			frame_count;
 	unsigned int			reqbufs_count;
+	bool				streaming;
 	int				input_index;
 	int				refcnt;
 	u32				input;
@@ -365,10 +347,8 @@ struct fimc_pix_limit {
 
 /**
  * struct fimc_variant - FIMC device variant information
- * @pix_hoff: indicate whether horizontal offset is in pixels or in bytes
  * @has_inp_rot: set if has input rotator
  * @has_out_rot: set if has output rotator
- * @has_cistatus2: 1 if CISTATUS2 register is present in this IP revision
  * @has_mainscaler_ext: 1 if extended mainscaler ratios in CIEXTEN register
  *			 are present in this IP revision
  * @has_cam_if: set if this instance has a camera input interface
@@ -378,23 +358,18 @@ struct fimc_pix_limit {
  * @min_out_pixsize: minimum output pixel size
  * @hor_offs_align: horizontal pixel offset aligment
  * @min_vsize_align: minimum vertical pixel size alignment
- * @out_buf_count: the number of buffers in output DMA sequence
  */
 struct fimc_variant {
-	unsigned int	pix_hoff:1;
 	unsigned int	has_inp_rot:1;
 	unsigned int	has_out_rot:1;
-	unsigned int	has_cistatus2:1;
 	unsigned int	has_mainscaler_ext:1;
 	unsigned int	has_cam_if:1;
 	unsigned int	has_isp_wb:1;
-	unsigned int	has_alpha:1;
 	const struct fimc_pix_limit *pix_limit;
 	u16		min_inp_pixsize;
 	u16		min_out_pixsize;
 	u16		hor_offs_align;
 	u16		min_vsize_align;
-	u16		out_buf_count;
 };
 
 /**
@@ -402,11 +377,20 @@ struct fimc_variant {
  * @variant: variant information for this device
  * @num_entities: number of fimc instances available in a SoC
  * @lclk_frequency: local bus clock frequency
+ * @cistatus2: 1 if the FIMC IPs have CISTATUS2 register
+ * @dma_pix_hoff: the horizontal DMA offset unit: 1 - pixels, 0 - bytes
+ * @alpha_color: 1 if alpha color component is supported
+ * @out_buf_count: maximum number of output DMA buffers supported
  */
 struct fimc_drvdata {
 	const struct fimc_variant *variant[FIMC_MAX_DEVS];
 	int num_entities;
 	unsigned long lclk_frequency;
+	/* Fields common to all FIMC IP instances */
+	u8 cistatus2;
+	u8 dma_pix_hoff;
+	u8 alpha_color;
+	u8 out_buf_count;
 };
 
 #define fimc_get_drvdata(_pdev) \
@@ -420,6 +404,7 @@ struct fimc_ctx;
  * @lock:	the mutex protecting this data structure
  * @pdev:	pointer to the FIMC platform device
  * @pdata:	pointer to the device platform data
+ * @sysreg:	pointer to the SYSREG regmap
  * @variant:	the IP variant information
  * @id:		FIMC device index (0..FIMC_MAX_DEVS)
  * @clock:	clocks required for FIMC operation
@@ -437,7 +422,9 @@ struct fimc_dev {
 	struct mutex			lock;
 	struct platform_device		*pdev;
 	struct s5p_platform_fimc	*pdata;
+	struct regmap			*sysreg;
 	const struct fimc_variant	*variant;
+	const struct fimc_drvdata	*drv_data;
 	u16				id;
 	struct clk			*clock[MAX_FIMC_CLOCKS];
 	void __iomem			*regs;
@@ -659,6 +646,15 @@ int fimc_register_m2m_device(struct fimc_dev *fimc,
 void fimc_unregister_m2m_device(struct fimc_dev *fimc);
 int fimc_register_driver(void);
 void fimc_unregister_driver(void);
+
+#ifdef CONFIG_MFD_SYSCON
+static inline struct regmap * fimc_get_sysreg_regmap(struct device_node *node)
+{
+	return syscon_regmap_lookup_by_phandle(node, "samsung,sysreg");
+}
+#else
+#define fimc_get_sysreg_regmap(node) (NULL)
+#endif
 
 /* -----------------------------------------------------*/
 /* fimc-m2m.c */

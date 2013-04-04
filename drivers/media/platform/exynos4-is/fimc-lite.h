@@ -20,11 +20,10 @@
 
 #include <media/media-entity.h>
 #include <media/videobuf2-core.h>
+#include <media/v4l2-ctrls.h>
 #include <media/v4l2-device.h>
 #include <media/v4l2-mediabus.h>
 #include <media/s5p_fimc.h>
-
-#include "fimc-core.h"
 
 #define FIMC_LITE_DRV_NAME	"exynos-fimc-lite"
 #define FLITE_CLK_NAME		"flite"
@@ -49,16 +48,12 @@ enum {
 #define FLITE_SD_PAD_SOURCE_ISP	2
 #define FLITE_SD_PADS_NUM	3
 
-struct flite_variant {
+struct flite_drvdata {
 	unsigned short max_width;
 	unsigned short max_height;
 	unsigned short out_width_align;
 	unsigned short win_hor_offs_align;
 	unsigned short out_hor_offs_align;
-};
-
-struct flite_drvdata {
-	struct flite_variant *variant[FIMC_LITE_MAX_DEVS];
 };
 
 #define fimc_lite_get_drvdata(_pdev) \
@@ -75,11 +70,13 @@ struct fimc_lite_events {
  * @f_width: full pixel width
  * @f_height: full pixel height
  * @rect: crop/composition rectangle
+ * @fmt: pointer to pixel format description data structure
  */
 struct flite_frame {
 	u16 f_width;
 	u16 f_height;
 	struct v4l2_rect rect;
+	const struct fimc_fmt *fmt;
 };
 
 /**
@@ -97,7 +94,7 @@ struct flite_buffer {
 /**
  * struct fimc_lite - fimc lite structure
  * @pdev: pointer to FIMC-LITE platform device
- * @variant: variant information for this IP
+ * @dd: SoC specific driver data structure
  * @v4l2_dev: pointer to top the level v4l2_device
  * @vfd: video device node
  * @fh: v4l2 file handle
@@ -116,7 +113,6 @@ struct flite_buffer {
  * @clock: FIMC-LITE gate clock
  * @regs: memory mapped io registers
  * @irq_queue: interrupt handler waitqueue
- * @fmt: pointer to color format description structure
  * @payload: image size in bytes (w x h x bpp)
  * @inp_frame: camera input frame structure
  * @out_frame: DMA output frame structure
@@ -133,7 +129,7 @@ struct flite_buffer {
  */
 struct fimc_lite {
 	struct platform_device	*pdev;
-	struct flite_variant	*variant;
+	struct flite_drvdata	*dd;
 	struct v4l2_device	*v4l2_dev;
 	struct video_device	vfd;
 	struct v4l2_fh		fh;
@@ -155,7 +151,6 @@ struct fimc_lite {
 	void __iomem		*regs;
 	wait_queue_head_t	irq_queue;
 
-	const struct fimc_fmt	*fmt;
 	unsigned long		payload[FLITE_MAX_PLANES];
 	struct flite_frame	inp_frame;
 	struct flite_frame	out_frame;
@@ -171,6 +166,7 @@ struct fimc_lite {
 	int			ref_count;
 
 	struct fimc_lite_events	events;
+	bool			streaming;
 };
 
 static inline bool fimc_lite_active(struct fimc_lite *fimc)

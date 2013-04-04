@@ -20,7 +20,10 @@
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/list.h>
+#include <linux/mfd/syscon.h>
 #include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 #include <linux/slab.h>
 #include <linux/clk.h>
 #include <media/v4l2-ioctl.h>
@@ -29,7 +32,7 @@
 
 #include "fimc-core.h"
 #include "fimc-reg.h"
-#include "fimc-mdevice.h"
+#include "media-dev.h"
 
 static char *fimc_clocks[MAX_FIMC_CLOCKS] = {
 	"sclk_fimc", "fimc"
@@ -76,6 +79,10 @@ static struct fimc_fmt fimc_formats[] = {
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.flags		= FMT_FLAGS_M2M_OUT | FMT_HAS_ALPHA,
+	}, {
+		.name		= "YUV 4:4:4",
+		.mbus_code	= V4L2_MBUS_FMT_YUV10_1X30,
+		.flags		= FMT_FLAGS_WRITEBACK,
 	}, {
 		.name		= "YUV 4:2:2 packed, YCbYCr",
 		.fourcc		= V4L2_PIX_FMT_YUYV,
@@ -405,34 +412,34 @@ void fimc_set_yuv_order(struct fimc_ctx *ctx)
 	/* Set order for 1 plane input formats. */
 	switch (ctx->s_frame.fmt->color) {
 	case FIMC_FMT_YCRYCB422:
-		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_CBYCRY;
-		break;
-	case FIMC_FMT_CBYCRY422:
 		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_YCRYCB;
 		break;
+	case FIMC_FMT_CBYCRY422:
+		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_CBYCRY;
+		break;
 	case FIMC_FMT_CRYCBY422:
-		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_YCBYCR;
+		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_CRYCBY;
 		break;
 	case FIMC_FMT_YCBYCR422:
 	default:
-		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_CRYCBY;
+		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_YCBYCR;
 		break;
 	}
 	dbg("ctx->in_order_1p= %d", ctx->in_order_1p);
 
 	switch (ctx->d_frame.fmt->color) {
 	case FIMC_FMT_YCRYCB422:
-		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_CBYCRY;
-		break;
-	case FIMC_FMT_CBYCRY422:
 		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_YCRYCB;
 		break;
+	case FIMC_FMT_CBYCRY422:
+		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_CBYCRY;
+		break;
 	case FIMC_FMT_CRYCBY422:
-		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_YCBYCR;
+		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_CRYCBY;
 		break;
 	case FIMC_FMT_YCBYCR422:
 	default:
-		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_CRYCBY;
+		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_YCBYCR;
 		break;
 	}
 	dbg("ctx->out_order_1p= %d", ctx->out_order_1p);
@@ -440,14 +447,14 @@ void fimc_set_yuv_order(struct fimc_ctx *ctx)
 
 void fimc_prepare_dma_offset(struct fimc_ctx *ctx, struct fimc_frame *f)
 {
-	const struct fimc_variant *variant = ctx->fimc_dev->variant;
+	bool pix_hoff = ctx->fimc_dev->drv_data->dma_pix_hoff;
 	u32 i, depth = 0;
 
 	for (i = 0; i < f->fmt->colplanes; i++)
 		depth += f->fmt->depth[i];
 
 	f->dma_offset.y_h = f->offs_h;
-	if (!variant->pix_hoff)
+	if (!pix_hoff)
 		f->dma_offset.y_h *= (depth >> 3);
 
 	f->dma_offset.y_v = f->offs_v;
@@ -458,7 +465,7 @@ void fimc_prepare_dma_offset(struct fimc_ctx *ctx, struct fimc_frame *f)
 	f->dma_offset.cr_h = f->offs_h;
 	f->dma_offset.cr_v = f->offs_v;
 
-	if (!variant->pix_hoff) {
+	if (!pix_hoff) {
 		if (f->fmt->colplanes == 3) {
 			f->dma_offset.cb_h >>= 1;
 			f->dma_offset.cr_h >>= 1;
@@ -589,7 +596,6 @@ static const struct v4l2_ctrl_ops fimc_ctrl_ops = {
 
 int fimc_ctrls_create(struct fimc_ctx *ctx)
 {
-	const struct fimc_variant *variant = ctx->fimc_dev->variant;
 	unsigned int max_alpha = fimc_get_alpha_mask(ctx->d_frame.fmt);
 	struct fimc_ctrls *ctrls = &ctx->ctrls;
 	struct v4l2_ctrl_handler *handler = &ctrls->handler;
@@ -606,7 +612,7 @@ int fimc_ctrls_create(struct fimc_ctx *ctx)
 	ctrls->vflip = v4l2_ctrl_new_std(handler, &fimc_ctrl_ops,
 					V4L2_CID_VFLIP, 0, 1, 1, 0);
 
-	if (variant->has_alpha)
+	if (ctx->fimc_dev->drv_data->alpha_color)
 		ctrls->alpha = v4l2_ctrl_new_std(handler, &fimc_ctrl_ops,
 					V4L2_CID_ALPHA_COMPONENT,
 					0, max_alpha, 1, 0);
@@ -677,7 +683,7 @@ void fimc_alpha_ctrl_update(struct fimc_ctx *ctx)
 	struct fimc_dev *fimc = ctx->fimc_dev;
 	struct v4l2_ctrl *ctrl = ctx->ctrls.alpha;
 
-	if (ctrl == NULL || !fimc->variant->has_alpha)
+	if (ctrl == NULL || !fimc->drv_data->alpha_color)
 		return;
 
 	v4l2_ctrl_lock(ctrl);
@@ -865,43 +871,113 @@ static int fimc_m2m_resume(struct fimc_dev *fimc)
 	return 0;
 }
 
+static const struct of_device_id fimc_of_match[];
+
+static int fimc_parse_dt(struct fimc_dev *fimc, u32 *clk_freq)
+{
+	struct device *dev = &fimc->pdev->dev;
+	struct device_node *node = dev->of_node;
+	const struct of_device_id *of_id;
+	struct fimc_variant *v;
+	struct fimc_pix_limit *lim;
+	u32 args[FIMC_PIX_LIMITS_MAX];
+	int ret;
+
+	if (of_property_read_bool(node, "samsung,lcd-wb"))
+		return -ENODEV;
+
+	v = devm_kzalloc(dev, sizeof(*v) + sizeof(*lim), GFP_KERNEL);
+	if (!v)
+		return -ENOMEM;
+
+	of_id = of_match_node(fimc_of_match, node);
+	if (!of_id)
+		return -EINVAL;
+	fimc->drv_data = of_id->data;
+	ret = of_property_read_u32_array(node, "samsung,pix-limits",
+					 args, FIMC_PIX_LIMITS_MAX);
+	if (ret < 0)
+		return ret;
+
+	lim = (struct fimc_pix_limit *)&v[1];
+
+	lim->scaler_en_w = args[0];
+	lim->scaler_dis_w = args[1];
+	lim->out_rot_en_w = args[2];
+	lim->out_rot_dis_w = args[3];
+	v->pix_limit = lim;
+
+	ret = of_property_read_u32_array(node, "samsung,min-pix-sizes",
+								args, 2);
+	v->min_inp_pixsize = ret ? FIMC_DEF_MIN_SIZE : args[0];
+	v->min_out_pixsize = ret ? FIMC_DEF_MIN_SIZE : args[1];
+	ret = of_property_read_u32_array(node, "samsung,min-pix-alignment",
+								args, 2);
+	v->min_vsize_align = ret ? FIMC_DEF_HEIGHT_ALIGN : args[0];
+	v->hor_offs_align = ret ? FIMC_DEF_HOR_OFFS_ALIGN : args[1];
+
+	ret = of_property_read_u32(node, "samsung,rotators", &args[1]);
+	v->has_inp_rot = ret ? 1 : args[1] & 0x01;
+	v->has_out_rot = ret ? 1 : args[1] & 0x10;
+	v->has_mainscaler_ext = of_property_read_bool(node,
+					"samsung,mainscaler-ext");
+
+	v->has_isp_wb = of_property_read_bool(node, "samsung,isp-wb");
+	v->has_cam_if = of_property_read_bool(node, "samsung,cam-if");
+	of_property_read_u32(node, "clock-frequency", clk_freq);
+	fimc->id = of_alias_get_id(node, "fimc");
+
+	fimc->variant = v;
+	return 0;
+}
+
 static int fimc_probe(struct platform_device *pdev)
 {
-	const struct fimc_drvdata *drv_data = fimc_get_drvdata(pdev);
-	struct s5p_platform_fimc *pdata;
+	struct device *dev = &pdev->dev;
+	u32 lclk_freq = 0;
 	struct fimc_dev *fimc;
 	struct resource *res;
 	int ret = 0;
 
-	if (pdev->id >= drv_data->num_entities) {
-		dev_err(&pdev->dev, "Invalid platform device id: %d\n",
-			pdev->id);
-		return -EINVAL;
-	}
-
-	fimc = devm_kzalloc(&pdev->dev, sizeof(*fimc), GFP_KERNEL);
+	fimc = devm_kzalloc(dev, sizeof(*fimc), GFP_KERNEL);
 	if (!fimc)
 		return -ENOMEM;
 
-	fimc->id = pdev->id;
-
-	fimc->variant = drv_data->variant[fimc->id];
 	fimc->pdev = pdev;
-	pdata = pdev->dev.platform_data;
-	fimc->pdata = pdata;
+
+	if (dev->of_node) {
+		ret = fimc_parse_dt(fimc, &lclk_freq);
+		if (ret < 0)
+			return ret;
+	} else {
+		fimc->drv_data = fimc_get_drvdata(pdev);
+		fimc->id = pdev->id;
+	}
+	if (!fimc->drv_data || fimc->id >= fimc->drv_data->num_entities ||
+	    fimc->id < 0) {
+		dev_err(dev, "Invalid driver data or device id (%d/%d)\n",
+			fimc->id, fimc->drv_data->num_entities);
+		return -EINVAL;
+	}
+	if (!dev->of_node)
+		fimc->variant = fimc->drv_data->variant[fimc->id];
 
 	init_waitqueue_head(&fimc->irq_queue);
 	spin_lock_init(&fimc->slock);
 	mutex_init(&fimc->lock);
 
+	fimc->sysreg = fimc_get_sysreg_regmap(dev->of_node);
+	if (IS_ERR(fimc->sysreg))
+		return PTR_ERR(fimc->sysreg);
+
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	fimc->regs = devm_ioremap_resource(&pdev->dev, res);
+	fimc->regs = devm_ioremap_resource(dev, res);
 	if (IS_ERR(fimc->regs))
 		return PTR_ERR(fimc->regs);
 
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (res == NULL) {
-		dev_err(&pdev->dev, "Failed to get IRQ resource\n");
+		dev_err(dev, "Failed to get IRQ resource\n");
 		return -ENXIO;
 	}
 
@@ -909,7 +985,10 @@ static int fimc_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	ret = clk_set_rate(fimc->clock[CLK_BUS], drv_data->lclk_frequency);
+	if (lclk_freq == 0)
+		lclk_freq = fimc->drv_data->lclk_frequency;
+
+	ret = clk_set_rate(fimc->clock[CLK_BUS], lclk_freq);
 	if (ret < 0)
 		return ret;
 
@@ -917,10 +996,10 @@ static int fimc_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	ret = devm_request_irq(&pdev->dev, res->start, fimc_irq_handler,
-			       0, dev_name(&pdev->dev), fimc);
+	ret = devm_request_irq(dev, res->start, fimc_irq_handler,
+			       0, dev_name(dev), fimc);
 	if (ret) {
-		dev_err(&pdev->dev, "failed to install irq (%d)\n", ret);
+		dev_err(dev, "failed to install irq (%d)\n", ret);
 		goto err_clk;
 	}
 
@@ -929,23 +1008,23 @@ static int fimc_probe(struct platform_device *pdev)
 		goto err_clk;
 
 	platform_set_drvdata(pdev, fimc);
-	pm_runtime_enable(&pdev->dev);
-	ret = pm_runtime_get_sync(&pdev->dev);
+	pm_runtime_enable(dev);
+	ret = pm_runtime_get_sync(dev);
 	if (ret < 0)
 		goto err_sd;
 	/* Initialize contiguous memory allocator */
-	fimc->alloc_ctx = vb2_dma_contig_init_ctx(&pdev->dev);
+	fimc->alloc_ctx = vb2_dma_contig_init_ctx(dev);
 	if (IS_ERR(fimc->alloc_ctx)) {
 		ret = PTR_ERR(fimc->alloc_ctx);
 		goto err_pm;
 	}
 
-	dev_dbg(&pdev->dev, "FIMC.%d registered successfully\n", fimc->id);
+	dev_dbg(dev, "FIMC.%d registered successfully\n", fimc->id);
 
-	pm_runtime_put(&pdev->dev);
+	pm_runtime_put(dev);
 	return 0;
 err_pm:
-	pm_runtime_put(&pdev->dev);
+	pm_runtime_put(dev);
 err_sd:
 	fimc_unregister_capture_subdev(fimc);
 err_clk:
@@ -1048,33 +1127,19 @@ static const struct fimc_pix_limit s5p_pix_limit[4] = {
 	[0] = {
 		.scaler_en_w	= 3264,
 		.scaler_dis_w	= 8192,
-		.in_rot_en_h	= 1920,
-		.in_rot_dis_w	= 8192,
 		.out_rot_en_w	= 1920,
 		.out_rot_dis_w	= 4224,
 	},
 	[1] = {
 		.scaler_en_w	= 4224,
 		.scaler_dis_w	= 8192,
-		.in_rot_en_h	= 1920,
-		.in_rot_dis_w	= 8192,
 		.out_rot_en_w	= 1920,
 		.out_rot_dis_w	= 4224,
 	},
 	[2] = {
 		.scaler_en_w	= 1920,
 		.scaler_dis_w	= 8192,
-		.in_rot_en_h	= 1280,
-		.in_rot_dis_w	= 8192,
 		.out_rot_en_w	= 1280,
-		.out_rot_dis_w	= 1920,
-	},
-	[3] = {
-		.scaler_en_w	= 1920,
-		.scaler_dis_w	= 8192,
-		.in_rot_en_h	= 1366,
-		.in_rot_dis_w	= 8192,
-		.out_rot_en_w	= 1366,
 		.out_rot_dis_w	= 1920,
 	},
 };
@@ -1087,7 +1152,6 @@ static const struct fimc_variant fimc0_variant_s5p = {
 	.min_out_pixsize = 16,
 	.hor_offs_align	 = 8,
 	.min_vsize_align = 16,
-	.out_buf_count	 = 4,
 	.pix_limit	 = &s5p_pix_limit[0],
 };
 
@@ -1097,12 +1161,10 @@ static const struct fimc_variant fimc2_variant_s5p = {
 	.min_out_pixsize = 16,
 	.hor_offs_align	 = 8,
 	.min_vsize_align = 16,
-	.out_buf_count	 = 4,
 	.pix_limit	 = &s5p_pix_limit[1],
 };
 
 static const struct fimc_variant fimc0_variant_s5pv210 = {
-	.pix_hoff	 = 1,
 	.has_inp_rot	 = 1,
 	.has_out_rot	 = 1,
 	.has_cam_if	 = 1,
@@ -1110,12 +1172,10 @@ static const struct fimc_variant fimc0_variant_s5pv210 = {
 	.min_out_pixsize = 16,
 	.hor_offs_align	 = 8,
 	.min_vsize_align = 16,
-	.out_buf_count	 = 4,
 	.pix_limit	 = &s5p_pix_limit[1],
 };
 
 static const struct fimc_variant fimc1_variant_s5pv210 = {
-	.pix_hoff	 = 1,
 	.has_inp_rot	 = 1,
 	.has_out_rot	 = 1,
 	.has_cam_if	 = 1,
@@ -1124,78 +1184,16 @@ static const struct fimc_variant fimc1_variant_s5pv210 = {
 	.min_out_pixsize = 16,
 	.hor_offs_align	 = 1,
 	.min_vsize_align = 1,
-	.out_buf_count	 = 4,
 	.pix_limit	 = &s5p_pix_limit[2],
 };
 
 static const struct fimc_variant fimc2_variant_s5pv210 = {
 	.has_cam_if	 = 1,
-	.pix_hoff	 = 1,
 	.min_inp_pixsize = 16,
 	.min_out_pixsize = 16,
 	.hor_offs_align	 = 8,
 	.min_vsize_align = 16,
-	.out_buf_count	 = 4,
 	.pix_limit	 = &s5p_pix_limit[2],
-};
-
-static const struct fimc_variant fimc0_variant_exynos4210 = {
-	.pix_hoff	 = 1,
-	.has_inp_rot	 = 1,
-	.has_out_rot	 = 1,
-	.has_cam_if	 = 1,
-	.has_cistatus2	 = 1,
-	.has_mainscaler_ext = 1,
-	.has_alpha	 = 1,
-	.min_inp_pixsize = 16,
-	.min_out_pixsize = 16,
-	.hor_offs_align	 = 2,
-	.min_vsize_align = 1,
-	.out_buf_count	 = 32,
-	.pix_limit	 = &s5p_pix_limit[1],
-};
-
-static const struct fimc_variant fimc3_variant_exynos4210 = {
-	.pix_hoff	 = 1,
-	.has_cistatus2	 = 1,
-	.has_mainscaler_ext = 1,
-	.has_alpha	 = 1,
-	.min_inp_pixsize = 16,
-	.min_out_pixsize = 16,
-	.hor_offs_align	 = 2,
-	.min_vsize_align = 1,
-	.out_buf_count	 = 32,
-	.pix_limit	 = &s5p_pix_limit[3],
-};
-
-static const struct fimc_variant fimc0_variant_exynos4x12 = {
-	.pix_hoff		= 1,
-	.has_inp_rot		= 1,
-	.has_out_rot		= 1,
-	.has_cam_if		= 1,
-	.has_isp_wb		= 1,
-	.has_cistatus2		= 1,
-	.has_mainscaler_ext	= 1,
-	.has_alpha		= 1,
-	.min_inp_pixsize	= 16,
-	.min_out_pixsize	= 16,
-	.hor_offs_align		= 2,
-	.min_vsize_align	= 1,
-	.out_buf_count		= 32,
-	.pix_limit		= &s5p_pix_limit[1],
-};
-
-static const struct fimc_variant fimc3_variant_exynos4x12 = {
-	.pix_hoff		= 1,
-	.has_cistatus2		= 1,
-	.has_mainscaler_ext	= 1,
-	.has_alpha		= 1,
-	.min_inp_pixsize	= 16,
-	.min_out_pixsize	= 16,
-	.hor_offs_align		= 2,
-	.min_vsize_align	= 1,
-	.out_buf_count		= 32,
-	.pix_limit		= &s5p_pix_limit[3],
 };
 
 /* S5PC100 */
@@ -1205,8 +1203,9 @@ static const struct fimc_drvdata fimc_drvdata_s5p = {
 		[1] = &fimc0_variant_s5p,
 		[2] = &fimc2_variant_s5p,
 	},
-	.num_entities = 3,
+	.num_entities	= 3,
 	.lclk_frequency = 133000000UL,
+	.out_buf_count	= 4,
 };
 
 /* S5PV210, S5PC110 */
@@ -1216,32 +1215,30 @@ static const struct fimc_drvdata fimc_drvdata_s5pv210 = {
 		[1] = &fimc1_variant_s5pv210,
 		[2] = &fimc2_variant_s5pv210,
 	},
-	.num_entities = 3,
-	.lclk_frequency = 166000000UL,
+	.num_entities	= 3,
+	.lclk_frequency	= 166000000UL,
+	.out_buf_count	= 4,
+	.dma_pix_hoff	= 1,
 };
 
 /* EXYNOS4210, S5PV310, S5PC210 */
 static const struct fimc_drvdata fimc_drvdata_exynos4210 = {
-	.variant = {
-		[0] = &fimc0_variant_exynos4210,
-		[1] = &fimc0_variant_exynos4210,
-		[2] = &fimc0_variant_exynos4210,
-		[3] = &fimc3_variant_exynos4210,
-	},
-	.num_entities = 4,
+	.num_entities	= 4,
 	.lclk_frequency = 166000000UL,
+	.dma_pix_hoff	= 1,
+	.cistatus2	= 1,
+	.alpha_color	= 1,
+	.out_buf_count	= 32,
 };
 
 /* EXYNOS4212, EXYNOS4412 */
 static const struct fimc_drvdata fimc_drvdata_exynos4x12 = {
-	.variant = {
-		[0] = &fimc0_variant_exynos4x12,
-		[1] = &fimc0_variant_exynos4x12,
-		[2] = &fimc0_variant_exynos4x12,
-		[3] = &fimc3_variant_exynos4x12,
-	},
-	.num_entities = 4,
-	.lclk_frequency = 166000000UL,
+	.num_entities	= 4,
+	.lclk_frequency	= 166000000UL,
+	.dma_pix_hoff	= 1,
+	.cistatus2	= 1,
+	.alpha_color	= 1,
+	.out_buf_count	= 32,
 };
 
 static const struct platform_device_id fimc_driver_ids[] = {
@@ -1258,9 +1255,22 @@ static const struct platform_device_id fimc_driver_ids[] = {
 		.name		= "exynos4x12-fimc",
 		.driver_data	= (unsigned long)&fimc_drvdata_exynos4x12,
 	},
-	{},
+	{ },
 };
-MODULE_DEVICE_TABLE(platform, fimc_driver_ids);
+
+static const struct of_device_id fimc_of_match[] = {
+	{
+		.compatible = "samsung,s5pv210-fimc",
+		.data = &fimc_drvdata_s5pv210,
+	}, {
+		.compatible = "samsung,exynos4210-fimc",
+		.data = &fimc_drvdata_exynos4210,
+	}, {
+		.compatible = "samsung,exynos4212-fimc",
+		.data = &fimc_drvdata_exynos4x12,
+	},
+	{ /* sentinel */ },
+};
 
 static const struct dev_pm_ops fimc_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(fimc_suspend, fimc_resume)
@@ -1272,9 +1282,10 @@ static struct platform_driver fimc_driver = {
 	.remove		= fimc_remove,
 	.id_table	= fimc_driver_ids,
 	.driver = {
-		.name	= FIMC_MODULE_NAME,
-		.owner	= THIS_MODULE,
-		.pm     = &fimc_pm_ops,
+		.of_match_table = fimc_of_match,
+		.name		= FIMC_MODULE_NAME,
+		.owner		= THIS_MODULE,
+		.pm     	= &fimc_pm_ops,
 	}
 };
 
