@@ -519,10 +519,6 @@ int omapdss_venc_display_enable(struct omap_dss_device *dssdev)
 		goto err0;
 	}
 
-	if (dssdev->platform_enable)
-		dssdev->platform_enable(dssdev);
-
-
 	r = venc_power_on(dssdev);
 	if (r)
 		goto err1;
@@ -533,8 +529,6 @@ int omapdss_venc_display_enable(struct omap_dss_device *dssdev)
 
 	return 0;
 err1:
-	if (dssdev->platform_disable)
-		dssdev->platform_disable(dssdev);
 	omap_dss_stop_device(dssdev);
 err0:
 	mutex_unlock(&venc.venc_lock);
@@ -550,9 +544,6 @@ void omapdss_venc_display_disable(struct omap_dss_device *dssdev)
 	venc_power_off(dssdev);
 
 	omap_dss_stop_device(dssdev);
-
-	if (dssdev->platform_disable)
-		dssdev->platform_disable(dssdev);
 
 	mutex_unlock(&venc.venc_lock);
 }
@@ -786,8 +777,6 @@ static void __init venc_probe_pdata(struct platform_device *vencdev)
 
 	dss_copy_device_pdata(dssdev, plat_dssdev);
 
-	dssdev->channel = OMAP_DSS_CHANNEL_DIGIT;
-
 	r = venc_init_display(dssdev);
 	if (r) {
 		DSSERR("device %s init failed: %d\n", dssdev->name, r);
@@ -819,6 +808,8 @@ static void __init venc_init_output(struct platform_device *pdev)
 	out->pdev = pdev;
 	out->id = OMAP_DSS_OUTPUT_VENC;
 	out->type = OMAP_DISPLAY_TYPE_VENC;
+	out->name = "venc.0";
+	out->dispc_channel = OMAP_DSS_CHANNEL_DIGIT;
 
 	dss_register_output(out);
 }
