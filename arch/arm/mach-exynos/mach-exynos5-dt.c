@@ -25,6 +25,7 @@
 #include "common.h"
 
 static u64 dma_mask64 = DMA_BIT_MASK(64);
+static u64 dma_mask32 = DMA_BIT_MASK(32);
 
 static void __init exynos5_dt_map_io(void)
 {
@@ -41,6 +42,10 @@ static int exynos5440_platform_notifier(struct notifier_block *nb,
 
 	dev->dma_mask = &dma_mask64;
 	dev->coherent_dma_mask = DMA_BIT_MASK(64);
+
+	if (of_device_is_compatible(dev->of_node, "snps,dwmac-3.70a"))
+		dev->dma_mask = &dma_mask32;
+
 	return NOTIFY_OK;
 }
 
