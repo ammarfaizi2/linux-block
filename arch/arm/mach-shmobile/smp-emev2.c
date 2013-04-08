@@ -30,24 +30,6 @@
 
 #define EMEV2_SCU_BASE 0x1e000000
 
-static DEFINE_SPINLOCK(scu_lock);
-static void __iomem *scu_base;
-
-static void modify_scu_cpu_psr(unsigned long set, unsigned long clr)
-{
-	unsigned long tmp;
-
-	/* we assume this code is running on a different cpu
-	 * than the one that is changing coherency setting */
-	spin_lock(&scu_lock);
-	tmp = readl(scu_base + 8);
-	tmp &= ~clr;
-	tmp |= set;
-	writel(tmp, scu_base + 8);
-	spin_unlock(&scu_lock);
-
-}
-
 static int __cpuinit emev2_boot_secondary(unsigned int cpu, struct task_struct *idle)
 {
 	arch_send_wakeup_ipi_mask(cpumask_of(cpu_logical_map(cpu)));
