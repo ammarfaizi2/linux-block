@@ -109,6 +109,8 @@ next/drivers
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/timer-signed
 		depends on omap/fixes-non-critical
 		depends on depends/rmk-errorchecking
+	omap/gpmc
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/gpmc-signed
 
 next/soc2
 	renesas/soc2
