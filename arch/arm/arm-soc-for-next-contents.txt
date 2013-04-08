@@ -136,6 +136,9 @@ next/boards2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards3-for-v3.10
 		  depends on renesas/soc2
 		  depends on renesas/pinmux2
+	renesas/defconfig-bockw
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-defconfig-bockw-for-v3.10
+		  depends on renesas/boards2
 
 next/renesas-pinctrl
 	renesas/pinctrl
