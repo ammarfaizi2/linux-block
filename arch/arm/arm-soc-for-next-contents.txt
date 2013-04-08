@@ -7,6 +7,10 @@ Format is a little different from before in an attempt to make it easier to read
 		<...>
 	<...>
 
+Dependencies from other trees:
+	depends/rmk/errorchecking
+	
+
 next/fixes-non-critical
 	ux500/dt-fixes
 		  git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-dt-fixes
@@ -101,6 +105,10 @@ next/drivers
 		depends on clksrc/cleanup
 	omap/usb
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/usb-signed
+	omap/timer
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/timer-signed
+		depends on omap/fixes-non-critical
+		depends on depends/rmk-errorchecking
 
 next/soc2
 	renesas/soc2
