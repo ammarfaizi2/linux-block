@@ -54,6 +54,8 @@ next/dt
 		  git://github.com/at91linux/linux-at91.git tags/at91-dt
 	sunxi/dt
 		  git://github.com/mripard/linux.git tags/sunxi-dt-for-3.10
+	zynq/core
+		   git://git.xilinx.com/linux-xlnx.git zynq/core
 
 next/soc
 	prima2/soc
