@@ -1603,7 +1603,8 @@ config ARCH_NR_GPIO
 	default 1024 if ARCH_SHMOBILE || ARCH_TEGRA
 	default 512 if SOC_OMAP5
 	default 392 if ARCH_U8500
-	default 288 if ARCH_VT8500 || ARCH_SUNXI
+	default 352 if ARCH_VT8500
+	default 288 if ARCH_SUNXI
 	default 264 if MACH_H4700
 	default 0
 	help

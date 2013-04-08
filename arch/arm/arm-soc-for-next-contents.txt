@@ -92,13 +92,15 @@ next/drivers
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-clocksource-for-v3.10
 	renesas/intc-external-irq2
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-intc-external-irq2-for-v3.10
+	vt8500/pinctrl
+		git://server.prisktech.co.nz/git/linuxwmt.git tags/vt8500/pinctrl
 
 
 next/soc2
 	renesas/soc2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-soc2-for-v3.10
 		  depends on renesas/soc
-		  depends on renesas/intc-eternal-irq
+		  depends on renesas/intc-external-irq
 	renesas/pinmux2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux2-for-v3.10
 		  depends on renesas/soc2
