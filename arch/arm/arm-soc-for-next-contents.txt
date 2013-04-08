@@ -108,6 +108,10 @@ next/soc2
 	renesas/pinmux2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux2-for-v3.10
 		  depends on renesas/soc2
+	zynq/smp
+		  git://git.xilinx.com/linux-xlnx.git zynq/core-smp
+		  depends on zynq/clocksource
+		  depends on gic/cleanup
 
 next/boards2
 	renesas/boards2
