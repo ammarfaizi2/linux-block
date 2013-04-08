@@ -99,6 +99,8 @@ next/drivers
 	zynq/clocksource
 		git://git.xilinx.com/linux-xlnx.git zynq/clksrc/cleanup
 		depends on clksrc/cleanup
+	omap/usb
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/usb-signed
 
 next/soc2
 	renesas/soc2
