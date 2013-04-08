@@ -361,6 +361,17 @@ config ARCH_AT91
 	  This enables support for systems based on Atmel
 	  AT91RM9200 and AT91SAM9* processors.
 
+config ARCH_CNS3XXX
+	bool "Cavium Networks CNS3XXX family"
+	select ARM_GIC
+	select CPU_V6K
+	select GENERIC_CLOCKEVENTS
+	select MIGHT_HAVE_CACHE_L2X0
+	select MIGHT_HAVE_PCI
+	select PCI_DOMAINS if PCI
+	help
+	  Support for Cavium Networks CNS3XXX platform.
+
 config ARCH_BCM2835
 	bool "Broadcom BCM2835 family"
 	select ARCH_REQUIRE_GPIOLIB
@@ -979,6 +990,8 @@ source "arch/arm/mach-mvebu/Kconfig"
 source "arch/arm/mach-at91/Kconfig"
 
 source "arch/arm/mach-bcm/Kconfig"
+
+source "arch/arm/mach-bcm2835/Kconfig"
 
 source "arch/arm/mach-clps711x/Kconfig"
 

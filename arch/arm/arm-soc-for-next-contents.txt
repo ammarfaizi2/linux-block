@@ -50,16 +50,20 @@ next/multiplatform
 		patches <1363779679-16880-1-git-send-email-arnd@arndb.de>
 	patch
 		"arm: vt8500: Add wm8850 config options to multi_v7_defconfig"
+	bcm2835/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-multiplatform
 
 next/dt
 	mvebu/dt
-		git://git.infradead.org/users/jcooper/linux.git tags/mvebu_dt_for_v3.10
+		  git://git.infradead.org/users/jcooper/linux.git tags/mvebu_dt_for_v3.10
 	at91/dt
 		  git://github.com/at91linux/linux-at91.git tags/at91-dt
 	sunxi/dt
 		  git://github.com/mripard/linux.git tags/sunxi-dt-for-3.10
 	zynq/core
-		   git://git.xilinx.com/linux-xlnx.git zynq/core
+		  git://git.xilinx.com/linux-xlnx.git zynq/core
+	bcm2835/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-dt
 
 next/soc
 	prima2/soc
@@ -80,6 +84,8 @@ next/soc
 		"ARM: bcm281xx: Add timer driver (DT portion)"
 	lpc32xx/defconfig
 		  git://git.antcom.de/linux-2.6.git lpc32xx/defconfig
+	bcm2835/defconfig
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-defconfig
 
 next/drivers
 	samsung/timer
