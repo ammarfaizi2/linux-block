@@ -32,6 +32,8 @@ next/cleanup
 	at91/cleanup2
 		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
 		 (minus the topmost patch "ARM: at91: make ATAGS support conditional on CONFIG_ATAGS")
+	omap/cleanup2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/cleanup-v2-signed
 
 next/multiplatform
 	nomadik/multiplatform
