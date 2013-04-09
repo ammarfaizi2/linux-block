@@ -40,6 +40,17 @@ next/cleanup
 		 (minus the topmost patch "ARM: at91: make ATAGS support conditional on CONFIG_ATAGS")
 	omap/cleanup2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/cleanup-v2-signed
+	omap/fixes-pm
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/fixes-pm-signed
+	tegra/cleanup
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-cleanup
+		  depends on tegra/fixes
+	mxs/cleanup
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-cleanup-3.10
+	samsung/cleanup
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/cleanup-samsung-for-v3.10
+	at91/cleanup
+		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
 
 next/multiplatform
 	nomadik/multiplatform
