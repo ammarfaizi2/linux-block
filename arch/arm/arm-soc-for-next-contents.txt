@@ -134,6 +134,19 @@ next/mailbox:
 	mailbox/subsystem
 		git://github.com/sumananna/mailbox.git dbx500-prcmu-mailbox
 
+next/renesas-pinctrl
+	renesas/pinctrl
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux-for-v3.10
+
+next/boards
+	renesas/boards
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards-for-v3.10
+		depends on renesas/pinctrl and renesas/soc
+	davinci/boards
+		git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci.git tags/davinci-for-v3.10/board
+	omap/boards
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/board-signed
+
 next/soc2
 	renesas/soc2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-soc2-for-v3.10
@@ -142,6 +155,7 @@ next/soc2
 	renesas/pinmux2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux2-for-v3.10
 		  depends on renesas/soc2
+		  depends on renesas/pinctrl
 	zynq/smp
 		  git://git.xilinx.com/linux-xlnx.git zynq/core-smp
 		  depends on zynq/clocksource
@@ -156,11 +170,4 @@ next/boards2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-defconfig-bockw-for-v3.10
 		  depends on renesas/boards2
 
-next/renesas-pinctrl
-	renesas/pinctrl
-		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux-for-v3.10
 
-next/boards
-	renesas/boards
-		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards-for-v3.10
-		depends on renesas/pinctrl and renesas/soc
