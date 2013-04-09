@@ -52,25 +52,6 @@ next/cleanup
 	at91/cleanup
 		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
 
-next/multiplatform
-	nomadik/multiplatform
-		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-nomadik.git tags/nomadik-multiplatform
-	spear/multiplatform
-		patches <1363106816-9603-1-git-send-email-arnd@arndb.de>
-	cns3xxx/multiplatform
-		patches <1363299271-8283-1-git-send-email-arnd@arndb.de>
-	prima2/multiplatform
-		patches <1363779679-16880-1-git-send-email-arnd@arndb.de>
-	patch
-		"arm: vt8500: Add wm8850 config options to multi_v7_defconfig"
-	bcm2835/multiplatform
-		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-multiplatform
-	ux500/multiplatform
-		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-multiplatform-mfd
-	mxs/multiplatform
-		git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-multiplatform-3.10
-		depends on mxs/cleanup
-
 next/dt
 	mvebu/dt
 		  git://git.infradead.org/users/jcooper/linux.git tags/mvebu_dt_for_v3.10
@@ -123,6 +104,28 @@ next/soc
 		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-soc-3.10
 	omap/soc
 		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/soc-signed
+
+next/multiplatform
+	nomadik/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-nomadik.git tags/nomadik-multiplatform
+	spear/multiplatform
+		patches <1363106816-9603-1-git-send-email-arnd@arndb.de>
+	cns3xxx/multiplatform
+		patches <1363299271-8283-1-git-send-email-arnd@arndb.de>
+	prima2/multiplatform
+		patches <1363779679-16880-1-git-send-email-arnd@arndb.de>
+	patch
+		"arm: vt8500: Add wm8850 config options to multi_v7_defconfig"
+	bcm2835/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-multiplatform
+	ux500/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-multiplatform-mfd
+	mxs/multiplatform
+		git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-multiplatform-3.10
+		depends on mxs/cleanup
+	tegra/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-multiplatform
+		depends on tegra/soc
 
 next/drivers
 	samsung/timer
