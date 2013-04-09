@@ -52,7 +52,7 @@ next/cleanup
 		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-cleanup-3.10
 	samsung/cleanup
 		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/cleanup-samsung-for-v3.10
-	at91/cleanup
+	at91/cleanup3
 		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
 
 next/dt
@@ -69,7 +69,7 @@ next/dt
 	at91/dt3
 		  git://github.com/at91linux/linux-at91.git tags/at91-dt
 		  depends on at91/dt
-	sunxi/dt
+	sunxi/dt3
 		  git://github.com/mripard/linux.git tags/sunxi-dt-for-3.10-2
 	tegra/dt-fix
 		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-fixes-for-mmc
@@ -166,6 +166,8 @@ next/drivers
 		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-clk
 		depends on depends/clk
 		depends on tegra/soc
+	ux500/pinctrl
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-pinctrl
 
 next/mailbox:
 	mailbox/subsystem
