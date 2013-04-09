@@ -423,23 +423,6 @@ config ARCH_FOOTBRIDGE
 	  Support for systems based on the DC21285 companion chip
 	  ("FootBridge"), such as the Simtec CATS and the Rebel NetWinder.
 
-config ARCH_MXS
-	bool "Freescale MXS-based"
-	select ARCH_REQUIRE_GPIOLIB
-	select CLKDEV_LOOKUP
-	select CLKSRC_MMIO
-	select CLKSRC_OF
-	select COMMON_CLK
-	select GENERIC_CLOCKEVENTS
-	select HAVE_CLK_PREPARE
-	select MULTI_IRQ_HANDLER
-	select PINCTRL
-	select SPARSE_IRQ
-	select STMP_DEVICE
-	select USE_OF
-	help
-	  Support for Freescale MXS-based family of processors
-
 config ARCH_NETX
 	bool "Hilscher NetX based"
 	select ARM_VIC
@@ -854,22 +837,6 @@ config ARCH_U300
 	select SPARSE_IRQ
 	help
 	  Support for ST-Ericsson U300 series mobile platforms.
-
-config ARCH_U8500
-	bool "ST-Ericsson U8500 Series"
-	depends on MMU
-	select ARCH_HAS_CPUFREQ
-	select ARCH_REQUIRE_GPIOLIB
-	select ARM_AMBA
-	select CLKDEV_LOOKUP
-	select CPU_V7
-	select GENERIC_CLOCKEVENTS
-	select HAVE_SMP
-	select MIGHT_HAVE_CACHE_L2X0
-	select SPARSE_IRQ
-	help
-	  Support for ST-Ericsson's Ux500 architecture
-
 
 config ARCH_DAVINCI
 	bool "TI DaVinci"

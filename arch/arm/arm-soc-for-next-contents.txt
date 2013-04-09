@@ -65,6 +65,11 @@ next/multiplatform
 		"arm: vt8500: Add wm8850 config options to multi_v7_defconfig"
 	bcm2835/multiplatform
 		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-multiplatform
+	ux500/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-multiplatform-mfd
+	mxs/multiplatform
+		git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-multiplatform-3.10
+		depends on mxs/cleanup
 
 next/dt
 	mvebu/dt
