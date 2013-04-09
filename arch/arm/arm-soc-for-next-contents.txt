@@ -16,6 +16,8 @@ next/fixes-non-critical
 		  git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-dt-fixes
 	omap/fixes-non-critical
 		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/fixes-non-critical-signed
+	tegra/fixes
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-fixes
 
 next/cleanup
 	samsung/cleanup-s3c
