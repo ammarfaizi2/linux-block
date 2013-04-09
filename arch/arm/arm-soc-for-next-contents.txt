@@ -9,6 +9,9 @@ Format is a little different from before in an attempt to make it easier to read
 
 Dependencies from other trees:
 	depends/rmk/errorchecking
+		(no branch tag so far)
+	depends/clk
+		git://git.linaro.org/people/mturquette/linux.git clk-for-3.10
 	
 
 next/fixes-non-critical
@@ -157,6 +160,10 @@ next/drivers
 		depends on depends/rmk-errorchecking
 	omap/gpmc
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/gpmc-signed
+	tegra/clk
+		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-clk
+		depends on depends/clk
+		depends on tegra/soc
 
 next/mailbox:
 	mailbox/subsystem
