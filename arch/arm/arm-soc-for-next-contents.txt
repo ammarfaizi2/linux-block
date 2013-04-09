@@ -67,6 +67,10 @@ next/dt
 	at91/dt3
 		  git://github.com/at91linux/linux-at91.git tags/at91-dt
 		  depends on at91/dt
+	sunxi/dt
+		  git://github.com/mripard/linux.git tags/sunxi-dt-for-3.10-2
+	tegra/dt-fix
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-fixes-for-mmc
 
 next/soc
 	prima2/soc
@@ -89,6 +93,11 @@ next/soc
 		  git://git.antcom.de/linux-2.6.git lpc32xx/defconfig
 	bcm2835/defconfig
 		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-defconfig
+	davinci/soc
+		  git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci.git tags/davinci-for-v3.10/soc
+	davinci/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci.git tags/davinci-for-v3.10/dt
+		  depends on davinci/soc
 
 next/drivers
 	samsung/timer
