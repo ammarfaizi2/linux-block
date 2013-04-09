@@ -1,6 +1,7 @@
 config SOC_IMX23
 	bool
 	select ARM_AMBA
+	select ARM_CPU_SUSPEND if PM
 	select CPU_ARM926T
 	select HAVE_PWM
 	select PINCTRL_IMX23
@@ -8,6 +9,7 @@ config SOC_IMX23
 config SOC_IMX28
 	bool
 	select ARM_AMBA
+	select ARM_CPU_SUSPEND if PM
 	select CPU_ARM926T
 	select HAVE_CAN_FLEXCAN if CAN
 	select HAVE_PWM
