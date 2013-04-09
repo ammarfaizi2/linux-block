@@ -82,7 +82,7 @@ struct keyprint_hack bch_pbtree(const struct btree *b)
 {
 	struct keyprint_hack r;
 
-	snprintf(r.s, 40, "%li level %i/%i", PTR_BUCKET_NR(b->c, &b->key, 0),
+	snprintf(r.s, 40, "%zu level %i/%i", PTR_BUCKET_NR(b->c, &b->key, 0),
 		 b->level, b->c->root ? b->c->root->level : -1);
 	return r;
 }
@@ -409,7 +409,9 @@ void bch_debug_init_cache_set(struct cache_set *c)
 
 #endif
 
-#ifdef CONFIG_BCACHE_DEBUG
+/* Fuzz tester has rotted: */
+#if 0
+
 static ssize_t btree_fuzz(struct kobject *k, struct kobj_attribute *a,
 			  const char *buffer, size_t size)
 {
@@ -552,7 +554,7 @@ void bch_debug_exit(void)
 int __init bch_debug_init(struct kobject *kobj)
 {
 	int ret = 0;
-#ifdef CONFIG_BCACHE_DEBUG
+#if 0
 	ret = sysfs_create_file(kobj, &ksysfs_fuzz.attr);
 	if (ret)
 		return ret;
