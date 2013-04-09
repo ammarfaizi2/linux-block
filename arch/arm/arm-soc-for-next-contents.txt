@@ -109,6 +109,8 @@ next/soc
 		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/soc-signed
 	tegra/defconfig
 		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-defconfig
+	samsung/devel
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/devel-samsung-for-v3.10
 
 next/multiplatform
 	nomadik/multiplatform
