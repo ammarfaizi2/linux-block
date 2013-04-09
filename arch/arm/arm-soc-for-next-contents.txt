@@ -160,6 +160,12 @@ next/soc2
 		  git://git.xilinx.com/linux-xlnx.git zynq/core-smp
 		  depends on zynq/clocksource
 		  depends on gic/cleanup
+	renesas/soc3
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-soc-r8a7779-for-v3.10
+		  depends on renesas/soc2
+	renesas/soc4
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-soc-r8a7778-for-v3.10
+		  depends on renesas/soc2
 
 next/boards2
 	renesas/boards2
@@ -169,5 +175,7 @@ next/boards2
 	renesas/defconfig-bockw
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-defconfig-bockw-for-v3.10
 		  depends on renesas/boards2
-
+	renesas/boards3
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-boards-bockw-for-v3.10
+		  depends on renesas/soc4
 
