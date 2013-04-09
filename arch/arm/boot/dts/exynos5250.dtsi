@@ -154,6 +154,7 @@
 		compatible = "samsung,exynos5250-pinctrl";
 		reg = <0x0368000 0x1000>;
 		interrupts = <0 47 0>;
+	};
 
 	pmu {
 		compatible = "arm,cortex-a15-pmu";
