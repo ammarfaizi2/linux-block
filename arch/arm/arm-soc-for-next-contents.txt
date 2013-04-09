@@ -170,6 +170,12 @@ next/drivers
 		depends on tegra/soc
 	ux500/pinctrl
 		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-pinctrl
+	samsung/irq-s3c24xx-2
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git next/irq-s3c24xx
+	exynos/mct
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/mct-exynos-for-v3.10
+	exynos/clk
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/clk-exynos-for-v3.10 
 
 next/mailbox:
 	mailbox/subsystem
@@ -227,3 +233,6 @@ next/dt2
 	tegra/dt
 		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-dt
 		  depends on tegra/soc
+	exynos/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/dt-exynos-for-v3.10
+		  depends on exynos/mct
