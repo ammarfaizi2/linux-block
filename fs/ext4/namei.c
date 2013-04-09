@@ -2251,8 +2251,7 @@ static int ext4_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 	dquot_initialize(dir);
 
 	credits = (EXT4_DATA_TRANS_BLOCKS(dir->i_sb) +
-		   EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3 +
-		   EXT4_MAXQUOTAS_INIT_BLOCKS(dir->i_sb));
+		   EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3);
 retry:
 	inode = ext4_new_inode_start_handle(dir, mode, &dentry->d_name, 0,
 					    NULL, EXT4_HT_DIR, credits);
@@ -2286,8 +2285,7 @@ static int ext4_mknod(struct inode *dir, struct dentry *dentry,
 	dquot_initialize(dir);
 
 	credits = (EXT4_DATA_TRANS_BLOCKS(dir->i_sb) +
-		   EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3 +
-		   EXT4_MAXQUOTAS_INIT_BLOCKS(dir->i_sb));
+		   EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3);
 retry:
 	inode = ext4_new_inode_start_handle(dir, mode, &dentry->d_name, 0,
 					    NULL, EXT4_HT_DIR, credits);
@@ -2396,8 +2394,7 @@ static int ext4_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	dquot_initialize(dir);
 
 	credits = (EXT4_DATA_TRANS_BLOCKS(dir->i_sb) +
-		   EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3 +
-		   EXT4_MAXQUOTAS_INIT_BLOCKS(dir->i_sb));
+		   EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3);
 retry:
 	inode = ext4_new_inode_start_handle(dir, S_IFDIR | mode,
 					    &dentry->d_name,
@@ -2826,8 +2823,7 @@ static int ext4_symlink(struct inode *dir,
 		 * quota blocks, sb is already counted in previous macros).
 		 */
 		credits = EXT4_DATA_TRANS_BLOCKS(dir->i_sb) +
-			  EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3 +
-			  EXT4_MAXQUOTAS_INIT_BLOCKS(dir->i_sb);
+			  EXT4_INDEX_EXTRA_TRANS_BLOCKS + 3;
 	}
 retry:
 	inode = ext4_new_inode_start_handle(dir, S_IFLNK|S_IRWXUGO,

@@ -652,6 +652,7 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
 	struct inode *ret;
 	ext4_group_t i;
 	ext4_group_t flex_group;
+	bool quota_allocated = false;
 
 	/* Cannot create files in a deleted directory */
 	if (!dir || !dir->i_nlink)
@@ -665,6 +666,23 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
 		return ERR_PTR(-ENOMEM);
 	ei = EXT4_I(inode);
 	sbi = EXT4_SB(sb);
+
+	/*
+	 * Initalize owners and quota early so that we don't have to account
+	 * for quota initialization worst case in standard inode creating
+	 * transaction
+	 */
+	if (owner) {
+		inode->i_mode = mode;
+		i_uid_write(inode, owner[0]);
+		i_gid_write(inode, owner[1]);
+	} else if (test_opt(sb, GRPID)) {
+		inode->i_mode = mode;
+		inode->i_uid = current_fsuid();
+		inode->i_gid = dir->i_gid;
+	} else
+		inode_init_owner(inode, dir, mode);
+	dquot_initialize(inode);
 
 	if (!goal)
 		goal = sbi->s_inode_goal;
@@ -851,17 +869,6 @@ got:
 		flex_group = ext4_flex_group(sbi, group);
 		atomic_dec(&sbi->s_flex_groups[flex_group].free_inodes);
 	}
-	if (owner) {
-		inode->i_mode = mode;
-		i_uid_write(inode, owner[0]);
-		i_gid_write(inode, owner[1]);
-	} else if (test_opt(sb, GRPID)) {
-		inode->i_mode = mode;
-		inode->i_uid = current_fsuid();
-		inode->i_gid = dir->i_gid;
-	} else
-		inode_init_owner(inode, dir, mode);
-
 	inode->i_ino = ino + group * EXT4_INODES_PER_GROUP(sb);
 	/* This is the optimal IO size (for stat), not the fs block size */
 	inode->i_blocks = 0;
@@ -918,18 +925,18 @@ got:
 		ext4_set_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
 
 	ret = inode;
-	dquot_initialize(inode);
 	err = dquot_alloc_inode(inode);
 	if (err)
-		goto fail_drop;
+		goto out;
+	quota_allocated = true;
 
 	err = ext4_init_acl(handle, inode, dir);
 	if (err)
-		goto fail_free_drop;
+		goto out;
 
 	err = ext4_init_security(handle, inode, dir, qstr);
 	if (err)
-		goto fail_free_drop;
+		goto out;
 
 	if (EXT4_HAS_INCOMPAT_FEATURE(sb, EXT4_FEATURE_INCOMPAT_EXTENTS)) {
 		/* set extent flag only for directory, file and normal symlink*/
@@ -945,10 +952,8 @@ got:
 	}
 
 	err = ext4_mark_inode_dirty(handle, inode);
-	if (err) {
-		ext4_std_error(sb, err);
-		goto fail_free_drop;
-	}
+	if (err)
+		goto fail;
 
 	ext4_debug("allocating inode %lu\n", inode->i_ino);
 	trace_ext4_allocate_inode(inode, dir, mode);
@@ -956,23 +961,18 @@ got:
 fail:
 	ext4_std_error(sb, err);
 out:
+	if (quota_allocated)
+		dquot_free_inode(inode);
+	dquot_drop(inode);
+	inode->i_flags |= S_NOQUOTA;
+	clear_nlink(inode);
+	if (inode->i_state & I_NEW)
+		unlock_new_inode(inode);
 	iput(inode);
 	ret = ERR_PTR(err);
 really_out:
 	brelse(inode_bitmap_bh);
 	return ret;
-
-fail_free_drop:
-	dquot_free_inode(inode);
-
-fail_drop:
-	dquot_drop(inode);
-	inode->i_flags |= S_NOQUOTA;
-	clear_nlink(inode);
-	unlock_new_inode(inode);
-	iput(inode);
-	brelse(inode_bitmap_bh);
-	return ERR_PTR(err);
 }
 
 /* Verify that we are loading a valid orphan from disk */
