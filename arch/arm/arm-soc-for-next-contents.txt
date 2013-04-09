@@ -176,10 +176,19 @@ next/drivers
 		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/mct-exynos-for-v3.10
 	exynos/clk
 		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/clk-exynos-for-v3.10 
+	exynos/pmu
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/pmu-exynos-for-v3.10
+	exynos/timer
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/timer-samsung-for-v3.10
 
 next/mailbox:
 	mailbox/subsystem
 		git://github.com/sumananna/mailbox.git dbx500-prcmu-mailbox
+
+next/firmware:
+	exynos/secure
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/secure-exynos-for-v3.10
+		depends on exynos/clk
 
 next/renesas-pinctrl
 	renesas/pinctrl
