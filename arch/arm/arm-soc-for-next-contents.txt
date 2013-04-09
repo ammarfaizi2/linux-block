@@ -64,6 +64,9 @@ next/dt
 		  git://git.xilinx.com/linux-xlnx.git zynq/core
 	bcm2835/dt
 		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-dt
+	at91/dt3
+		  git://github.com/at91linux/linux-at91.git tags/at91-dt
+		  depends on at91/dt
 
 next/soc
 	prima2/soc
