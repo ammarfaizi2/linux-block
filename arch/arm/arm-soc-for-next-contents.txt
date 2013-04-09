@@ -216,3 +216,10 @@ next/boards2
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-boards-bockw-for-v3.10
 		  depends on renesas/soc4
 
+next/dt2
+	mxs/dt
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-dt-3.10
+		  depends on mxs/cleanup
+	tegra/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-dt
+		  depends on tegra/soc
