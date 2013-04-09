@@ -131,6 +131,8 @@ next/multiplatform
 	tegra/multiplatform
 		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-multiplatform
 		depends on tegra/soc
+	patch "[PATCHv2] ARM: Push selects for TWD/SCU into machine entries"
+		<1362007694-3419-1-git-send-email-sboyd@codeaurora.org>
 
 next/drivers
 	samsung/timer
