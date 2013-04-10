@@ -302,30 +302,6 @@ static u32 vfp_emulate_instruction(u32 inst, u32 fpscr, struct pt_regs *regs)
 
 	pr_debug("VFP: emulate: INST=0x%08x SCR=0x%08x\n", inst, fpscr);
 
-	if (INST_CPRTDO(inst)) {
-		if (!INST_CPRT(inst)) {
-			/*
-			 * CPDO
-			 */
-			if (vfp_single(inst)) {
-				exceptions = vfp_single_cpdo(inst, fpscr);
-			} else {
-				exceptions = vfp_double_cpdo(inst, fpscr);
-			}
-		} else {
-			/*
-			 * A CPRT instruction can not appear in FPINST2, nor
-			 * can it cause an exception.  Therefore, we do not
-			 * have to emulate it.
-			 */
-		}
-	} else {
-		/*
-		 * A CPDT instruction can not appear in FPINST2, nor can
-		 * it cause an exception.  Therefore, we do not have to
-		 * emulate it.
-		 */
-	}
 	return exceptions & ~VFP_NAN_FLAG;
 }
 

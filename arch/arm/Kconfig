@@ -2250,30 +2250,6 @@ menu "Floating point emulation"
 
 comment "At least one emulation must be selected"
 
-config FPE_NWFPE
-	bool "NWFPE math emulation"
-	depends on (!AEABI || OABI_COMPAT) && !THUMB2_KERNEL
-	---help---
-	  Say Y to include the NWFPE floating point emulator in the kernel.
-	  This is necessary to run most binaries. Linux does not currently
-	  support floating point hardware so you need to say Y here even if
-	  your machine has an FPA or floating point co-processor podule.
-
-	  You may say N here if you are going to load the Acorn FPEmulator
-	  early in the bootup.
-
-config FPE_NWFPE_XP
-	bool "Support extended precision"
-	depends on FPE_NWFPE
-	help
-	  Say Y to include 80-bit support in the kernel floating-point
-	  emulator.  Otherwise, only 32 and 64-bit support is compiled in.
-	  Note that gcc does not generate 80-bit operations by default,
-	  so in most cases this option only enlarges the size of the
-	  floating point emulator without any good reason.
-
-	  You almost surely want to say N here.
-
 config FPE_FASTFPE
 	bool "FastFPE math emulation (EXPERIMENTAL)"
 	depends on (!AEABI || OABI_COMPAT) && !CPU_32v3
