@@ -1955,7 +1955,7 @@ zonelist_scan:
 				 * when the watermark is between the low and
 				 * min watermarks.
 				 */
-				if ((alloc_flags & ALLOC_WMARK_MIN) ||
+				if (((alloc_flags & ALLOC_WMARK_MASK) == ALLOC_WMARK_MIN) ||
 				    ret == ZONE_RECLAIM_SOME)
 					goto this_zone_full;
 
