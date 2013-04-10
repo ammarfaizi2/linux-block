@@ -156,7 +156,8 @@ static void discard_finish(struct work_struct *w)
 	closure_put(&ca->set->cl);
 }
 
-static void discard_endio(struct bio *bio, int error)
+static void discard_endio(struct bio *bio, int error,
+			  struct batch_complete *batch)
 {
 	struct discard *d = container_of(bio, struct discard, bio);
 	schedule_work(&d->work);
