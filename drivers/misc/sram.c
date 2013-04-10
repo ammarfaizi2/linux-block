@@ -113,7 +113,7 @@ static struct platform_driver sram_driver = {
 	.remove = sram_remove,
 };
 
-int __init sram_init(void)
+static int __init sram_init(void)
 {
 	return platform_driver_register(&sram_driver);
 }
