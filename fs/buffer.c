@@ -2999,7 +2999,7 @@ int _submit_bh(int rw, struct buffer_head *bh, unsigned long bio_flags)
 }
 EXPORT_SYMBOL_GPL(_submit_bh);
 
-int submit_bh(int rw, struct buffer_head * bh)
+int submit_bh(int rw, struct buffer_head *bh)
 {
 	return _submit_bh(rw, bh, 0);
 }
