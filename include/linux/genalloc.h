@@ -114,7 +114,7 @@ struct device_node;
 extern struct gen_pool *of_get_named_gen_pool(struct device_node *np,
 	const char *propname, int index);
 #else
-inline struct gen_pool *of_get_named_gen_pool(struct device_node *np,
+static inline struct gen_pool *of_get_named_gen_pool(struct device_node *np,
 	const char *propname, int index)
 {
 	return NULL;
