@@ -1774,7 +1774,7 @@ static void shrink_stripes(struct r5conf *conf)
 	conf->slab_cache = NULL;
 }
 
-static void raid5_end_read_request(struct bio * bi, int error,
+static void raid5_end_read_request(struct bio *bi, int error,
 				   struct batch_complete *batch)
 {
 	struct stripe_head *sh = bi->bi_private;
