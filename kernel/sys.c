@@ -2451,20 +2451,20 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 	}
 
 	if (!access_ok(VERIFY_WRITE, info, sizeof(struct compat_sysinfo)) ||
-	    __put_user (s.uptime, &info->uptime) ||
-	    __put_user (s.loads[0], &info->loads[0]) ||
-	    __put_user (s.loads[1], &info->loads[1]) ||
-	    __put_user (s.loads[2], &info->loads[2]) ||
-	    __put_user (s.totalram, &info->totalram) ||
-	    __put_user (s.freeram, &info->freeram) ||
-	    __put_user (s.sharedram, &info->sharedram) ||
-	    __put_user (s.bufferram, &info->bufferram) ||
-	    __put_user (s.totalswap, &info->totalswap) ||
-	    __put_user (s.freeswap, &info->freeswap) ||
-	    __put_user (s.procs, &info->procs) ||
-	    __put_user (s.totalhigh, &info->totalhigh) ||
-	    __put_user (s.freehigh, &info->freehigh) ||
-	    __put_user (s.mem_unit, &info->mem_unit))
+	    __put_user(s.uptime, &info->uptime) ||
+	    __put_user(s.loads[0], &info->loads[0]) ||
+	    __put_user(s.loads[1], &info->loads[1]) ||
+	    __put_user(s.loads[2], &info->loads[2]) ||
+	    __put_user(s.totalram, &info->totalram) ||
+	    __put_user(s.freeram, &info->freeram) ||
+	    __put_user(s.sharedram, &info->sharedram) ||
+	    __put_user(s.bufferram, &info->bufferram) ||
+	    __put_user(s.totalswap, &info->totalswap) ||
+	    __put_user(s.freeswap, &info->freeswap) ||
+	    __put_user(s.procs, &info->procs) ||
+	    __put_user(s.totalhigh, &info->totalhigh) ||
+	    __put_user(s.freehigh, &info->freehigh) ||
+	    __put_user(s.mem_unit, &info->mem_unit))
 		return -EFAULT;
 
 	return 0;
