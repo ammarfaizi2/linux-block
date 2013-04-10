@@ -1021,7 +1021,7 @@ static ssize_t aio_rw_vect_retry(struct kiocb *iocb, int rw, aio_rw_op *rw_op)
 	if (iocb->ki_pos < 0)
 		return -EINVAL;
 
-	if (opcode == IOCB_CMD_PWRITEV)
+	if (rw == WRITE)
 		file_start_write(file);
 	do {
 		ret = rw_op(iocb, &iocb->ki_iovec[iocb->ki_cur_seg],
@@ -1035,7 +1035,7 @@ static ssize_t aio_rw_vect_retry(struct kiocb *iocb, int rw, aio_rw_op *rw_op)
 	} while (ret > 0 && iocb->ki_left > 0 &&
 		 (rw == WRITE ||
 		  (!S_ISFIFO(inode->i_mode) && !S_ISSOCK(inode->i_mode))));
-	if (opcode == IOCB_CMD_PWRITEV)
+	if (rw == WRITE)
 		file_end_write(file);
 
 	/* This means we must have transferred all that we could */
