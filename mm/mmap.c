@@ -3198,7 +3198,7 @@ static struct notifier_block reserve_mem_nb = {
 
 int __meminit init_reserve_notifier(void)
 {
-	if (register_memory_notifier(&reserve_mem_nb))
+	if (register_hotmemory_notifier(&reserve_mem_nb))
 		printk("Failed registering memory add/remove notifier for admin reserve");
 
 	return 0;
