@@ -20,6 +20,13 @@
 
 #include <asm/uaccess.h>
 
+
+struct timer_list_iter {
+	int cpu;
+	bool second_pass;
+	u64 now;
+};
+
 typedef void (*print_fn_t)(struct seq_file *m, unsigned int *classes);
 
 DECLARE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases);
@@ -247,86 +254,80 @@ static void timer_list_show_tickdevices_header(struct seq_file *m)
 }
 #endif
 
+static inline void timer_list_header(struct seq_file *m, u64 now)
+{
+	SEQ_printf(m, "Timer List Version: v0.7\n");
+	SEQ_printf(m, "HRTIMER_MAX_CLOCK_BASES: %d\n", HRTIMER_MAX_CLOCK_BASES);
+	SEQ_printf(m, "now at %Ld nsecs\n", (unsigned long long)now);
+	SEQ_printf(m, "\n");
+}
+
 static int timer_list_show(struct seq_file *m, void *v)
 {
+	struct timer_list_iter *iter = v;
 	u64 now = ktime_to_ns(ktime_get());
-	int cpu;
 
-	if (v == (void *)1) {
-		SEQ_printf(m, "Timer List Version: v0.7\n");
-		SEQ_printf(m, "HRTIMER_MAX_CLOCK_BASES: %d\n",
-			   HRTIMER_MAX_CLOCK_BASES);
-		SEQ_printf(m, "now at %Ld nsecs\n", (unsigned long long)now);
-		SEQ_printf(m, "\n");
-	} else if (v < (void *)(unsigned long)(nr_cpu_ids + 2)) {
-		cpu = (unsigned long)(v - 2);
-		print_cpu(m, cpu, now);
-	}
+	if (iter->cpu == -1 && !iter->second_pass)
+		timer_list_header(m, now);
+	else if (!iter->second_pass)
+		print_cpu(m, iter->cpu, iter->now);
 #ifdef CONFIG_GENERIC_CLOCKEVENTS
-	else if (v == (void *)(unsigned long)nr_cpu_ids + 2) {
+	else if (iter->cpu == -1 && iter->second_pass)
 		timer_list_show_tickdevices_header(m);
-	} else {
-		cpu = (unsigned long)(v - 3 - nr_cpu_ids);
-		print_tickdevice(m, tick_get_device(cpu), cpu);
-	}
+	else
+		print_tickdevice(m, tick_get_device(iter->cpu), iter->cpu);
 #endif
 	return 0;
 }
 
-/*
- * This iterator really needs some explanation since it is offset and has
- * two passes, one of which is controlled by a config option.
- * In hotpluggable systems some cpus, including cpu 0 and the last cpu, may
- * be missing so we have to use cpumask_* to iterate over the cpus.
- * For the first pass:
- * It returns 1 for the header position.
- * For cpu 0 it returns 2 and the final possible cpu would be nr_cpu_ids + 1.
- * On the second pass:
- * It returns nr_cpu_ids + 1 for the second header position.
- * For cpu 0 it returns nr_cpu_ids + 2
- * The final possible cpu would be nr_cpu_ids + nr_cpu_ids + 2.
- * It is also important to remember that cpumask_next returns >= nr_cpu_ids if
- * no further cpus set.
- */
-static void *timer_list_start(struct seq_file *file, loff_t *offset)
+void sysrq_timer_list_show(void)
 {
-	unsigned long n = *offset;
+	u64 now = ktime_to_ns(ktime_get());
+	int cpu;
 
-	if (n == 0)
-		return (void *) 1;
+	timer_list_header(NULL, now);
 
-	if (n < nr_cpu_ids + 1) {
-		n = cpumask_next(n - 2, cpu_online_mask);
-		if (n >= nr_cpu_ids)
-			n = nr_cpu_ids;
-		*offset = n + 1;
-		return (void *)(unsigned long)(n + 2);
-	}
+	for_each_online_cpu(cpu)
+		print_cpu(NULL, cpu, now);
 
 #ifdef CONFIG_GENERIC_CLOCKEVENTS
-	if (n == nr_cpu_ids + 1)
-		return (void *)(unsigned long)(nr_cpu_ids + 2);
-
-	if (n < nr_cpu_ids * 2 + 2) {
-		n -= (nr_cpu_ids + 2);
-		n = cpumask_next(n - 1, cpu_online_mask);
-		if (n >= nr_cpu_ids)
-			return NULL;
-		*offset = n + 2 + nr_cpu_ids;
-		return (void *)(unsigned long)(n + 3 + nr_cpu_ids);
-	}
+	timer_list_show_tickdevices_header(NULL);
+	for_each_online_cpu(cpu)
+		print_tickdevice(NULL, tick_get_device(cpu), cpu);
 #endif
-
-	return NULL;
+	return;
 }
 
-static void *timer_list_next(struct seq_file *file, void *data, loff_t *offset)
+static void *timer_list_start(struct seq_file *file, loff_t *offset)
 {
-	(*offset)++;
+	struct timer_list_iter *iter = file->private;
+
+	if (!*offset) {
+		iter->cpu = -1;
+		iter->now = ktime_to_ns(ktime_get());
+	} else if (iter->cpu >= nr_cpu_ids) {
+#ifdef CONFIG_GENERIC_CLOCKEVENTS
+		if (!iter->second_pass) {
+			iter->cpu = -1;
+			iter->second_pass = true;
+		} else
+			return NULL;
+#else
+		return NULL;
+#endif
+	}
+	return iter;
+}
+
+static void *timer_list_next(struct seq_file *file, void *v, loff_t *offset)
+{
+	struct timer_list_iter *iter = file->private;
+	iter->cpu = cpumask_next(iter->cpu, cpu_online_mask);
+	++*offset;
 	return timer_list_start(file, offset);
 }
 
-static void timer_list_stop(struct seq_file *file, void *data)
+static void timer_list_stop(struct seq_file *seq, void *v)
 {
 }
 
@@ -337,28 +338,17 @@ static const struct seq_operations timer_list_sops = {
 	.show = timer_list_show,
 };
 
-void sysrq_timer_list_show(void)
-{
-	timer_list_show(NULL, NULL);
-}
-
-static int timer_list_release(struct inode *inode, struct file *filep)
-{
-	seq_release(inode, filep);
-
-	return 0;
-}
-
 static int timer_list_open(struct inode *inode, struct file *filp)
 {
-	return seq_open(filp, &timer_list_sops);
+	return seq_open_private(filp, &timer_list_sops,
+			sizeof(struct timer_list_iter));
 }
 
 static const struct file_operations timer_list_fops = {
 	.open		= timer_list_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= timer_list_release,
+	.release	= seq_release_private,
 };
 
 static int __init init_timer_list_procfs(void)
