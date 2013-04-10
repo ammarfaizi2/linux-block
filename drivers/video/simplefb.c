@@ -82,7 +82,7 @@ struct simplefb_format {
 	struct fb_bitfield transp;
 };
 
-struct simplefb_format simplefb_formats[] = {
+static struct simplefb_format simplefb_formats[] = {
 	{ "r5g6b5", 16, {11, 5}, {5, 6}, {0, 5}, {0, 0} },
 };
 
