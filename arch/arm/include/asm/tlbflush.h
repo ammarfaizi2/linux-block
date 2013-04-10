@@ -169,7 +169,7 @@
 # define v6wbi_always_flags	(-1UL)
 #endif
 
-#define v7wbi_tlb_flags_smp	(TLB_WB | TLB_DCLEAN | TLB_BARRIER | \
+#define v7wbi_tlb_flags_smp	(TLB_WB | TLB_BARRIER | \
 				 TLB_V7_UIS_FULL | TLB_V7_UIS_PAGE | \
 				 TLB_V7_UIS_ASID | TLB_V7_UIS_BP)
 #define v7wbi_tlb_flags_up	(TLB_WB | TLB_DCLEAN | TLB_BARRIER | \
@@ -449,6 +449,21 @@ static inline void local_flush_bp_all(void)
 	if (tlb_flag(TLB_BARRIER))
 		isb();
 }
+
+#ifdef CONFIG_ARM_ERRATA_798181
+static inline void dummy_flush_tlb_a15_erratum(void)
+{
+	/*
+	 * Dummy TLBIMVAIS. Using the unmapped address 0 and ASID 0.
+	 */
+	asm("mcr p15, 0, %0, c8, c3, 1" : : "r" (0));
+	dsb();
+}
+#else
+static inline void dummy_flush_tlb_a15_erratum(void)
+{
+}
+#endif
 
 /*
  *	flush_pmd_entry
