@@ -274,8 +274,9 @@ static int omap3_enter_idle_bm(struct cpuidle_device *dev,
 static DEFINE_PER_CPU(struct cpuidle_device, omap3_idle_dev);
 
 static struct cpuidle_driver omap3_idle_driver = {
-	.name =		"omap3_idle",
-	.owner =	THIS_MODULE,
+	.name             = "omap3_idle",
+	.owner            = THIS_MODULE,
+	.en_core_tk_irqen = 1,
 	.states = {
 		{
 			.enter		  = omap3_enter_idle_bm,
@@ -358,7 +359,10 @@ int __init omap3_idle_init(void)
 	if (!mpu_pd || !core_pd || !per_pd || !cam_pd)
 		return -ENODEV;
 
-	cpuidle_register_driver(&omap3_idle_driver);
+	if (cpuidle_register_driver(&omap3_idle_driver)) {
+		pr_err("%s: CPUidle driver register failed\n", __func__);
+		return -EIO;
+	}
 
 	dev = &per_cpu(omap3_idle_dev, smp_processor_id());
 	dev->cpu = 0;
@@ -366,6 +370,7 @@ int __init omap3_idle_init(void)
 	if (cpuidle_register_device(dev)) {
 		printk(KERN_ERR "%s: CPUidle register device failed\n",
 		       __func__);
+		cpuidle_unregister_driver(&omap3_idle_driver);
 		return -EIO;
 	}
 
