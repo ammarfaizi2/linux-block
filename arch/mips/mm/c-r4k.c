@@ -136,7 +136,8 @@ static void __cpuinit r4k_blast_dcache_page_indexed_setup(void)
 		r4k_blast_dcache_page_indexed = blast_dcache64_page_indexed;
 }
 
-static void (* r4k_blast_dcache)(void);
+void (* r4k_blast_dcache)(void);
+EXPORT_SYMBOL(r4k_blast_dcache);
 
 static void __cpuinit r4k_blast_dcache_setup(void)
 {
@@ -264,7 +265,8 @@ static void __cpuinit r4k_blast_icache_page_indexed_setup(void)
 		r4k_blast_icache_page_indexed = blast_icache64_page_indexed;
 }
 
-static void (* r4k_blast_icache)(void);
+void (* r4k_blast_icache)(void);
+EXPORT_SYMBOL(r4k_blast_icache);
 
 static void __cpuinit r4k_blast_icache_setup(void)
 {
@@ -1247,10 +1249,8 @@ static void __cpuinit setup_scache(void)
 		return;
 
 	default:
-		if (c->isa_level == MIPS_CPU_ISA_M32R1 ||
-		    c->isa_level == MIPS_CPU_ISA_M32R2 ||
-		    c->isa_level == MIPS_CPU_ISA_M64R1 ||
-		    c->isa_level == MIPS_CPU_ISA_M64R2) {
+		if (c->isa_level & (MIPS_CPU_ISA_M32R1 | MIPS_CPU_ISA_M32R2 |
+				    MIPS_CPU_ISA_M64R1 | MIPS_CPU_ISA_M64R2)) {
 #ifdef CONFIG_MIPS_CPU_SCACHE
 			if (mips_sc_init ()) {
 				scache_size = c->scache.ways * c->scache.sets * c->scache.linesz;
