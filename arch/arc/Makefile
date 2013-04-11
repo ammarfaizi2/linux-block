@@ -8,6 +8,10 @@
 
 UTS_MACHINE := arc
 
+ifeq ($(CROSS_COMPILE),)
+CROSS_COMPILE := arc-elf32-
+endif
+
 KBUILD_DEFCONFIG := fpga_defconfig
 
 cflags-y	+= -mA7 -fno-common -pipe -fno-builtin -D__linux__
@@ -92,15 +96,17 @@ drivers-$(CONFIG_OPROFILE)	+= arch/arc/oprofile/
 
 libs-y		+= arch/arc/lib/ $(LIBGCC)
 
+boot		:= arch/arc/boot
+
 #default target for make without any arguements.
-KBUILD_IMAGE := bootpImage
+KBUILD_IMAGE	:= bootpImage
 
 all:	$(KBUILD_IMAGE)
-boot	:= arch/arc/boot
-
 bootpImage: vmlinux
 
-uImage: vmlinux
+boot_targets += uImage uImage.bin uImage.gz
+
+$(boot_targets): vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 
 %.dtb %.dtb.S %.dtb.o: scripts
