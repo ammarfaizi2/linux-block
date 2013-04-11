@@ -23,6 +23,7 @@
 #include <linux/kernel.h>
 #include <linux/of_platform.h>
 #include <linux/serial_sci.h>
+#include <linux/platform_data/gpio-rcar.h>
 #include <linux/platform_data/irq-renesas-irqc.h>
 #include <mach/common.h>
 #include <mach/irqs.h>
@@ -33,10 +34,43 @@ static const struct resource pfc_resources[] = {
 	DEFINE_RES_MEM(0xe6060000, 0x250),
 };
 
+#define R8A7790_GPIO(idx)						\
+static struct resource r8a7790_gpio##idx##_resources[] = {		\
+	DEFINE_RES_MEM(0xe6050000 + 0x1000 * (idx), 0x50),		\
+	DEFINE_RES_IRQ(gic_spi(4 + (idx))),				\
+};									\
+									\
+static struct gpio_rcar_config r8a7790_gpio##idx##_platform_data = {	\
+	.gpio_base	= 32 * (idx),					\
+	.irq_base	= 0,						\
+	.number_of_pins	= 32,						\
+	.pctl_name	= "pfc-r8a7790",				\
+};									\
+
+R8A7790_GPIO(0);
+R8A7790_GPIO(1);
+R8A7790_GPIO(2);
+R8A7790_GPIO(3);
+R8A7790_GPIO(4);
+R8A7790_GPIO(5);
+
+#define r8a7790_register_gpio(idx)					\
+	platform_device_register_resndata(&platform_bus, "gpio_rcar", idx, \
+		r8a7790_gpio##idx##_resources,				\
+		ARRAY_SIZE(r8a7790_gpio##idx##_resources),		\
+		&r8a7790_gpio##idx##_platform_data,			\
+		sizeof(r8a7790_gpio##idx##_platform_data))
+
 void __init r8a7790_pinmux_init(void)
 {
 	platform_device_register_simple("pfc-r8a7790", -1, pfc_resources,
 					ARRAY_SIZE(pfc_resources));
+	r8a7790_register_gpio(0);
+	r8a7790_register_gpio(1);
+	r8a7790_register_gpio(2);
+	r8a7790_register_gpio(3);
+	r8a7790_register_gpio(4);
+	r8a7790_register_gpio(5);
 }
 
 #define SCIF_COMMON(scif_type, baseaddr, irq)			\
@@ -117,6 +151,18 @@ void __init r8a7790_add_standard_devices(void)
 	r8a7790_register_irqc(0);
 }
 
+void __init r8a7790_timer_init(void)
+{
+	void __iomem *cntcr;
+
+	/* make sure arch timer is started by setting bit 0 of CNTCT */
+	cntcr = ioremap(0xe6080000, PAGE_SIZE);
+	iowrite32(1, cntcr);
+	iounmap(cntcr);
+
+	shmobile_timer_init();
+}
+
 #ifdef CONFIG_USE_OF
 void __init r8a7790_add_standard_devices_dt(void)
 {
@@ -131,7 +177,7 @@ static const char *r8a7790_boards_compat_dt[] __initdata = {
 DT_MACHINE_START(R8A7790_DT, "Generic R8A7790 (Flattened Device Tree)")
 	.init_irq	= irqchip_init,
 	.init_machine	= r8a7790_add_standard_devices_dt,
-	.init_time	= shmobile_timer_init,
+	.init_time	= r8a7790_timer_init,
 	.dt_compat	= r8a7790_boards_compat_dt,
 MACHINE_END
 #endif /* CONFIG_USE_OF */
