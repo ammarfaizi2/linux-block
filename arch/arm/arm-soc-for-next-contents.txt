@@ -191,6 +191,8 @@ next/firmware:
 	exynos/secure
 		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/secure-exynos-for-v3.10
 		depends on exynos/clk
+	bcm/smc-l2
+		  git://github.com/broadcom/bcm11351.git tags/fw-for-3.10
 
 next/renesas-pinctrl
 	renesas/pinctrl
