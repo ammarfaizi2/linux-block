@@ -12,7 +12,8 @@ Dependencies from other trees:
 		(no branch tag so far)
 	depends/clk
 		git://git.linaro.org/people/mturquette/linux.git clk-for-3.10
-	
+	depends/clk-for-3.10
+		git://git.linaro.org/people/mturquette/linux.git clk-for-3.10 (later pull)
 
 next/fixes-non-critical
 	ux500/dt-fixes
@@ -60,6 +61,9 @@ next/cleanup
 		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
 	imx/cleanup
 		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/imx-cleanup-3.10
+	sunxi/cleanup
+		  git://github.com/mripard/linux.git tags/sunxi-cleanup-for-3.10
+		  depends on depends/clk-for-3.10
 
 next/dt
 	mvebu/dt
