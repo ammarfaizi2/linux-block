@@ -240,6 +240,9 @@ next/soc2
 	renesas/soc4
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-soc-r8a7778-for-v3.10
 		  depends on renesas/soc2
+	renesas/pinmux3
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-pinmux-fixes-for-v3.10
+		  depends on renesas/soc2
 
 next/boards2
 	renesas/boards2
