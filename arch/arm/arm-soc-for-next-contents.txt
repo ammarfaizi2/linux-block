@@ -58,6 +58,8 @@ next/cleanup
 		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/cleanup-samsung-for-v3.10
 	at91/cleanup3
 		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
+	imx/cleanup
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/imx-cleanup-3.10
 
 next/dt
 	mvebu/dt
