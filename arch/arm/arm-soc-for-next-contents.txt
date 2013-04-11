@@ -263,3 +263,5 @@ next/dt2
 	exynos/dt
 		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/dt-exynos-for-v3.10
 		  depends on exynos/mct
+	omap/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/dt-signed-v2
