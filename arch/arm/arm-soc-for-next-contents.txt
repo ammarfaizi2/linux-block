@@ -206,6 +206,8 @@ next/boards
 		git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci.git tags/davinci-for-v3.10/board
 	omap/boards
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/board-signed
+	pxa/devel
+		  git://github.com/hzhuang1/linux.git armsoc/pxa
 
 next/soc2
 	renesas/soc2
