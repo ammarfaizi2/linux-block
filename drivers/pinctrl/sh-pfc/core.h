@@ -11,6 +11,7 @@
 #define __SH_PFC_CORE_H__
 
 #include <linux/compiler.h>
+#include <linux/spinlock.h>
 #include <linux/types.h>
 
 #include "sh_pfc.h"
@@ -57,6 +58,7 @@ int sh_pfc_config_mux(struct sh_pfc *pfc, unsigned mark, int pinmux_type);
 extern const struct sh_pfc_soc_info r8a73a4_pinmux_info;
 extern const struct sh_pfc_soc_info r8a7740_pinmux_info;
 extern const struct sh_pfc_soc_info r8a7779_pinmux_info;
+extern const struct sh_pfc_soc_info r8a7790_pinmux_info;
 extern const struct sh_pfc_soc_info sh7203_pinmux_info;
 extern const struct sh_pfc_soc_info sh7264_pinmux_info;
 extern const struct sh_pfc_soc_info sh7269_pinmux_info;
