@@ -258,6 +258,10 @@ next/boards2
 	renesas/boards3
 		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-boards-bockw-for-v3.10
 		  depends on renesas/soc4
+	renesas/boards4
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards-lager-for-v3.10
+		  depends on renesas/soc5
+		  depends on renesas/pinmux3
 
 next/dt2
 	mxs/dt
