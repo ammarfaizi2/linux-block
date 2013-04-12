@@ -149,7 +149,6 @@ int slave_alloc(struct scsi_device *sdev);
 int slave_configure(struct scsi_device *sdev);
 int queuecommand(struct Scsi_Host *, struct scsi_cmnd *);
 int command_abort(struct scsi_cmnd *srb);
-int device_reset(struct scsi_cmnd *srb);
 int bus_reset(struct scsi_cmnd *srb);
 
 #endif /* __RTS51X_SCSI_H */

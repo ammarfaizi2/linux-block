@@ -209,21 +209,6 @@ static struct pci_dev *pc236_find_pci_dev(struct comedi_device *dev,
 }
 
 /*
- * This function checks and requests an I/O region, reporting an error
- * if there is a conflict.
- */
-static int pc236_request_region(struct comedi_device *dev, unsigned long from,
-				unsigned long extent)
-{
-	if (!from || !request_region(from, extent, PC236_DRIVER_NAME)) {
-		dev_err(dev->class_dev, "I/O port conflict (%#lx,%lu)!\n",
-		       from, extent);
-		return -EIO;
-	}
-	return 0;
-}
-
-/*
  * This function is called to mark the interrupt as disabled (no command
  * configured on subdevice 1) and to physically disable the interrupt
  * (not possible on the PC36AT, except by removing the IRQ jumper!).
@@ -470,12 +455,10 @@ static int pc236_pci_common_attach(struct comedi_device *dev,
 
 	comedi_set_hw_dev(dev, &pci_dev->dev);
 
-	ret = comedi_pci_enable(pci_dev, PC236_DRIVER_NAME);
-	if (ret < 0) {
-		dev_err(dev->class_dev,
-			"error! cannot enable PCI device and request regions!\n");
+	ret = comedi_pci_enable(dev);
+	if (ret)
 		return ret;
-	}
+
 	devpriv->lcr_iobase = pci_resource_start(pci_dev, 1);
 	iobase = pci_resource_start(pci_dev, 2);
 	return pc236_common_attach(dev, iobase, pci_dev->irq, IRQF_SHARED);
@@ -493,8 +476,6 @@ static int pc236_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	struct pc236_private *devpriv;
 	int ret;
 
-	dev_info(dev->class_dev, PC236_DRIVER_NAME ": attach\n");
-
 	devpriv = kzalloc(sizeof(*devpriv), GFP_KERNEL);
 	if (!devpriv)
 		return -ENOMEM;
@@ -502,12 +483,11 @@ static int pc236_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 
 	/* Process options according to bus type. */
 	if (is_isa_board(thisboard)) {
-		unsigned long iobase = it->options[0];
-		unsigned int irq = it->options[1];
-		ret = pc236_request_region(dev, iobase, PC236_IO_SIZE);
-		if (ret < 0)
+		ret = comedi_request_region(dev, it->options[0], PC236_IO_SIZE);
+		if (ret)
 			return ret;
-		return pc236_common_attach(dev, iobase, irq, 0);
+
+		return pc236_common_attach(dev, dev->iobase, it->options[1], 0);
 	} else if (is_pci_board(thisboard)) {
 		struct pci_dev *pci_dev;
 
@@ -576,11 +556,9 @@ static void pc236_detach(struct comedi_device *dev)
 			release_region(dev->iobase, PC236_IO_SIZE);
 	} else if (is_pci_board(thisboard)) {
 		struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-		if (pcidev) {
-			if (dev->iobase)
-				comedi_pci_disable(pcidev);
+		comedi_pci_disable(dev);
+		if (pcidev)
 			pci_dev_put(pcidev);
-		}
 	}
 }
 
@@ -610,9 +588,10 @@ static DEFINE_PCI_DEVICE_TABLE(pc236_pci_table) = {
 MODULE_DEVICE_TABLE(pci, pc236_pci_table);
 
 static int amplc_pc236_pci_probe(struct pci_dev *dev,
-					   const struct pci_device_id *ent)
+				 const struct pci_device_id *id)
 {
-	return comedi_pci_auto_config(dev, &amplc_pc236_driver);
+	return comedi_pci_auto_config(dev, &amplc_pc236_driver,
+				      id->driver_data);
 }
 
 static struct pci_driver amplc_pc236_pci_driver = {

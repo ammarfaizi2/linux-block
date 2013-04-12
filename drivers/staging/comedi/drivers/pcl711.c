@@ -451,23 +451,12 @@ static int pcl711_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	const struct pcl711_board *board = comedi_board(dev);
 	struct pcl711_private *devpriv;
 	int ret;
-	unsigned long iobase;
 	unsigned int irq;
 	struct comedi_subdevice *s;
 
-	/* claim our I/O space */
-
-	iobase = it->options[0];
-	printk(KERN_INFO "comedi%d: pcl711: 0x%04lx ", dev->minor, iobase);
-	if (!request_region(iobase, PCL711_SIZE, "pcl711")) {
-		printk("I/O port conflict\n");
-		return -EIO;
-	}
-	dev->iobase = iobase;
-
-	/* there should be a sanity check here */
-
-	dev->board_name = board->name;
+	ret = comedi_request_region(dev, it->options[0], PCL711_SIZE);
+	if (ret)
+		return ret;
 
 	/* grab our IRQ */
 	irq = it->options[1];
@@ -476,7 +465,8 @@ static int pcl711_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 		return -EINVAL;
 	}
 	if (irq) {
-		if (request_irq(irq, pcl711_interrupt, 0, "pcl711", dev)) {
+		if (request_irq(irq, pcl711_interrupt, 0, dev->board_name,
+			        dev)) {
 			printk(KERN_ERR "unable to allocate irq %u\n", irq);
 			return -EINVAL;
 		} else {

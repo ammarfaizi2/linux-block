@@ -114,14 +114,6 @@ struct das800_board {
 	int resolution;
 };
 
-/* analog input ranges */
-static const struct comedi_lrange range_das800_ai = {
-	1,
-	{
-	 RANGE(-5, 5),
-	 }
-};
-
 static const struct comedi_lrange range_das801_ai = {
 	9,
 	{
@@ -187,13 +179,13 @@ static const struct das800_board das800_boards[] = {
 	{
 	 .name = "das-800",
 	 .ai_speed = 25000,
-	 .ai_range = &range_das800_ai,
+	 .ai_range = &range_bipolar5,
 	 .resolution = 12,
 	 },
 	{
 	 .name = "cio-das800",
 	 .ai_speed = 20000,
-	 .ai_range = &range_das800_ai,
+	 .ai_range = &range_bipolar5,
 	 .resolution = 12,
 	 },
 	{
@@ -227,11 +219,6 @@ static const struct das800_board das800_boards[] = {
 	 .resolution = 16,
 	 },
 };
-
-/*
- * Useful for shorthand access to the particular board structure
- */
-#define thisboard ((const struct das800_board *)dev->board_ptr)
 
 struct das800_private {
 	volatile unsigned int count;	/* number of data points left to be taken */
@@ -279,6 +266,7 @@ static int das800_set_frequency(struct comedi_device *dev);
 /* checks and probes das-800 series board type */
 static int das800_probe(struct comedi_device *dev)
 {
+	const struct das800_board *thisboard = comedi_board(dev);
 	int id_bits;
 	unsigned long irq_flags;
 	int board;
@@ -350,6 +338,7 @@ static irqreturn_t das800_interrupt(int irq, void *d)
 	short i;		/* loop index */
 	short dataPoint = 0;
 	struct comedi_device *dev = d;
+	const struct das800_board *thisboard = comedi_board(dev);
 	struct das800_private *devpriv = dev->private;
 	struct comedi_subdevice *s = dev->read_subdev;	/* analog input subdevice */
 	struct comedi_async *async;
@@ -445,35 +434,22 @@ static irqreturn_t das800_interrupt(int irq, void *d)
 
 static int das800_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 {
+	const struct das800_board *thisboard = comedi_board(dev);
 	struct das800_private *devpriv;
 	struct comedi_subdevice *s;
-	unsigned long iobase = it->options[0];
 	unsigned int irq = it->options[1];
 	unsigned long irq_flags;
 	int board;
 	int ret;
-
-	dev_info(dev->class_dev, "das800: io 0x%lx\n", iobase);
-	if (irq)
-		dev_dbg(dev->class_dev, "irq %u\n", irq);
 
 	devpriv = kzalloc(sizeof(*devpriv), GFP_KERNEL);
 	if (!devpriv)
 		return -ENOMEM;
 	dev->private = devpriv;
 
-	if (iobase == 0) {
-		dev_err(dev->class_dev,
-			"io base address required for das800\n");
-		return -EINVAL;
-	}
-
-	/* check if io addresses are available */
-	if (!request_region(iobase, DAS800_SIZE, "das800")) {
-		dev_err(dev->class_dev, "I/O port conflict\n");
-		return -EIO;
-	}
-	dev->iobase = iobase;
+	ret = comedi_request_region(dev, it->options[0], DAS800_SIZE);
+	if (ret)
+		return ret;
 
 	board = das800_probe(dev);
 	if (board < 0) {
@@ -481,6 +457,7 @@ static int das800_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 		return -ENODEV;
 	}
 	dev->board_ptr = das800_boards + board;
+	thisboard = comedi_board(dev);
 
 	/* grab our IRQ */
 	if (irq == 1 || irq > 7) {
@@ -566,6 +543,7 @@ static int das800_cancel(struct comedi_device *dev, struct comedi_subdevice *s)
 /* enable_das800 makes the card start taking hardware triggered conversions */
 static void enable_das800(struct comedi_device *dev)
 {
+	const struct das800_board *thisboard = comedi_board(dev);
 	struct das800_private *devpriv = dev->private;
 	unsigned long irq_flags;
 
@@ -594,6 +572,7 @@ static int das800_ai_do_cmdtest(struct comedi_device *dev,
 				struct comedi_subdevice *s,
 				struct comedi_cmd *cmd)
 {
+	const struct das800_board *thisboard = comedi_board(dev);
 	struct das800_private *devpriv = dev->private;
 	int err = 0;
 	int tmp;
@@ -685,6 +664,7 @@ static int das800_ai_do_cmdtest(struct comedi_device *dev,
 static int das800_ai_do_cmd(struct comedi_device *dev,
 			    struct comedi_subdevice *s)
 {
+	const struct das800_board *thisboard = comedi_board(dev);
 	struct das800_private *devpriv = dev->private;
 	int startChan, endChan, scan, gain;
 	int conv_bits;
@@ -769,6 +749,7 @@ static int das800_ai_rinsn(struct comedi_device *dev,
 			   struct comedi_subdevice *s, struct comedi_insn *insn,
 			   unsigned int *data)
 {
+	const struct das800_board *thisboard = comedi_board(dev);
 	struct das800_private *devpriv = dev->private;
 	int i, n;
 	int chan;

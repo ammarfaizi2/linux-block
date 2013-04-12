@@ -876,7 +876,7 @@ static void das16_interrupt(struct comedi_device *dev)
 	int num_bytes, residue;
 	int buffer_index;
 
-	if (dev->attached == 0) {
+	if (!dev->attached) {
 		comedi_error(dev, "premature interrupt");
 		return;
 	}
@@ -1079,13 +1079,11 @@ static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	struct comedi_subdevice *s;
 	int ret;
 	unsigned int irq;
-	unsigned long iobase;
 	unsigned int dma_chan;
 	int timer_mode;
 	unsigned long flags;
 	struct comedi_krange *user_ai_range, *user_ao_range;
 
-	iobase = it->options[0];
 #if 0
 	irq = it->options[1];
 	timer_mode = it->options[8];
@@ -1096,8 +1094,6 @@ static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	timer_mode = 1;
 	if (timer_mode)
 		irq = 0;
-
-	printk(KERN_INFO "comedi%d: das16:", dev->minor);
 
 	/*  check that clock setting is valid */
 	if (it->options[3]) {
@@ -1116,39 +1112,28 @@ static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	dev->private = devpriv;
 
 	if (board->size < 0x400) {
-		printk(" 0x%04lx-0x%04lx\n", iobase, iobase + board->size);
-		if (!request_region(iobase, board->size, "das16")) {
-			printk(KERN_ERR " I/O port conflict\n");
-			return -EIO;
-		}
+		ret = comedi_request_region(dev, it->options[0], board->size);
+		if (ret)
+			return ret;
 	} else {
-		printk(KERN_INFO " 0x%04lx-0x%04lx 0x%04lx-0x%04lx\n",
-		       iobase, iobase + 0x0f,
-		       iobase + 0x400,
-		       iobase + 0x400 + (board->size & 0x3ff));
-		if (!request_region(iobase, 0x10, "das16")) {
-			printk(KERN_ERR " I/O port conflict:  0x%04lx-0x%04lx\n",
-			       iobase, iobase + 0x0f);
-			return -EIO;
-		}
-		if (!request_region(iobase + 0x400, board->size & 0x3ff,
-				    "das16")) {
-			release_region(iobase, 0x10);
-			printk(KERN_ERR " I/O port conflict:  0x%04lx-0x%04lx\n",
-			       iobase + 0x400,
-			       iobase + 0x400 + (board->size & 0x3ff));
+		ret = comedi_request_region(dev, it->options[0], 0x10);
+		if (ret)
+			return ret;
+		/* Request an additional region for the 8255 */
+		ret = __comedi_request_region(dev, dev->iobase + 0x400,
+					      board->size & 0x3ff);
+		if (ret) {
+			release_region(dev->iobase, 0x10);
+			dev->iobase = 0;
 			return -EIO;
 		}
 	}
-
-	dev->iobase = iobase;
 
 	/*  probe id bits to make sure they are consistent */
 	if (das16_probe(dev, it)) {
 		printk(KERN_ERR " id bits do not match selected board, aborting\n");
 		return -EINVAL;
 	}
-	dev->board_name = board->name;
 
 	/*  get master clock speed */
 	if (board->size < 0x400) {
@@ -1162,7 +1147,8 @@ static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 
 	/* now for the irq */
 	if (irq > 1 && irq < 8) {
-		ret = request_irq(irq, das16_dma_interrupt, 0, "das16", dev);
+		ret = request_irq(irq, das16_dma_interrupt, 0,
+				  dev->board_name, dev);
 
 		if (ret < 0)
 			return ret;
@@ -1188,7 +1174,7 @@ static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 			if (devpriv->dma_buffer[i] == NULL)
 				return -ENOMEM;
 		}
-		if (request_dma(dma_chan, "das16")) {
+		if (request_dma(dma_chan, dev->board_name)) {
 			printk(KERN_ERR " failed to allocate dma channel %i\n",
 			       dma_chan);
 			return -EINVAL;

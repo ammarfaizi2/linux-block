@@ -166,20 +166,6 @@ static struct pci_dev *pc263_find_pci_dev(struct comedi_device *dev,
 		bus, slot);
 	return NULL;
 }
-/*
- * This function checks and requests an I/O region, reporting an error
- * if there is a conflict.
- */
-static int pc263_request_region(struct comedi_device *dev, unsigned long from,
-				unsigned long extent)
-{
-	if (!from || !request_region(from, extent, PC263_DRIVER_NAME)) {
-		dev_err(dev->class_dev, "I/O port conflict (%#lx,%lu)!\n",
-			from, extent);
-		return -EIO;
-	}
-	return 0;
-}
 
 static int pc263_do_insn_bits(struct comedi_device *dev,
 			      struct comedi_subdevice *s,
@@ -249,13 +235,11 @@ static int pc263_pci_common_attach(struct comedi_device *dev,
 
 	comedi_set_hw_dev(dev, &pci_dev->dev);
 
-	ret = comedi_pci_enable(pci_dev, PC263_DRIVER_NAME);
-	if (ret < 0) {
-		dev_err(dev->class_dev,
-			"error! cannot enable PCI device and request regions!\n");
+	ret = comedi_pci_enable(dev);
+	if (ret)
 		return ret;
-	}
 	iobase = pci_resource_start(pci_dev, 2);
+
 	return pc263_common_attach(dev, iobase);
 }
 
@@ -270,15 +254,12 @@ static int pc263_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	const struct pc263_board *thisboard = comedi_board(dev);
 	int ret;
 
-	dev_info(dev->class_dev, PC263_DRIVER_NAME ": attach\n");
-
 	/* Process options and reserve resources according to bus type. */
 	if (is_isa_board(thisboard)) {
-		unsigned long iobase = it->options[0];
-		ret = pc263_request_region(dev, iobase, PC263_IO_SIZE);
-		if (ret < 0)
+		ret = comedi_request_region(dev, it->options[0], PC263_IO_SIZE);
+		if (ret)
 			return ret;
-		return pc263_common_attach(dev, iobase);
+		return pc263_common_attach(dev, dev->iobase);
 	} else if (is_pci_board(thisboard)) {
 		struct pci_dev *pci_dev;
 
@@ -335,11 +316,9 @@ static void pc263_detach(struct comedi_device *dev)
 			release_region(dev->iobase, PC263_IO_SIZE);
 	} else if (is_pci_board(thisboard)) {
 		struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-		if (pcidev) {
-			if (dev->iobase)
-				comedi_pci_disable(pcidev);
+		comedi_pci_disable(dev);
+		if (pcidev)
 			pci_dev_put(pcidev);
-		}
 	}
 }
 
@@ -368,10 +347,10 @@ static DEFINE_PCI_DEVICE_TABLE(pc263_pci_table) = {
 MODULE_DEVICE_TABLE(pci, pc263_pci_table);
 
 static int amplc_pc263_pci_probe(struct pci_dev *dev,
-						  const struct pci_device_id
-						  *ent)
+				 const struct pci_device_id *id)
 {
-	return comedi_pci_auto_config(dev, &amplc_pc263_driver);
+	return comedi_pci_auto_config(dev, &amplc_pc263_driver,
+				      id->driver_data);
 }
 
 static struct pci_driver amplc_pc263_pci_driver = {

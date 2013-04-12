@@ -837,7 +837,7 @@ start_pacer(struct comedi_device *dev, int mode, unsigned int divisor1,
 
 /*
 ==============================================================================
- Check if channel list from user is builded correctly
+ Check if channel list from user is built correctly
  If it's ok, then return non-zero length of repeated segment of channel list
 */
 static int
@@ -981,25 +981,16 @@ static int pcl816_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	const struct pcl816_board *board = comedi_board(dev);
 	struct pcl816_private *devpriv;
 	int ret;
-	unsigned long iobase;
 	unsigned int irq, dma;
 	unsigned long pages;
 	/* int i; */
 	struct comedi_subdevice *s;
 
-	/* claim our I/O space */
-	iobase = it->options[0];
-	printk("comedi%d: pcl816:  board=%s, ioport=0x%03lx", dev->minor,
-	       board->name, iobase);
+	ret = comedi_request_region(dev, it->options[0], board->io_range);
+	if (ret)
+		return ret;
 
-	if (!request_region(iobase, board->io_range, "pcl816")) {
-		printk("I/O port conflict\n");
-		return -EIO;
-	}
-
-	dev->iobase = iobase;
-
-	if (pcl816_check(iobase)) {
+	if (pcl816_check(dev->iobase)) {
 		printk(KERN_ERR ", I cann't detect board. FAIL!\n");
 		return -EIO;
 	}
@@ -1008,8 +999,6 @@ static int pcl816_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	if (!devpriv)
 		return -ENOMEM;
 	dev->private = devpriv;
-
-	dev->board_name = board->name;
 
 	/* grab our IRQ */
 	irq = 0;
@@ -1022,8 +1011,8 @@ static int pcl816_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 				     "DISABLING IT", irq);
 				irq = 0;	/* Bad IRQ */
 			} else {
-				if (request_irq
-				    (irq, interrupt_pcl816, 0, "pcl816", dev)) {
+				if (request_irq(irq, interrupt_pcl816, 0,
+						dev->board_name, dev)) {
 					printk
 					    (", unable to allocate IRQ %u, "
 					     "DISABLING IT", irq);
@@ -1049,8 +1038,9 @@ static int pcl816_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	devpriv->dma_rtc = 0;
 	if (it->options[2] > 0) {	/*  we want to use DMA */
 		if (RTC_lock == 0) {
-			if (!request_region(RTC_PORT(0), RTC_IO_EXTENT,
-					    "pcl816 (RTC)"))
+			ret = __comedi_request_region(dev, RTC_PORT(0),
+						      RTC_IO_EXTENT);
+			if (ret)
 				goto no_rtc;
 		}
 		devpriv->rtc_iobase = RTC_PORT(0);
@@ -1095,7 +1085,7 @@ no_rtc:
 			printk(", DMA is out of allowed range, FAIL!\n");
 			return -EINVAL;	/* Bad DMA */
 		}
-		ret = request_dma(dma, "pcl816");
+		ret = request_dma(dma, dev->board_name);
 		if (ret) {
 			printk(KERN_ERR
 			       ", unable to allocate DMA %u, FAIL!\n", dma);

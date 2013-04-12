@@ -66,7 +66,7 @@ extern const struct file_operations dgrp_dpa_ops;
 extern void dgrp_dpa_data(struct nd_struct *, int, u8 *, int);
 
 /* from dgrp_sysfs.c */
-extern void dgrp_create_class_sysfs_files(void);
+extern int dgrp_create_class_sysfs_files(void);
 extern void dgrp_remove_class_sysfs_files(void);
 
 extern void dgrp_create_node_class_sysfs_files(struct nd_struct *nd);

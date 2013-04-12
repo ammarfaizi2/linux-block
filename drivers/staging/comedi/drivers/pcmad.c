@@ -105,18 +105,12 @@ static int pcmad_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 {
 	const struct pcmad_board_struct *board = comedi_board(dev);
 	struct pcmad_priv_struct *devpriv;
-	int ret;
 	struct comedi_subdevice *s;
-	unsigned long iobase;
+	int ret;
 
-	iobase = it->options[0];
-	printk(KERN_INFO "comedi%d: pcmad: 0x%04lx ", dev->minor, iobase);
-	if (!request_region(iobase, PCMAD_SIZE, "pcmad")) {
-		printk(KERN_CONT "I/O port conflict\n");
-		return -EIO;
-	}
-	printk(KERN_CONT "\n");
-	dev->iobase = iobase;
+	ret = comedi_request_region(dev, it->options[0], PCMAD_SIZE);
+	if (ret)
+		return ret;
 
 	ret = comedi_alloc_subdevices(dev, 1);
 	if (ret)
@@ -126,8 +120,6 @@ static int pcmad_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	if (!devpriv)
 		return -ENOMEM;
 	dev->private = devpriv;
-
-	dev->board_name = board->name;
 
 	s = &dev->subdevices[0];
 	s->type = COMEDI_SUBD_AI;

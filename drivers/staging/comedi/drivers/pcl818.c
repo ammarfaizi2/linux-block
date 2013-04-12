@@ -1594,7 +1594,6 @@ static int pcl818_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	const struct pcl818_board *board = comedi_board(dev);
 	struct pcl818_private *devpriv;
 	int ret;
-	unsigned long iobase;
 	unsigned int irq;
 	int dma;
 	unsigned long pages;
@@ -1605,30 +1604,20 @@ static int pcl818_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 		return -ENOMEM;
 	dev->private = devpriv;
 
-	/* claim our I/O space */
-	iobase = it->options[0];
-	printk
-	    ("comedi%d: pcl818:  board=%s, ioport=0x%03lx",
-	     dev->minor, board->name, iobase);
 	devpriv->io_range = board->io_range;
 	if ((board->fifo) && (it->options[2] == -1)) {
 		/*  we've board with FIFO and we want to use FIFO */
 		devpriv->io_range = PCLx1xFIFO_RANGE;
 		devpriv->usefifo = 1;
 	}
-	if (!request_region(iobase, devpriv->io_range, "pcl818")) {
-		comedi_error(dev, "I/O port conflict\n");
-		return -EIO;
-	}
+	ret = comedi_request_region(dev, it->options[0], devpriv->io_range);
+	if (ret)
+		return ret;
 
-	dev->iobase = iobase;
-
-	if (pcl818_check(iobase)) {
+	if (pcl818_check(dev->iobase)) {
 		comedi_error(dev, "I can't detect board. FAIL!\n");
 		return -EIO;
 	}
-
-	dev->board_name = board->name;
 
 	/* grab our IRQ */
 	irq = 0;
@@ -1641,8 +1630,8 @@ static int pcl818_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 				     irq);
 				irq = 0;	/* Bad IRQ */
 			} else {
-				if (request_irq
-				    (irq, interrupt_pcl818, 0, "pcl818", dev)) {
+				if (request_irq(irq, interrupt_pcl818, 0,
+						dev->board_name, dev)) {
 					printk
 					    (", unable to allocate IRQ %u, DISABLING IT",
 					     irq);
@@ -1668,8 +1657,9 @@ static int pcl818_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	devpriv->dma_rtc = 0;
 	if (it->options[2] > 0) {	/*  we want to use DMA */
 		if (RTC_lock == 0) {
-			if (!request_region(RTC_PORT(0), RTC_IO_EXTENT,
-					    "pcl818 (RTC)"))
+			ret = __comedi_request_resource(dev, RTC_PORT(0),
+							RTC_IO_EXTENT);
+			if (ret)
 				goto no_rtc;
 		}
 		devpriv->rtc_iobase = RTC_PORT(0);
@@ -1707,7 +1697,7 @@ no_rtc:
 			printk(KERN_ERR "DMA is out of allowed range, FAIL!\n");
 			return -EINVAL;	/* Bad DMA */
 		}
-		ret = request_dma(dma, "pcl818");
+		ret = request_dma(dma, dev->board_name);
 		if (ret)
 			return -EBUSY;	/* DMA isn't free */
 		devpriv->dma = dma;

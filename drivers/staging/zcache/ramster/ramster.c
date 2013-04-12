@@ -67,12 +67,46 @@ static int ramster_remote_target_nodenum __read_mostly = -1;
 static long ramster_flnodes;
 static atomic_t ramster_flnodes_atomic = ATOMIC_INIT(0);
 static unsigned long ramster_flnodes_max;
+static inline void inc_ramster_flnodes(void)
+{
+	ramster_flnodes = atomic_inc_return(&ramster_flnodes_atomic);
+	if (ramster_flnodes > ramster_flnodes_max)
+		ramster_flnodes_max = ramster_flnodes;
+}
+static inline void dec_ramster_flnodes(void)
+{
+	ramster_flnodes = atomic_dec_return(&ramster_flnodes_atomic);
+}
 static ssize_t ramster_foreign_eph_pages;
 static atomic_t ramster_foreign_eph_pages_atomic = ATOMIC_INIT(0);
 static ssize_t ramster_foreign_eph_pages_max;
+static inline void inc_ramster_foreign_eph_pages(void)
+{
+	ramster_foreign_eph_pages = atomic_inc_return(
+			&ramster_foreign_eph_pages_atomic);
+	if (ramster_foreign_eph_pages > ramster_foreign_eph_pages_max)
+		ramster_foreign_eph_pages_max = ramster_foreign_eph_pages;
+}
+static inline void dec_ramster_foreign_eph_pages(void)
+{
+	ramster_foreign_eph_pages = atomic_dec_return(
+			&ramster_foreign_eph_pages_atomic);
+}
 static ssize_t ramster_foreign_pers_pages;
 static atomic_t ramster_foreign_pers_pages_atomic = ATOMIC_INIT(0);
 static ssize_t ramster_foreign_pers_pages_max;
+static inline void inc_ramster_foreign_pers_pages(void)
+{
+	ramster_foreign_pers_pages = atomic_inc_return(
+		&ramster_foreign_pers_pages_atomic);
+	if (ramster_foreign_pers_pages > ramster_foreign_pers_pages_max)
+		ramster_foreign_pers_pages_max = ramster_foreign_pers_pages;
+}
+static inline void dec_ramster_foreign_pers_pages(void)
+{
+	ramster_foreign_pers_pages = atomic_dec_return(
+		&ramster_foreign_pers_pages_atomic);
+}
 static ssize_t ramster_eph_pages_remoted;
 static ssize_t ramster_pers_pages_remoted;
 static ssize_t ramster_eph_pages_remote_failed;
@@ -134,6 +168,11 @@ static int __init ramster_debugfs_init(void)
 }
 #undef	zdebugfs
 #undef	zdfs64
+#else
+static inline int ramster_debugfs_init(void)
+{
+	return 0;
+}
 #endif
 
 static LIST_HEAD(ramster_rem_op_list);
@@ -154,9 +193,7 @@ static struct flushlist_node *ramster_flnode_alloc(struct tmem_pool *pool)
 	flnode = kp->flnode;
 	BUG_ON(flnode == NULL);
 	kp->flnode = NULL;
-	ramster_flnodes = atomic_inc_return(&ramster_flnodes_atomic);
-	if (ramster_flnodes > ramster_flnodes_max)
-		ramster_flnodes_max = ramster_flnodes;
+	inc_ramster_flnodes();
 	return flnode;
 }
 
@@ -165,10 +202,8 @@ static struct flushlist_node *ramster_flnode_alloc(struct tmem_pool *pool)
 static void ramster_flnode_free(struct flushlist_node *flnode,
 				struct tmem_pool *pool)
 {
-	int flnodes;
-
-	flnodes = atomic_dec_return(&ramster_flnodes_atomic);
-	BUG_ON(flnodes < 0);
+	dec_ramster_flnodes();
+	BUG_ON(ramster_flnodes < 0);
 	kmem_cache_free(ramster_flnode_cache, flnode);
 }
 
@@ -461,32 +496,20 @@ void *ramster_pampd_free(void *pampd, struct tmem_pool *pool,
 
 void ramster_count_foreign_pages(bool eph, int count)
 {
-	int c;
-
 	BUG_ON(count != 1 && count != -1);
 	if (eph) {
 		if (count > 0) {
-			c = atomic_inc_return(
-					&ramster_foreign_eph_pages_atomic);
-			if (c > ramster_foreign_eph_pages_max)
-				ramster_foreign_eph_pages_max = c;
+			inc_ramster_foreign_eph_pages();
 		} else {
-			c = atomic_dec_return(&ramster_foreign_eph_pages_atomic);
-			WARN_ON_ONCE(c < 0);
+			dec_ramster_foreign_eph_pages();
+			WARN_ON_ONCE(ramster_foreign_eph_pages < 0);
 		}
-		ramster_foreign_eph_pages = c;
 	} else {
 		if (count > 0) {
-			c = atomic_inc_return(
-					&ramster_foreign_pers_pages_atomic);
-			if (c > ramster_foreign_pers_pages_max)
-				ramster_foreign_pers_pages_max = c;
+			inc_ramster_foreign_pers_pages();
 		} else {
-			c = atomic_dec_return(
-					&ramster_foreign_pers_pages_atomic);
-			WARN_ON_ONCE(c < 0);
+			WARN_ON_ONCE(ramster_foreign_pers_pages < 0);
 		}
-		ramster_foreign_pers_pages = c;
 	}
 }
 

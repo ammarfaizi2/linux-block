@@ -1122,22 +1122,15 @@ static int pcl812_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	const struct pcl812_board *board = comedi_board(dev);
 	struct pcl812_private *devpriv;
 	int ret, subdev;
-	unsigned long iobase;
 	unsigned int irq;
 	unsigned int dma;
 	unsigned long pages;
 	struct comedi_subdevice *s;
 	int n_subdevices;
 
-	iobase = it->options[0];
-	printk(KERN_INFO "comedi%d: pcl812:  board=%s, ioport=0x%03lx",
-	       dev->minor, board->name, iobase);
-
-	if (!request_region(iobase, board->io_range, "pcl812")) {
-		printk("I/O port conflict\n");
-		return -EIO;
-	}
-	dev->iobase = iobase;
+	ret = comedi_request_region(dev, it->options[0], board->io_range);
+	if (ret)
+		return ret;
 
 	devpriv = kzalloc(sizeof(*devpriv), GFP_KERNEL);
 	if (!devpriv) {
@@ -1145,8 +1138,6 @@ static int pcl812_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 		return -ENOMEM;
 	}
 	dev->private = devpriv;
-
-	dev->board_name = board->name;
 
 	irq = 0;
 	if (board->IRQbits != 0) {	/* board support IRQ */
@@ -1158,8 +1149,8 @@ static int pcl812_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 				     "DISABLING IT", irq);
 				irq = 0;	/* Bad IRQ */
 			} else {
-				if (request_irq
-				    (irq, interrupt_pcl812, 0, "pcl812", dev)) {
+				if (request_irq(irq, interrupt_pcl812, 0,
+						dev->board_name, dev)) {
 					printk
 					    (", unable to allocate IRQ %u, "
 					     "DISABLING IT", irq);
@@ -1183,7 +1174,7 @@ static int pcl812_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 			printk(", DMA is out of allowed range, FAIL!\n");
 			return -EINVAL;	/* Bad DMA */
 		}
-		ret = request_dma(dma, "pcl812");
+		ret = request_dma(dma, dev->board_name);
 		if (ret) {
 			printk(KERN_ERR ", unable to allocate DMA %u, FAIL!\n",
 			       dma);

@@ -110,6 +110,7 @@ static void cleanup_device(struct comedi_device *dev)
 	dev->board_name = NULL;
 	dev->board_ptr = NULL;
 	dev->iobase = 0;
+	dev->ioenabled = false;
 	dev->irq = 0;
 	dev->read_subdev = NULL;
 	dev->write_subdev = NULL;
@@ -118,22 +119,12 @@ static void cleanup_device(struct comedi_device *dev)
 	comedi_clear_hw_dev(dev);
 }
 
-static void __comedi_device_detach(struct comedi_device *dev)
-{
-	dev->attached = 0;
-	if (dev->driver)
-		dev->driver->detach(dev);
-	else
-		dev_warn(dev->class_dev,
-			 "BUG: dev->driver=NULL in comedi_device_detach()\n");
-	cleanup_device(dev);
-}
-
 void comedi_device_detach(struct comedi_device *dev)
 {
-	if (!dev->attached)
-		return;
-	__comedi_device_detach(dev);
+	dev->attached = false;
+	if (dev->driver)
+		dev->driver->detach(dev);
+	cleanup_device(dev);
 }
 
 static int poll_invalid(struct comedi_device *dev, struct comedi_subdevice *s)
@@ -276,21 +267,15 @@ static int __comedi_device_postconfig(struct comedi_device *dev)
 }
 
 /* do a little post-config cleanup */
-/* called with module refcount incremented, decrements it */
 static int comedi_device_postconfig(struct comedi_device *dev)
 {
-	int ret = __comedi_device_postconfig(dev);
-	module_put(dev->driver->module);
-	if (ret < 0) {
-		__comedi_device_detach(dev);
+	int ret;
+
+	ret = __comedi_device_postconfig(dev);
+	if (ret < 0)
 		return ret;
-	}
-	if (!dev->board_name) {
-		dev_warn(dev->class_dev, "BUG: dev->board_name=NULL\n");
-		dev->board_name = "BUG";
-	}
 	smp_wmb();
-	dev->attached = 1;
+	dev->attached = true;
 	return 0;
 }
 
@@ -352,6 +337,51 @@ static void comedi_report_boards(struct comedi_driver *driv)
 		pr_info(" %s\n", driv->driver_name);
 }
 
+/**
+ * __comedi_request_region() - Request an I/O reqion for a legacy driver.
+ * @dev: comedi_device struct
+ * @start: base address of the I/O reqion
+ * @len: length of the I/O region
+ */
+int __comedi_request_region(struct comedi_device *dev,
+			    unsigned long start, unsigned long len)
+{
+	if (!start) {
+		dev_warn(dev->class_dev,
+			 "%s: a I/O base address must be specified\n",
+			 dev->board_name);
+		return -EINVAL;
+	}
+
+	if (!request_region(start, len, dev->board_name)) {
+		dev_warn(dev->class_dev, "%s: I/O port conflict (%#lx,%lu)\n",
+			 dev->board_name, start, len);
+		return -EIO;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(__comedi_request_region);
+
+/**
+ * comedi_request_region() - Request an I/O reqion for a legacy driver.
+ * @dev: comedi_device struct
+ * @start: base address of the I/O reqion
+ * @len: length of the I/O region
+ */
+int comedi_request_region(struct comedi_device *dev,
+			  unsigned long start, unsigned long len)
+{
+	int ret;
+
+	ret = __comedi_request_region(dev, start, len);
+	if (ret == 0)
+		dev->iobase = start;
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(comedi_request_region);
+
 int comedi_device_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 {
 	struct comedi_driver *driv;
@@ -393,21 +423,34 @@ int comedi_device_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	/* initialize dev->driver here so
 	 * comedi_error() can be called from attach */
 	dev->driver = driv;
+	dev->board_name = dev->board_ptr ? *(const char **)dev->board_ptr
+					 : dev->driver->driver_name;
 	ret = driv->attach(dev, it);
+	if (ret >= 0)
+		ret = comedi_device_postconfig(dev);
 	if (ret < 0) {
+		comedi_device_detach(dev);
 		module_put(dev->driver->module);
-		__comedi_device_detach(dev);
-		return ret;
 	}
-	return comedi_device_postconfig(dev);
+	/* On success, the driver module count has been incremented. */
+	return ret;
 }
 
 int comedi_auto_config(struct device *hardware_device,
 		       struct comedi_driver *driver, unsigned long context)
 {
-	int minor;
-	struct comedi_device *comedi_dev;
+	struct comedi_device *dev;
 	int ret;
+
+	if (!hardware_device) {
+		pr_warn("BUG! comedi_auto_config called with NULL hardware_device\n");
+		return -EINVAL;
+	}
+	if (!driver) {
+		dev_warn(hardware_device,
+			 "BUG! comedi_auto_config called with NULL comedi driver\n");
+		return -EINVAL;
+	}
 
 	if (!driver->auto_attach) {
 		dev_warn(hardware_device,
@@ -416,46 +459,31 @@ int comedi_auto_config(struct device *hardware_device,
 		return -EINVAL;
 	}
 
-	minor = comedi_alloc_board_minor(hardware_device);
-	if (minor < 0)
-		return minor;
+	dev = comedi_alloc_board_minor(hardware_device);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
+	/* Note: comedi_alloc_board_minor() locked dev->mutex. */
 
-	comedi_dev = comedi_dev_from_minor(minor);
-
-	mutex_lock(&comedi_dev->mutex);
-	if (comedi_dev->attached)
-		ret = -EBUSY;
-	else if (!try_module_get(driver->module))
-		ret = -EIO;
-	else {
-		comedi_set_hw_dev(comedi_dev, hardware_device);
-		comedi_dev->driver = driver;
-		ret = driver->auto_attach(comedi_dev, context);
-		if (ret < 0) {
-			module_put(driver->module);
-			__comedi_device_detach(comedi_dev);
-		} else {
-			ret = comedi_device_postconfig(comedi_dev);
-		}
-	}
-	mutex_unlock(&comedi_dev->mutex);
+	dev->driver = driver;
+	dev->board_name = dev->driver->driver_name;
+	ret = driver->auto_attach(dev, context);
+	if (ret >= 0)
+		ret = comedi_device_postconfig(dev);
+	if (ret < 0)
+		comedi_device_detach(dev);
+	mutex_unlock(&dev->mutex);
 
 	if (ret < 0)
-		comedi_free_board_minor(minor);
+		comedi_release_hardware_device(hardware_device);
 	return ret;
 }
 EXPORT_SYMBOL_GPL(comedi_auto_config);
 
 void comedi_auto_unconfig(struct device *hardware_device)
 {
-	int minor;
-
 	if (hardware_device == NULL)
 		return;
-	minor = comedi_find_board_minor(hardware_device);
-	if (minor < 0)
-		return;
-	comedi_free_board_minor(minor);
+	comedi_release_hardware_device(hardware_device);
 }
 EXPORT_SYMBOL_GPL(comedi_auto_unconfig);
 
