@@ -105,7 +105,7 @@ static void sysrq_handle_SAK(int key)
 }
 static struct sysrq_key_op sysrq_SAK_op = {
 	.handler	= sysrq_handle_SAK,
-	.help_msg	= "saK",
+	.help_msg	= "sak(k)",
 	.action_msg	= "SAK",
 	.enable_mask	= SYSRQ_ENABLE_KEYBOARD,
 };
@@ -121,7 +121,7 @@ static void sysrq_handle_unraw(int key)
 
 static struct sysrq_key_op sysrq_unraw_op = {
 	.handler	= sysrq_handle_unraw,
-	.help_msg	= "unRaw",
+	.help_msg	= "unraw(r)",
 	.action_msg	= "Keyboard mode set to system default",
 	.enable_mask	= SYSRQ_ENABLE_KEYBOARD,
 };
@@ -139,7 +139,7 @@ static void sysrq_handle_crash(int key)
 }
 static struct sysrq_key_op sysrq_crash_op = {
 	.handler	= sysrq_handle_crash,
-	.help_msg	= "Crash",
+	.help_msg	= "crash(c)",
 	.action_msg	= "Trigger a crash",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
 };
@@ -152,7 +152,7 @@ static void sysrq_handle_reboot(int key)
 }
 static struct sysrq_key_op sysrq_reboot_op = {
 	.handler	= sysrq_handle_reboot,
-	.help_msg	= "reBoot",
+	.help_msg	= "reboot(b)",
 	.action_msg	= "Resetting",
 	.enable_mask	= SYSRQ_ENABLE_BOOT,
 };
@@ -163,7 +163,7 @@ static void sysrq_handle_sync(int key)
 }
 static struct sysrq_key_op sysrq_sync_op = {
 	.handler	= sysrq_handle_sync,
-	.help_msg	= "Sync",
+	.help_msg	= "sync(s)",
 	.action_msg	= "Emergency Sync",
 	.enable_mask	= SYSRQ_ENABLE_SYNC,
 };
@@ -175,7 +175,7 @@ static void sysrq_handle_show_timers(int key)
 
 static struct sysrq_key_op sysrq_show_timers_op = {
 	.handler	= sysrq_handle_show_timers,
-	.help_msg	= "show-all-timers(Q)",
+	.help_msg	= "show-all-timers(q)",
 	.action_msg	= "Show clockevent devices & pending hrtimers (no others)",
 };
 
@@ -185,7 +185,7 @@ static void sysrq_handle_mountro(int key)
 }
 static struct sysrq_key_op sysrq_mountro_op = {
 	.handler	= sysrq_handle_mountro,
-	.help_msg	= "Unmount",
+	.help_msg	= "unmount(u)",
 	.action_msg	= "Emergency Remount R/O",
 	.enable_mask	= SYSRQ_ENABLE_REMOUNT,
 };
@@ -198,7 +198,7 @@ static void sysrq_handle_showlocks(int key)
 
 static struct sysrq_key_op sysrq_showlocks_op = {
 	.handler	= sysrq_handle_showlocks,
-	.help_msg	= "show-all-locks(D)",
+	.help_msg	= "show-all-locks(d)",
 	.action_msg	= "Show Locks Held",
 };
 #else
@@ -249,7 +249,7 @@ static void sysrq_handle_showallcpus(int key)
 
 static struct sysrq_key_op sysrq_showallcpus_op = {
 	.handler	= sysrq_handle_showallcpus,
-	.help_msg	= "show-backtrace-all-active-cpus(L)",
+	.help_msg	= "show-backtrace-all-active-cpus(l)",
 	.action_msg	= "Show backtrace of all active CPUs",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
 };
@@ -264,7 +264,7 @@ static void sysrq_handle_showregs(int key)
 }
 static struct sysrq_key_op sysrq_showregs_op = {
 	.handler	= sysrq_handle_showregs,
-	.help_msg	= "show-registers(P)",
+	.help_msg	= "show-registers(p)",
 	.action_msg	= "Show Regs",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
 };
@@ -275,7 +275,7 @@ static void sysrq_handle_showstate(int key)
 }
 static struct sysrq_key_op sysrq_showstate_op = {
 	.handler	= sysrq_handle_showstate,
-	.help_msg	= "show-task-states(T)",
+	.help_msg	= "show-task-states(t)",
 	.action_msg	= "Show State",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
 };
@@ -286,7 +286,7 @@ static void sysrq_handle_showstate_blocked(int key)
 }
 static struct sysrq_key_op sysrq_showstate_blocked_op = {
 	.handler	= sysrq_handle_showstate_blocked,
-	.help_msg	= "show-blocked-tasks(W)",
+	.help_msg	= "show-blocked-tasks(w)",
 	.action_msg	= "Show Blocked State",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
 };
@@ -300,7 +300,7 @@ static void sysrq_ftrace_dump(int key)
 }
 static struct sysrq_key_op sysrq_ftrace_dump_op = {
 	.handler	= sysrq_ftrace_dump,
-	.help_msg	= "dump-ftrace-buffer(Z)",
+	.help_msg	= "dump-ftrace-buffer(z)",
 	.action_msg	= "Dump ftrace buffer",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
 };
@@ -314,7 +314,7 @@ static void sysrq_handle_showmem(int key)
 }
 static struct sysrq_key_op sysrq_showmem_op = {
 	.handler	= sysrq_handle_showmem,
-	.help_msg	= "show-memory-usage(M)",
+	.help_msg	= "show-memory-usage(m)",
 	.action_msg	= "Show Memory",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
 };
@@ -345,7 +345,7 @@ static void sysrq_handle_term(int key)
 }
 static struct sysrq_key_op sysrq_term_op = {
 	.handler	= sysrq_handle_term,
-	.help_msg	= "terminate-all-tasks(E)",
+	.help_msg	= "terminate-all-tasks(e)",
 	.action_msg	= "Terminate All Tasks",
 	.enable_mask	= SYSRQ_ENABLE_SIGNAL,
 };
@@ -364,7 +364,7 @@ static void sysrq_handle_moom(int key)
 }
 static struct sysrq_key_op sysrq_moom_op = {
 	.handler	= sysrq_handle_moom,
-	.help_msg	= "memory-full-oom-kill(F)",
+	.help_msg	= "memory-full-oom-kill(f)",
 	.action_msg	= "Manual OOM execution",
 	.enable_mask	= SYSRQ_ENABLE_SIGNAL,
 };
@@ -376,7 +376,7 @@ static void sysrq_handle_thaw(int key)
 }
 static struct sysrq_key_op sysrq_thaw_op = {
 	.handler	= sysrq_handle_thaw,
-	.help_msg	= "thaw-filesystems(J)",
+	.help_msg	= "thaw-filesystems(j)",
 	.action_msg	= "Emergency Thaw of all frozen filesystems",
 	.enable_mask	= SYSRQ_ENABLE_SIGNAL,
 };
@@ -389,7 +389,7 @@ static void sysrq_handle_kill(int key)
 }
 static struct sysrq_key_op sysrq_kill_op = {
 	.handler	= sysrq_handle_kill,
-	.help_msg	= "kill-all-tasks(I)",
+	.help_msg	= "kill-all-tasks(i)",
 	.action_msg	= "Kill All Tasks",
 	.enable_mask	= SYSRQ_ENABLE_SIGNAL,
 };
@@ -400,7 +400,7 @@ static void sysrq_handle_unrt(int key)
 }
 static struct sysrq_key_op sysrq_unrt_op = {
 	.handler	= sysrq_handle_unrt,
-	.help_msg	= "nice-all-RT-tasks(N)",
+	.help_msg	= "nice-all-RT-tasks(n)",
 	.action_msg	= "Nice All RT Tasks",
 	.enable_mask	= SYSRQ_ENABLE_RTNICE,
 };
