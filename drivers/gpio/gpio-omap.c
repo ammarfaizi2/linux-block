@@ -689,7 +689,7 @@ static void gpio_irq_handler(unsigned int irq, struct irq_desc *desc)
 {
 	void __iomem *isr_reg = NULL;
 	u32 isr;
-	unsigned int i;
+	unsigned int bit;
 	struct gpio_bank *bank;
 	int unmasked = 0;
 	struct irq_chip *chip = irq_desc_get_chip(desc);
@@ -703,7 +703,7 @@ static void gpio_irq_handler(unsigned int irq, struct irq_desc *desc)
 	if (WARN_ON(!isr_reg))
 		goto exit;
 
-	while(1) {
+	while (1) {
 		u32 isr_saved, level_mask = 0;
 		u32 enabled;
 
@@ -730,9 +730,9 @@ static void gpio_irq_handler(unsigned int irq, struct irq_desc *desc)
 		if (!isr)
 			break;
 
-		for (i = 0; isr != 0; isr >>= 1, i++) {
-			if (!(isr & 1))
-				continue;
+		while (isr) {
+			bit = __ffs(isr);
+			isr &= ~(1 << bit);
 
 			/*
 			 * Some chips can't respond to both rising and falling
@@ -741,10 +741,10 @@ static void gpio_irq_handler(unsigned int irq, struct irq_desc *desc)
 			 * to respond to the IRQ for the opposite direction.
 			 * This will be indicated in the bank toggle_mask.
 			 */
-			if (bank->toggle_mask & (1 << i))
-				_toggle_gpio_edge_triggering(bank, i);
+			if (bank->toggle_mask & (1 << bit))
+				_toggle_gpio_edge_triggering(bank, bit);
 
-			generic_handle_irq(irq_find_mapping(bank->domain, i));
+			generic_handle_irq(irq_find_mapping(bank->domain, bit));
 		}
 	}
 	/* if bank has any level sensitive GPIO pin interrupt
@@ -1094,7 +1094,6 @@ static int omap_gpio_probe(struct platform_device *pdev)
 	const struct omap_gpio_platform_data *pdata;
 	struct resource *res;
 	struct gpio_bank *bank;
-	int ret = 0;
 
 	match = of_match_device(of_match_ptr(omap_gpio_match), dev);
 
@@ -1121,11 +1120,17 @@ static int omap_gpio_probe(struct platform_device *pdev)
 	bank->width = pdata->bank_width;
 	bank->is_mpuio = pdata->is_mpuio;
 	bank->non_wakeup_gpios = pdata->non_wakeup_gpios;
-	bank->loses_context = pdata->loses_context;
 	bank->regs = pdata->regs;
 #ifdef CONFIG_OF_GPIO
 	bank->chip.of_node = of_node_get(node);
 #endif
+	if (node) {
+		if (!of_property_read_bool(node, "ti,gpio-always-on"))
+			bank->loses_context = true;
+	} else {
+		bank->loses_context = pdata->loses_context;
+	}
+
 
 	bank->domain = irq_domain_add_linear(node, bank->width,
 					     &irq_domain_simple_ops, NULL);
@@ -1143,18 +1148,21 @@ static int omap_gpio_probe(struct platform_device *pdev)
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (unlikely(!res)) {
 		dev_err(dev, "Invalid mem resource\n");
+		irq_domain_remove(bank->domain);
 		return -ENODEV;
 	}
 
 	if (!devm_request_mem_region(dev, res->start, resource_size(res),
 				     pdev->name)) {
 		dev_err(dev, "Region already claimed\n");
+		irq_domain_remove(bank->domain);
 		return -EBUSY;
 	}
 
 	bank->base = devm_ioremap(dev, res->start, resource_size(res));
 	if (!bank->base) {
 		dev_err(dev, "Could not ioremap\n");
+		irq_domain_remove(bank->domain);
 		return -ENOMEM;
 	}
 
@@ -1178,7 +1186,7 @@ static int omap_gpio_probe(struct platform_device *pdev)
 
 	list_add_tail(&bank->node, &omap_gpio_list);
 
-	return ret;
+	return 0;
 }
 
 #ifdef CONFIG_ARCH_OMAP2PLUS
@@ -1256,9 +1264,9 @@ static int omap_gpio_runtime_resume(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
 	struct gpio_bank *bank = platform_get_drvdata(pdev);
-	int context_lost_cnt_after;
 	u32 l = 0, gen, gen0, gen1;
 	unsigned long flags;
+	int c;
 
 	spin_lock_irqsave(&bank->lock, flags);
 	_gpio_dbck_enable(bank);
@@ -1274,14 +1282,17 @@ static int omap_gpio_runtime_resume(struct device *dev)
 	__raw_writel(bank->context.risingdetect,
 		     bank->base + bank->regs->risingdetect);
 
-	if (bank->get_context_loss_count) {
-		context_lost_cnt_after =
-			bank->get_context_loss_count(bank->dev);
-		if (context_lost_cnt_after != bank->context_loss_count) {
+	if (bank->loses_context) {
+		if (!bank->get_context_loss_count) {
 			omap_gpio_restore_context(bank);
 		} else {
-			spin_unlock_irqrestore(&bank->lock, flags);
-			return 0;
+			c = bank->get_context_loss_count(bank->dev);
+			if (c != bank->context_loss_count) {
+				omap_gpio_restore_context(bank);
+			} else {
+				spin_unlock_irqrestore(&bank->lock, flags);
+				return 0;
+			}
 		}
 	}
 
@@ -1290,10 +1301,6 @@ static int omap_gpio_runtime_resume(struct device *dev)
 		return 0;
 	}
 
-	__raw_writel(bank->context.fallingdetect,
-			bank->base + bank->regs->fallingdetect);
-	__raw_writel(bank->context.risingdetect,
-			bank->base + bank->regs->risingdetect);
 	l = __raw_readl(bank->base + bank->regs->datain);
 
 	/*
