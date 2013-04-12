@@ -485,7 +485,6 @@ struct cgroup_subsys {
 	void (*exit)(struct cgroup *cgrp, struct cgroup *old_cgrp,
 		     struct task_struct *task);
 	int subsys_id;
-	int active;
 	int disabled;
 	int early_init;
 	/*
