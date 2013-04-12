@@ -36,11 +36,6 @@ static struct of_dma *of_dma_get_controller(struct of_phandle_args *dma_spec)
 
 	spin_lock(&of_dma_lock);
 
-	if (list_empty(&of_dma_list)) {
-		spin_unlock(&of_dma_lock);
-		return NULL;
-	}
-
 	list_for_each_entry(ofdma, &of_dma_list, of_dma_controllers)
 		if ((ofdma->of_node == dma_spec->np) &&
 		    (ofdma->of_dma_nbcells == dma_spec->args_count)) {
@@ -93,6 +88,7 @@ int of_dma_controller_register(struct device_node *np,
 {
 	struct of_dma	*ofdma;
 	int		nbcells;
+	const __be32	*prop;
 
 	if (!np || !of_dma_xlate) {
 		pr_err("%s: not enough information provided\n", __func__);
@@ -103,8 +99,11 @@ int of_dma_controller_register(struct device_node *np,
 	if (!ofdma)
 		return -ENOMEM;
 
-	nbcells = be32_to_cpup(of_get_property(np, "#dma-cells", NULL));
-	if (!nbcells) {
+	prop = of_get_property(np, "#dma-cells", NULL);
+	if (prop)
+		nbcells = be32_to_cpup(prop);
+
+	if (!prop || !nbcells) {
 		pr_err("%s: #dma-cells property is missing or invalid\n",
 		       __func__);
 		kfree(ofdma);
@@ -172,8 +171,8 @@ EXPORT_SYMBOL_GPL(of_dma_controller_free);
  * specifiers, matches the name provided. Returns 0 if the name matches and
  * a valid pointer to the DMA specifier is found. Otherwise returns -ENODEV.
  */
-static int of_dma_match_channel(struct device_node *np, char *name, int index,
-				struct of_phandle_args *dma_spec)
+static int of_dma_match_channel(struct device_node *np, const char *name,
+				int index, struct of_phandle_args *dma_spec)
 {
 	const char *s;
 
@@ -198,7 +197,7 @@ static int of_dma_match_channel(struct device_node *np, char *name, int index,
  * Returns pointer to appropriate dma channel on success or NULL on error.
  */
 struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
-					      char *name)
+					      const char *name)
 {
 	struct of_phandle_args	dma_spec;
 	struct of_dma		*ofdma;

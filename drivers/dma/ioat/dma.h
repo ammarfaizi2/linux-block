@@ -39,6 +39,7 @@
 #define to_ioat_desc(lh) container_of(lh, struct ioat_desc_sw, node)
 #define tx_to_ioat_desc(tx) container_of(tx, struct ioat_desc_sw, txd)
 #define to_dev(ioat_chan) (&(ioat_chan)->device->pdev->dev)
+#define to_pdev(ioat_chan) ((ioat_chan)->device->pdev)
 
 #define chan_num(ch) ((int)((ch)->reg_base - (ch)->device->reg_base) / 0x80)
 
@@ -47,6 +48,14 @@
  * (channel returns error when size is 0)
  */
 #define NULL_DESC_BUFFER_SIZE 1
+
+enum ioat_irq_mode {
+	IOAT_NOIRQ = 0,
+	IOAT_MSIX,
+	IOAT_MSIX_SINGLE,
+	IOAT_MSI,
+	IOAT_INTX
+};
 
 /**
  * struct ioatdma_device - internal representation of a IOAT device
@@ -77,6 +86,7 @@ struct ioatdma_device {
 	struct msix_entry msix_entries[4];
 	struct ioat_chan_common *idx[4];
 	struct dca_provider *dca;
+	enum ioat_irq_mode irq_mode;
 	void (*intr_quirk)(struct ioatdma_device *device);
 	int (*enumerate_channels)(struct ioatdma_device *device);
 	int (*reset_hw)(struct ioat_chan_common *chan);
@@ -179,7 +189,7 @@ __dump_desc_dbg(struct ioat_chan_common *chan, struct ioat_dma_descriptor *hw,
 	struct device *dev = to_dev(chan);
 
 	dev_dbg(dev, "desc[%d]: (%#llx->%#llx) cookie: %d flags: %#x"
-		" ctl: %#x (op: %d int_en: %d compl: %d)\n", id,
+		" ctl: %#10.8x (op: %#x int_en: %d compl: %d)\n", id,
 		(unsigned long long) tx->phys,
 		(unsigned long long) hw->next, tx->cookie, tx->flags,
 		hw->ctl, hw->ctl_f.op, hw->ctl_f.int_en, hw->ctl_f.compl_write);
@@ -201,7 +211,7 @@ ioat_chan_by_index(struct ioatdma_device *device, int index)
 	return device->idx[index];
 }
 
-static inline u64 ioat_chansts(struct ioat_chan_common *chan)
+static inline u64 ioat_chansts_32(struct ioat_chan_common *chan)
 {
 	u8 ver = chan->device->version;
 	u64 status;
@@ -217,6 +227,26 @@ static inline u64 ioat_chansts(struct ioat_chan_common *chan)
 
 	return status;
 }
+
+#if BITS_PER_LONG == 64
+
+static inline u64 ioat_chansts(struct ioat_chan_common *chan)
+{
+	u8 ver = chan->device->version;
+	u64 status;
+
+	 /* With IOAT v3.3 the status register is 64bit.  */
+	if (ver >= IOAT_VER_3_3)
+		status = readq(chan->reg_base + IOAT_CHANSTS_OFFSET(ver));
+	else
+		status = ioat_chansts_32(chan);
+
+	return status;
+}
+
+#else
+#define ioat_chansts ioat_chansts_32
+#endif
 
 static inline void ioat_start(struct ioat_chan_common *chan)
 {
@@ -321,6 +351,7 @@ bool ioat_cleanup_preamble(struct ioat_chan_common *chan,
 			   dma_addr_t *phys_complete);
 void ioat_kobject_add(struct ioatdma_device *device, struct kobj_type *type);
 void ioat_kobject_del(struct ioatdma_device *device);
+int ioat_dma_setup_interrupts(struct ioatdma_device *device);
 extern const struct sysfs_ops ioat_sysfs_ops;
 extern struct ioat_sysfs_entry ioat_version_attr;
 extern struct ioat_sysfs_entry ioat_cap_attr;
