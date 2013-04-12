@@ -197,6 +197,7 @@ enum reconstruct_states {
 struct stripe_head {
 	struct hlist_node	hash;
 	struct list_head	lru;	      /* inactive_list or handle_list */
+	struct llist_node	release_list;
 	struct r5conf		*raid_conf;
 	short			generation;	/* increments with every
 						 * reshape */
@@ -211,6 +212,7 @@ struct stripe_head {
 	enum check_states	check_state;
 	enum reconstruct_states reconstruct_state;
 	spinlock_t		stripe_lock;
+	int			cpu;
 	/**
 	 * struct stripe_operations
 	 * @target - STRIPE_OP_COMPUTE_BLK target
@@ -320,6 +322,7 @@ enum {
 	STRIPE_OPS_REQ_PENDING,
 	STRIPE_ON_UNPLUG_LIST,
 	STRIPE_DISCARD,
+	STRIPE_ON_RELEASE_LIST,
 };
 
 /*
@@ -360,6 +363,14 @@ enum {
 
 struct disk_info {
 	struct md_rdev	*rdev, *replacement;
+};
+
+struct raid5_auxth {
+	struct md_thread	*thread;
+	/* which CPUs should the auxiliary thread handle stripes from */
+	cpumask_t		work_mask;
+	struct kobject		kobj;
+	struct work_struct	del_work;
 };
 
 struct r5conf {
@@ -430,6 +441,12 @@ struct r5conf {
 					      * lists and performing address
 					      * conversions
 					      */
+		struct list_head handle_list;
+		cpumask_t	handle_threads; /* Which threads can the CPU's
+						 * stripes be handled. It really
+						 * is a bitmap to aux_threads[],
+						 * but has max bits NR_CPUS
+						 */
 	} __percpu *percpu;
 	size_t			scribble_len; /* size of scribble region must be
 					       * associated with conf to handle
@@ -444,6 +461,7 @@ struct r5conf {
 	 */
 	atomic_t		active_stripes;
 	struct list_head	inactive_list;
+	struct llist_head	released_stripes;
 	wait_queue_head_t	wait_for_stripe;
 	wait_queue_head_t	wait_for_overlap;
 	int			inactive_blocked;	/* release of inactive stripes blocked,
@@ -457,6 +475,10 @@ struct r5conf {
 	 * the new thread here until we fully activate the array.
 	 */
 	struct md_thread	*thread;
+	int			aux_thread_num;
+	struct raid5_auxth	**aux_threads;
+	/* which CPUs should raid5d thread handle stripes from */
+	cpumask_t		work_mask;
 };
 
 /*
