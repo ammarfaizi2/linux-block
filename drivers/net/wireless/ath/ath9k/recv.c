@@ -727,6 +727,13 @@ static struct ath_buf *ath_get_next_rx_buf(struct ath_softc *sc,
 		ret = ath9k_hw_rxprocdesc(ah, tds, &trs);
 		if (ret == -EINPROGRESS)
 			return NULL;
+
+		/*
+		 * mark descriptor as zero-length and set the 'more'
+		 * flag to ensure that both buffers get discarded
+		 */
+		rs->rs_datalen = 0;
+		rs->rs_more = true;
 	}
 
 	list_del(&bf->list);
@@ -863,7 +870,7 @@ static int ath9k_process_rate(struct ath_common *common,
 	unsigned int i = 0;
 	struct ath_softc __maybe_unused *sc = common->priv;
 
-	band = hw->conf.channel->band;
+	band = hw->conf.chandef.chan->band;
 	sband = hw->wiphy->bands[band];
 
 	if (rx_stats->rs_rate & 0x80) {
@@ -933,14 +940,20 @@ static void ath9k_process_rssi(struct ath_common *common,
  * up the frame up to let mac80211 handle the actual error case, be it no
  * decryption key or real decryption error. This let us keep statistics there.
  */
-static int ath9k_rx_skb_preprocess(struct ath_common *common,
-				   struct ieee80211_hw *hw,
+static int ath9k_rx_skb_preprocess(struct ath_softc *sc,
 				   struct ieee80211_hdr *hdr,
 				   struct ath_rx_status *rx_stats,
 				   struct ieee80211_rx_status *rx_status,
 				   bool *decrypt_error)
 {
-	struct ath_hw *ah = common->ah;
+	struct ieee80211_hw *hw = sc->hw;
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	bool discard_current = sc->rx.discard_next;
+
+	sc->rx.discard_next = rx_stats->rs_more;
+	if (discard_current)
+		return -EINVAL;
 
 	/*
 	 * everything but the rate is checked here, the rate check is done
@@ -958,14 +971,15 @@ static int ath9k_rx_skb_preprocess(struct ath_common *common,
 	if (ath9k_process_rate(common, hw, rx_stats, rx_status))
 		return -EINVAL;
 
-	rx_status->band = hw->conf.channel->band;
-	rx_status->freq = hw->conf.channel->center_freq;
+	rx_status->band = hw->conf.chandef.chan->band;
+	rx_status->freq = hw->conf.chandef.chan->center_freq;
 	rx_status->signal = ah->noise + rx_stats->rs_rssi;
 	rx_status->antenna = rx_stats->rs_antenna;
 	rx_status->flag |= RX_FLAG_MACTIME_END;
 	if (rx_stats->rs_moreaggr)
 		rx_status->flag |= RX_FLAG_NO_SIGNAL_VAL;
 
+	sc->rx.discard_next = false;
 	return 0;
 }
 
@@ -985,7 +999,7 @@ static void ath9k_rx_skb_postprocess(struct ath_common *common,
 	hdr = (struct ieee80211_hdr *) skb->data;
 	hdrlen = ieee80211_get_hdrlen_from_skb(skb);
 	fc = hdr->frame_control;
-	padpos = ath9k_cmn_padpos(hdr->frame_control);
+	padpos = ieee80211_hdrlen(fc);
 
 	/* The MAC header is padded to have 32-bit boundary if the
 	 * packet payload is non-zero. The general calculation for
@@ -1166,6 +1180,7 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 	u64 tsf = 0;
 	u32 tsf_lower = 0;
 	unsigned long flags;
+	dma_addr_t new_buf_addr;
 
 	if (edma)
 		dma_type = DMA_BIDIRECTIONAL;
@@ -1242,8 +1257,8 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 			}
 		}
 
-		retval = ath9k_rx_skb_preprocess(common, hw, hdr, &rs,
-						 rxs, &decrypt_error);
+		retval = ath9k_rx_skb_preprocess(sc, hdr, &rs, rxs,
+						 &decrypt_error);
 		if (retval)
 			goto requeue_drop_frag;
 
@@ -1264,10 +1279,20 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 			goto requeue_drop_frag;
 		}
 
+		/* We will now give hardware our shiny new allocated skb */
+		new_buf_addr = dma_map_single(sc->dev, requeue_skb->data,
+					      common->rx_bufsize, dma_type);
+		if (unlikely(dma_mapping_error(sc->dev, new_buf_addr))) {
+			dev_kfree_skb_any(requeue_skb);
+			goto requeue_drop_frag;
+		}
+
+		bf->bf_mpdu = requeue_skb;
+		bf->bf_buf_addr = new_buf_addr;
+
 		/* Unmap the frame */
 		dma_unmap_single(sc->dev, bf->bf_buf_addr,
-				 common->rx_bufsize,
-				 dma_type);
+				 common->rx_bufsize, dma_type);
 
 		skb_put(skb, rs.rs_datalen + ah->caps.rx_status_len);
 		if (ah->caps.rx_status_len)
@@ -1276,21 +1301,6 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 		if (!rs.rs_more)
 			ath9k_rx_skb_postprocess(common, hdr_skb, &rs,
 						 rxs, decrypt_error);
-
-		/* We will now give hardware our shiny new allocated skb */
-		bf->bf_mpdu = requeue_skb;
-		bf->bf_buf_addr = dma_map_single(sc->dev, requeue_skb->data,
-						 common->rx_bufsize,
-						 dma_type);
-		if (unlikely(dma_mapping_error(sc->dev,
-			  bf->bf_buf_addr))) {
-			dev_kfree_skb_any(requeue_skb);
-			bf->bf_mpdu = NULL;
-			bf->bf_buf_addr = 0;
-			ath_err(common, "dma_mapping_error() on RX\n");
-			ieee80211_rx(hw, skb);
-			break;
-		}
 
 		if (rs.rs_more) {
 			RX_STAT_INC(rx_frags);
@@ -1309,6 +1319,8 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 			sc->rx.frag = skb;
 			goto requeue;
 		}
+		if (rs.rs_status & ATH9K_RXERR_CORRUPT_DESC)
+			goto requeue_drop_frag;
 
 		if (sc->rx.frag) {
 			int space = skb->len - skb_tailroom(hdr_skb);
