@@ -73,6 +73,8 @@ extern int remove_proc_subtree(const char *name, struct proc_dir_entry *parent);
 extern struct proc_dir_entry *proc_symlink(const char *,
 		struct proc_dir_entry *, const char *);
 extern struct proc_dir_entry *proc_mkdir(const char *,struct proc_dir_entry *);
+extern struct proc_dir_entry *proc_mkdir_data(const char *, umode_t,
+					      struct proc_dir_entry *, void *);
 extern struct proc_dir_entry *proc_mkdir_mode(const char *name, umode_t mode,
 			struct proc_dir_entry *parent);
 
@@ -82,9 +84,6 @@ static inline struct proc_dir_entry *proc_create(const char *name, umode_t mode,
 	return proc_create_data(name, mode, parent, proc_fops, NULL);
 }
  
-extern struct proc_dir_entry *proc_net_mkdir(struct net *net, const char *name,
-	struct proc_dir_entry *parent);
-
 extern void proc_set_size(struct proc_dir_entry *, loff_t);
 extern void proc_set_user(struct proc_dir_entry *, kuid_t, kgid_t);
 #else
@@ -151,6 +150,12 @@ static inline struct proc_dir_entry *PDE(const struct inode *inode)
 static inline void *PDE_DATA(const struct inode *inode)
 {
 	return PROC_I(inode)->pde->data;
+}
+
+static inline struct proc_dir_entry *proc_net_mkdir(
+	struct net *net, const char *name, struct proc_dir_entry *parent)
+{
+	return proc_mkdir_data(name, 0, parent, net);
 }
 
 #endif /* _LINUX_PROC_FS_H */
