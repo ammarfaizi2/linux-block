@@ -60,21 +60,13 @@ struct proc_dir_entry {
 	kgid_t gid;
 	loff_t size;
 	const struct inode_operations *proc_iops;
-	/*
-	 * NULL ->proc_fops means "PDE is going away RSN" or
-	 * "PDE is just created". In either case, e.g. ->read_proc won't be
-	 * called because it's too late or too early, respectively.
-	 *
-	 * If you're allocating ->proc_fops dynamically, save a pointer
-	 * somewhere.
-	 */
 	const struct file_operations *proc_fops;
 	struct proc_dir_entry *next, *parent, *subdir;
 	void *data;
 	read_proc_t *read_proc;
-	write_proc_t *write_proc;
 	atomic_t count;		/* use count */
-	int pde_users;	/* number of callers into module in progress */
+	atomic_t in_use;	/* number of callers into module in progress; */
+			/* negative -> it's going away RSN */
 	struct completion *pde_unload_completion;
 	struct list_head pde_openers;	/* who did ->open, but not ->release */
 	spinlock_t pde_unload_lock; /* proc_fops checks and pde_users bumps */
@@ -110,8 +102,6 @@ extern void proc_root_init(void);
 
 void proc_flush_task(struct task_struct *task);
 
-extern struct proc_dir_entry *create_proc_entry(const char *name, umode_t mode,
-						struct proc_dir_entry *parent);
 struct proc_dir_entry *proc_create_data(const char *name, umode_t mode,
 				struct proc_dir_entry *parent,
 				const struct file_operations *proc_fops,
@@ -165,17 +155,9 @@ static inline struct proc_dir_entry *proc_create(const char *name, umode_t mode,
 	return proc_create_data(name, mode, parent, proc_fops, NULL);
 }
 
-static inline struct proc_dir_entry *create_proc_read_entry(const char *name,
+extern struct proc_dir_entry *create_proc_read_entry(const char *name,
 	umode_t mode, struct proc_dir_entry *base, 
-	read_proc_t *read_proc, void * data)
-{
-	struct proc_dir_entry *res=create_proc_entry(name,mode,base);
-	if (res) {
-		res->read_proc=read_proc;
-		res->data=data;
-	}
-	return res;
-}
+	read_proc_t *read_proc, void *data);
  
 extern struct proc_dir_entry *proc_net_mkdir(struct net *net, const char *name,
 	struct proc_dir_entry *parent);
@@ -190,9 +172,6 @@ extern void proc_free_inum(unsigned int inum);
 static inline void proc_flush_task(struct task_struct *task)
 {
 }
-
-static inline struct proc_dir_entry *create_proc_entry(const char *name,
-	umode_t mode, struct proc_dir_entry *parent) { return NULL; }
 
 #define proc_create(name, mode, parent, fops)  ({ (void)(mode), NULL; })
 
@@ -305,6 +284,11 @@ static inline struct proc_inode *PROC_I(const struct inode *inode)
 static inline struct proc_dir_entry *PDE(const struct inode *inode)
 {
 	return PROC_I(inode)->pde;
+}
+
+static inline void *PDE_DATA(const struct inode *inode)
+{
+	return PROC_I(inode)->pde->data;
 }
 
 static inline struct net *PDE_NET(struct proc_dir_entry *pde)

@@ -39,7 +39,7 @@ static int proc_match(unsigned int len, const char *name, struct proc_dir_entry 
 /* buffer size is one page but our output routines use some slack for overruns */
 #define PROC_BLOCK_SIZE	(PAGE_SIZE - 1024)
 
-static ssize_t
+ssize_t
 __proc_file_read(struct file *file, char __user *buf, size_t nbytes,
 	       loff_t *ppos)
 {
@@ -71,58 +71,54 @@ __proc_file_read(struct file *file, char __user *buf, size_t nbytes,
 		count = min_t(size_t, PROC_BLOCK_SIZE, nbytes);
 
 		start = NULL;
-		if (dp->read_proc) {
-			/*
-			 * How to be a proc read function
-			 * ------------------------------
-			 * Prototype:
-			 *    int f(char *buffer, char **start, off_t offset,
-			 *          int count, int *peof, void *dat)
-			 *
-			 * Assume that the buffer is "count" bytes in size.
-			 *
-			 * If you know you have supplied all the data you
-			 * have, set *peof.
-			 *
-			 * You have three ways to return data:
-			 * 0) Leave *start = NULL.  (This is the default.)
-			 *    Put the data of the requested offset at that
-			 *    offset within the buffer.  Return the number (n)
-			 *    of bytes there are from the beginning of the
-			 *    buffer up to the last byte of data.  If the
-			 *    number of supplied bytes (= n - offset) is 
-			 *    greater than zero and you didn't signal eof
-			 *    and the reader is prepared to take more data
-			 *    you will be called again with the requested
-			 *    offset advanced by the number of bytes 
-			 *    absorbed.  This interface is useful for files
-			 *    no larger than the buffer.
-			 * 1) Set *start = an unsigned long value less than
-			 *    the buffer address but greater than zero.
-			 *    Put the data of the requested offset at the
-			 *    beginning of the buffer.  Return the number of
-			 *    bytes of data placed there.  If this number is
-			 *    greater than zero and you didn't signal eof
-			 *    and the reader is prepared to take more data
-			 *    you will be called again with the requested
-			 *    offset advanced by *start.  This interface is
-			 *    useful when you have a large file consisting
-			 *    of a series of blocks which you want to count
-			 *    and return as wholes.
-			 *    (Hack by Paul.Russell@rustcorp.com.au)
-			 * 2) Set *start = an address within the buffer.
-			 *    Put the data of the requested offset at *start.
-			 *    Return the number of bytes of data placed there.
-			 *    If this number is greater than zero and you
-			 *    didn't signal eof and the reader is prepared to
-			 *    take more data you will be called again with the
-			 *    requested offset advanced by the number of bytes
-			 *    absorbed.
-			 */
-			n = dp->read_proc(page, &start, *ppos,
-					  count, &eof, dp->data);
-		} else
+		if (!dp->read_proc)
 			break;
+
+		/* How to be a proc read function
+		 * ------------------------------
+		 * Prototype:
+		 *    int f(char *buffer, char **start, off_t offset,
+		 *          int count, int *peof, void *dat)
+		 *
+		 * Assume that the buffer is "count" bytes in size.
+		 *
+		 * If you know you have supplied all the data you have, set
+		 * *peof.
+		 *
+		 * You have three ways to return data:
+		 *
+		 * 0) Leave *start = NULL.  (This is the default.)  Put the
+		 *    data of the requested offset at that offset within the
+		 *    buffer.  Return the number (n) of bytes there are from
+		 *    the beginning of the buffer up to the last byte of data.
+		 *    If the number of supplied bytes (= n - offset) is greater
+		 *    than zero and you didn't signal eof and the reader is
+		 *    prepared to take more data you will be called again with
+		 *    the requested offset advanced by the number of bytes
+		 *    absorbed.  This interface is useful for files no larger
+		 *    than the buffer.
+		 *
+		 * 1) Set *start = an unsigned long value less than the buffer
+		 *    address but greater than zero.  Put the data of the
+		 *    requested offset at the beginning of the buffer.  Return
+		 *    the number of bytes of data placed there.  If this number
+		 *    is greater than zero and you didn't signal eof and the
+		 *    reader is prepared to take more data you will be called
+		 *    again with the requested offset advanced by *start.  This
+		 *    interface is useful when you have a large file consisting
+		 *    of a series of blocks which you want to count and return
+		 *    as wholes.
+		 *    (Hack by Paul.Russell@rustcorp.com.au)
+		 *
+		 * 2) Set *start = an address within the buffer.  Put the data
+		 *    of the requested offset at *start.  Return the number of
+		 *    bytes of data placed there.  If this number is greater
+		 *    than zero and you didn't signal eof and the reader is
+		 *    prepared to take more data you will be called again with
+		 *    the requested offset advanced by the number of bytes
+		 *    absorbed.
+		 */
+		n = dp->read_proc(page, &start, *ppos, count, &eof, dp->data);
 
 		if (n == 0)   /* end of file */
 			break;
@@ -174,73 +170,6 @@ __proc_file_read(struct file *file, char __user *buf, size_t nbytes,
 	free_page((unsigned long) page);
 	return retval;
 }
-
-static ssize_t
-proc_file_read(struct file *file, char __user *buf, size_t nbytes,
-	       loff_t *ppos)
-{
-	struct proc_dir_entry *pde = PDE(file_inode(file));
-	ssize_t rv = -EIO;
-
-	spin_lock(&pde->pde_unload_lock);
-	if (!pde->proc_fops) {
-		spin_unlock(&pde->pde_unload_lock);
-		return rv;
-	}
-	pde->pde_users++;
-	spin_unlock(&pde->pde_unload_lock);
-
-	rv = __proc_file_read(file, buf, nbytes, ppos);
-
-	pde_users_dec(pde);
-	return rv;
-}
-
-static ssize_t
-proc_file_write(struct file *file, const char __user *buffer,
-		size_t count, loff_t *ppos)
-{
-	struct proc_dir_entry *pde = PDE(file_inode(file));
-	ssize_t rv = -EIO;
-
-	if (pde->write_proc) {
-		spin_lock(&pde->pde_unload_lock);
-		if (!pde->proc_fops) {
-			spin_unlock(&pde->pde_unload_lock);
-			return rv;
-		}
-		pde->pde_users++;
-		spin_unlock(&pde->pde_unload_lock);
-
-		/* FIXME: does this routine need ppos?  probably... */
-		rv = pde->write_proc(file, buffer, count, pde->data);
-		pde_users_dec(pde);
-	}
-	return rv;
-}
-
-
-static loff_t
-proc_file_lseek(struct file *file, loff_t offset, int orig)
-{
-	loff_t retval = -EINVAL;
-	switch (orig) {
-	case 1:
-		offset += file->f_pos;
-	/* fallthrough */
-	case 0:
-		if (offset < 0 || offset > MAX_NON_LFS)
-			break;
-		file->f_pos = retval = offset;
-	}
-	return retval;
-}
-
-static const struct file_operations proc_file_operations = {
-	.llseek		= proc_file_lseek,
-	.read		= proc_file_read,
-	.write		= proc_file_write,
-};
 
 static int proc_notify_change(struct dentry *dentry, struct iattr *iattr)
 {
@@ -371,7 +300,7 @@ void proc_free_inum(unsigned int inum)
 
 static void *proc_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
-	nd_set_link(nd, PDE(dentry->d_inode)->data);
+	nd_set_link(nd, PDE_DATA(dentry->d_inode));
 	return NULL;
 }
 
@@ -541,19 +470,18 @@ static int proc_register(struct proc_dir_entry * dir, struct proc_dir_entry * dp
 		return ret;
 
 	if (S_ISDIR(dp->mode)) {
-		if (dp->proc_iops == NULL) {
-			dp->proc_fops = &proc_dir_operations;
-			dp->proc_iops = &proc_dir_inode_operations;
-		}
+		dp->proc_fops = &proc_dir_operations;
+		dp->proc_iops = &proc_dir_inode_operations;
 		dir->nlink++;
 	} else if (S_ISLNK(dp->mode)) {
-		if (dp->proc_iops == NULL)
-			dp->proc_iops = &proc_link_inode_operations;
+		dp->proc_iops = &proc_link_inode_operations;
 	} else if (S_ISREG(dp->mode)) {
 		if (dp->proc_fops == NULL)
 			dp->proc_fops = &proc_file_operations;
-		if (dp->proc_iops == NULL)
-			dp->proc_iops = &proc_file_inode_operations;
+		dp->proc_iops = &proc_file_inode_operations;
+	} else {
+		WARN_ON(1);
+		return -EINVAL;
 	}
 
 	spin_lock(&proc_subdir_lock);
@@ -676,26 +604,27 @@ struct proc_dir_entry *proc_mkdir(const char *name,
 }
 EXPORT_SYMBOL(proc_mkdir);
 
-struct proc_dir_entry *create_proc_entry(const char *name, umode_t mode,
-					 struct proc_dir_entry *parent)
+struct proc_dir_entry *create_proc_read_entry(
+	const char *name, umode_t mode, struct proc_dir_entry *parent, 
+	read_proc_t *read_proc, void *data)
 {
 	struct proc_dir_entry *ent;
-	nlink_t nlink;
 
-	if (S_ISDIR(mode)) {
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO | S_IXUGO;
-		nlink = 2;
-	} else {
-		if ((mode & S_IFMT) == 0)
-			mode |= S_IFREG;
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO;
-		nlink = 1;
+	if ((mode & S_IFMT) == 0)
+		mode |= S_IFREG;
+
+	if (!S_ISREG(mode)) {
+		WARN_ON(1);	/* use proc_mkdir(), damnit */
+		return NULL;
 	}
 
-	ent = __proc_create(&parent, name, mode, nlink);
+	if ((mode & S_IALLUGO) == 0)
+		mode |= S_IRUGO;
+
+	ent = __proc_create(&parent, name, mode, 1);
 	if (ent) {
+		ent->read_proc = read_proc;
+		ent->data = data;
 		if (proc_register(parent, ent) < 0) {
 			kfree(ent);
 			ent = NULL;
@@ -703,7 +632,7 @@ struct proc_dir_entry *create_proc_entry(const char *name, umode_t mode,
 	}
 	return ent;
 }
-EXPORT_SYMBOL(create_proc_entry);
+EXPORT_SYMBOL(create_proc_read_entry);
 
 struct proc_dir_entry *proc_create_data(const char *name, umode_t mode,
 					struct proc_dir_entry *parent,
@@ -711,21 +640,17 @@ struct proc_dir_entry *proc_create_data(const char *name, umode_t mode,
 					void *data)
 {
 	struct proc_dir_entry *pde;
-	nlink_t nlink;
+	if ((mode & S_IFMT) == 0)
+		mode |= S_IFREG;
 
-	if (S_ISDIR(mode)) {
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO | S_IXUGO;
-		nlink = 2;
-	} else {
-		if ((mode & S_IFMT) == 0)
-			mode |= S_IFREG;
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO;
-		nlink = 1;
+	if (!S_ISREG(mode)) {
+		WARN_ON(1);	/* use proc_mkdir() */
+		return NULL;
 	}
 
-	pde = __proc_create(&parent, name, mode, nlink);
+	if ((mode & S_IALLUGO) == 0)
+		mode |= S_IRUGO;
+	pde = __proc_create(&parent, name, mode, 1);
 	if (!pde)
 		goto out;
 	pde->proc_fops = proc_fops;
@@ -753,41 +678,6 @@ void pde_put(struct proc_dir_entry *pde)
 {
 	if (atomic_dec_and_test(&pde->count))
 		free_proc_entry(pde);
-}
-
-static void entry_rundown(struct proc_dir_entry *de)
-{
-	spin_lock(&de->pde_unload_lock);
-	/*
-	 * Stop accepting new callers into module. If you're
-	 * dynamically allocating ->proc_fops, save a pointer somewhere.
-	 */
-	de->proc_fops = NULL;
-	/* Wait until all existing callers into module are done. */
-	if (de->pde_users > 0) {
-		DECLARE_COMPLETION_ONSTACK(c);
-
-		if (!de->pde_unload_completion)
-			de->pde_unload_completion = &c;
-
-		spin_unlock(&de->pde_unload_lock);
-
-		wait_for_completion(de->pde_unload_completion);
-
-		spin_lock(&de->pde_unload_lock);
-	}
-
-	while (!list_empty(&de->pde_openers)) {
-		struct pde_opener *pdeo;
-
-		pdeo = list_first_entry(&de->pde_openers, struct pde_opener, lh);
-		list_del(&pdeo->lh);
-		spin_unlock(&de->pde_unload_lock);
-		pdeo->release(pdeo->inode, pdeo->file);
-		kfree(pdeo);
-		spin_lock(&de->pde_unload_lock);
-	}
-	spin_unlock(&de->pde_unload_lock);
 }
 
 /*
@@ -821,7 +711,7 @@ void remove_proc_entry(const char *name, struct proc_dir_entry *parent)
 		return;
 	}
 
-	entry_rundown(de);
+	proc_entry_rundown(de);
 
 	if (S_ISDIR(de->mode))
 		parent->nlink--;
@@ -870,7 +760,7 @@ int remove_proc_subtree(const char *name, struct proc_dir_entry *parent)
 		}
 		spin_unlock(&proc_subdir_lock);
 
-		entry_rundown(de);
+		proc_entry_rundown(de);
 		next = de->parent;
 		if (S_ISDIR(de->mode))
 			next->nlink--;
