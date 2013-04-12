@@ -244,6 +244,7 @@ struct hci_dev {
 	struct sk_buff_head	raw_q;
 	struct sk_buff_head	cmd_q;
 
+	struct sk_buff		*recv_evt;
 	struct sk_buff		*sent_cmd;
 	struct sk_buff		*reassembly[NUM_REASSEMBLY];
 
@@ -268,8 +269,6 @@ struct hci_dev {
 
 	struct hci_dev_stats	stat;
 
-	struct sk_buff_head	driver_init;
-
 	atomic_t		promisc;
 
 	struct dentry		*debugfs;
@@ -292,6 +291,7 @@ struct hci_dev {
 	int (*open)(struct hci_dev *hdev);
 	int (*close)(struct hci_dev *hdev);
 	int (*flush)(struct hci_dev *hdev);
+	int (*setup)(struct hci_dev *hdev);
 	int (*send)(struct sk_buff *skb);
 	void (*notify)(struct hci_dev *hdev, unsigned int evt);
 	int (*ioctl)(struct hci_dev *hdev, unsigned int cmd, unsigned long arg);
@@ -612,7 +612,7 @@ static inline void hci_conn_hold(struct hci_conn *conn)
 	cancel_delayed_work(&conn->disc_work);
 }
 
-static inline void hci_conn_put(struct hci_conn *conn)
+static inline void hci_conn_drop(struct hci_conn *conn)
 {
 	BT_DBG("hcon %p orig refcnt %d", conn, atomic_read(&conn->refcnt));
 
@@ -1054,8 +1054,14 @@ struct hci_request {
 void hci_req_init(struct hci_request *req, struct hci_dev *hdev);
 int hci_req_run(struct hci_request *req, hci_req_complete_t complete);
 void hci_req_add(struct hci_request *req, u16 opcode, u32 plen, void *param);
+void hci_req_add_ev(struct hci_request *req, u16 opcode, u32 plen, void *param,
+		    u8 event);
 void hci_req_cmd_complete(struct hci_dev *hdev, u16 opcode, u8 status);
-void hci_req_cmd_status(struct hci_dev *hdev, u16 opcode, u8 status);
+
+struct sk_buff *__hci_cmd_sync(struct hci_dev *hdev, u16 opcode, u32 plen,
+			       void *param, u32 timeout);
+struct sk_buff *__hci_cmd_sync_ev(struct hci_dev *hdev, u16 opcode, u32 plen,
+				  void *param, u8 event, u32 timeout);
 
 int hci_send_cmd(struct hci_dev *hdev, __u16 opcode, __u32 plen, void *param);
 void hci_send_acl(struct hci_chan *chan, struct sk_buff *skb, __u16 flags);

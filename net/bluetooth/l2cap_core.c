@@ -571,7 +571,7 @@ void l2cap_chan_del(struct l2cap_chan *chan, int err)
 		chan->conn = NULL;
 
 		if (chan->chan_type != L2CAP_CHAN_CONN_FIX_A2MP)
-			hci_conn_put(conn->hcon);
+			hci_conn_drop(conn->hcon);
 
 		if (mgr && mgr->bredr_chan == chan)
 			mgr->bredr_chan = NULL;
@@ -1502,12 +1502,12 @@ static void security_timeout(struct work_struct *work)
 	}
 }
 
-static struct l2cap_conn *l2cap_conn_add(struct hci_conn *hcon, u8 status)
+static struct l2cap_conn *l2cap_conn_add(struct hci_conn *hcon)
 {
 	struct l2cap_conn *conn = hcon->l2cap_data;
 	struct hci_chan *hchan;
 
-	if (conn || status)
+	if (conn)
 		return conn;
 
 	hchan = hci_chan_create(hcon);
@@ -1695,9 +1695,9 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 		goto done;
 	}
 
-	conn = l2cap_conn_add(hcon, 0);
+	conn = l2cap_conn_add(hcon);
 	if (!conn) {
-		hci_conn_put(hcon);
+		hci_conn_drop(hcon);
 		err = -ENOMEM;
 		goto done;
 	}
@@ -1707,7 +1707,7 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 
 		if (!list_empty(&conn->chan_l)) {
 			err = -EBUSY;
-			hci_conn_put(hcon);
+			hci_conn_drop(hcon);
 		}
 
 		if (err)
@@ -6313,7 +6313,7 @@ void l2cap_connect_cfm(struct hci_conn *hcon, u8 status)
 	BT_DBG("hcon %p bdaddr %pMR status %d", hcon, &hcon->dst, status);
 
 	if (!status) {
-		conn = l2cap_conn_add(hcon, status);
+		conn = l2cap_conn_add(hcon);
 		if (conn)
 			l2cap_conn_ready(conn);
 	} else {
@@ -6482,7 +6482,7 @@ int l2cap_recv_acldata(struct hci_conn *hcon, struct sk_buff *skb, u16 flags)
 		goto drop;
 
 	if (!conn)
-		conn = l2cap_conn_add(hcon, 0);
+		conn = l2cap_conn_add(hcon);
 
 	if (!conn)
 		goto drop;
