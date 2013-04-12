@@ -344,7 +344,7 @@ static struct xt_hashlimit_htable *htable_find_get(struct net *net,
 	struct xt_hashlimit_htable *hinfo;
 
 	hlist_for_each_entry(hinfo, &hashlimit_net->htables, node) {
-		if (!strcmp(name, hinfo->pde->name) &&
+		if (!strcmp(name, get_proc_name(hinfo->pde)) &&
 		    hinfo->family == family) {
 			hinfo->use++;
 			return hinfo;

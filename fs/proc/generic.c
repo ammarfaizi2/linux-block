@@ -624,3 +624,9 @@ void *proc_get_parent_data(const struct inode *inode)
 	return de->parent->data;
 }
 EXPORT_SYMBOL_GPL(proc_get_parent_data);
+
+const char *get_proc_name(const struct proc_dir_entry *de)
+{
+	return de->name;
+}
+EXPORT_SYMBOL_GPL(get_proc_name);
