@@ -543,7 +543,7 @@ void kvm_irq_routing_update(struct kvm *kvm,
  * aggregated from all vm* instances. We need our own isolated single-thread
  * queue to prevent deadlock against flushing the normal work-queue.
  */
-static int __init irqfd_module_init(void)
+int kvm_irqfd_init(void)
 {
 	irqfd_cleanup_wq = create_singlethread_workqueue("kvm-irqfd-cleanup");
 	if (!irqfd_cleanup_wq)
@@ -552,13 +552,10 @@ static int __init irqfd_module_init(void)
 	return 0;
 }
 
-static void __exit irqfd_module_exit(void)
+void kvm_irqfd_exit(void)
 {
 	destroy_workqueue(irqfd_cleanup_wq);
 }
-
-module_init(irqfd_module_init);
-module_exit(irqfd_module_exit);
 #endif
 
 /*
@@ -577,6 +574,7 @@ struct _ioeventfd {
 	struct eventfd_ctx  *eventfd;
 	u64                  datamatch;
 	struct kvm_io_device dev;
+	u8                   bus_idx;
 	bool                 wildcard;
 };
 
@@ -669,7 +667,8 @@ ioeventfd_check_collision(struct kvm *kvm, struct _ioeventfd *p)
 	struct _ioeventfd *_p;
 
 	list_for_each_entry(_p, &kvm->ioeventfds, list)
-		if (_p->addr == p->addr && _p->length == p->length &&
+		if (_p->bus_idx == p->bus_idx &&
+		    _p->addr == p->addr && _p->length == p->length &&
 		    (_p->wildcard || p->wildcard ||
 		     _p->datamatch == p->datamatch))
 			return true;
@@ -677,15 +676,24 @@ ioeventfd_check_collision(struct kvm *kvm, struct _ioeventfd *p)
 	return false;
 }
 
+static enum kvm_bus ioeventfd_bus_from_flags(__u32 flags)
+{
+	if (flags & KVM_IOEVENTFD_FLAG_PIO)
+		return KVM_PIO_BUS;
+	if (flags & KVM_IOEVENTFD_FLAG_VIRTIO_CCW_NOTIFY)
+		return KVM_VIRTIO_CCW_NOTIFY_BUS;
+	return KVM_MMIO_BUS;
+}
+
 static int
 kvm_assign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 {
-	int                       pio = args->flags & KVM_IOEVENTFD_FLAG_PIO;
-	enum kvm_bus              bus_idx = pio ? KVM_PIO_BUS : KVM_MMIO_BUS;
+	enum kvm_bus              bus_idx;
 	struct _ioeventfd        *p;
 	struct eventfd_ctx       *eventfd;
 	int                       ret;
 
+	bus_idx = ioeventfd_bus_from_flags(args->flags);
 	/* must be natural-word sized */
 	switch (args->len) {
 	case 1:
@@ -717,6 +725,7 @@ kvm_assign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 
 	INIT_LIST_HEAD(&p->list);
 	p->addr    = args->addr;
+	p->bus_idx = bus_idx;
 	p->length  = args->len;
 	p->eventfd = eventfd;
 
@@ -760,12 +769,12 @@ fail:
 static int
 kvm_deassign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 {
-	int                       pio = args->flags & KVM_IOEVENTFD_FLAG_PIO;
-	enum kvm_bus              bus_idx = pio ? KVM_PIO_BUS : KVM_MMIO_BUS;
+	enum kvm_bus              bus_idx;
 	struct _ioeventfd        *p, *tmp;
 	struct eventfd_ctx       *eventfd;
 	int                       ret = -ENOENT;
 
+	bus_idx = ioeventfd_bus_from_flags(args->flags);
 	eventfd = eventfd_ctx_fdget(args->fd);
 	if (IS_ERR(eventfd))
 		return PTR_ERR(eventfd);
@@ -775,7 +784,8 @@ kvm_deassign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 	list_for_each_entry_safe(p, tmp, &kvm->ioeventfds, list) {
 		bool wildcard = !(args->flags & KVM_IOEVENTFD_FLAG_DATAMATCH);
 
-		if (p->eventfd != eventfd  ||
+		if (p->bus_idx != bus_idx ||
+		    p->eventfd != eventfd  ||
 		    p->addr != args->addr  ||
 		    p->length != args->len ||
 		    p->wildcard != wildcard)
