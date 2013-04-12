@@ -157,6 +157,11 @@ static unsigned int pid_entry_count_dirs(const struct pid_entry *entries,
 	return count;
 }
 
+struct pid *get_proc_pid(const struct inode *inode)
+{
+	return PROC_I(inode)->pid;
+}
+
 static int get_task_root(struct task_struct *task, struct path *root)
 {
 	int result = -ENOENT;

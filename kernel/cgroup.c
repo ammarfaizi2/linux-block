@@ -4823,8 +4823,7 @@ out:
 
 static int cgroup_open(struct inode *inode, struct file *file)
 {
-	struct pid *pid = PROC_I(inode)->pid;
-	return single_open(file, proc_cgroup_show, pid);
+	return single_open(file, proc_cgroup_show, get_proc_pid(inode));
 }
 
 const struct file_operations proc_cgroup_operations = {

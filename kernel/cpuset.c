@@ -2703,8 +2703,7 @@ out:
 
 static int cpuset_open(struct inode *inode, struct file *file)
 {
-	struct pid *pid = PROC_I(inode)->pid;
-	return single_open(file, proc_cpuset_show, pid);
+	return single_open(file, proc_cpuset_show, get_proc_pid(inode));
 }
 
 const struct file_operations proc_cpuset_operations = {

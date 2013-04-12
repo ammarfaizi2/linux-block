@@ -88,6 +88,7 @@ extern void proc_set_size(struct proc_dir_entry *, loff_t);
 extern void proc_set_user(struct proc_dir_entry *, kuid_t, kgid_t);
 extern void *proc_get_parent_data(const struct inode *);
 extern const char *get_proc_name(const struct proc_dir_entry *);
+extern struct pid *get_proc_pid(const struct inode *);
 #else
 
 static inline void proc_flush_task(struct task_struct *task)
@@ -113,6 +114,7 @@ static inline struct proc_dir_entry *proc_mkdir_mode(const char *name,
 	umode_t mode, struct proc_dir_entry *parent) { return NULL; }
 static inline void proc_set_size(struct proc_dir_entry *de, loff_t size) {}
 static inline void proc_set_user(struct proc_dir_entry *de, kuid_t uid, kgid_t gid) {}
+static inline struct pid *get_proc_pid(const struct inode *inode) { return NULL; }
 
 #endif /* CONFIG_PROC_FS */
 
