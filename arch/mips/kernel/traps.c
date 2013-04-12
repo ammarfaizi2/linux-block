@@ -60,9 +60,9 @@ extern void check_wait(void);
 extern asmlinkage void r4k_wait(void);
 extern asmlinkage void rollback_handle_int(void);
 extern asmlinkage void handle_int(void);
-extern asmlinkage void handle_tlbm(void);
-extern asmlinkage void handle_tlbl(void);
-extern asmlinkage void handle_tlbs(void);
+extern u32 handle_tlbl[];
+extern u32 handle_tlbs[];
+extern u32 handle_tlbm[];
 extern asmlinkage void handle_adel(void);
 extern asmlinkage void handle_ades(void);
 extern asmlinkage void handle_ibe(void);
@@ -1390,9 +1390,8 @@ unsigned long vi_handlers[64];
 void __init *set_except_vector(int n, void *addr)
 {
 	unsigned long handler = (unsigned long) addr;
-	unsigned long old_handler = exception_handlers[n];
+	unsigned long old_handler = xchg(&exception_handlers[n], handler);
 
-	exception_handlers[n] = handler;
 	if (n == 0 && cpu_has_divec) {
 		unsigned long jump_mask = ~((1 << 28) - 1);
 		u32 *buf = (u32 *)(ebase + 0x200);
@@ -1410,7 +1409,7 @@ void __init *set_except_vector(int n, void *addr)
 	return (void *)old_handler;
 }
 
-static asmlinkage void do_default_vi(void)
+static void do_default_vi(void)
 {
 	show_regs(get_irq_regs());
 	panic("Caught unexpected vectored interrupt.");
@@ -1713,7 +1712,12 @@ void __init trap_init(void)
 		ebase = (unsigned long)
 			__alloc_bootmem(size, 1 << fls(size), 0);
 	} else {
-		ebase = CKSEG0;
+#ifdef CONFIG_KVM_GUEST
+#define KVM_GUEST_KSEG0     0x40000000
+        ebase = KVM_GUEST_KSEG0;
+#else
+        ebase = CKSEG0;
+#endif
 		if (cpu_has_mips_r2)
 			ebase += (read_c0_ebase() & 0x3ffff000);
 	}
