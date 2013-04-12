@@ -140,6 +140,16 @@ extern int intel_agp_enabled;
 	.subdevice = PCI_ANY_ID,		\
 	.driver_data = (unsigned long) info }
 
+#define INTEL_QUANTA_VGA_DEVICE(info) {		\
+	.class = PCI_BASE_CLASS_DISPLAY << 16,	\
+	.class_mask = 0xff0000,			\
+	.vendor = 0x8086,			\
+	.device = 0x16a,			\
+	.subvendor = 0x152d,			\
+	.subdevice = 0x8990,			\
+	.driver_data = (unsigned long) info }
+
+
 static const struct intel_device_info intel_i830_info = {
 	.gen = 2, .is_mobile = 1, .cursor_needs_physical = 1, .num_pipes = 2,
 	.has_overlay = 1, .overlay_needs_physical = 1,
@@ -272,6 +282,12 @@ static const struct intel_device_info intel_ivybridge_m_info = {
 	.is_mobile = 1,
 };
 
+static const struct intel_device_info intel_ivybridge_q_info = {
+	GEN7_FEATURES,
+	.is_ivybridge = 1,
+	.num_pipes = 0, /* legal, last one wins */
+};
+
 static const struct intel_device_info intel_valleyview_m_info = {
 	GEN7_FEATURES,
 	.is_mobile = 1,
@@ -342,6 +358,7 @@ static const struct pci_device_id pciidlist[] = {		/* aka */
 	INTEL_VGA_DEVICE(0x0152, &intel_ivybridge_d_info), /* GT1 desktop */
 	INTEL_VGA_DEVICE(0x0162, &intel_ivybridge_d_info), /* GT2 desktop */
 	INTEL_VGA_DEVICE(0x015a, &intel_ivybridge_d_info), /* GT1 server */
+	INTEL_QUANTA_VGA_DEVICE(&intel_ivybridge_q_info), /* Quanta transcode */
 	INTEL_VGA_DEVICE(0x016a, &intel_ivybridge_d_info), /* GT2 server */
 	INTEL_VGA_DEVICE(0x0402, &intel_haswell_d_info), /* GT1 desktop */
 	INTEL_VGA_DEVICE(0x0412, &intel_haswell_d_info), /* GT2 desktop */
@@ -396,6 +413,15 @@ void intel_detect_pch(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct pci_dev *pch;
+
+	/* In all current cases, num_pipes is equivalent to the PCH_NOP setting
+	 * (which really amounts to a PCH but no South Display).
+	 */
+	if (INTEL_INFO(dev)->num_pipes == 0) {
+		dev_priv->pch_type = PCH_NOP;
+		dev_priv->num_pch_pll = 0;
+		return;
+	}
 
 	/*
 	 * The reason to probe ISA bridge instead of Dev31:Fun0 is to
@@ -463,6 +489,7 @@ bool i915_semaphore_is_enabled(struct drm_device *dev)
 static int i915_drm_freeze(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_crtc *crtc;
 
 	/* ignore lid events during suspend */
 	mutex_lock(&dev_priv->modeset_restore_lock);
@@ -486,10 +513,14 @@ static int i915_drm_freeze(struct drm_device *dev)
 
 		cancel_delayed_work_sync(&dev_priv->rps.delayed_resume_work);
 
-		intel_modeset_disable(dev);
-
 		drm_irq_uninstall(dev);
 		dev_priv->enable_hotplug_processing = false;
+		/*
+		 * Disable CRTCs directly since we want to preserve sw state
+		 * for _thaw.
+		 */
+		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head)
+			dev_priv->display.crtc_disable(crtc);
 	}
 
 	i915_save_state(dev);
@@ -545,6 +576,24 @@ void intel_console_resume(struct work_struct *work)
 	console_unlock();
 }
 
+static void intel_resume_hotplug(struct drm_device *dev)
+{
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct intel_encoder *encoder;
+
+	mutex_lock(&mode_config->mutex);
+	DRM_DEBUG_KMS("running encoder hotplug functions\n");
+
+	list_for_each_entry(encoder, &mode_config->encoder_list, base.head)
+		if (encoder->hot_plug)
+			encoder->hot_plug(encoder);
+
+	mutex_unlock(&mode_config->mutex);
+
+	/* Just fire off a uevent and let userspace tell us what to do */
+	drm_helper_hpd_irq_event(dev);
+}
+
 static int __i915_drm_thaw(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -567,7 +616,10 @@ static int __i915_drm_thaw(struct drm_device *dev)
 		drm_irq_install(dev);
 
 		intel_modeset_init_hw(dev);
-		intel_modeset_setup_hw_state(dev, false);
+
+		drm_modeset_lock_all(dev);
+		intel_modeset_setup_hw_state(dev, true);
+		drm_modeset_unlock_all(dev);
 
 		/*
 		 * ... but also need to make sure that hotplug processing
@@ -577,6 +629,8 @@ static int __i915_drm_thaw(struct drm_device *dev)
 		 * */
 		intel_hpd_init(dev);
 		dev_priv->enable_hotplug_processing = true;
+		/* Config may have changed between suspend and resume */
+		intel_resume_hotplug(dev);
 	}
 
 	intel_opregion_init(dev);
@@ -721,6 +775,7 @@ static int ironlake_do_reset(struct drm_device *dev)
 	int ret;
 
 	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
+	gdrst &= ~GRDOM_MASK;
 	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
 		   gdrst | GRDOM_RENDER | GRDOM_RESET_ENABLE);
 	ret = wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
@@ -729,6 +784,7 @@ static int ironlake_do_reset(struct drm_device *dev)
 
 	/* We can't reset render&media without also resetting display ... */
 	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
+	gdrst &= ~GRDOM_MASK;
 	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
 		   gdrst | GRDOM_MEDIA | GRDOM_RESET_ENABLE);
 	return wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
@@ -792,7 +848,7 @@ int intel_gpu_reset(struct drm_device *dev)
 
 	/* Also reset the gpu hangman. */
 	if (dev_priv->gpu_error.stop_rings) {
-		DRM_DEBUG("Simulated gpu hang, resetting stop_rings\n");
+		DRM_INFO("Simulated gpu hang, resetting stop_rings\n");
 		dev_priv->gpu_error.stop_rings = 0;
 		if (ret == -ENODEV) {
 			DRM_ERROR("Reset not implemented, but ignoring "
@@ -871,7 +927,11 @@ int i915_reset(struct drm_device *dev)
 			ring->init(ring);
 
 		i915_gem_context_init(dev);
-		i915_gem_init_ppgtt(dev);
+		if (dev_priv->mm.aliasing_ppgtt) {
+			ret = dev_priv->mm.aliasing_ppgtt->enable(dev);
+			if (ret)
+				i915_gem_cleanup_aliasing_ppgtt(dev);
+		}
 
 		/*
 		 * It would make sense to re-init all the other hw state, at
