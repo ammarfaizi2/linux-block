@@ -1,7 +1,7 @@
 /*
  * ELF definitions for the Hexagon architecture
  *
- * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -168,15 +168,15 @@ do {					\
 #define ELF_DATA	ELFDATA2LSB
 #define ELF_ARCH	EM_HEXAGON
 
-#ifdef CONFIG_HEXAGON_ARCH_V2
+#if CONFIG_HEXAGON_ARCH_VERSION == 2
 #define ELF_CORE_EFLAGS 0x1
 #endif
 
-#ifdef CONFIG_HEXAGON_ARCH_V3
+#if CONFIG_HEXAGON_ARCH_VERSION == 3
 #define ELF_CORE_EFLAGS 0x2
 #endif
 
-#ifdef CONFIG_HEXAGON_ARCH_V4
+#if CONFIG_HEXAGON_ARCH_VERSION == 4
 #define ELF_CORE_EFLAGS 0x3
 #endif
 
