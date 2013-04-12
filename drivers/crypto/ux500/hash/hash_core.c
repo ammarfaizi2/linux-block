@@ -939,6 +939,7 @@ static int hash_dma_final(struct ahash_request *req)
 	if (!ctx->device->dma.nents) {
 		dev_err(device_data->dev, "[%s] "
 				"ctx->device->dma.nents = 0", __func__);
+		ret = ctx->device->dma.nents;
 		goto out;
 	}
 
@@ -946,6 +947,7 @@ static int hash_dma_final(struct ahash_request *req)
 	if (bytes_written != req->nbytes) {
 		dev_err(device_data->dev, "[%s] "
 				"hash_dma_write() failed!", __func__);
+		ret = bytes_written;
 		goto out;
 	}
 
@@ -1368,14 +1370,12 @@ static int hash_setkey(struct crypto_ahash *tfm,
 	/**
 	 * Freed in final.
 	 */
-	ctx->key = kmalloc(keylen, GFP_KERNEL);
+	ctx->key = kmemdup(key, keylen, GFP_KERNEL);
 	if (!ctx->key) {
 		pr_err(DEV_DBG_NAME " [%s] Failed to allocate ctx->key "
 		       "for %d\n", __func__, alg);
 		return -ENOMEM;
 	}
-
-	memcpy(ctx->key, key, keylen);
 	ctx->keylen = keylen;
 
 	return ret;
