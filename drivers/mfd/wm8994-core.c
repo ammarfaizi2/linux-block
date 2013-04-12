@@ -191,7 +191,7 @@ static const char *wm8958_main_supplies[] = {
 	"SPKVDD2",
 };
 
-#ifdef CONFIG_PM
+#ifdef CONFIG_PM_RUNTIME
 static int wm8994_suspend(struct device *dev)
 {
 	struct wm8994 *wm8994 = dev_get_drvdata(dev);
@@ -405,7 +405,7 @@ static int wm8994_device_init(struct wm8994 *wm8994, int irq)
 	struct regmap_config *regmap_config;
 	const struct reg_default *regmap_patch = NULL;
 	const char *devname;
-	int ret, i, patch_regs;
+	int ret, i, patch_regs = 0;
 	int pulls = 0;
 
 	if (dev_get_platdata(wm8994->dev)) {
@@ -724,8 +724,9 @@ static const struct i2c_device_id wm8994_i2c_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, wm8994_i2c_id);
 
-static UNIVERSAL_DEV_PM_OPS(wm8994_pm_ops, wm8994_suspend, wm8994_resume,
-			    NULL);
+static const struct dev_pm_ops wm8994_pm_ops = {
+	SET_RUNTIME_PM_OPS(wm8994_suspend, wm8994_resume, NULL)
+};
 
 static struct i2c_driver wm8994_i2c_driver = {
 	.driver = {
