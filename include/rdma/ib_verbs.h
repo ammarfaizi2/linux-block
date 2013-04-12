@@ -871,7 +871,14 @@ enum ib_access_flags {
 	IB_ACCESS_REMOTE_READ	= (1<<2),
 	IB_ACCESS_REMOTE_ATOMIC	= (1<<3),
 	IB_ACCESS_MW_BIND	= (1<<4),
-	IB_ZERO_BASED		= (1<<5)
+	IB_ZERO_BASED		= (1<<5),
+	/*
+	 * IB_ACCESS_GIFT: This memory is a gift to the adapter.  If memory is
+	 * modified after registration, the local version and data seen by the
+	 * adapter through this region rkey may differ.
+	 * Only legal with IB_ACCESS_REMOTE_READ or no permissions.
+	 */
+	IB_ACCESS_GIFT		= (1<<6)
 };
 
 struct ib_phys_buf {

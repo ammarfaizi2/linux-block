@@ -450,11 +450,19 @@ enum {
 	kvm_ioeventfd_flag_nr_pio,
 	kvm_ioeventfd_flag_nr_deassign,
 	kvm_ioeventfd_flag_nr_virtio_ccw_notify,
+	kvm_ioeventfd_flag_nr_pv_mmio,
 	kvm_ioeventfd_flag_nr_max,
 };
 
 #define KVM_IOEVENTFD_FLAG_DATAMATCH (1 << kvm_ioeventfd_flag_nr_datamatch)
 #define KVM_IOEVENTFD_FLAG_PIO       (1 << kvm_ioeventfd_flag_nr_pio)
+/*
+ * PV_MMIO - Guest can promise us that all accesses touching this address
+ * are writes of specified length, starting at the specified address.
+ * If not - it's a Guest bug.
+ * Can not be used together with either PIO or DATAMATCH.
+ */
+#define KVM_IOEVENTFD_FLAG_PV_MMIO   (1 << kvm_ioeventfd_flag_nr_pv_mmio)
 #define KVM_IOEVENTFD_FLAG_DEASSIGN  (1 << kvm_ioeventfd_flag_nr_deassign)
 #define KVM_IOEVENTFD_FLAG_VIRTIO_CCW_NOTIFY \
 	(1 << kvm_ioeventfd_flag_nr_virtio_ccw_notify)
@@ -668,6 +676,7 @@ struct kvm_ppc_smmu_info {
 #define KVM_CAP_PPC_EPR 86
 #define KVM_CAP_ARM_PSCI 87
 #define KVM_CAP_ARM_SET_DEVICE_ADDR 88
+#define KVM_CAP_IOEVENTFD_PV_MMIO 89
 
 #ifdef KVM_CAP_IRQ_ROUTING
 

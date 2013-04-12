@@ -576,6 +576,7 @@ struct _ioeventfd {
 	struct kvm_io_device dev;
 	u8                   bus_idx;
 	bool                 wildcard;
+	bool                 pvmmio;
 };
 
 static inline struct _ioeventfd *
@@ -597,7 +598,15 @@ ioeventfd_in_range(struct _ioeventfd *p, gpa_t addr, int len, const void *val)
 {
 	u64 _val;
 
-	if (!(addr == p->addr && len == p->length))
+	if (addr != p->addr)
+		/* address must be precise for a hit */
+		return false;
+
+	if (p->pvmmio)
+		/* pvmmio only looks at the address, so always a hit */
+		return true;
+
+	if (len != p->length)
 		/* address-range must be precise for a hit */
 		return false;
 
@@ -668,9 +677,11 @@ ioeventfd_check_collision(struct kvm *kvm, struct _ioeventfd *p)
 
 	list_for_each_entry(_p, &kvm->ioeventfds, list)
 		if (_p->bus_idx == p->bus_idx &&
-		    _p->addr == p->addr && _p->length == p->length &&
-		    (_p->wildcard || p->wildcard ||
-		     _p->datamatch == p->datamatch))
+		    _p->addr == p->addr &&
+		    (_p->pvmmio || p->pvmmio ||
+		     (_p->length == p->length &&
+		      (_p->wildcard || p->wildcard ||
+		       _p->datamatch == p->datamatch))))
 			return true;
 
 	return false;
@@ -713,6 +724,12 @@ kvm_assign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 	if (args->flags & ~KVM_IOEVENTFD_VALID_FLAG_MASK)
 		return -EINVAL;
 
+	/* PV MMIO can't be combined with PIO or DATAMATCH */
+	if (args->flags & KVM_IOEVENTFD_FLAG_PV_MMIO &&
+	    args->flags & (KVM_IOEVENTFD_FLAG_PIO |
+			   KVM_IOEVENTFD_FLAG_DATAMATCH))
+		return -EINVAL;
+
 	eventfd = eventfd_ctx_fdget(args->fd);
 	if (IS_ERR(eventfd))
 		return PTR_ERR(eventfd);
@@ -728,12 +745,14 @@ kvm_assign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 	p->bus_idx = bus_idx;
 	p->length  = args->len;
 	p->eventfd = eventfd;
+	p->pvmmio = args->flags & KVM_IOEVENTFD_FLAG_PV_MMIO;
 
 	/* The datamatch feature is optional, otherwise this is a wildcard */
 	if (args->flags & KVM_IOEVENTFD_FLAG_DATAMATCH)
 		p->datamatch = args->datamatch;
 	else
 		p->wildcard = true;
+
 
 	mutex_lock(&kvm->slots_lock);
 
@@ -750,12 +769,24 @@ kvm_assign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 	if (ret < 0)
 		goto unlock_fail;
 
+	/* PV MMIO is also put on a separate bus, for faster lookups.
+	 * Length is ignored for PV MMIO bus. */
+	if (p->pvmmio) {
+		ret = kvm_io_bus_register_dev(kvm, KVM_PV_MMIO_BUS,
+					      p->addr, 0, &p->dev);
+		if (ret < 0)
+			goto register_fail;
+	}
+
 	list_add_tail(&p->list, &kvm->ioeventfds);
 
 	mutex_unlock(&kvm->slots_lock);
 
 	return 0;
 
+register_fail:
+	kvm_io_bus_register_dev(kvm, bus_idx, p->addr, p->length,
+                                      &p->dev);
 unlock_fail:
 	mutex_unlock(&kvm->slots_lock);
 
@@ -782,19 +813,25 @@ kvm_deassign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 	mutex_lock(&kvm->slots_lock);
 
 	list_for_each_entry_safe(p, tmp, &kvm->ioeventfds, list) {
+		bool pvmmio = args->flags & KVM_IOEVENTFD_FLAG_PV_MMIO;
 		bool wildcard = !(args->flags & KVM_IOEVENTFD_FLAG_DATAMATCH);
 
 		if (p->bus_idx != bus_idx ||
 		    p->eventfd != eventfd  ||
 		    p->addr != args->addr  ||
 		    p->length != args->len ||
-		    p->wildcard != wildcard)
+		    p->wildcard != wildcard ||
+		    p->pvmmio != pvmmio)
 			continue;
 
 		if (!p->wildcard && p->datamatch != args->datamatch)
 			continue;
 
 		kvm_io_bus_unregister_dev(kvm, bus_idx, &p->dev);
+		if (pvmmio) {
+			kvm_io_bus_unregister_dev(kvm, KVM_PV_MMIO_BUS,
+						  &p->dev);
+		}
 		ioeventfd_release(p);
 		ret = 0;
 		break;
