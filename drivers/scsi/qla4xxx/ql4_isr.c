@@ -396,7 +396,6 @@ static void qla4xxx_passthru_status_entry(struct scsi_qla_host *ha,
 
 	task_data = task->dd_data;
 	memcpy(&task_data->sts, sts_entry, sizeof(struct passthru_status));
-	ha->req_q_count += task_data->iocb_req_cnt;
 	ha->iocb_cnt -= task_data->iocb_req_cnt;
 	queue_work(ha->task_wq, &task_data->task_work);
 }
@@ -416,7 +415,6 @@ static struct mrb *qla4xxx_del_mrb_from_active_array(struct scsi_qla_host *ha,
 		return mrb;
 
 	/* update counters */
-	ha->req_q_count += mrb->iocb_cnt;
 	ha->iocb_cnt -= mrb->iocb_cnt;
 
 	return mrb;
@@ -1099,8 +1097,8 @@ irqreturn_t qla4_82xx_intr_handler(int irq, void *dev_id)
 
 	status = qla4_82xx_rd_32(ha, ISR_INT_STATE_REG);
 	if (!ISR_IS_LEGACY_INTR_TRIGGERED(status)) {
-		DEBUG2(ql4_printk(KERN_INFO, ha,
-		    "%s legacy Int not triggered\n", __func__));
+		DEBUG7(ql4_printk(KERN_INFO, ha,
+				  "%s legacy Int not triggered\n", __func__));
 		return IRQ_NONE;
 	}
 
@@ -1158,7 +1156,7 @@ irqreturn_t qla4_83xx_intr_handler(int irq, void *dev_id)
 
 	/* Legacy interrupt is valid if bit31 of leg_int_ptr is set */
 	if (!(leg_int_ptr & LEG_INT_PTR_B31)) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+		DEBUG7(ql4_printk(KERN_ERR, ha,
 				  "%s: Legacy Interrupt Bit 31 not set, spurious interrupt!\n",
 				  __func__));
 		return IRQ_NONE;
@@ -1166,7 +1164,7 @@ irqreturn_t qla4_83xx_intr_handler(int irq, void *dev_id)
 
 	/* Validate the PCIE function ID set in leg_int_ptr bits [19..16] */
 	if ((leg_int_ptr & PF_BITS_MASK) != ha->pf_bit) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+		DEBUG7(ql4_printk(KERN_ERR, ha,
 				  "%s: Incorrect function ID 0x%x in legacy interrupt register, ha->pf_bit = 0x%x\n",
 				  __func__, (leg_int_ptr & PF_BITS_MASK),
 				  ha->pf_bit));
