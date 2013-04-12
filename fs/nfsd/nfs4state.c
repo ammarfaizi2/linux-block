@@ -326,7 +326,6 @@ static struct nfs4_stid *nfs4_alloc_stid(struct nfs4_client *cl, struct
 kmem_cache *slab)
 {
 	struct idr *stateids = &cl->cl_stateids;
-	static int min_stateid = 0;
 	struct nfs4_stid *stid;
 	int new_id;
 
@@ -334,7 +333,7 @@ kmem_cache *slab)
 	if (!stid)
 		return NULL;
 
-	new_id = idr_alloc(stateids, stid, min_stateid, 0, GFP_KERNEL);
+	new_id = idr_alloc_cyclic(stateids, stid, 0, 0, GFP_KERNEL);
 	if (new_id < 0)
 		goto out_free;
 	stid->sc_client = cl;
@@ -353,10 +352,6 @@ kmem_cache *slab)
 	 * amount of time until an id is reused, by ensuring they always
 	 * "increase" (mod INT_MAX):
 	 */
-
-	min_stateid = new_id+1;
-	if (min_stateid == INT_MAX)
-		min_stateid = 0;
 	return stid;
 out_free:
 	kmem_cache_free(slab, stid);

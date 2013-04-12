@@ -134,20 +134,17 @@ static int max6902_probe(struct spi_device *spi)
 	if (res != 0)
 		return res;
 
-	rtc = rtc_device_register("max6902",
-				&spi->dev, &max6902_rtc_ops, THIS_MODULE);
+	rtc = devm_rtc_device_register(&spi->dev, "max6902",
+				&max6902_rtc_ops, THIS_MODULE);
 	if (IS_ERR(rtc))
 		return PTR_ERR(rtc);
 
-	dev_set_drvdata(&spi->dev, rtc);
+	spi_set_drvdata(spi, rtc);
 	return 0;
 }
 
 static int max6902_remove(struct spi_device *spi)
 {
-	struct rtc_device *rtc = dev_get_drvdata(&spi->dev);
-
-	rtc_device_unregister(rtc);
 	return 0;
 }
 
