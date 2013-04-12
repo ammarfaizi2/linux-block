@@ -630,3 +630,10 @@ const char *get_proc_name(const struct proc_dir_entry *de)
 	return de->name;
 }
 EXPORT_SYMBOL_GPL(get_proc_name);
+
+void proc_remove(struct proc_dir_entry *de)
+{
+	if (de)
+		remove_proc_subtree(de->name, de->parent);
+}
+EXPORT_SYMBOL(proc_remove);
