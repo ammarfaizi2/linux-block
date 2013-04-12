@@ -19,11 +19,27 @@
  */
 
 #include <linux/platform_device.h>
+#include <linux/regulator/fixed.h>
+#include <linux/regulator/machine.h>
 #include <linux/smsc911x.h>
 #include <mach/common.h>
 #include <mach/irqs.h>
 #include <mach/r8a7778.h>
 #include <asm/mach/arch.h>
+
+/*
+ *	CN9(Upper side) SCIF/RCAN selection
+ *
+ *		1,4	3,6
+ * SW40		SCIF	RCAN
+ * SW41		SCIF	RCAN
+ */
+
+/* Dummy supplies, where voltage doesn't matter */
+static struct regulator_consumer_supply dummy_supplies[] = {
+	REGULATOR_SUPPLY("vddvario", "smsc911x"),
+	REGULATOR_SUPPLY("vdd33a", "smsc911x"),
+};
 
 static struct smsc911x_platform_config smsc911x_data = {
 	.irq_polarity	= SMSC911X_IRQ_POLARITY_ACTIVE_LOW,
@@ -59,6 +75,9 @@ static void __init bockw_init(void)
 		val &= ~(1 << 4); /* enable SMSC911x */
 		iowrite16(val, fpga + IRQ0MR);
 		iounmap(fpga);
+
+		regulator_register_fixed(0, dummy_supplies,
+					 ARRAY_SIZE(dummy_supplies));
 
 		platform_device_register_resndata(
 			&platform_bus, "smsc911x", -1,
