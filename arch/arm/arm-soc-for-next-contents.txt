@@ -1,0 +1,277 @@
+for-next contents for 3.10: 
+Format is a little different from before in an attempt to make it easier to read:
+
+<next/* branch>
+	<topic branch>
+		<contents>
+		<...>
+	<...>
+
+Dependencies from other trees:
+	depends/rmk/errorchecking
+		(no branch tag so far)
+	depends/clk
+		git://git.linaro.org/people/mturquette/linux.git clk-for-3.10
+	depends/clk-for-3.10
+		git://git.linaro.org/people/mturquette/linux.git clk-for-3.10 (later pull)
+
+next/fixes-non-critical
+	ux500/dt-fixes
+		  git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-dt-fixes
+	omap/fixes-non-critical
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/fixes-non-critical-signed
+	tegra/fixes
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-fixes
+	patch
+		"ARM: vexpress: Remove A9 PMU compatible values for non-A9 platforms"
+	imx/fixes
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/imx-noncritical-fixes-3.10
+
+next/cleanup
+	samsung/cleanup-s3c
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git next/cleanup-s3c
+	samsung/cleanup-s5p
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git next/cleanup-s5p
+	clksrc/cleanup
+		  git://sources.calxeda.com/kernel/linux.git tags/clksrc-cleanup-for-3.10
+	at91/cleanup
+		  git://github.com/at91linux/linux-at91.git tags/at91-soc
+	patch
+		"irqchip: irq-gic: Fix checkpatch errors"
+	gic/cleanup
+		  git://git.kernel.org/pub/scm/linux/kernel/git/cmarinas/linux-aarch64.git gic
+		  + patch "irqchip: vic: add include of linux/irq.h"
+	patch
+		"ARM: irq: Call irqchip_init if no init_irq function is specified"
+	at91/cleanup2
+		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
+		 (minus the topmost patch "ARM: at91: make ATAGS support conditional on CONFIG_ATAGS")
+	omap/cleanup2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/cleanup-v2-signed
+	omap/fixes-pm
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/fixes-pm-signed
+	tegra/cleanup
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-cleanup
+		  depends on tegra/fixes
+	mxs/cleanup
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-cleanup-3.10
+	samsung/cleanup
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/cleanup-samsung-for-v3.10
+	at91/cleanup3
+		  git://github.com/at91linux/linux-at91.git tags/at91-cleanup
+	imx/cleanup
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/imx-cleanup-3.10
+	sunxi/cleanup
+		  git://github.com/mripard/linux.git tags/sunxi-cleanup-for-3.10
+		  depends on depends/clk-for-3.10
+
+next/dt
+	mvebu/dt
+		  git://git.infradead.org/users/jcooper/linux.git tags/mvebu_dt_for_v3.10
+	at91/dt
+		  git://github.com/at91linux/linux-at91.git tags/at91-dt
+	sunxi/dt
+		  git://github.com/mripard/linux.git tags/sunxi-dt-for-3.10
+	zynq/core
+		  git://git.xilinx.com/linux-xlnx.git zynq/core
+	bcm2835/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-dt
+	at91/dt3
+		  git://github.com/at91linux/linux-at91.git tags/at91-dt
+		  depends on at91/dt
+	sunxi/dt2
+		  git://github.com/mripard/linux.git tags/sunxi-dt-for-3.10-2
+	tegra/dt-fix
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-fixes-for-mmc
+	sunxi/dt3
+		  git://github.com/mripard/linux.git tags/sunxi-dt-for-3.10-3
+
+next/soc
+	prima2/soc
+		patches <1363590279-5656-1-git-send-email-Barry.Song@csr.com>
+	ux500/defconfig
+		http://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-defconfig-v3.10
+	ux500/core
+		http://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-core-v3.10
+	renesas/defconfig
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-defconfig-for-v3.10
+	renesas/soc
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-soc-for-v3.10
+	at91/soc
+		  git://github.com/at91linux/linux-at91.git tags/at91-soc
+	renesas/defconfig2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-defconfig2-for-v3.10
+	patch
+		"ARM: bcm281xx: Add timer driver (DT portion)"
+	lpc32xx/defconfig
+		  git://git.antcom.de/linux-2.6.git lpc32xx/defconfig
+	bcm2835/defconfig
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-defconfig
+	davinci/soc
+		  git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci.git tags/davinci-for-v3.10/soc
+	davinci/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci.git tags/davinci-for-v3.10/dt
+		  depends on davinci/soc
+	tegra/soc
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-soc
+		  depends on tegra/cleanup
+	mxs/soc
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-soc-3.10
+	omap/soc
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/soc-signed
+	tegra/defconfig
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-defconfig
+	samsung/devel
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/devel-samsung-for-v3.10
+
+next/multiplatform
+	nomadik/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-nomadik.git tags/nomadik-multiplatform
+	spear/multiplatform
+		patches <1363106816-9603-1-git-send-email-arnd@arndb.de>
+	cns3xxx/multiplatform
+		patches <1363299271-8283-1-git-send-email-arnd@arndb.de>
+	prima2/multiplatform
+		patches <1363779679-16880-1-git-send-email-arnd@arndb.de>
+	patch
+		"arm: vt8500: Add wm8850 config options to multi_v7_defconfig"
+	bcm2835/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-rpi.git bcm2835-for-3.10-multiplatform
+	ux500/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-multiplatform-mfd
+	mxs/multiplatform
+		git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-multiplatform-3.10
+		depends on mxs/cleanup
+	tegra/multiplatform
+		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-multiplatform
+		depends on tegra/soc
+	patch "[PATCHv2] ARM: Push selects for TWD/SCU into machine entries"
+		<1362007694-3419-1-git-send-email-sboyd@codeaurora.org>
+
+next/drivers
+	samsung/timer
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git next/timer-samsung
+		depends on samsung/cleanup-s3c
+	samsung/irq-s3c24xx
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git next/irq-s3c24xx
+	samsung/pinctrl-exynos
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git next/pinctrl-exynos
+	at91/lcdfb
+		git://github.com/at91linux/linux-at91.git tags/at91-driversLCD
+	renesas/intc-external-irq
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-intc-external-irq-for-v3.10
+		depends on renesas/soc
+	renesas/clocksource
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-clocksource-for-v3.10
+	renesas/intc-external-irq2
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-intc-external-irq2-for-v3.10
+	vt8500/pinctrl
+		git://server.prisktech.co.nz/git/linuxwmt.git tags/vt8500/pinctrl
+	zynq/clocksource
+		git://git.xilinx.com/linux-xlnx.git zynq/clksrc/cleanup
+		depends on clksrc/cleanup
+	omap/usb
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/usb-signed
+	omap/timer
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/timer-signed
+		depends on omap/fixes-non-critical
+		depends on depends/rmk-errorchecking
+	omap/gpmc
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/gpmc-signed
+	tegra/clk
+		git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-clk
+		depends on depends/clk
+		depends on tegra/soc
+	ux500/pinctrl
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson.git tags/ux500-pinctrl
+	samsung/irq-s3c24xx-2
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git next/irq-s3c24xx
+	exynos/mct
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/mct-exynos-for-v3.10
+	exynos/clk
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/clk-exynos-for-v3.10 
+	exynos/pmu
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/pmu-exynos-for-v3.10
+	exynos/timer
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/timer-samsung-for-v3.10
+
+next/mailbox:
+	mailbox/subsystem
+		git://github.com/sumananna/mailbox.git dbx500-prcmu-mailbox
+
+next/firmware:
+	exynos/secure
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/secure-exynos-for-v3.10
+		depends on exynos/clk
+	bcm/smc-l2
+		  git://github.com/broadcom/bcm11351.git tags/fw-for-3.10
+
+next/renesas-pinctrl
+	renesas/pinctrl
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux-for-v3.10
+
+next/boards
+	renesas/boards
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards-for-v3.10
+		depends on renesas/pinctrl and renesas/soc
+	davinci/boards
+		git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci.git tags/davinci-for-v3.10/board
+	omap/boards
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/board-signed
+	pxa/devel
+		  git://github.com/hzhuang1/linux.git armsoc/pxa
+
+next/soc2
+	renesas/soc2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-soc2-for-v3.10
+		  depends on renesas/soc
+		  depends on renesas/intc-external-irq
+	renesas/pinmux2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-pinmux2-for-v3.10
+		  depends on renesas/soc2
+		  depends on renesas/pinctrl
+	zynq/smp
+		  git://git.xilinx.com/linux-xlnx.git zynq/core-smp
+		  depends on zynq/clocksource
+		  depends on gic/cleanup
+	renesas/soc3
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-soc-r8a7779-for-v3.10
+		  depends on renesas/soc2
+	renesas/soc4
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-soc-r8a7778-for-v3.10
+		  depends on renesas/soc2
+	renesas/pinmux3
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-pinmux-fixes-for-v3.10
+		  depends on renesas/soc2
+	renesas/soc5
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-soc-r8a7790-for-v3.10
+		  depends on renesas/soc2
+
+next/boards2
+	renesas/boards2
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards3-for-v3.10
+		  depends on renesas/soc2
+		  depends on renesas/pinmux2
+	renesas/defconfig-bockw
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-defconfig-bockw-for-v3.10
+		  depends on renesas/boards2
+	renesas/boards3
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-boards-bockw-for-v3.10
+		  depends on renesas/soc4
+	renesas/boards4
+		  git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas.git tags/renesas-boards-lager-for-v3.10
+		  depends on renesas/soc5
+		  depends on renesas/pinmux3
+
+next/dt2
+	mxs/dt
+		  git://git.linaro.org/people/shawnguo/linux-2.6.git tags/mxs-dt-3.10
+		  depends on mxs/cleanup
+	tegra/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/swarren/linux-tegra.git tegra-for-3.10-dt
+		  depends on tegra/soc
+	exynos/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung.git tags/dt-exynos-for-v3.10
+		  depends on exynos/mct
+	omap/dt
+		  git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v3.10/dt-signed-v2

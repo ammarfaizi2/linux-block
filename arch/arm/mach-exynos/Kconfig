@@ -14,6 +14,7 @@ menu "SAMSUNG EXYNOS SoCs Support"
 config ARCH_EXYNOS4
 	bool "SAMSUNG EXYNOS4"
 	default y
+	select HAVE_ARM_SCU if SMP
 	select HAVE_SMP
 	select MIGHT_HAVE_CACHE_L2X0
 	help
@@ -21,6 +22,7 @@ config ARCH_EXYNOS4
 
 config ARCH_EXYNOS5
 	bool "SAMSUNG EXYNOS5"
+	select HAVE_ARM_SCU if SMP
 	select HAVE_SMP
 	help
 	  Samsung EXYNOS5 (Cortex-A15) SoC based systems
@@ -61,6 +63,7 @@ config SOC_EXYNOS5250
 	bool "SAMSUNG EXYNOS5250"
 	default y
 	depends on ARCH_EXYNOS5
+	select PM_GENERIC_DOMAINS if PM
 	select S5P_PM if PM
 	select S5P_SLEEP if PM
 	select S5P_DEV_MFC
@@ -81,12 +84,6 @@ config SOC_EXYNOS5440
 	help
 	  Enable EXYNOS5440 SoC support
 
-config EXYNOS4_MCT
-	bool
-	default y
-	help
-	  Use MCT (Multi Core Timer) as kernel timers
-
 config EXYNOS_DEV_DMA
 	bool
 	help
@@ -96,11 +93,6 @@ config EXYNOS4_DEV_AHCI
 	bool
 	help
 	  Compile in platform device definitions for AHCI
-
-config EXYNOS_DEV_DRM
-	bool
-	help
-	  Compile in platform device definitions for core DRM device
 
 config EXYNOS4_SETUP_FIMD0
 	bool
@@ -201,7 +193,6 @@ config MACH_SMDKV310
 	select EXYNOS4_SETUP_SDHCI
 	select EXYNOS4_SETUP_USB_PHY
 	select EXYNOS_DEV_DMA
-	select EXYNOS_DEV_DRM
 	select EXYNOS_DEV_SYSMMU
 	select S3C24XX_PWM
 	select S3C_DEV_HSMMC
@@ -255,9 +246,7 @@ config MACH_UNIVERSAL_C210
 	select EXYNOS4_SETUP_SDHCI
 	select EXYNOS4_SETUP_USB_PHY
 	select EXYNOS_DEV_DMA
-	select EXYNOS_DEV_DRM
 	select EXYNOS_DEV_SYSMMU
-	select HAVE_SCHED_CLOCK
 	select S3C_DEV_HSMMC
 	select S3C_DEV_HSMMC2
 	select S3C_DEV_HSMMC3
@@ -278,8 +267,8 @@ config MACH_UNIVERSAL_C210
 	select S5P_DEV_ONENAND
 	select S5P_DEV_TV
 	select S5P_GPIO_INT
-	select S5P_HRT
 	select S5P_SETUP_MIPIPHY
+	select SAMSUNG_HRT
 	help
 	  Machine support for Samsung Mobile Universal S5PC210 Reference
 	  Board.
@@ -296,7 +285,6 @@ config MACH_NURI
 	select EXYNOS4_SETUP_SDHCI
 	select EXYNOS4_SETUP_USB_PHY
 	select EXYNOS_DEV_DMA
-	select EXYNOS_DEV_DRM
 	select S3C_DEV_HSMMC
 	select S3C_DEV_HSMMC2
 	select S3C_DEV_HSMMC3
@@ -332,7 +320,6 @@ config MACH_ORIGEN
 	select EXYNOS4_SETUP_SDHCI
 	select EXYNOS4_SETUP_USB_PHY
 	select EXYNOS_DEV_DMA
-	select EXYNOS_DEV_DRM
 	select EXYNOS_DEV_SYSMMU
 	select S3C24XX_PWM
 	select S3C_DEV_HSMMC
@@ -368,7 +355,6 @@ config MACH_SMDK4212
 	select EXYNOS4_SETUP_SDHCI
 	select EXYNOS4_SETUP_USB_PHY
 	select EXYNOS_DEV_DMA
-	select EXYNOS_DEV_DRM
 	select EXYNOS_DEV_SYSMMU
 	select S3C24XX_PWM
 	select S3C_DEV_HSMMC2
@@ -408,10 +394,12 @@ config MACH_EXYNOS4_DT
 	bool "Samsung Exynos4 Machine using device tree"
 	depends on ARCH_EXYNOS4
 	select ARM_AMBA
+	select CLKSRC_OF
 	select CPU_EXYNOS4210
-	select HAVE_SAMSUNG_KEYPAD if INPUT_KEYBOARD
+	select KEYBOARD_SAMSUNG if INPUT_KEYBOARD
 	select PINCTRL
 	select PINCTRL_EXYNOS
+	select S5P_DEV_MFC
 	select USE_OF
 	help
 	  Machine support for Samsung Exynos4 machine with device tree enabled.
@@ -424,6 +412,7 @@ config MACH_EXYNOS5_DT
 	default y
 	depends on ARCH_EXYNOS5
 	select ARM_AMBA
+	select CLKSRC_OF
 	select USE_OF
 	help
 	  Machine support for Samsung EXYNOS5 machine with device tree enabled.

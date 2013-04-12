@@ -135,7 +135,7 @@ static struct omap_dss_board_info sdp2430_dss_data = {
 	.default_device	= &sdp2430_lcd_device,
 };
 
-#if defined(CONFIG_SMC91X) || defined(CONFIG_SMC91x_MODULE)
+#if IS_ENABLED(CONFIG_SMC91X)
 
 static struct omap_smc91x_platform_data board_smc91x_data = {
 	.cs		= 5,

@@ -27,7 +27,6 @@
 #include <mach/regs-gpio.h>
 #include <plat/regs-dma.h>
 #include <mach/regs-lcd.h>
-#include <mach/regs-sdi.h>
 #include <plat/regs-spi.h>
 
 #define MAP(x) { (x)| DMA_CH_VALID, (x)| DMA_CH_VALID, (x)| DMA_CH_VALID, (x)| DMA_CH_VALID }

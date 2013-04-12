@@ -818,12 +818,12 @@ struct device *omap_device_get_by_hwmod_name(const char *oh_name)
 	if (!oh) {
 		WARN(1, "%s: no hwmod for %s\n", __func__,
 			oh_name);
-		return -ENODEV;
+		return ERR_PTR(-ENODEV);
 	}
 	if (!oh->od) {
 		WARN(1, "%s: no omap_device for %s\n", __func__,
 			oh_name);
-		return -ENODEV;
+		return ERR_PTR(-ENODEV);
 	}
 
 	return &oh->od->pdev->dev;

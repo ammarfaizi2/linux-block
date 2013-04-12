@@ -204,6 +204,12 @@ config GPIO_PXA
 	help
 	  Say yes here to support the PXA GPIO device
 
+config GPIO_RCAR
+	tristate "Renesas R-Car GPIO"
+	depends on ARM
+	help
+	  Say yes here to support GPIO on Renesas R-Car SoCs.
+
 config GPIO_SPEAR_SPICS
 	bool "ST SPEAr13xx SPI Chip Select as GPIO support"
 	depends on PLAT_SPEAR
@@ -226,12 +232,6 @@ config GPIO_TS5500
 	  Technologic Systems platforms. It includes, but is not limited to, 3
 	  blocks of the TS-5500: DIO1, DIO2 and the LCD port, and the TS-5600
 	  LCD port.
-
-config GPIO_VT8500
-	bool "VIA/Wondermedia SoC GPIO Support"
-	depends on ARCH_VT8500
-	help
-	  Say yes here to support the VT8500/WM8505/WM8650 GPIO controller.
 
 config GPIO_XILINX
 	bool "Xilinx GPIO support"
