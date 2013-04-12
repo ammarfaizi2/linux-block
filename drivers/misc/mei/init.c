@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/export.h>
 #include <linux/pci.h>
 #include <linux/sched.h>
 #include <linux/wait.h>
@@ -22,6 +23,7 @@
 #include <linux/mei.h>
 
 #include "mei_dev.h"
+#include "hbm.h"
 #include "client.h"
 
 const char *mei_dev_state_str(int state)
@@ -33,7 +35,6 @@ const char *mei_dev_state_str(int state)
 	MEI_DEV_STATE(ENABLED);
 	MEI_DEV_STATE(RESETING);
 	MEI_DEV_STATE(DISABLED);
-	MEI_DEV_STATE(RECOVERING_FROM_RESET);
 	MEI_DEV_STATE(POWER_DOWN);
 	MEI_DEV_STATE(POWER_UP);
 	default:
@@ -46,7 +47,9 @@ void mei_device_init(struct mei_device *dev)
 {
 	/* setup our list array */
 	INIT_LIST_HEAD(&dev->file_list);
+	INIT_LIST_HEAD(&dev->device_list);
 	mutex_init(&dev->device_lock);
+	init_waitqueue_head(&dev->wait_hw_ready);
 	init_waitqueue_head(&dev->wait_recvd_msg);
 	init_waitqueue_head(&dev->wait_stop_wd);
 	dev->dev_state = MEI_DEV_INITIALIZING;
@@ -56,16 +59,26 @@ void mei_device_init(struct mei_device *dev)
 	mei_io_list_init(&dev->write_waiting_list);
 	mei_io_list_init(&dev->ctrl_wr_list);
 	mei_io_list_init(&dev->ctrl_rd_list);
+
+	INIT_DELAYED_WORK(&dev->timer_work, mei_timer);
+	INIT_WORK(&dev->init_work, mei_host_client_init);
+
+	INIT_LIST_HEAD(&dev->wd_cl.link);
+	INIT_LIST_HEAD(&dev->iamthif_cl.link);
+	mei_io_list_init(&dev->amthif_cmd_list);
+	mei_io_list_init(&dev->amthif_rd_complete_list);
+
 }
+EXPORT_SYMBOL_GPL(mei_device_init);
 
 /**
- * mei_hw_init - initializes host and fw to start work.
+ * mei_start - initializes host and fw to start work.
  *
  * @dev: the device structure
  *
  * returns 0 on success, <0 on failure.
  */
-int mei_hw_init(struct mei_device *dev)
+int mei_start(struct mei_device *dev)
 {
 	int ret = 0;
 
@@ -126,6 +139,7 @@ err:
 	mutex_unlock(&dev->device_lock);
 	return -ENODEV;
 }
+EXPORT_SYMBOL_GPL(mei_start);
 
 /**
  * mei_reset - resets host and fw.
@@ -136,9 +150,6 @@ err:
 void mei_reset(struct mei_device *dev, int interrupts_enabled)
 {
 	bool unexpected;
-
-	if (dev->dev_state == MEI_DEV_RECOVERING_FROM_RESET)
-		return;
 
 	unexpected = (dev->dev_state != MEI_DEV_INITIALIZING &&
 			dev->dev_state != MEI_DEV_DISABLED &&
@@ -176,12 +187,27 @@ void mei_reset(struct mei_device *dev, int interrupts_enabled)
 		dev_warn(&dev->pdev->dev, "unexpected reset: dev_state = %s\n",
 			 mei_dev_state_str(dev->dev_state));
 
+	if (!interrupts_enabled) {
+		dev_dbg(&dev->pdev->dev, "intr not enabled end of reset\n");
+		return;
+	}
+
+	mei_hw_start(dev);
+
+	dev_dbg(&dev->pdev->dev, "link is established start sending messages.\n");
+	/* link is established * start sending messages.  */
+
+	dev->dev_state = MEI_DEV_INIT_CLIENTS;
+
+	mei_hbm_start_req(dev);
+
 	/* wake up all readings so they can be interrupted */
 	mei_cl_all_read_wakeup(dev);
 
 	/* remove all waiting requests */
 	mei_cl_all_write_clear(dev);
 }
+EXPORT_SYMBOL_GPL(mei_reset);
 
 void mei_stop(struct mei_device *dev)
 {
@@ -193,14 +219,18 @@ void mei_stop(struct mei_device *dev)
 
 	mei_wd_stop(dev);
 
+	mei_nfc_host_exit();
+
 	dev->dev_state = MEI_DEV_POWER_DOWN;
 	mei_reset(dev, 0);
 
 	mutex_unlock(&dev->device_lock);
 
 	flush_scheduled_work();
-}
 
+	mei_watchdog_unregister(dev);
+}
+EXPORT_SYMBOL_GPL(mei_stop);
 
 
 
