@@ -131,7 +131,7 @@ static void select_policy(struct f2fs_sb_info *sbi, int gc_type,
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 
-	if (p->alloc_mode) {
+	if (p->alloc_mode == SSR) {
 		p->gc_mode = GC_GREEDY;
 		p->dirty_segmap = dirty_i->dirty_segmap[type];
 		p->ofs_unit = 1;
@@ -160,18 +160,21 @@ static unsigned int get_max_cost(struct f2fs_sb_info *sbi,
 static unsigned int check_bg_victims(struct f2fs_sb_info *sbi)
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
-	unsigned int segno;
+	unsigned int hint = 0;
+	unsigned int secno;
 
 	/*
 	 * If the gc_type is FG_GC, we can select victim segments
 	 * selected by background GC before.
 	 * Those segments guarantee they have small valid blocks.
 	 */
-	segno = find_next_bit(dirty_i->victim_segmap[BG_GC],
-						TOTAL_SEGS(sbi), 0);
-	if (segno < TOTAL_SEGS(sbi)) {
-		clear_bit(segno, dirty_i->victim_segmap[BG_GC]);
-		return segno;
+next:
+	secno = find_next_bit(dirty_i->victim_secmap, TOTAL_SECS(sbi), hint++);
+	if (secno < TOTAL_SECS(sbi)) {
+		if (sec_usage_check(sbi, secno))
+			goto next;
+		clear_bit(secno, dirty_i->victim_secmap);
+		return secno * sbi->segs_per_sec;
 	}
 	return NULL_SEGNO;
 }
@@ -222,7 +225,7 @@ static unsigned int get_gc_cost(struct f2fs_sb_info *sbi, unsigned int segno,
 }
 
 /*
- * This function is called from two pathes.
+ * This function is called from two paths.
  * One is garbage collection and the other is SSR segment selection.
  * When it is called during GC, it just gets a victim segment
  * and it does not remove it from dirty seglist.
@@ -234,7 +237,7 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 	struct victim_sel_policy p;
-	unsigned int segno;
+	unsigned int secno;
 	int nsearched = 0;
 
 	p.alloc_mode = alloc_mode;
@@ -253,6 +256,7 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 
 	while (1) {
 		unsigned long cost;
+		unsigned int segno;
 
 		segno = find_next_bit(p.dirty_segmap,
 						TOTAL_SEGS(sbi), p.offset);
@@ -265,13 +269,11 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 			break;
 		}
 		p.offset = ((segno / p.ofs_unit) * p.ofs_unit) + p.ofs_unit;
+		secno = GET_SECNO(sbi, segno);
 
-		if (test_bit(segno, dirty_i->victim_segmap[FG_GC]))
+		if (sec_usage_check(sbi, secno))
 			continue;
-		if (gc_type == BG_GC &&
-				test_bit(segno, dirty_i->victim_segmap[BG_GC]))
-			continue;
-		if (IS_CURSEC(sbi, GET_SECNO(sbi, segno)))
+		if (gc_type == BG_GC && test_bit(secno, dirty_i->victim_secmap))
 			continue;
 
 		cost = get_gc_cost(sbi, segno, &p);
@@ -291,13 +293,14 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 	}
 got_it:
 	if (p.min_segno != NULL_SEGNO) {
-		*result = (p.min_segno / p.ofs_unit) * p.ofs_unit;
 		if (p.alloc_mode == LFS) {
-			int i;
-			for (i = 0; i < p.ofs_unit; i++)
-				set_bit(*result + i,
-					dirty_i->victim_segmap[gc_type]);
+			secno = GET_SECNO(sbi, p.min_segno);
+			if (gc_type == FG_GC)
+				sbi->cur_victim_sec = secno;
+			else
+				set_bit(secno, dirty_i->victim_secmap);
 		}
+		*result = (p.min_segno / p.ofs_unit) * p.ofs_unit;
 	}
 	mutex_unlock(&dirty_i->seglist_lock);
 
@@ -401,8 +404,14 @@ next_step:
 			continue;
 
 		/* set page dirty and write it */
-		if (!PageWriteback(node_page))
+		if (gc_type == FG_GC) {
+			f2fs_submit_bio(sbi, NODE, true);
+			wait_on_page_writeback(node_page);
 			set_page_dirty(node_page);
+		} else {
+			if (!PageWriteback(node_page))
+				set_page_dirty(node_page);
+		}
 		f2fs_put_page(node_page, 1);
 		stat_inc_node_blk_count(sbi, 1);
 	}
@@ -418,6 +427,13 @@ next_step:
 			.for_reclaim = 0,
 		};
 		sync_node_pages(sbi, 0, &wbc);
+
+		/*
+		 * In the case of FG_GC, it'd be better to reclaim this victim
+		 * completely.
+		 */
+		if (get_valid_blocks(sbi, segno, 1) != 0)
+			goto next_step;
 	}
 }
 
@@ -481,21 +497,19 @@ static int check_dnode(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
 
 static void move_data_page(struct inode *inode, struct page *page, int gc_type)
 {
-	if (page->mapping != inode->i_mapping)
-		goto out;
-
-	if (inode != page->mapping->host)
-		goto out;
-
-	if (PageWriteback(page))
-		goto out;
-
 	if (gc_type == BG_GC) {
+		if (PageWriteback(page))
+			goto out;
 		set_page_dirty(page);
 		set_cold_data(page);
 	} else {
 		struct f2fs_sb_info *sbi = F2FS_SB(inode->i_sb);
-		mutex_lock_op(sbi, DATA_WRITE);
+
+		if (PageWriteback(page)) {
+			f2fs_submit_bio(sbi, DATA, true);
+			wait_on_page_writeback(page);
+		}
+
 		if (clear_page_dirty_for_io(page) &&
 			S_ISDIR(inode->i_mode)) {
 			dec_page_count(sbi, F2FS_DIRTY_DENTS);
@@ -503,7 +517,6 @@ static void move_data_page(struct inode *inode, struct page *page, int gc_type)
 		}
 		set_cold_data(page);
 		do_write_data_page(page);
-		mutex_unlock_op(sbi, DATA_WRITE);
 		clear_cold_data(page);
 	}
 out:
@@ -591,8 +604,18 @@ next_iput:
 	if (++phase < 4)
 		goto next_step;
 
-	if (gc_type == FG_GC)
+	if (gc_type == FG_GC) {
 		f2fs_submit_bio(sbi, DATA, true);
+
+		/*
+		 * In the case of FG_GC, it'd be better to reclaim this victim
+		 * completely.
+		 */
+		if (get_valid_blocks(sbi, segno, 1) != 0) {
+			phase = 2;
+			goto next_step;
+		}
+	}
 }
 
 static int __get_victim(struct f2fs_sb_info *sbi, unsigned int *victim,
@@ -617,12 +640,6 @@ static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 	if (IS_ERR(sum_page))
 		return;
 
-	/*
-	 * CP needs to lock sum_page. In this time, we don't need
-	 * to lock this page, because this summary page is not gone anywhere.
-	 * Also, this page is not gonna be updated before GC is done.
-	 */
-	unlock_page(sum_page);
 	sum = page_address(sum_page);
 
 	switch (GET_SUM_TYPE((&sum->footer))) {
@@ -636,7 +653,7 @@ static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 	stat_inc_seg_count(sbi, GET_SUM_TYPE((&sum->footer)));
 	stat_inc_call_count(sbi->stat_info);
 
-	f2fs_put_page(sum_page, 0);
+	f2fs_put_page(sum_page, 1);
 }
 
 int f2fs_gc(struct f2fs_sb_info *sbi)
@@ -652,8 +669,10 @@ gc_more:
 	if (!(sbi->sb->s_flags & MS_ACTIVE))
 		goto stop;
 
-	if (gc_type == BG_GC && has_not_enough_free_secs(sbi, nfree))
+	if (gc_type == BG_GC && has_not_enough_free_secs(sbi, nfree)) {
 		gc_type = FG_GC;
+		write_checkpoint(sbi, false);
+	}
 
 	if (!__get_victim(sbi, &segno, gc_type, NO_CHECK_TYPE))
 		goto stop;
@@ -662,9 +681,11 @@ gc_more:
 	for (i = 0; i < sbi->segs_per_sec; i++)
 		do_garbage_collect(sbi, segno + i, &ilist, gc_type);
 
-	if (gc_type == FG_GC &&
-			get_valid_blocks(sbi, segno, sbi->segs_per_sec) == 0)
+	if (gc_type == FG_GC) {
+		sbi->cur_victim_sec = NULL_SEGNO;
 		nfree++;
+		WARN_ON(get_valid_blocks(sbi, segno, sbi->segs_per_sec));
+	}
 
 	if (has_not_enough_free_secs(sbi, nfree))
 		goto gc_more;
