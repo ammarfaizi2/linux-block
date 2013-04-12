@@ -9,6 +9,7 @@
 #include <linux/if_vlan.h>
 #include <net/ip.h>
 #include <linux/ipv6.h>
+#include <net/checksum.h>
 
 #include "qlcnic.h"
 
@@ -146,7 +147,10 @@ static inline u8 qlcnic_mac_hash(u64 mac)
 static inline u32 qlcnic_get_ref_handle(struct qlcnic_adapter *adapter,
 					u16 handle, u8 ring_id)
 {
-	if (adapter->pdev->device == PCI_DEVICE_ID_QLOGIC_QLE834X)
+	unsigned short device = adapter->pdev->device;
+
+	if ((device == PCI_DEVICE_ID_QLOGIC_QLE834X) ||
+	    (device == PCI_DEVICE_ID_QLOGIC_VF_QLE834X))
 		return handle | (ring_id << 15);
 	else
 		return handle;
@@ -1132,9 +1136,8 @@ qlcnic_process_lro(struct qlcnic_adapter *adapter,
 		iph = (struct iphdr *)skb->data;
 		th = (struct tcphdr *)(skb->data + (iph->ihl << 2));
 		length = (iph->ihl << 2) + (th->doff << 2) + lro_length;
+		csum_replace2(&iph->check, iph->tot_len, htons(length));
 		iph->tot_len = htons(length);
-		iph->check = 0;
-		iph->check = ip_fast_csum((unsigned char *)iph, iph->ihl);
 	}
 
 	th->psh = push;
@@ -1595,9 +1598,8 @@ qlcnic_83xx_process_lro(struct qlcnic_adapter *adapter,
 		iph = (struct iphdr *)skb->data;
 		th = (struct tcphdr *)(skb->data + (iph->ihl << 2));
 		length = (iph->ihl << 2) + (th->doff << 2) + lro_length;
+		csum_replace2(&iph->check, iph->tot_len, htons(length));
 		iph->tot_len = htons(length);
-		iph->check = 0;
-		iph->check = ip_fast_csum((unsigned char *)iph, iph->ihl);
 	}
 
 	th->psh = push;
@@ -1692,6 +1694,29 @@ skip:
 	return count;
 }
 
+static int qlcnic_83xx_msix_sriov_vf_poll(struct napi_struct *napi, int budget)
+{
+	int tx_complete;
+	int work_done;
+	struct qlcnic_host_sds_ring *sds_ring;
+	struct qlcnic_adapter *adapter;
+	struct qlcnic_host_tx_ring *tx_ring;
+
+	sds_ring = container_of(napi, struct qlcnic_host_sds_ring, napi);
+	adapter = sds_ring->adapter;
+	/* tx ring count = 1 */
+	tx_ring = adapter->tx_ring;
+
+	tx_complete = qlcnic_process_cmd_ring(adapter, tx_ring, budget);
+	work_done = qlcnic_83xx_process_rcv_ring(sds_ring, budget);
+	if ((work_done < budget) && tx_complete) {
+		napi_complete(&sds_ring->napi);
+		qlcnic_83xx_enable_intr(adapter, sds_ring);
+	}
+
+	return work_done;
+}
+
 static int qlcnic_83xx_poll(struct napi_struct *napi, int budget)
 {
 	int tx_complete;
@@ -1769,7 +1794,8 @@ void qlcnic_83xx_napi_enable(struct qlcnic_adapter *adapter)
 			qlcnic_83xx_enable_intr(adapter, sds_ring);
 	}
 
-	if (adapter->flags & QLCNIC_MSIX_ENABLED) {
+	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
 		for (ring = 0; ring < adapter->max_drv_tx_rings; ring++) {
 			tx_ring = &adapter->tx_ring[ring];
 			napi_enable(&tx_ring->napi);
@@ -1796,7 +1822,8 @@ void qlcnic_83xx_napi_disable(struct qlcnic_adapter *adapter)
 		napi_disable(&sds_ring->napi);
 	}
 
-	if (adapter->flags & QLCNIC_MSIX_ENABLED) {
+	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
 		for (ring = 0; ring < adapter->max_drv_tx_rings; ring++) {
 			tx_ring = &adapter->tx_ring[ring];
 			qlcnic_83xx_disable_tx_intr(adapter, tx_ring);
@@ -1809,7 +1836,7 @@ void qlcnic_83xx_napi_disable(struct qlcnic_adapter *adapter)
 int qlcnic_83xx_napi_add(struct qlcnic_adapter *adapter,
 			 struct net_device *netdev)
 {
-	int ring, max_sds_rings;
+	int ring, max_sds_rings, temp;
 	struct qlcnic_host_sds_ring *sds_ring;
 	struct qlcnic_host_tx_ring *tx_ring;
 	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
@@ -1820,14 +1847,23 @@ int qlcnic_83xx_napi_add(struct qlcnic_adapter *adapter,
 	max_sds_rings = adapter->max_sds_rings;
 	for (ring = 0; ring < adapter->max_sds_rings; ring++) {
 		sds_ring = &recv_ctx->sds_rings[ring];
-		if (adapter->flags & QLCNIC_MSIX_ENABLED)
-			netif_napi_add(netdev, &sds_ring->napi,
-				       qlcnic_83xx_rx_poll,
-				       QLCNIC_NETDEV_WEIGHT * 2);
-		else
+		if (adapter->flags & QLCNIC_MSIX_ENABLED) {
+			if (!(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
+				netif_napi_add(netdev, &sds_ring->napi,
+					       qlcnic_83xx_rx_poll,
+					       QLCNIC_NETDEV_WEIGHT * 2);
+			} else {
+				temp = QLCNIC_NETDEV_WEIGHT / max_sds_rings;
+				netif_napi_add(netdev, &sds_ring->napi,
+					       qlcnic_83xx_msix_sriov_vf_poll,
+					       temp);
+			}
+
+		} else {
 			netif_napi_add(netdev, &sds_ring->napi,
 				       qlcnic_83xx_poll,
 				       QLCNIC_NETDEV_WEIGHT / max_sds_rings);
+		}
 	}
 
 	if (qlcnic_alloc_tx_rings(adapter, netdev)) {
@@ -1835,7 +1871,8 @@ int qlcnic_83xx_napi_add(struct qlcnic_adapter *adapter,
 		return -ENOMEM;
 	}
 
-	if (adapter->flags & QLCNIC_MSIX_ENABLED) {
+	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
 		for (ring = 0; ring < adapter->max_drv_tx_rings; ring++) {
 			tx_ring = &adapter->tx_ring[ring];
 			netif_napi_add(netdev, &tx_ring->napi,
@@ -1861,7 +1898,8 @@ void qlcnic_83xx_napi_del(struct qlcnic_adapter *adapter)
 
 	qlcnic_free_sds_rings(adapter->recv_ctx);
 
-	if ((adapter->flags & QLCNIC_MSIX_ENABLED)) {
+	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
 		for (ring = 0; ring < adapter->max_drv_tx_rings; ring++) {
 			tx_ring = &adapter->tx_ring[ring];
 			netif_napi_del(&tx_ring->napi);

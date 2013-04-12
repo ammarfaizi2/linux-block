@@ -431,6 +431,30 @@ TRACE_EVENT(drv_prepare_multicast,
 	)
 );
 
+TRACE_EVENT(drv_set_multicast_list,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata, int mc_count),
+
+	TP_ARGS(local, sdata, mc_count),
+
+	TP_STRUCT__entry(
+		LOCAL_ENTRY
+		__field(bool, allmulti)
+		__field(int, mc_count)
+	),
+
+	TP_fast_assign(
+		LOCAL_ASSIGN;
+		__entry->allmulti = sdata->flags & IEEE80211_SDATA_ALLMULTI;
+		__entry->mc_count = mc_count;
+	),
+
+	TP_printk(
+		LOCAL_PR_FMT " configure mc filter, count=%d, allmulti=%d",
+		LOCAL_PR_ARG, __entry->mc_count, __entry->allmulti
+	)
+);
+
 TRACE_EVENT(drv_configure_filter,
 	TP_PROTO(struct ieee80211_local *local,
 		 unsigned int changed_flags,
@@ -940,23 +964,26 @@ TRACE_EVENT(drv_get_survey,
 );
 
 TRACE_EVENT(drv_flush,
-	TP_PROTO(struct ieee80211_local *local, bool drop),
+	TP_PROTO(struct ieee80211_local *local,
+		 u32 queues, bool drop),
 
-	TP_ARGS(local, drop),
+	TP_ARGS(local, queues, drop),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		__field(bool, drop)
+		__field(u32, queues)
 	),
 
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		__entry->drop = drop;
+		__entry->queues = queues;
 	),
 
 	TP_printk(
-		LOCAL_PR_FMT " drop:%d",
-		LOCAL_PR_ARG, __entry->drop
+		LOCAL_PR_FMT " queues:0x%x drop:%d",
+		LOCAL_PR_ARG, __entry->queues, __entry->drop
 	)
 );
 
@@ -1042,15 +1069,17 @@ TRACE_EVENT(drv_remain_on_channel,
 	TP_PROTO(struct ieee80211_local *local,
 		 struct ieee80211_sub_if_data *sdata,
 		 struct ieee80211_channel *chan,
-		 unsigned int duration),
+		 unsigned int duration,
+		 enum ieee80211_roc_type type),
 
-	TP_ARGS(local, sdata, chan, duration),
+	TP_ARGS(local, sdata, chan, duration, type),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
 		__field(int, center_freq)
 		__field(unsigned int, duration)
+		__field(u32, type)
 	),
 
 	TP_fast_assign(
@@ -1058,12 +1087,13 @@ TRACE_EVENT(drv_remain_on_channel,
 		VIF_ASSIGN;
 		__entry->center_freq = chan->center_freq;
 		__entry->duration = duration;
+		__entry->type = type;
 	),
 
 	TP_printk(
-		LOCAL_PR_FMT  VIF_PR_FMT " freq:%dMHz duration:%dms",
+		LOCAL_PR_FMT  VIF_PR_FMT " freq:%dMHz duration:%dms type=%d",
 		LOCAL_PR_ARG, VIF_PR_ARG,
-		__entry->center_freq, __entry->duration
+		__entry->center_freq, __entry->duration, __entry->type
 	)
 );
 

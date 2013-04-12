@@ -1100,7 +1100,7 @@ static void iwlagn_configure_filter(struct ieee80211_hw *hw,
 			FIF_BCN_PRBRESP_PROMISC | FIF_CONTROL;
 }
 
-static void iwlagn_mac_flush(struct ieee80211_hw *hw, bool drop)
+static void iwlagn_mac_flush(struct ieee80211_hw *hw, u32 queues, bool drop)
 {
 	struct iwl_priv *priv = IWL_MAC80211_GET_DVM(hw);
 
@@ -1137,7 +1137,8 @@ done:
 static int iwlagn_mac_remain_on_channel(struct ieee80211_hw *hw,
 				     struct ieee80211_vif *vif,
 				     struct ieee80211_channel *channel,
-				     int duration)
+				     int duration,
+				     enum ieee80211_roc_type type)
 {
 	struct iwl_priv *priv = IWL_MAC80211_GET_DVM(hw);
 	struct iwl_rxon_context *ctx = &priv->contexts[IWL_RXON_CTX_PAN];

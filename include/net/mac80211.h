@@ -93,9 +93,11 @@ struct device;
  * enum ieee80211_max_queues - maximum number of queues
  *
  * @IEEE80211_MAX_QUEUES: Maximum number of regular device queues.
+ * @IEEE80211_MAX_QUEUE_MAP: bitmap with maximum queues set
  */
 enum ieee80211_max_queues {
 	IEEE80211_MAX_QUEUES =		16,
+	IEEE80211_MAX_QUEUE_MAP =	BIT(IEEE80211_MAX_QUEUES) - 1,
 };
 
 #define IEEE80211_INVAL_HW_QUEUE	0xff
@@ -1067,6 +1069,9 @@ enum ieee80211_vif_flags {
  *	path needing to access it; even though the netdev carrier will always
  *	be off when it is %NULL there can still be races and packets could be
  *	processed after it switches back to %NULL.
+ * @debugfs_dir: debugfs dentry, can be used by drivers to create own per
+ *      interface debug files. Note that it will be NULL for the virtual
+ *	monitor interface (if that is requested.)
  * @drv_priv: data area for driver use, will always be aligned to
  *	sizeof(void *).
  */
@@ -1082,6 +1087,10 @@ struct ieee80211_vif {
 	struct ieee80211_chanctx_conf __rcu *chanctx_conf;
 
 	u32 driver_flags;
+
+#ifdef CONFIG_MAC80211_DEBUGFS
+	struct dentry *debugfs_dir;
+#endif
 
 	/* must be last */
 	u8 drv_priv[0] __aligned(sizeof(void *));
@@ -1101,8 +1110,6 @@ static inline bool ieee80211_vif_is_mesh(struct ieee80211_vif *vif)
  * These flags are used for communication about keys between the driver
  * and mac80211, with the @flags parameter of &struct ieee80211_key_conf.
  *
- * @IEEE80211_KEY_FLAG_WMM_STA: Set by mac80211, this flag indicates
- *	that the STA this key will be used with could be using QoS.
  * @IEEE80211_KEY_FLAG_GENERATE_IV: This flag should be set by the
  *	driver to indicate that it requires IV generation for this
  *	particular key.
@@ -1127,7 +1134,6 @@ static inline bool ieee80211_vif_is_mesh(struct ieee80211_vif *vif)
  *	%IEEE80211_KEY_FLAG_SW_MGMT_TX flag to encrypt such frames in SW.
  */
 enum ieee80211_key_flags {
-	IEEE80211_KEY_FLAG_WMM_STA	= 1<<0,
 	IEEE80211_KEY_FLAG_GENERATE_IV	= 1<<1,
 	IEEE80211_KEY_FLAG_GENERATE_MMIC= 1<<2,
 	IEEE80211_KEY_FLAG_PAIRWISE	= 1<<3,
@@ -1231,9 +1237,8 @@ enum ieee80211_sta_rx_bandwidth {
  * @addr: MAC address
  * @aid: AID we assigned to the station if we're an AP
  * @supp_rates: Bitmap of supported rates (per band)
- * @ht_cap: HT capabilities of this STA; restricted to our own TX capabilities
- * @vht_cap: VHT capabilities of this STA; Not restricting any capabilities
- * 	of remote STA. Taking as is.
+ * @ht_cap: HT capabilities of this STA; restricted to our own capabilities
+ * @vht_cap: VHT capabilities of this STA; restricted to our own capabilities
  * @wme: indicates whether the STA supports WME. Only valid during AP-mode.
  * @drv_priv: data area for driver use, will always be aligned to
  *	sizeof(void *), size is determined in hw information.
@@ -1950,14 +1955,14 @@ void ieee80211_free_txskb(struct ieee80211_hw *hw, struct sk_buff *skb);
  * filter those response frames except in the case of frames that
  * are buffered in the driver -- those must remain buffered to avoid
  * reordering. Because it is possible that no frames are released
- * in this case, the driver must call ieee80211_sta_eosp_irqsafe()
+ * in this case, the driver must call ieee80211_sta_eosp()
  * to indicate to mac80211 that the service period ended anyway.
  *
  * Finally, if frames from multiple TIDs are released from mac80211
  * but the driver might reorder them, it must clear & set the flags
  * appropriately (only the last frame may have %IEEE80211_TX_STATUS_EOSP)
  * and also take care of the EOSP and MORE_DATA bits in the frame.
- * The driver may also use ieee80211_sta_eosp_irqsafe() in this case.
+ * The driver may also use ieee80211_sta_eosp() in this case.
  */
 
 /**
@@ -2135,6 +2140,24 @@ enum ieee80211_rate_control_changed {
 };
 
 /**
+ * enum ieee80211_roc_type - remain on channel type
+ *
+ * With the support for multi channel contexts and multi channel operations,
+ * remain on channel operations might be limited/deferred/aborted by other
+ * flows/operations which have higher priority (and vise versa).
+ * Specifying the ROC type can be used by devices to prioritize the ROC
+ * operations compared to other operations/flows.
+ *
+ * @IEEE80211_ROC_TYPE_NORMAL: There are no special requirements for this ROC.
+ * @IEEE80211_ROC_TYPE_MGMT_TX: The remain on channel request is required
+ *	for sending managment frames offchannel.
+ */
+enum ieee80211_roc_type {
+	IEEE80211_ROC_TYPE_NORMAL = 0,
+	IEEE80211_ROC_TYPE_MGMT_TX,
+};
+
+/**
  * struct ieee80211_ops - callbacks from mac80211 to the driver
  *
  * This structure contains various callbacks that the driver may
@@ -2212,18 +2235,6 @@ enum ieee80211_rate_control_changed {
  *	MAC address of the device going away.
  *	Hence, this callback must be implemented. It can sleep.
  *
- * @add_interface_debugfs: Drivers can use this callback to add debugfs files
- *	when a vif is added to mac80211. This callback and
- *	@remove_interface_debugfs should be within a CONFIG_MAC80211_DEBUGFS
- *	conditional. @remove_interface_debugfs must be provided for cleanup.
- *	This callback can sleep.
- *
- * @remove_interface_debugfs: Remove the debugfs files which were added using
- *	@add_interface_debugfs. This callback must remove all debugfs entries
- *	that were added because mac80211 only removes interface debugfs when the
- *	interface is destroyed, not when it is removed from the driver.
- *	This callback can sleep.
- *
  * @config: Handler for configuration requests. IEEE 802.11 code calls this
  *	function to change hardware configuration, e.g., channel.
  *	This function should never fail but returns a negative error code
@@ -2244,6 +2255,9 @@ enum ieee80211_rate_control_changed {
  * @configure_filter: Configure the device's RX filter.
  *	See the section "Frame filtering" for more information.
  *	This callback must be implemented and can sleep.
+ *
+ * @set_multicast_list: Configure the device's interface specific RX multicast
+ *	filter. This callback is optional. This callback must be atomic.
  *
  * @set_tim: Set TIM bit. mac80211 calls this function when a TIM bit
  * 	must be set or cleared for a given STA. Must be atomic.
@@ -2426,8 +2440,11 @@ enum ieee80211_rate_control_changed {
  * @testmode_dump: Implement a cfg80211 test mode dump. The callback can sleep.
  *
  * @flush: Flush all pending frames from the hardware queue, making sure
- *	that the hardware queues are empty. If the parameter @drop is set
- *	to %true, pending frames may be dropped. The callback can sleep.
+ *	that the hardware queues are empty. The @queues parameter is a bitmap
+ *	of queues to flush, which is useful if different virtual interfaces
+ *	use different hardware queues; it may also indicate all queues.
+ *	If the parameter @drop is set to %true, pending frames may be dropped.
+ *	The callback can sleep.
  *
  * @channel_switch: Drivers that need (or want) to offload the channel
  *	switch operation for CSAs received from the AP may implement this
@@ -2492,7 +2509,7 @@ enum ieee80211_rate_control_changed {
  *	setting the EOSP flag in the QoS header of the frames. Also, when the
  *	service period ends, the driver must set %IEEE80211_TX_STATUS_EOSP
  *	on the last frame in the SP. Alternatively, it may call the function
- *	ieee80211_sta_eosp_irqsafe() to inform mac80211 of the end of the SP.
+ *	ieee80211_sta_eosp() to inform mac80211 of the end of the SP.
  *	This callback must be atomic.
  * @allow_buffered_frames: Prepare device to allow the given number of frames
  *	to go out to the given station. The frames will be sent by mac80211
@@ -2503,7 +2520,7 @@ enum ieee80211_rate_control_changed {
  *	them between the TIDs, it must set the %IEEE80211_TX_STATUS_EOSP flag
  *	on the last frame and clear it on all others and also handle the EOSP
  *	bit in the QoS header correctly. Alternatively, it can also call the
- *	ieee80211_sta_eosp_irqsafe() function.
+ *	ieee80211_sta_eosp() function.
  *	The @tids parameter is a bitmap and tells the driver which TIDs the
  *	frames will be on; it will at most have two bits set.
  *	This callback must be atomic.
@@ -2591,6 +2608,10 @@ struct ieee80211_ops {
 				 unsigned int changed_flags,
 				 unsigned int *total_flags,
 				 u64 multicast);
+	void (*set_multicast_list)(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif, bool allmulti,
+				   struct netdev_hw_addr_list *mc_list);
+
 	int (*set_tim)(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
 		       bool set);
 	int (*set_key)(struct ieee80211_hw *hw, enum set_key_cmd cmd,
@@ -2637,12 +2658,6 @@ struct ieee80211_ops {
 				   struct ieee80211_vif *vif,
 				   struct ieee80211_sta *sta,
 				   struct dentry *dir);
-	void (*add_interface_debugfs)(struct ieee80211_hw *hw,
-				      struct ieee80211_vif *vif,
-				      struct dentry *dir);
-	void (*remove_interface_debugfs)(struct ieee80211_hw *hw,
-					 struct ieee80211_vif *vif,
-					 struct dentry *dir);
 #endif
 	void (*sta_notify)(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			enum sta_notify_cmd, struct ieee80211_sta *sta);
@@ -2677,7 +2692,7 @@ struct ieee80211_ops {
 			     struct netlink_callback *cb,
 			     void *data, int len);
 #endif
-	void (*flush)(struct ieee80211_hw *hw, bool drop);
+	void (*flush)(struct ieee80211_hw *hw, u32 queues, bool drop);
 	void (*channel_switch)(struct ieee80211_hw *hw,
 			       struct ieee80211_channel_switch *ch_switch);
 	int (*napi_poll)(struct ieee80211_hw *hw, int budget);
@@ -2687,7 +2702,8 @@ struct ieee80211_ops {
 	int (*remain_on_channel)(struct ieee80211_hw *hw,
 				 struct ieee80211_vif *vif,
 				 struct ieee80211_channel *chan,
-				 int duration);
+				 int duration,
+				 enum ieee80211_roc_type type);
 	int (*cancel_remain_on_channel)(struct ieee80211_hw *hw);
 	int (*set_ringparam)(struct ieee80211_hw *hw, u32 tx, u32 rx);
 	void (*get_ringparam)(struct ieee80211_hw *hw,
@@ -3842,14 +3858,17 @@ void ieee80211_sta_block_awake(struct ieee80211_hw *hw,
  * %IEEE80211_TX_STATUS_EOSP bit and call this function instead.
  * This applies for PS-Poll as well as uAPSD.
  *
- * Note that there is no non-_irqsafe version right now as
- * it wasn't needed, but just like _tx_status() and _rx()
- * must not be mixed in irqsafe/non-irqsafe versions, this
- * function must not be mixed with those either. Use the
- * all irqsafe, or all non-irqsafe, don't mix! If you need
- * the non-irqsafe version of this, you need to add it.
+ * Note that just like with _tx_status() and _rx() drivers must
+ * not mix calls to irqsafe/non-irqsafe versions, this function
+ * must not be mixed with those either. Use the all irqsafe, or
+ * all non-irqsafe, don't mix!
+ *
+ * NB: the _irqsafe version of this function doesn't exist, no
+ *     driver needs it right now. Don't call this function if
+ *     you'd need the _irqsafe version, look at the git history
+ *     and restore the _irqsafe version!
  */
-void ieee80211_sta_eosp_irqsafe(struct ieee80211_sta *pubsta);
+void ieee80211_sta_eosp(struct ieee80211_sta *pubsta);
 
 /**
  * ieee80211_iter_keys - iterate keys programmed into the device

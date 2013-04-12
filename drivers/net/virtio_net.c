@@ -154,7 +154,7 @@ struct padded_vnet_hdr {
  */
 static int vq2txq(struct virtqueue *vq)
 {
-	return (virtqueue_get_queue_index(vq) - 1) / 2;
+	return (vq->index - 1) / 2;
 }
 
 static int txq2vq(int txq)
@@ -164,7 +164,7 @@ static int txq2vq(int txq)
 
 static int vq2rxq(struct virtqueue *vq)
 {
-	return virtqueue_get_queue_index(vq) / 2;
+	return vq->index / 2;
 }
 
 static int rxq2vq(int rxq)
@@ -1510,6 +1510,8 @@ static int virtnet_probe(struct virtio_device *vdev)
 			dev->features |= dev->hw_features & (NETIF_F_ALL_TSO|NETIF_F_UFO);
 		/* (!csum && gso) case will be fixed by register_netdev() */
 	}
+
+	dev->vlan_features = dev->features;
 
 	/* Configuration may specify what MAC to use.  Otherwise random. */
 	if (virtio_config_val_len(vdev, VIRTIO_NET_F_MAC,

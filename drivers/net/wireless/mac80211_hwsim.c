@@ -964,6 +964,12 @@ static int mac80211_hwsim_change_interface(struct ieee80211_hw *hw,
 		    newtype, vif->addr);
 	hwsim_check_magic(vif);
 
+	/*
+	 * interface may change from non-AP to AP in
+	 * which case this needs to be set up again
+	 */
+	vif->cab_queue = 0;
+
 	return 0;
 }
 
@@ -1389,7 +1395,7 @@ static int mac80211_hwsim_ampdu_action(struct ieee80211_hw *hw,
 	return 0;
 }
 
-static void mac80211_hwsim_flush(struct ieee80211_hw *hw, bool drop)
+static void mac80211_hwsim_flush(struct ieee80211_hw *hw, u32 queues, bool drop)
 {
 	/* Not implemented, queues only on kernel side */
 }
@@ -1535,7 +1541,8 @@ static void hw_roc_done(struct work_struct *work)
 static int mac80211_hwsim_roc(struct ieee80211_hw *hw,
 			      struct ieee80211_vif *vif,
 			      struct ieee80211_channel *chan,
-			      int duration)
+			      int duration,
+			      enum ieee80211_roc_type type)
 {
 	struct mac80211_hwsim_data *hwsim = hw->priv;
 

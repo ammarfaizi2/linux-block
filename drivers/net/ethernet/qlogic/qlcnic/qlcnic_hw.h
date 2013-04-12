@@ -83,6 +83,8 @@ enum qlcnic_regs {
 #define QLCNIC_CMD_CONFIG_PORT			0x2e
 #define QLCNIC_CMD_TEMP_SIZE			0x2f
 #define QLCNIC_CMD_GET_TEMP_HDR			0x30
+#define QLCNIC_CMD_BC_EVENT_SETUP		0x31
+#define	QLCNIC_CMD_CONFIG_VPORT			0x32
 #define QLCNIC_CMD_GET_MAC_STATS		0x37
 #define QLCNIC_CMD_SET_DRV_VER			0x38
 #define QLCNIC_CMD_CONFIGURE_RSS		0x41
@@ -114,6 +116,7 @@ enum qlcnic_regs {
 #define QLCNIC_SET_FAC_DEF_MAC			5
 
 #define QLCNIC_MBX_LINK_EVENT		0x8001
+#define QLCNIC_MBX_BC_EVENT		0x8002
 #define QLCNIC_MBX_COMP_EVENT		0x8100
 #define QLCNIC_MBX_REQUEST_EVENT	0x8101
 #define QLCNIC_MBX_TIME_EXTEND_EVENT	0x8102
@@ -175,6 +178,9 @@ int qlcnic_82xx_issue_cmd(struct qlcnic_adapter *adapter,
 int qlcnic_82xx_fw_cmd_create_rx_ctx(struct qlcnic_adapter *);
 int qlcnic_82xx_fw_cmd_create_tx_ctx(struct qlcnic_adapter *,
 				     struct qlcnic_host_tx_ring *tx_ring, int);
+void qlcnic_82xx_fw_cmd_del_rx_ctx(struct qlcnic_adapter *);
+void qlcnic_82xx_fw_cmd_del_tx_ctx(struct qlcnic_adapter *,
+				   struct qlcnic_host_tx_ring *);
 int qlcnic_82xx_sre_macaddr_change(struct qlcnic_adapter *, u8 *, __le16, u8);
 int qlcnic_82xx_get_mac_address(struct qlcnic_adapter *, u8*);
 int qlcnic_82xx_get_nic_info(struct qlcnic_adapter *, struct qlcnic_info *, u8);

@@ -22,7 +22,7 @@
  * USA
  *
  * The full GNU General Public License is included in this distribution
- * in the file called LICENSE.GPL.
+ * in the file called COPYING.
  *
  * Contact Information:
  *  Intel Linux Wireless <ilw@linux.intel.com>
@@ -70,6 +70,7 @@
 #include "fw-api-mac.h"
 #include "fw-api-power.h"
 #include "fw-api-d3.h"
+#include "fw-api-bt-coex.h"
 
 /* queue and FIFO numbers by usage */
 enum {
@@ -150,8 +151,10 @@ enum {
 
 	SET_CALIB_DEFAULT_CMD = 0x8e,
 
+	BEACON_NOTIFICATION = 0x90,
 	BEACON_TEMPLATE_CMD = 0x91,
 	TX_ANT_CONFIGURATION_CMD = 0x98,
+	BT_CONFIG = 0x9b,
 	STATISTICS_NOTIFICATION = 0x9d,
 
 	/* RF-KILL commands and notifications */
@@ -161,6 +164,11 @@ enum {
 	REPLY_RX_PHY_CMD = 0xc0,
 	REPLY_RX_MPDU_CMD = 0xc1,
 	BA_NOTIF = 0xc5,
+
+	/* BT Coex */
+	BT_COEX_PRIO_TABLE = 0xcc,
+	BT_COEX_PROT_ENV = 0xcd,
+	BT_PROFILE_NOTIFICATION = 0xce,
 
 	REPLY_DEBUG_CMD = 0xf0,
 	DEBUG_LOG_MSG = 0xf7,
@@ -271,38 +279,7 @@ enum {
 	NVM_ACCESS_TARGET_EEPROM = 2,
 };
 
-/**
- * struct iwl_nvm_access_cmd_ver1 - Request the device to send the NVM.
- * @op_code: 0 - read, 1 - write.
- * @target: NVM_ACCESS_TARGET_*. should be 0 for read.
- * @cache_refresh: 0 - None, 1- NVM.
- * @offset: offset in the nvm data.
- * @length: of the chunk.
- * @data: empty on read, the NVM chunk on write
- */
-struct iwl_nvm_access_cmd_ver1 {
-	u8 op_code;
-	u8 target;
-	u8 cache_refresh;
-	u8 reserved;
-	__le16 offset;
-	__le16 length;
-	u8 data[];
-} __packed; /* NVM_ACCESS_CMD_API_S_VER_1 */
-
-/**
- * struct iwl_nvm_access_resp_ver1 - response to NVM_ACCESS_CMD
- * @offset: the offset in the nvm data
- * @length: of the chunk
- * @data: the nvm chunk on when NVM_ACCESS_CMD was read, nothing on write
- */
-struct iwl_nvm_access_resp_ver1 {
-	__le16 offset;
-	__le16 length;
-	u8 data[];
-} __packed; /* NVM_ACCESS_CMD_RESP_API_S_VER_1 */
-
-/* Section types for NVM_ACCESS_CMD version 2 */
+/* Section types for NVM_ACCESS_CMD */
 enum {
 	NVM_SECTION_TYPE_HW = 0,
 	NVM_SECTION_TYPE_SW,
@@ -323,7 +300,7 @@ enum {
  * @length: in bytes, to read/write
  * @data: if write operation, the data to write. On read its empty
  */
-struct iwl_nvm_access_cmd_ver2 {
+struct iwl_nvm_access_cmd {
 	u8 op_code;
 	u8 target;
 	__le16 type;
@@ -340,7 +317,7 @@ struct iwl_nvm_access_cmd_ver2 {
  * @status: 0 for success, fail otherwise
  * @data: if read operation, the data returned. Empty on write.
  */
-struct iwl_nvm_access_resp_ver2 {
+struct iwl_nvm_access_resp {
 	__le16 offset;
 	__le16 length;
 	__le16 type;
@@ -794,6 +771,7 @@ struct iwl_phy_context_cmd {
  * @byte_count: frame's byte-count
  * @frame_time: frame's time on the air, based on byte count and frame rate
  *	calculation
+ * @mac_active_msk: what MACs were active when the frame was received
  *
  * Before each Rx, the device sends this data. It contains PHY information
  * about the reception of the packet.
@@ -811,7 +789,7 @@ struct iwl_rx_phy_info {
 	__le32 non_cfg_phy[IWL_RX_INFO_PHY_CNT];
 	__le32 rate_n_flags;
 	__le32 byte_count;
-	__le16 reserved2;
+	__le16 mac_active_msk;
 	__le16 frame_time;
 } __packed;
 

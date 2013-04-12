@@ -5,6 +5,7 @@
  * See LICENSE.qlcnic for copyright and licensing details.
  */
 
+#include "qlcnic_sriov.h"
 #include "qlcnic.h"
 #include "qlcnic_hw.h"
 
@@ -25,12 +26,12 @@
 #define QLC_83XX_OPCODE_POLL_READ_LIST		0x0100
 
 static int qlcnic_83xx_init_default_driver(struct qlcnic_adapter *adapter);
-static int qlcnic_83xx_configure_opmode(struct qlcnic_adapter *adapter);
 static int qlcnic_83xx_check_heartbeat(struct qlcnic_adapter *p_dev);
 static int qlcnic_83xx_restart_hw(struct qlcnic_adapter *adapter);
 
 /* Template header */
 struct qlc_83xx_reset_hdr {
+#if defined(__LITTLE_ENDIAN)
 	u16	version;
 	u16	signature;
 	u16	size;
@@ -39,14 +40,31 @@ struct qlc_83xx_reset_hdr {
 	u16	checksum;
 	u16	init_offset;
 	u16	start_offset;
+#elif defined(__BIG_ENDIAN)
+	u16	signature;
+	u16	version;
+	u16	entries;
+	u16	size;
+	u16	checksum;
+	u16	hdr_size;
+	u16	start_offset;
+	u16	init_offset;
+#endif
 } __packed;
 
 /* Command entry header. */
 struct qlc_83xx_entry_hdr {
-	u16 cmd;
-	u16 size;
-	u16 count;
-	u16 delay;
+#if defined(__LITTLE_ENDIAN)
+	u16	cmd;
+	u16	size;
+	u16	count;
+	u16	delay;
+#elif defined(__BIG_ENDIAN)
+	u16	size;
+	u16	cmd;
+	u16	delay;
+	u16	count;
+#endif
 } __packed;
 
 /* Generic poll command */
@@ -60,10 +78,17 @@ struct qlc_83xx_rmw {
 	u32	mask;
 	u32	xor_value;
 	u32	or_value;
+#if defined(__LITTLE_ENDIAN)
 	u8	shl;
 	u8	shr;
 	u8	index_a;
 	u8	rsvd;
+#elif defined(__BIG_ENDIAN)
+	u8	rsvd;
+	u8	index_a;
+	u8	shr;
+	u8	shl;
+#endif
 } __packed;
 
 /* Generic command with 2 DWORD */
@@ -1893,6 +1918,9 @@ int qlcnic_83xx_config_default_opmode(struct qlcnic_adapter *adapter)
 	qlcnic_get_func_no(adapter);
 	op_mode = QLCRDX(ahw, QLC_83XX_DRV_OP_MODE);
 
+	if (test_bit(__QLCNIC_SRIOV_CAPABLE, &adapter->state))
+		op_mode = QLC_83XX_DEFAULT_OPMODE;
+
 	if (op_mode == QLC_83XX_DEFAULT_OPMODE) {
 		adapter->nic_ops->init_driver = qlcnic_83xx_init_default_driver;
 		ahw->idc.state_entry = qlcnic_83xx_idc_ready_state_entry;
@@ -1922,6 +1950,16 @@ int qlcnic_83xx_get_nic_configuration(struct qlcnic_adapter *adapter)
 	ahw->max_mac_filters = nic_info.max_mac_filters;
 	ahw->max_mtu = nic_info.max_mtu;
 
+	/* VNIC mode is detected by BIT_23 in capabilities. This bit is also
+	 * set in case device is SRIOV capable. VNIC and SRIOV are mutually
+	 * exclusive. So in case of sriov capable device load driver in
+	 * default mode
+	 */
+	if (test_bit(__QLCNIC_SRIOV_CAPABLE, &adapter->state)) {
+		ahw->nic_mode = QLC_83XX_DEFAULT_MODE;
+		return ahw->nic_mode;
+	}
+
 	if (ahw->capabilities & BIT_23)
 		ahw->nic_mode = QLC_83XX_VIRTUAL_NIC_MODE;
 	else
@@ -1930,7 +1968,7 @@ int qlcnic_83xx_get_nic_configuration(struct qlcnic_adapter *adapter)
 	return ahw->nic_mode;
 }
 
-static int qlcnic_83xx_configure_opmode(struct qlcnic_adapter *adapter)
+int qlcnic_83xx_configure_opmode(struct qlcnic_adapter *adapter)
 {
 	int ret;
 
@@ -2008,9 +2046,12 @@ static void qlcnic_83xx_clear_function_resources(struct qlcnic_adapter *adapter)
 	}
 }
 
-int qlcnic_83xx_init(struct qlcnic_adapter *adapter)
+int qlcnic_83xx_init(struct qlcnic_adapter *adapter, int pci_using_dac)
 {
 	struct qlcnic_hardware_context *ahw = adapter->ahw;
+
+	if (qlcnic_sriov_vf_check(adapter))
+		return qlcnic_sriov_vf_init(adapter, pci_using_dac);
 
 	if (qlcnic_83xx_check_hw_status(adapter))
 		return -EIO;

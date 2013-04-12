@@ -37,9 +37,9 @@
 #include "qlcnic_83xx_hw.h"
 
 #define _QLCNIC_LINUX_MAJOR 5
-#define _QLCNIC_LINUX_MINOR 1
-#define _QLCNIC_LINUX_SUBVERSION 35
-#define QLCNIC_LINUX_VERSIONID  "5.1.35"
+#define _QLCNIC_LINUX_MINOR 2
+#define _QLCNIC_LINUX_SUBVERSION 40
+#define QLCNIC_LINUX_VERSIONID  "5.2.40"
 #define QLCNIC_DRV_IDC_VER  0x01
 #define QLCNIC_DRIVER_VERSION  ((_QLCNIC_LINUX_MAJOR << 16) |\
 		 (_QLCNIC_LINUX_MINOR << 8) | (_QLCNIC_LINUX_SUBVERSION))
@@ -449,6 +449,7 @@ struct qlcnic_hardware_context {
 	struct qlc_83xx_idc idc;
 	struct qlc_83xx_fw_info fw_info;
 	struct qlcnic_intrpt_config *intr_tbl;
+	struct qlcnic_sriov *sriov;
 	u32 *reg_tbl;
 	u32 *ext_reg_tbl;
 	u32 mbox_aen[QLC_83XX_MBX_AEN_CNT];
@@ -896,6 +897,7 @@ struct qlcnic_ipaddr {
 #define QLCNIC_FW_RESET_OWNER		0x2000
 #define QLCNIC_FW_HANG			0x4000
 #define QLCNIC_FW_LRO_MSS_CAP		0x8000
+#define QLCNIC_TX_INTR_SHARED		0x10000
 #define QLCNIC_IS_MSI_FAMILY(adapter) \
 	((adapter)->flags & (QLCNIC_MSI_ENABLED | QLCNIC_MSIX_ENABLED))
 
@@ -914,7 +916,9 @@ struct qlcnic_ipaddr {
 #define __QLCNIC_AER			5
 #define __QLCNIC_DIAG_RES_ALLOC		6
 #define __QLCNIC_LED_ENABLE		7
-#define __QLCNIC_ELB_INPROGRESS	8
+#define __QLCNIC_ELB_INPROGRESS		8
+#define __QLCNIC_SRIOV_ENABLE		10
+#define __QLCNIC_SRIOV_CAPABLE		11
 
 #define QLCNIC_INTERRUPT_TEST		1
 #define QLCNIC_LOOPBACK_TEST		2
@@ -1009,6 +1013,7 @@ struct qlcnic_adapter {
 
 	struct qlcnic_filter_hash fhash;
 	struct qlcnic_filter_hash rx_fhash;
+	struct list_head vf_mc_list;
 
 	spinlock_t tx_clean_lock;
 	spinlock_t mac_learn_lock;
@@ -1051,7 +1056,11 @@ struct qlcnic_info_le {
 	u8      total_pf;
 	u8      total_rss_engines;
 	__le16  max_vports;
-	u8      reserved2[64];
+	__le16	linkstate_reg_offset;
+	__le16	bit_offsets;
+	__le16  max_local_ipv6_addrs;
+	__le16  max_remote_ipv6_addrs;
+	u8	reserved2[56];
 } __packed;
 
 struct qlcnic_info {
@@ -1083,6 +1092,10 @@ struct qlcnic_info {
 	u8      total_pf;
 	u8      total_rss_engines;
 	u16	max_vports;
+	u16	linkstate_reg_offset;
+	u16	bit_offsets;
+	u16	max_local_ipv6_addrs;
+	u16	max_remote_ipv6_addrs;
 };
 
 struct qlcnic_pci_info_le {
@@ -1348,6 +1361,7 @@ struct _cdrp_cmd {
 struct qlcnic_cmd_args {
 	struct _cdrp_cmd req;
 	struct _cdrp_cmd rsp;
+	int op_type;
 };
 
 int qlcnic_fw_cmd_get_minidump_temp(struct qlcnic_adapter *adapter);
@@ -1430,6 +1444,7 @@ void qlcnic_post_rx_buffers(struct qlcnic_adapter *adapter,
 		struct qlcnic_host_rds_ring *rds_ring, u8 ring_id);
 int qlcnic_process_rcv_ring(struct qlcnic_host_sds_ring *sds_ring, int max);
 void qlcnic_set_multi(struct net_device *netdev);
+void __qlcnic_set_multi(struct net_device *netdev);
 int qlcnic_nic_add_mac(struct qlcnic_adapter *, const u8 *);
 int qlcnic_nic_del_mac(struct qlcnic_adapter *, const u8 *);
 void qlcnic_free_mac_list(struct qlcnic_adapter *adapter);
@@ -1511,6 +1526,12 @@ int qlcnic_reset_npar_config(struct qlcnic_adapter *);
 int qlcnic_set_eswitch_port_config(struct qlcnic_adapter *);
 void qlcnic_add_lb_filter(struct qlcnic_adapter *, struct sk_buff *, int,
 			  __le16);
+int qlcnic_83xx_configure_opmode(struct qlcnic_adapter *adapter);
+int qlcnic_read_mac_addr(struct qlcnic_adapter *);
+int qlcnic_setup_netdev(struct qlcnic_adapter *, struct net_device *, int);
+void qlcnic_sriov_vf_schedule_multi(struct net_device *);
+void qlcnic_vf_add_mc_list(struct net_device *);
+
 /*
  * QLOGIC Board information
  */
@@ -1567,6 +1588,9 @@ struct qlcnic_hardware_ops {
 	int (*create_rx_ctx) (struct qlcnic_adapter *);
 	int (*create_tx_ctx) (struct qlcnic_adapter *,
 	struct qlcnic_host_tx_ring *, int);
+	void (*del_rx_ctx) (struct qlcnic_adapter *);
+	void (*del_tx_ctx) (struct qlcnic_adapter *,
+			    struct qlcnic_host_tx_ring *);
 	int (*setup_link_event) (struct qlcnic_adapter *, int);
 	int (*get_nic_info) (struct qlcnic_adapter *, struct qlcnic_info *, u8);
 	int (*get_pci_info) (struct qlcnic_adapter *, struct qlcnic_pci_info *);
@@ -1635,7 +1659,10 @@ static inline int qlcnic_alloc_mbx_args(struct qlcnic_cmd_args *mbx,
 static inline int qlcnic_issue_cmd(struct qlcnic_adapter *adapter,
 				   struct qlcnic_cmd_args *cmd)
 {
-	return adapter->ahw->hw_ops->mbx_cmd(adapter, cmd);
+	if (adapter->ahw->hw_ops->mbx_cmd)
+		return adapter->ahw->hw_ops->mbx_cmd(adapter, cmd);
+
+	return -EIO;
 }
 
 static inline void qlcnic_get_func_no(struct qlcnic_adapter *adapter)
@@ -1655,12 +1682,14 @@ static inline void qlcnic_api_unlock(struct qlcnic_adapter *adapter)
 
 static inline void qlcnic_add_sysfs(struct qlcnic_adapter *adapter)
 {
-	adapter->ahw->hw_ops->add_sysfs(adapter);
+	if (adapter->ahw->hw_ops->add_sysfs)
+		adapter->ahw->hw_ops->add_sysfs(adapter);
 }
 
 static inline void qlcnic_remove_sysfs(struct qlcnic_adapter *adapter)
 {
-	adapter->ahw->hw_ops->remove_sysfs(adapter);
+	if (adapter->ahw->hw_ops->remove_sysfs)
+		adapter->ahw->hw_ops->remove_sysfs(adapter);
 }
 
 static inline void
@@ -1679,6 +1708,17 @@ static inline int qlcnic_fw_cmd_create_tx_ctx(struct qlcnic_adapter *adapter,
 					      int ring)
 {
 	return adapter->ahw->hw_ops->create_tx_ctx(adapter, ptr, ring);
+}
+
+static inline void qlcnic_fw_cmd_del_rx_ctx(struct qlcnic_adapter *adapter)
+{
+	return adapter->ahw->hw_ops->del_rx_ctx(adapter);
+}
+
+static inline void qlcnic_fw_cmd_del_tx_ctx(struct qlcnic_adapter *adapter,
+					    struct qlcnic_host_tx_ring *ptr)
+{
+	return adapter->ahw->hw_ops->del_tx_ctx(adapter, ptr);
 }
 
 static inline int qlcnic_linkevent_request(struct qlcnic_adapter *adapter,
@@ -1778,12 +1818,14 @@ static inline int qlcnic_get_board_info(struct qlcnic_adapter *adapter)
 static inline void qlcnic_dev_request_reset(struct qlcnic_adapter *adapter,
 					    u32 key)
 {
-	adapter->nic_ops->request_reset(adapter, key);
+	if (adapter->nic_ops->request_reset)
+		adapter->nic_ops->request_reset(adapter, key);
 }
 
 static inline void qlcnic_cancel_idc_work(struct qlcnic_adapter *adapter)
 {
-	adapter->nic_ops->cancel_idc_work(adapter);
+	if (adapter->nic_ops->cancel_idc_work)
+		adapter->nic_ops->cancel_idc_work(adapter);
 }
 
 static inline irqreturn_t
@@ -1830,7 +1872,9 @@ extern const struct ethtool_ops qlcnic_ethtool_failed_ops;
 	} while (0)
 
 #define PCI_DEVICE_ID_QLOGIC_QLE834X    0x8030
+#define PCI_DEVICE_ID_QLOGIC_VF_QLE834X	0x8430
 #define PCI_DEVICE_ID_QLOGIC_QLE824X	0x8020
+
 static inline bool qlcnic_82xx_check(struct qlcnic_adapter *adapter)
 {
 	unsigned short device = adapter->pdev->device;
@@ -1840,8 +1884,23 @@ static inline bool qlcnic_82xx_check(struct qlcnic_adapter *adapter)
 static inline bool qlcnic_83xx_check(struct qlcnic_adapter *adapter)
 {
 	unsigned short device = adapter->pdev->device;
-	return (device == PCI_DEVICE_ID_QLOGIC_QLE834X) ? true : false;
+	bool status;
+
+	status = ((device == PCI_DEVICE_ID_QLOGIC_QLE834X) ||
+		  (device == PCI_DEVICE_ID_QLOGIC_VF_QLE834X)) ? true : false;
+
+	return status;
 }
 
+static inline bool qlcnic_sriov_pf_check(struct qlcnic_adapter *adapter)
+{
+	return (adapter->ahw->op_mode == QLCNIC_SRIOV_PF_FUNC) ? true : false;
+}
 
+static inline bool qlcnic_sriov_vf_check(struct qlcnic_adapter *adapter)
+{
+	unsigned short device = adapter->pdev->device;
+
+	return (device == PCI_DEVICE_ID_QLOGIC_VF_QLE834X) ? true : false;
+}
 #endif				/* __QLCNIC_H_ */

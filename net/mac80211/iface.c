@@ -92,7 +92,7 @@ static u32 __ieee80211_idle_on(struct ieee80211_local *local)
 	if (local->hw.conf.flags & IEEE80211_CONF_IDLE)
 		return 0;
 
-	drv_flush(local, false);
+	ieee80211_flush_queues(local, NULL);
 
 	local->hw.conf.flags |= IEEE80211_CONF_IDLE;
 	return IEEE80211_CONF_CHANGE_IDLE;
@@ -499,8 +499,6 @@ int ieee80211_do_open(struct wireless_dev *wdev, bool coming_up)
 		res = drv_start(local);
 		if (res)
 			goto err_del_bss;
-		if (local->ops->napi_poll)
-			napi_enable(&local->napi);
 		/* we're brought up, everything changes */
 		hw_reconf_flags = ~0;
 		ieee80211_led_radio(local, true);
@@ -572,8 +570,6 @@ int ieee80211_do_open(struct wireless_dev *wdev, bool coming_up)
 			if (res)
 				goto err_del_interface;
 		}
-
-		drv_add_interface_debugfs(local, sdata);
 
 		if (sdata->vif.type == NL80211_IFTYPE_AP) {
 			local->fif_pspoll++;
@@ -852,15 +848,15 @@ static void ieee80211_do_stop(struct ieee80211_sub_if_data *sdata,
 		rcu_barrier();
 		sta_info_flush_cleanup(sdata);
 
-		skb_queue_purge(&sdata->skb_queue);
-
 		/*
 		 * Free all remaining keys, there shouldn't be any,
-		 * except maybe group keys in AP more or WDS?
+		 * except maybe in WDS mode?
 		 */
 		ieee80211_free_keys(sdata);
 
-		drv_remove_interface_debugfs(local, sdata);
+		/* fall through */
+	case NL80211_IFTYPE_AP:
+		skb_queue_purge(&sdata->skb_queue);
 
 		if (going_down)
 			drv_remove_interface(local, sdata);
@@ -871,8 +867,6 @@ static void ieee80211_do_stop(struct ieee80211_sub_if_data *sdata,
 	ieee80211_recalc_ps(local, -1);
 
 	if (local->open_count == 0) {
-		if (local->ops->napi_poll)
-			napi_disable(&local->napi);
 		ieee80211_clear_tx_pending(local);
 		ieee80211_stop_device(local);
 
@@ -935,6 +929,17 @@ static void ieee80211_set_multicast_list(struct net_device *dev)
 			atomic_dec(&local->iff_promiscs);
 		sdata->flags ^= IEEE80211_SDATA_PROMISC;
 	}
+
+	/*
+	 * TODO: If somebody needs this on AP interfaces,
+	 *	 it can be enabled easily but multicast
+	 *	 addresses from VLANs need to be synced.
+	 */
+	if (sdata->vif.type != NL80211_IFTYPE_MONITOR &&
+	    sdata->vif.type != NL80211_IFTYPE_AP_VLAN &&
+	    sdata->vif.type != NL80211_IFTYPE_AP)
+		drv_set_multicast_list(local, sdata, &dev->mc);
+
 	spin_lock_bh(&local->filter_lock);
 	__hw_addr_sync(&local->mc_list, &dev->mc, dev->addr_len);
 	spin_unlock_bh(&local->filter_lock);
@@ -1561,6 +1566,8 @@ int ieee80211_if_add(struct ieee80211_local *local, const char *name,
 	INIT_WORK(&sdata->cleanup_stations_wk, ieee80211_cleanup_sdata_stas_wk);
 	INIT_DELAYED_WORK(&sdata->dfs_cac_timer_work,
 			  ieee80211_dfs_cac_timer_work);
+	INIT_DELAYED_WORK(&sdata->dec_tailroom_needed_wk,
+			  ieee80211_delayed_tailroom_dec);
 
 	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
 		struct ieee80211_supported_band *sband;
