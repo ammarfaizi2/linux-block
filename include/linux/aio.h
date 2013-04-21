@@ -6,6 +6,7 @@
 #include <linux/aio_abi.h>
 #include <linux/uio.h>
 #include <linux/rcupdate.h>
+#include <linux/llist.h>
 
 #include <linux/atomic.h>
 
@@ -103,6 +104,8 @@ struct kiocb {
 
 	__u64			ki_user_data;	/* user's data for completion */
 	loff_t			ki_pos;
+	__s64			ki_res;		/* completion data */
+	__s64			ki_res2;	/* completion data */
 
 	void			*private;
 	/* State that we remember to be able to restart/retry  */
@@ -117,7 +120,13 @@ struct kiocb {
 
 	struct list_head	ki_list;	/* the aio core uses this
 						 * for cancellation */
-	struct list_head	ki_batch;	/* batch allocation */
+	/*
+	 * We don't use batching for the lockless bits, so we can share
+	 */
+	union {
+		struct list_head	ki_batch;	/* batch allocation */
+		struct llist_node	ki_llist;	/* lockless ctx list */
+	};
 
 	/*
 	 * If the aio_resfd field of the userspace iocb is not zero,
@@ -191,6 +200,8 @@ struct kioctx {
 	wait_queue_head_t	wait;
 
 	spinlock_t		ctx_lock;
+
+	struct llist_head	____cacheline_aligned_in_smp done_reqs;
 
 	int			reqs_active;
 	struct list_head	active_reqs;	/* used for cancellation */
