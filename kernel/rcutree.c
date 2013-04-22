@@ -3009,7 +3009,8 @@ static int rcu_pm_notify(struct notifier_block *self,
 {
 	switch (action) {
 	case PM_HIBERNATION_PREPARE:
-		rcu_expedited = 1;
+		if (nr_cpu_ids <= 256) /* Expediting bad for large systems. */
+			rcu_expedited = 1;
 		break;
 	case PM_POST_RESTORE:
 		rcu_expedited = 0;
