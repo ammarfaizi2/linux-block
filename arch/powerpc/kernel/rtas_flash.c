@@ -267,7 +267,7 @@ static ssize_t rtas_flash_read_msg(struct file *file, char __user *buf,
 	mutex_unlock(&rtas_update_flash_mutex);
 
 	/* Read as text message */
-	len = get_flash_status_msg(uf->status, msg);
+	len = get_flash_status_msg(status, msg);
 	return simple_read_from_buffer(buf, count, ppos, msg, len);
 }
 
@@ -349,13 +349,13 @@ static ssize_t rtas_flash_write(struct file *file, const char __user *buffer,
 	fl->blocks[next_free].length = count;
 	fl->num_blocks++;
 out:
-	mutex_lock(&rtas_update_flash_mutex);
+	mutex_unlock(&rtas_update_flash_mutex);
 	return count;
 
 nomem:
 	rc = -ENOMEM;
 error:
-	mutex_lock(&rtas_update_flash_mutex);
+	mutex_unlock(&rtas_update_flash_mutex);
 	return rc;
 }
 
@@ -415,8 +415,10 @@ static ssize_t manage_flash_write(struct file *file, const char __user *buf,
 			op = RTAS_COMMIT_TMP_IMG;
 	}
 	
-	if (op == -1)   /* buf is empty, or contains invalid string */
-		return -EINVAL;
+	if (op == -1) {   /* buf is empty, or contains invalid string */
+		rc = -EINVAL;
+		goto error;
+	}
 
 	manage_flash(args_buf, op);
 out:
@@ -667,17 +669,17 @@ static const struct rtas_flash_file rtas_flash_files[] = {
 		.filename	= "powerpc/rtas/" VALIDATE_FLASH_NAME,
 		.rtas_call_name	= "ibm,validate-flash-image",
 		.status		= &rtas_validate_flash_data.status,
-		.fops.read	= manage_flash_read,
-		.fops.write	= manage_flash_write,
+		.fops.read	= validate_flash_read,
+		.fops.write	= validate_flash_write,
+		.fops.release	= validate_flash_release,
 		.fops.llseek	= default_llseek,
 	},
 	{
 		.filename	= "powerpc/rtas/" MANAGE_FLASH_NAME,
 		.rtas_call_name	= "ibm,manage-flash-image",
 		.status		= &rtas_manage_flash_data.status,
-		.fops.read	= validate_flash_read,
-		.fops.write	= validate_flash_write,
-		.fops.release	= validate_flash_release,
+		.fops.read	= manage_flash_read,
+		.fops.write	= manage_flash_write,
 		.fops.llseek	= default_llseek,
 	}
 };
