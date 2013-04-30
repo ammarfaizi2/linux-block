@@ -382,7 +382,7 @@ extern int  ax25_check_iframes_acked(ax25_cb *, unsigned short);
 /* ax25_route.c */
 extern void ax25_rt_device_down(struct net_device *);
 extern int  ax25_rt_ioctl(unsigned int, void __user *);
-extern const struct file_operations ax25_route_fops;
+extern __weak const struct file_operations ax25_route_fops;
 extern ax25_route *ax25_get_route(ax25_address *addr, struct net_device *dev);
 extern int  ax25_rt_autobind(ax25_cb *, ax25_address *);
 extern struct sk_buff *ax25_rt_build_path(struct sk_buff *, ax25_address *, ax25_address *, ax25_digi *);

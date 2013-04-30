@@ -3752,8 +3752,6 @@ static struct notifier_block packet_netdev_notifier = {
 	.notifier_call =	packet_notifier,
 };
 
-#ifdef CONFIG_PROC_FS
-
 static void *packet_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(RCU)
 {
@@ -3819,8 +3817,6 @@ static const struct file_operations packet_seq_fops = {
 	.llseek		= seq_lseek,
 	.release	= seq_release_net,
 };
-
-#endif
 
 static int __net_init packet_net_init(struct net *net)
 {

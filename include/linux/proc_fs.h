@@ -47,15 +47,20 @@ static inline struct proc_dir_entry *proc_mkdir(const char *name,
 	struct proc_dir_entry *parent) {return NULL;}
 static inline struct proc_dir_entry *proc_mkdir_mode(const char *name,
 	umode_t mode, struct proc_dir_entry *parent) { return NULL; }
+static inline struct proc_dir_entry *proc_mkdir_data(const char *name,
+						     umode_t mode,
+						     struct proc_dir_entry *parent,
+						     void *data)
+{ return NULL; }
 
 static inline void proc_set_size(struct proc_dir_entry *de, loff_t size) {}
 static inline void proc_set_user(struct proc_dir_entry *de, kuid_t uid, kgid_t gid) {}
+static inline void *PDE_DATA(const struct inode *inode) { BUG(); return NULL; }
 static inline void *proc_get_parent_data(const struct inode *inode) { return NULL; }
 
 static inline struct proc_dir_entry *proc_create_data(const char *name,
 	umode_t mode, struct proc_dir_entry *parent,
 	const struct file_operations *proc_fops, void *data) { return NULL; }
-static inline void proc_set_size(struct proc_dir_entry *de, loff_t size) {}
 
 static inline void proc_remove(struct proc_dir_entry *de) {}
 static inline void remove_proc_entry(const char *name, struct proc_dir_entry *parent) {}

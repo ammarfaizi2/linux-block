@@ -662,8 +662,8 @@ do {									\
 extern void proc_tty_register_driver(struct tty_driver *);
 extern void proc_tty_unregister_driver(struct tty_driver *);
 #else
-static inline void proc_tty_register_driver(struct tty_driver *) {}
-static inline void proc_tty_unregister_driver(struct tty_driver *) {}
+static inline void proc_tty_register_driver(struct tty_driver *driver) {}
+static inline void proc_tty_unregister_driver(struct tty_driver *driver) {}
 #endif
 
 #endif

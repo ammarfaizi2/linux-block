@@ -1755,7 +1755,6 @@ done:
 	return skb->len;
 }
 
-#ifdef CONFIG_PROC_FS
 struct dn_rt_cache_iter_state {
 	int bucket;
 };
@@ -1848,8 +1847,6 @@ static const struct file_operations dn_rt_cache_seq_fops = {
 	.llseek	 = seq_lseek,
 	.release = seq_release_private,
 };
-
-#endif /* CONFIG_PROC_FS */
 
 void __init dn_route_init(void)
 {

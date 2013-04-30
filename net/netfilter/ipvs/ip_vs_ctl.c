@@ -1914,8 +1914,6 @@ static struct ctl_table vs_vars[] = {
 
 #endif
 
-#ifdef CONFIG_PROC_FS
-
 struct ip_vs_iter {
 	struct seq_net_private p;  /* Do not move this, netns depends upon it*/
 	struct list_head *table;
@@ -2237,7 +2235,6 @@ static const struct file_operations ip_vs_stats_percpu_fops = {
 	.llseek = seq_lseek,
 	.release = single_release_net,
 };
-#endif
 
 /*
  *	Set timeout values for tcp tcpfin udp in the timeout_table.

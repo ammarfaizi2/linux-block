@@ -995,7 +995,6 @@ end:
 	return error;
 }
 
-#ifdef CONFIG_PROC_FS
 static int pppoe_seq_show(struct seq_file *seq, void *v)
 {
 	struct pppox_sock *po;
@@ -1098,8 +1097,6 @@ static const struct file_operations pppoe_seq_fops = {
 	.llseek		= seq_lseek,
 	.release	= seq_release_net,
 };
-
-#endif /* CONFIG_PROC_FS */
 
 static const struct proto_ops pppoe_ops = {
 	.family		= AF_PPPOX,

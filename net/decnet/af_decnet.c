@@ -2110,7 +2110,6 @@ static struct packet_type dn_dix_packet_type __read_mostly = {
 	.func =		dn_route_rcv,
 };
 
-#ifdef CONFIG_PROC_FS
 struct dn_iter_state {
 	int bucket;
 };
@@ -2323,7 +2322,6 @@ static const struct file_operations dn_socket_seq_fops = {
 	.llseek		= seq_lseek,
 	.release	= seq_release_private,
 };
-#endif
 
 static const struct net_proto_family	dn_family_ops = {
 	.family =	AF_DECnet,

@@ -525,9 +525,6 @@ int dn_neigh_elist(struct net_device *dev, unsigned char *ptr, int n)
 	return state.t;
 }
 
-
-#ifdef CONFIG_PROC_FS
-
 static inline void dn_neigh_format_entry(struct seq_file *seq,
 					 struct neighbour *n)
 {
@@ -584,8 +581,6 @@ static const struct file_operations dn_neigh_seq_fops = {
 	.llseek		= seq_lseek,
 	.release	= seq_release_net,
 };
-
-#endif
 
 void __init dn_neigh_init(void)
 {

@@ -1546,8 +1546,6 @@ end:
 
 static unsigned int pppol2tp_net_id;
 
-#ifdef CONFIG_PROC_FS
-
 struct pppol2tp_seq_data {
 	struct seq_net_private p;
 	int tunnel_idx;			/* current tunnel */
@@ -1733,8 +1731,6 @@ static const struct file_operations pppol2tp_proc_fops = {
 	.llseek		= seq_lseek,
 	.release	= seq_release_net,
 };
-
-#endif /* CONFIG_PROC_FS */
 
 /*****************************************************************************
  * Network namespace

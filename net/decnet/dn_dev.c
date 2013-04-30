@@ -1272,7 +1272,6 @@ int unregister_dnaddr_notifier(struct notifier_block *nb)
 	return blocking_notifier_chain_unregister(&dnaddr_chain, nb);
 }
 
-#ifdef CONFIG_PROC_FS
 static inline int is_dn_dev(struct net_device *dev)
 {
 	return dev->dn_ptr != NULL;
@@ -1385,8 +1384,6 @@ static const struct file_operations dn_dev_seq_fops = {
 	.llseek	 = seq_lseek,
 	.release = seq_release,
 };
-
-#endif /* CONFIG_PROC_FS */
 
 static int addr[2];
 module_param_array(addr, int, NULL, 0444);

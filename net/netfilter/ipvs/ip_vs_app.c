@@ -501,7 +501,6 @@ int ip_vs_app_pkt_in(struct ip_vs_conn *cp, struct sk_buff *skb)
 }
 
 
-#ifdef CONFIG_PROC_FS
 /*
  *	/proc/net/ip_vs_app entry function
  */
@@ -598,7 +597,6 @@ static const struct file_operations ip_vs_app_fops = {
 	.llseek  = seq_lseek,
 	.release = seq_release_net,
 };
-#endif
 
 int __net_init ip_vs_app_net_init(struct net *net)
 {

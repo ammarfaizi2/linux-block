@@ -939,7 +939,6 @@ ip_vs_conn_new(const struct ip_vs_conn_param *p,
 /*
  *	/proc/net/ip_vs_conn entries
  */
-#ifdef CONFIG_PROC_FS
 struct ip_vs_iter_state {
 	struct seq_net_private	p;
 	struct hlist_head	*l;
@@ -1149,8 +1148,6 @@ static const struct file_operations ip_vs_conn_sync_fops = {
 	.llseek  = seq_lseek,
 	.release = seq_release_net,
 };
-
-#endif
 
 
 /*

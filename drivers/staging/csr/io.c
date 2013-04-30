@@ -77,7 +77,6 @@ DEFINE_SEMAPHORE(Unifi_instance_mutex);
  */
 DECLARE_WAIT_QUEUE_HEAD(Unifi_cleanup_wq);
 
-#ifdef CONFIG_PROC_FS
 /*
  * seq_file wrappers for procfile show routines.
  */
@@ -97,8 +96,6 @@ static const struct file_operations uf_proc_fops = {
 	.llseek		= seq_lseek,
 	.release	= seq_release,
 };
-
-#endif /* CONFIG_PROC_FS */
 
 #ifdef CSR_WIFI_RX_PATH_SPLIT
 
@@ -863,7 +860,6 @@ uf_put_instance(int inst)
  *      None.
  * ---------------------------------------------------------------------------
  */
-#ifdef CONFIG_PROC_FS
 static int uf_proc_show(struct seq_file *m, void *v)
 {
 	unifi_priv_t *priv;
@@ -912,8 +908,6 @@ static int uf_proc_show(struct seq_file *m, void *v)
 	seq_putc(m, '\n');
 	return 0;
 }
-#endif
-
 
 
 

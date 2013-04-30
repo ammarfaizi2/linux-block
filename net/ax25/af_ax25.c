@@ -1846,8 +1846,6 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	return res;
 }
 
-#ifdef CONFIG_PROC_FS
-
 static void *ax25_info_start(struct seq_file *seq, loff_t *pos)
 	__acquires(ax25_list_lock)
 {
@@ -1934,8 +1932,6 @@ static const struct file_operations ax25_info_fops = {
 	.llseek = seq_lseek,
 	.release = seq_release,
 };
-
-#endif
 
 static const struct net_proto_family ax25_family_ops = {
 	.family =	PF_AX25,

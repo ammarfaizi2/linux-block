@@ -17,6 +17,8 @@
 #include <linux/proc_fs.h>
 
 extern struct proc_dir_entry *atm_proc_root;
+#else
+static struct proc_dir_entry *const atm_proc_root = NULL;
 #endif
 
 #ifdef CONFIG_COMPAT

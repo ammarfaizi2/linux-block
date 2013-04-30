@@ -1966,8 +1966,6 @@ static struct net_device_stats *scc_net_get_stats(struct net_device *dev)
 /* *		dump statistics to /proc/net/z8530drv		      * */
 /* ******************************************************************** */
 
-#ifdef CONFIG_PROC_FS
-
 static inline struct scc_channel *scc_net_seq_idx(loff_t pos)
 {
 	int k;
@@ -2094,8 +2092,6 @@ static const struct file_operations scc_net_seq_fops = {
 	.llseek	 = seq_lseek,
 	.release = seq_release_private,
 };
-
-#endif /* CONFIG_PROC_FS */
 
  
 /* ******************************************************************** */

@@ -178,12 +178,6 @@ static int ida_revalidate(struct gendisk *disk);
 static int revalidate_allvol(ctlr_info_t *host);
 static int cpqarray_register_ctlr(int ctlr, struct pci_dev *pdev);
 
-#ifdef CONFIG_PROC_FS
-static void ida_procinit(int i);
-#else
-static void ida_procinit(int i) {}
-#endif
-
 static inline drv_info_t *get_drv(struct gendisk *disk)
 {
 	return disk->private_data;
@@ -204,9 +198,6 @@ static const struct block_device_operations ida_fops  = {
 	.revalidate_disk= ida_revalidate,
 };
 
-
-#ifdef CONFIG_PROC_FS
-
 static struct proc_dir_entry *proc_array;
 static const struct file_operations ida_proc_fops;
 
@@ -216,12 +207,15 @@ static const struct file_operations ida_proc_fops;
  */
 static void __init ida_procinit(int i)
 {
-	if (proc_array == NULL) {
-		proc_array = proc_mkdir("driver/cpqarray", NULL);
-		if (!proc_array) return;
-	}
+	if (IS_ENABLED(CONFIG_PROC_FS)) {
+		if (proc_array == NULL) {
+			proc_array = proc_mkdir("driver/cpqarray", NULL);
+			if (!proc_array) return;
+		}
 
-	proc_create_data(hba[i]->devname, 0, proc_array, &ida_proc_fops, hba[i]);
+		proc_create_data(hba[i]->devname, 0, proc_array,
+				 &ida_proc_fops, hba[i]);
+	}
 }
 
 /*
@@ -306,7 +300,6 @@ static const struct file_operations ida_proc_fops = {
 	.llseek		= seq_lseek,
 	.release	= single_release,
 };
-#endif /* CONFIG_PROC_FS */
 
 module_param_array(eisa, int, NULL, 0);
 
