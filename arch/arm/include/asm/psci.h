@@ -29,6 +29,8 @@ struct psci_operations {
 	int (*cpu_off)(struct psci_power_state state);
 	int (*cpu_on)(unsigned long cpuid, unsigned long entry_point);
 	int (*migrate)(unsigned long cpuid);
+	void (*system_off)(void);
+	void (*system_reset)(void);
 };
 
 extern struct psci_operations psci_ops;

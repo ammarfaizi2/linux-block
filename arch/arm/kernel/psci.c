@@ -17,12 +17,14 @@
 
 #include <linux/init.h>
 #include <linux/of.h>
+#include <linux/pm.h>
 
 #include <asm/compiler.h>
 #include <asm/errno.h>
 #include <asm/opcodes-sec.h>
 #include <asm/opcodes-virt.h>
 #include <asm/psci.h>
+#include <asm/system_misc.h>
 
 struct psci_operations psci_ops;
 
@@ -33,6 +35,8 @@ enum psci_function {
 	PSCI_FN_CPU_ON,
 	PSCI_FN_CPU_OFF,
 	PSCI_FN_MIGRATE,
+	PSCI_FN_SYS_OFF,
+	PSCI_FN_SYS_RESET,
 	PSCI_FN_MAX,
 };
 
@@ -153,6 +157,30 @@ static int psci_migrate(unsigned long cpuid)
 	return psci_to_linux_errno(err);
 }
 
+static void psci_system_off(void)
+{
+	u32 fn = psci_function_id[PSCI_FN_SYS_OFF];
+	invoke_psci_fn(fn, 0, 0, 0);
+}
+
+static void psci_system_reset(void)
+{
+	u32 fn = psci_function_id[PSCI_FN_SYS_RESET];
+	invoke_psci_fn(fn, 0, 0, 0);
+}
+
+void psci_pm_power_off(void)
+{
+	if (psci_ops.system_off)
+		psci_ops.system_off();
+}
+
+void psci_restart(enum reboot_mode reboot_mode, const char *cmd)
+{
+	if (psci_ops.system_off)
+		psci_ops.system_reset();
+}
+
 static const struct of_device_id psci_of_match[] __initconst = {
 	{ .compatible = "arm,psci",	},
 	{},
@@ -202,6 +230,18 @@ void __init psci_init(void)
 	if (!of_property_read_u32(np, "migrate", &id)) {
 		psci_function_id[PSCI_FN_MIGRATE] = id;
 		psci_ops.migrate = psci_migrate;
+	}
+
+	if (!of_property_read_u32(np, "system_off", &id)) {
+		psci_function_id[PSCI_FN_SYS_OFF] = id;
+		psci_ops.system_off = psci_system_off;
+		pm_power_off = psci_pm_power_off;
+	}
+
+	if (!of_property_read_u32(np, "system_reset", &id)) {
+		psci_function_id[PSCI_FN_SYS_RESET] = id;
+		psci_ops.system_reset = psci_system_reset;
+		arm_pm_restart = psci_restart;
 	}
 
 out_put_node:
