@@ -1255,7 +1255,7 @@ static int __perf_remove_from_context(void *info)
  *
  * If event->ctx is a cloned context, callers must make sure that
  * every task struct that event->ctx->task could possibly point to
- * remains valid.  This is OK when called from perf_release since
+ * remains valid.  This is OK when called from perf_close since
  * that only calls us on the top-level context, which can't be a clone.
  * When called from perf_event_exit_task, it's OK because the
  * context has been detached from its task.
@@ -3026,10 +3026,9 @@ static void put_event(struct perf_event *event)
 	perf_event_release_kernel(event);
 }
 
-static int perf_release(struct inode *inode, struct file *file)
+static void perf_close(struct file *file)
 {
 	put_event(file->private_data);
-	return 0;
 }
 
 u64 perf_event_read_value(struct perf_event *event, u64 *enabled, u64 *running)
@@ -3743,7 +3742,7 @@ static int perf_fasync(int fd, struct file *filp, int on)
 
 static const struct file_operations perf_fops = {
 	.llseek			= no_llseek,
-	.release		= perf_release,
+	.close			= perf_close,
 	.read			= perf_read,
 	.poll			= perf_poll,
 	.unlocked_ioctl		= perf_ioctl,
@@ -6979,7 +6978,7 @@ void perf_event_exit_task(struct task_struct *child)
 
 		/*
 		 * Ensure the list deletion is visible before we clear
-		 * the owner, closes a race against perf_release() where
+		 * the owner, closes a race against perf_close() where
 		 * we need to serialize on the owner->perf_event_mutex.
 		 */
 		smp_wmb();

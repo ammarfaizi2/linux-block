@@ -969,19 +969,18 @@ out_kfree:
 	goto out;
 }
 
-static int sysvipc_proc_release(struct inode *inode, struct file *file)
+static void sysvipc_proc_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct ipc_proc_iter *iter = seq->private;
 	put_ipc_ns(iter->ns);
 	seq_close_private(file);
-	return 0;
 }
 
 static const struct file_operations sysvipc_proc_fops = {
 	.open    = sysvipc_proc_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = sysvipc_proc_release,
+	.close   = sysvipc_proc_close,
 };
 #endif /* CONFIG_PROC_FS */

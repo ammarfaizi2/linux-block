@@ -212,10 +212,10 @@ err_free_info:
 }
 
 /*
- * release() implementation for gcov data files. Release resources allocated
+ * close() implementation for gcov data files. Release resources allocated
  * by open().
  */
-static int gcov_seq_release(struct inode *inode, struct file *file)
+static void gcov_seq_close(struct file *file)
 {
 	struct gcov_iterator *iter;
 	struct gcov_info *info;
@@ -227,8 +227,6 @@ static int gcov_seq_release(struct inode *inode, struct file *file)
 	gcov_iter_free(iter);
 	gcov_info_free(info);
 	seq_close(file);
-
-	return 0;
 }
 
 /*
@@ -402,7 +400,7 @@ out_err:
 
 static const struct file_operations gcov_data_fops = {
 	.open		= gcov_seq_open,
-	.release	= gcov_seq_release,
+	.close		= gcov_seq_close,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.write		= gcov_seq_write,

@@ -80,7 +80,7 @@ static int xz_dec_test_open(struct inode *i, struct file *f)
 	return 0;
 }
 
-static int xz_dec_test_release(struct inode *i, struct file *f)
+static void xz_dec_test_close(struct file *f)
 {
 	device_is_open = false;
 
@@ -88,7 +88,6 @@ static int xz_dec_test_release(struct inode *i, struct file *f)
 		printk(KERN_INFO DEVICE_NAME ": input was truncated\n");
 
 	printk(KERN_INFO DEVICE_NAME ": closed\n");
-	return 0;
 }
 
 /*
@@ -178,7 +177,7 @@ static int __init xz_dec_test_init(void)
 	static const struct file_operations fileops = {
 		.owner = THIS_MODULE,
 		.open = &xz_dec_test_open,
-		.release = &xz_dec_test_release,
+		.close = &xz_dec_test_close,
 		.write = &xz_dec_test_write
 	};
 

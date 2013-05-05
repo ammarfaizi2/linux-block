@@ -374,14 +374,13 @@ static int shm_mmap(struct file * file, struct vm_area_struct * vma)
 	return ret;
 }
 
-static int shm_release(struct inode *ino, struct file *file)
+static void shm_file_close(struct file *file)
 {
 	struct shm_file_data *sfd = shm_file_data(file);
 
 	put_ipc_ns(sfd->ns);
 	shm_file_data(file) = NULL;
 	kfree(sfd);
-	return 0;
 }
 
 static int shm_fsync(struct file *file, loff_t start, loff_t end, int datasync)
@@ -415,7 +414,7 @@ static unsigned long shm_get_unmapped_area(struct file *file,
 static const struct file_operations shm_file_operations = {
 	.mmap		= shm_mmap,
 	.fsync		= shm_fsync,
-	.release	= shm_release,
+	.close		= shm_file_close,
 #ifndef CONFIG_MMU
 	.get_unmapped_area	= shm_get_unmapped_area,
 #endif
@@ -426,7 +425,7 @@ static const struct file_operations shm_file_operations = {
 static const struct file_operations shm_file_operations_huge = {
 	.mmap		= shm_mmap,
 	.fsync		= shm_fsync,
-	.release	= shm_release,
+	.close		= shm_file_close,
 	.get_unmapped_area	= shm_get_unmapped_area,
 	.llseek		= noop_llseek,
 	.fallocate	= shm_fallocate,

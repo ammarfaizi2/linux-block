@@ -638,16 +638,13 @@ static int devkmsg_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int devkmsg_release(struct inode *inode, struct file *file)
+static void devkmsg_close(struct file *file)
 {
 	struct devkmsg_user *user = file->private_data;
-
-	if (!user)
-		return 0;
-
-	mutex_destroy(&user->lock);
-	kfree(user);
-	return 0;
+	if (user) {
+		mutex_destroy(&user->lock);
+		kfree(user);
+	}
 }
 
 const struct file_operations kmsg_fops = {
@@ -656,7 +653,7 @@ const struct file_operations kmsg_fops = {
 	.aio_write = devkmsg_writev,
 	.llseek = devkmsg_llseek,
 	.poll = devkmsg_poll,
-	.release = devkmsg_release,
+	.close = devkmsg_close,
 };
 
 #ifdef CONFIG_KEXEC

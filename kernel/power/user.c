@@ -104,7 +104,7 @@ static int snapshot_open(struct inode *inode, struct file *filp)
 	return error;
 }
 
-static int snapshot_release(struct inode *inode, struct file *filp)
+static void snapshot_close(struct file *filp)
 {
 	struct snapshot_data *data;
 
@@ -123,8 +123,6 @@ static int snapshot_release(struct inode *inode, struct file *filp)
 	atomic_inc(&snapshot_device_available);
 
 	unlock_system_sleep();
-
-	return 0;
 }
 
 static ssize_t snapshot_read(struct file *filp, char __user *buf,
@@ -438,7 +436,7 @@ snapshot_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 static const struct file_operations snapshot_fops = {
 	.open = snapshot_open,
-	.release = snapshot_release,
+	.close = snapshot_close,
 	.read = snapshot_read,
 	.write = snapshot_write,
 	.llseek = no_llseek,

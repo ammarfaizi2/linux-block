@@ -918,19 +918,16 @@ static unsigned int relay_file_poll(struct file *filp, poll_table *wait)
 }
 
 /**
- *	relay_file_release - release file op for relay files
- *	@inode: the inode
+ *	relay_file_close - close file op for relay files
  *	@filp: the file
  *
  *	Decrements the channel refcount, as the filesystem is
  *	no longer using it.
  */
-static int relay_file_release(struct inode *inode, struct file *filp)
+static void relay_file_close(struct file *filp)
 {
 	struct rchan_buf *buf = filp->private_data;
 	kref_put(&buf->kref, relay_remove_buf);
-
-	return 0;
 }
 
 /*
@@ -1347,7 +1344,7 @@ const struct file_operations relay_file_operations = {
 	.mmap		= relay_file_mmap,
 	.read		= relay_file_read,
 	.llseek		= no_llseek,
-	.release	= relay_file_release,
+	.close		= relay_file_close,
 	.splice_read	= relay_file_splice_read,
 };
 EXPORT_SYMBOL_GPL(relay_file_operations);

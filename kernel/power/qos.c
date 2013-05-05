@@ -113,13 +113,13 @@ static ssize_t pm_qos_power_write(struct file *filp, const char __user *buf,
 static ssize_t pm_qos_power_read(struct file *filp, char __user *buf,
 		size_t count, loff_t *f_pos);
 static int pm_qos_power_open(struct inode *inode, struct file *filp);
-static int pm_qos_power_release(struct inode *inode, struct file *filp);
+static void pm_qos_power_close(struct file *filp);
 
 static const struct file_operations pm_qos_power_fops = {
 	.write = pm_qos_power_write,
 	.read = pm_qos_power_read,
 	.open = pm_qos_power_open,
-	.release = pm_qos_power_release,
+	.close = pm_qos_power_close,
 	.llseek = noop_llseek,
 };
 
@@ -504,15 +504,11 @@ static int pm_qos_power_open(struct inode *inode, struct file *filp)
 	return -EPERM;
 }
 
-static int pm_qos_power_release(struct inode *inode, struct file *filp)
+static void pm_qos_power_close(struct file *file)
 {
-	struct pm_qos_request *req;
-
-	req = filp->private_data;
+	struct pm_qos_request *req = file->private_data;
 	pm_qos_remove_request(req);
 	kfree(req);
-
-	return 0;
 }
 
 

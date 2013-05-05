@@ -641,13 +641,11 @@ static ssize_t lock_stat_write(struct file *file, const char __user *buf,
 	return count;
 }
 
-static int lock_stat_release(struct inode *inode, struct file *file)
+static void lock_stat_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
-
 	vfree(seq->private);
 	seq_close(file);
-	return 0;
 }
 
 static const struct file_operations proc_lock_stat_operations = {
@@ -655,7 +653,7 @@ static const struct file_operations proc_lock_stat_operations = {
 	.write		= lock_stat_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= lock_stat_release,
+	.close		= lock_stat_close,
 };
 #endif /* CONFIG_LOCK_STAT */
 
