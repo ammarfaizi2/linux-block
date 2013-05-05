@@ -620,14 +620,13 @@ void kvm_put_kvm(struct kvm *kvm)
 EXPORT_SYMBOL_GPL(kvm_put_kvm);
 
 
-static int kvm_vm_release(struct inode *inode, struct file *filp)
+static void kvm_vm_close(struct file *filp)
 {
 	struct kvm *kvm = filp->private_data;
 
 	kvm_irqfd_release(kvm);
 
 	kvm_put_kvm(kvm);
-	return 0;
 }
 
 /*
@@ -1873,16 +1872,14 @@ static int kvm_vcpu_mmap(struct file *file, struct vm_area_struct *vma)
 	return 0;
 }
 
-static int kvm_vcpu_release(struct inode *inode, struct file *filp)
+static void kvm_vcpu_close(struct file *filp)
 {
 	struct kvm_vcpu *vcpu = filp->private_data;
-
 	kvm_put_kvm(vcpu->kvm);
-	return 0;
 }
 
 static struct file_operations kvm_vcpu_fops = {
-	.release        = kvm_vcpu_release,
+	.close	        = kvm_vcpu_close,
 	.unlocked_ioctl = kvm_vcpu_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl   = kvm_vcpu_compat_ioctl,
@@ -2403,7 +2400,7 @@ static int kvm_vm_mmap(struct file *file, struct vm_area_struct *vma)
 }
 
 static struct file_operations kvm_vm_fops = {
-	.release        = kvm_vm_release,
+	.close	        = kvm_vm_close,
 	.unlocked_ioctl = kvm_vm_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl   = kvm_vm_compat_ioctl,
