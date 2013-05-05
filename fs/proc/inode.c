@@ -158,7 +158,10 @@ static void close_pdeo(struct proc_dir_entry *pde, struct pde_opener *pdeo)
 		pdeo->closing = 1;
 		spin_unlock(&pde->pde_unload_lock);
 		file = pdeo->file;
-		pde->proc_fops->release(file_inode(file), file);
+		if (pde->proc_fops->close)
+			pde->proc_fops->close(file);
+		else
+			pde->proc_fops->release(file_inode(file), file);
 		spin_lock(&pde->pde_unload_lock);
 		list_del_init(&pdeo->lh);
 		if (pdeo->c)
@@ -317,7 +320,7 @@ static int proc_reg_open(struct inode *inode, struct file *file)
 	if (open)
 		rv = open(inode, file);
 
-	if (rv == 0 && release) {
+	if (rv == 0 && (pde->proc_fops->release || pde->proc_fops->close)) {
 		/* To know what to release. */
 		pdeo->file = file;
 		/* Strictly for "too late" ->release in proc_reg_release(). */

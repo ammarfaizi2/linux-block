@@ -288,6 +288,10 @@ static int snd_disconnect_release(struct inode *inode, struct file *file)
 	if (likely(df)) {
 		if ((file->f_flags & FASYNC) && df->disconnected_f_op->fasync)
 			df->disconnected_f_op->fasync(-1, file, 0);
+		if (df->disconnected_f_op->close) {
+			df->disconnected_f_op->close(file);
+			return 0;
+		}
 		return df->disconnected_f_op->release(inode, file);
 	}
 

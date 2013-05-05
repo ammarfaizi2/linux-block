@@ -244,8 +244,12 @@ static void __fput(struct file *file)
 			file->f_op->fasync(-1, file, 0);
 	}
 	ima_file_free(file);
-	if (file->f_op && file->f_op->release)
-		file->f_op->release(inode, file);
+	if (file->f_op) {
+		if (file->f_op->close)
+			file->f_op->close(file);
+		else if (file->f_op->release)
+			file->f_op->release(inode, file);
+	}
 	security_file_free(file);
 	if (unlikely(S_ISCHR(inode->i_mode) && inode->i_cdev != NULL &&
 		     !(file->f_mode & FMODE_PATH))) {
