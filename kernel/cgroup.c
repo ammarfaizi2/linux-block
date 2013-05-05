@@ -2407,19 +2407,11 @@ static int cgroup_seqfile_show(struct seq_file *m, void *arg)
 	return cft->read_seq_string(state->cgroup, cft, m);
 }
 
-static int cgroup_seqfile_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	kfree(seq->private);
-	single_close(file);
-	return 0;
-}
-
 static const struct file_operations cgroup_seqfile_operations = {
 	.read = seq_read,
 	.write = cgroup_file_write,
 	.llseek = seq_lseek,
-	.release = cgroup_seqfile_release,
+	.close = seq_close_private,
 };
 
 static int cgroup_file_open(struct inode *inode, struct file *file)
@@ -2451,12 +2443,11 @@ static int cgroup_file_open(struct inode *inode, struct file *file)
 	return err;
 }
 
-static int cgroup_file_release(struct inode *inode, struct file *file)
+static void cgroup_file_close(struct file *file)
 {
 	struct cftype *cft = __d_cft(file->f_dentry);
-	if (cft->release)
-		return cft->release(inode, file);
-	return 0;
+	if (cft->close)
+		cft->close(file);
 }
 
 /*
@@ -2564,7 +2555,7 @@ static const struct file_operations cgroup_file_operations = {
 	.write = cgroup_file_write,
 	.llseek = generic_file_llseek,
 	.open = cgroup_file_open,
-	.release = cgroup_file_release,
+	.close = cgroup_file_close,
 };
 
 static const struct inode_operations cgroup_file_inode_operations = {
@@ -3647,11 +3638,11 @@ static void cgroup_release_pid_array(struct cgroup_pidlist *l)
 	up_write(&l->mutex);
 }
 
-static int cgroup_pidlist_release(struct inode *inode, struct file *file)
+static void cgroup_pidlist_close(struct file *file)
 {
 	struct cgroup_pidlist *l;
 	if (!(file->f_mode & FMODE_READ))
-		return 0;
+		return;
 	/*
 	 * the seq_file will only be initialized if the file was opened for
 	 * reading; hence we check if it's not null only in that case.
@@ -3659,14 +3650,13 @@ static int cgroup_pidlist_release(struct inode *inode, struct file *file)
 	l = ((struct seq_file *)file->private_data)->private;
 	cgroup_release_pid_array(l);
 	seq_close(file);
-	return 0;
 }
 
 static const struct file_operations cgroup_pidlist_operations = {
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.write = cgroup_file_write,
-	.release = cgroup_pidlist_release,
+	.close = cgroup_pidlist_close,
 };
 
 /*
@@ -3944,14 +3934,14 @@ static struct cftype files[] = {
 		.name = "tasks",
 		.open = cgroup_tasks_open,
 		.write_u64 = cgroup_tasks_write,
-		.release = cgroup_pidlist_release,
+		.close = cgroup_pidlist_close,
 		.mode = S_IRUGO | S_IWUSR,
 	},
 	{
 		.name = CGROUP_FILE_GENERIC_PREFIX "procs",
 		.open = cgroup_procs_open,
 		.write_u64 = cgroup_procs_write,
-		.release = cgroup_pidlist_release,
+		.close = cgroup_pidlist_close,
 		.mode = S_IRUGO | S_IWUSR,
 	},
 	{
