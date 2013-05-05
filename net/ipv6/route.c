@@ -2755,7 +2755,7 @@ static const struct file_operations ipv6_route_proc_fops = {
 	.open		= ipv6_route_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release_net,
+	.close		= single_close_net,
 };
 
 static int rt6_stats_seq_show(struct seq_file *seq, void *v)
@@ -2783,7 +2783,7 @@ static const struct file_operations rt6_stats_seq_fops = {
 	.open	 = rt6_stats_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release_net,
+	.close	 = single_close_net,
 };
 #endif	/* CONFIG_PROC_FS */
 

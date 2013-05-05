@@ -69,7 +69,7 @@ static const struct file_operations xfrm_statistics_seq_fops = {
 	.open	 = xfrm_statistics_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release_net,
+	.close	 = single_close_net,
 };
 
 int __net_init xfrm_proc_init(struct net *net)

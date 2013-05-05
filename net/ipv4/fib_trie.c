@@ -2227,7 +2227,7 @@ static const struct file_operations fib_triestat_fops = {
 	.open	= fib_triestat_seq_open,
 	.read	= seq_read,
 	.llseek	= seq_lseek,
-	.release = single_release_net,
+	.close  = single_close_net,
 };
 
 static struct rt_trie_node *fib_trie_get_idx(struct seq_file *seq, loff_t pos)

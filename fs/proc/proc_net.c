@@ -96,13 +96,13 @@ int seq_release_net(struct inode *ino, struct file *f)
 }
 EXPORT_SYMBOL_GPL(seq_release_net);
 
-int single_release_net(struct inode *ino, struct file *f)
+void single_close_net(struct file *f)
 {
 	struct seq_file *seq = f->private_data;
 	put_net(seq->private);
-	return single_release(ino, f);
+	single_release(ino, f);
 }
-EXPORT_SYMBOL_GPL(single_release_net);
+EXPORT_SYMBOL_GPL(single_close_net);
 
 static struct net *get_proc_task_net(struct inode *dir)
 {

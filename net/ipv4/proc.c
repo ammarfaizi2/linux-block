@@ -86,7 +86,7 @@ static const struct file_operations sockstat_seq_fops = {
 	.open	 = sockstat_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release_net,
+	.close   = single_close_net,
 };
 
 /* snmp items */
@@ -425,7 +425,7 @@ static const struct file_operations snmp_seq_fops = {
 	.open	 = snmp_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release_net,
+	.close   = single_close_net,
 };
 
 
@@ -473,7 +473,7 @@ static const struct file_operations netstat_seq_fops = {
 	.open	 = netstat_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release_net,
+	.close   = single_close_net,
 };
 
 static __net_init int ip_proc_init_net(struct net *net)

@@ -57,7 +57,7 @@ static const struct file_operations sockstat6_seq_fops = {
 	.open	 = sockstat6_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release_net,
+	.close   = single_close_net,
 };
 
 static const struct snmp_mib snmp6_ipstats_list[] = {
@@ -233,7 +233,7 @@ static const struct file_operations snmp6_seq_fops = {
 	.open	 = snmp6_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release_net,
+	.close   = single_close_net,
 };
 
 static int snmp6_dev_seq_show(struct seq_file *seq, void *v)
