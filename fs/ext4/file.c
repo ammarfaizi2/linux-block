@@ -32,17 +32,18 @@
 
 /*
  * Called when an inode is released. Note that this is different
- * from ext4_file_open: open gets called at every open, but release
+ * from ext4_file_open: ->open() gets called at every open(2), but ->close()
  * gets called only when /all/ the files are closed.
  */
-static int ext4_release_file(struct inode *inode, struct file *filp)
+static void ext4_close_file(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	if (ext4_test_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE)) {
 		ext4_alloc_da_blocks(inode);
 		ext4_clear_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE);
 	}
 	/* if we are the last writer on the inode, drop the block reservation */
-	if ((filp->f_mode & FMODE_WRITE) &&
+	if ((file->f_mode & FMODE_WRITE) &&
 			(atomic_read(&inode->i_writecount) == 1) &&
 		        !EXT4_I(inode)->i_reserved_data_blocks)
 	{
@@ -50,10 +51,8 @@ static int ext4_release_file(struct inode *inode, struct file *filp)
 		ext4_discard_preallocations(inode);
 		up_write(&EXT4_I(inode)->i_data_sem);
 	}
-	if (is_dx(inode) && filp->private_data)
-		ext4_htree_free_dir_info(filp->private_data);
-
-	return 0;
+	if (is_dx(inode) && file->private_data)
+		ext4_htree_free_dir_info(file->private_data);
 }
 
 void ext4_unwritten_wait(struct inode *inode)
@@ -634,7 +633,7 @@ const struct file_operations ext4_file_operations = {
 #endif
 	.mmap		= ext4_file_mmap,
 	.open		= ext4_file_open,
-	.release	= ext4_release_file,
+	.close		= ext4_close_file,
 	.fsync		= ext4_sync_file,
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= generic_file_splice_write,
