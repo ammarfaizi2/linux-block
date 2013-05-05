@@ -233,22 +233,18 @@ static int v9fs_dir_readdir_dotl(struct file *filp, void *dirent,
 
 
 /**
- * v9fs_dir_release - close a directory
- * @inode: inode of the directory
+ * v9fs_dir_close - close a directory
  * @filp: file pointer to a directory
  *
  */
 
-int v9fs_dir_release(struct inode *inode, struct file *filp)
+void v9fs_dir_close(struct file *file)
 {
-	struct p9_fid *fid;
-
-	fid = filp->private_data;
-	p9_debug(P9_DEBUG_VFS, "inode: %p filp: %p fid: %d\n",
-		 inode, filp, fid ? fid->fid : -1);
+	struct p9_fid *fid = file->private_data;
+	p9_debug(P9_DEBUG_VFS, "file: %p fid: %d\n",
+		 file, fid ? fid->fid : -1);
 	if (fid)
 		p9_client_clunk(fid);
-	return 0;
 }
 
 const struct file_operations v9fs_dir_operations = {
@@ -256,7 +252,7 @@ const struct file_operations v9fs_dir_operations = {
 	.llseek = generic_file_llseek,
 	.readdir = v9fs_dir_readdir,
 	.open = v9fs_file_open,
-	.release = v9fs_dir_release,
+	.close = v9fs_dir_close,
 };
 
 const struct file_operations v9fs_dir_operations_dotl = {
@@ -264,6 +260,6 @@ const struct file_operations v9fs_dir_operations_dotl = {
 	.llseek = generic_file_llseek,
 	.readdir = v9fs_dir_readdir_dotl,
 	.open = v9fs_file_open,
-	.release = v9fs_dir_release,
+	.close = v9fs_dir_close,
         .fsync = v9fs_file_fsync_dotl,
 };
