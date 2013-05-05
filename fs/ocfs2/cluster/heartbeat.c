@@ -1192,6 +1192,8 @@ static int o2hb_thread(void *data)
 	return 0;
 }
 
+static const struct file_operations o2hb_debug_fops;
+
 #ifdef CONFIG_DEBUG_FS
 static int o2hb_debug_open(struct inode *inode, struct file *file)
 {
@@ -1266,40 +1268,20 @@ bail:
 	return -ENOMEM;
 }
 
-static int o2hb_debug_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
-
 static ssize_t o2hb_debug_read(struct file *file, char __user *buf,
 				 size_t nbytes, loff_t *ppos)
 {
 	return simple_read_from_buffer(buf, nbytes, ppos, file->private_data,
 				       i_size_read(file->f_mapping->host));
 }
-#else
-static int o2hb_debug_open(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-static int o2hb_debug_release(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-static ssize_t o2hb_debug_read(struct file *file, char __user *buf,
-			       size_t nbytes, loff_t *ppos)
-{
-	return 0;
-}
-#endif  /* CONFIG_DEBUG_FS */
 
 static const struct file_operations o2hb_debug_fops = {
 	.open =		o2hb_debug_open,
-	.release =	o2hb_debug_release,
+	.close =	simple_close_kfree,
 	.read =		o2hb_debug_read,
 	.llseek =	generic_file_llseek,
 };
+#endif  /* CONFIG_DEBUG_FS */
 
 void o2hb_exit(void)
 {

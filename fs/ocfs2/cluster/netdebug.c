@@ -210,21 +210,20 @@ out:
 	return ret;
 }
 
-static int nst_fop_release(struct inode *inode, struct file *file)
+static void nst_fop_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct o2net_send_tracking *dummy_nst = seq->private;
 
 	o2net_debug_del_nst(dummy_nst);
 	seq_close_private(file);
-	return 0;
 }
 
 static const struct file_operations nst_seq_fops = {
 	.open = nst_fop_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = nst_fop_release,
+	.close = nst_fop_close,
 };
 
 void o2net_debug_add_sc(struct o2net_sock_container *sc)
@@ -442,7 +441,7 @@ out:
 	return ret;
 }
 
-static int sc_fop_release(struct inode *inode, struct file *file)
+static void sc_fop_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct o2net_sock_debug *sd = seq->private;
@@ -450,7 +449,6 @@ static int sc_fop_release(struct inode *inode, struct file *file)
 
 	o2net_debug_del_sc(dummy_sc);
 	seq_close_private(file);
-	return 0;
 }
 
 static int stats_fop_open(struct inode *inode, struct file *file)
@@ -471,7 +469,7 @@ static const struct file_operations stats_seq_fops = {
 	.open = stats_fop_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = sc_fop_release,
+	.close = sc_fop_close,
 };
 
 static int sc_fop_open(struct inode *inode, struct file *file)
@@ -492,7 +490,7 @@ static const struct file_operations sc_seq_fops = {
 	.open = sc_fop_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = sc_fop_release,
+	.close = sc_fop_close,
 };
 
 static int o2net_fill_bitmap(char *buf, int len)
@@ -524,12 +522,6 @@ static int nodes_fop_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int o2net_debug_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
-
 static ssize_t o2net_debug_read(struct file *file, char __user *buf,
 				size_t nbytes, loff_t *ppos)
 {
@@ -539,7 +531,7 @@ static ssize_t o2net_debug_read(struct file *file, char __user *buf,
 
 static const struct file_operations nodes_fops = {
 	.open		= nodes_fop_open,
-	.release	= o2net_debug_release,
+	.close		= simple_close_kfree,
 	.read		= o2net_debug_read,
 	.llseek		= generic_file_llseek,
 };

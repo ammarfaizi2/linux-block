@@ -219,6 +219,8 @@ static const match_table_t tokens = {
 	{Opt_err, NULL}
 };
 
+static const struct file_operations ocfs2_osb_debug_fops;
+
 #ifdef CONFIG_DEBUG_FS
 static int ocfs2_osb_dump(struct ocfs2_super *osb, char *buf, int len)
 {
@@ -365,40 +367,20 @@ bail:
 	return -ENOMEM;
 }
 
-static int ocfs2_debug_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
-
 static ssize_t ocfs2_debug_read(struct file *file, char __user *buf,
 				size_t nbytes, loff_t *ppos)
 {
 	return simple_read_from_buffer(buf, nbytes, ppos, file->private_data,
 				       i_size_read(file->f_mapping->host));
 }
-#else
-static int ocfs2_osb_debug_open(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-static int ocfs2_debug_release(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-static ssize_t ocfs2_debug_read(struct file *file, char __user *buf,
-				size_t nbytes, loff_t *ppos)
-{
-	return 0;
-}
-#endif	/* CONFIG_DEBUG_FS */
 
 static const struct file_operations ocfs2_osb_debug_fops = {
 	.open =		ocfs2_osb_debug_open,
-	.release =	ocfs2_debug_release,
+	.close =	simple_close_kfree,
 	.read =		ocfs2_debug_read,
 	.llseek =	generic_file_llseek,
 };
+#endif	/* CONFIG_DEBUG_FS */
 
 static int ocfs2_sync_fs(struct super_block *sb, int wait)
 {

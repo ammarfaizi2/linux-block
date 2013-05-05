@@ -563,7 +563,7 @@ static ssize_t ocfs2_control_read(struct file *file,
 	return ret;
 }
 
-static int ocfs2_control_release(struct inode *inode, struct file *file)
+static void ocfs2_control_close(struct file *file)
 {
 	struct ocfs2_control_private *p = file->private_data;
 
@@ -598,8 +598,6 @@ out:
 	mutex_unlock(&ocfs2_control_lock);
 
 	kfree(p);
-
-	return 0;
 }
 
 static int ocfs2_control_open(struct inode *inode, struct file *file)
@@ -621,7 +619,7 @@ static int ocfs2_control_open(struct inode *inode, struct file *file)
 
 static const struct file_operations ocfs2_control_fops = {
 	.open    = ocfs2_control_open,
-	.release = ocfs2_control_release,
+	.close	 = ocfs2_control_close,
 	.read    = ocfs2_control_read,
 	.write   = ocfs2_control_write,
 	.owner   = THIS_MODULE,

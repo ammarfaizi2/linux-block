@@ -177,17 +177,16 @@ bail:
 	return status;
 }
 
-static int dlmfs_file_release(struct inode *inode,
-			      struct file *file)
+static void dlmfs_file_close(struct file *file)
 {
 	int level, status;
-	struct dlmfs_inode_private *ip = DLMFS_I(inode);
+	struct dlmfs_inode_private *ip = DLMFS_I(file_inode(file));
 	struct dlmfs_filp_private *fp = file->private_data;
 
-	if (S_ISDIR(inode->i_mode))
+	if (S_ISDIR(file_inode(file)->i_mode))
 		BUG();
 
-	mlog(0, "close called on inode %lu\n", inode->i_ino);
+	mlog(0, "close called on inode %lu\n", file_inode(file)->i_ino);
 
 	status = 0;
 	if (fp) {
@@ -198,8 +197,6 @@ static int dlmfs_file_release(struct inode *inode,
 		kfree(fp);
 		file->private_data = NULL;
 	}
-
-	return 0;
 }
 
 /*
@@ -595,7 +592,7 @@ static int dlmfs_fill_super(struct super_block * sb,
 
 static const struct file_operations dlmfs_file_operations = {
 	.open		= dlmfs_file_open,
-	.release	= dlmfs_file_release,
+	.close		= dlmfs_file_close,
 	.poll		= dlmfs_file_poll,
 	.read		= dlmfs_file_read,
 	.write		= dlmfs_file_write,

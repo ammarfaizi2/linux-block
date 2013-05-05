@@ -371,10 +371,9 @@ static void dlm_debug_get(struct dlm_debug_ctxt *dc)
 	kref_get(&dc->debug_refcnt);
 }
 
-static int debug_release(struct inode *inode, struct file *file)
+static void debug_close(struct file *file)
 {
 	free_page((unsigned long)file->private_data);
-	return 0;
 }
 
 static ssize_t debug_read(struct file *file, char __user *buf,
@@ -435,7 +434,7 @@ bail:
 
 static const struct file_operations debug_purgelist_fops = {
 	.open =		debug_purgelist_open,
-	.release =	debug_release,
+	.close =	debug_close,
 	.read =		debug_read,
 	.llseek =	generic_file_llseek,
 };
@@ -495,7 +494,7 @@ bail:
 
 static const struct file_operations debug_mle_fops = {
 	.open =		debug_mle_open,
-	.release =	debug_release,
+	.close =	debug_close,
 	.read =		debug_read,
 	.llseek =	generic_file_llseek,
 };
@@ -691,7 +690,7 @@ bail:
 	return ret;
 }
 
-static int debug_lockres_release(struct inode *inode, struct file *file)
+static void debug_lockres_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct debug_lockres *dl = (struct debug_lockres *)seq->private;
@@ -701,12 +700,11 @@ static int debug_lockres_release(struct inode *inode, struct file *file)
 	dlm_put(dl->dl_ctxt);
 	kfree(dl->dl_buf);
 	seq_close_private(file);
-	return 0;
 }
 
 static const struct file_operations debug_lockres_fops = {
 	.open =		debug_lockres_open,
-	.release =	debug_lockres_release,
+	.close =	debug_lockres_close,
 	.read =		seq_read,
 	.llseek =	seq_lseek,
 };
@@ -898,7 +896,7 @@ bail:
 
 static const struct file_operations debug_state_fops = {
 	.open =		debug_state_open,
-	.release =	debug_release,
+	.close =	debug_close,
 	.read =		debug_read,
 	.llseek =	generic_file_llseek,
 };

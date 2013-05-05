@@ -80,10 +80,10 @@ static int ocfs2_init_file_private(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static void ocfs2_free_file_private(struct inode *inode, struct file *file)
+static void ocfs2_free_file_private(struct file *file)
 {
 	struct ocfs2_file_private *fp = file->private_data;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct ocfs2_super *osb = OCFS2_SB(file_inode(file)->i_sb);
 
 	if (fp) {
 		ocfs2_simple_drop_lockres(osb, &fp->fp_flock);
@@ -140,8 +140,9 @@ leave:
 	return status;
 }
 
-static int ocfs2_file_release(struct inode *inode, struct file *file)
+static void ocfs2_file_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	struct ocfs2_inode_info *oi = OCFS2_I(inode);
 
 	spin_lock(&oi->ip_lock);
@@ -155,20 +156,12 @@ static int ocfs2_file_release(struct inode *inode, struct file *file)
 				 oi->ip_open_count);
 	spin_unlock(&oi->ip_lock);
 
-	ocfs2_free_file_private(inode, file);
-
-	return 0;
+	ocfs2_free_file_private(file);
 }
 
 static int ocfs2_dir_open(struct inode *inode, struct file *file)
 {
 	return ocfs2_init_file_private(inode, file);
-}
-
-static int ocfs2_dir_release(struct inode *inode, struct file *file)
-{
-	ocfs2_free_file_private(inode, file);
-	return 0;
 }
 
 static int ocfs2_sync_file(struct file *file, loff_t start, loff_t end,
@@ -2694,7 +2687,7 @@ const struct file_operations ocfs2_fops = {
 	.write		= do_sync_write,
 	.mmap		= ocfs2_mmap,
 	.fsync		= ocfs2_sync_file,
-	.release	= ocfs2_file_release,
+	.close		= ocfs2_file_close,
 	.open		= ocfs2_file_open,
 	.aio_read	= ocfs2_file_aio_read,
 	.aio_write	= ocfs2_file_aio_write,
@@ -2714,7 +2707,7 @@ const struct file_operations ocfs2_dops = {
 	.read		= generic_read_dir,
 	.readdir	= ocfs2_readdir,
 	.fsync		= ocfs2_sync_file,
-	.release	= ocfs2_dir_release,
+	.close		= ocfs2_free_file_private,
 	.open		= ocfs2_dir_open,
 	.unlocked_ioctl	= ocfs2_ioctl,
 #ifdef CONFIG_COMPAT
@@ -2742,7 +2735,7 @@ const struct file_operations ocfs2_fops_no_plocks = {
 	.write		= do_sync_write,
 	.mmap		= ocfs2_mmap,
 	.fsync		= ocfs2_sync_file,
-	.release	= ocfs2_file_release,
+	.close		= ocfs2_file_close,
 	.open		= ocfs2_file_open,
 	.aio_read	= ocfs2_file_aio_read,
 	.aio_write	= ocfs2_file_aio_write,
@@ -2761,7 +2754,7 @@ const struct file_operations ocfs2_dops_no_plocks = {
 	.read		= generic_read_dir,
 	.readdir	= ocfs2_readdir,
 	.fsync		= ocfs2_sync_file,
-	.release	= ocfs2_dir_release,
+	.close		= ocfs2_free_file_private,
 	.open		= ocfs2_dir_open,
 	.unlocked_ioctl	= ocfs2_ioctl,
 #ifdef CONFIG_COMPAT

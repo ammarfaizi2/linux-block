@@ -2884,7 +2884,7 @@ static const struct seq_operations ocfs2_dlm_seq_ops = {
 	.show =		ocfs2_dlm_seq_show,
 };
 
-static int ocfs2_dlm_debug_release(struct inode *inode, struct file *file)
+static void ocfs2_dlm_debug_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct ocfs2_dlm_seq_priv *priv = seq->private;
@@ -2893,7 +2893,6 @@ static int ocfs2_dlm_debug_release(struct inode *inode, struct file *file)
 	ocfs2_remove_lockres_tracking(res);
 	ocfs2_put_dlm_debug(priv->p_dlm_debug);
 	seq_close_private(file);
-	return 0;
 }
 
 static int ocfs2_dlm_debug_open(struct inode *inode, struct file *file)
@@ -2933,7 +2932,7 @@ out:
 
 static const struct file_operations ocfs2_dlm_debug_fops = {
 	.open =		ocfs2_dlm_debug_open,
-	.release =	ocfs2_dlm_debug_release,
+	.close =	ocfs2_dlm_debug_close,
 	.read =		seq_read,
 	.llseek =	seq_lseek,
 };
