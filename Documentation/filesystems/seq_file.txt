@@ -238,7 +238,7 @@ file_operations structure will look like:
 	        .release = seq_release
 	};
 
-There is also a seq_release_private() which passes the contents of the
+There is also a seq_close_private() which passes the contents of the
 seq_file private field to kfree() before releasing the structure.
 
 The final step is the creation of the /proc file itself. In the example

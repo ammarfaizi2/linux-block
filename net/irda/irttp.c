@@ -1909,7 +1909,7 @@ const struct file_operations irttp_seq_fops = {
 	.open           = irttp_seq_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 
 #endif /* PROC_FS */

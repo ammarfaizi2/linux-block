@@ -1393,9 +1393,9 @@ static int content_open(struct inode *inode, struct file *file,
 static int content_release(struct inode *inode, struct file *file,
 		struct cache_detail *cd)
 {
-	int ret = seq_release_private(inode, file);
+	seq_close_private(file);
 	module_put(cd->owner);
-	return ret;
+	return 0;
 }
 
 static int open_flush(struct inode *inode, struct file *file,

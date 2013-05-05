@@ -1231,7 +1231,7 @@ const struct file_operations irlap_seq_fops = {
 	.open           = irlap_seq_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 
 #endif /* CONFIG_PROC_FS */

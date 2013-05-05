@@ -625,15 +625,13 @@ void single_close(struct file *file)
 }
 EXPORT_SYMBOL(single_close);
 
-int seq_release_private(struct inode *inode, struct file *file)
+void seq_close_private(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
-
 	kfree(seq->private);
-	seq->private = NULL;
-	return seq_release(inode, file);
+	seq_release(inode, file);
 }
-EXPORT_SYMBOL(seq_release_private);
+EXPORT_SYMBOL(seq_close_private);
 
 void *__seq_open_private(struct file *f, const struct seq_operations *ops,
 		int psize)

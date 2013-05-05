@@ -609,7 +609,7 @@ static const struct file_operations recent_mt_fops = {
 	.open    = recent_seq_open,
 	.read    = seq_read,
 	.write   = recent_mt_proc_write,
-	.release = seq_release_private,
+	.close   = seq_close_private,
 	.owner   = THIS_MODULE,
 	.llseek = seq_lseek,
 };

@@ -2855,7 +2855,7 @@ __tracing_open(struct inode *inode, struct file *file, bool snapshot)
 	kfree(iter->trace);
 	kfree(iter->buffer_iter);
 release:
-	seq_release_private(inode, file);
+	seq_close_private(file);
 	return ERR_PTR(-ENOMEM);
 }
 
@@ -2903,7 +2903,7 @@ static int tracing_release(struct inode *inode, struct file *file)
 	free_cpumask_var(iter->started);
 	kfree(iter->trace);
 	kfree(iter->buffer_iter);
-	seq_release_private(inode, file);
+	seq_close_private(file);
 	return 0;
 }
 

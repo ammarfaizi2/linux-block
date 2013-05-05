@@ -2052,7 +2052,7 @@ static const struct file_operations gfs2_glocks_fops = {
 	.open    = gfs2_glocks_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_private,
+	.close   = seq_close_private,
 };
 
 static const struct file_operations gfs2_glstats_fops = {
@@ -2060,7 +2060,7 @@ static const struct file_operations gfs2_glstats_fops = {
 	.open    = gfs2_glstats_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_private,
+	.close   = seq_close_private,
 };
 
 static const struct file_operations gfs2_sbstats_fops = {
@@ -2068,7 +2068,7 @@ static const struct file_operations gfs2_sbstats_fops = {
 	.open	 = gfs2_sbstats_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_private,
+	.close   = seq_close_private,
 };
 
 int gfs2_create_debugfs_file(struct gfs2_sbd *sdp)

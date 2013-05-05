@@ -301,7 +301,7 @@ static const struct file_operations pvc_seq_fops = {
 	.open		= pvc_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 
 static int vcc_seq_show(struct seq_file *seq, void *v)
@@ -335,7 +335,7 @@ static const struct file_operations vcc_seq_fops = {
 	.open		= vcc_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 
 static int svc_seq_show(struct seq_file *seq, void *v)
@@ -370,7 +370,7 @@ static const struct file_operations svc_seq_fops = {
 	.open		= svc_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 
 static ssize_t proc_dev_atm_read(struct file *file, char __user *buf,

@@ -1050,7 +1050,7 @@ const struct file_operations atalk_seq_arp_fops = {
 	.open           = aarp_seq_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 #endif
 

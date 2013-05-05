@@ -86,12 +86,9 @@ EXPORT_SYMBOL_GPL(single_open_net);
 
 int seq_release_net(struct inode *ino, struct file *f)
 {
-	struct seq_file *seq;
-
-	seq = f->private_data;
-
+	struct seq_file *seq = f->private_data;
 	put_net(seq_file_net(seq));
-	seq_release_private(ino, f);
+	seq_close_private(f);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(seq_release_net);

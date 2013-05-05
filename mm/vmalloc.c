@@ -2685,7 +2685,7 @@ static const struct file_operations proc_vmalloc_operations = {
 	.open		= vmalloc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 
 static int __init proc_vmalloc_init(void)

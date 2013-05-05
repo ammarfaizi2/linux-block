@@ -216,7 +216,8 @@ static int nst_fop_release(struct inode *inode, struct file *file)
 	struct o2net_send_tracking *dummy_nst = seq->private;
 
 	o2net_debug_del_nst(dummy_nst);
-	return seq_release_private(inode, file);
+	seq_close_private(file);
+	return 0;
 }
 
 static const struct file_operations nst_seq_fops = {
@@ -448,7 +449,8 @@ static int sc_fop_release(struct inode *inode, struct file *file)
 	struct o2net_sock_container *dummy_sc = sd->dbg_sock;
 
 	o2net_debug_del_sc(dummy_sc);
-	return seq_release_private(inode, file);
+	seq_close_private(file);
+	return 0;
 }
 
 static int stats_fop_open(struct inode *inode, struct file *file)

@@ -2321,7 +2321,7 @@ static const struct file_operations dn_socket_seq_fops = {
 	.open		= dn_socket_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 #endif
 

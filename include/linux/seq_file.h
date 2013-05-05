@@ -127,7 +127,7 @@ int single_open_size(struct file *, int (*)(struct seq_file *, void *), void *, 
 void single_close(struct file *);
 void *__seq_open_private(struct file *, const struct seq_operations *, int);
 int seq_open_private(struct file *, const struct seq_operations *, int);
-int seq_release_private(struct inode *, struct file *);
+void seq_close_private(struct file *);
 int seq_put_decimal_ull(struct seq_file *m, char delimiter,
 			unsigned long long num);
 int seq_put_decimal_ll(struct seq_file *m, char delimiter,

@@ -2892,7 +2892,8 @@ static int ocfs2_dlm_debug_release(struct inode *inode, struct file *file)
 
 	ocfs2_remove_lockres_tracking(res);
 	ocfs2_put_dlm_debug(priv->p_dlm_debug);
-	return seq_release_private(inode, file);
+	seq_close_private(file);
+	return 0;
 }
 
 static int ocfs2_dlm_debug_open(struct inode *inode, struct file *file)

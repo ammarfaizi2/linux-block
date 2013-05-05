@@ -847,7 +847,7 @@ static const struct file_operations ddebug_proc_fops = {
 	.open = ddebug_proc_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_private,
+	.close = seq_close_private,
 	.write = ddebug_proc_write
 };
 

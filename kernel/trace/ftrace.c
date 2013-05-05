@@ -3595,14 +3595,14 @@ static const struct file_operations ftrace_avail_fops = {
 	.open = ftrace_avail_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_private,
+	.close = seq_close_private,
 };
 
 static const struct file_operations ftrace_enabled_fops = {
 	.open = ftrace_enabled_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_private,
+	.close = seq_close_private,
 };
 
 static const struct file_operations ftrace_filter_fops = {

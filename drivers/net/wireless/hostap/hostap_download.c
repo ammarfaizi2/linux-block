@@ -235,7 +235,7 @@ static const struct file_operations prism2_download_aux_dump_proc_fops = {
 	.open		= prism2_download_aux_dump_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };
 
 

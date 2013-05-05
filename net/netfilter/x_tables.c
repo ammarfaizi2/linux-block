@@ -1157,7 +1157,7 @@ static const struct file_operations xt_match_ops = {
 	.open	 = xt_match_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release_private,
+	.close	 = seq_close_private,
 };
 
 static void *xt_target_seq_start(struct seq_file *seq, loff_t *pos)
@@ -1221,7 +1221,7 @@ static const struct file_operations xt_target_ops = {
 	.open	 = xt_target_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release_private,
+	.close	 = seq_close_private,
 };
 
 #define FORMAT_TABLES	"_tables_names"

@@ -1006,7 +1006,7 @@ static const struct file_operations lec_seq_fops = {
 	.open = lec_seq_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_private,
+	.close = seq_close_private,
 };
 #endif
 

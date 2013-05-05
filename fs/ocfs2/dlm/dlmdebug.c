@@ -700,7 +700,8 @@ static int debug_lockres_release(struct inode *inode, struct file *file)
 		dlm_lockres_put(dl->dl_res);
 	dlm_put(dl->dl_ctxt);
 	kfree(dl->dl_buf);
-	return seq_release_private(inode, file);
+	seq_close_private(file);
+	return 0;
 }
 
 static const struct file_operations debug_lockres_fops = {

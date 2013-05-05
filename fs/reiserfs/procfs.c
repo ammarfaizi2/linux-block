@@ -460,7 +460,7 @@ static const struct file_operations r_file_operations = {
 	.open = r_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_private,
+	.close = seq_close_private,
 	.owner = THIS_MODULE,
 };
 

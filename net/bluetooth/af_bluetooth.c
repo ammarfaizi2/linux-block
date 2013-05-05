@@ -623,7 +623,7 @@ static const struct file_operations bt_fops = {
 	.open = bt_seq_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_private
+	.close = seq_close_private
 };
 
 int bt_procfs_init(struct net *net, const char *name,
