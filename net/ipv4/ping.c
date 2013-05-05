@@ -880,7 +880,7 @@ static const struct file_operations ping_seq_fops = {
 	.open		= ping_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_net,
+	.close		= seq_close_net,
 };
 
 static int ping_proc_register(struct net *net)

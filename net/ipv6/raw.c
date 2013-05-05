@@ -1285,7 +1285,7 @@ static const struct file_operations raw6_seq_fops = {
 	.open =		raw6_seq_open,
 	.read =		seq_read,
 	.llseek =	seq_lseek,
-	.release =	seq_release_net,
+	.close =	seq_close_net,
 };
 
 static int __net_init raw6_init_net(struct net *net)

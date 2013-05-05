@@ -1409,7 +1409,7 @@ static const struct file_operations udp6_afinfo_seq_fops = {
 	.open     = udp_seq_open,
 	.read     = seq_read,
 	.llseek   = seq_lseek,
-	.release  = seq_release_net
+	.close	  = seq_close_net
 };
 
 static struct udp_seq_afinfo udp6_seq_afinfo = {

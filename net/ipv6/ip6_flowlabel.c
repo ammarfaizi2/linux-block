@@ -798,7 +798,8 @@ static int ip6fl_seq_release(struct inode *inode, struct file *file)
 	struct seq_file *seq = file->private_data;
 	struct ip6fl_iter_state *state = ip6fl_seq_private(seq);
 	put_pid_ns(state->pid_ns);
-	return seq_release_net(inode, file);
+	seq_close_net(file);
+	return 0;
 }
 
 static const struct file_operations ip6fl_seq_fops = {

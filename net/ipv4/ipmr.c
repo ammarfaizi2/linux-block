@@ -2510,7 +2510,7 @@ static const struct file_operations ipmr_vif_fops = {
 	.open    = ipmr_vif_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 struct ipmr_mfc_iter {
@@ -2678,7 +2678,7 @@ static const struct file_operations ipmr_mfc_fops = {
 	.open    = ipmr_mfc_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 #endif
 

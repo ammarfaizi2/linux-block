@@ -84,14 +84,13 @@ err_net:
 }
 EXPORT_SYMBOL_GPL(single_open_net);
 
-int seq_release_net(struct inode *ino, struct file *f)
+void seq_close_net(struct file *f)
 {
 	struct seq_file *seq = f->private_data;
 	put_net(seq_file_net(seq));
 	seq_close_private(f);
-	return 0;
 }
-EXPORT_SYMBOL_GPL(seq_release_net);
+EXPORT_SYMBOL_GPL(seq_close_net);
 
 void single_close_net(struct file *f)
 {

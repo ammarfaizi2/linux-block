@@ -2488,7 +2488,7 @@ static const struct file_operations igmp_mc_seq_fops = {
 	.open		=	igmp_mc_seq_open,
 	.read		=	seq_read,
 	.llseek		=	seq_lseek,
-	.release	=	seq_release_net,
+	.close		=	seq_close_net,
 };
 
 struct igmp_mcf_iter_state {
@@ -2639,7 +2639,7 @@ static const struct file_operations igmp_mcf_seq_fops = {
 	.open		=	igmp_mcf_seq_open,
 	.read		=	seq_read,
 	.llseek		=	seq_lseek,
-	.release	=	seq_release_net,
+	.close		=	seq_close_net,
 };
 
 static int __net_init igmp_net_init(struct net *net)

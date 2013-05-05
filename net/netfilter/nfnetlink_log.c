@@ -1021,7 +1021,7 @@ static const struct file_operations nful_file_ops = {
 	.open	 = nful_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 #endif /* PROC_FS */

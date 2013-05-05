@@ -2379,7 +2379,7 @@ static const struct file_operations unix_seq_fops = {
 	.open		= unix_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_net,
+	.close		= seq_close_net,
 };
 
 #endif

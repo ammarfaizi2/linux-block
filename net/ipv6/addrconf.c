@@ -3438,7 +3438,7 @@ static const struct file_operations if6_fops = {
 	.open		= if6_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_net,
+	.close		= seq_close_net,
 };
 
 static int __net_init if6_proc_net_init(struct net *net)

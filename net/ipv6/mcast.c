@@ -2432,7 +2432,7 @@ static const struct file_operations igmp6_mc_seq_fops = {
 	.open		=	igmp6_mc_seq_open,
 	.read		=	seq_read,
 	.llseek		=	seq_lseek,
-	.release	=	seq_release_net,
+	.close		=	seq_close_net,
 };
 
 struct igmp6_mcf_iter_state {
@@ -2591,7 +2591,7 @@ static const struct file_operations igmp6_mcf_seq_fops = {
 	.open		=	igmp6_mcf_seq_open,
 	.read		=	seq_read,
 	.llseek		=	seq_lseek,
-	.release	=	seq_release_net,
+	.close		=	seq_close_net,
 };
 
 static int __net_init igmp6_proc_init(struct net *net)

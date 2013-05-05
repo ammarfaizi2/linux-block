@@ -206,7 +206,7 @@ static const struct file_operations ct_file_ops = {
 	.open    = ct_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 /* expects */
@@ -318,7 +318,7 @@ static const struct file_operations ip_exp_file_ops = {
 	.open    = exp_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 static void *ct_cpu_seq_start(struct seq_file *seq, loff_t *pos)
@@ -411,7 +411,7 @@ static const struct file_operations ct_cpu_seq_fops = {
 	.open    = ct_cpu_seq_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 static int __net_init ip_conntrack_net_init(struct net *net)

@@ -636,7 +636,7 @@ const struct file_operations pn_sock_seq_fops = {
 	.open = pn_sock_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_net,
+	.close = seq_close_net,
 };
 #endif
 
@@ -820,6 +820,6 @@ const struct file_operations pn_res_seq_fops = {
 	.open = pn_res_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_net,
+	.close = seq_close_net,
 };
 #endif

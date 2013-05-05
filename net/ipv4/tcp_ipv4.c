@@ -2765,7 +2765,7 @@ static const struct file_operations tcp_afinfo_seq_fops = {
 	.open    = tcp_seq_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net
+	.close	 = seq_close_net
 };
 
 static struct tcp_seq_afinfo tcp4_seq_afinfo = {

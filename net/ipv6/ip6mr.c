@@ -476,7 +476,7 @@ static const struct file_operations ip6mr_vif_fops = {
 	.open    = ip6mr_vif_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 static void *ipmr_mfc_seq_start(struct seq_file *seq, loff_t *pos)
@@ -608,7 +608,7 @@ static const struct file_operations ip6mr_mfc_fops = {
 	.open    = ipmr_mfc_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 #endif
 

@@ -1041,7 +1041,7 @@ static const struct file_operations raw_seq_fops = {
 	.open	 = raw_v4_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 static __net_init int raw_init_net(struct net *net)

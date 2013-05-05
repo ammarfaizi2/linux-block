@@ -172,7 +172,7 @@ static const struct file_operations dev_seq_fops = {
 	.open    = dev_seq_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 static const struct seq_operations softnet_seq_ops = {
@@ -296,7 +296,7 @@ static const struct file_operations ptype_seq_fops = {
 	.open    = ptype_seq_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 
@@ -382,7 +382,7 @@ static const struct file_operations dev_mc_seq_fops = {
 	.open    = dev_mc_seq_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 static int __net_init dev_mc_net_init(struct net *net)

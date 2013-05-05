@@ -137,7 +137,7 @@ static const struct file_operations wireless_seq_fops = {
 	.open    = seq_open_wireless,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 int __net_init wext_proc_init(struct net *net)

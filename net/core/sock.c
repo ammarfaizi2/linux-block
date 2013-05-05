@@ -2839,7 +2839,7 @@ static const struct file_operations proto_seq_fops = {
 	.open		= proto_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_net,
+	.close		= seq_close_net,
 };
 
 static __net_init int proto_init_net(struct net *net)

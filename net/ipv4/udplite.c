@@ -81,7 +81,7 @@ static const struct file_operations udplite_afinfo_seq_fops = {
 	.open     = udp_seq_open,
 	.read     = seq_read,
 	.llseek   = seq_lseek,
-	.release  = seq_release_net
+	.close	  = seq_close_net
 };
 
 static struct udp_seq_afinfo udplite4_seq_afinfo = {

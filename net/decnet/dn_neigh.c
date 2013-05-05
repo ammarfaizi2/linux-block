@@ -582,7 +582,7 @@ static const struct file_operations dn_neigh_seq_fops = {
 	.open		= dn_neigh_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_net,
+	.close		= seq_close_net,
 };
 
 #endif

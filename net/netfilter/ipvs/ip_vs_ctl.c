@@ -2099,7 +2099,7 @@ static const struct file_operations ip_vs_info_fops = {
 	.open    = ip_vs_info_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release_net,
+	.close	 = seq_close_net,
 };
 
 static int ip_vs_stats_show(struct seq_file *seq, void *v)
