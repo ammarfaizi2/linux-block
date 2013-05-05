@@ -93,7 +93,7 @@ struct posix_clock_operations {
 	uint    (*poll)    (struct posix_clock *pc,
 			    struct file *file, poll_table *wait);
 
-	int     (*release) (struct posix_clock *pc);
+	void    (*release) (struct posix_clock *pc);
 
 	ssize_t (*read)    (struct posix_clock *pc,
 			    uint flags, char __user *buf, size_t cnt);

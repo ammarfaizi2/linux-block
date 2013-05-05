@@ -176,19 +176,16 @@ out:
 	return err;
 }
 
-static int posix_clock_release(struct inode *inode, struct file *fp)
+static void posix_clock_close(struct file *fp)
 {
 	struct posix_clock *clk = fp->private_data;
-	int err = 0;
 
 	if (clk->ops.release)
-		err = clk->ops.release(clk);
+		clk->ops.release(clk);
 
 	kref_put(&clk->kref, delete_clock);
 
 	fp->private_data = NULL;
-
-	return err;
 }
 
 static const struct file_operations posix_clock_file_operations = {
@@ -198,7 +195,7 @@ static const struct file_operations posix_clock_file_operations = {
 	.poll		= posix_clock_poll,
 	.unlocked_ioctl	= posix_clock_ioctl,
 	.open		= posix_clock_open,
-	.release	= posix_clock_release,
+	.close		= posix_clock_close,
 	.fasync		= posix_clock_fasync,
 	.mmap		= posix_clock_mmap,
 #ifdef CONFIG_COMPAT
