@@ -391,18 +391,16 @@ static int sysfs_open_file(struct inode *inode, struct file *file)
 	return error;
 }
 
-static int sysfs_release(struct inode *inode, struct file *filp)
+static void sysfs_close(struct file *file)
 {
-	struct sysfs_dirent *sd = filp->f_path.dentry->d_fsdata;
-	struct sysfs_buffer *buffer = filp->private_data;
+	struct sysfs_dirent *sd = file->f_path.dentry->d_fsdata;
+	struct sysfs_buffer *buffer = file->private_data;
 
 	sysfs_put_open_dirent(sd, buffer);
 
 	if (buffer->page)
 		free_page((unsigned long)buffer->page);
 	kfree(buffer);
-
-	return 0;
 }
 
 /* Sysfs attribute files are pollable.  The idea is that you read
@@ -481,7 +479,7 @@ const struct file_operations sysfs_file_operations = {
 	.write		= sysfs_write_file,
 	.llseek		= generic_file_llseek,
 	.open		= sysfs_open_file,
-	.release	= sysfs_release,
+	.close		= sysfs_close,
 	.poll		= sysfs_poll,
 };
 

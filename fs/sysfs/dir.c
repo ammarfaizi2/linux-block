@@ -943,10 +943,9 @@ static inline unsigned char dt_type(struct sysfs_dirent *sd)
 	return (sd->s_mode >> 12) & 15;
 }
 
-static int sysfs_dir_release(struct inode *inode, struct file *filp)
+static void sysfs_dir_close(struct file *file)
 {
-	sysfs_put(filp->private_data);
-	return 0;
+	sysfs_put(file->private_data);
 }
 
 static struct sysfs_dirent *sysfs_dir_pos(const void *ns,
@@ -1078,6 +1077,6 @@ static loff_t sysfs_dir_llseek(struct file *file, loff_t offset, int whence)
 const struct file_operations sysfs_dir_operations = {
 	.read		= generic_read_dir,
 	.readdir	= sysfs_readdir,
-	.release	= sysfs_dir_release,
+	.close		= sysfs_dir_close,
 	.llseek		= sysfs_dir_llseek,
 };

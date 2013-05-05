@@ -435,7 +435,7 @@ static int open(struct inode * inode, struct file * file)
 	return error;
 }
 
-static int release(struct inode * inode, struct file * file)
+static void close(struct file *file)
 {
 	struct bin_buffer *bb = file->private_data;
 
@@ -445,7 +445,6 @@ static int release(struct inode * inode, struct file * file)
 
 	kfree(bb->buffer);
 	kfree(bb);
-	return 0;
 }
 
 const struct file_operations bin_fops = {
@@ -454,7 +453,7 @@ const struct file_operations bin_fops = {
 	.mmap		= mmap,
 	.llseek		= generic_file_llseek,
 	.open		= open,
-	.release	= release,
+	.close		= close,
 };
 
 
