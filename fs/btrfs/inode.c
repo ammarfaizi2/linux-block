@@ -8694,7 +8694,7 @@ static const struct file_operations btrfs_dir_file_operations = {
 #ifdef CONFIG_COMPAT
 	.compat_ioctl	= btrfs_ioctl,
 #endif
-	.release        = btrfs_release_file,
+	.close        	= btrfs_close_file,
 	.fsync		= btrfs_sync_file,
 };
 

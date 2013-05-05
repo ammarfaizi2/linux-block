@@ -1619,8 +1619,9 @@ out:
 	return num_written ? num_written : err;
 }
 
-int btrfs_release_file(struct inode *inode, struct file *filp)
+void btrfs_close_file(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	/*
 	 * ordered_data_close is set by settattr when we are about to truncate
 	 * a file from a non-zero size to a zero size.  This tries to
@@ -1640,15 +1641,14 @@ int btrfs_release_file(struct inode *inode, struct file *filp)
 		 */
 		trans = btrfs_start_transaction(root, 0);
 		if (IS_ERR(trans))
-			return PTR_ERR(trans);
+			return;	/* XXX */
 		btrfs_add_ordered_operation(trans, BTRFS_I(inode)->root, inode);
 		btrfs_end_transaction(trans, root);
 		if (inode->i_size > BTRFS_ORDERED_OPERATIONS_FLUSH_LIMIT)
 			filemap_flush(inode->i_mapping);
 	}
-	if (filp->private_data)
-		btrfs_ioctl_trans_end(filp);
-	return 0;
+	if (file->private_data)
+		btrfs_ioctl_trans_end(file);
 }
 
 /*
@@ -2451,7 +2451,7 @@ const struct file_operations btrfs_file_operations = {
 	.aio_write	= btrfs_file_aio_write,
 	.mmap		= btrfs_file_mmap,
 	.open		= generic_file_open,
-	.release	= btrfs_release_file,
+	.close		= btrfs_close_file,
 	.fsync		= btrfs_sync_file,
 	.fallocate	= btrfs_fallocate,
 	.unlocked_ioctl	= btrfs_ioctl,
