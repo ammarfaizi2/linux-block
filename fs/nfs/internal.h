@@ -290,7 +290,7 @@ ssize_t nfs_file_splice_read(struct file *, loff_t *, struct pipe_inode_info *,
 			     size_t, unsigned int);
 int nfs_file_mmap(struct file *, struct vm_area_struct *);
 ssize_t nfs_file_write(struct kiocb *, const struct iovec *, unsigned long, loff_t);
-int nfs_file_release(struct inode *, struct file *);
+void nfs_file_close(struct file *);
 int nfs_lock(struct file *, int, struct file_lock *);
 int nfs_flock(struct file *, int, struct file_lock *);
 ssize_t nfs_file_splice_write(struct pipe_inode_info *, struct file *, loff_t *,

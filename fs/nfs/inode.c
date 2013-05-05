@@ -746,7 +746,7 @@ struct nfs_open_context *nfs_find_open_context(struct inode *inode, struct rpc_c
 	return ctx;
 }
 
-static void nfs_file_clear_open_context(struct file *filp)
+void nfs_release(struct file *filp)
 {
 	struct inode *inode = file_inode(filp);
 	struct nfs_open_context *ctx = nfs_file_open_context(filp);
@@ -773,12 +773,6 @@ int nfs_open(struct inode *inode, struct file *filp)
 	nfs_file_set_open_context(filp, ctx);
 	put_nfs_open_context(ctx);
 	nfs_fscache_set_inode_cookie(inode, filp);
-	return 0;
-}
-
-int nfs_release(struct inode *inode, struct file *filp)
-{
-	nfs_file_clear_open_context(filp);
 	return 0;
 }
 

@@ -45,7 +45,7 @@
 /* #define NFS_DEBUG_VERBOSE 1 */
 
 static int nfs_opendir(struct inode *, struct file *);
-static int nfs_closedir(struct inode *, struct file *);
+static void nfs_closedir(struct file *);
 static int nfs_readdir(struct file *, void *, filldir_t);
 static int nfs_fsync_dir(struct file *, loff_t, loff_t, int);
 static loff_t nfs_llseek_dir(struct file *, loff_t, int);
@@ -56,7 +56,7 @@ const struct file_operations nfs_dir_operations = {
 	.read		= generic_read_dir,
 	.readdir	= nfs_readdir,
 	.open		= nfs_opendir,
-	.release	= nfs_closedir,
+	.close		= nfs_closedir,
 	.fsync		= nfs_fsync_dir,
 };
 
@@ -122,11 +122,9 @@ out:
 	return res;
 }
 
-static int
-nfs_closedir(struct inode *inode, struct file *filp)
+static void nfs_closedir(struct file *file)
 {
-	put_nfs_open_dir_context(filp->private_data);
-	return 0;
+	put_nfs_open_dir_context(file->private_data);
 }
 
 struct nfs_cache_array_entry {

@@ -76,17 +76,16 @@ nfs_file_open(struct inode *inode, struct file *filp)
 	return res;
 }
 
-int
-nfs_file_release(struct inode *inode, struct file *filp)
+void nfs_file_close(struct file *file)
 {
 	dprintk("NFS: release(%s/%s)\n",
-			filp->f_path.dentry->d_parent->d_name.name,
-			filp->f_path.dentry->d_name.name);
+			file->f_path.dentry->d_parent->d_name.name,
+			file->f_path.dentry->d_name.name);
 
-	nfs_inc_stats(inode, NFSIOS_VFSRELEASE);
-	return nfs_release(inode, filp);
+	nfs_inc_stats(file_inode(file), NFSIOS_VFSRELEASE);
+	return nfs_release(file);
 }
-EXPORT_SYMBOL_GPL(nfs_file_release);
+EXPORT_SYMBOL_GPL(nfs_file_close);
 
 /**
  * nfs_revalidate_size - Revalidate the file size
@@ -926,7 +925,7 @@ const struct file_operations nfs_file_operations = {
 	.mmap		= nfs_file_mmap,
 	.open		= nfs_file_open,
 	.flush		= nfs_file_flush,
-	.release	= nfs_file_release,
+	.close		= nfs_file_close,
 	.fsync		= nfs_file_fsync,
 	.lock		= nfs_lock,
 	.flock		= nfs_flock,
