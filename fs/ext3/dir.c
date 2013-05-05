@@ -571,12 +571,10 @@ finished:
 	return 0;
 }
 
-static int ext3_release_dir (struct inode * inode, struct file * filp)
+static void ext3_close_dir(struct file *file)
 {
-       if (filp->private_data)
-		ext3_htree_free_dir_info(filp->private_data);
-
-	return 0;
+       if (file->private_data)
+		ext3_htree_free_dir_info(file->private_data);
 }
 
 const struct file_operations ext3_dir_operations = {
@@ -588,5 +586,5 @@ const struct file_operations ext3_dir_operations = {
 	.compat_ioctl	= ext3_compat_ioctl,
 #endif
 	.fsync		= ext3_sync_file,
-	.release	= ext3_release_dir,
+	.close		= ext3_close_dir,
 };

@@ -28,24 +28,23 @@
  * from ext3_file_open: open gets called at every open, but release
  * gets called only when /all/ the files are closed.
  */
-static int ext3_release_file (struct inode * inode, struct file * filp)
+static void ext3_close_file(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	if (ext3_test_inode_state(inode, EXT3_STATE_FLUSH_ON_CLOSE)) {
 		filemap_flush(inode->i_mapping);
 		ext3_clear_inode_state(inode, EXT3_STATE_FLUSH_ON_CLOSE);
 	}
 	/* if we are the last writer on the inode, drop the block reservation */
-	if ((filp->f_mode & FMODE_WRITE) &&
+	if ((file->f_mode & FMODE_WRITE) &&
 			(atomic_read(&inode->i_writecount) == 1))
 	{
 		mutex_lock(&EXT3_I(inode)->truncate_mutex);
 		ext3_discard_reservation(inode);
 		mutex_unlock(&EXT3_I(inode)->truncate_mutex);
 	}
-	if (is_dx(inode) && filp->private_data)
-		ext3_htree_free_dir_info(filp->private_data);
-
-	return 0;
+	if (is_dx(inode) && file->private_data)
+		ext3_htree_free_dir_info(file->private_data);
 }
 
 const struct file_operations ext3_file_operations = {
@@ -60,7 +59,7 @@ const struct file_operations ext3_file_operations = {
 #endif
 	.mmap		= generic_file_mmap,
 	.open		= dquot_file_open,
-	.release	= ext3_release_file,
+	.close		= ext3_close_file,
 	.fsync		= ext3_sync_file,
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= generic_file_splice_write,
