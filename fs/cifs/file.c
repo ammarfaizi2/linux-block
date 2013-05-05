@@ -709,18 +709,13 @@ reopen_error_exit:
 	return rc;
 }
 
-int cifs_close(struct inode *inode, struct file *file)
+void cifs_close(struct file *file)
 {
-	if (file->private_data != NULL) {
+	if (file->private_data)
 		cifsFileInfo_put(file->private_data);
-		file->private_data = NULL;
-	}
-
-	/* return code from the ->release op is always ignored */
-	return 0;
 }
 
-int cifs_closedir(struct inode *inode, struct file *file)
+void cifs_closedir(struct file *file)
 {
 	int rc = 0;
 	unsigned int xid;
@@ -729,10 +724,7 @@ int cifs_closedir(struct inode *inode, struct file *file)
 	struct TCP_Server_Info *server;
 	char *buf;
 
-	cFYI(1, "Closedir inode = 0x%p", inode);
-
-	if (cfile == NULL)
-		return rc;
+	cFYI(1, "Closedir inode = 0x%p", file_inode(file));
 
 	xid = get_xid();
 	tcon = tlink_tcon(cfile->tlink);
@@ -768,7 +760,6 @@ int cifs_closedir(struct inode *inode, struct file *file)
 	file->private_data = NULL;
 	/* BB can we lock the filestruct while this is going on? */
 	free_xid(xid);
-	return rc;
 }
 
 static struct cifsLockInfo *
