@@ -655,7 +655,7 @@ static int device_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int device_close(struct inode *inode, struct file *file)
+static void device_close(struct file *file)
 {
 	struct dlm_user_proc *proc = file->private_data;
 	struct dlm_ls *ls;
@@ -663,7 +663,7 @@ static int device_close(struct inode *inode, struct file *file)
 
 	ls = dlm_find_lockspace_local(proc->lockspace);
 	if (!ls)
-		return -ENOENT;
+		return;	/* WARN_ON? */
 
 	sigfillset(&allsigs);
 	sigprocmask(SIG_BLOCK, &allsigs, &tmpsig);
@@ -687,8 +687,6 @@ static int device_close(struct inode *inode, struct file *file)
 
 	sigprocmask(SIG_SETMASK, &tmpsig, NULL);
 	recalc_sigpending();
-
-	return 0;
 }
 
 static int copy_result_to_user(struct dlm_user_args *ua, int compat,
@@ -933,11 +931,6 @@ static int ctl_device_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int ctl_device_close(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-
 static int monitor_device_open(struct inode *inode, struct file *file)
 {
 	atomic_inc(&dlm_monitor_opened);
@@ -945,16 +938,15 @@ static int monitor_device_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int monitor_device_close(struct inode *inode, struct file *file)
+static void monitor_device_close(struct file *file)
 {
 	if (atomic_dec_and_test(&dlm_monitor_opened))
 		dlm_stop_lockspaces();
-	return 0;
 }
 
 static const struct file_operations device_fops = {
 	.open    = device_open,
-	.release = device_close,
+	.close	 = device_close,
 	.read    = device_read,
 	.write   = device_write,
 	.poll    = device_poll,
@@ -964,7 +956,6 @@ static const struct file_operations device_fops = {
 
 static const struct file_operations ctl_device_fops = {
 	.open    = ctl_device_open,
-	.release = ctl_device_close,
 	.read    = device_read,
 	.write   = device_write,
 	.owner   = THIS_MODULE,
@@ -979,7 +970,7 @@ static struct miscdevice ctl_device = {
 
 static const struct file_operations monitor_device_fops = {
 	.open    = monitor_device_open,
-	.release = monitor_device_close,
+	.close	 = monitor_device_close,
 	.owner   = THIS_MODULE,
 	.llseek  = noop_llseek,
 };
