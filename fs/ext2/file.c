@@ -30,14 +30,14 @@
  * for a single struct file are closed. Note that different open() calls
  * for the same file yield different struct file structures.
  */
-static int ext2_release_file (struct inode * inode, struct file * filp)
+static void ext2_close_file(struct file *file)
 {
-	if (filp->f_mode & FMODE_WRITE) {
+	if (file->f_mode & FMODE_WRITE) {
+		struct inode *inode = file_inode(file);
 		mutex_lock(&EXT2_I(inode)->truncate_mutex);
 		ext2_discard_reservation(inode);
 		mutex_unlock(&EXT2_I(inode)->truncate_mutex);
 	}
-	return 0;
 }
 
 int ext2_fsync(struct file *file, loff_t start, loff_t end, int datasync)
@@ -72,7 +72,7 @@ const struct file_operations ext2_file_operations = {
 #endif
 	.mmap		= generic_file_mmap,
 	.open		= dquot_file_open,
-	.release	= ext2_release_file,
+	.close		= ext2_close_file,
 	.fsync		= ext2_fsync,
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= generic_file_splice_write,
@@ -89,7 +89,7 @@ const struct file_operations ext2_xip_file_operations = {
 #endif
 	.mmap		= xip_file_mmap,
 	.open		= dquot_file_open,
-	.release	= ext2_release_file,
+	.close		= ext2_close_file,
 	.fsync		= ext2_fsync,
 };
 #endif
