@@ -81,7 +81,7 @@ static int ceph_init_file(struct inode *inode, struct file *file, int fmode)
 		cf->fmode = fmode;
 		cf->next_offset = 2;
 		file->private_data = cf;
-		BUG_ON(inode->i_fop->release != ceph_release);
+		BUG_ON(inode->i_fop->close != ceph_close);
 		break;
 
 	case S_IFLNK:
@@ -95,10 +95,10 @@ static int ceph_init_file(struct inode *inode, struct file *file, int fmode)
 		     inode->i_mode);
 		/*
 		 * we need to drop the open ref now, since we don't
-		 * have .release set to ceph_release.
+		 * have .close set to ceph_close.
 		 */
 		ceph_put_fmode(ceph_inode(inode), fmode); /* clean up */
-		BUG_ON(inode->i_fop->release == ceph_release);
+		BUG_ON(inode->i_fop->close == ceph_close);
 
 		/* call the proper open fop */
 		ret = inode->i_fop->open(inode, file);
@@ -278,8 +278,9 @@ out_err:
 	return err;
 }
 
-int ceph_release(struct inode *inode, struct file *file)
+void ceph_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	struct ceph_inode_info *ci = ceph_inode(inode);
 	struct ceph_file_info *cf = file->private_data;
 
@@ -294,7 +295,6 @@ int ceph_release(struct inode *inode, struct file *file)
 
 	/* wake up anyone waiting for caps on this inode */
 	wake_up_all(&ci->i_cap_wq);
-	return 0;
 }
 
 /*
@@ -856,7 +856,7 @@ out:
 
 const struct file_operations ceph_file_fops = {
 	.open = ceph_open,
-	.release = ceph_release,
+	.close = ceph_close,
 	.llseek = ceph_llseek,
 	.read = do_sync_read,
 	.write = do_sync_write,

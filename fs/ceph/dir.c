@@ -1310,7 +1310,7 @@ const struct file_operations ceph_dir_fops = {
 	.readdir = ceph_readdir,
 	.llseek = ceph_dir_llseek,
 	.open = ceph_open,
-	.release = ceph_release,
+	.close = ceph_close,
 	.unlocked_ioctl = ceph_ioctl,
 	.fsync = ceph_dir_fsync,
 };

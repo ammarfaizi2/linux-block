@@ -803,7 +803,7 @@ extern int ceph_open(struct inode *inode, struct file *file);
 extern int ceph_atomic_open(struct inode *dir, struct dentry *dentry,
 			    struct file *file, unsigned flags, umode_t mode,
 			    int *opened);
-extern int ceph_release(struct inode *inode, struct file *filp);
+extern void ceph_close(struct file *filp);
 
 /* dir.c */
 extern const struct file_operations ceph_dir_fops;
