@@ -416,7 +416,7 @@ err:
 	return rc;
 }
 
-static int sel_release_policy(struct inode *inode, struct file *filp)
+static void sel_close_policy(struct file *filp)
 {
 	struct policy_load_memory *plm = filp->private_data;
 
@@ -426,8 +426,6 @@ static int sel_release_policy(struct inode *inode, struct file *filp)
 
 	vfree(plm->data);
 	kfree(plm);
-
-	return 0;
 }
 
 static ssize_t sel_read_policy(struct file *filp, char __user *buf,
@@ -495,7 +493,7 @@ static const struct file_operations sel_policy_ops = {
 	.open		= sel_open_policy,
 	.read		= sel_read_policy,
 	.mmap		= sel_mmap_policy,
-	.release	= sel_release_policy,
+	.close		= sel_close_policy,
 	.llseek		= generic_file_llseek,
 };
 

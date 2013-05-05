@@ -298,30 +298,29 @@ static int ima_open_policy(struct inode * inode, struct file * filp)
 }
 
 /*
- * ima_release_policy - start using the new measure policy rules.
+ * ima_close_policy - start using the new measure policy rules.
  *
  * Initially, ima_measure points to the default policy rules, now
  * point to the new policy rules, and remove the securityfs policy file,
  * assuming a valid policy.
  */
-static int ima_release_policy(struct inode *inode, struct file *file)
+static void ima_close_policy(struct file *file)
 {
 	if (!valid_policy) {
 		ima_delete_rules();
 		valid_policy = 1;
 		atomic_set(&policy_opencount, 1);
-		return 0;
+	} else {
+		ima_update_policy();
+		securityfs_remove(ima_policy);
+		ima_policy = NULL;
 	}
-	ima_update_policy();
-	securityfs_remove(ima_policy);
-	ima_policy = NULL;
-	return 0;
 }
 
 static const struct file_operations ima_measure_policy_ops = {
 	.open = ima_open_policy,
 	.write = ima_write_policy,
-	.release = ima_release_policy,
+	.close = ima_close_policy,
 	.llseek = generic_file_llseek,
 };
 

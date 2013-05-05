@@ -146,10 +146,9 @@ static int tomoyo_open(struct inode *inode, struct file *file)
  * @file:  Pointer to "struct file".
  *
  */
-static int tomoyo_release(struct inode *inode, struct file *file)
+static void tomoyo_close(struct file *file)
 {
 	tomoyo_close_control(file->private_data);
-	return 0;
 }
 
 /**
@@ -207,7 +206,7 @@ static ssize_t tomoyo_write(struct file *file, const char __user *buf,
  */
 static const struct file_operations tomoyo_operations = {
 	.open    = tomoyo_open,
-	.release = tomoyo_release,
+	.close	 = tomoyo_close,
 	.poll    = tomoyo_poll,
 	.read    = tomoyo_read,
 	.write   = tomoyo_write,
