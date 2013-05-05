@@ -38,7 +38,7 @@ extern const struct file_operations coda_ioctl_operations;
 
 /* operations shared over more than one file */
 int coda_open(struct inode *i, struct file *f);
-int coda_release(struct inode *i, struct file *f);
+void coda_close(struct file *f);
 int coda_permission(struct inode *inode, int mask);
 int coda_revalidate_inode(struct dentry *);
 int coda_getattr(struct vfsmount *, struct dentry *, struct kstat *);

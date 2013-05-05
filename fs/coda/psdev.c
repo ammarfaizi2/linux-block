@@ -299,14 +299,14 @@ static int coda_psdev_open(struct inode * inode, struct file * file)
 }
 
 
-static int coda_psdev_release(struct inode * inode, struct file * file)
+static void coda_psdev_close(struct file *file)
 {
 	struct venus_comm *vcp = (struct venus_comm *) file->private_data;
 	struct upc_req *req, *tmp;
 
 	if (!vcp || !vcp->vc_inuse ) {
 		printk("psdev_release: Not open.\n");
-		return -1;
+		return;
 	}
 
 	mutex_lock(&vcp->vc_mutex);
@@ -335,7 +335,6 @@ static int coda_psdev_release(struct inode * inode, struct file * file)
 	file->private_data = NULL;
 	vcp->vc_inuse--;
 	mutex_unlock(&vcp->vc_mutex);
-	return 0;
 }
 
 
@@ -346,7 +345,7 @@ static const struct file_operations coda_psdev_fops = {
 	.poll		= coda_psdev_poll,
 	.unlocked_ioctl	= coda_psdev_ioctl,
 	.open		= coda_psdev_open,
-	.release	= coda_psdev_release,
+	.close		= coda_psdev_close,
 	.llseek		= noop_llseek,
 };
 

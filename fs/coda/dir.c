@@ -87,7 +87,7 @@ const struct file_operations coda_dir_operations = {
 	.read		= generic_read_dir,
 	.readdir	= coda_readdir,
 	.open		= coda_open,
-	.release	= coda_release,
+	.close		= coda_close,
 	.fsync		= coda_fsync,
 };
 

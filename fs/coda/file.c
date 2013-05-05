@@ -165,8 +165,9 @@ int coda_open(struct inode *coda_inode, struct file *coda_file)
 	return 0;
 }
 
-int coda_release(struct inode *coda_inode, struct file *coda_file)
+void coda_close(struct file *coda_file)
 {
+	struct inode *coda_inode = file_inode(coda_file);
 	unsigned short flags = (coda_file->f_flags) & (~O_EXCL);
 	unsigned short coda_flags = coda_flags_to_cflags(flags);
 	struct coda_file_info *cfi;
@@ -195,10 +196,6 @@ int coda_release(struct inode *coda_inode, struct file *coda_file)
 	fput(cfi->cfi_container);
 	kfree(coda_file->private_data);
 	coda_file->private_data = NULL;
-
-	/* VFS fput ignores the return value from file_operations->release, so
-	 * there is no use returning an error here */
-	return 0;
 }
 
 int coda_fsync(struct file *coda_file, loff_t start, loff_t end, int datasync)
@@ -235,7 +232,7 @@ const struct file_operations coda_file_operations = {
 	.write		= coda_file_write,
 	.mmap		= coda_file_mmap,
 	.open		= coda_open,
-	.release	= coda_release,
+	.close		= coda_close,
 	.fsync		= coda_fsync,
 	.splice_read	= coda_file_splice_read,
 };
