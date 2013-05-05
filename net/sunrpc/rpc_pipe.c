@@ -240,9 +240,9 @@ out:
 	return res;
 }
 
-static int
-rpc_pipe_release(struct inode *inode, struct file *filp)
+static void rpc_pipe_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	struct rpc_pipe *pipe;
 	struct rpc_pipe_msg *msg;
 	int last_close;
@@ -251,7 +251,7 @@ rpc_pipe_release(struct inode *inode, struct file *filp)
 	pipe = RPC_I(inode)->pipe;
 	if (pipe == NULL)
 		goto out;
-	msg = filp->private_data;
+	msg = file->private_data;
 	if (msg != NULL) {
 		spin_lock(&pipe->lock);
 		msg->errno = -EAGAIN;
@@ -259,9 +259,9 @@ rpc_pipe_release(struct inode *inode, struct file *filp)
 		spin_unlock(&pipe->lock);
 		pipe->ops->destroy_msg(msg);
 	}
-	if (filp->f_mode & FMODE_WRITE)
+	if (file->f_mode & FMODE_WRITE)
 		pipe->nwriters --;
-	if (filp->f_mode & FMODE_READ) {
+	if (file->f_mode & FMODE_READ) {
 		pipe->nreaders --;
 		if (pipe->nreaders == 0) {
 			LIST_HEAD(free_list);
@@ -278,7 +278,6 @@ rpc_pipe_release(struct inode *inode, struct file *filp)
 		pipe->ops->release_pipe(inode);
 out:
 	mutex_unlock(&inode->i_mutex);
-	return 0;
 }
 
 static ssize_t
@@ -395,7 +394,7 @@ static const struct file_operations rpc_pipe_fops = {
 	.poll		= rpc_pipe_poll,
 	.unlocked_ioctl	= rpc_pipe_ioctl,
 	.open		= rpc_pipe_open,
-	.release	= rpc_pipe_release,
+	.close		= rpc_pipe_close,
 };
 
 static int
@@ -439,16 +438,13 @@ rpc_info_open(struct inode *inode, struct file *file)
 	return ret;
 }
 
-static int
-rpc_info_release(struct inode *inode, struct file *file)
+static void rpc_info_close(struct file *file)
 {
 	struct seq_file *m = file->private_data;
-	struct rpc_clnt *clnt = (struct rpc_clnt *)m->private;
-
+	struct rpc_clnt *clnt = m->private;
 	if (clnt)
 		rpc_release_client(clnt);
 	single_close(file);
-	return 0;
 }
 
 static const struct file_operations rpc_info_operations = {
@@ -456,7 +452,7 @@ static const struct file_operations rpc_info_operations = {
 	.open		= rpc_info_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= rpc_info_release,
+	.close		= rpc_info_close,
 };
 
 

@@ -1001,10 +1001,9 @@ static int cache_open(struct inode *inode, struct file *filp,
 	return 0;
 }
 
-static int cache_release(struct inode *inode, struct file *filp,
-			 struct cache_detail *cd)
+static void cache_release(struct file *file, struct cache_detail *cd)
 {
-	struct cache_reader *rp = filp->private_data;
+	struct cache_reader *rp = file->private_data;
 
 	if (rp) {
 		spin_lock(&queue_lock);
@@ -1022,14 +1021,13 @@ static int cache_release(struct inode *inode, struct file *filp,
 		list_del(&rp->q.list);
 		spin_unlock(&queue_lock);
 
-		filp->private_data = NULL;
+		file->private_data = NULL;
 		kfree(rp);
 
 		cd->last_close = seconds_since_boot();
 		atomic_dec(&cd->readers);
 	}
 	module_put(cd->owner);
-	return 0;
 }
 
 
@@ -1390,12 +1388,10 @@ static int content_open(struct inode *inode, struct file *file,
 	return 0;
 }
 
-static int content_release(struct inode *inode, struct file *file,
-		struct cache_detail *cd)
+static void content_release(struct file *file, struct cache_detail *cd)
 {
 	seq_close_private(file);
 	module_put(cd->owner);
-	return 0;
 }
 
 static int open_flush(struct inode *inode, struct file *file,
@@ -1406,11 +1402,9 @@ static int open_flush(struct inode *inode, struct file *file,
 	return nonseekable_open(inode, file);
 }
 
-static int release_flush(struct inode *inode, struct file *file,
-			struct cache_detail *cd)
+static void release_flush(struct cache_detail *cd)
 {
 	module_put(cd->owner);
-	return 0;
 }
 
 static ssize_t read_flush(struct file *file, char __user *buf,
@@ -1498,11 +1492,9 @@ static int cache_open_procfs(struct inode *inode, struct file *filp)
 	return cache_open(inode, filp, cd);
 }
 
-static int cache_release_procfs(struct inode *inode, struct file *filp)
+static void cache_close_procfs(struct file *file)
 {
-	struct cache_detail *cd = PDE_DATA(inode);
-
-	return cache_release(inode, filp, cd);
+	cache_release(file, PDE_DATA(file_inode(file)));
 }
 
 static const struct file_operations cache_file_operations_procfs = {
@@ -1513,7 +1505,7 @@ static const struct file_operations cache_file_operations_procfs = {
 	.poll		= cache_poll_procfs,
 	.unlocked_ioctl	= cache_ioctl_procfs, /* for FIONREAD */
 	.open		= cache_open_procfs,
-	.release	= cache_release_procfs,
+	.close		= cache_close_procfs,
 };
 
 static int content_open_procfs(struct inode *inode, struct file *filp)
@@ -1523,18 +1515,16 @@ static int content_open_procfs(struct inode *inode, struct file *filp)
 	return content_open(inode, filp, cd);
 }
 
-static int content_release_procfs(struct inode *inode, struct file *filp)
+static void content_close_procfs(struct file *file)
 {
-	struct cache_detail *cd = PDE_DATA(inode);
-
-	return content_release(inode, filp, cd);
+	content_release(file, PDE_DATA(file_inode(file)));
 }
 
 static const struct file_operations content_file_operations_procfs = {
 	.open		= content_open_procfs,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= content_release_procfs,
+	.close		= content_close_procfs,
 };
 
 static int open_flush_procfs(struct inode *inode, struct file *filp)
@@ -1544,11 +1534,9 @@ static int open_flush_procfs(struct inode *inode, struct file *filp)
 	return open_flush(inode, filp, cd);
 }
 
-static int release_flush_procfs(struct inode *inode, struct file *filp)
+static void close_flush_procfs(struct file *file)
 {
-	struct cache_detail *cd = PDE_DATA(inode);
-
-	return release_flush(inode, filp, cd);
+	release_flush(PDE_DATA(file_inode(file)));
 }
 
 static ssize_t read_flush_procfs(struct file *filp, char __user *buf,
@@ -1572,7 +1560,7 @@ static const struct file_operations cache_flush_operations_procfs = {
 	.open		= open_flush_procfs,
 	.read		= read_flush_procfs,
 	.write		= write_flush_procfs,
-	.release	= release_flush_procfs,
+	.close		= close_flush_procfs,
 	.llseek		= no_llseek,
 };
 
@@ -1730,11 +1718,10 @@ static int cache_open_pipefs(struct inode *inode, struct file *filp)
 	return cache_open(inode, filp, cd);
 }
 
-static int cache_release_pipefs(struct inode *inode, struct file *filp)
+static void cache_close_pipefs(struct file *file)
 {
-	struct cache_detail *cd = RPC_I(inode)->private;
-
-	return cache_release(inode, filp, cd);
+	struct cache_detail *cd = RPC_I(file_inode(file))->private;
+	cache_release(file, cd);
 }
 
 const struct file_operations cache_file_operations_pipefs = {
@@ -1745,7 +1732,7 @@ const struct file_operations cache_file_operations_pipefs = {
 	.poll		= cache_poll_pipefs,
 	.unlocked_ioctl	= cache_ioctl_pipefs, /* for FIONREAD */
 	.open		= cache_open_pipefs,
-	.release	= cache_release_pipefs,
+	.close		= cache_close_pipefs,
 };
 
 static int content_open_pipefs(struct inode *inode, struct file *filp)
@@ -1755,18 +1742,17 @@ static int content_open_pipefs(struct inode *inode, struct file *filp)
 	return content_open(inode, filp, cd);
 }
 
-static int content_release_pipefs(struct inode *inode, struct file *filp)
+static void content_close_pipefs(struct file *file)
 {
-	struct cache_detail *cd = RPC_I(inode)->private;
-
-	return content_release(inode, filp, cd);
+	struct cache_detail *cd = RPC_I(file_inode(file))->private;
+	content_release(file, cd);
 }
 
 const struct file_operations content_file_operations_pipefs = {
 	.open		= content_open_pipefs,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= content_release_pipefs,
+	.close		= content_close_pipefs,
 };
 
 static int open_flush_pipefs(struct inode *inode, struct file *filp)
@@ -1776,11 +1762,10 @@ static int open_flush_pipefs(struct inode *inode, struct file *filp)
 	return open_flush(inode, filp, cd);
 }
 
-static int release_flush_pipefs(struct inode *inode, struct file *filp)
+static void close_flush_pipefs(struct file *file)
 {
-	struct cache_detail *cd = RPC_I(inode)->private;
-
-	return release_flush(inode, filp, cd);
+	struct cache_detail *cd = RPC_I(file_inode(file))->private;
+	release_flush(cd);
 }
 
 static ssize_t read_flush_pipefs(struct file *filp, char __user *buf,
@@ -1804,7 +1789,7 @@ const struct file_operations cache_flush_operations_pipefs = {
 	.open		= open_flush_pipefs,
 	.read		= read_flush_pipefs,
 	.write		= write_flush_pipefs,
-	.release	= release_flush_pipefs,
+	.close		= close_flush_pipefs,
 	.llseek		= no_llseek,
 };
 
