@@ -2644,7 +2644,7 @@ static int __fops ## _open(struct inode *inode, struct file *file)	\
 static const struct file_operations __fops = {				\
 	.owner	 = THIS_MODULE,						\
 	.open	 = __fops ## _open,					\
-	.release = simple_attr_release,					\
+	.close	 = simple_close_kfree,					\
 	.read	 = simple_attr_read,					\
 	.write	 = simple_attr_write,					\
 	.llseek	 = generic_file_llseek,					\
