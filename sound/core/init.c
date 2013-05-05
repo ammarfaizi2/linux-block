@@ -271,7 +271,7 @@ static ssize_t snd_disconnect_write(struct file *file, const char __user *buf,
 	return -ENODEV;
 }
 
-static int snd_disconnect_release(struct inode *inode, struct file *file)
+static void snd_disconnect_close(struct file *file)
 {
 	struct snd_monitor_file *df = NULL, *_df;
 
@@ -288,14 +288,11 @@ static int snd_disconnect_release(struct inode *inode, struct file *file)
 	if (likely(df)) {
 		if ((file->f_flags & FASYNC) && df->disconnected_f_op->fasync)
 			df->disconnected_f_op->fasync(-1, file, 0);
-		if (df->disconnected_f_op->close) {
-			df->disconnected_f_op->close(file);
-			return 0;
-		}
-		return df->disconnected_f_op->release(inode, file);
+		df->disconnected_f_op->close(file);
+		return;
 	}
 
-	panic("%s(%p, %p) failed!", __func__, inode, file);
+	panic("%s(%p) failed!", __func__, file);
 }
 
 static unsigned int snd_disconnect_poll(struct file * file, poll_table * wait)
@@ -325,7 +322,7 @@ static const struct file_operations snd_shutdown_f_ops =
 	.llseek =	snd_disconnect_llseek,
 	.read = 	snd_disconnect_read,
 	.write =	snd_disconnect_write,
-	.release =	snd_disconnect_release,
+	.close =	snd_disconnect_close,
 	.poll =		snd_disconnect_poll,
 	.unlocked_ioctl = snd_disconnect_ioctl,
 #ifdef CONFIG_COMPAT

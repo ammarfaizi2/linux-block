@@ -80,17 +80,14 @@ static int snd_mixer_oss_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int snd_mixer_oss_release(struct inode *inode, struct file *file)
+static void snd_mixer_oss_close(struct file *file)
 {
-	struct snd_mixer_oss_file *fmixer;
-
-	if (file->private_data) {
-		fmixer = file->private_data;
+	struct snd_mixer_oss_file *fmixer = file->private_data;
+	if (fmixer) {
 		module_put(fmixer->card->module);
 		snd_card_file_remove(fmixer->card, file);
 		kfree(fmixer);
 	}
-	return 0;
 }
 
 static int snd_mixer_oss_info(struct snd_mixer_oss_file *fmixer,
@@ -410,7 +407,7 @@ static const struct file_operations snd_mixer_oss_f_ops =
 {
 	.owner =	THIS_MODULE,
 	.open =		snd_mixer_oss_open,
-	.release =	snd_mixer_oss_release,
+	.close =	snd_mixer_oss_close,
 	.llseek =	no_llseek,
 	.unlocked_ioctl =	snd_mixer_oss_ioctl,
 	.compat_ioctl =	snd_mixer_oss_ioctl_compat,

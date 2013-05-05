@@ -3006,16 +3006,15 @@ static int vwsnd_audio_open(struct inode *inode, struct file *file)
  * Release (close) the audio device.
  */
 
-static int vwsnd_audio_release(struct inode *inode, struct file *file)
+static void vwsnd_audio_close(struct file *file)
 {
 	vwsnd_dev_t *devc = (vwsnd_dev_t *) file->private_data;
 	vwsnd_port_t *wport = NULL, *rport = NULL;
-	int err = 0;
 
 	mutex_lock(&vwsnd_mutex);
 	mutex_lock(&devc->io_mutex);
 	{
-		DBGEV("(inode=0x%p, file=0x%p)\n", inode, file);
+		DBGEV("(file=0x%p)\n", file);
 
 		if (file->f_mode & FMODE_READ)
 			rport = &devc->rport;
@@ -3041,7 +3040,6 @@ static int vwsnd_audio_release(struct inode *inode, struct file *file)
 	DEC_USE_COUNT;
 	DBGR();
 	mutex_unlock(&vwsnd_mutex);
-	return err;
 }
 
 static const struct file_operations vwsnd_audio_fops = {
@@ -3053,7 +3051,7 @@ static const struct file_operations vwsnd_audio_fops = {
 	.unlocked_ioctl = vwsnd_audio_ioctl,
 	.mmap =		vwsnd_audio_mmap,
 	.open =		vwsnd_audio_open,
-	.release =	vwsnd_audio_release,
+	.close =	vwsnd_audio_close,
 };
 
 /*****************************************************************************/
@@ -3085,11 +3083,10 @@ static int vwsnd_mixer_open(struct inode *inode, struct file *file)
 
 /* release (close) the mixer device. */
 
-static int vwsnd_mixer_release(struct inode *inode, struct file *file)
+static void vwsnd_mixer_close(struct file *file)
 {
-	DBGEV("(inode=0x%p, file=0x%p)\n", inode, file);
+	DBGEV("(file=0x%p)\n", file);
 	DEC_USE_COUNT;
-	return 0;
 }
 
 /* mixer_read_ioctl handles all read ioctls on the mixer device. */
@@ -3243,7 +3240,7 @@ static const struct file_operations vwsnd_mixer_fops = {
 	.llseek =	no_llseek,
 	.unlocked_ioctl = vwsnd_mixer_ioctl,
 	.open =		vwsnd_mixer_open,
-	.release =	vwsnd_mixer_release,
+	.close =	vwsnd_mixer_close,
 };
 
 /*****************************************************************************/

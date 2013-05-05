@@ -372,7 +372,7 @@ static int snd_seq_open(struct inode *inode, struct file *file)
 }
 
 /* delete a user client */
-static int snd_seq_release(struct inode *inode, struct file *file)
+static void snd_seq_close(struct file *file)
 {
 	struct snd_seq_client *client = file->private_data;
 
@@ -382,8 +382,6 @@ static int snd_seq_release(struct inode *inode, struct file *file)
 			snd_seq_fifo_delete(&client->data.user.fifo);
 		kfree(client);
 	}
-
-	return 0;
 }
 
 
@@ -2552,7 +2550,7 @@ static const struct file_operations snd_seq_f_ops =
 	.read =		snd_seq_read,
 	.write =	snd_seq_write,
 	.open =		snd_seq_open,
-	.release =	snd_seq_release,
+	.close =	snd_seq_close,
 	.llseek =	no_llseek,
 	.poll =		snd_seq_poll,
 	.unlocked_ioctl =	snd_seq_ioctl,

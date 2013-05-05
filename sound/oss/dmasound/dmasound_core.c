@@ -334,13 +334,12 @@ static int mixer_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int mixer_release(struct inode *inode, struct file *file)
+static void mixer_close(struct file *file)
 {
 	mutex_lock(&dmasound_core_mutex);
 	mixer.busy = 0;
 	module_put(dmasound.mach.owner);
 	mutex_unlock(&dmasound_core_mutex);
-	return 0;
 }
 
 static int mixer_ioctl(struct file *file, u_int cmd, u_long arg)
@@ -384,7 +383,7 @@ static const struct file_operations mixer_fops =
 	.llseek		= no_llseek,
 	.unlocked_ioctl	= mixer_unlocked_ioctl,
 	.open		= mixer_open,
-	.release	= mixer_release,
+	.close		= mixer_close,
 };
 
 static void mixer_init(void)
@@ -866,7 +865,7 @@ static int sq_fsync(void)
 	return rc;
 }
 
-static int sq_release(struct inode *inode, struct file *file)
+static void sq_close(struct file *file)
 {
 	int rc = 0;
 
@@ -902,8 +901,6 @@ static int sq_release(struct inode *inode, struct file *file)
 #endif /* blocking open() */
 
 	mutex_unlock(&dmasound_core_mutex);
-
-	return rc;
 }
 
 /* here we see if we have a right to modify format, channels, size and so on
@@ -1157,7 +1154,7 @@ static const struct file_operations sq_fops =
 	.poll		= sq_poll,
 	.unlocked_ioctl	= sq_unlocked_ioctl,
 	.open		= sq_open,
-	.release	= sq_release,
+	.close		= sq_close,
 };
 
 static int sq_init(void)
@@ -1334,13 +1331,12 @@ out:
 	return ret;
 }
 
-static int state_release(struct inode *inode, struct file *file)
+static void state_close(struct file *file)
 {
 	mutex_lock(&dmasound_core_mutex);
 	state.busy = 0;
 	module_put(dmasound.mach.owner);
 	mutex_unlock(&dmasound_core_mutex);
-	return 0;
 }
 
 static ssize_t state_read(struct file *file, char __user *buf, size_t count,
@@ -1362,7 +1358,7 @@ static const struct file_operations state_fops = {
 	.llseek		= no_llseek,
 	.read		= state_read,
 	.open		= state_open,
-	.release	= state_release,
+	.close		= state_close,
 };
 
 static int state_init(void)

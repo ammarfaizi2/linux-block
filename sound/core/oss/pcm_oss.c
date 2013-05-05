@@ -2467,7 +2467,7 @@ static int snd_pcm_oss_open(struct inode *inode, struct file *file)
 	return err;
 }
 
-static int snd_pcm_oss_release(struct inode *inode, struct file *file)
+static void snd_pcm_oss_close(struct file *file)
 {
 	struct snd_pcm *pcm;
 	struct snd_pcm_substream *substream;
@@ -2478,7 +2478,7 @@ static int snd_pcm_oss_release(struct inode *inode, struct file *file)
 	if (substream == NULL)
 		substream = pcm_oss_file->streams[SNDRV_PCM_STREAM_CAPTURE];
 	if (snd_BUG_ON(!substream))
-		return -ENXIO;
+		return;
 	pcm = substream->pcm;
 	if (!pcm->card->shutdown)
 		snd_pcm_oss_sync(pcm_oss_file);
@@ -2488,7 +2488,6 @@ static int snd_pcm_oss_release(struct inode *inode, struct file *file)
 	wake_up(&pcm->open_wait);
 	module_put(pcm->card->module);
 	snd_card_file_remove(pcm->card, file);
-	return 0;
 }
 
 static long snd_pcm_oss_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -2997,7 +2996,7 @@ static const struct file_operations snd_pcm_oss_f_reg =
 	.read =		snd_pcm_oss_read,
 	.write =	snd_pcm_oss_write,
 	.open =		snd_pcm_oss_open,
-	.release =	snd_pcm_oss_release,
+	.close =	snd_pcm_oss_close,
 	.llseek =	no_llseek,
 	.poll =		snd_pcm_oss_poll,
 	.unlocked_ioctl =	snd_pcm_oss_ioctl,

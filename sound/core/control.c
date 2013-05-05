@@ -113,7 +113,7 @@ static void snd_ctl_empty_read_queue(struct snd_ctl_file * ctl)
 	spin_unlock_irqrestore(&ctl->read_lock, flags);
 }
 
-static int snd_ctl_release(struct inode *inode, struct file *file)
+static void snd_ctl_close(struct file *file)
 {
 	unsigned long flags;
 	struct snd_card *card;
@@ -138,7 +138,6 @@ static int snd_ctl_release(struct inode *inode, struct file *file)
 	kfree(ctl);
 	module_put(card->module);
 	snd_card_file_remove(card, file);
-	return 0;
 }
 
 void snd_ctl_notify(struct snd_card *card, unsigned int mask,
@@ -1585,7 +1584,7 @@ static const struct file_operations snd_ctl_f_ops =
 	.owner =	THIS_MODULE,
 	.read =		snd_ctl_read,
 	.open =		snd_ctl_open,
-	.release =	snd_ctl_release,
+	.close =	snd_ctl_close,
 	.llseek =	no_llseek,
 	.poll =		snd_ctl_poll,
 	.unlocked_ioctl =	snd_ctl_ioctl,

@@ -158,7 +158,7 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 	return err;
 }
 
-static int snd_hwdep_release(struct inode *inode, struct file * file)
+static void snd_hwdep_close(struct file *file)
 {
 	int err = 0;
 	struct snd_hwdep *hw = file->private_data;
@@ -166,7 +166,7 @@ static int snd_hwdep_release(struct inode *inode, struct file * file)
 
 	mutex_lock(&hw->open_mutex);
 	if (hw->ops.release)
-		err = hw->ops.release(hw, file);
+		err = hw->ops.release(hw, file);	/* XXX */
 	if (hw->used > 0)
 		hw->used--;
 	mutex_unlock(&hw->open_mutex);
@@ -174,7 +174,6 @@ static int snd_hwdep_release(struct inode *inode, struct file * file)
 
 	snd_card_file_remove(hw->card, file);
 	module_put(mod);
-	return err;
 }
 
 static unsigned int snd_hwdep_poll(struct file * file, poll_table * wait)
@@ -338,7 +337,7 @@ static const struct file_operations snd_hwdep_f_ops =
 	.read = 	snd_hwdep_read,
 	.write =	snd_hwdep_write,
 	.open =		snd_hwdep_open,
-	.release =	snd_hwdep_release,
+	.close =	snd_hwdep_close,
 	.poll =		snd_hwdep_poll,
 	.unlocked_ioctl =	snd_hwdep_ioctl,
 	.compat_ioctl =	snd_hwdep_ioctl_compat,

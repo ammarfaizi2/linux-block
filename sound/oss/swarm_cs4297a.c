@@ -1576,13 +1576,10 @@ static int cs4297a_open_mixdev(struct inode *inode, struct file *file)
 }
 
 
-static int cs4297a_release_mixdev(struct inode *inode, struct file *file)
+static void cs4297a_close_mixdev(struct file *file)
 {
-	struct cs4297a_state *s =
-	    (struct cs4297a_state *) file->private_data;
-
+	struct cs4297a_state *s = file->private_data;
 	VALIDATE_STATE(s);
-	return 0;
 }
 
 
@@ -1606,7 +1603,7 @@ static const struct file_operations cs4297a_mixer_fops = {
 	.llseek		= no_llseek,
 	.unlocked_ioctl	= cs4297a_ioctl_mixdev,
 	.open		= cs4297a_open_mixdev,
-	.release	= cs4297a_release_mixdev,
+	.close		= cs4297a_close_mixdev,
 };
 
 // --------------------------------------------------------------------- 
@@ -2372,14 +2369,13 @@ static long cs4297a_unlocked_ioctl(struct file *file, u_int cmd, u_long arg)
 	return ret;
 }
 
-static int cs4297a_release(struct inode *inode, struct file *file)
+static void cs4297a_close(struct file *file)
 {
-	struct cs4297a_state *s =
-	    (struct cs4297a_state *) file->private_data;
+	struct cs4297a_state *s = file->private_data;
 
         CS_DBGOUT(CS_FUNCTION | CS_RELEASE, 2, printk(KERN_INFO
-		 "cs4297a: cs4297a_release(): inode=0x%.8x file=0x%.8x f_mode=0x%x\n",
-			 (unsigned) inode, (unsigned) file, file->f_mode));
+		 "cs4297a: cs4297a_close(): file=0x%.8x f_mode=0x%x\n",
+			 (unsigned) file, file->f_mode));
 	VALIDATE_STATE(s);
 
 	if (file->f_mode & FMODE_WRITE) {
@@ -2400,7 +2396,6 @@ static int cs4297a_release(struct inode *inode, struct file *file)
 		mutex_unlock(&s->open_sem_adc);
 		wake_up(&s->open_wait_adc);
 	}
-	return 0;
 }
 
 static int cs4297a_locked_open(struct inode *inode, struct file *file)
@@ -2493,7 +2488,7 @@ static int cs4297a_locked_open(struct inode *inode, struct file *file)
 		if (prog_dmabuf_adc(s)) {
 			CS_DBGOUT(CS_OPEN | CS_ERROR, 2, printk(KERN_ERR
 				"cs4297a: adc Program dmabufs failed.\n"));
-			cs4297a_release(inode, file);
+			cs4297a_close(file);
 			return -ENOMEM;
 		}
 	}
@@ -2511,7 +2506,7 @@ static int cs4297a_locked_open(struct inode *inode, struct file *file)
 		if (prog_dmabuf_dac(s)) {
 			CS_DBGOUT(CS_OPEN | CS_ERROR, 2, printk(KERN_ERR
 				"cs4297a: dac Program dmabufs failed.\n"));
-			cs4297a_release(inode, file);
+			cs4297a_close(file);
 			return -ENOMEM;
 		}
 	}
@@ -2543,7 +2538,7 @@ static const struct file_operations cs4297a_audio_fops = {
 	.unlocked_ioctl	= cs4297a_unlocked_ioctl,
 	.mmap		= cs4297a_mmap,
 	.open		= cs4297a_open,
-	.release	= cs4297a_release,
+	.close		= cs4297a_close,
 };
 
 static void cs4297a_interrupt(int irq, void *dev_id)

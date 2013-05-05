@@ -1269,7 +1269,7 @@ static int snd_timer_user_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int snd_timer_user_release(struct inode *inode, struct file *file)
+static void snd_timer_user_close(struct file *file)
 {
 	struct snd_timer_user *tu;
 
@@ -1282,7 +1282,6 @@ static int snd_timer_user_release(struct inode *inode, struct file *file)
 		kfree(tu->tqueue);
 		kfree(tu);
 	}
-	return 0;
 }
 
 static void snd_timer_user_zero_id(struct snd_timer_id *id)
@@ -1933,7 +1932,7 @@ static const struct file_operations snd_timer_f_ops =
 	.owner =	THIS_MODULE,
 	.read =		snd_timer_user_read,
 	.open =		snd_timer_user_open,
-	.release =	snd_timer_user_release,
+	.close =	snd_timer_user_close,
 	.llseek =	no_llseek,
 	.poll =		snd_timer_user_poll,
 	.unlocked_ioctl =	snd_timer_user_ioctl,

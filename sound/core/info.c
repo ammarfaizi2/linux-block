@@ -399,7 +399,7 @@ static int snd_info_entry_open(struct inode *inode, struct file *file)
 	return err;
 }
 
-static int snd_info_entry_release(struct inode *inode, struct file *file)
+static void snd_info_entry_close(struct file *file)
 {
 	struct snd_info_entry *entry;
 	struct snd_info_private_data *data;
@@ -435,7 +435,6 @@ static int snd_info_entry_release(struct inode *inode, struct file *file)
 	}
 	module_put(entry->module);
 	kfree(data);
-	return 0;
 }
 
 static unsigned int snd_info_entry_poll(struct file *file, poll_table * wait)
@@ -516,7 +515,7 @@ static const struct file_operations snd_info_entry_operations =
 	.unlocked_ioctl =	snd_info_entry_ioctl,
 	.mmap =			snd_info_entry_mmap,
 	.open =			snd_info_entry_open,
-	.release =		snd_info_entry_release,
+	.close =		snd_info_entry_close,
 };
 
 int __init snd_info_init(void)

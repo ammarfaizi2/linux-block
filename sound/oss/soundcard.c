@@ -252,9 +252,9 @@ static int sound_open(struct inode *inode, struct file *file)
 	return retval;
 }
 
-static int sound_release(struct inode *inode, struct file *file)
+static void sound_close(struct file *file)
 {
-	int dev = iminor(inode);
+	int dev = iminor(file_inode(file));
 
 	mutex_lock(&soundcard_mutex);
 	DEB(printk("sound_release(dev=%d)\n", dev));
@@ -282,8 +282,6 @@ static int sound_release(struct inode *inode, struct file *file)
 		printk(KERN_ERR "Sound error: Releasing unknown device 0x%02x\n", dev);
 	}
 	mutex_unlock(&soundcard_mutex);
-
-	return 0;
 }
 
 static int get_mixer_info(int dev, void __user *arg)
@@ -504,7 +502,7 @@ const struct file_operations oss_sound_fops = {
 	.unlocked_ioctl	= sound_ioctl,
 	.mmap		= sound_mmap,
 	.open		= sound_open,
-	.release	= sound_release,
+	.close		= sound_close,
 };
 
 /*

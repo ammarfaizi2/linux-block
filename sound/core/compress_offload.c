@@ -136,14 +136,13 @@ static int snd_compr_open(struct inode *inode, struct file *f)
 	return 0;
 }
 
-static int snd_compr_free(struct inode *inode, struct file *f)
+static void snd_compr_free(struct file *f)
 {
 	struct snd_compr_file *data = f->private_data;
 	data->stream.ops->free(&data->stream);
 	kfree(data->stream.runtime->buffer);
 	kfree(data->stream.runtime);
 	kfree(data);
-	return 0;
 }
 
 static int snd_compr_update_tstamp(struct snd_compr_stream *stream,
@@ -800,7 +799,7 @@ static long snd_compr_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 static const struct file_operations snd_compr_file_ops = {
 		.owner =	THIS_MODULE,
 		.open =		snd_compr_open,
-		.release =	snd_compr_free,
+		.close =	snd_compr_free,
 		.write =	snd_compr_write,
 		.read =		snd_compr_read,
 		.unlocked_ioctl = snd_compr_ioctl,

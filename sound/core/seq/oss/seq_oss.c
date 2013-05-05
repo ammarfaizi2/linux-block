@@ -60,7 +60,7 @@ static inline void unregister_proc(void) {}
 #endif
 
 static int odev_open(struct inode *inode, struct file *file);
-static int odev_release(struct inode *inode, struct file *file);
+static void odev_close(struct file *file);
 static ssize_t odev_read(struct file *file, char __user *buf, size_t count, loff_t *offset);
 static ssize_t odev_write(struct file *file, const char __user *buf, size_t count, loff_t *offset);
 static long odev_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
@@ -142,21 +142,16 @@ odev_open(struct inode *inode, struct file *file)
 	return rc;
 }
 
-static int
-odev_release(struct inode *inode, struct file *file)
+static void
+odev_close(struct file *file)
 {
-	struct seq_oss_devinfo *dp;
-
-	if ((dp = file->private_data) == NULL)
-		return 0;
-
-	snd_seq_oss_drain_write(dp);
-
-	mutex_lock(&register_mutex);
-	snd_seq_oss_release(dp);
-	mutex_unlock(&register_mutex);
-
-	return 0;
+	struct seq_oss_devinfo *dp = file->private_data;
+	if (dp) {
+		snd_seq_oss_drain_write(dp);
+		mutex_lock(&register_mutex);
+		snd_seq_oss_release(dp);
+		mutex_unlock(&register_mutex);
+	}
 }
 
 static ssize_t
@@ -216,7 +211,7 @@ static const struct file_operations seq_oss_f_ops =
 	.read =		odev_read,
 	.write =	odev_write,
 	.open =		odev_open,
-	.release =	odev_release,
+	.close =	odev_close,
 	.poll =		odev_poll,
 	.unlocked_ioctl =	odev_ioctl,
 	.compat_ioctl =	odev_ioctl_compat,

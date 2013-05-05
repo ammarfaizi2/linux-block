@@ -524,7 +524,7 @@ int snd_rawmidi_kernel_release(struct snd_rawmidi_file *rfile)
 	return 0;
 }
 
-static int snd_rawmidi_release(struct inode *inode, struct file *file)
+static void snd_rawmidi_close(struct file *file)
 {
 	struct snd_rawmidi_file *rfile;
 	struct snd_rawmidi *rmidi;
@@ -537,7 +537,6 @@ static int snd_rawmidi_release(struct inode *inode, struct file *file)
 	module = rmidi->card->module;
 	snd_card_file_remove(rmidi->card, file);
 	module_put(module);
-	return 0;
 }
 
 static int snd_rawmidi_info(struct snd_rawmidi_substream *substream,
@@ -1395,7 +1394,7 @@ static const struct file_operations snd_rawmidi_f_ops =
 	.read =		snd_rawmidi_read,
 	.write =	snd_rawmidi_write,
 	.open =		snd_rawmidi_open,
-	.release =	snd_rawmidi_release,
+	.close =	snd_rawmidi_close,
 	.llseek =	no_llseek,
 	.poll =		snd_rawmidi_poll,
 	.unlocked_ioctl =	snd_rawmidi_ioctl,

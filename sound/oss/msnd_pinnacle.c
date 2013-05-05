@@ -704,12 +704,6 @@ static void dsp_halt(struct file *file)
 	}
 }
 
-static int dsp_release(struct file *file)
-{
-	dsp_halt(file);
-	return 0;
-}
-
 static int dsp_open(struct file *file)
 {
 	if ((file ? file->f_mode : dev.mode) & FMODE_WRITE) {
@@ -796,20 +790,13 @@ out:
 	return err;
 }
 
-static int dev_release(struct inode *inode, struct file *file)
+static void dev_close(struct file *file)
 {
-	int minor = iminor(inode);
-	int err = 0;
-
+	int minor = iminor(file_inode(file));
 	mutex_lock(&msnd_pinnacle_mutex);
 	if (minor == dev.dsp_minor)
-		err = dsp_release(file);
-	else if (minor == dev.mixer_minor) {
-		/* nothing */
-	} else
-		err = -EINVAL;
+		dsp_halt(file);
 	mutex_unlock(&msnd_pinnacle_mutex);
-	return err;
 }
 
 static __inline__ int pack_DARQ_to_DARF(register int bank)
@@ -1117,7 +1104,7 @@ static const struct file_operations dev_fileops = {
 	.write		= dev_write,
 	.unlocked_ioctl	= dev_ioctl,
 	.open		= dev_open,
-	.release	= dev_release,
+	.close		= dev_close,
 	.llseek		= noop_llseek,
 };
 
