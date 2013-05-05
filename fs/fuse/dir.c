@@ -1431,11 +1431,9 @@ static int fuse_dir_open(struct inode *inode, struct file *file)
 	return fuse_open_common(inode, file, true);
 }
 
-static int fuse_dir_release(struct inode *inode, struct file *file)
+static void fuse_dir_close(struct file *file)
 {
 	fuse_release_common(file, FUSE_RELEASEDIR);
-
-	return 0;
 }
 
 static int fuse_dir_fsync(struct file *file, loff_t start, loff_t end,
@@ -1881,7 +1879,7 @@ static const struct file_operations fuse_dir_operations = {
 	.read		= generic_read_dir,
 	.readdir	= fuse_readdir,
 	.open		= fuse_dir_open,
-	.release	= fuse_dir_release,
+	.close		= fuse_dir_close,
 	.fsync		= fuse_dir_fsync,
 	.unlocked_ioctl	= fuse_dir_ioctl,
 	.compat_ioctl	= fuse_dir_compat_ioctl,

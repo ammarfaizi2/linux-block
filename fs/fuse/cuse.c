@@ -139,15 +139,13 @@ static int cuse_open(struct inode *inode, struct file *file)
 	return rc;
 }
 
-static int cuse_release(struct inode *inode, struct file *file)
+static void cuse_close(struct file *file)
 {
 	struct fuse_file *ff = file->private_data;
 	struct fuse_conn *fc = ff->fc;
 
 	fuse_sync_release(ff, file->f_flags);
 	fuse_conn_put(fc);
-
-	return 0;
 }
 
 static long cuse_file_ioctl(struct file *file, unsigned int cmd,
@@ -181,7 +179,7 @@ static const struct file_operations cuse_frontend_fops = {
 	.read			= cuse_read,
 	.write			= cuse_write,
 	.open			= cuse_open,
-	.release		= cuse_release,
+	.close			= cuse_close,
 	.unlocked_ioctl		= cuse_file_ioctl,
 	.compat_ioctl		= cuse_file_compat_ioctl,
 	.poll			= fuse_file_poll,
@@ -516,8 +514,7 @@ static int cuse_channel_open(struct inode *inode, struct file *file)
 }
 
 /**
- * cuse_channel_release - release method for /dev/cuse
- * @inode: inode for /dev/cuse
+ * cuse_channel_close - close method for /dev/cuse
  * @file: file struct being closed
  *
  * Disconnect the channel, deregister CUSE device and initiate
@@ -526,10 +523,9 @@ static int cuse_channel_open(struct inode *inode, struct file *file)
  * RETURNS:
  * 0 on success, -errno on failure.
  */
-static int cuse_channel_release(struct inode *inode, struct file *file)
+static void cuse_channel_close(struct file *file)
 {
 	struct cuse_conn *cc = fc_to_cc(file->private_data);
-	int rc;
 
 	/* remove from the conntbl, no more access from this point on */
 	mutex_lock(&cuse_lock);
@@ -544,9 +540,7 @@ static int cuse_channel_release(struct inode *inode, struct file *file)
 		cdev_del(cc->cdev);
 	}
 
-	rc = fuse_dev_release(inode, file);	/* puts the base reference */
-
-	return rc;
+	fuse_dev_close(file);	/* puts the base reference */
 }
 
 static struct file_operations cuse_channel_fops; /* initialized during init */
@@ -600,7 +594,7 @@ static int __init cuse_init(void)
 	cuse_channel_fops		= fuse_dev_operations;
 	cuse_channel_fops.owner		= THIS_MODULE;
 	cuse_channel_fops.open		= cuse_channel_open;
-	cuse_channel_fops.release	= cuse_channel_release;
+	cuse_channel_fops.close		= cuse_channel_close;
 
 	cuse_class = class_create(THIS_MODULE, "cuse");
 	if (IS_ERR(cuse_class))

@@ -269,12 +269,9 @@ static int fuse_open(struct inode *inode, struct file *file)
 	return fuse_open_common(inode, file, false);
 }
 
-static int fuse_release(struct inode *inode, struct file *file)
+static void fuse_close(struct file *file)
 {
 	fuse_release_common(file, FUSE_RELEASE);
-
-	/* return value is ignored by VFS */
-	return 0;
 }
 
 void fuse_sync_release(struct fuse_file *ff, int flags)
@@ -2291,7 +2288,7 @@ static const struct file_operations fuse_file_operations = {
 	.mmap		= fuse_file_mmap,
 	.open		= fuse_open,
 	.flush		= fuse_flush,
-	.release	= fuse_release,
+	.close		= fuse_close,
 	.fsync		= fuse_fsync,
 	.lock		= fuse_file_lock,
 	.flock		= fuse_file_flock,
@@ -2309,7 +2306,7 @@ static const struct file_operations fuse_direct_io_file_operations = {
 	.mmap		= fuse_direct_mmap,
 	.open		= fuse_open,
 	.flush		= fuse_flush,
-	.release	= fuse_release,
+	.close		= fuse_close,
 	.fsync		= fuse_fsync,
 	.lock		= fuse_file_lock,
 	.flock		= fuse_file_flock,

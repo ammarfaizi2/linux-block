@@ -2082,7 +2082,7 @@ void fuse_abort_conn(struct fuse_conn *fc)
 }
 EXPORT_SYMBOL_GPL(fuse_abort_conn);
 
-int fuse_dev_release(struct inode *inode, struct file *file)
+void fuse_dev_close(struct file *file)
 {
 	struct fuse_conn *fc = fuse_get_conn(file);
 	if (fc) {
@@ -2095,10 +2095,8 @@ int fuse_dev_release(struct inode *inode, struct file *file)
 		spin_unlock(&fc->lock);
 		fuse_conn_put(fc);
 	}
-
-	return 0;
 }
-EXPORT_SYMBOL_GPL(fuse_dev_release);
+EXPORT_SYMBOL_GPL(fuse_dev_close);
 
 static int fuse_dev_fasync(int fd, struct file *file, int on)
 {
@@ -2120,7 +2118,7 @@ const struct file_operations fuse_dev_operations = {
 	.aio_write	= fuse_dev_write,
 	.splice_write	= fuse_dev_splice_write,
 	.poll		= fuse_dev_poll,
-	.release	= fuse_dev_release,
+	.close		= fuse_dev_close,
 	.fasync		= fuse_dev_fasync,
 };
 EXPORT_SYMBOL_GPL(fuse_dev_operations);
