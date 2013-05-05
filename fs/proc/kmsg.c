@@ -24,10 +24,9 @@ static int kmsg_open(struct inode * inode, struct file * file)
 	return do_syslog(SYSLOG_ACTION_OPEN, NULL, 0, SYSLOG_FROM_FILE);
 }
 
-static int kmsg_release(struct inode * inode, struct file * file)
+static void kmsg_close(struct file * file)
 {
 	(void) do_syslog(SYSLOG_ACTION_CLOSE, NULL, 0, SYSLOG_FROM_FILE);
-	return 0;
 }
 
 static ssize_t kmsg_read(struct file *file, char __user *buf,
@@ -52,7 +51,7 @@ static const struct file_operations proc_kmsg_operations = {
 	.read		= kmsg_read,
 	.poll		= kmsg_poll,
 	.open		= kmsg_open,
-	.release	= kmsg_release,
+	.close		= kmsg_close,
 	.llseek		= generic_file_llseek,
 };
 

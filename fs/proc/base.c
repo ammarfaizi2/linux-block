@@ -815,12 +815,11 @@ loff_t mem_lseek(struct file *file, loff_t offset, int orig)
 	return file->f_pos;
 }
 
-static int mem_release(struct inode *inode, struct file *file)
+static void mem_close(struct file *file)
 {
 	struct mm_struct *mm = file->private_data;
 	if (mm)
 		mmdrop(mm);
-	return 0;
 }
 
 static const struct file_operations proc_mem_operations = {
@@ -828,7 +827,7 @@ static const struct file_operations proc_mem_operations = {
 	.read		= mem_read,
 	.write		= mem_write,
 	.open		= mem_open,
-	.release	= mem_release,
+	.close		= mem_close,
 };
 
 static int environ_open(struct inode *inode, struct file *file)
@@ -896,7 +895,7 @@ static const struct file_operations proc_environ_operations = {
 	.open		= environ_open,
 	.read		= environ_read,
 	.llseek		= generic_file_llseek,
-	.release	= mem_release,
+	.close		= mem_close,
 };
 
 static ssize_t oom_adj_read(struct file *file, char __user *buf, size_t count,
@@ -2564,13 +2563,12 @@ err:
 	return ret;
 }
 
-static int proc_id_map_release(struct inode *inode, struct file *file)
+static void proc_id_map_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct user_namespace *ns = seq->private;
 	put_user_ns(ns);
 	seq_close(file);
-	return 0;
 }
 
 static int proc_uid_map_open(struct inode *inode, struct file *file)
@@ -2593,7 +2591,7 @@ static const struct file_operations proc_uid_map_operations = {
 	.write		= proc_uid_map_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= proc_id_map_release,
+	.close		= proc_id_map_close,
 };
 
 static const struct file_operations proc_gid_map_operations = {
@@ -2601,7 +2599,7 @@ static const struct file_operations proc_gid_map_operations = {
 	.write		= proc_gid_map_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= proc_id_map_release,
+	.close		= proc_id_map_close,
 };
 
 static const struct file_operations proc_projid_map_operations = {
@@ -2609,7 +2607,7 @@ static const struct file_operations proc_projid_map_operations = {
 	.write		= proc_projid_map_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= proc_id_map_release,
+	.close		= proc_id_map_close,
 };
 #endif /* CONFIG_USER_NS */
 

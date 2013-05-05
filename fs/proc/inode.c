@@ -293,7 +293,6 @@ static int proc_reg_open(struct inode *inode, struct file *file)
 	struct proc_dir_entry *pde = PDE(inode);
 	int rv = 0;
 	int (*open)(struct inode *, struct file *);
-	int (*release)(struct inode *, struct file *);
 	struct pde_opener *pdeo;
 
 	/*
@@ -315,7 +314,6 @@ static int proc_reg_open(struct inode *inode, struct file *file)
 		return -ENOENT;
 	}
 	open = pde->proc_fops->open;
-	release = pde->proc_fops->release;
 
 	if (open)
 		rv = open(inode, file);
@@ -334,9 +332,9 @@ static int proc_reg_open(struct inode *inode, struct file *file)
 	return rv;
 }
 
-static int proc_reg_release(struct inode *inode, struct file *file)
+static void proc_reg_close(struct file *file)
 {
-	struct proc_dir_entry *pde = PDE(inode);
+	struct proc_dir_entry *pde = PDE(file_inode(file));
 	struct pde_opener *pdeo;
 	spin_lock(&pde->pde_unload_lock);
 	list_for_each_entry(pdeo, &pde->pde_openers, lh) {
@@ -346,7 +344,6 @@ static int proc_reg_release(struct inode *inode, struct file *file)
 		}
 	}
 	spin_unlock(&pde->pde_unload_lock);
-	return 0;
 }
 
 static const struct file_operations proc_reg_file_ops = {
@@ -360,7 +357,7 @@ static const struct file_operations proc_reg_file_ops = {
 #endif
 	.mmap		= proc_reg_mmap,
 	.open		= proc_reg_open,
-	.release	= proc_reg_release,
+	.close		= proc_reg_close,
 };
 
 #ifdef CONFIG_COMPAT
@@ -372,7 +369,7 @@ static const struct file_operations proc_reg_file_ops_no_compat = {
 	.unlocked_ioctl	= proc_reg_unlocked_ioctl,
 	.mmap		= proc_reg_mmap,
 	.open		= proc_reg_open,
-	.release	= proc_reg_release,
+	.close		= proc_reg_close,
 };
 #endif
 
