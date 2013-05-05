@@ -122,7 +122,7 @@ static ssize_t nfsctl_transaction_read(struct file *file, char __user *buf, size
 static const struct file_operations transaction_ops = {
 	.write		= nfsctl_transaction_write,
 	.read		= nfsctl_transaction_read,
-	.release	= simple_transaction_release,
+	.close		= simple_transaction_close,
 	.llseek		= default_llseek,
 };
 

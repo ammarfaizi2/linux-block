@@ -725,10 +725,9 @@ ssize_t simple_transaction_read(struct file *file, char __user *buf, size_t size
 	return simple_read_from_buffer(buf, size, pos, ar->data, ar->size);
 }
 
-int simple_transaction_release(struct inode *inode, struct file *file)
+void simple_transaction_close(struct file *file)
 {
 	free_page((unsigned long)file->private_data);
-	return 0;
 }
 
 /* Simple attribute files */
@@ -1007,7 +1006,7 @@ EXPORT_SYMBOL(memory_read_from_buffer);
 EXPORT_SYMBOL(simple_transaction_set);
 EXPORT_SYMBOL(simple_transaction_get);
 EXPORT_SYMBOL(simple_transaction_read);
-EXPORT_SYMBOL(simple_transaction_release);
+EXPORT_SYMBOL(simple_transaction_close);
 EXPORT_SYMBOL_GPL(simple_attr_open);
 EXPORT_SYMBOL_GPL(simple_attr_release);
 EXPORT_SYMBOL_GPL(simple_attr_read);

@@ -693,7 +693,7 @@ static ssize_t selinux_transaction_write(struct file *file, const char __user *b
 static const struct file_operations transaction_ops = {
 	.write		= selinux_transaction_write,
 	.read		= simple_transaction_read,
-	.release	= simple_transaction_release,
+	.close		= simple_transaction_close,
 	.llseek		= generic_file_llseek,
 };
 

@@ -1894,7 +1894,7 @@ static ssize_t smk_write_access(struct file *file, const char __user *buf,
 static const struct file_operations smk_access_ops = {
 	.write		= smk_write_access,
 	.read		= simple_transaction_read,
-	.release	= simple_transaction_release,
+	.close		= simple_transaction_close,
 	.llseek		= generic_file_llseek,
 };
 
@@ -2051,7 +2051,7 @@ static ssize_t smk_write_access2(struct file *file, const char __user *buf,
 static const struct file_operations smk_access2_ops = {
 	.write		= smk_write_access2,
 	.read		= simple_transaction_read,
-	.release	= simple_transaction_release,
+	.close		= simple_transaction_close,
 	.llseek		= generic_file_llseek,
 };
 
@@ -2120,7 +2120,7 @@ free_out:
 static const struct file_operations smk_revoke_subj_ops = {
 	.write		= smk_write_revoke_subj,
 	.read		= simple_transaction_read,
-	.release	= simple_transaction_release,
+	.close		= simple_transaction_close,
 	.llseek		= generic_file_llseek,
 };
 
@@ -2160,7 +2160,7 @@ static ssize_t smk_write_change_rule(struct file *file, const char __user *buf,
 static const struct file_operations smk_change_rule_ops = {
 	.write		= smk_write_change_rule,
 	.read		= simple_transaction_read,
-	.release	= simple_transaction_release,
+	.close		= simple_transaction_close,
 	.llseek		= generic_file_llseek,
 };
 

@@ -2614,7 +2614,7 @@ char *simple_transaction_get(struct file *file, const char __user *buf,
 				size_t size);
 ssize_t simple_transaction_read(struct file *file, char __user *buf,
 				size_t size, loff_t *pos);
-int simple_transaction_release(struct inode *inode, struct file *file);
+void simple_transaction_close(struct file *file);
 
 void simple_transaction_set(struct file *file, size_t n);
 
