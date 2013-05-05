@@ -28,7 +28,7 @@ static int afs_readpages(struct file *filp, struct address_space *mapping,
 
 const struct file_operations afs_file_operations = {
 	.open		= afs_open,
-	.release	= afs_release,
+	.close		= afs_close,
 	.llseek		= generic_file_llseek,
 	.read		= do_sync_read,
 	.write		= do_sync_write,
@@ -91,15 +91,14 @@ int afs_open(struct inode *inode, struct file *file)
 /*
  * release an AFS file or directory and discard its key
  */
-int afs_release(struct inode *inode, struct file *file)
+void afs_close(struct file *file)
 {
-	struct afs_vnode *vnode = AFS_FS_I(inode);
+	struct afs_vnode *vnode = AFS_FS_I(file_inode(file));
 
 	_enter("{%x:%u},", vnode->fid.vid, vnode->fid.vnode);
 
 	key_put(file->private_data);
-	_leave(" = 0");
-	return 0;
+	_leave("");
 }
 
 #ifdef CONFIG_AFS_FSCACHE

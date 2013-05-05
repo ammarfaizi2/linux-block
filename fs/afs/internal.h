@@ -497,7 +497,7 @@ extern const struct inode_operations afs_file_inode_operations;
 extern const struct file_operations afs_file_operations;
 
 extern int afs_open(struct inode *, struct file *);
-extern int afs_release(struct inode *, struct file *);
+extern void afs_close(struct file *);
 extern int afs_page_filler(void *, struct page *);
 
 /*

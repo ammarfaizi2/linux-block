@@ -42,7 +42,7 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 const struct file_operations afs_dir_file_operations = {
 	.open		= afs_dir_open,
-	.release	= afs_release,
+	.close		= afs_close,
 	.readdir	= afs_readdir,
 	.lock		= afs_lock,
 	.llseek		= generic_file_llseek,

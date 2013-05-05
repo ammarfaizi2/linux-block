@@ -45,7 +45,6 @@ static const struct file_operations afs_proc_cells_fops = {
 };
 
 static int afs_proc_rootcell_open(struct inode *inode, struct file *file);
-static int afs_proc_rootcell_release(struct inode *inode, struct file *file);
 static ssize_t afs_proc_rootcell_read(struct file *file, char __user *buf,
 				      size_t size, loff_t *_pos);
 static ssize_t afs_proc_rootcell_write(struct file *file,
@@ -57,13 +56,10 @@ static const struct file_operations afs_proc_rootcell_fops = {
 	.read		= afs_proc_rootcell_read,
 	.write		= afs_proc_rootcell_write,
 	.llseek		= no_llseek,
-	.release	= afs_proc_rootcell_release,
 	.owner		= THIS_MODULE,
 };
 
 static int afs_proc_cell_volumes_open(struct inode *inode, struct file *file);
-static int afs_proc_cell_volumes_release(struct inode *inode,
-					 struct file *file);
 static void *afs_proc_cell_volumes_start(struct seq_file *p, loff_t *pos);
 static void *afs_proc_cell_volumes_next(struct seq_file *p, void *v,
 					loff_t *pos);
@@ -81,14 +77,12 @@ static const struct file_operations afs_proc_cell_volumes_fops = {
 	.open		= afs_proc_cell_volumes_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= afs_proc_cell_volumes_release,
+	.close		= seq_close,
 	.owner		= THIS_MODULE,
 };
 
 static int afs_proc_cell_vlservers_open(struct inode *inode,
 					struct file *file);
-static int afs_proc_cell_vlservers_release(struct inode *inode,
-					   struct file *file);
 static void *afs_proc_cell_vlservers_start(struct seq_file *p, loff_t *pos);
 static void *afs_proc_cell_vlservers_next(struct seq_file *p, void *v,
 					  loff_t *pos);
@@ -106,13 +100,11 @@ static const struct file_operations afs_proc_cell_vlservers_fops = {
 	.open		= afs_proc_cell_vlservers_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= afs_proc_cell_vlservers_release,
+	.close		= seq_close,
 	.owner		= THIS_MODULE,
 };
 
 static int afs_proc_cell_servers_open(struct inode *inode, struct file *file);
-static int afs_proc_cell_servers_release(struct inode *inode,
-					 struct file *file);
 static void *afs_proc_cell_servers_start(struct seq_file *p, loff_t *pos);
 static void *afs_proc_cell_servers_next(struct seq_file *p, void *v,
 					loff_t *pos);
@@ -130,7 +122,7 @@ static const struct file_operations afs_proc_cell_servers_fops = {
 	.open		= afs_proc_cell_servers_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= afs_proc_cell_servers_release,
+	.close		= seq_close,
 	.owner		= THIS_MODULE,
 };
 
@@ -327,11 +319,6 @@ static int afs_proc_rootcell_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int afs_proc_rootcell_release(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-
 static ssize_t afs_proc_rootcell_read(struct file *file, char __user *buf,
 				      size_t size, loff_t *_pos)
 {
@@ -463,15 +450,6 @@ static int afs_proc_cell_volumes_open(struct inode *inode, struct file *file)
 }
 
 /*
- * close the file and release the ref to the cell
- */
-static int afs_proc_cell_volumes_release(struct inode *inode, struct file *file)
-{
-	seq_close(file);
-	return 0;
-}
-
-/*
  * set up the iterator to start reading from the cells list and return the
  * first item
  */
@@ -570,16 +548,6 @@ static int afs_proc_cell_vlservers_open(struct inode *inode, struct file *file)
 }
 
 /*
- * close the file and release the ref to the cell
- */
-static int afs_proc_cell_vlservers_release(struct inode *inode,
-					   struct file *file)
-{
-	seq_close(file);
-	return 0;
-}
-
-/*
  * set up the iterator to start reading from the cells list and return the
  * first item
  */
@@ -671,16 +639,6 @@ static int afs_proc_cell_servers_open(struct inode *inode, struct file *file)
 
 	m = file->private_data;
 	m->private = cell;
-	return 0;
-}
-
-/*
- * close the file and release the ref to the cell
- */
-static int afs_proc_cell_servers_release(struct inode *inode,
-					 struct file *file)
-{
-	seq_close(file);
 	return 0;
 }
 
