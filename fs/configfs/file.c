@@ -284,12 +284,12 @@ static int configfs_open_file(struct inode * inode, struct file * filp)
 	return check_perm(inode,filp);
 }
 
-static int configfs_release(struct inode * inode, struct file * filp)
+static void configfs_close(struct file *file)
 {
-	struct config_item * item = to_item(filp->f_path.dentry->d_parent);
-	struct configfs_attribute * attr = to_attr(filp->f_path.dentry);
-	struct module * owner = attr->ca_owner;
-	struct configfs_buffer * buffer = filp->private_data;
+	struct config_item *item = to_item(file->f_path.dentry->d_parent);
+	struct configfs_attribute *attr = to_attr(file->f_path.dentry);
+	struct module *owner = attr->ca_owner;
+	struct configfs_buffer *buffer = file->private_data;
 
 	if (item)
 		config_item_put(item);
@@ -302,7 +302,6 @@ static int configfs_release(struct inode * inode, struct file * filp)
 		mutex_destroy(&buffer->mutex);
 		kfree(buffer);
 	}
-	return 0;
 }
 
 const struct file_operations configfs_file_operations = {
@@ -310,7 +309,7 @@ const struct file_operations configfs_file_operations = {
 	.write		= configfs_write_file,
 	.llseek		= generic_file_llseek,
 	.open		= configfs_open_file,
-	.release	= configfs_release,
+	.close		= configfs_close,
 };
 
 

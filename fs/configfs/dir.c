@@ -1510,10 +1510,10 @@ static int configfs_dir_open(struct inode *inode, struct file *file)
 	return err;
 }
 
-static int configfs_dir_close(struct inode *inode, struct file *file)
+static void configfs_dir_close(struct file *file)
 {
-	struct dentry * dentry = file->f_path.dentry;
-	struct configfs_dirent * cursor = file->private_data;
+	struct dentry *dentry = file->f_path.dentry;
+	struct configfs_dirent *cursor = file->private_data;
 
 	mutex_lock(&dentry->d_inode->i_mutex);
 	spin_lock(&configfs_dirent_lock);
@@ -1522,8 +1522,6 @@ static int configfs_dir_close(struct inode *inode, struct file *file)
 	mutex_unlock(&dentry->d_inode->i_mutex);
 
 	release_configfs_dirent(cursor);
-
-	return 0;
 }
 
 /* Relationship between s_mode and the DT_xxx types */
@@ -1658,7 +1656,7 @@ static loff_t configfs_dir_lseek(struct file *file, loff_t offset, int whence)
 
 const struct file_operations configfs_dir_operations = {
 	.open		= configfs_dir_open,
-	.release	= configfs_dir_close,
+	.close		= configfs_dir_close,
 	.llseek		= configfs_dir_lseek,
 	.read		= generic_read_dir,
 	.readdir	= configfs_readdir,
