@@ -209,7 +209,7 @@ static int usb_stream_hwdep_open(struct snd_hwdep *hw, struct file *file)
 	return 0;
 }
 
-static int usb_stream_hwdep_release(struct snd_hwdep *hw, struct file *file)
+static void usb_stream_hwdep_release(struct snd_hwdep *hw, struct file *file)
 {
 	struct us122l	*us122l = hw->private_data;
 	struct usb_interface *iface;
@@ -230,7 +230,6 @@ static int usb_stream_hwdep_release(struct snd_hwdep *hw, struct file *file)
 
 	us122l->slave = NULL;
 	mutex_unlock(&us122l->mutex);
-	return 0;
 }
 
 static int usb_stream_hwdep_mmap(struct snd_hwdep *hw,

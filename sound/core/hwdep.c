@@ -160,13 +160,12 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 
 static void snd_hwdep_close(struct file *file)
 {
-	int err = 0;
 	struct snd_hwdep *hw = file->private_data;
 	struct module *mod = hw->card->module;
 
 	mutex_lock(&hw->open_mutex);
 	if (hw->ops.release)
-		err = hw->ops.release(hw, file);	/* XXX */
+		hw->ops.release(hw, file);
 	if (hw->used > 0)
 		hw->used--;
 	mutex_unlock(&hw->open_mutex);

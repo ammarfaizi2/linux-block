@@ -85,7 +85,7 @@ void hpi_send_recv(struct hpi_message *phm, struct hpi_response *phr)
 EXPORT_SYMBOL(hpi_send_recv);
 /* for radio-asihpi */
 
-int asihpi_hpi_release(struct file *file)
+void asihpi_hpi_release(struct file *file)
 {
 	struct hpi_message hm;
 	struct hpi_response hr;
@@ -95,7 +95,6 @@ int asihpi_hpi_release(struct file *file)
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_SUBSYSTEM,
 		HPI_SUBSYS_CLOSE);
 	hpi_send_recv_ex(&hm, &hr, file);
-	return 0;
 }
 
 long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)

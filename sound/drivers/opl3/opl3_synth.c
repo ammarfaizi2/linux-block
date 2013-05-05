@@ -179,12 +179,9 @@ int snd_opl3_ioctl(struct snd_hwdep * hw, struct file *file,
 /*
  * close the device
  */
-int snd_opl3_release(struct snd_hwdep * hw, struct file *file)
+void snd_opl3_release(struct snd_hwdep * hw, struct file *file)
 {
-	struct snd_opl3 *opl3 = hw->private_data;
-
-	snd_opl3_reset(opl3);
-	return 0;
+	snd_opl3_reset(hw->private_data);
 }
 
 #ifdef OPL3_SUPPORT_SYNTH

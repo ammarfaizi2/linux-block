@@ -25,7 +25,7 @@ void asihpi_adapter_remove(struct pci_dev *pci_dev);
 void __init asihpi_init(void);
 void __exit asihpi_exit(void);
 
-int asihpi_hpi_release(struct file *file);
+void asihpi_hpi_release(struct file *file);
 
 long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 

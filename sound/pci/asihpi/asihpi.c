@@ -2743,12 +2743,10 @@ static int snd_asihpi_hpi_open(struct snd_hwdep *hw, struct file *file)
 
 }
 
-static int snd_asihpi_hpi_release(struct snd_hwdep *hw, struct file *file)
+static void snd_asihpi_hpi_release(struct snd_hwdep *hw, struct file *file)
 {
 	if (enable_hpi_hwdep)
-		return asihpi_hpi_release(file);
-	else
-		return -ENODEV;
+		asihpi_hpi_release(file);
 }
 
 static int snd_asihpi_hpi_ioctl(struct snd_hwdep *hw, struct file *file,

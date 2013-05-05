@@ -122,7 +122,7 @@ extern int snd_wavefront_synth_ioctl   (struct snd_hwdep *,
 					unsigned int cmd, 
 					unsigned long arg);
 extern int  snd_wavefront_synth_open    (struct snd_hwdep *, struct file *);
-extern int  snd_wavefront_synth_release (struct snd_hwdep *, struct file *);
+extern void  snd_wavefront_synth_release (struct snd_hwdep *, struct file *);
 
 /* FX processor - see also yss225.[ch] */
 
@@ -133,7 +133,7 @@ extern int  snd_wavefront_fx_ioctl  (struct snd_hwdep *,
 				     unsigned int cmd, 
 				     unsigned long arg);
 extern int snd_wavefront_fx_open    (struct snd_hwdep *, struct file *);
-extern int snd_wavefront_fx_release (struct snd_hwdep *, struct file *);
+extern void snd_wavefront_fx_release (struct snd_hwdep *, struct file *);
 
 /* prefix in all snd_printk() delivered messages */
 

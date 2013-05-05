@@ -36,7 +36,7 @@ struct snd_hwdep_ops {
 	long (*write)(struct snd_hwdep *hw, const char __user *buf,
 		      long count, loff_t *offset);
 	int (*open)(struct snd_hwdep *hw, struct file * file);
-	int (*release)(struct snd_hwdep *hw, struct file * file);
+	void (*release)(struct snd_hwdep *hw, struct file * file);
 	unsigned int (*poll)(struct snd_hwdep *hw, struct file *file,
 			     poll_table *wait);
 	int (*ioctl)(struct snd_hwdep *hw, struct file *file,

@@ -80,7 +80,7 @@ struct desc_header {
 static void snd_sb_csp_free(struct snd_hwdep *hw);
 static int snd_sb_csp_open(struct snd_hwdep * hw, struct file *file);
 static int snd_sb_csp_ioctl(struct snd_hwdep * hw, struct file *file, unsigned int cmd, unsigned long arg);
-static int snd_sb_csp_release(struct snd_hwdep * hw, struct file *file);
+static void snd_sb_csp_release(struct snd_hwdep * hw, struct file *file);
 
 static int csp_detect(struct snd_sb *chip, int *version);
 static int set_codec_parameter(struct snd_sb *chip, unsigned char par, unsigned char val);
@@ -262,10 +262,9 @@ static int snd_sb_csp_ioctl(struct snd_hwdep * hw, struct file *file, unsigned i
 /*
  * close the device
  */
-static int snd_sb_csp_release(struct snd_hwdep * hw, struct file *file)
+static void snd_sb_csp_release(struct snd_hwdep * hw, struct file *file)
 {
-	struct snd_sb_csp *p = hw->private_data;
-	return (snd_sb_csp_unuse(p));
+	snd_sb_csp_unuse(hw->private_data);
 }
 
 /* ------------------------------ */

@@ -2621,11 +2621,6 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 	return -ENOTTY;
 }
 
-static int snd_emu10k1_fx8010_release(struct snd_hwdep * hw, struct file *file)
-{
-	return 0;
-}
-
 int snd_emu10k1_fx8010_new(struct snd_emu10k1 *emu, int device,
 			   struct snd_hwdep **rhwdep)
 {
@@ -2640,7 +2635,6 @@ int snd_emu10k1_fx8010_new(struct snd_emu10k1 *emu, int device,
 	hw->iface = SNDRV_HWDEP_IFACE_EMU10K1;
 	hw->ops.open = snd_emu10k1_fx8010_open;
 	hw->ops.ioctl = snd_emu10k1_fx8010_ioctl;
-	hw->ops.release = snd_emu10k1_fx8010_release;
 	hw->private_data = emu;
 	if (rhwdep)
 		*rhwdep = hw;

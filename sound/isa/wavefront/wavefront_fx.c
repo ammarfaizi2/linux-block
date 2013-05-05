@@ -153,12 +153,10 @@ snd_wavefront_fx_open (struct snd_hwdep *hw, struct file *file)
 	return 0;
 }
 
-int 
+void 
 snd_wavefront_fx_release (struct snd_hwdep *hw, struct file *file)
-
 {
 	module_put(hw->card->module);
-	return 0;
 }
 
 int

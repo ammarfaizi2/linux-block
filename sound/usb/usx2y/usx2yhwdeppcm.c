@@ -662,14 +662,13 @@ static int snd_usX2Y_hwdep_pcm_open(struct snd_hwdep *hw, struct file *file)
 }
 
 
-static int snd_usX2Y_hwdep_pcm_release(struct snd_hwdep *hw, struct file *file)
+static void snd_usX2Y_hwdep_pcm_release(struct snd_hwdep *hw, struct file *file)
 {
 	struct snd_card *card = hw->card;
 	int err = usX2Y_pcms_lock_check(card);
 	if (0 == err)
 		usX2Y(hw->card)->chip_status &= ~USX2Y_STAT_CHIP_MMAP_PCM_URBS;
 	usX2Y_pcms_unlock(card);
-	return err;
 }
 
 
