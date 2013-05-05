@@ -1035,7 +1035,7 @@ static int system_tr_open(struct inode *inode, struct file *filp)
 	return ret;
 }
 
-static int subsystem_release(struct inode *inode, struct file *file)
+static void subsystem_close(struct file *file)
 {
 	struct ftrace_subsystem_dir *dir = file->private_data;
 
@@ -1048,8 +1048,6 @@ static int subsystem_release(struct inode *inode, struct file *file)
 		put_system(dir);
 	else
 		kfree(dir);
-
-	return 0;
 }
 
 static ssize_t
@@ -1197,7 +1195,7 @@ static const struct file_operations ftrace_subsystem_filter_fops = {
 	.read = subsystem_filter_read,
 	.write = subsystem_filter_write,
 	.llseek = default_llseek,
-	.release = subsystem_release,
+	.close = subsystem_close,
 };
 
 static const struct file_operations ftrace_system_enable_fops = {
@@ -1205,7 +1203,7 @@ static const struct file_operations ftrace_system_enable_fops = {
 	.read = system_enable_read,
 	.write = system_enable_write,
 	.llseek = default_llseek,
-	.release = subsystem_release,
+	.close = subsystem_close,
 };
 
 static const struct file_operations ftrace_tr_enable_fops = {
@@ -1213,7 +1211,7 @@ static const struct file_operations ftrace_tr_enable_fops = {
 	.read = system_enable_read,
 	.write = system_enable_write,
 	.llseek = default_llseek,
-	.release = subsystem_release,
+	.close = subsystem_close,
 };
 
 static const struct file_operations ftrace_show_header_fops = {

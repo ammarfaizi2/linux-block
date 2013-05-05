@@ -286,21 +286,20 @@ static int tracing_stat_open(struct inode *inode, struct file *file)
 /*
  * Avoid consuming memory with our now useless rbtree.
  */
-static int tracing_stat_release(struct inode *i, struct file *f)
+static void tracing_stat_close(struct file *f)
 {
-	struct stat_session *session = i->i_private;
+	struct stat_session *session = file_inode(f)->i_private;
 
 	reset_stat_session(session);
 
 	seq_close(f);
-	return 0;
 }
 
 static const struct file_operations tracing_stat_fops = {
 	.open		= tracing_stat_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= tracing_stat_release
+	.close		= tracing_stat_close
 };
 
 static int tracing_stat_init(void)

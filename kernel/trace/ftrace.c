@@ -2614,7 +2614,7 @@ static void ftrace_filter_reset(struct ftrace_hash *hash)
  * routine if @flag has FTRACE_ITER_FILTER set, or
  * ftrace_notrace_write() if @flag has FTRACE_ITER_NOTRACE set.
  * ftrace_filter_lseek() should be used as the lseek routine, and
- * release must call ftrace_regex_release().
+ * release must call ftrace_regex_close().
  */
 int
 ftrace_regex_open(struct ftrace_ops *ops, int flag,
@@ -3542,7 +3542,7 @@ static void __init set_ftrace_early_filters(void)
 #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
 }
 
-int ftrace_regex_release(struct inode *inode, struct file *file)
+void ftrace_regex_close(struct file *file)
 {
 	struct seq_file *m = (struct seq_file *)file->private_data;
 	struct ftrace_iterator *iter;
@@ -3588,7 +3588,6 @@ int ftrace_regex_release(struct inode *inode, struct file *file)
 	kfree(iter);
 
 	mutex_unlock(&ftrace_regex_lock);
-	return 0;
 }
 
 static const struct file_operations ftrace_avail_fops = {
@@ -3610,7 +3609,7 @@ static const struct file_operations ftrace_filter_fops = {
 	.read = seq_read,
 	.write = ftrace_filter_write,
 	.llseek = ftrace_filter_lseek,
-	.release = ftrace_regex_release,
+	.close = ftrace_regex_close,
 };
 
 static const struct file_operations ftrace_notrace_fops = {
@@ -3618,7 +3617,7 @@ static const struct file_operations ftrace_notrace_fops = {
 	.read = seq_read,
 	.write = ftrace_notrace_write,
 	.llseek = ftrace_filter_lseek,
-	.release = ftrace_regex_release,
+	.close = ftrace_regex_close,
 };
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
@@ -3707,12 +3706,10 @@ ftrace_graph_open(struct inode *inode, struct file *file)
 	return ret;
 }
 
-static int
-ftrace_graph_release(struct inode *inode, struct file *file)
+static void ftrace_graph_close(struct file *file)
 {
 	if (file->f_mode & FMODE_READ)
 		seq_close(file);
-	return 0;
 }
 
 static int
@@ -3824,7 +3821,7 @@ static const struct file_operations ftrace_graph_fops = {
 	.read		= seq_read,
 	.write		= ftrace_graph_write,
 	.llseek		= ftrace_filter_lseek,
-	.release	= ftrace_graph_release,
+	.close		= ftrace_graph_close,
 };
 #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
 
@@ -4466,13 +4463,10 @@ ftrace_pid_write(struct file *filp, const char __user *ubuf,
 	return ret ? ret : cnt;
 }
 
-static int
-ftrace_pid_release(struct inode *inode, struct file *file)
+static void ftrace_pid_close(struct file *file)
 {
 	if (file->f_mode & FMODE_READ)
 		seq_close(file);
-
-	return 0;
 }
 
 static const struct file_operations ftrace_pid_fops = {
@@ -4480,7 +4474,7 @@ static const struct file_operations ftrace_pid_fops = {
 	.write		= ftrace_pid_write,
 	.read		= seq_read,
 	.llseek		= ftrace_filter_lseek,
-	.release	= ftrace_pid_release,
+	.close		= ftrace_pid_close,
 };
 
 static __init int ftrace_init_debugfs(void)

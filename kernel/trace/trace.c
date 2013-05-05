@@ -2868,7 +2868,7 @@ int tracing_open_generic(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static int tracing_release(struct inode *inode, struct file *file)
+static void tracing_close(struct file *file)
 {
 	struct seq_file *m = file->private_data;
 	struct trace_iterator *iter;
@@ -2876,7 +2876,7 @@ static int tracing_release(struct inode *inode, struct file *file)
 	int cpu;
 
 	if (!(file->f_mode & FMODE_READ))
-		return 0;
+		return;
 
 	iter = m->private;
 	tr = iter->tr;
@@ -2904,7 +2904,6 @@ static int tracing_release(struct inode *inode, struct file *file)
 	kfree(iter->trace);
 	kfree(iter->buffer_iter);
 	seq_close_private(file);
-	return 0;
 }
 
 static int tracing_open(struct inode *inode, struct file *file)
@@ -3015,7 +3014,7 @@ static const struct file_operations tracing_fops = {
 	.read		= seq_read,
 	.write		= tracing_write_stub,
 	.llseek		= tracing_seek,
-	.release	= tracing_release,
+	.close		= tracing_close,
 };
 
 static const struct file_operations show_traces_fops = {
@@ -3841,7 +3840,7 @@ fail:
 	return ret;
 }
 
-static int tracing_release_pipe(struct inode *inode, struct file *file)
+static void tracing_close_pipe(struct file *file)
 {
 	struct trace_iterator *iter = file->private_data;
 
@@ -3856,8 +3855,6 @@ static int tracing_release_pipe(struct inode *inode, struct file *file)
 	mutex_destroy(&iter->mutex);
 	kfree(iter->trace);
 	kfree(iter);
-
-	return 0;
 }
 
 static unsigned int
@@ -4303,18 +4300,15 @@ tracing_free_buffer_write(struct file *filp, const char __user *ubuf,
 	return cnt;
 }
 
-static int
-tracing_free_buffer_release(struct inode *inode, struct file *filp)
+static void tracing_free_buffer_close(struct file *file)
 {
-	struct trace_array *tr = inode->i_private;
+	struct trace_array *tr = file_inode(file)->i_private;
 
 	/* disable tracing ? */
 	if (trace_flags & TRACE_ITER_STOP_ON_FREE)
 		tracing_off();
 	/* resize the ring buffer to 0 */
 	tracing_resize_ring_buffer(tr, 0, RING_BUFFER_ALL_CPUS);
-
-	return 0;
 }
 
 static ssize_t
@@ -4607,25 +4601,24 @@ out:
 	return ret;
 }
 
-static int tracing_snapshot_release(struct inode *inode, struct file *file)
+static void tracing_snapshot_close(struct file *file)
 {
 	struct seq_file *m = file->private_data;
 
-	if (file->f_mode & FMODE_READ)
-		return tracing_release(inode, file);
-
+	if (file->f_mode & FMODE_READ) {
+		tracing_close(file);
+		return;
+	}
 	/* If write only, the seq_file is just a stub */
 	if (m)
 		kfree(m->private);
 	kfree(m);
-
-	return 0;
 }
 
 static int tracing_buffers_open(struct inode *inode, struct file *filp);
 static ssize_t tracing_buffers_read(struct file *filp, char __user *ubuf,
 				    size_t count, loff_t *ppos);
-static int tracing_buffers_release(struct inode *inode, struct file *file);
+static void tracing_buffers_close(struct file *file);
 static ssize_t tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 		   struct pipe_inode_info *pipe, size_t len, unsigned int flags);
 
@@ -4641,7 +4634,7 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
 	info = filp->private_data;
 
 	if (info->iter.trace->use_max_tr) {
-		tracing_buffers_release(inode, filp);
+		tracing_buffers_close(filp);
 		return -EBUSY;
 	}
 
@@ -4673,7 +4666,7 @@ static const struct file_operations tracing_pipe_fops = {
 	.poll		= tracing_poll_pipe,
 	.read		= tracing_read_pipe,
 	.splice_read	= tracing_splice_read_pipe,
-	.release	= tracing_release_pipe,
+	.close		= tracing_close_pipe,
 	.llseek		= no_llseek,
 };
 
@@ -4692,7 +4685,7 @@ static const struct file_operations tracing_total_entries_fops = {
 
 static const struct file_operations tracing_free_buffer_fops = {
 	.write		= tracing_free_buffer_write,
-	.release	= tracing_free_buffer_release,
+	.close		= tracing_free_buffer_close,
 };
 
 static const struct file_operations tracing_mark_fops = {
@@ -4715,13 +4708,13 @@ static const struct file_operations snapshot_fops = {
 	.read		= seq_read,
 	.write		= tracing_snapshot_write,
 	.llseek		= tracing_seek,
-	.release	= tracing_snapshot_release,
+	.close		= tracing_snapshot_close,
 };
 
 static const struct file_operations snapshot_raw_fops = {
 	.open		= snapshot_raw_open,
 	.read		= tracing_buffers_read,
-	.release	= tracing_buffers_release,
+	.close		= tracing_buffers_close,
 	.splice_read	= tracing_buffers_splice_read,
 	.llseek		= no_llseek,
 };
@@ -4850,7 +4843,7 @@ tracing_buffers_read(struct file *filp, char __user *ubuf,
 	return size;
 }
 
-static int tracing_buffers_release(struct inode *inode, struct file *file)
+static void tracing_buffers_close(struct file *file)
 {
 	struct ftrace_buffer_info *info = file->private_data;
 	struct trace_iterator *iter = &info->iter;
@@ -4865,8 +4858,6 @@ static int tracing_buffers_release(struct inode *inode, struct file *file)
 	kfree(info);
 
 	mutex_unlock(&trace_types_lock);
-
-	return 0;
 }
 
 struct buffer_ref {
@@ -5051,7 +5042,7 @@ static const struct file_operations tracing_buffers_fops = {
 	.open		= tracing_buffers_open,
 	.read		= tracing_buffers_read,
 	.poll		= tracing_buffers_poll,
-	.release	= tracing_buffers_release,
+	.close		= tracing_buffers_close,
 	.splice_read	= tracing_buffers_splice_read,
 	.llseek		= no_llseek,
 };

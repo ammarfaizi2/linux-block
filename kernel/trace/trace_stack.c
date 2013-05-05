@@ -383,7 +383,7 @@ static const struct file_operations stack_trace_filter_fops = {
 	.read = seq_read,
 	.write = ftrace_filter_write,
 	.llseek = ftrace_filter_lseek,
-	.release = ftrace_regex_release,
+	.close = ftrace_regex_close,
 };
 
 int
