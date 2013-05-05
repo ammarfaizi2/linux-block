@@ -579,15 +579,13 @@ fail:
 }
 
 /**
- * gfs2_release - called to close a struct file
- * @inode: the inode the struct file belongs to
+ * gfs2_close - called to close a struct file
  * @file: the struct file being closed
- *
- * Returns: errno
  */
 
-static int gfs2_release(struct inode *inode, struct file *file)
+static void gfs2_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	struct gfs2_inode *ip = GFS2_I(inode);
 
 	kfree(file->private_data);
@@ -596,8 +594,6 @@ static int gfs2_release(struct inode *inode, struct file *file)
 	if ((file->f_mode & FMODE_WRITE) &&
 	    (atomic_read(&inode->i_writecount) == 1))
 		gfs2_rs_delete(ip);
-
-	return 0;
 }
 
 /**
@@ -1029,7 +1025,7 @@ const struct file_operations gfs2_file_fops = {
 	.unlocked_ioctl	= gfs2_ioctl,
 	.mmap		= gfs2_mmap,
 	.open		= gfs2_open,
-	.release	= gfs2_release,
+	.close		= gfs2_close,
 	.fsync		= gfs2_fsync,
 	.lock		= gfs2_lock,
 	.flock		= gfs2_flock,
@@ -1043,7 +1039,7 @@ const struct file_operations gfs2_dir_fops = {
 	.readdir	= gfs2_readdir,
 	.unlocked_ioctl	= gfs2_ioctl,
 	.open		= gfs2_open,
-	.release	= gfs2_release,
+	.close		= gfs2_close,
 	.fsync		= gfs2_fsync,
 	.lock		= gfs2_lock,
 	.flock		= gfs2_flock,
@@ -1061,7 +1057,7 @@ const struct file_operations gfs2_file_fops_nolock = {
 	.unlocked_ioctl	= gfs2_ioctl,
 	.mmap		= gfs2_mmap,
 	.open		= gfs2_open,
-	.release	= gfs2_release,
+	.close		= gfs2_close,
 	.fsync		= gfs2_fsync,
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= generic_file_splice_write,
@@ -1073,7 +1069,7 @@ const struct file_operations gfs2_dir_fops_nolock = {
 	.readdir	= gfs2_readdir,
 	.unlocked_ioctl	= gfs2_ioctl,
 	.open		= gfs2_open,
-	.release	= gfs2_release,
+	.close		= gfs2_close,
 	.fsync		= gfs2_fsync,
 	.llseek		= default_llseek,
 };
