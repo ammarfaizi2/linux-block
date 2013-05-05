@@ -402,7 +402,7 @@ static const struct file_operations ap_control_proc_fops = {
 	.open		= ap_control_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 
@@ -622,7 +622,7 @@ static const struct file_operations prism2_ap_proc_fops = {
 	.open		= prism2_ap_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 #endif /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
 

@@ -1159,7 +1159,7 @@ const struct file_operations rose_nodes_fops = {
 	.open = rose_nodes_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static void *rose_neigh_start(struct seq_file *seq, loff_t *pos)
@@ -1243,7 +1243,7 @@ const struct file_operations rose_neigh_fops = {
 	.open = rose_neigh_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 
@@ -1329,7 +1329,7 @@ const struct file_operations rose_routes_fops = {
 	.open = rose_route_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 #endif /* CONFIG_PROC_FS */

@@ -545,7 +545,7 @@ static const struct file_operations cciss_proc_fops = {
 	.open    = cciss_seq_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 	.write	 = cciss_proc_write,
 };
 

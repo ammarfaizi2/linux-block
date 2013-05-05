@@ -291,15 +291,12 @@ err_free_pd:
 
 static int l2tp_dfs_seq_release(struct inode *inode, struct file *file)
 {
-	struct l2tp_dfs_seq_data *pd;
-	struct seq_file *seq;
-
-	seq = file->private_data;
-	pd = seq->private;
+	struct seq_file *seq = file->private_data;
+	struct l2tp_dfs_seq_data *pd = seq->private;
 	if (pd->net)
 		put_net(pd->net);
 	kfree(pd);
-	seq_release(inode, file);
+	seq_close(file);
 
 	return 0;
 }

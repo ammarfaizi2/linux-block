@@ -639,7 +639,7 @@ static const struct file_operations kprobe_events_ops = {
 	.open           = probes_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = seq_release,
+	.close	        = seq_close,
 	.write		= probes_write,
 };
 
@@ -671,7 +671,7 @@ static const struct file_operations kprobe_profile_ops = {
 	.open           = profile_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /* Sum up total data length for dynamic arraies (strings) */

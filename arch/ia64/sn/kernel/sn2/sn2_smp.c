@@ -541,7 +541,7 @@ static const struct file_operations proc_sn2_ptc_operations = {
 	.read = seq_read,
 	.write = sn2_ptc_proc_write,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static struct proc_dir_entry *proc_sn2_ptc;

@@ -1015,7 +1015,8 @@ static int jbd2_seq_info_release(struct inode *inode, struct file *file)
 	struct jbd2_stats_proc_session *s = seq->private;
 	kfree(s->stats);
 	kfree(s);
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 static const struct file_operations jbd2_seq_info_fops = {

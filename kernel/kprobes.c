@@ -2232,7 +2232,7 @@ static const struct file_operations debugfs_kprobes_operations = {
 	.open           = kprobes_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 static void __kprobes arm_all_kprobes(void)

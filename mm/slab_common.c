@@ -454,7 +454,7 @@ static const struct file_operations proc_slabinfo_operations = {
 	.read		= seq_read,
 	.write          = slabinfo_write,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int __init slab_proc_init(void)

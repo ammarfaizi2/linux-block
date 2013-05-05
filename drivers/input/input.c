@@ -1183,7 +1183,7 @@ static const struct file_operations input_devices_fileops = {
 	.poll		= input_proc_devices_poll,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static void *input_handlers_seq_start(struct seq_file *seq, loff_t *pos)
@@ -1246,7 +1246,7 @@ static const struct file_operations input_handlers_fileops = {
 	.open		= input_proc_handlers_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int __init input_proc_init(void)

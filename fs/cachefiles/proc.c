@@ -97,7 +97,7 @@ static const struct file_operations cachefiles_histogram_fops = {
 	.open		= cachefiles_histogram_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 /*

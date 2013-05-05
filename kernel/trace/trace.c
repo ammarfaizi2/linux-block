@@ -3021,7 +3021,7 @@ static const struct file_operations tracing_fops = {
 static const struct file_operations show_traces_fops = {
 	.open		= show_traces_open,
 	.read		= seq_read,
-	.release	= seq_release,
+	.close		= seq_close,
 	.llseek		= seq_lseek,
 };
 

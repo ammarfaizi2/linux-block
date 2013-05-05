@@ -211,7 +211,7 @@ static const struct file_operations nubus_proc_fops = {
 	.open		= nubus_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 void __init proc_bus_nubus_add_devices(void)

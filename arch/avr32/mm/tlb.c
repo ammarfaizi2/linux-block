@@ -363,7 +363,7 @@ static const struct file_operations proc_tlb_operations = {
 	.open		= tlb_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int __init proctlb_init(void)

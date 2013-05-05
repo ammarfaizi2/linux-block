@@ -150,7 +150,7 @@ static const struct file_operations exports_proc_operations = {
 	.open		= exports_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 	.owner		= THIS_MODULE,
 };
 
@@ -163,7 +163,7 @@ static const struct file_operations exports_nfsd_operations = {
 	.open		= exports_nfsd_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 	.owner		= THIS_MODULE,
 };
 

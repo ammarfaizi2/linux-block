@@ -165,7 +165,7 @@ static const struct file_operations ima_measurements_ops = {
 	.open = ima_measurements_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static void ima_print_digest(struct seq_file *m, u8 *digest)
@@ -240,7 +240,7 @@ static const struct file_operations ima_ascii_measurements_ops = {
 	.open = ima_ascii_measurements_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static ssize_t ima_write_policy(struct file *file, const char __user *buf,

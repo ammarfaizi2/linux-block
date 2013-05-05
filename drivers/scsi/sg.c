@@ -2271,7 +2271,7 @@ static const struct file_operations dev_fops = {
 	.open = sg_proc_open_dev,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 static const struct seq_operations dev_seq_ops = {
 	.start = dev_seq_start,
@@ -2287,7 +2287,7 @@ static const struct file_operations devstrs_fops = {
 	.open = sg_proc_open_devstrs,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 static const struct seq_operations devstrs_seq_ops = {
 	.start = dev_seq_start,
@@ -2303,7 +2303,7 @@ static const struct file_operations debug_fops = {
 	.open = sg_proc_open_debug,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 static const struct seq_operations debug_seq_ops = {
 	.start = dev_seq_start,

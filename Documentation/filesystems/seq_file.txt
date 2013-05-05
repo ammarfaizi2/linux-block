@@ -235,7 +235,7 @@ file_operations structure will look like:
 	        .open    = ct_open,
 	        .read    = seq_read,
 	        .llseek  = seq_lseek,
-	        .release = seq_release
+	        .close   = seq_close
 	};
 
 There is also a seq_close_private() which passes the contents of the
@@ -288,5 +288,5 @@ calls:
 When output time comes, the show() function will be called once. The data
 value given to single_open() can be found in the private field of the
 seq_file structure. When using single_open(), the programmer should use
-single_close() instead of seq_release() in the file_operations structure
+single_close() instead of seq_close() in the file_operations structure
 to avoid a memory leak.

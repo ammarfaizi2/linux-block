@@ -444,7 +444,7 @@ static const struct file_operations proc_scsi_operations = {
 	.read		= seq_read,
 	.write		= proc_scsi_write,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 /**

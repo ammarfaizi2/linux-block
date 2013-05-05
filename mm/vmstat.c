@@ -973,7 +973,7 @@ static const struct file_operations fragmentation_file_operations = {
 	.open		= fragmentation_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct seq_operations pagetypeinfo_op = {
@@ -992,7 +992,7 @@ static const struct file_operations pagetypeinfo_file_ops = {
 	.open		= pagetypeinfo_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
@@ -1085,7 +1085,7 @@ static const struct file_operations proc_zoneinfo_file_operations = {
 	.open		= zoneinfo_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 enum writeback_stat_item {
@@ -1167,7 +1167,7 @@ static const struct file_operations proc_vmstat_file_operations = {
 	.open		= vmstat_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 #endif /* CONFIG_PROC_FS */
 
@@ -1333,7 +1333,7 @@ static const struct file_operations unusable_file_ops = {
 	.open		= unusable_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static void extfrag_show_print(struct seq_file *m,
@@ -1385,7 +1385,7 @@ static const struct file_operations extfrag_file_ops = {
 	.open		= extfrag_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int __init extfrag_debug_init(void)

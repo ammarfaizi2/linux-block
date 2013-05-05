@@ -92,7 +92,7 @@ static const struct file_operations irlan_fops = {
 	.open    = irlan_seq_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 extern struct proc_dir_entry *proc_irda;

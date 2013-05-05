@@ -260,7 +260,7 @@ static ssize_t severities_coverage_write(struct file *file,
 
 static const struct file_operations severities_coverage_fops = {
 	.open		= severities_coverage_open,
-	.release	= seq_release,
+	.close		= seq_close,
 	.read		= seq_read,
 	.write		= severities_coverage_write,
 	.llseek		= seq_lseek,

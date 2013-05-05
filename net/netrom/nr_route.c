@@ -930,7 +930,7 @@ const struct file_operations nr_nodes_fops = {
 	.open = nr_node_info_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static void *nr_neigh_start(struct seq_file *seq, loff_t *pos)
@@ -997,7 +997,7 @@ const struct file_operations nr_neigh_fops = {
 	.open = nr_neigh_info_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 #endif

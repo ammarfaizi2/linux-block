@@ -956,9 +956,9 @@ int sn_topology_open(struct inode *inode, struct file *file)
 int sn_topology_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *seq = file->private_data;
-
 	vfree(seq->private);
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 int sn_hwperf_get_nearest_node(cnodeid_t node,

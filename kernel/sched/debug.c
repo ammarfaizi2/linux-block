@@ -451,13 +451,6 @@ static const struct seq_operations sched_debug_sops = {
 	.show = sched_debug_show,
 };
 
-static int sched_debug_release(struct inode *inode, struct file *file)
-{
-	seq_release(inode, file);
-
-	return 0;
-}
-
 static int sched_debug_open(struct inode *inode, struct file *filp)
 {
 	int ret = 0;
@@ -471,7 +464,7 @@ static const struct file_operations sched_debug_fops = {
 	.open		= sched_debug_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= sched_debug_release,
+	.close		= seq_close,
 };
 
 static int __init init_sched_debug_procfs(void)

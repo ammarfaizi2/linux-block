@@ -151,7 +151,7 @@ static const struct file_operations ipoib_mcg_fops = {
 	.open    = ipoib_mcg_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 static void *ipoib_path_seq_start(struct seq_file *file, loff_t *pos)
@@ -256,7 +256,7 @@ static const struct file_operations ipoib_path_fops = {
 	.open    = ipoib_path_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 void ipoib_create_debug_files(struct net_device *dev)

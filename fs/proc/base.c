@@ -2569,7 +2569,8 @@ static int proc_id_map_release(struct inode *inode, struct file *file)
 	struct seq_file *seq = file->private_data;
 	struct user_namespace *ns = seq->private;
 	put_user_ns(ns);
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 static int proc_uid_map_open(struct inode *inode, struct file *file)

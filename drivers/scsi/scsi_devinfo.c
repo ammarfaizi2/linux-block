@@ -758,7 +758,7 @@ static const struct file_operations scsi_devinfo_proc_fops = {
 	.read		= seq_read,
 	.write		= proc_scsi_devinfo_write,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 #endif /* CONFIG_SCSI_PROC_FS */
 

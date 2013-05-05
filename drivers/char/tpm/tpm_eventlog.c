@@ -229,7 +229,8 @@ static int tpm_bios_measurements_release(struct inode *inode,
 		kfree(log);
 	}
 
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 static int tpm_ascii_bios_measurements_show(struct seq_file *m, void *v)

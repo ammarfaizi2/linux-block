@@ -36,7 +36,7 @@ static const struct file_operations proc_keys_fops = {
 	.open		= proc_keys_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 #endif
 
@@ -57,7 +57,7 @@ static const struct file_operations proc_key_users_fops = {
 	.open		= proc_key_users_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 /*

@@ -125,7 +125,7 @@ static const struct file_operations sctp_objcnt_ops = {
 	.open	 = sctp_objcnt_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 /* Initialize the objcount in the proc filesystem.  */

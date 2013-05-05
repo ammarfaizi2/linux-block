@@ -235,7 +235,7 @@ static const struct file_operations bond_info_fops = {
 	.open    = bond_info_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 void bond_create_proc_entry(struct bonding *bond)

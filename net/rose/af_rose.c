@@ -1468,7 +1468,7 @@ static const struct file_operations rose_info_fops = {
 	.open = rose_info_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 #endif	/* CONFIG_PROC_FS */
 

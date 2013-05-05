@@ -159,7 +159,7 @@ static const struct file_operations openpromfs_prop_ops = {
 	.open		= property_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int openpromfs_readdir(struct file *, void *, filldir_t);

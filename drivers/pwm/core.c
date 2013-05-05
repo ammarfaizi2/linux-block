@@ -851,7 +851,7 @@ static const struct file_operations pwm_debugfs_ops = {
 	.open = pwm_seq_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static int __init pwm_debugfs_init(void)

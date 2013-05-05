@@ -1621,7 +1621,7 @@ static const struct file_operations proc_uv_ptc_operations = {
 	.read		= seq_read,
 	.write		= ptc_proc_write,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations tunables_fops = {

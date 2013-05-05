@@ -3658,7 +3658,8 @@ static int cgroup_pidlist_release(struct inode *inode, struct file *file)
 	 */
 	l = ((struct seq_file *)file->private_data)->private;
 	cgroup_release_pid_array(l);
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 static const struct file_operations cgroup_pidlist_operations = {

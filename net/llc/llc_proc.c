@@ -229,7 +229,7 @@ static const struct file_operations llc_seq_socket_fops = {
 	.open		= llc_seq_socket_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations llc_seq_core_fops = {
@@ -237,7 +237,7 @@ static const struct file_operations llc_seq_core_fops = {
 	.open		= llc_seq_core_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static struct proc_dir_entry *llc_proc_dir;

@@ -337,21 +337,19 @@ loff_t seq_lseek(struct file *file, loff_t offset, int whence)
 EXPORT_SYMBOL(seq_lseek);
 
 /**
- *	seq_release -	free the structures associated with sequential file.
+ *	seq_close -	free the structures associated with sequential file.
  *	@file: file in question
- *	@inode: its inode
  *
  *	Frees the structures associated with sequential file; can be used
- *	as ->f_op->release() if you don't have private data to destroy.
+ *	as ->f_op->close() if you don't have private data to destroy.
  */
-int seq_release(struct inode *inode, struct file *file)
+void seq_close(struct file *file)
 {
 	struct seq_file *m = file->private_data;
 	kfree(m->buf);
 	kfree(m);
-	return 0;
 }
-EXPORT_SYMBOL(seq_release);
+EXPORT_SYMBOL(seq_close);
 
 /**
  *	seq_escape -	print string into buffer, escaping some characters
@@ -620,7 +618,7 @@ EXPORT_SYMBOL(single_open_size);
 void single_close(struct file *file)
 {
 	const struct seq_operations *op = ((struct seq_file *)file->private_data)->op;
-	seq_release(inode, file);
+	seq_close(file);
 	kfree(op);
 }
 EXPORT_SYMBOL(single_close);
@@ -629,7 +627,7 @@ void seq_close_private(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	kfree(seq->private);
-	seq_release(inode, file);
+	seq_close(file);
 }
 EXPORT_SYMBOL(seq_close_private);
 

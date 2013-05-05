@@ -340,7 +340,7 @@ const struct file_operations ax25_route_fops = {
 	.open = ax25_rt_info_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 #endif

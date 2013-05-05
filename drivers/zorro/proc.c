@@ -123,7 +123,7 @@ static const struct file_operations zorro_devices_proc_fops = {
 	.open		= zorro_devices_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static struct proc_dir_entry *proc_bus_zorro_dir;

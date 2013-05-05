@@ -292,7 +292,8 @@ static int tracing_stat_release(struct inode *i, struct file *f)
 
 	reset_stat_session(session);
 
-	return seq_release(i, f);
+	seq_close(f);
+	return 0;
 }
 
 static const struct file_operations tracing_stat_fops = {

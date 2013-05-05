@@ -644,14 +644,9 @@ static int clusterip_proc_open(struct inode *inode, struct file *file)
 static int clusterip_proc_release(struct inode *inode, struct file *file)
 {
 	struct clusterip_config *c = PDE_DATA(inode);
-	int ret;
-
-	ret = seq_release(inode, file);
-
-	if (!ret)
-		clusterip_config_put(c);
-
-	return ret;
+	seq_close(file);
+	clusterip_config_put(c);
+	return 0;
 }
 
 static ssize_t clusterip_proc_write(struct file *file, const char __user *input,

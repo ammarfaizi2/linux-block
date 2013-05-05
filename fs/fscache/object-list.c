@@ -400,7 +400,7 @@ static int fscache_objlist_open(struct inode *inode, struct file *file)
 	/* buffer for key extraction */
 	data = kmalloc(sizeof(struct fscache_objlist_data), GFP_KERNEL);
 	if (!data) {
-		seq_release(inode, file);
+		seq_close(file);
 		return -ENOMEM;
 	}
 
@@ -416,5 +416,5 @@ const struct file_operations fscache_objlist_fops = {
 	.open		= fscache_objlist_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
+	.close		= seq_close_private,
 };

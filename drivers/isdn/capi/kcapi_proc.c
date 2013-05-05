@@ -123,7 +123,7 @@ static const struct file_operations proc_controller_ops = {
 	.open		= seq_controller_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations proc_contrstats_ops = {
@@ -131,7 +131,7 @@ static const struct file_operations proc_contrstats_ops = {
 	.open		= seq_contrstats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 // /proc/capi/applications:
@@ -233,7 +233,7 @@ static const struct file_operations proc_applications_ops = {
 	.open		= seq_applications_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations proc_applstats_ops = {
@@ -241,7 +241,7 @@ static const struct file_operations proc_applstats_ops = {
 	.open		= seq_applstats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 // ---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ static const struct file_operations proc_driver_ops = {
 	.open		= seq_capi_driver_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 // ---------------------------------------------------------------------------

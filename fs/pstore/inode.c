@@ -164,7 +164,7 @@ static const struct file_operations pstore_file_operations = {
 	.open		= pstore_file_open,
 	.read		= pstore_file_read,
 	.llseek		= pstore_file_llseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 /*

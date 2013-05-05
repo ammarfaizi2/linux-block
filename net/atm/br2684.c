@@ -831,7 +831,7 @@ static const struct file_operations br2684_proc_ops = {
 	.open = br2684_proc_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 extern struct proc_dir_entry *atm_proc_root;	/* from proc.c */

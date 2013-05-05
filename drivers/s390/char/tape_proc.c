@@ -115,7 +115,7 @@ static const struct file_operations tape_proc_ops =
 	.open		= tape_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 /*

@@ -290,7 +290,8 @@ static int mounts_release(struct inode *inode, struct file *file)
 	struct proc_mounts *p = proc_mounts(file->private_data);
 	path_put(&p->root);
 	put_mnt_ns(p->ns);
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 static int mounts_open(struct inode *inode, struct file *file)

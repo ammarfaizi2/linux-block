@@ -226,7 +226,7 @@ static int gcov_seq_release(struct inode *inode, struct file *file)
 	info = gcov_iter_get_info(iter);
 	gcov_iter_free(iter);
 	gcov_info_free(info);
-	seq_release(inode, file);
+	seq_close(file);
 
 	return 0;
 }

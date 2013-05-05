@@ -266,7 +266,7 @@ static const struct file_operations devices_seq_fops = {
 	.open		= atm_dev_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int pvc_seq_show(struct seq_file *seq, void *v)

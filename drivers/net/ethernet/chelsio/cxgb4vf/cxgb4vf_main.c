@@ -1754,7 +1754,7 @@ static const struct file_operations sge_qinfo_debugfs_fops = {
 	.open    = sge_qinfo_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 /*
@@ -1900,7 +1900,7 @@ static const struct file_operations sge_qstats_proc_fops = {
 	.open    = sge_qstats_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 /*
@@ -2010,7 +2010,7 @@ static const struct file_operations interfaces_proc_fops = {
 	.open    = interfaces_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 /*

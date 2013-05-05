@@ -418,6 +418,6 @@ const struct file_operations discovery_seq_fops = {
 	.open           = discovery_seq_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 #endif

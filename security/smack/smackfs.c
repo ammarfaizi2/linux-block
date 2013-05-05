@@ -675,7 +675,7 @@ static const struct file_operations smk_load_ops = {
 	.read		= seq_read,
 	.llseek         = seq_lseek,
 	.write		= smk_write_load,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /**
@@ -943,7 +943,7 @@ static const struct file_operations smk_cipso_ops = {
 	.read		= seq_read,
 	.llseek         = seq_lseek,
 	.write		= smk_write_cipso,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /*
@@ -1017,7 +1017,7 @@ static const struct file_operations smk_cipso2_ops = {
 	.read		= seq_read,
 	.llseek         = seq_lseek,
 	.write		= smk_write_cipso2,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /*
@@ -1287,7 +1287,7 @@ static const struct file_operations smk_netlbladdr_ops = {
 	.read		= seq_read,
 	.llseek         = seq_lseek,
 	.write		= smk_write_netlbladdr,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /**
@@ -1824,7 +1824,7 @@ static const struct file_operations smk_load_self_ops = {
 	.read		= seq_read,
 	.llseek         = seq_lseek,
 	.write		= smk_write_load_self,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /**
@@ -1959,7 +1959,7 @@ static const struct file_operations smk_load2_ops = {
 	.read		= seq_read,
 	.llseek         = seq_lseek,
 	.write		= smk_write_load2,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /*
@@ -2032,7 +2032,7 @@ static const struct file_operations smk_load_self2_ops = {
 	.read		= seq_read,
 	.llseek         = seq_lseek,
 	.write		= smk_write_load_self2,
-	.release        = seq_release,
+	.close	        = seq_close,
 };
 
 /**

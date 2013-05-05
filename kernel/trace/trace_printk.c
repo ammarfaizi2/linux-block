@@ -322,7 +322,7 @@ static const struct file_operations ftrace_formats_fops = {
 	.open = ftrace_formats_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static __init int init_trace_printk_function_export(void)

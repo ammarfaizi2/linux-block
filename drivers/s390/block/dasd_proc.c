@@ -140,7 +140,7 @@ static const struct file_operations dasd_devices_file_ops = {
 	.open		= dasd_devices_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 #ifdef CONFIG_DASD_PROFILE

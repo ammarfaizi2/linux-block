@@ -190,21 +190,21 @@ static const struct file_operations x25_seq_socket_fops = {
 	.open		= x25_seq_socket_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations x25_seq_route_fops = {
 	.open		= x25_seq_route_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations x25_seq_forward_fops = {
 	.open		= x25_seq_forward_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 int __init x25_proc_init(void)

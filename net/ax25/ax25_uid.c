@@ -199,7 +199,7 @@ const struct file_operations ax25_uid_fops = {
 	.open = ax25_uid_info_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 #endif

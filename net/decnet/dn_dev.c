@@ -1383,7 +1383,7 @@ static const struct file_operations dn_dev_seq_fops = {
 	.open	 = dn_dev_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 #endif /* CONFIG_PROC_FS */

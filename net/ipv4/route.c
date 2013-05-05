@@ -243,7 +243,7 @@ static const struct file_operations rt_cache_seq_fops = {
 	.open	 = rt_cache_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 
@@ -334,7 +334,7 @@ static const struct file_operations rt_cpu_seq_fops = {
 	.open	 = rt_cpu_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 #ifdef CONFIG_IP_ROUTE_CLASSID

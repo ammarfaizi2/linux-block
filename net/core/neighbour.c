@@ -2715,7 +2715,7 @@ static const struct file_operations neigh_stat_seq_fops = {
 	.open 	 = neigh_stat_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 #endif /* CONFIG_PROC_FS */

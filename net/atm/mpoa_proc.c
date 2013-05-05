@@ -61,7 +61,7 @@ static const struct file_operations mpc_file_operations = {
 	.read =		seq_read,
 	.llseek =	seq_lseek,
 	.write =	proc_mpc_write,
-	.release =	seq_release,
+	.close =	seq_close,
 };
 
 /*

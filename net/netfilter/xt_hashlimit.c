@@ -860,7 +860,7 @@ static const struct file_operations dl_file_ops = {
 	.open    = dl_proc_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 static int __net_init hashlimit_proc_net_init(struct net *net)

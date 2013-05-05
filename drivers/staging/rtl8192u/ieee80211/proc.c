@@ -103,7 +103,7 @@ static const struct file_operations proc_crypto_ops = {
 	.open		= crypto_info_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release
+	.close		= seq_close
 };
 
 void __init crypto_init_proc(void)

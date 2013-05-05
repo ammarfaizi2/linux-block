@@ -2277,7 +2277,7 @@ static const struct file_operations ext4_mb_seq_groups_fops = {
 	.open		= ext4_mb_seq_groups_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static struct kmem_cache *get_groupinfo_cache(int blocksize_bits)

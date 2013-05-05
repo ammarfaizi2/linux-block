@@ -40,7 +40,7 @@ static const struct file_operations afs_proc_cells_fops = {
 	.read		= seq_read,
 	.write		= afs_proc_cells_write,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 	.owner		= THIS_MODULE,
 };
 
@@ -467,7 +467,8 @@ static int afs_proc_cell_volumes_open(struct inode *inode, struct file *file)
  */
 static int afs_proc_cell_volumes_release(struct inode *inode, struct file *file)
 {
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 /*
@@ -574,7 +575,8 @@ static int afs_proc_cell_vlservers_open(struct inode *inode, struct file *file)
 static int afs_proc_cell_vlservers_release(struct inode *inode,
 					   struct file *file)
 {
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 /*
@@ -678,7 +680,8 @@ static int afs_proc_cell_servers_open(struct inode *inode, struct file *file)
 static int afs_proc_cell_servers_release(struct inode *inode,
 					 struct file *file)
 {
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 /*

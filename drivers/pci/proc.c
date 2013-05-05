@@ -447,7 +447,7 @@ static const struct file_operations proc_bus_pci_dev_operations = {
 	.open		= proc_bus_pci_dev_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int __init pci_proc_init(void)

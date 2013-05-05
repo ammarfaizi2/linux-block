@@ -159,7 +159,7 @@ static const struct file_operations prism2_wds_proc_fops = {
 	.open		= prism2_wds_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 
@@ -235,7 +235,7 @@ static const struct file_operations prism2_bss_list_proc_fops = {
 	.open		= prism2_bss_list_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 
@@ -442,7 +442,7 @@ static const struct file_operations prism2_scan_results_proc_fops = {
 	.open		= prism2_scan_results_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 

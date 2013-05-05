@@ -3555,7 +3555,7 @@ int ftrace_regex_release(struct inode *inode, struct file *file)
 	if (file->f_mode & FMODE_READ) {
 		iter = m->private;
 
-		seq_release(inode, file);
+		seq_close(file);
 	} else
 		iter = file->private_data;
 
@@ -3711,7 +3711,7 @@ static int
 ftrace_graph_release(struct inode *inode, struct file *file)
 {
 	if (file->f_mode & FMODE_READ)
-		seq_release(inode, file);
+		seq_close(file);
 	return 0;
 }
 
@@ -4470,7 +4470,7 @@ static int
 ftrace_pid_release(struct inode *inode, struct file *file)
 {
 	if (file->f_mode & FMODE_READ)
-		seq_release(inode, file);
+		seq_close(file);
 
 	return 0;
 }

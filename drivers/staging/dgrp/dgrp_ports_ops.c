@@ -52,7 +52,7 @@ const struct file_operations dgrp_ports_ops = {
 	.open    = dgrp_ports_open,
 	.read    = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 static void *dgrp_ports_seq_start(struct seq_file *seq, loff_t *pos)

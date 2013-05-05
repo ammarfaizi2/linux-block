@@ -230,7 +230,7 @@ static const struct file_operations atalk_seq_interface_fops = {
 	.open		= atalk_seq_interface_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations atalk_seq_route_fops = {
@@ -238,7 +238,7 @@ static const struct file_operations atalk_seq_route_fops = {
 	.open		= atalk_seq_route_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static const struct file_operations atalk_seq_socket_fops = {
@@ -246,7 +246,7 @@ static const struct file_operations atalk_seq_socket_fops = {
 	.open		= atalk_seq_socket_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static struct proc_dir_entry *atalk_proc_dir;

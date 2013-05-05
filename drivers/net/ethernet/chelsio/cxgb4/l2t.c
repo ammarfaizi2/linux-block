@@ -624,5 +624,5 @@ const struct file_operations t4_l2t_fops = {
 	.open = l2t_seq_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 };

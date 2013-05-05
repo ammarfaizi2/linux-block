@@ -883,7 +883,7 @@ static const struct file_operations proc_partitions_operations = {
 	.open		= partitions_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 #endif
 
@@ -1195,7 +1195,7 @@ static const struct file_operations proc_diskstats_operations = {
 	.open		= diskstats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 static int __init proc_genhd_init(void)

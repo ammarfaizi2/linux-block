@@ -69,7 +69,7 @@ static const struct file_operations config_proc_file_ops = {
 	.open	 = dgrp_config_proc_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 	.write   = dgrp_config_proc_write,
 };
 
@@ -86,7 +86,7 @@ static const struct file_operations nodeinfo_proc_file_ops = {
 	.open	 = dgrp_nodeinfo_proc_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = seq_release,
+	.close	 = seq_close,
 };
 
 static struct proc_dir_entry *net_entry_pointer;

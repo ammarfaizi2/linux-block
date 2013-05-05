@@ -109,7 +109,7 @@ static const struct file_operations proc_lockdep_operations = {
 	.open		= lockdep_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 
 #ifdef CONFIG_PROVE_LOCKING
@@ -177,7 +177,7 @@ static const struct file_operations proc_lockdep_chains_operations = {
 	.open		= lockdep_chains_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.close		= seq_close,
 };
 #endif /* CONFIG_PROVE_LOCKING */
 
@@ -646,7 +646,8 @@ static int lock_stat_release(struct inode *inode, struct file *file)
 	struct seq_file *seq = file->private_data;
 
 	vfree(seq->private);
-	return seq_release(inode, file);
+	seq_close(file);
+	return 0;
 }
 
 static const struct file_operations proc_lock_stat_operations = {

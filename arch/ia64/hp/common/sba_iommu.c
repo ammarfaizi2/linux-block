@@ -1963,7 +1963,7 @@ static const struct file_operations ioc_fops = {
 	.open    = ioc_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 static void __init

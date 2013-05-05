@@ -339,7 +339,7 @@ static const struct file_operations service_level_ops = {
 	.open		= service_level_open,
 	.read		= seq_read,
 	.llseek 	= seq_lseek,
-	.release	= seq_release
+	.close		= seq_close
 };
 
 static void service_level_vm_print(struct seq_file *m,

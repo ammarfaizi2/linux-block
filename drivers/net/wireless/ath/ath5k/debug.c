@@ -183,7 +183,7 @@ static const struct file_operations fops_registers = {
 	.open = open_file_registers,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release,
+	.close = seq_close,
 	.owner = THIS_MODULE,
 };
 

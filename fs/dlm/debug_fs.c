@@ -653,7 +653,7 @@ static const struct file_operations format1_fops = {
 	.open    = table_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 static const struct file_operations format2_fops = {
@@ -661,7 +661,7 @@ static const struct file_operations format2_fops = {
 	.open    = table_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 static const struct file_operations format3_fops = {
@@ -669,7 +669,7 @@ static const struct file_operations format3_fops = {
 	.open    = table_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 static const struct file_operations format4_fops = {
@@ -677,7 +677,7 @@ static const struct file_operations format4_fops = {
 	.open    = table_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = seq_release
+	.close	 = seq_close
 };
 
 /*

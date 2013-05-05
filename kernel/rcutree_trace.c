@@ -174,7 +174,7 @@ static const struct file_operations rcudata_fops = {
 	.open = rcudata_open,
 	.read = seq_read,
 	.llseek = no_llseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static int show_rcuexp(struct seq_file *m, void *v)
@@ -393,7 +393,7 @@ static const struct file_operations rcu_pending_fops = {
 	.open = rcu_pending_open,
 	.read = seq_read,
 	.llseek = no_llseek,
-	.release = seq_release,
+	.close = seq_close,
 };
 
 static int show_rcutorture(struct seq_file *m, void *unused)
