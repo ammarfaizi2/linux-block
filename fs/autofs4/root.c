@@ -39,7 +39,7 @@ static void autofs4_dentry_release(struct dentry *);
 
 const struct file_operations autofs4_root_operations = {
 	.open		= dcache_dir_open,
-	.release	= dcache_dir_close,
+	.close		= dcache_dir_close,
 	.read		= generic_read_dir,
 	.readdir	= dcache_readdir,
 	.llseek		= dcache_dir_lseek,
@@ -51,7 +51,7 @@ const struct file_operations autofs4_root_operations = {
 
 const struct file_operations autofs4_dir_operations = {
 	.open		= autofs4_dir_open,
-	.release	= dcache_dir_close,
+	.close		= dcache_dir_close,
 	.read		= generic_read_dir,
 	.readdir	= dcache_readdir,
 	.llseek		= dcache_dir_lseek,

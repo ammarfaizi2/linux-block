@@ -2525,7 +2525,7 @@ extern void iterate_supers_type(struct file_system_type *,
 			        void (*)(struct super_block *, void *), void *);
 
 extern int dcache_dir_open(struct inode *, struct file *);
-extern int dcache_dir_close(struct inode *, struct file *);
+extern void dcache_dir_close(struct file *);
 extern loff_t dcache_dir_lseek(struct file *, loff_t, int);
 extern int dcache_readdir(struct file *, void *, filldir_t);
 extern void simple_close_kfree(struct file *);

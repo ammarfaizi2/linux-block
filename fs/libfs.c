@@ -75,10 +75,9 @@ int dcache_dir_open(struct inode *inode, struct file *file)
 	return file->private_data ? 0 : -ENOMEM;
 }
 
-int dcache_dir_close(struct inode *inode, struct file *file)
+void dcache_dir_close(struct file *file)
 {
 	dput(file->private_data);
-	return 0;
 }
 
 loff_t dcache_dir_lseek(struct file *file, loff_t offset, int whence)
@@ -199,7 +198,7 @@ ssize_t generic_read_dir(struct file *filp, char __user *buf, size_t siz, loff_t
 
 const struct file_operations simple_dir_operations = {
 	.open		= dcache_dir_open,
-	.release	= dcache_dir_close,
+	.close		= dcache_dir_close,
 	.llseek		= dcache_dir_lseek,
 	.read		= generic_read_dir,
 	.readdir	= dcache_readdir,

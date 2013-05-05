@@ -230,7 +230,8 @@ static int spufs_dir_close(struct inode *inode, struct file *file)
 	mutex_unlock(&parent->i_mutex);
 	WARN_ON(ret);
 
-	return dcache_dir_close(inode, file);
+	dcache_dir_close(file);
+	return 0;
 }
 
 const struct file_operations spufs_context_fops = {
