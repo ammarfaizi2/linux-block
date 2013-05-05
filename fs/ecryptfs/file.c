@@ -212,7 +212,7 @@ static int ecryptfs_open(struct inode *inode, struct file *file)
 		rc = -EPERM;
 		goto out;
 	}
-	/* Released in ecryptfs_release or end of function if failure */
+	/* Released in ecryptfs_close or end of function if failure */
 	file_info = kmem_cache_zalloc(ecryptfs_file_info_cache, GFP_KERNEL);
 	ecryptfs_set_file_private(file, file_info);
 	if (!file_info) {
@@ -283,12 +283,11 @@ static int ecryptfs_flush(struct file *file, fl_owner_t td)
 	return 0;
 }
 
-static int ecryptfs_release(struct inode *inode, struct file *file)
+static void ecryptfs_close(struct file *file)
 {
-	ecryptfs_put_lower_file(inode);
+	ecryptfs_put_lower_file(file_inode(file));
 	kmem_cache_free(ecryptfs_file_info_cache,
 			ecryptfs_file_to_private(file));
-	return 0;
 }
 
 static int
@@ -345,7 +344,7 @@ const struct file_operations ecryptfs_dir_fops = {
 #endif
 	.open = ecryptfs_open,
 	.flush = ecryptfs_flush,
-	.release = ecryptfs_release,
+	.close = ecryptfs_close,
 	.fsync = ecryptfs_fsync,
 	.fasync = ecryptfs_fasync,
 	.splice_read = generic_file_splice_read,
@@ -366,7 +365,7 @@ const struct file_operations ecryptfs_main_fops = {
 	.mmap = generic_file_mmap,
 	.open = ecryptfs_open,
 	.flush = ecryptfs_flush,
-	.release = ecryptfs_release,
+	.close = ecryptfs_close,
 	.fsync = ecryptfs_fsync,
 	.fasync = ecryptfs_fasync,
 	.splice_read = generic_file_splice_read,

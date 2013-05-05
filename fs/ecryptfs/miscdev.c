@@ -107,17 +107,14 @@ out_unlock_daemon_list:
 }
 
 /**
- * ecryptfs_miscdev_release
- * @inode: inode of fs/ecryptfs/euid handle (ignored)
+ * ecryptfs_miscdev_close
  * @file: file for fs/ecryptfs/euid handle
  *
  * This keeps the daemon registered until the daemon sends another
  * ioctl to fs/ecryptfs/ctl or until the kernel module unregisters.
- *
- * Returns zero on success; non-zero otherwise
  */
-static int
-ecryptfs_miscdev_release(struct inode *inode, struct file *file)
+static void
+ecryptfs_miscdev_close(struct file *file)
 {
 	struct ecryptfs_daemon *daemon = file->private_data;
 	int rc;
@@ -137,7 +134,6 @@ ecryptfs_miscdev_release(struct inode *inode, struct file *file)
 		       "bug.\n", __func__, rc);
 		BUG();
 	}
-	return rc;
 }
 
 /**
@@ -465,7 +461,7 @@ static const struct file_operations ecryptfs_miscdev_fops = {
 	.poll    = ecryptfs_miscdev_poll,
 	.read    = ecryptfs_miscdev_read,
 	.write   = ecryptfs_miscdev_write,
-	.release = ecryptfs_miscdev_release,
+	.close	 = ecryptfs_miscdev_close,
 	.llseek  = noop_llseek,
 };
 
