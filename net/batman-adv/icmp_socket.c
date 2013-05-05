@@ -79,7 +79,7 @@ static int batadv_socket_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int batadv_socket_release(struct inode *inode, struct file *file)
+static void batadv_socket_close(struct file *file)
 {
 	struct batadv_socket_client *socket_client = file->private_data;
 	struct batadv_socket_packet *socket_packet;
@@ -101,8 +101,6 @@ static int batadv_socket_release(struct inode *inode, struct file *file)
 
 	kfree(socket_client);
 	module_put(THIS_MODULE);
-
-	return 0;
 }
 
 static ssize_t batadv_socket_read(struct file *file, char __user *buf,
@@ -272,7 +270,7 @@ static unsigned int batadv_socket_poll(struct file *file, poll_table *wait)
 static const struct file_operations batadv_fops = {
 	.owner = THIS_MODULE,
 	.open = batadv_socket_open,
-	.release = batadv_socket_release,
+	.close = batadv_socket_close,
 	.read = batadv_socket_read,
 	.write = batadv_socket_write,
 	.poll = batadv_socket_poll,

@@ -112,7 +112,7 @@ static ssize_t sock_aio_write(struct kiocb *iocb, const struct iovec *iov,
 			  unsigned long nr_segs, loff_t pos);
 static int sock_mmap(struct file *file, struct vm_area_struct *vma);
 
-static int sock_close(struct inode *inode, struct file *file);
+static void sock_close(struct file *file);
 static unsigned int sock_poll(struct file *file,
 			      struct poll_table_struct *wait);
 static long sock_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
@@ -144,7 +144,7 @@ static const struct file_operations socket_file_ops = {
 #endif
 	.mmap =		sock_mmap,
 	.open =		sock_no_open,	/* special open code to disallow open via /proc */
-	.release =	sock_close,
+	.close =	sock_close,
 	.fasync =	sock_fasync,
 	.sendpage =	sock_sendpage,
 	.splice_write = generic_splice_sendpage,
@@ -1158,10 +1158,9 @@ static int sock_mmap(struct file *file, struct vm_area_struct *vma)
 	return sock->ops->mmap(file, sock, vma);
 }
 
-static int sock_close(struct inode *inode, struct file *filp)
+static void sock_close(struct file *file)
 {
-	sock_release(SOCKET_I(inode));
-	return 0;
+	sock_release(file->private_data);
 }
 
 /*

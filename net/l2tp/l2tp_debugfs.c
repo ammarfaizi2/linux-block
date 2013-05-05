@@ -289,7 +289,7 @@ err_free_pd:
 	goto out;
 }
 
-static int l2tp_dfs_seq_release(struct inode *inode, struct file *file)
+static void l2tp_dfs_seq_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct l2tp_dfs_seq_data *pd = seq->private;
@@ -297,8 +297,6 @@ static int l2tp_dfs_seq_release(struct inode *inode, struct file *file)
 		put_net(pd->net);
 	kfree(pd);
 	seq_close(file);
-
-	return 0;
 }
 
 static const struct file_operations l2tp_dfs_fops = {
@@ -306,7 +304,7 @@ static const struct file_operations l2tp_dfs_fops = {
 	.open		= l2tp_dfs_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= l2tp_dfs_seq_release,
+	.close		= l2tp_dfs_seq_close,
 };
 
 static int __init l2tp_debugfs_init(void)

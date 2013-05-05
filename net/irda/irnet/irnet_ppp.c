@@ -525,15 +525,14 @@ dev_irnet_open(struct inode *	inode,
  * Close : when somebody close /dev/irnet
  * Destroy the instance of /dev/irnet
  */
-static int
-dev_irnet_close(struct inode *	inode,
-		struct file *	file)
+static void
+dev_irnet_close(struct file *file)
 {
   irnet_socket *	ap = file->private_data;
 
   DENTER(FS_TRACE, "(file=0x%p, ap=0x%p)\n",
 	 file, ap);
-  DABORT(ap == NULL, 0, FS_ERROR, "ap is NULL !!!\n");
+  DABORT(ap == NULL, , FS_ERROR, "ap is NULL !!!\n");
 
   /* Detach ourselves */
   file->private_data = NULL;
@@ -552,7 +551,6 @@ dev_irnet_close(struct inode *	inode,
   kfree(ap);
 
   DEXIT(FS_TRACE, "\n");
-  return 0;
 }
 
 /*------------------------------------------------------------------*/

@@ -110,10 +110,9 @@ static int batadv_log_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int batadv_log_release(struct inode *inode, struct file *file)
+static void batadv_log_close(struct file *file)
 {
 	module_put(THIS_MODULE);
-	return 0;
 }
 
 static int batadv_log_empty(struct batadv_priv_debug_log *debug_log)
@@ -191,7 +190,7 @@ static unsigned int batadv_log_poll(struct file *file, poll_table *wait)
 
 static const struct file_operations batadv_log_fops = {
 	.open           = batadv_log_open,
-	.release        = batadv_log_release,
+	.close	        = batadv_log_close,
 	.read           = batadv_log_read,
 	.poll           = batadv_log_poll,
 	.llseek         = no_llseek,

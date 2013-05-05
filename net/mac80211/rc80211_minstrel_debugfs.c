@@ -113,18 +113,11 @@ minstrel_stats_read(struct file *file, char __user *buf, size_t len, loff_t *ppo
 	return simple_read_from_buffer(buf, len, ppos, ms->buf, ms->len);
 }
 
-int
-minstrel_stats_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
-
 static const struct file_operations minstrel_stat_fops = {
 	.owner = THIS_MODULE,
 	.open = minstrel_stats_open,
 	.read = minstrel_stats_read,
-	.release = minstrel_stats_release,
+	.close = simple_close_kfree,
 	.llseek = default_llseek,
 };
 

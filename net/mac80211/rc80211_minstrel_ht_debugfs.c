@@ -124,7 +124,7 @@ static const struct file_operations minstrel_ht_stat_fops = {
 	.owner = THIS_MODULE,
 	.open = minstrel_ht_stats_open,
 	.read = minstrel_stats_read,
-	.release = minstrel_stats_release,
+	.close = simple_close_kfree,
 	.llseek = no_llseek,
 };
 

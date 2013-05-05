@@ -641,12 +641,11 @@ static int clusterip_proc_open(struct inode *inode, struct file *file)
 	return ret;
 }
 
-static int clusterip_proc_release(struct inode *inode, struct file *file)
+static void clusterip_proc_close(struct file *file)
 {
-	struct clusterip_config *c = PDE_DATA(inode);
+	struct clusterip_config *c = PDE_DATA(file_inode(file));
 	seq_close(file);
 	clusterip_config_put(c);
-	return 0;
 }
 
 static ssize_t clusterip_proc_write(struct file *file, const char __user *input,
@@ -688,7 +687,7 @@ static const struct file_operations clusterip_proc_fops = {
 	.read	 = seq_read,
 	.write	 = clusterip_proc_write,
 	.llseek	 = seq_lseek,
-	.release = clusterip_proc_release,
+	.close	 = clusterip_proc_close,
 };
 
 #endif /* CONFIG_PROC_FS */

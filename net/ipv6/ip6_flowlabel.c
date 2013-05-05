@@ -793,13 +793,12 @@ static int ip6fl_seq_open(struct inode *inode, struct file *file)
 	return err;
 }
 
-static int ip6fl_seq_release(struct inode *inode, struct file *file)
+static void ip6fl_seq_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct ip6fl_iter_state *state = ip6fl_seq_private(seq);
 	put_pid_ns(state->pid_ns);
 	seq_close_net(file);
-	return 0;
 }
 
 static const struct file_operations ip6fl_seq_fops = {
@@ -807,7 +806,7 @@ static const struct file_operations ip6fl_seq_fops = {
 	.open		=	ip6fl_seq_open,
 	.read		=	seq_read,
 	.llseek		=	seq_lseek,
-	.release	=	ip6fl_seq_release,
+	.close		=	ip6fl_seq_close,
 };
 
 static int __net_init ip6_flowlabel_proc_init(struct net *net)

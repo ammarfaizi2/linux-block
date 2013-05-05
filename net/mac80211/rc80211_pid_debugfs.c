@@ -108,16 +108,6 @@ static int rate_control_pid_events_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int rate_control_pid_events_release(struct inode *inode,
-					   struct file *file)
-{
-	struct rc_pid_events_file_info *file_info = file->private_data;
-
-	kfree(file_info);
-
-	return 0;
-}
-
 static unsigned int rate_control_pid_events_poll(struct file *file,
 						 poll_table *wait)
 {
@@ -206,7 +196,7 @@ static const struct file_operations rc_pid_fop_events = {
 	.read = rate_control_pid_events_read,
 	.poll = rate_control_pid_events_poll,
 	.open = rate_control_pid_events_open,
-	.release = rate_control_pid_events_release,
+	.close = simple_close_kfree,
 	.llseek = noop_llseek,
 };
 

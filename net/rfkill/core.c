@@ -1189,7 +1189,7 @@ static ssize_t rfkill_fop_write(struct file *file, const char __user *buf,
 	return count;
 }
 
-static int rfkill_fop_release(struct inode *inode, struct file *file)
+static void rfkill_fop_close(struct file *file)
 {
 	struct rfkill_data *data = file->private_data;
 	struct rfkill_int_event *ev, *tmp;
@@ -1209,8 +1209,6 @@ static int rfkill_fop_release(struct inode *inode, struct file *file)
 #endif
 
 	kfree(data);
-
-	return 0;
 }
 
 #ifdef CONFIG_RFKILL_INPUT
@@ -1245,7 +1243,7 @@ static const struct file_operations rfkill_fops = {
 	.read		= rfkill_fop_read,
 	.write		= rfkill_fop_write,
 	.poll		= rfkill_fop_poll,
-	.release	= rfkill_fop_release,
+	.close		= rfkill_fop_close,
 #ifdef CONFIG_RFKILL_INPUT
 	.unlocked_ioctl	= rfkill_fop_ioctl,
 	.compat_ioctl	= rfkill_fop_ioctl,

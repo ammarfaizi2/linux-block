@@ -61,9 +61,10 @@ static inline unsigned int
 /* ----------------------- CHARACTER DEVICE ----------------------- */
 static int
 	dev_irnet_open(struct inode *,	/* fs callback : open */
-		       struct file *),
-	dev_irnet_close(struct inode *,
-			struct file *);
+		       struct file *);
+
+static void
+	dev_irnet_close(struct file *);
 static ssize_t
 	dev_irnet_write(struct file *,
 			const char __user *,
@@ -103,7 +104,7 @@ static const struct file_operations irnet_device_fops =
 	.poll		= dev_irnet_poll,
 	.unlocked_ioctl	= dev_irnet_ioctl,
 	.open		= dev_irnet_open,
-	.release	= dev_irnet_close,
+	.close		= dev_irnet_close,
 	.llseek		= noop_llseek,
   /* Also : llseek, readdir, mmap, flush, fsync, fasync, lock, readv, writev */
 };
