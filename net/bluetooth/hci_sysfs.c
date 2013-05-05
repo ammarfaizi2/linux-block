@@ -429,7 +429,7 @@ static const struct file_operations inquiry_cache_fops = {
 	.open		= inquiry_cache_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int blacklist_show(struct seq_file *f, void *p)
@@ -456,7 +456,7 @@ static const struct file_operations blacklist_fops = {
 	.open		= blacklist_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void print_bt_uuid(struct seq_file *f, u8 *uuid)
@@ -499,7 +499,7 @@ static const struct file_operations uuids_fops = {
 	.open		= uuids_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int auto_accept_delay_set(void *data, u64 val)

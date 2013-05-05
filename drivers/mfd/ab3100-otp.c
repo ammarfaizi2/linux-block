@@ -119,7 +119,7 @@ static const struct file_operations ab3100_otp_operations = {
 	.open		= ab3100_otp_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init ab3100_otp_init_debugfs(struct device *dev,

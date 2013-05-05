@@ -50,7 +50,7 @@ static const struct file_operations ci_device_fops = {
 	.open		= ci_device_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /**
@@ -107,7 +107,7 @@ static const struct file_operations ci_port_test_fops = {
 	.write		= ci_port_test_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /**
@@ -150,7 +150,7 @@ static const struct file_operations ci_qheads_fops = {
 	.open		= ci_qheads_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /**
@@ -196,7 +196,7 @@ static const struct file_operations ci_requests_fops = {
 	.open		= ci_requests_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int ci_role_show(struct seq_file *s, void *data)
@@ -245,7 +245,7 @@ static const struct file_operations ci_role_fops = {
 	.write		= ci_role_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /**

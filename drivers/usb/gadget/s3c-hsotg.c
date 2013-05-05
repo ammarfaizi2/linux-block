@@ -3237,7 +3237,7 @@ static const struct file_operations state_fops = {
 	.open		= state_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /**
@@ -3286,7 +3286,7 @@ static const struct file_operations fifo_fops = {
 	.open		= fifo_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 
@@ -3371,7 +3371,7 @@ static const struct file_operations ep_fops = {
 	.open		= ep_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /**

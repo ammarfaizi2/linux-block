@@ -1191,7 +1191,7 @@ static const struct file_operations viafb_dvp0_proc_fops = {
 	.open		= viafb_dvp0_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= viafb_dvp0_proc_write,
 };
 
@@ -1256,7 +1256,7 @@ static const struct file_operations viafb_dvp1_proc_fops = {
 	.open		= viafb_dvp1_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= viafb_dvp1_proc_write,
 };
 
@@ -1291,7 +1291,7 @@ static const struct file_operations viafb_dfph_proc_fops = {
 	.open		= viafb_dfph_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= viafb_dfph_proc_write,
 };
 
@@ -1326,7 +1326,7 @@ static const struct file_operations viafb_dfpl_proc_fops = {
 	.open		= viafb_dfpl_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= viafb_dfpl_proc_write,
 };
 
@@ -1462,7 +1462,7 @@ static const struct file_operations viafb_vt1636_proc_fops = {
 	.open		= viafb_vt1636_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= viafb_vt1636_proc_write,
 };
 
@@ -1485,7 +1485,7 @@ static const struct file_operations viafb_sup_odev_proc_fops = {
 	.open		= viafb_sup_odev_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static ssize_t odev_update(const char __user *buffer, size_t count, u32 *odev)
@@ -1553,7 +1553,7 @@ static const struct file_operations viafb_iga1_odev_proc_fops = {
 	.open		= viafb_iga1_odev_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= viafb_iga1_odev_proc_write,
 };
 
@@ -1593,7 +1593,7 @@ static const struct file_operations viafb_iga2_odev_proc_fops = {
 	.open		= viafb_iga2_odev_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= viafb_iga2_odev_proc_write,
 };
 

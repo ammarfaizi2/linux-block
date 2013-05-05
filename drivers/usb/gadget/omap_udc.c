@@ -2451,7 +2451,7 @@ static const struct file_operations proc_ops = {
 	.open		= proc_udc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void create_proc_file(void)

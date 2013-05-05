@@ -259,7 +259,7 @@ static const struct file_operations snmp6_dev_seq_fops = {
 	.open	 = snmp6_dev_seq_open,
 	.read	 = seq_read,
 	.llseek	 = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 int snmp6_register_dev(struct inet6_dev *idev)

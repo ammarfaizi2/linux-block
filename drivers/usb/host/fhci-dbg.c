@@ -94,14 +94,14 @@ static const struct file_operations fhci_dfs_regs_fops = {
 	.open = fhci_dfs_regs_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static const struct file_operations fhci_dfs_irq_stat_fops = {
 	.open = fhci_dfs_irq_stat_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 void fhci_dfs_create(struct fhci_hcd *fhci)

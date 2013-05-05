@@ -1017,7 +1017,7 @@ static const struct file_operations debug_clock_fops = {
 	.open           = clk_dbg_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = single_release,
+	.close          = single_close,
 };
 
 static int clk_debugfs_register_one(struct clk *c)

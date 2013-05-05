@@ -284,7 +284,7 @@ static const struct file_operations can_stats_proc_fops = {
 	.open		= can_stats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int can_reset_stats_proc_show(struct seq_file *m, void *v)
@@ -315,7 +315,7 @@ static const struct file_operations can_reset_stats_proc_fops = {
 	.open		= can_reset_stats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int can_version_proc_show(struct seq_file *m, void *v)
@@ -334,7 +334,7 @@ static const struct file_operations can_version_proc_fops = {
 	.open		= can_version_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static inline void can_rcvlist_proc_show_one(struct seq_file *m, int idx,
@@ -386,7 +386,7 @@ static const struct file_operations can_rcvlist_proc_fops = {
 	.open		= can_rcvlist_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static inline void can_rcvlist_sff_proc_show_one(struct seq_file *m,
@@ -449,7 +449,7 @@ static const struct file_operations can_rcvlist_sff_proc_fops = {
 	.open		= can_rcvlist_sff_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /*

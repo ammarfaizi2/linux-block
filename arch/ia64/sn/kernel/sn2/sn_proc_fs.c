@@ -65,28 +65,28 @@ static const struct file_operations proc_partition_id_fops = {
 	.open		= partition_id_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations proc_system_sn_fops = {
 	.open		= system_serial_number_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations proc_license_id_fops = {
 	.open		= licenseID_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations proc_coherence_id_fops = {
 	.open		= coherence_id_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations proc_sn_topo_fops = {

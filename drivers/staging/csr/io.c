@@ -95,7 +95,7 @@ static const struct file_operations uf_proc_fops = {
 	.open		= uf_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #endif /* CONFIG_PROC_FS */

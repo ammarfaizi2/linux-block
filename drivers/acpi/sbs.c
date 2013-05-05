@@ -682,7 +682,7 @@ static const struct file_operations acpi_battery_info_fops = {
 	.open = acpi_battery_info_open_fs,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -690,7 +690,7 @@ static const struct file_operations acpi_battery_state_fops = {
 	.open = acpi_battery_state_open_fs,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -699,7 +699,7 @@ static const struct file_operations acpi_battery_alarm_fops = {
 	.read = seq_read,
 	.write = acpi_battery_write_alarm,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -730,7 +730,7 @@ static const struct file_operations acpi_ac_state_fops = {
 	.open = acpi_ac_state_open_fs,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 

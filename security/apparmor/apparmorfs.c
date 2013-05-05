@@ -179,7 +179,7 @@ const struct file_operations aa_fs_seq_file_ops = {
 	.open		= aa_fs_seq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /** Base file system setup **/

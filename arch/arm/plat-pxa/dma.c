@@ -190,7 +190,7 @@ static const struct file_operations dbg_fops_##name = { \
 	.open		= dbg_open_##name, \
 	.llseek		= seq_lseek, \
 	.read		= seq_read, \
-	.release	= single_release, \
+	.close		= single_close, \
 }
 
 DBGFS_FUNC_DECL(state);

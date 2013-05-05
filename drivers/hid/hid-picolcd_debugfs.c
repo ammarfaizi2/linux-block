@@ -73,7 +73,7 @@ static const struct file_operations picolcd_debug_reset_fops = {
 	.read     = seq_read,
 	.llseek   = seq_lseek,
 	.write    = picolcd_debug_reset_write,
-	.release  = single_release,
+	.close    = single_close,
 };
 
 /*

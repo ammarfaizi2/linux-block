@@ -2411,7 +2411,8 @@ static int cgroup_seqfile_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	kfree(seq->private);
-	return single_release(inode, file);
+	single_close(file);
+	return 0;
 }
 
 static const struct file_operations cgroup_seqfile_operations = {
@@ -4763,7 +4764,7 @@ static const struct file_operations proc_cgroupstats_operations = {
 	.open = cgroupstats_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 /**

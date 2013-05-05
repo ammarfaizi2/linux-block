@@ -533,7 +533,7 @@ static const struct file_operations ps3vram_proc_fops = {
 	.open		= ps3vram_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void ps3vram_proc_init(struct ps3_system_bus_device *dev)

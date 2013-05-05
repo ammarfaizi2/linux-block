@@ -3574,7 +3574,7 @@ static const struct file_operations mgsl_proc_fops = {
 	.open		= mgsl_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /* mgsl_allocate_dma_buffers()

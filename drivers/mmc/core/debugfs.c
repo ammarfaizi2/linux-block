@@ -172,7 +172,7 @@ static const struct file_operations mmc_ios_fops = {
 	.open		= mmc_ios_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int mmc_clock_opt_get(void *data, u64 *val)

@@ -123,9 +123,9 @@ static int rtc_proc_open(struct inode *inode, struct file *file)
 
 static int rtc_proc_release(struct inode *inode, struct file *file)
 {
-	int res = single_release(inode, file);
+	single_close(file);
 	module_put(THIS_MODULE);
-	return res;
+	return 0;
 }
 
 static const struct file_operations rtc_proc_fops = {

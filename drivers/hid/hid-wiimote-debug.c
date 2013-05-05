@@ -165,7 +165,7 @@ static const struct file_operations wiidebug_drm_fops = {
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.write = wiidebug_drm_write,
-	.release = single_release,
+	.close = single_close,
 };
 
 int wiidebug_init(struct wiimote_data *wdata)

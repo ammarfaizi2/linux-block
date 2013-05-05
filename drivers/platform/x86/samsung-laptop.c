@@ -1169,7 +1169,7 @@ static const struct file_operations samsung_laptop_call_io_ops = {
 	.open = samsung_debugfs_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static void samsung_debugfs_exit(struct samsung_laptop *samsung)

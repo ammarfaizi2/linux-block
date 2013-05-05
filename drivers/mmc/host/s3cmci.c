@@ -1527,7 +1527,7 @@ static const struct file_operations s3cmci_fops_state = {
 	.open		= s3cmci_state_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #define DBG_REG(_r) { .addr = S3C2410_SDI##_r, .name = #_r }
@@ -1578,7 +1578,7 @@ static const struct file_operations s3cmci_fops_regs = {
 	.open		= s3cmci_regs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void s3cmci_debugfs_attach(struct s3cmci_host *host)

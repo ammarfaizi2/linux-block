@@ -458,7 +458,7 @@ static const struct file_operations debug_fops = {
 	.open		= pkt_debugfs_fops_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.owner		= THIS_MODULE,
 };
 
@@ -2653,7 +2653,7 @@ static const struct file_operations pkt_proc_fops = {
 	.open	= pkt_seq_open,
 	.read	= seq_read,
 	.llseek	= seq_lseek,
-	.release = single_release
+	.close = single_close
 };
 
 static int pkt_new_dev(struct pktcdvd_device *pd, dev_t dev)

@@ -173,7 +173,7 @@ static const struct file_operations debug_fops = {
 	.open           = pm_dbg_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = single_release,
+	.close          = single_close,
 };
 
 static int pwrdm_suspend_get(void *data, u64 *val)

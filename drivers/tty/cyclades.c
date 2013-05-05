@@ -4013,7 +4013,7 @@ static const struct file_operations cyclades_proc_fops = {
 	.open		= cyclades_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /* The serial driver boot-time initialization code!

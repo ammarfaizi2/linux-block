@@ -400,7 +400,7 @@ static const struct file_operations proc_lstats_operations = {
 	.read		= seq_read,
 	.write		= lstats_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #endif
@@ -416,7 +416,7 @@ static const struct file_operations proc_cgroup_operations = {
 	.open		= cgroup_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif
 
@@ -432,7 +432,7 @@ static const struct file_operations proc_cpuset_operations = {
 	.open		= cpuset_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif
 
@@ -696,7 +696,7 @@ static const struct file_operations proc_single_file_operations = {
 	.open		= proc_single_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __mem_open(struct inode *inode, struct file *file, unsigned int mode)
@@ -1293,7 +1293,7 @@ static const struct file_operations proc_pid_sched_operations = {
 	.read		= seq_read,
 	.write		= sched_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #endif
@@ -1368,7 +1368,7 @@ static const struct file_operations proc_pid_sched_autogroup_operations = {
 	.read		= seq_read,
 	.write		= sched_autogroup_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #endif /* CONFIG_SCHED_AUTOGROUP */
@@ -1427,7 +1427,7 @@ static const struct file_operations proc_pid_set_comm_operations = {
 	.read		= seq_read,
 	.write		= comm_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int proc_exe_link(struct dentry *dentry, struct path *exe_path)

@@ -1238,7 +1238,7 @@ static const struct file_operations zcrypt_proc_fops = {
 	.open		= zcrypt_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= zcrypt_proc_write,
 };
 

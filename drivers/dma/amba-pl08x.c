@@ -1825,7 +1825,7 @@ static const struct file_operations pl08x_debugfs_operations = {
 	.open		= pl08x_debugfs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void init_pl08x_debugfs(struct pl08x_driver_data *pl08x)

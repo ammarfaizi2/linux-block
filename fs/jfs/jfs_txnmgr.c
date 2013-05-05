@@ -3050,7 +3050,7 @@ const struct file_operations jfs_txanchor_proc_fops = {
 	.open		= jfs_txanchor_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif
 
@@ -3091,6 +3091,6 @@ const struct file_operations jfs_txstats_proc_fops = {
 	.open		= jfs_txstats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif

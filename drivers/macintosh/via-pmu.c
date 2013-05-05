@@ -814,7 +814,7 @@ static const struct file_operations pmu_info_proc_fops = {
 	.open		= pmu_info_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int pmu_irqstats_proc_show(struct seq_file *m, void *v)
@@ -851,7 +851,7 @@ static const struct file_operations pmu_irqstats_proc_fops = {
 	.open		= pmu_irqstats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int pmu_battery_proc_show(struct seq_file *m, void *v)
@@ -878,7 +878,7 @@ static const struct file_operations pmu_battery_proc_fops = {
 	.open		= pmu_battery_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int pmu_options_proc_show(struct seq_file *m, void *v)
@@ -948,7 +948,7 @@ static const struct file_operations pmu_options_proc_fops = {
 	.open		= pmu_options_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= pmu_options_proc_write,
 };
 

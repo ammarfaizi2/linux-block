@@ -148,7 +148,7 @@ static const struct file_operations dss_debug_fops = {
 	.open           = dss_debug_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = single_release,
+	.close          = single_close,
 };
 
 static struct dentry *dss_debugfs_dir;

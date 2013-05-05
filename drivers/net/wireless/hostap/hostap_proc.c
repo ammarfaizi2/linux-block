@@ -52,7 +52,7 @@ static const struct file_operations prism2_debug_proc_fops = {
 	.open		= prism2_debug_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif /* PRISM2_NO_PROCFS_DEBUG */
 
@@ -103,7 +103,7 @@ static const struct file_operations prism2_stats_proc_fops = {
 	.open		= prism2_stats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 
@@ -265,7 +265,7 @@ static const struct file_operations prism2_crypt_proc_fops = {
 	.open		= prism2_crypt_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 

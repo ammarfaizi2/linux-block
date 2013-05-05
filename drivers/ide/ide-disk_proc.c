@@ -61,7 +61,7 @@ static const struct file_operations idedisk_cache_proc_fops = {
 	.open		= idedisk_cache_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int idedisk_capacity_proc_show(struct seq_file *m, void *v)
@@ -82,7 +82,7 @@ static const struct file_operations idedisk_capacity_proc_fops = {
 	.open		= idedisk_capacity_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __idedisk_proc_show(struct seq_file *m, ide_drive_t *drive, u8 sub_cmd)
@@ -123,7 +123,7 @@ static const struct file_operations idedisk_sv_proc_fops = {
 	.open		= idedisk_sv_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int idedisk_st_proc_show(struct seq_file *m, void *v)
@@ -141,7 +141,7 @@ static const struct file_operations idedisk_st_proc_fops = {
 	.open		= idedisk_st_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 ide_proc_entry_t ide_disk_proc[] = {

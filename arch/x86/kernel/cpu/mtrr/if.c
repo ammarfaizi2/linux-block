@@ -376,7 +376,8 @@ static int mtrr_close(struct inode *ino, struct file *file)
 		kfree(fcount);
 		FILE_FCOUNT(file) = NULL;
 	}
-	return single_release(ino, file);
+	single_close(file);
+	return 0;
 }
 
 static int mtrr_seq_show(struct seq_file *seq, void *offset);

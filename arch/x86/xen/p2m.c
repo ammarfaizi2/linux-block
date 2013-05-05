@@ -1151,7 +1151,7 @@ static const struct file_operations p2m_dump_fops = {
 	.open		= p2m_dump_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct dentry *d_mmu_debug;

@@ -185,7 +185,7 @@ static const struct file_operations zoran_operations = {
 	.read		= seq_read,
 	.write		= zoran_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif
 

@@ -444,7 +444,7 @@ static const struct file_operations clock_tree_fops = {
 	.open		= clock_tree_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int clock_rate_show(void *data, u64 *val)

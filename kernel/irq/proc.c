@@ -148,7 +148,7 @@ static const struct file_operations irq_affinity_proc_fops = {
 	.open		= irq_affinity_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= irq_affinity_proc_write,
 };
 
@@ -156,14 +156,14 @@ static const struct file_operations irq_affinity_hint_proc_fops = {
 	.open		= irq_affinity_hint_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations irq_affinity_list_proc_fops = {
 	.open		= irq_affinity_list_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= irq_affinity_list_proc_write,
 };
 
@@ -219,7 +219,7 @@ static const struct file_operations default_affinity_proc_fops = {
 	.open		= default_affinity_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= default_affinity_write,
 };
 
@@ -240,7 +240,7 @@ static const struct file_operations irq_node_proc_fops = {
 	.open		= irq_node_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif
 
@@ -263,7 +263,7 @@ static const struct file_operations irq_spurious_proc_fops = {
 	.open		= irq_spurious_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #define MAX_NAMELEN 128

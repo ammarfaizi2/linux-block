@@ -1117,7 +1117,7 @@ static const struct file_operations rndis_proc_fops = {
 	.open		= rndis_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= rndis_proc_write,
 };
 

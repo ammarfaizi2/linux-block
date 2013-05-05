@@ -1201,7 +1201,7 @@ static const struct file_operations isp116x_debug_fops = {
 	.open = isp116x_open_seq,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int create_debug_file(struct isp116x *isp116x)

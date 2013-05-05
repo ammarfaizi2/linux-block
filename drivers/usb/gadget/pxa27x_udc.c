@@ -232,7 +232,7 @@ static const struct file_operations state_dbg_fops = {
 	.open		= state_dbg_open,
 	.llseek		= seq_lseek,
 	.read		= seq_read,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations queues_dbg_fops = {
@@ -240,7 +240,7 @@ static const struct file_operations queues_dbg_fops = {
 	.open		= queues_dbg_open,
 	.llseek		= seq_lseek,
 	.read		= seq_read,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations eps_dbg_fops = {
@@ -248,7 +248,7 @@ static const struct file_operations eps_dbg_fops = {
 	.open		= eps_dbg_open,
 	.llseek		= seq_lseek,
 	.read		= seq_read,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void pxa_init_debugfs(struct pxa_udc *udc)

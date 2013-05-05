@@ -66,7 +66,7 @@ static const struct file_operations ide_imodel_proc_fops = {
 	.open		= ide_imodel_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int ide_mate_proc_show(struct seq_file *m, void *v)
@@ -90,7 +90,7 @@ static const struct file_operations ide_mate_proc_fops = {
 	.open		= ide_mate_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int ide_channel_proc_show(struct seq_file *m, void *v)
@@ -111,7 +111,7 @@ static const struct file_operations ide_channel_proc_fops = {
 	.open		= ide_channel_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int ide_identify_proc_show(struct seq_file *m, void *v)
@@ -151,7 +151,7 @@ static const struct file_operations ide_identify_proc_fops = {
 	.open		= ide_identify_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /**
@@ -437,7 +437,7 @@ static const struct file_operations ide_settings_proc_fops = {
 	.open		= ide_settings_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= ide_settings_proc_write,
 };
 
@@ -457,7 +457,7 @@ const struct file_operations ide_capacity_proc_fops = {
 	.open		= ide_capacity_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 EXPORT_SYMBOL_GPL(ide_capacity_proc_fops);
 
@@ -482,7 +482,7 @@ const struct file_operations ide_geometry_proc_fops = {
 	.open		= ide_geometry_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 EXPORT_SYMBOL(ide_geometry_proc_fops);
 
@@ -505,7 +505,7 @@ static const struct file_operations ide_dmodel_proc_fops = {
 	.open		= ide_dmodel_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int ide_driver_proc_show(struct seq_file *m, void *v)
@@ -578,7 +578,7 @@ static const struct file_operations ide_driver_proc_fops = {
 	.open		= ide_driver_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= ide_driver_proc_write,
 };
 
@@ -609,7 +609,7 @@ static const struct file_operations ide_media_proc_fops = {
 	.open		= ide_media_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static ide_proc_entry_t generic_drive_entries[] = {
@@ -770,7 +770,7 @@ static const struct file_operations ide_drivers_operations = {
 	.open		= ide_drivers_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 void proc_ide_create(void)

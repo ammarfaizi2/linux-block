@@ -2846,7 +2846,7 @@ static const struct file_operations smi_type_proc_ops = {
 	.open		= smi_type_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int smi_si_stats_proc_show(struct seq_file *m, void *v)
@@ -2889,7 +2889,7 @@ static const struct file_operations smi_si_stats_proc_ops = {
 	.open		= smi_si_stats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int smi_params_proc_show(struct seq_file *m, void *v)
@@ -2917,7 +2917,7 @@ static const struct file_operations smi_params_proc_ops = {
 	.open		= smi_params_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /*

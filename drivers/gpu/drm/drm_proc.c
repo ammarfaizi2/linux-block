@@ -73,7 +73,7 @@ static const struct file_operations drm_proc_fops = {
 	.open = drm_proc_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 

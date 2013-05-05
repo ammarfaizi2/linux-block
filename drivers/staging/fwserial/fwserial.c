@@ -1612,7 +1612,7 @@ static const struct file_operations fwtty_stats_fops = {
 	.open =		fwtty_stats_open,
 	.read =		seq_read,
 	.llseek =	seq_lseek,
-	.release =	single_release,
+	.close =	single_close,
 };
 
 static const struct file_operations fwtty_peers_fops = {
@@ -1620,7 +1620,7 @@ static const struct file_operations fwtty_peers_fops = {
 	.open =		fwtty_peers_open,
 	.read =		seq_read,
 	.llseek =	seq_lseek,
-	.release =	single_release,
+	.close =	single_close,
 };
 
 static const struct file_operations fwtty_proc_fops = {
@@ -1628,7 +1628,7 @@ static const struct file_operations fwtty_proc_fops = {
 	.open =         fwtty_proc_open,
 	.read =         seq_read,
 	.llseek =       seq_lseek,
-	.release =      single_release,
+	.close =	single_close,
 };
 
 static const struct tty_port_operations fwtty_port_ops = {

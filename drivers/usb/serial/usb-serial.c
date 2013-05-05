@@ -485,7 +485,7 @@ static const struct file_operations serial_proc_fops = {
 	.open		= serial_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int serial_tiocmget(struct tty_struct *tty)

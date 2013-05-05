@@ -99,7 +99,8 @@ qla2x00_dfs_fce_release(struct inode *inode, struct file *file)
 
 	mutex_unlock(&ha->fce_mutex);
 out:
-	return single_release(inode, file);
+	single_close(file);
+	return 0;
 }
 
 static const struct file_operations dfs_fce_ops = {

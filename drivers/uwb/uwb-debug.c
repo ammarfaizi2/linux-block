@@ -252,7 +252,7 @@ static const struct file_operations reservations_fops = {
 	.open    = reservations_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner   = THIS_MODULE,
 };
 
@@ -280,7 +280,7 @@ static const struct file_operations drp_avail_fops = {
 	.open    = drp_avail_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner   = THIS_MODULE,
 };
 

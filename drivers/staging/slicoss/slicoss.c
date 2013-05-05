@@ -2161,7 +2161,7 @@ static const struct file_operations slic_debug_adapter_fops = {
 	.open		= slic_debug_adapter_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations slic_debug_card_fops = {
@@ -2169,7 +2169,7 @@ static const struct file_operations slic_debug_card_fops = {
 	.open		= slic_debug_card_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void slic_debug_adapter_create(struct adapter *adapter)

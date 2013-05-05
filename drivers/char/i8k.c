@@ -97,7 +97,7 @@ static const struct file_operations i8k_fops = {
 	.open		= i8k_open_fs,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.unlocked_ioctl	= i8k_ioctl,
 };
 

@@ -1242,7 +1242,7 @@ static const struct file_operations fadump_region_fops = {
 	.open    = fadump_region_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static void fadump_init_files(void)

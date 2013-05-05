@@ -6664,7 +6664,7 @@ static const struct file_operations mpt_summary_proc_fops = {
 	.open		= mpt_summary_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int mpt_version_proc_show(struct seq_file *m, void *v)
@@ -6719,7 +6719,7 @@ static const struct file_operations mpt_version_proc_fops = {
 	.open		= mpt_version_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int mpt_iocinfo_proc_show(struct seq_file *m, void *v)
@@ -6813,7 +6813,7 @@ static const struct file_operations mpt_iocinfo_proc_fops = {
 	.open		= mpt_iocinfo_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif		/* CONFIG_PROC_FS } */
 

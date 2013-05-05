@@ -1676,7 +1676,7 @@ static const struct file_operations mmc_regs_fops = {
 	.open           = omap_hsmmc_regs_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = single_release,
+	.close          = single_close,
 };
 
 static void omap_hsmmc_debugfs(struct mmc_host *mmc)

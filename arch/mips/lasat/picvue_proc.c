@@ -93,7 +93,7 @@ static const struct file_operations pvc_line_proc_fops = {
 	.open		= pvc_line_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= pvc_line_proc_write,
 };
 
@@ -152,7 +152,7 @@ static const struct file_operations pvc_scroll_proc_fops = {
 	.open		= pvc_scroll_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= pvc_scroll_proc_write,
 };
 

@@ -57,7 +57,7 @@ static const struct file_operations bond_debug_rlb_hash_fops = {
 	.open		= bond_debug_rlb_hash_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 void bond_debug_register(struct bonding *bond)

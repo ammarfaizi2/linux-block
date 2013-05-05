@@ -1313,7 +1313,7 @@ static const struct file_operations ips_debugfs_ops = {
 	.open = ips_debugfs_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static void ips_debugfs_cleanup(struct ips_driver *ips)

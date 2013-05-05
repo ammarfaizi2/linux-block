@@ -1037,7 +1037,7 @@ static const struct file_operations dasd_stats_raw_fops = {
 	.open		= dasd_stats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= dasd_stats_write,
 };
 
@@ -1088,7 +1088,7 @@ static const struct file_operations dasd_stats_global_fops = {
 	.open		= dasd_stats_global_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= dasd_stats_global_write,
 };
 

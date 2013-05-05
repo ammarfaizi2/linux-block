@@ -152,7 +152,7 @@ static const struct file_operations di_fops = {
 	.open    = di_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner   = THIS_MODULE,
 };
 
@@ -160,7 +160,7 @@ static const struct file_operations asl_fops = {
 	.open    = asl_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner   = THIS_MODULE,
 };
 
@@ -168,7 +168,7 @@ static const struct file_operations pzl_fops = {
 	.open    = pzl_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner   = THIS_MODULE,
 };
 

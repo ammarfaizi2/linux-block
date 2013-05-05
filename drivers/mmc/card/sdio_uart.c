@@ -1020,7 +1020,7 @@ static const struct file_operations sdio_uart_proc_fops = {
 	.open		= sdio_uart_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct tty_port_operations sdio_uart_port_ops = {

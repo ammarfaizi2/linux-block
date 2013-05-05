@@ -55,7 +55,7 @@ static const struct file_operations nubus_devices_proc_fops = {
 	.open		= nubus_devices_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct proc_dir_entry *proc_bus_nubus_dir;

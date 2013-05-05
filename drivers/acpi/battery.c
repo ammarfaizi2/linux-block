@@ -946,7 +946,7 @@ DECLARE_FILE_FUNCTIONS(alarm);
 		.open = acpi_battery_##_name##_open_fs, \
 		.read = seq_read, \
 		.llseek = seq_lseek, \
-		.release = single_release, \
+		.close = single_close, \
 		.owner = THIS_MODULE, \
 		}, \
 	}
@@ -960,7 +960,7 @@ DECLARE_FILE_FUNCTIONS(alarm);
 		.read = seq_read, \
 		.llseek = seq_lseek, \
 		.write = acpi_battery_write_##_name, \
-		.release = single_release, \
+		.close = single_close, \
 		.owner = THIS_MODULE, \
 		}, \
 	}

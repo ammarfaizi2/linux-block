@@ -643,7 +643,7 @@ static const struct file_operations dma_buf_debug_fops = {
 	.open           = dma_buf_debug_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = single_release,
+	.close          = single_close,
 };
 
 static struct dentry *dma_buf_debugfs_dir;

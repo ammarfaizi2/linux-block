@@ -251,7 +251,7 @@ static const struct file_operations powergate_fops = {
 	.open		= powergate_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 int __init tegra_powergate_debugfs_init(void)

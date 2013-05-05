@@ -185,7 +185,7 @@ static const struct file_operations s3c2410_udc_debugfs_fops = {
 	.open		= s3c2410_udc_debugfs_fops_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.owner		= THIS_MODULE,
 };
 

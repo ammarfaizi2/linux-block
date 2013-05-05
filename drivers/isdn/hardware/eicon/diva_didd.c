@@ -88,7 +88,7 @@ static const struct file_operations divadidd_proc_fops = {
 	.open		= divadidd_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init create_proc(void)

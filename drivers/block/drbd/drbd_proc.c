@@ -321,7 +321,8 @@ static int drbd_proc_open(struct inode *inode, struct file *file)
 static int drbd_proc_release(struct inode *inode, struct file *file)
 {
 	module_put(THIS_MODULE);
-	return single_release(inode, file);
+	single_close(file);
+	return 0;
 }
 
 /* PROC FS stuff end */

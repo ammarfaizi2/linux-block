@@ -184,7 +184,7 @@ static const struct file_operations rbtree_fops = {
 	.open		= rbtree_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void rbtree_debugfs_init(struct regmap *map)

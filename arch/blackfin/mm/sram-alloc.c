@@ -879,7 +879,7 @@ static const struct file_operations sram_proc_ops = {
 	.open		= sram_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init sram_proc_init(void)

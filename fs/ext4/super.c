@@ -1811,7 +1811,7 @@ static const struct file_operations ext4_seq_options_fops = {
 	.open = options_open_fs,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int ext4_setup_super(struct super_block *sb, struct ext4_super_block *es,

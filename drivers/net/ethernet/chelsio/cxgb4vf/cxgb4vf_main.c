@@ -1941,7 +1941,7 @@ static const struct file_operations resources_proc_fops = {
 	.open    = resources_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 /*

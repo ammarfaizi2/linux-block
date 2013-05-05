@@ -288,5 +288,5 @@ calls:
 When output time comes, the show() function will be called once. The data
 value given to single_open() can be found in the private field of the
 seq_file structure. When using single_open(), the programmer should use
-single_release() instead of seq_release() in the file_operations structure
+single_close() instead of seq_release() in the file_operations structure
 to avoid a memory leak.

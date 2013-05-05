@@ -537,7 +537,7 @@ static const struct file_operations at91_clk_operations = {
 	.open		= at91_clk_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init at91_clk_debugfs_init(void)

@@ -125,7 +125,7 @@ static const struct file_operations bdi_debug_stats_fops = {
 	.open		= bdi_debug_stats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void bdi_debug_register(struct backing_dev_info *bdi, const char *name)

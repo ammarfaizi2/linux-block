@@ -33,7 +33,7 @@ static const struct file_operations proc_softirqs_operations = {
 	.open		= softirqs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init proc_softirqs_init(void)

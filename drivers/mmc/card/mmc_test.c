@@ -2903,7 +2903,7 @@ static const struct file_operations mmc_test_fops_test = {
 	.read		= seq_read,
 	.write		= mtf_test_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int mtf_testlist_show(struct seq_file *sf, void *data)
@@ -2929,7 +2929,7 @@ static const struct file_operations mmc_test_fops_testlist = {
 	.open		= mtf_testlist_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void mmc_test_free_dbgfs_file(struct mmc_card *card)

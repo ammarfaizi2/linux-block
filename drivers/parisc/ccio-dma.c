@@ -1096,7 +1096,7 @@ static const struct file_operations ccio_proc_info_fops = {
 	.open = ccio_proc_info_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int ccio_proc_bitmap_info(struct seq_file *m, void *p)
@@ -1132,7 +1132,7 @@ static const struct file_operations ccio_proc_bitmap_fops = {
 	.open = ccio_proc_bitmap_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 #endif /* CONFIG_PROC_FS */
 

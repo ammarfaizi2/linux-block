@@ -34,7 +34,7 @@ static const struct file_operations loadavg_proc_fops = {
 	.open		= loadavg_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init proc_loadavg_init(void)

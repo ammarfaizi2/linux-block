@@ -249,7 +249,7 @@ static const struct file_operations cn_file_ops = {
 	.open    = cn_proc_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release
+	.close = single_close
 };
 
 static struct cn_dev cdev = {

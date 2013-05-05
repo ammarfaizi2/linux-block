@@ -327,7 +327,7 @@ struct batadv_debuginfo batadv_debuginfo_##_name = {	\
 		  .open = _open,			\
 		  .read	= seq_read,			\
 		  .llseek = seq_lseek,			\
-		  .release = single_release,		\
+		  .close = single_close,		\
 		}					\
 };
 

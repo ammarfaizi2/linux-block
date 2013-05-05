@@ -2226,7 +2226,7 @@ static const struct file_operations adio_fops = {
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.write = sg_proc_write_adio,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int sg_proc_single_open_dressz(struct inode *inode, struct file *file);
@@ -2238,7 +2238,7 @@ static const struct file_operations dressz_fops = {
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.write = sg_proc_write_dressz,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int sg_proc_seq_show_version(struct seq_file *s, void *v);
@@ -2248,7 +2248,7 @@ static const struct file_operations version_fops = {
 	.open = sg_proc_single_open_version,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int sg_proc_seq_show_devhdr(struct seq_file *s, void *v);
@@ -2258,7 +2258,7 @@ static const struct file_operations devhdr_fops = {
 	.open = sg_proc_single_open_devhdr,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int sg_proc_seq_show_dev(struct seq_file *s, void *v);

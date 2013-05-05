@@ -255,7 +255,7 @@ static const struct file_operations sched_feat_fops = {
 	.write		= sched_feat_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static __init int sched_init_debug(void)

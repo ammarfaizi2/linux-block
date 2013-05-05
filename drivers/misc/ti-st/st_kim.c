@@ -699,14 +699,14 @@ static const struct file_operations version_debugfs_fops = {
 	.open = kim_version_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 static const struct file_operations list_debugfs_fops = {
 	/* protocols info */
 	.open = kim_list_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 /**********************************************************************/

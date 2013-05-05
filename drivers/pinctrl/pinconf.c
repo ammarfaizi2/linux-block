@@ -567,14 +567,14 @@ static const struct file_operations pinconf_pins_ops = {
 	.open		= pinconf_pins_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations pinconf_groups_ops = {
 	.open		= pinconf_groups_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #define MAX_NAME_LEN 15
@@ -802,7 +802,7 @@ static const struct file_operations pinconf_dbg_pinconfig_fops = {
 	.write = pinconf_dbg_config_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 

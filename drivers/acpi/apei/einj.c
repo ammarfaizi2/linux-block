@@ -570,7 +570,7 @@ static const struct file_operations available_error_type_fops = {
 	.open		= available_error_type_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int error_type_get(void *data, u64 *val)

@@ -502,7 +502,7 @@ static const struct file_operations snd_mem_proc_fops = {
 	.write		= snd_mem_proc_write,
 #endif
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #endif /* CONFIG_PROC_FS */

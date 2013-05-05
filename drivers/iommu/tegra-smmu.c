@@ -1060,7 +1060,7 @@ static const struct file_operations smmu_debugfs_stats_fops = {
 	.open		= smmu_debugfs_stats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= smmu_debugfs_stats_write,
 };
 

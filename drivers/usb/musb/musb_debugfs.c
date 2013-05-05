@@ -173,7 +173,7 @@ static const struct file_operations musb_regdump_fops = {
 	.open			= musb_regdump_open,
 	.read			= seq_read,
 	.llseek			= seq_lseek,
-	.release		= single_release,
+	.close			= single_close,
 };
 
 static int musb_test_mode_open(struct inode *inode, struct file *file)
@@ -230,7 +230,7 @@ static const struct file_operations musb_test_mode_fops = {
 	.write			= musb_test_mode_write,
 	.read			= seq_read,
 	.llseek			= seq_lseek,
-	.release		= single_release,
+	.close			= single_close,
 };
 
 int musb_init_debugfs(struct musb *musb)

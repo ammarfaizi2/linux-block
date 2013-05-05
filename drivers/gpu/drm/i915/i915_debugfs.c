@@ -854,7 +854,8 @@ static int i915_error_state_release(struct inode *inode, struct file *file)
 		kref_put(&error_priv->error->ref, i915_error_state_free);
 	kfree(error_priv);
 
-	return single_release(inode, file);
+	single_close(file);
+	return 0;
 }
 
 static const struct file_operations i915_error_state_fops = {

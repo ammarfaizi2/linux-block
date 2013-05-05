@@ -968,7 +968,7 @@ static const struct file_operations wsp_pci_regs_fops = {
 	.open = wsp_pci_regs_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int wsp_pci_reg_set(void *data, u64 val)

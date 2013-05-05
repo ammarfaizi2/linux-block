@@ -70,7 +70,7 @@ static const struct file_operations fops_board = {
 	.open		= fops_board_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.owner		= THIS_MODULE,
 };
 
@@ -112,7 +112,7 @@ static const struct file_operations fops_info = {
 	.open		= fops_info_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.owner		= THIS_MODULE,
 };
 
@@ -169,7 +169,7 @@ static const struct file_operations fops_io = {
 	.open		= fops_io_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.owner		= THIS_MODULE,
 };
 

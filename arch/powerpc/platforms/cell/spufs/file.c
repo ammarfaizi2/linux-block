@@ -2079,7 +2079,7 @@ static const struct file_operations spufs_caps_fops = {
 	.open		= spufs_caps_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static ssize_t __spufs_mbox_info_read(struct spu_context *ctx,
@@ -2328,7 +2328,7 @@ static const struct file_operations spufs_tid_fops = {
 	.open		= spufs_tid_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const char *ctx_state_names[] = {
@@ -2420,7 +2420,7 @@ static const struct file_operations spufs_stat_fops = {
 	.open		= spufs_stat_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static inline int spufs_switch_log_used(struct spu_context *ctx)
@@ -2674,7 +2674,7 @@ static const struct file_operations spufs_ctx_fops = {
 	.open           = spufs_ctx_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = single_release,
+	.close          = single_close,
 };
 
 const struct spufs_tree_descr spufs_dir_contents[] = {

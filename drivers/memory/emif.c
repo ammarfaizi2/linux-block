@@ -141,7 +141,7 @@ static int emif_regdump_open(struct inode *inode, struct file *file)
 static const struct file_operations emif_regdump_fops = {
 	.open			= emif_regdump_open,
 	.read			= seq_read,
-	.release		= single_release,
+	.close			= single_close,
 };
 
 static int emif_mr4_show(struct seq_file *s, void *unused)
@@ -160,7 +160,7 @@ static int emif_mr4_open(struct inode *inode, struct file *file)
 static const struct file_operations emif_mr4_fops = {
 	.open			= emif_mr4_open,
 	.read			= seq_read,
-	.release		= single_release,
+	.close			= single_close,
 };
 
 static int __init_or_module emif_debugfs_init(struct emif_data *emif)

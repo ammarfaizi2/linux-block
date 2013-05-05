@@ -222,7 +222,7 @@ static const struct file_operations ie6xx_wdt_dbg_operations = {
 	.open		= ie6xx_wdt_dbg_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void ie6xx_wdt_debugfs_init(void)

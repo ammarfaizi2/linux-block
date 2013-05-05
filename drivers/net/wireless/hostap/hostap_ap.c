@@ -89,7 +89,7 @@ static const struct file_operations ap_debug_proc_fops = {
 	.open		= ap_debug_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif /* PRISM2_NO_PROCFS_DEBUG */
 
@@ -1116,7 +1116,7 @@ static const struct file_operations prism2_sta_proc_fops = {
 	.open		= prism2_sta_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void handle_add_proc_queue(struct work_struct *work)

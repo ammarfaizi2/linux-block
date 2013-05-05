@@ -6712,7 +6712,7 @@ static const struct file_operations l2cap_debugfs_fops = {
 	.open		= l2cap_debugfs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct dentry *l2cap_debugfs;

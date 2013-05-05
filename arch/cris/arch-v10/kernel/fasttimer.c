@@ -644,7 +644,7 @@ static const struct file_operations proc_fasttimer_fops = {
 	.open		= proc_fasttimer_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif /* PROC_FS */
 

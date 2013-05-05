@@ -20,7 +20,7 @@ static const struct file_operations name##_fops = {			\
 	.open		= name##_open,					\
 	.read		= seq_read,					\
 	.llseek		= seq_lseek,					\
-	.release	= single_release,				\
+	.close		= single_close,					\
 };
 
 /* debugfs.c */

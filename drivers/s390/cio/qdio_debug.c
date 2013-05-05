@@ -136,7 +136,7 @@ static const struct file_operations debugfs_fops = {
 	.open	 = qstat_seq_open,
 	.read	 = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static char *qperf_names[] = {
@@ -230,7 +230,7 @@ static const struct file_operations debugfs_perf_fops = {
 	.read	 = seq_read,
 	.write	 = qperf_seq_write,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static void setup_debugfs_entry(struct qdio_q *q)

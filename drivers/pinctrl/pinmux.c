@@ -623,14 +623,14 @@ static const struct file_operations pinmux_functions_ops = {
 	.open		= pinmux_functions_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations pinmux_pins_ops = {
 	.open		= pinmux_pins_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 void pinmux_init_device_debugfs(struct dentry *devroot,

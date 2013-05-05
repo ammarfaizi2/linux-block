@@ -1697,7 +1697,7 @@ static const struct file_operations asus_wmi_debugfs_io_ops = {
 	.open = asus_wmi_debugfs_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static void asus_wmi_debugfs_exit(struct asus_wmi *asus)

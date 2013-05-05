@@ -67,7 +67,7 @@ static const struct file_operations proc_fdinfo_file_operations = {
 	.open		= seq_fdinfo_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int tid_fd_revalidate(struct dentry *dentry, unsigned int flags)

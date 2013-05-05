@@ -1659,7 +1659,7 @@ static const struct file_operations topology_ops = {
 	.read = seq_read,
 	.write = topology_write,
 	.open = topology_open,
-	.release = single_release
+	.close = single_close
 };
 
 static int topology_update_init(void)

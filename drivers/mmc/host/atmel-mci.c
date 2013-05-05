@@ -327,7 +327,7 @@ static const struct file_operations atmci_req_fops = {
 	.open		= atmci_req_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void atmci_show_status_reg(struct seq_file *s,
@@ -459,7 +459,7 @@ static const struct file_operations atmci_regs_fops = {
 	.open		= atmci_regs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void atmci_init_debugfs(struct atmel_mci_slot *slot)

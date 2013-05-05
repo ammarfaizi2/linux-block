@@ -206,7 +206,7 @@ static const struct file_operations fake_ide_media_proc_fops = {
 	.open		= fake_ide_media_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void make_ide_entries(const char *dev_name)

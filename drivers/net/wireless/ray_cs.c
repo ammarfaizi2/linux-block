@@ -2678,7 +2678,7 @@ static const struct file_operations ray_cs_proc_fops = {
 	.open = ray_cs_proc_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 #endif
 /*===========================================================================*/

@@ -328,7 +328,7 @@ struct docg3 {
 		.open = name##_open, \
 		.llseek = seq_lseek, \
 		.read = seq_read, \
-		.release = single_release \
+		.close = single_close \
 	};
 #endif
 

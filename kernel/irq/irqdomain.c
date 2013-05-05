@@ -829,7 +829,7 @@ static const struct file_operations virq_debug_fops = {
 	.open = virq_debug_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int __init irq_debugfs_init(void)

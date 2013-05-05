@@ -2649,7 +2649,7 @@ static const struct file_operations mgslpc_proc_fops = {
 	.open		= mgslpc_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int rx_alloc_buffers(MGSLPC_INFO *info)

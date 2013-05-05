@@ -947,7 +947,7 @@ static const struct file_operations data_debug_fops = {
 	.open		= data_debug_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int data_debugfs_init(struct fpga_device *priv)

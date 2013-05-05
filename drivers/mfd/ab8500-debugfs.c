@@ -1344,7 +1344,7 @@ static const struct file_operations ab8500_registers_fops = {
 	.open = ab8500_registers_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1446,7 +1446,7 @@ static int ab8500_all_banks_open(struct inode *inode, struct file *file)
 		s->size = (PAGE_SIZE * 2);
 		s->buf = kmalloc(s->size, GFP_KERNEL);
 		if (!s->buf) {
-			single_release(inode, file);
+			single_close(file);
 			err = -ENOMEM;
 		}
 	}
@@ -1457,7 +1457,7 @@ static const struct file_operations ab8500_all_banks_fops = {
 	.open = ab8500_all_banks_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1730,7 +1730,7 @@ static const struct file_operations ab8500_modem_fops = {
 	.open = ab8500_modem_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1759,7 +1759,7 @@ static const struct file_operations ab8500_gpadc_bat_ctrl_fops = {
 	.open = ab8500_gpadc_bat_ctrl_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1789,7 +1789,7 @@ static const struct file_operations ab8500_gpadc_btemp_ball_fops = {
 	.open = ab8500_gpadc_btemp_ball_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1820,7 +1820,7 @@ static const struct file_operations ab8500_gpadc_main_charger_v_fops = {
 	.open = ab8500_gpadc_main_charger_v_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1851,7 +1851,7 @@ static const struct file_operations ab8500_gpadc_acc_detect1_fops = {
 	.open = ab8500_gpadc_acc_detect1_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1882,7 +1882,7 @@ static const struct file_operations ab8500_gpadc_acc_detect2_fops = {
 	.open = ab8500_gpadc_acc_detect2_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1911,7 +1911,7 @@ static const struct file_operations ab8500_gpadc_aux1_fops = {
 	.open = ab8500_gpadc_aux1_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1940,7 +1940,7 @@ static const struct file_operations ab8500_gpadc_aux2_fops = {
 	.open = ab8500_gpadc_aux2_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1970,7 +1970,7 @@ static const struct file_operations ab8500_gpadc_main_bat_v_fops = {
 	.open = ab8500_gpadc_main_bat_v_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -1999,7 +1999,7 @@ static const struct file_operations ab8500_gpadc_vbus_v_fops = {
 	.open = ab8500_gpadc_vbus_v_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2030,7 +2030,7 @@ static const struct file_operations ab8500_gpadc_main_charger_c_fops = {
 	.open = ab8500_gpadc_main_charger_c_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2061,7 +2061,7 @@ static const struct file_operations ab8500_gpadc_usb_charger_c_fops = {
 	.open = ab8500_gpadc_usb_charger_c_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2090,7 +2090,7 @@ static const struct file_operations ab8500_gpadc_bk_bat_v_fops = {
 	.open = ab8500_gpadc_bk_bat_v_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2119,7 +2119,7 @@ static const struct file_operations ab8500_gpadc_die_temp_fops = {
 	.open = ab8500_gpadc_die_temp_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2148,7 +2148,7 @@ static const struct file_operations ab8500_gpadc_usb_id_fops = {
 	.open = ab8500_gpadc_usb_id_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2178,7 +2178,7 @@ static const struct file_operations ab8540_gpadc_xtal_temp_fops = {
 	.open = ab8540_gpadc_xtal_temp_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2209,7 +2209,7 @@ static const struct file_operations ab8540_gpadc_vbat_true_meas_fops = {
 	.open = ab8540_gpadc_vbat_true_meas_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2246,7 +2246,7 @@ static const struct file_operations ab8540_gpadc_bat_ctrl_and_ibat_fops = {
 	.open = ab8540_gpadc_bat_ctrl_and_ibat_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2282,7 +2282,7 @@ static const struct file_operations ab8540_gpadc_vbat_meas_and_ibat_fops = {
 	.open = ab8540_gpadc_vbat_meas_and_ibat_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2319,7 +2319,7 @@ static const struct file_operations ab8540_gpadc_vbat_true_meas_and_ibat_fops = 
 	.open = ab8540_gpadc_vbat_true_meas_and_ibat_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2355,7 +2355,7 @@ static const struct file_operations ab8540_gpadc_bat_temp_and_ibat_fops = {
 	.open = ab8540_gpadc_bat_temp_and_ibat_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2388,7 +2388,7 @@ static const struct file_operations ab8540_gpadc_otp_calib_fops = {
 	.open = ab8540_gpadc_otp_cal_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2433,7 +2433,7 @@ static const struct file_operations ab8500_gpadc_avg_sample_fops = {
 	.read = seq_read,
 	.write = ab8500_gpadc_avg_sample_write,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2478,7 +2478,7 @@ static const struct file_operations ab8500_gpadc_trig_edge_fops = {
 	.read = seq_read,
 	.write = ab8500_gpadc_trig_edge_write,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2521,7 +2521,7 @@ static const struct file_operations ab8500_gpadc_trig_timer_fops = {
 	.read = seq_read,
 	.write = ab8500_gpadc_trig_timer_write,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2566,7 +2566,7 @@ static const struct file_operations ab8500_gpadc_conv_type_fops = {
 	.read = seq_read,
 	.write = ab8500_gpadc_conv_type_write,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2876,7 +2876,7 @@ static const struct file_operations ab8500_bank_fops = {
 	.write = ab8500_bank_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2885,7 +2885,7 @@ static const struct file_operations ab8500_address_fops = {
 	.write = ab8500_address_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2894,7 +2894,7 @@ static const struct file_operations ab8500_val_fops = {
 	.write = ab8500_val_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2902,7 +2902,7 @@ static const struct file_operations ab8500_interrupts_fops = {
 	.open = ab8500_interrupts_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2911,7 +2911,7 @@ static const struct file_operations ab8500_subscribe_fops = {
 	.write = ab8500_subscribe_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2920,7 +2920,7 @@ static const struct file_operations ab8500_unsubscribe_fops = {
 	.write = ab8500_unsubscribe_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -2929,7 +2929,7 @@ static const struct file_operations ab8500_hwreg_fops = {
 	.write = ab8500_hwreg_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 

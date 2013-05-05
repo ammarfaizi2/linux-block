@@ -2261,7 +2261,7 @@ static const struct file_operations capidrv_proc_fops = {
 	.open		= capidrv_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void __init proc_init(void)

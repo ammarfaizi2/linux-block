@@ -1466,42 +1466,42 @@ static const struct file_operations pinctrl_pins_ops = {
 	.open		= pinctrl_pins_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations pinctrl_groups_ops = {
 	.open		= pinctrl_groups_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations pinctrl_gpioranges_ops = {
 	.open		= pinctrl_gpioranges_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations pinctrl_devices_ops = {
 	.open		= pinctrl_devices_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations pinctrl_maps_ops = {
 	.open		= pinctrl_maps_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations pinctrl_ops = {
 	.open		= pinctrl_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct dentry *debugfs_root;

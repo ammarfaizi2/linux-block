@@ -290,7 +290,7 @@ static const struct file_operations statistics_fops = {
 	.read 		= seq_read,
 	.write 		= statistics_write,
 	.llseek 	= seq_lseek,
-	.release 	= single_release,
+	.close	 	= single_close,
 };
 
 static const struct file_operations mcs_statistics_fops = {
@@ -298,7 +298,7 @@ static const struct file_operations mcs_statistics_fops = {
 	.read 		= seq_read,
 	.write 		= mcs_statistics_write,
 	.llseek 	= seq_lseek,
-	.release 	= single_release,
+	.close	 	= single_close,
 };
 
 static const struct file_operations options_fops = {
@@ -306,7 +306,7 @@ static const struct file_operations options_fops = {
 	.read 		= seq_read,
 	.write 		= options_write,
 	.llseek 	= seq_lseek,
-	.release 	= single_release,
+	.close	 	= single_close,
 };
 
 static const struct file_operations cch_fops = {

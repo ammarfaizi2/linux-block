@@ -443,7 +443,7 @@ static const struct file_operations dwc3_mode_fops = {
 	.write			= dwc3_mode_write,
 	.read			= seq_read,
 	.llseek			= seq_lseek,
-	.release		= single_release,
+	.close			= single_close,
 };
 
 static int dwc3_testmode_show(struct seq_file *s, void *unused)
@@ -526,7 +526,7 @@ static const struct file_operations dwc3_testmode_fops = {
 	.write			= dwc3_testmode_write,
 	.read			= seq_read,
 	.llseek			= seq_lseek,
-	.release		= single_release,
+	.close			= single_close,
 };
 
 static int dwc3_link_state_show(struct seq_file *s, void *unused)
@@ -635,7 +635,7 @@ static const struct file_operations dwc3_link_state_fops = {
 	.write			= dwc3_link_state_write,
 	.read			= seq_read,
 	.llseek			= seq_lseek,
-	.release		= single_release,
+	.close			= single_close,
 };
 
 int dwc3_debugfs_init(struct dwc3 *dwc)

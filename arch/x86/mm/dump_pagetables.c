@@ -344,7 +344,7 @@ static const struct file_operations ptdump_fops = {
 	.open		= ptdump_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int pt_dump_init(void)

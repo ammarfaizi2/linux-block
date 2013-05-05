@@ -138,7 +138,7 @@ static const struct file_operations host1x_debug_all_fops = {
 	.open		= host1x_debug_open_all,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int host1x_debug_open(struct inode *inode, struct file *file)
@@ -150,7 +150,7 @@ static const struct file_operations host1x_debug_fops = {
 	.open		= host1x_debug_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 void host1x_debug_init(struct host1x *host1x)

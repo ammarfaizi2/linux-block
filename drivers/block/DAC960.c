@@ -6461,7 +6461,7 @@ static const struct file_operations dac960_proc_fops = {
 	.open		= dac960_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int dac960_initial_status_proc_show(struct seq_file *m, void *v)
@@ -6481,7 +6481,7 @@ static const struct file_operations dac960_initial_status_proc_fops = {
 	.open		= dac960_initial_status_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int dac960_current_status_proc_show(struct seq_file *m, void *v)
@@ -6527,7 +6527,7 @@ static const struct file_operations dac960_current_status_proc_fops = {
 	.open		= dac960_current_status_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int dac960_user_command_proc_show(struct seq_file *m, void *v)
@@ -6569,7 +6569,7 @@ static const struct file_operations dac960_user_command_proc_fops = {
 	.open		= dac960_user_command_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= dac960_user_command_proc_write,
 };
 

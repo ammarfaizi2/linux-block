@@ -1135,7 +1135,7 @@ static const struct file_operations saa7164_proc_fops = {
 	.open		= saa7164_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int saa7164_proc_create(void)

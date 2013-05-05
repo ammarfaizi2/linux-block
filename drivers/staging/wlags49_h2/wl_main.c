@@ -160,7 +160,7 @@ static const struct file_operations scull_read_procmem_fops = {
 	.open		= scull_read_procmem_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #endif /* SCULL_USE_PROC */

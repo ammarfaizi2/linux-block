@@ -104,7 +104,7 @@ static const struct file_operations cache_debugfs_fops = {
 	.open		= cache_debugfs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init cache_debugfs_init(void)

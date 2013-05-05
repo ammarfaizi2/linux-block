@@ -183,7 +183,7 @@ static const struct file_operations bat_debug_fops = {
 	.open		= debug_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct dentry *da9030_bat_create_debugfs(struct da9030_charger *charger)

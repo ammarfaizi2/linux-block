@@ -1838,7 +1838,7 @@ static const struct file_operations sba_proc_fops = {
 	.open = sba_proc_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int
@@ -1870,7 +1870,7 @@ static const struct file_operations sba_proc_bitmap_fops = {
 	.open = sba_proc_bitmap_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 #endif /* CONFIG_PROC_FS */
 

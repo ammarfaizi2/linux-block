@@ -1381,7 +1381,7 @@ const struct file_operations msm_otg_mode_fops = {
 	.read = seq_read,
 	.write = msm_otg_mode_write,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static struct dentry *msm_otg_dbg_root;

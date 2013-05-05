@@ -1062,7 +1062,7 @@ static const struct file_operations memblock_debug_fops = {
 	.open = memblock_debug_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int __init memblock_init_debugfs(void)

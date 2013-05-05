@@ -929,7 +929,7 @@ static const struct file_operations proc_palinfo_fops = {
 	.open		= proc_palinfo_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void __cpuinit

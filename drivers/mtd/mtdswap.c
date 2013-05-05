@@ -1312,7 +1312,7 @@ static const struct file_operations mtdswap_fops = {
 	.open		= mtdswap_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int mtdswap_add_debugfs(struct mtdswap_dev *d)

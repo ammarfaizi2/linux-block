@@ -681,7 +681,7 @@ static const struct file_operations lparcfg_fops = {
 	.read		= seq_read,
 	.write		= lparcfg_write,
 	.open		= lparcfg_open,
-	.release	= single_release,
+	.close		= single_close,
 	.llseek		= seq_lseek,
 };
 

@@ -432,7 +432,7 @@ rpc_info_open(struct inode *inode, struct file *file)
 			m->private = clnt;
 		} else {
 			spin_unlock(&file->f_path.dentry->d_lock);
-			single_release(inode, file);
+			single_close(file);
 			ret = -EINVAL;
 		}
 	}
@@ -447,7 +447,8 @@ rpc_info_release(struct inode *inode, struct file *file)
 
 	if (clnt)
 		rpc_release_client(clnt);
-	return single_release(inode, file);
+	single_close(file);
+	return 0;
 }
 
 static const struct file_operations rpc_info_operations = {

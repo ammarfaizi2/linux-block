@@ -280,7 +280,7 @@ static const struct file_operations lstats_fops = {
 	.read		= seq_read,
 	.write		= lstats_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init init_lstats_procfs(void)

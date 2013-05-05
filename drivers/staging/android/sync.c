@@ -976,7 +976,7 @@ static const struct file_operations sync_debugfs_fops = {
 	.open           = sync_debugfs_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = single_release,
+	.close          = single_close,
 };
 
 static __init int sync_debugfs_init(void)

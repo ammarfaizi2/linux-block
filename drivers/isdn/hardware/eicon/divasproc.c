@@ -218,7 +218,7 @@ static const struct file_operations d_l1_down_proc_fops = {
 	.open		= d_l1_down_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= d_l1_down_proc_write,
 };
 
@@ -244,7 +244,7 @@ static const struct file_operations grp_opt_proc_fops = {
 	.open		= grp_opt_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= grp_opt_proc_write,
 };
 
@@ -343,7 +343,7 @@ static const struct file_operations info_proc_fops = {
 	.open		= info_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= info_proc_write,
 };
 

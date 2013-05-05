@@ -66,7 +66,7 @@ static const struct file_operations binder_##name##_fops = { \
 	.open = binder_##name##_open, \
 	.read = seq_read, \
 	.llseek = seq_lseek, \
-	.release = single_release, \
+	.close = single_close, \
 }
 
 static int binder_proc_show(struct seq_file *m, void *unused);

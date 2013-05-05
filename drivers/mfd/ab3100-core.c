@@ -473,7 +473,7 @@ static const struct file_operations ab3100_registers_fops = {
 	.open = ab3100_registers_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 

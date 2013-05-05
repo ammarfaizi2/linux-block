@@ -99,7 +99,7 @@ static const struct file_operations xfs_stat_proc_fops = {
 	.open		= xfs_stat_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /* legacy quota interfaces */
@@ -125,7 +125,7 @@ static const struct file_operations xqm_proc_fops = {
 	.open		= xqm_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /* legacy quota stats interface no 2 */
@@ -150,7 +150,7 @@ static const struct file_operations xqmstat_proc_fops = {
 	.open		= xqmstat_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif /* CONFIG_XFS_QUOTA */
 

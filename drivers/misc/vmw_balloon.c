@@ -742,7 +742,7 @@ static const struct file_operations vmballoon_debug_fops = {
 	.open		= vmballoon_debug_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init vmballoon_debugfs_init(struct vmballoon *b)

@@ -305,7 +305,7 @@ static const struct file_operations ks8695_gpio_operations = {
 	.open		= ks8695_gpio_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init ks8695_gpio_debugfs_init(void)

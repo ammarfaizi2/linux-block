@@ -1924,7 +1924,7 @@ static const struct file_operations smi_ipmb_proc_ops = {
 	.open		= smi_ipmb_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int smi_version_proc_show(struct seq_file *m, void *v)
@@ -1945,7 +1945,7 @@ static const struct file_operations smi_version_proc_ops = {
 	.open		= smi_version_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int smi_stats_proc_show(struct seq_file *m, void *v)
@@ -2020,7 +2020,7 @@ static const struct file_operations smi_stats_proc_ops = {
 	.open		= smi_stats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 #endif /* CONFIG_PROC_FS */
 

@@ -84,7 +84,7 @@ static int wil_vring_seq_open(struct inode *inode, struct file *file)
 
 static const struct file_operations fops_vring = {
 	.open		= wil_vring_seq_open,
-	.release	= single_release,
+	.close		= single_close,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 };
@@ -192,7 +192,7 @@ static int wil_mbox_seq_open(struct inode *inode, struct file *file)
 
 static const struct file_operations fops_mbox = {
 	.open		= wil_mbox_seq_open,
-	.release	= single_release,
+	.close		= single_close,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 };
@@ -307,7 +307,7 @@ static int wil_memread_seq_open(struct inode *inode, struct file *file)
 
 static const struct file_operations fops_memread = {
 	.open		= wil_memread_seq_open,
-	.release	= single_release,
+	.close		= single_close,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 };
@@ -447,7 +447,7 @@ static int wil_txdesc_seq_open(struct inode *inode, struct file *file)
 
 static const struct file_operations fops_txdesc = {
 	.open		= wil_txdesc_seq_open,
-	.release	= single_release,
+	.close		= single_close,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 };
@@ -473,7 +473,7 @@ static int wil_bf_seq_open(struct inode *inode, struct file *file)
 
 static const struct file_operations fops_bf = {
 	.open		= wil_bf_seq_open,
-	.release	= single_release,
+	.close		= single_close,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 };
@@ -559,7 +559,7 @@ static int wil_temp_seq_open(struct inode *inode, struct file *file)
 
 static const struct file_operations fops_temp = {
 	.open		= wil_temp_seq_open,
-	.release	= single_release,
+	.close		= single_close,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 };

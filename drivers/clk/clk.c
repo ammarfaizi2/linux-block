@@ -155,7 +155,7 @@ static const struct file_operations clk_summary_fops = {
 	.open		= clk_summary_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void clk_dump_one(struct seq_file *s, struct clk *c, int level)
@@ -223,7 +223,7 @@ static const struct file_operations clk_dump_fops = {
 	.open		= clk_dump_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /* caller must hold prepare_lock */

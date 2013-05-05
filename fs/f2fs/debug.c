@@ -299,7 +299,7 @@ static const struct file_operations stat_fops = {
 	.open = stat_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 int f2fs_build_stats(struct f2fs_sb_info *sbi)

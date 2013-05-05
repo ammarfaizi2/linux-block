@@ -615,7 +615,7 @@ static const struct file_operations omap_mux_dbg_board_fops = {
 	.open		= omap_mux_dbg_board_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct omap_mux_partition *omap_mux_get_partition(struct omap_mux *mux)
@@ -725,7 +725,7 @@ static const struct file_operations omap_mux_dbg_signal_fops = {
 	.read		= seq_read,
 	.write		= omap_mux_dbg_signal_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct dentry *mux_dbg_dir;

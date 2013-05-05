@@ -517,7 +517,7 @@ static const struct file_operations pktgen_fops = {
 	.read    = seq_read,
 	.llseek  = seq_lseek,
 	.write   = pgctrl_write,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int pktgen_if_show(struct seq_file *seq, void *v)
@@ -1694,7 +1694,7 @@ static const struct file_operations pktgen_if_fops = {
 	.read    = seq_read,
 	.llseek  = seq_lseek,
 	.write   = pktgen_if_write,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int pktgen_thread_show(struct seq_file *seq, void *v)
@@ -1832,7 +1832,7 @@ static const struct file_operations pktgen_thread_fops = {
 	.read    = seq_read,
 	.llseek  = seq_lseek,
 	.write   = pktgen_thread_write,
-	.release = single_release,
+	.close = single_close,
 };
 
 /* Think find or remove for NN */

@@ -244,7 +244,7 @@ static const struct file_operations debugfs_status_fops = {
 	.open = debugfs_status_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int debugfs_cfg_show(struct seq_file *s, void *data)
@@ -295,7 +295,7 @@ static const struct file_operations debugfs_cfg_fops = {
 	.open = debugfs_cfg_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int ideapad_debugfs_init(struct ideapad_private *priv)

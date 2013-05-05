@@ -247,7 +247,7 @@ static const struct file_operations cifs_debug_data_proc_fops = {
 	.open		= cifs_debug_data_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 #ifdef CONFIG_CIFS_STATS
@@ -365,7 +365,7 @@ static const struct file_operations cifs_stats_proc_fops = {
 	.open		= cifs_stats_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= cifs_stats_proc_write,
 };
 #endif /* STATS */
@@ -452,7 +452,7 @@ static const struct file_operations cifsFYI_proc_fops = {
 	.open		= cifsFYI_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= cifsFYI_proc_write,
 };
 
@@ -489,7 +489,7 @@ static const struct file_operations cifs_linux_ext_proc_fops = {
 	.open		= cifs_linux_ext_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= cifs_linux_ext_proc_write,
 };
 
@@ -526,7 +526,7 @@ static const struct file_operations cifs_lookup_cache_proc_fops = {
 	.open		= cifs_lookup_cache_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= cifs_lookup_cache_proc_write,
 };
 
@@ -563,7 +563,7 @@ static const struct file_operations traceSMB_proc_fops = {
 	.open		= traceSMB_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= traceSMB_proc_write,
 };
 
@@ -641,7 +641,7 @@ static const struct file_operations cifs_security_flags_proc_fops = {
 	.open		= cifs_security_flags_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= cifs_security_flags_proc_write,
 };
 #else

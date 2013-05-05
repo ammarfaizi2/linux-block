@@ -112,7 +112,7 @@ static const struct file_operations debugfs_pci_perf_fops = {
 	.read	 = seq_read,
 	.write	 = pci_perf_seq_write,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int pci_debug_show(struct seq_file *m, void *v)
@@ -133,7 +133,7 @@ static const struct file_operations debugfs_pci_debug_fops = {
 	.open	 = pci_debug_seq_open,
 	.read	 = seq_read,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 void zpci_debug_init_device(struct zpci_dev *zdev)

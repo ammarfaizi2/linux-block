@@ -921,7 +921,7 @@ static const struct file_operations hardwall_proc_fops = {
 	.open		= hardwall_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void hardwall_add_proc(struct hardwall_info *info)

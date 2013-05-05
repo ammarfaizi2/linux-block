@@ -448,35 +448,35 @@ static const struct file_operations debug_status_fops = {
 	.open = debug_status_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static const struct file_operations debug_dmem_fops = {
 	.open = debug_dmem_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static const struct file_operations debug_etd_fops = {
 	.open = debug_etd_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static const struct file_operations debug_statistics_fops = {
 	.open = debug_statistics_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static const struct file_operations debug_isoc_fops = {
 	.open = debug_isoc_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static void create_debug_files(struct imx21 *imx21)

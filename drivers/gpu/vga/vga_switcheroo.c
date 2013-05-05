@@ -498,7 +498,7 @@ static const struct file_operations vga_switcheroo_debugfs_fops = {
 	.write = vga_switcheroo_debugfs_write,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static void vga_switcheroo_debugfs_fini(struct vgasr_priv *priv)

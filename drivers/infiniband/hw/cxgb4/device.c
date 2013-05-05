@@ -334,7 +334,7 @@ static ssize_t stats_clear(struct file *file, const char __user *buf,
 static const struct file_operations stats_debugfs_fops = {
 	.owner   = THIS_MODULE,
 	.open    = stats_open,
-	.release = single_release,
+	.close = single_close,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
 	.write   = stats_clear,

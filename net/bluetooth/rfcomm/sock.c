@@ -992,7 +992,7 @@ static const struct file_operations rfcomm_sock_debugfs_fops = {
 	.open		= rfcomm_sock_debugfs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct dentry *rfcomm_sock_debugfs;

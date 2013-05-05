@@ -406,7 +406,7 @@ static const struct file_operations acpi_system_wakeup_device_fops = {
 	.read = seq_read,
 	.write = acpi_system_write_wakeup_device,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 #ifdef	HAVE_ACPI_LEGACY_ALARM
@@ -416,7 +416,7 @@ static const struct file_operations acpi_system_alarm_fops = {
 	.read = seq_read,
 	.write = acpi_system_write_alarm,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static u32 rtc_handler(void *context)

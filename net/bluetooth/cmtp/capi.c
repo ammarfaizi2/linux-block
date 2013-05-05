@@ -547,7 +547,7 @@ static const struct file_operations cmtp_proc_fops = {
 	.open		= cmtp_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 int cmtp_attach_device(struct cmtp_session *session)

@@ -667,7 +667,7 @@ static const struct file_operations bus_ecard_proc_fops = {
 	.open		= ecard_devices_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static struct proc_dir_entry *proc_bus_ecard_dir = NULL;

@@ -137,7 +137,7 @@ static const struct file_operations acpi_button_state_fops = {
 	.open = acpi_button_state_open_fs,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 static int acpi_button_add_fs(struct acpi_device *device)

@@ -214,7 +214,7 @@ static const struct file_operations kvmppc_exit_timing_fops = {
 	.read    = seq_read,
 	.write   = kvmppc_exit_timing_write,
 	.llseek  = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 };
 
 void kvmppc_create_vcpu_debugfs(struct kvm_vcpu *vcpu, unsigned int id)

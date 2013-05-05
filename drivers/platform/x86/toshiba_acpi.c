@@ -611,7 +611,7 @@ static const struct file_operations lcd_proc_fops = {
 	.open		= lcd_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= lcd_proc_write,
 };
 
@@ -715,7 +715,7 @@ static const struct file_operations video_proc_fops = {
 	.open		= video_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= video_proc_write,
 };
 
@@ -780,7 +780,7 @@ static const struct file_operations fan_proc_fops = {
 	.open		= fan_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= fan_proc_write,
 };
 
@@ -846,7 +846,7 @@ static const struct file_operations keys_proc_fops = {
 	.open		= keys_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 	.write		= keys_proc_write,
 };
 
@@ -867,7 +867,7 @@ static const struct file_operations version_proc_fops = {
 	.open		= version_proc_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 /* proc and module init

@@ -507,7 +507,7 @@ static const struct file_operations gpio_regs_operations = {
 	.open		= gpio_regs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init gpio_debugfs_init(void)

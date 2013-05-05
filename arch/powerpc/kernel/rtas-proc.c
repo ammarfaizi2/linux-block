@@ -164,7 +164,7 @@ static const struct file_operations ppc_rtas_sensors_operations = {
 	.open		= sensors_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int poweron_open(struct inode *inode, struct file *file)
@@ -177,7 +177,7 @@ static const struct file_operations ppc_rtas_poweron_operations = {
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.write		= ppc_rtas_poweron_write,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int progress_open(struct inode *inode, struct file *file)
@@ -190,7 +190,7 @@ static const struct file_operations ppc_rtas_progress_operations = {
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.write		= ppc_rtas_progress_write,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int clock_open(struct inode *inode, struct file *file)
@@ -203,7 +203,7 @@ static const struct file_operations ppc_rtas_clock_operations = {
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.write		= ppc_rtas_clock_write,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int tone_freq_open(struct inode *inode, struct file *file)
@@ -216,7 +216,7 @@ static const struct file_operations ppc_rtas_tone_freq_operations = {
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.write		= ppc_rtas_tone_freq_write,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int tone_volume_open(struct inode *inode, struct file *file)
@@ -229,7 +229,7 @@ static const struct file_operations ppc_rtas_tone_volume_operations = {
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.write		= ppc_rtas_tone_volume_write,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int rmo_buf_open(struct inode *inode, struct file *file)
@@ -241,7 +241,7 @@ static const struct file_operations ppc_rtas_rmo_buf_ops = {
 	.open		= rmo_buf_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int ppc_rtas_find_all_sensors(void);

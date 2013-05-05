@@ -681,7 +681,7 @@ static const struct file_operations fops_regset32 = {
 	.open =		debugfs_open_regset32,
 	.read =		seq_read,
 	.llseek =	seq_lseek,
-	.release =	single_release,
+	.close =	single_close,
 };
 
 /**

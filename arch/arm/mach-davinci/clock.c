@@ -699,7 +699,7 @@ static const struct file_operations davinci_ck_operations = {
 	.open		= davinci_ck_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int __init davinci_clk_debugfs_init(void)

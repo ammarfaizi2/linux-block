@@ -158,7 +158,7 @@ static const struct file_operations dw_mci_req_fops = {
 	.open		= dw_mci_req_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static int dw_mci_regs_show(struct seq_file *s, void *v)
@@ -183,7 +183,7 @@ static const struct file_operations dw_mci_regs_fops = {
 	.open		= dw_mci_regs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static void dw_mci_init_debugfs(struct dw_mci_slot *slot)

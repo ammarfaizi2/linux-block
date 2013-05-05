@@ -402,7 +402,7 @@ static const struct file_operations tstats_fops = {
 	.read		= seq_read,
 	.write		= tstats_write,
 	.llseek		= seq_lseek,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 void __init init_timer_stats(void)

@@ -116,7 +116,7 @@ static const struct file_operations ux500_regulator_power_state_cnt_fops = {
 	.open = ux500_regulator_power_state_cnt_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 
@@ -163,7 +163,7 @@ static const struct file_operations ux500_regulator_status_fops = {
 	.open = ux500_regulator_status_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = single_release,
+	.close = single_close,
 	.owner = THIS_MODULE,
 };
 

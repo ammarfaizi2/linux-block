@@ -2235,7 +2235,7 @@ static const struct file_operations usbd_dbg_fops = {
 	.open		= bcm63xx_usbd_dbg_open,
 	.llseek		= seq_lseek,
 	.read		= seq_read,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 static const struct file_operations iudma_dbg_fops = {
@@ -2243,7 +2243,7 @@ static const struct file_operations iudma_dbg_fops = {
 	.open		= bcm63xx_iudma_dbg_open,
 	.llseek		= seq_lseek,
 	.read		= seq_read,
-	.release	= single_release,
+	.close		= single_close,
 };
 
 
