@@ -10,12 +10,12 @@
 
 #define BLOCKS(size) (((size) + 511) >> 9)
 
-static int hpfs_file_release(struct inode *inode, struct file *file)
+static void hpfs_file_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	hpfs_lock(inode->i_sb);
 	hpfs_write_if_changed(inode);
 	hpfs_unlock(inode->i_sb);
-	return 0;
 }
 
 int hpfs_file_fsync(struct file *file, loff_t start, loff_t end, int datasync)
@@ -170,7 +170,7 @@ const struct file_operations hpfs_file_ops =
 	.write		= do_sync_write,
 	.aio_write	= generic_file_aio_write,
 	.mmap		= generic_file_mmap,
-	.release	= hpfs_file_release,
+	.close		= hpfs_file_close,
 	.fsync		= hpfs_file_fsync,
 	.splice_read	= generic_file_splice_read,
 };

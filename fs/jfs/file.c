@@ -82,8 +82,9 @@ static int jfs_open(struct inode *inode, struct file *file)
 
 	return 0;
 }
-static int jfs_release(struct inode *inode, struct file *file)
+static void jfs_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	struct jfs_inode_info *ji = JFS_IP(inode);
 
 	spin_lock_irq(&ji->ag_lock);
@@ -93,8 +94,6 @@ static int jfs_release(struct inode *inode, struct file *file)
 		ji->active_ag = -1;
 	}
 	spin_unlock_irq(&ji->ag_lock);
-
-	return 0;
 }
 
 int jfs_setattr(struct dentry *dentry, struct iattr *iattr)
@@ -157,7 +156,7 @@ const struct file_operations jfs_file_operations = {
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= generic_file_splice_write,
 	.fsync		= jfs_fsync,
-	.release	= jfs_release,
+	.close		= jfs_close,
 	.unlocked_ioctl = jfs_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl	= jfs_compat_ioctl,

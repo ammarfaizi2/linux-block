@@ -576,17 +576,10 @@ static ssize_t u32_array_read(struct file *file, char __user *buf, size_t len,
 					file->private_data, size);
 }
 
-static int u32_array_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-
-	return 0;
-}
-
 static const struct file_operations u32_array_fops = {
 	.owner	 = THIS_MODULE,
 	.open	 = u32_array_open,
-	.release = u32_array_release,
+	.close	 = simple_close_kfree,
 	.read	 = u32_array_read,
 	.llseek  = no_llseek,
 };

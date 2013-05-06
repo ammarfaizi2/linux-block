@@ -32,11 +32,6 @@
  */
 #include "exofs.h"
 
-static int exofs_release_file(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
-
 /* exofs_file_fsync - flush the inode to disk
  *
  *   Note, in exofs all metadata is written as part of inode, regardless.
@@ -73,7 +68,6 @@ const struct file_operations exofs_file_operations = {
 	.aio_write	= generic_file_aio_write,
 	.mmap		= generic_file_mmap,
 	.open		= generic_file_open,
-	.release	= exofs_release_file,
 	.fsync		= exofs_file_fsync,
 	.flush		= exofs_flush,
 	.splice_read	= generic_file_splice_read,

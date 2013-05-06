@@ -1009,14 +1009,13 @@ static int jbd2_seq_info_open(struct inode *inode, struct file *file)
 
 }
 
-static int jbd2_seq_info_release(struct inode *inode, struct file *file)
+static void jbd2_seq_info_close(struct file *file)
 {
 	struct seq_file *seq = file->private_data;
 	struct jbd2_stats_proc_session *s = seq->private;
 	kfree(s->stats);
 	kfree(s);
 	seq_close(file);
-	return 0;
 }
 
 static const struct file_operations jbd2_seq_info_fops = {
@@ -1024,7 +1023,7 @@ static const struct file_operations jbd2_seq_info_fops = {
 	.open           = jbd2_seq_info_open,
 	.read           = seq_read,
 	.llseek         = seq_lseek,
-	.release        = jbd2_seq_info_release,
+	.close          = jbd2_seq_info_close,
 };
 
 static struct proc_dir_entry *proc_jbd2_stats;

@@ -522,14 +522,13 @@ static loff_t hppfs_llseek(struct file *file, loff_t off, int where)
 	return default_llseek(file, off, where);
 }
 
-static int hppfs_release(struct inode *inode, struct file *file)
+static void hppfs_close(struct file *file)
 {
 	struct hppfs_private *data = file->private_data;
 	struct file *proc_file = data->proc_file;
 	if (proc_file)
 		fput(proc_file);
 	kfree(data);
-	return 0;
 }
 
 static const struct file_operations hppfs_file_fops = {
@@ -538,7 +537,7 @@ static const struct file_operations hppfs_file_fops = {
 	.read		= hppfs_read,
 	.write		= hppfs_write,
 	.open		= hppfs_open,
-	.release	= hppfs_release,
+	.close		= hppfs_close,
 };
 
 struct hppfs_dirent {
@@ -585,7 +584,7 @@ static const struct file_operations hppfs_dir_fops = {
 	.readdir	= hppfs_readdir,
 	.open		= hppfs_dir_open,
 	.llseek		= default_llseek,
-	.release	= hppfs_release,
+	.close		= hppfs_close,
 };
 
 static int hppfs_statfs(struct dentry *dentry, struct kstatfs *sf)

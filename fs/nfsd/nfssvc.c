@@ -716,14 +716,13 @@ int nfsd_pool_stats_open(struct inode *inode, struct file *file)
 	return ret;
 }
 
-int nfsd_pool_stats_release(struct inode *inode, struct file *file)
+void nfsd_pool_stats_release(struct file *file)
 {
-	struct net *net = inode->i_sb->s_fs_info;
+	struct net *net = file_inode(file)->i_sb->s_fs_info;
 
 	seq_close(file);
 	mutex_lock(&nfsd_mutex);
 	/* this function really, really should have been called svc_put() */
 	nfsd_destroy(net);
 	mutex_unlock(&nfsd_mutex);
-	return 0;
 }

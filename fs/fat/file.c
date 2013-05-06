@@ -138,14 +138,14 @@ static long fat_generic_compat_ioctl(struct file *filp, unsigned int cmd,
 }
 #endif
 
-static int fat_file_release(struct inode *inode, struct file *filp)
+static void fat_file_close(struct file *file)
 {
-	if ((filp->f_mode & FMODE_WRITE) &&
+	struct inode *inode = file_inode(file);
+	if ((file->f_mode & FMODE_WRITE) &&
 	     MSDOS_SB(inode->i_sb)->options.flush) {
 		fat_flush_inodes(inode->i_sb, inode, NULL);
 		congestion_wait(BLK_RW_ASYNC, HZ/10);
 	}
-	return 0;
 }
 
 int fat_file_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
@@ -167,7 +167,7 @@ const struct file_operations fat_file_operations = {
 	.aio_read	= generic_file_aio_read,
 	.aio_write	= generic_file_aio_write,
 	.mmap		= generic_file_mmap,
-	.release	= fat_file_release,
+	.close		= fat_file_close,
 	.unlocked_ioctl	= fat_generic_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl	= fat_generic_compat_ioctl,

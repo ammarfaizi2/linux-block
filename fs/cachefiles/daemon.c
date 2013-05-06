@@ -26,7 +26,7 @@
 #include "internal.h"
 
 static int cachefiles_daemon_open(struct inode *, struct file *);
-static int cachefiles_daemon_release(struct inode *, struct file *);
+static void cachefiles_daemon_release(struct file *);
 static ssize_t cachefiles_daemon_read(struct file *, char __user *, size_t,
 				      loff_t *);
 static ssize_t cachefiles_daemon_write(struct file *, const char __user *,
@@ -51,7 +51,7 @@ static unsigned long cachefiles_open;
 const struct file_operations cachefiles_daemon_fops = {
 	.owner		= THIS_MODULE,
 	.open		= cachefiles_daemon_open,
-	.release	= cachefiles_daemon_release,
+	.close		= cachefiles_daemon_release,
 	.read		= cachefiles_daemon_read,
 	.write		= cachefiles_daemon_write,
 	.poll		= cachefiles_daemon_poll,
@@ -130,7 +130,7 @@ static int cachefiles_daemon_open(struct inode *inode, struct file *file)
 /*
  * release a cache
  */
-static int cachefiles_daemon_release(struct inode *inode, struct file *file)
+static void cachefiles_daemon_release(struct file *file)
 {
 	struct cachefiles_cache *cache = file->private_data;
 
@@ -152,7 +152,6 @@ static int cachefiles_daemon_release(struct inode *inode, struct file *file)
 	kfree(cache);
 
 	_leave("");
-	return 0;
 }
 
 /*

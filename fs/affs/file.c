@@ -23,7 +23,7 @@ static struct buffer_head *affs_alloc_extblock(struct inode *inode, struct buffe
 static inline struct buffer_head *affs_get_extblock(struct inode *inode, u32 ext);
 static struct buffer_head *affs_get_extblock_slow(struct inode *inode, u32 ext);
 static int affs_file_open(struct inode *inode, struct file *filp);
-static int affs_file_release(struct inode *inode, struct file *filp);
+static void affs_file_close(struct file *file);
 
 const struct file_operations affs_file_operations = {
 	.llseek		= generic_file_llseek,
@@ -33,7 +33,7 @@ const struct file_operations affs_file_operations = {
 	.aio_write	= generic_file_aio_write,
 	.mmap		= generic_file_mmap,
 	.open		= affs_file_open,
-	.release	= affs_file_release,
+	.close		= affs_file_close,
 	.fsync		= affs_file_fsync,
 	.splice_read	= generic_file_splice_read,
 };
@@ -51,10 +51,11 @@ affs_file_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static int
-affs_file_release(struct inode *inode, struct file *filp)
+static void
+affs_file_close(struct file *file)
 {
-	pr_debug("AFFS: release(%lu, %d)\n",
+	struct inode *inode = file_inode(file);
+	pr_debug("AFFS: close(%lu, %d)\n",
 		 inode->i_ino, atomic_read(&AFFS_I(inode)->i_opencnt));
 
 	if (atomic_dec_and_test(&AFFS_I(inode)->i_opencnt)) {
@@ -64,8 +65,6 @@ affs_file_release(struct inode *inode, struct file *filp)
 		affs_free_prealloc(inode);
 		mutex_unlock(&inode->i_mutex);
 	}
-
-	return 0;
 }
 
 static int

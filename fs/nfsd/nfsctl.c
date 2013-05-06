@@ -209,7 +209,7 @@ static const struct file_operations pool_stats_operations = {
 	.open		= nfsd_pool_stats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= nfsd_pool_stats_release,
+	.close		= nfsd_pool_stats_release,
 	.owner		= THIS_MODULE,
 };
 

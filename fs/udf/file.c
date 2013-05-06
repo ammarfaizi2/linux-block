@@ -230,15 +230,15 @@ out:
 	return result;
 }
 
-static int udf_release_file(struct inode *inode, struct file *filp)
+static void udf_close_file(struct file *file)
 {
-	if (filp->f_mode & FMODE_WRITE) {
+	if (file->f_mode & FMODE_WRITE) {
+		struct inode *inode = file_inode(file);
 		down_write(&UDF_I(inode)->i_data_sem);
 		udf_discard_prealloc(inode);
 		udf_truncate_tail_extent(inode);
 		up_write(&UDF_I(inode)->i_data_sem);
 	}
-	return 0;
 }
 
 const struct file_operations udf_file_operations = {
@@ -249,7 +249,7 @@ const struct file_operations udf_file_operations = {
 	.mmap			= generic_file_mmap,
 	.write			= do_sync_write,
 	.aio_write		= udf_file_aio_write,
-	.release		= udf_release_file,
+	.close			= udf_close_file,
 	.fsync			= generic_file_fsync,
 	.splice_read		= generic_file_splice_read,
 	.llseek			= generic_file_llseek,

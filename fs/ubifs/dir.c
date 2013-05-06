@@ -460,14 +460,6 @@ static loff_t ubifs_dir_llseek(struct file *file, loff_t offset, int whence)
 	return generic_file_llseek(file, offset, whence);
 }
 
-/* Free saved readdir() state when the directory is closed */
-static int ubifs_dir_release(struct inode *dir, struct file *file)
-{
-	kfree(file->private_data);
-	file->private_data = NULL;
-	return 0;
-}
-
 /**
  * lock_2_inodes - a wrapper for locking two UBIFS inodes.
  * @inode1: first inode
@@ -1178,7 +1170,7 @@ const struct inode_operations ubifs_dir_inode_operations = {
 
 const struct file_operations ubifs_dir_operations = {
 	.llseek         = ubifs_dir_llseek,
-	.release        = ubifs_dir_release,
+	.close	        = simple_close_kfree,
 	.read           = generic_read_dir,
 	.readdir        = ubifs_readdir,
 	.fsync          = ubifs_fsync,

@@ -895,12 +895,9 @@ xfs_dir_open(
 	return 0;
 }
 
-STATIC int
-xfs_file_release(
-	struct inode	*inode,
-	struct file	*filp)
+STATIC void xfs_file_close(struct file *file)
 {
-	return -xfs_release(XFS_I(inode));
+	(void)xfs_release(XFS_I(file_inode(file)));
 }
 
 STATIC int
@@ -1423,7 +1420,7 @@ const struct file_operations xfs_file_operations = {
 #endif
 	.mmap		= xfs_file_mmap,
 	.open		= xfs_file_open,
-	.release	= xfs_file_release,
+	.close		= xfs_file_close,
 	.fsync		= xfs_file_fsync,
 	.fallocate	= xfs_file_fallocate,
 };

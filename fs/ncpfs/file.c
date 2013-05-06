@@ -271,11 +271,10 @@ outrel:
 	return already_written ? already_written : errno;
 }
 
-static int ncp_release(struct inode *inode, struct file *file) {
-	if (ncp_make_closed(inode)) {
-		DPRINTK("ncp_release: failed to close\n");
-	}
-	return 0;
+static void ncp_close(struct file *file)
+{
+	if (ncp_make_closed(file_inode(file)))
+		DPRINTK("ncp_close: failed to close\n");
 }
 
 const struct file_operations ncp_file_operations =
@@ -288,7 +287,7 @@ const struct file_operations ncp_file_operations =
 	.compat_ioctl	= ncp_compat_ioctl,
 #endif
 	.mmap		= ncp_mmap,
-	.release	= ncp_release,
+	.close		= ncp_close,
 	.fsync		= ncp_fsync,
 };
 

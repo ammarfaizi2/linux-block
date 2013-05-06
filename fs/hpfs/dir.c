@@ -9,13 +9,13 @@
 #include <linux/slab.h>
 #include "hpfs_fn.h"
 
-static int hpfs_dir_release(struct inode *inode, struct file *filp)
+static void hpfs_dir_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	hpfs_lock(inode->i_sb);
-	hpfs_del_pos(inode, &filp->f_pos);
+	hpfs_del_pos(inode, &file->f_pos);
 	/*hpfs_write_if_changed(inode);*/
 	hpfs_unlock(inode->i_sb);
-	return 0;
 }
 
 /* This is slow, but it's not used often */
@@ -321,6 +321,6 @@ const struct file_operations hpfs_dir_ops =
 	.llseek		= hpfs_dir_lseek,
 	.read		= generic_read_dir,
 	.readdir	= hpfs_readdir,
-	.release	= hpfs_dir_release,
+	.close		= hpfs_dir_close,
 	.fsync		= hpfs_file_fsync,
 };
