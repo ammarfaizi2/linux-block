@@ -172,16 +172,16 @@ out:
 	return err;
 }
 
-static int hfs_dir_release(struct inode *inode, struct file *file)
+static void hfs_dir_close(struct file *file)
 {
 	struct hfs_readdir_data *rd = file->private_data;
 	if (rd) {
+		struct inode *inode = file_inode(file);
 		mutex_lock(&inode->i_mutex);
 		list_del(&rd->list);
 		mutex_unlock(&inode->i_mutex);
 		kfree(rd);
 	}
-	return 0;
 }
 
 /*
@@ -308,7 +308,7 @@ const struct file_operations hfs_dir_operations = {
 	.read		= generic_read_dir,
 	.readdir	= hfs_readdir,
 	.llseek		= generic_file_llseek,
-	.release	= hfs_dir_release,
+	.close		= hfs_dir_close,
 };
 
 const struct inode_operations hfs_dir_inode_operations = {

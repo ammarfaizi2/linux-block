@@ -278,8 +278,9 @@ static int hfsplus_file_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int hfsplus_file_release(struct inode *inode, struct file *file)
+static void hfsplus_file_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	struct super_block *sb = inode->i_sb;
 
 	if (HFSPLUS_IS_RSRC(inode))
@@ -294,7 +295,6 @@ static int hfsplus_file_release(struct inode *inode, struct file *file)
 		}
 		mutex_unlock(&inode->i_mutex);
 	}
-	return 0;
 }
 
 static int hfsplus_setattr(struct dentry *dentry, struct iattr *attr)
@@ -394,7 +394,7 @@ static const struct file_operations hfsplus_file_operations = {
 	.splice_read	= generic_file_splice_read,
 	.fsync		= hfsplus_file_fsync,
 	.open		= hfsplus_file_open,
-	.release	= hfsplus_file_release,
+	.close		= hfsplus_file_close,
 	.unlocked_ioctl = hfsplus_ioctl,
 };
 

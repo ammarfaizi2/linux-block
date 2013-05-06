@@ -253,16 +253,16 @@ out:
 	return err;
 }
 
-static int hfsplus_dir_release(struct inode *inode, struct file *file)
+static void hfsplus_dir_close(struct file *file)
 {
 	struct hfsplus_readdir_data *rd = file->private_data;
 	if (rd) {
+		struct inode *inode = file_inode(file);
 		mutex_lock(&inode->i_mutex);
 		list_del(&rd->list);
 		mutex_unlock(&inode->i_mutex);
 		kfree(rd);
 	}
-	return 0;
 }
 
 static int hfsplus_link(struct dentry *src_dentry, struct inode *dst_dir,
@@ -541,5 +541,5 @@ const struct file_operations hfsplus_dir_operations = {
 	.readdir	= hfsplus_readdir,
 	.unlocked_ioctl = hfsplus_ioctl,
 	.llseek		= generic_file_llseek,
-	.release	= hfsplus_dir_release,
+	.close		= hfsplus_dir_close,
 };
