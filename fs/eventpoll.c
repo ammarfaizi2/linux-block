@@ -763,14 +763,11 @@ static void ep_free(struct eventpoll *ep)
 	kfree(ep);
 }
 
-static int ep_eventpoll_release(struct inode *inode, struct file *file)
+static void ep_eventpoll_close(struct file *file)
 {
 	struct eventpoll *ep = file->private_data;
-
 	if (ep)
 		ep_free(ep);
-
-	return 0;
 }
 
 static inline unsigned int ep_item_poll(struct epitem *epi, poll_table *pt)
@@ -858,7 +855,7 @@ static const struct file_operations eventpoll_fops = {
 #ifdef CONFIG_PROC_FS
 	.show_fdinfo	= ep_show_fdinfo,
 #endif
-	.release	= ep_eventpoll_release,
+	.close		= ep_eventpoll_close,
 	.poll		= ep_eventpoll_poll,
 	.llseek		= noop_llseek,
 };

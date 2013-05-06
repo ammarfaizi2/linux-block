@@ -82,11 +82,6 @@ static int bad_file_flush(struct file *file, fl_owner_t id)
 	return -EIO;
 }
 
-static int bad_file_release(struct inode *inode, struct file *filp)
-{
-	return -EIO;
-}
-
 static int bad_file_fsync(struct file *file, loff_t start, loff_t end,
 			  int datasync)
 {
@@ -159,7 +154,6 @@ static const struct file_operations bad_file_ops =
 	.mmap		= bad_file_mmap,
 	.open		= bad_file_open,
 	.flush		= bad_file_flush,
-	.release	= bad_file_release,
 	.fsync		= bad_file_fsync,
 	.aio_fsync	= bad_file_aio_fsync,
 	.fasync		= bad_file_fasync,

@@ -281,7 +281,7 @@ static ssize_t inotify_read(struct file *file, char __user *buf,
 	return ret;
 }
 
-static int inotify_release(struct inode *ignored, struct file *file)
+static void inotify_release(struct file *file)
 {
 	struct fsnotify_group *group = file->private_data;
 
@@ -289,8 +289,6 @@ static int inotify_release(struct inode *ignored, struct file *file)
 
 	/* free this group, matching get was inotify_init->fsnotify_obtain_group */
 	fsnotify_destroy_group(group);
-
-	return 0;
 }
 
 static long inotify_ioctl(struct file *file, unsigned int cmd,
@@ -331,7 +329,7 @@ static const struct file_operations inotify_fops = {
 	.poll		= inotify_poll,
 	.read		= inotify_read,
 	.fasync		= fsnotify_fasync,
-	.release	= inotify_release,
+	.close		= inotify_release,
 	.unlocked_ioctl	= inotify_ioctl,
 	.compat_ioctl	= inotify_ioctl,
 	.llseek		= noop_llseek,

@@ -285,13 +285,12 @@ static int mounts_open_common(struct inode *inode, struct file *file,
 	return ret;
 }
 
-static int mounts_release(struct inode *inode, struct file *file)
+static void mounts_close(struct file *file)
 {
 	struct proc_mounts *p = proc_mounts(file->private_data);
 	path_put(&p->root);
 	put_mnt_ns(p->ns);
 	seq_close(file);
-	return 0;
 }
 
 static int mounts_open(struct inode *inode, struct file *file)
@@ -313,7 +312,7 @@ const struct file_operations proc_mounts_operations = {
 	.open		= mounts_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= mounts_release,
+	.close		= mounts_close,
 	.poll		= mounts_poll,
 };
 
@@ -321,7 +320,7 @@ const struct file_operations proc_mountinfo_operations = {
 	.open		= mountinfo_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= mounts_release,
+	.close		= mounts_close,
 	.poll		= mounts_poll,
 };
 
@@ -329,5 +328,5 @@ const struct file_operations proc_mountstats_operations = {
 	.open		= mountstats_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= mounts_release,
+	.close		= mounts_close,
 };

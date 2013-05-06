@@ -105,13 +105,12 @@ void eventfd_ctx_put(struct eventfd_ctx *ctx)
 }
 EXPORT_SYMBOL_GPL(eventfd_ctx_put);
 
-static int eventfd_release(struct inode *inode, struct file *file)
+static void eventfd_close(struct file *file)
 {
 	struct eventfd_ctx *ctx = file->private_data;
 
 	wake_up_poll(&ctx->wqh, POLLHUP);
 	eventfd_ctx_put(ctx);
-	return 0;
 }
 
 static unsigned int eventfd_poll(struct file *file, poll_table *wait)
@@ -305,7 +304,7 @@ static const struct file_operations eventfd_fops = {
 #ifdef CONFIG_PROC_FS
 	.show_fdinfo	= eventfd_show_fdinfo,
 #endif
-	.release	= eventfd_release,
+	.close		= eventfd_close,
 	.poll		= eventfd_poll,
 	.read		= eventfd_read,
 	.write		= eventfd_write,

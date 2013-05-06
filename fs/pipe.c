@@ -725,9 +725,9 @@ pipe_poll(struct file *filp, poll_table *wait)
 	return mask;
 }
 
-static int
-pipe_release(struct inode *inode, struct file *file)
+static void pipe_close(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	struct pipe_inode_info *pipe = inode->i_pipe;
 	int kill = 0;
 
@@ -752,8 +752,6 @@ pipe_release(struct inode *inode, struct file *file)
 
 	if (kill)
 		free_pipe_info(pipe);
-
-	return 0;
 }
 
 static int
@@ -1150,7 +1148,7 @@ const struct file_operations pipefifo_fops = {
 	.aio_write	= pipe_write,
 	.poll		= pipe_poll,
 	.unlocked_ioctl	= pipe_ioctl,
-	.release	= pipe_release,
+	.close		= pipe_close,
 	.fasync		= pipe_fasync,
 };
 

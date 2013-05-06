@@ -51,12 +51,6 @@ struct signalfd_ctx {
 	sigset_t sigmask;
 };
 
-static int signalfd_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
-
 static unsigned int signalfd_poll(struct file *file, poll_table *wait)
 {
 	struct signalfd_ctx *ctx = file->private_data;
@@ -247,7 +241,7 @@ static const struct file_operations signalfd_fops = {
 #ifdef CONFIG_PROC_FS
 	.show_fdinfo	= signalfd_show_fdinfo,
 #endif
-	.release	= signalfd_release,
+	.close		= simple_close_kfree,
 	.poll		= signalfd_poll,
 	.read		= signalfd_read,
 	.llseek		= noop_llseek,

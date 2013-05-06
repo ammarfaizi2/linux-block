@@ -373,7 +373,7 @@ static ssize_t fanotify_write(struct file *file, const char __user *buf, size_t 
 #endif
 }
 
-static int fanotify_release(struct inode *ignored, struct file *file)
+static void fanotify_release(struct file *file)
 {
 	struct fsnotify_group *group = file->private_data;
 
@@ -398,13 +398,8 @@ static int fanotify_release(struct inode *ignored, struct file *file)
 	wake_up(&group->fanotify_data.access_waitq);
 #endif
 
-	if (file->f_flags & FASYNC)
-		fsnotify_fasync(-1, file, 0);
-
 	/* matches the fanotify_init->fsnotify_alloc_group */
 	fsnotify_destroy_group(group);
-
-	return 0;
 }
 
 static long fanotify_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -438,7 +433,7 @@ static const struct file_operations fanotify_fops = {
 	.read		= fanotify_read,
 	.write		= fanotify_write,
 	.fasync		= NULL,
-	.release	= fanotify_release,
+	.close		= fanotify_release,
 	.unlocked_ioctl	= fanotify_ioctl,
 	.compat_ioctl	= fanotify_ioctl,
 	.llseek		= noop_llseek,

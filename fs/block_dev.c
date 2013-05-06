@@ -1490,11 +1490,10 @@ void blkdev_put(struct block_device *bdev, fmode_t mode)
 }
 EXPORT_SYMBOL(blkdev_put);
 
-static int blkdev_close(struct inode * inode, struct file * filp)
+static void blkdev_close(struct file * filp)
 {
 	struct block_device *bdev = I_BDEV(filp->f_mapping->host);
 	blkdev_put(bdev, filp->f_mode);
-	return 0;
 }
 
 static long block_ioctl(struct file *file, unsigned cmd, unsigned long arg)
@@ -1586,7 +1585,7 @@ static const struct address_space_operations def_blk_aops = {
 
 const struct file_operations def_blk_fops = {
 	.open		= blkdev_open,
-	.release	= blkdev_close,
+	.close		= blkdev_close,
 	.llseek		= block_llseek,
 	.read		= do_sync_read,
 	.write		= do_sync_write,

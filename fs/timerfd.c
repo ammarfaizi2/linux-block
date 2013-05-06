@@ -153,14 +153,13 @@ static int timerfd_setup(struct timerfd_ctx *ctx, int flags,
 	return 0;
 }
 
-static int timerfd_release(struct inode *inode, struct file *file)
+static void timerfd_close(struct file *file)
 {
 	struct timerfd_ctx *ctx = file->private_data;
 
 	timerfd_remove_cancel(ctx);
 	hrtimer_cancel(&ctx->tmr);
 	kfree_rcu(ctx, rcu);
-	return 0;
 }
 
 static unsigned int timerfd_poll(struct file *file, poll_table *wait)
@@ -229,7 +228,7 @@ static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
 }
 
 static const struct file_operations timerfd_fops = {
-	.release	= timerfd_release,
+	.close		= timerfd_close,
 	.poll		= timerfd_poll,
 	.read		= timerfd_read,
 	.llseek		= noop_llseek,
