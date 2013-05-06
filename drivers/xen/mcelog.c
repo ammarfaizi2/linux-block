@@ -91,7 +91,7 @@ static int xen_mce_chrdev_open(struct inode *inode, struct file *file)
 	return nonseekable_open(inode, file);
 }
 
-static int xen_mce_chrdev_release(struct inode *inode, struct file *file)
+static void xen_mce_chrdev_close(struct file *file)
 {
 	spin_lock(&xen_mce_chrdev_state_lock);
 
@@ -99,8 +99,6 @@ static int xen_mce_chrdev_release(struct inode *inode, struct file *file)
 	xen_mce_chrdev_open_exclu = 0;
 
 	spin_unlock(&xen_mce_chrdev_state_lock);
-
-	return 0;
 }
 
 static ssize_t xen_mce_chrdev_read(struct file *filp, char __user *ubuf,
@@ -178,7 +176,7 @@ static long xen_mce_chrdev_ioctl(struct file *f, unsigned int cmd,
 
 static const struct file_operations xen_mce_chrdev_ops = {
 	.open			= xen_mce_chrdev_open,
-	.release		= xen_mce_chrdev_release,
+	.close			= xen_mce_chrdev_close,
 	.read			= xen_mce_chrdev_read,
 	.poll			= xen_mce_chrdev_poll,
 	.unlocked_ioctl		= xen_mce_chrdev_ioctl,

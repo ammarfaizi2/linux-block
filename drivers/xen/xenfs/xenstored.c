@@ -15,12 +15,6 @@ static ssize_t xsd_read(struct file *file, char __user *buf,
 	return simple_read_from_buffer(buf, size, off, str, strlen(str));
 }
 
-static int xsd_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
-
 static int xsd_kva_open(struct inode *inode, struct file *file)
 {
 	file->private_data = (void *)kasprintf(GFP_KERNEL, "0x%p",
@@ -49,7 +43,7 @@ const struct file_operations xsd_kva_file_ops = {
 	.open = xsd_kva_open,
 	.mmap = xsd_kva_mmap,
 	.read = xsd_read,
-	.release = xsd_release,
+	.close = simple_close_kfree,
 };
 
 static int xsd_port_open(struct inode *inode, struct file *file)
@@ -64,5 +58,5 @@ static int xsd_port_open(struct inode *inode, struct file *file)
 const struct file_operations xsd_port_file_ops = {
 	.open = xsd_port_open,
 	.read = xsd_read,
-	.release = xsd_release,
+	.close = simple_close_kfree,
 };

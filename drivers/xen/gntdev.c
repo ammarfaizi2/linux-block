@@ -527,9 +527,9 @@ static int gntdev_open(struct inode *inode, struct file *flip)
 	return 0;
 }
 
-static int gntdev_release(struct inode *inode, struct file *flip)
+static void gntdev_close(struct file *file)
 {
-	struct gntdev_priv *priv = flip->private_data;
+	struct gntdev_priv *priv = file->private_data;
 	struct grant_map *map;
 
 	pr_debug("priv %p\n", priv);
@@ -544,7 +544,6 @@ static int gntdev_release(struct inode *inode, struct file *flip)
 	if (use_ptemod)
 		mmu_notifier_unregister(&priv->mn, priv->mm);
 	kfree(priv);
-	return 0;
 }
 
 static long gntdev_ioctl_map_grant_ref(struct gntdev_priv *priv,
@@ -831,7 +830,7 @@ out_put_map:
 static const struct file_operations gntdev_fops = {
 	.owner = THIS_MODULE,
 	.open = gntdev_open,
-	.release = gntdev_release,
+	.close = gntdev_close,
 	.mmap = gntdev_mmap,
 	.unlocked_ioctl = gntdev_ioctl
 };

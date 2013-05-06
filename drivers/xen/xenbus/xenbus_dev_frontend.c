@@ -548,9 +548,9 @@ static int xenbus_file_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static int xenbus_file_release(struct inode *inode, struct file *filp)
+static void xenbus_file_close(struct file *file)
 {
-	struct xenbus_file_priv *u = filp->private_data;
+	struct xenbus_file_priv *u = file->private_data;
 	struct xenbus_transaction_holder *trans, *tmp;
 	struct watch_adapter *watch, *tmp_watch;
 	struct read_buffer *rb, *tmp_rb;
@@ -577,8 +577,6 @@ static int xenbus_file_release(struct inode *inode, struct file *filp)
 		kfree(rb);
 	}
 	kfree(u);
-
-	return 0;
 }
 
 static unsigned int xenbus_file_poll(struct file *file, poll_table *wait)
@@ -595,7 +593,7 @@ const struct file_operations xen_xenbus_fops = {
 	.read = xenbus_file_read,
 	.write = xenbus_file_write,
 	.open = xenbus_file_open,
-	.release = xenbus_file_release,
+	.close = xenbus_file_close,
 	.poll = xenbus_file_poll,
 	.llseek = no_llseek,
 };
