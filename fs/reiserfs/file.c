@@ -29,31 +29,25 @@
 ** We use reiserfs_truncate_file to pack the tail, since it already has
 ** all the conditions coded.
 */
-static int reiserfs_file_release(struct inode *inode, struct file *filp)
+static void reiserfs_file_close(struct file *file)
 {
-
+	struct inode *inode = file_inode(file);
 	struct reiserfs_transaction_handle th;
 	int err;
 	int jbegin_failure = 0;
 
 	BUG_ON(!S_ISREG(inode->i_mode));
 
-        if (atomic_add_unless(&REISERFS_I(inode)->openers, -1, 1))
-		return 0;
-
-	mutex_lock(&(REISERFS_I(inode)->tailpack));
-
-        if (!atomic_dec_and_test(&REISERFS_I(inode)->openers)) {
-		mutex_unlock(&(REISERFS_I(inode)->tailpack));
-		return 0;
-	}
+        if (!atomic_dec_and_mutex_lock(&REISERFS_I(inode)->openers,
+				       &(REISERFS_I(inode)->tailpack)))
+		return;
 
 	/* fast out for when nothing needs to be done */
 	if ((!(REISERFS_I(inode)->i_flags & i_pack_on_close_mask) ||
 	     !tail_has_to_be_packed(inode)) &&
 	    REISERFS_I(inode)->i_prealloc_count <= 0) {
 		mutex_unlock(&(REISERFS_I(inode)->tailpack));
-		return 0;
+		return;
 	}
 
 	reiserfs_write_lock(inode->i_sb);
@@ -111,7 +105,7 @@ static int reiserfs_file_release(struct inode *inode, struct file *filp)
       out:
 	reiserfs_write_unlock(inode->i_sb);
 	mutex_unlock(&(REISERFS_I(inode)->tailpack));
-	return err;
+	return;
 }
 
 static int reiserfs_file_open(struct inode *inode, struct file *file)
@@ -243,7 +237,7 @@ const struct file_operations reiserfs_file_operations = {
 #endif
 	.mmap = generic_file_mmap,
 	.open = reiserfs_file_open,
-	.release = reiserfs_file_release,
+	.close = reiserfs_file_close,
 	.fsync = reiserfs_sync_file,
 	.aio_read = generic_file_aio_read,
 	.aio_write = generic_file_aio_write,
