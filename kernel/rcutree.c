@@ -2978,10 +2978,12 @@ static int rcu_pm_notify(struct notifier_block *self,
 {
 	switch (action) {
 	case PM_HIBERNATION_PREPARE:
+	case PM_SUSPEND_PREPARE:
 		if (nr_cpu_ids <= 256) /* Expediting bad for large systems. */
 			rcu_expedited = 1;
 		break;
-	case PM_POST_RESTORE:
+	case PM_POST_HIBERNATION:
+	case PM_POST_SUSPEND:
 		rcu_expedited = 0;
 		break;
 	default:
