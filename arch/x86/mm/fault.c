@@ -569,6 +569,23 @@ static int is_f00f_bug(struct pt_regs *regs, unsigned long address)
 	return 0;
 }
 
+#ifdef CONFIG_PNPBIOS
+void fixup_pnpbios_exception(struct pt_regs *regs)
+{
+	if (unlikely(SEGMENT_IS_PNP_CODE(regs->cs))) {
+		extern u32 pnp_bios_fault_eip, pnp_bios_fault_esp;
+		extern u32 pnp_bios_is_utter_crap;
+		pnp_bios_is_utter_crap = 1;
+		printk(KERN_CRIT "PNPBIOS fault.. attempting recovery.\n");
+		__asm__ volatile(
+			"movl %0, %%esp\n\t"
+			"jmp *%1\n\t"
+			: : "g" (pnp_bios_fault_esp), "g" (pnp_bios_fault_eip));
+		panic("do_trap: can't hit this");
+	}
+}
+#endif
+
 static const char nx_warning[] = KERN_CRIT
 "kernel tried to execute NX-protected page - exploit attempt? (uid: %d)\n";
 
@@ -635,6 +652,8 @@ no_context(struct pt_regs *regs, unsigned long error_code,
 	unsigned long *stackend;
 	unsigned long flags;
 	int sig;
+
+	fixup_pnpbios_exception(regs);  /* Might not return */
 
 	/* Are we prepared to handle this kernel fault? */
 	if (fixup_exception(regs)) {

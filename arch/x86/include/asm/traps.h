@@ -89,6 +89,12 @@ asmlinkage void smp_thermal_interrupt(void);
 asmlinkage void mce_threshold_interrupt(void);
 #endif
 
+#ifdef CONFIG_PNPBIOS
+extern void fixup_pnpbios_exception(struct pt_regs *regs);
+#else
+static inline void fixup_pnpbios_exception(struct pt_regs *regs) {}
+#endif
+
 /* Interrupts/Exceptions */
 enum {
 	X86_TRAP_DE = 0,	/*  0, Divide-by-zero */

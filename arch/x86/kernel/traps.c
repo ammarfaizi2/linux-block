@@ -275,6 +275,8 @@ do_general_protection(struct pt_regs *regs, long error_code)
 
 	tsk = current;
 	if (!user_mode(regs)) {
+		fixup_pnpbios_exception(regs);  /* Might not return */
+
 		if (fixup_exception(regs))
 			goto exit;
 
