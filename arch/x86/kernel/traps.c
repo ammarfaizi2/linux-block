@@ -124,7 +124,7 @@ do_trap_no_signal(struct task_struct *tsk, int trapnr, char *str,
 	}
 #endif
 	if (!user_mode(regs)) {
-		if (!fixup_exception(regs)) {
+		if (!fixup_exception(regs, false)) {
 			tsk->thread.error_code = error_code;
 			tsk->thread.trap_nr = trapnr;
 			die(str, regs, error_code);
@@ -277,7 +277,11 @@ do_general_protection(struct pt_regs *regs, long error_code)
 	if (!user_mode(regs)) {
 		fixup_pnpbios_exception(regs);  /* Might not return */
 
-		if (fixup_exception(regs))
+		/*
+		 * This could be a non-canonical address in uaccess.  If so,
+		 * this is bad.
+		 */
+		if (fixup_exception(regs, false))
 			goto exit;
 
 		tsk->thread.error_code = error_code;
@@ -491,7 +495,7 @@ void math_error(struct pt_regs *regs, int error_code, int trapnr)
 
 	if (!user_mode_vm(regs))
 	{
-		if (!fixup_exception(regs)) {
+		if (!fixup_exception(regs, false)) {
 			task->thread.error_code = error_code;
 			task->thread.trap_nr = trapnr;
 			die(str, regs, error_code);

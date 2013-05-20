@@ -927,8 +927,10 @@ int __kprobes kprobe_fault_handler(struct pt_regs *regs, int trapnr)
 		/*
 		 * In case the user-specified fault handler returned
 		 * zero, try to fix up.
+		 *
+		 * XXX: This could be much more conservative.
 		 */
-		if (fixup_exception(regs))
+		if (fixup_exception(regs, true))
 			return 1;
 
 		/*

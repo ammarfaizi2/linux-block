@@ -644,6 +644,11 @@ pgtable_bad(struct pt_regs *regs, unsigned long error_code,
 	oops_end(flags, regs, sig);
 }
 
+static int fault_in_kernel_space(unsigned long address)
+{
+	return address >= TASK_SIZE_MAX;
+}
+
 static noinline void
 no_context(struct pt_regs *regs, unsigned long error_code,
 	   unsigned long address, int signal, int si_code)
@@ -655,8 +660,11 @@ no_context(struct pt_regs *regs, unsigned long error_code,
 
 	fixup_pnpbios_exception(regs);  /* Might not return */
 
-	/* Are we prepared to handle this kernel fault? */
-	if (fixup_exception(regs)) {
+	/*
+	 * Are we prepared to handle this kernel fault?  If this is a
+	 * uaccess fault, then the faulting address must be in user space.
+	 */
+	if (fixup_exception(regs, !fault_in_kernel_space(address))) {
 		if (current_thread_info()->sig_on_uaccess_error && signal) {
 			tsk->thread.trap_nr = X86_TRAP_PF;
 			tsk->thread.error_code = error_code | PF_USER;
@@ -999,11 +1007,6 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
 		return 1;
 
 	return 0;
-}
-
-static int fault_in_kernel_space(unsigned long address)
-{
-	return address >= TASK_SIZE_MAX;
 }
 
 static inline bool smap_violation(int error_code, struct pt_regs *regs)

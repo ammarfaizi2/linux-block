@@ -101,7 +101,7 @@ struct exception_table_entry {
 #define ARCH_HAS_SORT_EXTABLE
 #define ARCH_HAS_SEARCH_EXTABLE
 
-extern int fixup_exception(struct pt_regs *regs);
+extern int fixup_exception(struct pt_regs *regs, bool uaccess_ok);
 extern int early_fixup_exception(unsigned long *ip);
 
 /*
