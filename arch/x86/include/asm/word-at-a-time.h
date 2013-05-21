@@ -94,7 +94,7 @@ static inline unsigned long load_unaligned_zeropad(const void *addr)
 		"shr %%cl,%0\n\t"
 		"jmp 2b\n"
 		".previous\n"
-		_ASM_EXTABLE(1b, 3b)
+		_ASM_EXTABLE_ANY(1b, 3b)
 		:"=&r" (ret),"=&c" (dummy)
 		:"m" (*(unsigned long *)addr),
 		 "i" (-sizeof(unsigned long)),

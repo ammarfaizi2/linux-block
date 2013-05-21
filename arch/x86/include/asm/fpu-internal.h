@@ -133,7 +133,7 @@ static inline void sanitize_i387_state(struct task_struct *tsk)
 		     "3:  movl $-1,%[err]\n"				\
 		     "    jmp  2b\n"					\
 		     ".previous\n"					\
-		     _ASM_EXTABLE(1b, 3b)				\
+		     _ASM_EXTABLE_UACCESS(1b, 3b)				\
 		     : [err] "=r" (err), output				\
 		     : "0"(0), input);					\
 	err;								\
@@ -148,7 +148,7 @@ static inline void sanitize_i387_state(struct task_struct *tsk)
 		     "3:  movl $-1,%[err]\n"				\
 		     "    jmp  2b\n"					\
 		     ".previous\n"					\
-		     _ASM_EXTABLE(1b, 3b)				\
+		     _ASM_EXTABLE_ANY(1b, 3b)				\
 		     : [err] "=r" (err), output				\
 		     : "0"(0), input);					\
 	err;								\
@@ -356,7 +356,7 @@ static inline void __drop_fpu(struct task_struct *tsk)
 		/* Ignore delayed exceptions from user space */
 		asm volatile("1: fwait\n"
 			     "2:\n"
-			     _ASM_EXTABLE(1b, 2b));
+			     _ASM_EXTABLE_ANY(1b, 2b));
 		__thread_fpu_end(tsk);
 	}
 }

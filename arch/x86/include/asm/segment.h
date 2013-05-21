@@ -231,7 +231,7 @@ do {									\
 		     "		jmp 1b				\n"	\
 		     ".previous					\n"	\
 									\
-		     _ASM_EXTABLE(1b, 2b)				\
+		     _ASM_EXTABLE_ANY(1b, 2b)				\
 									\
 		     : "+r" (__val) : : "memory");			\
 } while (0)

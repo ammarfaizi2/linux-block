@@ -49,7 +49,7 @@ void *_mmx_memcpy(void *to, const void *from, size_t len)
 		"3: movw $0x1AEB, 1b\n"	/* jmp on 26 bytes */
 		"   jmp 2b\n"
 		".previous\n"
-			_ASM_EXTABLE(1b, 3b)
+			_ASM_EXTABLE_UACCESS(1b, 3b)
 			: : "r" (from));
 
 	for ( ; i > 5; i--) {
@@ -75,7 +75,7 @@ void *_mmx_memcpy(void *to, const void *from, size_t len)
 		"3: movw $0x05EB, 1b\n"	/* jmp on 5 bytes */
 		"   jmp 2b\n"
 		".previous\n"
-			_ASM_EXTABLE(1b, 3b)
+			_ASM_EXTABLE_UACCESS(1b, 3b)
 			: : "r" (from), "r" (to) : "memory");
 
 		from += 64;
@@ -176,7 +176,7 @@ static void fast_copy_page(void *to, void *from)
 		"3: movw $0x1AEB, 1b\n"	/* jmp on 26 bytes */
 		"   jmp 2b\n"
 		".previous\n"
-			_ASM_EXTABLE(1b, 3b) : : "r" (from));
+			_ASM_EXTABLE_UACCESS(1b, 3b) : : "r" (from));
 
 	for (i = 0; i < (4096-320)/64; i++) {
 		__asm__ __volatile__ (
@@ -201,7 +201,7 @@ static void fast_copy_page(void *to, void *from)
 		"3: movw $0x05EB, 1b\n"	/* jmp on 5 bytes */
 		"   jmp 2b\n"
 		".previous\n"
-		_ASM_EXTABLE(1b, 3b) : : "r" (from), "r" (to) : "memory");
+		_ASM_EXTABLE_UACCESS(1b, 3b) : : "r" (from), "r" (to) : "memory");
 
 		from += 64;
 		to += 64;
@@ -294,7 +294,7 @@ static void fast_copy_page(void *to, void *from)
 		"3: movw $0x1AEB, 1b\n"	/* jmp on 26 bytes */
 		"   jmp 2b\n"
 		".previous\n"
-			_ASM_EXTABLE(1b, 3b) : : "r" (from));
+			_ASM_EXTABLE_UACCESS(1b, 3b) : : "r" (from));
 
 	for (i = 0; i < 4096/64; i++) {
 		__asm__ __volatile__ (
@@ -319,7 +319,7 @@ static void fast_copy_page(void *to, void *from)
 		"3: movw $0x05EB, 1b\n"	/* jmp on 5 bytes */
 		"   jmp 2b\n"
 		".previous\n"
-			_ASM_EXTABLE(1b, 3b)
+			_ASM_EXTABLE_UACCESS(1b, 3b)
 			: : "r" (from), "r" (to) : "memory");
 
 		from += 64;

@@ -129,12 +129,12 @@ bad_get_user_8:
 END(bad_get_user_8)
 #endif
 
-	_ASM_EXTABLE(1b,bad_get_user)
-	_ASM_EXTABLE(2b,bad_get_user)
-	_ASM_EXTABLE(3b,bad_get_user)
+	_ASM_EXTABLE_UACCESS(1b,bad_get_user)
+	_ASM_EXTABLE_UACCESS(2b,bad_get_user)
+	_ASM_EXTABLE_UACCESS(3b,bad_get_user)
 #ifdef CONFIG_X86_64
-	_ASM_EXTABLE(4b,bad_get_user)
+	_ASM_EXTABLE_UACCESS(4b,bad_get_user)
 #else
-	_ASM_EXTABLE(4b,bad_get_user_8)
-	_ASM_EXTABLE(5b,bad_get_user_8)
+	_ASM_EXTABLE_UACCESS(4b,bad_get_user_8)
+	_ASM_EXTABLE_UACCESS(5b,bad_get_user_8)
 #endif

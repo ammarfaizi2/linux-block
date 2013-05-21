@@ -19,7 +19,7 @@
 		     "3:\tmov\t%3, %1\n"			\
 		     "\tjmp\t2b\n"				\
 		     "\t.previous\n"				\
-		     _ASM_EXTABLE(1b, 3b)			\
+		     _ASM_EXTABLE_UACCESS(1b, 3b)		\
 		     : "=r" (oldval), "=r" (ret), "+m" (*uaddr)	\
 		     : "i" (-EFAULT), "0" (oparg), "1" (0))
 
@@ -35,8 +35,8 @@
 		     "4:\tmov\t%5, %1\n"			\
 		     "\tjmp\t3b\n"				\
 		     "\t.previous\n"				\
-		     _ASM_EXTABLE(1b, 4b)			\
-		     _ASM_EXTABLE(2b, 4b)			\
+		     _ASM_EXTABLE_UACCESS(1b, 4b)		\
+		     _ASM_EXTABLE_UACCESS(2b, 4b)		\
 		     : "=&a" (oldval), "=&r" (ret),		\
 		       "+m" (*uaddr), "=&r" (tem)		\
 		     : "r" (oparg), "i" (-EFAULT), "1" (0))
@@ -122,7 +122,7 @@ static inline int futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 		     "3:\tmov     %3, %0\n"
 		     "\tjmp     2b\n"
 		     "\t.previous\n"
-		     _ASM_EXTABLE(1b, 3b)
+		     _ASM_EXTABLE_UACCESS(1b, 3b)
 		     : "+r" (ret), "=a" (oldval), "+m" (*uaddr)
 		     : "i" (-EFAULT), "r" (newval), "1" (oldval)
 		     : "memory"

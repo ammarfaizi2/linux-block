@@ -149,7 +149,7 @@ ENTRY(ia32_sysenter_target)
  	   32bit zero extended */ 
 	ASM_STAC
 1:	movl	(%rbp),%ebp
-	_ASM_EXTABLE(1b,ia32_badarg)
+	_ASM_EXTABLE_UACCESS(1b,ia32_badarg)
 	ASM_CLAC
 	orl     $TS_COMPAT,TI_status+THREAD_INFO(%rsp,RIP-ARGOFFSET)
 	testl   $_TIF_WORK_SYSCALL_ENTRY,TI_flags+THREAD_INFO(%rsp,RIP-ARGOFFSET)
@@ -306,7 +306,7 @@ ENTRY(ia32_cstar_target)
 	/* hardware stack frame is complete now */	
 	ASM_STAC
 1:	movl	(%r8),%r9d
-	_ASM_EXTABLE(1b,ia32_badarg)
+	_ASM_EXTABLE_UACCESS(1b,ia32_badarg)
 	ASM_CLAC
 	orl     $TS_COMPAT,TI_status+THREAD_INFO(%rsp,RIP-ARGOFFSET)
 	testl   $_TIF_WORK_SYSCALL_ENTRY,TI_flags+THREAD_INFO(%rsp,RIP-ARGOFFSET)

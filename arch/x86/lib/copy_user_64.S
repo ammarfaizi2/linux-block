@@ -65,8 +65,8 @@
 	jmp copy_user_handle_tail
 	.previous
 
-	_ASM_EXTABLE(100b,103b)
-	_ASM_EXTABLE(101b,103b)
+	_ASM_EXTABLE_UACCESS(100b,103b)
+	_ASM_EXTABLE_UACCESS(101b,103b)
 #endif
 	.endm
 
@@ -192,26 +192,26 @@ ENTRY(copy_user_generic_unrolled)
 60:	jmp copy_user_handle_tail /* ecx is zerorest also */
 	.previous
 
-	_ASM_EXTABLE(1b,30b)
-	_ASM_EXTABLE(2b,30b)
-	_ASM_EXTABLE(3b,30b)
-	_ASM_EXTABLE(4b,30b)
-	_ASM_EXTABLE(5b,30b)
-	_ASM_EXTABLE(6b,30b)
-	_ASM_EXTABLE(7b,30b)
-	_ASM_EXTABLE(8b,30b)
-	_ASM_EXTABLE(9b,30b)
-	_ASM_EXTABLE(10b,30b)
-	_ASM_EXTABLE(11b,30b)
-	_ASM_EXTABLE(12b,30b)
-	_ASM_EXTABLE(13b,30b)
-	_ASM_EXTABLE(14b,30b)
-	_ASM_EXTABLE(15b,30b)
-	_ASM_EXTABLE(16b,30b)
-	_ASM_EXTABLE(18b,40b)
-	_ASM_EXTABLE(19b,40b)
-	_ASM_EXTABLE(21b,50b)
-	_ASM_EXTABLE(22b,50b)
+	_ASM_EXTABLE_UACCESS(1b,30b)
+	_ASM_EXTABLE_UACCESS(2b,30b)
+	_ASM_EXTABLE_UACCESS(3b,30b)
+	_ASM_EXTABLE_UACCESS(4b,30b)
+	_ASM_EXTABLE_UACCESS(5b,30b)
+	_ASM_EXTABLE_UACCESS(6b,30b)
+	_ASM_EXTABLE_UACCESS(7b,30b)
+	_ASM_EXTABLE_UACCESS(8b,30b)
+	_ASM_EXTABLE_UACCESS(9b,30b)
+	_ASM_EXTABLE_UACCESS(10b,30b)
+	_ASM_EXTABLE_UACCESS(11b,30b)
+	_ASM_EXTABLE_UACCESS(12b,30b)
+	_ASM_EXTABLE_UACCESS(13b,30b)
+	_ASM_EXTABLE_UACCESS(14b,30b)
+	_ASM_EXTABLE_UACCESS(15b,30b)
+	_ASM_EXTABLE_UACCESS(16b,30b)
+	_ASM_EXTABLE_UACCESS(18b,40b)
+	_ASM_EXTABLE_UACCESS(19b,40b)
+	_ASM_EXTABLE_UACCESS(21b,50b)
+	_ASM_EXTABLE_UACCESS(22b,50b)
 	CFI_ENDPROC
 ENDPROC(copy_user_generic_unrolled)
 
@@ -259,8 +259,8 @@ ENTRY(copy_user_generic_string)
 	jmp copy_user_handle_tail
 	.previous
 
-	_ASM_EXTABLE(1b,11b)
-	_ASM_EXTABLE(3b,12b)
+	_ASM_EXTABLE_UACCESS(1b,11b)
+	_ASM_EXTABLE_UACCESS(3b,12b)
 	CFI_ENDPROC
 ENDPROC(copy_user_generic_string)
 
@@ -293,6 +293,6 @@ ENTRY(copy_user_enhanced_fast_string)
 	jmp copy_user_handle_tail
 	.previous
 
-	_ASM_EXTABLE(1b,12b)
+	_ASM_EXTABLE_UACCESS(1b,12b)
 	CFI_ENDPROC
 ENDPROC(copy_user_enhanced_fast_string)

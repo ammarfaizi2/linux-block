@@ -75,7 +75,7 @@ static inline unsigned long long native_read_msr_safe(unsigned int msr,
 		     ".section .fixup,\"ax\"\n\t"
 		     "3:  mov %[fault],%[err] ; jmp 1b\n\t"
 		     ".previous\n\t"
-		     _ASM_EXTABLE(2b, 3b)
+		     _ASM_EXTABLE_ANY(2b, 3b)
 		     : [err] "=r" (*err), EAX_EDX_RET(val, low, high)
 		     : "c" (msr), [fault] "i" (-EIO));
 	return EAX_EDX_VAL(val, low, high);
@@ -97,7 +97,7 @@ notrace static inline int native_write_msr_safe(unsigned int msr,
 		     ".section .fixup,\"ax\"\n\t"
 		     "3:  mov %[fault],%[err] ; jmp 1b\n\t"
 		     ".previous\n\t"
-		     _ASM_EXTABLE(2b, 3b)
+		     _ASM_EXTABLE_ANY(2b, 3b)
 		     : [err] "=a" (err)
 		     : "c" (msr), "0" (low), "d" (high),
 		       [fault] "i" (-EIO)

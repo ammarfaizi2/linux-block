@@ -57,14 +57,16 @@
  */
 
 /* There are two bits of extable entry class, added to a signed offset. */
-#define _EXTABLE_CLASS_DEFAULT	0		/* standard uaccess fixup */
+#define _EXTABLE_CLASS_UACCESS	0		/* standard uaccess fixup */
+#define _EXTABLE_CLASS_ANY	0x40000000	/* catch any exception */
 #define _EXTABLE_CLASS_EX	0x80000000	/* uaccess + set uaccess_err */
 
 /*
  * The biases are the class constants + 0x20000000, as signed integers.
  * This can't use ordinary arithmetic -- the assembler isn't that smart.
  */
-#define _EXTABLE_BIAS_DEFAULT	0x20000000
+#define _EXTABLE_BIAS_UACCESS	0x20000000
+#define _EXTABLE_BIAS_ANY	0x20000000 + 0x40000000
 #define _EXTABLE_BIAS_EX	0x20000000 - 0x80000000
 
 #ifdef __ASSEMBLY__
@@ -85,8 +87,11 @@
 	" .popsection\n"
 #endif
 
-#define _ASM_EXTABLE(from,to)						\
-	_ASM_EXTABLE_CLASS(from, to, _EXTABLE_BIAS_DEFAULT)
+#define _ASM_EXTABLE_UACCESS(from,to)					\
+	_ASM_EXTABLE_CLASS(from, to, _EXTABLE_BIAS_UACCESS)
+
+#define _ASM_EXTABLE_ANY(from,to)					\
+	_ASM_EXTABLE_CLASS(from, to, _EXTABLE_BIAS_ANY)
 
 #define _ASM_EXTABLE_EX(from,to)					\
 	_ASM_EXTABLE_CLASS(from, to, _EXTABLE_BIAS_EX)

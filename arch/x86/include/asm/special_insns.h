@@ -69,7 +69,7 @@ static inline unsigned long native_read_cr4_safe(void)
 #ifdef CONFIG_X86_32
 	asm volatile("1: mov %%cr4, %0\n"
 		     "2:\n"
-		     _ASM_EXTABLE(1b, 2b)
+		     _ASM_EXTABLE_ANY(1b, 2b)
 		     : "=r" (val), "=m" (__force_order) : "0" (0));
 #else
 	val = native_read_cr4();

@@ -1056,12 +1056,12 @@ restore_args:
 
 irq_return:
 	INTERRUPT_RETURN
-	_ASM_EXTABLE(irq_return, bad_iret)
+	_ASM_EXTABLE_ANY(irq_return, bad_iret)
 
 #ifdef CONFIG_PARAVIRT
 ENTRY(native_iret)
 	iretq
-	_ASM_EXTABLE(native_iret, bad_iret)
+	_ASM_EXTABLE_ANY(native_iret, bad_iret)
 #endif
 
 	.section .fixup,"ax"
@@ -1319,7 +1319,7 @@ gs_change:
 	CFI_ENDPROC
 END(native_load_gs_index)
 
-	_ASM_EXTABLE(gs_change,bad_gs)
+	_ASM_EXTABLE_ANY(gs_change,bad_gs)
 	.section .fixup,"ax"
 	/* running with kernelgs */
 bad_gs:

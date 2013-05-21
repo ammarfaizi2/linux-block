@@ -43,7 +43,7 @@ ENTRY(\op\()_safe_regs)
 	movl    $-EIO, %r11d
 	jmp     2b
 
-	_ASM_EXTABLE(1b, 3b)
+	_ASM_EXTABLE_ANY(1b, 3b)
 	CFI_ENDPROC
 ENDPROC(\op\()_safe_regs)
 .endm
@@ -90,7 +90,7 @@ ENTRY(\op\()_safe_regs)
 	movl    $-EIO, 4(%esp)
 	jmp     2b
 
-	_ASM_EXTABLE(1b, 3b)
+	_ASM_EXTABLE_ANY(1b, 3b)
 	CFI_ENDPROC
 ENDPROC(\op\()_safe_regs)
 .endm

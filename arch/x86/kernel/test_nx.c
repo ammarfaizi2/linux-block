@@ -92,7 +92,7 @@ static noinline int test_address(void *address)
 		"2:	mov %[zero], %[rslt]\n"
 		"	ret\n"
 		".previous\n"
-		_ASM_EXTABLE(0b,2b)
+		_ASM_EXTABLE_ANY(0b,2b)
 		: [rslt] "=r" (result)
 		: [fake_code] "r" (address), [zero] "r" (0UL), "0" (result)
 	);

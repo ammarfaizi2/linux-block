@@ -548,7 +548,7 @@ FOP_END;
 			"3: movb $1, %4 \n\t"				\
 			"jmp 2b \n\t"					\
 			".popsection \n\t"				\
-			_ASM_EXTABLE(1b, 3b)				\
+			_ASM_EXTABLE_UACCESS(1b, 3b)			\
 			: "=m" ((ctxt)->eflags), "=&r" (_tmp),		\
 			  "+a" (*rax), "+d" (*rdx), "+qm"(_ex)		\
 			: "i" (EFLAGS_MASK), "m" ((ctxt)->src.val));	\
@@ -4479,7 +4479,7 @@ static int flush_pending_x87_faults(struct x86_emulate_ctxt *ctxt)
 		     "movb $1, %[fault] \n\t"
 		     "jmp 2b \n\t"
 		     ".popsection \n\t"
-		     _ASM_EXTABLE(1b, 3b)
+		     _ASM_EXTABLE_ANY(1b, 3b)
 		     : [fault]"+qm"(fault));
 	ctxt->ops->put_fpu(ctxt);
 

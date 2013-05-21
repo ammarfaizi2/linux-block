@@ -43,7 +43,7 @@ int rodata_test(void)
 		".section .fixup,\"ax\"\n"
 		"2:	jmp 1b\n"
 		".previous\n"
-		_ASM_EXTABLE(0b,2b)
+		_ASM_EXTABLE_ANY(0b,2b)
 		: [rslt] "=r" (result)
 		: [rodata_test] "r" (&rodata_test_data), [zero] "r" (0UL)
 	);

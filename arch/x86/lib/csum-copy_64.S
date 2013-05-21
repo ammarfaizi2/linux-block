@@ -32,17 +32,17 @@
 
 	.macro source
 10:
-	_ASM_EXTABLE(10b, .Lbad_source)
+	_ASM_EXTABLE_UACCESS(10b, .Lbad_source)
 	.endm
 
 	.macro dest
 20:
-	_ASM_EXTABLE(20b, .Lbad_dest)
+	_ASM_EXTABLE_UACCESS(20b, .Lbad_dest)
 	.endm
 
 	.macro ignore L=.Lignore
 30:
-	_ASM_EXTABLE(30b, \L)
+	_ASM_EXTABLE_UACCESS(30b, \L)
 	.endm
 
 

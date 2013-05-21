@@ -154,7 +154,7 @@
 99:	movl $0, (%esp)
 	jmp 98b
 .popsection
-	_ASM_EXTABLE(98b,99b)
+	_ASM_EXTABLE_ANY(98b,99b)
 .endm
 
 .macro PTGS_TO_GS
@@ -165,7 +165,7 @@
 99:	movl $0, PT_GS(%esp)
 	jmp 98b
 .popsection
-	_ASM_EXTABLE(98b,99b)
+	_ASM_EXTABLE_ANY(98b,99b)
 .endm
 
 .macro GS_TO_REG reg
@@ -248,9 +248,9 @@
 6:	movl $0, (%esp)
 	jmp 3b
 .popsection
-	_ASM_EXTABLE(1b,4b)
-	_ASM_EXTABLE(2b,5b)
-	_ASM_EXTABLE(3b,6b)
+	_ASM_EXTABLE_ANY(1b,4b)
+	_ASM_EXTABLE_ANY(2b,5b)
+	_ASM_EXTABLE_ANY(3b,6b)
 	POP_GS_EX
 .endm
 
@@ -426,7 +426,7 @@ sysenter_past_esp:
 1:	movl (%ebp),%ebp
 	ASM_CLAC
 	movl %ebp,PT_EBP(%esp)
-	_ASM_EXTABLE(1b,syscall_fault)
+	_ASM_EXTABLE_UACCESS(1b,syscall_fault)
 
 	GET_THREAD_INFO(%ebp)
 
@@ -494,7 +494,7 @@ sysexit_audit:
 2:	movl $0,PT_FS(%esp)
 	jmp 1b
 .popsection
-	_ASM_EXTABLE(1b,2b)
+	_ASM_EXTABLE_ANY(1b,2b)
 	PTGS_TO_GS_EX
 ENDPROC(ia32_sysenter_target)
 
@@ -550,7 +550,7 @@ ENTRY(iret_exc)
 	pushl $do_iret_error
 	jmp error_code
 .previous
-	_ASM_EXTABLE(irq_return,iret_exc)
+	_ASM_EXTABLE_ANY(irq_return,iret_exc)
 
 	CFI_RESTORE_STATE
 ldt_ss:
@@ -849,7 +849,7 @@ END(device_not_available)
 #ifdef CONFIG_PARAVIRT
 ENTRY(native_iret)
 	iret
-	_ASM_EXTABLE(native_iret, iret_exc)
+	_ASM_EXTABLE_ANY(native_iret, iret_exc)
 END(native_iret)
 
 ENTRY(native_irq_enable_sysexit)
@@ -1040,10 +1040,10 @@ ENTRY(xen_failsafe_callback)
 	movl %eax,16(%esp)
 	jmp 4b
 .previous
-	_ASM_EXTABLE(1b,6b)
-	_ASM_EXTABLE(2b,7b)
-	_ASM_EXTABLE(3b,8b)
-	_ASM_EXTABLE(4b,9b)
+	_ASM_EXTABLE_ANY(1b,6b)
+	_ASM_EXTABLE_ANY(2b,7b)
+	_ASM_EXTABLE_ANY(3b,8b)
+	_ASM_EXTABLE_ANY(4b,9b)
 ENDPROC(xen_failsafe_callback)
 
 BUILD_INTERRUPT3(xen_hvm_callback_vector, HYPERVISOR_CALLBACK_VECTOR,

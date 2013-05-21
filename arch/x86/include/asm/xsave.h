@@ -50,7 +50,7 @@ static inline int fpu_xrstor_checking(struct xsave_struct *fx)
 		     "3:  movl $-1,%[err]\n"
 		     "    jmp  2b\n"
 		     ".previous\n"
-		     _ASM_EXTABLE(1b, 3b)
+		     _ASM_EXTABLE_ANY(1b, 3b)
 		     : [err] "=r" (err)
 		     : "D" (fx), "m" (*fx), "a" (-1), "d" (-1), "0" (0)
 		     : "memory");
@@ -77,7 +77,7 @@ static inline int xsave_user(struct xsave_struct __user *buf)
 			     "3:  movl $-1,%[err]\n"
 			     "    jmp  2b\n"
 			     ".previous\n"
-			     _ASM_EXTABLE(1b,3b)
+			     _ASM_EXTABLE_UACCESS(1b,3b)
 			     : [err] "=r" (err)
 			     : "D" (buf), "a" (-1), "d" (-1), "0" (0)
 			     : "memory");
@@ -98,7 +98,7 @@ static inline int xrestore_user(struct xsave_struct __user *buf, u64 mask)
 			     "3:  movl $-1,%[err]\n"
 			     "    jmp  2b\n"
 			     ".previous\n"
-			     _ASM_EXTABLE(1b,3b)
+			     _ASM_EXTABLE_UACCESS(1b,3b)
 			     : [err] "=r" (err)
 			     : "D" (xstate), "a" (lmask), "d" (hmask), "0" (0)
 			     : "memory");	/* memory required? */

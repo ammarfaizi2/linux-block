@@ -890,7 +890,7 @@ static noinline int do_test_wp_bit(void)
 		"1:	movb %1, %0	\n"
 		"	xorl %2, %2	\n"
 		"2:			\n"
-		_ASM_EXTABLE(1b,2b)
+		_ASM_EXTABLE_ANY(1b,2b)
 		:"=m" (*(char *)fix_to_virt(FIX_WP_TEST)),
 		 "=q" (tmp_reg),
 		 "=r" (flag)
