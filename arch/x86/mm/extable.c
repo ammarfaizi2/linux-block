@@ -8,25 +8,34 @@ ex_insn_addr(const struct exception_table_entry *x)
 {
 	return (unsigned long)&x->insn + x->insn;
 }
+
+static inline unsigned int
+ex_class(const struct exception_table_entry *x)
+{
+	return (unsigned int)x->fixup & 0xC0000000;
+}
+
 static inline unsigned long
 ex_fixup_addr(const struct exception_table_entry *x)
 {
-	return (unsigned long)&x->fixup + x->fixup;
+	long offset = (long)((u32)x->fixup & 0x3fffffff) - (long)0x20000000;
+	return (unsigned long)&x->fixup + offset;
 }
 
 int fixup_exception(struct pt_regs *regs)
 {
 	const struct exception_table_entry *fixup;
 	unsigned long new_ip;
+	unsigned int class;
 
 	fixup = search_exception_tables(regs->ip);
 	if (fixup) {
+		class = ex_class(fixup);
 		new_ip = ex_fixup_addr(fixup);
 
-		if (fixup->fixup - fixup->insn >= 0x7ffffff0 - 4) {
+		if (class == _EXTABLE_CLASS_EX) {
 			/* Special hack for uaccess_err */
 			current_thread_info()->uaccess_err = 1;
-			new_ip -= 0x7ffffff0;
 		}
 		regs->ip = new_ip;
 		return 1;
@@ -39,18 +48,15 @@ int fixup_exception(struct pt_regs *regs)
 int __init early_fixup_exception(unsigned long *ip)
 {
 	const struct exception_table_entry *fixup;
-	unsigned long new_ip;
 
 	fixup = search_exception_tables(*ip);
 	if (fixup) {
-		new_ip = ex_fixup_addr(fixup);
-
-		if (fixup->fixup - fixup->insn >= 0x7ffffff0 - 4) {
+		if (ex_class(fixup) == _EXTABLE_CLASS_EX) {
 			/* uaccess handling not supported during early boot */
 			return 0;
 		}
 
-		*ip = new_ip;
+		*ip = ex_fixup_addr(fixup);
 		return 1;
 	}
 
