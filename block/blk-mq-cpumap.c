@@ -87,6 +87,7 @@ unsigned int *blk_mq_make_queue_map(struct blk_mq_reg *reg)
 {
 	unsigned int *map;
 
+	/* If cpus are offline, map them to first hctx */
 	map = kzalloc_node(sizeof(*map) * num_possible_cpus(), GFP_KERNEL,
 				reg->numa_node);
 	if (!map)

@@ -254,7 +254,7 @@ void blk_mq_end_io(struct request *rq, int error)
 		return __blk_mq_end_io(rq, error);
 
 	cpu = get_cpu();
-	if (cpu == ctx->cpu)
+	if (cpu == ctx->cpu || !cpu_online(ctx->cpu))
 		__blk_mq_end_io(rq, error);
 	else {
 		struct call_single_data *data = &rq->csd;
@@ -606,7 +606,7 @@ void blk_mq_insert_request(struct request_queue *q, struct request *rq,
 			   bool run_queue)
 {
 	struct blk_mq_hw_ctx *hctx;
-	struct blk_mq_ctx *ctx;
+	struct blk_mq_ctx *ctx, *current_ctx;
 
 	ctx = rq->mq_ctx;
 	hctx = q->mq_ops->map_queue(q, ctx->cpu);
@@ -614,9 +614,18 @@ void blk_mq_insert_request(struct request_queue *q, struct request *rq,
 	if (rq->cmd_flags & (REQ_FLUSH | REQ_FUA)) {
 		blk_insert_flush(rq);
 	} else {
+		current_ctx = blk_mq_get_ctx(q);
+
+		if (!cpu_online(ctx->cpu)) {
+			ctx = current_ctx;
+			hctx = q->mq_ops->map_queue(q, ctx->cpu);
+			rq->mq_ctx = ctx;
+		}
 		spin_lock(&ctx->lock);
 		__blk_mq_insert_request(hctx, rq);
 		spin_unlock(&ctx->lock);
+
+		blk_mq_put_ctx(current_ctx);
 	}
 
 	if (run_queue)
@@ -632,14 +641,23 @@ void blk_mq_run_request(struct request *rq, bool run_queue, bool async)
 {
 	struct request_queue *q = rq->q;
 	struct blk_mq_hw_ctx *hctx;
-	struct blk_mq_ctx *ctx;
+	struct blk_mq_ctx *ctx, *current_ctx;
+
+	current_ctx = blk_mq_get_ctx(q);
 
 	ctx = rq->mq_ctx;
+	if (!cpu_online(ctx->cpu)) {
+		ctx = current_ctx;
+		rq->mq_ctx = ctx;
+	}
 	hctx = q->mq_ops->map_queue(q, ctx->cpu);
 
+	/* ctx->cpu might be offline */
 	spin_lock(&ctx->lock);
 	__blk_mq_insert_request(hctx, rq);
 	spin_unlock(&ctx->lock);
+
+	blk_mq_put_ctx(current_ctx);
 
 	if (run_queue)
 		blk_mq_run_hw_queue(hctx, async);
@@ -651,17 +669,31 @@ static void __blk_mq_insert_requests(struct request_queue *q,
 				     bool run_queue, bool from_schedule)
 
 {
-	struct blk_mq_hw_ctx *hctx = q->mq_ops->map_queue(q, ctx->cpu);
+	struct blk_mq_hw_ctx *hctx;
+	struct blk_mq_ctx *current_ctx;
 
+	current_ctx = blk_mq_get_ctx(q);
+
+	if (!cpu_online(ctx->cpu))
+		ctx = current_ctx;
+	hctx = q->mq_ops->map_queue(q, ctx->cpu);
+
+	/*
+	 * preemption doesn't flush plug list, so it's possible ctx->cpu is
+	 * offline now
+	 */
 	spin_lock(&ctx->lock);
 	while (!list_empty(list)) {
 		struct request *rq;
 
 		rq = list_first_entry(list, struct request, queuelist);
 		list_del_init(&rq->queuelist);
+		rq->mq_ctx = ctx;
 		__blk_mq_insert_request(hctx, rq);
 	}
 	spin_unlock(&ctx->lock);
+
+	blk_mq_put_ctx(current_ctx);
 
 	if (run_queue)
 		blk_mq_run_hw_queue(hctx, from_schedule);
@@ -1135,11 +1167,12 @@ static void blk_mq_init_cpu_queues(struct request_queue *q,
 		INIT_LIST_HEAD(&__ctx->rq_list);
 		__ctx->queue = q;
 
-		if (!cpu_online(i))
-			continue;
-
+		/* If the cpu isn't online, the cpu is mapped to first hctx */
 		hctx = q->mq_ops->map_queue(q, i);
 		hctx->nr_ctx++;
+
+		if (!cpu_online(i))
+			continue;
 
 		/*
 		 * Set local node, IFF we have more than one hw queue. If
@@ -1224,11 +1257,7 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_reg *reg,
 	 * Map software to hardware queues
 	 */
 	queue_for_each_ctx(q, ctx, i) {
-		if (!cpu_online(i)) {
-			ctx->index_hw = -1;
-			continue;
-		}
-
+		/* If the cpu isn't online, the cpu is mapped to first hctx */
 		hctx = q->mq_ops->map_queue(q, i);
 		ctx->index_hw = hctx->nr_ctx;
 		hctx->ctxs[hctx->nr_ctx++] = ctx;
