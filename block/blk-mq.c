@@ -611,14 +611,39 @@ void blk_mq_insert_request(struct request_queue *q, struct request *rq,
 	ctx = rq->mq_ctx;
 	hctx = q->mq_ops->map_queue(q, ctx->cpu);
 
-	spin_lock(&ctx->lock);
-	__blk_mq_insert_request(hctx, rq);
-	spin_unlock(&ctx->lock);
+	if (rq->cmd_flags & (REQ_FLUSH | REQ_FUA)) {
+		blk_insert_flush(rq);
+	} else {
+		spin_lock(&ctx->lock);
+		__blk_mq_insert_request(hctx, rq);
+		spin_unlock(&ctx->lock);
+	}
 
 	if (run_queue)
 		__blk_mq_run_hw_queue(hctx);
 }
 EXPORT_SYMBOL(blk_mq_insert_request);
+
+/*
+ * This is a special version of blk_mq_insert_request to bypass FLUSH request
+ * check. Should only be used internally.
+ */
+void blk_mq_run_request(struct request *rq, bool run_queue, bool async)
+{
+	struct request_queue *q = rq->q;
+	struct blk_mq_hw_ctx *hctx;
+	struct blk_mq_ctx *ctx;
+
+	ctx = rq->mq_ctx;
+	hctx = q->mq_ops->map_queue(q, ctx->cpu);
+
+	spin_lock(&ctx->lock);
+	__blk_mq_insert_request(hctx, rq);
+	spin_unlock(&ctx->lock);
+
+	if (run_queue)
+		blk_mq_run_hw_queue(hctx, async);
+}
 
 static void __blk_mq_insert_requests(struct request_queue *q,
 				     struct blk_mq_ctx *ctx,
@@ -706,7 +731,8 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
 {
 	struct blk_mq_hw_ctx *hctx;
 	struct blk_mq_ctx *ctx;
-	int is_sync = rw_is_sync(bio->bi_rw);
+	const int is_sync = rw_is_sync(bio->bi_rw);
+	const int is_flush_fua = bio->bi_rw & (REQ_FLUSH | REQ_FUA);
 	int rw = bio_data_dir(bio);
 	struct request *rq;
 	unsigned int use_plug, request_count = 0;
@@ -715,7 +741,7 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	 * If we have multiple hardware queues, just go directly to
 	 * one of those for sync IO.
 	 */
-	use_plug = (q->nr_hw_queues == 1) || !is_sync;
+	use_plug = !is_flush_fua && ((q->nr_hw_queues == 1) || !is_sync);
 
 	blk_queue_bounce(q, &bio);
 
@@ -739,6 +765,13 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	}
 
 	hctx->queued++;
+
+	if (unlikely(is_flush_fua)) {
+		blk_mq_bio_to_request(q, rq, bio);
+		blk_mq_put_ctx(ctx);
+		blk_insert_flush(rq);
+		goto run_queue;
+	}
 
 	/*
 	 * A task plug currently exists. Since this is completely lockless,
@@ -780,7 +813,8 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	 * ASYNC request, just ensure that we run it later on. The latter
 	 * allows for merging opportunities and more efficient dispatching.
 	 */
-	blk_mq_run_hw_queue(hctx, !is_sync);
+run_queue:
+	blk_mq_run_hw_queue(hctx, !is_sync || is_flush_fua);
 }
 
 static void blk_mq_execute_end_io(struct request *rq, int error)
@@ -1180,6 +1214,7 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_reg *reg,
 	if (reg->timeout)
 		blk_queue_rq_timeout(q, reg->timeout);
 
+	blk_mq_init_flush(q);
 	blk_mq_init_cpu_queues(q, reg->nr_hw_queues);
 
 	if (blk_mq_init_hw_queues(q, reg, driver_data))
