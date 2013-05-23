@@ -138,9 +138,9 @@ enum {
 				(1 << MTIP_PF_DM_ACTIVE_BIT)),
 
 	MTIP_PF_SVC_THD_ACTIVE_BIT  = 4,
-	MTIP_PF_ISSUE_CMDS_BIT      = 5,
-	MTIP_PF_REBUILD_BIT         = 6,
-	MTIP_PF_SVC_THD_STOP_BIT    = 8,
+	MTIP_PF_REBUILD_BIT         = 5,
+	MTIP_PF_SVC_THD_STOP_BIT    = 6,
+	MTIP_PF_INTERNAL_ACTIVE	    = 7,
 
 	/* below are bit numbers in 'dd_flag' defined in driver_data */
 	MTIP_DDF_SEC_LOCK_BIT	    = 0,
@@ -345,6 +345,23 @@ struct mtip_cmd {
 	int direction; /* Data transfer direction */
 };
 
+/* Structure used to describe an issue group */
+struct mtip_group {
+	/* Array of pointers to the memory mapped s_active registers. */
+	void __iomem *s_active;
+	/* Array of pointers to the memory mapped completed registers. */
+	void __iomem *completed;
+	/* Array of pointers to the memory mapped Command Issue registers. */
+	void __iomem *cmd_issue;
+	/* Spinlock for working around command-issue bug. */
+	spinlock_t cmd_issue_lock;
+
+	unsigned int group_num;
+
+	struct blk_mq_hw_ctx *hctx;
+	struct mtip_port *port;
+} ____cacheline_aligned_in_smp;
+
 /* Structure used to describe a port. */
 struct mtip_port {
 	/* Pointer back to the driver data for this port. */
@@ -356,12 +373,6 @@ struct mtip_port {
 	unsigned long identify_valid;
 	/* Base address of the memory mapped IO for the port. */
 	void __iomem *mmio;
-	/* Array of pointers to the memory mapped s_active registers. */
-	void __iomem *s_active[MTIP_MAX_SLOT_GROUPS];
-	/* Array of pointers to the memory mapped completed registers. */
-	void __iomem *completed[MTIP_MAX_SLOT_GROUPS];
-	/* Array of pointers to the memory mapped Command Issue registers. */
-	void __iomem *cmd_issue[MTIP_MAX_SLOT_GROUPS];
 	/*
 	 * Pointer to the beginning of the command header memory as used
 	 * by the driver.
@@ -424,12 +435,6 @@ struct mtip_port {
 	u8 *smart_buf;
 	dma_addr_t smart_buf_dma;
 
-	unsigned long allocated[SLOTBITS_IN_LONGS];
-	/*
-	 * used to queue commands when an internal command is in progress
-	 * or error handling is active
-	 */
-	unsigned long cmds_to_issue[SLOTBITS_IN_LONGS];
 	/* Used by mtip_service_thread to wait for an event */
 	wait_queue_head_t svc_wait;
 	/*
@@ -445,8 +450,7 @@ struct mtip_port {
 	/* Semaphore to control queue depth of unaligned IOs */
 	struct semaphore cmd_slot_unal;
 
-	/* Spinlock for working around command-issue bug. */
-	spinlock_t cmd_issue_lock[MTIP_MAX_SLOT_GROUPS];
+	struct mtip_group g[MTIP_MAX_SLOT_GROUPS];
 };
 
 /*
