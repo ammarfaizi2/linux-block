@@ -1,0 +1,19 @@
+TODO list for multiqueue/new-queue. In no particular order.
+-----------------------------------------------------------
+
+- Better switching scheme for deciding when to run
+  queues inline and when to punt to kblockd.
+
+- Implement proper scheme for not having lots of processes
+  or kblockds hammering on blk_mq_run_hw_queue() at the same
+  time. If someone else is already running the queue, we need
+  not do anything. (partially done)
+
+- Ensure that IO ordering is more sane:
+	- Let a process "stick" to a mapped queue while it
+	  has IO in flight, instead of always dynamically
+	  mapping it based on the current CPU.
+
+- Add token based mq aware IO scheduler
+
+/Jens
