@@ -8,6 +8,7 @@
 #include <linux/major.h>
 #include <linux/genhd.h>
 #include <linux/list.h>
+#include <linux/llist.h>
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 #include <linux/pagemap.h>
@@ -94,10 +95,14 @@ enum rq_cmd_type_bits {
  * as well!
  */
 struct request {
-	struct list_head queuelist;
+	union {
+		struct list_head queuelist;
+		struct llist_node ll_list;
+	};
 	struct call_single_data csd;
 
 	struct request_queue *q;
+	struct blk_mq_ctx *mq_ctx;
 
 	u64 cmd_flags;
 	enum rq_cmd_type_bits cmd_type;
@@ -215,6 +220,8 @@ struct request_pm_state
 
 #include <linux/elevator.h>
 
+struct blk_queue_ctx;
+
 typedef void (request_fn_proc) (struct request_queue *q);
 typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
 typedef int (prep_rq_fn) (struct request_queue *, struct request *);
@@ -313,6 +320,18 @@ struct request_queue {
 	dma_drain_needed_fn	*dma_drain_needed;
 	lld_busy_fn		*lld_busy_fn;
 
+	struct blk_mq_ops	*mq_ops;
+
+	unsigned int		*mq_map;
+
+	/* sw queues */
+	struct blk_mq_ctx	*queue_ctx;
+	unsigned int		nr_queues;
+
+	/* hw dispatch queues */
+	struct blk_mq_hw_ctx	**queue_hw_ctx;
+	unsigned int		nr_hw_queues;
+
 	/*
 	 * Dispatch queue sorting
 	 */
@@ -360,6 +379,11 @@ struct request_queue {
 	 * queue kobject
 	 */
 	struct kobject kobj;
+
+	/*
+	 * mq queue kobject
+	 */
+	struct kobject mq_kobj;
 
 #ifdef CONFIG_PM_RUNTIME
 	struct device		*dev;
@@ -1314,6 +1338,7 @@ static inline void put_dev_sector(Sector p)
 
 struct work_struct;
 int kblockd_schedule_work(struct request_queue *q, struct work_struct *work);
+int kblockd_schedule_delayed_work(struct request_queue *q, struct delayed_work *dwork, unsigned long delay);
 
 #ifdef CONFIG_BLK_CGROUP
 /*

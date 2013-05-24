@@ -7,6 +7,7 @@
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/blktrace_api.h>
+#include <linux/blk-mq.h>
 
 #include "blk.h"
 #include "blk-cgroup.h"
@@ -542,6 +543,9 @@ static void blk_release_queue(struct kobject *kobj)
 	if (q->queue_tags)
 		__blk_queue_free_tags(q);
 
+	if (q->mq_ops)
+		blk_mq_free_queue(q);
+
 	blk_trace_shutdown(q);
 
 	bdi_destroy(&q->backing_dev_info);
@@ -588,6 +592,9 @@ int blk_register_queue(struct gendisk *disk)
 
 	kobject_uevent(&q->kobj, KOBJ_ADD);
 
+	if (q->mq_ops)
+		blk_mq_register_disk(disk);
+
 	if (!q->request_fn)
 		return 0;
 
@@ -609,6 +616,9 @@ void blk_unregister_queue(struct gendisk *disk)
 
 	if (WARN_ON(!q))
 		return;
+
+	if (q->mq_ops)
+		blk_mq_unregister_disk(disk);
 
 	if (q->request_fn)
 		elv_unregister_queue(q);
