@@ -1218,9 +1218,18 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 			 * is alive.
 			 */
 			dead_count = atomic_read(&root->dead_count);
-			smp_rmb();
+
 			last_visited = iter->last_visited;
 			if (last_visited) {
+				/*
+				 * Paired with smp_wmb() below in this
+				 * function.  The pair guarantee that
+				 * last_visited is more current than
+				 * last_dead_count, which may lead to
+				 * spurious iteration resets but guarantees
+				 * reliable detection of dead condition.
+				 */
+				smp_rmb();
 				if ((dead_count != iter->last_dead_count) ||
 					!css_tryget(&last_visited->css)) {
 					last_visited = NULL;
@@ -1235,6 +1244,7 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 				css_put(&last_visited->css);
 
 			iter->last_visited = memcg;
+			/* paired with smp_rmb() above in this function */
 			smp_wmb();
 			iter->last_dead_count = dead_count;
 
