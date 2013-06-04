@@ -1170,17 +1170,14 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 				   struct mem_cgroup_reclaim_cookie *reclaim)
 {
 	struct mem_cgroup *memcg = NULL;
-	struct mem_cgroup *last_visited = NULL;
-	unsigned long uninitialized_var(dead_count);
+	struct mem_cgroup_per_zone *mz;
+	struct mem_cgroup_reclaim_iter *iter;
 
 	if (mem_cgroup_disabled())
 		return NULL;
 
 	if (!root)
 		root = root_mem_cgroup;
-
-	if (prev && !reclaim)
-		last_visited = prev;
 
 	if (!root->use_hierarchy && root != root_mem_cgroup) {
 		if (prev)
@@ -1189,73 +1186,87 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 	}
 
 	rcu_read_lock();
-	while (!memcg) {
-		struct mem_cgroup_reclaim_iter *uninitialized_var(iter);
 
-		if (reclaim) {
-			int nid = zone_to_nid(reclaim->zone);
-			int zid = zone_idx(reclaim->zone);
-			struct mem_cgroup_per_zone *mz;
+	/* non reclaim case is simple - just iterate from @prev */
+	if (!reclaim) {
+		memcg = __mem_cgroup_iter_next(root, prev);
+		goto out_unlock;
+	}
 
-			mz = mem_cgroup_zoneinfo(root, nid, zid);
-			iter = &mz->reclaim_iter[reclaim->priority];
-			last_visited = iter->last_visited;
-			if (prev && reclaim->generation != iter->generation) {
-				iter->last_visited = NULL;
-				goto out_unlock;
-			}
+	/*
+	 * @reclaim specified - find and share the per-zone-priority
+	 * iterator.
+	 */
+	mz = mem_cgroup_zoneinfo(root, zone_to_nid(reclaim->zone),
+				 zone_idx(reclaim->zone));
+	iter = &mz->reclaim_iter[reclaim->priority];
 
+	while (true) {
+		struct mem_cgroup *last_visited;
+		unsigned long dead_count;
+
+		/*
+		 * If this caller already iterated through some and @iter
+		 * wrapped since, finish this the iteration.
+		 */
+		if (prev && reclaim->generation != iter->generation) {
+			iter->last_visited = NULL;
+			break;
+		}
+
+		/*
+		 * If the dead_count mismatches, a destruction has happened
+		 * or is happening concurrently.  If the dead_count
+		 * matches, a destruction might still happen concurrently,
+		 * but since we checked under RCU, that destruction won't
+		 * free the object until we release the RCU reader lock.
+		 * Thus, the dead_count check verifies the pointer is still
+		 * valid, css_tryget() verifies the cgroup pointed to is
+		 * alive.
+		 */
+		dead_count = atomic_read(&root->dead_count);
+
+		last_visited = iter->last_visited;
+		if (last_visited) {
 			/*
-			 * If the dead_count mismatches, a destruction
-			 * has happened or is happening concurrently.
-			 * If the dead_count matches, a destruction
-			 * might still happen concurrently, but since
-			 * we checked under RCU, that destruction
-			 * won't free the object until we release the
-			 * RCU reader lock.  Thus, the dead_count
-			 * check verifies the pointer is still valid,
-			 * css_tryget() verifies the cgroup pointed to
-			 * is alive.
+			 * Paired with smp_wmb() below in this function.
+			 * The pair guarantee that last_visited is more
+			 * current than last_dead_count, which may lead to
+			 * spurious iteration resets but guarantees
+			 * reliable detection of dead condition.
 			 */
-			dead_count = atomic_read(&root->dead_count);
-
-			last_visited = iter->last_visited;
-			if (last_visited) {
-				/*
-				 * Paired with smp_wmb() below in this
-				 * function.  The pair guarantee that
-				 * last_visited is more current than
-				 * last_dead_count, which may lead to
-				 * spurious iteration resets but guarantees
-				 * reliable detection of dead condition.
-				 */
-				smp_rmb();
-				if ((dead_count != iter->last_dead_count) ||
-					!css_tryget(&last_visited->css)) {
-					last_visited = NULL;
-				}
+			smp_rmb();
+			if ((dead_count != iter->last_dead_count) ||
+			    !css_tryget(&last_visited->css)) {
+				last_visited = NULL;
 			}
 		}
 
 		memcg = __mem_cgroup_iter_next(root, last_visited);
 
-		if (reclaim) {
-			if (last_visited)
-				css_put(&last_visited->css);
+		if (last_visited)
+			css_put(&last_visited->css);
 
-			iter->last_visited = memcg;
-			/* paired with smp_rmb() above in this function */
-			smp_wmb();
-			iter->last_dead_count = dead_count;
+		iter->last_visited = memcg;
+		/* paired with smp_rmb() above in this function */
+		smp_wmb();
+		iter->last_dead_count = dead_count;
 
-			if (!memcg)
-				iter->generation++;
-			else if (!prev && memcg)
-				reclaim->generation = iter->generation;
+		/* if successful, sync the generation number and return */
+		if (likely(memcg)) {
+			reclaim->generation = iter->generation;
+			break;
 		}
 
-		if (prev && !memcg)
-			goto out_unlock;
+		/*
+		 * The iterator reached the end.  If this reclaimer already
+		 * visited some cgroups, finish the iteration; otherwise,
+		 * start a new iteration from the beginning.
+		 */
+		if (prev)
+			break;
+
+		iter->generation++;
 	}
 out_unlock:
 	rcu_read_unlock();
