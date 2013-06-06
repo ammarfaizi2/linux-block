@@ -1976,7 +1976,7 @@ static int path_lookupat(int dfd, const char *name,
 		err = complete_walk(nd);
 
 	if (!err && nd->flags & LOOKUP_DIRECTORY) {
-		if (!nd->inode->i_op->lookup) {
+		if (!can_lookup(nd->inode)) {
 			path_put(&nd->path);
 			err = -ENOTDIR;
 		}
@@ -2834,7 +2834,7 @@ finish_open:
 	if ((open_flag & O_CREAT) && S_ISDIR(nd->inode->i_mode))
 		goto out;
 	error = -ENOTDIR;
-	if ((nd->flags & LOOKUP_DIRECTORY) && !nd->inode->i_op->lookup)
+	if ((nd->flags & LOOKUP_DIRECTORY) && !can_lookup(nd->inode))
 		goto out;
 	if (!S_ISREG(nd->inode->i_mode))
 		will_truncate = false;
