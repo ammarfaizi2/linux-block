@@ -83,6 +83,7 @@ struct inode *ramfs_get_inode(struct super_block *sb,
 			inode->i_op = &page_symlink_inode_operations;
 			break;
 		}
+		lockdep_annotate_inode_mutex_key(inode);
 	}
 	return inode;
 }
