@@ -74,6 +74,9 @@ struct path *union_find_dir(struct dentry *dentry, unsigned int layer)
 	return &dentry->d_union_stack->u_dirs[layer];
 }
 
+extern int union_create_topmost_dir(struct path *, struct qstr *, struct path *,
+				    struct path *);
+
 #else /* CONFIG_UNION_MOUNT */
 
 static inline bool IS_MNT_UNION(struct vfsmount *mnt) { return false; }
@@ -92,6 +95,13 @@ static inline struct path *union_find_dir(struct dentry *dentry, unsigned layer)
 {
 	BUG();
 	return NULL;
+}
+
+static inline int union_create_topmost_dir(struct path *parent, struct qstr *name,
+					   struct path *topmost, struct path *lower)
+{
+	BUG();
+	return 0;
 }
 
 #endif	/* CONFIG_UNION_MOUNT */
