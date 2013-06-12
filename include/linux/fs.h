@@ -1322,6 +1322,12 @@ struct super_block {
 
 	/* Being remounted read-only */
 	int s_readonly_remount;
+
+	/* Number of mounts requiring that the underlying file system never
+	 * transition to read-write.  Protected by s_umount.  Decremented by
+	 * free_vfsmnt() if MNT_HARD_READONLY is set.
+	 */
+	int s_hard_readonly_users;
 };
 
 /* superblock cache pruning functions */
