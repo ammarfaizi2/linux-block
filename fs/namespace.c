@@ -1557,9 +1557,11 @@ void put_union_sb(struct super_block *sb)
 	if (unlikely(sb->s_union_lower_mnts)) {
 		struct mount *mnt = real_mount(sb->s_union_lower_mnts);
 
+		namespace_lock();
 		br_write_lock(&vfsmount_lock);
 		umount_tree(mnt, 0);
 		br_write_unlock(&vfsmount_lock);
+		namespace_unlock();
 		sb->s_union_lower_mnts = NULL;
 		sb->s_union_count = 0;
 	}
@@ -2549,7 +2551,7 @@ long do_mount(const char *dev_name, const char *dir_name,
 
 	flags &= ~(MS_NOSUID | MS_NOEXEC | MS_NODEV | MS_ACTIVE | MS_BORN |
 		   MS_NOATIME | MS_NODIRATIME | MS_RELATIME| MS_KERNMOUNT |
-		   MS_STRICTATIME | MS_UNION);
+		   MS_STRICTATIME);
 
 	if (flags & MS_REMOUNT)
 		retval = do_remount(&path, flags & ~MS_REMOUNT, mnt_flags,
