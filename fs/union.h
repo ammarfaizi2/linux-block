@@ -40,8 +40,14 @@ static inline bool IS_MNT_UNION(struct vfsmount *mnt)
 	return mnt->mnt_flags & MNT_UNION;
 }
 
+static inline bool IS_MNT_LOWER(struct vfsmount *mnt)
+{
+	return mnt->mnt_flags & MNT_UNION_LOWER;
+}
+
 #else /* CONFIG_UNION_MOUNT */
 
 static inline bool IS_MNT_UNION(struct vfsmount *mnt) { return false; }
+static inline bool IS_MNT_LOWER(struct vfsmount *mnt) { return false; }
 
 #endif	/* CONFIG_UNION_MOUNT */
