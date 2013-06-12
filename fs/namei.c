@@ -1331,9 +1331,25 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 			continue;
 		}
 
+		/* Files block everything below them.  Special case: If we find
+		 * a file below a directory (which makes no sense), just ignore
+		 * the file and return the directory above it.
+		 */
+		if (!S_ISDIR(lower.dentry->d_inode->i_mode)) {
+			if (topmost->dentry->d_inode &&
+			    S_ISDIR(topmost->dentry->d_inode->i_mode))
+				goto out_lookup_done;
+			goto out_found_lower_file;
+		}
+
 		/* XXX - do nothing, more in later patches */
 		path_put(&lower);
 	}
+	return 0;
+
+out_found_lower_file:
+	dput(topmost->dentry);
+	*topmost = lower;
 	return 0;
 
 out_lookup_done:
