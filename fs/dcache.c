@@ -1370,6 +1370,7 @@ static void __d_instantiate(struct dentry *dentry, struct inode *inode)
 {
 	spin_lock(&dentry->d_lock);
 	if (inode) {
+		dentry->d_flags &= ~DCACHE_WHITEOUT;
 		if (unlikely(IS_AUTOMOUNT(inode)))
 			dentry->d_flags |= DCACHE_NEED_AUTOMOUNT;
 		hlist_add_head(&dentry->d_alias, &inode->i_dentry);
