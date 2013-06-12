@@ -17,14 +17,15 @@
 #define CLEAR_MNT_SHARED(m) ((m)->mnt.mnt_flags &= ~MNT_SHARED)
 #define IS_MNT_UNBINDABLE(m) ((m)->mnt.mnt_flags & MNT_UNBINDABLE)
 
-#define CL_EXPIRE    		0x01
-#define CL_SLAVE     		0x02
-#define CL_COPY_ALL 		0x04
-#define CL_MAKE_SHARED 		0x08
-#define CL_PRIVATE 		0x10
-#define CL_SHARED_TO_SLAVE	0x20
-#define CL_UNPRIVILEGED		0x40
-#define CL_NO_SHARED 		0x80
+#define CL_EXPIRE    		0x0001
+#define CL_SLAVE     		0x0002
+#define CL_COPY_ALL 		0x0004
+#define CL_MAKE_SHARED 		0x0008
+#define CL_PRIVATE 		0x0010
+#define CL_SHARED_TO_SLAVE	0x0020
+#define CL_UNPRIVILEGED		0x0040
+#define CL_NO_SHARED 		0x0080
+#define CL_NO_SLAVE 		0x0100
 
 static inline void set_mnt_shared(struct mount *mnt)
 {
