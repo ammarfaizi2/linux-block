@@ -107,6 +107,8 @@ bool needs_lookup_union(struct nameidata *nd,
 }
 
 extern int __union_copyup_one_dir(struct path *);
+extern int union_copyup(struct path *parent, struct path *path,
+			bool copy_all, size_t len);
 
 #else /* CONFIG_UNION_MOUNT */
 
@@ -147,14 +149,13 @@ static inline int __union_copyup_one_dir(struct path *topmost_path)
 	return 0;
 }
 
-#endif	/* CONFIG_UNION_MOUNT */
-
-/* Temporary dummy */
 static inline int union_copyup(struct path *parent, struct path *path,
 			       bool copy_all, size_t len)
 {
-	return -ENOANO;
+	return 0;
 }
+
+#endif	/* CONFIG_UNION_MOUNT */
 
 /*
  * Make sure that an upper directory is opaque (ie. totally copied up if it is

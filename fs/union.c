@@ -19,11 +19,12 @@
 #include <linux/mount.h>
 #include <linux/fs_struct.h>
 #include <linux/slab.h>
-#include <linux/namei.h>
 #include <linux/fsnotify.h>
 #include <linux/xattr.h>
 #include <linux/file.h>
 #include <linux/security.h>
+#include <linux/splice.h>
+#include <linux/xattr.h>
 
 #include "union.h"
 
@@ -197,9 +198,16 @@ int union_create_topmost_dir(struct path *parent, struct qstr *name,
 
 	error = union_copyup_xattr(lower->dentry, topmost->dentry);
 	if (error)
-		dput(topmost->dentry);
+		goto out_rmdir;
 
 	fsnotify_mkdir(dir, topmost->dentry);
+
+	mnt_drop_write(parent->mnt);
+
+	return 0;
+out_rmdir:
+	/* XXX rm created dir */
+	dput(topmost->dentry);
 out:
 	mnt_drop_write(parent->mnt);
 	return error;
@@ -455,3 +463,226 @@ int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
 	return -ENOENT;
 }
 EXPORT_SYMBOL(generic_readdir_fallthru);
+
+/**
+ * union_create_file
+ * @parent: path of the upper parent directory
+ * @lower: path of the source file
+ * @new: path of the new file, negative dentry
+ *
+ * Must already have mnt_want_write() on the mnt and the parent's i_mutex.
+ */
+static int union_create_file(struct path *parent, struct path *lower,
+			     struct dentry *new)
+{
+	BUG_ON(!mutex_is_locked(&parent->dentry->d_inode->i_mutex));
+
+	return vfs_create(parent->dentry->d_inode, new,
+			  lower->dentry->d_inode->i_mode, true);
+}
+
+/**
+ * union_create_symlink
+ * @parent: Upper parent of the symlink
+ * @lower: Path of the source symlink
+ * @new: Path of the new symlink, negative dentry
+ *
+ * Must already have mnt_want_write() on the mnt and the parent's i_mutex.
+ */
+static int union_create_symlink(struct path *parent, struct path *lower,
+				struct dentry *new)
+{
+	struct inode *inode = lower->dentry->d_inode;
+	char *content;
+	int error;
+
+	BUG_ON(!mutex_is_locked(&parent->dentry->d_inode->i_mutex));
+
+	content = kmalloc(PATH_MAX + 2, GFP_KERNEL);
+	if (!content)
+		return -ENOMEM;
+
+	error = inode->i_op->readlink(lower->dentry, content, PATH_MAX + 1);
+	if (error < 0)
+		goto error;
+	content[error] = 0;
+
+	error = vfs_symlink(parent->dentry->d_inode, new, content);
+error:
+	kfree(content);
+	return error;
+}
+
+/**
+ * union_copyup_data - Copy up len bytes of old's data to new
+ * @lower: path of source file in lower layer
+ * @new_mnt: vfsmount of target file
+ * @new_dentry: dentry of target file
+ * @len: number of bytes to copy
+ */
+static int union_copyup_data(struct path *lower, struct path *new_path,
+			     size_t len)
+{
+	const struct cred *cred = current_cred();
+	struct file *lower_file;
+	struct file *new_file;
+	loff_t offset = 0;
+	long bytes;
+	int error = 0;
+
+	if (len == 0)
+		return 0;
+
+	lower_file = dentry_open(lower, O_RDONLY, cred);
+	if (IS_ERR(lower_file))
+		return PTR_ERR(lower_file);
+
+	new_file = dentry_open(new_path, O_WRONLY, cred);
+	if (IS_ERR(new_file)) {
+		error = PTR_ERR(new_file);
+		goto out_fput;
+	}
+
+	bytes = do_splice_direct(lower_file, &offset, new_file, len,
+				 SPLICE_F_MOVE);
+	if (bytes < 0)
+		error = bytes;
+
+	fput(new_file);
+out_fput:
+	fput(lower_file);
+	return error;
+}
+
+/**
+ * union_copyup_file - Copy up a regular file, symlink or special file
+ * @parent: Parent dir on upper fs
+ * @lower: path of file to be copied up
+ * @dentry: dentry to copy up to
+ * @len: number of bytes of file data to copy up
+ */
+static int union_copyup_file(struct path *parent, struct path *lower,
+			     struct dentry *dentry, size_t len)
+{
+	const struct cred *saved_cred;
+	struct cred *override_cred;
+	struct path to;
+	int error;
+
+	BUG_ON(!mutex_is_locked(&parent->dentry->d_inode->i_mutex));
+
+	override_cred = prepare_kernel_cred(NULL);
+	if (!override_cred)
+		return -ENOMEM;
+
+	override_cred->fsuid = lower->dentry->d_inode->i_uid;
+	override_cred->fsgid = lower->dentry->d_inode->i_gid;
+
+	saved_cred = override_creds(override_cred);
+
+	if (S_ISREG(lower->dentry->d_inode->i_mode)) {
+		error = union_create_file(parent, lower, dentry);
+		if (error)
+			goto out;
+		to.mnt = parent->mnt;
+		to.dentry = dentry;
+		error = union_copyup_data(lower, &to, len);
+	} else if (S_ISLNK(lower->dentry->d_inode->i_mode)) {
+		error = union_create_symlink(parent, lower, dentry);
+		goto out;
+	} else {
+		/* Don't currently support copyup of special files, though in
+		 * theory there's no reason we couldn't at least copy up
+		 * blockdev, chrdev and FIFO files
+		 */
+		error = -EXDEV;
+		goto out;
+	}
+	if (error)
+		/* Most likely error: ENOSPC */
+		vfs_unlink(parent->dentry->d_inode, dentry);
+
+out:
+	revert_creds(saved_cred);
+	put_cred(override_cred);
+	return error;
+}
+
+/**
+ * union_copyup - Copy up a file and len bytes of data
+ * @parent: Parent dir on upper fs
+ * @path: Path of file to be copied up from
+ * @copy_all: Copy all the file (if true) or just @len bytes of it
+ * @len: Amount of file data to copy up
+ *
+ * Parent's i_mutex must be held by caller.  Newly copied up path is
+ * returned in @path and original is path_put().
+ *
+ * NOTE!  If a copy up takes place, path->mnt will be changed to the same as
+ * the topmost dir, but won't have a ref taken on it.
+ */
+int union_copyup(struct path *parent, struct path *path,
+		 bool copy_all, size_t len)
+{
+	struct dentry *top_dentry;
+	int error;
+
+	pr_devel("-->%s(%s,%s)\n", __func__,
+		 parent->dentry->d_name.name,
+		 path->dentry->d_name.name);
+
+	BUG_ON(!mutex_is_locked(&parent->dentry->d_inode->i_mutex));
+
+	if (!IS_DIR_UNIONED(parent->dentry) || parent->mnt == path->mnt)
+		return 0;
+
+	BUG_ON(!S_ISDIR(parent->dentry->d_inode->i_mode));
+	if (IS_DEADDIR(parent->dentry->d_inode))
+		return -ENOENT;
+
+	if (copy_all && S_ISREG(path->dentry->d_inode->i_mode)) {
+		loff_t filesize = i_size_read(path->dentry->d_inode);
+		/* Check for overflow of file size */
+		if ((ssize_t)filesize != filesize)
+			return -EFBIG;
+		len = filesize;
+	}
+
+	top_dentry = lookup_one_len(path->dentry->d_name.name, parent->dentry,
+				    path->dentry->d_name.len);
+	if (IS_ERR(top_dentry))
+		return PTR_ERR(top_dentry);
+
+	if (top_dentry->d_inode) {
+		/* We raced with someone else and "lost".  That's okay, they
+		 * did all the work of copying up the file.
+		 *
+		 * Note that currently data copyup happens under the parent
+		 * dir's i_mutex.  If we move it outside that, we'll need some
+		 * way of waiting for the data copyup to complete here.
+		 */
+		pr_devel("<--%s() = 0 [lost]\n", __func__);
+		return 0;
+	}
+
+	error = 0;
+	if (!S_ISREG(path->dentry->d_inode->i_mode) &&
+	    !S_ISLNK(path->dentry->d_inode->i_mode))
+		goto out_dput;
+
+	pr_devel("- copy!\n");
+	error = union_copyup_file(parent, path, top_dentry, len);
+	if (error < 0)
+		goto out_dput;
+	pr_devel("- copied\n");
+
+	path_put(path);
+	path->mnt = parent->mnt;
+	path->dentry = top_dentry;
+	return 0;
+
+out_dput:
+	dput(top_dentry);
+	pr_devel("<--%s() = %d\n", __func__, error);
+	return error;
+}
