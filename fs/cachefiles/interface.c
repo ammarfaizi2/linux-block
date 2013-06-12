@@ -471,9 +471,9 @@ static void cachefiles_invalidate_object(struct fscache_operation *op)
 		path.mnt = cache->mnt;
 
 		cachefiles_begin_secure(cache, &saved_cred);
-		ret = vfs_truncate(&path, 0);
+		ret = vfs_truncate(NULL, &path, 0);
 		if (ret == 0)
-			ret = vfs_truncate(&path, ni_size);
+			ret = vfs_truncate(NULL, &path, ni_size);
 		cachefiles_end_secure(cache, saved_cred);
 
 		if (ret != 0) {

@@ -63,8 +63,9 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	return ret;
 }
 
-long vfs_truncate(struct path *path, loff_t length)
+long vfs_truncate(struct path *parent, struct path *path, loff_t length)
 {
+	struct vfsmount *mnt;
 	struct inode *inode;
 	long error;
 
@@ -76,18 +77,49 @@ long vfs_truncate(struct path *path, loff_t length)
 	if (!S_ISREG(inode->i_mode))
 		return -EINVAL;
 
-	error = mnt_want_write(path->mnt);
+	/* If we're looking at the lower layer of a union mount, then we need
+	 * to create the file on the upperfs and truncate that.
+	 */
+	mnt = path->mnt;
+	if (IS_MNT_LOWER(path->mnt) && parent->mnt)
+		mnt = parent->mnt;
+
+	error = mnt_want_write(mnt);
 	if (error)
 		goto out;
 
-	error = inode_permission(inode, MAY_WRITE);
-	if (error)
-		goto mnt_drop_write_and_out;
+	if (unlikely(IS_MNT_UNION(mnt))) {
+		/* We have to be able to write to the upperfs. */
+		error = -EROFS;
+		if (mnt->mnt_sb->s_flags & MS_RDONLY)
+			goto mnt_drop_write_and_out;
+
+		/* But the lowerfs inode must offer write permission - if the
+		 * lowerfs was mounted writably. */
+		error = __inode_permission(inode, MAY_WRITE);
+		if (error)
+			goto mnt_drop_write_and_out;
+	} else {
+		error = inode_permission(inode, MAY_WRITE);
+		if (error)
+			goto mnt_drop_write_and_out;
+	}
 
 	error = -EPERM;
 	if (IS_APPEND(inode))
 		goto mnt_drop_write_and_out;
 
+	if (IS_MNT_LOWER(path->mnt)) {
+		mutex_lock(&parent->dentry->d_inode->i_mutex);
+		error = union_copyup(parent, path, false, length);
+		mutex_unlock(&parent->dentry->d_inode->i_mutex);
+		if (error)
+			goto mnt_drop_write_and_out;
+		mntget(path->mnt);
+	}
+
+	/* path may have changed after copyup */
+	inode = path->dentry->d_inode;
 	error = get_write_access(inode);
 	if (error)
 		goto mnt_drop_write_and_out;
@@ -109,7 +141,7 @@ long vfs_truncate(struct path *path, loff_t length)
 put_write_and_out:
 	put_write_access(inode);
 mnt_drop_write_and_out:
-	mnt_drop_write(path->mnt);
+	mnt_drop_write(mnt);
 out:
 	return error;
 }
@@ -118,16 +150,18 @@ EXPORT_SYMBOL_GPL(vfs_truncate);
 static long do_sys_truncate(const char __user *pathname, loff_t length)
 {
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
-	struct path path;
+	struct path parent, path;
 	int error;
 
 	if (length < 0)	/* sorry, but loff_t says... */
 		return -EINVAL;
 
 retry:
-	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
+	error = user_path_and_parent(AT_FDCWD, pathname, lookup_flags,
+				     &parent, &path);
 	if (!error) {
-		error = vfs_truncate(&path, length);
+		error = vfs_truncate(&parent, &path, length);
+		path_put(&parent);
 		path_put(&path);
 	}
 	if (retry_estale(error, lookup_flags)) {
