@@ -4093,6 +4093,40 @@ out:
 }
 
 /*
+ * Create a whiteout to finish off a rename from a unionmounted directory.
+ * This prevents any file of the same name in the lowerfs from showing through.
+ */
+static int vfs_whiteout_after_rename(struct dentry *parent,
+				     const struct qstr *name)
+{
+	struct inode *dir = parent->d_inode;
+	struct dentry *dummy;
+	int err;
+
+	if (!dir->i_op || !dir->i_op->whiteout)
+		return -EOPNOTSUPP;
+
+	/* Rename moved the old dentry somewhere else, so there can't be one
+	 * here now (the caller's locks see to that) and so there's no need to
+	 * call lookup, especially as the ->whiteout() op is expected to add
+	 * the new dentry into the tree.
+	 */
+	dummy = d_alloc(parent, name);
+	if (!dummy)
+		return -ENOMEM;
+
+	/* I think it's okay to pass the new whiteout as the old dentry here.
+	 * What it seems to want is the name, the parent dentry and the inode.
+	 * However, we know the inode no longer resides there and d_inode will
+	 * be NULL.
+	 */
+	err = dir->i_op->whiteout(dir, dummy);
+
+	dput(dummy);
+	return err;
+}
+
+/*
  * The dentry_unhash() helper will try to drop the dentry early: we
  * should have a usage count of 1 if we're the only user of this
  * dentry, and if that is true (possibly after pruning the dcache),
@@ -4694,13 +4728,6 @@ retry:
 	error = -EXDEV;
 	if (oldnd.path.mnt != newnd.path.mnt)
 		goto exit2;
-
-	/* rename() on union mounts not implemented yet */
-	error = -EXDEV;
-	if (IS_DIR_UNIONED(oldnd.path.dentry) ||
-	    IS_DIR_UNIONED(newnd.path.dentry))
-		goto exit2;
-
 	old_dir = oldnd.path.dentry;
 	error = -EBUSY;
 	if (oldnd.last_type != LAST_NORM)
@@ -4715,6 +4742,7 @@ retry:
 		goto exit2;
 
 	oldnd.flags &= ~LOOKUP_PARENT;
+	oldnd.flags |= LOOKUP_COPY_UP;
 	newnd.flags &= ~LOOKUP_PARENT;
 	newnd.flags |= LOOKUP_RENAME_TARGET;
 
@@ -4741,6 +4769,11 @@ retry:
 	error = -EINVAL;
 	if (old.dentry == trap)
 		goto exit4;
+	error = -EXDEV;
+	/* Can't rename a directory from a lower layer */
+	if (IS_DIR_UNIONED(oldnd.path.dentry) &&
+	    IS_DIR_UNIONED(old.dentry))
+		goto exit4;
 	error = lookup_hash(&newnd, &new);
 	if (!error && needs_lookup_union(&newnd, &newnd.path, &new))
 		error = lookup_union_locked(&newnd, &newnd.last, &new);
@@ -4750,6 +4783,43 @@ retry:
 	error = -ENOTEMPTY;
 	if (new.dentry == trap)
 		goto exit5;
+	error = -EXDEV;
+	/* Can't rename over directories on the lower layer */
+	if (IS_DIR_UNIONED(newnd.path.dentry) &&
+	    IS_DIR_UNIONED(new.dentry))
+		goto exit5;
+
+	/* If source should've been copied up by lookup_hash() */
+	if (IS_DIR_UNIONED(oldnd.path.dentry))
+		BUG_ON(old.mnt != oldnd.path.mnt);
+
+	/* If target is on lower layer, get negative dentry for topmost */
+	if (IS_DIR_UNIONED(newnd.path.dentry) &&
+	    new.mnt != newnd.path.mnt) {
+		/* At this point, source and target are both files, the source
+		 * is on the topmost layer and the target is on a lower layer.
+		 * We want the target dentry to disappear from the namespace
+		 * and give vfs_rename a negative dentry from the topmost
+		 * layer.
+		 *
+		 * Note: We already did lookup once, so no need to recheck perm
+		 */
+		struct dentry *dentry =
+			__lookup_hash(&newnd.last, newnd.path.dentry,
+				      newnd.flags);
+		if (IS_ERR(dentry)) {
+			error = PTR_ERR(dentry);
+			goto exit5;
+		}
+
+		/* We no longer need the lower target dentry.  It definitely
+		 * should be removed from the hash table */
+		/* XXX what about failure case? */
+		d_delete(new.dentry);
+		mntput(new.mnt);
+		new.mnt = mntget(newnd.path.mnt);
+		new.dentry = dentry;
+	}
 
 	error = security_path_rename(&oldnd.path, old.dentry,
 				     &newnd.path, new.dentry);
@@ -4757,6 +4827,21 @@ retry:
 		goto exit5;
 	error = vfs_rename(old_dir->d_inode, old.dentry,
 				   new_dir->d_inode, new.dentry);
+	if (error)
+		goto exit5;
+
+	/* Now whiteout the source.  We may have exposed a positive lower level
+	 * dentry, so we have to make sure it doesn't get resurrected.  We
+	 * could probe the lower levels at this point to find out whether there
+	 * is actually anything that needs whiting out.
+	 *
+	 * Note that if this fails, it may leave the lower dentry exposed, and
+	 * we may not be able to recover by simply renaming back (say we
+	 * encountered ENOMEM or ENOSPC conditions).
+	 */
+	if (IS_DIR_UNIONED(oldnd.path.dentry))
+		error = vfs_whiteout_after_rename(old_dir, &oldnd.last);
+
 exit5:
 	path_put_conditional(&new, &newnd);
 exit4:
