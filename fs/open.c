@@ -527,7 +527,8 @@ SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umode_t, mode
 {
 	struct path path;
 	int error;
-	unsigned int lookup_flags = LOOKUP_FOLLOW;
+	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_COPY_UP;
+
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
 	if (!error) {
@@ -596,7 +597,7 @@ SYSCALL_DEFINE5(fchownat, int, dfd, const char __user *, filename, uid_t, user,
 	if (flag & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 retry:
-	error = user_path_at(dfd, filename, lookup_flags, &path);
+	error = user_path_at(dfd, filename, lookup_flags | LOOKUP_COPY_UP, &path);
 	if (error)
 		goto out;
 	error = mnt_want_write(path.mnt);

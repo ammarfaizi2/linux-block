@@ -154,7 +154,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec *times,
 		fdput(f);
 	} else {
 		struct path path;
-		int lookup_flags = 0;
+		int lookup_flags = LOOKUP_COPY_UP;
 
 		if (!(flags & AT_SYMLINK_NOFOLLOW))
 			lookup_flags |= LOOKUP_FOLLOW;

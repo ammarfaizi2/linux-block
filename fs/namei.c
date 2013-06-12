@@ -4475,8 +4475,9 @@ SYSCALL_DEFINE5(linkat, int, olddfd, const char __user *, oldname,
 
 	if (flags & AT_SYMLINK_FOLLOW)
 		how |= LOOKUP_FOLLOW;
+
 retry:
-	error = user_path_at(olddfd, oldname, how, &old_path);
+	error = user_path_at(olddfd, oldname, how | LOOKUP_COPY_UP, &old_path);
 	if (error)
 		return error;
 
