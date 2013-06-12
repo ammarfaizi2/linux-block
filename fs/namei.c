@@ -4088,11 +4088,6 @@ retry:
 	if (IS_ERR(name))
 		return PTR_ERR(name);
 
-	/* rmdir() on union mounts not implemented yet */
-	error = -EINVAL;
-	if (IS_DIR_UNIONED(nd.path.dentry))
-		goto exit1;
-
 	switch(nd.last_type) {
 	case LAST_DOTDOT:
 		error = -ENOTEMPTY;
@@ -4123,7 +4118,10 @@ retry:
 	error = security_path_rmdir(&nd.path, path.dentry);
 	if (error)
 		goto exit3;
-	error = vfs_rmdir(nd.path.dentry->d_inode, path.dentry);
+	if (IS_DIR_UNIONED(nd.path.dentry))
+		error = do_whiteout(&nd, &path, 1);
+	else
+		error = vfs_rmdir(nd.path.dentry->d_inode, path.dentry);
 exit3:
 	path_put_conditional(&path, &nd);
 exit2:
