@@ -917,13 +917,13 @@ static void shrink_dcache_for_umount_subtree(struct dentry *dentry)
 
 			if (dentry->d_count != 0) {
 				printk(KERN_ERR
-				       "BUG: Dentry %p{i=%lx,n=%s}"
+				       "BUG: Dentry %p{i=%lx,n=%pq}"
 				       " still in use (%d)"
 				       " [unmount of %s %s]\n",
 				       dentry,
 				       dentry->d_inode ?
 				       dentry->d_inode->i_ino : 0UL,
-				       dentry->d_name.name,
+				       &dentry->d_name,
 				       dentry->d_count,
 				       dentry->d_sb->s_type->name,
 				       dentry->d_sb->s_id);
@@ -2476,9 +2476,9 @@ struct dentry *d_materialise_unique(struct dentry *dentry, struct inode *inode)
 			if (IS_ERR(actual)) {
 				if (PTR_ERR(actual) == -ELOOP)
 					pr_warn_ratelimited(
-						"VFS: Lookup of '%s' in %s %s"
+						"VFS: Lookup of '%pq' in %s %s"
 						" would have caused loop\n",
-						dentry->d_name.name,
+						&dentry->d_name,
 						inode->i_sb->s_type->name,
 						inode->i_sb->s_id);
 				dput(alias);
@@ -2582,8 +2582,7 @@ global_root:
 	 */
 	if (IS_ROOT(dentry) &&
 	    (dentry->d_name.len != 1 || dentry->d_name.name[0] != '/')) {
-		WARN(1, "Root dentry has weird name <%.*s>\n",
-		     (int) dentry->d_name.len, dentry->d_name.name);
+		WARN(1, "Root dentry has weird name <%pq>\n", &dentry->d_name);
 	}
 	if (!slash)
 		error = prepend(buffer, buflen, "/", 1);

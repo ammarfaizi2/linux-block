@@ -26,6 +26,7 @@
 #include <linux/math64.h>
 #include <linux/uaccess.h>
 #include <linux/ioport.h>
+#include <linux/dcache.h>
 #include <net/addrconf.h>
 
 #include <asm/page.h>		/* for PAGE_SIZE */
@@ -510,6 +511,50 @@ char *string(char *buf, char *end, const char *s, struct printf_spec spec)
 		s = "(null)";
 
 	len = strnlen(s, spec.precision);
+
+	if (!(spec.flags & LEFT)) {
+		while (len < spec.field_width--) {
+			if (buf < end)
+				*buf = ' ';
+			++buf;
+		}
+	}
+	for (i = 0; i < len; ++i) {
+		if (buf < end)
+			*buf = *s;
+		++buf; ++s;
+	}
+	while (len < spec.field_width--) {
+		if (buf < end)
+			*buf = ' ';
+		++buf;
+	}
+
+	return buf;
+}
+
+static noinline_for_stack
+char *print_qstr(char *buf, char *end, const struct qstr *name,
+		 struct printf_spec spec)
+{
+	const char *s;
+	int len, i;
+
+	if ((unsigned long)name < PAGE_SIZE) {
+		s = "(null)";
+		len = 6;
+	} else if ((unsigned long)name->name < PAGE_SIZE) {
+		s = "(->null)";
+		len = 8;
+	} else if (name->len <= 0) {
+		s = "(*anon*)";
+		len = 8;
+	} else {
+		s = name->name;
+		len = name->len;
+	}
+	if (spec.precision > 0 && len > spec.precision)
+		len = spec.precision;
 
 	if (!(spec.flags & LEFT)) {
 		while (len < spec.field_width--) {
@@ -1039,6 +1084,7 @@ int kptr_restrict __read_mostly;
  *            The maximum supported length is 64 bytes of the input. Consider
  *            to use print_hex_dump() for the larger input.
  * - 'a' For a phys_addr_t type and its derivative types (passed by reference)
+ * - 'q' For a struct qstr as used in the VFS.
  *
  * Note: The difference between 'S' and 'F' is that on ia64 and ppc64
  * function pointers are really function descriptors, which contain a
@@ -1135,6 +1181,8 @@ char *pointer(const char *fmt, char *buf, char *end, void *ptr,
 		spec.base = 16;
 		return number(buf, end,
 			      (unsigned long long) *((phys_addr_t *)ptr), spec);
+	case 'q':
+		return print_qstr(buf, end, ptr, spec);
 	}
 	spec.flags |= SMALL;
 	if (spec.field_width == -1) {

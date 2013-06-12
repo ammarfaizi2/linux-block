@@ -103,8 +103,7 @@ static void cachefiles_mark_object_buried(struct cachefiles_cache *cache,
 	struct cachefiles_object *object;
 	struct rb_node *p;
 
-	_enter(",'%*.*s'",
-	       dentry->d_name.len, dentry->d_name.len, dentry->d_name.name);
+	_enter(",'%pq'", &dentry->d_name);
 
 	write_lock(&cache->active_lock);
 
@@ -278,9 +277,7 @@ static int cachefiles_bury_object(struct cachefiles_cache *cache,
 	char nbuffer[8 + 8 + 1];
 	int ret;
 
-	_enter(",'%*.*s','%*.*s'",
-	       dir->d_name.len, dir->d_name.len, dir->d_name.name,
-	       rep->d_name.len, rep->d_name.len, rep->d_name.name);
+	_enter(",'%pq','%pq'", &dir->d_name, &rep->d_name);
 
 	_debug("remove %p from %p", rep, dir);
 
@@ -602,8 +599,7 @@ lookup_again:
 	/* if we've found that the terminal object exists, then we need to
 	 * check its attributes and delete it if it's out of date */
 	if (!object->new) {
-		_debug("validate '%*.*s'",
-		       next->d_name.len, next->d_name.len, next->d_name.name);
+		_debug("validate '%pq'", &next->d_name);
 
 		ret = cachefiles_check_object_xattr(object, auxdata);
 		if (ret == -ESTALE) {
@@ -832,8 +828,7 @@ static struct dentry *cachefiles_check_active(struct cachefiles_cache *cache,
 	unsigned long start;
 	int ret;
 
-	//_enter(",%*.*s/,%s",
-	//       dir->d_name.len, dir->d_name.len, dir->d_name.name, filename);
+	//_enter(",%pq/,%s", &dir->d_name, filename);
 
 	/* look up the victim */
 	mutex_lock_nested(&dir->d_inode->i_mutex, 1);
@@ -915,8 +910,7 @@ int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 	struct dentry *victim;
 	int ret;
 
-	_enter(",%*.*s/,%s",
-	       dir->d_name.len, dir->d_name.len, dir->d_name.name, filename);
+	_enter(",%pq/,%s", &dir->d_name, filename);
 
 	victim = cachefiles_check_active(cache, dir, filename);
 	if (IS_ERR(victim))
@@ -974,8 +968,7 @@ int cachefiles_check_in_use(struct cachefiles_cache *cache, struct dentry *dir,
 {
 	struct dentry *victim;
 
-	//_enter(",%*.*s/,%s",
-	//       dir->d_name.len, dir->d_name.len, dir->d_name.name, filename);
+	//_enter(",%pq/,%s", &dir->d_name, filename);
 
 	victim = cachefiles_check_active(cache, dir, filename);
 	if (IS_ERR(victim))

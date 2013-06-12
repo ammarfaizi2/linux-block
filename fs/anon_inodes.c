@@ -31,8 +31,8 @@ static const struct file_operations anon_inode_fops;
  */
 static char *anon_inodefs_dname(struct dentry *dentry, char *buffer, int buflen)
 {
-	return dynamic_dname(dentry, buffer, buflen, "anon_inode:%s",
-				dentry->d_name.name);
+	return dynamic_dname(dentry, buffer, buflen, "anon_inode:%pq",
+				&dentry->d_name);
 }
 
 static const struct dentry_operations anon_inodefs_dentry_operations = {
