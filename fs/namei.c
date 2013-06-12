@@ -3979,6 +3979,42 @@ error_unlock:
 	return err;
 }
 
+static int do_whiteout(struct nameidata *nd, struct path *path, int isdir)
+{
+	struct path safe = nd->path;
+	struct dentry *dentry = path->dentry;
+	int err;
+
+	path_get(&safe);
+
+	err = may_delete(nd->path.dentry->d_inode, dentry, isdir);
+	if (err)
+		goto out;
+
+	if (nd->path.dentry != dentry->d_parent) {
+		/* We need the dentry on the upperfs as that's what we're going
+		 * to white out.
+		 */
+		dentry = __lookup_hash(&path->dentry->d_name, nd->path.dentry,
+				       nd->flags);
+		err = PTR_ERR(dentry);
+		if (IS_ERR(dentry))
+			goto out;
+
+		dput(path->dentry);
+		if (path->mnt != safe.mnt)
+			mntput(path->mnt);
+		path->mnt = nd->path.mnt;
+		path->dentry = dentry;
+	}
+
+	err = vfs_whiteout(nd->path.dentry, path, isdir);
+
+out:
+	path_put(&safe);
+	return err;
+}
+
 /*
  * The dentry_unhash() helper will try to drop the dentry early: we
  * should have a usage count of 1 if we're the only user of this
