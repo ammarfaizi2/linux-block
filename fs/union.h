@@ -18,6 +18,7 @@
 
 #include <linux/mount.h>
 #include <linux/dcache.h>
+#include <linux/namei.h>
 #include <linux/path.h>
 #include <linux/bug.h>
 
@@ -74,8 +75,36 @@ struct path *union_find_dir(struct dentry *dentry, unsigned int layer)
 	return &dentry->d_union_stack->u_dirs[layer];
 }
 
+
 extern int union_create_topmost_dir(struct path *, struct qstr *, struct path *,
 				    struct path *);
+
+/*
+ * Determine whether we need to perform unionmount traversal or the copyup of a
+ * dentry.
+ */
+static inline
+bool needs_lookup_union(struct nameidata *nd,
+			struct path *parent_path, struct path *path)
+{
+	if (!IS_DIR_UNIONED(parent_path->dentry))
+		return false;
+
+	/* Either already built or crossed a mountpoint to not-unioned mnt */
+	/* XXX are bind mounts root? think not */
+	if (IS_ROOT(path->dentry))
+		return false;
+
+	/* If this is a fallthru dentry and the caller requires the underlying
+	 * inode to be copied up, then do so.
+	 */
+	if (nd->flags & LOOKUP_COPY_UP && d_is_fallthru(path->dentry))
+		return true;
+
+	/* It's okay not to have the lock; will recheck in lookup_union() */
+	/* XXX set for root dentry at mount? */
+	return !(path->dentry->d_flags & DCACHE_UNION_LOOKUP_DONE);
+}
 
 #else /* CONFIG_UNION_MOUNT */
 
@@ -102,6 +131,12 @@ static inline int union_create_topmost_dir(struct path *parent, struct qstr *nam
 {
 	BUG();
 	return 0;
+}
+
+static inline bool needs_lookup_union(struct nameidata *nd,
+				      struct path *parent_path, struct path *path)
+{
+	return false;
 }
 
 #endif	/* CONFIG_UNION_MOUNT */

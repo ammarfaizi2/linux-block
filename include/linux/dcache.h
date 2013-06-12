@@ -235,6 +235,7 @@ struct dentry_operations {
 	(DCACHE_MOUNTED|DCACHE_NEED_AUTOMOUNT|DCACHE_MANAGE_TRANSIT)
 
 #define DCACHE_DENTRY_KILLED	0x100000
+#define DCACHE_UNION_LOOKUP_DONE 0x200000 /* Union lookup was called on this dentry */
 
 extern seqlock_t rename_lock;
 
