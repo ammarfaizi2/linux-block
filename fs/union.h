@@ -65,6 +65,7 @@ static inline bool IS_DIR_UNIONED(struct dentry *dentry)
 }
 
 extern void d_free_unions(struct dentry *);
+extern int union_add_dir(struct path *, struct path *, unsigned int);
 
 static inline
 struct path *union_find_dir(struct dentry *dentry, unsigned int layer)
@@ -79,6 +80,13 @@ static inline bool IS_MNT_UNION(struct vfsmount *mnt) { return false; }
 static inline bool IS_MNT_LOWER(struct vfsmount *mnt) { return false; }
 static inline bool IS_DIR_UNIONED(struct dentry *dentry) { return false; }
 static inline void d_free_unions(struct dentry *dentry) {}
+
+static inline
+int union_add_dir(struct path *topmost, struct path *lower, unsigned layer)
+{
+	BUG();
+	return 0;
+}
 
 static inline struct path *union_find_dir(struct dentry *dentry, unsigned layer)
 {

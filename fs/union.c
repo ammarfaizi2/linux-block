@@ -60,3 +60,31 @@ void d_free_unions(struct dentry *topmost)
 	kfree(topmost->d_union_stack);
 	topmost->d_union_stack = NULL;
 }
+
+/**
+ * union_add_dir - Add another layer to a unioned directory
+ * @topmost: topmost directory
+ * @lower: directory in the current layer
+ * @layer: index of layer to add this at
+ *
+ * @layer counts starting at 0 for the dir below the topmost dir.
+ *
+ * This transfers the caller's references to the constituents of *lower to the
+ * union stack.
+ */
+int union_add_dir(struct path *topmost, struct path *lower, unsigned layer)
+{
+	struct dentry *dentry = topmost->dentry;
+	struct path *path;
+
+	BUG_ON(layer >= dentry->d_sb->s_union_count);
+
+	if (!dentry->d_union_stack)
+		dentry->d_union_stack = union_alloc(topmost);
+	if (!dentry->d_union_stack)
+		return -ENOMEM;
+
+	path = union_find_dir(dentry, layer);
+	*path = *lower;
+	return 0;
+}
