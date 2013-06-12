@@ -59,6 +59,13 @@ static inline bool IS_MNT_LOWER(struct vfsmount *mnt)
 	return mnt->mnt_flags & MNT_UNION_LOWER;
 }
 
+static inline bool IS_DIR_UNIONED(struct dentry *dentry)
+{
+	return !!dentry->d_union_stack;
+}
+
+extern void d_free_unions(struct dentry *);
+
 static inline
 struct path *union_find_dir(struct dentry *dentry, unsigned int layer)
 {
@@ -70,6 +77,9 @@ struct path *union_find_dir(struct dentry *dentry, unsigned int layer)
 
 static inline bool IS_MNT_UNION(struct vfsmount *mnt) { return false; }
 static inline bool IS_MNT_LOWER(struct vfsmount *mnt) { return false; }
+static inline bool IS_DIR_UNIONED(struct dentry *dentry) { return false; }
+static inline void d_free_unions(struct dentry *dentry) {}
+
 static inline struct path *union_find_dir(struct dentry *dentry, unsigned layer)
 {
 	BUG();
