@@ -1254,6 +1254,78 @@ static void follow_dotdot(struct nameidata *nd)
 	nd->inode = nd->path.dentry->d_inode;
 }
 
+static struct dentry *__lookup_hash(struct qstr *name, struct dentry *base,
+				    unsigned flags);
+
+/**
+ * __lookup_union - Lookup and build union stack
+ * @nd: nameidata for the parent of @topmost
+ * @name: name of target
+ * @topmost: path of the target on the topmost file system
+ *
+ * Do the "union" part of lookup for @topmost - that is, look it up in the
+ * lower layers of its parent directory's union stack.  If @topmost is a
+ * directory, build its union stack.  @topmost is the path of the target in the
+ * topmost layer of the union file system.  It is either a directory or a
+ * negative (non-whiteout) dentry.
+ */
+static int __lookup_union(struct nameidata *nd, struct qstr *name,
+			  struct path *topmost)
+{
+	struct path lower, parent = nd->path;
+	unsigned i, layers = parent.dentry->d_sb->s_union_count;
+	int err;
+
+	if (!topmost->dentry->d_inode) {
+		if (d_is_whiteout(topmost->dentry))
+			return 0;
+		if (IS_OPAQUE(parent.dentry->d_inode) &&
+		    !d_is_fallthru(topmost->dentry))
+			return 0;
+	}
+
+	/* If it's positive and not a dir, no lookup needed */
+	if (topmost->dentry->d_inode &&
+	    !S_ISDIR(topmost->dentry->d_inode->i_mode))
+		return 0;
+
+	/* At this point we have either a negative fallthru dentry or we have a
+	 * positive directory dentry.
+	 *
+	 * Loop through the union stack of the parent of the target, building
+	 * the union stack of the target (if applicable).  Note that the union
+	 * stack of the root directory is built at mount.
+	 */
+	for (i = 0; i < layers; i++) {
+		/* Get the parent directory for this layer and lookup
+		 * the target in it.
+		 */
+		struct path *lower_parent = union_find_dir(parent.dentry, i);
+		if (!lower_parent->mnt)
+			continue;
+
+		lower.mnt = mntget(lower_parent->mnt);
+		mutex_lock(&lower_parent->dentry->d_inode->i_mutex);
+		lower.dentry = __lookup_hash(name, lower_parent->dentry,
+					     nd->flags);
+		mutex_unlock(&lower_parent->dentry->d_inode->i_mutex);
+
+		if (IS_ERR(lower.dentry)) {
+			mntput(lower.mnt);
+			err = PTR_ERR(lower.dentry);
+			goto out_err;
+		}
+		/* XXX - do nothing, lookup rule processing in later patches */
+		path_put(&lower);
+	}
+	return 0;
+
+out_err:
+	d_free_unions(topmost->dentry);
+	path_put(&lower);
+	return err;
+}
+
 /*
  * This looks up the name in dcache, possibly revalidates the old dentry and
  * allocates a new one if not found or not valid.  In the need_lookup argument
