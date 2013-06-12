@@ -26,6 +26,7 @@
 #define CL_UNPRIVILEGED		0x0040
 #define CL_NO_SHARED 		0x0080
 #define CL_NO_SLAVE 		0x0100
+#define CL_MAKE_HARD_READONLY	0x0200
 
 static inline void set_mnt_shared(struct mount *mnt)
 {
