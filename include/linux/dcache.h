@@ -203,6 +203,8 @@ struct dentry_operations {
 #define DCACHE_FSNOTIFY_PARENT_WATCHED 0x4000
      /* Parent inode is watched by some fsnotify listener */
 
+#define DCACHE_FALLTHRU		0x8000	/* Continue lookup below an opaque dir */
+
 #define DCACHE_MOUNTED		0x10000	/* is a mountpoint */
 #define DCACHE_NEED_AUTOMOUNT	0x20000	/* handle automount on this dir */
 #define DCACHE_MANAGE_TRANSIT	0x40000	/* manage transit from this dirent */
@@ -410,6 +412,11 @@ static inline bool d_managed(struct dentry *dentry)
 static inline int d_is_whiteout(struct dentry *dentry)
 {
 	return dentry->d_flags & DCACHE_WHITEOUT;
+}
+
+static inline int d_is_fallthru(struct dentry *dentry)
+{
+	return dentry->d_flags & DCACHE_FALLTHRU;
 }
 
 static inline bool d_mountpoint(struct dentry *dentry)

@@ -20,7 +20,8 @@
 
 static inline int simple_positive(struct dentry *dentry)
 {
-	return dentry->d_inode && !d_unhashed(dentry);
+	return (dentry->d_inode && !d_unhashed(dentry)) ||
+		(dentry->d_flags & DCACHE_FALLTHRU);
 }
 
 int simple_getattr(struct vfsmount *mnt, struct dentry *dentry,
