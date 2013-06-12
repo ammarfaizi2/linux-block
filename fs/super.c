@@ -303,6 +303,7 @@ void deactivate_locked_super(struct super_block *s)
 		/* caches are now gone, we can safely kill the shrinker now */
 		unregister_shrinker(&s->s_shrink);
 		put_filesystem(fs);
+		put_union_sb(s);
 		put_super(s);
 	} else {
 		up_write(&s->s_umount);
