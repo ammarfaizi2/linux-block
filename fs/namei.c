@@ -3849,8 +3849,17 @@ int vfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 		return -EMLINK;
 
 	error = dir->i_op->mkdir(dir, dentry, mode);
-	if (!error)
-		fsnotify_mkdir(dir, dentry);
+	if (error)
+		return error;
+
+	/* XXX racy - crash now and dir isn't opaque */
+	if (IS_DIR_UNIONED(dentry->d_parent)) {
+		dentry->d_inode->i_flags |= S_OPAQUE;
+		mark_inode_dirty(dentry->d_inode);
+	}
+
+	fsnotify_mkdir(dir, dentry);
+
 	return error;
 }
 
