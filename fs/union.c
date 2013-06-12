@@ -569,6 +569,9 @@ static int union_copyup_file(struct path *parent, struct path *lower,
 	struct path to;
 	int error;
 
+	printk("-->union_copyup_file(,%s,%s,%zu)\n",
+	       lower->dentry->d_name.name, dentry->d_name.name, len);
+
 	BUG_ON(!mutex_is_locked(&parent->dentry->d_inode->i_mutex));
 
 	override_cred = prepare_kernel_cred(NULL);
@@ -605,6 +608,7 @@ static int union_copyup_file(struct path *parent, struct path *lower,
 out:
 	revert_creds(saved_cred);
 	put_cred(override_cred);
+	printk("<--union_copyup_file() = %d\n", error);
 	return error;
 }
 

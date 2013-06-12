@@ -1686,6 +1686,8 @@ static int prepare_mnt_union(struct mount *topmost_mnt, struct path *mntpnt)
 	if (d_unlinked(mntpnt->dentry))
 		return -ENOENT;
 
+	printk("UNION: prepare\n");
+
 	err = check_topmost_union_mnt(topmost_mnt, topmost_mnt->mnt.mnt_flags);
 	if (err)
 		return err;
@@ -1697,6 +1699,8 @@ static int prepare_mnt_union(struct mount *topmost_mnt, struct path *mntpnt)
 	err = build_root_union(topmost_mnt);
 	if (err)
 		goto out;
+
+	printk("UNION: prepared\n");
 	return 0;
 
 out:

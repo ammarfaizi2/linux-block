@@ -90,6 +90,8 @@ bool needs_lookup_union(struct nameidata *nd,
 	if (!IS_DIR_UNIONED(parent_path->dentry))
 		return false;
 
+	printk("UNION: is unioned\n");
+
 	/* Either already built or crossed a mountpoint to not-unioned mnt */
 	/* XXX are bind mounts root? think not */
 	if (IS_ROOT(path->dentry))

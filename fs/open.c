@@ -71,6 +71,15 @@ long vfs_truncate(struct path *parent, struct path *path, loff_t length)
 
 	inode = path->dentry->d_inode;
 
+	if (IS_MNT_LOWER(path->mnt))
+		printk("UNION: truncate: path.mnt: at lower\n");
+	if (IS_MNT_UNION(path->mnt))
+		printk("UNION: truncate: path.mnt: at upper\n");
+	if (parent && IS_MNT_LOWER(parent->mnt))
+		printk("UNION: truncate: parent.mnt at lower\n");
+	if (parent && IS_MNT_UNION(parent->mnt))
+		printk("UNION: truncate: parent.mnt at upper\n");
+
 	/* For directories it's -EISDIR, for other non-regulars - -EINVAL */
 	if (S_ISDIR(inode->i_mode))
 		return -EISDIR;
