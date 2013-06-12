@@ -1428,6 +1428,154 @@ static int lookup_union_locked(struct nameidata *nd, struct qstr *name,
 }
 
 /*
+ * lookup_union - union mount-aware part of do_lookup()
+ *
+ * do_lookup()-style wrapper for lookup_union().  Follows mounts.
+ */
+static int lookup_union(struct nameidata *nd, struct qstr *name,
+			struct path *topmost)
+{
+	struct dentry *parent = nd->path.dentry;
+	struct inode *dir = parent->d_inode;
+	int err;
+
+	mutex_lock(&dir->i_mutex);
+	err = lookup_union_locked(nd, name, topmost);
+	mutex_unlock(&dir->i_mutex);
+	if (err)
+		return err;
+
+	return follow_managed(topmost, nd->flags);
+}
+
+/*
+ * lookup_union_rcu - Handle union mounted dentries in RCU-walk mode
+ * @nd: The current pathwalk state (refers to @parent currently)
+ * @parent: The parent directory (holds the union stack)
+ * @path: The point just looked up in @parent
+ * @parent_seq: The d_seq of @parent at the point of lookup
+ * @inode: The inode at @dentry (*@inode is NULL if negative dentry)
+ *
+ * Handle a dentry that represents a non-directory file or a hole/reference in
+ * a union mount upperfs.  This involves transiting to the lower file, provided
+ * we aren't going to open the lower file for writing - otherwise we have to
+ * copy the file up (which we can't do in rcuwalk mode).
+ *
+ * Directories are handled differently: they're unconditionally and completely
+ * mirrored from the lowerfs to the upperfs as soon as we encounter them in a
+ * lookup.  However, since we don't create dentries in rcuwalk mode, this will
+ * be handled automatically by refwalk mode.
+ *
+ * We return true if we don't need to do anything or if we've successfully
+ * updated the path.  If we need to drop out of RCU-walk and go to refwalk
+ * mode, we return false.
+ */
+static bool lookup_union_rcu(struct nameidata *nd,
+			     struct dentry *parent,
+			     struct path *path,
+			     unsigned parent_seq,
+			     struct inode **inode)
+{
+	struct dentry *dentry = path->dentry;
+	struct inode *parent_inode = nd->inode;
+	unsigned layer, layers;
+
+	/* Handle non-unionmount dentries first.  The union stack will have
+	 * been built during the initial lookup of the parent dir, so if it's
+	 * not there, it's not unioned.
+	 */
+	if (!IS_DIR_UNIONED(parent))
+		return true;
+
+	/* If it's positive then no further lookup is needed: the file or
+	 * directory has been copied up and the user gets to play with that.
+	 */
+	if (*inode)
+		return true;
+
+	/* If this dentry is a blocker, then stop here. */
+	if (d_is_whiteout(dentry) ||
+	    (IS_OPAQUE(parent_inode) && !d_is_fallthru(dentry)))
+		return true;
+
+	/* The dentry is a fallthru in an opaque unioned directory.
+	 *
+	 * If the caller demands that the terminal dentry be instantiated in
+	 * the top layer of the union (copied up) immediately, that will
+	 * require a mutex.
+	 */
+	if (nd->flags & LOOKUP_COPY_UP)
+		return false;
+
+	/* At this point we have a negative dentry in the unionmount that may
+	 * be overlaying a non-directory file in a lower filesystem, so we loop
+	 * through the union stack of the parent directory to try to find a
+	 * usable dentry further down.
+	 */
+	layers = parent->d_sb->s_union_count;
+	for (layer = 0; layer < layers; layer++) {
+		/* Look for the a matching dentry in this layer, assuming it's
+		 * still valid.  Since the lower fs is hard locked R/O,
+		 * revalidation ought to be unnecessary.
+		 */
+		unsigned ldseq, seq;
+		struct dentry *lower_dir, *lower;
+		struct path *lower_path = union_find_dir(parent, layer);
+		if (!lower_path->mnt)
+			continue;
+
+		lower_dir = lower_path->dentry;
+		ldseq = read_seqcount_begin(&lower_dir->d_seq);
+
+		if (unlikely(lower_dir->d_flags & DCACHE_OP_REVALIDATE)) {
+			if (unlikely(d_revalidate(lower_dir, nd->flags) <= 0) ||
+			    __read_seqcount_retry(&lower_dir->d_seq, ldseq))
+				return false;
+		}
+
+		lower = __d_lookup_rcu(lower_dir, &dentry->d_name, &seq, *inode);
+		if (!lower)
+			return false;
+		*inode = lower->d_inode;
+
+		/* We've got a negative dentry which can mean several things: a
+		 * plain negative dentry is ignored and lookup continues to the
+		 * next layer; but a whiteout or a non-fallthru in an opaque
+		 * dir covers everything below it.
+		 */
+		if (!*inode) {
+			if (d_is_whiteout(lower) ||
+			    (IS_OPAQUE(parent_inode) && !d_is_fallthru(lower))) {
+				if (read_seqcount_retry(&lower_dir->d_seq,
+							ldseq))
+					return false;
+				return true;
+			}
+			continue;
+		}
+
+		/* If the lower dentry is a directory then it will need copying
+		 * up before we can make use of it.
+		 */
+		if (S_ISDIR((*inode)->i_mode))
+			return false;
+
+		/* There is a file in a lower fs that we can use */
+		if (read_seqcount_retry(&lower_dir->d_seq, ldseq) ||
+		    __read_seqcount_retry(&parent->d_seq, parent_seq))
+			return false;
+
+		path->mnt = lower_path->mnt;
+		path->dentry = lower;
+		nd->seq = seq;
+		return true;
+	}
+
+	/* Found nothing, so just use the top negative dentry */
+	return true;
+}
+
+/*
  * This looks up the name in dcache, possibly revalidates the old dentry and
  * allocates a new one if not found or not valid.  In the need_lookup argument
  * returns whether i_op->lookup is necessary.
@@ -1525,7 +1673,7 @@ static int lookup_fast(struct nameidata *nd,
 	 * do the non-racy lookup, below.
 	 */
 	if (nd->flags & LOOKUP_RCU) {
-		unsigned seq;
+		unsigned seq, pseq;
 		dentry = __d_lookup_rcu(parent, &nd->last, &seq, nd->inode);
 		if (!dentry)
 			goto unlazy;
@@ -1545,7 +1693,8 @@ static int lookup_fast(struct nameidata *nd,
 		 * The memory barrier in read_seqcount_begin of child is
 		 *  enough, we can use __read_seqcount_retry here.
 		 */
-		if (__read_seqcount_retry(&parent->d_seq, nd->seq))
+		pseq = nd->seq;
+		if (__read_seqcount_retry(&parent->d_seq, pseq))
 			return -ECHILD;
 		nd->seq = seq;
 
@@ -1559,6 +1708,8 @@ static int lookup_fast(struct nameidata *nd,
 		}
 		path->mnt = mnt;
 		path->dentry = dentry;
+		if (unlikely(!lookup_union_rcu(nd, parent, path, pseq, inode)))
+			goto unlazy;
 		if (unlikely(!__follow_mount_rcu(nd, path, inode)))
 			goto unlazy;
 		if (unlikely(path->dentry->d_flags & DCACHE_NEED_AUTOMOUNT))
