@@ -140,3 +140,10 @@ static inline bool needs_lookup_union(struct nameidata *nd,
 }
 
 #endif	/* CONFIG_UNION_MOUNT */
+
+/* Temporary dummy */
+static inline int union_copyup(struct path *parent, struct path *path,
+			       bool copy_all, size_t len)
+{
+	return -ENOANO;
+}
