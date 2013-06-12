@@ -1747,6 +1747,13 @@ unlazy:
 	}
 	if (err)
 		nd->flags |= LOOKUP_JUMPED;
+
+	if (needs_lookup_union(nd, &nd->path, path)) {
+		int err = lookup_union(nd, &nd->last, path);
+		if (err < 0)
+			return err;
+	}
+
 	*inode = path->dentry->d_inode;
 	return 0;
 
@@ -1777,6 +1784,13 @@ static int lookup_slow(struct nameidata *nd, struct path *path)
 	}
 	if (err)
 		nd->flags |= LOOKUP_JUMPED;
+	if (needs_lookup_union(nd, &nd->path, path)) {
+		err = lookup_union(nd, &nd->last, path);
+		if (err < 0) {
+			path_put_conditional(path, nd);
+			return err;
+		}
+	}
 	return 0;
 }
 
@@ -2416,6 +2430,7 @@ static int lookup_hash(struct nameidata *nd, struct path *path)
 		path->dentry = NULL;
 		return PTR_ERR(result);
 	}
+
 	path->mnt = nd->path.mnt;
 	path->dentry = result;
 	return 0;
@@ -3665,6 +3680,8 @@ struct dentry *kern_path_create(int dfd, const char *pathname,
 	 */
 	mutex_lock_nested(&nd.path.dentry->d_inode->i_mutex, I_MUTEX_PARENT);
 	error = lookup_hash(&nd, &new_path);
+	if (!error && needs_lookup_union(&nd, &nd.path, &new_path))
+		error = lookup_union_locked(&nd, &nd.last, &new_path);
 	if (error)
 		goto unlock;
 
@@ -3964,6 +3981,8 @@ retry:
 
 	mutex_lock_nested(&nd.path.dentry->d_inode->i_mutex, I_MUTEX_PARENT);
 	error = lookup_hash(&nd, &path);
+	if (!error && needs_lookup_union(&nd, &nd.path, &path))
+		error = lookup_union_locked(&nd, &nd.last, &path);
 	if (error)
 		goto exit2;
 	if (!path.dentry->d_inode) {
@@ -4061,6 +4080,8 @@ retry:
 
 	mutex_lock_nested(&nd.path.dentry->d_inode->i_mutex, I_MUTEX_PARENT);
 	error = lookup_hash(&nd, &path);
+	if (!error && needs_lookup_union(&nd, &nd.path, &path))
+		error = lookup_union_locked(&nd, &nd.last, &path);
 	if (!error) {
 		/* Why not before? Because we want correct error value */
 		if (nd.last.name[nd.last.len])
@@ -4495,6 +4516,8 @@ retry:
 	trap = lock_rename(new_dir, old_dir);
 
 	error = lookup_hash(&oldnd, &old);
+	if (!error && needs_lookup_union(&oldnd, &oldnd.path, &old))
+		error = lookup_union_locked(&oldnd, &oldnd.last, &old);
 	if (error)
 		goto exit3;
 	/* source must exist */
@@ -4514,6 +4537,8 @@ retry:
 	if (old.dentry == trap)
 		goto exit4;
 	error = lookup_hash(&newnd, &new);
+	if (!error && needs_lookup_union(&newnd, &newnd.path, &new))
+		error = lookup_union_locked(&newnd, &newnd.last, &new);
 	if (error)
 		goto exit4;
 	/* target should not be an ancestor of source */
