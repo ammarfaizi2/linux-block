@@ -2255,13 +2255,90 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 	return 0;
 }
 
+/*
+ * Walk the final component of a path, returning it in *path.  The parent is
+ * left in nd->path.
+ */
+static int walk_last_component(struct nameidata *nd, struct path *path,
+			       int follow)
+{
+	struct inode *inode;
+	int err;
+
+	/* "." and ".." are special - ".." especially so because it has
+	 * to be able to know about the current root directory and
+	 * parent relationships.
+	 */
+	if (unlikely(nd->last_type != LAST_NORM))
+		return handle_dots(nd, nd->last_type);
+	err = lookup_fast(nd, path, &inode);
+	if (unlikely(err)) {
+		if (err < 0)
+			goto out_err;
+		err = lookup_slow(nd, path);
+		if (err < 0)
+			goto out_err;
+		inode = path->dentry->d_inode;
+	}
+
+	err = -ENOENT;
+	if (!inode)
+		goto out_path_put;
+
+	if (should_follow_link(inode, follow)) {
+		if (nd->flags & LOOKUP_RCU) {
+			if (unlikely(unlazy_walk(nd, path->dentry))) {
+				err = -ECHILD;
+				goto out_err;
+			}
+		}
+		BUG_ON(inode != path->dentry->d_inode);
+		return 1;
+	}
+
+	if (nd->flags & LOOKUP_COPY_UP && IS_MNT_LOWER(path->mnt)) {
+		BUG_ON(S_ISDIR(inode->i_mode));
+		if (nd->flags & LOOKUP_RCU &&
+		    unlikely(unlazy_walk(nd, path->dentry))) {
+			err = -ECHILD;
+			goto out_err;
+		}
+
+		err = mnt_want_write(nd->path.mnt);
+		if (err)
+			goto out_path_put;
+
+		mutex_lock(&nd->path.dentry->d_inode->i_mutex);
+		err = union_copyup(&nd->path, path, true, 0);
+		mutex_unlock(&nd->path.dentry->d_inode->i_mutex);
+		mnt_drop_write(nd->path.mnt);
+		if (err)
+			goto out_path_put;
+
+		inode = path->dentry->d_inode;
+		err = -ENOENT;
+		if (!inode)
+			goto out_path_put;
+	}
+
+	path_to_nameidata(path, nd);
+	nd->inode = inode;
+	return 0;
+
+out_path_put:
+	path_to_nameidata(path, nd);
+out_err:
+	terminate_walk(nd);
+	return err;
+}
+
 static inline int lookup_last(struct nameidata *nd, struct path *path)
 {
 	if (nd->last_type == LAST_NORM && nd->last.name[nd->last.len])
 		nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
 
 	nd->flags &= ~LOOKUP_PARENT;
-	return walk_component(nd, path, nd->flags & LOOKUP_FOLLOW);
+	return walk_last_component(nd, path, nd->flags & LOOKUP_FOLLOW);
 }
 
 /* Returns 0 and nd will be valid on success; Retuns error, otherwise. */
