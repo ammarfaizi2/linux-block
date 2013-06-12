@@ -1342,6 +1342,16 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 			goto out_found_lower_file;
 		}
 
+		/* Mountpoints and automount points on a lowerfs just confuse
+		 * everything, so refuse to handle them for the moment.
+		 */
+		err = -EXDEV;
+		if (unlikely(d_mountpoint(lower.dentry)))
+			goto out_err;
+		err = -EREMOTE;
+		if (unlikely(d_managed(lower.dentry)))
+			goto out_err;
+
 		/* Now we know the target is a directory.  Create a matching
 		 * topmost directory if one doesn't already exist, and add this
 		 * layer's directory to the union stack for the topmost
