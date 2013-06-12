@@ -89,16 +89,36 @@ extern unsigned int full_name_hash(const unsigned char *, unsigned int);
  * Try to keep struct dentry aligned on 64 byte cachelines (this will
  * give reasonable cacheline footprint with larger lines without the
  * large memory footprint increase).
+ *
+ * XXX DNAME_INLINE_LEN_MIN is kind of pitiful on 64bit + union
+ * mounts.  May be worth tuning up, but either we go to 256 bytes and
+ * a wasteful 88 bytes of d_iname, or we lose 64-byte aligment.
  */
 #ifdef CONFIG_64BIT
+
+#ifdef CONFIG_UNION_MOUNT
+# define DNAME_INLINE_LEN 24 /* 192 bytes */
+#else
 # define DNAME_INLINE_LEN 32 /* 192 bytes */
+#endif /* CONFIG_UNION_MOUNT */
+
+#else
+
+#ifdef CONFIG_UNION_MOUNT
+# ifdef CONFIG_SMP
+#  define DNAME_INLINE_LEN 32 /* 128 bytes */
+# else
+#  define DNAME_INLINE_LEN 36 /* 128 bytes */
+# endif
 #else
 # ifdef CONFIG_SMP
 #  define DNAME_INLINE_LEN 36 /* 128 bytes */
 # else
 #  define DNAME_INLINE_LEN 40 /* 128 bytes */
 # endif
-#endif
+#endif /* CONFIG_UNION_MOUNT */
+
+#endif /* CONFIG_64BIT */
 
 struct dentry {
 	/* RCU lookup touched fields */
@@ -119,6 +139,9 @@ struct dentry {
 	unsigned long d_time;		/* used by d_revalidate */
 	void *d_fsdata;			/* fs-specific data */
 
+#ifdef CONFIG_UNION_MOUNT
+	struct union_stack *d_union_stack;	/* dirs in union stack */
+#endif
 	struct list_head d_lru;		/* LRU list */
 	/*
 	 * d_child and d_rcu can share memory

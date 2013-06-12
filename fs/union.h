@@ -19,7 +19,6 @@
 #include <linux/mount.h>
 #include <linux/dcache.h>
 #include <linux/path.h>
-#include <linux/bug.h>
 
 /*
  * WARNING! Confusing terminology alert.
@@ -34,6 +33,20 @@
  * its mnt->mnt_parent pointer, but "up" in union mounts means going in the
  * opposite direction (until you run out of union layers).
  */
+
+/*
+ * The union_stack structure.  It is an array of struct paths of
+ * directories below the topmost directory in a unioned directory, The
+ * topmost dentry has a pointer to this structure.  The topmost dentry
+ * can only be part of one union, so we can reference it from the
+ * dentry, but lower dentries can be part of multiple union stacks.
+ *
+ * The number of dirs actually allocated is kept in the superblock,
+ * s_union_count.
+ */
+struct union_stack {
+	struct path u_dirs[0];
+};
 
 static inline bool IS_MNT_UNION(struct vfsmount *mnt)
 {
