@@ -404,8 +404,8 @@ static void __put_css_set(struct css_set *cset, int taskexit)
 	list_for_each_entry_safe(link, tmp_link, &cset->cgrp_links, cgrp_link) {
 		struct cgroup *cgrp = link->cgrp;
 
-		list_del(&link->cset_link);
-		list_del(&link->cgrp_link);
+		list_del_init(&link->cset_link);
+		list_del_init(&link->cgrp_link);
 
 		/*
 		 * We may not be holding cgroup_mutex, and if cgrp->count is
@@ -576,7 +576,7 @@ static void free_cgrp_cset_links(struct list_head *links_to_free)
 	struct cgrp_cset_link *link, *tmp_link;
 
 	list_for_each_entry_safe(link, tmp_link, links_to_free, cset_link) {
-		list_del(&link->cset_link);
+		list_del_init(&link->cset_link);
 		kfree(link);
 	}
 }
@@ -597,7 +597,7 @@ static int allocate_cgrp_cset_links(int count, struct list_head *tmp_links)
 	INIT_LIST_HEAD(tmp_links);
 
 	for (i = 0; i < count; i++) {
-		link = kmalloc(sizeof(*link), GFP_KERNEL);
+		link = kzalloc(sizeof(*link), GFP_KERNEL);
 		if (!link) {
 			free_cgrp_cset_links(tmp_links);
 			return -ENOMEM;
@@ -658,7 +658,7 @@ static struct css_set *find_css_set(struct css_set *old_cset,
 	if (cset)
 		return cset;
 
-	cset = kmalloc(sizeof(*cset), GFP_KERNEL);
+	cset = kzalloc(sizeof(*cset), GFP_KERNEL);
 	if (!cset)
 		return NULL;
 
@@ -1754,14 +1754,14 @@ static void cgroup_kill_sb(struct super_block *sb) {
 	write_lock(&css_set_lock);
 
 	list_for_each_entry_safe(link, tmp_link, &cgrp->cset_links, cset_link) {
-		list_del(&link->cset_link);
-		list_del(&link->cgrp_link);
+		list_del_init(&link->cset_link);
+		list_del_init(&link->cgrp_link);
 		kfree(link);
 	}
 	write_unlock(&css_set_lock);
 
 	if (!list_empty(&root->root_list)) {
-		list_del(&root->root_list);
+		list_del_init(&root->root_list);
 		root_count--;
 	}
 
@@ -2478,10 +2478,12 @@ static int cgroup_file_open(struct inode *inode, struct file *file)
 	cft = __d_cft(file->f_dentry);
 
 	if (cft->read_map || cft->read_seq_string) {
-		struct cgroup_seqfile_state *state =
-			kzalloc(sizeof(*state), GFP_USER);
+		struct cgroup_seqfile_state *state;
+
+		state = kzalloc(sizeof(*state), GFP_USER);
 		if (!state)
 			return -ENOMEM;
+
 		state->cft = cft;
 		state->cgroup = __d_cgrp(file->f_dentry->d_parent);
 		file->f_op = &cgroup_seqfile_operations;
@@ -3514,7 +3516,7 @@ static struct cgroup_pidlist *cgroup_pidlist_find(struct cgroup *cgrp,
 		}
 	}
 	/* entry not found; create a new one */
-	l = kmalloc(sizeof(struct cgroup_pidlist), GFP_KERNEL);
+	l = kzalloc(sizeof(struct cgroup_pidlist), GFP_KERNEL);
 	if (!l) {
 		mutex_unlock(&cgrp->pidlist_mutex);
 		return l;
@@ -3523,8 +3525,6 @@ static struct cgroup_pidlist *cgroup_pidlist_find(struct cgroup *cgrp,
 	down_write(&l->mutex);
 	l->key.type = type;
 	l->key.ns = get_pid_ns(ns);
-	l->use_count = 0; /* don't increment here */
-	l->list = NULL;
 	l->owner = cgrp;
 	list_add(&l->links, &cgrp->pidlists);
 	mutex_unlock(&cgrp->pidlist_mutex);
@@ -3738,7 +3738,7 @@ static void cgroup_release_pid_array(struct cgroup_pidlist *l)
 	BUG_ON(!l->use_count);
 	if (!--l->use_count) {
 		/* we're the last user if refcount is 0; remove and free */
-		list_del(&l->links);
+		list_del_init(&l->links);
 		mutex_unlock(&l->owner->pidlist_mutex);
 		pidlist_free(l->list);
 		put_pid_ns(l->key.ns);
