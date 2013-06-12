@@ -39,6 +39,7 @@
 #include <linux/ratelimit.h>
 #include "internal.h"
 #include "mount.h"
+#include "union.h"
 
 /*
  * Usage:
@@ -376,6 +377,7 @@ static struct dentry *d_kill(struct dentry *dentry, struct dentry *parent)
 	if (parent)
 		spin_unlock(&parent->d_lock);
 	dentry_iput(dentry);
+	d_free_unions(dentry);
 	/*
 	 * dentry_iput drops the locks, at which point nobody (except
 	 * transient RCU lookups) can reach this dentry.
@@ -947,6 +949,7 @@ static void shrink_dcache_for_umount_subtree(struct dentry *dentry)
 					iput(inode);
 			}
 
+			d_free_unions(dentry);
 			d_free(dentry);
 
 			/* finished when we fall off the top of the tree,
@@ -2081,6 +2084,7 @@ again:
 		}
 		dentry->d_flags &= ~DCACHE_CANT_MOUNT;
 		dentry_unlink_inode(dentry);
+		d_free_unions(dentry);
 		fsnotify_nameremove(dentry, isdir);
 		return;
 	}
@@ -2090,6 +2094,12 @@ again:
 
 	spin_unlock(&dentry->d_lock);
 
+	/* Remove any associated unions.  While someone still has this
+	 * directory open (ref count > 0), we could not have deleted it unless
+	 * it was empty, and therefore has no references to directories below
+	 * it.  So we don't need the unions.
+	 */
+	d_free_unions(dentry);
 	fsnotify_nameremove(dentry, isdir);
 }
 EXPORT_SYMBOL(d_delete);
