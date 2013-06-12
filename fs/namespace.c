@@ -1524,12 +1524,12 @@ static int invent_group_ids(struct mount *mnt, bool recurse)
  */
 static int check_topmost_union_mnt(struct mount *topmost_mnt, int mnt_flags)
 {
-	struct super_block *sb = topmost_mnt->mnt.mnt_sb;
-
 #ifndef CONFIG_UNION_MOUNT
 	printk(KERN_INFO "union mount: not supported by the kernel\n");
 	return -EINVAL;
 #else
+	struct super_block *sb = topmost_mnt->mnt.mnt_sb;
+
 	if (mnt_flags & MNT_READONLY)
 		return -EROFS;
 
@@ -1550,6 +1550,71 @@ static int check_topmost_union_mnt(struct mount *topmost_mnt, int mnt_flags)
 
 	return 0;
 #endif
+}
+
+void put_union_sb(struct super_block *sb)
+{
+	if (unlikely(sb->s_union_lower_mnts)) {
+		struct mount *mnt = real_mount(sb->s_union_lower_mnts);
+
+		br_write_lock(&vfsmount_lock);
+		umount_tree(mnt, 0);
+		br_write_unlock(&vfsmount_lock);
+		sb->s_union_lower_mnts = NULL;
+		sb->s_union_count = 0;
+	}
+}
+
+/**
+ * clone_union_tree - Clone all union-able mounts at this mountpoint
+ * @topmost: vfsmount of topmost layer
+ * @mntpnt: target of union mount
+ *
+ * Given the target mountpoint of a union mount, clone all the mounts at that
+ * mountpoint (well, pathname) that qualify as a union lower layer.  Increment
+ * the hard readonly count of the lower layer superblocks.
+ *
+ * Returns error if any of the mounts or submounts mounted on or below this
+ * pathname are unsuitable for union mounting.  This means you can't construct
+ * a union mount at the root of an existing mount without unioning it.
+ *
+ * XXX - Maybe should take # of layers to go down as an argument. But how to
+ * pass this in through mount options?  All solutions look ugly.  Currently you
+ * express your intention through mounting file systems on the same mountpoint,
+ * which is pretty elegant.
+ */
+static int clone_union_tree(struct mount *topmost, struct path *mntpnt)
+{
+	struct mount *mnt, *cloned_tree;
+
+	if (!IS_ROOT(mntpnt->dentry)) {
+		printk(KERN_INFO "union mount: mount point must be a root dir\n");
+		return -EINVAL;
+	}
+
+	/* Look for the "lowest" layer to union. */
+	mnt = real_mount(mntpnt->mnt);
+	while (mnt->mnt_parent->mnt.mnt_root == mnt->mnt_mountpoint) {
+		/* Got root (mnt)? */
+		if (mnt->mnt_parent == mnt)
+			break;
+		mnt = mnt->mnt_parent;
+	}
+
+	/* Clone all the read-only mounts and submounts, only if they
+	 * are not shared or slave, and increment the hard read-only
+	 * users count on each one.  If this can't be done for every
+	 * mount and submount below this one, fail.
+	 */
+	cloned_tree = copy_tree(mnt, mnt->mnt.mnt_root,
+				CL_COPY_ALL | CL_PRIVATE |
+				CL_NO_SHARED | CL_NO_SLAVE |
+				CL_MAKE_HARD_READONLY | CL_MAKE_UNION);
+	if (IS_ERR(cloned_tree))
+		return PTR_ERR(cloned_tree);
+
+	topmost->mnt.mnt_sb->s_union_lower_mnts = &cloned_tree->mnt;
+	return 0;
 }
 
 /*
