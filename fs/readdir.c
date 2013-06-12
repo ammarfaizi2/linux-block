@@ -20,6 +20,8 @@
 
 #include <asm/uaccess.h>
 
+#include "union.h"
+
 int iterate_dir(struct file *file, struct dir_context *ctx)
 {
 	struct inode *inode = file_inode(file);
@@ -37,11 +39,18 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
 
 	res = -ENOENT;
 	if (!IS_DEADDIR(inode)) {
+		if (IS_DIR_UNIONED(file->f_path.dentry)) {
+			res = union_copyup_one_dir(&file->f_path);
+			if (res)
+				goto out_unlock;
+		}
+
 		ctx->pos = file->f_pos;
 		res = file->f_op->iterate(file, ctx);
 		file->f_pos = ctx->pos;
 		file_accessed(file);
 	}
+out_unlock:
 	mutex_unlock(&inode->i_mutex);
 out:
 	return res;

@@ -106,6 +106,8 @@ bool needs_lookup_union(struct nameidata *nd,
 	return !(path->dentry->d_flags & DCACHE_UNION_LOOKUP_DONE);
 }
 
+extern int __union_copyup_one_dir(struct path *);
+
 #else /* CONFIG_UNION_MOUNT */
 
 static inline bool IS_MNT_UNION(struct vfsmount *mnt) { return false; }
@@ -139,6 +141,12 @@ static inline bool needs_lookup_union(struct nameidata *nd,
 	return false;
 }
 
+static inline int __union_copyup_one_dir(struct path *topmost_path)
+{
+	BUG();
+	return 0;
+}
+
 #endif	/* CONFIG_UNION_MOUNT */
 
 /* Temporary dummy */
@@ -146,4 +154,15 @@ static inline int union_copyup(struct path *parent, struct path *path,
 			       bool copy_all, size_t len)
 {
 	return -ENOANO;
+}
+
+/*
+ * Make sure that an upper directory is opaque (ie. totally copied up if it is
+ * in fact unioned with some lower dirs).
+ */
+static inline int union_copyup_one_dir(struct path *path)
+{
+	if (IS_OPAQUE(path->dentry->d_inode))
+		return 0;
+	return __union_copyup_one_dir(path);
 }
