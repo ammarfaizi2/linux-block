@@ -3245,6 +3245,10 @@ looked_up:
  *
  * FILE_CREATE will be set in @*opened if the dentry was created and will be
  * cleared otherwise prior to returning.
+ *
+ * If an entry on a union mount is being considered, we pass back a file from
+ * the lower layer if there is one and leave it up to do_last() to copy up if
+ * need be.
  */
 static int lookup_open(struct nameidata *nd, struct path *path,
 			struct file *file,
@@ -3266,10 +3270,14 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 	if (!need_lookup && dentry->d_inode)
 		goto out_no_open;
 
-	if ((nd->flags & LOOKUP_OPEN) && dir_inode->i_op->atomic_open) {
+	/* Perform an atomic open if that is available - but not if a file on
+	 * the upper filesystem of a union is being opened for writing
+	 */
+	if ((nd->flags & LOOKUP_OPEN) && dir_inode->i_op->atomic_open &&
+	    !(IS_MNT_UNION(nd->path.mnt) &&
+	      op->acc_mode & (MAY_WRITE | MAY_APPEND)))
 		return atomic_open(nd, dentry, path, file, op, got_write,
 				   need_lookup, opened);
-	}
 
 	if (need_lookup) {
 		BUG_ON(dentry->d_inode);
@@ -3284,8 +3292,8 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 		umode_t mode = op->mode;
 		if (!IS_POSIXACL(dir->d_inode))
 			mode &= ~current_umask();
-		/*
-		 * This write is needed to ensure that a
+
+		/* This write is needed to ensure that a
 		 * rw->ro transition does not occur between
 		 * the time when the file is created and when
 		 * a permanent write count is taken through
@@ -3295,6 +3303,56 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 			error = -EROFS;
 			goto out_dput;
 		}
+
+		/* If the negative dentry is on the upper layer of a union
+		 * mount then we may need to copy up or turn a whiteout into a
+		 * file.  The negative dentry will not be on a lower layer at
+		 * this point.
+		 *
+		 * If the dentry is a whiteout or a normal negative dentry in
+		 * an opaque directory then we can just create over it.
+		 *
+		 * If O_CREAT|O_TRUNC|O_EXCL is specified then we fail if
+		 * there's a file in the lower layer or succeed without copying
+		 * up otherwise.
+		 *
+		 * If O_CREAT|O_TRUNC is specified then we need to copy up the
+		 * attributes if there's a lower file.
+		 *
+		 * If O_CREAT|O_RDONLY is specified and the file exists in the
+		 * lower layer, we just use the lower file.
+		 *
+		 * Otherwise we need to copy up the whole file.
+		 */
+		if (IS_MNT_UNION(nd->path.mnt)) {
+			struct path topmost;
+
+			if (d_is_whiteout(dentry) ||
+			    (IS_OPAQUE(dir_inode) && !d_is_fallthru(dentry)))
+				goto just_create; /* Lower is blocked off */
+
+			/* Look up the lower file.  This checks the lower
+			 * layers to see if we need to copy up, but if the file
+			 * is opened read-only with just O_CREAT then it'll
+			 * return the lower file.
+			 */
+			topmost.mnt = nd->path.mnt;
+			topmost.dentry = dentry;
+			error = __lookup_union(nd, &dentry->d_name, &topmost);
+			if (error)
+				goto out_dput;
+
+			if (topmost.mnt != nd->path.mnt) {
+				/* Moved down. */
+				BUG_ON(!IS_MNT_LOWER(topmost.mnt));
+				BUG_ON(!topmost.dentry->d_inode);
+				*path = topmost;
+				return 1;
+			}
+			BUG_ON(topmost.dentry != dentry);
+		}
+
+	just_create:
 		*opened |= FILE_CREATED;
 		error = security_path_mknod(&nd->path, dentry, mode, 0);
 		if (error)
@@ -3303,7 +3361,23 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 				   nd->flags & LOOKUP_EXCL);
 		if (error)
 			goto out_dput;
+	} else if (!dentry->d_inode && IS_DIR_UNIONED(dir)) {
+		/* The file does not exist in the top layer of a union - but it
+		 * might exist in a lower layer.
+		 */
+		if (d_is_whiteout(dentry) ||
+		    (IS_OPAQUE(dir_inode) && !d_is_fallthru(dentry)))
+			goto out_no_open; /* Lower is blocked off */
+
+		/* Check for a lower file */
+		path->mnt = nd->path.mnt;
+		path->dentry = dentry;
+		error = __lookup_union(nd, &dentry->d_name, path);
+		if (error)
+			goto out_dput;
+		return 1;
 	}
+
 out_no_open:
 	path->dentry = dentry;
 	path->mnt = nd->path.mnt;
@@ -3393,6 +3467,8 @@ retry_lookup:
 		if (error)
 			goto out;
 
+		/* We shouldn't get a unionmount lower file this way */
+		BUG_ON(IS_MNT_LOWER(path->mnt));
 		if ((*opened & FILE_CREATED) ||
 		    !S_ISREG(file_inode(file)->i_mode))
 			will_truncate = false;
@@ -3401,6 +3477,10 @@ retry_lookup:
 		goto opened;
 	}
 
+	/* At this point, the file may have been looked up and created or
+	 * truncated but hasn't been opened yet - however, since we dropped the
+	 * lock, things may have changed in the filesystem.
+	 */
 	if (*opened & FILE_CREATED) {
 		/* Don't check for write permission, don't truncate */
 		open_flag &= ~O_TRUNC;
@@ -3433,6 +3513,11 @@ retry_lookup:
 	if ((open_flag & (O_EXCL | O_CREAT)) == (O_EXCL | O_CREAT))
 		goto exit_dput;
 
+	if (IS_MNT_LOWER(path->mnt) && d_managed(path->dentry)) {
+		error = -EREMOTE;
+		goto exit_dput;
+	}
+
 	error = follow_managed(path, nd->flags);
 	if (error < 0)
 		goto exit_dput;
@@ -3444,6 +3529,10 @@ retry_lookup:
 	inode = path->dentry->d_inode;
 finish_lookup:
 	/* we _can_ be in RCU mode here */
+	BUG_ON(IS_MNT_LOWER(path->mnt) &&
+	       (d_is_whiteout(path->dentry) ||
+		(IS_OPAQUE(dir->d_inode) && d_is_fallthru(path->dentry))));
+
 	error = -ENOENT;
 	if (!inode) {
 		path_to_nameidata(path, nd);
@@ -3458,7 +3547,48 @@ finish_lookup:
 			}
 		}
 		BUG_ON(inode != path->dentry->d_inode);
+		if (got_write)
+			mnt_drop_write(nd->path.mnt);
 		return 1;
+	}
+
+	if (IS_MNT_LOWER(path->mnt) &&
+	    nd->flags & LOOKUP_COPY_UP &&
+	    S_ISREG(inode->i_mode)) {
+		if (nd->flags & LOOKUP_RCU &&
+		    unlikely(unlazy_walk(nd, path->dentry))) {
+			path_to_nameidata(path, nd);
+			error = -ECHILD;
+			goto out;
+		}
+
+		error = __inode_permission(inode, MAY_WRITE);
+		if (error < 0)
+			goto exit_dput;
+
+		error = mnt_want_write(nd->path.mnt);
+		if (error)
+			goto exit_dput;
+
+		mutex_lock(&dir->d_inode->i_mutex);
+		error = union_copyup(&nd->path, path, !will_truncate, 0);
+		mutex_unlock(&dir->d_inode->i_mutex);
+		mnt_drop_write(nd->path.mnt);
+		if (error)
+			goto exit_dput;
+
+		BUG_ON(path->mnt != nd->path.mnt);
+
+		inode = path->dentry->d_inode;
+		if (!inode) {
+			path_to_nameidata(path, nd);
+			error = -ENOENT;
+			goto out;
+		}
+
+		open_flag &= ~O_TRUNC;
+		will_truncate = false;
+		acc_mode = MAY_OPEN;
 	}
 
 	if ((nd->flags & LOOKUP_RCU) || nd->path.mnt != path->mnt) {
@@ -3488,7 +3618,7 @@ finish_open:
 	if (!S_ISREG(inode->i_mode))
 		will_truncate = false;
 
-	if (will_truncate) {
+	if (will_truncate && !got_write) {
 		error = mnt_want_write(nd->path.mnt);
 		if (error)
 			goto out;
@@ -3632,6 +3762,9 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 		error = do_tmpfile(dfd, pathname, nd, flags, op, file, &opened);
 		goto out;
 	}
+
+	if (op->acc_mode & (MAY_WRITE | MAY_APPEND) || op->open_flag & O_TRUNC)
+		flags |= LOOKUP_COPY_UP;
 
 	error = path_init(dfd, pathname->name, flags | LOOKUP_PARENT, nd, &base);
 	if (unlikely(error))
