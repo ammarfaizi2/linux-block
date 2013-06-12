@@ -1387,9 +1387,9 @@ out_err:
 
 /**
  * lookup_union_locked - Lookup and/or build union stack if needed
- * @nd - nameidata for the parent of @topmost
- * @name - name of target
- * @topmost - path of the target on the topmost file system
+ * @nd: nameidata for the parent of @topmost
+ * @name: name of target
+ * @topmost: path of the target on the topmost file system
  *
  * Check if we need to do a union lookup on this target.  Mark dentry
  * to show lookup union has been performed.
@@ -3891,6 +3891,92 @@ retry:
 SYSCALL_DEFINE2(mkdir, const char __user *, pathname, umode_t, mode)
 {
 	return sys_mkdirat(AT_FDCWD, pathname, mode);
+}
+
+/**
+ * vfs_whiteout: Create a whiteout for the given directory entry
+ * @parent: Parent directory
+ * @old_path: Directory entry to whiteout
+ * @isdir: The file at @old_path is a directory
+ *
+ * Create a whiteout for the given directory entry.  A whiteout prevents lookup
+ * from dropping down to a lower layer of a union mounted file system.
+ *
+ * There are two important cases: (a) The directory entry to be whited out may
+ * already exist, in which case it must first be deleted before we create the
+ * whiteout, and (b) no such directory entry exists and we only have to create
+ * the whiteout itself.
+ *
+ * The caller must pass in a dentry for the directory entry to be whited out -
+ * a positive one if it exists, and a negative if not.  When this function
+ * returns, the caller should dput() the old, now defunct dentry it passed in.
+ * The dentry for the whiteout itself is created inside this function.
+ *
+ * The caller must hold the i_mutex lock on the parent directory.
+ */
+static int vfs_whiteout(struct dentry *parent, struct path *old_path, int isdir)
+{
+	struct dentry *old_dentry = old_path->dentry;
+	struct inode *dir = parent->d_inode, *old_inode = old_dentry->d_inode;
+	int err = 0;
+
+	BUG_ON(old_dentry->d_parent != parent);
+
+	if (!dir->i_op || !dir->i_op->whiteout)
+		return -EOPNOTSUPP;
+
+	/* If the old dentry is positive, then we have to delete this entry
+	 * before we create the whiteout.  The file system ->whiteout() op does
+	 * the actual delete, but we do all the VFS-level checks and changes
+	 * here.
+	 */
+	if (old_inode) {
+		mutex_lock(&old_inode->i_mutex);
+		if (d_mountpoint(old_dentry)) {
+			mutex_unlock(&old_inode->i_mutex);
+			return -EBUSY;
+		}
+		if (isdir)
+			err = security_inode_rmdir(dir, old_dentry);
+		else
+			err = security_inode_unlink(dir, old_dentry);
+		if (err)
+			goto error_unlock;
+
+		/* If we're removing a directory, we need to work out if it is
+		 * empty - but if the directory has not yet been copied up, we
+		 * cannot tell that by simply reading the lower dirs.  We have
+		 * to subtract the set of whiteouts in the top dir from the
+		 * union of the sets of dirents from the lower dirs - ie. do a
+		 * copyup.
+		 */
+		if (isdir) {
+			err = union_copyup_one_dir(old_path);
+			if (err)
+				goto error_unlock;
+		}
+	}
+
+	err = dir->i_op->whiteout(dir, old_dentry);
+	if (err)
+		goto error_unlock;
+
+	if (old_inode) {
+		mutex_unlock(&old_inode->i_mutex);
+		if (isdir) {
+			old_inode->i_flags |= S_DEAD;
+			dont_mount(old_dentry);
+		} else {
+			fsnotify_link_count(old_inode);
+		}
+		d_drop(old_dentry);
+	}
+	return err;
+
+error_unlock:
+	if (old_inode)
+		mutex_unlock(&old_inode->i_mutex);
+	return err;
 }
 
 /*
