@@ -45,6 +45,10 @@ extern void __init chrdev_init(void);
  * namei.c
  */
 extern int __inode_permission(struct inode *, int);
+extern int __user_path_and_parent(int, const char *, unsigned,
+				  struct path *, struct path *);
+extern int user_path_and_parent(int, const char __user *, unsigned,
+				struct path *, struct path *);
 
 /*
  * namespace.c

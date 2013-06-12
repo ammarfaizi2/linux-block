@@ -2148,6 +2148,220 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
 	return __lookup_hash(&this, base, 0);
 }
 
+/*
+ * Walk the final component of a path, returning it in *path and *_inode.  The
+ * parent is left in nd->path.
+ *
+ * Returns negative on error, 0 if walked to a non-symlink, 1 if walked to
+ * symlink, 2 if walked to "." or "..".
+ */
+static int lookup_last_and_parent(struct nameidata *nd, struct path *_path)
+{
+	struct inode *inode;
+	struct path path;
+	int follow;
+	int err;
+
+	if (nd->last_type == LAST_NORM && nd->last.name[nd->last.len])
+		nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
+	nd->flags &= ~LOOKUP_PARENT;
+	follow = nd->flags & LOOKUP_FOLLOW;
+
+	/* "." and ".." are special - ".." especially so because it has
+	 * to be able to know about the current root directory and
+	 * parent relationships.
+	 */
+	if (unlikely(nd->last_type != LAST_NORM)) {
+		err = handle_dots(nd, nd->last_type);
+		return err ?: 2;
+	}
+	err = lookup_fast(nd, &path, &inode);
+	if (unlikely(err)) {
+		if (err < 0)
+			goto out_err;
+		err = lookup_slow(nd, &path);
+		if (err < 0)
+			goto out_err;
+		inode = path.dentry->d_inode;
+	}
+
+	err = -ENOENT;
+	if (!inode)
+		goto out_path_put;
+
+	if (should_follow_link(inode, follow)) {
+		if (nd->flags & LOOKUP_RCU) {
+			if (unlikely(unlazy_walk(nd, path.dentry))) {
+				err = -ECHILD;
+				goto out_err;
+			}
+		}
+		BUG_ON(inode != path.dentry->d_inode);
+		*_path = path;
+		return 1;
+	}
+
+	nd->inode = inode;
+	*_path = path;
+	return 0;
+
+out_path_put:
+	path_to_nameidata(&path, nd);
+out_err:
+	terminate_walk(nd);
+	return err;
+}
+
+/* Returns 0 and nd will be valid on success; Retuns error, otherwise. */
+static int path_and_parent_lookupat(int dfd, const char *name, unsigned flags,
+				    struct path *_parent, struct path *_path)
+{
+	struct nameidata nd;
+	struct file *base = NULL;
+	struct path path, parent;
+	unsigned pseq;
+	int err;
+
+	parent.mnt    = NULL;
+	parent.dentry = NULL;
+
+	BUG_ON(flags & LOOKUP_PARENT);
+
+	/* Find the part of the path prior to the final component */
+	err = path_init(dfd, name, flags | LOOKUP_PARENT, &nd, &base);
+	if (unlikely(err))
+		return err;
+
+	current->total_link_count = 0;
+	err = link_path_walk(name, &nd);
+	if (err < 0)
+		goto out;
+
+	/* At this point we've processed all the non-terminal parts of the path
+	 * and are ready to tackle the final section.  The final section may
+	 * still include terminal symlinks, however, so we need to iterate
+	 * through those.
+	 */
+	pseq = nd.seq;
+	err = lookup_last_and_parent(&nd, &path);
+	while (err > 0) {
+		void *cookie;
+		struct path link = path;
+
+		if (err == 2) {
+			/* Terminal '.' or '..' */
+			err = complete_walk(&nd);
+			if (err)
+				goto out;
+			path = nd.path;
+			path_get(&path);
+			goto okay;
+		}
+
+		BUG_ON(!path.mnt);
+		BUG_ON(!path.dentry);
+
+		err = may_follow_link(&link, &nd);
+		if (unlikely(err))
+			goto out;
+		nd.flags |= LOOKUP_PARENT;
+		err = follow_link(&link, &nd, &cookie);
+		if (err)
+			goto out;
+		pseq = nd.seq;
+		err = lookup_last_and_parent(&nd, &path);
+		put_link(&nd, &link, cookie);
+	}
+
+	if (err < 0)
+		goto out;
+
+	/* We can't call complete_walk() as-is here since that only checks a
+	 * single path point against a single seq, whereas we need to check two
+	 * path points against a pair of seq counters.
+	 */
+	if (_parent) {
+		parent = nd.path;
+		if (nd.flags & LOOKUP_RCU) {
+			spin_lock(&parent.dentry->d_lock);
+			if (unlikely(!__d_rcu_to_refcount(parent.dentry, pseq))) {
+				spin_unlock(&parent.dentry->d_lock);
+				unlock_rcu_walk();
+				err = -ECHILD;
+				goto out;
+			}
+			mntget(parent.mnt);
+			spin_unlock(&parent.dentry->d_lock);
+		}
+	}
+	nd.path = path;
+	err = complete_walk(&nd);
+	if (err < 0) {
+		path_put(&parent);
+		goto out;
+	}
+
+okay:
+	if (nd.flags & LOOKUP_DIRECTORY && !path.dentry->d_inode->i_op->lookup) {
+		BUG_ON(nd.flags & LOOKUP_RCU);
+		path_put(&parent);
+		path_put(&path);
+		err = -ENOTDIR;
+		goto out;
+	}
+	*_path = path;
+	if (_parent)
+		*_parent = parent;
+
+out:
+	if (base)
+		fput(base);
+
+	if (nd.root.mnt && !(nd.flags & LOOKUP_ROOT)) {
+		path_put(&nd.root);
+		nd.root.mnt = NULL;
+	}
+	return err;
+}
+
+/*
+ * Take a path and return both the referred-to path point and also, if
+ * possible, its parent.  If the path point terminates in ".", ".." or is just
+ * "/" or LAST_BIND is set, then a {NULL,NULL} parent is returned.
+ */
+int __user_path_and_parent(int dfd, const char *name, unsigned flags,
+			   struct path *_parent, struct path *_path)
+{
+	int error;
+
+	error = path_and_parent_lookupat(dfd, name, flags | LOOKUP_RCU,
+					 _parent, _path);
+	if (unlikely(error == -ECHILD))
+		error = path_and_parent_lookupat(dfd, name, flags,
+						 _parent, _path);
+	if (unlikely(error == -ESTALE))
+		error = path_and_parent_lookupat(dfd, name,
+						 flags | LOOKUP_REVAL,
+						 _parent, _path);
+	return error;
+}
+
+int user_path_and_parent(int dfd, const char __user *filename, unsigned flags,
+			 struct path *_parent, struct path *_path)
+{
+	struct filename *s = getname(filename);
+	int error;
+
+	if (IS_ERR(s))
+		return PTR_ERR(s);
+
+	error = __user_path_and_parent(dfd, s->name, flags, _parent, _path);
+	if (error == 0)
+		audit_inode(s, _path->dentry, flags);
+	putname(s);
+	return error;
+}
+
 int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
 		 struct path *path, int *empty)
 {
