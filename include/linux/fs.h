@@ -2594,6 +2594,21 @@ extern int generic_file_fsync(struct file *, loff_t, loff_t, int);
 
 extern int generic_check_addressable(unsigned, u64);
 
+#ifdef CONFIG_UNION_MOUNT
+extern int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+				    int namlen, ino_t *ino, unsigned char *d_type);
+#else
+static inline int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+					   int namlen, ino_t *ino, unsigned char *d_type)
+{
+	/*
+	 * Found a fallthru on a kernel without union support.
+	 * There's nothing to fall through to, so return -ENOENT.
+	 */
+	return -ENOENT;
+}
+#endif
+
 #ifdef CONFIG_MIGRATION
 extern int buffer_migrate_page(struct address_space *,
 				struct page *, struct page *,
