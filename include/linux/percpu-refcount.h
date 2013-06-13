@@ -67,7 +67,8 @@ struct percpu_ref {
 	struct rcu_head		rcu;
 };
 
-int percpu_ref_init(struct percpu_ref *ref, percpu_ref_func_t *release);
+int __must_check percpu_ref_init(struct percpu_ref *ref,
+				 percpu_ref_func_t *release);
 void percpu_ref_kill_and_confirm(struct percpu_ref *ref,
 				 percpu_ref_func_t *confirm_kill);
 
