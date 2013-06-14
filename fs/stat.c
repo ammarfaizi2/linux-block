@@ -17,6 +17,7 @@
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
+#include "union.h"
 
 void generic_fillattr(struct inode *inode, struct kstat *stat)
 {
@@ -39,18 +40,27 @@ EXPORT_SYMBOL(generic_fillattr);
 
 int vfs_getattr(struct path *path, struct kstat *stat)
 {
-	struct inode *inode = path->dentry->d_inode;
+	struct path lower_cache, actual;
+	struct inode *inode;
 	int retval;
 
-	retval = security_inode_getattr(path->mnt, path->dentry);
-	if (retval)
-		return retval;
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
-	if (inode->i_op->getattr)
-		return inode->i_op->getattr(path->mnt, path->dentry, stat);
+	retval = security_inode_getattr(actual.mnt, actual.dentry);
+	if (retval)
+		goto out;
+
+	if (inode->i_op->getattr) {
+		retval = inode->i_op->getattr(actual.mnt, actual.dentry, stat);
+		goto out;
+	}
 
 	generic_fillattr(inode, stat);
-	return 0;
+out:
+	path_put_maybe(&lower_cache);
+	return retval;
 }
 
 EXPORT_SYMBOL(vfs_getattr);

@@ -232,7 +232,7 @@ static void cachefiles_update_object(struct fscache_object *_object)
 	auxdata->type = cookie->def->type;
 
 	cachefiles_begin_secure(cache, &saved_cred);
-	cachefiles_update_object_xattr(object, auxdata);
+	cachefiles_update_object_xattr(cache, object, auxdata);
 	cachefiles_end_secure(cache, saved_cred);
 	kfree(auxdata);
 	_leave("");
@@ -471,9 +471,9 @@ static void cachefiles_invalidate_object(struct fscache_operation *op)
 		path.mnt = cache->mnt;
 
 		cachefiles_begin_secure(cache, &saved_cred);
-		ret = vfs_truncate(NULL, &path, 0);
+		ret = vfs_truncate(&path, 0);
 		if (ret == 0)
-			ret = vfs_truncate(NULL, &path, ni_size);
+			ret = vfs_truncate(&path, ni_size);
 		cachefiles_end_secure(cache, saved_cred);
 
 		if (ret != 0) {

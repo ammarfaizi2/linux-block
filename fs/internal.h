@@ -49,6 +49,7 @@ extern int __user_path_and_parent(int, const char *, unsigned,
 				  struct path *, struct path *);
 extern int user_path_and_parent(int, const char __user *, unsigned,
 				struct path *, struct path *);
+extern struct dentry *__lookup_hash(struct qstr *, struct dentry *, unsigned);
 
 /*
  * namespace.c

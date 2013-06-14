@@ -10,6 +10,8 @@
 #include <linux/syscalls.h>
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
+#include "internal.h"
+#include "union.h"
 
 #ifdef __ARCH_WANT_SYS_UTIME
 
@@ -52,11 +54,18 @@ static int utimes_common(struct path *path, struct timespec *times)
 {
 	int error;
 	struct iattr newattrs;
-	struct inode *inode = path->dentry->d_inode;
+	struct inode *inode;
+	struct path lower_cache, actual;
+
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode)) {
+		error = PTR_ERR(inode);
+		goto out;
+	}
 
 	error = mnt_want_write(path->mnt);
 	if (error)
-		goto out;
+		goto out_put_cache;
 
 	if (times && times[0].tv_nsec == UTIME_NOW &&
 		     times[1].tv_nsec == UTIME_NOW)
@@ -96,17 +105,34 @@ static int utimes_common(struct path *path, struct timespec *times)
 			goto mnt_drop_write_and_out;
 
 		if (!inode_owner_or_capable(inode)) {
-			error = inode_permission(inode, MAY_WRITE);
-			if (error)
-				goto mnt_drop_write_and_out;
+			/* We have to be able to write to the upperfs. */
+			if (d_is_unioned(path->dentry, &actual)) {
+				error = -EROFS;
+				if (path->dentry->d_sb->s_flags & MS_RDONLY)
+					goto mnt_drop_write_and_out;
+				error = __inode_permission(inode, MAY_WRITE);
+				if (error)
+					goto mnt_drop_write_and_out;
+			} else {
+				error = inode_permission(inode, MAY_WRITE);
+				if (error)
+					goto mnt_drop_write_and_out;
+			}
 		}
 	}
+
+	error = union_copy_up(path, &actual);
+	if (error)
+		goto mnt_drop_write_and_out;
+
 	mutex_lock(&inode->i_mutex);
 	error = notify_change(path->dentry, &newattrs);
 	mutex_unlock(&inode->i_mutex);
 
 mnt_drop_write_and_out:
 	mnt_drop_write(path->mnt);
+out_put_cache:
+	path_put_maybe(&lower_cache);
 out:
 	return error;
 }
@@ -154,7 +180,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec *times,
 		fdput(f);
 	} else {
 		struct path path;
-		int lookup_flags = LOOKUP_COPY_UP;
+		int lookup_flags = 0;
 
 		if (!(flags & AT_SYMLINK_NOFOLLOW))
 			lookup_flags |= LOOKUP_FOLLOW;

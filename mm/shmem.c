@@ -2161,9 +2161,11 @@ static int shmem_link(struct dentry *old_dentry, struct inode *dir, struct dentr
 	 * but each new link needs a new dentry, pinning lowmem, and
 	 * tmpfs dentries cannot be pruned until they are unlinked.
 	 */
-	ret = shmem_reserve_inode(inode->i_sb);
-	if (ret)
-		goto out;
+	if (inode->i_nlink > 0) {
+		ret = shmem_reserve_inode(inode->i_sb);
+		if (ret)
+			goto out;
+	}
 
 	inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
 	inc_nlink(inode);
@@ -2203,7 +2205,7 @@ static void shmem_dir_unlink_whiteouts(struct inode *dir, struct dentry *dentry)
 
 		spin_lock(&dentry->d_lock);
 		list_for_each_entry(child, &dentry->d_subdirs, d_u.d_child) {
-			spin_lock(&child->d_lock);
+			spin_lock_nested(&child->d_lock, 1);
 			if (d_is_whiteout(child)) {
 				__d_drop(child);
 				if (!list_empty(&child->d_lru)) {

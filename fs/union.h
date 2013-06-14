@@ -14,9 +14,10 @@
  * of the License.
  */
 
+#include <linux/mount.h>
+
 #ifdef CONFIG_UNION_MOUNT
 
-#include <linux/mount.h>
 #include <linux/dcache.h>
 #include <linux/namei.h>
 #include <linux/path.h>
@@ -76,8 +77,7 @@ struct path *union_find_dir(struct dentry *dentry, unsigned int layer)
 }
 
 
-extern int union_create_topmost_dir(struct path *, struct qstr *, struct path *,
-				    struct path *);
+extern int union_create_topmost_dir(struct path *, struct path *, struct dentry *);
 
 /*
  * Determine whether we need to perform unionmount traversal or the copyup of a
@@ -109,8 +109,6 @@ bool needs_lookup_union(struct nameidata *nd,
 }
 
 extern int __union_copyup_one_dir(struct path *);
-extern int union_copyup(struct path *parent, struct path *path,
-			bool copy_all, size_t len);
 
 #else /* CONFIG_UNION_MOUNT */
 
@@ -151,12 +149,6 @@ static inline int __union_copyup_one_dir(struct path *topmost_path)
 	return 0;
 }
 
-static inline int union_copyup(struct path *parent, struct path *path,
-			       bool copy_all, size_t len)
-{
-	return 0;
-}
-
 #endif	/* CONFIG_UNION_MOUNT */
 
 /*
@@ -169,3 +161,213 @@ static inline int union_copyup_one_dir(struct path *path)
 		return 0;
 	return __union_copyup_one_dir(path);
 }
+
+extern struct inode *__union_get_inode_locked(struct dentry *parent,
+					      struct path *upper,
+					      struct path *_lower_cache,
+					      struct path *_actual);
+extern struct inode *__union_get_inode(struct path *upper,
+				       struct path *_lower_cache,
+				       struct path *_actual);
+extern int __union_copy_up(struct path *path, struct path *actual,
+			   const loff_t *truncate_to);
+
+extern int __union_copy_up_locked(struct path *parent, struct path *path,
+				  struct path *actual,
+				  const loff_t *truncate_to);
+
+static inline void path_put_maybe(struct path *path)
+{
+	/* These optimise away if CONFIG_UNION_MOUNT=n */
+	if (unlikely(path->dentry))
+		dput(path->dentry);
+	if (unlikely(path->mnt))
+		mntput(path->mnt);
+}
+
+/**
+ * union_get_inode_locked - Get the actual inode and dentry for a dentry
+ * @parent: The locked parent of the object we're interested in.
+ * @path: The object we're interested in.
+ * @_lower_cache: Cache for lower dentry pinning.
+ * @_actual: The point actually corresponding to the returned inode.
+ *
+ * Gets the inode to be used for a dentry where that inode may exist on a lower
+ * layer in a union.  Note that we don't get a ref on the inode, so to pin it
+ * temporarily, we may point *_lower at the lower dentry.
+ *
+ * The caller must hold i_mutex on the parent.
+ *
+ * Returns a pointer to the inode to use if a positive dentry is found, NULL if
+ * a negative dentry is found and an error if lookup in the lower layers
+ * failed.
+ *
+ * On a successful return (positive or negative dentry), *_actual will be set
+ * to point to the dentry that we determined was the one of interest.  This
+ * does not hold any refs of its own.
+ *
+ * The caller should call path_put_maybe() on *_lower_cache to clear any pins
+ * it may contain.
+ */
+static inline struct inode *union_get_inode_locked(struct dentry *parent,
+						   struct path *path,
+						   struct path *_lower_cache,
+						   struct path *_actual)
+{
+	/* Optimise for the non-unionmount case. */
+	_lower_cache->dentry = NULL;
+	_lower_cache->mnt = NULL;
+	*_actual = *path;
+
+#ifndef CONFIG_UNION_MOUNT
+	return path->dentry->d_inode;
+#else
+	/* The normal case is that the inode is right where we expect... */
+	if (likely(path->dentry->d_inode))
+		return path->dentry->d_inode;
+
+	/* ... or the dentry is ordinarily negative. */
+	if (likely(!path->dentry->d_sb->s_union_lower_mnts))
+		return NULL;
+
+	if (d_is_whiteout(path->dentry) ||
+	    (!d_is_fallthru(path->dentry) && IS_OPAQUE(parent->d_inode)))
+		return NULL;
+
+	/* We have to lock the parent and do a lookup. */
+	return __union_get_inode_locked(parent, path, _lower_cache, _actual);
+#endif
+}
+
+/**
+ * union_get_inode - Get the actual inode and dentry for an object
+ * @path: The object we're interested in.
+ * @_lower_cache: Cache for lower dentry pinning.
+ * @_actual: The point actually corresponding to the returned inode.
+ *
+ * Gets the inode to be used for a dentry where that inode may exist on a lower
+ * layer in a union.  Note that we don't get a ref on the inode, so to pin it
+ * temporarily, we may return a dentry in *_lower.
+ *
+ * Returns a pointer to the inode to use if a positive dentry is found, NULL if
+ * a negative dentry is found and an error if lookup in the lower layers
+ * failed.
+ *
+ * On a successful return (positive or negative dentry), *_actual will be set
+ * to point to the dentry that we determined was the one of interest.  This
+ * does not have its own ref taken and thus does not need to be dput().
+ */
+static inline struct inode *union_get_inode(struct path *path,
+					    struct path *_lower_cache,
+					    struct path *_actual)
+{
+	_lower_cache->mnt = NULL;
+	_lower_cache->dentry = NULL;
+	*_actual = *path;
+
+#ifndef CONFIG_UNION_MOUNT
+	return path->dentry->d_inode;
+#else
+	/* The normal case is that the inode is right where we expect... */
+	if (likely(path->dentry->d_inode))
+		return path->dentry->d_inode;
+
+	/* ... or the dentry is ordinarily negative. */
+	if (likely(!path->dentry->d_sb->s_union_lower_mnts))
+		return NULL;
+
+	if (d_is_whiteout(path->dentry))
+		return NULL;
+
+	/* We have to lock the parent and do a lookup. */
+	return __union_get_inode(path, _lower_cache, _actual);
+#endif
+}
+
+/**
+ * union_truncated_copy_up - If needed, partially copy up a file (truncate)
+ * path: The target object.
+ * lower: The lower dentry (or NULL) from union_get_inode().
+ * truncate_to: The amount to copy up.
+ */
+static inline int union_truncated_copy_up(struct path *path, struct path *actual,
+					  const loff_t *truncate_to)
+{
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!path->dentry->d_inode))
+		return __union_copy_up(path, actual, truncate_to);
+#endif
+	return 0;
+}
+
+/**
+ * union_copy_up - If needed, copy up a file in its entirety
+ * path: The target object.
+ * lower: The lower dentry (or NULL) from union_get_inode().
+ */
+static inline int union_copy_up(struct path *path, struct path *actual)
+{
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!path->dentry->d_inode))
+		return __union_copy_up(path, actual, NULL);
+#endif
+	return 0;
+}
+
+/**
+ * union_copy_up_locked - If needed, copy up a file, caller holds parent lock
+ * parent: The parent directory of the target object
+ * path: The target object.
+ * lower: The lower dentry (or NULL) from union_get_inode().
+ *
+ * The parent must hold i_mutex on the parent directory.
+ */
+static inline int union_copy_up_locked(struct path *parent, struct path *path,
+				       struct path *actual)
+{
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!path->dentry->d_inode))
+	//	return __union_copy_up_locked(parent, path, actual, true, 0);
+		return -ENOANO;
+#endif
+	return 0;
+	
+}
+
+extern int __union_copy_up_for_do_last(struct path *, struct path *, bool);
+
+/**
+ * union_copy_up_do_last - If needed, copy up a file (maybe truncated)
+ * path: The target object.
+ * lower: The lower dentry (or NULL) from union_get_inode().
+ * will_truncate: Whether to honour O_TRUNC or not.
+ */
+static inline int union_copy_up_for_do_last(struct path *parent, struct path *path,
+					    bool will_truncate)
+{
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!path->dentry->d_inode))
+		return __union_copy_up_for_do_last(parent, path, will_truncate);
+#endif
+	return 0;
+}
+
+static inline bool d_is_unioned(const struct dentry *dentry, const struct path *actual)
+{
+#ifndef CONFIG_UNION_MOUNT
+	return false;
+#else
+	return unlikely(dentry != actual->dentry);
+#endif
+}
+
+static inline bool is_unioned(const struct dentry *dentry, const struct inode *inode)
+{
+#ifndef CONFIG_UNION_MOUNT
+	return false;
+#else
+	return unlikely(dentry->d_inode != inode);
+#endif
+}
+
+extern struct union_stack *union_alloc(struct path *topmost);

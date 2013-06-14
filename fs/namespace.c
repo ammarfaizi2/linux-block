@@ -1377,12 +1377,11 @@ SYSCALL_DEFINE1(oldumount, char __user *, name)
 
 #endif
 
-static bool mnt_ns_loop(struct path *path)
+static bool mnt_ns_loop(struct inode *inode)
 {
 	/* Could bind mounting the mount namespace inode cause a
 	 * mount namespace loop?
 	 */
-	struct inode *inode = path->dentry->d_inode;
 	struct proc_ns *ei;
 	struct mnt_namespace *mnt_ns;
 
@@ -1629,8 +1628,8 @@ static int clone_union_tree(struct mount *topmost, struct path *mntpnt)
  */
 static int build_root_union(struct mount *topmost_mnt)
 {
-	struct path lower, topmost_path;
 	struct mount *mnt, *topmost_ro_mnt;
+	struct path lower, topmost_path;
 	unsigned int i, layers = 1;
 	int err = 0;
 
@@ -1932,56 +1931,59 @@ static int do_change_type(struct path *path, int flag)
 static int do_loopback(struct path *path, const char *old_name,
 				int recurse)
 {
-	struct path old_parent, old_path;
+	struct path old_path, lower_cache, actual;
 	struct mount *mnt = NULL, *old, *parent;
 	struct mountpoint *mp;
+	struct inode *inode;
 	int err;
 	if (!old_name || !*old_name)
 		return -EINVAL;
 
-	err = __user_path_and_parent(AT_FDCWD, old_name,
-				     LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT,
-				     &old_parent, &old_path);
+	err = user_path_at(AT_FDCWD, old_name,
+			   LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT, &old_path);
 	if (err)
 		return err;
 
-	err = -EINVAL;
-	if (mnt_ns_loop(&old_path))
-		goto out; 
-
-	mp = lock_mount(path);
-	err = PTR_ERR(mp);
-	if (IS_ERR(mp))
+	inode = union_get_inode(&old_path, &lower_cache, &actual);
+	if (IS_ERR(inode)) {
+		err = PTR_ERR(inode);
 		goto out;
+	}
+
+	err = -EINVAL;
+	if (mnt_ns_loop(inode))
+		goto out_lower; 
 
 	old = real_mount(old_path.mnt);
 
 	err = -EINVAL;
 	if (IS_MNT_UNBINDABLE(old))
-		goto out2;
+		goto out_lower;
 
-	if (IS_MNT_LOWER(old_path.mnt)) {
-		/* If we're bind-mounting a file that's on a lower fs in a
-		 * union then we must first copy the file up as the copied
-		 * mount stack attached to the superblock is independent of any
-		 * namespace and will fail the check_mnt() test.  Directories
-		 * are copied up during the pathwalk, so we need not worry
-		 * about those.
-		 */
-		if (!old_parent.mnt)
-			goto out2;
-		mutex_lock(&old_parent.dentry->d_inode->i_mutex);
-		err = union_copyup(&old_parent, &old_path, true, 0);
-		mutex_unlock(&old_parent.dentry->d_inode->i_mutex);
-		if (err)
-			goto out2;
-		mntget(old_path.mnt);
-		old = real_mount(old_path.mnt);
-	}
+	/* If we're bind-mounting a file that's on a lower fs in a union then
+	 * we must first copy the file up as the copied mount stack attached to
+	 * the superblock is independent of any namespace and will fail the
+	 * check_mnt() test.  Directories are copied up during the pathwalk, so
+	 * we need not worry about those.
+	 */
+	err = union_copy_up(&old_path, &actual);
+	if (err < 0)
+		goto out_lower;
+
+	mp = lock_mount(path);
+	err = PTR_ERR(mp);
+	if (IS_ERR(mp))
+		goto out_lower;
+
+	old = real_mount(old_path.mnt);
+
+	err = -EINVAL;
+	if (IS_MNT_UNBINDABLE(old))
+		goto out_unlock;
 
 	parent = real_mount(path->mnt);
 	if (!check_mnt(parent) || !check_mnt(old))
-		goto out2;
+		goto out_unlock;
 
 	if (recurse)
 		mnt = copy_tree(old, old_path.dentry, 0);
@@ -1990,7 +1992,7 @@ static int do_loopback(struct path *path, const char *old_name,
 
 	if (IS_ERR(mnt)) {
 		err = PTR_ERR(mnt);
-		goto out2;
+		goto out_unlock;
 	}
 
 	err = graft_tree(mnt, parent, mp);
@@ -1999,11 +2001,12 @@ static int do_loopback(struct path *path, const char *old_name,
 		umount_tree(mnt, 0);
 		br_write_unlock(&vfsmount_lock);
 	}
-out2:
+out_unlock:
 	unlock_mount(mp);
+out_lower:
+	path_put_maybe(&lower_cache);
 out:
 	path_put(&old_path);
-	path_put(&old_parent);
 	return err;
 }
 
@@ -2225,7 +2228,7 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 	if (IS_MNT_UNION(&newmnt->mnt)) {
 		err = prepare_mnt_union(newmnt, path);
 		if (err)
-			return err;
+			goto unlock;
 		unioned = true;
 	}
 

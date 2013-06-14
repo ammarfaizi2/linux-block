@@ -1377,6 +1377,8 @@ static void __d_instantiate(struct dentry *dentry, struct inode *inode)
 	spin_lock(&dentry->d_lock);
 	if (inode) {
 		dentry->d_flags &= ~(DCACHE_WHITEOUT | DCACHE_FALLTHRU);
+		if (inode->i_op->follow_link)
+			dentry->d_flags |= DCACHE_SYMLINK;
 		if (unlikely(IS_AUTOMOUNT(inode)))
 			dentry->d_flags |= DCACHE_NEED_AUTOMOUNT;
 		hlist_add_head(&dentry->d_alias, &inode->i_dentry);
@@ -1585,6 +1587,8 @@ struct dentry *d_obtain_alias(struct inode *inode)
 	/* attach a disconnected dentry */
 	spin_lock(&tmp->d_lock);
 	tmp->d_inode = inode;
+	if (inode->i_op->follow_link)
+		tmp->d_flags |= DCACHE_SYMLINK;
 	tmp->d_flags |= DCACHE_DISCONNECTED;
 	hlist_add_head(&tmp->d_alias, &inode->i_dentry);
 	hlist_bl_lock(&tmp->d_sb->s_anon);

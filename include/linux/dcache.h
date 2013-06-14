@@ -140,7 +140,10 @@ struct dentry {
 	void *d_fsdata;			/* fs-specific data */
 
 #ifdef CONFIG_UNION_MOUNT
-	struct union_stack *d_union_stack;	/* dirs in union stack */
+	union {
+		struct union_stack *d_union_stack; /* Dirs in union stack */
+		struct dentry *d_fallthru; /* Lower dentry pinned by fallthru */
+	};
 #endif
 	struct list_head d_lru;		/* LRU list */
 	/*
@@ -215,7 +218,6 @@ struct dentry_operations {
 #define DCACHE_CANT_MOUNT	0x0100
 #define DCACHE_GENOCIDE		0x0200
 #define DCACHE_SHRINK_LIST	0x0400
-#define DCACHE_WHITEOUT		0x0800	/* Stop lookup in a unioned file system */
 
 #define DCACHE_OP_WEAK_REVALIDATE	0x0800
 
@@ -226,8 +228,6 @@ struct dentry_operations {
 #define DCACHE_FSNOTIFY_PARENT_WATCHED 0x4000
      /* Parent inode is watched by some fsnotify listener */
 
-#define DCACHE_FALLTHRU		0x8000	/* Continue lookup below an opaque dir */
-
 #define DCACHE_MOUNTED		0x10000	/* is a mountpoint */
 #define DCACHE_NEED_AUTOMOUNT	0x20000	/* handle automount on this dir */
 #define DCACHE_MANAGE_TRANSIT	0x40000	/* manage transit from this dirent */
@@ -235,7 +235,14 @@ struct dentry_operations {
 	(DCACHE_MOUNTED|DCACHE_NEED_AUTOMOUNT|DCACHE_MANAGE_TRANSIT)
 
 #define DCACHE_DENTRY_KILLED	0x100000
-#define DCACHE_UNION_LOOKUP_DONE 0x200000 /* Union lookup was called on this dentry */
+
+#define DCACHE_SYMLINK			0x00200000 /* Symlink-type (or fallthru to such) */
+#define DCACHE_WHITEOUT			0x00400000 /* Whiteout-type (stop pathwalk) */
+#define DCACHE_FALLTHRU			0x00800000 /* Fallthru-type (jump union layer) */
+
+#define DCACHE_UNION_LOOKUP_DONE	0x01000000 /* Union lookup was called on this dentry */
+#define DCACHE_UNION_PINNING_LOWER	0x02000000 /* Union upper dentry is pinning lower */
+#define DCACHE_UNION_COPYING_UP		0x04000000 /* This dentry is being copied up */
 
 extern seqlock_t rename_lock;
 
@@ -433,14 +440,44 @@ static inline bool d_managed(struct dentry *dentry)
 	return dentry->d_flags & DCACHE_MANAGED_DENTRY;
 }
 
-static inline int d_is_whiteout(struct dentry *dentry)
+static inline bool d_is_symlink(struct dentry *dentry)
+{
+	return dentry->d_flags & DCACHE_SYMLINK;
+}
+
+static inline bool d_is_whiteout(struct dentry *dentry)
 {
 	return dentry->d_flags & DCACHE_WHITEOUT;
 }
 
-static inline int d_is_fallthru(struct dentry *dentry)
+static inline bool d_is_fallthru(struct dentry *dentry)
 {
 	return dentry->d_flags & DCACHE_FALLTHRU;
+}
+
+static inline bool d_has_lower(struct dentry *dentry)
+{
+	return unlikely(!dentry->d_inode &&
+			dentry->d_flags & (DCACHE_FALLTHRU |
+					   DCACHE_UNION_PINNING_LOWER));
+}
+
+static inline void d_pin_lower(struct dentry *dentry, struct dentry *lower)
+{
+	BUG_ON(dentry->d_fallthru != NULL);
+	dentry->d_fallthru = lower;
+	smp_wmb();
+	dentry->d_flags |= DCACHE_UNION_PINNING_LOWER;
+}
+
+static inline bool d_is_pinning_lower(struct dentry *dentry)
+{
+	if (unlikely(dentry->d_flags & DCACHE_UNION_PINNING_LOWER)) {
+		smp_rmb(); /* d_fallthru must be read only after this flag is
+			    * checked. */
+		return true;
+	}
+	return false;
 }
 
 static inline bool d_mountpoint(struct dentry *dentry)

@@ -26,9 +26,11 @@ static const char cachefiles_xattr_cache[] =
  * check the type label on an object
  * - done using xattrs
  */
-int cachefiles_check_object_type(struct cachefiles_object *object)
+int cachefiles_check_object_type(struct cachefiles_cache *cache,
+				 struct cachefiles_object *object)
 {
 	struct dentry *dentry = object->dentry;
+	struct path path = { .mnt = cache->mnt, .dentry = dentry };
 	char type[3], xtype[3];
 	int ret;
 
@@ -43,7 +45,7 @@ int cachefiles_check_object_type(struct cachefiles_object *object)
 	_enter("%p{%s}", object, type);
 
 	/* attempt to install a type label directly */
-	ret = vfs_setxattr(dentry, cachefiles_xattr_cache, type, 2,
+	ret = vfs_setxattr(&path, cachefiles_xattr_cache, type, 2,
 			   XATTR_CREATE);
 	if (ret == 0) {
 		_debug("SET"); /* we succeeded */
@@ -97,21 +99,22 @@ bad_type:
 /*
  * set the state xattr on a cache file
  */
-int cachefiles_set_object_xattr(struct cachefiles_object *object,
+int cachefiles_set_object_xattr(struct cachefiles_cache *cache,
+				struct cachefiles_object *object,
 				struct cachefiles_xattr *auxdata)
 {
-	struct dentry *dentry = object->dentry;
+	struct path path = { .mnt = cache->mnt, .dentry = object->dentry };
 	int ret;
 
 	ASSERT(object->fscache.cookie);
-	ASSERT(dentry);
+	ASSERT(path.dentry);
 
 	_enter("%p,#%d", object, auxdata->len);
 
 	/* attempt to install the cache metadata directly */
 	_debug("SET %s #%u", object->fscache.cookie->def->name, auxdata->len);
 
-	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
+	ret = vfs_setxattr(&path, cachefiles_xattr_cache,
 			   &auxdata->type, auxdata->len,
 			   XATTR_CREATE);
 	if (ret < 0 && ret != -ENOMEM)
@@ -126,21 +129,22 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 /*
  * update the state xattr on a cache file
  */
-int cachefiles_update_object_xattr(struct cachefiles_object *object,
+int cachefiles_update_object_xattr(struct cachefiles_cache *cache,
+				   struct cachefiles_object *object,
 				   struct cachefiles_xattr *auxdata)
 {
-	struct dentry *dentry = object->dentry;
+	struct path path = { .mnt = cache->mnt, .dentry = object->dentry };
 	int ret;
 
 	ASSERT(object->fscache.cookie);
-	ASSERT(dentry);
+	ASSERT(path.dentry);
 
 	_enter("%p,#%d", object, auxdata->len);
 
 	/* attempt to install the cache metadata directly */
 	_debug("SET %s #%u", object->fscache.cookie->def->name, auxdata->len);
 
-	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
+	ret = vfs_setxattr(&path, cachefiles_xattr_cache,
 			   &auxdata->type, auxdata->len,
 			   XATTR_REPLACE);
 	if (ret < 0 && ret != -ENOMEM)
@@ -156,11 +160,13 @@ int cachefiles_update_object_xattr(struct cachefiles_object *object,
  * check the state xattr on a cache file
  * - return -ESTALE if the object should be deleted
  */
-int cachefiles_check_object_xattr(struct cachefiles_object *object,
+int cachefiles_check_object_xattr(struct cachefiles_cache *cache,
+				  struct cachefiles_object *object,
 				  struct cachefiles_xattr *auxdata)
 {
 	struct cachefiles_xattr *auxbuf;
 	struct dentry *dentry = object->dentry;
+	struct path path = { .mnt = cache->mnt, .dentry = dentry };
 	int ret;
 
 	_enter("%p,#%d", object, auxdata->len);
@@ -231,7 +237,7 @@ int cachefiles_check_object_xattr(struct cachefiles_object *object,
 		}
 
 		/* update the current label */
-		ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
+		ret = vfs_setxattr(&path, cachefiles_xattr_cache,
 				   &auxdata->type, auxdata->len,
 				   XATTR_REPLACE);
 		if (ret < 0) {
@@ -268,9 +274,10 @@ stale:
 int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 				   struct dentry *dentry)
 {
+	struct path path = { .mnt = cache->mnt, .dentry = dentry };
 	int ret;
 
-	ret = vfs_removexattr(dentry, cachefiles_xattr_cache);
+	ret = vfs_removexattr(&path, cachefiles_xattr_cache);
 	if (ret < 0) {
 		if (ret == -ENOENT || ret == -ENODATA)
 			ret = 0;

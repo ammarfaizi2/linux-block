@@ -23,13 +23,19 @@
 #include <linux/posix_acl_xattr.h>
 
 #include <asm/uaccess.h>
+#include "internal.h"
+#include "union.h"
 
 /*
  * Check permissions for extended attribute access.  This is a bit complicated
  * because different namespaces have very different rules.
+ *
+ * Note: in unionmount conditions, dentry must be on the _upper_ layer whilst
+ * inode may be on the lower.
  */
 static int
-xattr_permission(struct inode *inode, const char *name, int mask)
+xattr_permission(struct dentry *dentry, struct inode *inode, const char *name,
+		 int mask)
 {
 	/*
 	 * We can never set or remove an extended attribute on a read-only
@@ -70,7 +76,13 @@ xattr_permission(struct inode *inode, const char *name, int mask)
 			return -EPERM;
 	}
 
-	return inode_permission(inode, mask);
+	if (is_unioned(dentry, inode)) {
+		if (mask & MAY_WRITE && dentry->d_sb->s_flags & MS_RDONLY)
+			return -EROFS;
+		return __inode_permission(inode, mask);
+	} else {
+		return inode_permission(inode, mask);
+	}
 }
 
 /**
@@ -87,7 +99,7 @@ xattr_permission(struct inode *inode, const char *name, int mask)
  *
  *  This function requires the caller to lock the inode's i_mutex before it
  *  is executed. It also assumes that the caller will make the appropriate
- *  permission checks.
+ *  permission checks.  The caller must also have copied up for unionmount.
  */
 int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
 		const void *value, size_t size, int flags)
@@ -97,6 +109,8 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
 	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
 				   XATTR_SECURITY_PREFIX_LEN);
 
+	if (!inode)
+		return -ENOENT;
 	if (issec)
 		inode->i_flags &= ~S_NOSEC;
 	if (inode->i_op->setxattr) {
@@ -119,25 +133,43 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
 
 
 int
-vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+vfs_setxattr(struct path *path, const char *name, const void *value,
 		size_t size, int flags)
 {
-	struct inode *inode = dentry->d_inode;
+	struct path lower_cache, actual;
+	struct inode *inode;
 	int error;
 
-	error = xattr_permission(inode, name, MAY_WRITE);
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
+
+again:
+	error = xattr_permission(actual.dentry, inode, name, MAY_WRITE);
 	if (error)
-		return error;
+		goto out_lower;
 
-	mutex_lock(&inode->i_mutex);
-	error = security_inode_setxattr(dentry, name, value, size, flags);
+	mutex_lock_nested(&inode->i_mutex, 1);
+	error = security_inode_setxattr(actual.dentry, name, value, size, flags);
 	if (error)
-		goto out;
+		goto out_unlock;
 
-	error = __vfs_setxattr_noperm(dentry, name, value, size, flags);
+	if (d_is_unioned(path->dentry, &actual)) {
+		/* Unionmounted */
+		mutex_unlock(&inode->i_mutex);
+		error = union_copy_up(path, &actual);
+		if (error)
+			goto out_lower;
+		inode = actual.dentry->d_inode;
+		goto again;
+	}
 
-out:
+	error = __vfs_setxattr_noperm(actual.dentry, name, value, size, flags);
+
+out_unlock:
 	mutex_unlock(&inode->i_mutex);
+out_lower:
+	path_put_maybe(&lower_cache);
 	return error;
 }
 EXPORT_SYMBOL_GPL(vfs_setxattr);
@@ -185,7 +217,7 @@ vfs_getxattr_alloc(struct dentry *dentry, const char *name, char **xattr_value,
 	char *value = *xattr_value;
 	int error;
 
-	error = xattr_permission(inode, name, MAY_READ);
+	error = xattr_permission(dentry, inode, name, MAY_READ);
 	if (error)
 		return error;
 
@@ -230,86 +262,121 @@ int vfs_xattr_cmp(struct dentry *dentry, const char *xattr_name,
 ssize_t
 vfs_getxattr(struct dentry *dentry, const char *name, void *value, size_t size)
 {
-	struct inode *inode = dentry->d_inode;
-	int error;
+	struct inode *inode;
+	struct path lower_cache, actual;
+	struct path path = { .dentry = dentry };
+	ssize_t error;
 
-	error = xattr_permission(inode, name, MAY_READ);
-	if (error)
-		return error;
+	inode = union_get_inode(&path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
-	error = security_inode_getxattr(dentry, name);
+	error = xattr_permission(dentry, inode, name, MAY_READ);
 	if (error)
-		return error;
+		goto out_dput;
+
+	error = security_inode_getxattr(actual.dentry, name);
+	if (error)
+		goto out_dput;
 
 	if (!strncmp(name, XATTR_SECURITY_PREFIX,
 				XATTR_SECURITY_PREFIX_LEN)) {
 		const char *suffix = name + XATTR_SECURITY_PREFIX_LEN;
-		int ret = xattr_getsecurity(inode, suffix, value, size);
+		ssize_t ret = xattr_getsecurity(inode, suffix, value, size);
 		/*
 		 * Only overwrite the return value if a security module
 		 * is actually active.
 		 */
 		if (ret == -EOPNOTSUPP)
 			goto nolsm;
-		return ret;
+		error = ret;
+		goto out_dput;
 	}
 nolsm:
 	if (inode->i_op->getxattr)
-		error = inode->i_op->getxattr(dentry, name, value, size);
+		error = inode->i_op->getxattr(actual.dentry, name, value, size);
 	else
 		error = -EOPNOTSUPP;
 
+out_dput:
+	path_put_maybe(&lower_cache);
 	return error;
 }
 EXPORT_SYMBOL_GPL(vfs_getxattr);
 
 ssize_t
-vfs_listxattr(struct dentry *d, char *list, size_t size)
+vfs_listxattr(struct dentry *dentry, char *list, size_t size)
 {
+	struct inode *inode;
+	struct path lower_cache, actual;
+	struct path path = { .dentry = dentry };
 	ssize_t error;
 
-	error = security_inode_listxattr(d);
-	if (error)
-		return error;
-	error = -EOPNOTSUPP;
-	if (d->d_inode->i_op->listxattr) {
-		error = d->d_inode->i_op->listxattr(d, list, size);
-	} else {
-		error = security_inode_listsecurity(d->d_inode, list, size);
-		if (size && error > size)
-			error = -ERANGE;
+	inode = union_get_inode(&path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
+
+	error = security_inode_listxattr(actual.dentry);
+	if (!error) {
+		error = -EOPNOTSUPP;
+		if (inode->i_op->listxattr) {
+			error = inode->i_op->listxattr(actual.dentry, list, size);
+		} else {
+			error = security_inode_listsecurity(inode, list, size);
+			if (size && error > size)
+				error = -ERANGE;
+		}
 	}
+	path_put_maybe(&lower_cache);
 	return error;
 }
 EXPORT_SYMBOL_GPL(vfs_listxattr);
 
 int
-vfs_removexattr(struct dentry *dentry, const char *name)
+vfs_removexattr(struct path *path, const char *name)
 {
-	struct inode *inode = dentry->d_inode;
+	struct inode *inode;
+	struct path lower_cache, actual;
 	int error;
 
-	if (!inode->i_op->removexattr)
-		return -EOPNOTSUPP;
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
-	error = xattr_permission(inode, name, MAY_WRITE);
+again:
+	error = -EOPNOTSUPP;
+	if (!inode->i_op->removexattr)
+		goto out;
+
+	error = xattr_permission(path->dentry, inode, name, MAY_WRITE);
 	if (error)
-		return error;
+		goto out;
 
 	mutex_lock(&inode->i_mutex);
-	error = security_inode_removexattr(dentry, name);
+	error = security_inode_removexattr(actual.dentry, name);
 	if (error) {
 		mutex_unlock(&inode->i_mutex);
-		return error;
+		goto out;
 	}
 
-	error = inode->i_op->removexattr(dentry, name);
+	if (d_is_unioned(path->dentry, &actual)) {
+		mutex_unlock(&inode->i_mutex);
+		error = union_copy_up(path, &actual);
+		if (error)
+			goto out;
+		inode = actual.dentry->d_inode;
+		goto again;
+	}
+
+	error = inode->i_op->removexattr(actual.dentry, name);
 	mutex_unlock(&inode->i_mutex);
 
 	if (!error) {
-		fsnotify_xattr(dentry);
-		evm_inode_post_removexattr(dentry, name);
+		fsnotify_xattr(actual.dentry);
+		evm_inode_post_removexattr(actual.dentry, name);
 	}
+out:
+	path_put_maybe(&lower_cache);
 	return error;
 }
 EXPORT_SYMBOL_GPL(vfs_removexattr);
@@ -319,7 +386,7 @@ EXPORT_SYMBOL_GPL(vfs_removexattr);
  * Extended attribute SET operations
  */
 static long
-setxattr(struct dentry *d, const char __user *name, const void __user *value,
+setxattr(struct path *path, const char __user *name, const void __user *value,
 	 size_t size, int flags)
 {
 	int error;
@@ -355,7 +422,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
 			posix_acl_fix_xattr_from_user(kvalue, size);
 	}
 
-	error = vfs_setxattr(d, kname, kvalue, size, flags);
+	error = vfs_setxattr(path, kname, kvalue, size, flags);
 out:
 	if (vvalue)
 		vfree(vvalue);
@@ -370,7 +437,7 @@ SYSCALL_DEFINE5(setxattr, const char __user *, pathname,
 {
 	struct path path;
 	int error;
-	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_COPY_UP;
+	unsigned int lookup_flags = LOOKUP_FOLLOW;
 
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
@@ -378,7 +445,7 @@ retry:
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, name, value, size, flags);
+		error = setxattr(&path, name, value, size, flags);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -395,7 +462,7 @@ SYSCALL_DEFINE5(lsetxattr, const char __user *, pathname,
 {
 	struct path path;
 	int error;
-	unsigned int lookup_flags = LOOKUP_COPY_UP;
+	unsigned int lookup_flags = 0;
 
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
@@ -403,7 +470,7 @@ retry:
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, name, value, size, flags);
+		error = setxattr(&path, name, value, size, flags);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -424,12 +491,16 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
 	if (!f.file)
 		return error;
 	dentry = f.file->f_path.dentry;
+	error = -EACCES;
+	if (f.file->f_inode != dentry->d_inode)
+		goto error; /* Can't alter an open lower union file this way */
 	audit_inode(NULL, dentry, 0);
 	error = mnt_want_write_file(f.file);
 	if (!error) {
-		error = setxattr(dentry, name, value, size, flags);
+		error = setxattr(&f.file->f_path, name, value, size, flags);
 		mnt_drop_write_file(f.file);
 	}
+error:
 	fdput(f);
 	return error;
 }
@@ -524,13 +595,17 @@ retry:
 SYSCALL_DEFINE4(fgetxattr, int, fd, const char __user *, name,
 		void __user *, value, size_t, size)
 {
+	struct dentry *dentry;
 	struct fd f = fdget(fd);
 	ssize_t error = -EBADF;
 
 	if (!f.file)
 		return error;
-	audit_inode(NULL, f.file->f_path.dentry, 0);
-	error = getxattr(f.file->f_path.dentry, name, value, size);
+	dentry = f.file->f_path.dentry;
+	if (f.file->f_inode != dentry->d_inode)
+		dentry = dentry->d_fallthru;
+	audit_inode(NULL, dentry, 0);
+	error = getxattr(dentry, name, value, size);
 	fdput(f);
 	return error;
 }
@@ -613,13 +688,17 @@ retry:
 
 SYSCALL_DEFINE3(flistxattr, int, fd, char __user *, list, size_t, size)
 {
+	struct dentry *dentry;
 	struct fd f = fdget(fd);
 	ssize_t error = -EBADF;
 
 	if (!f.file)
 		return error;
-	audit_inode(NULL, f.file->f_path.dentry, 0);
-	error = listxattr(f.file->f_path.dentry, list, size);
+	dentry = f.file->f_path.dentry;
+	if (f.file->f_inode != dentry->d_inode)
+		dentry = dentry->d_fallthru;
+	audit_inode(NULL, dentry, 0);
+	error = listxattr(dentry, list, size);
 	fdput(f);
 	return error;
 }
@@ -628,7 +707,7 @@ SYSCALL_DEFINE3(flistxattr, int, fd, char __user *, list, size_t, size)
  * Extended attribute REMOVE operations
  */
 static long
-removexattr(struct dentry *d, const char __user *name)
+removexattr(struct path *path, const char __user *name)
 {
 	int error;
 	char kname[XATTR_NAME_MAX + 1];
@@ -639,7 +718,7 @@ removexattr(struct dentry *d, const char __user *name)
 	if (error < 0)
 		return error;
 
-	return vfs_removexattr(d, kname);
+	return vfs_removexattr(path, kname);
 }
 
 SYSCALL_DEFINE2(removexattr, const char __user *, pathname,
@@ -647,7 +726,7 @@ SYSCALL_DEFINE2(removexattr, const char __user *, pathname,
 {
 	struct path path;
 	int error;
-	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_COPY_UP;
+	unsigned int lookup_flags = LOOKUP_FOLLOW;
 
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
@@ -655,7 +734,7 @@ retry:
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = removexattr(path.dentry, name);
+		error = removexattr(&path, name);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -671,7 +750,7 @@ SYSCALL_DEFINE2(lremovexattr, const char __user *, pathname,
 {
 	struct path path;
 	int error;
-	unsigned int lookup_flags = LOOKUP_COPY_UP;
+	unsigned int lookup_flags = 0;
 
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
@@ -679,7 +758,7 @@ retry:
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = removexattr(path.dentry, name);
+		error = removexattr(&path, name);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -699,12 +778,16 @@ SYSCALL_DEFINE2(fremovexattr, int, fd, const char __user *, name)
 	if (!f.file)
 		return error;
 	dentry = f.file->f_path.dentry;
+	error = -EACCES;
+	if (f.file->f_inode != dentry->d_inode)
+		goto error; /* Can't alter an open lower union file this way */
 	audit_inode(NULL, dentry, 0);
 	error = mnt_want_write_file(f.file);
 	if (!error) {
-		error = removexattr(dentry, name);
+		error = removexattr(&f.file->f_path, name);
 		mnt_drop_write_file(f.file);
 	}
+error:
 	fdput(f);
 	return error;
 }

@@ -33,18 +33,30 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
 	if (res)
 		goto out;
 
-	res = mutex_lock_killable(&inode->i_mutex);
-	if (res)
-		goto out;
+	if (unlikely(IS_DIR_UNIONED(file->f_path.dentry)) &&
+	    !IS_OPAQUE(file->f_path.dentry->d_inode)) {
+		res = mnt_want_write(file->f_path.mnt);
+		if (res < 0)
+			goto out;
+
+		res = mutex_lock_killable(&inode->i_mutex);
+		if (res < 0) {
+			mnt_drop_write(file->f_path.mnt);
+			goto out;
+		}
+
+		res = union_copyup_one_dir(&file->f_path);
+		mnt_drop_write(file->f_path.mnt);
+		if (res < 0)
+			goto out_unlock;
+	} else {
+		res = mutex_lock_killable(&inode->i_mutex);
+		if (res)
+			goto out;
+	}
 
 	res = -ENOENT;
 	if (!IS_DEADDIR(inode)) {
-		if (IS_DIR_UNIONED(file->f_path.dentry)) {
-			res = union_copyup_one_dir(&file->f_path);
-			if (res)
-				goto out_unlock;
-		}
-
 		ctx->pos = file->f_pos;
 		res = file->f_op->iterate(file, ctx);
 		file->f_pos = ctx->pos;

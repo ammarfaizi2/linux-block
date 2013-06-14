@@ -694,9 +694,18 @@ void nd_jump_link(struct nameidata *nd, struct path *path)
 
 static inline void put_link(struct nameidata *nd, struct path *link, void *cookie)
 {
-	struct inode *inode = link->dentry->d_inode;
+	struct dentry *dentry = link->dentry;
+	struct inode *inode;
+
+	inode = dentry->d_inode;
+#ifdef CONFIG_UNION_MOUNT
+	if (!inode) {
+		dentry = dentry->d_fallthru;
+		inode = dentry->d_inode;
+	}
+#endif
 	if (inode->i_op->put_link)
-		inode->i_op->put_link(link->dentry, nd, cookie);
+		inode->i_op->put_link(dentry, nd, cookie);
 	path_put(link);
 }
 
@@ -729,6 +738,10 @@ static inline int may_follow_link(struct path *link, struct nameidata *nd)
 
 	/* Allowed if owner and follower match. */
 	inode = link->dentry->d_inode;
+#ifdef CONFIG_UNION_MOUNT
+	if (!inode)
+		inode = link->dentry->d_fallthru->d_inode;
+#endif
 	if (uid_eq(current_cred()->fsuid, inode->i_uid))
 		return 0;
 
@@ -796,21 +809,19 @@ static bool safe_hardlink_source(struct inode *inode)
  */
 static int may_linkat(struct path *link)
 {
-	const struct cred *cred;
-	struct inode *inode;
+	struct inode *inode = link->dentry->d_inode;
 
 	if (!sysctl_protected_hardlinks)
 		return 0;
 
-	cred = current_cred();
-	inode = link->dentry->d_inode;
-
 	/* Source inode owner (or CAP_FOWNER) can hardlink all they like,
 	 * otherwise, it must be a safe source.
 	 */
-	if (uid_eq(cred->fsuid, inode->i_uid) || safe_hardlink_source(inode) ||
-	    capable(CAP_FOWNER))
+	if (uid_eq(current_cred()->fsuid, inode->i_uid) ||
+	    safe_hardlink_source(inode) ||
+	    capable(CAP_FOWNER)) {
 		return 0;
+	}
 
 	audit_log_link_denied("linkat", link);
 	return -EPERM;
@@ -838,7 +849,12 @@ follow_link(struct path *link, struct nameidata *nd, void **p)
 	touch_atime(link);
 	nd_set_link(nd, NULL);
 
-	error = security_inode_follow_link(link->dentry, nd);
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!dentry->d_inode))
+		dentry = dentry->d_fallthru;
+#endif
+
+	error = security_inode_follow_link(dentry, nd);
 	if (error)
 		goto out_put_nd_path;
 
@@ -1254,8 +1270,204 @@ static void follow_dotdot(struct nameidata *nd)
 	nd->inode = nd->path.dentry->d_inode;
 }
 
-static struct dentry *__lookup_hash(struct qstr *name, struct dentry *base,
-				    unsigned flags);
+/*
+ * Build the lower-layer directory stack for a unioned dir.  Returns:
+ *
+ * (*) 0 if encountered a dir first - the union stack will be filled in.
+ *
+ * (*) 1 if encountered a symlink first - d->u_dirs[0].dentry will be set to it.
+ *
+ * (*) -ENOTDIR if we encountered any other type of file first.
+ *
+ * (*) -ENOENT if we didn't encounter anything.
+ *
+ * The caller must hold i_mutex on the parent dir.
+ */
+static int union_build_dirs(struct path *parent, struct path *path,
+			    struct union_stack *d)
+{
+	struct dentry *lower = NULL;
+	unsigned i, layers = parent->dentry->d_sb->s_union_count;
+	int ret = -ENOENT;
+
+	printk("UNION: -->union_build_dirs(%pq/%pq)\n",
+	       &parent->dentry->d_name, &path->dentry->d_name);
+
+	for (i = 0; i < layers; i++) {
+		/* Get the parent directory for this layer and lookup
+		 * the target in it.
+		 */
+		struct path *lower_parent = union_find_dir(parent->dentry, i);
+		if (!lower_parent->mnt)
+			continue;
+
+		mutex_lock(&lower_parent->dentry->d_inode->i_mutex);
+		lower = __lookup_hash(&path->dentry->d_name, lower_parent->dentry, 0);
+		mutex_unlock(&lower_parent->dentry->d_inode->i_mutex);
+
+		if (IS_ERR(lower)) {
+			ret = PTR_ERR(lower);
+			lower = NULL;
+			break;
+		}
+
+		/* A negative dentry can mean several things: a plain negative
+		 * dentry is ignored and lookup continues to the next layer,
+		 * but a whiteout or a non-fallthru in an opaque dir covers
+		 * everything below it.
+		 */
+		if (!lower->d_inode) {
+			if (d_is_whiteout(lower))
+				break;
+			if (IS_OPAQUE(lower_parent->dentry->d_inode) &&
+			    !d_is_fallthru(lower))
+				break;
+			dput(lower);
+			lower = NULL;
+			continue;
+		}
+
+		/* Files block everything below them.  Special case: If we find
+		 * a file below a directory (which makes no sense), just ignore
+		 * the file and return the directory above it.
+		 */
+		if (!S_ISDIR(lower->d_inode->i_mode)) {
+			if (ret != -ENOENT)
+				break;
+			if (S_ISLNK(lower->d_inode->i_mode)) {
+				d->u_dirs[0].dentry = lower;
+				lower = NULL;
+				ret = 1;
+				break;
+			}
+			ret = -ENOTDIR;
+			break;
+		}
+
+		printk("UNION: layer %u is dir\n", i);
+
+		/* Mountpoints and automount points on a lowerfs just confuse
+		 * everything, so refuse to handle them for the moment.
+		 */
+		if (unlikely(d_mountpoint(lower))) {
+			if (ret == -ENOENT)
+				ret = -EXDEV;
+			break;
+		}
+		if (unlikely(d_managed(lower))) {
+			if (ret == -ENOENT)
+				ret = -EREMOTE;
+			break;
+		}
+
+		d->u_dirs[i].dentry = lower;
+		d->u_dirs[i].mnt = mntget(lower_parent->mnt);
+		lower = NULL;
+		ret = 0;
+	}
+
+	dput(lower);
+	return ret;
+}
+
+/**
+ * union_lookup_parent - Raise directory to upper level
+ * @nd: nameidata for the parent of @path
+ * @path: Path of the target on the upper file system
+ */
+static int union_lookup_parent(struct nameidata *nd, struct path *path)
+{
+	struct union_stack *d;
+	struct dentry *dentry = path->dentry, *lower;
+	struct inode *dir = nd->path.dentry->d_inode;
+	unsigned i, layers = nd->path.dentry->d_sb->s_union_count;
+	int ret;
+
+	printk("UNION: -->union_lookup_parent(%pq/%pq)\n",
+	       &nd->path.dentry->d_name, &path->dentry->d_name);
+
+	if (dentry->d_flags & DCACHE_UNION_LOOKUP_DONE) {
+		printk("UNION: <--union_lookup_parent() = 0 [already 0]\n");
+		return 0;
+	}
+
+	BUG_ON(nd->flags & LOOKUP_RCU); /* lookup_union_rcu() should prevent this */
+	BUG_ON(dentry->d_flags & DCACHE_UNION_PINNING_LOWER);
+
+	d = union_alloc(path);
+	if (!d)
+		return -ENOMEM;
+
+	mutex_lock(&dir->i_mutex);
+	if (dentry->d_flags & DCACHE_UNION_LOOKUP_DONE) {
+		printk("UNION: <--union_lookup_parent() = 0 [already 1]\n");
+		ret = 0;
+		goto out_unlock_mutex;
+	}
+	ret = union_build_dirs(&nd->path, path, d);
+	mutex_unlock(&dir->i_mutex);
+
+	if (ret == 1 || ret == -ENOTDIR) {
+		spin_lock(&dentry->d_lock);
+		if (ret == 1) {
+			/* Dentries covering lower symlinks are pointed at the
+			 * underlying symlink and marked.
+			 */
+			dentry->d_flags |= DCACHE_SYMLINK;
+			d_pin_lower(dentry, d->u_dirs[0].dentry);
+			d->u_dirs[0].dentry = NULL;
+			printk("UNION: <--union_lookup_parent() = 0 [symlink]\n");
+		} else {
+			printk("UNION: <--union_lookup_parent() = 0 [file]\n");
+		}
+		dentry->d_flags |= DCACHE_UNION_LOOKUP_DONE;
+		spin_unlock(&dentry->d_lock);
+		ret = 0;
+		goto out;
+	}
+	if (ret < 0)
+		goto out;
+
+	/* It's a directory, so it must be raised to the upper level.  However,
+	 * we have to take the locks in the right order.
+	 */
+	printk("UNION: May need to raise dir\n");
+	ret = mnt_want_write(nd->path.mnt);
+	if (ret < 0)
+		goto out;
+
+	mutex_lock(&dir->i_mutex);
+
+	ret = 0;
+	if (!(dentry->d_flags & DCACHE_UNION_LOOKUP_DONE)) {
+		printk("UNION: Need to raise dir\n");
+		for (i = 0; i < layers; i++)
+			if ((lower = d->u_dirs[i].dentry))
+				break;
+		ret = union_create_topmost_dir(&nd->path, path, lower);
+		if (ret == 0) {
+			spin_lock(&dentry->d_lock);
+			dentry->d_union_stack = d;
+			dentry->d_flags |= DCACHE_UNION_LOOKUP_DONE;
+			spin_unlock(&dentry->d_lock);
+			d = NULL;
+		}
+	} else {
+		printk("UNION: <--union_lookup_parent() = 0 [already 2]\n");
+	}
+
+	mnt_drop_write(nd->path.mnt);
+out_unlock_mutex:
+	mutex_unlock(&dir->i_mutex);
+out:
+	if (d) {
+		for (i = 0; i < layers; i++)
+			path_put(&d->u_dirs[i]);
+		kfree(d);
+	}
+	printk("UNION: <--union_lookup_parent() = %d\n", ret);
+	return ret;
+}
 
 /**
  * __lookup_union - Lookup and build union stack
@@ -1276,7 +1488,7 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 	unsigned i, layers = parent.dentry->d_sb->s_union_count;
 	int err;
 
-	printk("UNION: __lookup %s\n", name->name);
+	printk("UNION: __lookup_union %pq\n", name);
 
 	if (!topmost->dentry->d_inode) {
 		if (d_is_whiteout(topmost->dentry))
@@ -1359,14 +1571,18 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 			goto out_err;
 
 		/* Now we know the target is a directory.  Create a matching
-		 * topmost directory if one doesn't already exist, and add this
+		 * topmost directory if one doesn't already exist and add this
 		 * layer's directory to the union stack for the topmost
 		 * directory.
 		 */
 		if (!topmost->dentry->d_inode) {
 			printk("UNION: create top\n");
-			err = union_create_topmost_dir(&parent, name, topmost,
-						       &lower);
+			err = mnt_want_write(parent.mnt);
+			if (err)
+				goto out_err;
+
+			err = union_create_topmost_dir(&parent, topmost, lower.dentry);
+			mnt_drop_write(parent.mnt);
 			if (err)
 				goto out_err;
 		}
@@ -1378,11 +1594,17 @@ static int __lookup_union(struct nameidata *nd, struct qstr *name,
 	return 0;
 
 out_found_lower_file:
-	printk("UNION: __lookup found lower file\n");
-	dput(topmost->dentry);
-	*topmost = lower;
-	return 0;
-
+	if (S_ISLNK(lower.dentry->d_inode->i_mode)) {
+		if (nd->flags & (LOOKUP_PARENT | LOOKUP_FOLLOW)) {
+			printk("UNION: __lookup follow symlink\n");
+			dput(topmost->dentry);
+			*topmost = lower;
+			return 0;
+		}
+		printk("UNION: __lookup found lower symlink\n");
+	} else {
+		printk("UNION: __lookup found lower file\n");
+	}
 out_lookup_done:
 	path_put(&lower);
 	return 0;
@@ -1435,6 +1657,7 @@ static int lookup_union_locked(struct nameidata *nd, struct qstr *name,
 	return err;
 }
 
+#if 0 // TODO: REMOVE CONTENTS
 /*
  * lookup_union - union mount-aware part of do_lookup()
  *
@@ -1447,7 +1670,7 @@ static int lookup_union(struct nameidata *nd, struct qstr *name,
 	struct inode *dir = parent->d_inode;
 	int err;
 
-	printk("UNION: lookup %s\n", name->name);
+	printk("UNION: lookup \"%pq\"\n", name);
 
 	mutex_lock(&dir->i_mutex);
 	err = lookup_union_locked(nd, name, topmost);
@@ -1457,24 +1680,17 @@ static int lookup_union(struct nameidata *nd, struct qstr *name,
 
 	return follow_managed(topmost, nd->flags);
 }
+#endif
 
 /*
  * lookup_union_rcu - Handle union mounted dentries in RCU-walk mode
  * @nd: The current pathwalk state (refers to @parent currently)
  * @parent: The parent directory (holds the union stack)
  * @path: The point just looked up in @parent
- * @parent_seq: The d_seq of @parent at the point of lookup
  * @inode: The inode at @dentry (*@inode is NULL if negative dentry)
  *
  * Handle a dentry that represents a non-directory file or a hole/reference in
- * a union mount upperfs.  This involves transiting to the lower file, provided
- * we aren't going to open the lower file for writing - otherwise we have to
- * copy the file up (which we can't do in rcuwalk mode).
- *
- * Directories are handled differently: they're unconditionally and completely
- * mirrored from the lowerfs to the upperfs as soon as we encounter them in a
- * lookup.  However, since we don't create dentries in rcuwalk mode, this will
- * be handled automatically by refwalk mode.
+ * a union mount upperfs
  *
  * We return true if we don't need to do anything or if we've successfully
  * updated the path.  If we need to drop out of RCU-walk and go to refwalk
@@ -1483,18 +1699,16 @@ static int lookup_union(struct nameidata *nd, struct qstr *name,
 static bool lookup_union_rcu(struct nameidata *nd,
 			     struct dentry *parent,
 			     struct path *path,
-			     unsigned parent_seq,
 			     struct inode **inode)
 {
 	struct dentry *dentry = path->dentry;
-	struct inode *parent_inode = nd->inode;
-	unsigned layer, layers;
+	struct inode *dir = nd->inode;
 
 	/* Handle non-unionmount dentries first.  The union stack will have
 	 * been built during the initial lookup of the parent dir, so if it's
 	 * not there, it's not unioned.
 	 */
-	if (!IS_DIR_UNIONED(parent))
+	if (likely(!IS_DIR_UNIONED(parent)))
 		return true;
 
 	printk("UNION: Dir is unioned (RCU)\n");
@@ -1507,88 +1721,22 @@ static bool lookup_union_rcu(struct nameidata *nd,
 
 	/* If this dentry is a blocker, then stop here. */
 	if (d_is_whiteout(dentry) ||
-	    (IS_OPAQUE(parent_inode) && !d_is_fallthru(dentry)))
+	    (!d_is_fallthru(dentry) && IS_OPAQUE(dir)))
 		return true;
 
-	/* The dentry is a fallthru in an opaque unioned directory.
+	/* If we need to look below, then we should break out of RCU walk mode
+	 * with immediate effect.  There are three cases:
 	 *
-	 * If the caller demands that the terminal dentry be instantiated in
-	 * the top layer of the union (copied up) immediately, that will
-	 * require a mutex.
+	 * (1) We've encountered a lower directory.  This must be copied up.
+	 *
+	 * (2) We've encountered a symlink.  Symlinks are walked in refwalk
+	 *     mode (or (3) applies if NOFOLLOW).
+	 *
+	 * (3) We've encountered some other type of file.  This must terminate
+	 *     the pathwalk immediately, one way or another.
 	 */
-	if (nd->flags & LOOKUP_COPY_UP) {
-		printk("Must copy up %s\n", dentry->d_name.name);
-		return false;
-	}
-
-	/* At this point we have a negative dentry in the unionmount that may
-	 * be overlaying a non-directory file in a lower filesystem, so we loop
-	 * through the union stack of the parent directory to try to find a
-	 * usable dentry further down.
-	 */
-	layers = parent->d_sb->s_union_count;
-	for (layer = 0; layer < layers; layer++) {
-		/* Look for the a matching dentry in this layer, assuming it's
-		 * still valid.  Since the lower fs is hard locked R/O,
-		 * revalidation ought to be unnecessary.
-		 */
-		unsigned ldseq, seq;
-		struct dentry *lower_dir, *lower;
-		struct path *lower_path = union_find_dir(parent, layer);
-		if (!lower_path->mnt)
-			continue;
-
-		lower_dir = lower_path->dentry;
-		ldseq = read_seqcount_begin(&lower_dir->d_seq);
-
-		if (unlikely(lower_dir->d_flags & DCACHE_OP_REVALIDATE)) {
-			if (unlikely(d_revalidate(lower_dir, nd->flags) <= 0) ||
-			    __read_seqcount_retry(&lower_dir->d_seq, ldseq))
-				return false;
-		}
-
-		lower = __d_lookup_rcu(lower_dir, &dentry->d_name, &seq, *inode);
-		if (!lower)
-			return false;
-		*inode = lower->d_inode;
-
-		/* We've got a negative dentry which can mean several things: a
-		 * plain negative dentry is ignored and lookup continues to the
-		 * next layer; but a whiteout or a non-fallthru in an opaque
-		 * dir covers everything below it.
-		 */
-		if (!*inode) {
-			if (d_is_whiteout(lower) ||
-			    (IS_OPAQUE(parent_inode) && !d_is_fallthru(lower))) {
-				if (read_seqcount_retry(&lower_dir->d_seq,
-							ldseq))
-					return false;
-				return true;
-			}
-			continue;
-		}
-
-		/* If the lower dentry is a directory then it will need copying
-		 * up before we can make use of it.
-		 */
-		if (S_ISDIR((*inode)->i_mode)) {
-			printk("UNION: Need copyup\n");
-			return false;
-		}
-
-		/* There is a file in a lower fs that we can use */
-		if (read_seqcount_retry(&lower_dir->d_seq, ldseq) ||
-		    __read_seqcount_retry(&parent->d_seq, parent_seq))
-			return false;
-
-		path->mnt = lower_path->mnt;
-		path->dentry = lower;
-		nd->seq = seq;
-		return true;
-	}
-
-	/* Found nothing, so just use the top negative dentry */
-	return true;
+	printk("UNION: Drop out of RCU\n");
+	return false;
 }
 
 /*
@@ -1656,7 +1804,7 @@ static struct dentry *lookup_real(struct inode *dir, struct dentry *dentry,
 	return dentry;
 }
 
-static struct dentry *__lookup_hash(struct qstr *name,
+struct dentry *__lookup_hash(struct qstr *name,
 		struct dentry *base, unsigned int flags)
 {
 	bool need_lookup;
@@ -1674,17 +1822,18 @@ static struct dentry *__lookup_hash(struct qstr *name,
  *  small and for now I'd prefer to have fast path as straight as possible.
  *  It _is_ time-critical.
  */
-static int lookup_fast(struct nameidata *nd,
-		       struct path *path, struct inode **inode)
+static noinline int lookup_fast(struct nameidata *nd,
+		       struct path *path, struct inode **_inode)
 {
 	struct vfsmount *mnt = nd->path.mnt;
 	struct dentry *dentry, *parent = nd->path.dentry;
+	struct inode *inode;
 	int need_reval = 1;
 	int status = 1;
 	int err;
 
 	if (IS_DIR_UNIONED(parent))
-		printk("UNION: --> lookup_fast(%s)\n", nd->last.name);
+		printk("UNION: --> lookup_fast(%pq)\n", &nd->last);
 
 	/*
 	 * Rename seqlock is not required here because in the off chance
@@ -1694,14 +1843,20 @@ static int lookup_fast(struct nameidata *nd,
 	if (nd->flags & LOOKUP_RCU) {
 		unsigned seq, pseq;
 		dentry = __d_lookup_rcu(parent, &nd->last, &seq, nd->inode);
-		if (!dentry)
+		if (!dentry) {
+			if (IS_DIR_UNIONED(parent))
+				printk("UNION: __d_lookup_rcu\n");
 			goto unlazy;
+		}
 
 		/*
 		 * This sequence count validates that the inode matches
 		 * the dentry name information from lookup.
 		 */
-		*inode = dentry->d_inode;
+		inode = dentry->d_inode;
+		if (!inode && d_is_pinning_lower(dentry))
+			inode = dentry->d_fallthru->d_inode;
+		*_inode = inode;
 		if (read_seqcount_retry(&dentry->d_seq, seq))
 			return -ECHILD;
 
@@ -1722,17 +1877,28 @@ static int lookup_fast(struct nameidata *nd,
 			if (unlikely(status <= 0)) {
 				if (status != -ECHILD)
 					need_reval = 0;
+				if (IS_DIR_UNIONED(parent))
+					printk("UNION: d_revalidate\n");
 				goto unlazy;
 			}
 		}
 		path->mnt = mnt;
 		path->dentry = dentry;
-		if (unlikely(!lookup_union_rcu(nd, parent, path, pseq, inode)))
+		if (unlikely(!lookup_union_rcu(nd, parent, path, _inode))) {
+			if (IS_DIR_UNIONED(parent))
+				printk("UNION: !lookup_union_rcu\n");
 			goto unlazy;
-		if (unlikely(!__follow_mount_rcu(nd, path, inode)))
+		}
+		if (unlikely(!__follow_mount_rcu(nd, path, _inode))) {
+			if (IS_DIR_UNIONED(parent))
+				printk("UNION: !__follow_mount_rcu\n");
 			goto unlazy;
-		if (unlikely(path->dentry->d_flags & DCACHE_NEED_AUTOMOUNT))
+		}
+		if (unlikely(path->dentry->d_flags & DCACHE_NEED_AUTOMOUNT)) {
+			if (IS_DIR_UNIONED(parent))
+				printk("UNION: need_automount\n");
 			goto unlazy;
+		}
 		return 0;
 unlazy:
 		if (IS_DIR_UNIONED(parent))
@@ -1771,6 +1937,7 @@ unlazy:
 	if (err)
 		nd->flags |= LOOKUP_JUMPED;
 
+#if 0
 	if (needs_lookup_union(nd, &nd->path, path)) {
 		int err;
 		printk("UNION: Fast need lookup\n");
@@ -1778,8 +1945,12 @@ unlazy:
 		if (err < 0)
 			return err;
 	}
+#endif
 
-	*inode = path->dentry->d_inode;
+	inode = path->dentry->d_inode;
+	if (!inode && d_is_pinning_lower(path->dentry))
+		inode = dentry->d_fallthru->d_inode;
+	*_inode = inode;
 	return 0;
 
 need_lookup:
@@ -1789,7 +1960,7 @@ need_lookup:
 }
 
 /* Fast lookup failed, do it the slow way */
-static int lookup_slow(struct nameidata *nd, struct path *path)
+static noinline int lookup_slow(struct nameidata *nd, struct path *path)
 {
 	struct dentry *dentry, *parent;
 	int err;
@@ -1798,14 +1969,14 @@ static int lookup_slow(struct nameidata *nd, struct path *path)
 	BUG_ON(nd->inode != parent->d_inode);
 
 	if (IS_DIR_UNIONED(parent))
-		printk("UNION: --> lookup_slow(%s)\n", nd->last.name);
+		printk("UNION: --> lookup_slow(%pq)\n", &nd->last);
 
 	mutex_lock(&parent->d_inode->i_mutex);
 	dentry = __lookup_hash(&nd->last, parent, nd->flags);
 	mutex_unlock(&parent->d_inode->i_mutex);
 
 	if (IS_DIR_UNIONED(parent))
-		printk("UNION: --> slow: __lookup_hash() = %p\n", dentry);
+		printk("UNION: slow: __lookup_hash() = %p\n", dentry);
 
 	if (IS_ERR(dentry))
 		return PTR_ERR(dentry);
@@ -1818,6 +1989,7 @@ static int lookup_slow(struct nameidata *nd, struct path *path)
 	}
 	if (err)
 		nd->flags |= LOOKUP_JUMPED;
+#if 0
 	if (needs_lookup_union(nd, &nd->path, path)) {
 		printk("UNION: Slow need lookup\n");
 		err = lookup_union(nd, &nd->last, path);
@@ -1826,10 +1998,11 @@ static int lookup_slow(struct nameidata *nd, struct path *path)
 			return err;
 		}
 	}
+#endif
 	return 0;
 }
 
-static inline int may_lookup(struct nameidata *nd)
+static noinline int may_lookup(struct nameidata *nd)
 {
 	if (nd->flags & LOOKUP_RCU) {
 		int err = inode_permission(nd->inode, MAY_EXEC|MAY_NOT_BLOCK);
@@ -1871,28 +2044,19 @@ static void terminate_walk(struct nameidata *nd)
  * so we keep a cache of "no, this doesn't need follow_link"
  * for the common case.
  */
-static inline int should_follow_link(struct inode *inode, int follow)
+static inline int should_follow_link(struct dentry *dentry, int follow)
 {
-	if (unlikely(!(inode->i_opflags & IOP_NOFOLLOW))) {
-		if (likely(inode->i_op->follow_link))
-			return follow;
-
-		/* This gets set once for the inode lifetime */
-		spin_lock(&inode->i_lock);
-		inode->i_opflags |= IOP_NOFOLLOW;
-		spin_unlock(&inode->i_lock);
-	}
-	return 0;
+	return unlikely(d_is_symlink(dentry)) ? follow : 0;
 }
 
-static inline int walk_component(struct nameidata *nd, struct path *path,
+static noinline int walk_component(struct nameidata *nd, struct path *path,
 		int follow)
 {
 	struct inode *inode;
 	int err;
 
 	if (IS_DIR_UNIONED(nd->path.dentry))
-		printk("UNION: --> walk_component(%s)\n", nd->last.name);
+		printk("UNION: --> walk_component(%pq)\n", &nd->last);
 
 	/*
 	 * "." and ".." are special - ".." especially so because it has
@@ -1911,15 +2075,35 @@ static inline int walk_component(struct nameidata *nd, struct path *path,
 			goto out_err;
 
 		inode = path->dentry->d_inode;
+		if (!inode && d_is_pinning_lower(path->dentry))
+			inode = path->dentry->d_fallthru->d_inode;
 	}
 
-	if (IS_DIR_UNIONED(nd->path.dentry))
-		printk("UNION: --> walk: looked up\n");
-	err = -ENOENT;
-	if (!inode)
-		goto out_path_put;
+	if (IS_MNT_UNION(path->mnt)) {
+		printk("UNION: walk_comp: path->mnt UPPER%s\n",
+		       nd->flags & LOOKUP_RCU ? " RCU" : "");
+		printk("UNION: dentry %pq: %p(%p)\n",
+		       &path->dentry->d_name, path->dentry, path->dentry->d_inode);
+	}
 
-	if (should_follow_link(inode, follow)) {
+	if (!inode) {
+		if (likely(!IS_MNT_UNION(path->mnt)))
+			goto enoent;
+
+		if (!(path->dentry->d_flags & DCACHE_UNION_LOOKUP_DONE)) {
+			err = union_lookup_parent(nd, path);
+			if (err < 0)
+				goto out_path_put;
+		}
+		if (should_follow_link(path->dentry, follow))
+			return 1;
+		inode = path->dentry->d_inode;
+		if (!inode && nd->flags & LOOKUP_PARENT)
+			goto enoent;
+		goto success;
+	}
+
+	if (should_follow_link(path->dentry, follow)) {
 		if (nd->flags & LOOKUP_RCU) {
 			if (unlikely(unlazy_walk(nd, path->dentry))) {
 				err = -ECHILD;
@@ -1929,10 +2113,13 @@ static inline int walk_component(struct nameidata *nd, struct path *path,
 		BUG_ON(inode != path->dentry->d_inode);
 		return 1;
 	}
+success:
 	path_to_nameidata(path, nd);
 	nd->inode = inode;
 	return 0;
 
+enoent:
+	err = -ENOENT;
 out_path_put:
 	path_to_nameidata(path, nd);
 out_err:
@@ -1983,18 +2170,20 @@ static inline int nested_symlink(struct path *path, struct nameidata *nd)
  * the inode ->i_opflags field that says "yes, we can
  * do lookup on this inode".
  */
-static inline int can_lookup(struct inode *inode)
+static inline bool can_lookup(struct inode *inode)
 {
+	if (unlikely(!inode))
+		return false; /* Unioned non-dir, non-symlink */
 	if (likely(inode->i_opflags & IOP_LOOKUP))
-		return 1;
+		return true;
 	if (likely(!inode->i_op->lookup))
-		return 0;
+		return false;
 
 	/* We do this once for the lifetime of the inode */
 	spin_lock(&inode->i_lock);
 	inode->i_opflags |= IOP_LOOKUP;
 	spin_unlock(&inode->i_lock);
-	return 1;
+	return true;
 }
 
 /*
@@ -2297,109 +2486,13 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 	return 0;
 }
 
-/*
- * Walk the final component of a path, returning it in *path.  The parent is
- * left in nd->path.
- */
-static int walk_last_component(struct nameidata *nd, struct path *path,
-			       int follow)
-{
-	struct inode *inode;
-	int err;
-
-	if (IS_DIR_UNIONED(nd->path.dentry))
-		printk("UNION: --> walk_last_component(%s)\n", nd->last.name);
-
-	/* "." and ".." are special - ".." especially so because it has
-	 * to be able to know about the current root directory and
-	 * parent relationships.
-	 */
-	if (unlikely(nd->last_type != LAST_NORM))
-		return handle_dots(nd, nd->last_type);
-	err = lookup_fast(nd, path, &inode);
-	if (unlikely(err)) {
-		if (err < 0)
-			goto out_err;
-		err = lookup_slow(nd, path);
-		if (err < 0)
-			goto out_err;
-		inode = path->dentry->d_inode;
-	}
-
-	if (IS_MNT_UNION(nd->path.mnt))
-		printk("UNION: walk_last_comp: nd->path.mnt UPPER\n");
-	if (IS_MNT_LOWER(nd->path.mnt))
-		printk("UNION: walk_last_comp: nd->path.mnt LOWER\n");
-	if (IS_MNT_UNION(path->mnt))
-		printk("UNION: walk_last_comp: path->mnt UPPER\n");
-	if (IS_MNT_LOWER(path->mnt))
-		printk("UNION: walk_last_comp: path->mnt LOWER\n");
-
-	err = -ENOENT;
-	if (!inode)
-		goto out_path_put;
-
-	if (should_follow_link(inode, follow)) {
-		if (nd->flags & LOOKUP_RCU) {
-			if (unlikely(unlazy_walk(nd, path->dentry))) {
-				err = -ECHILD;
-				goto out_err;
-			}
-		}
-		BUG_ON(inode != path->dentry->d_inode);
-		return 1;
-	}
-
-	if (nd->flags & LOOKUP_COPY_UP && IS_MNT_LOWER(path->mnt)) {
-		BUG_ON(S_ISDIR(inode->i_mode));
-		printk("UNION: walk_last_comp: Need to copy up\n");
-		if (nd->flags & LOOKUP_RCU &&
-		    unlikely(unlazy_walk(nd, path->dentry))) {
-			err = -ECHILD;
-			goto out_err;
-		}
-
-		err = mnt_want_write(nd->path.mnt);
-		if (err)
-			goto out_path_put;
-
-		mutex_lock(&nd->path.dentry->d_inode->i_mutex);
-		err = union_copyup(&nd->path, path, true, 0);
-		mutex_unlock(&nd->path.dentry->d_inode->i_mutex);
-		mnt_drop_write(nd->path.mnt);
-		if (err)
-			goto out_path_put;
-
-		if (path->mnt != nd->path.mnt)
-			printk("UNION: !!! mnt not changed by copyup\n");
-
-		printk("UNION: walk_last_comp: copied up lower\n");
-		BUG_ON(path->mnt != nd->path.mnt);
-
-		inode = path->dentry->d_inode;
-		err = -ENOENT;
-		if (!inode)
-			goto out_path_put;
-	}
-
-	path_to_nameidata(path, nd);
-	nd->inode = inode;
-	return 0;
-
-out_path_put:
-	path_to_nameidata(path, nd);
-out_err:
-	terminate_walk(nd);
-	return err;
-}
-
 static inline int lookup_last(struct nameidata *nd, struct path *path)
 {
 	if (nd->last_type == LAST_NORM && nd->last.name[nd->last.len])
 		nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
 
 	nd->flags &= ~LOOKUP_PARENT;
-	return walk_last_component(nd, path, nd->flags & LOOKUP_FOLLOW);
+	return walk_component(nd, path, nd->flags & LOOKUP_FOLLOW);
 }
 
 /* Returns 0 and nd will be valid on success; Retuns error, otherwise. */
@@ -2431,6 +2524,9 @@ static int path_lookupat(int dfd, const char *name,
 
 	current->total_link_count = 0;
 	err = link_path_walk(name, nd);
+	if (!err && IS_MNT_UNION(nd->path.mnt))
+		printk("UNION: link_path_walk returned nd->path.mnt UPPER%s\n>>>\n",
+		       flags & LOOKUP_PARENT ? " PARENT" : "");
 
 	/* At this point we've processed all the non-terminal parts of the path
 	 * and are ready to tackle the final section.  The final section may
@@ -2442,14 +2538,22 @@ static int path_lookupat(int dfd, const char *name,
 		while (err > 0) {
 			void *cookie;
 			struct path link = terminal_symlink;
+			if (IS_MNT_UNION(nd->path.mnt))
+				printk("UNION: path_lookupat: may_follow_link\n");
 			err = may_follow_link(&link, nd);
 			if (unlikely(err))
 				break;
 			nd->flags |= LOOKUP_PARENT;
+			if (IS_MNT_UNION(nd->path.mnt))
+				printk("UNION: path_lookupat: follow_link\n");
 			err = follow_link(&link, nd, &cookie);
 			if (err)
 				break;
+			if (IS_MNT_UNION(nd->path.mnt))
+				printk("UNION: path_lookupat: lookup_last\n");
 			err = lookup_last(nd, &terminal_symlink);
+			if (IS_MNT_UNION(nd->path.mnt))
+				printk("UNION: path_lookupat: put_link\n");
 			put_link(nd, &link, cookie);
 		}
 
@@ -2469,7 +2573,7 @@ static int path_lookupat(int dfd, const char *name,
 		err = complete_walk(nd);
 
 	if (!err && nd->flags & LOOKUP_DIRECTORY) {
-		if (!can_lookup(nd->inode)) {
+		if (!nd->inode || !can_lookup(nd->inode)) {
 			path_put(&nd->path);
 			err = -ENOTDIR;
 		}
@@ -2678,7 +2782,7 @@ static int lookup_last_and_parent(struct nameidata *nd, struct path *_path)
 	if (!inode)
 		goto out_path_put;
 
-	if (should_follow_link(inode, follow)) {
+	if (should_follow_link(path.dentry, follow)) {
 		if (nd->flags & LOOKUP_RCU) {
 			if (unlikely(unlazy_walk(nd, path.dentry))) {
 				err = -ECHILD;
@@ -3049,10 +3153,8 @@ int vfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 	return error;
 }
 
-static int may_open(struct path *path, int acc_mode, int flag)
+static int may_open(struct path *path, struct inode *inode, int acc_mode, int flag)
 {
-	struct dentry *dentry = path->dentry;
-	struct inode *inode = dentry->d_inode;
 	int error;
 
 	/* O_PATH? */
@@ -3173,7 +3275,7 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
 	BUG_ON(dentry->d_inode);
 
 	if (IS_DIR_UNIONED(nd->path.dentry))
-		printk("UNION: --> atomic_open(%s)\n", nd->last.name);
+		printk("UNION: --> atomic_open(%pq)\n", &nd->last);
 	if (IS_MNT_UNION(nd->path.mnt))
 		printk("UNION: --> atomic_open(UNIONED)\n");
 
@@ -3269,7 +3371,7 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
 	 * We didn't have the inode before the open, so check open permission
 	 * here.
 	 */
-	error = may_open(&file->f_path, acc_mode, open_flag);
+	error = may_open(&file->f_path, file->f_inode, acc_mode, open_flag);
 	if (error)
 		fput(file);
 
@@ -3306,6 +3408,53 @@ looked_up:
 }
 
 /*
+ * Look below a top-level dentry to see what lies beneath on a lower fs and
+ * mark the dentry up appropriately.  The caller must hold the parent directory
+ * inode mutex.
+ */
+static noinline int union_assess_lower(struct nameidata *nd, struct path *path)
+{
+	struct path lower_cache, actual;
+	struct inode *inode;
+	struct dentry *dentry;
+	int ret = 0;
+
+	printk("union_assess_lower: %x %p\n",
+	       path->dentry->d_flags, path->dentry->d_fallthru);
+
+	inode = union_get_inode_locked(nd->path.dentry, path,
+				       &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
+
+	dentry = path->dentry;
+	spin_lock(&dentry->d_lock);
+
+	if (!inode) {
+		printk("UNION: union_assess_lower: no ino\n");
+		BUG_ON(dentry->d_fallthru != NULL);
+		dentry->d_flags |= DCACHE_UNION_LOOKUP_DONE;
+	} else if (S_ISDIR(inode->i_mode)) {
+		/* A directory will need creating up top regardless. */
+		printk("UNION: union_assess_lower: isdir\n");
+		ret = -ENOANO;
+	} else {
+		if (d_is_symlink(actual.dentry)) {
+			printk("UNION: union_assess_lower: sym\n");
+			dentry->d_flags |= DCACHE_SYMLINK;
+		} else {
+			printk("UNION: union_assess_lower: file\n");
+		}
+		d_pin_lower(dentry, dget_dlock(actual.dentry));
+		dentry->d_flags |= DCACHE_UNION_LOOKUP_DONE;
+	}
+
+	spin_unlock(&path->dentry->d_lock);
+	path_put_maybe(&lower_cache);
+	return ret;
+}
+
+/*
  * Look up and maybe create and open the last component.
  *
  * Must be called with i_mutex held on parent.
@@ -3339,7 +3488,7 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 	bool need_lookup;
 
 	if (IS_DIR_UNIONED(dir))
-		printk("UNION: --> lookup_open(%s)\n", nd->last.name);
+		printk("UNION: --> lookup_open(%pq)\n", &nd->last);
 	if (IS_MNT_UNION(nd->path.mnt))
 		printk("UNION: --> lookup_open(UNIONED)\n");
 	if (IS_MNT_LOWER(nd->path.mnt))
@@ -3420,37 +3569,34 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 		 * Otherwise we need to copy up the whole file.
 		 */
 		if (IS_MNT_UNION(nd->path.mnt)) {
-			struct path topmost;
-
-			printk("UNION: %p/%p\n", dir->d_sb, dentry->d_sb);
-
 			printk("UNION: deal with O_CREAT\n");
 
-			if (d_is_whiteout(dentry) ||
-			    (IS_OPAQUE(dir_inode) && !d_is_fallthru(dentry)))
-				goto just_create; /* Lower is blocked off */
-
-			/* Look up the lower file.  This checks the lower
-			 * layers to see if we need to copy up, but if the file
-			 * is opened read-only with just O_CREAT then it'll
-			 * return the lower file.
-			 */
-			topmost.mnt = nd->path.mnt;
-			topmost.dentry = dentry;
-			error = __lookup_union(nd, &dentry->d_name, &topmost);
-			if (error)
-				goto out_dput;
-
-			if (topmost.mnt != nd->path.mnt) {
-				/* Moved down. */
-				printk("UNION: found lower (ignore O_CREAT)\n");
-				BUG_ON(!IS_MNT_LOWER(topmost.mnt));
-				BUG_ON(!topmost.dentry->d_inode);
-				*path = topmost;
-				printk("UNION: looked up lower (O_CREAT ignored)\n");
-				return 1;
+			if (!(dentry->d_flags & DCACHE_UNION_LOOKUP_DONE)) {
+				struct path tmp = {
+					.mnt = nd->path.mnt,
+					.dentry = dentry,
+				};
+				error = union_assess_lower(nd, &tmp);
+				if (error)
+					goto out_dput;
 			}
-			BUG_ON(topmost.dentry != dentry);
+
+			if (d_is_whiteout(dentry) ||
+			    (!d_is_fallthru(dentry) && IS_OPAQUE(dir_inode))) {
+				printk("UNION: lower blocked\n");
+				goto just_create; /* Lower is blocked off */
+			}
+			if (d_is_symlink(dentry))
+				goto out_no_open;
+
+			printk("UNION: deal with O_CREAT\n");
+			if (d_is_pinning_lower(dentry) &&
+			    dentry->d_fallthru->d_inode) {
+				printk("UNION: lower available (O_CREAT ignored)\n");
+				goto out_no_open;
+			}
+
+			printk("UNION: create over lower\n");
 		}
 
 	just_create:
@@ -3460,27 +3606,11 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 			goto out_dput;
 		error = vfs_create(dir->d_inode, dentry, mode,
 				   nd->flags & LOOKUP_EXCL);
+		if (IS_MNT_UNION(nd->path.mnt))
+			printk("UNION: vfs_create() = %d [%pq: %p]\n",
+			       error, &dentry->d_name, dentry);
 		if (error)
 			goto out_dput;
-	} else if (!dentry->d_inode && IS_DIR_UNIONED(dir)) {
-		/* The file does not exist in the top layer of a union - but it
-		 * might exist in a lower layer.
-		 */
-		printk("UNION: %p/%p\n", dir->d_sb, dentry->d_sb);
-
-		if (d_is_whiteout(dentry) ||
-		    (IS_OPAQUE(dir_inode) && !d_is_fallthru(dentry)))
-			goto out_no_open; /* Lower is blocked off */
-
-		/* Check for a lower file */
-		path->mnt = nd->path.mnt;
-		path->dentry = dentry;
-		error = __lookup_union(nd, &dentry->d_name, path);
-		if (error)
-			goto out_dput;
-
-		printk("UNION: looked up lower\n");
-		return 1;
 	}
 
 out_no_open:
@@ -3581,6 +3711,7 @@ retry_lookup:
 		 * dropping this one anyway.
 		 */
 	}
+
 	mutex_lock(&dir->d_inode->i_mutex);
 	error = lookup_open(nd, path, file, op, got_write, opened);
 	mutex_unlock(&dir->d_inode->i_mutex);
@@ -3667,17 +3798,56 @@ finish_lookup:
 	else if (IS_MNT_UNION(nd->path.mnt))
 		printk("UNION: do_last: nd->path.mnt at upper\n");
 	/* we _can_ be in RCU mode here */
-	BUG_ON(IS_MNT_LOWER(path->mnt) &&
-	       (d_is_whiteout(path->dentry) ||
-		(IS_OPAQUE(dir->d_inode) && d_is_fallthru(path->dentry))));
 
-	error = -ENOENT;
 	if (!inode) {
-		path_to_nameidata(path, nd);
-		goto out;
+		if (likely(!IS_DIR_UNIONED(dir)))
+			goto noent;
+
+		printk("UNION: %pq: d_flags = %x\n",
+		       &path->dentry->d_name, path->dentry->d_flags);
+
+		if (d_is_whiteout(path->dentry) ||
+		    (!d_is_fallthru(path->dentry) && IS_OPAQUE(dir->d_inode)))
+			goto noent;
+
+		/* The dentry falls through from the upper fs of a union - so
+		 * we need to take a look below it.
+		 */
+		printk("UNION: fell through\n");
+		if (!(path->dentry->d_flags & DCACHE_UNION_LOOKUP_DONE)) {
+			/* Need to have a look below, but step out of RCU-mode
+			 * first.  We use d_fallthru to cache the result for
+			 * subsequent RCU-mode walks.
+			 */
+			if (nd->flags & LOOKUP_RCU &&
+			    unlikely(unlazy_walk(nd, path->dentry))) {
+				error = -ECHILD;
+				goto out;
+			}
+
+			mutex_lock(&dir->d_inode->i_mutex);
+			error = union_assess_lower(nd, path);
+			mutex_unlock(&dir->d_inode->i_mutex);
+			if (error)
+				goto out;
+		}
+
+		if (!d_is_pinning_lower(path->dentry))
+			goto noent;
+
+		inode = path->dentry->d_fallthru->d_inode;
+		if (!inode)
+			/* Fallthrough to nothing, it would appear. */
+			goto noent;
+
+		printk("UNION: got lower from d_fallthru\n");
 	}
 
-	if (should_follow_link(inode, !symlink_ok)) {
+	if (should_follow_link(path->dentry, !symlink_ok)) {
+		/* The dentry is either a symlink on this fs or it's a
+		 * fallthrough to a symlink in a lower fs (in which case inode
+		 * will be NULL).
+		 */
 		if (IS_DIR_UNIONED(dir))
 			printk("UNION: should_follow_link() -> true\n");
 		if (nd->flags & LOOKUP_RCU) {
@@ -3686,16 +3856,17 @@ finish_lookup:
 				goto out;
 			}
 		}
-		BUG_ON(inode != path->dentry->d_inode);
 		if (got_write)
 			mnt_drop_write(nd->path.mnt);
 		return 1;
 	}
 
-	if (IS_MNT_LOWER(path->mnt) &&
+	if (IS_DIR_UNIONED(dir) &&
 	    nd->flags & LOOKUP_COPY_UP &&
+	    !path->dentry->d_inode &&
 	    S_ISREG(inode->i_mode)) {
-		printk("UNION: Need to copy up\n");
+		printk("UNION: WWWWW Need to copy up\n");
+
 		if (nd->flags & LOOKUP_RCU &&
 		    unlikely(unlazy_walk(nd, path->dentry))) {
 			path_to_nameidata(path, nd);
@@ -3703,6 +3874,10 @@ finish_lookup:
 			goto out;
 		}
 
+		/* Like inode_permission(), but inode->i_sb != dentry->d_sb */
+		error = sb_permission(path->dentry->d_sb, inode, MAY_WRITE);
+		if (error < 0)
+			goto exit_dput;
 		error = __inode_permission(inode, MAY_WRITE);
 		if (error < 0)
 			goto exit_dput;
@@ -3711,9 +3886,7 @@ finish_lookup:
 		if (error)
 			goto exit_dput;
 
-		mutex_lock(&dir->d_inode->i_mutex);
-		error = union_copyup(&nd->path, path, !will_truncate, 0);
-		mutex_unlock(&dir->d_inode->i_mutex);
+		error = union_copy_up_for_do_last(&nd->path, path, will_truncate);
 		mnt_drop_write(nd->path.mnt);
 		if (error)
 			goto exit_dput;
@@ -3759,7 +3932,7 @@ finish_open:
 		printk("UNION: --> complete_walk()\n");
 	error = complete_walk(nd);
 	if (IS_DIR_UNIONED(dir))
-		printk("UNION: <-- complete_walk()\n");
+		printk("UNION: <-- complete_walk() = %d\n", error);
 	if (error) {
 		path_put(&save_parent);
 		return error;
@@ -3770,8 +3943,11 @@ finish_open:
 	if ((open_flag & O_CREAT) && S_ISDIR(inode->i_mode))
 		goto out;
 	error = -ENOTDIR;
-	if ((nd->flags & LOOKUP_DIRECTORY) && !can_lookup(inode))
+	if ((nd->flags & LOOKUP_DIRECTORY) && !can_lookup(inode)) {
+		if (IS_DIR_UNIONED(dir))
+			printk("UNION: !can_lookup\n");
 		goto out;
+	}
 	if (!S_ISREG(inode->i_mode))
 		will_truncate = false;
 
@@ -3782,11 +3958,15 @@ finish_open:
 		got_write = true;
 	}
 finish_open_created:
-	error = may_open(&nd->path, acc_mode, open_flag);
+	error = may_open(&nd->path, inode, acc_mode, open_flag);
+	if (IS_DIR_UNIONED(dir))
+		printk("UNION: <-- may_open() = %d\n", error);
 	if (error)
 		goto out;
 	file->f_path.mnt = nd->path.mnt;
 	error = finish_open(file, nd->path.dentry, inode, NULL, opened);
+	if (IS_DIR_UNIONED(dir))
+		printk("UNION: <-- finish_open() = %d\n", error);
 	if (error) {
 		if (error == -EOPENSTALE)
 			goto stale_open;
@@ -3811,6 +3991,13 @@ out:
 	path_put(&save_parent);
 	terminate_walk(nd);
 	return error;
+
+noent:
+	if (IS_DIR_UNIONED(dir))
+		printk("UNION: %pq: ENOENT\n", &path->dentry->d_name);
+	error = -ENOENT;
+	path_to_nameidata(path, nd);
+	goto out;
 
 exit_dput:
 	path_put_conditional(path, nd);
@@ -3876,7 +4063,7 @@ static int do_tmpfile(int dfd, struct filename *pathname,
 	if (error)
 		goto out2;
 	audit_inode(pathname, nd->path.dentry, 0);
-	error = may_open(&nd->path, op->acc_mode, op->open_flag);
+	error = may_open(&nd->path, nd->path.dentry->d_inode, op->acc_mode, op->open_flag);
 	if (error)
 		goto out2;
 	file->f_path.mnt = nd->path.mnt;
@@ -4000,7 +4187,7 @@ struct file *do_file_open_root(struct dentry *dentry, struct vfsmount *mnt,
 	nd.root.mnt = mnt;
 	nd.root.dentry = dentry;
 
-	if (dentry->d_inode->i_op->follow_link && op->intent & LOOKUP_OPEN)
+	if (d_is_symlink(dentry) && op->intent & LOOKUP_OPEN)
 		return ERR_PTR(-ELOOP);
 
 	file = path_openat(-1, &filename, &nd, op, flags | LOOKUP_RCU);
@@ -4015,6 +4202,8 @@ struct dentry *kern_path_create(int dfd, const char *pathname,
 				struct path *path, unsigned int lookup_flags)
 {
 	struct nameidata nd;
+	struct path lower_cache, actual;
+	struct inode *inode;
 	struct path new_path;
 	int err2;
 	int error;
@@ -4047,14 +4236,18 @@ struct dentry *kern_path_create(int dfd, const char *pathname,
 	 */
 	mutex_lock_nested(&nd.path.dentry->d_inode->i_mutex, I_MUTEX_PARENT);
 	error = lookup_hash(&nd, &new_path);
-	if (!error && needs_lookup_union(&nd, &nd.path, &new_path))
-		error = lookup_union_locked(&nd, &nd.last, &new_path);
 	if (error)
 		goto unlock;
 
+	inode = union_get_inode_locked(nd.path.dentry, &new_path,
+				       &lower_cache, &actual);
+	path_put_maybe(&lower_cache);
+	if (IS_ERR(inode))
+		goto put;
+
 	error = -EEXIST;
-	if (new_path.dentry->d_inode)
-		goto fail;
+	if (inode)
+		goto put;
 	/*
 	 * Special case - lookup gave negative, but... we had foo/bar/
 	 * From the vfs_mknod() POV we just have a negative dentry -
@@ -4063,15 +4256,16 @@ struct dentry *kern_path_create(int dfd, const char *pathname,
 	 */
 	if (unlikely(!is_dir && nd.last.name[nd.last.len])) {
 		error = -ENOENT;
-		goto fail;
+		goto put;
 	}
 	if (unlikely(err2)) {
 		error = err2;
-		goto fail;
+		goto put;
 	}
 	*path = nd.path;
 	return new_path.dentry;
-fail:
+
+put:
 	dput(new_path.dentry);
 unlock:
 	mutex_unlock(&nd.path.dentry->d_inode->i_mutex);
@@ -4512,10 +4706,6 @@ retry:
 		error = lookup_union_locked(&nd, &nd.last, &path);
 	if (error)
 		goto exit2;
-	if (!path.dentry->d_inode) {
-		error = -ENOENT;
-		goto exit3;
-	}
 	error = security_path_rmdir(&nd.path, path.dentry);
 	if (error)
 		goto exit3;
@@ -4780,7 +4970,8 @@ SYSCALL_DEFINE5(linkat, int, olddfd, const char __user *, oldname,
 		int, newdfd, const char __user *, newname, int, flags)
 {
 	struct dentry *new_dentry;
-	struct path old_path, new_path;
+	struct inode *inode;
+	struct path old_path, new_path, lower_cache, actual;
 	int how = 0;
 	int error;
 
@@ -4801,9 +4992,19 @@ SYSCALL_DEFINE5(linkat, int, olddfd, const char __user *, oldname,
 		how |= LOOKUP_FOLLOW;
 
 retry:
-	error = user_path_at(olddfd, oldname, how | LOOKUP_COPY_UP, &old_path);
+	error = user_path_at(olddfd, oldname, how, &old_path);
 	if (error)
 		return error;
+
+	inode = union_get_inode(&old_path, &lower_cache, &actual);
+	if (IS_ERR(inode)) {
+		error = PTR_ERR(inode);
+		goto out;
+	}
+	error = union_copy_up(&old_path, &actual);
+	path_put_maybe(&lower_cache);
+	if (error < 0)
+		goto out;
 
 	new_dentry = user_path_create(newdfd, newname, &new_path,
 					(how & LOOKUP_REVAL));
@@ -4994,7 +5195,8 @@ SYSCALL_DEFINE4(renameat, int, olddfd, const char __user *, oldname,
 		int, newdfd, const char __user *, newname)
 {
 	struct dentry *old_dir, *new_dir;
-	struct path old, new;
+	struct inode *old_inode;
+	struct path old, new, old_lower_cache, old_actual;
 	struct dentry *trap;
 	struct nameidata oldnd, newnd;
 	struct filename *from;
@@ -5032,23 +5234,26 @@ retry:
 		goto exit2;
 
 	oldnd.flags &= ~LOOKUP_PARENT;
-	oldnd.flags |= LOOKUP_COPY_UP;
 	newnd.flags &= ~LOOKUP_PARENT;
 	newnd.flags |= LOOKUP_RENAME_TARGET;
 
 	trap = lock_rename(new_dir, old_dir);
 
 	error = lookup_hash(&oldnd, &old);
-	if (!error && needs_lookup_union(&oldnd, &oldnd.path, &old))
-		error = lookup_union_locked(&oldnd, &oldnd.last, &old);
 	if (error)
 		goto exit3;
 	/* source must exist */
+	old_inode = union_get_inode_locked(oldnd.path.dentry, &old,
+					   &old_lower_cache, &old_actual);
+	if (IS_ERR(old_inode)) {
+		error = PTR_ERR(old_inode);
+		goto exit_err_old_inode;
+	}
 	error = -ENOENT;
-	if (!old.dentry->d_inode)
+	if (!old_inode)
 		goto exit4;
 	/* unless the source is a directory trailing slashes give -ENOTDIR */
-	if (!S_ISDIR(old.dentry->d_inode->i_mode)) {
+	if (!S_ISDIR(old_inode->i_mode)) {
 		error = -ENOTDIR;
 		if (oldnd.last.name[oldnd.last.len])
 			goto exit4;
@@ -5065,8 +5270,6 @@ retry:
 	    IS_DIR_UNIONED(old.dentry))
 		goto exit4;
 	error = lookup_hash(&newnd, &new);
-	if (!error && needs_lookup_union(&newnd, &newnd.path, &new))
-		error = lookup_union_locked(&newnd, &newnd.last, &new);
 	if (error)
 		goto exit4;
 	/* target should not be an ancestor of source */
@@ -5079,42 +5282,15 @@ retry:
 	    IS_DIR_UNIONED(new.dentry))
 		goto exit5;
 
-	/* If source should've been copied up by lookup_hash() */
-	if (IS_DIR_UNIONED(oldnd.path.dentry))
-		BUG_ON(old.mnt != oldnd.path.mnt);
-
-	/* If target is on lower layer, get negative dentry for topmost */
-	if (IS_DIR_UNIONED(newnd.path.dentry) &&
-	    new.mnt != newnd.path.mnt) {
-		/* At this point, source and target are both files, the source
-		 * is on the topmost layer and the target is on a lower layer.
-		 * We want the target dentry to disappear from the namespace
-		 * and give vfs_rename a negative dentry from the topmost
-		 * layer.
-		 *
-		 * Note: We already did lookup once, so no need to recheck perm
-		 */
-		struct dentry *dentry =
-			__lookup_hash(&newnd.last, newnd.path.dentry,
-				      newnd.flags);
-		if (IS_ERR(dentry)) {
-			error = PTR_ERR(dentry);
-			goto exit5;
-		}
-
-		/* We no longer need the lower target dentry.  It definitely
-		 * should be removed from the hash table */
-		/* XXX what about failure case? */
-		d_delete(new.dentry);
-		mntput(new.mnt);
-		new.mnt = mntget(newnd.path.mnt);
-		new.dentry = dentry;
-	}
-
 	error = security_path_rename(&oldnd.path, old.dentry,
 				     &newnd.path, new.dentry);
 	if (error)
 		goto exit5;
+
+	error = union_copy_up_locked(&oldnd.path, &old, &old_actual);
+	if (error)
+		goto exit5;
+
 	error = vfs_rename(old_dir->d_inode, old.dentry,
 				   new_dir->d_inode, new.dentry);
 	if (error)
@@ -5135,6 +5311,8 @@ retry:
 exit5:
 	path_put_conditional(&new, &newnd);
 exit4:
+	path_put_maybe(&old_lower_cache);
+exit_err_old_inode:
 	path_put_conditional(&old, &oldnd);
 exit3:
 	unlock_rename(new_dir, old_dir);

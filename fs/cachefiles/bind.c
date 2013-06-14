@@ -200,7 +200,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	fsdef->dentry = cachedir;
 	fsdef->fscache.cookie = NULL;
 
-	ret = cachefiles_check_object_type(fsdef);
+	ret = cachefiles_check_object_type(cache, fsdef);
 	if (ret < 0)
 		goto error_unsupported;
 
