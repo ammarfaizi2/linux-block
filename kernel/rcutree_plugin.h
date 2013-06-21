@@ -2450,6 +2450,11 @@ static void rcu_sysidle_exit(struct rcu_dynticks *rdtp, int irq)
 	WARN_ON_ONCE(!(atomic_read(&rdtp->dynticks_idle) & 0x1));
 }
 
+static inline void rcu_sysidle_nmi_jiffies(struct rcu_dynticks *rdtp)
+{
+	rdtp->dynticks_nmi_jiffies = jiffies;
+}
+
 /*
  * Initialize dynticks sysidle state for CPUs coming online.
  */
@@ -2465,6 +2470,10 @@ static void rcu_sysidle_enter(struct rcu_dynticks *rdtp, int irq)
 }
 
 static void rcu_sysidle_exit(struct rcu_dynticks *rdtp, int irq)
+{
+}
+
+static inline void rcu_sysidle_nmi_jiffies(struct rcu_dynticks *rdtp)
 {
 }
 
