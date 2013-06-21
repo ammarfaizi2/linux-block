@@ -28,7 +28,7 @@
 #include <linux/gfp.h>
 #include <linux/oom.h>
 #include <linux/smpboot.h>
-#include <linux/tick.h>
+#include "time/tick-internal.h"
 
 #define RCU_KTHREAD_PRIO 1
 
@@ -2395,12 +2395,12 @@ static void rcu_kick_nohz_cpu(int cpu)
  * most active flavor of RCU.
  */
 #ifdef CONFIG_PREEMPT_RCU
-static struct rcu_state __maybe_unused *rcu_sysidle_state = &rcu_preempt_state;
+static struct rcu_state *rcu_sysidle_state = &rcu_preempt_state;
 #else /* #ifdef CONFIG_PREEMPT_RCU */
-static struct rcu_state __maybe_unused *rcu_sysidle_state = &rcu_sched_state;
+static struct rcu_state *rcu_sysidle_state = &rcu_sched_state;
 #endif /* #else #ifdef CONFIG_PREEMPT_RCU */
 
-static int __maybe_unused full_sysidle_state; /* Current system-idle state. */
+static int full_sysidle_state;		/* Current system-idle state. */
 #define RCU_SYSIDLE_NOT		0	/* Some CPU is not idle. */
 #define RCU_SYSIDLE_SHORT	1	/* All CPUs idle for brief period. */
 #define RCU_SYSIDLE_FULL	2	/* All CPUs idle, ready for sysidle. */
@@ -2443,6 +2443,38 @@ static void rcu_sysidle_enter(struct rcu_dynticks *rdtp, int irq)
 }
 
 /*
+ * Unconditionally force exit from full system-idle state.  This is
+ * invoked when a normal CPU exits idle, but must be called separately
+ * for the timekeeping CPU (tick_do_timer_cpu).  The reason for this
+ * is that the timekeeping CPU is permitted to take scheduling-clock
+ * interrupts while the system is in system-idle state, and of course
+ * rcu_sysidle_exit() has no way of distinguishing a scheduling-clock
+ * interrupt from any other type of interrupt.
+ */
+void rcu_sysidle_force_exit(void)
+{
+	int oldstate = ACCESS_ONCE(full_sysidle_state);
+	int newoldstate;
+
+	/*
+	 * Each pass through the following loop attempts to exit full
+	 * system-idle state.  If contention proves to be a problem,
+	 * a trylock-based contention tree could be used here.
+	 */
+	while (oldstate > RCU_SYSIDLE_SHORT) {
+		newoldstate = cmpxchg(&full_sysidle_state,
+				      oldstate, RCU_SYSIDLE_NOT);
+		if (oldstate == newoldstate &&
+		    oldstate == RCU_SYSIDLE_FULL_NOTED) {
+			rcu_kick_nohz_cpu(tick_do_timer_cpu);
+			return; /* We cleared it, done! */
+		}
+		oldstate = newoldstate;
+	}
+	smp_mb(); /* Order initial oldstate fetch vs. later non-idle work. */
+}
+
+/*
  * Invoked to note entry to irq or task transition from idle.  Note that
  * usermode execution does -not- count as idle here!  The caller must
  * have disabled interrupts.
@@ -2475,11 +2507,229 @@ static void rcu_sysidle_exit(struct rcu_dynticks *rdtp, int irq)
 	atomic_inc(&rdtp->dynticks_idle);
 	smp_mb__after_atomic_inc();
 	WARN_ON_ONCE(!(atomic_read(&rdtp->dynticks_idle) & 0x1));
+
+	/*
+	 * If we are the timekeeping CPU, we are permitted to be non-idle
+	 * during a system-idle state.  This must be the case, because
+	 * the timekeeping CPU has to take scheduling-clock interrupts
+	 * during the time that the system is transitioning to full
+	 * system-idle state.  This means that the timekeeping CPU must
+	 * invoke rcu_sysidle_force_exit() directly if it does anything
+	 * more than take a scheduling-clock interrupt.
+	 */
+	if (smp_processor_id() == tick_do_timer_cpu)
+		return;
+
+	/* Update system-idle state: We are clearly no longer fully idle! */
+	rcu_sysidle_force_exit();
 }
 
+/*
+ * Record the jiffies that this NMI occurred at.
+ */
 static inline void rcu_sysidle_nmi_jiffies(struct rcu_dynticks *rdtp)
 {
 	rdtp->dynticks_nmi_jiffies = jiffies;
+}
+
+/*
+ * Check to see if the current CPU is idle.  Note that usermode execution
+ * does not count as idle.  The caller must have disabled interrupts.
+ */
+static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
+				  unsigned long *maxj)
+{
+	int cur;
+	int curnmi;
+	unsigned long j;
+	unsigned long jnmi;
+	struct rcu_dynticks *rdtp = rdp->dynticks;
+
+	/*
+	 * If some other CPU has already reported non-idle, if this is
+	 * not the flavor of RCU that tracks sysidle state, or if this
+	 * is an offline or the timekeeping CPU, nothing to do.
+	 */
+	if (!*isidle || rdp->rsp != rcu_sysidle_state ||
+	    cpu_is_offline(rdp->cpu) || rdp->cpu == tick_do_timer_cpu)
+		return;
+	/* WARN_ON_ONCE(smp_processor_id() != tick_do_timer_cpu); */
+
+	/*
+	 * Pick up current idle and NMI-nesting counters, check.  We check
+	 * for NMIs using RCU's main ->dynticks counter.  This works because
+	 * any time ->dynticks has its low bit set, ->dynticks_idle will
+	 * too -- unless the only reason that ->dynticks's low bit is set
+	 * is due to an NMI from idle.  Which is exactly the case we need
+	 * to account for.
+	 */
+	cur = atomic_read(&rdtp->dynticks_idle);
+	curnmi = atomic_read(&rdtp->dynticks);
+	if ((cur & 0x1) || (curnmi & 0x1)) {
+		*isidle = 0; /* We are not idle! */
+		return;
+	}
+	smp_mb(); /* Read counters before timestamps. */
+
+	/* Pick up timestamps. */
+	j = ACCESS_ONCE(rdtp->dynticks_idle_jiffies);
+	jnmi = ACCESS_ONCE(rdtp->dynticks_nmi_jiffies);
+	if (ULONG_CMP_LT(j, jnmi)) {
+		j = jnmi;
+		ACCESS_ONCE(rdtp->dynticks_idle_jiffies) = jnmi;
+	}
+
+	/* If this CPU entered idle more recently, update maxj timestamp. */
+	if (ULONG_CMP_LT(*maxj, j))
+		*maxj = j;
+}
+
+/*
+ * Is this the flavor of RCU that is handling full-system idle?
+ */
+static bool is_sysidle_rcu_state(struct rcu_state *rsp)
+{
+	return rsp == rcu_sysidle_state;
+}
+
+/*
+ * Return a delay in jiffies based on the number of CPUs, rcu_node
+ * leaf fanout, and jiffies tick rate.  The idea is to allow larger
+ * systems more time to transition to full-idle state in order to
+ * avoid the cache thrashing that otherwise occur on the state variable.
+ * Really small systems (less than a couple of tens of CPUs) should
+ * instead use a single global atomically incremented counter, and later
+ * versions of this will automatically reconfigure themselves accordingly.
+ */
+static unsigned long rcu_sysidle_delay(void)
+{
+	if (nr_cpu_ids <= RCU_SYSIDLE_SMALL)
+		return 0;
+	return DIV_ROUND_UP(nr_cpu_ids * HZ, rcu_fanout_leaf * 1000);
+}
+
+/*
+ * Advance the full-system-idle state.  This is invoked when all of
+ * the non-timekeeping CPUs are idle.
+ */
+static void rcu_sysidle(unsigned long j)
+{
+	/* Check the current state. */
+	switch (ACCESS_ONCE(full_sysidle_state)) {
+	case RCU_SYSIDLE_NOT:
+
+		/* First time all are idle, so note a short idle period. */
+		ACCESS_ONCE(full_sysidle_state) = RCU_SYSIDLE_SHORT;
+		break;
+
+	case RCU_SYSIDLE_SHORT:
+
+		/*
+		 * Idle for a bit, time to advance to next state?
+		 * cmpxchg failure means race with non-idle, let them win.
+		 */
+		if (ULONG_CMP_GE(jiffies, j + rcu_sysidle_delay()))
+			(void)cmpxchg(&full_sysidle_state,
+				      RCU_SYSIDLE_SHORT, RCU_SYSIDLE_FULL);
+		break;
+
+	default:
+		break;
+	}
+}
+
+/*
+ * Found a non-idle non-timekeeping CPU, so kick the system-idle state
+ * back to the beginning.
+ */
+static void rcu_sysidle_cancel(void)
+{
+	smp_mb();
+	ACCESS_ONCE(full_sysidle_state) = RCU_SYSIDLE_NOT;
+}
+
+/*
+ * Update the sysidle state based on the results of a force-quiescent-state
+ * scan of the CPUs' dyntick-idle state.
+ */
+static void rcu_sysidle_report(struct rcu_state *rsp, int isidle,
+			       unsigned long maxj)
+{
+	if (rsp != rcu_sysidle_state)
+		return;  /* Wrong flavor, ignore. */
+	if (isidle)
+		rcu_sysidle(maxj);    /* More idle! */
+	else
+		rcu_sysidle_cancel(); /* Idle is over. */
+}
+
+/* Callback and function for forcing an RCU grace period. */
+struct rcu_sysidle_head {
+	struct rcu_head rh;
+	int inuse;
+};
+
+static void rcu_sysidle_cb(struct rcu_head *rhp)
+{
+	struct rcu_sysidle_head *rshp;
+
+	smp_mb();  /* grace period precedes setting inuse. */
+	rshp = container_of(rhp, struct rcu_sysidle_head, rh);
+	ACCESS_ONCE(rshp->inuse) = 0;
+}
+
+/*
+ * Check to see if the system is fully idle, other than the timekeeping CPU.
+ * The caller must have disabled interrupts.
+ */
+bool rcu_sys_is_idle(void)
+{
+	static struct rcu_sysidle_head rsh;
+	int rss = ACCESS_ONCE(full_sysidle_state);
+
+	WARN_ON_ONCE(smp_processor_id() != tick_do_timer_cpu);
+
+	/* Handle small-system case by doing a full scan of CPUs. */
+	if (nr_cpu_ids <= RCU_SYSIDLE_SMALL && rss < RCU_SYSIDLE_FULL) {
+		int cpu;
+		bool isidle = true;
+		unsigned long maxj = jiffies - ULONG_MAX / 4;
+		struct rcu_data *rdp;
+
+		/* Scan all the CPUs looking for nonidle CPUs. */
+		for_each_possible_cpu(cpu) {
+			rdp = per_cpu_ptr(rcu_sysidle_state->rda, cpu);
+			rcu_sysidle_check_cpu(rdp, &isidle, &maxj);
+			if (!isidle)
+				break;
+		}
+		rcu_sysidle_report(rcu_sysidle_state, isidle, maxj);
+		rss = ACCESS_ONCE(full_sysidle_state);
+	}
+
+	/* If this is the first observation of an idle period, record it. */
+	if (rss == RCU_SYSIDLE_FULL) {
+		rss = cmpxchg(&full_sysidle_state,
+			      RCU_SYSIDLE_FULL, RCU_SYSIDLE_FULL_NOTED);
+		return rss == RCU_SYSIDLE_FULL;
+	}
+
+	smp_mb(); /* ensure rss load happens before later caller actions. */
+
+	/* If already fully idle, tell the caller (in case of races). */
+	if (rss == RCU_SYSIDLE_FULL_NOTED)
+		return true;
+
+	/*
+	 * If we aren't there yet, and a grace period is not in flight,
+	 * initiate a grace period.  Either way, tell the caller that
+	 * we are not there yet.
+	 */
+	if (nr_cpu_ids > RCU_SYSIDLE_SMALL &&
+	    !rcu_gp_in_progress(rcu_sysidle_state) &&
+	    !rsh.inuse && xchg(&rsh.inuse, 1) == 0)
+		call_rcu(&rsh.rh, rcu_sysidle_cb);
+	return false;
 }
 
 /*
@@ -2501,6 +2751,21 @@ static void rcu_sysidle_exit(struct rcu_dynticks *rdtp, int irq)
 }
 
 static inline void rcu_sysidle_nmi_jiffies(struct rcu_dynticks *rdtp)
+{
+}
+
+static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
+				  unsigned long *maxj)
+{
+}
+
+static bool is_sysidle_rcu_state(struct rcu_state *rsp)
+{
+	return false;
+}
+
+static void rcu_sysidle_report(struct rcu_state *rsp, int isidle,
+			       unsigned long maxj)
 {
 }
 
