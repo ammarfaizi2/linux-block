@@ -295,9 +295,6 @@ struct cgroupfs_root {
 	/* Unique id for this hierarchy. */
 	int hierarchy_id;
 
-	/* The bitmask of subsystems currently attached to this hierarchy */
-	unsigned long actual_subsys_mask;
-
 	/* A list running through the attached subsystems */
 	struct list_head subsys_list;
 
