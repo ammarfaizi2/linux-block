@@ -2553,7 +2553,7 @@ static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
 	if (!*isidle || rdp->rsp != rcu_sysidle_state ||
 	    cpu_is_offline(rdp->cpu) || rdp->cpu == tick_do_timer_cpu)
 		return;
-	/* WARN_ON_ONCE(smp_processor_id() != tick_do_timer_cpu); */
+	WARN_ON_ONCE(smp_processor_id() != tick_do_timer_cpu);
 
 	/*
 	 * Pick up current idle and NMI-nesting counters, check.  We check
@@ -2590,6 +2590,20 @@ static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
 static bool is_sysidle_rcu_state(struct rcu_state *rsp)
 {
 	return rsp == rcu_sysidle_state;
+}
+
+/*
+ * Bind the grace-period kthread for the sysidle flavor of RCU to the
+ * timekeeping CPU.
+ */
+static void rcu_bind_gp_kthread(void)
+{
+	int cpu = ACCESS_ONCE(tick_do_timer_cpu);
+
+	if (cpu < 0 || cpu >= nr_cpu_ids)
+		return;
+	if (raw_smp_processor_id() != cpu)
+		set_cpus_allowed_ptr(current, cpumask_of(cpu));
 }
 
 /*
@@ -2762,6 +2776,10 @@ static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
 static bool is_sysidle_rcu_state(struct rcu_state *rsp)
 {
 	return false;
+}
+
+static void rcu_bind_gp_kthread(void)
+{
 }
 
 static void rcu_sysidle_report(struct rcu_state *rsp, int isidle,
