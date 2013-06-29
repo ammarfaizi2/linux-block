@@ -1127,10 +1127,13 @@ int blkcg_policy_register(struct blkcg_policy *pol)
 	pol->plid = i;
 	blkcg_policy[i] = pol;
 
-	/* everything is in place, add intf files for the new policy */
-	if (pol->cftypes)
-		WARN_ON(cgroup_add_cftypes(&blkio_subsys, pol->cftypes));
+	/* try to add intf files for the new policy */
 	ret = 0;
+	if (pol->cftypes) {
+		ret = cgroup_add_cftypes(&blkio_subsys, pol->cftypes);
+		if (ret)
+			blkcg_policy[i] = NULL;
+	}
 out_unlock:
 	mutex_unlock(&blkcg_pol_mutex);
 	return ret;
