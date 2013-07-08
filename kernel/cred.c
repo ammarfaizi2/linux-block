@@ -411,7 +411,7 @@ static bool cred_cap_issubset(const struct cred *set, const struct cred *subset)
  * Always returns 0 thus allowing this function to be tail-called at the end
  * of, say, sys_setgid().
  */
-int commit_creds(struct cred *new)
+int commit_creds(const struct cred *new)
 {
 	struct task_struct *task = current;
 	const struct cred *old = task->real_cred;
