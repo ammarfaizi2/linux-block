@@ -332,7 +332,7 @@ static int tomoyo_file_open(struct file *f, const struct cred *cred)
 	/* Don't check read permission here if called from do_execve(). */
 	if (current->in_execve)
 		return 0;
-	return tomoyo_check_open_permission(tomoyo_domain(), &f->f_path, flags);
+	return tomoyo_check_open_permission(cred->security, &f->f_path, flags);
 }
 
 /**
