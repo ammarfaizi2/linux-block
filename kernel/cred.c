@@ -219,34 +219,24 @@ error:
 }
 
 /**
- * prepare_creds - Prepare a new set of credentials for modification
+ * duplicate_creds - Prepare a duplicate set of credentials for modification
  *
- * Prepare a new set of task credentials for modification.  A task's creds
- * shouldn't generally be modified directly, therefore this function is used to
- * prepare a new copy, which the caller then modifies and then commits by
- * calling commit_creds().
- *
- * Preparation involves making a copy of the objective creds for modification.
+ * Prepare a duplicate set of credentials for modification.
  *
  * Returns a pointer to the new creds-to-be if successful, NULL otherwise.
  *
  * Call commit_creds() or abort_creds() to clean up.
  */
-struct cred *prepare_creds(void)
+struct cred *duplicate_creds(const struct cred *old)
 {
-	struct task_struct *task = current;
-	const struct cred *old;
 	struct cred *new;
-
-	validate_process_creds();
 
 	new = kmem_cache_alloc(cred_jar, GFP_KERNEL);
 	if (!new)
 		return NULL;
 
-	kdebug("prepare_creds() alloc %p", new);
+	kdebug("duplicate_creds() alloc %p", new);
 
-	old = task->cred;
 	memcpy(new, old, sizeof(struct cred));
 
 	atomic_set(&new->usage, 1);
@@ -274,6 +264,26 @@ struct cred *prepare_creds(void)
 error:
 	abort_creds(new);
 	return NULL;
+}
+
+/**
+ * prepare_creds - Prepare a new set of credentials for modification
+ *
+ * Prepare a new set of task credentials for modification.  A task's creds
+ * shouldn't generally be modified directly, therefore this function is used to
+ * prepare a new copy, which the caller then modifies and then commits by
+ * calling commit_creds().
+ *
+ * Preparation involves making a copy of the objective creds for modification.
+ *
+ * Returns a pointer to the new creds-to-be if successful, NULL otherwise.
+ *
+ * Call commit_creds() or abort_creds() to clean up.
+ */
+struct cred *prepare_creds(void)
+{
+	validate_process_creds();
+	return duplicate_creds(current->cred);
 }
 EXPORT_SYMBOL(prepare_creds);
 

@@ -477,17 +477,18 @@ static int smack_sb_umount(struct vfsmount *mnt, int flags)
 /**
  * smack_bprm_set_creds - set creds for exec
  * @bprm: the exec information
+ * @new: the credentials under construction
  *
  * Returns 0 if it gets a blob, -ENOMEM otherwise
  */
-static int smack_bprm_set_creds(struct linux_binprm *bprm)
+static int smack_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 {
 	struct inode *inode = file_inode(bprm->file);
-	struct task_smack *bsp = bprm->cred->security;
+	struct task_smack *bsp = new->security;
 	struct inode_smack *isp;
 	int rc;
 
-	rc = cap_bprm_set_creds(bprm);
+	rc = cap_bprm_set_creds(bprm, new);
 	if (rc != 0)
 		return rc;
 

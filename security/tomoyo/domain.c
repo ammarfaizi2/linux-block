@@ -668,12 +668,13 @@ out:
  * tomoyo_find_next_domain - Find a domain.
  *
  * @bprm: Pointer to "struct linux_binprm".
+ * @new: The credentials under construction.
  *
  * Returns 0 on success, negative value otherwise.
  *
  * Caller holds tomoyo_read_lock().
  */
-int tomoyo_find_next_domain(struct linux_binprm *bprm)
+int tomoyo_find_next_domain(struct linux_binprm *bprm, struct cred *new)
 {
 	struct tomoyo_domain_info *old_domain = tomoyo_domain();
 	struct tomoyo_domain_info *domain = NULL;
@@ -840,7 +841,7 @@ force_jump_domain:
 		domain = old_domain;
 	/* Update reference count on "struct tomoyo_domain_info". */
 	atomic_inc(&domain->users);
-	bprm->cred->security = domain;
+	new->security = domain;
 	kfree(exename.name);
 	if (!retval) {
 		ee->r.domain = domain;

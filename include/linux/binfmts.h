@@ -33,7 +33,7 @@ struct linux_binprm {
 #endif
 	unsigned int recursion_depth;
 	struct file * file;
-	struct cred *cred;	/* new credentials */
+	const struct cred *cred; /* new credentials */
 	int unsafe;		/* how unsafe this exec is (mask of LSM_UNSAFE_*) */
 	unsigned int per_clear;	/* bits to clear in current->personality */
 	int argc, envc;

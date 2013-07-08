@@ -2004,7 +2004,7 @@ static int selinux_vm_enough_memory(struct mm_struct *mm, long pages)
 
 /* binprm security operations */
 
-static int selinux_bprm_set_creds(struct linux_binprm *bprm)
+static int selinux_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 {
 	const struct task_security_struct *old_tsec;
 	struct task_security_struct *new_tsec;
@@ -2013,7 +2013,7 @@ static int selinux_bprm_set_creds(struct linux_binprm *bprm)
 	struct inode *inode = file_inode(bprm->file);
 	int rc;
 
-	rc = cap_bprm_set_creds(bprm);
+	rc = cap_bprm_set_creds(bprm, new);
 	if (rc)
 		return rc;
 
@@ -2023,7 +2023,7 @@ static int selinux_bprm_set_creds(struct linux_binprm *bprm)
 		return 0;
 
 	old_tsec = current_security();
-	new_tsec = bprm->cred->security;
+	new_tsec = new->security;
 	isec = inode->i_security;
 
 	/* Default to the current task SID. */

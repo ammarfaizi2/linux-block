@@ -67,14 +67,15 @@ static void tomoyo_cred_free(struct cred *cred)
  * tomoyo_bprm_set_creds - Target for security_bprm_set_creds().
  *
  * @bprm: Pointer to "struct linux_binprm".
+ * @new: The credentials to be filled in.
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_bprm_set_creds(struct linux_binprm *bprm)
+static int tomoyo_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 {
 	int rc, idx, err;
 
-	rc = cap_bprm_set_creds(bprm);
+	rc = cap_bprm_set_creds(bprm, new);
 	if (rc)
 		return rc;
 
@@ -98,15 +99,14 @@ static int tomoyo_bprm_set_creds(struct linux_binprm *bprm)
 	 * stored inside "bprm->cred->security" will be acquired later inside
 	 * tomoyo_find_next_domain().
 	 */
-	atomic_dec(&((struct tomoyo_domain_info *)
-		     bprm->cred->security)->users);
+	atomic_dec(&((struct tomoyo_domain_info *)new->security)->users);
 
 	/* Check that the caller has execute permission on the program they
 	 * actually asked to run and install the new domain into the
 	 * credentials being constructed.
 	 */
 	idx = tomoyo_read_lock();
-	err = tomoyo_find_next_domain(bprm);
+	err = tomoyo_find_next_domain(bprm, new);
 	tomoyo_read_unlock(idx);
 	return err;
 }

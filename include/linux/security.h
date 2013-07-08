@@ -79,7 +79,7 @@ extern int cap_capset(struct cred *new, const struct cred *old,
 		      const kernel_cap_t *effective,
 		      const kernel_cap_t *inheritable,
 		      const kernel_cap_t *permitted);
-extern int cap_bprm_set_creds(struct linux_binprm *bprm);
+extern int cap_bprm_set_creds(struct linux_binprm *bprm, struct cred *cred);
 extern int cap_bprm_secureexec(struct linux_binprm *bprm);
 extern int cap_inode_setxattr(struct dentry *dentry, const char *name,
 			      const void *value, size_t size, int flags);
@@ -206,6 +206,7 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
  *	may decide either to retain the security information saved earlier or
  *	to replace it.
  *	@bprm contains the linux_binprm structure.
+ *	@cred contains the new credentials under construction at this point
  *	Return 0 if the hook is successful and permission is granted.
  * @bprm_check_security:
  *	This hook mediates the point when a search for a binary handler will
@@ -1421,7 +1422,7 @@ struct security_operations {
 	int (*settime) (const struct timespec *ts, const struct timezone *tz);
 	int (*vm_enough_memory) (struct mm_struct *mm, long pages);
 
-	int (*bprm_set_creds) (struct linux_binprm *bprm);
+	int (*bprm_set_creds) (struct linux_binprm *bprm, struct cred *cred);
 	int (*bprm_check_security) (struct linux_binprm *bprm);
 	int (*bprm_secureexec) (struct linux_binprm *bprm);
 	void (*bprm_committing_creds) (struct linux_binprm *bprm);
@@ -1710,7 +1711,7 @@ int security_quota_on(struct dentry *dentry);
 int security_syslog(int type);
 int security_settime(const struct timespec *ts, const struct timezone *tz);
 int security_vm_enough_memory_mm(struct mm_struct *mm, long pages);
-int security_bprm_set_creds(struct linux_binprm *bprm);
+int security_bprm_set_creds(struct linux_binprm *bprm, struct cred *new);
 int security_bprm_check(struct linux_binprm *bprm);
 void security_bprm_committing_creds(struct linux_binprm *bprm);
 void security_bprm_committed_creds(struct linux_binprm *bprm);
@@ -1936,9 +1937,10 @@ static inline int security_vm_enough_memory_mm(struct mm_struct *mm, long pages)
 	return cap_vm_enough_memory(mm, pages);
 }
 
-static inline int security_bprm_set_creds(struct linux_binprm *bprm)
+static inline
+int security_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 {
-	return cap_bprm_set_creds(bprm);
+	return cap_bprm_set_creds(bprm, new);
 }
 
 static inline int security_bprm_check(struct linux_binprm *bprm)

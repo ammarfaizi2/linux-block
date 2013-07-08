@@ -278,9 +278,9 @@ int cap_capset(struct cred *new,
 /*
  * Clear proposed capability sets for execve().
  */
-static inline void bprm_clear_caps(struct linux_binprm *bprm)
+static inline void bprm_clear_caps(struct linux_binprm *bprm, struct cred *new)
 {
-	cap_clear(bprm->cred->cap_permitted);
+	cap_clear(new->cap_permitted);
 	bprm->cap_effective = false;
 }
 
@@ -334,9 +334,9 @@ int cap_inode_killpriv(struct dentry *dentry)
 static inline int bprm_caps_from_vfs_caps(struct cpu_vfs_cap_data *caps,
 					  struct linux_binprm *bprm,
 					  bool *effective,
-					  bool *has_cap)
+					  bool *has_cap,
+					  struct cred *new)
 {
-	struct cred *new = bprm->cred;
 	unsigned i;
 	int ret = 0;
 
@@ -429,13 +429,14 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data 
  * its xattrs and, if present, apply them to the proposed credentials being
  * constructed by execve().
  */
-static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_cap)
+static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_cap,
+			 struct cred *new)
 {
 	struct dentry *dentry;
 	int rc = 0;
 	struct cpu_vfs_cap_data vcaps;
 
-	bprm_clear_caps(bprm);
+	bprm_clear_caps(bprm, new);
 
 	if (!file_caps_enabled)
 		return 0;
@@ -455,7 +456,7 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
 		goto out;
 	}
 
-	rc = bprm_caps_from_vfs_caps(&vcaps, bprm, effective, has_cap);
+	rc = bprm_caps_from_vfs_caps(&vcaps, bprm, effective, has_cap, new);
 	if (rc == -EINVAL)
 		printk(KERN_NOTICE "%s: cap_from_disk returned %d for %s\n",
 		       __func__, rc, bprm->filename);
@@ -463,7 +464,7 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
 out:
 	dput(dentry);
 	if (rc)
-		bprm_clear_caps(bprm);
+		bprm_clear_caps(bprm, new);
 
 	return rc;
 }
@@ -471,21 +472,21 @@ out:
 /**
  * cap_bprm_set_creds - Set up the proposed credentials for execve().
  * @bprm: The execution parameters, including the proposed creds
+ * @new: The credentials being constructed
  *
  * Set up the proposed credentials for a new execution context being
  * constructed by execve().  The proposed creds in @bprm->cred is altered,
  * which won't take effect immediately.  Returns 0 if successful, -ve on error.
  */
-int cap_bprm_set_creds(struct linux_binprm *bprm)
+int cap_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 {
 	const struct cred *old = current_cred();
-	struct cred *new = bprm->cred;
 	bool effective, has_cap = false;
 	int ret;
 	kuid_t root_uid;
 
 	effective = false;
-	ret = get_file_caps(bprm, &effective, &has_cap);
+	ret = get_file_caps(bprm, &effective, &has_cap, new);
 	if (ret < 0)
 		return ret;
 

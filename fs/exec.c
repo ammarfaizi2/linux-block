@@ -1171,7 +1171,7 @@ void free_bprm(struct linux_binprm *bprm)
 	free_arg_pages(bprm);
 	if (bprm->cred) {
 		mutex_unlock(&current->signal->cred_guard_mutex);
-		abort_creds(bprm->cred);
+		put_cred(bprm->cred);
 	}
 	/* If a binfmt changed the interp, free it. */
 	if (bprm->interp != bprm->filename)
@@ -1275,6 +1275,8 @@ static int check_unsafe_exec(struct linux_binprm *bprm)
  */
 int prepare_binprm(struct linux_binprm *bprm)
 {
+	const struct cred *old;
+	struct cred *cred;
 	umode_t mode;
 	struct inode * inode = file_inode(bprm->file);
 	int retval;
@@ -1283,9 +1285,13 @@ int prepare_binprm(struct linux_binprm *bprm)
 	if (bprm->file->f_op == NULL)
 		return -EACCES;
 
+	cred = duplicate_creds(bprm->cred);
+	if (!cred)
+		return -ENOMEM;
+
 	/* clear any previous set[ug]id data from a previous binary */
-	bprm->cred->euid = current_euid();
-	bprm->cred->egid = current_egid();
+	cred->euid = current_euid();
+	cred->egid = current_egid();
 
 	if (!(bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID) &&
 	    !current->no_new_privs &&
@@ -1294,7 +1300,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 		/* Set-uid? */
 		if (mode & S_ISUID) {
 			bprm->per_clear |= PER_CLEAR_ON_SETID;
-			bprm->cred->euid = inode->i_uid;
+			cred->euid = inode->i_uid;
 		}
 
 		/* Set-gid? */
@@ -1305,15 +1311,23 @@ int prepare_binprm(struct linux_binprm *bprm)
 		 */
 		if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) {
 			bprm->per_clear |= PER_CLEAR_ON_SETID;
-			bprm->cred->egid = inode->i_gid;
+			cred->egid = inode->i_gid;
 		}
 	}
 
 	/* fill in binprm security blob */
-	retval = security_bprm_set_creds(bprm);
-	if (retval)
+	retval = security_bprm_set_creds(bprm, cred);
+	if (retval) {
+		abort_creds(cred);
 		return retval;
+	}
+
+	/* 'commit' the new creds - after this point, the new creds may not be
+	 * altered */
+	old = bprm->cred;
+	bprm->cred = cred;
 	bprm->cred_prepared = 1;
+	put_cred(old);
 
 	memset(bprm->buf, 0, BINPRM_BUF_SIZE);
 	return kernel_read(bprm->file, 0, bprm->buf, BINPRM_BUF_SIZE);

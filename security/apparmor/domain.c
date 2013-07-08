@@ -333,10 +333,11 @@ static struct aa_profile *x_to_profile(struct aa_profile *profile,
 /**
  * apparmor_bprm_set_creds - set the new creds on the bprm struct
  * @bprm: binprm for the exec  (NOT NULL)
+ * @new: the credentials under construction.
  *
  * Returns: %0 or error on failure
  */
-int apparmor_bprm_set_creds(struct linux_binprm *bprm)
+int apparmor_bprm_set_creds(struct linux_binprm *bprm, struct cred *new)
 {
 	struct aa_task_cxt *cxt;
 	struct aa_profile *profile, *new_profile = NULL;
@@ -349,14 +350,14 @@ int apparmor_bprm_set_creds(struct linux_binprm *bprm)
 		file_inode(bprm->file)->i_mode
 	};
 	const char *name = NULL, *target = NULL, *info = NULL;
-	int error = cap_bprm_set_creds(bprm);
+	int error = cap_bprm_set_creds(bprm, new);
 	if (error)
 		return error;
 
 	if (bprm->cred_prepared)
 		return 0;
 
-	cxt = cred_cxt(bprm->cred);
+	cxt = cred_cxt(new);
 	BUG_ON(!cxt);
 
 	profile = aa_get_profile(aa_newest_version(cxt->profile));
