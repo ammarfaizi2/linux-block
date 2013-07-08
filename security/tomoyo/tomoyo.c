@@ -72,7 +72,7 @@ static void tomoyo_cred_free(struct cred *cred)
  */
 static int tomoyo_bprm_set_creds(struct linux_binprm *bprm)
 {
-	int rc;
+	int rc, idx, err;
 
 	rc = cap_bprm_set_creds(bprm);
 	if (rc)
@@ -100,12 +100,15 @@ static int tomoyo_bprm_set_creds(struct linux_binprm *bprm)
 	 */
 	atomic_dec(&((struct tomoyo_domain_info *)
 		     bprm->cred->security)->users);
-	/*
-	 * Tell tomoyo_bprm_check_security() is called for the first time of an
-	 * execve operation.
+
+	/* Check that the caller has execute permission on the program they
+	 * actually asked to run and install the new domain into the
+	 * credentials being constructed.
 	 */
-	bprm->cred->security = NULL;
-	return 0;
+	idx = tomoyo_read_lock();
+	err = tomoyo_find_next_domain(bprm);
+	tomoyo_read_unlock(idx);
+	return err;
 }
 
 /**
@@ -119,16 +122,6 @@ static int tomoyo_bprm_check_security(struct linux_binprm *bprm)
 {
 	struct tomoyo_domain_info *domain = bprm->cred->security;
 
-	/*
-	 * Execute permission is checked against pathname passed to do_execve()
-	 * using current domain.
-	 */
-	if (!domain) {
-		const int idx = tomoyo_read_lock();
-		const int err = tomoyo_find_next_domain(bprm);
-		tomoyo_read_unlock(idx);
-		return err;
-	}
 	/*
 	 * Read permission is checked against interpreters using next domain.
 	 */
