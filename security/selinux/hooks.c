@@ -174,6 +174,15 @@ static inline u32 cred_sid(const struct cred *cred)
 }
 
 /*
+ * Get the objective security ID of a task for a caller who is holding the RCU
+ * read lock.
+ */
+static inline u32 __task_sid(const struct task_struct *task)
+{
+	return cred_sid(__task_cred(task));
+}
+
+/*
  * get the objective security ID of a task
  */
 static inline u32 task_sid(const struct task_struct *task)
@@ -181,7 +190,7 @@ static inline u32 task_sid(const struct task_struct *task)
 	u32 sid;
 
 	rcu_read_lock();
-	sid = cred_sid(__task_cred(task));
+	sid = __task_sid(task);
 	rcu_read_unlock();
 	return sid;
 }
@@ -5405,11 +5414,13 @@ static int selinux_setprocattr(struct task_struct *p,
 		/* Check for ptracing, and update the task SID if ok.
 		   Otherwise, leave SID unchanged and fail. */
 		ptsid = 0;
+		rcu_read_lock();
 		task_lock(p);
 		tracer = ptrace_parent(p);
 		if (tracer)
-			ptsid = task_sid(tracer);
+			ptsid = __task_sid(p);
 		task_unlock(p);
+		rcu_read_unlock();
 
 		if (tracer) {
 			error = avc_has_perm(ptsid, sid, SECCLASS_PROCESS,
