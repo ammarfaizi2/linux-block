@@ -1884,7 +1884,7 @@ early_initcall(rcu_register_oom_notifier);
 
 #ifdef CONFIG_RCU_FAST_NO_HZ
 
-static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
+static void print_cpu_stall_fast_no_hz(const char *cp, int cpu)
 {
 	struct rcu_dynticks *rdtp = &per_cpu(rcu_dynticks, cpu);
 	unsigned long nlpd = rdtp->nonlazy_posted - rdtp->nonlazy_posted_snap;
@@ -2020,7 +2020,7 @@ static void increment_cpu_stall_ticks(void)
 
 
 /* Parse the boot-time rcu_nocb_mask CPU list from the kernel parameters. */
-static int __init rcu_nocb_setup(char *str)
+static int __init rcu_nocb_setup(const char *str)
 {
 	alloc_bootmem_cpumask_var(&rcu_nocb_mask);
 	have_rcu_nocb_mask = true;
@@ -2029,7 +2029,7 @@ static int __init rcu_nocb_setup(char *str)
 }
 __setup("rcu_nocbs=", rcu_nocb_setup);
 
-static int __init parse_rcu_nocb_poll(char *arg)
+static int __init parse_rcu_nocb_poll(const char *arg)
 {
 	rcu_nocb_poll = 1;
 	return 0;
