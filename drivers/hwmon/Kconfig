@@ -1462,6 +1462,16 @@ config SENSORS_MC13783_ADC
         help
           Support for the A/D converter on MC13783 and MC13892 PMIC.
 
+config SENSORS_TSOD
+	tristate "Temperature Sensor On DIMM (TSOD)"
+	depends on I2C
+	help
+	  If you say yes here you get support for the integrated temperature
+	  sensors on newer DIMMs that comply with JESD21-C.
+
+	  This driver can also be built as a module.  If so, the module
+	  will be called tsod.
+
 if ACPI
 
 comment "ACPI drivers"
