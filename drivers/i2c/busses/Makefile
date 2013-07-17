@@ -24,6 +24,10 @@ obj-$(CONFIG_I2C_SIS96X)	+= i2c-sis96x.o
 obj-$(CONFIG_I2C_VIA)		+= i2c-via.o
 obj-$(CONFIG_I2C_VIAPRO)	+= i2c-viapro.o
 
+# DIMM busses
+obj-$(CONFIG_I2C_DIMM_BUS)	+= dimm-bus.o
+obj-$(CONFIG_I2C_IMC)		+= i2c-imc.o
+
 # Mac SMBus host controller drivers
 obj-$(CONFIG_I2C_HYDRA)		+= i2c-hydra.o
 obj-$(CONFIG_I2C_POWERMAC)	+= i2c-powermac.o
