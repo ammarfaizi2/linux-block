@@ -2215,6 +2215,9 @@ int bch_btree_insert(struct btree_op *op, struct cache_set *c,
 		}
 	}
 
+	if (op->insert_collision)
+		return -ESRCH;
+
 	return ret;
 }
 
