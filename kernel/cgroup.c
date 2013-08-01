@@ -1365,6 +1365,7 @@ static void init_cgroup_housekeeping(struct cgroup *cgrp)
 	INIT_LIST_HEAD(&cgrp->release_list);
 	INIT_LIST_HEAD(&cgrp->pidlists);
 	mutex_init(&cgrp->pidlist_mutex);
+	cgrp->dummy_css.cgroup = cgrp;
 	INIT_LIST_HEAD(&cgrp->event_list);
 	spin_lock_init(&cgrp->event_list_lock);
 	simple_xattrs_init(&cgrp->xattrs);
@@ -2278,7 +2279,7 @@ static struct cgroup_subsys_state *cgroup_file_css(struct cfent *cfe)
 
 	if (cft->ss)
 		return cgrp->subsys[cft->ss->subsys_id];
-	return NULL;
+	return &cgrp->dummy_css;
 }
 
 /* A buffer size big enough for numbers or short strings */
@@ -2460,7 +2461,7 @@ static int cgroup_file_open(struct inode *inode, struct file *file)
 	 * unpinned either on open failure or release.  This ensures that
 	 * @css stays alive for all file operations.
 	 */
-	if (css && !css_tryget(css))
+	if (css->ss && !css_tryget(css))
 		return -ENODEV;
 
 	if (cft->read_map || cft->read_seq_string) {
@@ -2470,7 +2471,7 @@ static int cgroup_file_open(struct inode *inode, struct file *file)
 		err = cft->open(inode, file);
 	}
 
-	if (css && err)
+	if (css->ss && err)
 		css_put(css);
 	return err;
 }
@@ -2484,7 +2485,7 @@ static int cgroup_file_release(struct inode *inode, struct file *file)
 
 	if (cft->release)
 		ret = cft->release(inode, file);
-	if (css)
+	if (css->ss)
 		css_put(css);
 	return ret;
 }
