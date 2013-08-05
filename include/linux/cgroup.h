@@ -923,6 +923,10 @@ bool css_is_ancestor(struct cgroup_subsys_state *cg,
 unsigned short css_id(struct cgroup_subsys_state *css);
 struct cgroup_subsys_state *cgroup_css_from_dir(struct file *f, int id);
 
+/* do not add new users of the following two functions */
+struct cgroup *__cgroup_from_dentry(struct dentry *dentry, struct cftype **cftp);
+void __cgroup_dput(struct cgroup *cgrp);
+
 #else /* !CONFIG_CGROUPS */
 
 static inline int cgroup_init_early(void) { return 0; }

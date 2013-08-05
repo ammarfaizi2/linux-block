@@ -2661,14 +2661,16 @@ static struct dentry *cgroup_lookup(struct inode *dir, struct dentry *dentry, un
 	return NULL;
 }
 
-/*
- * Check if a file is a control file
- */
-static inline struct cftype *__file_cft(struct file *file)
+/* do not add new users */
+struct cgroup *__cgroup_from_dentry(struct dentry *dentry, struct cftype **cftp)
 {
-	if (file_inode(file)->i_fop != &cgroup_file_operations)
-		return ERR_PTR(-EINVAL);
-	return __d_cft(file->f_dentry);
+	if (!dentry->d_inode ||
+	    dentry->d_inode->i_op != &cgroup_file_inode_operations)
+		return NULL;
+
+	if (cftp)
+		*cftp = __d_cft(dentry);
+	return __d_cgrp(dentry->d_parent);
 }
 
 static int cgroup_create_file(struct dentry *dentry, umode_t mode,
@@ -3953,7 +3955,7 @@ static int cgroup_write_notify_on_release(struct cgroup_subsys_state *css,
  *
  * That's why we hold a reference before dput() and drop it right after.
  */
-static void cgroup_dput(struct cgroup *cgrp)
+void __cgroup_dput(struct cgroup *cgrp)
 {
 	struct super_block *sb = cgrp->root->sb;
 
@@ -3983,7 +3985,7 @@ static void cgroup_event_remove(struct work_struct *work)
 
 	eventfd_ctx_put(event->eventfd);
 	kfree(event);
-	cgroup_dput(cgrp);
+	__cgroup_dput(cgrp);
 }
 
 /*
@@ -4095,9 +4097,9 @@ static int cgroup_write_event_control(struct cgroup_subsys_state *css,
 	if (ret < 0)
 		goto out_put_cfile;
 
-	event->cft = __file_cft(cfile);
-	if (IS_ERR(event->cft)) {
-		ret = PTR_ERR(event->cft);
+	cgrp_cfile = __cgroup_from_dentry(cfile->f_dentry, &event->cft);
+	if (!cgrp_cfile) {
+		ret = -EINVAL;
 		goto out_put_cfile;
 	}
 
@@ -4105,7 +4107,6 @@ static int cgroup_write_event_control(struct cgroup_subsys_state *css,
 	 * The file to be monitored must be in the same cgroup as
 	 * cgroup.event_control is.
 	 */
-	cgrp_cfile = __d_cgrp(cfile->f_dentry->d_parent);
 	if (cgrp_cfile != cgrp) {
 		ret = -EINVAL;
 		goto out_put_cfile;
@@ -4272,7 +4273,7 @@ static void css_dput_fn(struct work_struct *work)
 	struct cgroup_subsys_state *css =
 		container_of(work, struct cgroup_subsys_state, dput_work);
 
-	cgroup_dput(css->cgroup);
+	__cgroup_dput(css->cgroup);
 }
 
 static void css_release(struct percpu_ref *ref)
