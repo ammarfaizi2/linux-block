@@ -261,6 +261,22 @@ struct cgroup_event {
 	 */
 	struct list_head list;
 	/*
+	 * register_event() callback will be used to add new userspace
+	 * waiter for changes related to this event.  Use eventfd_signal()
+	 * on eventfd to send notification to userspace.
+	 */
+	int (*register_event)(struct cgroup_subsys_state *css,
+			      struct cftype *cft, struct eventfd_ctx *eventfd,
+			      const char *args);
+	/*
+	 * unregister_event() callback will be called when userspace closes
+	 * the eventfd or on cgroup removing.  This callback must be set,
+	 * if you want provide notification functionality.
+	 */
+	void (*unregister_event)(struct cgroup_subsys_state *css,
+				 struct cftype *cft,
+				 struct eventfd_ctx *eventfd);
+	/*
 	 * All fields below needed to unregister event when
 	 * userspace closes eventfd.
 	 */
@@ -372,6 +388,10 @@ struct mem_cgroup {
 	atomic_t	numainfo_events;
 	atomic_t	numainfo_updating;
 #endif
+
+	/* List of events which userspace want to receive */
+	struct list_head event_list;
+	spinlock_t event_list_lock;
 
 	struct mem_cgroup_per_node *nodeinfo[0];
 	/* WARNING: nodeinfo must be the last member here */
@@ -5971,7 +5991,7 @@ static void cgroup_event_remove(struct work_struct *work)
 
 	remove_wait_queue(event->wqh, &event->wait);
 
-	event->cft->unregister_event(css, event->cft, event->eventfd);
+	event->unregister_event(css, event->cft, event->eventfd);
 
 	/* Notify userspace the event is going away. */
 	eventfd_signal(event->eventfd, 1);
@@ -5991,7 +6011,7 @@ static int cgroup_event_wake(wait_queue_t *wait, unsigned mode,
 {
 	struct cgroup_event *event = container_of(wait,
 			struct cgroup_event, wait);
-	struct cgroup *cgrp = event->css->cgroup;
+	struct mem_cgroup *memcg = mem_cgroup_from_css(event->css);
 	unsigned long flags = (unsigned long)key;
 
 	if (flags & POLLHUP) {
@@ -6004,7 +6024,7 @@ static int cgroup_event_wake(wait_queue_t *wait, unsigned mode,
 		 * side will require wqh->lock via remove_wait_queue(),
 		 * which we hold.
 		 */
-		spin_lock(&cgrp->event_list_lock);
+		spin_lock(&memcg->event_list_lock);
 		if (!list_empty(&event->list)) {
 			list_del_init(&event->list);
 			/*
@@ -6013,7 +6033,7 @@ static int cgroup_event_wake(wait_queue_t *wait, unsigned mode,
 			 */
 			schedule_work(&event->remove);
 		}
-		spin_unlock(&cgrp->event_list_lock);
+		spin_unlock(&memcg->event_list_lock);
 	}
 
 	return 0;
@@ -6038,6 +6058,7 @@ static void cgroup_event_ptable_queue_proc(struct file *file,
 static int cgroup_write_event_control(struct cgroup_subsys_state *css,
 				      struct cftype *cft, const char *buffer)
 {
+	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
 	struct cgroup *cgrp = css->cgroup;
 	struct cgroup_event *event;
 	struct cgroup *cgrp_cfile;
@@ -6105,13 +6126,30 @@ static int cgroup_write_event_control(struct cgroup_subsys_state *css,
 		goto out_put_cfile;
 	}
 
-	if (!event->cft->register_event || !event->cft->unregister_event) {
+	/*
+	 * Determine the event callbacks and set them in @event.  This used
+	 * to be done via struct cftype but cgroup core no longer knows
+	 * about these events.  The following is crude but the whole thing
+	 * is for compatibility anyway.
+	 */
+	if (!strcmp(event->cft->name, "usage_in_bytes")) {
+		event->register_event = mem_cgroup_usage_register_event;
+		event->unregister_event = mem_cgroup_usage_unregister_event;
+	} else if (!strcmp(event->cft->name, "oom_control")) {
+		event->register_event = mem_cgroup_oom_register_event;
+		event->unregister_event = mem_cgroup_oom_unregister_event;
+	} else if (!strcmp(event->cft->name, "pressure_level")) {
+		event->register_event = vmpressure_register_event;
+		event->unregister_event = vmpressure_unregister_event;
+	} else if (!strcmp(event->cft->name, "memsw.usage_in_bytes")) {
+		event->register_event = mem_cgroup_usage_register_event;
+		event->unregister_event = mem_cgroup_usage_unregister_event;
+	} else {
 		ret = -EINVAL;
 		goto out_put_cfile;
 	}
 
-	ret = event->cft->register_event(css, event->cft,
-			event->eventfd, buffer);
+	ret = event->register_event(css, event->cft, event->eventfd, buffer);
 	if (ret)
 		goto out_put_cfile;
 
@@ -6124,9 +6162,9 @@ static int cgroup_write_event_control(struct cgroup_subsys_state *css,
 	 */
 	dget(cgrp->dentry);
 
-	spin_lock(&cgrp->event_list_lock);
-	list_add(&event->list, &cgrp->event_list);
-	spin_unlock(&cgrp->event_list_lock);
+	spin_lock(&memcg->event_list_lock);
+	list_add(&event->list, &memcg->event_list);
+	spin_unlock(&memcg->event_list_lock);
 
 	fput(cfile);
 	fput(efile);
@@ -6150,8 +6188,6 @@ static struct cftype mem_cgroup_files[] = {
 		.name = "usage_in_bytes",
 		.private = MEMFILE_PRIVATE(_MEM, RES_USAGE),
 		.read = mem_cgroup_read,
-		.register_event = mem_cgroup_usage_register_event,
-		.unregister_event = mem_cgroup_usage_unregister_event,
 	},
 	{
 		.name = "max_usage_in_bytes",
@@ -6211,14 +6247,10 @@ static struct cftype mem_cgroup_files[] = {
 		.name = "oom_control",
 		.read_map = mem_cgroup_oom_control_read,
 		.write_u64 = mem_cgroup_oom_control_write,
-		.register_event = mem_cgroup_oom_register_event,
-		.unregister_event = mem_cgroup_oom_unregister_event,
 		.private = MEMFILE_PRIVATE(_OOM_TYPE, OOM_CONTROL),
 	},
 	{
 		.name = "pressure_level",
-		.register_event = vmpressure_register_event,
-		.unregister_event = vmpressure_unregister_event,
 	},
 #ifdef CONFIG_NUMA
 	{
@@ -6266,8 +6298,6 @@ static struct cftype memsw_cgroup_files[] = {
 		.name = "memsw.usage_in_bytes",
 		.private = MEMFILE_PRIVATE(_MEMSWAP, RES_USAGE),
 		.read = mem_cgroup_read,
-		.register_event = mem_cgroup_usage_register_event,
-		.unregister_event = mem_cgroup_usage_unregister_event,
 	},
 	{
 		.name = "memsw.max_usage_in_bytes",
@@ -6458,6 +6488,8 @@ mem_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
 	mutex_init(&memcg->thresholds_lock);
 	spin_lock_init(&memcg->move_lock);
 	vmpressure_init(&memcg->vmpressure);
+	INIT_LIST_HEAD(&memcg->event_list);
+	spin_lock_init(&memcg->event_list_lock);
 
 	return &memcg->css;
 
@@ -6530,7 +6562,6 @@ static void mem_cgroup_invalidate_reclaim_iterators(struct mem_cgroup *memcg)
 static void mem_cgroup_css_offline(struct cgroup_subsys_state *css)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-	struct cgroup *cgrp = css->cgroup;
 	struct cgroup_event *event, *tmp;
 
 	/*
@@ -6538,12 +6569,12 @@ static void mem_cgroup_css_offline(struct cgroup_subsys_state *css)
 	 * Notify userspace about cgroup removing only after rmdir of cgroup
 	 * directory to avoid race between userspace and kernelspace.
 	 */
-	spin_lock(&cgrp->event_list_lock);
-	list_for_each_entry_safe(event, tmp, &cgrp->event_list, list) {
+	spin_lock(&memcg->event_list_lock);
+	list_for_each_entry_safe(event, tmp, &memcg->event_list, list) {
 		list_del_init(&event->list);
 		schedule_work(&event->remove);
 	}
-	spin_unlock(&cgrp->event_list_lock);
+	spin_unlock(&memcg->event_list_lock);
 
 	kmem_cgroup_css_offline(memcg);
 
