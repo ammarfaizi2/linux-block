@@ -243,6 +243,7 @@ static void rcu_preempt_note_context_switch(int cpu)
 				       : rnp->gpnum + 1);
 		raw_spin_unlock_irqrestore(&rnp->lock, flags);
 	} else if (t->rcu_read_lock_nesting < 0 &&
+		   !WARN_ON_ONCE(t->rcu_read_lock_nesting != INT_MIN) &&
 		   t->rcu_read_unlock_special) {
 
 		/*
