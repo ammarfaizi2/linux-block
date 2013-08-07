@@ -942,10 +942,13 @@ void exit_rcu(void)
 
 	if (likely(list_empty(&current->rcu_node_entry)))
 		return;
-	t->rcu_read_lock_nesting = 1;
-	barrier();
-	t->rcu_read_unlock_special = RCU_READ_UNLOCK_BLOCKED;
-	__rcu_read_unlock();
+	WARN_ON_ONCE(!(t->rcu_read_unlock_special | RCU_READ_UNLOCK_BLOCKED));
+	/*
+	 * Task RCU state(rcu_node_entry) of this task will be cleanup by
+	 * the next rcu_preempt_note_context_switch() of the next schedule()
+	 * in the do_exit().
+	 */
+	t->rcu_read_lock_nesting = INT_MIN;
 }
 
 #else /* #ifdef CONFIG_TREE_PREEMPT_RCU */
