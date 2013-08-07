@@ -684,8 +684,11 @@ static void rcu_preempt_check_callbacks(int cpu)
 {
 	struct task_struct *t = current;
 
-	if (t->rcu_read_lock_nesting == 0) {
+	if (t->rcu_read_lock_nesting == 0 ||
+	    t->rcu_read_lock_nesting == INT_MIN) {
 		rcu_preempt_qs(cpu);
+		if (t->rcu_read_unlock_special)
+			rcu_read_unlock_special(t, false);
 		return;
 	}
 	if (t->rcu_read_lock_nesting > 0 &&
