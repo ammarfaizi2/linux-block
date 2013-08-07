@@ -242,15 +242,16 @@ static void rcu_preempt_note_context_switch(int cpu)
 				       ? rnp->gpnum
 				       : rnp->gpnum + 1);
 		raw_spin_unlock_irqrestore(&rnp->lock, flags);
-	} else if (t->rcu_read_lock_nesting < 0 &&
-		   !WARN_ON_ONCE(t->rcu_read_lock_nesting != INT_MIN) &&
-		   t->rcu_read_unlock_special) {
+	} else if (t->rcu_read_lock_nesting == 0 ||
+		   (t->rcu_read_lock_nesting < 0 &&
+		   !WARN_ON_ONCE(t->rcu_read_lock_nesting != INT_MIN))) {
 
 		/*
 		 * Complete exit from RCU read-side critical section on
 		 * behalf of preempted instance of __rcu_read_unlock().
 		 */
-		rcu_read_unlock_special(t);
+		if (t->rcu_read_unlock_special)
+			rcu_read_unlock_special(t, false);
 	}
 
 	/*
@@ -333,7 +334,7 @@ static struct list_head *rcu_next_node_entry(struct task_struct *t,
  * notify RCU core processing or task having blocked during the RCU
  * read-side critical section.
  */
-void rcu_read_unlock_special(struct task_struct *t)
+void rcu_read_unlock_special(struct task_struct *t, bool unlock)
 {
 	int empty;
 	int empty_exp;
@@ -364,6 +365,42 @@ void rcu_read_unlock_special(struct task_struct *t)
 
 	/* Clean up if blocked during RCU read-side critical section. */
 	if (special & RCU_READ_UNLOCK_BLOCKED) {
+		/*
+		 * If rcu read lock overlaps with scheduler lock,
+		 * rcu_read_unlock_special() may lead to deadlock:
+		 *
+		 * rcu_read_lock();
+		 * preempt_schedule[_irq]() (when preemption)
+		 * scheduler lock; (or some other locks can be (chained) nested
+		 *                  in rcu_read_unlock_special()/rnp->lock)
+		 * access and check rcu data
+		 * rcu_read_unlock();
+		 *   rcu_read_unlock_special();
+		 *     wake_up();                 DEAD LOCK
+		 *
+		 * To avoid all these kinds of deadlock, we should quit
+		 * rcu_read_unlock_special() here and defer it to
+		 * rcu_preempt_note_context_switch() or next outmost
+		 * rcu_read_unlock() if we consider this case may happen.
+		 *
+		 * Although we can't know whether current _special()
+		 * is nested in scheduler lock or not. But we know that
+		 * irqs are always disabled in this case. so we just quit
+		 * and defer it to rcu_preempt_note_context_switch()
+		 * when irqs are disabled.
+		 *
+		 * It means we always defer _special() when it is
+		 * nested in irqs disabled context, but
+		 *	(special & RCU_READ_UNLOCK_BLOCKED) &&
+		 *	irqs_disabled_flags(flags)
+		 * is still unlikely to be true.
+		 */
+		if (unlikely(unlock && irqs_disabled_flags(flags))) {
+			set_need_resched();
+			local_irq_restore(flags);
+			return;
+		}
+
 		t->rcu_read_unlock_special &= ~RCU_READ_UNLOCK_BLOCKED;
 
 		/*

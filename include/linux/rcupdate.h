@@ -180,7 +180,7 @@ extern void synchronize_sched(void);
 
 extern void __rcu_read_lock(void);
 extern void __rcu_read_unlock(void);
-extern void rcu_read_unlock_special(struct task_struct *t);
+extern void rcu_read_unlock_special(struct task_struct *t, bool unlock);
 void synchronize_rcu(void);
 
 /*
