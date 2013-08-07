@@ -338,7 +338,7 @@ void rcu_read_unlock_special(struct task_struct *t)
 	int empty;
 	int empty_exp;
 	int empty_exp_now;
-	unsigned long flags;
+	unsigned long flags, irq_disabled_flags;
 	struct list_head *np;
 #ifdef CONFIG_RCU_BOOST
 	struct rt_mutex *rbmp = NULL;
@@ -351,6 +351,7 @@ void rcu_read_unlock_special(struct task_struct *t)
 		return;
 
 	local_irq_save(flags);
+	local_save_flags(irq_disabled_flags);
 
 	/*
 	 * If RCU core is waiting for this CPU to exit critical section,
@@ -414,9 +415,12 @@ void rcu_read_unlock_special(struct task_struct *t)
 							 rnp->grplo,
 							 rnp->grphi,
 							 !!rnp->gp_tasks);
-			rcu_report_unblock_qs_rnp(rnp, flags);
+			rcu_report_unblock_qs_rnp(rnp, irq_disabled_flags);
+			/* irqs remain disabled. */
 		} else {
-			raw_spin_unlock_irqrestore(&rnp->lock, flags);
+			raw_spin_unlock_irqrestore(&rnp->lock,
+						   irq_disabled_flags);
+			/* irqs remain disabled. */
 		}
 
 #ifdef CONFIG_RCU_BOOST
@@ -431,9 +435,8 @@ void rcu_read_unlock_special(struct task_struct *t)
 		 */
 		if (!empty_exp && empty_exp_now)
 			rcu_report_exp_rnp(&rcu_preempt_state, rnp, true);
-	} else {
-		local_irq_restore(flags);
 	}
+	local_irq_restore(flags);
 }
 
 #ifdef CONFIG_RCU_CPU_STALL_VERBOSE
