@@ -396,6 +396,7 @@ void rcu_read_unlock_special(struct task_struct *t, bool unlock)
 		 * is still unlikely to be true.
 		 */
 		if (unlikely(unlock && irqs_disabled_flags(flags))) {
+			this_cpu_ptr(&rcu_preempt_data)->n_defer_special++;
 			set_need_resched();
 			local_irq_restore(flags);
 			return;

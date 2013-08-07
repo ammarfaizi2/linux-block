@@ -298,6 +298,7 @@ struct rcu_data {
 	unsigned long	n_force_qs_snap;
 					/* did other CPU force QS recently? */
 	long		blimit;		/* Upper limit on a processed batch */
+	unsigned long	n_defer_special;/* # of deferred _special() */
 
 	/* 3) dynticks interface. */
 	struct rcu_dynticks *dynticks;	/* Shared per-CPU dynticks state. */
