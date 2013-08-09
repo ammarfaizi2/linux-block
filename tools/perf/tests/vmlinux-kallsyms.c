@@ -98,16 +98,16 @@ int test__vmlinux_matches_kallsyms(void)
 	/*
 	 * Step 6:
 	 *
-	 * Locate a vmlinux file in the vmlinux path that has a buildid that
-	 * matches the one of the running kernel.
+	 * Locate a vmlinux file that has a buildid that matches the one of the
+	 * running kernel.
 	 *
 	 * While doing that look if we find the ref reloc symbol, if we find it
 	 * we'll have its ref_reloc_symbol.unrelocated_addr and then
 	 * maps__reloc_vmlinux will notice and set proper ->[un]map_ip routines
 	 * to fixup the symbols.
 	 */
-	if (machine__load_vmlinux_path(&vmlinux, type,
-				       vmlinux_matches_kallsyms_filter) <= 0) {
+	if (map__load(vmlinux_map, vmlinux_matches_kallsyms_filter) < 0 ||
+	    vmlinux_map->dso->symtab_type != DSO_BINARY_TYPE__VMLINUX) {
 		pr_debug("Couldn't find a vmlinux that matches the kernel running on this machine, skipping test\n");
 		err = TEST_SKIP;
 		goto out;

@@ -623,18 +623,6 @@ int machines__create_kernel_maps(struct machines *machines, pid_t pid)
 	return machine__create_kernel_maps(machine);
 }
 
-int machine__load_vmlinux_path(struct machine *machine, enum map_type type,
-			       symbol_filter_t filter)
-{
-	struct map *map = machine->vmlinux_maps[type];
-	int ret = dso__load_vmlinux_path(map->dso, map, filter);
-
-	if (ret > 0)
-		dso__set_loaded(map->dso, type);
-
-	return ret;
-}
-
 static void map_groups__fixup_end(struct map_groups *mg)
 {
 	int i;

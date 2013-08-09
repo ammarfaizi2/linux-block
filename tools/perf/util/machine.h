@@ -142,9 +142,6 @@ struct symbol *machine__find_kernel_function_by_name(struct machine *machine,
 struct map *machine__new_module(struct machine *machine, u64 start,
 				const char *filename);
 
-int machine__load_vmlinux_path(struct machine *machine, enum map_type type,
-			       symbol_filter_t filter);
-
 size_t machine__fprintf_dsos_buildid(struct machine *machine, FILE *fp,
 				     bool (skip)(struct dso *dso, int parm), int parm);
 size_t machines__fprintf_dsos(struct machines *machines, FILE *fp);
