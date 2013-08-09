@@ -208,8 +208,6 @@ int dso__load_vmlinux(struct dso *dso, struct map *map,
 		      const char *vmlinux, symbol_filter_t filter);
 int dso__load_vmlinux_path(struct dso *dso, struct map *map,
 			   symbol_filter_t filter);
-int dso__load_kallsyms(struct dso *dso, const char *filename, struct map *map,
-		       symbol_filter_t filter);
 
 struct symbol *dso__find_symbol(struct dso *dso, enum map_type type,
 				u64 addr);

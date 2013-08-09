@@ -891,8 +891,8 @@ out_err:
 	return -EINVAL;
 }
 
-int dso__load_kallsyms(struct dso *dso, const char *filename,
-		       struct map *map, symbol_filter_t filter)
+static int dso__load_kallsyms(struct dso *dso, const char *filename,
+			      struct map *map, symbol_filter_t filter)
 {
 	if (symbol__restricted_filename(filename, "/proc/kallsyms"))
 		return -1;

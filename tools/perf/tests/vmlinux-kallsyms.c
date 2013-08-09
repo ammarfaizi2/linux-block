@@ -55,8 +55,14 @@ int test__vmlinux_matches_kallsyms(void)
 	 *
 	 * Load and split /proc/kallsyms into multiple maps, one per module.
 	 */
-	if (machine__load_kallsyms(&kallsyms, "/proc/kallsyms", type, NULL) <= 0) {
-		pr_debug("dso__load_kallsyms ");
+	kallsyms_map = machine__kernel_map(&kallsyms, type);
+
+	symbol_conf.kallsyms_name = "/proc/kallsyms";
+	err = map__load(kallsyms_map, NULL);
+	symbol_conf.kallsyms_name = NULL;
+
+	if (err < 0) {
+		pr_debug("map__load(\"/proc/kallsyms\")");
 		goto out;
 	}
 
@@ -68,8 +74,6 @@ int test__vmlinux_matches_kallsyms(void)
 	 * to see if the running kernel was relocated by checking if it has the
 	 * same value in the vmlinux file we load.
 	 */
-	kallsyms_map = machine__kernel_map(&kallsyms, type);
-
 	sym = map__find_symbol_by_name(kallsyms_map, ref_reloc_sym.name, NULL);
 	if (sym == NULL) {
 		pr_debug("dso__find_symbol_by_name ");

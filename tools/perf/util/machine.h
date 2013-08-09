@@ -142,8 +142,6 @@ struct symbol *machine__find_kernel_function_by_name(struct machine *machine,
 struct map *machine__new_module(struct machine *machine, u64 start,
 				const char *filename);
 
-int machine__load_kallsyms(struct machine *machine, const char *filename,
-			   enum map_type type, symbol_filter_t filter);
 int machine__load_vmlinux_path(struct machine *machine, enum map_type type,
 			       symbol_filter_t filter);
 
