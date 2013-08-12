@@ -1049,3 +1049,40 @@ size_t perf_evlist__fprintf(struct perf_evlist *evlist, FILE *fp)
 
 	return printed + fprintf(fp, "\n");;
 }
+
+static struct perf_evsel *perf_evlist__find_by_name(struct perf_evlist *evlist,
+						    const char *name)
+{
+	struct perf_evsel *evsel;
+
+	list_for_each_entry(evsel, &evlist->entries, node) {
+		if (strcmp(name, perf_evsel__name(evsel)) == 0)
+			return evsel;
+	}
+
+	return NULL;
+}
+
+int __perf_evlist__set_handlers(struct perf_evlist *evlist,
+				const struct perf_evsel_str_handler *assocs,
+				size_t nr_assocs)
+{
+	struct perf_evsel *evsel;
+	size_t i;
+	int err = -EEXIST;
+
+	for (i = 0; i < nr_assocs; i++) {
+		evsel = perf_evlist__find_by_name(evlist, assocs[i].name);
+		if (evsel == NULL)
+			continue;
+
+		if (evsel->handler.func != NULL)
+			goto out;
+
+		evsel->handler.func = assocs[i].handler;
+	}
+
+	err = 0;
+out:
+	return err;
+}

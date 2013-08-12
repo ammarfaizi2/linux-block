@@ -52,6 +52,13 @@ struct perf_evsel_str_handler {
 	void	   *handler;
 };
 
+int __perf_evlist__set_handlers(struct perf_evlist *evlist,
+				const struct perf_evsel_str_handler *assocs,
+				size_t nr_assocs);
+
+#define perf_evlist__set_handlers(evlist, array) \
+        __perf_evlist__set_handlers(evlist, array, ARRAY_SIZE(array))
+
 struct perf_evlist *perf_evlist__new(void);
 void perf_evlist__init(struct perf_evlist *evlist, struct cpu_map *cpus,
 		       struct thread_map *threads);
