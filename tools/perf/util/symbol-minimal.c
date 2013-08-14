@@ -278,9 +278,8 @@ void symsrc__destroy(struct symsrc *ss)
 	close(ss->fd);
 }
 
-int dso__synthesize_plt_symbols(struct dso *dso __maybe_unused,
-				struct symsrc *ss __maybe_unused,
-				struct map *map __maybe_unused)
+int symbols__synthesize_plt(struct rb_root *symbols __maybe_unused,
+			    struct symsrc *ss __maybe_unused)
 {
 	return 0;
 }

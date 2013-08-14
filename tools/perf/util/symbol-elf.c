@@ -163,7 +163,7 @@ static Elf_Scn *elf_section_by_name(Elf *elf, GElf_Ehdr *ep,
  * And always look at the original dso, not at debuginfo packages, that
  * have the PLT data stripped out (shdr_rel_plt.sh_type == SHT_NOBITS).
  */
-int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss, struct map *map)
+int symbols__synthesize_plt(struct rb_root *symbols, struct symsrc *ss)
 {
 	uint32_t nr_rel_entries, idx;
 	GElf_Sym sym;
@@ -251,7 +251,7 @@ int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss, struct map *
 			if (!f)
 				goto out_elf_end;
 
-			symbols__insert(&dso->symbols[map->type], f);
+			symbols__insert(symbols, f);
 			++nr;
 		}
 	} else if (shdr_rel_plt.sh_type == SHT_REL) {
@@ -269,7 +269,7 @@ int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss, struct map *
 			if (!f)
 				goto out_elf_end;
 
-			symbols__insert(&dso->symbols[map->type], f);
+			symbols__insert(symbols, f);
 			++nr;
 		}
 	}
@@ -278,8 +278,7 @@ int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss, struct map *
 out_elf_end:
 	if (err == 0)
 		return nr;
-	pr_debug("%s: problems reading %s PLT info.\n",
-		 __func__, dso->long_name);
+	pr_debug("%s: problems reading %s PLT info.\n", __func__, ss->name);
 	return 0;
 }
 

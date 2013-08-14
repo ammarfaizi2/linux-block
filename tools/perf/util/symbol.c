@@ -965,6 +965,12 @@ out_failure:
 	return -1;
 }
 
+static int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss,
+				       struct map *map)
+{
+	return symbols__synthesize_plt(&dso->symbols[map->type], ss);
+}
+
 int dso__load(struct dso *dso, struct map *map)
 {
 	char *name;

@@ -236,7 +236,7 @@ bool symbol__restricted_filename(const char *filename,
 
 int dso__load_sym(struct dso *dso, struct map *map, struct symsrc *syms_ss,
 		  struct symsrc *runtime_ss, int kmodule);
-int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss, struct map *map);
+int symbols__synthesize_plt(struct rb_root *symbols, struct symsrc *ss);
 
 void symbols__insert(struct rb_root *symbols, struct symbol *sym);
 void symbols__fixup_duplicate(struct rb_root *symbols);
