@@ -159,8 +159,8 @@ struct cachefiles_cx_bitmap {
  * culling index entry layout
  */
 struct cachefiles_cx_entry {
-	uint8_t				type;		/* exportfs enum fid_type */
 	uint8_t				len;		/* fh len */
+	uint8_t				type;		/* exportfs enum fid_type */
 	__u32				fh[0];		/* exportfs file handle */
 } __attribute__((packed));
 

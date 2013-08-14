@@ -291,6 +291,7 @@ static int cachefiles_cx_generate_actor(struct pipe_inode_info *pipe,
 	size_t size = desc->len;
 	int ret;
 	u8 *kaddr, *p;
+	struct cachefiles_cx_entry *ent;
 
 	_enter(",{%lx},%lx", page->index, size);
 
@@ -305,14 +306,15 @@ static int cachefiles_cx_generate_actor(struct pipe_inode_info *pipe,
 	p = kaddr = kmap_atomic(page);
 
 	for (slot = 0; slot < nperpage; slot++) {
-		/* the first byte of each slot indicates whether it's occupied
+		ent = (struct cachefiles_cx_entry *)p;
+		/* The type entry of each slot indicates whether it's occupied
 		 * or not (zero indicating unoccupied) */
-		if (!*p && cachefiles_cx_mark_empty(cache, index + slot,
-						    &last_bm) < 0) {
+		if (!ent->type && cachefiles_cx_mark_empty(cache, index + slot,
+							   &last_bm) < 0) {
 			ret = -EIO;
 			break;
-		} else if (*p) {
-			_debug("[%02x]: type=%u len=%u", slot, p[0], p[1]);
+		} else if (ent->type) {
+			_debug("[%02x]: type=%u len=%u", slot, ent->type, ent->len);
 			if (__cachefiles_cx_mark_cullable(cache, index + slot,
 							  true, &last_bm) < 0) {
 				ret = -EIO;
@@ -595,35 +597,46 @@ void cachefiles_cx_clear_slot(struct cachefiles_cache *cache,
 	mm_segment_t old_fs;
 	unsigned offset;
 	ssize_t ret;
-	loff_t pos;
+	loff_t pos, apos;
 
 	_enter(",{%u}", slot);
 
 	if (slot == CACHEFILES_NO_CULL_SLOT ||
 	    slot == CACHEFILES_PINNED)
 
-	/* we write a zero byte over the index type */
+	/* we write zero bytes over the index type and length */
 	pos = slot / cache->cx_nperpage;
 	offset = slot % cache->cx_nperpage;
 	pos *= PAGE_SIZE;
 	pos += offset * cache->cx_entsize;
+	apos = slot * sizeof(__le32);
 
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 	_debug("CLEAR index 1 @ %llx", pos);
 	ret = cache->cull_index->f_op->write(
 		cache->cull_index,
-		(const void __user *) empty_zero_page, 1, &pos);
-	set_fs(old_fs);
+		(const void __user *) empty_zero_page, 2, &pos);
+	if (ret != 2)
+		goto ioerror;
 
-	if (ret == 1)
-		cachefiles_cx_unalloc_slot(cache, slot);
-	else
-		cachefiles_io_error(cache,
-				    "Cull index slot %u clearance error: %ld",
-				    slot, ret);
+	ret = cache->cull_atimes->f_op->write(
+		cache->cull_atimes,
+		(const void __user *) empty_zero_page, sizeof(__le32), &apos);
+	if (ret != sizeof(__le32))
+		goto ioerror;
+
+	set_fs(old_fs);
+	cachefiles_cx_unalloc_slot(cache, slot);
 
 	_leave("");
+	return;
+
+ioerror:
+	set_fs(old_fs);
+	cachefiles_io_error(cache,
+			    "Cull index slot %u clearance error: %ld",
+			    slot, ret);
 }
 
 /*
@@ -802,7 +815,8 @@ void cachefiles_cx_mark_access(struct cachefiles_cache *cache,
 		return;
 
 	atime = get_seconds();
-	ratime = atime > cache->atime_base ? atime - cache->atime_base : 0;
+	/* Reserve 0 to indicate an empty slot, so ensure ratime is non-zero. */
+	ratime = atime > cache->atime_base ? atime - cache->atime_base : 1;
 	buffer = cpu_to_le32(ratime);
 
 	pos = object->cull_slot;
