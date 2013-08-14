@@ -21,7 +21,11 @@
 #include <linux/splice.h>
 #include "internal.h"
 
-#define SLOTS_PER_BITMAP (PAGE_SIZE * 8)
+#define BITS_PER_PAGE (PAGE_SIZE * 8)
+#define BITS_PER_BITMAP BITS_PER_PAGE
+#define SLOTS_PER_BITMAP BITS_PER_PAGE
+#define BITS_PER_PAGE_MASK (BITS_PER_BITMAP - 1)
+#define slot_to_map_number(INDEX) ((INDEX) >> (PAGE_SHIFT + 3))
 
 /*
  * release the storage for an index bitmap
@@ -55,12 +59,13 @@ static int cachefiles_cx_check_size(struct cachefiles_cache *cache)
 	_enter("");
 
 	ret = -ENOMEM;
-	scratch = kmalloc(NFS4_FHSIZE, GFP_KERNEL);
+	scratch = kmalloc(MAX_HANDLE_SZ, GFP_KERNEL);
 	if (!scratch)
 		goto error;
 
 	/* determine how big a directory FH might be */
-	dir_len = NFS4_FHSIZE / sizeof(u32);
+	/* Note, exportfs_encode_fh works in terms of 4 byte sequences, not bytes. */
+	dir_len = MAX_HANDLE_SZ / sizeof(u32);
 	ret = exportfs_encode_fh(cache->graveyard, scratch, &dir_len, 1);
 	if (ret < 0) {
 		pr_err("Unable to determine Backing FS dir FH size: error=%d",
@@ -71,7 +76,7 @@ static int cachefiles_cx_check_size(struct cachefiles_cache *cache)
 	_debug("- dir FH %d", dir_len);
 
 	/* determine how big a file FH might be */
-	file_len = NFS4_FHSIZE / sizeof(u32);
+	file_len = MAX_HANDLE_SZ / sizeof(u32);
 	ret = exportfs_encode_fh(cache->cull_index->f_path.dentry, scratch,
 				 &file_len, 1);
 	if (ret < 0) {
@@ -112,7 +117,7 @@ static int cachefiles_cx_alloc_bitmap(struct cachefiles_cache *cache)
 
 	_enter("");
 
-	fsize = i_size_read(cache->cull_index->f_path.dentry->d_inode);
+	fsize = i_size_read(file_inode(cache->cull_index));
 	nslots = (fsize + PAGE_SHIFT - 1) >> PAGE_SHIFT;
 	nslots *= cache->cx_nperpage;
 	cache->cull_nslots = nslots;
@@ -135,6 +140,7 @@ static int cachefiles_cx_alloc_bitmap(struct cachefiles_cache *cache)
 		if (!bm->cullable_slots)
 			goto error_no_page_2;
 		bm->offset = loop;
+		/* assume bitmap is full until we scan it for free slots. */
 		bm->nfreeslots = 0;
 		bm->nslots = min(nslots, SLOTS_PER_BITMAP);
 		nslots -= bm->nslots;
@@ -176,7 +182,7 @@ static int cachefiles_cx_mark_empty(struct cachefiles_cache *cache,
 	_enter(",%u,", index);
 
 	bm = *_last_bm;
-	offset = index >> (PAGE_SHIFT + 3);
+	offset = slot_to_map_number(index);
 	if (!bm || bm->offset != offset) {
 		p = cache->cull_bitmap.rb_node;
 		while (p) {
@@ -199,11 +205,11 @@ static int cachefiles_cx_mark_empty(struct cachefiles_cache *cache,
 	}
 
 	bitmap = kmap_atomic(bm->free_slots);
-	__set_bit(index & ((1 << (PAGE_SHIFT + 3)) - 1), bitmap);
+	__set_bit(index & BITS_PER_PAGE_MASK, bitmap);
 	kunmap_atomic(bitmap);
 
 	bitmap = kmap_atomic(bm->cullable_slots);
-	__clear_bit(index & ((1 << (PAGE_SHIFT + 3)) - 1), bitmap);
+	__clear_bit(index & BITS_PER_PAGE_MASK, bitmap);
 	kunmap_atomic(bitmap);
 	return 0;
 }
@@ -247,9 +253,9 @@ static int __cachefiles_cx_mark_cullable(struct cachefiles_cache *cache,
 
 	bitmap = kmap_atomic(bm->cullable_slots);
 	if (cullable)
-		__set_bit(index & ((1 << (PAGE_SHIFT + 3)) - 1), bitmap);
+		__set_bit(index & BITS_PER_PAGE_MASK, bitmap);
 	else
-		__clear_bit(index & ((1 << (PAGE_SHIFT + 3)) - 1), bitmap);
+		__clear_bit(index & BITS_PER_PAGE_MASK, bitmap);
 	kunmap_atomic(bitmap);
 	return 0;
 }
@@ -341,10 +347,12 @@ int cachefiles_cx_generate_bitmap(struct cachefiles_cache *cache)
 
 	_enter("");
 
+	/* determine cx_entsize and the per-page density */
 	ret = cachefiles_cx_check_size(cache);
 	if (ret < 0)
 		goto error;
 
+	/* create a number of nodes based on the size of the index file */
 	ret = cachefiles_cx_alloc_bitmap(cache);
 	if (ret < 0)
 		goto error;

@@ -597,7 +597,7 @@ lookup_again:
 
 	/* if we've found that the terminal object exists, then we need to
 	 * check its attributes and delete it if it's out of date
-	 * - this will also retrieve it's current cull slot assignment
+	 * - this will also retrieve its current cull slot assignment
 	 */
 	if (!test_bit(CACHEFILES_OBJECT_NEW, &object->flags)) {
 		_debug("validate '%pd'", next);
