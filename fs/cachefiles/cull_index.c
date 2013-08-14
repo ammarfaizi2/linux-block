@@ -174,6 +174,36 @@ error:
 	return -ENOMEM;
 }
 
+static struct cachefiles_cx_bitmap *
+__cachefiles_cx_find_bitmap(struct rb_node *root,
+			    unsigned index,
+			    struct cachefiles_cx_bitmap *bm)
+{
+	struct rb_node *p;
+	unsigned offset;
+
+	_enter(",%u,", index);
+
+	offset = slot_to_map_number(index);
+	if (!bm || bm->offset != offset) {
+		p = root;
+		while (p) {
+			bm = rb_entry(p, struct cachefiles_cx_bitmap, rb);
+
+			if (offset < bm->offset)
+				p = p->rb_left;
+			else if (offset > bm->offset)
+				p = p->rb_right;
+			else if (offset == bm->offset)
+				return bm;
+			else
+				return NULL;
+		}
+	}
+
+	return bm;
+}
+
 /*
  * mark an empty slot in the bitmap
  * - the caller is responsible for locking cull_bitmap_lock if necessary
@@ -183,34 +213,18 @@ static int cachefiles_cx_mark_empty(struct cachefiles_cache *cache,
 				    struct cachefiles_cx_bitmap **_last_bm)
 {
 	struct cachefiles_cx_bitmap *bm;
-	struct rb_node *p;
 	unsigned long *bitmap;
-	unsigned offset;
 
 	_enter(",%u,", index);
 
-	bm = *_last_bm;
-	offset = slot_to_map_number(index);
-	if (!bm || bm->offset != offset) {
-		p = cache->cull_bitmap.rb_node;
-		while (p) {
-			bm = rb_entry(p, struct cachefiles_cx_bitmap, rb);
-
-			if (offset < bm->offset)
-				p = p->rb_left;
-			else if (offset > bm->offset)
-				p = p->rb_right;
-			else
-				goto found;
-		}
-		*_last_bm = NULL;
+	*_last_bm = bm = __cachefiles_cx_find_bitmap(cache->cull_bitmap.rb_node,
+						     index,
+						     *_last_bm);
+	if (!bm) {
 		_leave(" = -EIO");
 		return -EIO;
-
-	found:
-		bm->nfreeslots++;
-		*_last_bm = bm;
 	}
+	bm->nfreeslots++;
 
 	bitmap = kmap_atomic(bm->free_slots);
 	__set_bit(index & BITS_PER_PAGE_MASK, bitmap);
@@ -231,32 +245,16 @@ static int __cachefiles_cx_mark_cullable(struct cachefiles_cache *cache,
 					 struct cachefiles_cx_bitmap **_last_bm)
 {
 	struct cachefiles_cx_bitmap *bm;
-	struct rb_node *p;
 	unsigned long *bitmap;
-	unsigned offset;
 
 	_enter(",%u,%u,", index, cullable);
 
-	bm = *_last_bm;
-	offset = index >> (PAGE_SHIFT + 3);
-	if (!bm || bm->offset != offset) {
-		p = cache->cull_bitmap.rb_node;
-		while (p) {
-			bm = rb_entry(p, struct cachefiles_cx_bitmap, rb);
-
-			if (offset < bm->offset)
-				p = p->rb_left;
-			else if (offset > bm->offset)
-				p = p->rb_right;
-			else
-				goto found;
-		}
-		*_last_bm = NULL;
+	*_last_bm = bm = __cachefiles_cx_find_bitmap(cache->cull_bitmap.rb_node,
+						     index,
+						     *_last_bm);
+	if (!bm) {
 		_leave(" = -EIO");
 		return -EIO;
-
-	found:
-		*_last_bm = bm;
 	}
 
 	bitmap = kmap_atomic(bm->cullable_slots);
