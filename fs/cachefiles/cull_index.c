@@ -603,6 +603,7 @@ void cachefiles_cx_clear_slot(struct cachefiles_cache *cache,
 
 	if (slot == CACHEFILES_NO_CULL_SLOT ||
 	    slot == CACHEFILES_PINNED)
+		return;
 
 	/* we write zero bytes over the index type and length */
 	pos = slot / cache->cx_nperpage;
