@@ -118,7 +118,7 @@ static int cachefiles_cx_alloc_bitmap(struct cachefiles_cache *cache)
 	_enter("");
 
 	fsize = i_size_read(file_inode(cache->cull_index));
-	nslots = (fsize + PAGE_SHIFT - 1) >> PAGE_SHIFT;
+	nslots = (fsize + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	nslots *= cache->cx_nperpage;
 	cache->cull_nslots = nslots;
 
