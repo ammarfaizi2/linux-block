@@ -132,7 +132,7 @@ static int cachefiles_cx_alloc_bitmap(struct cachefiles_cache *cache)
 		if (!bm->free_slots)
 			goto error_no_page;
 		bm->cullable_slots = alloc_page(GFP_KERNEL | __GFP_ZERO);
-		if (!bm->free_slots)
+		if (!bm->cullable_slots)
 			goto error_no_page_2;
 		bm->offset = loop;
 		bm->nfreeslots = 0;
