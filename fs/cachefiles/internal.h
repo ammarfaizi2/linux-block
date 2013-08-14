@@ -80,6 +80,7 @@ struct cachefiles_cache {
 	struct rb_root			active_nodes;	/* active nodes (can't be culled) */
 	rwlock_t			active_lock;	/* lock for active_nodes */
 	spinlock_t			cull_bitmap_lock; /* access lock for cull_bitmap */
+	struct mutex			xattr_mutex;	/* access mutex for xattrs */
 	atomic_t			gravecounter;	/* graveyard uniquifier */
 	unsigned short			cx_entsize;	/* size of culling index entry */
 	unsigned short			cx_nperpage;	/* number of elements per page */
@@ -216,6 +217,8 @@ extern int cachefiles_cx_lookup(struct cachefiles_cache *cache,
 extern int cachefiles_cx_validate_slot(struct cachefiles_cache *cache,
 				       struct dentry *dentry,
 				       unsigned slot);
+extern int cachefiles_cx_fixslot(struct cachefiles_cache *cache,
+				 unsigned slot);
 
 /*
  * daemon.c
@@ -260,6 +263,10 @@ extern int cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot);
 
 extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
 				   struct dentry *dir, char *filename);
+
+int cachefiles_check_dentry_active(struct cachefiles_cache *cache,
+				   struct dentry *dir,
+				   struct dentry *victim);
 
 /*
  * proc.c
@@ -338,6 +345,7 @@ extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);
 extern int cachefiles_check_cull_index(struct cachefiles_cache *cache);
 extern int cachefiles_get_set_atime_base(struct cachefiles_cache *cache);
+extern int cachefiles_reset_slot(struct dentry *dentry, unsigned slot);
 
 
 /*

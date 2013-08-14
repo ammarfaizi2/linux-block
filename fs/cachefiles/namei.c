@@ -602,8 +602,10 @@ lookup_again:
 	if (!test_bit(CACHEFILES_OBJECT_NEW, &object->flags)) {
 		_debug("validate '%pd'", next);
 
+		mutex_lock(&cache->xattr_mutex);
 		ret = cachefiles_check_object_xattr(object, auxdata);
 		if (ret == -ESTALE) {
+			mutex_unlock(&cache->xattr_mutex);
 			/* delete the object (the deleter drops the directory
 			 * mutex) */
 			object->dentry = NULL;
@@ -629,6 +631,9 @@ lookup_again:
 
 	/* note that we're now using this object */
 	ret = cachefiles_mark_object_active(cache, object);
+
+	/* The coast is clear on other processes monkeying with xattrs, now. */
+	mutex_unlock(&cache->xattr_mutex);
 
 	mutex_unlock(&dir->d_inode->i_mutex);
 	dput(dir);
@@ -675,6 +680,7 @@ lookup_again:
 
 alloc_slot_error:
 	_debug("index slot alloc error %d", ret);
+	mutex_unlock(&cache->xattr_mutex);
 	if (ret == -EIO)
 		cachefiles_io_error(cache, "Alloc index slot failed");
 	goto error;
@@ -984,9 +990,9 @@ lookup_error:
  * find out if an object is in use or not
  * - the caller must have the directory locked
  */
-static int cachefiles_check_dentry_active(struct cachefiles_cache *cache,
-					  struct dentry *dir,
-					  struct dentry *victim)
+int cachefiles_check_dentry_active(struct cachefiles_cache *cache,
+				   struct dentry *dir,
+				   struct dentry *victim)
 {
 	struct cachefiles_object *object;
 	struct rb_node *_n;

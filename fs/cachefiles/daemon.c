@@ -46,6 +46,9 @@ static int cachefiles_daemon_dir(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_inuse(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_secctx(struct cachefiles_cache *, char *);
 static int cachefiles_daemon_tag(struct cachefiles_cache *, char *);
+static int cachefiles_daemon_rmslot(struct cachefiles_cache *, char *);
+static int cachefiles_daemon_fixslot(struct cachefiles_cache *, char *);
+static int cachefiles_daemon_fsck(struct cachefiles_cache *, char *);
 
 static unsigned long cachefiles_open;
 
@@ -79,6 +82,9 @@ static const struct cachefiles_daemon_cmd cachefiles_daemon_cmds[] = {
 	{ "inuse",	cachefiles_daemon_inuse		},
 	{ "secctx",	cachefiles_daemon_secctx	},
 	{ "tag",	cachefiles_daemon_tag		},
+	{ "rmslot",	cachefiles_daemon_rmslot	},
+	{ "fixslot",	cachefiles_daemon_fixslot	},
+	{ "fsck",	cachefiles_daemon_fsck		},
 	{ "",		NULL				}
 };
 
@@ -113,6 +119,7 @@ static int cachefiles_daemon_open(struct inode *inode, struct file *file)
 	cache->active_nodes = RB_ROOT;
 	rwlock_init(&cache->active_lock);
 	spin_lock_init(&cache->cull_bitmap_lock);
+	mutex_init(&cache->xattr_mutex);
 	init_waitqueue_head(&cache->daemon_pollwq);
 
 	/* set default caching limits
@@ -798,4 +805,77 @@ begin_cull:
 
 	_leave(" = %d", ret);
 	return ret;
+}
+
+
+static int cachefiles_daemon_rmslot(struct cachefiles_cache *cache, char *args)
+{
+	unsigned long slot;
+
+	_enter("%p,\"%s\"", cache, args);
+
+	if (!*args)
+		return -EINVAL;
+
+	slot = simple_strtol(args, &args, 10);
+	if (args[0] != '\0')
+		return -EINVAL;
+
+	cachefiles_cx_clear_slot(cache, slot);
+	return 0;
+}
+
+
+static int cachefiles_daemon_fixslot(struct cachefiles_cache *cache, char *args)
+{
+	unsigned long slot;
+
+	_enter("%p,\"%s\"", cache, args);
+
+	if (!*args)
+		return -EINVAL;
+
+	slot = simple_strtol(args, &args, 10);
+	if (args == '\0')
+		return -EINVAL;
+
+	/* note that fixslot may either delete or
+	 * fix the slot, as it sees appropriate.
+	 * It will return 0 or a negative number.
+	 */
+	return cachefiles_cx_fixslot(cache, slot);
+}
+
+
+/**
+ * The daemon will report the status of the fsck upon completion
+ * (or error) with "fsck %d". From the return code reported by
+ * the daemon, we can mark the cache as no longer dirty,
+ * or raise an error if the daemon failed to complete its scan.
+ * - "fsck 0" will indicate success, and change the cache state to clean.
+ */
+static int cachefiles_daemon_fsck(struct cachefiles_cache *cache, char *args)
+{
+	long scanrc;
+
+	_enter("%p,\"%s\"", cache, args);
+
+	if (!*args)
+		return -EINVAL;
+
+	scanrc = simple_strtol(args, &args, 10);
+	if (args[0] != '\0')
+		return -EINVAL;
+
+	if (scanrc) {
+		kerror("cachefilesd daemon fsck failed with rc=%ld\n", scanrc);
+	} else {
+		pr_notice("cachefilesd daemon completed the cache check successfully.");
+		/* We're no longer dirty, signal the daemon to
+		 * let him know that we're happy, and so the
+		 * daemon can clean up its fsck resources. */
+		cachefiles_mark_clean(cache);
+	}
+
+	return 0;
 }

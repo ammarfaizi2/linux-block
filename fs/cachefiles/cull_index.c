@@ -1036,3 +1036,79 @@ io_error:
 	kfree(entry);
 	return -EIO;
 }
+
+
+/**
+ * repair a slot if the file it points to is not in use.
+ * If the file is in use, it was re-assigned a new slot
+ * by cachefiles_cx_get_slot, so delete this old duplicated slot.
+ *
+ * @return 0 on success, negative integer otherwise.
+ */
+int cachefiles_cx_fixslot(struct cachefiles_cache *cache, unsigned slot)
+{
+	struct dentry *dir, *entry;
+	int ret = 0;
+
+	_enter("%p,%u",cache,slot);
+
+	/* Look up the slot requested. The FH _shouldn't_ be stale,
+	 * because the daemon identified this as a slot to 'fix'. */
+	ret = cachefiles_cx_lookup(cache, slot, &dir, &entry);
+	if (unlikely(ret < 0)) {
+		if (ret == -ESTALE) {
+			cachefiles_cx_clear_slot(cache, slot);
+			ret = 0;
+		}
+		goto leave;
+	}
+
+	_debug("fixslot %*.*s/%*.*s",
+	       dir->d_name.len, dir->d_name.len, dir->d_name.name,
+	       entry->d_name.len, entry->d_name.len, entry->d_name.name);
+
+	mutex_lock_nested(&dir->d_inode->i_mutex, 1);
+	/* We take a lock that assures us that the code responsible
+	 * for bringing new items into the cache will not be able to
+	 * read xattrs or mark an object as active. */
+	mutex_lock(&cache->xattr_mutex);
+
+	/*
+	 * Check if the entry is in use or not.
+	 * Note that a dentry is marked active _after_ it reads the xattr from disk.
+	 *
+	 * If the file is not active, thanks to the xattr_mutex, it will not
+	 * BECOME active until after we release the lock -- this means that
+	 * the xattrs definitely have not been read into memory yet. We can
+	 * therefore fix the xattr on the file itself.
+	 *
+	 * If the file is already active, it was _definitely_ given a new slot,
+	 * so we should just clear this slot instead, as a duplicate.
+	 */
+	ret = cachefiles_check_dentry_active(cache, dir, entry);
+	if (ret < 0) {
+		if (ret == -EBUSY) {
+			_debug("- fixslot, file in use, deleting slot");
+			cachefiles_cx_clear_slot(cache, slot);
+			ret = 0;
+		} else {
+			kerror("Error checking if file (%s) is active",
+			       entry->d_name.name);
+		}
+		goto unlock;
+	}
+
+	/* Okay, dentry wasn't active. */
+	ret = cachefiles_reset_slot(entry, slot);
+	if (ret < 0) {
+		kerror("fixslot: failed to reset slot to %u", slot);
+		goto unlock;
+	}
+
+unlock:
+	mutex_unlock(&dir->d_inode->i_mutex);
+	mutex_unlock(&cache->xattr_mutex);
+leave:
+	_leave(" = %d", ret);
+	return ret;
+}
