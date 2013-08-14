@@ -942,6 +942,9 @@ int cachefiles_cx_validate_slot(struct cachefiles_cache *cache,
 	if (slot == CACHEFILES_NO_CULL_SLOT)
 		return -ENOENT;
 
+	if (slot > cache->cull_nslots)
+		return -ENOENT;
+
 	entry = kmalloc(cache->cx_entsize, GFP_NOIO);
 	if (!entry)
 		return -ENOMEM;
