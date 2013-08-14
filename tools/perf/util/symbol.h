@@ -203,11 +203,10 @@ int symsrc__init(struct symsrc *ss, struct dso *dso, const char *name,
 bool symsrc__has_symtab(struct symsrc *ss);
 bool symsrc__possibly_runtime(struct symsrc *ss);
 
-int dso__load(struct dso *dso, struct map *map, symbol_filter_t filter);
+int dso__load(struct dso *dso, struct map *map);
 int dso__load_vmlinux(struct dso *dso, struct map *map,
-		      const char *vmlinux, symbol_filter_t filter);
-int dso__load_vmlinux_path(struct dso *dso, struct map *map,
-			   symbol_filter_t filter);
+		      const char *vmlinux);
+int dso__load_vmlinux_path(struct dso *dso, struct map *map);
 
 struct symbol *dso__find_symbol(struct dso *dso, enum map_type type,
 				u64 addr);
@@ -236,10 +235,8 @@ bool symbol__restricted_filename(const char *filename,
 				 const char *restricted_filename);
 
 int dso__load_sym(struct dso *dso, struct map *map, struct symsrc *syms_ss,
-		  struct symsrc *runtime_ss, symbol_filter_t filter,
-		  int kmodule);
-int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss,
-				struct map *map, symbol_filter_t filter);
+		  struct symsrc *runtime_ss, int kmodule);
+int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss, struct map *map);
 
 void symbols__insert(struct rb_root *symbols, struct symbol *sym);
 void symbols__fixup_duplicate(struct rb_root *symbols);

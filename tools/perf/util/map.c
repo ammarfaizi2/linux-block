@@ -142,6 +142,32 @@ void map__fixup_end(struct map *map)
 
 #define DSO__DELETED "(deleted)"
 
+int map__filter(struct map *map, symbol_filter_t filter)
+{
+	int filtered = 0;
+	struct symbol *pos;
+	struct rb_root *symbols;
+	struct rb_node *next;
+
+	if (filter == NULL)
+		return 0;
+
+	symbols = &map->dso->symbols[map->type];
+	next = rb_first(symbols);
+	while (next) {
+		pos = rb_entry(next, struct symbol, rb_node);
+		next = rb_next(&pos->rb_node);
+
+		if (filter(map, pos)) {
+			rb_erase(&pos->rb_node, symbols);
+			symbol__delete(pos);
+			++filtered;
+		}
+	}
+
+	return filtered;
+}
+
 int map__load(struct map *map, symbol_filter_t filter)
 {
 	const char *name = map->dso->long_name;
@@ -150,7 +176,7 @@ int map__load(struct map *map, symbol_filter_t filter)
 	if (dso__loaded(map->dso, map->type))
 		return 0;
 
-	nr = dso__load(map->dso, map, filter);
+	nr = dso__load(map->dso, map);
 	if (nr < 0) {
 		if (map->dso->has_build_id) {
 			char sbuild_id[BUILD_ID_SIZE * 2 + 1];
@@ -182,6 +208,8 @@ int map__load(struct map *map, symbol_filter_t filter)
 #endif
 		return -1;
 	}
+
+	map__filter(map, filter);
 
 	return 0;
 }
