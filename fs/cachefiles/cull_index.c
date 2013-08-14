@@ -665,6 +665,8 @@ int cachefiles_cx_get_slot(struct cachefiles_cache *cache,
 				    object->dentry->d_inode->i_ino);
 		goto io_error_no_setfs;
 	}
+	/* convert len back to length in bytes */
+	len *= sizeof(__be32);
 
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
