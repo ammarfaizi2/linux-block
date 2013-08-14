@@ -947,8 +947,8 @@ static int machine__process_kernel_mmap_event(struct machine *machine,
 			/*
 			 * preload dso of guest kernel and modules
 			 */
-			dso__load(kernel, machine->vmlinux_maps[MAP__FUNCTION],
-				  NULL);
+			map__load(machine->vmlinux_maps[MAP__FUNCTION],
+				  machine->symbol_filter);
 		}
 	}
 	return 0;
