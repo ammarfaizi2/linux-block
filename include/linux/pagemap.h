@@ -25,6 +25,7 @@ enum mapping_flags {
 	AS_MM_ALL_LOCKS	= __GFP_BITS_SHIFT + 2,	/* under mm_take_all_locks() */
 	AS_UNEVICTABLE	= __GFP_BITS_SHIFT + 3,	/* e.g., ramdisk, SHM_LOCK */
 	AS_BALLOON_MAP  = __GFP_BITS_SHIFT + 4, /* balloon page special map */
+	AS_CMTIME	= __GFP_BITS_SHIFT + 5, /* cmtime update deferred */
 };
 
 static inline void mapping_set_error(struct address_space *mapping, int error)
@@ -72,6 +73,21 @@ static inline int mapping_balloon(struct address_space *mapping)
 static inline gfp_t mapping_gfp_mask(struct address_space * mapping)
 {
 	return (__force gfp_t)mapping->flags & __GFP_BITS_MASK;
+}
+
+static inline void mapping_set_cmtime(struct address_space * mapping)
+{
+	set_bit(AS_CMTIME, &mapping->flags);
+}
+
+static inline bool mapping_test_cmtime(struct address_space * mapping)
+{
+	return test_bit(AS_CMTIME, &mapping->flags);
+}
+
+static inline bool mapping_test_clear_cmtime(struct address_space * mapping)
+{
+	return test_and_clear_bit(AS_CMTIME, &mapping->flags);
 }
 
 /*

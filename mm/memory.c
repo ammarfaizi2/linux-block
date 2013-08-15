@@ -1150,8 +1150,13 @@ again:
 			if (PageAnon(page))
 				rss[MM_ANONPAGES]--;
 			else {
-				if (pte_dirty(ptent))
+				if (pte_dirty(ptent)) {
+					struct address_space *mapping =
+						page_mapping(page);
+					if (mapping)
+						mapping_set_cmtime(mapping);
 					set_page_dirty(page);
+				}
 				if (pte_young(ptent) &&
 				    likely(!(vma->vm_flags & VM_SEQ_READ)))
 					mark_page_accessed(page);

@@ -928,6 +928,10 @@ static int page_mkclean_file(struct address_space *mapping, struct page *page)
 		}
 	}
 	mutex_unlock(&mapping->i_mmap_mutex);
+
+	if (ret)
+		mapping_set_cmtime(mapping);
+
 	return ret;
 }
 
@@ -1179,6 +1183,19 @@ out:
 }
 
 /*
+ * Mark a page's mapping for future cmtime update.  It's safe to call this
+ * on any page, but it only has any effect if the page is backed by a mapping
+ * that uses mapping_test_clear_cmtime to handle file time updates.  This means
+ * that there's no need to call this on for non-VM_SHARED vmas.
+ */
+static void page_set_cmtime(struct page *page)
+{
+	struct address_space *mapping = page_mapping(page);
+	if (mapping)
+		mapping_set_cmtime(mapping);
+}
+
+/*
  * Subfunctions of try_to_unmap: try_to_unmap_one called
  * repeatedly from try_to_unmap_ksm, try_to_unmap_anon or try_to_unmap_file.
  */
@@ -1219,8 +1236,11 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	pteval = ptep_clear_flush(vma, address, pte);
 
 	/* Move the dirty bit to the physical page now the pte is gone. */
-	if (pte_dirty(pteval))
+	if (pte_dirty(pteval)) {
 		set_page_dirty(page);
+		if (vma->vm_flags & VM_SHARED)
+			page_set_cmtime(page);
+	}
 
 	/* Update high watermark before we lower rss */
 	update_hiwater_rss(mm);
@@ -1413,8 +1433,11 @@ static int try_to_unmap_cluster(unsigned long cursor, unsigned int *mapcount,
 		}
 
 		/* Move the dirty bit to the physical page now the pte is gone. */
-		if (pte_dirty(pteval))
+		if (pte_dirty(pteval)) {
 			set_page_dirty(page);
+			if (vma->vm_flags & VM_SHARED)
+				page_set_cmtime(page);
+		}
 
 		page_remove_rmap(page);
 		page_cache_release(page);
