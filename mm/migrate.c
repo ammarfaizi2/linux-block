@@ -627,6 +627,8 @@ static int writeout(struct address_space *mapping, struct page *page)
 		/* unlocked. Relock */
 		lock_page(page);
 
+	mapping_flush_cmtime(mapping);
+
 	return (rc < 0) ? -EIO : -EAGAIN;
 }
 

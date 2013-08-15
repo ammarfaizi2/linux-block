@@ -90,6 +90,12 @@ static inline bool mapping_test_clear_cmtime(struct address_space * mapping)
 	return test_and_clear_bit(AS_CMTIME, &mapping->flags);
 }
 
+/* Use this one in writepages, etc. */
+extern void mapping_flush_cmtime(struct address_space * mapping);
+
+/* Use this one outside writeback. */
+extern void mapping_flush_cmtime_nowb(struct address_space * mapping);
+
 /*
  * This is non-atomic.  Only to be used before the mapping is activated.
  * Probably needs a barrier...

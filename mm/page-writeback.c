@@ -1912,11 +1912,29 @@ int generic_writepages(struct address_space *mapping,
 
 	blk_start_plug(&plug);
 	ret = write_cache_pages(mapping, wbc, __writepage, mapping);
+	mapping_flush_cmtime(mapping);
 	blk_finish_plug(&plug);
 	return ret;
 }
-
 EXPORT_SYMBOL(generic_writepages);
+
+/**
+ * generic_update_cmtime_deferred - update cmtime after an mmapped write
+ * @mapping: The mapping
+ *
+ * This library function implements .update_cmtime_deferred.  It is unlikely
+ * that any filesystem will want to do anything here except update the time
+ * (using this helper) or nothing at all (by leaving .update_cmtime_deferred
+ * NULL).
+ */
+void generic_update_cmtime_deferred(struct address_space *mapping)
+{
+	struct blk_plug plug;
+	blk_start_plug(&plug);
+	inode_update_time_writable(mapping->host);
+	blk_finish_plug(&plug);
+}
+EXPORT_SYMBOL(generic_update_cmtime_deferred);
 
 int do_writepages(struct address_space *mapping, struct writeback_control *wbc)
 {
@@ -1969,6 +1987,39 @@ int write_one_page(struct page *page, int wait)
 	return ret;
 }
 EXPORT_SYMBOL(write_one_page);
+
+void mapping_flush_cmtime(struct address_space *mapping)
+{
+	if (mapping_test_clear_cmtime(mapping) &&
+	    mapping->a_ops->update_cmtime_deferred)
+		mapping->a_ops->update_cmtime_deferred(mapping);
+}
+EXPORT_SYMBOL(mapping_flush_cmtime);
+
+void mapping_flush_cmtime_nowb(struct address_space *mapping)
+{
+	/*
+	 * We get called from munmap and msync.  Both calls can race
+	 * with fs freezing.  If the fs is frozen after
+	 * mapping_test_clear_cmtime but before the time update, then
+	 * sync_filesystem will miss the cmtime update (because we
+	 * just cleared it) and we don't be able to write (because the
+	 * fs is frozen).  On the other hand, we can't just return if
+	 * we're in the SB_FREEZE_PAGEFAULT state because our caller
+	 * expects the timestamp to be synchronously updated.  So we
+	 * get write access without blocking, at the SB_FREEZE_FS
+	 * level.  If the fs is already fully frozen, then we already
+	 * know we have nothing to do.
+	 */
+
+	if (!mapping_test_cmtime(mapping))
+		return;  /* Optimization: nothing to do. */
+
+	if (__sb_start_write(mapping->host->i_sb, SB_FREEZE_FS, false)) {
+		mapping_flush_cmtime(mapping);
+		__sb_end_write(mapping->host->i_sb, SB_FREEZE_FS);
+	}
+}
 
 /*
  * For address_spaces which do not use buffers nor write back.

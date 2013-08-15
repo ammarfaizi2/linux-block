@@ -429,6 +429,7 @@ static pageout_t pageout(struct page *page, struct address_space *mapping,
 		res = mapping->a_ops->writepage(page, &wbc);
 		if (res < 0)
 			handle_write_error(mapping, page, res);
+		mapping_flush_cmtime(mapping);
 		if (res == AOP_WRITEPAGE_ACTIVATE) {
 			ClearPageReclaim(page);
 			return PAGE_ACTIVATE;

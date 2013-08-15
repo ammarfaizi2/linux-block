@@ -350,6 +350,14 @@ struct address_space_operations {
 	/* Write back some dirty pages from this mapping. */
 	int (*writepages)(struct address_space *, struct writeback_control *);
 
+	/*
+	 * Called when a deferred cmtime update should be applied.
+	 * Implementations should update cmtime.  (As an optional
+	 * optimization, implementaions can call mapping_test_clear_cmtime
+	 * from writepages as well.)
+	 */
+	void (*update_cmtime_deferred)(struct address_space *);
+
 	/* Set a page dirty.  Return true if this dirtied it */
 	int (*set_page_dirty)(struct page *page);
 
