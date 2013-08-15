@@ -2382,8 +2382,11 @@ static int ext4_writepages(struct address_space *mapping,
 	 * a transaction for special inodes like journal inode on last iput()
 	 * because that could violate lock ordering on umount
 	 */
-	if (!mapping->nrpages || !mapping_tagged(mapping, PAGECACHE_TAG_DIRTY))
+	if (!mapping->nrpages ||
+	    !mapping_tagged(mapping, PAGECACHE_TAG_DIRTY)) {
+		mapping_flush_cmtime(mapping);
 		return 0;
+	}
 
 	if (ext4_should_journal_data(inode)) {
 		struct blk_plug plug;
@@ -2391,6 +2394,7 @@ static int ext4_writepages(struct address_space *mapping,
 
 		blk_start_plug(&plug);
 		ret = write_cache_pages(mapping, wbc, __writepage, mapping);
+		mapping_flush_cmtime(mapping);
 		blk_finish_plug(&plug);
 		return ret;
 	}
@@ -2525,6 +2529,7 @@ retry:
 		if (ret)
 			break;
 	}
+	mapping_flush_cmtime(mapping);
 	blk_finish_plug(&plug);
 	if (!ret && !cycled) {
 		cycled = 1;
@@ -3238,6 +3243,7 @@ static const struct address_space_operations ext4_aops = {
 	.writepages		= ext4_writepages,
 	.write_begin		= ext4_write_begin,
 	.write_end		= ext4_write_end,
+	.update_cmtime_deferred	= generic_update_cmtime_deferred,
 	.bmap			= ext4_bmap,
 	.invalidatepage		= ext4_invalidatepage,
 	.releasepage		= ext4_releasepage,
@@ -3254,6 +3260,7 @@ static const struct address_space_operations ext4_journalled_aops = {
 	.writepages		= ext4_writepages,
 	.write_begin		= ext4_write_begin,
 	.write_end		= ext4_journalled_write_end,
+	.update_cmtime_deferred	= generic_update_cmtime_deferred,
 	.set_page_dirty		= ext4_journalled_set_page_dirty,
 	.bmap			= ext4_bmap,
 	.invalidatepage		= ext4_journalled_invalidatepage,
@@ -3270,6 +3277,7 @@ static const struct address_space_operations ext4_da_aops = {
 	.writepages		= ext4_writepages,
 	.write_begin		= ext4_da_write_begin,
 	.write_end		= ext4_da_write_end,
+	.update_cmtime_deferred	= generic_update_cmtime_deferred,
 	.bmap			= ext4_bmap,
 	.invalidatepage		= ext4_da_invalidatepage,
 	.releasepage		= ext4_releasepage,
@@ -5025,7 +5033,6 @@ int ext4_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 	int retries = 0;
 
 	sb_start_pagefault(inode->i_sb);
-	file_update_time(vma->vm_file);
 	/* Delalloc case is easy... */
 	if (test_opt(inode->i_sb, DELALLOC) &&
 	    !ext4_should_journal_data(inode) &&
