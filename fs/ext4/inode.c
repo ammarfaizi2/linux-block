@@ -3236,6 +3236,7 @@ static const struct address_space_operations ext4_aops = {
 	.readpages		= ext4_readpages,
 	.writepage		= ext4_writepage,
 	.writepages		= ext4_writepages,
+	.flush_cmtime		= generic_flush_cmtime,
 	.write_begin		= ext4_write_begin,
 	.write_end		= ext4_write_end,
 	.bmap			= ext4_bmap,
@@ -3252,6 +3253,7 @@ static const struct address_space_operations ext4_journalled_aops = {
 	.readpages		= ext4_readpages,
 	.writepage		= ext4_writepage,
 	.writepages		= ext4_writepages,
+	.flush_cmtime		= generic_flush_cmtime,
 	.write_begin		= ext4_write_begin,
 	.write_end		= ext4_journalled_write_end,
 	.set_page_dirty		= ext4_journalled_set_page_dirty,
@@ -3268,6 +3270,7 @@ static const struct address_space_operations ext4_da_aops = {
 	.readpages		= ext4_readpages,
 	.writepage		= ext4_writepage,
 	.writepages		= ext4_writepages,
+	.flush_cmtime		= generic_flush_cmtime,
 	.write_begin		= ext4_da_write_begin,
 	.write_end		= ext4_da_write_end,
 	.bmap			= ext4_bmap,
@@ -5025,7 +5028,6 @@ int ext4_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 	int retries = 0;
 
 	sb_start_pagefault(inode->i_sb);
-	file_update_time(vma->vm_file);
 	/* Delalloc case is easy... */
 	if (test_opt(inode->i_sb, DELALLOC) &&
 	    !ext4_should_journal_data(inode) &&
