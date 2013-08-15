@@ -350,6 +350,15 @@ struct address_space_operations {
 	/* Write back some dirty pages from this mapping. */
 	int (*writepages)(struct address_space *, struct writeback_control *);
 
+	/*
+	 * Userspace expects certain system calls to update cmtime if
+	 * a file has been recently written using a shared vma.  In
+	 * cases where cmtime may need to be updated but writepages is
+	 * not called, this is called instead.  (Implementations
+	 * should call mapping_test_clear_cmtime.)
+	 */
+	void (*flush_cmtime)(struct address_space *);
+
 	/* Set a page dirty.  Return true if this dirtied it */
 	int (*set_page_dirty)(struct page *page);
 

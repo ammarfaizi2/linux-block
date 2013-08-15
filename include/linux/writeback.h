@@ -174,6 +174,7 @@ typedef int (*writepage_t)(struct page *page, struct writeback_control *wbc,
 
 int generic_writepages(struct address_space *mapping,
 		       struct writeback_control *wbc);
+void generic_flush_cmtime(struct address_space *mapping);
 void tag_pages_for_writeback(struct address_space *mapping,
 			     pgoff_t start, pgoff_t end);
 int write_cache_pages(struct address_space *mapping,

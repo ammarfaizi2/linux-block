@@ -1,3 +1,4 @@
+
 /*
  * mm/mmap.c
  *
@@ -249,8 +250,14 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
 	might_sleep();
 	if (vma->vm_ops && vma->vm_ops->close)
 		vma->vm_ops->close(vma);
-	if (vma->vm_file)
+	if (vma->vm_file) {
+		if ((vma->vm_flags & VM_SHARED) && vma->vm_file->f_mapping) {
+			struct address_space *mapping = vma->vm_file->f_mapping;
+			if (mapping->a_ops && mapping->a_ops->flush_cmtime)
+				mapping->a_ops->flush_cmtime(mapping);
+		}
 		fput(vma->vm_file);
+	}
 	mpol_put(vma_policy(vma));
 	kmem_cache_free(vm_area_cachep, vma);
 	return next;

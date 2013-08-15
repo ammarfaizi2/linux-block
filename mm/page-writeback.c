@@ -1928,6 +1928,18 @@ int do_writepages(struct address_space *mapping, struct writeback_control *wbc)
 		ret = mapping->a_ops->writepages(mapping, wbc);
 	else
 		ret = generic_writepages(mapping, wbc);
+
+	/*
+	 * ->writepages will call clear_page_dirty_for_io, which may, in turn,
+	 * mark the mapping for deferred cmtime update.  As an optimization,
+	 * a filesystem can flush the update at the end of ->writepages
+	 * (possibly avoiding a journal transaction, for example), but,
+	 * for simplicity, let filesystems skip that part and just implement
+	 * ->flush_cmtime.
+	 */
+	if (mapping->a_ops->flush_cmtime)
+		mapping->a_ops->flush_cmtime(mapping);
+
 	return ret;
 }
 
@@ -1969,6 +1981,20 @@ int write_one_page(struct page *page, int wait)
 	return ret;
 }
 EXPORT_SYMBOL(write_one_page);
+
+/**
+ * generic_flush_cmtime - perform a deferred cmtime update if needed
+ * @mapping: address space structure
+ *
+ * This is a library function, which implements the flush_cmtime()
+ * address_space_operation.
+ */
+void generic_flush_cmtime(struct address_space *mapping)
+{
+	if (mapping_test_clear_cmtime(mapping))
+		inode_update_time_writable(mapping->host);
+}
+EXPORT_SYMBOL(generic_flush_cmtime);
 
 /*
  * For address_spaces which do not use buffers nor write back.
