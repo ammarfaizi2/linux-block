@@ -2108,7 +2108,7 @@ static void __call_rcu_nocb_enqueue(struct rcu_data *rdp,
 
 	/* If we are not being polled and there is a kthread, awaken it ... */
 	t = ACCESS_ONCE(rdp->nocb_kthread);
-	if (rcu_nocb_poll | !t) {
+	if (rcu_nocb_poll || !t) {
 		trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu,
 				    TPS("WakeNotPoll"));
 		return;
