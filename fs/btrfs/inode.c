@@ -7499,10 +7499,8 @@ int btrfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 
 	sb_start_pagefault(inode->i_sb);
 	ret  = btrfs_delalloc_reserve_space(inode, PAGE_CACHE_SIZE);
-	if (!ret) {
-		ret = file_update_time(vma->vm_file);
+	if (!ret)
 		reserved = 1;
-	}
 	if (ret) {
 		if (ret == -ENOMEM)
 			ret = VM_FAULT_OOM;
@@ -8711,22 +8709,24 @@ static struct extent_io_ops btrfs_extent_io_ops = {
  * For now we're avoiding this by dropping bmap.
  */
 static const struct address_space_operations btrfs_aops = {
-	.readpage	= btrfs_readpage,
-	.writepage	= btrfs_writepage,
-	.writepages	= btrfs_writepages,
-	.readpages	= btrfs_readpages,
-	.direct_IO	= btrfs_direct_IO,
-	.invalidatepage = btrfs_invalidatepage,
-	.releasepage	= btrfs_releasepage,
-	.set_page_dirty	= btrfs_set_page_dirty,
-	.error_remove_page = generic_error_remove_page,
+	.readpage		= btrfs_readpage,
+	.writepage		= btrfs_writepage,
+	.writepages		= btrfs_writepages,
+	.update_cmtime_deferred	= generic_update_cmtime_deferred,
+	.readpages		= btrfs_readpages,
+	.direct_IO		= btrfs_direct_IO,
+	.invalidatepage		= btrfs_invalidatepage,
+	.releasepage		= btrfs_releasepage,
+	.set_page_dirty		= btrfs_set_page_dirty,
+	.error_remove_page	= generic_error_remove_page,
 };
 
 static const struct address_space_operations btrfs_symlink_aops = {
-	.readpage	= btrfs_readpage,
-	.writepage	= btrfs_writepage,
-	.invalidatepage = btrfs_invalidatepage,
-	.releasepage	= btrfs_releasepage,
+	.readpage		= btrfs_readpage,
+	.writepage		= btrfs_writepage,
+	.update_cmtime_deferred	= generic_update_cmtime_deferred,
+	.invalidatepage 	= btrfs_invalidatepage,
+	.releasepage		= btrfs_releasepage,
 };
 
 static const struct inode_operations btrfs_file_inode_operations = {

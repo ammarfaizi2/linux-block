@@ -3756,6 +3756,7 @@ int extent_writepages(struct extent_io_tree *tree,
 				       __extent_writepage, &epd,
 				       flush_write_bio);
 	flush_epd_write_bio(&epd);
+	mapping_flush_cmtime(mapping);
 	return ret;
 }
 
