@@ -2674,14 +2674,18 @@ static void rcu_sysidle_report(struct rcu_state *rsp, int isidle,
 {
 	if (rsp != rcu_sysidle_state)
 		return;  /* Wrong flavor, ignore. */
-	if (isidle) {
-		if (gpkt && nr_cpu_ids > CONFIG_NO_HZ_FULL_SYSIDLE_SMALL)
-			rcu_sysidle(maxj);    /* More idle! */
-	} else {
+	if (gpkt && nr_cpu_ids > CONFIG_NO_HZ_FULL_SYSIDLE_SMALL)
+		return;  /* Running state machine from timekeeping CPU. */
+	if (isidle)
+		rcu_sysidle(maxj);    /* More idle! */
+	else
 		rcu_sysidle_cancel(); /* Idle is over. */
-	}
 }
 
+/*
+ * Wrapper for rcu_sysidle_report() when called from the grace-period
+ * kthread's context.
+ */
 static void rcu_sysidle_report_gp(struct rcu_state *rsp, int isidle,
 				  unsigned long maxj)
 {
@@ -2698,7 +2702,13 @@ static void rcu_sysidle_cb(struct rcu_head *rhp)
 {
 	struct rcu_sysidle_head *rshp;
 
+	/*
+	 * The following memory barrier is needed to replace the
+	 * memory barriers that would normally be in the memory
+	 * allocator.
+	 */
 	smp_mb();  /* grace period precedes setting inuse. */
+
 	rshp = container_of(rhp, struct rcu_sysidle_head, rh);
 	ACCESS_ONCE(rshp->inuse) = 0;
 }
@@ -2759,7 +2769,9 @@ bool rcu_sys_is_idle(void)
 	/*
 	 * If we aren't there yet, and a grace period is not in flight,
 	 * initiate a grace period.  Either way, tell the caller that
-	 * we are not there yet.
+	 * we are not there yet.  We use an xchg() rather than an assignment
+	 * to make up for the memory barriers that would otherwise be
+	 * provided by the memory allocator.
 	 */
 	if (nr_cpu_ids > CONFIG_NO_HZ_FULL_SYSIDLE_SMALL &&
 	    !rcu_gp_in_progress(rcu_sysidle_state) &&
