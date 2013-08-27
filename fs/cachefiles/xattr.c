@@ -518,7 +518,7 @@ int cachefiles_reset_slot(struct dentry *dentry, unsigned slot)
 	len = vfs_getxattr(dentry, cachefiles_xattr_cache, &xbuf->cull_slot,
 			   512 + sizeof(struct cachefiles_xattr));
 	if (len < 0) {
-		kerror("Failed to read xattrs on %s", dentry->d_name.name);
+		pr_err("Failed to read xattrs on %s", dentry->d_name.name);
 		ret = len;
 		goto error;
 	}
@@ -527,7 +527,7 @@ int cachefiles_reset_slot(struct dentry *dentry, unsigned slot)
 	ret = vfs_setxattr(dentry, cachefiles_xattr_cache, &xbuf->cull_slot, len,
 			   XATTR_REPLACE);
 	if (ret) {
-		kerror("Failed to replace xattrs on %s", dentry->d_name.name);
+		pr_err("Failed to replace xattrs on %s", dentry->d_name.name);
 		if (ret == ENOMEM)
 			ret = -ENOMEM;
 		else

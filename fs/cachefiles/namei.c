@@ -1216,6 +1216,12 @@ int cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot)
 
 	mutex_lock_nested(&dir->d_inode->i_mutex, 1);
 
+	/* If the object is a directory and has children, we shouldn't cull it */
+	if (S_ISDIR(victim->d_inode->i_mode) && !simple_empty(victim)) {
+		ret = -ENOTEMPTY;
+		goto object_busy;
+	}
+
 	/* see whether the entry is in use */
 	ret = cachefiles_check_dentry_active(cache, dir, victim);
 	if (ret < 0)

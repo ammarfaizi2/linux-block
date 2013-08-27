@@ -926,7 +926,7 @@ int cachefiles_cx_lookup(struct cachefiles_cache *cache,
 	if (IS_ROOT(dentry)) {
 		dput(dentry);
 		pr_err("Cannot find parent of file in cull slot %d FH", slot);
-		return -EIO;
+		return -ESTALE;
 	}
 
 	dir = dget_parent(dentry);
@@ -1092,7 +1092,7 @@ int cachefiles_cx_fixslot(struct cachefiles_cache *cache, unsigned slot)
 			cachefiles_cx_clear_slot(cache, slot);
 			ret = 0;
 		} else {
-			kerror("Error checking if file (%s) is active",
+			pr_err("Error checking if file (%s) is active",
 			       entry->d_name.name);
 		}
 		goto unlock;
@@ -1101,7 +1101,7 @@ int cachefiles_cx_fixslot(struct cachefiles_cache *cache, unsigned slot)
 	/* Okay, dentry wasn't active. */
 	ret = cachefiles_reset_slot(entry, slot);
 	if (ret < 0) {
-		kerror("fixslot: failed to reset slot to %u", slot);
+		pr_err("fixslot: failed to reset slot to %u", slot);
 		goto unlock;
 	}
 

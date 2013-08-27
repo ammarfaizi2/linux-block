@@ -868,7 +868,7 @@ static int cachefiles_daemon_fsck(struct cachefiles_cache *cache, char *args)
 		return -EINVAL;
 
 	if (scanrc) {
-		kerror("cachefilesd daemon fsck failed with rc=%ld\n", scanrc);
+		pr_err("cachefilesd daemon fsck failed with rc=%ld\n", scanrc);
 	} else {
 		pr_notice("cachefilesd daemon completed the cache check successfully.");
 		/* We're no longer dirty, signal the daemon to
