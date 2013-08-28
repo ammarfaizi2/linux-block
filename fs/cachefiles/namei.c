@@ -832,19 +832,16 @@ nomem_d_alloc:
 }
 
 /*
- * get a file
+ * Lookup a file
  */
-struct file *cachefiles_get_file(struct cachefiles_cache *cache,
-				 struct dentry *dir,
-				 const char *filename)
+struct dentry *cachefiles_lookup_file(struct dentry *dir,
+				      const char *filename)
 {
 	struct dentry *dentry;
-	struct file *file;
-	struct path path;
 	unsigned long start;
 	int ret;
 
-	_enter(",,%s", filename);
+	_enter("%p,\"%s\"", dir, filename);
 
 	/* search the current directory for the element name */
 	mutex_lock(&dir->d_inode->i_mutex);
@@ -861,6 +858,59 @@ struct file *cachefiles_get_file(struct cachefiles_cache *cache,
 	_debug("dentry -> %p %s",
 	       dentry, dentry->d_inode ? "positive" : "negative");
 
+	mutex_unlock(&dir->d_inode->i_mutex);
+
+	if (dentry->d_inode)
+		_leave(" = [%lu]", dentry->d_inode->i_ino);
+	else
+		_leave(" = [N/A]");
+
+	return dentry;
+
+lookup_error:
+	ret = PTR_ERR(dentry);
+	pr_err("Lookup %s failed with error %d", filename, ret);
+	mutex_unlock(&dir->d_inode->i_mutex);
+	return ERR_PTR(ret);
+
+nomem_d_alloc:
+	_leave(" = -ENOMEM");
+	mutex_unlock(&dir->d_inode->i_mutex);
+	return ERR_PTR(-ENOMEM);
+}
+
+/*
+ * open a file.
+ * will return ERR_PTR(-ENOENT) if create == 0 and file does not exist.
+ */
+struct file *cachefiles_get_file(struct cachefiles_cache *cache,
+				 struct dentry *dir,
+				 const char *filename,
+				 bool create)
+{
+	struct dentry *dentry;
+	struct file *file;
+	struct path path;
+	int ret;
+
+	_enter("%p,%p,\"%s\",%u", cache, dir, filename, create);
+
+	/* search the current directory for the element name */
+
+	dentry = cachefiles_lookup_file(dir, filename);
+	if (IS_ERR(dentry)) {
+		goto lookup_error;
+	}
+
+	/* If we don't want to force a creation but it isn't there ... */
+	if (!create && !dentry->d_inode) {
+		dput(dentry);
+		_debug("returning ERR_PTR(-ENOENT).");
+		return ERR_PTR(-ENOENT);
+	}
+
+	_debug("creating file [%s]", filename);
+	mutex_lock(&dir->d_inode->i_mutex);
 	/* we need to create the file if it doesn't exist yet */
 	if (!dentry->d_inode) {
 		ret = cachefiles_has_space(cache, 1, 0);
@@ -919,21 +969,15 @@ check_error:
 	return ERR_PTR(ret);
 
 create_error:
-	mutex_unlock(&dir->d_inode->i_mutex);
 	dput(dentry);
+	mutex_unlock(&dir->d_inode->i_mutex);
 	pr_err("mkdir %s failed with error %d", filename, ret);
 	return ERR_PTR(ret);
 
 lookup_error:
-	mutex_unlock(&dir->d_inode->i_mutex);
 	ret = PTR_ERR(dentry);
 	pr_err("Lookup %s failed with error %d", filename, ret);
 	return ERR_PTR(ret);
-
-nomem_d_alloc:
-	mutex_unlock(&dir->d_inode->i_mutex);
-	_leave(" = -ENOMEM");
-	return ERR_PTR(-ENOMEM);
 }
 
 /*

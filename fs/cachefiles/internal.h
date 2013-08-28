@@ -66,6 +66,7 @@ extern struct kmem_cache *cachefiles_object_jar;
  */
 struct cachefiles_cache {
 	struct fscache_cache		cache;		/* FS-Cache record */
+	struct dentry                   *root;
 	struct vfsmount			*mnt;		/* mountpoint holding the cache */
 	struct dentry			*graveyard;	/* directory into which dead objects go */
 	struct file			*cull_index;	/* file containing cull FH index */
@@ -103,6 +104,7 @@ struct cachefiles_cache {
 #define CACHEFILES_DEAD			1	/* T if cache dead */
 #define CACHEFILES_CULLING		2	/* T if cull engaged */
 #define CACHEFILES_STATE_CHANGED	3	/* T if state changed (poll trigger) */
+#define CACHEFILES_NEED_FSCK		4	/* T if index inconsistency found */
 	char				*rootdirname;	/* name of cache root directory */
 	char				*secctx;	/* LSM security context */
 	char				*tag;		/* cache binding tag */
@@ -173,6 +175,18 @@ static inline void cachefiles_state_changed(struct cachefiles_cache *cache)
 	wake_up_all(&cache->daemon_pollwq);
 }
 
+static inline void cachefiles_mark_dirty(struct cachefiles_cache *cache)
+{
+	set_bit(CACHEFILES_NEED_FSCK, &cache->flags);
+	set_bit(CACHEFILES_STATE_CHANGED, &cache->flags);
+}
+
+static inline void cachefiles_mark_clean(struct cachefiles_cache *cache)
+{
+	clear_bit(CACHEFILES_NEED_FSCK, &cache->flags);
+	set_bit(CACHEFILES_STATE_CHANGED, &cache->flags);
+}
+
 /*
  * bind.c
  */
@@ -233,9 +247,12 @@ extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
+extern struct dentry *cachefiles_lookup_file(struct dentry *dir,
+					     const char *filename);
 extern struct file *cachefiles_get_file(struct cachefiles_cache *cache,
 					struct dentry *dir,
-					const char *filename);
+					const char *filename,
+					bool create);
 
 extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 			   char *filename);

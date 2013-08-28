@@ -114,6 +114,7 @@ static int cachefiles_cx_alloc_bitmap(struct cachefiles_cache *cache)
 	struct cachefiles_cx_bitmap *bm;
 	struct rb_node *last, **insert;
 	unsigned long fsize, loop, nbitmaps, nslots;
+	unsigned long naslots;
 
 	_enter("");
 
@@ -126,6 +127,13 @@ static int cachefiles_cx_alloc_bitmap(struct cachefiles_cache *cache)
 	nbitmaps >>= ilog2(SLOTS_PER_BITMAP);
 
 	_debug("nslots=%lu nbitmaps=%lu", nslots, nbitmaps);
+
+	naslots = (i_size_read(file_inode(cache->cull_atimes)) >> 2);
+	if (nslots != naslots) {
+		pr_err("Warning: index slots (%lu) does not match atime slots (%lu)\n",
+		       nslots, naslots);
+		cachefiles_mark_dirty(cache);
+	}
 
 	insert = &cache->cull_bitmap.rb_node;
 	last = NULL;

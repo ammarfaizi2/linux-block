@@ -88,7 +88,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	struct path path;
 	struct kstatfs stats;
 	struct dentry *graveyard, *cachedir, *root;
-	struct file *cull_index, *cull_atimes;
+	struct file *cull_index, *cull_atimes, *lockfile;
 	const struct cred *saved_cred;
 	int ret;
 
@@ -121,7 +121,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 		goto error_open_root;
 
 	cache->mnt = path.mnt;
-	root = path.dentry;
+	cache->root = root = path.dentry;
 
 	/* check parameters */
 	ret = -EOPNOTSUPP;
@@ -214,20 +214,59 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 
 	cache->graveyard = graveyard;
 
+	/* Before we create/open the culling/atime indices,
+	 * mark them as locked/dirty. */
+	lockfile = cachefiles_get_file(cache, root, ".lock", 0);
+	if (IS_ERR(lockfile)) {
+		_debug("IS_ERR(lockfile) ...");
+		if (PTR_ERR(lockfile) == -ENOENT) {
+			lockfile = NULL;
+		} else {
+			pr_err("Failed to check for lockfile.");
+			ret = PTR_ERR(lockfile);
+			goto error_unsupported;
+		}
+	}
+
+	if (lockfile) {
+		_debug(".lock file already exists, requesting cache fsck");
+		cachefiles_mark_dirty(cache);
+	} else {
+		_debug("creating .lock file");
+		lockfile = cachefiles_get_file(cache, root, ".lock", 1);
+		if (IS_ERR(lockfile)) {
+			pr_err("Failed to create lockfile.");
+			ret = PTR_ERR(lockfile);
+			goto error_unsupported;
+		}
+	}
+	/* No reason to hang on to it. */
+	fput(lockfile);
+
 	/* get the culling index file */
-	cull_index = cachefiles_get_file(cache, root, "cull_index");
+	cull_index = cachefiles_get_file(cache, root, "cull_index", 1);
 	if (IS_ERR(cull_index)) {
 		ret = PTR_ERR(cull_index);
 		goto error_bad_index;
 	}
 
+	if (i_size_read(file_inode(cull_index)) & (PAGE_SIZE - 1)) {
+		pr_err("cull_index file not a multiple of PAGE_SIZE");
+		cachefiles_mark_dirty(cache);
+	}
+
 	cache->cull_index = cull_index;
 
 	/* get the culling atime file */
-	cull_atimes = cachefiles_get_file(cache, root, "cull_atimes");
+	cull_atimes = cachefiles_get_file(cache, root, "cull_atimes", 1);
 	if (IS_ERR(cull_atimes)) {
 		ret = PTR_ERR(cull_atimes);
 		goto error_bad_atimes;
+	}
+
+	if (i_size_read(file_inode(cull_atimes)) & (sizeof(__le32) - 1)) {
+		pr_err("cull_atimes file not a multiple of 4 (__le32)");
+		cachefiles_mark_dirty(cache);
 	}
 
 	cache->cull_atimes = cull_atimes;
@@ -256,7 +295,6 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 
 	/* done */
 	set_bit(CACHEFILES_READY, &cache->flags);
-	dput(root);
 
 	pr_info("File cache on %s registered\n", cache->cache.identifier);
 
@@ -296,6 +334,9 @@ error_root_object:
  */
 void cachefiles_daemon_unbind(struct cachefiles_cache *cache)
 {
+	int ret;
+	struct dentry *dentry;
+
 	_enter("");
 
 	if (test_bit(CACHEFILES_READY, &cache->flags)) {
@@ -305,12 +346,32 @@ void cachefiles_daemon_unbind(struct cachefiles_cache *cache)
 		fscache_withdraw_cache(&cache->cache);
 	}
 
+	/* Delete the .lock file. */
+	/* If bind() got as far as determining the root dir
+	 * (It may not have) */
+	if (cache->root) {
+		dentry = cachefiles_lookup_file(cache->root, ".lock");
+		if (IS_ERR(dentry)) {
+			pr_err("Error, could not lookup .lock file");
+		} else if (dentry->d_inode) {
+			_debug("Got handle to .lock file");
+			ret = vfs_unlink(cache->root->d_inode, dentry, NULL);
+			if (ret) pr_err("Failed to delete .lock file.");
+		} else {
+			_debug(".lock file seems to have been deleted already.");
+		}
+
+		if (!IS_ERR(dentry))
+			dput(dentry);
+	}
+
 	cachefiles_cx_free_bitmap(cache);
 	if (cache->cull_atimes)
 		fput(cache->cull_atimes);
 	if (cache->cull_index)
 		fput(cache->cull_index);
 	dput(cache->graveyard);
+	dput(cache->root);
 	mntput(cache->mnt);
 
 	kfree(cache->rootdirname);

@@ -183,6 +183,7 @@ static ssize_t cachefiles_daemon_read(struct file *file, char __user *_buffer,
 
 	n = snprintf(buffer, sizeof(buffer),
 		     "cull=%c"
+		     " fsck=%c"
 		     " frun=%llx"
 		     " fcull=%llx"
 		     " fstop=%llx"
@@ -191,6 +192,7 @@ static ssize_t cachefiles_daemon_read(struct file *file, char __user *_buffer,
 		     " bstop=%llx"
 		     " format=%u",
 		     test_bit(CACHEFILES_CULLING, &cache->flags) ? '1' : '0',
+		     test_bit(CACHEFILES_NEED_FSCK, &cache->flags) ? '1' : '0',
 		     (unsigned long long) cache->frun,
 		     (unsigned long long) cache->fcull,
 		     (unsigned long long) cache->fstop,
