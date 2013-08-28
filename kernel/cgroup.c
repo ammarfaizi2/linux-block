@@ -4244,7 +4244,7 @@ static struct cftype cgroup_base_files[] = {
 static int cgroup_populate_dir(struct cgroup *cgrp, unsigned long subsys_mask)
 {
 	struct cgroup_subsys *ss;
-	int i, ret = 0;
+	int i, ret;
 
 	/* process cftsets of each subsystem */
 	for_each_subsys(ss, i) {
@@ -4255,29 +4255,14 @@ static int cgroup_populate_dir(struct cgroup *cgrp, unsigned long subsys_mask)
 
 		list_for_each_entry(set, &ss->cftsets, node) {
 			ret = cgroup_addrm_files(cgrp, set->cfts, true);
-			if (ret < 0)
-				goto err;
+			if (ret < 0) {
+				cgroup_clear_dir(cgrp, subsys_mask);
+				return ret;
+			}
 		}
 	}
 
-	/* This cgroup is ready now */
-	for_each_root_subsys(cgrp->root, ss) {
-		struct cgroup_subsys_state *css = cgroup_css(cgrp, ss);
-		struct css_id *id = rcu_dereference_protected(css->id, true);
-
-		/*
-		 * Update id->css pointer and make this css visible from
-		 * CSS ID functions. This pointer will be dereferened
-		 * from RCU-read-side without locks.
-		 */
-		if (id)
-			rcu_assign_pointer(id->css, css);
-	}
-
 	return 0;
-err:
-	cgroup_clear_dir(cgrp, subsys_mask);
-	return ret;
 }
 
 /*
@@ -4356,18 +4341,30 @@ static void init_css(struct cgroup_subsys_state *css, struct cgroup_subsys *ss,
 static int online_css(struct cgroup_subsys_state *css)
 {
 	struct cgroup_subsys *ss = css->ss;
-	int ret = 0;
+	struct css_id *id = rcu_dereference_protected(css->id, true);
+	int ret;
 
 	lockdep_assert_held(&cgroup_mutex);
 
-	if (ss->css_online)
+	if (ss->css_online) {
 		ret = ss->css_online(css);
-	if (!ret) {
-		css->flags |= CSS_ONLINE;
-		css->cgroup->nr_css++;
-		rcu_assign_pointer(css->cgroup->subsys[ss->subsys_id], css);
+		if (ret)
+			return ret;
 	}
-	return ret;
+
+	css->flags |= CSS_ONLINE;
+	css->cgroup->nr_css++;
+	rcu_assign_pointer(css->cgroup->subsys[ss->subsys_id], css);
+
+	/*
+	 * Update id->css pointer and make this css visible from CSS ID
+	 * functions. This pointer will be dereferened from RCU-read-side
+	 * without locks.
+	 */
+	if (id)
+		rcu_assign_pointer(id->css, css);
+
+	return 0;
 }
 
 /* if the CSS is online, invoke ->css_offline() on it and mark it offline */
@@ -5678,7 +5675,7 @@ static int alloc_css_id(struct cgroup_subsys_state *child_css)
 	child_id->stack[depth] = child_id->id;
 	/*
 	 * child_id->css pointer will be set after this cgroup is available
-	 * see cgroup_populate_dir()
+	 * see online_css()
 	 */
 	rcu_assign_pointer(child_css->id, child_id);
 
