@@ -1206,23 +1206,14 @@ int cachefiles_check_in_use(struct cachefiles_cache *cache, struct dentry *dir,
 }
 
 /*
- * cull an object by slot number
- * - called only by cache manager daemon
+ * cull an object by slot number, implementation
  */
-int cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot)
+static int _cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot,
+				struct dentry *dir, struct dentry *victim)
 {
-	struct dentry *dir, *victim;
 	int ret;
 
 	_enter(",{%u}", slot);
-
-	ret = cachefiles_cx_lookup(cache, slot, &dir, &victim);
-	if (ret < 0) {
-		if (ret == -ESTALE)
-			cachefiles_cx_clear_slot(cache, slot);
-		_leave(" = %d", ret);
-		return ret;
-	}
 
 	_debug("cullslot %*.*s/%*.*s",
 	       dir->d_name.len, dir->d_name.len, dir->d_name.name,
@@ -1260,20 +1251,17 @@ int cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot)
 	if (ret < 0)
 		goto error;
 
-	dput(victim);
 	_leave(" = 0");
 	return 0;
 
 object_busy:
 	mutex_unlock(&dir->d_inode->i_mutex);
-	dput(victim);
 	_leave(" = %d", ret);
 	return ret;
 
 error_unlock:
 	mutex_unlock(&dir->d_inode->i_mutex);
 error:
-	dput(victim);
 	if (ret == -ENOENT) {
 		/* file or dir now absent - probably retired by netfs */
 		_leave(" = -ESTALE [absent]");
@@ -1286,5 +1274,56 @@ error:
 	}
 
 	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
+ * cull an object by slot number
+ * - called only by cache manager daemon via cachefiles_daemon_cullslot()
+ */
+int cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot)
+{
+	struct dentry *dir, *victim;
+	int ret;
+
+	_enter(",{%u}", slot);
+
+	ret = cachefiles_cx_lookup(cache, slot, &dir, &victim);
+	if (ret < 0) {
+		if (ret == -ESTALE)
+			cachefiles_cx_clear_slot(cache, slot);
+		_leave(" = %d", ret);
+		return ret;
+	}
+
+	ret = _cachefiles_cullslot(cache, slot, dir, victim);
+	if (ret < 0) goto error;
+
+	/* Consider removing the parent, if the parent is an empty dir */
+	if (!simple_empty(dir)) goto error;
+
+	dput(victim);
+	victim = dir;
+	dir = dget_parent(victim);
+
+	/* the parent might itself be a cache object.
+	 * _cachefiles_cullslot will check to make sure it is
+	 * not active, and read_cull_slot will get the slot number, if any. */
+	slot = cachefiles_read_cull_slot(cache, victim);
+	ret = _cachefiles_cullslot(cache, slot, dir, victim);
+	if (ret < 0) {
+		/* We only failed to cull a parent directory:
+		 * This is not a big deal. */
+		if (ret == -EBUSY ||
+		    ret == -ENOTEMPTY ||
+		    ret == -ENOENT) {
+			_debug("Failed to remove %u's parent: BUSY/NOTEMPTY/NOENT", slot);
+			ret = 0;
+		}
+	}
+
+error:
+	dput(dir);
+	dput(victim);
 	return ret;
 }
