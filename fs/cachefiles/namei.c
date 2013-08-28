@@ -465,7 +465,7 @@ int cachefiles_walk_to_object(struct cachefiles_object *parent,
 	struct dentry *dir, *next = NULL;
 	struct path path;
 	unsigned long start;
-	const char *name;
+	const char *name, *keystart = key;
 	int ret, nlen;
 
 	_enter("OBJ%x{%p},OBJ%x,%s,",
@@ -475,7 +475,9 @@ int cachefiles_walk_to_object(struct cachefiles_object *parent,
 	cache = container_of(parent->fscache.cache,
 			     struct cachefiles_cache, cache);
 	path.mnt = cache->mnt;
+restart:
 
+	key = keystart;
 	ASSERT(parent->dentry);
 	ASSERT(parent->dentry->d_inode);
 
@@ -502,6 +504,18 @@ lookup_again:
 	_debug("lookup '%s'", name);
 
 	mutex_lock_nested(&dir->d_inode->i_mutex, I_MUTEX_PARENT);
+
+	/* Are you still here, directory? */
+	if (d_unhashed(dir)) {
+		if (dir == parent->dentry) {
+			_debug("parent dir vanished, aborting");
+			ret = -ENOENT;
+			goto error;
+		}
+		/* otherwise... */
+		_debug("dir vanished on us, restarting pathwalk");
+		goto restart;
+	}
 
 	start = jiffies;
 	next = lookup_one_len(name, dir, nlen);
