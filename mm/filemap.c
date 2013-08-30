@@ -2417,7 +2417,6 @@ EXPORT_SYMBOL(generic_file_buffered_write);
  * @iocb:	IO state structure (file, offset, etc.)
  * @iov:	vector with data to write
  * @nr_segs:	number of segments in the vector
- * @ppos:	position where to write
  *
  * This function does all the work needed for actually writing data to a
  * file. It does all basic checks, removes SUID from the file, updates
@@ -2432,13 +2431,14 @@ EXPORT_SYMBOL(generic_file_buffered_write);
  * avoid syncing under i_mutex.
  */
 ssize_t __generic_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
-				 unsigned long nr_segs, loff_t *ppos)
+				 unsigned long nr_segs)
 {
 	struct file *file = iocb->ki_filp;
 	struct address_space * mapping = file->f_mapping;
 	size_t ocount;		/* original count */
 	size_t count;		/* after file limit checks */
 	struct inode 	*inode = mapping->host;
+	loff_t		*ppos = &iocb->ki_pos;
 	loff_t		pos;
 	ssize_t		written;
 	ssize_t		err;
@@ -2549,7 +2549,7 @@ ssize_t generic_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	BUG_ON(iocb->ki_pos != pos);
 
 	mutex_lock(&inode->i_mutex);
-	ret = __generic_file_aio_write(iocb, iov, nr_segs, &iocb->ki_pos);
+	ret = __generic_file_aio_write(iocb, iov, nr_segs);
 	mutex_unlock(&inode->i_mutex);
 
 	if (ret > 0) {

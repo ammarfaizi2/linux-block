@@ -2551,8 +2551,7 @@ cifs_writev(struct kiocb *iocb, const struct iovec *iov,
 				     server->vals->exclusive_lock_type, NULL,
 				     CIFS_WRITE_OP)) {
 		mutex_lock(&inode->i_mutex);
-		rc = __generic_file_aio_write(iocb, iov, nr_segs,
-					       &iocb->ki_pos);
+		rc = __generic_file_aio_write(iocb, iov, nr_segs);
 		mutex_unlock(&inode->i_mutex);
 	}
 
