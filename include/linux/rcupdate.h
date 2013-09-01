@@ -506,8 +506,17 @@ static inline void rcu_preempt_sleep_check(void)
 #ifdef __CHECKER__
 #define rcu_dereference_sparse(p, space) \
 	((void)(((typeof(*p) space *)p) == p))
+/* The dummy first argument in __rcu_assign_pointer_typecheck makes the
+ * typechecked pointer the second argument, matching rcu_assign_pointer itself;
+ * this avoids confusion about argument numbers in warning messages. */
+#define __rcu_assign_pointer_check_kernel(v) \
+	do { \
+		extern void __rcu_assign_pointer_typecheck(int, typeof(*(v)) __kernel *); \
+		__rcu_assign_pointer_typecheck(0, v); \
+	} while (0)
 #else /* #ifdef __CHECKER__ */
 #define rcu_dereference_sparse(p, space)
+#define __rcu_assign_pointer_check_kernel(v) do { } while (0)
 #endif /* #else #ifdef __CHECKER__ */
 
 #define __rcu_access_pointer(p, space) \
@@ -551,7 +560,8 @@ static inline void rcu_preempt_sleep_check(void)
 #define __rcu_assign_pointer(p, v, space) \
 	do { \
 		smp_wmb(); \
-		(p) = (typeof(*v) __force space *)(v); \
+		__rcu_assign_pointer_check_kernel(v); \
+		ACCESS_ONCE(p) = (typeof(*(v)) __force space *)(v); \
 	} while (0)
 
 
