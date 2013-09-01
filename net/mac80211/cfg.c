@@ -2874,9 +2874,31 @@ void ieee80211_csa_finalize_work(struct work_struct *work)
 	if (WARN_ON(err < 0))
 		return;
 
-	err = ieee80211_assign_beacon(sdata, sdata->u.ap.next_beacon);
-	if (err < 0)
+	if (!local->use_chanctx) {
+		local->_oper_chandef = local->csa_chandef;
+		ieee80211_hw_config(local, 0);
+	}
+
+	ieee80211_bss_info_change_notify(sdata, changed);
+
+	switch (sdata->vif.type) {
+	case NL80211_IFTYPE_AP:
+		err = ieee80211_assign_beacon(sdata, sdata->u.ap.next_beacon);
+		if (err < 0)
+			return;
+		changed |= err;
+		kfree(sdata->u.ap.next_beacon);
+		sdata->u.ap.next_beacon = NULL;
+
+		ieee80211_bss_info_change_notify(sdata, err);
+		break;
+	case NL80211_IFTYPE_ADHOC:
+		ieee80211_ibss_finish_csa(sdata);
+		break;
+	default:
+		WARN_ON(1);
 		return;
+	}
 
 	changed |= err;
 	kfree(sdata->u.ap.next_beacon);
