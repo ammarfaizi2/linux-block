@@ -202,8 +202,8 @@ static int cgroup_addrm_files(struct cgroup *cgrp, struct cftype cfts[],
  * keep accessing it outside the said locks.  This function may return
  * %NULL if @cgrp doesn't have @subsys_id enabled.
  */
-struct cgroup_subsys_state *cgroup_css(struct cgroup *cgrp,
-				       struct cgroup_subsys *ss)
+static struct cgroup_subsys_state *cgroup_css(struct cgroup *cgrp,
+					      struct cgroup_subsys *ss)
 {
 	if (ss)
 		return rcu_dereference_check(cgrp->subsys[ss->subsys_id],
@@ -2632,16 +2632,6 @@ static struct dentry *cgroup_lookup(struct inode *dir, struct dentry *dentry, un
 		return ERR_PTR(-ENAMETOOLONG);
 	d_add(dentry, NULL);
 	return NULL;
-}
-
-/*
- * Check if a file is a control file
- */
-struct cftype *__file_cft(struct file *file)
-{
-	if (file_inode(file)->i_fop != &cgroup_file_operations)
-		return ERR_PTR(-EINVAL);
-	return __d_cft(file->f_dentry);
 }
 
 static int cgroup_create_file(struct dentry *dentry, umode_t mode,
