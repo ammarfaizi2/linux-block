@@ -433,7 +433,7 @@ static int afs_do_lookup(struct inode *dir, struct dentry *dentry,
 	};
 	int ret;
 
-	_enter("{%lu},%p{%s},", dir->i_ino, dentry, dentry->d_name.name);
+	_enter("{%lu},%p{%pd},", dir->i_ino, dentry, dentry);
 
 	/* search the directory */
 	ret = afs_dir_iterate(dir, &cookie.ctx, key);
@@ -501,8 +501,8 @@ static struct dentry *afs_lookup(struct inode *dir, struct dentry *dentry,
 
 	vnode = AFS_FS_I(dir);
 
-	_enter("{%x:%u},%p{%s},",
-	       vnode->fid.vid, vnode->fid.vnode, dentry, dentry->d_name.name);
+	_enter("{%x:%u},%p{%pd},",
+	       vnode->fid.vid, vnode->fid.vnode, dentry, dentry);
 
 	ASSERTCMP(dentry->d_inode, ==, NULL);
 
@@ -588,11 +588,11 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 	vnode = AFS_FS_I(dentry->d_inode);
 
 	if (dentry->d_inode)
-		_enter("{v={%x:%u} n=%s fl=%lx},",
-		       vnode->fid.vid, vnode->fid.vnode, dentry->d_name.name,
+		_enter("{v={%x:%u} n=%pd fl=%lx},",
+		       vnode->fid.vid, vnode->fid.vnode, dentry,
 		       vnode->flags);
 	else
-		_enter("{neg n=%s}", dentry->d_name.name);
+		_enter("{neg n=%pd}", dentry);
 
 	key = afs_request_key(AFS_FS_S(dentry->d_sb)->volume->cell);
 	if (IS_ERR(key))
@@ -607,7 +607,7 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 		afs_validate(dir, key);
 
 	if (test_bit(AFS_VNODE_DELETED, &dir->flags)) {
-		_debug("%s: parent dir deleted", dentry->d_name.name);
+		_debug("%pd: parent dir deleted", dentry);
 		goto out_bad;
 	}
 
@@ -625,17 +625,16 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 		if (!dentry->d_inode)
 			goto out_bad;
 		if (is_bad_inode(dentry->d_inode)) {
-			printk("kAFS: afs_d_revalidate: %s/%s has bad inode\n",
-			       parent->d_name.name, dentry->d_name.name);
+			printk("kAFS: afs_d_revalidate: %pd2 has bad inode\n",
+			       dentry);
 			goto out_bad;
 		}
 
 		/* if the vnode ID has changed, then the dirent points to a
 		 * different file */
 		if (fid.vnode != vnode->fid.vnode) {
-			_debug("%s: dirent changed [%u != %u]",
-			       dentry->d_name.name, fid.vnode,
-			       vnode->fid.vnode);
+			_debug("%pd: dirent changed [%u != %u]",
+			       dentry, fid.vnode, vnode->fid.vnode);
 			goto not_found;
 		}
 
@@ -643,8 +642,8 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 		 * been deleted and replaced, and the original vnode ID has
 		 * been reused */
 		if (fid.unique != vnode->fid.unique) {
-			_debug("%s: file deleted (uq %u -> %u I:%u)",
-			       dentry->d_name.name, fid.unique,
+			_debug("%pd: file deleted (uq %u -> %u I:%u)",
+			       dentry, fid.unique,
 			       vnode->fid.unique,
 			       dentry->d_inode->i_generation);
 			spin_lock(&vnode->lock);
@@ -656,14 +655,13 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 
 	case -ENOENT:
 		/* the filename is unknown */
-		_debug("%s: dirent not found", dentry->d_name.name);
+		_debug("%pd: dirent not found", dentry);
 		if (dentry->d_inode)
 			goto not_found;
 		goto out_valid;
 
 	default:
-		_debug("failed to iterate dir %s: %d",
-		       parent->d_name.name, ret);
+		_debug("failed to iterate dir %pd: %d", parent, ret);
 		goto out_bad;
 	}
 
@@ -1030,9 +1028,8 @@ static int afs_symlink(struct inode *dir, struct dentry *dentry,
 
 	dvnode = AFS_FS_I(dir);
 
-	_enter("{%x:%u},{%s},%s",
-	       dvnode->fid.vid, dvnode->fid.vnode, dentry->d_name.name,
-	       content);
+	_enter("{%x:%u},{%pd},%s",
+	       dvnode->fid.vid, dvnode->fid.vnode, dentry, content);
 
 	ret = -EINVAL;
 	if (strlen(content) >= AFSPATHMAX)
@@ -1098,11 +1095,11 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	orig_dvnode = AFS_FS_I(old_dir);
 	new_dvnode = AFS_FS_I(new_dir);
 
-	_enter("{%x:%u},{%x:%u},{%x:%u},{%s}",
+	_enter("{%x:%u},{%x:%u},{%x:%u},{%pd}",
 	       orig_dvnode->fid.vid, orig_dvnode->fid.vnode,
 	       vnode->fid.vid, vnode->fid.vnode,
 	       new_dvnode->fid.vid, new_dvnode->fid.vnode,
-	       new_dentry->d_name.name);
+	       new_dentry);
 
 	key = afs_request_key(orig_dvnode->volume->cell);
 	if (IS_ERR(key)) {

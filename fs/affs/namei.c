@@ -179,7 +179,7 @@ affs_find_entry(struct inode *dir, struct dentry *dentry)
 	toupper_t toupper = affs_get_toupper(sb);
 	u32 key;
 
-	pr_debug("AFFS: find_entry(\"%.*s\")\n", (int)dentry->d_name.len, dentry->d_name.name);
+	pr_debug("AFFS: find_entry(\"%pd\")\n", dentry);
 
 	bh = affs_bread(sb, dir->i_ino);
 	if (!bh)
@@ -207,7 +207,7 @@ affs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 	struct buffer_head *bh;
 	struct inode *inode = NULL;
 
-	pr_debug("AFFS: lookup(\"%.*s\")\n",(int)dentry->d_name.len,dentry->d_name.name);
+	pr_debug("AFFS: lookup(\"%pd\")\n",dentry);
 
 	affs_lock_dir(dir);
 	bh = affs_find_entry(dir, dentry);
@@ -237,9 +237,9 @@ affs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 int
 affs_unlink(struct inode *dir, struct dentry *dentry)
 {
-	pr_debug("AFFS: unlink(dir=%d, %lu \"%.*s\")\n", (u32)dir->i_ino,
+	pr_debug("AFFS: unlink(dir=%d, %lu \"%pd\")\n", (u32)dir->i_ino,
 		 dentry->d_inode->i_ino,
-		 (int)dentry->d_name.len, dentry->d_name.name);
+		 dentry);
 
 	return affs_remove_header(dentry);
 }
@@ -251,8 +251,7 @@ affs_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl)
 	struct inode	*inode;
 	int		 error;
 
-	pr_debug("AFFS: create(%lu,\"%.*s\",0%ho)\n",dir->i_ino,(int)dentry->d_name.len,
-		 dentry->d_name.name,mode);
+	pr_debug("AFFS: create(%lu,\"%pd\",0%ho)\n",dir->i_ino,dentry,mode);
 
 	inode = affs_new_inode(dir);
 	if (!inode)
@@ -280,8 +279,7 @@ affs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	struct inode		*inode;
 	int			 error;
 
-	pr_debug("AFFS: mkdir(%lu,\"%.*s\",0%ho)\n",dir->i_ino,
-		 (int)dentry->d_name.len,dentry->d_name.name,mode);
+	pr_debug("AFFS: mkdir(%lu,\"%pd\",0%ho)\n",dir->i_ino, dentry, mode);
 
 	inode = affs_new_inode(dir);
 	if (!inode)
@@ -306,9 +304,8 @@ affs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 int
 affs_rmdir(struct inode *dir, struct dentry *dentry)
 {
-	pr_debug("AFFS: rmdir(dir=%u, %lu \"%.*s\")\n", (u32)dir->i_ino,
-		 dentry->d_inode->i_ino,
-		 (int)dentry->d_name.len, dentry->d_name.name);
+	pr_debug("AFFS: rmdir(dir=%u, %lu \"%pd\")\n", (u32)dir->i_ino,
+		 dentry->d_inode->i_ino, dentry);
 
 	return affs_remove_header(dentry);
 }
@@ -323,8 +320,8 @@ affs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	int			 i, maxlen, error;
 	char			 c, lc;
 
-	pr_debug("AFFS: symlink(%lu,\"%.*s\" -> \"%s\")\n",dir->i_ino,
-		 (int)dentry->d_name.len,dentry->d_name.name,symname);
+	pr_debug("AFFS: symlink(%lu,\"%pd\" -> \"%s\")\n",dir->i_ino,
+		 dentry, symname);
 
 	maxlen = AFFS_SB(sb)->s_hashsize * sizeof(u32) - 1;
 	inode  = affs_new_inode(dir);
@@ -393,8 +390,8 @@ affs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *dentry)
 {
 	struct inode *inode = old_dentry->d_inode;
 
-	pr_debug("AFFS: link(%u, %u, \"%.*s\")\n", (u32)inode->i_ino, (u32)dir->i_ino,
-		 (int)dentry->d_name.len,dentry->d_name.name);
+	pr_debug("AFFS: link(%u, %u, \"%pd\")\n", (u32)inode->i_ino, (u32)dir->i_ino,
+		 dentry);
 
 	return affs_add_entry(dir, inode, dentry, ST_LINKFILE);
 }
@@ -407,9 +404,9 @@ affs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct buffer_head *bh = NULL;
 	int retval;
 
-	pr_debug("AFFS: rename(old=%u,\"%*s\" to new=%u,\"%*s\")\n",
-		 (u32)old_dir->i_ino, (int)old_dentry->d_name.len, old_dentry->d_name.name,
-		 (u32)new_dir->i_ino, (int)new_dentry->d_name.len, new_dentry->d_name.name);
+	pr_debug("AFFS: rename(old=%u,\"%pd\" to new=%u,\"%pd\")\n",
+		 (u32)old_dir->i_ino, old_dentry,
+		 (u32)new_dir->i_ino, new_dentry);
 
 	retval = affs_check_name(new_dentry->d_name.name,new_dentry->d_name.len);
 	if (retval)

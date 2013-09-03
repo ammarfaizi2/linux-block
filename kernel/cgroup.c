@@ -5541,14 +5541,12 @@ static int current_css_set_cg_links_read(struct cgroup_subsys_state *css,
 	cset = rcu_dereference(current->cgroups);
 	list_for_each_entry(link, &cset->cgrp_links, cgrp_link) {
 		struct cgroup *c = link->cgrp;
-		const char *name;
 
+		seq_printf(seq, "Root %d ", c->root->hierarchy_id);
 		if (c->dentry)
-			name = c->dentry->d_name.name;
+			seq_printf(seq, "group %pd\n", c->dentry);
 		else
-			name = "?";
-		seq_printf(seq, "Root %d group %s\n",
-			   c->root->hierarchy_id, name);
+			seq_printf(seq, "group ?\n");
 	}
 	rcu_read_unlock();
 	read_unlock(&css_set_lock);
