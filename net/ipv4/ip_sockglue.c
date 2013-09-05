@@ -269,7 +269,8 @@ int ip_ra_control(struct sock *sk, unsigned char on,
 			}
 			/* dont let ip_call_ra_chain() use sk again */
 			ra->sk = NULL;
-			rcu_assign_pointer(*rap, ra->next);
+			/* Both --rcu and visible, so ACCESS_ONCE() is OK. */
+			ACCESS_ONCE(*rap) = ra->next;
 			spin_unlock_bh(&ip_ra_lock);
 
 			if (ra->destructor)
