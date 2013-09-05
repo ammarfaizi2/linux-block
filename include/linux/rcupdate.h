@@ -225,6 +225,9 @@ extern void rcu_idle_enter(void);
 extern void rcu_idle_exit(void);
 extern void rcu_irq_enter(void);
 extern void rcu_irq_exit(void);
+#if defined(CONFIG_SMP) || defined(CONFIG_RCU_TRACE)
+extern bool rcu_watching_this_cpu(void);
+#endif /* #if defined(CONFIG_SMP) || defined(CONFIG_RCU_TRACE) */
 
 #ifdef CONFIG_RCU_USER_QS
 extern void rcu_user_enter(void);

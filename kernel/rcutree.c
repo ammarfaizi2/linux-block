@@ -710,6 +710,18 @@ EXPORT_SYMBOL_GPL(rcu_lockdep_current_cpu_online);
 #endif /* #if defined(CONFIG_PROVE_RCU) && defined(CONFIG_HOTPLUG_CPU) */
 
 /**
+ * rcu_watching_this_cpu - are RCU read-side critical sections safe?
+ *
+ * Return true if RCU is watching the running CPU, which means that this
+ * CPU can safely enter RCU read-side critical sections.  The caller must
+ * have at least disabled preemption.
+ */
+bool rcu_watching_this_cpu(void)
+{
+	return !!__this_cpu_read(rcu_dynticks.dynticks_nesting);
+}
+
+/**
  * rcu_is_cpu_rrupt_from_idle - see if idle or immediately interrupted from idle
  *
  * If the current CPU is idle or running at a first-level (not nested)

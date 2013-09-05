@@ -189,6 +189,17 @@ EXPORT_SYMBOL(rcu_is_cpu_idle);
 
 #endif /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
+#ifdef CONFIG_RCU_TRACE
+/*
+ * Test whether the current CPU can safely enter RCU read-side critical
+ * sections.  The caller must at least have disabled interrupts.
+ */
+bool rcu_watching_this_cpu(void)
+{
+	return !!rcu_dynticks_nesting;
+}
+#endif /* #ifdef CONFIG_RCU_TRACE */
+
 /*
  * Test whether the current CPU was interrupted from idle.  Nested
  * interrupts don't count, we must be running at the first interrupt
