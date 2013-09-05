@@ -51,7 +51,7 @@ static int notifier_chain_unregister(struct notifier_block **nl,
 {
 	while ((*nl) != NULL) {
 		if ((*nl) == n) {
-			rcu_assign_pointer(*nl, n->next);
+			rcu_assign_pointer(*nl, rcu_access_pointer(n->next));
 			return 0;
 		}
 		nl = &((*nl)->next);
