@@ -11,51 +11,148 @@
 
 struct perf_c2c {
 	struct perf_tool tool;
+	bool		 raw_records;
 };
 
-static int perf_sample__fprintf(struct perf_sample *sample,
-				struct perf_evsel *evsel,
-				struct addr_location *al, FILE *fp)
+enum { OP, LVL, SNP, LCK, TLB };
+
+static int perf_c2c__scnprintf_data_src(char *bf, size_t size, uint64_t val)
 {
-	return fprintf(fp, "%25.25s: %5d %5d 0x%016" PRIx64 " 0x016%" PRIx64 " %5" PRIu64 " 0x%06" PRIx64 " %s:%s\n",
-		       perf_evsel__name(evsel),
-		       sample->pid, sample->tid, sample->ip, sample->addr,
-		       sample->weight, sample->data_src,
+#define PREFIX       "["
+#define SUFFIX       "]"
+#define ELLIPSIS     "..."
+	static const struct {
+		uint64_t   bit;
+		int64_t    field;
+		const char *name;
+	} decode_bits[] = {
+	{ PERF_MEM_OP_LOAD,       OP,  "LOAD"     },
+	{ PERF_MEM_OP_STORE,      OP,  "STORE"    },
+	{ PERF_MEM_OP_NA,         OP,  "OP_NA"    },
+	{ PERF_MEM_LVL_LFB,       LVL, "LFB"      },
+	{ PERF_MEM_LVL_L1,        LVL, "L1"       },
+	{ PERF_MEM_LVL_L2,        LVL, "L2"       },
+	{ PERF_MEM_LVL_L3,        LVL, "LCL_LLC"  },
+	{ PERF_MEM_LVL_LOC_RAM,   LVL, "LCL_RAM"  },
+	{ PERF_MEM_LVL_REM_RAM1,  LVL, "RMT_RAM"  },
+	{ PERF_MEM_LVL_REM_RAM2,  LVL, "RMT_RAM"  },
+	{ PERF_MEM_LVL_REM_CCE1,  LVL, "RMT_LLC"  },
+	{ PERF_MEM_LVL_REM_CCE2,  LVL, "RMT_LLC"  },
+	{ PERF_MEM_LVL_IO,        LVL, "I/O"	  },
+	{ PERF_MEM_LVL_UNC,       LVL, "UNCACHED" },
+	{ PERF_MEM_LVL_NA,        LVL, "N"        },
+	{ PERF_MEM_LVL_HIT,       LVL, "HIT"      },
+	{ PERF_MEM_LVL_MISS,      LVL, "MISS"     },
+	{ PERF_MEM_SNOOP_NONE,    SNP, "SNP NONE" },
+	{ PERF_MEM_SNOOP_HIT,     SNP, "SNP HIT"  },
+	{ PERF_MEM_SNOOP_MISS,    SNP, "SNP MISS" },
+	{ PERF_MEM_SNOOP_HITM,    SNP, "SNP HITM" },
+	{ PERF_MEM_SNOOP_NA,      SNP, "SNP NA"   },
+	{ PERF_MEM_LOCK_LOCKED,   LCK, "LOCKED"   },
+	{ PERF_MEM_LOCK_NA,       LCK, "LOCK_NA"  },
+	};
+	union perf_mem_data_src dsrc = { .val = val, };
+	int printed = scnprintf(bf, size, PREFIX);
+	size_t i;
+	bool first_present = true;
+
+	for (i = 0; i < ARRAY_SIZE(decode_bits); i++) {
+		int bitval;
+
+		switch (decode_bits[i].field) {
+		case OP:  bitval = decode_bits[i].bit & dsrc.mem_op;    break;
+		case LVL: bitval = decode_bits[i].bit & dsrc.mem_lvl;   break;
+		case SNP: bitval = decode_bits[i].bit & dsrc.mem_snoop; break;
+		case LCK: bitval = decode_bits[i].bit & dsrc.mem_lock;  break;
+		case TLB: bitval = decode_bits[i].bit & dsrc.mem_dtlb;  break;
+		default: bitval = 0;					break;
+		}
+
+		if (!bitval)
+			continue;
+
+		if (strlen(decode_bits[i].name) + !!i > size - printed - sizeof(SUFFIX)) {
+			sprintf(bf + size - sizeof(SUFFIX) - sizeof(ELLIPSIS) + 1, ELLIPSIS);
+			printed = size - sizeof(SUFFIX);
+			break;
+		}
+
+		printed += scnprintf(bf + printed, size - printed, "%s%s",
+				     first_present ? "" : ",", decode_bits[i].name);
+		first_present = false;
+	}
+
+	printed += scnprintf(bf + printed, size - printed, SUFFIX);
+	return printed;
+}
+
+static int perf_c2c__fprintf_header(FILE *fp)
+{
+	int printed = fprintf(fp, "%c %-16s  %6s  %6s  %4s  %18s  %18s  %18s  %6s  %-10s %-60s %s\n", 
+			      'T', 
+			      "Status",                                            
+			      "Pid", 
+			      "Tid", 
+			      "CPU",                  
+			      "Inst Adrs",               
+			      "Virt Data Adrs",      
+			      "Phys Data Adrs",
+			      "Cycles",               
+			      "Source", 
+			      "  Decoded Source",
+			      "ObJect:Symbol");
+	return printed + fprintf(fp, "%-*.*s\n", printed, printed, graph_dotted_line);
+}
+
+static int perf_sample__fprintf(struct perf_sample *sample, char tag,
+				const char *reason, struct addr_location *al, FILE *fp)
+{
+	char data_src[61];
+
+	perf_c2c__scnprintf_data_src(data_src, sizeof(data_src), sample->data_src);
+
+	return fprintf(fp, "%c %-16s  %6d  %6d  %4d  %#18" PRIx64 "  %#18" PRIx64 "  %#18" PRIx64 "  %6" PRIu64 "  %#10" PRIx64 " %-60.60s %s:%s\n", 
+		       tag, 
+		       reason ?: "valid record",
+		       sample->pid, 
+		       sample->tid, 
+		       sample->cpu, 
+		       sample->ip, 
+		       sample->addr,
+		       0UL,
+		       sample->weight, 
+		       sample->data_src, 
+		       data_src, 
 		       al->map ? (al->map->dso ? al->map->dso->long_name : "???") : "???",
 		       al->sym ? al->sym->name : "???");
 }
 
-static int perf_c2c__process_load(struct perf_evsel *evsel,
-				  struct perf_sample *sample,
-				  struct addr_location *al)
+static int perf_c2c__process_load_store(struct perf_c2c *c2c,
+					struct perf_sample *sample,
+					struct addr_location *al)
 {
-	perf_sample__fprintf(sample, evsel, al, stdout);
-	return 0;
-}
+	if (c2c->raw_records)
+		perf_sample__fprintf(sample, ' ', "raw input", al, stdout);
 
-static int perf_c2c__process_store(struct perf_evsel *evsel,
-				   struct perf_sample *sample,
-				   struct addr_location *al)
-{
-	perf_sample__fprintf(sample, evsel, al, stdout);
 	return 0;
 }
 
 static const struct perf_evsel_str_handler handlers[] = {
-	{ "cpu/mem-loads,ldlat=30/pp", perf_c2c__process_load, },
-	{ "cpu/mem-stores/pp",	       perf_c2c__process_store, },
+	{ "cpu/mem-loads,ldlat=30/pp", perf_c2c__process_load_store, },
+	{ "cpu/mem-stores/pp",	       perf_c2c__process_load_store, },
 };
 
-typedef int (*sample_handler)(struct perf_evsel *evsel,
+typedef int (*sample_handler)(struct perf_c2c *c2c,
 			      struct perf_sample *sample,
 			      struct addr_location *al);
 
-static int perf_c2c__process_sample(struct perf_tool *tool __maybe_unused,
+static int perf_c2c__process_sample(struct perf_tool *tool,
 				    union perf_event *event,
 				    struct perf_sample *sample,
 				    struct perf_evsel *evsel,
 				    struct machine *machine)
 {
+	struct perf_c2c *c2c = container_of(tool, struct perf_c2c, tool);
 	struct addr_location al;
 	int err = 0;
 
@@ -67,7 +164,7 @@ static int perf_c2c__process_sample(struct perf_tool *tool __maybe_unused,
 
 	if (evsel->handler.func != NULL) {
 		sample_handler f = evsel->handler.func;
-		err = f(evsel, sample, &al);
+		err = f(c2c, sample, &al);
 	}
 
 	return err;
@@ -100,6 +197,10 @@ out:
 static int perf_c2c__report(struct perf_c2c *c2c)
 {
 	setup_pager();
+
+	if (c2c->raw_records)
+		perf_c2c__fprintf_header(stdout);
+
 	return perf_c2c__read_events(c2c);
 }
 
@@ -150,6 +251,7 @@ int cmd_c2c(int argc, const char **argv, const char *prefix __maybe_unused)
 		},
 	};
 	const struct option c2c_options[] = {
+	OPT_BOOLEAN('r', "raw_records", &c2c.raw_records, "dump raw events"),
 	OPT_END()
 	};
 	const char * const c2c_usage[] = {
