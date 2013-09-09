@@ -21,10 +21,9 @@ enum chain_order {
 
 struct callchain_node {
 	struct callchain_node	*parent;
-	struct list_head	siblings;
-	struct list_head	children;
 	struct list_head	val;
 	struct rb_node		rb_node; /* to sort nodes in an rbtree */
+	struct rb_root		rb_root_in; /* sorted tree of children */
 	struct rb_root		rb_root; /* sorted tree of children */
 	unsigned int		val_nr;
 	u64			hit;
@@ -86,8 +85,6 @@ extern __thread struct callchain_cursor callchain_cursor;
 
 static inline void callchain_init(struct callchain_root *root)
 {
-	INIT_LIST_HEAD(&root->node.siblings);
-	INIT_LIST_HEAD(&root->node.children);
 	INIT_LIST_HEAD(&root->node.val);
 
 	root->node.parent = NULL;
