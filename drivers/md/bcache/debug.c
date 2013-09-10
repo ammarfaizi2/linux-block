@@ -203,13 +203,13 @@ void bch_data_verify(struct cached_dev *dc, struct bio *bio)
 		void *p1 = kmap(bv->bv_page);
 		void *p2 = kmap(check->bi_io_vec[i].bv_page);
 
-		if (memcmp(p1 + bv->bv_offset,
-			   p2 + bv->bv_offset,
-			   bv->bv_len))
-			printk(KERN_ERR
-			       "bcache (%s): verify failed at sector %llu\n",
-			       bdevname(dc->bdev, name),
-			       (uint64_t) bio->bi_sector);
+		cache_set_err_on(memcmp(p1 + bv->bv_offset,
+					p2 + bv->bv_offset,
+					bv->bv_len),
+				 dc->disk.c,
+				 "verify failed at dev %s sector %llu",
+				 bdevname(dc->bdev, name),
+				 (uint64_t) bio->bi_sector);
 
 		kunmap(bv->bv_page);
 		kunmap(check->bi_io_vec[i].bv_page);
