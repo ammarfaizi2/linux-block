@@ -79,7 +79,8 @@ struct sort_entry sort_thread = {
 static int64_t
 sort__comm_cmp(struct hist_entry *left, struct hist_entry *right)
 {
-	return right->thread->tid - left->thread->tid;
+	/* Compare the addr that should be unique among comm */
+	return thread__comm_curr(right->thread) - thread__comm_curr(left->thread);
 }
 
 static int64_t
