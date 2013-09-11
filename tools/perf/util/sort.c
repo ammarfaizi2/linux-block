@@ -42,7 +42,7 @@ static int repsep_snprintf(char *bf, size_t size, const char *fmt, ...)
 	return n;
 }
 
-static int64_t cmp_null(void *l, void *r)
+static int64_t cmp_null(const void *l, const void *r)
 {
 	if (!l && !r)
 		return 0;
@@ -64,7 +64,7 @@ static int hist_entry__thread_snprintf(struct hist_entry *self, char *bf,
 				       size_t size, unsigned int width)
 {
 	return repsep_snprintf(bf, size, "%*s:%5d", width - 6,
-			      self->thread->comm ?: "", self->thread->tid);
+			       thread__comm_curr(self->thread) ?: "", self->thread->tid);
 }
 
 struct sort_entry sort_thread = {
@@ -85,8 +85,8 @@ sort__comm_cmp(struct hist_entry *left, struct hist_entry *right)
 static int64_t
 sort__comm_collapse(struct hist_entry *left, struct hist_entry *right)
 {
-	char *comm_l = left->thread->comm;
-	char *comm_r = right->thread->comm;
+	const char *comm_l = thread__comm_curr(left->thread);
+	const char *comm_r = thread__comm_curr(right->thread);
 
 	if (!comm_l || !comm_r)
 		return cmp_null(comm_l, comm_r);
@@ -97,7 +97,7 @@ sort__comm_collapse(struct hist_entry *left, struct hist_entry *right)
 static int hist_entry__comm_snprintf(struct hist_entry *self, char *bf,
 				     size_t size, unsigned int width)
 {
-	return repsep_snprintf(bf, size, "%*s", width, self->thread->comm);
+	return repsep_snprintf(bf, size, "%*s", width, thread__comm_curr(self->thread));
 }
 
 struct sort_entry sort_comm = {
