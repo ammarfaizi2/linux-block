@@ -151,6 +151,9 @@ struct btree_iter {
 	struct btree_iter_set {
 		struct bkey *k, *end;
 	} data[MAX_BSETS];
+#ifdef CONFIG_BCACHE_DEBUG
+	struct btree *b;
+#endif
 };
 
 struct bset_tree {
