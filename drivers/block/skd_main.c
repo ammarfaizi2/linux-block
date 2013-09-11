@@ -397,7 +397,6 @@ struct skd_flush_cmd {
 #define SKD_WRITEL(DEV, VAL, OFF) skd_reg_write32(DEV, VAL, OFF)
 #define SKD_READL(DEV, OFF)      skd_reg_read32(DEV, OFF)
 #define SKD_WRITEQ(DEV, VAL, OFF) skd_reg_write64(DEV, VAL, OFF)
-#define SKD_READQ(DEV, OFF)      skd_reg_read64(DEV, OFF)
 
 static inline u32 skd_reg_read32(struct skd_device *skdev, u32 offset)
 {
@@ -430,21 +429,6 @@ static inline void skd_reg_write32(struct skd_device *skdev, u32 val,
 		readl(skdev->mem_map[1] + offset);
 		barrier();
 		VPRINTK(skdev, "offset %x = %x\n", offset, val);
-	}
-}
-
-static inline u64 skd_reg_read64(struct skd_device *skdev, u32 offset)
-{
-	u64 val;
-
-	if (likely(skdev->dbg_level < 2))
-		return readq(skdev->mem_map[1] + offset);
-	else {
-		barrier();
-		val = readq(skdev->mem_map[1] + offset);
-		barrier();
-		VPRINTK(skdev, "offset %x = %016llx\n", offset, val);
-		return val;
 	}
 }
 
@@ -4581,7 +4565,8 @@ static int skd_cons_skmsg(struct skd_device *skdev)
 	VPRINTK(skdev, "skmsg_table kzalloc, struct %lu, count %u total %lu\n",
 		sizeof(struct skd_fitmsg_context),
 		skdev->num_fitmsg_context,
-		sizeof(struct skd_fitmsg_context) * skdev->num_fitmsg_context);
+		(unsigned long) sizeof(struct skd_fitmsg_context) *
+					skdev->num_fitmsg_context);
 
 	skdev->skmsg_table = kzalloc(sizeof(struct skd_fitmsg_context)
 				     *skdev->num_fitmsg_context, GFP_KERNEL);
