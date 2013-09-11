@@ -396,6 +396,10 @@ else
   endif
 endif
 
+ifndef ($(filter -lbfd,$(EXTLIBS)),)
+  CFLAGS += -DLIBBFD_SUPPORT
+endif
+
 ifndef NO_STRLCPY
   ifeq ($(call try-cc,$(SOURCE_STRLCPY),,-DHAVE_STRLCPY),y)
     CFLAGS += -DHAVE_STRLCPY
