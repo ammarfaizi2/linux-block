@@ -456,7 +456,7 @@ static size_t trace__fprintf_entry_head(struct trace *trace, struct thread *thre
 }
 
 static int trace__process_event(struct trace *trace, struct machine *machine,
-				union perf_event *event)
+				union perf_event *event, struct perf_sample *sample)
 {
 	int ret = 0;
 
@@ -464,9 +464,9 @@ static int trace__process_event(struct trace *trace, struct machine *machine,
 	case PERF_RECORD_LOST:
 		color_fprintf(trace->output, PERF_COLOR_RED,
 			      "LOST %" PRIu64 " events!\n", event->lost.lost);
-		ret = machine__process_lost_event(machine, event);
+		ret = machine__process_lost_event(machine, event, sample);
 	default:
-		ret = machine__process_event(machine, event);
+		ret = machine__process_event(machine, event, sample);
 		break;
 	}
 
@@ -475,11 +475,11 @@ static int trace__process_event(struct trace *trace, struct machine *machine,
 
 static int trace__tool_process(struct perf_tool *tool,
 			       union perf_event *event,
-			       struct perf_sample *sample __maybe_unused,
+			       struct perf_sample *sample,
 			       struct machine *machine)
 {
 	struct trace *trace = container_of(tool, struct trace, tool);
-	return trace__process_event(trace, machine, event);
+	return trace__process_event(trace, machine, event, sample);
 }
 
 static int trace__symbols_init(struct trace *trace, struct perf_evlist *evlist)
@@ -977,7 +977,7 @@ again:
 				trace->base_time = sample.time;
 
 			if (type != PERF_RECORD_SAMPLE) {
-				trace__process_event(trace, &trace->host, event);
+				trace__process_event(trace, &trace->host, event, &sample);
 				continue;
 			}
 
