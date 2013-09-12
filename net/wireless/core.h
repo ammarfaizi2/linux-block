@@ -382,6 +382,17 @@ int cfg80211_can_use_iftype_chan(struct cfg80211_registered_device *rdev,
 				 enum cfg80211_chan_mode chanmode,
 				 u8 radar_detect);
 
+/**
+ * cfg80211_chandef_dfs_usable - checks if chandef is usable and we can
+ * start CAC on such chandef.
+ * @wiphy: the wiphy to validate against
+ * @chandef: the channel definition to check
+ * Return: Return true if all channels available and at least
+ * one channel required CAC (NL80211_DFS_USABLE)
+ */
+bool cfg80211_chandef_dfs_usable(struct wiphy *wiphy,
+				 const struct cfg80211_chan_def *chandef);
+
 void cfg80211_set_dfs_state(struct wiphy *wiphy,
 			    const struct cfg80211_chan_def *chandef,
 			    enum nl80211_dfs_state dfs_state);
