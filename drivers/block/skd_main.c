@@ -2911,7 +2911,7 @@ static void skd_do_inq_page_da(struct skd_device *skdev,
 
 	inq.page_code = DRIVER_INQ_EVPD_PAGE_CODE;
 
-	if (skdev && skdev->pdev && skdev->pdev->bus) {
+	if (skdev->pdev && skdev->pdev->bus) {
 		skd_get_link_info(skdev->pdev,
 				  &inq.pcie_link_speed, &inq.pcie_link_lanes);
 		inq.pcie_bus_number = cpu_to_be16(skdev->pdev->bus->number);
