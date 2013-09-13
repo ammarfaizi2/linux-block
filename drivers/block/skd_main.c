@@ -1736,7 +1736,7 @@ static int skd_sg_io_get_and_check_args(struct skd_device *skdev,
 		return -EINVAL;
 	}
 
-	if (__copy_from_user(sksgio->cdb, sgp->cmdp, sgp->cmd_len)) {
+	if (copy_from_user(sksgio->cdb, sgp->cmdp, sgp->cmd_len)) {
 		DPRINTK(skdev, "copy_from_user cmdp failed %p\n", sgp->cmdp);
 		return -EFAULT;
 	}
@@ -1767,7 +1767,7 @@ static int skd_sg_io_get_and_check_args(struct skd_device *skdev,
 		sksgio->iov = iov;
 		sksgio->iovcnt = sgp->iovec_count;
 
-		if (__copy_from_user(iov, sgp->dxferp, nbytes)) {
+		if (copy_from_user(iov, sgp->dxferp, nbytes)) {
 			DPRINTK(skdev, "copy_from_user iovec failed %p\n",
 				sgp->dxferp);
 			return -EFAULT;
