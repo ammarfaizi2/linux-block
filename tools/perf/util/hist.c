@@ -412,6 +412,7 @@ struct hist_entry *__hists__add_mem_entry(struct hists *self,
 {
 	struct hist_entry entry = {
 		.thread	= al->thread,
+		.comm = thread__comm(al->thread),
 		.ms = {
 			.map	= al->map,
 			.sym	= al->sym,
@@ -442,6 +443,7 @@ struct hist_entry *__hists__add_branch_entry(struct hists *self,
 {
 	struct hist_entry entry = {
 		.thread	= al->thread,
+		.comm = thread__comm(al->thread),
 		.ms = {
 			.map	= bi->to.map,
 			.sym	= bi->to.sym,
@@ -471,6 +473,7 @@ struct hist_entry *__hists__add_entry(struct hists *self,
 {
 	struct hist_entry entry = {
 		.thread	= al->thread,
+		.comm = thread__comm(al->thread),
 		.ms = {
 			.map	= al->map,
 			.sym	= al->sym,
