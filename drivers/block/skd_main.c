@@ -4919,8 +4919,6 @@ static void skd_destruct(struct skd_device *skdev)
 
 	VPRINTK(skdev, "skdev\n");
 	kfree(skdev);
-
-	DPRINTK(skdev, "VICTORY\n");
 }
 
 static void skd_free_skcomp(struct skd_device *skdev)
