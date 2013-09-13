@@ -2899,9 +2899,7 @@ static void skd_do_inq_page_da(struct skd_device *skdev,
 			       volatile struct fit_comp_error_info *skerr,
 			       uint8_t *cdb, uint8_t *buf)
 {
-	unsigned ver_byte;
 	unsigned max_bytes;
-	char *ver = DRV_VER_COMPL;
 	struct driver_inquiry_data inq;
 	u16 val;
 
@@ -2945,12 +2943,8 @@ static void skd_do_inq_page_da(struct skd_device *skdev,
 	/* Driver version, fixed lenth, padded with spaces on the right */
 	inq.driver_version_length = sizeof(inq.driver_version);
 	memset(&inq.driver_version, ' ', sizeof(inq.driver_version));
-	for (ver_byte = 0; ver_byte < sizeof(inq.driver_version); ver_byte++) {
-		if (ver[ver_byte] != 0)
-			inq.driver_version[ver_byte] = ver[ver_byte];
-		else
-			break;
-	}
+	memcpy(inq.driver_version, DRV_VER_COMPL,
+	       min(sizeof(inq.driver_version), strlen(DRV_VER_COMPL)));
 
 	inq.page_length = cpu_to_be16((sizeof(inq) - 4));
 
