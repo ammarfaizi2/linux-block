@@ -134,11 +134,19 @@ static inline void rcu_scheduler_starting(void)
 
 #ifdef CONFIG_RCU_TRACE
 
-static inline bool __rcu_is_watching(void)
+static inline bool rcu_is_watching(void)
 {
-	return !rcu_is_cpu_idle();
+	return __rcu_is_watching();
 }
 
-#endif /* #ifdef CONFIG_RCU_TRACE */
+#else /* #ifdef CONFIG_RCU_TRACE */
+
+static inline bool rcu_is_watching(void)
+{
+	return true;
+}
+
+
+#endif /* #else #ifdef CONFIG_RCU_TRACE */
 
 #endif /* __LINUX_RCUTINY_H */
