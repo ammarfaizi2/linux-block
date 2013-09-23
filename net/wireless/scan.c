@@ -671,7 +671,7 @@ static bool cfg80211_combine_bsses(struct cfg80211_registered_device *dev,
 		bss->pub.hidden_beacon_bss = &new->pub;
 		new->refcount += bss->refcount;
 		rcu_assign_pointer(bss->pub.beacon_ies,
-				   new->pub.beacon_ies);
+				   rcu_access_pointer(new->pub.beacon_ies));
 	}
 
 	return true;
@@ -706,10 +706,10 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 			old = rcu_access_pointer(found->pub.proberesp_ies);
 
 			rcu_assign_pointer(found->pub.proberesp_ies,
-					   tmp->pub.proberesp_ies);
+					   rcu_access_pointer(tmp->pub.proberesp_ies));
 			/* Override possible earlier Beacon frame IEs */
 			rcu_assign_pointer(found->pub.ies,
-					   tmp->pub.proberesp_ies);
+					   rcu_access_pointer(tmp->pub.proberesp_ies));
 			if (old)
 				kfree_rcu((struct cfg80211_bss_ies *)old,
 					  rcu_head);
@@ -740,12 +740,12 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 			old = rcu_access_pointer(found->pub.beacon_ies);
 
 			rcu_assign_pointer(found->pub.beacon_ies,
-					   tmp->pub.beacon_ies);
+					   rcu_access_pointer(tmp->pub.beacon_ies));
 
 			/* Override IEs if they were from a beacon before */
 			if (old == rcu_access_pointer(found->pub.ies))
 				rcu_assign_pointer(found->pub.ies,
-						   tmp->pub.beacon_ies);
+						   rcu_access_pointer(tmp->pub.beacon_ies));
 
 			/* Assign beacon IEs to all sub entries */
 			list_for_each_entry(bss, &found->hidden_list,
@@ -756,7 +756,7 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 				WARN_ON(ies != old);
 
 				rcu_assign_pointer(bss->pub.beacon_ies,
-						   tmp->pub.beacon_ies);
+						   rcu_access_pointer(tmp->pub.beacon_ies));
 			}
 
 			if (old)
@@ -804,7 +804,7 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 					 &hidden->hidden_list);
 				hidden->refcount++;
 				rcu_assign_pointer(new->pub.beacon_ies,
-						   hidden->pub.beacon_ies);
+						   rcu_access_pointer(hidden->pub.beacon_ies));
 			}
 		} else {
 			/*
