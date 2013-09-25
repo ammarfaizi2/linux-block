@@ -276,7 +276,7 @@ static void ip6gre_tunnel_unlink(struct ip6gre_net *ign, struct ip6_tnl *t)
 	     (iter = rtnl_dereference(*tp)) != NULL;
 	     tp = &iter->next) {
 		if (t == iter) {
-			rcu_assign_pointer(*tp, t->next);
+			rcu_assign_pointer(*tp, rcu_access_pointer(t->next));
 			break;
 		}
 	}

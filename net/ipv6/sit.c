@@ -157,7 +157,7 @@ static void ipip6_tunnel_unlink(struct sit_net *sitn, struct ip_tunnel *t)
 	     (iter = rtnl_dereference(*tp)) != NULL;
 	     tp = &iter->next) {
 		if (t == iter) {
-			rcu_assign_pointer(*tp, t->next);
+			rcu_assign_pointer(*tp, rcu_access_pointer(t->next));
 			break;
 		}
 	}
