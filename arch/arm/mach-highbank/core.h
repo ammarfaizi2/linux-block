@@ -1,11 +1,6 @@
 #ifndef __HIGHBANK_CORE_H
 #define __HIGHBANK_CORE_H
 
-#include <linux/reboot.h>
-
-extern void highbank_restart(enum reboot_mode, const char *);
-extern void __iomem *scu_base_addr;
-
 #ifdef CONFIG_PM_SLEEP
 extern void highbank_pm_init(void);
 #else

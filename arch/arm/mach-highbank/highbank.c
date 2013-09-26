@@ -29,24 +29,10 @@
 #include <asm/psci.h>
 #include <asm/hardware/cache-l2x0.h>
 #include <asm/mach/arch.h>
-#include <asm/mach/map.h>
 
 #include "core.h"
-#include "sysregs.h"
 
 void __iomem *sregs_base;
-void __iomem *scu_base_addr;
-
-static void __init highbank_scu_map_io(void)
-{
-	unsigned long base;
-
-	/* Get SCU base */
-	asm("mrc p15, 4, %0, c15, c0, 0" : "=r" (base));
-
-	scu_base_addr = ioremap(base, SZ_4K);
-}
-
 
 static void highbank_l2x0_disable(void)
 {
@@ -58,9 +44,6 @@ static void __init highbank_init_irq(void)
 {
 	irqchip_init();
 
-	if (of_find_compatible_node(NULL, NULL, "arm,cortex-a9"))
-		highbank_scu_map_io();
-
 	/* Enable PL310 L2 Cache controller */
 	if (IS_ENABLED(CONFIG_CACHE_L2X0) &&
 	    of_find_compatible_node(NULL, NULL, "arm,pl310-cache")) {
@@ -68,14 +51,6 @@ static void __init highbank_init_irq(void)
 		l2x0_of_init(0, ~0UL);
 		outer_cache.disable = highbank_l2x0_disable;
 	}
-}
-
-static void highbank_power_off(void)
-{
-	highbank_set_pwr_shutdown();
-
-	while (1)
-		cpu_do_idle();
 }
 
 static int highbank_platform_notifier(struct notifier_block *nb,
@@ -139,7 +114,6 @@ static void __init highbank_init(void)
 	sregs_base = of_iomap(np, 0);
 	WARN_ON(!sregs_base);
 
-	pm_power_off = highbank_power_off;
 	highbank_pm_init();
 
 	bus_register_notifier(&platform_bus_type, &highbank_platform_nb);
@@ -164,5 +138,4 @@ DT_MACHINE_START(HIGHBANK, "Highbank")
 	.init_irq	= highbank_init_irq,
 	.init_machine	= highbank_init,
 	.dt_compat	= highbank_match,
-	.restart	= highbank_restart,
 MACHINE_END
