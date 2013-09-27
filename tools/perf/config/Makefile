@@ -360,6 +360,13 @@ else
   endif
 endif
 
+FLAGS_BFD=$(CFLAGS) $(LDFLAGS) $(EXTLIBS) -DPACKAGE='perf' -lbfd
+has_bfd := $(call try-cc,$(SOURCE_BFD),$(FLAGS_BFD),libbfd)
+ifeq ($(has_bfd),y)
+  EXTLIBS += -lbfd
+  CFLAGS += -DLIBBFD_SUPPORT
+endif
+
 ifdef NO_DEMANGLE
   CFLAGS += -DNO_DEMANGLE
 else
@@ -367,11 +374,7 @@ else
     EXTLIBS += -liberty
     CFLAGS += -DHAVE_CPLUS_DEMANGLE
   else
-    FLAGS_BFD=$(CFLAGS) $(LDFLAGS) $(EXTLIBS) -DPACKAGE='perf' -lbfd
-    has_bfd := $(call try-cc,$(SOURCE_BFD),$(FLAGS_BFD),libbfd)
-    ifeq ($(has_bfd),y)
-      EXTLIBS += -lbfd
-    else
+    ifneq ($(has_bfd),y)
       FLAGS_BFD_IBERTY=$(FLAGS_BFD) -liberty
       has_bfd_iberty := $(call try-cc,$(SOURCE_BFD),$(FLAGS_BFD_IBERTY),liberty)
       ifeq ($(has_bfd_iberty),y)
@@ -395,10 +398,6 @@ else
       endif
     endif
   endif
-endif
-
-ifndef ($(filter -lbfd,$(EXTLIBS)),)
-  CFLAGS += -DLIBBFD_SUPPORT
 endif
 
 ifndef NO_STRLCPY
