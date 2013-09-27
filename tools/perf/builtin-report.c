@@ -591,6 +591,7 @@ static int __cmd_report(struct perf_report *rep)
 				ret = 0;
 
 		} else if (use_browser == 2) {
+#ifdef GTK2_SUPPORT
 			int (*hist_browser)(struct perf_evlist *,
 					    const char *,
 					    struct hist_browser_timer *,
@@ -604,6 +605,7 @@ static int __cmd_report(struct perf_report *rep)
 			}
 			hist_browser(session->evlist, help, NULL,
 				     rep->min_percent);
+#endif
 		}
 	} else
 		perf_evlist__tty_browse_hists(session->evlist, rep, help);

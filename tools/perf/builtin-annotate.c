@@ -142,6 +142,7 @@ find_next:
 		}
 
 		if (use_browser == 2) {
+#ifdef GTK2_SUPPORT
 			int ret;
 			int (*annotate)(struct hist_entry *he,
 					struct perf_evsel *evsel,
@@ -161,6 +162,9 @@ find_next:
 			/* skip missing symbols */
 			nd = rb_next(nd);
 		} else if (use_browser == 1) {
+#else
+			use_browser = 1;
+#endif
 			key = hist_entry__tui_annotate(he, evsel, NULL);
 			switch (key) {
 			case -1:
@@ -258,6 +262,7 @@ static int __cmd_annotate(struct perf_annotate *ann)
 		goto out_delete;
 	}
 
+#ifdef GTK2_SUPPORT
 	if (use_browser == 2) {
 		void (*show_annotations)(void);
 
@@ -269,6 +274,7 @@ static int __cmd_annotate(struct perf_annotate *ann)
 		}
 		show_annotations();
 	}
+#endif
 
 out_delete:
 	/*
