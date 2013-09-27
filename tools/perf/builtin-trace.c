@@ -1232,11 +1232,8 @@ typedef int (*tracepoint_handler)(struct trace *trace, struct perf_evsel *evsel,
 				  struct perf_sample *sample);
 
 static struct syscall *trace__syscall_info(struct trace *trace,
-					   struct perf_evsel *evsel,
-					   struct perf_sample *sample)
+					   struct perf_evsel *evsel, int id)
 {
-	int id = perf_evsel__intval(evsel, sample, "id");
-
 	if (id < 0) {
 
 		/*
@@ -1283,7 +1280,8 @@ static int trace__sys_enter(struct trace *trace, struct perf_evsel *evsel,
 	void *args;
 	size_t printed = 0;
 	struct thread *thread;
-	struct syscall *sc = trace__syscall_info(trace, evsel, sample);
+	int id = perf_evsel__intval(evsel, sample, "id");
+	struct syscall *sc = trace__syscall_info(trace, evsel, id);
 	struct thread_trace *ttrace;
 
 	if (sc == NULL)
@@ -1336,7 +1334,8 @@ static int trace__sys_exit(struct trace *trace, struct perf_evsel *evsel,
 	int ret;
 	u64 duration = 0;
 	struct thread *thread;
-	struct syscall *sc = trace__syscall_info(trace, evsel, sample);
+	int id = perf_evsel__intval(evsel, sample, "id");
+	struct syscall *sc = trace__syscall_info(trace, evsel, id);
 	struct thread_trace *ttrace;
 
 	if (sc == NULL)
