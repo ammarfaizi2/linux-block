@@ -92,8 +92,6 @@ identify_qemu_append () {
 	if test -n "$RCU_QEMU_INTERACTIVE"
 	then
 		echo root=/dev/sda
-	else
-		echo console=ttyS0
 	fi
 }
 
