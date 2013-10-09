@@ -2619,126 +2619,6 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			energy efficiency by requiring that the kthreads
 			periodically wake up to do the polling.
 
-	rcutree.blimit=	[KNL,BOOT]
-			Set maximum number of finished RCU callbacks to process
-			in one batch.
-
-	rcutree.fanout_leaf=	[KNL,BOOT]
-			Increase the number of CPUs assigned to each
-			leaf rcu_node structure.  Useful for very large
-			systems.
-
-	rcutree.jiffies_till_first_fqs= [KNL,BOOT]
-			Set delay from grace-period initialization to
-			first attempt to force quiescent states.
-			Units are jiffies, minimum value is zero,
-			and maximum value is HZ.
-
-	rcutree.jiffies_till_next_fqs= [KNL,BOOT]
-			Set delay between subsequent attempts to force
-			quiescent states.  Units are jiffies, minimum
-			value is one, and maximum value is HZ.
-
-	rcutree.qhimark=	[KNL,BOOT]
-			Set threshold of queued
-			RCU callbacks over which batch limiting is disabled.
-
-	rcutree.qlowmark=	[KNL,BOOT]
-			Set threshold of queued RCU callbacks below which
-			batch limiting is re-enabled.
-
-	rcutree.rcu_cpu_stall_suppress=	[KNL,BOOT]
-			Suppress RCU CPU stall warning messages.
-
-	rcutree.rcu_cpu_stall_timeout= [KNL,BOOT]
-			Set timeout for RCU CPU stall warning messages.
-
-	rcutree.rcu_idle_gp_delay=	[KNL,BOOT]
-			Set wakeup interval for idle CPUs that have
-			RCU callbacks (RCU_FAST_NO_HZ=y).
-
-	rcutree.rcu_idle_lazy_gp_delay=	[KNL,BOOT]
-			Set wakeup interval for idle CPUs that have
-			only "lazy" RCU callbacks (RCU_FAST_NO_HZ=y).
-			Lazy RCU callbacks are those which RCU can
-			prove do nothing more than free memory.
-
-	rcutorture.fqs_duration= [KNL,BOOT]
-			Set duration of force_quiescent_state bursts.
-
-	rcutorture.fqs_holdoff= [KNL,BOOT]
-			Set holdoff time within force_quiescent_state bursts.
-
-	rcutorture.fqs_stutter= [KNL,BOOT]
-			Set wait time between force_quiescent_state bursts.
-
-	rcutorture.irqreader= [KNL,BOOT]
-			Test RCU readers from irq handlers.
-
-	rcutorture.n_barrier_cbs= [KNL,BOOT]
-			Set callbacks/threads for rcu_barrier() testing.
-
-	rcutorture.nfakewriters= [KNL,BOOT]
-			Set number of concurrent RCU writers.  These just
-			stress RCU, they don't participate in the actual
-			test, hence the "fake".
-
-	rcutorture.nreaders= [KNL,BOOT]
-			Set number of RCU readers.
-
-	rcutorture.onoff_holdoff= [KNL,BOOT]
-			Set time (s) after boot for CPU-hotplug testing.
-
-	rcutorture.onoff_interval= [KNL,BOOT]
-			Set time (s) between CPU-hotplug operations, or
-			zero to disable CPU-hotplug testing.
-
-	rcutorture.shuffle_interval= [KNL,BOOT]
-			Set task-shuffle interval (s).  Shuffling tasks
-			allows some CPUs to go into dyntick-idle mode
-			during the rcutorture test.
-
-	rcutorture.shutdown_secs= [KNL,BOOT]
-			Set time (s) after boot system shutdown.  This
-			is useful for hands-off automated testing.
-
-	rcutorture.stall_cpu= [KNL,BOOT]
-			Duration of CPU stall (s) to test RCU CPU stall
-			warnings, zero to disable.
-
-	rcutorture.stall_cpu_holdoff= [KNL,BOOT]
-			Time to wait (s) after boot before inducing stall.
-
-	rcutorture.stat_interval= [KNL,BOOT]
-			Time (s) between statistics printk()s.
-
-	rcutorture.stutter= [KNL,BOOT]
-			Time (s) to stutter testing, for example, specifying
-			five seconds causes the test to run for five seconds,
-			wait for five seconds, and so on.  This tests RCU's
-			ability to transition abruptly to and from idle.
-
-	rcutorture.test_boost= [KNL,BOOT]
-			Test RCU priority boosting?  0=no, 1=maybe, 2=yes.
-			"Maybe" means test if the RCU implementation
-			under test support RCU priority boosting.
-
-	rcutorture.test_boost_duration= [KNL,BOOT]
-			Duration (s) of each individual boost test.
-
-	rcutorture.test_boost_interval= [KNL,BOOT]
-			Interval (s) between each boost test.
-
-	rcutorture.test_no_idle_hz= [KNL,BOOT]
-			Test RCU's dyntick-idle handling.  See also the
-			rcutorture.shuffle_interval parameter.
-
-	rcutorture.torture_type= [KNL,BOOT]
-			Specify the RCU implementation to test.
-
-	rcutorture.verbose= [KNL,BOOT]
-			Enable additional printk() statements.
-
 	rdinit=		[KNL]
 			Format: <full_path>
 			Run specified binary instead of /init from the ramdisk,
@@ -3109,6 +2989,94 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			e.g. base its process migration decisions on it.
 			Default is on.
 
+	torture.fqs_duration= [KNL,BOOT]
+			Set duration of force_quiescent_state bursts.
+
+	torture.fqs_holdoff= [KNL,BOOT]
+			Set holdoff time within force_quiescent_state bursts.
+
+	torture.fqs_stutter= [KNL,BOOT]
+			Set wait time between force_quiescent_state bursts.
+
+	torture.gp_exp= [KNL,BOOT]
+			Use expedited update-side primitives.
+
+	torture.gp_normal= [KNL,BOOT]
+			Use normal (non-expedited) update-side primitives.
+			If both gp_exp and gp_normal are set, do both.
+			If neither gp_exp or gp_normal are set, still
+			do both.
+
+	torture.n_barrier_cbs= [KNL,BOOT]
+			Set callbacks/threads for rcu_barrier() testing.
+
+	torture.nfakewriters= [KNL,BOOT]
+			Set number of concurrent RCU writers.  These just
+			stress RCU, they don't participate in the actual
+			test, hence the "fake".
+
+	torture.nreaders= [KNL,BOOT]
+			Set number of RCU readers.
+
+	torture.object_debug= [KNL,BOOT]
+			Enable debug-object double-call_rcu() testing.
+
+	torture.onoff_holdoff= [KNL,BOOT]
+			Set time (s) after boot for CPU-hotplug testing.
+
+	torture.onoff_interval= [KNL,BOOT]
+			Set time (s) between CPU-hotplug operations, or
+			zero to disable CPU-hotplug testing.
+
+	torture.rcutorture_runnable= [BOOT]
+			Start rcutorture running at boot time.
+
+	torture.shuffle_interval= [KNL,BOOT]
+			Set task-shuffle interval (s).  Shuffling tasks
+			allows some CPUs to go into dyntick-idle mode
+			during the rcutorture test.
+
+	torture.shutdown_secs= [KNL,BOOT]
+			Set time (s) after boot system shutdown.  This
+			is useful for hands-off automated testing.
+
+	torture.stall_cpu= [KNL,BOOT]
+			Duration of CPU stall (s) to test RCU CPU stall
+			warnings, zero to disable.
+
+	torture.stall_cpu_holdoff= [KNL,BOOT]
+			Time to wait (s) after boot before inducing stall.
+
+	torture.stat_interval= [KNL,BOOT]
+			Time (s) between statistics printk()s.
+
+	torture.stutter= [KNL,BOOT]
+			Time (s) to stutter testing, for example, specifying
+			five seconds causes the test to run for five seconds,
+			wait for five seconds, and so on.  This tests RCU's
+			ability to transition abruptly to and from idle.
+
+	torture.test_boost= [KNL,BOOT]
+			Test RCU priority boosting?  0=no, 1=maybe, 2=yes.
+			"Maybe" means test if the RCU implementation
+			under test support RCU priority boosting.
+
+	torture.test_boost_duration= [KNL,BOOT]
+			Duration (s) of each individual boost test.
+
+	torture.test_boost_interval= [KNL,BOOT]
+			Interval (s) between each boost test.
+
+	torture.test_no_idle_hz= [KNL,BOOT]
+			Test RCU's dyntick-idle handling.  See also the
+			torture.shuffle_interval parameter.
+
+	torture.torture_type= [KNL,BOOT]
+			Specify the RCU implementation to test.
+
+	torture.verbose= [KNL,BOOT]
+			Enable additional printk() statements.
+
 	tp720=		[HW,PS2]
 
 	tpm_suspend_pcr=[HW,TPM]
@@ -3164,6 +3132,44 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			with respect to transparent hugepages.
 			See Documentation/vm/transhuge.txt for more details.
 
+	tree.blimit=	[KNL,BOOT]
+			Set maximum number of finished RCU callbacks to process
+			in one batch.
+
+	tree.rcu_fanout_leaf=	[KNL,BOOT]
+			Increase the number of CPUs assigned to each
+			leaf rcu_node structure.  Useful for very large
+			systems.
+
+	tree.jiffies_till_first_fqs= [KNL,BOOT]
+			Set delay from grace-period initialization to
+			first attempt to force quiescent states.
+			Units are jiffies, minimum value is zero,
+			and maximum value is HZ.
+
+	tree.jiffies_till_next_fqs= [KNL,BOOT]
+			Set delay between subsequent attempts to force
+			quiescent states.  Units are jiffies, minimum
+			value is one, and maximum value is HZ.
+
+	tree.qhimark=	[KNL,BOOT]
+			Set threshold of queued
+			RCU callbacks over which batch limiting is disabled.
+
+	tree.qlowmark=	[KNL,BOOT]
+			Set threshold of queued RCU callbacks below which
+			batch limiting is re-enabled.
+
+	tree.rcu_idle_gp_delay=	[KNL,BOOT]
+			Set wakeup interval for idle CPUs that have
+			RCU callbacks (RCU_FAST_NO_HZ=y).
+
+	tree.rcu_idle_lazy_gp_delay=	[KNL,BOOT]
+			Set wakeup interval for idle CPUs that have
+			only "lazy" RCU callbacks (RCU_FAST_NO_HZ=y).
+			Lazy RCU callbacks are those which RCU can
+			prove do nothing more than free memory.
+
 	tsc=		Disable clocksource stability checks for TSC.
 			Format: <string>
 			[x86] reliable: mark tsc clocksource as reliable, this
@@ -3200,6 +3206,17 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 
 	unknown_nmi_panic
 			[X86] Cause panic on unknown NMI.
+
+	rcu.update.rcu_expedited= [KNL,BOOT]
+			Use expedited grace-period primitives, for
+			example, synchronize_rcu_expedited() instead
+			of synchronize_rcu().
+
+	update.rcu_cpu_stall_suppress=	[KNL,BOOT]
+			Suppress RCU CPU stall warning messages.
+
+	update.rcu_cpu_stall_timeout= [KNL,BOOT]
+			Set timeout for RCU CPU stall warning messages.
 
 	usbcore.authorized_default=
 			[USB] Default USB device authorization:
