@@ -138,6 +138,12 @@ boot_args="`rcutorture_param_n_barrier_cbs "$boot_args"`"
 # Pull in Kconfig-fragment boot parameters
 boot_args="`configfrag_boot_params "$boot_args" "$config_template"`"
 
+# Adjust for rcutorture source-code location in Linux source tree
+if test -e $builddir/kernel/rcu/torture.c
+then
+	boot_args="`echo "$boot_args" | sed -e 's/rcutorture\./torture./g'`"
+fi
+
 echo $QEMU $qemu_args -m 512 -kernel $builddir/arch/x86/boot/bzImage -append \"$qemu_append rcutorture.stat_interval=15 rcutorture.shutdown_secs=$seconds rcutorture.rcutorture_runnable=1 $boot_args\" > $resdir/qemu-cmd
 $QEMU $qemu_args -m 512 -kernel $builddir/arch/x86/boot/bzImage -append "$qemu_append rcutorture.stat_interval=15 rcutorture.shutdown_secs=$seconds rcutorture.rcutorture_runnable=1 $boot_args" &
 qemu_pid=$!
