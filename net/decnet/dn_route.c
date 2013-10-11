@@ -344,8 +344,9 @@ static int dn_insert_route(struct dn_route *rt, unsigned int hash, struct dn_rou
 		if (compare_keys(&rth->fld, &rt->fld)) {
 			/* Put it first */
 			*rthp = rth->dst.dn_next;
-			rcu_assign_pointer(rth->dst.dn_next,
-					   dn_rt_hash_table[hash].chain);
+			/* Both --rcu and visible, so ACCESS_ONCE() is OK. */
+			ACCESS_ONCE(rth->dst.dn_next) =
+					   dn_rt_hash_table[hash].chain;
 			rcu_assign_pointer(dn_rt_hash_table[hash].chain, rth);
 
 			dst_use(&rth->dst, now);
@@ -358,7 +359,8 @@ static int dn_insert_route(struct dn_route *rt, unsigned int hash, struct dn_rou
 		rthp = &rth->dst.dn_next;
 	}
 
-	rcu_assign_pointer(rt->dst.dn_next, dn_rt_hash_table[hash].chain);
+	/* Both --rcu and visible, so ACCESS_ONCE() is OK. */
+	ACCESS_ONCE(rt->dst.dn_next) = dn_rt_hash_table[hash].chain;
 	rcu_assign_pointer(dn_rt_hash_table[hash].chain, rt);
 
 	dst_use(&rt->dst, now);
