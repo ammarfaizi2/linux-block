@@ -1667,7 +1667,8 @@ void bond_alb_handle_active_change(struct bonding *bond, struct slave *new_slave
 	}
 
 	swap_slave = bond->curr_active_slave;
-	rcu_assign_pointer(bond->curr_active_slave, new_slave);
+	/* Both --rcu and visible, so ACCESS_ONCE() is OK. */
+	ACCESS_ONCE(bond->curr_active_slave) = new_slave;
 
 	if (!new_slave || list_empty(&bond->slave_list))
 		return;
