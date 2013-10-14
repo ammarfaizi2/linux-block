@@ -20,16 +20,16 @@
 
 #include "ath9k.h"
 #include "dfs_debug.h"
+#include "dfs_pattern_detector.h"
 
-
-struct ath_dfs_pool_stats global_dfs_pool_stats = { 0 };
+static struct ath_dfs_pool_stats dfs_pool_stats = { 0 };
 
 #define ATH9K_DFS_STAT(s, p) \
 	len += snprintf(buf + len, size - len, "%28s : %10u\n", s, \
 			sc->debug.stats.dfs_stats.p);
 #define ATH9K_DFS_POOL_STAT(s, p) \
 	len += snprintf(buf + len, size - len, "%28s : %10u\n", s, \
-			global_dfs_pool_stats.p);
+			 dfs_pool_stats.p);
 
 static ssize_t read_file_dfs(struct file *file, char __user *user_buf,
 			     size_t count, loff_t *ppos)
@@ -44,10 +44,13 @@ static ssize_t read_file_dfs(struct file *file, char __user *user_buf,
 	if (buf == NULL)
 		return -ENOMEM;
 
+	if (sc->dfs_detector)
+		dfs_pool_stats = sc->dfs_detector->get_stats(sc->dfs_detector);
+
 	len += snprintf(buf + len, size - len, "DFS support for "
-			"macVersion = 0x%x, macRev = 0x%x: %s\n",
-			hw_ver->macVersion, hw_ver->macRev,
-			(sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_DFS) ?
+			 "macVersion = 0x%x, macRev = 0x%x: %s\n",
+			 hw_ver->macVersion, hw_ver->macRev,
+			 (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_DFS) ?
 					"enabled" : "disabled");
 	len += snprintf(buf + len, size - len, "Pulse detector statistics:\n");
 	ATH9K_DFS_STAT("pulse events reported   ", pulses_total);
