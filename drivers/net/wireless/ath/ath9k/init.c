@@ -601,7 +601,8 @@ static int ath9k_init_softc(u16 devid, struct ath_softc *sc,
 	atomic_set(&ah->intr_ref_cnt, -1);
 	sc->sc_ah = ah;
 
-	sc->dfs_detector = dfs_pattern_detector_init(ah, NL80211_DFS_UNSET);
+	common = ath9k_hw_common(ah);
+	sc->dfs_detector = dfs_pattern_detector_init(common, NL80211_DFS_UNSET);
 
 	if (!pdata) {
 		ah->ah_flags |= AH_USE_EEPROM;
@@ -615,7 +616,6 @@ static int ath9k_init_softc(u16 devid, struct ath_softc *sc,
 		ah->external_reset = pdata->external_reset;
 	}
 
-	common = ath9k_hw_common(ah);
 	common->ops = &ah->reg_ops;
 	common->bus_ops = bus_ops;
 	common->ah = ah;
