@@ -771,7 +771,8 @@ static void perf_event__process_sample(struct perf_tool *tool,
 		    sample->callchain) {
 			err = machine__resolve_callchain(machine, evsel,
 							 al.thread, sample,
-							 &parent, &al);
+							 &parent, &al,
+							 PERF_MAX_STACK_DEPTH);
 			if (err)
 				return;
 		}
