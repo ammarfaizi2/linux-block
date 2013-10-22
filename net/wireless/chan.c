@@ -432,6 +432,7 @@ static bool cfg80211_secondary_chans_ok(struct wiphy *wiphy,
 {
 	struct ieee80211_channel *c;
 	u32 freq, start_freq, end_freq;
+	u32 ignore_flags;
 
 	start_freq = cfg80211_get_start_freq(center_freq, bandwidth);
 	end_freq = cfg80211_get_end_freq(center_freq, bandwidth);
@@ -441,13 +442,28 @@ static bool cfg80211_secondary_chans_ok(struct wiphy *wiphy,
 		if (!c)
 			return false;
 
+		ignore_flags = IEEE80211_CHAN_RADAR;
+
 		/* check for radar flags */
-		if ((prohibited_flags & c->flags & IEEE80211_CHAN_RADAR) &&
-		    (c->dfs_state != NL80211_DFS_AVAILABLE))
-			return false;
+		if (prohibited_flags & c->flags & IEEE80211_CHAN_RADAR) {
+			if (c->dfs_state != NL80211_DFS_AVAILABLE)
+				return false;
+			/*
+			 * If DFS is required we should check only
+			 * c->dfs_state == NL80211_DFS_AVAILABLE and
+			 * ignore IEEE80211_CHAN_NO_IBSS and
+			 * IEEE80211_CHAN_PASSIVE_SCAN flags
+			 */
+			ignore_flags |= IEEE80211_CHAN_NO_IBSS |
+					IEEE80211_CHAN_PASSIVE_SCAN;
+		}
+
+		WARN_ON(ignore_flags & ~(IEEE80211_CHAN_RADAR |
+					 IEEE80211_CHAN_NO_IBSS |
+					 IEEE80211_CHAN_PASSIVE_SCAN));
 
 		/* check for the other flags */
-		if (c->flags & prohibited_flags & ~IEEE80211_CHAN_RADAR)
+		if (c->flags & prohibited_flags & ~ignore_flags)
 			return false;
 	}
 
