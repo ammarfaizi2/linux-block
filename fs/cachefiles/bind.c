@@ -346,10 +346,9 @@ void cachefiles_daemon_unbind(struct cachefiles_cache *cache)
 		fscache_withdraw_cache(&cache->cache);
 	}
 
-	/* Delete the .lock file. */
-	/* If bind() got as far as determining the root dir
-	 * (It may not have) */
-	if (cache->root) {
+	/* Delete the .lock file, if the cache is not dirty
+	 * and bind() got at least as far as determining the root dir. */
+	if (cache->root && !test_bit(CACHEFILES_NEED_FSCK, &cache->flags)) {
 		dentry = cachefiles_lookup_file(cache->root, ".lock");
 		if (IS_ERR(dentry)) {
 			pr_err("Error, could not lookup .lock file");
