@@ -1118,6 +1118,8 @@ lookup_error:
 /*
  * cull an object if it's not in use
  * - called only by cache manager daemon
+ * - NB: This function is also used to cull non-cache objects,
+ *   if any sneak into the cache directory.
  */
 int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 		    char *filename)
@@ -1142,12 +1144,22 @@ int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 
 	slot = cachefiles_read_cull_slot(cache, victim);
 
+	if (cachefiles_cx_validate_slot(cache, victim, slot) < 0)
+		slot = CACHEFILES_NO_CULL_SLOT;
+
+	/* Here's the cross-roads:
+	 * If this is a valid cache object, refuse to delete it if it is a non-empty dir.
+	 * If it is invalid, try to delete it regardless. */
+	if (slot == CACHEFILES_NO_CULL_SLOT &&
+	    S_ISDIR(victim->d_inode->i_mode) && !simple_empty(victim)) {
+		_debug("victim is a valid, non-empty dir. Refusing to cull.");
+		ret = -ENOTEMPTY;
+		goto error;
+	}
+
 	ret = cachefiles_remove_object_xattr(cache, victim);
 	if (ret < 0)
 		goto error_unlock;
-
-	if (cachefiles_cx_validate_slot(cache, victim, slot) < 0)
-		slot = CACHEFILES_NO_CULL_SLOT;
 
 	cachefiles_cx_clear_slot(cache, slot);
 
@@ -1167,6 +1179,12 @@ error_unlock:
 	mutex_unlock(&dir->d_inode->i_mutex);
 error:
 	dput(victim);
+	if (ret == -ENOTEMPTY) {
+		/* Tried to delete a non-empty dir. */
+		_leave(" = -ENOTEMPTY");
+		return ret;
+	}
+
 	if (ret == -ENOENT) {
 		/* file or dir now absent - probably retired by netfs */
 		_leave(" = -ESTALE [absent]");
