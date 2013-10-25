@@ -2468,6 +2468,9 @@ enum {
 
 	/* filesystem does not support filling holes */
 	DIO_SKIP_HOLES	= 0x02,
+
+	/* inode/fs/bdev does not need truncate protection */
+	DIO_IGNORE_TRUNCATE = 0x04,
 };
 
 void dio_end_io(struct bio *bio, int error);
@@ -2488,7 +2491,8 @@ static inline ssize_t blockdev_direct_IO(int rw, struct kiocb *iocb,
 #endif
 
 void inode_dio_wait(struct inode *inode);
-void inode_dio_done(struct inode *inode);
+void inode_dio_done(struct inode *inode, int dio_flags);
+void inode_dio_start(struct inode *inode, int dio_flags);
 
 extern const struct file_operations generic_ro_fops;
 

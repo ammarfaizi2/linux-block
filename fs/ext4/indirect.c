@@ -683,14 +683,14 @@ retry:
 		smp_mb();
 		if (unlikely(ext4_test_inode_state(inode,
 						    EXT4_STATE_DIOREAD_LOCK))) {
-			inode_dio_done(inode);
+			inode_dio_done(inode, 0);
 			goto locked;
 		}
 		ret = __blockdev_direct_IO(rw, iocb, inode,
 				 inode->i_sb->s_bdev, iov,
 				 offset, nr_segs,
 				 ext4_get_block, NULL, NULL, 0);
-		inode_dio_done(inode);
+		inode_dio_done(inode, 0);
 	} else {
 locked:
 		ret = blockdev_direct_IO(rw, iocb, inode, iov,

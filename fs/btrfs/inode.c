@@ -7238,7 +7238,7 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 			goto out;
 	} else if (unlikely(test_bit(BTRFS_INODE_READDIO_NEED_LOCK,
 				     &BTRFS_I(inode)->runtime_flags))) {
-		inode_dio_done(inode);
+		inode_dio_done(inode, 0);
 		flags = DIO_LOCKING | DIO_SKIP_HOLES;
 		wakeup = false;
 	}
@@ -7258,7 +7258,7 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 	}
 out:
 	if (wakeup)
-		inode_dio_done(inode);
+		inode_dio_done(inode, 0);
 	if (relock)
 		mutex_lock(&inode->i_mutex);
 

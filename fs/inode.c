@@ -1854,6 +1854,20 @@ void inode_dio_wait(struct inode *inode)
 }
 EXPORT_SYMBOL(inode_dio_wait);
 
+void inode_dio_start(struct inode *inode, int dio_flags)
+{
+	if (!(dio_flags & DIO_IGNORE_TRUNCATE))
+		atomic_inc(&inode->i_dio_count);
+}
+
+static int inode_dio_dec(struct inode *inode, int dio_flags)
+{
+	if (!(dio_flags & DIO_IGNORE_TRUNCATE))
+		return atomic_dec_and_test(&inode->i_dio_count);
+
+	return 0;
+}
+
 /*
  * inode_dio_done - signal finish of a direct I/O requests
  * @inode: inode the direct I/O happens on
@@ -1861,9 +1875,9 @@ EXPORT_SYMBOL(inode_dio_wait);
  * This is called once we've finished processing a direct I/O request,
  * and is used to wake up callers waiting for direct I/O to be quiesced.
  */
-void inode_dio_done(struct inode *inode)
+void inode_dio_done(struct inode *inode, int dio_flags)
 {
-	if (atomic_dec_and_test(&inode->i_dio_count))
+	if (inode_dio_dec(inode, dio_flags))
 		wake_up_bit(&inode->i_state, __I_DIO_WAKEUP);
 }
 EXPORT_SYMBOL(inode_dio_done);

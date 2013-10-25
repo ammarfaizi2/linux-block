@@ -476,7 +476,7 @@ out:
 static void nfs_inode_dio_write_done(struct inode *inode)
 {
 	nfs_zap_mapping(inode, inode->i_mapping);
-	inode_dio_done(inode);
+	inode_dio_done(inode, 0);
 }
 
 #if IS_ENABLED(CONFIG_NFS_V3) || IS_ENABLED(CONFIG_NFS_V4)
@@ -833,7 +833,7 @@ static ssize_t nfs_direct_write_schedule_iovec(struct nfs_direct_req *dreq,
 	 * generic layer handle the completion.
 	 */
 	if (requested_bytes == 0) {
-		inode_dio_done(inode);
+		inode_dio_done(inode, 0);
 		nfs_direct_req_release(dreq);
 		return result < 0 ? result : -EIO;
 	}
