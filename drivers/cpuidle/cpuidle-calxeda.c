@@ -24,6 +24,8 @@
 #include <linux/cpu_pm.h>
 #include <linux/init.h>
 #include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/of.h>
 #include <linux/platform_device.h>
 #include <asm/cpuidle.h>
 #include <asm/suspend.h>
@@ -67,15 +69,26 @@ static struct cpuidle_driver calxeda_idle_driver = {
 
 static int __init calxeda_cpuidle_probe(struct platform_device *pdev)
 {
-	return cpuidle_register(&calxeda_idle_driver, NULL);
+	if (psci_ops.cpu_suspend)
+		return cpuidle_register(&calxeda_idle_driver, NULL);
+	else
+		return -ENODEV;
 }
+
+static const struct of_device_id calxeda_cpuidle_of_match[] __initconst = {
+	{ .compatible = "calxeda,highbank" },
+	{},
+};
+MODULE_DEVICE_TABLE(of, calxeda_cpuidle_of_match);
 
 static struct platform_driver calxeda_cpuidle_plat_driver = {
         .driver = {
                 .name = "cpuidle-calxeda",
                 .owner = THIS_MODULE,
+		.of_match_table = calxeda_cpuidle_of_match,
+
         },
         .probe = calxeda_cpuidle_probe,
 };
 
-module_platform_driver(calxeda_cpuidle_plat_driver);
+module_platform_driver_match_and_probe(calxeda_cpuidle_plat_driver, calxeda_cpuidle_probe);

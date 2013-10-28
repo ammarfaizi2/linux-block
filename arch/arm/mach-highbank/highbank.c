@@ -26,7 +26,6 @@
 #include <linux/amba/bus.h>
 #include <linux/platform_device.h>
 
-#include <asm/psci.h>
 #include <asm/hardware/cache-l2x0.h>
 #include <asm/mach/arch.h>
 
@@ -101,10 +100,6 @@ static struct notifier_block highbank_platform_nb = {
 	.notifier_call = highbank_platform_notifier,
 };
 
-static struct platform_device highbank_cpuidle_device = {
-	.name = "cpuidle-calxeda",
-};
-
 static void __init highbank_init(void)
 {
 	struct device_node *np;
@@ -120,9 +115,6 @@ static void __init highbank_init(void)
 	bus_register_notifier(&amba_bustype, &highbank_amba_nb);
 
 	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
-
-	if (psci_ops.cpu_suspend)
-		platform_device_register(&highbank_cpuidle_device);
 }
 
 static const char *highbank_match[] __initconst = {
