@@ -12,6 +12,7 @@
 #define _PLATFORM_DEVICE_H_
 
 #include <linux/device.h>
+#include <linux/err.h>
 #include <linux/mod_devicetable.h>
 
 #define PLATFORM_DEVID_NONE	(-1)
@@ -240,6 +241,28 @@ extern struct platform_device *platform_create_bundle(
 	struct platform_driver *driver, int (*probe)(struct platform_device *),
 	struct resource *res, unsigned int n_res,
 	const void *data, size_t size);
+
+/*
+ * module_platform_driver_match_and_probe() - Helper macro for drivers without
+ * a bus device node and need to match on an arbitrary compatible property.
+ * This eliminates a lot of boilerplate.  Each module may only use this macro
+ * once, and calling it replaces module_init() and module_exit()
+ */
+#define module_platform_driver_match_and_probe(__platform_driver, __platform_probe) \
+static int __init __platform_driver##_init(void) \
+{ \
+	if (of_find_matching_node(NULL, (__platform_driver).driver.of_match_table)) \
+		return PTR_ERR_OR_ZERO(platform_create_bundle(&(__platform_driver), \
+			__platform_probe, NULL, 0, NULL, 0)); \
+	else \
+		return -ENODEV;	\
+} \
+module_init(__platform_driver##_init); \
+static void __exit __platform_driver##_exit(void) \
+{ \
+	platform_driver_unregister(&(__platform_driver)); \
+} \
+module_exit(__platform_driver##_exit);
 
 /* early platform driver interface */
 struct early_platform_driver {
