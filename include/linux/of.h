@@ -592,6 +592,18 @@ static inline int of_property_read_u32(const struct device_node *np,
 		s;						\
 		s = of_prop_next_string(prop, s))
 
+#define of_initcall_match(__func, __lvl, __match) \
+static int __init __func##_init(void) \
+{ \
+	if (of_find_matching_node(NULL, __match)) \
+		return __func(); \
+	else \
+		return -ENODEV;	\
+} \
+__lvl(__func##_init);
+
+#define of_module_init_match(__func, __match) of_initcall_match(__func, module_init, __match)
+
 #if defined(CONFIG_PROC_FS) && defined(CONFIG_PROC_DEVICETREE)
 extern void proc_device_tree_add_node(struct device_node *, struct proc_dir_entry *);
 extern void proc_device_tree_add_prop(struct proc_dir_entry *pde, struct property *prop);
