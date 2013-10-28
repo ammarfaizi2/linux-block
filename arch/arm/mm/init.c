@@ -238,6 +238,10 @@ void __init setup_dma_zone(const struct machine_desc *mdesc)
 	if (mdesc->dma_zone_size) {
 		arm_dma_zone_size = mdesc->dma_zone_size;
 		arm_dma_limit = PHYS_OFFSET + arm_dma_zone_size - 1;
+	} else if (IS_ENABLED(CONFIG_ARM_LPAE) &&
+		   (get_num_physpages() > phys_to_pfn(~0UL)) {
+		arm_dma_zone_size = 4ULL * SZ_1G;
+		arm_dma_limit = PHYS_OFFSET + arm_dma_zone_size - 1;
 	} else
 		arm_dma_limit = 0xffffffff;
 #endif
