@@ -16,6 +16,7 @@
 
 #include <linux/cpu_pm.h>
 #include <linux/init.h>
+#include <linux/of.h>
 #include <linux/suspend.h>
 
 #include <asm/suspend.h>
@@ -49,10 +50,18 @@ static const struct platform_suspend_ops highbank_pm_ops = {
 	.valid = suspend_valid_only_mem,
 };
 
-void __init highbank_pm_init(void)
+int __init highbank_pm_init(void)
 {
 	if (!psci_ops.cpu_suspend)
-		return;
+		return -ENODEV;
 
 	suspend_set_ops(&highbank_pm_ops);
+	return 0;
 }
+
+static const struct of_device_id of_match[] __initconst = {
+	{ .compatible = "calxeda,highbank" },
+	{ .compatible = "calxeda,ecx-2000" },
+	{},
+};
+of_module_init_match(highbank_pm_init, of_match);

@@ -109,8 +109,6 @@ static void __init highbank_init(void)
 	sregs_base = of_iomap(np, 0);
 	WARN_ON(!sregs_base);
 
-	highbank_pm_init();
-
 	bus_register_notifier(&platform_bus_type, &highbank_platform_nb);
 	bus_register_notifier(&amba_bustype, &highbank_amba_nb);
 
