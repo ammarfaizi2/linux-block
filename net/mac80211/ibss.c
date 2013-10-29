@@ -213,7 +213,7 @@ error:
 
 static void __ieee80211_sta_join_ibss(struct ieee80211_sub_if_data *sdata,
 				      const u8 *bssid, const int beacon_int,
-				      struct ieee80211_channel *chan,
+				      struct cfg80211_chan_def *req_chandef,
 				      const u32 basic_rates,
 				      const u16 capability, u64 tsf,
 				      bool creator)
@@ -225,6 +225,7 @@ static void __ieee80211_sta_join_ibss(struct ieee80211_sub_if_data *sdata,
 	struct cfg80211_bss *bss;
 	u32 bss_change;
 	struct cfg80211_chan_def chandef;
+	struct ieee80211_channel *chan;
 	struct beacon_data *presp;
 	enum nl80211_bss_scan_width scan_width;
 	bool have_higher_than_11mbit;
@@ -258,7 +259,9 @@ static void __ieee80211_sta_join_ibss(struct ieee80211_sub_if_data *sdata,
 
 	sdata->drop_unencrypted = capability & WLAN_CAPABILITY_PRIVACY ? 1 : 0;
 
-	chandef = ifibss->chandef;
+	/* make a copy of the chandef, it could be modified below. */
+	chandef = *req_chandef;
+	chan = chandef.chan;
 	if (!cfg80211_reg_can_beacon(local->hw.wiphy, &chandef)) {
 		if (chandef.width == NL80211_CHAN_WIDTH_5 ||
 		    chandef.width == NL80211_CHAN_WIDTH_10 ||
