@@ -13,21 +13,14 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/clocksource.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>
-#include <linux/irqchip.h>
 #include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
 #include <linux/of_address.h>
 #include <linux/amba/bus.h>
 #include <linux/platform_device.h>
 
 #include <asm/hardware/cache-l2x0.h>
-#include <asm/mach/arch.h>
 
 #include "core.h"
 
@@ -39,18 +32,22 @@ static void highbank_l2x0_disable(void)
 	highbank_smc1(0x102, 0x0);
 }
 
-static void __init highbank_init_irq(void)
+static int __init highbank_init_cache(void)
 {
-	irqchip_init();
-
 	/* Enable PL310 L2 Cache controller */
-	if (IS_ENABLED(CONFIG_CACHE_L2X0) &&
-	    of_find_compatible_node(NULL, NULL, "arm,pl310-cache")) {
-		highbank_smc1(0x102, 0x1);
-		l2x0_of_init(0, ~0UL);
-		outer_cache.disable = highbank_l2x0_disable;
-	}
+	if (!IS_ENABLED(CONFIG_CACHE_L2X0))
+		return -ENODEV;
+
+	highbank_smc1(0x102, 0x1);
+	l2x0_of_init(0, ~0UL);	outer_cache.disable = highbank_l2x0_disable;
+	return 0;
 }
+
+static const struct of_device_id pl310_match[] __initconst = {
+	{ .compatible = "arm,pl310-cache" },
+	{},
+};
+of_initcall_match(highbank_init_cache, arch_initcall, pl310_match);
 
 static int highbank_platform_notifier(struct notifier_block *nb,
 				  unsigned long event, void *__dev)
@@ -100,7 +97,7 @@ static struct notifier_block highbank_platform_nb = {
 	.notifier_call = highbank_platform_notifier,
 };
 
-static void __init highbank_init(void)
+static int __init highbank_init(void)
 {
 	struct device_node *np;
 
@@ -112,20 +109,12 @@ static void __init highbank_init(void)
 	bus_register_notifier(&platform_bus_type, &highbank_platform_nb);
 	bus_register_notifier(&amba_bustype, &highbank_amba_nb);
 
-	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
+	return 0;
 }
 
-static const char *highbank_match[] __initconst = {
-	"calxeda,highbank",
-	"calxeda,ecx-2000",
-	NULL,
+static const struct of_device_id highbank_match[] __initconst = {
+	{ .compatible = "calxeda,highbank" },
+	{ .compatible = "calxeda,ecx-2000" },
+	{},
 };
-
-DT_MACHINE_START(HIGHBANK, "Highbank")
-#if defined(CONFIG_ZONE_DMA) && defined(CONFIG_ARM_LPAE)
-	.dma_zone_size	= (4ULL * SZ_1G),
-#endif
-	.init_irq	= highbank_init_irq,
-	.init_machine	= highbank_init,
-	.dt_compat	= highbank_match,
-MACHINE_END
+of_initcall_match(highbank_init, subsys_initcall, highbank_match);
