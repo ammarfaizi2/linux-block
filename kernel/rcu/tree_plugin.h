@@ -363,8 +363,8 @@ void rcu_read_unlock_special(struct task_struct *t)
 		rcu_preempt_qs(smp_processor_id());
 	}
 
-	/* Hardware IRQ handlers cannot block. */
-	if (in_irq() || in_serving_softirq()) {
+	/* Hardware IRQ handlers cannot block, complain if they get here. */
+	if (WARN_ON_ONCE(in_irq() || in_serving_softirq())) {
 		local_irq_restore(flags);
 		return;
 	}
