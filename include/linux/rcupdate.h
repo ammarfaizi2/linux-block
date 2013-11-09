@@ -325,6 +325,7 @@ static inline void rcu_lock_release(struct lockdep_map *map)
 extern struct lockdep_map rcu_lock_map;
 extern struct lockdep_map rcu_bh_lock_map;
 extern struct lockdep_map rcu_sched_lock_map;
+extern struct lockdep_map rcu_callback_map;
 extern int debug_lockdep_rcu_enabled(void);
 
 /**
@@ -506,8 +507,17 @@ static inline void rcu_preempt_sleep_check(void)
 #ifdef __CHECKER__
 #define rcu_dereference_sparse(p, space) \
 	((void)(((typeof(*p) space *)p) == p))
+/* The dummy first argument in __rcu_assign_pointer_typecheck makes the
+ * typechecked pointer the second argument, matching rcu_assign_pointer itself;
+ * this avoids confusion about argument numbers in warning messages. */
+#define __rcu_assign_pointer_check_kernel(v) \
+	do { \
+		extern void __rcu_assign_pointer_typecheck(int, typeof(*(v)) __kernel *); \
+		__rcu_assign_pointer_typecheck(0, v); \
+	} while (0)
 #else /* #ifdef __CHECKER__ */
 #define rcu_dereference_sparse(p, space)
+#define __rcu_assign_pointer_check_kernel(v) do { } while (0)
 #endif /* #else #ifdef __CHECKER__ */
 
 #define __rcu_access_pointer(p, space) \
@@ -551,7 +561,8 @@ static inline void rcu_preempt_sleep_check(void)
 #define __rcu_assign_pointer(p, v, space) \
 	do { \
 		smp_wmb(); \
-		(p) = (typeof(*v) __force space *)(v); \
+		__rcu_assign_pointer_check_kernel(v); \
+		ACCESS_ONCE(p) = (typeof(*(v)) __force space *)(v); \
 	} while (0)
 
 
@@ -911,6 +922,14 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  * rcu_assign_pointer() is a very bad thing that results in
  * impossible-to-diagnose memory corruption.  So please be careful.
  * See the RCU_INIT_POINTER() comment header for details.
+ *
+ * Note that rcu_assign_pointer() evaluates each of its arguments only
+ * once, appearances notwithstanding.  One of the "extra" evaluations
+ * is in typeof() and the other visible only to sparse (__CHECKER__),
+ * neither of which actually execute the argument.  As with most cpp
+ * macros, this execute-arguments-only-once property is important, so
+ * please be careful when making changes to rcu_assign_pointer() and the
+ * other macros that it invokes.
  */
 #define rcu_assign_pointer(p, v) \
 	__rcu_assign_pointer((p), (v), __rcu)
