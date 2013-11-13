@@ -19,7 +19,7 @@
 extern const struct ieee80211_regdomain __rcu *cfg80211_regdomain;
 
 bool is_world_regdom(const char *alpha2);
-bool reg_supported_dfs_region(u8 dfs_region);
+bool reg_supported_dfs_region(enum nl80211_dfs_regions dfs_region);
 
 int regulatory_hint_user(const char *alpha2,
 			 enum nl80211_user_reg_hint_type user_reg_hint_type);
