@@ -1557,7 +1557,7 @@ static void ath10k_reg_notifier(struct wiphy *wiphy,
 	ath_reg_notifier_apply(wiphy, request, &ar->ath_common.regulatory);
 
 	if (config_enabled(CONFIG_ATH10K_DFS_CERTIFIED) && ar->dfs_detector) {
-		ath10k_dbg(ATH10K_DBG_REGULATORY, "dfs region 0x%X\n",
+		ath10k_dbg(ATH10K_DBG_REGULATORY, "dfs region 0x%x\n",
 			   request->dfs_region);
 		result = ar->dfs_detector->set_dfs_domain(ar->dfs_detector,
 							  request->dfs_region);
@@ -3424,12 +3424,14 @@ static const struct ieee80211_iface_limit ath10k_if_limits[] = {
 	},
 };
 
+#ifdef CONFIG_ATH10K_DFS_CERTIFIED
 static const struct ieee80211_iface_limit ath10k_if_dfs_limits[] = {
 	{
 	.max	= 8,
 	.types	= BIT(NL80211_IFTYPE_AP)
 	},
 };
+#endif
 
 static const struct ieee80211_iface_combination ath10k_if_comb[] = {
 	{
@@ -3439,6 +3441,7 @@ static const struct ieee80211_iface_combination ath10k_if_comb[] = {
 		.num_different_channels = 1,
 		.beacon_int_infra_match = true,
 	},
+#ifdef CONFIG_ATH10K_DFS_CERTIFIED
 	{
 		.limits = ath10k_if_dfs_limits,
 		.n_limits = ARRAY_SIZE(ath10k_if_dfs_limits),
@@ -3450,6 +3453,7 @@ static const struct ieee80211_iface_combination ath10k_if_comb[] = {
 					BIT(NL80211_CHAN_WIDTH_40) |
 					BIT(NL80211_CHAN_WIDTH_80),
 	}
+#endif
 };
 
 static struct ieee80211_sta_vht_cap ath10k_create_vht_cap(struct ath10k *ar)

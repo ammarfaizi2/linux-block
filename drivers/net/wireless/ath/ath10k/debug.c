@@ -21,14 +21,6 @@
 #include "core.h"
 #include "debug.h"
 
-#define ATH10K_DFS_STAT(s, p) (\
-	len += scnprintf(buf + len, size - len, "%28s : %10u\n", s, \
-			 ar->debug.dfs_stats.p))
-
-#define ATH10K_DFS_POOL_STAT(s, p) (\
-	len += scnprintf(buf + len, size - len, "%28s : %10u\n", s, \
-			 ar->debug.dfs_pool_stats.p))
-
 /* ms */
 #define ATH10K_DEBUG_HTT_STATS_INTERVAL 1000
 
@@ -665,10 +657,19 @@ static const struct file_operations fops_simulate_radar = {
 	.llseek = default_llseek,
 };
 
-static ssize_t ath10k_read_file_dfs(struct file *file, char __user *user_buf,
-				    size_t count, loff_t *ppos)
+#define ATH10K_DFS_STAT(s, p) (\
+	len += scnprintf(buf + len, size - len, "%-28s : %10u\n", s, \
+			 ar->debug.dfs_stats.p))
+
+#define ATH10K_DFS_POOL_STAT(s, p) (\
+	len += scnprintf(buf + len, size - len, "%-28s : %10u\n", s, \
+			 ar->debug.dfs_pool_stats.p))
+
+static ssize_t ath10k_read_dfs_stats(struct file *file, char __user *user_buf,
+				     size_t count, loff_t *ppos)
 {
-	int retval = 0, size = 8000, len = 0;
+	int retval = 0, len = 0;
+	const int size = 8000;
 	struct ath10k *ar = file->private_data;
 	char *buf;
 
@@ -681,23 +682,25 @@ static ssize_t ath10k_read_file_dfs(struct file *file, char __user *user_buf,
 		goto exit;
 	}
 
-	ar->debug.dfs_pool_stats = ar->dfs_detector->get_stats(ar->dfs_detector);
+	ar->debug.dfs_pool_stats =
+			ar->dfs_detector->get_stats(ar->dfs_detector);
 
 	len += scnprintf(buf + len, size - len, "Pulse detector statistics:\n");
-	ATH10K_DFS_STAT("reported phy errors     ", phy_errors);
-	ATH10K_DFS_STAT("pulse events reported   ", pulses_total);
-	ATH10K_DFS_STAT("DFS pulses detected     ", pulses_detected);
-	ATH10K_DFS_STAT("DFS pulses discarded    ", pulses_discarded);
-	ATH10K_DFS_STAT("Radars detected         ", radar_detected);
+
+	ATH10K_DFS_STAT("reported phy errors", phy_errors);
+	ATH10K_DFS_STAT("pulse events reported", pulses_total);
+	ATH10K_DFS_STAT("DFS pulses detected", pulses_detected);
+	ATH10K_DFS_STAT("DFS pulses discarded", pulses_discarded);
+	ATH10K_DFS_STAT("Radars detected", radar_detected);
 
 	len += scnprintf(buf + len, size - len, "Global Pool statistics:\n");
-	ATH10K_DFS_POOL_STAT("Pool references         ", pool_reference);
-	ATH10K_DFS_POOL_STAT("Pulses allocated        ", pulse_allocated);
-	ATH10K_DFS_POOL_STAT("Pulses alloc error      ", pulse_alloc_error);
-	ATH10K_DFS_POOL_STAT("Pulses in use           ", pulse_used);
-	ATH10K_DFS_POOL_STAT("Seqs. allocated         ", pseq_allocated);
-	ATH10K_DFS_POOL_STAT("Seqs. alloc error       ", pseq_alloc_error);
-	ATH10K_DFS_POOL_STAT("Seqs. in use            ", pseq_used);
+	ATH10K_DFS_POOL_STAT("Pool references", pool_reference);
+	ATH10K_DFS_POOL_STAT("Pulses allocated", pulse_allocated);
+	ATH10K_DFS_POOL_STAT("Pulses alloc error", pulse_alloc_error);
+	ATH10K_DFS_POOL_STAT("Pulses in use", pulse_used);
+	ATH10K_DFS_POOL_STAT("Seqs. allocated", pseq_allocated);
+	ATH10K_DFS_POOL_STAT("Seqs. alloc error", pseq_alloc_error);
+	ATH10K_DFS_POOL_STAT("Seqs. in use", pseq_used);
 
 exit:
 	if (len > size)
@@ -710,7 +713,7 @@ exit:
 }
 
 static const struct file_operations fops_dfs_stats = {
-	.read = ath10k_read_file_dfs,
+	.read = ath10k_read_dfs_stats,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,

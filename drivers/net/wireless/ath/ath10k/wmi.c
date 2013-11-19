@@ -1428,8 +1428,7 @@ static void ath10k_dfs_radar_report(struct ath10k *ar,
 	width = MS(reg1, RADAR_REPORT_REG1_PULSE_DUR);
 	rssi = event->hdr.rssi_combined;
 
-	/*
-	 * hardware store this as 8 bit signed value,
+	/* hardware store this as 8 bit signed value,
 	 * set to zero if negative number
 	 */
 	if (rssi & 0x80)
@@ -1541,7 +1540,8 @@ static void ath10k_wmi_event_dfs(struct ath10k *ar,
 		switch (tlv->tag) {
 		case PHYERR_TLV_TAG_RADAR_PULSE_SUMMARY:
 			if (i + sizeof(*tlv) + sizeof(*rr) > buf_len) {
-				ath10k_warn("too short radar pulse summary (%d)\n", i);
+				ath10k_warn("too short radar pulse summary (%d)\n",
+					    i);
 				return;
 			}
 

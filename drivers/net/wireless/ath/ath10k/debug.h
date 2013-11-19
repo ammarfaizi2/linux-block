@@ -55,6 +55,7 @@ void ath10k_debug_read_target_stats(struct ath10k *ar,
 				    struct wmi_stats_event *ev);
 
 #define ATH10K_DFS_STAT_INC(ar, c) (ar->debug.dfs_stats.c++)
+
 #else
 static inline int ath10k_debug_start(struct ath10k *ar)
 {
@@ -84,7 +85,9 @@ static inline void ath10k_debug_read_target_stats(struct ath10k *ar,
 						  struct wmi_stats_event *ev)
 {
 }
+
 #define ATH10K_DFS_STAT_INC(ar, c) do { } while (0)
+
 #endif /* CONFIG_ATH10K_DEBUGFS */
 
 #ifdef CONFIG_ATH10K_DEBUG
