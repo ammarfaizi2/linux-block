@@ -1901,7 +1901,7 @@ static int path_lookupat(int dfd, const char *name,
 				unsigned int flags, struct nameidata *nd)
 {
 	struct file *base = NULL;
-	struct path path;
+	struct path terminal_symlink;
 	int err;
 
 	/*
@@ -1926,11 +1926,16 @@ static int path_lookupat(int dfd, const char *name,
 	current->total_link_count = 0;
 	err = link_path_walk(name, nd);
 
+	/* At this point we've processed all the non-terminal parts of the path
+	 * and are ready to tackle the final section.  The final section may
+	 * still include terminal symlinks, however, so we need to iterate
+	 * through those.
+	 */
 	if (!err && !(flags & LOOKUP_PARENT)) {
-		err = lookup_last(nd, &path);
+		err = lookup_last(nd, &terminal_symlink);
 		while (err > 0) {
 			void *cookie;
-			struct path link = path;
+			struct path link = terminal_symlink;
 			err = may_follow_link(&link, nd);
 			if (unlikely(err))
 				break;
@@ -1938,7 +1943,7 @@ static int path_lookupat(int dfd, const char *name,
 			err = follow_link(&link, nd, &cookie);
 			if (err)
 				break;
-			err = lookup_last(nd, &path);
+			err = lookup_last(nd, &terminal_symlink);
 			put_link(nd, &link, cookie);
 		}
 	}
@@ -3151,7 +3156,7 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 {
 	struct file *base = NULL;
 	struct file *file;
-	struct path path;
+	struct path terminal_symlink;
 	int opened = 0;
 	int error;
 
@@ -3175,12 +3180,12 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 	if (unlikely(error))
 		goto out;
 
-	error = do_last(nd, &path, file, op, &opened, pathname);
+	error = do_last(nd, &terminal_symlink, file, op, &opened, pathname);
 	while (unlikely(error > 0)) { /* trailing symlink */
-		struct path link = path;
+		struct path link = terminal_symlink;
 		void *cookie;
 		if (!(nd->flags & LOOKUP_FOLLOW)) {
-			path_put_conditional(&path, nd);
+			path_put_conditional(&terminal_symlink, nd);
 			path_put(&nd->path);
 			error = -ELOOP;
 			break;
@@ -3193,7 +3198,7 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 		error = follow_link(&link, nd, &cookie);
 		if (unlikely(error))
 			break;
-		error = do_last(nd, &path, file, op, &opened, pathname);
+		error = do_last(nd, &terminal_symlink, file, op, &opened, pathname);
 		put_link(nd, &link, cookie);
 	}
 out:
