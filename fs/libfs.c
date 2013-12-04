@@ -49,7 +49,7 @@ EXPORT_SYMBOL(simple_statfs);
  */
 int always_delete_dentry(const struct dentry *dentry)
 {
-	return 1;
+	return !d_is_whiteout(dentry);
 }
 EXPORT_SYMBOL(always_delete_dentry);
 
