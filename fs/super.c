@@ -142,6 +142,7 @@ static void destroy_super(struct super_block *s)
 	list_lru_destroy(&s->s_inode_lru);
 	for (i = 0; i < SB_FREEZE_LEVELS; i++)
 		percpu_counter_destroy(&s->s_writers.counter[i]);
+	BUG_ON(s->s_hard_readonly_users);
 	security_sb_free(s);
 	WARN_ON(!list_empty(&s->s_mounts));
 	kfree(s->s_subtype);
@@ -719,6 +720,9 @@ int do_remount_sb(struct super_block *sb, int flags, void *data, int force)
 		}
 	}
 
+	if (!(flags & MS_RDONLY) && sb->s_hard_readonly_users)
+		return -EROFS;
+
 	if (sb->s_op->remount_fs) {
 		retval = sb->s_op->remount_fs(sb, &flags, data);
 		if (retval) {
@@ -1111,9 +1115,16 @@ mount_fs(struct file_system_type *type, int flags, const char *name, void *data)
 	WARN((sb->s_maxbytes < 0), "%s set sb->s_maxbytes to "
 		"negative value (%lld)\n", type->name, sb->s_maxbytes);
 
+	if (!(flags & MS_RDONLY) && sb->s_hard_readonly_users)
+		goto out_sb_is_hard_ro;
+
 	up_write(&sb->s_umount);
 	free_secdata(secdata);
 	return root;
+
+out_sb_is_hard_ro:
+	up_write(&sb->s_umount);
+	error = -EROFS;
 out_sb:
 	dput(root);
 	deactivate_locked_super(sb);

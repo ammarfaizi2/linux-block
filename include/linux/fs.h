@@ -1315,6 +1315,12 @@ struct super_block {
 	/* Being remounted read-only */
 	int s_readonly_remount;
 
+	/* Number of mounts requiring that the underlying file system never
+	 * transition to read-write.  Protected by s_umount.  Decremented by
+	 * free_vfsmnt() if MNT_HARD_READONLY is set.
+	 */
+	int s_hard_readonly_users;
+
 	/* AIO completions deferred from interrupt context */
 	struct workqueue_struct *s_dio_done_wq;
 
