@@ -151,6 +151,8 @@ int dcache_readdir(struct file *file, struct dir_context *ctx)
 	struct dentry *dentry = file->f_path.dentry;
 	struct dentry *cursor = file->private_data;
 	struct list_head *p, *q = &cursor->d_u.d_child;
+	ino_t ino;
+	char d_type;
 
 	if (!dir_emit_dots(file, ctx))
 		return 0;
@@ -161,15 +163,24 @@ int dcache_readdir(struct file *file, struct dir_context *ctx)
 	for (p = q->next; p != &dentry->d_subdirs; p = p->next) {
 		struct dentry *next = list_entry(p, struct dentry, d_u.d_child);
 		spin_lock_nested(&next->d_lock, DENTRY_D_LOCK_NESTED);
-		if (!simple_positive(next)) {
+		if (d_unhashed(next) ||
+		    (!next->d_inode && !d_is_fallthru(next))) {
 			spin_unlock(&next->d_lock);
 			continue;
 		}
 
 		spin_unlock(&next->d_lock);
 		spin_unlock(&dentry->d_lock);
+		if (d_is_fallthru(next)) {
+			/* XXX placeholder until generic_readdir_fallthru() arrives */
+			ino = 1;
+			d_type = DT_UNKNOWN;
+		} else {
+			ino = next->d_inode->i_ino;
+			d_type = dt_type(next->d_inode);
+		}
 		if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
-			      next->d_inode->i_ino, dt_type(next->d_inode)))
+			      ino, d_type))
 			return 0;
 		spin_lock(&dentry->d_lock);
 		spin_lock_nested(&next->d_lock, DENTRY_D_LOCK_NESTED);

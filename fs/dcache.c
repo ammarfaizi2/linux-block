@@ -3317,7 +3317,9 @@ static enum d_walk_ret d_genocide_kill(void *data, struct dentry *dentry)
 		 * can evict it.
 		 */
 		if (d_unhashed(dentry) ||
-		    (!dentry->d_inode && !d_is_whiteout(dentry)))
+		    (!dentry->d_inode &&
+		     !d_is_whiteout(dentry) &&
+		     !d_is_fallthru(dentry)))
 			return D_WALK_SKIP;
 
 		if (!(dentry->d_flags & DCACHE_GENOCIDE)) {
