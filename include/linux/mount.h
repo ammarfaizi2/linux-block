@@ -47,6 +47,7 @@ struct mnt_namespace;
 
 #define MNT_INTERNAL	0x4000
 #define MNT_HARD_READONLY	0x8000	/* has a hard read-only ref on the sb */
+#define MNT_UNION	0x10000		/* top layer of a union mount */
 
 #define MNT_LOCK_READONLY	0x400000
 #define MNT_LOCKED		0x800000
