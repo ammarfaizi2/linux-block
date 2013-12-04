@@ -179,6 +179,7 @@ static struct super_block *alloc_super(struct file_system_type *type, int flags)
 	init_waitqueue_head(&s->s_writers.wait);
 	init_waitqueue_head(&s->s_writers.wait_unfrozen);
 	s->s_flags = flags;
+	s->s_lock_class = (flags & MS_UNION) ? 1 : 0;
 	s->s_bdi = &default_backing_dev_info;
 	INIT_HLIST_NODE(&s->s_instances);
 	INIT_HLIST_BL_HEAD(&s->s_anon);
@@ -449,6 +450,12 @@ retry:
 				destroy_super(s);
 				s = NULL;
 			}
+#ifdef CONFIG_UNION_MOUNT
+			if (unlikely((old->s_flags | flags) & MS_UNION)) {
+				deactivate_locked_super(old);
+				return ERR_PTR(-EINVAL);
+			}
+#endif
 			return old;
 		}
 	}

@@ -157,8 +157,14 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	spin_lock_init(&inode->i_lock);
 	lockdep_set_class(&inode->i_lock, &sb->s_type->i_lock_key);
 
+	/* Duplicate the code with separate indices so that when lockdep print
+	 * a warning, the numeric index is seen.
+	 */
 	mutex_init(&inode->i_mutex);
-	lockdep_set_class(&inode->i_mutex, &sb->s_type->i_mutex_key);
+	if (sb->s_lock_class == 0)
+		lockdep_set_class(&inode->i_mutex, &sb->s_type->i_mutex_key[0]);
+	else
+		lockdep_set_class(&inode->i_mutex, &sb->s_type->i_mutex_key[1]);
 
 	atomic_set(&inode->i_dio_count, 0);
 
@@ -906,17 +912,36 @@ EXPORT_SYMBOL(new_inode);
 void lockdep_annotate_inode_mutex_key(struct inode *inode)
 {
 	if (S_ISDIR(inode->i_mode)) {
-		struct file_system_type *type = inode->i_sb->s_type;
+		struct super_block *sb = inode->i_sb;
+		struct file_system_type *type = sb->s_type;
 
-		/* Set new key only if filesystem hasn't already changed it */
-		if (lockdep_match_class(&inode->i_mutex, &type->i_mutex_key)) {
-			/*
-			 * ensure nobody is actually holding i_mutex
-			 */
-			mutex_destroy(&inode->i_mutex);
-			mutex_init(&inode->i_mutex);
-			lockdep_set_class(&inode->i_mutex,
-					  &type->i_mutex_dir_key);
+		/* Set new key only if filesystem hasn't already changed it
+		 *
+		 * Duplicate the code with separate indices so that when
+		 * lockdep prints a warning, the numeric index is seen.
+		 */
+		if (sb->s_lock_class == 0) {
+			if (lockdep_match_class(&inode->i_mutex,
+						&type->i_mutex_key[0])) {
+				/*
+				 * ensure nobody is actually holding i_mutex
+				 */
+				mutex_destroy(&inode->i_mutex);
+				mutex_init(&inode->i_mutex);
+				lockdep_set_class(&inode->i_mutex,
+						  &type->i_mutex_dir_key[0]);
+			}
+		} else {
+			if (lockdep_match_class(&inode->i_mutex,
+						&type->i_mutex_key[1])) {
+				/*
+				 * ensure nobody is actually holding i_mutex
+				 */
+				mutex_destroy(&inode->i_mutex);
+				mutex_init(&inode->i_mutex);
+				lockdep_set_class(&inode->i_mutex,
+						  &type->i_mutex_dir_key[1]);
+			}
 		}
 	}
 }
