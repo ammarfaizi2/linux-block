@@ -479,6 +479,22 @@ static inline bool d_is_positive(const struct dentry *dentry)
 	return !d_is_negative(dentry);
 }
 
+static inline void d_set_fallthru(struct dentry *dentry)
+{
+	spin_lock(&dentry->d_lock);
+	dentry->d_flags |= DCACHE_FALLTHRU;
+	spin_unlock(&dentry->d_lock);
+}
+
+static inline bool d_is_fallthru(const struct dentry *dentry)
+{
+#ifdef CONFIG_UNION_MOUNT
+	return dentry->d_flags & DCACHE_FALLTHRU;
+#else
+	return false;
+#endif
+}
+
 extern int sysctl_vfs_cache_pressure;
 
 static inline unsigned long vfs_pressure_ratio(unsigned long val)
