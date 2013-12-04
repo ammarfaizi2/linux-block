@@ -605,7 +605,7 @@ lookup_again:
 		_debug("validate '%*.*s'",
 		       next->d_name.len, next->d_name.len, next->d_name.name);
 
-		ret = cachefiles_check_object_xattr(object, auxdata);
+		ret = cachefiles_check_object_xattr(cache, object, auxdata);
 		if (ret == -ESTALE) {
 			/* delete the object (the deleter drops the directory
 			 * mutex) */
@@ -637,7 +637,7 @@ lookup_again:
 
 	if (object->new) {
 		/* attach data to a newly constructed terminal object */
-		ret = cachefiles_set_object_xattr(object, auxdata);
+		ret = cachefiles_set_object_xattr(cache, object, auxdata);
 		if (ret < 0)
 			goto check_error;
 	} else {

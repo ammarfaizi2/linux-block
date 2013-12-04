@@ -1033,17 +1033,17 @@ ecryptfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 		  size_t size, int flags)
 {
 	int rc = 0;
-	struct dentry *lower_dentry;
+	struct path *lower_path;
 
-	lower_dentry = ecryptfs_dentry_to_lower(dentry);
-	if (!lower_dentry->d_inode->i_op->setxattr) {
+	lower_path = ecryptfs_dentry_to_lower_path(dentry);
+	if (!lower_path->dentry->d_inode->i_op->setxattr) {
 		rc = -EOPNOTSUPP;
 		goto out;
 	}
 
-	rc = vfs_setxattr(lower_dentry, name, value, size, flags);
+	rc = vfs_setxattr(lower_path, name, value, size, flags);
 	if (!rc)
-		fsstack_copy_attr_all(dentry->d_inode, lower_dentry->d_inode);
+		fsstack_copy_attr_all(dentry->d_inode, lower_path->dentry->d_inode);
 out:
 	return rc;
 }

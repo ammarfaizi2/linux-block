@@ -230,13 +230,17 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
 /*
  * xattr.c
  */
-extern int cachefiles_check_object_type(struct cachefiles_object *object);
-extern int cachefiles_set_object_xattr(struct cachefiles_object *object,
+extern int cachefiles_check_object_type(struct cachefiles_cache *cache,
+					struct cachefiles_object *object);
+extern int cachefiles_set_object_xattr(struct cachefiles_cache *cache,
+				       struct cachefiles_object *object,
 				       struct cachefiles_xattr *auxdata);
-extern int cachefiles_update_object_xattr(struct cachefiles_object *object,
+extern int cachefiles_update_object_xattr(struct cachefiles_cache *cache,
+					  struct cachefiles_object *object,
 					  struct cachefiles_xattr *auxdata);
 extern int cachefiles_check_auxdata(struct cachefiles_object *object);
-extern int cachefiles_check_object_xattr(struct cachefiles_object *object,
+extern int cachefiles_check_object_xattr(struct cachefiles_cache *cache,
+					 struct cachefiles_object *object,
 					 struct cachefiles_xattr *auxdata);
 extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);

@@ -239,7 +239,7 @@ static void cachefiles_update_object(struct fscache_object *_object)
 	auxdata->type = cookie->def->type;
 
 	cachefiles_begin_secure(cache, &saved_cred);
-	cachefiles_update_object_xattr(object, auxdata);
+	cachefiles_update_object_xattr(cache, object, auxdata);
 	cachefiles_end_secure(cache, saved_cred);
 	kfree(auxdata);
 	_leave("");

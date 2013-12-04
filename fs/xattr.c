@@ -119,9 +119,10 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
 
 
 int
-vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+vfs_setxattr(struct path *path, const char *name, const void *value,
 		size_t size, int flags)
 {
+	struct dentry *dentry = path->dentry;
 	struct inode *inode = dentry->d_inode;
 	int error;
 
@@ -284,8 +285,9 @@ vfs_listxattr(struct dentry *d, char *list, size_t size)
 EXPORT_SYMBOL_GPL(vfs_listxattr);
 
 int
-vfs_removexattr(struct dentry *dentry, const char *name)
+vfs_removexattr(struct path *path, const char *name)
 {
+	struct dentry *dentry = path->dentry;
 	struct inode *inode = dentry->d_inode;
 	int error;
 
@@ -319,7 +321,7 @@ EXPORT_SYMBOL_GPL(vfs_removexattr);
  * Extended attribute SET operations
  */
 static long
-setxattr(struct dentry *d, const char __user *name, const void __user *value,
+setxattr(struct path *path, const char __user *name, const void __user *value,
 	 size_t size, int flags)
 {
 	int error;
@@ -355,7 +357,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
 			posix_acl_fix_xattr_from_user(kvalue, size);
 	}
 
-	error = vfs_setxattr(d, kname, kvalue, size, flags);
+	error = vfs_setxattr(path, kname, kvalue, size, flags);
 out:
 	if (vvalue)
 		vfree(vvalue);
@@ -371,13 +373,14 @@ SYSCALL_DEFINE5(setxattr, const char __user *, pathname,
 	struct path path;
 	int error;
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
 	if (error)
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, name, value, size, flags);
+		error = setxattr(&path, name, value, size, flags);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -395,13 +398,14 @@ SYSCALL_DEFINE5(lsetxattr, const char __user *, pathname,
 	struct path path;
 	int error;
 	unsigned int lookup_flags = 0;
+
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
 	if (error)
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, name, value, size, flags);
+		error = setxattr(&path, name, value, size, flags);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -425,7 +429,7 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
 	audit_inode(NULL, dentry, 0);
 	error = mnt_want_write_file(f.file);
 	if (!error) {
-		error = setxattr(dentry, name, value, size, flags);
+		error = setxattr(&f.file->f_path, name, value, size, flags);
 		mnt_drop_write_file(f.file);
 	}
 	fdput(f);
@@ -626,7 +630,7 @@ SYSCALL_DEFINE3(flistxattr, int, fd, char __user *, list, size_t, size)
  * Extended attribute REMOVE operations
  */
 static long
-removexattr(struct dentry *d, const char __user *name)
+removexattr(struct path *path, const char __user *name)
 {
 	int error;
 	char kname[XATTR_NAME_MAX + 1];
@@ -637,7 +641,7 @@ removexattr(struct dentry *d, const char __user *name)
 	if (error < 0)
 		return error;
 
-	return vfs_removexattr(d, kname);
+	return vfs_removexattr(path, kname);
 }
 
 SYSCALL_DEFINE2(removexattr, const char __user *, pathname,
@@ -646,13 +650,14 @@ SYSCALL_DEFINE2(removexattr, const char __user *, pathname,
 	struct path path;
 	int error;
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
 	if (error)
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = removexattr(path.dentry, name);
+		error = removexattr(&path, name);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -669,13 +674,14 @@ SYSCALL_DEFINE2(lremovexattr, const char __user *, pathname,
 	struct path path;
 	int error;
 	unsigned int lookup_flags = 0;
+
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
 	if (error)
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = removexattr(path.dentry, name);
+		error = removexattr(&path, name);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -698,7 +704,7 @@ SYSCALL_DEFINE2(fremovexattr, int, fd, const char __user *, name)
 	audit_inode(NULL, dentry, 0);
 	error = mnt_want_write_file(f.file);
 	if (!error) {
-		error = removexattr(dentry, name);
+		error = removexattr(&f.file->f_path, name);
 		mnt_drop_write_file(f.file);
 	}
 	fdput(f);

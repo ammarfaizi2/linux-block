@@ -18,6 +18,7 @@
 
 struct inode;
 struct dentry;
+struct path;
 
 struct xattr_handler {
 	const char *prefix;
@@ -40,8 +41,8 @@ ssize_t xattr_getsecurity(struct inode *, const char *, void *, size_t);
 ssize_t vfs_getxattr(struct dentry *, const char *, void *, size_t);
 ssize_t vfs_listxattr(struct dentry *d, char *list, size_t size);
 int __vfs_setxattr_noperm(struct dentry *, const char *, const void *, size_t, int);
-int vfs_setxattr(struct dentry *, const char *, const void *, size_t, int);
-int vfs_removexattr(struct dentry *, const char *);
+int vfs_setxattr(struct path *, const char *, const void *, size_t, int);
+int vfs_removexattr(struct path *, const char *);
 
 ssize_t generic_getxattr(struct dentry *dentry, const char *name, void *buffer, size_t size);
 ssize_t generic_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size);

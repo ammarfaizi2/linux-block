@@ -493,7 +493,7 @@ static ssize_t nfsd_getxattr(struct dentry *dentry, char *key, void **buf)
 
 #if defined(CONFIG_NFSD_V4)
 static int
-set_nfsv4_acl_one(struct dentry *dentry, struct posix_acl *pacl, char *key)
+set_nfsv4_acl_one(struct path *path, struct posix_acl *pacl, char *key)
 {
 	int len;
 	size_t buflen;
@@ -512,7 +512,7 @@ set_nfsv4_acl_one(struct dentry *dentry, struct posix_acl *pacl, char *key)
 		goto out;
 	}
 
-	error = vfs_setxattr(dentry, key, buf, len, 0);
+	error = vfs_setxattr(path, key, buf, len, 0);
 out:
 	kfree(buf);
 	return error;
@@ -522,9 +522,9 @@ __be32
 nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
     struct nfs4_acl *acl)
 {
+	struct path path;
 	__be32 error;
 	int host_error;
-	struct dentry *dentry;
 	struct inode *inode;
 	struct posix_acl *pacl = NULL, *dpacl = NULL;
 	unsigned int flags = 0;
@@ -534,8 +534,9 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
 	if (error)
 		return error;
 
-	dentry = fhp->fh_dentry;
-	inode = dentry->d_inode;
+	path.mnt = fhp->fh_export->ex_path.mnt;
+	path.dentry = fhp->fh_dentry;
+	inode = path.dentry->d_inode;
 	if (S_ISDIR(inode->i_mode))
 		flags = NFS4_ACL_DIR;
 
@@ -545,12 +546,12 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
 	} else if (host_error < 0)
 		goto out_nfserr;
 
-	host_error = set_nfsv4_acl_one(dentry, pacl, POSIX_ACL_XATTR_ACCESS);
+	host_error = set_nfsv4_acl_one(&path, pacl, POSIX_ACL_XATTR_ACCESS);
 	if (host_error < 0)
 		goto out_release;
 
 	if (S_ISDIR(inode->i_mode))
-		host_error = set_nfsv4_acl_one(dentry, dpacl, POSIX_ACL_XATTR_DEFAULT);
+		host_error = set_nfsv4_acl_one(&path, dpacl, POSIX_ACL_XATTR_DEFAULT);
 
 out_release:
 	posix_acl_release(pacl);
@@ -2321,11 +2322,16 @@ nfsd_get_posix_acl(struct svc_fh *fhp, int type)
 int
 nfsd_set_posix_acl(struct svc_fh *fhp, int type, struct posix_acl *acl)
 {
-	struct inode *inode = fhp->fh_dentry->d_inode;
+	struct path path = { .mnt = fhp->fh_export->ex_path.mnt,
+			     .dentry = fhp->fh_dentry };
+	struct inode *inode = path.dentry->d_inode;
 	char *name;
 	void *value = NULL;
 	size_t size;
 	int error;
+
+	if (!inode)
+		return -EOPNOTSUPP; /* Appears to be unionmounted */
 
 	if (!IS_POSIXACL(inode) ||
 	    !inode->i_op->setxattr || !inode->i_op->removexattr)
@@ -2357,12 +2363,12 @@ nfsd_set_posix_acl(struct svc_fh *fhp, int type, struct posix_acl *acl)
 	if (error)
 		goto getout;
 	if (size)
-		error = vfs_setxattr(fhp->fh_dentry, name, value, size, 0);
+		error = vfs_setxattr(&path, name, value, size, 0);
 	else {
 		if (!S_ISDIR(inode->i_mode) && type == ACL_TYPE_DEFAULT)
 			error = 0;
 		else {
-			error = vfs_removexattr(fhp->fh_dentry, name);
+			error = vfs_removexattr(&path, name);
 			if (error == -ENODATA)
 				error = 0;
 		}
