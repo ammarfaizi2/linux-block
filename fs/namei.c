@@ -2408,7 +2408,6 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
 		return -ENOENT;
 	BUG_ON(!inode);
 
-	BUG_ON(victim->d_parent->d_inode != dir);
 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
 
 	error = inode_permission(dir, MAY_WRITE | MAY_EXEC);

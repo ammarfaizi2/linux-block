@@ -86,6 +86,7 @@ struct inodes_stat_t {
 #define MS_KERNMOUNT	(1<<22) /* this is a kern_mount call */
 #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
 #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
+#define MS_WHITEOUT	(1<<25) /* FS supports whiteout filetype */
 
 /* These sb flags are internal to the kernel */
 #define MS_NOSEC	(1<<28)
