@@ -33,6 +33,7 @@
 #include <linux/compat.h>
 
 #include "internal.h"
+#include "union.h"
 
 int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	struct file *filp)
@@ -65,29 +66,55 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 
 long vfs_truncate(struct path *path, loff_t length)
 {
+	struct path lower_cache, actual;
 	struct inode *inode;
 	long error;
 
-	inode = path->dentry->d_inode;
+	if (IS_PATH_UNIONED(path))
+		printk("UNION: truncate: path.mnt: at upper\n");
+
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	/* For directories it's -EISDIR, for other non-regulars - -EINVAL */
+	error = -EISDIR;
 	if (S_ISDIR(inode->i_mode))
-		return -EISDIR;
+		goto out;
+	error = -EINVAL;
 	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+		goto out;
 
 	error = mnt_want_write(path->mnt);
 	if (error)
 		goto out;
 
-	error = inode_permission(inode, MAY_WRITE);
-	if (error)
-		goto mnt_drop_write_and_out;
+	if (unlikely(d_is_unioned(path->dentry, &actual))) {
+		/* We have to be able to write to the upperfs. */
+		error = -EROFS;
+		if (path->dentry->d_sb->s_flags & MS_RDONLY)
+			goto mnt_drop_write_and_out;
+
+		/* But the lowerfs inode must offer write permission - if the
+		 * lowerfs was mounted writably. */
+		error = __inode_permission(inode, MAY_WRITE);
+		if (error)
+			goto mnt_drop_write_and_out;
+	} else {
+		error = inode_permission(inode, MAY_WRITE);
+		if (error)
+			goto mnt_drop_write_and_out;
+	}
 
 	error = -EPERM;
 	if (IS_APPEND(inode))
 		goto mnt_drop_write_and_out;
 
+	error = union_truncated_copy_up(path, &actual, &length);
+	if (error)
+		goto mnt_drop_write_and_out;
+
+	inode = path->dentry->d_inode;
 	error = get_write_access(inode);
 	if (error)
 		goto mnt_drop_write_and_out;
@@ -111,6 +138,7 @@ put_write_and_out:
 mnt_drop_write_and_out:
 	mnt_drop_write(path->mnt);
 out:
+	path_put_maybe(&lower_cache);
 	return error;
 }
 EXPORT_SYMBOL_GPL(vfs_truncate);
@@ -332,7 +360,7 @@ retry:
 	if (res)
 		goto out;
 
-	inode = path.dentry->d_inode;
+	inode = d_inode_or_lower(path.dentry);
 
 	if ((mode & MAY_EXEC) && S_ISREG(inode->i_mode)) {
 		/*
@@ -344,7 +372,15 @@ retry:
 			goto out_path_release;
 	}
 
-	res = inode_permission(inode, mode | MAY_ACCESS);
+	/* For unionmount files, we need to check the permissions on the upper
+	 * superblock and the lower inode.
+	 */
+	res = sb_permission(path.dentry->d_sb, inode, mode);
+	if (res != 0)
+		goto out_path_release;
+
+	res = __inode_permission(inode, mode | MAY_ACCESS);
+
 	/* SuS v2 requires we report a read only fs too */
 	if (res || !(mode & S_IWOTH) || special_file(inode->i_mode))
 		goto out_path_release;
@@ -464,19 +500,32 @@ out:
 
 static int chmod_common(struct path *path, umode_t mode)
 {
-	struct inode *inode = path->dentry->d_inode;
-	struct inode *delegated_inode = NULL;
+	struct inode *inode, *delegated_inode = NULL;
+	struct path lower_cache, actual;
 	struct iattr newattrs;
 	int error;
 
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
+
 	error = mnt_want_write(path->mnt);
 	if (error)
-		return error;
+		goto out_lower;
 retry_deleg:
+again:
 	mutex_lock(&inode->i_mutex);
-	error = security_path_chmod(path, mode);
+	error = security_path_chmod(&actual, mode);
 	if (error)
 		goto out_unlock;
+	if (d_is_unioned(path->dentry, &actual)) {
+		mutex_unlock(&inode->i_mutex);
+		error = union_copy_up(path, &actual);
+		if (error < 0)
+			goto out_drop_write;
+		inode = actual.dentry->d_inode;
+		goto again;
+	}
 	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
 	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
 	error = notify_change(path->dentry, &newattrs, &delegated_inode);
@@ -487,7 +536,10 @@ out_unlock:
 		if (!error)
 			goto retry_deleg;
 	}
+out_drop_write:
 	mnt_drop_write(path->mnt);
+out_lower:
+	path_put_maybe(&lower_cache);
 	return error;
 }
 
@@ -498,7 +550,10 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
 
 	if (f.file) {
 		audit_inode(NULL, f.file->f_path.dentry, 0);
-		err = chmod_common(&f.file->f_path, mode);
+		if (f.file->f_inode != f.file->f_path.dentry->d_inode)
+			err = -EACCES; /* Unioned, but can't copy up. */
+		else
+			err = chmod_common(&f.file->f_path, mode);
 		fdput(f);
 	}
 	return err;
@@ -509,6 +564,7 @@ SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umode_t, mode
 	struct path path;
 	int error;
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
 	if (!error) {
@@ -529,8 +585,8 @@ SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
 
 static int chown_common(struct path *path, uid_t user, gid_t group)
 {
-	struct inode *inode = path->dentry->d_inode;
-	struct inode *delegated_inode = NULL;
+	struct path lower_cache, actual;
+	struct inode *inode, *delegated_inode = NULL;
 	int error;
 	struct iattr newattrs;
 	kuid_t uid;
@@ -542,31 +598,54 @@ static int chown_common(struct path *path, uid_t user, gid_t group)
 	newattrs.ia_valid =  ATTR_CTIME;
 	if (user != (uid_t) -1) {
 		if (!uid_valid(uid))
-			return -EINVAL;
+			goto einval;
 		newattrs.ia_valid |= ATTR_UID;
 		newattrs.ia_uid = uid;
 	}
 	if (group != (gid_t) -1) {
 		if (!gid_valid(gid))
-			return -EINVAL;
+			goto einval;
 		newattrs.ia_valid |= ATTR_GID;
 		newattrs.ia_gid = gid;
 	}
+
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 	if (!S_ISDIR(inode->i_mode))
 		newattrs.ia_valid |=
 			ATTR_KILL_SUID | ATTR_KILL_SGID | ATTR_KILL_PRIV;
 retry_deleg:
+again:
 	mutex_lock(&inode->i_mutex);
 	error = security_path_chown(path, uid, gid);
-	if (!error)
-		error = notify_change(path->dentry, &newattrs, &delegated_inode);
+	if (error < 0)
+		goto error;
+
+	if (d_is_unioned(path->dentry, &actual)) {
+		mutex_unlock(&inode->i_mutex);
+		error = union_copy_up(path, &actual);
+		if (error < 0)
+			goto error;
+		inode = actual.dentry->d_inode;
+		goto again;
+	}
+
+	error = notify_change(path->dentry, &newattrs, &delegated_inode);
 	mutex_unlock(&inode->i_mutex);
 	if (delegated_inode) {
 		error = break_deleg_wait(&delegated_inode);
 		if (!error)
 			goto retry_deleg;
 	}
+error:
+	mutex_unlock(&inode->i_mutex);
+	path_put_maybe(&lower_cache);
 	return error;
+
+einval:
+	path_put_maybe(&lower_cache);
+	return -EINVAL;
 }
 
 SYSCALL_DEFINE5(fchownat, int, dfd, const char __user *, filename, uid_t, user,
@@ -619,6 +698,11 @@ SYSCALL_DEFINE3(fchown, unsigned int, fd, uid_t, user, gid_t, group)
 
 	if (!f.file)
 		goto out;
+
+	if (f.file->f_inode != f.file->f_path.dentry->d_inode) {
+		error = -EACCES; /* Unioned, but can't copy up. */
+		goto out_fput;
+	}
 
 	error = mnt_want_write_file(f.file);
 	if (error)

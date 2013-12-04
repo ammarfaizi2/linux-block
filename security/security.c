@@ -433,10 +433,13 @@ int security_path_link(struct dentry *old_dentry, struct path *new_dir,
 }
 
 int security_path_rename(struct path *old_dir, struct dentry *old_dentry,
-			 struct path *new_dir, struct dentry *new_dentry)
+			 struct path *new_dir, struct dentry *new_dentry,
+			 struct inode *old_inode)
 {
-	if (unlikely(IS_PRIVATE(old_dentry->d_inode) ||
-		     (new_dentry->d_inode && IS_PRIVATE(new_dentry->d_inode))))
+	struct inode *new_inode = d_inode_or_lower(new_dentry);
+	
+	if (unlikely(IS_PRIVATE(old_inode) ||
+		     (new_inode && IS_PRIVATE(new_inode))))
 		return 0;
 	return security_ops->path_rename(old_dir, old_dentry, new_dir,
 					 new_dentry);
@@ -526,8 +529,9 @@ int security_inode_mknod(struct inode *dir, struct dentry *dentry, umode_t mode,
 int security_inode_rename(struct inode *old_dir, struct dentry *old_dentry,
 			   struct inode *new_dir, struct dentry *new_dentry)
 {
-        if (unlikely(IS_PRIVATE(old_dentry->d_inode) ||
-            (new_dentry->d_inode && IS_PRIVATE(new_dentry->d_inode))))
+        if (unlikely(IS_PRIVATE(d_inode_or_lower(old_dentry)) ||
+		     (d_inode_or_lower(new_dentry) &&
+		      IS_PRIVATE(d_inode_or_lower(new_dentry)))))
 		return 0;
 	return security_ops->inode_rename(old_dir, old_dentry,
 					   new_dir, new_dentry);
@@ -535,7 +539,7 @@ int security_inode_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 int security_inode_readlink(struct dentry *dentry)
 {
-	if (unlikely(IS_PRIVATE(dentry->d_inode)))
+	if (unlikely(IS_PRIVATE(d_inode_or_lower(dentry))))
 		return 0;
 	return security_ops->inode_readlink(dentry);
 }

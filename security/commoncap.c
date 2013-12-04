@@ -381,6 +381,11 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data 
 	int size;
 	struct vfs_cap_data caps;
 
+#ifdef CONFIG_UNION_MOUNT
+	if (!inode)
+		inode = dentry->d_fallthru->d_inode;
+#endif
+
 	memset(cpu_caps, 0, sizeof(struct cpu_vfs_cap_data));
 
 	if (!inode || !inode->i_op->getxattr)

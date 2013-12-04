@@ -1601,6 +1601,11 @@ static inline int dentry_has_perm(const struct cred *cred,
 	struct inode *inode = dentry->d_inode;
 	struct common_audit_data ad;
 
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!inode) && dentry->d_fallthru)
+		inode = dentry->d_fallthru->d_inode;
+#endif
+
 	ad.type = LSM_AUDIT_DATA_DENTRY;
 	ad.u.dentry = dentry;
 	return inode_has_perm(cred, inode, av, &ad);
@@ -1615,6 +1620,11 @@ static inline int path_has_perm(const struct cred *cred,
 {
 	struct inode *inode = path->dentry->d_inode;
 	struct common_audit_data ad;
+
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!inode) && path->dentry->d_fallthru)
+		inode = path->dentry->d_fallthru->d_inode;
+#endif
 
 	ad.type = LSM_AUDIT_DATA_PATH;
 	ad.u.path = *path;

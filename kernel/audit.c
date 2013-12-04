@@ -1753,6 +1753,7 @@ void audit_log_link_denied(const char *operation, struct path *link)
 {
 	struct audit_buffer *ab;
 	struct audit_names *name;
+	struct inode *inode;
 
 	name = kzalloc(sizeof(*name), GFP_NOFS);
 	if (!name)
@@ -1770,7 +1771,12 @@ void audit_log_link_denied(const char *operation, struct path *link)
 
 	/* Generate AUDIT_PATH record with object. */
 	name->type = AUDIT_TYPE_NORMAL;
-	audit_copy_inode(name, link->dentry, link->dentry->d_inode);
+	inode = link->dentry->d_inode;
+#ifdef CONFIG_UNION_MOUNT
+	if (!inode)
+		inode = link->dentry->d_fallthru->d_inode;
+#endif
+	audit_copy_inode(name, link->dentry, inode);
 	audit_log_name(current->audit_context, name, link, 0, NULL);
 out:
 	kfree(name);

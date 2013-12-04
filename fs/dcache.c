@@ -40,6 +40,7 @@
 #include <linux/list_lru.h>
 #include "internal.h"
 #include "mount.h"
+#include "union.h"
 
 /*
  * Usage:
@@ -445,6 +446,7 @@ static struct dentry *d_kill(struct dentry *dentry, struct dentry *parent)
 	if (parent)
 		spin_unlock(&parent->d_lock);
 	dentry_iput(dentry);
+	d_free_unions(dentry);
 	/*
 	 * dentry_iput drops the locks, at which point nobody (except
 	 * transient RCU lookups) can reach this dentry.
@@ -1522,6 +1524,9 @@ struct dentry *__d_alloc(struct super_block *sb, const struct qstr *name)
 	dentry->d_sb = sb;
 	dentry->d_op = NULL;
 	dentry->d_fsdata = NULL;
+#ifdef CONFIG_UNION_MOUNT
+	dentry->d_union_stack = NULL;
+#endif
 	INIT_HLIST_BL_NODE(&dentry->d_hash);
 	INIT_LIST_HEAD(&dentry->d_lru);
 	INIT_LIST_HEAD(&dentry->d_subdirs);
@@ -2384,6 +2389,7 @@ again:
 		}
 		dentry->d_flags &= ~DCACHE_CANT_MOUNT;
 		dentry_unlink_inode(dentry);
+		d_free_unions(dentry);
 		fsnotify_nameremove(dentry, isdir);
 		return;
 	}
@@ -2393,6 +2399,12 @@ again:
 
 	spin_unlock(&dentry->d_lock);
 
+	/* Remove any associated unions.  While someone still has this
+	 * directory open (ref count > 0), we could not have deleted it unless
+	 * it was empty, and therefore has no references to directories below
+	 * it.  So we don't need the unions.
+	 */
+	d_free_unions(dentry);
 	fsnotify_nameremove(dentry, isdir);
 }
 EXPORT_SYMBOL(d_delete);

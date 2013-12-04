@@ -25,6 +25,7 @@
 #include <linux/magic.h>
 #include "pnode.h"
 #include "internal.h"
+#include "union.h"
 
 #define HASH_SHIFT ilog2(PAGE_SIZE / sizeof(struct list_head))
 #define HASH_SIZE (1UL << HASH_SHIFT)
@@ -1403,10 +1404,9 @@ SYSCALL_DEFINE1(oldumount, char __user *, name)
 
 #endif
 
-static bool is_mnt_ns_file(struct dentry *dentry)
+static bool is_mnt_ns_file(struct inode *inode)
 {
 	/* Is this a proxy for a mount namespace? */
-	struct inode *inode = dentry->d_inode;
 	struct proc_ns *ei;
 
 	if (!proc_ns_inode(inode))
@@ -1419,16 +1419,16 @@ static bool is_mnt_ns_file(struct dentry *dentry)
 	return true;
 }
 
-static bool mnt_ns_loop(struct dentry *dentry)
+static bool mnt_ns_loop(struct inode *inode)
 {
 	/* Could bind mounting the mount namespace inode cause a
 	 * mount namespace loop?
 	 */
 	struct mnt_namespace *mnt_ns;
-	if (!is_mnt_ns_file(dentry))
+	if (!is_mnt_ns_file(inode))
 		return false;
 
-	mnt_ns = get_proc_ns(dentry->d_inode)->ns;
+	mnt_ns = get_proc_ns(inode)->ns;
 	return current->nsproxy->mnt_ns->seq >= mnt_ns->seq;
 }
 
@@ -1440,7 +1440,7 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 	if (!(flag & CL_COPY_UNBINDABLE) && IS_MNT_UNBINDABLE(mnt))
 		return ERR_PTR(-EINVAL);
 
-	if (!(flag & CL_COPY_MNT_NS_FILE) && is_mnt_ns_file(dentry))
+	if (!(flag & CL_COPY_MNT_NS_FILE) && is_mnt_ns_file(dentry->d_inode))
 		return ERR_PTR(-EINVAL);
 
 	res = q = clone_mnt(mnt, dentry, flag);
@@ -1463,7 +1463,7 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 				continue;
 			}
 			if (!(flag & CL_COPY_MNT_NS_FILE) &&
-			    is_mnt_ns_file(s->mnt.mnt_root)) {
+			    is_mnt_ns_file(s->mnt.mnt_root->d_inode)) {
 				s = skip_mnt_tree(s);
 				continue;
 			}
@@ -1555,6 +1555,202 @@ static int invent_group_ids(struct mount *mnt, bool recurse)
 	}
 
 	return 0;
+}
+
+/**
+ * check_topmost_union_mnt - mount-time checks for union mount
+ * @topmost_mnt: vfsmount of the topmost union filed system
+ * @mnt_flags: mount flags for the topmost mount
+ *
+ * Our readdir() solution of copying up directory entries requires
+ * that the topmost layer be writeable and support whiteouts and
+ * fallthrus.  The topmost file system can't be mounted elsewhere
+ * because it's Too Hard(tm).
+ */
+static int check_topmost_union_mnt(struct mount *topmost_mnt, int mnt_flags)
+{
+#ifndef CONFIG_UNION_MOUNT
+	printk(KERN_INFO "union mount: not supported by the kernel\n");
+	return -EINVAL;
+#else
+	struct super_block *sb = topmost_mnt->mnt.mnt_sb;
+
+	if (mnt_flags & MNT_READONLY)
+		return -EROFS;
+
+	if (atomic_read(&sb->s_active) != 1) {
+		printk(KERN_INFO "union mount: topmost fs mounted elsewhere\n");
+		return -EBUSY;
+	}
+
+	if (!(sb->s_flags & MS_WHITEOUT)) {
+		printk(KERN_INFO "union mount: whiteouts not supported by fs\n");
+		return -EINVAL;
+	}
+
+	if (!(sb->s_flags & MS_FALLTHRU)) {
+		printk(KERN_INFO "union mount: fallthrus not supported by fs\n");
+		return -EINVAL;
+	}
+
+	return 0;
+#endif
+}
+
+void put_union_sb(struct super_block *sb)
+{
+	if (unlikely(sb->s_union_lower_mnts)) {
+		drop_collected_mounts(sb->s_union_lower_mnts);
+		sb->s_union_lower_mnts = NULL;
+		sb->s_union_count = 0;
+	}
+}
+
+/**
+ * clone_union_tree - Clone all union-able mounts at this mountpoint
+ * @topmost: vfsmount of topmost layer
+ * @mntpnt: target of union mount
+ *
+ * Given the target mountpoint of a union mount, clone all the mounts at that
+ * mountpoint (well, pathname) that qualify as a union lower layer.  Increment
+ * the hard readonly count of the lower layer superblocks.
+ *
+ * Returns error if any of the mounts or submounts mounted on or below this
+ * pathname are unsuitable for union mounting.  This means you can't construct
+ * a union mount at the root of an existing mount without unioning it.
+ *
+ * XXX - Maybe should take # of layers to go down as an argument. But how to
+ * pass this in through mount options?  All solutions look ugly.  Currently you
+ * express your intention through mounting file systems on the same mountpoint,
+ * which is pretty elegant.
+ */
+static int clone_union_tree(struct mount *topmost, struct path *mntpnt)
+{
+	struct mount *mnt, *cloned_tree;
+
+	if (!IS_ROOT(mntpnt->dentry)) {
+		printk(KERN_INFO "union mount: mount point must be a root dir\n");
+		return -EINVAL;
+	}
+
+	/* Look for the "lowest" layer to union. */
+	mnt = real_mount(mntpnt->mnt);
+	while (mnt->mnt_parent->mnt.mnt_root == mnt->mnt_mountpoint) {
+		/* Got root (mnt)? */
+		if (mnt->mnt_parent == mnt)
+			break;
+		mnt = mnt->mnt_parent;
+	}
+
+	/* Clone all the read-only mounts and submounts, only if they
+	 * are not shared or slave, and increment the hard read-only
+	 * users count on each one.  If this can't be done for every
+	 * mount and submount below this one, fail.
+	 */
+	cloned_tree = copy_tree(mnt, mnt->mnt.mnt_root,
+				CL_COPY_ALL | CL_PRIVATE |
+				CL_NO_SHARED | CL_NO_SLAVE |
+				CL_MAKE_HARD_READONLY);
+	if (IS_ERR(cloned_tree))
+		return PTR_ERR(cloned_tree);
+
+	topmost->mnt.mnt_sb->s_union_lower_mnts = &cloned_tree->mnt;
+	return 0;
+}
+
+/**
+ * build_root_union - Create the union stack for the root dir
+ * @topmost_mnt - vfsmount of topmost mount
+ *
+ * Build the union stack for the root dir.  Annoyingly, we have to traverse
+ * union "up" from the root of the cloned tree to find the topmost read-only
+ * mount, and then traverse back "down" to build the stack.
+ */
+static int build_root_union(struct mount *topmost_mnt)
+{
+	struct mount *mnt, *topmost_ro_mnt;
+	struct path lower, topmost_path;
+	unsigned int i, layers = 1;
+	int err = 0;
+
+	/* Find the topmost read-only mount */
+	topmost_ro_mnt = real_mount(topmost_mnt->mnt.mnt_sb->s_union_lower_mnts);
+	for (mnt = topmost_ro_mnt; mnt; mnt = next_mnt(mnt, topmost_ro_mnt)) {
+		if (mnt->mnt_parent == topmost_ro_mnt &&
+		    mnt->mnt_mountpoint == topmost_ro_mnt->mnt.mnt_root) {
+			topmost_ro_mnt = mnt;
+			layers++;
+		}
+	}
+	topmost_mnt->mnt.mnt_sb->s_union_count = layers;
+
+	// SHOULD USE collect_mounts() here rather than merely mntgetting
+
+	/* Build the root dir's union stack from the top down */
+	topmost_path.mnt = &topmost_mnt->mnt;
+	topmost_path.dentry = topmost_mnt->mnt.mnt_root;
+	mnt = topmost_ro_mnt;
+	for (i = 0; i < layers; i++) {
+		lower.mnt = mntget(&mnt->mnt); // !!!!!!!!!! TODO: FIX
+		lower.dentry = dget(mnt->mnt.mnt_root);
+		err = union_add_dir(&topmost_path, &lower, i);
+		if (err)
+			goto out;
+		mnt = mnt->mnt_parent;
+	}
+	return 0;
+
+out:
+	d_free_unions(topmost_path.dentry);
+	topmost_mnt->mnt.mnt_sb->s_union_count = 0;
+	return err;
+}
+
+/**
+ * prepare_mnt_union - do setup necessary for a union mount
+ * @topmost_mnt: vfsmount of topmost layer
+ * @mntpnt: path of requested mountpoint
+ *
+ * We union every underlying file system that is mounted on the same mountpoint
+ * (well, pathname), read-only, and not shared.  If we get at least one layer,
+ * we don't return an error, although we will complain in the kernel log if we
+ * hit a mount that can't be unioned.
+ *
+ * Caller needs namespace_sem, but can't have vfsmount_lock.
+ */
+static int prepare_mnt_union(struct mount *topmost_mnt, struct path *mntpnt)
+{
+	int err;
+
+	if (d_unlinked(mntpnt->dentry))
+		return -ENOENT;
+
+	printk("UNION: prepare\n");
+
+	err = check_topmost_union_mnt(topmost_mnt, topmost_mnt->mnt.mnt_flags);
+	if (err)
+		return err;
+
+	err = clone_union_tree(topmost_mnt, mntpnt);
+	if (err)
+		return err;
+
+	err = build_root_union(topmost_mnt);
+	if (err)
+		goto out;
+
+	printk("UNION: prepared\n");
+	return 0;
+
+out:
+	put_union_sb(topmost_mnt->mnt.mnt_sb);
+	return err;
+}
+
+static void cleanup_mnt_union(struct mount *topmost_mnt)
+{
+	d_free_unions(topmost_mnt->mnt.mnt_root);
+	put_union_sb(topmost_mnt->mnt.mnt_sb);
 }
 
 /*
@@ -1788,37 +1984,56 @@ static bool has_locked_children(struct mount *mnt, struct dentry *dentry)
 static int do_loopback(struct path *path, const char *old_name,
 				int recurse)
 {
-	struct path old_path;
+	struct path old_path, lower_cache, actual;
 	struct mount *mnt = NULL, *old, *parent;
 	struct mountpoint *mp;
+	struct inode *inode;
 	int err;
 	if (!old_name || !*old_name)
 		return -EINVAL;
-	err = kern_path(old_name, LOOKUP_FOLLOW|LOOKUP_AUTOMOUNT, &old_path);
+
+	err = user_path_at(AT_FDCWD, old_name,
+			   LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT, &old_path);
 	if (err)
 		return err;
 
+	inode = union_get_inode(&old_path, &lower_cache, &actual);
+	if (IS_ERR(inode)) {
+		err = PTR_ERR(inode);
+		goto out;
+	}
+
 	err = -EINVAL;
-	if (mnt_ns_loop(old_path.dentry))
-		goto out; 
+	if (mnt_ns_loop(inode))
+		goto out_lower; 
 
 	mp = lock_mount(path);
 	err = PTR_ERR(mp);
 	if (IS_ERR(mp))
-		goto out;
+		goto out_lower;
 
 	old = real_mount(old_path.mnt);
-	parent = real_mount(path->mnt);
 
 	err = -EINVAL;
 	if (IS_MNT_UNBINDABLE(old))
-		goto out2;
+		goto out_unlock;
 
+	/* If we're bind-mounting a file that's on a lower fs in a union then
+	 * we must first copy the file up as the copied mount stack attached to
+	 * the superblock is independent of any namespace and will fail the
+	 * check_mnt() test.  Directories are copied up during the pathwalk, so
+	 * we need not worry about those.
+	 */
+	err = union_copy_up(&old_path, &actual);
+	if (err < 0)
+		goto out_unlock;
+
+	parent = real_mount(path->mnt);
 	if (!check_mnt(parent) || !check_mnt(old))
-		goto out2;
+		goto out_unlock;
 
 	if (!recurse && has_locked_children(old, old_path.dentry))
-		goto out2;
+		goto out_unlock;
 
 	if (recurse)
 		mnt = copy_tree(old, old_path.dentry, CL_COPY_MNT_NS_FILE);
@@ -1827,7 +2042,7 @@ static int do_loopback(struct path *path, const char *old_name,
 
 	if (IS_ERR(mnt)) {
 		err = PTR_ERR(mnt);
-		goto out2;
+		goto out_unlock;
 	}
 
 	mnt->mnt.mnt_flags &= ~MNT_LOCKED;
@@ -1838,8 +2053,10 @@ static int do_loopback(struct path *path, const char *old_name,
 		umount_tree(mnt, 0);
 		unlock_mount_hash();
 	}
-out2:
+out_unlock:
 	unlock_mount(mp);
+out_lower:
+	path_put_maybe(&lower_cache);
 out:
 	path_put(&old_path);
 	return err;
@@ -1878,6 +2095,18 @@ static int do_remount(struct path *path, int flags, int mnt_flags,
 	struct mount *mnt = real_mount(path->mnt);
 
 	if (!check_mnt(mnt))
+		return -EINVAL;
+
+	if ((path->mnt->mnt_flags & MNT_UNION) &&
+	    !(mnt_flags & MNT_UNION))
+		return -EINVAL;
+
+	if ((mnt_flags & MNT_UNION) &&
+	    !(path->mnt->mnt_flags & MNT_UNION))
+		return -EINVAL;
+
+	if ((path->mnt->mnt_flags & MNT_UNION) &&
+	    (mnt_flags & MNT_READONLY))
 		return -EINVAL;
 
 	if (path->dentry != path->mnt->mnt_root)
@@ -2015,6 +2244,7 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 {
 	struct mountpoint *mp;
 	struct mount *parent;
+	bool unioned = false;
 	int err;
 
 	mnt_flags &= ~(MNT_SHARED | MNT_WRITE_HOLD | MNT_INTERNAL | MNT_DOOMED | MNT_SYNC_UMOUNT);
@@ -2045,7 +2275,17 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 		goto unlock;
 
 	newmnt->mnt.mnt_flags = mnt_flags;
+
+	if (IS_MNT_UNION(&newmnt->mnt)) {
+		err = prepare_mnt_union(newmnt, path);
+		if (err)
+			goto unlock;
+		unioned = true;
+	}
+
 	err = graft_tree(newmnt, parent, mp);
+	if (err < 0 && unioned)
+		cleanup_mnt_union(newmnt);
 
 unlock:
 	unlock_mount(mp);

@@ -17,6 +17,7 @@
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
+#include "union.h"
 
 void generic_fillattr(struct inode *inode, struct kstat *stat)
 {
@@ -51,25 +52,50 @@ EXPORT_SYMBOL(generic_fillattr);
  */
 int vfs_getattr_nosec(struct path *path, struct kstat *stat)
 {
-	struct inode *inode = path->dentry->d_inode;
+	struct path lower_cache, actual;
+	struct inode *inode;
+	int retval;
 
-	if (inode->i_op->getattr)
-		return inode->i_op->getattr(path->mnt, path->dentry, stat);
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
+
+	if (inode->i_op->getattr) {
+		retval = inode->i_op->getattr(actual.mnt, actual.dentry, stat);
+		goto out;
+	}
 
 	generic_fillattr(inode, stat);
-	return 0;
+out:
+	path_put_maybe(&lower_cache);
+	return retval;
 }
 
 EXPORT_SYMBOL(vfs_getattr_nosec);
 
 int vfs_getattr(struct path *path, struct kstat *stat)
 {
+	struct path lower_cache, actual;
+	struct inode *inode;
 	int retval;
 
-	retval = security_inode_getattr(path->mnt, path->dentry);
+	inode = union_get_inode(path, &lower_cache, &actual);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
+
+	retval = security_inode_getattr(actual.mnt, actual.dentry);
 	if (retval)
-		return retval;
-	return vfs_getattr_nosec(path, stat);
+		goto out;
+
+	if (inode->i_op->getattr) {
+		retval = inode->i_op->getattr(actual.mnt, actual.dentry, stat);
+		goto out;
+	}
+
+	generic_fillattr(inode, stat);
+out:
+	path_put_maybe(&lower_cache);
+	return retval;
 }
 
 EXPORT_SYMBOL(vfs_getattr);
@@ -326,7 +352,12 @@ SYSCALL_DEFINE4(readlinkat, int, dfd, const char __user *, pathname,
 retry:
 	error = user_path_at_empty(dfd, pathname, lookup_flags, &path, &empty);
 	if (!error) {
-		struct inode *inode = path.dentry->d_inode;
+		struct inode *inode = d_inode_or_lower(path.dentry);
+
+		if (IS_MNT_UNION(path.mnt)) {
+			printk("readlink inode: %p -> %p [%x %d]\n",
+			       path.dentry->d_inode, inode, path.dentry->d_flags, empty);
+		}
 
 		error = empty ? -ENOENT : -EINVAL;
 		if (inode->i_op->readlink) {

@@ -1325,6 +1325,16 @@ struct super_block {
 	/* AIO completions deferred from interrupt context */
 	struct workqueue_struct *s_dio_done_wq;
 
+	/* Root of the private cloned vfsmount tree of the read-only
+	 * mounts in this union (set in topmost vfsmount only)
+	 */
+	struct vfsmount *s_union_lower_mnts;
+
+	/* Number of layers in this union, not counting the topmost or
+	 * submounts.
+	 */
+	unsigned int s_union_count;
+
 	/*
 	 * Keep the lru lists last in the structure so they always sit on their
 	 * own individual cachelines.
@@ -2656,6 +2666,21 @@ extern ssize_t simple_write_to_buffer(void *to, size_t available, loff_t *ppos,
 extern int generic_file_fsync(struct file *, loff_t, loff_t, int);
 
 extern int generic_check_addressable(unsigned, u64);
+
+#ifdef CONFIG_UNION_MOUNT
+extern int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+				    int namlen, ino_t *ino, unsigned char *d_type);
+#else
+static inline int generic_readdir_fallthru(struct dentry *topmost_dentry, const char *name,
+					   int namlen, ino_t *ino, unsigned char *d_type)
+{
+	/*
+	 * Found a fallthru on a kernel without union support.
+	 * There's nothing to fall through to, so return -ENOENT.
+	 */
+	return -ENOENT;
+}
+#endif
 
 #ifdef CONFIG_MIGRATION
 extern int buffer_migrate_page(struct address_space *,

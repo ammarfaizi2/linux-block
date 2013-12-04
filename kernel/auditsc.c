@@ -1757,11 +1757,12 @@ void audit_putname(struct filename *name)
  * @dentry: dentry being audited
  * @flags: attributes for this particular entry
  */
-void __audit_inode(struct filename *name, const struct dentry *dentry,
-		   unsigned int flags)
+static void __audit_inode(struct filename *name,
+			  const struct dentry *dentry,
+			  const struct inode *inode,
+			  unsigned int flags)
 {
 	struct audit_context *context = current->audit_context;
-	const struct inode *inode = dentry->d_inode;
 	struct audit_names *n;
 	bool parent = flags & AUDIT_INODE_PARENT;
 
@@ -1826,6 +1827,32 @@ out:
 	}
 	handle_path(dentry);
 	audit_copy_inode(n, dentry, inode);
+}
+
+/**
+ * __audit_dentry - store the inode and device from a lookup
+ * @name: name being audited (optional)
+ * @dentry: dentry being audited
+ * @flags: attributes for this particular entry
+ */
+void __audit_dentry(struct filename *name, const struct dentry *dentry,
+		    unsigned flags)
+{
+	if (unlikely(!audit_dummy_context()))
+		__audit_inode(name, dentry, dentry->d_inode, flags);
+}
+
+/**
+ * __audit_file - store the inode and device from an open file
+ * @name: name being audited (optional)
+ * @file: dentry being audited
+ * @flags: attributes for this particular entry
+ */
+void __audit_file(struct filename *name, const struct file *file,
+		  unsigned flags)
+{
+	if (unlikely(!audit_dummy_context()))
+		__audit_inode(name, file->f_path.dentry, file->f_inode, flags);
 }
 
 /**

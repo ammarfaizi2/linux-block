@@ -65,6 +65,8 @@ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
 		{ MNT_NOATIME, ",noatime" },
 		{ MNT_NODIRATIME, ",nodiratime" },
 		{ MNT_RELATIME, ",relatime" },
+		{ MNT_SHARED, ",shared" },
+		{ MNT_UNBINDABLE, ",nobind" },
 		{ MNT_UNION, ",union" },
 		{ 0, NULL }
 	};

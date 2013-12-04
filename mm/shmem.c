@@ -1976,6 +1976,7 @@ static int shmem_whiteout(struct inode *dir, struct dentry *old_dentry)
 		ret = PTR_ERR(dentry);
 		goto error_free;
 	}
+	d_set_type(whiteout, DCACHE_WHITEOUT_TYPE);
 
 	if (old_dentry->d_inode || d_is_fallthru(old_dentry)) {
 		/* A fallthru for a dir is treated like a regular link */
@@ -2017,7 +2018,10 @@ static void shmem_d_instantiate(struct inode *dir, struct dentry *dentry,
 		dir->i_size += BOGO_DIRENT_SIZE;
 		dget(dentry); /* Extra count - pin the dentry in core */
 	}
-	/* Will clear DCACHE_WHITEOUT and DCACHE_FALLTHRU flags */
+
+	/* Attach the inode to the dentry - this will set the DCACHE_ENTRY_TYPE
+	 * field and clear DCACHE_FALLTHRU flags.
+	 */
 	d_instantiate(dentry, inode);
 }
 
@@ -2052,11 +2056,8 @@ static int shmem_fallthru(struct inode *dir, struct dentry *dentry)
 	}
 
 	shmem_d_instantiate(dir, dentry, NULL);
+	d_set_fallthru(dentry);
 	dir->i_ctime = dir->i_mtime = CURRENT_TIME;
-
-	spin_lock(&dentry->d_lock);
-	dentry->d_flags |= DCACHE_FALLTHRU;
-	spin_unlock(&dentry->d_lock);
 	return 0;
 }
 
@@ -2155,9 +2156,11 @@ static int shmem_link(struct dentry *old_dentry, struct inode *dir, struct dentr
 	 * but each new link needs a new dentry, pinning lowmem, and
 	 * tmpfs dentries cannot be pruned until they are unlinked.
 	 */
-	ret = shmem_reserve_inode(inode->i_sb);
-	if (ret)
-		goto out;
+	if (inode->i_nlink > 0) {
+		ret = shmem_reserve_inode(inode->i_sb);
+		if (ret)
+			goto out;
+	}
 
 	inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
 	inc_nlink(inode);
@@ -2197,7 +2200,7 @@ static void shmem_dir_unlink_whiteouts(struct inode *dir, struct dentry *dentry)
 
 		spin_lock(&dentry->d_lock);
 		list_for_each_entry(child, &dentry->d_subdirs, d_u.d_child) {
-			spin_lock(&child->d_lock);
+			spin_lock_nested(&child->d_lock, 1);
 			if (d_is_whiteout(child)) {
 				__d_drop(child);
 				if (!list_empty(&child->d_lru)) {

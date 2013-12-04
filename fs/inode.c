@@ -1553,6 +1553,11 @@ void touch_atime(const struct path *path)
 	struct inode *inode = path->dentry->d_inode;
 	struct timespec now;
 
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(!inode))
+		return;
+#endif
+
 	if (inode->i_flags & S_NOATIME)
 		return;
 	if (IS_NOATIME(inode))

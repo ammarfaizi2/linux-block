@@ -14,6 +14,7 @@
 struct nameidata;
 struct path;
 struct vfsmount;
+struct union_stack;
 
 /*
  * linux/include/linux/dcache.h
@@ -92,16 +93,36 @@ extern unsigned int full_name_hash(const unsigned char *, unsigned int);
  * Try to keep struct dentry aligned on 64 byte cachelines (this will
  * give reasonable cacheline footprint with larger lines without the
  * large memory footprint increase).
+ *
+ * XXX DNAME_INLINE_LEN_MIN is kind of pitiful on 64bit + union
+ * mounts.  May be worth tuning up, but either we go to 256 bytes and
+ * a wasteful 88 bytes of d_iname, or we lose 64-byte aligment.
  */
 #ifdef CONFIG_64BIT
+
+#ifdef CONFIG_UNION_MOUNT
+# define DNAME_INLINE_LEN 24 /* 192 bytes */
+#else
 # define DNAME_INLINE_LEN 32 /* 192 bytes */
+#endif /* CONFIG_UNION_MOUNT */
+
+#else
+
+#ifdef CONFIG_UNION_MOUNT
+# ifdef CONFIG_SMP
+#  define DNAME_INLINE_LEN 32 /* 128 bytes */
+# else
+#  define DNAME_INLINE_LEN 36 /* 128 bytes */
+# endif
 #else
 # ifdef CONFIG_SMP
 #  define DNAME_INLINE_LEN 36 /* 128 bytes */
 # else
 #  define DNAME_INLINE_LEN 40 /* 128 bytes */
 # endif
-#endif
+#endif /* CONFIG_UNION_MOUNT */
+
+#endif /* CONFIG_64BIT */
 
 #define d_lock	d_lockref.lock
 
@@ -123,6 +144,12 @@ struct dentry {
 	unsigned long d_time;		/* used by d_revalidate */
 	void *d_fsdata;			/* fs-specific data */
 
+#ifdef CONFIG_UNION_MOUNT
+	union {
+		struct union_stack *d_union_stack; /* Dirs in union stack */
+		struct dentry *d_fallthru; /* Lower dentry pinned by fallthru */
+	};
+#endif
 	struct list_head d_lru;		/* LRU list */
 	/*
 	 * d_child and d_rcu can share memory
@@ -493,6 +520,71 @@ static inline bool d_is_fallthru(const struct dentry *dentry)
 #else
 	return false;
 #endif
+}
+
+static inline bool d_has_lower(const struct dentry *dentry)
+{
+	return unlikely(!dentry->d_inode &&
+			(d_is_fallthru(dentry) ||
+			 dentry->d_flags & DCACHE_UNION_PINNING_LOWER));
+}
+
+static inline void d_set_union_stack(struct dentry *dentry, struct union_stack *d)
+{
+#ifdef CONFIG_UNION_MOUNT
+	BUG_ON(dentry->d_union_stack != NULL);
+	dentry->d_union_stack = d;
+#endif
+}
+
+static inline void d_pin_lower(struct dentry *dentry, struct dentry *lower)
+{
+#ifdef CONFIG_UNION_MOUNT
+	BUG_ON(dentry->d_fallthru != NULL);
+	dentry->d_fallthru = lower;
+	smp_wmb();
+	dentry->d_flags |= DCACHE_UNION_PINNING_LOWER;
+#endif
+}
+
+static inline bool d_is_pinning_lower(const struct dentry *dentry)
+{
+#ifdef CONFIG_UNION_MOUNT
+	if (unlikely(dentry->d_flags & DCACHE_UNION_PINNING_LOWER)) {
+		smp_rmb(); /* d_fallthru must be read only after this flag is
+			    * checked. */
+		return true;
+	}
+#endif
+	return false;
+}
+
+static inline struct dentry *d_get_fallthru(struct dentry *dentry)
+{
+#ifdef CONFIG_UNION_MOUNT
+	return dentry->d_fallthru;
+#else
+	return NULL;
+#endif
+}
+
+static inline struct dentry *d_dentry_or_lower(struct dentry *dentry)
+{
+#ifdef CONFIG_UNION_MOUNT
+	return dentry->d_inode ? dentry : dentry->d_fallthru;
+#else
+	return dentry;
+#endif
+}
+
+static inline struct inode *d_inode_or_lower(struct dentry *dentry)
+{
+	struct inode *inode = dentry->d_inode;
+#ifdef CONFIG_UNION_MOUNT
+	if (!inode && d_is_pinning_lower(dentry))
+		inode = dentry->d_fallthru->d_inode;
+#endif
+	return inode;
 }
 
 extern int sysctl_vfs_cache_pressure;
