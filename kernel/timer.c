@@ -338,6 +338,17 @@ void set_timer_slack(struct timer_list *timer, int slack_hz)
 }
 EXPORT_SYMBOL_GPL(set_timer_slack);
 
+static bool catchup_timer_jiffies(struct tvec_base *base)
+{
+#ifdef CONFIG_NO_HZ_FULL
+	if (!base->all_timers) {
+		base->timer_jiffies = jiffies;
+		return 1;
+	}
+#endif /* #ifdef CONFIG_NO_HZ_FULL */
+	return 0;
+}
+
 static void
 __internal_add_timer(struct tvec_base *base, struct timer_list *timer)
 {
@@ -1150,6 +1161,10 @@ static inline void __run_timers(struct tvec_base *base)
 	struct timer_list *timer;
 
 	spin_lock_irq(&base->lock);
+	if (catchup_timer_jiffies(base)) {
+		spin_unlock_irq(&base->lock);
+		return;
+	}
 	while (time_after_eq(jiffies, base->timer_jiffies)) {
 		struct list_head work_list;
 		struct list_head *head = &work_list;
