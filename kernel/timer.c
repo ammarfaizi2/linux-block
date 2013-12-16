@@ -693,6 +693,7 @@ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
 	detach_timer(timer, clear_pending);
 	if (!tbase_get_deferrable(timer->base)) {
 		base->active_timers--;
+		(void)catchup_timer_jiffies(base);
 		if (timer->expires == base->next_timer)
 			base->next_timer = base->timer_jiffies;
 	}
