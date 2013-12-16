@@ -700,6 +700,7 @@ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
 			base->next_timer = base->timer_jiffies;
 	}
 	base->all_timers--;
+	(void)catchup_timer_jiffies(base);
 	return 1;
 }
 
