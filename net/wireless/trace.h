@@ -1844,36 +1844,23 @@ TRACE_EVENT(rdev_crit_proto_stop,
 );
 
 TRACE_EVENT(rdev_channel_switch,
-	TP_PROTO(struct wiphy *wiphy, struct net_device *netdev,
-		 struct cfg80211_csa_settings *params),
-	TP_ARGS(wiphy, netdev, params),
+	TP_PROTO(struct wiphy *wiphy,
+		 struct cfg80211_csa_settings *params,
+		 int num_params),
+	TP_ARGS(wiphy, params, num_params),
 	TP_STRUCT__entry(
 		WIPHY_ENTRY
-		NETDEV_ENTRY
-		CHAN_DEF_ENTRY
-		__field(u16, counter_offset_beacon)
-		__field(u16, counter_offset_presp)
-		__field(bool, radar_required)
-		__field(bool, block_tx)
-		__field(u8, count)
+		__field(int, num_params)
+		__dynamic_array(u8, params, sizeof(*params) * num_params)
 	),
 	TP_fast_assign(
 		WIPHY_ASSIGN;
-		NETDEV_ASSIGN;
-		CHAN_DEF_ASSIGN(&params->chandef);
-		__entry->counter_offset_beacon = params->counter_offset_beacon;
-		__entry->counter_offset_presp = params->counter_offset_presp;
-		__entry->radar_required = params->radar_required;
-		__entry->block_tx = params->block_tx;
-		__entry->count = params->count;
+		__entry->num_params = num_params;
+		memcpy(__get_dynamic_array(params), params,
+		       sizeof(*params) * num_params);
 	),
-	TP_printk(WIPHY_PR_FMT ", " NETDEV_PR_FMT ", " CHAN_DEF_PR_FMT
-		  ", block_tx: %d, count: %u, radar_required: %d"
-		  ", counter offsets (beacon/presp): %u/%u",
-		  WIPHY_PR_ARG, NETDEV_PR_ARG, CHAN_DEF_PR_ARG,
-		  __entry->block_tx, __entry->count, __entry->radar_required,
-		  __entry->counter_offset_beacon,
-		  __entry->counter_offset_presp)
+	TP_printk(WIPHY_PR_FMT ", num_params=%d",
+		  WIPHY_PR_ARG, __entry->num_params)
 );
 
 /*************************************************************

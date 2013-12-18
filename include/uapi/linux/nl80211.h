@@ -1575,6 +1575,10 @@ enum nl80211_commands {
  *	advertise values that cannot always be met. In such cases, an attempt
  *	to add a new station entry with @NL80211_CMD_NEW_STATION may fail.
  *
+ * @NL80211_ATTR_CH_SWITCH_IFACES: Nested attribute with channel switch
+ *	settings in each entry (ifindex, frequency, beacon IEs). Also used as a
+ *	device capability flag in nl80211_send_wiphy().
+ *
  * @NL80211_ATTR_MAX: highest attribute number currently defined
  * @__NL80211_ATTR_AFTER_LAST: internal use
  */
@@ -1907,6 +1911,8 @@ enum nl80211_attrs {
 	NL80211_ATTR_WIPHY_FREQ_HINT,
 
 	NL80211_ATTR_MAX_AP_ASSOC_STA,
+
+	NL80211_ATTR_CH_SWITCH_IFACES,
 
 	/* add attributes here, update the policy in nl80211.c */
 

@@ -925,13 +925,13 @@ static inline void rdev_crit_proto_stop(struct cfg80211_registered_device *rdev,
 }
 
 static inline int rdev_channel_switch(struct cfg80211_registered_device *rdev,
-				      struct net_device *dev,
-				      struct cfg80211_csa_settings *params)
+				      struct cfg80211_csa_settings *params,
+				      int num_params)
 {
 	int ret;
 
-	trace_rdev_channel_switch(&rdev->wiphy, dev, params);
-	ret = rdev->ops->channel_switch(&rdev->wiphy, dev, params);
+	trace_rdev_channel_switch(&rdev->wiphy, params, num_params);
+	ret = rdev->ops->channel_switch(&rdev->wiphy, params, num_params);
 	trace_rdev_return_int(&rdev->wiphy, ret);
 	return ret;
 }

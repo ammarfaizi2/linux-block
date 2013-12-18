@@ -1425,8 +1425,11 @@ void ieee80211_handle_roc_started(struct ieee80211_roc_work *roc);
 
 /* channel switch handling */
 void ieee80211_csa_finalize_work(struct work_struct *work);
-int ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
-			     struct cfg80211_csa_settings *params);
+int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
+			       struct cfg80211_csa_settings *params);
+int ieee80211_channel_switch(struct wiphy *wiphy,
+			     struct cfg80211_csa_settings *params,
+			     int num_params);
 
 /* interface handling */
 int ieee80211_iface_init(void);

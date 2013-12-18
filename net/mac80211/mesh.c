@@ -936,8 +936,8 @@ ieee80211_mesh_process_chnswitch(struct ieee80211_sub_if_data *sdata,
 
 	ifmsh->csa_role = IEEE80211_MESH_CSA_ROLE_REPEATER;
 
-	if (ieee80211_channel_switch(sdata->local->hw.wiphy, sdata->dev,
-				     &params) < 0)
+	if (__ieee80211_channel_switch(sdata->local->hw.wiphy, sdata->dev,
+				       &params) < 0)
 		return false;
 
 	return true;

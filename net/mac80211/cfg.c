@@ -3048,8 +3048,8 @@ unlock:
 	sdata_unlock(sdata);
 }
 
-int ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
-			     struct cfg80211_csa_settings *params)
+int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
+			       struct cfg80211_csa_settings *params)
 {
 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
 	struct ieee80211_local *local = sdata->local;
@@ -3228,6 +3228,25 @@ int ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	return 0;
+}
+
+int ieee80211_channel_switch(struct wiphy *wiphy,
+			     struct cfg80211_csa_settings *params,
+			     int num_params)
+{
+	struct ieee80211_sub_if_data *sdata;
+	int err;
+
+	/* multi-vif CSA is not implemented */
+	if (num_params > 1)
+		return -EOPNOTSUPP;
+
+	sdata = IEEE80211_DEV_TO_SUB_IF(params[0].dev);
+	sdata_lock(sdata);
+	err = __ieee80211_channel_switch(wiphy, params[0].dev, &params[0]);
+	sdata_unlock(sdata);
+
+	return err;
 }
 
 static int ieee80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
