@@ -228,6 +228,14 @@ enum cfg80211_chan_mode {
 	CHAN_MODE_EXCLUSIVE,
 };
 
+struct cfg80211_iftype_chan_param {
+	struct wireless_dev *wdev;
+	enum nl80211_iftype iftype;
+	struct ieee80211_channel *chan;
+	enum cfg80211_chan_mode chanmode;
+	u8 radar_detect_width;
+};
+
 struct cfg80211_beacon_registration {
 	struct list_head list;
 	u32 nlportid;
@@ -375,12 +383,9 @@ int cfg80211_change_iface(struct cfg80211_registered_device *rdev,
 void cfg80211_process_rdev_events(struct cfg80211_registered_device *rdev);
 void cfg80211_process_wdev_events(struct wireless_dev *wdev);
 
-int cfg80211_can_use_iftype_chan(struct cfg80211_registered_device *rdev,
-				 struct wireless_dev *wdev,
-				 enum nl80211_iftype iftype,
-				 struct ieee80211_channel *chan,
-				 enum cfg80211_chan_mode chanmode,
-				 u8 radar_detect);
+int cfg80211_can_use_iftype_chan_params(struct cfg80211_registered_device *rdev,
+				const struct cfg80211_iftype_chan_param *params,
+				int num_params);
 
 /**
  * cfg80211_chandef_dfs_usable - checks if chandef is usable and we can
@@ -399,6 +404,25 @@ void cfg80211_set_dfs_state(struct wiphy *wiphy,
 
 void cfg80211_dfs_channels_update_work(struct work_struct *work);
 
+
+static inline int
+cfg80211_can_use_iftype_chan(struct cfg80211_registered_device *rdev,
+			     struct wireless_dev *wdev,
+			     enum nl80211_iftype iftype,
+			     struct ieee80211_channel *chan,
+			     enum cfg80211_chan_mode chanmode,
+			     u8 radar_detect_width)
+{
+	struct cfg80211_iftype_chan_param param = {
+		.wdev = wdev,
+		.iftype = iftype,
+		.chan = chan,
+		.chanmode = chanmode,
+		.radar_detect_width = radar_detect_width,
+	};
+
+	return cfg80211_can_use_iftype_chan_params(rdev, &param, 1);
+}
 
 static inline int
 cfg80211_can_change_interface(struct cfg80211_registered_device *rdev,

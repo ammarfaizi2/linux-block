@@ -1233,30 +1233,11 @@ int cfg80211_validate_beacon_int(struct cfg80211_registered_device *rdev,
 	return res;
 }
 
-int cfg80211_can_use_iftype_chan(struct cfg80211_registered_device *rdev,
-				 struct wireless_dev *wdev,
-				 enum nl80211_iftype iftype,
-				 struct ieee80211_channel *chan,
-				 enum cfg80211_chan_mode chanmode,
-				 u8 radar_detect)
+static int cfg80211_is_radar_required(enum nl80211_iftype iftype,
+				      struct ieee80211_channel *chan,
+				      enum cfg80211_chan_mode chanmode,
+				      u8 radar_detect_width)
 {
-	struct wireless_dev *wdev_iter;
-	u32 used_iftypes = BIT(iftype);
-	int num[NUM_NL80211_IFTYPES];
-	struct ieee80211_channel
-			*used_channels[CFG80211_MAX_NUM_DIFFERENT_CHANNELS];
-	struct ieee80211_channel *ch;
-	enum cfg80211_chan_mode chmode;
-	int num_different_channels = 0;
-	int total = 1;
-	bool radar_required = false;
-	int i, j;
-
-	ASSERT_RTNL();
-
-	if (WARN_ON(hweight32(radar_detect) > 1))
-		return -EINVAL;
-
 	switch (iftype) {
 	case NL80211_IFTYPE_ADHOC:
 	case NL80211_IFTYPE_AP:
@@ -1264,58 +1245,132 @@ int cfg80211_can_use_iftype_chan(struct cfg80211_registered_device *rdev,
 	case NL80211_IFTYPE_MESH_POINT:
 	case NL80211_IFTYPE_P2P_GO:
 	case NL80211_IFTYPE_WDS:
-		/* if the interface could potentially choose a DFS channel,
-		 * then mark DFS as required.
-		 */
-		if (!chan) {
-			if (chanmode != CHAN_MODE_UNDEFINED && radar_detect)
-				radar_required = true;
-			break;
-		}
-		radar_required = !!(chan->flags & IEEE80211_CHAN_RADAR);
-		break;
+		/* if the interface could potentially choose a DFS
+		 * channel, then mark DFS as required. */
+		if (!chan)
+			return (chanmode != CHAN_MODE_UNDEFINED &&
+				radar_detect_width) ? 1 : 0;
+
+		return (chan->flags & IEEE80211_CHAN_RADAR) ? 1 : 0;
 	case NL80211_IFTYPE_P2P_CLIENT:
 	case NL80211_IFTYPE_STATION:
 	case NL80211_IFTYPE_P2P_DEVICE:
 	case NL80211_IFTYPE_MONITOR:
-		break;
+		return 0;
 	case NUM_NL80211_IFTYPES:
 	case NL80211_IFTYPE_UNSPECIFIED:
 	default:
 		return -EINVAL;
 	}
+}
 
-	if (radar_required && !radar_detect)
-		return -EINVAL;
-
-	/* Always allow software iftypes */
-	if (rdev->wiphy.software_iftypes & BIT(iftype)) {
-		if (radar_detect)
-			return -EINVAL;
-		return 0;
-	}
-
-	memset(num, 0, sizeof(num));
-	memset(used_channels, 0, sizeof(used_channels));
-
-	num[iftype] = 1;
+static int cfg80211_add_used_chan(struct ieee80211_channel **used_chans,
+				  int *num_diff_chans,
+				  int max_num_diff_chans,
+				  struct ieee80211_channel *chan,
+				  enum cfg80211_chan_mode chanmode)
+{
+	int i;
 
 	switch (chanmode) {
 	case CHAN_MODE_UNDEFINED:
 		break;
 	case CHAN_MODE_SHARED:
-		WARN_ON(!chan);
-		used_channels[0] = chan;
-		num_different_channels++;
+		if (WARN_ON(!chan))
+			return -EINVAL;
+
+		for (i = 0; i < max_num_diff_chans; i++)
+			if (!used_chans[i] || used_chans[i] == chan)
+				break;
+
+		if (i == max_num_diff_chans)
+			return -EBUSY;
+
+		if (used_chans[i] == NULL) {
+			used_chans[i] = chan;
+			(*num_diff_chans)++;
+		}
 		break;
 	case CHAN_MODE_EXCLUSIVE:
-		num_different_channels++;
+		(*num_diff_chans)++;
 		break;
 	}
 
+	return 0;
+}
+
+int cfg80211_can_use_iftype_chan_params(struct cfg80211_registered_device *rdev,
+				const struct cfg80211_iftype_chan_param *params,
+				int num_params)
+{
+	struct wireless_dev *wdev_iter;
+	u32 used_iftypes = 0;
+	int num[NUM_NL80211_IFTYPES];
+	struct ieee80211_channel
+			*used_channels[CFG80211_MAX_NUM_DIFFERENT_CHANNELS];
+	struct ieee80211_channel *ch;
+	enum cfg80211_chan_mode chmode;
+	int num_different_channels = 0;
+	int total = num_params;
+	bool num_software_iftypes = 0;
+	int err, i, j;
+
+	ASSERT_RTNL();
+
+	memset(num, 0, sizeof(num));
+	memset(used_channels, 0, sizeof(used_channels));
+
+	for (i = 0; i < num_params; i++) {
+		if (WARN_ON(hweight32(params[i].radar_detect_width) > 1))
+			return -EINVAL;
+
+		/* sanity check - make sure all wdevs in params[] are unique */
+		for (j = 0; j < num_params; j++)
+			if (WARN_ON(i != j && params[i].wdev == params[j].wdev))
+				return -EINVAL;
+
+		if (params[i].wdev && params[i].wdev->wiphy != &rdev->wiphy)
+			return -EINVAL;
+
+		used_iftypes |= BIT(params[i].iftype);
+		num[params[i].iftype]++;
+
+		err = cfg80211_is_radar_required(params[i].iftype,
+						 params[i].chan,
+						 params[i].chanmode,
+						 params[i].radar_detect_width);
+		if (err < 0)
+			return err;
+		else if (err && !params[i].radar_detect_width)
+			return -EINVAL;
+
+		if (rdev->wiphy.software_iftypes & BIT(params[i].iftype)) {
+			num_software_iftypes++;
+			if (params[i].radar_detect_width)
+				return -EINVAL;
+		}
+
+		err = cfg80211_add_used_chan(used_channels,
+					     &num_different_channels,
+					     ARRAY_SIZE(used_channels),
+					     params[i].chan,
+					     params[i].chanmode);
+		if (err)
+			return err;
+	}
+
+	/* Always allow software iftypes */
+	if (num_params == num_software_iftypes)
+		return 0;
+
 	list_for_each_entry(wdev_iter, &rdev->wdev_list, list) {
-		if (wdev_iter == wdev)
+		/* skip wdevs which are in params[] */
+		for (i = 0; i < num_params; i++)
+			if (wdev_iter == params[i].wdev)
+				break;
+		if (i < num_params)
 			continue;
+
 		if (wdev_iter->iftype == NL80211_IFTYPE_P2P_DEVICE) {
 			if (!wdev_iter->p2p_started)
 				continue;
@@ -1340,38 +1395,25 @@ int cfg80211_can_use_iftype_chan(struct cfg80211_registered_device *rdev,
 		cfg80211_get_chan_state(wdev_iter, &ch, &chmode);
 		wdev_unlock(wdev_iter);
 
-		switch (chmode) {
-		case CHAN_MODE_UNDEFINED:
-			break;
-		case CHAN_MODE_SHARED:
-			for (i = 0; i < CFG80211_MAX_NUM_DIFFERENT_CHANNELS; i++)
-				if (!used_channels[i] || used_channels[i] == ch)
-					break;
-
-			if (i == CFG80211_MAX_NUM_DIFFERENT_CHANNELS)
-				return -EBUSY;
-
-			if (used_channels[i] == NULL) {
-				used_channels[i] = ch;
-				num_different_channels++;
-			}
-			break;
-		case CHAN_MODE_EXCLUSIVE:
-			num_different_channels++;
-			break;
-		}
+		err = cfg80211_add_used_chan(used_channels,
+					     &num_different_channels,
+					     ARRAY_SIZE(used_channels),
+					     ch, chmode);
+		if (err)
+			return err;
 
 		num[wdev_iter->iftype]++;
 		total++;
 		used_iftypes |= BIT(wdev_iter->iftype);
 	}
 
-	if (total == 1 && !radar_detect)
+	if (total == 1 && num_params == 1 && !params[0].radar_detect_width)
 		return 0;
 
 	for (i = 0; i < rdev->wiphy.n_iface_combinations; i++) {
 		const struct ieee80211_iface_combination *c;
 		struct ieee80211_iface_limit *limits;
+		enum nl80211_iftype iftype;
 		u32 all_iftypes = 0;
 
 		c = &rdev->wiphy.iface_combinations[i];
@@ -1399,8 +1441,12 @@ int cfg80211_can_use_iftype_chan(struct cfg80211_registered_device *rdev,
 			}
 		}
 
-		if (radar_detect && !(c->radar_detect_widths & radar_detect))
-			goto cont;
+		for (j = 0; j < num_params; j++) {
+			if (params[j].radar_detect_width &&
+			    !(c->radar_detect_widths &
+			      params[j].radar_detect_width))
+				goto cont;
+		}
 
 		/*
 		 * Finally check that all iftypes that we're currently
