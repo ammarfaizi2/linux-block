@@ -796,6 +796,12 @@ ieee80211_ibss_process_chanswitch(struct ieee80211_sub_if_data *sdata,
 	int err;
 	u32 sta_flags;
 
+	sdata_assert_lock(sdata);
+	lockdep_assert_held(&sdata->local->mtx);
+
+	if (sdata->vif.csa_active)
+		return true;
+
 	sta_flags = IEEE80211_STA_DISABLE_VHT;
 	switch (ifibss->chandef.width) {
 	case NL80211_CHAN_WIDTH_5:
@@ -937,8 +943,9 @@ ieee80211_rx_mgmt_spectrum_mgmt(struct ieee80211_sub_if_data *sdata,
 	if (len < required_len)
 		return;
 
-	if (!sdata->vif.csa_active)
-		ieee80211_ibss_process_chanswitch(sdata, elems, false);
+	mutex_lock(&sdata->local->mtx);
+	ieee80211_ibss_process_chanswitch(sdata, elems, false);
+	mutex_unlock(&sdata->local->mtx);
 }
 
 static void ieee80211_rx_mgmt_deauth_ibss(struct ieee80211_sub_if_data *sdata,
@@ -1119,9 +1126,12 @@ static void ieee80211_rx_bss_info(struct ieee80211_sub_if_data *sdata,
 		goto put_bss;
 
 	/* process channel switch */
-	if (sdata->vif.csa_active ||
-	    ieee80211_ibss_process_chanswitch(sdata, elems, true))
+	mutex_lock(&local->mtx);
+	if (ieee80211_ibss_process_chanswitch(sdata, elems, true)) {
+		mutex_unlock(&local->mtx);
 		goto put_bss;
+	}
+	mutex_unlock(&local->mtx);
 
 	/* same BSSID */
 	if (ether_addr_equal(cbss->bssid, sdata->u.ibss.bssid))

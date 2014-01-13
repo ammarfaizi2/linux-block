@@ -250,13 +250,18 @@ static inline int identical_mac_addr_allowed(int type1, int type2)
 			 type2 == NL80211_IFTYPE_AP_VLAN));
 }
 
-static int ieee80211_check_concurrent_iface(struct ieee80211_sub_if_data *sdata,
-					    enum nl80211_iftype iftype)
+static int
+__ieee80211_check_concurrent_iface(struct ieee80211_sub_if_data *sdata,
+				   enum nl80211_iftype iftype)
 {
 	struct ieee80211_local *local = sdata->local;
 	struct ieee80211_sub_if_data *nsdata;
 
 	ASSERT_RTNL();
+
+	/* access to vif.csa_active must be protected by sdata or local->mtx.
+	 * this interates over interfaces so sdata lock won't do */
+	lockdep_assert_held(&local->mtx);
 
 	/* we hold the RTNL here so can safely walk the list */
 	list_for_each_entry(nsdata, &local->interfaces, list) {
@@ -306,6 +311,21 @@ static int ieee80211_check_concurrent_iface(struct ieee80211_sub_if_data *sdata,
 	}
 
 	return 0;
+}
+
+static int ieee80211_check_concurrent_iface(struct ieee80211_sub_if_data *sdata,
+					    enum nl80211_iftype iftype)
+{
+	struct ieee80211_local *local = sdata->local;
+	int err;
+
+	ASSERT_RTNL();
+
+	mutex_lock(&local->mtx);
+	err = __ieee80211_check_concurrent_iface(sdata, iftype);
+	mutex_unlock(&local->mtx);
+
+	return err;
 }
 
 static int ieee80211_check_queues(struct ieee80211_sub_if_data *sdata,
@@ -824,7 +844,11 @@ static void ieee80211_do_stop(struct ieee80211_sub_if_data *sdata,
 	cancel_work_sync(&local->dynamic_ps_enable_work);
 
 	cancel_work_sync(&sdata->recalc_smps);
+	sdata_lock(sdata);
+	mutex_lock(&local->mtx);
 	sdata->vif.csa_active = false;
+	mutex_unlock(&local->mtx);
+	sdata_unlock(sdata);
 	cancel_work_sync(&sdata->csa_finalize_work);
 
 	cancel_delayed_work_sync(&sdata->dfs_cac_timer_work);

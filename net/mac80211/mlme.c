@@ -883,12 +883,11 @@ static void ieee80211_chswitch_work(struct work_struct *work)
 		return;
 
 	sdata_lock(sdata);
+	mutex_lock(&local->mtx);
 	if (!ifmgd->associated)
 		goto out;
 
-	mutex_lock(&local->mtx);
 	ret = ieee80211_vif_change_channel(sdata, &changed);
-	mutex_unlock(&local->mtx);
 	if (ret) {
 		sdata_info(sdata,
 			   "vif channel switch failed, disconnecting\n");
@@ -921,6 +920,7 @@ static void ieee80211_chswitch_work(struct work_struct *work)
  out:
 	sdata->vif.csa_active = false;
 	ifmgd->flags &= ~IEEE80211_STA_CSA_RECEIVED;
+	mutex_unlock(&local->mtx);
 	sdata_unlock(sdata);
 }
 
@@ -963,6 +963,7 @@ ieee80211_sta_process_chanswitch(struct ieee80211_sub_if_data *sdata,
 	int res;
 
 	sdata_assert_lock(sdata);
+	lockdep_assert_held(&sdata->local->mtx);
 
 	if (!cbss)
 		return;
@@ -1666,7 +1667,7 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
 	if (WARN_ON(!ifmgd->associated))
 		return;
 
-	ieee80211_stop_poll(sdata);
+	__ieee80211_stop_poll(sdata);
 
 	ifmgd->associated = NULL;
 	netif_carrier_off(sdata->dev);
@@ -1751,9 +1752,7 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
 	ifmgd->have_beacon = false;
 
 	ifmgd->flags = 0;
-	mutex_lock(&local->mtx);
 	ieee80211_vif_release_channel(sdata);
-	mutex_unlock(&local->mtx);
 
 	sdata->encrypt_headroom = IEEE80211_ENCRYPT_HEADROOM;
 }
@@ -1983,10 +1982,9 @@ static void __ieee80211_disconnect(struct ieee80211_sub_if_data *sdata)
 	u8 frame_buf[IEEE80211_DEAUTH_FRAME_LEN];
 
 	sdata_lock(sdata);
-	if (!ifmgd->associated) {
-		sdata_unlock(sdata);
-		return;
-	}
+	mutex_lock(&sdata->local->mtx);
+	if (!ifmgd->associated)
+		goto out;
 
 	ieee80211_set_disassoc(sdata, IEEE80211_STYPE_DEAUTH,
 			       WLAN_REASON_DISASSOC_DUE_TO_INACTIVITY,
@@ -1999,6 +1997,8 @@ static void __ieee80211_disconnect(struct ieee80211_sub_if_data *sdata)
 
 	cfg80211_tx_mlme_mgmt(sdata->dev, frame_buf,
 			      IEEE80211_DEAUTH_FRAME_LEN);
+out:
+	mutex_unlock(&sdata->local->mtx);
 	sdata_unlock(sdata);
 }
 
@@ -2965,8 +2965,10 @@ static void ieee80211_rx_mgmt_beacon(struct ieee80211_sub_if_data *sdata,
 
 	ieee80211_rx_bss_info(sdata, mgmt, len, rx_status, &elems);
 
+	mutex_lock(&local->mtx);
 	ieee80211_sta_process_chanswitch(sdata, rx_status->mactime,
 					 &elems, true);
+	mutex_unlock(&local->mtx);
 
 	if (!(ifmgd->flags & IEEE80211_STA_DISABLE_WMM) &&
 	    ieee80211_sta_wmm_params(local, sdata, elems.wmm_param,
@@ -3097,9 +3099,11 @@ void ieee80211_sta_rx_queued_mgmt(struct ieee80211_sub_if_data *sdata,
 			if (elems.parse_error)
 				break;
 
+			mutex_lock(&sdata->local->mtx);
 			ieee80211_sta_process_chanswitch(sdata,
 							 rx_status->mactime,
 							 &elems, false);
+			mutex_unlock(&sdata->local->mtx);
 		} else if (mgmt->u.action.category == WLAN_CATEGORY_PUBLIC) {
 			ies_len = skb->len -
 				  offsetof(struct ieee80211_mgmt,
@@ -3119,9 +3123,11 @@ void ieee80211_sta_rx_queued_mgmt(struct ieee80211_sub_if_data *sdata,
 			elems.ext_chansw_ie =
 				&mgmt->u.action.u.ext_chan_switch.data;
 
+			mutex_lock(&sdata->local->mtx);
 			ieee80211_sta_process_chanswitch(sdata,
 							 rx_status->mactime,
 							 &elems, false);
+			mutex_unlock(&sdata->local->mtx);
 		}
 		break;
 	}
