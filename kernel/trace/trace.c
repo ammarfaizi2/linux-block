@@ -946,22 +946,6 @@ static ssize_t trace_seq_to_buffer(struct trace_seq *s, void *buf, size_t cnt)
 	return cnt;
 }
 
-/*
- * ftrace_max_lock is used to protect the swapping of buffers
- * when taking a max snapshot. The buffers themselves are
- * protected by per_cpu spinlocks. But the action of the swap
- * needs its own lock.
- *
- * This is defined as a arch_spinlock_t in order to help
- * with performance when lockdep debugging is enabled.
- *
- * It is also used in other places outside the update_max_tr
- * so it needs to be defined outside of the
- * CONFIG_TRACER_MAX_TRACE.
- */
-static arch_spinlock_t ftrace_max_lock =
-	(arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
-
 unsigned long __read_mostly	tracing_thresh;
 
 #ifdef CONFIG_TRACER_MAX_TRACE
@@ -1029,14 +1013,14 @@ update_max_tr(struct trace_array *tr, struct task_struct *tsk, int cpu)
 		return;
 	}
 
-	arch_spin_lock(&ftrace_max_lock);
+	arch_spin_lock(&tr->max_lock);
 
 	buf = tr->trace_buffer.buffer;
 	tr->trace_buffer.buffer = tr->max_buffer.buffer;
 	tr->max_buffer.buffer = buf;
 
 	__update_max_tr(tr, tsk, cpu);
-	arch_spin_unlock(&ftrace_max_lock);
+	arch_spin_unlock(&tr->max_lock);
 }
 
 /**
@@ -1062,7 +1046,7 @@ update_max_tr_single(struct trace_array *tr, struct task_struct *tsk, int cpu)
 		return;
 	}
 
-	arch_spin_lock(&ftrace_max_lock);
+	arch_spin_lock(&tr->max_lock);
 
 	ret = ring_buffer_swap_cpu(tr->max_buffer.buffer, tr->trace_buffer.buffer, cpu);
 
@@ -1080,7 +1064,7 @@ update_max_tr_single(struct trace_array *tr, struct task_struct *tsk, int cpu)
 	WARN_ON_ONCE(ret && ret != -EAGAIN && ret != -EBUSY);
 
 	__update_max_tr(tr, tsk, cpu);
-	arch_spin_unlock(&ftrace_max_lock);
+	arch_spin_unlock(&tr->max_lock);
 }
 #endif /* CONFIG_TRACER_MAX_TRACE */
 
@@ -1334,7 +1318,7 @@ void tracing_start(void)
 	}
 
 	/* Prevent the buffers from switching */
-	arch_spin_lock(&ftrace_max_lock);
+	arch_spin_lock(&global_trace.max_lock);
 
 	buffer = global_trace.trace_buffer.buffer;
 	if (buffer)
@@ -1346,7 +1330,7 @@ void tracing_start(void)
 		ring_buffer_record_enable(buffer);
 #endif
 
-	arch_spin_unlock(&ftrace_max_lock);
+	arch_spin_unlock(&global_trace.max_lock);
 
 	ftrace_start();
  out:
@@ -1401,7 +1385,7 @@ void tracing_stop(void)
 		goto out;
 
 	/* Prevent the buffers from switching */
-	arch_spin_lock(&ftrace_max_lock);
+	arch_spin_lock(&global_trace.max_lock);
 
 	buffer = global_trace.trace_buffer.buffer;
 	if (buffer)
@@ -1413,7 +1397,7 @@ void tracing_stop(void)
 		ring_buffer_record_disable(buffer);
 #endif
 
-	arch_spin_unlock(&ftrace_max_lock);
+	arch_spin_unlock(&global_trace.max_lock);
 
  out:
 	raw_spin_unlock_irqrestore(&global_trace.start_lock, flags);
@@ -3298,7 +3282,7 @@ tracing_cpumask_write(struct file *filp, const char __user *ubuf,
 	mutex_lock(&tracing_cpumask_update_lock);
 
 	local_irq_disable();
-	arch_spin_lock(&ftrace_max_lock);
+	arch_spin_lock(&tr->max_lock);
 	for_each_tracing_cpu(cpu) {
 		/*
 		 * Increase/decrease the disabled counter if we are
@@ -3315,7 +3299,7 @@ tracing_cpumask_write(struct file *filp, const char __user *ubuf,
 			ring_buffer_record_enable_cpu(tr->trace_buffer.buffer, cpu);
 		}
 	}
-	arch_spin_unlock(&ftrace_max_lock);
+	arch_spin_unlock(&tr->max_lock);
 	local_irq_enable();
 
 	cpumask_copy(tr->tracing_cpumask, tracing_cpumask_new);
@@ -6050,6 +6034,8 @@ static int new_instance_create(const char *name)
 
 	raw_spin_lock_init(&tr->start_lock);
 
+	tr->max_lock = (arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
+
 	tr->current_trace = &nop_trace;
 
 	INIT_LIST_HEAD(&tr->systems);
@@ -6534,6 +6520,8 @@ __init static int tracer_alloc_buffers(void)
 	 * just a bootstrap of current_trace anyway.
 	 */
 	global_trace.current_trace = &nop_trace;
+
+	global_trace.max_lock = (arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
 
 	ftrace_init_global_array_ops(&global_trace);
 
