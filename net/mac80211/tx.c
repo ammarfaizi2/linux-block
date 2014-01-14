@@ -2402,13 +2402,16 @@ static void ieee80211_update_csa(struct ieee80211_sub_if_data *sdata,
 	if (WARN_ON(counter_offset_beacon >= beacon_data_len))
 		return;
 
-	/* Warn if the driver did not check for/react to csa
-	 * completeness.  A beacon with CSA counter set to 0 should
-	 * never occur, because a counter of 1 means switch just
-	 * before the next beacon.
-	 */
-	if (WARN_ON(beacon_data[counter_offset_beacon] == 1))
+	if (beacon_data[counter_offset_beacon] == 1) {
+		/* Warn if the driver did not check for/react to csa
+		 * completeness. A beacon with CSA counter set to 0 should
+		 * never occur, because a counter of 1 means switch just before
+		 * the next beacon. Multi-interface CSA may need to wait for
+		 * other interfaces to complete their counter so don't warn
+		 * unless driver actually didn't notify us. */
+		WARN_ON(!sdata->csa_complete);
 		return;
+	}
 
 	beacon_data[counter_offset_beacon]--;
 

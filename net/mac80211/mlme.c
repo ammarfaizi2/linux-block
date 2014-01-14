@@ -887,7 +887,17 @@ static void ieee80211_chswitch_work(struct work_struct *work)
 	if (!ifmgd->associated)
 		goto out;
 
-	ret = ieee80211_vif_change_channel(sdata, &changed);
+	if (sdata->vif.bss_conf.chandef.width !=
+	    sdata->csa_chandef.width)
+		changed |= BSS_CHANGED_BANDWIDTH;
+
+	mutex_lock(&local->chanctx_mtx);
+	/* satisfy sanity checks */
+	sdata->csa_complete = true;
+
+	ret = ieee80211_chanctx_chswitch(local);
+	mutex_unlock(&local->chanctx_mtx);
+
 	if (ret) {
 		sdata_info(sdata,
 			   "vif channel switch failed, disconnecting\n");

@@ -846,9 +846,11 @@ static void ieee80211_do_stop(struct ieee80211_sub_if_data *sdata,
 	cancel_work_sync(&sdata->recalc_smps);
 	sdata_lock(sdata);
 	mutex_lock(&local->mtx);
-	sdata->vif.csa_active = false;
+	ieee80211_csa_clear(sdata);
+	ieee80211_csa_free(sdata);
 	mutex_unlock(&local->mtx);
 	sdata_unlock(sdata);
+	cancel_work_sync(&sdata->csa_complete_work);
 	cancel_work_sync(&sdata->csa_finalize_work);
 
 	cancel_delayed_work_sync(&sdata->dfs_cac_timer_work);
@@ -1317,6 +1319,7 @@ static void ieee80211_setup_sdata(struct ieee80211_sub_if_data *sdata,
 	INIT_WORK(&sdata->work, ieee80211_iface_work);
 	INIT_WORK(&sdata->recalc_smps, ieee80211_recalc_smps_work);
 	INIT_WORK(&sdata->csa_finalize_work, ieee80211_csa_finalize_work);
+	INIT_WORK(&sdata->csa_complete_work, ieee80211_csa_complete_work);
 
 	switch (type) {
 	case NL80211_IFTYPE_P2P_GO:

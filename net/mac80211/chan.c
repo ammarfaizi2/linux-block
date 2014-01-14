@@ -552,49 +552,103 @@ int ieee80211_vif_use_channel(struct ieee80211_sub_if_data *sdata,
 	return ret;
 }
 
-int ieee80211_vif_change_channel(struct ieee80211_sub_if_data *sdata,
-				 u32 *changed)
+const struct cfg80211_chan_def *
+ieee80211_get_csa_chandef(struct ieee80211_local *local)
 {
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_chanctx_conf *conf;
-	struct ieee80211_chanctx *ctx;
-	const struct cfg80211_chan_def *chandef = &sdata->csa_chandef;
-	int ret;
-	u32 chanctx_changed = 0;
+	struct ieee80211_sub_if_data *sdata;
+	const struct cfg80211_chan_def *chandef = NULL;
 
 	lockdep_assert_held(&local->mtx);
+	lockdep_assert_held(&local->chanctx_mtx);
 
-	/* should never be called if not performing a channel switch. */
-	if (WARN_ON(!sdata->vif.csa_active))
+	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
+		if (!sdata->vif.csa_active)
+			continue;
+
+		if (!sdata->csa_complete)
+			return NULL;
+
+		if (chandef == NULL)
+			chandef = &sdata->csa_chandef;
+		else
+			chandef = cfg80211_chandef_compatible(
+					chandef, &sdata->csa_chandef);
+
+		if (!chandef)
+			return NULL;
+	}
+
+	return chandef;
+}
+
+static void ieee80211_use_csa_chandef(struct ieee80211_local *local)
+{
+	struct ieee80211_sub_if_data *sdata;
+
+	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
+		if (!sdata->vif.csa_active)
+			continue;
+
+		sdata->radar_required = sdata->csa_radar_required;
+		sdata->vif.bss_conf.chandef = sdata->csa_chandef;
+	}
+}
+
+struct ieee80211_chanctx *
+ieee80211_get_csa_chanctx(struct ieee80211_local *local)
+{
+	struct ieee80211_chanctx *chanctx = NULL, *ctx;
+	int num_chanctx = 0;
+
+	lockdep_assert_held(&local->chanctx_mtx);
+
+	list_for_each_entry(ctx, &local->chanctx_list, list) {
+		chanctx = ctx;
+		num_chanctx++;
+	}
+
+	/* multi-channel is not supported, multi-vif is */
+	if (num_chanctx > 1)
+		return NULL;
+
+	return chanctx;
+}
+
+int ieee80211_chanctx_chswitch(struct ieee80211_local *local)
+{
+	u32 chanctx_changed = 0;
+	struct ieee80211_chanctx *ctx;
+	const struct cfg80211_chan_def *chandef;
+
+	lockdep_assert_held(&local->mtx);
+	lockdep_assert_held(&local->chanctx_mtx);
+
+	ctx = ieee80211_get_csa_chanctx(local);
+	if (!ctx)
+		return -EBUSY;
+
+	rcu_read_lock();
+	chandef = ieee80211_get_csa_chandef(local);
+	if (!chandef) {
+		rcu_read_unlock();
 		return -EINVAL;
+	}
 
-	if (!cfg80211_chandef_usable(sdata->local->hw.wiphy, chandef,
-				     IEEE80211_CHAN_DISABLED))
+	if (!cfg80211_chandef_usable(local->hw.wiphy, chandef,
+				     IEEE80211_CHAN_DISABLED)) {
+		rcu_read_unlock();
 		return -EINVAL;
-
-	mutex_lock(&local->chanctx_mtx);
-	conf = rcu_dereference_protected(sdata->vif.chanctx_conf,
-					 lockdep_is_held(&local->chanctx_mtx));
-	if (!conf) {
-		ret = -EINVAL;
-		goto out;
 	}
 
-	ctx = container_of(conf, struct ieee80211_chanctx, conf);
-	if (ctx->refcount != 1) {
-		ret = -EINVAL;
-		goto out;
-	}
-
-	if (sdata->vif.bss_conf.chandef.width != chandef->width) {
-		chanctx_changed = IEEE80211_CHANCTX_CHANGE_WIDTH;
-		*changed |= BSS_CHANGED_BANDWIDTH;
-	}
-
-	sdata->vif.bss_conf.chandef = *chandef;
-	ctx->conf.def = *chandef;
+	ieee80211_use_csa_chandef(local);
+	rcu_read_unlock();
 
 	chanctx_changed |= IEEE80211_CHANCTX_CHANGE_CHANNEL;
+
+	if (ctx->conf.def.width != chandef->width)
+		chanctx_changed = IEEE80211_CHANCTX_CHANGE_WIDTH;
+
+	ctx->conf.def = *chandef;
 	drv_change_chanctx(local, ctx, chanctx_changed);
 
 	ieee80211_recalc_chanctx_chantype(local, ctx);
@@ -602,10 +656,7 @@ int ieee80211_vif_change_channel(struct ieee80211_sub_if_data *sdata,
 	ieee80211_recalc_radar_chanctx(local, ctx);
 	ieee80211_recalc_chanctx_min_def(local, ctx);
 
-	ret = 0;
- out:
-	mutex_unlock(&local->chanctx_mtx);
-	return ret;
+	return 0;
 }
 
 int ieee80211_vif_change_bandwidth(struct ieee80211_sub_if_data *sdata,

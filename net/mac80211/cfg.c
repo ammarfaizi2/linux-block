@@ -1088,9 +1088,8 @@ static int ieee80211_stop_ap(struct wiphy *wiphy, struct net_device *dev)
 
 	/* abort any running channel switch */
 	mutex_lock(&local->mtx);
-	sdata->vif.csa_active = false;
-	kfree(sdata->u.ap.next_beacon);
-	sdata->u.ap.next_beacon = NULL;
+	ieee80211_csa_clear(sdata);
+	ieee80211_csa_free(sdata);
 	mutex_unlock(&local->mtx);
 
 	cancel_work_sync(&sdata->u.ap.request_smps_work);
@@ -3007,15 +3006,94 @@ cfg80211_beacon_dup(struct cfg80211_beacon_data *beacon)
 	return new_beacon;
 }
 
+static int ieee80211_ap_beacon_presp_backup(struct ieee80211_sub_if_data *sdata)
+{
+	struct beacon_data *beacon;
+	struct probe_resp *probe_resp;
+
+	beacon = sdata_dereference(sdata->u.ap.beacon, sdata);
+	if (beacon) {
+		int head_pos, tail_pos, meshconf_pos;
+		struct beacon_data *prev_beacon;
+
+		prev_beacon = kmemdup(beacon, sizeof(beacon) +
+				      beacon->head_len + beacon->tail_len,
+				      GFP_KERNEL);
+		if (!prev_beacon)
+			return -ENOMEM;
+
+		head_pos = (void *)beacon->head - (void *)beacon;
+		tail_pos = (void *)beacon->tail - (void *)beacon;
+		meshconf_pos = (void *)beacon->meshconf - (void *)beacon;
+
+		prev_beacon->head = (void *)prev_beacon + head_pos;
+		prev_beacon->tail = (void *)prev_beacon + tail_pos;
+		prev_beacon->meshconf = (void *)prev_beacon + meshconf_pos;
+
+		sdata->u.ap.prev_beacon = prev_beacon;
+	}
+
+	probe_resp = sdata_dereference(sdata->u.ap.probe_resp, sdata);
+	if (probe_resp) {
+		sdata->u.ap.prev_presp = kmemdup(probe_resp,
+						 sizeof(probe_resp) +
+						 probe_resp->len, GFP_KERNEL);
+		if (!sdata->u.ap.prev_presp) {
+			kfree(sdata->u.ap.prev_beacon);
+			sdata->u.ap.prev_beacon = NULL;
+			return -ENOMEM;
+		}
+	}
+
+	return 0;
+}
+
+static int
+ieee80211_ap_beacon_presp_restore(struct ieee80211_sub_if_data *sdata)
+{
+	struct beacon_data *beacon;
+	struct probe_resp *probe_resp;
+	int changed = 0;
+
+	if (sdata->u.ap.prev_beacon) {
+		beacon = sdata_dereference(sdata->u.ap.beacon, sdata);
+		rcu_assign_pointer(sdata->u.ap.beacon, sdata->u.ap.prev_beacon);
+		if (beacon)
+			kfree_rcu(beacon, rcu_head);
+		sdata->u.ap.prev_beacon = NULL;
+		changed |= BSS_CHANGED_BEACON;
+	}
+
+	if (sdata->u.ap.prev_presp) {
+		probe_resp = sdata_dereference(sdata->u.ap.probe_resp, sdata);
+		rcu_assign_pointer(sdata->u.ap.probe_resp,
+				   sdata->u.ap.prev_presp);
+		if (probe_resp)
+			kfree_rcu(probe_resp, rcu_head);
+		sdata->u.ap.prev_presp = NULL;
+		changed |= BSS_CHANGED_AP_PROBE_RESP;
+	}
+
+	return changed;
+}
+
 static int ieee80211_ap_finish_csa(struct ieee80211_sub_if_data *sdata)
 {
-	int err;
+	int err = 0;
 
 	lockdep_assert_held(&sdata->local->mtx);
 
-	err = ieee80211_assign_beacon(sdata, sdata->u.ap.next_beacon);
+	if (sdata->u.ap.next_beacon)
+		err = ieee80211_assign_beacon(sdata, sdata->u.ap.next_beacon);
+	else
+		err = ieee80211_ap_beacon_presp_restore(sdata);
+
 	kfree(sdata->u.ap.next_beacon);
+	kfree(sdata->u.ap.prev_beacon);
+	kfree(sdata->u.ap.prev_presp);
 	sdata->u.ap.next_beacon = NULL;
+	sdata->u.ap.prev_beacon = NULL;
+	sdata->u.ap.prev_presp = NULL;
 
 	if (err < 0)
 		return err;
@@ -3029,9 +3107,78 @@ void ieee80211_csa_finish(struct ieee80211_vif *vif)
 	struct ieee80211_sub_if_data *sdata = vif_to_sdata(vif);
 
 	ieee80211_queue_work(&sdata->local->hw,
-			     &sdata->csa_finalize_work);
+			     &sdata->csa_complete_work);
 }
 EXPORT_SYMBOL(ieee80211_csa_finish);
+
+void ieee80211_csa_clear(struct ieee80211_sub_if_data *sdata)
+{
+	struct ieee80211_local *local = sdata->local;
+
+	sdata_assert_lock(sdata);
+	lockdep_assert_held(&local->mtx);
+
+	sdata->vif.csa_active = false;
+	sdata->csa_complete = false;
+
+	/* unblock queues when last CSA interface is cleared (either finalizes
+	 * or is cancelled) */
+	if (ieee80211_is_csa_active(local))
+		return;
+
+	ieee80211_wake_queues_by_reason(&local->hw,
+					IEEE80211_MAX_QUEUE_MAP,
+					IEEE80211_QUEUE_STOP_REASON_CSA);
+}
+
+void ieee80211_csa_free(struct ieee80211_sub_if_data *sdata)
+{
+	sdata_assert_lock(sdata);
+	lockdep_assert_held(&sdata->local->mtx);
+
+	if (sdata->vif.type != NL80211_IFTYPE_AP)
+		return;
+
+	kfree(sdata->u.ap.next_beacon);
+	kfree(sdata->u.ap.prev_beacon);
+	kfree(sdata->u.ap.prev_presp);
+	sdata->u.ap.next_beacon = NULL;
+	sdata->u.ap.prev_beacon = NULL;
+	sdata->u.ap.prev_presp = NULL;
+}
+
+static int ieee80211_csa_finish_beacon(struct ieee80211_sub_if_data *sdata)
+{
+	int err;
+
+	sdata_assert_lock(sdata);
+	lockdep_assert_held(&sdata->local->mtx);
+
+	switch (sdata->vif.type) {
+	case NL80211_IFTYPE_AP:
+		err = ieee80211_ap_finish_csa(sdata);
+		if (err < 0)
+			return err;
+		break;
+	case NL80211_IFTYPE_ADHOC:
+		err = ieee80211_ibss_finish_csa(sdata);
+		if (err < 0)
+			return err;
+		break;
+#ifdef CONFIG_MAC80211_MESH
+	case NL80211_IFTYPE_MESH_POINT:
+		err = ieee80211_mesh_finish_csa(sdata);
+		if (err < 0)
+			return err;
+		break;
+#endif
+	default:
+		WARN_ON(1);
+		return -EINVAL;
+	}
+
+	return 0;
+}
 
 static void ieee80211_csa_finalize(struct ieee80211_sub_if_data *sdata)
 {
@@ -3041,9 +3188,21 @@ static void ieee80211_csa_finalize(struct ieee80211_sub_if_data *sdata)
 	sdata_assert_lock(sdata);
 	lockdep_assert_held(&local->mtx);
 
-	sdata->radar_required = sdata->csa_radar_required;
+	if (!ieee80211_sdata_running(sdata))
+		return;
 
-	err = ieee80211_vif_change_channel(sdata, &changed);
+	if (!sdata->vif.csa_active)
+		return;
+
+	if (sdata->vif.bss_conf.chandef.width != sdata->csa_chandef.width)
+		changed |= BSS_CHANGED_BANDWIDTH;
+
+	/* channel switch is called for each sdata csa is being performed, but
+	 * this shouldn't be a problem */
+	mutex_lock(&local->chanctx_mtx);
+	err = ieee80211_chanctx_chswitch(local);
+	mutex_unlock(&local->chanctx_mtx);
+
 	if (WARN_ON(err < 0))
 		return;
 
@@ -3054,33 +3213,9 @@ static void ieee80211_csa_finalize(struct ieee80211_sub_if_data *sdata)
 
 	ieee80211_bss_info_change_notify(sdata, changed);
 
-	sdata->vif.csa_active = false;
-	switch (sdata->vif.type) {
-	case NL80211_IFTYPE_AP:
-		err = ieee80211_ap_finish_csa(sdata);
-		if (err < 0)
-			return;
-		break;
-	case NL80211_IFTYPE_ADHOC:
-		err = ieee80211_ibss_finish_csa(sdata);
-		if (err < 0)
-			return;
-		break;
-#ifdef CONFIG_MAC80211_MESH
-	case NL80211_IFTYPE_MESH_POINT:
-		err = ieee80211_mesh_finish_csa(sdata);
-		if (err < 0)
-			return;
-		break;
-#endif
-	default:
-		WARN_ON(1);
+	err = ieee80211_csa_finish_beacon(sdata);
+	if (err)
 		return;
-	}
-
-	ieee80211_wake_queues_by_reason(&sdata->local->hw,
-					IEEE80211_MAX_QUEUE_MAP,
-					IEEE80211_QUEUE_STOP_REASON_CSA);
 
 	cfg80211_ch_switch_notify(sdata->dev, &sdata->csa_chandef);
 }
@@ -3104,53 +3239,142 @@ void ieee80211_csa_finalize_work(struct work_struct *work)
 	ieee80211_csa_finalize(sdata);
 
 unlock:
+	ieee80211_csa_clear(sdata);
 	mutex_unlock(&sdata->local->mtx);
 	sdata_unlock(sdata);
 }
 
-int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
-			       struct cfg80211_csa_settings *params)
+static bool ieee80211_is_csa_complete(struct ieee80211_local *local)
+{
+	struct ieee80211_sub_if_data *sdata;
+	int num_active = 0;
+	int num_complete = 0;
+
+	lockdep_assert_held(&local->mtx);
+	lockdep_assert_held(&local->iflist_mtx);
+
+	list_for_each_entry(sdata, &local->interfaces, list) {
+		if (sdata->vif.csa_active)
+			num_active++;
+		if (sdata->csa_complete)
+			num_complete++;
+	}
+
+	if (num_active == 0)
+		return false;
+	if (num_active != num_complete)
+		return false;
+
+	return true;
+}
+
+static void ieee80211_queue_csa_finalize(struct ieee80211_local *local)
+{
+	struct ieee80211_sub_if_data *sdata;
+
+	lockdep_assert_held(&local->mtx);
+	lockdep_assert_held(&local->iflist_mtx);
+
+	list_for_each_entry(sdata, &local->interfaces, list) {
+		if (!ieee80211_sdata_running(sdata))
+			continue;
+
+		if (!sdata->vif.csa_active)
+			continue;
+
+		ieee80211_queue_work(&local->hw, &sdata->csa_finalize_work);
+	}
+}
+
+void ieee80211_csa_complete_work(struct work_struct *work)
+{
+	struct ieee80211_sub_if_data *sdata =
+		container_of(work, struct ieee80211_sub_if_data,
+			     csa_complete_work);
+	struct ieee80211_local *local = sdata->local;
+
+	mutex_lock(&local->mtx);
+	mutex_lock(&local->iflist_mtx);
+
+	if (sdata->vif.csa_active)
+		sdata->csa_complete = true;
+
+	if (ieee80211_is_csa_complete(sdata->local))
+		ieee80211_queue_csa_finalize(sdata->local);
+
+	mutex_unlock(&local->iflist_mtx);
+	mutex_unlock(&local->mtx);
+}
+
+static void ieee80211_channel_switch_abort(struct wiphy *wiphy,
+					   struct net_device *dev,
+					   struct cfg80211_csa_settings *params)
 {
 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
 	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_chanctx_conf *chanctx_conf;
-	struct ieee80211_chanctx *chanctx;
 	struct ieee80211_if_mesh __maybe_unused *ifmsh;
-	int err, num_chanctx, changed = 0;
 
 	sdata_assert_lock(sdata);
 	lockdep_assert_held(&local->mtx);
 
-	if (!list_empty(&local->roc_list) || local->scanning)
+	ieee80211_csa_clear(sdata);
+
+	/* force to switch to previous AP beacon */
+	kfree(sdata->u.ap.next_beacon);
+	sdata->u.ap.next_beacon = NULL;
+
+	ieee80211_csa_finish_beacon(sdata);
+}
+
+int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
+			       struct cfg80211_csa_settings *params,
+			       int num_ifaces)
+{
+	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+	struct ieee80211_local *local = sdata->local;
+	struct ieee80211_chanctx *chanctx;
+	struct ieee80211_if_mesh __maybe_unused *ifmsh;
+	int err, changed = 0;
+
+	sdata_assert_lock(sdata);
+	lockdep_assert_held(&local->mtx);
+
+	/* Only first CSA call sets num_ifaces > 0. It's used to validate
+	 * chanctx->refcount and start CSA sequence (thus reserving subsequenct
+	 * CSA for each interface */
+
+	if (num_ifaces && (!list_empty(&local->roc_list) ||
+			    local->scanning ||
+			    ieee80211_is_csa_active(local)))
 		return -EBUSY;
 
+	if (!ieee80211_sdata_running(sdata))
+		return -ENETDOWN;
+
 	if (sdata->wdev.cac_started)
+		return -EBUSY;
+
+	if (sdata->vif.csa_active)
 		return -EBUSY;
 
 	if (cfg80211_chandef_identical(&params->chandef,
 				       &sdata->vif.bss_conf.chandef))
 		return -EINVAL;
 
-	rcu_read_lock();
-	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
-	if (!chanctx_conf) {
-		rcu_read_unlock();
+	mutex_lock(&local->chanctx_mtx);
+
+	chanctx = ieee80211_get_csa_chanctx(local);
+	if (!chanctx) {
+		mutex_unlock(&local->chanctx_mtx);
 		return -EBUSY;
 	}
 
-	/* don't handle for multi-VIF cases */
-	chanctx = container_of(chanctx_conf, struct ieee80211_chanctx, conf);
-	if (chanctx->refcount > 1) {
-		rcu_read_unlock();
+	if (num_ifaces && chanctx->refcount != num_ifaces) {
+		mutex_unlock(&local->chanctx_mtx);
 		return -EBUSY;
 	}
-	num_chanctx = 0;
-	list_for_each_entry_rcu(chanctx, &local->chanctx_list, list)
-		num_chanctx++;
-	rcu_read_unlock();
 
-	if (num_chanctx > 1)
-		return -EBUSY;
+	mutex_unlock(&local->chanctx_mtx);
 
 	/* don't allow another channel switch if one is already active. */
 	if (sdata->vif.csa_active)
@@ -3185,9 +3409,16 @@ int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 		sdata->csa_counter_offset_beacon =
 			params->counter_offset_beacon;
 		sdata->csa_counter_offset_presp = params->counter_offset_presp;
+
+		err = ieee80211_ap_beacon_presp_backup(sdata);
+		if (err) {
+			ieee80211_csa_free(sdata);
+			return -ENOMEM;
+		}
+
 		err = ieee80211_assign_beacon(sdata, &params->beacon_csa);
 		if (err < 0) {
-			kfree(sdata->u.ap.next_beacon);
+			ieee80211_csa_free(sdata);
 			return err;
 		}
 		changed |= err;
@@ -3293,26 +3524,63 @@ int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 	return 0;
 }
 
+static int ieee80211_csa_allowed_settings(struct cfg80211_csa_settings *params,
+					  int num_params)
+{
+	const struct cfg80211_chan_def *chandef;
+	int i;
+
+	if (num_params == 0)
+		return -EINVAL;
+
+	chandef = &params[0].chandef;
+	for (i = 1; i < num_params; i++) {
+		chandef = cfg80211_chandef_compatible(chandef,
+						      &params[i].chandef);
+		if (!chandef)
+			return -EBUSY;
+	}
+
+	return 0;
+}
+
 int ieee80211_channel_switch(struct wiphy *wiphy,
 			     struct cfg80211_csa_settings *params,
 			     int num_params)
 {
 	struct ieee80211_sub_if_data *sdata;
-	int err;
+	int err, i;
 
-	/* multi-vif CSA is not implemented */
-	if (num_params > 1)
-		return -EOPNOTSUPP;
+	err = ieee80211_csa_allowed_settings(params, num_params);
+	if (err)
+		return err;
 
-	sdata = IEEE80211_DEV_TO_SUB_IF(params[0].dev);
+	for (i = 0; i < num_params; i++) {
+		sdata = IEEE80211_DEV_TO_SUB_IF(params[i].dev);
 
-	sdata_lock(sdata);
-	mutex_lock(&sdata->local->mtx);
-	err = __ieee80211_channel_switch(wiphy, params[0].dev, &params[0]);
-	mutex_unlock(&sdata->local->mtx);
-	sdata_unlock(sdata);
+		sdata_lock(sdata);
+		mutex_lock(&sdata->local->mtx);
+		err = __ieee80211_channel_switch(wiphy, params[i].dev,
+						 &params[i],
+						 i == 0 ? num_params : 0);
+		mutex_unlock(&sdata->local->mtx);
+		sdata_unlock(sdata);
 
-	return err;
+		if (err) {
+			for (i--; i >= 0; i--) {
+				sdata_lock(sdata);
+				mutex_lock(&sdata->local->mtx);
+				ieee80211_channel_switch_abort(wiphy,
+							       params[i].dev,
+							       &params[i]);
+				mutex_unlock(&sdata->local->mtx);
+				sdata_unlock(sdata);
+			}
+			return err;
+		}
+	}
+
+	return 0;
 }
 
 static int ieee80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,

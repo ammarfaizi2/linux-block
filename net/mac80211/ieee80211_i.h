@@ -261,6 +261,10 @@ struct ieee80211_if_ap {
 	struct cfg80211_beacon_data *next_beacon;
 	struct list_head vlans;
 
+	/* to be used if channel switch fails. */
+	struct beacon_data *prev_beacon;
+	struct probe_resp *prev_presp;
+
 	struct ps_data ps;
 	atomic_t num_mcast_sta; /* number of stations receiving multicast */
 	enum ieee80211_smps_mode req_smps, /* requested smps mode */
@@ -699,6 +703,7 @@ struct ieee80211_chanctx {
 
 struct ieee80211_sub_if_data {
 	struct list_head list;
+	struct list_head csa_list;
 
 	struct wireless_dev wdev;
 
@@ -744,9 +749,11 @@ struct ieee80211_sub_if_data {
 	struct ieee80211_tx_queue_params tx_conf[IEEE80211_NUM_ACS];
 
 	struct work_struct csa_finalize_work;
+	struct work_struct csa_complete_work;
 	int csa_counter_offset_beacon;
 	int csa_counter_offset_presp;
 	bool csa_radar_required;
+	bool csa_complete;
 	struct cfg80211_chan_def csa_chandef;
 
 	/* used to reconfigure hardware SM PS */
@@ -1429,12 +1436,22 @@ void ieee80211_handle_roc_started(struct ieee80211_roc_work *roc);
 
 /* channel switch handling */
 void ieee80211_csa_finalize_work(struct work_struct *work);
+void ieee80211_csa_complete_work(struct work_struct *work);
 int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
-			       struct cfg80211_csa_settings *params);
+			       struct cfg80211_csa_settings *params,
+			       int num_ifaces);
 int ieee80211_channel_switch(struct wiphy *wiphy,
 			     struct cfg80211_csa_settings *params,
 			     int num_params);
 bool ieee80211_is_csa_active(struct ieee80211_local *local);
+void ieee80211_csa_clear(struct ieee80211_sub_if_data *sdata);
+void ieee80211_csa_free(struct ieee80211_sub_if_data *sdata);
+const struct cfg80211_chan_def *
+ieee80211_get_csa_chandef(struct ieee80211_local *local);
+struct ieee80211_chanctx *
+ieee80211_get_csa_chanctx(struct ieee80211_local *local);
+int ieee80211_chanctx_csa(struct ieee80211_local *local);
+int ieee80211_chanctx_chswitch(struct ieee80211_local *local);
 
 /* interface handling */
 int ieee80211_iface_init(void);
@@ -1749,10 +1766,6 @@ int __must_check
 ieee80211_vif_change_bandwidth(struct ieee80211_sub_if_data *sdata,
 			       const struct cfg80211_chan_def *chandef,
 			       u32 *changed);
-/* NOTE: only use ieee80211_vif_change_channel() for channel switch */
-int __must_check
-ieee80211_vif_change_channel(struct ieee80211_sub_if_data *sdata,
-			     u32 *changed);
 void ieee80211_vif_release_channel(struct ieee80211_sub_if_data *sdata);
 void ieee80211_vif_vlan_copy_chanctx(struct ieee80211_sub_if_data *sdata);
 void ieee80211_vif_copy_chanctx_to_vlans(struct ieee80211_sub_if_data *sdata,

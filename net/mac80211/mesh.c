@@ -944,7 +944,7 @@ ieee80211_mesh_process_chnswitch(struct ieee80211_sub_if_data *sdata,
 	sdata->csa_chandef = params.chandef;
 
 	if (__ieee80211_channel_switch(sdata->local->hw.wiphy, sdata->dev,
-				       &params) < 0)
+				       &params, 1) < 0)
 		return false;
 
 	return true;

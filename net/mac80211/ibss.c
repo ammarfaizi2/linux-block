@@ -906,7 +906,7 @@ ieee80211_ibss_process_chanswitch(struct ieee80211_sub_if_data *sdata,
 	params.block_tx = !!csa_ie.mode;
 
 	if (__ieee80211_channel_switch(sdata->local->hw.wiphy, sdata->dev,
-				       &params))
+				       &params, 1))
 		goto disconnect;
 
 	ieee80211_ibss_csa_mark_radar(sdata);

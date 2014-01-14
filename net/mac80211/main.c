@@ -951,6 +951,12 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 	if (local->hw.wiphy->flags & WIPHY_FLAG_SUPPORTS_TDLS)
 		local->hw.wiphy->flags |= WIPHY_FLAG_TDLS_EXTERNAL_SETUP;
 
+	/* it should be trivial for mac80211 based drivers to support
+	 * multi-interface channel switching as all the complex logic sits in
+	 * mac80211 already */
+	if (local->hw.wiphy->flags & WIPHY_FLAG_HAS_CHANNEL_SWITCH)
+		local->hw.wiphy->flags |= WIPHY_FLAG_HAS_MULTI_IF_CHSWITCH;
+
 	result = wiphy_register(local->hw.wiphy);
 	if (result < 0)
 		goto fail_wiphy_register;
