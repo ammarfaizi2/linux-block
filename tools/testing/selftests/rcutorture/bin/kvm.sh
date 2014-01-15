@@ -30,6 +30,10 @@
 scriptname=$0
 args="$*"
 
+T=/tmp/kvm.sh.$$
+trap 'rm -rf $T' 0
+mkdir $T
+
 dur=30
 KVM="`pwd`/tools/testing/selftests/rcutorture"; export KVM
 PATH=${KVM}/bin:$PATH; export PATH
@@ -38,6 +42,7 @@ RCU_INITRD="$KVM/initrd"; export RCU_INITRD
 RCU_KMAKE_ARG=""; export RCU_KMAKE_ARG
 resdir=""
 configs=""
+cpus=0
 ds=`date +%Y.%m.%d-%H:%M:%S`
 kversion=""
 
@@ -49,6 +54,7 @@ usage () {
 	echo "       --builddir absolute-pathname"
 	echo "       --buildonly"
 	echo "       --configs \"config-file list\""
+	echo "       --cpus N"
 	echo "       --datestamp string"
 	echo "       --duration minutes"
 	echo "       --interactive"
@@ -83,6 +89,11 @@ do
 	--configs)
 		checkarg --configs "(list of config files)" "$#" "$2" '^[^/]*$' '^--'
 		configs="$2"
+		shift
+		;;
+	--cpus)
+		checkarg --cpus "(number)" "$#" "$2" '^[0-9]*$' '^--'
+		cpus=$2
 		shift
 		;;
 	--datestamp)
@@ -178,11 +189,76 @@ then
 	git status >> $resdir/$ds/testid.txt
 	git rev-parse HEAD >> $resdir/$ds/testid.txt
 fi
-builddir=$KVM/b1
-if ! test -e $builddir
-then
-	mkdir $builddir || :
-fi
+
+touch $T/cfgcpu
+for CF in $configs
+do
+	echo $CF `configNR_CPUS.sh $CONFIGFRAG/$kversion/$CF` >> $T/cfgcpu
+done
+sort -k2nr $T/cfgcpu > $T/cfgcpu.sort
+
+awk < $T/cfgcpu.sort \
+	-v CONFIGDIR="$CONFIGFRAG/$kversion/" \
+	-v KVM="$KVM" \
+	-v ncpus=$cpus \
+	-v rd=$resdir/$ds/ \
+	-v dur=$dur \
+	-v RCU_QEMU_ARG=$RCU_QEMU_ARG \
+	-v RCU_BOOTARGS=$RCU_BOOTARGS \
+'BEGIN {
+	i = 0;
+}
+
+{
+	cf[i] = $1;
+	cpus[i] = $2;
+	i++;
+}
+
+function dump(first, pastlast)
+{
+	print "# ----start batch----"
+	jn=1
+	for (j = first; j < pastlast; j++) {
+		builddir=KVM "/b" jn
+		print "# ", cf[j], cpus[j]
+		print "touch " builddir ".wait"
+		print "mkdir " builddir " || :"
+		print "kvm-test-1-rcu.sh " CONFIGDIR cf[j], builddir, rd cf[j], dur " \"" RCU_QEMU_ARG "\" \"" RCU_BOOTARGS "\" &"
+		print "while test -f \"" builddir ".wait"
+		print "do"
+		print "\tsleep 1"
+		print "done"
+		jn++;
+	}
+	print "wait"
+	for (j = 1; j < jn; j++) {
+		builddir=KVM "/b" j
+		print "rm -f " builddir ".*"
+	}
+}
+
+END {
+	njobs = i;
+	nc = ncpus;
+	first = 0;
+	for (i = 0; i < njobs; i++) {
+		if (ncpus == 0) {
+			dump(i, i + 1);
+			first = i;
+		} else if (nc < cpus[i] && i != 0) {
+			dump(first, i);
+			first = i;
+			nc = ncpus;
+		}
+		nc -= cpus[i];
+	}
+	dump(first, i);
+}' > $T/script
+
+cat $T/script # &&&&
+
+exit # &&&&
 
 for CF in $configs
 do
