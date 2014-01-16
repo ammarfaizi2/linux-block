@@ -810,6 +810,22 @@ config DEBUG_PREEMPT
 	  if kernel code uses it in a preemption-unsafe way. Also, the kernel
 	  will detect preemption count underflows.
 
+config PREEMPT_STACK
+	bool "Keep a record of preempt disabled locations"
+	depends on DEBUG_KERNEL
+	depends on PREEMPT
+	select DEBUG_PREEMPT_COUNT
+	help
+	 When enabled, it keeps track of the last 25 locations that disabled
+	 preemption. This is useful to debug a "scheduling while atomic" error.
+	 Sometimes it is hard to find what left preemption disabled, and this
+	 utility can help.
+
+	 Saying yes to this will introduce an overhead, as all preempt disabled
+	 calls are being tracked.
+
+	 If unsure, say N.
+
 menu "Lock Debugging (spinlocks, mutexes, etc...)"
 
 config DEBUG_RT_MUTEXES

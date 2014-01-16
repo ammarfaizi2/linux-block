@@ -2341,6 +2341,46 @@ notrace unsigned long get_parent_ip(unsigned long addr)
 
 #ifdef CONFIG_DEBUG_PREEMPT_COUNT
 
+#ifdef CONFIG_PREEMPT_STACK
+# define MAX_PREEMPT_STACK 25
+struct preempt_stack {
+	unsigned long		ip;
+	unsigned long		parent_ip;
+};
+
+static DEFINE_PER_CPU(struct preempt_stack,
+		      preempt_stack_trace[MAX_PREEMPT_STACK]);
+
+void print_preempt_trace(void)
+{
+	struct preempt_stack *stack;
+	unsigned int count;
+	unsigned int i, lim;
+
+	stack = this_cpu_ptr(preempt_stack_trace);
+
+	count = preempt_count();
+
+	lim = count & PREEMPT_MASK;
+
+	if (lim >= MAX_PREEMPT_STACK)
+		lim = MAX_PREEMPT_STACK-1;
+	printk(KERN_ERR "---------------------------\n");
+	printk(KERN_CONT "| preempt count: %08x ]\n", count);
+	printk(KERN_CONT "| %d-level deep critical section nesting:\n", lim);
+	printk(KERN_CONT "----------------------------------------\n");
+	for (i = 1; i <= lim; i++) {
+		printk(KERN_CONT ".. [<%08lx>] .... %pS\n",
+		       stack[i].ip, (void *)stack[i].ip);
+		printk(KERN_CONT ".....[<%08lx>] ..   ( <= %pS)\n",
+		       stack[i].parent_ip, (void *)stack[i].parent_ip);
+	}
+	printk(KERN_CONT "\n");
+}
+#else
+static inline void print_preempt_trace(void) { }
+#endif
+
 void __kprobes preempt_count_add(int val)
 {
 #ifdef CONFIG_DEBUG_PREEMPT
@@ -2351,6 +2391,19 @@ void __kprobes preempt_count_add(int val)
 		return;
 #endif
 	__preempt_count_add(val);
+
+#ifdef CONFIG_PREEMPT_STACK
+	if (val < SOFTIRQ_OFFSET) {
+		unsigned int idx = preempt_count() & PREEMPT_MASK;
+		if (idx < MAX_PREEMPT_STACK) {
+			struct preempt_stack *stack;
+			stack = this_cpu_ptr(preempt_stack_trace);
+			stack[idx].ip = CALLER_ADDR0;
+			stack[idx].parent_ip = get_parent_ip(CALLER_ADDR1);
+		}
+	}
+#endif
+
 #ifdef CONFIG_DEBUG_PREEMPT
 	/*
 	 * Spinlock count overflowing soon?
@@ -2385,7 +2438,9 @@ void __kprobes preempt_count_sub(int val)
 }
 EXPORT_SYMBOL(preempt_count_sub);
 
-#endif
+#else
+static inline void print_preempt_trace(void) { }
+#endif /* CONFIG_DEBUG_PREEMPT_COUNT */
 
 /*
  * Print scheduling while atomic bug:
@@ -2403,6 +2458,7 @@ static noinline void __schedule_bug(struct task_struct *prev)
 	if (irqs_disabled())
 		print_irqtrace_events(prev);
 	dump_stack();
+	print_preempt_trace();
 	add_taint(TAINT_WARN, LOCKDEP_STILL_OK);
 }
 
@@ -6388,6 +6444,7 @@ void __might_sleep(const char *file, int line, int preempt_offset)
 	if (irqs_disabled())
 		print_irqtrace_events(current);
 	dump_stack();
+	print_preempt_trace();
 }
 EXPORT_SYMBOL(__might_sleep);
 #endif
