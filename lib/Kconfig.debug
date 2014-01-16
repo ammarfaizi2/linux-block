@@ -796,9 +796,13 @@ config TIMER_STATS
 	  (it defaults to deactivated on bootup and will only be activated
 	  if some application like powertop activates it explicitly).
 
+config DEBUG_PREEMPT_COUNT
+       bool
+
 config DEBUG_PREEMPT
 	bool "Debug preemptible kernel"
 	depends on DEBUG_KERNEL && PREEMPT && TRACE_IRQFLAGS_SUPPORT
+	select DEBUG_PREEMPT_COUNT
 	default y
 	help
 	  If you say Y here then the kernel will use a debug variant of the

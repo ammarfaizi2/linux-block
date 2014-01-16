@@ -2339,8 +2339,7 @@ notrace unsigned long get_parent_ip(unsigned long addr)
 	return addr;
 }
 
-#if defined(CONFIG_PREEMPT) && (defined(CONFIG_DEBUG_PREEMPT) || \
-				defined(CONFIG_PREEMPT_TRACER))
+#ifdef CONFIG_DEBUG_PREEMPT_COUNT
 
 void __kprobes preempt_count_add(int val)
 {
