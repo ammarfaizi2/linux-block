@@ -433,7 +433,7 @@ config NET_CLS_FLOW
 	  module will be called cls_flow.
 
 config NET_CLS_CGROUP
-	tristate "Control Group Classifier"
+	bool "Control Group Classifier"
 	select NET_CLS
 	depends on CGROUPS
 	---help---

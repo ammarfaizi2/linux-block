@@ -309,27 +309,8 @@ static struct tcf_proto_ops cls_cgroup_ops __read_mostly = {
 
 static int __init init_cgroup_cls(void)
 {
-	int ret;
-
-	ret = cgroup_load_subsys(&net_cls_subsys);
-	if (ret)
-		goto out;
-
-	ret = register_tcf_proto_ops(&cls_cgroup_ops);
-	if (ret)
-		cgroup_unload_subsys(&net_cls_subsys);
-
-out:
-	return ret;
+	return register_tcf_proto_ops(&cls_cgroup_ops);
 }
 
-static void __exit exit_cgroup_cls(void)
-{
-	unregister_tcf_proto_ops(&cls_cgroup_ops);
-
-	cgroup_unload_subsys(&net_cls_subsys);
-}
-
-module_init(init_cgroup_cls);
-module_exit(exit_cgroup_cls);
+subsys_initcall(init_cgroup_cls);
 MODULE_LICENSE("GPL");
