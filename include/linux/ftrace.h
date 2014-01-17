@@ -634,16 +634,36 @@ static inline void __ftrace_enabled_restore(int enabled)
 #endif
 
 #ifdef CONFIG_PREEMPT_TRACER
-  extern void trace_preempt_on(unsigned long a0, unsigned long a1);
-  extern void trace_preempt_off(unsigned long a0, unsigned long a1);
-#else
+ extern void time_preempt_on(unsigned long a0, unsigned long a1);
+ extern void time_preempt_off(unsigned long a0, unsigned long a1);
+# ifdef CONFIG_PROVE_LOCKING
+   extern void trace_preempt_on(unsigned long a0, unsigned long a1);
+   extern void trace_preempt_off(unsigned long a0, unsigned long a1);
+# else
+static inline void trace_preempt_on(unsigned long a0, unsigned long a1)
+{
+	time_preempt_on(a0, a1);
+}
+static inline void trace_preempt_off(unsigned long a0, unsigned long a1)
+{
+	time_preempt_off(a0, a1);
+}
+# endif /* CONFIG_PROVE_LOCKING */
+#else /* !CONFIG_PREEMPT_TRACER */
+static inline void time_preempt_on(unsigned long a0, unsigned long a1) { }
+static inline void time_preempt_off(unsigned long a0, unsigned long a1) { }
+# ifdef CONFIG_PROVE_LOCKING
+   extern void trace_preempt_on(unsigned long a0, unsigned long a1);
+   extern void trace_preempt_off(unsigned long a0, unsigned long a1);
+# else
 /*
  * Use defines instead of static inlines because some arches will make code out
  * of the CALLER_ADDR, when we really want these to be a real nop.
  */
 # define trace_preempt_on(a0, a1) do { } while (0)
 # define trace_preempt_off(a0, a1) do { } while (0)
-#endif
+# endif /* CONFIG_PROVE_LOCKING */
+#endif /* CONFIG_PREEMPT_TRACER */
 
 #ifdef CONFIG_FTRACE_MCOUNT_RECORD
 extern void ftrace_init(void);

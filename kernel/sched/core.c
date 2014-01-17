@@ -2411,7 +2411,8 @@ void __kprobes preempt_count_add(int val)
 	DEBUG_LOCKS_WARN_ON((preempt_count() & PREEMPT_MASK) >=
 				PREEMPT_MASK - 10);
 #endif
-	if (preempt_count() == val)
+	/* PREEMPT_ACTIVE gets set directly, it must be ignored */
+	if ((preempt_count() & ~PREEMPT_ACTIVE) == val)
 		trace_preempt_off(CALLER_ADDR0, get_parent_ip(CALLER_ADDR1));
 }
 EXPORT_SYMBOL(preempt_count_add);
@@ -2432,7 +2433,8 @@ void __kprobes preempt_count_sub(int val)
 		return;
 #endif
 
-	if (preempt_count() == val)
+	/* PREEMPT_ACTIVE gets set directly, it must be ignored */
+	if ((preempt_count() & ~PREEMPT_ACTIVE) == val)
 		trace_preempt_on(CALLER_ADDR0, get_parent_ip(CALLER_ADDR1));
 	__preempt_count_sub(val);
 }

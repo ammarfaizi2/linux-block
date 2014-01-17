@@ -516,13 +516,13 @@ EXPORT_SYMBOL(trace_hardirqs_off_caller);
 #endif /*  CONFIG_IRQSOFF_TRACER */
 
 #ifdef CONFIG_PREEMPT_TRACER
-void trace_preempt_on(unsigned long a0, unsigned long a1)
+void time_preempt_on(unsigned long a0, unsigned long a1)
 {
 	if (preempt_trace() && !irq_trace())
 		stop_critical_timing(a0, a1);
 }
 
-void trace_preempt_off(unsigned long a0, unsigned long a1)
+void time_preempt_off(unsigned long a0, unsigned long a1)
 {
 	if (preempt_trace() && !irq_trace())
 		start_critical_timing(a0, a1);
