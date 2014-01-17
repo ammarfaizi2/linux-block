@@ -30,7 +30,7 @@ static inline struct cgroup_cls_state *css_cls_state(struct cgroup_subsys_state 
 
 static inline struct cgroup_cls_state *task_cls_state(struct task_struct *p)
 {
-	return css_cls_state(task_css(p, net_cls_subsys_id));
+	return css_cls_state(task_css(p, net_cls_cgrp_id));
 }
 
 static struct cgroup_subsys_state *
@@ -103,13 +103,11 @@ static struct cftype ss_files[] = {
 	{ }	/* terminate */
 };
 
-struct cgroup_subsys net_cls_subsys = {
-	.name		= "net_cls",
+struct cgroup_subsys net_cls_cgrp_subsys = {
 	.css_alloc	= cgrp_css_alloc,
 	.css_online	= cgrp_css_online,
 	.css_free	= cgrp_css_free,
 	.attach		= cgrp_attach,
-	.subsys_id	= net_cls_subsys_id,
 	.base_cftypes	= ss_files,
 };
 
