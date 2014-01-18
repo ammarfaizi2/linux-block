@@ -77,15 +77,12 @@ config ARM
 	  Europe.  There is an ARM Linux project with a web page at
 	  <http://www.arm.linux.org.uk/>.
 
-config ARM_HAS_SG_CHAIN
-	bool
-
 config NEED_SG_DMA_LENGTH
 	bool
 
 config ARM_DMA_USE_IOMMU
 	bool
-	select ARM_HAS_SG_CHAIN
+	select HAVE_SG_CHAIN
 	select NEED_SG_DMA_LENGTH
 
 if ARM_DMA_USE_IOMMU

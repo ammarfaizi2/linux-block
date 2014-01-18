@@ -143,6 +143,7 @@ config S390
 	select SYSCTL_EXCEPTION_TRACE
 	select VIRT_CPU_ACCOUNTING
 	select VIRT_TO_BUS
+	select HAVE_SG_CHAIN
 
 config SCHED_OMIT_FRAME_POINTER
 	def_bool y

@@ -12,6 +12,4 @@
 #include <asm/dma.h>
 #include <asm-generic/scatterlist.h>
 
-#define ARCH_HAS_SG_CHAIN
-
 #endif /* _ASM_POWERPC_SCATTERLIST_H */
