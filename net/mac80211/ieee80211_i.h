@@ -1434,6 +1434,7 @@ int __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 int ieee80211_channel_switch(struct wiphy *wiphy,
 			     struct cfg80211_csa_settings *params,
 			     int num_params);
+bool ieee80211_is_csa_active(struct ieee80211_local *local);
 
 /* interface handling */
 int ieee80211_iface_init(void);

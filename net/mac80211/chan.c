@@ -517,6 +517,13 @@ int ieee80211_vif_use_channel(struct ieee80211_sub_if_data *sdata,
 
 	WARN_ON(sdata->dev && netif_carrier_ok(sdata->dev));
 
+	/* Do not allow an interface to bind to channel contexts during CSA as
+	 * it would end up with the interface being dragged to a different
+	 * channel once CSA completes. It's safe to unbind from channel
+	 * contexts though. */
+	if (ieee80211_is_csa_active(local))
+		return -EBUSY;
+
 	mutex_lock(&local->chanctx_mtx);
 	__ieee80211_vif_release_channel(sdata);
 
