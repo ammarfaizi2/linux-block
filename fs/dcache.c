@@ -1647,7 +1647,7 @@ static void __d_instantiate(struct dentry *dentry, struct inode *inode)
 	unsigned add_flags = d_flags_for_inode(inode);
 
 	spin_lock(&dentry->d_lock);
-	dentry->d_flags &= ~DCACHE_ENTRY_TYPE;
+	dentry->d_flags &= ~(DCACHE_ENTRY_TYPE | DCACHE_FALLTHRU);
 	dentry->d_flags |= add_flags;
 	if (inode)
 		hlist_add_head(&dentry->d_alias, &inode->i_dentry);
