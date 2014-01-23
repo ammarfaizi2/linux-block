@@ -2858,7 +2858,7 @@ static int do_last(struct nameidata *nd, struct path *path,
 	bool will_truncate = (open_flag & O_TRUNC) != 0;
 	bool got_write = false;
 	int acc_mode = op->acc_mode;
-	struct inode *inode;
+	struct inode *inode = nd->inode;
 	bool symlink_ok = false;
 	struct path save_parent = { .dentry = NULL, .mnt = NULL };
 	bool retried = false;
@@ -2938,6 +2938,7 @@ retry_lookup:
 		open_flag &= ~O_TRUNC;
 		will_truncate = false;
 		acc_mode = MAY_OPEN;
+		inode = path->dentry->d_inode;
 		path_to_nameidata(path, nd);
 		goto finish_open_created;
 	}
@@ -2945,8 +2946,10 @@ retry_lookup:
 	/*
 	 * create/update audit record if it already exists.
 	 */
-	if (d_is_positive(path->dentry))
+	if (d_is_positive(path->dentry)) {
 		audit_inode(name, path->dentry, 0);
+		inode = path->dentry->d_inode;
+	}
 
 	/*
 	 * If atomic_open() acquired write access it is dropped now due to
@@ -3006,6 +3009,7 @@ finish_open:
 		path_put(&save_parent);
 		return error;
 	}
+	inode = nd->inode;
 	audit_inode(name, nd->path.dentry, 0);
 	error = -EISDIR;
 	if ((open_flag & O_CREAT) &&
@@ -3014,7 +3018,7 @@ finish_open:
 	error = -ENOTDIR;
 	if ((nd->flags & LOOKUP_DIRECTORY) && !d_is_directory(nd->path.dentry))
 		goto out;
-	if (!S_ISREG(nd->inode->i_mode))
+	if (!S_ISREG(inode->i_mode))
 		will_truncate = false;
 
 	if (will_truncate) {
@@ -3028,7 +3032,7 @@ finish_open_created:
 	if (error)
 		goto out;
 	file->f_path.mnt = nd->path.mnt;
-	error = finish_open(file, nd->path.dentry, NULL, opened);
+	error = finish_open(file, nd->path.dentry, inode, NULL, opened);
 	if (error) {
 		if (error == -EOPENSTALE)
 			goto stale_open;
@@ -3122,7 +3126,8 @@ static int do_tmpfile(int dfd, struct filename *pathname,
 	if (error)
 		goto out2;
 	file->f_path.mnt = nd->path.mnt;
-	error = finish_open(file, nd->path.dentry, NULL, opened);
+	error = finish_open(file, nd->path.dentry, nd->path.dentry->d_inode,
+			    NULL, opened);
 	if (error)
 		goto out2;
 	error = open_check_o_direct(file);

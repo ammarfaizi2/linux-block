@@ -1381,7 +1381,7 @@ static int nfs_finish_open(struct nfs_open_context *ctx,
 	if ((open_flags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
 		*opened |= FILE_CREATED;
 
-	err = finish_open(file, dentry, do_open, opened);
+	err = finish_open(file, dentry, dentry->d_inode, do_open, opened);
 	if (err)
 		goto out;
 	nfs_file_set_open_context(file, ctx);
