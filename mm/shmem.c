@@ -1414,6 +1414,7 @@ static struct inode *shmem_get_inode(struct super_block *sb, const struct inode 
 			mpol_shared_policy_init(&info->policy, NULL);
 			break;
 		}
+		lockdep_annotate_inode_mutex_key(inode);
 	} else
 		shmem_free_inode(sb);
 	return inode;

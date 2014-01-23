@@ -826,6 +826,7 @@ static struct inode *cgroup_new_inode(umode_t mode, struct super_block *sb)
 		inode->i_gid = current_fsgid();
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 		inode->i_mapping->backing_dev_info = &cgroup_backing_dev_info;
+		lockdep_annotate_inode_mutex_key(inode);
 	}
 	return inode;
 }

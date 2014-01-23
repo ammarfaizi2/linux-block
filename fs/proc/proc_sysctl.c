@@ -420,6 +420,7 @@ static struct inode *proc_sys_make_inode(struct super_block *sb,
 		inode->i_op = &proc_sys_dir_operations;
 		inode->i_fop = &proc_sys_dir_file_operations;
 	}
+	lockdep_annotate_inode_mutex_key(inode);
 out:
 	return inode;
 }

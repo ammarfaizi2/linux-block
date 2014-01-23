@@ -1863,6 +1863,7 @@ proc_map_files_instantiate(struct inode *dir, struct dentry *dentry,
 		inode->i_mode |= S_IRUSR;
 	if (mode & FMODE_WRITE)
 		inode->i_mode |= S_IWUSR;
+	lockdep_annotate_inode_mutex_key(inode);
 
 	d_set_d_op(dentry, &tid_map_files_dentry_operations);
 	d_add(dentry, inode);
@@ -2148,6 +2149,7 @@ static int proc_pident_instantiate(struct inode *dir,
 		inode->i_op = p->iop;
 	if (p->fop)
 		inode->i_fop = p->fop;
+	lockdep_annotate_inode_mutex_key(inode);
 	ei->op = p->op;
 	d_set_d_op(dentry, &pid_dentry_operations);
 	d_add(dentry, inode);
@@ -2790,6 +2792,7 @@ static int proc_pid_instantiate(struct inode *dir,
 
 	set_nlink(inode, 2 + pid_entry_count_dirs(tgid_base_stuff,
 						  ARRAY_SIZE(tgid_base_stuff)));
+	lockdep_annotate_inode_mutex_key(inode);
 
 	d_set_d_op(dentry, &pid_dentry_operations);
 
@@ -3034,6 +3037,7 @@ static int proc_task_instantiate(struct inode *dir,
 
 	set_nlink(inode, 2 + pid_entry_count_dirs(tid_base_stuff,
 						  ARRAY_SIZE(tid_base_stuff)));
+	lockdep_annotate_inode_mutex_key(inode);
 
 	d_set_d_op(dentry, &pid_dentry_operations);
 
