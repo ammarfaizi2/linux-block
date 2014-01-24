@@ -1765,6 +1765,7 @@ struct cfg80211_bitrate_mask {
 	struct {
 		u32 legacy;
 		u8 ht_mcs[IEEE80211_HT_MCS_MASK_LEN];
+		u16 vht_mcs[NL80211_VHT_NSS_MAX];
 	} control[IEEE80211_NUM_BANDS];
 };
 /**
