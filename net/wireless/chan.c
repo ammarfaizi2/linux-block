@@ -425,6 +425,80 @@ bool cfg80211_chandef_dfs_usable(struct wiphy *wiphy,
 	return (r1 + r2 > 0);
 }
 
+static int cfg80211_get_chans_dfs_is_weather(struct wiphy *wiphy,
+					     u32 center_freq,
+					     u32 bandwidth)
+{
+	struct ieee80211_channel *c;
+	u32 start_freq, end_freq, freq;
+
+	start_freq = cfg80211_get_start_freq(center_freq, bandwidth);
+	end_freq = cfg80211_get_end_freq(center_freq, bandwidth);
+
+	/*
+	 * ETSI EN 301 893 V1.7.0 Table D.1
+	 * 5600 - 5650MHz - weather radar channels
+	 */
+	for (freq = start_freq; freq <= end_freq; freq += 20) {
+		c = ieee80211_get_channel(wiphy, freq);
+		if (!c)
+			return -EINVAL;
+		if (c->center_freq >= 5600 && c->center_freq <= 5650)
+			return 1;
+	}
+	return 0;
+}
+
+static int
+cfg80211_chandef_dfs_is_weather(struct wiphy *wiphy,
+				const struct cfg80211_chan_def *chandef)
+{
+	int width;
+	int r;
+
+	if (WARN_ON(!cfg80211_chandef_valid(chandef)))
+		return -EINVAL;
+
+	width = cfg80211_chandef_get_width(chandef);
+	if (width < 0)
+		return -EINVAL;
+
+	r = cfg80211_get_chans_dfs_is_weather(wiphy, chandef->center_freq1,
+					      width);
+
+	if (r)
+		return r;
+
+	if (!chandef->center_freq2)
+		return 0;
+
+	return cfg80211_get_chans_dfs_is_weather(wiphy, chandef->center_freq2,
+						 width);
+}
+
+unsigned int
+cfg80211_chandef_dfs_cac_time(struct wiphy *wiphy,
+			      const struct cfg80211_chan_def *chandef,
+			      enum nl80211_dfs_regions dfs_region)
+{
+	unsigned int timeout_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
+
+	switch (dfs_region) {
+	case NL80211_DFS_ETSI:
+		if (cfg80211_chandef_dfs_is_weather(wiphy, chandef) > 0)
+			timeout_ms = IEEE80211_DFS_WEATHER_MIN_CAC_TIME_MS;
+		break;
+	/* TODO check JP CAC time */
+	case NL80211_DFS_JP:
+		break;
+	/* FCC don't allow weather channels */
+	case NL80211_DFS_FCC:
+	default:
+		break;
+	}
+
+	return timeout_ms;
+}
 
 static bool cfg80211_secondary_chans_ok(struct wiphy *wiphy,
 					u32 center_freq, u32 bandwidth,
