@@ -528,13 +528,11 @@ static bool cfg80211_secondary_chans_ok(struct wiphy *wiphy,
 			 * ignore IEEE80211_CHAN_NO_IBSS and
 			 * IEEE80211_CHAN_PASSIVE_SCAN flags
 			 */
-			ignore_flags |= IEEE80211_CHAN_NO_IBSS |
-					IEEE80211_CHAN_PASSIVE_SCAN;
+			ignore_flags |= IEEE80211_CHAN_NO_IR;
 		}
 
 		WARN_ON(ignore_flags & ~(IEEE80211_CHAN_RADAR |
-					 IEEE80211_CHAN_NO_IBSS |
-					 IEEE80211_CHAN_PASSIVE_SCAN));
+					 IEEE80211_CHAN_NO_IR));
 
 		/* check for the other flags */
 		if (c->flags & prohibited_flags & ~ignore_flags)
@@ -648,8 +646,7 @@ bool cfg80211_reg_can_beacon(struct wiphy *wiphy,
 
 	res = cfg80211_chandef_usable(wiphy, chandef,
 				      IEEE80211_CHAN_DISABLED |
-				      IEEE80211_CHAN_PASSIVE_SCAN |
-				      IEEE80211_CHAN_NO_IBSS |
+				      IEEE80211_CHAN_NO_IR |
 				      IEEE80211_CHAN_RADAR);
 
 	trace_cfg80211_return_bool(res);

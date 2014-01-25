@@ -1572,7 +1572,7 @@ static int ath10k_update_channel_list(struct ath10k *ar)
 			ch->allow_vht = true;
 
 			ch->allow_ibss =
-				!(channel->flags & IEEE80211_CHAN_NO_IBSS);
+				!(channel->flags & IEEE80211_CHAN_NO_IR);
 
 			ch->ht40plus =
 				!(channel->flags & IEEE80211_CHAN_NO_HT40PLUS);
@@ -1580,7 +1580,7 @@ static int ath10k_update_channel_list(struct ath10k *ar)
 			ch->chan_radar =
 				!!(channel->flags & IEEE80211_CHAN_RADAR);
 
-			passive = channel->flags & IEEE80211_CHAN_PASSIVE_SCAN;
+			passive = channel->flags & IEEE80211_CHAN_NO_IR;
 			ch->passive = passive;
 
 			ch->freq = channel->center_freq;
