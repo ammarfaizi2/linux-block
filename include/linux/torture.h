@@ -35,6 +35,26 @@
 #include <linux/bug.h>
 #include <linux/compiler.h>
 
+/* Mediate rmmod and system shutdown.  Concurrent rmmod & shutdown illegal! */
+#define FULLSTOP_DONTSTOP 0	/* Normal operation. */
+#define FULLSTOP_SHUTDOWN 1	/* System shutdown with rcutorture running. */
+#define FULLSTOP_RMMOD    2	/* Normal rmmod of rcutorture. */
+extern int fullstop;
+/* Protect fullstop transitions and spawning of kthreads.  */
+extern struct mutex fullstop_mutex;
+
+extern char *torture_type;
+extern bool verbose;
+
+/* Torture console output macros. */
+#define TORTURE_FLAG "-torture:"
+#define TOROUT_STRING(s) \
+	do { pr_alert("%s" TORTURE_FLAG s "\n", torture_type); } while (0)
+#define VERBOSE_TOROUT_STRING(s) \
+	do { if (verbose) pr_alert("%s" TORTURE_FLAG s "\n", torture_type); } while (0)
+#define VERBOSE_TOROUT_ERRSTRING(s) \
+	do { if (verbose) pr_alert("%s" TORTURE_FLAG "!!! " s "\n", torture_type); } while (0)
+
 /* Definitions for a non-string torture-test module parameter. */
 #define torture_parm(type, name, init, msg) \
 	static type name = init; \
@@ -48,5 +68,13 @@ struct torture_random_state {
 };
 #define DEFINE_TORTURE_RANDOM(name) struct torture_random_state name = { 0, 0 }
 unsigned long torture_random(struct torture_random_state *trsp);
+
+/* Task shuffler to promote the occasional idle CPU. */
+void torture_shuffle_task_register(struct task_struct *tp);
+int torture_shuffle_init(long shuffint);
+void torture_shuffle_cleanup(void);
+
+/* Shutdown absorption. */
+void torture_shutdown_absorb(const char *title);
 
 #endif /* __LINUX_TORTURE_H */

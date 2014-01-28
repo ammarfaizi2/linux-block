@@ -90,26 +90,19 @@ torture_parm(int, test_boost_interval, 7,
 	     "Interval between boost tests, seconds.");
 torture_parm(bool, test_no_idle_hz, true,
 	     "Test support for tickless idle CPUs");
-torture_parm(bool, verbose, false, "Enable verbose debugging printk()s");
 
-static char *torture_type = "rcu";
+char *torture_type = "rcu";
 module_param(torture_type, charp, 0444);
 MODULE_PARM_DESC(torture_type, "Type of RCU to torture (rcu, rcu_bh, ...)");
-
-#define TORTURE_FLAG "-torture:"
-#define PRINTK_STRING(s) \
-	do { pr_alert("%s" TORTURE_FLAG s "\n", torture_type); } while (0)
-#define VERBOSE_PRINTK_STRING(s) \
-	do { if (verbose) pr_alert("%s" TORTURE_FLAG s "\n", torture_type); } while (0)
-#define VERBOSE_PRINTK_ERRSTRING(s) \
-	do { if (verbose) pr_alert("%s" TORTURE_FLAG "!!! " s "\n", torture_type); } while (0)
+bool verbose;
+module_param(verbose, bool, 0444);
+MODULE_PARM_DESC(verbose, "Enable verbose debugging printk()s");
 
 static int nrealreaders;
 static struct task_struct *writer_task;
 static struct task_struct **fakewriter_tasks;
 static struct task_struct **reader_tasks;
 static struct task_struct *stats_task;
-static struct task_struct *shuffler_task;
 static struct task_struct *stutter_task;
 static struct task_struct *fqs_task;
 static struct task_struct *boost_tasks[NR_CPUS];
@@ -164,7 +157,6 @@ static int max_online;
 static long n_barrier_attempts;
 static long n_barrier_successes;
 static struct list_head rcu_torture_removed;
-static cpumask_var_t shuffle_tmp_mask;
 
 static int stutter_pause_test;
 
@@ -207,17 +199,6 @@ static atomic_t barrier_cbs_invoked;	/* Barrier callbacks invoked. */
 static wait_queue_head_t *barrier_cbs_wq; /* Coordinate barrier testing. */
 static DECLARE_WAIT_QUEUE_HEAD(barrier_wq);
 
-/* Mediate rmmod and system shutdown.  Concurrent rmmod & shutdown illegal! */
-
-#define FULLSTOP_DONTSTOP 0	/* Normal operation. */
-#define FULLSTOP_SHUTDOWN 1	/* System shutdown with rcutorture running. */
-#define FULLSTOP_RMMOD    2	/* Normal rmmod of rcutorture. */
-static int fullstop = FULLSTOP_RMMOD;
-/*
- * Protect fullstop transitions and spawning of kthreads.
- */
-static DEFINE_MUTEX(fullstop_mutex);
-
 /* Forward reference. */
 static void rcu_torture_cleanup(void);
 
@@ -236,20 +217,6 @@ rcutorture_shutdown_notify(struct notifier_block *unused1,
 		       "Concurrent 'rmmod rcutorture' and shutdown illegal!\n");
 	mutex_unlock(&fullstop_mutex);
 	return NOTIFY_DONE;
-}
-
-/*
- * Absorb kthreads into a kernel function that won't return, so that
- * they won't ever access module text or data again.
- */
-static void rcutorture_shutdown_absorb(const char *title)
-{
-	if (ACCESS_ONCE(fullstop) == FULLSTOP_SHUTDOWN) {
-		pr_notice(
-		       "rcutorture thread %s parking due to system shutdown\n",
-		       title);
-		schedule_timeout_uninterruptible(MAX_SCHEDULE_TIMEOUT);
-	}
 }
 
 /*
@@ -293,7 +260,7 @@ rcu_stutter_wait(const char *title)
 			schedule_timeout_interruptible(1);
 		else
 			schedule_timeout_interruptible(round_jiffies_relative(HZ));
-		rcutorture_shutdown_absorb(title);
+		torture_shutdown_absorb(title);
 	}
 }
 
@@ -618,12 +585,12 @@ static int rcu_torture_boost(void *arg)
 	struct rcu_boost_inflight rbi = { .inflight = 0 };
 	struct sched_param sp;
 
-	VERBOSE_PRINTK_STRING("rcu_torture_boost started");
+	VERBOSE_TOROUT_STRING("rcu_torture_boost started");
 
 	/* Set real-time priority. */
 	sp.sched_priority = 1;
 	if (sched_setscheduler(current, SCHED_FIFO, &sp) < 0) {
-		VERBOSE_PRINTK_STRING("rcu_torture_boost RT prio failed!");
+		VERBOSE_TOROUT_STRING("rcu_torture_boost RT prio failed!");
 		n_rcu_torture_boost_rterror++;
 	}
 
@@ -651,7 +618,7 @@ static int rcu_torture_boost(void *arg)
 				call_rcu(&rbi.rcu, rcu_torture_boost_cb);
 				if (jiffies - call_rcu_time >
 					 test_boost_duration * HZ - HZ / 2) {
-					VERBOSE_PRINTK_STRING("rcu_torture_boost boosting failed");
+					VERBOSE_TOROUT_STRING("rcu_torture_boost boosting failed");
 					n_rcu_torture_boost_failure++;
 				}
 				call_rcu_time = jiffies;
@@ -687,8 +654,8 @@ checkwait:	rcu_stutter_wait("rcu_torture_boost");
 	} while (!kthread_should_stop() && fullstop  == FULLSTOP_DONTSTOP);
 
 	/* Clean up and exit. */
-	VERBOSE_PRINTK_STRING("rcu_torture_boost task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_boost");
+	VERBOSE_TOROUT_STRING("rcu_torture_boost task stopping");
+	torture_shutdown_absorb("rcu_torture_boost");
 	while (!kthread_should_stop() || rbi.inflight)
 		schedule_timeout_uninterruptible(1);
 	smp_mb(); /* order accesses to ->inflight before stack-frame death. */
@@ -707,7 +674,7 @@ rcu_torture_fqs(void *arg)
 	unsigned long fqs_resume_time;
 	int fqs_burst_remaining;
 
-	VERBOSE_PRINTK_STRING("rcu_torture_fqs task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_fqs task started");
 	do {
 		fqs_resume_time = jiffies + fqs_stutter * HZ;
 		while (ULONG_CMP_LT(jiffies, fqs_resume_time) &&
@@ -723,8 +690,8 @@ rcu_torture_fqs(void *arg)
 		}
 		rcu_stutter_wait("rcu_torture_fqs");
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
-	VERBOSE_PRINTK_STRING("rcu_torture_fqs task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_fqs");
+	VERBOSE_TOROUT_STRING("rcu_torture_fqs task stopping");
+	torture_shutdown_absorb("rcu_torture_fqs");
 	while (!kthread_should_stop())
 		schedule_timeout_uninterruptible(1);
 	return 0;
@@ -745,7 +712,7 @@ rcu_torture_writer(void *arg)
 	struct rcu_torture *old_rp;
 	static DEFINE_TORTURE_RANDOM(rand);
 
-	VERBOSE_PRINTK_STRING("rcu_torture_writer task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_writer task started");
 	set_user_nice(current, 19);
 
 	do {
@@ -795,8 +762,8 @@ rcu_torture_writer(void *arg)
 		rcutorture_record_progress(++rcu_torture_current_version);
 		rcu_stutter_wait("rcu_torture_writer");
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
-	VERBOSE_PRINTK_STRING("rcu_torture_writer task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_writer");
+	VERBOSE_TOROUT_STRING("rcu_torture_writer task stopping");
+	torture_shutdown_absorb("rcu_torture_writer");
 	while (!kthread_should_stop())
 		schedule_timeout_uninterruptible(1);
 	return 0;
@@ -811,7 +778,7 @@ rcu_torture_fakewriter(void *arg)
 {
 	DEFINE_TORTURE_RANDOM(rand);
 
-	VERBOSE_PRINTK_STRING("rcu_torture_fakewriter task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_fakewriter task started");
 	set_user_nice(current, 19);
 
 	do {
@@ -833,8 +800,8 @@ rcu_torture_fakewriter(void *arg)
 		rcu_stutter_wait("rcu_torture_fakewriter");
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
 
-	VERBOSE_PRINTK_STRING("rcu_torture_fakewriter task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_fakewriter");
+	VERBOSE_TOROUT_STRING("rcu_torture_fakewriter task stopping");
+	torture_shutdown_absorb("rcu_torture_fakewriter");
 	while (!kthread_should_stop())
 		schedule_timeout_uninterruptible(1);
 	return 0;
@@ -927,7 +894,7 @@ rcu_torture_reader(void *arg)
 	struct timer_list t;
 	unsigned long long ts;
 
-	VERBOSE_PRINTK_STRING("rcu_torture_reader task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_reader task started");
 	set_user_nice(current, 19);
 	if (irqreader && cur_ops->irq_capable)
 		setup_timer_on_stack(&t, rcu_torture_timer, 0);
@@ -977,8 +944,8 @@ rcu_torture_reader(void *arg)
 		schedule();
 		rcu_stutter_wait("rcu_torture_reader");
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
-	VERBOSE_PRINTK_STRING("rcu_torture_reader task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_reader");
+	VERBOSE_TOROUT_STRING("rcu_torture_reader task stopping");
+	torture_shutdown_absorb("rcu_torture_reader");
 	if (irqreader && cur_ops->irq_capable)
 		del_timer_sync(&t);
 	while (!kthread_should_stop())
@@ -1098,97 +1065,13 @@ rcu_torture_stats_print(void)
 static int
 rcu_torture_stats(void *arg)
 {
-	VERBOSE_PRINTK_STRING("rcu_torture_stats task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_stats task started");
 	do {
 		schedule_timeout_interruptible(stat_interval * HZ);
 		rcu_torture_stats_print();
-		rcutorture_shutdown_absorb("rcu_torture_stats");
+		torture_shutdown_absorb("rcu_torture_stats");
 	} while (!kthread_should_stop());
-	VERBOSE_PRINTK_STRING("rcu_torture_stats task stopping");
-	return 0;
-}
-
-static int rcu_idle_cpu;	/* Force all torture tasks off this CPU */
-
-/* Shuffle tasks such that we allow @rcu_idle_cpu to become idle. A special case
- * is when @rcu_idle_cpu = -1, when we allow the tasks to run on all CPUs.
- */
-static void rcu_torture_shuffle_tasks(void)
-{
-	int i;
-
-	cpumask_setall(shuffle_tmp_mask);
-	get_online_cpus();
-
-	/* No point in shuffling if there is only one online CPU (ex: UP) */
-	if (num_online_cpus() == 1) {
-		put_online_cpus();
-		return;
-	}
-
-	if (rcu_idle_cpu != -1)
-		cpumask_clear_cpu(rcu_idle_cpu, shuffle_tmp_mask);
-
-	set_cpus_allowed_ptr(current, shuffle_tmp_mask);
-
-	if (reader_tasks) {
-		for (i = 0; i < nrealreaders; i++)
-			if (reader_tasks[i])
-				set_cpus_allowed_ptr(reader_tasks[i],
-						     shuffle_tmp_mask);
-	}
-	if (fakewriter_tasks) {
-		for (i = 0; i < nfakewriters; i++)
-			if (fakewriter_tasks[i])
-				set_cpus_allowed_ptr(fakewriter_tasks[i],
-						     shuffle_tmp_mask);
-	}
-	if (writer_task)
-		set_cpus_allowed_ptr(writer_task, shuffle_tmp_mask);
-	if (stats_task)
-		set_cpus_allowed_ptr(stats_task, shuffle_tmp_mask);
-	if (stutter_task)
-		set_cpus_allowed_ptr(stutter_task, shuffle_tmp_mask);
-	if (fqs_task)
-		set_cpus_allowed_ptr(fqs_task, shuffle_tmp_mask);
-	if (shutdown_task)
-		set_cpus_allowed_ptr(shutdown_task, shuffle_tmp_mask);
-#ifdef CONFIG_HOTPLUG_CPU
-	if (onoff_task)
-		set_cpus_allowed_ptr(onoff_task, shuffle_tmp_mask);
-#endif /* #ifdef CONFIG_HOTPLUG_CPU */
-	if (stall_task)
-		set_cpus_allowed_ptr(stall_task, shuffle_tmp_mask);
-	if (barrier_cbs_tasks)
-		for (i = 0; i < n_barrier_cbs; i++)
-			if (barrier_cbs_tasks[i])
-				set_cpus_allowed_ptr(barrier_cbs_tasks[i],
-						     shuffle_tmp_mask);
-	if (barrier_task)
-		set_cpus_allowed_ptr(barrier_task, shuffle_tmp_mask);
-
-	if (rcu_idle_cpu == -1)
-		rcu_idle_cpu = num_online_cpus() - 1;
-	else
-		rcu_idle_cpu--;
-
-	put_online_cpus();
-}
-
-/* Shuffle tasks across CPUs, with the intent of allowing each CPU in the
- * system to become idle at a time and cut off its timer ticks. This is meant
- * to test the support for such tickless idle CPU in RCU.
- */
-static int
-rcu_torture_shuffle(void *arg)
-{
-	VERBOSE_PRINTK_STRING("rcu_torture_shuffle task started");
-	do {
-		schedule_timeout_interruptible(shuffle_interval * HZ);
-		rcu_torture_shuffle_tasks();
-		rcutorture_shutdown_absorb("rcu_torture_shuffle");
-	} while (!kthread_should_stop());
-	VERBOSE_PRINTK_STRING("rcu_torture_shuffle task stopping");
+	VERBOSE_TOROUT_STRING("rcu_torture_stats task stopping");
 	return 0;
 }
 
@@ -1198,16 +1081,16 @@ rcu_torture_shuffle(void *arg)
 static int
 rcu_torture_stutter(void *arg)
 {
-	VERBOSE_PRINTK_STRING("rcu_torture_stutter task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_stutter task started");
 	do {
 		schedule_timeout_interruptible(stutter * HZ);
 		stutter_pause_test = 1;
 		if (!kthread_should_stop())
 			schedule_timeout_interruptible(stutter * HZ);
 		stutter_pause_test = 0;
-		rcutorture_shutdown_absorb("rcu_torture_stutter");
+		torture_shutdown_absorb("rcu_torture_stutter");
 	} while (!kthread_should_stop());
-	VERBOSE_PRINTK_STRING("rcu_torture_stutter task stopping");
+	VERBOSE_TOROUT_STRING("rcu_torture_stutter task stopping");
 	return 0;
 }
 
@@ -1245,7 +1128,7 @@ static void rcutorture_booster_cleanup(int cpu)
 	if (boost_tasks[cpu] == NULL)
 		return;
 	mutex_lock(&boost_mutex);
-	VERBOSE_PRINTK_STRING("Stopping rcu_torture_boost task");
+	VERBOSE_TOROUT_STRING("Stopping rcu_torture_boost task");
 	t = boost_tasks[cpu];
 	boost_tasks[cpu] = NULL;
 	mutex_unlock(&boost_mutex);
@@ -1264,13 +1147,13 @@ static int rcutorture_booster_init(int cpu)
 
 	/* Don't allow time recalculation while creating a new task. */
 	mutex_lock(&boost_mutex);
-	VERBOSE_PRINTK_STRING("Creating rcu_torture_boost task");
+	VERBOSE_TOROUT_STRING("Creating rcu_torture_boost task");
 	boost_tasks[cpu] = kthread_create_on_node(rcu_torture_boost, NULL,
 						  cpu_to_node(cpu),
 						  "rcu_torture_boost");
 	if (IS_ERR(boost_tasks[cpu])) {
 		retval = PTR_ERR(boost_tasks[cpu]);
-		VERBOSE_PRINTK_STRING("rcu_torture_boost task create failed");
+		VERBOSE_TOROUT_STRING("rcu_torture_boost task create failed");
 		n_rcu_torture_boost_ktrerror++;
 		boost_tasks[cpu] = NULL;
 		mutex_unlock(&boost_mutex);
@@ -1292,7 +1175,7 @@ rcu_torture_shutdown(void *arg)
 	long delta;
 	unsigned long jiffies_snap;
 
-	VERBOSE_PRINTK_STRING("rcu_torture_shutdown task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_shutdown task started");
 	jiffies_snap = jiffies;
 	while (ULONG_CMP_LT(jiffies_snap, shutdown_time) &&
 	       !kthread_should_stop()) {
@@ -1305,13 +1188,13 @@ rcu_torture_shutdown(void *arg)
 		jiffies_snap = jiffies;
 	}
 	if (kthread_should_stop()) {
-		VERBOSE_PRINTK_STRING("rcu_torture_shutdown task stopping");
+		VERBOSE_TOROUT_STRING("rcu_torture_shutdown task stopping");
 		return 0;
 	}
 
 	/* OK, shut down the system. */
 
-	VERBOSE_PRINTK_STRING("rcu_torture_shutdown task shutting down system");
+	VERBOSE_TOROUT_STRING("rcu_torture_shutdown task shutting down system");
 	shutdown_task = NULL;	/* Avoid self-kill deadlock. */
 	rcu_torture_cleanup();	/* Get the success/failure message. */
 	kernel_power_off();	/* Shut down the system. */
@@ -1334,14 +1217,14 @@ rcu_torture_onoff(void *arg)
 	int ret;
 	unsigned long starttime;
 
-	VERBOSE_PRINTK_STRING("rcu_torture_onoff task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_onoff task started");
 	for_each_online_cpu(cpu)
 		maxcpu = cpu;
 	WARN_ON(maxcpu < 0);
 	if (onoff_holdoff > 0) {
-		VERBOSE_PRINTK_STRING("rcu_torture_onoff begin holdoff");
+		VERBOSE_TOROUT_STRING("rcu_torture_onoff begin holdoff");
 		schedule_timeout_interruptible(onoff_holdoff * HZ);
-		VERBOSE_PRINTK_STRING("rcu_torture_onoff end holdoff");
+		VERBOSE_TOROUT_STRING("rcu_torture_onoff end holdoff");
 	}
 	while (!kthread_should_stop()) {
 		cpu = (torture_random(&rand) >> 4) % (maxcpu + 1);
@@ -1408,7 +1291,7 @@ rcu_torture_onoff(void *arg)
 		}
 		schedule_timeout_interruptible(onoff_interval * HZ);
 	}
-	VERBOSE_PRINTK_STRING("rcu_torture_onoff task stopping");
+	VERBOSE_TOROUT_STRING("rcu_torture_onoff task stopping");
 	return 0;
 }
 
@@ -1425,6 +1308,7 @@ rcu_torture_onoff_init(void)
 		onoff_task = NULL;
 		return ret;
 	}
+	torture_shuffle_task_register(onoff_task);
 	return 0;
 }
 
@@ -1432,7 +1316,7 @@ static void rcu_torture_onoff_cleanup(void)
 {
 	if (onoff_task == NULL)
 		return;
-	VERBOSE_PRINTK_STRING("Stopping rcu_torture_onoff task");
+	VERBOSE_TOROUT_STRING("Stopping rcu_torture_onoff task");
 	kthread_stop(onoff_task);
 	onoff_task = NULL;
 }
@@ -1459,11 +1343,11 @@ static int rcu_torture_stall(void *args)
 {
 	unsigned long stop_at;
 
-	VERBOSE_PRINTK_STRING("rcu_torture_stall task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_stall task started");
 	if (stall_cpu_holdoff > 0) {
-		VERBOSE_PRINTK_STRING("rcu_torture_stall begin holdoff");
+		VERBOSE_TOROUT_STRING("rcu_torture_stall begin holdoff");
 		schedule_timeout_interruptible(stall_cpu_holdoff * HZ);
-		VERBOSE_PRINTK_STRING("rcu_torture_stall end holdoff");
+		VERBOSE_TOROUT_STRING("rcu_torture_stall end holdoff");
 	}
 	if (!kthread_should_stop()) {
 		stop_at = get_seconds() + stall_cpu;
@@ -1477,7 +1361,7 @@ static int rcu_torture_stall(void *args)
 		rcu_read_unlock();
 		pr_alert("rcu_torture_stall end.\n");
 	}
-	rcutorture_shutdown_absorb("rcu_torture_stall");
+	torture_shutdown_absorb("rcu_torture_stall");
 	while (!kthread_should_stop())
 		schedule_timeout_interruptible(10 * HZ);
 	return 0;
@@ -1504,7 +1388,7 @@ static void rcu_torture_stall_cleanup(void)
 {
 	if (stall_task == NULL)
 		return;
-	VERBOSE_PRINTK_STRING("Stopping rcu_torture_stall_task.");
+	VERBOSE_TOROUT_STRING("Stopping rcu_torture_stall_task.");
 	kthread_stop(stall_task);
 	stall_task = NULL;
 }
@@ -1524,7 +1408,7 @@ static int rcu_torture_barrier_cbs(void *arg)
 	struct rcu_head rcu;
 
 	init_rcu_head_on_stack(&rcu);
-	VERBOSE_PRINTK_STRING("rcu_torture_barrier_cbs task started");
+	VERBOSE_TOROUT_STRING("rcu_torture_barrier_cbs task started");
 	set_user_nice(current, 19);
 	do {
 		wait_event(barrier_cbs_wq[myid],
@@ -1540,8 +1424,8 @@ static int rcu_torture_barrier_cbs(void *arg)
 		if (atomic_dec_and_test(&barrier_cbs_count))
 			wake_up(&barrier_wq);
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
-	VERBOSE_PRINTK_STRING("rcu_torture_barrier_cbs task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_barrier_cbs");
+	VERBOSE_TOROUT_STRING("rcu_torture_barrier_cbs task stopping");
+	torture_shutdown_absorb("rcu_torture_barrier_cbs");
 	while (!kthread_should_stop())
 		schedule_timeout_interruptible(1);
 	cur_ops->cb_barrier();
@@ -1554,7 +1438,7 @@ static int rcu_torture_barrier(void *arg)
 {
 	int i;
 
-	VERBOSE_PRINTK_STRING("rcu_torture_barrier task starting");
+	VERBOSE_TOROUT_STRING("rcu_torture_barrier task starting");
 	do {
 		atomic_set(&barrier_cbs_invoked, 0);
 		atomic_set(&barrier_cbs_count, n_barrier_cbs);
@@ -1577,8 +1461,8 @@ static int rcu_torture_barrier(void *arg)
 		n_barrier_successes++;
 		schedule_timeout_interruptible(HZ / 10);
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
-	VERBOSE_PRINTK_STRING("rcu_torture_barrier task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_barrier");
+	VERBOSE_TOROUT_STRING("rcu_torture_barrier task stopping");
+	torture_shutdown_absorb("rcu_torture_barrier");
 	while (!kthread_should_stop())
 		schedule_timeout_interruptible(1);
 	return 0;
@@ -1618,16 +1502,17 @@ static int rcu_torture_barrier_init(void)
 						   "rcu_torture_barrier_cbs");
 		if (IS_ERR(barrier_cbs_tasks[i])) {
 			ret = PTR_ERR(barrier_cbs_tasks[i]);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create rcu_torture_barrier_cbs");
+			VERBOSE_TOROUT_ERRSTRING("Failed to create rcu_torture_barrier_cbs");
 			barrier_cbs_tasks[i] = NULL;
 			return ret;
 		}
+		torture_shuffle_task_register(barrier_cbs_tasks[i]);
 	}
 	barrier_task = kthread_run(rcu_torture_barrier, NULL,
 				   "rcu_torture_barrier");
 	if (IS_ERR(barrier_task)) {
 		ret = PTR_ERR(barrier_task);
-		VERBOSE_PRINTK_ERRSTRING("Failed to create rcu_torture_barrier");
+		VERBOSE_TOROUT_ERRSTRING("Failed to create rcu_torture_barrier");
 		barrier_task = NULL;
 	}
 	return 0;
@@ -1639,14 +1524,14 @@ static void rcu_torture_barrier_cleanup(void)
 	int i;
 
 	if (barrier_task != NULL) {
-		VERBOSE_PRINTK_STRING("Stopping rcu_torture_barrier task");
+		VERBOSE_TOROUT_STRING("Stopping rcu_torture_barrier task");
 		kthread_stop(barrier_task);
 		barrier_task = NULL;
 	}
 	if (barrier_cbs_tasks != NULL) {
 		for (i = 0; i < n_barrier_cbs; i++) {
 			if (barrier_cbs_tasks[i] != NULL) {
-				VERBOSE_PRINTK_STRING("Stopping rcu_torture_barrier_cbs task");
+				VERBOSE_TOROUT_STRING("Stopping rcu_torture_barrier_cbs task");
 				kthread_stop(barrier_cbs_tasks[i]);
 				barrier_cbs_tasks[i] = NULL;
 			}
@@ -1705,19 +1590,15 @@ rcu_torture_cleanup(void)
 	rcu_torture_barrier_cleanup();
 	rcu_torture_stall_cleanup();
 	if (stutter_task) {
-		VERBOSE_PRINTK_STRING("Stopping rcu_torture_stutter task");
+		VERBOSE_TOROUT_STRING("Stopping rcu_torture_stutter task");
 		kthread_stop(stutter_task);
 	}
 	stutter_task = NULL;
-	if (shuffler_task) {
-		VERBOSE_PRINTK_STRING("Stopping rcu_torture_shuffle task");
-		kthread_stop(shuffler_task);
-		free_cpumask_var(shuffle_tmp_mask);
-	}
-	shuffler_task = NULL;
+
+	torture_shuffle_cleanup();
 
 	if (writer_task) {
-		VERBOSE_PRINTK_STRING("Stopping rcu_torture_writer task");
+		VERBOSE_TOROUT_STRING("Stopping rcu_torture_writer task");
 		kthread_stop(writer_task);
 	}
 	writer_task = NULL;
@@ -1725,7 +1606,7 @@ rcu_torture_cleanup(void)
 	if (reader_tasks) {
 		for (i = 0; i < nrealreaders; i++) {
 			if (reader_tasks[i]) {
-				VERBOSE_PRINTK_STRING(
+				VERBOSE_TOROUT_STRING(
 					"Stopping rcu_torture_reader task");
 				kthread_stop(reader_tasks[i]);
 			}
@@ -1739,7 +1620,7 @@ rcu_torture_cleanup(void)
 	if (fakewriter_tasks) {
 		for (i = 0; i < nfakewriters; i++) {
 			if (fakewriter_tasks[i]) {
-				VERBOSE_PRINTK_STRING(
+				VERBOSE_TOROUT_STRING(
 					"Stopping rcu_torture_fakewriter task");
 				kthread_stop(fakewriter_tasks[i]);
 			}
@@ -1750,13 +1631,13 @@ rcu_torture_cleanup(void)
 	}
 
 	if (stats_task) {
-		VERBOSE_PRINTK_STRING("Stopping rcu_torture_stats task");
+		VERBOSE_TOROUT_STRING("Stopping rcu_torture_stats task");
 		kthread_stop(stats_task);
 	}
 	stats_task = NULL;
 
 	if (fqs_task) {
-		VERBOSE_PRINTK_STRING("Stopping rcu_torture_fqs task");
+		VERBOSE_TOROUT_STRING("Stopping rcu_torture_fqs task");
 		kthread_stop(fqs_task);
 	}
 	fqs_task = NULL;
@@ -1767,7 +1648,7 @@ rcu_torture_cleanup(void)
 			rcutorture_booster_cleanup(i);
 	}
 	if (shutdown_task != NULL) {
-		VERBOSE_PRINTK_STRING("Stopping rcu_torture_shutdown task");
+		VERBOSE_TOROUT_STRING("Stopping rcu_torture_shutdown task");
 		kthread_stop(shutdown_task);
 	}
 	shutdown_task = NULL;
@@ -1923,82 +1804,71 @@ rcu_torture_init(void)
 
 	/* Start up the kthreads. */
 
-	VERBOSE_PRINTK_STRING("Creating rcu_torture_writer task");
+	VERBOSE_TOROUT_STRING("Creating rcu_torture_writer task");
 	writer_task = kthread_create(rcu_torture_writer, NULL,
 				     "rcu_torture_writer");
 	if (IS_ERR(writer_task)) {
 		firsterr = PTR_ERR(writer_task);
-		VERBOSE_PRINTK_ERRSTRING("Failed to create writer");
+		VERBOSE_TOROUT_ERRSTRING("Failed to create writer");
 		writer_task = NULL;
 		goto unwind;
 	}
+	torture_shuffle_task_register(writer_task);
 	wake_up_process(writer_task);
 	fakewriter_tasks = kzalloc(nfakewriters * sizeof(fakewriter_tasks[0]),
 				   GFP_KERNEL);
 	if (fakewriter_tasks == NULL) {
-		VERBOSE_PRINTK_ERRSTRING("out of memory");
+		VERBOSE_TOROUT_ERRSTRING("out of memory");
 		firsterr = -ENOMEM;
 		goto unwind;
 	}
 	for (i = 0; i < nfakewriters; i++) {
-		VERBOSE_PRINTK_STRING("Creating rcu_torture_fakewriter task");
+		VERBOSE_TOROUT_STRING("Creating rcu_torture_fakewriter task");
 		fakewriter_tasks[i] = kthread_run(rcu_torture_fakewriter, NULL,
 						  "rcu_torture_fakewriter");
 		if (IS_ERR(fakewriter_tasks[i])) {
 			firsterr = PTR_ERR(fakewriter_tasks[i]);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create fakewriter");
+			VERBOSE_TOROUT_ERRSTRING("Failed to create fakewriter");
 			fakewriter_tasks[i] = NULL;
 			goto unwind;
 		}
+		torture_shuffle_task_register(fakewriter_tasks[i]);
 	}
 	reader_tasks = kzalloc(nrealreaders * sizeof(reader_tasks[0]),
 			       GFP_KERNEL);
 	if (reader_tasks == NULL) {
-		VERBOSE_PRINTK_ERRSTRING("out of memory");
+		VERBOSE_TOROUT_ERRSTRING("out of memory");
 		firsterr = -ENOMEM;
 		goto unwind;
 	}
 	for (i = 0; i < nrealreaders; i++) {
-		VERBOSE_PRINTK_STRING("Creating rcu_torture_reader task");
+		VERBOSE_TOROUT_STRING("Creating rcu_torture_reader task");
 		reader_tasks[i] = kthread_run(rcu_torture_reader, NULL,
 					      "rcu_torture_reader");
 		if (IS_ERR(reader_tasks[i])) {
 			firsterr = PTR_ERR(reader_tasks[i]);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create reader");
+			VERBOSE_TOROUT_ERRSTRING("Failed to create reader");
 			reader_tasks[i] = NULL;
 			goto unwind;
 		}
+		torture_shuffle_task_register(reader_tasks[i]);
 	}
 	if (stat_interval > 0) {
-		VERBOSE_PRINTK_STRING("Creating rcu_torture_stats task");
+		VERBOSE_TOROUT_STRING("Creating rcu_torture_stats task");
 		stats_task = kthread_run(rcu_torture_stats, NULL,
 					"rcu_torture_stats");
 		if (IS_ERR(stats_task)) {
 			firsterr = PTR_ERR(stats_task);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create stats");
+			VERBOSE_TOROUT_ERRSTRING("Failed to create stats");
 			stats_task = NULL;
 			goto unwind;
 		}
+		torture_shuffle_task_register(stats_task);
 	}
 	if (test_no_idle_hz) {
-		rcu_idle_cpu = num_online_cpus() - 1;
-
-		if (!alloc_cpumask_var(&shuffle_tmp_mask, GFP_KERNEL)) {
-			firsterr = -ENOMEM;
-			VERBOSE_PRINTK_ERRSTRING("Failed to alloc mask");
+		firsterr = torture_shuffle_init(shuffle_interval * HZ);
+		if (firsterr != 0)
 			goto unwind;
-		}
-
-		/* Create the shuffler thread */
-		shuffler_task = kthread_run(rcu_torture_shuffle, NULL,
-					  "rcu_torture_shuffle");
-		if (IS_ERR(shuffler_task)) {
-			free_cpumask_var(shuffle_tmp_mask);
-			firsterr = PTR_ERR(shuffler_task);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create shuffler");
-			shuffler_task = NULL;
-			goto unwind;
-		}
 	}
 	if (stutter < 0)
 		stutter = 0;
@@ -2008,10 +1878,11 @@ rcu_torture_init(void)
 					  "rcu_torture_stutter");
 		if (IS_ERR(stutter_task)) {
 			firsterr = PTR_ERR(stutter_task);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create stutter");
+			VERBOSE_TOROUT_ERRSTRING("Failed to create stutter");
 			stutter_task = NULL;
 			goto unwind;
 		}
+		torture_shuffle_task_register(stutter_task);
 	}
 	if (fqs_duration < 0)
 		fqs_duration = 0;
@@ -2021,10 +1892,11 @@ rcu_torture_init(void)
 				       "rcu_torture_fqs");
 		if (IS_ERR(fqs_task)) {
 			firsterr = PTR_ERR(fqs_task);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create fqs");
+			VERBOSE_TOROUT_ERRSTRING("Failed to create fqs");
 			fqs_task = NULL;
 			goto unwind;
 		}
+		torture_shuffle_task_register(fqs_task);
 	}
 	if (test_boost_interval < 1)
 		test_boost_interval = 1;
@@ -2051,10 +1923,11 @@ rcu_torture_init(void)
 					       "rcu_torture_shutdown");
 		if (IS_ERR(shutdown_task)) {
 			firsterr = PTR_ERR(shutdown_task);
-			VERBOSE_PRINTK_ERRSTRING("Failed to create shutdown");
+			VERBOSE_TOROUT_ERRSTRING("Failed to create shutdown");
 			shutdown_task = NULL;
 			goto unwind;
 		}
+		torture_shuffle_task_register(shutdown_task);
 		wake_up_process(shutdown_task);
 	}
 	i = rcu_torture_onoff_init();
