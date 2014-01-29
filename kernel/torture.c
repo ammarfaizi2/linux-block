@@ -90,7 +90,6 @@ static cpumask_var_t shuffle_tmp_mask;
 static int shuffle_idle_cpu;	/* Force all torture tasks off this CPU */
 struct list_head shuffle_task_list = LIST_HEAD_INIT(shuffle_task_list);
 static DEFINE_MUTEX(shuffle_task_mutex);
-static atomic_t n_torture_shuffle_task_register_fails;
 
 /*
  * Register a task to be shuffled.  If there is no memory, just splat
@@ -98,12 +97,13 @@ static atomic_t n_torture_shuffle_task_register_fails;
  */
 void torture_shuffle_task_register(struct task_struct *tp)
 {
-	struct shuffle_task *stp = kmalloc(sizeof(*stp), GFP_KERNEL);
+	struct shuffle_task *stp;
 
-	if (WARN_ON_ONCE(stp == NULL)) {
-		atomic_inc(&n_torture_shuffle_task_register_fails);
+	if (WARN_ON_ONCE(tp == NULL))
 		return;
-	}
+	stp = kmalloc(sizeof(*stp), GFP_KERNEL);
+	if (WARN_ON_ONCE(stp == NULL))
+		return;
 	mutex_lock(&shuffle_task_mutex);
 	list_add(&stp->st_l, &shuffle_task_list);
 	mutex_unlock(&shuffle_task_mutex);
@@ -202,7 +202,7 @@ int torture_shuffle_init(long shuffint)
 void torture_shuffle_cleanup(void)
 {
 	if (shuffler_task) {
-		VERBOSE_TOROUT_STRING("Stopping rcu_torture_shuffle task");
+		VERBOSE_TOROUT_STRING("Stopping torture_shuffle task");
 		kthread_stop(shuffler_task);
 		free_cpumask_var(shuffle_tmp_mask);
 	}
