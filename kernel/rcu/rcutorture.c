@@ -199,17 +199,6 @@ static atomic_t barrier_cbs_invoked;	/* Barrier callbacks invoked. */
 static wait_queue_head_t *barrier_cbs_wq; /* Coordinate barrier testing. */
 static DECLARE_WAIT_QUEUE_HEAD(barrier_wq);
 
-/* Mediate rmmod and system shutdown.  Concurrent rmmod & shutdown illegal! */
-
-#define FULLSTOP_DONTSTOP 0	/* Normal operation. */
-#define FULLSTOP_SHUTDOWN 1	/* System shutdown with rcutorture running. */
-#define FULLSTOP_RMMOD    2	/* Normal rmmod of rcutorture. */
-static int fullstop = FULLSTOP_RMMOD;
-/*
- * Protect fullstop transitions and spawning of kthreads.
- */
-static DEFINE_MUTEX(fullstop_mutex);
-
 /* Forward reference. */
 static void rcu_torture_cleanup(void);
 
@@ -228,20 +217,6 @@ rcutorture_shutdown_notify(struct notifier_block *unused1,
 		       "Concurrent 'rmmod rcutorture' and shutdown illegal!\n");
 	mutex_unlock(&fullstop_mutex);
 	return NOTIFY_DONE;
-}
-
-/*
- * Absorb kthreads into a kernel function that won't return, so that
- * they won't ever access module text or data again.
- */
-static void rcutorture_shutdown_absorb(const char *title)
-{
-	if (ACCESS_ONCE(fullstop) == FULLSTOP_SHUTDOWN) {
-		pr_notice(
-		       "rcutorture thread %s parking due to system shutdown\n",
-		       title);
-		schedule_timeout_uninterruptible(MAX_SCHEDULE_TIMEOUT);
-	}
 }
 
 /*
@@ -285,7 +260,7 @@ rcu_stutter_wait(const char *title)
 			schedule_timeout_interruptible(1);
 		else
 			schedule_timeout_interruptible(round_jiffies_relative(HZ));
-		rcutorture_shutdown_absorb(title);
+		torture_shutdown_absorb(title);
 	}
 }
 
@@ -680,7 +655,7 @@ checkwait:	rcu_stutter_wait("rcu_torture_boost");
 
 	/* Clean up and exit. */
 	VERBOSE_TOROUT_STRING("rcu_torture_boost task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_boost");
+	torture_shutdown_absorb("rcu_torture_boost");
 	while (!kthread_should_stop() || rbi.inflight)
 		schedule_timeout_uninterruptible(1);
 	smp_mb(); /* order accesses to ->inflight before stack-frame death. */
@@ -716,7 +691,7 @@ rcu_torture_fqs(void *arg)
 		rcu_stutter_wait("rcu_torture_fqs");
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
 	VERBOSE_TOROUT_STRING("rcu_torture_fqs task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_fqs");
+	torture_shutdown_absorb("rcu_torture_fqs");
 	while (!kthread_should_stop())
 		schedule_timeout_uninterruptible(1);
 	return 0;
@@ -788,7 +763,7 @@ rcu_torture_writer(void *arg)
 		rcu_stutter_wait("rcu_torture_writer");
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
 	VERBOSE_TOROUT_STRING("rcu_torture_writer task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_writer");
+	torture_shutdown_absorb("rcu_torture_writer");
 	while (!kthread_should_stop())
 		schedule_timeout_uninterruptible(1);
 	return 0;
@@ -826,7 +801,7 @@ rcu_torture_fakewriter(void *arg)
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
 
 	VERBOSE_TOROUT_STRING("rcu_torture_fakewriter task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_fakewriter");
+	torture_shutdown_absorb("rcu_torture_fakewriter");
 	while (!kthread_should_stop())
 		schedule_timeout_uninterruptible(1);
 	return 0;
@@ -970,7 +945,7 @@ rcu_torture_reader(void *arg)
 		rcu_stutter_wait("rcu_torture_reader");
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
 	VERBOSE_TOROUT_STRING("rcu_torture_reader task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_reader");
+	torture_shutdown_absorb("rcu_torture_reader");
 	if (irqreader && cur_ops->irq_capable)
 		del_timer_sync(&t);
 	while (!kthread_should_stop())
@@ -1094,7 +1069,7 @@ rcu_torture_stats(void *arg)
 	do {
 		schedule_timeout_interruptible(stat_interval * HZ);
 		rcu_torture_stats_print();
-		rcutorture_shutdown_absorb("rcu_torture_stats");
+		torture_shutdown_absorb("rcu_torture_stats");
 	} while (!kthread_should_stop());
 	VERBOSE_TOROUT_STRING("rcu_torture_stats task stopping");
 	return 0;
@@ -1178,7 +1153,7 @@ rcu_torture_shuffle(void *arg)
 	do {
 		schedule_timeout_interruptible(shuffle_interval * HZ);
 		rcu_torture_shuffle_tasks();
-		rcutorture_shutdown_absorb("rcu_torture_shuffle");
+		torture_shutdown_absorb("rcu_torture_shuffle");
 	} while (!kthread_should_stop());
 	VERBOSE_TOROUT_STRING("rcu_torture_shuffle task stopping");
 	return 0;
@@ -1197,7 +1172,7 @@ rcu_torture_stutter(void *arg)
 		if (!kthread_should_stop())
 			schedule_timeout_interruptible(stutter * HZ);
 		stutter_pause_test = 0;
-		rcutorture_shutdown_absorb("rcu_torture_stutter");
+		torture_shutdown_absorb("rcu_torture_stutter");
 	} while (!kthread_should_stop());
 	VERBOSE_TOROUT_STRING("rcu_torture_stutter task stopping");
 	return 0;
@@ -1469,7 +1444,7 @@ static int rcu_torture_stall(void *args)
 		rcu_read_unlock();
 		pr_alert("rcu_torture_stall end.\n");
 	}
-	rcutorture_shutdown_absorb("rcu_torture_stall");
+	torture_shutdown_absorb("rcu_torture_stall");
 	while (!kthread_should_stop())
 		schedule_timeout_interruptible(10 * HZ);
 	return 0;
@@ -1533,7 +1508,7 @@ static int rcu_torture_barrier_cbs(void *arg)
 			wake_up(&barrier_wq);
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
 	VERBOSE_TOROUT_STRING("rcu_torture_barrier_cbs task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_barrier_cbs");
+	torture_shutdown_absorb("rcu_torture_barrier_cbs");
 	while (!kthread_should_stop())
 		schedule_timeout_interruptible(1);
 	cur_ops->cb_barrier();
@@ -1570,7 +1545,7 @@ static int rcu_torture_barrier(void *arg)
 		schedule_timeout_interruptible(HZ / 10);
 	} while (!kthread_should_stop() && fullstop == FULLSTOP_DONTSTOP);
 	VERBOSE_TOROUT_STRING("rcu_torture_barrier task stopping");
-	rcutorture_shutdown_absorb("rcu_torture_barrier");
+	torture_shutdown_absorb("rcu_torture_barrier");
 	while (!kthread_should_stop())
 		schedule_timeout_interruptible(1);
 	return 0;
