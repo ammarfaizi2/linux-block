@@ -90,11 +90,15 @@ torture_parm(int, test_boost_interval, 7,
 	     "Interval between boost tests, seconds.");
 torture_parm(bool, test_no_idle_hz, true,
 	     "Test support for tickless idle CPUs");
-torture_parm(bool, verbose, false, "Enable verbose debugging printk()s");
 
-static char *torture_type = "rcu";
+char *torture_type = "rcu";
+EXPORT_SYMBOL_GPL(torture_type);
 module_param(torture_type, charp, 0444);
 MODULE_PARM_DESC(torture_type, "Type of RCU to torture (rcu, rcu_bh, ...)");
+bool verbose;
+EXPORT_SYMBOL_GPL(verbose);
+module_param(verbose, bool, 0444);
+MODULE_PARM_DESC(verbose, "Enable verbose debugging printk()s");
 
 static int nrealreaders;
 static struct task_struct *writer_task;

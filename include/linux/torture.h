@@ -49,6 +49,10 @@ extern int fullstop;
 /* Protect fullstop transitions and spawning of kthreads.  */
 extern struct mutex fullstop_mutex;
 
+/* Common module parameters. */
+extern char *torture_type;
+extern bool verbose;
+
 #define TORTURE_FLAG "-torture:"
 #define TOROUT_STRING(s) \
 	pr_alert("%s" TORTURE_FLAG s "\n", torture_type)
