@@ -52,8 +52,11 @@ MODULE_AUTHOR("Paul E. McKenney <paulmck@us.ibm.com>");
 static char *torture_type;
 static bool verbose;
 
-int fullstop = FULLSTOP_RMMOD;
-EXPORT_SYMBOL_GPL(fullstop);
+/* Mediate rmmod and system shutdown.  Concurrent rmmod & shutdown illegal! */
+#define FULLSTOP_DONTSTOP 0	/* Normal operation. */
+#define FULLSTOP_SHUTDOWN 1	/* System shutdown with rcutorture running. */
+#define FULLSTOP_RMMOD    2	/* Normal rmmod of rcutorture. */
+static int fullstop = FULLSTOP_RMMOD;
 static DEFINE_MUTEX(fullstop_mutex);
 
 #ifdef CONFIG_HOTPLUG_CPU
@@ -455,6 +458,7 @@ void __init torture_init_begin(char *ttype, bool v)
 	mutex_lock(&fullstop_mutex);
 	torture_type = ttype;
 	verbose = v;
+	fullstop = FULLSTOP_DONTSTOP;
 
 }
 EXPORT_SYMBOL_GPL(torture_init_begin);
@@ -495,3 +499,12 @@ bool torture_cleanup(void)
 	return false;
 }
 EXPORT_SYMBOL_GPL(torture_cleanup);
+
+/*
+ * Is it time for the current torture test to stop?
+ */
+bool torture_must_stop(void)
+{
+	return kthread_should_stop() || fullstop != FULLSTOP_DONTSTOP;
+}
+EXPORT_SYMBOL_GPL(torture_must_stop);
