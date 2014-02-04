@@ -1268,7 +1268,6 @@ rcu_torture_cleanup(void)
 
 	rcu_torture_barrier_cleanup();
 	torture_stop_kthread(rcu_torture_stall, stall_task);
-	torture_stutter_cleanup();
 	torture_stop_kthread(rcu_torture_writer, writer_task);
 
 	if (reader_tasks) {
@@ -1296,7 +1295,6 @@ rcu_torture_cleanup(void)
 		for_each_possible_cpu(i)
 			rcutorture_booster_cleanup(i);
 	}
-	torture_shutdown_cleanup();
 
 	/* Wait for all RCU callbacks to fire.  */
 
