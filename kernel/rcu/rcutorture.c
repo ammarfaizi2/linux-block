@@ -53,12 +53,6 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Paul E. McKenney <paulmck@us.ibm.com> and Josh Triplett <josh@freedesktop.org>");
 
-MODULE_ALIAS("rcutorture");
-#ifdef MODULE_PARAM_PREFIX
-#undef MODULE_PARAM_PREFIX
-#endif
-#define MODULE_PARAM_PREFIX "rcutorture."
-
 torture_parm(int, fqs_duration, 0, "Duration of fqs bursts (us), 0 to disable");
 torture_parm(int, fqs_holdoff, 0, "Holdoff time within fqs bursts (us)");
 torture_parm(int, fqs_stutter, 3, "Wait time between fqs bursts (s)");
