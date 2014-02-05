@@ -918,7 +918,7 @@ int cachefiles_cx_lookup(struct cachefiles_cache *cache,
 	if (IS_ROOT(dentry)) {
 		dput(dentry);
 		kerror("Cannot find parent of file in cull slot %d FH", slot);
-		return -EIO;
+		return -ESTALE;
 	}
 
 	dir = dget_parent(dentry);
