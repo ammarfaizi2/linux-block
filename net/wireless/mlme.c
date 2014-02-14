@@ -797,10 +797,3 @@ void cfg80211_cac_event(struct net_device *netdev,
 	nl80211_radar_notify(rdev, chandef, event, netdev, gfp);
 }
 EXPORT_SYMBOL(cfg80211_cac_event);
-
-void cfg80211_leave_dfs_channel(struct wiphy *wiphy,
-				struct cfg80211_chan_def *chandef)
-{
-	cfg80211_set_dfs_state(wiphy, chandef, NL80211_DFS_USABLE);
-}
-EXPORT_SYMBOL(cfg80211_leave_dfs_channel);

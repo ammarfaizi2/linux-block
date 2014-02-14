@@ -4171,16 +4171,6 @@ void cfg80211_cac_event(struct net_device *netdev,
 			struct cfg80211_chan_def *chandef,
 			enum nl80211_radar_event event, gfp_t gfp);
 
-/**
- * cfg80211_leave_dfs_channel - Leaving dfs channel
- * @wiphy: the wiphy
- * @chandef: chandef for the current channel
- *
- * This function is called when dfs channel is being not used for diffrent
- * reasons. Make channel DFS USABLE again.
- */
-void cfg80211_leave_dfs_channel(struct wiphy *wiphy,
-				struct cfg80211_chan_def *chandef);
 
 /**
  * cfg80211_cqm_pktloss_notify - notify userspace about packetloss to peer

@@ -1129,12 +1129,6 @@ static int ieee80211_stop_ap(struct wiphy *wiphy, struct net_device *dev)
 		cfg80211_cac_event(sdata->dev, &chandef,
 				   NL80211_RADAR_CAC_ABORTED,
 				   GFP_KERNEL);
-	} else if (sdata->radar_required) {
-		/*
-		 * AP stopped on DFS channel so change that channel state
-		 * to NL80211_DFS_USABLE again.
-		 */
-		cfg80211_leave_dfs_channel(wiphy, &sdata->vif.bss_conf.chandef);
 	}
 
 	drv_stop_ap(sdata->local, sdata);
