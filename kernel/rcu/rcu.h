@@ -12,8 +12,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * along with this program; if not, you can access it online at
+ * http://www.gnu.org/licenses/gpl-2.0.html.
  *
  * Copyright IBM Corporation, 2011
  *
@@ -115,8 +115,6 @@ static inline bool __rcu_reclaim(const char *rn, struct rcu_head *head)
 		return 0;
 	}
 }
-
-extern int rcu_expedited;
 
 #ifdef CONFIG_RCU_STALL_COMMON
 
