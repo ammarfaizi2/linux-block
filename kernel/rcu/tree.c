@@ -296,6 +296,24 @@ void rcutorture_record_test_transition(void)
 EXPORT_SYMBOL_GPL(rcutorture_record_test_transition);
 
 /*
+ * Send along grace-period-related data for rcutorture diagnostics.
+ */
+void rcutorture_get_gp_data(enum rcutorture_type test_type, int *flags,
+			    unsigned long *gpnum, unsigned long *completed)
+{
+	if (test_type == RTORT_SRCU || test_type == RTORT_BUSTED) {
+		*flags = 0;
+		*gpnum = 0;
+		*completed = 0;
+		return;
+	}
+	*flags = ACCESS_ONCE(rcu_state->gp_flags);
+	*gpnum = ACCESS_ONCE(rcu_state->gpnum);
+	*completed = ACCESS_ONCE(rcu_state->completed);
+}
+EXPORT_SYMBOL_GPL(rcutorture_get_gp_data);
+
+/*
  * Record the number of writer passes through the current rcutorture test.
  * This is also used to correlate debugfs tracing stats with the rcutorture
  * messages.
