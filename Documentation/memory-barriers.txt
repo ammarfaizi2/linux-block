@@ -1674,12 +1674,12 @@ for each construct.  These operations all imply certain barriers:
      Memory operations issued after the ACQUIRE will be completed after the
      ACQUIRE operation has completed.
 
-     Memory operations issued before the ACQUIRE may be completed after the
-     ACQUIRE operation has completed.  An smp_mb__before_spinlock(), combined
-     with a following ACQUIRE, orders prior loads against subsequent stores and
-     stores and prior stores against subsequent stores.  Note that this is
-     weaker than smp_mb()!  The smp_mb__before_spinlock() primitive is free on
-     many architectures.
+     Memory operations issued before the ACQUIRE may be completed after
+     the ACQUIRE operation has completed.  An smp_mb__before_spinlock(),
+     combined with a following ACQUIRE, orders prior loads against
+     subsequent loads and stores and also orders prior stores against
+     subsequent stores.  Note that this is weaker than smp_mb()!  The
+     smp_mb__before_spinlock() primitive is free on many architectures.
 
  (2) RELEASE operation implication:
 
@@ -1717,23 +1717,47 @@ the two accesses can themselves then cross:
 
 	*A = a;
 	ACQUIRE M
-	RELEASE M
+	RELEASE N
 	*B = b;
 
 may occur as:
 
-	ACQUIRE M, STORE *B, STORE *A, RELEASE M
+	ACQUIRE M, STORE *B, STORE *A, RELEASE N
 
-This same reordering can of course occur if the lock's ACQUIRE and RELEASE are
-to the same lock variable, but only from the perspective of another CPU not
-holding that lock.
+When the ACQUIRE and RELEASE are a lock acquisition and release,
+respectively, this same reordering can of course occur if the lock's
+ACQUIRE and RELEASE are to the same lock variable, but only from the
+perspective of another CPU not holding that lock.
 
-In short, a RELEASE followed by an ACQUIRE may -not- be assumed to be a full
-memory barrier because it is possible for a preceding RELEASE to pass a
-later ACQUIRE from the viewpoint of the CPU, but not from the viewpoint
-of the compiler.  Note that deadlocks cannot be introduced by this
-interchange because if such a deadlock threatened, the RELEASE would
-simply complete.
+In short, a RELEASE followed by an ACQUIRE may -not- be assumed to be
+a full memory barrier because it is possible for a preceding RELEASE
+to pass a later ACQUIRE from the viewpoint of the CPU, but not from the
+viewpoint of the compiler.  Note that the CPU cannot introduce deadlocks
+with this interchange because if such a deadlock threatened, the RELEASE
+would simply complete.
+
+	Why does this work?
+
+	One key point is that we are only talking about the CPU doing
+	the interchanging, not the compiler.  If the compiler (or, for
+	that matter, the developer) switched the operations, deadlock
+	-could- occur.
+
+	But suppose the CPU interchanged the operations.  In this case,
+	the unlock precedes the lock in the assembly code.  The CPU simply
+	elected to try executing the later lock operation first.  If there
+	is a deadlock, this lock operation will simply spin (or try to
+	sleep, but more on that later).  The CPU will eventually execute
+	the unlock operation (which again preceded the lock operation
+	in the assembly code), which will unravel the potential deadlock,
+	allowing the lock operation to succeed.
+
+	But what if the lock is a sleeplock?  In that case, the code will
+	try to enter the scheduler, where it will eventually encounter
+	a memory barrier, which will force the earlier unlock operation
+	to complete, again unraveling the deadlock.  There might be
+	a sleep-unlock race, but the locking primitive needs to resolve
+	such races properly in any case.
 
 If it is necessary for a RELEASE-ACQUIRE pair to produce a full barrier, the
 ACQUIRE can be followed by an smp_mb__after_unlock_lock() invocation.  This
