@@ -128,7 +128,7 @@ do
 		;;
 	--mac)
 		checkarg --mac "(MAC address)" $# "$2" '^\([0-9a-fA-F]\{2\}:\)\{5\}[0-9a-fA-F]\{2\}$' error
-		RCU_QEMU_MAC=$2; export RCU_QEMU_MAC
+		TORTURE_QEMU_MAC=$2; export TORTURE_QEMU_MAC
 		shift
 		;;
 	--no-initrd)
@@ -380,7 +380,7 @@ then
 	echo RCU_QEMU_CMD="$RCU_QEMU_CMD; export RCU_QEMU_CMD"
 	echo TORTURE_QEMU_INTERACTIVE="$TORTURE_QEMU_INTERACTIVE;
 		export TORTURE_QEMU_INTERACTIVE"
-	echo RCU_QEMU_MAC="$RCU_QEMU_MAC; export RCU_QEMU_MAC"
+	echo TORTURE_QEMU_MAC="$TORTURE_QEMU_MAC; export TORTURE_QEMU_MAC"
 	echo "mkdir -p "$resdir" || :"
 	echo "mkdir $resdir/$ds"
 	cat $T/script
