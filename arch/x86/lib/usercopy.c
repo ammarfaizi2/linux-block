@@ -11,11 +11,13 @@
 #include <linux/sched.h>
 
 /*
- * We rely on the nested NMI work to allow atomic faults from the NMI path; the
- * nested NMI paths are careful to preserve CR2.
+ * Used by tracing, needs to restore state of the cr2 register if
+ * the copy triggered a page fault. That's because tracing can happen
+ * between the time a normal page fault occurred and the cr2 is read
+ * by the handler.
  */
 unsigned long
-copy_from_user_nmi(void *to, const void __user *from, unsigned long n)
+copy_from_user_trace(void *to, const void __user *from, unsigned long n)
 {
 	unsigned long ret;
 
@@ -33,7 +35,7 @@ copy_from_user_nmi(void *to, const void __user *from, unsigned long n)
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(copy_from_user_nmi);
+EXPORT_SYMBOL_GPL(copy_from_user_trace);
 
 /**
  * copy_to_user: - Copy a block of data into user space.

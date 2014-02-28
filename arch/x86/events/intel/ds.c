@@ -991,7 +991,7 @@ static int intel_pmu_pebs_fixup_ip(struct pt_regs *regs)
 		u8 *buf = this_cpu_read(insn_buffer);
 
 		/* 'size' must fit our buffer, see above */
-		bytes = copy_from_user_nmi(buf, (void __user *)to, size);
+		bytes = copy_from_user_trace(buf, (void __user *)to, size);
 		if (bytes != 0)
 			return 0;
 

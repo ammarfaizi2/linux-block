@@ -554,7 +554,7 @@ struct __large_struct { unsigned long buf[100]; };
 	__put_user_size_ex((__typeof__(*(ptr)))(x), (ptr), sizeof(*(ptr)))
 
 extern unsigned long
-copy_from_user_nmi(void *to, const void __user *from, unsigned long n);
+copy_from_user_trace(void *to, const void __user *from, unsigned long n);
 extern __must_check long
 strncpy_from_user(char *dst, const char __user *src, long count);
 
@@ -735,7 +735,7 @@ copy_to_user(void __user *to, const void *from, unsigned long n)
  * Caller must use pagefault_enable/disable, or run in interrupt context,
  * and also do a uaccess_ok() check
  */
-#define __copy_from_user_nmi __copy_from_user_inatomic
+#define __copy_from_user_trace __copy_from_user_inatomic
 
 /*
  * The "unsafe" user accesses aren't really "unsafe", but the naming

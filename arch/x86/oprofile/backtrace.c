@@ -27,7 +27,7 @@ dump_user_backtrace_32(struct stack_frame_ia32 *head)
 	struct stack_frame_ia32 *fp;
 	unsigned long bytes;
 
-	bytes = copy_from_user_nmi(bufhead, head, sizeof(bufhead));
+	bytes = copy_from_user_trace(bufhead, head, sizeof(bufhead));
 	if (bytes != 0)
 		return NULL;
 
@@ -73,7 +73,7 @@ static struct stack_frame *dump_user_backtrace(struct stack_frame *head)
 	struct stack_frame bufhead[2];
 	unsigned long bytes;
 
-	bytes = copy_from_user_nmi(bufhead, head, sizeof(bufhead));
+	bytes = copy_from_user_trace(bufhead, head, sizeof(bufhead));
 	if (bytes != 0)
 		return NULL;
 

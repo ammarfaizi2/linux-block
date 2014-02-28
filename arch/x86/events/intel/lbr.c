@@ -791,8 +791,8 @@ static int branch_type(unsigned long from, unsigned long to, int abort)
 			return X86_BR_NONE;
 
 		/* may fail if text not present */
-		bytes_left = copy_from_user_nmi(buf, (void __user *)from,
-						MAX_INSN_SIZE);
+		bytes_left = copy_from_user_trace(buf, (void __user *)from,
+						  MAX_INSN_SIZE);
 		bytes_read = MAX_INSN_SIZE - bytes_left;
 		if (!bytes_read)
 			return X86_BR_NONE;

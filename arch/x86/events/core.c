@@ -2364,10 +2364,10 @@ perf_callchain_user32(struct pt_regs *regs, struct perf_callchain_entry_ctx *ent
 		if (!valid_user_frame(fp, sizeof(frame)))
 			break;
 
-		bytes = __copy_from_user_nmi(&frame.next_frame, fp, 4);
+		bytes = __copy_from_user_trace(&frame.next_frame, fp, 4);
 		if (bytes != 0)
 			break;
-		bytes = __copy_from_user_nmi(&frame.return_address, fp+4, 4);
+		bytes = __copy_from_user_trace(&frame.return_address, fp+4, 4);
 		if (bytes != 0)
 			break;
 
@@ -2422,10 +2422,10 @@ perf_callchain_user(struct perf_callchain_entry_ctx *entry, struct pt_regs *regs
 		if (!valid_user_frame(fp, sizeof(frame)))
 			break;
 
-		bytes = __copy_from_user_nmi(&frame.next_frame, fp, sizeof(*fp));
+		bytes = __copy_from_user_trace(&frame.next_frame, fp, sizeof(*fp));
 		if (bytes != 0)
 			break;
-		bytes = __copy_from_user_nmi(&frame.return_address, fp + 1, sizeof(*fp));
+		bytes = __copy_from_user_trace(&frame.return_address, fp + 1, sizeof(*fp));
 		if (bytes != 0)
 			break;
 
