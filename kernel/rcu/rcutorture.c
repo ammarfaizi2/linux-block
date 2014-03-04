@@ -486,15 +486,16 @@ static void srcu_torture_barrier(void)
 
 static void srcu_torture_stats(char *page)
 {
+	long c0, c1;
 	int cpu;
 	int idx = srcu_ctl.completed & 0x1;
 
 	page += sprintf(page, "%s%s per-CPU(idx=%d):",
 		       torture_type, TORTURE_FLAG, idx);
 	for_each_possible_cpu(cpu) {
-		page += sprintf(page, " %d(%lu,%lu)", cpu,
-			       per_cpu_ptr(srcu_ctl.per_cpu_ref, cpu)->c[!idx],
-			       per_cpu_ptr(srcu_ctl.per_cpu_ref, cpu)->c[idx]);
+		c0 = (long)per_cpu_ptr(srcu_ctl.per_cpu_ref, cpu)->c[!idx];
+		c1 = (long)per_cpu_ptr(srcu_ctl.per_cpu_ref, cpu)->c[idx];
+		page += sprintf(page, " %d(%ld,%ld)", cpu, c0, c1);
 	}
 	sprintf(page, "\n");
 }
