@@ -124,6 +124,10 @@ static struct test {
 #endif
 #endif
 	{
+		.desc = "Test mmap thread lookup",
+		.func = test__mmap_thread_lookup,
+	},
+	{
 		.func = NULL,
 	},
 };
