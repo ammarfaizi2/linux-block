@@ -94,9 +94,11 @@ fi
 # CONFIG_YENTA=n
 if kvm-build.sh $config_template $builddir $T
 then
+	QEMU="`identify_qemu $builddir/vmlinux`"
+	BOOT_IMAGE="`identify_boot_image $QEMU`"
 	cp $builddir/Make*.out $resdir
 	cp $builddir/.config $resdir
-	cp $builddir/arch/x86/boot/bzImage $resdir
+	cp $builddir/$BOOT_IMAGE $resdir
 	parse-build.sh $resdir/Make.out $title
 	if test -f $builddir.wait
 	then
@@ -124,9 +126,6 @@ cd $KVM
 kstarttime=`awk 'BEGIN { print systime() }' < /dev/null`
 echo ' ---' `date`: Starting kernel
 
-# Determine the appropriate flavor of qemu command.
-QEMU="`identify_qemu $builddir/vmlinux`"
-
 # Generate -smp qemu argument.
 qemu_args="-nographic $qemu_args"
 cpu_count=`configNR_CPUS.sh $config_template`
@@ -151,13 +150,13 @@ boot_args="`configfrag_boot_params "$boot_args" "$config_template"`"
 # Generate kernel-version-specific boot parameters
 boot_args="`per_version_boot_params "$boot_args" $builddir/.config $seconds`"
 
-echo $QEMU $qemu_args -m 512 -kernel $builddir/arch/x86/boot/bzImage -append \"$qemu_append $boot_args\" > $resdir/qemu-cmd
+echo $QEMU $qemu_args -m 512 -kernel $builddir/$BOOT_IMAGE -append \"$qemu_append $boot_args\" > $resdir/qemu-cmd
 if test -n "$TORTURE_BUILDONLY"
 then
 	echo Build-only run specified, boot/test omitted.
 	exit 0
 fi
-$QEMU $qemu_args -m 512 -kernel $builddir/arch/x86/boot/bzImage -append "$qemu_append $boot_args"; echo $? > $resdir/qemu-retval &
+$QEMU $qemu_args -m 512 -kernel $builddir/$BOOT_IMAGE -append "$qemu_append $boot_args"; echo $? > $resdir/qemu-retval &
 qemu_pid=$!
 commandcompleted=0
 echo Monitoring qemu job at pid $qemu_pid
