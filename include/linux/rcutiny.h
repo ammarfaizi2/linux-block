@@ -109,6 +109,10 @@ static inline void rcu_sched_force_quiescent_state(void)
 {
 }
 
+static inline void show_rcu_gp_kthreads(void)
+{
+}
+
 static inline void rcu_cpu_stall_reset(void)
 {
 }
