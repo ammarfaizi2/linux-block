@@ -1023,8 +1023,13 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  * The BUILD_BUG_ON check must not involve any function calls, hence the
  * checks are done in macros here.
  */
-#define kfree_rcu(ptr, rcu_head)					\
-	__kfree_rcu(&((ptr)->rcu_head), offsetof(typeof(*(ptr)), rcu_head))
+#define kfree_rcu(ptr, rcu_head) \
+do { \
+	unsigned long ___offset = offsetof(typeof(*(ptr)), rcu_head); \
+	\
+	BUILD_BUG_ON(___offset & (sizeof(void *) - 1)); \
+	__kfree_rcu(&((ptr)->rcu_head), ___offset / sizeof(void *)); \
+} while (0)
 
 #if defined(CONFIG_TINY_RCU) || defined(CONFIG_RCU_NOCB_CPU_ALL)
 static inline int rcu_needs_cpu(int cpu, unsigned long *delta_jiffies)
