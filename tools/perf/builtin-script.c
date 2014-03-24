@@ -381,11 +381,11 @@ static bool sample_addr_correlates_sym(struct perf_event_attr *attr)
 
 static void print_sample_addr(union perf_event *event,
 			  struct perf_sample *sample,
-			  struct machine *machine,
 			  struct thread *thread,
 			  struct perf_event_attr *attr)
 {
 	struct addr_location al;
+	struct machine *machine = thread->mg->machine;
 	u8 cpumode = event->header.misc & PERF_RECORD_MISC_CPUMODE_MASK;
 
 	printf("%16" PRIx64, sample->addr);
@@ -445,7 +445,7 @@ static void print_sample_bts(union perf_event *event,
 	if (PRINT_FIELD(ADDR) ||
 	    ((evsel->attr.sample_type & PERF_SAMPLE_ADDR) &&
 	     !output[attr->type].user_set))
-		print_sample_addr(event, sample, thread->mg->machine, thread, attr);
+		print_sample_addr(event, sample, thread, attr);
 
 	printf("\n");
 }
@@ -475,7 +475,7 @@ static void process_event(union perf_event *event, struct perf_sample *sample,
 		event_format__print(evsel->tp_format, sample->cpu,
 				    sample->raw_data, sample->raw_size);
 	if (PRINT_FIELD(ADDR))
-		print_sample_addr(event, sample, thread->mg->machine, thread, attr);
+		print_sample_addr(event, sample, thread, attr);
 
 	if (PRINT_FIELD(IP)) {
 		if (!symbol_conf.use_callchain)
