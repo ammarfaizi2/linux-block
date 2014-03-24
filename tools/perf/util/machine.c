@@ -1259,13 +1259,13 @@ struct branch_info *sample__resolve_bstack(struct perf_sample *sample,
 	return bi;
 }
 
-static int machine__resolve_callchain_sample(struct machine *machine,
-					     struct thread *thread,
+static int thread__resolve_callchain_sample(struct thread *thread,
 					     struct ip_callchain *chain,
 					     struct symbol **parent,
 					     struct addr_location *root_al,
 					     int max_stack)
 {
+	struct machine *machine = thread->mg->machine;
 	u8 cpumode = PERF_RECORD_MISC_USER;
 	int chain_nr = min(max_stack, (int)chain->nr);
 	int i;
@@ -1343,19 +1343,17 @@ static int unwind_entry(struct unwind_entry *entry, void *arg)
 				       entry->map, entry->sym);
 }
 
-int machine__resolve_callchain(struct machine *machine,
+int thread__resolve_callchain(struct thread *thread,
 			       struct perf_evsel *evsel,
-			       struct thread *thread,
 			       struct perf_sample *sample,
 			       struct symbol **parent,
 			       struct addr_location *root_al,
 			       int max_stack)
 {
-	int ret;
-
-	ret = machine__resolve_callchain_sample(machine, thread,
-						sample->callchain, parent,
-						root_al, max_stack);
+	struct machine *machine = thread->mg->machine;
+	int ret = thread__resolve_callchain_sample(thread,
+						   sample->callchain, parent,
+						   root_al, max_stack);
 	if (ret)
 		return ret;
 
