@@ -539,8 +539,9 @@ int sample__resolve_callchain(struct perf_sample *sample, struct symbol **parent
 		return 0;
 
 	if (symbol_conf.use_callchain || sort__has_parent) {
-		return machine__resolve_callchain(al->machine, evsel, al->thread,
-						  sample, parent, al, max_stack);
+		return machine__resolve_callchain(al->thread->mg->machine, evsel,
+						  al->thread, sample, parent, al,
+						  max_stack);
 	}
 	return 0;
 }

@@ -180,7 +180,6 @@ struct mem_info {
 };
 
 struct addr_location {
-	struct machine *machine;
 	struct thread *thread;
 	struct map    *map;
 	struct symbol *sym;

@@ -1233,8 +1233,8 @@ struct mem_info *sample__resolve_mem(struct perf_sample *sample,
 	if (!mi)
 		return NULL;
 
-	ip__resolve_ams(al->machine, al->thread, &mi->iaddr, sample->ip);
-	ip__resolve_data(al->machine, al->thread, al->cpumode,
+	ip__resolve_ams(al->thread->mg->machine, al->thread, &mi->iaddr, sample->ip);
+	ip__resolve_data(al->thread->mg->machine, al->thread, al->cpumode,
 			 &mi->daddr, sample->addr);
 	mi->data_src.val = sample->data_src;
 
@@ -1252,8 +1252,8 @@ struct branch_info *sample__resolve_bstack(struct perf_sample *sample,
 		return NULL;
 
 	for (i = 0; i < bs->nr; i++) {
-		ip__resolve_ams(al->machine, al->thread, &bi[i].to, bs->entries[i].to);
-		ip__resolve_ams(al->machine, al->thread, &bi[i].from, bs->entries[i].from);
+		ip__resolve_ams(al->thread->mg->machine, al->thread, &bi[i].to, bs->entries[i].to);
+		ip__resolve_ams(al->thread->mg->machine, al->thread, &bi[i].from, bs->entries[i].from);
 		bi[i].flags = bs->entries[i].flags;
 	}
 	return bi;
