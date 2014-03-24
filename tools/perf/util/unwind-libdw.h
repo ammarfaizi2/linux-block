@@ -11,7 +11,6 @@ bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg);
 struct unwind_info {
 	Dwfl			*dwfl;
 	struct perf_sample      *sample;
-	struct machine          *machine;
 	struct thread           *thread;
 	unwind_entry_cb_t	cb;
 	void			*arg;

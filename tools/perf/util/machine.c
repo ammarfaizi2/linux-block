@@ -1350,7 +1350,6 @@ int thread__resolve_callchain(struct thread *thread,
 			       struct addr_location *root_al,
 			       int max_stack)
 {
-	struct machine *machine = thread->mg->machine;
 	int ret = thread__resolve_callchain_sample(thread,
 						   sample->callchain, parent,
 						   root_al, max_stack);
@@ -1367,7 +1366,7 @@ int thread__resolve_callchain(struct thread *thread,
 	    (!sample->user_stack.size))
 		return 0;
 
-	return unwind__get_entries(unwind_entry, &callchain_cursor, machine,
+	return unwind__get_entries(unwind_entry, &callchain_cursor,
 				   thread, sample, max_stack);
 
 }
