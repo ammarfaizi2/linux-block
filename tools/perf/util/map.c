@@ -315,14 +315,14 @@ u64 map__objdump_2mem(struct map *map, u64 ip)
 	return ip + map->reloc;
 }
 
-void map_groups__init(struct map_groups *mg)
+void map_groups__init(struct map_groups *mg, struct machine *machine)
 {
 	int i;
 	for (i = 0; i < MAP__NR_TYPES; ++i) {
 		mg->maps[i] = RB_ROOT;
 		INIT_LIST_HEAD(&mg->removed_maps[i]);
 	}
-	mg->machine = NULL;
+	mg->machine = machine;
 }
 
 static void maps__delete(struct rb_root *maps)
@@ -358,12 +358,12 @@ void map_groups__exit(struct map_groups *mg)
 	}
 }
 
-struct map_groups *map_groups__new(void)
+struct map_groups *map_groups__new(struct machine *machine)
 {
 	struct map_groups *mg = malloc(sizeof(*mg));
 
 	if (mg != NULL)
-		map_groups__init(mg);
+		map_groups__init(mg, machine);
 
 	return mg;
 }

@@ -14,7 +14,7 @@
 
 int machine__init(struct machine *machine, const char *root_dir, pid_t pid)
 {
-	map_groups__init(&machine->kmaps);
+	map_groups__init(&machine->kmaps, machine);
 	RB_CLEAR_NODE(&machine->rb_node);
 	INIT_LIST_HEAD(&machine->user_dsos);
 	INIT_LIST_HEAD(&machine->kernel_dsos);
@@ -23,7 +23,6 @@ int machine__init(struct machine *machine, const char *root_dir, pid_t pid)
 	INIT_LIST_HEAD(&machine->dead_threads);
 	machine->last_match = NULL;
 
-	machine->kmaps.machine = machine;
 	machine->pid = pid;
 
 	machine->symbol_filter = NULL;
@@ -311,7 +310,7 @@ static struct thread *__machine__findnew_thread(struct machine *machine,
 	if (!create)
 		return NULL;
 
-	th = thread__new(pid, tid);
+	th = thread__new(pid, tid, machine);
 	if (th != NULL) {
 		rb_link_node(&th->rb_node, parent, p);
 		rb_insert_color(&th->rb_node, &machine->threads);

@@ -8,14 +8,14 @@
 #include "debug.h"
 #include "comm.h"
 
-struct thread *thread__new(pid_t pid, pid_t tid)
+struct thread *thread__new(pid_t pid, pid_t tid, struct machine *machine)
 {
 	char *comm_str;
 	struct comm *comm;
 	struct thread *thread = zalloc(sizeof(*thread));
 
 	if (thread != NULL) {
-		thread->mg = map_groups__new();
+		thread->mg = map_groups__new(machine);
 		if (thread->mg == NULL)
 			goto out_free;
 
