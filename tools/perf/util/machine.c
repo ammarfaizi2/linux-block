@@ -1188,9 +1188,7 @@ static bool symbol__match_regex(struct symbol *sym, regex_t *regex)
 	return 0;
 }
 
-static void ip__resolve_ams(struct machine *machine, struct thread *thread,
-			    struct addr_map_symbol *ams,
-			    u64 ip)
+static void thread__resolve_ams(struct thread *thread, struct addr_map_symbol *ams, u64 ip)
 {
 	struct addr_location al;
 
@@ -1202,7 +1200,7 @@ static void ip__resolve_ams(struct machine *machine, struct thread *thread,
 	 * Thus, we have to try consecutively until we find a match
 	 * or else, the symbol is unknown
 	 */
-	thread__find_cpumode_addr_location(thread, machine, MAP__FUNCTION, ip, &al);
+	thread__find_cpumode_addr_location(thread, thread->mg->machine, MAP__FUNCTION, ip, &al);
 
 	ams->addr = ip;
 	ams->al_addr = al.addr;
@@ -1210,14 +1208,13 @@ static void ip__resolve_ams(struct machine *machine, struct thread *thread,
 	ams->map = al.map;
 }
 
-static void ip__resolve_data(struct machine *machine, struct thread *thread,
-			     u8 m, struct addr_map_symbol *ams, u64 addr)
+static void thread__resolve_data(struct thread *thread, u8 m, struct addr_map_symbol *ams, u64 addr)
 {
 	struct addr_location al;
 
 	memset(&al, 0, sizeof(al));
 
-	thread__find_addr_location(thread, machine, m, MAP__VARIABLE, addr,
+	thread__find_addr_location(thread, thread->mg->machine, m, MAP__VARIABLE, addr,
 				   &al);
 	ams->addr = addr;
 	ams->al_addr = al.addr;
@@ -1233,9 +1230,8 @@ struct mem_info *sample__resolve_mem(struct perf_sample *sample,
 	if (!mi)
 		return NULL;
 
-	ip__resolve_ams(al->thread->mg->machine, al->thread, &mi->iaddr, sample->ip);
-	ip__resolve_data(al->thread->mg->machine, al->thread, al->cpumode,
-			 &mi->daddr, sample->addr);
+	thread__resolve_ams(al->thread, &mi->iaddr, sample->ip);
+	thread__resolve_data(al->thread, al->cpumode, &mi->daddr, sample->addr);
 	mi->data_src.val = sample->data_src;
 
 	return mi;
@@ -1252,8 +1248,8 @@ struct branch_info *sample__resolve_bstack(struct perf_sample *sample,
 		return NULL;
 
 	for (i = 0; i < bs->nr; i++) {
-		ip__resolve_ams(al->thread->mg->machine, al->thread, &bi[i].to, bs->entries[i].to);
-		ip__resolve_ams(al->thread->mg->machine, al->thread, &bi[i].from, bs->entries[i].from);
+		thread__resolve_ams(al->thread, &bi[i].to, bs->entries[i].to);
+		thread__resolve_ams(al->thread, &bi[i].from, bs->entries[i].from);
 		bi[i].flags = bs->entries[i].flags;
 	}
 	return bi;
