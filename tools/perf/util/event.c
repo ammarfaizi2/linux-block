@@ -694,12 +694,12 @@ int perf_event__process(struct perf_tool *tool __maybe_unused,
 	return machine__process_event(machine, event, sample);
 }
 
-void thread__find_addr_map(struct thread *thread,
-			   struct machine *machine, u8 cpumode,
+void thread__find_addr_map(struct thread *thread, u8 cpumode,
 			   enum map_type type, u64 addr,
 			   struct addr_location *al)
 {
 	struct map_groups *mg = thread->mg;
+	struct machine *machine = mg->machine;
 	bool load_map = false;
 
 	al->thread = thread;
@@ -707,10 +707,7 @@ void thread__find_addr_map(struct thread *thread,
 	al->cpumode = cpumode;
 	al->filtered = 0;
 
-	if (machine == NULL) {
-		al->map = NULL;
-		return;
-	}
+	BUG_ON(machine == NULL);
 
 	if (cpumode == PERF_RECORD_MISC_KERNEL && perf_host) {
 		al->level = 'k';
@@ -753,7 +750,7 @@ try_again:
 		 */
 		if ((long long)al->addr < 0 &&
 		    cpumode == PERF_RECORD_MISC_USER &&
-		    machine && mg != &machine->kmaps) {
+		    mg != &machine->kmaps) {
 			mg = &machine->kmaps;
 			goto try_again;
 		}
@@ -768,14 +765,14 @@ try_again:
 	}
 }
 
-void thread__find_addr_location(struct thread *thread, struct machine *machine,
+void thread__find_addr_location(struct thread *thread,
 				u8 cpumode, enum map_type type, u64 addr,
 				struct addr_location *al)
 {
-	thread__find_addr_map(thread, machine, cpumode, type, addr, al);
+	thread__find_addr_map(thread, cpumode, type, addr, al);
 	if (al->map != NULL)
 		al->sym = map__find_symbol(al->map, al->addr,
-					   machine->symbol_filter);
+					   thread->mg->machine->symbol_filter);
 	else
 		al->sym = NULL;
 }
@@ -804,7 +801,7 @@ int perf_event__preprocess_sample(const union perf_event *event,
 	    machine->vmlinux_maps[MAP__FUNCTION] == NULL)
 		machine__create_kernel_maps(machine);
 
-	thread__find_addr_map(thread, machine, cpumode, MAP__FUNCTION,
+	thread__find_addr_map(thread, cpumode, MAP__FUNCTION,
 			      sample->ip, al);
 	dump_printf(" ...... dso: %s\n",
 		    al->map ? al->map->dso->long_name :

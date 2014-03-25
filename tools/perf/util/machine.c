@@ -1200,7 +1200,7 @@ static void thread__resolve_ams(struct thread *thread, struct addr_map_symbol *a
 	 * Thus, we have to try consecutively until we find a match
 	 * or else, the symbol is unknown
 	 */
-	thread__find_cpumode_addr_location(thread, thread->mg->machine, MAP__FUNCTION, ip, &al);
+	thread__find_cpumode_addr_location(thread, MAP__FUNCTION, ip, &al);
 
 	ams->addr = ip;
 	ams->al_addr = al.addr;
@@ -1214,8 +1214,7 @@ static void thread__resolve_data(struct thread *thread, u8 m, struct addr_map_sy
 
 	memset(&al, 0, sizeof(al));
 
-	thread__find_addr_location(thread, thread->mg->machine, m, MAP__VARIABLE, addr,
-				   &al);
+	thread__find_addr_location(thread, m, MAP__VARIABLE, addr, &al);
 	ams->addr = addr;
 	ams->al_addr = al.addr;
 	ams->sym = al.sym;
@@ -1261,7 +1260,6 @@ static int thread__resolve_callchain_sample(struct thread *thread,
 					     struct addr_location *root_al,
 					     int max_stack)
 {
-	struct machine *machine = thread->mg->machine;
 	u8 cpumode = PERF_RECORD_MISC_USER;
 	int chain_nr = min(max_stack, (int)chain->nr);
 	int i;
@@ -1308,7 +1306,7 @@ static int thread__resolve_callchain_sample(struct thread *thread,
 		}
 
 		al.filtered = 0;
-		thread__find_addr_location(thread, machine, cpumode,
+		thread__find_addr_location(thread, cpumode,
 					   MAP__FUNCTION, ip, &al);
 		if (al.sym != NULL) {
 			if (sort__has_parent && !*parent &&

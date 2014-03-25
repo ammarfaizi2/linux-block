@@ -385,7 +385,6 @@ static void print_sample_addr(union perf_event *event,
 			  struct perf_event_attr *attr)
 {
 	struct addr_location al;
-	struct machine *machine = thread->mg->machine;
 	u8 cpumode = event->header.misc & PERF_RECORD_MISC_CPUMODE_MASK;
 
 	printf("%16" PRIx64, sample->addr);
@@ -393,10 +392,10 @@ static void print_sample_addr(union perf_event *event,
 	if (!sample_addr_correlates_sym(attr))
 		return;
 
-	thread__find_addr_map(thread, machine, cpumode, MAP__FUNCTION,
+	thread__find_addr_map(thread, cpumode, MAP__FUNCTION,
 			      sample->addr, &al);
 	if (!al.map)
-		thread__find_addr_map(thread, machine, cpumode, MAP__VARIABLE,
+		thread__find_addr_map(thread, cpumode, MAP__VARIABLE,
 				      sample->addr, &al);
 
 	al.cpu = sample->cpu;

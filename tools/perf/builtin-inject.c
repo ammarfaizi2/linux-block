@@ -216,7 +216,7 @@ static int perf_event__inject_buildid(struct perf_tool *tool,
 		goto repipe;
 	}
 
-	thread__find_addr_map(thread, machine, cpumode, MAP__FUNCTION,
+	thread__find_addr_map(thread, cpumode, MAP__FUNCTION,
 			      sample->ip, &al);
 
 	if (al.map != NULL) {
