@@ -371,6 +371,9 @@ struct map_groups *map_groups__new(struct machine *machine)
 
 void map_groups__delete(struct map_groups *mg)
 {
+	if (mg == NULL)
+		return;
+
 	map_groups__exit(mg);
 	free(mg);
 }
@@ -585,23 +588,6 @@ move_map:
 			return err;
 	}
 
-	return 0;
-}
-
-/*
- * XXX This should not really _copy_ te maps, but refcount them.
- */
-int map_groups__clone(struct map_groups *mg,
-		      struct map_groups *parent, enum map_type type)
-{
-	struct rb_node *nd;
-	for (nd = rb_first(&parent->maps[type]); nd; nd = rb_next(nd)) {
-		struct map *map = rb_entry(nd, struct map, rb_node);
-		struct map *new = map__clone(map);
-		if (new == NULL)
-			return -ENOMEM;
-		map_groups__insert(mg, new);
-	}
 	return 0;
 }
 

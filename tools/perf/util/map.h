@@ -148,8 +148,6 @@ struct map *maps__first(struct rb_root *maps);
 struct map *maps__next(struct map *map);
 void map_groups__init(struct map_groups *mg, struct machine *machine);
 void map_groups__exit(struct map_groups *mg);
-int map_groups__clone(struct map_groups *mg,
-		      struct map_groups *parent, enum map_type type);
 size_t map_groups__fprintf(struct map_groups *mg, int verbose, FILE *fp);
 size_t map_groups__fprintf_maps(struct map_groups *mg, int verbose, FILE *fp);
 

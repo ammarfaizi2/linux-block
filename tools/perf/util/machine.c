@@ -323,7 +323,19 @@ static struct thread *__machine__findnew_thread(struct machine *machine,
 struct thread *machine__findnew_thread(struct machine *machine, pid_t pid,
 				       pid_t tid)
 {
-	return __machine__findnew_thread(machine, pid, tid, true);
+	struct thread *thread = NULL, *parent = NULL;
+
+	if (pid != tid) {
+		parent = __machine__findnew_thread(machine, pid, pid, true);
+		if (parent == NULL)
+			goto out;
+	}
+
+	thread = __machine__findnew_thread(machine, pid, tid, true);
+	if (thread != NULL && parent != NULL)
+		thread->mg = map_groups__get(parent->mg);
+out:		
+	return thread;
 }
 
 struct thread *machine__find_thread(struct machine *machine, pid_t pid,

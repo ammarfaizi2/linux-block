@@ -15,10 +15,12 @@ struct thread *thread__new(pid_t pid, pid_t tid, struct machine *machine)
 	struct thread *thread = zalloc(sizeof(*thread));
 
 	if (thread != NULL) {
-		thread->mg = map_groups__new(machine);
-		if (thread->mg == NULL)
-			goto out_free;
-
+		if (pid == tid) {
+			thread->mg = map_groups__new(machine);
+			
+			if (thread->mg == NULL)
+				goto out_free;
+		}
 		thread->pid_ = pid;
 		thread->tid = tid;
 		thread->ppid = -1;
@@ -128,7 +130,7 @@ void thread__insert_map(struct thread *thread, struct map *map)
 
 int thread__fork(struct thread *thread, struct thread *parent, u64 timestamp)
 {
-	int i, err;
+	int err;
 
 	if (parent->comm_set) {
 		const char *comm = thread__comm_str(parent);
@@ -139,10 +141,6 @@ int thread__fork(struct thread *thread, struct thread *parent, u64 timestamp)
 			return err;
 		thread->comm_set = true;
 	}
-
-	for (i = 0; i < MAP__NR_TYPES; ++i)
-		if (map_groups__clone(thread->mg, parent->mg, i) < 0)
-			return -ENOMEM;
 
 	thread->ppid = parent->tid;
 
