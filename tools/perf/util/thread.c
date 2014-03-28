@@ -116,7 +116,7 @@ int thread__comm_len(struct thread *thread)
 
 size_t thread__fprintf(struct thread *thread, FILE *fp)
 {
-	return fprintf(fp, "Thread %d %s\n", thread->tid, thread__comm_str(thread)) +
+	return fprintf(fp, "Thread %d:%d %s\n", thread->pid_, thread->tid, thread__comm_str(thread)) +
 	       map_groups__fprintf(thread->mg, verbose, fp);
 }
 
