@@ -1613,7 +1613,7 @@ extern int tick_nohz_enabled;
  * Afterwards, if there are any callbacks ready for immediate invocation,
  * return true.
  */
-static bool rcu_try_advance_all_cbs(void)
+static bool __maybe_unused rcu_try_advance_all_cbs(void)
 {
 	bool cbs_ready = false;
 	struct rcu_data *rdp;
@@ -1692,6 +1692,7 @@ int rcu_needs_cpu(int cpu, unsigned long *dj)
  */
 static void rcu_prepare_for_idle(int cpu)
 {
+#ifndef CONFIG_RCU_NOCB_CPU_ALL
 	struct rcu_data *rdp;
 	struct rcu_dynticks *rdtp = &per_cpu(rcu_dynticks, cpu);
 	struct rcu_node *rnp;
@@ -1740,6 +1741,7 @@ static void rcu_prepare_for_idle(int cpu)
 		rcu_accelerate_cbs(rsp, rnp, rdp);
 		raw_spin_unlock(&rnp->lock); /* irqs remain disabled. */
 	}
+#endif /* #ifndef CONFIG_RCU_NOCB_CPU_ALL */
 }
 
 /*
@@ -1749,6 +1751,7 @@ static void rcu_prepare_for_idle(int cpu)
  */
 static void rcu_cleanup_after_idle(int cpu)
 {
+#ifndef CONFIG_RCU_NOCB_CPU_ALL
 	struct rcu_data *rdp;
 	struct rcu_state *rsp;
 
@@ -1760,6 +1763,7 @@ static void rcu_cleanup_after_idle(int cpu)
 		if (cpu_has_callbacks_ready_to_invoke(rdp))
 			invoke_rcu_core();
 	}
+#endif /* #ifndef CONFIG_RCU_NOCB_CPU_ALL */
 }
 
 /*
