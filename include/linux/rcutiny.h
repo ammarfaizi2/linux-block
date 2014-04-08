@@ -91,12 +91,6 @@ static inline void rcu_preempt_note_context_switch(void)
 {
 }
 
-static inline int rcu_needs_cpu(int cpu, unsigned long *delta_jiffies)
-{
-	*delta_jiffies = ULONG_MAX;
-	return 0;
-}
-
 #else /* #ifdef CONFIG_TINY_RCU */
 
 void rcu_preempt_note_context_switch(void);
