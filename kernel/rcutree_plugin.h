@@ -2052,6 +2052,7 @@ static void rcu_init_one_nocb(struct rcu_node *rnp)
 	init_waitqueue_head(&rnp->nocb_gp_wq[1]);
 }
 
+#ifndef CONFIG_RCU_NOCB_CPU_ALL
 /* Is the specified CPU a no-CPUs CPU? */
 bool rcu_is_nocb_cpu(int cpu)
 {
@@ -2059,6 +2060,7 @@ bool rcu_is_nocb_cpu(int cpu)
 		return cpumask_test_cpu(cpu, rcu_nocb_mask);
 	return false;
 }
+#endif /* #ifndef CONFIG_RCU_NOCB_CPU_ALL */
 
 /*
  * Enqueue the specified string of rcu_head structures onto the specified

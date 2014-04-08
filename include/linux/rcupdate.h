@@ -1010,7 +1010,11 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
 	__kfree_rcu(&((ptr)->rcu_head), offsetof(typeof(*(ptr)), rcu_head))
 
 #ifdef CONFIG_RCU_NOCB_CPU
+#ifdef CONFIG_RCU_NOCB_CPU_ALL
+static inline bool rcu_is_nocb_cpu(int cpu) { return true; }
+#else /* #ifdef CONFIG_RCU_NOCB_CPU_ALL */
 extern bool rcu_is_nocb_cpu(int cpu);
+#endif /* #else #ifdef CONFIG_RCU_NOCB_CPU_ALL */
 #else
 static inline bool rcu_is_nocb_cpu(int cpu) { return false; }
 #endif /* #else #ifdef CONFIG_RCU_NOCB_CPU */
