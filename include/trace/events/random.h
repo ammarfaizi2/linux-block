@@ -7,6 +7,25 @@
 #include <linux/writeback.h>
 #include <linux/tracepoint.h>
 
+TRACE_EVENT(add_drbg_randomness,
+	TP_PROTO(int bytes, unsigned long IP),
+
+	TP_ARGS(bytes, IP),
+
+	TP_STRUCT__entry(
+		__field(	  int,	bytes			)
+		__field(unsigned long,	IP			)
+	),
+
+	TP_fast_assign(
+		__entry->bytes		= bytes;
+		__entry->IP		= IP;
+	),
+
+	TP_printk("bytes %d caller %pF",
+		__entry->bytes, (void *)__entry->IP)
+);
+
 TRACE_EVENT(add_device_randomness,
 	TP_PROTO(int bytes, unsigned long IP),
 

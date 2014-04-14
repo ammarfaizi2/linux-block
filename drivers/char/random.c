@@ -125,11 +125,23 @@
  * The current exported interfaces for gathering environmental noise
  * from the devices are:
  *
+ *	void add_drbg_randomness(const void *buf, unsigned int size);
  *	void add_device_randomness(const void *buf, unsigned int size);
  * 	void add_input_randomness(unsigned int type, unsigned int code,
  *                                unsigned int value);
  *	void add_interrupt_randomness(int irq, int irq_flags);
  * 	void add_disk_randomness(struct gendisk *disk);
+ *
+ * add_drbg_randomness() adds data from a so-called hardware rng.  These
+ * devices can include TPMs, hypervisors, and similar sources of
+ * hopefully cryptographically secure bits of uncertain quality.
+ * add_drbg_randomness() should not be called for
+ * arch_get_random_long-style RNGs, as the core random code does that
+ * automatically.  There is no requirement that add_drbg_randomness be
+ * provided with any actual entropy.  In cases where the number of bits
+ * provided is easy to adjust and where security could realistically
+ * depend on the number of bits provided, 256 bits or more should be
+ * used.
  *
  * add_device_randomness() is for adding data to the random pool that
  * is likely to differ between two devices (or possibly even per boot).
@@ -466,6 +478,12 @@ static struct entropy_store nonblocking_pool = {
 					push_to_pool),
 };
 
+/*
+ * Tracks total bits supplied to add_drbg_randomness.  Protected by
+ * nonblocking_pool.lock.
+ */
+static __u64 total_drbg_input;
+
 static __u32 const twist_table[8] = {
 	0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
 	0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278 };
@@ -654,11 +672,12 @@ retry:
 	r->entropy_total += nbits;
 	if (!r->initialized && r->entropy_total > 128) {
 		r->initialized = 1;
-		r->entropy_total = 0;
 		if (r == &nonblocking_pool) {
 			prandom_reseed_late();
-			pr_notice("random: %s pool is initialized\n", r->name);
+			pr_notice("random: %s pool is initialized with %d bits of entropy and %llu bits of DRBG data\n",
+				  r->name, r->entropy_total, total_drbg_input);
 		}
+		r->entropy_total = 0;
 	}
 
 	trace_credit_entropy_bits(r->name, nbits,
@@ -723,6 +742,23 @@ struct timer_rand_state {
 };
 
 #define INIT_TIMER_RAND_STATE { INITIAL_JIFFIES, };
+
+/*
+ * Add DRBG randomness.  This type of input is not trusted enough to go
+ * to the blocking pool, and no entropy is credited, but it can substantially
+ * strengthen the nonblocking pool, especially during and shortly after
+ * boot.
+ */
+void add_drbg_randomness(const void *buf, unsigned int size)
+{
+	unsigned long flags;
+	trace_add_drbg_randomness(size, _RET_IP_);
+	spin_lock_irqsave(&nonblocking_pool.lock, flags);
+	_mix_pool_bytes(&nonblocking_pool, buf, size, NULL);
+	total_drbg_input += size * 8;
+	spin_unlock_irqrestore(&nonblocking_pool.lock, flags);
+}
+EXPORT_SYMBOL(add_drbg_randomness);
 
 /*
  * Add device- or boot-specific data to the input and nonblocking
@@ -1246,16 +1282,22 @@ static void init_std_data(struct entropy_store *r)
 	int i;
 	ktime_t now = ktime_get_real();
 	unsigned long rv;
+	__u64 drbg_bits = 0;
 
 	r->last_pulled = jiffies;
 	mix_pool_bytes(r, &now, sizeof(now), NULL);
 	for (i = r->poolinfo->poolbytes; i > 0; i -= sizeof(rv)) {
-		if (!arch_get_random_seed_long(&rv) &&
-		    !arch_get_random_long(&rv))
+		if (arch_get_random_seed_long(&rv) ||
+		    arch_get_random_long(&rv))
+			drbg_bits += sizeof(unsigned long) * 8;
+		else
 			rv = random_get_entropy();
 		mix_pool_bytes(r, &rv, sizeof(rv), NULL);
 	}
 	mix_pool_bytes(r, utsname(), sizeof(*(utsname())), NULL);
+
+	if (r == &nonblocking_pool && drbg_bits)
+		total_drbg_input += drbg_bits;
 }
 
 /*
@@ -1367,9 +1409,9 @@ urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
 	int ret;
 
 	if (unlikely(nonblocking_pool.initialized == 0))
-		printk_once(KERN_NOTICE "random: %s urandom read "
-			    "with %d bits of entropy available\n",
-			    current->comm, nonblocking_pool.entropy_total);
+		printk_once(KERN_NOTICE "random: %s urandom read with %d bits of entropy available and %llu bits of DRBG data\n",
+			    current->comm, nonblocking_pool.entropy_total,
+			    total_drbg_input);
 
 	ret = extract_entropy_user(&nonblocking_pool, buf, nbytes);
 
