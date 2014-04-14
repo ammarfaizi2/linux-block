@@ -28,6 +28,7 @@
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 #include <linux/freezer.h>
+#include <linux/random.h>
 
 #include "tpm.h"
 #include "tpm_eventlog.h"
@@ -780,9 +781,21 @@ int tpm_do_selftest(struct tpm_chip *chip)
 			return 0;
 		}
 		if (rc != TPM_WARN_DOING_SELFTEST)
-			return rc;
+			break;
 		msleep(delay_msec);
 	} while (--loops > 0);
+
+	if (rc == 0) {
+		/* We're functional and/or we just resumed. */
+		u8 randomness[32];
+		int bytes = tpm_get_random(chip->dev_num,
+					   randomness, sizeof(randomness));
+		if (bytes > 0) {
+			dev_info(chip->dev, "adding %d bits of DRBG data\n",
+				 bytes * 8);
+			add_drbg_randomness(randomness, bytes);
+		}
+	}
 
 	return rc;
 }
