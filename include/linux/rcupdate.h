@@ -309,8 +309,23 @@ void rcu_resched(void);
  */
 static inline bool rcu_should_resched(void)
 {
-	return __this_cpu_inc_return(rcu_cond_resched_count) >=
-	       RCU_COND_RESCHED_LIM;
+	int t;
+
+#ifdef CONFIG_DEBUG_PREEMPT
+	preempt_disable();
+#endif /* #ifdef CONFIG_DEBUG_PREEMPT */
+	t = __this_cpu_read(rcu_cond_resched_count) + 1;
+	if (t < RCU_COND_RESCHED_LIM) {
+		__this_cpu_write(rcu_cond_resched_count, t);
+#ifdef CONFIG_DEBUG_PREEMPT
+		preempt_enable();
+#endif /* #ifdef CONFIG_DEBUG_PREEMPT */
+		return false;
+	}
+#ifdef CONFIG_DEBUG_PREEMPT
+	preempt_enable();
+#endif /* #ifdef CONFIG_DEBUG_PREEMPT */
+	return true;
 }
 
 /*
