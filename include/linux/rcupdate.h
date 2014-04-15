@@ -309,8 +309,15 @@ void rcu_resched(void);
  */
 static inline bool rcu_should_resched(void)
 {
-	return __this_cpu_inc_return(rcu_cond_resched_count) >=
-	       RCU_COND_RESCHED_LIM;
+	int t;
+	int *tp = &per_cpu(rcu_cond_resched_count, raw_smp_processor_id());
+
+	t = ACCESS_ONCE(*tp) + 1;
+	if (t < RCU_COND_RESCHED_LIM) {
+		ACCESS_ONCE(*tp) = t;
+		return false;
+	}
+	return true;
 }
 
 /*
