@@ -2894,6 +2894,9 @@ static int do_last(struct nameidata *nd, struct path *path,
 		goto finish_open;
 	}
 
+	if (open_flag & (O_WRONLY | O_RDWR))
+		nd->flags |= LOOKUP_WRITE;
+
 	if (!(open_flag & O_CREAT)) {
 		if (nd->last.name[nd->last.len])
 			nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;

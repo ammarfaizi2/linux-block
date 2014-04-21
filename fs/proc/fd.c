@@ -139,6 +139,17 @@ static const struct dentry_operations tid_fd_dentry_operations = {
 	.d_delete	= pid_delete_dentry,
 };
 
+static int proc_may_follow(struct nameidata *nd, struct file *f)
+{
+	if (!nd)
+		return 0;  /* This is readlink, */
+
+	if ((nd->flags & LOOKUP_WRITE) && !(f->f_mode & FMODE_WRITE))
+		return -EACCES;
+
+	return 0;
+}
+
 static int proc_fd_link(struct nameidata *nd,
 			struct dentry *dentry, struct path *path)
 {
@@ -159,9 +170,11 @@ static int proc_fd_link(struct nameidata *nd,
 		spin_lock(&files->file_lock);
 		fd_file = fcheck_files(files, fd);
 		if (fd_file) {
-			*path = fd_file->f_path;
-			path_get(&fd_file->f_path);
-			ret = 0;
+			ret = proc_may_follow(nd, fd_file);
+			if (ret == 0) {
+				*path = fd_file->f_path;
+				path_get(&fd_file->f_path);
+			}
 		}
 		spin_unlock(&files->file_lock);
 		put_files_struct(files);
