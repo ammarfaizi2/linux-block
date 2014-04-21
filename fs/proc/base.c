@@ -171,7 +171,8 @@ static int get_task_root(struct task_struct *task, struct path *root)
 	return result;
 }
 
-static int proc_cwd_link(struct dentry *dentry, struct path *path)
+static int proc_cwd_link(struct nameidata *nd,
+			 struct dentry *dentry, struct path *path)
 {
 	struct task_struct *task = get_proc_task(dentry->d_inode);
 	int result = -ENOENT;
@@ -188,7 +189,8 @@ static int proc_cwd_link(struct dentry *dentry, struct path *path)
 	return result;
 }
 
-static int proc_root_link(struct dentry *dentry, struct path *path)
+static int proc_root_link(struct nameidata *nd,
+			  struct dentry *dentry, struct path *path)
 {
 	struct task_struct *task = get_proc_task(dentry->d_inode);
 	int result = -ENOENT;
@@ -1407,7 +1409,8 @@ static const struct file_operations proc_pid_set_comm_operations = {
 	.release	= single_release,
 };
 
-static int proc_exe_link(struct dentry *dentry, struct path *exe_path)
+static int proc_exe_link(struct nameidata *nd,
+			 struct dentry *dentry, struct path *exe_path)
 {
 	struct task_struct *task;
 	struct mm_struct *mm;
@@ -1441,7 +1444,7 @@ static void *proc_pid_follow_link(struct dentry *dentry, struct nameidata *nd)
 	if (!proc_fd_access_allowed(inode))
 		goto out;
 
-	error = PROC_I(inode)->op.proc_get_link(dentry, &path);
+	error = PROC_I(inode)->op.proc_get_link(nd, dentry, &path);
 	if (error)
 		goto out;
 
@@ -1485,7 +1488,7 @@ static int proc_pid_readlink(struct dentry * dentry, char __user * buffer, int b
 	if (!proc_fd_access_allowed(inode))
 		goto out;
 
-	error = PROC_I(inode)->op.proc_get_link(dentry, &path);
+	error = PROC_I(inode)->op.proc_get_link(NULL, dentry, &path);
 	if (error)
 		goto out;
 

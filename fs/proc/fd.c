@@ -139,7 +139,8 @@ static const struct dentry_operations tid_fd_dentry_operations = {
 	.d_delete	= pid_delete_dentry,
 };
 
-static int proc_fd_link(struct dentry *dentry, struct path *path)
+static int proc_fd_link(struct nameidata *nd,
+			struct dentry *dentry, struct path *path)
 {
 	struct files_struct *files = NULL;
 	struct task_struct *task;
