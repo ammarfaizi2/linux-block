@@ -21,13 +21,14 @@ struct vfsmount;
 struct dentry;
 struct mnt_namespace;
 
-#define MNT_NOSUID	0x01
-#define MNT_NODEV	0x02
-#define MNT_NOEXEC	0x04
-#define MNT_NOATIME	0x08
-#define MNT_NODIRATIME	0x10
-#define MNT_RELATIME	0x20
-#define MNT_READONLY	0x40	/* does the user want this to be r/o? */
+#define MNT_NOSUID		0x01
+#define MNT_NODEV		0x02
+#define MNT_NOEXEC		0x04
+#define MNT_NOATIME		0x08
+#define MNT_NODIRATIME		0x10
+#define MNT_RELATIME		0x20
+#define MNT_READONLY		0x40	/* does the user want this to be r/o? */
+#define MNT_NOIPCCONNECT	0x80
 
 #define MNT_SHRINKABLE	0x100
 #define MNT_WRITE_HOLD	0x200

@@ -2546,6 +2546,8 @@ static int may_open(struct path *path, int acc_mode, int flag)
 		/*FALLTHRU*/
 	case S_IFIFO:
 	case S_IFSOCK:
+		if (path->mnt->mnt_flags & MNT_NOIPCCONNECT)
+			return -EACCES;
 		flag &= ~O_TRUNC;
 		break;
 	}

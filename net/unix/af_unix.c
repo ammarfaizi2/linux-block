@@ -783,6 +783,12 @@ static struct sock *unix_find_other(struct net *net,
 		err = kern_path(sunname->sun_path, LOOKUP_FOLLOW, &path);
 		if (err)
 			goto fail;
+
+		if (path.mnt->mnt_flags & MNT_NOIPCCONNECT) {
+			err = -EACCES;
+			goto put_fail;
+		}
+
 		inode = path.dentry->d_inode;
 		err = inode_permission(inode, MAY_WRITE);
 		if (err)
