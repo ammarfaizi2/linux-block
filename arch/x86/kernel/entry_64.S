@@ -1033,9 +1033,56 @@ retint_swapgs:		/* return to user-space */
 retint_restore_args:	/* return to kernel space */
 	DISABLE_INTERRUPTS(CLBR_ANY)
 	/*
-	 * The iretq could re-enable interrupts:
+	 * The sti could re-enable interrupts:
 	 */
 	TRACE_IRQS_IRETQ
+
+	/*
+	 * Fast return to kernel.  The stack looks like:
+	 *
+	 * previous frame
+	 * possible 8 byte gap for alignment
+	 * SS RSP EFLAGS CS RIP
+	 * ORIG_RAX RDI ... R11
+	 *
+	 * We rewrite it to:
+	 *
+	 * previous frame
+	 * RIP (EFLAGS & ~IF) ...
+	 * pointer to the EFLAGS slot
+	 * RDI ... R11
+	 */
+	movq RSP-ARGOFFSET(%rsp), %rsi
+	subq $16, %rsi
+	movq EFLAGS-ARGOFFSET(%rsp), %rdi
+	movq RIP-ARGOFFSET(%rsp), %rcx
+	btr $9, %rdi
+	movq %rdi, (%rsi)
+	movq %rcx, 8(%rsi)
+	movq %rsi, ORIG_RAX-ARGOFFSET(%rsp)
+	popq_cfi %r11
+	popq_cfi %r10
+	popq_cfi %r9
+	popq_cfi %r8
+	popq_cfi %rax
+	popq_cfi %rcx
+	popq_cfi %rdx
+	popq_cfi %rsi
+	popq_cfi %rdi
+
+	popq %rsp
+	jc 1f
+	/* Interrupts were not enabled */
+	popfq_cfi
+	retq
+1:
+	CFI_ADJUST_CFA_OFFSET 8
+	/* Interrupts were enabled */
+	popfq_cfi
+	sti
+	/* Interrupts are still off because of the one-insn grace period. */
+	retq
+
 restore_args:
 	RESTORE_ARGS 1,8,1
 
