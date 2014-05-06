@@ -1027,6 +1027,9 @@ retint_swapgs:		/* return to user-space */
 	 */
 	DISABLE_INTERRUPTS(CLBR_ANY)
 	TRACE_IRQS_IRETQ
+	call install_sysret_trampoline
+	test %rax,%rax
+	jnz iret_via_sysret
 	SWAPGS
 	jmp restore_args
 
@@ -1036,12 +1039,23 @@ retint_restore_args:	/* return to kernel space */
 	 * The iretq could re-enable interrupts:
 	 */
 	TRACE_IRQS_IRETQ
+
 restore_args:
 	RESTORE_ARGS 1,8,1
 
 irq_return:
 	INTERRUPT_RETURN
 	_ASM_EXTABLE(irq_return, bad_iret)
+
+iret_via_sysret:
+	SWAPGS
+	RESTORE_ARGS 1,8,1
+	popq %rcx /* RIP */
+	popq %r11 /* CS */
+	popq %r11 /* RFLAGS */
+	popq %rsp /* RSP */
+	          /* ignore SS */
+	sysretq
 
 #ifdef CONFIG_PARAVIRT
 ENTRY(native_iret)

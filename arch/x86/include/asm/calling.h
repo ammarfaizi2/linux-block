@@ -46,7 +46,9 @@ For 32-bit we have the following conventions - kernel is built with
 
 */
 
+#ifdef __ASSEMBLY__
 #include <asm/dwarf2.h>
+#endif
 
 #ifdef CONFIG_X86_64
 
@@ -84,6 +86,8 @@ For 32-bit we have the following conventions - kernel is built with
 
 #define ARGOFFSET	R11
 #define SWFRAME		ORIG_RAX
+
+#ifdef __ASSEMBLY__
 
 	.macro SAVE_ARGS addskip=0, save_rcx=1, save_r891011=1
 	subq  $9*8+\addskip, %rsp
@@ -195,7 +199,11 @@ For 32-bit we have the following conventions - kernel is built with
 	.byte 0xf1
 	.endm
 
+#endif /* __ASSEMBLY__ */
+
 #else /* CONFIG_X86_64 */
+
+#ifdef __ASSEMBLY__
 
 /*
  * For 32bit only simplified versions of SAVE_ALL/RESTORE_ALL. These
@@ -239,6 +247,8 @@ For 32-bit we have the following conventions - kernel is built with
 	popl_cfi %eax
 	CFI_RESTORE eax
 	.endm
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* CONFIG_X86_64 */
 

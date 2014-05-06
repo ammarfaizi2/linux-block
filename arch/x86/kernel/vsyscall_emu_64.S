@@ -32,6 +32,11 @@ __vsyscall_page:
 	syscall
 	ret
 
+	.balign 1024, 0xcc
+	popq %rcx
+	popq %r11
+	retq $128
+
 	.balign 4096, 0xcc
 
 	.size __vsyscall_page, 4096

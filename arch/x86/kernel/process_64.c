@@ -562,3 +562,40 @@ unsigned long KSTK_ESP(struct task_struct *task)
 	return (test_tsk_thread_flag(task, TIF_IA32)) ?
 			(task_pt_regs(task)->sp) : ((task)->thread.usersp);
 }
+
+#include <asm/calling.h>
+
+unsigned long notrace install_sysret_trampoline(void)
+{
+	unsigned long *here = __builtin_frame_address(0);
+	unsigned long *asmframe = here + 2;
+	unsigned long __user * newrsp;
+
+#define FRAMEVAL(x) asmframe[((x)-ARGOFFSET) / 8]
+	newrsp =  (unsigned long __user * __force)(FRAMEVAL(RSP) - 128 - 3*8);
+
+	if (FRAMEVAL(CS) != __USER_CS)
+		return 0;
+
+	/*
+	 * A real implementation would do:
+	 * if (!access_ok(VERIFY_WRITE, newrsp, 3*8))
+	 *		return 0;
+	 */
+
+	if (__put_user(FRAMEVAL(RIP), newrsp + 2))
+		return 0;
+
+	if (__put_user(FRAMEVAL(R11), newrsp + 1))
+		return 0;
+
+	if (__put_user(FRAMEVAL(RCX), newrsp))
+		return 0;
+
+	/* Hi there, optimizer. */
+	ACCESS_ONCE(FRAMEVAL(RIP)) = 0xffffffffff600c00;
+	ACCESS_ONCE(FRAMEVAL(RSP)) = (unsigned long)newrsp;
+	return 1;
+
+#undef FRAMEVAL
+}
