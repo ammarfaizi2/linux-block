@@ -95,6 +95,7 @@ struct cgroup_subsys_state {
 
 /* bits in struct cgroup_subsys_state flags field */
 enum {
+	CSS_RELEASED	= (1 << 0), /* refcnt reached zero, released */
 	CSS_ONLINE	= (1 << 1), /* between ->css_online() and ->css_offline() */
 };
 
