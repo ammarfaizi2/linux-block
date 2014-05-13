@@ -4157,8 +4157,6 @@ static void init_and_link_css(struct cgroup_subsys_state *css,
 	if (cgrp->parent) {
 		css->parent = cgroup_css(cgrp->parent, ss);
 		css_get(css->parent);
-	} else {
-		css->flags |= CSS_ROOT;
 	}
 
 	BUG_ON(cgroup_css(cgrp, ss));
@@ -4581,9 +4579,10 @@ static void __init cgroup_init_subsys(struct cgroup_subsys *ss, bool early)
 	BUG_ON(IS_ERR(css));
 	init_and_link_css(css, ss, &cgrp_dfl_root.cgrp);
 	if (early) {
-		/* idr_alloc() can't be called safely during early init */
+		/* allocation can't be done safely during early init */
 		css->id = 1;
 	} else {
+		BUG_ON(percpu_ref_init(&css->refcnt, css_release));
 		css->id = cgroup_idr_alloc(&ss->css_idr, css, 1, 2, GFP_KERNEL);
 		BUG_ON(css->id < 0);
 	}
@@ -4670,6 +4669,7 @@ int __init cgroup_init(void)
 			struct cgroup_subsys_state *css =
 				init_css_set.subsys[ss->id];
 
+			BUG_ON(percpu_ref_init(&css->refcnt, css_release));
 			css->id = cgroup_idr_alloc(&ss->css_idr, css, 1, 2,
 						   GFP_KERNEL);
 			BUG_ON(css->id < 0);
