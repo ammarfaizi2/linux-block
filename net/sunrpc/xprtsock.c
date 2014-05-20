@@ -965,7 +965,7 @@ static void xs_local_data_ready(struct sock *sk)
 	if (xprt == NULL)
 		goto out;
 
-	skb = skb_recv_datagram(sk, 0, 1, &err);
+	skb = skb_recv_datagram(sk, 0, 1, &err, NULL);
 	if (skb == NULL)
 		goto out;
 
@@ -1027,7 +1027,7 @@ static void xs_udp_data_ready(struct sock *sk)
 	if (!(xprt = xprt_from_sock(sk)))
 		goto out;
 
-	if ((skb = skb_recv_datagram(sk, 0, 1, &err)) == NULL)
+	if ((skb = skb_recv_datagram(sk, 0, 1, &err, NULL)) == NULL)
 		goto out;
 
 	repsize = skb->len - sizeof(struct udphdr);

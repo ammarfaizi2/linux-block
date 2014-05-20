@@ -1111,7 +1111,7 @@ static int macvtap_sendmsg(struct kiocb *iocb, struct socket *sock,
 
 static int macvtap_recvmsg(struct kiocb *iocb, struct socket *sock,
 			   struct msghdr *m, size_t total_len,
-			   int flags)
+			   int flags, long *timeop)
 {
 	struct macvtap_queue *q = container_of(sock, struct macvtap_queue, sock);
 	int ret;

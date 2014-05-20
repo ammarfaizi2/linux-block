@@ -731,7 +731,7 @@ send_failed:
 }
 
 static int raw_recvmsg(struct kiocb *iocb, struct socket *sock,
-		       struct msghdr *msg, size_t size, int flags)
+		       struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct sk_buff *skb;
@@ -741,7 +741,7 @@ static int raw_recvmsg(struct kiocb *iocb, struct socket *sock,
 	noblock =  flags & MSG_DONTWAIT;
 	flags   &= ~MSG_DONTWAIT;
 
-	skb = skb_recv_datagram(sk, flags, noblock, &err);
+	skb = skb_recv_datagram(sk, flags, noblock, &err, timeop);
 	if (!skb)
 		return err;
 

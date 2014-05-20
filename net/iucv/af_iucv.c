@@ -1314,7 +1314,7 @@ static void iucv_process_message_q(struct sock *sk)
 }
 
 static int iucv_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
-			     struct msghdr *msg, size_t len, int flags)
+			     struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	int noblock = flags & MSG_DONTWAIT;
 	struct sock *sk = sock->sk;
@@ -1335,7 +1335,7 @@ static int iucv_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 	/* receive/dequeue next skb:
 	 * the function understands MSG_PEEK and, thus, does not dequeue skb */
-	skb = skb_recv_datagram(sk, flags, noblock, &err);
+	skb = skb_recv_datagram(sk, flags, noblock, &err, timeop);
 	if (!skb) {
 		if (sk->sk_shutdown & RCV_SHUTDOWN)
 			return 0;

@@ -507,7 +507,7 @@ no_route:
 }
 
 static int l2tp_ip_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-			   size_t len, int noblock, int flags, int *addr_len)
+			   size_t len, int noblock, int flags, int *addr_len, long *timeop)
 {
 	struct inet_sock *inet = inet_sk(sk);
 	size_t copied = 0;
@@ -518,7 +518,7 @@ static int l2tp_ip_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *m
 	if (flags & MSG_OOB)
 		goto out;
 
-	skb = skb_recv_datagram(sk, flags, noblock, &err);
+	skb = skb_recv_datagram(sk, flags, noblock, &err, timeop);
 	if (!skb)
 		goto out;
 

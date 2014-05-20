@@ -519,17 +519,17 @@ static int unix_shutdown(struct socket *, int);
 static int unix_stream_sendmsg(struct kiocb *, struct socket *,
 			       struct msghdr *, size_t);
 static int unix_stream_recvmsg(struct kiocb *, struct socket *,
-			       struct msghdr *, size_t, int);
+			       struct msghdr *, size_t, int, long *);
 static int unix_dgram_sendmsg(struct kiocb *, struct socket *,
 			      struct msghdr *, size_t);
 static int unix_dgram_recvmsg(struct kiocb *, struct socket *,
-			      struct msghdr *, size_t, int);
+			      struct msghdr *, size_t, int, long *);
 static int unix_dgram_connect(struct socket *, struct sockaddr *,
 			      int, int);
 static int unix_seqpacket_sendmsg(struct kiocb *, struct socket *,
 				  struct msghdr *, size_t);
 static int unix_seqpacket_recvmsg(struct kiocb *, struct socket *,
-				  struct msghdr *, size_t, int);
+				  struct msghdr *, size_t, int, long *);
 
 static int unix_set_peek_off(struct sock *sk, int val)
 {
@@ -1283,7 +1283,7 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags)
 	 * so that no locks are necessary.
 	 */
 
-	skb = skb_recv_datagram(sk, 0, flags&O_NONBLOCK, &err);
+	skb = skb_recv_datagram(sk, 0, flags&O_NONBLOCK, &err, NULL);
 	if (!skb) {
 		/* This means receive shutdown. */
 		if (err == 0)
@@ -1755,14 +1755,14 @@ static int unix_seqpacket_sendmsg(struct kiocb *kiocb, struct socket *sock,
 
 static int unix_seqpacket_recvmsg(struct kiocb *iocb, struct socket *sock,
 			      struct msghdr *msg, size_t size,
-			      int flags)
+			      int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 
 	if (sk->sk_state != TCP_ESTABLISHED)
 		return -ENOTCONN;
 
-	return unix_dgram_recvmsg(iocb, sock, msg, size, flags);
+	return unix_dgram_recvmsg(iocb, sock, msg, size, flags, timeop);
 }
 
 static void unix_copy_addr(struct msghdr *msg, struct sock *sk)
@@ -1777,7 +1777,7 @@ static void unix_copy_addr(struct msghdr *msg, struct sock *sk)
 
 static int unix_dgram_recvmsg(struct kiocb *iocb, struct socket *sock,
 			      struct msghdr *msg, size_t size,
-			      int flags)
+			      int flags, long *timeop)
 {
 	struct sock_iocb *siocb = kiocb_to_siocb(iocb);
 	struct scm_cookie tmp_scm;
@@ -1803,7 +1803,7 @@ static int unix_dgram_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 	skip = sk_peek_offset(sk, flags);
 
-	skb = __skb_recv_datagram(sk, flags, &peeked, &skip, &err);
+	skb = __skb_recv_datagram(sk, flags, &peeked, &skip, &err, timeop);
 	if (!skb) {
 		unix_state_lock(sk);
 		/* Signal EOF on disconnected non-blocking SEQPACKET socket. */
@@ -1914,7 +1914,7 @@ static unsigned int unix_skb_len(const struct sk_buff *skb)
 
 static int unix_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 			       struct msghdr *msg, size_t size,
-			       int flags)
+			       int flags, long *timeop)
 {
 	struct sock_iocb *siocb = kiocb_to_siocb(iocb);
 	struct scm_cookie tmp_scm;
@@ -1926,7 +1926,7 @@ static int unix_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 	int check_creds = 0;
 	int target;
 	int err = 0;
-	long timeo;
+	long timeo = sock_rcvtimeop(sk, timeop, noblock);
 	int skip;
 
 	err = -EINVAL;
@@ -1938,7 +1938,6 @@ static int unix_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 		goto out;
 
 	target = sock_rcvlowat(sk, flags&MSG_WAITALL, size);
-	timeo = sock_rcvtimeo(sk, noblock);
 
 	/* Lock the socket to prevent queue disordering
 	 * while sleeps in memcpy_tomsg
@@ -2071,6 +2070,8 @@ again:
 	mutex_unlock(&u->readlock);
 	scm_recv(sock, msg, siocb->scm, flags);
 out:
+	if (timeop)
+		*timeop = timeo;
 	return copied ? : err;
 }
 

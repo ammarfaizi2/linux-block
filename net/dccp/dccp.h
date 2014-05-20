@@ -314,7 +314,7 @@ int dccp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		 size_t size);
 int dccp_recvmsg(struct kiocb *iocb, struct sock *sk,
 		 struct msghdr *msg, size_t len, int nonblock, int flags,
-		 int *addr_len);
+		 int *addr_len, long *timeop);
 void dccp_shutdown(struct sock *sk, int how);
 int inet_dccp_listen(struct socket *sock, int backlog);
 unsigned int dccp_poll(struct file *file, struct socket *sock,

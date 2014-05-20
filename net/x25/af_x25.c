@@ -1254,7 +1254,7 @@ out_kfree_skb:
 
 static int x25_recvmsg(struct kiocb *iocb, struct socket *sock,
 		       struct msghdr *msg, size_t size,
-		       int flags)
+		       int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct x25_sock *x25 = x25_sk(sk);
@@ -1306,7 +1306,7 @@ static int x25_recvmsg(struct kiocb *iocb, struct socket *sock,
 		/* Now we can treat all alike */
 		release_sock(sk);
 		skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
-					flags & MSG_DONTWAIT, &rc);
+					flags & MSG_DONTWAIT, &rc, timeop);
 		lock_sock(sk);
 		if (!skb)
 			goto out;

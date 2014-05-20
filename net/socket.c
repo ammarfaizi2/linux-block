@@ -772,7 +772,7 @@ void __sock_recv_ts_and_drops(struct msghdr *msg, struct sock *sk,
 EXPORT_SYMBOL_GPL(__sock_recv_ts_and_drops);
 
 static inline int __sock_recvmsg_nosec(struct kiocb *iocb, struct socket *sock,
-				       struct msghdr *msg, size_t size, int flags)
+				       struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	struct sock_iocb *si = kiocb_to_siocb(iocb);
 
@@ -782,19 +782,19 @@ static inline int __sock_recvmsg_nosec(struct kiocb *iocb, struct socket *sock,
 	si->size = size;
 	si->flags = flags;
 
-	return sock->ops->recvmsg(iocb, sock, msg, size, flags);
+	return sock->ops->recvmsg(iocb, sock, msg, size, flags, timeop);
 }
 
 static inline int __sock_recvmsg(struct kiocb *iocb, struct socket *sock,
-				 struct msghdr *msg, size_t size, int flags)
+				 struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	int err = security_socket_recvmsg(sock, msg, size, flags);
 
-	return err ?: __sock_recvmsg_nosec(iocb, sock, msg, size, flags);
+	return err ?: __sock_recvmsg_nosec(iocb, sock, msg, size, flags, timeop);
 }
 
 int sock_recvmsg(struct socket *sock, struct msghdr *msg,
-		 size_t size, int flags)
+		 size_t size, int flags, long *timeop)
 {
 	struct kiocb iocb;
 	struct sock_iocb siocb;
@@ -802,7 +802,7 @@ int sock_recvmsg(struct socket *sock, struct msghdr *msg,
 
 	init_sync_kiocb(&iocb, NULL);
 	iocb.private = &siocb;
-	ret = __sock_recvmsg(&iocb, sock, msg, size, flags);
+	ret = __sock_recvmsg(&iocb, sock, msg, size, flags, timeop);
 	if (-EIOCBQUEUED == ret)
 		ret = wait_on_sync_kiocb(&iocb);
 	return ret;
@@ -810,7 +810,7 @@ int sock_recvmsg(struct socket *sock, struct msghdr *msg,
 EXPORT_SYMBOL(sock_recvmsg);
 
 static int sock_recvmsg_nosec(struct socket *sock, struct msghdr *msg,
-			      size_t size, int flags)
+			      size_t size, int flags, long *timeop)
 {
 	struct kiocb iocb;
 	struct sock_iocb siocb;
@@ -818,7 +818,7 @@ static int sock_recvmsg_nosec(struct socket *sock, struct msghdr *msg,
 
 	init_sync_kiocb(&iocb, NULL);
 	iocb.private = &siocb;
-	ret = __sock_recvmsg_nosec(&iocb, sock, msg, size, flags);
+	ret = __sock_recvmsg_nosec(&iocb, sock, msg, size, flags, timeop);
 	if (-EIOCBQUEUED == ret)
 		ret = wait_on_sync_kiocb(&iocb);
 	return ret;
@@ -851,7 +851,7 @@ int kernel_recvmsg(struct socket *sock, struct msghdr *msg,
 	 * iovec are identical, yielding the same in-core layout and alignment
 	 */
 	msg->msg_iov = (struct iovec *)vec, msg->msg_iovlen = num;
-	result = sock_recvmsg(sock, msg, size, flags);
+	result = sock_recvmsg(sock, msg, size, flags, NULL);
 	set_fs(oldfs);
 	return result;
 }
@@ -914,7 +914,7 @@ static ssize_t do_sock_read(struct msghdr *msg, struct kiocb *iocb,
 	msg->msg_iovlen = nr_segs;
 	msg->msg_flags = (file->f_flags & O_NONBLOCK) ? MSG_DONTWAIT : 0;
 
-	return __sock_recvmsg(iocb, sock, msg, size, msg->msg_flags);
+	return __sock_recvmsg(iocb, sock, msg, size, msg->msg_flags, NULL);
 }
 
 static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
@@ -1862,7 +1862,7 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
 	msg.msg_namelen = 0;
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
-	err = sock_recvmsg(sock, &msg, size, flags);
+	err = sock_recvmsg(sock, &msg, size, flags, NULL);
 
 	if (err >= 0 && addr != NULL) {
 		err2 = move_addr_to_user(&address,
@@ -2207,7 +2207,7 @@ SYSCALL_DEFINE4(sendmmsg, int, fd, struct mmsghdr __user *, mmsg,
 }
 
 static int ___sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
-			 struct msghdr *msg_sys, unsigned int flags, int nosec)
+			 struct msghdr *msg_sys, unsigned int flags, int nosec, long *timeop)
 {
 	struct compat_msghdr __user *msg_compat =
 	    (struct compat_msghdr __user *)msg;
@@ -2265,7 +2265,7 @@ static int ___sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	err = (nosec ? sock_recvmsg_nosec : sock_recvmsg)(sock, msg_sys,
-							  total_len, flags);
+							  total_len, flags, timeop);
 	if (err < 0)
 		goto out_freeiov;
 	len = err;
@@ -2312,7 +2312,7 @@ long __sys_recvmsg(int fd, struct msghdr __user *msg, unsigned flags)
 	if (!sock)
 		goto out;
 
-	err = ___sys_recvmsg(sock, msg, &msg_sys, flags, 0);
+	err = ___sys_recvmsg(sock, msg, &msg_sys, flags, 0, NULL);
 
 	fput_light(sock->file, fput_needed);
 out:
@@ -2327,6 +2327,30 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 	return __sys_recvmsg(fd, msg, flags);
 }
 
+static int sock_set_timeout_ts(long *timeo_p, struct timespec *ts)
+{
+	if (ts->tv_nsec < 0 || ts->tv_nsec >= NSEC_PER_SEC)
+		return -EDOM;
+
+	if (ts->tv_sec < 0) {
+		static int warned __read_mostly;
+
+		*timeo_p = 0;
+		if (warned < 10 && net_ratelimit()) {
+			warned++;
+			pr_info("%s: `%s' (pid %d) tries to set negative timeout\n",
+				__func__, current->comm, task_pid_nr(current));
+		}
+		return 0;
+	}
+	*timeo_p = MAX_SCHEDULE_TIMEOUT;
+	if (ts->tv_sec == 0 && ts->tv_nsec == 0)
+		return 0;
+	if (ts->tv_sec < (MAX_SCHEDULE_TIMEOUT / HZ - 1))
+		*timeo_p = ts->tv_sec * HZ + (ts->tv_nsec + (NSEC_PER_SEC / HZ - 1)) / (NSEC_PER_SEC / HZ);
+	return 0;
+}
+
 /*
  *     Linux recvmmsg interface
  */
@@ -2339,12 +2363,14 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 	struct mmsghdr __user *entry;
 	struct compat_mmsghdr __user *compat_entry;
 	struct msghdr msg_sys;
-	struct timespec end_time;
+	long timeout_hz, *timeop = NULL;
 
-	if (timeout &&
-	    poll_select_set_timeout(&end_time, timeout->tv_sec,
-				    timeout->tv_nsec))
-		return -EINVAL;
+	if (timeout) {
+		err = sock_set_timeout_ts(&timeout_hz, timeout);
+		if (err)
+			return err;
+		timeop = &timeout_hz;
+	}
 
 	datagrams = 0;
 
@@ -2366,7 +2392,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 		if (MSG_CMSG_COMPAT & flags) {
 			err = ___sys_recvmsg(sock, (struct msghdr __user *)compat_entry,
 					     &msg_sys, flags & ~MSG_WAITFORONE,
-					     datagrams);
+					     datagrams, timeop);
 			if (err < 0)
 				break;
 			err = __put_user(err, &compat_entry->msg_len);
@@ -2375,7 +2401,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 			err = ___sys_recvmsg(sock,
 					     (struct msghdr __user *)entry,
 					     &msg_sys, flags & ~MSG_WAITFORONE,
-					     datagrams);
+					     datagrams, timeop);
 			if (err < 0)
 				break;
 			err = put_user(err, &entry->msg_len);
@@ -2390,17 +2416,11 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 		if (flags & MSG_WAITFORONE)
 			flags |= MSG_DONTWAIT;
 
-		if (timeout) {
-			ktime_get_ts(timeout);
-			*timeout = timespec_sub(end_time, *timeout);
-			if (timeout->tv_sec < 0) {
-				timeout->tv_sec = timeout->tv_nsec = 0;
-				break;
-			}
-
+		if (timeout && timeout_hz == 0) {
 			/* Timeout, return less than vlen datagrams */
-			if (timeout->tv_nsec == 0 && timeout->tv_sec == 0)
-				break;
+			timeout->tv_sec = timeout->tv_nsec = 0;
+			timeop = NULL;
+			break;
 		}
 
 		/* Out of band data, return right away */
@@ -2410,6 +2430,11 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 
 out_put:
 	fput_light(sock->file, fput_needed);
+
+	if (timeop) {
+		timeout->tv_sec	 = timeout_hz / HZ;
+		timeout->tv_nsec = (timeout_hz % HZ) * (NSEC_PER_SEC / HZ);
+	}
 
 	if (err == 0)
 		return datagrams;

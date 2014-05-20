@@ -1063,10 +1063,10 @@ out:
 }
 
 static int vsock_dgram_recvmsg(struct kiocb *kiocb, struct socket *sock,
-			       struct msghdr *msg, size_t len, int flags)
+			       struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	return transport->dgram_dequeue(kiocb, vsock_sk(sock->sk), msg, len,
-					flags);
+					flags, timeop);
 }
 
 static const struct proto_ops vsock_dgram_ops = {
@@ -1646,7 +1646,7 @@ out:
 static int
 vsock_stream_recvmsg(struct kiocb *kiocb,
 		     struct socket *sock,
-		     struct msghdr *msg, size_t len, int flags)
+		     struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	struct sock *sk;
 	struct vsock_sock *vsk;
@@ -1661,6 +1661,7 @@ vsock_stream_recvmsg(struct kiocb *kiocb,
 	sk = sock->sk;
 	vsk = vsock_sk(sk);
 	err = 0;
+	timeout = sock_rcvtimeop(sk, timeop, flags & MSG_DONTWAIT);
 
 	lock_sock(sk);
 
@@ -1711,7 +1712,6 @@ vsock_stream_recvmsg(struct kiocb *kiocb,
 		err = -ENOMEM;
 		goto out;
 	}
-	timeout = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
 	copied = 0;
 
 	err = transport->notify_recv_init(vsk, target, &recv_data);
@@ -1821,6 +1821,8 @@ vsock_stream_recvmsg(struct kiocb *kiocb,
 out_wait:
 	finish_wait(sk_sleep(sk), &wait);
 out:
+	if (timeop)
+		*timeop = timeout;
 	release_sock(sk);
 	return err;
 }

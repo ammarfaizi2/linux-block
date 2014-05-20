@@ -138,6 +138,9 @@ out_noerr:
  *	@off: an offset in bytes to peek skb from. Returns an offset
  *	      within an skb where data actually starts
  *	@err: error code returned
+ *	@timeop: per call timeout (as opposed as per socket via SO_RCVTIMEO),
+ *		 will return the remaining time, used in recvmmsg, ignored
+ *		 if set to NULL.
  *
  *	Get a datagram skbuff, understands the peeking, nonblocking wakeups
  *	and possible races. This replaces identical code in packet, raw and
@@ -162,7 +165,7 @@ out_noerr:
  *	the standard around please.
  */
 struct sk_buff *__skb_recv_datagram(struct sock *sk, unsigned int flags,
-				    int *peeked, int *off, int *err)
+				    int *peeked, int *off, int *err, long *timeop)
 {
 	struct sk_buff *skb, *last;
 	long timeo;
@@ -174,7 +177,7 @@ struct sk_buff *__skb_recv_datagram(struct sock *sk, unsigned int flags,
 	if (error)
 		goto no_packet;
 
-	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	timeo = sock_rcvtimeop(sk, timeop, flags & MSG_DONTWAIT);
 
 	do {
 		/* Again only user level code calls this function, so nothing
@@ -205,6 +208,8 @@ struct sk_buff *__skb_recv_datagram(struct sock *sk, unsigned int flags,
 
 			spin_unlock_irqrestore(&queue->lock, cpu_flags);
 			*off = _off;
+			if (timeop)
+				*timeop = timeo;
 			return skb;
 		}
 		spin_unlock_irqrestore(&queue->lock, cpu_flags);
@@ -219,22 +224,24 @@ struct sk_buff *__skb_recv_datagram(struct sock *sk, unsigned int flags,
 			goto no_packet;
 
 	} while (!wait_for_more_packets(sk, err, &timeo, last));
-
+out:
+	if (timeop)
+		*timeop = timeo;
 	return NULL;
 
 no_packet:
 	*err = error;
-	return NULL;
+	goto out;
 }
 EXPORT_SYMBOL(__skb_recv_datagram);
 
 struct sk_buff *skb_recv_datagram(struct sock *sk, unsigned int flags,
-				  int noblock, int *err)
+				  int noblock, int *err, long *timeop)
 {
 	int peeked, off = 0;
 
 	return __skb_recv_datagram(sk, flags | (noblock ? MSG_DONTWAIT : 0),
-				   &peeked, &off, err);
+				   &peeked, &off, err, timeop);
 }
 EXPORT_SYMBOL(skb_recv_datagram);
 

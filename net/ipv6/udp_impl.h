@@ -26,7 +26,7 @@ int compat_udpv6_getsockopt(struct sock *sk, int level, int optname,
 int udpv6_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		  size_t len);
 int udpv6_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		  size_t len, int noblock, int flags, int *addr_len);
+		  size_t len, int noblock, int flags, int *addr_len, long *timeop);
 int udpv6_queue_rcv_skb(struct sock *sk, struct sk_buff *skb);
 void udpv6_destroy_sock(struct sock *sk);
 

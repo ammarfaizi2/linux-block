@@ -601,7 +601,7 @@ static void handle_rx(struct vhost_net *net)
 		if (unlikely(headcount > UIO_MAXIOV)) {
 			msg.msg_iovlen = 1;
 			err = sock->ops->recvmsg(NULL, sock, &msg,
-						 1, MSG_DONTWAIT | MSG_TRUNC);
+						 1, MSG_DONTWAIT | MSG_TRUNC, NULL);
 			pr_debug("Discarded rx packet: len %zd\n", sock_len);
 			continue;
 		}
@@ -627,7 +627,7 @@ static void handle_rx(struct vhost_net *net)
 			copy_iovec_hdr(vq->iov, nvq->hdr, sock_hlen, in);
 		msg.msg_iovlen = in;
 		err = sock->ops->recvmsg(NULL, sock, &msg,
-					 sock_len, MSG_DONTWAIT | MSG_TRUNC);
+					 sock_len, MSG_DONTWAIT | MSG_TRUNC, NULL);
 		/* Userspace might have consumed the packet meanwhile:
 		 * it's not supposed to do this usually, but might be hard
 		 * to prevent. Discard data we got (if any) and keep going. */

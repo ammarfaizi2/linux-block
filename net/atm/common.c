@@ -524,7 +524,7 @@ int vcc_connect(struct socket *sock, int itf, short vpi, int vci)
 }
 
 int vcc_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg,
-		size_t size, int flags)
+		size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct atm_vcc *vcc;
@@ -544,7 +544,7 @@ int vcc_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg,
 	    !test_bit(ATM_VF_READY, &vcc->flags))
 		return 0;
 
-	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &error);
+	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &error, timeop);
 	if (!skb)
 		return error;
 

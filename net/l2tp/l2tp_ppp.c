@@ -187,7 +187,7 @@ static int pppol2tp_recv_payload_hook(struct sk_buff *skb)
  */
 static int pppol2tp_recvmsg(struct kiocb *iocb, struct socket *sock,
 			    struct msghdr *msg, size_t len,
-			    int flags)
+			    int flags, long *timeop)
 {
 	int err;
 	struct sk_buff *skb;
@@ -199,7 +199,7 @@ static int pppol2tp_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 	err = 0;
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
-				flags & MSG_DONTWAIT, &err);
+				flags & MSG_DONTWAIT, &err, timeop);
 	if (!skb)
 		goto end;
 

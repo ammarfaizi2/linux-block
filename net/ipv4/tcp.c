@@ -1601,7 +1601,7 @@ EXPORT_SYMBOL(tcp_read_sock);
  */
 
 int tcp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		size_t len, int nonblock, int flags, int *addr_len)
+		size_t len, int nonblock, int flags, int *addr_len, long *timeop)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	int copied = 0;
@@ -1626,7 +1626,7 @@ int tcp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 	if (sk->sk_state == TCP_LISTEN)
 		goto out;
 
-	timeo = sock_rcvtimeo(sk, nonblock);
+	timeo = sock_rcvtimeop(sk, timeop, nonblock);
 
 	/* Urgent data needs to be handled specially. */
 	if (flags & MSG_OOB)
@@ -1993,20 +1993,18 @@ skip_copy:
 
 	/* Clean up data we have read: This will do ACK frames. */
 	tcp_cleanup_rbuf(sk, copied);
-
-	release_sock(sk);
-	return copied;
-
 out:
 	release_sock(sk);
-	return err;
+	if (timeop)
+		*timeop = timeo;
+	return copied;
 
 recv_urg:
-	err = tcp_recv_urg(sk, msg, len, flags);
+	copied = tcp_recv_urg(sk, msg, len, flags);
 	goto out;
 
 recv_sndq:
-	err = tcp_peek_sndq(sk, msg, len);
+	copied = tcp_peek_sndq(sk, msg, len);
 	goto out;
 }
 EXPORT_SYMBOL(tcp_recvmsg);

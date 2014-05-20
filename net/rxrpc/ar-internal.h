@@ -573,7 +573,7 @@ extern const struct file_operations rxrpc_connection_seq_fops;
  */
 void rxrpc_remove_user_ID(struct rxrpc_sock *, struct rxrpc_call *);
 int rxrpc_recvmsg(struct kiocb *, struct socket *, struct msghdr *, size_t,
-		  int);
+		  int, long *);
 
 /*
  * ar-security.c

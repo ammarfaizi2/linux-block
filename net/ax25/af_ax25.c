@@ -1600,7 +1600,7 @@ out:
 }
 
 static int ax25_recvmsg(struct kiocb *iocb, struct socket *sock,
-	struct msghdr *msg, size_t size, int flags)
+	struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct sk_buff *skb;
@@ -1619,7 +1619,7 @@ static int ax25_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 	/* Now we can treat all alike */
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
-				flags & MSG_DONTWAIT, &err);
+				flags & MSG_DONTWAIT, &err, timeop);
 	if (skb == NULL)
 		goto out;
 

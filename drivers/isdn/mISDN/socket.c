@@ -113,7 +113,7 @@ mISDN_sock_cmsg(struct sock *sk, struct msghdr *msg, struct sk_buff *skb)
 
 static int
 mISDN_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
-		   struct msghdr *msg, size_t len, int flags)
+		   struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	struct sk_buff		*skb;
 	struct sock		*sk = sock->sk;
@@ -130,7 +130,7 @@ mISDN_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
 	if (sk->sk_state == MISDN_CLOSED)
 		return 0;
 
-	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
+	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err, timeop);
 	if (!skb)
 		return err;
 

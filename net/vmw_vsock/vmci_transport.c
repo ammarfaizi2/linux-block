@@ -1733,7 +1733,7 @@ static int vmci_transport_dgram_enqueue(
 static int vmci_transport_dgram_dequeue(struct kiocb *kiocb,
 					struct vsock_sock *vsk,
 					struct msghdr *msg, size_t len,
-					int flags)
+					int flags, long *timeop)
 {
 	int err;
 	int noblock;
@@ -1748,7 +1748,7 @@ static int vmci_transport_dgram_dequeue(struct kiocb *kiocb,
 
 	/* Retrieve the head sk_buff from the socket's receive queue. */
 	err = 0;
-	skb = skb_recv_datagram(&vsk->sk, flags, noblock, &err);
+	skb = skb_recv_datagram(&vsk->sk, flags, noblock, &err, timeop);
 	if (err)
 		return err;
 

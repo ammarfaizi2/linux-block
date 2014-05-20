@@ -2852,7 +2852,7 @@ out:
  */
 
 static int packet_recvmsg(struct kiocb *iocb, struct socket *sock,
-			  struct msghdr *msg, size_t len, int flags)
+			  struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct sk_buff *skb;
@@ -2884,7 +2884,7 @@ static int packet_recvmsg(struct kiocb *iocb, struct socket *sock,
 	 *	but then it will block.
 	 */
 
-	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
+	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err, timeop);
 
 	/*
 	 *	An error occurred so return it. Because skb_recv_datagram()

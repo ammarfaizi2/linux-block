@@ -976,7 +976,7 @@ static int l2cap_sock_sendmsg(struct kiocb *iocb, struct socket *sock,
 }
 
 static int l2cap_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
-			      struct msghdr *msg, size_t len, int flags)
+			      struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct l2cap_pinfo *pi = l2cap_pi(sk);
@@ -1003,9 +1003,9 @@ static int l2cap_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
 	release_sock(sk);
 
 	if (sock->type == SOCK_STREAM)
-		err = bt_sock_stream_recvmsg(iocb, sock, msg, len, flags);
+		err = bt_sock_stream_recvmsg(iocb, sock, msg, len, flags, timeop);
 	else
-		err = bt_sock_recvmsg(iocb, sock, msg, len, flags);
+		err = bt_sock_recvmsg(iocb, sock, msg, len, flags, timeop);
 
 	if (pi->chan->mode != L2CAP_MODE_ERTM)
 		return err;

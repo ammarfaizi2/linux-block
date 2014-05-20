@@ -1669,7 +1669,7 @@ static int dn_data_ready(struct sock *sk, struct sk_buff_head *q, int flags, int
 
 
 static int dn_recvmsg(struct kiocb *iocb, struct socket *sock,
-	struct msghdr *msg, size_t size, int flags)
+	struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct dn_scp *scp = DN_SK(sk);
@@ -1680,7 +1680,7 @@ static int dn_recvmsg(struct kiocb *iocb, struct socket *sock,
 	struct sk_buff *skb, *n;
 	struct dn_skb_cb *cb = NULL;
 	unsigned char eor = 0;
-	long timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	long timeo = sock_rcvtimeop(sk, timeop, flags & MSG_DONTWAIT);
 
 	lock_sock(sk);
 
@@ -1814,7 +1814,8 @@ out:
 	}
 
 	release_sock(sk);
-
+	if (timeop)
+		*timeop = timeo;
 	return rv;
 }
 

@@ -1732,7 +1732,7 @@ out:
 }
 
 static int atalk_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg,
-			 size_t size, int flags)
+			 size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct ddpehdr *ddp;
@@ -1742,7 +1742,7 @@ static int atalk_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	struct sk_buff *skb;
 
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
-						flags & MSG_DONTWAIT, &err);
+						flags & MSG_DONTWAIT, &err, timeop);
 	lock_sock(sk);
 
 	if (!skb)

@@ -44,7 +44,7 @@ void rxrpc_remove_user_ID(struct rxrpc_sock *rx, struct rxrpc_call *call)
  *   simultaneously
  */
 int rxrpc_recvmsg(struct kiocb *iocb, struct socket *sock,
-		  struct msghdr *msg, size_t len, int flags)
+		  struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	struct rxrpc_skb_priv *sp;
 	struct rxrpc_call *call = NULL, *continue_call = NULL;
@@ -63,7 +63,7 @@ int rxrpc_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 	ullen = msg->msg_flags & MSG_CMSG_COMPAT ? 4 : sizeof(unsigned long);
 
-	timeo = sock_rcvtimeo(&rx->sk, flags & MSG_DONTWAIT);
+	timeo = sock_rcvtimeop(&rx->sk, timeop, flags & MSG_DONTWAIT);
 	msg->msg_flags |= MSG_MORE;
 
 	lock_sock(&rx->sk);
@@ -78,7 +78,8 @@ int rxrpc_recvmsg(struct kiocb *iocb, struct socket *sock,
 				release_sock(&rx->sk);
 				if (continue_call)
 					rxrpc_put_call(continue_call);
-				return -ENODATA;
+				copied = -ENODATA;
+				goto out_copied;
 			}
 		}
 
@@ -135,7 +136,7 @@ int rxrpc_recvmsg(struct kiocb *iocb, struct socket *sock,
 				release_sock(&rx->sk);
 				rxrpc_put_call(continue_call);
 				_leave(" = %d [noncont]", copied);
-				return copied;
+				goto out_copied;
 			}
 		}
 
@@ -252,6 +253,9 @@ out:
 	if (continue_call)
 		rxrpc_put_call(continue_call);
 	_leave(" = %d [data]", copied);
+out_copied:
+	if (timeop)
+		*timeop = timeo;
 	return copied;
 
 	/* handle non-DATA messages such as aborts, incoming connections and
@@ -328,7 +332,8 @@ terminal_message:
 	if (continue_call)
 		rxrpc_put_call(continue_call);
 	_leave(" = %d", ret);
-	return ret;
+	copied = ret;
+	goto out_copied;
 
 copy_error:
 	_debug("copy error");
@@ -337,7 +342,8 @@ copy_error:
 	if (continue_call)
 		rxrpc_put_call(continue_call);
 	_leave(" = %d", ret);
-	return ret;
+	copied = ret;
+	goto out_copied;
 
 wait_interrupted:
 	ret = sock_intr_errno(timeo);
@@ -348,8 +354,7 @@ wait_error:
 	if (copied)
 		copied = ret;
 	_leave(" = %d [waitfail %d]", copied, ret);
-	return copied;
-
+	goto out_copied;
 }
 
 /**

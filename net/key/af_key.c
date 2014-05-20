@@ -3635,7 +3635,7 @@ out:
 
 static int pfkey_recvmsg(struct kiocb *kiocb,
 			 struct socket *sock, struct msghdr *msg, size_t len,
-			 int flags)
+			 int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct pfkey_sock *pfk = pfkey_sk(sk);
@@ -3646,7 +3646,7 @@ static int pfkey_recvmsg(struct kiocb *kiocb,
 	if (flags & ~(MSG_PEEK|MSG_DONTWAIT|MSG_TRUNC|MSG_CMSG_COMPAT))
 		goto out;
 
-	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
+	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err, timeop);
 	if (skb == NULL)
 		goto out;
 

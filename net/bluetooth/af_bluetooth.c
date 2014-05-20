@@ -209,7 +209,7 @@ struct sock *bt_accept_dequeue(struct sock *parent, struct socket *newsock)
 EXPORT_SYMBOL(bt_accept_dequeue);
 
 int bt_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
-				struct msghdr *msg, size_t len, int flags)
+				struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	int noblock = flags & MSG_DONTWAIT;
 	struct sock *sk = sock->sk;
@@ -222,7 +222,7 @@ int bt_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
 	if (flags & (MSG_OOB))
 		return -EOPNOTSUPP;
 
-	skb = skb_recv_datagram(sk, flags, noblock, &err);
+	skb = skb_recv_datagram(sk, flags, noblock, &err, timeop);
 	if (!skb) {
 		if (sk->sk_shutdown & RCV_SHUTDOWN)
 			return 0;
@@ -282,7 +282,7 @@ static long bt_sock_data_wait(struct sock *sk, long timeo)
 }
 
 int bt_sock_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
-			       struct msghdr *msg, size_t size, int flags)
+			       struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	int err = 0;
@@ -297,7 +297,7 @@ int bt_sock_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 	lock_sock(sk);
 
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, size);
-	timeo  = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	timeo  = sock_rcvtimeop(sk, timeop, flags & MSG_DONTWAIT);
 
 	do {
 		struct sk_buff *skb;
@@ -381,6 +381,8 @@ int bt_sock_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 	} while (size);
 
 out:
+	if (timeop)
+		*timeop = timeo;
 	release_sock(sk);
 	return copied ? : err;
 }

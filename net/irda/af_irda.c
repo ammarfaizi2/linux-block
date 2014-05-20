@@ -1373,7 +1373,7 @@ out:
  *    after being read, regardless of how much the user actually read
  */
 static int irda_recvmsg_dgram(struct kiocb *iocb, struct socket *sock,
-			      struct msghdr *msg, size_t size, int flags)
+			      struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct irda_sock *self = irda_sk(sk);
@@ -1384,7 +1384,7 @@ static int irda_recvmsg_dgram(struct kiocb *iocb, struct socket *sock,
 	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
-				flags & MSG_DONTWAIT, &err);
+				flags & MSG_DONTWAIT, &err, timeop);
 	if (!skb)
 		return err;
 
@@ -1422,7 +1422,7 @@ static int irda_recvmsg_dgram(struct kiocb *iocb, struct socket *sock,
  * Function irda_recvmsg_stream (iocb, sock, msg, size, flags)
  */
 static int irda_recvmsg_stream(struct kiocb *iocb, struct socket *sock,
-			       struct msghdr *msg, size_t size, int flags)
+			       struct msghdr *msg, size_t size, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct irda_sock *self = irda_sk(sk);
@@ -1445,7 +1445,7 @@ static int irda_recvmsg_stream(struct kiocb *iocb, struct socket *sock,
 
 	err = 0;
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, size);
-	timeo = sock_rcvtimeo(sk, noblock);
+	timeo = sock_rcvtimeop(sk, timeop, noblock);
 
 	do {
 		int chunk;
@@ -1480,8 +1480,10 @@ static int irda_recvmsg_stream(struct kiocb *iocb, struct socket *sock,
 
 			finish_wait(sk_sleep(sk), &wait);
 
-			if (err)
-				return err;
+			if (err) {
+				copied = err;
+				break;
+			}
 			if (sk->sk_shutdown & RCV_SHUTDOWN)
 				break;
 
@@ -1534,6 +1536,8 @@ static int irda_recvmsg_stream(struct kiocb *iocb, struct socket *sock,
 		}
 	}
 
+	if (timeop)
+		*timeop = timeo;
 	return copied;
 }
 

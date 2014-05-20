@@ -961,7 +961,7 @@ struct proto {
 	int			(*recvmsg)(struct kiocb *iocb, struct sock *sk,
 					   struct msghdr *msg,
 					   size_t len, int noblock, int flags,
-					   int *addr_len);
+					   int *addr_len, long *timeop);
 	int			(*sendpage)(struct sock *sk, struct page *page,
 					int offset, size_t size, int flags);
 	int			(*bind)(struct sock *sk,
@@ -1593,7 +1593,7 @@ int sock_no_getsockopt(struct socket *, int , int, char __user *, int __user *);
 int sock_no_setsockopt(struct socket *, int, int, char __user *, unsigned int);
 int sock_no_sendmsg(struct kiocb *, struct socket *, struct msghdr *, size_t);
 int sock_no_recvmsg(struct kiocb *, struct socket *, struct msghdr *, size_t,
-		    int);
+		    int, long *);
 int sock_no_mmap(struct file *file, struct socket *sock,
 		 struct vm_area_struct *vma);
 ssize_t sock_no_sendpage(struct socket *sock, struct page *page, int offset,
@@ -1606,7 +1606,7 @@ ssize_t sock_no_sendpage(struct socket *sock, struct page *page, int offset,
 int sock_common_getsockopt(struct socket *sock, int level, int optname,
 				  char __user *optval, int __user *optlen);
 int sock_common_recvmsg(struct kiocb *iocb, struct socket *sock,
-			       struct msghdr *msg, size_t size, int flags);
+			       struct msghdr *msg, size_t size, int flags, long *timeop);
 int sock_common_setsockopt(struct socket *sock, int level, int optname,
 				  char __user *optval, unsigned int optlen);
 int compat_sock_common_getsockopt(struct socket *sock, int level,
@@ -2102,6 +2102,11 @@ static inline gfp_t gfp_any(void)
 static inline long sock_rcvtimeo(const struct sock *sk, bool noblock)
 {
 	return noblock ? 0 : sk->sk_rcvtimeo;
+}
+
+static inline long sock_rcvtimeop(const struct sock *sk, long *timeop, bool noblock)
+{
+	return noblock ? 0 : (timeop ? *timeop : sk->sk_rcvtimeo);
 }
 
 static inline long sock_sndtimeo(const struct sock *sk, bool noblock)

@@ -2042,11 +2042,11 @@ static int sctp_skb_pull(struct sk_buff *skb, int len)
  *  flags   - flags sent or received with the user message, see Section
  *            5 for complete description of the flags.
  */
-static struct sk_buff *sctp_skb_recv_datagram(struct sock *, int, int, int *);
+static struct sk_buff *sctp_skb_recv_datagram(struct sock *, int, int, int *, long *);
 
 static int sctp_recvmsg(struct kiocb *iocb, struct sock *sk,
 			struct msghdr *msg, size_t len, int noblock,
-			int flags, int *addr_len)
+			int flags, int *addr_len, long *timeop)
 {
 	struct sctp_ulpevent *event = NULL;
 	struct sctp_sock *sp = sctp_sk(sk);
@@ -2066,7 +2066,7 @@ static int sctp_recvmsg(struct kiocb *iocb, struct sock *sk,
 		goto out;
 	}
 
-	skb = sctp_skb_recv_datagram(sk, flags, noblock, &err);
+	skb = sctp_skb_recv_datagram(sk, flags, noblock, &err, timeop);
 	if (!skb)
 		goto out;
 
@@ -6519,13 +6519,13 @@ out:
  * with a few changes to make lksctp work.
  */
 static struct sk_buff *sctp_skb_recv_datagram(struct sock *sk, int flags,
-					      int noblock, int *err)
+					      int noblock, int *err, long *timeop)
 {
 	int error;
 	struct sk_buff *skb;
 	long timeo;
 
-	timeo = sock_rcvtimeo(sk, noblock);
+	timeo = sock_rcvtimeop(sk, timeop, noblock);
 
 	pr_debug("%s: timeo:%ld, max:%ld\n", __func__, timeo,
 		 MAX_SCHEDULE_TIMEOUT);
@@ -6549,7 +6549,7 @@ static struct sk_buff *sctp_skb_recv_datagram(struct sock *sk, int flags,
 		}
 
 		if (skb)
-			return skb;
+			break;
 
 		/* Caller is allowed not to check sk->sk_err before calling. */
 		error = sock_error(sk);
@@ -6569,11 +6569,15 @@ static struct sk_buff *sctp_skb_recv_datagram(struct sock *sk, int flags,
 			goto no_packet;
 	} while (sctp_wait_for_packet(sk, err, &timeo) == 0);
 
-	return NULL;
+out:
+	if (timeop)
+		*timeop = timeo;
+
+	return skb;
 
 no_packet:
 	*err = error;
-	return NULL;
+	goto out;
 }
 
 /* If sndbuf has changed, wake up per association sndbuf waiters.  */

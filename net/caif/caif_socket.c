@@ -272,7 +272,7 @@ static void caif_check_flow_release(struct sock *sk)
  * changed locking, address handling and added MSG_TRUNC.
  */
 static int caif_seqpkt_recvmsg(struct kiocb *iocb, struct socket *sock,
-			       struct msghdr *m, size_t len, int flags)
+			       struct msghdr *m, size_t len, int flags, long *timeop)
 
 {
 	struct sock *sk = sock->sk;
@@ -284,7 +284,7 @@ static int caif_seqpkt_recvmsg(struct kiocb *iocb, struct socket *sock,
 	if (m->msg_flags&MSG_OOB)
 		goto read_error;
 
-	skb = skb_recv_datagram(sk, flags, 0 , &ret);
+	skb = skb_recv_datagram(sk, flags, 0 , &ret, timeop);
 	if (!skb)
 		goto read_error;
 	copylen = skb->len;
@@ -345,7 +345,7 @@ static long caif_stream_data_wait(struct sock *sk, long timeo)
  */
 static int caif_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 			       struct msghdr *msg, size_t size,
-			       int flags)
+			       int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	int copied = 0;
@@ -367,7 +367,7 @@ static int caif_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 	caif_read_lock(sk);
 	target = sock_rcvlowat(sk, flags&MSG_WAITALL, size);
-	timeo = sock_rcvtimeo(sk, flags&MSG_DONTWAIT);
+	timeo = sock_rcvtimeop(sk, timeop, flags&MSG_DONTWAIT);
 
 	do {
 		int chunk;
@@ -450,6 +450,8 @@ unlock:
 	caif_read_unlock(sk);
 
 out:
+	if (timeop)
+		*timeop = timeo;
 	return copied ? : err;
 }
 

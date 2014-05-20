@@ -437,7 +437,7 @@ int compat_tcp_setsockopt(struct sock *sk, int level, int optname,
 void tcp_set_keepalive(struct sock *sk, int val);
 void tcp_syn_ack_timeout(struct sock *sk, struct request_sock *req);
 int tcp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		size_t len, int nonblock, int flags, int *addr_len);
+		size_t len, int nonblock, int flags, int *addr_len, long *timeop);
 void tcp_parse_options(const struct sk_buff *skb,
 		       struct tcp_options_received *opt_rx,
 		       int estab, struct tcp_fastopen_cookie *foc);

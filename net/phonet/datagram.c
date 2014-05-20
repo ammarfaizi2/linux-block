@@ -127,7 +127,7 @@ static int pn_sendmsg(struct kiocb *iocb, struct sock *sk,
 
 static int pn_recvmsg(struct kiocb *iocb, struct sock *sk,
 			struct msghdr *msg, size_t len, int noblock,
-			int flags, int *addr_len)
+			int flags, int *addr_len, long *timeop)
 {
 	struct sk_buff *skb = NULL;
 	struct sockaddr_pn sa;
@@ -138,7 +138,7 @@ static int pn_recvmsg(struct kiocb *iocb, struct sock *sk,
 			MSG_CMSG_COMPAT))
 		goto out_nofree;
 
-	skb = skb_recv_datagram(sk, flags, noblock, &rval);
+	skb = skb_recv_datagram(sk, flags, noblock, &rval, timeop);
 	if (skb == NULL)
 		goto out_nofree;
 

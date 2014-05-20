@@ -705,7 +705,7 @@ out:
  *	Returns non-negative upon success, negative otherwise.
  */
 static int llc_ui_recvmsg(struct kiocb *iocb, struct socket *sock,
-			  struct msghdr *msg, size_t len, int flags)
+			  struct msghdr *msg, size_t len, int flags, long *timeop)
 {
 	DECLARE_SOCKADDR(struct sockaddr_llc *, uaddr, msg->msg_name);
 	const int nonblock = flags & MSG_DONTWAIT;
@@ -725,7 +725,7 @@ static int llc_ui_recvmsg(struct kiocb *iocb, struct socket *sock,
 	if (unlikely(sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_LISTEN))
 		goto out;
 
-	timeo = sock_rcvtimeo(sk, nonblock);
+	timeo = sock_rcvtimeop(sk, timeop, nonblock);
 
 	seq = &llc->copied_seq;
 	if (flags & MSG_PEEK) {
@@ -851,6 +851,8 @@ static int llc_ui_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 out:
 	release_sock(sk);
+	if (timeop)
+		*timeop = timeo;
 	return copied;
 copy_uaddr:
 	if (uaddr != NULL && skb != NULL) {

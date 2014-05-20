@@ -808,7 +808,7 @@ out_discard:
 EXPORT_SYMBOL_GPL(dccp_sendmsg);
 
 int dccp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		 size_t len, int nonblock, int flags, int *addr_len)
+		 size_t len, int nonblock, int flags, int *addr_len, long *timeop)
 {
 	const struct dccp_hdr *dh;
 	long timeo;
@@ -820,7 +820,7 @@ int dccp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		goto out;
 	}
 
-	timeo = sock_rcvtimeo(sk, nonblock);
+	timeo = sock_rcvtimeop(sk, timeop, nonblock);
 
 	do {
 		struct sk_buff *skb = skb_peek(&sk->sk_receive_queue);
@@ -910,6 +910,8 @@ verify_sock_status:
 	} while (1);
 out:
 	release_sock(sk);
+	if (timeop)
+		*timeop = timeo;
 	return len;
 }
 

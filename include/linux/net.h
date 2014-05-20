@@ -171,10 +171,13 @@ struct proto_ops {
 	 * returning uninitialized memory to user space.  The recvfrom
 	 * handlers can assume that msg.msg_name is either NULL or has
 	 * a minimum size of sizeof(struct sockaddr_storage).
+	 * timeop contains a per call timeout (as opposed as per socket,
+	 * used by recvmmsg, set it to NULL to disable it. It should return
+	 * the remaining time, if not NULL, even when interrupted by a signal.
 	 */
 	int		(*recvmsg)   (struct kiocb *iocb, struct socket *sock,
 				      struct msghdr *m, size_t total_len,
-				      int flags);
+				      int flags, long *timeop);
 	int		(*mmap)	     (struct file *file, struct socket *sock,
 				      struct vm_area_struct * vma);
 	ssize_t		(*sendpage)  (struct socket *sock, struct page *page,
@@ -215,7 +218,7 @@ int sock_create_lite(int family, int type, int proto, struct socket **res);
 void sock_release(struct socket *sock);
 int sock_sendmsg(struct socket *sock, struct msghdr *msg, size_t len);
 int sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
-		 int flags);
+		 int flags, long *timeop);
 struct file *sock_alloc_file(struct socket *sock, int flags, const char *dname);
 struct socket *sockfd_lookup(int fd, int *err);
 struct socket *sock_from_file(struct file *file, int *err);

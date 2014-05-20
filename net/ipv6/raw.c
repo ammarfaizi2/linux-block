@@ -458,7 +458,7 @@ int rawv6_rcv(struct sock *sk, struct sk_buff *skb)
 
 static int rawv6_recvmsg(struct kiocb *iocb, struct sock *sk,
 		  struct msghdr *msg, size_t len,
-		  int noblock, int flags, int *addr_len)
+		  int noblock, int flags, int *addr_len, long *timeop)
 {
 	struct ipv6_pinfo *np = inet6_sk(sk);
 	DECLARE_SOCKADDR(struct sockaddr_in6 *, sin6, msg->msg_name);
@@ -475,7 +475,7 @@ static int rawv6_recvmsg(struct kiocb *iocb, struct sock *sk,
 	if (np->rxpmtu && np->rxopt.bits.rxpmtu)
 		return ipv6_recv_rxpmtu(sk, msg, len, addr_len);
 
-	skb = skb_recv_datagram(sk, flags, noblock, &err);
+	skb = skb_recv_datagram(sk, flags, noblock, &err, timeop);
 	if (!skb)
 		goto out;
 

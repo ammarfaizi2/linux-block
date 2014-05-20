@@ -1327,7 +1327,7 @@ done:
 }
 
 static ssize_t tun_do_read(struct tun_struct *tun, struct tun_file *tfile,
-			   const struct iovec *iv, ssize_t len, int noblock)
+			   const struct iovec *iv, ssize_t len, int noblock, long *timeop)
 {
 	struct sk_buff *skb;
 	ssize_t ret = 0;
@@ -1343,7 +1343,7 @@ static ssize_t tun_do_read(struct tun_struct *tun, struct tun_file *tfile,
 
 	/* Read frames from queue */
 	skb = __skb_recv_datagram(tfile->socket.sk, noblock ? MSG_DONTWAIT : 0,
-				  &peeked, &off, &err);
+				  &peeked, &off, &err, timeop);
 	if (skb) {
 		ret = tun_put_user(tun, tfile, skb, iv, len);
 		kfree_skb(skb);
@@ -1370,7 +1370,7 @@ static ssize_t tun_chr_aio_read(struct kiocb *iocb, const struct iovec *iv,
 	}
 
 	ret = tun_do_read(tun, tfile, iv, len,
-			  file->f_flags & O_NONBLOCK);
+			  file->f_flags & O_NONBLOCK, NULL);
 	ret = min_t(ssize_t, ret, len);
 	if (ret > 0)
 		iocb->ki_pos = ret;
@@ -1452,7 +1452,7 @@ static int tun_sendmsg(struct kiocb *iocb, struct socket *sock,
 
 static int tun_recvmsg(struct kiocb *iocb, struct socket *sock,
 		       struct msghdr *m, size_t total_len,
-		       int flags)
+		       int flags, long *timeop)
 {
 	struct tun_file *tfile = container_of(sock, struct tun_file, socket);
 	struct tun_struct *tun = __tun_get(tfile);
@@ -1471,7 +1471,7 @@ static int tun_recvmsg(struct kiocb *iocb, struct socket *sock,
 		goto out;
 	}
 	ret = tun_do_read(tun, tfile, m->msg_iov, total_len,
-			  flags & MSG_DONTWAIT);
+			  flags & MSG_DONTWAIT, timeop);
 	if (ret > total_len) {
 		m->msg_flags |= MSG_TRUNC;
 		ret = flags & MSG_TRUNC ? ret : total_len;

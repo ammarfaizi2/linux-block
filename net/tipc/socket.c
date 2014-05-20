@@ -1031,7 +1031,7 @@ static int tipc_wait_for_rcvmsg(struct socket *sock, long *timeop)
  * Returns size of returned message data, errno otherwise
  */
 static int tipc_recvmsg(struct kiocb *iocb, struct socket *sock,
-			struct msghdr *m, size_t buf_len, int flags)
+			struct msghdr *m, size_t buf_len, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct tipc_sock *tsk = tipc_sk(sk);
@@ -1054,7 +1054,7 @@ static int tipc_recvmsg(struct kiocb *iocb, struct socket *sock,
 		goto exit;
 	}
 
-	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	timeo = sock_rcvtimeop(sk, timeop, flags & MSG_DONTWAIT);
 restart:
 
 	/* Look for a message in receive queue; wait if necessary */
@@ -1109,6 +1109,8 @@ restart:
 		advance_rx_queue(sk);
 	}
 exit:
+	if (timeop)
+		*timeop = timeo;
 	release_sock(sk);
 	return res;
 }
@@ -1126,7 +1128,7 @@ exit:
  * Returns size of returned message data, errno otherwise
  */
 static int tipc_recv_stream(struct kiocb *iocb, struct socket *sock,
-			    struct msghdr *m, size_t buf_len, int flags)
+			    struct msghdr *m, size_t buf_len, int flags, long *timeop)
 {
 	struct sock *sk = sock->sk;
 	struct tipc_sock *tsk = tipc_sk(sk);
