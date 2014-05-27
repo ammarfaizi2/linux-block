@@ -131,7 +131,7 @@ struct nvme_ns {
  * allocated to store the PRP list.
  */
 struct nvme_iod {
-	void *private;		/* For the use of the submitter of the I/O */
+	unsigned long private;	/* For the use of the submitter of the I/O */
 	int npages;		/* In the PRP list. 0 means small pool in use */
 	int offset;		/* Of PRP list */
 	int nents;		/* Used in scatterlist */
