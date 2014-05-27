@@ -1195,14 +1195,20 @@ static void b43_bcma_wireless_core_reset(struct b43_wldev *dev, bool gmode)
 		  B43_BCMA_CLKCTLST_PHY_PLL_REQ;
 	u32 status = B43_BCMA_CLKCTLST_80211_PLL_ST |
 		     B43_BCMA_CLKCTLST_PHY_PLL_ST;
+	u32 flags;
 
-	b43_device_enable(dev, B43_BCMA_IOCTL_PHY_CLKEN);
+	flags = B43_BCMA_IOCTL_PHY_CLKEN;
+	if (gmode)
+		flags |= B43_BCMA_IOCTL_GMODE;
+	b43_device_enable(dev, flags);
+
 	bcma_core_set_clockmode(dev->dev->bdev, BCMA_CLKMODE_FAST);
 	b43_bcma_phy_reset(dev);
 	bcma_core_pll_ctl(dev->dev->bdev, req, status, true);
 }
 #endif
 
+#ifdef CONFIG_B43_SSB
 static void b43_ssb_wireless_core_reset(struct b43_wldev *dev, bool gmode)
 {
 	struct ssb_device *sdev = dev->dev->sdev;
@@ -1230,6 +1236,7 @@ static void b43_ssb_wireless_core_reset(struct b43_wldev *dev, bool gmode)
 	ssb_read32(sdev, SSB_TMSLOW);	/* flush */
 	msleep(1);
 }
+#endif
 
 void b43_wireless_core_reset(struct b43_wldev *dev, bool gmode)
 {
@@ -2730,6 +2737,8 @@ out:
 /* Initialize the GPIOs
  * http://bcm-specs.sipsolutions.net/GPIO
  */
+
+#ifdef CONFIG_B43_SSB
 static struct ssb_device *b43_ssb_gpio_dev(struct b43_wldev *dev)
 {
 	struct ssb_bus *bus = dev->dev->sdev->bus;
@@ -2740,10 +2749,13 @@ static struct ssb_device *b43_ssb_gpio_dev(struct b43_wldev *dev)
 	return bus->chipco.dev;
 #endif
 }
+#endif
 
 static int b43_gpio_init(struct b43_wldev *dev)
 {
+#ifdef CONFIG_B43_SSB
 	struct ssb_device *gpiodev;
+#endif
 	u32 mask, set;
 
 	b43_maskset32(dev, B43_MMIO_MACCTL, ~B43_MACCTL_GPOUTSMSK, 0);
@@ -2802,7 +2814,9 @@ static int b43_gpio_init(struct b43_wldev *dev)
 /* Turn off all GPIO stuff. Call this on module unload, for example. */
 static void b43_gpio_cleanup(struct b43_wldev *dev)
 {
+#ifdef CONFIG_B43_SSB
 	struct ssb_device *gpiodev;
+#endif
 
 	switch (dev->dev->bus_type) {
 #ifdef CONFIG_B43_BCMA
@@ -3687,7 +3701,9 @@ static void b43_op_set_tsf(struct ieee80211_hw *hw,
 
 static void b43_put_phy_into_reset(struct b43_wldev *dev)
 {
+#ifdef CONFIG_B43_SSB
 	u32 tmp;
+#endif
 
 	switch (dev->dev->bus_type) {
 #ifdef CONFIG_B43_BCMA
@@ -3735,40 +3751,35 @@ static int b43_switch_band(struct b43_wl *wl, struct ieee80211_channel *chan)
 {
 	struct b43_wldev *up_dev = NULL;
 	struct b43_wldev *down_dev;
-	struct b43_wldev *d;
 	int err;
 	bool uninitialized_var(gmode);
 	int prev_status;
 
 	/* Find a device and PHY which supports the band. */
-	list_for_each_entry(d, &wl->devlist, list) {
-		switch (chan->band) {
-		case IEEE80211_BAND_5GHZ:
-			if (d->phy.supports_5ghz) {
-				up_dev = d;
-				gmode = false;
-			}
-			break;
-		case IEEE80211_BAND_2GHZ:
-			if (d->phy.supports_2ghz) {
-				up_dev = d;
-				gmode = true;
-			}
-			break;
-		default:
-			B43_WARN_ON(1);
-			return -EINVAL;
+	switch (chan->band) {
+	case IEEE80211_BAND_5GHZ:
+		if (wl->current_dev->phy.supports_5ghz) {
+			up_dev = wl->current_dev;
+			gmode = false;
 		}
-		if (up_dev)
-			break;
+		break;
+	case IEEE80211_BAND_2GHZ:
+		if (wl->current_dev->phy.supports_2ghz) {
+			up_dev = wl->current_dev;
+			gmode = true;
+		}
+		break;
+	default:
+		B43_WARN_ON(1);
+		return -EINVAL;
 	}
+
 	if (!up_dev) {
 		b43err(wl, "Could not find a device for %s-GHz band operation\n",
 		       band_to_string(chan->band));
 		return -ENODEV;
 	}
-	if ((up_dev == wl->current_dev) &&
-	    (!!wl->current_dev->phy.gmode == !!gmode)) {
+	if (!!wl->current_dev->phy.gmode == !!gmode) {
 		/* This device is already running. */
 		return 0;
 	}
@@ -4582,8 +4593,12 @@ static void b43_imcfglo_timeouts_workaround(struct b43_wldev *dev)
 	struct ssb_bus *bus;
 	u32 tmp;
 
+#ifdef CONFIG_B43_SSB
 	if (dev->dev->bus_type != B43_BUS_SSB)
 		return;
+#else
+	return;
+#endif
 
 	bus = dev->dev->sdev->bus;
 
@@ -4738,7 +4753,7 @@ static int b43_wireless_core_init(struct b43_wldev *dev)
 	}
 	if (sprom->boardflags_lo & B43_BFL_XTAL_NOSLOW)
 		hf |= B43_HF_DSCRQ; /* Disable slowclock requests from ucode. */
-#ifdef CONFIG_SSB_DRIVER_PCICORE
+#if defined(CONFIG_B43_SSB) && defined(CONFIG_SSB_DRIVER_PCICORE)
 	if (dev->dev->bus_type == B43_BUS_SSB &&
 	    dev->dev->sdev->bus->bustype == SSB_BUSTYPE_PCI &&
 	    dev->dev->sdev->bus->pcicore.dev->id.revision <= 10)
@@ -5178,7 +5193,6 @@ static int b43_wireless_core_attach(struct b43_wldev *dev)
 	}
 
 	dev->phy.gmode = have_2ghz_phy;
-	dev->phy.radio_on = true;
 	b43_wireless_core_reset(dev, dev->phy.gmode);
 
 	err = b43_phy_versioning(dev);
@@ -5270,7 +5284,6 @@ static void b43_one_core_detach(struct b43_bus_dev *dev)
 	b43_debugfs_remove_device(wldev);
 	b43_wireless_core_detach(wldev);
 	list_del(&wldev->list);
-	wl->nr_devs--;
 	b43_bus_set_wldev(dev, NULL);
 	kfree(wldev);
 }
@@ -5295,8 +5308,6 @@ static int b43_one_core_attach(struct b43_bus_dev *dev, struct b43_wl *wl)
 	if (err)
 		goto err_kfree_wldev;
 
-	list_add(&wldev->list, &wl->devlist);
-	wl->nr_devs++;
 	b43_bus_set_wldev(dev, wldev);
 	b43_debugfs_add_device(wldev);
 
@@ -5314,6 +5325,7 @@ static int b43_one_core_attach(struct b43_bus_dev *dev, struct b43_wl *wl)
 	(pdev->subsystem_vendor == PCI_VENDOR_ID_##_subvendor) &&	\
 	(pdev->subsystem_device == _subdevice)				)
 
+#ifdef CONFIG_B43_SSB
 static void b43_sprom_fixup(struct ssb_bus *bus)
 {
 	struct pci_dev *pdev;
@@ -5345,6 +5357,7 @@ static void b43_wireless_exit(struct b43_bus_dev *dev, struct b43_wl *wl)
 	ssb_set_devtypedata(dev->sdev, NULL);
 	ieee80211_free_hw(hw);
 }
+#endif
 
 static struct b43_wl *b43_wireless_init(struct b43_bus_dev *dev)
 {
@@ -5386,7 +5399,6 @@ static struct b43_wl *b43_wireless_init(struct b43_bus_dev *dev)
 	wl->hw = hw;
 	mutex_init(&wl->mutex);
 	spin_lock_init(&wl->hardirq_lock);
-	INIT_LIST_HEAD(&wl->devlist);
 	INIT_WORK(&wl->beacon_update_trigger, b43_beacon_update_trigger_work);
 	INIT_WORK(&wl->txpower_adjust_work, b43_phy_txpower_adjust_work);
 	INIT_WORK(&wl->tx_work, b43_tx_work);
@@ -5486,39 +5498,42 @@ int b43_ssb_probe(struct ssb_device *sdev, const struct ssb_device_id *id)
 	struct b43_bus_dev *dev;
 	struct b43_wl *wl;
 	int err;
-	int first = 0;
 
 	dev = b43_bus_dev_ssb_init(sdev);
 	if (!dev)
 		return -ENOMEM;
 
 	wl = ssb_get_devtypedata(sdev);
-	if (!wl) {
-		/* Probing the first core. Must setup common struct b43_wl */
-		first = 1;
-		b43_sprom_fixup(sdev->bus);
-		wl = b43_wireless_init(dev);
-		if (IS_ERR(wl)) {
-			err = PTR_ERR(wl);
-			goto out;
-		}
-		ssb_set_devtypedata(sdev, wl);
-		B43_WARN_ON(ssb_get_devtypedata(sdev) != wl);
+	if (wl) {
+		b43err(NULL, "Dual-core devices are not supported\n");
+		err = -ENOTSUPP;
+		goto err_ssb_kfree_dev;
 	}
+
+	b43_sprom_fixup(sdev->bus);
+
+	wl = b43_wireless_init(dev);
+	if (IS_ERR(wl)) {
+		err = PTR_ERR(wl);
+		goto err_ssb_kfree_dev;
+	}
+	ssb_set_devtypedata(sdev, wl);
+	B43_WARN_ON(ssb_get_devtypedata(sdev) != wl);
+
 	err = b43_one_core_attach(dev, wl);
 	if (err)
-		goto err_wireless_exit;
+		goto err_ssb_wireless_exit;
 
 	/* setup and start work to load firmware */
 	INIT_WORK(&wl->firmware_load, b43_request_firmware);
 	schedule_work(&wl->firmware_load);
 
-      out:
 	return err;
 
-      err_wireless_exit:
-	if (first)
-		b43_wireless_exit(dev, wl);
+err_ssb_wireless_exit:
+	b43_wireless_exit(dev, wl);
+err_ssb_kfree_dev:
+	kfree(dev);
 	return err;
 }
 
@@ -5546,13 +5561,8 @@ static void b43_ssb_remove(struct ssb_device *sdev)
 	/* Unregister HW RNG driver */
 	b43_rng_exit(wl);
 
-	if (list_empty(&wl->devlist)) {
-		b43_leds_unregister(wl);
-		/* Last core on the chip unregistered.
-		 * We can destroy common struct b43_wl.
-		 */
-		b43_wireless_exit(dev, wl);
-	}
+	b43_leds_unregister(wl);
+	b43_wireless_exit(dev, wl);
 }
 
 static struct ssb_driver b43_ssb_driver = {

@@ -667,12 +667,9 @@ static void iwl_mvm_mac_ctxt_cmd_common(struct iwl_mvm *mvm,
 	if (vif->bss_conf.qos)
 		cmd->qos_flags |= cpu_to_le32(MAC_QOS_FLG_UPDATE_EDCA);
 
-	/* Don't use cts to self as the fw doesn't support it currently. */
 	if (vif->bss_conf.use_cts_prot) {
 		cmd->protection_flags |= cpu_to_le32(MAC_PROT_FLG_TGG_PROTECT);
-		if (IWL_UCODE_API(mvm->fw->ucode_ver) >= 8)
-			cmd->protection_flags |=
-				cpu_to_le32(MAC_PROT_FLG_SELF_CTS_EN);
+		cmd->protection_flags |= cpu_to_le32(MAC_PROT_FLG_SELF_CTS_EN);
 	}
 	IWL_DEBUG_RATE(mvm, "use_cts_prot %d, ht_operation_mode %d\n",
 		       vif->bss_conf.use_cts_prot,
@@ -1240,11 +1237,23 @@ int iwl_mvm_rx_beacon_notif(struct iwl_mvm *mvm,
 	u32 rate __maybe_unused =
 		le32_to_cpu(beacon->beacon_notify_hdr.initial_rate);
 
+	lockdep_assert_held(&mvm->mutex);
+
 	IWL_DEBUG_RX(mvm, "beacon status %#x retries:%d tsf:0x%16llX rate:%d\n",
 		     status & TX_STATUS_MSK,
 		     beacon->beacon_notify_hdr.failure_frame,
 		     le64_to_cpu(beacon->tsf),
 		     rate);
+
+	if (unlikely(mvm->csa_vif && mvm->csa_vif->csa_active)) {
+		if (!ieee80211_csa_is_complete(mvm->csa_vif)) {
+			iwl_mvm_mac_ctxt_beacon_changed(mvm, mvm->csa_vif);
+		} else {
+			ieee80211_csa_finish(mvm->csa_vif);
+			mvm->csa_vif = NULL;
+		}
+	}
+
 	return 0;
 }
 
