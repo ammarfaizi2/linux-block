@@ -441,6 +441,15 @@ void d_drop(struct dentry *dentry)
 }
 EXPORT_SYMBOL(d_drop);
 
+/*
+ * Finish off a dentry we've decided to kill.
+ * Both dentry and its parent must have ->d_lock held,
+ * on return both are dropped.
+ * If we fail to acquire ->i_lock of dentry->d_inode,
+ * we return 0 and possibly put dentry back on given shrink
+ * list before dropping locks.  Otherwise we kill it off
+ * and return 1.
+ */
 static int __dentry_kill(struct dentry *dentry, struct list_head *list)
 {
 	struct inode *inode = dentry->d_inode;
@@ -506,29 +515,6 @@ static int __dentry_kill(struct dentry *dentry, struct list_head *list)
 	return 1;
 }
 
-/*
- * Finish off a dentry we've decided to kill.
- * dentry->d_lock must be held, returns with it unlocked.
- * If ref is non-zero, then decrement the refcount too.
- * Returns dentry requiring refcount drop, or NULL if we're done.
- */
-static struct dentry *dentry_kill(struct dentry *dentry)
-	__releases(dentry->d_lock)
-{
-	struct dentry *parent = NULL;
-
-	if (!IS_ROOT(dentry)) {
-		parent = dentry->d_parent;
-		if (unlikely(!spin_trylock(&parent->d_lock))) {
-			spin_unlock(&dentry->d_lock);
-			cpu_relax();
-			return dentry; /* try again with same dentry */
-		}
-	}
-
-	return __dentry_kill(dentry, NULL) ? parent : dentry;
-}
-
 /* 
  * This is dput
  *
@@ -557,6 +543,7 @@ static struct dentry *dentry_kill(struct dentry *dentry)
  */
 void dput(struct dentry *dentry)
 {
+	struct dentry *parent;
 	if (unlikely(!dentry))
 		return;
 
@@ -582,7 +569,17 @@ repeat:
 	return;
 
 kill_it:
-	dentry = dentry_kill(dentry);
+	parent = NULL;
+	if (!IS_ROOT(dentry)) {
+		parent = dentry->d_parent;
+		if (unlikely(!spin_trylock(&parent->d_lock))) {
+			spin_unlock(&dentry->d_lock);
+			cpu_relax();
+			goto repeat;
+		}
+	}
+	if (likely(__dentry_kill(dentry, NULL)))
+		dentry = parent;
 	if (dentry)
 		goto repeat;
 }
