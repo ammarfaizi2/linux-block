@@ -450,7 +450,7 @@ EXPORT_SYMBOL(d_drop);
  * list before dropping locks.  Otherwise we kill it off
  * and return 1.
  */
-static int __dentry_kill(struct dentry *dentry, struct list_head *list)
+static int dentry_kill(struct dentry *dentry, struct list_head *list)
 {
 	struct inode *inode = dentry->d_inode;
 	struct dentry *parent = NULL;
@@ -595,7 +595,7 @@ kill_it:
 			spin_unlock(&parent->d_lock);
 		goto keep_it;
 	}
-	if (likely(__dentry_kill(dentry, NULL)))
+	if (likely(dentry_kill(dentry, NULL)))
 		dentry = parent;
 	if (dentry)
 		goto repeat;
@@ -847,7 +847,7 @@ static void shrink_dentry_list(struct list_head *list)
 			continue;
 		}
 
-		if (!__dentry_kill(dentry, list))
+		if (!dentry_kill(dentry, list))
 			continue;
 
 		/*
@@ -866,7 +866,7 @@ static void shrink_dentry_list(struct list_head *list)
 					spin_unlock(&parent->d_lock);
 				break;
 			}
-			if (likely(__dentry_kill(dentry, NULL)))
+			if (likely(dentry_kill(dentry, NULL)))
 				dentry = parent;
 		}
 	}
