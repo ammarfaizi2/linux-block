@@ -796,6 +796,25 @@ restart:
 }
 EXPORT_SYMBOL(d_prune_aliases);
 
+static inline struct dentry *lock_parent(struct dentry *dentry)
+{
+	struct dentry *parent = dentry->d_parent;
+	if (IS_ROOT(dentry))
+		return NULL;
+	if (unlikely(!spin_trylock(&parent->d_lock))) {
+		spin_unlock(&dentry->d_lock);
+		read_seqlock_excl(&rename_lock);
+		parent = NULL;
+		if (!IS_ROOT(dentry)) {
+			parent = dentry->d_parent;
+			spin_lock(&parent->d_lock);
+		}
+		read_sequnlock_excl(&rename_lock);
+		spin_lock(&dentry->d_lock);
+	}
+	return parent;
+}
+
 static void shrink_dentry_list(struct list_head *list)
 {
 	struct dentry *dentry, *parent;
@@ -804,6 +823,8 @@ static void shrink_dentry_list(struct list_head *list)
 		struct inode *inode;
 		dentry = list_entry(list->prev, struct dentry, d_lru);
 		spin_lock(&dentry->d_lock);
+		parent = lock_parent(dentry);
+
 		/*
 		 * The dispose list is isolated and dentries are not accounted
 		 * to the LRU here, so we can simply remove it from the list
@@ -817,6 +838,8 @@ static void shrink_dentry_list(struct list_head *list)
 		 */
 		if ((int)dentry->d_lockref.count > 0) {
 			spin_unlock(&dentry->d_lock);
+			if (parent)
+				spin_unlock(&parent->d_lock);
 			continue;
 		}
 
@@ -824,6 +847,8 @@ static void shrink_dentry_list(struct list_head *list)
 		if (unlikely(dentry->d_flags & DCACHE_DENTRY_KILLED)) {
 			bool can_free = dentry->d_flags & DCACHE_MAY_FREE;
 			spin_unlock(&dentry->d_lock);
+			if (parent)
+				spin_unlock(&parent->d_lock);
 			if (can_free)
 				dentry_free(dentry);
 			continue;
@@ -833,22 +858,13 @@ static void shrink_dentry_list(struct list_head *list)
 		if (inode && unlikely(!spin_trylock(&inode->i_lock))) {
 			d_shrink_add(dentry, list);
 			spin_unlock(&dentry->d_lock);
+			if (parent)
+				spin_unlock(&parent->d_lock);
 			continue;
 		}
 
-		parent = NULL;
-		if (!IS_ROOT(dentry)) {
-			parent = dentry->d_parent;
-			if (unlikely(!spin_trylock(&parent->d_lock))) {
-				if (inode)
-					spin_unlock(&inode->i_lock);
-				d_shrink_add(dentry, list);
-				spin_unlock(&dentry->d_lock);
-				continue;
-			}
-		}
-
 		__dentry_kill(dentry);
+
 		/*
 		 * We need to prune ancestors too. This is necessary to prevent
 		 * quadratic behavior of shrink_dcache_parent(), but is also
