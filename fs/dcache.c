@@ -515,6 +515,25 @@ static int __dentry_kill(struct dentry *dentry, struct list_head *list)
 	return 1;
 }
 
+static inline struct dentry *lock_parent(struct dentry *dentry)
+{
+	struct dentry *parent = dentry->d_parent;
+	if (IS_ROOT(dentry))
+		return NULL;
+	if (unlikely(!spin_trylock(&parent->d_lock))) {
+		spin_unlock(&dentry->d_lock);
+		read_seqlock_excl(&rename_lock);
+		parent = NULL;
+		if (!IS_ROOT(dentry)) {
+			parent = dentry->d_parent;
+			spin_lock(&parent->d_lock);
+		}
+		read_sequnlock_excl(&rename_lock);
+		spin_lock(&dentry->d_lock);
+	}
+	return parent;
+}
+
 /* 
  * This is dput
  *
@@ -560,6 +579,7 @@ repeat:
 			goto kill_it;
 	}
 
+keep_it:
 	if (!(dentry->d_flags & DCACHE_REFERENCED))
 		dentry->d_flags |= DCACHE_REFERENCED;
 	dentry_lru_add(dentry);
@@ -569,14 +589,11 @@ repeat:
 	return;
 
 kill_it:
-	parent = NULL;
-	if (!IS_ROOT(dentry)) {
-		parent = dentry->d_parent;
-		if (unlikely(!spin_trylock(&parent->d_lock))) {
-			spin_unlock(&dentry->d_lock);
-			cpu_relax();
-			goto repeat;
-		}
+	parent = lock_parent(dentry);
+	if (unlikely(dentry->d_lockref.count != 1)) {
+		if (parent)
+			spin_unlock(&parent->d_lock);
+		goto keep_it;
 	}
 	if (likely(__dentry_kill(dentry, NULL)))
 		dentry = parent;
@@ -791,25 +808,6 @@ restart:
 	spin_unlock(&inode->i_lock);
 }
 EXPORT_SYMBOL(d_prune_aliases);
-
-static inline struct dentry *lock_parent(struct dentry *dentry)
-{
-	struct dentry *parent = dentry->d_parent;
-	if (IS_ROOT(dentry))
-		return NULL;
-	if (unlikely(!spin_trylock(&parent->d_lock))) {
-		spin_unlock(&dentry->d_lock);
-		read_seqlock_excl(&rename_lock);
-		parent = NULL;
-		if (!IS_ROOT(dentry)) {
-			parent = dentry->d_parent;
-			spin_lock(&parent->d_lock);
-		}
-		read_sequnlock_excl(&rename_lock);
-		spin_lock(&dentry->d_lock);
-	}
-	return parent;
-}
 
 static void shrink_dentry_list(struct list_head *list)
 {
