@@ -441,12 +441,23 @@ void d_drop(struct dentry *dentry)
 }
 EXPORT_SYMBOL(d_drop);
 
-static void __dentry_kill(struct dentry *dentry)
+static int __dentry_kill(struct dentry *dentry, struct list_head *list)
 {
+	struct inode *inode = dentry->d_inode;
 	struct dentry *parent = NULL;
 	bool can_free = true;
 	if (!IS_ROOT(dentry))
 		parent = dentry->d_parent;
+
+	if (unlikely(!spin_trylock(&inode->i_lock))) {
+		if (list)
+			d_shrink_add(dentry, list);
+		spin_unlock(&dentry->d_lock);
+		if (parent)
+			spin_unlock(&parent->d_lock);
+		cpu_relax();
+		return 0;
+	}
 
 	/*
 	 * The dentry is now unrecoverably dead to the world.
@@ -492,6 +503,7 @@ static void __dentry_kill(struct dentry *dentry)
 	spin_unlock(&dentry->d_lock);
 	if (likely(can_free))
 		dentry_free(dentry);
+	return 1;
 }
 
 /*
@@ -503,28 +515,18 @@ static void __dentry_kill(struct dentry *dentry)
 static struct dentry *dentry_kill(struct dentry *dentry)
 	__releases(dentry->d_lock)
 {
-	struct inode *inode = dentry->d_inode;
 	struct dentry *parent = NULL;
-
-	if (inode && unlikely(!spin_trylock(&inode->i_lock)))
-		goto failed;
 
 	if (!IS_ROOT(dentry)) {
 		parent = dentry->d_parent;
 		if (unlikely(!spin_trylock(&parent->d_lock))) {
-			if (inode)
-				spin_unlock(&inode->i_lock);
-			goto failed;
+			spin_unlock(&dentry->d_lock);
+			cpu_relax();
+			return dentry; /* try again with same dentry */
 		}
 	}
 
-	__dentry_kill(dentry);
-	return parent;
-
-failed:
-	spin_unlock(&dentry->d_lock);
-	cpu_relax();
-	return dentry; /* try again with same dentry */
+	return __dentry_kill(dentry, NULL) ? parent : dentry;
 }
 
 /* 
@@ -817,7 +819,6 @@ static void shrink_dentry_list(struct list_head *list)
 	struct dentry *dentry, *parent;
 
 	while (!list_empty(list)) {
-		struct inode *inode;
 		dentry = list_entry(list->prev, struct dentry, d_lru);
 		spin_lock(&dentry->d_lock);
 		parent = lock_parent(dentry);
@@ -851,16 +852,8 @@ static void shrink_dentry_list(struct list_head *list)
 			continue;
 		}
 
-		inode = dentry->d_inode;
-		if (inode && unlikely(!spin_trylock(&inode->i_lock))) {
-			d_shrink_add(dentry, list);
-			spin_unlock(&dentry->d_lock);
-			if (parent)
-				spin_unlock(&parent->d_lock);
+		if (!__dentry_kill(dentry, list))
 			continue;
-		}
-
-		__dentry_kill(dentry);
 
 		/*
 		 * We need to prune ancestors too. This is necessary to prevent
@@ -878,16 +871,8 @@ static void shrink_dentry_list(struct list_head *list)
 					spin_unlock(&parent->d_lock);
 				break;
 			}
-			inode = dentry->d_inode;	/* can't be NULL */
-			if (unlikely(!spin_trylock(&inode->i_lock))) {
-				spin_unlock(&dentry->d_lock);
-				if (parent)
-					spin_unlock(&parent->d_lock);
-				cpu_relax();
-				continue;
-			}
-			__dentry_kill(dentry);
-			dentry = parent;
+			if (likely(__dentry_kill(dentry, NULL)))
+				dentry = parent;
 		}
 	}
 }
