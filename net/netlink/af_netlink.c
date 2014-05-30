@@ -1264,8 +1264,10 @@ static int netlink_create(struct net *net, struct socket *sock, int protocol,
 	 * hack in netlink_sendmsg, just let the socket
 	 * start out connected.
 	 */
-	if (protocol == NETLINK_ROUTE)
+	if (protocol == NETLINK_ROUTE) {
 		sock->sk->sk_state = NETLINK_CONNECTED;
+		nlk->cred = get_current_cred();
+	}
 
 out:
 	return err;
@@ -1307,6 +1309,8 @@ static int netlink_release(struct socket *sock)
 				NETLINK_URELEASE, &n);
 	}
 
+	if (nlk->cred)
+		put_cred(nlk->cred);
 	module_put(nlk->module);
 
 	netlink_table_grab();
@@ -1385,16 +1389,51 @@ retry:
  * @user_ns: The user namespace of the capability to use
  * @cap: The capability to use
  *
- * Test to see if the opener of the socket we received the message
- * from had when the netlink socket was created and the sender of the
- * message has has the capability @cap in the user namespace @user_ns.
+ * For sendto/sendmsg with an explicit destination, just check whether
+ * the sender has the requested capability @cap in the user namespace @user_ns.
+ *
+ * For a send without an explicit destination, check whether whoever
+ * connected the sending socket had the requested capability.  In this
+ * case, we do not check whether the caller has the capability, for
+ * two reasons.
+ *
+ *  1. Checking is mostly useless: the sender can often redirect some
+ *     privileged program's output to the socket, this passing any
+ *     check on current creds we could do here.
+ *
+ *  2. Not checking is useful: programs can open a netlink socket, connect
+ *     it, and drop privileges as a way to retain the right to control
+ *     the network or whatever else the socket is pointing at.
  */
 bool __netlink_ns_capable(const struct netlink_skb_parms *nsp,
-			struct user_namespace *user_ns, int cap)
+			  struct user_namespace *user_ns, int cap)
 {
-	return ((nsp->flags & NETLINK_SKB_DST) ||
-		file_ns_capable(nsp->sk->sk_socket->file, user_ns, cap)) &&
-		ns_capable(user_ns, cap);
+	if (nsp->flags & NETLINK_SKB_DST) {
+		return ns_capable(user_ns, cap);
+	} else {
+		bool ret;
+		unsigned seq;
+		struct netlink_sock *nlk = nlk_sk(nsp->sk);
+
+		rcu_read_lock();
+		do {
+			seq = read_seqbegin(&nlk->dst_lock);
+			ret = security_capable(rcu_dereference(nlk->cred),
+					       user_ns, cap);
+			if (nlk->dst_portid != nsp->portid ||
+			    nlk->dst_group != nsp->dst_group) {
+				/*
+				 * Race!  Fixing the race would be a
+				 * giant mess, so we just fail the check
+				 * instead.
+				 */
+				ret = false;
+			}
+		} while (read_seqbegin(&nlk->dst_lock, seq));
+		rcu_read_unlock();
+
+		return ret;
+	}
 }
 EXPORT_SYMBOL(__netlink_ns_capable);
 
@@ -2370,8 +2409,10 @@ static int netlink_sendmsg(struct kiocb *kiocb, struct socket *sock,
 			err = sk->sk_state == NETLINK_CONNECTED ? 0 : -ENOTCONN;
 		} while (read_seqretry(&nlk->dst_lock, seq));
 
-		if (err)
+		if (err) {
+			printk(KERN_ERR "Oh shit %s\n", current->comm);
 			goto out;
+		}
 	}
 
 	if (!nlk->portid) {

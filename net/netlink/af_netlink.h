@@ -25,9 +25,10 @@ struct netlink_sock {
 	struct sock		sk;
 	u32			portid;
 
-	seqlock_t		dst_lock;	/* Protects sk_state and dst */
+	seqlock_t		dst_lock;  /* For sk_state, dst_*, and cred */
 	u32			dst_portid;
 	u32			dst_group;
+	struct cred *		cred;
 
 	u32			flags;
 	u32			subscriptions;
