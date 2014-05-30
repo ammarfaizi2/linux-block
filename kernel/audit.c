@@ -67,6 +67,10 @@
 #include <linux/pid_namespace.h>
 #include <net/netns/generic.h>
 
+#ifdef CONFIG_HAVE_SYSCALL_IN_SYSCALL
+#include <asm/syscall.h>
+#endif
+
 #include "audit.h"
 
 /* No auditing will take place until audit_initialized == AUDIT_INITIALIZED.
@@ -1897,6 +1901,40 @@ out:
 	kfree(name);
 }
 
+#ifdef CONFIG_HAVE_SYSCALL_IN_SYSCALL
+/**
+ * audit_log_missing_context - append otherwise-missing context
+ * @ab: the audit_buffer
+ *
+ * If syscall auditing is unavailable, try to log syscall context
+ * information anyway.
+ */
+static void audit_log_missing_context(struct audit_buffer *ab)
+{
+	struct task_struct *tsk = current;
+	struct pt_regs *regs = current_pt_regs();
+	unsigned long args[6];
+
+	if (!syscall_in_syscall(tsk, regs))
+		return;
+
+	if (ab->ctx && ab->ctx->in_syscall)
+		return;  /* Let audit_log_exit log the context. */
+
+	syscall_get_arguments(tsk, regs, 0, 6, args);
+
+	audit_log_format(ab, " arch=%x syscall=%d a0=%lx a1=%lx a2=%lx a3=%lx a4=%lx a5=%lx",
+			 (unsigned int)syscall_get_arch(),
+			 syscall_get_nr(tsk, regs),
+			 args[0], args[1], args[2], args[3], args[4], args[5]);
+}
+#else
+static void audit_log_missing_context(struct audit_buffer *ab)
+{
+	/* We need arch support to do this reliably, so don't even try. */
+}
+#endif
+
 /**
  * audit_log_end - end one audit record
  * @ab: the audit_buffer
@@ -1913,7 +1951,11 @@ void audit_log_end(struct audit_buffer *ab)
 	if (!audit_rate_check()) {
 		audit_log_lost("rate limit exceeded");
 	} else {
-		struct nlmsghdr *nlh = nlmsg_hdr(ab->skb);
+		struct nlmsghdr *nlh;
+
+		audit_log_missing_context(ab);
+
+		nlh = nlmsg_hdr(ab->skb);
 		nlh->nlmsg_len = ab->skb->len - NLMSG_HDRLEN;
 
 		if (audit_pid) {
