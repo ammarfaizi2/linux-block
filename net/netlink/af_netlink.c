@@ -1184,6 +1184,7 @@ static int __netlink_create(struct net *net, struct socket *sock,
 	sock_init_data(sock, sk);
 
 	nlk = nlk_sk(sk);
+	seqlock_init(&nlk->dst_lock);
 	if (cb_mutex) {
 		nlk->cb_mutex = cb_mutex;
 	} else {
@@ -1547,18 +1548,25 @@ static int netlink_connect(struct socket *sock, struct sockaddr *addr,
 	if (alen < sizeof(addr->sa_family))
 		return -EINVAL;
 
+	write_seqlock(&nlk->dst_lock);
+
 	if (addr->sa_family == AF_UNSPEC) {
 		sk->sk_state	= NETLINK_UNCONNECTED;
 		nlk->dst_portid	= 0;
 		nlk->dst_group  = 0;
-		return 0;
+		err = 0;
+		goto out;
 	}
-	if (addr->sa_family != AF_NETLINK)
-		return -EINVAL;
+	if (addr->sa_family != AF_NETLINK) {
+		err = -EINVAL;
+		goto out;
+	}
 
 	if ((nladdr->nl_groups || nladdr->nl_pid) &&
-	    !netlink_allowed(sock, NL_CFG_F_NONROOT_SEND))
-		return -EPERM;
+	    !netlink_allowed(sock, NL_CFG_F_NONROOT_SEND)) {
+		err = -EPERM;
+		goto out;
+	}
 
 	if (!nlk->portid)
 		err = netlink_autobind(sock);
@@ -1569,6 +1577,8 @@ static int netlink_connect(struct socket *sock, struct sockaddr *addr,
 		nlk->dst_group  = ffs(nladdr->nl_groups);
 	}
 
+out:
+	write_sequnlock(&nlk->dst_lock);
 	return err;
 }
 
@@ -1584,8 +1594,12 @@ static int netlink_getname(struct socket *sock, struct sockaddr *addr,
 	*addr_len = sizeof(*nladdr);
 
 	if (peer) {
-		nladdr->nl_pid = nlk->dst_portid;
-		nladdr->nl_groups = netlink_group_mask(nlk->dst_group);
+		unsigned seq;
+		do {
+			seq = read_seqbegin(&nlk->dst_lock);
+			nladdr->nl_pid = nlk->dst_portid;
+			nladdr->nl_groups = netlink_group_mask(nlk->dst_group);
+		} while (read_seqretry(&nlk->dst_lock, seq));
 	} else {
 		nladdr->nl_pid = nlk->portid;
 		nladdr->nl_groups = nlk->groups ? nlk->groups[0] : 0;
@@ -1597,18 +1611,29 @@ static struct sock *netlink_getsockbyportid(struct sock *ssk, u32 portid)
 {
 	struct sock *sock;
 	struct netlink_sock *nlk;
+	bool reject;
+	unsigned seq;
 
 	sock = netlink_lookup(sock_net(ssk), ssk->sk_protocol, portid);
 	if (!sock)
 		return ERR_PTR(-ECONNREFUSED);
 
-	/* Don't bother queuing skb if kernel socket has no input function */
+	/*
+	 * If the destination is connected, don't send if it's connected
+	 * to someone other than us.
+	 */
 	nlk = nlk_sk(sock);
-	if (sock->sk_state == NETLINK_CONNECTED &&
-	    nlk->dst_portid != nlk_sk(ssk)->portid) {
+	do {
+		seq = read_seqbegin(&nlk->dst_lock);
+		reject = (sock->sk_state == NETLINK_CONNECTED &&
+			  nlk->dst_portid != nlk_sk(ssk)->portid);
+	} while (read_seqretry(&nlk->dst_lock, seq));
+
+	if (reject) {
 		sock_put(sock);
 		return ERR_PTR(-ECONNREFUSED);
 	}
+
 	return sock;
 }
 
@@ -2319,8 +2344,12 @@ static int netlink_sendmsg(struct kiocb *kiocb, struct socket *sock,
 			goto out;
 		netlink_skb_flags |= NETLINK_SKB_DST;
 	} else {
-		dst_portid = nlk->dst_portid;
-		dst_group = nlk->dst_group;
+		unsigned seq;
+		do {
+			seq = read_seqbegin(&nlk->dst_lock);
+			dst_portid = nlk->dst_portid;
+			dst_group = nlk->dst_group;
+		} while (read_seqretry(&nlk->dst_lock, seq));
 	}
 
 	if (!nlk->portid) {

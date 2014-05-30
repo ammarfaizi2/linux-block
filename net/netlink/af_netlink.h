@@ -24,8 +24,11 @@ struct netlink_sock {
 	/* struct sock has to be the first member of netlink_sock */
 	struct sock		sk;
 	u32			portid;
+
+	seqlock_t		dst_lock;	/* Protects sk_state and dst */
 	u32			dst_portid;
 	u32			dst_group;
+
 	u32			flags;
 	u32			subscriptions;
 	u32			ngroups;
