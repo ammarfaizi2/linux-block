@@ -1249,6 +1249,24 @@ static int netlink_create(struct net *net, struct socket *sock, int protocol,
 	nlk = nlk_sk(sock->sk);
 	nlk->module = module;
 	nlk->netlink_bind = bind;
+
+	/*
+	 * iproute 3.14 does this:
+	 *  socket(PF_NETLINK, SOCK_RAW|SOCK_CLOEXEC, 0) = 3
+	 *  setsockopt(3, ...)
+	 *  setsockopt(3, ...)
+	 *  bind(3, {sa_family=AF_NETLINK, pid=0, groups=00000000}, 12)
+	 *  getsockname(3, {sa_family=AF_NETLINK, ..., [12]) = 0
+	 *  sendto(3, ..., 0, NULL, 0) = 40
+	 *
+	 * Yes, it sends on an unconnected socket without a
+	 * destination.  Rather than maintaining a giant
+	 * hack in netlink_sendmsg, just let the socket
+	 * start out connected.
+	 */
+	if (protocol == NETLINK_ROUTE)
+		sock->sk->sk_state = NETLINK_CONNECTED;
+
 out:
 	return err;
 
@@ -2349,7 +2367,11 @@ static int netlink_sendmsg(struct kiocb *kiocb, struct socket *sock,
 			seq = read_seqbegin(&nlk->dst_lock);
 			dst_portid = nlk->dst_portid;
 			dst_group = nlk->dst_group;
+			err = sk->sk_state == NETLINK_CONNECTED ? 0 : -ENOTCONN;
 		} while (read_seqretry(&nlk->dst_lock, seq));
+
+		if (err)
+			goto out;
 	}
 
 	if (!nlk->portid) {
