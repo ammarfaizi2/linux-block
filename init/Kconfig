@@ -295,6 +295,9 @@ config AUDIT
 config HAVE_ARCH_AUDITSYSCALL
 	bool
 
+config HAVE_SYSCALL_IN_SYSCALL
+	bool
+
 config AUDITSYSCALL
 	bool "Enable system-call auditing support"
 	depends on AUDIT && HAVE_ARCH_AUDITSYSCALL

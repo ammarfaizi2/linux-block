@@ -23,6 +23,55 @@
 typedef void (*sys_call_ptr_t)(void);
 extern const sys_call_ptr_t sys_call_table[];
 
+/**
+ * syscall_in_syscall() - are we in a syscall context?
+ * @task: The task to query.
+ * @regs: The task's pt_regs.
+ *
+ * This checks whether we are in a syscall.  "In a syscall" is a somewhat
+ * nebulous concept; read below for details.
+ *
+ * If it returns true, then syscall_get_nr(), etc are usable and
+ * current is currently processing a system call.
+ *
+ * Conversely, if we were called by normal C code from a syscall
+ * implementation, syscall_in_syscall() will return true.
+ *
+ * These are the only guarantees made.  For example, if we are in an
+ * NMI or processing a page fault caused by a syscall handler,
+ * syscall_in_syscall() can return true or false.  Similarly, a
+ * syscall with an invalid nr can cause syscall_in_syscall() to return
+ * an indeterminate value (although, if syscall_in_syscall() returns
+ * true, the the rest of the syscall_xyz() functions will work).
+ */
+static inline bool syscall_in_syscall(struct task_struct *task,
+				      struct pt_regs *regs)
+{
+	/*
+	 * This relies on the fact that all of the non-IST, non-syscall
+	 * entries either set orig_ax to -1 before running C code or the
+	 * first thing that the C code does is to mark the CPU as being
+	 * in an interrupt.  Similarly, the syscall entries put the nr
+	 * into in_interrupt, and nr == -1 only happens for bad
+	 * syscalls.
+	 *
+	 * This is a bit more subtle on x86_32: system_call is a trap
+	 * gate, so another interrupt can happen after system_call
+	 * starts but before pt_regs is set up.  If this happens, we'll
+	 * either switch stacks or be in_interrupt(), though, so we're
+	 * still safe.
+	 */
+	unsigned long sp;
+#ifdef CONFIG_X86_64
+	asm("movq %%rsp,%0" : "=rm" (sp));
+#else
+	asm("movl %%esp,%0" : "=rm" (sp));
+#endif
+	return regs->orig_ax != -1 && !in_interrupt() &&
+		((sp ^ this_cpu_read_stable(kernel_stack)) &
+		 -THREAD_SIZE) == 0;
+}
+
 /*
  * Only the low 32 bits of orig_ax are meaningful, so we return int.
  * This importantly ignores the high bits on 64-bit, so comparisons
