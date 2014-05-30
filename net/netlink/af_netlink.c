@@ -1429,7 +1429,7 @@ bool __netlink_ns_capable(const struct netlink_skb_parms *nsp,
 				 */
 				ret = false;
 			}
-		} while (read_seqbegin(&nlk->dst_lock, seq));
+		} while (read_seqretry(&nlk->dst_lock, seq));
 		rcu_read_unlock();
 
 		return ret;
@@ -1611,6 +1611,10 @@ static int netlink_connect(struct socket *sock, struct sockaddr *addr,
 		sk->sk_state	= NETLINK_UNCONNECTED;
 		nlk->dst_portid	= 0;
 		nlk->dst_group  = 0;
+		if (nlk->cred) {
+			put_cred(nlk->cred);
+			nlk->cred = NULL;
+		}
 		err = 0;
 		goto out;
 	}
@@ -1632,6 +1636,9 @@ static int netlink_connect(struct socket *sock, struct sockaddr *addr,
 		sk->sk_state	= NETLINK_CONNECTED;
 		nlk->dst_portid = nladdr->nl_pid;
 		nlk->dst_group  = ffs(nladdr->nl_groups);
+		if (nlk->cred)
+			put_cred(nlk->cred);
+		nlk->cred = get_current_cred();
 	}
 
 out:
@@ -2409,10 +2416,8 @@ static int netlink_sendmsg(struct kiocb *kiocb, struct socket *sock,
 			err = sk->sk_state == NETLINK_CONNECTED ? 0 : -ENOTCONN;
 		} while (read_seqretry(&nlk->dst_lock, seq));
 
-		if (err) {
-			printk(KERN_ERR "Oh shit %s\n", current->comm);
+		if (err)
 			goto out;
-		}
 	}
 
 	if (!nlk->portid) {
