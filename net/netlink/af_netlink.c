@@ -2416,8 +2416,10 @@ static int netlink_sendmsg(struct kiocb *kiocb, struct socket *sock,
 			err = sk->sk_state == NETLINK_CONNECTED ? 0 : -ENOTCONN;
 		} while (read_seqretry(&nlk->dst_lock, seq));
 
-		if (err)
+		if (err) {
+			printk(KERN_ERR "%s: Netlink ENOTCONN\n", current->comm);
 			goto out;
+		}
 	}
 
 	if (!nlk->portid) {
