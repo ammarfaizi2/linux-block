@@ -82,6 +82,10 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 
+#ifdef CONFIG_HAVE_SYSCALL_IN_SYSCALL
+#include <asm/syscall.h>
+#endif
+
 #include <trace/events/sched.h>
 
 #define CREATE_TRACE_POINTS
@@ -1641,6 +1645,10 @@ long do_fork(unsigned long clone_flags,
  */
 pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
 {
+#ifdef CONFIG_HAVE_SYSCALL_IN_SYSCALL
+	WARN_ON_ONCE(syscall_in_syscall(current, current_pt_regs()));
+#endif
+
 	return do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
 		(unsigned long)arg, NULL, NULL);
 }
