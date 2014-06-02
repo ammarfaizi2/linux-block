@@ -405,7 +405,7 @@ enum P2P_MODES {
 #define HS_CFG_CANCEL			0xffffffff
 #define HS_CFG_COND_DEF			0x00000000
 #define HS_CFG_GPIO_DEF			0xff
-#define HS_CFG_GAP_DEF			0
+#define HS_CFG_GAP_DEF			0xff
 #define HS_CFG_COND_BROADCAST_DATA	0x00000001
 #define HS_CFG_COND_UNICAST_DATA	0x00000002
 #define HS_CFG_COND_MAC_EVENT		0x00000004
@@ -539,6 +539,7 @@ struct mwifiex_ie_types_data {
 #define MWIFIEX_TxPD_POWER_MGMT_NULL_PACKET 0x01
 #define MWIFIEX_TxPD_POWER_MGMT_LAST_PACKET 0x08
 #define MWIFIEX_TXPD_FLAGS_TDLS_PACKET      0x10
+#define MWIFIEX_RXPD_FLAGS_TDLS_PACKET      0x01
 
 struct txpd {
 	u8 bss_type;
@@ -581,7 +582,7 @@ struct rxpd {
 	 * [Bit 7] Reserved
 	 */
 	u8 ht_info;
-	u8 reserved;
+	u8 flags;
 } __packed;
 
 struct uap_txpd {

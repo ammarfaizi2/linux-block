@@ -341,8 +341,8 @@ static u8 brcmf_mw_to_qdbm(u16 mw)
 	return qdbm;
 }
 
-u16 chandef_to_chanspec(struct brcmu_d11inf *d11inf,
-			struct cfg80211_chan_def *ch)
+static u16 chandef_to_chanspec(struct brcmu_d11inf *d11inf,
+			       struct cfg80211_chan_def *ch)
 {
 	struct brcmu_chan ch_inf;
 	s32 primary_offset;
@@ -640,6 +640,9 @@ s32 brcmf_notify_escan_complete(struct brcmf_cfg80211_info *cfg,
 		if (err)
 			brcmf_err("Scan abort  failed\n");
 	}
+
+	brcmf_set_mpc(ifp, 1);
+
 	/*
 	 * e-scan can be initiated by scheduled scan
 	 * which takes precedence.
@@ -649,12 +652,10 @@ s32 brcmf_notify_escan_complete(struct brcmf_cfg80211_info *cfg,
 		cfg->sched_escan = false;
 		if (!aborted)
 			cfg80211_sched_scan_results(cfg_to_wiphy(cfg));
-		brcmf_set_mpc(ifp, 1);
 	} else if (scan_request) {
 		brcmf_dbg(SCAN, "ESCAN Completed scan: %s\n",
 			  aborted ? "Aborted" : "Done");
 		cfg80211_scan_done(scan_request, aborted);
-		brcmf_set_mpc(ifp, 1);
 	}
 	if (!test_and_clear_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
 		brcmf_dbg(SCAN, "Scan complete, probably P2P scan\n");
@@ -2236,7 +2237,7 @@ brcmf_cfg80211_config_default_mgmt_key(struct wiphy *wiphy,
 
 static s32
 brcmf_cfg80211_get_station(struct wiphy *wiphy, struct net_device *ndev,
-			   u8 *mac, struct station_info *sinfo)
+			   const u8 *mac, struct station_info *sinfo)
 {
 	struct brcmf_if *ifp = netdev_priv(ndev);
 	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
@@ -3178,7 +3179,7 @@ brcmf_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	}
 
 	if (!request->n_ssids || !request->n_match_sets) {
-		brcmf_err("Invalid sched scan req!! n_ssids:%d\n",
+		brcmf_dbg(SCAN, "Invalid sched scan req!! n_ssids:%d\n",
 			  request->n_ssids);
 		return -EINVAL;
 	}
@@ -4014,7 +4015,7 @@ brcmf_cfg80211_change_beacon(struct wiphy *wiphy, struct net_device *ndev,
 
 static int
 brcmf_cfg80211_del_station(struct wiphy *wiphy, struct net_device *ndev,
-			   u8 *mac)
+			   const u8 *mac)
 {
 	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
 	struct brcmf_scb_val_le scbval;
@@ -4242,7 +4243,7 @@ static int brcmf_convert_nl80211_tdls_oper(enum nl80211_tdls_operation oper)
 }
 
 static int brcmf_cfg80211_tdls_oper(struct wiphy *wiphy,
-				    struct net_device *ndev, u8 *peer,
+				    struct net_device *ndev, const u8 *peer,
 				    enum nl80211_tdls_operation oper)
 {
 	struct brcmf_if *ifp;
