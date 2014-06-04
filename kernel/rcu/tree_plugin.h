@@ -2869,7 +2869,12 @@ static void rcu_bind_gp_kthread(void)
 
 	if (cpu < 0 || cpu >= nr_cpu_ids)
 		return;
+#ifdef CONFIG_NO_HZ_FULL_SYSIDLE
 	if (raw_smp_processor_id() != cpu)
 		set_cpus_allowed_ptr(current, cpumask_of(cpu));
+#else /* #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
+	if (!cpumask_test_cpu(raw_smp_processor_id(), tick_nohz_not_full_mask))
+		set_cpus_allowed_ptr(current, tick_nohz_not_full_mask);
+#endif /* #else #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
 #endif /* #ifdef CONFIG_NO_HZ_FULL */
 }
