@@ -53,6 +53,10 @@ OPTIONS
 -r::
 --repeat=<n>::
 	repeat command and print average + stddev (max: 100). 0 means forever.
+	In addition it prints a spark line (when not in CSV mode), which visualizes the
+	variance between minimum and maximum of the measurements. This allows a simple sanity
+	check of the measurements. Only 8 values are printed, when more are available
+	it adds ..
 
 -B::
 --big-num::

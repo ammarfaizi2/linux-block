@@ -1,10 +1,16 @@
 #include <math.h>
+#include <stdio.h>
 
 #include "stat.h"
+#include "spark.h"
 
 void update_stats(struct stats *stats, u64 val)
 {
 	double delta;
+	int n = stats->n;
+
+	if (n < NUM_SPARK_VALS)
+		stats->svals[n] = val;
 
 	stats->n++;
 	delta = val - stats->mean;
@@ -60,4 +66,32 @@ double rel_stddev_stats(double stddev, double avg)
 		pct = 100.0 * stddev/avg;
 
 	return pct;
+}
+
+static int all_zero(unsigned long long *vals, int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++)
+		if (vals[i] != 0)
+			return 0;
+	return 1;
+}
+
+void print_stat_spark(FILE *f, struct stats *stat)
+{
+	int len;
+
+	if (stat->n <= 1)
+		return;
+
+	len = stat->n;
+	if (len > NUM_SPARK_VALS)
+		len = NUM_SPARK_VALS;
+	if (all_zero(stat->svals, len))
+		return;
+
+	print_spark(f, stat->svals, len);
+	if (stat->n > NUM_SPARK_VALS)
+		fputs("..", f);
 }

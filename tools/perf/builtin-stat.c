@@ -1176,6 +1176,9 @@ static void print_aggr(char *prefix)
 				if (run != ena)
 					fprintf(output, "  (%.2f%%)",
 						100.0 * run / ena);
+
+				fputc(' ', output);
+				print_stat_spark(output, counter->priv);
 			}
 			fputc('\n', output);
 		}
@@ -1228,6 +1231,9 @@ static void print_counter_aggr(struct perf_evsel *counter, char *prefix)
 		fputc('\n', output);
 		return;
 	}
+
+	fputc(' ', output);
+	print_stat_spark(output, counter->priv);
 
 	if (scaled) {
 		double avg_enabled, avg_running;
@@ -1295,6 +1301,9 @@ static void print_counter(struct perf_evsel *counter, char *prefix)
 			if (run != ena)
 				fprintf(output, "  (%.2f%%)",
 					100.0 * run / ena);
+
+			fputc(' ', output);
+			print_stat_spark(output, counter->priv);
 		}
 		fputc('\n', output);
 	}
@@ -1355,6 +1364,9 @@ static void print_stat(int argc, const char **argv)
 			fprintf(output, "                                        ");
 			print_noise_pct(stddev_stats(&walltime_nsecs_stats),
 					avg_stats(&walltime_nsecs_stats));
+
+			fputc(' ', output);
+			print_stat_spark(output, &walltime_nsecs_stats);
 		}
 		fprintf(output, "\n\n");
 	}
