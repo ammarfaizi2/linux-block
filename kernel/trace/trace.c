@@ -6679,7 +6679,7 @@ out_free_cpumask:
 out_free_buffer_mask:
 	free_cpumask_var(tracing_buffer_mask);
 out:
-	return ret
+	return ret;
 }
 
 __init static int clear_boot_tracer(void)
@@ -6698,7 +6698,7 @@ __init static int clear_boot_tracer(void)
 	       default_bootup_tracer);
 	default_bootup_tracer = NULL;
 
-	return 0;
+	return x;
 }
 
 early_initcall(tracer_alloc_buffers);
