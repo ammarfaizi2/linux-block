@@ -2603,6 +2603,16 @@ static void *t_start(struct seq_file *m, loff_t *pos)
 		return iter;
 	}
 
+	if (iter->flags & FTRACE_ITER_NOTRACE &&
+	    ftrace_hash_empty(ops->notrace_hash)) {
+		if (*pos > 0)
+			return t_hash_start(m, pos);
+		iter->flags |= FTRACE_ITER_PRINTALL;
+		/* reset in case of seek/pread */
+		iter->flags &= ~FTRACE_ITER_HASH;
+		return iter;
+	}
+
 	if (iter->flags & FTRACE_ITER_HASH)
 		return t_hash_start(m, pos);
 
@@ -2639,7 +2649,10 @@ static int t_show(struct seq_file *m, void *v)
 		return t_hash_show(m, iter);
 
 	if (iter->flags & FTRACE_ITER_PRINTALL) {
-		seq_printf(m, "#### all functions enabled ####\n");
+		if (iter->flags & FTRACE_ITER_NOTRACE)
+			seq_printf(m, "#### no functions disabled ####\n");
+		else
+			seq_printf(m, "#### all functions enabled ####\n");
 		return 0;
 	}
 
