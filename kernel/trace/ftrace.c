@@ -2297,7 +2297,6 @@ static void ftrace_run_update_code(int command)
 
 static ftrace_func_t saved_ftrace_func;
 static int ftrace_start_up;
-static int global_start_up;
 
 static void control_ops_free(struct ftrace_ops *ops)
 {
@@ -2361,8 +2360,7 @@ static int ftrace_shutdown(struct ftrace_ops *ops, int command)
 
 	ftrace_hash_rec_disable(ops, 1);
 
-	if (!global_start_up)
-		ops->flags &= ~FTRACE_OPS_FL_ENABLED;
+	ops->flags &= ~FTRACE_OPS_FL_ENABLED;
 
 	command |= FTRACE_UPDATE_CALLS;
 
