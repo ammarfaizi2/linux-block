@@ -2867,7 +2867,7 @@ static void rcu_bind_gp_kthread(void)
 #ifdef CONFIG_NO_HZ_FULL
 	int cpu = tick_do_timer_cpu;
 
-	if (cpu < 0 || cpu >= nr_cpu_ids)
+	if (!tick_nohz_full_enabled() || cpu < 0 || cpu >= nr_cpu_ids)
 		return;
 #ifdef CONFIG_NO_HZ_FULL_SYSIDLE
 	if (raw_smp_processor_id() != cpu)
