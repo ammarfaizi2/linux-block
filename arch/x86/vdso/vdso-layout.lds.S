@@ -8,14 +8,15 @@
 
 SECTIONS
 {
+	VDSO_START = .;
 	. = SIZEOF_HEADERS;
 
-	.hash		: { *(.hash) }			:text
+	.hash		: { DYN_HASH = .; *(.hash) }		:text
 	.gnu.hash	: { *(.gnu.hash) }
-	.dynsym		: { *(.dynsym) }
-	.dynstr		: { *(.dynstr) }
-	.gnu.version	: { *(.gnu.version) }
-	.gnu.version_d	: { *(.gnu.version_d) }
+	.dynsym		: { DYN_SYMTAB = .; *(.dynsym) }
+	.dynstr		: { DYN_STRTAB = .; *(.dynstr) }
+	.gnu.version	: { DYN_VERSYM = .; *(.gnu.version) }
+	.gnu.version_d	: { DYN_VERDEF = .; *(.gnu.version_d) }
 	.gnu.version_r	: { *(.gnu.version_r) }
 
 	.note		: { *(.note.*) }		:text	:note

@@ -16,7 +16,9 @@ vdso-install-$(VDSO32-y)	+= $(vdso32-images)
 
 # files to link into the vdso
 vobjs-y := vdso-note.o vclock_gettime.o vgetcpu.o vdso-fakesections.o
+vobjs-y += vdso-findsym.o
 vobjs-nox32 := vdso-fakesections.o
+vobjs-nox32 += vdso-findsym.o
 
 # files to link into kernel
 obj-y				+= vma.o
@@ -84,6 +86,7 @@ CFLAGS_REMOVE_vdso-note.o = -pg
 CFLAGS_REMOVE_vclock_gettime.o = -pg
 CFLAGS_REMOVE_vgetcpu.o = -pg
 CFLAGS_REMOVE_vvar.o = -pg
+CFLAGS_REMOVE_vdso-findsym.o = -pg
 
 #
 # X32 processes use x32 vDSO to access 64bit kernel data.

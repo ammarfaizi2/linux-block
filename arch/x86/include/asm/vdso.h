@@ -23,10 +23,11 @@ struct vdso_image {
 	unsigned long sym_vvar_page;
 	unsigned long sym_hpet_page;
 	unsigned long sym_VDSO32_NOTE_MASK;
+	unsigned long sym_VDSO32_SYSENTER_RETURN;
 	unsigned long sym___kernel_sigreturn;
 	unsigned long sym___kernel_rt_sigreturn;
 	unsigned long sym___kernel_vsyscall;
-	unsigned long sym_VDSO32_SYSENTER_RETURN;
+	unsigned long sym___vdso_findsym;
 };
 
 #ifdef CONFIG_X86_64

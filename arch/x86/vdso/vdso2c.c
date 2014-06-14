@@ -39,6 +39,7 @@ char const * const required_syms[] = {
 	"__kernel_vsyscall",
 	"__kernel_sigreturn",
 	"__kernel_rt_sigreturn",
+	"__vdso_findsym",
 };
 
 __attribute__((format(printf, 1, 2))) __attribute__((noreturn))

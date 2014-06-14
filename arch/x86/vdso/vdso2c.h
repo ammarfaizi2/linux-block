@@ -51,7 +51,7 @@ static void GOFUNC(void *addr, size_t len, FILE *outfile, const char *name)
 	for (i = 0; dyn + i < dyn_end &&
 		     GET_LE(&dyn[i].d_tag) != DT_NULL; i++) {
 		typeof(dyn[i].d_tag) tag = GET_LE(&dyn[i].d_tag);
-		if (tag == DT_REL || tag == DT_RELSZ ||
+		if (tag == DT_REL || tag == DT_RELA || tag == DT_RELSZ ||
 		    tag == DT_RELENT || tag == DT_TEXTREL)
 			fail("vdso image contains dynamic relocations\n");
 	}

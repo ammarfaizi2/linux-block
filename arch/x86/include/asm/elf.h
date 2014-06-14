@@ -297,9 +297,13 @@ do {									\
 
 #define ARCH_DLINFO							\
 do {									\
-	if (vdso64_enabled)						\
+	if (vdso64_enabled) {						\
 		NEW_AUX_ENT(AT_SYSINFO_EHDR,				\
 			    (unsigned long __force)current->mm->context.vdso); \
+		NEW_AUX_ENT(AT_VDSO_FINDSYM,				\
+			    (unsigned long __force)current->mm->context.vdso + \
+			    vdso_image_64.sym___vdso_findsym);		\
+	}								\
 } while (0)
 
 /* As a historical oddity, the x32 and x86_64 vDSOs are controlled together. */
