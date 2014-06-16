@@ -84,7 +84,7 @@ static unsigned long elf_hash(const unsigned char *name)
 	while (*name)
 	{
 		h = (h << 4) + *name++;
-		if (g = h & 0xf0000000)
+		if ((g = h & 0xf0000000) != 0)
 			h ^= g >> 24;
 		h &= ~g;
 	}
@@ -204,7 +204,7 @@ static bool vdso_match_version(ELF(Versym) ver,
 	ELF(Verdef) *def = vdso_info.verdef;
 	while(true) {
 		if ((def->vd_flags & VER_FLG_BASE) == 0
-		    && (def->vd_ndx & 0x7fff) == ver)
+		    && def->vd_ndx == ver)
 			break;
 
 		if (def->vd_next == 0)
@@ -221,12 +221,13 @@ static bool vdso_match_version(ELF(Versym) ver,
 
 void *vdso_sym(const char *version, const char *name)
 {
-	unsigned long ver_hash;
+	unsigned long ver_hash, name_hash;
 	if (!vdso_info.valid)
 		return 0;
 
-	ver_hash = elf_hash(version);
-	ELF(Word) chain = vdso_info.bucket[elf_hash(name) % vdso_info.nbucket];
+	ver_hash = elf_hash((const unsigned char *)version);
+	name_hash = elf_hash((const unsigned char *)name);
+	ELF(Word) chain = vdso_info.bucket[name_hash % vdso_info.nbucket];
 
 	for (; chain != STN_UNDEF; chain = vdso_info.chain[chain]) {
 		ELF(Sym) *sym = &vdso_info.symtab[chain];

@@ -4,7 +4,7 @@
  * Subject to the GNU General Public License, version 2
  *
  * Compile with:
- * gcc -std=gnu99 vdso_test.c parse_vdso.c
+ * gcc -Wall -std=gnu99 vdso_test.c parse_vdso.c
  *
  * Tested on x86, 32-bit and 64-bit.  It may work on other architectures, too.
  */
