@@ -193,18 +193,20 @@ static bool vdso_match_version(ELF(Versym) ver,
 	 * to build an index.  I also don't know why the table has
 	 * variable size entries in the first place.
 	 *
-	 * For added fun, I can't find a comprehensible specification of how
-	 * to parse all the weird flags in the table.
-	 *
 	 * So I just parse the whole table every time.
 	 */
 
 	/* First step: find the version definition */
-	ver &= 0x7fff;  /* Apparently bit 15 means "hidden" */
 	ELF(Verdef) *def = vdso_info.verdef;
 	while(true) {
+		/*
+		 * VER_FLG_BASE indicates that this is the soname,
+		 * not a version.  Bit 15 of the versym indicates that the
+		 * candidate symbol is not the default (i.e. foo@VER,
+		 * not foo@@VER).
+		 */
 		if ((def->vd_flags & VER_FLG_BASE) == 0
-		    && def->vd_ndx == ver)
+		    && def->vd_ndx == (ver & 0x7fff))
 			break;
 
 		if (def->vd_next == 0)
