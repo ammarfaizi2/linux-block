@@ -232,11 +232,11 @@ void *vdso_sym(const char *version, const char *name)
 	for (; chain != STN_UNDEF; chain = vdso_info.chain[chain]) {
 		ELF(Sym) *sym = &vdso_info.symtab[chain];
 
-		/* Check for a defined global or weak function w/ right name. */
-		if (ELF64_ST_TYPE(sym->st_info) != STT_FUNC)
-			continue;
-		if (ELF64_ST_BIND(sym->st_info) != STB_GLOBAL &&
-		    ELF64_ST_BIND(sym->st_info) != STB_WEAK)
+		/*
+		 * Check for a defined global function w/ right name.
+		 * NB: ELF64_ST_INFO and ELF32_ST_INFO are the same thing.
+		 */
+		if (sym->st_info != ELF64_ST_INFO(STB_GLOBAL, STT_FUNC))
 			continue;
 		if (sym->st_shndx == SHN_UNDEF)
 			continue;
