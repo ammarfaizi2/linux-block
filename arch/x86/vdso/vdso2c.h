@@ -136,7 +136,9 @@ static void GOFUNC(void *addr, size_t len, FILE *outfile, const char *name)
 		return;
 	}
 
-	fprintf(outfile, "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */\n\n");
+	fprintf(outfile, "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */\n");
+	fprintf(outfile, "/* %lu byte vdso, padded to %lu */\n\n",
+		load_size, data_size);
 	fprintf(outfile, "#include <linux/linkage.h>\n");
 	fprintf(outfile, "#include <asm/page_types.h>\n");
 	fprintf(outfile, "#include <asm/vdso.h>\n");
