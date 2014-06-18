@@ -83,6 +83,19 @@ static inline void rcu_note_context_switch(int cpu)
 	rcu_sched_qs(cpu);
 }
 
+static inline bool rcu_should_resched(void)
+{
+	return false;
+}
+
+static inline void rcu_cond_resched(void)
+{
+}
+
+static inline void rcu_resched(void)
+{
+}
+
 /*
  * Take advantage of the fact that there is only one CPU, which
  * allows us to ignore virtualization-based context switches.

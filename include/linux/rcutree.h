@@ -46,6 +46,22 @@ static inline void rcu_virt_note_context_switch(int cpu)
 	rcu_note_context_switch(cpu);
 }
 
+DECLARE_PER_CPU(int, rcu_cond_resched_mask);
+void rcu_resched(void);
+
+/* Is it time to report RCU quiescent states? */
+static inline bool rcu_should_resched(void)
+{
+	return raw_cpu_read(rcu_cond_resched_mask);
+}
+
+/* Report quiescent states to RCU if it is time to do so. */
+static inline void rcu_cond_resched(void)
+{
+	if (unlikely(rcu_should_resched()))
+		rcu_resched();
+}
+
 void synchronize_rcu_bh(void);
 void synchronize_sched_expedited(void);
 void synchronize_rcu_expedited(void);
