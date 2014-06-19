@@ -56,10 +56,21 @@ static inline bool rcu_should_resched(void)
 }
 
 /* Report quiescent states to RCU if it is time to do so. */
-static inline void rcu_cond_resched(void)
+static inline void __rcu_cond_resched(void)
 {
 	if (unlikely(rcu_should_resched()))
 		rcu_resched();
+}
+
+/*
+ * Report quiescent states to RCU in kernels that are not configured
+ * for low-latency kernel-intensive workloads.
+ */
+static inline void rcu_cond_resched(void)
+{
+#ifdef CONFIG_RCU_COND_RESCHED_QS
+	__rcu_cond_resched();
+#endif /* #ifdef CONFIG_RCU_COND_RESCHED_QS */
 }
 
 /**
@@ -71,7 +82,7 @@ static inline void rcu_cond_resched(void)
  */
 #define cond_resched_rcu_qs() \
 do { \
-	rcu_cond_resched(); \
+	__rcu_cond_resched(); \
 	cond_resched(); \
 } while (0)
 
