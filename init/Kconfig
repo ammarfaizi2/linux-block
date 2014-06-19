@@ -781,6 +781,32 @@ config RCU_NOCB_CPU_ALL
 
 endchoice
 
+config RCU_COND_RESCHED_QS
+	bool "Use cond_resched() calls as RCU quiescent states"
+	depends on TREE_RCU || TREE_PREEMPT_RCU
+	default n
+	help
+	  Use this option to allow RCU grace periods to make progress
+	  on large systems that can execute for extended time periods
+	  in the kernel.  Workloads that contain processes with large
+	  numbers of open files, systems with large quantities of
+	  memory, workloads that do mm-related system calls on large
+	  regions, and systems with large numbers of mass-storage
+	  devices are particularly prone to this behavior.  Without
+	  this option set, RCU CPU stall warnings or even OOMs can
+	  result.
+
+	  This option causes cond_resched() to check to see if the
+	  current RCU grace period has been waiting for too long for
+	  this CPU, and to emulate a zero-duration dyntick-idle
+	  period if so.  RCU's grace-period kthreads will then note
+	  this dyntick-idle period and report a quiescent state to
+	  the RCU core on this CPU's behalf, thus avoiding both RCU
+	  CPU stall warnings and OOMs.
+
+	  Say Y here for reliable operation on large systems.
+	  Say N here for kernel-intensive low-latency workloads.
+
 endmenu # "RCU Subsystem"
 
 config IKCONFIG
