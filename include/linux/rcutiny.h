@@ -83,6 +83,8 @@ static inline void rcu_note_context_switch(int cpu)
 	rcu_sched_qs(cpu);
 }
 
+#define cond_resched_rcu_qs() cond_resched()
+
 static inline bool rcu_should_resched(void)
 {
 	return false;
