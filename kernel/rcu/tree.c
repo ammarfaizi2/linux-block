@@ -297,6 +297,14 @@ static ulong jiffies_till_next_fqs = ULONG_MAX;
 module_param(jiffies_till_first_fqs, ulong, 0644);
 module_param(jiffies_till_next_fqs, ulong, 0644);
 
+/*
+ * How long the grace period must be before we start recruiting
+ * quiescent-state help from cond_resched_rcu_qs() and, if
+ * CONFIG_RCU_COND_RESCHED_QS=y, also from cond_resched() itself.
+ */
+static ulong jiffies_till_cond_resched_qs = 10;
+module_param(jiffies_till_cond_resched_qs, ulong, 0644);
+
 static bool rcu_start_gp_advanced(struct rcu_state *rsp, struct rcu_node *rnp,
 				  struct rcu_data *rdp);
 static void force_qs_rnp(struct rcu_state *rsp,
@@ -953,9 +961,21 @@ static int rcu_implicit_dynticks_qs(struct rcu_data *rdp,
 	 * even context-switching back and forth between a pair of
 	 * in-kernel CPU-bound tasks cannot advance grace periods.
 	 * So if the grace period is old enough, make the CPU pay attention.
+	 * Note that the unsynchronized assignments to the per-CPU
+	 * rcu_cond_resched_mask variable are safe.  Yes, setting of
+	 * bits can be lost, but they will be set again on the next
+	 * force-quiescent-state pass.  So lost bit sets do not result
+	 * in incorrect behavior, merely in a grace period lasting
+	 * a few jiffies longer than it might otherwise.  Because
+	 * there are at most four threads involved, and because the
+	 * updates are only once every few jiffies, the probability of
+	 * lossage (and thus of slight grace-period extension) is
+	 * quite low.
 	 */
-	if (ULONG_CMP_GE(jiffies, rdp->rsp->gp_start + 7)) {
-		rcrmp = &per_cpu(rcu_cond_resched_mask, rdp->cpu);
+	rcrmp = &per_cpu(rcu_cond_resched_mask, rdp->cpu);
+	if (ULONG_CMP_GE(jiffies,
+			 rdp->rsp->gp_start + jiffies_till_cond_resched_qs) &&
+	    !(ACCESS_ONCE(*rcrmp) & rdp->rsp->flavor_mask)) {
 		ACCESS_ONCE(rdp->cond_resched_completed) =
 			ACCESS_ONCE(rdp->mynode->completed);
 		smp_mb(); /* ->cond_resched_completed before *rcrmp. */
