@@ -318,7 +318,8 @@ void scsi_device_unbusy(struct scsi_device *sdev)
 	unsigned long flags;
 
 	atomic_dec(&shost->host_busy);
-	atomic_dec(&starget->target_busy);
+	if (starget->can_queue > 0)
+		atomic_dec(&starget->target_busy);
 
 	if (unlikely(scsi_host_in_recovery(shost) &&
 		     (shost->host_failed || shost->host_eh_scheduled))) {
@@ -1331,6 +1332,9 @@ static inline int scsi_target_queue_ready(struct Scsi_Host *shost,
 		spin_unlock_irq(shost->host_lock);
 	}
 
+	if (starget->can_queue <= 0)
+		return 1;
+
 	busy = atomic_inc_return(&starget->target_busy) - 1;
 	if (busy == 0 && atomic_read(&starget->target_blocked) > 0) {
 		if (atomic_dec_return(&starget->target_blocked) > 0)
@@ -1340,7 +1344,7 @@ static inline int scsi_target_queue_ready(struct Scsi_Host *shost,
 				 "unblocking target at zero depth\n"));
 	}
 
-	if (starget->can_queue > 0 && busy >= starget->can_queue)
+	if (busy >= starget->can_queue)
 		goto starved;
 	if (atomic_read(&starget->target_blocked) > 0)
 		goto starved;
@@ -1352,7 +1356,8 @@ starved:
 	list_move_tail(&sdev->starved_entry, &shost->starved_list);
 	spin_unlock_irq(shost->host_lock);
 out_dec:
-	atomic_dec(&starget->target_busy);
+	if (starget->can_queue > 0)
+		atomic_dec(&starget->target_busy);
 	return 0;
 }
 
@@ -1470,7 +1475,8 @@ static void scsi_kill_request(struct request *req, struct request_queue *q)
 	 */
 	atomic_inc(&sdev->device_busy);
 	atomic_inc(&shost->host_busy);
-	atomic_inc(&starget->target_busy);
+	if (starget->can_queue > 0)
+		atomic_inc(&starget->target_busy);
 
 	blk_complete_request(req);
 }
@@ -1639,7 +1645,8 @@ static void scsi_request_fn(struct request_queue *q)
 	return;
 
  host_not_ready:
-	atomic_dec(&scsi_target(sdev)->target_busy);
+	if (scsi_target(sdev)->can_queue > 0)
+		atomic_dec(&scsi_target(sdev)->target_busy);
  not_ready:
 	/*
 	 * lock q, handle tag, requeue req, and decrement device_busy. We
