@@ -129,6 +129,15 @@ static inline void *bio_data(struct bio *bio)
 #define BIO_SEG_BOUNDARY(q, b1, b2) \
 	BIOVEC_SEG_BOUNDARY((q), __BVEC_END((b1)), __BVEC_START((b2)))
 
+/*
+ * Check if adding a bio_vec after bprv with offset would create a gap in
+ * the SG list. Most drivers don't care about this, but some do.
+ */
+static inline bool bvec_gap_to_prev(struct bio_vec *bprv, unsigned int offset)
+{
+	return offset || ((bprv->bv_offset + bprv->bv_len) & (PAGE_SIZE - 1));
+}
+
 #define bio_io_error(bio) bio_endio((bio), -EIO)
 
 /*
