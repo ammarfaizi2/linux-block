@@ -1492,6 +1492,9 @@ bool blk_attempt_plug_merge(struct request_queue *q, struct bio *bio,
 	bool ret = false;
 	struct list_head *plug_list;
 
+	if (blk_queue_nomerges(q))
+		goto out;
+
 	plug = current->plug;
 	if (!plug)
 		goto out;
