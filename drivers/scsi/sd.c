@@ -800,15 +800,16 @@ static int sd_setup_write_same_cmnd(struct scsi_device *sdp, struct request *rq)
 
 	rq->__data_len = sdp->sector_size;
 	rq->timeout = SD_WRITE_SAME_TIMEOUT;
-	memset(rq->cmd, 0, rq->cmd_len);
 
 	if (sdkp->ws16 || sector > 0xffffffff || nr_sectors > 0xffff) {
 		rq->cmd_len = 16;
+		memset(rq->cmd, 0, rq->cmd_len);
 		rq->cmd[0] = WRITE_SAME_16;
 		put_unaligned_be64(sector, &rq->cmd[2]);
 		put_unaligned_be32(nr_sectors, &rq->cmd[10]);
 	} else {
 		rq->cmd_len = 10;
+		memset(rq->cmd, 0, rq->cmd_len);
 		rq->cmd[0] = WRITE_SAME;
 		put_unaligned_be32(sector, &rq->cmd[2]);
 		put_unaligned_be16(nr_sectors, &rq->cmd[7]);
