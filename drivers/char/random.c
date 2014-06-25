@@ -794,6 +794,7 @@ void add_disk_randomness(struct gendisk *disk)
 
 	add_timer_randomness(disk->random, 0x100 + disk_devt(disk));
 }
+EXPORT_SYMBOL_GPL(add_disk_randomness);
 #endif
 
 /*********************************************************************
