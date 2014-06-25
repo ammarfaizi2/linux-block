@@ -150,6 +150,7 @@ struct blk_mq_hw_ctx *blk_mq_alloc_single_hw_queue(struct blk_mq_tag_set *, unsi
 void blk_mq_free_single_hw_queue(struct blk_mq_hw_ctx *, unsigned int);
 
 void blk_mq_end_io(struct request *rq, int error);
+void __blk_mq_end_io(struct request *rq, int error);
 
 void blk_mq_complete_request(struct request *rq);
 
