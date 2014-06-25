@@ -117,6 +117,7 @@ static void scsi_unprep_request(struct request *req)
 	req->special = NULL;
 
 	scsi_put_command(cmd);
+	put_device(&cmd->device->sdev_gendev);
 }
 
 /**
@@ -535,6 +536,7 @@ void scsi_next_command(struct scsi_cmnd *cmd)
 	get_device(&sdev->sdev_gendev);
 
 	scsi_put_command(cmd);
+	put_device(&sdev->sdev_gendev);
 	scsi_run_queue(q);
 
 	/* ok to remove device now */
@@ -1115,6 +1117,7 @@ err_exit:
 	scsi_release_buffers(cmd);
 	cmd->request->special = NULL;
 	scsi_put_command(cmd);
+	put_device(&cmd->device->sdev_gendev);
 	return error;
 }
 EXPORT_SYMBOL(scsi_init_io);
@@ -1125,9 +1128,15 @@ static struct scsi_cmnd *scsi_get_cmd_from_req(struct scsi_device *sdev,
 	struct scsi_cmnd *cmd;
 
 	if (!req->special) {
-		cmd = scsi_get_command(sdev, GFP_ATOMIC);
-		if (unlikely(!cmd))
+		/* Bail if we can't get a reference to the device */
+		if (!get_device(&sdev->sdev_gendev))
 			return NULL;
+
+		cmd = scsi_get_command(sdev, GFP_ATOMIC);
+		if (unlikely(!cmd)) {
+			put_device(&sdev->sdev_gendev);
+			return NULL;
+		}
 		req->special = cmd;
 	} else {
 		cmd = req->special;
@@ -1290,6 +1299,7 @@ int scsi_prep_return(struct request_queue *q, struct request *req, int ret)
 			struct scsi_cmnd *cmd = req->special;
 			scsi_release_buffers(cmd);
 			scsi_put_command(cmd);
+			put_device(&cmd->device->sdev_gendev);
 			req->special = NULL;
 		}
 		break;

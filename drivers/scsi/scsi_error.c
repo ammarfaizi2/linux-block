@@ -2252,6 +2252,11 @@ scsi_reset_provider(struct scsi_device *dev, int flag)
 	if (scsi_autopm_get_host(shost) < 0)
 		return FAILED;
 
+	if (!get_device(&dev->sdev_gendev)) {
+		rtn = FAILED;
+		goto out_put_autopm_host;
+	}
+
 	scmd = scsi_get_command(dev, GFP_KERNEL);
 	if (!scmd) {
 		rtn = FAILED;
