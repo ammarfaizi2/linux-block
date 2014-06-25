@@ -165,6 +165,7 @@ static void sg_kfree(struct scatterlist *sg, unsigned int nents)
  * __sg_free_table - Free a previously mapped sg table
  * @table:	The sg table header to use
  * @max_ents:	The maximum number of entries per single scatterlist
+ * @skip_first_chunk: don't free the (preallocated) first scatterlist chunk
  * @free_fn:	Free function
  *
  *  Description:
@@ -174,7 +175,7 @@ static void sg_kfree(struct scatterlist *sg, unsigned int nents)
  *
  **/
 void __sg_free_table(struct sg_table *table, unsigned int max_ents,
-		     sg_free_fn *free_fn)
+		     bool skip_first_chunk, sg_free_fn *free_fn)
 {
 	struct scatterlist *sgl, *next;
 
@@ -202,7 +203,9 @@ void __sg_free_table(struct sg_table *table, unsigned int max_ents,
 		}
 
 		table->orig_nents -= sg_size;
-		free_fn(sgl, alloc_size);
+		if (!skip_first_chunk)
+			free_fn(sgl, alloc_size);
+		skip_first_chunk = false;
 		sgl = next;
 	}
 
@@ -217,7 +220,7 @@ EXPORT_SYMBOL(__sg_free_table);
  **/
 void sg_free_table(struct sg_table *table)
 {
-	__sg_free_table(table, SG_MAX_SINGLE_ALLOC, sg_kfree);
+	__sg_free_table(table, SG_MAX_SINGLE_ALLOC, false, sg_kfree);
 }
 EXPORT_SYMBOL(sg_free_table);
 
@@ -241,8 +244,8 @@ EXPORT_SYMBOL(sg_free_table);
  *
  **/
 int __sg_alloc_table(struct sg_table *table, unsigned int nents,
-		     unsigned int max_ents, gfp_t gfp_mask,
-		     sg_alloc_fn *alloc_fn)
+		     unsigned int max_ents, struct scatterlist *first_chunk,
+		     gfp_t gfp_mask, sg_alloc_fn *alloc_fn)
 {
 	struct scatterlist *sg, *prv;
 	unsigned int left;
@@ -267,7 +270,12 @@ int __sg_alloc_table(struct sg_table *table, unsigned int nents,
 
 		left -= sg_size;
 
-		sg = alloc_fn(alloc_size, gfp_mask);
+		if (first_chunk) {
+			sg = first_chunk;
+			first_chunk = NULL;
+		} else {
+			sg = alloc_fn(alloc_size, gfp_mask);
+		}
 		if (unlikely(!sg)) {
 			/*
 			 * Adjust entry count to reflect that the last
@@ -322,9 +330,9 @@ int sg_alloc_table(struct sg_table *table, unsigned int nents, gfp_t gfp_mask)
 	int ret;
 
 	ret = __sg_alloc_table(table, nents, SG_MAX_SINGLE_ALLOC,
-			       gfp_mask, sg_kmalloc);
+			       NULL, gfp_mask, sg_kmalloc);
 	if (unlikely(ret))
-		__sg_free_table(table, SG_MAX_SINGLE_ALLOC, sg_kfree);
+		__sg_free_table(table, SG_MAX_SINGLE_ALLOC, false, sg_kfree);
 
 	return ret;
 }
