@@ -61,7 +61,7 @@ static int scsi_try_to_abort_cmd(struct scsi_host_template *,
 /* called with shost->host_lock held */
 void scsi_eh_wakeup(struct Scsi_Host *shost)
 {
-	if (shost->host_busy == shost->host_failed) {
+	if (atomic_read(&shost->host_busy) == shost->host_failed) {
 		trace_scsi_eh_wakeup(shost);
 		wake_up_process(shost->ehandler);
 		SCSI_LOG_ERROR_RECOVERY(5,
@@ -2106,7 +2106,7 @@ int scsi_error_handler(void *data)
 	while (!kthread_should_stop()) {
 		set_current_state(TASK_INTERRUPTIBLE);
 		if ((shost->host_failed == 0 && shost->host_eh_scheduled == 0) ||
-		    shost->host_failed != shost->host_busy) {
+		    shost->host_failed != atomic_read(&shost->host_busy)) {
 			SCSI_LOG_ERROR_RECOVERY(1,
 				printk("scsi_eh_%d: sleeping\n",
 					shost->host_no));
@@ -2118,7 +2118,8 @@ int scsi_error_handler(void *data)
 		SCSI_LOG_ERROR_RECOVERY(1,
 			printk("scsi_eh_%d: waking up %d/%d/%d\n",
 			       shost->host_no, shost->host_eh_scheduled,
-			       shost->host_failed, shost->host_busy));
+			       shost->host_failed,
+				atomic_read(&shost->host_busy)));
 
 		/*
 		 * We have a host that is failing for some reason.  Figure out
