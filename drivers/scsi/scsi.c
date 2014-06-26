@@ -72,8 +72,6 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/scsi.h>
 
-static void scsi_done(struct scsi_cmnd *cmd);
-
 /*
  * Definitions and constants.
  */
@@ -704,8 +702,6 @@ int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 	}
 
 	trace_scsi_dispatch_cmd_start(cmd);
-
-	cmd->scsi_done = scsi_done;
 	rtn = host->hostt->queuecommand(host, cmd);
 	if (rtn) {
 		trace_scsi_dispatch_cmd_error(cmd, rtn);
@@ -719,27 +715,8 @@ int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 
 	return rtn;
  done:
-	scsi_done(cmd);
+	cmd->scsi_done(cmd);
 	return 0;
-}
-
-/**
- * scsi_done - Enqueue the finished SCSI command into the done queue.
- * @cmd: The SCSI Command for which a low-level device driver (LLDD) gives
- * ownership back to SCSI Core -- i.e. the LLDD has finished with it.
- *
- * Description: This function is the mid-level's (SCSI Core) interrupt routine,
- * which regains ownership of the SCSI command (de facto) from a LLDD, and
- * enqueues the command to the done queue for further processing.
- *
- * This is the producer of the done queue who enqueues at the tail.
- *
- * This function is interrupt context safe.
- */
-static void scsi_done(struct scsi_cmnd *cmd)
-{
-	trace_scsi_dispatch_cmd_done(cmd);
-	blk_complete_request(cmd->request);
 }
 
 /**
