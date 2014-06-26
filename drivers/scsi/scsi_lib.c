@@ -122,14 +122,16 @@ scsi_set_blocked(struct scsi_cmnd *cmd, int reason)
 	 */
 	switch (reason) {
 	case SCSI_MLQUEUE_HOST_BUSY:
-		host->host_blocked = host->max_host_blocked;
+		atomic_set(&host->host_blocked, host->max_host_blocked);
 		break;
 	case SCSI_MLQUEUE_DEVICE_BUSY:
 	case SCSI_MLQUEUE_EH_RETRY:
-		device->device_blocked = device->max_device_blocked;
+		atomic_set(&device->device_blocked,
+			   device->max_device_blocked);
 		break;
 	case SCSI_MLQUEUE_TARGET_BUSY:
-		starget->target_blocked = starget->max_target_blocked;
+		atomic_set(&starget->target_blocked,
+			   starget->max_target_blocked);
 		break;
 	}
 }
@@ -374,30 +376,39 @@ static void scsi_single_lun_run(struct scsi_device *current_sdev)
 	spin_unlock_irqrestore(shost->host_lock, flags);
 }
 
-static inline int scsi_device_is_busy(struct scsi_device *sdev)
+static inline bool scsi_device_is_busy(struct scsi_device *sdev)
 {
 	if (atomic_read(&sdev->device_busy) >= sdev->queue_depth)
-		return 1;
-	if (sdev->device_blocked)
-		return 1;
+		return true;
+	if (atomic_read(&sdev->device_blocked) > 0)
+		return true;
 	return 0;
 }
 
-static inline int scsi_target_is_busy(struct scsi_target *starget)
+static inline bool scsi_target_is_busy(struct scsi_target *starget)
 {
-	return ((starget->can_queue > 0 &&
-		 atomic_read(&starget->target_busy) >= starget->can_queue) ||
-		 starget->target_blocked);
+	if (starget->can_queue > 0) {
+		if (atomic_read(&starget->target_busy) >= starget->can_queue)
+			return true;
+		if (atomic_read(&starget->target_blocked) > 0)
+			return true;
+	}
+
+	return false;
 }
 
-static inline int scsi_host_is_busy(struct Scsi_Host *shost)
+static inline bool scsi_host_is_busy(struct Scsi_Host *shost)
 {
-	if ((shost->can_queue > 0 &&
-	     atomic_read(&shost->host_busy) >= shost->can_queue) ||
-	    shost->host_blocked || shost->host_self_blocked)
-		return 1;
+	if (shost->can_queue > 0) {
+		if (atomic_read(&shost->host_busy) >= shost->can_queue)
+			return true;
+		if (atomic_read(&shost->host_blocked) > 0)
+			return true;
+		if (shost->host_self_blocked)
+			return true;
+	}
 
-	return 0;
+	return false;
 }
 
 static void scsi_starved_list_run(struct Scsi_Host *shost)
@@ -1279,11 +1290,8 @@ static inline int scsi_dev_queue_ready(struct request_queue *q,
 	unsigned int busy;
 
 	busy = atomic_inc_return(&sdev->device_busy) - 1;
-	if (busy == 0 && sdev->device_blocked) {
-		/*
-		 * unblock after device_blocked iterates to zero
-		 */
-		if (--sdev->device_blocked != 0) {
+	if (busy == 0 && atomic_read(&sdev->device_blocked) > 0) {
+		if (atomic_dec_return(&sdev->device_blocked) > 0) {
 			blk_delay_queue(q, SCSI_QUEUE_DELAY);
 			goto out_dec;
 		}
@@ -1293,7 +1301,7 @@ static inline int scsi_dev_queue_ready(struct request_queue *q,
 
 	if (busy >= sdev->queue_depth)
 		goto out_dec;
-	if (sdev->device_blocked)
+	if (atomic_read(&sdev->device_blocked) > 0)
 		goto out_dec;
 
 	return 1;
@@ -1324,16 +1332,9 @@ static inline int scsi_target_queue_ready(struct Scsi_Host *shost,
 	}
 
 	busy = atomic_inc_return(&starget->target_busy) - 1;
-	if (busy == 0 && starget->target_blocked) {
-		/*
-		 * unblock after target_blocked iterates to zero
-		 */
-		spin_lock_irq(shost->host_lock);
-		if (--starget->target_blocked != 0) {
-			spin_unlock_irq(shost->host_lock);
+	if (busy == 0 && atomic_read(&starget->target_blocked) > 0) {
+		if (atomic_dec_return(&starget->target_blocked) > 0)
 			goto out_dec;
-		}
-		spin_unlock_irq(shost->host_lock);
 
 		SCSI_LOG_MLQUEUE(3, starget_printk(KERN_INFO, starget,
 				 "unblocking target at zero depth\n"));
@@ -1341,7 +1342,7 @@ static inline int scsi_target_queue_ready(struct Scsi_Host *shost,
 
 	if (starget->can_queue > 0 && busy >= starget->can_queue)
 		goto starved;
-	if (starget->target_blocked)
+	if (atomic_read(&starget->target_blocked) > 0)
 		goto starved;
 
 	return 1;
@@ -1371,16 +1372,9 @@ static inline int scsi_host_queue_ready(struct request_queue *q,
 		return 0;
 
 	busy = atomic_inc_return(&shost->host_busy) - 1;
-	if (busy == 0 && shost->host_blocked) {
-		/*
-		 * unblock after host_blocked iterates to zero
-		 */
-		spin_lock_irq(shost->host_lock);
-		if (--shost->host_blocked != 0) {
-			spin_unlock_irq(shost->host_lock);
+	if (busy == 0 && atomic_read(&shost->host_blocked) > 0) {
+		if (atomic_dec_return(&shost->host_blocked) > 0)
 			goto out_dec;
-		}
-		spin_unlock_irq(shost->host_lock);
 
 		SCSI_LOG_MLQUEUE(3,
 			shost_printk(KERN_INFO, shost,
@@ -1389,7 +1383,9 @@ static inline int scsi_host_queue_ready(struct request_queue *q,
 
 	if (shost->can_queue > 0 && busy >= shost->can_queue)
 		goto starved;
-	if (shost->host_blocked || shost->host_self_blocked)
+	if (atomic_read(&shost->host_blocked) > 0)
+		goto starved;
+	if (shost->host_self_blocked)
 		goto starved;
 
 	/* We're OK to process the command, so we can't be starved */
