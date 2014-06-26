@@ -260,8 +260,8 @@ struct scsi_target {
 						 * means no lun present. */
 	unsigned int		no_report_luns:1;	/* Don't use
 						 * REPORT LUNS for scanning. */
-	/* commands actually active on LLD. protected by host lock. */
-	unsigned int		target_busy;
+	/* commands actually active on LLD. */
+	atomic_t		target_busy;
 	/*
 	 * LLDs should set this in the slave_alloc host template callout.
 	 * If set to zero then there is not limit.
