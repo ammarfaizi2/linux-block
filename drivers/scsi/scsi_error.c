@@ -2000,6 +2000,12 @@ scsi_reset_provider(struct scsi_device *dev, int flag)
 		return FAILED;
 
 	scmd = scsi_get_command(dev, GFP_KERNEL);
+	if (!scmd) {
+		rtn = FAILED;
+		put_device(&dev->sdev_gendev);
+		goto out_put_autopm_host;
+	}
+
 	blk_rq_init(NULL, &req);
 	scmd->request = &req;
 
@@ -2056,6 +2062,7 @@ scsi_reset_provider(struct scsi_device *dev, int flag)
 	scsi_run_host_queues(shost);
 
 	scsi_next_command(scmd);
+out_put_autopm_host:
 	scsi_autopm_put_host(shost);
 	return rtn;
 }
