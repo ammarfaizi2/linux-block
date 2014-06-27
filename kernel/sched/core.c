@@ -2762,6 +2762,7 @@ need_resched:
 		} else {
 			deactivate_task(rq, prev, DEQUEUE_SLEEP);
 			prev->on_rq = 0;
+			rcu_note_voluntary_context_switch(prev);
 
 			/*
 			 * If a worker went to sleep, notify and ask workqueue
@@ -2828,6 +2829,7 @@ asmlinkage __visible void __sched schedule(void)
 	struct task_struct *tsk = current;
 
 	sched_submit_work(tsk);
+	rcu_note_voluntary_context_switch(tsk);
 	__schedule();
 }
 EXPORT_SYMBOL(schedule);
