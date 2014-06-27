@@ -47,6 +47,7 @@
 #include <linux/hardirq.h>
 #include <linux/delay.h>
 #include <linux/module.h>
+#include <linux/kthread.h>
 
 #define CREATE_TRACE_POINTS
 
@@ -350,3 +351,160 @@ static int __init check_cpu_stall_init(void)
 early_initcall(check_cpu_stall_init);
 
 #endif /* #ifdef CONFIG_RCU_STALL_COMMON */
+
+#ifdef CONFIG_TASKS_RCU
+
+/*
+ * Simple variant of RCU whose quiescent states are voluntary context switch,
+ * user-space execution, and idle.  As such, grace periods can take one good
+ * long time.  There are no read-side primitives similar to rcu_read_lock()
+ * and rcu_read_unlock() because this implementation is intended to get
+ * the system into a safe state for some of the manipulations involved in
+ * tracing and the like.  Finally, this implementation does not support
+ * high call_rcu_tasks() rates from multiple CPUs.  If this is required,
+ * per-CPU callback lists will be needed.
+ */
+
+/* Lists of tasks that we are still waiting for during this grace period. */
+LIST_HEAD(rcu_tasks_holdouts);
+
+/* Global list of callbacks and associated lock. */
+struct rcu_head *rcu_tasks_cbs_head;
+struct rcu_head **rcu_tasks_cbs_tail = &rcu_tasks_cbs_head;
+DEFINE_RAW_SPINLOCK(rcu_tasks_cbs_lock);
+
+/* Post an RCU-tasks callback. */
+void call_rcu_tasks(struct rcu_head *rhp, void (*func)(struct rcu_head *rhp))
+{
+	unsigned long flags;
+
+	rhp->next = NULL;
+	rhp->func = func;
+	raw_spin_lock_irqsave(&rcu_tasks_cbs_lock, flags);
+	*rcu_tasks_cbs_tail = rhp;
+	rcu_tasks_cbs_tail = &rhp->next;
+	raw_spin_unlock_irqrestore(&rcu_tasks_cbs_lock, flags);
+}
+
+/* RCU-tasks kthread that detects grace periods and invokes callbacks. */
+static int rcu_tasks_kthread(void *arg)
+{
+	unsigned long flags;
+	struct task_struct *g, *t;
+	struct rcu_head *list;
+	struct rcu_head *next;
+
+	/* FIXME: Add housekeeping affinity. */
+
+	/*
+	 * Each pass through the following loop makes one check for
+	 * newly arrived callbacks, and, if there are some, waits for
+	 * one RCU-tasks grace period and then invokes the callbacks.
+	 * This loop is terminated by the system going down.  ;-)
+	 */
+	for (;;) {
+
+		/* Pick up any new callbacks. */
+		raw_spin_lock_irqsave(&rcu_tasks_cbs_lock, flags);
+		smp_mb__after_unlock_lock(); /* Enforce GP memory ordering. */
+		list = rcu_tasks_cbs_head;
+		rcu_tasks_cbs_head = NULL;
+		rcu_tasks_cbs_tail = &rcu_tasks_cbs_head;
+		raw_spin_unlock_irqrestore(&rcu_tasks_cbs_lock, flags);
+
+		/* If there were none, wait a bit and start over. */
+		if (!list) {
+			schedule_timeout_interruptible(HZ);
+			flush_signals(current);
+			continue;
+		}
+
+		/*
+		 * There were callbacks, so we need to wait for an
+		 * RCU-tasks grace period.  Start off by scanning
+		 * the task list for tasks that are not already
+		 * voluntarily blocked.  Mark these tasks and make
+		 * a list of them in rcu_tasks_holdouts.
+		 */
+		do_each_thread(g, t) {
+			cond_resched();
+			if (t != current && ACCESS_ONCE(t->on_rq) &&
+			    !is_idle_task(t)) {
+				t->rcu_tasks_holdout = 1;
+				list_add(&t->rcu_tasks_holdout_list,
+					 &rcu_tasks_holdouts);
+			}
+		} while_each_thread(g, t);
+
+		/*
+		 * The "t != current" and "!is_idle_task()" comparisons
+		 * above are stable, but the "t->on_rq" value could
+		 * change at any time, and is generally unordered.
+		 * Therefore, we need some ordering.  The trick is
+		 * that t->on_rq is updated with a runqueue lock held,
+		 * and thus with interrupts disabled.  So the following
+		 * synchronize_sched() provides the needed ordering by:
+		 * (1) Waiting for all interrupts-disabled code sections
+		 * to complete and (2) The synchronize_sched() ordering
+		 * guarantees, which provide for a memory barrier on each
+		 * CPU since the completion of its last read-side critical
+		 * section, including interrupt-disabled code sections.
+		 */
+		synchronize_sched();
+
+		/*
+		 * Each pass through the following loop scans the list
+		 * of holdout tasks, removing any that are no longer
+		 * holdouts.  When the list is empty, we are done.
+		 */
+		do {
+			struct task_struct *n;
+
+			schedule_timeout_interruptible(HZ / 10);
+			flush_signals(current);
+			list_for_each_entry_safe(t, n, &rcu_tasks_holdouts,
+						 rcu_tasks_holdout_list) {
+				cond_resched();
+				if (smp_load_acquire(&t->rcu_tasks_holdout))
+					continue;
+				list_del_init(&t->rcu_tasks_holdout_list);
+				/* @@@ need to check for usermode on CPU. */
+			}
+		} while (!list_empty(&rcu_tasks_holdouts));
+
+		/*
+		 * Most implementations of RCU would need to force a
+		 * memory barrier on all non-idle non-userspace CPUs at
+		 * this point.  The reason that this implementation does
+		 * not is that all of the callbacks are invoked by this
+		 * kthread.  Therefore, the quiescent states on the other
+		 * CPUs need only be ordered against this one kthread,
+		 * and the smp_store_release() and smp_load_acquire()
+		 * on ->rcu_tasks_holdout suffices for this ordering.
+		 */
+
+		/* Invoke the callbacks. */
+		while (list) {
+			next = list->next;
+			local_bh_disable();
+			list->func(list);
+			local_bh_enable();
+			list = next;
+			cond_resched();
+		}
+	}
+	return 0;  /* Some compilers don't grok non-terminating loops. */
+}
+
+/* Spawn rcu_tasks_kthread() at boot time. */
+static int __init rcu_spawn_tasks_kthread(void)
+{
+	struct task_struct __maybe_unused *t;
+
+	t = kthread_run(rcu_tasks_kthread, NULL, "rcu_tasks_kthread");
+	BUG_ON(IS_ERR(t));
+	return 0;
+}
+early_initcall(rcu_spawn_tasks_kthread);
+
+#endif /* #ifdef CONFIG_TASKS_RCU */

@@ -1273,6 +1273,10 @@ struct task_struct {
 #ifdef CONFIG_RCU_BOOST
 	struct rt_mutex *rcu_boost_mutex;
 #endif /* #ifdef CONFIG_RCU_BOOST */
+#ifdef CONFIG_TASKS_RCU
+	int rcu_tasks_holdout;
+	struct list_head rcu_tasks_holdout_list;
+#endif /* #ifdef CONFIG_TASKS_RCU */
 
 #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
 	struct sched_info sched_info;
@@ -2013,6 +2017,10 @@ static inline void rcu_copy_process(struct task_struct *p)
 	p->rcu_boost_mutex = NULL;
 #endif /* #ifdef CONFIG_RCU_BOOST */
 	INIT_LIST_HEAD(&p->rcu_node_entry);
+#ifdef CONFIG_TASKS_RCU
+	p->rcu_tasks_holdout = false;
+	INIT_LIST_HEAD(&p->rcu_tasks_holdout_list);
+#endif /* #ifdef CONFIG_TASKS_RCU */
 }
 
 #else
