@@ -602,6 +602,42 @@ static struct rcu_torture_ops sched_ops = {
 };
 
 /*
+ * Definitions for RCU-tasks torture testing.
+ */
+
+static int tasks_torture_read_lock(void)
+{
+	return 0;
+}
+
+static void tasks_torture_read_unlock(int idx)
+{
+}
+
+static void rcu_tasks_torture_deferred_free(struct rcu_torture *p)
+{
+	call_rcu_tasks(&p->rtort_rcu, rcu_torture_cb);
+}
+
+static struct rcu_torture_ops tasks_ops = {
+	.ttype		= RCU_TASKS_FLAVOR,
+	.init		= rcu_sync_torture_init,
+	.readlock	= tasks_torture_read_lock,
+	.read_delay	= rcu_read_delay,  /* just reuse rcu's version. */
+	.readunlock	= tasks_torture_read_unlock,
+	.completed	= rcu_no_completed,
+	.deferred_free	= rcu_tasks_torture_deferred_free,
+	.sync		= synchronize_rcu_tasks,
+	.exp_sync	= synchronize_rcu_tasks,
+	.call		= call_rcu_tasks,
+	.cb_barrier	= rcu_barrier_tasks,
+	.fqs		= NULL,
+	.stats		= NULL,
+	.irq_capable	= 1,
+	.name		= "tasks"
+};
+
+/*
  * RCU torture priority-boost testing.  Runs one real-time thread per
  * CPU for moderate bursts, repeatedly registering RCU callbacks and
  * spinning waiting for them to be invoked.  If a given callback takes
@@ -1295,7 +1331,8 @@ static int rcu_torture_barrier_cbs(void *arg)
 		if (atomic_dec_and_test(&barrier_cbs_count))
 			wake_up(&barrier_wq);
 	} while (!torture_must_stop());
-	cur_ops->cb_barrier();
+	if (cur_ops->cb_barrier != NULL)
+		cur_ops->cb_barrier();
 	destroy_rcu_head_on_stack(&rcu);
 	torture_kthread_stopping("rcu_torture_barrier_cbs");
 	return 0;
@@ -1534,6 +1571,7 @@ rcu_torture_init(void)
 	int firsterr = 0;
 	static struct rcu_torture_ops *torture_ops[] = {
 		&rcu_ops, &rcu_bh_ops, &rcu_busted_ops, &srcu_ops, &sched_ops,
+		&tasks_ops,
 	};
 
 	if (!torture_init_begin(torture_type, verbose, &rcutorture_runnable))
