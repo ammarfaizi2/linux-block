@@ -370,6 +370,10 @@ static struct rcu_head *rcu_tasks_cbs_head;
 static struct rcu_head **rcu_tasks_cbs_tail = &rcu_tasks_cbs_head;
 static DEFINE_RAW_SPINLOCK(rcu_tasks_cbs_lock);
 
+/* Control stall timeouts.  Disable with <= 0, otherwise jiffies till stall. */
+static int rcu_task_stall_timeout __read_mostly = HZ * 60 * 3;
+module_param(rcu_task_stall_timeout, int, 0644);
+
 /* Post an RCU-tasks callback. */
 void call_rcu_tasks(struct rcu_head *rhp, void (*func)(struct rcu_head *rhp))
 {
@@ -442,7 +446,8 @@ void rcu_barrier_tasks(void)
 EXPORT_SYMBOL_GPL(rcu_barrier_tasks);
 
 /* See if tasks are still holding out, complain if so. */
-static void check_holdout_task(struct task_struct *t)
+static void check_holdout_task(struct task_struct *t,
+			       bool needreport, bool *firstreport)
 {
 	if (!ACCESS_ONCE(t->rcu_tasks_holdout) ||
 	    t->rcu_tasks_nvcsw != ACCESS_ONCE(t->nvcsw) ||
@@ -450,7 +455,15 @@ static void check_holdout_task(struct task_struct *t)
 		ACCESS_ONCE(t->rcu_tasks_holdout) = 0;
 		list_del_rcu(&t->rcu_tasks_holdout_list);
 		put_task_struct(t);
+		return;
 	}
+	if (!needreport)
+		return;
+	if (*firstreport) {
+		pr_err("INFO: rcu_tasks detected stalls on tasks:\n");
+		*firstreport = false;
+	}
+	sched_show_task(current);
 }
 
 /* RCU-tasks kthread that detects grace periods and invokes callbacks. */
@@ -458,6 +471,7 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 {
 	unsigned long flags;
 	struct task_struct *g, *t;
+	unsigned long lastreport;
 	struct rcu_head *list;
 	struct rcu_head *next;
 	LIST_HEAD(rcu_tasks_holdouts);
@@ -528,13 +542,24 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 		 * of holdout tasks, removing any that are no longer
 		 * holdouts.  When the list is empty, we are done.
 		 */
+		lastreport = jiffies;
 		while (!list_empty(&rcu_tasks_holdouts)) {
+			bool firstreport;
+			bool needreport;
+			int rtst;
+
 			schedule_timeout_interruptible(HZ / 10);
+			rtst = ACCESS_ONCE(rcu_task_stall_timeout);
+			needreport = rtst > 0 &&
+				     time_after(jiffies, lastreport + rtst);
+			if (needreport)
+				lastreport = jiffies;
+			firstreport = true;
 			WARN_ON(signal_pending(current));
 			rcu_read_lock();
 			list_for_each_entry_rcu(t, &rcu_tasks_holdouts,
 						rcu_tasks_holdout_list)
-				check_holdout_task(t);
+				check_holdout_task(t, needreport, &firstreport);
 			rcu_read_unlock();
 		}
 
