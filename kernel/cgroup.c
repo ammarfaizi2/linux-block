@@ -2414,9 +2414,7 @@ static int cgroup_release_agent_show(struct seq_file *seq, void *v)
 
 static int cgroup_sane_behavior_show(struct seq_file *seq, void *v)
 {
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
-
-	seq_printf(seq, "%d\n", cgroup_sane_behavior(cgrp));
+	seq_puts(seq, "0\n");
 	return 0;
 }
 
@@ -4016,7 +4014,7 @@ static struct cftype cgroup_base_files[] = {
 	},
 	{
 		.name = "cgroup.sane_behavior",
-		.flags = CFTYPE_ONLY_ON_ROOT,
+		.flags = CFTYPE_INSANE | CFTYPE_ONLY_ON_ROOT,
 		.seq_show = cgroup_sane_behavior_show,
 	},
 	{
