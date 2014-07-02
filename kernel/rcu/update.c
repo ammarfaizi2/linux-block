@@ -373,6 +373,10 @@ struct rcu_head *rcu_tasks_cbs_head;
 struct rcu_head **rcu_tasks_cbs_tail = &rcu_tasks_cbs_head;
 DEFINE_RAW_SPINLOCK(rcu_tasks_cbs_lock);
 
+/* Control stall timeouts.  Disable with <= 0, otherwise jiffies till stall. */
+static int rcu_task_stall_timeout __read_mostly = HZ * 60 * 3;
+module_param(rcu_task_stall_timeout, int, 0644);
+
 /* Post an RCU-tasks callback. */
 void call_rcu_tasks(struct rcu_head *rhp, void (*func)(struct rcu_head *rhp))
 {
@@ -438,11 +442,31 @@ void rcu_barrier_tasks(void)
 	wait_rcu_gp(call_rcu_tasks);
 }
 
+/* See if tasks are still holding out, complain if so. */
+static void check_holdout_task(struct task_struct *t,
+			       bool needreport, bool *firstreport)
+{
+	cond_resched();
+	if (!smp_load_acquire(&t->rcu_tasks_holdout)) {
+		/* @@@ need to check for usermode on CPU. */
+		list_del_init(&t->rcu_tasks_holdout_list);
+		return;
+	}
+	if (!needreport)
+		return;
+	if (*firstreport) {
+		pr_err("INFO: rcu_tasks detected stalls on tasks:\n");
+		*firstreport = false;
+	}
+	sched_show_task(current);
+}
+
 /* RCU-tasks kthread that detects grace periods and invokes callbacks. */
 static int rcu_tasks_kthread(void *arg)
 {
 	unsigned long flags;
 	struct task_struct *g, *t;
+	unsigned long lastreport;
 	struct rcu_head *list;
 	struct rcu_head *next;
 
@@ -509,19 +533,24 @@ static int rcu_tasks_kthread(void *arg)
 		 * of holdout tasks, removing any that are no longer
 		 * holdouts.  When the list is empty, we are done.
 		 */
+		lastreport = jiffies;
 		do {
+			bool firstreport;
+			bool needreport;
+			int rtst;
 			struct task_struct *n;
 
 			schedule_timeout_interruptible(HZ / 10);
+			rtst = ACCESS_ONCE(rcu_task_stall_timeout);
+			needreport = rtst > 0 &&
+				     time_after(jiffies, lastreport + rtst);
+			if (needreport)
+				lastreport = jiffies;
+			firstreport = true;
 			flush_signals(current);
 			list_for_each_entry_safe(t, n, &rcu_tasks_holdouts,
-						 rcu_tasks_holdout_list) {
-				cond_resched();
-				if (smp_load_acquire(&t->rcu_tasks_holdout))
-					continue;
-				list_del_init(&t->rcu_tasks_holdout_list);
-				/* @@@ need to check for usermode on CPU. */
-			}
+						 rcu_tasks_holdout_list)
+				check_holdout_task(t, needreport, &firstreport);
 		} while (!list_empty(&rcu_tasks_holdouts));
 
 		/*
