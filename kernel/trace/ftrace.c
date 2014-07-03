@@ -2886,6 +2886,22 @@ static void t_stop(struct seq_file *m, void *p)
 	mutex_unlock(&ftrace_lock);
 }
 
+void * __weak
+arch_ftrace_trampoline_func(struct ftrace_ops *ops, struct dyn_ftrace *rec)
+{
+	return NULL;
+}
+
+static void add_trampoline_func(struct seq_file *m, struct ftrace_ops *ops,
+				struct dyn_ftrace *rec)
+{
+	void *ptr;
+
+	ptr = arch_ftrace_trampoline_func(ops, rec);
+	if (ptr)
+		seq_printf(m, " ->%pS", ptr);
+}
+
 static int t_show(struct seq_file *m, void *v)
 {
 	struct ftrace_iterator *iter = m->private;
@@ -2909,19 +2925,21 @@ static int t_show(struct seq_file *m, void *v)
 
 	seq_printf(m, "%ps", (void *)rec->ip);
 	if (iter->flags & FTRACE_ITER_ENABLED) {
+		struct ftrace_ops *ops = NULL;
+
 		seq_printf(m, " (%ld)%s",
 			   ftrace_rec_count(rec),
 			   rec->flags & FTRACE_FL_REGS ? " R" : "  ");
 		if (rec->flags & FTRACE_FL_TRAMP_EN) {
-			struct ftrace_ops *ops;
-
 			ops = ftrace_find_tramp_ops_curr(rec);
 			if (ops && ops->trampoline)
 				seq_printf(m, "\ttramp: %pS",
 					   (void *)ops->trampoline);
 			else
 				seq_printf(m, "\ttramp: ERROR!");
+
 		}
+		add_trampoline_func(m, ops, rec);
 	}	
 
 	seq_printf(m, "\n");
