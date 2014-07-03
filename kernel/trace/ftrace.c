@@ -371,6 +371,8 @@ static int remove_ftrace_list_ops(struct ftrace_ops **list,
 	return ret;
 }
 
+static void ftrace_update_trampoline(struct ftrace_ops *ops);
+
 static int __register_ftrace_function(struct ftrace_ops *ops)
 {
 	if (ops->flags & FTRACE_OPS_FL_DELETED)
@@ -402,6 +404,8 @@ static int __register_ftrace_function(struct ftrace_ops *ops)
 		add_ftrace_list_ops(&ftrace_control_list, &control_ops, ops);
 	} else
 		add_ftrace_ops(&ftrace_ops_list, ops);
+
+	ftrace_update_trampoline(ops);
 
 	if (ftrace_enabled)
 		update_ftrace_function();
@@ -2182,11 +2186,10 @@ static int ftrace_save_ops_tramp_hash(struct ftrace_ops *ops)
 {
 	struct ftrace_page *pg;
 	struct dyn_ftrace *rec;
-	int size, bits;
+	int size = ops->trampolines;
+	int bits = 0, cnt = 0;
 	int ret;
 
-	size = ops->trampolines;
-	bits = 0;
 	/*
 	 * Make the hash size about 1/2 the # found
 	 */
@@ -2205,18 +2208,31 @@ static int ftrace_save_ops_tramp_hash(struct ftrace_ops *ops)
 		return -ENOMEM;
 
 	do_for_each_ftrace_rec(pg, rec) {
-		if (ftrace_rec_count(rec) == 1 &&
-		    ftrace_ops_test(ops, rec->ip, rec)) {
+		/*
+		 * If more than one ops shared this rec, and
+		 * it went back down to a single ops using
+		 * it, the rec will not call the trampoline
+		 * directly. Skip it if that's the case.
+		 */
+		if (!(rec->flags & FTRACE_FL_TRAMP_EN))
+			continue;
 
-			/* This record had better have a trampoline */
-			if (FTRACE_WARN_ON(!(rec->flags & FTRACE_FL_TRAMP_EN)))
+		if (ftrace_ops_test(ops, rec->ip, rec)) {
+
+			/* It better only have a single ops attached */
+			if (FTRACE_WARN_ON(ftrace_rec_count(rec) != 1))
 				return -1;
-
+			cnt++;
 			ret = add_hash_entry(ops->tramp_hash, rec->ip);
 			if (ret < 0)
 				return ret;
 		}
 	} while_for_each_ftrace_rec();
+
+	/* Make sure we added the number of trampolines as we expect to */
+	if (FTRACE_WARN_ON(cnt != ops->trampolines))
+		pr_warn("%d trampolines activated, %d expected\n",
+			cnt, ops->trampolines);
 
 	return 0;
 }
@@ -2369,6 +2385,12 @@ static int ftrace_shutdown(struct ftrace_ops *ops, int command)
 	ftrace_run_update_code(command);
 
 	removed_ops = NULL;
+
+	/*
+	 * When an ops is unregistered (not tracing anything),
+	 * no function should be pointed to its trampoline.
+	 */
+	FTRACE_WARN_ON(ops->trampolines);
 
 	/*
 	 * Dynamic ops may be freed, we must make sure that all
@@ -2935,9 +2957,6 @@ static int
 ftrace_enabled_open(struct inode *inode, struct file *file)
 {
 	struct ftrace_iterator *iter;
-
-	if (unlikely(ftrace_disabled))
-		return -ENODEV;
 
 	iter = __seq_open_private(file, &show_ftrace_seq_ops, sizeof(*iter));
 	if (iter) {
@@ -3882,6 +3901,9 @@ static char ftrace_graph_buf[FTRACE_FILTER_SIZE] __initdata;
 static char ftrace_graph_notrace_buf[FTRACE_FILTER_SIZE] __initdata;
 static int ftrace_set_func(unsigned long *array, int *idx, int size, char *buffer);
 
+static unsigned long save_global_trampoline;
+static unsigned long save_global_flags;
+
 static int __init set_graph_function(char *str)
 {
 	strlcpy(ftrace_graph_buf, str, FTRACE_FILTER_SIZE);
@@ -4479,6 +4501,40 @@ static int ftrace_process_locs(struct module *mod,
 
 #ifdef CONFIG_MODULES
 
+static void *ftrace_remove_tramp_pg(struct ftrace_ops *ops,
+				    struct ftrace_page *pg)
+{
+	struct dyn_ftrace *rec;
+	int i;
+
+	for (i = 0; i < pg->index; i++) {
+		rec = &pg->records[i];
+
+		/* We need to only worry about records with trampolines */
+		if (!(rec->flags & FTRACE_FL_TRAMP_EN))
+			continue;
+
+		if (ftrace_ops_test(ops, rec->ip, rec)) {
+			FTRACE_WARN_ON(ftrace_rec_count(rec) != 1);
+			ops->trampolines--;
+		}
+	}
+}
+
+/*
+ * If tracing is activated, we need to update the counts for
+ * ftrace_ops with trampolines.
+ */
+static void update_trampoline_counts(struct ftrace_page *pg)
+{
+	struct ftrace_ops *op;
+
+	do_for_each_ftrace_op(op, ftrace_ops_list) {
+		if (op->trampolines)
+			ftrace_remove_tramp_pg(op, pg);
+	} while_for_each_ftrace_op(op);
+}
+
 #define next_to_ftrace_page(p) container_of(p, struct ftrace_page, next)
 
 void ftrace_release_mod(struct module *mod)
@@ -4511,6 +4567,8 @@ void ftrace_release_mod(struct module *mod)
 			/* Check if we are deleting the last page */
 			if (pg == ftrace_pages)
 				ftrace_pages = next_to_ftrace_page(last_pg);
+
+			update_trampoline_counts(pg);
 
 			*last_pg = pg->next;
 			order = get_count_order(pg->size / ENTRIES_PER_PAGE);
@@ -4600,6 +4658,20 @@ void __init ftrace_init(void)
 	ftrace_disabled = 1;
 }
 
+/* Do nothing if arch does not support this */
+void __weak arch_ftrace_update_trampoline(struct ftrace_ops *ops)
+{
+}
+
+static void ftrace_update_trampoline(struct ftrace_ops *ops)
+{
+	/* Currently, only non dynamic ops can have a trampoline */
+	if (ops->flags & FTRACE_OPS_FL_DYNAMIC)
+		return;
+
+	arch_ftrace_update_trampoline(ops);
+}
+
 #else
 
 static struct ftrace_ops global_ops = {
@@ -4640,6 +4712,10 @@ static inline int
 ftrace_ops_test(struct ftrace_ops *ops, unsigned long ip, void *regs)
 {
 	return 1;
+}
+
+static void ftrace_update_trampoline(struct ftrace_ops *ops)
+{
 }
 
 #endif /* CONFIG_DYNAMIC_FTRACE */
@@ -5351,6 +5427,13 @@ int register_ftrace_graph(trace_func_graph_ret_t retfunc,
 	global_ops.flags |= FTRACE_OPS_FL_STUB;
 
 #ifdef CONFIG_DYNAMIC_FTRACE
+	/* Save off the trampoline if there was one. */
+	save_global_trampoline = global_ops.trampoline;
+	save_global_flags = global_ops.flags;
+
+	/* Function graph does not allocate the trampoline */
+	global_ops.flags &= ~FTRACE_OPS_FL_ALLOC_TRAMP;
+
 	/* Optimize function graph calling (if implemented by arch) */
 	if (FTRACE_GRAPH_TRAMP_ADDR != 0)
 		global_ops.trampoline = FTRACE_GRAPH_TRAMP_ADDR;
@@ -5376,12 +5459,19 @@ void unregister_ftrace_graph(void)
 	__ftrace_graph_entry = ftrace_graph_entry_stub;
 	ftrace_shutdown(&global_ops, FTRACE_STOP_FUNC_RET);
 	global_ops.flags &= ~FTRACE_OPS_FL_STUB;
-#ifdef CONFIG_DYNAMIC_FTRACE
-	if (FTRACE_GRAPH_TRAMP_ADDR != 0)
-		global_ops.trampoline = 0;
-#endif
 	unregister_pm_notifier(&ftrace_suspend_notifier);
 	unregister_trace_sched_switch(ftrace_graph_probe_sched_switch, NULL);
+
+#ifdef CONFIG_DYNAMIC_FTRACE
+	/*
+	 * Function graph does not allocate the trampoline, but
+	 * other global_ops do. We need to reset the ALLOC_TRAMP flag
+	 * if one was used.
+	 */
+	global_ops.trampoline = save_global_trampoline;
+	if (save_global_flags & FTRACE_OPS_FL_ALLOC_TRAMP)
+		global_ops.flags |= FTRACE_OPS_FL_ALLOC_TRAMP;
+#endif
 
  out:
 	mutex_unlock(&ftrace_lock);
