@@ -924,7 +924,7 @@ struct cgroup_subsys blkio_cgrp_subsys = {
 	.css_offline = blkcg_css_offline,
 	.css_free = blkcg_css_free,
 	.can_attach = blkcg_can_attach,
-	.base_cftypes = blkcg_files,
+	.legacy_cftypes = blkcg_files,
 };
 EXPORT_SYMBOL_GPL(blkio_cgrp_subsys);
 
