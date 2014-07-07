@@ -913,6 +913,10 @@ extern void default_banner(void);
 	PARA_SITE(PARA_PATCH(pv_cpu_ops, PV_CPU_iret), CLBR_NONE,	\
 		  jmp PARA_INDIRECT(pv_cpu_ops+PV_CPU_iret))
 
+#define INTERRUPT_RETURN_UNBLOCK_NMI					\
+	PARA_SITE(PARA_PATCH(pv_cpu_ops, PV_CPU_iret_unblock_nmi), CLBR_NONE, \
+		  jmp PARA_INDIRECT(pv_cpu_ops+PV_CPU_iret_unblock_nmi))
+
 #define DISABLE_INTERRUPTS(clobbers)					\
 	PARA_SITE(PARA_PATCH(pv_irq_ops, PV_IRQ_irq_disable), clobbers, \
 		  PV_SAVE_REGS(clobbers | CLBR_CALLEE_SAVE);		\

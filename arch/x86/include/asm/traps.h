@@ -134,4 +134,10 @@ enum {
 	X86_TRAP_IRET = 32,	/* 32, IRET Exception */
 };
 
+#ifdef CONFIG_X86_64
+extern void fixup_lret_nmi(struct pt_regs *regs);
+#else
+static inline void fixup_lret_nmi(struct pt_regs *regs) {}
+#endif
+
 #endif /* _ASM_X86_TRAPS_H */

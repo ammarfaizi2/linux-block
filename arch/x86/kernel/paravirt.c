@@ -154,6 +154,7 @@ unsigned paravirt_patch_default(u8 type, u16 clobbers, void *insnbuf,
 		ret = paravirt_patch_ident_64(insnbuf, len);
 
 	else if (type == PARAVIRT_PATCH(pv_cpu_ops.iret) ||
+		 type == PARAVIRT_PATCH(pv_cpu_ops.iret_unblock_nmi) ||
 		 type == PARAVIRT_PATCH(pv_cpu_ops.irq_enable_sysexit) ||
 		 type == PARAVIRT_PATCH(pv_cpu_ops.usergs_sysret32) ||
 		 type == PARAVIRT_PATCH(pv_cpu_ops.usergs_sysret64))
@@ -210,6 +211,9 @@ static u64 native_steal_clock(int cpu)
 
 /* These are in entry.S */
 extern void native_iret(void);
+#ifdef CONFIG_X86_64
+extern void native_irq_return_need_iret(void);
+#endif
 extern void native_irq_enable_sysexit(void);
 extern void native_usergs_sysret32(void);
 extern void native_usergs_sysret64(void);
@@ -381,6 +385,9 @@ __visible struct pv_cpu_ops pv_cpu_ops = {
 	.usergs_sysret64 = native_usergs_sysret64,
 #endif
 	.iret = native_iret,
+#ifdef CONFIG_X86_64
+	.iret_unblock_nmi = native_irq_return_need_iret,
+#endif
 	.swapgs = native_swapgs,
 
 	.set_iopl_mask = native_set_iopl_mask,

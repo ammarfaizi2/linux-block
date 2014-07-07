@@ -833,6 +833,82 @@ irq_return:
 
 ENTRY(native_iret)
 	/*
+	 * This implements "iret" the Platonic ideal, not "iret" the
+	 * instruction.  Specifically, it will pop RIP, CS, FLAGS,
+	 * RSP, and SS and load them, correctly, into the CPU state.
+	 * (IRET screws up RSP depending on SS).  It tries to avoid
+	 * serializing (IRET always serializes).
+	 *
+	 * This code does *not* promise to unblock NMIs.  Use
+	 * INTERRUPT_RETURN_UNBLOCK_NMI if you need NMIs to be unblocked.
+	 */
+
+	/*
+	 * Only IRET can set RF correctly, and our sti trick is
+	 * is incompatible with TF being set.
+	 */
+	testl $(X86_EFLAGS_RF|X86_EFLAGS_TF), (EFLAGS-RIP)(%rsp)
+	jnz native_irq_return_need_iret
+
+	/*
+	 * While it's technically possible to be in userspace with IF
+	 * clear (using iopl(2)), it's so unlikely that there's no point
+	 * in optimizing it.
+	 */
+	testl $X86_EFLAGS_IF, (EFLAGS-RIP)(%rsp)
+	jz native_irq_return_need_iret
+
+	/*
+	 * Returning without IRET to kernel space is possible, but
+	 * the considerations are different and we're not ready for that
+	 * yet.
+	 */
+	testl $3, (CS-RIP)(%rsp)
+	jz native_irq_return_need_iret
+
+#ifdef CONFIG_X86_ESPFIX64
+	/* lret has the same bug^Wfeature as iret wrt 16-bit SS. */
+	testb $4,(SS-RIP)(%rsp)
+	jnz native_irq_return_ldt
+#endif
+
+	/*
+	 * Rearrange the stack to pretend we got here via a call gate
+	 * (yes, really), and do a long return.
+	 */
+	pushq (SS     - RIP + 0*8)(%rsp)
+	pushq (RSP    - RIP + 1*8)(%rsp)
+	pushq (CS     - RIP + 2*8)(%rsp)
+	pushq (RIP    - RIP + 3*8)(%rsp)
+	pushq (EFLAGS - RIP + 4*8)(%rsp)
+	andl $~X86_EFLAGS_IF, (%rsp)	/* Clear saved IF. */
+	popfq				/* Restore all regs except IF. */
+
+.global native_sti_before_lret_to_userspace
+native_sti_before_lret_to_userspace:
+	sti				/* Restore IF. */
+
+	/*
+	 * This relies on the one-instruction interrupt grace period here
+	 * between sti and lret.  A non-paranoid interrupt here will
+	 * explode because GS is wrong.  More subtly, we may be on an IST
+	 * stack, and if we enable interrupts before leaving the IST stack,
+	 * we could cause a recursive IST interrupt, which would blow away
+	 * our stack frame.
+	 *
+	 * NMI and MCE are safe here -- see fixup_lret_nmi.
+	 */
+
+.global native_lret_to_userspace
+native_lret_to_userspace:
+	lretq
+
+	/* This fixup is special -- see error_lret. */
+	_ASM_EXTABLE(native_lret_to_userspace, bad_iret)
+
+.global native_irq_return_need_iret
+native_irq_return_need_iret:
+	/*
 	 * Are we returning to a stack segment from the LDT?  Note: in
 	 * 64-bit mode SS:RSP on the exception stack is always valid.
 	 */
@@ -882,6 +958,8 @@ bad_iret:
 	 * We are now running with the kernel GS after exception recovery.
 	 * But error_entry expects us to have user GS to match the user %cs,
 	 * so swap back.
+	 *
+	 * lret faults land here, too.
 	 */
 	pushq $0
 
@@ -1411,7 +1489,7 @@ error_sti:
 	ret
 
 /*
- * There are two places in the kernel that can potentially fault with
+ * There are three places in the kernel that can potentially fault with
  * usergs. Handle them here. The exception handlers after iret run with
  * kernel gs again, so don't set the user space flag. B stepping K8s
  * sometimes report an truncated RIP for IRET exceptions returning to
@@ -1428,6 +1506,8 @@ error_kernelspace:
 	je bstep_iret
 	cmpq $gs_change,RIP+8(%rsp)
 	je error_swapgs
+	cmpq $native_lret_to_userspace,RIP+8(%rsp)
+	je error_lret
 	jmp error_sti
 
 bstep_iret:
@@ -1435,6 +1515,16 @@ bstep_iret:
 	movq %rcx,RIP+8(%rsp)
 	jmp error_swapgs
 	CFI_ENDPROC
+
+error_lret:
+	/*
+	 * We can't return from this fault with IF set because we'll lose
+	 * the sti grace period.  Fix up the fault so that it looks just
+	 * like an iret fault instead.
+	 */
+	addq $4*8,RSP+8(%rsp)			/* pop the lret frame */
+	andl $~X86_EFLAGS_IF,EFLAGS+8(%rsp)	/* clear IF */
+	jmp error_swapgs			/* return w/ kernel GS */
 END(error_entry)
 
 
@@ -1706,7 +1796,7 @@ nmi_restore:
 
 	/* Clear the NMI executing stack variable */
 	movq $0, 5*8(%rsp)
-	jmp irq_return
+	INTERRUPT_RETURN_UNBLOCK_NMI
 	CFI_ENDPROC
 END(nmi)
 

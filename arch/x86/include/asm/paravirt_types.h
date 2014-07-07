@@ -188,6 +188,9 @@ struct pv_cpu_ops {
 	   frame set up. */
 	void (*iret)(void);
 
+	/* Same as iret, but promises to unblock NMIs */
+	void (*iret_unblock_nmi)(void);
+
 	void (*swapgs)(void);
 
 	void (*start_context_switch)(struct task_struct *prev);

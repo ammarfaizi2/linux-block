@@ -306,11 +306,32 @@ NOKPROBE_SYMBOL(unknown_nmi_error);
 static DEFINE_PER_CPU(bool, swallow_nmi);
 static DEFINE_PER_CPU(unsigned long, last_nmi_rip);
 
+#ifdef CONFIG_X86_64
+void fixup_lret_nmi(struct pt_regs *regs)
+{
+	/*
+	 * There is no architectural guarantee that an NMI or MCE can't
+	 * happen between sti and lret.  To avoid returning to the lret
+	 * instruction with interrupts on, we back up one instruction.
+	 */
+	extern const char native_lret_to_userspace[];
+	extern const char native_sti_before_lret_to_userspace[];
+
+	if (!user_mode_vm(regs) &&
+	    regs->ip == (unsigned long)native_lret_to_userspace) {
+		regs->ip = (unsigned long)native_sti_before_lret_to_userspace;
+		regs->flags &= ~X86_EFLAGS_IF;
+	}
+}
+#endif
+
 static void default_do_nmi(struct pt_regs *regs)
 {
 	unsigned char reason = 0;
 	int handled;
 	bool b2b = false;
+
+	fixup_lret_nmi(regs);
 
 	/*
 	 * CPU-specific NMI must be processed before non-CPU-specific
