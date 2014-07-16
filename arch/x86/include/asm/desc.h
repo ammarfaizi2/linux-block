@@ -56,7 +56,7 @@ static inline void pack_gate(gate_desc *gate, unsigned type, unsigned long func,
 			     unsigned dpl, unsigned ist, unsigned seg)
 {
 	gate->offset_low	= PTR_LOW(func);
-	gate->segment		= __KERNEL_CS;
+	gate->segment		= seg;
 	gate->ist		= ist;
 	gate->p			= 1;
 	gate->dpl		= dpl;

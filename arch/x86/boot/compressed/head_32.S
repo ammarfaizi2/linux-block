@@ -23,6 +23,7 @@
  */
 	.text
 
+#include "misc.h"
 #include <linux/init.h>
 #include <linux/linkage.h>
 #include <asm/segment.h>
@@ -224,6 +225,33 @@ relocated:
  */
 	xorl	%ebx, %ebx
 	jmp	*%eax
+
+#ifdef USE_BOOT_IDT
+/*
+ * IDT vectors
+ */
+.global boot_general_protection
+ENTRY(boot_general_protection)
+	pushl %edi
+	pushl %esi
+	pushl %eax
+	pushl %ecx
+	pushl %edx
+
+	leal 6*4(%esp),%eax		/* Argument: pointer to saved RIP */
+	pushl %eax
+	call do_boot_general_protection
+	popl %edx			/* Pop the argument */
+
+	popl %edx
+	popl %ecx
+	popl %eax
+	popl %esi
+	popl %edi
+	addl $4,%esp			/* Pop error code */
+	iret
+ENDPROC(boot_general_protection)
+#endif
 
 #ifdef CONFIG_EFI_STUB
 	.data

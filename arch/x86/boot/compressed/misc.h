@@ -1,15 +1,14 @@
 #ifndef BOOT_COMPRESSED_MISC_H
 #define BOOT_COMPRESSED_MISC_H
 
+#ifndef __ASSEMBLY__
+
 /*
  * we have to be careful, because no indirections are allowed here, and
  * paravirt_ops is a kind of one. As it will only run in baremetal anyway,
  * we just keep it from happening
  */
 #undef CONFIG_PARAVIRT
-#ifdef CONFIG_X86_32
-#define _ASM_X86_DESC_H 1
-#endif
 
 #include <linux/linkage.h>
 #include <linux/screen_info.h>
@@ -35,6 +34,7 @@ extern memptr free_mem_end_ptr;
 extern struct boot_params *real_mode;		/* Pointer to real-mode data */
 void __putstr(const char *s);
 #define error_putstr(__x)  __putstr(__x)
+extern void error(char *x);
 
 #ifdef CONFIG_X86_VERBOSE_BOOTUP
 
@@ -81,6 +81,23 @@ void console_init(void);
 static const int early_serial_base;
 static inline void console_init(void)
 { }
+#endif
+
+#endif	/* !__ASSEMBLY__ */
+
+#if defined(CONFIG_X86_VERBOSE_BOOTUP) || defined(CONFIG_RANDOMIZE_BASE)
+
+#define USE_BOOT_IDT 1
+#ifndef __ASSEMBLY__
+extern void setup_idt(void);
+#endif
+
+#else
+
+#ifndef __ASSEMBLY__
+static inline void setup_idt(void) {}
+#endif
+
 #endif
 
 #endif

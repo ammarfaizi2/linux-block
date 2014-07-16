@@ -33,6 +33,13 @@ SECTIONS
 		_text = .; 	/* Text */
 		*(.text)
 		*(.text.*)
+		*(.fixup)
+
+		. = ALIGN(8);
+		__start___ex_table = .;
+		*(__ex_table)
+		__stop___ex_table = .;
+
 		_etext = . ;
 	}
 	.rodata : {

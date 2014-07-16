@@ -24,6 +24,7 @@
 	.code32
 	.text
 
+#include "misc.h"
 #include <linux/init.h>
 #include <linux/linkage.h>
 #include <asm/segment.h>
@@ -415,6 +416,39 @@ relocated:
  * Jump to the decompressed kernel.
  */
 	jmp	*%rax
+
+#ifdef USE_BOOT_IDT
+/*
+ * IDT vectors
+ */
+.global boot_general_protection
+ENTRY(boot_general_protection)
+	pushq %rdi
+	pushq %rsi
+	pushq %rax
+	pushq %rcx
+	pushq %rdx
+	pushq %r8
+	pushq %r9
+	pushq %r10
+	pushq %r11
+
+	leaq 10*8(%rsp),%rdi		/* Argument: pointer to saved RIP */
+	call do_boot_general_protection
+
+	popq %r11
+	popq %r10
+	popq %r9
+	popq %r8
+	popq %rdx
+	popq %rcx
+	popq %rax
+	popq %rsi
+	popq %rdi
+	addq $8,%rsp			/* Pop error code */
+	iretq
+ENDPROC(boot_general_protection)
+#endif
 
 	.code32
 no_longmode:
