@@ -1339,7 +1339,7 @@ static int rcu_spawn_one_boost_kthread(struct rcu_state *rsp,
 	if (&rcu_preempt_state != rsp)
 		return 0;
 
-	if (!rcu_scheduler_fully_active || rnp->qsmaskinit == 0)
+	if (rnp->qsmaskinit == 0)
 		return 0;
 
 	rsp->boost = 1;
@@ -1487,8 +1487,7 @@ static void rcu_prepare_kthreads(int cpu)
 	struct rcu_node *rnp = rdp->mynode;
 
 	/* Fire up the incoming CPU's kthread and leaf rcu_node kthread. */
-	if (rcu_scheduler_fully_active)
-		(void)rcu_spawn_one_boost_kthread(rcu_state_p, rnp);
+	(void)rcu_spawn_one_boost_kthread(rcu_state_p, rnp);
 }
 
 #else /* #ifdef CONFIG_RCU_BOOST */
@@ -2507,9 +2506,8 @@ static void rcu_spawn_all_nocb_kthreads(int cpu)
 {
 	struct rcu_state *rsp;
 
-	if (rcu_scheduler_fully_active)
-		for_each_rcu_flavor(rsp)
-			rcu_spawn_one_nocb_kthread(rsp, cpu);
+	for_each_rcu_flavor(rsp)
+		rcu_spawn_one_nocb_kthread(rsp, cpu);
 }
 
 /*
