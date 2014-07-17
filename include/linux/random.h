@@ -106,6 +106,46 @@ static inline int arch_has_random_seed(void)
 }
 #endif
 
+#ifndef __HAVE_ARCH_RNG_INIT
+
+/**
+ * arch_rng_init() - get architectural rng seed data
+ * @ctx: context for the seed function
+ * @seed: function to call for each u32 obtained
+ * @bits_per_source: number of bits from each source to try to use
+ * @log_prefix: beginning of log output (may be NULL)
+ *
+ * Synchronously load some architectural entropy or other best-effort
+ * random seed data.  An arch-specific implementation should be no worse
+ * than this generic implementation.  If the arch code does something
+ * interesting, it may log something of the form "log_prefix with
+ * 8 bits of stuff".
+ *
+ * No arch-specific implementation should be any worse than the generic
+ * implementation.
+ */
+static inline void arch_rng_init(void *ctx,
+				 void (*seed)(void *ctx, u32 data),
+				 int bits_per_source,
+				 const char *log_prefix)
+{
+	int i;
+
+	for (i = 0; i < bits_per_source; i += 8 * sizeof(long)) {
+		unsigned long rv;
+
+		if (arch_get_random_seed_long(&rv) ||
+		    arch_get_random_long(&rv)) {
+			seed(ctx, (u32)rv);
+#if BITS_PER_LONG > 32
+			seed(ctx, (u32)(rv >> 32));
+#endif
+		}
+	}
+}
+
+#endif /* __HAVE_ARCH_RNG_INIT */
+
 /* Pseudo random number generator from numerical recipes. */
 static inline u32 next_pseudo_random32(u32 seed)
 {
