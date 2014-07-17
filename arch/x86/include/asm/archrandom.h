@@ -117,6 +117,12 @@ GET_SEED(arch_get_random_seed_int, unsigned int, RDSEED_INT, ASM_NOP4);
 #define arch_has_random()	static_cpu_has(X86_FEATURE_RDRAND)
 #define arch_has_random_seed()	static_cpu_has(X86_FEATURE_RDSEED)
 
+#define __HAVE_ARCH_RNG_INIT
+extern void arch_rng_init(void *ctx,
+			  void (*seed)(void *ctx, u32 data),
+			  int bits_per_source,
+			  const char *log_prefix);
+
 #else
 
 static inline int rdrand_long(unsigned long *v)
