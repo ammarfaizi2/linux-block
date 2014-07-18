@@ -2789,8 +2789,13 @@ static void rcu_sysidle_exit(struct rcu_dynticks *rdtp, int irq)
 	 * system-idle state.  This means that the timekeeping CPU must
 	 * invoke rcu_sysidle_force_exit() directly if it does anything
 	 * more than take a scheduling-clock interrupt.
+	 *
+	 * In addition if we are not a nohz_full= CPU, then when we are
+	 * non-idle we have our own tick, so we don't need the timekeeping
+	 * CPU to keep a tick on our behalf.  We assume that the timekeeping
+	 * CPU is also a nohz_full= CPU.
 	 */
-	if (smp_processor_id() == tick_do_timer_cpu)
+	if (!tick_nohz_full_cpu(cpu))
 		return;
 
 	/* Update system-idle state: We are clearly no longer fully idle! */
@@ -2810,11 +2815,11 @@ static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
 
 	/*
 	 * If some other CPU has already reported non-idle, if this is
-	 * not the flavor of RCU that tracks sysidle state, or if this
-	 * is an offline or the timekeeping CPU, nothing to do.
+	 * not the flavor of RCU that tracks sysidle state, or if this is
+	 * an offline or !nohz_full= or the timekeeping CPU, nothing to do.
 	 */
 	if (!*isidle || rdp->rsp != rcu_sysidle_state ||
-	    cpu_is_offline(rdp->cpu) || rdp->cpu == tick_do_timer_cpu)
+	    cpu_is_offline(rdp->cpu) || !tick_nohz_full_cpu(rdp->cpu))
 		return;
 	if (rcu_gp_in_progress(rdp->rsp))
 		WARN_ON_ONCE(smp_processor_id() != tick_do_timer_cpu);
