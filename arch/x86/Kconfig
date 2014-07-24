@@ -594,6 +594,7 @@ config KVM_GUEST
 	bool "KVM Guest support (including kvmclock)"
 	depends on PARAVIRT
 	select PARAVIRT_CLOCK
+	select ARCH_RANDOM
 	default y
 	---help---
 	  This option enables various optimizations for running under the KVM
@@ -1507,6 +1508,9 @@ config ARCH_RANDOM
 	  (Intel Bull Mountain technology) to generate random numbers.
 	  If supported, this is a high bandwidth, cryptographically
 	  secure hardware random number generator.
+
+	  This also enables paravirt RNGs such as KVM's if the relevant
+	  PV guest support is enabled.
 
 config X86_SMAP
 	def_bool y

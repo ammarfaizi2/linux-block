@@ -416,6 +416,16 @@ void kvm_disable_steal_time(void)
 	wrmsr(MSR_KVM_STEAL_TIME, 0, 0);
 }
 
+bool kvm_get_rng_seed(u64 *v)
+{
+	/*
+	 * KVM_GET_RNG_SEED has no associated CPUID bit.  Instead, we
+	 * just try it and see if it works.
+	 */
+	return (kvm_para_has_feature(KVM_FEATURE_GET_RNG_SEED) &&
+		rdmsrl_safe(MSR_KVM_GET_RNG_SEED, v) == 0);
+}
+
 #ifdef CONFIG_SMP
 static void __init kvm_smp_prepare_boot_cpu(void)
 {

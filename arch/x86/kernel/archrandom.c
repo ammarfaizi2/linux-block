@@ -15,6 +15,7 @@
  */
 
 #include <asm/archrandom.h>
+#include <asm/kvm_guest.h>
 
 void arch_rng_init(void *ctx,
 		   void (*seed)(void *ctx, u32 data),
@@ -22,7 +23,8 @@ void arch_rng_init(void *ctx,
 		   const char *log_prefix)
 {
 	int i;
-	int rdseed_bits = 0, rdrand_bits = 0;
+	int rdseed_bits = 0, rdrand_bits = 0, kvm_bits = 0;
+	bool kvm_seed_works = false;
 	char buf[128] = "";
 	char *msgptr = buf;
 
@@ -42,10 +44,40 @@ void arch_rng_init(void *ctx,
 #endif
 	}
 
+	/*
+	 * Use KVM_GET_RNG_SEED regardless of whether the CPU RNG
+	 * worked, since it incorporates entropy unavailable to the CPU,
+	 * and we shouldn't trust the hardware RNG more than we need to.
+	 * We request enough bits for the entire internal RNG state,
+	 * because there's no good reason not to.
+	 */
+	for (i = 0; i < bits_per_source; i += 64) {
+		u64 rv;
+
+		if (kvm_get_rng_seed(&rv)) {
+			if (rv)
+				kvm_seed_works = true;
+			seed(ctx, (u32)rv);
+			seed(ctx, (u32)(rv >> 32));
+			kvm_bits += 8 * sizeof(rv);
+		} else {
+			break;	/* If it fails once, it will keep failing. */
+		}
+	}
+
 	if (rdseed_bits)
 		msgptr += sprintf(msgptr, ", %d bits from RDSEED", rdseed_bits);
 	if (rdrand_bits)
 		msgptr += sprintf(msgptr, ", %d bits from RDRAND", rdrand_bits);
+
+	/*
+	 * QEMU is buggy and will return all zeros instead of failing.
+	 * Don't pretend that it worked if this happens.
+	 */
+	if (kvm_bits && kvm_seed_works)
+		msgptr += sprintf(msgptr, ", %d bits from KVM_GET_RNG_BITS",
+				  kvm_bits);
+
 	if (buf[0])
 		pr_info("%s with %s\n", log_prefix, buf + 2);
 }
