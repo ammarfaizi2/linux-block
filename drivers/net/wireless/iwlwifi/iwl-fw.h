@@ -90,6 +90,7 @@
  *	P2P client interfaces simultaneously if they are in different bindings.
  * @IWL_UCODE_TLV_FLAGS_P2P_BSS_PS_SCM: support power save on BSS station and
  *	P2P client interfaces simultaneously if they are in same bindings.
+ * @IWL_UCODE_TLV_FLAGS_UAPSD_SUPPORT: General support for uAPSD
  * @IWL_UCODE_TLV_FLAGS_P2P_PS_UAPSD: P2P client supports uAPSD power save
  * @IWL_UCODE_TLV_FLAGS_BCAST_FILTERING: uCode supports broadcast filtering.
  * @IWL_UCODE_TLV_FLAGS_GO_UAPSD: AP/GO interfaces support uAPSD clients
@@ -120,14 +121,18 @@ enum iwl_ucode_tlv_flag {
  * enum iwl_ucode_tlv_api - ucode api
  * @IWL_UCODE_TLV_API_WOWLAN_CONFIG_TID: wowlan config includes tid field.
  * @IWL_UCODE_TLV_CAPA_EXTENDED_BEACON: Support Extended beacon notification
+ * @IWL_UCODE_TLV_API_BT_COEX_SPLIT: new API for BT Coex
  * @IWL_UCODE_TLV_API_CSA_FLOW: ucode can do unbind-bind flow for CSA.
  * @IWL_UCODE_TLV_API_DISABLE_STA_TX: ucode supports tx_disable bit.
+ * @IWL_UCODE_TLV_API_LMAC_SCAN: This ucode uses LMAC unified scan API.
  */
 enum iwl_ucode_tlv_api {
 	IWL_UCODE_TLV_API_WOWLAN_CONFIG_TID	= BIT(0),
 	IWL_UCODE_TLV_CAPA_EXTENDED_BEACON	= BIT(1),
+	IWL_UCODE_TLV_API_BT_COEX_SPLIT         = BIT(3),
 	IWL_UCODE_TLV_API_CSA_FLOW		= BIT(4),
 	IWL_UCODE_TLV_API_DISABLE_STA_TX	= BIT(5),
+	IWL_UCODE_TLV_API_LMAC_SCAN		= BIT(6),
 };
 
 /**

@@ -67,6 +67,7 @@
 #include "iwl-prph.h"
 #include "fw-api.h"
 #include "mvm.h"
+#include "time-event.h"
 
 const u8 iwl_mvm_ac_to_tx_fifo[] = {
 	IWL_MVM_TX_FIFO_VO,
@@ -667,10 +668,9 @@ static void iwl_mvm_mac_ctxt_cmd_common(struct iwl_mvm *mvm,
 	if (vif->bss_conf.qos)
 		cmd->qos_flags |= cpu_to_le32(MAC_QOS_FLG_UPDATE_EDCA);
 
-	if (vif->bss_conf.use_cts_prot) {
+	if (vif->bss_conf.use_cts_prot)
 		cmd->protection_flags |= cpu_to_le32(MAC_PROT_FLG_TGG_PROTECT);
-		cmd->protection_flags |= cpu_to_le32(MAC_PROT_FLG_SELF_CTS_EN);
-	}
+
 	IWL_DEBUG_RATE(mvm, "use_cts_prot %d, ht_operation_mode %d\n",
 		       vif->bss_conf.use_cts_prot,
 		       vif->bss_conf.ht_operation_mode);
@@ -970,7 +970,7 @@ int iwl_mvm_mac_ctxt_beacon_changed(struct iwl_mvm *mvm,
 	WARN_ON(vif->type != NL80211_IFTYPE_AP &&
 		vif->type != NL80211_IFTYPE_ADHOC);
 
-	beacon = ieee80211_beacon_get(mvm->hw, vif);
+	beacon = ieee80211_beacon_get_template(mvm->hw, vif, NULL);
 	if (!beacon)
 		return -ENOMEM;
 
@@ -1074,8 +1074,12 @@ static int iwl_mvm_mac_ctxt_cmd_ap(struct iwl_mvm *mvm,
 	/* Fill the common data for all mac context types */
 	iwl_mvm_mac_ctxt_cmd_common(mvm, vif, &cmd, action);
 
-	/* Also enable probe requests to pass */
-	cmd.filter_flags |= cpu_to_le32(MAC_FILTER_IN_PROBE_REQUEST);
+	/*
+	 * pass probe requests and beacons from other APs (needed
+	 * for ht protection)
+	 */
+	cmd.filter_flags |= cpu_to_le32(MAC_FILTER_IN_PROBE_REQUEST |
+					MAC_FILTER_IN_BEACON);
 
 	/* Fill the data specific for ap mode */
 	iwl_mvm_mac_ctxt_cmd_fill_ap(mvm, vif, &cmd.ap,
@@ -1095,6 +1099,13 @@ static int iwl_mvm_mac_ctxt_cmd_go(struct iwl_mvm *mvm,
 
 	/* Fill the common data for all mac context types */
 	iwl_mvm_mac_ctxt_cmd_common(mvm, vif, &cmd, action);
+
+	/*
+	 * pass probe requests and beacons from other APs (needed
+	 * for ht protection)
+	 */
+	cmd.filter_flags |= cpu_to_le32(MAC_FILTER_IN_PROBE_REQUEST |
+					MAC_FILTER_IN_BEACON);
 
 	/* Fill the data specific for GO mode */
 	iwl_mvm_mac_ctxt_cmd_fill_ap(mvm, vif, &cmd.go.ap,
@@ -1201,12 +1212,43 @@ int iwl_mvm_mac_ctxt_remove(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
 	return 0;
 }
 
+static void iwl_mvm_csa_count_down(struct iwl_mvm *mvm,
+				   struct ieee80211_vif *csa_vif, u32 gp2)
+{
+	struct iwl_mvm_vif *mvmvif =
+			iwl_mvm_vif_from_mac80211(csa_vif);
+
+	if (!ieee80211_csa_is_complete(csa_vif)) {
+		int c = ieee80211_csa_update_counter(csa_vif);
+
+		iwl_mvm_mac_ctxt_beacon_changed(mvm, csa_vif);
+		if (csa_vif->p2p &&
+		    !iwl_mvm_te_scheduled(&mvmvif->time_event_data) && gp2) {
+			u32 rel_time = (c + 1) *
+				       csa_vif->bss_conf.beacon_int -
+				       IWL_MVM_CHANNEL_SWITCH_TIME;
+			u32 apply_time = gp2 + rel_time * 1024;
+
+			iwl_mvm_schedule_csa_noa(mvm, csa_vif,
+						 IWL_MVM_CHANNEL_SWITCH_TIME -
+						 IWL_MVM_CHANNEL_SWITCH_MARGIN,
+						 apply_time);
+		}
+	} else if (!iwl_mvm_te_scheduled(&mvmvif->time_event_data)) {
+		/* we don't have CSA NoA scheduled yet, switch now */
+		ieee80211_csa_finish(csa_vif);
+		RCU_INIT_POINTER(mvm->csa_vif, NULL);
+	}
+}
+
 int iwl_mvm_rx_beacon_notif(struct iwl_mvm *mvm,
 			    struct iwl_rx_cmd_buffer *rxb,
 			    struct iwl_device_cmd *cmd)
 {
 	struct iwl_rx_packet *pkt = rxb_addr(rxb);
 	struct iwl_mvm_tx_resp *beacon_notify_hdr;
+	struct ieee80211_vif *csa_vif;
+	struct ieee80211_vif *tx_blocked_vif;
 	u64 tsf;
 
 	lockdep_assert_held(&mvm->mutex);
@@ -1232,12 +1274,32 @@ int iwl_mvm_rx_beacon_notif(struct iwl_mvm *mvm,
 		     mvm->ap_last_beacon_gp2,
 		     le32_to_cpu(beacon_notify_hdr->initial_rate));
 
-	if (unlikely(mvm->csa_vif && mvm->csa_vif->csa_active)) {
-		if (!ieee80211_csa_is_complete(mvm->csa_vif)) {
-			iwl_mvm_mac_ctxt_beacon_changed(mvm, mvm->csa_vif);
-		} else {
-			ieee80211_csa_finish(mvm->csa_vif);
-			mvm->csa_vif = NULL;
+	csa_vif = rcu_dereference_protected(mvm->csa_vif,
+					    lockdep_is_held(&mvm->mutex));
+	if (unlikely(csa_vif && csa_vif->csa_active))
+		iwl_mvm_csa_count_down(mvm, csa_vif, mvm->ap_last_beacon_gp2);
+
+	tx_blocked_vif = rcu_dereference_protected(mvm->csa_tx_blocked_vif,
+						lockdep_is_held(&mvm->mutex));
+	if (unlikely(tx_blocked_vif)) {
+		struct iwl_mvm_vif *mvmvif =
+			iwl_mvm_vif_from_mac80211(tx_blocked_vif);
+
+		/*
+		 * The channel switch is started and we have blocked the
+		 * stations. If this is the first beacon (the timeout wasn't
+		 * set), set the unblock timeout, otherwise countdown
+		 */
+		if (!mvm->csa_tx_block_bcn_timeout)
+			mvm->csa_tx_block_bcn_timeout =
+				IWL_MVM_CS_UNBLOCK_TX_TIMEOUT;
+		else
+			mvm->csa_tx_block_bcn_timeout--;
+
+		/* Check if the timeout is expired, and unblock tx */
+		if (mvm->csa_tx_block_bcn_timeout == 0) {
+			iwl_mvm_modify_all_sta_disable_tx(mvm, mvmvif, false);
+			RCU_INIT_POINTER(mvm->csa_tx_blocked_vif, NULL);
 		}
 	}
 
