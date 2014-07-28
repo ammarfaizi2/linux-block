@@ -129,6 +129,7 @@ static inline void rcu_cpu_stall_reset(void)
 
 static inline void exit_rcu(void)
 {
+	exit_rcu_tasks();
 }
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
