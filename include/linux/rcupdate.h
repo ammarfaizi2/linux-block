@@ -292,6 +292,14 @@ static inline void rcu_user_hooks_switch(struct task_struct *prev,
 					 struct task_struct *next) { }
 #endif /* CONFIG_RCU_USER_QS */
 
+#ifdef CONFIG_TASKS_RCU
+void exit_rcu_tasks(void);
+#else /* #ifdef CONFIG_TASKS_RCU */
+static inline exit_rcu_tasks(void)
+{
+}
+#endif /* #else #ifdef CONFIG_TASKS_RCU */
+
 /**
  * RCU_NONIDLE - Indicate idle-loop code that needs RCU readers
  * @a: Code that RCU needs to pay attention to.

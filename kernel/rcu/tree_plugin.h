@@ -943,6 +943,7 @@ void exit_rcu(void)
 	barrier();
 	t->rcu_read_unlock_special = RCU_READ_UNLOCK_BLOCKED;
 	__rcu_read_unlock();
+	exit_rcu_tasks();
 }
 
 #else /* #ifdef CONFIG_TREE_PREEMPT_RCU */
@@ -1093,6 +1094,7 @@ static void __init __rcu_init_preempt(void)
  */
 void exit_rcu(void)
 {
+	exit_rcu_tasks();
 }
 
 #endif /* #else #ifdef CONFIG_TREE_PREEMPT_RCU */

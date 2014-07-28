@@ -127,8 +127,9 @@ extern struct group_info init_groups;
 #ifdef CONFIG_TASKS_RCU
 #define INIT_TASK_RCU_TASKS(tsk)					\
 	.rcu_tasks_holdout = false,					\
-	.rcu_tasks_holdout_list =					\
-		LIST_HEAD_INIT(tsk.rcu_tasks_holdout_list),
+	.rcu_tasks_holdout_list.prev = LIST_POISON2,			\
+	.rcu_tasks_lock = __SPIN_LOCK_UNLOCKED(tsk.rcu_tasks_lock),	\
+	.rcu_tasks_exiting = 0,
 #else
 #define INIT_TASK_RCU_TASKS(tsk)
 #endif
