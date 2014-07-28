@@ -1277,6 +1277,9 @@ struct task_struct {
 	unsigned long rcu_tasks_nvcsw;
 	int rcu_tasks_holdout;
 	struct list_head rcu_tasks_holdout_list;
+	spinlock_t rcu_tasks_lock;
+	int rcu_tasks_exiting;
+	wait_queue_head_t *rcu_tasks_exit_wq;
 #endif /* #ifdef CONFIG_TASKS_RCU */
 
 #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
@@ -2020,7 +2023,9 @@ static inline void rcu_copy_process(struct task_struct *p)
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
 #ifdef CONFIG_TASKS_RCU
 	p->rcu_tasks_holdout = false;
-	INIT_LIST_HEAD(&p->rcu_tasks_holdout_list);
+	p->rcu_tasks_holdout_list.prev = LIST_POISON2;
+	spin_lock_init(&p->rcu_tasks_lock);
+	p->rcu_tasks_exit_wq = NULL;
 #endif /* #ifdef CONFIG_TASKS_RCU */
 }
 

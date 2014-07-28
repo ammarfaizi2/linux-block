@@ -453,15 +453,103 @@ void rcu_barrier_tasks(void)
 }
 EXPORT_SYMBOL_GPL(rcu_barrier_tasks);
 
+/*
+ * Note a RCU-tasks quiescent state, which might require interacting
+ * with an exiting task.
+ */
+static void rcu_tasks_note_qs(struct task_struct *t)
+{
+	spin_lock(&t->rcu_tasks_lock);
+	list_del_rcu(&t->rcu_tasks_holdout_list);
+	t->rcu_tasks_holdout = 0;
+	if (t->rcu_tasks_exit_wq)
+		wake_up(t->rcu_tasks_exit_wq);
+	spin_unlock(&t->rcu_tasks_lock);
+}
+
+/*
+ * Build the list of tasks that must be waited on for this RCU-tasks
+ * grace period.  Note that we must wait for pre-existing exiting tasks
+ * to finish exiting in order to avoid the ABA problem.
+ */
+static void rcu_tasks_build_list(void)
+{
+	struct task_struct *g, *t;
+	int n_exiting = 0;
+
+	/*
+	 * Wait for all pre-existing t->on_rq transitions to complete.
+	 * Invoking synchronize_sched() suffices because all t->on_rq
+	 * transitions occur with interrupts disabled.
+	 */
+	synchronize_sched();
+
+	/*
+	 * Scan the task list under RCU protection, accumulating
+	 * tasks that are currently running or preempted that are
+	 * not also in the process of exiting.
+	 */
+	rcu_read_lock();
+	for_each_process_thread(g, t) {
+		/* Acquire this thread's lock to synchronize with exit. */
+		spin_lock(&t->rcu_tasks_lock);
+		/* Assume that we must wait for this task. */
+		t->rcu_tasks_nvcsw = ACCESS_ONCE(t->nvcsw);
+		ACCESS_ONCE(t->rcu_tasks_holdout) = 1;
+		if (t->rcu_tasks_exiting) {
+			/*
+			 * Task is exiting, so don't add to list.  Instead,
+			 * set up to wait for its exiting to complete.
+			 */
+			n_exiting++;
+			t->rcu_tasks_exiting = 1; /* Task already exiting. */
+			spin_unlock(&t->rcu_tasks_lock);
+			goto next_thread;
+		}
+
+		spin_unlock(&t->rcu_tasks_lock);
+		smp_mb();  /* Order ->rcu_tasks_holdout store before "if". */
+		if (t == current || !ACCESS_ONCE(t->on_rq) || is_idle_task(t))
+			smp_store_release(&t->rcu_tasks_holdout, 0);
+		else
+			list_add_tail_rcu(&t->rcu_tasks_holdout_list,
+					  &rcu_tasks_holdouts);
+next_thread:;
+	}
+	rcu_read_unlock();
+
+	/*
+	 * OK, we have our candidate list of threads.  Now wait for
+	 * the threads that were in the process of exiting to finish
+	 * doing so.
+	 */
+	while (n_exiting) {
+		n_exiting = 0;
+		rcu_read_lock();
+		for_each_process_thread(g, t) {
+			int am_exiting = ACCESS_ONCE(t->rcu_tasks_exiting);
+
+			if (am_exiting == 1 &&
+			    ACCESS_ONCE(t->rcu_tasks_holdout)) {
+				n_exiting++; /* Started exit before GP. */
+			} else if (am_exiting == 2) {
+				/* Holdout exited after GP, dequeue & wake. */
+				rcu_tasks_note_qs(t);
+			}
+		}
+		rcu_read_unlock();
+		schedule_timeout_interruptible(HZ / 10);
+	}
+}
+
 /* See if tasks are still holding out, complain if so. */
 static void check_holdout_task(struct task_struct *t,
 			       bool needreport, bool *firstreport)
 {
 	if (!smp_load_acquire(&t->rcu_tasks_holdout) ||
-	    t->rcu_tasks_nvcsw != ACCESS_ONCE(t->nvcsw)) {
-		ACCESS_ONCE(t->rcu_tasks_holdout) = 0;
-		/* @@@ need to check for usermode on CPU. */
-		list_del_rcu(&t->rcu_tasks_holdout_list);
+	    t->rcu_tasks_nvcsw != ACCESS_ONCE(t->nvcsw) ||
+	    !ACCESS_ONCE(t->on_rq)) {
+		rcu_tasks_note_qs(t);
 		return;
 	}
 	if (!needreport)
@@ -477,7 +565,7 @@ static void check_holdout_task(struct task_struct *t,
 static int __noreturn rcu_tasks_kthread(void *arg)
 {
 	unsigned long flags;
-	struct task_struct *g, *t;
+	struct task_struct *t;
 	unsigned long lastreport;
 	struct rcu_head *list;
 	struct rcu_head *next;
@@ -513,38 +601,10 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 
 		/*
 		 * There were callbacks, so we need to wait for an
-		 * RCU-tasks grace period.  Start off by scanning
-		 * the task list for tasks that are not already
-		 * voluntarily blocked.  Mark these tasks and make
-		 * a list of them in rcu_tasks_holdouts.
+		 * RCU-tasks grace period.  Go build the list of
+		 * tasks that must be waited for.
 		 */
-		rcu_read_lock();
-		for_each_process_thread(g, t) {
-			if (t != current && ACCESS_ONCE(t->on_rq) &&
-			    !is_idle_task(t)) {
-				t->rcu_tasks_nvcsw = ACCESS_ONCE(t->nvcsw);
-				t->rcu_tasks_holdout = 1;
-				list_add(&t->rcu_tasks_holdout_list,
-					 &rcu_tasks_holdouts);
-			}
-		}
-		rcu_read_unlock();
-
-		/*
-		 * The "t != current" and "!is_idle_task()" comparisons
-		 * above are stable, but the "t->on_rq" value could
-		 * change at any time, and is generally unordered.
-		 * Therefore, we need some ordering.  The trick is
-		 * that t->on_rq is updated with a runqueue lock held,
-		 * and thus with interrupts disabled.  So the following
-		 * synchronize_sched() provides the needed ordering by:
-		 * (1) Waiting for all interrupts-disabled code sections
-		 * to complete and (2) The synchronize_sched() ordering
-		 * guarantees, which provide for a memory barrier on each
-		 * CPU since the completion of its last read-side critical
-		 * section, including interrupt-disabled code sections.
-		 */
-		synchronize_sched();
+		rcu_tasks_build_list();
 
 		/*
 		 * Each pass through the following loop scans the list
@@ -607,5 +667,28 @@ static int __init rcu_spawn_tasks_kthread(void)
 	return 0;
 }
 early_initcall(rcu_spawn_tasks_kthread);
+
+/*
+ * RCU-tasks hook for exiting tasks.  This hook prevents the current
+ * task from being added to the RCU-tasks list, and also ensures that
+ * any future RCU-tasks grace period will wait for the current task
+ * to finish exiting.
+ */
+void exit_rcu_tasks(void)
+{
+	int exitcode;
+	struct task_struct *t = current;
+	DECLARE_WAIT_QUEUE_HEAD(wq);
+
+	spin_lock(&t->rcu_tasks_lock);
+	exitcode = t->rcu_tasks_holdout + 1;
+	t->rcu_tasks_exiting = exitcode;
+	if (exitcode)
+		t->rcu_tasks_exit_wq = &wq;
+	spin_unlock(&t->rcu_tasks_lock);
+	wait_event(wq,
+		   ACCESS_ONCE(t->rcu_tasks_holdout_list.prev) == LIST_POISON2);
+	t->rcu_tasks_exit_wq = NULL;
+}
 
 #endif /* #ifdef CONFIG_TASKS_RCU */
