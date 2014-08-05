@@ -1140,5 +1140,14 @@ static inline void rcu_sysidle_force_exit(void)
 
 #endif /* #else #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
 
+#if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL)
+struct task_struct *rcu_dynticks_task_cur(int cpu);
+#else /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
+static inline struct task_struct *rcu_dynticks_task_cur(int cpu)
+{
+	return NULL;
+}
+#endif /* #else #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
+
 
 #endif /* __LINUX_RCUPDATE_H */

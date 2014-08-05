@@ -481,6 +481,28 @@ static void check_holdout_task(struct task_struct *t,
 	sched_show_task(current);
 }
 
+/* Check for nohz_full CPUs executing in userspace. */
+static void check_no_hz_full_tasks(void)
+{
+#ifdef CONFIG_NO_HZ_FULL
+	int cpu;
+	struct task_struct *t;
+
+	for_each_online_cpu(cpu) {
+		cond_resched();
+		rcu_read_lock();
+		t = rcu_dynticks_task_cur(cpu);
+		if (t == NULL || is_idle_task(t)) {
+			rcu_read_unlock();
+			continue;
+		}
+		if (ACCESS_ONCE(t->rcu_tasks_holdout))
+			ACCESS_ONCE(t->rcu_tasks_holdout) = 0;
+		rcu_read_unlock();
+	}
+#endif /* #ifdef CONFIG_NO_HZ_FULL */
+}
+
 /* RCU-tasks kthread that detects grace periods and invokes callbacks. */
 static int __noreturn rcu_tasks_kthread(void *arg)
 {
@@ -584,6 +606,7 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 				lastreport = jiffies;
 			firstreport = true;
 			WARN_ON(signal_pending(current));
+			check_no_hz_full_tasks();
 			rcu_read_lock();
 			list_for_each_entry_rcu(t, &rcu_tasks_holdouts,
 						rcu_tasks_holdout_list)

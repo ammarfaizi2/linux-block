@@ -2852,3 +2852,29 @@ static void rcu_bind_gp_kthread(void)
 		set_cpus_allowed_ptr(current, cpumask_of(cpu));
 #endif /* #ifdef CONFIG_NO_HZ_FULL */
 }
+
+/* Record the current task on dyntick-idle entry. */
+static void rcu_dynticks_task_enter(struct rcu_dynticks *rdtp,
+				    struct task_struct *t)
+{
+#if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL)
+	ACCESS_ONCE(rdtp->dynticks_tsk) = t;
+#endif /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
+}
+
+/* Record no current task on dyntick-idle exit. */
+static void rcu_dynticks_task_exit(struct rcu_dynticks *rdtp)
+{
+	rcu_dynticks_task_enter(rdtp, NULL);
+}
+
+#if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL)
+struct task_struct *rcu_dynticks_task_cur(int cpu)
+{
+	struct rcu_dynticks *rdtp = &per_cpu(rcu_dynticks, cpu);
+	struct task_struct *t = ACCESS_ONCE(rdtp->dynticks_tsk);
+
+	smp_read_barrier_depends(); /* Dereferences after fetch of "t". */
+	return t;
+}
+#endif /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
