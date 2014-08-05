@@ -2852,3 +2852,19 @@ static void rcu_bind_gp_kthread(void)
 		set_cpus_allowed_ptr(current, cpumask_of(cpu));
 #endif /* #ifdef CONFIG_NO_HZ_FULL */
 }
+
+/* Record the current task on dyntick-idle entry. */
+static void rcu_dynticks_task_enter(void)
+{
+#if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL)
+	ACCESS_ONCE(current->rcu_tasks_idle_cpu) = smp_processor_id();
+#endif /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
+}
+
+/* Record no current task on dyntick-idle exit. */
+static void rcu_dynticks_task_exit(void)
+{
+#if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL)
+	ACCESS_ONCE(current->rcu_tasks_idle_cpu) = -1;
+#endif /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
+}
