@@ -468,7 +468,7 @@ static void check_holdout_task(struct task_struct *t,
 	    t->rcu_tasks_nvcsw != ACCESS_ONCE(t->nvcsw) ||
 	    !ACCESS_ONCE(t->on_rq)) {
 		ACCESS_ONCE(t->rcu_tasks_holdout) = 0;
-		list_del_rcu(&t->rcu_tasks_holdout_list);
+		list_del_init(&t->rcu_tasks_holdout_list);
 		put_task_struct(t);
 		return;
 	}
@@ -597,6 +597,7 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 			bool firstreport;
 			bool needreport;
 			int rtst;
+			struct task_struct *t1;
 
 			schedule_timeout_interruptible(HZ / 10);
 			rtst = ACCESS_ONCE(rcu_task_stall_timeout);
@@ -607,11 +608,11 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 			firstreport = true;
 			WARN_ON(signal_pending(current));
 			check_no_hz_full_tasks();
-			rcu_read_lock();
-			list_for_each_entry_rcu(t, &rcu_tasks_holdouts,
-						rcu_tasks_holdout_list)
+			list_for_each_entry_safe(t, t1, &rcu_tasks_holdouts,
+						rcu_tasks_holdout_list) {
 				check_holdout_task(t, needreport, &firstreport);
-			rcu_read_unlock();
+				cond_resched();
+			}
 		}
 
 		/*
