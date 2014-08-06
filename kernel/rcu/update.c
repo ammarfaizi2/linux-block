@@ -48,6 +48,7 @@
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
+#include "../sched/sched.h" /* cpu_rq()->idle */
 
 #define CREATE_TRACE_POINTS
 
@@ -462,17 +463,36 @@ EXPORT_SYMBOL_GPL(rcu_barrier_tasks);
 
 /* See if tasks are still holding out, complain if so. */
 static void check_holdout_task(struct task_struct *t,
-			       bool needreport, bool *firstreport)
+			       bool needreport, bool *firstreport,
+			       bool needidlekick)
 {
-	if (!ACCESS_ONCE(t->rcu_tasks_holdout) ||
-	    t->rcu_tasks_nvcsw != ACCESS_ONCE(t->nvcsw) ||
-	    !ACCESS_ONCE(t->on_rq) ||
-	    (IS_ENABLED(CONFIG_NO_HZ_FULL) &&
-	     !is_idle_task(t) && t->rcu_tasks_idle_cpu >= 0)) {
-		ACCESS_ONCE(t->rcu_tasks_holdout) = 0;
-		list_del_init(&t->rcu_tasks_holdout_list);
-		put_task_struct(t);
-		return;
+	if (!ACCESS_ONCE(t->rcu_tasks_holdout))
+		goto not_holdout; /* Other detection of non-holdout status. */
+	if (t->rcu_tasks_nvcsw != ACCESS_ONCE(t->nvcsw))
+		goto not_holdout; /* Voluntary context switch. */
+	if (!ACCESS_ONCE(t->on_rq))
+		goto not_holdout; /* Not on runqueue. */
+	if (IS_ENABLED(CONFIG_NO_HZ_FULL) &&
+	    !is_idle_task(t) && t->rcu_tasks_idle_cpu >= 0)
+		goto not_holdout; /* NO_HZ_FULL userspace execution. */
+	if (is_idle_task(t)) {
+		int cpu;
+
+		cpu = task_cpu(t);
+		if (cpu >= 0 && cpu_curr(cpu) != t)
+			goto not_holdout; /* Idle task not running. */
+
+		if (cpu >= 0) {
+			/*
+			 * We must schedule on the idle CPU.  Note that
+			 * checking for changes in dyntick-idle counters
+			 * is not sufficient, as an interrupt or NMI can
+			 * change these counters without guaranteeing that
+			 * the underlying idle task has made progress.
+			 */
+			set_cpus_allowed_ptr(current, cpumask_of(cpu));
+			set_cpus_allowed_ptr(current, cpu_online_mask);
+		}
 	}
 	if (!needreport)
 		return;
@@ -481,13 +501,20 @@ static void check_holdout_task(struct task_struct *t,
 		*firstreport = false;
 	}
 	sched_show_task(t);
+	return;
+not_holdout:
+	ACCESS_ONCE(t->rcu_tasks_holdout) = 0;
+	list_del_init(&t->rcu_tasks_holdout_list);
+	put_task_struct(t);
 }
 
 /* RCU-tasks kthread that detects grace periods and invokes callbacks. */
 static int __noreturn rcu_tasks_kthread(void *arg)
 {
+	int cpu;
 	unsigned long flags;
 	struct task_struct *g, *t;
+	unsigned long lastidlekick;
 	unsigned long lastreport;
 	struct rcu_head *list;
 	struct rcu_head *next;
@@ -546,8 +573,7 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 		 */
 		rcu_read_lock();
 		for_each_process_thread(g, t) {
-			if (t != current && ACCESS_ONCE(t->on_rq) &&
-			    !is_idle_task(t)) {
+			if (t != current && ACCESS_ONCE(t->on_rq)) {
 				get_task_struct(t);
 				t->rcu_tasks_nvcsw = ACCESS_ONCE(t->nvcsw);
 				ACCESS_ONCE(t->rcu_tasks_holdout) = 1;
@@ -556,6 +582,24 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 			}
 		}
 		rcu_read_unlock();
+
+		/*
+		 * Next, queue up any currently running idle tasks.
+		 * Exclude CPU hotplug during the time we are working
+		 * with idle tasks, as it is considered bad form to
+		 * send IPIs to offline CPUs.
+		 */
+		get_online_cpus();
+		for_each_online_cpu(cpu) {
+			t = cpu_rq(cpu)->idle;
+			if (t == cpu_curr(cpu)) {
+				get_task_struct(t);
+				t->rcu_tasks_nvcsw = ACCESS_ONCE(t->nvcsw);
+				ACCESS_ONCE(t->rcu_tasks_holdout) = 1;
+				list_add(&t->rcu_tasks_holdout_list,
+					 &rcu_tasks_holdouts);
+			}
+		}
 
 		/*
 		 * Wait for tasks that are in the process of exiting.
@@ -571,14 +615,20 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 		 * of holdout tasks, removing any that are no longer
 		 * holdouts.  When the list is empty, we are done.
 		 */
+		lastidlekick = jiffies;
 		lastreport = jiffies;
 		while (!list_empty(&rcu_tasks_holdouts)) {
 			bool firstreport;
+			int needidlekick = false;
 			bool needreport;
 			int rtst;
 			struct task_struct *t1;
 
 			schedule_timeout_interruptible(HZ);
+			if (time_after(jiffies, lastidlekick + 10 * HZ)) {
+				needidlekick = true;
+				lastidlekick = jiffies;
+			}
 			rtst = ACCESS_ONCE(rcu_task_stall_timeout);
 			needreport = rtst > 0 &&
 				     time_after(jiffies, lastreport + rtst);
@@ -588,10 +638,12 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 			WARN_ON(signal_pending(current));
 			list_for_each_entry_safe(t, t1, &rcu_tasks_holdouts,
 						rcu_tasks_holdout_list) {
-				check_holdout_task(t, needreport, &firstreport);
+				check_holdout_task(t, needreport, &firstreport,
+						   needidlekick);
 				cond_resched();
 			}
 		}
+		put_online_cpus();
 
 		/*
 		 * Because ->on_rq and ->nvcsw are not guaranteed
