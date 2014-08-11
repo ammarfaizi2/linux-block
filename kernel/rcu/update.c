@@ -465,6 +465,8 @@ EXPORT_SYMBOL_GPL(rcu_barrier_tasks);
 static void check_holdout_task(struct task_struct *t,
 			       bool needreport, bool *firstreport)
 {
+	int cpu;
+
 	if (!ACCESS_ONCE(t->rcu_tasks_holdout))
 		goto not_holdout; /* Other detection of non-holdout status. */
 	if (t->rcu_tasks_nvcsw != ACCESS_ONCE(t->nvcsw))
@@ -475,8 +477,6 @@ static void check_holdout_task(struct task_struct *t,
 	    !is_idle_task(t) && t->rcu_tasks_idle_cpu >= 0)
 		goto not_holdout; /* NO_HZ_FULL userspace execution. */
 	if (is_idle_task(t)) {
-		int cpu;
-
 		cpu = task_cpu(t);
 		if (cpu >= 0 && cpu_curr(cpu) != t)
 			goto not_holdout; /* Idle task not running. */
@@ -499,6 +499,12 @@ static void check_holdout_task(struct task_struct *t,
 		pr_err("INFO: rcu_tasks detected stalls on tasks:\n");
 		*firstreport = false;
 	}
+	cpu = task_cpu(t);
+	pr_alert("%p: %c%c nvcsw: %lu/%lu holdout: %d idle_cpu: %d/%d\n",
+		 t, ".I"[is_idle_task(t)],
+		 "N."[cpu < 0 || !tick_nohz_full_cpu(cpu)],
+		 t->rcu_tasks_nvcsw, t->nvcsw, t->rcu_tasks_holdout,
+		 t->rcu_tasks_idle_cpu, cpu);
 	sched_show_task(t);
 	return;
 not_holdout:
