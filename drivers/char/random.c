@@ -257,6 +257,7 @@
 #include <linux/kmemcheck.h>
 #include <linux/workqueue.h>
 #include <linux/irq.h>
+#include <linux/syscore_ops.h>
 
 #include <asm/processor.h>
 #include <asm/uaccess.h>
@@ -1279,6 +1280,26 @@ static void init_std_data(struct entropy_store *r)
 	mix_pool_bytes(r, utsname(), sizeof(*(utsname())), NULL);
 }
 
+static void init_all_pools(void)
+{
+	init_std_data(&input_pool);
+	init_std_data(&blocking_pool);
+	init_std_data(&nonblocking_pool);
+}
+
+static void random_resume(void)
+{
+	/*
+	 * After resume (and especially after hibernation / kexec resume),
+	 * make a best-effort attempt to collect fresh entropy.
+	 */
+	init_all_pools();
+}
+
+static struct syscore_ops random_syscore_ops = {
+	.resume = random_resume,
+};
+
 /*
  * Note that setup_arch() may call add_device_randomness()
  * long before we get here. This allows seeding of the pools
@@ -1291,9 +1312,8 @@ static void init_std_data(struct entropy_store *r)
  */
 static int rand_initialize(void)
 {
-	init_std_data(&input_pool);
-	init_std_data(&blocking_pool);
-	init_std_data(&nonblocking_pool);
+	init_all_pools();
+	register_syscore_ops(&random_syscore_ops);
 	return 0;
 }
 early_initcall(rand_initialize);
