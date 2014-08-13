@@ -428,6 +428,22 @@ void perf_evlist__add_pollfd(struct perf_evlist *evlist, int fd)
 	evlist->nr_fds++;
 }
 
+int perf_evlist__filter_pollfd(struct perf_evlist *evlist, short revents_and_mask)
+{
+	int fd = 0, nr_fds = 0;
+
+	while (fd < evlist->nr_fds) {
+		if ((evlist->pollfd[fd].revents & revents_and_mask) == 0)
+			++nr_fds;
+
+		if (++fd != nr_fds)
+			evlist->pollfd[nr_fds] = evlist->pollfd[fd];
+	}
+
+	evlist->nr_fds = nr_fds;
+	return nr_fds;
+}
+
 static void perf_evlist__id_hash(struct perf_evlist *evlist,
 				 struct perf_evsel *evsel,
 				 int cpu, int thread, u64 id)
