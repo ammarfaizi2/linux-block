@@ -2171,7 +2171,8 @@ next_event:
 	if (trace->nr_events == before) {
 		int timeout = done ? 100 : -1;
 
-		if (poll(evlist->pollfd, evlist->nr_fds, timeout) > 0)
+		if (poll(evlist->pollfd, evlist->nr_fds, timeout) > 0 &&
+		    perf_evlist__filter_pollfd(evlist, POLLERR | POLLHUP) > 0)
 			goto again;
 	} else {
 		goto again;
