@@ -154,6 +154,10 @@ static struct test {
 		.func = test__hists_cumulate,
 	},
 	{
+		.desc = "Filter fds with revents mask in a pollfd array",
+		.func = test__perf_evlist__filter_pollfd,
+	},
+	{
 		.func = NULL,
 	},
 };
