@@ -467,6 +467,9 @@ static int __cmd_record(struct record *rec, int argc, const char **argv)
 			if (err > 0 || (err < 0 && errno == EINTR))
 				err = 0;
 			waking++;
+
+			if (perf_evlist__filter_pollfd(rec->evlist, POLLERR | POLLHUP) == 0)
+				done = 1;
 		}
 
 		/*
