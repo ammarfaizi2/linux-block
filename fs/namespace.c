@@ -2154,12 +2154,20 @@ static int do_new_mount(struct path *path, const char *fstype, int flags,
 			put_filesystem(type);
 			return -EPERM;
 		}
-		/* Only in special cases allow devices from mounts
-		 * created outside the initial user namespace.
+
+		/*
+		 * If a filesystem might allow the mounter to put
+		 * device nodes on it without the checks in mknod,
+		 * then require MS_NODEV to mount it.
 		 */
 		if (!(type->fs_flags & FS_USERNS_DEV_MOUNT)) {
-			flags |= MS_NODEV;
-			mnt_flags |= MNT_NODEV | MNT_LOCK_NODEV;
+			if (!(mnt_flags & MNT_NODEV)) {
+				put_filesystem(type);
+				return -EPERM;
+			}
+
+			/* Do not allow nodev to be cleared. */
+			mnt_flags |= MNT_LOCK_NODEV;
 		}
 	}
 
