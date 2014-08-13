@@ -1263,12 +1263,10 @@ static void seed_entropy_store(void *ctx, u32 data)
 static void init_std_data(struct entropy_store *r)
 {
 	int i;
-	ktime_t now = ktime_get_real();
 	unsigned long rv;
 	char log_prefix[128];
 
 	r->last_pulled = jiffies;
-	mix_pool_bytes(r, &now, sizeof(now), NULL);
 	for (i = r->poolinfo->poolbytes; i > 0; i -= sizeof(rv)) {
 		rv = random_get_entropy();
 		mix_pool_bytes(r, &rv, sizeof(rv), NULL);

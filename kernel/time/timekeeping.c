@@ -23,6 +23,7 @@
 #include <linux/stop_machine.h>
 #include <linux/pvclock_gtod.h>
 #include <linux/compiler.h>
+#include <linux/random.h>
 
 #include "tick-internal.h"
 #include "ntp_internal.h"
@@ -791,6 +792,7 @@ void __init timekeeping_init(void)
 	struct clocksource *clock;
 	unsigned long flags;
 	struct timespec now, boot, tmp;
+	ktime_t ktime;
 
 	read_persistent_clock(&now);
 
@@ -835,7 +837,13 @@ void __init timekeeping_init(void)
 	memcpy(&shadow_timekeeper, &timekeeper, sizeof(timekeeper));
 
 	write_seqcount_end(&timekeeper_seq);
+
+	add_device_randomness(tk, sizeof(*tk));
+
 	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
+
+	ktime = ktime_get_real();
+	add_device_randomness(&ktime, sizeof(ktime));
 }
 
 /* time in seconds when suspend began */
@@ -916,6 +924,7 @@ static void timekeeping_resume(void)
 	struct timespec ts_new, ts_delta;
 	cycle_t cycle_now, cycle_delta;
 	bool suspendtime_found = false;
+	ktime_t ktime;
 
 	read_persistent_clock(&ts_new);
 
@@ -976,6 +985,13 @@ static void timekeeping_resume(void)
 	timekeeping_suspended = 0;
 	timekeeping_update(tk, TK_MIRROR | TK_CLOCK_WAS_SET);
 	write_seqcount_end(&timekeeper_seq);
+
+	/*
+	 * The timekeeping state has a decent chance of differing
+	 * between resumptions of the same image.
+	 */
+	add_device_randomness(tk, sizeof(*tk));
+
 	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
 	touch_softlockup_watchdog();
@@ -984,6 +1000,9 @@ static void timekeeping_resume(void)
 
 	/* Resume hrtimers */
 	hrtimers_resume();
+
+	ktime = ktime_get_real();
+	add_device_randomness(&ktime, sizeof(ktime));
 }
 
 static int timekeeping_suspend(void)
