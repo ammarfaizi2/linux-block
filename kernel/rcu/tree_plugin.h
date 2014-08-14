@@ -2216,7 +2216,7 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
 			(d = ULONG_CMP_GE(ACCESS_ONCE(rnp->completed), c)));
 		if (likely(d))
 			break;
-		flush_signals(current);
+		WARN_ON(signal_pending(current));
 		trace_rcu_future_gp(rnp, rdp, c, TPS("ResumeWait"));
 	}
 	trace_rcu_future_gp(rnp, rdp, c, TPS("EndWait"));
@@ -2275,7 +2275,7 @@ wait_again:
 		if (!rcu_nocb_poll)
 			trace_rcu_nocb_wake(my_rdp->rsp->name, my_rdp->cpu,
 					    "WokeEmpty");
-		flush_signals(current);
+		WARN_ON(signal_pending(current));
 		schedule_timeout_interruptible(1);
 
 		/* Rescan in case we were a victim of memory ordering. */
@@ -2355,7 +2355,7 @@ static void nocb_follower_wait(struct rcu_data *rdp)
 		if (!rcu_nocb_poll)
 			trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu,
 					    "WokeEmpty");
-		flush_signals(current);
+		WARN_ON(signal_pending(current));
 		schedule_timeout_interruptible(1);
 	}
 }
