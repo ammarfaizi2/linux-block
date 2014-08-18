@@ -402,7 +402,21 @@ int perf_evlist__enable_event_idx(struct perf_evlist *evlist,
 		return perf_evlist__enable_event_thread(evlist, evsel, idx);
 }
 
-static int perf_evlist__alloc_pollfd(struct perf_evlist *evlist)
+static int perf_evlist__grow_pollfd(struct perf_evlist *evlist, int hint)
+{
+	int nr_fds_alloc = evlist->nr_fds_alloc + hint;
+	size_t size = sizeof(struct pollfd) * nr_fds_alloc;
+	struct pollfd *pollfd = realloc(evlist->pollfd, size);
+
+	if (pollfd == NULL)
+		return -ENOMEM;
+
+	evlist->nr_fds_alloc = nr_fds_alloc;
+	evlist->pollfd	     = pollfd;
+	return 0;
+}
+
+int perf_evlist__alloc_pollfd(struct perf_evlist *evlist)
 {
 	int nr_cpus = cpu_map__nr(evlist->cpus);
 	int nr_threads = thread_map__nr(evlist->threads);
@@ -416,16 +430,28 @@ static int perf_evlist__alloc_pollfd(struct perf_evlist *evlist)
 			nfds += nr_cpus * nr_threads;
 	}
 
-	evlist->pollfd = malloc(sizeof(struct pollfd) * nfds);
-	return evlist->pollfd != NULL ? 0 : -ENOMEM;
+	if (evlist->nr_fds_alloc - evlist->nr_fds < nfds &&
+	    perf_evlist__grow_pollfd(evlist, nfds) < 0)
+		return -ENOMEM;
+
+	return 0;
 }
 
-void perf_evlist__add_pollfd(struct perf_evlist *evlist, int fd)
+int perf_evlist__add_pollfd(struct perf_evlist *evlist, int fd)
 {
+	/*
+	 * XXX: 64 is arbitrary, just not to call realloc at each fd.
+	 *	Find a better autogrowing heuristic
+	 */
+	if (evlist->nr_fds == evlist->nr_fds_alloc &&
+	    perf_evlist__grow_pollfd(evlist, 64) < 0)
+		return -ENOMEM;
+
 	fcntl(fd, F_SETFL, O_NONBLOCK);
 	evlist->pollfd[evlist->nr_fds].fd = fd;
 	evlist->pollfd[evlist->nr_fds].events = POLLIN | POLLERR | POLLHUP;
 	evlist->nr_fds++;
+	return 0;
 }
 
 int perf_evlist__filter_pollfd(struct perf_evlist *evlist, short revents_and_mask)
@@ -718,7 +744,11 @@ static int __perf_evlist__mmap(struct perf_evlist *evlist, int idx,
 		return -1;
 	}
 
-	perf_evlist__add_pollfd(evlist, fd);
+	if (perf_evlist__add_pollfd(evlist, fd) < 0) {
+		__perf_evlist__munmap(evlist->mmap[idx].base, idx);
+		return -1;
+	}
+
 	return 0;
 }
 
