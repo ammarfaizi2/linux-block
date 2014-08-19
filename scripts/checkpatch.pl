@@ -3255,6 +3255,14 @@ sub process {
 			     "Prefer dev_$level(... to dev_printk(KERN_$orig, ...\n" . $herecurr);
 		}
 
+# ENOSYS means "bad syscall nr" and nothing else
+# (note that this doesn't run on assembly files, so entry*.S is okay)
+		if ($line =~ /\bENOSYS\b/) {
+			ERROR("ENOSYS",
+			      "ENOSYS means 'invalid syscall nr' and nothing else\n" .
+			      "       (ignore if this really is syscall entry code)\n" . $herecurr);
+		}
+
 # function brace can't be on same line, except for #defines of do while,
 # or if closed on same line
 		if (($line=~/$Type\s*$Ident\(.*\).*\s*{/) and
