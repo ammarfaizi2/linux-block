@@ -833,7 +833,7 @@ static inline struct file *get_file(struct file *f)
  *
  * Lockd stuffs a "host" pointer into this.
  */
-typedef struct files_struct *fl_owner_t;
+typedef void *fl_owner_t;
 
 struct file_lock_operations {
 	void (*fl_copy_lock)(struct file_lock *, struct file_lock *);
@@ -1921,6 +1921,12 @@ static inline int break_lease(struct inode *inode, unsigned int mode)
 
 static inline int break_deleg(struct inode *inode, unsigned int mode)
 {
+	/*
+	 * Since this check is lockless, we must ensure that any refcounts
+	 * taken are done before checking inode->i_flock. Otherwise, we could
+	 * end up racing with tasks trying to set a new lease on this file.
+	 */
+	smp_mb();
 	if (inode->i_flock)
 		return __break_lease(inode, mode, FL_DELEG);
 	return 0;
@@ -2682,7 +2688,7 @@ static const struct file_operations __fops = {				\
 	.read	 = simple_attr_read,					\
 	.write	 = simple_attr_write,					\
 	.llseek	 = generic_file_llseek,					\
-};
+}
 
 static inline __printf(1, 2)
 void __simple_attr_check_format(const char *fmt, ...)

@@ -656,6 +656,7 @@ enum intel_sbi_destination {
 #define QUIRK_PIPEA_FORCE (1<<0)
 #define QUIRK_LVDS_SSC_DISABLE (1<<1)
 #define QUIRK_INVERT_BRIGHTNESS (1<<2)
+#define QUIRK_BACKLIGHT_PRESENT (1<<3)
 
 struct intel_fbdev;
 struct intel_fbc_work;
@@ -930,7 +931,7 @@ struct intel_ilk_power_mgmt {
 	unsigned long last_time1;
 	unsigned long chipset_power;
 	u64 last_count2;
-	struct timespec last_time2;
+	u64 last_time2;
 	unsigned long gfx_power;
 	u8 corr;
 
@@ -977,6 +978,8 @@ struct i915_power_well {
 	bool always_on;
 	/* power well enable/disable usage count */
 	int count;
+	/* cached hw enabled state */
+	bool hw_enabled;
 	unsigned long domains;
 	unsigned long data;
 	const struct i915_power_well_ops *ops;

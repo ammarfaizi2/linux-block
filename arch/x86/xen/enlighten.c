@@ -1537,7 +1537,10 @@ asmlinkage __visible void __init xen_start_kernel(void)
 	if (!xen_pvh_domain())
 		pv_cpu_ops = xen_cpu_ops;
 
-	x86_init.resources.memory_setup = xen_memory_setup;
+	if (xen_feature(XENFEAT_auto_translated_physmap))
+		x86_init.resources.memory_setup = xen_auto_xlated_memory_setup;
+	else
+		x86_init.resources.memory_setup = xen_memory_setup;
 	x86_init.oem.arch_setup = xen_arch_setup;
 	x86_init.oem.banner = xen_banner;
 
@@ -1714,6 +1717,8 @@ asmlinkage __visible void __init xen_start_kernel(void)
 	xen_raw_console_write("about to get started...\n");
 
 	xen_setup_runstate_info(0);
+
+	xen_efi_init();
 
 	/* Start the world */
 #ifdef CONFIG_X86_32

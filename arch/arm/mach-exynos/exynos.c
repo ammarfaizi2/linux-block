@@ -173,15 +173,35 @@ static struct platform_device exynos_cpuidle = {
 
 void __init exynos_cpuidle_init(void)
 {
-	if (soc_is_exynos5440())
-		return;
-
-	platform_device_register(&exynos_cpuidle);
+	if (soc_is_exynos4210() || soc_is_exynos5250())
+		platform_device_register(&exynos_cpuidle);
 }
 
 void __init exynos_cpufreq_init(void)
 {
 	platform_device_register_simple("exynos-cpufreq", -1, NULL, 0);
+}
+
+void __iomem *sysram_base_addr;
+void __iomem *sysram_ns_base_addr;
+
+void __init exynos_sysram_init(void)
+{
+	struct device_node *node;
+
+	for_each_compatible_node(node, NULL, "samsung,exynos4210-sysram") {
+		if (!of_device_is_available(node))
+			continue;
+		sysram_base_addr = of_iomap(node, 0);
+		break;
+	}
+
+	for_each_compatible_node(node, NULL, "samsung,exynos4210-sysram-ns") {
+		if (!of_device_is_available(node))
+			continue;
+		sysram_ns_base_addr = of_iomap(node, 0);
+		break;
+	}
 }
 
 void __init exynos_init_late(void)
@@ -198,7 +218,7 @@ static int __init exynos_fdt_map_chipid(unsigned long node, const char *uname,
 					int depth, void *data)
 {
 	struct map_desc iodesc;
-	__be32 *reg;
+	const __be32 *reg;
 	int len;
 
 	if (!of_flat_dt_is_compatible(node, "samsung,exynos4210-chipid") &&
@@ -271,6 +291,13 @@ static void __init exynos_dt_machine_init(void)
 		}
 	}
 
+	/*
+	 * This is called from smp_prepare_cpus if we've built for SMP, but
+	 * we still need to set it up for PM and firmware ops if not.
+	 */
+	if (!IS_ENABLED(CONFIG_SMP))
+		exynos_sysram_init();
+
 	exynos_cpuidle_init();
 	exynos_cpufreq_init();
 
@@ -308,6 +335,15 @@ static void __init exynos_reserve(void)
 #endif
 }
 
+static void __init exynos_dt_fixup(void)
+{
+	/*
+	 * Some versions of uboot pass garbage entries in the memory node,
+	 * use the old CONFIG_ARM_NR_BANKS
+	 */
+	of_fdt_limit_memory(8);
+}
+
 DT_MACHINE_START(EXYNOS_DT, "SAMSUNG EXYNOS (Flattened Device Tree)")
 	/* Maintainer: Thomas Abraham <thomas.abraham@linaro.org> */
 	/* Maintainer: Kukjin Kim <kgene.kim@samsung.com> */
@@ -321,4 +357,5 @@ DT_MACHINE_START(EXYNOS_DT, "SAMSUNG EXYNOS (Flattened Device Tree)")
 	.dt_compat	= exynos_dt_compat,
 	.restart	= exynos_restart,
 	.reserve	= exynos_reserve,
+	.dt_fixup	= exynos_dt_fixup,
 MACHINE_END
