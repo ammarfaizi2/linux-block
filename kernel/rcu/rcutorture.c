@@ -83,6 +83,10 @@ torture_param(int, onoff_interval, 0,
 	     "Time between CPU hotplugs (s), 0=disable");
 torture_param(int, shuffle_interval, 3, "Number of seconds between shuffles");
 torture_param(int, shutdown_secs, 0, "Shutdown time (s), <= zero to disable.");
+torture_param(int, slam_kthreads, 1, "# preemption-slam threads, 0 disables.");
+torture_param(int, slam_prio, 99, "slam kthread RT priority.");
+torture_param(int, slam_sleep, 2, "slam kthread sleep time (jiffies).");
+torture_param(int, slam_spin, 200, "slam kthread spin time (us).");
 torture_param(int, stall_cpu, 0, "Stall duration (s), zero to disable.");
 torture_param(int, stall_cpu_holdoff, 10,
 	     "Time to wait before starting stall (s).");
@@ -1545,6 +1549,7 @@ rcu_torture_cleanup(void)
 	torture_stop_kthread(rcu_torture_fqs, fqs_task);
 	for (i = 0; i < ncbflooders; i++)
 		torture_stop_kthread(rcu_torture_cbflood, cbflood_task[i]);
+	torture_slam_cleanup();
 	if ((test_boost == 1 && cur_ops->can_boost) ||
 	    test_boost == 2) {
 		unregister_cpu_notifier(&rcutorture_cpu_nb);
@@ -1810,6 +1815,12 @@ rcu_torture_init(void)
 				goto unwind;
 		}
 	}
+	if (slam_kthreads < 0)
+		slam_kthreads = num_online_cpus();
+	firsterr = torture_slam_init(slam_kthreads, slam_sleep,
+				     slam_spin, slam_prio);
+	if (firsterr)
+		goto unwind;
 	rcutorture_record_test_transition();
 	torture_init_end();
 	return 0;
