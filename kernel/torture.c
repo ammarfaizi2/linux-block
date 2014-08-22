@@ -508,6 +508,103 @@ static void torture_shutdown_cleanup(void)
 	shutdown_task = NULL;
 }
 
+/* Task pointers for preemption slam testing kthreads. */
+struct task_struct **slam_tasks;
+
+/* Parameters for preemption slam testing. */
+static int slam_kthreads;
+static int slam_prio;
+static int slam_sleep;
+static int slam_spin;
+
+/*
+ * Preemption-slam kthread for kthread-exit testing.
+ */
+static int torture_slam_exit_kthread(void *arg)
+{
+	while (!kthread_should_stop()) {
+		torture_shutdown_absorb("torture_slam_exit_kthread");
+		schedule_timeout_uninterruptible(1);
+	}
+	return 0;
+}
+
+/*
+ * Preemption-slam kthread for kthread-preemption testing.
+ */
+static int torture_slam_kthread(void *arg)
+{
+	struct sched_param sp;
+	struct task_struct *tp;
+
+	VERBOSE_TOROUT_STRING("torture_slam_kthread started");
+	sp.sched_priority = slam_prio;
+	sched_setscheduler_nocheck(current, SCHED_FIFO, &sp);
+	do {
+		tp = kthread_run(torture_slam_exit_kthread, NULL,
+				 "torture_slam_exit_kthread");
+		schedule_timeout_interruptible(slam_sleep);
+		udelay(slam_spin);
+		if (tp)
+			kthread_stop(tp);
+		stutter_wait("torture_slam_kthread");
+	} while (!torture_must_stop());
+	torture_kthread_stopping("torture_slam_kthread");
+	return 0;
+}
+
+/*
+ * Clean up after preemption-slam torturing.
+ */
+void torture_slam_cleanup(void)
+{
+	int i;
+
+	if (!slam_tasks)
+		return;
+	for (i = 0; i < slam_kthreads; i++) {
+		if (!slam_tasks[i])
+			continue;
+		VERBOSE_TOROUT_STRING("Stopping torture_slam_kthread");
+		kthread_stop(slam_tasks[i]);
+		slam_tasks[i] = NULL;
+	}
+}
+
+/*
+ * Initialize preemption-slam kthread.
+ */
+int torture_slam_init(int sl_kthreads, int sl_sleep, int sl_spin, int sl_prio)
+{
+	int i;
+	int ret = 0;
+
+	slam_kthreads = sl_kthreads;
+	slam_sleep = sl_sleep;
+	slam_spin = sl_spin;
+	slam_prio = sl_prio;
+	if (slam_kthreads <= 0 ||
+	    slam_spin <= 0 ||
+	    slam_prio <= 0) {
+		pr_alert("torture_slam disabled, invalid args\n");
+		return -EINVAL;
+	}
+	slam_tasks = kcalloc(slam_kthreads, sizeof(slam_tasks[0]), GFP_KERNEL);
+	if (!slam_tasks) {
+		pr_alert("torture_slam: Out of memory\n");
+		return -ENOMEM;
+	}
+	for (i = 0; i < slam_kthreads; i++) {
+		ret = torture_create_kthread(torture_slam_kthread, NULL,
+					     slam_tasks[i]);
+		if (ret) {
+			torture_slam_cleanup();
+			return ret;
+		}
+	}
+	return ret;
+}
+
 /*
  * Variables for stuttering, which means to periodically pause and
  * restart testing in order to catch bugs that appear when load is

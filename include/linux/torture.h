@@ -70,6 +70,10 @@ int torture_shuffle_init(long shuffint);
 void torture_shutdown_absorb(const char *title);
 int torture_shutdown_init(int ssecs, void (*cleanup)(void));
 
+/* Test premption-slamming. */
+void torture_slam_cleanup(void);
+int torture_slam_init(int sl_kthreads, int sl_sleep, int sl_spin, int sl_prio);
+
 /* Task stuttering, which forces load/no-load transitions. */
 void stutter_wait(const char *title);
 int torture_stutter_init(int s);

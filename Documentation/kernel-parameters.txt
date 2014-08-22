@@ -2950,6 +2950,26 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			Set time (s) after boot system shutdown.  This
 			is useful for hands-off automated testing.
 
+	rcutorture.slam_kthreads= [KNL]
+			The number of preemption-slam kthreads provisioned
+			to disrupt kernel subsystems subjected to torture
+			testing.  Zero disables, while the default of -1
+			provisions one per online CPU.
+
+	rcutorture.slam_prio= [KNL]
+			The real-time scheduling priority that the
+			preemption-slam kthreads are to run at.
+			Defaults to 99.
+
+	rcutorture.slam_sleep= [KNL]
+			The number of jiffies that each preemption-slam
+			kthread should sleep between slams.  Defaults to 2.
+
+	rcutorture.slam_spin= [KNL]
+			The number of microseconds that each
+			preemption-slam kthread should spin while
+			slamming.  Defaults to 200.
+
 	rcutorture.stall_cpu= [KNL]
 			Duration of CPU stall (s) to test RCU CPU stall
 			warnings, zero to disable.
