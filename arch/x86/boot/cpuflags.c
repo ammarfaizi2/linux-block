@@ -2,6 +2,7 @@
 #include "bitops.h"
 
 #include <asm/processor-flags.h>
+#include <asm/processor-inlines.h>
 #include <asm/required-features.h>
 #include <asm/msr-index.h>
 #include "cpuflags.h"
@@ -70,21 +71,11 @@ int has_eflag(unsigned long mask)
 # define EBX_REG "=b"
 #endif
 
-static inline void cpuid(u32 id, u32 *a, u32 *b, u32 *c, u32 *d)
-{
-	asm volatile(".ifnc %%ebx,%3 ; movl  %%ebx,%3 ; .endif	\n\t"
-		     "cpuid					\n\t"
-		     ".ifnc %%ebx,%3 ; xchgl %%ebx,%3 ; .endif	\n\t"
-		    : "=a" (*a), "=c" (*c), "=d" (*d), EBX_REG (*b)
-		    : "a" (id)
-	);
-}
-
 void get_cpuflags(void)
 {
 	u32 max_intel_level, max_amd_level;
 	u32 tfms;
-	u32 ignored;
+	u32 ignored = 0;
 
 	if (loaded_flags)
 		return;
@@ -94,12 +85,14 @@ void get_cpuflags(void)
 		set_bit(X86_FEATURE_FPU, cpu.flags);
 
 	if (has_eflag(X86_EFLAGS_ID)) {
-		cpuid(0x0, &max_intel_level, &cpu_vendor[0], &cpu_vendor[2],
-		      &cpu_vendor[1]);
+		max_intel_level = 0;
+		native_cpuid(&max_intel_level,
+			     &cpu_vendor[0], &cpu_vendor[2], &cpu_vendor[1]);
 
 		if (max_intel_level >= 0x00000001 &&
 		    max_intel_level <= 0x0000ffff) {
-			cpuid(0x1, &tfms, &ignored, &cpu.flags[4],
+			tfms = 1;
+			native_cpuid(&tfms, &ignored, &cpu.flags[4],
 			      &cpu.flags[0]);
 			cpu.level = (tfms >> 8) & 15;
 			cpu.model = (tfms >> 4) & 15;
@@ -107,12 +100,14 @@ void get_cpuflags(void)
 				cpu.model += ((tfms >> 16) & 0xf) << 4;
 		}
 
-		cpuid(0x80000000, &max_amd_level, &ignored, &ignored,
+		max_amd_level = 0x80000000;
+		native_cpuid(&max_amd_level, &ignored, &ignored,
 		      &ignored);
 
 		if (max_amd_level >= 0x80000001 &&
 		    max_amd_level <= 0x8000ffff) {
-			cpuid(0x80000001, &ignored, &ignored, &cpu.flags[6],
+			u32 eax = 0x80000001;
+			native_cpuid(&eax, &ignored, &cpu.flags[6],
 			      &cpu.flags[1]);
 		}
 	}
