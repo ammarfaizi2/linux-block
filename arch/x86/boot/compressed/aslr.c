@@ -5,6 +5,8 @@
 #include <asm/archrandom.h>
 #include <asm/e820.h>
 
+#include <uapi/asm/kvm_para.h>
+
 #include <generated/compile.h>
 #include <linux/module.h>
 #include <linux/uts.h>
@@ -14,6 +16,17 @@
 /* Simplified build-specific string for starting entropy. */
 static const char build_str[] = UTS_RELEASE " (" LINUX_COMPILE_BY "@"
 		LINUX_COMPILE_HOST ") (" LINUX_COMPILER ") " UTS_VERSION;
+
+static u64 rdmsr_or_zero(unsigned int msr)
+{
+	int err;
+	u64 ret;
+
+	ret = native_read_msr_safe(msr, &err);
+	if (err)
+		ret = 0;
+	return ret;
+}
 
 #define I8254_PORT_CONTROL	0x43
 #define I8254_PORT_COUNTER0	0x40
@@ -69,6 +82,7 @@ static unsigned long get_random_long(void)
 	const unsigned long mix_const = 0x3f39e593UL;
 #endif
 	unsigned long raw, random = get_random_boot();
+	u64 kvm_seed;
 	bool use_i8254 = true;
 
 	debug_putstr("KASLR using");
@@ -79,6 +93,16 @@ static unsigned long get_random_long(void)
 			random ^= raw;
 			use_i8254 = false;
 		}
+	}
+
+	/*
+	 * QEMU will return zero instead of failing, so we don't try to
+	 * distinguish those cases.
+	 */
+	if ((kvm_seed = rdmsr_or_zero(MSR_KVM_GET_RNG_SEED)) != 0) {
+		debug_putstr(" MSR_KVM_GET_RNG_SEED");
+		random ^= (unsigned long)kvm_seed;
+		use_i8254 = false;
 	}
 
 	if (has_cpuflag(X86_FEATURE_TSC)) {
