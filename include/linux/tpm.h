@@ -93,6 +93,22 @@ static inline int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max) {
 #define TPM_RETURN_OFFSET		6
 #define TPM_DATA_OFFSET			10
 
+enum tpm_entity_type {
+	TPM_ET_KEYHANDLE		= 0x01,
+	TPM_ET_OWNER			= 0x02,
+	TPM_ET_DATA			= 0x03,
+	TPM_ET_SRK			= 0x04,
+	TPM_ET_KEY			= 0x05,
+	TPM_ET_REVOKE			= 0x06,
+	TPM_ET_DEL_OWNER_BLOB		= 0x07,
+	TPM_ET_DEL_ROW			= 0x08,
+	TPM_ET_DEL_KEY_BLOB		= 0x09,
+	TPM_ET_COUNTER			= 0x0a,
+	TPM_ET_NV			= 0x0b,
+	TPM_ET_OPERATOR			= 0x0c,
+	TPM_ET_RESERVED_HANDLE		= 0x40,
+};
+
 struct tpm_buf {
 	int len;
 	unsigned char data[MAX_BUF_SIZE];
@@ -103,7 +119,8 @@ struct tpm_buf {
 extern int tpm_library_use(void);
 extern void tpm_library_unuse(void);
 
-extern int tpm_seal(struct tpm_chip *chip, struct tpm_buf *tb, uint16_t keytype,
+extern int tpm_seal(struct tpm_chip *chip,
+		    struct tpm_buf *tb, enum tpm_entity_type keytype,
 		    uint32_t keyhandle, const unsigned char *keyauth,
 		    const unsigned char *data, uint32_t datalen,
 		    unsigned char *blob, uint32_t *bloblen,
