@@ -100,8 +100,8 @@ struct tpm_buf {
 
 #define INIT_BUF(tb) (tb->len = 0)
 
-extern void trusted_shash_release(void);
-extern int trusted_shash_alloc(void);
+extern int tpm_library_use(void);
+extern void tpm_library_unuse(void);
 
 extern int tpm_seal(struct tpm_chip *chip, struct tpm_buf *tb, uint16_t keytype,
 		    uint32_t keyhandle, const unsigned char *keyauth,

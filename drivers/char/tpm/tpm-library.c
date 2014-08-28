@@ -8,44 +8,36 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, version 2 of the License.
- *
- * See Documentation/security/keys-trusted-encrypted.txt
  */
 
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/init.h>
+#define pr_fmt(fmt) "TPMLIB: "fmt
 #include <linux/slab.h>
-#include <linux/parser.h>
-#include <linux/string.h>
 #include <linux/err.h>
-#include <keys/user-type.h>
-#include <keys/trusted-type.h>
-#include <linux/key-type.h>
-#include <linux/rcupdate.h>
+#include <linux/mutex.h>
 #include <linux/crypto.h>
 #include <crypto/hash.h>
 #include <crypto/sha.h>
-#include <linux/capability.h>
 #include <linux/tpm.h>
 #include <linux/tpm_command.h>
 
 #include "tpm-library.h"
 
-static const char hmac_alg[] = "hmac(sha1)";
-static const char hash_alg[] = "sha1";
+static const char tpm_hmac_alg[] = "hmac(sha1)";
+static const char tpm_hash_alg[] = "sha1";
 
-struct sdesc {
+struct tpm_sdesc {
 	struct shash_desc shash;
 	char ctx[];
 };
 
-static struct crypto_shash *hashalg;
-static struct crypto_shash *hmacalg;
+static DEFINE_MUTEX(tpm_library_init_mutex);
+static atomic_t tpm_library_usage;
+static struct crypto_shash *tpm_hashalg;
+static struct crypto_shash *tpm_hmacalg;
 
-static struct sdesc *init_sdesc(struct crypto_shash *alg)
+static struct tpm_sdesc *tpm_init_sdesc(struct crypto_shash *alg)
 {
-	struct sdesc *sdesc;
+	struct tpm_sdesc *sdesc;
 	int size;
 
 	size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
@@ -60,12 +52,12 @@ static struct sdesc *init_sdesc(struct crypto_shash *alg)
 static int TSS_sha1(const unsigned char *data, unsigned int datalen,
 		    unsigned char *digest)
 {
-	struct sdesc *sdesc;
+	struct tpm_sdesc *sdesc;
 	int ret;
 
-	sdesc = init_sdesc(hashalg);
+	sdesc = tpm_init_sdesc(tpm_hashalg);
 	if (IS_ERR(sdesc)) {
-		pr_info("trusted_key: can't alloc %s\n", hash_alg);
+		pr_info("Can't alloc %s\n", tpm_hash_alg);
 		return PTR_ERR(sdesc);
 	}
 
@@ -77,19 +69,19 @@ static int TSS_sha1(const unsigned char *data, unsigned int datalen,
 static int TSS_rawhmac(unsigned char *digest, const unsigned char *key,
 		       unsigned int keylen, ...)
 {
-	struct sdesc *sdesc;
+	struct tpm_sdesc *sdesc;
 	va_list argp;
 	unsigned int dlen;
 	unsigned char *data;
 	int ret;
 
-	sdesc = init_sdesc(hmacalg);
+	sdesc = tpm_init_sdesc(tpm_hmacalg);
 	if (IS_ERR(sdesc)) {
-		pr_info("trusted_key: can't alloc %s\n", hmac_alg);
+		pr_info("Can't alloc %s\n", tpm_hmac_alg);
 		return PTR_ERR(sdesc);
 	}
 
-	ret = crypto_shash_setkey(hmacalg, key, keylen);
+	ret = crypto_shash_setkey(tpm_hmacalg, key, keylen);
 	if (ret < 0)
 		goto out;
 	ret = crypto_shash_init(&sdesc->shash);
@@ -126,16 +118,16 @@ static int TSS_authhmac(unsigned char *digest, const unsigned char *key,
 			unsigned char *h2, unsigned char h3, ...)
 {
 	unsigned char paramdigest[SHA1_DIGEST_SIZE];
-	struct sdesc *sdesc;
+	struct tpm_sdesc *sdesc;
 	unsigned int dlen;
 	unsigned char *data;
 	unsigned char c;
 	int ret;
 	va_list argp;
 
-	sdesc = init_sdesc(hashalg);
+	sdesc = tpm_init_sdesc(tpm_hashalg);
 	if (IS_ERR(sdesc)) {
-		pr_info("trusted_key: can't alloc %s\n", hash_alg);
+		pr_info("Can't alloc %s\n", tpm_hash_alg);
 		return PTR_ERR(sdesc);
 	}
 
@@ -187,7 +179,7 @@ static int TSS_checkhmac1(unsigned char *buffer,
 	unsigned char *authdata;
 	unsigned char testhmac[SHA1_DIGEST_SIZE];
 	unsigned char paramdigest[SHA1_DIGEST_SIZE];
-	struct sdesc *sdesc;
+	struct tpm_sdesc *sdesc;
 	unsigned int dlen;
 	unsigned int dpos;
 	va_list argp;
@@ -205,9 +197,9 @@ static int TSS_checkhmac1(unsigned char *buffer,
 	continueflag = authdata - 1;
 	enonce = continueflag - TPM_NONCE_SIZE;
 
-	sdesc = init_sdesc(hashalg);
+	sdesc = tpm_init_sdesc(tpm_hashalg);
 	if (IS_ERR(sdesc)) {
-		pr_info("trusted_key: can't alloc %s\n", hash_alg);
+		pr_info("Can't alloc %s\n", tpm_hash_alg);
 		return PTR_ERR(sdesc);
 	}
 	ret = crypto_shash_init(&sdesc->shash);
@@ -274,7 +266,7 @@ static int TSS_checkhmac2(unsigned char *buffer,
 	unsigned char testhmac1[SHA1_DIGEST_SIZE];
 	unsigned char testhmac2[SHA1_DIGEST_SIZE];
 	unsigned char paramdigest[SHA1_DIGEST_SIZE];
-	struct sdesc *sdesc;
+	struct tpm_sdesc *sdesc;
 	unsigned int dlen;
 	unsigned int dpos;
 	va_list argp;
@@ -297,9 +289,9 @@ static int TSS_checkhmac2(unsigned char *buffer,
 	enonce1 = continueflag1 - TPM_NONCE_SIZE;
 	enonce2 = continueflag2 - TPM_NONCE_SIZE;
 
-	sdesc = init_sdesc(hashalg);
+	sdesc = tpm_init_sdesc(tpm_hashalg);
 	if (IS_ERR(sdesc)) {
-		pr_info("trusted_key: can't alloc %s\n", hash_alg);
+		pr_info("Can't alloc %s\n", tpm_hash_alg);
 		return PTR_ERR(sdesc);
 	}
 	ret = crypto_shash_init(&sdesc->shash);
@@ -355,8 +347,8 @@ out:
  * For key specific tpm requests, we will generate and send our
  * own TPM command packets using the drivers send function.
  */
-static int trusted_tpm_send(struct tpm_chip *chip, unsigned char *cmd,
-			    size_t buflen, const char *desc)
+static int tpm_send_dump(struct tpm_chip *chip,
+			 unsigned char *cmd, size_t buflen, const char *desc)
 {
 	int rc;
 
@@ -372,9 +364,10 @@ static int trusted_tpm_send(struct tpm_chip *chip, unsigned char *cmd,
 /*
  * Create an object specific authorisation protocol (OSAP) session
  */
-static int osap(struct tpm_chip *chip,
-		struct tpm_buf *tb, struct osapsess *s,
-		const unsigned char *key, uint16_t type, uint32_t handle)
+static int tpm_create_osap(struct tpm_chip *chip,
+			   struct tpm_buf *tb, struct tpm_osapsess *s,
+			   const unsigned char *key, uint16_t type,
+			   uint32_t handle)
 {
 	unsigned char enonce[TPM_NONCE_SIZE];
 	unsigned char ononce[TPM_NONCE_SIZE];
@@ -392,8 +385,8 @@ static int osap(struct tpm_chip *chip,
 	store32(tb, handle);
 	storebytes(tb, ononce, TPM_NONCE_SIZE);
 
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
-			       "creating OSAP session");
+	ret = tpm_send_dump(chip, tb->data, MAX_BUF_SIZE,
+			    "creating OSAP session");
 	if (ret < 0)
 		return ret;
 
@@ -409,8 +402,8 @@ static int osap(struct tpm_chip *chip,
 /*
  * Create an object independent authorisation protocol (oiap) session
  */
-static int oiap(struct tpm_chip *chip, struct tpm_buf *tb, uint32_t *handle,
-		unsigned char *nonce)
+static int tpm_create_oiap(struct tpm_chip *chip, struct tpm_buf *tb,
+			   uint32_t *handle, unsigned char *nonce)
 {
 	int ret;
 
@@ -418,8 +411,8 @@ static int oiap(struct tpm_chip *chip, struct tpm_buf *tb, uint32_t *handle,
 	store16(tb, TPM_TAG_RQU_COMMAND);
 	store32(tb, TPM_OIAP_SIZE);
 	store32(tb, TPM_ORD_OIAP);
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
-			       "creating OIAP session");
+	ret = tpm_send_dump(chip, tb->data, MAX_BUF_SIZE,
+			    "creating OIAP session");
 	if (ret < 0)
 		return ret;
 
@@ -448,7 +441,7 @@ int tpm_seal(struct tpm_chip *chip, struct tpm_buf *tb, uint16_t keytype,
 	     const unsigned char *blobauth,
 	     const unsigned char *pcrinfo, uint32_t pcrinfosize)
 {
-	struct osapsess sess;
+	struct tpm_osapsess sess;
 	struct tpm_digests *td;
 	unsigned char cont;
 	uint32_t ordinal;
@@ -466,7 +459,7 @@ int tpm_seal(struct tpm_chip *chip, struct tpm_buf *tb, uint16_t keytype,
 		return -ENOMEM;
 
 	/* get session for sealing key */
-	ret = osap(chip, tb, &sess, keyauth, keytype, keyhandle);
+	ret = tpm_create_osap(chip, tb, &sess, keyauth, keytype, keyhandle);
 	if (ret < 0)
 		goto out;
 	dump_sess(&sess);
@@ -527,8 +520,8 @@ int tpm_seal(struct tpm_chip *chip, struct tpm_buf *tb, uint16_t keytype,
 	store8(tb, cont);
 	storebytes(tb, td->pubauth, SHA1_DIGEST_SIZE);
 
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
-			       "sealing data");
+	ret = tpm_send_dump(chip, tb->data, MAX_BUF_SIZE,
+			    "sealing data");
 	if (ret < 0)
 		goto out;
 
@@ -577,14 +570,14 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 	int ret;
 
 	/* sessions for unsealing key and data */
-	ret = oiap(chip, tb, &authhandle1, enonce1);
+	ret = tpm_create_oiap(chip, tb, &authhandle1, enonce1);
 	if (ret < 0) {
-		pr_info("trusted_key: oiap failed (%d)\n", ret);
+		pr_info("Failed to create OIAP 1 (%d)\n", ret);
 		return ret;
 	}
-	ret = oiap(chip, tb, &authhandle2, enonce2);
+	ret = tpm_create_oiap(chip, tb, &authhandle2, enonce2);
 	if (ret < 0) {
-		pr_info("trusted_key: oiap failed (%d)\n", ret);
+		pr_info("Failed to create OIAP 2 (%d)\n", ret);
 		return ret;
 	}
 
@@ -592,7 +585,7 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 	keyhndl = htonl(SRKHANDLE);
 	ret = tpm_get_random(chip, nonceodd, TPM_NONCE_SIZE);
 	if (ret != TPM_NONCE_SIZE) {
-		pr_info("trusted_key: tpm_get_random failed (%d)\n", ret);
+		pr_info("tpm_get_random failed (%d)\n", ret);
 		return ret;
 	}
 	ret = TSS_authhmac(authdata1, keyauth, TPM_NONCE_SIZE,
@@ -622,10 +615,10 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 	store8(tb, cont);
 	storebytes(tb, authdata2, SHA1_DIGEST_SIZE);
 
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
-			       "unsealing data");
+	ret = tpm_send_dump(chip, tb->data, MAX_BUF_SIZE,
+			    "unsealing data");
 	if (ret < 0) {
-		pr_info("trusted_key: authhmac failed (%d)\n", ret);
+		pr_info("authhmac failed (%d)\n", ret);
 		return ret;
 	}
 
@@ -637,7 +630,7 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 			     *datalen, TPM_DATA_OFFSET + sizeof(uint32_t), 0,
 			     0);
 	if (ret < 0) {
-		pr_info("trusted_key: TSS_checkhmac2 failed (%d)\n", ret);
+		pr_info("TSS_checkhmac2 failed (%d)\n", ret);
 		return ret;
 	}
 	memcpy(data, tb->data + TPM_DATA_OFFSET + sizeof(uint32_t), *datalen);
@@ -645,38 +638,76 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 }
 EXPORT_SYMBOL_GPL(tpm_unseal);
 
-void trusted_shash_release(void)
+/**
+ * tpm_library_use - Tell the TPM library we want to make use of it
+ *
+ * Tell the TPM library that we want to make use of it, allowing it to
+ * allocate the resources it needs.
+ */
+int tpm_library_use(void)
 {
-	if (hashalg)
-		crypto_free_shash(hashalg);
-	if (hmacalg)
-		crypto_free_shash(hmacalg);
-}
-EXPORT_SYMBOL_GPL(trusted_shash_release);
-
-int trusted_shash_alloc(void)
-{
+	struct crypto_shash *hashalg = NULL;
+	struct crypto_shash *hmacalg = NULL;
 	int ret;
 
-	hmacalg = crypto_alloc_shash(hmac_alg, 0, CRYPTO_ALG_ASYNC);
+	if (atomic_inc_not_zero(&tpm_library_usage))
+		return 0;
+
+	/* We don't want to hold a mutex whilst allocating a crypto
+	 * object as it may have to call up to userspace.
+	 */
+	hmacalg = crypto_alloc_shash(tpm_hmac_alg, 0, CRYPTO_ALG_ASYNC);
 	if (IS_ERR(hmacalg)) {
-		pr_info("trusted_key: could not allocate crypto %s\n",
-			hmac_alg);
-		return PTR_ERR(hmacalg);
+		pr_info("Could not allocate crypto %s\n", tpm_hmac_alg);
+		ret = PTR_ERR(hmacalg);
+		goto hmacalg_fail;
 	}
 
-	hashalg = crypto_alloc_shash(hash_alg, 0, CRYPTO_ALG_ASYNC);
+	hashalg = crypto_alloc_shash(tpm_hash_alg, 0, CRYPTO_ALG_ASYNC);
 	if (IS_ERR(hashalg)) {
-		pr_info("trusted_key: could not allocate crypto %s\n",
-			hash_alg);
+		pr_info("Could not allocate crypto %s\n", tpm_hash_alg);
 		ret = PTR_ERR(hashalg);
 		goto hashalg_fail;
 	}
 
+	mutex_lock(&tpm_library_init_mutex);
+
+	if (atomic_inc_return(&tpm_library_usage) == 1) {
+		tpm_hmacalg = hmacalg;
+		tpm_hashalg = hashalg;
+	} else {
+		crypto_free_shash(hashalg);
+		crypto_free_shash(hmacalg);
+	}
+
+	mutex_unlock(&tpm_library_init_mutex);
 	return 0;
 
 hashalg_fail:
-	crypto_free_shash(hmacalg);
+	crypto_free_shash(tpm_hmacalg);
+hmacalg_fail:
 	return ret;
 }
-EXPORT_SYMBOL_GPL(trusted_shash_alloc);
+EXPORT_SYMBOL_GPL(tpm_library_use);
+
+/**
+ * tpm_library_unuse - Tell the TPM library we've finished with it
+ *
+ * Tell the TPM library we've finished with it, allowing it to free the
+ * resources it had allocated.
+ */
+void tpm_library_unuse(void)
+{
+	if (atomic_add_unless(&tpm_library_usage, -1, 1))
+		return;
+
+	mutex_lock(&tpm_library_init_mutex);
+
+	if (atomic_dec_and_test(&tpm_library_usage)) {
+		crypto_free_shash(tpm_hashalg);
+		crypto_free_shash(tpm_hmacalg);
+	}
+
+	mutex_unlock(&tpm_library_init_mutex);
+}
+EXPORT_SYMBOL_GPL(tpm_library_unuse);

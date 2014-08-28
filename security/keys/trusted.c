@@ -521,19 +521,19 @@ static int __init init_trusted(void)
 {
 	int ret;
 
-	ret = trusted_shash_alloc();
+	ret = tpm_library_use();
 	if (ret < 0)
 		return ret;
 	ret = register_key_type(&key_type_trusted);
 	if (ret < 0)
-		trusted_shash_release();
+		tpm_library_unuse();
 	return ret;
 }
 
 static void __exit cleanup_trusted(void)
 {
-	trusted_shash_release();
 	unregister_key_type(&key_type_trusted);
+	tpm_library_unuse();
 }
 
 late_initcall(init_trusted);

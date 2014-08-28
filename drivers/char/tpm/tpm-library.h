@@ -15,7 +15,7 @@
 #define LOAD32N(buffer, offset)	(*(uint32_t *)&buffer[offset])
 #define LOAD16(buffer, offset)	(ntohs(*(uint16_t *)&buffer[offset]))
 
-struct osapsess {
+struct tpm_osapsess {
 	uint32_t handle;
 	unsigned char secret[SHA1_DIGEST_SIZE];
 	unsigned char enonce[TPM_NONCE_SIZE];
@@ -51,14 +51,14 @@ static inline void storebytes(struct tpm_buf *buf, const unsigned char *in,
 #define TPM_DEBUG 0
 
 #ifdef TPM_DEBUG
-static inline void dump_sess(struct osapsess *s)
+static inline void dump_sess(struct tpm_osapsess *s)
 {
-	print_hex_dump(KERN_INFO, "trusted-key: handle ", DUMP_PREFIX_NONE,
+	print_hex_dump(KERN_INFO, "handle ", DUMP_PREFIX_NONE,
 		       16, 1, &s->handle, 4, 0);
-	pr_info("trusted-key: secret:\n");
+	pr_info("secret:\n");
 	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE,
 		       16, 1, &s->secret, SHA1_DIGEST_SIZE, 0);
-	pr_info("trusted-key: enonce:\n");
+	pr_info("enonce:\n");
 	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE,
 		       16, 1, &s->enonce, SHA1_DIGEST_SIZE, 0);
 }
@@ -67,13 +67,13 @@ static inline void dump_tpm_buf(unsigned char *buf)
 {
 	int len;
 
-	pr_info("\ntrusted-key: tpm buffer\n");
+	pr_info("\ntpm buffer\n");
 	len = LOAD32(buf, TPM_SIZE_OFFSET);
 	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1, buf, len, 0);
 }
 
 #else
-static inline void dump_sess(struct osapsess *s)
+static inline void dump_sess(struct tpm_osapsess *s)
 {
 }
 
