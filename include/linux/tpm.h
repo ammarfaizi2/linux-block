@@ -77,4 +77,42 @@ static inline int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max) {
 	return -ENODEV;
 }
 #endif
+
+/*
+ * TPM call library.
+ */
+/* implementation specific TPM constants */
+#define MAX_PCRINFO_SIZE		64
+#define MAX_BUF_SIZE			512
+#define TPM_GETRANDOM_SIZE		14
+#define TPM_OSAP_SIZE			36
+#define TPM_OIAP_SIZE			10
+#define TPM_SEAL_SIZE			87
+#define TPM_UNSEAL_SIZE			104
+#define TPM_SIZE_OFFSET			2
+#define TPM_RETURN_OFFSET		6
+#define TPM_DATA_OFFSET			10
+
+struct tpm_buf {
+	int len;
+	unsigned char data[MAX_BUF_SIZE];
+};
+
+#define INIT_BUF(tb) (tb->len = 0)
+
+extern void trusted_shash_release(void);
+extern int trusted_shash_alloc(void);
+
+extern int tpm_seal(struct tpm_chip *chip, struct tpm_buf *tb, uint16_t keytype,
+		    uint32_t keyhandle, const unsigned char *keyauth,
+		    const unsigned char *data, uint32_t datalen,
+		    unsigned char *blob, uint32_t *bloblen,
+		    const unsigned char *blobauth,
+		    const unsigned char *pcrinfo, uint32_t pcrinfosize);
+extern int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
+		      uint32_t keyhandle, const unsigned char *keyauth,
+		      const unsigned char *blob, int bloblen,
+		      const unsigned char *blobauth,
+		      unsigned char *data, unsigned int *datalen);
+
 #endif
