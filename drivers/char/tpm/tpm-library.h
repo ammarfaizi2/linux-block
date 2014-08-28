@@ -15,10 +15,18 @@
 #define LOAD32N(buffer, offset)	(*(uint32_t *)&buffer[offset])
 #define LOAD16(buffer, offset)	(ntohs(*(uint16_t *)&buffer[offset]))
 
+struct tpm_even_nonce {
+	unsigned char data[TPM_NONCE_SIZE];
+};
+
+struct tpm_odd_nonce {
+	unsigned char data[TPM_NONCE_SIZE];
+};
+
 struct tpm_osapsess {
 	uint32_t handle;
 	unsigned char secret[SHA1_DIGEST_SIZE];
-	unsigned char enonce[TPM_NONCE_SIZE];
+	struct tpm_even_nonce enonce;
 };
 
 static inline void store8(struct tpm_buf *buf, const unsigned char value)
