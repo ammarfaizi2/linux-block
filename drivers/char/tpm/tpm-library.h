@@ -11,9 +11,9 @@
  */
 
 
-#define LOAD32(buffer, offset)	(ntohl(*(uint32_t *)&buffer[offset]))
-#define LOAD32N(buffer, offset)	(*(uint32_t *)&buffer[offset])
-#define LOAD16(buffer, offset)	(ntohs(*(uint16_t *)&buffer[offset]))
+#define LOAD32BE(buffer, offset) (*(__be32 *)&buffer[(offset)])
+#define LOAD16(buffer, offset)	(be16_to_cpu(*(__be16 *)&buffer[(offset)]))
+#define LOAD32(buffer, offset)	(be32_to_cpu(LOAD32BE(buffer, (offset))))
 
 struct tpm_even_nonce {
 	unsigned char data[TPM_NONCE_SIZE];
@@ -36,14 +36,14 @@ static inline void store_8(struct tpm_buf *buf, unsigned char value)
 
 static inline void store16(struct tpm_buf *buf, uint16_t value)
 {
-	*(uint16_t *)&buf->data[buf->len] = htons(value);
-	buf->len += sizeof value;
+	*(__be16 *)&buf->data[buf->len] = cpu_to_be16(value);
+	buf->len += sizeof(value);
 }
 
 static inline void store32(struct tpm_buf *buf, uint32_t value)
 {
-	*(uint32_t *)&buf->data[buf->len] = htonl(value);
-	buf->len += sizeof value;
+	*(__be32 *)&buf->data[buf->len] = cpu_to_be32(value);
+	buf->len += sizeof(value);
 }
 
 static inline void store_s(struct tpm_buf *buf, const void *in, int len)
