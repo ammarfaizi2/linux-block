@@ -427,7 +427,7 @@ static int tpm_create_osap(struct tpm_chip *chip,
 	store32(tb, TPM_ORD_OSAP);
 	store16(tb, keytype);
 	store32(tb, keyhandle);
-	storebytes(tb, ononce.data, TPM_NONCE_SIZE);
+	store_s(tb, ononce.data, TPM_NONCE_SIZE);
 
 	ret = tpm_send_dump(chip, tb->data, MAX_BUF_SIZE,
 			    "creating OSAP session");
@@ -579,15 +579,15 @@ int tpm_seal(struct tpm_chip *chip,
 	store32(tb, TPM_SEAL_SIZE + pcrinfosize + rawlen);
 	store32(tb, TPM_ORD_SEAL);
 	store32(tb, keyhandle);
-	storebytes(tb, td->encauth, SHA1_DIGEST_SIZE);
+	store_s(tb, td->encauth, SHA1_DIGEST_SIZE);
 	store32(tb, pcrinfosize);
-	storebytes(tb, pcrinfo, pcrinfosize);
+	store_s(tb, pcrinfo, pcrinfosize);
 	store32(tb, rawlen);
-	storebytes(tb, rawdata, rawlen);
+	store_s(tb, rawdata, rawlen);
 	store32(tb, sess.handle);
-	storebytes(tb, td->ononce.data, TPM_NONCE_SIZE);
-	store8(tb, cont);
-	storebytes(tb, td->pubauth, SHA1_DIGEST_SIZE);
+	store_s(tb, td->ononce.data, TPM_NONCE_SIZE);
+	store_8(tb, cont);
+	store_s(tb, td->pubauth, SHA1_DIGEST_SIZE);
 
 	ret = tpm_send_dump(chip, tb->data, MAX_BUF_SIZE,
 			    "sealing data");
@@ -688,15 +688,15 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 	store32(tb, TPM_UNSEAL_SIZE + enclen);
 	store32(tb, TPM_ORD_UNSEAL);
 	store32(tb, keyhandle);
-	storebytes(tb, encdata, enclen);
+	store_s(tb, encdata, enclen);
 	store32(tb, authhandle1);
-	storebytes(tb, ononce.data, TPM_NONCE_SIZE);
-	store8(tb, cont);
-	storebytes(tb, authdata1, SHA1_DIGEST_SIZE);
+	store_s(tb, ononce.data, TPM_NONCE_SIZE);
+	store_8(tb, cont);
+	store_s(tb, authdata1, SHA1_DIGEST_SIZE);
 	store32(tb, authhandle2);
-	storebytes(tb, ononce.data, TPM_NONCE_SIZE);
-	store8(tb, cont);
-	storebytes(tb, authdata2, SHA1_DIGEST_SIZE);
+	store_s(tb, ononce.data, TPM_NONCE_SIZE);
+	store_8(tb, cont);
+	store_s(tb, authdata2, SHA1_DIGEST_SIZE);
 
 	ret = tpm_send_dump(chip, tb->data, MAX_BUF_SIZE,
 			    "unsealing data");

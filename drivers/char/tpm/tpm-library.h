@@ -29,25 +29,25 @@ struct tpm_osapsess {
 	struct tpm_even_nonce enonce;
 };
 
-static inline void store8(struct tpm_buf *buf, const unsigned char value)
+static inline void store_8(struct tpm_buf *buf, unsigned char value)
 {
 	buf->data[buf->len++] = value;
 }
 
-static inline void store16(struct tpm_buf *buf, const uint16_t value)
+static inline void store16(struct tpm_buf *buf, uint16_t value)
 {
-	*(uint16_t *) & buf->data[buf->len] = htons(value);
+	*(uint16_t *)&buf->data[buf->len] = htons(value);
 	buf->len += sizeof value;
 }
 
-static inline void store32(struct tpm_buf *buf, const uint32_t value)
+static inline void store32(struct tpm_buf *buf, uint32_t value)
 {
-	*(uint32_t *) & buf->data[buf->len] = htonl(value);
+	*(uint32_t *)&buf->data[buf->len] = htonl(value);
 	buf->len += sizeof value;
 }
 
-static inline void storebytes(struct tpm_buf *buf, const unsigned char *in,
-			      const int len)
+static inline void store_s(struct tpm_buf *buf, const unsigned char *in,
+			   int len)
 {
 	memcpy(buf->data + buf->len, in, len);
 	buf->len += len;
