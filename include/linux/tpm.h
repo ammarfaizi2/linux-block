@@ -110,7 +110,8 @@ enum tpm_entity_type {
 };
 
 struct tpm_buf {
-	int len;
+	unsigned short len;
+	unsigned short offset;
 	unsigned char data[MAX_BUF_SIZE];
 };
 

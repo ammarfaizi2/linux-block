@@ -11,10 +11,6 @@
  */
 
 
-#define LOAD32BE(buffer, offset) (*(__be32 *)&buffer[(offset)])
-#define LOAD16(buffer, offset)	(be16_to_cpu(*(__be16 *)&buffer[(offset)]))
-#define LOAD32(buffer, offset)	(be32_to_cpu(LOAD32BE(buffer, (offset))))
-
 struct tpm_even_nonce {
 	unsigned char data[TPM_NONCE_SIZE];
 };
@@ -28,6 +24,38 @@ struct tpm_osapsess {
 	unsigned char secret[SHA1_DIGEST_SIZE];
 	struct tpm_even_nonce enonce;
 };
+
+static inline void SET_BUF_OFFSET(struct tpm_buf *buffer, unsigned offset)
+{
+	buffer->offset = offset;
+}
+
+static inline uint16_t LOAD16(struct tpm_buf *buffer)
+{
+	__be16 *p = (__be16 *)(buffer->data + buffer->offset);
+	buffer->offset += 2;
+	return be16_to_cpup(p);
+}
+
+static inline __be32 LOAD32BE(struct tpm_buf *buffer)
+{
+	__be32 val = *(__be32 *)(buffer->data + buffer->offset);
+	buffer->offset += 4;
+	return val;
+}
+
+static inline uint32_t LOAD32(struct tpm_buf *buffer)
+{
+	__be32 *p = (__be32 *)(buffer->data + buffer->offset);
+	buffer->offset += 4;
+	return be32_to_cpup(p);
+}
+
+static inline void LOAD_S(struct tpm_buf *buffer, void *data_buffer, size_t amount)
+{
+	memcpy(data_buffer, buffer->data + buffer->offset, amount);
+	buffer->offset += amount;
+}
 
 static inline void store_8(struct tpm_buf *buf, unsigned char value)
 {
@@ -70,13 +98,14 @@ static inline void dump_sess(struct tpm_osapsess *s)
 		       16, 1, &s->enonce, SHA1_DIGEST_SIZE, 0);
 }
 
-static inline void dump_tpm_buf(unsigned char *buf)
+static inline void dump_tpm_buf(struct tpm_buf *tb)
 {
 	int len;
 
 	pr_info("\ntpm buffer\n");
-	len = LOAD32(buf, TPM_SIZE_OFFSET);
-	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1, buf, len, 0);
+	SET_BUF_OFFSET(tb, TPM_SIZE_OFFSET);
+	len = LOAD32(tb);
+	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1, tb->data, len, 0);
 }
 
 #else
