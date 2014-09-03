@@ -8,28 +8,26 @@ static void perf_evlist__init_pollfd(struct perf_evlist *evlist,
 				     int nr_fds_alloc, short revents)
 {
 	int fd;
+	struct fdarray *fda = &evlist->pollfd;
 
-	evlist->nr_fds = nr_fds_alloc;
+	fda->nr = nr_fds_alloc;
 
 	for (fd = 0; fd < nr_fds_alloc; ++fd) {
-		evlist->pollfd[fd].fd	   = nr_fds_alloc - fd;
-		evlist->pollfd[fd].revents = revents;
+		fda->entries[fd].fd	 = nr_fds_alloc - fd;
+		fda->entries[fd].revents = revents;
 	}
 }
 
 static int perf_evlist__fprintf_pollfd(struct perf_evlist *evlist,
 				       const char *prefix, FILE *fp)
 {
-	int printed = 0, fd;
+	int printed = 0;
 
 	if (!verbose)
 		return 0;
 
-	printed += fprintf(fp, "\n%s: %3d [ ", prefix, evlist->nr_fds);
-	for (fd = 0; fd < evlist->nr_fds; ++fd)
-		printed += fprintf(fp, "%s%d", fd ? ", " : "", evlist->pollfd[fd].fd);
-	printed += fprintf(fp, " ]");
-	return printed;
+	printed += fprintf(fp, "\n%s: ", prefix);
+	return fdarray__fprintf(&evlist->pollfd, fp);
 }
 
 int test__perf_evlist__filter_pollfd(void)
@@ -38,7 +36,9 @@ int test__perf_evlist__filter_pollfd(void)
 	int nr_fds, expected_fd[2], fd;
 	struct pollfd pollfd[nr_fds_alloc];
 	struct perf_evlist evlist_alloc = {
-		.pollfd	= pollfd,
+		.pollfd	= {
+			.entries = pollfd,
+		},
 	}, *evlist = &evlist_alloc;
 
 	perf_evlist__init_pollfd(evlist, nr_fds_alloc, POLLIN);
@@ -113,9 +113,12 @@ int test__perf_evlist__add_pollfd(void)
 		.nr = 2,
 	};
 	struct perf_evlist evlist_alloc = {
-		.pollfd	 = NULL,
+		.pollfd	 = {
+			.entries = NULL,
+		},
 		.threads = &threads,
 	}, *evlist = &evlist_alloc;
+	struct fdarray *fda = &evlist->pollfd;
 
 	INIT_LIST_HEAD(&evlist->entries);
 	list_add(&evsel.node, &evlist->entries);
@@ -125,9 +128,9 @@ int test__perf_evlist__add_pollfd(void)
 		return TEST_FAIL;
 	}
 
-	if (evlist->nr_fds_alloc != threads.nr) {
+	if (fda->nr_alloc != threads.nr) {
 		pr_debug("\n_evlist__alloc_pollfd: nr_fds_alloc=%d != (threads->nr(%d) * cpu_map->nr(%d))=%d",
-			 evlist->nr_fds_alloc, thread_map__nr(evlist->threads), cpu_map__nr(evlist->cpus),
+			 fda->nr_alloc, thread_map__nr(evlist->threads), cpu_map__nr(evlist->cpus),
 			 thread_map__nr(evlist->threads) * cpu_map__nr(evlist->cpus));
 		return TEST_FAIL;
 	}
@@ -137,8 +140,8 @@ int test__perf_evlist__add_pollfd(void)
 		return TEST_FAIL;
 	}
 
-	if (evlist->nr_fds != 1) {
-		pr_debug("\nperf_evlist__add_pollfd(evlist, 1)=%d != 1", evlist->nr_fds);
+	if (fda->nr != 1) {
+		pr_debug("\nperf_evlist__add_pollfd(evlist, 1)=%d != 1", fda->nr);
 		return TEST_FAIL;
 	}
 
@@ -147,8 +150,8 @@ int test__perf_evlist__add_pollfd(void)
 		return TEST_FAIL;
 	}
 
-	if (evlist->nr_fds != 2) {
-		pr_debug("\nperf_evlist__add_pollfd(evlist, 2)=%d != 2", evlist->nr_fds);
+	if (fda->nr != 2) {
+		pr_debug("\nperf_evlist__add_pollfd(evlist, 2)=%d != 2", fda->nr);
 		return TEST_FAIL;
 	}
 
@@ -159,20 +162,20 @@ int test__perf_evlist__add_pollfd(void)
 		return TEST_FAIL;
 	}
 
-	if (evlist->nr_fds != 3) {
-		pr_debug("\nperf_evlist__add_pollfd(evlist, 35)=%d != 3", evlist->nr_fds);
+	if (fda->nr != 3) {
+		pr_debug("\nperf_evlist__add_pollfd(evlist, 35)=%d != 3", fda->nr);
 		return TEST_FAIL;
 	}
 
-	if (evlist->pollfd == NULL) {
+	if (fda->entries == NULL) {
 		pr_debug("\nperf_evlist__add_pollfd(evlist, 35) should have allocated evlist->pollfd!");
 		return TEST_FAIL;
 	}
 
 	perf_evlist__fprintf_pollfd(evlist, "after 3rd add_pollfd", stderr);
 
-	if (evlist->pollfd[2].fd != 35) {
-		pr_debug("\nevlist->pollfd[2](%d) != 35!", evlist->pollfd[2].fd);
+	if (fda->entries[2].fd != 35) {
+		pr_debug("\nfda->entries[2](%d) != 35!", fda->entries[2].fd);
 		return TEST_FAIL;
 	}
 
@@ -181,30 +184,30 @@ int test__perf_evlist__add_pollfd(void)
 		return TEST_FAIL;
 	}
 
-	if (evlist->nr_fds != 4) {
-		pr_debug("\nperf_evlist__add_pollfd(evlist, 88)=%d != 2", evlist->nr_fds);
+	if (fda->nr != 4) {
+		pr_debug("\nperf_evlist__add_pollfd(evlist, 88)=%d != 2", fda->nr);
 		return TEST_FAIL;
 	}
 
 	perf_evlist__fprintf_pollfd(evlist, "after 4th add_pollfd", stderr);
 
-	if (evlist->pollfd[0].fd != 1) {
-		pr_debug("\nevlist->pollfd[0](%d) != 1!", evlist->pollfd[0].fd);
+	if (fda->entries[0].fd != 1) {
+		pr_debug("\nfda->entries[0](%d) != 1!", fda->entries[0].fd);
 		return TEST_FAIL;
 	}
 
-	if (evlist->pollfd[1].fd != 2) {
-		pr_debug("\nevlist->pollfd[1](%d) != 2!", evlist->pollfd[1].fd);
+	if (fda->entries[1].fd != 2) {
+		pr_debug("\nfda->entries[1](%d) != 2!", fda->entries[1].fd);
 		return TEST_FAIL;
 	}
 
-	if (evlist->pollfd[2].fd != 35) {
-		pr_debug("\nevlist->pollfd[2](%d) != 35!", evlist->pollfd[2].fd);
+	if (fda->entries[2].fd != 35) {
+		pr_debug("\nfda->entries[2](%d) != 35!", fda->entries[2].fd);
 		return TEST_FAIL;
 	}
 
-	if (evlist->pollfd[3].fd != 88) {
-		pr_debug("\nevlist->pollfd[3](%d) != 88!", evlist->pollfd[3].fd);
+	if (fda->entries[3].fd != 88) {
+		pr_debug("\nfda->entries[3](%d) != 88!", fda->entries[3].fd);
 		return TEST_FAIL;
 	}
 
