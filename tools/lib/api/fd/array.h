@@ -10,6 +10,7 @@ struct fdarray {
 	int	       nr_alloc;
 	int	       nr_autogrow;
 	struct pollfd *entries;
+	int	      *priv;
 };
 
 void fdarray__init(struct fdarray *fda, int nr_autogrow);
@@ -20,7 +21,8 @@ void fdarray__delete(struct fdarray *fda);
 
 int fdarray__add(struct fdarray *fda, int fd, short revents);
 int fdarray__poll(struct fdarray *fda, int timeout);
-int fdarray__filter(struct fdarray *fda, short revents);
+int fdarray__filter(struct fdarray *fda, short revents,
+		    void (*entry_destructor)(struct fdarray *fda, int fd));
 int fdarray__grow(struct fdarray *fda, int extra);
 int fdarray__fprintf(struct fdarray *fda, FILE *fp);
 
