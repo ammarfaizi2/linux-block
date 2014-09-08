@@ -664,6 +664,7 @@ static void __perf_evlist__munmap(struct perf_evlist *evlist, int idx)
 	if (evlist->mmap[idx].base != NULL) {
 		munmap(evlist->mmap[idx].base, evlist->mmap_len);
 		evlist->mmap[idx].base = NULL;
+		evlist->mmap[idx].nfds = 0;
 	}
 }
 
@@ -697,6 +698,7 @@ struct mmap_params {
 static int __perf_evlist__mmap(struct perf_evlist *evlist, int idx,
 			       struct mmap_params *mp, int fd)
 {
+	evlist->mmap[idx].nfds = 1;
 	evlist->mmap[idx].prev = 0;
 	evlist->mmap[idx].mask = mp->mask;
 	evlist->mmap[idx].base = mmap(NULL, evlist->mmap_len, mp->prot,
@@ -709,6 +711,19 @@ static int __perf_evlist__mmap(struct perf_evlist *evlist, int idx,
 	}
 
 	return 0;
+}
+
+static void perf_evlist__mmap_get(struct perf_evlist *evlist, int idx)
+{
+	++evlist->mmap[idx].nfds;
+}
+
+static void perf_evlist__mmap_put(struct perf_evlist *evlist, int idx)
+{
+	BUG_ON(evlist->mmap[idx].nfds == 0);
+
+	if (--evlist->mmap[idx].nfds == 0)
+		__perf_evlist__munmap(evlist, idx);
 }
 
 static int perf_evlist__mmap_per_evsel(struct perf_evlist *evlist, int idx,
@@ -732,10 +747,14 @@ static int perf_evlist__mmap_per_evsel(struct perf_evlist *evlist, int idx,
 		} else {
 			if (ioctl(fd, PERF_EVENT_IOC_SET_OUTPUT, *output) != 0)
 				return -1;
+
+			perf_evlist__mmap_get(evlist, idx);
 		}
 
-		if (perf_evlist__add_pollfd(evlist, fd) < 0)
+		if (perf_evlist__add_pollfd(evlist, fd) < 0) {
+			perf_evlist__mmap_put(evlist, idx);
 			return -1;
+		}
 
 		if ((evsel->attr.read_format & PERF_FORMAT_ID) &&
 		    perf_evlist__id_add_fd(evlist, evsel, cpu, thread, fd) < 0)

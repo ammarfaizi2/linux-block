@@ -18,9 +18,15 @@ struct record_opts;
 #define PERF_EVLIST__HLIST_BITS 8
 #define PERF_EVLIST__HLIST_SIZE (1 << PERF_EVLIST__HLIST_BITS)
 
+/**
+ * struct perf_mmap - perf's ring buffer mmap details
+ *
+ * @nfds - file descriptors pointing here via PERF_EVENT_IOC_SET_OUTPUT
+ */
 struct perf_mmap {
 	void		 *base;
 	int		 mask;
+	int		 nfds;
 	unsigned int	 prev;
 	char		 event_copy[PERF_SAMPLE_MAX_SIZE];
 };
