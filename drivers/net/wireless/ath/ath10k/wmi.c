@@ -23,6 +23,7 @@
 #include "debug.h"
 #include "wmi.h"
 #include "mac.h"
+#include "testmode.h"
 
 /* MAIN WMI cmd track */
 static struct wmi_cmd_map wmi_cmd_map = {
@@ -624,7 +625,7 @@ int ath10k_wmi_wait_for_unified_ready(struct ath10k *ar)
 	return ret;
 }
 
-static struct sk_buff *ath10k_wmi_alloc_skb(struct ath10k *ar, u32 len)
+struct sk_buff *ath10k_wmi_alloc_skb(struct ath10k *ar, u32 len)
 {
 	struct sk_buff *skb;
 	u32 round_len = roundup(len, 4);
@@ -666,7 +667,7 @@ static int ath10k_wmi_cmd_send_nowait(struct ath10k *ar, struct sk_buff *skb,
 
 	memset(skb_cb, 0, sizeof(*skb_cb));
 	ret = ath10k_htc_send(&ar->htc, ar->wmi.eid, skb);
-	trace_ath10k_wmi_cmd(cmd_id, skb->data, skb->len, ret);
+	trace_ath10k_wmi_cmd(ar, cmd_id, skb->data, skb->len, ret);
 
 	if (ret)
 		goto err_pull;
@@ -725,8 +726,7 @@ static void ath10k_wmi_op_ep_tx_credits(struct ath10k *ar)
 	wake_up(&ar->wmi.tx_credits_wq);
 }
 
-static int ath10k_wmi_cmd_send(struct ath10k *ar, struct sk_buff *skb,
-			       u32 cmd_id)
+int ath10k_wmi_cmd_send(struct ath10k *ar, struct sk_buff *skb, u32 cmd_id)
 {
 	int ret = -EOPNOTSUPP;
 
@@ -1288,7 +1288,7 @@ static int ath10k_wmi_event_debug_mesg(struct ath10k *ar, struct sk_buff *skb)
 	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi event debug mesg len %d\n",
 		   skb->len);
 
-	trace_ath10k_wmi_dbglog(skb->data, skb->len);
+	trace_ath10k_wmi_dbglog(ar, skb->data, skb->len);
 
 	return 0;
 }
@@ -2164,7 +2164,7 @@ static void ath10k_wmi_service_ready_event_rx(struct ath10k *ar,
 					      struct sk_buff *skb)
 {
 	struct wmi_service_ready_event *ev = (void *)skb->data;
-	DECLARE_BITMAP(svc_bmap, WMI_SERVICE_BM_SIZE) = {};
+	DECLARE_BITMAP(svc_bmap, WMI_SERVICE_MAX) = {};
 
 	if (skb->len < sizeof(*ev)) {
 		ath10k_warn(ar, "Service ready event was %d B but expected %zu B. Wrong firmware version?\n",
@@ -2241,7 +2241,7 @@ static void ath10k_wmi_10x_service_ready_event_rx(struct ath10k *ar,
 	u32 num_units, req_id, unit_size, num_mem_reqs, num_unit_info, i;
 	int ret;
 	struct wmi_service_ready_event_10x *ev = (void *)skb->data;
-	DECLARE_BITMAP(svc_bmap, WMI_SERVICE_BM_SIZE) = {};
+	DECLARE_BITMAP(svc_bmap, WMI_SERVICE_MAX) = {};
 
 	if (skb->len < sizeof(*ev)) {
 		ath10k_warn(ar, "Service ready event was %d B but expected %zu B. Wrong firmware version?\n",
@@ -2371,7 +2371,7 @@ static void ath10k_wmi_main_process_rx(struct ath10k *ar, struct sk_buff *skb)
 	if (skb_pull(skb, sizeof(struct wmi_cmd_hdr)) == NULL)
 		return;
 
-	trace_ath10k_wmi_event(id, skb->data, skb->len);
+	trace_ath10k_wmi_event(ar, id, skb->data, skb->len);
 
 	switch (id) {
 	case WMI_MGMT_RX_EVENTID:
@@ -2480,6 +2480,7 @@ static void ath10k_wmi_10x_process_rx(struct ath10k *ar, struct sk_buff *skb)
 {
 	struct wmi_cmd_hdr *cmd_hdr;
 	enum wmi_10x_event_id id;
+	bool consumed;
 
 	cmd_hdr = (struct wmi_cmd_hdr *)skb->data;
 	id = MS(__le32_to_cpu(cmd_hdr->cmd_id), WMI_CMD_HDR_CMD_ID);
@@ -2487,7 +2488,19 @@ static void ath10k_wmi_10x_process_rx(struct ath10k *ar, struct sk_buff *skb)
 	if (skb_pull(skb, sizeof(struct wmi_cmd_hdr)) == NULL)
 		return;
 
-	trace_ath10k_wmi_event(id, skb->data, skb->len);
+	trace_ath10k_wmi_event(ar, id, skb->data, skb->len);
+
+	consumed = ath10k_tm_event_wmi(ar, id, skb);
+
+	/* Ready event must be handled normally also in UTF mode so that we
+	 * know the UTF firmware has booted, others we are just bypass WMI
+	 * events to testmode.
+	 */
+	if (consumed && id != WMI_10X_READY_EVENTID) {
+		ath10k_dbg(ar, ATH10K_DBG_WMI,
+			   "wmi testmode consumed 0x%x\n", id);
+		goto out;
+	}
 
 	switch (id) {
 	case WMI_10X_MGMT_RX_EVENTID:
@@ -2575,11 +2588,15 @@ static void ath10k_wmi_10x_process_rx(struct ath10k *ar, struct sk_buff *skb)
 	case WMI_10X_READY_EVENTID:
 		ath10k_wmi_ready_event_rx(ar, skb);
 		break;
+	case WMI_10X_PDEV_UTF_EVENTID:
+		/* ignore utf events */
+		break;
 	default:
 		ath10k_warn(ar, "Unknown eventid: %d\n", id);
 		break;
 	}
 
+out:
 	dev_kfree_skb(skb);
 }
 
@@ -2594,7 +2611,7 @@ static void ath10k_wmi_10_2_process_rx(struct ath10k *ar, struct sk_buff *skb)
 	if (skb_pull(skb, sizeof(struct wmi_cmd_hdr)) == NULL)
 		return;
 
-	trace_ath10k_wmi_event(id, skb->data, skb->len);
+	trace_ath10k_wmi_event(ar, id, skb->data, skb->len);
 
 	switch (id) {
 	case WMI_10_2_MGMT_RX_EVENTID:
