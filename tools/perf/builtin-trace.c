@@ -1242,6 +1242,7 @@ struct trace {
 	bool			summary_only;
 	bool			show_comm;
 	bool			show_tool_stats;
+	bool			draining;
 	bool			trace_syscalls;
 	int			trace_pgfaults;
 };
@@ -2171,9 +2172,12 @@ next_event:
 	if (trace->nr_events == before) {
 		int timeout = done ? 100 : -1;
 
-		if (perf_evlist__poll(evlist, timeout) > 0 &&
-		    perf_evlist__filter_pollfd(evlist, POLLERR | POLLHUP) > 0)
+		if (!trace->draining && perf_evlist__poll(evlist, timeout) > 0) {
+			if (perf_evlist__filter_pollfd(evlist, POLLERR | POLLHUP) == 0)
+				trace->draining = true;
+
 			goto again;
+		}
 	} else {
 		goto again;
 	}
