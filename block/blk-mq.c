@@ -532,7 +532,7 @@ struct blk_mq_timeout_data {
 	unsigned int next_set;
 };
 
-static void blk_mq_rq_timed_out(struct request *req)
+static void blk_mq_rq_timed_out(struct request *req, bool reserved)
 {
 	struct blk_mq_ops *ops = req->q->mq_ops;
 	enum blk_eh_timer_return ret = BLK_EH_RESET_TIMER;
@@ -550,7 +550,7 @@ static void blk_mq_rq_timed_out(struct request *req)
 		return;
 
 	if (ops->timeout)
-		ret = ops->timeout(req);
+		ret = ops->timeout(req, reserved);
 
 	switch (ret) {
 	case BLK_EH_HANDLED:
@@ -578,7 +578,7 @@ static void blk_mq_check_expired(struct blk_mq_hw_ctx *hctx,
 
 	if (time_after_eq(jiffies, rq->deadline)) {
 		if (!blk_mark_rq_complete(rq))
-			blk_mq_rq_timed_out(rq);
+			blk_mq_rq_timed_out(rq, reserved);
 	} else if (!data->next_set || time_after(data->next, rq->deadline)) {
 		data->next = rq->deadline;
 		data->next_set = 1;
