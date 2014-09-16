@@ -152,13 +152,13 @@ static void virtblk_done(struct virtqueue *vq)
 		blk_mq_start_stopped_hw_queues(vblk->disk->queue, true);
 }
 
-static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
+static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
+			   bool last)
 {
 	struct virtio_blk *vblk = hctx->queue->queuedata;
 	struct virtblk_req *vbr = blk_mq_rq_to_pdu(req);
 	unsigned long flags;
 	unsigned int num;
-	const bool last = (req->cmd_flags & REQ_END) != 0;
 
 	BUG_ON(req->nr_phys_segments + 2 > vblk->sg_elems);
 
