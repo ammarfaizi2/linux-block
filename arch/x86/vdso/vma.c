@@ -89,6 +89,38 @@ static unsigned long vdso_addr(unsigned long start, unsigned len)
 #endif
 }
 
+static void vvar_start_set(struct vm_special_mapping *sm,
+			   struct mm_struct *mm, unsigned long start_addr)
+{
+	if (start_addr >= TASK_SIZE_MAX - mm->context.vdso_image->size) {
+		/*
+		 * We were just relocated out of bounds.  Malicious
+		 * user code can cause this by mremapping only the
+		 * first page of a multi-page vdso.
+		 *
+		 * We can't actually fail here, but it's not safe to
+		 * allow vdso symbols to resolve to potentially
+		 * non-canonical addresses.  Instead, just ignore
+		 * the update.
+		 */
+
+		return;
+	}
+
+	mm->context.vvar_vma_start = start_addr;
+
+	/*
+	 * If we're here as a result of an mremap call, there are two
+	 * major gotchas.  First, if that call came from the vdso, we're
+	 * about to crash (i.e. don't do that).  Second, if we have more
+	 * than one thread, this won't update the other threads.
+	 */
+	if (mm->context.vdso_image->sym_VDSO32_SYSENTER_RETURN)
+		current_thread_info()->sysenter_return =
+			VDSO_SYM_ADDR(current->mm, VDSO32_SYSENTER_RETURN);
+
+}
+
 static int map_vdso(const struct vdso_image *image, bool calculate_addr)
 {
 	struct mm_struct *mm = current->mm;
@@ -99,6 +131,12 @@ static int map_vdso(const struct vdso_image *image, bool calculate_addr)
 	static struct vm_special_mapping vvar_mapping = {
 		.name = "[vvar]",
 		.pages = no_pages,
+
+		/*
+		 * Tracking the vdso is roughly equivalent to tracking the
+		 * vvar area, and the latter is slightly easier.
+		 */
+		.start_addr_set = vvar_start_set,
 	};
 
 	if (calculate_addr) {
@@ -118,7 +156,7 @@ static int map_vdso(const struct vdso_image *image, bool calculate_addr)
 	}
 
 	text_start = addr - image->sym_vvar_start;
-	current->mm->context.vdso = (void __user *)text_start;
+	current->mm->context.vdso_image = image;
 
 	/*
 	 * MAYWRITE to allow gdb to COW and set breakpoints
@@ -171,7 +209,7 @@ static int map_vdso(const struct vdso_image *image, bool calculate_addr)
 
 up_fail:
 	if (ret)
-		current->mm->context.vdso = NULL;
+		current->mm->context.vdso_image = NULL;
 
 	up_write(&mm->mmap_sem);
 	return ret;
@@ -188,11 +226,6 @@ static int load_vdso32(void)
 	ret = map_vdso(selected_vdso32, false);
 	if (ret)
 		return ret;
-
-	if (selected_vdso32->sym_VDSO32_SYSENTER_RETURN)
-		current_thread_info()->sysenter_return =
-			current->mm->context.vdso +
-			selected_vdso32->sym_VDSO32_SYSENTER_RETURN;
 
 	return 0;
 }

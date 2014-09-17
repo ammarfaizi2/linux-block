@@ -18,7 +18,9 @@ typedef struct {
 #endif
 
 	struct mutex lock;
-	void __user *vdso;
+
+	unsigned long vvar_vma_start;
+	const struct vdso_image *vdso_image;
 } mm_context_t;
 
 #ifdef CONFIG_SMP

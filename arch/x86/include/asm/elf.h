@@ -276,7 +276,7 @@ struct task_struct;
 
 #define	ARCH_DLINFO_IA32						\
 do {									\
-	if (vdso32_enabled) {						\
+	if (current->mm->context.vdso_image) {				\
 		NEW_AUX_ENT(AT_SYSINFO,	VDSO_ENTRY);			\
 		NEW_AUX_ENT(AT_SYSINFO_EHDR, VDSO_CURRENT_BASE);	\
 	}								\
@@ -295,26 +295,19 @@ do {									\
 /* 1GB for 64bit, 8MB for 32bit */
 #define STACK_RND_MASK (test_thread_flag(TIF_ADDR32) ? 0x7ff : 0x3fffff)
 
-#define ARCH_DLINFO							\
+#define ARCH_DLINFO_X86_64						\
 do {									\
-	if (vdso64_enabled)						\
-		NEW_AUX_ENT(AT_SYSINFO_EHDR,				\
-			    (unsigned long __force)current->mm->context.vdso); \
+	if (current->mm->context.vdso_image)				\
+		NEW_AUX_ENT(AT_SYSINFO_EHDR, VDSO_CURRENT_BASE);	\
 } while (0)
 
-/* As a historical oddity, the x32 and x86_64 vDSOs are controlled together. */
-#define ARCH_DLINFO_X32							\
-do {									\
-	if (vdso64_enabled)						\
-		NEW_AUX_ENT(AT_SYSINFO_EHDR,				\
-			    (unsigned long __force)current->mm->context.vdso); \
-} while (0)
+#define ARCH_DLINFO ARCH_DLINFO_X86_64
 
 #define AT_SYSINFO		32
 
 #define COMPAT_ARCH_DLINFO						\
 if (test_thread_flag(TIF_X32))						\
-	ARCH_DLINFO_X32;						\
+	ARCH_DLINFO_X86_64;						\
 else									\
 	ARCH_DLINFO_IA32
 
@@ -322,11 +315,8 @@ else									\
 
 #endif /* !CONFIG_X86_32 */
 
-#define VDSO_CURRENT_BASE	((unsigned long)current->mm->context.vdso)
-
-#define VDSO_ENTRY							\
-	((unsigned long)current->mm->context.vdso +			\
-	 selected_vdso32->sym___kernel_vsyscall)
+#define VDSO_CURRENT_BASE	((unsigned long)vdso_text_start(current->mm))
+#define VDSO_ENTRY ((unsigned long)VDSO_SYM_ADDR(current->mm, __kernel_vsyscall))
 
 struct linux_binprm;
 

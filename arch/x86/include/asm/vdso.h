@@ -49,6 +49,22 @@ extern const struct vdso_image *selected_vdso32;
 
 extern void __init init_vdso_image(const struct vdso_image *image);
 
+static inline void __user *vdso_text_start(const struct mm_struct *mm)
+{
+	if (!mm->context.vdso_image)
+		return NULL;
+
+	return (void __user *)ACCESS_ONCE(mm->context.vvar_vma_start) -
+		mm->context.vdso_image->sym_vvar_start;
+}
+
+#define VDSO_SYM_ADDR(mm, sym) (					\
+		(mm)->context.vdso_image ?				\
+		vdso_text_start((mm)) +					\
+			(mm)->context.vdso_image->sym_ ## sym		\
+		: NULL							\
+	)
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* _ASM_X86_VDSO_H */
