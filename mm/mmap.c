@@ -2923,8 +2923,21 @@ static const struct vm_operations_struct legacy_special_mapping_vmops = {
 	.fault = special_mapping_fault,
 };
 
+void update_special_mapping_addr(struct vm_area_struct *vma)
+{
+	struct vm_special_mapping *sm;
+
+	if (vma->vm_ops != &special_mapping_vmops)
+		return;
+
+	sm = vma->vm_private_data;
+	if (sm->start_addr_set &&
+	    vma->vm_start == (vma->vm_pgoff << PAGE_SHIFT))
+		sm->start_addr_set(sm, vma->vm_mm, vma->vm_start);
+}
+
 static int special_mapping_fault(struct vm_area_struct *vma,
-				struct vm_fault *vmf)
+				 struct vm_fault *vmf)
 {
 	pgoff_t pgoff;
 	struct page **pages;
@@ -3009,8 +3022,13 @@ struct vm_area_struct *_install_special_mapping(
 	unsigned long addr, unsigned long len,
 	unsigned long vm_flags, const struct vm_special_mapping *spec)
 {
-	return __install_special_mapping(mm, addr, len, vm_flags,
-					 &special_mapping_vmops, (void *)spec);
+	struct vm_area_struct *vma;
+
+	vma = __install_special_mapping(mm, addr, len, vm_flags,
+					&special_mapping_vmops, (void *)spec);
+	if (!IS_ERR(vma))
+		update_special_mapping_addr(vma);
+	return vma;
 }
 
 int install_special_mapping(struct mm_struct *mm,

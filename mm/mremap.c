@@ -287,6 +287,8 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 		old_len = new_len;
 		old_addr = new_addr;
 		new_addr = -ENOMEM;
+	} else {
+		update_special_mapping_addr(new_vma);
 	}
 
 	/* Conceal VM_ACCOUNT so old reservation is not undone */

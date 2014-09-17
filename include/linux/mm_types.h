@@ -515,6 +515,14 @@ struct vm_special_mapping
 {
 	const char *name;
 	struct page **pages;
+
+	/*
+	 * If non-NULL, this is called when installed and when mremap
+	 * moves the first page of the mapping.
+	 */
+	void (*start_addr_set)(struct vm_special_mapping *sm,
+			       struct mm_struct *mm,
+			       unsigned long start_addr);
 };
 
 enum tlb_flush_reason {
