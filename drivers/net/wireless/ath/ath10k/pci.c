@@ -340,8 +340,8 @@ static void ath10k_pci_disable_and_clear_legacy_irq(struct ath10k *ar)
 
 	/* IMPORTANT: this extra read transaction is required to
 	 * flush the posted write buffer. */
-	(void) ath10k_pci_read32(ar, SOC_CORE_BASE_ADDRESS +
-				 PCIE_INTR_ENABLE_ADDRESS);
+	(void)ath10k_pci_read32(ar, SOC_CORE_BASE_ADDRESS +
+				PCIE_INTR_ENABLE_ADDRESS);
 }
 
 static void ath10k_pci_enable_legacy_irq(struct ath10k *ar)
@@ -352,8 +352,8 @@ static void ath10k_pci_enable_legacy_irq(struct ath10k *ar)
 
 	/* IMPORTANT: this extra read transaction is required to
 	 * flush the posted write buffer. */
-	(void) ath10k_pci_read32(ar, SOC_CORE_BASE_ADDRESS +
-				 PCIE_INTR_ENABLE_ADDRESS);
+	(void)ath10k_pci_read32(ar, SOC_CORE_BASE_ADDRESS +
+				PCIE_INTR_ENABLE_ADDRESS);
 }
 
 static inline const char *ath10k_pci_get_irq_method(struct ath10k *ar)
@@ -362,10 +362,11 @@ static inline const char *ath10k_pci_get_irq_method(struct ath10k *ar)
 
 	if (ar_pci->num_msi_intrs > 1)
 		return "msi-x";
-	else if (ar_pci->num_msi_intrs == 1)
+
+	if (ar_pci->num_msi_intrs == 1)
 		return "msi";
-	else
-		return "legacy";
+
+	return "legacy";
 }
 
 static int __ath10k_pci_rx_post_buf(struct ath10k_pci_pipe *pipe)
@@ -527,7 +528,7 @@ static int ath10k_pci_diag_read_mem(struct ath10k *ar, u32 address, void *data,
 						     address);
 
 		ret = ath10k_ce_send(ce_diag, NULL, (u32)address, nbytes, 0,
-				 0);
+				     0);
 		if (ret)
 			goto done;
 
@@ -547,7 +548,7 @@ static int ath10k_pci_diag_read_mem(struct ath10k *ar, u32 address, void *data,
 			goto done;
 		}
 
-		if (buf != (u32) address) {
+		if (buf != (u32)address) {
 			ret = -EIO;
 			goto done;
 		}
@@ -630,7 +631,7 @@ static int __ath10k_pci_diag_read_hi(struct ath10k *ar, void *dest,
 }
 
 #define ath10k_pci_diag_read_hi(ar, dest, src, len)		\
-	__ath10k_pci_diag_read_hi(ar, dest, HI_ITEM(src), len);
+	__ath10k_pci_diag_read_hi(ar, dest, HI_ITEM(src), len)
 
 static int ath10k_pci_diag_write_mem(struct ath10k *ar, u32 address,
 				     const void *data, int nbytes)
@@ -695,7 +696,7 @@ static int ath10k_pci_diag_write_mem(struct ath10k *ar, u32 address,
 		 * Request CE to send caller-supplied data that
 		 * was copied to bounce buffer to Target(!) address.
 		 */
-		ret = ath10k_ce_send(ce_diag, NULL, (u32) ce_data,
+		ret = ath10k_ce_send(ce_diag, NULL, (u32)ce_data,
 				     nbytes, 0, 0);
 		if (ret != 0)
 			goto done;
@@ -1106,7 +1107,7 @@ static int ath10k_pci_hif_map_service_to_pipe(struct ath10k *ar,
 }
 
 static void ath10k_pci_hif_get_default_pipe(struct ath10k *ar,
-						u8 *ul_pipe, u8 *dl_pipe)
+					    u8 *ul_pipe, u8 *dl_pipe)
 {
 	int ul_is_polled, dl_is_polled;
 
@@ -1476,8 +1477,8 @@ static int ath10k_pci_init_config(struct ath10k *ar)
 	}
 
 	ret = ath10k_pci_diag_write_mem(ar, pipe_cfg_targ_addr,
-				 target_ce_config_wlan,
-				 sizeof(target_ce_config_wlan));
+					target_ce_config_wlan,
+					sizeof(target_ce_config_wlan));
 
 	if (ret != 0) {
 		ath10k_err(ar, "Failed to write pipe cfg: %d\n", ret);
@@ -1500,8 +1501,8 @@ static int ath10k_pci_init_config(struct ath10k *ar)
 	}
 
 	ret = ath10k_pci_diag_write_mem(ar, svc_to_pipe_map,
-				 target_service_to_ce_map_wlan,
-				 sizeof(target_service_to_ce_map_wlan));
+					target_service_to_ce_map_wlan,
+					sizeof(target_service_to_ce_map_wlan));
 	if (ret != 0) {
 		ath10k_err(ar, "Failed to write svc/pipe map: %d\n", ret);
 		return ret;
@@ -1624,7 +1625,7 @@ static int ath10k_pci_ce_init(struct ath10k *ar)
 			continue;
 		}
 
-		pipe_info->buf_sz = (size_t) (attr->src_sz_max);
+		pipe_info->buf_sz = (size_t)(attr->src_sz_max);
 	}
 
 	return 0;
@@ -2160,7 +2161,7 @@ static int ath10k_pci_init_irq(struct ath10k *ar)
 	if (ath10k_pci_irq_mode == ATH10K_PCI_IRQ_AUTO) {
 		ar_pci->num_msi_intrs = MSI_NUM_REQUEST;
 		ret = pci_enable_msi_range(ar_pci->pdev, ar_pci->num_msi_intrs,
-							 ar_pci->num_msi_intrs);
+					   ar_pci->num_msi_intrs);
 		if (ret > 0)
 			return 0;
 

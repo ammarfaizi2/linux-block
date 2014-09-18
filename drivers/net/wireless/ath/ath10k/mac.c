@@ -199,7 +199,7 @@ static int ath10k_clear_vdev_key(struct ath10k_vif *arvif,
 		list_for_each_entry(peer, &ar->peers, list) {
 			for (i = 0; i < ARRAY_SIZE(peer->keys); i++) {
 				if (peer->keys[i] == key) {
-					memcpy(addr, peer->addr, ETH_ALEN);
+					ether_addr_copy(addr, peer->addr);
 					peer->keys[i] = NULL;
 					break;
 				}
@@ -224,7 +224,6 @@ static int ath10k_clear_vdev_key(struct ath10k_vif *arvif,
 
 	return first_errno;
 }
-
 
 /*********************/
 /* General utilities */
@@ -699,8 +698,8 @@ static int ath10k_monitor_recalc(struct ath10k *ar)
 
 	if (should_start)
 		return ath10k_monitor_start(ar);
-	else
-		return ath10k_monitor_stop(ar);
+
+	return ath10k_monitor_stop(ar);
 }
 
 static int ath10k_recalc_rtscts_prot(struct ath10k_vif *arvif)
@@ -896,7 +895,7 @@ static int ath10k_vdev_stop(struct ath10k_vif *arvif)
 }
 
 static void ath10k_control_beaconing(struct ath10k_vif *arvif,
-				struct ieee80211_bss_conf *info)
+				     struct ieee80211_bss_conf *info)
 {
 	struct ath10k *ar = arvif->ar;
 	int ret = 0;
@@ -931,7 +930,7 @@ static void ath10k_control_beaconing(struct ath10k_vif *arvif,
 		return;
 
 	arvif->aid = 0;
-	memcpy(arvif->bssid, info->bssid, ETH_ALEN);
+	ether_addr_copy(arvif->bssid, info->bssid);
 
 	ret = ath10k_wmi_vdev_up(arvif->ar, arvif->vdev_id, arvif->aid,
 				 arvif->bssid);
@@ -1051,7 +1050,7 @@ static void ath10k_peer_assoc_h_basic(struct ath10k *ar,
 {
 	lockdep_assert_held(&ar->conf_mutex);
 
-	memcpy(arg->addr, sta->addr, ETH_ALEN);
+	ether_addr_copy(arg->addr, sta->addr);
 	arg->vdev_id = arvif->vdev_id;
 	arg->peer_aid = sta->aid;
 	arg->peer_flags |= WMI_PEER_AUTH;
@@ -1106,9 +1105,9 @@ static void ath10k_peer_assoc_h_crypto(struct ath10k *ar,
 		ies = rcu_dereference(bss->ies);
 
 		wpaie = cfg80211_find_vendor_ie(WLAN_OUI_MICROSOFT,
-				WLAN_OUI_TYPE_MICROSOFT_WPA,
-				ies->data,
-				ies->len);
+						WLAN_OUI_TYPE_MICROSOFT_WPA,
+						ies->data,
+						ies->len);
 		rcu_read_unlock();
 		cfg80211_put_bss(ar->hw->wiphy, bss);
 	}
@@ -1158,6 +1157,7 @@ static void ath10k_peer_assoc_h_ht(struct ath10k *ar,
 {
 	const struct ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
 	int i, n;
+	u32 stbc;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -1194,7 +1194,6 @@ static void ath10k_peer_assoc_h_ht(struct ath10k *ar,
 	}
 
 	if (ht_cap->cap & IEEE80211_HT_CAP_RX_STBC) {
-		u32 stbc;
 		stbc = ht_cap->cap & IEEE80211_HT_CAP_RX_STBC;
 		stbc = stbc >> IEEE80211_HT_CAP_RX_STBC_SHIFT;
 		stbc = stbc << WMI_RC_RX_STBC_FLAG_S;
@@ -1262,7 +1261,6 @@ static int ath10k_peer_assoc_qos_ap(struct ath10k *ar,
 			uapsd |= WMI_AP_PS_UAPSD_AC0_DELIVERY_EN |
 				 WMI_AP_PS_UAPSD_AC0_TRIGGER_EN;
 
-
 		if (sta->max_sp < MAX_WMI_AP_PS_PEER_PARAM_MAX_SP)
 			max_sp = sta->max_sp;
 
@@ -1291,7 +1289,8 @@ static int ath10k_peer_assoc_qos_ap(struct ath10k *ar,
 		   sta->listen_interval - mac80211 patch required.
 		   Currently use 10 seconds */
 		ret = ath10k_wmi_set_ap_ps_param(ar, arvif->vdev_id, sta->addr,
-					WMI_AP_PS_PEER_PARAM_AGEOUT_TIME, 10);
+						 WMI_AP_PS_PEER_PARAM_AGEOUT_TIME,
+						 10);
 		if (ret) {
 			ath10k_warn(ar, "failed to set ap ps peer param ageout time for vdev %i: %d\n",
 				    arvif->vdev_id, ret);
@@ -1314,7 +1313,6 @@ static void ath10k_peer_assoc_h_vht(struct ath10k *ar,
 
 	arg->peer_flags |= WMI_PEER_VHT;
 	arg->peer_vht_caps = vht_cap->cap;
-
 
 	ampdu_factor = (vht_cap->cap &
 			IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK) >>
@@ -1526,7 +1524,7 @@ static void ath10k_bss_assoc(struct ieee80211_hw *hw,
 		   arvif->vdev_id, bss_conf->bssid, bss_conf->aid);
 
 	arvif->aid = bss_conf->aid;
-	memcpy(arvif->bssid, bss_conf->bssid, ETH_ALEN);
+	ether_addr_copy(arvif->bssid, bss_conf->bssid);
 
 	ret = ath10k_wmi_vdev_up(ar, arvif->vdev_id, arvif->aid, arvif->bssid);
 	if (ret) {
@@ -3013,7 +3011,7 @@ static void ath10k_bss_info_changed(struct ieee80211_hw *hw,
 	struct ath10k *ar = hw->priv;
 	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
 	int ret = 0;
-	u32 vdev_param, pdev_param;
+	u32 vdev_param, pdev_param, slottime, preamble;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -3092,7 +3090,7 @@ static void ath10k_bss_info_changed(struct ieee80211_hw *hw,
 				 * this is never erased as we it for crypto key
 				 * clearing; this is FW requirement
 				 */
-				memcpy(arvif->bssid, info->bssid, ETH_ALEN);
+				ether_addr_copy(arvif->bssid, info->bssid);
 
 				ath10k_dbg(ar, ATH10K_DBG_MAC,
 					   "mac vdev %d start %pM\n",
@@ -3134,7 +3132,6 @@ static void ath10k_bss_info_changed(struct ieee80211_hw *hw,
 	}
 
 	if (changed & BSS_CHANGED_ERP_SLOT) {
-		u32 slottime;
 		if (info->use_short_slot)
 			slottime = WMI_VDEV_SLOT_TIME_SHORT; /* 9us */
 
@@ -3153,7 +3150,6 @@ static void ath10k_bss_info_changed(struct ieee80211_hw *hw,
 	}
 
 	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
-		u32 preamble;
 		if (info->use_short_preamble)
 			preamble = WMI_VDEV_PREAMBLE_SHORT;
 		else
@@ -3568,7 +3564,7 @@ exit:
 }
 
 static int ath10k_conf_tx_uapsd(struct ath10k *ar, struct ieee80211_vif *vif,
-				 u16 ac, bool enable)
+				u16 ac, bool enable)
 {
 	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
 	u32 value = 0;
@@ -4069,8 +4065,8 @@ ath10k_bitrate_mask_nss(const struct cfg80211_bitrate_mask *mask,
 			continue;
 		else if (mask->control[band].ht_mcs[i] == 0x00)
 			break;
-		else
-			return false;
+
+		return false;
 	}
 
 	ht_nss = i;
@@ -4081,8 +4077,8 @@ ath10k_bitrate_mask_nss(const struct cfg80211_bitrate_mask *mask,
 			continue;
 		else if (mask->control[band].vht_mcs[i] == 0x0000)
 			break;
-		else
-			return false;
+
+		return false;
 	}
 
 	vht_nss = i;
@@ -4713,7 +4709,6 @@ static struct ieee80211_sta_ht_cap ath10k_get_ht_cap(struct ath10k *ar)
 
 	return ht_cap;
 }
-
 
 static void ath10k_get_arvif_iter(void *data, u8 *mac,
 				  struct ieee80211_vif *vif)
