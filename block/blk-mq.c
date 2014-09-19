@@ -485,7 +485,7 @@ static void blk_mq_requeue_work(struct work_struct *work)
 		blk_mq_insert_request(rq, false, false, false);
 	}
 
-	blk_mq_run_queues(q, false);
+	blk_mq_start_hw_queues(q);
 }
 
 void blk_mq_add_to_requeue_list(struct request *rq, bool at_head)
