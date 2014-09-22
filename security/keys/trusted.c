@@ -354,13 +354,13 @@ out:
  * For key specific tpm requests, we will generate and send our
  * own TPM command packets using the drivers send function.
  */
-static int trusted_tpm_send(const u32 chip_num, unsigned char *cmd,
+static int trusted_tpm_send(struct tpm_chip *chip, unsigned char *cmd,
 			    size_t buflen)
 {
 	int rc;
 
 	dump_tpm_buf(cmd);
-	rc = tpm_send(chip_num, cmd, buflen);
+	rc = tpm_send(chip, cmd, buflen);
 	dump_tpm_buf(cmd);
 	if (rc > 0)
 		/* Can't return positive return codes values to keyctl */
@@ -374,30 +374,31 @@ static int trusted_tpm_send(const u32 chip_num, unsigned char *cmd,
  * Prevents a trusted key that is sealed to PCRs from being accessed.
  * This uses the tpm driver's extend function.
  */
-static int pcrlock(const int pcrnum)
+static int pcrlock(struct tpm_chip *chip, const int pcrnum)
 {
 	unsigned char hash[SHA1_DIGEST_SIZE];
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
-	ret = tpm_get_random(TPM_ANY_NUM, hash, SHA1_DIGEST_SIZE);
+	ret = tpm_get_random(chip, hash, SHA1_DIGEST_SIZE);
 	if (ret != SHA1_DIGEST_SIZE)
 		return ret;
-	return tpm_pcr_extend(TPM_ANY_NUM, pcrnum, hash) ? -EINVAL : 0;
+	return tpm_pcr_extend(chip, pcrnum, hash) ? -EINVAL : 0;
 }
 
 /*
  * Create an object specific authorisation protocol (OSAP) session
  */
-static int osap(struct tpm_buf *tb, struct osapsess *s,
+static int osap(struct tpm_chip *chip,
+		struct tpm_buf *tb, struct osapsess *s,
 		const unsigned char *key, uint16_t type, uint32_t handle)
 {
 	unsigned char enonce[TPM_NONCE_SIZE];
 	unsigned char ononce[TPM_NONCE_SIZE];
 	int ret;
 
-	ret = tpm_get_random(TPM_ANY_NUM, ononce, TPM_NONCE_SIZE);
+	ret = tpm_get_random(chip, ononce, TPM_NONCE_SIZE);
 	if (ret != TPM_NONCE_SIZE)
 		return ret;
 
@@ -409,7 +410,7 @@ static int osap(struct tpm_buf *tb, struct osapsess *s,
 	store32(tb, handle);
 	storebytes(tb, ononce, TPM_NONCE_SIZE);
 
-	ret = trusted_tpm_send(TPM_ANY_NUM, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
 	if (ret < 0)
 		return ret;
 
@@ -425,7 +426,8 @@ static int osap(struct tpm_buf *tb, struct osapsess *s,
 /*
  * Create an object independent authorisation protocol (oiap) session
  */
-static int oiap(struct tpm_buf *tb, uint32_t *handle, unsigned char *nonce)
+static int oiap(struct tpm_chip *chip, struct tpm_buf *tb, uint32_t *handle,
+		unsigned char *nonce)
 {
 	int ret;
 
@@ -433,7 +435,7 @@ static int oiap(struct tpm_buf *tb, uint32_t *handle, unsigned char *nonce)
 	store16(tb, TPM_TAG_RQU_COMMAND);
 	store32(tb, TPM_OIAP_SIZE);
 	store32(tb, TPM_ORD_OIAP);
-	ret = trusted_tpm_send(TPM_ANY_NUM, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
 	if (ret < 0)
 		return ret;
 
@@ -455,7 +457,8 @@ struct tpm_digests {
  * Have the TPM seal(encrypt) the trusted key, possibly based on
  * Platform Configuration Registers (PCRs). AUTH1 for sealing key.
  */
-static int tpm_seal(struct tpm_buf *tb, uint16_t keytype,
+static int tpm_seal(struct tpm_chip *chip,
+		    struct tpm_buf *tb, uint16_t keytype,
 		    uint32_t keyhandle, const unsigned char *keyauth,
 		    const unsigned char *data, uint32_t datalen,
 		    unsigned char *blob, uint32_t *bloblen,
@@ -480,7 +483,7 @@ static int tpm_seal(struct tpm_buf *tb, uint16_t keytype,
 		return -ENOMEM;
 
 	/* get session for sealing key */
-	ret = osap(tb, &sess, keyauth, keytype, keyhandle);
+	ret = osap(chip, tb, &sess, keyauth, keytype, keyhandle);
 	if (ret < 0)
 		goto out;
 	dump_sess(&sess);
@@ -492,7 +495,7 @@ static int tpm_seal(struct tpm_buf *tb, uint16_t keytype,
 	if (ret < 0)
 		goto out;
 
-	ret = tpm_get_random(TPM_ANY_NUM, td->nonceodd, TPM_NONCE_SIZE);
+	ret = tpm_get_random(chip, td->nonceodd, TPM_NONCE_SIZE);
 	if (ret != TPM_NONCE_SIZE)
 		goto out;
 	ordinal = htonl(TPM_ORD_SEAL);
@@ -541,7 +544,7 @@ static int tpm_seal(struct tpm_buf *tb, uint16_t keytype,
 	store8(tb, cont);
 	storebytes(tb, td->pubauth, SHA1_DIGEST_SIZE);
 
-	ret = trusted_tpm_send(TPM_ANY_NUM, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
 	if (ret < 0)
 		goto out;
 
@@ -570,7 +573,7 @@ out:
 /*
  * use the AUTH2_COMMAND form of unseal, to authorize both key and blob
  */
-static int tpm_unseal(struct tpm_buf *tb,
+static int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 		      uint32_t keyhandle, const unsigned char *keyauth,
 		      const unsigned char *blob, int bloblen,
 		      const unsigned char *blobauth,
@@ -589,12 +592,12 @@ static int tpm_unseal(struct tpm_buf *tb,
 	int ret;
 
 	/* sessions for unsealing key and data */
-	ret = oiap(tb, &authhandle1, enonce1);
+	ret = oiap(chip, tb, &authhandle1, enonce1);
 	if (ret < 0) {
 		pr_info("trusted_key: oiap failed (%d)\n", ret);
 		return ret;
 	}
-	ret = oiap(tb, &authhandle2, enonce2);
+	ret = oiap(chip, tb, &authhandle2, enonce2);
 	if (ret < 0) {
 		pr_info("trusted_key: oiap failed (%d)\n", ret);
 		return ret;
@@ -602,7 +605,7 @@ static int tpm_unseal(struct tpm_buf *tb,
 
 	ordinal = htonl(TPM_ORD_UNSEAL);
 	keyhndl = htonl(SRKHANDLE);
-	ret = tpm_get_random(TPM_ANY_NUM, nonceodd, TPM_NONCE_SIZE);
+	ret = tpm_get_random(chip, nonceodd, TPM_NONCE_SIZE);
 	if (ret != TPM_NONCE_SIZE) {
 		pr_info("trusted_key: tpm_get_random failed (%d)\n", ret);
 		return ret;
@@ -634,7 +637,7 @@ static int tpm_unseal(struct tpm_buf *tb,
 	store8(tb, cont);
 	storebytes(tb, authdata2, SHA1_DIGEST_SIZE);
 
-	ret = trusted_tpm_send(TPM_ANY_NUM, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
 	if (ret < 0) {
 		pr_info("trusted_key: authhmac failed (%d)\n", ret);
 		return ret;
@@ -658,7 +661,8 @@ static int tpm_unseal(struct tpm_buf *tb,
 /*
  * Have the TPM seal(encrypt) the symmetric key
  */
-static int key_seal(struct trusted_key_payload *p,
+static int key_seal(struct tpm_chip *chip,
+		    struct trusted_key_payload *p,
 		    struct trusted_key_options *o)
 {
 	struct tpm_buf *tb;
@@ -671,7 +675,7 @@ static int key_seal(struct trusted_key_payload *p,
 	/* include migratable flag at end of sealed key */
 	p->key[p->key_len] = p->migratable;
 
-	ret = tpm_seal(tb, o->keytype, o->keyhandle, o->keyauth,
+	ret = tpm_seal(chip, tb, o->keytype, o->keyhandle, o->keyauth,
 		       p->key, p->key_len + 1, p->blob, &p->blob_len,
 		       o->blobauth, o->pcrinfo, o->pcrinfo_len);
 	if (ret < 0)
@@ -684,7 +688,8 @@ static int key_seal(struct trusted_key_payload *p,
 /*
  * Have the TPM unseal(decrypt) the symmetric key
  */
-static int key_unseal(struct trusted_key_payload *p,
+static int key_unseal(struct tpm_chip *chip,
+		      struct trusted_key_payload *p,
 		      struct trusted_key_options *o)
 {
 	struct tpm_buf *tb;
@@ -694,7 +699,8 @@ static int key_unseal(struct trusted_key_payload *p,
 	if (!tb)
 		return -ENOMEM;
 
-	ret = tpm_unseal(tb, o->keyhandle, o->keyauth, p->blob, p->blob_len,
+	ret = tpm_unseal(chip, tb, o->keyhandle, o->keyauth,
+			 p->blob, p->blob_len,
 			 o->blobauth, p->key, &p->key_len);
 	if (ret < 0)
 		pr_info("trusted_key: srkunseal failed (%d)\n", ret);
@@ -900,6 +906,7 @@ static int trusted_instantiate(struct key *key,
 {
 	struct trusted_key_payload *payload = NULL;
 	struct trusted_key_options *options = NULL;
+	struct tpm_chip *chip = NULL;
 	size_t datalen = prep->datalen;
 	char *datablob;
 	int ret = 0;
@@ -935,9 +942,14 @@ static int trusted_instantiate(struct key *key,
 	dump_payload(payload);
 	dump_options(options);
 
+	ret = -ENODEV;
+	chip = tpm_chip_find_get(TPM_ANY_NUM);
+	if (!chip)
+		goto out;
+
 	switch (key_cmd) {
 	case Opt_load:
-		ret = key_unseal(payload, options);
+		ret = key_unseal(chip, payload, options);
 		dump_payload(payload);
 		dump_options(options);
 		if (ret < 0)
@@ -945,12 +957,12 @@ static int trusted_instantiate(struct key *key,
 		break;
 	case Opt_new:
 		key_len = payload->key_len;
-		ret = tpm_get_random(TPM_ANY_NUM, payload->key, key_len);
+		ret = tpm_get_random(chip, payload->key, key_len);
 		if (ret != key_len) {
 			pr_info("trusted_key: key_create failed (%d)\n", ret);
 			goto out;
 		}
-		ret = key_seal(payload, options);
+		ret = key_seal(chip, payload, options);
 		if (ret < 0)
 			pr_info("trusted_key: key_seal failed (%d)\n", ret);
 		break;
@@ -958,9 +970,11 @@ static int trusted_instantiate(struct key *key,
 		ret = -EINVAL;
 		goto out;
 	}
+
 	if (!ret && options->pcrlock)
-		ret = pcrlock(options->pcrlock);
+		ret = pcrlock(chip, options->pcrlock);
 out:
+	tpm_chip_put(chip);
 	kfree(datablob);
 	kfree(options);
 	if (!ret)
@@ -987,6 +1001,7 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
 	struct trusted_key_payload *p = key->payload.data;
 	struct trusted_key_payload *new_p;
 	struct trusted_key_options *new_o;
+	struct tpm_chip *chip = NULL;
 	size_t datalen = prep->datalen;
 	char *datablob;
 	int ret = 0;
@@ -1018,6 +1033,7 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
 		kfree(new_p);
 		goto out;
 	}
+
 	/* copy old key values, and reseal with new pcrs */
 	new_p->migratable = p->migratable;
 	new_p->key_len = p->key_len;
@@ -1025,14 +1041,19 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
 	dump_payload(p);
 	dump_payload(new_p);
 
-	ret = key_seal(new_p, new_o);
+	ret = -ENODEV;
+	chip = tpm_chip_find_get(TPM_ANY_NUM);
+	if (!chip)
+		goto out;
+
+	ret = key_seal(chip, new_p, new_o);
 	if (ret < 0) {
 		pr_info("trusted_key: key_seal failed (%d)\n", ret);
 		kfree(new_p);
 		goto out;
 	}
 	if (new_o->pcrlock) {
-		ret = pcrlock(new_o->pcrlock);
+		ret = pcrlock(chip, new_o->pcrlock);
 		if (ret < 0) {
 			pr_info("trusted_key: pcrlock failed (%d)\n", ret);
 			kfree(new_p);
@@ -1042,6 +1063,7 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
 	rcu_assign_keypointer(key, new_p);
 	call_rcu(&p->rcu, trusted_rcu_free);
 out:
+	tpm_chip_put(chip);
 	kfree(datablob);
 	kfree(new_o);
 	return ret;

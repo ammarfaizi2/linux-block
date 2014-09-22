@@ -44,8 +44,8 @@ enum tpm_pcrs { TPM_PCR0 = 0, TPM_PCR8 = 8 };
 #define IMA_TEMPLATE_IMA_FMT "d|n"
 
 /* set during initialization */
+extern struct tpm_chip *ima_tpm;
 extern int ima_initialized;
-extern int ima_used_chip;
 extern int ima_hash_algo;
 extern int ima_appraise;
 

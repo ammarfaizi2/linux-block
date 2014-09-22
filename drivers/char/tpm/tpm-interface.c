@@ -678,7 +678,18 @@ static struct tpm_input_header pcrread_header = {
 	.ordinal = TPM_ORDINAL_PCRREAD
 };
 
-int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
+/**
+ * tpm_pcr_read - read a pcr value
+ * @chip:	The chip to pass the request to
+ * @pcr_idx:	pcr idx to retrieve
+ * @res_buf:	TPM_PCR value
+ *		size of res_buf is 20 bytes (or NULL if you don't care)
+ *
+ * The TPM driver should be built-in, but for whatever reason it
+ * isn't, protect against the chip disappearing, by incrementing
+ * the module usage count.
+ */
+int tpm_pcr_read(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
 {
 	int rc;
 	struct tpm_cmd_t cmd;
@@ -693,35 +704,11 @@ int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
 		       TPM_DIGEST_SIZE);
 	return rc;
 }
-
-/**
- * tpm_pcr_read - read a pcr value
- * @chip_num:	tpm idx # or ANY
- * @pcr_idx:	pcr idx to retrieve
- * @res_buf:	TPM_PCR value
- *		size of res_buf is 20 bytes (or NULL if you don't care)
- *
- * The TPM driver should be built-in, but for whatever reason it
- * isn't, protect against the chip disappearing, by incrementing
- * the module usage count.
- */
-int tpm_pcr_read(u32 chip_num, int pcr_idx, u8 *res_buf)
-{
-	struct tpm_chip *chip;
-	int rc;
-
-	chip = tpm_chip_find_get(chip_num);
-	if (chip == NULL)
-		return -ENODEV;
-	rc = tpm_pcr_read_dev(chip, pcr_idx, res_buf);
-	tpm_chip_put(chip);
-	return rc;
-}
 EXPORT_SYMBOL_GPL(tpm_pcr_read);
 
 /**
  * tpm_pcr_extend - extend pcr value with hash
- * @chip_num:	tpm idx # or AN&
+ * @chip:	The chip to pass the request to
  * @pcr_idx:	pcr idx to extend
  * @hash:	hash value used to extend pcr value
  *
@@ -737,24 +724,15 @@ static struct tpm_input_header pcrextend_header = {
 	.ordinal = TPM_ORD_PCR_EXTEND
 };
 
-int tpm_pcr_extend(u32 chip_num, int pcr_idx, const u8 *hash)
+int tpm_pcr_extend(struct tpm_chip *chip, int pcr_idx, const u8 *hash)
 {
 	struct tpm_cmd_t cmd;
-	int rc;
-	struct tpm_chip *chip;
-
-	chip = tpm_chip_find_get(chip_num);
-	if (chip == NULL)
-		return -ENODEV;
 
 	cmd.header.in = pcrextend_header;
 	cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(pcr_idx);
 	memcpy(cmd.params.pcrextend_in.hash, hash, TPM_DIGEST_SIZE);
-	rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
-			  "attempting extend a PCR value");
-
-	tpm_chip_put(chip);
-	return rc;
+	return transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+			    "attempting extend a PCR value");
 }
 EXPORT_SYMBOL_GPL(tpm_pcr_extend);
 
@@ -821,19 +799,9 @@ int tpm_do_selftest(struct tpm_chip *chip)
 }
 EXPORT_SYMBOL_GPL(tpm_do_selftest);
 
-int tpm_send(u32 chip_num, void *cmd, size_t buflen)
+int tpm_send(struct tpm_chip *chip, void *cmd, size_t buflen)
 {
-	struct tpm_chip *chip;
-	int rc;
-
-	chip = tpm_chip_find_get(chip_num);
-	if (chip == NULL)
-		return -ENODEV;
-
-	rc = transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
-
-	tpm_chip_put(chip);
-	return rc;
+	return transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
 }
 EXPORT_SYMBOL_GPL(tpm_send);
 
@@ -1010,15 +978,14 @@ static struct tpm_input_header tpm_getrandom_header = {
 
 /**
  * tpm_get_random() - Get random bytes from the tpm's RNG
- * @chip_num: A specific chip number for the request or TPM_ANY_NUM
+ * @chip: The chip to pass the request to
  * @out: destination buffer for the random bytes
  * @max: the max number of bytes to write to @out
  *
  * Returns < 0 on error and the number of bytes read on success
  */
-int tpm_get_random(u32 chip_num, u8 *out, size_t max)
+int tpm_get_random(struct tpm_chip *chip, u8 *out, size_t max)
 {
-	struct tpm_chip *chip;
 	struct tpm_cmd_t tpm_cmd;
 	u32 recd, num_bytes = min_t(u32, max, TPM_MAX_RNG_DATA);
 	int err, total = 0, retries = 5;
@@ -1026,10 +993,6 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
 
 	if (!out || !num_bytes || max > TPM_MAX_RNG_DATA)
 		return -EINVAL;
-
-	chip = tpm_chip_find_get(chip_num);
-	if (chip == NULL)
-		return -ENODEV;
 
 	do {
 		tpm_cmd.header.in = tpm_getrandom_header;
@@ -1049,7 +1012,6 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
 		num_bytes -= recd;
 	} while (retries-- && total < max);
 
-	tpm_chip_put(chip);
 	return total ? total : -EIO;
 }
 EXPORT_SYMBOL_GPL(tpm_get_random);

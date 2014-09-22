@@ -556,10 +556,10 @@ int ima_calc_field_array_hash(struct ima_field_data *field_data,
 
 static void __init ima_pcrread(int idx, u8 *pcr)
 {
-	if (!ima_used_chip)
+	if (!ima_tpm)
 		return;
 
-	if (tpm_pcr_read(TPM_ANY_NUM, idx, pcr) != 0)
+	if (tpm_pcr_read(ima_tpm, idx, pcr) != 0)
 		pr_err("Error Communicating to TPM chip\n");
 }
 
