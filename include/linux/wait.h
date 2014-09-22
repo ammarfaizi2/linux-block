@@ -294,6 +294,10 @@ do {									\
 	(void)___wait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
 			    cmd1; schedule(); cmd2)
 
+#define __wait_event_cmd_interruptible(wq, condition, cmd1, cmd2)	\
+	(void)___wait_event(wq, condition, TASK_INTERRUPTIBLE, 0, 0,	\
+			    cmd1; schedule(); cmd2)
+
 /**
  * wait_event_cmd - sleep until a condition gets true
  * @wq: the waitqueue to wait on
@@ -313,6 +317,13 @@ do {									\
 	if (condition)							\
 		break;							\
 	__wait_event_cmd(wq, condition, cmd1, cmd2);			\
+} while (0)
+
+#define wait_event_cmd_interruptible(wq, condition, cmd1, cmd2)		\
+do {									\
+	if (condition)							\
+		break;							\
+	__wait_event_cmd_interruptible(wq, condition, cmd1, cmd2);	\
 } while (0)
 
 #define __wait_event_interruptible(wq, condition)			\

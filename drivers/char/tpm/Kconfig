@@ -122,4 +122,17 @@ config TCG_XEN
 	  To compile this driver as a module, choose M here; the module
 	  will be called xen-tpmfront.
 
+config TCG_USER_EMUL
+	tristate "Userspace TPM emulation interface for development purposes"
+	depends on DEBUG_KERNEL
+	---help---
+	  Provide a userspace TPM emulation interface through a misc device
+	  interface (/dev/tpm_emul).  This can be used to enable development of
+	  TPM-based services by providing a target TPM that can be safely
+	  trashed or for computers that don't have a physical TPM.
+
+	  This driver should _NOT_ be included in production kernels as it
+	  might be possible to use it to fool various kernel security features
+	  (such as IMA).
+
 endif # TCG_TPM
