@@ -1881,6 +1881,8 @@ static int scsi_mq_prep_fn(struct request *req)
 		next_rq->special = bidi_sdb;
 	}
 
+	blk_mq_start_request(req);
+
 	switch (req->cmd_type) {
 	case REQ_TYPE_FS:
 		return scsi_cmd_to_driver(cmd)->init_command(cmd);
@@ -1927,6 +1929,8 @@ static int scsi_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
 		if (ret)
 			goto out_dec_host_busy;
 		req->cmd_flags |= REQ_DONTPREP;
+	} else {
+		blk_mq_start_request(req);
 	}
 
 	scsi_init_cmd_errh(cmd);
