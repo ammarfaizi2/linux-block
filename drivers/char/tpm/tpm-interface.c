@@ -636,10 +636,11 @@ static int tpm_continue_selftest(struct tpm_chip *chip)
 	return rc;
 }
 
-/*
- * tpm_chip_find_get - return tpm_chip for given chip number
+/**
+ * tpm_chip_find_get - Look up a TPM chip by device index
+ * @chip_num: The index number of the chip to use or TPM_ANY_NUM
  */
-static struct tpm_chip *tpm_chip_find_get(int chip_num)
+struct tpm_chip *tpm_chip_find_get(int chip_num)
 {
 	struct tpm_chip *pos, *chip = NULL;
 
@@ -656,6 +657,18 @@ static struct tpm_chip *tpm_chip_find_get(int chip_num)
 	rcu_read_unlock();
 	return chip;
 }
+EXPORT_SYMBOL_GPL(tpm_chip_find_get);
+
+/**
+ * tpm_chip_put - Release a previously looked up TPM chip
+ * @chip: The chip to release
+ */
+void tpm_chip_put(struct tpm_chip *chip)
+{
+	if (chip)
+		module_put(chip->dev->driver->owner);
+}
+EXPORT_SYMBOL_GPL(tpm_chip_put);
 
 #define TPM_ORDINAL_PCRREAD cpu_to_be32(21)
 #define READ_PCR_RESULT_SIZE 30
