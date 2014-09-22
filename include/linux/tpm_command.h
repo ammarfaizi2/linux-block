@@ -15,11 +15,20 @@
 #define TPM_TAG_RSP_AUTH2_COMMAND       198
 
 /* Command Ordinals */
-#define TPM_ORD_GETRANDOM               70
-#define TPM_ORD_OSAP                    11
-#define TPM_ORD_OIAP                    10
-#define TPM_ORD_SEAL                    23
-#define TPM_ORD_UNSEAL                  24
+enum tpm_ordinal {
+	TPM_ORD_OSAP			= 11,
+	TPM_ORD_OIAP			= 10,
+	TPM_ORD_PCR_EXTEND		= 20,
+	TPM_ORD_PCR_READ		= 21,
+	TPM_ORD_SEAL			= 23,
+	TPM_ORD_UNSEAL			= 24,
+	TPM_ORD_GET_RANDOM		= 70,
+	TPM_ORD_CONTINUE_SELFTEST	= 83,
+	TPM_ORD_GET_CAP			= 101,
+	TPM_ORD_READPUBEK		= 124,
+	TPM_ORD_SAVESTATE		= 152,
+	TPM_ORD_STARTUP			= 153,
+};
 
 /* Other constants */
 #define SRKHANDLE                       0x40000000

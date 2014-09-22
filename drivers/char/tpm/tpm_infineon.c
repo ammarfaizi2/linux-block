@@ -591,10 +591,10 @@ static int tpm_inf_pnp_suspend(struct pnp_dev *dev, pm_message_t pm_state)
 	struct tpm_chip *chip = pnp_get_drvdata(dev);
 	int rc;
 	if (chip) {
-		u8 savestate[] = {
-			0, 193,	/* TPM_TAG_RQU_COMMAND */
+		static const u8 savestate[] = {
+			0, TPM_TAG_RQU_COMMAND,
 			0, 0, 0, 10,	/* blob length (in bytes) */
-			0, 0, 0, 152	/* TPM_ORD_SaveState */
+			0, 0, 0, TPM_ORD_SAVESTATE,
 		};
 		dev_info(&dev->dev, "saving TPM state\n");
 		rc = tpm_inf_send(chip, savestate, sizeof(savestate));

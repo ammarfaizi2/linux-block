@@ -28,6 +28,7 @@
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 #include <linux/freezer.h>
+#include <linux/tpm_command.h>
 
 #include "tpm.h"
 #include "tpm_eventlog.h"
@@ -417,13 +418,11 @@ static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
 }
 
 #define TPM_INTERNAL_RESULT_SIZE 200
-#define TPM_ORD_GET_CAP cpu_to_be32(101)
-#define TPM_ORD_GET_RANDOM cpu_to_be32(70)
 
 static const struct tpm_input_header tpm_getcap_header = {
-	.tag = TPM_TAG_RQU_COMMAND,
-	.length = cpu_to_be32(22),
-	.ordinal = TPM_ORD_GET_CAP
+	.tag	 = cpu_to_be16(TPM_TAG_RQU_COMMAND),
+	.length	 = cpu_to_be32(22),
+	.ordinal = cpu_to_be32(TPM_ORD_GET_CAP),
 };
 
 ssize_t tpm_getcap(struct device *dev, __be32 subcap_id, cap_t *cap,
@@ -469,14 +468,13 @@ void tpm_gen_interrupt(struct tpm_chip *chip)
 }
 EXPORT_SYMBOL_GPL(tpm_gen_interrupt);
 
-#define TPM_ORD_STARTUP cpu_to_be32(153)
 #define TPM_ST_CLEAR cpu_to_be16(1)
 #define TPM_ST_STATE cpu_to_be16(2)
 #define TPM_ST_DEACTIVATED cpu_to_be16(3)
 static const struct tpm_input_header tpm_startup_header = {
-	.tag = TPM_TAG_RQU_COMMAND,
-	.length = cpu_to_be32(12),
-	.ordinal = TPM_ORD_STARTUP
+	.tag	 = cpu_to_be16(TPM_TAG_RQU_COMMAND),
+	.length	 = cpu_to_be32(12),
+	.ordinal = cpu_to_be32(TPM_ORD_STARTUP),
 };
 
 static int tpm_startup(struct tpm_chip *chip, __be16 startup_type)
@@ -609,12 +607,11 @@ duration:
 }
 EXPORT_SYMBOL_GPL(tpm_get_timeouts);
 
-#define TPM_ORD_CONTINUE_SELFTEST 83
 #define CONTINUE_SELFTEST_RESULT_SIZE 10
 
 static struct tpm_input_header continue_selftest_header = {
-	.tag = TPM_TAG_RQU_COMMAND,
-	.length = cpu_to_be32(10),
+	.tag	 = cpu_to_be16(TPM_TAG_RQU_COMMAND),
+	.length	 = cpu_to_be32(10),
 	.ordinal = cpu_to_be32(TPM_ORD_CONTINUE_SELFTEST),
 };
 
@@ -670,12 +667,11 @@ void tpm_chip_put(struct tpm_chip *chip)
 }
 EXPORT_SYMBOL_GPL(tpm_chip_put);
 
-#define TPM_ORDINAL_PCRREAD cpu_to_be32(21)
 #define READ_PCR_RESULT_SIZE 30
 static struct tpm_input_header pcrread_header = {
-	.tag = TPM_TAG_RQU_COMMAND,
-	.length = cpu_to_be32(14),
-	.ordinal = TPM_ORDINAL_PCRREAD
+	.tag	 = cpu_to_be16(TPM_TAG_RQU_COMMAND),
+	.length	 = cpu_to_be32(14),
+	.ordinal = cpu_to_be32(TPM_ORD_PCR_READ),
 };
 
 /**
@@ -716,12 +712,11 @@ EXPORT_SYMBOL_GPL(tpm_pcr_read);
  * isn't, protect against the chip disappearing, by incrementing
  * the module usage count.
  */
-#define TPM_ORD_PCR_EXTEND cpu_to_be32(20)
 #define EXTEND_PCR_RESULT_SIZE 34
 static struct tpm_input_header pcrextend_header = {
-	.tag = TPM_TAG_RQU_COMMAND,
-	.length = cpu_to_be32(34),
-	.ordinal = TPM_ORD_PCR_EXTEND
+	.tag	 = cpu_to_be16(TPM_TAG_RQU_COMMAND),
+	.length	 = cpu_to_be32(34),
+	.ordinal = cpu_to_be32(TPM_ORD_PCR_EXTEND)
 };
 
 int tpm_pcr_extend(struct tpm_chip *chip, int pcr_idx, const u8 *hash)
@@ -889,13 +884,12 @@ void tpm_remove_hardware(struct device *dev)
 }
 EXPORT_SYMBOL_GPL(tpm_remove_hardware);
 
-#define TPM_ORD_SAVESTATE cpu_to_be32(152)
 #define SAVESTATE_RESULT_SIZE 10
 
 static struct tpm_input_header savestate_header = {
-	.tag = TPM_TAG_RQU_COMMAND,
-	.length = cpu_to_be32(10),
-	.ordinal = TPM_ORD_SAVESTATE
+	.tag	 = cpu_to_be16(TPM_TAG_RQU_COMMAND),
+	.length	 = cpu_to_be32(10),
+	.ordinal = cpu_to_be32(TPM_ORD_SAVESTATE),
 };
 
 /*
@@ -971,9 +965,9 @@ EXPORT_SYMBOL_GPL(tpm_pm_resume);
 
 #define TPM_GETRANDOM_RESULT_SIZE	18
 static struct tpm_input_header tpm_getrandom_header = {
-	.tag = TPM_TAG_RQU_COMMAND,
-	.length = cpu_to_be32(14),
-	.ordinal = TPM_ORD_GET_RANDOM
+	.tag	 = cpu_to_be16(TPM_TAG_RQU_COMMAND),
+	.length	 = cpu_to_be32(14),
+	.ordinal = cpu_to_be32(TPM_ORD_GET_RANDOM),
 };
 
 /**

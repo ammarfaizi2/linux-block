@@ -138,8 +138,6 @@ struct tpm_output_header {
 	__be32	return_code;
 } __packed;
 
-#define TPM_TAG_RQU_COMMAND cpu_to_be16(193)
-
 struct	stclear_flags_t {
 	__be16	tag;
 	u8	deactivated;
