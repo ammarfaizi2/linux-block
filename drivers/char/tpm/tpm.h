@@ -306,13 +306,11 @@ struct tpm_cmd_t {
 	tpm_cmd_params	params;
 } __packed;
 
-ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
+extern long tpm_getcap(struct device *, __be32, cap_t *, const char *);
 
-ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
-		     size_t bufsiz);
-extern int tpm_get_timeouts(struct tpm_chip *);
+extern long tpm_get_timeouts(struct tpm_chip *);
 extern void tpm_gen_interrupt(struct tpm_chip *);
-extern int tpm_do_selftest(struct tpm_chip *);
+extern long tpm_do_selftest(struct tpm_chip *);
 extern unsigned long tpm_calc_ordinal_duration(struct tpm_chip *, u32);
 extern struct tpm_chip* tpm_register_hardware(struct device *,
 					      const struct tpm_class_ops *ops);

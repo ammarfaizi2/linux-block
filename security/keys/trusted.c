@@ -355,12 +355,12 @@ out:
  * own TPM command packets using the drivers send function.
  */
 static int trusted_tpm_send(struct tpm_chip *chip, unsigned char *cmd,
-			    size_t buflen)
+			    size_t buflen, const char *desc)
 {
 	int rc;
 
 	dump_tpm_buf(cmd);
-	rc = tpm_send(chip, cmd, buflen);
+	rc = tpm_send_command(chip, cmd, buflen, desc);
 	dump_tpm_buf(cmd);
 	if (rc > 0)
 		/* Can't return positive return codes values to keyctl */
@@ -410,7 +410,8 @@ static int osap(struct tpm_chip *chip,
 	store32(tb, handle);
 	storebytes(tb, ononce, TPM_NONCE_SIZE);
 
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
+			       "creating OSAP session");
 	if (ret < 0)
 		return ret;
 
@@ -435,7 +436,8 @@ static int oiap(struct tpm_chip *chip, struct tpm_buf *tb, uint32_t *handle,
 	store16(tb, TPM_TAG_RQU_COMMAND);
 	store32(tb, TPM_OIAP_SIZE);
 	store32(tb, TPM_ORD_OIAP);
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
+			       "creating OIAP session");
 	if (ret < 0)
 		return ret;
 
@@ -544,7 +546,8 @@ static int tpm_seal(struct tpm_chip *chip,
 	store8(tb, cont);
 	storebytes(tb, td->pubauth, SHA1_DIGEST_SIZE);
 
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
+			       "sealing data");
 	if (ret < 0)
 		goto out;
 
@@ -637,7 +640,8 @@ static int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 	store8(tb, cont);
 	storebytes(tb, authdata2, SHA1_DIGEST_SIZE);
 
-	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE);
+	ret = trusted_tpm_send(chip, tb->data, MAX_BUF_SIZE,
+			       "unsealing data");
 	if (ret < 0) {
 		pr_info("trusted_key: authhmac failed (%d)\n", ret);
 		return ret;

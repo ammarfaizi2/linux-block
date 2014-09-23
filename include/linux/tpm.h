@@ -51,7 +51,8 @@ extern void tpm_chip_put(struct tpm_chip *chip);
 
 extern int tpm_pcr_read(struct tpm_chip *chip, int pcr_idx, u8 *res_buf);
 extern int tpm_pcr_extend(struct tpm_chip *chip, int pcr_idx, const u8 *hash);
-extern int tpm_send(struct tpm_chip *chip, void *cmd, size_t buflen);
+extern long tpm_send_command(struct tpm_chip *chip, void *buf, size_t buflen,
+			     const char *desc);
 extern int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max);
 #else
 static inline struct tpm_chip *tpm_chip_find_get(int chip_num)
@@ -67,7 +68,9 @@ static inline int tpm_pcr_read(struct tpm_chip *chip, int pcr_idx, u8 *res_buf) 
 static inline int tpm_pcr_extend(struct tpm_chip *chip, int pcr_idx, const u8 *hash) {
 	return -ENODEV;
 }
-static inline int tpm_send(struct tpm_chip *chip, void *cmd, size_t buflen) {
+static inline long tpm_send_command(struct tpm_chip *chip, void *buf, size_t buflen,
+				    const char *desc)
+{
 	return -ENODEV;
 }
 static inline int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max) {

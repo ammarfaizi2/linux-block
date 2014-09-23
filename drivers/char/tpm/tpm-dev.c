@@ -32,7 +32,10 @@ struct file_priv {
 	struct timer_list user_read_timer;      /* user needs to claim result */
 	struct work_struct work;
 
-	u8 data_buffer[TPM_BUFSIZE];
+	union {
+		u8 data_buffer[TPM_BUFSIZE];
+		struct tpm_output_header reply;
+	};
 };
 
 static void user_reader_timeout(unsigned long ptr)
@@ -119,7 +122,7 @@ static ssize_t tpm_write(struct file *file, const char __user *buf,
 {
 	struct file_priv *priv = file->private_data;
 	size_t in_size = size;
-	ssize_t out_size;
+	long rc;
 
 	/* cannot perform a write until the read has cleared
 	   either via tpm_read or a user_read_timer timeout.
@@ -140,14 +143,14 @@ static ssize_t tpm_write(struct file *file, const char __user *buf,
 	}
 
 	/* atomic tpm command send and result receive */
-	out_size = tpm_transmit(priv->chip, priv->data_buffer,
-				sizeof(priv->data_buffer));
-	if (out_size < 0) {
+	rc = tpm_send_command(priv->chip, priv->data_buffer,
+			      sizeof(priv->data_buffer), NULL);
+	if (rc < 0) {
 		mutex_unlock(&priv->buffer_mutex);
-		return out_size;
+		return rc;
 	}
 
-	atomic_set(&priv->data_pending, out_size);
+	atomic_set(&priv->data_pending, be32_to_cpu(priv->reply.length));
 	mutex_unlock(&priv->buffer_mutex);
 
 	/* Set a timeout by which the reader must come claim the result */
