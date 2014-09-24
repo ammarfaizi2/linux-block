@@ -76,7 +76,12 @@
  * in cases like this where there are no data dependencies.
  **/
 
-#define read_barrier_depends()	do { } while (0)
+#define read_barrier_depends()	\
+do { \
+	asm volatile("je 1f\n" \
+		     "1:" \
+		     : : : "memory"); \
+} while (0)
 
 #ifdef CONFIG_SMP
 #define smp_mb()	mb()
