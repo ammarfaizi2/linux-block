@@ -30,6 +30,7 @@ enum tpm_ordinal {
 	TPM_ORD_READPUBEK		= 124,
 	TPM_ORD_SAVESTATE		= 152,
 	TPM_ORD_STARTUP			= 153,
+	TPM_ORD_FLUSHSPECIFIC		= 186,
 };
 
 /* Other constants */

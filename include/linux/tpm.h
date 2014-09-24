@@ -109,6 +109,19 @@ enum tpm_entity_type {
 	TPM_ET_RESERVED_HANDLE		= 0x40,
 };
 
+enum tpm_resource_type {
+	TPM_RT_KEY			= 0x00000001,
+	TPM_RT_AUTH			= 0x00000002,
+	TPM_RT_HASH			= 0x00000003,
+	TPM_RT_TRANS			= 0x00000004,
+	TPM_RT_CONTEXT			= 0x00000005,
+	TPM_RT_COUNTER			= 0x00000006,
+	TPM_RT_DELEGATE			= 0x00000007,
+	TPM_RT_DAA_TPM			= 0x00000008,
+	TPM_RT_DAA_V0			= 0x00000009,
+	TPM_RT_DAA_V1			= 0x0000000a,
+};
+
 struct tpm_buf {
 	unsigned short len;
 	unsigned short offset;
@@ -153,5 +166,9 @@ extern int tpm_load_key2(struct tpm_chip *chip,
 			 const unsigned char *parent_auth,
 			 const struct tpm_wrapped_key *wrapped_key,
 			 uint32_t *_key_handle);
+
+extern int tpm_flush_specific(struct tpm_chip *chip,
+			      uint32_t handle,
+			      enum tpm_resource_type handle_type);
 
 #endif

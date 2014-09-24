@@ -1111,6 +1111,37 @@ out:
 EXPORT_SYMBOL_GPL(tpm_load_key2);
 
 /**
+ * tpm_flush_specific - Tell the TPM to discard a handle and associated resources
+ * @chip: The chip to use
+ * @handle: The handle to discard
+ * @handle_type: The type of handle
+ */
+int tpm_flush_specific(struct tpm_chip *chip,
+		       uint32_t handle, enum tpm_resource_type handle_type)
+{
+	struct tpm_buf *tb;
+	int ret;
+
+	/* alloc some work space */
+	tb = kmalloc(sizeof(*tb), GFP_KERNEL);
+	if (!tb)
+		return -ENOMEM;
+
+	/* build and send the TPM request packet */
+	INIT_BUF(tb);
+	store16(tb, TPM_TAG_RQU_COMMAND);
+	store32(tb, TPM_DATA_OFFSET + 8);
+	store32(tb, TPM_ORD_FLUSHSPECIFIC);
+	store32(tb, handle);
+	store32(tb, handle_type);
+
+	ret = tpm_send_dump(chip, tb, "flushing handle");
+	kfree(tb);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(tpm_flush_specific);
+
+/**
  * tpm_library_use - Tell the TPM library we want to make use of it
  *
  * Tell the TPM library that we want to make use of it, allowing it to
