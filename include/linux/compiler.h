@@ -378,7 +378,17 @@ void ftrace_likely_update(struct ftrace_branch_data *f, int val, int expect);
  * use is to mediate communication between process-level code and irq/NMI
  * handlers, all running on the same CPU.
  */
+#ifdef CONFIG_X86
+#define ACCESS_ONCE(x) \
+(*({ \
+	asm volatile("je 1f\n" \
+		     "1:" \
+		     : : : "memory"); \
+	(volatile typeof(x) *)&(x); \
+}))
+#else /* #ifdef CONFIG_X86 */
 #define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
+#endif /* #else #ifdef CONFIG_X86 */
 
 /* Ignore/forbid kprobes attach on very low level functions marked by this attribute: */
 #ifdef CONFIG_KPROBES
