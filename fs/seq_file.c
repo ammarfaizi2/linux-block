@@ -647,10 +647,11 @@ EXPORT_SYMBOL(seq_open_private);
 
 int seq_putc(struct seq_file *m, char c)
 {
-	if (m->count < m->size) {
+	if (m->count + 1 < m->size) {
 		m->buf[m->count++] = c;
 		return 0;
 	}
+	seq_set_overflow(m);
 	return -1;
 }
 EXPORT_SYMBOL(seq_putc);
