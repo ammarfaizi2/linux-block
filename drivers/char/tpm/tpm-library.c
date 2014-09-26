@@ -489,6 +489,30 @@ struct tpm_digests {
 	struct tpm_odd_nonce ononce;
 };
 
+/*
+ * Calculate an XOR-based symmetric key that can be used to encrypt protected
+ * data.  The key is left in td->xorhash.
+ */
+static int tpm_calc_symmetric_authkey(struct tpm_digests *td,
+				      const u8 *secret,
+				      const struct tpm_even_nonce *enonce)
+{
+	memcpy(td->xorwork, secret, SHA1_DIGEST_SIZE);
+	memcpy(td->xorwork + SHA1_DIGEST_SIZE, enonce->data, SHA1_DIGEST_SIZE);
+	return TSS_sha1(td->xorwork, SHA1_DIGEST_SIZE * 2, td->xorhash);
+}
+
+/*
+ * Encrypt/decrypt data with a previously calculated XOR-based symmetric key.
+ */
+static void tpm_crypt_with_authkey(const struct tpm_digests *td,
+				   const u8 *data, u8 *buffer)
+{
+	int i;
+	for (i = 0; i < SHA1_DIGEST_SIZE; ++i)
+		buffer[i] = td->xorhash[i] ^ data[i];
+}
+
 /**
  * tpm_seal - Encrypt one key according to another plus PCR state
  * @chip: The chip to use
@@ -528,7 +552,6 @@ int tpm_seal(struct tpm_chip *chip,
 	int encdatasize;
 	int storedsize;
 	int ret;
-	int i;
 
 	/* alloc some work space for all the hashes */
 	td = kmalloc(sizeof *td, GFP_KERNEL);
@@ -541,13 +564,18 @@ int tpm_seal(struct tpm_chip *chip,
 		goto out;
 	dump_sess(&sess);
 
-	/* calculate encrypted authorization value */
-	memcpy(td->xorwork, sess.secret, SHA1_DIGEST_SIZE);
-	memcpy(td->xorwork + SHA1_DIGEST_SIZE, sess.enonce.data, SHA1_DIGEST_SIZE);
-	ret = TSS_sha1(td->xorwork, SHA1_DIGEST_SIZE * 2, td->xorhash);
+	/* We need to pass a 'password' to the TPM with which it will encrypt
+	 * the sealed data before returning it.  So that the password doesn't
+	 * travel to the TPM in the clear, we generate a symmetric key from the
+	 * negotiated and encrypted session data and encrypt the password with
+	 * that.
+	 */
+	ret = tpm_calc_symmetric_authkey(td, sess.secret, &sess.enonce);
 	if (ret < 0)
 		goto out;
+	tpm_crypt_with_authkey(td, encauth, td->encauth);
 
+	/* Set up the parameters we will be sending */
 	ret = tpm_gen_odd_nonce(chip, &td->ononce);
 	if (ret < 0)
 		goto out;
@@ -555,10 +583,6 @@ int tpm_seal(struct tpm_chip *chip,
 	rawlen_be	= cpu_to_be32(rawlen);
 	pcrinfosize_be	= cpu_to_be32(pcrinfosize);
 	cont = 0;
-
-	/* encrypt data authorization key */
-	for (i = 0; i < SHA1_DIGEST_SIZE; ++i)
-		td->encauth[i] = td->xorhash[i] ^ encauth[i];
 
 	/* calculate authorization HMAC value */
 	BUG_ON(!pcrinfo);
