@@ -67,4 +67,11 @@ config SIGNED_PE_FILE_VERIFICATION
 	  This option provides support for verifying the signature(s) on a
 	  signed PE binary.
 
+config ASYMMETRIC_TPM_KEY_SUBTYPE
+	tristate "Asymmetric TPM-based public-key crypto algorithm subtype"
+	depends on TCG_TPM
+	help
+	  This option provides support for TPM hardware-based asymmetric public
+	  key type handling.
+
 endif # ASYMMETRIC_KEY_TYPE
