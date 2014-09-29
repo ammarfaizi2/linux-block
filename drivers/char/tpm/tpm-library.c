@@ -21,6 +21,8 @@
 #include <linux/tpm_command.h>
 
 #include "tpm-library.h"
+#define kenter(fmt, ...) pr_devel("==>%s("fmt")\n", __func__, ## __VA_ARGS__)
+#define kleave(fmt, ...) pr_devel("<==%s()"fmt"\n", __func__, ## __VA_ARGS__)
 
 static const char tpm_hmac_alg[] = "hmac(sha1)";
 static const char tpm_hash_alg[] = "sha1";
@@ -95,7 +97,7 @@ static int TSS_rawhmac(unsigned char *digest,
 	va_list argp;
 	unsigned int dlen;
 	unsigned char *data;
-	int ret;
+	int ret, s;
 
 	sdesc = tpm_init_sdesc(tpm_hmacalg);
 	if (IS_ERR(sdesc)) {
@@ -111,11 +113,12 @@ static int TSS_rawhmac(unsigned char *digest,
 		goto out;
 
 	va_start(argp, keylen);
-	for (;;) {
+	for (s = 1;; s++) {
 		dlen = va_arg(argp, unsigned int);
 		data = va_arg(argp, unsigned char *);
 		if (!data)
 			break;
+		pr_devel("RAWHMAC %dH1: [%u] %*phN\n", s, dlen, dlen, data);
 		ret = crypto_shash_update(&sdesc->shash, data, dlen);
 		if (ret < 0)
 			break;
@@ -152,7 +155,7 @@ static int TSS_authhmac(unsigned char *digest,
 	struct tpm_sdesc *sdesc;
 	unsigned int dlen;
 	unsigned char *data;
-	int ret;
+	int ret, s;
 	va_list argp;
 
 	sdesc = tpm_init_sdesc(tpm_hashalg);
@@ -165,11 +168,12 @@ static int TSS_authhmac(unsigned char *digest,
 	if (ret < 0)
 		goto out;
 	va_start(argp, cont);
-	for (;;) {
+	for (s = 1;; s++) {
 		dlen = va_arg(argp, unsigned int);
 		data = va_arg(argp, unsigned char *);
 		if (!data)
 			break;
+		pr_devel("AUTHHASH S%d: [%u] %*phN\n", s, dlen, dlen, data);
 		ret = crypto_shash_update(&sdesc->shash, data, dlen);
 		if (ret < 0)
 			break;
@@ -411,6 +415,9 @@ static int tpm_send_dump(struct tpm_chip *chip, struct tpm_buf *cmd,
 {
 	int rc;
 
+	kenter(",{%u,%u},%s",
+	       cmd->len, be32_to_cpu(*(__be32 *)(cmd->data + TPM_SIZE_OFFSET)), desc);
+
 	dump_tpm_buf(cmd);
 	rc = tpm_send_command(chip, cmd->data, MAX_BUF_SIZE, desc);
 	dump_tpm_buf(cmd);
@@ -419,6 +426,7 @@ static int tpm_send_dump(struct tpm_chip *chip, struct tpm_buf *cmd,
 		rc = -EPERM;
 	else
 		SET_BUF_OFFSET(cmd, TPM_DATA_OFFSET);
+	kleave(" = %d [%u]", rc, be32_to_cpu(*(__be32 *)(cmd->data + TPM_SIZE_OFFSET)));
 	return rc;
 }
 
@@ -434,6 +442,8 @@ static int tpm_create_osap(struct tpm_chip *chip,
 	struct tpm_odd_nonce ononce;
 	int ret;
 
+	kenter("");
+
 	ret = tpm_gen_odd_nonce(chip, &ononce);
 	if (ret < 0)
 		return ret;
@@ -448,16 +458,20 @@ static int tpm_create_osap(struct tpm_chip *chip,
 
 	ret = tpm_send_dump(chip, tb, "creating OSAP session");
 	if (ret < 0)
-		return ret;
+		goto out;
 
 	s->handle = LOAD32(tb);
 	LOAD_S(tb, s->enonce.data, TPM_NONCE_SIZE);
 	LOAD_S(tb, enonce.data, TPM_NONCE_SIZE);
 
-	return TSS_rawhmac(s->secret, keyauth, SHA1_DIGEST_SIZE,
-			   TPM_NONCE_SIZE, enonce.data,
-			   TPM_NONCE_SIZE, ononce.data,
-			   0, NULL);
+	/* Calculate the encrypted shared secret */
+	ret = TSS_rawhmac(s->secret, keyauth, SHA1_DIGEST_SIZE,
+			  TPM_NONCE_SIZE, enonce.data,
+			  TPM_NONCE_SIZE, ononce.data,
+			  0, NULL);
+out:
+	kleave(" = %d [%08x]", ret, s->handle);
+	return ret;
 }
 
 /*
@@ -467,6 +481,8 @@ static int tpm_create_oiap(struct tpm_chip *chip, struct tpm_buf *tb,
 			   uint32_t *handle, struct tpm_even_nonce *enonce)
 {
 	int ret;
+
+	kenter("");
 
 	INIT_BUF(tb);
 	store16(tb, TPM_TAG_RQU_COMMAND);
@@ -478,6 +494,7 @@ static int tpm_create_oiap(struct tpm_chip *chip, struct tpm_buf *tb,
 
 	*handle = LOAD32(tb);
 	LOAD_S(tb, enonce->data, TPM_NONCE_SIZE);
+	kleave(" = 0 [%08x]", *handle);
 	return 0;
 }
 
@@ -552,6 +569,8 @@ int tpm_seal(struct tpm_chip *chip,
 	int encdatasize;
 	int storedsize;
 	int ret;
+
+	kenter("");
 
 	/* alloc some work space for all the hashes */
 	td = kmalloc(sizeof *td, GFP_KERNEL);
@@ -641,6 +660,7 @@ int tpm_seal(struct tpm_chip *chip,
 	}
 out:
 	kfree(td);
+	kleave(" = %d", ret);
 	return ret;
 }
 EXPORT_SYMBOL_GPL(tpm_seal);
@@ -676,36 +696,38 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 	__be32 ordinal;
 	int ret;
 
+	kenter("");
+
 	/* sessions for unsealing key and data */
 	ret = tpm_create_oiap(chip, tb, &authhandle1, &enonce1);
 	if (ret < 0) {
 		pr_info("Failed to create OIAP 1 (%d)\n", ret);
-		return ret;
+		goto out;
 	}
 	ret = tpm_create_oiap(chip, tb, &authhandle2, &enonce2);
 	if (ret < 0) {
 		pr_info("Failed to create OIAP 2 (%d)\n", ret);
-		return ret;
+		goto out;
 	}
 
 	ordinal = cpu_to_be32(TPM_ORD_UNSEAL);
 	ret = tpm_gen_odd_nonce(chip, &ononce);
 	if (ret < 0)
-		return ret;
+		goto out;
 	ret = TSS_authhmac(authdata1, keyauth, TPM_NONCE_SIZE,
 			   &enonce1, &ononce, cont,
 			   /* 1S */ sizeof(__be32), &ordinal,
 			   /* 2S */ enclen, encdata,
 			   0, NULL);
 	if (ret < 0)
-		return ret;
+		goto out;
 	ret = TSS_authhmac(authdata2, decauth, TPM_NONCE_SIZE,
 			   &enonce2, &ononce, cont,
 			   /* 1S */ sizeof(__be32), &ordinal,
 			   /* 2S */ enclen, encdata,
 			   0, NULL);
 	if (ret < 0)
-		return ret;
+		goto out;
 
 	/* build and send TPM request packet */
 	INIT_BUF(tb);
@@ -726,7 +748,7 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 	ret = tpm_send_dump(chip, tb, "unsealing data");
 	if (ret < 0) {
 		pr_info("authhmac failed (%d)\n", ret);
-		return ret;
+		goto out;
 	}
 
 	*_rawlen = LOAD32(tb);
@@ -738,10 +760,12 @@ int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 			     0, 0);
 	if (ret < 0) {
 		pr_info("TSS_checkhmac2 failed (%d)\n", ret);
-		return ret;
+		goto out;
 	}
 	LOAD_S(tb, rawbuffer, *_rawlen);
-	return 0;
+out:
+	kleave(" = %d", ret);
+	return ret;
 }
 EXPORT_SYMBOL_GPL(tpm_unseal);
 
