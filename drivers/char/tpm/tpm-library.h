@@ -46,8 +46,7 @@ static inline void store32(struct tpm_buf *buf, uint32_t value)
 	buf->len += sizeof value;
 }
 
-static inline void store_s(struct tpm_buf *buf, const unsigned char *in,
-			   int len)
+static inline void store_s(struct tpm_buf *buf, const void *in, int len)
 {
 	memcpy(buf->data + buf->len, in, len);
 	buf->len += len;
