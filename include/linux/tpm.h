@@ -83,7 +83,7 @@ static inline int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max) {
  */
 /* implementation specific TPM constants */
 #define MAX_PCRINFO_SIZE		64
-#define MAX_BUF_SIZE			512
+#define MAX_BUF_SIZE			(2048 - 4)
 #define TPM_GETRANDOM_SIZE		14
 #define TPM_OSAP_SIZE			36
 #define TPM_OIAP_SIZE			10
@@ -133,4 +133,18 @@ extern int tpm_unseal(struct tpm_chip *chip, struct tpm_buf *tb,
 		      const unsigned char *blobauth,
 		      unsigned char *data, unsigned int *datalen);
 
+struct tpm_wrapped_key {
+	unsigned short data_len;
+	unsigned short pubkey_offset;
+	unsigned short pubkey_len;
+	u8 data[];
+};
+
+extern int tpm_create_wrap_key(struct tpm_chip *chip,
+			       enum tpm_entity_type parent_type,
+			       uint32_t parent_handle,
+			       const unsigned char *parent_auth,
+			       const unsigned char *usage_auth,
+			       const unsigned char *migration_auth,
+			       struct tpm_wrapped_key **_wrapped_key);
 #endif
