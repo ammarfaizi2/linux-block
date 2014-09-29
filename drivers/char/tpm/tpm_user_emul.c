@@ -656,17 +656,39 @@ static struct miscdevice tpm_user_dev = {
 	.fops	= &tpm_user_fops,
 };
 
+static struct platform_driver tpm_user_drv = {
+	.driver = {
+		.name	= "tpm_user",
+		.owner	= THIS_MODULE,
+		/* .pm	= &tpm_user_pm, -- do we need pm since there's no h/w? */
+	},
+};
+
 /*
  * Initialise a device
  */
 static __init int tpm_user_mod_init(void)
 {
-	return misc_register(&tpm_user_dev);
+	int ret;
+
+	ret = platform_driver_register(&tpm_user_drv);
+	if (ret < 0)
+		return ret;
+
+	ret = misc_register(&tpm_user_dev);
+	if (ret < 0)
+		goto error_dev;
+	return 0;
+
+error_dev:
+	platform_driver_unregister(&tpm_user_drv);
+	return ret;
 }
 device_initcall(tpm_user_mod_init);
 
 static __exit void tpm_user_mod_exit(void)
 {
 	misc_deregister(&tpm_user_dev);
+	platform_driver_unregister(&tpm_user_drv);
 }
 module_exit(tpm_user_mod_exit);
