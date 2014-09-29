@@ -147,4 +147,11 @@ extern int tpm_create_wrap_key(struct tpm_chip *chip,
 			       const unsigned char *usage_auth,
 			       const unsigned char *migration_auth,
 			       struct tpm_wrapped_key **_wrapped_key);
+extern int tpm_load_key2(struct tpm_chip *chip,
+			 enum tpm_entity_type parent_type,
+			 uint32_t parent_handle,
+			 const unsigned char *parent_auth,
+			 const struct tpm_wrapped_key *wrapped_key,
+			 uint32_t *_key_handle);
+
 #endif
