@@ -18,7 +18,7 @@
 
 static void seq_set_overflow(struct seq_file *m)
 {
-	m->count = m->size;
+	m->count = m->size + 1;
 }
 
 static void *seq_buf_alloc(unsigned long size)
@@ -234,7 +234,7 @@ ssize_t seq_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
 			m->index = pos;
 			continue;
 		}
-		if (m->count < m->size)
+		if (m->count <= m->size)
 			goto Fill;
 		m->op->stop(m, p);
 		kvfree(m->buf);
@@ -647,7 +647,7 @@ EXPORT_SYMBOL(seq_open_private);
 
 int seq_putc(struct seq_file *m, char c)
 {
-	if (m->count + 1 < m->size) {
+	if (m->count < m->size) {
 		m->buf[m->count++] = c;
 		return 0;
 	}
@@ -659,7 +659,7 @@ EXPORT_SYMBOL(seq_putc);
 int seq_puts(struct seq_file *m, const char *s)
 {
 	int len = strlen(s);
-	if (m->count + len < m->size) {
+	if (m->count + len <= m->size) {
 		memcpy(m->buf + m->count, s, len);
 		m->count += len;
 		return 0;
@@ -681,7 +681,7 @@ int seq_put_decimal_ull(struct seq_file *m, char delimiter,
 {
 	int len;
 
-	if (m->count + 2 >= m->size) /* we'll write 2 bytes at least */
+	if (m->count + 2 > m->size) /* we'll write 2 bytes at least */
 		goto overflow;
 
 	if (delimiter)
@@ -707,7 +707,7 @@ int seq_put_decimal_ll(struct seq_file *m, char delimiter,
 			long long num)
 {
 	if (num < 0) {
-		if (m->count + 3 >= m->size) {
+		if (m->count + 3 > m->size) {
 			seq_set_overflow(m);
 			return -1;
 		}
@@ -731,7 +731,7 @@ EXPORT_SYMBOL(seq_put_decimal_ll);
  */
 int seq_write(struct seq_file *seq, const void *data, size_t len)
 {
-	if (seq->count + len < seq->size) {
+	if (seq->count + len <= seq->size) {
 		memcpy(seq->buf + seq->count, data, len);
 		seq->count += len;
 		return 0;

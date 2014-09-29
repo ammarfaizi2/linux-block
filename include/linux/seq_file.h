@@ -48,13 +48,13 @@ struct seq_operations {
  *
  * seq_files have a buffer which may overflow. When this happens a larger
  * buffer is reallocated and all the data will be printed again.
- * The overflow state is true when m->count == m->size.
+ * The overflow state is true when m->count > m->size.
  *
  * Returns true if the buffer received more than it can hold.
  */
 static inline bool seq_has_overflowed(struct seq_file *m)
 {
-	return m->count == m->size;
+	return m->count > m->size;
 }
 
 /**
@@ -67,7 +67,7 @@ static inline bool seq_has_overflowed(struct seq_file *m)
  */
 static inline size_t seq_get_buf(struct seq_file *m, char **bufp)
 {
-	BUG_ON(m->count > m->size);
+	BUG_ON(m->count > m->size + 1);
 	if (m->count < m->size)
 		*bufp = m->buf + m->count;
 	else
@@ -90,7 +90,7 @@ static inline void seq_commit(struct seq_file *m, int num)
 	if (num < 0) {
 		m->count = m->size;
 	} else {
-		BUG_ON(m->count + num > m->size);
+		BUG_ON(m->count + num > m->size + 1);
 		m->count += num;
 	}
 }
