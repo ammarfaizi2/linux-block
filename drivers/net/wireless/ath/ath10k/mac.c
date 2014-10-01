@@ -479,6 +479,40 @@ static void ath10k_peer_cleanup_all(struct ath10k *ar)
 /* Interface management */
 /************************/
 
+void ath10k_mac_vif_beacon_free(struct ath10k_vif *arvif)
+{
+	struct ath10k *ar = arvif->ar;
+
+	lockdep_assert_held(&ar->data_lock);
+
+	if (!arvif->beacon)
+		return;
+
+	if (!arvif->beacon_buf)
+		dma_unmap_single(ar->dev, ATH10K_SKB_CB(arvif->beacon)->paddr,
+				 arvif->beacon->len, DMA_TO_DEVICE);
+
+	dev_kfree_skb_any(arvif->beacon);
+
+	arvif->beacon = NULL;
+	arvif->beacon_sent = false;
+}
+
+static void ath10k_mac_vif_beacon_cleanup(struct ath10k_vif *arvif)
+{
+	struct ath10k *ar = arvif->ar;
+
+	lockdep_assert_held(&ar->data_lock);
+
+	ath10k_mac_vif_beacon_free(arvif);
+
+	if (arvif->beacon_buf) {
+		dma_free_coherent(ar->dev, IEEE80211_MAX_FRAME_LEN,
+				  arvif->beacon_buf, arvif->beacon_paddr);
+		arvif->beacon_buf = NULL;
+	}
+}
+
 static inline int ath10k_vdev_setup_sync(struct ath10k *ar)
 {
 	int ret;
@@ -590,9 +624,9 @@ static int ath10k_monitor_vdev_create(struct ath10k *ar)
 		return -ENOMEM;
 	}
 
-	bit = ffs(ar->free_vdev_map);
+	bit = __ffs64(ar->free_vdev_map);
 
-	ar->monitor_vdev_id = bit - 1;
+	ar->monitor_vdev_id = bit;
 
 	ret = ath10k_wmi_vdev_create(ar, ar->monitor_vdev_id,
 				     WMI_VDEV_TYPE_MONITOR,
@@ -603,7 +637,7 @@ static int ath10k_monitor_vdev_create(struct ath10k *ar)
 		return ret;
 	}
 
-	ar->free_vdev_map &= ~(1 << ar->monitor_vdev_id);
+	ar->free_vdev_map &= ~(1LL << ar->monitor_vdev_id);
 	ath10k_dbg(ar, ATH10K_DBG_MAC, "mac monitor vdev %d created\n",
 		   ar->monitor_vdev_id);
 
@@ -623,7 +657,7 @@ static int ath10k_monitor_vdev_delete(struct ath10k *ar)
 		return ret;
 	}
 
-	ar->free_vdev_map |= 1 << ar->monitor_vdev_id;
+	ar->free_vdev_map |= 1LL << ar->monitor_vdev_id;
 
 	ath10k_dbg(ar, ATH10K_DBG_MAC, "mac monitor vdev %d deleted\n",
 		   ar->monitor_vdev_id);
@@ -909,15 +943,7 @@ static void ath10k_control_beaconing(struct ath10k_vif *arvif,
 		arvif->is_up = false;
 
 		spin_lock_bh(&arvif->ar->data_lock);
-		if (arvif->beacon) {
-			dma_unmap_single(arvif->ar->dev,
-					 ATH10K_SKB_CB(arvif->beacon)->paddr,
-					 arvif->beacon->len, DMA_TO_DEVICE);
-			dev_kfree_skb_any(arvif->beacon);
-
-			arvif->beacon = NULL;
-			arvif->beacon_sent = false;
-		}
+		ath10k_mac_vif_beacon_free(arvif);
 		spin_unlock_bh(&arvif->ar->data_lock);
 
 		return;
@@ -1729,6 +1755,7 @@ static int ath10k_update_channel_list(struct ath10k *ar)
 			ch->passive = passive;
 
 			ch->freq = channel->center_freq;
+			ch->band_center_freq1 = channel->center_freq;
 			ch->min_power = 0;
 			ch->max_power = channel->max_power * 2;
 			ch->max_reg_power = channel->max_reg_power * 2;
@@ -2376,16 +2403,8 @@ void ath10k_halt(struct ath10k *ar)
 	ath10k_hif_power_down(ar);
 
 	spin_lock_bh(&ar->data_lock);
-	list_for_each_entry(arvif, &ar->arvifs, list) {
-		if (!arvif->beacon)
-			continue;
-
-		dma_unmap_single(arvif->ar->dev,
-				 ATH10K_SKB_CB(arvif->beacon)->paddr,
-				 arvif->beacon->len, DMA_TO_DEVICE);
-		dev_kfree_skb_any(arvif->beacon);
-		arvif->beacon = NULL;
-	}
+	list_for_each_entry(arvif, &ar->arvifs, list)
+		ath10k_mac_vif_beacon_cleanup(arvif);
 	spin_unlock_bh(&ar->data_lock);
 }
 
@@ -2772,9 +2791,12 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
 		ret = -EBUSY;
 		goto err;
 	}
-	bit = ffs(ar->free_vdev_map);
+	bit = __ffs64(ar->free_vdev_map);
 
-	arvif->vdev_id = bit - 1;
+	ath10k_dbg(ar, ATH10K_DBG_MAC, "mac create vdev %i map %llx\n",
+		   bit, ar->free_vdev_map);
+
+	arvif->vdev_id = bit;
 	arvif->vdev_subtype = WMI_VDEV_SUBTYPE_NONE;
 
 	if (ar->p2p)
@@ -2804,8 +2826,39 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
 		break;
 	}
 
-	ath10k_dbg(ar, ATH10K_DBG_MAC, "mac vdev create %d (add interface) type %d subtype %d\n",
-		   arvif->vdev_id, arvif->vdev_type, arvif->vdev_subtype);
+	/* Some firmware revisions don't wait for beacon tx completion before
+	 * sending another SWBA event. This could lead to hardware using old
+	 * (freed) beacon data in some cases, e.g. tx credit starvation
+	 * combined with missed TBTT. This is very very rare.
+	 *
+	 * On non-IOMMU-enabled hosts this could be a possible security issue
+	 * because hw could beacon some random data on the air.  On
+	 * IOMMU-enabled hosts DMAR faults would occur in most cases and target
+	 * device would crash.
+	 *
+	 * Since there are no beacon tx completions (implicit nor explicit)
+	 * propagated to host the only workaround for this is to allocate a
+	 * DMA-coherent buffer for a lifetime of a vif and use it for all
+	 * beacon tx commands. Worst case for this approach is some beacons may
+	 * become corrupted, e.g. have garbled IEs or out-of-date TIM bitmap.
+	 */
+	if (vif->type == NL80211_IFTYPE_ADHOC ||
+	    vif->type == NL80211_IFTYPE_AP) {
+		arvif->beacon_buf = dma_zalloc_coherent(ar->dev,
+							IEEE80211_MAX_FRAME_LEN,
+							&arvif->beacon_paddr,
+							GFP_KERNEL);
+		if (!arvif->beacon_buf) {
+			ret = -ENOMEM;
+			ath10k_warn(ar, "failed to allocate beacon buffer: %d\n",
+				    ret);
+			goto err;
+		}
+	}
+
+	ath10k_dbg(ar, ATH10K_DBG_MAC, "mac vdev create %d (add interface) type %d subtype %d bcnmode %s\n",
+		   arvif->vdev_id, arvif->vdev_type, arvif->vdev_subtype,
+		   arvif->beacon_buf ? "single-buf" : "per-skb");
 
 	ret = ath10k_wmi_vdev_create(ar, arvif->vdev_id, arvif->vdev_type,
 				     arvif->vdev_subtype, vif->addr);
@@ -2815,7 +2868,7 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
 		goto err;
 	}
 
-	ar->free_vdev_map &= ~(1 << arvif->vdev_id);
+	ar->free_vdev_map &= ~(1LL << arvif->vdev_id);
 	list_add(&arvif->list, &ar->arvifs);
 
 	vdev_param = ar->wmi.vdev_param->def_keyid;
@@ -2908,10 +2961,16 @@ err_peer_delete:
 
 err_vdev_delete:
 	ath10k_wmi_vdev_delete(ar, arvif->vdev_id);
-	ar->free_vdev_map |= 1 << arvif->vdev_id;
+	ar->free_vdev_map |= 1LL << arvif->vdev_id;
 	list_del(&arvif->list);
 
 err:
+	if (arvif->beacon_buf) {
+		dma_free_coherent(ar->dev, IEEE80211_MAX_FRAME_LEN,
+				  arvif->beacon_buf, arvif->beacon_paddr);
+		arvif->beacon_buf = NULL;
+	}
+
 	mutex_unlock(&ar->conf_mutex);
 
 	return ret;
@@ -2929,14 +2988,7 @@ static void ath10k_remove_interface(struct ieee80211_hw *hw,
 	cancel_work_sync(&arvif->wep_key_work);
 
 	spin_lock_bh(&ar->data_lock);
-	if (arvif->beacon) {
-		dma_unmap_single(arvif->ar->dev,
-				 ATH10K_SKB_CB(arvif->beacon)->paddr,
-				 arvif->beacon->len, DMA_TO_DEVICE);
-		dev_kfree_skb_any(arvif->beacon);
-		arvif->beacon = NULL;
-	}
-
+	ath10k_mac_vif_beacon_cleanup(arvif);
 	spin_unlock_bh(&ar->data_lock);
 
 	ret = ath10k_spectral_vif_stop(arvif);
@@ -2944,7 +2996,7 @@ static void ath10k_remove_interface(struct ieee80211_hw *hw,
 		ath10k_warn(ar, "failed to stop spectral for vdev %i: %d\n",
 			    arvif->vdev_id, ret);
 
-	ar->free_vdev_map |= 1 << arvif->vdev_id;
+	ar->free_vdev_map |= 1LL << arvif->vdev_id;
 	list_del(&arvif->list);
 
 	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
@@ -4456,6 +4508,9 @@ static const struct ieee80211_ops ath10k_ops = {
 	.sta_rc_update			= ath10k_sta_rc_update,
 	.get_tsf			= ath10k_get_tsf,
 	.ampdu_action			= ath10k_ampdu_action,
+	.get_et_sset_count		= ath10k_debug_get_et_sset_count,
+	.get_et_stats			= ath10k_debug_get_et_stats,
+	.get_et_strings			= ath10k_debug_get_et_strings,
 
 	CFG80211_TESTMODE_CMD(ath10k_tm_cmd)
 
@@ -4799,15 +4854,6 @@ int ath10k_mac_register(struct ath10k *ar)
 	ar->hw->wiphy->interface_modes =
 		BIT(NL80211_IFTYPE_STATION) |
 		BIT(NL80211_IFTYPE_AP);
-
-	if (test_bit(ATH10K_FW_FEATURE_WMI_10X, ar->fw_features)) {
-		/* TODO:  Have to deal with 2x2 chips if/when the come out. */
-		ar->supp_tx_chainmask = TARGET_10X_TX_CHAIN_MASK;
-		ar->supp_rx_chainmask = TARGET_10X_RX_CHAIN_MASK;
-	} else {
-		ar->supp_tx_chainmask = TARGET_TX_CHAIN_MASK;
-		ar->supp_rx_chainmask = TARGET_RX_CHAIN_MASK;
-	}
 
 	ar->hw->wiphy->available_antennas_rx = ar->supp_rx_chainmask;
 	ar->hw->wiphy->available_antennas_tx = ar->supp_tx_chainmask;

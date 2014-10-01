@@ -40,9 +40,9 @@ enum ath10k_debug_mask {
 
 extern unsigned int ath10k_debug_mask;
 
-__printf(2, 3) int ath10k_info(struct ath10k *ar, const char *fmt, ...);
-__printf(2, 3) int ath10k_err(struct ath10k *ar, const char *fmt, ...);
-__printf(2, 3) int ath10k_warn(struct ath10k *ar, const char *fmt, ...);
+__printf(2, 3) void ath10k_info(struct ath10k *ar, const char *fmt, ...);
+__printf(2, 3) void ath10k_err(struct ath10k *ar, const char *fmt, ...);
+__printf(2, 3) void ath10k_warn(struct ath10k *ar, const char *fmt, ...);
 void ath10k_print_driver_info(struct ath10k *ar);
 
 #ifdef CONFIG_ATH10K_DEBUGFS
@@ -53,16 +53,24 @@ void ath10k_debug_destroy(struct ath10k *ar);
 int ath10k_debug_register(struct ath10k *ar);
 void ath10k_debug_unregister(struct ath10k *ar);
 void ath10k_debug_read_service_map(struct ath10k *ar,
-				   void *service_map,
+				   const void *service_map,
 				   size_t map_size);
-void ath10k_debug_read_target_stats(struct ath10k *ar,
-				    struct wmi_stats_event *ev);
+void ath10k_debug_fw_stats_process(struct ath10k *ar, struct sk_buff *skb);
 struct ath10k_fw_crash_data *
 ath10k_debug_get_new_fw_crash_data(struct ath10k *ar);
 
 void ath10k_debug_dbglog_add(struct ath10k *ar, u8 *buffer, int len);
 
 #define ATH10K_DFS_STAT_INC(ar, c) (ar->debug.dfs_stats.c++)
+
+void ath10k_debug_get_et_strings(struct ieee80211_hw *hw,
+				 struct ieee80211_vif *vif,
+				 u32 sset, u8 *data);
+int ath10k_debug_get_et_sset_count(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif, int sset);
+void ath10k_debug_get_et_stats(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif,
+			       struct ethtool_stats *stats, u64 *data);
 
 #else
 static inline int ath10k_debug_start(struct ath10k *ar)
@@ -93,13 +101,13 @@ static inline void ath10k_debug_unregister(struct ath10k *ar)
 }
 
 static inline void ath10k_debug_read_service_map(struct ath10k *ar,
-						 void *service_map,
+						 const void *service_map,
 						 size_t map_size)
 {
 }
 
-static inline void ath10k_debug_read_target_stats(struct ath10k *ar,
-						  struct wmi_stats_event *ev)
+static inline void ath10k_debug_fw_stats_process(struct ath10k *ar,
+						 struct sk_buff *skb)
 {
 }
 
@@ -115,6 +123,10 @@ ath10k_debug_get_new_fw_crash_data(struct ath10k *ar)
 }
 
 #define ATH10K_DFS_STAT_INC(ar, c) do { } while (0)
+
+#define ath10k_debug_get_et_strings NULL
+#define ath10k_debug_get_et_sset_count NULL
+#define ath10k_debug_get_et_stats NULL
 
 #endif /* CONFIG_ATH10K_DEBUGFS */
 

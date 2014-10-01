@@ -443,12 +443,12 @@ int ath10k_ce_rx_post_buf(struct ath10k_ce_pipe *pipe, void *ctx, u32 paddr)
  * Guts of ath10k_ce_completed_recv_next.
  * The caller takes responsibility for any necessary locking.
  */
-static int ath10k_ce_completed_recv_next_nolock(struct ath10k_ce_pipe *ce_state,
-						void **per_transfer_contextp,
-						u32 *bufferp,
-						unsigned int *nbytesp,
-						unsigned int *transfer_idp,
-						unsigned int *flagsp)
+int ath10k_ce_completed_recv_next_nolock(struct ath10k_ce_pipe *ce_state,
+					 void **per_transfer_contextp,
+					 u32 *bufferp,
+					 unsigned int *nbytesp,
+					 unsigned int *transfer_idp,
+					 unsigned int *flagsp)
 {
 	struct ath10k_ce_ring *dest_ring = ce_state->dest_ring;
 	unsigned int nentries_mask = dest_ring->nentries_mask;
@@ -576,11 +576,11 @@ int ath10k_ce_revoke_recv_next(struct ath10k_ce_pipe *ce_state,
  * Guts of ath10k_ce_completed_send_next.
  * The caller takes responsibility for any necessary locking.
  */
-static int ath10k_ce_completed_send_next_nolock(struct ath10k_ce_pipe *ce_state,
-						void **per_transfer_contextp,
-						u32 *bufferp,
-						unsigned int *nbytesp,
-						unsigned int *transfer_idp)
+int ath10k_ce_completed_send_next_nolock(struct ath10k_ce_pipe *ce_state,
+					 void **per_transfer_contextp,
+					 u32 *bufferp,
+					 unsigned int *nbytesp,
+					 unsigned int *transfer_idp)
 {
 	struct ath10k_ce_ring *src_ring = ce_state->src_ring;
 	u32 ctrl_addr = ce_state->ctrl_addr;
@@ -817,7 +817,10 @@ void ath10k_ce_enable_interrupts(struct ath10k *ar)
 	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
 	int ce_id;
 
-	for (ce_id = 0; ce_id < CE_COUNT; ce_id++)
+	/* Skip the last copy engine, CE7 the diagnostic window, as that
+	 * uses polling and isn't initialized for interrupts.
+	 */
+	for (ce_id = 0; ce_id < CE_COUNT - 1; ce_id++)
 		ath10k_ce_per_engine_handler_adjust(&ar_pci->ce_states[ce_id]);
 }
 

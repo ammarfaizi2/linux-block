@@ -485,6 +485,8 @@ static int ath10k_pci_diag_read_mem(struct ath10k *ar, u32 address, void *data,
 	void *data_buf = NULL;
 	int i;
 
+	spin_lock_bh(&ar_pci->ce_lock);
+
 	ce_diag = ar_pci->ce_diag;
 
 	/*
@@ -511,7 +513,7 @@ static int ath10k_pci_diag_read_mem(struct ath10k *ar, u32 address, void *data,
 		nbytes = min_t(unsigned int, remaining_bytes,
 			       DIAG_TRANSFER_LIMIT);
 
-		ret = ath10k_ce_rx_post_buf(ce_diag, NULL, ce_data);
+		ret = __ath10k_ce_rx_post_buf(ce_diag, NULL, ce_data);
 		if (ret != 0)
 			goto done;
 
@@ -527,15 +529,15 @@ static int ath10k_pci_diag_read_mem(struct ath10k *ar, u32 address, void *data,
 		address = TARG_CPU_SPACE_TO_CE_SPACE(ar, ar_pci->mem,
 						     address);
 
-		ret = ath10k_ce_send(ce_diag, NULL, (u32)address, nbytes, 0,
-				     0);
+		ret = ath10k_ce_send_nolock(ce_diag, NULL, (u32)address, nbytes, 0,
+					    0);
 		if (ret)
 			goto done;
 
 		i = 0;
-		while (ath10k_ce_completed_send_next(ce_diag, NULL, &buf,
-						     &completed_nbytes,
-						     &id) != 0) {
+		while (ath10k_ce_completed_send_next_nolock(ce_diag, NULL, &buf,
+							    &completed_nbytes,
+							    &id) != 0) {
 			mdelay(1);
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
 				ret = -EBUSY;
@@ -554,9 +556,9 @@ static int ath10k_pci_diag_read_mem(struct ath10k *ar, u32 address, void *data,
 		}
 
 		i = 0;
-		while (ath10k_ce_completed_recv_next(ce_diag, NULL, &buf,
-						     &completed_nbytes,
-						     &id, &flags) != 0) {
+		while (ath10k_ce_completed_recv_next_nolock(ce_diag, NULL, &buf,
+							    &completed_nbytes,
+							    &id, &flags) != 0) {
 			mdelay(1);
 
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
@@ -590,6 +592,8 @@ done:
 	if (data_buf)
 		dma_free_coherent(ar->dev, orig_nbytes, data_buf,
 				  ce_data_base);
+
+	spin_unlock_bh(&ar_pci->ce_lock);
 
 	return ret;
 }
@@ -648,6 +652,8 @@ static int ath10k_pci_diag_write_mem(struct ath10k *ar, u32 address,
 	dma_addr_t ce_data_base = 0;
 	int i;
 
+	spin_lock_bh(&ar_pci->ce_lock);
+
 	ce_diag = ar_pci->ce_diag;
 
 	/*
@@ -688,7 +694,7 @@ static int ath10k_pci_diag_write_mem(struct ath10k *ar, u32 address,
 		nbytes = min_t(int, remaining_bytes, DIAG_TRANSFER_LIMIT);
 
 		/* Set up to receive directly into Target(!) address */
-		ret = ath10k_ce_rx_post_buf(ce_diag, NULL, address);
+		ret = __ath10k_ce_rx_post_buf(ce_diag, NULL, address);
 		if (ret != 0)
 			goto done;
 
@@ -696,15 +702,15 @@ static int ath10k_pci_diag_write_mem(struct ath10k *ar, u32 address,
 		 * Request CE to send caller-supplied data that
 		 * was copied to bounce buffer to Target(!) address.
 		 */
-		ret = ath10k_ce_send(ce_diag, NULL, (u32)ce_data,
-				     nbytes, 0, 0);
+		ret = ath10k_ce_send_nolock(ce_diag, NULL, (u32)ce_data,
+					    nbytes, 0, 0);
 		if (ret != 0)
 			goto done;
 
 		i = 0;
-		while (ath10k_ce_completed_send_next(ce_diag, NULL, &buf,
-						     &completed_nbytes,
-						     &id) != 0) {
+		while (ath10k_ce_completed_send_next_nolock(ce_diag, NULL, &buf,
+							    &completed_nbytes,
+							    &id) != 0) {
 			mdelay(1);
 
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
@@ -724,9 +730,9 @@ static int ath10k_pci_diag_write_mem(struct ath10k *ar, u32 address,
 		}
 
 		i = 0;
-		while (ath10k_ce_completed_recv_next(ce_diag, NULL, &buf,
-						     &completed_nbytes,
-						     &id, &flags) != 0) {
+		while (ath10k_ce_completed_recv_next_nolock(ce_diag, NULL, &buf,
+							    &completed_nbytes,
+							    &id, &flags) != 0) {
 			mdelay(1);
 
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
@@ -759,6 +765,8 @@ done:
 	if (ret != 0)
 		ath10k_warn(ar, "failed to write diag value at 0x%x: %d\n",
 			    address, ret);
+
+	spin_unlock_bh(&ar_pci->ce_lock);
 
 	return ret;
 }
@@ -861,6 +869,12 @@ static void ath10k_pci_ce_recv_data(struct ath10k_ce_pipe *ce_state)
 		}
 
 		skb_put(skb, nbytes);
+
+		ath10k_dbg(ar, ATH10K_DBG_PCI, "pci rx ce pipe %d len %d\n",
+			   ce_state->id, skb->len);
+		ath10k_dbg_dump(ar, ATH10K_DBG_PCI_DUMP, NULL, "pci rx: ",
+				skb->data, skb->len);
+
 		cb->rx_completion(ar, skb, pipe_info->pipe_num);
 	}
 
@@ -936,6 +950,12 @@ err:
 	return err;
 }
 
+static int ath10k_pci_hif_diag_read(struct ath10k *ar, u32 address, void *buf,
+				    size_t buf_len)
+{
+	return ath10k_pci_diag_read_mem(ar, address, buf, buf_len);
+}
+
 static u16 ath10k_pci_hif_get_free_queue_number(struct ath10k *ar, u8 pipe)
 {
 	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
@@ -985,6 +1005,8 @@ static void ath10k_pci_fw_crashed_dump(struct ath10k *ar)
 	char uuid[50];
 
 	spin_lock_bh(&ar->data_lock);
+
+	ar->stats.fw_crash_counter++;
 
 	crash_data = ath10k_debug_get_new_fw_crash_data(ar);
 
@@ -1672,6 +1694,12 @@ static int ath10k_pci_warm_reset(struct ath10k *ar)
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot warm reset\n");
 
+	spin_lock_bh(&ar->data_lock);
+
+	ar->stats.fw_warm_reset_counter++;
+
+	spin_unlock_bh(&ar->data_lock);
+
 	/* debug */
 	val = ath10k_pci_read32(ar, SOC_CORE_BASE_ADDRESS +
 				PCIE_INTR_CAUSE_ADDRESS);
@@ -1921,6 +1949,7 @@ static int ath10k_pci_hif_resume(struct ath10k *ar)
 
 static const struct ath10k_hif_ops ath10k_pci_hif_ops = {
 	.tx_sg			= ath10k_pci_hif_tx_sg,
+	.diag_read		= ath10k_pci_hif_diag_read,
 	.exchange_bmi_msg	= ath10k_pci_hif_exchange_bmi_msg,
 	.start			= ath10k_pci_hif_start,
 	.stop			= ath10k_pci_hif_stop,
@@ -2286,6 +2315,12 @@ static int ath10k_pci_cold_reset(struct ath10k *ar)
 	u32 val;
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot cold reset\n");
+
+	spin_lock_bh(&ar->data_lock);
+
+	ar->stats.fw_cold_reset_counter++;
+
+	spin_unlock_bh(&ar->data_lock);
 
 	/* Put Target, including PCIe, into RESET. */
 	val = ath10k_pci_reg_read32(ar, SOC_GLOBAL_RESET_ADDRESS);
