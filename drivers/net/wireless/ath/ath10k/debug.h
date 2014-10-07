@@ -38,6 +38,15 @@ enum ath10k_debug_mask {
 	ATH10K_DBG_ANY		= 0xffffffff,
 };
 
+enum ath10k_pktlog_filter {
+	ATH10K_PKTLOG_RX         = 0x000000001,
+	ATH10K_PKTLOG_TX         = 0x000000002,
+	ATH10K_PKTLOG_RCFIND     = 0x000000004,
+	ATH10K_PKTLOG_RCUPDATE   = 0x000000008,
+	ATH10K_PKTLOG_DBG_PRINT  = 0x000000010,
+	ATH10K_PKTLOG_ANY        = 0x00000001f,
+};
+
 extern unsigned int ath10k_debug_mask;
 
 __printf(2, 3) void ath10k_info(struct ath10k *ar, const char *fmt, ...);
@@ -60,7 +69,6 @@ struct ath10k_fw_crash_data *
 ath10k_debug_get_new_fw_crash_data(struct ath10k *ar);
 
 void ath10k_debug_dbglog_add(struct ath10k *ar, u8 *buffer, int len);
-
 #define ATH10K_DFS_STAT_INC(ar, c) (ar->debug.dfs_stats.c++)
 
 void ath10k_debug_get_et_strings(struct ieee80211_hw *hw,
