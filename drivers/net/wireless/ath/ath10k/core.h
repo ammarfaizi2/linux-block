@@ -63,6 +63,20 @@
 
 struct ath10k;
 
+enum ath10k_bus {
+	ATH10K_BUS_PCI,
+};
+
+static inline const char *ath10k_bus_str(enum ath10k_bus bus)
+{
+	switch (bus) {
+	case ATH10K_BUS_PCI:
+		return "pci";
+	}
+
+	return "unknown";
+}
+
 struct ath10k_skb_cb {
 	dma_addr_t paddr;
 	u8 vdev_id;
@@ -373,6 +387,23 @@ enum ath10k_dev_flags {
 	ATH10K_FLAG_CORE_REGISTERED,
 };
 
+enum ath10k_cal_mode {
+	ATH10K_CAL_MODE_FILE,
+	ATH10K_CAL_MODE_OTP,
+};
+
+static inline const char *ath10k_cal_mode_str(enum ath10k_cal_mode mode)
+{
+	switch (mode) {
+	case ATH10K_CAL_MODE_FILE:
+		return "file";
+	case ATH10K_CAL_MODE_OTP:
+		return "otp";
+	}
+
+	return "unknown";
+}
+
 enum ath10k_scan_state {
 	ATH10K_SCAN_IDLE,
 	ATH10K_SCAN_STARTING,
@@ -423,6 +454,7 @@ struct ath10k {
 	bool p2p;
 
 	struct {
+		enum ath10k_bus bus;
 		const struct ath10k_hif_ops *ops;
 	} hif;
 
@@ -458,7 +490,10 @@ struct ath10k {
 	const void *firmware_data;
 	size_t firmware_len;
 
+	const struct firmware *cal_file;
+
 	int fw_api;
+	enum ath10k_cal_mode cal_mode;
 
 	struct {
 		struct completion started;
@@ -577,6 +612,7 @@ struct ath10k {
 };
 
 struct ath10k *ath10k_core_create(size_t priv_size, struct device *dev,
+				  enum ath10k_bus bus,
 				  const struct ath10k_hif_ops *hif_ops);
 void ath10k_core_destroy(struct ath10k *ar);
 
