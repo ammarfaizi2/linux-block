@@ -14,6 +14,20 @@ NAME = Shuffling Zombie Juror
 # (this increases performance and avoids hard-to-debug behaviour);
 MAKEFLAGS += -rR
 
+#
+# The targets "kernelrelease", "kernelversion" and "image_name" requires
+# printing just the result. No need to show "Entering/Leaving directory ..."
+# messages. Tools like ktest.pl require this.
+ifeq ("$(MAKECMDGOALS)", "kernelrelease")
+  MAKEFLAGS += --no-print-directory
+endif
+ifeq ("$(MAKECMDGOALS)", "kernelversion")
+  MAKEFLAGS += --no-print-directory
+endif
+ifeq ("$(MAKECMDGOALS)", "image_name")
+  MAKEFLAGS += --no-print-directory
+endif
+
 # Avoid funny character set dependencies
 unexport LC_ALL
 LC_COLLATE=C
