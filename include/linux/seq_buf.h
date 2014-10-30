@@ -111,6 +111,7 @@ static inline void seq_buf_commit(struct seq_buf *s, int num)
 	}
 }
 
+int seq_buf_escape(struct seq_buf *s, const char *str, const char *esc);
 extern __printf(2, 3)
 int seq_buf_printf(struct seq_buf *s, const char *fmt, ...);
 extern __printf(2, 0)

@@ -44,6 +44,42 @@ int seq_buf_print_seq(struct seq_file *m, struct seq_buf *s)
 }
 
 /**
+ *	seq_buf_escape - print string into buffer, escaping some characters
+ *	@s:	target buffer
+ *	@str:	string
+ *	@esc:	set of characters that need escaping
+ *
+ *	Puts string into buffer, replacing each occurrence of character from
+ *	@esc with usual octal escape.  Returns 0 in case of success, -1 - in
+ *	case of overflow.
+ */
+int seq_buf_escape(struct seq_buf *s, const char *str, const char *esc)
+{
+	char *end = s->buffer + s->size;
+	char *p;
+	char c;
+
+        for (p = s->buffer + s->len; (c = *str) != '\0' && p < end; str++) {
+		if (!strchr(esc, c)) {
+			*p++ = c;
+			continue;
+		}
+		if (p + 3 < end) {
+			*p++ = '\\';
+			*p++ = '0' + ((c & 0300) >> 6);
+			*p++ = '0' + ((c & 070) >> 3);
+			*p++ = '0' + (c & 07);
+			continue;
+		}
+		seq_buf_set_overflow(s);
+		return -1;
+        }
+	s->len = p - s->buffer;
+        return 0;
+}
+EXPORT_SYMBOL(seq_buf_escape);
+
+/**
  * seq_buf_vprintf - sequence printing of information.
  * @s: seq_buf descriptor
  * @fmt: printf format string
