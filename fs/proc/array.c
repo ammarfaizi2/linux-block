@@ -90,19 +90,24 @@
 
 static inline void task_name(struct seq_file *m, struct task_struct *p)
 {
+	char *start_buf;
 	char *buf;
 	char tcomm[sizeof(p->comm)];
 
 	get_task_comm(tcomm, p);
 
 	seq_puts(m, "Name:\t");
-	buf = m->buf + m->count;
+
+	/* Returns zero if no buffer left */
+	if (!seq_get_buf(m, &buf))
+		return;
+	start_buf = buf;
 
 	/* Ignore error for now */
-	string_escape_str(tcomm, &buf, m->size - m->count,
+	string_escape_str(tcomm, &buf, seq_buf_left(m),
 			  ESCAPE_SPACE | ESCAPE_SPECIAL, "\n\\");
 
-	m->count = buf - m->buf;
+	seq_commit(m, buf - start_buf);
 	seq_putc(m, '\n');
 }
 

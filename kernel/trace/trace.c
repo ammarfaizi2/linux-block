@@ -3763,7 +3763,7 @@ static void *saved_cmdlines_next(struct seq_file *m, void *v, loff_t *pos)
 {
 	unsigned int *ptr = v;
 
-	if (*pos || m->count)
+	if (*pos || m->buf.len)
 		ptr++;
 
 	(*pos)++;

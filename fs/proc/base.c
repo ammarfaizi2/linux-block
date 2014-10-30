@@ -203,8 +203,8 @@ static int proc_pid_cmdline(struct seq_file *m, struct pid_namespace *ns,
 	 * Rely on struct seq_operations::show() being called once
 	 * per internal buffer allocation. See single_open(), traverse().
 	 */
-	BUG_ON(m->size < PAGE_SIZE);
-	m->count += get_cmdline(task, m->buf, PAGE_SIZE);
+	BUG_ON(m->buf.size < PAGE_SIZE);
+	m->buf.len += get_cmdline(task, m->buf.buffer, PAGE_SIZE);
 	return 0;
 }
 

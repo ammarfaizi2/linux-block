@@ -7,6 +7,7 @@
 #include <linux/mutex.h>
 #include <linux/cpumask.h>
 #include <linux/nodemask.h>
+#include <linux/seq_buf.h>
 
 struct seq_operations;
 struct file;
@@ -16,13 +17,10 @@ struct dentry;
 struct user_namespace;
 
 struct seq_file {
-	char *buf;
-	size_t size;
+	struct seq_buf buf;
 	size_t from;
-	size_t count;
 	size_t pad_until;
 	loff_t index;
-	loff_t read_pos;
 	u64 version;
 	struct mutex lock;
 	const struct seq_operations *op;
@@ -48,13 +46,13 @@ struct seq_operations {
  *
  * seq_files have a buffer which may overflow. When this happens a larger
  * buffer is reallocated and all the data will be printed again.
- * The overflow state is true when m->count > m->size.
+ * The overflow state is true when m->buf.len > m->size.
  *
  * Returns true if the buffer received more than it can hold.
  */
 static inline bool seq_has_overflowed(struct seq_file *m)
 {
-	return m->count > m->size;
+	return seq_buf_has_overflowed(&m->buf);
 }
 
 /**
@@ -67,13 +65,7 @@ static inline bool seq_has_overflowed(struct seq_file *m)
  */
 static inline size_t seq_get_buf(struct seq_file *m, char **bufp)
 {
-	BUG_ON(m->count > m->size + 1);
-	if (m->count < m->size)
-		*bufp = m->buf + m->count;
-	else
-		*bufp = NULL;
-
-	return m->size - m->count;
+	return seq_buf_get_buf(&m->buf, bufp);
 }
 
 /**
@@ -87,12 +79,20 @@ static inline size_t seq_get_buf(struct seq_file *m, char **bufp)
  */
 static inline void seq_commit(struct seq_file *m, int num)
 {
-	if (num < 0) {
-		m->count = m->size;
-	} else {
-		BUG_ON(m->count + num > m->size + 1);
-		m->count += num;
-	}
+	seq_buf_commit(&m->buf, num);
+}
+
+/**
+ * seq_buf_left - how much buffer is currently left
+ * @m: the seq_file handle
+ *
+ * Returns how much space is left on the current buffer before
+ * it overflows.
+ */
+static inline unsigned int
+seq_buf_left(struct seq_file *m)
+{
+	return seq_buf_buffer_left(&m->buf);
 }
 
 /**
@@ -105,7 +105,7 @@ static inline void seq_commit(struct seq_file *m, int num)
  */
 static inline void seq_setwidth(struct seq_file *m, size_t size)
 {
-	m->pad_until = m->count + size;
+	m->pad_until = m->buf.len + size;
 }
 void seq_pad(struct seq_file *m, char c);
 

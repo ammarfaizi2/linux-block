@@ -18,7 +18,7 @@
 
 static void seq_set_overflow(struct seq_file *m)
 {
-	m->count = m->size + 1;
+	seq_buf_set_overflow(&m->buf);
 }
 
 static void *seq_buf_alloc(unsigned long size)
@@ -91,19 +91,21 @@ static int traverse(struct seq_file *m, loff_t offset)
 {
 	loff_t pos = 0, index;
 	int error = 0;
+	void *buf;
 	void *p;
 
 	m->version = 0;
 	index = 0;
-	m->count = m->from = 0;
+	m->buf.len = m->from = 0;
 	if (!offset) {
 		m->index = index;
 		return 0;
 	}
-	if (!m->buf) {
-		m->buf = seq_buf_alloc(m->size = PAGE_SIZE);
-		if (!m->buf)
+	if (!m->buf.buffer) {
+		buf = seq_buf_alloc(PAGE_SIZE);
+		if (!buf)
 			return -ENOMEM;
+		seq_buf_init(&m->buf, buf, PAGE_SIZE);
 	}
 	p = m->op->start(m, &index);
 	while (p) {
@@ -115,18 +117,18 @@ static int traverse(struct seq_file *m, loff_t offset)
 			break;
 		if (unlikely(error)) {
 			error = 0;
-			m->count = 0;
+			m->buf.len = 0;
 		}
 		if (seq_has_overflowed(m))
 			goto Eoverflow;
-		if (pos + m->count > offset) {
+		if (pos + m->buf.len > offset) {
 			m->from = offset - pos;
-			m->count -= m->from;
+			m->buf.len -= m->from;
 			m->index = index;
 			break;
 		}
-		pos += m->count;
-		m->count = 0;
+		pos += m->buf.len;
+		m->buf.len = 0;
 		if (pos == offset) {
 			index++;
 			m->index = index;
@@ -140,10 +142,10 @@ static int traverse(struct seq_file *m, loff_t offset)
 
 Eoverflow:
 	m->op->stop(m, p);
-	kvfree(m->buf);
-	m->count = 0;
-	m->buf = seq_buf_alloc(m->size <<= 1);
-	return !m->buf ? -ENOMEM : -EAGAIN;
+	kvfree(m->buf.buffer);
+	m->buf.len = 0;
+	m->buf.buffer = seq_buf_alloc(m->buf.size <<= 1);
+	return !m->buf.buffer ? -ENOMEM : -EAGAIN;
 }
 
 /**
@@ -161,6 +163,7 @@ ssize_t seq_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
 	size_t copied = 0;
 	loff_t pos;
 	size_t n;
+	void *b;
 	void *p;
 	int err = 0;
 
@@ -180,39 +183,39 @@ ssize_t seq_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
 	m->version = file->f_version;
 
 	/* Don't assume *ppos is where we left it */
-	if (unlikely(*ppos != m->read_pos)) {
+	if (unlikely(*ppos != m->buf.readpos)) {
 		while ((err = traverse(m, *ppos)) == -EAGAIN)
 			;
 		if (err) {
 			/* With prejudice... */
-			m->read_pos = 0;
+			seq_buf_clear(&m->buf);
 			m->version = 0;
 			m->index = 0;
-			m->count = 0;
 			goto Done;
 		} else {
-			m->read_pos = *ppos;
+			m->buf.readpos = *ppos;
 		}
 	}
 
 	/* grab buffer if we didn't have one */
-	if (!m->buf) {
-		m->buf = seq_buf_alloc(m->size = PAGE_SIZE);
-		if (!m->buf)
+	if (!m->buf.buffer) {
+		b = seq_buf_alloc(PAGE_SIZE);
+		if (!b)
 			goto Enomem;
+		seq_buf_init(&m->buf, b, PAGE_SIZE);
 	}
 	/* if not empty - flush it first */
-	if (m->count) {
-		n = min(m->count, size);
-		err = copy_to_user(buf, m->buf + m->from, n);
+	if (m->buf.len) {
+		n = min(m->buf.len, size);
+		err = copy_to_user(buf, m->buf.buffer + m->from, n);
 		if (err)
 			goto Efault;
-		m->count -= n;
+		m->buf.len -= n;
 		m->from += n;
 		size -= n;
 		buf += n;
 		copied += n;
-		if (!m->count)
+		if (!m->buf.len)
 			m->index++;
 		if (!size)
 			goto Done;
@@ -228,31 +231,31 @@ ssize_t seq_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
 		if (err < 0)
 			break;
 		if (unlikely(err))
-			m->count = 0;
-		if (unlikely(!m->count)) {
+			m->buf.len = 0;
+		if (unlikely(!m->buf.len)) {
 			p = m->op->next(m, p, &pos);
 			m->index = pos;
 			continue;
 		}
-		if (m->count <= m->size)
+		if (!seq_buf_has_overflowed(&m->buf))
 			goto Fill;
 		m->op->stop(m, p);
-		kvfree(m->buf);
-		m->count = 0;
-		m->buf = seq_buf_alloc(m->size <<= 1);
-		if (!m->buf)
+		kvfree(m->buf.buffer);
+		b = seq_buf_alloc(m->buf.size <<= 1);
+		if (!b)
 			goto Enomem;
+		seq_buf_init(&m->buf, b, m->buf.size);
 		m->version = 0;
 		pos = m->index;
 		p = m->op->start(m, &pos);
 	}
 	m->op->stop(m, p);
-	m->count = 0;
+	m->buf.len = 0;
 	goto Done;
 Fill:
 	/* they want more? let's try to get some more */
-	while (m->count < size) {
-		size_t offs = m->count;
+	while (m->buf.len < size) {
+		size_t offs = m->buf.len;
 		loff_t next = pos;
 		p = m->op->next(m, p, &next);
 		if (!p || IS_ERR(p)) {
@@ -261,20 +264,20 @@ Fill:
 		}
 		err = m->op->show(m, p);
 		if (seq_has_overflowed(m) || err) {
-			m->count = offs;
+			m->buf.len = offs;
 			if (likely(err <= 0))
 				break;
 		}
 		pos = next;
 	}
 	m->op->stop(m, p);
-	n = min(m->count, size);
-	err = copy_to_user(buf, m->buf, n);
+	n = min(m->buf.len, size);
+	err = copy_to_user(buf, m->buf.buffer, n);
 	if (err)
 		goto Efault;
 	copied += n;
-	m->count -= n;
-	if (m->count)
+	m->buf.len -= n;
+	if (m->buf.len)
 		m->from = n;
 	else
 		pos++;
@@ -284,12 +287,14 @@ Done:
 		copied = err;
 	else {
 		*ppos += copied;
-		m->read_pos += copied;
+		m->buf.readpos += copied;
 	}
 	file->f_version = m->version;
 	mutex_unlock(&m->lock);
 	return copied;
 Enomem:
+	/* Don't leave the seq buf in an undefined state */
+	seq_buf_init(&m->buf, NULL, 0);
 	err = -ENOMEM;
 	goto Done;
 Efault:
@@ -320,18 +325,17 @@ loff_t seq_lseek(struct file *file, loff_t offset, int whence)
 		if (offset < 0)
 			break;
 		retval = offset;
-		if (offset != m->read_pos) {
+		if (offset != m->buf.readpos) {
 			while ((retval = traverse(m, offset)) == -EAGAIN)
 				;
 			if (retval) {
 				/* with extreme prejudice... */
 				file->f_pos = 0;
-				m->read_pos = 0;
+				seq_buf_clear(&m->buf);
 				m->version = 0;
 				m->index = 0;
-				m->count = 0;
 			} else {
-				m->read_pos = offset;
+				m->buf.readpos = offset;
 				retval = file->f_pos = offset;
 			}
 		} else {
@@ -355,7 +359,7 @@ EXPORT_SYMBOL(seq_lseek);
 int seq_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *m = file->private_data;
-	kvfree(m->buf);
+	kvfree(m->buf.buffer);
 	kfree(m);
 	return 0;
 }
@@ -373,43 +377,13 @@ EXPORT_SYMBOL(seq_release);
  */
 int seq_escape(struct seq_file *m, const char *s, const char *esc)
 {
-	char *end = m->buf + m->size;
-        char *p;
-	char c;
-
-        for (p = m->buf + m->count; (c = *s) != '\0' && p < end; s++) {
-		if (!strchr(esc, c)) {
-			*p++ = c;
-			continue;
-		}
-		if (p + 3 < end) {
-			*p++ = '\\';
-			*p++ = '0' + ((c & 0300) >> 6);
-			*p++ = '0' + ((c & 070) >> 3);
-			*p++ = '0' + (c & 07);
-			continue;
-		}
-		seq_set_overflow(m);
-		return -1;
-        }
-	m->count = p - m->buf;
-        return 0;
+	return seq_buf_escape(&m->buf, s, esc);
 }
 EXPORT_SYMBOL(seq_escape);
 
 int seq_vprintf(struct seq_file *m, const char *f, va_list args)
 {
-	int len;
-
-	if (m->count < m->size) {
-		len = vsnprintf(m->buf + m->count, m->size - m->count, f, args);
-		if (m->count + len < m->size) {
-			m->count += len;
-			return 0;
-		}
-	}
-	seq_set_overflow(m);
-	return -1;
+	return seq_buf_vprintf(&m->buf, f, args);
 }
 EXPORT_SYMBOL(seq_vprintf);
 
@@ -469,21 +443,7 @@ EXPORT_SYMBOL(mangle_path);
  */
 int seq_path(struct seq_file *m, const struct path *path, const char *esc)
 {
-	char *buf;
-	size_t size = seq_get_buf(m, &buf);
-	int res = -1;
-
-	if (size) {
-		char *p = d_path(path, buf, size);
-		if (!IS_ERR(p)) {
-			char *end = mangle_path(buf, p, esc);
-			if (end)
-				res = end - buf;
-		}
-	}
-	seq_commit(m, res);
-
-	return res;
+	return seq_buf_path(&m->buf, path, esc);
 }
 EXPORT_SYMBOL(seq_path);
 
@@ -578,6 +538,7 @@ EXPORT_SYMBOL(single_open);
 int single_open_size(struct file *file, int (*show)(struct seq_file *, void *),
 		void *data, size_t size)
 {
+	struct seq_file *m;
 	char *buf = seq_buf_alloc(size);
 	int ret;
 	if (!buf)
@@ -587,8 +548,8 @@ int single_open_size(struct file *file, int (*show)(struct seq_file *, void *),
 		kvfree(buf);
 		return ret;
 	}
-	((struct seq_file *)file->private_data)->buf = buf;
-	((struct seq_file *)file->private_data)->size = size;
+	m = (struct seq_file *)file->private_data;
+	seq_buf_init(&m->buf, buf, size);
 	return 0;
 }
 EXPORT_SYMBOL(single_open_size);
@@ -647,25 +608,13 @@ EXPORT_SYMBOL(seq_open_private);
 
 int seq_putc(struct seq_file *m, char c)
 {
-	if (m->count < m->size) {
-		m->buf[m->count++] = c;
-		return 0;
-	}
-	seq_set_overflow(m);
-	return -1;
+	return seq_buf_putc(&m->buf, c);
 }
 EXPORT_SYMBOL(seq_putc);
 
 int seq_puts(struct seq_file *m, const char *s)
 {
-	int len = strlen(s);
-	if (m->count + len <= m->size) {
-		memcpy(m->buf + m->count, s, len);
-		m->count += len;
-		return 0;
-	}
-	seq_set_overflow(m);
-	return -1;
+	return seq_buf_puts(&m->buf, s);
 }
 EXPORT_SYMBOL(seq_puts);
 
@@ -681,21 +630,21 @@ int seq_put_decimal_ull(struct seq_file *m, char delimiter,
 {
 	int len;
 
-	if (m->count + 2 > m->size) /* we'll write 2 bytes at least */
+	if (m->buf.len + 2 > m->buf.size) /* we'll write 2 bytes at least */
 		goto overflow;
 
 	if (delimiter)
-		m->buf[m->count++] = delimiter;
+		m->buf.buffer[m->buf.len++] = delimiter;
 
 	if (num < 10) {
-		m->buf[m->count++] = num + '0';
+		m->buf.buffer[m->buf.len++] = num + '0';
 		return 0;
 	}
 
-	len = num_to_str(m->buf + m->count, m->size - m->count, num);
+	len = num_to_str(m->buf.buffer + m->buf.len, m->buf.size - m->buf.len, num);
 	if (!len)
 		goto overflow;
-	m->count += len;
+	m->buf.len += len;
 	return 0;
 overflow:
 	seq_set_overflow(m);
@@ -707,12 +656,12 @@ int seq_put_decimal_ll(struct seq_file *m, char delimiter,
 			long long num)
 {
 	if (num < 0) {
-		if (m->count + 3 > m->size) {
+		if (m->buf.len + 3 > m->buf.size) {
 			seq_set_overflow(m);
 			return -1;
 		}
 		if (delimiter)
-			m->buf[m->count++] = delimiter;
+			m->buf.buffer[m->buf.len++] = delimiter;
 		num = -num;
 		delimiter = '-';
 	}
@@ -731,9 +680,9 @@ EXPORT_SYMBOL(seq_put_decimal_ll);
  */
 int seq_write(struct seq_file *seq, const void *data, size_t len)
 {
-	if (seq->count + len <= seq->size) {
-		memcpy(seq->buf + seq->count, data, len);
-		seq->count += len;
+	if (seq->buf.len + len <= seq->buf.size) {
+		memcpy(seq->buf.buffer + seq->buf.len, data, len);
+		seq->buf.len += len;
 		return 0;
 	}
 	seq_set_overflow(seq);
@@ -748,7 +697,7 @@ EXPORT_SYMBOL(seq_write);
  */
 void seq_pad(struct seq_file *m, char c)
 {
-	int size = m->pad_until - m->count;
+	int size = m->pad_until - m->buf.len;
 	if (size > 0)
 		seq_printf(m, "%*s", size, "");
 	if (c)
