@@ -514,13 +514,6 @@ extern struct list_head rcu_struct_flavors;
 #define for_each_rcu_flavor(rsp) \
 	list_for_each_entry((rsp), &rcu_struct_flavors, flavors)
 
-/* Return values for rcu_preempt_offline_tasks(). */
-
-#define RCU_OFL_TASKS_NORM_GP	0x1		/* Tasks blocking normal */
-						/*  GP were moved to root. */
-#define RCU_OFL_TASKS_EXP_GP	0x2		/* Tasks blocking expedited */
-						/*  GP were moved to root. */
-
 /*
  * RCU implementation internal declarations:
  */
@@ -557,11 +550,6 @@ static bool rcu_preempt_has_tasks(struct rcu_node *rnp);
 static void rcu_print_detail_task_stall(struct rcu_state *rsp);
 static int rcu_print_task_stall(struct rcu_node *rnp);
 static void rcu_preempt_check_blocked_tasks(struct rcu_node *rnp);
-#ifdef CONFIG_HOTPLUG_CPU
-static int rcu_preempt_offline_tasks(struct rcu_state *rsp,
-				     struct rcu_node *rnp,
-				     struct rcu_data *rdp);
-#endif /* #ifdef CONFIG_HOTPLUG_CPU */
 static void rcu_preempt_check_callbacks(void);
 void call_rcu(struct rcu_head *head, void (*func)(struct rcu_head *rcu));
 #if defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_PREEMPT_RCU)
