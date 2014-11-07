@@ -816,9 +816,18 @@ void blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx, bool async)
 	if (unlikely(test_bit(BLK_MQ_S_STOPPED, &hctx->state)))
 		return;
 
-	if (!async && cpumask_test_cpu(smp_processor_id(), hctx->cpumask))
-		__blk_mq_run_hw_queue(hctx);
-	else if (hctx->queue->nr_hw_queues == 1)
+	if (!async) {
+		preempt_disable();
+		if (cpumask_test_cpu(smp_processor_id(), hctx->cpumask)) {
+			__blk_mq_run_hw_queue(hctx);
+			preempt_enable();
+			return;
+		}
+
+		preempt_enable();
+	}
+
+	if (hctx->queue->nr_hw_queues == 1)
 		kblockd_schedule_delayed_work(&hctx->run_work, 0);
 	else {
 		unsigned int cpu;
@@ -839,9 +848,7 @@ void blk_mq_run_queues(struct request_queue *q, bool async)
 		    test_bit(BLK_MQ_S_STOPPED, &hctx->state))
 			continue;
 
-		preempt_disable();
 		blk_mq_run_hw_queue(hctx, async);
-		preempt_enable();
 	}
 }
 EXPORT_SYMBOL(blk_mq_run_queues);
@@ -868,9 +875,7 @@ void blk_mq_start_hw_queue(struct blk_mq_hw_ctx *hctx)
 {
 	clear_bit(BLK_MQ_S_STOPPED, &hctx->state);
 
-	preempt_disable();
 	blk_mq_run_hw_queue(hctx, false);
-	preempt_enable();
 }
 EXPORT_SYMBOL(blk_mq_start_hw_queue);
 
@@ -895,9 +900,7 @@ void blk_mq_start_stopped_hw_queues(struct request_queue *q, bool async)
 			continue;
 
 		clear_bit(BLK_MQ_S_STOPPED, &hctx->state);
-		preempt_disable();
 		blk_mq_run_hw_queue(hctx, async);
-		preempt_enable();
 	}
 }
 EXPORT_SYMBOL(blk_mq_start_stopped_hw_queues);
