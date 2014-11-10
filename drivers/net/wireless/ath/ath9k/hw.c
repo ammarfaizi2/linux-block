@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/time.h>
 #include <linux/bitops.h>
+#include <linux/etherdevice.h>
 #include <asm/unaligned.h>
 
 #include "hw.h"
@@ -222,31 +223,28 @@ static void ath9k_hw_read_revisions(struct ath_hw *ah)
 {
 	u32 val;
 
+	if (ah->get_mac_revision)
+		ah->hw_version.macRev = ah->get_mac_revision();
+
 	switch (ah->hw_version.devid) {
 	case AR5416_AR9100_DEVID:
 		ah->hw_version.macVersion = AR_SREV_VERSION_9100;
 		break;
 	case AR9300_DEVID_AR9330:
 		ah->hw_version.macVersion = AR_SREV_VERSION_9330;
-		if (ah->get_mac_revision) {
-			ah->hw_version.macRev = ah->get_mac_revision();
-		} else {
+		if (!ah->get_mac_revision) {
 			val = REG_READ(ah, AR_SREV);
 			ah->hw_version.macRev = MS(val, AR_SREV_REVISION2);
 		}
 		return;
 	case AR9300_DEVID_AR9340:
 		ah->hw_version.macVersion = AR_SREV_VERSION_9340;
-		val = REG_READ(ah, AR_SREV);
-		ah->hw_version.macRev = MS(val, AR_SREV_REVISION2);
 		return;
 	case AR9300_DEVID_QCA955X:
 		ah->hw_version.macVersion = AR_SREV_VERSION_9550;
 		return;
 	case AR9300_DEVID_AR953X:
 		ah->hw_version.macVersion = AR_SREV_VERSION_9531;
-		if (ah->get_mac_revision)
-			ah->hw_version.macRev = ah->get_mac_revision();
 		return;
 	}
 
@@ -449,8 +447,16 @@ static int ath9k_hw_init_macaddr(struct ath_hw *ah)
 		common->macaddr[2 * i] = eeval >> 8;
 		common->macaddr[2 * i + 1] = eeval & 0xff;
 	}
-	if (sum == 0 || sum == 0xffff * 3)
-		return -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(common->macaddr)) {
+		ath_err(common,
+			"eeprom contains invalid mac address: %pM\n",
+			common->macaddr);
+
+		random_ether_addr(common->macaddr);
+		ath_err(common,
+			"random mac address will be used: %pM\n",
+			common->macaddr);
+	}
 
 	return 0;
 }
@@ -647,6 +653,8 @@ int ath9k_hw_init(struct ath_hw *ah)
 		return ret;
 	}
 
+	ath_dynack_init(ah);
+
 	return 0;
 }
 EXPORT_SYMBOL(ath9k_hw_init);
@@ -702,6 +710,8 @@ static void ath9k_hw_init_pll(struct ath_hw *ah,
 {
 	u32 pll;
 
+	pll = ath9k_hw_compute_pll_control(ah, chan);
+
 	if (AR_SREV_9485(ah) || AR_SREV_9565(ah)) {
 		/* program BB PLL ki and kd value, ki=0x4, kd=0x40 */
 		REG_RMW_FIELD(ah, AR_CH0_BB_DPLL2,
@@ -752,7 +762,8 @@ static void ath9k_hw_init_pll(struct ath_hw *ah,
 		REG_RMW_FIELD(ah, AR_CH0_DDR_DPLL3,
 			      AR_CH0_DPLL3_PHASE_SHIFT, 0x1);
 
-		REG_WRITE(ah, AR_RTC_PLL_CONTROL, 0x1142c);
+		REG_WRITE(ah, AR_RTC_PLL_CONTROL,
+			  pll | AR_RTC_9300_PLL_BYPASS);
 		udelay(1000);
 
 		/* program refdiv, nint, frac to RTC register */
@@ -768,7 +779,8 @@ static void ath9k_hw_init_pll(struct ath_hw *ah,
 	} else if (AR_SREV_9340(ah) || AR_SREV_9550(ah) || AR_SREV_9531(ah)) {
 		u32 regval, pll2_divint, pll2_divfrac, refdiv;
 
-		REG_WRITE(ah, AR_RTC_PLL_CONTROL, 0x1142c);
+		REG_WRITE(ah, AR_RTC_PLL_CONTROL,
+			  pll | AR_RTC_9300_SOC_PLL_BYPASS);
 		udelay(1000);
 
 		REG_SET_BIT(ah, AR_PHY_PLL_MODE, 0x1 << 16);
@@ -841,7 +853,6 @@ static void ath9k_hw_init_pll(struct ath_hw *ah,
 		udelay(1000);
 	}
 
-	pll = ath9k_hw_compute_pll_control(ah, chan);
 	if (AR_SREV_9565(ah))
 		pll |= 0x40000;
 	REG_WRITE(ah, AR_RTC_PLL_CONTROL, pll);
@@ -935,21 +946,21 @@ static void ath9k_hw_set_sifs_time(struct ath_hw *ah, u32 us)
 	REG_WRITE(ah, AR_D_GBL_IFS_SIFS, val);
 }
 
-static void ath9k_hw_setslottime(struct ath_hw *ah, u32 us)
+void ath9k_hw_setslottime(struct ath_hw *ah, u32 us)
 {
 	u32 val = ath9k_hw_mac_to_clks(ah, us);
 	val = min(val, (u32) 0xFFFF);
 	REG_WRITE(ah, AR_D_GBL_IFS_SLOT, val);
 }
 
-static void ath9k_hw_set_ack_timeout(struct ath_hw *ah, u32 us)
+void ath9k_hw_set_ack_timeout(struct ath_hw *ah, u32 us)
 {
 	u32 val = ath9k_hw_mac_to_clks(ah, us);
 	val = min(val, (u32) MS(0xFFFFFFFF, AR_TIME_OUT_ACK));
 	REG_RMW_FIELD(ah, AR_TIME_OUT, AR_TIME_OUT_ACK, val);
 }
 
-static void ath9k_hw_set_cts_timeout(struct ath_hw *ah, u32 us)
+void ath9k_hw_set_cts_timeout(struct ath_hw *ah, u32 us)
 {
 	u32 val = ath9k_hw_mac_to_clks(ah, us);
 	val = min(val, (u32) MS(0xFFFFFFFF, AR_TIME_OUT_CTS));
@@ -1051,6 +1062,14 @@ void ath9k_hw_init_global_settings(struct ath_hw *ah)
 	    !IS_CHAN_HALF_RATE(chan) && !IS_CHAN_QUARTER_RATE(chan)) {
 		acktimeout += 64 - sifstime - ah->slottime;
 		ctstimeout += 48 - sifstime - ah->slottime;
+	}
+
+	if (ah->dynack.enabled) {
+		acktimeout = ah->dynack.ackto;
+		ctstimeout = acktimeout;
+		slottime = (acktimeout - 3) / 2;
+	} else {
+		ah->dynack.ackto = acktimeout;
 	}
 
 	ath9k_hw_set_sifs_time(ah, sifstime);
@@ -1182,9 +1201,12 @@ static void ath9k_hw_set_operating_mode(struct ath_hw *ah, int opmode)
 
 	switch (opmode) {
 	case NL80211_IFTYPE_ADHOC:
-		set |= AR_STA_ID1_ADHOC;
-		REG_SET_BIT(ah, AR_CFG, AR_CFG_AP_ADHOC_INDICATION);
-		break;
+		if (!AR_SREV_9340_13(ah)) {
+			set |= AR_STA_ID1_ADHOC;
+			REG_SET_BIT(ah, AR_CFG, AR_CFG_AP_ADHOC_INDICATION);
+			break;
+		}
+		/* fall through */
 	case NL80211_IFTYPE_MESH_POINT:
 	case NL80211_IFTYPE_AP:
 		set |= AR_STA_ID1_STA_AP;
@@ -1940,8 +1962,10 @@ int ath9k_hw_reset(struct ath_hw *ah, struct ath9k_channel *chan,
 	if (ath9k_hw_mci_is_enabled(ah))
 		ar9003_mci_check_bt(ah);
 
-	ath9k_hw_loadnf(ah, chan);
-	ath9k_hw_start_nfcal(ah, true);
+	if (AR_SREV_9300_20_OR_LATER(ah)) {
+		ath9k_hw_loadnf(ah, chan);
+		ath9k_hw_start_nfcal(ah, true);
+	}
 
 	if (AR_SREV_9300_20_OR_LATER(ah))
 		ar9003_hw_bb_watchdog_config(ah);
@@ -1953,6 +1977,12 @@ int ath9k_hw_reset(struct ath_hw *ah, struct ath9k_channel *chan,
 
 	if (AR_SREV_9565(ah) && common->bt_ant_diversity)
 		REG_SET_BIT(ah, AR_BTCOEX_WL_LNADIV, AR_BTCOEX_WL_LNADIV_FORCE_ON);
+
+	if (ah->hw->conf.radar_enabled) {
+		/* set HW specific DFS configuration */
+		ah->radar_conf.ext_channel = IS_CHAN_HT40(chan);
+		ath9k_hw_set_radar_params(ah);
+	}
 
 	return 0;
 }
@@ -2323,17 +2353,25 @@ int ath9k_hw_fill_cap_info(struct ath_hw *ah)
 	}
 
 	eeval = ah->eep_ops->get_eeprom(ah, EEP_OP_MODE);
-	if ((eeval & (AR5416_OPFLAGS_11G | AR5416_OPFLAGS_11A)) == 0) {
-		ath_err(common,
-			"no band has been marked as supported in EEPROM\n");
-		return -EINVAL;
+
+	if (eeval & AR5416_OPFLAGS_11A) {
+		if (ah->disable_5ghz)
+			ath_warn(common, "disabling 5GHz band\n");
+		else
+			pCap->hw_caps |= ATH9K_HW_CAP_5GHZ;
 	}
 
-	if (eeval & AR5416_OPFLAGS_11A)
-		pCap->hw_caps |= ATH9K_HW_CAP_5GHZ;
+	if (eeval & AR5416_OPFLAGS_11G) {
+		if (ah->disable_2ghz)
+			ath_warn(common, "disabling 2GHz band\n");
+		else
+			pCap->hw_caps |= ATH9K_HW_CAP_2GHZ;
+	}
 
-	if (eeval & AR5416_OPFLAGS_11G)
-		pCap->hw_caps |= ATH9K_HW_CAP_2GHZ;
+	if ((pCap->hw_caps & (ATH9K_HW_CAP_2GHZ | ATH9K_HW_CAP_5GHZ)) == 0) {
+		ath_err(common, "both bands are disabled\n");
+		return -EINVAL;
+	}
 
 	if (AR_SREV_9485(ah) ||
 	    AR_SREV_9285(ah) ||

@@ -4005,9 +4005,13 @@ exit:
 }
 #endif
 
-static void ath10k_restart_complete(struct ieee80211_hw *hw)
+static void ath10k_reconfig_complete(struct ieee80211_hw *hw,
+				     enum ieee80211_reconfig_type reconfig_type)
 {
 	struct ath10k *ar = hw->priv;
+
+	if (reconfig_type != IEEE80211_RECONFIG_TYPE_RESTART)
+		return;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -4530,7 +4534,7 @@ static const struct ieee80211_ops ath10k_ops = {
 	.tx_last_beacon			= ath10k_tx_last_beacon,
 	.set_antenna			= ath10k_set_antenna,
 	.get_antenna			= ath10k_get_antenna,
-	.restart_complete		= ath10k_restart_complete,
+	.reconfig_complete		= ath10k_reconfig_complete,
 	.get_survey			= ath10k_get_survey,
 	.set_bitrate_mask		= ath10k_set_bitrate_mask,
 	.sta_rc_update			= ath10k_sta_rc_update,
@@ -4898,7 +4902,6 @@ int ath10k_mac_register(struct ath10k *ar)
 			IEEE80211_HW_MFP_CAPABLE |
 			IEEE80211_HW_REPORTS_TX_ACK_STATUS |
 			IEEE80211_HW_HAS_RATE_CONTROL |
-			IEEE80211_HW_SUPPORTS_STATIC_SMPS |
 			IEEE80211_HW_AP_LINK_PS |
 			IEEE80211_HW_SPECTRUM_MGMT;
 
@@ -4906,8 +4909,10 @@ int ath10k_mac_register(struct ath10k *ar)
 	 * bytes is used for padding/alignment if necessary. */
 	ar->hw->extra_tx_headroom += sizeof(struct htt_data_tx_desc_frag)*2 + 4;
 
+	ar->hw->wiphy->features |= NL80211_FEATURE_STATIC_SMPS;
+
 	if (ar->ht_cap_info & WMI_HT_CAP_DYNAMIC_SMPS)
-		ar->hw->flags |= IEEE80211_HW_SUPPORTS_DYNAMIC_SMPS;
+		ar->hw->wiphy->features |= NL80211_FEATURE_DYNAMIC_SMPS;
 
 	if (ar->ht_cap_info & WMI_HT_CAP_ENABLED) {
 		ar->hw->flags |= IEEE80211_HW_AMPDU_AGGREGATION;

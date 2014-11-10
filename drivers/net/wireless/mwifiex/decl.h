@@ -48,8 +48,8 @@
 #define MWIFIEX_UAP_AMPDU_DEF_RXWINSIZE        16
 #define MWIFIEX_11AC_STA_AMPDU_DEF_TXWINSIZE   64
 #define MWIFIEX_11AC_STA_AMPDU_DEF_RXWINSIZE   64
-#define MWIFIEX_11AC_UAP_AMPDU_DEF_TXWINSIZE   48
-#define MWIFIEX_11AC_UAP_AMPDU_DEF_RXWINSIZE   32
+#define MWIFIEX_11AC_UAP_AMPDU_DEF_TXWINSIZE   64
+#define MWIFIEX_11AC_UAP_AMPDU_DEF_RXWINSIZE   64
 
 #define MWIFIEX_DEFAULT_BLOCK_ACK_TIMEOUT  0xffff
 
@@ -184,5 +184,15 @@ struct mwifiex_arp_eth_header {
 	u8 ar_sip[4];
 	u8 ar_tha[ETH_ALEN];
 	u8 ar_tip[4];
+} __packed;
+
+struct mwifiex_chan_stats {
+	u8 chan_num;
+	u8 bandcfg;
+	u8 flags;
+	s8 noise;
+	u16 total_bss;
+	u16 cca_scan_dur;
+	u16 cca_busy_dur;
 } __packed;
 #endif /* !_MWIFIEX_DECL_H_ */

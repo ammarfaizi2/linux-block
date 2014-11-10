@@ -2538,8 +2538,14 @@ static void hci_pend_le_actions_clear(struct hci_dev *hdev)
 {
 	struct hci_conn_params *p;
 
-	list_for_each_entry(p, &hdev->le_conn_params, list)
+	list_for_each_entry(p, &hdev->le_conn_params, list) {
+		if (p->conn) {
+			hci_conn_drop(p->conn);
+			hci_conn_put(p->conn);
+			p->conn = NULL;
+		}
 		list_del_init(&p->action);
+	}
 
 	BT_DBG("All LE pending actions cleared");
 }
@@ -2580,8 +2586,8 @@ static int hci_dev_do_close(struct hci_dev *hdev)
 
 	hci_dev_lock(hdev);
 	hci_inquiry_cache_flush(hdev);
-	hci_conn_hash_flush(hdev);
 	hci_pend_le_actions_clear(hdev);
+	hci_conn_hash_flush(hdev);
 	hci_dev_unlock(hdev);
 
 	hci_notify(hdev, HCI_DEV_DOWN);
@@ -3720,6 +3726,18 @@ int hci_conn_params_set(struct hci_dev *hdev, bdaddr_t *addr, u8 addr_type,
 	return 0;
 }
 
+static void hci_conn_params_free(struct hci_conn_params *params)
+{
+	if (params->conn) {
+		hci_conn_drop(params->conn);
+		hci_conn_put(params->conn);
+	}
+
+	list_del(&params->action);
+	list_del(&params->list);
+	kfree(params);
+}
+
 /* This function requires the caller holds hdev->lock */
 void hci_conn_params_del(struct hci_dev *hdev, bdaddr_t *addr, u8 addr_type)
 {
@@ -3729,9 +3747,7 @@ void hci_conn_params_del(struct hci_dev *hdev, bdaddr_t *addr, u8 addr_type)
 	if (!params)
 		return;
 
-	list_del(&params->action);
-	list_del(&params->list);
-	kfree(params);
+	hci_conn_params_free(params);
 
 	hci_update_background_scan(hdev);
 
@@ -3758,11 +3774,8 @@ void hci_conn_params_clear_all(struct hci_dev *hdev)
 {
 	struct hci_conn_params *params, *tmp;
 
-	list_for_each_entry_safe(params, tmp, &hdev->le_conn_params, list) {
-		list_del(&params->action);
-		list_del(&params->list);
-		kfree(params);
-	}
+	list_for_each_entry_safe(params, tmp, &hdev->le_conn_params, list)
+		hci_conn_params_free(params);
 
 	hci_update_background_scan(hdev);
 
@@ -3859,6 +3872,7 @@ static void set_random_addr(struct hci_request *req, bdaddr_t *rpa)
 	if (test_bit(HCI_LE_ADV, &hdev->dev_flags) ||
 	    hci_conn_hash_lookup_state(hdev, LE_LINK, BT_CONNECT)) {
 		BT_DBG("Deferring random address update");
+		set_bit(HCI_RPA_EXPIRED, &hdev->dev_flags);
 		return;
 	}
 
@@ -4360,26 +4374,6 @@ static int hci_reassembly(struct hci_dev *hdev, int type, void *data,
 	return remain;
 }
 
-int hci_recv_fragment(struct hci_dev *hdev, int type, void *data, int count)
-{
-	int rem = 0;
-
-	if (type < HCI_ACLDATA_PKT || type > HCI_EVENT_PKT)
-		return -EILSEQ;
-
-	while (count) {
-		rem = hci_reassembly(hdev, type, data, count, type - 1);
-		if (rem < 0)
-			return rem;
-
-		data += (count - rem);
-		count = rem;
-	}
-
-	return rem;
-}
-EXPORT_SYMBOL(hci_recv_fragment);
-
 #define STREAM_REASSEMBLY 0
 
 int hci_recv_stream_fragment(struct hci_dev *hdev, void *data, int count)
@@ -4483,7 +4477,7 @@ int hci_req_run(struct hci_request *req, hci_req_complete_t complete)
 
 	BT_DBG("length %u", skb_queue_len(&req->cmd_q));
 
-	/* If an error occured during request building, remove all HCI
+	/* If an error occurred during request building, remove all HCI
 	 * commands queued on the HCI request queue.
 	 */
 	if (req->err) {
@@ -4533,6 +4527,7 @@ static struct sk_buff *hci_prepare_cmd(struct hci_dev *hdev, u16 opcode,
 	BT_DBG("skb len %d", skb->len);
 
 	bt_cb(skb)->pkt_type = HCI_COMMAND_PKT;
+	bt_cb(skb)->opcode = opcode;
 
 	return skb;
 }
@@ -4551,7 +4546,7 @@ int hci_send_cmd(struct hci_dev *hdev, __u16 opcode, __u32 plen,
 		return -ENOMEM;
 	}
 
-	/* Stand-alone HCI commands must be flaged as
+	/* Stand-alone HCI commands must be flagged as
 	 * single-command requests.
 	 */
 	bt_cb(skb)->req.start = true;
@@ -4571,7 +4566,7 @@ void hci_req_add_ev(struct hci_request *req, u16 opcode, u32 plen,
 
 	BT_DBG("%s opcode 0x%4.4x plen %d", hdev->name, opcode, plen);
 
-	/* If an error occured during request building, there is no point in
+	/* If an error occurred during request building, there is no point in
 	 * queueing the HCI command. We can simply return.
 	 */
 	if (req->err)
@@ -4666,8 +4661,12 @@ static void hci_queue_acl(struct hci_chan *chan, struct sk_buff_head *queue,
 
 		skb_shinfo(skb)->frag_list = NULL;
 
-		/* Queue all fragments atomically */
-		spin_lock(&queue->lock);
+		/* Queue all fragments atomically. We need to use spin_lock_bh
+		 * here because of 6LoWPAN links, as there this function is
+		 * called from softirq and using normal spin lock could cause
+		 * deadlocks.
+		 */
+		spin_lock_bh(&queue->lock);
 
 		__skb_queue_tail(queue, skb);
 
@@ -4684,7 +4683,7 @@ static void hci_queue_acl(struct hci_chan *chan, struct sk_buff_head *queue,
 			__skb_queue_tail(queue, skb);
 		} while (list);
 
-		spin_unlock(&queue->lock);
+		spin_unlock_bh(&queue->lock);
 	}
 }
 

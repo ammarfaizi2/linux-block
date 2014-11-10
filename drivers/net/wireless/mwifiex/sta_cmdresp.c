@@ -85,8 +85,6 @@ mwifiex_process_cmdresp_error(struct mwifiex_private *priv,
 		spin_lock_irqsave(&adapter->mwifiex_cmd_lock, flags);
 		adapter->scan_processing = false;
 		spin_unlock_irqrestore(&adapter->mwifiex_cmd_lock, flags);
-		if (priv->report_scan_result)
-			priv->report_scan_result = false;
 		break;
 
 	case HostCmd_CMD_MAC_CONTROL:
@@ -985,7 +983,7 @@ int mwifiex_process_sta_cmdresp(struct mwifiex_private *priv, u16 cmdresp_no,
 		adapter->curr_cmd->wait_q_enabled = false;
 		break;
 	case HostCmd_CMD_802_11_SCAN_EXT:
-		ret = mwifiex_ret_802_11_scan_ext(priv);
+		ret = mwifiex_ret_802_11_scan_ext(priv, resp);
 		adapter->curr_cmd->wait_q_enabled = false;
 		break;
 	case HostCmd_CMD_802_11_BG_SCAN_QUERY:

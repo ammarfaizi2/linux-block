@@ -398,6 +398,8 @@ struct hci_conn {
 	__u16		le_conn_interval;
 	__u16		le_conn_latency;
 	__u16		le_supv_timeout;
+	__u8		le_adv_data[HCI_MAX_AD_LENGTH];
+	__u8		le_adv_data_len;
 	__s8		rssi;
 	__s8		tx_power;
 	__s8		max_tx_power;
@@ -464,6 +466,8 @@ struct hci_conn_params {
 		HCI_AUTO_CONN_ALWAYS,
 		HCI_AUTO_CONN_LINK_LOSS,
 	} auto_connect;
+
+	struct hci_conn *conn;
 };
 
 extern struct list_head hci_dev_list;
@@ -537,7 +541,6 @@ enum {
 	HCI_CONN_RSWITCH_PEND,
 	HCI_CONN_MODE_CHANGE_PEND,
 	HCI_CONN_SCO_SETUP_PEND,
-	HCI_CONN_LE_SMP_PEND,
 	HCI_CONN_MGMT_CONNECTED,
 	HCI_CONN_SSP_ENABLED,
 	HCI_CONN_SC_ENABLED,
@@ -551,6 +554,8 @@ enum {
 	HCI_CONN_FIPS,
 	HCI_CONN_STK_ENCRYPT,
 	HCI_CONN_AUTH_INITIATOR,
+	HCI_CONN_DROP,
+	HCI_CONN_PARAM_REMOVAL_PEND,
 };
 
 static inline bool hci_conn_ssp_enabled(struct hci_conn *conn)
@@ -700,7 +705,7 @@ static inline struct hci_conn *hci_conn_hash_lookup_state(struct hci_dev *hdev,
 	return NULL;
 }
 
-void hci_disconnect(struct hci_conn *conn, __u8 reason);
+int hci_disconnect(struct hci_conn *conn, __u8 reason);
 bool hci_setup_sync(struct hci_conn *conn, __u16 handle);
 void hci_sco_setup(struct hci_conn *conn, __u8 status);
 
@@ -754,9 +759,10 @@ void hci_le_conn_failed(struct hci_conn *conn, u8 status);
  * _get()/_drop() in it, but require the caller to have a valid ref (FIXME).
  */
 
-static inline void hci_conn_get(struct hci_conn *conn)
+static inline struct hci_conn *hci_conn_get(struct hci_conn *conn)
 {
 	get_device(&conn->dev);
+	return conn;
 }
 
 static inline void hci_conn_put(struct hci_conn *conn)
@@ -788,7 +794,7 @@ static inline void hci_conn_drop(struct hci_conn *conn)
 				if (!conn->out)
 					timeo *= 2;
 			} else {
-				timeo = msecs_to_jiffies(10);
+				timeo = 0;
 			}
 			break;
 
@@ -797,7 +803,7 @@ static inline void hci_conn_drop(struct hci_conn *conn)
 			break;
 
 		default:
-			timeo = msecs_to_jiffies(10);
+			timeo = 0;
 			break;
 		}
 
@@ -923,7 +929,6 @@ int hci_remove_remote_oob_data(struct hci_dev *hdev, bdaddr_t *bdaddr);
 void hci_event_packet(struct hci_dev *hdev, struct sk_buff *skb);
 
 int hci_recv_frame(struct hci_dev *hdev, struct sk_buff *skb);
-int hci_recv_fragment(struct hci_dev *hdev, int type, void *data, int count);
 int hci_recv_stream_fragment(struct hci_dev *hdev, void *data, int count);
 
 void hci_init_sysfs(struct hci_dev *hdev);
@@ -1308,9 +1313,8 @@ int mgmt_update_adv_data(struct hci_dev *hdev);
 void mgmt_discoverable_timeout(struct hci_dev *hdev);
 void mgmt_new_link_key(struct hci_dev *hdev, struct link_key *key,
 		       bool persistent);
-void mgmt_device_connected(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
-			   u8 addr_type, u32 flags, u8 *name, u8 name_len,
-			   u8 *dev_class);
+void mgmt_device_connected(struct hci_dev *hdev, struct hci_conn *conn,
+			   u32 flags, u8 *name, u8 name_len);
 void mgmt_device_disconnected(struct hci_dev *hdev, bdaddr_t *bdaddr,
 			      u8 link_type, u8 addr_type, u8 reason,
 			      bool mgmt_connected);
@@ -1339,8 +1343,7 @@ int mgmt_user_passkey_neg_reply_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 int mgmt_user_passkey_notify(struct hci_dev *hdev, bdaddr_t *bdaddr,
 			     u8 link_type, u8 addr_type, u32 passkey,
 			     u8 entered);
-void mgmt_auth_failed(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
-		      u8 addr_type, u8 status);
+void mgmt_auth_failed(struct hci_conn *conn, u8 status);
 void mgmt_auth_enable_complete(struct hci_dev *hdev, u8 status);
 void mgmt_ssp_enable_complete(struct hci_dev *hdev, u8 enable, u8 status);
 void mgmt_sc_enable_complete(struct hci_dev *hdev, u8 enable, u8 status);

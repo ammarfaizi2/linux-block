@@ -3,6 +3,7 @@
  * Copyright 2005-2006, Devicescape Software, Inc.
  * Copyright 2006-2007	Jiri Benc <jbenc@suse.cz>
  * Copyright 2007-2010	Johannes Berg <johannes@sipsolutions.net>
+ * Copyright 2013-2014  Intel Mobile Communications GmbH
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -835,6 +836,16 @@ static bool ieee80211_sta_manage_reorder_buf(struct ieee80211_sub_if_data *sdata
 
 	spin_lock(&tid_agg_rx->reorder_lock);
 
+	/*
+	 * Offloaded BA sessions have no known starting sequence number so pick
+	 * one from first Rxed frame for this tid after BA was started.
+	 */
+	if (unlikely(tid_agg_rx->auto_seq)) {
+		tid_agg_rx->auto_seq = false;
+		tid_agg_rx->ssn = mpdu_seq_num;
+		tid_agg_rx->head_seq_num = mpdu_seq_num;
+	}
+
 	buf_size = tid_agg_rx->buf_size;
 	head_seq_num = tid_agg_rx->head_seq_num;
 
@@ -1021,6 +1032,7 @@ ieee80211_rx_h_check(struct ieee80211_rx_data *rx)
 		      ieee80211_is_pspoll(hdr->frame_control)) &&
 		     rx->sdata->vif.type != NL80211_IFTYPE_ADHOC &&
 		     rx->sdata->vif.type != NL80211_IFTYPE_WDS &&
+		     rx->sdata->vif.type != NL80211_IFTYPE_OCB &&
 		     (!rx->sta || !test_sta_flag(rx->sta, WLAN_STA_ASSOC)))) {
 		/*
 		 * accept port control frames from the AP even when it's not
@@ -1261,6 +1273,12 @@ ieee80211_rx_h_sta_process(struct ieee80211_rx_data *rx)
 				sta->last_rx_rate_vht_nss = status->vht_nss;
 			}
 		}
+	} else if (rx->sdata->vif.type == NL80211_IFTYPE_OCB) {
+		u8 *bssid = ieee80211_get_bssid(hdr, rx->skb->len,
+						NL80211_IFTYPE_OCB);
+		/* OCB uses wild-card BSSID */
+		if (is_broadcast_ether_addr(bssid))
+			sta->last_rx = jiffies;
 	} else if (!is_multicast_ether_addr(hdr->addr1)) {
 		/*
 		 * Mesh beacons will update last_rx when if they are found to
@@ -2725,7 +2743,7 @@ ieee80211_rx_h_userspace_mgmt(struct ieee80211_rx_data *rx)
 		sig = status->signal;
 
 	if (cfg80211_rx_mgmt(&rx->sdata->wdev, status->freq, sig,
-			     rx->skb->data, rx->skb->len, 0, GFP_ATOMIC)) {
+			     rx->skb->data, rx->skb->len, 0)) {
 		if (rx->sta)
 			rx->sta->rx_packets++;
 		dev_kfree_skb(rx->skb);
@@ -2809,6 +2827,7 @@ ieee80211_rx_h_mgmt(struct ieee80211_rx_data *rx)
 
 	if (!ieee80211_vif_is_mesh(&sdata->vif) &&
 	    sdata->vif.type != NL80211_IFTYPE_ADHOC &&
+	    sdata->vif.type != NL80211_IFTYPE_OCB &&
 	    sdata->vif.type != NL80211_IFTYPE_STATION)
 		return RX_DROP_MONITOR;
 
@@ -3117,6 +3136,33 @@ static bool prepare_for_handlers(struct ieee80211_rx_data *rx,
 				rate_idx = status->rate_idx;
 			ieee80211_ibss_rx_no_sta(sdata, bssid, hdr->addr2,
 						 BIT(rate_idx));
+		}
+		break;
+	case NL80211_IFTYPE_OCB:
+		if (!bssid)
+			return false;
+		if (ieee80211_is_beacon(hdr->frame_control)) {
+			return false;
+		} else if (!is_broadcast_ether_addr(bssid)) {
+			ocb_dbg(sdata, "BSSID mismatch in OCB mode!\n");
+			return false;
+		} else if (!multicast &&
+			   !ether_addr_equal(sdata->dev->dev_addr,
+					     hdr->addr1)) {
+			/* if we are in promisc mode we also accept
+			 * packets not destined for us
+			 */
+			if (!(sdata->dev->flags & IFF_PROMISC))
+				return false;
+			rx->flags &= ~IEEE80211_RX_RA_MATCH;
+		} else if (!rx->sta) {
+			int rate_idx;
+			if (status->flag & RX_FLAG_HT)
+				rate_idx = 0; /* TODO: HT rates */
+			else
+				rate_idx = status->rate_idx;
+			ieee80211_ocb_rx_no_sta(sdata, bssid, hdr->addr2,
+						BIT(rate_idx));
 		}
 		break;
 	case NL80211_IFTYPE_MESH_POINT:

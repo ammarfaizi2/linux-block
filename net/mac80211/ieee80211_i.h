@@ -3,6 +3,7 @@
  * Copyright 2005, Devicescape Software, Inc.
  * Copyright 2006-2007	Jiri Benc <jbenc@suse.cz>
  * Copyright 2007-2010	Johannes Berg <johannes@sipsolutions.net>
+ * Copyright 2013-2014  Intel Mobile Communications GmbH
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -130,7 +131,7 @@ enum ieee80211_bss_corrupt_data_flags {
  *
  * These are bss flags that are attached to a bss in the
  * @valid_data field of &struct ieee80211_bss.  They show which parts
- * of the data structure were recieved as a result of an un-corrupted
+ * of the data structure were received as a result of an un-corrupted
  * beacon/probe response.
  */
 enum ieee80211_bss_valid_data_flags {
@@ -354,6 +355,7 @@ enum ieee80211_sta_flags {
 	IEEE80211_STA_DISABLE_80P80MHZ	= BIT(12),
 	IEEE80211_STA_DISABLE_160MHZ	= BIT(13),
 	IEEE80211_STA_DISABLE_WMM	= BIT(14),
+	IEEE80211_STA_ENABLE_RRM	= BIT(15),
 };
 
 struct ieee80211_mgd_auth_data {
@@ -397,6 +399,24 @@ struct ieee80211_mgd_assoc_data {
 	u8 ie[];
 };
 
+struct ieee80211_sta_tx_tspec {
+	/* timestamp of the first packet in the time slice */
+	unsigned long time_slice_start;
+
+	u32 admitted_time; /* in usecs, unlike over the air */
+	u8 tsid;
+	s8 up; /* signed to be able to invalidate with -1 during teardown */
+
+	/* consumed TX time in microseconds in the time slice */
+	u32 consumed_tx_time;
+	enum {
+		TX_TSPEC_ACTION_NONE = 0,
+		TX_TSPEC_ACTION_DOWNGRADE,
+		TX_TSPEC_ACTION_STOP_DOWNGRADE,
+	} action;
+	bool downgraded;
+};
+
 struct ieee80211_if_managed {
 	struct timer_list timer;
 	struct timer_list conn_mon_timer;
@@ -431,6 +451,8 @@ struct ieee80211_if_managed {
 	struct work_struct request_smps_work;
 
 	unsigned int flags;
+
+	bool csa_waiting_bcn;
 
 	bool beacon_crc_valid;
 	u32 beacon_crc;
@@ -505,6 +527,16 @@ struct ieee80211_if_managed {
 
 	u8 tdls_peer[ETH_ALEN] __aligned(2);
 	struct delayed_work tdls_peer_del_work;
+
+	/* WMM-AC TSPEC support */
+	struct ieee80211_sta_tx_tspec tx_tspec[IEEE80211_NUM_ACS];
+	/* Use a separate work struct so that we can do something here
+	 * while the sdata->work is flushing the queues, for example.
+	 * otherwise, in scenarios where we hardly get any traffic out
+	 * on the BE queue, but there's a lot of VO traffic, we might
+	 * get stuck in a downgraded situation and flush takes forever.
+	 */
+	struct delayed_work tx_tspec_wk;
 };
 
 struct ieee80211_if_ibss {
@@ -542,6 +574,25 @@ struct ieee80211_if_ibss {
 		IEEE80211_IBSS_MLME_SEARCH,
 		IEEE80211_IBSS_MLME_JOINED,
 	} state;
+};
+
+/**
+ * struct ieee80211_if_ocb - OCB mode state
+ *
+ * @housekeeping_timer: timer for periodic invocation of a housekeeping task
+ * @wrkq_flags: OCB deferred task action
+ * @incomplete_lock: delayed STA insertion lock
+ * @incomplete_stations: list of STAs waiting for delayed insertion
+ * @joined: indication if the interface is connected to an OCB network
+ */
+struct ieee80211_if_ocb {
+	struct timer_list housekeeping_timer;
+	unsigned long wrkq_flags;
+
+	spinlock_t incomplete_lock;
+	struct list_head incomplete_stations;
+
+	bool joined;
 };
 
 /**
@@ -837,6 +888,7 @@ struct ieee80211_sub_if_data {
 		struct ieee80211_if_managed mgd;
 		struct ieee80211_if_ibss ibss;
 		struct ieee80211_if_mesh mesh;
+		struct ieee80211_if_ocb ocb;
 		u32 mntr_flags;
 	} u;
 
@@ -1305,6 +1357,9 @@ struct ieee80211_local {
 	/* virtual monitor interface */
 	struct ieee80211_sub_if_data __rcu *monitor_sdata;
 	struct cfg80211_chan_def monitor_chandef;
+
+	/* extended capabilities provided by mac80211 */
+	u8 ext_capa[8];
 };
 
 static inline struct ieee80211_sub_if_data *
@@ -1367,6 +1422,7 @@ struct ieee802_11_elems {
 	const struct ieee80211_wide_bw_chansw_ie *wide_bw_chansw_ie;
 	const u8 *country_elem;
 	const u8 *pwr_constr_elem;
+	const u8 *cisco_dtpc_elem;
 	const struct ieee80211_timeout_interval_ie *timeout_int;
 	const u8 *opmode_notif;
 	const struct ieee80211_sec_chan_offs_ie *sec_chan_offs;
@@ -1451,6 +1507,7 @@ void ieee80211_mgd_conn_tx_status(struct ieee80211_sub_if_data *sdata,
 				  __le16 fc, bool acked);
 void ieee80211_mgd_quiesce(struct ieee80211_sub_if_data *sdata);
 void ieee80211_sta_restart(struct ieee80211_sub_if_data *sdata);
+void ieee80211_sta_handle_tspec_ac_params(struct ieee80211_sub_if_data *sdata);
 
 /* IBSS code */
 void ieee80211_ibss_notify_scan_completed(struct ieee80211_local *local);
@@ -1467,6 +1524,15 @@ int ieee80211_ibss_csa_beacon(struct ieee80211_sub_if_data *sdata,
 			      struct cfg80211_csa_settings *csa_settings);
 int ieee80211_ibss_finish_csa(struct ieee80211_sub_if_data *sdata);
 void ieee80211_ibss_stop(struct ieee80211_sub_if_data *sdata);
+
+/* OCB code */
+void ieee80211_ocb_work(struct ieee80211_sub_if_data *sdata);
+void ieee80211_ocb_rx_no_sta(struct ieee80211_sub_if_data *sdata,
+			     const u8 *bssid, const u8 *addr, u32 supp_rates);
+void ieee80211_ocb_setup_sdata(struct ieee80211_sub_if_data *sdata);
+int ieee80211_ocb_join(struct ieee80211_sub_if_data *sdata,
+		       struct ocb_setup *setup);
+int ieee80211_ocb_leave(struct ieee80211_sub_if_data *sdata);
 
 /* mesh code */
 void ieee80211_mesh_work(struct ieee80211_sub_if_data *sdata);
@@ -1587,7 +1653,7 @@ void __ieee80211_stop_rx_ba_session(struct sta_info *sta, u16 tid,
 void __ieee80211_start_rx_ba_session(struct sta_info *sta,
 				     u8 dialog_token, u16 timeout,
 				     u16 start_seq_num, u16 ba_policy, u16 tid,
-				     u16 buf_size, bool tx);
+				     u16 buf_size, bool tx, bool auto_seq);
 void ieee80211_sta_tear_down_BA_sessions(struct sta_info *sta,
 					 enum ieee80211_agg_stop_reason reason);
 void ieee80211_process_delba(struct ieee80211_sub_if_data *sdata,
@@ -1755,6 +1821,13 @@ static inline bool ieee80211_rx_reorder_ready(struct sk_buff_head *frames)
 	return true;
 }
 
+extern const int ieee802_1d_to_ac[8];
+
+static inline int ieee80211_ac_from_tid(int tid)
+{
+	return ieee802_1d_to_ac[tid & 7];
+}
+
 void ieee80211_dynamic_ps_enable_work(struct work_struct *work);
 void ieee80211_dynamic_ps_disable_work(struct work_struct *work);
 void ieee80211_dynamic_ps_timer(unsigned long data);
@@ -1764,7 +1837,7 @@ void ieee80211_send_nullfunc(struct ieee80211_local *local,
 void ieee80211_sta_rx_notify(struct ieee80211_sub_if_data *sdata,
 			     struct ieee80211_hdr *hdr);
 void ieee80211_sta_tx_notify(struct ieee80211_sub_if_data *sdata,
-			     struct ieee80211_hdr *hdr, bool ack);
+			     struct ieee80211_hdr *hdr, bool ack, u16 tx_time);
 
 void ieee80211_wake_queues_by_reason(struct ieee80211_hw *hw,
 				     unsigned long queues,
@@ -1830,8 +1903,10 @@ int __ieee80211_request_smps_ap(struct ieee80211_sub_if_data *sdata,
 void ieee80211_recalc_smps(struct ieee80211_sub_if_data *sdata);
 void ieee80211_recalc_min_chandef(struct ieee80211_sub_if_data *sdata);
 
-size_t ieee80211_ie_split(const u8 *ies, size_t ielen,
-			  const u8 *ids, int n_ids, size_t offset);
+size_t ieee80211_ie_split_ric(const u8 *ies, size_t ielen,
+			      const u8 *ids, int n_ids,
+			      const u8 *after_ric, int n_after_ric,
+			      size_t offset);
 size_t ieee80211_ie_split_vendor(const u8 *ies, size_t ielen, size_t offset);
 u8 *ieee80211_ie_build_ht_cap(u8 *pos, struct ieee80211_sta_ht_cap *ht_cap,
 			      u16 cap);
@@ -1869,7 +1944,6 @@ ieee80211_vif_reserve_chanctx(struct ieee80211_sub_if_data *sdata,
 int __must_check
 ieee80211_vif_use_reserved_context(struct ieee80211_sub_if_data *sdata);
 int ieee80211_vif_unreserve_chanctx(struct ieee80211_sub_if_data *sdata);
-int ieee80211_vif_use_reserved_switch(struct ieee80211_local *local);
 
 int __must_check
 ieee80211_vif_change_bandwidth(struct ieee80211_sub_if_data *sdata,
@@ -1918,7 +1992,7 @@ int ieee80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
 			size_t extra_ies_len);
 int ieee80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 			const u8 *peer, enum nl80211_tdls_operation oper);
-
+void ieee80211_tdls_peer_del_work(struct work_struct *wk);
 
 extern const struct ethtool_ops ieee80211_ethtool_ops;
 
@@ -1929,4 +2003,3 @@ extern const struct ethtool_ops ieee80211_ethtool_ops;
 #endif
 
 #endif /* IEEE80211_I_H */
-void ieee80211_tdls_peer_del_work(struct work_struct *wk);

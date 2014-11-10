@@ -838,7 +838,7 @@ static ssize_t read_file_misc(struct file *file, char __user *user_buf,
 			iter_data.nmeshes, iter_data.nwds);
 		len += scnprintf(buf + len, sizeof(buf) - len,
 			" ADHOC: %i TOTAL: %hi BEACON-VIF: %hi\n",
-			iter_data.nadhocs, sc->nvifs, sc->nbcnvifs);
+			iter_data.nadhocs, sc->cur_chan->nvifs, sc->nbcnvifs);
 	}
 
 	if (len > sizeof(buf))
@@ -852,36 +852,31 @@ static ssize_t read_file_reset(struct file *file, char __user *user_buf,
 			       size_t count, loff_t *ppos)
 {
 	struct ath_softc *sc = file->private_data;
+	static const char * const reset_cause[__RESET_TYPE_MAX] = {
+		[RESET_TYPE_BB_HANG] = "Baseband Hang",
+		[RESET_TYPE_BB_WATCHDOG] = "Baseband Watchdog",
+		[RESET_TYPE_FATAL_INT] = "Fatal HW Error",
+		[RESET_TYPE_TX_ERROR] = "TX HW error",
+		[RESET_TYPE_TX_GTT] = "Transmit timeout",
+		[RESET_TYPE_TX_HANG] = "TX Path Hang",
+		[RESET_TYPE_PLL_HANG] = "PLL RX Hang",
+		[RESET_TYPE_MAC_HANG] = "MAC Hang",
+		[RESET_TYPE_BEACON_STUCK] = "Stuck Beacon",
+		[RESET_TYPE_MCI] = "MCI Reset",
+		[RESET_TYPE_CALIBRATION] = "Calibration error",
+	};
 	char buf[512];
 	unsigned int len = 0;
+	int i;
 
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "Baseband Hang",
-			 sc->debug.stats.reset[RESET_TYPE_BB_HANG]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "Baseband Watchdog",
-			 sc->debug.stats.reset[RESET_TYPE_BB_WATCHDOG]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "Fatal HW Error",
-			 sc->debug.stats.reset[RESET_TYPE_FATAL_INT]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "TX HW error",
-			 sc->debug.stats.reset[RESET_TYPE_TX_ERROR]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "TX Path Hang",
-			 sc->debug.stats.reset[RESET_TYPE_TX_HANG]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "PLL RX Hang",
-			 sc->debug.stats.reset[RESET_TYPE_PLL_HANG]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "MAC Hang",
-			 sc->debug.stats.reset[RESET_TYPE_MAC_HANG]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "Stuck Beacon",
-			 sc->debug.stats.reset[RESET_TYPE_BEACON_STUCK]);
-	len += scnprintf(buf + len, sizeof(buf) - len,
-			 "%17s: %2d\n", "MCI Reset",
-			 sc->debug.stats.reset[RESET_TYPE_MCI]);
+	for (i = 0; i < ARRAY_SIZE(reset_cause); i++) {
+		if (!reset_cause[i])
+		    continue;
+
+		len += scnprintf(buf + len, sizeof(buf) - len,
+				 "%17s: %2d\n", reset_cause[i],
+				 sc->debug.stats.reset[i]);
+	}
 
 	if (len > sizeof(buf))
 		len = sizeof(buf);
@@ -1169,6 +1164,29 @@ static const struct file_operations fops_btcoex = {
 };
 #endif
 
+#ifdef CONFIG_ATH9K_DYNACK
+static ssize_t read_file_ackto(struct file *file, char __user *user_buf,
+			       size_t count, loff_t *ppos)
+{
+	struct ath_softc *sc = file->private_data;
+	struct ath_hw *ah = sc->sc_ah;
+	char buf[32];
+	unsigned int len;
+
+	len = sprintf(buf, "%u %c\n", ah->dynack.ackto,
+		      (ah->dynack.enabled) ? 'A' : 'S');
+
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
+
+static const struct file_operations fops_ackto = {
+	.read = read_file_ackto,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+#endif
+
 /* Ethtool support for get-stats */
 
 #define AMKSTR(nm) #nm "_BE", #nm "_BK", #nm "_VI", #nm "_VO"
@@ -1372,6 +1390,11 @@ int ath9k_init_debug(struct ath_hw *ah)
 			    sc->debug.debugfs_phy, sc, &fops_bt_ant_diversity);
 	debugfs_create_file("btcoex", S_IRUSR, sc->debug.debugfs_phy, sc,
 			    &fops_btcoex);
+#endif
+
+#ifdef CONFIG_ATH9K_DYNACK
+	debugfs_create_file("ack_to", S_IRUSR | S_IWUSR, sc->debug.debugfs_phy,
+			    sc, &fops_ackto);
 #endif
 
 	return 0;

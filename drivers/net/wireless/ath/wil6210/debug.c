@@ -47,7 +47,7 @@ void wil_info(struct wil6210_priv *wil, const char *fmt, ...)
 	va_end(args);
 }
 
-int wil_dbg_trace(struct wil6210_priv *wil, const char *fmt, ...)
+void wil_dbg_trace(struct wil6210_priv *wil, const char *fmt, ...)
 {
 	struct va_format vaf = {
 		.fmt = fmt,
@@ -58,6 +58,4 @@ int wil_dbg_trace(struct wil6210_priv *wil, const char *fmt, ...)
 	vaf.va = &args;
 	trace_wil6210_log_dbg(&vaf);
 	va_end(args);
-
-	return 0;
 }

@@ -92,6 +92,15 @@ config ATH9K_DFS_CERTIFIED
 	  developed. At this point enabling this option won't do anything
 	  except increase code size.
 
+config ATH9K_DYNACK
+	bool "Atheros ath9k ACK timeout estimation algorithm (EXPERIMENTAL)"
+	depends on ATH9K
+	default n
+	---help---
+	  This option enables ath9k dynamic ACK timeout estimation algorithm
+	  based on ACK frame RX timestamp, TX frame timestamp and frame
+	  duration
+
 config ATH9K_TX99
 	bool "Atheros ath9k TX99 testing support"
 	depends on ATH9K_DEBUGFS && CFG80211_CERTIFICATION_ONUS
@@ -138,6 +147,11 @@ config ATH9K_CHANNEL_CONTEXT
          This option enables channel context support in ath9k, which is needed
 	 for multi-channel concurrency. Enable this if P2P PowerSave support
 	 is required.
+
+config ATH9K_PCOEM
+	bool "Atheros ath9k support for PC OEM cards" if EXPERT
+	depends on ATH9K
+	default y
 
 config ATH9K_HTC
        tristate "Atheros HTC based wireless cards support"
