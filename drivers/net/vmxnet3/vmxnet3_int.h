@@ -51,7 +51,6 @@
 #include <linux/ipv6.h>
 #include <linux/in.h>
 #include <linux/etherdevice.h>
-#include <asm/checksum.h>
 #include <linux/if_vlan.h>
 #include <linux/if_arp.h>
 #include <linux/inetdevice.h>

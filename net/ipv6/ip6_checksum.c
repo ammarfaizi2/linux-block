@@ -2,7 +2,6 @@
 #include <net/ip.h>
 #include <net/udp.h>
 #include <net/udplite.h>
-#include <asm/checksum.h>
 
 #ifndef _HAVE_ARCH_IPV6_CSUM
 __sum16 csum_ipv6_magic(const struct in6_addr *saddr,

@@ -27,8 +27,6 @@
 #include <linux/module.h>
 #include <linux/property.h>
 
-#include <asm/checksum.h>
-
 #include <lantiq_soc.h>
 #include <xway_dma.h>
 #include <lantiq_platform.h>
