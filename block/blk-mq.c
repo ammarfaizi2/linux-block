@@ -292,6 +292,7 @@ void blk_mq_free_request(struct request *rq)
 	hctx = q->mq_ops->map_queue(q, ctx->cpu);
 	__blk_mq_free_request(hctx, ctx, rq);
 }
+EXPORT_SYMBOL_GPL(blk_mq_free_request);
 
 /*
  * Clone all relevant state from a request that has been put on hold in
