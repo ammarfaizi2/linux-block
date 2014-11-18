@@ -130,7 +130,7 @@ void blk_mq_drain_queue(struct request_queue *q)
  * Guarantee no request is in use, so we can change any data structure of
  * the queue afterward.
  */
-static void blk_mq_freeze_queue(struct request_queue *q)
+void blk_mq_freeze_queue(struct request_queue *q)
 {
 	bool drain;
 
@@ -142,8 +142,9 @@ static void blk_mq_freeze_queue(struct request_queue *q)
 	if (drain)
 		blk_mq_drain_queue(q);
 }
+EXPORT_SYMBOL_GPL(blk_mq_freeze_queue);
 
-static void blk_mq_unfreeze_queue(struct request_queue *q)
+void blk_mq_unfreeze_queue(struct request_queue *q)
 {
 	bool wake = false;
 
@@ -157,6 +158,7 @@ static void blk_mq_unfreeze_queue(struct request_queue *q)
 	if (wake)
 		wake_up_all(&q->mq_freeze_wq);
 }
+EXPORT_SYMBOL_GPL(blk_mq_unfreeze_queue);
 
 bool blk_mq_can_queue(struct blk_mq_hw_ctx *hctx)
 {
