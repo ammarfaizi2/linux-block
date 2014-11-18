@@ -146,6 +146,13 @@ static inline bool test_and_clear_restore_sigmask(void)
 #error "no set_restore_sigmask() provided and default one won't work"
 #endif
 
+#ifndef CONFIG_HAVE_ARCH_SCHEDULE_ALLOWED
+static inline bool arch_schedule_allowed(void)
+{
+	return true;
+}
+#endif
+
 #endif	/* __KERNEL__ */
 
 #endif /* _LINUX_THREAD_INFO_H */

@@ -180,6 +180,12 @@ static inline unsigned long current_stack_pointer(void)
 	return sp;
 }
 
+static inline bool arch_schedule_allowed(void)
+{
+	return ((current_stack_pointer() ^ (current_top_of_stack() - 1))
+		& ~(THREAD_SIZE - 1)) == 0;
+}
+
 #else /* !__ASSEMBLY__ */
 
 #ifdef CONFIG_X86_64

@@ -3111,7 +3111,7 @@ static inline void schedule_debug(struct task_struct *prev)
 	BUG_ON(task_stack_end_corrupted(prev));
 #endif
 
-	if (unlikely(in_atomic_preempt_off())) {
+	if (unlikely(in_atomic_preempt_off() || !arch_schedule_allowed())) {
 		__schedule_bug(prev);
 		preempt_count_set(PREEMPT_DISABLED);
 	}
@@ -7669,10 +7669,12 @@ EXPORT_SYMBOL(__might_sleep);
 void ___might_sleep(const char *file, int line, int preempt_offset)
 {
 	static unsigned long prev_jiffy;	/* ratelimiting */
+	bool arch_ok;
 
 	rcu_sleep_check(); /* WARN_ON_ONCE() by default, no rate limit reqd. */
+	arch_ok = arch_schedule_allowed();
 	if ((preempt_count_equals(preempt_offset) && !irqs_disabled() &&
-	     !is_idle_task(current)) ||
+	     !is_idle_task(current) && arch_ok) ||
 	    system_state != SYSTEM_RUNNING || oops_in_progress)
 		return;
 	if (time_before(jiffies, prev_jiffy + HZ) && prev_jiffy)
@@ -7683,8 +7685,8 @@ void ___might_sleep(const char *file, int line, int preempt_offset)
 		"BUG: sleeping function called from invalid context at %s:%d\n",
 			file, line);
 	printk(KERN_ERR
-		"in_atomic(): %d, irqs_disabled(): %d, pid: %d, name: %s\n",
-			in_atomic(), irqs_disabled(),
+		"in_atomic(): %d, irqs_disabled(): %d, arch_schedule_allowed: %d, pid: %d, name: %s\n",
+			in_atomic(), irqs_disabled(), (int)arch_ok,
 			current->pid, current->comm);
 
 	if (task_stack_end_corrupted(current))
