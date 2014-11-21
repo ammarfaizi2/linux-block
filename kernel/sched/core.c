@@ -7444,8 +7444,7 @@ void sched_move_task(struct task_struct *tsk)
 	if (unlikely(running))
 		put_prev_task(rq, tsk);
 
-	tg = container_of(task_css_check(tsk, cpu_cgrp_id,
-				lockdep_is_held(&tsk->sighand->siglock)),
+	tg = container_of(task_css_check(tsk, cpu_cgrp_id, true),
 			  struct task_group, css);
 	tg = autogroup_task_group(tsk, tg);
 	tsk->sched_task_group = tg;
