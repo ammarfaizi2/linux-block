@@ -770,7 +770,8 @@ void rcu_nmi_enter(void)
 	if (rdtp->dynticks_nmi_nesting == 0 &&
 	    (atomic_read(&rdtp->dynticks) & 0x1))
 		return;
-	rdtp->dynticks_nmi_nesting++;
+	if (rdtp->dynticks_nmi_nesting++ != 0)
+		return; /* Nested NMI/IST/whatever. */
 	smp_mb__before_atomic();  /* Force delay from prior write. */
 	atomic_inc(&rdtp->dynticks);
 	/* CPUs seeing atomic_inc() must see later RCU read-side crit sects */
