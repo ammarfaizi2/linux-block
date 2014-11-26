@@ -1330,13 +1330,10 @@ ENTRY(nmi)
 	 * resume the outer NMI.
 	 */
 
-	movq	$repeat_nmi, %rdx
-	cmpq	8(%rsp), %rdx
-	ja	1f
-	movq	$end_repeat_nmi, %rdx
-	cmpq	8(%rsp), %rdx
-	ja	nested_nmi_out
-1:
+	movq	8(%rsp), %rdx
+	subq	$repeat_nmi, %rdx
+	cmpq	$end_repeat_nmi-repeat_nmi, %rdx
+	jb	nested_nmi_out
 
 	/*
 	 * Now check "NMI executing".  If it's set, then we're nested.
