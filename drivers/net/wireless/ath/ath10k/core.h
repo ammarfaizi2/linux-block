@@ -83,6 +83,7 @@ struct ath10k_skb_cb {
 
 	struct {
 		u8 tid;
+		u16 freq;
 		bool is_offchan;
 		struct ath10k_htt_txbuf *txbuf;
 		u32 txbuf_paddr;
@@ -218,6 +219,8 @@ struct ath10k_peer {
 	int vdev_id;
 	u8 addr[ETH_ALEN];
 	DECLARE_BITMAP(peer_ids, ATH10K_MAX_NUM_PEER_IDS);
+
+	/* protected by ar->data_lock */
 	struct ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
 };
 
@@ -320,6 +323,7 @@ struct ath10k_debug {
 	/* protected by conf_mutex */
 	u32 fw_dbglog_mask;
 	u32 pktlog_filter;
+	u32 reg_addr;
 
 	u8 htt_max_amsdu;
 	u8 htt_max_ampdu;
@@ -560,8 +564,12 @@ struct ath10k {
 	struct list_head peers;
 	wait_queue_head_t peer_mapping_wq;
 
-	/* number of created peers; protected by data_lock */
+	/* protected by conf_mutex */
 	int num_peers;
+	int num_stations;
+
+	int max_num_peers;
+	int max_num_stations;
 
 	struct work_struct offchan_tx_work;
 	struct sk_buff_head offchan_tx_queue;
