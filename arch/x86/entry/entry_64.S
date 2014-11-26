@@ -1355,16 +1355,17 @@ ENTRY(nmi)
 	 * if it controls the kernel's RSP.  We set DF before we clear
 	 * "NMI executing".
 	 */
-	lea	6*8(%rsp), %rdx
-	/* Compare the NMI stack (rdx) with the stack we came from (4*8(%rsp)) */
-	cmpq	%rdx, 4*8(%rsp)
-	/* If the stack pointer is above the NMI stack, this is a normal NMI */
-	ja	first_nmi
 
-	subq	$EXCEPTION_STKSZ, %rdx
-	cmpq	%rdx, 4*8(%rsp)
-	/* If it is below the NMI stack, it is a normal NMI */
-	jb	first_nmi
+	/* Load address of the top of this stack into rdx */
+	lea 5*8+7(%rsp), %rdx
+	/* Subtract the return stack pointer from it */
+	subq 4*8(%rsp), %rdx
+	/*
+	 * If the result is greater or equal to the stack size,
+	 * then the return stack was not on this stack.
+	 */
+	cmpq $EXCEPTION_STKSZ, %rdx
+	jae first_nmi
 
 	/* Ah, it is within the NMI stack. */
 
