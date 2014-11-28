@@ -114,6 +114,7 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
 	ns->parent = get_pid_ns(parent_pid_ns);
 	ns->user_ns = get_user_ns(user_ns);
 	ns->nr_hashed = PIDNS_HASH_ADDING;
+	atomic64_set(&ns->next_highpid, MIN_HIGHPID);
 	INIT_WORK(&ns->proc_work, proc_cleanup_work);
 
 	set_bit(0, ns->pidmap[0].page);
@@ -268,6 +269,44 @@ static int pid_ns_ctl_handler(struct ctl_table *table, int write,
 	return proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
 }
 
+static int pid_ns_next_highpid_handler(struct ctl_table *table, int write,
+		void __user *buffer, size_t *lenp, loff_t *ppos)
+{
+	struct pid_namespace *pid_ns = task_active_pid_ns(current);
+
+	/* The standard proc helpers can't handle u64. */
+
+	if (write) {
+		u64 nr;
+		int ret;
+
+		if (!ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN))
+			return -EPERM;
+
+		if (*ppos)
+			return -EINVAL;
+
+		ret = kstrtou64_from_user(buffer, *lenp, 10, &nr);
+		if (ret != 0)
+			return ret;
+
+		if (nr < MIN_HIGHPID || nr > MAX_HIGHPID)
+			return -ERANGE;
+
+		*ppos = *lenp;
+		atomic64_set(&pid_ns->next_highpid, nr);
+		return 0;
+	} else {
+		char nr_str[21];  /* 2^64 is a 20-digit number. */
+		struct ctl_table tmp = *table;
+
+		snprintf(nr_str, sizeof(nr_str), "%llu",
+			 (u64)atomic64_read(&pid_ns->next_highpid));
+		tmp.data = nr_str;
+		return proc_dostring(&tmp, 0, buffer, lenp, ppos);
+	}
+}
+
 extern int pid_max;
 static int zero = 0;
 static struct ctl_table pid_ns_ctl_table[] = {
@@ -278,6 +317,12 @@ static struct ctl_table pid_ns_ctl_table[] = {
 		.proc_handler = pid_ns_ctl_handler,
 		.extra1 = &zero,
 		.extra2 = &pid_max,
+	},
+	{
+		.procname = "ns_next_highpid",
+		.maxlen = 20,
+		.mode = 0666, /* permissions are checked in the handler */
+		.proc_handler = pid_ns_next_highpid_handler,
 	},
 	{ }
 };

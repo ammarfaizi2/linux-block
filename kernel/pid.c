@@ -76,6 +76,7 @@ struct pid_namespace init_pid_ns = {
 	},
 	.last_pid = 0,
 	.nr_hashed = PIDNS_HASH_ADDING,
+	.next_highpid = ATOMIC64_INIT(MIN_HIGHPID),
 	.level = 0,
 	.child_reaper = &init_task,
 	.user_ns = &init_user_ns,
@@ -291,6 +292,29 @@ void free_pid(struct pid *pid)
 	call_rcu(&pid->rcu, delayed_put_pid);
 }
 
+static u64 alloc_highpid(struct pid_namespace *ns)
+{
+	u64 prev, old, new;
+	u64 nr = atomic64_inc_return(&ns->next_highpid) - 1;
+
+	if (likely(nr >= MIN_HIGHPID && nr <= MAX_HIGHPID))
+		return nr;
+
+	/*
+	 * Atomically increase next_highpid to something between
+	 * MIN_HIGHPID + 1 and MAX_HIGHPID + 1 and return new - 1.
+	 */
+	prev = nr + 1;
+	do {
+		old = prev;
+		new = old + 1;
+		if (new < MIN_HIGHPID + 1 || new > MAX_HIGHPID + 1)
+			new = MIN_HIGHPID + 1;
+		prev = atomic64_cmpxchg(&ns->next_highpid, old, new);
+	} while (prev != old);
+	return new - 1;
+}
+
 struct pid *alloc_pid(struct pid_namespace *ns)
 {
 	struct pid *pid;
@@ -312,6 +336,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 
 		pid->numbers[i].nr = nr;
 		pid->numbers[i].ns = tmp;
+		pid->numbers[i].highnr = alloc_highpid(tmp);
 		tmp = tmp->parent;
 	}
 
@@ -492,17 +517,26 @@ struct pid *find_get_pid(pid_t nr)
 }
 EXPORT_SYMBOL_GPL(find_get_pid);
 
-pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns)
+const struct upid *pid_upid_ns(struct pid *pid, struct pid_namespace *ns)
 {
 	struct upid *upid;
-	pid_t nr = 0;
 
 	if (pid && ns->level <= pid->level) {
 		upid = &pid->numbers[ns->level];
 		if (upid->ns == ns)
-			nr = upid->nr;
+			return upid;
 	}
-	return nr;
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(pid_upid_ns);
+
+pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns)
+{
+	const struct upid *upid = pid_upid_ns(pid, ns);
+
+	if (!upid)
+		return 0;
+	return upid->nr;
 }
 EXPORT_SYMBOL_GPL(pid_nr_ns);
 

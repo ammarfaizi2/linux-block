@@ -51,7 +51,13 @@ struct upid {
 	/* Try to keep pid_chain in the same cacheline as nr for find_vpid */
 	int nr;
 	struct pid_namespace *ns;
+	u64 highnr;
 	struct hlist_node pid_chain;
+
+#ifdef CONFIG_IA64
+	/* IA64 is special and wants struct upid to have a power-of-2 size. */
+	u64 padding[3];
+#endif
 };
 
 struct pid
@@ -170,6 +176,7 @@ static inline pid_t pid_nr(struct pid *pid)
 }
 
 pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns);
+const struct upid *pid_upid_ns(struct pid *pid, struct pid_namespace *ns);
 pid_t pid_vnr(struct pid *pid);
 
 #define do_each_pid_task(pid, type, task)				\

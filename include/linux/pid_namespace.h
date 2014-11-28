@@ -20,12 +20,22 @@ struct pidmap {
 
 struct bsd_acct_struct;
 
+/* We don't want a highpid to ever be a valid pid. */
+#define MIN_HIGHPID ((u64)(1ULL << 32))
+
+/*
+ * We don't want a highpid to ever look like an error code, and, to avoid
+ * confusion, we'll avoid numbers that don't fit in a signed 64-bit variable.
+ */
+#define MAX_HIGHPID ((u64)(S64_MAX))
+
 struct pid_namespace {
 	struct kref kref;
 	struct pidmap pidmap[PIDMAP_ENTRIES];
 	struct rcu_head rcu;
 	int last_pid;
 	unsigned int nr_hashed;
+	atomic64_t next_highpid;
 	struct task_struct *child_reaper;
 	struct kmem_cache *pid_cachep;
 	unsigned int level;
