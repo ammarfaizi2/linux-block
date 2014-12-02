@@ -71,7 +71,11 @@ module_param(rcu_expedited, int, 0);
  */
 void __rcu_read_lock(void)
 {
-	current->rcu_read_lock_nesting++;
+	struct task_struct *t = current;
+
+	if (!t->rcu_read_lock_nesting)
+		preempt_disable();
+	t->rcu_read_lock_nesting++;
 	barrier();  /* critical section after entry code. */
 }
 EXPORT_SYMBOL_GPL(__rcu_read_lock);
@@ -92,6 +96,7 @@ void __rcu_read_unlock(void)
 	} else {
 		barrier();  /* critical section before exit code. */
 		t->rcu_read_lock_nesting = INT_MIN;
+		preempt_disable();
 		barrier();  /* assign before ->rcu_read_unlock_special load */
 		if (unlikely(ACCESS_ONCE(t->rcu_read_unlock_special.s)))
 			rcu_read_unlock_special(t);
