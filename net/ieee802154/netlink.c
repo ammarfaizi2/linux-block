@@ -1,5 +1,5 @@
 /*
- * Netlink inteface for IEEE 802.15.4 stack
+ * Netlink interface for IEEE 802.15.4 stack
  *
  * Copyright 2007, 2008 Siemens AG
  *
@@ -155,7 +155,7 @@ int __init ieee802154_nl_init(void)
 						    ieee802154_mcgrps);
 }
 
-void __exit ieee802154_nl_exit(void)
+void ieee802154_nl_exit(void)
 {
 	genl_unregister_family(&nl802154_family);
 }

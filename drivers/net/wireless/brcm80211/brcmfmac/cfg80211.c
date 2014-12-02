@@ -299,6 +299,7 @@ static u16 chandef_to_chanspec(struct brcmu_d11inf *d11inf,
 	primary_offset = ch->center_freq1 - ch->chan->center_freq;
 	switch (ch->width) {
 	case NL80211_CHAN_WIDTH_20:
+	case NL80211_CHAN_WIDTH_20_NOHT:
 		ch_inf.bw = BRCMU_CHAN_BW_20;
 		WARN_ON(primary_offset != 0);
 		break;
@@ -323,6 +324,10 @@ static u16 chandef_to_chanspec(struct brcmu_d11inf *d11inf,
 				ch_inf.sb = BRCMU_CHAN_SB_LU;
 		}
 		break;
+	case NL80211_CHAN_WIDTH_80P80:
+	case NL80211_CHAN_WIDTH_160:
+	case NL80211_CHAN_WIDTH_5:
+	case NL80211_CHAN_WIDTH_10:
 	default:
 		WARN_ON_ONCE(1);
 	}
@@ -333,6 +338,7 @@ static u16 chandef_to_chanspec(struct brcmu_d11inf *d11inf,
 	case IEEE80211_BAND_5GHZ:
 		ch_inf.band = BRCMU_CHAN_BAND_5G;
 		break;
+	case IEEE80211_BAND_60GHZ:
 	default:
 		WARN_ON_ONCE(1);
 	}
@@ -1809,6 +1815,7 @@ brcmf_cfg80211_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 		return -EIO;
 
 	clear_bit(BRCMF_VIF_STATUS_CONNECTED, &ifp->vif->sme_state);
+	clear_bit(BRCMF_VIF_STATUS_CONNECTING, &ifp->vif->sme_state);
 	cfg80211_disconnected(ndev, reason_code, NULL, 0, GFP_KERNEL);
 
 	memcpy(&scbval.ea, &profile->bssid, ETH_ALEN);
@@ -2926,7 +2933,7 @@ brcmf_update_pmklist(struct net_device *ndev,
 		     struct brcmf_cfg80211_pmk_list *pmk_list, s32 err)
 {
 	int i, j;
-	int pmkid_len;
+	u32 pmkid_len;
 
 	pmkid_len = le32_to_cpu(pmk_list->pmkids.npmkid);
 
@@ -2954,8 +2961,7 @@ brcmf_cfg80211_set_pmksa(struct wiphy *wiphy, struct net_device *ndev,
 	struct brcmf_if *ifp = netdev_priv(ndev);
 	struct pmkid_list *pmkids = &cfg->pmk_list->pmkids;
 	s32 err = 0;
-	int i;
-	int pmkid_len;
+	u32 pmkid_len, i;
 
 	brcmf_dbg(TRACE, "Enter\n");
 	if (!check_vif_up(ifp->vif))
@@ -2994,7 +3000,7 @@ brcmf_cfg80211_del_pmksa(struct wiphy *wiphy, struct net_device *ndev,
 	struct brcmf_if *ifp = netdev_priv(ndev);
 	struct pmkid_list pmkid;
 	s32 err = 0;
-	int i, pmkid_len;
+	u32 pmkid_len, i;
 
 	brcmf_dbg(TRACE, "Enter\n");
 	if (!check_vif_up(ifp->vif))

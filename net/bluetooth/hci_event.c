@@ -994,8 +994,8 @@ static void hci_cc_read_local_oob_data(struct hci_dev *hdev,
 	BT_DBG("%s status 0x%2.2x", hdev->name, rp->status);
 
 	hci_dev_lock(hdev);
-	mgmt_read_local_oob_data_complete(hdev, rp->hash, rp->randomizer,
-					  NULL, NULL, rp->status);
+	mgmt_read_local_oob_data_complete(hdev, rp->hash, rp->rand, NULL, NULL,
+					  rp->status);
 	hci_dev_unlock(hdev);
 }
 
@@ -1007,8 +1007,8 @@ static void hci_cc_read_local_oob_ext_data(struct hci_dev *hdev,
 	BT_DBG("%s status 0x%2.2x", hdev->name, rp->status);
 
 	hci_dev_lock(hdev);
-	mgmt_read_local_oob_data_complete(hdev, rp->hash192, rp->randomizer192,
-					  rp->hash256, rp->randomizer256,
+	mgmt_read_local_oob_data_complete(hdev, rp->hash192, rp->rand192,
+					  rp->hash256, rp->rand256,
 					  rp->status);
 	hci_dev_unlock(hdev);
 }
@@ -1581,7 +1581,14 @@ static void hci_check_pending_name(struct hci_dev *hdev, struct hci_conn *conn,
 	struct discovery_state *discov = &hdev->discovery;
 	struct inquiry_entry *e;
 
-	if (conn && !test_and_set_bit(HCI_CONN_MGMT_CONNECTED, &conn->flags))
+	/* Update the mgmt connected state if necessary. Be careful with
+	 * conn objects that exist but are not (yet) connected however.
+	 * Only those in BT_CONFIG or BT_CONNECTED states can be
+	 * considered connected.
+	 */
+	if (conn &&
+	    (conn->state == BT_CONFIG || conn->state == BT_CONNECTED) &&
+	    !test_and_set_bit(HCI_CONN_MGMT_CONNECTED, &conn->flags))
 		mgmt_device_connected(hdev, conn, 0, name, name_len);
 
 	if (discov->state == DISCOVERY_STOPPED)
@@ -3184,6 +3191,38 @@ unlock:
 	hci_dev_unlock(hdev);
 }
 
+static void conn_set_key(struct hci_conn *conn, u8 key_type, u8 pin_len)
+{
+	if (key_type == HCI_LK_CHANGED_COMBINATION)
+		return;
+
+	conn->pin_length = pin_len;
+	conn->key_type = key_type;
+
+	switch (key_type) {
+	case HCI_LK_LOCAL_UNIT:
+	case HCI_LK_REMOTE_UNIT:
+	case HCI_LK_DEBUG_COMBINATION:
+		return;
+	case HCI_LK_COMBINATION:
+		if (pin_len == 16)
+			conn->pending_sec_level = BT_SECURITY_HIGH;
+		else
+			conn->pending_sec_level = BT_SECURITY_MEDIUM;
+		break;
+	case HCI_LK_UNAUTH_COMBINATION_P192:
+	case HCI_LK_UNAUTH_COMBINATION_P256:
+		conn->pending_sec_level = BT_SECURITY_MEDIUM;
+		break;
+	case HCI_LK_AUTH_COMBINATION_P192:
+		conn->pending_sec_level = BT_SECURITY_HIGH;
+		break;
+	case HCI_LK_AUTH_COMBINATION_P256:
+		conn->pending_sec_level = BT_SECURITY_FIPS;
+		break;
+	}
+}
+
 static void hci_link_key_request_evt(struct hci_dev *hdev, struct sk_buff *skb)
 {
 	struct hci_ev_link_key_req *ev = (void *) skb->data;
@@ -3225,8 +3264,7 @@ static void hci_link_key_request_evt(struct hci_dev *hdev, struct sk_buff *skb)
 			goto not_found;
 		}
 
-		conn->key_type = key->type;
-		conn->pin_length = key->pin_len;
+		conn_set_key(conn, key->type, key->pin_len);
 	}
 
 	bacpy(&cp.bdaddr, &ev->bdaddr);
@@ -3259,12 +3297,8 @@ static void hci_link_key_notify_evt(struct hci_dev *hdev, struct sk_buff *skb)
 	if (conn) {
 		hci_conn_hold(conn);
 		conn->disc_timeout = HCI_DISCONN_TIMEOUT;
-		pin_len = conn->pin_length;
-
-		if (ev->key_type != HCI_LK_CHANGED_COMBINATION)
-			conn->key_type = ev->key_type;
-
 		hci_conn_drop(conn);
+		conn_set_key(conn, ev->key_type, conn->pin_length);
 	}
 
 	if (!test_bit(HCI_MGMT, &hdev->dev_flags))
@@ -3275,6 +3309,12 @@ static void hci_link_key_notify_evt(struct hci_dev *hdev, struct sk_buff *skb)
 	if (!key)
 		goto unlock;
 
+	/* Update connection information since adding the key will have
+	 * fixed up the type in the case of changed combination keys.
+	 */
+	if (ev->key_type == HCI_LK_CHANGED_COMBINATION)
+		conn_set_key(conn, key->type, key->pin_len);
+
 	mgmt_new_link_key(hdev, key, persistent);
 
 	/* Keep debug keys around only if the HCI_KEEP_DEBUG_KEYS flag
@@ -3284,8 +3324,8 @@ static void hci_link_key_notify_evt(struct hci_dev *hdev, struct sk_buff *skb)
 	 */
 	if (key->type == HCI_LK_DEBUG_COMBINATION &&
 	    !test_bit(HCI_KEEP_DEBUG_KEYS, &hdev->dev_flags)) {
-		list_del(&key->list);
-		kfree(key);
+		list_del_rcu(&key->list);
+		kfree_rcu(key, rcu);
 	} else if (conn) {
 		if (persistent)
 			clear_bit(HCI_CONN_FLUSH_KEY, &conn->flags);
@@ -3989,11 +4029,9 @@ static void hci_remote_oob_data_request_evt(struct hci_dev *hdev,
 
 			bacpy(&cp.bdaddr, &ev->bdaddr);
 			memcpy(cp.hash192, data->hash192, sizeof(cp.hash192));
-			memcpy(cp.randomizer192, data->randomizer192,
-			       sizeof(cp.randomizer192));
+			memcpy(cp.rand192, data->rand192, sizeof(cp.rand192));
 			memcpy(cp.hash256, data->hash256, sizeof(cp.hash256));
-			memcpy(cp.randomizer256, data->randomizer256,
-			       sizeof(cp.randomizer256));
+			memcpy(cp.rand256, data->rand256, sizeof(cp.rand256));
 
 			hci_send_cmd(hdev, HCI_OP_REMOTE_OOB_EXT_DATA_REPLY,
 				     sizeof(cp), &cp);
@@ -4002,8 +4040,7 @@ static void hci_remote_oob_data_request_evt(struct hci_dev *hdev,
 
 			bacpy(&cp.bdaddr, &ev->bdaddr);
 			memcpy(cp.hash, data->hash192, sizeof(cp.hash));
-			memcpy(cp.randomizer, data->randomizer192,
-			       sizeof(cp.randomizer));
+			memcpy(cp.rand, data->rand192, sizeof(cp.rand));
 
 			hci_send_cmd(hdev, HCI_OP_REMOTE_OOB_DATA_REPLY,
 				     sizeof(cp), &cp);
@@ -4571,8 +4608,8 @@ static void hci_le_ltk_request_evt(struct hci_dev *hdev, struct sk_buff *skb)
 	 */
 	if (ltk->type == SMP_STK) {
 		set_bit(HCI_CONN_STK_ENCRYPT, &conn->flags);
-		list_del(&ltk->list);
-		kfree(ltk);
+		list_del_rcu(&ltk->list);
+		kfree_rcu(ltk, rcu);
 	} else {
 		clear_bit(HCI_CONN_STK_ENCRYPT, &conn->flags);
 	}
