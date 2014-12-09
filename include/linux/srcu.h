@@ -26,6 +26,8 @@
  *
  */
 
+#ifdef CONFIG_SRCU
+
 #ifndef _LINUX_SRCU_H
 #define _LINUX_SRCU_H
 
@@ -249,4 +251,6 @@ static inline void smp_mb__after_srcu_read_unlock(void)
 	/* __srcu_read_unlock has smp_mb() internally so nothing to do here. */
 }
 
-#endif
+#endif /* _LINUX_SRCU_H */
+
+#endif /* CONFIG_SRCU */
