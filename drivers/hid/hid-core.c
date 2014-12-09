@@ -702,6 +702,13 @@ static void hid_scan_collection(struct hid_parser *parser, unsigned type)
 	if (((parser->global.usage_page << 16) == HID_UP_SENSOR) &&
 	    type == HID_COLLECTION_PHYSICAL)
 		hid->group = HID_GROUP_SENSOR_HUB;
+
+	if (parser->local.usage_index) {
+		u32 usage = (parser->global.usage_page << 16) |
+			parser->local.usage[parser->local.usage_index - 1];
+		if (type == HID_COLLECTION_APPLICATION && usage == HID_FIDO_U2F)
+			hid->group = HID_GROUP_FIDO_U2F;
+	}
 }
 
 static int hid_scan_main(struct hid_parser *parser, struct hid_item *item)
