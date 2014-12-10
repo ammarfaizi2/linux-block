@@ -774,6 +774,17 @@ config THRUSTMASTER_FF
 	  a THRUSTMASTER Dual Trigger 3-in-1 or a THRUSTMASTER Ferrari GT
 	  Rumble Force or Force Feedback Wheel.
 
+config HID_U2F
+       tristate "FIDO U2F HID device support"
+       depends on HID
+       ---help---
+         This driver supports "Universal 2nd Factor" devices compliant
+	 with the FIDO Alliance specification.
+
+	 In contrast to accessing these devices using hidraw, the U2F
+	 driver provides real enumeration, a character device, and proper
+	 isolation between client applications.
+
 config HID_WACOM
 	tristate "Wacom Intuos/Graphire tablet support (USB)"
 	depends on HID
