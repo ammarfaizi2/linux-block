@@ -669,7 +669,6 @@ config RCU_BOOST
 config RCU_KTHREAD_PRIO
 	int "Real-time priority to use for RCU worker threads"
 	range 1 99
-	depends on RCU_BOOST
 	default 1
 	help
 	  This option specifies the SCHED_FIFO priority value that will be
