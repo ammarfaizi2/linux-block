@@ -100,4 +100,10 @@ extern int rcu_scheduler_active __read_mostly;
 
 bool rcu_is_watching(void);
 
+DECLARE_PER_CPU(unsigned long, rcu_qs_ctr);
+static inline void rcu_all_qs(void)
+{
+	this_cpu_inc(rcu_qs_ctr);
+}
+
 #endif /* __LINUX_RCUTREE_H */
