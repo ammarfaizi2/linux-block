@@ -78,47 +78,92 @@ static notrace const struct pvclock_vsyscall_time_info *get_pvti(int cpu)
 
 static notrace cycle_t vread_pvclock(int *mode)
 {
-	const struct pvclock_vsyscall_time_info *pvti;
+	const struct pvclock_vcpu_time_info *pvti;
 	cycle_t ret;
-	u64 last;
-	u32 version;
-	u8 flags;
-	unsigned cpu, cpu1;
-
+	u64 tsc, pvti_tsc;
+	u64 last, delta, pvti_system_time;
+	u32 version, pvti_tsc_to_system_mul, pvti_tsc_shift;
+	unsigned cpu;
 
 	/*
-	 * Note: hypervisor must guarantee that:
-	 * 1. cpu ID number maps 1:1 to per-CPU pvclock time info.
-	 * 2. that per-CPU pvclock time info is updated if the
-	 *    underlying CPU changes.
-	 * 3. that version is increased whenever underlying CPU
-	 *    changes.
+	 * Note: The kernel and hypervisor must guarantee that cpu ID
+	 * number maps 1:1 to per-CPU pvclock time info.
 	 *
+	 * Because the hypervisor is entirely unaware of guest userspace
+	 * preemption, it cannot guarantee that per-CPU pvclock time
+	 * info is updated if the underlying CPU changes or that that
+	 * version is increased whenever underlying CPU changes.
 	 */
 	do {
-		cpu = __getcpu() & VGETCPU_CPU_MASK;
-		/* TODO: We can put vcpu id into higher bits of pvti.version.
-		 * This will save a couple of cycles by getting rid of
-		 * __getcpu() calls (Gleb).
-		 */
+		cpu = __getcpu();
+		pvti = &get_pvti(cpu & VGETCPU_CPU_MASK)->pvti;
 
-		pvti = get_pvti(cpu);
+		if (unlikely(!(pvti->flags & PVCLOCK_TSC_STABLE_BIT))) {
+			*mode = VCLOCK_NONE;
+			return 0;
+		}
 
-		version = __pvclock_read_cycles(&pvti->pvti, &ret, &flags);
+		version = pvti->version;
 
 		/*
-		 * Test we're still on the cpu as well as the version.
-		 * We could have been migrated just after the first
-		 * vgetcpu but before fetching the version, so we
-		 * wouldn't notice a version change.
+		 * We only get here if the TSC is monotonic across all CPUs,
+		 * so we don't need to use rdtscp.
+		 *
+		 * Note for future micro-optimization: replacing __getcpu and
+		 * rdtsc_barrier with rdtscp is slightly faster.  Making that
+		 * change would prevent us from efficiently reading
+		 * pvti->version before reading the timestamp.  We could
+		 * possibly compare our tsc timestamp to pvti->tsc_timestamp
+		 * if we had an actual guarantee that pvti->tsc_timestamp were
+		 * updated whenever a relevant pvti change happened, but the
+		 * spec is vague on that point.
 		 */
-		cpu1 = __getcpu() & VGETCPU_CPU_MASK;
-	} while (unlikely(cpu != cpu1 ||
-			  (pvti->pvti.version & 1) ||
-			  pvti->pvti.version != version));
+		rdtsc_barrier();
+		tsc = __native_read_tsc();
 
-	if (unlikely(!(flags & PVCLOCK_TSC_STABLE_BIT)))
-		*mode = VCLOCK_NONE;
+		smp_rmb();
+
+		/*
+		 * The KVM host is buggy and doesn't update
+		 * version correctly during an update, so the
+		 * pvti variables we read might not be
+		 * consistent with each other.
+		 *
+		 * This workaround relies on two tricks:
+		 *
+		 * 1. The host only updates pvti when the vCPU
+		 *    isn't running.  That means that any
+		 *    __getcpu or native_read_tscp that matches
+		 *    pvti acts as a sort of barrier and ensures
+		 *    that all prior pvti writes are complete
+		 *    (but only for the duration of the single
+		 *    instruction).
+		 *
+		 * 2. The buggy KVM host most likely writes the pvti
+		 *    fields in order, and version is first.
+		 *
+		 * Therefore, if we read version, then do a __getcpu
+		 * barrier, then read the rest of pvti, and then double-
+		 * check version, then the pvti variables that we read
+		 * will have been consistent.
+		 */
+		if (__getcpu() != cpu)
+			version = 1;  /* continue here makes GCC warn. */
+
+		smp_rmb();
+
+		pvti_tsc_to_system_mul = pvti->tsc_to_system_mul;
+		pvti_tsc_shift = pvti->tsc_shift;
+		pvti_system_time = pvti->system_time;
+		pvti_tsc = pvti->tsc_timestamp;
+
+		smp_rmb();
+	} while (unlikely((version & 1) || version != pvti->version));
+
+	delta = tsc - pvti_tsc;
+	ret = pvti_system_time +
+		pvclock_scale_delta(delta, pvti_tsc_to_system_mul,
+				    pvti_tsc_shift);
 
 	/* refer to tsc.c read_tsc() comment for rationale */
 	last = gtod->cycle_last;
