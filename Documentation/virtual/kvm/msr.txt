@@ -121,6 +121,10 @@ MSR_KVM_SYSTEM_TIME_NEW:  0x4b564d01
 		     1	    |	  N/A	   | the host
 			    |		   | See 4.70 in api.txt
 		-------------------------------------------------------------
+			    |		   | the host increments version as
+		     2	    |	  N/A	   | required by this spec and
+			    |		   | uses appropriate barriers
+		-------------------------------------------------------------
 
 	Availability of this MSR must be checked via bit 3 in 0x4000001 cpuid
 	leaf prior to usage.

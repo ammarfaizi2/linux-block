@@ -1644,11 +1644,12 @@ static int kvm_guest_time_update(struct kvm_vcpu *v)
 		return 0;
 
 	/*
-	 * The interface expects us to write an even number signaling that the
-	 * update is finished. Since the guest won't see the intermediate
-	 * state, we just increase by 2 at the end.
+	 * The interface expects us to write an odd number, then do the
+	 * update, then write an even number signaling that the update
+	 * is finished.  The guest kernel is unlikely to ever observe an
+	 * odd number, but guest user code might.
 	 */
-	vcpu->hv_clock.version = guest_hv_clock.version + 2;
+	vcpu->hv_clock.version = guest_hv_clock.version + 1;
 
 	/* retain PVCLOCK_GUEST_STOPPED if set in guest copy */
 	pvclock_flags = (guest_hv_clock.flags & PVCLOCK_GUEST_STOPPED);
@@ -1662,13 +1663,28 @@ static int kvm_guest_time_update(struct kvm_vcpu *v)
 	if (use_master_clock)
 		pvclock_flags |= PVCLOCK_TSC_STABLE_BIT;
 
+	/* We implement the version protocol correctly. */
+	pvclock_flags |= PVCLOCK_VALID_VERSION;
+
 	vcpu->hv_clock.flags = pvclock_flags;
 
 	trace_kvm_pvclock_update(v->vcpu_id, &vcpu->hv_clock);
 
 	kvm_write_guest_cached(v->kvm, &vcpu->pv_time,
+			       &vcpu->hv_clock.version,
+			       offsetof(struct pvclock_vcpu_time_info, version),
+			       sizeof(vcpu->hv_clock.version));
+	smp_wmb();
+	kvm_write_guest_cached(v->kvm, &vcpu->pv_time,
 				&vcpu->hv_clock, 0,
 				sizeof(vcpu->hv_clock));
+	smp_wmb();
+	vcpu->hv_clock.version = guest_hv_clock.version + 2;
+	kvm_write_guest_cached(v->kvm, &vcpu->pv_time,
+			       &vcpu->hv_clock.version,
+			       offsetof(struct pvclock_vcpu_time_info, version),
+			       sizeof(vcpu->hv_clock.version));
+
 	return 0;
 }
 
