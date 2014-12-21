@@ -123,32 +123,34 @@ static notrace cycle_t vread_pvclock(int *mode)
 
 		smp_rmb();
 
-		/*
-		 * The KVM host is buggy and doesn't update
-		 * version correctly during an update, so the
-		 * pvti variables we read might not be
-		 * consistent with each other.
-		 *
-		 * This workaround relies on two tricks:
-		 *
-		 * 1. The host only updates pvti when the vCPU
-		 *    isn't running.  That means that any
-		 *    __getcpu or native_read_tscp that matches
-		 *    pvti acts as a sort of barrier and ensures
-		 *    that all prior pvti writes are complete
-		 *    (but only for the duration of the single
-		 *    instruction).
-		 *
-		 * 2. The buggy KVM host most likely writes the pvti
-		 *    fields in order, and version is first.
-		 *
-		 * Therefore, if we read version, then do a __getcpu
-		 * barrier, then read the rest of pvti, and then double-
-		 * check version, then the pvti variables that we read
-		 * will have been consistent.
-		 */
-		if (__getcpu() != cpu)
-			version = 1;  /* continue here makes GCC warn. */
+		if (!(pvti->flags & PVCLOCK_VALID_VERSION)) {
+			/*
+			 * The KVM host is buggy and doesn't update
+			 * version correctly during an update, so the
+			 * pvti variables we read might not be
+			 * consistent with each other.
+			 *
+			 * This workaround relies on two tricks:
+			 *
+			 * 1. The host only updates pvti when the vCPU
+			 *    isn't running.  That means that any
+			 *    __getcpu or native_read_tscp that matches
+			 *    pvti acts as a sort of barrier and ensures
+			 *    that all prior pvti writes are complete
+			 *    (but only for the duration of the single
+			 *    instruction).
+			 *
+			 * 2. The buggy KVM host most likely writes the pvti
+			 *    fields in order, and version is first.
+			 *
+			 * Therefore, if we read version, then do a __getcpu
+			 * barrier, then read the rest of pvti, and then double-
+			 * check version, then the pvti variables that we read
+			 * will have been consistent.
+			 */
+			if (__getcpu() != cpu)
+				version = 1;  /* continue here makes GCC warn */
+		}
 
 		smp_rmb();
 
