@@ -493,7 +493,7 @@ static int pv_eoi_put_user(struct kvm_vcpu *vcpu, u8 val)
 {
 
 	return kvm_write_guest_cached(vcpu->kvm, &vcpu->arch.pv_eoi.data, &val,
-				      sizeof(val));
+				      0, sizeof(val));
 }
 
 static int pv_eoi_get_user(struct kvm_vcpu *vcpu, u8 *val)
@@ -1859,7 +1859,7 @@ void kvm_lapic_sync_to_vapic(struct kvm_vcpu *vcpu)
 	data = (tpr & 0xff) | ((max_isr & 0xf0) << 8) | (max_irr << 24);
 
 	kvm_write_guest_cached(vcpu->kvm, &vcpu->arch.apic->vapic_cache, &data,
-				sizeof(u32));
+				0, sizeof(u32));
 }
 
 int kvm_lapic_set_vapic_addr(struct kvm_vcpu *vcpu, gpa_t vapic_addr)

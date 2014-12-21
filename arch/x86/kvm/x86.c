@@ -1667,7 +1667,7 @@ static int kvm_guest_time_update(struct kvm_vcpu *v)
 	trace_kvm_pvclock_update(v->vcpu_id, &vcpu->hv_clock);
 
 	kvm_write_guest_cached(v->kvm, &vcpu->pv_time,
-				&vcpu->hv_clock,
+				&vcpu->hv_clock, 0,
 				sizeof(vcpu->hv_clock));
 	return 0;
 }
@@ -2082,7 +2082,7 @@ static void record_steal_time(struct kvm_vcpu *vcpu)
 	vcpu->arch.st.accum_steal = 0;
 
 	kvm_write_guest_cached(vcpu->kvm, &vcpu->arch.st.stime,
-		&vcpu->arch.st.steal, sizeof(struct kvm_steal_time));
+		&vcpu->arch.st.steal, 0, sizeof(struct kvm_steal_time));
 }
 
 int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
@@ -7747,7 +7747,7 @@ static int apf_put_user(struct kvm_vcpu *vcpu, u32 val)
 {
 
 	return kvm_write_guest_cached(vcpu->kvm, &vcpu->arch.apf.data, &val,
-				      sizeof(val));
+				      0, sizeof(val));
 }
 
 void kvm_arch_async_page_not_present(struct kvm_vcpu *vcpu,
