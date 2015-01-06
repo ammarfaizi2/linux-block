@@ -171,6 +171,10 @@ enum smb_version {
 	Smb_21,
 	Smb_30,
 	Smb_302,
+#ifdef CONFIG_CIFS_SMB31
+	Smb_31,
+#endif /* SMB31 */
+	Smb_version_err
 };
 
 struct mid_q_entry;
@@ -1617,4 +1621,7 @@ extern struct smb_version_values smb30_values;
 #define SMB302_VERSION_STRING	"3.02"
 /*extern struct smb_version_operations smb302_operations;*/ /* not needed yet */
 extern struct smb_version_values smb302_values;
+#define SMB31_VERSION_STRING	"3.1"
+/*extern struct smb_version_operations smb31_operations;*/ /* not needed yet */
+extern struct smb_version_values smb31_values;
 #endif	/* _CIFS_GLOB_H */

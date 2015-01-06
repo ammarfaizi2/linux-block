@@ -951,7 +951,7 @@ static void ft1000_proc_drvmsg(struct net_device *dev)
 	struct prov_record *ptr;
 	struct pseudo_hdr *ppseudo_hdr;
 	u16 *pmsg;
-	struct timeval tv;
+	time64_t time;
 	union {
 		u8 byte[2];
 		u16 wrd;
@@ -1027,8 +1027,8 @@ static void ft1000_proc_drvmsg(struct net_device *dev)
 						netif_carrier_on(dev);
 						netif_wake_queue(dev);
 						info->mediastate = 1;
-						do_gettimeofday(&tv);
-						info->ConTm = tv.tv_sec;
+						time = get_seconds();
+						info->ConTm = time;
 					}
 				} else {
 					pr_debug("Media is down\n");

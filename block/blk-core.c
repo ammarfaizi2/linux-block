@@ -473,6 +473,25 @@ void blk_queue_bypass_end(struct request_queue *q)
 }
 EXPORT_SYMBOL_GPL(blk_queue_bypass_end);
 
+void blk_set_queue_dying(struct request_queue *q)
+{
+	queue_flag_set_unlocked(QUEUE_FLAG_DYING, q);
+
+	if (q->mq_ops)
+		blk_mq_wake_waiters(q);
+	else {
+		struct request_list *rl;
+
+		blk_queue_for_each_rl(rl, q) {
+			if (rl->rq_pool) {
+				wake_up(&rl->wait[BLK_RW_SYNC]);
+				wake_up(&rl->wait[BLK_RW_ASYNC]);
+			}
+		}
+	}
+}
+EXPORT_SYMBOL_GPL(blk_set_queue_dying);
+
 /**
  * blk_cleanup_queue - shutdown a request queue
  * @q: request queue to shutdown
@@ -486,7 +505,7 @@ void blk_cleanup_queue(struct request_queue *q)
 
 	/* mark @q DYING, no new request or merges will be allowed afterwards */
 	mutex_lock(&q->sysfs_lock);
-	queue_flag_set_unlocked(QUEUE_FLAG_DYING, q);
+	blk_set_queue_dying(q);
 	spin_lock_irq(lock);
 
 	/*
@@ -2029,6 +2048,13 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 	    should_fail_request(&rq->rq_disk->part0, blk_rq_bytes(rq)))
 		return -EIO;
 
+	if (q->mq_ops) {
+		if (blk_queue_io_stat(q))
+			blk_account_io_start(rq, true);
+		blk_mq_insert_request(rq, false, true, true);
+		return 0;
+	}
+
 	spin_lock_irqsave(q->queue_lock, flags);
 	if (unlikely(blk_queue_dying(q))) {
 		spin_unlock_irqrestore(q->queue_lock, flags);
@@ -2925,8 +2951,6 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
 
 	if (!bs)
 		bs = fs_bio_set;
-
-	blk_rq_init(NULL, rq);
 
 	__rq_for_each_bio(bio_src, rq_src) {
 		bio = bio_clone_fast(bio_src, gfp_mask, bs);

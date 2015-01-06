@@ -153,6 +153,8 @@ long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		goto out;
 	}
 
+	res_max_size = min_t(size_t, res_max_size, sizeof(*hr));
+
 	switch (hm->h.function) {
 	case HPI_SUBSYS_CREATE_ADAPTER:
 	case HPI_ADAPTER_DELETE:
@@ -539,10 +541,8 @@ void asihpi_adapter_remove(struct pci_dev *pci_dev)
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
 
 	/* unmap PCI memory space, mapped during device init. */
-	for (idx = 0; idx < HPI_MAX_ADAPTER_MEM_SPACES; idx++) {
-		if (pci.ap_mem_base[idx])
-			iounmap(pci.ap_mem_base[idx]);
-	}
+	for (idx = 0; idx < HPI_MAX_ADAPTER_MEM_SPACES; ++idx)
+		iounmap(pci.ap_mem_base[idx]);
 
 	if (pa->irq)
 		free_irq(pa->irq, pa);
