@@ -5,7 +5,7 @@
 /* GCC 4.1.[01] miscompiles __weak */
 #ifdef __KERNEL__
 # if GCC_VERSION >= 40100 &&  GCC_VERSION <= 40101
-#  error Your version of gcc miscompiles the __weak directive
+//#  error Your version of gcc miscompiles the __weak directive
 # endif
 #endif
 
