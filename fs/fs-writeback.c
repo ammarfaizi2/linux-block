@@ -117,21 +117,37 @@ out_unlock:
  */
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
 {
+	struct backing_dev_info *bdi = dctx->mapping->backing_dev_info;
+	struct cgroup_subsys_state *blkcg_css;
+
 	/* cgroup writeback requires support from both the bdi and filesystem */
 	if (!mapping_cgwb_enabled(dctx->mapping))
 		goto force_root;
 
-	page_blkcg_attach_dirty(dctx->page);
+	/*
+	 * @dctx->page is a candidate for cgroup writeback and about to be
+	 * dirtied.  Attach the dirty blkcg to the page and pre-allocate
+	 * all resources necessary for cgroup writeback.  On failure, fall
+	 * back to the root blkcg.
+	 */
+	blkcg_css = page_blkcg_attach_dirty(dctx->page);
+	dctx->wb = cgwb_lookup_create(bdi, blkcg_css);
+	if (!dctx->wb) {
+		page_blkcg_detach_dirty(dctx->page);
+		goto force_root;
+	}
 	return;
 
 force_root:
 	page_blkcg_force_root_dirty(dctx->page);
+	dctx->wb = &bdi->wb;
 }
 
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
 {
+	dctx->wb = &dctx->mapping->backing_dev_info->wb;
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
@@ -176,6 +192,7 @@ void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode)
 {
 	memset(dctx, 0, sizeof(*dctx));
 	dctx->inode = inode;
+	dctx->wb = &inode_to_bdi(inode)->wb;
 }
 
 static void __wb_start_writeback(struct bdi_writeback *wb, long nr_pages,

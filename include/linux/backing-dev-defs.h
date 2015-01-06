@@ -2,6 +2,7 @@
 #define __LINUX_BACKING_DEV_DEFS_H
 
 #include <linux/list.h>
+#include <linux/radix-tree.h>
 #include <linux/spinlock.h>
 #include <linux/percpu_counter.h>
 #include <linux/flex_proportions.h>
@@ -68,6 +69,15 @@ struct bdi_writeback {
 	spinlock_t work_lock;		/* protects work_list & dwork scheduling */
 	struct list_head work_list;
 	struct delayed_work dwork;	/* work item used for writeback */
+
+#ifdef CONFIG_CGROUP_WRITEBACK
+	struct cgroup_subsys_state *blkcg_css; /* the blkcg we belong to */
+	struct list_head blkcg_node;	/* anchored at blkcg->wb_list */
+	union {
+		struct list_head shutdown_node;
+		struct rcu_head rcu;
+	};
+#endif
 };
 
 struct backing_dev_info {
@@ -82,8 +92,10 @@ struct backing_dev_info {
 	unsigned int min_ratio;
 	unsigned int max_ratio, max_prop_frac;
 
-	struct bdi_writeback wb;  /* default writeback info for this bdi */
-
+	struct bdi_writeback wb; /* the root writeback info for this bdi */
+#ifdef CONFIG_CGROUP_WRITEBACK
+	struct radix_tree_root cgwb_tree; /* radix tree of !root cgroup wbs */
+#endif
 	struct device *dev;
 
 	struct timer_list laptop_mode_wb_timer;
@@ -102,6 +114,7 @@ struct dirty_context {
 	struct page		*page;
 	struct inode		*inode;
 	struct address_space	*mapping;
+	struct bdi_writeback	*wb;
 };
 
 enum {

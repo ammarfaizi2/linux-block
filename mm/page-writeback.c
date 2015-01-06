@@ -2102,8 +2102,8 @@ void account_page_dirtied(struct dirty_context *dctx)
 
 	__inc_zone_page_state(page, NR_FILE_DIRTY);
 	__inc_zone_page_state(page, NR_DIRTIED);
-	__inc_wb_stat(&mapping->backing_dev_info->wb, WB_RECLAIMABLE);
-	__inc_wb_stat(&mapping->backing_dev_info->wb, WB_DIRTIED);
+	__inc_wb_stat(dctx->wb, WB_RECLAIMABLE);
+	__inc_wb_stat(dctx->wb, WB_DIRTIED);
 	task_io_account_write(PAGE_CACHE_SIZE);
 	current->nr_dirtied++;
 	this_cpu_inc(bdp_ratelimits);

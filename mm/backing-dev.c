@@ -440,6 +440,192 @@ static void wb_exit(struct bdi_writeback *wb)
 	fprop_local_destroy_percpu(&wb->completions);
 }
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+
+/*
+ * cgwb_lock protects bdi->cgwb_tree and blkcg->cgwb_list where the former
+ * is also RCU protected.  cgwb_shutdown_mutex synchronizes shutdown
+ * attempts from bdi and blkcg destructions.  For details, see
+ * cgwb_shutdown_prepare/commit().
+ */
+static DEFINE_SPINLOCK(cgwb_lock);
+static DEFINE_MUTEX(cgwb_shutdown_mutex);
+
+int __cgwb_create(struct backing_dev_info *bdi,
+		  struct cgroup_subsys_state *blkcg_css)
+{
+	struct blkcg *blkcg = css_to_blkcg(blkcg_css);
+	struct bdi_writeback *wb;
+	unsigned long flags;
+	int ret;
+
+	wb = kzalloc(sizeof(*wb), GFP_ATOMIC);
+	if (!wb)
+		return -ENOMEM;
+
+	ret = wb_init(wb, bdi, GFP_ATOMIC);
+	if (ret) {
+		kfree(wb);
+		return -ENOMEM;
+	}
+
+	wb->blkcg_css = blkcg_css;
+	set_bit(WB_registered, &wb->state); /* cgwbs are always registered */
+
+	ret = -ENODEV;
+	spin_lock_irqsave(&cgwb_lock, flags);
+	/* the root wb determines the registered state of the whole bdi */
+	if (test_bit(WB_registered, &bdi->wb.state)) {
+		/* we might have raced w/ another instance of this function */
+		ret = radix_tree_insert(&bdi->cgwb_tree, blkcg_css->id, wb);
+		if (!ret)
+			list_add_tail(&wb->blkcg_node, &blkcg->cgwb_list);
+	}
+	spin_unlock_irqrestore(&cgwb_lock, flags);
+	if (ret) {
+		wb_exit(wb);
+		if (ret != -EEXIST)
+			return ret;
+	}
+	return 0;
+}
+
+/**
+ * cgwb_shutdown_prepare - prepare to shutdown a cgwb
+ * @wb: cgwb to be shutdown
+ * @to_shutdown: list to queue @wb on
+ *
+ * This function is called to queue @wb for shutdown on @to_shutdown.  The
+ * bdi_writeback indexes use the cgwb_lock spinlock but wb_shutdown() needs
+ * process context, so this function can be called while holding cgwb_lock
+ * and cgwb_shutdown_mutex to queue cgwbs for shutdown.  Once all target
+ * cgwbs are queued, the caller should release cgwb_lock and invoke
+ * cgwb_shutdown_commit().
+ */
+static void cgwb_shutdown_prepare(struct bdi_writeback *wb,
+				  struct list_head *to_shutdown)
+{
+	lockdep_assert_held(&cgwb_lock);
+	lockdep_assert_held(&cgwb_shutdown_mutex);
+
+	WARN_ON(!test_bit(WB_registered, &wb->state));
+	clear_bit(WB_registered, &wb->state);
+	list_add_tail(&wb->shutdown_node, to_shutdown);
+}
+
+/**
+ * cgwb_shutdown_commit - commit cgwb shutdowns
+ * @to_shutdown: list of cgwbs to shutdown
+ *
+ * This function is called after @to_shutdown is built by calls to
+ * cgwb_shutdown_prepare() and cgwb_lock is released.  It invokes
+ * wb_shutdown() on all cgwbs on the list.  bdi and blkcg may try to
+ * shutdown the same cgwbs and should wait till completion if shutdown is
+ * initiated by the other.  This synchronization is achieved through
+ * cgwb_shutdown_mutex which should have been acquired before the
+ * cgwb_shutdown_prepare() invocations.
+ */
+static void cgwb_shutdown_commit(struct list_head *to_shutdown)
+{
+	struct bdi_writeback *wb;
+
+	lockdep_assert_held(&cgwb_shutdown_mutex);
+
+	list_for_each_entry(wb, to_shutdown, shutdown_node)
+		wb_shutdown(wb);
+}
+
+static void cgwb_exit(struct bdi_writeback *wb)
+{
+	WARN_ON(!radix_tree_delete(&wb->bdi->cgwb_tree, wb->blkcg_css->id));
+	list_del(&wb->blkcg_node);
+	wb_exit(wb);
+	kfree_rcu(wb, rcu);
+}
+
+static void cgwb_bdi_init(struct backing_dev_info *bdi)
+{
+	bdi->wb.blkcg_css = blkcg_root_css;
+	INIT_RADIX_TREE(&bdi->cgwb_tree, GFP_ATOMIC);
+}
+
+/**
+ * cgwb_bdi_shutdown - @bdi is being shut down, shut down all cgwbs
+ * @bdi: bdi being shut down
+ */
+static void cgwb_bdi_shutdown(struct backing_dev_info *bdi)
+{
+	LIST_HEAD(to_shutdown);
+	struct radix_tree_iter iter;
+	void **slot;
+
+	WARN_ON(test_bit(WB_registered, &bdi->wb.state));
+
+	mutex_lock(&cgwb_shutdown_mutex);
+	spin_lock_irq(&cgwb_lock);
+
+	radix_tree_for_each_slot(slot, &bdi->cgwb_tree, &iter, 0)
+		cgwb_shutdown_prepare(*slot, &to_shutdown);
+
+	spin_unlock_irq(&cgwb_lock);
+	cgwb_shutdown_commit(&to_shutdown);
+	mutex_unlock(&cgwb_shutdown_mutex);
+}
+
+/**
+ * cgwb_bdi_exit - @bdi is being exit, exit all its cgwbs
+ * @bdi: bdi being shut down
+ */
+static void cgwb_bdi_exit(struct backing_dev_info *bdi)
+{
+	LIST_HEAD(to_free);
+	struct radix_tree_iter iter;
+	void **slot;
+
+	spin_lock_irq(&cgwb_lock);
+	radix_tree_for_each_slot(slot, &bdi->cgwb_tree, &iter, 0) {
+		struct bdi_writeback *wb = *slot;
+
+		WARN_ON(test_bit(WB_registered, &wb->state));
+		cgwb_exit(wb);
+	}
+	spin_unlock_irq(&cgwb_lock);
+}
+
+/**
+ * cgwb_blkcg_released - a blkcg is being destroyed, release all matching cgwbs
+ * @blkcg_css: blkcg being destroyed
+ */
+void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css)
+{
+	LIST_HEAD(to_shutdown);
+	struct blkcg *blkcg = css_to_blkcg(blkcg_css);
+	struct bdi_writeback *wb, *next;
+
+	mutex_lock(&cgwb_shutdown_mutex);
+	spin_lock_irq(&cgwb_lock);
+
+	list_for_each_entry_safe(wb, next, &blkcg->cgwb_list, blkcg_node)
+		cgwb_shutdown_prepare(wb, &to_shutdown);
+
+	spin_unlock_irq(&cgwb_lock);
+	cgwb_shutdown_commit(&to_shutdown);
+	mutex_unlock(&cgwb_shutdown_mutex);
+
+	spin_lock_irq(&cgwb_lock);
+	list_for_each_entry_safe(wb, next, &blkcg->cgwb_list, blkcg_node)
+		cgwb_exit(wb);
+	spin_unlock_irq(&cgwb_lock);
+}
+
+#else	/* CONFIG_CGROUP_WRITEBACK */
+
+static void cgwb_bdi_init(struct backing_dev_info *bdi) { }
+static void cgwb_bdi_shutdown(struct backing_dev_info *bdi) { }
+static void cgwb_bdi_exit(struct backing_dev_info *bdi) { }
+
+#endif	/* CONFIG_CGROUP_WRITEBACK */
+
 int bdi_init(struct backing_dev_info *bdi)
 {
 	int err;
@@ -455,6 +641,7 @@ int bdi_init(struct backing_dev_info *bdi)
 	if (err)
 		return err;
 
+	cgwb_bdi_init(bdi);
 	return 0;
 }
 EXPORT_SYMBOL(bdi_init);
@@ -532,6 +719,7 @@ void bdi_unregister(struct backing_dev_info *bdi)
 			/* make sure nobody finds us on the bdi_list anymore */
 			bdi_remove_from_list(bdi);
 			wb_shutdown(&bdi->wb);
+			cgwb_bdi_shutdown(bdi);
 		}
 
 		bdi_debug_unregister(bdi);
@@ -544,6 +732,7 @@ EXPORT_SYMBOL(bdi_unregister);
 void bdi_destroy(struct backing_dev_info *bdi)
 {
 	bdi_unregister(bdi);
+	cgwb_bdi_exit(bdi);
 	wb_exit(&bdi->wb);
 }
 EXPORT_SYMBOL(bdi_destroy);

@@ -13,6 +13,7 @@
 #include <linux/sched.h>
 #include <linux/writeback.h>
 #include <linux/memcontrol.h>
+#include <linux/blk-cgroup.h>
 
 #include <linux/backing-dev-defs.h>
 
@@ -273,6 +274,10 @@ void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode);
 
 #ifdef CONFIG_CGROUP_WRITEBACK
 
+void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css);
+int __cgwb_create(struct backing_dev_info *bdi,
+		  struct cgroup_subsys_state *blkcg_css);
+
 /**
  * mapping_cgwb_enabled - test whether cgroup writeback is enabled on a mapping
  * @mapping: address_space of interest
@@ -290,11 +295,129 @@ static inline bool mapping_cgwb_enabled(struct address_space *mapping)
 		inode && (inode->i_sb->s_type->fs_flags & FS_CGROUP_WRITEBACK);
 }
 
+/**
+ * cgwb_lookup - lookup cgwb for a given blkcg on a bdi
+ * @bdi: target bdi
+ * @blkcg_css: target blkcg
+ *
+ * Look up the cgwb (cgroup bdi_writeback) for @blkcg_css on @bdi.  The
+ * returned cgwb is accessible as long as @bdi and @blkcg_css stay alive.
+ *
+ * Returns the pointer to the found cgwb on success, NULL on failure.
+ */
+static inline struct bdi_writeback *
+cgwb_lookup(struct backing_dev_info *bdi, struct cgroup_subsys_state *blkcg_css)
+{
+	struct bdi_writeback *cgwb;
+
+	if (blkcg_css == blkcg_root_css)
+		return &bdi->wb;
+
+	/*
+	 * RCU locking protects the radix tree itself.  The looked up cgwb
+	 * is protected by the caller ensuring that @bdi and the blkcg w/
+	 * @blkcg_id are alive.
+	 */
+	rcu_read_lock();
+	cgwb = radix_tree_lookup(&bdi->cgwb_tree, blkcg_css->id);
+	rcu_read_unlock();
+	return cgwb;
+}
+
+/**
+ * cgwb_lookup_create - try to lookup cgwb and create one if not found
+ * @bdi: target bdi
+ * @blkcg_css: cgroup_subsys_state of the target blkcg
+ *
+ * Try to look up the cgwb (cgroup bdi_writeback) for the blkcg with
+ * @blkcg_css on @bdi.  If it doesn't exist, try to create one.  This
+ * function can be called under any context without locking as long as @bdi
+ * and @blkcg_css are kept alive.  See cgwb_lookup() for details.
+ *
+ * Returns the pointer to the found cgwb on success, NULL if such cgwb
+ * doesn't exist and creation failed due to memory pressure.
+ */
+static inline struct bdi_writeback *
+cgwb_lookup_create(struct backing_dev_info *bdi,
+		   struct cgroup_subsys_state *blkcg_css)
+{
+	struct bdi_writeback *wb;
+
+	do {
+		wb = cgwb_lookup(bdi, blkcg_css);
+		if (wb)
+			return wb;
+	} while (!__cgwb_create(bdi, blkcg_css));
+
+	return NULL;
+}
+
+/**
+ * page_cgwb_dirty - lookup the dirty cgwb of a page
+ * @page: target page
+ *
+ * Returns the dirty cgwb (cgroup bdi_writeback) of @page.  The returned
+ * wb is accessible as long as @page is dirty.
+ */
+static inline struct bdi_writeback *page_cgwb_dirty(struct page *page)
+{
+	struct backing_dev_info *bdi = page->mapping->backing_dev_info;
+	struct bdi_writeback *wb = cgwb_lookup(bdi, page_blkcg_dirty(page));
+
+	if (WARN_ON_ONCE(!wb))
+		return &bdi->wb;
+	return wb;
+}
+
+/**
+ * page_cgwb_wb - lookup the writeback cgwb of a page
+ * @page: target page
+ *
+ * Returns the writeback cgwb (cgroup bdi_writeback) of @page.  The
+ * returned wb is accessible as long as @page is under writeback.
+ */
+static inline struct bdi_writeback *page_cgwb_wb(struct page *page)
+{
+	struct backing_dev_info *bdi = page->mapping->backing_dev_info;
+	struct bdi_writeback *wb = cgwb_lookup(bdi, page_blkcg_wb(page));
+
+	if (WARN_ON_ONCE(!wb))
+		return &bdi->wb;
+	return wb;
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static inline bool mapping_cgwb_enabled(struct address_space *mapping)
 {
 	return false;
+}
+
+static inline void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css)
+{
+}
+
+static inline struct bdi_writeback *
+cgwb_lookup(struct backing_dev_info *bdi, struct cgroup_subsys_state *blkcg_css)
+{
+	return &bdi->wb;
+}
+
+static inline struct bdi_writeback *
+cgwb_lookup_create(struct backing_dev_info *bdi,
+		   struct cgroup_subsys_state *blkcg_css)
+{
+	return &bdi->wb;
+}
+
+static inline struct bdi_writeback *page_cgwb_dirty(struct page *page)
+{
+	return &page->mapping->backing_dev_info->wb;
+}
+
+static inline struct bdi_writeback *page_cgwb_wb(struct page *page)
+{
+	return &page->mapping->backing_dev_info->wb;
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */

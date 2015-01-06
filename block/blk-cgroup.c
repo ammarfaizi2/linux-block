@@ -15,6 +15,7 @@
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/blkdev.h>
+#include <linux/backing-dev.h>
 #include <linux/slab.h>
 #include <linux/genhd.h>
 #include <linux/delay.h>
@@ -813,6 +814,11 @@ static void blkcg_css_offline(struct cgroup_subsys_state *css)
 	spin_unlock_irq(&blkcg->lock);
 }
 
+static void blkcg_css_released(struct cgroup_subsys_state *css)
+{
+	cgwb_blkcg_released(css);
+}
+
 static void blkcg_css_free(struct cgroup_subsys_state *css)
 {
 	struct blkcg *blkcg = css_to_blkcg(css);
@@ -841,7 +847,9 @@ done:
 	spin_lock_init(&blkcg->lock);
 	INIT_RADIX_TREE(&blkcg->blkg_tree, GFP_ATOMIC);
 	INIT_HLIST_HEAD(&blkcg->blkg_list);
-
+#ifdef CONFIG_CGROUP_WRITEBACK
+	INIT_LIST_HEAD(&blkcg->cgwb_list);
+#endif
 	return &blkcg->css;
 }
 
@@ -926,6 +934,7 @@ static int blkcg_can_attach(struct cgroup_subsys_state *css,
 struct cgroup_subsys blkio_cgrp_subsys = {
 	.css_alloc = blkcg_css_alloc,
 	.css_offline = blkcg_css_offline,
+	.css_released = blkcg_css_released,
 	.css_free = blkcg_css_free,
 	.can_attach = blkcg_can_attach,
 	.legacy_cftypes = blkcg_files,
