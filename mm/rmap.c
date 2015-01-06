@@ -244,9 +244,10 @@ static inline void unlock_anon_vma_root(struct anon_vma *root)
  * If dst->anon_vma is NULL this function tries to find and reuse existing
  * anon_vma which has no vmas and only one child anon_vma. This prevents
  * degradation of anon_vma hierarchy to endless linear chain in case of
- * constantly forking task. In other hand anon_vma with more than one child
- * isn't reused even if was no alive vma, thus rmap walker has a good chance
- * to avoid scanning whole hieraryhy when it searches where page is mapped.
+ * constantly forking task. On the other hand, an anon_vma with more than one
+ * child isn't reused even if there was no alive vma, thus rmap walker has a
+ * good chance of avoiding scanning the whole hierarchy when it searches where
+ * page is mapped.
  */
 int anon_vma_clone(struct vm_area_struct *dst, struct vm_area_struct *src)
 {
