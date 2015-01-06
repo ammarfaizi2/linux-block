@@ -455,8 +455,13 @@ config DEBUG_SLAB
 	  memory. This can make kmalloc/kfree-intensive workloads much slower.
 
 config DEBUG_SLAB_LEAK
-	bool "Memory leak debugging"
+	bool "Slab memory leak debugging"
 	depends on DEBUG_SLAB
+	default y
+	help
+	  Enable /proc/slab_allocators - provides detailed information about
+	  which parts of the kernel are using slab objects.  May be used for
+	  tracking memory leaks and for instrumenting memory usage.
 
 config SLUB_DEBUG_ON
 	bool "SLUB debugging on by default"
