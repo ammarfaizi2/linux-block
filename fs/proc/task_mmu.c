@@ -859,7 +859,7 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 	if (type == CLEAR_REFS_MM_HIWATER_RSS) {
 		/*
 		 * Writing 5 to /proc/pid/clear_refs resets the peak resident
-		 * set size.
+		 * set size to this mm's current rss value.
 		 */
 		down_write(&mm->mmap_sem);
 		reset_mm_hiwater_rss(mm);
