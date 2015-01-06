@@ -551,6 +551,30 @@ bdi_writeback_wb(struct backing_dev_info *bdi, struct writeback_control *wbc)
 }
 
 /**
+ * mapping_writeback_index - determine the cursor for cyclic writeback
+ * @mapping: address_space under writeback
+ * @wbc: writeback_control in effect
+ *
+ * Called from address_space_operations->writepages() implementations to
+ * retrieve the pointer to the cursor variable to use for cyclic
+ * writebacks.  If cgroup writeback is enabled, there's a separate cyclic
+ * cursor for each cgroup writing back @mapping.
+ */
+static inline pgoff_t *mapping_writeback_index(struct address_space *mapping,
+					       struct writeback_control *wbc)
+{
+	struct inode_wb_link *iwbl = wbc->iwbl;
+
+	if (!iwbl || iwbl_to_wb(iwbl)->blkcg_css == blkcg_root_css) {
+		return &mapping->writeback_index;
+	} else {
+		struct inode_cgwb_link *icgwbl =
+			container_of(iwbl, struct inode_cgwb_link, iwbl);
+		return &icgwbl->writeback_index;
+	}
+}
+
+/**
  * wbc_blkcg_css - return the blkcg_css associated with a wbc
  * @wbc: writeback_control of interest
  *
@@ -650,6 +674,12 @@ static inline struct bdi_writeback *
 bdi_writeback_wb(struct backing_dev_info *bdi, struct writeback_control *wbc)
 {
 	return &bdi->wb;
+}
+
+static inline pgoff_t *mapping_writeback_index(struct address_space *mapping,
+					       struct writeback_control *wbc)
+{
+	return &mapping->writeback_index;
 }
 
 static inline struct cgroup_subsys_state *

@@ -193,6 +193,8 @@ struct inode_cgwb_link {
 	struct hlist_node	inode_node;	/* RCU-safe, sorted */
 	struct list_head	wb_node;
 
+	pgoff_t			writeback_index; /* cyclic writeback cursor */
+
 	struct rcu_head		rcu;
 };
 

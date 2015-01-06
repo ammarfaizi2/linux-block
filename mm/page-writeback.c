@@ -1906,6 +1906,7 @@ int write_cache_pages(struct address_space *mapping,
 	int done = 0;
 	struct pagevec pvec;
 	int nr_pages;
+	pgoff_t *writeback_index_ptr = mapping_writeback_index(mapping, wbc);
 	pgoff_t uninitialized_var(writeback_index);
 	pgoff_t index;
 	pgoff_t end;		/* Inclusive */
@@ -1916,7 +1917,7 @@ int write_cache_pages(struct address_space *mapping,
 
 	pagevec_init(&pvec, 0);
 	if (wbc->range_cyclic) {
-		writeback_index = mapping->writeback_index; /* prev offset */
+		writeback_index = *writeback_index_ptr; /* prev offset */
 		index = writeback_index;
 		if (index == 0)
 			cycled = 1;
@@ -2048,7 +2049,7 @@ continue_unlock:
 		goto retry;
 	}
 	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
-		mapping->writeback_index = done_index;
+		*writeback_index_ptr = done_index;
 
 	return ret;
 }
