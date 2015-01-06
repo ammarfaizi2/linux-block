@@ -430,24 +430,111 @@ restart:
 	rcu_read_unlock();
 }
 
+/**
+ * iwbl_test_sync - test whether writeback is in progress on an inode_wb_link
+ * @iwbl: target inode_wb_link
+ *
+ * Test whether writeback is in progress for the inode on the bdi_writeback
+ * specified by @iwbl.  The caller is responsible for synchornization.
+ */
+static bool iwbl_test_sync(struct inode_wb_link *iwbl)
+{
+	return test_bit(IWBL_SYNC, &iwbl->data);
+}
+
+/**
+ * iwbl_set_sync - mark an inode_wb_link that writeback is in progress
+ * @iwbl: target inode_wb_link
+ * @inode: inode @iwbl is associated with
+ *
+ * Mark that writeback is in progress for @inode on the bdi_writeback
+ * specified by @iwbl.  iwbl_test_sync() will return %true on @iwbl and
+ * %I_SYNC is set on @inode while there's any writeback in progress on it.
+ */
+static void iwbl_set_sync(struct inode_wb_link *iwbl, struct inode *inode)
+{
+	lockdep_assert_held(&inode->i_lock);
+	WARN_ON_ONCE(iwbl_test_sync(iwbl));
+
+	set_bit(IWBL_SYNC, &iwbl->data);
+	inode->i_nr_syncs++;
+	inode->i_state |= I_SYNC;
+}
+
+/**
+ * iwbl_clear_sync - undo iwbl_set_sync()
+ * @iwbl: target inode_wb_link
+ * @inode: inode @iwbl is associated with
+ *
+ * Returns %true if this was the last writeback in progress on @inode;
+ * %false, otherwise.
+ */
+static bool iwbl_clear_sync(struct inode_wb_link *iwbl, struct inode *inode)
+{
+	bool sync_complete;
+
+	lockdep_assert_held(&inode->i_lock);
+	WARN_ON_ONCE(!iwbl_test_sync(iwbl));
+
+	clear_bit(IWBL_SYNC, &iwbl->data);
+	sync_complete = !--inode->i_nr_syncs;
+	if (sync_complete)
+		inode->i_state &= ~I_SYNC;
+	return sync_complete;
+}
+
+/**
+ * iwbl_wait_for_writeback - wait for writeback in progree on an inode_wb_link
+ * @iwbl: target inode_wb_link
+ *
+ * Wait for the writeback in progress for the inode on the bdi_writeback
+ * specified by @iwbl.
+ */
+static void iwbl_wait_for_writeback(struct inode_wb_link *iwbl)
+	__releases(inode->i_lock)
+	__acquires(inode->i_lock)
+{
+	struct inode *inode = iwbl_to_inode(iwbl);
+	DEFINE_WAIT_BIT(wq, &iwbl->data, IWBL_SYNC);
+	wait_queue_head_t *wqh;
+
+	lockdep_assert_held(&inode->i_lock);
+
+	wqh = bit_waitqueue(&iwbl->data, IWBL_SYNC);
+	while (test_bit(IWBL_SYNC, &iwbl->data)) {
+		spin_unlock(&inode->i_lock);
+		__wait_on_bit(wqh, &wq, bit_wait, TASK_UNINTERRUPTIBLE);
+		spin_lock(&inode->i_lock);
+	}
+}
+
 /*
  * Sleep until I_SYNC is cleared. This function must be called with i_lock
  * held and drops it. It is aimed for callers not holding any inode reference
  * so once i_lock is dropped, inode can go away.
  */
-static void inode_sleep_on_writeback(struct inode *inode)
-	__releases(inode->i_lock)
+static void iwbl_sleep_on_writeback(struct inode_wb_link *iwbl)
 {
 	DEFINE_WAIT(wait);
-	wait_queue_head_t *wqh = bit_waitqueue(&inode->i_state, __I_SYNC);
+	struct inode *inode = iwbl_to_inode(iwbl);
+	wait_queue_head_t *wqh = bit_waitqueue(&iwbl->data, IWBL_SYNC);
 	int sleep;
 
 	prepare_to_wait(wqh, &wait, TASK_UNINTERRUPTIBLE);
-	sleep = inode->i_state & I_SYNC;
+	sleep = test_bit(IWBL_SYNC, &iwbl->data);
 	spin_unlock(&inode->i_lock);
 	if (sleep)
 		schedule();
 	finish_wait(wqh, &wait);
+}
+
+/**
+ * iwbl_sync_wakeup - wakeup iwbl_{wait_for|sleep_on}_writeback() waiter
+ * @iwbl: target inode_wb_link
+ */
+static void iwbl_sync_wakeup(struct inode_wb_link *iwbl)
+{
+	wake_up_bit(&iwbl->data, IWBL_SYNC);
 }
 
 static inline struct inode_cgwb_link *icgwbl_first(struct inode *inode)
@@ -504,6 +591,7 @@ static void inode_icgwbls_del(struct inode *inode)
 	 * bdi->icgwbls_lock.
 	 */
 	inode_for_each_icgwbl(icgwbl, next, inode) {
+		WARN_ON_ONCE(test_bit(IWBL_SYNC, &icgwbl->iwbl.data));
 		hlist_del_rcu(&icgwbl->inode_node);
 		list_move(&icgwbl->wb_node, &to_free);
 	}
@@ -544,15 +632,39 @@ static void bdi_split_work_to_wbs(struct backing_dev_info *bdi,
 	}
 }
 
+static bool iwbl_test_sync(struct inode_wb_link *iwbl)
+{
+	struct inode *inode = iwbl_to_inode(iwbl);
+
+	return inode->i_state & I_SYNC;
+}
+
+static void iwbl_set_sync(struct inode_wb_link *iwbl, struct inode *inode)
+{
+	inode->i_state |= I_SYNC;
+}
+
+static bool iwbl_clear_sync(struct inode_wb_link *iwbl, struct inode *inode)
+{
+	inode->i_state &= ~I_SYNC;
+	return true;
+}
+
+static void iwbl_wait_for_writeback(struct inode_wb_link *iwbl)
+{
+	__inode_wait_for_writeback(iwbl_to_inode(iwbl));
+}
+
 /*
  * Sleep until I_SYNC is cleared. This function must be called with i_lock
  * held and drops it. It is aimed for callers not holding any inode reference
  * so once i_lock is dropped, inode can go away.
  */
-static void inode_sleep_on_writeback(struct inode *inode)
+static void iwbl_sleep_on_writeback(struct inode_wb_link *iwbl)
 	__releases(inode->i_lock)
 {
 	DEFINE_WAIT(wait);
+	struct inode *inode = iwbl_to_inode(iwbl);
 	wait_queue_head_t *wqh = bit_waitqueue(&inode->i_state, __I_SYNC);
 	int sleep;
 
@@ -562,6 +674,11 @@ static void inode_sleep_on_writeback(struct inode *inode)
 	if (sleep)
 		schedule();
 	finish_wait(wqh, &wait);
+}
+
+static void iwbl_sync_wakeup(struct inode_wb_link *iwbl)
+{
+	/* noop, __I_SYNC wakeup is enough */
 }
 
 static void inode_icgwbls_del(struct inode *inode)
@@ -700,14 +817,22 @@ static void requeue_io(struct inode_wb_link *iwbl, struct bdi_writeback *wb)
 	iwbl_move_locked(iwbl, wb, &wb->b_more_io);
 }
 
-static void inode_sync_complete(struct inode *inode)
+static void iwbl_sync_complete(struct inode_wb_link *iwbl)
 {
-	inode->i_state &= ~I_SYNC;
+	struct inode *inode = iwbl_to_inode(iwbl);
+	bool sync_complete;
+
+	sync_complete = iwbl_clear_sync(iwbl, inode);
 	/* If inode is clean an unused, put it into LRU now... */
-	inode_add_lru(inode);
+	if (sync_complete)
+		inode_add_lru(inode);
+
 	/* Waiters must see I_SYNC cleared before being woken up */
 	smp_mb();
-	wake_up_bit(&inode->i_state, __I_SYNC);
+
+	iwbl_sync_wakeup(iwbl);
+	if (sync_complete)
+		wake_up_bit(&inode->i_state, __I_SYNC);
 }
 
 static bool iwbl_dirtied_after(struct inode_wb_link *iwbl, unsigned long t)
@@ -888,17 +1013,18 @@ static void requeue_inode(struct inode_wb_link *iwbl, struct bdi_writeback *wb,
 /*
  * Write out an inode and its dirty pages. Do not update the writeback list
  * linkage. That is left to the caller. The caller is also responsible for
- * setting I_SYNC flag and calling inode_sync_complete() to clear it.
+ * setting I_SYNC flag and calling iwbl_sync_complete() to clear it.
  */
 static int
 __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 {
 	struct address_space *mapping = inode->i_mapping;
+	struct inode_wb_link *iwbl = &inode->i_wb_link;
 	long nr_to_write = wbc->nr_to_write;
 	unsigned dirty;
 	int ret;
 
-	WARN_ON(!(inode->i_state & I_SYNC));
+	WARN_ON(!iwbl_test_sync(iwbl));
 
 	trace_writeback_single_inode_start(inode, wbc, nr_to_write);
 
@@ -976,7 +1102,7 @@ writeback_single_inode(struct inode *inode, struct bdi_writeback *wb,
 	else
 		WARN_ON(inode->i_state & I_WILL_FREE);
 
-	if (inode->i_state & I_SYNC) {
+	if (iwbl_test_sync(iwbl)) {
 		if (wbc->sync_mode != WB_SYNC_ALL)
 			goto out;
 		/*
@@ -984,9 +1110,9 @@ writeback_single_inode(struct inode *inode, struct bdi_writeback *wb,
 		 * inode reference or inode has I_WILL_FREE set, it cannot go
 		 * away under us.
 		 */
-		__inode_wait_for_writeback(inode);
+		iwbl_wait_for_writeback(iwbl);
 	}
-	WARN_ON(inode->i_state & I_SYNC);
+	WARN_ON(iwbl_test_sync(iwbl));
 	/*
 	 * Skip inode if it is clean and we have no outstanding writeback in
 	 * WB_SYNC_ALL mode. We don't want to mess with writeback lists in this
@@ -999,7 +1125,7 @@ writeback_single_inode(struct inode *inode, struct bdi_writeback *wb,
 	    (wbc->sync_mode != WB_SYNC_ALL ||
 	     !mapping_tagged(inode->i_mapping, PAGECACHE_TAG_WRITEBACK)))
 		goto out;
-	inode->i_state |= I_SYNC;
+	iwbl_set_sync(iwbl, inode);
 	spin_unlock(&inode->i_lock);
 
 	ret = __writeback_single_inode(inode, wbc);
@@ -1013,7 +1139,7 @@ writeback_single_inode(struct inode *inode, struct bdi_writeback *wb,
 	if (!(inode->i_state & I_DIRTY))
 		iwbl_del_locked(iwbl, wb);
 	spin_unlock(&wb->list_lock);
-	inode_sync_complete(inode);
+	iwbl_sync_complete(iwbl);
 out:
 	spin_unlock(&inode->i_lock);
 	return ret;
@@ -1107,7 +1233,7 @@ static long writeback_sb_inodes(struct super_block *sb,
 			redirty_tail(iwbl, wb);
 			continue;
 		}
-		if ((inode->i_state & I_SYNC) && wbc.sync_mode != WB_SYNC_ALL) {
+		if (iwbl_test_sync(iwbl) && wbc.sync_mode != WB_SYNC_ALL) {
 			/*
 			 * If this inode is locked for writeback and we are not
 			 * doing writeback-for-data-integrity, move it to
@@ -1129,14 +1255,14 @@ static long writeback_sb_inodes(struct super_block *sb,
 		 * are doing WB_SYNC_NONE writeback. So this catches only the
 		 * WB_SYNC_ALL case.
 		 */
-		if (inode->i_state & I_SYNC) {
+		if (iwbl_test_sync(iwbl)) {
 			/* Wait for I_SYNC. This function drops i_lock... */
-			inode_sleep_on_writeback(inode);
+			iwbl_sleep_on_writeback(iwbl);
 			/* Inode may be gone, start again */
 			spin_lock(&wb->list_lock);
 			continue;
 		}
-		inode->i_state |= I_SYNC;
+		iwbl_set_sync(iwbl, inode);
 		spin_unlock(&inode->i_lock);
 
 		write_chunk = writeback_chunk_size(wb, work);
@@ -1156,7 +1282,7 @@ static long writeback_sb_inodes(struct super_block *sb,
 		if (!(inode->i_state & I_DIRTY))
 			wrote++;
 		requeue_inode(iwbl, wb, &wbc);
-		inode_sync_complete(inode);
+		iwbl_sync_complete(iwbl);
 		spin_unlock(&inode->i_lock);
 		cond_resched_lock(&wb->list_lock);
 		/*
@@ -1356,7 +1482,7 @@ static long wb_writeback(struct bdi_writeback *wb,
 			spin_lock(&inode->i_lock);
 			spin_unlock(&wb->list_lock);
 			/* This function drops i_lock... */
-			inode_sleep_on_writeback(inode);
+			iwbl_sleep_on_writeback(iwbl);
 			spin_lock(&wb->list_lock);
 		}
 	}
@@ -1648,7 +1774,7 @@ void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 		 * The unlocker will place the inode on the appropriate
 		 * superblock list, based upon its state.
 		 */
-		if (inode->i_state & I_SYNC)
+		if (iwbl_test_sync(iwbl))
 			goto out_unlock_inode;
 
 		/*

@@ -539,6 +539,7 @@ static void cgwb_exit(struct bdi_writeback *wb)
 	spin_lock_irqsave(&wb->bdi->icgwbls_lock, flags);
 	list_for_each_entry_safe(icgwbl, next, &wb->icgwbls, wb_node) {
 		WARN_ON_ONCE(!list_empty(&icgwbl->iwbl.dirty_list));
+		WARN_ON_ONCE(test_bit(IWBL_SYNC, &icgwbl->iwbl.data));
 		hlist_del_rcu(&icgwbl->inode_node);
 		list_del(&icgwbl->wb_node);
 		kfree_rcu(icgwbl, rcu);

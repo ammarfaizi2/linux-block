@@ -625,6 +625,9 @@ struct inode {
 #ifdef CONFIG_IMA
 	atomic_t		i_readcount; /* struct files open RO */
 #endif
+#ifdef CONFIG_CGROUP_WRITEBACK
+	unsigned int		i_nr_syncs;
+#endif
 	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
 	struct file_lock	*i_flock;
 	struct address_space	i_data;

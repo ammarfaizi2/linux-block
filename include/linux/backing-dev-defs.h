@@ -47,8 +47,15 @@ enum wb_stat_item {
  * IWBL_* flags which occupy the lower bits of inode_wb_link->data.  The
  * upper bits point to bdi_writeback, so the number of these flags
  * determines the minimum alignment of bdi_writeback.
+ *
+ * IWBL_SYNC
+ *
+ *  Tracks whether writeback is in progress for an iwbl.  If this bit is
+ *  set for any iwbl on an inode, the inode's I_SYNC is set too.
  */
 enum {
+	IWBL_SYNC		= 0,
+
 	IWBL_FLAGS_BITS,
 	IWBL_FLAGS_MASK		= (1UL << IWBL_FLAGS_BITS) - 1,
 };
