@@ -510,6 +510,9 @@ void inode_wb_list_del(struct inode *inode)
 	struct backing_dev_info *bdi = inode_to_bdi(inode);
 	struct bdi_writeback *wb = &bdi->wb;
 
+	if (list_empty(&inode->i_wb_list))
+		return;
+
 	spin_lock(&wb->list_lock);
 	inode_wb_list_del_locked(inode, wb);
 	spin_unlock(&wb->list_lock);
