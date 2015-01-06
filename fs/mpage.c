@@ -595,6 +595,8 @@ page_is_mapped:
 
 alloc_new:
 	if (bio == NULL) {
+		struct cgroup_subsys_state *blkcg_css;
+
 		if (first_unmapped == blocks_per_page) {
 			if (!bdev_write_page(bdev, blocks[0] << (blkbits - 9),
 								page, wbc)) {
@@ -606,6 +608,10 @@ alloc_new:
 				bio_get_nr_vecs(bdev), GFP_NOFS|__GFP_HIGH);
 		if (bio == NULL)
 			goto confused;
+
+		blkcg_css = wbc_blkcg_css(wbc);
+		if (blkcg_css)
+			bio_associate_blkcg(bio, blkcg_css);
 	}
 
 	/*
