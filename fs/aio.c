@@ -170,7 +170,6 @@ static const struct address_space_operations aio_ctx_aops;
  */
 static struct backing_dev_info aio_fs_backing_dev_info = {
 	.name           = "aiofs",
-	.state          = 0,
 	.capabilities   = BDI_CAP_NO_ACCT_AND_WRITEBACK | BDI_CAP_MAP_COPY,
 };
 
