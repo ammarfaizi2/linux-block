@@ -132,6 +132,75 @@ static void wb_wait_for_completion(struct backing_dev_info *bdi,
 	wait_event(bdi->wb_waitq, !atomic_read(&done->cnt));
 }
 
+/**
+ * iwbl_move_locked - move an inode_wb_link onto a bdi_writeback IO list
+ * @iwbl: inode_wb_link to be moved
+ * @wb: target bdi_writeback
+ * @head: one of @wb->b_{dirty|io|more_io}
+ *
+ * Move @iwbl->dirty_list to @list of @wb and set %WB_has_dirty_io.
+ * Returns %true if all IO lists were empty before; otherwise, %false.
+ */
+static bool iwbl_move_locked(struct inode_wb_link *iwbl,
+			     struct bdi_writeback *wb, struct list_head *head)
+{
+	assert_spin_locked(&wb->list_lock);
+
+	list_move(&iwbl->dirty_list, head);
+
+	if (wb_has_dirty_io(wb)) {
+		return false;
+	} else {
+		set_bit(WB_has_dirty_io, &wb->state);
+		WARN_ON_ONCE(!wb->avg_write_bandwidth);
+		atomic_long_add(wb->avg_write_bandwidth,
+				&wb->bdi->tot_write_bandwidth);
+		return true;
+	}
+}
+
+/**
+ * iwbl_del_locked - remove an inode_wb_link from its bdi_writeback IO list
+ * @iwbl: inode_wb_link to be removed
+ * @wb: bdi_writeback @inode is being removed from
+ *
+ * Remove @iwbl which may be on one of @wb->b_{dirty|io|more_io} lists and
+ * clear %WB_has_dirty_io if all are empty afterwards.
+ */
+static void iwbl_del_locked(struct inode_wb_link *iwbl,
+			    struct bdi_writeback *wb)
+{
+	assert_spin_locked(&wb->list_lock);
+
+	list_del_init(&iwbl->dirty_list);
+
+	if (wb_has_dirty_io(wb) && list_empty(&wb->b_dirty) &&
+	    list_empty(&wb->b_io) && list_empty(&wb->b_more_io)) {
+		clear_bit(WB_has_dirty_io, &wb->state);
+		WARN_ON_ONCE(atomic_long_sub_return(wb->avg_write_bandwidth,
+					&wb->bdi->tot_write_bandwidth) < 0);
+	}
+}
+
+/*
+ * Wait for writeback on an inode to complete. Called with i_lock held.
+ * Caller must make sure inode cannot go away when we drop i_lock.
+ */
+static void __inode_wait_for_writeback(struct inode *inode)
+	__releases(inode->i_lock)
+	__acquires(inode->i_lock)
+{
+	DEFINE_WAIT_BIT(wq, &inode->i_state, __I_SYNC);
+	wait_queue_head_t *wqh;
+
+	wqh = bit_waitqueue(&inode->i_state, __I_SYNC);
+	while (inode->i_state & I_SYNC) {
+		spin_unlock(&inode->i_lock);
+		__wait_on_bit(wqh, &wq, bit_wait, TASK_UNINTERRUPTIBLE);
+		spin_lock(&inode->i_lock);
+	}
+}
+
 #ifdef CONFIG_CGROUP_WRITEBACK
 
 /**
@@ -331,6 +400,26 @@ restart:
 	rcu_read_unlock();
 }
 
+/*
+ * Sleep until I_SYNC is cleared. This function must be called with i_lock
+ * held and drops it. It is aimed for callers not holding any inode reference
+ * so once i_lock is dropped, inode can go away.
+ */
+static void inode_sleep_on_writeback(struct inode *inode)
+	__releases(inode->i_lock)
+{
+	DEFINE_WAIT(wait);
+	wait_queue_head_t *wqh = bit_waitqueue(&inode->i_state, __I_SYNC);
+	int sleep;
+
+	prepare_to_wait(wqh, &wait, TASK_UNINTERRUPTIBLE);
+	sleep = inode->i_state & I_SYNC;
+	spin_unlock(&inode->i_lock);
+	if (sleep)
+		schedule();
+	finish_wait(wqh, &wait);
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
@@ -356,6 +445,26 @@ static void bdi_split_work_to_wbs(struct backing_dev_info *bdi,
 		base_work->single_done = 0;
 		wb_queue_work(&bdi->wb, base_work);
 	}
+}
+
+/*
+ * Sleep until I_SYNC is cleared. This function must be called with i_lock
+ * held and drops it. It is aimed for callers not holding any inode reference
+ * so once i_lock is dropped, inode can go away.
+ */
+static void inode_sleep_on_writeback(struct inode *inode)
+	__releases(inode->i_lock)
+{
+	DEFINE_WAIT(wait);
+	wait_queue_head_t *wqh = bit_waitqueue(&inode->i_state, __I_SYNC);
+	int sleep;
+
+	prepare_to_wait(wqh, &wait, TASK_UNINTERRUPTIBLE);
+	sleep = inode->i_state & I_SYNC;
+	spin_unlock(&inode->i_lock);
+	if (sleep)
+		schedule();
+	finish_wait(wqh, &wait);
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
@@ -449,56 +558,6 @@ void wb_start_background_writeback(struct bdi_writeback *wb)
 	 */
 	trace_writeback_wake_background(wb->bdi);
 	wb_wakeup(wb);
-}
-
-/**
- * iwbl_move_locked - move an inode_wb_link onto a bdi_writeback IO list
- * @iwbl: inode_wb_link to be moved
- * @wb: target bdi_writeback
- * @head: one of @wb->b_{dirty|io|more_io}
- *
- * Move @iwbl->dirty_list to @list of @wb and set %WB_has_dirty_io.
- * Returns %true if all IO lists were empty before; otherwise, %false.
- */
-static bool iwbl_move_locked(struct inode_wb_link *iwbl,
-			     struct bdi_writeback *wb, struct list_head *head)
-{
-	assert_spin_locked(&wb->list_lock);
-
-	list_move(&iwbl->dirty_list, head);
-
-	if (wb_has_dirty_io(wb)) {
-		return false;
-	} else {
-		set_bit(WB_has_dirty_io, &wb->state);
-		WARN_ON_ONCE(!wb->avg_write_bandwidth);
-		atomic_long_add(wb->avg_write_bandwidth,
-				&wb->bdi->tot_write_bandwidth);
-		return true;
-	}
-}
-
-/**
- * iwbl_del_locked - remove an inode_wb_link from its bdi_writeback IO list
- * @iwbl: inode_wb_link to be removed
- * @wb: bdi_writeback @inode is being removed from
- *
- * Remove @iwbl which may be on one of @wb->b_{dirty|io|more_io} lists and
- * clear %WB_has_dirty_io if all are empty afterwards.
- */
-static void iwbl_del_locked(struct inode_wb_link *iwbl,
-			    struct bdi_writeback *wb)
-{
-	assert_spin_locked(&wb->list_lock);
-
-	list_del_init(&iwbl->dirty_list);
-
-	if (wb_has_dirty_io(wb) && list_empty(&wb->b_dirty) &&
-	    list_empty(&wb->b_io) && list_empty(&wb->b_more_io)) {
-		clear_bit(WB_has_dirty_io, &wb->state);
-		WARN_ON_ONCE(atomic_long_sub_return(wb->avg_write_bandwidth,
-					&wb->bdi->tot_write_bandwidth) < 0);
-	}
 }
 
 /*
@@ -657,26 +716,6 @@ static int write_inode(struct inode *inode, struct writeback_control *wbc)
 }
 
 /*
- * Wait for writeback on an inode to complete. Called with i_lock held.
- * Caller must make sure inode cannot go away when we drop i_lock.
- */
-static void __inode_wait_for_writeback(struct inode *inode)
-	__releases(inode->i_lock)
-	__acquires(inode->i_lock)
-{
-	DEFINE_WAIT_BIT(wq, &inode->i_state, __I_SYNC);
-	wait_queue_head_t *wqh;
-
-	wqh = bit_waitqueue(&inode->i_state, __I_SYNC);
-	while (inode->i_state & I_SYNC) {
-		spin_unlock(&inode->i_lock);
-		__wait_on_bit(wqh, &wq, bit_wait,
-			      TASK_UNINTERRUPTIBLE);
-		spin_lock(&inode->i_lock);
-	}
-}
-
-/*
  * Wait for writeback on an inode to complete. Caller must have inode pinned.
  */
 void inode_wait_for_writeback(struct inode *inode)
@@ -684,26 +723,6 @@ void inode_wait_for_writeback(struct inode *inode)
 	spin_lock(&inode->i_lock);
 	__inode_wait_for_writeback(inode);
 	spin_unlock(&inode->i_lock);
-}
-
-/*
- * Sleep until I_SYNC is cleared. This function must be called with i_lock
- * held and drops it. It is aimed for callers not holding any inode reference
- * so once i_lock is dropped, inode can go away.
- */
-static void inode_sleep_on_writeback(struct inode *inode)
-	__releases(inode->i_lock)
-{
-	DEFINE_WAIT(wait);
-	wait_queue_head_t *wqh = bit_waitqueue(&inode->i_state, __I_SYNC);
-	int sleep;
-
-	prepare_to_wait(wqh, &wait, TASK_UNINTERRUPTIBLE);
-	sleep = inode->i_state & I_SYNC;
-	spin_unlock(&inode->i_lock);
-	if (sleep)
-		schedule();
-	finish_wait(wqh, &wait);
 }
 
 /*
