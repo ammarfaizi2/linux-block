@@ -36,7 +36,7 @@ struct thread_info {
 
 	mm_segment_t addr_limit;	/* thread address space */
 
-	u8 supervisor_stack[0];
+	u8 supervisor_stack[0] __aligned(8);
 };
 
 #else /* !__ASSEMBLY__ */
