@@ -338,109 +338,6 @@ void wb_wakeup_delayed(struct bdi_writeback *wb)
 }
 
 /*
- * Remove bdi from bdi_list, and ensure that it is no longer visible
- */
-static void bdi_remove_from_list(struct backing_dev_info *bdi)
-{
-	spin_lock_bh(&bdi_lock);
-	list_del_rcu(&bdi->bdi_list);
-	spin_unlock_bh(&bdi_lock);
-
-	synchronize_rcu_expedited();
-}
-
-int bdi_register(struct backing_dev_info *bdi, struct device *parent,
-		const char *fmt, ...)
-{
-	va_list args;
-	struct device *dev;
-
-	if (bdi->dev)	/* The driver needs to use separate queues per device */
-		return 0;
-
-	va_start(args, fmt);
-	dev = device_create_vargs(bdi_class, parent, MKDEV(0, 0), bdi, fmt, args);
-	va_end(args);
-	if (IS_ERR(dev))
-		return PTR_ERR(dev);
-
-	bdi->dev = dev;
-
-	bdi_debug_register(bdi, dev_name(dev));
-	set_bit(WB_registered, &bdi->wb.state);
-
-	spin_lock_bh(&bdi_lock);
-	list_add_tail_rcu(&bdi->bdi_list, &bdi_list);
-	spin_unlock_bh(&bdi_lock);
-
-	trace_writeback_bdi_register(bdi);
-	return 0;
-}
-EXPORT_SYMBOL(bdi_register);
-
-int bdi_register_dev(struct backing_dev_info *bdi, dev_t dev)
-{
-	return bdi_register(bdi, NULL, "%u:%u", MAJOR(dev), MINOR(dev));
-}
-EXPORT_SYMBOL(bdi_register_dev);
-
-/*
- * Remove bdi from the global list and shutdown any threads we have running
- */
-static void wb_shutdown(struct bdi_writeback *wb)
-{
-	/* Make sure nobody queues further work */
-	spin_lock_bh(&wb->work_lock);
-	clear_bit(WB_registered, &wb->state);
-	spin_unlock_bh(&wb->work_lock);
-
-	/*
-	 * Drain work list and shutdown the delayed_work.  !WB_registered
-	 * tells wb_workfn() that @wb is dying and its work_list needs to
-	 * be drained no matter what.
-	 */
-	mod_delayed_work(bdi_wq, &wb->dwork, 0);
-	flush_delayed_work(&wb->dwork);
-	WARN_ON(!list_empty(&wb->work_list));
-	WARN_ON(delayed_work_pending(&wb->dwork));
-}
-
-/*
- * This bdi is going away now, make sure that no super_blocks point to it
- */
-static void bdi_prune_sb(struct backing_dev_info *bdi)
-{
-	struct super_block *sb;
-
-	spin_lock(&sb_lock);
-	list_for_each_entry(sb, &super_blocks, s_list) {
-		if (sb->s_bdi == bdi)
-			sb->s_bdi = &default_backing_dev_info;
-	}
-	spin_unlock(&sb_lock);
-}
-
-void bdi_unregister(struct backing_dev_info *bdi)
-{
-	if (bdi->dev) {
-		bdi_set_min_ratio(bdi, 0);
-		trace_writeback_bdi_unregister(bdi);
-		bdi_prune_sb(bdi);
-
-		if (bdi_cap_writeback_dirty(bdi)) {
-			/* make sure nobody finds us on the bdi_list anymore */
-			bdi_remove_from_list(bdi);
-			wb_shutdown(&bdi->wb);
-		}
-
-		bdi_debug_unregister(bdi);
-		device_unregister(bdi->dev);
-		bdi->dev = NULL;
-	}
-}
-EXPORT_SYMBOL(bdi_unregister);
-
-/*
  * Initial write bandwidth: 100 MB/s
  */
 #define INIT_BW		(100 << (20 - PAGE_SHIFT))
@@ -483,6 +380,27 @@ static int wb_init(struct bdi_writeback *wb, struct backing_dev_info *bdi)
 	}
 
 	return 0;
+}
+
+/*
+ * Remove bdi from the global list and shutdown any threads we have running
+ */
+static void wb_shutdown(struct bdi_writeback *wb)
+{
+	/* Make sure nobody queues further work */
+	spin_lock_bh(&wb->work_lock);
+	clear_bit(WB_registered, &wb->state);
+	spin_unlock_bh(&wb->work_lock);
+
+	/*
+	 * Drain work list and shutdown the delayed_work.  !WB_registered
+	 * tells wb_workfn() that @wb is dying and its work_list needs to
+	 * be drained no matter what.
+	 */
+	mod_delayed_work(bdi_wq, &wb->dwork, 0);
+	flush_delayed_work(&wb->dwork);
+	WARN_ON(!list_empty(&wb->work_list));
+	WARN_ON(delayed_work_pending(&wb->dwork));
 }
 
 static void wb_exit(struct bdi_writeback *wb)
@@ -539,6 +457,88 @@ int bdi_init(struct backing_dev_info *bdi)
 	return 0;
 }
 EXPORT_SYMBOL(bdi_init);
+
+int bdi_register(struct backing_dev_info *bdi, struct device *parent,
+		const char *fmt, ...)
+{
+	va_list args;
+	struct device *dev;
+
+	if (bdi->dev)	/* The driver needs to use separate queues per device */
+		return 0;
+
+	va_start(args, fmt);
+	dev = device_create_vargs(bdi_class, parent, MKDEV(0, 0), bdi, fmt, args);
+	va_end(args);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
+
+	bdi->dev = dev;
+
+	bdi_debug_register(bdi, dev_name(dev));
+	set_bit(WB_registered, &bdi->wb.state);
+
+	spin_lock_bh(&bdi_lock);
+	list_add_tail_rcu(&bdi->bdi_list, &bdi_list);
+	spin_unlock_bh(&bdi_lock);
+
+	trace_writeback_bdi_register(bdi);
+	return 0;
+}
+EXPORT_SYMBOL(bdi_register);
+
+int bdi_register_dev(struct backing_dev_info *bdi, dev_t dev)
+{
+	return bdi_register(bdi, NULL, "%u:%u", MAJOR(dev), MINOR(dev));
+}
+EXPORT_SYMBOL(bdi_register_dev);
+
+/*
+ * This bdi is going away now, make sure that no super_blocks point to it
+ */
+static void bdi_prune_sb(struct backing_dev_info *bdi)
+{
+	struct super_block *sb;
+
+	spin_lock(&sb_lock);
+	list_for_each_entry(sb, &super_blocks, s_list) {
+		if (sb->s_bdi == bdi)
+			sb->s_bdi = &default_backing_dev_info;
+	}
+	spin_unlock(&sb_lock);
+}
+
+/*
+ * Remove bdi from bdi_list, and ensure that it is no longer visible
+ */
+static void bdi_remove_from_list(struct backing_dev_info *bdi)
+{
+	spin_lock_bh(&bdi_lock);
+	list_del_rcu(&bdi->bdi_list);
+	spin_unlock_bh(&bdi_lock);
+
+	synchronize_rcu_expedited();
+}
+
+void bdi_unregister(struct backing_dev_info *bdi)
+{
+	if (bdi->dev) {
+		bdi_set_min_ratio(bdi, 0);
+		trace_writeback_bdi_unregister(bdi);
+		bdi_prune_sb(bdi);
+
+		if (bdi_cap_writeback_dirty(bdi)) {
+			/* make sure nobody finds us on the bdi_list anymore */
+			bdi_remove_from_list(bdi);
+			wb_shutdown(&bdi->wb);
+		}
+
+		bdi_debug_unregister(bdi);
+		device_unregister(bdi->dev);
+		bdi->dev = NULL;
+	}
+}
+EXPORT_SYMBOL(bdi_unregister);
 
 void bdi_destroy(struct backing_dev_info *bdi)
 {
