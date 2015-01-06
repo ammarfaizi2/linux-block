@@ -1,5 +1,5 @@
 /*
- * rtc-isl12057 - Driver for Intersil ISL12057 I2C Real Time Clock / Alarm
+ * rtc-isl12057 - Driver for Intersil ISL12057 I2C Real Time Clock
  *
  * Copyright (C) 2013, Arnaud EBALARD <arno@natisbad.org>
  *
@@ -555,14 +555,7 @@ static int isl12057_probe(struct i2c_client *client,
 				client->irq, ret);
 	}
 
-	/*
-	 * This is needed to have 'wakealarm' sysfs entry available. One
-	 * would expect the device to be marked as a wakeup source only
-	 * when an IRQ pin of the RTC is routed to an interrupt line of the
-	 * CPU. In practice, such an IRQ pin can be connected to a PMIC and
-	 * this allows the device to be powered up when RTC alarm rings.
-	 */
-	device_init_wakeup(dev, true);
+	device_init_wakeup(dev, !!data->irq);
 
 	data->rtc = devm_rtc_device_register(dev, DRV_NAME, &rtc_ops,
 					     THIS_MODULE);
@@ -585,7 +578,7 @@ static int isl12057_remove(struct i2c_client *client)
 {
 	struct isl12057_rtc_data *rtc_data = dev_get_drvdata(&client->dev);
 
-	if (rtc_data->irq > 0)
+	if (rtc_data->irq)
 		device_init_wakeup(&client->dev, false);
 
 	return 0;
@@ -643,5 +636,5 @@ static struct i2c_driver isl12057_driver = {
 module_i2c_driver(isl12057_driver);
 
 MODULE_AUTHOR("Arnaud EBALARD <arno@natisbad.org>");
-MODULE_DESCRIPTION("Intersil ISL12057 RTC/Alarm driver");
+MODULE_DESCRIPTION("Intersil ISL12057 RTC driver");
 MODULE_LICENSE("GPL");
