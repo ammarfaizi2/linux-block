@@ -266,6 +266,9 @@ paging_init (void)
 		 */
 		NODE_DATA(0)->node_mem_map = vmem_map +
 			find_min_pfn_with_active_regions();
+		printk(KERN_DEBUG
+			"Node %d memmap at 0x%p size %lu first pfn 0x%p\n",
+			0, vmem_map, map_size, NODE_DATA(0)->node_mem_map);
 		free_area_init_nodes(max_zone_pfns);
 
 		printk("Virtual mem_map starts at 0x%p\n", mem_map);

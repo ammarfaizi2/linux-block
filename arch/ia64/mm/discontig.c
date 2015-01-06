@@ -717,6 +717,9 @@ void __init paging_init(void)
 
 #ifdef CONFIG_VIRTUAL_MEM_MAP
 		NODE_DATA(node)->node_mem_map = vmem_map + pfn_offset;
+		printk(KERN_DEBUG
+			"Node %d memmap at 0x%p size %u first pfn 0x%p\n",
+			node, vmem_map, 0, NODE_DATA(node)->node_mem_map);
 #endif
 		if (mem_data[node].max_pfn > max_pfn)
 			max_pfn = mem_data[node].max_pfn;

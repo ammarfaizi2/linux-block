@@ -5041,6 +5041,9 @@ static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
 			map = memblock_virt_alloc_node_nopanic(size,
 							       pgdat->node_id);
 		pgdat->node_mem_map = map + (pgdat->node_start_pfn - start);
+		printk(KERN_DEBUG
+			"Node %d memmap at 0x%p size %lu first pfn 0x%p\n",
+			pgdat->node_id, map, size, pgdat->node_mem_map);
 	}
 #ifndef CONFIG_NEED_MULTIPLE_NODES
 	/*
@@ -5433,6 +5436,9 @@ void __init free_area_init_nodes(unsigned long *max_zone_pfn)
 	/* Find the PFNs that ZONE_MOVABLE begins at in each node */
 	memset(zone_movable_pfn, 0, sizeof(zone_movable_pfn));
 	find_zone_movable_pfns_for_nodes();
+
+	/* Print out the page size for debugging meminit problems */
+	printk(KERN_DEBUG "sizeof(struct page) = %zd\n", sizeof(struct page));
 
 	/* Print out the zone ranges */
 	pr_info("Zone ranges:\n");
