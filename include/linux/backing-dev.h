@@ -12,6 +12,7 @@
 #include <linux/fs.h>
 #include <linux/sched.h>
 #include <linux/writeback.h>
+#include <linux/memcontrol.h>
 
 #include <linux/backing-dev-defs.h>
 

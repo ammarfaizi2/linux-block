@@ -116,6 +116,7 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 				    WB_RECLAIMABLE);
 			if (account_size)
 				task_io_account_cancelled_write(account_size);
+			page_blkcg_detach_dirty(page);
 		}
 	}
 }

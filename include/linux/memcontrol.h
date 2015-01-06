@@ -23,6 +23,8 @@
 #include <linux/vm_event_item.h>
 #include <linux/hardirq.h>
 #include <linux/jump_label.h>
+#include <linux/percpu-refcount.h>
+#include <linux/blk-cgroup.h>
 
 struct mem_cgroup;
 struct page;
@@ -536,5 +538,59 @@ static inline void memcg_kmem_put_cache(struct kmem_cache *cachep)
 {
 }
 #endif /* CONFIG_MEMCG_KMEM */
+
+#ifdef CONFIG_CGROUP_WRITEBACK
+
+struct cgroup_subsys_state *page_blkcg_dirty(struct page *page);
+struct cgroup_subsys_state *page_blkcg_wb(struct page *page);
+struct cgroup_subsys_state *page_blkcg_attach_dirty(struct page *page);
+struct cgroup_subsys_state *page_blkcg_attach_wb(struct page *page);
+void page_blkcg_detach_dirty(struct page *page);
+void page_blkcg_detach_wb(struct page *page);
+void page_blkcg_force_root_dirty(struct page *page);
+void page_blkcg_force_root_wb(struct page *page);
+
+#else /* CONFIG_CGROUP_WRITEBACK */
+
+static inline struct cgroup_subsys_state *page_blkcg_dirty(struct page *page)
+{
+	return blkcg_root_css;
+}
+
+static inline struct cgroup_subsys_state *page_blkcg_wb(struct page *page)
+{
+	return blkcg_root_css;
+}
+
+static inline struct cgroup_subsys_state *
+page_blkcg_attach_dirty(struct page *page)
+{
+	return blkcg_root_css;
+}
+
+static inline struct cgroup_subsys_state *
+page_blkcg_attach_wb(struct page *page)
+{
+	return blkcg_root_css;
+}
+
+static inline void page_blkcg_detach_dirty(struct page *page)
+{
+}
+
+static inline void page_blkcg_detach_wb(struct page *page)
+{
+}
+
+static inline void page_blkcg_force_root_dirty(struct page *page)
+{
+}
+
+static inline void page_blkcg_force_root_wb(struct page *page)
+{
+}
+
+#endif /* CONFIG_CGROUP_WRITEBACK */
+
 #endif /* _LINUX_MEMCONTROL_H */
 

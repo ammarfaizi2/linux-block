@@ -106,6 +106,36 @@ out_unlock:
 	spin_unlock_bh(&wb->work_lock);
 }
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+
+/**
+ * init_cgwb_dirty_page_context - init cgwb part of dirty_context
+ * @dctx: dirty_context being initialized
+ *
+ * @dctx is being initialized by init_dirty_page_context().  Initialize
+ * cgroup writeback part of it.
+ */
+static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
+{
+	/* cgroup writeback requires support from both the bdi and filesystem */
+	if (!mapping_cgwb_enabled(dctx->mapping))
+		goto force_root;
+
+	page_blkcg_attach_dirty(dctx->page);
+	return;
+
+force_root:
+	page_blkcg_force_root_dirty(dctx->page);
+}
+
+#else	/* CONFIG_CGROUP_WRITEBACK */
+
+static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
+{
+}
+
+#endif	/* CONFIG_CGROUP_WRITEBACK */
+
 /**
  * init_dirty_page_context - init dirty_context for page dirtying
  * @dctx: dirty_context to initialize
@@ -129,6 +159,8 @@ void init_dirty_page_context(struct dirty_context *dctx, struct page *page,
 	dctx->mapping = page_mapping(page);
 
 	BUG_ON(dctx->mapping != mapping);
+
+	init_cgwb_dirty_page_context(dctx);
 }
 EXPORT_SYMBOL_GPL(init_dirty_page_context);
 

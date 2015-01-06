@@ -56,6 +56,7 @@
 #include <linux/oom.h>
 #include <linux/lockdep.h>
 #include <linux/file.h>
+#include <linux/blkdev.h>
 #include "internal.h"
 #include <net/sock.h>
 #include <net/ip.h>
@@ -94,7 +95,23 @@ static int really_do_swap_account __initdata;
  * are cleared together with it.
  */
 enum page_cgflags {
+#ifdef CONFIG_CGROUP_WRITEBACK
+	/*
+	 * Flags to associate a page with blkcgs.  There are two
+	 * associations - one for dirtying, the other for writeback.  If
+	 * VALID is clear, the root blkcg is used.  If not, the COLOR bit
+	 * indexes page_memcg(page)->blkcg_ptr[].  The COLOR bits must
+	 * immediately follow the corresponding VALID bits.  See
+	 * memcg_blkcg_ptr implementation for more info.
+	 */
+	PCG_BLKCG_DIRTY_VALID	= 1UL << 0,
+	PCG_BLKCG_DIRTY_COLOR	= 1UL << 1,
+	PCG_BLKCG_WB_VALID	= 1UL << 2,
+	PCG_BLKCG_WB_COLOR	= 1UL << 3,
+	PCG_FLAGS_BITS		= 4,
+#else
 	PCG_FLAGS_BITS		= 0,
+#endif
 	PCG_FLAGS_MASK		= ((1UL << PCG_FLAGS_BITS) - 1),
 };
 
@@ -294,6 +311,15 @@ struct mem_cgroup_event {
 static void mem_cgroup_threshold(struct mem_cgroup *memcg);
 static void mem_cgroup_oom_notify(struct mem_cgroup *memcg);
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+struct memcg_blkcg_ptr {
+	struct cgroup_subsys_state	*css;
+	struct percpu_ref		ref;
+	struct mem_cgroup		*memcg;
+	struct work_struct		release_work;
+};
+#endif
+
 /*
  * The memory controller data structure. The memory controller controls both
  * page cache and RSS per cgroup. We would eventually like to provide
@@ -383,6 +409,11 @@ struct mem_cgroup {
 	nodemask_t	scan_nodes;
 	atomic_t	numainfo_events;
 	atomic_t	numainfo_updating;
+#endif
+
+#ifdef CONFIG_CGROUP_WRITEBACK
+	int				blkcg_color;
+	struct memcg_blkcg_ptr		blkcg_ptr[2];
 #endif
 
 	/* List of events which userspace want to receive */
@@ -3418,6 +3449,397 @@ static int memcg_update_kmem_limit(struct mem_cgroup *memcg,
 }
 #endif /* CONFIG_MEMCG_KMEM */
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+
+/*
+ * memcg_blkcg_ptr implementation.
+ *
+ * A charged page is associated with a memcg.  When the page gets dirtied
+ * and written back, we want to associate the dirtying and writeback to the
+ * matching blkcg so that the writeback IOs can be attributed to the
+ * originating cgroup and controlled accordingly.
+ *
+ * As adding another per-page pointer to track blkcg is undesirable and the
+ * matching effective blkcg for a given memcg is mostly static, it makes
+ * sense to track a page's associated blkcg through its associated memcg.
+ *
+ * If the relationship between memcg and blkcg were static, this would be
+ * trivial - a single pointer, e.g. page_memcg(page)->blkcg_css, would
+ * suffice; however, the corresponding blkcg may change as controllers are
+ * enabled and disabled.  To accommodate this, pointer coloring is used.
+ *
+ * There are two reference counted pointers and one of the two is the
+ * active one.  When a new page needs to be associated with its blkcg, the
+ * reference count for the active color pointer is incremented and the
+ * blkcg it points to is used.  The page only needs to record the one bit
+ * color to determine the associated blkcg.  If the corresponding blkcg
+ * changes, the other pointer is updated to point to the new blkcg and the
+ * active color is flipped.  The now inactive color pointer is maintained
+ * until all referencing pages are drained.
+ *
+ * Note that this two pointer scheme can only accommodate single on-going
+ * blkcg change.  If the matching effective blkcg changes again while the
+ * inactive pointer is still being drained from the previous round, the new
+ * update is delayed until the draining is complete.
+ *
+ * A page needs to be associated with its blkcg while it's dirty and being
+ * written back.  The page may be re-dirtied repeatedly while being written
+ * back, which can prevent blkcg pointer draining from making progress as
+ * the reference the page holds may never be put.  To break this possible
+ * live-lock, a page uses two separate pointer colors for dirtying and
+ * writeback where the latter inherits the former on writeback start.
+ * Splitting the writeback association from the dirty one ensures that the
+ * current color is guaranteed to drain after a single writeback cycle as
+ * new dirtying can always take on the current active color.
+ */
+
+static DEFINE_MUTEX(memcg_blkcg_ptr_mutex);
+static DECLARE_WAIT_QUEUE_HEAD(memcg_blkcg_ptr_waitq);
+
+/**
+ * memcg_blkcg_ptr_update_locked - update the memcg blkcg ptr
+ * @memcg: target mem_cgroup
+ *
+ * This function is called when the matching effective blkcg of @memcg may
+ * have changed.  If different from the currently active pointer and the
+ * inactive one is free, this function updates the inactive pointer to
+ * point to the corresponding blkcg, flips the active color and starts
+ * draining the previous one.
+ *
+ * This function should be called under memcg_blkcg_ptr_mutex.
+ */
+static void memcg_blkcg_ptr_update_locked(struct mem_cgroup *memcg)
+{
+	int cur_color = memcg->blkcg_color;
+	int next_color = !cur_color;
+	struct memcg_blkcg_ptr *cur_ptr = &memcg->blkcg_ptr[cur_color];
+	struct memcg_blkcg_ptr *next_ptr = &memcg->blkcg_ptr[next_color];
+	struct cgroup_subsys_state *blkcg_css;
+
+	lockdep_assert_held(&memcg_blkcg_ptr_mutex);
+
+	/*
+	 * Negative cur_color indicates that @memcg is defunct and no more
+	 * pointer update can happen till the previous one is complete.
+	 */
+	if (cur_color < 0 || next_ptr->css)
+		return;
+
+	/* acquire current matching blkcg and see whether update is needed */
+	blkcg_css = cgroup_get_e_css(memcg->css.cgroup, &blkio_cgrp_subsys);
+	if (blkcg_css == cur_ptr->css) {
+		css_put(blkcg_css);
+		return;
+	}
+
+	/* init the next ptr, flip the color and start draining the prev */
+	next_ptr->css = blkcg_css;
+	percpu_ref_reinit(&next_ptr->ref);
+	memcg->blkcg_color = next_color;
+
+	if (cur_ptr->css)
+		percpu_ref_kill(&cur_ptr->ref);
+}
+
+static void memcg_blkcg_ptr_update(struct mem_cgroup *memcg)
+{
+	mutex_lock(&memcg_blkcg_ptr_mutex);
+	memcg_blkcg_ptr_update_locked(memcg);
+	mutex_unlock(&memcg_blkcg_ptr_mutex);
+}
+
+static void memcg_blkcg_ref_release_workfn(struct work_struct *work)
+{
+	struct memcg_blkcg_ptr *ptr =
+		container_of(work, struct memcg_blkcg_ptr, release_work);
+	struct mem_cgroup *memcg = ptr->memcg;
+
+	/* @ptr just finished draining, put the blkcg it was pointing to */
+	css_put(ptr->css);
+
+	/*
+	 * Mark @ptr free and try updating as previous update attempts may
+	 * have been delayed because @ptr was occupied.
+	 */
+	mutex_lock(&memcg_blkcg_ptr_mutex);
+	ptr->css = NULL;
+	memcg_blkcg_ptr_update_locked(memcg);
+	mutex_unlock(&memcg_blkcg_ptr_mutex);
+
+	wake_up_all(&memcg_blkcg_ptr_waitq);
+}
+
+static void memcg_blkcg_ref_release(struct percpu_ref *ref)
+{
+	struct memcg_blkcg_ptr *ptr =
+		container_of(ref, struct memcg_blkcg_ptr, ref);
+
+	schedule_work(&ptr->release_work);
+}
+
+static int memcg_blkcg_ptr_init(struct mem_cgroup *memcg)
+{
+	int i, ret;
+
+	/*
+	 * The first ptr_update always flips the color.  Let's init w/ 1 so
+	 * that we start with 0 after the initial ptr_update.
+	 */
+	memcg->blkcg_color = 1;
+
+	for (i = 0; i < ARRAY_SIZE(memcg->blkcg_ptr); i++) {
+		struct memcg_blkcg_ptr *ptr = &memcg->blkcg_ptr[i];
+
+		/* start dead, ptr_update will reinit the next ptr */
+		ret = percpu_ref_init(&ptr->ref, memcg_blkcg_ref_release,
+				      PERCPU_REF_INIT_DEAD, GFP_KERNEL);
+		if (ret) {
+			while (--i >= 0)
+				percpu_ref_exit(&memcg->blkcg_ptr[i].ref);
+			return ret;
+		}
+
+		ptr->memcg = memcg;
+		INIT_WORK(&ptr->release_work, memcg_blkcg_ref_release_workfn);
+	}
+
+	return 0;
+}
+
+static void memcg_blkcg_ptr_exit(struct mem_cgroup *memcg)
+{
+	int i;
+
+	mutex_lock(&memcg_blkcg_ptr_mutex);
+
+	/* disable further ptr_update */
+	memcg->blkcg_color = -1;
+
+	for (i = 0; i < ARRAY_SIZE(memcg->blkcg_ptr); i++) {
+		struct memcg_blkcg_ptr *ptr = &memcg->blkcg_ptr[i];
+
+		/* force start draining and wait for its completion */
+		if (!percpu_ref_is_dying(&ptr->ref))
+			percpu_ref_kill(&ptr->ref);
+		if (ptr->css) {
+			mutex_unlock(&memcg_blkcg_ptr_mutex);
+			wait_event(memcg_blkcg_ptr_waitq, !ptr->css);
+			mutex_lock(&memcg_blkcg_ptr_mutex);
+		}
+		percpu_ref_exit(&ptr->ref);
+	}
+
+	mutex_unlock(&memcg_blkcg_ptr_mutex);
+}
+
+static __always_inline struct cgroup_subsys_state *
+page_blkcg(struct page *page, unsigned int valid_flag, unsigned int color_flag)
+{
+	struct mem_cgroup *memcg = page_memcg(page);
+	unsigned long memcg_v = page->mem_cgroup;
+	int color;
+
+	if (!(memcg_v & valid_flag))
+		return blkcg_root_css;
+
+	color = (bool)(memcg_v & color_flag);
+	return memcg->blkcg_ptr[color].css;
+}
+
+/**
+ * page_blkcg_dirty - the blkcg a page is associated with for dirtying
+ * @page: page in question
+ */
+struct cgroup_subsys_state *page_blkcg_dirty(struct page *page)
+{
+	return page_blkcg(page, PCG_BLKCG_DIRTY_VALID, PCG_BLKCG_DIRTY_COLOR);
+}
+
+/**
+ * page_blkcg_writeback - the blkcg a page is associated with for writeback
+ * @page: page in question
+ */
+struct cgroup_subsys_state *page_blkcg_wb(struct page *page)
+{
+	return page_blkcg(page, PCG_BLKCG_WB_VALID, PCG_BLKCG_WB_COLOR);
+}
+
+static __always_inline void page_cgflags_update(struct page *page,
+						unsigned long cgflags_mask,
+						unsigned long cgflags_target)
+{
+	unsigned long memcg_v = page->mem_cgroup;
+
+	WARN_ON_ONCE(!memcg_v);
+
+	/* dirty the cacheline only when necessary */
+	if ((memcg_v & cgflags_mask) != cgflags_target)
+		page->mem_cgroup = (memcg_v & ~cgflags_mask) | cgflags_target;
+}
+
+/**
+ * page_blkcg_attach_dirty - associate a page with its dirtying blkcg
+ * @page: target page
+ *
+ * This function is to be called when @page is being newly dirtied and
+ * makes the active corresponding blkcg of its memcg its dirty blkcg.  This
+ * blkcg can be retrieved using page_blkcg_dirty().
+ */
+struct cgroup_subsys_state *page_blkcg_attach_dirty(struct page *page)
+{
+	struct mem_cgroup *memcg = page_memcg(page);
+	struct memcg_blkcg_ptr *ptr;
+	int color;
+
+	while (true) {
+		color = memcg->blkcg_color;
+		ptr = &memcg->blkcg_ptr[color];
+		if (ptr->css == blkcg_root_css)
+			goto root_css;
+		if (likely(percpu_ref_tryget(&ptr->ref)))
+			break;
+		cpu_relax();
+	}
+
+	page_cgflags_update(page, PCG_BLKCG_DIRTY_VALID | PCG_BLKCG_DIRTY_COLOR,
+			    PCG_BLKCG_DIRTY_VALID |
+			    (color ? PCG_BLKCG_DIRTY_COLOR : 0));
+	return ptr->css;
+root_css:
+	page_cgflags_update(page, PCG_BLKCG_DIRTY_VALID, 0);
+	return blkcg_root_css;
+}
+
+/**
+ * page_blkcg_attach_wb - associate a page with its writeback blkcg
+ * @page: target page
+ *
+ * This function is to be called when @page is about to be written back and
+ * makes its dirty blkcg its writeback blkcg.  This blkcg can be retrieved
+ * using page_blkcg_wb().
+ */
+struct cgroup_subsys_state *page_blkcg_attach_wb(struct page *page)
+{
+	unsigned long memcg_v = page->mem_cgroup;
+	struct mem_cgroup *memcg = page_memcg(page);
+	struct memcg_blkcg_ptr *ptr;
+	int color;
+
+	if (!(memcg_v & PCG_BLKCG_DIRTY_VALID))
+		goto root_css;
+
+	/*
+	 * Inherit @page's dirty color.  @page's dirty color is already
+	 * detached at this point, and, if the associated memcg's active
+	 * color has flipped, the page may already have been redirtied with
+	 * a different color or the blkcg_ptr released.
+	 *
+	 * If @page has been redirtied to a different blkcg before
+	 * writeback starts on the previous dirty state, the writeback is
+	 * attributed to the new blkcg.  The race window isn't huge and
+	 * charging to the new blkcg isn't strictly wrong as @page got
+	 * redirtied to the new blkcg after all.
+	 *
+	 * If @page's dirty blkcg_ptr already got released, we fall back to
+	 * the root blkcg.  This can only happen if blkcg_ptr's reference
+	 * count reached zero since the put of @page's dirty reference
+	 * making it highly unlikely to happen to more than few pages.
+	 *
+	 * We may attach some pages to the wrong blkcg across memcg-blkcg
+	 * correspondence change but such changes are rare to begin with
+	 * and the number of pages we may misattribute is pretty limited.
+	 */
+	color = (bool)(memcg_v & PCG_BLKCG_DIRTY_COLOR);
+	ptr = &memcg->blkcg_ptr[color];
+	if (unlikely(!percpu_ref_tryget(&ptr->ref)))
+		goto root_css;
+
+	page_cgflags_update(page, PCG_BLKCG_WB_VALID | PCG_BLKCG_WB_COLOR,
+			    PCG_BLKCG_WB_VALID |
+			    (color ? PCG_BLKCG_WB_COLOR : 0));
+	return ptr->css;
+root_css:
+	page_cgflags_update(page, PCG_BLKCG_WB_VALID, 0);
+	return blkcg_root_css;
+}
+
+static __always_inline void
+page_blkcg_detach(struct page *page, unsigned valid_flag, unsigned color_flag)
+{
+	unsigned long memcg_v = page->mem_cgroup;
+	struct mem_cgroup *memcg = page_memcg(page);
+	int color;
+
+	if (!(memcg_v & valid_flag))
+		return;
+
+	color = (bool)(memcg_v & color_flag);
+	percpu_ref_put(&memcg->blkcg_ptr[color].ref);
+}
+
+/**
+ * page_blkcg_detach_dirty - disassociate a page from its dirty blkcg
+ * @page: target page
+ *
+ * Put @page's current dirty blkcg association.  This function must be
+ * called before @page's dirtiness is cleared.
+ */
+void page_blkcg_detach_dirty(struct page *page)
+{
+	page_blkcg_detach(page, PCG_BLKCG_DIRTY_VALID, PCG_BLKCG_DIRTY_COLOR);
+}
+
+/**
+ * page_blkcg_detach_wb - disassociate a page from its writeback blkcg
+ * @page: target page
+ *
+ * Put @page's current writeback blkcg association.  This funtion must be
+ * called before @page's writeback is complete.
+ */
+void page_blkcg_detach_wb(struct page *page)
+{
+	page_blkcg_detach(page, PCG_BLKCG_WB_VALID, PCG_BLKCG_WB_COLOR);
+}
+
+/**
+ * page_blkcg_force_root_dirty - force a page's dirty blkcg to be the root one
+ * @page: target page
+ *
+ * The caller must ensure that @page doesn't have dirty blkcg attached.
+ */
+void page_blkcg_force_root_dirty(struct page *page)
+{
+	page_cgflags_update(page, PCG_BLKCG_DIRTY_VALID, 0);
+}
+
+/**
+ * page_blkcg_force_root_wb - force a page's writeback blkcg to be the root one
+ * @page: target page
+ *
+ * The caller must ensure that @page doesn't have writeback blkcg attached.
+ */
+void page_blkcg_force_root_wb(struct page *page)
+{
+	page_cgflags_update(page, PCG_BLKCG_WB_VALID, 0);
+}
+
+#else	/* CONFIG_CGROUP_WRITEBACK */
+
+static void memcg_blkcg_ptr_update(struct mem_cgroup *memcg)
+{
+}
+
+static int memcg_blkcg_ptr_init(struct mem_cgroup *memcg)
+{
+	return 0;
+}
+
+static void memcg_blkcg_ptr_exit(struct mem_cgroup *memcg)
+{
+}
+
+#endif	/* CONFIG_CGROUP_WRITEBACK */
+
 /*
  * The user of this function is...
  * RES_LIMIT.
@@ -4560,6 +4982,10 @@ mem_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
 		if (alloc_mem_cgroup_per_zone_info(memcg, node))
 			goto free_out;
 
+	error = memcg_blkcg_ptr_init(memcg);
+	if (error)
+		goto free_out;
+
 	/* root ? */
 	if (parent_css == NULL) {
 		root_mem_cgroup = memcg;
@@ -4599,7 +5025,7 @@ mem_cgroup_css_online(struct cgroup_subsys_state *css)
 		return -ENOSPC;
 
 	if (!parent)
-		return 0;
+		goto done;
 
 	mutex_lock(&memcg_create_mutex);
 
@@ -4642,7 +5068,8 @@ mem_cgroup_css_online(struct cgroup_subsys_state *css)
 	 * reading the memcg members.
 	 */
 	smp_store_release(&memcg->initialized, 1);
-
+done:
+	memcg_blkcg_ptr_update(memcg);
 	return 0;
 }
 
@@ -4671,6 +5098,7 @@ static void mem_cgroup_css_free(struct cgroup_subsys_state *css)
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	memcg_destroy_kmem(memcg);
+	memcg_blkcg_ptr_exit(memcg);
 	__mem_cgroup_free(memcg);
 }
 
@@ -4695,6 +5123,11 @@ static void mem_cgroup_css_reset(struct cgroup_subsys_state *css)
 	mem_cgroup_resize_memsw_limit(memcg, PAGE_COUNTER_MAX);
 	memcg_update_kmem_limit(memcg, PAGE_COUNTER_MAX);
 	memcg->soft_limit = PAGE_COUNTER_MAX;
+}
+
+static void mem_cgroup_css_e_css_changed(struct cgroup_subsys_state *css)
+{
+	memcg_blkcg_ptr_update(mem_cgroup_from_css(css));
 }
 
 #ifdef CONFIG_MMU
@@ -5288,6 +5721,7 @@ struct cgroup_subsys memory_cgrp_subsys = {
 	.css_offline = mem_cgroup_css_offline,
 	.css_free = mem_cgroup_css_free,
 	.css_reset = mem_cgroup_css_reset,
+	.css_e_css_changed = mem_cgroup_css_e_css_changed,
 	.can_attach = mem_cgroup_can_attach,
 	.cancel_attach = mem_cgroup_cancel_attach,
 	.attach = mem_cgroup_move_task,
