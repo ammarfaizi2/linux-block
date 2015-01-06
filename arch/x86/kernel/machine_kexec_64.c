@@ -335,6 +335,7 @@ void arch_crash_save_vmcoreinfo(void)
 #endif
 	vmcoreinfo_append_str("KERNELOFFSET=%lx\n",
 			      (unsigned long)&_text - __START_KERNEL);
+	VMCOREINFO_PHYS_BASE(phys_base);
 }
 
 /* arch-dependent functionality related to kexec file-based syscall */
