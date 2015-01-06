@@ -1548,6 +1548,8 @@ static int show_numa_map(struct seq_file *m, void *v, int is_pid)
 	if (!md->pages)
 		goto out;
 
+	seq_printf(m, " kernelpagesize_kB=%lu", vma_kernel_pagesize(vma) >> 10);
+
 	if (md->anon)
 		seq_printf(m, " anon=%lu", md->anon);
 
