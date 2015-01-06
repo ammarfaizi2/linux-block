@@ -1946,9 +1946,17 @@ repeat:
 	if (buffer_jbd(bh)) {
 		jh = bh2jh(bh);
 	} else {
-		J_ASSERT_BH(bh,
-			(atomic_read(&bh->b_count) > 0) ||
-			(bh->b_page && bh->b_page->mapping));
+		if (!(atomic_read(&bh->b_count) > 0 ||
+				(bh->b_page && bh->b_page->mapping))) {
+			printk(KERN_EMERG "%s: bh->b_count=%d\n",
+				__FUNCTION__, atomic_read(&bh->b_count));
+			printk(KERN_EMERG "%s: bh->b_page=%p\n",
+				__FUNCTION__, bh->b_page);
+			if (bh->b_page)
+				printk(KERN_EMERG "%s: "
+						"bh->b_page->mapping=%p\n",
+					__FUNCTION__, bh->b_page->mapping);
+		}
 
 		if (!new_jh) {
 			jbd_unlock_bh_journal_head(bh);
