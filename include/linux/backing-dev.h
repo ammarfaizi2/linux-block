@@ -146,6 +146,8 @@ int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
  * BDI_CAP_SWAP_BACKED:    Count shmem/tmpfs objects as swap-backed.
  *
  * BDI_CAP_STRICTLIMIT:    Keep number of dirty pages below bdi threshold.
+ *
+ * BDI_CAP_CGROUP_WRITEBACK: Supports cgroup-aware writeback.
  */
 #define BDI_CAP_NO_ACCT_DIRTY	0x00000001
 #define BDI_CAP_NO_WRITEBACK	0x00000002
@@ -158,6 +160,7 @@ int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
 #define BDI_CAP_SWAP_BACKED	0x00000100
 #define BDI_CAP_STABLE_WRITES	0x00000200
 #define BDI_CAP_STRICTLIMIT	0x00000400
+#define BDI_CAP_CGROUP_WRITEBACK 0x00000800
 
 #define BDI_CAP_VMFLAGS \
 	(BDI_CAP_READ_MAP | BDI_CAP_WRITE_MAP | BDI_CAP_EXEC_MAP)
@@ -266,5 +269,33 @@ static inline struct backing_dev_info *inode_to_bdi(struct inode *inode)
 void init_dirty_page_context(struct dirty_context *dctx, struct page *page,
 			     struct address_space *mapping);
 void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode);
+
+#ifdef CONFIG_CGROUP_WRITEBACK
+
+/**
+ * mapping_cgwb_enabled - test whether cgroup writeback is enabled on a mapping
+ * @mapping: address_space of interest
+ *
+ * cgroup writeback requires support from both the bdi and filesystem.
+ * Test whether @mapping has both.
+ */
+static inline bool mapping_cgwb_enabled(struct address_space *mapping)
+{
+	struct backing_dev_info *bdi = mapping->backing_dev_info;
+	struct inode *inode = mapping->host;
+
+	return bdi_cap_account_dirty(bdi) &&
+		(bdi->capabilities & BDI_CAP_CGROUP_WRITEBACK) &&
+		inode && (inode->i_sb->s_type->fs_flags & FS_CGROUP_WRITEBACK);
+}
+
+#else	/* CONFIG_CGROUP_WRITEBACK */
+
+static inline bool mapping_cgwb_enabled(struct address_space *mapping)
+{
+	return false;
+}
+
+#endif	/* CONFIG_CGROUP_WRITEBACK */
 
 #endif		/* _LINUX_BACKING_DEV_H */
