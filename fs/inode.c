@@ -195,6 +195,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	inode->i_fsnotify_mask = 0;
 #endif
 
+	init_i_wb_link(inode);
 	this_cpu_inc(nr_inodes);
 
 	return 0;

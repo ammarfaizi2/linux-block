@@ -507,8 +507,7 @@ static void iwbl_del_locked(struct inode_wb_link *iwbl,
 void inode_wb_list_del(struct inode *inode)
 {
 	struct inode_wb_link *iwbl = &inode->i_wb_link;
-	struct backing_dev_info *bdi = inode_to_bdi(inode);
-	struct bdi_writeback *wb = &bdi->wb;
+	struct bdi_writeback *wb = iwbl_to_wb(iwbl);
 
 	if (list_empty(&iwbl->dirty_list))
 		return;
@@ -1787,7 +1786,7 @@ EXPORT_SYMBOL(sync_inodes_sb);
  */
 int write_inode_now(struct inode *inode, int sync)
 {
-	struct bdi_writeback *wb = &inode_to_bdi(inode)->wb;
+	struct bdi_writeback *wb = iwbl_to_wb(&inode->i_wb_link);
 	struct writeback_control wbc = {
 		.nr_to_write = LONG_MAX,
 		.sync_mode = sync ? WB_SYNC_ALL : WB_SYNC_NONE,
@@ -1816,7 +1815,8 @@ EXPORT_SYMBOL(write_inode_now);
  */
 int sync_inode(struct inode *inode, struct writeback_control *wbc)
 {
-	return writeback_single_inode(inode, &inode_to_bdi(inode)->wb, wbc);
+	return writeback_single_inode(inode, iwbl_to_wb(&inode->i_wb_link),
+				      wbc);
 }
 EXPORT_SYMBOL(sync_inode);
 

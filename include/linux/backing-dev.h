@@ -450,6 +450,25 @@ static inline struct bdi_writeback *__wb_iter_init(struct wb_iter *iter,
 	for ((wb_cur) = __wb_iter_init(iter, bdi, start_blkcg_id);	\
 	     (wb_cur); (wb_cur) = __wb_iter_next(iter, bdi))
 
+/**
+ * init_i_wb_link - (re)initialize inode->i_wb_link
+ * @inode: inode of interest
+ *
+ * Initialize @inode->i_wb_link.  Usually invoked on inode initialization.
+ * One special case is the bdev inodes which are associated with different
+ * bdi's over their lifetimes.  This function must be called each time the
+ * associated bdi changes.
+ */
+static inline void init_i_wb_link(struct inode *inode)
+{
+	inode->i_wb_link.data = (unsigned long)&inode_to_bdi(inode)->wb;
+}
+
+static inline struct bdi_writeback *iwbl_to_wb(struct inode_wb_link *iwbl)
+{
+	return (void *)(iwbl->data & ~IWBL_FLAGS_MASK);
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static inline bool mapping_cgwb_enabled(struct address_space *mapping)
@@ -498,6 +517,17 @@ struct wb_iter {
 	for ((iter)->next_id = (start_blkcg_id);			\
 	     ({	(wb_cur) = !(iter)->next_id++ ? &(bdi)->wb : NULL;	\
 	     }); )
+
+static inline void init_i_wb_link(struct inode *inode)
+{
+}
+
+static inline struct bdi_writeback *iwbl_to_wb(struct inode_wb_link *iwbl)
+{
+	struct inode *inode = iwbl_to_inode(iwbl);
+
+	return &inode_to_bdi(inode)->wb;
+}
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
 

@@ -43,6 +43,24 @@ enum wb_stat_item {
 
 #define WB_STAT_BATCH (8*(1+ilog2(nr_cpu_ids)))
 
+/*
+ * IWBL_* flags which occupy the lower bits of inode_wb_link->data.  The
+ * upper bits point to bdi_writeback, so the number of these flags
+ * determines the minimum alignment of bdi_writeback.
+ */
+enum {
+	IWBL_FLAGS_BITS,
+	IWBL_FLAGS_MASK		= (1UL << IWBL_FLAGS_BITS) - 1,
+};
+
+/*
+ * Align bdi_writeback so that inode_wb_link->data can carry IWBL_* flags
+ * in the lower bits but don't let it fall below that of ullong.
+ */
+#define BDI_WRITEBACK_ALIGN	\
+	((1UL << IWBL_FLAGS_BITS) > __alignof(unsigned long long) ?	\
+	 (1UL << IWBL_FLAGS_BITS) : __alignof(unsigned long long))
+
 struct bdi_writeback {
 	struct backing_dev_info *bdi;	/* our parent bdi */
 
@@ -86,7 +104,7 @@ struct bdi_writeback {
 		struct rcu_head rcu;
 	};
 #endif
-};
+} __aligned(BDI_WRITEBACK_ALIGN);
 
 struct backing_dev_info {
 	struct list_head bdi_list;
@@ -127,6 +145,13 @@ struct backing_dev_info {
  * one at ->i_wb_link which is used for the root wb.
  */
 struct inode_wb_link {
+#ifdef CONFIG_CGROUP_WRITEBACK
+	/*
+	 * Upper bits point to the associated bdi_writeback.  Lower carry
+	 * IWBL_* flags.  Use iwbl_to_wb() to reach the bdi_writeback.
+	 */
+	unsigned long		data;
+#endif
 	struct list_head	dirty_list;
 };
 
