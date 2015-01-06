@@ -17,10 +17,18 @@ struct dentry;
  * Bits in bdi_writeback.state
  */
 enum wb_state {
+	/*
+	 * The two congested flags are modified asynchronously and must be
+	 * atomic.  The other flags are protected either by wb->list_lock
+	 * or ->work_lock and don't need to be atomic if placed on separate
+	 * fields.  The extra atomic operations don't really matter here.
+	 * Let's keep them together and use atomic bitops.
+	 */
 	WB_async_congested,	/* The async (write) queue is getting full */
 	WB_sync_congested,	/* The sync queue is getting full */
 	WB_registered,		/* bdi_register() was done */
 	WB_writeback_running,	/* Writeback is in progress */
+	WB_has_dirty_io,	/* Dirty inodes on ->b_{dirty|io|more_io} */
 };
 
 typedef int (congested_fn)(void *, int);
