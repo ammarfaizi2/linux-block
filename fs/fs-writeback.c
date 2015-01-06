@@ -684,6 +684,19 @@ static inline bool iwbl_still_has_dirty_pages(struct inode_wb_link *iwbl,
 	return test_bit(IWBL_DIRTY_PAGES, &iwbl->data);
 }
 
+/**
+ * wbc_skip_metadata - determine whether to skip writing out metadata
+ * @wbc: writeback_control in effect
+ *
+ * Called by __writeback_single_inode() to decide whether to skip writing
+ * out metadata.  Metadata is always dirtied against the root cgroup and
+ * should only be written out by the root.
+ */
+static inline bool wbc_skip_metadata(struct writeback_control *wbc)
+{
+	return wbc->iwbl && !iwbl_is_root(wbc->iwbl);
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
@@ -789,6 +802,11 @@ static inline bool iwbl_still_has_dirty_pages(struct inode_wb_link *iwbl,
 					      struct inode *inode)
 {
 	return mapping_tagged(inode->i_mapping, PAGECACHE_TAG_DIRTY);
+}
+
+static inline bool wbc_skip_metadata(struct writeback_control *wbc)
+{
+	return false;
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
@@ -1128,6 +1146,7 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 	struct address_space *mapping = inode->i_mapping;
 	struct inode_wb_link *iwbl = inode_writeback_iwbl(inode, wbc);
 	long nr_to_write = wbc->nr_to_write;
+	bool skip_metadata = wbc_skip_metadata(wbc);
 	unsigned dirty;
 	int ret;
 
@@ -1144,7 +1163,7 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 	 * separate, external IO completion path and ->sync_fs for guaranteeing
 	 * inode metadata is written back correctly.
 	 */
-	if (wbc->sync_mode == WB_SYNC_ALL && !wbc->for_sync) {
+	if (wbc->sync_mode == WB_SYNC_ALL && !wbc->for_sync && !skip_metadata) {
 		int err = filemap_fdatawait(mapping);
 		if (ret == 0)
 			ret = err;
@@ -1157,8 +1176,12 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 	 */
 	spin_lock(&inode->i_lock);
 
-	dirty = inode->i_state & I_DIRTY;
-	inode->i_state &= ~I_DIRTY;
+	if (skip_metadata)
+		dirty = inode->i_state & I_DIRTY_PAGES;
+	else
+		dirty = inode->i_state & I_DIRTY;
+
+	inode->i_state &= ~dirty;
 
 	/*
 	 * Paired with smp_mb() in __mark_inode_dirty_dctx().  This allows
