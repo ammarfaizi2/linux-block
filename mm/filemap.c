@@ -284,7 +284,7 @@ int __filemap_fdatawrite_range(struct address_space *mapping, loff_t start,
 	if (!mapping_cap_writeback_dirty(mapping))
 		return 0;
 
-	ret = do_writepages(mapping, &wbc);
+	ret = cgwb_do_writepages(mapping, &wbc);
 	return ret;
 }
 

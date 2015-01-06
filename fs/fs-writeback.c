@@ -36,6 +36,9 @@
 
 struct wb_completion {
 	atomic_t		cnt;
+#ifdef CONFIG_CGROUP_WRITEBACK
+	int			mapping_ret;	/* used by works w/ ->mapping */
+#endif
 };
 
 /*
@@ -43,8 +46,19 @@ struct wb_completion {
  */
 struct wb_writeback_work {
 	long nr_pages;
+
 	struct super_block *sb;
 	unsigned long *older_than_this;
+
+	/*
+	 * If ->mapping is set, only that mapping is written out using
+	 * do_writepages().  ->mapping_range_{start|end} are meaningful
+	 * only in such cases.
+	 */
+	struct address_space *mapping;
+	loff_t mapping_range_start;
+	loff_t mapping_range_end;
+
 	enum writeback_sync_modes sync_mode;
 	unsigned int tagged_writepages:1;
 	unsigned int for_kupdate:1;
@@ -697,6 +711,133 @@ static inline bool wbc_skip_metadata(struct writeback_control *wbc)
 	return wbc->iwbl && !iwbl_is_root(wbc->iwbl);
 }
 
+static bool cgwb_do_writepages_split_work(struct inode_wb_link *iwbl,
+					  struct wb_writeback_work *base_work)
+{
+	struct bdi_writeback *wb = iwbl_to_wb(iwbl);
+
+	/* if DIRTY_PAGES isn't visible yet, neither is the dirty data */
+	if (!test_bit(IWBL_DIRTY_PAGES, &iwbl->data))
+		return true;
+
+	return wb_clone_and_queue_work(wb, base_work);
+}
+
+/**
+ * cgwb_do_writepages - cgroup-aware do_writepages()
+ * @mapping: address_space to write out
+ * @wbc: writeback_control in effect
+ *
+ * Write out pages from @mapping according to @wbc.  This function expects
+ * @mapping to be a file backed one.  If cgroup writeback is enabled, the
+ * writes are distributed across the cgroups which dirtied the pages;
+ * otherwise, this is equivalent to do_writepages().  Returns 0 on success,
+ * -errno on failre.
+ */
+int cgwb_do_writepages(struct address_space *mapping,
+		       struct writeback_control *wbc)
+{
+	DEFINE_WB_COMPLETION_ONSTACK(done);
+	struct inode *inode = mapping->host;
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
+	struct wb_writeback_work base_work = {
+		.mapping		= mapping,
+		.mapping_range_start	= wbc->range_start,
+		.mapping_range_end	= wbc->range_end,
+		.nr_pages		= wbc->nr_to_write,
+		.sync_mode		= wbc->sync_mode,
+		.tagged_writepages	= wbc->tagged_writepages,
+		.for_kupdate		= wbc->for_kupdate,
+		.range_cyclic		= wbc->range_cyclic,
+		.for_background		= wbc->for_background,
+		.for_sync		= wbc->for_sync,
+		.done			= &done,
+	};
+	struct cgroup_subsys_state *blkcg_css;
+	struct inode_wb_link *iwbl;
+	struct inode_cgwb_link *icgwbl, *n;
+	int last_blkcg_id = 0, ret;
+
+	/*
+	 * The caller is likely flushing the pages it dirtied.  First look
+	 * up the current iwbl and perform do_writepages() directly on it.
+	 * If no page is skipped due to mismatching cgroup, there's nothing
+	 * more to do.
+	 */
+	blkcg_css = task_get_css(current, blkio_cgrp_id);
+	iwbl = iwbl_lookup(inode, blkcg_css);
+	if (iwbl) {
+		wbc_set_iwbl(wbc, iwbl);
+		wbc->iwbl_mismatch = 0;
+
+		ret = do_writepages(mapping, wbc);
+
+		css_put(blkcg_css);
+		if (ret || !wbc->iwbl_mismatch)
+			return ret;
+	} else {
+		css_put(blkcg_css);
+	}
+
+	/*
+	 * Split writes to all dirty iwbl's.  We don't yet implement
+	 * bandwidth-proportional distribution of nr_pages as the only
+	 * current caller, __filemap_fdatawrite_range(), always sets it to
+	 * LONG_MAX.  Implementing proportional distribution would require
+	 * a prepatory pass over dirty iwbl's to calculate the total write
+	 * bandwidth of the involved wb's.
+	 */
+	WARN_ON_ONCE(base_work.nr_pages != LONG_MAX);
+
+	if (!cgwb_do_writepages_split_work(&inode->i_wb_link, &base_work))
+		wb_wait_for_single_work(bdi, &base_work);
+restart_split:
+	rcu_read_lock();
+	inode_for_each_icgwbl(icgwbl, n, inode) {
+		struct inode_wb_link *iwbl = &icgwbl->iwbl;
+		int blkcg_id = iwbl_to_wb(iwbl)->blkcg_css->id;
+
+		if (blkcg_id <= last_blkcg_id)
+			continue;
+
+		if (!cgwb_do_writepages_split_work(iwbl, &base_work)) {
+			rcu_read_unlock();
+			wb_wait_for_single_work(bdi, &base_work);
+			goto restart_split;
+		}
+		last_blkcg_id = blkcg_id;
+	}
+	rcu_read_unlock();
+
+	wb_wait_for_completion(bdi, &done);
+	return done.mapping_ret;
+}
+
+static bool maybe_writeback_single_mapping(struct wb_writeback_work *work)
+{
+	struct wb_completion *done = work->done;
+	struct writeback_control wbc = {
+		.range_start		= work->mapping_range_start,
+		.range_end		= work->mapping_range_end,
+		.nr_to_write		= work->nr_pages,
+		.sync_mode		= work->sync_mode,
+		.tagged_writepages	= work->tagged_writepages,
+		.for_kupdate		= work->for_kupdate,
+		.range_cyclic		= work->range_cyclic,
+		.for_background		= work->for_background,
+		.for_sync		= work->for_sync,
+	};
+	int ret;
+
+	if (!work->mapping)
+		return false;
+
+	ret = do_writepages(work->mapping, &wbc);
+	if (done && ret)
+		done->mapping_ret = ret;
+	return true;
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
@@ -805,6 +946,11 @@ static inline bool iwbl_still_has_dirty_pages(struct inode_wb_link *iwbl,
 }
 
 static inline bool wbc_skip_metadata(struct writeback_control *wbc)
+{
+	return false;
+}
+
+static bool maybe_writeback_single_mapping(struct wb_writeback_work *work)
 {
 	return false;
 }
@@ -1718,7 +1864,8 @@ static long wb_do_writeback(struct bdi_writeback *wb)
 
 		trace_writeback_exec(wb->bdi, work);
 
-		wrote += wb_writeback(wb, work);
+		if (!maybe_writeback_single_mapping(work))
+			wrote += wb_writeback(wb, work);
 
 		if (work->single_wait) {
 			WARN_ON_ONCE(work->auto_free);

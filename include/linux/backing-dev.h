@@ -281,6 +281,8 @@ int __cgwb_create(struct backing_dev_info *bdi,
 		  struct cgroup_subsys_state *blkcg_css);
 struct inode_wb_link *iwbl_create(struct inode *inode,
 				  struct bdi_writeback *wb);
+int cgwb_do_writepages(struct address_space *mapping,
+		       struct writeback_control *wbc);
 int mapping_congested(struct address_space *mapping, struct task_struct *task,
 		      int bdi_bits);
 
@@ -785,6 +787,12 @@ static inline bool wbc_skip_page(struct writeback_control *wbc,
 				 struct page *page)
 {
 	return false;
+}
+
+static inline int cgwb_do_writepages(struct address_space *mapping,
+				     struct writeback_control *wbc)
+{
+	return do_writepages(mapping, wbc);
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
