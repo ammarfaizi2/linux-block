@@ -263,4 +263,8 @@ static inline struct backing_dev_info *inode_to_bdi(struct inode *inode)
 	return sb->s_bdi;
 }
 
+void init_dirty_page_context(struct dirty_context *dctx, struct page *page,
+			     struct address_space *mapping);
+void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode);
+
 #endif		/* _LINUX_BACKING_DEV_H */

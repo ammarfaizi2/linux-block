@@ -94,6 +94,16 @@ struct backing_dev_info {
 #endif
 };
 
+/*
+ * The following structure carries context used during page and inode
+ * dirtying.  Should be initialized with init_dirty_{inode|page}_context().
+ */
+struct dirty_context {
+	struct page		*page;
+	struct inode		*inode;
+	struct address_space	*mapping;
+};
+
 enum {
 	BLK_RW_ASYNC	= 0,
 	BLK_RW_SYNC	= 1,

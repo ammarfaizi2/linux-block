@@ -36,6 +36,7 @@
 #include <linux/mpage.h>
 #include <linux/pagevec.h>
 #include <linux/writeback.h>
+#include <linux/backing-dev.h>
 
 void
 xfs_count_page_state(
@@ -1814,17 +1815,19 @@ xfs_vm_set_page_dirty(
 
 	if (newly_dirty) {
 		/* sigh - __set_page_dirty() is static, so copy it here, too */
+		struct dirty_context dctx;
 		unsigned long flags;
 
 		spin_lock_irqsave(&mapping->tree_lock, flags);
+		init_dirty_page_context(&dctx, page, mapping);
 		if (page->mapping) {	/* Race with truncate? */
 			WARN_ON_ONCE(!PageUptodate(page));
-			account_page_dirtied(page, mapping);
+			account_page_dirtied(&dctx);
 			radix_tree_tag_set(&mapping->page_tree,
 					page_index(page), PAGECACHE_TAG_DIRTY);
 		}
 		spin_unlock_irqrestore(&mapping->tree_lock, flags);
-		__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
+		mark_inode_dirty_dctx(&dctx, I_DIRTY_PAGES);
 	}
 	return newly_dirty;
 }

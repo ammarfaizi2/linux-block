@@ -2090,8 +2090,11 @@ int __set_page_dirty_no_writeback(struct page *page)
  * Helper function for set_page_dirty family.
  * NOTE: This relies on being atomic wrt interrupts.
  */
-void account_page_dirtied(struct page *page, struct address_space *mapping)
+void account_page_dirtied(struct dirty_context *dctx)
 {
+	struct page *page = dctx->page;
+	struct address_space *mapping = dctx->mapping;
+
 	trace_writeback_dirty_page(page, mapping);
 
 	if (!mapping_cap_account_dirty(mapping))
@@ -2123,21 +2126,22 @@ int __set_page_dirty_nobuffers(struct page *page)
 {
 	if (!TestSetPageDirty(page)) {
 		struct address_space *mapping = page_mapping(page);
+		struct dirty_context dctx;
 		unsigned long flags;
 
 		if (!mapping)
 			return 1;
 
 		spin_lock_irqsave(&mapping->tree_lock, flags);
-		BUG_ON(page_mapping(page) != mapping);
+		init_dirty_page_context(&dctx, page, mapping);
 		WARN_ON_ONCE(!PagePrivate(page) && !PageUptodate(page));
-		account_page_dirtied(page, mapping);
+		account_page_dirtied(&dctx);
 		radix_tree_tag_set(&mapping->page_tree, page_index(page),
 				   PAGECACHE_TAG_DIRTY);
 		spin_unlock_irqrestore(&mapping->tree_lock, flags);
-		if (mapping->host) {
+		if (dctx.inode) {
 			/* !PageAnon && !swapper_space */
-			__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
+			mark_inode_dirty_dctx(&dctx, I_DIRTY_PAGES);
 		}
 		return 1;
 	}

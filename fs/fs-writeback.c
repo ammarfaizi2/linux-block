@@ -106,6 +106,46 @@ out_unlock:
 	spin_unlock_bh(&wb->work_lock);
 }
 
+/**
+ * init_dirty_page_context - init dirty_context for page dirtying
+ * @dctx: dirty_context to initialize
+ * @page: page to be dirtied
+ *
+ * @page is about to be dirtied, prepare @dctx accordingly.  Must be called
+ * with @mapping->tree_lock held.  The inode dirtying due to @page dirtying
+ * should use the same @dctx.
+ *
+ * @mapping may have been obtained before the lock was acquired and
+ * @dctx->mapping can be set to NULL even if @mapping isn't if truncate
+ * took place in-between.  @dctx->inode is always set to @mapping->inode.
+ */
+void init_dirty_page_context(struct dirty_context *dctx, struct page *page,
+			     struct address_space *mapping)
+{
+	lockdep_assert_held(&mapping->tree_lock);
+
+	dctx->page = page;
+	dctx->inode = mapping->host;
+	dctx->mapping = page_mapping(page);
+
+	BUG_ON(dctx->mapping != mapping);
+}
+EXPORT_SYMBOL_GPL(init_dirty_page_context);
+
+/**
+ * init_dirty_inode_context - init dirty_context for inode dirtying
+ * @dctx: dirty_context to initialize
+ * @inode: inode to be dirtied
+ *
+ * @inode is about to be dirtied w/o a page belonging to it being dirtied,
+ * prepare @dctx accordingly.
+ */
+void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode)
+{
+	memset(dctx, 0, sizeof(*dctx));
+	dctx->inode = inode;
+}
+
 static void __wb_start_writeback(struct bdi_writeback *wb, long nr_pages,
 				 bool range_cyclic, enum wb_reason reason)
 {
@@ -1107,8 +1147,8 @@ static noinline void block_dump___mark_inode_dirty(struct inode *inode)
 }
 
 /**
- *	__mark_inode_dirty -	internal function
- *	@inode: inode to mark
+ *	mark_inode_dirty_dctx -	internal function
+ *	@dctx: dirty_context containing the target inode
  *	@flags: what kind of dirty (i.e. I_DIRTY_SYNC)
  *	Mark an inode as dirty. Callers should use mark_inode_dirty or
  *  	mark_inode_dirty_sync.
@@ -1130,8 +1170,9 @@ static noinline void block_dump___mark_inode_dirty(struct inode *inode)
  * page->mapping->host, so the page-dirtying time is recorded in the internal
  * blockdev inode.
  */
-void __mark_inode_dirty(struct inode *inode, int flags)
+void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 {
+	struct inode *inode = dctx->inode;
 	struct super_block *sb = inode->i_sb;
 	struct backing_dev_info *bdi = NULL;
 
@@ -1221,6 +1262,15 @@ void __mark_inode_dirty(struct inode *inode, int flags)
 out_unlock_inode:
 	spin_unlock(&inode->i_lock);
 
+}
+EXPORT_SYMBOL(mark_inode_dirty_dctx);
+
+void __mark_inode_dirty(struct inode *inode, int flags)
+{
+	struct dirty_context dctx;
+
+	init_dirty_inode_context(&dctx, inode);
+	mark_inode_dirty_dctx(&dctx, flags);
 }
 EXPORT_SYMBOL(__mark_inode_dirty);
 
