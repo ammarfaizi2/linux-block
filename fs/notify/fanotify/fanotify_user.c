@@ -492,6 +492,7 @@ static __u32 fanotify_mark_remove_from_mask(struct fsnotify_mark *fsn_mark,
 	spin_lock(&fsn_mark->lock);
 	if (!(flags & FAN_MARK_IGNORED_MASK)) {
 		__u32 tmask = fsn_mark->mask & ~mask;
+
 		if (flags & FAN_MARK_ONDIR)
 			tmask &= ~FAN_ONDIR;
 
@@ -576,6 +577,7 @@ static __u32 fanotify_mark_add_to_mask(struct fsnotify_mark *fsn_mark,
 	spin_lock(&fsn_mark->lock);
 	if (!(flags & FAN_MARK_IGNORED_MASK)) {
 		__u32 tmask = fsn_mark->mask | mask;
+
 		if (flags & FAN_MARK_ONDIR)
 			tmask |= FAN_ONDIR;
 
