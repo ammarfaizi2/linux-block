@@ -99,13 +99,13 @@ static int bdi_debug_stats_show(struct seq_file *m, void *v)
 		   "b_more_io:          %10lu\n"
 		   "bdi_list:           %10u\n"
 		   "state:              %10lx\n",
-		   (unsigned long) K(bdi_stat(bdi, BDI_WRITEBACK)),
-		   (unsigned long) K(bdi_stat(bdi, BDI_RECLAIMABLE)),
+		   (unsigned long) K(wb_stat(wb, WB_WRITEBACK)),
+		   (unsigned long) K(wb_stat(wb, WB_RECLAIMABLE)),
 		   K(bdi_thresh),
 		   K(dirty_thresh),
 		   K(background_thresh),
-		   (unsigned long) K(bdi_stat(bdi, BDI_DIRTIED)),
-		   (unsigned long) K(bdi_stat(bdi, BDI_WRITTEN)),
+		   (unsigned long) K(wb_stat(wb, WB_DIRTIED)),
+		   (unsigned long) K(wb_stat(wb, WB_WRITTEN)),
 		   (unsigned long) K(bdi->write_bandwidth),
 		   nr_dirty,
 		   nr_io,
@@ -443,8 +443,10 @@ void bdi_unregister(struct backing_dev_info *bdi)
 }
 EXPORT_SYMBOL(bdi_unregister);
 
-static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info *bdi)
+static int bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info *bdi)
 {
+	int i, err;
+
 	memset(wb, 0, sizeof(*wb));
 
 	wb->bdi = bdi;
@@ -454,6 +456,27 @@ static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info *bdi)
 	INIT_LIST_HEAD(&wb->b_more_io);
 	spin_lock_init(&wb->list_lock);
 	INIT_DELAYED_WORK(&wb->dwork, bdi_writeback_workfn);
+
+	for (i = 0; i < NR_WB_STAT_ITEMS; i++) {
+		err = percpu_counter_init(&wb->stat[i], 0, GFP_KERNEL);
+		if (err) {
+			while (--i)
+				percpu_counter_destroy(&wb->stat[i]);
+			return err;
+		}
+	}
+
+	return 0;
+}
+
+static void bdi_wb_exit(struct bdi_writeback *wb)
+{
+	int i;
+
+	WARN_ON(delayed_work_pending(&wb->dwork));
+
+	for (i = 0; i < NR_WB_STAT_ITEMS; i++)
+		percpu_counter_destroy(&wb->stat[i]);
 }
 
 /*
@@ -463,7 +486,7 @@ static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info *bdi)
 
 int bdi_init(struct backing_dev_info *bdi)
 {
-	int i, err;
+	int err;
 
 	bdi->dev = NULL;
 
@@ -474,13 +497,9 @@ int bdi_init(struct backing_dev_info *bdi)
 	INIT_LIST_HEAD(&bdi->bdi_list);
 	INIT_LIST_HEAD(&bdi->work_list);
 
-	bdi_wb_init(&bdi->wb, bdi);
-
-	for (i = 0; i < NR_BDI_STAT_ITEMS; i++) {
-		err = percpu_counter_init(&bdi->bdi_stat[i], 0, GFP_KERNEL);
-		if (err)
-			goto err;
-	}
+	err = bdi_wb_init(&bdi->wb, bdi);
+	if (err)
+		return err;
 
 	bdi->dirty_exceeded = 0;
 
@@ -493,21 +512,17 @@ int bdi_init(struct backing_dev_info *bdi)
 	bdi->avg_write_bandwidth = INIT_BW;
 
 	err = fprop_local_init_percpu(&bdi->completions, GFP_KERNEL);
-
 	if (err) {
-err:
-		while (i--)
-			percpu_counter_destroy(&bdi->bdi_stat[i]);
+		bdi_wb_exit(&bdi->wb);
+		return err;
 	}
 
-	return err;
+	return 0;
 }
 EXPORT_SYMBOL(bdi_init);
 
 void bdi_destroy(struct backing_dev_info *bdi)
 {
-	int i;
-
 	/*
 	 * Splice our entries to the default_backing_dev_info.  This
 	 * condition shouldn't happen.  @wb must be empty at this point and
@@ -533,11 +548,7 @@ void bdi_destroy(struct backing_dev_info *bdi)
 	}
 
 	bdi_unregister(bdi);
-
-	WARN_ON(delayed_work_pending(&bdi->wb.dwork));
-
-	for (i = 0; i < NR_BDI_STAT_ITEMS; i++)
-		percpu_counter_destroy(&bdi->bdi_stat[i]);
+	bdi_wb_exit(&bdi->wb);
 
 	fprop_local_destroy_percpu(&bdi->completions);
 }

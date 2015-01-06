@@ -1081,8 +1081,8 @@ mds_commit:
 	spin_unlock(cinfo->lock);
 	if (!cinfo->dreq) {
 		inc_zone_page_state(req->wb_page, NR_UNSTABLE_NFS);
-		inc_bdi_stat(page_file_mapping(req->wb_page)->backing_dev_info,
-			     BDI_RECLAIMABLE);
+		inc_wb_stat(&page_file_mapping(req->wb_page)->backing_dev_info->wb,
+			    WB_RECLAIMABLE);
 		__mark_inode_dirty(req->wb_context->dentry->d_inode,
 				   I_DIRTY_DATASYNC);
 	}

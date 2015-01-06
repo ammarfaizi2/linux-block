@@ -786,8 +786,8 @@ nfs_request_add_commit_list(struct nfs_page *req, struct list_head *dst,
 	spin_unlock(cinfo->lock);
 	if (!cinfo->dreq) {
 		inc_zone_page_state(req->wb_page, NR_UNSTABLE_NFS);
-		inc_bdi_stat(page_file_mapping(req->wb_page)->backing_dev_info,
-			     BDI_RECLAIMABLE);
+		inc_wb_stat(&page_file_mapping(req->wb_page)->backing_dev_info->wb,
+			    WB_RECLAIMABLE);
 		__mark_inode_dirty(req->wb_context->dentry->d_inode,
 				   I_DIRTY_DATASYNC);
 	}
@@ -853,7 +853,8 @@ static void
 nfs_clear_page_commit(struct page *page)
 {
 	dec_zone_page_state(page, NR_UNSTABLE_NFS);
-	dec_bdi_stat(page_file_mapping(page)->backing_dev_info, BDI_RECLAIMABLE);
+	dec_wb_stat(&page_file_mapping(page)->backing_dev_info->wb,
+		    WB_RECLAIMABLE);
 }
 
 /* Called holding inode (/cinfo) lock */
@@ -1564,8 +1565,8 @@ void nfs_retry_commit(struct list_head *page_list,
 		nfs_mark_request_commit(req, lseg, cinfo);
 		if (!cinfo->dreq) {
 			dec_zone_page_state(req->wb_page, NR_UNSTABLE_NFS);
-			dec_bdi_stat(page_file_mapping(req->wb_page)->backing_dev_info,
-				     BDI_RECLAIMABLE);
+			dec_wb_stat(&page_file_mapping(req->wb_page)->backing_dev_info->wb,
+				    WB_RECLAIMABLE);
 		}
 		nfs_unlock_and_release_request(req);
 	}
