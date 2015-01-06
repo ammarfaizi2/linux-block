@@ -1977,6 +1977,9 @@ retry:
 
 			done_index = page->index;
 
+			if (wbc_skip_page(wbc, page))
+				continue;
+
 			lock_page(page);
 
 			/*

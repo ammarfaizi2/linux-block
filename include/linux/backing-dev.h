@@ -648,6 +648,27 @@ wbc_blkcg_css(struct writeback_control *wbc)
 	return wbc->iwbl ? iwbl_to_wb(wbc->iwbl)->blkcg_css : NULL;
 }
 
+/**
+ * wbc_skip_page - determine whether to skip a page during writeback
+ * @wbc: writeback_control in effect
+ * @page: page being considered
+ *
+ * Determine whether @page should be written back during a writeback
+ * controlled by @wbc.  This function also accounts the number of skipped
+ * pages in @wbc and should only be called once per page.
+ */
+static inline bool wbc_skip_page(struct writeback_control *wbc,
+				 struct page *page)
+{
+	struct cgroup_subsys_state *blkcg_css = wbc_blkcg_css(wbc);
+
+	if (blkcg_css && blkcg_css != page_blkcg_dirty(page)) {
+		wbc->iwbl_mismatch = 1;
+		return true;
+	}
+	return false;
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static inline bool mapping_cgwb_enabled(struct address_space *mapping)
@@ -758,6 +779,12 @@ static inline struct cgroup_subsys_state *
 wbc_blkcg_css(struct writeback_control *wbc)
 {
 	return NULL;
+}
+
+static inline bool wbc_skip_page(struct writeback_control *wbc,
+				 struct page *page)
+{
+	return false;
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
