@@ -2818,10 +2818,8 @@ rebalance:
 						migratetype,&did_some_progress);
 			if (page)
 				goto got_pg;
-			if (!did_some_progress) {
-				BUG_ON(gfp_mask & __GFP_NOFAIL);
+			if (!did_some_progress)
 				goto nopage;
-			}
 		}
 		/* Wait for some write requests to complete then retry */
 		wait_iff_congested(preferred_zone, BLK_RW_ASYNC, HZ/50);
