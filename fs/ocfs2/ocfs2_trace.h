@@ -2373,6 +2373,9 @@ DEFINE_OCFS2_ULL_EVENT(ocfs2_orphan_add_begin);
 
 DEFINE_OCFS2_ULL_UINT_EVENT(ocfs2_orphan_add_end);
 
+DEFINE_OCFS2_ULL_EVENT(ocfs2_dio_orphan_add_begin);
+DEFINE_OCFS2_ULL_UINT_EVENT(ocfs2_dio_orphan_add_end);
+
 TRACE_EVENT(ocfs2_orphan_del,
 	TP_PROTO(unsigned long long dir, const char *name, int namelen),
 	TP_ARGS(dir, name, namelen),
