@@ -494,7 +494,7 @@ TRACE_EVENT(writeback_sb_inodes_requeue,
 		        dev_name(inode_to_bdi(inode)->dev), 32);
 		__entry->ino		= inode->i_ino;
 		__entry->state		= inode->i_state;
-		__entry->dirtied_when	= inode->dirtied_when;
+		__entry->dirtied_when	= inode->i_wb_link.dirtied_when;
 	),
 
 	TP_printk("bdi %s: ino=%lu state=%s dirtied_when=%lu age=%lu",
@@ -565,7 +565,7 @@ DECLARE_EVENT_CLASS(writeback_single_inode_template,
 			dev_name(inode_to_bdi(inode)->dev), 32);
 		__entry->ino		= inode->i_ino;
 		__entry->state		= inode->i_state;
-		__entry->dirtied_when	= inode->dirtied_when;
+		__entry->dirtied_when	= inode->i_wb_link.dirtied_when;
 		__entry->writeback_index = inode->i_mapping->writeback_index;
 		__entry->nr_to_write	= nr_to_write;
 		__entry->wrote		= nr_to_write - wbc->nr_to_write;

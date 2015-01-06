@@ -521,23 +521,19 @@ void inode_wb_list_del(struct inode *inode)
  * Redirty an inode: set its when-it-was dirtied timestamp and move it to the
  * furthest end of its superblock's dirty-inode list.
  *
- * Before stamping the inode's ->dirtied_when, we check to see whether it is
+ * Before stamping the iwbl's ->dirtied_when, we check to see whether it is
  * already the most-recently-dirtied inode on the b_dirty list.  If that is
  * the case then the inode must have been redirtied while it was being written
  * out and we don't reset its dirtied_when.
  */
 static void redirty_tail(struct inode_wb_link *iwbl, struct bdi_writeback *wb)
 {
-	struct inode *inode = iwbl_to_inode(iwbl);
-
 	if (!list_empty(&wb->b_dirty)) {
-		struct inode_wb_link *tail_iwbl;
-		struct inode *tail;
+		struct inode_wb_link *tail;
 
-		tail_iwbl = dirty_list_to_iwbl(wb->b_dirty.next);
-		tail = iwbl_to_inode(tail_iwbl);
-		if (time_before(inode->dirtied_when, tail->dirtied_when))
-			inode->dirtied_when = jiffies;
+		tail = dirty_list_to_iwbl(wb->b_dirty.next);
+		if (time_before(iwbl->dirtied_when, tail->dirtied_when))
+			iwbl->dirtied_when = jiffies;
 	}
 	iwbl_move_locked(iwbl, wb, &wb->b_dirty);
 }
@@ -560,9 +556,9 @@ static void inode_sync_complete(struct inode *inode)
 	wake_up_bit(&inode->i_state, __I_SYNC);
 }
 
-static bool inode_dirtied_after(struct inode *inode, unsigned long t)
+static bool iwbl_dirtied_after(struct inode_wb_link *iwbl, unsigned long t)
 {
-	bool ret = time_after(inode->dirtied_when, t);
+	bool ret = time_after(iwbl->dirtied_when, t);
 #ifndef CONFIG_64BIT
 	/*
 	 * For inodes being constantly redirtied, dirtied_when can get stuck.
@@ -570,7 +566,7 @@ static bool inode_dirtied_after(struct inode *inode, unsigned long t)
 	 * This test is necessary to prevent such wrapped-around relative times
 	 * from permanently stopping the whole bdi writeback.
 	 */
-	ret = ret && time_before_eq(inode->dirtied_when, jiffies);
+	ret = ret && time_before_eq(iwbl->dirtied_when, jiffies);
 #endif
 	return ret;
 }
@@ -596,7 +592,7 @@ static int move_expired_inodes(struct list_head *delaying_queue,
 		inode = iwbl_to_inode(iwbl);
 
 		if (work->older_than_this &&
-		    inode_dirtied_after(inode, *work->older_than_this))
+		    iwbl_dirtied_after(iwbl, *work->older_than_this))
 			break;
 		list_move(&iwbl->dirty_list, &tmp);
 		moved++;
@@ -733,7 +729,7 @@ static void requeue_inode(struct inode_wb_link *iwbl, struct bdi_writeback *wb,
 	 */
 	if ((inode->i_state & I_DIRTY) &&
 	    (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_writepages))
-		inode->dirtied_when = jiffies;
+		iwbl->dirtied_when = jiffies;
 
 	if (wbc->pages_skipped) {
 		/*
@@ -1488,7 +1484,7 @@ static noinline void block_dump___mark_inode_dirty(struct inode *inode)
  * In short, make sure you hash any inodes _before_ you start marking
  * them dirty.
  *
- * Note that for blockdevs, inode->dirtied_when represents the dirtying time of
+ * Note that for blockdevs, iwbl->dirtied_when represents the dirtying time of
  * the block-special inode (/dev/hda1) itself.  And the ->dirtied_when field of
  * the kernel-internal blockdev inode represents the dirtying time of the
  * blockdev's pages.  This is why for I_DIRTY_PAGES we always use
@@ -1567,7 +1563,7 @@ void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 			     !test_bit(WB_registered, &bdi->wb.state),
 			     "bdi-%s not registered\n", bdi->name);
 
-			inode->dirtied_when = jiffies;
+			iwbl->dirtied_when = jiffies;
 			wakeup_bdi = iwbl_move_locked(iwbl, &bdi->wb,
 						      &bdi->wb.b_dirty);
 			spin_unlock(&bdi->wb.list_lock);

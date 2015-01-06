@@ -152,6 +152,7 @@ struct inode_wb_link {
 	 */
 	unsigned long		data;
 #endif
+	unsigned long		dirtied_when;
 	struct list_head	dirty_list;
 };
 

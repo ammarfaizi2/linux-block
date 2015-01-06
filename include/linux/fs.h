@@ -607,8 +607,6 @@ struct inode {
 	unsigned long		i_state;
 	struct mutex		i_mutex;
 
-	unsigned long		dirtied_when;	/* jiffies of first dirtying */
-
 	struct hlist_node	i_hash;
 	struct inode_wb_link	i_wb_link;	/* backing dev IO list */
 	struct list_head	i_lru;		/* inode LRU list */

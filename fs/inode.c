@@ -152,7 +152,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	inode->i_bdev = NULL;
 	inode->i_cdev = NULL;
 	inode->i_rdev = 0;
-	inode->dirtied_when = 0;
+	inode->i_wb_link.dirtied_when = 0;
 
 	if (security_inode_alloc(inode))
 		goto out;
