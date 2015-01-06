@@ -55,6 +55,8 @@ static int rtc_suspend(struct device *dev)
 	struct timespec64	delta, delta_delta;
 	int err;
 
+	rtc->valid_alarm = !rtc_read_alarm(rtc, &rtc->alarm);
+
 	if (has_persistent_clock())
 		return 0;
 
@@ -102,6 +104,27 @@ static int rtc_resume(struct device *dev)
 	struct timespec64	sleep_time;
 	int err;
 
+	/*
+	 * Ensure that the platform hasn't overwritten a pending alarm while
+	 * suspended
+	 */
+	if (rtc->valid_alarm) {
+		long now, scheduled;
+
+		rtc_read_time(rtc, &tm);
+		rtc_tm_to_time(&rtc->alarm.time, &scheduled);
+		rtc_tm_to_time(&tm, &now);
+
+		/* Clear the alarm registers if it went off during suspend */
+		if (scheduled <= now) {
+			rtc_time_to_tm(0, &rtc->alarm.time);
+			rtc->alarm.enabled = 0;
+		}
+
+		if (rtc->ops && rtc->ops->set_alarm)
+			rtc->ops->set_alarm(rtc->dev.parent, &rtc->alarm);
+	}
+
 	if (has_persistent_clock())
 		return 0;
 
@@ -145,6 +168,7 @@ static int rtc_resume(struct device *dev)
 	if (sleep_time.tv_sec >= 0)
 		timekeeping_inject_sleeptime64(&sleep_time);
 	rtc_hctosys_ret = 0;
+
 	return 0;
 }
 
