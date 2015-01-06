@@ -2159,10 +2159,13 @@ EXPORT_SYMBOL(__set_page_dirty_nobuffers);
 void account_page_redirty(struct page *page)
 {
 	struct address_space *mapping = page->mapping;
+
 	if (mapping && mapping_cap_account_dirty(mapping)) {
+		struct bdi_writeback *wb = page_cgwb_dirty(page);
+
 		current->nr_dirtied--;
 		dec_zone_page_state(page, NR_DIRTIED);
-		dec_wb_stat(&mapping->backing_dev_info->wb, WB_DIRTIED);
+		dec_wb_stat(wb, WB_DIRTIED);
 	}
 }
 EXPORT_SYMBOL(account_page_redirty);
@@ -2300,9 +2303,10 @@ int clear_page_dirty_for_io(struct page *page)
 		 * exclusion.
 		 */
 		if (TestClearPageDirty(page)) {
+			struct bdi_writeback *wb = page_cgwb_dirty(page);
+
 			dec_zone_page_state(page, NR_FILE_DIRTY);
-			dec_wb_stat(&mapping->backing_dev_info->wb,
-				    WB_RECLAIMABLE);
+			dec_wb_stat(wb, WB_RECLAIMABLE);
 			page_blkcg_detach_dirty(page);
 			return 1;
 		}
@@ -2330,9 +2334,11 @@ int test_clear_page_writeback(struct page *page)
 						page_index(page),
 						PAGECACHE_TAG_WRITEBACK);
 			if (bdi_cap_account_writeback(bdi)) {
-				__dec_wb_stat(&bdi->wb, WB_WRITEBACK);
+				struct bdi_writeback *wb = page_cgwb_wb(page);
+
+				__dec_wb_stat(wb, WB_WRITEBACK);
 				page_blkcg_detach_wb(page);
-				__wb_writeout_inc(&bdi->wb);
+				__wb_writeout_inc(wb);
 			}
 		}
 		spin_unlock_irqrestore(&mapping->tree_lock, flags);
@@ -2366,8 +2372,8 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
 						page_index(page),
 						PAGECACHE_TAG_WRITEBACK);
 			if (bdi_cap_account_writeback(bdi)) {
-				__inc_wb_stat(&bdi->wb, WB_WRITEBACK);
 				page_blkcg_attach_wb(page);
+				__inc_wb_stat(page_cgwb_wb(page), WB_WRITEBACK);
 			}
 		}
 		if (!PageDirty(page))

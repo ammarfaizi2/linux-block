@@ -211,7 +211,7 @@ void __delete_from_page_cache(struct page *page, void *shadow)
 	 */
 	if (PageDirty(page) && mapping_cap_account_dirty(mapping)) {
 		dec_zone_page_state(page, NR_FILE_DIRTY);
-		dec_wb_stat(&mapping->backing_dev_info->wb, WB_RECLAIMABLE);
+		dec_wb_stat(page_cgwb_dirty(page), WB_RECLAIMABLE);
 		page_blkcg_detach_dirty(page);
 	}
 }

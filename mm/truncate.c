@@ -112,8 +112,7 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 		struct address_space *mapping = page->mapping;
 		if (mapping && mapping_cap_account_dirty(mapping)) {
 			dec_zone_page_state(page, NR_FILE_DIRTY);
-			dec_wb_stat(&mapping->backing_dev_info->wb,
-				    WB_RECLAIMABLE);
+			dec_wb_stat(page_cgwb_dirty(page), WB_RECLAIMABLE);
 			if (account_size)
 				task_io_account_cancelled_write(account_size);
 			page_blkcg_detach_dirty(page);
