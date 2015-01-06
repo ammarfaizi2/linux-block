@@ -274,9 +274,8 @@ more:
 static struct inode *
 befs_alloc_inode(struct super_block *sb)
 {
-        struct befs_inode_info *bi;
-        bi = (struct befs_inode_info *)kmem_cache_alloc(befs_inode_cachep,
-							GFP_KERNEL);
+	struct befs_inode_info *bi = kmem_cache_alloc(befs_inode_cachep,
+						      GFP_KERNEL);
         if (!bi)
                 return NULL;
         return &bi->vfs_inode;
