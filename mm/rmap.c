@@ -706,6 +706,7 @@ int page_mapped_in_vma(struct page *page, struct vm_area_struct *vma)
 }
 
 struct page_referenced_arg {
+	int dirtied;
 	int mapcount;
 	int referenced;
 	unsigned long vm_flags;
@@ -720,6 +721,7 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
 	struct mm_struct *mm = vma->vm_mm;
 	spinlock_t *ptl;
 	int referenced = 0;
+	int dirty = 0;
 	struct page_referenced_arg *pra = arg;
 
 	if (unlikely(PageTransHuge(page))) {
@@ -743,6 +745,11 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
 		/* go ahead even if the pmd is pmd_trans_splitting() */
 		if (pmdp_clear_flush_young_notify(vma, address, pmd))
 			referenced++;
+
+		/*
+		 * In this implmentation, MADV_FREE doesn't support THP free
+		 */
+		dirty++;
 		spin_unlock(ptl);
 	} else {
 		pte_t *pte;
@@ -772,6 +779,10 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
 			if (likely(!(vma->vm_flags & VM_SEQ_READ)))
 				referenced++;
 		}
+
+		if (pte_dirty(*pte))
+			dirty++;
+
 		pte_unmap_unlock(pte, ptl);
 	}
 
@@ -779,6 +790,9 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
 		pra->referenced++;
 		pra->vm_flags |= vma->vm_flags;
 	}
+
+	if (dirty)
+		pra->dirtied++;
 
 	pra->mapcount--;
 	if (!pra->mapcount)
@@ -804,6 +818,7 @@ static bool invalid_page_referenced_vma(struct vm_area_struct *vma, void *arg)
  * @is_locked: caller holds lock on the page
  * @memcg: target memory cgroup
  * @vm_flags: collect encountered vma->vm_flags who actually referenced the page
+ * @is_pte_dirty: ptes which have marked dirty bit - used for lazyfree page
  *
  * Quick test_and_clear_referenced for all mappings to a page,
  * returns the number of ptes which referenced the page.
@@ -811,7 +826,8 @@ static bool invalid_page_referenced_vma(struct vm_area_struct *vma, void *arg)
 int page_referenced(struct page *page,
 		    int is_locked,
 		    struct mem_cgroup *memcg,
-		    unsigned long *vm_flags)
+		    unsigned long *vm_flags,
+		    int *is_pte_dirty)
 {
 	int ret;
 	int we_locked = 0;
@@ -826,6 +842,9 @@ int page_referenced(struct page *page,
 	};
 
 	*vm_flags = 0;
+	if (is_pte_dirty)
+		*is_pte_dirty = 0;
+
 	if (!page_mapped(page))
 		return 0;
 
@@ -852,6 +871,9 @@ int page_referenced(struct page *page,
 
 	if (we_locked)
 		unlock_page(page);
+
+	if (is_pte_dirty)
+		*is_pte_dirty = pra.dirtied;
 
 	return pra.referenced;
 }
@@ -1181,6 +1203,7 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	spinlock_t *ptl;
 	int ret = SWAP_AGAIN;
 	enum ttu_flags flags = (enum ttu_flags)arg;
+	int dirty = 0;
 
 	pte = page_check_address(page, mm, address, &ptl, 0);
 	if (!pte)
@@ -1210,7 +1233,8 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	pteval = ptep_clear_flush(vma, address, pte);
 
 	/* Move the dirty bit to the physical page now the pte is gone. */
-	if (pte_dirty(pteval))
+	dirty = pte_dirty(pteval);
+	if (dirty)
 		set_page_dirty(page);
 
 	/* Update high watermark before we lower rss */
@@ -1238,6 +1262,19 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	} else if (PageAnon(page)) {
 		swp_entry_t entry = { .val = page_private(page) };
 		pte_t swp_pte;
+
+		if (flags & TTU_FREE) {
+			VM_BUG_ON_PAGE(PageSwapCache(page), page);
+			if (!dirty && !PageDirty(page)) {
+				/* It's a freeable page by MADV_FREE */
+				dec_mm_counter(mm, MM_ANONPAGES);
+				goto discard;
+			} else {
+				set_pte_at(mm, address, pte, pteval);
+				ret = SWAP_FAIL;
+				goto out_unmap;
+			}
+		}
 
 		if (PageSwapCache(page)) {
 			/*
@@ -1280,6 +1317,7 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	} else
 		dec_mm_counter(mm, MM_FILEPAGES);
 
+discard:
 	page_remove_rmap(page);
 	page_cache_release(page);
 
