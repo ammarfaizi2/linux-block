@@ -1839,10 +1839,12 @@ static bool __zone_watermark_ok(struct zone *z, unsigned int order,
 		/* At the next order, this order's pages become unavailable */
 		free_pages -= z->free_area[o].nr_free << o;
 
-		/* If CMA's page number of this order was substructed as part
-		   of "zone_page_state(z, NR_FREE_CMA_PAGES)", subtracting
-		   "z->free_area[o].nr_free << o" substructed CMA's page
-		   number of this order again.  So add it back.  */
+		/*
+		 * If CMA's page number of this order was substracted as part
+		 * of "zone_page_state(z, NR_FREE_CMA_PAGES)", subtracting
+		 * "z->free_area[o].nr_free << o" subtracted CMA's page number
+		 * of this order again.  So add it back.
+		 */
 		if (IS_ENABLED(CONFIG_CMA) && free_cma)
 			free_pages += z->free_area[o].cma_nr_free << o;
 
