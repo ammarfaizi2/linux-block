@@ -1948,14 +1948,13 @@ repeat:
 	} else {
 		if (!(atomic_read(&bh->b_count) > 0 ||
 				(bh->b_page && bh->b_page->mapping))) {
-			printk(KERN_EMERG "%s: bh->b_count=%d\n",
-				__FUNCTION__, atomic_read(&bh->b_count));
-			printk(KERN_EMERG "%s: bh->b_page=%p\n",
-				__FUNCTION__, bh->b_page);
+			pr_emerg("%s: bh->b_count=%d\n",
+				__func__, atomic_read(&bh->b_count));
+			pr_emerg("%s: bh->b_page=%p\n",
+				__func__, bh->b_page);
 			if (bh->b_page)
-				printk(KERN_EMERG "%s: "
-						"bh->b_page->mapping=%p\n",
-					__FUNCTION__, bh->b_page->mapping);
+				pr_emerg("%s: bh->b_page->mapping=%p\n",
+					__func__, bh->b_page->mapping);
 		}
 
 		if (!new_jh) {
