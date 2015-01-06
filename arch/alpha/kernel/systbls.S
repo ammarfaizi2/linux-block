@@ -533,7 +533,3 @@ sys_call_table:
 	.size sys_call_table, . - sys_call_table
 	.type sys_call_table, @object
 
-/* Remember to update everything, kids.  */
-.ifne (. - sys_call_table) - (NR_SYSCALLS * 8)
-.err
-.endif
