@@ -244,6 +244,8 @@ static int __release_resource(struct resource *old)
 		}
 	}
 
+	WARN_ON(old->child);
+
 	p = &old->parent->child;
 	for (;;) {
 		tmp = *p;
