@@ -97,7 +97,7 @@ void dump_page_badflags(struct page *page, const char *reason,
 	}
 #ifdef CONFIG_MEMCG
 	if (page->mem_cgroup)
-		pr_alert("page->mem_cgroup:%p\n", page->mem_cgroup);
+		pr_alert("page->mem_cgroup:%p\n", (void *)page->mem_cgroup);
 #endif
 }
 

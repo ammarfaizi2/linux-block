@@ -21,7 +21,6 @@
 #define AT_VECTOR_SIZE (2*(AT_VECTOR_SIZE_ARCH + AT_VECTOR_SIZE_BASE + 1))
 
 struct address_space;
-struct mem_cgroup;
 
 #define USE_SPLIT_PTE_PTLOCKS	(NR_CPUS >= CONFIG_SPLIT_PTLOCK_CPUS)
 #define USE_SPLIT_PMD_PTLOCKS	(USE_SPLIT_PTE_PTLOCKS && \
@@ -176,7 +175,7 @@ struct page {
 	};
 
 #ifdef CONFIG_MEMCG
-	struct mem_cgroup *mem_cgroup;
+	unsigned long mem_cgroup;
 #endif
 
 	/*
