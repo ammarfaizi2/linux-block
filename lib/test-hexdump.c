@@ -148,7 +148,7 @@ static void __init test_hexdump_overflow(bool ascii)
 	}
 
 	if (!a) {
-		pr_err("Len: %zu rc: %zu strlen: %zu\n", l, r, strlen(buf));
+		pr_err("Len: %zu rc: %u strlen: %zu\n", l, r, strlen(buf));
 		pr_err("Result: '%s'\n", buf);
 	}
 }
