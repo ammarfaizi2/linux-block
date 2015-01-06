@@ -123,6 +123,14 @@ struct backing_dev_info {
 };
 
 /*
+ * Used to link a dirty inode on a wb (bdi_writeback).  Each inode embeds
+ * one at ->i_wb_link which is used for the root wb.
+ */
+struct inode_wb_link {
+	struct list_head	dirty_list;
+};
+
+/*
  * The following structure carries context used during page and inode
  * dirtying.  Should be initialized with init_dirty_{inode|page}_context().
  */

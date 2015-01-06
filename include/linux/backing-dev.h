@@ -274,6 +274,11 @@ void init_dirty_page_context(struct dirty_context *dctx, struct page *page,
 			     struct address_space *mapping);
 void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode);
 
+static inline struct inode *iwbl_to_inode(struct inode_wb_link *iwbl)
+{
+	return container_of(iwbl, struct inode, i_wb_link);
+}
+
 #ifdef CONFIG_CGROUP_WRITEBACK
 
 void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css);
