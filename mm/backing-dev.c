@@ -464,6 +464,7 @@ int __cgwb_create(struct backing_dev_info *bdi,
 		return -ENOMEM;
 	}
 
+	INIT_LIST_HEAD(&wb->icgwbls);
 	wb->blkcg_css = blkcg_css;
 	set_bit(WB_registered, &wb->state); /* cgwbs are always registered */
 
@@ -532,16 +533,31 @@ static void cgwb_shutdown_commit(struct list_head *to_shutdown)
 
 static void cgwb_exit(struct bdi_writeback *wb)
 {
+	struct inode_cgwb_link *icgwbl, *next;
+	unsigned long flags;
+
+	spin_lock_irqsave(&wb->bdi->icgwbls_lock, flags);
+	list_for_each_entry_safe(icgwbl, next, &wb->icgwbls, wb_node) {
+		WARN_ON_ONCE(!list_empty(&icgwbl->iwbl.dirty_list));
+		hlist_del_rcu(&icgwbl->inode_node);
+		list_del(&icgwbl->wb_node);
+		kfree_rcu(icgwbl, rcu);
+	}
+	spin_unlock_irqrestore(&wb->bdi->icgwbls_lock, flags);
+
 	WARN_ON(!radix_tree_delete(&wb->bdi->cgwb_tree, wb->blkcg_css->id));
 	list_del(&wb->blkcg_node);
+
 	wb_exit(wb);
 	kfree_rcu(wb, rcu);
 }
 
 static void cgwb_bdi_init(struct backing_dev_info *bdi)
 {
+	INIT_LIST_HEAD(&bdi->wb.icgwbls);
 	bdi->wb.blkcg_css = blkcg_root_css;
 	INIT_RADIX_TREE(&bdi->cgwb_tree, GFP_ATOMIC);
+	spin_lock_init(&bdi->icgwbls_lock);
 }
 
 /**
@@ -611,6 +627,70 @@ void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css)
 	list_for_each_entry_safe(wb, next, &blkcg->cgwb_list, blkcg_node)
 		cgwb_exit(wb);
 	spin_unlock_irq(&cgwb_lock);
+}
+
+/**
+ * iwbl_create - create an inode_cgwb_link
+ * @inode: target inode
+ * @wb: target bdi_writeback
+ *
+ * Try to create an iwbl (inode_wb_link) for dirtying @inode against @wb.
+ * This function can be called under any context without locking as long as
+ * @inode and @wb are kept alive.  See iwbl_lookup() for details.
+ *
+ * Returns the pointer to the created or found icgwbl on success, %NULL on
+ * failure.
+ */
+struct inode_wb_link *iwbl_create(struct inode *inode, struct bdi_writeback *wb)
+{
+	struct inode_wb_link *iwbl = NULL;
+	struct inode_cgwb_link *icgwbl;
+	unsigned long flags;
+
+	icgwbl = kzalloc(sizeof(*icgwbl), GFP_ATOMIC);
+	if (!icgwbl)
+		return NULL;
+
+	icgwbl->iwbl.data = (unsigned long)wb;
+	INIT_LIST_HEAD(&icgwbl->iwbl.dirty_list);
+	icgwbl->inode = inode;
+
+	spin_lock_irqsave(&wb->bdi->icgwbls_lock, flags);
+
+	/*
+	 * Testing I_FREEING under icgwbls_lock guarantees that no new
+	 * icgwbl's will be created after inode_icgwbls_del().
+	 */
+	if (inode->i_state & I_FREEING)
+		goto out_unlock;
+
+	iwbl = iwbl_lookup(inode, wb->blkcg_css);
+	if (!iwbl) {
+		struct inode_cgwb_link *prev = NULL, *pos;
+		int blkcg_id = wb->blkcg_css->id;
+
+		/* i_cgwb_links is sorted by blkcg ID */
+		hlist_for_each_entry_rcu(pos, &inode->i_cgwb_links, inode_node) {
+			if (iwbl_to_wb(&pos->iwbl)->blkcg_css->id > blkcg_id)
+				break;
+			prev = pos;
+		}
+		if (prev)
+			hlist_add_behind_rcu(&icgwbl->inode_node,
+					     &prev->inode_node);
+		else
+			hlist_add_head_rcu(&icgwbl->inode_node,
+					   &inode->i_cgwb_links);
+
+		list_add(&icgwbl->wb_node, &wb->icgwbls);
+
+		iwbl = &icgwbl->iwbl;
+		icgwbl = NULL;
+	}
+out_unlock:
+	spin_unlock_irqrestore(&wb->bdi->icgwbls_lock, flags);
+	kfree(icgwbl);
+	return iwbl;
 }
 
 #else	/* CONFIG_CGROUP_WRITEBACK */

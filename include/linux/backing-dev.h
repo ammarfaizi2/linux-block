@@ -274,16 +274,13 @@ void init_dirty_page_context(struct dirty_context *dctx, struct page *page,
 			     struct address_space *mapping);
 void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode);
 
-static inline struct inode *iwbl_to_inode(struct inode_wb_link *iwbl)
-{
-	return container_of(iwbl, struct inode, i_wb_link);
-}
-
 #ifdef CONFIG_CGROUP_WRITEBACK
 
 void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css);
 int __cgwb_create(struct backing_dev_info *bdi,
 		  struct cgroup_subsys_state *blkcg_css);
+struct inode_wb_link *iwbl_create(struct inode *inode,
+				  struct bdi_writeback *wb);
 int mapping_congested(struct address_space *mapping, struct task_struct *task,
 		      int bdi_bits);
 
@@ -469,6 +466,60 @@ static inline struct bdi_writeback *iwbl_to_wb(struct inode_wb_link *iwbl)
 	return (void *)(iwbl->data & ~IWBL_FLAGS_MASK);
 }
 
+static inline bool iwbl_is_root(struct inode_wb_link *iwbl)
+{
+	struct bdi_writeback *wb = iwbl_to_wb(iwbl);
+
+	return wb->blkcg_css == blkcg_root_css;
+}
+
+static inline struct inode *iwbl_to_inode(struct inode_wb_link *iwbl)
+{
+	if (iwbl_is_root(iwbl)) {
+		return container_of(iwbl, struct inode, i_wb_link);
+	} else {
+		struct inode_cgwb_link *icgwbl =
+			container_of(iwbl, struct inode_cgwb_link, iwbl);
+		return icgwbl->inode;
+	}
+}
+
+/**
+ * iwbl_lookup - lookup iwbl for dirtying an inode against a blkcg_css
+ * @inode: target inode
+ * @blkcg_css: target blkcg_css
+ *
+ * Lookup iwbl (inode_wb_link) for dirtying @inode against @blkcg_css.  If
+ * found, the returned iwbl is associated with the bdi_writeback of
+ * @blkcg_css on @inode's bdi.  If not found, %NULL is returned.
+ *
+ * The returned iwbl remains accessible as long as both @inode and
+ * @blkcg_css are alive.
+ */
+static inline struct inode_wb_link *
+iwbl_lookup(struct inode *inode, struct cgroup_subsys_state *blkcg_css)
+{
+	struct inode_wb_link *iwbl = NULL;
+	struct inode_cgwb_link *icgwbl;
+
+	if (blkcg_css == blkcg_root_css)
+		return &inode->i_wb_link;
+
+	/*
+	 * RCU protects the lookup itself.  Once looked up, the iwbl's
+	 * lifetime is governed by those of @inode and @blkcg_css.
+	 */
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(icgwbl, &inode->i_cgwb_links, inode_node) {
+		if (iwbl_to_wb(&icgwbl->iwbl)->blkcg_css == blkcg_css) {
+			iwbl = &icgwbl->iwbl;
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return iwbl;
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static inline bool mapping_cgwb_enabled(struct address_space *mapping)
@@ -522,11 +573,27 @@ static inline void init_i_wb_link(struct inode *inode)
 {
 }
 
+static inline struct inode *iwbl_to_inode(struct inode_wb_link *iwbl)
+{
+	return container_of(iwbl, struct inode, i_wb_link);
+}
+
 static inline struct bdi_writeback *iwbl_to_wb(struct inode_wb_link *iwbl)
 {
 	struct inode *inode = iwbl_to_inode(iwbl);
 
 	return &inode_to_bdi(inode)->wb;
+}
+
+static inline bool iwbl_is_root(struct inode_wb_link *iwbl)
+{
+	return true;
+}
+
+static inline struct inode_wb_link *
+iwbl_lookup(struct inode *inode, struct cgroup_subsys_state *blkcg_css)
+{
+	return &inode->i_wb_link;
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */

@@ -99,6 +99,7 @@ struct bdi_writeback {
 #ifdef CONFIG_CGROUP_WRITEBACK
 	struct cgroup_subsys_state *blkcg_css; /* the blkcg we belong to */
 	struct list_head blkcg_node;	/* anchored at blkcg->wb_list */
+	struct list_head icgwbls;	/* inode_cgwb_links of this wb */
 	union {
 		struct list_head shutdown_node;
 		struct rcu_head rcu;
@@ -127,6 +128,7 @@ struct backing_dev_info {
 	struct bdi_writeback wb; /* the root writeback info for this bdi */
 #ifdef CONFIG_CGROUP_WRITEBACK
 	struct radix_tree_root cgwb_tree; /* radix tree of !root cgroup wbs */
+	spinlock_t icgwbls_lock; /* protects wb->icgwbls and inode->i_cgwb_links */
 #endif
 	wait_queue_head_t wb_waitq;
 
@@ -157,6 +159,37 @@ struct inode_wb_link {
 };
 
 /*
+ * Used to link a dirty inode on a non-root wb (bdi_writeback).  An inode
+ * may have multiple of these as it gets dirtied on non-root wb's.  Linked
+ * on both the inode and wb and destroyed when either goes away.
+ *
+ * TODO: When an inode is being dirtied against a non-root wb, its
+ * ->i_wb_link is searched linearly to locate the matching icgwbl
+ * (inode_cgwb_link).  The linear search is a scalability bottleneck but
+ * the kernel currently don't have an indexing data structure which would
+ * fit this use case.  A balanced tree which can be walked under RCU read
+ * lock is necessary (e.g. bonsai tree).  Once such indexing data structure
+ * is necessary, icgwbl should be converted to use that.
+ */
+struct inode_cgwb_link {
+	struct inode_wb_link	iwbl;
+
+	struct inode		*inode;		/* the associated inode */
+
+	/*
+	 * ->inode_node is anchored at inode->i_wb_links and ->wb_node at
+	 * bdi_writeback->icgwbls.  Both are write-protected by
+	 * bdi->icgwbls_lock but the former can be traversed under RCU and
+	 * is sorted by the associated blkcg ID to allow traversal
+	 * continuation after dropping RCU read lock.
+	 */
+	struct hlist_node	inode_node;	/* RCU-safe, sorted */
+	struct list_head	wb_node;
+
+	struct rcu_head		rcu;
+};
+
+/*
  * The following structure carries context used during page and inode
  * dirtying.  Should be initialized with init_dirty_{inode|page}_context().
  */
@@ -165,6 +198,7 @@ struct dirty_context {
 	struct inode		*inode;
 	struct address_space	*mapping;
 	struct bdi_writeback	*wb;
+	struct inode_wb_link	*iwbl;
 };
 
 enum {

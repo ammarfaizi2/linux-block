@@ -182,6 +182,18 @@ static void iwbl_del_locked(struct inode_wb_link *iwbl,
 	}
 }
 
+static void iwbl_del(struct inode_wb_link *iwbl)
+{
+	struct bdi_writeback *wb = iwbl_to_wb(iwbl);
+
+	if (list_empty(&iwbl->dirty_list))
+		return;
+
+	spin_lock(&wb->list_lock);
+	iwbl_del_locked(iwbl, wb);
+	spin_unlock(&wb->list_lock);
+}
+
 /*
  * Wait for writeback on an inode to complete. Called with i_lock held.
  * Caller must make sure inode cannot go away when we drop i_lock.
@@ -260,16 +272,34 @@ static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
 	 * back to the root blkcg.
 	 */
 	blkcg_css = page_blkcg_attach_dirty(dctx->page);
-	dctx->wb = cgwb_lookup_create(bdi, blkcg_css);
-	if (!dctx->wb) {
-		page_blkcg_detach_dirty(dctx->page);
-		goto force_root;
+
+	/* if iwbl already exists, wb can be determined from that too */
+	dctx->iwbl = iwbl_lookup(dctx->inode, blkcg_css);
+	if (dctx->iwbl) {
+		dctx->wb = iwbl_to_wb(dctx->iwbl);
+		return;
 	}
+
+	/* slow path, let's create wb and iwbl */
+	dctx->wb = cgwb_lookup_create(bdi, blkcg_css);
+	if (!dctx->wb)
+		goto detach_dirty;
+
+	dctx->iwbl = iwbl_create(dctx->inode, dctx->wb);
+	if (!dctx->iwbl)
+		goto detach_dirty;
+
 	return;
 
+detach_dirty:
+	page_blkcg_detach_dirty(dctx->page);
 force_root:
 	page_blkcg_force_root_dirty(dctx->page);
 	dctx->wb = &bdi->wb;
+	if (dctx->inode)
+		dctx->iwbl = &dctx->inode->i_wb_link;
+	else
+		dctx->iwbl = NULL;
 }
 
 /**
@@ -420,11 +450,78 @@ static void inode_sleep_on_writeback(struct inode *inode)
 	finish_wait(wqh, &wait);
 }
 
+static inline struct inode_cgwb_link *icgwbl_first(struct inode *inode)
+{
+	struct hlist_node *node =
+		rcu_dereference_check(hlist_first_rcu(&inode->i_cgwb_links),
+			lockdep_is_held(&inode_to_bdi(inode)->icgwbls_lock));
+
+	return hlist_entry_safe(node, struct inode_cgwb_link, inode_node);
+}
+
+static inline struct inode_cgwb_link *icgwbl_next(struct inode_cgwb_link *pos,
+						  struct inode *inode)
+{
+	struct hlist_node *node =
+		rcu_dereference_check(hlist_next_rcu(&pos->inode_node),
+			lockdep_is_held(&inode_to_bdi(inode)->icgwbls_lock));
+
+	return hlist_entry_safe(node, struct inode_cgwb_link, inode_node);
+}
+
+/**
+ * inode_for_each_icgwbl - walk all icgwbl's of an inode
+ * @cur: cursor struct inode_cgwb_link pointer
+ * @nxt: temp struct inode_cgwb_link pointer
+ * @inode: inode to walk icgwbl's of
+ *
+ * Walk @inode's icgwbl's (inode_cgwb_link's).  rcu_read_lock() must be
+ * held throughout iteration.
+ */
+#define inode_for_each_icgwbl(cur, nxt, inode)				\
+	for ((cur) = icgwbl_first((inode)),				\
+	     (nxt) = (cur) ? icgwbl_next((cur), (inode)) : NULL;	\
+	     (cur);							\
+	     (cur) = (nxt),						\
+	     (nxt) = (nxt) ? icgwbl_next((nxt), (inode)) : NULL)
+
+static void inode_icgwbls_del(struct inode *inode)
+{
+	LIST_HEAD(to_free);
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
+	struct inode_cgwb_link *icgwbl, *next;
+	unsigned long flags;
+
+	spin_lock_irqsave(&bdi->icgwbls_lock, flags);
+
+	/* I_FREEING must be set here to disallow further iwbl_create() */
+	WARN_ON_ONCE(!(inode->i_state & I_FREEING));
+
+	/*
+	 * We don't wanna nest wb->list_lock under bdi->icgwbls_lock as the
+	 * latter is irq-safe and the former isn't.  Queue icgwbls on
+	 * @to_free and perform iwbl_del() and freeing after releasing
+	 * bdi->icgwbls_lock.
+	 */
+	inode_for_each_icgwbl(icgwbl, next, inode) {
+		hlist_del_rcu(&icgwbl->inode_node);
+		list_move(&icgwbl->wb_node, &to_free);
+	}
+
+	spin_unlock_irqrestore(&bdi->icgwbls_lock, flags);
+
+	list_for_each_entry_safe(icgwbl, next, &to_free, wb_node) {
+		iwbl_del(&icgwbl->iwbl);
+		kfree_rcu(icgwbl, rcu);
+	}
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
 {
 	dctx->wb = &dctx->mapping->backing_dev_info->wb;
+	dctx->iwbl = dctx->inode ? &dctx->inode->i_wb_link : NULL;
 }
 
 static long wb_split_bdi_pages(struct bdi_writeback *wb, long nr_pages)
@@ -465,6 +562,10 @@ static void inode_sleep_on_writeback(struct inode *inode)
 	if (sleep)
 		schedule();
 	finish_wait(wqh, &wait);
+}
+
+static void inode_icgwbls_del(struct inode *inode)
+{
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
@@ -510,6 +611,7 @@ void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode)
 	memset(dctx, 0, sizeof(*dctx));
 	dctx->inode = inode;
 	dctx->wb = &inode_to_bdi(inode)->wb;
+	dctx->iwbl = &inode->i_wb_link;
 }
 
 void wb_start_writeback(struct bdi_writeback *wb, long nr_pages,
@@ -565,15 +667,8 @@ void wb_start_background_writeback(struct bdi_writeback *wb)
  */
 void inode_wb_list_del(struct inode *inode)
 {
-	struct inode_wb_link *iwbl = &inode->i_wb_link;
-	struct bdi_writeback *wb = iwbl_to_wb(iwbl);
-
-	if (list_empty(&iwbl->dirty_list))
-		return;
-
-	spin_lock(&wb->list_lock);
-	iwbl_del_locked(iwbl, wb);
-	spin_unlock(&wb->list_lock);
+	iwbl_del(&inode->i_wb_link);
+	inode_icgwbls_del(inode);
 }
 
 /*

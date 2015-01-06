@@ -609,6 +609,9 @@ struct inode {
 
 	struct hlist_node	i_hash;
 	struct inode_wb_link	i_wb_link;	/* backing dev IO list */
+#ifdef CONFIG_CGROUP_WRITEBACK
+	struct hlist_head	i_cgwb_links;	/* sorted inode_cgwb_links */
+#endif
 	struct list_head	i_lru;		/* inode LRU list */
 	struct list_head	i_sb_list;
 	union {

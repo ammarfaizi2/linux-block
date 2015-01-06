@@ -374,6 +374,9 @@ void inode_init_once(struct inode *inode)
 	INIT_LIST_HEAD(&inode->i_lru);
 	address_space_init_once(&inode->i_data);
 	i_size_ordered_init(inode);
+#ifdef CONFIG_CGROUP_WRITEBACK
+	INIT_HLIST_HEAD(&inode->i_cgwb_links);
+#endif
 #ifdef CONFIG_FSNOTIFY
 	INIT_HLIST_HEAD(&inode->i_fsnotify_marks);
 #endif
