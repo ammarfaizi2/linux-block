@@ -1734,8 +1734,9 @@ static noinline void block_dump___mark_inode_dirty(struct inode *inode)
 void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 {
 	struct inode *inode = dctx->inode;
+	struct inode_wb_link *iwbl = dctx->iwbl;
+	struct bdi_writeback *wb = dctx->wb;
 	struct super_block *sb = inode->i_sb;
-	struct backing_dev_info *bdi = NULL;
 
 	/*
 	 * Don't do this for I_DIRTY_PAGES - that doesn't actually
@@ -1764,7 +1765,6 @@ void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 
 	spin_lock(&inode->i_lock);
 	if ((inode->i_state & flags) != flags) {
-		struct inode_wb_link *iwbl = &inode->i_wb_link;
 		const int was_dirty = inode->i_state & I_DIRTY;
 
 		inode->i_state |= flags;
@@ -1794,19 +1794,17 @@ void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 		 */
 		if (!was_dirty) {
 			bool wakeup_bdi = false;
-			bdi = inode_to_bdi(inode);
 
 			spin_unlock(&inode->i_lock);
-			spin_lock(&bdi->wb.list_lock);
+			spin_lock(&wb->list_lock);
 
-			WARN(bdi_cap_writeback_dirty(bdi) &&
-			     !test_bit(WB_registered, &bdi->wb.state),
-			     "bdi-%s not registered\n", bdi->name);
+			WARN(bdi_cap_writeback_dirty(wb->bdi) &&
+			     !test_bit(WB_registered, &wb->state),
+			     "bdi-%s not registered\n", wb->bdi->name);
 
 			iwbl->dirtied_when = jiffies;
-			wakeup_bdi = iwbl_move_locked(iwbl, &bdi->wb,
-						      &bdi->wb.b_dirty);
-			spin_unlock(&bdi->wb.list_lock);
+			wakeup_bdi = iwbl_move_locked(iwbl, wb, &wb->b_dirty);
+			spin_unlock(&wb->list_lock);
 
 			/*
 			 * If this is the first dirty inode for this bdi,
@@ -1814,8 +1812,8 @@ void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 			 * to make sure background write-back happens
 			 * later.
 			 */
-			if (bdi_cap_writeback_dirty(bdi) && wakeup_bdi)
-				wb_wakeup_delayed(&bdi->wb);
+			if (bdi_cap_writeback_dirty(wb->bdi) && wakeup_bdi)
+				wb_wakeup_delayed(wb);
 			return;
 		}
 	}
