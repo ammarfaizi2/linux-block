@@ -182,6 +182,7 @@ static struct blkcg_gq *blkg_create(struct blkcg *blkcg,
 				    struct blkcg_gq *new_blkg)
 {
 	struct blkcg_gq *blkg;
+	struct bdi_writeback *wb;
 	int i, ret;
 
 	WARN_ON_ONCE(!rcu_read_lock_held());
@@ -190,6 +191,19 @@ static struct blkcg_gq *blkg_create(struct blkcg *blkcg,
 	/* blkg holds a reference to blkcg */
 	if (!css_tryget_online(&blkcg->css)) {
 		ret = -EINVAL;
+		goto err_free_blkg;
+	}
+
+	/*
+	 * Once created, @wb will stay alive longer than @blkg.  @wb is
+	 * destroyed iff either its bdi or @blkcg is destroyed.  The bdi is
+	 * part of the request_queue and will outlive @blkg, and, while
+	 * @blkcg is being brought down, @wb will be destroyed the last in
+	 * ->css_released().
+	 */
+	wb = cgwb_lookup_create(&q->backing_dev_info, &blkcg->css);
+	if (!wb) {
+		ret = -ENOMEM;
 		goto err_free_blkg;
 	}
 
@@ -202,6 +216,7 @@ static struct blkcg_gq *blkg_create(struct blkcg *blkcg,
 		}
 	}
 	blkg = new_blkg;
+	blkg->wb = wb;
 
 	/* link parent */
 	if (blkcg_parent(blkcg)) {
