@@ -1335,6 +1335,7 @@ static inline void wb_dirty_limits(struct bdi_writeback *wb,
  * perform some writeout.
  */
 static void balance_dirty_pages(struct address_space *mapping,
+				struct bdi_writeback *wb,
 				unsigned long pages_dirtied)
 {
 	unsigned long nr_reclaimable;	/* = file_dirty + unstable_nfs */
@@ -1351,7 +1352,6 @@ static void balance_dirty_pages(struct address_space *mapping,
 	unsigned long dirty_ratelimit;
 	unsigned long pos_ratio;
 	struct backing_dev_info *bdi = mapping->backing_dev_info;
-	struct bdi_writeback *wb = &bdi->wb;
 	bool strictlimit = bdi->capabilities & BDI_CAP_STRICTLIMIT;
 	unsigned long start_time = jiffies;
 
@@ -1575,12 +1575,24 @@ DEFINE_PER_CPU(int, dirty_throttle_leaks) = 0;
 void balance_dirty_pages_ratelimited(struct address_space *mapping)
 {
 	struct backing_dev_info *bdi = mapping->backing_dev_info;
-	struct bdi_writeback *wb = &bdi->wb;
+	struct cgroup_subsys_state *blkcg_css = NULL;
+	struct bdi_writeback *wb = NULL;
 	int ratelimit;
 	int *p;
 
 	if (!bdi_cap_account_dirty(bdi))
 		return;
+
+	/*
+	 * Throttle against the cgwb of the current blkcg.  Make sure that
+	 * the cgwb stays alive by pinning the blkcg.
+	 */
+	if (mapping_cgwb_enabled(mapping)) {
+		blkcg_css = task_get_blkcg_css(current);
+		wb = cgwb_lookup(bdi, blkcg_css);
+	}
+	if (!wb)
+		wb = &bdi->wb;
 
 	ratelimit = current->nr_dirtied_pause;
 	if (wb->dirty_exceeded)
@@ -1615,7 +1627,10 @@ void balance_dirty_pages_ratelimited(struct address_space *mapping)
 	preempt_enable();
 
 	if (unlikely(current->nr_dirtied >= ratelimit))
-		balance_dirty_pages(mapping, current->nr_dirtied);
+		balance_dirty_pages(mapping, wb, current->nr_dirtied);
+
+	if (blkcg_css)
+		css_put(blkcg_css);
 }
 EXPORT_SYMBOL(balance_dirty_pages_ratelimited);
 
