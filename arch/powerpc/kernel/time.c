@@ -621,6 +621,30 @@ unsigned long long sched_clock(void)
 	return mulhdu(get_tb() - boot_tb, tb_to_ns_scale) << tb_to_ns_shift;
 }
 
+unsigned long long running_clock(void)
+{
+	/*
+	 * Don't read the VTB as a host since KVM does not switch in host timebase
+	 * into the VTB when it takes a guest off the CPU, reading the VTB would
+	 * result in reading 'last switched out' guest VTB.
+	 */
+
+	if (firmware_has_feature(FW_FEATURE_LPAR)) {
+		if (cpu_has_feature(CPU_FTR_ARCH_207S))
+			return mulhdu(get_vtb() - boot_tb, tb_to_ns_scale) << tb_to_ns_shift;
+
+		/* This is a next best approximation without a VTB. */
+		return sched_clock() - cputime_to_nsecs(kcpustat_this_cpu->cpustat[CPUTIME_STEAL]);
+	}
+
+	/*
+	 * On a host which doesn't do any virtualisation TB *should* equal VTB so
+	 * it makes no difference anyway.
+	 */
+
+	return sched_clock();
+}
+
 static int __init get_freq(char *name, int cells, unsigned long *val)
 {
 	struct device_node *cpu;
