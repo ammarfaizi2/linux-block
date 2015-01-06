@@ -86,7 +86,6 @@ unsigned long long __weak running_clock(void)
 {
 	return sched_clock();
 }
-EXPORT_SYMBOL_GPL(running_clock);
 
 __read_mostly int sched_clock_running;
 
