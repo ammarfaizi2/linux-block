@@ -604,6 +604,21 @@ static void inode_icgwbls_del(struct inode *inode)
 	}
 }
 
+/**
+ * wbc_set_iwbl - associate a wbc with an iwbl
+ * @wbc: target writeback_control
+ * @iwbl: inode_wb_link to associate @wbc with
+ *
+ * Writeback for @iwbl is about to be performed with @wbc as the control
+ * structure.  Associate @wbc with @iwbl so that writeback implementation
+ * can retrieve @iwbl from @wbc.
+ */
+static inline void wbc_set_iwbl(struct writeback_control *wbc,
+				struct inode_wb_link *iwbl)
+{
+	wbc->iwbl = iwbl;
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
@@ -682,6 +697,11 @@ static void iwbl_sync_wakeup(struct inode_wb_link *iwbl)
 }
 
 static void inode_icgwbls_del(struct inode *inode)
+{
+}
+
+static inline void wbc_set_iwbl(struct writeback_control *wbc,
+				struct inode_wb_link *iwbl)
 {
 }
 
@@ -1019,7 +1039,7 @@ static int
 __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 {
 	struct address_space *mapping = inode->i_mapping;
-	struct inode_wb_link *iwbl = &inode->i_wb_link;
+	struct inode_wb_link *iwbl = inode_writeback_iwbl(inode, wbc);
 	long nr_to_write = wbc->nr_to_write;
 	unsigned dirty;
 	int ret;
@@ -1090,10 +1110,10 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
  * and does more profound writeback list handling in writeback_sb_inodes().
  */
 static int
-writeback_single_inode(struct inode *inode, struct bdi_writeback *wb,
-		       struct writeback_control *wbc)
+writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 {
-	struct inode_wb_link *iwbl = &inode->i_wb_link;
+	struct inode_wb_link *iwbl = inode_writeback_iwbl(inode, wbc);
+	struct bdi_writeback *wb = iwbl_to_wb(iwbl);
 	int ret = 0;
 
 	spin_lock(&inode->i_lock);
@@ -1221,6 +1241,8 @@ static long writeback_sb_inodes(struct super_block *sb,
 			 */
 			break;
 		}
+
+		wbc_set_iwbl(&wbc, iwbl);
 
 		/*
 		 * Don't bother with new inodes or inodes being freed, first
@@ -2020,7 +2042,6 @@ EXPORT_SYMBOL(sync_inodes_sb);
  */
 int write_inode_now(struct inode *inode, int sync)
 {
-	struct bdi_writeback *wb = iwbl_to_wb(&inode->i_wb_link);
 	struct writeback_control wbc = {
 		.nr_to_write = LONG_MAX,
 		.sync_mode = sync ? WB_SYNC_ALL : WB_SYNC_NONE,
@@ -2032,7 +2053,7 @@ int write_inode_now(struct inode *inode, int sync)
 		wbc.nr_to_write = 0;
 
 	might_sleep();
-	return writeback_single_inode(inode, wb, &wbc);
+	return writeback_single_inode(inode, &wbc);
 }
 EXPORT_SYMBOL(write_inode_now);
 
@@ -2049,8 +2070,7 @@ EXPORT_SYMBOL(write_inode_now);
  */
 int sync_inode(struct inode *inode, struct writeback_control *wbc)
 {
-	return writeback_single_inode(inode, iwbl_to_wb(&inode->i_wb_link),
-				      wbc);
+	return writeback_single_inode(inode, wbc);
 }
 EXPORT_SYMBOL(sync_inode);
 

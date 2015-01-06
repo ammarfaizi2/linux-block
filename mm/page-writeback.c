@@ -148,6 +148,9 @@ static struct timer_list writeout_period_timer =
 		TIMER_DEFERRED_INITIALIZER(writeout_period, 0, 0);
 static unsigned long writeout_period_time = 0;
 
+static int clear_page_dirty_for_io_wbc(struct page *page,
+				       struct writeback_control *wbc);
+
 /*
  * Length of period for aging writeout fractions of bdis. This is an
  * arbitrarily chosen number. The longer the period, the slower fractions will
@@ -1993,7 +1996,7 @@ continue_unlock:
 			}
 
 			BUG_ON(PageWriteback(page));
-			if (!clear_page_dirty_for_io(page))
+			if (!clear_page_dirty_for_io_wbc(page, wbc))
 				goto continue_unlock;
 
 			trace_wbc_writepage(wbc, mapping->backing_dev_info);
@@ -2326,7 +2329,8 @@ EXPORT_SYMBOL(set_page_dirty_lock);
  * This incoherency between the page's dirty flag and radix-tree tag is
  * unfortunate, but it only exists while the page is locked.
  */
-int clear_page_dirty_for_io(struct page *page)
+static int clear_page_dirty_for_io_wbc(struct page *page,
+				       struct writeback_control *wbc)
 {
 	struct address_space *mapping = page_mapping(page);
 
@@ -2369,7 +2373,8 @@ int clear_page_dirty_for_io(struct page *page)
 		 * exclusion.
 		 */
 		if (TestClearPageDirty(page)) {
-			struct bdi_writeback *wb = page_cgwb_dirty(page);
+			struct backing_dev_info *bdi = mapping->backing_dev_info;
+			struct bdi_writeback *wb = bdi_writeback_wb(bdi, wbc);
 
 			dec_zone_page_state(page, NR_FILE_DIRTY);
 			dec_wb_stat(wb, WB_RECLAIMABLE);
@@ -2379,6 +2384,16 @@ int clear_page_dirty_for_io(struct page *page)
 		return 0;
 	}
 	return TestClearPageDirty(page);
+}
+
+int clear_page_dirty_for_io(struct page *page)
+{
+	struct writeback_control wbc = {
+		.sync_mode = WB_SYNC_ALL,
+		.nr_to_write = 1,
+	};
+
+	return clear_page_dirty_for_io_wbc(page, &wbc);
 }
 EXPORT_SYMBOL(clear_page_dirty_for_io);
 

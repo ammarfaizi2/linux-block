@@ -520,6 +520,50 @@ iwbl_lookup(struct inode *inode, struct cgroup_subsys_state *blkcg_css)
 	return iwbl;
 }
 
+/**
+ * inode_writeback_iwbl - determine the inode_wb_link under writeback
+ * @inode: inode under writeback
+ * @wbc: writeback_control in effect
+ *
+ * Called from code path which is writing back @inode with @wbc to
+ * determine the iwbl (inode_wb_link) this writeback is for.  Guaranteed to
+ * return a valid iwbl.
+ */
+static inline struct inode_wb_link *
+inode_writeback_iwbl(struct inode *inode, struct writeback_control *wbc)
+{
+	return wbc->iwbl ?: &inode->i_wb_link;
+}
+
+/**
+ * bdi_writeback_wb - determine the bdi_writeback under writeback
+ * @bdi: backing_dev_info under writeback
+ * @wbc: writeback_control in effect
+ *
+ * Called from code path which is writing back @bdi with @wbc to determine
+ * the wb (bdi_writebck) this writeback is for.  Guaranteed to return a
+ * valid wb.
+ */
+static inline struct bdi_writeback *
+bdi_writeback_wb(struct backing_dev_info *bdi, struct writeback_control *wbc)
+{
+	return wbc->iwbl ? iwbl_to_wb(wbc->iwbl) : &bdi->wb;
+}
+
+/**
+ * wbc_blkcg_css - return the blkcg_css associated with a wbc
+ * @wbc: writeback_control of interest
+ *
+ * Return the blkcg_css of the inode_wb_link @wbc is associated with.  If
+ * @wbc hasn't been associated with an iwbl using wbc_set_iwbl(), %NULL is
+ * returned.
+ */
+static inline struct cgroup_subsys_state *
+wbc_blkcg_css(struct writeback_control *wbc)
+{
+	return wbc->iwbl ? iwbl_to_wb(wbc->iwbl)->blkcg_css : NULL;
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static inline bool mapping_cgwb_enabled(struct address_space *mapping)
@@ -594,6 +638,24 @@ static inline struct inode_wb_link *
 iwbl_lookup(struct inode *inode, struct cgroup_subsys_state *blkcg_css)
 {
 	return &inode->i_wb_link;
+}
+
+static inline struct inode_wb_link *
+inode_writeback_iwbl(struct inode *inode, struct writeback_control *wbc)
+{
+	return &inode->i_wb_link;
+}
+
+static inline struct bdi_writeback *
+bdi_writeback_wb(struct backing_dev_info *bdi, struct writeback_control *wbc)
+{
+	return &bdi->wb;
+}
+
+static inline struct cgroup_subsys_state *
+wbc_blkcg_css(struct writeback_control *wbc)
+{
+	return NULL;
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
