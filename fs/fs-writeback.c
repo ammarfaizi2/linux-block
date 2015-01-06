@@ -619,6 +619,71 @@ static inline void wbc_set_iwbl(struct writeback_control *wbc,
 	wbc->iwbl = iwbl;
 }
 
+/**
+ * iwbl_has_enough_dirty - does an iwbl and its inode have dirty bits already?
+ * @iwbl: inode_wb_link of interest
+ * @inode: inode @iwbl belongs to
+ * @dirty: I_DIRTY_* bits to be set
+ *
+ * @inode is being dirtied with @dirty by @iwbl's cgroup, test whether
+ * @iwbl and @inode already have all the dirty bits set.  Each iwbl has
+ * separate %IWBL_DIRTY_PAGES bit which should be also set if @dirty has
+ * %I_DIRTY_PAGES.
+ */
+static inline bool iwbl_has_enough_dirty(struct inode_wb_link *iwbl,
+					 struct inode *inode, int dirty)
+{
+	return (inode->i_state & dirty) == dirty &&
+		(!(dirty & I_DIRTY_PAGES) ||
+		 test_bit(IWBL_DIRTY_PAGES, &iwbl->data));
+}
+
+/**
+ * iwbl_set_dirty - set dirty bits on an iwbl and its inode
+ * @iwbl: ionde_wb_link of interest
+ * @inode: inode @iwbl belongs to
+ * @dirty: I_DIRTY_* bits to be set
+ *
+ * Set @dirty on @iwbl and @inode and return whether @iwbl was already
+ * dirty.  @iwbl only carries the data dirty bit through %IWBL_DIRTY_PAGES.
+ */
+static inline bool iwbl_set_dirty(struct inode_wb_link *iwbl,
+				  struct inode *inode, int dirty)
+{
+	bool was_dirty = test_bit(IWBL_DIRTY_PAGES, &iwbl->data);
+
+	/* metadata dirty bit is always attributed to the root */
+	if (iwbl_is_root(iwbl))
+		was_dirty |= inode->i_state & (I_DIRTY_SYNC | I_DIRTY_DATASYNC);
+
+	inode->i_state |= dirty;
+	if (dirty & I_DIRTY_PAGES)
+		set_bit(IWBL_DIRTY_PAGES, &iwbl->data);
+	return was_dirty;
+}
+
+/**
+ * iwbl_still_has_dirty_pages - does an iwbl have dirty pages after writeback?
+ * @iwbl: inode_wb_link of interest
+ * @inode: inode @iwbl belongs to
+ *
+ * Called from requeue_inode() after writing back @inode for @iwbl to
+ * determine whether @iwbl still has dirty pages and should thus be
+ * requeued.  This function can update IWBL_DIRTY_PAGES and may also
+ * spuriously return true.
+ *
+ * See IWBL_DIRTY_PAGES definition for more info.
+ */
+static inline bool iwbl_still_has_dirty_pages(struct inode_wb_link *iwbl,
+					      struct inode *inode)
+{
+	if (!mapping_tagged(inode->i_mapping, PAGECACHE_TAG_DIRTY)) {
+		clear_bit(IWBL_DIRTY_PAGES, &iwbl->data);
+		return false;
+	}
+	return test_bit(IWBL_DIRTY_PAGES, &iwbl->data);
+}
+
 #else	/* CONFIG_CGROUP_WRITEBACK */
 
 static void init_cgwb_dirty_page_context(struct dirty_context *dctx)
@@ -703,6 +768,27 @@ static void inode_icgwbls_del(struct inode *inode)
 static inline void wbc_set_iwbl(struct writeback_control *wbc,
 				struct inode_wb_link *iwbl)
 {
+}
+
+static inline bool iwbl_has_enough_dirty(struct inode_wb_link *iwbl,
+					 struct inode *inode, int dirty)
+{
+	return (inode->i_state & dirty) == dirty;
+}
+
+static inline bool iwbl_set_dirty(struct inode_wb_link *iwbl,
+				  struct inode *inode, int dirty)
+{
+	bool was_dirty = inode->i_state & I_DIRTY;
+
+	inode->i_state |= dirty;
+	return was_dirty;
+}
+
+static inline bool iwbl_still_has_dirty_pages(struct inode_wb_link *iwbl,
+					      struct inode *inode)
+{
+	return mapping_tagged(inode->i_mapping, PAGECACHE_TAG_DIRTY);
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
@@ -999,7 +1085,7 @@ static void requeue_inode(struct inode_wb_link *iwbl, struct bdi_writeback *wb,
 		return;
 	}
 
-	if (mapping_tagged(inode->i_mapping, PAGECACHE_TAG_DIRTY)) {
+	if (iwbl_still_has_dirty_pages(iwbl, inode)) {
 		/*
 		 * We didn't write back all the pages.  nfs_writepages()
 		 * sometimes bales out without doing anything.
@@ -1017,7 +1103,8 @@ static void requeue_inode(struct inode_wb_link *iwbl, struct bdi_writeback *wb,
 			 */
 			redirty_tail(iwbl, wb);
 		}
-	} else if (inode->i_state & I_DIRTY) {
+	} else if (iwbl_is_root(iwbl) &&
+		   (inode->i_state & (I_DIRTY_SYNC | I_DIRTY_DATASYNC))) {
 		/*
 		 * Filesystems can dirty the inode during writeback operations,
 		 * such as delayed allocation during submission or metadata
@@ -1074,14 +1161,14 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 	inode->i_state &= ~I_DIRTY;
 
 	/*
-	 * Paired with smp_mb() in __mark_inode_dirty().  This allows
-	 * __mark_inode_dirty() to test i_state without grabbing i_lock -
-	 * either they see the I_DIRTY bits cleared or we see the dirtied
-	 * inode.
+	 * Paired with smp_mb() in __mark_inode_dirty_dctx().  This allows
+	 * the function to perform iwbl_has_enough_dirty() test without
+	 * grabbing i_lock - either they see the dirty bits cleared or we
+	 * see the dirtied inode.
 	 *
 	 * I_DIRTY_PAGES is always cleared together above even if @mapping
 	 * still has dirty pages.  The flag is reinstated after smp_mb() if
-	 * necessary.  This guarantees that either __mark_inode_dirty()
+	 * necessary to guarantee that either __mark_inode_dirty_dctx()
 	 * sees clear I_DIRTY_PAGES or we see PAGECACHE_TAG_DIRTY.
 	 */
 	smp_mb();
@@ -1729,31 +1816,7 @@ static noinline void block_dump___mark_inode_dirty(struct inode *inode)
 	}
 }
 
-/**
- *	mark_inode_dirty_dctx -	internal function
- *	@dctx: dirty_context containing the target inode
- *	@flags: what kind of dirty (i.e. I_DIRTY_SYNC)
- *	Mark an inode as dirty. Callers should use mark_inode_dirty or
- *  	mark_inode_dirty_sync.
- *
- * Put the inode on the super block's dirty list.
- *
- * CAREFUL! We mark it dirty unconditionally, but move it onto the
- * dirty list only if it is hashed or if it refers to a blockdev.
- * If it was not hashed, it will never be added to the dirty list
- * even if it is later hashed, as it will have been marked dirty already.
- *
- * In short, make sure you hash any inodes _before_ you start marking
- * them dirty.
- *
- * Note that for blockdevs, iwbl->dirtied_when represents the dirtying time of
- * the block-special inode (/dev/hda1) itself.  And the ->dirtied_when field of
- * the kernel-internal blockdev inode represents the dirtying time of the
- * blockdev's pages.  This is why for I_DIRTY_PAGES we always use
- * page->mapping->host, so the page-dirtying time is recorded in the internal
- * blockdev inode.
- */
-void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
+static void __mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 {
 	struct inode *inode = dctx->inode;
 	struct inode_wb_link *iwbl = dctx->iwbl;
@@ -1774,22 +1837,23 @@ void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
 	}
 
 	/*
-	 * Paired with smp_mb() in __writeback_single_inode() for the
-	 * following lockless i_state test.  See there for details.
+	 * Paired with smp_mb()'s in __writeback_single_inode() and
+	 * mapping_writeback_maybe_whole() for the following lockless
+	 * iwbl_has_enough_dirty() test.  See there for details.
 	 */
 	smp_mb();
 
-	if ((inode->i_state & flags) == flags)
+	if (iwbl_has_enough_dirty(iwbl, inode, flags))
 		return;
 
 	if (unlikely(block_dump))
 		block_dump___mark_inode_dirty(inode);
 
 	spin_lock(&inode->i_lock);
-	if ((inode->i_state & flags) != flags) {
-		const int was_dirty = inode->i_state & I_DIRTY;
+	if (!iwbl_has_enough_dirty(iwbl, inode, flags)) {
+		bool was_dirty;
 
-		inode->i_state |= flags;
+		was_dirty = iwbl_set_dirty(iwbl, inode, flags);
 
 		/*
 		 * If the inode is being synced, just update its dirty state.
@@ -1844,6 +1908,52 @@ out_unlock_inode:
 
 }
 EXPORT_SYMBOL(mark_inode_dirty_dctx);
+
+/**
+ *	mark_inode_dirty_dctx -	internal function
+ *	@dctx: dirty_context containing the target inode
+ *	@flags: what kind of dirty (i.e. I_DIRTY_SYNC)
+ *	Mark an inode as dirty. Callers should use mark_inode_dirty or
+ *  	mark_inode_dirty_sync.
+ *
+ * Put the inode on the super block's dirty list.
+ *
+ * CAREFUL! We mark it dirty unconditionally, but move it onto the
+ * dirty list only if it is hashed or if it refers to a blockdev.
+ * If it was not hashed, it will never be added to the dirty list
+ * even if it is later hashed, as it will have been marked dirty already.
+ *
+ * In short, make sure you hash any inodes _before_ you start marking
+ * them dirty.
+ *
+ * Note that for blockdevs, iwbl->dirtied_when represents the dirtying time of
+ * the block-special inode (/dev/hda1) itself.  And the ->dirtied_when field of
+ * the kernel-internal blockdev inode represents the dirtying time of the
+ * blockdev's pages.  This is why for I_DIRTY_PAGES we always use
+ * page->mapping->host, so the page-dirtying time is recorded in the internal
+ * blockdev inode.
+ */
+void mark_inode_dirty_dctx(struct dirty_context *dctx, int flags)
+{
+	/*
+	 * I_DIRTY_PAGES should dirty @dctx->iwbl but I_DIRTY_[DATA]SYNC
+	 * should always dirty the root iwbl.  If @dctx->iwbl is root, we
+	 * can do both at the same time; otherwise, handle the two dirtying
+	 * separately.
+	 */
+	if (iwbl_is_root(dctx->iwbl) ||
+	    !(flags & (I_DIRTY_SYNC | I_DIRTY_DATASYNC))) {
+		__mark_inode_dirty_dctx(dctx, flags);
+		return;
+	}
+
+	if (flags & I_DIRTY_PAGES)
+		__mark_inode_dirty_dctx(dctx, I_DIRTY_PAGES);
+
+	flags &= ~I_DIRTY_PAGES;
+	if (flags)
+		__mark_inode_dirty(dctx->inode, flags);
+}
 
 void __mark_inode_dirty(struct inode *inode, int flags)
 {

@@ -52,9 +52,26 @@ enum wb_stat_item {
  *
  *  Tracks whether writeback is in progress for an iwbl.  If this bit is
  *  set for any iwbl on an inode, the inode's I_SYNC is set too.
+ *
+ * IWBL_DIRTY_PAGES
+ *
+ *  Tracks whether an iwbl has dirty pages.  This bit is asserted when a
+ *  page is dirtied against it; unfortunately, unlike I_DIRTY_PAGES which
+ *  can be cleared reliably by testing PAGECACHE_TAG_DIRTY after a
+ *  writeback, there's no way to reliably determine whether an iwbl is
+ *  clean and the bit may remain set spuriously w/o dirty pages.
+ *
+ *  mapping_writeback_{maybe|confirm}_whole() are used to opportunistically
+ *  clear the bit if a writeback attempt successfully sweeps all the dirty
+ *  pages.  It also gets cleared when PAGECACHE_TAG_DIRTY test indicates
+ *  that the whole address_space is clean.  While the bit may remain set
+ *  spuriously for a while, the duration of such inaccuracy should be
+ *  reasonably limited as a periodic cyclic writeback triggered on a clean
+ *  iwbl will notice the clean state.
  */
 enum {
 	IWBL_SYNC		= 0,
+	IWBL_DIRTY_PAGES,
 
 	IWBL_FLAGS_BITS,
 	IWBL_FLAGS_MASK		= (1UL << IWBL_FLAGS_BITS) - 1,

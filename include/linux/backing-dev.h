@@ -575,6 +575,66 @@ static inline pgoff_t *mapping_writeback_index(struct address_space *mapping,
 }
 
 /**
+ * mapping_writeback_maybe_whole - prepare for possible whole writeback
+ * @mapping: address_space under writeback
+ * @wbc: writeback_control in effect
+ *
+ * @mapping is being written back according to @wbc and it may write back
+ * all dirty pages.  This function must be called before such writeback is
+ * started and matched with mapping_writeback_confirm_whole() which is
+ * called after the writeback.  Combined, these two functions can detect
+ * clean condition on the associated inode_wb_link and clear
+ * %IWBL_DIRTY_PAGES on it so that its writeback work can be selectively
+ * turned off even while the inode is dirty on other cgroups.
+ *
+ * See IWBL_DIRTY_PAGES definition for more info.
+ */
+static inline void
+mapping_writeback_maybe_whole(struct address_space *mapping,
+			      struct writeback_control *wbc)
+{
+	struct inode *inode = mapping->host;
+
+	if (!inode)
+		return;
+
+	clear_bit(IWBL_DIRTY_PAGES, &inode_writeback_iwbl(inode, wbc)->data);
+
+	/*
+	 * Paired with smp_mb() in __mark_inode_dirty_dctx().  Clearing
+	 * IWBL_DIRTY_PAGES before the following mb and reinstating it
+	 * later if writeback skips over some pages guarantees that either
+	 * __mark_inode_dirty_dctx() sees clear IWBL_DIRTY_PAGES or we see
+	 * all the dirtied pages.
+	 */
+	smp_mb__after_atomic();
+}
+
+/**
+ * mapping_writeback_confirm_whole - confirm whether whole writeback took place
+ * @mapping: address_space under writeback
+ * @wbc: writeback_control in effect
+ * @wrote_whole: were all pages written out?
+ *
+ * @mapping is being written back according to @wbc and
+ * mapping_writeback_maybe_whole() was called because it could write back
+ * all dirty pages.  The writeback function must call this function to
+ * indicate whether all pages were actually written out or not.  See
+ * mapping_writeback_maybe_whole() for more info.
+ */
+static inline void
+mapping_writeback_confirm_whole(struct address_space *mapping,
+				struct writeback_control *wbc, bool wrote_whole)
+{
+	struct inode *inode = mapping->host;
+
+	if (!inode || wrote_whole)
+		return;
+
+	set_bit(IWBL_DIRTY_PAGES, &inode_writeback_iwbl(inode, wbc)->data);
+}
+
+/**
  * wbc_blkcg_css - return the blkcg_css associated with a wbc
  * @wbc: writeback_control of interest
  *
@@ -680,6 +740,18 @@ static inline pgoff_t *mapping_writeback_index(struct address_space *mapping,
 					       struct writeback_control *wbc)
 {
 	return &mapping->writeback_index;
+}
+
+static inline void
+mapping_writeback_maybe_whole(struct address_space *mapping,
+			      struct writeback_control *wbc)
+{
+}
+
+static inline void
+mapping_writeback_confirm_whole(struct address_space *mapping,
+				struct writeback_control *wbc, bool wrote_whole)
+{
 }
 
 static inline struct cgroup_subsys_state *

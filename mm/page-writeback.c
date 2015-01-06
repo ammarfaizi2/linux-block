@@ -1904,6 +1904,7 @@ int write_cache_pages(struct address_space *mapping,
 {
 	int ret = 0;
 	int done = 0;
+	int skipped_dirty = 0;
 	struct pagevec pvec;
 	int nr_pages;
 	pgoff_t *writeback_index_ptr = mapping_writeback_index(mapping, wbc);
@@ -1913,6 +1914,7 @@ int write_cache_pages(struct address_space *mapping,
 	pgoff_t done_index;
 	int cycled;
 	int range_whole = 0;
+	int maybe_whole = 0;
 	int tag;
 
 	pagevec_init(&pvec, 0);
@@ -1924,13 +1926,20 @@ int write_cache_pages(struct address_space *mapping,
 		else
 			cycled = 0;
 		end = -1;
+		maybe_whole = 1;
 	} else {
 		index = wbc->range_start >> PAGE_CACHE_SHIFT;
 		end = wbc->range_end >> PAGE_CACHE_SHIFT;
-		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
+		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX) {
 			range_whole = 1;
+			maybe_whole = 1;
+		}
 		cycled = 1; /* ignore range_cyclic tests */
 	}
+
+	if (maybe_whole)
+		mapping_writeback_maybe_whole(mapping, wbc);
+
 	if (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_writepages)
 		tag = PAGECACHE_TAG_TOWRITE;
 	else
@@ -1990,10 +1999,12 @@ continue_unlock:
 			}
 
 			if (PageWriteback(page)) {
-				if (wbc->sync_mode != WB_SYNC_NONE)
+				if (wbc->sync_mode != WB_SYNC_NONE) {
 					wait_on_page_writeback(page);
-				else
+				} else {
+					skipped_dirty = 1;
 					goto continue_unlock;
+				}
 			}
 
 			BUG_ON(PageWriteback(page));
@@ -2004,6 +2015,7 @@ continue_unlock:
 			ret = (*writepage)(page, wbc, data);
 			if (unlikely(ret)) {
 				if (ret == AOP_WRITEPAGE_ACTIVATE) {
+					skipped_dirty = 1;
 					unlock_page(page);
 					ret = 0;
 				} else {
@@ -2051,6 +2063,9 @@ continue_unlock:
 	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
 		*writeback_index_ptr = done_index;
 
+	if (maybe_whole)
+		mapping_writeback_confirm_whole(mapping, wbc,
+						!done && !skipped_dirty);
 	return ret;
 }
 EXPORT_SYMBOL(write_cache_pages);
