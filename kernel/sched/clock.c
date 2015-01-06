@@ -74,6 +74,20 @@ unsigned long long __weak sched_clock(void)
 }
 EXPORT_SYMBOL_GPL(sched_clock);
 
+/*
+ * Running clock - returns the time that has elapsed while a guest has been
+ * running.
+ * On a guest this value should be sched_clock minus the time the
+ * guest was suspended by the hypervisor (for any reason).
+ * On bare metal this function should return the same as sched_clock.
+ * Architectures and sub-architectures can override this.
+ */
+unsigned long long __weak running_clock(void)
+{
+	return sched_clock();
+}
+EXPORT_SYMBOL_GPL(running_clock);
+
 __read_mostly int sched_clock_running;
 
 #ifdef CONFIG_HAVE_UNSTABLE_SCHED_CLOCK
