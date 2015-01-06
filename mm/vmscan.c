@@ -411,14 +411,14 @@ static inline int is_page_cache_freeable(struct page *page)
 	return page_count(page) - page_has_private(page) == 2;
 }
 
-static int may_write_to_queue(struct backing_dev_info *bdi,
-			      struct scan_control *sc)
+static int may_write_to_mapping(struct address_space *mapping,
+				struct scan_control *sc)
 {
 	if (current->flags & PF_SWAPWRITE)
 		return 1;
-	if (!bdi_write_congested(bdi))
+	if (!mapping_write_congested(mapping, current))
 		return 1;
-	if (bdi == current->backing_dev_info)
+	if (mapping->backing_dev_info == current->backing_dev_info)
 		return 1;
 	return 0;
 }
@@ -497,7 +497,7 @@ static pageout_t pageout(struct page *page, struct address_space *mapping,
 	}
 	if (mapping->a_ops->writepage == NULL)
 		return PAGE_ACTIVATE;
-	if (!may_write_to_queue(mapping->backing_dev_info, sc))
+	if (!may_write_to_mapping(mapping, sc))
 		return PAGE_KEEP;
 
 	if (clear_page_dirty_for_io(page)) {
@@ -885,7 +885,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 		 */
 		mapping = page_mapping(page);
 		if (((dirty || writeback) && mapping &&
-		     bdi_write_congested(mapping->backing_dev_info)) ||
+		     mapping_write_congested(mapping, current)) ||
 		    (writeback && PageReclaim(page)))
 			nr_congested++;
 

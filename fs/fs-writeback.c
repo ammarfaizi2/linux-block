@@ -109,6 +109,40 @@ out_unlock:
 #ifdef CONFIG_CGROUP_WRITEBACK
 
 /**
+ * mapping_congested - test whether a mapping is congested for a task
+ * @mapping: address space to test for congestion
+ * @task: task to test congestion for
+ * @bdi_bits: mask of WB_[a]sync_congested bits to test
+ *
+ * Tests whether @mapping is congested for @task.  @bdi_bits is the mask of
+ * congestion bits to test and the return value is the mask of set bits.
+ *
+ * If cgroup writeback is enabled for @mapping, its congestion state for
+ * @task is determined by whether the cgwb (cgroup bdi_writeback) for the
+ * blkcg of %current on @mapping->backing_dev_info is congested; otherwise,
+ * the root's congestion state is used.
+ */
+int mapping_congested(struct address_space *mapping,
+		      struct task_struct *task, int bdi_bits)
+{
+	struct backing_dev_info *bdi = mapping->backing_dev_info;
+	struct bdi_writeback *wb;
+	int ret = 0;
+
+	if (!mapping_cgwb_enabled(mapping))
+		return wb_congested(&bdi->wb, bdi_bits);
+
+	rcu_read_lock();
+	wb = cgwb_lookup(bdi, task_css(task, blkio_cgrp_id));
+	if (wb)
+		ret = wb_congested(wb, bdi_bits);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(mapping_congested);
+
+/**
  * init_cgwb_dirty_page_context - init cgwb part of dirty_context
  * @dctx: dirty_context being initialized
  *

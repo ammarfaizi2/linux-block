@@ -263,6 +263,8 @@ void init_dirty_inode_context(struct dirty_context *dctx, struct inode *inode);
 void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css);
 int __cgwb_create(struct backing_dev_info *bdi,
 		  struct cgroup_subsys_state *blkcg_css);
+int mapping_congested(struct address_space *mapping, struct task_struct *task,
+		      int bdi_bits);
 
 /**
  * mapping_cgwb_enabled - test whether cgroup writeback is enabled on a mapping
@@ -383,6 +385,12 @@ static inline void cgwb_blkcg_released(struct cgroup_subsys_state *blkcg_css)
 {
 }
 
+static inline int mapping_congested(struct address_space *mapping,
+				    struct task_struct *task, int bdi_bits)
+{
+	return wb_congested(&mapping->backing_dev_info->wb, bdi_bits);
+}
+
 static inline struct bdi_writeback *
 cgwb_lookup(struct backing_dev_info *bdi, struct cgroup_subsys_state *blkcg_css)
 {
@@ -407,6 +415,25 @@ static inline struct bdi_writeback *page_cgwb_wb(struct page *page)
 }
 
 #endif	/* CONFIG_CGROUP_WRITEBACK */
+
+static inline int mapping_read_congested(struct address_space *mapping,
+					 struct task_struct *task)
+{
+	return mapping_congested(mapping, task, 1 << WB_sync_congested);
+}
+
+static inline int mapping_write_congested(struct address_space *mapping,
+					  struct task_struct *task)
+{
+	return mapping_congested(mapping, task, 1 << WB_async_congested);
+}
+
+static inline int mapping_rw_congested(struct address_space *mapping,
+				       struct task_struct *task)
+{
+	return mapping_congested(mapping, task, (1 << WB_sync_congested) |
+						(1 << WB_async_congested));
+}
 
 static inline int bdi_congested(struct backing_dev_info *bdi, int bdi_bits)
 {
