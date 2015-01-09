@@ -150,7 +150,7 @@ static int raw_sendmsg(struct kiocb *iocb, struct sock *sk,
 	skb_reset_mac_header(skb);
 	skb_reset_network_header(skb);
 
-	err = memcpy_fromiovec(skb_put(skb, size), msg->msg_iov, size);
+	err = memcpy_from_msg(skb_put(skb, size), msg, size);
 	if (err < 0)
 		goto out_skb;
 
@@ -191,7 +191,7 @@ static int raw_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		copied = len;
 	}
 
-	err = skb_copy_datagram_iovec(skb, 0, msg->msg_iov, copied);
+	err = skb_copy_datagram_msg(skb, 0, msg, copied);
 	if (err)
 		goto done;
 
@@ -220,7 +220,6 @@ static int raw_rcv_skb(struct sock *sk, struct sk_buff *skb)
 
 	return NET_RX_SUCCESS;
 }
-
 
 void ieee802154_raw_deliver(struct net_device *dev, struct sk_buff *skb)
 {

@@ -157,14 +157,11 @@ static int cpts_ptp_adjfreq(struct ptp_clock_info *ptp, s32 ppb)
 
 static int cpts_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 {
-	s64 now;
 	unsigned long flags;
 	struct cpts *cpts = container_of(ptp, struct cpts, info);
 
 	spin_lock_irqsave(&cpts->lock, flags);
-	now = timecounter_read(&cpts->tc);
-	now += delta;
-	timecounter_init(&cpts->tc, &cpts->cc, now);
+	timecounter_adjtime(&cpts->tc, delta);
 	spin_unlock_irqrestore(&cpts->lock, flags);
 
 	return 0;
@@ -264,7 +261,7 @@ static int cpts_match(struct sk_buff *skb, unsigned int ptp_class,
 
 	switch (ptp_class & PTP_CLASS_PMASK) {
 	case PTP_CLASS_IPV4:
-		offset += ETH_HLEN + IPV4_HLEN(data) + UDP_HLEN;
+		offset += ETH_HLEN + IPV4_HLEN(data + offset) + UDP_HLEN;
 		break;
 	case PTP_CLASS_IPV6:
 		offset += ETH_HLEN + IP6_HLEN + UDP_HLEN;

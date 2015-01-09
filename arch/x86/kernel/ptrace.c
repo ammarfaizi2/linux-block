@@ -1445,12 +1445,12 @@ static void do_audit_syscall_entry(struct pt_regs *regs, u32 arch)
 {
 #ifdef CONFIG_X86_64
 	if (arch == AUDIT_ARCH_X86_64) {
-		audit_syscall_entry(arch, regs->orig_ax, regs->di,
+		audit_syscall_entry(regs->orig_ax, regs->di,
 				    regs->si, regs->dx, regs->r10);
 	} else
 #endif
 	{
-		audit_syscall_entry(arch, regs->orig_ax, regs->bx,
+		audit_syscall_entry(regs->orig_ax, regs->bx,
 				    regs->cx, regs->dx, regs->si);
 	}
 }
@@ -1484,7 +1484,7 @@ unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
 	 */
 	if (work & _TIF_NOHZ) {
 		user_exit();
-		work &= ~TIF_NOHZ;
+		work &= ~_TIF_NOHZ;
 	}
 
 #ifdef CONFIG_SECCOMP

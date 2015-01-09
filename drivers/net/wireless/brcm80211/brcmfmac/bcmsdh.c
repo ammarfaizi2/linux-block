@@ -996,18 +996,20 @@ out:
 }
 
 #define BRCMF_SDIO_DEVICE(dev_id)	\
-	{SDIO_DEVICE(BRCM_SDIO_VENDOR_ID_BROADCOM, dev_id)}
+	{SDIO_DEVICE(SDIO_VENDOR_ID_BROADCOM, dev_id)}
 
 /* devices we support, null terminated */
 static const struct sdio_device_id brcmf_sdmmc_ids[] = {
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_43143_DEVICE_ID),
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_43241_DEVICE_ID),
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_4329_DEVICE_ID),
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_4330_DEVICE_ID),
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_4334_DEVICE_ID),
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_43362_DEVICE_ID),
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_4335_4339_DEVICE_ID),
-	BRCMF_SDIO_DEVICE(BRCM_SDIO_4354_DEVICE_ID),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_43143),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_43241),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_4329),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_4330),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_4334),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_43340),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_43341),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_43362),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_4335_4339),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_4354),
 	{ /* end: all zeroes */ }
 };
 MODULE_DEVICE_TABLE(sdio, brcmf_sdmmc_ids);
@@ -1070,7 +1072,7 @@ static int brcmf_ops_sdio_probe(struct sdio_func *func,
 	 */
 	if ((sdio_get_host_pm_caps(sdiodev->func[1]) & MMC_PM_KEEP_POWER) &&
 	    ((sdio_get_host_pm_caps(sdiodev->func[1]) & MMC_PM_WAKE_SDIO_IRQ) ||
-	     (sdiodev->pdata->oob_irq_supported)))
+	     (sdiodev->pdata && sdiodev->pdata->oob_irq_supported)))
 		bus_if->wowl_supported = true;
 #endif
 
@@ -1167,7 +1169,7 @@ static int brcmf_ops_sdio_resume(struct device *dev)
 	struct brcmf_sdio_dev *sdiodev = bus_if->bus_priv.sdio;
 
 	brcmf_dbg(SDIO, "Enter\n");
-	if (sdiodev->pdata->oob_irq_supported)
+	if (sdiodev->pdata && sdiodev->pdata->oob_irq_supported)
 		disable_irq_wake(sdiodev->pdata->oob_irq_nr);
 	brcmf_sdio_wd_timer(sdiodev->bus, BRCMF_WD_POLL_MS);
 	atomic_set(&sdiodev->suspend, false);
@@ -1221,7 +1223,6 @@ static struct platform_driver brcmf_sdio_pd = {
 	.remove		= brcmf_sdio_pd_remove,
 	.driver		= {
 		.name	= BRCMFMAC_SDIO_PDATA_NAME,
-		.owner	= THIS_MODULE,
 	}
 };
 

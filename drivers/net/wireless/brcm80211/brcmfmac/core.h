@@ -29,8 +29,6 @@
 /* For supporting multiple interfaces */
 #define BRCMF_MAX_IFS	16
 
-#define DOT11_MAX_DEFAULT_KEYS	4
-
 /* Small, medium and maximum buffer size for dcmd
  */
 #define BRCMF_DCMD_SMLEN	256
@@ -167,7 +165,7 @@ struct brcmf_skb_reorder_data {
 	u8 *reorder;
 };
 
-int brcmf_netdev_wait_pend8021x(struct net_device *ndev);
+int brcmf_netdev_wait_pend8021x(struct brcmf_if *ifp);
 
 /* Return pointer to interface name */
 char *brcmf_ifname(struct brcmf_pub *drvr, int idx);
@@ -175,7 +173,8 @@ char *brcmf_ifname(struct brcmf_pub *drvr, int idx);
 int brcmf_net_attach(struct brcmf_if *ifp, bool rtnl_locked);
 struct brcmf_if *brcmf_add_if(struct brcmf_pub *drvr, s32 bssidx, s32 ifidx,
 			      char *name, u8 *mac_addr);
-void brcmf_del_if(struct brcmf_pub *drvr, s32 bssidx);
+void brcmf_remove_interface(struct brcmf_pub *drvr, u32 bssidx);
+int brcmf_get_next_free_bsscfgidx(struct brcmf_pub *drvr);
 void brcmf_txflowblock_if(struct brcmf_if *ifp,
 			  enum brcmf_netif_stop_reason reason, bool state);
 void brcmf_txfinalize(struct brcmf_pub *drvr, struct sk_buff *txp, u8 ifidx,

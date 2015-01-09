@@ -975,7 +975,7 @@ static int iwl_mvm_mac_ctxt_send_beacon(struct iwl_mvm *mvm,
 	beacon_cmd.tx.tx_flags = cpu_to_le32(tx_flags);
 
 	mvm->mgmt_last_antenna_idx =
-		iwl_mvm_next_antenna(mvm, mvm->fw->valid_tx_ant,
+		iwl_mvm_next_antenna(mvm, iwl_mvm_get_valid_tx_ant(mvm),
 				     mvm->mgmt_last_antenna_idx);
 
 	beacon_cmd.tx.rate_n_flags =
@@ -1304,31 +1304,22 @@ int iwl_mvm_rx_beacon_notif(struct iwl_mvm *mvm,
 			    struct iwl_device_cmd *cmd)
 {
 	struct iwl_rx_packet *pkt = rxb_addr(rxb);
+	struct iwl_extended_beacon_notif *beacon = (void *)pkt->data;
 	struct iwl_mvm_tx_resp *beacon_notify_hdr;
 	struct ieee80211_vif *csa_vif;
 	struct ieee80211_vif *tx_blocked_vif;
-	u64 tsf;
 	u16 status;
 
 	lockdep_assert_held(&mvm->mutex);
 
-	if (mvm->fw->ucode_capa.api[0] & IWL_UCODE_TLV_CAPA_EXTENDED_BEACON) {
-		struct iwl_extended_beacon_notif *beacon = (void *)pkt->data;
-
-		beacon_notify_hdr = &beacon->beacon_notify_hdr;
-		tsf = le64_to_cpu(beacon->tsf);
-		mvm->ap_last_beacon_gp2 = le32_to_cpu(beacon->gp2);
-	} else {
-		struct iwl_beacon_notif *beacon = (void *)pkt->data;
-
-		beacon_notify_hdr = &beacon->beacon_notify_hdr;
-		tsf = le64_to_cpu(beacon->tsf);
-	}
+	beacon_notify_hdr = &beacon->beacon_notify_hdr;
+	mvm->ap_last_beacon_gp2 = le32_to_cpu(beacon->gp2);
 
 	status = le16_to_cpu(beacon_notify_hdr->status.status) & TX_STATUS_MSK;
 	IWL_DEBUG_RX(mvm,
 		     "beacon status %#x retries:%d tsf:0x%16llX gp2:0x%X rate:%d\n",
-		     status, beacon_notify_hdr->failure_frame, tsf,
+		     status, beacon_notify_hdr->failure_frame,
+		     le64_to_cpu(beacon->tsf),
 		     mvm->ap_last_beacon_gp2,
 		     le32_to_cpu(beacon_notify_hdr->initial_rate));
 

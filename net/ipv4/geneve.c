@@ -104,7 +104,7 @@ static void geneve_build_header(struct genevehdr *geneveh,
 	memcpy(geneveh->options, options, options_len);
 }
 
-/* Transmit a fully formated Geneve frame.
+/* Transmit a fully formatted Geneve frame.
  *
  * When calling this function. The skb->data should point
  * to the geneve header which is fully formed.
@@ -122,32 +122,125 @@ int geneve_xmit_skb(struct geneve_sock *gs, struct rtable *rt,
 	int err;
 
 	skb = udp_tunnel_handle_offloads(skb, !gs->sock->sk->sk_no_check_tx);
+	if (IS_ERR(skb))
+		return PTR_ERR(skb);
 
 	min_headroom = LL_RESERVED_SPACE(rt->dst.dev) + rt->dst.header_len
 			+ GENEVE_BASE_HLEN + opt_len + sizeof(struct iphdr)
 			+ (vlan_tx_tag_present(skb) ? VLAN_HLEN : 0);
 
 	err = skb_cow_head(skb, min_headroom);
-	if (unlikely(err))
+	if (unlikely(err)) {
+		kfree_skb(skb);
 		return err;
-
-	if (vlan_tx_tag_present(skb)) {
-		if (unlikely(!__vlan_put_tag(skb,
-					     skb->vlan_proto,
-					     vlan_tx_tag_get(skb)))) {
-			err = -ENOMEM;
-			return err;
-		}
-		skb->vlan_tci = 0;
 	}
+
+	skb = vlan_hwaccel_push_inside(skb);
+	if (unlikely(!skb))
+		return -ENOMEM;
 
 	gnvh = (struct genevehdr *)__skb_push(skb, sizeof(*gnvh) + opt_len);
 	geneve_build_header(gnvh, tun_flags, vni, opt_len, opt);
+
+	skb_set_inner_protocol(skb, htons(ETH_P_TEB));
 
 	return udp_tunnel_xmit_skb(gs->sock, rt, skb, src, dst,
 				   tos, ttl, df, src_port, dst_port, xnet);
 }
 EXPORT_SYMBOL_GPL(geneve_xmit_skb);
+
+static int geneve_hlen(struct genevehdr *gh)
+{
+	return sizeof(*gh) + gh->opt_len * 4;
+}
+
+static struct sk_buff **geneve_gro_receive(struct sk_buff **head,
+					   struct sk_buff *skb)
+{
+	struct sk_buff *p, **pp = NULL;
+	struct genevehdr *gh, *gh2;
+	unsigned int hlen, gh_len, off_gnv;
+	const struct packet_offload *ptype;
+	__be16 type;
+	int flush = 1;
+
+	off_gnv = skb_gro_offset(skb);
+	hlen = off_gnv + sizeof(*gh);
+	gh = skb_gro_header_fast(skb, off_gnv);
+	if (skb_gro_header_hard(skb, hlen)) {
+		gh = skb_gro_header_slow(skb, hlen, off_gnv);
+		if (unlikely(!gh))
+			goto out;
+	}
+
+	if (gh->ver != GENEVE_VER || gh->oam)
+		goto out;
+	gh_len = geneve_hlen(gh);
+
+	hlen = off_gnv + gh_len;
+	if (skb_gro_header_hard(skb, hlen)) {
+		gh = skb_gro_header_slow(skb, hlen, off_gnv);
+		if (unlikely(!gh))
+			goto out;
+	}
+
+	flush = 0;
+
+	for (p = *head; p; p = p->next) {
+		if (!NAPI_GRO_CB(p)->same_flow)
+			continue;
+
+		gh2 = (struct genevehdr *)(p->data + off_gnv);
+		if (gh->opt_len != gh2->opt_len ||
+		    memcmp(gh, gh2, gh_len)) {
+			NAPI_GRO_CB(p)->same_flow = 0;
+			continue;
+		}
+	}
+
+	type = gh->proto_type;
+
+	rcu_read_lock();
+	ptype = gro_find_receive_by_type(type);
+	if (ptype == NULL) {
+		flush = 1;
+		goto out_unlock;
+	}
+
+	skb_gro_pull(skb, gh_len);
+	skb_gro_postpull_rcsum(skb, gh, gh_len);
+	pp = ptype->callbacks.gro_receive(head, skb);
+
+out_unlock:
+	rcu_read_unlock();
+out:
+	NAPI_GRO_CB(skb)->flush |= flush;
+
+	return pp;
+}
+
+static int geneve_gro_complete(struct sk_buff *skb, int nhoff)
+{
+	struct genevehdr *gh;
+	struct packet_offload *ptype;
+	__be16 type;
+	int gh_len;
+	int err = -ENOSYS;
+
+	udp_tunnel_gro_complete(skb, nhoff);
+
+	gh = (struct genevehdr *)(skb->data + nhoff);
+	gh_len = geneve_hlen(gh);
+	type = gh->proto_type;
+
+	rcu_read_lock();
+	ptype = gro_find_complete_by_type(type);
+	if (ptype != NULL)
+		err = ptype->callbacks.gro_complete(skb, nhoff + gh_len);
+
+	rcu_read_unlock();
+	return err;
+}
 
 static void geneve_notify_add_rx_port(struct geneve_sock *gs)
 {
@@ -161,6 +254,15 @@ static void geneve_notify_add_rx_port(struct geneve_sock *gs)
 			pr_warn("geneve: udp_add_offload failed with status %d\n",
 				err);
 	}
+}
+
+static void geneve_notify_del_rx_port(struct geneve_sock *gs)
+{
+	struct sock *sk = gs->sock->sk;
+	sa_family_t sa_family = sk->sk_family;
+
+	if (sa_family == AF_INET)
+		udp_del_offload(&gs->udp_offloads);
 }
 
 /* Callback from net/ipv4/udp.c to receive packets */
@@ -269,8 +371,8 @@ static struct geneve_sock *geneve_socket_create(struct net *net, __be16 port,
 
 	/* Initialize the geneve udp offloads structure */
 	gs->udp_offloads.port = port;
-	gs->udp_offloads.callbacks.gro_receive = NULL;
-	gs->udp_offloads.callbacks.gro_complete = NULL;
+	gs->udp_offloads.callbacks.gro_receive  = geneve_gro_receive;
+	gs->udp_offloads.callbacks.gro_complete = geneve_gro_complete;
 
 	spin_lock(&gn->sock_lock);
 	hlist_add_head_rcu(&gs->hlist, gs_head(net, port));
@@ -291,6 +393,7 @@ struct geneve_sock *geneve_sock_add(struct net *net, __be16 port,
 				    geneve_rcv_t *rcv, void *data,
 				    bool no_share, bool ipv6)
 {
+	struct geneve_net *gn = net_generic(net, geneve_net_id);
 	struct geneve_sock *gs;
 
 	gs = geneve_socket_create(net, port, rcv, data, ipv6);
@@ -300,15 +403,15 @@ struct geneve_sock *geneve_sock_add(struct net *net, __be16 port,
 	if (no_share)	/* Return error if sharing is not allowed. */
 		return ERR_PTR(-EINVAL);
 
+	spin_lock(&gn->sock_lock);
 	gs = geneve_find_sock(net, port);
-	if (gs) {
-		if (gs->rcv == rcv)
-			atomic_inc(&gs->refcnt);
-		else
+	if (gs && ((gs->rcv != rcv) ||
+		   !atomic_add_unless(&gs->refcnt, 1, 0)))
 			gs = ERR_PTR(-EBUSY);
-	} else {
+	spin_unlock(&gn->sock_lock);
+
+	if (!gs)
 		gs = ERR_PTR(-EINVAL);
-	}
 
 	return gs;
 }
@@ -316,8 +419,16 @@ EXPORT_SYMBOL_GPL(geneve_sock_add);
 
 void geneve_sock_release(struct geneve_sock *gs)
 {
+	struct net *net = sock_net(gs->sock->sk);
+	struct geneve_net *gn = net_generic(net, geneve_net_id);
+
 	if (!atomic_dec_and_test(&gs->refcnt))
 		return;
+
+	spin_lock(&gn->sock_lock);
+	hlist_del_rcu(&gs->hlist);
+	geneve_notify_del_rx_port(gs);
+	spin_unlock(&gn->sock_lock);
 
 	queue_work(geneve_wq, &gs->del_work);
 }
@@ -364,6 +475,7 @@ late_initcall(geneve_init_module);
 static void __exit geneve_cleanup_module(void)
 {
 	destroy_workqueue(geneve_wq);
+	unregister_pernet_subsys(&geneve_net_ops);
 }
 module_exit(geneve_cleanup_module);
 

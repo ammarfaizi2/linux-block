@@ -295,7 +295,6 @@ enum iwl_bt_force_ant_mode {
 * struct iwl_mvm_vif_bf_data - beacon filtering related data
 * @bf_enabled: indicates if beacon filtering is enabled
 * @ba_enabled: indicated if beacon abort is enabled
-* @last_beacon_signal: last beacon rssi signal in dbm
 * @ave_beacon_signal: average beacon signal
 * @last_cqm_event: rssi of the last cqm event
 * @bt_coex_min_thold: minimum threshold for BT coex
@@ -671,6 +670,7 @@ struct iwl_mvm {
 	/* -1 for always, 0 for never, >0 for that many times */
 	s8 restart_fw;
 	struct work_struct fw_error_dump_wk;
+	enum iwl_fw_dbg_conf fw_dbg_conf;
 
 #ifdef CONFIG_IWLWIFI_LEDS
 	struct led_classdev led;
@@ -685,6 +685,10 @@ struct iwl_mvm {
 	/* sched scan settings for net detect */
 	struct cfg80211_sched_scan_request *nd_config;
 	struct ieee80211_scan_ies nd_ies;
+	struct cfg80211_match_set *nd_match_sets;
+	int n_nd_match_sets;
+	struct ieee80211_channel **nd_channels;
+	int n_nd_channels;
 	bool net_detect;
 #ifdef CONFIG_IWLWIFI_DEBUGFS
 	u32 d3_wake_sysassert; /* must be u32 for debugfs_create_bool */
@@ -846,6 +850,8 @@ iwl_mvm_sta_from_staid_protected(struct iwl_mvm *mvm, u8 sta_id)
 static inline bool iwl_mvm_is_d0i3_supported(struct iwl_mvm *mvm)
 {
 	return mvm->trans->cfg->d0i3 &&
+	       mvm->trans->d0i3_mode != IWL_D0I3_MODE_OFF &&
+	       !iwlwifi_mod_params.d0i3_disable &&
 	       (mvm->fw->ucode_capa.capa[0] & IWL_UCODE_TLV_CAPA_D0I3_SUPPORT);
 }
 
@@ -932,6 +938,33 @@ int iwl_mvm_rx_statistics(struct iwl_mvm *mvm,
 /* NVM */
 int iwl_nvm_init(struct iwl_mvm *mvm, bool read_nvm_from_nic);
 int iwl_mvm_load_nvm_to_nic(struct iwl_mvm *mvm);
+
+static inline u8 iwl_mvm_get_valid_tx_ant(struct iwl_mvm *mvm)
+{
+	return mvm->nvm_data && mvm->nvm_data->valid_tx_ant ?
+	       mvm->fw->valid_tx_ant & mvm->nvm_data->valid_tx_ant :
+	       mvm->fw->valid_tx_ant;
+}
+
+static inline u8 iwl_mvm_get_valid_rx_ant(struct iwl_mvm *mvm)
+{
+	return mvm->nvm_data && mvm->nvm_data->valid_rx_ant ?
+	       mvm->fw->valid_rx_ant & mvm->nvm_data->valid_rx_ant :
+	       mvm->fw->valid_rx_ant;
+}
+
+static inline u32 iwl_mvm_get_phy_config(struct iwl_mvm *mvm)
+{
+	u32 phy_config = ~(FW_PHY_CFG_TX_CHAIN |
+			   FW_PHY_CFG_RX_CHAIN);
+	u32 valid_rx_ant = iwl_mvm_get_valid_rx_ant(mvm);
+	u32 valid_tx_ant = iwl_mvm_get_valid_tx_ant(mvm);
+
+	phy_config |= valid_tx_ant << FW_PHY_CFG_TX_CHAIN_POS |
+		      valid_rx_ant << FW_PHY_CFG_RX_CHAIN_POS;
+
+	return mvm->fw->phy_config & phy_config;
+}
 
 int iwl_mvm_up(struct iwl_mvm *mvm);
 int iwl_mvm_load_d3_fw(struct iwl_mvm *mvm);
@@ -1143,7 +1176,7 @@ iwl_mvm_set_last_nonqos_seq(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
 }
 #endif
 void iwl_mvm_set_wowlan_qos_seq(struct iwl_mvm_sta *mvm_ap_sta,
-				struct iwl_wowlan_config_cmd_v2 *cmd);
+				struct iwl_wowlan_config_cmd *cmd);
 int iwl_mvm_send_proto_offload(struct iwl_mvm *mvm,
 			       struct ieee80211_vif *vif,
 			       bool disable_offloading,
@@ -1155,6 +1188,8 @@ void iwl_mvm_unref(struct iwl_mvm *mvm, enum iwl_mvm_ref_type ref_type);
 int iwl_mvm_ref_sync(struct iwl_mvm *mvm, enum iwl_mvm_ref_type ref_type);
 bool iwl_mvm_ref_taken(struct iwl_mvm *mvm);
 void iwl_mvm_d0i3_enable_tx(struct iwl_mvm *mvm, __le16 *qos_seq);
+int iwl_mvm_enter_d0i3(struct iwl_op_mode *op_mode);
+int iwl_mvm_exit_d0i3(struct iwl_op_mode *op_mode);
 int _iwl_mvm_exit_d0i3(struct iwl_mvm *mvm);
 
 /* BT Coex */
@@ -1339,5 +1374,8 @@ struct ieee80211_vif *iwl_mvm_get_bss_vif(struct iwl_mvm *mvm);
 
 void iwl_mvm_nic_restart(struct iwl_mvm *mvm, bool fw_error);
 void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm);
+
+int iwl_mvm_start_fw_dbg_conf(struct iwl_mvm *mvm, enum iwl_fw_dbg_conf id);
+void iwl_mvm_fw_dbg_collect(struct iwl_mvm *mvm);
 
 #endif /* __IWL_MVM_H__ */

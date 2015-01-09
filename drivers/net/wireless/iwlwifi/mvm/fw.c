@@ -70,6 +70,7 @@
 #include "iwl-debug.h"
 #include "iwl-csr.h" /* for iwl_mvm_rx_card_state_notif */
 #include "iwl-io.h" /* for iwl_mvm_rx_card_state_notif */
+#include "iwl-prph.h"
 #include "iwl-eeprom-parse.h"
 
 #include "mvm.h"
@@ -186,7 +187,12 @@ static int iwl_mvm_load_ucode_wait_alive(struct iwl_mvm *mvm,
 	static const u8 alive_cmd[] = { MVM_ALIVE };
 	struct iwl_sf_region st_fwrd_space;
 
-	fw = iwl_get_ucode_image(mvm, ucode_type);
+	if (ucode_type == IWL_UCODE_REGULAR &&
+	    iwl_fw_dbg_conf_usniffer(mvm->fw, FW_DBG_CUSTOM) &&
+	    iwl_fw_dbg_conf_enabled(mvm->fw, FW_DBG_CUSTOM))
+		fw = iwl_get_ucode_image(mvm, IWL_UCODE_REGULAR_USNIFFER);
+	else
+		fw = iwl_get_ucode_image(mvm, ucode_type);
 	if (WARN_ON(!fw))
 		return -EINVAL;
 	mvm->cur_ucode = ucode_type;
@@ -264,7 +270,7 @@ static int iwl_send_phy_cfg_cmd(struct iwl_mvm *mvm)
 	enum iwl_ucode_type ucode_type = mvm->cur_ucode;
 
 	/* Set parameters */
-	phy_cfg_cmd.phy_cfg = cpu_to_le32(mvm->fw->phy_config);
+	phy_cfg_cmd.phy_cfg = cpu_to_le32(iwl_mvm_get_phy_config(mvm));
 	phy_cfg_cmd.calib_control.event_trigger =
 		mvm->fw->default_calib[ucode_type].event_trigger;
 	phy_cfg_cmd.calib_control.flow_trigger =
@@ -341,7 +347,7 @@ int iwl_run_init_mvm_ucode(struct iwl_mvm *mvm, bool read_nvm)
 	mvm->calibrating = true;
 
 	/* Send TX valid antennas before triggering calibrations */
-	ret = iwl_send_tx_ant_cfg(mvm, mvm->fw->valid_tx_ant);
+	ret = iwl_send_tx_ant_cfg(mvm, iwl_mvm_get_valid_tx_ant(mvm));
 	if (ret)
 		goto error;
 
@@ -391,6 +397,60 @@ out:
 		mvm->nvm_data->bands[0].bitrates->hw_value = 10;
 	}
 
+	return ret;
+}
+
+void iwl_mvm_fw_dbg_collect(struct iwl_mvm *mvm)
+{
+	lockdep_assert_held(&mvm->mutex);
+
+	/* stop recording */
+	if (mvm->cfg->device_family == IWL_DEVICE_FAMILY_7000) {
+		iwl_set_bits_prph(mvm->trans, MON_BUFF_SAMPLE_CTL, 0x100);
+	} else {
+		iwl_write_prph(mvm->trans, DBGC_IN_SAMPLE, 0);
+		iwl_write_prph(mvm->trans, DBGC_OUT_CTRL, 0);
+	}
+
+	iwl_mvm_fw_error_dump(mvm);
+
+	/* start recording again */
+	WARN_ON_ONCE(mvm->fw->dbg_dest_tlv &&
+		     iwl_mvm_start_fw_dbg_conf(mvm, mvm->fw_dbg_conf));
+}
+
+int iwl_mvm_start_fw_dbg_conf(struct iwl_mvm *mvm, enum iwl_fw_dbg_conf conf_id)
+{
+	u8 *ptr;
+	int ret;
+	int i;
+
+	if (WARN_ONCE(conf_id >= ARRAY_SIZE(mvm->fw->dbg_conf_tlv),
+		      "Invalid configuration %d\n", conf_id))
+		return -EINVAL;
+
+	if (!mvm->fw->dbg_conf_tlv[conf_id])
+		return -EINVAL;
+
+	if (mvm->fw_dbg_conf != FW_DBG_INVALID)
+		IWL_WARN(mvm, "FW already configured (%d) - re-configuring\n",
+			 mvm->fw_dbg_conf);
+
+	/* Send all HCMDs for configuring the FW debug */
+	ptr = (void *)&mvm->fw->dbg_conf_tlv[conf_id]->hcmd;
+	for (i = 0; i < mvm->fw->dbg_conf_tlv[conf_id]->num_of_hcmds; i++) {
+		struct iwl_fw_dbg_conf_hcmd *cmd = (void *)ptr;
+
+		ret = iwl_mvm_send_cmd_pdu(mvm, cmd->id, 0,
+					   le16_to_cpu(cmd->len), cmd->data);
+		if (ret)
+			return ret;
+
+		ptr += sizeof(*cmd);
+		ptr += le16_to_cpu(cmd->len);
+	}
+
+	mvm->fw_dbg_conf = conf_id;
 	return ret;
 }
 
@@ -445,7 +505,10 @@ int iwl_mvm_up(struct iwl_mvm *mvm)
 	if (ret)
 		IWL_ERR(mvm, "Failed to initialize Smart Fifo\n");
 
-	ret = iwl_send_tx_ant_cfg(mvm, mvm->fw->valid_tx_ant);
+	mvm->fw_dbg_conf = FW_DBG_INVALID;
+	iwl_mvm_start_fw_dbg_conf(mvm, FW_DBG_CUSTOM);
+
+	ret = iwl_send_tx_ant_cfg(mvm, iwl_mvm_get_valid_tx_ant(mvm));
 	if (ret)
 		goto error;
 
@@ -540,7 +603,7 @@ int iwl_mvm_load_d3_fw(struct iwl_mvm *mvm)
 		goto error;
 	}
 
-	ret = iwl_send_tx_ant_cfg(mvm, mvm->fw->valid_tx_ant);
+	ret = iwl_send_tx_ant_cfg(mvm, iwl_mvm_get_valid_tx_ant(mvm));
 	if (ret)
 		goto error;
 

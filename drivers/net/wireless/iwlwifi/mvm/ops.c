@@ -84,15 +84,8 @@
 #include "time-event.h"
 #include "iwl-fw-error-dump.h"
 
-/*
- * module name, copyright, version, etc.
- */
 #define DRV_DESCRIPTION	"The new Intel(R) wireless AGN driver for Linux"
-
-#define DRV_VERSION     IWLWIFI_VERSION
-
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
-MODULE_VERSION(DRV_VERSION);
 MODULE_AUTHOR(DRV_COPYRIGHT " " DRV_AUTHOR);
 MODULE_LICENSE("GPL");
 
@@ -146,13 +139,14 @@ static void iwl_mvm_nic_config(struct iwl_op_mode *op_mode)
 	struct iwl_mvm *mvm = IWL_OP_MODE_GET_MVM(op_mode);
 	u8 radio_cfg_type, radio_cfg_step, radio_cfg_dash;
 	u32 reg_val = 0;
+	u32 phy_config = iwl_mvm_get_phy_config(mvm);
 
-	radio_cfg_type = (mvm->fw->phy_config & FW_PHY_CFG_RADIO_TYPE) >>
-			  FW_PHY_CFG_RADIO_TYPE_POS;
-	radio_cfg_step = (mvm->fw->phy_config & FW_PHY_CFG_RADIO_STEP) >>
-			  FW_PHY_CFG_RADIO_STEP_POS;
-	radio_cfg_dash = (mvm->fw->phy_config & FW_PHY_CFG_RADIO_DASH) >>
-			  FW_PHY_CFG_RADIO_DASH_POS;
+	radio_cfg_type = (phy_config & FW_PHY_CFG_RADIO_TYPE) >>
+			 FW_PHY_CFG_RADIO_TYPE_POS;
+	radio_cfg_step = (phy_config & FW_PHY_CFG_RADIO_STEP) >>
+			 FW_PHY_CFG_RADIO_STEP_POS;
+	radio_cfg_dash = (phy_config & FW_PHY_CFG_RADIO_DASH) >>
+			 FW_PHY_CFG_RADIO_DASH_POS;
 
 	/* SKU control */
 	reg_val |= CSR_HW_REV_STEP(mvm->trans->hw_rev) <<
@@ -325,11 +319,9 @@ static const char *const iwl_mvm_cmd_strings[REPLY_MAX] = {
 	CMD(WOWLAN_KEK_KCK_MATERIAL),
 	CMD(WOWLAN_GET_STATUSES),
 	CMD(WOWLAN_TX_POWER_PER_DB),
-	CMD(NET_DETECT_CONFIG_CMD),
-	CMD(NET_DETECT_PROFILES_QUERY_CMD),
-	CMD(NET_DETECT_PROFILES_CMD),
-	CMD(NET_DETECT_HOTSPOTS_CMD),
-	CMD(NET_DETECT_HOTSPOTS_QUERY_CMD),
+	CMD(SCAN_OFFLOAD_PROFILES_QUERY_CMD),
+	CMD(SCAN_OFFLOAD_HOTSPOTS_CONFIG_CMD),
+	CMD(SCAN_OFFLOAD_HOTSPOTS_QUERY_CMD),
 	CMD(CARD_STATE_NOTIFICATION),
 	CMD(MISSED_BEACONS_NOTIFICATION),
 	CMD(BT_COEX_PRIO_TABLE),
@@ -489,6 +481,8 @@ iwl_op_mode_mvm_start(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 	trans_cfg.cmd_fifo = IWL_MVM_TX_FIFO_CMD;
 	trans_cfg.scd_set_active = true;
 
+	trans_cfg.sdio_adma_addr = fw->sdio_adma_addr;
+
 	snprintf(mvm->hw->wiphy->fw_version,
 		 sizeof(mvm->hw->wiphy->fw_version),
 		 "%s", fw->fw_version);
@@ -498,6 +492,10 @@ iwl_op_mode_mvm_start(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 
 	trans->rx_mpdu_cmd = REPLY_RX_MPDU_CMD;
 	trans->rx_mpdu_cmd_hdr_size = sizeof(struct iwl_rx_mpdu_res_start);
+	trans->dbg_dest_tlv = mvm->fw->dbg_dest_tlv;
+	trans->dbg_dest_reg_num = mvm->fw->dbg_dest_reg_num;
+	memcpy(trans->dbg_conf_tlv, mvm->fw->dbg_conf_tlv,
+	       sizeof(trans->dbg_conf_tlv));
 
 	/* set up notification wait support */
 	iwl_notification_wait_init(&mvm->notif_wait);
@@ -515,10 +513,15 @@ iwl_op_mode_mvm_start(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 	min_backoff = calc_min_backoff(trans, cfg);
 	iwl_mvm_tt_initialize(mvm, min_backoff);
 	/* set the nvm_file_name according to priority */
-	if (iwlwifi_mod_params.nvm_file)
+	if (iwlwifi_mod_params.nvm_file) {
 		mvm->nvm_file_name = iwlwifi_mod_params.nvm_file;
-	else
-		mvm->nvm_file_name = mvm->cfg->default_nvm_file;
+	} else {
+		if ((trans->cfg->device_family == IWL_DEVICE_FAMILY_8000) &&
+		    (CSR_HW_REV_STEP(trans->hw_rev) == SILICON_A_STEP))
+			mvm->nvm_file_name = mvm->cfg->default_nvm_file_8000A;
+		else
+			mvm->nvm_file_name = mvm->cfg->default_nvm_file;
+	}
 
 	if (WARN(cfg->no_power_up_nic_in_init && !mvm->nvm_file_name,
 		 "not allowing power-up and not having nvm_file\n"))
@@ -1002,7 +1005,7 @@ static void iwl_mvm_enter_d0i3_iterator(void *_data, u8 *mac,
 }
 
 static void iwl_mvm_set_wowlan_data(struct iwl_mvm *mvm,
-				    struct iwl_wowlan_config_cmd_v3 *cmd,
+				    struct iwl_wowlan_config_cmd *cmd,
 				    struct iwl_d0i3_iter_data *iter_data)
 {
 	struct ieee80211_sta *ap_sta;
@@ -1018,18 +1021,19 @@ static void iwl_mvm_set_wowlan_data(struct iwl_mvm *mvm,
 		goto out;
 
 	mvm_ap_sta = iwl_mvm_sta_from_mac80211(ap_sta);
-	cmd->common.is_11n_connection = ap_sta->ht_cap.ht_supported;
+	cmd->is_11n_connection = ap_sta->ht_cap.ht_supported;
 	cmd->offloading_tid = iter_data->offloading_tid;
 
 	/*
 	 * The d0i3 uCode takes care of the nonqos counters,
 	 * so configure only the qos seq ones.
 	 */
-	iwl_mvm_set_wowlan_qos_seq(mvm_ap_sta, &cmd->common);
+	iwl_mvm_set_wowlan_qos_seq(mvm_ap_sta, cmd);
 out:
 	rcu_read_unlock();
 }
-static int iwl_mvm_enter_d0i3(struct iwl_op_mode *op_mode)
+
+int iwl_mvm_enter_d0i3(struct iwl_op_mode *op_mode)
 {
 	struct iwl_mvm *mvm = IWL_OP_MODE_GET_MVM(op_mode);
 	u32 flags = CMD_ASYNC | CMD_HIGH_PRIO | CMD_SEND_IN_IDLE;
@@ -1037,17 +1041,15 @@ static int iwl_mvm_enter_d0i3(struct iwl_op_mode *op_mode)
 	struct iwl_d0i3_iter_data d0i3_iter_data = {
 		.mvm = mvm,
 	};
-	struct iwl_wowlan_config_cmd_v3 wowlan_config_cmd = {
-		.common = {
-			.wakeup_filter =
-				cpu_to_le32(IWL_WOWLAN_WAKEUP_RX_FRAME |
-					    IWL_WOWLAN_WAKEUP_BEACON_MISS |
-					    IWL_WOWLAN_WAKEUP_LINK_CHANGE |
-					    IWL_WOWLAN_WAKEUP_BCN_FILTERING),
-		},
+	struct iwl_wowlan_config_cmd wowlan_config_cmd = {
+		.wakeup_filter = cpu_to_le32(IWL_WOWLAN_WAKEUP_RX_FRAME |
+					     IWL_WOWLAN_WAKEUP_BEACON_MISS |
+					     IWL_WOWLAN_WAKEUP_LINK_CHANGE |
+					     IWL_WOWLAN_WAKEUP_BCN_FILTERING),
 	};
 	struct iwl_d3_manager_config d3_cfg_cmd = {
 		.min_sleep_time = cpu_to_le32(1000),
+		.wakeup_flags = cpu_to_le32(IWL_WAKEUP_D3_CONFIG_FW_ERROR),
 	};
 
 	IWL_DEBUG_RPM(mvm, "MVM entering D0i3\n");
@@ -1147,7 +1149,7 @@ void iwl_mvm_d0i3_enable_tx(struct iwl_mvm *mvm, __le16 *qos_seq)
 
 	if (mvm->d0i3_offloading && qos_seq) {
 		/* update qos seq numbers if offloading was enabled */
-		mvm_ap_sta = (struct iwl_mvm_sta *)sta->drv_priv;
+		mvm_ap_sta = iwl_mvm_sta_from_mac80211(sta);
 		for (i = 0; i < IWL_MAX_TID_COUNT; i++) {
 			u16 seq = le16_to_cpu(qos_seq[i]);
 			/* firmware stores last-used one, we store next one */
@@ -1246,7 +1248,7 @@ out:
 	return ret;
 }
 
-static int iwl_mvm_exit_d0i3(struct iwl_op_mode *op_mode)
+int iwl_mvm_exit_d0i3(struct iwl_op_mode *op_mode)
 {
 	struct iwl_mvm *mvm = IWL_OP_MODE_GET_MVM(op_mode);
 
