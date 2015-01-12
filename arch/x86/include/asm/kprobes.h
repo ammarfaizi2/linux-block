@@ -117,4 +117,13 @@ extern int kprobe_exceptions_notify(struct notifier_block *self,
 				    unsigned long val, void *data);
 extern int kprobe_int3_handler(struct pt_regs *regs);
 extern int kprobe_debug_handler(struct pt_regs *regs);
+
+/*
+ * If fentry is being used, then it's OK to function graph trace
+ * jprobes, as it is implented on top of the ftrace infrastructure.
+ */
+#if defined(CC_USING_FENTRY) && defined(CONFIG_FUNCTION_GRAPH_TRACER)
+# define ALLOW_JPROBE_GRAPH_TRACER
+#endif
+
 #endif /* _ASM_X86_KPROBES_H */

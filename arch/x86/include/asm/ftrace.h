@@ -27,6 +27,9 @@ static inline unsigned long ftrace_call_adjust(unsigned long addr)
 	return addr;
 }
 
+/* Used to keep jprobes from messing with function graph tracing */
+void fixup_jprobe(void);
+
 #ifdef CONFIG_DYNAMIC_FTRACE
 
 struct dyn_arch_ftrace {

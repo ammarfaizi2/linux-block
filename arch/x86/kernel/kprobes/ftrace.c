@@ -29,6 +29,18 @@ static nokprobe_inline
 int __skip_singlestep(struct kprobe *p, struct pt_regs *regs,
 		      struct kprobe_ctlblk *kcb, unsigned long orig_ip)
 {
+#ifdef ALLOW_JPROBE_GRAPH_TRACER
+	/*
+	 * If the function graph tracer traced the jprobe entry then
+	 * the ip address would be set to fixup_jprobe, and we do
+	 * not want to modify that (and we expect that orig_ip to be
+	 * zero in this case as well). Make sure that the regs->ip
+	 * is set back to fixup_jprobe on exit.
+	 */
+	if (!orig_ip && regs->ip == (unsigned long)fixup_jprobe)
+		orig_ip = regs->ip;
+#endif
+
 	/*
 	 * Emulate singlestep (and also recover regs->ip)
 	 * as if there is a 5byte nop

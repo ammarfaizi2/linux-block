@@ -323,4 +323,26 @@ GLOBAL(return_to_handler)
 	movq (%rsp), %rax
 	addq $24, %rsp
 	jmp *%rdi
-#endif
+
+/*
+ * A jprobe that is traced or the function it traces is traced, then
+ * it needs to have a special verson of return_to_handler that it
+ * gets set from longjmp_break_handler(). This is because the jprobe
+ * callback is not returning to the function that called it, but instead
+ * it is returning to the function it probed.
+ */
+ENTRY(fixup_jprobe)
+	/* longjmp_break_handler() placed the probed function into r10 */
+	addq $MCOUNT_INSN_SIZE, %r10
+	pushq %r10
+	save_mcount_regs
+	/* No need to check frames here */
+	movq $0, %rdi
+	call ftrace_return_to_handler
+	/* Put the return address back to its proper place */
+	movq %rax, MCOUNT_REG_SIZE+8(%rsp)
+	restore_mcount_regs
+	retq
+END(fixup_jprobe)
+
+#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
