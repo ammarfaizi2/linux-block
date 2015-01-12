@@ -333,7 +333,6 @@ GLOBAL(return_to_handler)
  */
 ENTRY(fixup_jprobe)
 	/* longjmp_break_handler() placed the probed function into r10 */
-	addq $MCOUNT_INSN_SIZE, %r10
 	pushq %r10
 	save_mcount_regs
 	/* No need to check frames here */
@@ -341,8 +340,21 @@ ENTRY(fixup_jprobe)
 	call ftrace_return_to_handler
 	/* Put the return address back to its proper place */
 	movq %rax, MCOUNT_REG_SIZE+8(%rsp)
+	movq MCOUNT_REG_SIZE(%rsp), %rdi
+	leaq MCOUNT_REG_SIZE+8(%rsp), %rsi
+	movq $0, %rdx	/* No framepointers needed */
+	call prepare_ftrace_return
 	restore_mcount_regs
+	/* Skip over the fentry call */
+	addq $MCOUNT_INSN_SIZE, 0(%rsp)
 	retq
 END(fixup_jprobe)
+
+ENTRY(ftrace_trace_addr)
+	/* longjmp_break_handler() saved our return address in r10 */
+	pushq %r10
+	addq $MCOUNT_INSN_SIZE, 0(%rsp)
+	jmp ftrace_graph_caller
+END(ftrace_trace_addr)
 
 #endif /* CONFIG_FUNCTION_GRAPH_TRACER */

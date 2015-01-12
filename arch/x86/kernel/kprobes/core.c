@@ -1098,6 +1098,22 @@ int longjmp_break_handler(struct kprobe *p, struct pt_regs *regs)
  */
 #ifdef ALLOW_JPROBE_GRAPH_TRACER
 		/*
+		 * Since we are not returning back to the function
+		 * that was probed, the fixup_jprobe and ftrace_trace_addr
+		 * needs a way to know what to jump back to. Store that in the
+		 * r10 register, which callee functions are allowed
+		 * to clobber. Since r10 can be clobbered by the callee,
+		 * the caller must save it if necessary. As the callee
+		 * (probed function) has not been executed yet, the
+		 * value for r10 currently is not important.
+		 *
+		 * Note, as this only happens with fentry which is
+		 * not supported (yet) by i386, we can use the r10
+		 * field directly here.
+		 */
+		kcb->jprobe_saved_regs.r10 = (unsigned long)p->addr;
+
+		/*
 		 * If function graph tracing traced the function that the
 		 * jprobe attached to, then the function graph tracing
 		 * would have changed the stack return address to point to
@@ -1117,21 +1133,12 @@ int longjmp_break_handler(struct kprobe *p, struct pt_regs *regs)
 			 * handler.
 			 */
 			kcb->jprobe_saved_regs.ip = (unsigned long)fixup_jprobe;
+		} else {
 			/*
-			 * Since we are not returning back to the function
-			 * that was probed, the fixup_jprobe needs a way
-			 * to know what to jump back to. Store that in the
-			 * r10 register which callee functions are allowed
-			 * to clobber. Since r10 can be clobbered by the callee,
-			 * the caller must save it if necessary. As the callee
-			 * (probed function) has not been executed yet, the
-			 * value for r10 currently is not important.
-			 *
-			 * Note, as this only happens with fentry which is
-			 * not supported (yet) by i386, we can use the r10
-			 * field directly here.
+			 * See if function graph tracing is enabled and
+			 * trace this function if necessary.
 			 */
-			kcb->jprobe_saved_regs.r10 = (unsigned long)p->addr;
+			kcb->jprobe_saved_regs.ip = (unsigned long)ftrace_trace_addr;
 		}
 #else
 		/* It's OK to start function graph tracing again */

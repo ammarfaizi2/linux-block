@@ -37,7 +37,9 @@ int __skip_singlestep(struct kprobe *p, struct pt_regs *regs,
 	 * zero in this case as well). Make sure that the regs->ip
 	 * is set back to fixup_jprobe on exit.
 	 */
-	if (!orig_ip && regs->ip == (unsigned long)fixup_jprobe)
+	if (!orig_ip &&
+	    (regs->ip == (unsigned long)fixup_jprobe ||
+	     regs->ip == (unsigned long)ftrace_trace_addr))
 		orig_ip = regs->ip;
 #endif
 
