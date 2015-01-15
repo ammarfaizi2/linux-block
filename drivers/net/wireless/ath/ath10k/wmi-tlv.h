@@ -1375,6 +1375,40 @@ struct wmi_tlv_pktlog_disable {
 	__le32 reserved;
 } __packed;
 
+enum wmi_tlv_bcn_tx_status {
+	WMI_TLV_BCN_TX_STATUS_OK,
+	WMI_TLV_BCN_TX_STATUS_XRETRY,
+	WMI_TLV_BCN_TX_STATUS_DROP,
+	WMI_TLV_BCN_TX_STATUS_FILTERED,
+};
+
+struct wmi_tlv_bcn_tx_status_ev {
+	__le32 vdev_id;
+	__le32 tx_status;
+} __packed;
+
+struct wmi_tlv_bcn_prb_info {
+	__le32 caps;
+	__le32 erp;
+	u8 ies[0];
+} __packed;
+
+struct wmi_tlv_bcn_tmpl_cmd {
+	__le32 vdev_id;
+	__le32 tim_ie_offset;
+	__le32 buf_len;
+} __packed;
+
+struct wmi_tlv_prb_tmpl_cmd {
+	__le32 vdev_id;
+	__le32 buf_len;
+} __packed;
+
+struct wmi_tlv_p2p_go_bcn_ie {
+	__le32 vdev_id;
+	__le32 ie_len;
+} __packed;
+
 void ath10k_wmi_tlv_attach(struct ath10k *ar);
 
 #endif

@@ -58,6 +58,8 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		= { .min_len = sizeof(struct wlan_host_mem_req) },
 	[WMI_TLV_TAG_STRUCT_READY_EVENT]
 		= { .min_len = sizeof(struct wmi_tlv_rdy_ev) },
+	[WMI_TLV_TAG_STRUCT_OFFLOAD_BCN_TX_STATUS_EVENT]
+		= { .min_len = sizeof(struct wmi_tlv_bcn_tx_status_ev) },
 };
 
 static int
@@ -154,6 +156,51 @@ ath10k_wmi_tlv_parse_alloc(struct ath10k *ar, const void *ptr,
 static u16 ath10k_wmi_tlv_len(const void *ptr)
 {
 	return __le16_to_cpu((((const struct wmi_tlv *)ptr) - 1)->len);
+}
+
+/**************/
+/* TLV events */
+/**************/
+static int ath10k_wmi_tlv_event_bcn_tx_status(struct ath10k *ar,
+					      struct sk_buff *skb)
+{
+	const void **tb;
+	const struct wmi_tlv_bcn_tx_status_ev *ev;
+	u32 vdev_id, tx_status;
+	int ret;
+
+	tb = ath10k_wmi_tlv_parse_alloc(ar, skb->data, skb->len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath10k_warn(ar, "failed to parse tlv: %d\n", ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TLV_TAG_STRUCT_OFFLOAD_BCN_TX_STATUS_EVENT];
+	if (!ev) {
+		kfree(tb);
+		return -EPROTO;
+	}
+
+	tx_status = __le32_to_cpu(ev->tx_status);
+	vdev_id = __le32_to_cpu(ev->vdev_id);
+
+	switch (tx_status) {
+	case WMI_TLV_BCN_TX_STATUS_OK:
+		break;
+	case WMI_TLV_BCN_TX_STATUS_XRETRY:
+	case WMI_TLV_BCN_TX_STATUS_DROP:
+	case WMI_TLV_BCN_TX_STATUS_FILTERED:
+		/* FIXME: It's probably worth telling mac80211 to stop the
+		 * interface as it is crippled.
+		 */
+		ath10k_warn(ar, "received bcn tmpl tx status on vdev %i: %d",
+			    vdev_id, tx_status);
+		break;
+	}
+
+	kfree(tb);
+	return 0;
 }
 
 /***********/
@@ -267,6 +314,9 @@ static void ath10k_wmi_tlv_op_rx(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	case WMI_TLV_READY_EVENTID:
 		ath10k_wmi_event_ready(ar, skb);
+		break;
+	case WMI_TLV_OFFLOAD_BCN_TX_STATUS_EVENTID:
+		ath10k_wmi_tlv_event_bcn_tx_status(ar, skb);
 		break;
 	default:
 		ath10k_warn(ar, "Unknown eventid: %d\n", id);
@@ -1922,6 +1972,159 @@ ath10k_wmi_tlv_op_gen_pktlog_disable(struct ath10k *ar)
 	return skb;
 }
 
+static struct sk_buff *
+ath10k_wmi_tlv_op_gen_bcn_tmpl(struct ath10k *ar, u32 vdev_id,
+			       u32 tim_ie_offset, struct sk_buff *bcn,
+			       u32 prb_caps, u32 prb_erp, void *prb_ies,
+			       size_t prb_ies_len)
+{
+	struct wmi_tlv_bcn_tmpl_cmd *cmd;
+	struct wmi_tlv_bcn_prb_info *info;
+	struct wmi_tlv *tlv;
+	struct sk_buff *skb;
+	void *ptr;
+	size_t len;
+
+	if (WARN_ON(prb_ies_len > 0 && !prb_ies))
+		return ERR_PTR(-EINVAL);
+
+	len = sizeof(*tlv) + sizeof(*cmd) +
+	      sizeof(*tlv) + sizeof(*info) + prb_ies_len +
+	      sizeof(*tlv) + roundup(bcn->len, 4);
+	skb = ath10k_wmi_alloc_skb(ar, len);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	ptr = (void *)skb->data;
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_BCN_TMPL_CMD);
+	tlv->len = __cpu_to_le16(sizeof(*cmd));
+	cmd = (void *)tlv->value;
+	cmd->vdev_id = __cpu_to_le32(vdev_id);
+	cmd->tim_ie_offset = __cpu_to_le32(tim_ie_offset);
+	cmd->buf_len = __cpu_to_le32(bcn->len);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*cmd);
+
+	/* FIXME: prb_ies_len should be probably aligned to 4byte boundary but
+	 * then it is then impossible to pass original ie len.
+	 * This chunk is not used yet so if setting probe resp template yields
+	 * problems with beaconing or crashes firmware look here.
+	 */
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_BCN_PRB_INFO);
+	tlv->len = __cpu_to_le16(sizeof(*info) + prb_ies_len);
+	info = (void *)tlv->value;
+	info->caps = __cpu_to_le32(prb_caps);
+	info->erp = __cpu_to_le32(prb_erp);
+	memcpy(info->ies, prb_ies, prb_ies_len);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*info);
+	ptr += prb_ies_len;
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_ARRAY_BYTE);
+	tlv->len = __cpu_to_le16(roundup(bcn->len, 4));
+	memcpy(tlv->value, bcn->data, bcn->len);
+
+	/* FIXME: Adjust TSF? */
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv bcn tmpl vdev_id %i\n",
+		   vdev_id);
+	return skb;
+}
+
+static struct sk_buff *
+ath10k_wmi_tlv_op_gen_prb_tmpl(struct ath10k *ar, u32 vdev_id,
+			       struct sk_buff *prb)
+{
+	struct wmi_tlv_prb_tmpl_cmd *cmd;
+	struct wmi_tlv_bcn_prb_info *info;
+	struct wmi_tlv *tlv;
+	struct sk_buff *skb;
+	void *ptr;
+	size_t len;
+
+	len = sizeof(*tlv) + sizeof(*cmd) +
+	      sizeof(*tlv) + sizeof(*info) +
+	      sizeof(*tlv) + roundup(prb->len, 4);
+	skb = ath10k_wmi_alloc_skb(ar, len);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	ptr = (void *)skb->data;
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_PRB_TMPL_CMD);
+	tlv->len = __cpu_to_le16(sizeof(*cmd));
+	cmd = (void *)tlv->value;
+	cmd->vdev_id = __cpu_to_le32(vdev_id);
+	cmd->buf_len = __cpu_to_le32(prb->len);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*cmd);
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_BCN_PRB_INFO);
+	tlv->len = __cpu_to_le16(sizeof(*info));
+	info = (void *)tlv->value;
+	info->caps = 0;
+	info->erp = 0;
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*info);
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_ARRAY_BYTE);
+	tlv->len = __cpu_to_le16(roundup(prb->len, 4));
+	memcpy(tlv->value, prb->data, prb->len);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv prb tmpl vdev_id %i\n",
+		   vdev_id);
+	return skb;
+}
+
+static struct sk_buff *
+ath10k_wmi_tlv_op_gen_p2p_go_bcn_ie(struct ath10k *ar, u32 vdev_id,
+				    const u8 *p2p_ie)
+{
+	struct wmi_tlv_p2p_go_bcn_ie *cmd;
+	struct wmi_tlv *tlv;
+	struct sk_buff *skb;
+	void *ptr;
+	size_t len;
+
+	len = sizeof(*tlv) + sizeof(*cmd) +
+	      sizeof(*tlv) + roundup(p2p_ie[1] + 2, 4);
+	skb = ath10k_wmi_alloc_skb(ar, len);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	ptr = (void *)skb->data;
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_P2P_GO_SET_BEACON_IE);
+	tlv->len = __cpu_to_le16(sizeof(*cmd));
+	cmd = (void *)tlv->value;
+	cmd->vdev_id = __cpu_to_le32(vdev_id);
+	cmd->ie_len = __cpu_to_le32(p2p_ie[1] + 2);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*cmd);
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_ARRAY_BYTE);
+	tlv->len = __cpu_to_le16(roundup(p2p_ie[1] + 2, 4));
+	memcpy(tlv->value, p2p_ie, p2p_ie[1] + 2);
+
+	ptr += sizeof(*tlv);
+	ptr += roundup(p2p_ie[1] + 2, 4);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv p2p go bcn ie for vdev %i\n",
+		   vdev_id);
+	return skb;
+}
+
 /****************/
 /* TLV mappings */
 /****************/
@@ -2211,6 +2414,9 @@ static const struct wmi_ops wmi_tlv_ops = {
 	/* .gen_addba_send not implemented */
 	/* .gen_addba_set_resp not implemented */
 	/* .gen_delba_send not implemented */
+	.gen_bcn_tmpl = ath10k_wmi_tlv_op_gen_bcn_tmpl,
+	.gen_prb_tmpl = ath10k_wmi_tlv_op_gen_prb_tmpl,
+	.gen_p2p_go_bcn_ie = ath10k_wmi_tlv_op_gen_p2p_go_bcn_ie,
 };
 
 /************/

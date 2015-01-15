@@ -98,7 +98,7 @@ static int ath10k_thermal_set_cur_dutycycle(struct thermal_cooling_device *cdev,
 	}
 	period = max(ATH10K_QUIET_PERIOD_MIN,
 		     (ATH10K_QUIET_PERIOD_DEFAULT / num_bss));
-	duration = period * (duty_cycle / 100);
+	duration = (period * duty_cycle) / 100;
 	enabled = duration ? 1 : 0;
 
 	ret = ath10k_wmi_pdev_set_quiet_mode(ar, period, duration,
@@ -160,7 +160,8 @@ static ssize_t ath10k_thermal_show_temp(struct device *dev,
 	temperature = ar->thermal.temperature;
 	spin_unlock_bh(&ar->data_lock);
 
-	ret = snprintf(buf, PAGE_SIZE, "%d", temperature);
+	/* display in millidegree celcius */
+	ret = snprintf(buf, PAGE_SIZE, "%d\n", temperature * 1000);
 out:
 	mutex_unlock(&ar->conf_mutex);
 	return ret;
