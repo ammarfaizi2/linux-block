@@ -3639,7 +3639,7 @@ int
 register_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 			      void *data)
 {
-	struct ftrace_ops_hash old_hash_ops;
+	struct ftrace_ops_hash old_ops_hash;
 	struct ftrace_func_probe *entry;
 	struct ftrace_hash **orig_hash = &trace_probe_ops.func_hash->filter_hash;
 	struct ftrace_hash *old_hash = *orig_hash;
@@ -3661,9 +3661,9 @@ register_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 
 	mutex_lock(&trace_probe_ops.func_hash->regex_lock);
 
-	old_hash_ops.filter_hash = old_hash;
+	old_ops_hash.filter_hash = old_hash;
 	/* Probes only have filters */
-	old_hash_ops.notrace_hash = NULL;
+	old_ops_hash.notrace_hash = NULL;
 
 	hash = alloc_and_copy_ftrace_hash(FTRACE_HASH_DEFAULT_BITS, old_hash);
 	if (!hash) {
@@ -3725,7 +3725,7 @@ register_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 
 	ret = ftrace_hash_move(&trace_probe_ops, 1, orig_hash, hash);
 
-	__enable_ftrace_function_probe(&old_hash_ops);
+	__enable_ftrace_function_probe(&old_ops_hash);
 
 	if (!ret)
 		free_ftrace_hash_rcu(old_hash);
@@ -4048,7 +4048,7 @@ ftrace_set_hash(struct ftrace_ops *ops, unsigned char *buf, int len,
 		unsigned long ip, int remove, int reset, int enable)
 {
 	struct ftrace_hash **orig_hash;
-	struct ftrace_ops_hash old_hash_ops;
+	struct ftrace_ops_hash old_ops_hash;
 	struct ftrace_hash *old_hash;
 	struct ftrace_hash *hash;
 	int ret;
@@ -4085,11 +4085,11 @@ ftrace_set_hash(struct ftrace_ops *ops, unsigned char *buf, int len,
 
 	mutex_lock(&ftrace_lock);
 	old_hash = *orig_hash;
-	old_hash_ops.filter_hash = ops->func_hash->filter_hash;
-	old_hash_ops.notrace_hash = ops->func_hash->notrace_hash;
+	old_ops_hash.filter_hash = ops->func_hash->filter_hash;
+	old_ops_hash.notrace_hash = ops->func_hash->notrace_hash;
 	ret = ftrace_hash_move(ops, enable, orig_hash, hash);
 	if (!ret) {
-		ftrace_ops_update_code(ops, &old_hash_ops);
+		ftrace_ops_update_code(ops, &old_ops_hash);
 		free_ftrace_hash_rcu(old_hash);
 	}
 	mutex_unlock(&ftrace_lock);
@@ -4301,7 +4301,7 @@ static void __init set_ftrace_early_filters(void)
 int ftrace_regex_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *m = (struct seq_file *)file->private_data;
-	struct ftrace_ops_hash old_hash_ops;
+	struct ftrace_ops_hash old_ops_hash;
 	struct ftrace_iterator *iter;
 	struct ftrace_hash **orig_hash;
 	struct ftrace_hash *old_hash;
@@ -4335,12 +4335,12 @@ int ftrace_regex_release(struct inode *inode, struct file *file)
 
 		mutex_lock(&ftrace_lock);
 		old_hash = *orig_hash;
-		old_hash_ops.filter_hash = iter->ops->func_hash->filter_hash;
-		old_hash_ops.notrace_hash = iter->ops->func_hash->notrace_hash;
+		old_ops_hash.filter_hash = iter->ops->func_hash->filter_hash;
+		old_ops_hash.notrace_hash = iter->ops->func_hash->notrace_hash;
 		ret = ftrace_hash_move(iter->ops, filter_hash,
 				       orig_hash, iter->hash);
 		if (!ret) {
-			ftrace_ops_update_code(iter->ops, &old_hash_ops);
+			ftrace_ops_update_code(iter->ops, &old_ops_hash);
 			free_ftrace_hash_rcu(old_hash);
 		}
 		mutex_unlock(&ftrace_lock);
