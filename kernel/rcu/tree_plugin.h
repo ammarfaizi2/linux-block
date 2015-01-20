@@ -3091,3 +3091,29 @@ static void rcu_dynticks_task_exit(void)
 	ACCESS_ONCE(current->rcu_tasks_idle_cpu) = -1;
 #endif /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
 }
+
+/*
+ * Compute the per-level fanout, either using the exact fanout specified
+ * or balancing the tree, depending on CONFIG_RCU_FANOUT_EXACT.
+ */
+static void __init rcu_init_levelspread(struct rcu_state *rsp)
+{
+#ifdef CONFIG_RCU_FANOUT_EXACT
+	int i;
+
+	rsp->levelspread[rcu_num_lvls - 1] = rcu_fanout_leaf;
+	for (i = rcu_num_lvls - 2; i >= 0; i--)
+		rsp->levelspread[i] = CONFIG_RCU_FANOUT;
+#else /* #ifdef CONFIG_RCU_FANOUT_EXACT */
+	int ccur;
+	int cprv;
+	int i;
+
+	cprv = nr_cpu_ids;
+	for (i = rcu_num_lvls - 1; i >= 0; i--) {
+		ccur = rsp->levelcnt[i];
+		rsp->levelspread[i] = (cprv + ccur - 1) / ccur;
+		cprv = ccur;
+	}
+#endif /* #else #ifdef CONFIG_RCU_FANOUT_EXACT */
+}
