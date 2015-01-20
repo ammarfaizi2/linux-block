@@ -32,6 +32,7 @@
 #include <linux/splice.h>
 #include <linux/kdebug.h>
 #include <linux/string.h>
+#include <linux/mount.h>
 #include <linux/rwsem.h>
 #include <linux/slab.h>
 #include <linux/ctype.h>
@@ -5815,10 +5816,35 @@ static __init int register_snapshot_cmd(void)
 static inline __init int register_snapshot_cmd(void) { return 0; }
 #endif /* defined(CONFIG_TRACER_SNAPSHOT) && defined(CONFIG_DYNAMIC_FTRACE) */
 
+static struct vfsmount *trace_automount(struct path *path)
+{
+	struct vfsmount *mnt;
+	struct file_system_type *type;
+
+	/*
+	 * To maintain backward compatibility for tools that mount
+	 * debugfs to get to the tracing facility, tracefs is automatically
+	 * mounted to the debugfs/tracing directory.
+	 */
+	type = get_fs_type("tracefs");
+	if (!type)
+		return NULL;
+	mnt = vfs_kern_mount(type, 0, "tracefs", NULL);
+	put_filesystem(type);
+	if (IS_ERR(mnt))
+		return NULL;
+	mntget(mnt);
+
+	return mnt;
+}
+
 #define TRACE_TOP_DIR_ENTRY		((struct dentry *)1)
 
 struct dentry *tracing_init_dentry_tr(struct trace_array *tr)
 {
+	static struct dentry_operations trace_ops;
+	struct dentry *traced;
+
 	/* Top entry does not have a descriptor */
 	if (tr->dir == TRACE_TOP_DIR_ENTRY)
 		return NULL;
@@ -5831,7 +5857,30 @@ struct dentry *tracing_init_dentry_tr(struct trace_array *tr)
 		return ERR_PTR(-ENODEV);
 
 	if (tr->flags & TRACE_ARRAY_FL_GLOBAL) {
-		tr->dir = debugfs_create_dir("tracing", NULL);
+		traced = debugfs_create_dir("tracing", NULL);
+		if (!traced)
+			return ERR_PTR(-ENOMEM);
+		/* copy the dentry ops and add an automount to it */
+		if (traced->d_op) {
+			/*
+			 * FIXME:
+			 * Currently debugfs sets the d_op by a side-effect
+			 * of calling simple_lookup(). Normally, we should
+			 * never change d_op of a dentry, but as this is
+			 * happening at boot up and shouldn't be racing with
+			 * any other users, this should be OK. But it is still
+			 * a hack, and needs to be properly done.
+			 */
+			trace_ops = *traced->d_op;
+			trace_ops.d_automount = trace_automount;
+			traced->d_flags |= DCACHE_NEED_AUTOMOUNT;
+			traced->d_op = &trace_ops;
+		} else {
+			/* Ideally, this is what should happen */
+			trace_ops = simple_dentry_operations;
+			trace_ops.d_automount = trace_automount;
+			d_set_d_op(traced, &trace_ops);
+		}
 		tr->dir = TRACE_TOP_DIR_ENTRY;
 		return NULL;
 	}
