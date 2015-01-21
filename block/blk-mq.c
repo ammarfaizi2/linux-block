@@ -126,11 +126,7 @@ void blk_mq_drain_queue(struct request_queue *q)
 	}
 }
 
-/*
- * Guarantee no request is in use, so we can change any data structure of
- * the queue afterward.
- */
-void blk_mq_freeze_queue(struct request_queue *q)
+void blk_mq_freeze_queue_start(struct request_queue *q)
 {
 	bool drain;
 
@@ -140,7 +136,18 @@ void blk_mq_freeze_queue(struct request_queue *q)
 	spin_unlock_irq(q->queue_lock);
 
 	if (drain)
-		blk_mq_drain_queue(q);
+		blk_mq_run_queues(q, false);
+}
+EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_start);
+
+/*
+ * Guarantee no request is in use, so we can change any data structure of
+ * the queue afterward.
+ */
+void blk_mq_freeze_queue(struct request_queue *q)
+{
+	blk_mq_freeze_queue_start(q);
+	blk_mq_drain_queue(q);
 }
 EXPORT_SYMBOL_GPL(blk_mq_freeze_queue);
 
