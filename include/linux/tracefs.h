@@ -34,6 +34,14 @@ struct dentry *tracefs_create_dir(const char *name, struct dentry *parent);
 void tracefs_remove(struct dentry *dentry);
 void tracefs_remove_recursive(struct dentry *dentry);
 
+struct tracefs_dir_ops {
+	int (*mkdir)(const char *name);
+	int (*rmdir)(const char *name);
+	struct task_struct *lock_owner;
+};
+
+void tracefs_add_dir_ops(struct dentry *dentry, struct tracefs_dir_ops *ops);
+
 bool tracefs_initialized(void);
 
 #endif /* CONFIG_TRACING */

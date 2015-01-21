@@ -42,11 +42,60 @@ static ssize_t default_write_file(struct file *file, const char __user *buf,
 	return count;
 }
 
-const struct file_operations tracefs_file_operations = {
+static const struct file_operations tracefs_file_operations = {
 	.read =		default_read_file,
 	.write =	default_write_file,
 	.open =		simple_open,
 	.llseek =	noop_llseek,
+};
+
+static int tracefs_syscall_mkdir(struct inode *inode, struct dentry *dentry, umode_t mode)
+{
+	struct tracefs_dir_ops *ops = inode ? inode->i_private : NULL;
+	int ret;
+
+	if (!ops)
+		return -EPERM;
+
+	/*
+	 * The mkdir call can call the generic functions that create
+	 * the files within the tracefs system. Do not relock the parent,
+	 * it was locked by the caller of this function.
+	 */
+	ops->lock_owner = current;
+	ret = ops->mkdir(dentry->d_iname);
+	ops->lock_owner = NULL;
+
+	return ret;
+}
+
+static int tracefs_syscall_rmdir(struct inode *inode, struct dentry *dentry)
+{
+	struct tracefs_dir_ops *ops = inode->i_private;
+	int ret;
+
+	if (!ops)
+		return -EPERM;
+
+	/*
+	 * The rmdir call can call the generic functions that remove
+	 * the files within the tracefs system. Do not relock the parent,
+	 * it was locked by the caller of this function.
+	 */
+	ops->lock_owner = current;
+	/* The caller also locked the dentry, do not lock that again either */
+	dentry->d_inode->i_private = ops;
+	ret = ops->rmdir(dentry->d_iname);
+	dentry->d_inode->i_private = NULL;
+	ops->lock_owner = NULL;
+
+	return ret;
+}
+
+const struct inode_operations tracefs_dir_inode_operations = {
+	.lookup		= simple_lookup,
+	.mkdir		= tracefs_syscall_mkdir,
+	.rmdir		= tracefs_syscall_rmdir,
 };
 
 static struct inode *tracefs_get_inode(struct super_block *sb, umode_t mode, dev_t dev,
@@ -68,7 +117,7 @@ static struct inode *tracefs_get_inode(struct super_block *sb, umode_t mode, dev
 			inode->i_private = data;
 			break;
 		case S_IFDIR:
-			inode->i_op = &simple_dir_inode_operations;
+			inode->i_op = &tracefs_dir_inode_operations;
 			inode->i_fop = &simple_dir_operations;
 
 			/* directory inodes start off with i_nlink == 2
@@ -123,6 +172,16 @@ static int tracefs_create(struct inode *dir, struct dentry *dentry, umode_t mode
 	if (!res)
 		fsnotify_create(dir, dentry);
 	return res;
+}
+
+void tracefs_add_dir_ops(struct dentry *dentry, struct tracefs_dir_ops *ops)
+{
+	struct inode *inode = dentry->d_inode;
+
+	if (!inode)
+		return;
+
+	inode->i_private = ops;
 }
 
 struct tracefs_mount_opts {
@@ -305,7 +364,9 @@ static struct dentry *__create_file(const char *name, umode_t mode,
 				    struct dentry *parent, void *data,
 				    const struct file_operations *fops)
 {
+	struct tracefs_dir_ops *ops;
 	struct dentry *dentry = NULL;
+	struct inode *parent_inode;
 	int error;
 
 	pr_debug("tracefs: creating file '%s'\n",name);
@@ -323,7 +384,12 @@ static struct dentry *__create_file(const char *name, umode_t mode,
 	if (!parent)
 		parent = tracefs_mount->mnt_root;
 
-	mutex_lock(&parent->d_inode->i_mutex);
+	parent_inode = parent->d_inode;
+	ops = parent_inode->i_private;
+
+	if (!ops || ops->lock_owner != current)
+		mutex_lock(&parent->d_inode->i_mutex);
+
 	dentry = lookup_one_len(name, parent, strlen(name));
 	if (!IS_ERR(dentry)) {
 		switch (mode & S_IFMT) {
@@ -339,7 +405,8 @@ static struct dentry *__create_file(const char *name, umode_t mode,
 		dput(dentry);
 	} else
 		error = PTR_ERR(dentry);
-	mutex_unlock(&parent->d_inode->i_mutex);
+	if (!ops || ops->lock_owner != current)
+		mutex_unlock(&parent->d_inode->i_mutex);
 
 	if (error) {
 		dentry = NULL;
@@ -452,7 +519,9 @@ static int __tracefs_remove(struct dentry *dentry, struct dentry *parent)
  */
 void tracefs_remove(struct dentry *dentry)
 {
+	struct tracefs_dir_ops *ops;
 	struct dentry *parent;
+	struct inode *inode;
 	int ret;
 
 	if (IS_ERR_OR_NULL(dentry))
@@ -462,9 +531,13 @@ void tracefs_remove(struct dentry *dentry)
 	if (!parent || !parent->d_inode)
 		return;
 
-	mutex_lock(&parent->d_inode->i_mutex);
+	inode = parent->d_inode;
+	ops = inode->i_private;
+	if (!ops || ops->lock_owner != current)
+		mutex_lock(&parent->d_inode->i_mutex);
 	ret = __tracefs_remove(dentry, parent);
-	mutex_unlock(&parent->d_inode->i_mutex);
+	if (!ops || ops->lock_owner != current)
+		mutex_unlock(&parent->d_inode->i_mutex);
 	if (!ret)
 		simple_release_fs(&tracefs_mount, &tracefs_mount_count);
 }
@@ -479,6 +552,7 @@ void tracefs_remove(struct dentry *dentry)
  */
 void tracefs_remove_recursive(struct dentry *dentry)
 {
+	struct tracefs_dir_ops *ops;
 	struct dentry *child, *parent;
 
 	if (IS_ERR_OR_NULL(dentry))
@@ -490,7 +564,9 @@ void tracefs_remove_recursive(struct dentry *dentry)
 
 	parent = dentry;
  down:
-	mutex_lock(&parent->d_inode->i_mutex);
+	ops = parent->d_inode->i_private;
+	if (!ops || ops->lock_owner != current)
+		mutex_lock(&parent->d_inode->i_mutex);
  loop:
 	/*
 	 * The parent->d_subdirs is protected by the d_lock. Outside that
@@ -505,7 +581,8 @@ void tracefs_remove_recursive(struct dentry *dentry)
 		/* perhaps simple_empty(child) makes more sense */
 		if (!list_empty(&child->d_subdirs)) {
 			spin_unlock(&parent->d_lock);
-			mutex_unlock(&parent->d_inode->i_mutex);
+			if (!ops || ops->lock_owner != current)
+				mutex_unlock(&parent->d_inode->i_mutex);
 			parent = child;
 			goto down;
 		}
@@ -526,10 +603,13 @@ void tracefs_remove_recursive(struct dentry *dentry)
 	}
 	spin_unlock(&parent->d_lock);
 
-	mutex_unlock(&parent->d_inode->i_mutex);
+	if (!ops || ops->lock_owner != current)
+		mutex_unlock(&parent->d_inode->i_mutex);
 	child = parent;
 	parent = parent->d_parent;
-	mutex_lock(&parent->d_inode->i_mutex);
+	ops = parent->d_inode->i_private;
+	if (!ops || ops->lock_owner != current)
+		mutex_lock(&parent->d_inode->i_mutex);
 
 	if (child != dentry)
 		/* go up */
@@ -537,7 +617,8 @@ void tracefs_remove_recursive(struct dentry *dentry)
 
 	if (!__tracefs_remove(child, parent))
 		simple_release_fs(&tracefs_mount, &tracefs_mount_count);
-	mutex_unlock(&parent->d_inode->i_mutex);
+	if (!ops || ops->lock_owner != current)
+		mutex_unlock(&parent->d_inode->i_mutex);
 }
 
 /**
