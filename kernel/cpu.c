@@ -343,6 +343,8 @@ static int __ref take_cpu_down(void *_param)
 	return 0;
 }
 
+DECLARE_PER_CPU(bool, cpu_dead_idle);
+
 /* Requires cpu_add_remove_lock to be held */
 static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 {
@@ -408,8 +410,10 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 	 *
 	 * Wait for the stop thread to go away.
 	 */
-	while (!idle_cpu(cpu))
+	while (!per_cpu(cpu_dead_idle, cpu))
 		cpu_relax();
+	smp_mb(); /* Read from cpu_dead_idle before __cpu_die(). */
+	per_cpu(cpu_dead_idle, cpu) = false;
 
 	/* This actually kills the CPU. */
 	__cpu_die(cpu);
