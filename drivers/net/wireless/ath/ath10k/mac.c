@@ -58,10 +58,7 @@ static int ath10k_send_key(struct ath10k_vif *arvif,
 	switch (key->cipher) {
 	case WLAN_CIPHER_SUITE_CCMP:
 		arg.key_cipher = WMI_CIPHER_AES_CCM;
-		if (arvif->vdev_type == WMI_VDEV_TYPE_AP)
-			key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV_MGMT;
-		else
-			key->flags |= IEEE80211_KEY_FLAG_SW_MGMT_TX;
+		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV_MGMT;
 		break;
 	case WLAN_CIPHER_SUITE_TKIP:
 		arg.key_cipher = WMI_CIPHER_TKIP;
@@ -2145,6 +2142,7 @@ static void ath10k_tx_h_nwifi(struct ieee80211_hw *hw, struct sk_buff *skb)
 	 * used only for CQM purposes (e.g. hostapd station keepalive ping) so
 	 * it is safe to downgrade to NullFunc.
 	 */
+	hdr = (void *)skb->data;
 	if (ieee80211_is_qos_nullfunc(hdr->frame_control)) {
 		hdr->frame_control &= ~__cpu_to_le16(IEEE80211_STYPE_QOS_DATA);
 		cb->htt.tid = HTT_DATA_TX_EXT_TID_NON_QOS_MCAST_BCAST;
@@ -3435,7 +3433,7 @@ static void ath10k_bss_info_changed(struct ieee80211_hw *hw,
 				    arvif->vdev_id, ret);
 	}
 
-	if (changed & BSS_CHANGED_BEACON_INFO) {
+	if (changed & (BSS_CHANGED_BEACON_INFO | BSS_CHANGED_BEACON)) {
 		arvif->dtim_period = info->dtim_period;
 
 		ath10k_dbg(ar, ATH10K_DBG_MAC,
@@ -3987,6 +3985,8 @@ static int ath10k_conf_tx_uapsd(struct ath10k *ar, struct ieee80211_vif *vif,
 				u16 ac, bool enable)
 {
 	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
+	struct wmi_sta_uapsd_auto_trig_arg arg = {};
+	u32 prio = 0, acc = 0;
 	u32 value = 0;
 	int ret = 0;
 
@@ -3999,18 +3999,26 @@ static int ath10k_conf_tx_uapsd(struct ath10k *ar, struct ieee80211_vif *vif,
 	case IEEE80211_AC_VO:
 		value = WMI_STA_PS_UAPSD_AC3_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC3_TRIGGER_EN;
+		prio = 7;
+		acc = 3;
 		break;
 	case IEEE80211_AC_VI:
 		value = WMI_STA_PS_UAPSD_AC2_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC2_TRIGGER_EN;
+		prio = 5;
+		acc = 2;
 		break;
 	case IEEE80211_AC_BE:
 		value = WMI_STA_PS_UAPSD_AC1_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC1_TRIGGER_EN;
+		prio = 2;
+		acc = 1;
 		break;
 	case IEEE80211_AC_BK:
 		value = WMI_STA_PS_UAPSD_AC0_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC0_TRIGGER_EN;
+		prio = 0;
+		acc = 0;
 		break;
 	}
 
@@ -4050,6 +4058,29 @@ static int ath10k_conf_tx_uapsd(struct ath10k *ar, struct ieee80211_vif *vif,
 		ath10k_warn(ar, "failed to recalc ps poll count on vdev %i: %d\n",
 			    arvif->vdev_id, ret);
 		return ret;
+	}
+
+	if (test_bit(WMI_SERVICE_STA_UAPSD_BASIC_AUTO_TRIG, ar->wmi.svc_map) ||
+	    test_bit(WMI_SERVICE_STA_UAPSD_VAR_AUTO_TRIG, ar->wmi.svc_map)) {
+		/* Only userspace can make an educated decision when to send
+		 * trigger frame. The following effectively disables u-UAPSD
+		 * autotrigger in firmware (which is enabled by default
+		 * provided the autotrigger service is available).
+		 */
+
+		arg.wmm_ac = acc;
+		arg.user_priority = prio;
+		arg.service_interval = 0;
+		arg.suspend_interval = WMI_STA_UAPSD_MAX_INTERVAL_MSEC;
+		arg.delay_interval = WMI_STA_UAPSD_MAX_INTERVAL_MSEC;
+
+		ret = ath10k_wmi_vdev_sta_uapsd(ar, arvif->vdev_id,
+						arvif->bssid, &arg, 1);
+		if (ret) {
+			ath10k_warn(ar, "failed to set uapsd auto trigger %d\n",
+				    ret);
+			return ret;
+		}
 	}
 
 exit:

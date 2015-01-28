@@ -60,6 +60,8 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		= { .min_len = sizeof(struct wmi_tlv_rdy_ev) },
 	[WMI_TLV_TAG_STRUCT_OFFLOAD_BCN_TX_STATUS_EVENT]
 		= { .min_len = sizeof(struct wmi_tlv_bcn_tx_status_ev) },
+	[WMI_TLV_TAG_STRUCT_DIAG_DATA_CONTAINER_EVENT]
+		= { .min_len = sizeof(struct wmi_tlv_diag_data_ev) },
 };
 
 static int
@@ -203,6 +205,97 @@ static int ath10k_wmi_tlv_event_bcn_tx_status(struct ath10k *ar,
 	return 0;
 }
 
+static int ath10k_wmi_tlv_event_diag_data(struct ath10k *ar,
+					  struct sk_buff *skb)
+{
+	const void **tb;
+	const struct wmi_tlv_diag_data_ev *ev;
+	const struct wmi_tlv_diag_item *item;
+	const void *data;
+	int ret, num_items, len;
+
+	tb = ath10k_wmi_tlv_parse_alloc(ar, skb->data, skb->len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath10k_warn(ar, "failed to parse tlv: %d\n", ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TLV_TAG_STRUCT_DIAG_DATA_CONTAINER_EVENT];
+	data = tb[WMI_TLV_TAG_ARRAY_BYTE];
+	if (!ev || !data) {
+		kfree(tb);
+		return -EPROTO;
+	}
+
+	num_items = __le32_to_cpu(ev->num_items);
+	len = ath10k_wmi_tlv_len(data);
+
+	while (num_items--) {
+		if (len == 0)
+			break;
+		if (len < sizeof(*item)) {
+			ath10k_warn(ar, "failed to parse diag data: can't fit item header\n");
+			break;
+		}
+
+		item = data;
+
+		if (len < sizeof(*item) + __le16_to_cpu(item->len)) {
+			ath10k_warn(ar, "failed to parse diag data: item is too long\n");
+			break;
+		}
+
+		trace_ath10k_wmi_diag_container(ar,
+						item->type,
+						__le32_to_cpu(item->timestamp),
+						__le32_to_cpu(item->code),
+						__le16_to_cpu(item->len),
+						item->payload);
+
+		len -= sizeof(*item);
+		len -= roundup(__le16_to_cpu(item->len), 4);
+
+		data += sizeof(*item);
+		data += roundup(__le16_to_cpu(item->len), 4);
+	}
+
+	if (num_items != -1 || len != 0)
+		ath10k_warn(ar, "failed to parse diag data event: num_items %d len %d\n",
+			    num_items, len);
+
+	kfree(tb);
+	return 0;
+}
+
+static int ath10k_wmi_tlv_event_diag(struct ath10k *ar,
+				     struct sk_buff *skb)
+{
+	const void **tb;
+	const void *data;
+	int ret, len;
+
+	tb = ath10k_wmi_tlv_parse_alloc(ar, skb->data, skb->len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath10k_warn(ar, "failed to parse tlv: %d\n", ret);
+		return ret;
+	}
+
+	data = tb[WMI_TLV_TAG_ARRAY_BYTE];
+	if (!data) {
+		kfree(tb);
+		return -EPROTO;
+	}
+	len = ath10k_wmi_tlv_len(data);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv diag event len %d\n", len);
+	trace_ath10k_wmi_diag(ar, data, len);
+
+	kfree(tb);
+	return 0;
+}
+
 /***********/
 /* TLV ops */
 /***********/
@@ -317,6 +410,12 @@ static void ath10k_wmi_tlv_op_rx(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	case WMI_TLV_OFFLOAD_BCN_TX_STATUS_EVENTID:
 		ath10k_wmi_tlv_event_bcn_tx_status(ar, skb);
+		break;
+	case WMI_TLV_DIAG_DATA_CONTAINER_EVENTID:
+		ath10k_wmi_tlv_event_diag_data(ar, skb);
+		break;
+	case WMI_TLV_DIAG_EVENTID:
+		ath10k_wmi_tlv_event_diag(ar, skb);
 		break;
 	default:
 		ath10k_warn(ar, "Unknown eventid: %d\n", id);
@@ -953,8 +1052,15 @@ static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
 
 	cfg->num_vdevs = __cpu_to_le32(TARGET_TLV_NUM_VDEVS);
 	cfg->num_peers = __cpu_to_le32(TARGET_TLV_NUM_PEERS);
-	cfg->num_offload_peers = __cpu_to_le32(0);
-	cfg->num_offload_reorder_bufs = __cpu_to_le32(0);
+
+	if (test_bit(WMI_SERVICE_RX_FULL_REORDER, ar->wmi.svc_map)) {
+		cfg->num_offload_peers = __cpu_to_le32(3);
+		cfg->num_offload_reorder_bufs = __cpu_to_le32(3);
+	} else {
+		cfg->num_offload_peers = __cpu_to_le32(0);
+		cfg->num_offload_reorder_bufs = __cpu_to_le32(0);
+	}
+
 	cfg->num_peer_keys = __cpu_to_le32(2);
 	cfg->num_tids = __cpu_to_le32(TARGET_TLV_NUM_TIDS);
 	cfg->ast_skid_limit = __cpu_to_le32(0x10);
@@ -1403,6 +1509,78 @@ ath10k_wmi_tlv_op_gen_vdev_install_key(struct ath10k *ar,
 	ptr += roundup(arg->key_len, sizeof(__le32));
 
 	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv vdev install key\n");
+	return skb;
+}
+
+static void *ath10k_wmi_tlv_put_uapsd_ac(struct ath10k *ar, void *ptr,
+					 const struct wmi_sta_uapsd_auto_trig_arg *arg)
+{
+	struct wmi_sta_uapsd_auto_trig_param *ac;
+	struct wmi_tlv *tlv;
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_STA_UAPSD_AUTO_TRIG_PARAM);
+	tlv->len = __cpu_to_le16(sizeof(*ac));
+	ac = (void *)tlv->value;
+
+	ac->wmm_ac = __cpu_to_le32(arg->wmm_ac);
+	ac->user_priority = __cpu_to_le32(arg->user_priority);
+	ac->service_interval = __cpu_to_le32(arg->service_interval);
+	ac->suspend_interval = __cpu_to_le32(arg->suspend_interval);
+	ac->delay_interval = __cpu_to_le32(arg->delay_interval);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI,
+		   "wmi tlv vdev sta uapsd auto trigger ac %d prio %d svc int %d susp int %d delay int %d\n",
+		   ac->wmm_ac, ac->user_priority, ac->service_interval,
+		   ac->suspend_interval, ac->delay_interval);
+
+	return ptr + sizeof(*tlv) + sizeof(*ac);
+}
+
+static struct sk_buff *
+ath10k_wmi_tlv_op_gen_vdev_sta_uapsd(struct ath10k *ar, u32 vdev_id,
+				     const u8 peer_addr[ETH_ALEN],
+				     const struct wmi_sta_uapsd_auto_trig_arg *args,
+				     u32 num_ac)
+{
+	struct wmi_sta_uapsd_auto_trig_cmd_fixed_param *cmd;
+	struct wmi_sta_uapsd_auto_trig_param *ac;
+	struct wmi_tlv *tlv;
+	struct sk_buff *skb;
+	size_t len;
+	size_t ac_tlv_len;
+	void *ptr;
+	int i;
+
+	ac_tlv_len = num_ac * (sizeof(*tlv) + sizeof(*ac));
+	len = sizeof(*tlv) + sizeof(*cmd) +
+	      sizeof(*tlv) + ac_tlv_len;
+	skb = ath10k_wmi_alloc_skb(ar, len);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	ptr = (void *)skb->data;
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_STA_UAPSD_AUTO_TRIG_CMD);
+	tlv->len = __cpu_to_le16(sizeof(*cmd));
+	cmd = (void *)tlv->value;
+	cmd->vdev_id = __cpu_to_le32(vdev_id);
+	cmd->num_ac = __cpu_to_le32(num_ac);
+	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*cmd);
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_ARRAY_STRUCT);
+	tlv->len = __cpu_to_le16(ac_tlv_len);
+	ac = (void *)tlv->value;
+
+	ptr += sizeof(*tlv);
+	for (i = 0; i < num_ac; i++)
+		ptr = ath10k_wmi_tlv_put_uapsd_ac(ar, ptr, &args[i]);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv vdev sta uapsd auto trigger\n");
 	return skb;
 }
 
@@ -2417,6 +2595,7 @@ static const struct wmi_ops wmi_tlv_ops = {
 	.gen_bcn_tmpl = ath10k_wmi_tlv_op_gen_bcn_tmpl,
 	.gen_prb_tmpl = ath10k_wmi_tlv_op_gen_prb_tmpl,
 	.gen_p2p_go_bcn_ie = ath10k_wmi_tlv_op_gen_p2p_go_bcn_ie,
+	.gen_vdev_sta_uapsd = ath10k_wmi_tlv_op_gen_vdev_sta_uapsd,
 };
 
 /************/
