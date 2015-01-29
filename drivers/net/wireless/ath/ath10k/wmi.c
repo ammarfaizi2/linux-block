@@ -4890,8 +4890,8 @@ ath10k_wmi_op_gen_beacon_dma(struct ath10k_vif *arvif)
 	return skb;
 }
 
-void ath10k_wmi_pdev_set_wmm_param(struct wmi_wmm_params *params,
-				   const struct wmi_wmm_params_arg *arg)
+void ath10k_wmi_set_wmm_param(struct wmi_wmm_params *params,
+			      const struct wmi_wmm_params_arg *arg)
 {
 	params->cwmin  = __cpu_to_le32(arg->cwmin);
 	params->cwmax  = __cpu_to_le32(arg->cwmax);
@@ -4903,7 +4903,7 @@ void ath10k_wmi_pdev_set_wmm_param(struct wmi_wmm_params *params,
 
 static struct sk_buff *
 ath10k_wmi_op_gen_pdev_set_wmm(struct ath10k *ar,
-			       const struct wmi_pdev_set_wmm_params_arg *arg)
+			       const struct wmi_wmm_params_all_arg *arg)
 {
 	struct wmi_pdev_set_wmm_params *cmd;
 	struct sk_buff *skb;
@@ -4913,10 +4913,10 @@ ath10k_wmi_op_gen_pdev_set_wmm(struct ath10k *ar,
 		return ERR_PTR(-ENOMEM);
 
 	cmd = (struct wmi_pdev_set_wmm_params *)skb->data;
-	ath10k_wmi_pdev_set_wmm_param(&cmd->ac_be, &arg->ac_be);
-	ath10k_wmi_pdev_set_wmm_param(&cmd->ac_bk, &arg->ac_bk);
-	ath10k_wmi_pdev_set_wmm_param(&cmd->ac_vi, &arg->ac_vi);
-	ath10k_wmi_pdev_set_wmm_param(&cmd->ac_vo, &arg->ac_vo);
+	ath10k_wmi_set_wmm_param(&cmd->ac_be, &arg->ac_be);
+	ath10k_wmi_set_wmm_param(&cmd->ac_bk, &arg->ac_bk);
+	ath10k_wmi_set_wmm_param(&cmd->ac_vi, &arg->ac_vi);
+	ath10k_wmi_set_wmm_param(&cmd->ac_vo, &arg->ac_vo);
 
 	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi pdev set wmm params\n");
 	return skb;
@@ -5188,6 +5188,7 @@ static const struct wmi_ops wmi_ops = {
 	.gen_vdev_install_key = ath10k_wmi_op_gen_vdev_install_key,
 	.gen_vdev_spectral_conf = ath10k_wmi_op_gen_vdev_spectral_conf,
 	.gen_vdev_spectral_enable = ath10k_wmi_op_gen_vdev_spectral_enable,
+	/* .gen_vdev_wmm_conf not implemented */
 	.gen_peer_create = ath10k_wmi_op_gen_peer_create,
 	.gen_peer_delete = ath10k_wmi_op_gen_peer_delete,
 	.gen_peer_flush = ath10k_wmi_op_gen_peer_flush,
@@ -5251,6 +5252,7 @@ static const struct wmi_ops wmi_10_1_ops = {
 	.gen_vdev_install_key = ath10k_wmi_op_gen_vdev_install_key,
 	.gen_vdev_spectral_conf = ath10k_wmi_op_gen_vdev_spectral_conf,
 	.gen_vdev_spectral_enable = ath10k_wmi_op_gen_vdev_spectral_enable,
+	/* .gen_vdev_wmm_conf not implemented */
 	.gen_peer_create = ath10k_wmi_op_gen_peer_create,
 	.gen_peer_delete = ath10k_wmi_op_gen_peer_delete,
 	.gen_peer_flush = ath10k_wmi_op_gen_peer_flush,
@@ -5313,6 +5315,7 @@ static const struct wmi_ops wmi_10_2_ops = {
 	.gen_vdev_install_key = ath10k_wmi_op_gen_vdev_install_key,
 	.gen_vdev_spectral_conf = ath10k_wmi_op_gen_vdev_spectral_conf,
 	.gen_vdev_spectral_enable = ath10k_wmi_op_gen_vdev_spectral_enable,
+	/* .gen_vdev_wmm_conf not implemented */
 	.gen_peer_create = ath10k_wmi_op_gen_peer_create,
 	.gen_peer_delete = ath10k_wmi_op_gen_peer_delete,
 	.gen_peer_flush = ath10k_wmi_op_gen_peer_flush,

@@ -1286,6 +1286,38 @@ static int ath10k_mac_vif_setup_ps(struct ath10k_vif *arvif)
 	return 0;
 }
 
+static int ath10k_mac_vif_disable_keepalive(struct ath10k_vif *arvif)
+{
+	struct ath10k *ar = arvif->ar;
+	struct wmi_sta_keepalive_arg arg = {};
+	int ret;
+
+	lockdep_assert_held(&arvif->ar->conf_mutex);
+
+	if (arvif->vdev_type != WMI_VDEV_TYPE_STA)
+		return 0;
+
+	if (!test_bit(WMI_SERVICE_STA_KEEP_ALIVE, ar->wmi.svc_map))
+		return 0;
+
+	/* Some firmware revisions have a bug and ignore the `enabled` field.
+	 * Instead use the interval to disable the keepalive.
+	 */
+	arg.vdev_id = arvif->vdev_id;
+	arg.enabled = 1;
+	arg.method = WMI_STA_KEEPALIVE_METHOD_NULL_FRAME;
+	arg.interval = WMI_STA_KEEPALIVE_INTERVAL_DISABLE;
+
+	ret = ath10k_wmi_sta_keepalive(ar, &arg);
+	if (ret) {
+		ath10k_warn(ar, "failed to submit keepalive on vdev %i: %d\n",
+			    arvif->vdev_id, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 /**********************/
 /* Station management */
 /**********************/
@@ -1554,6 +1586,10 @@ static void ath10k_peer_assoc_h_vht(struct ath10k *ar,
 		return;
 
 	arg->peer_flags |= WMI_PEER_VHT;
+
+	if (ar->hw->conf.chandef.chan->band == IEEE80211_BAND_2GHZ)
+		arg->peer_flags |= WMI_PEER_VHT_2G;
+
 	arg->peer_vht_caps = vht_cap->cap;
 
 	ampdu_factor = (vht_cap->cap &
@@ -1632,7 +1668,12 @@ static void ath10k_peer_assoc_h_phymode(struct ath10k *ar,
 
 	switch (ar->hw->conf.chandef.chan->band) {
 	case IEEE80211_BAND_2GHZ:
-		if (sta->ht_cap.ht_supported) {
+		if (sta->vht_cap.vht_supported) {
+			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
+				phymode = MODE_11AC_VHT40;
+			else
+				phymode = MODE_11AC_VHT20;
+		} else if (sta->ht_cap.ht_supported) {
 			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
 				phymode = MODE_11NG_HT40;
 			else
@@ -3180,6 +3221,16 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
 	ar->free_vdev_map &= ~(1LL << arvif->vdev_id);
 	list_add(&arvif->list, &ar->arvifs);
 
+	/* It makes no sense to have firmware do keepalives. mac80211 already
+	 * takes care of this with idle connection polling.
+	 */
+	ret = ath10k_mac_vif_disable_keepalive(arvif);
+	if (ret) {
+		ath10k_warn(ar, "failed to disable keepalive on vdev %i: %d\n",
+			    arvif->vdev_id, ret);
+		goto err_vdev_delete;
+	}
+
 	vdev_param = ar->wmi.vdev_param->def_keyid;
 	ret = ath10k_wmi_vdev_set_param(ar, 0, vdev_param,
 					arvif->def_wep_key_idx);
@@ -4092,6 +4143,7 @@ static int ath10k_conf_tx(struct ieee80211_hw *hw,
 			  const struct ieee80211_tx_queue_params *params)
 {
 	struct ath10k *ar = hw->priv;
+	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
 	struct wmi_wmm_params_arg *p = NULL;
 	int ret;
 
@@ -4099,16 +4151,16 @@ static int ath10k_conf_tx(struct ieee80211_hw *hw,
 
 	switch (ac) {
 	case IEEE80211_AC_VO:
-		p = &ar->wmm_params.ac_vo;
+		p = &arvif->wmm_params.ac_vo;
 		break;
 	case IEEE80211_AC_VI:
-		p = &ar->wmm_params.ac_vi;
+		p = &arvif->wmm_params.ac_vi;
 		break;
 	case IEEE80211_AC_BE:
-		p = &ar->wmm_params.ac_be;
+		p = &arvif->wmm_params.ac_be;
 		break;
 	case IEEE80211_AC_BK:
-		p = &ar->wmm_params.ac_bk;
+		p = &arvif->wmm_params.ac_bk;
 		break;
 	}
 
@@ -4128,11 +4180,23 @@ static int ath10k_conf_tx(struct ieee80211_hw *hw,
 	 */
 	p->txop = params->txop * 32;
 
-	/* FIXME: FW accepts wmm params per hw, not per vif */
-	ret = ath10k_wmi_pdev_set_wmm_params(ar, &ar->wmm_params);
-	if (ret) {
-		ath10k_warn(ar, "failed to set wmm params: %d\n", ret);
-		goto exit;
+	if (ar->wmi.ops->gen_vdev_wmm_conf) {
+		ret = ath10k_wmi_vdev_wmm_conf(ar, arvif->vdev_id,
+					       &arvif->wmm_params);
+		if (ret) {
+			ath10k_warn(ar, "failed to set vdev wmm params on vdev %i: %d\n",
+				    arvif->vdev_id, ret);
+			goto exit;
+		}
+	} else {
+		/* This won't work well with multi-interface cases but it's
+		 * better than nothing.
+		 */
+		ret = ath10k_wmi_pdev_set_wmm_params(ar, &arvif->wmm_params);
+		if (ret) {
+			ath10k_warn(ar, "failed to set wmm params: %d\n", ret);
+			goto exit;
+		}
 	}
 
 	ret = ath10k_conf_tx_uapsd(ar, vif, ac, params->uapsd);
@@ -5246,7 +5310,8 @@ int ath10k_mac_register(struct ath10k *ar)
 		band->bitrates = ath10k_g_rates;
 		band->ht_cap = ht_cap;
 
-		/* vht is not supported in 2.4 GHz */
+		/* Enable the VHT support at 2.4 GHz */
+		band->vht_cap = vht_cap;
 
 		ar->hw->wiphy->bands[IEEE80211_BAND_2GHZ] = band;
 	}

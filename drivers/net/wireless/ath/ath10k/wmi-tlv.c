@@ -1584,6 +1584,101 @@ ath10k_wmi_tlv_op_gen_vdev_sta_uapsd(struct ath10k *ar, u32 vdev_id,
 	return skb;
 }
 
+static void *ath10k_wmi_tlv_put_wmm(void *ptr,
+				    const struct wmi_wmm_params_arg *arg)
+{
+	struct wmi_wmm_params *wmm;
+	struct wmi_tlv *tlv;
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_WMM_PARAMS);
+	tlv->len = __cpu_to_le16(sizeof(*wmm));
+	wmm = (void *)tlv->value;
+	ath10k_wmi_set_wmm_param(wmm, arg);
+
+	return ptr + sizeof(*tlv) + sizeof(*wmm);
+}
+
+static struct sk_buff *
+ath10k_wmi_tlv_op_gen_vdev_wmm_conf(struct ath10k *ar, u32 vdev_id,
+				    const struct wmi_wmm_params_all_arg *arg)
+{
+	struct wmi_tlv_vdev_set_wmm_cmd *cmd;
+	struct wmi_wmm_params *wmm;
+	struct wmi_tlv *tlv;
+	struct sk_buff *skb;
+	size_t len;
+	void *ptr;
+
+	len = (sizeof(*tlv) + sizeof(*cmd)) +
+	      (4 * (sizeof(*tlv) + sizeof(*wmm)));
+	skb = ath10k_wmi_alloc_skb(ar, len);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	ptr = (void *)skb->data;
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_VDEV_SET_WMM_PARAMS_CMD);
+	tlv->len = __cpu_to_le16(sizeof(*cmd));
+	cmd = (void *)tlv->value;
+	cmd->vdev_id = __cpu_to_le32(vdev_id);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*cmd);
+
+	ptr = ath10k_wmi_tlv_put_wmm(ptr, &arg->ac_be);
+	ptr = ath10k_wmi_tlv_put_wmm(ptr, &arg->ac_bk);
+	ptr = ath10k_wmi_tlv_put_wmm(ptr, &arg->ac_vi);
+	ptr = ath10k_wmi_tlv_put_wmm(ptr, &arg->ac_vo);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv vdev wmm conf\n");
+	return skb;
+}
+
+static struct sk_buff *
+ath10k_wmi_tlv_op_gen_sta_keepalive(struct ath10k *ar,
+				    const struct wmi_sta_keepalive_arg *arg)
+{
+	struct wmi_tlv_sta_keepalive_cmd *cmd;
+	struct wmi_sta_keepalive_arp_resp *arp;
+	struct sk_buff *skb;
+	struct wmi_tlv *tlv;
+	void *ptr;
+	size_t len;
+
+	len = sizeof(*tlv) + sizeof(*cmd) +
+	      sizeof(*tlv) + sizeof(*arp);
+	skb = ath10k_wmi_alloc_skb(ar, len);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	ptr = (void *)skb->data;
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_STA_KEEPALIVE_CMD);
+	tlv->len = __cpu_to_le16(sizeof(*cmd));
+	cmd = (void *)tlv->value;
+	cmd->vdev_id = __cpu_to_le32(arg->vdev_id);
+	cmd->enabled = __cpu_to_le32(arg->enabled);
+	cmd->method = __cpu_to_le32(arg->method);
+	cmd->interval = __cpu_to_le32(arg->interval);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*cmd);
+
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_STA_KEEPALVE_ARP_RESPONSE);
+	tlv->len = __cpu_to_le16(sizeof(*arp));
+	arp = (void *)tlv->value;
+
+	arp->src_ip4_addr = arg->src_ip4_addr;
+	arp->dest_ip4_addr = arg->dest_ip4_addr;
+	ether_addr_copy(arp->dest_mac_addr.addr, arg->dest_mac_addr);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv sta keepalive vdev %d enabled %d method %d inverval %d\n",
+		   arg->vdev_id, arg->enabled, arg->method, arg->interval);
+	return skb;
+}
+
 static struct sk_buff *
 ath10k_wmi_tlv_op_gen_peer_create(struct ath10k *ar, u32 vdev_id,
 				  const u8 peer_addr[ETH_ALEN])
@@ -1944,24 +2039,9 @@ ath10k_wmi_tlv_op_gen_beacon_dma(struct ath10k_vif *arvif)
 	return skb;
 }
 
-static void *ath10k_wmi_tlv_put_wmm(void *ptr,
-				    const struct wmi_wmm_params_arg *arg)
-{
-	struct wmi_wmm_params *wmm;
-	struct wmi_tlv *tlv;
-
-	tlv = ptr;
-	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_WMM_PARAMS);
-	tlv->len = __cpu_to_le16(sizeof(*wmm));
-	wmm = (void *)tlv->value;
-	ath10k_wmi_pdev_set_wmm_param(wmm, arg);
-
-	return ptr + sizeof(*tlv) + sizeof(*wmm);
-}
-
 static struct sk_buff *
 ath10k_wmi_tlv_op_gen_pdev_set_wmm(struct ath10k *ar,
-				   const struct wmi_pdev_set_wmm_params_arg *arg)
+				   const struct wmi_wmm_params_all_arg *arg)
 {
 	struct wmi_tlv_pdev_set_wmm_cmd *cmd;
 	struct wmi_wmm_params *wmm;
@@ -2426,6 +2506,7 @@ static struct wmi_cmd_map wmi_tlv_cmd_map = {
 	.gpio_config_cmdid = WMI_TLV_GPIO_CONFIG_CMDID,
 	.gpio_output_cmdid = WMI_TLV_GPIO_OUTPUT_CMDID,
 	.pdev_get_temperature_cmdid = WMI_TLV_CMD_UNSUPPORTED,
+	.vdev_set_wmm_params_cmdid = WMI_TLV_VDEV_SET_WMM_PARAMS_CMDID,
 };
 
 static struct wmi_pdev_param_map wmi_tlv_pdev_param_map = {
@@ -2569,6 +2650,7 @@ static const struct wmi_ops wmi_tlv_ops = {
 	.gen_vdev_down = ath10k_wmi_tlv_op_gen_vdev_down,
 	.gen_vdev_set_param = ath10k_wmi_tlv_op_gen_vdev_set_param,
 	.gen_vdev_install_key = ath10k_wmi_tlv_op_gen_vdev_install_key,
+	.gen_vdev_wmm_conf = ath10k_wmi_tlv_op_gen_vdev_wmm_conf,
 	.gen_peer_create = ath10k_wmi_tlv_op_gen_peer_create,
 	.gen_peer_delete = ath10k_wmi_tlv_op_gen_peer_delete,
 	.gen_peer_flush = ath10k_wmi_tlv_op_gen_peer_flush,
@@ -2596,6 +2678,7 @@ static const struct wmi_ops wmi_tlv_ops = {
 	.gen_prb_tmpl = ath10k_wmi_tlv_op_gen_prb_tmpl,
 	.gen_p2p_go_bcn_ie = ath10k_wmi_tlv_op_gen_p2p_go_bcn_ie,
 	.gen_vdev_sta_uapsd = ath10k_wmi_tlv_op_gen_vdev_sta_uapsd,
+	.gen_sta_keepalive = ath10k_wmi_tlv_op_gen_sta_keepalive,
 };
 
 /************/

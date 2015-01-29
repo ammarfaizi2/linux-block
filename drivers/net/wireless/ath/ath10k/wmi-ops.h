@@ -78,6 +78,8 @@ struct wmi_ops {
 						  const struct wmi_vdev_spectral_conf_arg *arg);
 	struct sk_buff *(*gen_vdev_spectral_enable)(struct ath10k *ar, u32 vdev_id,
 						    u32 trigger, u32 enable);
+	struct sk_buff *(*gen_vdev_wmm_conf)(struct ath10k *ar, u32 vdev_id,
+					     const struct wmi_wmm_params_all_arg *arg);
 	struct sk_buff *(*gen_peer_create)(struct ath10k *ar, u32 vdev_id,
 					   const u8 peer_addr[ETH_ALEN]);
 	struct sk_buff *(*gen_peer_delete)(struct ath10k *ar, u32 vdev_id,
@@ -104,7 +106,7 @@ struct wmi_ops {
 					      const struct wmi_scan_chan_list_arg *arg);
 	struct sk_buff *(*gen_beacon_dma)(struct ath10k_vif *arvif);
 	struct sk_buff *(*gen_pdev_set_wmm)(struct ath10k *ar,
-					    const struct wmi_pdev_set_wmm_params_arg *arg);
+					    const struct wmi_wmm_params_all_arg *arg);
 	struct sk_buff *(*gen_request_stats)(struct ath10k *ar,
 					     enum wmi_stats_id stats_id);
 	struct sk_buff *(*gen_force_fw_hang)(struct ath10k *ar,
@@ -141,6 +143,8 @@ struct wmi_ops {
 					      const u8 peer_addr[ETH_ALEN],
 					      const struct wmi_sta_uapsd_auto_trig_arg *args,
 					      u32 num_ac);
+	struct sk_buff *(*gen_sta_keepalive)(struct ath10k *ar,
+					     const struct wmi_sta_keepalive_arg *arg);
 };
 
 int ath10k_wmi_cmd_send(struct ath10k *ar, struct sk_buff *skb, u32 cmd_id);
@@ -601,6 +605,21 @@ ath10k_wmi_vdev_sta_uapsd(struct ath10k *ar, u32 vdev_id,
 }
 
 static inline int
+ath10k_wmi_vdev_wmm_conf(struct ath10k *ar, u32 vdev_id,
+			 const struct wmi_wmm_params_all_arg *arg)
+{
+	struct sk_buff *skb;
+	u32 cmd_id;
+
+	skb = ar->wmi.ops->gen_vdev_wmm_conf(ar, vdev_id, arg);
+	if (IS_ERR(skb))
+		return PTR_ERR(skb);
+
+	cmd_id = ar->wmi.cmd->vdev_set_wmm_params_cmdid;
+	return ath10k_wmi_cmd_send(ar, skb, cmd_id);
+}
+
+static inline int
 ath10k_wmi_peer_create(struct ath10k *ar, u32 vdev_id,
 		       const u8 peer_addr[ETH_ALEN])
 {
@@ -774,7 +793,7 @@ ath10k_wmi_beacon_send_ref_nowait(struct ath10k_vif *arvif)
 
 static inline int
 ath10k_wmi_pdev_set_wmm_params(struct ath10k *ar,
-			       const struct wmi_pdev_set_wmm_params_arg *arg)
+			       const struct wmi_wmm_params_all_arg *arg)
 {
 	struct sk_buff *skb;
 
@@ -1015,6 +1034,24 @@ ath10k_wmi_p2p_go_bcn_ie(struct ath10k *ar, u32 vdev_id, const u8 *p2p_ie)
 		return PTR_ERR(skb);
 
 	return ath10k_wmi_cmd_send(ar, skb, ar->wmi.cmd->p2p_go_set_beacon_ie);
+}
+
+static inline int
+ath10k_wmi_sta_keepalive(struct ath10k *ar,
+			 const struct wmi_sta_keepalive_arg *arg)
+{
+	struct sk_buff *skb;
+	u32 cmd_id;
+
+	if (!ar->wmi.ops->gen_sta_keepalive)
+		return -EOPNOTSUPP;
+
+	skb = ar->wmi.ops->gen_sta_keepalive(ar, arg);
+	if (IS_ERR(skb))
+		return PTR_ERR(skb);
+
+	cmd_id = ar->wmi.cmd->sta_keepalive_cmd;
+	return ath10k_wmi_cmd_send(ar, skb, cmd_id);
 }
 
 #endif
