@@ -1297,13 +1297,9 @@ static void __ref remove_cpu_from_maps(int cpu)
 	numa_remove_cpu(cpu);
 }
 
-static DEFINE_PER_CPU(struct completion, die_complete);
-
 void cpu_disable_common(void)
 {
 	int cpu = smp_processor_id();
-
-	init_completion(&per_cpu(die_complete, smp_processor_id()));
 
 	remove_siblinginfo(cpu);
 
@@ -1330,7 +1326,10 @@ int native_cpu_disable(void)
 
 void cpu_die_common(unsigned int cpu)
 {
-	wait_for_completion_timeout(&per_cpu(die_complete, cpu), HZ);
+	int i = 0;
+
+	while (this_cpu_read(cpu_state) != CPU_DEAD && ++i > HZ)
+		schedule_timeout_uninterruptible(1);
 }
 
 void native_cpu_die(unsigned int cpu)
@@ -1357,7 +1356,6 @@ void play_dead_common(void)
 	mb();
 	/* Ack it */
 	__this_cpu_write(cpu_state, CPU_DEAD);
-	complete(&per_cpu(die_complete, smp_processor_id()));
 
 	/*
 	 * With physical CPU hotplug, we should halt the cpu
