@@ -1851,6 +1851,9 @@ static int rcu_gp_init(struct rcu_state *rsp)
 		raw_spin_unlock_irq(&rnp->lock);
 		cond_resched_rcu_qs();
 		ACCESS_ONCE(rsp->gp_activity) = jiffies;
+		WARN_ON_ONCE(!rcu_preempt_has_tasks(rnp) && !rnp->qsmask &&
+			     rnp->parent &&
+			     (rnp->parent->qsmask & rnp->grpmask));
 		if (IS_ENABLED(CONFIG_RCU_TORTURE_TEST_SLOW_INIT) &&
 		    gp_init_delay > 0 &&
 		    !(rsp->gpnum % (rcu_num_nodes * 10)))
