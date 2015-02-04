@@ -262,6 +262,12 @@ struct ath10k_sta {
 
 #define ATH10K_VDEV_SETUP_TIMEOUT_HZ (5*HZ)
 
+enum ath10k_beacon_state {
+	ATH10K_BEACON_SCHEDULED = 0,
+	ATH10K_BEACON_SENDING,
+	ATH10K_BEACON_SENT,
+};
+
 struct ath10k_vif {
 	struct list_head list;
 
@@ -272,7 +278,7 @@ struct ath10k_vif {
 	u32 dtim_period;
 	struct sk_buff *beacon;
 	/* protected by data_lock */
-	bool beacon_sent;
+	enum ath10k_beacon_state beacon_state;
 	void *beacon_buf;
 	dma_addr_t beacon_paddr;
 
@@ -285,10 +291,8 @@ struct ath10k_vif {
 	u32 aid;
 	u8 bssid[ETH_ALEN];
 
-	struct work_struct wep_key_work;
 	struct ieee80211_key_conf *wep_keys[WMI_MAX_KEY_INDEX + 1];
-	u8 def_wep_key_idx;
-	u8 def_wep_key_newidx;
+	s8 def_wep_key_idx;
 
 	u16 tx_seq_no;
 
@@ -346,6 +350,7 @@ struct ath10k_debug {
 
 	/* protected by conf_mutex */
 	u32 fw_dbglog_mask;
+	u32 fw_dbglog_level;
 	u32 pktlog_filter;
 	u32 reg_addr;
 	u32 nf_cal_period;
