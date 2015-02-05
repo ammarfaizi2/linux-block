@@ -3761,12 +3761,10 @@ __unregister_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 	char str[KSYM_SYMBOL_LEN];
 	int type = MATCH_FULL;
 	int i, len = 0;
-	char *search;
+	char *search = NULL;
 	int ret;
 
-	if (glob && (strcmp(glob, "*") == 0 || !strlen(glob)))
-		glob = NULL;
-	else if (glob) {
+	if (glob && *glob && strcmp(glob, "*") != 0) {
 		int not;
 
 		type = filter_parse_regex(glob, strlen(glob), &search, &not);
@@ -3799,10 +3797,10 @@ __unregister_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 				continue;
 
 			/* do this last, since it is the most expensive */
-			if (glob) {
+			if (search) {
 				kallsyms_lookup(entry->ip, NULL, NULL,
 						NULL, str);
-				if (!ftrace_match(str, glob, len, type))
+				if (!ftrace_match(str, search, len, type))
 					continue;
 			}
 
