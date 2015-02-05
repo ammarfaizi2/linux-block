@@ -3441,7 +3441,6 @@ static int
 match_records(struct ftrace_hash *hash, char *buff,
 	      int len, char *mod, int not)
 {
-	unsigned search_len = 0;
 	struct ftrace_page *pg;
 	struct dyn_ftrace *rec;
 	int type = MATCH_FULL;
@@ -3449,10 +3448,8 @@ match_records(struct ftrace_hash *hash, char *buff,
 	int found = 0;
 	int ret;
 
-	if (len) {
-		type = filter_parse_regex(buff, len, &search, &not);
-		search_len = strlen(search);
-	}
+	if (len)
+		type = filter_parse_regex(buff, &len, &search, &not);
 
 	mutex_lock(&ftrace_lock);
 
@@ -3460,7 +3457,7 @@ match_records(struct ftrace_hash *hash, char *buff,
 		goto out_unlock;
 
 	do_for_each_ftrace_rec(pg, rec) {
-		if (ftrace_match_record(rec, mod, search, search_len, type)) {
+		if (ftrace_match_record(rec, mod, search, len, type)) {
 			ret = enter_record(hash, rec, not);
 			if (ret < 0) {
 				found = ret;
@@ -3648,14 +3645,13 @@ register_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 	struct ftrace_hash *hash;
 	struct ftrace_page *pg;
 	struct dyn_ftrace *rec;
-	int type, len, not;
+	int type, len = strlen(glob), not;
 	unsigned long key;
 	int count = 0;
 	char *search;
 	int ret;
 
-	type = filter_parse_regex(glob, strlen(glob), &search, &not);
-	len = strlen(search);
+	type = filter_parse_regex(glob, &len, &search, &not);
 
 	/* we do not support '!' for function probes */
 	if (WARN_ON(not))
@@ -3768,9 +3764,9 @@ __unregister_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 
 	if (glob && *glob && strcmp(glob, "*") != 0) {
 		int not;
+		len = strlen(glob);
 
-		type = filter_parse_regex(glob, strlen(glob), &search, &not);
-		len = strlen(search);
+		type = filter_parse_regex(glob, &len, &search, &not);
 
 		/* we do not support '!' for function probes */
 		if (WARN_ON(not))
@@ -4549,7 +4545,7 @@ ftrace_set_func(unsigned long *array, int *idx, int size, char *buffer)
 {
 	struct dyn_ftrace *rec;
 	struct ftrace_page *pg;
-	int search_len;
+	int search_len = strlen(buffer);
 	int fail = 1;
 	int type, not;
 	char *search;
@@ -4557,11 +4553,9 @@ ftrace_set_func(unsigned long *array, int *idx, int size, char *buffer)
 	int i;
 
 	/* decode regex */
-	type = filter_parse_regex(buffer, strlen(buffer), &search, &not);
+	type = filter_parse_regex(buffer, &search_len, &search, &not);
 	if (!not && *idx >= size)
 		return -EBUSY;
-
-	search_len = strlen(search);
 
 	mutex_lock(&ftrace_lock);
 

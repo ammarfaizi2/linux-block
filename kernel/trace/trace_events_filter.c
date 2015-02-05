@@ -321,7 +321,7 @@ static int regex_match_end(char *str, struct regex *r, int len)
  *  not returns 1 if buff started with a '!'
  *     0 otherwise.
  */
-enum regex_type filter_parse_regex(char *buff, int len, char **search, int *not)
+enum regex_type filter_parse_regex(char *buff, int *len, char **search, int *not)
 {
 	int type = MATCH_FULL;
 	int i;
@@ -329,13 +329,13 @@ enum regex_type filter_parse_regex(char *buff, int len, char **search, int *not)
 	if (buff[0] == '!') {
 		*not = 1;
 		buff++;
-		len--;
+		(*len)--;
 	} else
 		*not = 0;
 
 	*search = buff;
 
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < *len; i++) {
 		if (buff[i] == '*') {
 			if (!i) {
 				*search = buff + 1;
@@ -350,6 +350,7 @@ enum regex_type filter_parse_regex(char *buff, int len, char **search, int *not)
 			}
 		}
 	}
+	*len = strlen(*search);
 
 	return type;
 }
@@ -362,8 +363,7 @@ static void filter_build_regex(struct filter_pred *pred)
 	int not = 0;
 
 	if (pred->op == OP_GLOB) {
-		type = filter_parse_regex(r->pattern, r->len, &search, &not);
-		r->len = strlen(search);
+		type = filter_parse_regex(r->pattern, &r->len, &search, &not);
 		memmove(r->pattern, search, r->len+1);
 	}
 
