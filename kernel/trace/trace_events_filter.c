@@ -271,21 +271,25 @@ static int filter_pred_none(struct filter_pred *pred, void *event)
 
 static int regex_match_full(char *str, struct regex *r, int len)
 {
-	if (strncmp(str, r->pattern, len) == 0)
+	if (len - 1 != r->len)
+		return 0;
+	if (memcmp(str, r->pattern, r->len) == 0)
 		return 1;
 	return 0;
 }
 
 static int regex_match_front(char *str, struct regex *r, int len)
 {
-	if (strncmp(str, r->pattern, r->len) == 0)
+	if (len - 1 < r->len)
+		return 0;
+	if (memcmp(str, r->pattern, r->len) == 0)
 		return 1;
 	return 0;
 }
 
 static int regex_match_middle(char *str, struct regex *r, int len)
 {
-	if (strnstr(str, r->pattern, len))
+	if (memmem(str, len, r->pattern, r->len))
 		return 1;
 	return 0;
 }
