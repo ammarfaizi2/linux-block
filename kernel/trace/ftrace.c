@@ -3365,24 +3365,26 @@ ftrace_notrace_open(struct inode *inode, struct file *file)
 static int ftrace_match(char *str, char *regex, int len, int type)
 {
 	int matched = 0;
-	int slen;
+	int slen = strlen(str);
+
+	if (slen < len)
+		return 0;
 
 	switch (type) {
 	case MATCH_FULL:
-		if (strcmp(str, regex) == 0)
+		if (slen == len && memcmp(str, regex, len) == 0)
 			matched = 1;
 		break;
 	case MATCH_FRONT_ONLY:
-		if (strncmp(str, regex, len) == 0)
+		if (memcmp(str, regex, len) == 0)
 			matched = 1;
 		break;
 	case MATCH_MIDDLE_ONLY:
-		if (strstr(str, regex))
+		if (memmem(str, slen, regex, len))
 			matched = 1;
 		break;
 	case MATCH_END_ONLY:
-		slen = strlen(str);
-		if (slen >= len && memcmp(str + slen - len, regex, len) == 0)
+		if (memcmp(str + slen - len, regex, len) == 0)
 			matched = 1;
 		break;
 	}
