@@ -3362,7 +3362,7 @@ ftrace_notrace_open(struct inode *inode, struct file *file)
 				 inode, file);
 }
 
-static int ftrace_match(char *str, char *regex, int len, int type)
+static int ftrace_match(char *str, const char *regex, int len, int type)
 {
 	int matched = 0;
 	int slen = strlen(str);
@@ -3417,7 +3417,7 @@ enter_record(struct ftrace_hash *hash, struct dyn_ftrace *rec, int not)
 
 static int
 ftrace_match_record(struct dyn_ftrace *rec, char *mod,
-		    char *regex, int len, int type)
+		    const char *regex, int len, int type)
 {
 	char str[KSYM_SYMBOL_LEN];
 	char *modname;
@@ -3438,13 +3438,13 @@ ftrace_match_record(struct dyn_ftrace *rec, char *mod,
 }
 
 static int
-match_records(struct ftrace_hash *hash, char *buff,
+match_records(struct ftrace_hash *hash, const char *buff,
 	      int len, char *mod, int not)
 {
 	struct ftrace_page *pg;
 	struct dyn_ftrace *rec;
 	int type = MATCH_FULL;
-	char *search = buff;
+	const char *search = buff;
 	int found = 0;
 	int ret;
 
@@ -3648,7 +3648,7 @@ register_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 	int type, len = strlen(glob), not;
 	unsigned long key;
 	int count = 0;
-	char *search;
+	const char *search;
 	int ret;
 
 	type = filter_parse_regex(glob, &len, &search, &not);
@@ -3759,7 +3759,7 @@ __unregister_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 	char str[KSYM_SYMBOL_LEN];
 	int type = MATCH_FULL;
 	int i, len = 0;
-	char *search = NULL;
+	const char *search = NULL;
 	int ret;
 
 	if (glob && *glob && strcmp(glob, "*") != 0) {
@@ -4548,7 +4548,7 @@ ftrace_set_func(unsigned long *array, int *idx, int size, char *buffer)
 	int search_len = strlen(buffer);
 	int fail = 1;
 	int type, not;
-	char *search;
+	const char *search;
 	bool exists;
 	int i;
 

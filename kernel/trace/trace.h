@@ -1051,7 +1051,7 @@ struct filter_pred {
 };
 
 extern enum regex_type
-filter_parse_regex(char *buff, int *len, char **search, int *not);
+filter_parse_regex(const char *buff, int *len, const char **search, int *not);
 extern void print_event_filter(struct ftrace_event_file *file,
 			       struct trace_seq *s);
 extern int apply_event_filter(struct ftrace_event_file *file,

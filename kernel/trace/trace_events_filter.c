@@ -321,7 +321,8 @@ static int regex_match_end(char *str, struct regex *r, int len)
  *  not returns 1 if buff started with a '!'
  *     0 otherwise.
  */
-enum regex_type filter_parse_regex(char *buff, int *len, char **search, int *not)
+enum regex_type filter_parse_regex(const char *buff, int *len,
+				   const char **search, int *not)
 {
 	int type = MATCH_FULL;
 	int i;
@@ -345,12 +346,11 @@ enum regex_type filter_parse_regex(char *buff, int *len, char **search, int *not
 					type = MATCH_MIDDLE_ONLY;
 				else
 					type = MATCH_FRONT_ONLY;
-				buff[i] = 0;
 				break;
 			}
 		}
 	}
-	*len = strlen(*search);
+	*len = buff + i - *search;
 
 	return type;
 }
@@ -358,7 +358,7 @@ enum regex_type filter_parse_regex(char *buff, int *len, char **search, int *not
 static void filter_build_regex(struct filter_pred *pred)
 {
 	struct regex *r = &pred->regex;
-	char *search;
+	const char *search;
 	enum regex_type type = MATCH_FULL;
 	int not = 0;
 
