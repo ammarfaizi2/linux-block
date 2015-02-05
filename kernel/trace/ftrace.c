@@ -3473,7 +3473,7 @@ match_records(struct ftrace_hash *hash, const char *buff,
 }
 
 static int
-ftrace_match_records(struct ftrace_hash *hash, char *buff, int len)
+ftrace_match_records(struct ftrace_hash *hash, const char *buff, int len)
 {
 	return match_records(hash, buff, len, NULL, 0);
 }
@@ -4040,7 +4040,7 @@ static void ftrace_ops_update_code(struct ftrace_ops *ops,
 }
 
 static int
-ftrace_set_hash(struct ftrace_ops *ops, unsigned char *buf, int len,
+ftrace_set_hash(struct ftrace_ops *ops, const unsigned char *buf, int len,
 		unsigned long ip, int remove, int reset, int enable)
 {
 	struct ftrace_hash **orig_hash;
@@ -4123,7 +4123,7 @@ int ftrace_set_filter_ip(struct ftrace_ops *ops, unsigned long ip,
 EXPORT_SYMBOL_GPL(ftrace_set_filter_ip);
 
 static int
-ftrace_set_regex(struct ftrace_ops *ops, unsigned char *buf, int len,
+ftrace_set_regex(struct ftrace_ops *ops, const unsigned char *buf, int len,
 		 int reset, int enable)
 {
 	return ftrace_set_hash(ops, buf, len, 0, 0, reset, enable);
@@ -4139,7 +4139,7 @@ ftrace_set_regex(struct ftrace_ops *ops, unsigned char *buf, int len,
  * Filters denote which functions should be enabled when tracing is enabled.
  * If @buf is NULL and reset is set, all functions will be enabled for tracing.
  */
-int ftrace_set_filter(struct ftrace_ops *ops, unsigned char *buf,
+int ftrace_set_filter(struct ftrace_ops *ops, const unsigned char *buf,
 		       int len, int reset)
 {
 	ftrace_ops_init(ops);
@@ -4158,7 +4158,7 @@ EXPORT_SYMBOL_GPL(ftrace_set_filter);
  * is enabled. If @buf is NULL and reset is set, all functions will be enabled
  * for tracing.
  */
-int ftrace_set_notrace(struct ftrace_ops *ops, unsigned char *buf,
+int ftrace_set_notrace(struct ftrace_ops *ops, const unsigned char *buf,
 			int len, int reset)
 {
 	ftrace_ops_init(ops);
@@ -4174,7 +4174,7 @@ EXPORT_SYMBOL_GPL(ftrace_set_notrace);
  * Filters denote which functions should be enabled when tracing is enabled.
  * If @buf is NULL and reset is set, all functions will be enabled for tracing.
  */
-void ftrace_set_global_filter(unsigned char *buf, int len, int reset)
+void ftrace_set_global_filter(const unsigned char *buf, int len, int reset)
 {
 	ftrace_set_regex(&global_ops, buf, len, reset, 1);
 }
@@ -4190,7 +4190,7 @@ EXPORT_SYMBOL_GPL(ftrace_set_global_filter);
  * is enabled. If @buf is NULL and reset is set, all functions will be enabled
  * for tracing.
  */
-void ftrace_set_global_notrace(unsigned char *buf, int len, int reset)
+void ftrace_set_global_notrace(const unsigned char *buf, int len, int reset)
 {
 	ftrace_set_regex(&global_ops, buf, len, reset, 0);
 }

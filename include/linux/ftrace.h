@@ -360,12 +360,12 @@ struct dyn_ftrace {
 int ftrace_force_update(void);
 int ftrace_set_filter_ip(struct ftrace_ops *ops, unsigned long ip,
 			 int remove, int reset);
-int ftrace_set_filter(struct ftrace_ops *ops, unsigned char *buf,
+int ftrace_set_filter(struct ftrace_ops *ops, const unsigned char *buf,
 		       int len, int reset);
-int ftrace_set_notrace(struct ftrace_ops *ops, unsigned char *buf,
+int ftrace_set_notrace(struct ftrace_ops *ops, const unsigned char *buf,
 			int len, int reset);
-void ftrace_set_global_filter(unsigned char *buf, int len, int reset);
-void ftrace_set_global_notrace(unsigned char *buf, int len, int reset);
+void ftrace_set_global_filter(const unsigned char *buf, int len, int reset);
+void ftrace_set_global_notrace(const unsigned char *buf, int len, int reset);
 void ftrace_free_filter(struct ftrace_ops *ops);
 
 int register_ftrace_command(struct ftrace_func_command *cmd);
