@@ -740,6 +740,27 @@ EXPORT_SYMBOL(strstr);
 #endif
 
 #ifndef __HAVE_ARCH_STRNSTR
+
+/**
+ * memmem - Find the first length-limited substring in a length-limited string
+ * @s1: The string to be searched
+ * @len1: the maximum number of characters to search
+ * @s2: The string to search for
+ * @len2: the length of the string being searched
+ */
+void *memmem(const void *s1, size_t len1, const void *s2, size_t len2)
+{
+	if (!len2)
+		return (void *)s1;
+	while (len1 >= len2) {
+		len1--;
+		if (!memcmp(s1, s2, len2))
+			return (void *)s1;
+		s1++;
+	}
+	return NULL;
+}
+EXPORT_SYMBOL(memmem);
 /**
  * strnstr - Find the first substring in a length-limited string
  * @s1: The string to be searched
@@ -748,18 +769,7 @@ EXPORT_SYMBOL(strstr);
  */
 char *strnstr(const char *s1, const char *s2, size_t len)
 {
-	size_t l2;
-
-	l2 = strlen(s2);
-	if (!l2)
-		return (char *)s1;
-	while (len >= l2) {
-		len--;
-		if (!memcmp(s1, s2, l2))
-			return (char *)s1;
-		s1++;
-	}
-	return NULL;
+	return memmem(s1, len, s2, strlen(s2));
 }
 EXPORT_SYMBOL(strnstr);
 #endif
