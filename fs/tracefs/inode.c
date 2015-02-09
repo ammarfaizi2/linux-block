@@ -381,9 +381,6 @@ static struct dentry *end_creating(struct dentry *dentry)
  * pointer must be passed to the tracefs_remove() function when the file is
  * to be removed (no automatic cleanup happens if your module is unloaded,
  * you are responsible here.)  If an error occurs, %NULL will be returned.
- *
- * If tracefs is not enabled in the kernel, the value -%ENODEV will be
- * returned.
  */
 struct dentry *tracefs_create_file(const char *name, umode_t mode,
 				   struct dentry *parent, void *data,
@@ -450,9 +447,6 @@ static struct dentry *__create_dir(const char *name, struct dentry *parent,
  * This function will return a pointer to a dentry if it succeeds.  This
  * pointer must be passed to the tracefs_remove() function when the file is
  * to be removed. If an error occurs, %NULL will be returned.
- *
- * If tracing is not enabled in the kernel, the value -%ENODEV will be
- * returned.
  */
 struct dentry *tracefs_create_dir(const char *name, struct dentry *parent)
 {
@@ -470,7 +464,7 @@ struct dentry *tracefs_create_dir(const char *name, struct dentry *parent)
  *
  * The instances directory is special as it allows for mkdir and rmdir to
  * to be done by userspace. When a mkdir or rmdir is performed, the inode
- * locks are released and the methhods passed in (@mkdir and @rmdir) are
+ * locks are released and the methods passed in (@mkdir and @rmdir) are
  * called without locks and with the name of the directory being created
  * within the instances directory.
  *
