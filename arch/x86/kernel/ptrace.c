@@ -1596,12 +1596,22 @@ long syscall_trace_enter_phase2(struct pt_regs *regs, u32 arch,
 	if (work & _TIF_SINGLESTEP)
 		regs->flags |= X86_EFLAGS_TF;
 
+	if (unlikely(work & _TIF_SYSCALL_EMU))
+		ret = -1L;
+
+	if ((ret || test_thread_flag(TIF_SYSCALL_TRACE)) &&
+	    tracehook_report_syscall_entry(regs))
+		ret = -1L;
+
 #ifdef CONFIG_SECCOMP
 	/*
-	 * Run seccomp before running the other hooks so that they can
-	 * see any changes made by a seccomp tracer.  This is essentially
-	 * the same as __secure_computing, except that we get to use
-	 * the optimizations in do_seccomp_phase1.
+	 * Run seccomp after ptrace: ptracers should see syscalls as
+	 * submitted by the traced process, and ptracers should not be
+	 * able to change syscalls and thus bypass seccomp except by
+	 * using SECCOMP_RET_TRACE.
+	 *
+	 * This is essentially the same as __secure_computing, except
+	 * that we get to use the optimizations in do_seccomp_phase1.
 	 */
 	if (work & _TIF_SECCOMP) {
 		phase1_result = do_seccomp_phase1(regs, arch);
@@ -1614,13 +1624,6 @@ long syscall_trace_enter_phase2(struct pt_regs *regs, u32 arch,
 		}
 	}
 #endif
-
-	if (unlikely(work & _TIF_SYSCALL_EMU))
-		ret = -1L;
-
-	if ((ret || test_thread_flag(TIF_SYSCALL_TRACE)) &&
-	    tracehook_report_syscall_entry(regs))
-		ret = -1L;
 
 	if (unlikely(test_thread_flag(TIF_SYSCALL_TRACEPOINT)))
 		trace_sys_enter(regs, regs->orig_ax);

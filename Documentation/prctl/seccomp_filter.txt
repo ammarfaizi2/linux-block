@@ -131,12 +131,8 @@ SECCOMP_RET_TRACE:
 	requested by changing the system call to a valid syscall number.  If
 	the tracer asks to skip the system call, then the system call will
 	appear to return the value that the tracer puts in the return value
-	register.
-
-	The seccomp check will not be run again after the tracer is
-	notified.  (This means that seccomp-based sandboxes MUST NOT
-	allow use of ptrace, even of other sandboxed processes, without
-	extreme care; ptracers can use this mechanism to escape.)
+	register.  The seccomp filter will not be re-run after the tracer
+	changes the syscall.
 
 SECCOMP_RET_ALLOW:
 	Results in the system call being executed.
@@ -158,6 +154,18 @@ architecture that supports multiple system call invocation conventions,
 the system call numbers may vary based on the specific invocation.  If
 the numbers in the different calling conventions overlap, then checks in
 the filters may be abused.  Always check the arch value!
+
+On Linux 3.21 or newer on x86, ptracers that catch syscall entry will
+observer the syscall state before seccomp checks and possibly modifies
+it, so tools like strace will see syscalls that the process thinks
+it is issuing.
+
+Otherwise (i.e. Linux 3.20 and before and on non-x86 architectures),
+ptrace is run *after* seccomp.  This can confuse tools like strace,
+and it means that seccomp-based sandboxes MUST NOT allow use of
+ptrace, even of other sandboxed processes, without extreme care, as a
+ptracer can modify a syscall to something that would have been
+disallowed by seccomp if issued directly.
 
 Example
 -------
