@@ -1494,10 +1494,19 @@ static unsigned long do_seccomp_phase1(struct pt_regs *regs, u32 arch)
  * NB: We don't have full pt_regs here, but regs->orig_ax and regs->ax
  * are fully functional.
  *
+ * To keep this comprehensible, the division of labor is very simple:
+ * TIF_NOHZ is always handled by syscall_trace_enter_phase1.  Other than that,
+ * syscall_trace_enter_phase1 either defers everything to phase2 or it
+ * handles everything except a possible phase2 seccomp operation.
+ *
+ * The intent is that this is purely an optimized fast path.  Replacing
+ * this whole function with something that handles TIF_NOHZ and returns 1
+ * would be slower but still correct.
+ *
  * For phase 2's benefit, our return value is:
- * 0:			resume the syscall
- * 1:			go to phase 2; no seccomp phase 2 needed
- * anything else:	go to phase 2; pass return value to seccomp
+ * 0:			resume the syscall without running phase2
+ * 1:			do full entry work in phase2 (other than nohz)
+ * anything else:	phase2 does seccomp phase 2 work only
  */
 unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
 {
@@ -1518,6 +1527,11 @@ unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
 		work &= ~_TIF_NOHZ;
 	}
 
+	if (work & ~(_TIF_SECCOMP & _TIF_SYSCALL_AUDIT)) {
+		/* Run slow path. */
+		return 1;
+	}
+
 #ifdef CONFIG_SECCOMP
 	/*
 	 * Do seccomp first -- it should minimize exposure of other
@@ -1532,32 +1546,29 @@ unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
 
 		if (ret == SECCOMP_PHASE1_SKIP) {
 			regs->orig_ax = -1;
+
+			/*
+			 * Do not invoke phase 2.  We've destroyed orig_ax
+			 * in order to skip the syscall, but no one except
+			 * audit is looking, so this change doesn't matter.
+			 */
 			ret = 0;
-		} else if (ret != SECCOMP_PHASE1_OK) {
-			return ret;  /* Go directly to phase 2 */
 		}
 
-		work &= ~_TIF_SECCOMP;
+		/*
+		 * else if ret == SECCOMP_PHASE1_OK, we need ret = 0, but
+		 * ret is already 0.  Otherwise, we return ret as is for
+		 * further seccomp processing.
+		 */
 	}
 #endif
-
-	/* Do our best to finish without phase 2. */
-	if (work == 0)
-		return ret;  /* seccomp and/or nohz only (ret == 0 here) */
 
 #ifdef CONFIG_AUDITSYSCALL
-	if (work == _TIF_SYSCALL_AUDIT) {
-		/*
-		 * If there is no more work to be done except auditing,
-		 * then audit in phase 1.  Phase 2 always audits, so, if
-		 * we audit here, then we can't go on to phase 2.
-		 */
+	if (work & _TIF_SYSCALL_AUDIT)
 		do_audit_syscall_entry(regs, arch);
-		return 0;
-	}
 #endif
 
-	return 1;  /* Something is enabled that we can't handle in phase 1 */
+	return ret;
 }
 
 /* Returns the syscall nr to run (which should match regs->orig_ax). */
@@ -1565,7 +1576,12 @@ long syscall_trace_enter_phase2(struct pt_regs *regs, u32 arch,
 				unsigned long phase1_result)
 {
 	long ret = 0;
-	u32 work = ACCESS_ONCE(current_thread_info()->flags) &
+	u32 work;
+
+	if (phase1_result > 1)
+		return seccomp_phase2(phase1_result);
+
+	work = ACCESS_ONCE(current_thread_info()->flags) &
 		_TIF_WORK_SYSCALL_ENTRY;
 
 	BUG_ON(regs != task_pt_regs(current));
@@ -1582,12 +1598,20 @@ long syscall_trace_enter_phase2(struct pt_regs *regs, u32 arch,
 
 #ifdef CONFIG_SECCOMP
 	/*
-	 * Call seccomp_phase2 before running the other hooks so that
-	 * they can see any changes made by a seccomp tracer.
+	 * Run seccomp before running the other hooks so that they can
+	 * see any changes made by a seccomp tracer.  This is essentially
+	 * the same as __secure_computing, except that we get to use
+	 * the optimizations in do_seccomp_phase1.
 	 */
-	if (phase1_result > 1 && seccomp_phase2(phase1_result)) {
-		/* seccomp failures shouldn't expose any additional code. */
-		return -1;
+	if (work & _TIF_SECCOMP) {
+		phase1_result = do_seccomp_phase1(regs, arch);
+		if (likely(phase1_result == SECCOMP_PHASE1_OK)) {
+			/* nothing to do */
+		} else if (phase1_result == SECCOMP_PHASE1_SKIP) {
+			ret = -1;
+		} else if (seccomp_phase2(phase1_result) != 0) {
+			ret = -1;
+		}
 	}
 #endif
 
