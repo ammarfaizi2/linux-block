@@ -1455,6 +1455,37 @@ static void do_audit_syscall_entry(struct pt_regs *regs, u32 arch)
 	}
 }
 
+#ifdef CONFIG_SECCOMP
+static unsigned long do_seccomp_phase1(struct pt_regs *regs, u32 arch)
+{
+	struct seccomp_data sd;
+
+	sd.arch = arch;
+	sd.nr = regs->orig_ax;
+	sd.instruction_pointer = regs->ip;
+#ifdef CONFIG_X86_64
+	if (arch == AUDIT_ARCH_X86_64) {
+		sd.args[0] = regs->di;
+		sd.args[1] = regs->si;
+		sd.args[2] = regs->dx;
+		sd.args[3] = regs->r10;
+		sd.args[4] = regs->r8;
+		sd.args[5] = regs->r9;
+	} else
+#endif
+	{
+		sd.args[0] = regs->bx;
+		sd.args[1] = regs->cx;
+		sd.args[2] = regs->dx;
+		sd.args[3] = regs->si;
+		sd.args[4] = regs->di;
+		sd.args[5] = regs->bp;
+	}
+
+	return seccomp_phase1(&sd);
+}
+#endif
+
 /*
  * We can return 0 to resume the syscall or anything else to go to phase
  * 2.  If we resume the syscall, we need to put something appropriate in
@@ -1494,34 +1525,11 @@ unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
 	 * than the rest of this.
 	 */
 	if (work & _TIF_SECCOMP) {
-		struct seccomp_data sd;
-
-		sd.arch = arch;
-		sd.nr = regs->orig_ax;
-		sd.instruction_pointer = regs->ip;
-#ifdef CONFIG_X86_64
-		if (arch == AUDIT_ARCH_X86_64) {
-			sd.args[0] = regs->di;
-			sd.args[1] = regs->si;
-			sd.args[2] = regs->dx;
-			sd.args[3] = regs->r10;
-			sd.args[4] = regs->r8;
-			sd.args[5] = regs->r9;
-		} else
-#endif
-		{
-			sd.args[0] = regs->bx;
-			sd.args[1] = regs->cx;
-			sd.args[2] = regs->dx;
-			sd.args[3] = regs->si;
-			sd.args[4] = regs->di;
-			sd.args[5] = regs->bp;
-		}
+		ret = do_seccomp_phase1(regs, arch);
 
 		BUILD_BUG_ON(SECCOMP_PHASE1_OK != 0);
 		BUILD_BUG_ON(SECCOMP_PHASE1_SKIP != 1);
 
-		ret = seccomp_phase1(&sd);
 		if (ret == SECCOMP_PHASE1_SKIP) {
 			regs->orig_ax = -1;
 			ret = 0;
