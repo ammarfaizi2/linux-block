@@ -1595,7 +1595,7 @@ int do_statahead_enter(struct inode *dir, struct dentry **dentryp,
 			rc = md_revalidate_lock(ll_i2mdexp(dir), &it,
 						ll_inode2fid(inode), &bits);
 			if (rc == 1) {
-				if ((*dentryp)->d_inode == NULL) {
+				if (d_inode(*dentryp) == NULL) {
 					struct dentry *alias;
 
 					alias = ll_splice_alias(inode,
@@ -1605,13 +1605,13 @@ int do_statahead_enter(struct inode *dir, struct dentry **dentryp,
 						return PTR_ERR(alias);
 					}
 					*dentryp = alias;
-				} else if ((*dentryp)->d_inode != inode) {
+				} else if (d_inode(*dentryp) != inode) {
 					/* revalidate, but inode is recreated */
 					CDEBUG(D_READA,
 					      "stale dentry %pd inode %lu/%u, statahead inode %lu/%u\n",
 					      *dentryp,
-					      (*dentryp)->d_inode->i_ino,
-					      (*dentryp)->d_inode->i_generation,
+					      d_inode(*dentryp)->i_ino,
+					      d_inode(*dentryp)->i_generation,
 					      inode->i_ino,
 					      inode->i_generation);
 					ll_sai_unplug(sai, entry);

@@ -447,7 +447,7 @@ static int ll_lookup_it_finish(struct ptlrpc_request *request,
 		   !it_disposition(it, DISP_OPEN_CREATE)) {
 		/* With DISP_OPEN_CREATE dentry will
 		   instantiated in ll_create_it. */
-		LASSERT((*de)->d_inode == NULL);
+		LASSERT(d_inode(*de) == NULL);
 		d_instantiate(*de, inode);
 	}
 
