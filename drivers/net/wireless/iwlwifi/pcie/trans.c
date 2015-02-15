@@ -75,6 +75,7 @@
 #include "iwl-trans.h"
 #include "iwl-csr.h"
 #include "iwl-prph.h"
+#include "iwl-scd.h"
 #include "iwl-agn-hw.h"
 #include "iwl-fw-error-dump.h"
 #include "internal.h"
@@ -722,6 +723,11 @@ static int iwl_pcie_load_cpu_sections_8000b(struct iwl_trans *trans,
 
 	*first_ucode_section = last_read_idx;
 
+	if (cpu == 1)
+		iwl_write_direct32(trans, FH_UCODE_LOAD_STATUS, 0xFFFF);
+	else
+		iwl_write_direct32(trans, FH_UCODE_LOAD_STATUS, 0xFFFFFFFF);
+
 	return 0;
 }
 
@@ -911,9 +917,6 @@ static int iwl_pcie_load_given_ucode_8000b(struct iwl_trans *trans,
 	if (trans->dbg_dest_tlv)
 		iwl_pcie_apply_destination(trans);
 
-	/* Notify FW loading is done */
-	iwl_write_direct32(trans, FH_UCODE_LOAD_STATUS, 0xFFFFFFFF);
-
 	/* wait for image verification to complete  */
 	ret = iwl_poll_prph_bit(trans, LMPM_SECURE_BOOT_CPU1_STATUS_ADDR_B0,
 				LMPM_SECURE_BOOT_STATUS_SUCCESS,
@@ -982,7 +985,7 @@ static int iwl_trans_pcie_start_fw(struct iwl_trans *trans,
 
 	/* Load the given image to the HW */
 	if ((trans->cfg->device_family == IWL_DEVICE_FAMILY_8000) &&
-	    (CSR_HW_REV_STEP(trans->hw_rev) == SILICON_B_STEP))
+	    (CSR_HW_REV_STEP(trans->hw_rev) != SILICON_A_STEP))
 		return iwl_pcie_load_given_ucode_8000b(trans, fw);
 	else
 		return iwl_pcie_load_given_ucode(trans, fw);
@@ -1266,6 +1269,7 @@ static void iwl_trans_pcie_configure(struct iwl_trans *trans,
 
 	trans_pcie->cmd_queue = trans_cfg->cmd_queue;
 	trans_pcie->cmd_fifo = trans_cfg->cmd_fifo;
+	trans_pcie->cmd_q_wdg_timeout = trans_cfg->cmd_q_wdg_timeout;
 	if (WARN_ON(trans_cfg->n_no_reclaim_cmds > MAX_NO_RECLAIM_CMDS))
 		trans_pcie->n_no_reclaim_cmds = 0;
 	else
@@ -1279,9 +1283,6 @@ static void iwl_trans_pcie_configure(struct iwl_trans *trans,
 		trans_pcie->rx_page_order = get_order(8 * 1024);
 	else
 		trans_pcie->rx_page_order = get_order(4 * 1024);
-
-	trans_pcie->wd_timeout =
-		msecs_to_jiffies(trans_cfg->queue_watchdog_timeout);
 
 	trans_pcie->command_names = trans_cfg->command_names;
 	trans_pcie->bc_table_dword = trans_cfg->bc_table_dword;
@@ -2348,6 +2349,7 @@ struct iwl_trans *iwl_trans_pcie_alloc(struct pci_dev *pdev,
 	trans_pcie->trans = trans;
 	spin_lock_init(&trans_pcie->irq_lock);
 	spin_lock_init(&trans_pcie->reg_lock);
+	spin_lock_init(&trans_pcie->ref_lock);
 	init_waitqueue_head(&trans_pcie->ucode_write_waitq);
 
 	err = pci_enable_device(pdev);

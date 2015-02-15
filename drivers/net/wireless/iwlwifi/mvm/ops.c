@@ -93,6 +93,7 @@ static const struct iwl_op_mode_ops iwl_mvm_ops;
 
 struct iwl_mvm_mod_params iwlmvm_mod_params = {
 	.power_scheme = IWL_POWER_SCHEME_BPS,
+	.tfd_q_hang_detect = true
 	/* rest of fields are 0 by default */
 };
 
@@ -102,6 +103,10 @@ MODULE_PARM_DESC(init_dbg,
 module_param_named(power_scheme, iwlmvm_mod_params.power_scheme, int, S_IRUGO);
 MODULE_PARM_DESC(power_scheme,
 		 "power management scheme: 1-active, 2-balanced, 3-low power, default: 2");
+module_param_named(tfd_q_hang_detect, iwlmvm_mod_params.tfd_q_hang_detect,
+		   bool, S_IRUGO);
+MODULE_PARM_DESC(tfd_q_hang_detect,
+		 "TFD queues hang detection (default: true");
 
 /*
  * module init and exit functions
@@ -234,6 +239,8 @@ static const struct iwl_rx_handlers iwl_mvm_rx_handlers[] = {
 
 	RX_HANDLER(SCAN_REQUEST_CMD, iwl_mvm_rx_scan_response, false),
 	RX_HANDLER(SCAN_COMPLETE_NOTIFICATION, iwl_mvm_rx_scan_complete, true),
+	RX_HANDLER(SCAN_ITERATION_COMPLETE,
+		   iwl_mvm_rx_scan_offload_iter_complete_notif, false),
 	RX_HANDLER(SCAN_OFFLOAD_COMPLETE,
 		   iwl_mvm_rx_scan_offload_complete_notif, true),
 	RX_HANDLER(MATCH_FOUND_NOTIFICATION, iwl_mvm_rx_scan_offload_results,
@@ -268,6 +275,7 @@ static const char *const iwl_mvm_cmd_strings[REPLY_MAX] = {
 	CMD(MGMT_MCAST_KEY),
 	CMD(TX_CMD),
 	CMD(TXPATH_FLUSH),
+	CMD(SHARED_MEM_CFG),
 	CMD(MAC_CONTEXT_CMD),
 	CMD(TIME_EVENT_CMD),
 	CMD(TIME_EVENT_NOTIFICATION),
@@ -470,11 +478,6 @@ iwl_op_mode_mvm_start(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 	if (mvm->fw->ucode_capa.flags & IWL_UCODE_TLV_FLAGS_DW_BC_TABLE)
 		trans_cfg.bc_table_dword = true;
 
-	if (!iwlwifi_mod_params.wd_disable)
-		trans_cfg.queue_watchdog_timeout = cfg->base_params->wd_timeout;
-	else
-		trans_cfg.queue_watchdog_timeout = IWL_WATCHDOG_DISABLED;
-
 	trans_cfg.command_names = iwl_mvm_cmd_strings;
 
 	trans_cfg.cmd_queue = IWL_MVM_CMD_QUEUE;
@@ -482,6 +485,11 @@ iwl_op_mode_mvm_start(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 	trans_cfg.scd_set_active = true;
 
 	trans_cfg.sdio_adma_addr = fw->sdio_adma_addr;
+
+	/* Set a short watchdog for the command queue */
+	trans_cfg.cmd_q_wdg_timeout =
+		iwlmvm_mod_params.tfd_q_hang_detect ? IWL_DEF_WD_TIMEOUT :
+						      IWL_WATCHDOG_DISABLED;
 
 	snprintf(mvm->hw->wiphy->fw_version,
 		 sizeof(mvm->hw->wiphy->fw_version),
@@ -559,6 +567,9 @@ iwl_op_mode_mvm_start(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 	mvm->scan_cmd = kmalloc(scan_size, GFP_KERNEL);
 	if (!mvm->scan_cmd)
 		goto out_free;
+
+	/* Set EBS as successful as long as not stated otherwise by the FW. */
+	mvm->last_ebs_successful = true;
 
 	err = iwl_mvm_mac_setup_register(mvm);
 	if (err)
@@ -818,9 +829,20 @@ static void iwl_mvm_fw_error_dump_wk(struct work_struct *work)
 	struct iwl_mvm *mvm =
 		container_of(work, struct iwl_mvm, fw_error_dump_wk);
 
+	if (iwl_mvm_ref_sync(mvm, IWL_MVM_REF_FW_DBG_COLLECT))
+		return;
+
 	mutex_lock(&mvm->mutex);
 	iwl_mvm_fw_error_dump(mvm);
+
+	/* start recording again if the firmware is not crashed */
+	WARN_ON_ONCE((!test_bit(STATUS_FW_ERROR, &mvm->trans->status)) &&
+		      mvm->fw->dbg_dest_tlv &&
+		      iwl_mvm_start_fw_dbg_conf(mvm, mvm->fw_dbg_conf));
+
 	mutex_unlock(&mvm->mutex);
+
+	iwl_mvm_unref(mvm, IWL_MVM_REF_FW_DBG_COLLECT);
 }
 
 void iwl_mvm_nic_restart(struct iwl_mvm *mvm, bool fw_error)
@@ -856,7 +878,10 @@ void iwl_mvm_nic_restart(struct iwl_mvm *mvm, bool fw_error)
 	 * If WoWLAN fw asserted, don't restart either, mac80211
 	 * can't recover this since we're already half suspended.
 	 */
-	if (test_and_set_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status)) {
+	if (!mvm->restart_fw && fw_error) {
+		schedule_work(&mvm->fw_error_dump_wk);
+	} else if (test_and_set_bit(IWL_MVM_STATUS_IN_HW_RESTART,
+				    &mvm->status)) {
 		struct iwl_mvm_reprobe *reprobe;
 
 		IWL_ERR(mvm,
@@ -880,16 +905,13 @@ void iwl_mvm_nic_restart(struct iwl_mvm *mvm, bool fw_error)
 		reprobe->dev = mvm->trans->dev;
 		INIT_WORK(&reprobe->work, iwl_mvm_reprobe_wk);
 		schedule_work(&reprobe->work);
-	} else if (mvm->cur_ucode == IWL_UCODE_REGULAR &&
-		   (!fw_error || mvm->restart_fw)) {
+	} else if (mvm->cur_ucode == IWL_UCODE_REGULAR) {
 		/* don't let the transport/FW power down */
 		iwl_mvm_ref(mvm, IWL_MVM_REF_UCODE_DOWN);
 
 		if (fw_error && mvm->restart_fw > 0)
 			mvm->restart_fw--;
 		ieee80211_restart_hw(mvm->hw);
-	} else if (fw_error) {
-		schedule_work(&mvm->fw_error_dump_wk);
 	}
 }
 

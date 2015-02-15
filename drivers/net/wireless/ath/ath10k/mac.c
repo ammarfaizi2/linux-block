@@ -608,7 +608,7 @@ static int ath10k_monitor_vdev_start(struct ath10k *ar, int vdev_id)
 
 	ret = ath10k_vdev_setup_sync(ar);
 	if (ret) {
-		ath10k_warn(ar, "failed to synchronize setup for monitor vdev %i: %d\n",
+		ath10k_warn(ar, "failed to synchronize setup for monitor vdev %i start: %d\n",
 			    vdev_id, ret);
 		return ret;
 	}
@@ -655,7 +655,7 @@ static int ath10k_monitor_vdev_stop(struct ath10k *ar)
 
 	ret = ath10k_vdev_setup_sync(ar);
 	if (ret)
-		ath10k_warn(ar, "failed to synchronise monitor vdev %i: %d\n",
+		ath10k_warn(ar, "failed to synchronize monitor vdev %i stop: %d\n",
 			    ar->monitor_vdev_id, ret);
 
 	ath10k_dbg(ar, ATH10K_DBG_MAC, "mac monitor vdev %i stopped\n",
@@ -924,8 +924,9 @@ static int ath10k_vdev_start_restart(struct ath10k_vif *arvif, bool restart)
 
 	ret = ath10k_vdev_setup_sync(ar);
 	if (ret) {
-		ath10k_warn(ar, "failed to synchronise setup for vdev %i: %d\n",
-			    arg.vdev_id, ret);
+		ath10k_warn(ar,
+			    "failed to synchronize setup for vdev %i restart %d: %d\n",
+			    arg.vdev_id, restart, ret);
 		return ret;
 	}
 
@@ -963,7 +964,7 @@ static int ath10k_vdev_stop(struct ath10k_vif *arvif)
 
 	ret = ath10k_vdev_setup_sync(ar);
 	if (ret) {
-		ath10k_warn(ar, "failed to syncronise setup for vdev %i: %d\n",
+		ath10k_warn(ar, "failed to synchronize setup for vdev %i stop: %d\n",
 			    arvif->vdev_id, ret);
 		return ret;
 	}
@@ -1778,6 +1779,68 @@ static int ath10k_setup_peer_smps(struct ath10k *ar, struct ath10k_vif *arvif,
 					 ath10k_smps_map[smps]);
 }
 
+static int ath10k_mac_vif_recalc_txbf(struct ath10k *ar,
+				      struct ieee80211_vif *vif,
+				      struct ieee80211_sta_vht_cap vht_cap)
+{
+	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
+	int ret;
+	u32 param;
+	u32 value;
+
+	if (!(ar->vht_cap_info &
+	      (IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE |
+	       IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE |
+	       IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE |
+	       IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE)))
+		return 0;
+
+	param = ar->wmi.vdev_param->txbf;
+	value = 0;
+
+	if (WARN_ON(param == WMI_VDEV_PARAM_UNSUPPORTED))
+		return 0;
+
+	/* The following logic is correct. If a remote STA advertises support
+	 * for being a beamformer then we should enable us being a beamformee.
+	 */
+
+	if (ar->vht_cap_info &
+	    (IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE |
+	     IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE)) {
+		if (vht_cap.cap & IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE)
+			value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFEE;
+
+		if (vht_cap.cap & IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE)
+			value |= WMI_VDEV_PARAM_TXBF_MU_TX_BFEE;
+	}
+
+	if (ar->vht_cap_info &
+	    (IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE |
+	     IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE)) {
+		if (vht_cap.cap & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE)
+			value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFER;
+
+		if (vht_cap.cap & IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE)
+			value |= WMI_VDEV_PARAM_TXBF_MU_TX_BFER;
+	}
+
+	if (value & WMI_VDEV_PARAM_TXBF_MU_TX_BFEE)
+		value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFEE;
+
+	if (value & WMI_VDEV_PARAM_TXBF_MU_TX_BFER)
+		value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFER;
+
+	ret = ath10k_wmi_vdev_set_param(ar, arvif->vdev_id, param, value);
+	if (ret) {
+		ath10k_warn(ar, "failed to submit vdev param txbf 0x%x: %d\n",
+			    value, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 /* can be called only in mac80211 callbacks due to `key_count` usage */
 static void ath10k_bss_assoc(struct ieee80211_hw *hw,
 			     struct ieee80211_vif *vif,
@@ -1786,6 +1849,7 @@ static void ath10k_bss_assoc(struct ieee80211_hw *hw,
 	struct ath10k *ar = hw->priv;
 	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
 	struct ieee80211_sta_ht_cap ht_cap;
+	struct ieee80211_sta_vht_cap vht_cap;
 	struct wmi_peer_assoc_complete_arg peer_arg;
 	struct ieee80211_sta *ap_sta;
 	int ret;
@@ -1808,6 +1872,7 @@ static void ath10k_bss_assoc(struct ieee80211_hw *hw,
 	/* ap_sta must be accessed only within rcu section which must be left
 	 * before calling ath10k_setup_peer_smps() which might sleep. */
 	ht_cap = ap_sta->ht_cap;
+	vht_cap = ap_sta->vht_cap;
 
 	ret = ath10k_peer_assoc_prepare(ar, vif, ap_sta, &peer_arg);
 	if (ret) {
@@ -1830,6 +1895,13 @@ static void ath10k_bss_assoc(struct ieee80211_hw *hw,
 	if (ret) {
 		ath10k_warn(ar, "failed to setup peer SMPS for vdev %i: %d\n",
 			    arvif->vdev_id, ret);
+		return;
+	}
+
+	ret = ath10k_mac_vif_recalc_txbf(ar, vif, vht_cap);
+	if (ret) {
+		ath10k_warn(ar, "failed to recalc txbf for vdev %i on bss %pM: %d\n",
+			    arvif->vdev_id, bss_conf->bssid, ret);
 		return;
 	}
 
@@ -1857,6 +1929,7 @@ static void ath10k_bss_disassoc(struct ieee80211_hw *hw,
 {
 	struct ath10k *ar = hw->priv;
 	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
+	struct ieee80211_sta_vht_cap vht_cap = {};
 	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
@@ -1870,6 +1943,13 @@ static void ath10k_bss_disassoc(struct ieee80211_hw *hw,
 			    arvif->vdev_id, ret);
 
 	arvif->def_wep_key_idx = -1;
+
+	ret = ath10k_mac_vif_recalc_txbf(ar, vif, vht_cap);
+	if (ret) {
+		ath10k_warn(ar, "failed to recalc txbf for vdev %i: %d\n",
+			    arvif->vdev_id, ret);
+		return;
+	}
 
 	arvif->is_up = false;
 }
@@ -2551,6 +2631,17 @@ static int ath10k_start_scan(struct ath10k *ar,
 		return -ETIMEDOUT;
 	}
 
+	/* If we failed to start the scan, return error code at
+	 * this point.  This is probably due to some issue in the
+	 * firmware, but no need to wedge the driver due to that...
+	 */
+	spin_lock_bh(&ar->data_lock);
+	if (ar->scan.state == ATH10K_SCAN_IDLE) {
+		spin_unlock_bh(&ar->data_lock);
+		return -EINVAL;
+	}
+	spin_unlock_bh(&ar->data_lock);
+
 	/* Add a 200ms margin to account for event/command processing */
 	ieee80211_queue_delayed_work(ar->hw, &ar->scan.timeout,
 				     msecs_to_jiffies(arg->max_scan_time+200));
@@ -3078,6 +3169,8 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
 	int bit;
 	u32 vdev_param;
 
+	vif->driver_flags |= IEEE80211_VIF_SUPPORTS_UAPSD;
+
 	mutex_lock(&ar->conf_mutex);
 
 	memset(arvif, 0, sizeof(*arvif));
@@ -3318,9 +3411,10 @@ static void ath10k_remove_interface(struct ieee80211_hw *hw,
 	list_del(&arvif->list);
 
 	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
-		ret = ath10k_peer_delete(arvif->ar, arvif->vdev_id, vif->addr);
+		ret = ath10k_wmi_peer_delete(arvif->ar, arvif->vdev_id,
+					     vif->addr);
 		if (ret)
-			ath10k_warn(ar, "failed to remove peer for AP vdev %i: %d\n",
+			ath10k_warn(ar, "failed to submit AP self-peer removal on vdev %i: %d\n",
 				    arvif->vdev_id, ret);
 
 		kfree(arvif->u.ap.noa_data);
@@ -3333,6 +3427,21 @@ static void ath10k_remove_interface(struct ieee80211_hw *hw,
 	if (ret)
 		ath10k_warn(ar, "failed to delete WMI vdev %i: %d\n",
 			    arvif->vdev_id, ret);
+
+	/* Some firmware revisions don't notify host about self-peer removal
+	 * until after associated vdev is deleted.
+	 */
+	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
+		ret = ath10k_wait_for_peer_deleted(ar, arvif->vdev_id,
+						   vif->addr);
+		if (ret)
+			ath10k_warn(ar, "failed to remove AP self-peer on vdev %i: %d\n",
+				    arvif->vdev_id, ret);
+
+		spin_lock_bh(&ar->data_lock);
+		ar->num_peers--;
+		spin_unlock_bh(&ar->data_lock);
+	}
 
 	ath10k_peer_cleanup(ar, arvif->vdev_id);
 
@@ -5336,7 +5445,6 @@ int ath10k_mac_register(struct ath10k *ar)
 	ar->hw->flags = IEEE80211_HW_SIGNAL_DBM |
 			IEEE80211_HW_SUPPORTS_PS |
 			IEEE80211_HW_SUPPORTS_DYNAMIC_PS |
-			IEEE80211_HW_SUPPORTS_UAPSD |
 			IEEE80211_HW_MFP_CAPABLE |
 			IEEE80211_HW_REPORTS_TX_ACK_STATUS |
 			IEEE80211_HW_HAS_RATE_CONTROL |

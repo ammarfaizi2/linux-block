@@ -1125,6 +1125,25 @@ static void ath10k_wmi_event_scan_started(struct ath10k *ar)
 	}
 }
 
+static void ath10k_wmi_event_scan_start_failed(struct ath10k *ar)
+{
+	lockdep_assert_held(&ar->data_lock);
+
+	switch (ar->scan.state) {
+	case ATH10K_SCAN_IDLE:
+	case ATH10K_SCAN_RUNNING:
+	case ATH10K_SCAN_ABORTING:
+		ath10k_warn(ar, "received scan start failed event in an invalid scan state: %s (%d)\n",
+			    ath10k_scan_state_str(ar->scan.state),
+			    ar->scan.state);
+		break;
+	case ATH10K_SCAN_STARTING:
+		complete(&ar->scan.started);
+		__ath10k_scan_finish(ar);
+		break;
+	}
+}
+
 static void ath10k_wmi_event_scan_completed(struct ath10k *ar)
 {
 	lockdep_assert_held(&ar->data_lock);
@@ -1292,6 +1311,7 @@ int ath10k_wmi_event_scan(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	case WMI_SCAN_EVENT_START_FAILED:
 		ath10k_warn(ar, "received scan start failure event\n");
+		ath10k_wmi_event_scan_start_failed(ar);
 		break;
 	case WMI_SCAN_EVENT_DEQUEUED:
 	case WMI_SCAN_EVENT_PREEMPTED:
@@ -1670,11 +1690,11 @@ void ath10k_wmi_event_chan_info(struct ath10k *ar, struct sk_buff *skb)
 		rx_clear_count -= ar->survey_last_rx_clear_count;
 
 		survey = &ar->survey[idx];
-		survey->channel_time = WMI_CHAN_INFO_MSEC(cycle_count);
-		survey->channel_time_rx = WMI_CHAN_INFO_MSEC(rx_clear_count);
+		survey->time = WMI_CHAN_INFO_MSEC(cycle_count);
+		survey->time_rx = WMI_CHAN_INFO_MSEC(rx_clear_count);
 		survey->noise = noise_floor;
-		survey->filled = SURVEY_INFO_CHANNEL_TIME |
-				 SURVEY_INFO_CHANNEL_TIME_RX |
+		survey->filled = SURVEY_INFO_TIME |
+				 SURVEY_INFO_TIME_RX |
 				 SURVEY_INFO_NOISE_DBM;
 	}
 
@@ -4954,7 +4974,7 @@ ath10k_wmi_op_gen_pdev_set_wmm(struct ath10k *ar,
 }
 
 static struct sk_buff *
-ath10k_wmi_op_gen_request_stats(struct ath10k *ar, enum wmi_stats_id stats_id)
+ath10k_wmi_op_gen_request_stats(struct ath10k *ar, u32 stats_mask)
 {
 	struct wmi_request_stats_cmd *cmd;
 	struct sk_buff *skb;
@@ -4964,9 +4984,10 @@ ath10k_wmi_op_gen_request_stats(struct ath10k *ar, enum wmi_stats_id stats_id)
 		return ERR_PTR(-ENOMEM);
 
 	cmd = (struct wmi_request_stats_cmd *)skb->data;
-	cmd->stats_id = __cpu_to_le32(stats_id);
+	cmd->stats_id = __cpu_to_le32(stats_mask);
 
-	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi request stats %d\n", (int)stats_id);
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi request stats 0x%08x\n",
+		   stats_mask);
 	return skb;
 }
 
