@@ -33,7 +33,7 @@ static DEFINE_MUTEX(all_q_mutex);
 static LIST_HEAD(all_q_list);
 
 static void __blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx);
-static void blk_mq_run_queues(struct request_queue *q);
+static void blk_mq_run_queues(struct request_queue *q, bool async);
 
 /*
  * Check if any of the ctx's have pending work in this hardware queue
@@ -41,6 +41,9 @@ static void blk_mq_run_queues(struct request_queue *q);
 static bool blk_mq_hctx_has_pending(struct blk_mq_hw_ctx *hctx)
 {
 	unsigned int i;
+
+	if (!list_empty_careful(&hctx->dispatch))
+		return true;
 
 	for (i = 0; i < hctx->ctx_map.map_size; i++)
 		if (hctx->ctx_map.map[i].word)
@@ -118,7 +121,7 @@ void blk_mq_freeze_queue_start(struct request_queue *q)
 
 	if (freeze) {
 		percpu_ref_kill(&q->mq_usage_counter);
-		blk_mq_run_queues(q);
+		blk_mq_run_queues(q, false);
 	}
 }
 EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_start);
@@ -298,6 +301,7 @@ static void __blk_mq_free_request(struct blk_mq_hw_ctx *hctx,
 	rq->cmd_flags = 0;
 
 	clear_bit(REQ_ATOM_STARTED, &rq->atomic_flags);
+	clear_bit(REQ_ATOM_FIFO, &rq->atomic_flags);
 	blk_mq_put_tag(hctx, tag, &ctx->last_tag);
 	blk_mq_queue_exit(q);
 }
@@ -305,10 +309,28 @@ static void __blk_mq_free_request(struct blk_mq_hw_ctx *hctx,
 void blk_mq_free_hctx_request(struct blk_mq_hw_ctx *hctx, struct request *rq)
 {
 	struct blk_mq_ctx *ctx = rq->mq_ctx;
+	bool need_start = false, need_start_all = false;
 
 	ctx->rq_completed[rq_is_sync(rq)]++;
+
+	/*
+	 * If RESTART is set, we originally stopped dispatching IO because
+	 * of this request. Kick the the queue back into gear.
+	 */
+	if (test_bit(REQ_ATOM_RESTART_ALL, &rq->atomic_flags)) {
+		clear_bit(REQ_ATOM_RESTART_ALL, &rq->atomic_flags);
+		need_start_all = true;
+	} else if (test_bit(REQ_ATOM_RESTART, &rq->atomic_flags)) {
+		clear_bit(REQ_ATOM_RESTART, &rq->atomic_flags);
+		need_start = true;
+	}
+
 	__blk_mq_free_request(hctx, ctx, rq);
 
+	if (need_start_all)
+		blk_mq_run_queues(hctx->queue, true);
+	else if (need_start)
+		blk_mq_run_hw_queue(hctx, true);
 }
 EXPORT_SYMBOL_GPL(blk_mq_free_hctx_request);
 
@@ -622,8 +644,8 @@ void blk_mq_rq_timed_out(struct request *req, bool reserved)
 	}
 }
 
-static void blk_mq_check_expired(struct blk_mq_hw_ctx *hctx,
-		struct request *rq, void *priv, bool reserved)
+static int blk_mq_check_expired(struct blk_mq_hw_ctx *hctx, struct request *rq,
+				void *priv, bool reserved)
 {
 	struct blk_mq_timeout_data *data = priv;
 
@@ -636,10 +658,10 @@ static void blk_mq_check_expired(struct blk_mq_hw_ctx *hctx,
 			rq->errors = -EIO;
 			blk_mq_complete_request(rq);
 		}
-		return;
+		return 0;
 	}
 	if (rq->cmd_flags & REQ_NO_TIMEOUT)
-		return;
+		return 0;
 
 	if (time_after_eq(jiffies, rq->deadline)) {
 		if (!blk_mark_rq_complete(rq))
@@ -648,6 +670,8 @@ static void blk_mq_check_expired(struct blk_mq_hw_ctx *hctx,
 		data->next = rq->deadline;
 		data->next_set = 1;
 	}
+
+	return 0;
 }
 
 static void blk_mq_rq_timer(unsigned long priv)
@@ -753,6 +777,128 @@ static void flush_busy_ctxs(struct blk_mq_hw_ctx *hctx, struct list_head *list)
 	}
 }
 
+static int rq_deadline_cmp(void *priv, struct list_head *a, struct list_head *b)
+{
+	struct request *rqa = container_of(a, struct request, queuelist);
+	struct request *rqb = container_of(b, struct request, queuelist);
+
+	if (rqa->fifo_usec < rqb->fifo_usec)
+		return -1;
+	else if (rqa->fifo_usec > rqb->fifo_usec)
+		return 1;
+
+	return 0;
+}
+
+struct deadline_data {
+	/*
+	 * Input
+	 */
+	struct request *rq;
+	bool local;
+
+	/*
+	 * Output
+	 */
+	bool may_dispatch;
+};
+
+static int deadline_iter_fn(struct blk_mq_hw_ctx *hctx, struct request *rq,
+			    void *data, bool reserved)
+{
+	struct deadline_data *d = data;
+	const int bit = d->local ? REQ_ATOM_RESTART : REQ_ATOM_RESTART_ALL;
+
+	/*
+	 * Ignore reserved requests, that's mostly error handling. And ignore
+	 * non filesystem requests.
+	 */
+	if (reserved)
+		return 1;
+	if (rq->cmd_type != REQ_TYPE_FS)
+		return 0;
+
+	/*
+	 * Complete, we don't care. We could potentially check for STARTED
+	 * as well. Right now we ignore that bit, which means we look at all
+	 * requests, both the ones that are queued up and the ones that have
+	 * been issued to hw as well. If FIFO is set, the request is both
+	 * allocated and has a valid ->fifo_usec set.
+	 */
+	if (test_bit(REQ_ATOM_COMPLETE, &rq->atomic_flags) ||
+	    !test_bit(REQ_ATOM_FIFO, &rq->atomic_flags))
+		return 0;
+
+	if (d->rq->fifo_usec <= rq->fifo_usec)
+		return 0;
+
+	/*
+	 * We're newer than 'rq', so defer dispatch of this request. Mark
+	 * 'rq' as restarting the queue when it completes.
+	 */
+	set_bit(bit, &rq->atomic_flags);
+
+	/*
+	 * If we didn't race on completion, stop here.
+	 */
+	if (!test_bit(REQ_ATOM_COMPLETE, &rq->atomic_flags)) {
+		d->may_dispatch = false;
+		return 1;
+	}
+
+	/*
+	 * Request completed meanwhile, continue our search.
+	 */
+	clear_bit(bit, &rq->atomic_flags);
+	return 0;
+}
+
+static bool blk_mq_deadline_may_dispatch(struct blk_mq_hw_ctx *hctx,
+					 struct request *rq)
+{
+	struct blk_mq_hw_ctx *__hctx;
+	struct deadline_data d;
+	int i;
+
+	if (!(hctx->flags & BLK_MQ_F_DEADLINE))
+		return true;
+	if (rq->cmd_type != REQ_TYPE_FS)
+		return true;
+
+	/*
+	 * Iterate requests that are queued or inflight, disallow submission
+	 * of current 'rq' if have requests older than ->fifo_usec pending.
+	 */
+	d.rq = rq;
+	d.local = true;
+	d.may_dispatch = true;
+	blk_mq_tag_busy_iter(hctx, deadline_iter_fn, &d);
+
+	/*
+	 * On disallow or for single queue cases, or for cases where we
+	 * only deadline schedule per hardware queue, we are done.
+	 */
+	if (!d.may_dispatch || hctx->queue->nr_hw_queues == 1 ||
+	    !(hctx->flags & BLK_MQ_F_DEADLINE_ALL))
+		return d.may_dispatch;
+
+	/*
+	 * We are allowed dispatch from our local hw queue. Check others
+	 * and see if that's also the case.
+	 */
+	d.local = false;
+	queue_for_each_hw_ctx(hctx->queue, __hctx, i) {
+		if (__hctx == hctx || !blk_mq_hw_queue_mapped(__hctx))
+			continue;
+
+		blk_mq_tag_busy_iter(__hctx, deadline_iter_fn, &d);
+		if (!d.may_dispatch)
+			break;
+	}
+
+	return d.may_dispatch;
+}
+
 /*
  * Run this hardware queue, pulling any software queues mapped to it in.
  * Note that this function currently has various problems around ordering
@@ -762,6 +908,7 @@ static void flush_busy_ctxs(struct blk_mq_hw_ctx *hctx, struct list_head *list)
 static void __blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx)
 {
 	struct request_queue *q = hctx->queue;
+	const int use_deadline = hctx->flags & BLK_MQ_F_DEADLINE;
 	struct request *rq;
 	LIST_HEAD(rq_list);
 	LIST_HEAD(driver_list);
@@ -791,6 +938,9 @@ static void __blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx)
 		spin_unlock(&hctx->lock);
 	}
 
+	if (use_deadline)
+		list_sort(NULL, &rq_list, rq_deadline_cmp);
+
 	/*
 	 * Start off with dptr being NULL, so we start the first request
 	 * immediately, even if we have more pending.
@@ -806,11 +956,20 @@ static void __blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx)
 		int ret;
 
 		rq = list_first_entry(&rq_list, struct request, queuelist);
-		list_del_init(&rq->queuelist);
 
+		if (queued && !blk_mq_deadline_may_dispatch(hctx, rq))
+			break;
+
+		list_del_init(&rq->queuelist);
 		bd.rq = rq;
 		bd.list = dptr;
-		bd.last = list_empty(&rq_list);
+
+		/*
+		 * If we're deadline scheduling, we don't want to hit the
+		 * case of not having passed 'last == true' in case we
+		 * decide to stop dispatching.
+		 */
+		bd.last = list_empty(&rq_list) || (use_deadline && queued);
 
 		ret = q->mq_ops->queue_rq(hctx, &bd);
 		switch (ret) {
@@ -904,18 +1063,17 @@ void blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx, bool async)
 			&hctx->run_work, 0);
 }
 
-static void blk_mq_run_queues(struct request_queue *q)
+static void blk_mq_run_queues(struct request_queue *q, bool async)
 {
 	struct blk_mq_hw_ctx *hctx;
 	int i;
 
 	queue_for_each_hw_ctx(q, hctx, i) {
-		if ((!blk_mq_hctx_has_pending(hctx) &&
-		    list_empty_careful(&hctx->dispatch)) ||
+		if (!blk_mq_hctx_has_pending(hctx) ||
 		    test_bit(BLK_MQ_S_STOPPED, &hctx->state))
 			continue;
 
-		blk_mq_run_hw_queue(hctx, false);
+		blk_mq_run_hw_queue(hctx, async);
 	}
 }
 
@@ -999,6 +1157,23 @@ void blk_mq_delay_queue(struct blk_mq_hw_ctx *hctx, unsigned long msecs)
 }
 EXPORT_SYMBOL(blk_mq_delay_queue);
 
+static void blk_mq_set_fifo_time(struct blk_mq_hw_ctx *hctx,
+				 struct request *rq, bool at_head)
+{
+	if (!(hctx->flags & BLK_MQ_F_DEADLINE))
+		return;
+
+	/*
+	 * TODO: at_head is now not at head, if we have requests older
+	 * than this pending.
+	 */
+	rq->fifo_usec = ktime_to_us(ktime_get());
+	if (!at_head)
+		rq->fifo_usec += hctx->fifo_usec[rq_data_dir(rq)];
+
+	set_bit(REQ_ATOM_FIFO, &rq->atomic_flags);
+}
+
 static void __blk_mq_insert_request(struct blk_mq_hw_ctx *hctx,
 				    struct request *rq, bool at_head)
 {
@@ -1011,6 +1186,7 @@ static void __blk_mq_insert_request(struct blk_mq_hw_ctx *hctx,
 	else
 		list_add_tail(&rq->queuelist, &ctx->rq_list);
 
+	blk_mq_set_fifo_time(hctx, rq, at_head);
 	blk_mq_hctx_mark_pending(hctx, ctx);
 }
 
@@ -1251,11 +1427,13 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	}
 
 	/*
-	 * If the driver supports defer issued based on 'last', then
-	 * queue it up like normal since we can potentially save some
-	 * CPU this way.
+	 * If the driver supports defer issued based on 'last' or has
+	 * deadline scheduling enabled, then queue it up like normal. This is
+	 * needed for deadline to work, and for deferred issue we can
+	 * potentially save some CPU this way.
 	 */
-	if (is_sync && !(data.hctx->flags & BLK_MQ_F_DEFER_ISSUE)) {
+	if (is_sync &&
+	    !(data.hctx->flags & (BLK_MQ_F_DEFER_ISSUE | BLK_MQ_F_DEADLINE))) {
 		struct blk_mq_queue_data bd = {
 			.rq = rq,
 			.list = NULL,
@@ -1664,6 +1842,11 @@ static int blk_mq_init_hctx(struct request_queue *q,
 	hctx->queue = q;
 	hctx->queue_num = hctx_idx;
 	hctx->flags = set->flags;
+
+	if (hctx->flags & BLK_MQ_F_DEADLINE) {
+		hctx->fifo_usec[0] = 100;
+		hctx->fifo_usec[1] = 1000;
+	}
 
 	blk_mq_init_cpu_notifier(&hctx->cpu_notifier,
 					blk_mq_hctx_notify, hctx);

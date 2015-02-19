@@ -90,6 +90,9 @@ void blk_account_io_done(struct request *req);
 enum rq_atomic_flags {
 	REQ_ATOM_COMPLETE = 0,
 	REQ_ATOM_STARTED,
+	REQ_ATOM_FIFO,
+	REQ_ATOM_RESTART,
+	REQ_ATOM_RESTART_ALL,
 };
 
 /*

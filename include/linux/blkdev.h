@@ -102,6 +102,7 @@ struct request {
 	union {
 		struct call_single_data csd;
 		unsigned long fifo_time;
+		u64 fifo_usec;
 	};
 
 	struct request_queue *q;

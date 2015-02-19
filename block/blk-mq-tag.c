@@ -428,8 +428,10 @@ static void bt_for_each(struct blk_mq_hw_ctx *hctx,
 		     bit < bm->depth;
 		     bit = find_next_bit(&bm->word, bm->depth, bit + 1)) {
 		     	rq = blk_mq_tag_to_rq(hctx->tags, off + bit);
-			if (rq->q == hctx->queue)
-				fn(hctx, rq, data, reserved);
+			if (rq->q != hctx->queue)
+				continue;
+			if (fn(hctx, rq, data, reserved))
+				break;
 		}
 
 		off += (1 << bt->bits_per_word);

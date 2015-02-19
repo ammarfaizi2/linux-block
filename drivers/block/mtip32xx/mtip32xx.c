@@ -42,6 +42,10 @@
 #include <linux/prefetch.h>
 #include "mtip32xx.h"
 
+static bool use_deadline = false;
+module_param(use_deadline, bool, S_IRUGO);
+MODULE_PARM_DESC(use_deadline, "Tell blk-mq to deadline schedule. Default: false");
+
 #define HW_CMD_SLOT_SZ		(MTIP_MAX_COMMAND_SLOTS * 32)
 
 /* DMA region containing RX Fis, Identify, RLE10, and SMART buffers */
@@ -3916,6 +3920,8 @@ skip_create_disk:
 	dd->tags.cmd_size = sizeof(struct mtip_cmd);
 	dd->tags.numa_node = dd->numa_node;
 	dd->tags.flags = BLK_MQ_F_SHOULD_MERGE;
+	if (use_deadline)
+		dd->tags.flags |= BLK_MQ_F_DEADLINE;
 	dd->tags.driver_data = dd;
 
 	rv = blk_mq_alloc_tag_set(&dd->tags);

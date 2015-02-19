@@ -235,6 +235,49 @@ static ssize_t blk_mq_hw_sysfs_cpus_show(struct blk_mq_hw_ctx *hctx, char *page)
 	return ret;
 }
 
+static ssize_t blk_mq_hw_sysfs_dead_show(u64 val, char *page)
+{
+	return sprintf(page, "%llu\n", (unsigned long long) val);
+}
+
+static ssize_t blk_mq_hw_sysfs_dead_store(u64 *val, const char *page,
+					  size_t length)
+{
+	unsigned long long store;
+	int err;
+
+	err = kstrtoull(page, 10, &store);
+	if (err)
+		return -EINVAL;
+
+	*val = store;
+	return length;
+}
+
+static ssize_t blk_mq_hw_sysfs_rdead_show(struct blk_mq_hw_ctx *hctx,
+					  char *page)
+{
+	return blk_mq_hw_sysfs_dead_show(hctx->fifo_usec[0], page);
+}
+
+static ssize_t blk_mq_hw_sysfs_rdead_store(struct blk_mq_hw_ctx *hctx,
+					   const char *page, size_t length)
+{
+	return blk_mq_hw_sysfs_dead_store(&hctx->fifo_usec[0], page, length);
+}
+
+static ssize_t blk_mq_hw_sysfs_wdead_show(struct blk_mq_hw_ctx *hctx,
+					  char *page)
+{
+	return blk_mq_hw_sysfs_dead_show(hctx->fifo_usec[1], page);
+}
+
+static ssize_t blk_mq_hw_sysfs_wdead_store(struct blk_mq_hw_ctx *hctx,
+					   const char *page, size_t length)
+{
+	return blk_mq_hw_sysfs_dead_store(&hctx->fifo_usec[1], page, length);
+}
+
 static struct blk_mq_ctx_sysfs_entry blk_mq_sysfs_dispatched = {
 	.attr = {.name = "dispatched", .mode = S_IRUGO },
 	.show = blk_mq_sysfs_dispatched_show,
@@ -288,6 +331,16 @@ static struct blk_mq_hw_ctx_sysfs_entry blk_mq_hw_sysfs_cpus = {
 	.attr = {.name = "cpu_list", .mode = S_IRUGO },
 	.show = blk_mq_hw_sysfs_cpus_show,
 };
+static struct blk_mq_hw_ctx_sysfs_entry blk_mq_hw_sysfs_rdead = {
+	.attr = {.name = "read_deadline_us", .mode = S_IRUGO | S_IWUSR },
+	.show = blk_mq_hw_sysfs_rdead_show,
+	.store = blk_mq_hw_sysfs_rdead_store,
+};
+static struct blk_mq_hw_ctx_sysfs_entry blk_mq_hw_sysfs_wdead = {
+	.attr = {.name = "write_deadline_us", .mode = S_IRUGO | S_IWUSR },
+	.show = blk_mq_hw_sysfs_wdead_show,
+	.store = blk_mq_hw_sysfs_wdead_store,
+};
 
 static struct attribute *default_hw_ctx_attrs[] = {
 	&blk_mq_hw_sysfs_queued.attr,
@@ -297,6 +350,12 @@ static struct attribute *default_hw_ctx_attrs[] = {
 	&blk_mq_hw_sysfs_tags.attr,
 	&blk_mq_hw_sysfs_cpus.attr,
 	&blk_mq_hw_sysfs_active.attr,
+	NULL,
+};
+
+static struct attribute *sched_hw_attrs[] = {
+	&blk_mq_hw_sysfs_rdead.attr,
+	&blk_mq_hw_sysfs_wdead.attr,
 	NULL,
 };
 
@@ -358,6 +417,19 @@ static int blk_mq_register_hctx(struct blk_mq_hw_ctx *hctx)
 		ret = kobject_add(&ctx->kobj, &hctx->kobj, "cpu%u", ctx->cpu);
 		if (ret)
 			break;
+	}
+
+	if (ret)
+		return ret;
+
+	if (hctx->flags & BLK_MQ_F_DEADLINE) {
+		struct attribute *attr;
+
+		for (i = 0; (attr = sched_hw_attrs[i]) != NULL; i++) {
+			ret = sysfs_create_file(&hctx->kobj, attr);
+			if (ret)
+				break;
+		}
 	}
 
 	return ret;

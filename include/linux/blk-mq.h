@@ -31,6 +31,8 @@ struct blk_mq_hw_ctx {
 	int			next_cpu;
 	int			next_cpu_batch;
 
+	u64			fifo_usec[2];
+
 	unsigned long		flags;		/* BLK_MQ_F_* flags */
 
 	struct request_queue	*queue;
@@ -94,7 +96,7 @@ typedef int (init_request_fn)(void *, struct request *, unsigned int,
 typedef void (exit_request_fn)(void *, struct request *, unsigned int,
 		unsigned int);
 
-typedef void (busy_iter_fn)(struct blk_mq_hw_ctx *, struct request *, void *,
+typedef int (busy_iter_fn)(struct blk_mq_hw_ctx *, struct request *, void *,
 		bool);
 
 struct blk_mq_ops {
@@ -146,6 +148,9 @@ enum {
 	BLK_MQ_F_SG_MERGE	= 1 << 2,
 	BLK_MQ_F_SYSFS_UP	= 1 << 3,
 	BLK_MQ_F_DEFER_ISSUE	= 1 << 4,
+	BLK_MQ_F_DEADLINE	= 1 << 5,
+	BLK_MQ_F_DEADLINE_ALL	= (1 << 6) | BLK_MQ_F_DEADLINE,
+
 	BLK_MQ_F_ALLOC_POLICY_START_BIT = 8,
 	BLK_MQ_F_ALLOC_POLICY_BITS = 1,
 

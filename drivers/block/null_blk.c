@@ -147,6 +147,10 @@ static bool use_per_node_hctx = false;
 module_param(use_per_node_hctx, bool, S_IRUGO);
 MODULE_PARM_DESC(use_per_node_hctx, "Use per-node allocation for hardware context queues. Default: false");
 
+static bool use_deadline = false;
+module_param(use_deadline, bool, S_IRUGO);
+MODULE_PARM_DESC(use_deadline, "Tell blk-mq to deadline schedule. Default: false");
+
 static void put_tag(struct nullb_queue *nq, unsigned int tag)
 {
 	clear_bit_unlock(tag, nq->tag_map);
@@ -523,6 +527,8 @@ static int null_add_dev(void)
 		nullb->tag_set.numa_node = home_node;
 		nullb->tag_set.cmd_size	= sizeof(struct nullb_cmd);
 		nullb->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
+		if (use_deadline)
+			nullb->tag_set.flags |= BLK_MQ_F_DEADLINE;
 		nullb->tag_set.driver_data = nullb;
 
 		rv = blk_mq_alloc_tag_set(&nullb->tag_set);
