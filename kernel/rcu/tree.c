@@ -2203,7 +2203,7 @@ rcu_report_qs_rnp(unsigned long mask, struct rcu_state *rsp,
  * irqs disabled, and this lock is released upon return, but irqs remain
  * disabled.
  */
-static void __maybe_unused rcu_report_unblock_qs_rnp(struct rcu_state *rsp,
+static void rcu_report_unblock_qs_rnp(struct rcu_state *rsp,
 				      struct rcu_node *rnp, unsigned long flags)
 	__releases(rnp->lock)
 {
@@ -2738,12 +2738,21 @@ static void force_qs_rnp(struct rcu_state *rsp,
 			}
 		}
 		if (mask != 0) {
-
-			/* rcu_report_qs_rnp() releases rnp->lock. */
+			/* Idle/offline CPUs, report. */
 			rcu_report_qs_rnp(mask, rsp, rnp, flags);
-			continue;
+		} else if (rnp->parent &&
+			 list_empty(&rnp->blkd_tasks) &&
+			 !rnp->qsmask &&
+			 (rnp->parent->qsmask & rnp->grpmask)) {
+			/*
+			 * Race between grace-period initialization and task
+			 * existing RCU read-side critical section, report.
+			 */
+			rcu_report_unblock_qs_rnp(rsp, rnp, flags);
+		} else {
+			/* Nothing to do here, so just drop the lock. */
+			raw_spin_unlock_irqrestore(&rnp->lock, flags);
 		}
-		raw_spin_unlock_irqrestore(&rnp->lock, flags);
 	}
 }
 
