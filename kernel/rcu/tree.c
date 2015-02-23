@@ -1844,9 +1844,6 @@ static int rcu_gp_init(struct rcu_state *rsp)
 			rnp->wait_blkd_tasks = false;
 			rcu_cleanup_dead_rnp(rnp);
 		}
-		WARN_ON_ONCE(rnp->parent &&
-			     (!list_empty(&rnp->blkd_tasks) || rnp->qsmask) !=
-			     !!(rnp->parent->qsmask & rnp->grpmask));
 		if (IS_ENABLED(CONFIG_RCU_TORTURE_TEST_SLOW_INIT) &&
 		    gp_init_delay > 0 &&
 		    !(rsp->gpnum % (rcu_num_nodes * 10)))
