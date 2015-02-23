@@ -1794,6 +1794,22 @@ static int rcu_gp_init(struct rcu_state *rsp)
 				rcu_cleanup_dead_rnp(rnp);
 		}
 
+		/*
+		 * If all waited-on tasks from prior grace period are
+		 * done, and if all this rcu_node structure's CPUs are
+		 * still offline, propagate up the rcu_node tree and
+		 * clear ->wait_blkd_tasks.  Otherwise, if one of this
+		 * rcu_node structure's CPUs has since come back online,
+		 * simply clear ->wait_blkd_tasks (but rcu_cleanup_dead_rnp()
+		 * checks for this, so just call it unconditionally).
+		 */
+		if (rnp->wait_blkd_tasks &&
+		    (!rcu_preempt_has_tasks(rnp) ||
+		     rnp->qsmaskinit)) {
+			rnp->wait_blkd_tasks = false;
+			rcu_cleanup_dead_rnp(rnp);
+		}
+
 		raw_spin_unlock_irq(&rnp->lock);
 	}
 
@@ -1828,22 +1844,6 @@ static int rcu_gp_init(struct rcu_state *rsp)
 		raw_spin_unlock_irq(&rnp->lock);
 		cond_resched_rcu_qs();
 		ACCESS_ONCE(rsp->gp_activity) = jiffies;
-
-		/*
-		 * If all waited-on tasks from prior grace period are
-		 * done, and if all this rcu_node structure's CPUs are
-		 * still offline, propagate up the rcu_node tree and
-		 * clear ->wait_blkd_tasks.  Otherwise, if one of this
-		 * rcu_node structure's CPUs has since come back online,
-		 * simply clear ->wait_blkd_tasks (but rcu_cleanup_dead_rnp()
-		 * checks for this, so just call it unconditionally).
-		 */
-		if (rnp->wait_blkd_tasks &&
-		    (!rcu_preempt_has_tasks(rnp) ||
-		     rnp->qsmaskinit)) {
-			rnp->wait_blkd_tasks = false;
-			rcu_cleanup_dead_rnp(rnp);
-		}
 		if (IS_ENABLED(CONFIG_RCU_TORTURE_TEST_SLOW_INIT) &&
 		    gp_init_delay > 0 &&
 		    !(rsp->gpnum % (rcu_num_nodes * 10)))
