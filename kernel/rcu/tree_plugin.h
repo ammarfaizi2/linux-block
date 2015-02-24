@@ -2763,7 +2763,8 @@ static void rcu_sysidle_exit(int irq)
 
 /*
  * Check to see if the current CPU is idle.  Note that usermode execution
- * does not count as idle.  The caller must have disabled interrupts.
+ * does not count as idle.  The caller must have disabled interrupts,
+ * and must be running on tick_do_timer_cpu.
  */
 static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
 				  unsigned long *maxj)
@@ -2784,8 +2785,8 @@ static void rcu_sysidle_check_cpu(struct rcu_data *rdp, bool *isidle,
 	if (!*isidle || rdp->rsp != rcu_state_p ||
 	    cpu_is_offline(rdp->cpu) || rdp->cpu == tick_do_timer_cpu)
 		return;
-	if (rcu_gp_in_progress(rdp->rsp))
-		WARN_ON_ONCE(smp_processor_id() != tick_do_timer_cpu);
+	/* Verify affinity of current kthread. */
+	WARN_ON_ONCE(smp_processor_id() != tick_do_timer_cpu);
 
 	/* Pick up current idle and NMI-nesting counter and check. */
 	cur = atomic_read(&rdtp->dynticks_idle);
@@ -3066,14 +3067,13 @@ static void rcu_bind_gp_kthread(void)
 
 	if (!tick_nohz_full_enabled())
 		return;
-#ifdef CONFIG_NO_HZ_FULL_SYSIDLE
-	cpu = tick_do_timer_cpu;
-	if (cpu >= 0 && cpu < nr_cpu_ids && raw_smp_processor_id() != cpu)
-		set_cpus_allowed_ptr(current, cpumask_of(cpu));
-#else /* #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
-	if (!is_housekeeping_cpu(raw_smp_processor_id()))
+	if (IS_ENABLED(CONFIG_NO_HZ_FULL_SYSIDLE)) {
+		cpu = tick_do_timer_cpu;
+		if (cpu >= 0 && cpu < nr_cpu_ids)
+			set_cpus_allowed_ptr(current, cpumask_of(cpu));
+	} else {
 		housekeeping_affine(current);
-#endif /* #else #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
+	}
 }
 
 /* Record the current task on dyntick-idle entry. */
