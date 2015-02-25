@@ -90,14 +90,10 @@ static void cpu_bringup(void)
 
 	set_cpu_online(cpu, true);
 
-	this_cpu_write(cpu_state, CPU_ONLINE);
-
-	wmb();
+	cpu_set_state_online(cpu);  /* Implies full memory barrier. */
 
 	/* We can take interrupts now: we're officially "up". */
 	local_irq_enable();
-
-	wmb();			/* make sure everything is out */
 }
 
 /*
@@ -459,7 +455,10 @@ static int xen_cpu_up(unsigned int cpu, struct task_struct *idle)
 	xen_setup_timer(cpu);
 	xen_init_lock_cpu(cpu);
 
-	per_cpu(cpu_state, cpu) = CPU_UP_PREPARE;
+	/* Xen outgoing CPUs need help cleaning up, so -EBUSY is an error. */
+	rc = cpu_check_up_prepare(cpu);
+	if (rc)
+		return rc;
 
 	/* make sure interrupts start blocked */
 	per_cpu(xen_vcpu, cpu)->evtchn_upcall_mask = 1;
@@ -479,10 +478,8 @@ static int xen_cpu_up(unsigned int cpu, struct task_struct *idle)
 	rc = HYPERVISOR_vcpu_op(VCPUOP_up, cpu, NULL);
 	BUG_ON(rc);
 
-	while(per_cpu(cpu_state, cpu) != CPU_ONLINE) {
+	while (cpu_report_state(cpu) != CPU_ONLINE)
 		HYPERVISOR_sched_op(SCHEDOP_yield, NULL);
-		barrier();
-	}
 
 	return 0;
 }
@@ -511,7 +508,8 @@ static void xen_cpu_die(unsigned int cpu)
 		schedule_timeout(HZ/10);
 	}
 
-	cpu_die_common(cpu);
+	(void)cpu_wait_death(cpu);
+	/* FIXME: Are the below calls really safe in case of timeout? */
 
 	xen_smp_intr_free(cpu);
 	xen_uninit_lock_cpu(cpu);
