@@ -9,8 +9,9 @@
  * 2 of the Licence, or (at your option) any later version.
  */
 
+//#define __KDEBUG
 #include <linux/module.h>
-#include <linux/sched.h>
+#include <linux/kernel.h>
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/fsnotify.h>
@@ -21,12 +22,16 @@
 
 static const char cachefiles_xattr_cache[] =
 	XATTR_USER_PREFIX "CacheFiles.cache";
+static const char cachefiles_xattr_cull_index[] =
+	XATTR_USER_PREFIX "CacheFiles.cull_index";
+static const char cachefiles_xattr_atime_base[] =
+	XATTR_USER_PREFIX "CacheFiles.atime_base";
 
 /*
- * check the type label on an object
+ * check the type label on the root object
  * - done using xattrs
  */
-int cachefiles_check_object_type(struct cachefiles_object *object)
+int cachefiles_check_root_object_type(struct cachefiles_object *object)
 {
 	struct dentry *dentry = object->dentry;
 	char type[3], xtype[3];
@@ -111,15 +116,14 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 	_enter("%p,#%d", object, auxdata->len);
 
 	/* attempt to install the cache metadata directly */
-	_debug("SET #%u", auxdata->len);
+	_debug("SET #%u [cs=%d]",
+	       auxdata->len, le32_to_cpu(auxdata->cull_slot));
 
 	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
-			   &auxdata->type, auxdata->len,
-			   XATTR_CREATE);
+			   &auxdata->cull_slot, auxdata->len, 0);
 	if (ret < 0 && ret != -ENOMEM)
 		cachefiles_io_error_obj(
-			object,
-			"Failed to set xattr with error %d", ret);
+			object, "Failed to set xattr with error %d", ret);
 
 	_leave(" = %d", ret);
 	return ret;
@@ -139,10 +143,11 @@ int cachefiles_update_object_xattr(struct cachefiles_object *object,
 	_enter("%p,#%d", object, auxdata->len);
 
 	/* attempt to install the cache metadata directly */
-	_debug("SET #%u", auxdata->len);
+	_debug("UPD #%u [cs=%u]",
+	       auxdata->len, le32_to_cpu(auxdata->cull_slot));
 
 	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
-			   &auxdata->type, auxdata->len,
+			   &auxdata->cull_slot, auxdata->len,
 			   XATTR_REPLACE);
 	if (ret < 0 && ret != -ENOMEM)
 		cachefiles_io_error_obj(
@@ -212,9 +217,9 @@ int cachefiles_check_object_xattr(struct cachefiles_object *object,
 		return -ENOMEM;
 	}
 
-	/* read the current type label */
+	/* read the current cull slot number and type label */
 	ret = vfs_getxattr(dentry, cachefiles_xattr_cache,
-			   &auxbuf->type, 512 + 1);
+			   &auxbuf->cull_slot, 512 + 5);
 	if (ret < 0) {
 		if (ret == -ENODATA)
 			goto stale; /* no attribute - power went off
@@ -230,7 +235,7 @@ int cachefiles_check_object_xattr(struct cachefiles_object *object,
 	}
 
 	/* check the on-disk object */
-	if (ret < 1)
+	if (ret < 5)
 		goto bad_type_length;
 
 	if (auxbuf->type != auxdata->type)
@@ -243,7 +248,7 @@ int cachefiles_check_object_xattr(struct cachefiles_object *object,
 		enum fscache_checkaux result;
 		unsigned int dlen;
 
-		dlen = auxbuf->len - 1;
+		dlen = auxbuf->len - 5;
 
 		_debug("checkaux %s #%u",
 		       object->fscache.cookie->def->name, dlen);
@@ -282,6 +287,7 @@ int cachefiles_check_object_xattr(struct cachefiles_object *object,
 	}
 
 okay:
+	auxdata->cull_slot = auxbuf->cull_slot;
 	ret = 0;
 
 error:
@@ -298,6 +304,28 @@ bad_type_length:
 stale:
 	ret = -ESTALE;
 	goto error;
+}
+
+/*
+ * read the slot number from a file
+ */
+unsigned cachefiles_read_cull_slot(struct cachefiles_cache *cache,
+				   struct dentry *dentry)
+{
+	__le32 slot;
+	int ret;
+
+	_enter("");
+
+	/* read the current cull slot number and type label */
+	ret = vfs_getxattr(dentry, cachefiles_xattr_cache, &slot, 4);
+	if (ret < 4) {
+		_leave(" = no cull slot");
+		return CACHEFILES_NO_CULL_SLOT;
+	}
+
+	_leave(" = %d", le32_to_cpu(slot));
+	return le32_to_cpu(slot);
 }
 
 /*
@@ -321,4 +349,148 @@ int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 
 	_leave(" = %d", ret);
 	return ret;
+}
+
+/*
+ * check the label on the culling index
+ * - done using xattrs
+ */
+int cachefiles_check_cull_index(struct cachefiles_cache *cache)
+{
+	struct dentry *dentry = cache->cull_index->f_path.dentry;
+	char label[3], xlabel[3];
+	int ret;
+
+	ASSERT(dentry);
+	ASSERT(dentry->d_inode);
+
+	snprintf(label, 3, "%02x", cache->cx_entsize);
+
+	_enter("{%s}", label);
+
+	/* attempt to install a label directly */
+	ret = vfs_setxattr(dentry, cachefiles_xattr_cull_index, label, 2,
+			   XATTR_CREATE);
+	if (ret == 0) {
+		_debug("SET"); /* we succeeded */
+		goto error;
+	}
+
+	if (ret != -EEXIST) {
+		pr_err("Can't set xattr on %*.*s [%lu] (err %d)",
+		       dentry->d_name.len, dentry->d_name.len,
+		       dentry->d_name.name, dentry->d_inode->i_ino,
+		       -ret);
+		goto error;
+	}
+
+	/* read the current label */
+	ret = vfs_getxattr(dentry, cachefiles_xattr_cull_index, xlabel, 3);
+	if (ret < 0) {
+		if (ret == -ERANGE)
+			goto bad_label_length;
+
+		pr_err("Can't read xattr on %*.*s [%lu] (err %d)",
+		       dentry->d_name.len, dentry->d_name.len,
+		       dentry->d_name.name, dentry->d_inode->i_ino,
+		       -ret);
+		goto error;
+	}
+
+	/* check the type is what we're expecting */
+	if (ret != 2)
+		goto bad_label_length;
+
+	if (xlabel[0] != label[0] || xlabel[1] != label[1])
+		goto bad_label;
+
+	ret = 0;
+
+error:
+	_leave(" = %d", ret);
+	return ret;
+
+bad_label_length:
+	pr_err("Cache cull index xattr length incorrect");
+	ret = -EIO;
+	goto error;
+
+bad_label:
+	xlabel[2] = 0;
+	pr_err("Cache cull index xattr specifies entry size of 0x%s not 0x%s",
+	       xlabel, label);
+	ret = -EIO;
+	goto error;
+}
+
+/*
+ * get/set the atime base from the cull_atimes file
+ * - done using xattrs
+ */
+int cachefiles_get_set_atime_base(struct cachefiles_cache *cache)
+{
+	struct dentry *dentry = cache->cull_atimes->f_path.dentry;
+	char label[16 + 1], *end;
+	int ret;
+
+	ASSERT(dentry);
+	ASSERT(dentry->d_inode);
+
+	cache->atime_base = get_seconds();
+	sprintf(label, "%016lx", cache->atime_base);
+
+	_enter("{%s}", label);
+
+	/* attempt to install a label directly */
+	ret = vfs_setxattr(dentry, cachefiles_xattr_atime_base, label, 16,
+			   XATTR_CREATE);
+	if (ret == 0) {
+		_debug("SET"); /* we succeeded */
+		goto error;
+	}
+
+	if (ret != -EEXIST) {
+		pr_err("Can't set xattr on %*.*s [%lu] (err %d)",
+		       dentry->d_name.len, dentry->d_name.len,
+		       dentry->d_name.name, dentry->d_inode->i_ino,
+		       -ret);
+		goto error;
+	}
+
+	/* read the current label */
+	ret = vfs_getxattr(dentry, cachefiles_xattr_atime_base, label, 17);
+	if (ret < 0) {
+		if (ret == -ERANGE)
+			goto bad_label_length;
+
+		pr_err("Can't read xattr on %*.*s [%lu] (err %d)",
+		       dentry->d_name.len, dentry->d_name.len,
+		       dentry->d_name.name, dentry->d_inode->i_ino,
+		       -ret);
+		goto error;
+	}
+
+	/* attempt to parse the atime base */
+	if (ret != 16)
+		goto bad_label_length;
+
+	cache->atime_base = simple_strtoull(label, &end, 16);
+	if (end - label != 16 || *end != '\0') {
+		pr_err("Failed to parse xattr on %*.*s [%lu]",
+		       dentry->d_name.len, dentry->d_name.len,
+		       dentry->d_name.name, dentry->d_inode->i_ino);
+		ret = -EIO;
+		goto error;
+	}
+
+	ret = 0;
+
+error:
+	_leave(" = %d [%lx]", ret, cache->atime_base);
+	return ret;
+
+bad_label_length:
+	pr_err("Cache atime_base xattr length incorrect");
+	ret = -EIO;
+	goto error;
 }

@@ -43,9 +43,11 @@ struct cachefiles_object {
 	loff_t				i_size;		/* object size */
 	unsigned long			flags;
 #define CACHEFILES_OBJECT_ACTIVE	0		/* T if marked active */
+#define CACHEFILES_OBJECT_NEW		1		/* T if object is new */
+#define CACHEFILES_OBJECT_UPDATE_XATTR	2		/* T if xattr should be updated */
 	atomic_t			usage;		/* object usage count */
 	uint8_t				type;		/* object type */
-	uint8_t				new;		/* T if object new */
+	unsigned			cull_slot;	/* slot in cull index */
 	spinlock_t			work_lock;
 	struct rb_node			active_node;	/* link in active tree (dentry is key) */
 };
@@ -59,13 +61,20 @@ struct cachefiles_cache {
 	struct fscache_cache		cache;		/* FS-Cache record */
 	struct vfsmount			*mnt;		/* mountpoint holding the cache */
 	struct dentry			*graveyard;	/* directory into which dead objects go */
+	struct file			*cull_index;	/* file containing cull FH index */
+	struct file			*cull_atimes;	/* file containing cull atime array */
 	struct file			*cachefilesd;	/* manager daemon handle */
 	const struct cred		*cache_cred;	/* security override for accessing cache */
+	struct rw_semaphore		cull_file_sem;	/* access to cull index files */
 	struct mutex			daemon_mutex;	/* command serialisation mutex */
 	wait_queue_head_t		daemon_pollwq;	/* poll waitqueue for daemon */
+	struct rb_root			cull_bitmap;	/* culling index free space bitmap */
 	struct rb_root			active_nodes;	/* active nodes (can't be culled) */
 	rwlock_t			active_lock;	/* lock for active_nodes */
+	spinlock_t			cull_bitmap_lock; /* access lock for cull_bitmap */
 	atomic_t			gravecounter;	/* graveyard uniquifier */
+	unsigned short			cx_entsize;	/* size of culling index entry */
+	unsigned short			cx_nperpage;	/* number of elements per page */
 	unsigned			frun_percent;	/* when to stop culling (% files) */
 	unsigned			fcull_percent;	/* when to start culling (% files) */
 	unsigned			fstop_percent;	/* when to stop allocating (% files) */
@@ -74,12 +83,14 @@ struct cachefiles_cache {
 	unsigned			bstop_percent;	/* when to stop allocating (% blocks) */
 	unsigned			bsize;		/* cache's block size */
 	unsigned			bshift;		/* min(ilog2(PAGE_SIZE / bsize), 0) */
+	time_t				atime_base;	/* atime base for culling */
 	uint64_t			frun;		/* when to stop culling */
 	uint64_t			fcull;		/* when to start culling */
 	uint64_t			fstop;		/* when to stop allocating */
 	sector_t			brun;		/* when to stop culling */
 	sector_t			bcull;		/* when to start culling */
 	sector_t			bstop;		/* when to stop allocating */
+	unsigned long			cull_nslots;	/* # of culling slots allocated on disk */
 	unsigned long			flags;
 #define CACHEFILES_READY		0	/* T if cache prepared */
 #define CACHEFILES_DEAD			1	/* T if cache dead */
@@ -116,10 +127,35 @@ struct cachefiles_one_write {
  * auxiliary data xattr buffer
  */
 struct cachefiles_xattr {
-	uint16_t			len;
+	unsigned			len;
+	/* everything after here will be written as the xattr data */
+	__le32				cull_slot;	/* assigned culling index slot */
+#define CACHEFILES_NO_CULL_SLOT		UINT_MAX
+#define CACHEFILES_PINNED		(UINT_MAX - 1)
 	uint8_t				type;
 	uint8_t				data[];
 };
+
+/*
+ * culling index free slots bitmap and cullable slots bitmap block
+ */
+struct cachefiles_cx_bitmap {
+	struct rb_node			rb;		/* link in bitmap tree */
+	unsigned			offset;		/* offset of bitmap in rb */
+	unsigned			nfreeslots;	/* # of free slots in this block */
+	unsigned			nslots;		/* # of slots actually allocated on disk */
+	struct page			*free_slots;	/* bits indicating free slots */
+	struct page			*cullable_slots; /* bits indicating cullable slots */
+};
+
+/*
+ * culling index entry layout
+ */
+struct cachefiles_cx_entry {
+	uint8_t				type;		/* exportfs enum fid_type */
+	uint8_t				len;		/* fh len */
+	__u32				fh[0];		/* exportfs file handle */
+} __attribute__((packed));
 
 /*
  * note change of state for daemon
@@ -135,6 +171,30 @@ static inline void cachefiles_state_changed(struct cachefiles_cache *cache)
  */
 extern int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args);
 extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
+
+/*
+ * cull_index.c
+ */
+extern void cachefiles_cx_free_bitmap(struct cachefiles_cache *cache);
+extern void cachefiles_cx_mark_cullable(struct cachefiles_cache *cache,
+					unsigned slot, bool cullable);
+extern int cachefiles_cx_generate_bitmap(struct cachefiles_cache *cache);
+extern void cachefiles_cx_unalloc_slot(struct cachefiles_cache *cache,
+				       unsigned slot);
+extern void cachefiles_cx_clear_slot(struct cachefiles_cache *cache,
+				     unsigned slot);
+extern int cachefiles_cx_get_slot(struct cachefiles_cache *cache,
+				  struct cachefiles_object *object,
+				  __le32 *_xattr_slot);
+extern void cachefiles_cx_mark_access(struct cachefiles_cache *cache,
+				      struct cachefiles_object *object);
+extern int cachefiles_cx_lookup(struct cachefiles_cache *cache,
+				unsigned slot,
+				struct dentry **_dir,
+				struct dentry **_object);
+extern int cachefiles_cx_validate_slot(struct cachefiles_cache *cache,
+				       struct dentry *dentry,
+				       unsigned slot);
 
 /*
  * daemon.c
@@ -166,9 +226,13 @@ extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
+extern struct file *cachefiles_get_file(struct cachefiles_cache *cache,
+					struct dentry *dir,
+					const char *filename);
 
 extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 			   char *filename);
+extern int cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot);
 
 extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
 				   struct dentry *dir, char *filename);
@@ -236,7 +300,7 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
 /*
  * xattr.c
  */
-extern int cachefiles_check_object_type(struct cachefiles_object *object);
+extern int cachefiles_check_root_object_type(struct cachefiles_object *object);
 extern int cachefiles_set_object_xattr(struct cachefiles_object *object,
 				       struct cachefiles_xattr *auxdata);
 extern int cachefiles_update_object_xattr(struct cachefiles_object *object,
@@ -244,8 +308,12 @@ extern int cachefiles_update_object_xattr(struct cachefiles_object *object,
 extern int cachefiles_check_auxdata(struct cachefiles_object *object);
 extern int cachefiles_check_object_xattr(struct cachefiles_object *object,
 					 struct cachefiles_xattr *auxdata);
+extern unsigned cachefiles_read_cull_slot(struct cachefiles_cache *cache,
+					  struct dentry *dentry);
 extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);
+extern int cachefiles_check_cull_index(struct cachefiles_cache *cache);
+extern int cachefiles_get_set_atime_base(struct cachefiles_cache *cache);
 
 
 /*

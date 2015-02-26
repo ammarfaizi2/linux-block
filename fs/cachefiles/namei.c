@@ -511,8 +511,8 @@ lookup_again:
 
 	_debug("next -> %p %s", next, next->d_inode ? "positive" : "negative");
 
-	if (!key)
-		object->new = !next->d_inode;
+	if (!key && !next->d_inode)
+		__set_bit(CACHEFILES_OBJECT_NEW, &object->flags);
 
 	/* if this element of the path doesn't exist, then the lookup phase
 	 * failed, and we can release any readers in the certain knowledge that
@@ -596,8 +596,10 @@ lookup_again:
 	object->dentry = next;
 
 	/* if we've found that the terminal object exists, then we need to
-	 * check its attributes and delete it if it's out of date */
-	if (!object->new) {
+	 * check its attributes and delete it if it's out of date
+	 * - this will also retrieve it's current cull slot assignment
+	 */
+	if (!test_bit(CACHEFILES_OBJECT_NEW, &object->flags)) {
 		_debug("validate '%pd'", next);
 
 		ret = cachefiles_check_object_xattr(object, auxdata);
@@ -620,6 +622,11 @@ lookup_again:
 		}
 	}
 
+	/* get a culling slot for this object if we don't already have one */
+	ret = cachefiles_cx_get_slot(cache, object, &auxdata->cull_slot);
+	if (ret < 0)
+		goto alloc_slot_error;
+
 	/* note that we're now using this object */
 	ret = cachefiles_mark_object_active(cache, object);
 
@@ -632,19 +639,17 @@ lookup_again:
 
 	_debug("=== OBTAINED_OBJECT ===");
 
-	if (object->new) {
-		/* attach data to a newly constructed terminal object */
+	if (test_bit(CACHEFILES_OBJECT_NEW, &object->flags) ||
+	    test_bit(CACHEFILES_OBJECT_UPDATE_XATTR, &object->flags)) {
+		/* attach data to a newly constructed terminal object or update
+		 * an existing one */
+		__clear_bit(CACHEFILES_OBJECT_UPDATE_XATTR, &object->flags);
 		ret = cachefiles_set_object_xattr(object, auxdata);
 		if (ret < 0)
 			goto check_error;
-	} else {
-		/* always update the atime on an object we've just looked up
-		 * (this is used to keep track of culling, and atimes are only
-		 * updated by read, write and readdir but not lookup or
-		 * open) */
-		path.dentry = next;
-		touch_atime(&path);
 	}
+
+	cachefiles_cx_mark_access(cache, object);
 
 	/* open a file interface onto a data file */
 	if (object->type != FSCACHE_COOKIE_TYPE_INDEX) {
@@ -662,11 +667,17 @@ lookup_again:
 		}
 	}
 
-	object->new = 0;
+	clear_bit(CACHEFILES_OBJECT_NEW, &object->flags);
 	fscache_obtained_object(&object->fscache);
 
 	_leave(" = 0 [%lu]", object->dentry->d_inode->i_ino);
 	return 0;
+
+alloc_slot_error:
+	_debug("index slot alloc error %d", ret);
+	if (ret == -EIO)
+		cachefiles_io_error(cache, "Alloc index slot failed");
+	goto error;
 
 no_space_error:
 	fscache_object_mark_killed(&object->fscache, FSCACHE_OBJECT_NO_SPACE);
@@ -687,6 +698,7 @@ check_error:
 	clear_bit(CACHEFILES_OBJECT_ACTIVE, &object->flags);
 	wake_up_bit(&object->flags, CACHEFILES_OBJECT_ACTIVE);
 	write_unlock(&cache->active_lock);
+	cachefiles_cx_mark_cullable(cache, object->cull_slot, true);
 release_dentry:
 	dput(object->dentry);
 	object->dentry = NULL;
@@ -708,6 +720,10 @@ error:
 error_out2:
 	dput(dir);
 error_out:
+	if (test_bit(CACHEFILES_OBJECT_NEW, &object->flags)) {
+		cachefiles_cx_unalloc_slot(cache, object->cull_slot);
+		object->cull_slot = CACHEFILES_NO_CULL_SLOT;
+	}
 	_leave(" = error %d", -ret);
 	return ret;
 }
@@ -816,7 +832,154 @@ nomem_d_alloc:
 }
 
 /*
+ * get a file
+ */
+struct file *cachefiles_get_file(struct cachefiles_cache *cache,
+				 struct dentry *dir,
+				 const char *filename)
+{
+	struct dentry *dentry;
+	struct file *file;
+	struct path path;
+	unsigned long start;
+	int ret;
+
+	_enter(",,%s", filename);
+
+	/* search the current directory for the element name */
+	mutex_lock(&dir->d_inode->i_mutex);
+
+	start = jiffies;
+	dentry = lookup_one_len(filename, dir, strlen(filename));
+	cachefiles_hist(cachefiles_lookup_histogram, start);
+	if (IS_ERR(dentry)) {
+		if (PTR_ERR(dentry) == -ENOMEM)
+			goto nomem_d_alloc;
+		goto lookup_error;
+	}
+
+	_debug("dentry -> %p %s",
+	       dentry, dentry->d_inode ? "positive" : "negative");
+
+	/* we need to create the file if it doesn't exist yet */
+	if (!dentry->d_inode) {
+		ret = cachefiles_has_space(cache, 1, 0);
+		if (ret < 0)
+			goto create_error;
+
+		_debug("attempt create");
+
+		ret = vfs_create(dir->d_inode, dentry, 0600, false);
+		if (ret < 0)
+			goto create_error;
+
+		ASSERT(dentry->d_inode);
+
+		_debug("create -> %p{%p{ino=%lu}}",
+		       dentry,
+		       dentry->d_inode,
+		       dentry->d_inode->i_ino);
+	}
+
+	mutex_unlock(&dir->d_inode->i_mutex);
+
+	/* we need to make sure the we've got a file */
+	ASSERT(dentry->d_inode);
+
+	if (!S_ISREG(dentry->d_inode->i_mode)) {
+		pr_err("%s is not a regular file", filename);
+		ret = -EIO;
+		goto check_error;
+	}
+
+	ret = -EPERM;
+	if (!dentry->d_inode->i_op ||
+	    !dentry->d_inode->i_op->setxattr ||
+	    !dentry->d_inode->i_op->getxattr)
+		goto check_error;
+
+	path.mnt = cache->mnt;
+	path.dentry = dentry;
+	file = dentry_open(&path, O_RDWR, cache->cache_cred);
+	dput(dentry);
+	if (IS_ERR(file))
+		goto open_error;
+
+	_leave(" = [%lu]", file_inode(file)->i_ino);
+	return file;
+
+open_error:
+	ret = PTR_ERR(file);
+	_leave(" = %d [open]", ret);
+	return ERR_PTR(ret);
+
+check_error:
+	dput(dentry);
+	_leave(" = %d [check]", ret);
+	return ERR_PTR(ret);
+
+create_error:
+	mutex_unlock(&dir->d_inode->i_mutex);
+	dput(dentry);
+	pr_err("mkdir %s failed with error %d", filename, ret);
+	return ERR_PTR(ret);
+
+lookup_error:
+	mutex_unlock(&dir->d_inode->i_mutex);
+	ret = PTR_ERR(dentry);
+	pr_err("Lookup %s failed with error %d", filename, ret);
+	return ERR_PTR(ret);
+
+nomem_d_alloc:
+	mutex_unlock(&dir->d_inode->i_mutex);
+	_leave(" = -ENOMEM");
+	return ERR_PTR(-ENOMEM);
+}
+
+/*
  * find out if an object is in use or not
+ * - the caller must have the directory locked
+ */
+static int cachefiles_check_dentry_active(struct cachefiles_cache *cache,
+					  struct dentry *dir,
+					  struct dentry *victim)
+{
+	struct cachefiles_object *object;
+	struct rb_node *_n;
+
+	_enter(",%*.*s/,%*.*s",
+	       dir->d_name.len, dir->d_name.len, dir->d_name.name,
+	       victim->d_name.len, victim->d_name.len, victim->d_name.name);
+
+	/* check to see if we're using this object */
+	read_lock(&cache->active_lock);
+
+	_n = cache->active_nodes.rb_node;
+
+	while (_n) {
+		object = rb_entry(_n, struct cachefiles_object, active_node);
+
+		if (object->dentry > victim)
+			_n = _n->rb_left;
+		else if (object->dentry < victim)
+			_n = _n->rb_right;
+		else
+			goto object_in_use;
+	}
+
+	read_unlock(&cache->active_lock);
+
+	//_leave(" = 0");
+	return 0;
+
+object_in_use:
+	read_unlock(&cache->active_lock);
+	//_leave(" = -EBUSY [in use]");
+	return -EBUSY;
+}
+
+/*
+ * find out if an object is in use or not by filename
  * - if finds object and it's not in use:
  *   - returns a pointer to the object and a reference on it
  *   - returns with the directory locked
@@ -825,8 +988,6 @@ static struct dentry *cachefiles_check_active(struct cachefiles_cache *cache,
 					      struct dentry *dir,
 					      char *filename)
 {
-	struct cachefiles_object *object;
-	struct rb_node *_n;
 	struct dentry *victim;
 	unsigned long start;
 	int ret;
@@ -856,29 +1017,15 @@ static struct dentry *cachefiles_check_active(struct cachefiles_cache *cache,
 		return ERR_PTR(-ENOENT);
 	}
 
-	/* check to see if we're using this object */
-	read_lock(&cache->active_lock);
+	ret = cachefiles_check_dentry_active(cache, dir, victim);
+	if (ret < 0)
+		goto object_busy;
 
-	_n = cache->active_nodes.rb_node;
-
-	while (_n) {
-		object = rb_entry(_n, struct cachefiles_object, active_node);
-
-		if (object->dentry > victim)
-			_n = _n->rb_left;
-		else if (object->dentry < victim)
-			_n = _n->rb_right;
-		else
-			goto object_in_use;
-	}
-
-	read_unlock(&cache->active_lock);
-
+	/* return with victim dentry referenced and dir locked */
 	//_leave(" = %p", victim);
 	return victim;
 
-object_in_use:
-	read_unlock(&cache->active_lock);
+object_busy:
 	mutex_unlock(&dir->d_inode->i_mutex);
 	dput(victim);
 	//_leave(" = -EBUSY [in use]");
@@ -912,6 +1059,7 @@ int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 		    char *filename)
 {
 	struct dentry *victim;
+	unsigned slot;
 	int ret;
 
 	_enter(",%pd/,%s", dir, filename);
@@ -928,9 +1076,16 @@ int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 	 */
 	_debug("victim is cullable");
 
+	slot = cachefiles_read_cull_slot(cache, victim);
+
 	ret = cachefiles_remove_object_xattr(cache, victim);
 	if (ret < 0)
 		goto error_unlock;
+
+	if (cachefiles_cx_validate_slot(cache, victim, slot) < 0)
+		slot = CACHEFILES_NO_CULL_SLOT;
+
+	cachefiles_cx_clear_slot(cache, slot);
 
 	/*  actually remove the victim (drops the dir mutex) */
 	_debug("bury");
@@ -984,4 +1139,82 @@ int cachefiles_check_in_use(struct cachefiles_cache *cache, struct dentry *dir,
 	dput(victim);
 	//_leave(" = 0");
 	return 0;
+}
+
+/*
+ * cull an object by slot number
+ * - called only by cache manager daemon
+ */
+int cachefiles_cullslot(struct cachefiles_cache *cache, unsigned slot)
+{
+	struct dentry *dir, *victim;
+	int ret;
+
+	_enter(",{%u}", slot);
+
+	ret = cachefiles_cx_lookup(cache, slot, &dir, &victim);
+	if (ret < 0) {
+		if (ret == -ESTALE)
+			cachefiles_cx_clear_slot(cache, slot);
+		_leave(" = %d", ret);
+		return ret;
+	}
+
+	_debug("cullslot %*.*s/%*.*s",
+	       dir->d_name.len, dir->d_name.len, dir->d_name.name,
+	       victim->d_name.len, victim->d_name.len, victim->d_name.name);
+
+	mutex_lock_nested(&dir->d_inode->i_mutex, 1);
+
+	/* see whether the entry is in use */
+	ret = cachefiles_check_dentry_active(cache, dir, victim);
+	if (ret < 0)
+		goto object_busy;
+
+	/* okay... the victim is not being used so we can cull it
+	 * - start by marking it as stale
+	 */
+	_debug("victim is cullable");
+
+	ret = cachefiles_remove_object_xattr(cache, victim);
+	if (ret < 0)
+		goto error_unlock;
+
+	cachefiles_cx_clear_slot(cache, slot);
+
+	/*  actually remove the victim (drops the dir mutex) */
+	_debug("bury");
+
+	ret = cachefiles_bury_object(cache, dir, victim, false,
+				     FSCACHE_OBJECT_WAS_CULLED);
+	if (ret < 0)
+		goto error;
+
+	dput(victim);
+	_leave(" = 0");
+	return 0;
+
+object_busy:
+	mutex_unlock(&dir->d_inode->i_mutex);
+	dput(victim);
+	_leave(" = %d", ret);
+	return ret;
+
+error_unlock:
+	mutex_unlock(&dir->d_inode->i_mutex);
+error:
+	dput(victim);
+	if (ret == -ENOENT) {
+		/* file or dir now absent - probably retired by netfs */
+		_leave(" = -ESTALE [absent]");
+		return -ESTALE;
+	}
+
+	if (ret != -ENOMEM) {
+		pr_err("Internal error: %d", ret);
+		ret = -EIO;
+	}
+
+	_leave(" = %d", ret);
+	return ret;
 }

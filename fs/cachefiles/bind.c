@@ -9,6 +9,7 @@
  * 2 of the Licence, or (at your option) any later version.
  */
 
+#define __KDEBUG
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/sched.h>
@@ -87,6 +88,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	struct path path;
 	struct kstatfs stats;
 	struct dentry *graveyard, *cachedir, *root;
+	struct file *cull_index, *cull_atimes;
 	const struct cred *saved_cred;
 	int ret;
 
@@ -199,7 +201,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	fsdef->dentry = cachedir;
 	fsdef->fscache.cookie = NULL;
 
-	ret = cachefiles_check_object_type(fsdef);
+	ret = cachefiles_check_root_object_type(fsdef);
 	if (ret < 0)
 		goto error_unsupported;
 
@@ -211,6 +213,34 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	}
 
 	cache->graveyard = graveyard;
+
+	/* get the culling index file */
+	cull_index = cachefiles_get_file(cache, root, "cull_index");
+	if (IS_ERR(cull_index)) {
+		ret = PTR_ERR(cull_index);
+		goto error_bad_index;
+	}
+
+	cache->cull_index = cull_index;
+
+	/* get the culling atime file */
+	cull_atimes = cachefiles_get_file(cache, root, "cull_atimes");
+	if (IS_ERR(cull_atimes)) {
+		ret = PTR_ERR(cull_atimes);
+		goto error_bad_atimes;
+	}
+
+	cache->cull_atimes = cull_atimes;
+
+	ret = cachefiles_get_set_atime_base(cache);
+	if (ret < 0)
+		goto error_base_atime_failed;
+
+	/* scan the culling index file and build a bitmap indicating where the
+	 * free space is */
+	ret = cachefiles_cx_generate_bitmap(cache);
+	if (ret < 0)
+		goto error_ixgen_failed;
 
 	/* publish the cache */
 	fscache_init_cache(&cache->cache,
@@ -236,6 +266,15 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	return 0;
 
 error_add_cache:
+	cachefiles_cx_free_bitmap(cache);
+error_ixgen_failed:
+error_base_atime_failed:
+	fput(cache->cull_atimes);
+	cache->cull_atimes = NULL;
+error_bad_atimes:
+	fput(cache->cull_index);
+	cache->cull_index = NULL;
+error_bad_index:
 	dput(cache->graveyard);
 	cache->graveyard = NULL;
 error_unsupported:
@@ -266,6 +305,11 @@ void cachefiles_daemon_unbind(struct cachefiles_cache *cache)
 		fscache_withdraw_cache(&cache->cache);
 	}
 
+	cachefiles_cx_free_bitmap(cache);
+	if (cache->cull_atimes)
+		fput(cache->cull_atimes);
+	if (cache->cull_index)
+		fput(cache->cull_index);
 	dput(cache->graveyard);
 	mntput(cache->mnt);
 

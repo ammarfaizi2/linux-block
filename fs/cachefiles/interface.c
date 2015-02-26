@@ -56,6 +56,7 @@ static struct fscache_object *cachefiles_alloc_object(
 	fscache_object_init(&object->fscache, cookie, &cache->cache);
 
 	object->type = cookie->def->type;
+	object->cull_slot = UINT_MAX;
 
 	/* get hold of the raw key
 	 * - stick the length on the front and leave space on the back for the
@@ -87,7 +88,8 @@ static struct fscache_object *cachefiles_alloc_object(
 		ASSERTCMP(auxlen, <, 511);
 	}
 
-	auxdata->len = auxlen + 1;
+	auxdata->len = auxlen + 5;
+	auxdata->cull_slot = CACHEFILES_NO_CULL_SLOT;
 	auxdata->type = cookie->def->type;
 
 	lookup_data->auxdata = auxdata;
@@ -235,6 +237,7 @@ static void cachefiles_update_object(struct fscache_object *_object)
 	ASSERTCMP(auxlen, <, 511);
 
 	auxdata->len = auxlen + 1;
+	auxdata->cull_slot = object->cull_slot;
 	auxdata->type = cookie->def->type;
 
 	cachefiles_begin_secure(cache, &saved_cred);
@@ -253,6 +256,7 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
+	bool deleted = false;
 
 	ASSERT(_object);
 
@@ -282,6 +286,7 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 			cachefiles_begin_secure(cache, &saved_cred);
 			cachefiles_delete_object(cache, object);
 			cachefiles_end_secure(cache, saved_cred);
+			deleted = true;
 		}
 
 		/* close the filesystem stuff attached to the object */
@@ -300,6 +305,9 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 		wake_up_bit(&object->flags, CACHEFILES_OBJECT_ACTIVE);
 		write_unlock(&cache->active_lock);
 	}
+
+	if (!deleted)
+		cachefiles_cx_mark_cullable(cache, object->cull_slot, true);
 
 	dput(object->dentry);
 	object->dentry = NULL;
