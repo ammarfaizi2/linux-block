@@ -22,6 +22,13 @@
 #include <linux/workqueue.h>
 #include <linux/security.h>
 
+/*
+ * The cachefiles disk format employed:
+ *
+ * 1: Directory tree mirroring cookie tree.
+ */
+#define cachefiles_disk_format 1
+
 struct cachefiles_cache;
 struct cachefiles_object;
 

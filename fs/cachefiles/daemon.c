@@ -188,15 +188,16 @@ static ssize_t cachefiles_daemon_read(struct file *file, char __user *_buffer,
 		     " fstop=%llx"
 		     " brun=%llx"
 		     " bcull=%llx"
-		     " bstop=%llx",
+		     " bstop=%llx"
+		     " format=%u",
 		     test_bit(CACHEFILES_CULLING, &cache->flags) ? '1' : '0',
 		     (unsigned long long) cache->frun,
 		     (unsigned long long) cache->fcull,
 		     (unsigned long long) cache->fstop,
 		     (unsigned long long) cache->brun,
 		     (unsigned long long) cache->bcull,
-		     (unsigned long long) cache->bstop
-		     );
+		     (unsigned long long) cache->bstop,
+		     cachefiles_disk_format);
 
 	if (n > buflen)
 		return -EMSGSIZE;
