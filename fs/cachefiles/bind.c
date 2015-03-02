@@ -9,7 +9,6 @@
  * 2 of the Licence, or (at your option) any later version.
  */
 
-#define __KDEBUG
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/sched.h>

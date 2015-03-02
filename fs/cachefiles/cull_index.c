@@ -9,7 +9,6 @@
  * 2 of the Licence, or (at your option) any later version.
  */
 
-#define __KDEBUG
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/sched.h>
@@ -621,15 +620,14 @@ void cachefiles_cx_clear_slot(struct cachefiles_cache *cache,
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 	_debug("CLEAR index 1 @ %llx", pos);
-	ret = cache->cull_index->f_op->write(
-		cache->cull_index,
-		(const void __user *) empty_zero_page, 2, &pos);
+	ret = vfs_write(cache->cull_index,
+			(const void __user *)empty_zero_page, 2, &pos);
 	if (ret != 2)
 		goto ioerror;
 
-	ret = cache->cull_atimes->f_op->write(
-		cache->cull_atimes,
-		(const void __user *) empty_zero_page, sizeof(__le32), &apos);
+	ret = vfs_write(cache->cull_atimes,
+			(const void __user *)empty_zero_page, sizeof(__le32),
+			&apos);
 	if (ret != sizeof(__le32))
 		goto ioerror;
 
@@ -720,9 +718,8 @@ actually_alloc:
 
 	/* read the contents of the slot so that we can check it */
 	tmppos = pos;
-	read = cache->cull_index->f_op->read(
-		cache->cull_index, (void * __user) entry,
-		cache->cx_entsize, &tmppos);
+	read = vfs_read(cache->cull_index, (void * __user) entry,
+			cache->cx_entsize, &tmppos);
 	if (read != cache->cx_entsize) {
 		cachefiles_io_error(cache,
 				    "Cull index slot %d fill check error: %ld",
@@ -746,9 +743,8 @@ actually_alloc:
 		 * - we just decide not to care if the slot is already occupied
 		 */
 		tmppos = pos;
-		written = cache->cull_index->f_op->write(
-			cache->cull_index, (const void * __user) entry,
-			cache->cx_entsize, &tmppos);
+		written = vfs_write(cache->cull_index, (const void * __user) entry,
+				    cache->cx_entsize, &tmppos);
 
 		if (written != cache->cx_entsize) {
 			cachefiles_io_error(
@@ -831,8 +827,8 @@ void cachefiles_cx_mark_access(struct cachefiles_cache *cache,
 
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
-	ret = cache->cull_atimes->f_op->write(
-		cache->cull_atimes, (const void __user *) &buffer, 4, &pos);
+	ret = vfs_write(cache->cull_atimes,
+			(const void __user *) &buffer, 4, &pos);
 	set_fs(old_fs);
 
 	if (ret != 4) {
@@ -888,9 +884,8 @@ int cachefiles_cx_lookup(struct cachefiles_cache *cache,
 
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
-	read = cache->cull_index->f_op->read(cache->cull_index,
-					     (void * __user) entry,
-					     cache->cx_entsize, &pos);
+	read = vfs_read(cache->cull_index,
+			(void * __user) entry, cache->cx_entsize, &pos);
 	set_fs(old_fs);
 
 	if (read != cache->cx_entsize) {
@@ -904,7 +899,7 @@ int cachefiles_cx_lookup(struct cachefiles_cache *cache,
 	/* check that the slot is occupied */
 	if (entry->type == 0) {
 		kfree(buffer);
-		kleave(" = -ESTALE [unoccupied]");
+		_leave(" = -ESTALE [unoccupied]");
 		return -ESTALE;
 	}
 
@@ -916,7 +911,7 @@ int cachefiles_cx_lookup(struct cachefiles_cache *cache,
 	if (IS_ERR(dentry)) {
 		ret = PTR_ERR(dentry);
 		if (ret == -ESTALE) {
-			kleave(" = -ESTALE [unresolvable]");
+			_leave(" = -ESTALE [unresolvable]");
 			return -ESTALE;
 		}
 		pr_err("Cannot decode cull slot %d FH: %d", slot, ret);
@@ -938,7 +933,7 @@ int cachefiles_cx_lookup(struct cachefiles_cache *cache,
 
 	*_dir = dir;
 	*_object = dentry;
-	kleave(" = 0");
+	_leave(" = 0");
 	return 0;
 }
 
@@ -984,9 +979,8 @@ int cachefiles_cx_validate_slot(struct cachefiles_cache *cache,
 	/* read the contents of the slot so that we can check it */
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
-	read = cache->cull_index->f_op->read(
-		cache->cull_index, (void * __user) entry,
-		cache->cx_entsize, &pos);
+	read = vfs_read(cache->cull_index, (void * __user) entry,
+			cache->cx_entsize, &pos);
 	set_fs(old_fs);
 
 	if (read != cache->cx_entsize) {

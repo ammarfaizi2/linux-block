@@ -179,11 +179,9 @@ static ssize_t cachefiles_daemon_read(struct file *file, char __user *_buffer,
 
 	//_enter(",,%zu,", buflen);
 
-	if (!test_bit(CACHEFILES_READY, &cache->flags))
-		return 0;
-
 	/* check how much space the cache has */
-	cachefiles_has_space(cache, 0, 0);
+	if (test_bit(CACHEFILES_READY, &cache->flags))
+		cachefiles_has_space(cache, 0, 0);
 
 	/* summarise */
 	clear_bit(CACHEFILES_STATE_CHANGED, &cache->flags);
@@ -868,9 +866,10 @@ static int cachefiles_daemon_fsck(struct cachefiles_cache *cache, char *args)
 		return -EINVAL;
 
 	if (scanrc) {
-		pr_err("cachefilesd daemon fsck failed with rc=%ld\n", scanrc);
+		pr_err("%s: daemon fsck failed with rc=%ld\n", cache->cache.identifier, scanrc);
 	} else {
-		pr_notice("cachefilesd daemon completed the cache check successfully.");
+		pr_notice("%s: daemon completed the cache check successfully.\n",
+			  cache->cache.identifier);
 		/* We're no longer dirty, signal the daemon to
 		 * let him know that we're happy, and so the
 		 * daemon can clean up its fsck resources. */

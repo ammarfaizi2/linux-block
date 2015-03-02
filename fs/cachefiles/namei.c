@@ -503,6 +503,9 @@ lookup_again:
 	/* search the current directory for the element name */
 	_debug("lookup '%s'", name);
 
+	ret = mnt_want_write(cache->mnt);
+	if (ret < 0)
+		goto error_out2;
 	mutex_lock_nested(&dir->d_inode->i_mutex, I_MUTEX_PARENT);
 
 	/* Are you still here, directory? */
@@ -513,6 +516,8 @@ lookup_again:
 			goto error;
 		}
 		/* otherwise... */
+		mutex_unlock(&dir->d_inode->i_mutex);
+		mnt_drop_write(cache->mnt);
 		_debug("dir vanished on us, restarting pathwalk");
 		goto restart;
 	}
@@ -600,6 +605,7 @@ lookup_again:
 	if (key) {
 		_debug("advance");
 		mutex_unlock(&dir->d_inode->i_mutex);
+		mnt_drop_write(cache->mnt);
 		dput(dir);
 		dir = next;
 		next = NULL;
@@ -613,10 +619,10 @@ lookup_again:
 	 * check its attributes and delete it if it's out of date
 	 * - this will also retrieve its current cull slot assignment
 	 */
+	mutex_lock(&cache->xattr_mutex);
 	if (!test_bit(CACHEFILES_OBJECT_NEW, &object->flags)) {
 		_debug("validate '%pd'", next);
 
-		mutex_lock(&cache->xattr_mutex);
 		ret = cachefiles_check_object_xattr(object, auxdata);
 		if (ret == -ESTALE) {
 			mutex_unlock(&cache->xattr_mutex);
@@ -650,6 +656,7 @@ lookup_again:
 	mutex_unlock(&cache->xattr_mutex);
 
 	mutex_unlock(&dir->d_inode->i_mutex);
+	mnt_drop_write(cache->mnt);
 	dput(dir);
 	dir = NULL;
 
@@ -736,6 +743,7 @@ lookup_error:
 	next = NULL;
 error:
 	mutex_unlock(&dir->d_inode->i_mutex);
+	mnt_drop_write(cache->mnt);
 	dput(next);
 error_out2:
 	dput(dir);

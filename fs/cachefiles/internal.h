@@ -26,8 +26,9 @@
  * The cachefiles disk format employed:
  *
  * 1: Directory tree mirroring cookie tree.
+ * 2: As 1 but with indices for faster culling.
  */
-#define cachefiles_disk_format 1
+#define cachefiles_disk_format 2
 
 struct cachefiles_cache;
 struct cachefiles_object;
