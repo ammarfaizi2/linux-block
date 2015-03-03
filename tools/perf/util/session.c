@@ -517,9 +517,8 @@ static int process_finished_round(struct perf_tool *tool __maybe_unused,
 	return ordered_events__flush(oe, OE_FLUSH__ROUND);
 }
 
-int perf_session_queue_event(struct perf_session *s, union perf_event *event,
-			     struct perf_tool *tool __maybe_unused, struct perf_sample *sample,
-			     u64 file_offset)
+int perf_session__queue_event(struct perf_session *s, union perf_event *event,
+			      struct perf_sample *sample, u64 file_offset)
 {
 	struct ordered_events *oe = &s->ordered_events;
 
@@ -1089,8 +1088,7 @@ static s64 perf_session__process_event(struct perf_session *session,
 		return ret;
 
 	if (tool->ordered_events) {
-		ret = perf_session_queue_event(session, event, tool, &sample,
-					       file_offset);
+		ret = perf_session__queue_event(session, event, &sample, file_offset);
 		if (ret != -ETIME)
 			return ret;
 	}
