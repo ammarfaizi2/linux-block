@@ -95,7 +95,6 @@ struct perf_session *perf_session__new(struct perf_data_file *file,
 		goto out;
 
 	session->repipe = repipe;
-	ordered_events__init(&session->ordered_events);
 	machines__init(&session->machines);
 
 	if (file) {
@@ -126,7 +125,8 @@ struct perf_session *perf_session__new(struct perf_data_file *file,
 	    tool->ordered_events && !perf_evlist__sample_id_all(session->evlist)) {
 		dump_printf("WARNING: No sample_id_all support, falling back to unordered processing\n");
 		tool->ordered_events = false;
-	}
+	} else
+		ordered_events__init(&session->ordered_events, &session->machines, session->evlist, tool);
 
 	return session;
 
@@ -508,24 +508,20 @@ static perf_event__swap_op perf_event__swap_ops[] = {
  *      Flush every events below timestamp 7
  *      etc...
  */
-static int process_finished_round(struct perf_tool *tool,
+static int process_finished_round(struct perf_tool *tool __maybe_unused,
 				  union perf_event *event __maybe_unused,
 				  struct perf_session *session)
 {
 	struct ordered_events *oe = &session->ordered_events;
-	struct perf_evlist *evlist = session->evlist;
-	struct machines *machines = &session->machines;
 
-	return ordered_events__flush(oe, machines, evlist, tool, OE_FLUSH__ROUND);
+	return ordered_events__flush(oe, OE_FLUSH__ROUND);
 }
 
 int perf_session_queue_event(struct perf_session *s, union perf_event *event,
-			     struct perf_tool *tool, struct perf_sample *sample,
+			     struct perf_tool *tool __maybe_unused, struct perf_sample *sample,
 			     u64 file_offset)
 {
 	struct ordered_events *oe = &s->ordered_events;
-	struct perf_evlist *evlist = s->evlist;
-	struct machines *machines = &s->machines;
 
 	u64 timestamp = sample->time;
 	struct ordered_event *new;
@@ -543,7 +539,7 @@ int perf_session_queue_event(struct perf_session *s, union perf_event *event,
 
 	new = ordered_events__new(oe, timestamp, event);
 	if (!new) {
-		ordered_events__flush(oe, machines, evlist, tool, OE_FLUSH__HALF);
+		ordered_events__flush(oe, OE_FLUSH__HALF);
 		new = ordered_events__new(oe, timestamp, event);
 	}
 
@@ -1177,8 +1173,6 @@ static int __perf_session__process_pipe_events(struct perf_session *session,
 					       struct perf_tool *tool)
 {
 	struct ordered_events *oe = &session->ordered_events;
-	struct perf_evlist *evlist = session->evlist;
-	struct machines *machines = &session->machines;
 	int fd = perf_data_file__fd(session->file);
 	union perf_event *event;
 	uint32_t size, cur_size = 0;
@@ -1258,7 +1252,7 @@ more:
 		goto more;
 done:
 	/* do the final flush for ordered samples */
-	err = ordered_events__flush(oe, machines, evlist, tool, OE_FLUSH__FINAL);
+	err = ordered_events__flush(oe, OE_FLUSH__FINAL);
 out_err:
 	free(buf);
 	perf_tool__warn_about_errors(tool, &session->evlist->stats);
@@ -1311,8 +1305,6 @@ static int __perf_session__process_events(struct perf_session *session,
 					  u64 file_size, struct perf_tool *tool)
 {
 	struct ordered_events *oe = &session->ordered_events;
-	struct perf_evlist *evlist = session->evlist;
-	struct machines *machines = &session->machines;
 	int fd = perf_data_file__fd(session->file);
 	u64 head, page_offset, file_offset, file_pos, size;
 	int err, mmap_prot, mmap_flags, map_idx = 0;
@@ -1406,7 +1398,7 @@ more:
 
 out:
 	/* do the final flush for ordered samples */
-	err = ordered_events__flush(oe, machines, evlist, tool, OE_FLUSH__FINAL);
+	err = ordered_events__flush(oe, OE_FLUSH__FINAL);
 out_err:
 	ui_progress__finish();
 	perf_tool__warn_about_errors(tool, &session->evlist->stats);
