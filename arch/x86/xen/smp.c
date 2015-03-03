@@ -508,12 +508,13 @@ static void xen_cpu_die(unsigned int cpu)
 		schedule_timeout(HZ/10);
 	}
 
-	(void)cpu_wait_death(cpu, 5);
-	/* FIXME: Are the below calls really safe in case of timeout? */
-
-	xen_smp_intr_free(cpu);
-	xen_uninit_lock_cpu(cpu);
-	xen_teardown_timer(cpu);
+	if (cpu_wait_death(cpu, 5)) {
+		xen_smp_intr_free(cpu);
+		xen_uninit_lock_cpu(cpu);
+		xen_teardown_timer(cpu);
+	} else {
+		pr_err("CPU %u didn't die...\n", cpu);
+	}
 }
 
 static void xen_play_dead(void) /* used only with HOTPLUG_CPU */
