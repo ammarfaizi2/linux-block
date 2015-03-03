@@ -1845,7 +1845,7 @@ static int rcu_gp_init(struct rcu_state *rsp)
 		ACCESS_ONCE(rsp->gp_activity) = jiffies;
 		if (IS_ENABLED(CONFIG_RCU_TORTURE_TEST_SLOW_INIT) &&
 		    gp_init_delay > 0 &&
-		    !(rsp->gpnum % (rcu_num_nodes * 10)))
+		    !(rsp->gpnum % (rcu_num_nodes * 3 * gp_init_delay)))
 			schedule_timeout_uninterruptible(gp_init_delay);
 	}
 
