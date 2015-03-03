@@ -1242,6 +1242,7 @@ struct trace {
 		u64		vfs_getname,
 				proc_getname;
 	} stats;
+	struct ordered_events	ordered_events;
 	bool			not_ev_qualifier;
 	bool			live;
 	bool			full_time;
@@ -2147,6 +2148,16 @@ static void trace__handle_event(struct trace *trace, union perf_event *event, st
 	}
 }
 
+static int trace__deliver_event(struct ordered_events *oe,
+				struct ordered_event *event,
+				struct perf_sample *sample)
+{
+	struct trace *trace = container_of(oe, struct trace, ordered_events);
+
+	trace__handle_event(trace, event->event, sample);
+	return 0;
+}
+
 static int trace__run(struct trace *trace, int argc, const char **argv)
 {
 	struct perf_evlist *evlist = trace->evlist;
@@ -2156,6 +2167,8 @@ static int trace__run(struct trace *trace, int argc, const char **argv)
 	bool draining = false;
 
 	trace->live = true;
+
+	ordered_events__init(&trace->ordered_events, NULL, evlist, &trace->tool, trace__deliver_event);
 
 	if (trace->trace_syscalls &&
 	    perf_evlist__add_syscall_newtp(evlist, trace__sys_enter,
@@ -2254,7 +2267,7 @@ again:
 				goto next_event;
 			}
 
-			trace__handle_event(trace, event, &sample);
+			ordered_events__queue(&trace->ordered_events, event, &sample, 0);
 next_event:
 			perf_evlist__mmap_consume(evlist, i);
 
@@ -2273,10 +2286,12 @@ next_event:
 			goto again;
 		}
 	} else {
+		ordered_events__flush(&trace->ordered_events, OE_FLUSH__ROUND);
 		goto again;
 	}
 
 out_disable:
+	ordered_events__flush(&trace->ordered_events, OE_FLUSH__FINAL);
 	thread__zput(trace->current);
 
 	perf_evlist__disable(evlist);
