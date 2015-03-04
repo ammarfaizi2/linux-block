@@ -67,6 +67,8 @@ struct backing_dev_info {
 	congested_fn *congested_fn; /* Function pointer if device is md/dm */
 	void *congested_data;	/* Pointer to aux data for congested func */
 
+	int (*io_poll)(struct backing_dev_info *, queue_cookie_t);
+
 	char *name;
 
 	struct percpu_counter bdi_stat[NR_BDI_STAT_ITEMS];
@@ -124,6 +126,7 @@ void bdi_start_background_writeback(struct backing_dev_info *bdi);
 void bdi_writeback_workfn(struct work_struct *work);
 int bdi_has_dirty_io(struct backing_dev_info *bdi);
 void bdi_wakeup_thread_delayed(struct backing_dev_info *bdi);
+void bdi_io_wait(struct backing_dev_info *bdi, queue_cookie_t cookie);
 
 extern spinlock_t bdi_lock;
 extern struct list_head bdi_list;

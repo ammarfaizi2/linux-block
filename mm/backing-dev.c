@@ -615,3 +615,29 @@ int pdflush_proc_obsolete(struct ctl_table *table, int write,
 	*ppos += *lenp;
 	return 2;
 }
+
+void bdi_io_wait(struct backing_dev_info *bdi, queue_cookie_t cookie)
+{
+	long state;
+
+	if (!bdi || !bdi->io_poll || !blk_queue_cookie_valid(cookie))
+		goto sched;
+
+	state = current->state;
+	while (!need_resched()) {
+		int ret = bdi->io_poll(bdi, cookie);
+
+		if (ret > 0 || signal_pending_state(state, current)) {
+			set_current_state(TASK_RUNNING);
+			return;
+		}
+		if (current->state == TASK_RUNNING)
+			return;
+		if (ret < 0)
+			break;
+		cpu_relax();
+	}
+
+sched:
+	io_schedule();
+}
