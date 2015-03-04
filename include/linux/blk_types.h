@@ -248,10 +248,16 @@ enum rq_flag_bits {
 
 typedef unsigned int queue_cookie_t;
 #define QUEUE_COOKIE_NONE	-1U
+#define COOKIE_QUEUE_SHIFT	16
 
 static inline bool blk_queue_cookie_valid(queue_cookie_t val)
 {
 	return val != QUEUE_COOKIE_NONE;
+}
+
+static inline queue_cookie_t blk_tag_to_queue_cookie(int tag, int queue_num)
+{
+	return tag | (queue_num << COOKIE_QUEUE_SHIFT);
 }
 
 #endif /* __LINUX_BLK_TYPES_H */

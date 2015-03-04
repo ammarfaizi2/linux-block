@@ -1233,6 +1233,7 @@ static queue_cookie_t blk_mq_make_request(struct request_queue *q,
 	const int is_flush_fua = bio->bi_rw & (REQ_FLUSH | REQ_FUA);
 	struct blk_map_ctx data;
 	struct request *rq;
+	queue_cookie_t cookie;
 
 	blk_queue_bounce(q, &bio);
 
@@ -1244,6 +1245,8 @@ static queue_cookie_t blk_mq_make_request(struct request_queue *q,
 	rq = blk_mq_map_request(q, bio, &data);
 	if (unlikely(!rq))
 		return QUEUE_COOKIE_NONE;
+
+	cookie = blk_tag_to_queue_cookie(rq->tag, data.hctx->queue_num);
 
 	if (unlikely(is_flush_fua)) {
 		blk_mq_bio_to_request(rq, bio);
@@ -1275,6 +1278,7 @@ static queue_cookie_t blk_mq_make_request(struct request_queue *q,
 		if (ret == BLK_MQ_RQ_QUEUE_OK)
 			goto done;
 		else {
+			cookie = -1;
 			__blk_mq_requeue_request(rq);
 
 			if (ret == BLK_MQ_RQ_QUEUE_ERROR) {
@@ -1297,7 +1301,7 @@ run_queue:
 	}
 done:
 	blk_mq_put_ctx(data.ctx);
-	return QUEUE_COOKIE_NONE;
+	return cookie;
 }
 
 /*
@@ -1312,6 +1316,7 @@ static queue_cookie_t blk_sq_make_request(struct request_queue *q,
 	unsigned int use_plug, request_count = 0;
 	struct blk_map_ctx data;
 	struct request *rq;
+	queue_cookie_t cookie;
 
 	/*
 	 * If we have multiple hardware queues, just go directly to
@@ -1333,6 +1338,8 @@ static queue_cookie_t blk_sq_make_request(struct request_queue *q,
 	rq = blk_mq_map_request(q, bio, &data);
 	if (unlikely(!rq))
 		return QUEUE_COOKIE_NONE;
+
+	cookie = blk_tag_to_queue_cookie(rq->tag, data.hctx->queue_num);
 
 	if (unlikely(is_flush_fua)) {
 		blk_mq_bio_to_request(rq, bio);
@@ -1358,7 +1365,7 @@ static queue_cookie_t blk_sq_make_request(struct request_queue *q,
 			}
 			list_add_tail(&rq->queuelist, &plug->mq_list);
 			blk_mq_put_ctx(data.ctx);
-			return QUEUE_COOKIE_NONE;
+			return cookie;
 		}
 	}
 
@@ -1374,7 +1381,7 @@ run_queue:
 	}
 
 	blk_mq_put_ctx(data.ctx);
-	return QUEUE_COOKIE_NONE;
+	return cookie;
 }
 
 /*
