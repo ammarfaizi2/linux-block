@@ -1265,7 +1265,7 @@ config RCU_TORTURE_TEST_SLOW_INIT
 	  Say N if you want a sane system.
 
 config RCU_TORTURE_TEST_SLOW_INIT_DELAY
-	int "How must to slow down RCU grace-period initialization"
+	int "How much to slow down RCU grace-period initialization"
 	range 0 5
 	default 3
 	help
