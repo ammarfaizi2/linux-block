@@ -101,6 +101,7 @@ static void __init rcu_bootup_announce_oddness(void)
 
 RCU_STATE_INITIALIZER(rcu_preempt, 'p', call_rcu);
 static struct rcu_state *const rcu_state_p = &rcu_preempt_state;
+static struct rcu_data __percpu *const rcu_data_p = &rcu_preempt_data;
 
 static int rcu_preempted_readers_exp(struct rcu_node *rnp);
 static void rcu_report_exp_rnp(struct rcu_state *rsp, struct rcu_node *rnp);
@@ -125,11 +126,11 @@ static void __init rcu_bootup_announce(void)
  */
 static void rcu_preempt_qs(void)
 {
-	if (!__this_cpu_read(rcu_preempt_data.passed_quiesce)) {
+	if (!__this_cpu_read(rcu_data_p->passed_quiesce)) {
 		trace_rcu_grace_period(TPS("rcu_preempt"),
-				       __this_cpu_read(rcu_preempt_data.gpnum),
+				       __this_cpu_read(rcu_data_p->gpnum),
 				       TPS("cpuqs"));
-		__this_cpu_write(rcu_preempt_data.passed_quiesce, 1);
+		__this_cpu_write(rcu_data_p->passed_quiesce, 1);
 		barrier(); /* Coordinate with rcu_preempt_check_callbacks(). */
 		current->rcu_read_unlock_special.b.need_qs = false;
 	}
@@ -494,8 +495,8 @@ static void rcu_preempt_check_callbacks(void)
 		return;
 	}
 	if (t->rcu_read_lock_nesting > 0 &&
-	    __this_cpu_read(rcu_preempt_data.qs_pending) &&
-	    !__this_cpu_read(rcu_preempt_data.passed_quiesce))
+	    __this_cpu_read(rcu_data_p->qs_pending) &&
+	    !__this_cpu_read(rcu_data_p->passed_quiesce))
 		t->rcu_read_unlock_special.b.need_qs = true;
 }
 
@@ -503,7 +504,7 @@ static void rcu_preempt_check_callbacks(void)
 
 static void rcu_preempt_do_callbacks(void)
 {
-	rcu_do_batch(rcu_state_p, this_cpu_ptr(&rcu_preempt_data));
+	rcu_do_batch(rcu_state_p, this_cpu_ptr(rcu_data_p));
 }
 
 #endif /* #ifdef CONFIG_RCU_BOOST */
@@ -763,7 +764,7 @@ EXPORT_SYMBOL_GPL(rcu_barrier);
  */
 static void __init __rcu_init_preempt(void)
 {
-	rcu_init_one(rcu_state_p, &rcu_preempt_data);
+	rcu_init_one(rcu_state_p, rcu_data_p);
 }
 
 /*
@@ -787,6 +788,7 @@ void exit_rcu(void)
 #else /* #ifdef CONFIG_PREEMPT_RCU */
 
 static struct rcu_state *const rcu_state_p = &rcu_sched_state;
+static struct rcu_data __percpu *const rcu_data_p = &rcu_sched_data;
 
 /*
  * Tell them what RCU they are running.
