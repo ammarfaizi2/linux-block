@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Intel Ethernet Controller XL710 Family Linux Virtual Function Driver
- * Copyright(c) 2013 - 2014 Intel Corporation.
+ * Copyright(c) 2013 - 2015 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -175,12 +175,12 @@ struct i40e_link_status {
 	u8 an_info;
 	u8 ext_info;
 	u8 loopback;
-	bool an_enabled;
 	/* is Link Status Event notification to SW enabled */
 	bool lse_enable;
 	u16 max_frame_size;
 	bool crc_enable;
 	u8 pacing;
+	u8 requested_speeds;
 };
 
 struct i40e_phy_info {
@@ -211,6 +211,7 @@ struct i40e_hw_capabilities {
 	bool evb_802_1_qbh; /* Bridge Port Extension */
 	bool dcb;
 	bool fcoe;
+	bool iscsi; /* Indicates iSCSI enabled */
 	bool mfp_mode_1;
 	bool mgmt_cem;
 	bool ieee_1588;
@@ -425,7 +426,7 @@ struct i40e_hw {
 	u8 __iomem *hw_addr;
 	void *back;
 
-	/* function pointer structs */
+	/* subsystem structs */
 	struct i40e_phy_info phy;
 	struct i40e_mac_info mac;
 	struct i40e_bus_info bus;
@@ -451,6 +452,11 @@ struct i40e_hw {
 	/* device profile info */
 	u8  pf_id;
 	u16 main_vsi_seid;
+
+	/* for multi-function MACs */
+	u16 partition_id;
+	u16 num_partitions;
+	u16 num_ports;
 
 	/* Closest numa node to the device */
 	u16 numa_node;

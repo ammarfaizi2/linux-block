@@ -45,6 +45,7 @@
 #ifdef CONFIG_NET_RX_BUSY_POLL
 #include <net/busy_poll.h>
 #endif
+#include <linux/crash_dump.h>
 
 #include "cq_enet_desc.h"
 #include "vnic_dev.h"
@@ -88,7 +89,7 @@ MODULE_DEVICE_TABLE(pci, enic_id_table);
  *  coalescing timer values
  *  {rx_rate in Mbps, mapping percentage of the range}
  */
-struct enic_intr_mod_table mod_table[ENIC_MAX_COALESCE_TIMERS + 1] = {
+static struct enic_intr_mod_table mod_table[ENIC_MAX_COALESCE_TIMERS + 1] = {
 	{4000,  0},
 	{4400, 10},
 	{5060, 20},
@@ -105,7 +106,7 @@ struct enic_intr_mod_table mod_table[ENIC_MAX_COALESCE_TIMERS + 1] = {
 /* This table helps the driver to pick different ranges for rx coalescing
  * timer depending on the link speed.
  */
-struct enic_intr_mod_range mod_range[ENIC_MAX_LINK_SPEEDS] = {
+static struct enic_intr_mod_range mod_range[ENIC_MAX_LINK_SPEEDS] = {
 	{0,  0}, /* 0  - 4  Gbps */
 	{0,  3}, /* 4  - 10 Gbps */
 	{3,  6}, /* 10 - 40 Gbps */
@@ -519,10 +520,10 @@ static inline void enic_queue_wq_skb(struct enic *enic,
 	int loopback = 0;
 	int err;
 
-	if (vlan_tx_tag_present(skb)) {
+	if (skb_vlan_tag_present(skb)) {
 		/* VLAN tag from trunking driver */
 		vlan_tag_insert = 1;
-		vlan_tag = vlan_tx_tag_get(skb);
+		vlan_tag = skb_vlan_tag_get(skb);
 	} else if (enic->loop_enable) {
 		vlan_tag = enic->loop_tag;
 		loopback = 1;
@@ -1302,7 +1303,7 @@ static void enic_set_rx_cpu_rmap(struct enic *enic)
 #endif /* CONFIG_RFS_ACCEL */
 
 #ifdef CONFIG_NET_RX_BUSY_POLL
-int enic_busy_poll(struct napi_struct *napi)
+static int enic_busy_poll(struct napi_struct *napi)
 {
 	struct net_device *netdev = napi->dev;
 	struct enic *enic = netdev_priv(netdev);
@@ -1371,7 +1372,7 @@ static int enic_poll_msix_rq(struct napi_struct *napi, int budget)
 	int err;
 
 	if (!enic_poll_lock_napi(&enic->rq[rq]))
-		return work_done;
+		return budget;
 	/* Service RQ
 	 */
 
@@ -1652,7 +1653,7 @@ static int enic_open(struct net_device *netdev)
 		if (vnic_rq_desc_used(&enic->rq[i]) == 0) {
 			netdev_err(netdev, "Unable to alloc receive buffers\n");
 			err = -ENOMEM;
-			goto err_out_notify_unset;
+			goto err_out_free_rq;
 		}
 	}
 
@@ -1685,7 +1686,9 @@ static int enic_open(struct net_device *netdev)
 
 	return 0;
 
-err_out_notify_unset:
+err_out_free_rq:
+	for (i = 0; i < enic->rq_count; i++)
+		vnic_rq_clean(&enic->rq[i], enic_free_rq_buf);
 	enic_dev_notify_unset(enic);
 err_out_free_intr:
 	enic_free_intr(enic);
@@ -2265,6 +2268,18 @@ static void enic_dev_deinit(struct enic *enic)
 	enic_clear_intr_mode(enic);
 }
 
+static void enic_kdump_kernel_config(struct enic *enic)
+{
+	if (is_kdump_kernel()) {
+		dev_info(enic_get_dev(enic), "Running from within kdump kernel. Using minimal resources\n");
+		enic->rq_count = 1;
+		enic->wq_count = 1;
+		enic->config.rq_desc_count = ENIC_MIN_RQ_DESCS;
+		enic->config.wq_desc_count = ENIC_MIN_WQ_DESCS;
+		enic->config.mtu = min_t(u16, 1500, enic->config.mtu);
+	}
+}
+
 static int enic_dev_init(struct enic *enic)
 {
 	struct device *dev = enic_get_dev(enic);
@@ -2293,6 +2308,10 @@ static int enic_dev_init(struct enic *enic)
 	 */
 
 	enic_get_res_counts(enic);
+
+	/* modify resource count if we are in kdump_kernel
+	 */
+	enic_kdump_kernel_config(enic);
 
 	/* Set interrupt mode based on resource counts and system
 	 * capabilities

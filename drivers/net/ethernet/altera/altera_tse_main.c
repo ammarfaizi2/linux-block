@@ -105,11 +105,11 @@ static int altera_tse_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
 
 	/* set MDIO address */
 	csrwr32((mii_id & 0x1f), priv->mac_dev,
-		tse_csroffs(mdio_phy0_addr));
+		tse_csroffs(mdio_phy1_addr));
 
 	/* get the data */
 	return csrrd32(priv->mac_dev,
-		       tse_csroffs(mdio_phy0) + regnum * 4) & 0xffff;
+		       tse_csroffs(mdio_phy1) + regnum * 4) & 0xffff;
 }
 
 static int altera_tse_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
@@ -120,10 +120,10 @@ static int altera_tse_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
 
 	/* set MDIO address */
 	csrwr32((mii_id & 0x1f), priv->mac_dev,
-		tse_csroffs(mdio_phy0_addr));
+		tse_csroffs(mdio_phy1_addr));
 
 	/* write the data */
-	csrwr32(value, priv->mac_dev, tse_csroffs(mdio_phy0) + regnum * 4);
+	csrwr32(value, priv->mac_dev, tse_csroffs(mdio_phy1) + regnum * 4);
 	return 0;
 }
 
@@ -1099,8 +1099,12 @@ static int tse_open(struct net_device *dev)
 
 	spin_lock(&priv->mac_cfg_lock);
 	ret = reset_mac(priv);
+	/* Note that reset_mac will fail if the clocks are gated by the PHY
+	 * due to the PHY being put into isolation or power down mode.
+	 * This is not an error if reset fails due to no clock.
+	 */
 	if (ret)
-		netdev_err(dev, "Cannot reset MAC core (error: %d)\n", ret);
+		netdev_dbg(dev, "Cannot reset MAC core (error: %d)\n", ret);
 
 	ret = init_mac(priv);
 	spin_unlock(&priv->mac_cfg_lock);
@@ -1170,10 +1174,6 @@ tx_request_irq_error:
 init_error:
 	free_skbufs(dev);
 alloc_skbuf_error:
-	if (priv->phydev) {
-		phy_disconnect(priv->phydev);
-		priv->phydev = NULL;
-	}
 phy_error:
 	return ret;
 }
@@ -1186,12 +1186,9 @@ static int tse_shutdown(struct net_device *dev)
 	int ret;
 	unsigned long int flags;
 
-	/* Stop and disconnect the PHY */
-	if (priv->phydev) {
+	/* Stop the PHY */
+	if (priv->phydev)
 		phy_stop(priv->phydev);
-		phy_disconnect(priv->phydev);
-		priv->phydev = NULL;
-	}
 
 	netif_stop_queue(dev);
 	napi_disable(&priv->napi);
@@ -1211,8 +1208,12 @@ static int tse_shutdown(struct net_device *dev)
 	spin_lock(&priv->tx_lock);
 
 	ret = reset_mac(priv);
+	/* Note that reset_mac will fail if the clocks are gated by the PHY
+	 * due to the PHY being put into isolation or power down mode.
+	 * This is not an error if reset fails due to no clock.
+	 */
 	if (ret)
-		netdev_err(dev, "Cannot reset MAC core (error: %d)\n", ret);
+		netdev_dbg(dev, "Cannot reset MAC core (error: %d)\n", ret);
 	priv->dmaops->reset_dma(priv);
 	free_skbufs(dev);
 
@@ -1525,6 +1526,10 @@ err_free_netdev:
 static int altera_tse_remove(struct platform_device *pdev)
 {
 	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct altera_tse_private *priv = netdev_priv(ndev);
+
+	if (priv->phydev)
+		phy_disconnect(priv->phydev);
 
 	platform_set_drvdata(pdev, NULL);
 	altera_tse_mdio_destroy(ndev);

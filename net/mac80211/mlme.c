@@ -1651,7 +1651,7 @@ __ieee80211_sta_handle_tspec_ac_params(struct ieee80211_sub_if_data *sdata)
 {
 	struct ieee80211_local *local = sdata->local;
 	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
-	bool ret;
+	bool ret = false;
 	int ac;
 
 	if (local->hw.queues < IEEE80211_NUM_ACS)
@@ -2010,6 +2010,9 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
 
 	/* disable per-vif ps */
 	ieee80211_recalc_ps_vif(sdata);
+
+	/* make sure ongoing transmission finishes */
+	synchronize_net();
 
 	/*
 	 * drop any frame before deauth/disassoc, this can be data or

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Intel Ethernet Controller XL710 Family Linux Driver
- * Copyright(c) 2013 - 2014 Intel Corporation.
+ * Copyright(c) 2013 - 2015 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -71,6 +71,9 @@ i40e_status i40e_aq_get_firmware_version(struct i40e_hw *hw,
 i40e_status i40e_aq_debug_write_register(struct i40e_hw *hw,
 					u32 reg_addr, u64 reg_val,
 					struct i40e_asq_cmd_details *cmd_details);
+i40e_status i40e_aq_debug_read_register(struct i40e_hw *hw,
+				u32  reg_addr, u64 *reg_val,
+				struct i40e_asq_cmd_details *cmd_details);
 i40e_status i40e_aq_set_phy_debug(struct i40e_hw *hw, u8 cmd_flags,
 				struct i40e_asq_cmd_details *cmd_details);
 i40e_status i40e_aq_set_default_vsi(struct i40e_hw *hw, u16 vsi_id,
@@ -94,7 +97,6 @@ i40e_status i40e_aq_set_link_restart_an(struct i40e_hw *hw,
 i40e_status i40e_aq_get_link_info(struct i40e_hw *hw,
 				bool enable_lse, struct i40e_link_status *link,
 				struct i40e_asq_cmd_details *cmd_details);
-i40e_status i40e_update_link_info(struct i40e_hw *hw, bool enable_lse);
 i40e_status i40e_aq_set_local_advt_reg(struct i40e_hw *hw,
 				u64 advt_reg,
 				struct i40e_asq_cmd_details *cmd_details);
@@ -244,7 +246,15 @@ void i40e_clear_hw(struct i40e_hw *hw);
 void i40e_clear_pxe_mode(struct i40e_hw *hw);
 bool i40e_get_link_status(struct i40e_hw *hw);
 i40e_status i40e_get_mac_addr(struct i40e_hw *hw, u8 *mac_addr);
+i40e_status i40e_read_bw_from_alt_ram(struct i40e_hw *hw,
+				      u32 *max_bw, u32 *min_bw, bool *min_valid,
+				      bool *max_valid);
+i40e_status i40e_aq_configure_partition_bw(struct i40e_hw *hw,
+			struct i40e_aqc_configure_partition_bw_data *bw_data,
+			struct i40e_asq_cmd_details *cmd_details);
 i40e_status i40e_get_port_mac_addr(struct i40e_hw *hw, u8 *mac_addr);
+i40e_status i40e_read_pba_string(struct i40e_hw *hw, u8 *pba_num,
+				 u32 pba_num_size);
 i40e_status i40e_validate_mac_addr(u8 *mac_addr);
 void i40e_pre_tx_queue_cfg(struct i40e_hw *hw, u32 queue, bool enable);
 #ifdef I40E_FCOE
@@ -255,8 +265,6 @@ i40e_status i40e_init_nvm(struct i40e_hw *hw);
 i40e_status i40e_acquire_nvm(struct i40e_hw *hw,
 				      enum i40e_aq_resource_access_type access);
 void i40e_release_nvm(struct i40e_hw *hw);
-i40e_status i40e_read_nvm_srrd(struct i40e_hw *hw, u16 offset,
-					 u16 *data);
 i40e_status i40e_read_nvm_word(struct i40e_hw *hw, u16 offset,
 					 u16 *data);
 i40e_status i40e_read_nvm_buffer(struct i40e_hw *hw, u16 offset,
