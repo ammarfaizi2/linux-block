@@ -80,7 +80,7 @@ static wait_queue_head_t nvme_kthread_wait;
 static struct class *nvme_class;
 
 static void nvme_reset_failed_dev(struct work_struct *ws);
-static int nvme_process_cq(struct nvme_queue *nvmeq);
+static void nvme_process_cq(struct nvme_queue *nvmeq);
 
 struct async_cmd_info {
 	struct kthread_work work;
@@ -910,7 +910,7 @@ static int nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
 	return BLK_MQ_RQ_QUEUE_BUSY;
 }
 
-static int nvme_process_cq(struct nvme_queue *nvmeq)
+static void __nvme_process_cq(struct nvme_queue *nvmeq, unsigned int *tag)
 {
 	u16 head, phase;
 
@@ -928,6 +928,8 @@ static int nvme_process_cq(struct nvme_queue *nvmeq)
 			head = 0;
 			phase = !phase;
 		}
+		if (tag && *tag == cqe.command_id)
+			*tag = -1;
 		ctx = nvme_finish_cmd(nvmeq, cqe.command_id, &fn);
 		fn(nvmeq, ctx, &cqe);
 	}
@@ -938,15 +940,17 @@ static int nvme_process_cq(struct nvme_queue *nvmeq)
 	 * requires that 0.1% of your interrupts are handled, so this isn't
 	 * a big problem.
 	 */
-	if (head == nvmeq->cq_head && phase == nvmeq->cq_phase)
-		return 0;
+	if (!(head == nvmeq->cq_head && phase == nvmeq->cq_phase)) {
+		writel(head, nvmeq->q_db + nvmeq->dev->db_stride);
+		nvmeq->cq_head = head;
+		nvmeq->cq_phase = phase;
+		nvmeq->cqe_seen = 1;
+	}
+}
 
-	writel(head, nvmeq->q_db + nvmeq->dev->db_stride);
-	nvmeq->cq_head = head;
-	nvmeq->cq_phase = phase;
-
-	nvmeq->cqe_seen = 1;
-	return 1;
+static void nvme_process_cq(struct nvme_queue *nvmeq)
+{
+	__nvme_process_cq(nvmeq, NULL);
 }
 
 /* Admin queue isn't initialized as a request queue. If at some point this
@@ -2128,6 +2132,36 @@ static int nvme_kthread(void *data)
 	return 0;
 }
 
+static int nvme_io_poll(struct backing_dev_info *bdi, queue_cookie_t cookie)
+{
+	struct request_queue *q = container_of(bdi, struct request_queue,
+						backing_dev_info);
+	struct nvme_ns *ns = q->queuedata;
+	struct nvme_queue *nvmeq;
+	struct blk_mq_hw_ctx *hctx;
+
+	nvmeq = ns->dev->queues[1 + (cookie >> COOKIE_QUEUE_SHIFT)];
+	hctx = nvmeq->hctx;
+
+	hctx->poll_invoked++;
+
+	if ((le16_to_cpu(nvmeq->cqes[nvmeq->cq_head].status) & 1) ==
+	    nvmeq->cq_phase) {
+		unsigned int tag = cookie & 0xffff;
+
+		spin_lock_irq(&nvmeq->q_lock);
+		__nvme_process_cq(nvmeq, &tag);
+		spin_unlock_irq(&nvmeq->q_lock);
+
+		if (tag == -1) {
+			hctx->poll_success++;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static void nvme_alloc_ns(struct nvme_dev *dev, unsigned nsid)
 {
 	struct nvme_ns *ns;
@@ -2146,6 +2180,7 @@ static void nvme_alloc_ns(struct nvme_dev *dev, unsigned nsid)
 	queue_flag_set_unlocked(QUEUE_FLAG_SG_GAPS, ns->queue);
 	ns->dev = dev;
 	ns->queue->queuedata = ns;
+	ns->queue->backing_dev_info.io_poll = nvme_io_poll;
 
 	disk = alloc_disk_node(0, node);
 	if (!disk)
