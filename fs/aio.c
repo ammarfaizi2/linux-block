@@ -783,11 +783,17 @@ static int kill_ioctx(struct mm_struct *mm, struct kioctx *ctx,
  */
 ssize_t wait_on_sync_kiocb(struct kiocb *req)
 {
+	struct backing_dev_info *bdi = NULL;
+
+	if (req->ki_filp)
+		bdi = inode_to_bdi(req->ki_filp->f_inode);
+
 	while (!req->ki_ctx) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		if (req->ki_ctx)
 			break;
-		io_schedule();
+
+		bdi_io_wait(bdi, req->ki_queue_cookie);
 	}
 	__set_current_state(TASK_RUNNING);
 	return req->ki_user_data;

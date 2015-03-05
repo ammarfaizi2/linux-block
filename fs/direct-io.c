@@ -403,6 +403,9 @@ static inline void dio_bio_submit(struct dio *dio, struct dio_submit *sdio)
 	} else
 		dio->bio_cookie = submit_bio(dio->rw, bio);
 
+	if (dio->iocb)
+		dio->iocb->ki_queue_cookie = dio->bio_cookie;
+
 	sdio->bio = NULL;
 	sdio->boundary = 0;
 	sdio->logical_offset_in_bio = 0;

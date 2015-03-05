@@ -8,6 +8,7 @@
 #include <linux/rcupdate.h>
 
 #include <linux/atomic.h>
+#include <linux/blk_types.h>
 
 struct kioctx;
 struct kiocb;
@@ -52,6 +53,8 @@ struct kiocb {
 	 * this is the underlying eventfd context to deliver events to.
 	 */
 	struct eventfd_ctx	*ki_eventfd;
+
+	queue_cookie_t		ki_queue_cookie;
 };
 
 static inline bool is_sync_kiocb(struct kiocb *kiocb)
