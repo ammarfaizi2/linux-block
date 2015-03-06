@@ -71,7 +71,7 @@ static inline int connection_based(struct sock *sk)
 static int receiver_wake_function(wait_queue_t *wait, unsigned int mode, int sync,
 				  void *key)
 {
-	unsigned long bits = (unsigned long)key;
+	__poll_t bits = key_to_poll(key);
 
 	/*
 	 * Avoid a wakeup if event not interesting for us

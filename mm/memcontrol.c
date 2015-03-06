@@ -3808,7 +3808,7 @@ static int memcg_event_wake(wait_queue_t *wait, unsigned mode,
 	struct mem_cgroup_event *event =
 		container_of(wait, struct mem_cgroup_event, wait);
 	struct mem_cgroup *memcg = event->memcg;
-	unsigned long flags = (unsigned long)key;
+	__poll_t flags = key_to_poll(key);
 
 	if (flags & POLLHUP) {
 		/*

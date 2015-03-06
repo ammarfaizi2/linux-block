@@ -470,7 +470,7 @@ out_unlock:
  */
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 static inline void ep_wake_up_nested(wait_queue_head_t *wqueue,
-				     unsigned long events, int subclass)
+				     __poll_t events, int subclass)
 {
 	unsigned long flags;
 
@@ -480,7 +480,7 @@ static inline void ep_wake_up_nested(wait_queue_head_t *wqueue,
 }
 #else
 static inline void ep_wake_up_nested(wait_queue_head_t *wqueue,
-				     unsigned long events, int subclass)
+				     __poll_t events, int subclass)
 {
 	wake_up_poll(wqueue, events);
 }
@@ -1003,7 +1003,7 @@ static int ep_poll_callback(wait_queue_t *wait, unsigned mode, int sync, void *k
 	struct epitem *epi = ep_item_from_wait(wait);
 	struct eventpoll *ep = epi->ep;
 
-	if ((unsigned long)key & POLLFREE) {
+	if (key_to_poll(key) & POLLFREE) {
 		ep_pwq_from_wait(wait)->whead = NULL;
 		/*
 		 * whead = NULL above can race with ep_remove_wait_queue()
