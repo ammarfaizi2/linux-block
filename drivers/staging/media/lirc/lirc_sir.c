@@ -144,7 +144,7 @@ static bool debug;
 /* SECTION: Prototypes */
 
 /* Communication with user-space */
-static unsigned int lirc_poll(struct file *file, poll_table *wait);
+static __poll_t lirc_poll(struct file *file, poll_table *wait);
 static ssize_t lirc_read(struct file *file, char __user *buf, size_t count,
 			 loff_t *ppos);
 static ssize_t lirc_write(struct file *file, const char __user *buf, size_t n,
@@ -190,7 +190,7 @@ static void safe_udelay(unsigned long usecs)
 
 /* SECTION: Communication with user-space */
 
-static unsigned int lirc_poll(struct file *file, poll_table *wait)
+static __poll_t lirc_poll(struct file *file, poll_table *wait)
 {
 	poll_wait(file, &lirc_read_queue, wait);
 	if (rx_head != rx_tail)

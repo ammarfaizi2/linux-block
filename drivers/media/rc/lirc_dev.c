@@ -538,10 +538,10 @@ int lirc_dev_fop_close(struct inode *inode, struct file *file)
 }
 EXPORT_SYMBOL(lirc_dev_fop_close);
 
-unsigned int lirc_dev_fop_poll(struct file *file, poll_table *wait)
+__poll_t lirc_dev_fop_poll(struct file *file, poll_table *wait)
 {
 	struct irctl *ir = irctls[iminor(file_inode(file))];
-	unsigned int ret;
+	__poll_t ret;
 
 	if (!ir) {
 		printk(KERN_ERR "%s: called with invalid irctl\n", __func__);

@@ -1526,7 +1526,7 @@ static int omap1_cam_set_bus_param(struct soc_camera_device *icd)
 	return 0;
 }
 
-static unsigned int omap1_cam_poll(struct file *file, poll_table *pt)
+static __poll_t omap1_cam_poll(struct file *file, poll_table *pt)
 {
 	struct soc_camera_device *icd = file->private_data;
 	struct omap1_cam_buf *buf;

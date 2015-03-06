@@ -1789,7 +1789,7 @@ static int rcar_vin_try_fmt(struct soc_camera_device *icd,
 	return ret;
 }
 
-static unsigned int rcar_vin_poll(struct file *file, poll_table *pt)
+static __poll_t rcar_vin_poll(struct file *file, poll_table *pt)
 {
 	struct soc_camera_device *icd = file->private_data;
 

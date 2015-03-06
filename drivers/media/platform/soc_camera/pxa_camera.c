@@ -1567,7 +1567,7 @@ static int pxa_camera_reqbufs(struct soc_camera_device *icd,
 	return 0;
 }
 
-static unsigned int pxa_camera_poll(struct file *file, poll_table *pt)
+static __poll_t pxa_camera_poll(struct file *file, poll_table *pt)
 {
 	struct soc_camera_device *icd = file->private_data;
 	struct pxa_buffer *buf;

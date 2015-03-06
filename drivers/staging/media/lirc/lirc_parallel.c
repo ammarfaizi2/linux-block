@@ -451,7 +451,7 @@ out:
 	return ret;
 }
 
-static unsigned int lirc_poll(struct file *file, poll_table *wait)
+static __poll_t lirc_poll(struct file *file, poll_table *wait)
 {
 	poll_wait(file, &lirc_wait, wait);
 	if (rptr != wptr)

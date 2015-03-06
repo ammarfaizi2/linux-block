@@ -1277,7 +1277,7 @@ static int mx2_camera_querycap(struct soc_camera_host *ici,
 	return 0;
 }
 
-static unsigned int mx2_camera_poll(struct file *file, poll_table *pt)
+static __poll_t mx2_camera_poll(struct file *file, poll_table *pt)
 {
 	struct soc_camera_device *icd = file->private_data;
 

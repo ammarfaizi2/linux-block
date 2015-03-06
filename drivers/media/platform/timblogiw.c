@@ -721,7 +721,7 @@ static ssize_t timblogiw_read(struct file *file, char __user *data,
 		file->f_flags & O_NONBLOCK);
 }
 
-static unsigned int timblogiw_poll(struct file *file,
+static __poll_t timblogiw_poll(struct file *file,
 	struct poll_table_struct *wait)
 {
 	struct video_device *vdev = video_devdata(file);

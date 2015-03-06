@@ -765,12 +765,12 @@ EXPORT_SYMBOL_GPL(vb2_queue_release);
  * The return values from this function are intended to be directly returned
  * from poll handler in driver.
  */
-unsigned int vb2_poll(struct vb2_queue *q, struct file *file, poll_table *wait)
+__poll_t vb2_poll(struct vb2_queue *q, struct file *file, poll_table *wait)
 {
 	struct video_device *vfd = video_devdata(file);
-	unsigned long req_events = poll_requested_events(wait);
+	__poll_t req_events = poll_requested_events(wait);
 	struct vb2_buffer *vb = NULL;
-	unsigned int res = 0;
+	__poll_t res = 0;
 	unsigned long flags;
 
 	if (test_bit(V4L2_FL_USES_V4L2_FH, &vfd->flags)) {
@@ -1601,12 +1601,12 @@ exit:
 }
 EXPORT_SYMBOL_GPL(vb2_fop_read);
 
-unsigned int vb2_fop_poll(struct file *file, poll_table *wait)
+__poll_t vb2_fop_poll(struct file *file, poll_table *wait)
 {
 	struct video_device *vdev = video_devdata(file);
 	struct vb2_queue *q = vdev->queue;
 	struct mutex *lock = q->lock ? q->lock : vdev->lock;
-	unsigned res;
+	__poll_t res;
 	void *fileio;
 
 	/*

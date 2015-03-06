@@ -901,7 +901,7 @@ int v4l2_ctrl_subscribe_event(struct v4l2_fh *fh,
 				const struct v4l2_event_subscription *sub);
 
 /* Can be used as a poll function that just polls for control events. */
-unsigned int v4l2_ctrl_poll(struct file *file, struct poll_table_struct *wait);
+__poll_t v4l2_ctrl_poll(struct file *file, struct poll_table_struct *wait);
 
 /* Helpers for ioctl_ops. If hdl == NULL then they will all return -EINVAL. */
 int v4l2_queryctrl(struct v4l2_ctrl_handler *hdl, struct v4l2_queryctrl *qc);

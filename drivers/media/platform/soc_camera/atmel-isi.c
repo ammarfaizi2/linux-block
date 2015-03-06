@@ -750,7 +750,7 @@ static void isi_camera_remove_device(struct soc_camera_device *icd)
 		 icd->devnum);
 }
 
-static unsigned int isi_camera_poll(struct file *file, poll_table *pt)
+static __poll_t isi_camera_poll(struct file *file, poll_table *pt)
 {
 	struct soc_camera_device *icd = file->private_data;
 

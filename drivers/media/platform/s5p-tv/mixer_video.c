@@ -829,11 +829,11 @@ unlock:
 	return ret;
 }
 
-static unsigned int
+static __poll_t
 mxr_video_poll(struct file *file, struct poll_table_struct *wait)
 {
 	struct mxr_layer *layer = video_drvdata(file);
-	unsigned int res;
+	__poll_t res;
 
 	mxr_dbg(layer->mdev, "%s:%d\n", __func__, __LINE__);
 
