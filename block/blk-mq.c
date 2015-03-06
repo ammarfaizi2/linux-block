@@ -1226,7 +1226,8 @@ static struct request *blk_mq_map_request(struct request_queue *q,
  * but will attempt to bypass the hctx queueing if we can go straight to
  * hardware for SYNC IO.
  */
-static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
+static queue_cookie_t blk_mq_make_request(struct request_queue *q,
+					  struct bio *bio)
 {
 	const int is_sync = rw_is_sync(bio->bi_rw);
 	const int is_flush_fua = bio->bi_rw & (REQ_FLUSH | REQ_FUA);
@@ -1237,12 +1238,12 @@ static void blk_mq_make_request(struct request_queue *q, struct bio *bio)
 
 	if (bio_integrity_enabled(bio) && bio_integrity_prep(bio)) {
 		bio_endio(bio, -EIO);
-		return;
+		return QUEUE_COOKIE_NONE;
 	}
 
 	rq = blk_mq_map_request(q, bio, &data);
 	if (unlikely(!rq))
-		return;
+		return QUEUE_COOKIE_NONE;
 
 	if (unlikely(is_flush_fua)) {
 		blk_mq_bio_to_request(rq, bio);
@@ -1296,13 +1297,15 @@ run_queue:
 	}
 done:
 	blk_mq_put_ctx(data.ctx);
+	return QUEUE_COOKIE_NONE;
 }
 
 /*
  * Single hardware queue variant. This will attempt to use any per-process
  * plug for merging and IO deferral.
  */
-static void blk_sq_make_request(struct request_queue *q, struct bio *bio)
+static queue_cookie_t blk_sq_make_request(struct request_queue *q,
+					  struct bio *bio)
 {
 	const int is_sync = rw_is_sync(bio->bi_rw);
 	const int is_flush_fua = bio->bi_rw & (REQ_FLUSH | REQ_FUA);
@@ -1320,16 +1323,16 @@ static void blk_sq_make_request(struct request_queue *q, struct bio *bio)
 
 	if (bio_integrity_enabled(bio) && bio_integrity_prep(bio)) {
 		bio_endio(bio, -EIO);
-		return;
+		return QUEUE_COOKIE_NONE;
 	}
 
 	if (use_plug && !blk_queue_nomerges(q) &&
 	    blk_attempt_plug_merge(q, bio, &request_count))
-		return;
+		return QUEUE_COOKIE_NONE;
 
 	rq = blk_mq_map_request(q, bio, &data);
 	if (unlikely(!rq))
-		return;
+		return QUEUE_COOKIE_NONE;
 
 	if (unlikely(is_flush_fua)) {
 		blk_mq_bio_to_request(rq, bio);
@@ -1355,7 +1358,7 @@ static void blk_sq_make_request(struct request_queue *q, struct bio *bio)
 			}
 			list_add_tail(&rq->queuelist, &plug->mq_list);
 			blk_mq_put_ctx(data.ctx);
-			return;
+			return QUEUE_COOKIE_NONE;
 		}
 	}
 
@@ -1371,6 +1374,7 @@ run_queue:
 	}
 
 	blk_mq_put_ctx(data.ctx);
+	return QUEUE_COOKIE_NONE;
 }
 
 /*

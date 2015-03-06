@@ -27,7 +27,8 @@
 
 static int dcssblk_open(struct block_device *bdev, fmode_t mode);
 static void dcssblk_release(struct gendisk *disk, fmode_t mode);
-static void dcssblk_make_request(struct request_queue *q, struct bio *bio);
+static queue_cookie_t dcssblk_make_request(struct request_queue *q,
+						struct bio *bio);
 static long dcssblk_direct_access(struct block_device *bdev, sector_t secnum,
 				 void **kaddr, unsigned long *pfn, long size);
 
@@ -815,7 +816,7 @@ dcssblk_release(struct gendisk *disk, fmode_t mode)
 	up_write(&dcssblk_devices_sem);
 }
 
-static void
+static queue_cookie_t
 dcssblk_make_request(struct request_queue *q, struct bio *bio)
 {
 	struct dcssblk_dev_info *dev_info;
@@ -872,9 +873,10 @@ dcssblk_make_request(struct request_queue *q, struct bio *bio)
 		bytes_done += bvec.bv_len;
 	}
 	bio_endio(bio, 0);
-	return;
+	return QUEUE_COOKIE_NONE;
 fail:
 	bio_io_error(bio);
+	return QUEUE_COOKIE_NONE;
 }
 
 static long

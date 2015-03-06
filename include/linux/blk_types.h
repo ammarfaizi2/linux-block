@@ -246,4 +246,12 @@ enum rq_flag_bits {
 #define REQ_MQ_INFLIGHT		(1ULL << __REQ_MQ_INFLIGHT)
 #define REQ_NO_TIMEOUT		(1ULL << __REQ_NO_TIMEOUT)
 
+typedef unsigned int queue_cookie_t;
+#define QUEUE_COOKIE_NONE	-1U
+
+static inline bool blk_queue_cookie_valid(queue_cookie_t val)
+{
+	return val != QUEUE_COOKIE_NONE;
+}
+
 #endif /* __LINUX_BLK_TYPES_H */

@@ -119,13 +119,15 @@ static int simdisk_xfer_bio(struct simdisk *dev, struct bio *bio)
 	return 0;
 }
 
-static void simdisk_make_request(struct request_queue *q, struct bio *bio)
+static queue_cookie_t simdisk_make_request(struct request_queue *q,
+					   struct bio *bio)
 {
 	struct simdisk *dev = q->queuedata;
 	int status = simdisk_xfer_bio(dev, bio);
-	bio_endio(bio, status);
-}
 
+	bio_endio(bio, status);
+	return QUEUE_COOKIE_NONE;
+}
 
 static int simdisk_open(struct block_device *bdev, fmode_t mode)
 {

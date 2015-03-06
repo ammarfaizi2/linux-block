@@ -310,7 +310,7 @@ static struct nullb_queue *nullb_to_queue(struct nullb *nullb)
 	return &nullb->queues[index];
 }
 
-static void null_queue_bio(struct request_queue *q, struct bio *bio)
+static queue_cookie_t null_queue_bio(struct request_queue *q, struct bio *bio)
 {
 	struct nullb *nullb = q->queuedata;
 	struct nullb_queue *nq = nullb_to_queue(nullb);
@@ -320,6 +320,7 @@ static void null_queue_bio(struct request_queue *q, struct bio *bio)
 	cmd->bio = bio;
 
 	null_handle_cmd(cmd);
+	return QUEUE_COOKIE_NONE;
 }
 
 static int null_rq_prep_fn(struct request_queue *q, struct request *req)

@@ -597,7 +597,8 @@ out:
 	return next;
 }
 
-static void ps3vram_make_request(struct request_queue *q, struct bio *bio)
+static queue_cookie_t ps3vram_make_request(struct request_queue *q,
+					   struct bio *bio)
 {
 	struct ps3_system_bus_device *dev = q->queuedata;
 	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
@@ -611,11 +612,13 @@ static void ps3vram_make_request(struct request_queue *q, struct bio *bio)
 	spin_unlock_irq(&priv->lock);
 
 	if (busy)
-		return;
+		return QUEUE_COOKIE_NONE;
 
 	do {
 		bio = ps3vram_do_bio(dev, bio);
 	} while (bio);
+
+	return QUEUE_COOKIE_NONE;
 }
 
 static int ps3vram_probe(struct ps3_system_bus_device *dev)

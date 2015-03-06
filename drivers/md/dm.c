@@ -1722,7 +1722,7 @@ int dm_request_based(struct mapped_device *md)
 	return blk_queue_stackable(md->queue);
 }
 
-static void dm_request(struct request_queue *q, struct bio *bio)
+static queue_cookie_t dm_request(struct request_queue *q, struct bio *bio)
 {
 	struct mapped_device *md = q->queuedata;
 
@@ -1730,6 +1730,8 @@ static void dm_request(struct request_queue *q, struct bio *bio)
 		blk_queue_bio(q, bio);
 	else
 		_dm_request(q, bio);
+
+	return QUEUE_COOKIE_NONE;
 }
 
 static void dm_dispatch_clone_request(struct request *clone, struct request *rq)

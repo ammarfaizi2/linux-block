@@ -2440,7 +2440,7 @@ static void pkt_make_request_write(struct request_queue *q, struct bio *bio)
 	}
 }
 
-static void pkt_make_request(struct request_queue *q, struct bio *bio)
+static queue_cookie_t pkt_make_request(struct request_queue *q, struct bio *bio)
 {
 	struct pktcdvd_device *pd;
 	char b[BDEVNAME_SIZE];
@@ -2462,7 +2462,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
 	 */
 	if (bio_data_dir(bio) == READ) {
 		pkt_make_request_read(pd, bio);
-		return;
+		return QUEUE_COOKIE_NONE;
 	}
 
 	if (!test_bit(PACKET_WRITABLE, &pd->flags)) {
@@ -2496,12 +2496,11 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
 		pkt_make_request_write(q, split);
 	} while (split != bio);
 
-	return;
+	return QUEUE_COOKIE_NONE;
 end_io:
 	bio_io_error(bio);
+	return QUEUE_COOKIE_NONE;
 }
-
-
 
 static int pkt_merge_bvec(struct request_queue *q, struct bvec_merge_data *bmd,
 			  struct bio_vec *bvec)

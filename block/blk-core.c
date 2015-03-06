@@ -1563,7 +1563,7 @@ void init_request_from_bio(struct request *req, struct bio *bio)
 	blk_rq_bio_prep(req->q, req, bio);
 }
 
-void blk_queue_bio(struct request_queue *q, struct bio *bio)
+queue_cookie_t blk_queue_bio(struct request_queue *q, struct bio *bio)
 {
 	const bool sync = !!(bio->bi_rw & REQ_SYNC);
 	struct blk_plug *plug;
@@ -1580,7 +1580,7 @@ void blk_queue_bio(struct request_queue *q, struct bio *bio)
 
 	if (bio_integrity_enabled(bio) && bio_integrity_prep(bio)) {
 		bio_endio(bio, -EIO);
-		return;
+		return QUEUE_COOKIE_NONE;
 	}
 
 	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA)) {
@@ -1595,7 +1595,7 @@ void blk_queue_bio(struct request_queue *q, struct bio *bio)
 	 */
 	if (!blk_queue_nomerges(q) &&
 	    blk_attempt_plug_merge(q, bio, &request_count))
-		return;
+		return QUEUE_COOKIE_NONE;
 
 	spin_lock_irq(q->queue_lock);
 
@@ -1670,6 +1670,8 @@ get_rq:
 out_unlock:
 		spin_unlock_irq(q->queue_lock);
 	}
+
+	return QUEUE_COOKIE_NONE;
 }
 EXPORT_SYMBOL_GPL(blk_queue_bio);	/* for device mapper only */
 
@@ -1886,12 +1888,13 @@ end_io:
  * a lower device by calling into generic_make_request recursively, which
  * means the bio should NOT be touched after the call to ->make_request_fn.
  */
-void generic_make_request(struct bio *bio)
+queue_cookie_t generic_make_request(struct bio *bio)
 {
 	struct bio_list bio_list_on_stack;
+	queue_cookie_t ret;
 
 	if (!generic_make_request_checks(bio))
-		return;
+		return QUEUE_COOKIE_NONE;
 
 	/*
 	 * We only want one ->make_request_fn to be active at a time, else
@@ -1905,7 +1908,7 @@ void generic_make_request(struct bio *bio)
 	 */
 	if (current->bio_list) {
 		bio_list_add(current->bio_list, bio);
-		return;
+		return QUEUE_COOKIE_NONE;
 	}
 
 	/* following loop may be a bit non-obvious, and so deserves some
@@ -1928,11 +1931,13 @@ void generic_make_request(struct bio *bio)
 	do {
 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
-		q->make_request_fn(q, bio);
+		ret = q->make_request_fn(q, bio);
 
 		bio = bio_list_pop(current->bio_list);
 	} while (bio);
 	current->bio_list = NULL; /* deactivate */
+
+	return ret;
 }
 EXPORT_SYMBOL(generic_make_request);
 
@@ -1946,7 +1951,7 @@ EXPORT_SYMBOL(generic_make_request);
  * interfaces; @bio must be presetup and ready for I/O.
  *
  */
-void submit_bio(int rw, struct bio *bio)
+queue_cookie_t submit_bio(int rw, struct bio *bio)
 {
 	bio->bi_rw |= rw;
 
@@ -1980,7 +1985,7 @@ void submit_bio(int rw, struct bio *bio)
 		}
 	}
 
-	generic_make_request(bio);
+	return generic_make_request(bio);
 }
 EXPORT_SYMBOL(submit_bio);
 
