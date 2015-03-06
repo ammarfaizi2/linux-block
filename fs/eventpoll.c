@@ -841,7 +841,7 @@ static int ep_poll_readyevents_proc(void *priv, void *cookie, int call_nests)
 				  call_nests + 1, arg->locked);
 }
 
-static unsigned int ep_eventpoll_poll(struct file *file, poll_table *wait)
+static __poll_t ep_eventpoll_poll(struct file *file, poll_table *wait)
 {
 	int pollflags;
 	struct eventpoll *ep = file->private_data;

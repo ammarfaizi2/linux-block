@@ -779,7 +779,7 @@ void kernfs_unmap_bin_file(struct kernfs_node *kn)
  * to see if it supports poll (Neither 'poll' nor 'select' return
  * an appropriate error code).  When in doubt, set a suitable timeout value.
  */
-static unsigned int kernfs_fop_poll(struct file *filp, poll_table *wait)
+static __poll_t kernfs_fop_poll(struct file *filp, poll_table *wait)
 {
 	struct kernfs_open_file *of = kernfs_of(filp);
 	struct kernfs_node *kn = filp->f_path.dentry->d_fsdata;
