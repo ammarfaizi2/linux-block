@@ -1554,8 +1554,8 @@ int sock_no_connect(struct socket *, struct sockaddr *, int, int);
 int sock_no_socketpair(struct socket *, struct socket *);
 int sock_no_accept(struct socket *, struct socket *, int);
 int sock_no_getname(struct socket *, struct sockaddr *, int *, int);
-unsigned int sock_no_poll(struct file *, struct socket *,
-			  struct poll_table_struct *);
+__poll_t sock_no_poll(struct file *, struct socket *,
+		      struct poll_table_struct *);
 int sock_no_ioctl(struct socket *, unsigned int, unsigned long);
 int sock_no_listen(struct socket *, int);
 int sock_no_shutdown(struct socket *, int);

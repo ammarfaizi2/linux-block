@@ -306,10 +306,9 @@ EXPORT_SYMBOL_GPL(dccp_disconnect);
  *	take care of normal races (between the test and the event) and we don't
  *	go look at any of the socket buffers directly.
  */
-unsigned int dccp_poll(struct file *file, struct socket *sock,
-		       poll_table *wait)
+__poll_t dccp_poll(struct file *file, struct socket *sock, poll_table *wait)
 {
-	unsigned int mask;
+	__poll_t mask;
 	struct sock *sk = sock->sk;
 
 	sock_poll_wait(file, sk_sleep(sk), wait);

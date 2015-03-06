@@ -424,8 +424,8 @@ void tcp_fetch_timewait_stamp(struct sock *sk, struct dst_entry *dst);
 void tcp_disable_fack(struct tcp_sock *tp);
 void tcp_close(struct sock *sk, long timeout);
 void tcp_init_sock(struct sock *sk);
-unsigned int tcp_poll(struct file *file, struct socket *sock,
-		      struct poll_table_struct *wait);
+__poll_t tcp_poll(struct file *file, struct socket *sock,
+		  struct poll_table_struct *wait);
 int tcp_getsockopt(struct sock *sk, int level, int optname,
 		   char __user *optval, int __user *optlen);
 int tcp_setsockopt(struct sock *sk, int level, int optname,

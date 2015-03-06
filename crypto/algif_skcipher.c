@@ -707,13 +707,13 @@ static int skcipher_recvmsg(struct socket *sock, struct msghdr *msg,
 		skcipher_recvmsg_sync(sock, msg, flags);
 }
 
-static unsigned int skcipher_poll(struct file *file, struct socket *sock,
-				  poll_table *wait)
+static __poll_t skcipher_poll(struct file *file, struct socket *sock,
+			      poll_table *wait)
 {
 	struct sock *sk = sock->sk;
 	struct alg_sock *ask = alg_sk(sk);
 	struct skcipher_ctx *ctx = ask->private;
-	unsigned int mask;
+	__poll_t mask;
 
 	sock_poll_wait(file, sk_sleep(sk), wait);
 	mask = 0;

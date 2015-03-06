@@ -585,10 +585,10 @@ error:
 /*
  * permit an RxRPC socket to be polled
  */
-static unsigned int rxrpc_poll(struct file *file, struct socket *sock,
-			       poll_table *wait)
+static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
+			   poll_table *wait)
 {
-	unsigned int mask;
+	__poll_t mask;
 	struct sock *sk = sock->sk;
 
 	sock_poll_wait(file, sk_sleep(sk), wait);

@@ -665,12 +665,12 @@ static bool netlink_dump_space(struct netlink_sock *nlk)
 	return hdr->nm_status == NL_MMAP_STATUS_UNUSED;
 }
 
-static unsigned int netlink_poll(struct file *file, struct socket *sock,
-				 poll_table *wait)
+static __poll_t netlink_poll(struct file *file, struct socket *sock,
+			     poll_table *wait)
 {
 	struct sock *sk = sock->sk;
 	struct netlink_sock *nlk = nlk_sk(sk);
-	unsigned int mask;
+	__poll_t mask;
 	int err;
 
 	if (nlk->rx_ring.pg_vec != NULL) {
