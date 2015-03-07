@@ -399,7 +399,7 @@ static long sound_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	return ret;
 }
 
-static unsigned int sound_poll(struct file *file, poll_table * wait)
+static __poll_t sound_poll(struct file *file, poll_table * wait)
 {
 	struct inode *inode = file_inode(file);
 	int dev = iminor(inode);

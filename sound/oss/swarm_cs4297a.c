@@ -1902,13 +1902,13 @@ static ssize_t cs4297a_write(struct file *file, const char *buffer,
 }
 
 
-static unsigned int cs4297a_poll(struct file *file,
+static __poll_t cs4297a_poll(struct file *file,
 				struct poll_table_struct *wait)
 {
 	struct cs4297a_state *s =
 	    (struct cs4297a_state *) file->private_data;
 	unsigned long flags;
-	unsigned int mask = 0;
+	__poll_t mask = 0;
 
 	CS_DBGOUT(CS_FUNCTION | CS_WAVE_WRITE | CS_WAVE_READ, 4,
 		  printk(KERN_INFO "cs4297a: cs4297a_poll()+\n"));

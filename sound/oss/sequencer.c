@@ -1518,10 +1518,10 @@ int sequencer_ioctl(int dev, struct file *file, unsigned int cmd, void __user *a
 }
 
 /* No kernel lock - we're using the global irq lock here */
-unsigned int sequencer_poll(int dev, struct file *file, poll_table * wait)
+__poll_t sequencer_poll(int dev, struct file *file, poll_table * wait)
 {
 	unsigned long flags;
-	unsigned int mask = 0;
+	__poll_t mask = 0;
 
 	dev = dev >> 4;
 

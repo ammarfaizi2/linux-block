@@ -1193,7 +1193,7 @@ void DMAbuf_init(int dev, int dma1, int dma2)
 }
 
 /* No kernel lock - DMAbuf_activate_recording protected by global cli/sti */
-static unsigned int poll_input(struct file * file, int dev, poll_table *wait)
+static __poll_t poll_input(struct file * file, int dev, poll_table *wait)
 {
 	struct audio_operations *adev = audio_devs[dev];
 	struct dma_buffparms *dmap = adev->dmap_in;
@@ -1222,7 +1222,7 @@ static unsigned int poll_input(struct file * file, int dev, poll_table *wait)
 	return POLLIN | POLLRDNORM;
 }
 
-static unsigned int poll_output(struct file * file, int dev, poll_table *wait)
+static __poll_t poll_output(struct file * file, int dev, poll_table *wait)
 {
 	struct audio_operations *adev = audio_devs[dev];
 	struct dma_buffparms *dmap = adev->dmap_out;
@@ -1243,7 +1243,7 @@ static unsigned int poll_output(struct file * file, int dev, poll_table *wait)
 	return POLLOUT | POLLWRNORM;
 }
 
-unsigned int DMAbuf_poll(struct file * file, int dev, poll_table *wait)
+__poll_t DMAbuf_poll(struct file * file, int dev, poll_table *wait)
 {
 	struct audio_operations *adev = audio_devs[dev];
 	poll_wait(file, &adev->poll_sleeper, wait);
