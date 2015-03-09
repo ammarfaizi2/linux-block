@@ -4019,7 +4019,6 @@ static void __init rcu_init_geometry(void)
 {
 	ulong d;
 	int i;
-	int j;
 	int rcu_capacity[MAX_RCU_LVLS + 1];
 
 	/*
@@ -4070,24 +4069,21 @@ static void __init rcu_init_geometry(void)
 		return;
 	}
 
+	/* Calculate the number of levels in the tree. */
+	for (i = 0; nr_cpu_ids > rcu_capacity[i]; i++) {
+	}
+	rcu_num_lvls = i;
+
 	/* Calculate the number of rcu_nodes at each level of the tree. */
-	for (i = 1; i <= MAX_RCU_LVLS; i++)
-		if (nr_cpu_ids <= rcu_capacity[i]) {
-			for (j = 0; j <= i; j++) {
-				int cap = rcu_capacity[i - j];
-				num_rcu_lvl[j] = DIV_ROUND_UP(nr_cpu_ids, cap);
-			}
-			rcu_num_lvls = i;
-			for (j = i + 1; j <= MAX_RCU_LVLS; j++)
-				num_rcu_lvl[j] = 0;
-			break;
-		}
+	for (i = 0; i < rcu_num_lvls; i++) {
+		int cap = rcu_capacity[rcu_num_lvls - i];
+		num_rcu_lvl[i] = DIV_ROUND_UP(nr_cpu_ids, cap);
+	}
 
 	/* Calculate the total number of rcu_node structures. */
 	rcu_num_nodes = 0;
-	for (i = 0; i <= MAX_RCU_LVLS; i++)
+	for (i = 0; i < rcu_num_lvls; i++)
 		rcu_num_nodes += num_rcu_lvl[i];
-	rcu_num_nodes -= nr_cpu_ids;
 }
 
 void __init rcu_init(void)
