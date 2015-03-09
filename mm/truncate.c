@@ -108,9 +108,13 @@ void do_invalidatepage(struct page *page, unsigned int offset,
  */
 void cancel_dirty_page(struct page *page, unsigned int account_size)
 {
+	struct mem_cgroup *memcg;
+
+	memcg = mem_cgroup_begin_page_stat(page);
 	if (TestClearPageDirty(page)) {
 		struct address_space *mapping = page->mapping;
 		if (mapping && mapping_cap_account_dirty(mapping)) {
+			mem_cgroup_dec_page_stat(memcg, MEM_CGROUP_STAT_DIRTY);
 			dec_zone_page_state(page, NR_FILE_DIRTY);
 			dec_bdi_stat(inode_to_bdi(mapping->host),
 					BDI_RECLAIMABLE);
@@ -118,6 +122,7 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 				task_io_account_cancelled_write(account_size);
 		}
 	}
+	mem_cgroup_end_page_stat(memcg);
 }
 EXPORT_SYMBOL(cancel_dirty_page);
 
@@ -535,19 +540,24 @@ EXPORT_SYMBOL(invalidate_mapping_pages);
 static int
 invalidate_complete_page2(struct address_space *mapping, struct page *page)
 {
+	struct mem_cgroup *memcg;
+	unsigned long flags;
+
 	if (page->mapping != mapping)
 		return 0;
 
 	if (page_has_private(page) && !try_to_release_page(page, GFP_KERNEL))
 		return 0;
 
-	spin_lock_irq(&mapping->tree_lock);
+	memcg = mem_cgroup_begin_page_stat(page);
+	spin_lock_irqsave(&mapping->tree_lock, flags);
 	if (PageDirty(page))
 		goto failed;
 
 	BUG_ON(page_has_private(page));
-	__delete_from_page_cache(page, NULL);
-	spin_unlock_irq(&mapping->tree_lock);
+	__delete_from_page_cache(page, NULL, memcg);
+	spin_unlock_irqrestore(&mapping->tree_lock, flags);
+	mem_cgroup_end_page_stat(memcg);
 
 	if (mapping->a_ops->freepage)
 		mapping->a_ops->freepage(page);
@@ -555,7 +565,8 @@ invalidate_complete_page2(struct address_space *mapping, struct page *page)
 	page_cache_release(page);	/* pagecache ref */
 	return 1;
 failed:
-	spin_unlock_irq(&mapping->tree_lock);
+	spin_unlock_irqrestore(&mapping->tree_lock, flags);
+	mem_cgroup_end_page_stat(memcg);
 	return 0;
 }
 

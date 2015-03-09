@@ -84,6 +84,7 @@ static const char * const mem_cgroup_stat_names[] = {
 	"rss",
 	"rss_huge",
 	"mapped_file",
+	"dirty",
 	"writeback",
 	"swap",
 };
@@ -2002,6 +2003,7 @@ again:
 
 	return memcg;
 }
+EXPORT_SYMBOL(mem_cgroup_begin_page_stat);
 
 /**
  * mem_cgroup_end_page_stat - finish a page state statistics transaction
@@ -2020,6 +2022,7 @@ void mem_cgroup_end_page_stat(struct mem_cgroup *memcg)
 
 	rcu_read_unlock();
 }
+EXPORT_SYMBOL(mem_cgroup_end_page_stat);
 
 /**
  * mem_cgroup_update_page_stat - update page state statistics
@@ -2800,6 +2803,7 @@ static int mem_cgroup_move_account(struct page *page,
 {
 	unsigned long flags;
 	int ret;
+	bool anon;
 
 	VM_BUG_ON(from == to);
 	VM_BUG_ON_PAGE(PageLRU(page), page);
@@ -2825,13 +2829,31 @@ static int mem_cgroup_move_account(struct page *page,
 	if (page->mem_cgroup != from)
 		goto out_unlock;
 
+	anon = PageAnon(page);
+
 	spin_lock_irqsave(&from->move_lock, flags);
 
-	if (!PageAnon(page) && page_mapped(page)) {
+	if (!anon && page_mapped(page)) {
 		__this_cpu_sub(from->stat->count[MEM_CGROUP_STAT_FILE_MAPPED],
 			       nr_pages);
 		__this_cpu_add(to->stat->count[MEM_CGROUP_STAT_FILE_MAPPED],
 			       nr_pages);
+	}
+
+	/*
+	 * move_lock grabbed above and caller set from->moving_account, so
+	 * mem_cgroup_update_page_stat() will serialize updates to PageDirty.
+	 * So mapping should be stable for dirty pages.
+	 */
+	if (!anon && PageDirty(page)) {
+		struct address_space *mapping = page_mapping(page);
+
+		if (mapping_cap_account_dirty(mapping)) {
+			__this_cpu_sub(from->stat->count[MEM_CGROUP_STAT_DIRTY],
+				       nr_pages);
+			__this_cpu_add(to->stat->count[MEM_CGROUP_STAT_DIRTY],
+				       nr_pages);
+		}
 	}
 
 	if (PageWriteback(page)) {
