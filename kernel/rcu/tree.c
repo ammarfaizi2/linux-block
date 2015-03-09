@@ -4054,16 +4054,19 @@ static void __init rcu_init_geometry(void)
 		rcu_capacity[i] = rcu_capacity[i - 1] * CONFIG_RCU_FANOUT;
 
 	/*
+	 * The tree must be able to accommodate the configured number of CPUs.
+	 * If this limit is exceeded than we have a serious problem elsewhere.
+	 *
 	 * The boot-time rcu_fanout_leaf parameter is only permitted
 	 * to increase the leaf-level fanout, not decrease it.  Of course,
 	 * the leaf-level fanout cannot exceed the number of bits in
-	 * the rcu_node masks.  Finally, the tree must be able to accommodate
-	 * the configured number of CPUs.  Complain and fall back to the
-	 * compile-time values if these limits are exceeded.
+	 * the rcu_node masks.  Complain and fall back to the compile-
+	 * time values if these limits are exceeded.
 	 */
-	if (rcu_fanout_leaf < CONFIG_RCU_FANOUT_LEAF ||
-	    rcu_fanout_leaf > sizeof(unsigned long) * 8 ||
-	    n > rcu_capacity[MAX_RCU_LVLS]) {
+	if (n > rcu_capacity[MAX_RCU_LVLS])
+		panic("rcu_init_geometry: rcu_capacity[] is too small");
+	else if (rcu_fanout_leaf < CONFIG_RCU_FANOUT_LEAF ||
+		 rcu_fanout_leaf > sizeof(unsigned long) * 8) {
 		WARN_ON(1);
 		return;
 	}
