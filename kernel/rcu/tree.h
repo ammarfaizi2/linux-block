@@ -35,7 +35,6 @@
  * In practice, this did work well going from three levels to four.
  * Of course, your mileage may vary.
  */
-#define MAX_RCU_LVLS 4
 #define RCU_FANOUT_1	      (CONFIG_RCU_FANOUT_LEAF)
 #define RCU_FANOUT_2	      (RCU_FANOUT_1 * CONFIG_RCU_FANOUT)
 #define RCU_FANOUT_3	      (RCU_FANOUT_2 * CONFIG_RCU_FANOUT)
