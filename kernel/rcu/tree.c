@@ -2162,14 +2162,14 @@ static void rcu_report_qs_rsp(struct rcu_state *rsp, unsigned long flags)
  */
 static void
 rcu_report_qs_rnp(unsigned long mask, struct rcu_state *rsp,
-		  struct rcu_node *rnp, unsigned long flags)
+		  struct rcu_node *rnp, unsigned long gps, unsigned long flags)
 	__releases(rnp->lock)
 {
 	struct rcu_node *rnp_c;
 
 	/* Walk up the rcu_node hierarchy. */
 	for (;;) {
-		if (!(rnp->qsmask & mask)) {
+		if (!(rnp->qsmask & mask) || rnp->gpnum != gps) {
 
 			/* Our bit has already been cleared, so done. */
 			raw_spin_unlock_irqrestore(&rnp->lock, flags);
@@ -2220,6 +2220,7 @@ static void rcu_report_unblock_qs_rnp(struct rcu_state *rsp,
 				      struct rcu_node *rnp, unsigned long flags)
 	__releases(rnp->lock)
 {
+	unsigned long gps;
 	unsigned long mask;
 	struct rcu_node *rnp_p;
 
@@ -2240,11 +2241,12 @@ static void rcu_report_unblock_qs_rnp(struct rcu_state *rsp,
 	}
 
 	/* Report up the rest of the hierarchy. */
+	gps = rnp->gpnum;
 	mask = rnp->grpmask;
 	raw_spin_unlock(&rnp->lock);	/* irqs remain disabled. */
 	raw_spin_lock(&rnp_p->lock);	/* irqs already disabled. */
 	smp_mb__after_unlock_lock();
-	rcu_report_qs_rnp(mask, rsp, rnp_p, flags);
+	rcu_report_qs_rnp(mask, rsp, rnp_p, gps, flags);
 }
 
 /*
@@ -2295,7 +2297,8 @@ rcu_report_qs_rdp(int cpu, struct rcu_state *rsp, struct rcu_data *rdp)
 		 */
 		needwake = rcu_accelerate_cbs(rsp, rnp, rdp);
 
-		rcu_report_qs_rnp(mask, rsp, rnp, flags); /* rlses rnp->lock */
+		rcu_report_qs_rnp(mask, rsp, rnp, rnp->gpnum, flags);
+		/* ^^^ Released rnp->lock */
 		if (needwake)
 			rcu_gp_kthread_wake(rsp);
 	}
@@ -2754,8 +2757,8 @@ static void force_qs_rnp(struct rcu_state *rsp,
 			}
 		}
 		if (mask != 0) {
-			/* Idle/offline CPUs, report. */
-			rcu_report_qs_rnp(mask, rsp, rnp, flags);
+			/* Idle/offline CPUs, report (releases rnp->lock. */
+			rcu_report_qs_rnp(mask, rsp, rnp, rnp->gpnum, flags);
 		} else {
 			/* Nothing to do here, so just drop the lock. */
 			raw_spin_unlock_irqrestore(&rnp->lock, flags);
