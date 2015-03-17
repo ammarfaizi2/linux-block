@@ -1708,7 +1708,7 @@ struct block_device *lookup_bdev(const char *pathname)
 	if (error)
 		return ERR_PTR(error);
 
-	inode = path.dentry->d_inode;
+	inode = d_inode(path.dentry);
 	error = -ENOTBLK;
 	if (!S_ISBLK(inode->i_mode))
 		goto fail;
