@@ -17,9 +17,11 @@
 #include "core.h"
 #include "debug.h"
 #include "hw.h"
+#include "mac.h"
 #include "wmi.h"
 #include "wmi-ops.h"
 #include "wmi-tlv.h"
+#include "p2p.h"
 
 /***************/
 /* TLV helpers */
@@ -62,6 +64,10 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		= { .min_len = sizeof(struct wmi_tlv_bcn_tx_status_ev) },
 	[WMI_TLV_TAG_STRUCT_DIAG_DATA_CONTAINER_EVENT]
 		= { .min_len = sizeof(struct wmi_tlv_diag_data_ev) },
+	[WMI_TLV_TAG_STRUCT_P2P_NOA_EVENT]
+		= { .min_len = sizeof(struct wmi_tlv_p2p_noa_ev) },
+	[WMI_TLV_TAG_STRUCT_ROAM_EVENT]
+		= { .min_len = sizeof(struct wmi_tlv_roam_ev) },
 };
 
 static int
@@ -168,6 +174,7 @@ static int ath10k_wmi_tlv_event_bcn_tx_status(struct ath10k *ar,
 {
 	const void **tb;
 	const struct wmi_tlv_bcn_tx_status_ev *ev;
+	struct ath10k_vif *arvif;
 	u32 vdev_id, tx_status;
 	int ret;
 
@@ -200,6 +207,10 @@ static int ath10k_wmi_tlv_event_bcn_tx_status(struct ath10k *ar,
 			    vdev_id, tx_status);
 		break;
 	}
+
+	arvif = ath10k_get_arvif(ar, vdev_id);
+	if (arvif && arvif->is_up && arvif->vif->csa_active)
+		ieee80211_queue_work(ar->hw, &arvif->ap_csa_work);
 
 	kfree(tb);
 	return 0;
@@ -291,6 +302,41 @@ static int ath10k_wmi_tlv_event_diag(struct ath10k *ar,
 
 	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv diag event len %d\n", len);
 	trace_ath10k_wmi_diag(ar, data, len);
+
+	kfree(tb);
+	return 0;
+}
+
+static int ath10k_wmi_tlv_event_p2p_noa(struct ath10k *ar,
+					struct sk_buff *skb)
+{
+	const void **tb;
+	const struct wmi_tlv_p2p_noa_ev *ev;
+	const struct wmi_p2p_noa_info *noa;
+	int ret, vdev_id;
+
+	tb = ath10k_wmi_tlv_parse_alloc(ar, skb->data, skb->len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath10k_warn(ar, "failed to parse tlv: %d\n", ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TLV_TAG_STRUCT_P2P_NOA_EVENT];
+	noa = tb[WMI_TLV_TAG_STRUCT_P2P_NOA_INFO];
+
+	if (!ev || !noa) {
+		kfree(tb);
+		return -EPROTO;
+	}
+
+	vdev_id = __le32_to_cpu(ev->vdev_id);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI,
+		   "wmi tlv p2p noa vdev_id %i descriptors %hhu\n",
+		   vdev_id, noa->num_descriptors);
+
+	ath10k_p2p_noa_update_by_vdev_id(ar, vdev_id, noa);
 
 	kfree(tb);
 	return 0;
@@ -416,6 +462,9 @@ static void ath10k_wmi_tlv_op_rx(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	case WMI_TLV_DIAG_EVENTID:
 		ath10k_wmi_tlv_event_diag(ar, skb);
+		break;
+	case WMI_TLV_P2P_NOA_EVENTID:
+		ath10k_wmi_tlv_event_p2p_noa(ar, skb);
 		break;
 	default:
 		ath10k_warn(ar, "Unknown eventid: %d\n", id);
@@ -1007,6 +1056,35 @@ static int ath10k_wmi_tlv_op_pull_fw_stats(struct ath10k *ar,
 		dst->peer_rx_rate = __le32_to_cpu(src->peer_rx_rate);
 		list_add_tail(&dst->list, &stats->peers);
 	}
+
+	kfree(tb);
+	return 0;
+}
+
+static int ath10k_wmi_tlv_op_pull_roam_ev(struct ath10k *ar,
+					  struct sk_buff *skb,
+					  struct wmi_roam_ev_arg *arg)
+{
+	const void **tb;
+	const struct wmi_tlv_roam_ev *ev;
+	int ret;
+
+	tb = ath10k_wmi_tlv_parse_alloc(ar, skb->data, skb->len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath10k_warn(ar, "failed to parse tlv: %d\n", ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TLV_TAG_STRUCT_ROAM_EVENT];
+	if (!ev) {
+		kfree(tb);
+		return -EPROTO;
+	}
+
+	arg->vdev_id = ev->vdev_id;
+	arg->reason = ev->reason;
+	arg->rssi = ev->rssi;
 
 	kfree(tb);
 	return 0;
@@ -2027,7 +2105,7 @@ ath10k_wmi_tlv_op_gen_set_ap_ps(struct ath10k *ar, u32 vdev_id, const u8 *mac,
 	if (!mac)
 		return ERR_PTR(-EINVAL);
 
-	skb = ath10k_wmi_alloc_skb(ar, sizeof(*cmd));
+	skb = ath10k_wmi_alloc_skb(ar, sizeof(*tlv) + sizeof(*cmd));
 	if (!skb)
 		return ERR_PTR(-ENOMEM);
 
@@ -2736,6 +2814,7 @@ static const struct wmi_ops wmi_tlv_ops = {
 	.pull_svc_rdy = ath10k_wmi_tlv_op_pull_svc_rdy_ev,
 	.pull_rdy = ath10k_wmi_tlv_op_pull_rdy_ev,
 	.pull_fw_stats = ath10k_wmi_tlv_op_pull_fw_stats,
+	.pull_roam_ev = ath10k_wmi_tlv_op_pull_roam_ev,
 
 	.gen_pdev_suspend = ath10k_wmi_tlv_op_gen_pdev_suspend,
 	.gen_pdev_resume = ath10k_wmi_tlv_op_gen_pdev_resume,

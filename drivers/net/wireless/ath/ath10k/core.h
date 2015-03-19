@@ -43,6 +43,7 @@
 #define ATH10K_SCAN_ID 0
 #define WMI_READY_TIMEOUT (5 * HZ)
 #define ATH10K_FLUSH_TIMEOUT_HZ (5*HZ)
+#define ATH10K_CONNECTION_LOSS_HZ (3*HZ)
 #define ATH10K_NUM_CHANS 38
 
 /* Antenna noise floor */
@@ -341,6 +342,8 @@ struct ath10k_vif {
 	int num_legacy_stations;
 	int txpower;
 	struct wmi_wmm_params_all_arg wmm_params;
+	struct work_struct ap_csa_work;
+	struct delayed_work connection_loss_work;
 };
 
 struct ath10k_vif_iter {

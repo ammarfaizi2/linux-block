@@ -26,6 +26,7 @@
 #include "mac.h"
 #include "testmode.h"
 #include "wmi-ops.h"
+#include "p2p.h"
 
 /* MAIN WMI cmd track */
 static struct wmi_cmd_map wmi_cmd_map = {
@@ -1585,6 +1586,9 @@ int ath10k_wmi_event_mgmt_rx(struct ath10k *ar, struct sk_buff *skb)
 		}
 	}
 
+	if (ieee80211_is_beacon(hdr->frame_control))
+		ath10k_mac_handle_beacon(ar, skb);
+
 	ath10k_dbg(ar, ATH10K_DBG_MGMT,
 		   "event mgmt rx skb %p len %d ftype %02x stype %02x\n",
 		   skb, skb->len,
@@ -2276,109 +2280,25 @@ static void ath10k_wmi_update_tim(struct ath10k *ar,
 		   tim->bitmap_ctrl, pvm_len);
 }
 
-static void ath10k_p2p_fill_noa_ie(u8 *data, u32 len,
-				   const struct wmi_p2p_noa_info *noa)
-{
-	struct ieee80211_p2p_noa_attr *noa_attr;
-	u8  ctwindow_oppps = noa->ctwindow_oppps;
-	u8 ctwindow = ctwindow_oppps >> WMI_P2P_OPPPS_CTWINDOW_OFFSET;
-	bool oppps = !!(ctwindow_oppps & WMI_P2P_OPPPS_ENABLE_BIT);
-	__le16 *noa_attr_len;
-	u16 attr_len;
-	u8 noa_descriptors = noa->num_descriptors;
-	int i;
-
-	/* P2P IE */
-	data[0] = WLAN_EID_VENDOR_SPECIFIC;
-	data[1] = len - 2;
-	data[2] = (WLAN_OUI_WFA >> 16) & 0xff;
-	data[3] = (WLAN_OUI_WFA >> 8) & 0xff;
-	data[4] = (WLAN_OUI_WFA >> 0) & 0xff;
-	data[5] = WLAN_OUI_TYPE_WFA_P2P;
-
-	/* NOA ATTR */
-	data[6] = IEEE80211_P2P_ATTR_ABSENCE_NOTICE;
-	noa_attr_len = (__le16 *)&data[7]; /* 2 bytes */
-	noa_attr = (struct ieee80211_p2p_noa_attr *)&data[9];
-
-	noa_attr->index = noa->index;
-	noa_attr->oppps_ctwindow = ctwindow;
-	if (oppps)
-		noa_attr->oppps_ctwindow |= IEEE80211_P2P_OPPPS_ENABLE_BIT;
-
-	for (i = 0; i < noa_descriptors; i++) {
-		noa_attr->desc[i].count =
-			__le32_to_cpu(noa->descriptors[i].type_count);
-		noa_attr->desc[i].duration = noa->descriptors[i].duration;
-		noa_attr->desc[i].interval = noa->descriptors[i].interval;
-		noa_attr->desc[i].start_time = noa->descriptors[i].start_time;
-	}
-
-	attr_len = 2; /* index + oppps_ctwindow */
-	attr_len += noa_descriptors * sizeof(struct ieee80211_p2p_noa_desc);
-	*noa_attr_len = __cpu_to_le16(attr_len);
-}
-
-static u32 ath10k_p2p_calc_noa_ie_len(const struct wmi_p2p_noa_info *noa)
-{
-	u32 len = 0;
-	u8 noa_descriptors = noa->num_descriptors;
-	u8 opp_ps_info = noa->ctwindow_oppps;
-	bool opps_enabled = !!(opp_ps_info & WMI_P2P_OPPPS_ENABLE_BIT);
-
-	if (!noa_descriptors && !opps_enabled)
-		return len;
-
-	len += 1 + 1 + 4; /* EID + len + OUI */
-	len += 1 + 2; /* noa attr  + attr len */
-	len += 1 + 1; /* index + oppps_ctwindow */
-	len += noa_descriptors * sizeof(struct ieee80211_p2p_noa_desc);
-
-	return len;
-}
-
 static void ath10k_wmi_update_noa(struct ath10k *ar, struct ath10k_vif *arvif,
 				  struct sk_buff *bcn,
 				  const struct wmi_p2p_noa_info *noa)
 {
-	u8 *new_data, *old_data = arvif->u.ap.noa_data;
-	u32 new_len;
-
 	if (arvif->vdev_subtype != WMI_VDEV_SUBTYPE_P2P_GO)
 		return;
 
 	ath10k_dbg(ar, ATH10K_DBG_MGMT, "noa changed: %d\n", noa->changed);
-	if (noa->changed & WMI_P2P_NOA_CHANGED_BIT) {
-		new_len = ath10k_p2p_calc_noa_ie_len(noa);
-		if (!new_len)
-			goto cleanup;
 
-		new_data = kmalloc(new_len, GFP_ATOMIC);
-		if (!new_data)
-			goto cleanup;
-
-		ath10k_p2p_fill_noa_ie(new_data, new_len, noa);
-
-		spin_lock_bh(&ar->data_lock);
-		arvif->u.ap.noa_data = new_data;
-		arvif->u.ap.noa_len = new_len;
-		spin_unlock_bh(&ar->data_lock);
-		kfree(old_data);
-	}
+	if (noa->changed & WMI_P2P_NOA_CHANGED_BIT)
+		ath10k_p2p_noa_update(arvif, noa);
 
 	if (arvif->u.ap.noa_data)
 		if (!pskb_expand_head(bcn, 0, arvif->u.ap.noa_len, GFP_ATOMIC))
 			memcpy(skb_put(bcn, arvif->u.ap.noa_len),
 			       arvif->u.ap.noa_data,
 			       arvif->u.ap.noa_len);
-	return;
 
-cleanup:
-	spin_lock_bh(&ar->data_lock);
-	arvif->u.ap.noa_data = NULL;
-	arvif->u.ap.noa_len = 0;
-	spin_unlock_bh(&ar->data_lock);
-	kfree(old_data);
+	return;
 }
 
 static int ath10k_wmi_op_pull_swba_ev(struct ath10k *ar, struct sk_buff *skb,
@@ -2601,7 +2521,7 @@ static void ath10k_dfs_radar_report(struct ath10k *ar,
 	pe.freq = ar->hw->conf.chandef.chan->center_freq;
 	pe.width = width;
 	pe.rssi = rssi;
-
+	pe.chirp = (MS(reg0, RADAR_REPORT_REG0_PULSE_IS_CHIRP) != 0);
 	ath10k_dbg(ar, ATH10K_DBG_REGULATORY,
 		   "dfs add pulse freq: %d, width: %d, rssi %d, tsf: %llX\n",
 		   pe.freq, pe.width, pe.rssi, pe.ts);
@@ -2872,7 +2792,43 @@ void ath10k_wmi_event_phyerr(struct ath10k *ar, struct sk_buff *skb)
 
 void ath10k_wmi_event_roam(struct ath10k *ar, struct sk_buff *skb)
 {
-	ath10k_dbg(ar, ATH10K_DBG_WMI, "WMI_ROAM_EVENTID\n");
+	struct wmi_roam_ev_arg arg = {};
+	int ret;
+	u32 vdev_id;
+	u32 reason;
+	s32 rssi;
+
+	ret = ath10k_wmi_pull_roam_ev(ar, skb, &arg);
+	if (ret) {
+		ath10k_warn(ar, "failed to parse roam event: %d\n", ret);
+		return;
+	}
+
+	vdev_id = __le32_to_cpu(arg.vdev_id);
+	reason = __le32_to_cpu(arg.reason);
+	rssi = __le32_to_cpu(arg.rssi);
+	rssi += WMI_SPECTRAL_NOISE_FLOOR_REF_DEFAULT;
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI,
+		   "wmi roam event vdev %u reason 0x%08x rssi %d\n",
+		   vdev_id, reason, rssi);
+
+	if (reason >= WMI_ROAM_REASON_MAX)
+		ath10k_warn(ar, "ignoring unknown roam event reason %d on vdev %i\n",
+			    reason, vdev_id);
+
+	switch (reason) {
+	case WMI_ROAM_REASON_BEACON_MISS:
+		ath10k_mac_handle_beacon_miss(ar, vdev_id);
+		break;
+	case WMI_ROAM_REASON_BETTER_AP:
+	case WMI_ROAM_REASON_LOW_RSSI:
+	case WMI_ROAM_REASON_SUITABLE_AP_FOUND:
+	case WMI_ROAM_REASON_HO_FAILED:
+		ath10k_warn(ar, "ignoring not implemented roam event reason %d on vdev %i\n",
+			    reason, vdev_id);
+		break;
+	}
 }
 
 void ath10k_wmi_event_profile_match(struct ath10k *ar, struct sk_buff *skb)
@@ -3227,6 +3183,21 @@ static int ath10k_wmi_op_pull_rdy_ev(struct ath10k *ar, struct sk_buff *skb,
 	arg->abi_version = ev->abi_version;
 	arg->status = ev->status;
 	arg->mac_addr = ev->mac_addr.addr;
+
+	return 0;
+}
+
+static int ath10k_wmi_op_pull_roam_ev(struct ath10k *ar, struct sk_buff *skb,
+				      struct wmi_roam_ev_arg *arg)
+{
+	struct wmi_roam_ev *ev = (void *)skb->data;
+
+	if (skb->len < sizeof(*ev))
+		return -EPROTO;
+
+	skb_pull(skb, sizeof(*ev));
+	arg->vdev_id = ev->vdev_id;
+	arg->reason = ev->reason;
 
 	return 0;
 }
@@ -5223,6 +5194,7 @@ static const struct wmi_ops wmi_ops = {
 	.pull_svc_rdy = ath10k_wmi_main_op_pull_svc_rdy_ev,
 	.pull_rdy = ath10k_wmi_op_pull_rdy_ev,
 	.pull_fw_stats = ath10k_wmi_main_op_pull_fw_stats,
+	.pull_roam_ev = ath10k_wmi_op_pull_roam_ev,
 
 	.gen_pdev_suspend = ath10k_wmi_op_gen_pdev_suspend,
 	.gen_pdev_resume = ath10k_wmi_op_gen_pdev_resume,
@@ -5290,6 +5262,7 @@ static const struct wmi_ops wmi_10_1_ops = {
 	.pull_swba = ath10k_wmi_op_pull_swba_ev,
 	.pull_phyerr = ath10k_wmi_op_pull_phyerr_ev,
 	.pull_rdy = ath10k_wmi_op_pull_rdy_ev,
+	.pull_roam_ev = ath10k_wmi_op_pull_roam_ev,
 
 	.gen_pdev_suspend = ath10k_wmi_op_gen_pdev_suspend,
 	.gen_pdev_resume = ath10k_wmi_op_gen_pdev_resume,
@@ -5353,6 +5326,7 @@ static const struct wmi_ops wmi_10_2_ops = {
 	.pull_swba = ath10k_wmi_op_pull_swba_ev,
 	.pull_phyerr = ath10k_wmi_op_pull_phyerr_ev,
 	.pull_rdy = ath10k_wmi_op_pull_rdy_ev,
+	.pull_roam_ev = ath10k_wmi_op_pull_roam_ev,
 
 	.gen_pdev_suspend = ath10k_wmi_op_gen_pdev_suspend,
 	.gen_pdev_resume = ath10k_wmi_op_gen_pdev_resume,
@@ -5413,6 +5387,7 @@ static const struct wmi_ops wmi_10_2_4_ops = {
 	.pull_swba = ath10k_wmi_op_pull_swba_ev,
 	.pull_phyerr = ath10k_wmi_op_pull_phyerr_ev,
 	.pull_rdy = ath10k_wmi_op_pull_rdy_ev,
+	.pull_roam_ev = ath10k_wmi_op_pull_roam_ev,
 
 	.gen_pdev_suspend = ath10k_wmi_op_gen_pdev_suspend,
 	.gen_pdev_resume = ath10k_wmi_op_gen_pdev_resume,
