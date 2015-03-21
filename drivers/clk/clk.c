@@ -1466,12 +1466,12 @@ static struct clk_core *clk_propagate_rate_change(struct clk_core *core,
  * walk down a subtree and set the new rates notifying the rate
  * change on the way
  */
-static void clk_change_rate(struct clk_core *core)
+static void
+clk_change_rate(struct clk_core *core, unsigned long best_parent_rate)
 {
 	struct clk_core *child;
 	struct hlist_node *tmp;
 	unsigned long old_rate;
-	unsigned long best_parent_rate = 0;
 	bool skip_set_rate = false;
 	struct clk_core *old_parent;
 	struct clk_core *parent = NULL;
@@ -1523,6 +1523,7 @@ static void clk_change_rate(struct clk_core *core)
 	trace_clk_set_rate_complete(core, core->new_rate);
 
 	core->rate = clk_recalc(core, best_parent_rate);
+	core->rate = core->new_rate;
 
 	if (core->flags & CLK_SET_RATE_UNGATE) {
 		unsigned long flags;
@@ -1550,12 +1551,13 @@ static void clk_change_rate(struct clk_core *core)
 		/* Skip children who will be reparented to another clock */
 		if (child->new_parent && child->new_parent != core)
 			continue;
-		clk_change_rate(child);
+		if (child->new_rate != child->rate)
+			clk_change_rate(child, core->new_rate);
 	}
 
-	/* handle the new child who might not be in core->children yet */
-	if (core->new_child)
-		clk_change_rate(core->new_child);
+	/* handle the new child who might not be in clk->children yet */
+	if (core->new_child && core->new_child->new_rate != core->new_child->rate)
+		clk_change_rate(core->new_child, core->new_rate);
 }
 
 static int clk_core_set_rate_nolock(struct clk_core *core,
@@ -1563,6 +1565,7 @@ static int clk_core_set_rate_nolock(struct clk_core *core,
 {
 	struct clk_core *top, *fail_clk;
 	unsigned long rate = req_rate;
+	unsigned long parent_rate;
 
 	if (!core)
 		return 0;
@@ -1588,8 +1591,13 @@ static int clk_core_set_rate_nolock(struct clk_core *core,
 		return -EBUSY;
 	}
 
+	if (top->parent)
+		parent_rate = top->parent->rate;
+	else
+		parent_rate = 0;
+
 	/* change the rates */
-	clk_change_rate(top);
+	clk_change_rate(top, parent_rate);
 
 	core->req_rate = req_rate;
 
