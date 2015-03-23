@@ -1708,6 +1708,61 @@ static int ath10k_debug_cal_data_release(struct inode *inode,
 	return 0;
 }
 
+static ssize_t ath10k_write_ani_enable(struct file *file,
+				       const char __user *user_buf,
+				       size_t count, loff_t *ppos)
+{
+	struct ath10k *ar = file->private_data;
+	int ret;
+	u8 enable;
+
+	if (kstrtou8_from_user(user_buf, count, 0, &enable))
+		return -EINVAL;
+
+	mutex_lock(&ar->conf_mutex);
+
+	if (ar->ani_enabled == enable) {
+		ret = count;
+		goto exit;
+	}
+
+	ret = ath10k_wmi_pdev_set_param(ar, ar->wmi.pdev_param->ani_enable,
+					enable);
+	if (ret) {
+		ath10k_warn(ar, "ani_enable failed from debugfs: %d\n", ret);
+		goto exit;
+	}
+	ar->ani_enabled = enable;
+
+	ret = count;
+
+exit:
+	mutex_unlock(&ar->conf_mutex);
+
+	return ret;
+}
+
+static ssize_t ath10k_read_ani_enable(struct file *file, char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct ath10k *ar = file->private_data;
+	int len = 0;
+	char buf[32];
+
+	len = scnprintf(buf, sizeof(buf) - len, "%d\n",
+			ar->ani_enabled);
+
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
+
+static const struct file_operations fops_ani_enable = {
+	.read = ath10k_read_ani_enable,
+	.write = ath10k_write_ani_enable,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 static const struct file_operations fops_cal_data = {
 	.open = ath10k_debug_cal_data_open,
 	.read = ath10k_debug_cal_data_read,
@@ -1991,6 +2046,50 @@ static const struct file_operations fops_pktlog_filter = {
 	.open = simple_open
 };
 
+static ssize_t ath10k_write_quiet_period(struct file *file,
+					 const char __user *ubuf,
+					 size_t count, loff_t *ppos)
+{
+	struct ath10k *ar = file->private_data;
+	u32 period;
+
+	if (kstrtouint_from_user(ubuf, count, 0, &period))
+		return -EINVAL;
+
+	if (period < ATH10K_QUIET_PERIOD_MIN) {
+		ath10k_warn(ar, "Quiet period %u can not be lesser than 25ms\n",
+			    period);
+		return -EINVAL;
+	}
+	mutex_lock(&ar->conf_mutex);
+	ar->thermal.quiet_period = period;
+	ath10k_thermal_set_throttling(ar);
+	mutex_unlock(&ar->conf_mutex);
+
+	return count;
+}
+
+static ssize_t ath10k_read_quiet_period(struct file *file, char __user *ubuf,
+					size_t count, loff_t *ppos)
+{
+	char buf[32];
+	struct ath10k *ar = file->private_data;
+	int len = 0;
+
+	mutex_lock(&ar->conf_mutex);
+	len = scnprintf(buf, sizeof(buf) - len, "%d\n",
+			ar->thermal.quiet_period);
+	mutex_unlock(&ar->conf_mutex);
+
+	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
+}
+
+static const struct file_operations fops_quiet_period = {
+	.read = ath10k_read_quiet_period,
+	.write = ath10k_write_quiet_period,
+	.open = simple_open
+};
+
 int ath10k_debug_create(struct ath10k *ar)
 {
 	ar->debug.fw_crash_data = vzalloc(sizeof(*ar->debug.fw_crash_data));
@@ -2068,6 +2167,9 @@ int ath10k_debug_register(struct ath10k *ar)
 	debugfs_create_file("cal_data", S_IRUSR, ar->debug.debugfs_phy,
 			    ar, &fops_cal_data);
 
+	debugfs_create_file("ani_enable", S_IRUSR | S_IWUSR,
+			    ar->debug.debugfs_phy, ar, &fops_ani_enable);
+
 	debugfs_create_file("nf_cal_period", S_IRUSR | S_IWUSR,
 			    ar->debug.debugfs_phy, ar, &fops_nf_cal_period);
 
@@ -2087,6 +2189,9 @@ int ath10k_debug_register(struct ath10k *ar)
 
 	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
 			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
+
+	debugfs_create_file("quiet_period", S_IRUGO | S_IWUSR,
+			    ar->debug.debugfs_phy, ar, &fops_quiet_period);
 
 	return 0;
 }

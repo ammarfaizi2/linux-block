@@ -881,11 +881,13 @@ static int ath10k_recalc_rtscts_prot(struct ath10k_vif *arvif)
 
 	vdev_param = ar->wmi.vdev_param->enable_rtscts;
 
-	if (arvif->use_cts_prot || arvif->num_legacy_stations > 0)
-		rts_cts |= SM(WMI_RTSCTS_ENABLED, WMI_RTSCTS_SET);
+	rts_cts |= SM(WMI_RTSCTS_ENABLED, WMI_RTSCTS_SET);
 
 	if (arvif->num_legacy_stations > 0)
 		rts_cts |= SM(WMI_RTSCTS_ACROSS_SW_RETRIES,
+			      WMI_RTSCTS_PROFILE);
+	else
+		rts_cts |= SM(WMI_RTSCTS_FOR_SECOND_RATESERIES,
 			      WMI_RTSCTS_PROFILE);
 
 	return ath10k_wmi_vdev_set_param(ar, arvif->vdev_id, vdev_param,
@@ -3151,10 +3153,21 @@ static int ath10k_start(struct ieee80211_hw *hw)
 		goto err_core_stop;
 	}
 
+	ret = ath10k_wmi_pdev_set_param(ar,
+					ar->wmi.pdev_param->ani_enable, 1);
+	if (ret) {
+		ath10k_warn(ar, "failed to enable ani by default: %d\n",
+			    ret);
+		goto err_core_stop;
+	}
+
+	ar->ani_enabled = true;
+
 	ar->num_started_vdevs = 0;
 	ath10k_regd_update(ar);
 
 	ath10k_spectral_start(ar);
+	ath10k_thermal_set_throttling(ar);
 
 	mutex_unlock(&ar->conf_mutex);
 	return 0;
@@ -5479,6 +5492,7 @@ static const struct ieee80211_channel ath10k_5ghz_channels[] = {
 	CHAN5G(132, 5660, 0),
 	CHAN5G(136, 5680, 0),
 	CHAN5G(140, 5700, 0),
+	CHAN5G(144, 5720, 0),
 	CHAN5G(149, 5745, 0),
 	CHAN5G(153, 5765, 0),
 	CHAN5G(157, 5785, 0),
