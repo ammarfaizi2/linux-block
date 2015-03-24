@@ -166,7 +166,7 @@ int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state)
 	/* We may already have this, but read-locks nest anyway */
 	rcu_read_lock();
 
-	elem = list_entry_rcu(&nf_hooks[state->pf][state->hook],
+	elem = list_entry_rcu(nf_hooks[state->pf][state->hook].next,
 			      struct nf_hook_ops, list);
 next_hook:
 	verdict = nf_iterate(&nf_hooks[state->pf][state->hook], skb, state,
