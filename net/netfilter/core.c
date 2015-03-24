@@ -174,7 +174,7 @@ int nf_hook_slow(u_int8_t pf, unsigned int hook, struct sk_buff *skb,
 	/* We may already have this, but read-locks nest anyway */
 	rcu_read_lock();
 
-	elem = list_entry_rcu(&nf_hooks[pf][hook], struct nf_hook_ops, list);
+	elem = list_entry_rcu(nf_hooks[pf][hook].next, struct nf_hook_ops, list);
 next_hook:
 	verdict = nf_iterate(&nf_hooks[pf][hook], skb, hook, indev,
 			     outdev, &elem, okfn, hook_thresh);
