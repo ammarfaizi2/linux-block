@@ -116,8 +116,8 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 		if (mapping && mapping_cap_account_dirty(mapping)) {
 			mem_cgroup_dec_page_stat(memcg, MEM_CGROUP_STAT_DIRTY);
 			dec_zone_page_state(page, NR_FILE_DIRTY);
-			dec_bdi_stat(inode_to_bdi(mapping->host),
-					BDI_RECLAIMABLE);
+			dec_wb_stat(&inode_to_bdi(mapping->host)->wb,
+				    WB_RECLAIMABLE);
 			if (account_size)
 				task_io_account_cancelled_write(account_size);
 		}

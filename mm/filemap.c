@@ -215,7 +215,7 @@ void __delete_from_page_cache(struct page *page, void *shadow,
 	if (PageDirty(page) && mapping_cap_account_dirty(mapping)) {
 		mem_cgroup_dec_page_stat(memcg, MEM_CGROUP_STAT_DIRTY);
 		dec_zone_page_state(page, NR_FILE_DIRTY);
-		dec_bdi_stat(inode_to_bdi(mapping->host), BDI_RECLAIMABLE);
+		dec_wb_stat(&inode_to_bdi(mapping->host)->wb, WB_RECLAIMABLE);
 	}
 }
 
