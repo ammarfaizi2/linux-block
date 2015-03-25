@@ -333,6 +333,49 @@ static inline struct bdi_writeback *inode_to_wb(struct inode *inode)
 	return inode->i_wb;
 }
 
+/**
+ * inode_wb_stat_unlocked_begin - begin wb stat update transaction
+ * @inode: target inode
+ * @lockedp: temp bool output param, to be passed to the end function
+ *
+ * The caller wants to update stats of the wb associated with @inode but
+ * isn't holding inode->i_lock, mapping->tree_lock, or wb->list_lock.  This
+ * function determines the wb to use and ensures that the stat update is
+ * properly synchronized against wb switching.
+ *
+ * The caller must call inode_wb_stat_unlocked_end() with *@lockdep after
+ * updating the stats and can't sleep during transaction.  IRQ may or may
+ * not be disabled on return.
+ */
+static inline struct bdi_writeback *
+inode_wb_stat_unlocked_begin(struct inode *inode, bool *lockedp)
+{
+	rcu_read_lock();
+
+	/*
+	 * Paired with store_release in inode_switch_wb_work_fn() and
+	 * ensures that we see the new wb if we see cleared I_WB_SWITCH.
+	 */
+	*lockedp = smp_load_acquire(&inode->i_state) & I_WB_SWITCH;
+
+	if (unlikely(*lockedp))
+		spin_lock_irq(&inode->i_mapping->tree_lock);
+	return inode_to_wb(inode);
+}
+
+/**
+ * inode_wb_stat_unlocked_end - end wb stat update transaction
+ * @inode: target inode
+ * @locked: *@lockedp from inode_wb_stat_unlocked_begin()
+ */
+static inline void inode_wb_stat_unlocked_end(struct inode *inode, bool locked)
+{
+	if (unlikely(locked))
+		spin_unlock_irq(&inode->i_mapping->tree_lock);
+
+	rcu_read_unlock();
+}
+
 struct wb_iter {
 	int			start_blkcg_id;
 	struct radix_tree_iter	tree_iter;
@@ -419,6 +462,16 @@ wb_get_create_current(struct backing_dev_info *bdi, gfp_t gfp)
 static inline struct bdi_writeback *inode_to_wb(struct inode *inode)
 {
 	return &inode_to_bdi(inode)->wb;
+}
+
+static inline struct bdi_writeback *
+inode_wb_stat_unlocked_begin(struct inode *inode, bool *lockedp)
+{
+	return inode_to_wb(inode);
+}
+
+static inline void inode_wb_stat_unlocked_end(struct inode *inode, bool locked)
+{
 }
 
 static inline void wb_memcg_offline(struct mem_cgroup *memcg)

@@ -2474,11 +2474,15 @@ void account_page_redirty(struct page *page)
 	struct address_space *mapping = page->mapping;
 
 	if (mapping && mapping_cap_account_dirty(mapping)) {
-		struct bdi_writeback *wb = inode_to_wb(mapping->host);
+		struct inode *inode = mapping->host;
+		struct bdi_writeback *wb;
+		bool locked;
 
+		wb = inode_wb_stat_unlocked_begin(inode, &locked);
 		current->nr_dirtied--;
 		dec_zone_page_state(page, NR_DIRTIED);
 		dec_wb_stat(wb, WB_DIRTIED);
+		inode_wb_stat_unlocked_end(inode, locked);
 	}
 }
 EXPORT_SYMBOL(account_page_redirty);
@@ -2579,12 +2583,16 @@ EXPORT_SYMBOL(set_page_dirty_lock);
 int clear_page_dirty_for_io(struct page *page)
 {
 	struct address_space *mapping = page_mapping(page);
-	struct mem_cgroup *memcg;
 	int ret = 0;
 
 	BUG_ON(!PageLocked(page));
 
 	if (mapping && mapping_cap_account_dirty(mapping)) {
+		struct inode *inode = mapping->host;
+		struct bdi_writeback *wb;
+		struct mem_cgroup *memcg;
+		bool locked;
+
 		/*
 		 * Yes, Virginia, this is indeed insane.
 		 *
@@ -2620,14 +2628,16 @@ int clear_page_dirty_for_io(struct page *page)
 		 * always locked coming in here, so we get the desired
 		 * exclusion.
 		 */
+		wb = inode_wb_stat_unlocked_begin(inode, &locked);
 		memcg = mem_cgroup_begin_page_stat(page);
 		if (TestClearPageDirty(page)) {
 			mem_cgroup_dec_page_stat(memcg, MEM_CGROUP_STAT_DIRTY);
 			dec_zone_page_state(page, NR_FILE_DIRTY);
-			dec_wb_stat(inode_to_wb(mapping->host), WB_RECLAIMABLE);
+			dec_wb_stat(wb, WB_RECLAIMABLE);
 			ret = 1;
 		}
 		mem_cgroup_end_page_stat(memcg);
+		inode_wb_stat_unlocked_end(inode, locked);
 		return ret;
 	}
 	return TestClearPageDirty(page);

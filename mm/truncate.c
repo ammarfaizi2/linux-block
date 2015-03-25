@@ -111,12 +111,14 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 	struct address_space *mapping = page->mapping;
 
 	if (mapping && mapping_cap_account_dirty(mapping)) {
+		struct inode *inode = mapping->host;
+		struct bdi_writeback *wb;
 		struct mem_cgroup *memcg;
+		bool locked;
 
+		wb = inode_wb_stat_unlocked_begin(inode, &locked);
 		memcg = mem_cgroup_begin_page_stat(page);
 		if (TestClearPageDirty(page)) {
-			struct bdi_writeback *wb = inode_to_wb(mapping->host);
-
 			mem_cgroup_dec_page_stat(memcg, MEM_CGROUP_STAT_DIRTY);
 			dec_zone_page_state(page, NR_FILE_DIRTY);
 			dec_wb_stat(wb, WB_RECLAIMABLE);
@@ -124,6 +126,7 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 				task_io_account_cancelled_write(account_size);
 		}
 		mem_cgroup_end_page_stat(memcg);
+		inode_wb_stat_unlocked_end(inode, locked);
 	} else {
 		ClearPageDirty(page);
 	}
