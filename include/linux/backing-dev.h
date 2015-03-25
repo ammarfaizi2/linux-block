@@ -230,6 +230,8 @@ struct bdi_writeback *wb_get_create(struct backing_dev_info *bdi,
 void __inode_attach_wb(struct inode *inode, struct page *page);
 void wb_memcg_offline(struct mem_cgroup *memcg);
 void wb_blkcg_offline(struct blkcg *blkcg);
+int mapping_congested(struct address_space *mapping, struct task_struct *task,
+		      int cong_bits);
 
 /**
  * inode_cgwb_enabled - test whether cgroup writeback is enabled on an inode
@@ -438,7 +440,32 @@ static inline void wb_blkcg_offline(struct blkcg *blkcg)
 {
 }
 
+static inline int mapping_congested(struct address_space *mapping,
+				    struct task_struct *task, int cong_bits)
+{
+	return wb_congested(&inode_to_bdi(mapping->host)->wb, cong_bits);
+}
+
 #endif	/* CONFIG_CGROUP_WRITEBACK */
+
+static inline int mapping_read_congested(struct address_space *mapping,
+					 struct task_struct *task)
+{
+	return mapping_congested(mapping, task, 1 << WB_sync_congested);
+}
+
+static inline int mapping_write_congested(struct address_space *mapping,
+					  struct task_struct *task)
+{
+	return mapping_congested(mapping, task, 1 << WB_async_congested);
+}
+
+static inline int mapping_rw_congested(struct address_space *mapping,
+				       struct task_struct *task)
+{
+	return mapping_congested(mapping, task, (1 << WB_sync_congested) |
+						(1 << WB_async_congested));
+}
 
 static inline int bdi_congested(struct backing_dev_info *bdi, int cong_bits)
 {

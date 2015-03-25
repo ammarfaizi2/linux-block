@@ -130,6 +130,45 @@ static void __wb_start_writeback(struct bdi_writeback *wb, long nr_pages,
 	wb_queue_work(wb, work);
 }
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+
+/**
+ * mapping_congested - test whether a mapping is congested for a task
+ * @mapping: address space to test for congestion
+ * @task: task to test congestion for
+ * @cong_bits: mask of WB_[a]sync_congested bits to test
+ *
+ * Tests whether @mapping is congested for @task.  @cong_bits is the mask
+ * of congestion bits to test and the return value is the mask of set bits.
+ *
+ * If cgroup writeback is enabled for @mapping, its congestion state for
+ * @task is determined by whether the cgwb (cgroup bdi_writeback) for the
+ * blkcg of %current on @mapping->backing_dev_info is congested; otherwise,
+ * the root's congestion state is used.
+ */
+int mapping_congested(struct address_space *mapping,
+		      struct task_struct *task, int cong_bits)
+{
+	struct inode *inode = mapping->host;
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
+	struct bdi_writeback *wb;
+	int ret = 0;
+
+	if (!inode || !inode_cgwb_enabled(inode))
+		return wb_congested(&bdi->wb, cong_bits);
+
+	rcu_read_lock();
+	wb = wb_find_current(bdi);
+	if (wb)
+		ret = wb_congested(wb, cong_bits);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(mapping_congested);
+
+#endif	/* CONFIG_CGROUP_WRITEBACK */
+
 /**
  * bdi_start_writeback - start writeback
  * @bdi: the backing device to write from
