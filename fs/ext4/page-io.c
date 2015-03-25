@@ -403,6 +403,7 @@ submit_and_retry:
 		ret = io_submit_init_bio(io, bh);
 		if (ret)
 			return ret;
+		bio_set_streamid(io->io_bio, inode_streamid(inode));
 	}
 	ret = bio_add_page(io->io_bio, page, bh->b_size, bh_offset(bh));
 	if (ret != bh->b_size)
