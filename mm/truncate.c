@@ -113,11 +113,13 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 	memcg = mem_cgroup_begin_page_stat(page);
 	if (TestClearPageDirty(page)) {
 		struct address_space *mapping = page->mapping;
+
 		if (mapping && mapping_cap_account_dirty(mapping)) {
+			struct bdi_writeback *wb = inode_to_wb(mapping->host);
+
 			mem_cgroup_dec_page_stat(memcg, MEM_CGROUP_STAT_DIRTY);
 			dec_zone_page_state(page, NR_FILE_DIRTY);
-			dec_wb_stat(&inode_to_bdi(mapping->host)->wb,
-				    WB_RECLAIMABLE);
+			dec_wb_stat(wb, WB_RECLAIMABLE);
 			if (account_size)
 				task_io_account_cancelled_write(account_size);
 		}
