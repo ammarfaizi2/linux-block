@@ -78,6 +78,9 @@ enum qca6174_chip_id_rev {
 /* added support for ATH10K_FW_IE_WMI_OP_VERSION */
 #define ATH10K_FW_API4_FILE		"firmware-4.bin"
 
+/* HTT id conflict fix for management frames over HTT */
+#define ATH10K_FW_API5_FILE		"firmware-5.bin"
+
 #define ATH10K_FW_UTF_FILE		"utf.bin"
 
 /* includes also the null byte */
@@ -104,6 +107,11 @@ enum ath10k_fw_ie_type {
 	 * FW API 4 and above.
 	 */
 	ATH10K_FW_IE_WMI_OP_VERSION = 5,
+
+	/* HTT "operations" interface version, 32 bit value. Supported from
+	 * FW API 5 and above.
+	 */
+	ATH10K_FW_IE_HTT_OP_VERSION = 6,
 };
 
 enum ath10k_fw_wmi_op_version {
@@ -117,6 +125,20 @@ enum ath10k_fw_wmi_op_version {
 
 	/* keep last */
 	ATH10K_FW_WMI_OP_VERSION_MAX,
+};
+
+enum ath10k_fw_htt_op_version {
+	ATH10K_FW_HTT_OP_VERSION_UNSET = 0,
+
+	ATH10K_FW_HTT_OP_VERSION_MAIN = 1,
+
+	/* also used in 10.2 and 10.2.4 branches */
+	ATH10K_FW_HTT_OP_VERSION_10_1 = 2,
+
+	ATH10K_FW_HTT_OP_VERSION_TLV = 3,
+
+	/* keep last */
+	ATH10K_FW_HTT_OP_VERSION_MAX,
 };
 
 enum ath10k_hw_rev {
@@ -263,6 +285,7 @@ struct ath10k_pktlog_hdr {
 						 2)
 #define TARGET_TLV_NUM_TIDS			((TARGET_TLV_NUM_PEERS) * 2)
 #define TARGET_TLV_NUM_MSDU_DESC		(1024 + 32)
+#define TARGET_TLV_NUM_WOW_PATTERNS		22
 
 /* Number of Copy Engines supported */
 #define CE_COUNT 8
