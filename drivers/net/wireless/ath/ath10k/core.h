@@ -84,6 +84,8 @@ struct ath10k_skb_cb {
 	dma_addr_t paddr;
 	u8 eid;
 	u8 vdev_id;
+	enum ath10k_hw_txrx_mode txmode;
+	bool is_protected;
 
 	struct {
 		u8 tid;
@@ -645,6 +647,7 @@ struct ath10k {
 	int max_num_peers;
 	int max_num_stations;
 	int max_num_vdevs;
+	int max_num_tdls_vdevs;
 
 	struct work_struct offchan_tx_work;
 	struct sk_buff_head offchan_tx_queue;
