@@ -108,13 +108,13 @@ void do_invalidatepage(struct page *page, unsigned int offset,
  */
 void cancel_dirty_page(struct page *page, unsigned int account_size)
 {
-	struct mem_cgroup *memcg;
+	struct address_space *mapping = page->mapping;
 
-	memcg = mem_cgroup_begin_page_stat(page);
-	if (TestClearPageDirty(page)) {
-		struct address_space *mapping = page->mapping;
+	if (mapping && mapping_cap_account_dirty(mapping)) {
+		struct mem_cgroup *memcg;
 
-		if (mapping && mapping_cap_account_dirty(mapping)) {
+		memcg = mem_cgroup_begin_page_stat(page);
+		if (TestClearPageDirty(page)) {
 			struct bdi_writeback *wb = inode_to_wb(mapping->host);
 
 			mem_cgroup_dec_page_stat(memcg, MEM_CGROUP_STAT_DIRTY);
@@ -123,8 +123,10 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 			if (account_size)
 				task_io_account_cancelled_write(account_size);
 		}
+		mem_cgroup_end_page_stat(memcg);
+	} else {
+		ClearPageDirty(page);
 	}
-	mem_cgroup_end_page_stat(memcg);
 }
 EXPORT_SYMBOL(cancel_dirty_page);
 
