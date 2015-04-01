@@ -45,7 +45,7 @@
 #define WMI_READY_TIMEOUT (5 * HZ)
 #define ATH10K_FLUSH_TIMEOUT_HZ (5*HZ)
 #define ATH10K_CONNECTION_LOSS_HZ (3*HZ)
-#define ATH10K_NUM_CHANS 38
+#define ATH10K_NUM_CHANS 39
 
 /* Antenna noise floor */
 #define ATH10K_DEFAULT_NOISE_FLOOR -95
@@ -284,6 +284,15 @@ struct ath10k_sta {
 #endif
 };
 
+struct ath10k_chanctx {
+	/* Used to story copy of chanctx_conf to avoid inconsistencies. Ideally
+	 * mac80211 should allow some sort of explicit locking to guarantee
+	 * that the publicly available chanctx_conf can be accessed safely at
+	 * all times.
+	 */
+	struct ieee80211_chanctx_conf conf;
+};
+
 #define ATH10K_VDEV_SETUP_TIMEOUT_HZ (5*HZ)
 
 enum ath10k_beacon_state {
@@ -305,6 +314,7 @@ struct ath10k_vif {
 	enum ath10k_beacon_state beacon_state;
 	void *beacon_buf;
 	dma_addr_t beacon_paddr;
+	unsigned long tx_paused; /* arbitrary values defined by target */
 
 	struct ath10k *ar;
 	struct ieee80211_vif *vif;
@@ -338,9 +348,6 @@ struct ath10k_vif {
 		} ap;
 	} u;
 
-	u8 fixed_rate;
-	u8 fixed_nss;
-	u8 force_sgi;
 	bool use_cts_prot;
 	int num_legacy_stations;
 	int txpower;
@@ -510,6 +517,11 @@ static inline const char *ath10k_scan_state_str(enum ath10k_scan_state state)
 	return "unknown";
 }
 
+enum ath10k_tx_pause_reason {
+	ATH10K_TX_PAUSE_Q_FULL,
+	ATH10K_TX_PAUSE_MAX,
+};
+
 struct ath10k {
 	struct ath_common ath_common;
 	struct ieee80211_hw *hw;
@@ -607,6 +619,7 @@ struct ath10k {
 	struct cfg80211_chan_def chandef;
 
 	unsigned long long free_vdev_map;
+	struct ath10k_vif *monitor_arvif;
 	bool monitor;
 	int monitor_vdev_id;
 	bool monitor_started;
@@ -669,6 +682,8 @@ struct ath10k {
 	struct survey_info survey[ATH10K_NUM_CHANS];
 
 	struct dfs_pattern_detector *dfs_detector;
+
+	unsigned long tx_paused; /* see ATH10K_TX_PAUSE_ */
 
 #ifdef CONFIG_ATH10K_DEBUGFS
 	struct ath10k_debug debug;

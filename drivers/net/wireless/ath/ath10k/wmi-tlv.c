@@ -16,6 +16,7 @@
  */
 #include "core.h"
 #include "debug.h"
+#include "mac.h"
 #include "hw.h"
 #include "mac.h"
 #include "wmi.h"
@@ -70,6 +71,8 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		= { .min_len = sizeof(struct wmi_tlv_roam_ev) },
 	[WMI_TLV_TAG_STRUCT_WOW_EVENT_INFO]
 		= { .min_len = sizeof(struct wmi_tlv_wow_event_info) },
+	[WMI_TLV_TAG_STRUCT_TX_PAUSE_EVENT]
+		= { .min_len = sizeof(struct wmi_tlv_tx_pause_ev) },
 };
 
 static int
@@ -339,6 +342,48 @@ static int ath10k_wmi_tlv_event_p2p_noa(struct ath10k *ar,
 		   vdev_id, noa->num_descriptors);
 
 	ath10k_p2p_noa_update_by_vdev_id(ar, vdev_id, noa);
+	kfree(tb);
+	return 0;
+}
+
+static int ath10k_wmi_tlv_event_tx_pause(struct ath10k *ar,
+					 struct sk_buff *skb)
+{
+	const void **tb;
+	const struct wmi_tlv_tx_pause_ev *ev;
+	int ret, vdev_id;
+	u32 pause_id, action, vdev_map, peer_id, tid_map;
+
+	tb = ath10k_wmi_tlv_parse_alloc(ar, skb->data, skb->len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath10k_warn(ar, "failed to parse tlv: %d\n", ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TLV_TAG_STRUCT_TX_PAUSE_EVENT];
+	if (!ev) {
+		kfree(tb);
+		return -EPROTO;
+	}
+
+	pause_id = __le32_to_cpu(ev->pause_id);
+	action = __le32_to_cpu(ev->action);
+	vdev_map = __le32_to_cpu(ev->vdev_map);
+	peer_id = __le32_to_cpu(ev->peer_id);
+	tid_map = __le32_to_cpu(ev->tid_map);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI,
+		   "wmi tlv tx pause pause_id %u action %u vdev_map 0x%08x peer_id %u tid_map 0x%08x\n",
+		   pause_id, action, vdev_map, peer_id, tid_map);
+
+	for (vdev_id = 0; vdev_map; vdev_id++) {
+		if (!(vdev_map & BIT(vdev_id)))
+			continue;
+
+		vdev_map &= ~BIT(vdev_id);
+		ath10k_mac_handle_tx_pause(ar, vdev_id, pause_id, action);
+	}
 
 	kfree(tb);
 	return 0;
@@ -467,6 +512,9 @@ static void ath10k_wmi_tlv_op_rx(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	case WMI_TLV_P2P_NOA_EVENTID:
 		ath10k_wmi_tlv_event_p2p_noa(ar, skb);
+		break;
+	case WMI_TLV_TX_PAUSE_EVENTID:
+		ath10k_wmi_tlv_event_tx_pause(ar, skb);
 		break;
 	default:
 		ath10k_warn(ar, "Unknown eventid: %d\n", id);
@@ -1270,8 +1318,8 @@ static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
 	cfg->num_peers = __cpu_to_le32(TARGET_TLV_NUM_PEERS);
 
 	if (test_bit(WMI_SERVICE_RX_FULL_REORDER, ar->wmi.svc_map)) {
-		cfg->num_offload_peers = __cpu_to_le32(3);
-		cfg->num_offload_reorder_bufs = __cpu_to_le32(3);
+		cfg->num_offload_peers = __cpu_to_le32(TARGET_TLV_NUM_VDEVS);
+		cfg->num_offload_reorder_bufs = __cpu_to_le32(TARGET_TLV_NUM_VDEVS);
 	} else {
 		cfg->num_offload_peers = __cpu_to_le32(0);
 		cfg->num_offload_reorder_bufs = __cpu_to_le32(0);
@@ -1288,8 +1336,8 @@ static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
 	cfg->rx_timeout_pri[3] = __cpu_to_le32(0x28);
 	cfg->rx_decap_mode = __cpu_to_le32(1);
 	cfg->scan_max_pending_reqs = __cpu_to_le32(4);
-	cfg->bmiss_offload_max_vdev = __cpu_to_le32(3);
-	cfg->roam_offload_max_vdev = __cpu_to_le32(3);
+	cfg->bmiss_offload_max_vdev = __cpu_to_le32(TARGET_TLV_NUM_VDEVS);
+	cfg->roam_offload_max_vdev = __cpu_to_le32(TARGET_TLV_NUM_VDEVS);
 	cfg->roam_offload_max_ap_profiles = __cpu_to_le32(8);
 	cfg->num_mcast_groups = __cpu_to_le32(0);
 	cfg->num_mcast_table_elems = __cpu_to_le32(0);
@@ -1518,8 +1566,6 @@ ath10k_wmi_tlv_op_gen_vdev_start(struct ath10k *ar,
 	void *ptr;
 	u32 flags = 0;
 
-	if (WARN_ON(arg->ssid && arg->ssid_len == 0))
-		return ERR_PTR(-EINVAL);
 	if (WARN_ON(arg->hidden_ssid && !arg->ssid))
 		return ERR_PTR(-EINVAL);
 	if (WARN_ON(arg->ssid_len > sizeof(cmd->ssid.ssid)))
@@ -2949,6 +2995,34 @@ ath10k_wmi_tlv_op_gen_wow_del_pattern(struct ath10k *ar, u32 vdev_id,
 	return skb;
 }
 
+static struct sk_buff *
+ath10k_wmi_tlv_op_gen_adaptive_qcs(struct ath10k *ar, bool enable)
+{
+	struct wmi_tlv_adaptive_qcs *cmd;
+	struct wmi_tlv *tlv;
+	struct sk_buff *skb;
+	void *ptr;
+	size_t len;
+
+	len = sizeof(*tlv) + sizeof(*cmd);
+	skb = ath10k_wmi_alloc_skb(ar, len);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	ptr = (void *)skb->data;
+	tlv = ptr;
+	tlv->tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_RESMGR_ADAPTIVE_OCS_CMD);
+	tlv->len = __cpu_to_le16(sizeof(*cmd));
+	cmd = (void *)tlv->value;
+	cmd->enable = __cpu_to_le32(enable ? 1 : 0);
+
+	ptr += sizeof(*tlv);
+	ptr += sizeof(*cmd);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv adaptive qcs %d\n", enable);
+	return skb;
+}
+
 /****************/
 /* TLV mappings */
 /****************/
@@ -3075,6 +3149,7 @@ static struct wmi_cmd_map wmi_tlv_cmd_map = {
 	.vdev_set_wmm_params_cmdid = WMI_TLV_VDEV_SET_WMM_PARAMS_CMDID,
 	.tdls_set_state_cmdid = WMI_TLV_TDLS_SET_STATE_CMDID,
 	.tdls_peer_update_cmdid = WMI_TLV_TDLS_PEER_UPDATE_CMDID,
+	.adaptive_qcs_cmdid = WMI_TLV_RESMGR_ADAPTIVE_OCS_CMDID,
 };
 
 static struct wmi_pdev_param_map wmi_tlv_pdev_param_map = {
@@ -3256,6 +3331,7 @@ static const struct wmi_ops wmi_tlv_ops = {
 	.gen_wow_del_pattern = ath10k_wmi_tlv_op_gen_wow_del_pattern,
 	.gen_update_fw_tdls_state = ath10k_wmi_tlv_op_gen_update_fw_tdls_state,
 	.gen_tdls_peer_update = ath10k_wmi_tlv_op_gen_tdls_peer_update,
+	.gen_adaptive_qcs = ath10k_wmi_tlv_op_gen_adaptive_qcs,
 };
 
 /************/
