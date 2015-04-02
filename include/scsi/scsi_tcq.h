@@ -119,6 +119,16 @@ static inline struct scsi_cmnd *scsi_mq_find_tag(struct Scsi_Host *shost,
 	return req ? (struct scsi_cmnd *)req->special : NULL;
 }
 
+static inline void *scsi_mq_scmd_to_pdu(struct scsi_cmnd *scmd)
+{
+	return blk_mq_rq_to_pdu(scmd->request) + sizeof(*scmd);
+}
+
+static inline bool scsi_mq_request_started(struct scsi_cmnd *scmd)
+{
+	return blk_mq_request_started(scmd->request);
+}
+
 /**
  * scsi_find_tag - find a tagged command by device
  * @SDpnt:	pointer to the ScSI device
