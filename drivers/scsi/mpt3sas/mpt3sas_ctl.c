@@ -522,6 +522,101 @@ _ctl_poll(struct file *filep, poll_table *wait)
 	return 0;
 }
 
+static bool
+_scmd_match(struct scsi_cmnd *scmd, u16 handle, u32 lun)
+{
+	struct MPT3SAS_DEVICE *priv_data;
+
+	if (scmd == NULL || scmd->device == NULL ||
+	    scmd->device->hostdata == NULL)
+		return false;
+	if (lun != scmd->device->lun)
+		return false;
+	priv_data = scmd->device->hostdata;
+	if (priv_data->sas_target == NULL)
+		return false;
+	if (priv_data->sas_target->handle != handle)
+		return false;
+
+	return true;
+}
+
+struct smid_match_data {
+	u16 handle;
+	u16 smid;
+	u32 lun;
+};
+
+static void
+_smid_fn(struct blk_mq_hw_ctx *hctx, struct request *rq, void *data, bool res)
+{
+	struct scsi_cmnd *scmd = rq->special;
+	struct smid_match_data *smd = data;
+
+	if (_scmd_match(scmd, smd->handle, smd->lun)) {
+		struct scsiio_tracker *st;
+
+		st = blk_mq_rq_to_pdu(rq) + sizeof(*scmd);
+		smd->smid = st->smid;
+	}
+}
+
+static u16
+_ctl_find_smid_mq(struct MPT3SAS_ADAPTER *ioc, u16 handle, u32 lun)
+{
+	struct scsi_device *sdev;
+	struct smid_match_data smd;
+
+	/*
+	 * This is pretty shitty - we basically check all pending commands
+	 * on all devices on this host.
+	 */
+	smd.smid = 0;
+	shost_for_each_device(sdev, ioc->shost) {
+		struct blk_mq_hw_ctx *hctx;
+
+		hctx = sdev->request_queue->queue_hw_ctx[0];
+		blk_mq_tag_busy_iter(hctx, _smid_fn, &smd);
+		if (smd.smid) {
+			scsi_device_put(sdev);
+			break;
+		}
+	}
+
+	return smd.smid;
+}
+
+static u16
+_ctl_find_smid_legacy(struct MPT3SAS_ADAPTER *ioc, u16 handle, u32 lun)
+{
+	struct scsi_cmnd *scmd;
+	unsigned long flags;
+	u16 smid = 0;
+	int i;
+
+	spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
+	for (i = ioc->scsiio_depth; i; i--) {
+		scmd = ioc->scsi_lookup[i - 1].scmd;
+		if (!_scmd_match(scmd, handle, lun))
+			continue;
+
+		smid = ioc->scsi_lookup[i - 1].smid;
+		break;
+	}
+	spin_unlock_irqrestore(&ioc->scsi_lookup_lock, flags);
+
+	return smid;
+}
+
+static u16
+_ctl_find_smid(struct MPT3SAS_ADAPTER *ioc, u16 handle, u32 lun)
+{
+	if (shost_use_blk_mq(ioc->shost))
+		return _ctl_find_smid_mq(ioc, handle, lun);
+	else
+		return _ctl_find_smid_legacy(ioc, handle, lun);
+}
+
 /**
  * _ctl_set_task_mid - assign an active smid to tm request
  * @ioc: per adapter object
@@ -535,12 +630,7 @@ static int
 _ctl_set_task_mid(struct MPT3SAS_ADAPTER *ioc, struct mpt3_ioctl_command *karg,
 	Mpi2SCSITaskManagementRequest_t *tm_request)
 {
-	u8 found = 0;
-	u16 i;
-	u16 handle;
-	struct scsi_cmnd *scmd;
-	struct MPT3SAS_DEVICE *priv_data;
-	unsigned long flags;
+	u16 smid, handle;
 	Mpi2SCSITaskManagementReply_t *tm_reply;
 	u32 sz;
 	u32 lun;
@@ -554,27 +644,11 @@ _ctl_set_task_mid(struct MPT3SAS_ADAPTER *ioc, struct mpt3_ioctl_command *karg,
 		return 0;
 
 	lun = scsilun_to_int((struct scsi_lun *)tm_request->LUN);
-
 	handle = le16_to_cpu(tm_request->DevHandle);
-	spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
-	for (i = ioc->scsiio_depth; i && !found; i--) {
-		scmd = ioc->scsi_lookup[i - 1].scmd;
-		if (scmd == NULL || scmd->device == NULL ||
-		    scmd->device->hostdata == NULL)
-			continue;
-		if (lun != scmd->device->lun)
-			continue;
-		priv_data = scmd->device->hostdata;
-		if (priv_data->sas_target == NULL)
-			continue;
-		if (priv_data->sas_target->handle != handle)
-			continue;
-		tm_request->TaskMID = cpu_to_le16(ioc->scsi_lookup[i - 1].smid);
-		found = 1;
-	}
-	spin_unlock_irqrestore(&ioc->scsi_lookup_lock, flags);
 
-	if (!found) {
+	smid = _ctl_find_smid(ioc, handle, lun);
+
+	if (!smid) {
 		dctlprintk(ioc, pr_info(MPT3SAS_FMT
 			"%s: handle(0x%04x), lun(%d), no active mid!!\n",
 			ioc->name,
@@ -593,6 +667,8 @@ _ctl_set_task_mid(struct MPT3SAS_ADAPTER *ioc, struct mpt3_ioctl_command *karg,
 			    __LINE__, __func__);
 		return 1;
 	}
+
+	tm_request->TaskMID = cpu_to_le16(smid);
 
 	dctlprintk(ioc, pr_info(MPT3SAS_FMT
 		"%s: handle(0x%04x), lun(%d), task_mid(%d)\n", ioc->name,
