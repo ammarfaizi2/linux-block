@@ -622,8 +622,8 @@ void blk_mq_rq_timed_out(struct request *req, bool reserved)
 	}
 }
 
-static void blk_mq_check_expired(struct blk_mq_hw_ctx *hctx,
-		struct request *rq, void *priv, bool reserved)
+static bool blk_mq_check_expired(struct blk_mq_hw_ctx *hctx, struct request *rq,
+				 void *priv, bool reserved)
 {
 	struct blk_mq_timeout_data *data = priv;
 
@@ -636,10 +636,10 @@ static void blk_mq_check_expired(struct blk_mq_hw_ctx *hctx,
 			rq->errors = -EIO;
 			blk_mq_complete_request(rq);
 		}
-		return;
+		return false;
 	}
 	if (rq->cmd_flags & REQ_NO_TIMEOUT)
-		return;
+		return false;
 
 	if (time_after_eq(jiffies, rq->deadline)) {
 		if (!blk_mark_rq_complete(rq))
@@ -648,6 +648,8 @@ static void blk_mq_check_expired(struct blk_mq_hw_ctx *hctx,
 		data->next = rq->deadline;
 		data->next_set = 1;
 	}
+
+	return false;
 }
 
 static void blk_mq_rq_timer(unsigned long priv)

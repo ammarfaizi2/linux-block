@@ -416,13 +416,15 @@ void blk_mq_put_tag(struct blk_mq_hw_ctx *hctx, unsigned int tag,
 	}
 }
 
-static void bt_for_each(struct blk_mq_hw_ctx *hctx,
-		struct blk_mq_bitmap_tags *bt, unsigned int off,
-		busy_iter_fn *fn, void *data, bool reserved)
+static bool bt_for_each(struct blk_mq_hw_ctx *hctx,
+			struct blk_mq_bitmap_tags *bt, unsigned int off,
+			busy_iter_fn *fn, void *data, bool reserved)
 {
 	struct request *rq;
 	int bit, i;
+	bool ret;
 
+	ret = false;
 	for (i = 0; i < bt->map_nr; i++) {
 		struct blk_align_bitmap *bm = &bt->map[i];
 
@@ -430,23 +432,33 @@ static void bt_for_each(struct blk_mq_hw_ctx *hctx,
 		     bit < bm->depth;
 		     bit = find_next_bit(&bm->word, bm->depth, bit + 1)) {
 		     	rq = blk_mq_tag_to_rq(hctx->tags, off + bit);
-			if (rq->q == hctx->queue)
-				fn(hctx, rq, data, reserved);
+			if (rq->q != hctx->queue)
+				continue;
+			ret = fn(hctx, rq, data, reserved);
+			if (ret)
+				break;
 		}
 
 		off += (1 << bt->bits_per_word);
 	}
+
+	return ret;
 }
 
-void blk_mq_tag_busy_iter(struct blk_mq_hw_ctx *hctx, busy_iter_fn *fn,
+bool blk_mq_tag_busy_iter(struct blk_mq_hw_ctx *hctx, busy_iter_fn *fn,
 		void *priv)
 {
 	struct blk_mq_tags *tags = hctx->tags;
+	bool ret = false;
 
 	if (tags->nr_reserved_tags)
-		bt_for_each(hctx, &tags->breserved_tags, 0, fn, priv, true);
-	bt_for_each(hctx, &tags->bitmap_tags, tags->nr_reserved_tags, fn, priv,
-			false);
+		ret = bt_for_each(hctx, &tags->breserved_tags, 0, fn, priv,
+					true);
+	if (!ret)
+		bt_for_each(hctx, &tags->bitmap_tags, tags->nr_reserved_tags,
+				fn, priv, false);
+
+	return ret;
 }
 EXPORT_SYMBOL(blk_mq_tag_busy_iter);
 

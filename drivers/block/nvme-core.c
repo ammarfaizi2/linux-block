@@ -1260,7 +1260,7 @@ static void nvme_abort_req(struct request *req)
 	}
 }
 
-static void nvme_cancel_queue_ios(struct blk_mq_hw_ctx *hctx,
+static bool nvme_cancel_queue_ios(struct blk_mq_hw_ctx *hctx,
 				struct request *req, void *data, bool reserved)
 {
 	struct nvme_queue *nvmeq = data;
@@ -1270,12 +1270,12 @@ static void nvme_cancel_queue_ios(struct blk_mq_hw_ctx *hctx,
 	struct nvme_completion cqe;
 
 	if (!blk_mq_request_started(req))
-		return;
+		return false;
 
 	cmd = blk_mq_rq_to_pdu(req);
 
 	if (cmd->ctx == CMD_CTX_CANCELLED)
-		return;
+		return false;
 
 	if (blk_queue_dying(req->q))
 		cqe.status = cpu_to_le16((NVME_SC_ABORT_REQ | NVME_SC_DNR) << 1);
@@ -1287,6 +1287,7 @@ static void nvme_cancel_queue_ios(struct blk_mq_hw_ctx *hctx,
 						req->tag, nvmeq->qid);
 	ctx = cancel_cmd_info(cmd, &fn);
 	fn(nvmeq, ctx, &cqe);
+	return false;
 }
 
 static enum blk_eh_timer_return nvme_timeout(struct request *req, bool reserved)
