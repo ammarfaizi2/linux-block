@@ -8,6 +8,7 @@
 #include <linux/timer.h>
 #include <linux/scatterlist.h>
 #include <scsi/scsi_device.h>
+#include <linux/blk-mq.h>
 
 struct Scsi_Host;
 struct scsi_driver;
@@ -153,6 +154,16 @@ static inline void *scsi_cmd_priv(struct scsi_cmnd *cmd)
 static inline struct scsi_driver *scsi_cmd_to_driver(struct scsi_cmnd *cmd)
 {
 	return *(struct scsi_driver **)cmd->request->rq_disk->private_data;
+}
+
+static inline void *scsi_mq_scmd_to_pdu(struct scsi_cmnd *scmd)
+{
+	return blk_mq_rq_to_pdu(scmd->request) + sizeof(*scmd);
+}
+
+static inline bool scsi_mq_scmd_started(struct scsi_cmnd *scmd)
+{
+	return blk_mq_request_started(scmd->request);
 }
 
 extern struct scsi_cmnd *scsi_get_command(struct scsi_device *, gfp_t);
