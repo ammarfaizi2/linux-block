@@ -884,7 +884,10 @@ _scsih_is_end_device(u32 device_info)
 static struct scsi_cmnd *
 _scsih_scsi_lookup_get(struct MPT2SAS_ADAPTER *ioc, u16 smid)
 {
-	return ioc->scsi_lookup[smid - 1].scmd;
+	if (shost_use_blk_mq(ioc->shost))
+		return scsi_mq_find_tag(ioc->shost, smid - 1);
+	else
+		return ioc->scsi_lookup[smid - 1].scmd;
 }
 
 /**
@@ -900,6 +903,8 @@ _scsih_scsi_lookup_get_clear(struct MPT2SAS_ADAPTER *ioc, u16 smid)
 {
 	unsigned long flags;
 	struct scsi_cmnd *scmd;
+
+	BUG_ON(shost_use_blk_mq(ioc->shost));
 
 	spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
 	scmd = ioc->scsi_lookup[smid - 1].scmd;
@@ -926,6 +931,13 @@ _scsih_scsi_lookup_find_by_scmd(struct MPT2SAS_ADAPTER *ioc, struct scsi_cmnd
 	u16 smid;
 	unsigned long	flags;
 	int i;
+
+	if (shost_use_blk_mq(ioc->shost)) {
+		struct scsiio_tracker *st;
+
+		st = scsi_mq_scmd_to_pdu(scmd);
+		return st->smid;
+	}
 
 	spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
 	smid = 0;
@@ -961,9 +973,14 @@ _scsih_scsi_lookup_find_by_target(struct MPT2SAS_ADAPTER *ioc, int id,
 	spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
 	found = 0;
 	for (i = 0 ; i < ioc->scsiio_depth; i++) {
-		if (ioc->scsi_lookup[i].scmd &&
-		    (ioc->scsi_lookup[i].scmd->device->id == id &&
-		    ioc->scsi_lookup[i].scmd->device->channel == channel)) {
+		struct scsiio_tracker *st;
+
+		st = mpt2sas_get_st_from_smid(ioc, i + 1);
+		if (!st)
+			continue;
+		if (st->scmd &&
+		    (st->scmd->device->id == id &&
+		    st->scmd->device->channel == channel)) {
 			found = 1;
 			goto out;
 		}
@@ -995,10 +1012,15 @@ _scsih_scsi_lookup_find_by_lun(struct MPT2SAS_ADAPTER *ioc, int id,
 	spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
 	found = 0;
 	for (i = 0 ; i < ioc->scsiio_depth; i++) {
-		if (ioc->scsi_lookup[i].scmd &&
-		    (ioc->scsi_lookup[i].scmd->device->id == id &&
-		    ioc->scsi_lookup[i].scmd->device->channel == channel &&
-		    ioc->scsi_lookup[i].scmd->device->lun == lun)) {
+		struct scsiio_tracker *st;
+
+		st = mpt2sas_get_st_from_smid(ioc, i + 1);
+		if (!st)
+			continue;
+		if (st->scmd &&
+		    (st->scmd->device->id == id &&
+		    st->scmd->device->channel == channel &&
+		    st->scmd->device->lun == lun)) {
 			found = 1;
 			goto out;
 		}
@@ -1019,6 +1041,7 @@ static struct chain_tracker *
 _scsih_get_chain_buffer_tracker(struct MPT2SAS_ADAPTER *ioc, u16 smid)
 {
 	struct chain_tracker *chain_req;
+	struct scsiio_tracker *st;
 	unsigned long flags;
 
 	spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
@@ -1031,8 +1054,8 @@ _scsih_get_chain_buffer_tracker(struct MPT2SAS_ADAPTER *ioc, u16 smid)
 	chain_req = list_entry(ioc->free_chain_list.next,
 	    struct chain_tracker, tracker_list);
 	list_del_init(&chain_req->tracker_list);
-	list_add_tail(&chain_req->tracker_list,
-	    &ioc->scsi_lookup[smid - 1].chain_list);
+	st = mpt2sas_get_st_from_smid(ioc, smid);
+	list_add_tail(&chain_req->tracker_list, &st->chain_list);
 	spin_unlock_irqrestore(&ioc->scsi_lookup_lock, flags);
 	return chain_req;
 }
@@ -2387,7 +2410,7 @@ mpt2sas_scsih_issue_tm(struct MPT2SAS_ADAPTER *ioc, u16 handle, uint channel,
 	}
 
 	if (type == MPI2_SCSITASKMGMT_TASKTYPE_ABORT_TASK)
-		scsi_lookup = &ioc->scsi_lookup[smid_task - 1];
+		scsi_lookup = mpt2sas_get_st_from_smid(ioc, smid_task);
 
 	dtmprintk(ioc, printk(MPT2SAS_INFO_FMT "sending tm: handle(0x%04x),"
 	    " task_type(0x%02x), smid(%d)\n", ioc->name, handle, type,
@@ -3698,7 +3721,13 @@ _scsih_flush_running_cmds(struct MPT2SAS_ADAPTER *ioc)
 	u16 count = 0;
 
 	for (smid = 1; smid <= ioc->scsiio_depth; smid++) {
-		scmd = _scsih_scsi_lookup_get_clear(ioc, smid);
+		if (shost_use_blk_mq(ioc->shost)) {
+			scmd = _scsih_scsi_lookup_get(ioc, smid);
+			if (!scsi_mq_scmd_started(scmd))
+				scmd = NULL;
+		} else
+			scmd = _scsih_scsi_lookup_get_clear(ioc, smid);
+
 		if (!scmd)
 			continue;
 		count++;
@@ -3809,7 +3838,7 @@ _scsih_eedp_error_handling(struct scsi_cmnd *scmd, u16 ioc_status)
 static inline u8
 _scsih_scsi_direct_io_get(struct MPT2SAS_ADAPTER *ioc, u16 smid)
 {
-	return ioc->scsi_lookup[smid - 1].direct_io;
+	return mpt2sas_get_st_from_smid(ioc, smid)->direct_io;
 }
 
 /**
@@ -3823,7 +3852,7 @@ _scsih_scsi_direct_io_get(struct MPT2SAS_ADAPTER *ioc, u16 smid)
 static inline void
 _scsih_scsi_direct_io_set(struct MPT2SAS_ADAPTER *ioc, u16 smid, u8 direct_io)
 {
-	ioc->scsi_lookup[smid - 1].direct_io = direct_io;
+	mpt2sas_get_st_from_smid(ioc, smid)->direct_io = direct_io;
 }
 
 
@@ -4443,7 +4472,11 @@ _scsih_io_done(struct MPT2SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 	unsigned long flags;
 
 	mpi_reply = mpt2sas_base_get_reply_virt_addr(ioc, reply);
-	scmd = _scsih_scsi_lookup_get_clear(ioc, smid);
+	if (shost_use_blk_mq(ioc->shost))
+		scmd = scsi_mq_find_tag(ioc->shost, smid - 1);
+	else
+		scmd = _scsih_scsi_lookup_get_clear(ioc, smid);
+
 	if (scmd == NULL)
 		return 1;
 
@@ -4468,10 +4501,12 @@ _scsih_io_done(struct MPT2SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 	if (_scsih_scsi_direct_io_get(ioc, smid) &&
 	    ((ioc_status & MPI2_IOCSTATUS_MASK)
 	    != MPI2_IOCSTATUS_SCSI_TASK_TERMINATED)) {
-		spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
-		ioc->scsi_lookup[smid - 1].scmd = scmd;
+		if (ioc->scsi_lookup) {
+			spin_lock_irqsave(&ioc->scsi_lookup_lock, flags);
+			ioc->scsi_lookup[smid - 1].scmd = scmd;
+			spin_unlock_irqrestore(&ioc->scsi_lookup_lock, flags);
+		}
 		_scsih_scsi_direct_io_set(ioc, smid, 0);
-		spin_unlock_irqrestore(&ioc->scsi_lookup_lock, flags);
 		memcpy(mpi_request->CDB.CDB32, scmd->cmnd, scmd->cmd_len);
 		mpi_request->DevHandle =
 		    cpu_to_le16(sas_device_priv_data->sas_target->handle);
@@ -7623,6 +7658,22 @@ mpt2sas_scsih_event_callback(struct MPT2SAS_ADAPTER *ioc, u8 msix_index,
 	return;
 }
 
+static int
+_scsih_init_command(struct Scsi_Host *shost, struct scsi_cmnd *cmd,
+			unsigned int request_idx)
+{
+	struct MPT2SAS_ADAPTER *ioc = shost_priv(shost);
+	struct scsiio_tracker *st;
+
+	st = (void *) cmd + sizeof(*cmd);
+	INIT_LIST_HEAD(&st->chain_list);
+	st->scmd = cmd;
+	st->cb_idx = ioc->scsi_io_cb_idx;
+	st->smid = request_idx + 1;
+	st->direct_io = 0;
+	return 0;
+}
+
 /* shost template */
 static struct scsi_host_template scsih_driver_template = {
 	.module				= THIS_MODULE,
@@ -7651,6 +7702,8 @@ static struct scsi_host_template scsih_driver_template = {
 	.shost_attrs			= mpt2sas_host_attrs,
 	.sdev_attrs			= mpt2sas_dev_attrs,
 	.track_queue_depth		= 1,
+	.cmd_size			= sizeof(struct scsiio_tracker),
+	.init_command			= _scsih_init_command,
 };
 
 /**
