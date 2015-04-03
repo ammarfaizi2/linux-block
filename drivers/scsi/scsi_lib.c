@@ -648,6 +648,32 @@ static void scsi_mq_uninit_cmd(struct scsi_cmnd *cmd)
 	}
 }
 
+struct scsi_mq_iter_data {
+	scsi_scmd_iter *fn;
+	void *priv;
+};
+
+static bool scsi_mq_iter_fn(struct blk_mq_hw_ctx *hctx, struct request *rq,
+			    void *priv, bool reserved)
+{
+	struct scsi_mq_iter_data *data = priv;
+	struct scsi_cmnd *scmd = rq->special;
+
+	return data->fn(scmd, data->priv);
+}
+
+bool scsi_mq_scmd_busy_iter(struct scsi_device *sdev, scsi_scmd_iter *fn,
+			    void *priv)
+{
+	struct scsi_mq_iter_data data;
+
+	data.fn = fn;
+	data.priv = priv;
+	return blk_mq_queue_busy_iter(sdev->request_queue, scsi_mq_iter_fn,
+					&data);
+}
+EXPORT_SYMBOL(scsi_mq_scmd_busy_iter);
+
 /*
  * Function:    scsi_release_buffers()
  *

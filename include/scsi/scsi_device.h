@@ -536,4 +536,7 @@ static inline int scsi_device_tpgs(struct scsi_device *sdev)
 	MODULE_ALIAS("scsi:t-" __stringify(type) "*")
 #define SCSI_DEVICE_MODALIAS_FMT "scsi:t-0x%02x"
 
+typedef bool (scsi_scmd_iter)(struct scsi_cmnd *, void *);
+bool scsi_mq_scmd_busy_iter(struct scsi_device *sdev, scsi_scmd_iter *fn, void *priv);
+
 #endif /* _SCSI_SCSI_DEVICE_H */
