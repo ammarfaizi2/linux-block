@@ -2082,11 +2082,23 @@ static int scsi_init_request(void *data, struct request *rq,
 		unsigned int numa_node)
 {
 	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+	struct Scsi_Host *shost = data;
 
 	cmd->sense_buffer = kzalloc_node(SCSI_SENSE_BUFFERSIZE, GFP_KERNEL,
 			numa_node);
 	if (!cmd->sense_buffer)
 		return -ENOMEM;
+
+	if (shost->hostt->init_command) {
+		int ret;
+
+		ret = shost->hostt->init_command(shost, cmd, request_idx);
+		if (ret) {
+			kfree(cmd->sense_buffer);
+			return ret;
+		}
+	}
+
 	return 0;
 }
 
@@ -2094,8 +2106,12 @@ static void scsi_exit_request(void *data, struct request *rq,
 		unsigned int hctx_idx, unsigned int request_idx)
 {
 	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+	struct Scsi_Host *shost = data;
 
 	kfree(cmd->sense_buffer);
+
+	if (shost->hostt->exit_command)
+		shost->hostt->exit_command(shost, cmd);
 }
 
 static u64 scsi_calculate_bounce_limit(struct Scsi_Host *shost)

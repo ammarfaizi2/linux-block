@@ -496,10 +496,14 @@ struct scsi_host_template {
 	u64 vendor_id;
 
 	/*
-	 * Additional per-command data allocated for the driver.
+	 * Additional per-command data allocated for the driver, along
+	 * with init/exit helper hooks.
 	 */
 	unsigned int cmd_size;
 	struct scsi_host_cmd_pool *cmd_pool;
+	int (*init_command)(struct Scsi_Host *, struct scsi_cmnd *,
+				unsigned int);
+	void (*exit_command)(struct Scsi_Host *, struct scsi_cmnd *);
 
 	/* temporary flag to disable blk-mq I/O path */
 	bool disable_blk_mq;
