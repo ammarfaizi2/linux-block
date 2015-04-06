@@ -13,10 +13,10 @@
 struct thread_stack;
 
 struct thread {
-	union {
+	//union {
 		struct rb_node	 rb_node;
 		struct list_head node;
-	};
+	//};
 	struct map_groups	*mg;
 	pid_t			pid_; /* Not all tools update this */
 	pid_t			tid;
