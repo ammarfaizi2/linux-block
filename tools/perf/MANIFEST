@@ -17,6 +17,7 @@ tools/include/asm-generic/bitops/fls64.h
 tools/include/asm-generic/bitops/fls.h
 tools/include/asm-generic/bitops/hweight.h
 tools/include/asm-generic/bitops.h
+tools/include/linux/atomic.h
 tools/include/linux/bitops.h
 tools/include/linux/compiler.h
 tools/include/linux/export.h
