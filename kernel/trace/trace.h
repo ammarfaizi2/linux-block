@@ -38,6 +38,7 @@ enum trace_type {
 	TRACE_USER_STACK,
 	TRACE_BLK,
 	TRACE_BPUTS,
+	TRACE_HWLAT,
 
 	__TRACE_LAST_TYPE,
 };
@@ -307,6 +308,7 @@ extern void __ftrace_bad_type(void);
 			  TRACE_GRAPH_ENT);		\
 		IF_ASSIGN(var, ent, struct ftrace_graph_ret_entry,	\
 			  TRACE_GRAPH_RET);		\
+		IF_ASSIGN(var, ent, struct trace_hwlat_detector, TRACE_HWLAT);	\
 		__ftrace_bad_type();					\
 	} while (0)
 
@@ -528,6 +530,7 @@ trace_buffer_iter(struct trace_iterator *iter, int cpu)
 	return NULL;
 }
 
+int tracer_tracing_is_on(struct trace_array *tr);
 int tracer_init(struct tracer *t, struct trace_array *tr);
 int tracing_is_enabled(void);
 void tracing_reset(struct trace_buffer *buf, int cpu);

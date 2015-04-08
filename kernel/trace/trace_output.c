@@ -1221,6 +1221,89 @@ static struct trace_event trace_print_event = {
 	.funcs		= &trace_print_funcs,
 };
 
+/* TRACE_HWLAT */
+static enum print_line_t
+trace_hwlat_trace(struct trace_iterator *iter, int flags,
+		  struct trace_event *event)
+{
+	struct trace_hwlat_detector *field;
+	struct trace_seq *s = &iter->seq;
+
+	trace_assign_type(field, iter->ent);
+
+	trace_seq_printf(s, "cnt:%u\tts:%010lu.%010lu\tinner:%llu\touter:%llu\n",
+			 field->seqnum,
+			 field->timestamp.tv_sec,
+			 field->timestamp.tv_nsec,
+			 field->duration,
+			 field->outer_duration);
+
+	return trace_handle_return(s);
+}
+
+static enum print_line_t trace_hwlat_raw(struct trace_iterator *iter, int flags,
+				      struct trace_event *event)
+{
+	struct trace_hwlat_detector *field;
+
+	trace_assign_type(field, iter->ent);
+
+	trace_seq_printf(&iter->seq, "%u %010lu.%010lu %llu %llu",
+			 field->seqnum,
+			 field->timestamp.tv_sec,
+			 field->timestamp.tv_nsec,
+			 field->duration,
+			 field->outer_duration);
+
+	return trace_handle_return(&iter->seq);
+}
+
+static enum print_line_t trace_hwlat_hex(struct trace_iterator *iter, int flags,
+					 struct trace_event *event)
+{
+	struct trace_hwlat_detector *field;
+	struct trace_seq *s = &iter->seq;
+
+	trace_assign_type(field, iter->ent);
+
+	SEQ_PUT_HEX_FIELD(s, field->seqnum);
+	SEQ_PUT_HEX_FIELD(s, field->timestamp.tv_sec);
+	SEQ_PUT_HEX_FIELD(s, field->timestamp.tv_nsec);
+	SEQ_PUT_HEX_FIELD(s, field->duration);
+	SEQ_PUT_HEX_FIELD(s, field->outer_duration);
+
+	return trace_handle_return(s);
+}
+
+static enum print_line_t trace_hwlat_bin(struct trace_iterator *iter, int flags,
+					 struct trace_event *event)
+{
+	struct trace_hwlat_detector *field;
+	struct trace_seq *s = &iter->seq;
+
+	trace_assign_type(field, iter->ent);
+
+	SEQ_PUT_FIELD(s, field->seqnum);
+	SEQ_PUT_FIELD(s, field->timestamp.tv_sec);
+	SEQ_PUT_FIELD(s, field->timestamp.tv_nsec);
+	SEQ_PUT_FIELD(s, field->duration);
+	SEQ_PUT_FIELD(s, field->outer_duration);
+
+	return trace_handle_return(s);
+}
+
+static struct trace_event_functions trace_hwlat_funcs = {
+	.trace		= trace_hwlat_trace,
+	.raw		= trace_hwlat_raw,
+	.hex		= trace_hwlat_hex,
+	.binary		= trace_hwlat_bin,
+};
+
+static struct trace_event trace_hwlat_event = {
+	.type		= TRACE_HWLAT,
+	.funcs		= &trace_hwlat_funcs,
+};
+
 
 static struct trace_event *events[] __initdata = {
 	&trace_fn_event,
@@ -1231,6 +1314,7 @@ static struct trace_event *events[] __initdata = {
 	&trace_bputs_event,
 	&trace_bprint_event,
 	&trace_print_event,
+	&trace_hwlat_event,
 	NULL
 };
 
