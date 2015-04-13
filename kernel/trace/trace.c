@@ -3372,13 +3372,13 @@ static const struct file_operations show_traces_fops = {
  * The tracer itself will not take this lock, but still we want
  * to provide a consistent cpumask to user-space:
  */
-static DEFINE_MUTEX(tracing_cpumask_update_lock);
+DEFINE_MUTEX(tracing_cpumask_update_lock);
 
 /*
  * Temporary storage for the character representation of the
  * CPU bitmask (and one more byte for the newline):
  */
-static char mask_str[NR_CPUS + 1];
+char tracing_mask_str[NR_CPUS + 1];
 
 static ssize_t
 tracing_cpumask_read(struct file *filp, char __user *ubuf,
@@ -3389,13 +3389,14 @@ tracing_cpumask_read(struct file *filp, char __user *ubuf,
 
 	mutex_lock(&tracing_cpumask_update_lock);
 
-	len = snprintf(mask_str, count, "%*pb\n",
+	len = snprintf(tracing_mask_str, count, "%*pb\n",
 		       cpumask_pr_args(tr->tracing_cpumask));
 	if (len >= count) {
 		count = -EINVAL;
 		goto out_err;
 	}
-	count = simple_read_from_buffer(ubuf, count, ppos, mask_str, NR_CPUS+1);
+	count = simple_read_from_buffer(ubuf, count, ppos,
+					tracing_mask_str, NR_CPUS+1);
 
 out_err:
 	mutex_unlock(&tracing_cpumask_update_lock);

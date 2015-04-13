@@ -46,12 +46,17 @@ count			- number of latency spikes observed since last reset
 width			- time period to sample with CPUs held (usecs)
 			  must be less than the total window size (enforced)
 window			- total period of sampling, width being inside (usecs)
+cpumask			- the cpu mask to run the hwlat detector kthreads on
 
 By default we will set width to 500,000 and window to 1,000,000, meaning that
 we will sample every 1,000,000 usecs (1s) for 500,000 usecs (0.5s). If we
 observe any latencies that exceed the threshold (initially 100 usecs),
 then we write to a global sample ring buffer of 8K samples, which is
 consumed by reading from the "sample" (pipe) debugfs file interface.
+
+The cpumask is set to default of 1, meaning it will only kick off one thread
+on CPU 0. If you want to test other CPUs, writing a cpumask number (hex digit
+like 'e') into the cpumask file will spawn new threads to run on those CPUs.
 
 Also the following tracing directory files are used by the hwlat_detector:
 

@@ -226,8 +226,9 @@ config HWLAT_TRACER
      	select GENERIC_TRACER
 	select TRACER_MAX_TRACE
 	help
-	 This tracer, when enabled will create a kernel thread that
-	 spins in a loop looking for interruptions caused by
+	 This tracer, when enabled will create one or more kernel threads,
+	 depening on what the cpumask file is set to, which each thread
+	 spinning in a loop looking for interruptions caused by
 	 something other than the kernel. For example, if a
 	 System Management Interrupt (SMI) takes a noticeable amount of
 	 time, this tracer will detect it. This is useful for testing
@@ -236,18 +237,20 @@ config HWLAT_TRACER
 	 Some files are created in the tracing directory when this
 	 is enabled:
 
-	   hwlat_detector/count  - the count of records of latencies found
-	   hwlat_detector/width  - time in usecs for how long to spin for
-	   hwlat_detector/window - time in usecs between the start of each
-				    iteration
+	   hwlat_detector/count   - the count of records of latencies found
+	   hwlat_detector/width   - time in usecs for how long to spin for
+	   hwlat_detector/window  - time in usecs between the start of each
+				     iteration
+	   hwlat_detector/cpumask - The mask of what CPUs the test should run on.
 
-	 The kernel thread will spin with interrupts disabled for
+	 A kernel thread is created on each CPU specified by "cpumask".
+
+	 Each kernel thread will spin with interrupts disabled for
 	 "width" microseconds in every "widow" cycle. It will not spin
 	 for "window - width" microseconds, where the system can
 	 continue to operate.
 
-	 Only a single thread is created that runs this tracer. The
-	 output will appear in the trace and trace_pipe files.
+	 The output will appear in the trace and trace_pipe files.
 
 	 When the tracer is not running, it has no affect on the system,
 	 but when it is running, it can cause the system to be

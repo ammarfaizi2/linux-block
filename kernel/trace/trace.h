@@ -598,6 +598,8 @@ int is_tracing_stopped(void);
 loff_t tracing_lseek(struct file *file, loff_t offset, int whence);
 
 extern cpumask_var_t __read_mostly tracing_buffer_mask;
+extern char tracing_mask_str[NR_CPUS + 1];
+extern struct mutex tracing_cpumask_update_lock;
 
 #define for_each_tracing_cpu(cpu)	\
 	for_each_cpu(cpu, tracing_buffer_mask)
