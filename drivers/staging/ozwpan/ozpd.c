@@ -175,10 +175,8 @@ static void oz_pd_free(struct work_struct *work)
  */
 void oz_pd_destroy(struct oz_pd *pd)
 {
-	if (hrtimer_active(&pd->timeout))
-		hrtimer_cancel(&pd->timeout);
-	if (hrtimer_active(&pd->heartbeat))
-		hrtimer_cancel(&pd->heartbeat);
+	hrtimer_cancel(&pd->timeout);
+	hrtimer_cancel(&pd->heartbeat);
 
 	INIT_WORK(&pd->workitem, oz_pd_free);
 	if (!schedule_work(&pd->workitem))
@@ -247,7 +245,7 @@ void oz_pd_heartbeat(struct oz_pd *pd, u16 apps)
 				more = 1;
 		}
 	}
-	if ((!more) && (hrtimer_active(&pd->heartbeat)))
+	if (!more)
 		hrtimer_cancel(&pd->heartbeat);
 	if (pd->mode & OZ_F_ISOC_ANYTIME) {
 		int count = 8;
