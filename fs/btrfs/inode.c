@@ -8121,8 +8121,7 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 	struct inode *inode = file->f_mapping->host;
 	u64 outstanding_extents = 0;
 	size_t count = 0;
-	int flags = 0;
-	bool wakeup = true;
+	int flags = DIO_SKIP_DIO_COUNT;
 	bool relock = false;
 	ssize_t ret;
 
@@ -8170,8 +8169,11 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 	} else if (test_bit(BTRFS_INODE_READDIO_NEED_LOCK,
 				     &BTRFS_I(inode)->runtime_flags)) {
 		inode_dio_dec(inode);
+		/*
+		 * we know need i_dio_count inc/dec, the below overwrites
+		 * the skip inc/dec flag.
+		 */
 		flags = DIO_LOCKING | DIO_SKIP_HOLES;
-		wakeup = false;
 	}
 
 	ret = __blockdev_direct_IO(rw, iocb, inode,
@@ -8187,7 +8189,7 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 						     count - (size_t)ret);
 	}
 out:
-	if (wakeup)
+	if (flags & DIO_SKIP_DIO_COUNT)
 		inode_dio_dec(inode);
 	if (relock)
 		mutex_lock(&inode->i_mutex);
