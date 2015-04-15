@@ -2977,8 +2977,10 @@ static ssize_t ext4_ext_direct_IO(int rw, struct kiocb *iocb,
 	 * conversion. This also disallows race between truncate() and
 	 * overwrite DIO as i_dio_count needs to be incremented under i_mutex.
 	 */
-	if (rw == WRITE)
+	if (rw == WRITE) {
 		inode_dio_inc(inode);
+		dio_flags |= DIO_SKIP_DIO_COUNT;
+	}
 
 	/* If we do a overwrite dio, i_mutex locking can be released */
 	overwrite = *((int *)iocb->private);
@@ -3032,7 +3034,7 @@ static ssize_t ext4_ext_direct_IO(int rw, struct kiocb *iocb,
 		get_block_func = ext4_get_block_write_nolock;
 	} else {
 		get_block_func = ext4_get_block_write;
-		dio_flags = DIO_LOCKING;
+		dio_flags |= DIO_LOCKING;
 	}
 	if (IS_DAX(inode))
 		ret = dax_do_io(rw, iocb, inode, iter, offset, get_block_func,
