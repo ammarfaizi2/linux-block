@@ -8129,7 +8129,7 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 	if (check_direct_IO(BTRFS_I(inode)->root, rw, iocb, iter, offset))
 		return 0;
 
-	atomic_inc(&inode->i_dio_count);
+	inode_dio_inc(inode);
 	smp_mb__after_atomic();
 
 	/*
@@ -8169,7 +8169,7 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 		current->journal_info = &outstanding_extents;
 	} else if (test_bit(BTRFS_INODE_READDIO_NEED_LOCK,
 				     &BTRFS_I(inode)->runtime_flags)) {
-		inode_dio_done(inode);
+		inode_dio_dec(inode);
 		flags = DIO_LOCKING | DIO_SKIP_HOLES;
 		wakeup = false;
 	}
@@ -8188,7 +8188,7 @@ static ssize_t btrfs_direct_IO(int rw, struct kiocb *iocb,
 	}
 out:
 	if (wakeup)
-		inode_dio_done(inode);
+		inode_dio_dec(inode);
 	if (relock)
 		mutex_lock(&inode->i_mutex);
 

@@ -2978,7 +2978,7 @@ static ssize_t ext4_ext_direct_IO(int rw, struct kiocb *iocb,
 	 * overwrite DIO as i_dio_count needs to be incremented under i_mutex.
 	 */
 	if (rw == WRITE)
-		atomic_inc(&inode->i_dio_count);
+		inode_dio_inc(inode);
 
 	/* If we do a overwrite dio, i_mutex locking can be released */
 	overwrite = *((int *)iocb->private);
@@ -3080,7 +3080,7 @@ static ssize_t ext4_ext_direct_IO(int rw, struct kiocb *iocb,
 
 retake_lock:
 	if (rw == WRITE)
-		inode_dio_done(inode);
+		inode_dio_dec(inode);
 	/* take i_mutex locking again if we do a ovewrite dio */
 	if (overwrite) {
 		up_read(&EXT4_I(inode)->i_data_sem);

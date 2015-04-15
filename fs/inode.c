@@ -1946,18 +1946,31 @@ void inode_dio_wait(struct inode *inode)
 EXPORT_SYMBOL(inode_dio_wait);
 
 /*
- * inode_dio_done - signal finish of a direct I/O requests
+ * inode_dio_begin - signal start of a direct I/O requests
  * @inode: inode the direct I/O happens on
  *
  * This is called once we've finished processing a direct I/O request,
  * and is used to wake up callers waiting for direct I/O to be quiesced.
  */
-void inode_dio_done(struct inode *inode)
+void inode_dio_inc(struct inode *inode)
+{
+	atomic_inc(&inode->i_dio_count);
+}
+EXPORT_SYMBOL(inode_dio_inc);
+
+/*
+ * inode_dio_dec - signal finish of a direct I/O requests
+ * @inode: inode the direct I/O happens on
+ *
+ * This is called once we've finished processing a direct I/O request,
+ * and is used to wake up callers waiting for direct I/O to be quiesced.
+ */
+void inode_dio_dec(struct inode *inode)
 {
 	if (atomic_dec_and_test(&inode->i_dio_count))
 		wake_up_bit(&inode->i_state, __I_DIO_WAKEUP);
 }
-EXPORT_SYMBOL(inode_dio_done);
+EXPORT_SYMBOL(inode_dio_dec);
 
 /*
  * inode_set_flags - atomically set some inode flags
