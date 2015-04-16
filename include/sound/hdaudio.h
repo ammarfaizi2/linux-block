@@ -319,9 +319,10 @@ void snd_hdac_bus_enter_link_reset(struct hdac_bus *bus);
 void snd_hdac_bus_exit_link_reset(struct hdac_bus *bus);
 
 void snd_hdac_bus_update_rirb(struct hdac_bus *bus);
-void snd_hdac_bus_handle_stream_irq(struct hdac_bus *bus, unsigned int status,
+bool snd_hdac_bus_handle_stream_irq(struct hdac_bus *bus,
 				    void (*ack)(struct hdac_bus *,
 						struct hdac_stream *));
+bool snd_hdac_bus_handle_rirb_irq(struct hdac_bus *bus, int delay);
 
 int snd_hdac_bus_alloc_stream_pages(struct hdac_bus *bus);
 void snd_hdac_bus_free_stream_pages(struct hdac_bus *bus);

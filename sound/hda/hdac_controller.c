@@ -424,15 +424,23 @@ EXPORT_SYMBOL_GPL(snd_hdac_bus_stop_chip);
 /**
  * snd_hdac_bus_handle_stream_irq - interrupt handler for streams
  * @bus: HD-audio core bus
- * @status: INTSTS register value
- * @ask: callback to be called for woken streams
+ * @ack: callback to be called for woken streams
+ *
+ * Check the irq status register and handle the streams accordingly.
+ * For each signaled stream, the given @ack callback is called.
+ * Returns true for any irq events, or false if no events are seen.
  */
-void snd_hdac_bus_handle_stream_irq(struct hdac_bus *bus, unsigned int status,
+bool snd_hdac_bus_handle_stream_irq(struct hdac_bus *bus,
 				    void (*ack)(struct hdac_bus *,
 						struct hdac_stream *))
 {
 	struct hdac_stream *azx_dev;
+	unsigned int status;
 	u8 sd_status;
+
+	status = snd_hdac_chip_readl(bus, INTSTS);
+	if (status == 0 || status == -1)
+		return false;
 
 	list_for_each_entry(azx_dev, &bus->stream_list, list) {
 		if (status & azx_dev->sd_int_sta_mask) {
@@ -445,8 +453,37 @@ void snd_hdac_bus_handle_stream_irq(struct hdac_bus *bus, unsigned int status,
 				ack(bus, azx_dev);
 		}
 	}
+
+	return true;
 }
 EXPORT_SYMBOL_GPL(snd_hdac_bus_handle_stream_irq);
+
+/**
+ * snd_hdac_bus_handle_rirb_irq - interrupt handler for RIRB
+ * @bus: HD-audio core bus
+ * @delay: delay before updating RIRB (in usec)
+ *
+ * Update RIRB if the irq status register indicates.
+ * Returns true for any irq events, or false if no events are seen.
+ */
+bool snd_hdac_bus_handle_rirb_irq(struct hdac_bus *bus, int delay)
+{
+	unsigned int status = snd_hdac_chip_readb(bus, RIRBSTS);
+
+	if (!(status & RIRB_INT_MASK))
+		return false;
+
+	if (status & RIRB_INT_RESPONSE) {
+		if (delay)
+			udelay(delay);
+		snd_hdac_bus_update_rirb(bus);
+	}
+
+	/* clear rirb int */
+	snd_hdac_chip_writeb(bus, RIRBSTS, RIRB_INT_MASK);
+	return true;
+}
+EXPORT_SYMBOL_GPL(snd_hdac_bus_handle_rirb_irq);
 
 /**
  * snd_hdac_bus_alloc_stream_pages - allocate BDL and other buffers

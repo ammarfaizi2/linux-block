@@ -929,7 +929,8 @@ irqreturn_t azx_interrupt(int irq, void *dev_id)
 {
 	struct azx *chip = dev_id;
 	struct hdac_bus *bus = azx_bus(chip);
-	u32 status;
+	irqreturn_t ret = IRQ_NONE;
+	int delay = 0;
 
 #ifdef CONFIG_PM
 	if (azx_has_pm_runtime(chip))
@@ -939,33 +940,20 @@ irqreturn_t azx_interrupt(int irq, void *dev_id)
 
 	spin_lock(&bus->reg_lock);
 
-	if (chip->disabled) {
-		spin_unlock(&bus->reg_lock);
-		return IRQ_NONE;
-	}
+	if (chip->disabled)
+		goto unlock;
 
-	status = azx_readl(chip, INTSTS);
-	if (status == 0 || status == 0xffffffff) {
-		spin_unlock(&bus->reg_lock);
-		return IRQ_NONE;
-	}
+	if (snd_hdac_bus_handle_stream_irq(bus, stream_update))
+		ret = IRQ_HANDLED;
 
-	snd_hdac_bus_handle_stream_irq(bus, status, stream_update);
+	if (chip->driver_caps & AZX_DCAPS_RIRB_PRE_DELAY)
+		delay = 80;
+	if (snd_hdac_bus_handle_rirb_irq(bus, delay))
+		ret = IRQ_HANDLED;
 
-	/* clear rirb int */
-	status = azx_readb(chip, RIRBSTS);
-	if (status & RIRB_INT_MASK) {
-		if (status & RIRB_INT_RESPONSE) {
-			if (chip->driver_caps & AZX_DCAPS_RIRB_PRE_DELAY)
-				udelay(80);
-			snd_hdac_bus_update_rirb(bus);
-		}
-		azx_writeb(chip, RIRBSTS, RIRB_INT_MASK);
-	}
-
+ unlock:
 	spin_unlock(&bus->reg_lock);
-
-	return IRQ_HANDLED;
+	return ret;
 }
 EXPORT_SYMBOL_GPL(azx_interrupt);
 
