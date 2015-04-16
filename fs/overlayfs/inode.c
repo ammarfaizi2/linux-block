@@ -51,9 +51,9 @@ int ovl_setattr(struct dentry *dentry, struct iattr *attr)
 
 	upperdentry = ovl_dentry_upper(dentry);
 	if (upperdentry) {
-		mutex_lock(&upperdentry->d_inode->i_mutex);
+		mutex_lock(&d_backing_inode(upperdentry)->i_mutex);
 		err = notify_change(upperdentry, attr, NULL);
-		mutex_unlock(&upperdentry->d_inode->i_mutex);
+		mutex_unlock(&d_backing_inode(upperdentry)->i_mutex);
 	} else {
 		err = ovl_copy_up_last(dentry, attr, false);
 	}
@@ -147,7 +147,7 @@ static void *ovl_follow_link(struct dentry *dentry, struct nameidata *nd)
 	struct inode *realinode;
 
 	realdentry = ovl_dentry_real(dentry);
-	realinode = realdentry->d_inode;
+	realinode = d_backing_inode(realdentry);
 
 	if (WARN_ON(!realinode->i_op->follow_link))
 		return ERR_PTR(-EPERM);
@@ -181,7 +181,7 @@ static void ovl_put_link(struct dentry *dentry, struct nameidata *nd, void *c)
 	if (!data)
 		return;
 
-	realinode = data->realdentry->d_inode;
+	realinode = d_backing_inode(data->realdentry);
 	realinode->i_op->put_link(data->realdentry, nd, data->cookie);
 	kfree(data);
 }
@@ -192,7 +192,7 @@ static int ovl_readlink(struct dentry *dentry, char __user *buf, int bufsiz)
 	struct inode *realinode;
 
 	ovl_path_real(dentry, &realpath);
-	realinode = realpath.dentry->d_inode;
+	realinode = d_backing_inode(realpath.dentry);
 
 	if (!realinode->i_op->readlink)
 		return -EINVAL;
@@ -327,7 +327,7 @@ static bool ovl_open_need_copy_up(int flags, enum ovl_path_type type,
 	if (OVL_TYPE_UPPER(type))
 		return false;
 
-	if (special_file(realdentry->d_inode->i_mode))
+	if (d_is_special(realdentry))
 		return false;
 
 	if (!(OPEN_FMODE(flags) & FMODE_WRITE) && !(flags & O_TRUNC))

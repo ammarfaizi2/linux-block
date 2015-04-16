@@ -39,7 +39,7 @@ struct dentry *ovl_lookup_temp(struct dentry *workdir, struct dentry *dentry)
 	snprintf(name, sizeof(name), "#%lx", (unsigned long) dentry);
 
 	temp = lookup_one_len(name, workdir, strlen(name));
-	if (!IS_ERR(temp) && temp->d_inode) {
+	if (!IS_ERR(temp) && d_is_positive(temp)) {
 		pr_err("overlayfs: workdir/%s already exists\n", name);
 		dput(temp);
 		temp = ERR_PTR(-EIO);
@@ -164,7 +164,7 @@ static int ovl_create_upper(struct dentry *dentry, struct inode *inode,
 			    struct dentry *hardlink)
 {
 	struct dentry *upperdir = ovl_dentry_upper(dentry->d_parent);
-	struct inode *udir = upperdir->d_inode;
+	struct inode *udir = d_backing_inode(upperdir);
 	struct dentry *newdentry;
 	int err;
 
@@ -180,7 +180,7 @@ static int ovl_create_upper(struct dentry *dentry, struct inode *inode,
 
 	ovl_dentry_version_inc(dentry->d_parent);
 	ovl_dentry_update(dentry, newdentry);
-	ovl_copyattr(newdentry->d_inode, inode);
+	ovl_copyattr(d_backing_inode(newdentry), inode);
 	d_instantiate(dentry, inode);
 	newdentry = NULL;
 out_dput:
@@ -214,9 +214,9 @@ static struct dentry *ovl_clear_empty(struct dentry *dentry,
 				      struct list_head *list)
 {
 	struct dentry *workdir = ovl_workdir(dentry);
-	struct inode *wdir = workdir->d_inode;
+	struct inode *wdir = d_backing_inode(workdir);
 	struct dentry *upperdir = ovl_dentry_upper(dentry->d_parent);
-	struct inode *udir = upperdir->d_inode;
+	struct inode *udir = d_backing_inode(upperdir);
 	struct path upperpath;
 	struct dentry *upper;
 	struct dentry *opaquedir;
@@ -236,7 +236,7 @@ static struct dentry *ovl_clear_empty(struct dentry *dentry,
 	if (!S_ISDIR(stat.mode))
 		goto out_unlock;
 	upper = upperpath.dentry;
-	if (upper->d_parent->d_inode != udir)
+	if (d_backing_inode(upper->d_parent) != udir)
 		goto out_unlock;
 
 	opaquedir = ovl_lookup_temp(workdir, dentry);
@@ -256,9 +256,9 @@ static struct dentry *ovl_clear_empty(struct dentry *dentry,
 	if (err)
 		goto out_cleanup;
 
-	mutex_lock(&opaquedir->d_inode->i_mutex);
+	mutex_lock(&d_backing_inode(opaquedir)->i_mutex);
 	err = ovl_set_attr(opaquedir, &stat);
-	mutex_unlock(&opaquedir->d_inode->i_mutex);
+	mutex_unlock(&d_backing_inode(opaquedir)->i_mutex);
 	if (err)
 		goto out_cleanup;
 
@@ -316,9 +316,9 @@ static int ovl_create_over_whiteout(struct dentry *dentry, struct inode *inode,
 				    struct dentry *hardlink)
 {
 	struct dentry *workdir = ovl_workdir(dentry);
-	struct inode *wdir = workdir->d_inode;
+	struct inode *wdir = d_backing_inode(workdir);
 	struct dentry *upperdir = ovl_dentry_upper(dentry->d_parent);
-	struct inode *udir = upperdir->d_inode;
+	struct inode *udir = d_backing_inode(upperdir);
 	struct dentry *upper;
 	struct dentry *newdentry;
 	int err;
@@ -360,7 +360,7 @@ static int ovl_create_over_whiteout(struct dentry *dentry, struct inode *inode,
 	}
 	ovl_dentry_version_inc(dentry->d_parent);
 	ovl_dentry_update(dentry, newdentry);
-	ovl_copyattr(newdentry->d_inode, inode);
+	ovl_copyattr(d_backing_inode(newdentry), inode);
 	d_instantiate(dentry, inode);
 	newdentry = NULL;
 out_dput2:
@@ -488,7 +488,7 @@ static int ovl_link(struct dentry *old, struct inode *newdir,
 		goto out_drop_write;
 
 	upper = ovl_dentry_upper(old);
-	err = ovl_create_or_link(new, upper->d_inode->i_mode, 0, NULL, upper);
+	err = ovl_create_or_link(new, d_backing_inode(upper)->i_mode, 0, NULL, upper);
 
 out_drop_write:
 	ovl_drop_write(old);
@@ -499,9 +499,9 @@ out:
 static int ovl_remove_and_whiteout(struct dentry *dentry, bool is_dir)
 {
 	struct dentry *workdir = ovl_workdir(dentry);
-	struct inode *wdir = workdir->d_inode;
+	struct inode *wdir = d_backing_inode(workdir);
 	struct dentry *upperdir = ovl_dentry_upper(dentry->d_parent);
-	struct inode *udir = upperdir->d_inode;
+	struct inode *udir = d_backing_inode(upperdir);
 	struct dentry *whiteout;
 	struct dentry *upper;
 	struct dentry *opaquedir = NULL;
@@ -573,7 +573,7 @@ kill_whiteout:
 static int ovl_remove_upper(struct dentry *dentry, bool is_dir)
 {
 	struct dentry *upperdir = ovl_dentry_upper(dentry->d_parent);
-	struct inode *dir = upperdir->d_inode;
+	struct inode *dir = d_backing_inode(upperdir);
 	struct dentry *upper = ovl_dentry_upper(dentry);
 	int err;
 
@@ -604,8 +604,8 @@ static int ovl_remove_upper(struct dentry *dentry, bool is_dir)
 
 static inline int ovl_check_sticky(struct dentry *dentry)
 {
-	struct inode *dir = ovl_dentry_real(dentry->d_parent)->d_inode;
-	struct inode *inode = ovl_dentry_real(dentry)->d_inode;
+	struct inode *dir = d_backing_inode(ovl_dentry_real(dentry->d_parent));
+	struct inode *inode = d_backing_inode(ovl_dentry_real(dentry));
 
 	if (check_sticky(dir, inode))
 		return -EPERM;
@@ -731,13 +731,13 @@ static int ovl_rename2(struct inode *olddir, struct dentry *old,
 
 		err = 0;
 		if (!OVL_TYPE_UPPER(new_type) && !OVL_TYPE_UPPER(old_type)) {
-			if (ovl_dentry_lower(old)->d_inode ==
-			    ovl_dentry_lower(new)->d_inode)
+			if (d_backing_inode(ovl_dentry_lower(old)) ==
+			    d_backing_inode(ovl_dentry_lower(new)))
 				goto out;
 		}
 		if (OVL_TYPE_UPPER(new_type) && OVL_TYPE_UPPER(old_type)) {
-			if (ovl_dentry_upper(old)->d_inode ==
-			    ovl_dentry_upper(new)->d_inode)
+			if (d_backing_inode(ovl_dentry_upper(old)) ==
+			    d_backing_inode(ovl_dentry_upper(new)))
 				goto out;
 		}
 	} else {
@@ -857,14 +857,14 @@ static int ovl_rename2(struct inode *olddir, struct dentry *old,
 	}
 
 	if (old_opaque || new_opaque) {
-		err = ovl_do_rename(old_upperdir->d_inode, olddentry,
-				    new_upperdir->d_inode, newdentry,
+		err = ovl_do_rename(d_backing_inode(old_upperdir), olddentry,
+				    d_backing_inode(new_upperdir), newdentry,
 				    flags);
 	} else {
 		/* No debug for the plain case */
 		BUG_ON(flags & ~RENAME_EXCHANGE);
-		err = vfs_rename(old_upperdir->d_inode, olddentry,
-				 new_upperdir->d_inode, newdentry,
+		err = vfs_rename(d_backing_inode(old_upperdir), olddentry,
+				 d_backing_inode(new_upperdir), newdentry,
 				 NULL, flags);
 	}
 
@@ -888,7 +888,7 @@ static int ovl_rename2(struct inode *olddir, struct dentry *old,
 	}
 
 	if (cleanup_whiteout)
-		ovl_cleanup(old_upperdir->d_inode, newdentry);
+		ovl_cleanup(d_backing_inode(old_upperdir), newdentry);
 
 	ovl_dentry_version_inc(old->d_parent);
 	ovl_dentry_version_inc(new->d_parent);

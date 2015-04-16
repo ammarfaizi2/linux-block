@@ -26,8 +26,8 @@ int ovl_copy_xattr(struct dentry *old, struct dentry *new)
 	char *buf, *name, *value;
 	int error;
 
-	if (!old->d_inode->i_op->getxattr ||
-	    !new->d_inode->i_op->getxattr)
+	if (!d_backing_inode(old)->i_op->getxattr ||
+	    !d_backing_inode(new)->i_op->getxattr)
 		return 0;
 
 	list_size = vfs_listxattr(old, NULL, 0);
@@ -126,7 +126,7 @@ static char *ovl_read_symlink(struct dentry *realdentry)
 {
 	int res;
 	char *buf;
-	struct inode *inode = realdentry->d_inode;
+	struct inode *inode = d_backing_inode(realdentry);
 	mm_segment_t old_fs;
 
 	res = -EINVAL;
@@ -198,8 +198,8 @@ static int ovl_copy_up_locked(struct dentry *workdir, struct dentry *upperdir,
 			      struct kstat *stat, struct iattr *attr,
 			      const char *link)
 {
-	struct inode *wdir = workdir->d_inode;
-	struct inode *udir = upperdir->d_inode;
+	struct inode *wdir = d_backing_inode(workdir);
+	struct inode *udir = d_backing_inode(upperdir);
 	struct dentry *newdentry = NULL;
 	struct dentry *upper = NULL;
 	umode_t mode = stat->mode;
@@ -238,11 +238,11 @@ static int ovl_copy_up_locked(struct dentry *workdir, struct dentry *upperdir,
 	if (err)
 		goto out_cleanup;
 
-	mutex_lock(&newdentry->d_inode->i_mutex);
+	mutex_lock(&d_backing_inode(newdentry)->i_mutex);
 	err = ovl_set_attr(newdentry, stat);
 	if (!err && attr)
 		err = notify_change(newdentry, attr, NULL);
-	mutex_unlock(&newdentry->d_inode->i_mutex);
+	mutex_unlock(&d_backing_inode(newdentry)->i_mutex);
 	if (err)
 		goto out_cleanup;
 
@@ -346,9 +346,9 @@ int ovl_copy_up_one(struct dentry *parent, struct dentry *dentry,
 		err = 0;
 		/* Raced with another copy-up?  Do the setattr here */
 		if (attr) {
-			mutex_lock(&upperdentry->d_inode->i_mutex);
+			mutex_lock(&d_backing_inode(upperdentry)->i_mutex);
 			err = notify_change(upperdentry, attr, NULL);
-			mutex_unlock(&upperdentry->d_inode->i_mutex);
+			mutex_unlock(&d_backing_inode(upperdentry)->i_mutex);
 		}
 		goto out_put_cred;
 	}

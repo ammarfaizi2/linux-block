@@ -536,7 +536,7 @@ void ovl_cleanup_whiteouts(struct dentry *upper, struct list_head *list)
 {
 	struct ovl_cache_entry *p;
 
-	mutex_lock_nested(&upper->d_inode->i_mutex, I_MUTEX_CHILD);
+	mutex_lock_nested(&d_backing_inode(upper)->i_mutex, I_MUTEX_CHILD);
 	list_for_each_entry(p, list, l_node) {
 		struct dentry *dentry;
 
@@ -550,8 +550,8 @@ void ovl_cleanup_whiteouts(struct dentry *upper, struct list_head *list)
 			       (int) PTR_ERR(dentry));
 			continue;
 		}
-		ovl_cleanup(upper->d_inode, dentry);
+		ovl_cleanup(d_backing_inode(upper), dentry);
 		dput(dentry);
 	}
-	mutex_unlock(&upper->d_inode->i_mutex);
+	mutex_unlock(&d_backing_inode(upper)->i_mutex);
 }

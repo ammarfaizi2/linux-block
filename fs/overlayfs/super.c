@@ -209,9 +209,9 @@ void ovl_dentry_update(struct dentry *dentry, struct dentry *upperdentry)
 {
 	struct ovl_entry *oe = dentry->d_fsdata;
 
-	WARN_ON(!mutex_is_locked(&upperdentry->d_parent->d_inode->i_mutex));
+	WARN_ON(!mutex_is_locked(&d_backing_inode(upperdentry->d_parent)->i_mutex));
 	WARN_ON(oe->__upperdentry);
-	BUG_ON(!upperdentry->d_inode);
+	BUG_ON(!d_backing_inode(upperdentry));
 	/*
 	 * Make sure upperdentry is consistent before making it visible to
 	 * ovl_upperdentry_dereference().
@@ -293,14 +293,14 @@ static inline struct dentry *ovl_lookup_real(struct dentry *dir,
 {
 	struct dentry *dentry;
 
-	mutex_lock(&dir->d_inode->i_mutex);
+	mutex_lock(&d_backing_inode(dir)->i_mutex);
 	dentry = lookup_one_len(name->name, dir, name->len);
-	mutex_unlock(&dir->d_inode->i_mutex);
+	mutex_unlock(&d_backing_inode(dir)->i_mutex);
 
 	if (IS_ERR(dentry)) {
 		if (PTR_ERR(dentry) == -ENOENT)
 			dentry = NULL;
-	} else if (!dentry->d_inode) {
+	} else if (d_is_miss(dentry)) {
 		dput(dentry);
 		dentry = NULL;
 	}
@@ -427,15 +427,16 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 
 	if (upperdentry || ctr) {
 		struct dentry *realdentry;
+		struct inode *realinode;
 
 		realdentry = upperdentry ? upperdentry : stack[0].dentry;
+		realinode = d_backing_inode(realdentry);
 
 		err = -ENOMEM;
-		inode = ovl_new_inode(dentry->d_sb, realdentry->d_inode->i_mode,
-				      oe);
+		inode = ovl_new_inode(dentry->d_sb, realinode->i_mode, oe);
 		if (!inode)
 			goto out_free_oe;
-		ovl_copyattr(realdentry->d_inode, inode);
+		ovl_copyattr(realinode, inode);
 	}
 
 	oe->opaque = upperopaque;
@@ -635,7 +636,7 @@ static int ovl_parse_opt(char *opt, struct ovl_config *config)
 static struct dentry *ovl_workdir_create(struct vfsmount *mnt,
 					 struct dentry *dentry)
 {
-	struct inode *dir = dentry->d_inode;
+	struct inode *dir = d_backing_inode(dentry);
 	struct dentry *work;
 	int err;
 	bool retried = false;
@@ -654,7 +655,7 @@ retry:
 			.mode = S_IFDIR | 0,
 		};
 
-		if (work->d_inode) {
+		if (d_backing_inode(work)) {
 			err = -EEXIST;
 			if (retried)
 				goto out_dput;
