@@ -54,7 +54,7 @@ static struct dentry *ovl_whiteout(struct dentry *workdir,
 {
 	int err;
 	struct dentry *whiteout;
-	struct inode *wdir = workdir->d_inode;
+	struct inode *wdir = d_inode(workdir);
 
 	whiteout = ovl_lookup_temp(workdir, dentry);
 	if (IS_ERR(whiteout))
@@ -75,7 +75,7 @@ int ovl_create_real(struct inode *dir, struct dentry *newdentry,
 {
 	int err;
 
-	if (newdentry->d_inode)
+	if (d_really_is_positive(newdentry))
 		return -ESTALE;
 
 	if (hardlink) {
@@ -106,7 +106,8 @@ int ovl_create_real(struct inode *dir, struct dentry *newdentry,
 			err = -EPERM;
 		}
 	}
-	if (!err && WARN_ON(!newdentry->d_inode)) {
+
+	if (!err && WARN_ON(d_really_is_negative(newdentry))) {
 		/*
 		 * Not quite sure if non-instantiated dentry is legal or not.
 		 * VFS doesn't seem to care so check and warn here.
@@ -145,7 +146,7 @@ static int ovl_dir_getattr(struct vfsmount *mnt, struct dentry *dentry,
 		return err;
 
 	stat->dev = dentry->d_sb->s_dev;
-	stat->ino = dentry->d_inode->i_ino;
+	stat->ino = d_inode(dentry)->i_ino;
 
 	/*
 	 * It's probably not worth it to count subdirs to get the
@@ -715,7 +716,7 @@ static int ovl_rename2(struct inode *olddir, struct dentry *old,
 	if (OVL_TYPE_MERGE_OR_LOWER(old_type) && is_dir)
 		goto out;
 
-	if (new->d_inode) {
+	if (d_really_is_positive(new)) {
 		err = ovl_check_sticky(new);
 		if (err)
 			goto out;
@@ -798,14 +799,14 @@ static int ovl_rename2(struct inode *olddir, struct dentry *old,
 
 	if (overwrite) {
 		if (old_opaque) {
-			if (new->d_inode || !new_opaque) {
+			if (d_really_is_positive(new) || !new_opaque) {
 				/* Whiteout source */
 				flags |= RENAME_WHITEOUT;
 			} else {
 				/* Switch whiteouts */
 				flags |= RENAME_EXCHANGE;
 			}
-		} else if (is_dir && !new->d_inode && new_opaque) {
+		} else if (is_dir && d_really_is_negative(new) && new_opaque) {
 			flags |= RENAME_EXCHANGE;
 			cleanup_whiteout = true;
 		}

@@ -224,7 +224,7 @@ void ovl_dentry_version_inc(struct dentry *dentry)
 {
 	struct ovl_entry *oe = dentry->d_fsdata;
 
-	WARN_ON(!mutex_is_locked(&dentry->d_inode->i_mutex));
+	WARN_ON(!mutex_is_locked(&d_inode(dentry)->i_mutex));
 	oe->version++;
 }
 
@@ -232,13 +232,13 @@ u64 ovl_dentry_version_get(struct dentry *dentry)
 {
 	struct ovl_entry *oe = dentry->d_fsdata;
 
-	WARN_ON(!mutex_is_locked(&dentry->d_inode->i_mutex));
+	WARN_ON(!mutex_is_locked(&d_inode(dentry)->i_mutex));
 	return oe->version;
 }
 
 bool ovl_is_whiteout(struct dentry *dentry)
 {
-	struct inode *inode = dentry->d_inode;
+	struct inode *inode = d_inode(dentry);
 
 	return inode && IS_WHITEOUT(inode);
 }
@@ -247,7 +247,7 @@ static bool ovl_is_opaquedir(struct dentry *dentry)
 {
 	int res;
 	char val;
-	struct inode *inode = dentry->d_inode;
+	struct inode *inode = d_inode(dentry);
 
 	if (!S_ISDIR(inode->i_mode) || !inode->i_op->getxattr)
 		return false;
@@ -409,7 +409,7 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 		/*
 		 * If this is a non-directory then stop here.
 		 */
-		if (!S_ISDIR(this->d_inode->i_mode))
+		if (!S_ISDIR(d_inode(this)->i_mode))
 			opaque = true;
 
 		stack[ctr].dentry = this;
