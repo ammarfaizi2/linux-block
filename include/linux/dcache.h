@@ -562,6 +562,24 @@ static inline struct inode *d_backing_inode(const struct dentry *upper)
 }
 
 /**
+ * d_backing_inode_rcu - Get upper or lower inode we should be using with ACCESS_ONCE()
+ * @upper: The upper layer
+ *
+ * This is the helper that should be used to get at the inode that will be used
+ * if this dentry were to be opened as a file.  The inode may be on the upper
+ * dentry or it may be on a lower dentry pinned by the upper.  Further, the
+ * upper dentry might not have an inode set.
+ *
+ * Normal filesystems should not use this to access their own inodes.
+ */
+static inline struct inode *d_backing_inode_rcu(const struct dentry *upper)
+{
+	struct inode *inode = ACCESS_ONCE(upper->d_inode);
+
+	return inode;
+}
+
+/**
  * d_backing_dentry - Get upper or lower dentry we should be using
  * @upper: The upper layer
  *
