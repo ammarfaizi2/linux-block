@@ -76,7 +76,7 @@ enum ovl_path_type ovl_path_type(struct dentry *dentry)
 		type = __OVL_PATH_UPPER;
 
 		if (oe->numlower) {
-			if (S_ISDIR(dentry->d_inode->i_mode))
+			if (d_is_dir(dentry))
 				type |= __OVL_PATH_MERGE;
 		} else if (!oe->opaque) {
 			type |= __OVL_PATH_PURE;
@@ -395,8 +395,8 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 		if (i < poe->numlower - 1 && ovl_is_opaquedir(this))
 			opaque = true;
 
-		if (prev && (!S_ISDIR(prev->d_inode->i_mode) ||
-			     !S_ISDIR(this->d_inode->i_mode))) {
+		if (prev && (!d_is_dir(prev) ||
+			     !d_is_dir(this))) {
 			/*
 			 * FIXME: check for upper-opaqueness maybe better done
 			 * in remove code.
@@ -731,7 +731,7 @@ static int ovl_mount_dir_noesc(const char *name, struct path *path)
 		pr_err("overlayfs: filesystem on '%s' not supported\n", name);
 		goto out_put;
 	}
-	if (!S_ISDIR(path->dentry->d_inode->i_mode)) {
+	if (!d_can_lookup(path->dentry)) {
 		pr_err("overlayfs: '%s' not a directory\n", name);
 		goto out_put;
 	}
