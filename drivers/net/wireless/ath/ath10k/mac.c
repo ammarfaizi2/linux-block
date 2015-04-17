@@ -230,9 +230,13 @@ static int ath10k_install_peer_wep_keys(struct ath10k_vif *arvif,
 		flags = 0;
 		flags |= WMI_KEY_PAIRWISE;
 
-		/* set TX_USAGE flag for default key id */
-		if (arvif->def_wep_key_idx == i)
-			flags |= WMI_KEY_TX_USAGE;
+		ret = ath10k_install_key(arvif, arvif->wep_keys[i], SET_KEY,
+					 addr, flags);
+		if (ret)
+			return ret;
+
+		flags = 0;
+		flags |= WMI_KEY_GROUP;
 
 		ret = ath10k_install_key(arvif, arvif->wep_keys[i], SET_KEY,
 					 addr, flags);
@@ -242,6 +246,27 @@ static int ath10k_install_peer_wep_keys(struct ath10k_vif *arvif,
 		spin_lock_bh(&ar->data_lock);
 		peer->keys[i] = arvif->wep_keys[i];
 		spin_unlock_bh(&ar->data_lock);
+	}
+
+	/* In some cases (notably with static WEP IBSS with multiple keys)
+	 * multicast Tx becomes broken. Both pairwise and groupwise keys are
+	 * installed already. Using WMI_KEY_TX_USAGE in different combinations
+	 * didn't seem help. Using def_keyid vdev parameter seems to be
+	 * effective so use that.
+	 *
+	 * FIXME: Revisit. Perhaps this can be done in a less hacky way.
+	 */
+	if (arvif->def_wep_key_idx == -1)
+		return 0;
+
+	ret = ath10k_wmi_vdev_set_param(arvif->ar,
+					arvif->vdev_id,
+					arvif->ar->wmi.vdev_param->def_keyid,
+					arvif->def_wep_key_idx);
+	if (ret) {
+		ath10k_warn(ar, "failed to re-set def wpa key idxon vdev %i: %d\n",
+			    arvif->vdev_id, ret);
+		return ret;
 	}
 
 	return 0;
@@ -358,47 +383,6 @@ static int ath10k_clear_vdev_key(struct ath10k_vif *arvif,
 	}
 
 	return first_errno;
-}
-
-static int ath10k_mac_vif_sta_fix_wep_key(struct ath10k_vif *arvif, int keyidx)
-{
-	struct ath10k *ar = arvif->ar;
-	enum nl80211_iftype iftype = arvif->vif->type;
-	struct ieee80211_key_conf *key;
-	u32 flags;
-	int ret;
-	int i;
-
-	lockdep_assert_held(&ar->conf_mutex);
-
-	if (iftype != NL80211_IFTYPE_STATION)
-		return 0;
-
-	if (keyidx < 0)
-		return 0;
-
-	for (i = 0; i < ARRAY_SIZE(arvif->wep_keys); i++) {
-		if (!arvif->wep_keys[i])
-			continue;
-
-		key = arvif->wep_keys[i];
-
-		flags = 0;
-		flags |= WMI_KEY_PAIRWISE;
-
-		if (key->keyidx == keyidx)
-			flags |= WMI_KEY_TX_USAGE;
-
-		ret = ath10k_install_key(arvif, key, SET_KEY, arvif->bssid,
-					 flags);
-		if (ret) {
-			ath10k_warn(ar, "failed to install key %i on vdev %i: %d\n",
-				    key->keyidx, arvif->vdev_id, ret);
-			return ret;
-		}
-	}
-
-	return 0;
 }
 
 static int ath10k_mac_vif_update_wep_key(struct ath10k_vif *arvif,
@@ -2593,7 +2577,6 @@ static int ath10k_station_assoc(struct ath10k *ar,
 		return ret;
 	}
 
-	peer_arg.peer_reassoc = reassoc;
 	ret = ath10k_wmi_peer_assoc(ar, &peer_arg);
 	if (ret) {
 		ath10k_warn(ar, "failed to run peer assoc for STA %pM vdev %i: %d\n",
@@ -4667,10 +4650,14 @@ static void ath10k_set_key_h_def_keyidx(struct ath10k *ar,
 	 * frames with multi-vif APs. This is not required for main firmware
 	 * branch (e.g. 636).
 	 *
-	 * FIXME: This has been tested only in AP. It remains unknown if this
-	 * is required for multi-vif STA interfaces on 10.1 */
+	 * This is also needed for 636 fw for IBSS-RSN to work more reliably.
+	 *
+	 * FIXME: It remains unknown if this is required for multi-vif STA
+	 * interfaces on 10.1.
+	 */
 
-	if (arvif->vdev_type != WMI_VDEV_TYPE_AP)
+	if (arvif->vdev_type != WMI_VDEV_TYPE_AP &&
+	    arvif->vdev_type != WMI_VDEV_TYPE_IBSS)
 		return;
 
 	if (key->cipher == WLAN_CIPHER_SUITE_WEP40)
@@ -4703,7 +4690,9 @@ static int ath10k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	bool is_wep = key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
 		      key->cipher == WLAN_CIPHER_SUITE_WEP104;
 	int ret = 0;
+	int ret2;
 	u32 flags = 0;
+	u32 flags2;
 
 	/* this one needs to be done in software */
 	if (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC)
@@ -4774,24 +4763,6 @@ static int ath10k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		 */
 		if (cmd == SET_KEY && arvif->def_wep_key_idx == -1)
 			flags |= WMI_KEY_TX_USAGE;
-
-		/* mac80211 uploads static WEP keys as groupwise while fw/hw
-		 * requires pairwise keys for non-self peers, i.e. BSSID in STA
-		 * mode and associated stations in AP/IBSS.
-		 *
-		 * Static WEP keys for peer_addr=vif->addr and 802.1X WEP keys
-		 * work fine when mapped directly from mac80211.
-		 *
-		 * Note: When installing first static WEP groupwise key (which
-		 * should be pairwise) def_wep_key_idx isn't known yet (it's
-		 * equal to -1).  Since .set_default_unicast_key is called only
-		 * for static WEP it's used to re-upload the key as pairwise.
-		 */
-		if (arvif->def_wep_key_idx >= 0 &&
-		    memcmp(peer_addr, arvif->vif->addr, ETH_ALEN)) {
-			flags &= ~WMI_KEY_GROUP;
-			flags |= WMI_KEY_PAIRWISE;
-		}
 	}
 
 	ret = ath10k_install_key(arvif, key, cmd, peer_addr, flags);
@@ -4799,6 +4770,27 @@ static int ath10k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		ath10k_warn(ar, "failed to install key for vdev %i peer %pM: %d\n",
 			    arvif->vdev_id, peer_addr, ret);
 		goto exit;
+	}
+
+	/* mac80211 sets static WEP keys as groupwise while firmware requires
+	 * them to be installed twice as both pairwise and groupwise.
+	 */
+	if (is_wep && !sta && vif->type == NL80211_IFTYPE_STATION) {
+		flags2 = flags;
+		flags2 &= ~WMI_KEY_GROUP;
+		flags2 |= WMI_KEY_PAIRWISE;
+
+		ret = ath10k_install_key(arvif, key, cmd, peer_addr, flags2);
+		if (ret) {
+			ath10k_warn(ar, "failed to install (ucast) key for vdev %i peer %pM: %d\n",
+				    arvif->vdev_id, peer_addr, ret);
+			ret2 = ath10k_install_key(arvif, key, DISABLE_KEY,
+						  peer_addr, flags);
+			if (ret2)
+				ath10k_warn(ar, "failed to disable (mcast) key for vdev %i peer %pM: %d\n",
+					    arvif->vdev_id, peer_addr, ret2);
+			goto exit;
+		}
 	}
 
 	ath10k_set_key_h_def_keyidx(ar, arvif, cmd, key);
@@ -4848,13 +4840,6 @@ static void ath10k_set_default_unicast_key(struct ieee80211_hw *hw,
 	}
 
 	arvif->def_wep_key_idx = keyidx;
-
-	ret = ath10k_mac_vif_sta_fix_wep_key(arvif, keyidx);
-	if (ret) {
-		ath10k_warn(ar, "failed to fix sta wep key on vdev %i: %d\n",
-			    arvif->vdev_id, ret);
-		goto unlock;
-	}
 
 unlock:
 	mutex_unlock(&arvif->ar->conf_mutex);
@@ -6697,11 +6682,13 @@ int ath10k_mac_register(struct ath10k *ar)
 			IEEE80211_HW_SPECTRUM_MGMT |
 			IEEE80211_HW_SW_CRYPTO_CONTROL |
 			IEEE80211_HW_CONNECTION_MONITOR |
+			IEEE80211_HW_SUPPORTS_PER_STA_GTK |
 			IEEE80211_HW_WANT_MONITOR_VIF |
 			IEEE80211_HW_CHANCTX_STA_CSA |
 			IEEE80211_HW_QUEUE_CONTROL;
 
 	ar->hw->wiphy->features |= NL80211_FEATURE_STATIC_SMPS;
+	ar->hw->wiphy->flags |= WIPHY_FLAG_IBSS_RSN;
 
 	if (ar->ht_cap_info & WMI_HT_CAP_DYNAMIC_SMPS)
 		ar->hw->wiphy->features |= NL80211_FEATURE_DYNAMIC_SMPS;
