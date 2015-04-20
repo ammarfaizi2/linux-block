@@ -3952,7 +3952,7 @@ static void __init rcu_init_levelspread(int *levelspread, const int *levelcnt)
 	if (rcu_fanout_exact) {
 		levelspread[rcu_num_lvls - 1] = rcu_fanout_leaf;
 		for (i = rcu_num_lvls - 2; i >= 0; i--)
-			levelspread[i] = CONFIG_RCU_FANOUT;
+			levelspread[i] = RCU_FANOUT;
 	} else {
 		int ccur;
 		int cprv;
@@ -4083,7 +4083,7 @@ static void __init rcu_init_geometry(void)
 	 */
 	rcu_capacity[0] = rcu_fanout_leaf;
 	for (i = 1; i < RCU_NUM_LVLS; i++)
-		rcu_capacity[i] = rcu_capacity[i - 1] * CONFIG_RCU_FANOUT;
+		rcu_capacity[i] = rcu_capacity[i - 1] * RCU_FANOUT;
 
 	/*
 	 * The tree must be able to accommodate the configured number of CPUs.
