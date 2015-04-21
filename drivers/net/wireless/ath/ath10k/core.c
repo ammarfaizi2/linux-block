@@ -482,6 +482,71 @@ static int ath10k_fetch_cal_file(struct ath10k *ar)
 	return 0;
 }
 
+static int ath10k_core_fetch_spec_board_file(struct ath10k *ar)
+{
+	char filename[100];
+
+	scnprintf(filename, sizeof(filename), "board-%s-%s.bin",
+		  ath10k_bus_str(ar->hif.bus), ar->spec_board_id);
+
+	ar->board = ath10k_fetch_fw_file(ar, ar->hw_params.fw.dir, filename);
+	if (IS_ERR(ar->board))
+		return PTR_ERR(ar->board);
+
+	ar->board_data = ar->board->data;
+	ar->board_len = ar->board->size;
+	ar->spec_board_loaded = true;
+
+	return 0;
+}
+
+static int ath10k_core_fetch_generic_board_file(struct ath10k *ar)
+{
+	if (!ar->hw_params.fw.board) {
+		ath10k_err(ar, "failed to find board file fw entry\n");
+		return -EINVAL;
+	}
+
+	ar->board = ath10k_fetch_fw_file(ar,
+					 ar->hw_params.fw.dir,
+					 ar->hw_params.fw.board);
+	if (IS_ERR(ar->board))
+		return PTR_ERR(ar->board);
+
+	ar->board_data = ar->board->data;
+	ar->board_len = ar->board->size;
+	ar->spec_board_loaded = false;
+
+	return 0;
+}
+
+static int ath10k_core_fetch_board_file(struct ath10k *ar)
+{
+	int ret;
+
+	if (strlen(ar->spec_board_id) > 0) {
+		ret = ath10k_core_fetch_spec_board_file(ar);
+		if (ret) {
+			ath10k_info(ar, "failed to load spec board file, falling back to generic: %d\n",
+				    ret);
+			goto generic;
+		}
+
+		ath10k_dbg(ar, ATH10K_DBG_BOOT, "found specific board file for %s\n",
+			   ar->spec_board_id);
+		return 0;
+	}
+
+generic:
+	ret = ath10k_core_fetch_generic_board_file(ar);
+	if (ret) {
+		ath10k_err(ar, "failed to fetch generic board data: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 static int ath10k_core_fetch_firmware_api_1(struct ath10k *ar)
 {
 	int ret = 0;
@@ -490,23 +555,6 @@ static int ath10k_core_fetch_firmware_api_1(struct ath10k *ar)
 		ath10k_err(ar, "firmware file not defined\n");
 		return -EINVAL;
 	}
-
-	if (ar->hw_params.fw.board == NULL) {
-		ath10k_err(ar, "board data file not defined");
-		return -EINVAL;
-	}
-
-	ar->board = ath10k_fetch_fw_file(ar,
-					 ar->hw_params.fw.dir,
-					 ar->hw_params.fw.board);
-	if (IS_ERR(ar->board)) {
-		ret = PTR_ERR(ar->board);
-		ath10k_err(ar, "could not fetch board data (%d)\n", ret);
-		goto err;
-	}
-
-	ar->board_data = ar->board->data;
-	ar->board_len = ar->board->size;
 
 	ar->firmware = ath10k_fetch_fw_file(ar,
 					    ar->hw_params.fw.dir,
@@ -706,27 +754,6 @@ static int ath10k_core_fetch_firmware_api_n(struct ath10k *ar, const char *name)
 		goto err;
 	}
 
-	/* now fetch the board file */
-	if (ar->hw_params.fw.board == NULL) {
-		ath10k_err(ar, "board data file not defined");
-		ret = -EINVAL;
-		goto err;
-	}
-
-	ar->board = ath10k_fetch_fw_file(ar,
-					 ar->hw_params.fw.dir,
-					 ar->hw_params.fw.board);
-	if (IS_ERR(ar->board)) {
-		ret = PTR_ERR(ar->board);
-		ath10k_err(ar, "could not fetch board data '%s/%s' (%d)\n",
-			   ar->hw_params.fw.dir, ar->hw_params.fw.board,
-			   ret);
-		goto err;
-	}
-
-	ar->board_data = ar->board->data;
-	ar->board_len = ar->board->size;
-
 	return 0;
 
 err:
@@ -740,6 +767,12 @@ static int ath10k_core_fetch_firmware_files(struct ath10k *ar)
 
 	/* calibration file is optional, don't check for any errors */
 	ath10k_fetch_cal_file(ar);
+
+	ret = ath10k_core_fetch_board_file(ar);
+	if (ret) {
+		ath10k_err(ar, "failed to fetch board file: %d\n", ret);
+		return ret;
+	}
 
 	ar->fw_api = 5;
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "trying fw api %d\n", ar->fw_api);

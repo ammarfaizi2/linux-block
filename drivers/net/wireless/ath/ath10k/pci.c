@@ -1539,12 +1539,11 @@ static int ath10k_pci_get_num_banks(struct ath10k *ar)
 		switch (MS(ar->chip_id, SOC_CHIP_ID_REV)) {
 		case QCA6174_HW_1_0_CHIP_ID_REV:
 		case QCA6174_HW_1_1_CHIP_ID_REV:
+		case QCA6174_HW_2_1_CHIP_ID_REV:
+		case QCA6174_HW_2_2_CHIP_ID_REV:
 			return 3;
 		case QCA6174_HW_1_3_CHIP_ID_REV:
 			return 2;
-		case QCA6174_HW_2_1_CHIP_ID_REV:
-		case QCA6174_HW_2_2_CHIP_ID_REV:
-			return 6;
 		case QCA6174_HW_3_0_CHIP_ID_REV:
 		case QCA6174_HW_3_1_CHIP_ID_REV:
 		case QCA6174_HW_3_2_CHIP_ID_REV:
@@ -2626,6 +2625,12 @@ static int ath10k_pci_probe(struct pci_dev *pdev,
 	ar_pci->pdev = pdev;
 	ar_pci->dev = &pdev->dev;
 	ar_pci->ar = ar;
+
+	if (pdev->subsystem_vendor || pdev->subsystem_device)
+		scnprintf(ar->spec_board_id, sizeof(ar->spec_board_id),
+			  "%04x:%04x:%04x:%04x",
+			  pdev->vendor, pdev->device,
+			  pdev->subsystem_vendor, pdev->subsystem_device);
 
 	spin_lock_init(&ar_pci->ce_lock);
 	setup_timer(&ar_pci->rx_post_retry, ath10k_pci_rx_replenish_retry,
