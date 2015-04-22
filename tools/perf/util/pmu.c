@@ -579,6 +579,38 @@ static int pmu_resolve_param_term(struct parse_events_term *term,
 	return -1;
 }
 
+static char *formats_error_string(struct list_head *formats)
+{
+	struct perf_pmu_format *format;
+	char *error, *str;
+	static const char *static_terms = "config,config1,config2,name,period,branch_type\n";
+	unsigned i = 0;
+
+	if (!asprintf(&str, "valid terms:"))
+		return NULL;
+
+	/* sysfs exported terms */
+	list_for_each_entry(format, formats, list) {
+		char c = i++ ? ',' : ' ';
+
+		error = str;
+		if (!asprintf(&str, "%s%c%s", error, c, format->name))
+			goto fail;
+		free(error);
+	}
+
+	/* static terms */
+	error = str;
+	if (!asprintf(&str, "%s,%s", error, static_terms))
+		goto fail;
+
+	free(error);
+	return str;
+fail:
+	free(error);
+	return NULL;
+}
+
 /*
  * Setup one of config[12] attr members based on the
  * user input data - term parameter.
@@ -587,7 +619,7 @@ static int pmu_config_term(struct list_head *formats,
 			   struct perf_event_attr *attr,
 			   struct parse_events_term *term,
 			   struct list_head *head_terms,
-			   bool zero)
+			   bool zero, struct parse_events_error *error)
 {
 	struct perf_pmu_format *format;
 	__u64 *vp;
@@ -611,6 +643,11 @@ static int pmu_config_term(struct list_head *formats,
 	if (!format) {
 		if (verbose)
 			printf("Invalid event/parameter '%s'\n", term->config);
+		if (error) {
+			error->idx  = term->err_term;
+			error->str  = strdup("unknown term");
+			error->help = formats_error_string(formats);
+		}
 		return -EINVAL;
 	}
 
@@ -636,9 +673,14 @@ static int pmu_config_term(struct list_head *formats,
 		val = term->val.num;
 	else if (term->type_val == PARSE_EVENTS__TERM_TYPE_STR) {
 		if (strcmp(term->val.str, "?")) {
-			if (verbose)
+			if (verbose) {
 				pr_info("Invalid sysfs entry %s=%s\n",
 						term->config, term->val.str);
+			}
+			if (error) {
+				error->idx = term->err_val;
+				error->str = strdup("expected numeric value");
+			}
 			return -EINVAL;
 		}
 
@@ -654,12 +696,13 @@ static int pmu_config_term(struct list_head *formats,
 int perf_pmu__config_terms(struct list_head *formats,
 			   struct perf_event_attr *attr,
 			   struct list_head *head_terms,
-			   bool zero)
+			   bool zero, struct parse_events_error *error)
 {
 	struct parse_events_term *term;
 
 	list_for_each_entry(term, head_terms, list) {
-		if (pmu_config_term(formats, attr, term, head_terms, zero))
+		if (pmu_config_term(formats, attr, term, head_terms,
+				    zero, error))
 			return -EINVAL;
 	}
 
@@ -672,12 +715,14 @@ int perf_pmu__config_terms(struct list_head *formats,
  * 2) pmu format definitions - specified by pmu parameter
  */
 int perf_pmu__config(struct perf_pmu *pmu, struct perf_event_attr *attr,
-		     struct list_head *head_terms)
+		     struct list_head *head_terms,
+		     struct parse_events_error *error)
 {
 	bool zero = !!pmu->default_config;
 
 	attr->type = pmu->type;
-	return perf_pmu__config_terms(&pmu->format, attr, head_terms, zero);
+	return perf_pmu__config_terms(&pmu->format, attr, head_terms,
+				      zero, error);
 }
 
 static struct perf_pmu_alias *pmu_find_alias(struct perf_pmu *pmu,
