@@ -29,6 +29,7 @@
 #include <linux/syscore_ops.h>
 #include <linux/reboot.h>
 #include <linux/security.h>
+#include <keys/system_keyring.h>
 
 #include <generated/utsrelease.h>
 
@@ -37,6 +38,11 @@
 MODULE_AUTHOR("Manuel Estrada Sainz");
 MODULE_DESCRIPTION("Multi purpose firmware loading support");
 MODULE_LICENSE("GPL");
+
+static bool fw_sig_enforce = IS_ENABLED(CONFIG_FIRMWARE_SIG_FORCE);
+#ifndef CONFIG_FIRMWARE_SIG_FORCE
+module_param(fw_sig_enforce, bool_enable_only, 0644);
+#endif /* !CONFIG_FIRMWARE_SIG_FORCE */
 
 /* Builtin firmware support */
 
@@ -142,6 +148,9 @@ struct firmware_buf {
 	unsigned long status;
 	void *data;
 	size_t size;
+	void *data_sig;
+	size_t size_sig;
+	bool sig_ok;
 #ifdef CONFIG_FW_LOADER_USER_HELPER
 	bool is_paged_buf;
 	bool need_uevent;
@@ -151,6 +160,7 @@ struct firmware_buf {
 	struct list_head pending_list;
 #endif
 	const char *fw_id;
+	const char *fw_sig;
 };
 
 struct fw_cache_entry {
@@ -180,16 +190,32 @@ static struct firmware_buf *__allocate_fw_buf(const char *fw_name,
 					      struct firmware_cache *fwc)
 {
 	struct firmware_buf *buf;
+	const char *sign_ext = ".p7s";
+	char *signed_name;
+
+	signed_name = kzalloc(PATH_MAX, GFP_ATOMIC);
+	if (!signed_name)
+		return NULL;
 
 	buf = kzalloc(sizeof(*buf), GFP_ATOMIC);
-	if (!buf)
+	if (!buf) {
+		kfree(signed_name);
 		return NULL;
+	}
 
 	buf->fw_id = kstrdup_const(fw_name, GFP_ATOMIC);
 	if (!buf->fw_id) {
+		kfree(signed_name);
 		kfree(buf);
 		return NULL;
 	}
+
+	strcpy(signed_name, buf->fw_id);
+	strncat(signed_name, sign_ext, strlen(sign_ext));
+	buf->fw_sig = kstrdup_const(signed_name, GFP_ATOMIC);
+	if (!buf->fw_sig)
+		goto out;
+
 
 	kref_init(&buf->ref);
 	buf->fwc = fwc;
@@ -201,6 +227,11 @@ static struct firmware_buf *__allocate_fw_buf(const char *fw_name,
 	pr_debug("%s: fw-%s buf=%p\n", __func__, fw_name, buf);
 
 	return buf;
+out:
+	kfree(signed_name);
+	kfree_const(buf->fw_id);
+	kfree(buf);
+	return NULL;
 }
 
 static struct firmware_buf *__fw_lookup_buf(const char *fw_name)
@@ -262,6 +293,7 @@ static void __fw_free_buf(struct kref *ref)
 #endif
 		vfree(buf->data);
 	kfree_const(buf->fw_id);
+	kfree_const(buf->fw_sig);
 	kfree(buf);
 }
 
@@ -325,7 +357,84 @@ fail:
 	return rc;
 }
 
+#ifdef CONFIG_FIRMWARE_SIG_FORCE
+static struct file *get_filesystem_file_sig(const char *sig_name)
+{
+	return filp_open(sig_name, O_RDONLY, 0);
+}
+
+static bool get_filesystem_file_sig_ok(struct file *file_sig)
+{
+	if (IS_ERR(file_sig))
+		return -EINVAL;
+	return 0;
+}
+
+static int read_file_signature_contents(struct file *file_sig,
+					struct firmware_buf *fw_buf)
+{
+	int rc;
+
+	rc = __read_file_contents(file_sig,
+				  &fw_buf->data_sig,
+				  &fw_buf->size_sig);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
+#elif CONFIG_FIRMWARE_SIG
+static struct file *get_filesystem_file_sig(const char *sig_name)
+{
+	struct file *file;
+
+	file = filp_open(sig_name, O_RDONLY, 0);
+	if (IS_ERR(file))
+		pr_info("singature %s not present, but this is OK\n", sig_name);
+
+	return file;
+}
+
+static bool get_filesystem_file_sig_ok(struct file *file_sig)
+{
+	return 0;
+}
+
+static int read_file_signature_contents(struct file *file_sig,
+					struct firmware_buf *fw_buf)
+{
+	int rc;
+
+	rc = __read_file_contents(file,
+				  &fw_buf->data_sig,
+				  &fw_buf->size_sig);
+	if (rc)
+		pr_info("could not read signature %s, but this is OK\n",
+			fw_buf->fw_sig);
+
+	return 0;
+}
+#else
+static struct file *get_filesystem_file_sig(const char *sig_name)
+{
+	return NULL;
+}
+
+static bool get_filesystem_file_sig_ok(struct file *file_sig)
+{
+	return 0;
+}
+
+static int read_file_signature_contents(struct file *file_sig,
+					struct firmware_buf *fw_buf)
+{
+	return 0;
+}
+#endif
+
 static int fw_read_file_contents(struct file *file,
+				 struct file *file_sig,
 				 struct firmware_buf *fw_buf)
 {
 	int rc;
@@ -336,6 +445,10 @@ static int fw_read_file_contents(struct file *file,
 	if (rc)
 		return rc;
 
+	rc = read_file_signature_contents(file_sig, fw_buf);
+	if (rc)
+		return rc;
+
 	return 0;
 }
 
@@ -343,15 +456,20 @@ static int fw_get_filesystem_firmware(struct device *device,
 				       struct firmware_buf *buf)
 {
 	int i, len;
-	int rc = -ENOENT;
-	char *path;
+	int rc = -ENOMEM;
+	char *path, *path_sig = NULL;
 
 	path = __getname();
 	if (!path)
 		return -ENOMEM;
 
+	path_sig = __getname();
+	if (!path_sig)
+		goto out;
+
 	for (i = 0; i < ARRAY_SIZE(fw_path); i++) {
 		struct file *file;
+		struct file *file_sig;
 
 		/* skip the unset customized path */
 		if (!fw_path[i][0])
@@ -364,18 +482,43 @@ static int fw_get_filesystem_firmware(struct device *device,
 			break;
 		}
 
+		len = snprintf(path_sig, PATH_MAX, "%s/%s",
+			       fw_path[i], buf->fw_sig);
+		if (len >= PATH_MAX) {
+			rc = -ENAMETOOLONG;
+			break;
+		}
+
 		file = filp_open(path, O_RDONLY, 0);
-		if (IS_ERR(file))
+		if (IS_ERR(file)) {
+			rc = -ENOENT;
 			continue;
-		rc = fw_read_file_contents(file, buf);
+		}
+
+		file_sig = get_filesystem_file_sig(path_sig);
+		rc = get_filesystem_file_sig_ok(file_sig);
+		if (rc) {
+			fput(file);
+			if (!IS_ERR(file_sig))
+				fput(file_sig);
+			continue;
+		}
+
+		rc = fw_read_file_contents(file, file_sig, buf);
+
 		fput(file);
+		if (!IS_ERR(file_sig))
+			fput(file_sig);
+
 		if (rc)
 			dev_warn(device, "firmware, attempted to load %s, but failed with error %d\n",
 				path, rc);
 		else
 			break;
 	}
+out:
 	__putname(path);
+	__putname(path_sig);
 
 	if (!rc) {
 		dev_dbg(device, "firmware: direct-loading firmware %s\n",
@@ -410,10 +553,41 @@ static void fw_set_page_data(struct firmware_buf *buf, struct firmware *fw)
 	fw->size = buf->size;
 	fw->data = buf->data;
 
-	pr_debug("%s: fw-%s buf=%p data=%p size=%u\n",
+	pr_debug("%s: fw-%s buf=%p data=%p size=%u sig_ok=%d\n",
 		 __func__, buf->fw_id, buf, buf->data,
-		 (unsigned int)buf->size);
+		 (unsigned int)buf->size, buf->sig_ok);
 }
+
+#ifdef CONFIG_FIRMWARE_SIG
+static int firmware_sig_check(struct firmware *fw, const char *name)
+{
+	int err = -ENOKEY;
+	struct firmware_buf *buf = fw->priv;
+	const void *data = buf->data;
+	const void *data_sig = buf->data_sig;
+
+	err = system_verify_data(data, buf->size, data_sig, buf->size_sig);
+	if (!err) {
+		buf->sig_ok = true;
+		fw_set_page_data(buf, fw);
+		return 0;
+	}
+
+	/* Not having a signature is only an error if we're strict. */
+	if (err == -ENOKEY && !fw_sig_enforce)
+		err = 0;
+
+	fw_set_page_data(buf, fw);
+
+	return err;
+}
+#else /* !CONFIG_FIRMWARE_SIG */
+static int firmware_sig_check(struct firmware *fw, const char *name)
+{
+	return 0;
+}
+#endif /* !CONFIG_MODULE_SIG */
+
 
 #ifdef CONFIG_PM_SLEEP
 static void fw_name_devm_release(struct device *dev, void *res)
@@ -1130,6 +1304,22 @@ static int assign_firmware_buf(struct firmware *fw, struct device *device,
 	return 0;
 }
 
+#ifdef CONFIG_FIRMWARE_SIG
+static void fw_check_sig_ok(const struct firmware *fw, const char *name)
+{
+	struct firmware_buf *buf = fw->priv;
+
+	if (!buf->sig_ok)
+		pr_notice_once("%s: firmware verification failed: signature "
+				       "and/or required key missing\n", name);
+}
+#else
+static void fw_check_sig_ok(const struct firmware *fw, const char *name)
+{
+	return;
+}
+#endif
+
 /* called from request_firmware() and request_firmware_work_func() */
 static int
 _request_firmware(const struct firmware **firmware_p, const char *name,
@@ -1187,6 +1377,15 @@ _request_firmware(const struct firmware **firmware_p, const char *name,
 	usermodehelper_read_unlock();
 
  out:
+	if (ret >= 0) {
+		ret = firmware_sig_check(fw, name);
+		if (ret)
+			goto out_bad_sig;
+		fw_check_sig_ok(fw, name);
+	}
+
+ out_bad_sig:
+
 	if (ret < 0) {
 		release_firmware(fw);
 		fw = NULL;

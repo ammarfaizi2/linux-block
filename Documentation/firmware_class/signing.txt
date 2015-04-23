@@ -1,0 +1,123 @@
+			================================
+			KERNEL FIRMWARE SIGNING FACILITY
+			================================
+
+CONTENTS
+
+ - Overview.
+ - Configuring firmware signing.
+ - Using signing keys.
+ - Signing firmware files.
+
+
+========
+OVERVIEW
+========
+
+Device drivers which require a firmware to be uploaded onto a device as its own
+device's microcode use any of the following APIs:
+
+  * request_firmware()
+  * request_firmware_direct()
+  * request_firmware_nowait()
+
+The kernel firmware signing facility enables firmware files on a system to have
+associated cryptographic signatures that can be used to validate them.  This
+uses the same mechanism as is used for module signing.
+
+Firmware signatures are kept in separate files from the actual firmware data to
+avoid accidental corruption of the firmware and to avoid licensing issues from
+changes.
+
+A firmware signature file consists of a PKCS#7 message containing one or more
+cryptographic signatures for the respective firmware file.  The signature file
+is named for the firmware file to which it corresponds and must be kept in the
+same directory.  For instance, for the signature file for a firmware file named
+foo.bin would be named foo.bin.p7s.
+
+When firmware signature checking is enabled (CONFIG_FIRMWARE_SIG) and when one
+of the above APIs is used against foo.bin, the file foo.bin.p7s will also be
+looked for.
+
+If a signature file is found, the kernel's system keyring will be searched for
+public keys that can be used to verify the signatures held therein.  For any
+signature for which a matching key is found, the kernel will attempt to verify
+the signature with the key.  If verification fails on any signature, the
+firmware load will be rejected (with EKEYREJECTED) - even if other signatures
+match.
+
+If CONFIG_FIRMWARE_SIG_FORCE is also enabled, then the firmware load will be
+rejected (with ENOKEY) if there is no signature file or none of the signatures
+match any of the keys in the kernel system keyring.  But if at least one
+signature matches, then the load will be allowed to proceed.
+
+If CONFIG_FIRMWARE_SIG is not enabled the signature file is ignored completely.
+
+Firmware signing increases security by making it harder to load a malicious
+firmware into the kernel.  The firmware signature checking is done by the
+kernel so that it is not necessary to have trusted userspace bits.
+
+============================
+CONFIGURING FIRMWARE SIGNING
+============================
+
+The firmware signing facility is enabled by going to the section:
+
+-> Device Drivers
+  -> Generic Driver Options
+    -> Userspace firmware loading support (FW_LOADER [=y])
+      -> Firmware signature verification (FIRMWARE_SIG [=y])
+
+If you want to not allow unsigned firmware to be loaded you should
+enable:
+
+"Require all firmware to be validly signed" (FIRMWARE_SIG_FORCE [=y]),
+under the same menu.
+
+==================
+USING SIGNING KEYS
+==================
+
+The same key types used for module signing can be used for firmware
+signing. For details on that refer to Documentation/module-signing.txt.
+
+You will need:
+
+  A) A DER-encoded X.509 certificate containing the public key.
+  B) A DER-encoded PKCS#7 message containing the signatures, these are
+     the .p7s files.
+  C) A binary blob that is the detached data for the PKCS#7 message, this
+     is the firmware files
+
+A) is must be made available to the kernel. One way to do this is to provide a
+DER-encoded in the source directory as <name>.x509 when you build the kernel.
+
+======================
+SIGNING FIRMWARE FILES
+======================
+
+To generate a DER-encoded PKCS#7 signature message for each firmware file
+you can use openssl as follows:
+
+	openssl smime -sign -in $FIRMWARE_BLOB_NAME \
+		-outform DER \
+		-inkey $PRIVATE_KEY_FILE_IN_PEM_FORM \
+		-signer $X509_CERT_FILE_IN_PEM_FORM \
+		-nocerts -md $DIGEST_ALGORITHM -binary \
+		-out $(FIRMWARE_BLOB_NAME).p7s
+
+To verify a DER-encoded PKCS#7 signature message for each firmware file
+you can use openssl as follows:
+
+	openssl smime -verify -in $(FIRMWARE_BLOB_NAME).p7s \
+		-inform DER \
+		-certfile $X509_CERT_FILE_IN_PEM_FORM \
+		-content $FIRMWARE_BLOB_NAME \
+		-binary -noverify -out /dev/null
+
+The $DIGEST_ALGORITHM needs to be enabled as built-in (=y) or modular
+(=m) in the running kernel and can differ from CONFIG_MODULE_SIG_HASH.
+If you are enabling the $DIGEST_ALGORITHM as a module take care to
+ensure that this module will also be present on the initramfs used as
+some firmware signatures within the initramfs may need it if using the
+firmware_class APIs and firmware signing has been enabled.

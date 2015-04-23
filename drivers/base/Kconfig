@@ -85,6 +85,24 @@ config FW_LOADER
 	  require userspace firmware loading support, but a module built
 	  out-of-tree does.
 
+config FIRMWARE_SIG
+	bool "Firmware signature verification"
+	select FW_LOADER
+	select SYSTEM_DATA_VERIFICATION
+	help
+	  Check firmware files for valid signatures upon load: if the firmware
+	  was called foo.bin, a respective foo.bin.p7s is expected to be
+	  present as the signature. For more information see
+	  Documentation/firmware_class/signing.txt
+
+config FIRMWARE_SIG_FORCE
+	bool "Require all firmware to be validly signed"
+	depends on FIRMWARE_SIG
+	help
+	  Reject unsigned files or signed files for which we don't have a
+	  key.  Without this, you'll only get a record on the kernel ring
+	  buffer of firmware files loaded without a signature.
+
 config FIRMWARE_IN_KERNEL
 	bool "Include in-kernel firmware blobs in kernel binary"
 	depends on FW_LOADER
