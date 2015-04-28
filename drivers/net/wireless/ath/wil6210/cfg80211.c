@@ -507,6 +507,8 @@ static int wil_cfg80211_disconnect(struct wiphy *wiphy,
 	int rc;
 	struct wil6210_priv *wil = wiphy_to_wil(wiphy);
 
+	wil_dbg_misc(wil, "%s(reason=%d)\n", __func__, reason_code);
+
 	rc = wmi_send(wil, WMI_DISCONNECT_CMDID, NULL, 0);
 
 	return rc;
@@ -569,6 +571,9 @@ static int wil_cfg80211_add_key(struct wiphy *wiphy,
 {
 	struct wil6210_priv *wil = wiphy_to_wil(wiphy);
 
+	wil_dbg_misc(wil, "%s(%pM[%d] %s)\n", __func__, mac_addr, key_index,
+		     pairwise ? "PTK" : "GTK");
+
 	/* group key is not used */
 	if (!pairwise)
 		return 0;
@@ -583,6 +588,9 @@ static int wil_cfg80211_del_key(struct wiphy *wiphy,
 				const u8 *mac_addr)
 {
 	struct wil6210_priv *wil = wiphy_to_wil(wiphy);
+
+	wil_dbg_misc(wil, "%s(%pM[%d] %s)\n", __func__, mac_addr, key_index,
+		     pairwise ? "PTK" : "GTK");
 
 	/* group key is not used */
 	if (!pairwise)
@@ -814,13 +822,9 @@ static int wil_cfg80211_stop_ap(struct wiphy *wiphy,
 	wmi_pcp_stop(wil);
 
 	__wil_down(wil);
-	__wil_up(wil);
 
 	mutex_unlock(&wil->mutex);
 
-	/* some functions above might fail (e.g. __wil_up). Nevertheless, we
-	 * return success because AP has stopped
-	 */
 	return 0;
 }
 
@@ -829,6 +833,9 @@ static int wil_cfg80211_del_station(struct wiphy *wiphy,
 				    struct station_del_parameters *params)
 {
 	struct wil6210_priv *wil = wiphy_to_wil(wiphy);
+
+	wil_dbg_misc(wil, "%s(%pM, reason=%d)\n", __func__, params->mac,
+		     params->reason_code);
 
 	mutex_lock(&wil->mutex);
 	wil6210_disconnect(wil, params->mac, params->reason_code, false);
