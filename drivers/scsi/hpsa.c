@@ -6632,14 +6632,12 @@ static void fail_all_outstanding_cmds(struct ctlr_info *h)
 
 static void set_lockup_detected_for_all_cpus(struct ctlr_info *h, u32 value)
 {
-	int i, cpu;
+	int cpu;
 
-	cpu = cpumask_first(cpu_online_mask);
-	for (i = 0; i < num_online_cpus(); i++) {
+	for_each_online_cpu(cpu) {
 		u32 *lockup_detected;
 		lockup_detected = per_cpu_ptr(h->lockup_detected, cpu);
 		*lockup_detected = value;
-		cpu = cpumask_next(cpu, cpu_online_mask);
 	}
 	wmb(); /* be sure the per-cpu variables are out to memory */
 }
@@ -6831,10 +6829,8 @@ static struct workqueue_struct *hpsa_create_controller_wq(struct ctlr_info *h,
 						char *name)
 {
 	struct workqueue_struct *wq = NULL;
-	char wq_name[20];
 
-	snprintf(wq_name, sizeof(wq_name), "%s_%d_hpsa", name, h->ctlr);
-	wq = alloc_ordered_workqueue(wq_name, 0);
+	wq = alloc_ordered_workqueue("%s_%d_hpsa", 0, name, h->ctlr);
 	if (!wq)
 		dev_err(&h->pdev->dev, "failed to create %s workqueue\n", name);
 

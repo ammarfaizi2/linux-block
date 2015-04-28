@@ -953,8 +953,10 @@ int iwl_mvm_rx_ba_notif(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb,
 	mvmsta = iwl_mvm_sta_from_mac80211(sta);
 	tid_data = &mvmsta->tid_data[tid];
 
-	if (WARN_ONCE(tid_data->txq_id != scd_flow, "Q %d, tid %d, flow %d",
-		      tid_data->txq_id, tid, scd_flow)) {
+	if (tid_data->txq_id != scd_flow) {
+		IWL_ERR(mvm,
+			"invalid BA notification: Q %d, tid %d, flow %d\n",
+			tid_data->txq_id, tid, scd_flow);
 		rcu_read_unlock();
 		return 0;
 	}
@@ -1047,6 +1049,14 @@ out:
 	return 0;
 }
 
+/*
+ * Note that there are transports that buffer frames before they reach
+ * the firmware. This means that after flush_tx_path is called, the
+ * queue might not be empty. The race-free way to handle this is to:
+ * 1) set the station as draining
+ * 2) flush the Tx path
+ * 3) wait for the transport queues to be empty
+ */
 int iwl_mvm_flush_tx_path(struct iwl_mvm *mvm, u32 tfd_msk, bool sync)
 {
 	int ret;

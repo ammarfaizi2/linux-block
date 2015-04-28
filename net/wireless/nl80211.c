@@ -1099,8 +1099,6 @@ static int nl80211_send_wowlan(struct sk_buff *msg,
 	if (large && nl80211_send_wowlan_tcp_caps(rdev, msg))
 		return -ENOBUFS;
 
-	/* TODO: send wowlan net detect */
-
 	nla_nest_end(msg, nl_wowlan);
 
 	return 0;
@@ -2655,10 +2653,6 @@ static int nl80211_new_interface(struct sk_buff *skb, struct genl_info *info)
 			return err;
 	}
 
-	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
-
 	err = parse_monitor_flags(type == NL80211_IFTYPE_MONITOR ?
 				  info->attrs[NL80211_ATTR_MNTR_FLAGS] : NULL,
 				  &flags);
@@ -2667,9 +2661,14 @@ static int nl80211_new_interface(struct sk_buff *skb, struct genl_info *info)
 	    !(rdev->wiphy.features & NL80211_FEATURE_ACTIVE_MONITOR))
 		return -EOPNOTSUPP;
 
+	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
+
 	wdev = rdev_add_virtual_intf(rdev,
 				nla_data(info->attrs[NL80211_ATTR_IFNAME]),
-				type, err ? NULL : &flags, &params);
+				NET_NAME_USER, type, err ? NULL : &flags,
+				&params);
 	if (WARN_ON(!wdev)) {
 		nlmsg_free(msg);
 		return -EPROTO;
@@ -4401,6 +4400,16 @@ static int nl80211_new_station(struct sk_buff *skb, struct genl_info *info)
 	if (parse_station_flags(info, dev->ieee80211_ptr->iftype, &params))
 		return -EINVAL;
 
+	/* HT/VHT requires QoS, but if we don't have that just ignore HT/VHT
+	 * as userspace might just pass through the capabilities from the IEs
+	 * directly, rather than enforcing this restriction and returning an
+	 * error in this case.
+	 */
+	if (!(params.sta_flags_set & BIT(NL80211_STA_FLAG_WME))) {
+		params.ht_capa = NULL;
+		params.vht_capa = NULL;
+	}
+
 	/* When you run into this, adjust the code below for the new flag */
 	BUILD_BUG_ON(NL80211_STA_FLAG_MAX != 7);
 
@@ -5655,7 +5664,7 @@ static int nl80211_set_reg(struct sk_buff *skb, struct genl_info *info)
 		}
 	}
 
-	r = set_regdom(rd);
+	r = set_regdom(rd, REGD_SOURCE_CRDA);
 	/* set_regdom took ownership */
 	rd = NULL;
 
@@ -5695,8 +5704,8 @@ static int nl80211_parse_random_mac(struct nlattr **attrs,
 	int i;
 
 	if (!attrs[NL80211_ATTR_MAC] && !attrs[NL80211_ATTR_MAC_MASK]) {
-		memset(mac_addr, 0, ETH_ALEN);
-		memset(mac_addr_mask, 0, ETH_ALEN);
+		eth_zero_addr(mac_addr);
+		eth_zero_addr(mac_addr_mask);
 		mac_addr[0] = 0x2;
 		mac_addr_mask[0] = 0x3;
 
@@ -8784,8 +8793,8 @@ static int nl80211_send_wowlan_tcp(struct sk_buff *msg,
 	if (!nl_tcp)
 		return -ENOBUFS;
 
-	if (nla_put_be32(msg, NL80211_WOWLAN_TCP_SRC_IPV4, tcp->src) ||
-	    nla_put_be32(msg, NL80211_WOWLAN_TCP_DST_IPV4, tcp->dst) ||
+	if (nla_put_in_addr(msg, NL80211_WOWLAN_TCP_SRC_IPV4, tcp->src) ||
+	    nla_put_in_addr(msg, NL80211_WOWLAN_TCP_DST_IPV4, tcp->dst) ||
 	    nla_put(msg, NL80211_WOWLAN_TCP_DST_MAC, ETH_ALEN, tcp->dst_mac) ||
 	    nla_put_u16(msg, NL80211_WOWLAN_TCP_SRC_PORT, tcp->src_port) ||
 	    nla_put_u16(msg, NL80211_WOWLAN_TCP_DST_PORT, tcp->dst_port) ||
@@ -8829,6 +8838,9 @@ static int nl80211_send_wowlan_nd(struct sk_buff *msg,
 		return -ENOBUFS;
 
 	if (nla_put_u32(msg, NL80211_ATTR_SCHED_SCAN_INTERVAL, req->interval))
+		return -ENOBUFS;
+
+	if (nla_put_u32(msg, NL80211_ATTR_SCHED_SCAN_DELAY, req->delay))
 		return -ENOBUFS;
 
 	freqs = nla_nest_start(msg, NL80211_ATTR_SCAN_FREQUENCIES);
@@ -9016,8 +9028,8 @@ static int nl80211_parse_wowlan_tcp(struct cfg80211_registered_device *rdev,
 	cfg = kzalloc(size, GFP_KERNEL);
 	if (!cfg)
 		return -ENOMEM;
-	cfg->src = nla_get_be32(tb[NL80211_WOWLAN_TCP_SRC_IPV4]);
-	cfg->dst = nla_get_be32(tb[NL80211_WOWLAN_TCP_DST_IPV4]);
+	cfg->src = nla_get_in_addr(tb[NL80211_WOWLAN_TCP_SRC_IPV4]);
+	cfg->dst = nla_get_in_addr(tb[NL80211_WOWLAN_TCP_DST_IPV4]);
 	memcpy(cfg->dst_mac, nla_data(tb[NL80211_WOWLAN_TCP_DST_MAC]),
 	       ETH_ALEN);
 	if (tb[NL80211_WOWLAN_TCP_SRC_PORT])
@@ -12583,9 +12595,7 @@ static int cfg80211_net_detect_results(struct sk_buff *msg,
 			}
 
 			for (j = 0; j < match->n_channels; j++) {
-				if (nla_put_u32(msg,
-						NL80211_ATTR_WIPHY_FREQ,
-						match->channels[j])) {
+				if (nla_put_u32(msg, j, match->channels[j])) {
 					nla_nest_cancel(msg, nl_freqs);
 					nla_nest_cancel(msg, nl_match);
 					goto out;

@@ -29,29 +29,33 @@
 
 /*
  * Tables translating between page_cache_type_t and pte encoding.
- * Minimal supported modes are defined statically, modified if more supported
- * cache modes are available.
- * Index into __cachemode2pte_tbl is the cachemode.
- * Index into __pte2cachemode_tbl are the caching attribute bits of the pte
- * (_PAGE_PWT, _PAGE_PCD, _PAGE_PAT) at index bit positions 0, 1, 2.
+ *
+ * Minimal supported modes are defined statically, they are modified
+ * during bootup if more supported cache modes are available.
+ *
+ *   Index into __cachemode2pte_tbl[] is the cachemode.
+ *
+ *   Index into __pte2cachemode_tbl[] are the caching attribute bits of the pte
+ *   (_PAGE_PWT, _PAGE_PCD, _PAGE_PAT) at index bit positions 0, 1, 2.
  */
 uint16_t __cachemode2pte_tbl[_PAGE_CACHE_MODE_NUM] = {
-	[_PAGE_CACHE_MODE_WB]		= 0,
-	[_PAGE_CACHE_MODE_WC]		= _PAGE_PWT,
-	[_PAGE_CACHE_MODE_UC_MINUS]	= _PAGE_PCD,
-	[_PAGE_CACHE_MODE_UC]		= _PAGE_PCD | _PAGE_PWT,
-	[_PAGE_CACHE_MODE_WT]		= _PAGE_PCD,
-	[_PAGE_CACHE_MODE_WP]		= _PAGE_PCD,
+	[_PAGE_CACHE_MODE_WB      ]	= 0         | 0        ,
+	[_PAGE_CACHE_MODE_WC      ]	= _PAGE_PWT | 0        ,
+	[_PAGE_CACHE_MODE_UC_MINUS]	= 0         | _PAGE_PCD,
+	[_PAGE_CACHE_MODE_UC      ]	= _PAGE_PWT | _PAGE_PCD,
+	[_PAGE_CACHE_MODE_WT      ]	= 0         | _PAGE_PCD,
+	[_PAGE_CACHE_MODE_WP      ]	= 0         | _PAGE_PCD,
 };
 EXPORT_SYMBOL(__cachemode2pte_tbl);
+
 uint8_t __pte2cachemode_tbl[8] = {
-	[__pte2cm_idx(0)] = _PAGE_CACHE_MODE_WB,
-	[__pte2cm_idx(_PAGE_PWT)] = _PAGE_CACHE_MODE_WC,
-	[__pte2cm_idx(_PAGE_PCD)] = _PAGE_CACHE_MODE_UC_MINUS,
-	[__pte2cm_idx(_PAGE_PWT | _PAGE_PCD)] = _PAGE_CACHE_MODE_UC,
-	[__pte2cm_idx(_PAGE_PAT)] = _PAGE_CACHE_MODE_WB,
-	[__pte2cm_idx(_PAGE_PWT | _PAGE_PAT)] = _PAGE_CACHE_MODE_WC,
-	[__pte2cm_idx(_PAGE_PCD | _PAGE_PAT)] = _PAGE_CACHE_MODE_UC_MINUS,
+	[__pte2cm_idx( 0        | 0         | 0        )] = _PAGE_CACHE_MODE_WB,
+	[__pte2cm_idx(_PAGE_PWT | 0         | 0        )] = _PAGE_CACHE_MODE_WC,
+	[__pte2cm_idx( 0        | _PAGE_PCD | 0        )] = _PAGE_CACHE_MODE_UC_MINUS,
+	[__pte2cm_idx(_PAGE_PWT | _PAGE_PCD | 0        )] = _PAGE_CACHE_MODE_UC,
+	[__pte2cm_idx( 0        | 0         | _PAGE_PAT)] = _PAGE_CACHE_MODE_WB,
+	[__pte2cm_idx(_PAGE_PWT | 0         | _PAGE_PAT)] = _PAGE_CACHE_MODE_WC,
+	[__pte2cm_idx(0         | _PAGE_PCD | _PAGE_PAT)] = _PAGE_CACHE_MODE_UC_MINUS,
 	[__pte2cm_idx(_PAGE_PWT | _PAGE_PCD | _PAGE_PAT)] = _PAGE_CACHE_MODE_UC,
 };
 EXPORT_SYMBOL(__pte2cachemode_tbl);
@@ -131,21 +135,7 @@ void  __init early_alloc_pgt_buf(void)
 
 int after_bootmem;
 
-int direct_gbpages
-#ifdef CONFIG_DIRECT_GBPAGES
-				= 1
-#endif
-;
-
-static void __init init_gbpages(void)
-{
-#ifdef CONFIG_X86_64
-	if (direct_gbpages && cpu_has_gbpages)
-		printk(KERN_INFO "Using GB pages for direct mapping\n");
-	else
-		direct_gbpages = 0;
-#endif
-}
+early_param_on_off("gbpages", "nogbpages", direct_gbpages, CONFIG_X86_DIRECT_GBPAGES);
 
 struct map_range {
 	unsigned long start;
@@ -157,16 +147,12 @@ static int page_size_mask;
 
 static void __init probe_page_size_mask(void)
 {
-	init_gbpages();
-
 #if !defined(CONFIG_DEBUG_PAGEALLOC) && !defined(CONFIG_KMEMCHECK)
 	/*
 	 * For CONFIG_DEBUG_PAGEALLOC, identity mapping will use small pages.
 	 * This will simplify cpa(), which otherwise needs to support splitting
 	 * large pages into small in interrupt context, etc.
 	 */
-	if (direct_gbpages)
-		page_size_mask |= 1 << PG_LEVEL_1G;
 	if (cpu_has_pse)
 		page_size_mask |= 1 << PG_LEVEL_2M;
 #endif
@@ -179,6 +165,15 @@ static void __init probe_page_size_mask(void)
 	if (cpu_has_pge) {
 		cr4_set_bits_and_update_boot(X86_CR4_PGE);
 		__supported_pte_mask |= _PAGE_GLOBAL;
+	} else
+		__supported_pte_mask &= ~_PAGE_GLOBAL;
+
+	/* Enable 1 GB linear kernel mappings if available: */
+	if (direct_gbpages && cpu_has_gbpages) {
+		printk(KERN_INFO "Using GB pages for direct mapping\n");
+		page_size_mask |= 1 << PG_LEVEL_1G;
+	} else {
+		direct_gbpages = 0;
 	}
 }
 
@@ -236,6 +231,31 @@ static void __init_refok adjust_range_page_size_mask(struct map_range *mr,
 				mr[i].page_size_mask |= 1<<PG_LEVEL_1G;
 		}
 	}
+}
+
+static const char *page_size_string(struct map_range *mr)
+{
+	static const char str_1g[] = "1G";
+	static const char str_2m[] = "2M";
+	static const char str_4m[] = "4M";
+	static const char str_4k[] = "4k";
+
+	if (mr->page_size_mask & (1<<PG_LEVEL_1G))
+		return str_1g;
+	/*
+	 * 32-bit without PAE has a 4M large page size.
+	 * PG_LEVEL_2M is misnamed, but we can at least
+	 * print out the right size in the string.
+	 */
+	if (IS_ENABLED(CONFIG_X86_32) &&
+	    !IS_ENABLED(CONFIG_X86_PAE) &&
+	    mr->page_size_mask & (1<<PG_LEVEL_2M))
+		return str_4m;
+
+	if (mr->page_size_mask & (1<<PG_LEVEL_2M))
+		return str_2m;
+
+	return str_4k;
 }
 
 static int __meminit split_mem_range(struct map_range *mr, int nr_range,
@@ -333,8 +353,7 @@ static int __meminit split_mem_range(struct map_range *mr, int nr_range,
 	for (i = 0; i < nr_range; i++)
 		printk(KERN_DEBUG " [mem %#010lx-%#010lx] page %s\n",
 				mr[i].start, mr[i].end - 1,
-			(mr[i].page_size_mask & (1<<PG_LEVEL_1G))?"1G":(
-			 (mr[i].page_size_mask & (1<<PG_LEVEL_2M))?"2M":"4k"));
+				page_size_string(&mr[i]));
 
 	return nr_range;
 }

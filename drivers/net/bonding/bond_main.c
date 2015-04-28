@@ -82,6 +82,8 @@
 #include <net/bond_3ad.h>
 #include <net/bond_alb.h>
 
+#include "bonding_priv.h"
+
 /*---------------------------- Module parameters ----------------------------*/
 
 /* monitor all links that often (in milliseconds). <=0 disables monitoring */
@@ -928,6 +930,39 @@ static inline void slave_disable_netpoll(struct slave *slave)
 
 static void bond_poll_controller(struct net_device *bond_dev)
 {
+	struct bonding *bond = netdev_priv(bond_dev);
+	struct slave *slave = NULL;
+	struct list_head *iter;
+	struct ad_info ad_info;
+	struct netpoll_info *ni;
+	const struct net_device_ops *ops;
+
+	if (BOND_MODE(bond) == BOND_MODE_8023AD)
+		if (bond_3ad_get_active_agg_info(bond, &ad_info))
+			return;
+
+	rcu_read_lock_bh();
+	bond_for_each_slave_rcu(bond, slave, iter) {
+		ops = slave->dev->netdev_ops;
+		if (!bond_slave_is_up(slave) || !ops->ndo_poll_controller)
+			continue;
+
+		if (BOND_MODE(bond) == BOND_MODE_8023AD) {
+			struct aggregator *agg =
+			    SLAVE_AD_INFO(slave)->port.aggregator;
+
+			if (agg &&
+			    agg->aggregator_identifier != ad_info.aggregator_id)
+				continue;
+		}
+
+		ni = rcu_dereference_bh(slave->dev->npinfo);
+		if (down_trylock(&ni->dev_lock))
+			continue;
+		ops->ndo_poll_controller(slave->dev);
+		up(&ni->dev_lock);
+	}
+	rcu_read_unlock_bh();
 }
 
 static void bond_netpoll_cleanup(struct net_device *bond_dev)
@@ -3848,7 +3883,8 @@ static inline int bond_slave_override(struct bonding *bond,
 	/* Find out if any slaves have the same mapping as this skb. */
 	bond_for_each_slave_rcu(bond, slave, iter) {
 		if (slave->queue_id == skb->queue_mapping) {
-			if (bond_slave_can_tx(slave)) {
+			if (bond_slave_is_up(slave) &&
+			    slave->link == BOND_LINK_UP) {
 				bond_dev_queue_xmit(bond, skb, slave->dev);
 				return 0;
 			}
@@ -4005,6 +4041,7 @@ static const struct net_device_ops bond_netdev_ops = {
 	.ndo_fix_features	= bond_fix_features,
 	.ndo_bridge_setlink	= ndo_dflt_netdev_switch_port_bridge_setlink,
 	.ndo_bridge_dellink	= ndo_dflt_netdev_switch_port_bridge_dellink,
+	.ndo_features_check	= passthru_features_check,
 };
 
 static const struct device_type bond_type = {

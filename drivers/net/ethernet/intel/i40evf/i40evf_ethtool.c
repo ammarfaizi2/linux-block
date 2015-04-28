@@ -29,7 +29,6 @@
 
 #include <linux/uaccess.h>
 
-
 struct i40evf_stats {
 	char stat_string[ETH_GSTRING_LEN];
 	int stat_offset;
@@ -210,7 +209,7 @@ static void i40evf_get_drvinfo(struct net_device *netdev,
 
 	strlcpy(drvinfo->driver, i40evf_driver_name, 32);
 	strlcpy(drvinfo->version, i40evf_driver_version, 32);
-
+	strlcpy(drvinfo->fw_version, "N/A", 4);
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev), 32);
 }
 
@@ -642,12 +641,14 @@ static int i40evf_get_rxfh(struct net_device *netdev, u32 *indir, u8 *key,
 	if (!indir)
 		return 0;
 
-	for (i = 0, j = 0; i <= I40E_VFQF_HLUT_MAX_INDEX; i++) {
-		hlut_val = rd32(hw, I40E_VFQF_HLUT(i));
-		indir[j++] = hlut_val & 0xff;
-		indir[j++] = (hlut_val >> 8) & 0xff;
-		indir[j++] = (hlut_val >> 16) & 0xff;
-		indir[j++] = (hlut_val >> 24) & 0xff;
+	if (indir) {
+		for (i = 0, j = 0; i <= I40E_VFQF_HLUT_MAX_INDEX; i++) {
+			hlut_val = rd32(hw, I40E_VFQF_HLUT(i));
+			indir[j++] = hlut_val & 0xff;
+			indir[j++] = (hlut_val >> 8) & 0xff;
+			indir[j++] = (hlut_val >> 16) & 0xff;
+			indir[j++] = (hlut_val >> 24) & 0xff;
+		}
 	}
 	return 0;
 }

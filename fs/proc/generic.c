@@ -19,7 +19,6 @@
 #include <linux/mount.h>
 #include <linux/init.h>
 #include <linux/idr.h>
-#include <linux/namei.h>
 #include <linux/bitops.h>
 #include <linux/spinlock.h>
 #include <linux/completion.h>
@@ -102,7 +101,7 @@ static bool pde_subdir_insert(struct proc_dir_entry *dir,
 
 static int proc_notify_change(struct dentry *dentry, struct iattr *iattr)
 {
-	struct inode *inode = dentry->d_inode;
+	struct inode *inode = d_inode(dentry);
 	struct proc_dir_entry *de = PDE(inode);
 	int error;
 
@@ -121,7 +120,7 @@ static int proc_notify_change(struct dentry *dentry, struct iattr *iattr)
 static int proc_getattr(struct vfsmount *mnt, struct dentry *dentry,
 			struct kstat *stat)
 {
-	struct inode *inode = dentry->d_inode;
+	struct inode *inode = d_inode(dentry);
 	struct proc_dir_entry *de = PDE(inode);
 	if (de && de->nlink)
 		set_nlink(inode, de->nlink);
@@ -222,17 +221,6 @@ void proc_free_inum(unsigned int inum)
 	ida_remove(&proc_inum_ida, inum - PROC_DYNAMIC_FIRST);
 	spin_unlock_irqrestore(&proc_inum_lock, flags);
 }
-
-static void *proc_follow_link(struct dentry *dentry, struct nameidata *nd)
-{
-	nd_set_link(nd, __PDE_DATA(dentry->d_inode));
-	return NULL;
-}
-
-static const struct inode_operations proc_link_inode_operations = {
-	.readlink	= generic_readlink,
-	.follow_link	= proc_follow_link,
-};
 
 /*
  * Don't create negative dentries here, return -ENOENT by hand

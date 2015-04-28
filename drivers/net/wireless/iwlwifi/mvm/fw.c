@@ -526,16 +526,33 @@ int iwl_mvm_fw_dbg_collect(struct iwl_mvm *mvm, enum iwl_fw_dbg_trigger trig,
 
 int iwl_mvm_fw_dbg_collect_trig(struct iwl_mvm *mvm,
 				struct iwl_fw_dbg_trigger_tlv *trigger,
-				const char *str, size_t len)
+				const char *fmt, ...)
 {
 	unsigned int delay = msecs_to_jiffies(le32_to_cpu(trigger->stop_delay));
 	u16 occurrences = le16_to_cpu(trigger->occurrences);
-	int ret;
+	int ret, len = 0;
+	char buf[64];
 
 	if (!occurrences)
 		return 0;
 
-	ret = iwl_mvm_fw_dbg_collect(mvm, le32_to_cpu(trigger->id), str,
+	if (fmt) {
+		va_list ap;
+
+		buf[sizeof(buf) - 1] = '\0';
+
+		va_start(ap, fmt);
+		vsnprintf(buf, sizeof(buf), fmt, ap);
+		va_end(ap);
+
+		/* check for truncation */
+		if (WARN_ON_ONCE(buf[sizeof(buf) - 1]))
+			buf[sizeof(buf) - 1] = '\0';
+
+		len = strlen(buf) + 1;
+	}
+
+	ret = iwl_mvm_fw_dbg_collect(mvm, le32_to_cpu(trigger->id), buf,
 				     len, delay);
 	if (ret)
 		return ret;
@@ -738,6 +755,16 @@ int iwl_mvm_up(struct iwl_mvm *mvm)
 	ret = iwl_mvm_power_update_device(mvm);
 	if (ret)
 		goto error;
+
+	/*
+	 * RTNL is not taken during Ct-kill, but we don't need to scan/Tx
+	 * anyway, so don't init MCC.
+	 */
+	if (!test_bit(IWL_MVM_STATUS_HW_CTKILL, &mvm->status)) {
+		ret = iwl_mvm_init_mcc(mvm);
+		if (ret)
+			goto error;
+	}
 
 	if (mvm->fw->ucode_capa.capa[0] & IWL_UCODE_TLV_CAPA_UMAC_SCAN) {
 		ret = iwl_mvm_config_scan(mvm);

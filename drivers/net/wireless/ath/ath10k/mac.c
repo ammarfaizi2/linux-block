@@ -1634,7 +1634,7 @@ static void ath10k_control_ibss(struct ath10k_vif *arvif,
 		if (is_zero_ether_addr(arvif->bssid))
 			return;
 
-		memset(arvif->bssid, 0, ETH_ALEN);
+		eth_zero_addr(arvif->bssid);
 
 		return;
 	}
@@ -6081,7 +6081,7 @@ static void ath10k_sta_rc_update(struct ieee80211_hw *hw,
 			bw = WMI_PEER_CHWIDTH_80MHZ;
 			break;
 		case IEEE80211_STA_RX_BW_160:
-			ath10k_warn(ar, "Invalid bandwith %d in rc update for %pM\n",
+			ath10k_warn(ar, "Invalid bandwidth %d in rc update for %pM\n",
 				    sta->bandwidth, sta->addr);
 			bw = WMI_PEER_CHWIDTH_20MHZ;
 			break;

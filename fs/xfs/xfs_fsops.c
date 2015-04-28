@@ -602,6 +602,12 @@ xfs_growfs_data(
 	if (!mutex_trylock(&mp->m_growlock))
 		return -EWOULDBLOCK;
 	error = xfs_growfs_data_private(mp, in);
+	/*
+	 * Increment the generation unconditionally, the error could be from
+	 * updating the secondary superblocks, in which case the new size
+	 * is live already.
+	 */
+	mp->m_generation++;
 	mutex_unlock(&mp->m_growlock);
 	return error;
 }
@@ -631,12 +637,13 @@ xfs_fs_counts(
 	xfs_mount_t		*mp,
 	xfs_fsop_counts_t	*cnt)
 {
-	xfs_icsb_sync_counters(mp, XFS_ICSB_LAZY_COUNT);
+	cnt->allocino = percpu_counter_read_positive(&mp->m_icount);
+	cnt->freeino = percpu_counter_read_positive(&mp->m_ifree);
+	cnt->freedata = percpu_counter_read_positive(&mp->m_fdblocks) -
+							XFS_ALLOC_SET_ASIDE(mp);
+
 	spin_lock(&mp->m_sb_lock);
-	cnt->freedata = mp->m_sb.sb_fdblocks - XFS_ALLOC_SET_ASIDE(mp);
 	cnt->freertx = mp->m_sb.sb_frextents;
-	cnt->freeino = mp->m_sb.sb_ifree;
-	cnt->allocino = mp->m_sb.sb_icount;
 	spin_unlock(&mp->m_sb_lock);
 	return 0;
 }
@@ -686,14 +693,9 @@ xfs_reserve_blocks(
 	 * what to do. This means that the amount of free space can
 	 * change while we do this, so we need to retry if we end up
 	 * trying to reserve more space than is available.
-	 *
-	 * We also use the xfs_mod_incore_sb() interface so that we
-	 * don't have to care about whether per cpu counter are
-	 * enabled, disabled or even compiled in....
 	 */
 retry:
 	spin_lock(&mp->m_sb_lock);
-	xfs_icsb_sync_counters_locked(mp, 0);
 
 	/*
 	 * If our previous reservation was larger than the current value,
@@ -710,7 +712,8 @@ retry:
 	} else {
 		__int64_t	free;
 
-		free =  mp->m_sb.sb_fdblocks - XFS_ALLOC_SET_ASIDE(mp);
+		free = percpu_counter_sum(&mp->m_fdblocks) -
+							XFS_ALLOC_SET_ASIDE(mp);
 		if (!free)
 			goto out; /* ENOSPC and fdblks_delta = 0 */
 
@@ -749,8 +752,7 @@ out:
 		 * the extra reserve blocks from the reserve.....
 		 */
 		int error;
-		error = xfs_icsb_modify_counters(mp, XFS_SBS_FDBLOCKS,
-						 fdblks_delta, 0);
+		error = xfs_mod_fdblocks(mp, fdblks_delta, 0);
 		if (error == -ENOSPC)
 			goto retry;
 	}

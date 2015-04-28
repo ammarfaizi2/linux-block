@@ -23,7 +23,7 @@ acpi-y				+= nvs.o
 
 # Power management related files
 acpi-y				+= wakeup.o
-acpi-y				+= sleep.o
+acpi-$(CONFIG_ACPI_SYSTEM_POWER_STATES_SUPPORT) += sleep.o
 acpi-y				+= device_pm.o
 acpi-$(CONFIG_ACPI_SLEEP)	+= proc.o
 
@@ -55,6 +55,8 @@ acpi-$(CONFIG_ACPI_PROCFS_POWER) += cm_sbs.o
 ifdef CONFIG_ACPI_VIDEO
 acpi-y				+= video_detect.o
 endif
+acpi-y				+= acpi_lpat.o
+acpi-$(CONFIG_ACPI_GENERIC_GSI) += gsi.o
 
 # These are (potentially) separate modules
 

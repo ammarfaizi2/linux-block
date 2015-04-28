@@ -239,6 +239,8 @@ enum {
 	Opt_nocrc,
 	Opt_cephx_require_signatures,
 	Opt_nocephx_require_signatures,
+	Opt_tcp_nodelay,
+	Opt_notcp_nodelay,
 };
 
 static match_table_t opt_tokens = {
@@ -259,6 +261,8 @@ static match_table_t opt_tokens = {
 	{Opt_nocrc, "nocrc"},
 	{Opt_cephx_require_signatures, "cephx_require_signatures"},
 	{Opt_nocephx_require_signatures, "nocephx_require_signatures"},
+	{Opt_tcp_nodelay, "tcp_nodelay"},
+	{Opt_notcp_nodelay, "notcp_nodelay"},
 	{-1, NULL}
 };
 
@@ -457,11 +461,19 @@ ceph_parse_options(char *options, const char *dev_name,
 		case Opt_nocrc:
 			opt->flags |= CEPH_OPT_NOCRC;
 			break;
+
 		case Opt_cephx_require_signatures:
 			opt->flags &= ~CEPH_OPT_NOMSGAUTH;
 			break;
 		case Opt_nocephx_require_signatures:
 			opt->flags |= CEPH_OPT_NOMSGAUTH;
+			break;
+
+		case Opt_tcp_nodelay:
+			opt->flags |= CEPH_OPT_TCP_NODELAY;
+			break;
+		case Opt_notcp_nodelay:
+			opt->flags &= ~CEPH_OPT_TCP_NODELAY;
 			break;
 
 		default:
@@ -477,6 +489,43 @@ out:
 	return ERR_PTR(err);
 }
 EXPORT_SYMBOL(ceph_parse_options);
+
+int ceph_print_client_options(struct seq_file *m, struct ceph_client *client)
+{
+	struct ceph_options *opt = client->options;
+	size_t pos = m->count;
+
+	if (opt->name)
+		seq_printf(m, "name=%s,", opt->name);
+	if (opt->key)
+		seq_puts(m, "secret=<hidden>,");
+
+	if (opt->flags & CEPH_OPT_FSID)
+		seq_printf(m, "fsid=%pU,", &opt->fsid);
+	if (opt->flags & CEPH_OPT_NOSHARE)
+		seq_puts(m, "noshare,");
+	if (opt->flags & CEPH_OPT_NOCRC)
+		seq_puts(m, "nocrc,");
+	if (opt->flags & CEPH_OPT_NOMSGAUTH)
+		seq_puts(m, "nocephx_require_signatures,");
+	if ((opt->flags & CEPH_OPT_TCP_NODELAY) == 0)
+		seq_puts(m, "notcp_nodelay,");
+
+	if (opt->mount_timeout != CEPH_MOUNT_TIMEOUT_DEFAULT)
+		seq_printf(m, "mount_timeout=%d,", opt->mount_timeout);
+	if (opt->osd_idle_ttl != CEPH_OSD_IDLE_TTL_DEFAULT)
+		seq_printf(m, "osd_idle_ttl=%d,", opt->osd_idle_ttl);
+	if (opt->osd_keepalive_timeout != CEPH_OSD_KEEPALIVE_DEFAULT)
+		seq_printf(m, "osdkeepalivetimeout=%d,",
+			   opt->osd_keepalive_timeout);
+
+	/* drop redundant comma */
+	if (m->count != pos)
+		m->count--;
+
+	return 0;
+}
+EXPORT_SYMBOL(ceph_print_client_options);
 
 u64 ceph_client_id(struct ceph_client *client)
 {
@@ -518,10 +567,12 @@ struct ceph_client *ceph_create_client(struct ceph_options *opt, void *private,
 	/* msgr */
 	if (ceph_test_opt(client, MYIP))
 		myaddr = &client->options->my_addr;
+
 	ceph_messenger_init(&client->msgr, myaddr,
 		client->supported_features,
 		client->required_features,
-		ceph_test_opt(client, NOCRC));
+		ceph_test_opt(client, NOCRC),
+		ceph_test_opt(client, TCP_NODELAY));
 
 	/* subsystems */
 	err = ceph_monc_init(&client->monc, client);

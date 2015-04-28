@@ -44,7 +44,8 @@
 #define I40E_DEV_ID_QSFP_B		0x1584
 #define I40E_DEV_ID_QSFP_C		0x1585
 #define I40E_DEV_ID_10G_BASE_T		0x1586
-#define I40E_DEV_ID_VF		0x154C
+#define I40E_DEV_ID_20G_KR2		0x1587
+#define I40E_DEV_ID_VF			0x154C
 #define I40E_DEV_ID_VF_HV		0x1571
 
 #define i40e_is_40G_device(d)		((d) == I40E_DEV_ID_QSFP_A  || \
@@ -241,6 +242,7 @@ struct i40e_hw_capabilities {
 	u8 rx_buf_chain_len;
 	u32 enabled_tcmap;
 	u32 maxtc;
+	u64 wr_csr_prot;
 };
 
 struct i40e_mac_info {
@@ -1116,7 +1118,7 @@ struct i40e_hw_port_stats {
 /* Checksum and Shadow RAM pointers */
 #define I40E_SR_NVM_CONTROL_WORD		0x00
 #define I40E_SR_EMP_MODULE_PTR			0x0F
-#define I40E_SR_NVM_IMAGE_VERSION		0x18
+#define I40E_SR_NVM_DEV_STARTER_VERSION		0x18
 #define I40E_SR_NVM_WAKE_ON_LAN			0x19
 #define I40E_SR_ALTERNATE_SAN_MAC_ADDRESS_PTR	0x27
 #define I40E_SR_NVM_EETRACK_LO			0x2D

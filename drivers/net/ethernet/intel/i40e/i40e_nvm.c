@@ -171,8 +171,8 @@ static i40e_status i40e_poll_sr_srctl_done_bit(struct i40e_hw *hw)
  *
  * Reads one 16 bit word from the Shadow RAM using the GLNVM_SRCTL register.
  **/
-i40e_status i40e_read_nvm_word_srctl(struct i40e_hw *hw, u16 offset,
-				     u16 *data)
+static i40e_status i40e_read_nvm_word_srctl(struct i40e_hw *hw, u16 offset,
+					    u16 *data)
 {
 	i40e_status ret_code = I40E_ERR_TIMEOUT;
 	u32 sr_reg;
@@ -200,7 +200,6 @@ i40e_status i40e_read_nvm_word_srctl(struct i40e_hw *hw, u16 offset,
 			*data = (u16)((sr_reg &
 				       I40E_GLNVM_SRDATA_RDDATA_MASK)
 				    >> I40E_GLNVM_SRDATA_RDDATA_SHIFT);
-			*data = le16_to_cpu(*data);
 		}
 	}
 	if (ret_code)
@@ -237,8 +236,8 @@ i40e_status i40e_read_nvm_word(struct i40e_hw *hw, u16 offset,
  * method. The buffer read is preceded by the NVM ownership take
  * and followed by the release.
  **/
-i40e_status i40e_read_nvm_buffer_srctl(struct i40e_hw *hw, u16 offset,
-				       u16 *words, u16 *data)
+static i40e_status i40e_read_nvm_buffer_srctl(struct i40e_hw *hw, u16 offset,
+					      u16 *words, u16 *data)
 {
 	i40e_status ret_code = 0;
 	u16 index, word;
@@ -725,9 +724,11 @@ static i40e_status i40e_nvmupd_state_writing(struct i40e_hw *hw,
 {
 	i40e_status status;
 	enum i40e_nvmupd_cmd upd_cmd;
+	bool retry_attempt = false;
 
 	upd_cmd = i40e_nvmupd_validate_command(hw, cmd, errno);
 
+retry:
 	switch (upd_cmd) {
 	case I40E_NVMUPD_WRITE_CON:
 		status = i40e_nvmupd_nvm_write(hw, cmd, bytes, errno);
@@ -771,6 +772,39 @@ static i40e_status i40e_nvmupd_state_writing(struct i40e_hw *hw,
 		*errno = -ESRCH;
 		break;
 	}
+
+	/* In some circumstances, a multi-write transaction takes longer
+	 * than the default 3 minute timeout on the write semaphore.  If
+	 * the write failed with an EBUSY status, this is likely the problem,
+	 * so here we try to reacquire the semaphore then retry the write.
+	 * We only do one retry, then give up.
+	 */
+	if (status && (hw->aq.asq_last_status == I40E_AQ_RC_EBUSY) &&
+	    !retry_attempt) {
+		i40e_status old_status = status;
+		u32 old_asq_status = hw->aq.asq_last_status;
+		u32 gtime;
+
+		gtime = rd32(hw, I40E_GLVFGEN_TIMER);
+		if (gtime >= hw->nvm.hw_semaphore_timeout) {
+			i40e_debug(hw, I40E_DEBUG_ALL,
+				   "NVMUPD: write semaphore expired (%d >= %lld), retrying\n",
+				   gtime, hw->nvm.hw_semaphore_timeout);
+			i40e_release_nvm(hw);
+			status = i40e_acquire_nvm(hw, I40E_RESOURCE_WRITE);
+			if (status) {
+				i40e_debug(hw, I40E_DEBUG_ALL,
+					   "NVMUPD: write semaphore reacquire failed aq_err = %d\n",
+					   hw->aq.asq_last_status);
+				status = old_status;
+				hw->aq.asq_last_status = old_asq_status;
+			} else {
+				retry_attempt = true;
+				goto retry;
+			}
+		}
+	}
+
 	return status;
 }
 
@@ -787,13 +821,12 @@ static enum i40e_nvmupd_cmd i40e_nvmupd_validate_command(struct i40e_hw *hw,
 						 int *errno)
 {
 	enum i40e_nvmupd_cmd upd_cmd;
-	u8 transaction, module;
+	u8 transaction;
 
 	/* anything that doesn't match a recognized case is an error */
 	upd_cmd = I40E_NVMUPD_INVALID;
 
 	transaction = i40e_nvmupd_get_transaction(cmd->config);
-	module = i40e_nvmupd_get_module(cmd->config);
 
 	/* limits on data size */
 	if ((cmd->data_size < 1) ||

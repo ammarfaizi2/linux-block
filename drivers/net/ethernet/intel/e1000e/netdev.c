@@ -947,7 +947,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring, int *work_done,
 		if (*work_done >= work_to_do)
 			break;
 		(*work_done)++;
-		rmb();	/* read descriptor and rx_buffer_info after status DD */
+		dma_rmb();	/* read descriptor and rx_buffer_info after status DD */
 
 		skb = buffer_info->skb;
 		buffer_info->skb = NULL;
@@ -1232,7 +1232,7 @@ static bool e1000_clean_tx_irq(struct e1000_ring *tx_ring)
 	       (count < tx_ring->count)) {
 		bool cleaned = false;
 
-		rmb();		/* read buffer_info after eop_desc */
+		dma_rmb();		/* read buffer_info after eop_desc */
 		for (; !cleaned; count++) {
 			tx_desc = E1000_TX_DESC(*tx_ring, i);
 			buffer_info = &tx_ring->buffer_info[i];
@@ -1332,7 +1332,7 @@ static bool e1000_clean_rx_irq_ps(struct e1000_ring *rx_ring, int *work_done,
 			break;
 		(*work_done)++;
 		skb = buffer_info->skb;
-		rmb();	/* read descriptor and rx_buffer_info after status DD */
+		dma_rmb();	/* read descriptor and rx_buffer_info after status DD */
 
 		/* in the packet split case this is header only */
 		prefetch(skb->data - NET_IP_ALIGN);
@@ -1536,7 +1536,7 @@ static bool e1000_clean_jumbo_rx_irq(struct e1000_ring *rx_ring, int *work_done,
 		if (*work_done >= work_to_do)
 			break;
 		(*work_done)++;
-		rmb();	/* read descriptor and rx_buffer_info after status DD */
+		dma_rmb();	/* read descriptor and rx_buffer_info after status DD */
 
 		skb = buffer_info->skb;
 		buffer_info->skb = NULL;
@@ -3297,9 +3297,9 @@ static void e1000_configure_rx(struct e1000_adapter *adapter)
 			ew32(RXDCTL(0), rxdctl | 0x3);
 		}
 
-		pm_qos_update_request(&adapter->netdev->pm_qos_req, lat);
+		pm_qos_update_request(&adapter->pm_qos_req, lat);
 	} else {
-		pm_qos_update_request(&adapter->netdev->pm_qos_req,
+		pm_qos_update_request(&adapter->pm_qos_req,
 				      PM_QOS_DEFAULT_VALUE);
 	}
 
@@ -4084,6 +4084,8 @@ void e1000e_down(struct e1000_adapter *adapter, bool reset)
 	 */
 	set_bit(__E1000_DOWN, &adapter->state);
 
+	netif_carrier_off(netdev);
+
 	/* disable receives in the hardware */
 	rctl = er32(RCTL);
 	if (!(adapter->flags2 & FLAG2_NO_DISABLE_RX))
@@ -4107,8 +4109,6 @@ void e1000e_down(struct e1000_adapter *adapter, bool reset)
 
 	del_timer_sync(&adapter->watchdog_timer);
 	del_timer_sync(&adapter->phy_info_timer);
-
-	netif_carrier_off(netdev);
 
 	spin_lock(&adapter->stats64_lock);
 	e1000e_update_stats(adapter);
@@ -4403,7 +4403,7 @@ static int e1000_open(struct net_device *netdev)
 		e1000_update_mng_vlan(adapter);
 
 	/* DMA latency requirement to workaround jumbo issue */
-	pm_qos_add_request(&adapter->netdev->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
+	pm_qos_add_request(&adapter->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
 			   PM_QOS_DEFAULT_VALUE);
 
 	/* before we allocate an interrupt, we must be ready to handle it.
@@ -4514,7 +4514,7 @@ static int e1000_close(struct net_device *netdev)
 	    !test_bit(__E1000_TESTING, &adapter->state))
 		e1000e_release_hw_control(adapter);
 
-	pm_qos_remove_request(&adapter->netdev->pm_qos_req);
+	pm_qos_remove_request(&adapter->pm_qos_req);
 
 	pm_runtime_put_sync(&pdev->dev);
 
@@ -6833,7 +6833,8 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		goto err_ioremap;
 
 	if ((adapter->flags & FLAG_HAS_FLASH) &&
-	    (pci_resource_flags(pdev, 1) & IORESOURCE_MEM)) {
+	    (pci_resource_flags(pdev, 1) & IORESOURCE_MEM) &&
+	    (hw->mac.type < e1000_pch_spt)) {
 		flash_start = pci_resource_start(pdev, 1);
 		flash_len = pci_resource_len(pdev, 1);
 		adapter->hw.flash_address = ioremap(flash_start, flash_len);
@@ -6873,7 +6874,8 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		goto err_hw_init;
 
 	if ((adapter->flags & FLAG_IS_ICH) &&
-	    (adapter->flags & FLAG_READ_ONLY_NVM))
+	    (adapter->flags & FLAG_READ_ONLY_NVM) &&
+	    (hw->mac.type < e1000_pch_spt))
 		e1000e_write_protect_nvm_ich8lan(&adapter->hw);
 
 	hw->mac.ops.get_bus_info(&adapter->hw);
@@ -7069,7 +7071,7 @@ err_hw_init:
 	kfree(adapter->tx_ring);
 	kfree(adapter->rx_ring);
 err_sw_init:
-	if (adapter->hw.flash_address)
+	if ((adapter->hw.flash_address) && (hw->mac.type < e1000_pch_spt))
 		iounmap(adapter->hw.flash_address);
 	e1000e_reset_interrupt_capability(adapter);
 err_flashmap:
@@ -7142,7 +7144,8 @@ static void e1000_remove(struct pci_dev *pdev)
 	kfree(adapter->rx_ring);
 
 	iounmap(adapter->hw.hw_addr);
-	if (adapter->hw.flash_address)
+	if ((adapter->hw.flash_address) &&
+	    (adapter->hw.mac.type < e1000_pch_spt))
 		iounmap(adapter->hw.flash_address);
 	pci_release_selected_regions(pdev,
 				     pci_select_bars(pdev, IORESOURCE_MEM));

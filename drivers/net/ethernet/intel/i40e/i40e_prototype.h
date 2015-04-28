@@ -66,6 +66,7 @@ void i40e_led_set(struct i40e_hw *hw, u32 mode, bool blink);
 
 i40e_status i40e_aq_get_firmware_version(struct i40e_hw *hw,
 				u16 *fw_major_version, u16 *fw_minor_version,
+				u32 *fw_build,
 				u16 *api_major_version, u16 *api_minor_version,
 				struct i40e_asq_cmd_details *cmd_details);
 i40e_status i40e_aq_debug_write_register(struct i40e_hw *hw,
@@ -302,4 +303,9 @@ i40e_status i40e_aq_add_rem_control_packet_filter(struct i40e_hw *hw,
 				u16 vsi_seid, u16 queue, bool is_add,
 				struct i40e_control_filter_stats *stats,
 				struct i40e_asq_cmd_details *cmd_details);
+i40e_status i40e_aq_debug_dump(struct i40e_hw *hw, u8 cluster_id,
+			       u8 table_id, u32 start_index, u16 buff_size,
+			       void *buff, u16 *ret_buff_size,
+			       u8 *ret_next_table, u32 *ret_next_index,
+			       struct i40e_asq_cmd_details *cmd_details);
 #endif /* _I40E_PROTOTYPE_H_ */

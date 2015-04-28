@@ -269,6 +269,41 @@ static inline int dname_external(const struct dentry *dentry)
 	return dentry->d_name.name != dentry->d_iname;
 }
 
+/*
+ * Make sure other CPUs see the inode attached before the type is set.
+ */
+static inline void __d_set_inode_and_type(struct dentry *dentry,
+					  struct inode *inode,
+					  unsigned type_flags)
+{
+	unsigned flags;
+
+	dentry->d_inode = inode;
+	smp_wmb();
+	flags = READ_ONCE(dentry->d_flags);
+	flags &= ~(DCACHE_ENTRY_TYPE | DCACHE_FALLTHRU);
+	flags |= type_flags;
+	WRITE_ONCE(dentry->d_flags, flags);
+}
+
+/*
+ * Ideally, we want to make sure that other CPUs see the flags cleared before
+ * the inode is detached, but this is really a violation of RCU principles
+ * since the ordering suggests we should always set inode before flags.
+ *
+ * We should instead replace or discard the entire dentry - but that sucks
+ * performancewise on mass deletion/rename.
+ */
+static inline void __d_clear_type_and_inode(struct dentry *dentry)
+{
+	unsigned flags = READ_ONCE(dentry->d_flags);
+
+	flags &= ~(DCACHE_ENTRY_TYPE | DCACHE_FALLTHRU);
+	WRITE_ONCE(dentry->d_flags, flags);
+	smp_wmb();
+	dentry->d_inode = NULL;
+}
+
 static void dentry_free(struct dentry *dentry)
 {
 	WARN_ON(!hlist_unhashed(&dentry->d_u.d_alias));
@@ -311,7 +346,7 @@ static void dentry_iput(struct dentry * dentry)
 {
 	struct inode *inode = dentry->d_inode;
 	if (inode) {
-		dentry->d_inode = NULL;
+		__d_clear_type_and_inode(dentry);
 		hlist_del_init(&dentry->d_u.d_alias);
 		spin_unlock(&dentry->d_lock);
 		spin_unlock(&inode->i_lock);
@@ -335,8 +370,7 @@ static void dentry_unlink_inode(struct dentry * dentry)
 	__releases(dentry->d_inode->i_lock)
 {
 	struct inode *inode = dentry->d_inode;
-	__d_clear_type(dentry);
-	dentry->d_inode = NULL;
+	__d_clear_type_and_inode(dentry);
 	hlist_del_init(&dentry->d_u.d_alias);
 	dentry_rcuwalk_barrier(dentry);
 	spin_unlock(&dentry->d_lock);
@@ -1659,9 +1693,25 @@ void d_set_d_op(struct dentry *dentry, const struct dentry_operations *op)
 }
 EXPORT_SYMBOL(d_set_d_op);
 
+
+/*
+ * d_set_fallthru - Mark a dentry as falling through to a lower layer
+ * @dentry - The dentry to mark
+ *
+ * Mark a dentry as falling through to the lower layer (as set with
+ * d_pin_lower()).  This flag may be recorded on the medium.
+ */
+void d_set_fallthru(struct dentry *dentry)
+{
+	spin_lock(&dentry->d_lock);
+	dentry->d_flags |= DCACHE_FALLTHRU;
+	spin_unlock(&dentry->d_lock);
+}
+EXPORT_SYMBOL(d_set_fallthru);
+
 static unsigned d_flags_for_inode(struct inode *inode)
 {
-	unsigned add_flags = DCACHE_FILE_TYPE;
+	unsigned add_flags = DCACHE_REGULAR_TYPE;
 
 	if (!inode)
 		return DCACHE_MISS_TYPE;
@@ -1674,13 +1724,21 @@ static unsigned d_flags_for_inode(struct inode *inode)
 			else
 				inode->i_opflags |= IOP_LOOKUP;
 		}
-	} else if (unlikely(!(inode->i_opflags & IOP_NOFOLLOW))) {
-		if (unlikely(inode->i_op->follow_link))
-			add_flags = DCACHE_SYMLINK_TYPE;
-		else
-			inode->i_opflags |= IOP_NOFOLLOW;
+		goto type_determined;
 	}
 
+	if (unlikely(!(inode->i_opflags & IOP_NOFOLLOW))) {
+		if (unlikely(inode->i_op->follow_link)) {
+			add_flags = DCACHE_SYMLINK_TYPE;
+			goto type_determined;
+		}
+		inode->i_opflags |= IOP_NOFOLLOW;
+	}
+
+	if (unlikely(!S_ISREG(inode->i_mode)))
+		add_flags = DCACHE_SPECIAL_TYPE;
+
+type_determined:
 	if (unlikely(IS_AUTOMOUNT(inode)))
 		add_flags |= DCACHE_NEED_AUTOMOUNT;
 	return add_flags;
@@ -1691,10 +1749,9 @@ static void __d_instantiate(struct dentry *dentry, struct inode *inode)
 	unsigned add_flags = d_flags_for_inode(inode);
 
 	spin_lock(&dentry->d_lock);
-	__d_set_type(dentry, add_flags);
 	if (inode)
 		hlist_add_head(&dentry->d_u.d_alias, &inode->i_dentry);
-	dentry->d_inode = inode;
+	__d_set_inode_and_type(dentry, inode, add_flags);
 	dentry_rcuwalk_barrier(dentry);
 	spin_unlock(&dentry->d_lock);
 	fsnotify_d_instantiate(dentry, inode);
@@ -1912,8 +1969,7 @@ static struct dentry *__d_obtain_alias(struct inode *inode, int disconnected)
 		add_flags |= DCACHE_DISCONNECTED;
 
 	spin_lock(&tmp->d_lock);
-	tmp->d_inode = inode;
-	tmp->d_flags |= add_flags;
+	__d_set_inode_and_type(tmp, inode, add_flags);
 	hlist_add_head(&tmp->d_u.d_alias, &inode->i_dentry);
 	hlist_bl_lock(&tmp->d_sb->s_anon);
 	hlist_bl_add_head(&tmp->d_hash, &tmp->d_sb->s_anon);
@@ -2665,7 +2721,7 @@ static int __d_unalias(struct inode *inode,
 		struct dentry *dentry, struct dentry *alias)
 {
 	struct mutex *m1 = NULL, *m2 = NULL;
-	int ret = -EBUSY;
+	int ret = -ESTALE;
 
 	/* If alias and dentry share a parent, then no extra locks required */
 	if (alias->d_parent == dentry->d_parent)

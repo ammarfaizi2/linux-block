@@ -31,10 +31,10 @@
 #include <asm/uaccess.h>
 #include <net/compat.h>
 
-ssize_t get_compat_msghdr(struct msghdr *kmsg,
-			  struct compat_msghdr __user *umsg,
-			  struct sockaddr __user **save_addr,
-			  struct iovec **iov)
+int get_compat_msghdr(struct msghdr *kmsg,
+		      struct compat_msghdr __user *umsg,
+		      struct sockaddr __user **save_addr,
+		      struct iovec **iov)
 {
 	compat_uptr_t uaddr, uiov, tmp3;
 	compat_size_t nr_segs;
@@ -49,6 +49,13 @@ ssize_t get_compat_msghdr(struct msghdr *kmsg,
 	    __get_user(kmsg->msg_controllen, &umsg->msg_controllen) ||
 	    __get_user(kmsg->msg_flags, &umsg->msg_flags))
 		return -EFAULT;
+
+	if (!uaddr)
+		kmsg->msg_namelen = 0;
+
+	if (kmsg->msg_namelen < 0)
+		return -EINVAL;
+
 	if (kmsg->msg_namelen > sizeof(struct sockaddr_storage))
 		kmsg->msg_namelen = sizeof(struct sockaddr_storage);
 	kmsg->msg_control = compat_ptr(tmp3);
@@ -72,13 +79,11 @@ ssize_t get_compat_msghdr(struct msghdr *kmsg,
 	if (nr_segs > UIO_MAXIOV)
 		return -EMSGSIZE;
 
-	err = compat_rw_copy_check_uvector(save_addr ? READ : WRITE,
-					   compat_ptr(uiov), nr_segs,
-					   UIO_FASTIOV, *iov, iov);
-	if (err >= 0)
-		iov_iter_init(&kmsg->msg_iter, save_addr ? READ : WRITE,
-			      *iov, nr_segs, err);
-	return err;
+	kmsg->msg_iocb = NULL;
+
+	return compat_import_iovec(save_addr ? READ : WRITE,
+				   compat_ptr(uiov), nr_segs,
+				   UIO_FASTIOV, iov, &kmsg->msg_iter);
 }
 
 /* Bleech... */
@@ -711,24 +716,18 @@ static unsigned char nas[21] = {
 
 COMPAT_SYSCALL_DEFINE3(sendmsg, int, fd, struct compat_msghdr __user *, msg, unsigned int, flags)
 {
-	if (flags & MSG_CMSG_COMPAT)
-		return -EINVAL;
 	return __sys_sendmsg(fd, (struct user_msghdr __user *)msg, flags | MSG_CMSG_COMPAT);
 }
 
 COMPAT_SYSCALL_DEFINE4(sendmmsg, int, fd, struct compat_mmsghdr __user *, mmsg,
 		       unsigned int, vlen, unsigned int, flags)
 {
-	if (flags & MSG_CMSG_COMPAT)
-		return -EINVAL;
 	return __sys_sendmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
 			      flags | MSG_CMSG_COMPAT);
 }
 
 COMPAT_SYSCALL_DEFINE3(recvmsg, int, fd, struct compat_msghdr __user *, msg, unsigned int, flags)
 {
-	if (flags & MSG_CMSG_COMPAT)
-		return -EINVAL;
 	return __sys_recvmsg(fd, (struct user_msghdr __user *)msg, flags | MSG_CMSG_COMPAT);
 }
 
@@ -750,9 +749,6 @@ COMPAT_SYSCALL_DEFINE5(recvmmsg, int, fd, struct compat_mmsghdr __user *, mmsg,
 {
 	int datagrams;
 	struct timespec ktspec;
-
-	if (flags & MSG_CMSG_COMPAT)
-		return -EINVAL;
 
 	if (timeout == NULL)
 		return __sys_recvmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,

@@ -2456,6 +2456,7 @@ struct cfg80211_ops {
 
 	struct wireless_dev * (*add_virtual_intf)(struct wiphy *wiphy,
 						  const char *name,
+						  unsigned char name_assign_type,
 						  enum nl80211_iftype type,
 						  u32 *flags,
 						  struct vif_params *params);
@@ -3216,10 +3217,8 @@ struct wiphy {
 	const struct ieee80211_ht_cap *ht_capa_mod_mask;
 	const struct ieee80211_vht_cap *vht_capa_mod_mask;
 
-#ifdef CONFIG_NET_NS
 	/* the network namespace this phy lives in currently */
-	struct net *_net;
-#endif
+	possible_net_t _net;
 
 #ifdef CONFIG_CFG80211_WEXT
 	const struct iw_handler_def *wext;
@@ -4903,6 +4902,17 @@ void cfg80211_ch_switch_started_notify(struct net_device *dev,
 bool ieee80211_operating_class_to_band(u8 operating_class,
 				       enum ieee80211_band *band);
 
+/**
+ * ieee80211_chandef_to_operating_class - convert chandef to operation class
+ *
+ * @chandef: the chandef to convert
+ * @op_class: a pointer to the resulting operating class
+ *
+ * Returns %true if the conversion was successful, %false otherwise.
+ */
+bool ieee80211_chandef_to_operating_class(struct cfg80211_chan_def *chandef,
+					  u8 *op_class);
+
 /*
  * cfg80211_tdls_oper_request - request userspace to perform TDLS operation
  * @dev: the device on which the operation is requested
@@ -4989,6 +4999,64 @@ void cfg80211_ft_event(struct net_device *netdev,
 int cfg80211_get_p2p_attr(const u8 *ies, unsigned int len,
 			  enum ieee80211_p2p_attr_id attr,
 			  u8 *buf, unsigned int bufsize);
+
+/**
+ * ieee80211_ie_split_ric - split an IE buffer according to ordering (with RIC)
+ * @ies: the IE buffer
+ * @ielen: the length of the IE buffer
+ * @ids: an array with element IDs that are allowed before
+ *	the split
+ * @n_ids: the size of the element ID array
+ * @after_ric: array IE types that come after the RIC element
+ * @n_after_ric: size of the @after_ric array
+ * @offset: offset where to start splitting in the buffer
+ *
+ * This function splits an IE buffer by updating the @offset
+ * variable to point to the location where the buffer should be
+ * split.
+ *
+ * It assumes that the given IE buffer is well-formed, this
+ * has to be guaranteed by the caller!
+ *
+ * It also assumes that the IEs in the buffer are ordered
+ * correctly, if not the result of using this function will not
+ * be ordered correctly either, i.e. it does no reordering.
+ *
+ * The function returns the offset where the next part of the
+ * buffer starts, which may be @ielen if the entire (remainder)
+ * of the buffer should be used.
+ */
+size_t ieee80211_ie_split_ric(const u8 *ies, size_t ielen,
+			      const u8 *ids, int n_ids,
+			      const u8 *after_ric, int n_after_ric,
+			      size_t offset);
+
+/**
+ * ieee80211_ie_split - split an IE buffer according to ordering
+ * @ies: the IE buffer
+ * @ielen: the length of the IE buffer
+ * @ids: an array with element IDs that are allowed before
+ *	the split
+ * @n_ids: the size of the element ID array
+ * @offset: offset where to start splitting in the buffer
+ *
+ * This function splits an IE buffer by updating the @offset
+ * variable to point to the location where the buffer should be
+ * split.
+ *
+ * It assumes that the given IE buffer is well-formed, this
+ * has to be guaranteed by the caller!
+ *
+ * It also assumes that the IEs in the buffer are ordered
+ * correctly, if not the result of using this function will not
+ * be ordered correctly either, i.e. it does no reordering.
+ *
+ * The function returns the offset where the next part of the
+ * buffer starts, which may be @ielen if the entire (remainder)
+ * of the buffer should be used.
+ */
+size_t ieee80211_ie_split(const u8 *ies, size_t ielen,
+			  const u8 *ids, int n_ids, size_t offset);
 
 /**
  * cfg80211_report_wowlan_wakeup - report wakeup from WoWLAN

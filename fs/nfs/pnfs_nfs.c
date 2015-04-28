@@ -561,7 +561,7 @@ static bool load_v3_ds_connect(void)
 	return(get_v3_ds_connect != NULL);
 }
 
-void __exit nfs4_pnfs_v3_ds_connect_unload(void)
+void nfs4_pnfs_v3_ds_connect_unload(void)
 {
 	if (get_v3_ds_connect) {
 		symbol_put(nfs3_set_ds_client);
@@ -838,3 +838,43 @@ out_err:
 	return NULL;
 }
 EXPORT_SYMBOL_GPL(nfs4_decode_mp_ds_addr);
+
+void
+pnfs_layout_mark_request_commit(struct nfs_page *req,
+				struct pnfs_layout_segment *lseg,
+				struct nfs_commit_info *cinfo,
+				u32 ds_commit_idx)
+{
+	struct list_head *list;
+	struct pnfs_commit_bucket *buckets;
+
+	spin_lock(cinfo->lock);
+	buckets = cinfo->ds->buckets;
+	list = &buckets[ds_commit_idx].written;
+	if (list_empty(list)) {
+		/* Non-empty buckets hold a reference on the lseg.  That ref
+		 * is normally transferred to the COMMIT call and released
+		 * there.  It could also be released if the last req is pulled
+		 * off due to a rewrite, in which case it will be done in
+		 * pnfs_common_clear_request_commit
+		 */
+		WARN_ON_ONCE(buckets[ds_commit_idx].wlseg != NULL);
+		buckets[ds_commit_idx].wlseg = pnfs_get_lseg(lseg);
+	}
+	set_bit(PG_COMMIT_TO_DS, &req->wb_flags);
+	cinfo->ds->nwritten++;
+	spin_unlock(cinfo->lock);
+
+	nfs_request_add_commit_list(req, list, cinfo);
+}
+EXPORT_SYMBOL_GPL(pnfs_layout_mark_request_commit);
+
+int
+pnfs_nfs_generic_sync(struct inode *inode, bool datasync)
+{
+	if (datasync)
+		return 0;
+	return pnfs_layoutcommit_inode(inode, true);
+}
+EXPORT_SYMBOL_GPL(pnfs_nfs_generic_sync);
+

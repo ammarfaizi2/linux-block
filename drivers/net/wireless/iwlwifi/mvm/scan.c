@@ -587,8 +587,10 @@ int iwl_mvm_scan_offload_stop(struct iwl_mvm *mvm, bool notify)
 	if (mvm->scan_status == IWL_MVM_SCAN_NONE)
 		return 0;
 
-	if (iwl_mvm_is_radio_killed(mvm))
+	if (iwl_mvm_is_radio_killed(mvm)) {
+		ret = 0;
 		goto out;
+	}
 
 	iwl_init_notification_wait(&mvm->notif_wait, &wait_scan_done,
 				   scan_done_notif,
@@ -600,16 +602,14 @@ int iwl_mvm_scan_offload_stop(struct iwl_mvm *mvm, bool notify)
 		IWL_DEBUG_SCAN(mvm, "Send stop %sscan failed %d\n",
 			       sched ? "offloaded " : "", ret);
 		iwl_remove_notification(&mvm->notif_wait, &wait_scan_done);
-		return ret;
+		goto out;
 	}
 
 	IWL_DEBUG_SCAN(mvm, "Successfully sent stop %sscan\n",
 		       sched ? "offloaded " : "");
 
 	ret = iwl_wait_notification(&mvm->notif_wait, &wait_scan_done, 1 * HZ);
-	if (ret)
-		return ret;
-
+out:
 	/*
 	 * Clear the scan status so the next scan requests will succeed. This
 	 * also ensures the Rx handler doesn't do anything, as the scan was
@@ -619,7 +619,6 @@ int iwl_mvm_scan_offload_stop(struct iwl_mvm *mvm, bool notify)
 	if (mvm->scan_status == IWL_MVM_SCAN_OS)
 		iwl_mvm_unref(mvm, IWL_MVM_REF_SCAN);
 
-out:
 	mvm->scan_status = IWL_MVM_SCAN_NONE;
 
 	if (notify) {
@@ -629,7 +628,7 @@ out:
 			ieee80211_scan_completed(mvm->hw, true);
 	}
 
-	return 0;
+	return ret;
 }
 
 static void iwl_mvm_unified_scan_fill_tx_cmd(struct iwl_mvm *mvm,
@@ -936,6 +935,8 @@ int iwl_mvm_unified_sched_scan_lmac(struct iwl_mvm *mvm,
 
 	cmd->n_channels = (u8)req->n_channels;
 
+	cmd->delay = cpu_to_le32(req->delay);
+
 	if (iwl_mvm_scan_pass_all(mvm, req))
 		flags |= IWL_MVM_LMAC_SCAN_FLAG_PASS_ALL;
 	else
@@ -1176,6 +1177,18 @@ static bool iwl_mvm_find_scan_type(struct iwl_mvm *mvm,
 			return true;
 
 	return false;
+}
+
+static int iwl_mvm_find_first_scan(struct iwl_mvm *mvm,
+				   enum iwl_umac_scan_uid_type type)
+{
+	int i;
+
+	for (i = 0; i < IWL_MVM_MAX_SIMULTANEOUS_SCANS; i++)
+		if (mvm->scan_uid[i] & type)
+			return i;
+
+	return i;
 }
 
 static u32 iwl_generate_scan_uid(struct iwl_mvm *mvm,
@@ -1437,7 +1450,13 @@ int iwl_mvm_sched_scan_umac(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 				cpu_to_le16(req->interval / MSEC_PER_SEC);
 	sec_part->schedule[0].iter_count = 0xff;
 
-	sec_part->delay = 0;
+	if (req->delay > U16_MAX) {
+		IWL_DEBUG_SCAN(mvm,
+			       "delay value is > 16-bits, set to max possible\n");
+		sec_part->delay = cpu_to_le16(U16_MAX);
+	} else {
+		sec_part->delay = cpu_to_le16(req->delay);
+	}
 
 	iwl_mvm_build_unified_scan_probe(mvm, vif, ies, &sec_part->preq,
 		req->flags & NL80211_SCAN_FLAG_RANDOM_ADDR ?
@@ -1613,4 +1632,55 @@ int iwl_mvm_scan_size(struct iwl_mvm *mvm)
 		sizeof(struct iwl_scan_channel_cfg_lmac) *
 		mvm->fw->ucode_capa.n_scan_channels +
 		sizeof(struct iwl_scan_probe_req);
+}
+
+/*
+ * This function is used in nic restart flow, to inform mac80211 about scans
+ * that was aborted by restart flow or by an assert.
+ */
+void iwl_mvm_report_scan_aborted(struct iwl_mvm *mvm)
+{
+	if (mvm->fw->ucode_capa.capa[0] & IWL_UCODE_TLV_CAPA_UMAC_SCAN) {
+		u32 uid, i;
+
+		uid = iwl_mvm_find_first_scan(mvm, IWL_UMAC_SCAN_UID_REG_SCAN);
+		if (uid < IWL_MVM_MAX_SIMULTANEOUS_SCANS) {
+			ieee80211_scan_completed(mvm->hw, true);
+			mvm->scan_uid[uid] = 0;
+		}
+		uid = iwl_mvm_find_first_scan(mvm,
+					      IWL_UMAC_SCAN_UID_SCHED_SCAN);
+		if (uid < IWL_MVM_MAX_SIMULTANEOUS_SCANS && !mvm->restart_fw) {
+			ieee80211_sched_scan_stopped(mvm->hw);
+			mvm->scan_uid[uid] = 0;
+		}
+
+		/* We shouldn't have any UIDs still set.  Loop over all the
+		 * UIDs to make sure there's nothing left there and warn if
+		 * any is found.
+		 */
+		for (i = 0; i < IWL_MVM_MAX_SIMULTANEOUS_SCANS; i++) {
+			if (WARN_ONCE(mvm->scan_uid[i],
+				      "UMAC scan UID %d was not cleaned\n",
+				      mvm->scan_uid[i]))
+				mvm->scan_uid[i] = 0;
+		}
+	} else {
+		switch (mvm->scan_status) {
+		case IWL_MVM_SCAN_NONE:
+			break;
+		case IWL_MVM_SCAN_OS:
+			ieee80211_scan_completed(mvm->hw, true);
+			break;
+		case IWL_MVM_SCAN_SCHED:
+			/*
+			 * Sched scan will be restarted by mac80211 in
+			 * restart_hw, so do not report if FW is about to be
+			 * restarted.
+			 */
+			if (!mvm->restart_fw)
+				ieee80211_sched_scan_stopped(mvm->hw);
+			break;
+		}
+	}
 }

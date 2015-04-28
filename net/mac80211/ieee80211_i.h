@@ -26,6 +26,7 @@
 #include <linux/etherdevice.h>
 #include <linux/leds.h>
 #include <linux/idr.h>
+#include <linux/rhashtable.h>
 #include <net/ieee80211_radiotap.h>
 #include <net/cfg80211.h>
 #include <net/mac80211.h>
@@ -58,13 +59,24 @@ struct ieee80211_local;
 #define IEEE80211_UNSET_POWER_LEVEL	INT_MIN
 
 /*
- * Some APs experience problems when working with U-APSD. Decrease the
- * probability of that happening by using legacy mode for all ACs but VO.
- * The AP that caused us trouble was a Cisco 4410N. It ignores our
- * setting, and always treats non-VO ACs as legacy.
+ * Some APs experience problems when working with U-APSD. Decreasing the
+ * probability of that happening by using legacy mode for all ACs but VO isn't
+ * enough.
+ *
+ * Cisco 4410N originally forced us to enable VO by default only because it
+ * treated non-VO ACs as legacy.
+ *
+ * However some APs (notably Netgear R7000) silently reclassify packets to
+ * different ACs. Since u-APSD ACs require trigger frames for frame retrieval
+ * clients would never see some frames (e.g. ARP responses) or would fetch them
+ * accidentally after a long time.
+ *
+ * It makes little sense to enable u-APSD queues by default because it needs
+ * userspace applications to be aware of it to actually take advantage of the
+ * possible additional powersavings. Implicitly depending on driver autotrigger
+ * frame support doesn't make much sense.
  */
-#define IEEE80211_DEFAULT_UAPSD_QUEUES \
-	IEEE80211_WMM_IE_STA_QOSINFO_AC_VO
+#define IEEE80211_DEFAULT_UAPSD_QUEUES 0
 
 #define IEEE80211_DEFAULT_MAX_SP_LEN		\
 	IEEE80211_WMM_IE_STA_QOSINFO_SP_ALL
@@ -453,6 +465,7 @@ struct ieee80211_if_managed {
 	unsigned int flags;
 
 	bool csa_waiting_bcn;
+	bool csa_ignored_same_chan;
 
 	bool beacon_crc_valid;
 	u32 beacon_crc;
@@ -798,6 +811,19 @@ struct mac80211_qos_map {
 	struct rcu_head rcu_head;
 };
 
+enum txq_info_flags {
+	IEEE80211_TXQ_STOP,
+	IEEE80211_TXQ_AMPDU,
+};
+
+struct txq_info {
+	struct sk_buff_head queue;
+	unsigned long flags;
+
+	/* keep last! */
+	struct ieee80211_txq txq;
+};
+
 struct ieee80211_sub_if_data {
 	struct list_head list;
 
@@ -840,6 +866,7 @@ struct ieee80211_sub_if_data {
 	bool control_port_no_encrypt;
 	int encrypt_headroom;
 
+	atomic_t txqs_len[IEEE80211_NUM_ACS];
 	struct ieee80211_tx_queue_params tx_conf[IEEE80211_NUM_ACS];
 	struct mac80211_qos_map __rcu *qos_map;
 
@@ -1175,7 +1202,7 @@ struct ieee80211_local {
 	spinlock_t tim_lock;
 	unsigned long num_sta;
 	struct list_head sta_list;
-	struct sta_info __rcu *sta_hash[STA_HASH_SIZE];
+	struct rhashtable sta_hash;
 	struct timer_list sta_cleanup;
 	int sta_generation;
 
@@ -1437,6 +1464,10 @@ static inline struct ieee80211_local *hw_to_local(
 	return container_of(hw, struct ieee80211_local, hw);
 }
 
+static inline struct txq_info *to_txq_info(struct ieee80211_txq *txq)
+{
+	return container_of(txq, struct txq_info, txq);
+}
 
 static inline int ieee80211_bssid_match(const u8 *raddr, const u8 *addr)
 {
@@ -1529,7 +1560,8 @@ int ieee80211_mesh_finish_csa(struct ieee80211_sub_if_data *sdata);
 void ieee80211_scan_work(struct work_struct *work);
 int ieee80211_request_ibss_scan(struct ieee80211_sub_if_data *sdata,
 				const u8 *ssid, u8 ssid_len,
-				struct ieee80211_channel *chan,
+				struct ieee80211_channel **channels,
+				unsigned int n_channels,
 				enum nl80211_bss_scan_width scan_width);
 int ieee80211_request_scan(struct ieee80211_sub_if_data *sdata,
 			   struct cfg80211_scan_request *req);
@@ -1578,6 +1610,7 @@ int ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 int ieee80211_iface_init(void);
 void ieee80211_iface_exit(void);
 int ieee80211_if_add(struct ieee80211_local *local, const char *name,
+		     unsigned char name_assign_type,
 		     struct wireless_dev **new_wdev, enum nl80211_iftype type,
 		     struct vif_params *params);
 int ieee80211_if_change_type(struct ieee80211_sub_if_data *sdata,
@@ -1891,6 +1924,9 @@ static inline bool ieee80211_can_run_worker(struct ieee80211_local *local)
 	return true;
 }
 
+void ieee80211_init_tx_queue(struct ieee80211_sub_if_data *sdata,
+			     struct sta_info *sta,
+			     struct txq_info *txq, int tid);
 void ieee80211_send_auth(struct ieee80211_sub_if_data *sdata,
 			 u16 transaction, u16 auth_alg, u16 status,
 			 const u8 *extra, size_t extra_len, const u8 *bssid,
@@ -1929,10 +1965,6 @@ int __ieee80211_request_smps_ap(struct ieee80211_sub_if_data *sdata,
 void ieee80211_recalc_smps(struct ieee80211_sub_if_data *sdata);
 void ieee80211_recalc_min_chandef(struct ieee80211_sub_if_data *sdata);
 
-size_t ieee80211_ie_split_ric(const u8 *ies, size_t ielen,
-			      const u8 *ids, int n_ids,
-			      const u8 *after_ric, int n_after_ric,
-			      size_t offset);
 size_t ieee80211_ie_split_vendor(const u8 *ies, size_t ielen, size_t offset);
 u8 *ieee80211_ie_build_ht_cap(u8 *pos, struct ieee80211_sta_ht_cap *ht_cap,
 			      u16 cap);
@@ -1958,6 +1990,9 @@ u8 *ieee80211_add_wmm_info_ie(u8 *buf, u8 qosinfo);
 void ieee80211_ht_oper_to_chandef(struct ieee80211_channel *control_chan,
 				  const struct ieee80211_ht_operation *ht_oper,
 				  struct cfg80211_chan_def *chandef);
+void ieee80211_vht_oper_to_chandef(struct ieee80211_channel *control_chan,
+				   const struct ieee80211_vht_operation *oper,
+				   struct cfg80211_chan_def *chandef);
 u32 ieee80211_chandef_downgrade(struct cfg80211_chan_def *c);
 
 int __must_check

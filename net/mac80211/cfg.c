@@ -24,6 +24,7 @@
 
 static struct wireless_dev *ieee80211_add_iface(struct wiphy *wiphy,
 						const char *name,
+						unsigned char name_assign_type,
 						enum nl80211_iftype type,
 						u32 *flags,
 						struct vif_params *params)
@@ -33,7 +34,7 @@ static struct wireless_dev *ieee80211_add_iface(struct wiphy *wiphy,
 	struct ieee80211_sub_if_data *sdata;
 	int err;
 
-	err = ieee80211_if_add(local, name, &wdev, type, params);
+	err = ieee80211_if_add(local, name, name_assign_type, &wdev, type, params);
 	if (err)
 		return ERR_PTR(err);
 
@@ -1058,6 +1059,10 @@ static int sta_apply_parameters(struct ieee80211_local *local,
 		}
 	}
 
+	if (mask & BIT(NL80211_STA_FLAG_WME) &&
+	    local->hw.queues >= IEEE80211_NUM_ACS)
+		sta->sta.wme = set & BIT(NL80211_STA_FLAG_WME);
+
 	/* auth flags will be set later for TDLS stations */
 	if (!test_sta_flag(sta, WLAN_STA_TDLS_PEER)) {
 		ret = sta_apply_auth_flags(local, sta, mask, set);
@@ -1071,9 +1076,6 @@ static int sta_apply_parameters(struct ieee80211_local *local,
 		else
 			clear_sta_flag(sta, WLAN_STA_SHORT_PREAMBLE);
 	}
-
-	if (mask & BIT(NL80211_STA_FLAG_WME))
-		sta->sta.wme = set & BIT(NL80211_STA_FLAG_WME);
 
 	if (mask & BIT(NL80211_STA_FLAG_MFP)) {
 		sta->sta.mfp = !!(set & BIT(NL80211_STA_FLAG_MFP));
@@ -1492,7 +1494,7 @@ static void mpath_set_pinfo(struct mesh_path *mpath, u8 *next_hop,
 	if (next_hop_sta)
 		memcpy(next_hop, next_hop_sta->sta.addr, ETH_ALEN);
 	else
-		memset(next_hop, 0, ETH_ALEN);
+		eth_zero_addr(next_hop);
 
 	memset(pinfo, 0, sizeof(*pinfo));
 
@@ -2300,7 +2302,7 @@ int __ieee80211_request_smps_ap(struct ieee80211_sub_if_data *sdata,
 	}
 
 	ht_dbg(sdata,
-	       "SMSP %d requested in AP mode, sending Action frame to %d stations\n",
+	       "SMPS %d requested in AP mode, sending Action frame to %d stations\n",
 	       smps_mode, atomic_read(&sdata->u.ap.num_mcast_sta));
 
 	mutex_lock(&sdata->local->sta_mtx);

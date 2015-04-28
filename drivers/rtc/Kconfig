@@ -65,7 +65,7 @@ config RTC_DEBUG
 comment "RTC interfaces"
 
 config RTC_INTF_SYSFS
-	boolean "/sys/class/rtc/rtcN (sysfs)"
+	bool "/sys/class/rtc/rtcN (sysfs)"
 	depends on SYSFS
 	default RTC_CLASS
 	help
@@ -75,7 +75,7 @@ config RTC_INTF_SYSFS
 	  If unsure, say Y.
 
 config RTC_INTF_PROC
-	boolean "/proc/driver/rtc (procfs for rtcN)"
+	bool "/proc/driver/rtc (procfs for rtcN)"
 	depends on PROC_FS
 	default RTC_CLASS
 	help
@@ -88,7 +88,7 @@ config RTC_INTF_PROC
 	  If unsure, say Y.
 
 config RTC_INTF_DEV
-	boolean "/dev/rtcN (character devices)"
+	bool "/dev/rtcN (character devices)"
 	default RTC_CLASS
 	help
 	  Say yes here if you want to use your RTCs using the /dev
@@ -466,7 +466,7 @@ config RTC_DRV_DM355EVM
 	  Supports the RTC firmware in the MSP430 on the DM355 EVM.
 
 config RTC_DRV_TWL92330
-	boolean "TI TWL92330/Menelaus"
+	bool "TI TWL92330/Menelaus"
 	depends on MENELAUS
 	help
 	  If you say yes here you get support for the RTC on the
@@ -1111,6 +1111,16 @@ config RTC_DRV_DAVINCI
 	  This driver can also be built as a module. If so, the module
 	  will be called rtc-davinci.
 
+config RTC_DRV_DIGICOLOR
+	tristate "Conexant Digicolor RTC"
+	depends on ARCH_DIGICOLOR
+	help
+	  If you say yes here you get support for the RTC on Conexant
+	  Digicolor platforms. This currently includes the CX92755 SoC.
+
+	  This driver can also be built as a module. If so, the module
+	  will be called rtc-digicolor.
+
 config RTC_DRV_IMXDI
 	tristate "Freescale IMX DryIce Real Time Clock"
 	depends on ARCH_MXC
@@ -1121,11 +1131,11 @@ config RTC_DRV_IMXDI
 	   will be called "rtc-imxdi".
 
 config RTC_DRV_OMAP
-	tristate "TI OMAP1"
-	depends on ARCH_OMAP15XX || ARCH_OMAP16XX || ARCH_OMAP730 || ARCH_DAVINCI_DA8XX || SOC_AM33XX
+	tristate "TI OMAP Real Time Clock"
+	depends on ARCH_OMAP || ARCH_DAVINCI
 	help
 	  Say "yes" here to support the on chip real time clock
-	  present on TI OMAP1, AM33xx and DA8xx/OMAP-L13x.
+	  present on TI OMAP1, AM33xx, DA8xx/OMAP-L13x, AM43xx and DRA7xx.
 
 	  This driver can also be built as a module, if so, module
 	  will be called rtc-omap.

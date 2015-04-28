@@ -566,6 +566,10 @@ static int alloc_proxy_bufs(struct ib_device *dev, struct mlx4_ib_qp *qp)
 			ib_dma_map_single(dev, qp->sqp_proxy_rcv[i].addr,
 					  sizeof (struct mlx4_ib_proxy_sqp_hdr),
 					  DMA_FROM_DEVICE);
+		if (ib_dma_mapping_error(dev, qp->sqp_proxy_rcv[i].map)) {
+			kfree(qp->sqp_proxy_rcv[i].addr);
+			goto err;
+		}
 	}
 	return 0;
 
@@ -1696,8 +1700,10 @@ static int __mlx4_ib_modify_qp(struct ib_qp *ibqp,
 			    qp->mlx4_ib_qp_type == MLX4_IB_QPT_PROXY_GSI ||
 			    qp->mlx4_ib_qp_type == MLX4_IB_QPT_TUN_GSI) {
 				err = handle_eth_ud_smac_index(dev, qp, (u8 *)attr->smac, context);
-				if (err)
-					return -EINVAL;
+				if (err) {
+					err = -EINVAL;
+					goto out;
+				}
 				if (qp->mlx4_ib_qp_type == MLX4_IB_QPT_PROXY_GSI)
 					dev->qp1_proxy[qp->port - 1] = qp;
 			}
@@ -2603,8 +2609,7 @@ static int build_lso_seg(struct mlx4_wqe_lso_seg *wqe, struct ib_send_wr *wr,
 
 	memcpy(wqe->header, wr->wr.ud.header, wr->wr.ud.hlen);
 
-	*lso_hdr_sz  = cpu_to_be32((wr->wr.ud.mss - wr->wr.ud.hlen) << 16 |
-				   wr->wr.ud.hlen);
+	*lso_hdr_sz  = cpu_to_be32(wr->wr.ud.mss << 16 | wr->wr.ud.hlen);
 	*lso_seg_len = halign;
 	return 0;
 }
