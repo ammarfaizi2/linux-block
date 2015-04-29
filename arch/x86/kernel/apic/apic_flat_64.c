@@ -139,7 +139,7 @@ static unsigned int read_xapic_id(void)
 	return id;
 }
 
-static int flat_apic_id_registered(void)
+static bool flat_apic_id_registered(void)
 {
 	return physid_isset(read_xapic_id(), phys_cpu_present_map);
 }

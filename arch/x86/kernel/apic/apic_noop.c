@@ -72,7 +72,7 @@ static int noop_probe(void)
 	return 0;
 }
 
-static int noop_apic_id_registered(void)
+static bool noop_apic_id_registered(void)
 {
 	/*
 	 * if we would be really "pedantic"
