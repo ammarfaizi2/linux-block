@@ -2081,11 +2081,11 @@ EXPORT_SYMBOL(write_one_page);
 /*
  * For address_spaces which do not use buffers nor write back.
  */
-int __set_page_dirty_no_writeback(struct page *page)
+bool __set_page_dirty_no_writeback(struct page *page)
 {
 	if (!PageDirty(page))
 		return !TestSetPageDirty(page);
-	return 0;
+	return false;
 }
 
 /*
@@ -2141,14 +2141,14 @@ EXPORT_SYMBOL(account_page_cleaned);
  * hold the page lock, but e.g. zap_pte_range() calls with the page mapped and
  * the pte lock held, which also locks out truncation.
  */
-int __set_page_dirty_nobuffers(struct page *page)
+bool __set_page_dirty_nobuffers(struct page *page)
 {
 	if (!TestSetPageDirty(page)) {
 		struct address_space *mapping = page_mapping(page);
 		unsigned long flags;
 
 		if (!mapping)
-			return 1;
+			return true;
 
 		spin_lock_irqsave(&mapping->tree_lock, flags);
 		BUG_ON(page_mapping(page) != mapping);
@@ -2161,9 +2161,9 @@ int __set_page_dirty_nobuffers(struct page *page)
 			/* !PageAnon && !swapper_space */
 			__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
 		}
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 EXPORT_SYMBOL(__set_page_dirty_nobuffers);
 
@@ -2190,9 +2190,9 @@ EXPORT_SYMBOL(account_page_redirty);
  * page for some reason, it should redirty the locked page via
  * redirty_page_for_writepage() and it should then unlock the page and return 0
  */
-int redirty_page_for_writepage(struct writeback_control *wbc, struct page *page)
+bool redirty_page_for_writepage(struct writeback_control *wbc, struct page *page)
 {
-	int ret;
+	bool ret;
 
 	wbc->pages_skipped++;
 	ret = __set_page_dirty_nobuffers(page);
@@ -2212,12 +2212,12 @@ EXPORT_SYMBOL(redirty_page_for_writepage);
  * If the mapping doesn't provide a set_page_dirty a_op, then
  * just fall through and assume that it wants buffer_heads.
  */
-int set_page_dirty(struct page *page)
+bool set_page_dirty(struct page *page)
 {
 	struct address_space *mapping = page_mapping(page);
 
 	if (likely(mapping)) {
-		int (*spd)(struct page *) = mapping->a_ops->set_page_dirty;
+		bool (*spd)(struct page *) = mapping->a_ops->set_page_dirty;
 		/*
 		 * readahead/lru_deactivate_page could remain
 		 * PG_readahead/PG_reclaim due to race with end_page_writeback
@@ -2238,9 +2238,9 @@ int set_page_dirty(struct page *page)
 	}
 	if (!PageDirty(page)) {
 		if (!TestSetPageDirty(page))
-			return 1;
+			return true;
 	}
-	return 0;
+	return false;
 }
 EXPORT_SYMBOL(set_page_dirty);
 
@@ -2254,9 +2254,9 @@ EXPORT_SYMBOL(set_page_dirty);
  *
  * In other cases, the page should be locked before running set_page_dirty().
  */
-int set_page_dirty_lock(struct page *page)
+bool set_page_dirty_lock(struct page *page)
 {
-	int ret;
+	bool ret;
 
 	lock_page(page);
 	ret = set_page_dirty(page);
@@ -2279,7 +2279,7 @@ EXPORT_SYMBOL(set_page_dirty_lock);
  * This incoherency between the page's dirty flag and radix-tree tag is
  * unfortunate, but it only exists while the page is locked.
  */
-int clear_page_dirty_for_io(struct page *page)
+bool clear_page_dirty_for_io(struct page *page)
 {
 	struct address_space *mapping = page_mapping(page);
 
@@ -2325,19 +2325,19 @@ int clear_page_dirty_for_io(struct page *page)
 			dec_zone_page_state(page, NR_FILE_DIRTY);
 			dec_bdi_stat(inode_to_bdi(mapping->host),
 					BDI_RECLAIMABLE);
-			return 1;
+			return true;
 		}
-		return 0;
+		return false;
 	}
 	return TestClearPageDirty(page);
 }
 EXPORT_SYMBOL(clear_page_dirty_for_io);
 
-int test_clear_page_writeback(struct page *page)
+bool test_clear_page_writeback(struct page *page)
 {
 	struct address_space *mapping = page_mapping(page);
 	struct mem_cgroup *memcg;
-	int ret;
+	bool ret;
 
 	memcg = mem_cgroup_begin_page_stat(page);
 	if (mapping) {
@@ -2368,11 +2368,11 @@ int test_clear_page_writeback(struct page *page)
 	return ret;
 }
 
-int __test_set_page_writeback(struct page *page, bool keep_write)
+bool __test_set_page_writeback(struct page *page, bool keep_write)
 {
 	struct address_space *mapping = page_mapping(page);
 	struct mem_cgroup *memcg;
-	int ret;
+	bool ret;
 
 	memcg = mem_cgroup_begin_page_stat(page);
 	if (mapping) {
@@ -2414,7 +2414,7 @@ EXPORT_SYMBOL(__test_set_page_writeback);
  * Return true if any of the pages in the mapping are marked with the
  * passed tag.
  */
-int mapping_tagged(struct address_space *mapping, int tag)
+bool mapping_tagged(struct address_space *mapping, int tag)
 {
 	return radix_tree_tagged(&mapping->page_tree, tag);
 }

@@ -22,7 +22,7 @@ static int afs_write_back_from_locked_page(struct afs_writeback *wb,
 /*
  * mark a page as having been made dirty and thus needing writeback
  */
-int afs_set_page_dirty(struct page *page)
+bool afs_set_page_dirty(struct page *page)
 {
 	_enter("");
 	return __set_page_dirty_nobuffers(page);

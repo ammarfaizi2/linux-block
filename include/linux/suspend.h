@@ -337,7 +337,7 @@ static inline void __init register_nosave_region_late(unsigned long b, unsigned 
 {
 	__register_nosave_region(b, e, 1);
 }
-extern int swsusp_page_is_forbidden(struct page *);
+extern bool swsusp_page_is_forbidden(struct page *);
 extern void swsusp_set_page_free(struct page *);
 extern void swsusp_unset_page_free(struct page *);
 extern unsigned long get_safe_page(gfp_t gfp_mask);

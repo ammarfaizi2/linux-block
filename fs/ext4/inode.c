@@ -3237,7 +3237,7 @@ static ssize_t ext4_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
  * So what we do is to mark the page "pending dirty" and next time writepage
  * is called, propagate that into the buffers appropriately.
  */
-static int ext4_journalled_set_page_dirty(struct page *page)
+static bool ext4_journalled_set_page_dirty(struct page *page)
 {
 	SetPageChecked(page);
 	return __set_page_dirty_nobuffers(page);

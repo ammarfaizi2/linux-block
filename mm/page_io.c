@@ -368,7 +368,7 @@ out:
 	return ret;
 }
 
-int swap_set_page_dirty(struct page *page)
+bool swap_set_page_dirty(struct page *page)
 {
 	struct swap_info_struct *sis = page_swap_info(page);
 

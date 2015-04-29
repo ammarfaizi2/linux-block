@@ -1422,9 +1422,9 @@ EXPORT_SYMBOL(radix_tree_delete);
  *	@root:		radix tree root
  *	@tag:		tag to test
  */
-int radix_tree_tagged(struct radix_tree_root *root, unsigned int tag)
+bool radix_tree_tagged(struct radix_tree_root *root, unsigned int tag)
 {
-	return root_tag_get(root, tag);
+	return root_tag_get(root, tag) != 0;
 }
 EXPORT_SYMBOL(radix_tree_tagged);
 

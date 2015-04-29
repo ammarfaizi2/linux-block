@@ -90,7 +90,7 @@ static inline void clear_buffer_##name(struct buffer_head *bh)		\
 {									\
 	clear_bit(BH_##bit, &(bh)->b_state);				\
 }									\
-static inline int buffer_##name(const struct buffer_head *bh)		\
+static inline bool buffer_##name(const struct buffer_head *bh)		\
 {									\
 	return test_bit(BH_##bit, &(bh)->b_state);			\
 }
@@ -99,11 +99,11 @@ static inline int buffer_##name(const struct buffer_head *bh)		\
  * test_set_buffer_foo() and test_clear_buffer_foo()
  */
 #define TAS_BUFFER_FNS(bit, name)					\
-static inline int test_set_buffer_##name(struct buffer_head *bh)	\
+static inline bool test_set_buffer_##name(struct buffer_head *bh)	\
 {									\
 	return test_and_set_bit(BH_##bit, &(bh)->b_state);		\
 }									\
-static inline int test_clear_buffer_##name(struct buffer_head *bh)	\
+static inline bool test_clear_buffer_##name(struct buffer_head *bh)	\
 {									\
 	return test_and_clear_bit(BH_##bit, &(bh)->b_state);		\
 }									\
@@ -381,7 +381,7 @@ __bread(struct block_device *bdev, sector_t block, unsigned size)
 	return __bread_gfp(bdev, block, size, __GFP_MOVABLE);
 }
 
-extern int __set_page_dirty_buffers(struct page *page);
+extern bool __set_page_dirty_buffers(struct page *page);
 
 #else /* CONFIG_BLOCK */
 

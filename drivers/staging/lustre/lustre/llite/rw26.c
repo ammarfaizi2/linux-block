@@ -161,7 +161,7 @@ static int ll_releasepage(struct page *vmpage, RELEASEPAGE_ARG_TYPE gfp_mask)
 	return result;
 }
 
-static int ll_set_page_dirty(struct page *vmpage)
+static bool ll_set_page_dirty(struct page *vmpage)
 {
 #if 0
 	struct cl_page    *page = vvp_vmpage_page_transient(vmpage);

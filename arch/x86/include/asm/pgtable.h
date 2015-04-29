@@ -90,47 +90,47 @@ extern struct mm_struct *pgd_page_get_mm(struct page *page);
  * The following only work if pte_present() is true.
  * Undefined behaviour if not..
  */
-static inline int pte_dirty(pte_t pte)
+static inline bool pte_dirty(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_DIRTY;
 }
 
-static inline int pte_young(pte_t pte)
+static inline bool pte_young(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_ACCESSED;
 }
 
-static inline int pmd_dirty(pmd_t pmd)
+static inline bool pmd_dirty(pmd_t pmd)
 {
 	return pmd_flags(pmd) & _PAGE_DIRTY;
 }
 
-static inline int pmd_young(pmd_t pmd)
+static inline bool pmd_young(pmd_t pmd)
 {
 	return pmd_flags(pmd) & _PAGE_ACCESSED;
 }
 
-static inline int pte_write(pte_t pte)
+static inline bool pte_write(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_RW;
 }
 
-static inline int pte_huge(pte_t pte)
+static inline bool pte_huge(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_PSE;
 }
 
-static inline int pte_global(pte_t pte)
+static inline bool pte_global(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_GLOBAL;
 }
 
-static inline int pte_exec(pte_t pte)
+static inline bool pte_exec(pte_t pte)
 {
 	return !(pte_flags(pte) & _PAGE_NX);
 }
 
-static inline int pte_special(pte_t pte)
+static inline bool pte_special(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_SPECIAL;
 }
@@ -152,23 +152,23 @@ static inline unsigned long pud_pfn(pud_t pud)
 
 #define pte_page(pte)	pfn_to_page(pte_pfn(pte))
 
-static inline int pmd_large(pmd_t pte)
+static inline bool pmd_large(pmd_t pte)
 {
 	return pmd_flags(pte) & _PAGE_PSE;
 }
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
-static inline int pmd_trans_splitting(pmd_t pmd)
+static inline bool pmd_trans_splitting(pmd_t pmd)
 {
 	return pmd_val(pmd) & _PAGE_SPLITTING;
 }
 
-static inline int pmd_trans_huge(pmd_t pmd)
+static inline bool pmd_trans_huge(pmd_t pmd)
 {
 	return pmd_val(pmd) & _PAGE_PSE;
 }
 
-static inline int has_transparent_hugepage(void)
+static inline bool has_transparent_hugepage(void)
 {
 	return cpu_has_pse;
 }
@@ -298,12 +298,12 @@ static inline pmd_t pmd_mknotpresent(pmd_t pmd)
 }
 
 #ifdef CONFIG_HAVE_ARCH_SOFT_DIRTY
-static inline int pte_soft_dirty(pte_t pte)
+static inline bool pte_soft_dirty(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_SOFT_DIRTY;
 }
 
-static inline int pmd_soft_dirty(pmd_t pmd)
+static inline bool pmd_soft_dirty(pmd_t pmd)
 {
 	return pmd_flags(pmd) & _PAGE_SOFT_DIRTY;
 }
@@ -383,15 +383,15 @@ static inline pgprot_t pgprot_modify(pgprot_t oldprot, pgprot_t newprot)
 
 #define canon_pgprot(p) __pgprot(massage_pgprot(p))
 
-static inline int is_new_memtype_allowed(u64 paddr, unsigned long size,
-					 enum page_cache_mode pcm,
-					 enum page_cache_mode new_pcm)
+static inline bool is_new_memtype_allowed(u64 paddr, unsigned long size,
+					  enum page_cache_mode pcm,
+					  enum page_cache_mode new_pcm)
 {
 	/*
 	 * PAT type is always WB for untracked ranges, so no need to check.
 	 */
 	if (x86_platform.is_untracked_pat_range(paddr, paddr + size))
-		return 1;
+		return true;
 
 	/*
 	 * Certain new memtypes are not allowed with certain
@@ -403,10 +403,10 @@ static inline int is_new_memtype_allowed(u64 paddr, unsigned long size,
 	     new_pcm == _PAGE_CACHE_MODE_WB) ||
 	    (pcm == _PAGE_CACHE_MODE_WC &&
 	     new_pcm == _PAGE_CACHE_MODE_WB)) {
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 pmd_t *populate_extra_pmd(unsigned long vaddr);
@@ -424,18 +424,18 @@ pte_t *populate_extra_pte(unsigned long vaddr);
 #include <linux/mmdebug.h>
 #include <linux/log2.h>
 
-static inline int pte_none(pte_t pte)
+static inline bool pte_none(pte_t pte)
 {
 	return !pte.pte;
 }
 
 #define __HAVE_ARCH_PTE_SAME
-static inline int pte_same(pte_t a, pte_t b)
+static inline bool pte_same(pte_t a, pte_t b)
 {
 	return a.pte == b.pte;
 }
 
-static inline int pte_present(pte_t a)
+static inline bool pte_present(pte_t a)
 {
 	return pte_flags(a) & (_PAGE_PRESENT | _PAGE_PROTNONE);
 }
@@ -453,12 +453,12 @@ static inline bool pte_accessible(struct mm_struct *mm, pte_t a)
 	return false;
 }
 
-static inline int pte_hidden(pte_t pte)
+static inline bool pte_hidden(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_HIDDEN;
 }
 
-static inline int pmd_present(pmd_t pmd)
+static inline bool pmd_present(pmd_t pmd)
 {
 	/*
 	 * Checking for _PAGE_PSE is needed too because
@@ -474,20 +474,20 @@ static inline int pmd_present(pmd_t pmd)
  * These work without NUMA balancing but the kernel does not care. See the
  * comment in include/asm-generic/pgtable.h
  */
-static inline int pte_protnone(pte_t pte)
+static inline bool pte_protnone(pte_t pte)
 {
 	return (pte_flags(pte) & (_PAGE_PROTNONE | _PAGE_PRESENT))
 		== _PAGE_PROTNONE;
 }
 
-static inline int pmd_protnone(pmd_t pmd)
+static inline bool pmd_protnone(pmd_t pmd)
 {
 	return (pmd_flags(pmd) & (_PAGE_PROTNONE | _PAGE_PRESENT))
 		== _PAGE_PROTNONE;
 }
 #endif /* CONFIG_NUMA_BALANCING */
 
-static inline int pmd_none(pmd_t pmd)
+static inline bool pmd_none(pmd_t pmd)
 {
 	/* Only check low word on 32-bit platforms, since it might be
 	   out of sync with upper half. */
@@ -541,7 +541,7 @@ static inline pte_t *pte_offset_kernel(pmd_t *pmd, unsigned long address)
 	return (pte_t *)pmd_page_vaddr(*pmd) + pte_index(address);
 }
 
-static inline int pmd_bad(pmd_t pmd)
+static inline bool pmd_bad(pmd_t pmd)
 {
 	return (pmd_flags(pmd) & ~_PAGE_USER) != _KERNPG_TABLE;
 }
@@ -552,12 +552,12 @@ static inline unsigned long pages_to_mb(unsigned long npg)
 }
 
 #if CONFIG_PGTABLE_LEVELS > 2
-static inline int pud_none(pud_t pud)
+static inline bool pud_none(pud_t pud)
 {
 	return native_pud_val(pud) == 0;
 }
 
-static inline int pud_present(pud_t pud)
+static inline bool pud_present(pud_t pud)
 {
 	return pud_flags(pud) & _PAGE_PRESENT;
 }
@@ -579,25 +579,25 @@ static inline pmd_t *pmd_offset(pud_t *pud, unsigned long address)
 	return (pmd_t *)pud_page_vaddr(*pud) + pmd_index(address);
 }
 
-static inline int pud_large(pud_t pud)
+static inline bool pud_large(pud_t pud)
 {
 	return (pud_val(pud) & (_PAGE_PSE | _PAGE_PRESENT)) ==
 		(_PAGE_PSE | _PAGE_PRESENT);
 }
 
-static inline int pud_bad(pud_t pud)
+static inline bool pud_bad(pud_t pud)
 {
 	return (pud_flags(pud) & ~(_KERNPG_TABLE | _PAGE_USER)) != 0;
 }
 #else
-static inline int pud_large(pud_t pud)
+static inline bool pud_large(pud_t pud)
 {
-	return 0;
+	return false;
 }
 #endif	/* CONFIG_PGTABLE_LEVELS > 2 */
 
 #if CONFIG_PGTABLE_LEVELS > 3
-static inline int pgd_present(pgd_t pgd)
+static inline bool pgd_present(pgd_t pgd)
 {
 	return pgd_flags(pgd) & _PAGE_PRESENT;
 }
@@ -624,12 +624,12 @@ static inline pud_t *pud_offset(pgd_t *pgd, unsigned long address)
 	return (pud_t *)pgd_page_vaddr(*pgd) + pud_index(address);
 }
 
-static inline int pgd_bad(pgd_t pgd)
+static inline bool pgd_bad(pgd_t pgd)
 {
 	return (pgd_flags(pgd) & ~_PAGE_USER) != _KERNPG_TABLE;
 }
 
-static inline int pgd_none(pgd_t pgd)
+static inline bool pgd_none(pgd_t pgd)
 {
 	return !native_pgd_val(pgd);
 }
@@ -724,17 +724,17 @@ static inline void native_set_pmd_at(struct mm_struct *mm, unsigned long addr,
 struct vm_area_struct;
 
 #define  __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS
-extern int ptep_set_access_flags(struct vm_area_struct *vma,
-				 unsigned long address, pte_t *ptep,
-				 pte_t entry, int dirty);
+extern bool ptep_set_access_flags(struct vm_area_struct *vma,
+				  unsigned long address, pte_t *ptep,
+				  pte_t entry, int dirty);
 
 #define __HAVE_ARCH_PTEP_TEST_AND_CLEAR_YOUNG
-extern int ptep_test_and_clear_young(struct vm_area_struct *vma,
-				     unsigned long addr, pte_t *ptep);
+extern bool ptep_test_and_clear_young(struct vm_area_struct *vma,
+				      unsigned long addr, pte_t *ptep);
 
 #define __HAVE_ARCH_PTEP_CLEAR_YOUNG_FLUSH
-extern int ptep_clear_flush_young(struct vm_area_struct *vma,
-				  unsigned long address, pte_t *ptep);
+extern bool ptep_clear_flush_young(struct vm_area_struct *vma,
+				   unsigned long address, pte_t *ptep);
 
 #define __HAVE_ARCH_PTEP_GET_AND_CLEAR
 static inline pte_t ptep_get_and_clear(struct mm_struct *mm, unsigned long addr,
@@ -776,17 +776,17 @@ static inline void ptep_set_wrprotect(struct mm_struct *mm,
 #define mk_pmd(page, pgprot)   pfn_pmd(page_to_pfn(page), (pgprot))
 
 #define  __HAVE_ARCH_PMDP_SET_ACCESS_FLAGS
-extern int pmdp_set_access_flags(struct vm_area_struct *vma,
-				 unsigned long address, pmd_t *pmdp,
-				 pmd_t entry, int dirty);
+extern bool pmdp_set_access_flags(struct vm_area_struct *vma,
+				  unsigned long address, pmd_t *pmdp,
+				  pmd_t entry, int dirty);
 
 #define __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG
-extern int pmdp_test_and_clear_young(struct vm_area_struct *vma,
-				     unsigned long addr, pmd_t *pmdp);
+extern bool pmdp_test_and_clear_young(struct vm_area_struct *vma,
+				      unsigned long addr, pmd_t *pmdp);
 
 #define __HAVE_ARCH_PMDP_CLEAR_YOUNG_FLUSH
-extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
-				  unsigned long address, pmd_t *pmdp);
+extern bool pmdp_clear_flush_young(struct vm_area_struct *vma,
+				   unsigned long address, pmd_t *pmdp);
 
 
 #define __HAVE_ARCH_PMDP_SPLITTING_FLUSH
@@ -794,7 +794,7 @@ extern void pmdp_splitting_flush(struct vm_area_struct *vma,
 				 unsigned long addr, pmd_t *pmdp);
 
 #define __HAVE_ARCH_PMD_WRITE
-static inline int pmd_write(pmd_t pmd)
+static inline bool pmd_write(pmd_t pmd)
 {
 	return pmd_flags(pmd) & _PAGE_RW;
 }
@@ -864,7 +864,7 @@ static inline pte_t pte_swp_mksoft_dirty(pte_t pte)
 	return pte_set_flags(pte, _PAGE_SWP_SOFT_DIRTY);
 }
 
-static inline int pte_swp_soft_dirty(pte_t pte)
+static inline bool pte_swp_soft_dirty(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_SWP_SOFT_DIRTY;
 }

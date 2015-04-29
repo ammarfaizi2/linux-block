@@ -624,7 +624,7 @@ static inline int pmd_move_must_withdraw(spinlock_t *new_pmd_ptl,
  * version above, is also needed when THP is disabled because the page
  * fault can populate the pmd from under us).
  */
-static inline int pmd_none_or_trans_huge_or_clear_bad(pmd_t *pmd)
+static inline bool pmd_none_or_trans_huge_or_clear_bad(pmd_t *pmd)
 {
 	pmd_t pmdval = pmd_read_atomic(pmd);
 	/*
@@ -645,12 +645,12 @@ static inline int pmd_none_or_trans_huge_or_clear_bad(pmd_t *pmd)
 	barrier();
 #endif
 	if (pmd_none(pmdval) || pmd_trans_huge(pmdval))
-		return 1;
+		return true;
 	if (unlikely(pmd_bad(pmdval))) {
 		pmd_clear_bad(pmd);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 /*
@@ -666,12 +666,12 @@ static inline int pmd_none_or_trans_huge_or_clear_bad(pmd_t *pmd)
  * become null, but then a page fault can map in a THP and not a
  * regular page).
  */
-static inline int pmd_trans_unstable(pmd_t *pmd)
+static inline bool pmd_trans_unstable(pmd_t *pmd)
 {
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 	return pmd_none_or_trans_huge_or_clear_bad(pmd);
 #else
-	return 0;
+	return false;
 #endif
 }
 
@@ -684,12 +684,12 @@ static inline int pmd_trans_unstable(pmd_t *pmd)
  * is the responsibility of the caller to distinguish between PROT_NONE
  * protections and NUMA hinting fault protections.
  */
-static inline int pte_protnone(pte_t pte)
+static inline bool pte_protnone(pte_t pte)
 {
 	return 0;
 }
 
-static inline int pmd_protnone(pmd_t pmd)
+static inline bool pmd_protnone(pmd_t pmd)
 {
 	return 0;
 }
@@ -698,24 +698,24 @@ static inline int pmd_protnone(pmd_t pmd)
 #endif /* CONFIG_MMU */
 
 #ifdef CONFIG_HAVE_ARCH_HUGE_VMAP
-int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot);
-int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot);
-int pud_clear_huge(pud_t *pud);
-int pmd_clear_huge(pmd_t *pmd);
+bool pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot);
+bool pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot);
+bool pud_clear_huge(pud_t *pud);
+bool pmd_clear_huge(pmd_t *pmd);
 #else	/* !CONFIG_HAVE_ARCH_HUGE_VMAP */
-static inline int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
+static inline bool pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
 {
 	return 0;
 }
-static inline int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
+static inline bool pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
 {
 	return 0;
 }
-static inline int pud_clear_huge(pud_t *pud)
+static inline bool pud_clear_huge(pud_t *pud)
 {
 	return 0;
 }
-static inline int pmd_clear_huge(pmd_t *pmd)
+static inline bool pmd_clear_huge(pmd_t *pmd)
 {
 	return 0;
 }

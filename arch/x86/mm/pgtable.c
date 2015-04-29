@@ -406,11 +406,11 @@ void pgd_free(struct mm_struct *mm, pgd_t *pgd)
  * to also make the pte writeable at the same time the dirty bit is
  * set. In that case we do actually need to write the PTE.
  */
-int ptep_set_access_flags(struct vm_area_struct *vma,
-			  unsigned long address, pte_t *ptep,
-			  pte_t entry, int dirty)
+bool ptep_set_access_flags(struct vm_area_struct *vma,
+			   unsigned long address, pte_t *ptep,
+			   pte_t entry, int dirty)
 {
-	int changed = !pte_same(*ptep, entry);
+	bool changed = !pte_same(*ptep, entry);
 
 	if (changed && dirty) {
 		*ptep = entry;
@@ -421,11 +421,11 @@ int ptep_set_access_flags(struct vm_area_struct *vma,
 }
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
-int pmdp_set_access_flags(struct vm_area_struct *vma,
-			  unsigned long address, pmd_t *pmdp,
-			  pmd_t entry, int dirty)
+bool pmdp_set_access_flags(struct vm_area_struct *vma,
+			   unsigned long address, pmd_t *pmdp,
+			   pmd_t entry, int dirty)
 {
-	int changed = !pmd_same(*pmdp, entry);
+	bool changed = !pmd_same(*pmdp, entry);
 
 	VM_BUG_ON(address & ~HPAGE_PMD_MASK);
 
@@ -444,10 +444,10 @@ int pmdp_set_access_flags(struct vm_area_struct *vma,
 }
 #endif
 
-int ptep_test_and_clear_young(struct vm_area_struct *vma,
-			      unsigned long addr, pte_t *ptep)
+bool ptep_test_and_clear_young(struct vm_area_struct *vma,
+			       unsigned long addr, pte_t *ptep)
 {
-	int ret = 0;
+	bool ret = false;
 
 	if (pte_young(*ptep))
 		ret = test_and_clear_bit(_PAGE_BIT_ACCESSED,
@@ -460,10 +460,10 @@ int ptep_test_and_clear_young(struct vm_area_struct *vma,
 }
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
-int pmdp_test_and_clear_young(struct vm_area_struct *vma,
-			      unsigned long addr, pmd_t *pmdp)
+bool pmdp_test_and_clear_young(struct vm_area_struct *vma,
+			       unsigned long addr, pmd_t *pmdp)
 {
-	int ret = 0;
+	bool ret = 0;
 
 	if (pmd_young(*pmdp))
 		ret = test_and_clear_bit(_PAGE_BIT_ACCESSED,
@@ -476,8 +476,8 @@ int pmdp_test_and_clear_young(struct vm_area_struct *vma,
 }
 #endif
 
-int ptep_clear_flush_young(struct vm_area_struct *vma,
-			   unsigned long address, pte_t *ptep)
+bool ptep_clear_flush_young(struct vm_area_struct *vma,
+			    unsigned long address, pte_t *ptep)
 {
 	/*
 	 * On x86 CPUs, clearing the accessed bit without a TLB flush
@@ -496,10 +496,10 @@ int ptep_clear_flush_young(struct vm_area_struct *vma,
 }
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
-int pmdp_clear_flush_young(struct vm_area_struct *vma,
-			   unsigned long address, pmd_t *pmdp)
+bool pmdp_clear_flush_young(struct vm_area_struct *vma,
+			    unsigned long address, pmd_t *pmdp)
 {
-	int young;
+	bool young;
 
 	VM_BUG_ON(address & ~HPAGE_PMD_MASK);
 
@@ -563,7 +563,7 @@ void native_set_fixmap(enum fixed_addresses idx, phys_addr_t phys,
 }
 
 #ifdef CONFIG_HAVE_ARCH_HUGE_VMAP
-int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
+bool pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
 {
 	u8 mtrr;
 
@@ -573,7 +573,7 @@ int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
 	 */
 	mtrr = mtrr_type_lookup(addr, addr + PUD_SIZE);
 	if ((mtrr != MTRR_TYPE_WRBACK) && (mtrr != 0xFF))
-		return 0;
+		return false;
 
 	prot = pgprot_4k_2_large(prot);
 
@@ -581,10 +581,10 @@ int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
 		(u64)addr >> PAGE_SHIFT,
 		__pgprot(pgprot_val(prot) | _PAGE_PSE)));
 
-	return 1;
+	return true;
 }
 
-int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
+bool pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
 {
 	u8 mtrr;
 
@@ -594,7 +594,7 @@ int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
 	 */
 	mtrr = mtrr_type_lookup(addr, addr + PMD_SIZE);
 	if ((mtrr != MTRR_TYPE_WRBACK) && (mtrr != 0xFF))
-		return 0;
+		return false;
 
 	prot = pgprot_4k_2_large(prot);
 
@@ -602,26 +602,26 @@ int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
 		(u64)addr >> PAGE_SHIFT,
 		__pgprot(pgprot_val(prot) | _PAGE_PSE)));
 
-	return 1;
+	return true;
 }
 
-int pud_clear_huge(pud_t *pud)
+bool pud_clear_huge(pud_t *pud)
 {
 	if (pud_large(*pud)) {
 		pud_clear(pud);
-		return 1;
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 
-int pmd_clear_huge(pmd_t *pmd)
+bool pmd_clear_huge(pmd_t *pmd)
 {
 	if (pmd_large(*pmd)) {
 		pmd_clear(pmd);
-		return 1;
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */

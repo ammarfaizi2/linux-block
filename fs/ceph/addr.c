@@ -66,13 +66,13 @@ static inline struct ceph_snap_context *page_snap_context(struct page *page)
  * Dirty a page.  Optimistically adjust accounting, on the assumption
  * that we won't race with invalidate.  If we do, readjust.
  */
-static int ceph_set_page_dirty(struct page *page)
+static bool ceph_set_page_dirty(struct page *page)
 {
 	struct address_space *mapping = page->mapping;
 	struct inode *inode;
 	struct ceph_inode_info *ci;
 	struct ceph_snap_context *snapc;
-	int ret;
+	bool ret;
 
 	if (unlikely(!mapping))
 		return !TestSetPageDirty(page);
@@ -81,7 +81,7 @@ static int ceph_set_page_dirty(struct page *page)
 		dout("%p set_page_dirty %p idx %lu -- already dirty\n",
 		     mapping->host, page, page->index);
 		BUG_ON(!PagePrivate(page));
-		return 0;
+		return false;
 	}
 
 	inode = mapping->host;

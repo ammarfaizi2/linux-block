@@ -925,10 +925,10 @@ failed:
  * gfs2_set_page_dirty - Page dirtying function
  * @page: The page to dirty
  *
- * Returns: 1 if it dirtyed the page, or 0 otherwise
+ * Returns: true if it dirtied the page, or false otherwise
  */
  
-static int gfs2_set_page_dirty(struct page *page)
+static bool gfs2_set_page_dirty(struct page *page)
 {
 	SetPageChecked(page);
 	return __set_page_dirty_buffers(page);

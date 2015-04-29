@@ -736,7 +736,7 @@ extern int afs_volume_release_fileserver(struct afs_vnode *,
 /*
  * write.c
  */
-extern int afs_set_page_dirty(struct page *);
+extern bool afs_set_page_dirty(struct page *);
 extern void afs_put_writeback(struct afs_writeback *);
 extern int afs_write_begin(struct file *file, struct address_space *mapping,
 			loff_t pos, unsigned len, unsigned flags,

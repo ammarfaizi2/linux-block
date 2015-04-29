@@ -38,7 +38,7 @@
 
 #include "power.h"
 
-static int swsusp_page_is_free(struct page *);
+static bool swsusp_page_is_free(struct page *);
 static void swsusp_set_page_forbidden(struct page *);
 static void swsusp_unset_page_forbidden(struct page *);
 
@@ -734,7 +734,7 @@ static void memory_bm_clear_current(struct memory_bitmap *bm)
 	clear_bit(bit, bm->cur.node->data);
 }
 
-static int memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn)
+static bool memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn)
 {
 	void *addr;
 	unsigned int bit;
@@ -892,7 +892,7 @@ void swsusp_set_page_free(struct page *page)
 		memory_bm_set_bit(free_pages_map, page_to_pfn(page));
 }
 
-static int swsusp_page_is_free(struct page *page)
+static bool swsusp_page_is_free(struct page *page)
 {
 	return free_pages_map ?
 		memory_bm_test_bit(free_pages_map, page_to_pfn(page)) : 0;
@@ -910,7 +910,7 @@ static void swsusp_set_page_forbidden(struct page *page)
 		memory_bm_set_bit(forbidden_pages_map, page_to_pfn(page));
 }
 
-int swsusp_page_is_forbidden(struct page *page)
+bool swsusp_page_is_forbidden(struct page *page)
 {
 	return forbidden_pages_map ?
 		memory_bm_test_bit(forbidden_pages_map, page_to_pfn(page)) : 0;

@@ -1037,9 +1037,9 @@ EXPORT_SYMBOL(kfree_put_link);
  * nop .set_page_dirty method so that people can use .page_mkwrite on
  * anon inodes.
  */
-static int anon_set_page_dirty(struct page *page)
+static bool anon_set_page_dirty(struct page *page)
 {
-	return 0;
+	return false;
 };
 
 /*
