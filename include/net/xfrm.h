@@ -1658,10 +1658,10 @@ static inline int xfrm_policy_id2dir(u32 index)
 }
 
 #ifdef CONFIG_XFRM
-static inline int xfrm_aevent_is_on(struct net *net)
+static inline bool xfrm_aevent_is_on(struct net *net)
 {
 	struct sock *nlsk;
-	int ret = 0;
+	bool ret = false;
 
 	rcu_read_lock();
 	nlsk = rcu_dereference(net->xfrm.nlsk);
@@ -1671,10 +1671,10 @@ static inline int xfrm_aevent_is_on(struct net *net)
 	return ret;
 }
 
-static inline int xfrm_acquire_is_on(struct net *net)
+static inline bool xfrm_acquire_is_on(struct net *net)
 {
 	struct sock *nlsk;
-	int ret = 0;
+	int ret = false;
 
 	rcu_read_lock();
 	nlsk = rcu_dereference(net->xfrm.nlsk);
