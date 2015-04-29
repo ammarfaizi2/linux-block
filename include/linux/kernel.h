@@ -453,7 +453,7 @@ enum lockdep_ok {
 	LOCKDEP_NOW_UNRELIABLE
 };
 extern void add_taint(unsigned flag, enum lockdep_ok);
-extern int test_taint(unsigned flag);
+extern bool test_taint(unsigned flag);
 extern unsigned long get_taint(void);
 extern int root_mountflags;
 

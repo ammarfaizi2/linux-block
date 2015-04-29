@@ -272,7 +272,7 @@ const char *print_tainted(void)
 	return buf;
 }
 
-int test_taint(unsigned flag)
+bool test_taint(unsigned flag)
 {
 	return test_bit(flag, &tainted_mask);
 }
