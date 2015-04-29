@@ -8,9 +8,9 @@ do {									\
 	asm_volatile_goto (fullop "; j" cc " %l[cc_label]"		\
 			: : "m" (var), ## __VA_ARGS__ 			\
 			: "memory" : cc_label);				\
-	return 0;							\
+	return false;							\
 cc_label:								\
-	return 1;							\
+	return true;							\
 } while (0)
 
 #define GEN_UNARY_RMWcc(op, var, arg0, cc) 				\
