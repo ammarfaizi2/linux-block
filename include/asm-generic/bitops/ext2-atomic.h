@@ -7,7 +7,7 @@
 
 #define ext2_set_bit_atomic(lock, nr, addr)		\
 	({						\
-		int ret;				\
+		bool ret;				\
 		spin_lock(lock);			\
 		ret = __test_and_set_bit_le(nr, addr);	\
 		spin_unlock(lock);			\
@@ -16,7 +16,7 @@
 
 #define ext2_clear_bit_atomic(lock, nr, addr)		\
 	({						\
-		int ret;				\
+		bool ret;				\
 		spin_lock(lock);			\
 		ret = __test_and_clear_bit_le(nr, addr);	\
 		spin_unlock(lock);			\
