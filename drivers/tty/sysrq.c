@@ -949,13 +949,14 @@ static bool sysrq_handler_registered;
 
 static inline void sysrq_register_handler(void)
 {
+	const unsigned short *p = platform_sysrq_reset_seq;
 	unsigned short key;
 	int error;
 	int i;
 
 	/* First check if a __weak interface was instantiated. */
 	for (i = 0; i < ARRAY_SIZE(sysrq_reset_seq); i++) {
-		key = platform_sysrq_reset_seq[i];
+		key = *p++;
 		if (key == KEY_RESERVED || key > KEY_MAX)
 			break;
 
