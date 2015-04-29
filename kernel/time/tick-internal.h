@@ -49,9 +49,9 @@ extern ssize_t sysfs_get_uname(const char *buf, char *dst, size_t cnt);
 
 /* Broadcasting support */
 # ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-extern int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu);
+extern bool tick_device_uses_broadcast(struct clock_event_device *dev, int cpu);
 extern void tick_install_broadcast_device(struct clock_event_device *dev);
-extern int tick_is_broadcast_device(struct clock_event_device *dev);
+extern bool tick_is_broadcast_device(struct clock_event_device *dev);
 extern void tick_shutdown_broadcast(unsigned int cpu);
 extern void tick_suspend_broadcast(void);
 extern void tick_resume_broadcast(void);
@@ -118,7 +118,7 @@ static inline int tick_check_oneshot_change(int allow_nohz) { return 0; }
 extern void tick_broadcast_setup_oneshot(struct clock_event_device *bc);
 extern void tick_broadcast_switch_to_oneshot(void);
 extern void tick_shutdown_broadcast_oneshot(unsigned int cpu);
-extern int tick_broadcast_oneshot_active(void);
+extern bool tick_broadcast_oneshot_active(void);
 extern void tick_check_oneshot_broadcast_this_cpu(void);
 bool tick_broadcast_oneshot_available(void);
 extern struct cpumask *tick_get_broadcast_oneshot_mask(void);

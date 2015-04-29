@@ -197,9 +197,9 @@ extern int tick_receive_broadcast(void);
 
 # if defined(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST) && defined(CONFIG_TICK_ONESHOT)
 extern void tick_setup_hrtimer_broadcast(void);
-extern int tick_check_broadcast_expired(void);
+extern bool tick_check_broadcast_expired(void);
 # else
-static inline int tick_check_broadcast_expired(void) { return 0; }
+static inline bool tick_check_broadcast_expired(void) { return false; }
 static inline void tick_setup_hrtimer_broadcast(void) { }
 # endif
 
@@ -210,7 +210,7 @@ extern int clockevents_notify(unsigned long reason, void *arg);
 static inline void clockevents_suspend(void) { }
 static inline void clockevents_resume(void) { }
 static inline int clockevents_notify(unsigned long reason, void *arg) { return 0; }
-static inline int tick_check_broadcast_expired(void) { return 0; }
+static inline bool tick_check_broadcast_expired(void) { return 0; }
 static inline void tick_setup_hrtimer_broadcast(void) { }
 
 #endif /* !CONFIG_GENERIC_CLOCKEVENTS */

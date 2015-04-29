@@ -117,7 +117,7 @@ void tick_install_broadcast_device(struct clock_event_device *dev)
 /*
  * Check, if the device is the broadcast device
  */
-int tick_is_broadcast_device(struct clock_event_device *dev)
+bool tick_is_broadcast_device(struct clock_event_device *dev)
 {
 	return (dev && tick_broadcast_device.evtdev == dev);
 }
@@ -155,11 +155,11 @@ static void tick_device_setup_broadcast_func(struct clock_event_device *dev)
  * Check, if the device is disfunctional and a place holder, which
  * needs to be handled by the broadcast device.
  */
-int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu)
+bool tick_device_uses_broadcast(struct clock_event_device *dev, int cpu)
 {
 	struct clock_event_device *bc = tick_broadcast_device.evtdev;
 	unsigned long flags;
-	int ret;
+	bool ret;
 
 	raw_spin_lock_irqsave(&tick_broadcast_lock, flags);
 
@@ -177,7 +177,7 @@ int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu)
 			tick_broadcast_start_periodic(bc);
 		else
 			tick_broadcast_setup_oneshot(bc);
-		ret = 1;
+		ret = true;
 	} else {
 		/*
 		 * Clear the broadcast bit for this cpu if the
@@ -206,7 +206,7 @@ int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu)
 			 * caller initialize the device.
 			 */
 			tick_broadcast_clear_oneshot(cpu);
-			ret = 0;
+			ret = false;
 			break;
 
 		case TICKDEV_MODE_PERIODIC:
@@ -227,7 +227,7 @@ int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu)
 			break;
 		default:
 			/* Nothing to do */
-			ret = 0;
+			ret = false;
 			break;
 		}
 	}
@@ -511,7 +511,7 @@ struct cpumask *tick_get_broadcast_oneshot_mask(void)
  * to avoid a deep idle transition as we are about to get the
  * broadcast IPI right away.
  */
-int tick_check_broadcast_expired(void)
+bool tick_check_broadcast_expired(void)
 {
 	return cpumask_test_cpu(smp_processor_id(), tick_broadcast_force_mask);
 }
@@ -934,7 +934,7 @@ void tick_shutdown_broadcast_oneshot(unsigned int cpu)
 /*
  * Check, whether the broadcast device is in one shot mode
  */
-int tick_broadcast_oneshot_active(void)
+bool tick_broadcast_oneshot_active(void)
 {
 	return tick_broadcast_device.mode == TICKDEV_MODE_ONESHOT;
 }
