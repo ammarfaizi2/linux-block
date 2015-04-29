@@ -116,7 +116,7 @@ nfnetlink_find_client(u_int16_t type, const struct nfnetlink_subsystem *ss)
 	return &ss->cb[cb_id];
 }
 
-int nfnetlink_has_listeners(struct net *net, unsigned int group)
+bool nfnetlink_has_listeners(struct net *net, unsigned int group)
 {
 	return netlink_has_listeners(net->nfnl, group);
 }

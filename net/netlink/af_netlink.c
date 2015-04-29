@@ -1871,9 +1871,9 @@ out:
 }
 EXPORT_SYMBOL_GPL(netlink_alloc_skb);
 
-int netlink_has_listeners(struct sock *sk, unsigned int group)
+bool netlink_has_listeners(struct sock *sk, unsigned int group)
 {
-	int res = 0;
+	bool res = false;
 	struct listeners *listeners;
 
 	BUG_ON(!netlink_is_kernel(sk));
@@ -2042,10 +2042,10 @@ struct netlink_set_err_data {
 	int code;
 };
 
-static int do_one_set_err(struct sock *sk, struct netlink_set_err_data *p)
+static bool do_one_set_err(struct sock *sk, struct netlink_set_err_data *p)
 {
 	struct netlink_sock *nlk = nlk_sk(sk);
-	int ret = 0;
+	bool ret = false;
 
 	if (sk == p->exclude_sk)
 		goto out;
@@ -2058,7 +2058,7 @@ static int do_one_set_err(struct sock *sk, struct netlink_set_err_data *p)
 		goto out;
 
 	if (p->code == ENOBUFS && nlk->flags & NETLINK_RECV_NO_ENOBUFS) {
-		ret = 1;
+		ret = true;
 		goto out;
 	}
 
@@ -2103,13 +2103,14 @@ EXPORT_SYMBOL(netlink_set_err);
 /* must be called with netlink table grabbed */
 static void netlink_update_socket_mc(struct netlink_sock *nlk,
 				     unsigned int group,
-				     int is_new)
+				     bool is_new)
 {
-	int old, new = !!is_new, subscriptions;
+	bool old;
+	int subscriptions;
 
 	old = test_bit(group - 1, nlk->groups);
-	subscriptions = nlk->subscriptions - old + new;
-	if (new)
+	subscriptions = nlk->subscriptions - old + is_new;
+	if (is_new)
 		__set_bit(group - 1, nlk->groups);
 	else
 		__clear_bit(group - 1, nlk->groups);
@@ -2595,7 +2596,7 @@ void __netlink_clear_multicast_users(struct sock *ksk, unsigned int group)
 	struct netlink_table *tbl = &nl_table[ksk->sk_protocol];
 
 	sk_for_each_bound(sk, &tbl->mc_list)
-		netlink_update_socket_mc(nlk_sk(sk), group, 0);
+		netlink_update_socket_mc(nlk_sk(sk), group, false);
 }
 
 struct nlmsghdr *
