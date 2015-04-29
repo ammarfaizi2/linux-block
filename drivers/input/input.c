@@ -50,8 +50,8 @@ static DEFINE_MUTEX(input_mutex);
 
 static const struct input_value input_value_sync = { EV_SYN, SYN_REPORT, 1 };
 
-static inline int is_event_supported(unsigned int code,
-				     unsigned long *bm, unsigned int max)
+static inline bool is_event_supported(unsigned int code,
+				      unsigned long *bm, unsigned int max)
 {
 	return code <= max && test_bit(code, bm);
 }
@@ -294,7 +294,7 @@ static int input_get_disposition(struct input_dev *dev,
 				break;
 			}
 
-			if (!!test_bit(code, dev->key) != !!value) {
+			if (test_bit(code, dev->key) != !!value) {
 
 				__change_bit(code, dev->key);
 				disposition = INPUT_PASS_TO_HANDLERS;
@@ -304,7 +304,7 @@ static int input_get_disposition(struct input_dev *dev,
 
 	case EV_SW:
 		if (is_event_supported(code, dev->swbit, SW_MAX) &&
-		    !!test_bit(code, dev->sw) != !!value) {
+		    test_bit(code, dev->sw) != !!value) {
 
 			__change_bit(code, dev->sw);
 			disposition = INPUT_PASS_TO_HANDLERS;
@@ -331,7 +331,7 @@ static int input_get_disposition(struct input_dev *dev,
 
 	case EV_LED:
 		if (is_event_supported(code, dev->ledbit, LED_MAX) &&
-		    !!test_bit(code, dev->led) != !!value) {
+		    test_bit(code, dev->led) != !!value) {
 
 			__change_bit(code, dev->led);
 			disposition = INPUT_PASS_TO_ALL;
@@ -341,7 +341,7 @@ static int input_get_disposition(struct input_dev *dev,
 	case EV_SND:
 		if (is_event_supported(code, dev->sndbit, SND_MAX)) {
 
-			if (!!test_bit(code, dev->snd) != !!value)
+			if (test_bit(code, dev->snd) != !!value)
 				__change_bit(code, dev->snd);
 			disposition = INPUT_PASS_TO_ALL;
 		}
