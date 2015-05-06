@@ -193,8 +193,22 @@ static int symbol_in_range(struct sym_entry *s, struct addr_range *ranges,
 	return 0;
 }
 
-static int symbol_valid(struct sym_entry *s)
+static const char *skip_prefix(const char *sym)
 {
+	if (symbol_prefix_char && *sym == symbol_prefix_char)
+		return sym + 1;
+	return sym;
+}
+
+static int match_sys(const char *sym, const char *sys)
+{
+	return !strncmp(sys, "sys_", 4) && !strcmp(sym + 4, sys + 4);
+}
+
+static int symbol_valid(int idx)
+{
+	struct sym_entry *s = &table[idx];
+
 	/* Symbols which vary between passes.  Passes 1 and 2 must have
 	 * identical symbol lists.  The kallsyms_* symbols below are only added
 	 * after pass 1, they would be included in pass 2 when --all-symbols is
@@ -224,9 +238,7 @@ static int symbol_valid(struct sym_entry *s)
 	if (s->addr < kernel_start_addr)
 		return 0;
 
-	/* skip prefix char */
-	if (symbol_prefix_char && *sym_name == symbol_prefix_char)
-		sym_name++;
+	sym_name = skip_prefix(sym_name);
 
 
 	/* if --all-symbols is not specified, then symbols outside the text
@@ -254,6 +266,27 @@ static int symbol_valid(struct sym_entry *s)
 	for (i = 0; special_symbols[i]; i++)
 		if (strcmp(sym_name, special_symbols[i]) == 0)
 			return 0;
+
+	/* Ignore SyS_* alias system calls */
+	if (!strncmp(sym_name, "SyS_", 4)) {
+		char *sym_name_before = "";
+		char *sym_name_after = "";
+
+		if (i > 0) {
+			sym_name_before = (char *)table[idx-1].sym + 1;
+			sym_name_before = skip_prefix(sym_name_before);
+		}
+
+		if (i < table_cnt - 1) {
+			sym_name_after = (char *)table[idx+1].sym + 1;
+			sym_name_after = skip_prefix(sym_name_after);
+		}
+
+		/* If SyS_foo matches a sys_foo, skip it */
+		if (match_sys(sym_name, sym_name_before) ||
+		    match_sys(sym_name, sym_name_after))
+			return 0;
+	}
 
 	for (i = 0; special_suffixes[i]; i++) {
 		int l = strlen(sym_name) - strlen(special_suffixes[i]);
@@ -447,7 +480,7 @@ static void build_initial_tok_table(void)
 
 	pos = 0;
 	for (i = 0; i < table_cnt; i++) {
-		if ( symbol_valid(&table[i]) ) {
+		if ( symbol_valid(i) ) {
 			if (pos != i)
 				table[pos] = table[i];
 			learn_symbol(table[pos].sym, table[pos].len);
