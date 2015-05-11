@@ -291,7 +291,8 @@ static const char * const fw_path[] = {
 module_param_string(path, fw_path_para, sizeof(fw_path_para), 0644);
 MODULE_PARM_DESC(path, "customized firmware image search path with a higher priority than default path");
 
-static int fw_read_file_contents(struct file *file, struct firmware_buf *fw_buf)
+static int __read_file_contents(struct file *file,
+				void **dest_buf, size_t *dest_size)
 {
 	int size;
 	char *buf;
@@ -314,12 +315,28 @@ static int fw_read_file_contents(struct file *file, struct firmware_buf *fw_buf)
 	rc = security_kernel_fw_from_file(file, buf, size);
 	if (rc)
 		goto fail;
-	fw_buf->data = buf;
-	fw_buf->size = size;
+
+	*dest_buf = buf;
+	*dest_size = size;
+
 	return 0;
 fail:
 	vfree(buf);
 	return rc;
+}
+
+static int fw_read_file_contents(struct file *file,
+				 struct firmware_buf *fw_buf)
+{
+	int rc;
+
+	rc = __read_file_contents(file,
+				  &fw_buf->data,
+				  &fw_buf->size);
+	if (rc)
+		return rc;
+
+	return 0;
 }
 
 static int fw_get_filesystem_firmware(struct device *device,
