@@ -2992,11 +2992,34 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			Set maximum number of finished RCU callbacks to
 			process in one batch.
 
+	rcutree.dump_tree=	[KNL]
+			Dump the structure of the rcu_node combining tree
+			out at early boot.  This is used for diagnostic
+			purposes, to verify correct tree setup.
+
+	rcutree.gp_cleanup_delay=	[KNL]
+			Set the number of jiffies to delay each step of
+			RCU grace-period cleanup.  This only has effect
+			when CONFIG_RCU_TORTURE_TEST_SLOW_CLEANUP is set.
+
 	rcutree.gp_init_delay=	[KNL]
 			Set the number of jiffies to delay each step of
 			RCU grace-period initialization.  This only has
-			effect when CONFIG_RCU_TORTURE_TEST_SLOW_INIT is
-			set.
+			effect when CONFIG_RCU_TORTURE_TEST_SLOW_INIT
+			is set.
+
+	rcutree.gp_preinit_delay=	[KNL]
+			Set the number of jiffies to delay each step of
+			RCU grace-period pre-initialization, that is,
+			the propagation of recent CPU-hotplug changes up
+			the rcu_node combining tree.  This only has effect
+			when CONFIG_RCU_TORTURE_TEST_SLOW_PREINIT is set.
+
+	rcutree.rcu_fanout_exact= [KNL]
+			Disable autobalancing of the rcu_node combining
+			tree.  This is used by rcutorture, and might
+			possibly be useful for architectures having high
+			cache-to-cache transfer latencies.
 
 	rcutree.rcu_fanout_leaf= [KNL]
 			Increase the number of CPUs assigned to each
