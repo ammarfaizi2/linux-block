@@ -181,7 +181,7 @@ static struct md_rdev *next_active_rdev(struct md_rdev *rdev, struct mddev *mdde
 	rcu_read_lock();
 	if (rdev == NULL)
 		/* start at the beginning */
-		rdev = list_entry_rcu(&mddev->disks, struct md_rdev, same_set);
+		rdev = list_entry_rcu(mddev->disks.next, struct md_rdev, same_set);
 	else {
 		/* release the previous rdev and start from there. */
 		rdev_dec_pending(rdev, mddev);
