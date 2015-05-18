@@ -5014,6 +5014,9 @@ static int mem_cgroup_can_attach(struct cgroup_subsys_state *css,
 		return 0;
 
 	p = cgroup_taskset_first(tset);
+	if (!thread_group_leader(p))
+		return 0;
+
 	from = mem_cgroup_from_task(p);
 
 	VM_BUG_ON(from == memcg);
