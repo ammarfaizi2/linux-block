@@ -1,0 +1,467 @@
+Intel Processor Trace
+=====================
+
+perf record
+===========
+
+new event
+---------
+
+The Intel PT kernel driver creates a new PMU for Intel PT.  PMU events are
+selected by providing the PMU name followed by the "config" separated by slashes.
+An enhancement has been made to allow default "config" e.g. the option
+
+	-e intel_pt//
+
+will use a default config value.  Currently that is the same as
+
+	-e intel_pt/tsc,noretcomp=0/
+
+which is the same as
+
+	-e intel_pt/tsc=1,noretcomp=0/
+
+The config terms are listed in /sys/devices/intel_pt/format.  They are bit
+fields within the config member of the struct perf_event_attr which is
+passed to the kernel by the perf_event_open system call.  They correspond to bit
+fields in the IA32_RTIT_CTL MSR.  Here is a list of them and their definitions:
+
+	$ for f in `ls /sys/devices/intel_pt/format`;do
+	> echo $f
+	> cat /sys/devices/intel_pt/format/$f
+	> done
+	noretcomp
+	config:11
+	tsc
+	config:10
+
+Note that the default config must be overridden for each term i.e.
+
+	-e intel_pt/noretcomp=0/
+
+is the same as:
+
+	-e intel_pt/tsc=1,noretcomp=0/
+
+So, to disable TSC packets use:
+
+	-e intel_pt/tsc=0/
+
+It is also possible to specify the config value explicitly:
+
+	-e intel_pt/config=0x400/
+
+Note that, as with all events, the event is suffixed with event modifiers:
+
+	u	userspace
+	k	kernel
+	h	hypervisor
+	G	guest
+	H	host
+	p	precise ip
+
+'h', 'G' and 'H' are for virtualization which is not supported by Intel PT.
+'p' is also not relevant to Intel PT.  So only options 'u' and 'k' are
+meaningful for Intel PT.
+
+perf_event_attr is displayed if the -vv option is used e.g.
+
+	------------------------------------------------------------
+	perf_event_attr:
+	type                             6
+	size                             112
+	config                           0x400
+	{ sample_period, sample_freq }   1
+	sample_type                      IP|TID|TIME|CPU|IDENTIFIER
+	read_format                      ID
+	disabled                         1
+	inherit                          1
+	exclude_kernel                   1
+	exclude_hv                       1
+	enable_on_exec                   1
+	sample_id_all                    1
+	------------------------------------------------------------
+	sys_perf_event_open: pid 31104  cpu 0  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 1  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 2  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 3  group_fd -1  flags 0x8
+	------------------------------------------------------------
+
+
+new snapshot option
+-------------------
+
+To select snapshot mode a new option has been added:
+
+	-S
+
+Optionally it can be followed by the snapshot size e.g.
+
+	-S0x100000
+
+The default snapshot size is the auxtrace mmap size.  If neither auxtrace mmap size
+nor snapshot size is specified, then the default is 4MiB for privileged users
+(or if /proc/sys/kernel/perf_event_paranoid < 0), 128KiB for unprivileged users.
+If an unprivileged user does not specify mmap pages, the mmap pages will be
+reduced as described in the 'new auxtrace mmap size option' section below.
+
+The snapshot size is displayed if the option -vv is used e.g.
+
+	Intel PT snapshot size: %zu
+
+
+new auxtrace mmap size option
+---------------------------
+
+Intel PT buffer size is specified by an addition to the -m option e.g.
+
+	-m,16
+
+selects a buffer size of 16 pages i.e. 64KiB.
+
+Note that the existing functionality of -m is unchanged.  The auxtrace mmap size
+is specified by the optional addition of a comma and the value.
+
+The default auxtrace mmap size for Intel PT is 4MiB/page_size for privileged users
+(or if /proc/sys/kernel/perf_event_paranoid < 0), 128KiB for unprivileged users.
+If an unprivileged user does not specify mmap pages, the mmap pages will be
+reduced from the default 512KiB/page_size to 256KiB/page_size, otherwise the
+user is likely to get an error as they exceed their mlock limit (Max locked
+memory as shown in /proc/self/limits).  Note that perf does not count the first
+512KiB (actually /proc/sys/kernel/perf_event_mlock_kb minus 1 page) per cpu
+against the mlock limit so an unprivileged user is allowed 512KiB per cpu plus
+their mlock limit (which defaults to 64KiB but is not multiplied by the number
+of cpus).
+
+In full-trace mode, powers of two are allowed for buffer size, with a minimum
+size of 2 pages.  In snapshot mode, it is the same but the minimum size is
+1 page.
+
+The mmap size and auxtrace mmap size are displayed if the -vv option is used e.g.
+
+	mmap length 528384
+	auxtrace mmap length 4198400
+
+
+Intel PT modes of operation
+---------------------------
+
+Intel PT can be used in 2 modes:
+	full-trace mode
+	snapshot mode
+
+Full-trace mode traces continuously e.g.
+
+	perf record -e intel_pt//u uname
+
+Snapshot mode captures the available data when a signal is sent e.g.
+
+	perf record -v -e intel_pt//u -S ./loopy 1000000000 &
+	[1] 11435
+	kill -USR2 11435
+	Recording AUX area tracing snapshot
+
+Note that the signal sent is SIGUSR2.
+Note that "Recording AUX area tracing snapshot" is displayed because the -v
+option is used.
+
+None of the 3 modes can be used together.
+
+
+Buffer handling
+---------------
+
+There may be buffer limitations (i.e. single ToPa entry) which means that actual
+buffer sizes are limited to powers of 2 up to 4MiB (MAX_ORDER).  In order to
+provide other sizes, and in particular an arbitrarily large size, multiple
+buffers are logically concatenated.  However an interrupt must be used to switch
+between buffers.  That has two potential problems:
+	a) the interrupt may not be handled in time so that the current buffer
+	becomes full and some trace data is lost.
+	b) the interrupts may slow the system and affect the performance
+	results.
+
+If trace data is lost, the driver sets 'truncated' in the PERF_RECORD_AUX event
+which the tools report as an error.
+
+In full-trace mode, the driver waits for data to be copied out before allowing
+the (logical) buffer to wrap-around.  If data is not copied out quickly enough,
+again 'truncated' is set in the PERF_RECORD_AUX event.  If the driver has to
+wait, the intel_pt event gets disabled.  Because it is difficult to know when
+that happens, perf tools always re-enable the intel_pt event after copying out
+data.
+
+
+Intel PT and build ids
+----------------------
+
+By default "perf record" post-processes the event stream to find all build ids
+for executables for all addresses sampled.  Deliberately, Intel PT is not
+decoded for that purpose (it would take too long).  Instead the build ids for
+all executables encountered (due to mmap, comm or task events) are included
+in the perf.data file.
+
+To see buildids included in the perf.data file use the command:
+
+	perf buildid-list
+
+If the perf.data file contains Intel PT data, that is the same as:
+
+	perf buildid-list --with-hits
+
+
+Snapshot mode and event disabling
+---------------------------------
+
+In order to make a snapshot, the intel_pt event is disabled using an IOCTL,
+namely PERF_EVENT_IOC_DISABLE.  However doing that can also disable the
+collection of side-band information.  In order to prevent that,  a dummy
+software event has been introduced that permits tracking events (like mmaps) to
+continue to be recorded while intel_pt is disabled.  That is important to ensure
+there is complete side-band information to allow the decoding of subsequent
+snapshots.
+
+A test has been created for that.  To find the test:
+
+	perf test list
+	...
+	23: Test using a dummy software event to keep tracking
+
+To run the test:
+
+	perf test 23
+	23: Test using a dummy software event to keep tracking     : Ok
+
+
+perf record modes (nothing new here)
+------------------------------------
+
+perf record essentially operates in one of three modes:
+	per thread
+	per cpu
+	workload only
+
+"per thread" mode is selected by -t or by --per-thread (with -p or -u or just a
+workload).
+"per cpu" is selected by -C or -a.
+"workload only" mode is selected by not using the other options but providing a
+command to run (i.e. the workload).
+
+In per-thread mode an exact list of threads is traced.  There is no inheritance.
+Each thread has its own event buffer.
+
+In per-cpu mode all processes (or processes from the selected cgroup i.e. -G
+option, or processes selected with -p or -u) are traced.  Each cpu has its own
+buffer. Inheritance is allowed.
+
+In workload-only mode, the workload is traced but with per-cpu buffers.
+Inheritance is allowed.  Note that you can now trace a workload in per-thread
+mode by using the --per-thread option.
+
+
+Privileged vs non-privileged users
+----------------------------------
+
+Unless /proc/sys/kernel/perf_event_paranoid is set to -1, unprivileged users
+have memory limits imposed upon them.  That affects what buffer sizes they can
+have as outlined above.
+
+Unless /proc/sys/kernel/perf_event_paranoid is set to -1, unprivileged users are
+not permitted to use tracepoints which means there is insufficient side-band
+information to decode Intel PT in per-cpu mode, and potentially workload-only
+mode too if the workload creates new processes.
+
+Note also, that to use tracepoints, read-access to debugfs is required.  So if
+debugfs is not mounted or the user does not have read-access, it will again not
+be possible to decode Intel PT in per-cpu mode.
+
+
+sched_switch tracepoint
+-----------------------
+
+The sched_switch tracepoint is used to provide side-band data for Intel PT
+decoding.  sched_switch events are automatically added. e.g. the second event
+shown below
+
+	$ perf record -vv -e intel_pt//u uname
+	------------------------------------------------------------
+	perf_event_attr:
+	type                             6
+	size                             112
+	config                           0x400
+	{ sample_period, sample_freq }   1
+	sample_type                      IP|TID|TIME|CPU|IDENTIFIER
+	read_format                      ID
+	disabled                         1
+	inherit                          1
+	exclude_kernel                   1
+	exclude_hv                       1
+	enable_on_exec                   1
+	sample_id_all                    1
+	------------------------------------------------------------
+	sys_perf_event_open: pid 31104  cpu 0  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 1  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 2  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 3  group_fd -1  flags 0x8
+	------------------------------------------------------------
+	perf_event_attr:
+	type                             2
+	size                             112
+	config                           0x108
+	{ sample_period, sample_freq }   1
+	sample_type                      IP|TID|TIME|CPU|PERIOD|RAW|IDENTIFIER
+	read_format                      ID
+	inherit                          1
+	sample_id_all                    1
+	exclude_guest                    1
+	------------------------------------------------------------
+	sys_perf_event_open: pid -1  cpu 0  group_fd -1  flags 0x8
+	sys_perf_event_open: pid -1  cpu 1  group_fd -1  flags 0x8
+	sys_perf_event_open: pid -1  cpu 2  group_fd -1  flags 0x8
+	sys_perf_event_open: pid -1  cpu 3  group_fd -1  flags 0x8
+	------------------------------------------------------------
+	perf_event_attr:
+	type                             1
+	size                             112
+	config                           0x9
+	{ sample_period, sample_freq }   1
+	sample_type                      IP|TID|TIME|IDENTIFIER
+	read_format                      ID
+	disabled                         1
+	inherit                          1
+	exclude_kernel                   1
+	exclude_hv                       1
+	mmap                             1
+	comm                             1
+	enable_on_exec                   1
+	task                             1
+	sample_id_all                    1
+	mmap2                            1
+	comm_exec                        1
+	------------------------------------------------------------
+	sys_perf_event_open: pid 31104  cpu 0  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 1  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 2  group_fd -1  flags 0x8
+	sys_perf_event_open: pid 31104  cpu 3  group_fd -1  flags 0x8
+	mmap size 528384B
+	AUX area mmap length 4194304
+	perf event ring buffer mmapped per cpu
+	Synthesizing auxtrace information
+	Linux
+	[ perf record: Woken up 1 times to write data ]
+	[ perf record: Captured and wrote 0.042 MB perf.data ]
+
+Note, the sched_switch event is only added if the user is permitted to use it
+and only in per-cpu mode.
+
+Note also, the sched_switch event is only added if TSC packets are requested.
+That is because, in the absence of timing information, the sched_switch events
+cannot be matched against the Intel PT trace.
+
+
+perf script
+===========
+
+By default, perf script will decode trace data found in the perf.data file.
+This can be further controlled by new option --itrace.
+
+
+New AUX area option
+----------------------------
+
+Having no option is the same as
+
+	--itrace
+
+which, in turn, is the same as
+
+	--itrace=ibxe
+
+The letters are:
+
+	i	synthesize "instructions" events
+	b	synthesize "branches" events
+	x	synthesize "transactions" events
+	c	synthesize branches events (calls only)
+	r	synthesize branches events (returns only)
+	e	synthesize tracing error events
+	d	create a debug log
+	g	synthesize a call chain (use with i or x)
+
+"Instructions" events look like they were recorded by "perf record -e
+instructions".
+
+"Branches" events look like they were recorded by "perf record -e branches". "c"
+and "r" can be combined to get calls and returns.
+
+"Transactions" events correspond to the start or end of transactions. The
+'flags' field can be used in perf script to determine whether the event is a
+tranasaction start, commit or abort.
+
+Error events are new.  They show where the decoder lost the trace.  Error events
+are quite important.  Users must know if what they are seeing is a complete
+picture or not.
+
+The "d" option will cause the creation of a file "intel_pt.log" containing all
+decoded packets and instructions.  Note that this option slows down the decoder
+and that the resulting file may be very large.
+
+In addition, the period of the "instructions" event can be specified. e.g.
+
+	--itrace=i10us
+
+sets the period to 10us i.e. one  instruction sample is synthesized for each 10
+microseconds of trace.  Alternatives to "us" are "ms" (milliseconds),
+"ns" (nanoseconds), "t" (TSC ticks) or "i" (instructions).
+
+"ms", "us" and "ns" are converted to TSC ticks.
+
+The timing information included with Intel PT does not give the time of every
+instruction.  Consequently, for the purpose of sampling, the decoder estimates
+the time since the last timing packet based on 1 tick per instruction.  The time
+on the sample is *not* adjusted and reflects the last known value of TSC.
+
+For Intel PT, the default period is 100us.
+
+Also the call chain size (default 16, max. 1024) for instructions or
+transactions events can be specified. e.g.
+
+	--itrace=ig32
+	--itrace=xg32
+
+To disable trace decoding entirely, use the option --no-itrace.
+
+
+dump option
+-----------
+
+perf script has an option (-D) to "dump" the events i.e. display the binary
+data.
+
+When -D is used, Intel PT packets are displayed.  The packet decoder does not
+pay attention to PSB packets, but just decodes the bytes - so the packets seen
+by the actual decoder may not be identical in places where the data is corrupt.
+One example of that would be when the buffer-switching interrupt has been too
+slow, and the buffer has been filled completely.  In that case, the last packet
+in the buffer might be truncated and immediately followed by a PSB as the trace
+continues in the next buffer.
+
+To disable the display of Intel PT packets, combine the -D option with
+--no-itrace.
+
+
+perf report
+===========
+
+By default, perf report will decode trace data found in the perf.data file.
+This can be further controlled by new option --itrace exactly the same as
+perf script, with the exception that the default is --itrace=ge.
+
+
+perf inject
+===========
+
+perf inject also accepts the --itrace option in which case tracing data is
+removed and replaced with the synthesized events. e.g.
+
+	perf inject --itrace -i perf.data -o perf.data.new
