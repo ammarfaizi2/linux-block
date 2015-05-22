@@ -1,0 +1,69 @@
+Intel Branch Trace Store
+========================
+
+perf record
+===========
+
+new event
+---------
+
+The Intel BTS kernel driver creates a new PMU for Intel BTS.  The perf record
+option is:
+
+	-e intel_bts//
+
+Currently Intel BTS is limited to per-thread tracing so the --per-thread option
+is also needed.
+
+
+snapshot option
+---------------
+
+The snapshot option is the same as Intel PT (refer Intel PT documentation).
+
+
+auxtrace mmap size option
+-----------------------
+
+The mmap size option is the same as Intel PT (refer Intel PT documentation).
+
+
+perf script
+===========
+
+By default, perf script will decode trace data found in the perf.data file.
+This can be further controlled by option --itrace.  The --itrace option is
+the same as Intel PT (refer Intel PT documentation) except that neither
+"instructions" events nor "transactions" events (and consequently call
+chains) are supported.
+
+To disable trace decoding entirely, use the option --no-itrace.
+
+
+dump option
+-----------
+
+perf script has an option (-D) to "dump" the events i.e. display the binary
+data.
+
+When -D is used, Intel BTS packets are displayed.
+
+To disable the display of Intel BTS packets, combine the -D option with
+--no-itrace.
+
+
+perf report
+===========
+
+By default, perf report will decode trace data found in the perf.data file.
+This can be further controlled by new option --itrace exactly the same as
+perf script.
+
+
+perf inject
+===========
+
+perf inject also accepts the --itrace option in which case tracing data is
+removed and replaced with the synthesized events. e.g.
+
+	perf inject --itrace -i perf.data -o perf.data.new
