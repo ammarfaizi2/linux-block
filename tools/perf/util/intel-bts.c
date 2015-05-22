@@ -30,6 +30,7 @@
 #include "debug.h"
 #include "tsc.h"
 #include "auxtrace.h"
+#include "intel-pt-decoder/intel-pt-insn-decoder.h"
 #include "intel-bts.h"
 
 #define MAX_TIMESTAMP (~0ULL)
@@ -58,6 +59,7 @@ struct intel_bts {
 	bool				cap_user_time_zero;
 	struct itrace_synth_opts	synth_opts;
 	bool				sample_branches;
+	u32				branches_filter;
 	u64				branches_sample_type;
 	u64				branches_id;
 	size_t				branches_event_size;
@@ -74,6 +76,8 @@ struct intel_bts_queue {
 	pid_t			tid;
 	int			cpu;
 	u64			time;
+	struct intel_pt_insn	intel_pt_insn;
+	u32			sample_flags;
 };
 
 struct branch {
@@ -281,6 +285,8 @@ static int intel_bts_synth_branch_sample(struct intel_bts_queue *btsq,
 	sample.stream_id = btsq->bts->branches_id;
 	sample.period = 1;
 	sample.cpu = btsq->cpu;
+	sample.flags = btsq->sample_flags;
+	sample.insn_len = btsq->intel_pt_insn.length;
 
 	if (bts->synth_opts.inject) {
 		event.sample.header.size = bts->branches_event_size;
@@ -300,11 +306,115 @@ static int intel_bts_synth_branch_sample(struct intel_bts_queue *btsq,
 	return ret;
 }
 
+static int intel_bts_get_next_insn(struct intel_bts_queue *btsq, u64 ip)
+{
+	struct machine *machine = btsq->bts->machine;
+	struct thread *thread;
+	struct addr_location al;
+	unsigned char buf[1024];
+	size_t bufsz;
+	ssize_t len;
+	int x86_64;
+	uint8_t cpumode;
+
+	bufsz = intel_pt_insn_max_size();
+
+	if (machine__kernel_ip(machine, ip))
+		cpumode = PERF_RECORD_MISC_KERNEL;
+	else
+		cpumode = PERF_RECORD_MISC_USER;
+
+	thread = machine__find_thread(machine, -1, btsq->tid);
+	if (!thread)
+		return -1;
+
+	thread__find_addr_map(thread, cpumode, MAP__FUNCTION, ip, &al);
+	if (!al.map || !al.map->dso)
+		return -1;
+
+	len = dso__data_read_addr(al.map->dso, al.map, machine, ip, buf, bufsz);
+	if (len <= 0)
+		return -1;
+
+	/* Load maps to ensure dso->is_64_bit has been updated */
+	map__load(al.map, machine->symbol_filter);
+
+	x86_64 = al.map->dso->is_64_bit;
+
+	if (intel_pt_get_insn(buf, len, x86_64, &btsq->intel_pt_insn))
+		return -1;
+
+	return 0;
+}
+
+static int intel_bts_synth_error(struct intel_bts *bts, int cpu, pid_t pid,
+				 pid_t tid, u64 ip)
+{
+	union perf_event event;
+	int err;
+
+	auxtrace_synth_error(&event.auxtrace_error, PERF_AUXTRACE_ERROR_ITRACE,
+			     INTEL_BTS_ERR_NOINSN, cpu, pid, tid, ip,
+			     "Failed to get instruction");
+
+	err = perf_session__deliver_synth_event(bts->session, &event, NULL);
+	if (err)
+		pr_err("Intel BTS: failed to deliver error event, error %d\n",
+		       err);
+
+	return err;
+}
+
+static int intel_bts_get_branch_type(struct intel_bts_queue *btsq,
+				     struct branch *branch)
+{
+	int err;
+
+	if (!branch->from) {
+		if (branch->to)
+			btsq->sample_flags = PERF_IP_FLAG_BRANCH |
+					     PERF_IP_FLAG_TRACE_BEGIN;
+		else
+			btsq->sample_flags = 0;
+		btsq->intel_pt_insn.length = 0;
+	} else if (!branch->to) {
+		btsq->sample_flags = PERF_IP_FLAG_BRANCH |
+				     PERF_IP_FLAG_TRACE_END;
+		btsq->intel_pt_insn.length = 0;
+	} else {
+		err = intel_bts_get_next_insn(btsq, branch->from);
+		if (err) {
+			btsq->sample_flags = 0;
+			btsq->intel_pt_insn.length = 0;
+			if (!btsq->bts->synth_opts.errors)
+				return 0;
+			err = intel_bts_synth_error(btsq->bts, btsq->cpu,
+						    btsq->pid, btsq->tid,
+						    branch->from);
+			return err;
+		}
+		btsq->sample_flags = intel_pt_insn_type(btsq->intel_pt_insn.op);
+		/* Check for an async branch into the kernel */
+		if (!machine__kernel_ip(btsq->bts->machine, branch->from) &&
+		    machine__kernel_ip(btsq->bts->machine, branch->to) &&
+		    btsq->sample_flags != (PERF_IP_FLAG_BRANCH |
+					   PERF_IP_FLAG_CALL |
+					   PERF_IP_FLAG_SYSCALLRET))
+			btsq->sample_flags = PERF_IP_FLAG_BRANCH |
+					     PERF_IP_FLAG_CALL |
+					     PERF_IP_FLAG_ASYNC |
+					     PERF_IP_FLAG_INTERRUPT;
+	}
+
+	return 0;
+}
+
 static int intel_bts_process_buffer(struct intel_bts_queue *btsq,
 				    struct auxtrace_buffer *buffer)
 {
 	struct branch *branch;
-	size_t sz;
+	size_t sz, bsz = sizeof(struct branch);
+	u32 filter = btsq->bts->branches_filter;
 	int err = 0;
 
 	if (buffer->use_data) {
@@ -318,14 +428,15 @@ static int intel_bts_process_buffer(struct intel_bts_queue *btsq,
 	if (!btsq->bts->sample_branches)
 		return 0;
 
-	while (sz > sizeof(struct branch)) {
+	for (; sz > bsz; branch += 1, sz -= bsz) {
 		if (!branch->from && !branch->to)
+			continue;
+		intel_bts_get_branch_type(btsq, branch);
+		if (filter && !(filter & btsq->sample_flags))
 			continue;
 		err = intel_bts_synth_branch_sample(btsq, branch);
 		if (err)
 			break;
-		branch += 1;
-		sz -= sizeof(struct branch);
 	}
 	return err;
 }
@@ -770,6 +881,13 @@ int intel_bts_process_auxtrace_info(union perf_event *event,
 		bts->synth_opts = *session->itrace_synth_opts;
 	else
 		itrace_synth_opts__set_default(&bts->synth_opts);
+
+	if (bts->synth_opts.calls)
+		bts->branches_filter |= PERF_IP_FLAG_CALL | PERF_IP_FLAG_ASYNC |
+					PERF_IP_FLAG_TRACE_END;
+	if (bts->synth_opts.returns)
+		bts->branches_filter |= PERF_IP_FLAG_RETURN |
+					PERF_IP_FLAG_TRACE_BEGIN;
 
 	err = intel_bts_synth_events(bts, session);
 	if (err)
