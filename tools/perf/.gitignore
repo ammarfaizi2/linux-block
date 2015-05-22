@@ -28,3 +28,5 @@ config.mak.autogen
 *-flex.*
 *.pyc
 *.pyo
+util/intel-pt-decoder/inat-tables.c
+util/intel-pt-decoder/inat.c
