@@ -34,7 +34,6 @@ struct map {
 	u64			start;
 	u64			end;
 	u8 /* enum map_type */	type;
-	bool			referenced;
 	bool			erange_warned;
 	u32			priv;
 	u32			prot;
@@ -63,7 +62,6 @@ struct kmap {
 struct maps {
 	struct rb_root	 entries;
 	pthread_rwlock_t lock;
-	struct list_head removed_maps;
 };
 
 struct map_groups {
