@@ -1100,7 +1100,7 @@ nocsum:
 			 * unknown protocol, disable HW csum
 			 * and hope a bad packet is detected
 			 */
-			return TXPKT_L4CSUM_DIS;
+			return TXPKT_L4CSUM_DIS_F;
 		}
 	} else {
 		/*
@@ -1117,15 +1117,15 @@ nocsum:
 	}
 
 	if (likely(csum_type >= TX_CSUM_TCPIP))
-		return TXPKT_CSUM_TYPE(csum_type) |
-			TXPKT_IPHDR_LEN(skb_network_header_len(skb)) |
-			TXPKT_ETHHDR_LEN(skb_network_offset(skb) - ETH_HLEN);
+		return TXPKT_CSUM_TYPE_V(csum_type) |
+			TXPKT_IPHDR_LEN_V(skb_network_header_len(skb)) |
+			TXPKT_ETHHDR_LEN_V(skb_network_offset(skb) - ETH_HLEN);
 	else {
 		int start = skb_transport_offset(skb);
 
-		return TXPKT_CSUM_TYPE(csum_type) |
-			TXPKT_CSUM_START(start) |
-			TXPKT_CSUM_LOC(start + skb->csum_offset);
+		return TXPKT_CSUM_TYPE_V(csum_type) |
+			TXPKT_CSUM_START_V(start) |
+			TXPKT_CSUM_LOC_V(start + skb->csum_offset);
 	}
 }
 
@@ -1160,7 +1160,7 @@ int t4vf_eth_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	u32 wr_mid;
 	u64 cntrl, *end;
-	int qidx, credits;
+	int qidx, credits, max_pkt_len;
 	unsigned int flits, ndesc;
 	struct adapter *adapter;
 	struct sge_eth_txq *txq;
@@ -1181,6 +1181,13 @@ int t4vf_eth_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * smaller than that ...
 	 */
 	if (unlikely(skb->len < fw_hdr_copy_len))
+		goto out_free;
+
+	/* Discard the packet if the length is greater than mtu */
+	max_pkt_len = ETH_HLEN + dev->mtu;
+	if (skb_vlan_tag_present(skb))
+		max_pkt_len += VLAN_HLEN;
+	if (!skb_shinfo(skb)->gso_size && (unlikely(skb->len > max_pkt_len)))
 		goto out_free;
 
 	/*
@@ -1281,29 +1288,30 @@ int t4vf_eth_xmit(struct sk_buff *skb, struct net_device *dev)
 		 * Fill in the LSO CPL message.
 		 */
 		lso->lso_ctrl =
-			cpu_to_be32(LSO_OPCODE(CPL_TX_PKT_LSO) |
-				    LSO_FIRST_SLICE |
-				    LSO_LAST_SLICE |
-				    LSO_IPV6(v6) |
-				    LSO_ETHHDR_LEN(eth_xtra_len/4) |
-				    LSO_IPHDR_LEN(l3hdr_len/4) |
-				    LSO_TCPHDR_LEN(tcp_hdr(skb)->doff));
+			cpu_to_be32(LSO_OPCODE_V(CPL_TX_PKT_LSO) |
+				    LSO_FIRST_SLICE_F |
+				    LSO_LAST_SLICE_F |
+				    LSO_IPV6_V(v6) |
+				    LSO_ETHHDR_LEN_V(eth_xtra_len / 4) |
+				    LSO_IPHDR_LEN_V(l3hdr_len / 4) |
+				    LSO_TCPHDR_LEN_V(tcp_hdr(skb)->doff));
 		lso->ipid_ofst = cpu_to_be16(0);
 		lso->mss = cpu_to_be16(ssi->gso_size);
 		lso->seqno_offset = cpu_to_be32(0);
 		if (is_t4(adapter->params.chip))
 			lso->len = cpu_to_be32(skb->len);
 		else
-			lso->len = cpu_to_be32(LSO_T5_XFER_SIZE(skb->len));
+			lso->len = cpu_to_be32(LSO_T5_XFER_SIZE_V(skb->len));
 
 		/*
 		 * Set up TX Packet CPL pointer, control word and perform
 		 * accounting.
 		 */
 		cpl = (void *)(lso + 1);
-		cntrl = (TXPKT_CSUM_TYPE(v6 ? TX_CSUM_TCPIP6 : TX_CSUM_TCPIP) |
-			 TXPKT_IPHDR_LEN(l3hdr_len) |
-			 TXPKT_ETHHDR_LEN(eth_xtra_len));
+		cntrl = (TXPKT_CSUM_TYPE_V(v6 ?
+					   TX_CSUM_TCPIP6 : TX_CSUM_TCPIP) |
+			 TXPKT_IPHDR_LEN_V(l3hdr_len) |
+			 TXPKT_ETHHDR_LEN_V(eth_xtra_len));
 		txq->tso++;
 		txq->tx_cso += ssi->gso_segs;
 	} else {
@@ -1320,10 +1328,10 @@ int t4vf_eth_xmit(struct sk_buff *skb, struct net_device *dev)
 		 */
 		cpl = (void *)(wr + 1);
 		if (skb->ip_summed == CHECKSUM_PARTIAL) {
-			cntrl = hwcsum(skb) | TXPKT_IPCSUM_DIS;
+			cntrl = hwcsum(skb) | TXPKT_IPCSUM_DIS_F;
 			txq->tx_cso++;
 		} else
-			cntrl = TXPKT_L4CSUM_DIS | TXPKT_IPCSUM_DIS;
+			cntrl = TXPKT_L4CSUM_DIS_F | TXPKT_IPCSUM_DIS_F;
 	}
 
 	/*
@@ -1332,15 +1340,15 @@ int t4vf_eth_xmit(struct sk_buff *skb, struct net_device *dev)
 	 */
 	if (skb_vlan_tag_present(skb)) {
 		txq->vlan_ins++;
-		cntrl |= TXPKT_VLAN_VLD | TXPKT_VLAN(skb_vlan_tag_get(skb));
+		cntrl |= TXPKT_VLAN_VLD_F | TXPKT_VLAN_V(skb_vlan_tag_get(skb));
 	}
 
 	/*
 	 * Fill in the TX Packet CPL message header.
 	 */
-	cpl->ctrl0 = cpu_to_be32(TXPKT_OPCODE(CPL_TX_PKT_XT) |
-				 TXPKT_INTF(pi->port_id) |
-				 TXPKT_PF(0));
+	cpl->ctrl0 = cpu_to_be32(TXPKT_OPCODE_V(CPL_TX_PKT_XT) |
+				 TXPKT_INTF_V(pi->port_id) |
+				 TXPKT_PF_V(0));
 	cpl->pack = cpu_to_be16(0);
 	cpl->len = cpu_to_be16(skb->len);
 	cpl->ctrl1 = cpu_to_be64(cntrl);
@@ -1663,7 +1671,7 @@ int t4vf_ethrx_handler(struct sge_rspq *rspq, const __be64 *rsp,
 static inline bool is_new_response(const struct rsp_ctrl *rc,
 				   const struct sge_rspq *rspq)
 {
-	return RSPD_GEN(rc->type_gen) == rspq->gen;
+	return ((rc->type_gen >> RSPD_GEN_S) & 0x1) == rspq->gen;
 }
 
 /**
@@ -1752,8 +1760,8 @@ static int process_responses(struct sge_rspq *rspq, int budget)
 		 * SGE.
 		 */
 		dma_rmb();
-		rsp_type = RSPD_TYPE(rc->type_gen);
-		if (likely(rsp_type == RSP_TYPE_FLBUF)) {
+		rsp_type = RSPD_TYPE_G(rc->type_gen);
+		if (likely(rsp_type == RSPD_TYPE_FLBUF_X)) {
 			struct page_frag *fp;
 			struct pkt_gl gl;
 			const struct rx_sw_desc *sdesc;
@@ -1764,7 +1772,7 @@ static int process_responses(struct sge_rspq *rspq, int budget)
 			 * If we get a "new buffer" message from the SGE we
 			 * need to move on to the next Free List buffer.
 			 */
-			if (len & RSPD_NEWBUF) {
+			if (len & RSPD_NEWBUF_F) {
 				/*
 				 * We get one "new buffer" message when we
 				 * first start up a queue so we need to ignore
@@ -1775,7 +1783,7 @@ static int process_responses(struct sge_rspq *rspq, int budget)
 						     1);
 					rspq->offset = 0;
 				}
-				len = RSPD_LEN(len);
+				len = RSPD_LEN_G(len);
 			}
 			gl.tot_len = len;
 
@@ -1818,10 +1826,10 @@ static int process_responses(struct sge_rspq *rspq, int budget)
 				rspq->offset += ALIGN(fp->size, s->fl_align);
 			else
 				restore_rx_bufs(&gl, &rxq->fl, frag);
-		} else if (likely(rsp_type == RSP_TYPE_CPL)) {
+		} else if (likely(rsp_type == RSPD_TYPE_CPL_X)) {
 			ret = rspq->handler(rspq, rspq->cur_desc, NULL);
 		} else {
-			WARN_ON(rsp_type > RSP_TYPE_CPL);
+			WARN_ON(rsp_type > RSPD_TYPE_CPL_X);
 			ret = 0;
 		}
 
@@ -1833,7 +1841,7 @@ static int process_responses(struct sge_rspq *rspq, int budget)
 			 */
 			const int NOMEM_TIMER_IDX = SGE_NTIMERS-1;
 			rspq->next_intr_params =
-				QINTR_TIMER_IDX(NOMEM_TIMER_IDX);
+				QINTR_TIMER_IDX_V(NOMEM_TIMER_IDX);
 			break;
 		}
 
@@ -1875,7 +1883,7 @@ static int napi_rx_handler(struct napi_struct *napi, int budget)
 		intr_params = rspq->next_intr_params;
 		rspq->next_intr_params = rspq->intr_params;
 	} else
-		intr_params = QINTR_TIMER_IDX(SGE_TIMER_UPD_CIDX);
+		intr_params = QINTR_TIMER_IDX_V(SGE_TIMER_UPD_CIDX);
 
 	if (unlikely(work_done == 0))
 		rspq->unhandled_irqs++;
@@ -1936,10 +1944,10 @@ static unsigned int process_intrq(struct adapter *adapter)
 		 * never happen ...
 		 */
 		dma_rmb();
-		if (unlikely(RSPD_TYPE(rc->type_gen) != RSP_TYPE_INTR)) {
+		if (unlikely(RSPD_TYPE_G(rc->type_gen) != RSPD_TYPE_INTR_X)) {
 			dev_err(adapter->pdev_dev,
 				"Unexpected INTRQ response type %d\n",
-				RSPD_TYPE(rc->type_gen));
+				RSPD_TYPE_G(rc->type_gen));
 			continue;
 		}
 
@@ -1951,7 +1959,7 @@ static unsigned int process_intrq(struct adapter *adapter)
 		 * want to either make them fatal and/or conditionalized under
 		 * DEBUG.
 		 */
-		qid = RSPD_QID(be32_to_cpu(rc->pldbuflen_qid));
+		qid = RSPD_QID_G(be32_to_cpu(rc->pldbuflen_qid));
 		iq_idx = IQ_IDX(s, qid);
 		if (unlikely(iq_idx >= MAX_INGQ)) {
 			dev_err(adapter->pdev_dev,
@@ -2243,8 +2251,12 @@ int t4vf_sge_alloc_rxq(struct adapter *adapter, struct sge_rspq *rspq,
 		 * Allocate the ring for the hardware free list (with space
 		 * for its status page) along with the associated software
 		 * descriptor ring.  The free list size needs to be a multiple
-		 * of the Egress Queue Unit.
+		 * of the Egress Queue Unit and at least 2 Egress Units larger
+		 * than the SGE's Egress Congrestion Threshold
+		 * (fl_starve_thres - 1).
 		 */
+		if (fl->size < s->fl_starve_thres - 1 + 2 * FL_PER_EQ_UNIT)
+			fl->size = s->fl_starve_thres - 1 + 2 * FL_PER_EQ_UNIT;
 		fl->size = roundup(fl->size, FL_PER_EQ_UNIT);
 		fl->desc = alloc_ring(adapter->pdev_dev, fl->size,
 				      sizeof(__be64), sizeof(struct rx_sw_desc),

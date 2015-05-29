@@ -267,6 +267,15 @@ tcp_ecn - INTEGER
 		  but do not request ECN on outgoing connections.
 	Default: 2
 
+tcp_ecn_fallback - BOOLEAN
+	If the kernel detects that ECN connection misbehaves, enable fall
+	back to non-ECN. Currently, this knob implements the fallback
+	from RFC3168, section 6.1.1.1., but we reserve that in future,
+	additional detection mechanisms could be implemented under this
+	knob. The value	is not used, if tcp_ecn or per route (or congestion
+	control) ECN settings are disabled.
+	Default: 1 (fallback enabled)
+
 tcp_fack - BOOLEAN
 	Enable FACK congestion avoidance and fast retransmission.
 	The value is not used, if tcp_sack is not enabled.
@@ -1212,6 +1221,14 @@ auto_flowlabels - BOOLEAN
 	TRUE: enabled
 	FALSE: disabled
 	Default: false
+
+flowlabel_state_ranges - BOOLEAN
+	Split the flow label number space into two ranges. 0-0x7FFFF is
+	reserved for the IPv6 flow manager facility, 0x80000-0xFFFFF
+	is reserved for stateless flow labels as described in RFC6437.
+	TRUE: enabled
+	FALSE: disabled
+	Default: true
 
 anycast_src_echo_reply - BOOLEAN
 	Controls the use of anycast addresses as source addresses for ICMPv6

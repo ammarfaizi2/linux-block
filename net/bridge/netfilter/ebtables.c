@@ -139,7 +139,7 @@ ebt_basic_match(const struct ebt_entry *e, const struct sk_buff *skb,
 		ethproto = h->h_proto;
 
 	if (e->bitmask & EBT_802_3) {
-		if (FWINV2(ntohs(ethproto) >= ETH_P_802_3_MIN, EBT_IPROTO))
+		if (FWINV2(eth_proto_is_802_3(ethproto), EBT_IPROTO))
 			return 1;
 	} else if (!(e->bitmask & EBT_NOPROTO) &&
 	   FWINV2(e->ethproto != ethproto, EBT_IPROTO))
@@ -1117,6 +1117,8 @@ static int do_replace(struct net *net, const void __user *user,
 		return -ENOMEM;
 	if (tmp.num_counters >= INT_MAX / sizeof(struct ebt_counter))
 		return -ENOMEM;
+	if (tmp.num_counters == 0)
+		return -EINVAL;
 
 	tmp.name[sizeof(tmp.name) - 1] = 0;
 
@@ -2159,6 +2161,8 @@ static int compat_copy_ebt_replace_from_user(struct ebt_replace *repl,
 		return -ENOMEM;
 	if (tmp.num_counters >= INT_MAX / sizeof(struct ebt_counter))
 		return -ENOMEM;
+	if (tmp.num_counters == 0)
+		return -EINVAL;
 
 	memcpy(repl, &tmp, offsetof(struct ebt_replace, hook_entry));
 

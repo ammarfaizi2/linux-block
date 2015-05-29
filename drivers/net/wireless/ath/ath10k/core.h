@@ -577,6 +577,13 @@ struct ath10k {
 		u32 patch_load_addr;
 		int uart_pin;
 
+		/* This is true if given HW chip has a quirky Cycle Counter
+		 * wraparound which resets to 0x7fffffff instead of 0. All
+		 * other CC related counters (e.g. Rx Clear Count) are divided
+		 * by 2 so they never wraparound themselves.
+		 */
+		bool has_shifted_cc_wraparound;
+
 		struct ath10k_hw_params_fw {
 			const char *dir;
 			const char *fw;
@@ -693,6 +700,14 @@ struct ath10k {
 	u32 survey_last_rx_clear_count;
 	u32 survey_last_cycle_count;
 	struct survey_info survey[ATH10K_NUM_CHANS];
+
+	/* Channel info events are expected to come in pairs without and with
+	 * COMPLETE flag set respectively for each channel visit during scan.
+	 *
+	 * However there are deviations from this rule. This flag is used to
+	 * avoid reporting garbage data.
+	 */
+	bool ch_info_can_report_survey;
 
 	struct dfs_pattern_detector *dfs_detector;
 

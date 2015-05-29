@@ -1626,6 +1626,7 @@ process:
 	skb->dev = NULL;
 
 	bh_lock_sock_nested(sk);
+	tcp_sk(sk)->segs_in += max_t(u16, 1, skb_shinfo(skb)->gso_segs);
 	ret = 0;
 	if (!sock_owned_by_user(sk)) {
 		if (!tcp_prequeue(sk, skb))
@@ -1802,6 +1803,7 @@ void tcp_v4_destroy_sock(struct sock *sk)
 
 	/* If socket is aborted during connect operation */
 	tcp_free_fastopen_req(tp);
+	tcp_saved_syn_free(tp);
 
 	sk_sockets_allocated_dec(sk);
 	sock_release_memcg(sk);
@@ -2410,12 +2412,15 @@ static int __net_init tcp_sk_init(struct net *net)
 			goto fail;
 		*per_cpu_ptr(net->ipv4.tcp_sk, cpu) = sk;
 	}
+
 	net->ipv4.sysctl_tcp_ecn = 2;
+	net->ipv4.sysctl_tcp_ecn_fallback = 1;
+
 	net->ipv4.sysctl_tcp_base_mss = TCP_BASE_MSS;
 	net->ipv4.sysctl_tcp_probe_threshold = TCP_PROBE_THRESHOLD;
 	net->ipv4.sysctl_tcp_probe_interval = TCP_PROBE_INTERVAL;
-	return 0;
 
+	return 0;
 fail:
 	tcp_sk_exit(net);
 
