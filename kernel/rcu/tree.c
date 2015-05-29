@@ -4050,19 +4050,19 @@ static void __init rcu_init_one(struct rcu_state *rsp,
 		"rcu_node_0",
 		"rcu_node_1",
 		"rcu_node_2",
-		"rcu_node_3" };  /* Match MAX_RCU_LVLS */
+		"rcu_node_3" };
 	static const char * const fqs[] = {
 		"rcu_node_fqs_0",
 		"rcu_node_fqs_1",
 		"rcu_node_fqs_2",
-		"rcu_node_fqs_3" };  /* Match MAX_RCU_LVLS */
+		"rcu_node_fqs_3" };
 	static u8 fl_mask = 0x1;
 	int cpustride = 1;
 	int i;
 	int j;
 	struct rcu_node *rnp;
 
-	BUILD_BUG_ON(MAX_RCU_LVLS > ARRAY_SIZE(buf));  /* Fix buf[] init! */
+	BUILD_BUG_ON(RCU_NUM_LVLS > ARRAY_SIZE(buf));  /* Fix buf[] init! */
 
 	/* Silence gcc 4.8 false positive about array index out of range. */
 	if (rcu_num_lvls <= 0 || rcu_num_lvls > RCU_NUM_LVLS)
@@ -4134,7 +4134,7 @@ static void __init rcu_init_geometry(void)
 {
 	ulong d;
 	int i;
-	int rcu_capacity[MAX_RCU_LVLS];
+	int rcu_capacity[RCU_NUM_LVLS];
 
 	/*
 	 * Initialize any unspecified boot parameters.
@@ -4161,7 +4161,7 @@ static void __init rcu_init_geometry(void)
 	 * with the given number of levels.
 	 */
 	rcu_capacity[0] = rcu_fanout_leaf;
-	for (i = 1; i < MAX_RCU_LVLS; i++)
+	for (i = 1; i < RCU_NUM_LVLS; i++)
 		rcu_capacity[i] = rcu_capacity[i - 1] * RCU_FANOUT;
 
 	/*
@@ -4174,7 +4174,7 @@ static void __init rcu_init_geometry(void)
 	 * the rcu_node masks.  Complain and fall back to the compile-
 	 * time values if these limits are exceeded.
 	 */
-	if (nr_cpu_ids > rcu_capacity[MAX_RCU_LVLS - 1])
+	if (nr_cpu_ids > rcu_capacity[RCU_NUM_LVLS - 1])
 		panic("rcu_init_geometry: rcu_capacity[] is too small");
 	else if (rcu_fanout_leaf < RCU_FANOUT_LEAF ||
 		 rcu_fanout_leaf > sizeof(unsigned long) * 8) {
