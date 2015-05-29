@@ -58,6 +58,13 @@ include/linux/stringify.h
 lib/hweight.c
 lib/rbtree.c
 include/linux/swab.h
+arch/x86/lib/insn.c
+arch/x86/lib/inat.c
+arch/x86/include/asm/insn.h
+arch/x86/include/asm/inat.h
+arch/x86/include/asm/inat_types.h
+arch/x86/tools/gen-insn-attr-x86.awk
+arch/x86/lib/x86-opcode-map.txt
 arch/*/include/asm/unistd*.h
 arch/*/include/uapi/asm/unistd*.h
 arch/*/include/uapi/asm/perf_regs.h
