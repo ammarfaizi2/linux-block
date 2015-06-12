@@ -93,6 +93,7 @@ struct inodes_stat_t {
 #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
 
 /* These sb flags are internal to the kernel */
+#define MS_CGROUPWB	(1<<27)	/* cgroup-aware writeback enabled */
 #define MS_NOSEC	(1<<28)
 #define MS_BORN		(1<<29)
 #define MS_ACTIVE	(1<<30)

@@ -879,7 +879,7 @@ static int ext2_fill_super(struct super_block *sb, void *data, int silent)
 	if (!parse_options((char *) data, sb))
 		goto failed_mount;
 
-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
+	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) | MS_CGROUPWB |
 		((EXT2_SB(sb)->s_mount_opt & EXT2_MOUNT_POSIX_ACL) ?
 		 MS_POSIXACL : 0);
 
@@ -1543,7 +1543,7 @@ static struct file_system_type ext2_fs_type = {
 	.name		= "ext2",
 	.mount		= ext2_mount,
 	.kill_sb	= kill_block_super,
-	.fs_flags	= FS_REQUIRES_DEV | FS_CGROUP_WRITEBACK,
+	.fs_flags	= FS_REQUIRES_DEV,
 };
 MODULE_ALIAS_FS("ext2");
 
