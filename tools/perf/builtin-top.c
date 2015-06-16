@@ -235,6 +235,10 @@ static void perf_top__show_details(struct perf_top *top)
 
 	more = symbol__annotate_printf(symbol, he->ms.map, top->sym_evsel,
 				       0, top->sym_pcnt_filter, top->print_entries, 4);
+
+	if (!top->evlist->enabled)
+		goto out_unlock;
+
 	if (top->zero)
 		symbol__annotate_zero_histogram(symbol, top->sym_evsel->idx);
 	else
@@ -276,6 +280,9 @@ static void perf_top__print_sym_table(struct perf_top *top)
 		return;
 	}
 
+	if (!top->evlist->enabled)
+		goto out_fprintf;
+
 	if (top->zero) {
 		hists__delete_entries(hists);
 	} else {
@@ -288,6 +295,7 @@ static void perf_top__print_sym_table(struct perf_top *top)
 
 	hists__output_recalc_col_len(hists, top->print_entries - printed);
 	putchar('\n');
+out_fprintf:
 	hists__fprintf(hists, false, top->print_entries - printed, win_width,
 		       top->min_percent, stdout);
 }
@@ -540,6 +548,9 @@ static void perf_top__sort_new_samples(void *arg)
 
 	perf_top__reset_sample_counters(t);
 
+	if (!t->evlist->enabled)
+		return;
+
 	if (t->evlist->selected != NULL)
 		t->sym_evsel = t->evlist->selected;
 
@@ -579,8 +590,16 @@ static void *display_thread_tui(void *arg)
 		hists->uid_filter_str = top->record_opts.target.uid_str;
 	}
 
-	perf_evlist__tui_browse_hists(top->evlist, help, &hbt, top->min_percent,
-				      &top->session->header.env);
+	while (true)  {
+		int key = perf_evlist__tui_browse_hists(top->evlist, help, &hbt,
+							top->min_percent,
+							&top->session->header.env);
+
+		if (key != CTRL('z'))
+			break;
+
+		perf_evlist__toggle_enable(top->evlist);
+	}
 
 	done = 1;
 	return NULL;

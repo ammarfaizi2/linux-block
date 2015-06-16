@@ -704,8 +704,10 @@ static int annotate_browser__run(struct annotate_browser *browser,
 			if (hbt)
 				hbt->timer(hbt->arg);
 
-			if (delay_secs != 0)
+			if (delay_secs != 0) {
+				/* FIXME  do not decay when evlist is disabled */
 				symbol__annotate_decay_histogram(sym, evsel->idx);
+			}
 			continue;
 		case K_TAB:
 			if (nd != NULL) {
