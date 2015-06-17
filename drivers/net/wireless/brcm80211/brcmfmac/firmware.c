@@ -25,7 +25,7 @@
 
 #define BRCMF_FW_MAX_NVRAM_SIZE			64000
 #define BRCMF_FW_NVRAM_DEVPATH_LEN		19	/* devpath0=pcie/1/4/ */
-#define BRCMF_FW_NVRAM_PCIEDEV_LEN		9	/* pcie/1/4/ */
+#define BRCMF_FW_NVRAM_PCIEDEV_LEN		10	/* pcie/1/4/ + \0 */
 
 char brcmf_firmware_path[BRCMF_FW_PATH_LEN];
 module_param_string(firmware_path, brcmf_firmware_path,
@@ -43,7 +43,7 @@ enum nvram_parser_state {
  * struct nvram_parser - internal info for parser.
  *
  * @state: current parser state.
- * @fwnv: input buffer being parsed.
+ * @data: input buffer being parsed.
  * @nvram: output buffer with parse result.
  * @nvram_len: lenght of parse result.
  * @line: current line.
@@ -55,7 +55,7 @@ enum nvram_parser_state {
  */
 struct nvram_parser {
 	enum nvram_parser_state state;
-	const struct firmware *fwnv;
+	const u8 *data;
 	u8 *nvram;
 	u32 nvram_len;
 	u32 line;
@@ -66,6 +66,12 @@ struct nvram_parser {
 	bool multi_dev_v2;
 };
 
+/**
+ * is_nvram_char() - check if char is a valid one for NVRAM entry
+ *
+ * It accepts all printable ASCII chars except for '#' which opens a comment.
+ * Please note that ' ' (space) while accepted is not a valid key name char.
+ */
 static bool is_nvram_char(char c)
 {
 	/* comment marker excluded */
@@ -73,7 +79,7 @@ static bool is_nvram_char(char c)
 		return false;
 
 	/* key and value may have any other readable character */
-	return (c > 0x20 && c < 0x7f);
+	return (c >= 0x20 && c < 0x7f);
 }
 
 static bool is_whitespace(char c)
@@ -85,7 +91,7 @@ static enum nvram_parser_state brcmf_nvram_handle_idle(struct nvram_parser *nvp)
 {
 	char c;
 
-	c = nvp->fwnv->data[nvp->pos];
+	c = nvp->data[nvp->pos];
 	if (c == '\n')
 		return COMMENT;
 	if (is_whitespace(c))
@@ -109,18 +115,18 @@ static enum nvram_parser_state brcmf_nvram_handle_key(struct nvram_parser *nvp)
 	enum nvram_parser_state st = nvp->state;
 	char c;
 
-	c = nvp->fwnv->data[nvp->pos];
+	c = nvp->data[nvp->pos];
 	if (c == '=') {
 		/* ignore RAW1 by treating as comment */
-		if (strncmp(&nvp->fwnv->data[nvp->entry], "RAW1", 4) == 0)
+		if (strncmp(&nvp->data[nvp->entry], "RAW1", 4) == 0)
 			st = COMMENT;
 		else
 			st = VALUE;
-		if (strncmp(&nvp->fwnv->data[nvp->entry], "devpath", 7) == 0)
+		if (strncmp(&nvp->data[nvp->entry], "devpath", 7) == 0)
 			nvp->multi_dev_v1 = true;
-		if (strncmp(&nvp->fwnv->data[nvp->entry], "pcie/", 5) == 0)
+		if (strncmp(&nvp->data[nvp->entry], "pcie/", 5) == 0)
 			nvp->multi_dev_v2 = true;
-	} else if (!is_nvram_char(c)) {
+	} else if (!is_nvram_char(c) || c == ' ') {
 		brcmf_dbg(INFO, "warning: ln=%d:col=%d: '=' expected, skip invalid key entry\n",
 			  nvp->line, nvp->column);
 		return COMMENT;
@@ -139,11 +145,11 @@ brcmf_nvram_handle_value(struct nvram_parser *nvp)
 	char *ekv;
 	u32 cplen;
 
-	c = nvp->fwnv->data[nvp->pos];
+	c = nvp->data[nvp->pos];
 	if (!is_nvram_char(c)) {
 		/* key,value pair complete */
-		ekv = (u8 *)&nvp->fwnv->data[nvp->pos];
-		skv = (u8 *)&nvp->fwnv->data[nvp->entry];
+		ekv = (u8 *)&nvp->data[nvp->pos];
+		skv = (u8 *)&nvp->data[nvp->entry];
 		cplen = ekv - skv;
 		if (nvp->nvram_len + cplen + 1 >= BRCMF_FW_MAX_NVRAM_SIZE)
 			return END;
@@ -162,17 +168,20 @@ brcmf_nvram_handle_value(struct nvram_parser *nvp)
 static enum nvram_parser_state
 brcmf_nvram_handle_comment(struct nvram_parser *nvp)
 {
-	char *eol, *sol;
+	char *eoc, *sol;
 
-	sol = (char *)&nvp->fwnv->data[nvp->pos];
-	eol = strchr(sol, '\n');
-	if (eol == NULL)
-		return END;
+	sol = (char *)&nvp->data[nvp->pos];
+	eoc = strchr(sol, '\n');
+	if (!eoc) {
+		eoc = strchr(sol, '\0');
+		if (!eoc)
+			return END;
+	}
 
 	/* eat all moving to next line */
 	nvp->line++;
 	nvp->column = 1;
-	nvp->pos += (eol - sol) + 1;
+	nvp->pos += (eoc - sol) + 1;
 	return IDLE;
 }
 
@@ -192,17 +201,17 @@ static enum nvram_parser_state
 };
 
 static int brcmf_init_nvram_parser(struct nvram_parser *nvp,
-				   const struct firmware *nv)
+				   const u8 *data, size_t data_len)
 {
 	size_t size;
 
 	memset(nvp, 0, sizeof(*nvp));
-	nvp->fwnv = nv;
+	nvp->data = data;
 	/* Limit size to MAX_NVRAM_SIZE, some files contain lot of comment */
-	if (nv->size > BRCMF_FW_MAX_NVRAM_SIZE)
+	if (data_len > BRCMF_FW_MAX_NVRAM_SIZE)
 		size = BRCMF_FW_MAX_NVRAM_SIZE;
 	else
-		size = nv->size;
+		size = data_len;
 	/* Alloc for extra 0 byte + roundup by 4 + length field */
 	size += 1 + 3 + sizeof(u32);
 	nvp->nvram = kzalloc(size, GFP_KERNEL);
@@ -222,6 +231,12 @@ static int brcmf_init_nvram_parser(struct nvram_parser *nvp,
 static void brcmf_fw_strip_multi_v1(struct nvram_parser *nvp, u16 domain_nr,
 				    u16 bus_nr)
 {
+	/* Device path with a leading '=' key-value separator */
+	char pci_path[] = "=pci/?/?";
+	size_t pci_len;
+	char pcie_path[] = "=pcie/?/?";
+	size_t pcie_len;
+
 	u32 i, j;
 	bool found;
 	u8 *nvram;
@@ -238,20 +253,24 @@ static void brcmf_fw_strip_multi_v1(struct nvram_parser *nvp, u16 domain_nr,
 	/* First search for the devpathX and see if it is the configuration
 	 * for domain_nr/bus_nr. Search complete nvp
 	 */
+	snprintf(pci_path, sizeof(pci_path), "=pci/%d/%d", domain_nr,
+		 bus_nr);
+	pci_len = strlen(pci_path);
+	snprintf(pcie_path, sizeof(pcie_path), "=pcie/%d/%d", domain_nr,
+		 bus_nr);
+	pcie_len = strlen(pcie_path);
 	found = false;
 	i = 0;
 	while (i < nvp->nvram_len - BRCMF_FW_NVRAM_DEVPATH_LEN) {
 		/* Format: devpathX=pcie/Y/Z/
 		 * Y = domain_nr, Z = bus_nr, X = virtual ID
 		 */
-		if ((strncmp(&nvp->nvram[i], "devpath", 7) == 0) &&
-		    (strncmp(&nvp->nvram[i + 8], "=pcie/", 6) == 0)) {
-			if (((nvp->nvram[i + 14] - '0') == domain_nr) &&
-			    ((nvp->nvram[i + 16] - '0') == bus_nr)) {
-				id = nvp->nvram[i + 7] - '0';
-				found = true;
-				break;
-			}
+		if (strncmp(&nvp->nvram[i], "devpath", 7) == 0 &&
+		    (!strncmp(&nvp->nvram[i + 8], pci_path, pci_len) ||
+		     !strncmp(&nvp->nvram[i + 8], pcie_path, pcie_len))) {
+			id = nvp->nvram[i + 7] - '0';
+			found = true;
+			break;
 		}
 		while (nvp->nvram[i] != 0)
 			i++;
@@ -297,6 +316,8 @@ fail:
 static void brcmf_fw_strip_multi_v2(struct nvram_parser *nvp, u16 domain_nr,
 				    u16 bus_nr)
 {
+	char prefix[BRCMF_FW_NVRAM_PCIEDEV_LEN];
+	size_t len;
 	u32 i, j;
 	u8 *nvram;
 
@@ -308,14 +329,13 @@ static void brcmf_fw_strip_multi_v2(struct nvram_parser *nvp, u16 domain_nr,
 	 * Valid entries are of type pcie/X/Y/ where X = domain_nr and
 	 * Y = bus_nr.
 	 */
+	snprintf(prefix, sizeof(prefix), "pcie/%d/%d/", domain_nr, bus_nr);
+	len = strlen(prefix);
 	i = 0;
 	j = 0;
-	while (i < nvp->nvram_len - BRCMF_FW_NVRAM_PCIEDEV_LEN) {
-		if ((strncmp(&nvp->nvram[i], "pcie/", 5) == 0) &&
-		    (nvp->nvram[i + 6] == '/') && (nvp->nvram[i + 8] == '/') &&
-		    ((nvp->nvram[i + 5] - '0') == domain_nr) &&
-		    ((nvp->nvram[i + 7] - '0') == bus_nr)) {
-			i += BRCMF_FW_NVRAM_PCIEDEV_LEN;
+	while (i < nvp->nvram_len - len) {
+		if (strncmp(&nvp->nvram[i], prefix, len) == 0) {
+			i += len;
 			while (nvp->nvram[i] != 0) {
 				nvram[j] = nvp->nvram[i];
 				i++;
@@ -342,18 +362,18 @@ fail:
  * and converts newlines to NULs. Shortens buffer as needed and pads with NULs.
  * End of buffer is completed with token identifying length of buffer.
  */
-static void *brcmf_fw_nvram_strip(const struct firmware *nv, u32 *new_length,
-				  u16 domain_nr, u16 bus_nr)
+static void *brcmf_fw_nvram_strip(const u8 *data, size_t data_len,
+				  u32 *new_length, u16 domain_nr, u16 bus_nr)
 {
 	struct nvram_parser nvp;
 	u32 pad;
 	u32 token;
 	__le32 token_le;
 
-	if (brcmf_init_nvram_parser(&nvp, nv) < 0)
+	if (brcmf_init_nvram_parser(&nvp, data, data_len) < 0)
 		return NULL;
 
-	while (nvp.pos < nv->size) {
+	while (nvp.pos < data_len) {
 		nvp.state = nv_parser_states[nvp.state](&nvp);
 		if (nvp.state == END)
 			break;
@@ -412,7 +432,7 @@ static void brcmf_fw_request_nvram_done(const struct firmware *fw, void *ctx)
 		goto fail;
 
 	if (fw) {
-		nvram = brcmf_fw_nvram_strip(fw, &nvram_length,
+		nvram = brcmf_fw_nvram_strip(fw->data, fw->size, &nvram_length,
 					     fwctx->domain_nr, fwctx->bus_nr);
 		release_firmware(fw);
 		if (!nvram && !(fwctx->flags & BRCMF_FW_REQ_NV_OPTIONAL))
