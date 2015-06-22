@@ -517,6 +517,15 @@ config SRCU
 	  permits arbitrary sleeping or blocking within RCU read-side critical
 	  sections.
 
+config FRSRCU
+	bool
+	help
+	  This option selects the fast-readers sleepable version of
+	  RCU. This version permits arbitrary sleeping or blocking within
+	  RCU read-side critical sections, but also avoids memory barriers
+	  within read-side markers.  Nothing comes for free, though.
+	  Grace periods are quite a bit more expensive than those of SRCU.
+
 config TASKS_RCU
 	bool
 	default n

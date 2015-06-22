@@ -44,6 +44,7 @@
 #include <linux/cpu.h>
 #include <linux/delay.h>
 #include <linux/stat.h>
+#include <linux/frsrcu.h>
 #include <linux/srcu.h>
 #include <linux/slab.h>
 #include <linux/trace_clock.h>
@@ -262,6 +263,102 @@ struct rcu_torture_ops {
 };
 
 static struct rcu_torture_ops *cur_ops;
+
+/*
+ * Definitions for frsrcu torture testing.
+ */
+
+DEFINE_STATIC_FRSRCU(frsrcu_ctl);
+static struct frsrcu_struct frsrcu_ctld;
+static struct frsrcu_struct *frsrcu_ctlp = &frsrcu_ctl;
+
+static int frsrcu_torture_read_lock(void) __acquires(frsrcu_ctlp)
+{
+	return frsrcu_read_lock(frsrcu_ctlp);
+}
+
+static void frsrcu_torture_read_unlock(int idx) __releases(frsrcu_ctlp)
+{
+	frsrcu_read_unlock(frsrcu_ctlp, idx);
+}
+
+static unsigned long frsrcu_torture_completed(void)
+{
+	return frsrcu_batches_completed(frsrcu_ctlp);
+}
+
+static void frsrcu_torture_synchronize(void)
+{
+	synchronize_frsrcu(frsrcu_ctlp);
+}
+
+static void frsrcu_torture_stats(void)
+{
+	int cpu;
+	int idx = frsrcu_ctlp->completed & 0x1;
+
+	pr_alert("%s%s per-CPU(idx=%d):",
+		 torture_type, TORTURE_FLAG, idx);
+	for_each_possible_cpu(cpu) {
+		long c0, c1;
+
+		c0 = (long)per_cpu_ptr(frsrcu_ctlp->per_cpu_ref, cpu)->c[!idx];
+		c1 = (long)per_cpu_ptr(frsrcu_ctlp->per_cpu_ref, cpu)->c[idx];
+		pr_cont(" %d(%ld,%ld)", cpu, c0, c1);
+	}
+	pr_cont("\n");
+}
+
+static void frsrcu_torture_synchronize_expedited(void)
+{
+	synchronize_frsrcu_expedited(frsrcu_ctlp);
+}
+
+static void rcu_sync_torture_init(void);
+static void srcu_read_delay(struct torture_random_state *rrsp);
+
+static struct rcu_torture_ops frsrcu_ops = {
+	.ttype		= FRSRCU_FLAVOR,
+	.init		= rcu_sync_torture_init,
+	.readlock	= frsrcu_torture_read_lock,
+	.read_delay	= srcu_read_delay,
+	.readunlock	= frsrcu_torture_read_unlock,
+	.started	= NULL,
+	.completed	= frsrcu_torture_completed,
+	.sync		= frsrcu_torture_synchronize,
+	.exp_sync	= frsrcu_torture_synchronize_expedited,
+	.stats		= frsrcu_torture_stats,
+	.name		= "frsrcu"
+};
+
+static void frsrcu_torture_init(void)
+{
+	rcu_sync_torture_init();
+	WARN_ON(init_frsrcu_struct(&frsrcu_ctld));
+	frsrcu_ctlp = &frsrcu_ctld;
+}
+
+static void frsrcu_torture_cleanup(void)
+{
+	cleanup_frsrcu_struct(&frsrcu_ctld);
+	frsrcu_ctlp = &frsrcu_ctl; /* In case of a later rcutorture run. */
+}
+
+/* As above, but dynamically allocated. */
+static struct rcu_torture_ops frsrcud_ops = {
+	.ttype		= FRSRCU_FLAVOR,
+	.init		= frsrcu_torture_init,
+	.cleanup	= frsrcu_torture_cleanup,
+	.readlock	= frsrcu_torture_read_lock,
+	.read_delay	= srcu_read_delay,
+	.readunlock	= frsrcu_torture_read_unlock,
+	.started	= NULL,
+	.completed	= frsrcu_torture_completed,
+	.sync		= frsrcu_torture_synchronize,
+	.exp_sync	= frsrcu_torture_synchronize_expedited,
+	.stats		= frsrcu_torture_stats,
+	.name		= "frsrcud"
+};
 
 /*
  * Definitions for rcu torture testing.
@@ -1709,6 +1806,7 @@ rcu_torture_init(void)
 	int cpu;
 	int firsterr = 0;
 	static struct rcu_torture_ops *torture_ops[] = {
+		&frsrcu_ops, &frsrcud_ops,
 		&rcu_ops, &rcu_bh_ops, &rcu_busted_ops, &srcu_ops, &srcud_ops,
 		&sched_ops, RCUTORTURE_TASKS_OPS
 	};

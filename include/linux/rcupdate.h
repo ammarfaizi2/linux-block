@@ -69,6 +69,7 @@ void rcu_unexpedite_gp(void);
 #endif /* #else #ifdef CONFIG_TINY_RCU */
 
 enum rcutorture_type {
+	FRSRCU_FLAVOR,
 	RCU_FLAVOR,
 	RCU_BH_FLAVOR,
 	RCU_SCHED_FLAVOR,
