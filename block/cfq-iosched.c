@@ -1543,6 +1543,11 @@ static void cfqg_stats_init(struct cfqg_stats *stats)
 #endif
 }
 
+static struct blkg_policy_data *cfq_pd_alloc(gfp_t gfp, int node)
+{
+	return kzalloc_node(sizeof(struct cfq_group), gfp, node);
+}
+
 static void cfq_pd_init(struct blkcg_gq *blkg)
 {
 	struct cfq_group *cfqg = blkg_to_cfqg(blkg);
@@ -1576,6 +1581,11 @@ static void cfq_pd_offline(struct blkcg_gq *blkg)
 	 * stats for them will be lost.  Oh well...
 	 */
 	cfqg_stats_xfer_dead(cfqg);
+}
+
+static void cfq_pd_free(struct blkg_policy_data *pd)
+{
+	return kfree(pd);
 }
 
 /* offset delta from cfqg->stats to cfqg->dead_stats */
@@ -4552,11 +4562,12 @@ static struct elevator_type iosched_cfq = {
 
 #ifdef CONFIG_CFQ_GROUP_IOSCHED
 static struct blkcg_policy blkcg_policy_cfq = {
-	.pd_size		= sizeof(struct cfq_group),
 	.cftypes		= cfq_blkcg_files,
 
+	.pd_alloc_fn		= cfq_pd_alloc,
 	.pd_init_fn		= cfq_pd_init,
 	.pd_offline_fn		= cfq_pd_offline,
+	.pd_free_fn		= cfq_pd_free,
 	.pd_reset_stats_fn	= cfq_pd_reset_stats,
 };
 #endif
