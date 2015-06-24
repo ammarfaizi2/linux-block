@@ -1045,7 +1045,8 @@ int blkcg_activate_policy(struct request_queue *q,
 		blkg->pd[pol->plid] = pd;
 		pd->blkg = blkg;
 		pd->plid = pol->plid;
-		pol->pd_init_fn(blkg);
+		if (pol->pd_init_fn)
+			pol->pd_init_fn(blkg);
 
 		spin_unlock(&blkg->blkcg->lock);
 	}
