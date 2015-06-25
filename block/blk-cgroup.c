@@ -618,7 +618,7 @@ EXPORT_SYMBOL_GPL(blkg_prfill_rwstat);
  * @off: offset to the blkg_stat in @pd
  *
  * Collect the blkg_stat specified by @off from @pd and all its online
- * descendants and return the sum.  The caller must be holding the queue
+ * descendants and their aux counts.  The caller must be holding the queue
  * lock for online tests.
  */
 u64 blkg_stat_recursive_sum(struct blkg_policy_data *pd, int off)
@@ -636,7 +636,8 @@ u64 blkg_stat_recursive_sum(struct blkg_policy_data *pd, int off)
 		struct blkg_stat *stat = (void *)pos_pd + off;
 
 		if (pos_blkg->online)
-			sum += blkg_stat_read(stat);
+			sum += blkg_stat_read(stat) +
+				atomic64_read(&stat->aux_cnt);
 	}
 	rcu_read_unlock();
 
@@ -650,7 +651,7 @@ EXPORT_SYMBOL_GPL(blkg_stat_recursive_sum);
  * @off: offset to the blkg_stat in @pd
  *
  * Collect the blkg_rwstat specified by @off from @pd and all its online
- * descendants and return the sum.  The caller must be holding the queue
+ * descendants and their aux counts.  The caller must be holding the queue
  * lock for online tests.
  */
 struct blkg_rwstat blkg_rwstat_recursive_sum(struct blkg_policy_data *pd,
@@ -676,7 +677,8 @@ struct blkg_rwstat blkg_rwstat_recursive_sum(struct blkg_policy_data *pd,
 		tmp = blkg_rwstat_read(rwstat);
 
 		for (i = 0; i < BLKG_RWSTAT_NR; i++)
-			sum.cnt[i] += tmp.cnt[i];
+			sum.cnt[i] += tmp.cnt[i] +
+				atomic64_read(&rwstat->aux_cnt[i]);
 	}
 	rcu_read_unlock();
 
