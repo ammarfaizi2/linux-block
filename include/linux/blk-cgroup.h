@@ -123,6 +123,9 @@ struct blkcg_gq {
 	/* is this blkg online? protected by both blkcg and q locks */
 	bool				online;
 
+	struct blkg_rwstat		stat_bytes;
+	struct blkg_rwstat		stat_ios;
+
 	struct blkg_policy_data		*pd[BLKCG_MAX_POLS];
 
 	struct rcu_head			rcu_head;
@@ -178,6 +181,10 @@ u64 __blkg_prfill_rwstat(struct seq_file *sf, struct blkg_policy_data *pd,
 u64 blkg_prfill_stat(struct seq_file *sf, struct blkg_policy_data *pd, int off);
 u64 blkg_prfill_rwstat(struct seq_file *sf, struct blkg_policy_data *pd,
 		       int off);
+int blkg_print_stat_bytes(struct seq_file *sf, void *v);
+int blkg_print_stat_ios(struct seq_file *sf, void *v);
+int blkg_print_stat_bytes_recursive(struct seq_file *sf, void *v);
+int blkg_print_stat_ios_recursive(struct seq_file *sf, void *v);
 
 u64 blkg_stat_recursive_sum(struct blkcg_gq *blkg,
 			    struct blkcg_policy *pol, int off);
@@ -605,6 +612,23 @@ static inline void blkg_rwstat_add_aux(struct blkg_rwstat *to,
 			     &to->aux_cnt[i]);
 }
 
+static inline void blkcg_account_io_completion(struct request *rq,
+					       unsigned int bytes)
+{
+	struct request_list *rl = blk_rq_rl(rq);
+	struct blkcg_gq *blkg = rl ? rl->blkg : rq->q->root_blkg;
+
+	blkg_rwstat_add(&blkg->stat_bytes, rq->cmd_flags, bytes);
+}
+
+static inline void blkcg_account_io_done(struct request *rq)
+{
+	struct request_list *rl = blk_rq_rl(rq);
+	struct blkcg_gq *blkg = rl ? rl->blkg : rq->q->root_blkg;
+
+	blkg_rwstat_add(&blkg->stat_ios, rq->cmd_flags, 1);
+}
+
 #else	/* CONFIG_BLK_CGROUP */
 
 struct blkcg {
@@ -654,6 +678,8 @@ static inline struct request_list *blk_get_rl(struct request_queue *q,
 static inline void blk_put_rl(struct request_list *rl) { }
 static inline void blk_rq_set_rl(struct request *rq, struct request_list *rl) { }
 static inline struct request_list *blk_rq_rl(struct request *rq) { return &rq->q->root_rl; }
+static inline void blkcg_account_io_completion(struct request *rq, unsigned int bytes) { }
+static inline void blkcg_account_io_done(struct request *rq) { }
 
 #define blk_queue_for_each_rl(rl, q)	\
 	for ((rl) = &(q)->root_rl; (rl); (rl) = NULL)

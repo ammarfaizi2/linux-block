@@ -2170,6 +2170,8 @@ void blk_account_io_completion(struct request *req, unsigned int bytes)
 		part = req->part;
 		part_stat_add(cpu, part, sectors[rw], bytes >> 9);
 		part_stat_unlock();
+
+		blkcg_account_io_completion(req, bytes);
 	}
 }
 
@@ -2196,6 +2198,8 @@ void blk_account_io_done(struct request *req)
 
 		hd_struct_put(part);
 		part_stat_unlock();
+
+		blkcg_account_io_done(req);
 	}
 }
 
