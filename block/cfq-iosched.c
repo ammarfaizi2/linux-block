@@ -180,8 +180,6 @@ struct cfqg_stats {
 	struct blkg_rwstat		wait_time;
 	/* number of IOs queued up */
 	struct blkg_rwstat		queued;
-	/* total sectors transferred */
-	struct blkg_stat		sectors;
 	/* total disk time and nr sectors dispatched by this group */
 	struct blkg_stat		time;
 #ifdef CONFIG_DEBUG_BLK_CGROUP
@@ -663,12 +661,6 @@ static inline void cfqg_stats_update_io_merged(struct cfq_group *cfqg, int rw)
 	blkg_rwstat_add(&cfqg->stats.merged, rw, 1);
 }
 
-static inline void cfqg_stats_update_dispatch(struct cfq_group *cfqg,
-					      uint64_t bytes, int rw)
-{
-	blkg_stat_add(&cfqg->stats.sectors, bytes >> 9);
-}
-
 static inline void cfqg_stats_update_completion(struct cfq_group *cfqg,
 			uint64_t start_time, uint64_t io_start_time, int rw)
 {
@@ -757,8 +749,6 @@ static inline void cfqg_stats_update_timeslice_used(struct cfq_group *cfqg,
 			unsigned long time, unsigned long unaccounted_time) { }
 static inline void cfqg_stats_update_io_remove(struct cfq_group *cfqg, int rw) { }
 static inline void cfqg_stats_update_io_merged(struct cfq_group *cfqg, int rw) { }
-static inline void cfqg_stats_update_dispatch(struct cfq_group *cfqg,
-					      uint64_t bytes, int rw) { }
 static inline void cfqg_stats_update_completion(struct cfq_group *cfqg,
 			uint64_t start_time, uint64_t io_start_time, int rw) { }
 
@@ -1513,8 +1503,6 @@ static void cfqg_stats_exit(struct cfqg_stats *stats)
 	blkg_rwstat_exit(&stats->service_time);
 	blkg_rwstat_exit(&stats->wait_time);
 	blkg_rwstat_exit(&stats->queued);
-
-	blkg_stat_exit(&stats->sectors);
 	blkg_stat_exit(&stats->time);
 #ifdef CONFIG_DEBUG_BLK_CGROUP
 	blkg_stat_exit(&stats->unaccounted_time);
@@ -1533,8 +1521,6 @@ static int cfqg_stats_init(struct cfqg_stats *stats, gfp_t gfp)
 	    blkg_rwstat_init(&stats->service_time, gfp) ||
 	    blkg_rwstat_init(&stats->wait_time, gfp) ||
 	    blkg_rwstat_init(&stats->queued, gfp) ||
-
-	    blkg_stat_init(&stats->sectors, gfp) ||
 	    blkg_stat_init(&stats->time, gfp))
 		goto err;
 
@@ -1833,6 +1819,40 @@ static int cfqg_print_rwstat_recursive(struct seq_file *sf, void *v)
 	return 0;
 }
 
+static u64 cfqg_prfill_sectors(struct seq_file *sf, struct blkg_policy_data *pd,
+			       int off)
+{
+	u64 sum = blkg_rwstat_total(&pd->blkg->stat_bytes);
+
+	return __blkg_prfill_u64(sf, pd, sum >> 9);
+}
+
+static int cfqg_print_stat_sectors(struct seq_file *sf, void *v)
+{
+	blkcg_print_blkgs(sf, css_to_blkcg(seq_css(sf)),
+			  cfqg_prfill_sectors, &blkcg_policy_cfq, 0, false);
+	return 0;
+}
+
+static u64 cfqg_prfill_sectors_recursive(struct seq_file *sf,
+					 struct blkg_policy_data *pd, int off)
+{
+	struct blkg_rwstat tmp = blkg_rwstat_recursive_sum(pd->blkg, NULL,
+					offsetof(struct blkcg_gq, stat_bytes));
+	u64 sum = atomic64_read(&tmp.aux_cnt[BLKG_RWSTAT_READ]) +
+		atomic64_read(&tmp.aux_cnt[BLKG_RWSTAT_WRITE]);
+
+	return __blkg_prfill_u64(sf, pd, sum >> 9);
+}
+
+static int cfqg_print_stat_sectors_recursive(struct seq_file *sf, void *v)
+{
+	blkcg_print_blkgs(sf, css_to_blkcg(seq_css(sf)),
+			  cfqg_prfill_sectors_recursive, &blkcg_policy_cfq, 0,
+			  false);
+	return 0;
+}
+
 #ifdef CONFIG_DEBUG_BLK_CGROUP
 static u64 cfqg_prfill_avg_queue_size(struct seq_file *sf,
 				      struct blkg_policy_data *pd, int off)
@@ -1907,8 +1927,7 @@ static struct cftype cfq_blkcg_files[] = {
 	},
 	{
 		.name = "sectors",
-		.private = offsetof(struct cfq_group, stats.sectors),
-		.seq_show = cfqg_print_stat,
+		.seq_show = cfqg_print_stat_sectors,
 	},
 	{
 		.name = "io_service_bytes",
@@ -1949,8 +1968,7 @@ static struct cftype cfq_blkcg_files[] = {
 	},
 	{
 		.name = "sectors_recursive",
-		.private = offsetof(struct cfq_group, stats.sectors),
-		.seq_show = cfqg_print_stat_recursive,
+		.seq_show = cfqg_print_stat_sectors_recursive,
 	},
 	{
 		.name = "io_service_bytes_recursive",
@@ -2820,7 +2838,6 @@ static void cfq_dispatch_insert(struct request_queue *q, struct request *rq)
 
 	cfqd->rq_in_flight[cfq_cfqq_sync(cfqq)]++;
 	cfqq->nr_sectors += blk_rq_sectors(rq);
-	cfqg_stats_update_dispatch(cfqq->cfqg, blk_rq_bytes(rq), rq->cmd_flags);
 }
 
 /*
