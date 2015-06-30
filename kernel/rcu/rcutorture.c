@@ -686,9 +686,19 @@ static struct rcu_torture_ops tasks_ops = {
 
 #define RCUTORTURE_TASKS_OPS &tasks_ops,
 
+static bool __maybe_unused torturing_tasks(void)
+{
+	return cur_ops == &tasks_ops;
+}
+
 #else /* #ifdef CONFIG_TASKS_RCU */
 
 #define RCUTORTURE_TASKS_OPS
+
+static bool torturing_tasks(void)
+{
+	return false;
+}
 
 #endif /* #else #ifdef CONFIG_TASKS_RCU */
 
@@ -1089,7 +1099,8 @@ static void rcu_torture_timer(unsigned long unused)
 	p = rcu_dereference_check(rcu_torture_current,
 				  rcu_read_lock_bh_held() ||
 				  rcu_read_lock_sched_held() ||
-				  srcu_read_lock_held(srcu_ctlp));
+				  srcu_read_lock_held(srcu_ctlp) ||
+				  torturing_tasks());
 	if (p == NULL) {
 		/* Leave because rcu_torture_writer is not yet underway */
 		cur_ops->readunlock(idx);
@@ -1163,7 +1174,8 @@ rcu_torture_reader(void *arg)
 		p = rcu_dereference_check(rcu_torture_current,
 					  rcu_read_lock_bh_held() ||
 					  rcu_read_lock_sched_held() ||
-					  srcu_read_lock_held(srcu_ctlp));
+					  srcu_read_lock_held(srcu_ctlp) ||
+					  torturing_tasks());
 		if (p == NULL) {
 			/* Wait for rcu_torture_writer to get underway */
 			cur_ops->readunlock(idx);
