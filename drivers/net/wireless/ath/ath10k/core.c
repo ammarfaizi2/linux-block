@@ -49,6 +49,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.patch_load_addr = QCA988X_HW_2_0_PATCH_LOAD_ADDR,
 		.uart_pin = 7,
 		.has_shifted_cc_wraparound = true,
+		.otp_exe_param = 0,
 		.fw = {
 			.dir = QCA988X_HW_2_0_FW_DIR,
 			.fw = QCA988X_HW_2_0_FW_FILE,
@@ -63,6 +64,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.name = "qca6174 hw2.1",
 		.patch_load_addr = QCA6174_HW_2_1_PATCH_LOAD_ADDR,
 		.uart_pin = 6,
+		.otp_exe_param = 0,
 		.fw = {
 			.dir = QCA6174_HW_2_1_FW_DIR,
 			.fw = QCA6174_HW_2_1_FW_FILE,
@@ -77,6 +79,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.name = "qca6174 hw3.0",
 		.patch_load_addr = QCA6174_HW_3_0_PATCH_LOAD_ADDR,
 		.uart_pin = 6,
+		.otp_exe_param = 0,
 		.fw = {
 			.dir = QCA6174_HW_3_0_FW_DIR,
 			.fw = QCA6174_HW_3_0_FW_FILE,
@@ -91,6 +94,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.name = "qca6174 hw3.2",
 		.patch_load_addr = QCA6174_HW_3_0_PATCH_LOAD_ADDR,
 		.uart_pin = 6,
+		.otp_exe_param = 0,
 		.fw = {
 			/* uses same binaries as hw3.0 */
 			.dir = QCA6174_HW_3_0_FW_DIR,
@@ -99,6 +103,21 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board = QCA6174_HW_3_0_BOARD_DATA_FILE,
 			.board_size = QCA6174_BOARD_DATA_SZ,
 			.board_ext_size = QCA6174_BOARD_EXT_DATA_SZ,
+		},
+	},
+	{
+		.id = QCA99X0_HW_2_0_DEV_VERSION,
+		.name = "qca99x0 hw2.0",
+		.patch_load_addr = QCA99X0_HW_2_0_PATCH_LOAD_ADDR,
+		.uart_pin = 7,
+		.otp_exe_param = 0x00000700,
+		.fw = {
+			.dir = QCA99X0_HW_2_0_FW_DIR,
+			.fw = QCA99X0_HW_2_0_FW_FILE,
+			.otp = QCA99X0_HW_2_0_OTP_FILE,
+			.board = QCA99X0_HW_2_0_BOARD_DATA_FILE,
+			.board_size = QCA99X0_BOARD_DATA_SZ,
+			.board_ext_size = QCA99X0_BOARD_EXT_DATA_SZ,
 		},
 	},
 };
@@ -399,6 +418,7 @@ out:
 static int ath10k_download_and_run_otp(struct ath10k *ar)
 {
 	u32 result, address = ar->hw_params.patch_load_addr;
+	u32 bmi_otp_exe_param = ar->hw_params.otp_exe_param;
 	int ret;
 
 	ret = ath10k_download_board_data(ar, ar->board_data, ar->board_len);
@@ -424,7 +444,7 @@ static int ath10k_download_and_run_otp(struct ath10k *ar)
 		return ret;
 	}
 
-	ret = ath10k_bmi_execute(ar, address, 0, &result);
+	ret = ath10k_bmi_execute(ar, address, bmi_otp_exe_param, &result);
 	if (ret) {
 		ath10k_err(ar, "could not execute otp (%d)\n", ret);
 		return ret;
@@ -456,6 +476,13 @@ static int ath10k_download_fw(struct ath10k *ar, enum ath10k_firmware_mode mode)
 		data = ar->firmware_data;
 		data_len = ar->firmware_len;
 		mode_name = "normal";
+		ret = ath10k_swap_code_seg_configure(ar,
+				ATH10K_SWAP_CODE_SEG_BIN_TYPE_FW);
+		if (ret) {
+			ath10k_err(ar, "failed to configure fw code swap: %d\n",
+				   ret);
+			return ret;
+		}
 		break;
 	case ATH10K_FIRMWARE_MODE_UTF:
 		data = ar->testmode.utf->data;
@@ -495,6 +522,8 @@ static void ath10k_core_free_firmware_files(struct ath10k *ar)
 	if (!IS_ERR(ar->cal_file))
 		release_firmware(ar->cal_file);
 
+	ath10k_swap_code_seg_release(ar);
+
 	ar->board = NULL;
 	ar->board_data = NULL;
 	ar->board_len = 0;
@@ -508,6 +537,7 @@ static void ath10k_core_free_firmware_files(struct ath10k *ar)
 	ar->firmware_len = 0;
 
 	ar->cal_file = NULL;
+
 }
 
 static int ath10k_fetch_cal_file(struct ath10k *ar)
@@ -780,6 +810,13 @@ static int ath10k_core_fetch_firmware_api_n(struct ath10k *ar, const char *name)
 
 			ath10k_dbg(ar, ATH10K_DBG_BOOT, "found fw ie htt op version %d\n",
 				   ar->htt.op_version);
+			break;
+		case ATH10K_FW_IE_FW_CODE_SWAP_IMAGE:
+			ath10k_dbg(ar, ATH10K_DBG_BOOT,
+				   "found fw code swap image ie (%zd B)\n",
+				   ie_len);
+			ar->swap.firmware_codeswap_data = data;
+			ar->swap.firmware_codeswap_len = ie_len;
 			break;
 		default:
 			ath10k_warn(ar, "Unknown FW IE: %u\n",
@@ -1078,6 +1115,14 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
 		ar->fw_stats_req_mask = WMI_STAT_PDEV | WMI_STAT_VDEV |
 			WMI_STAT_PEER;
 		break;
+	case ATH10K_FW_WMI_OP_VERSION_10_4:
+		ar->max_num_peers = TARGET_10_4_NUM_PEERS;
+		ar->max_num_stations = TARGET_10_4_NUM_STATIONS;
+		ar->num_active_peers = TARGET_10_4_ACTIVE_PEERS;
+		ar->max_num_vdevs = TARGET_10_4_NUM_VDEVS;
+		ar->num_tids = TARGET_10_4_TGT_NUM_TIDS;
+		ar->fw_stats_req_mask = WMI_STAT_PEER;
+		break;
 	case ATH10K_FW_WMI_OP_VERSION_UNSET:
 	case ATH10K_FW_WMI_OP_VERSION_MAX:
 		WARN_ON(1);
@@ -1100,6 +1145,7 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
 		case ATH10K_FW_WMI_OP_VERSION_TLV:
 			ar->htt.op_version = ATH10K_FW_HTT_OP_VERSION_TLV;
 			break;
+		case ATH10K_FW_WMI_OP_VERSION_10_4:
 		case ATH10K_FW_WMI_OP_VERSION_UNSET:
 		case ATH10K_FW_WMI_OP_VERSION_MAX:
 			WARN_ON(1);
@@ -1374,6 +1420,13 @@ static int ath10k_core_probe_fw(struct ath10k *ar)
 		goto err_free_firmware_files;
 	}
 
+	ret = ath10k_swap_code_seg_init(ar);
+	if (ret) {
+		ath10k_err(ar, "failed to initialize code swap segment: %d\n",
+			   ret);
+		goto err_free_firmware_files;
+	}
+
 	mutex_lock(&ar->conf_mutex);
 
 	ret = ath10k_core_start(ar, ATH10K_FIRMWARE_MODE_NORMAL);
@@ -1514,9 +1567,15 @@ struct ath10k *ath10k_core_create(size_t priv_size, struct device *dev,
 	switch (hw_rev) {
 	case ATH10K_HW_QCA988X:
 		ar->regs = &qca988x_regs;
+		ar->hw_values = &qca988x_values;
 		break;
 	case ATH10K_HW_QCA6174:
 		ar->regs = &qca6174_regs;
+		ar->hw_values = &qca6174_values;
+		break;
+	case ATH10K_HW_QCA99X0:
+		ar->regs = &qca99x0_regs;
+		ar->hw_values = &qca99x0_values;
 		break;
 	default:
 		ath10k_err(ar, "unsupported core hardware revision %d\n",

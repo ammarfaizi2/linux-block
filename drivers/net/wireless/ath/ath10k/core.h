@@ -36,6 +36,7 @@
 #include "spectral.h"
 #include "thermal.h"
 #include "wow.h"
+#include "swap.h"
 
 #define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
 #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
@@ -560,6 +561,7 @@ struct ath10k {
 	struct completion target_suspend;
 
 	const struct ath10k_hw_regs *regs;
+	const struct ath10k_hw_values *hw_values;
 	struct ath10k_bmi bmi;
 	struct ath10k_wmi wmi;
 	struct ath10k_htc htc;
@@ -570,6 +572,7 @@ struct ath10k {
 		const char *name;
 		u32 patch_load_addr;
 		int uart_pin;
+		u32 otp_exe_param;
 
 		/* This is true if given HW chip has a quirky Cycle Counter
 		 * wraparound which resets to 0x7fffffff instead of 0. All
@@ -601,6 +604,12 @@ struct ath10k {
 	size_t firmware_len;
 
 	const struct firmware *cal_file;
+
+	struct {
+		const void *firmware_codeswap_data;
+		size_t firmware_codeswap_len;
+		struct ath10k_swap_code_seg_info *firmware_swap_code_seg_info;
+	} swap;
 
 	char spec_board_id[100];
 	bool spec_board_loaded;
@@ -675,6 +684,8 @@ struct ath10k {
 	int max_num_stations;
 	int max_num_vdevs;
 	int max_num_tdls_vdevs;
+	int num_active_peers;
+	int num_tids;
 
 	struct work_struct offchan_tx_work;
 	struct sk_buff_head offchan_tx_queue;
