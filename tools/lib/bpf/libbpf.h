@@ -38,6 +38,13 @@ int bpf_object__unload(struct bpf_object *obj);
 /* Accessors of bpf_object */
 int bpf_object__get_prog_cnt(struct bpf_object *obj, size_t *pcnt);
 
+struct bpf_object *bpf_object__next(struct bpf_object *prev);
+#define bpf_object__for_each(pos, tmp)			\
+	for ((pos) = bpf_object__next(NULL),		\
+		(tmp) = bpf_object__next(pos);		\
+	     (pos) != NULL;				\
+	     (pos) = (tmp), (tmp) = bpf_object__next(tmp))
+
 /* Accessors of bpf_program. */
 struct bpf_program;
 struct bpf_program *bpf_program__next(struct bpf_program *prog,
