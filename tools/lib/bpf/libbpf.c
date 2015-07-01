@@ -936,6 +936,15 @@ void bpf_object__close(struct bpf_object *obj)
 	free(obj);
 }
 
+int bpf_object__get_prog_cnt(struct bpf_object *obj, size_t *pcnt)
+{
+	if (!obj || !pcnt)
+		return -EINVAL;
+
+	*pcnt = obj->nr_programs;
+	return 0;
+}
+
 struct bpf_program *
 bpf_program__next(struct bpf_program *prev, struct bpf_object *obj)
 {

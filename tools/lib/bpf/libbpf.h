@@ -35,6 +35,9 @@ void bpf_object__close(struct bpf_object *object);
 int bpf_object__load(struct bpf_object *obj);
 int bpf_object__unload(struct bpf_object *obj);
 
+/* Accessors of bpf_object */
+int bpf_object__get_prog_cnt(struct bpf_object *obj, size_t *pcnt);
+
 /* Accessors of bpf_program. */
 struct bpf_program;
 struct bpf_program *bpf_program__next(struct bpf_program *prog,
