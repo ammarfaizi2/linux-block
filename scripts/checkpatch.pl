@@ -5011,6 +5011,7 @@ sub process {
 				     "memory barrier without comment\n" . $herecurr);
 			}
 		}
+
 # check for waitqueue_active without a comment.
 		if ($line =~ /\bwaitqueue_active\s*\(/) {
 			if (!ctx_has_comment($first_line, $linenr)) {
@@ -5018,6 +5019,15 @@ sub process {
 				     "waitqueue_active without comment\n" . $herecurr);
 			}
 		}
+
+# check for expedited grace periods that interrupt CPUs.
+# note that synchronize_srcu_expedited() does -not- do this, so no complaints.
+		if ($line =~ /\b(synchronize_rcu_expedited|synchronize_sched_expedited)\(/) {
+			WARN("EXPEDITED_RCU_GRACE_PERIOD",
+			     "expedited RCU grace periods should be avoided\n" . $herecurr);
+
+		}
+
 # check of hardware specific defines
 		if ($line =~ m@^.\s*\#\s*if.*\b(__i386__|__powerpc64__|__sun__|__s390x__)\b@ && $realfile !~ m@include/asm-@) {
 			CHK("ARCH_DEFINES",
