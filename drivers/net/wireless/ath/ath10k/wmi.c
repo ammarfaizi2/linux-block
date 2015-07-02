@@ -1923,6 +1923,8 @@ ath10k_wmi_event_scan_type_str(enum wmi_scan_event_type type,
 			return "completed [preempted]";
 		case WMI_SCAN_REASON_TIMEDOUT:
 			return "completed [timedout]";
+		case WMI_SCAN_REASON_INTERNAL_FAILURE:
+			return "completed [internal err]";
 		case WMI_SCAN_REASON_MAX:
 			break;
 		}
@@ -1937,6 +1939,10 @@ ath10k_wmi_event_scan_type_str(enum wmi_scan_event_type type,
 		return "preempted";
 	case WMI_SCAN_EVENT_START_FAILED:
 		return "start failed";
+	case WMI_SCAN_EVENT_RESTARTED:
+		return "restarted";
+	case WMI_SCAN_EVENT_FOREIGN_CHANNEL_EXIT:
+		return "foreign channel exit";
 	default:
 		return "unknown";
 	}
@@ -2012,6 +2018,8 @@ int ath10k_wmi_event_scan(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	case WMI_SCAN_EVENT_DEQUEUED:
 	case WMI_SCAN_EVENT_PREEMPTED:
+	case WMI_SCAN_EVENT_RESTARTED:
+	case WMI_SCAN_EVENT_FOREIGN_CHANNEL_EXIT:
 	default:
 		break;
 	}
@@ -2314,6 +2322,29 @@ static int ath10k_wmi_op_pull_ch_info_ev(struct ath10k *ar, struct sk_buff *skb,
 	arg->noise_floor = ev->noise_floor;
 	arg->rx_clear_count = ev->rx_clear_count;
 	arg->cycle_count = ev->cycle_count;
+
+	return 0;
+}
+
+static int ath10k_wmi_10_4_op_pull_ch_info_ev(struct ath10k *ar,
+					      struct sk_buff *skb,
+					      struct wmi_ch_info_ev_arg *arg)
+{
+	struct wmi_10_4_chan_info_event *ev = (void *)skb->data;
+
+	if (skb->len < sizeof(*ev))
+		return -EPROTO;
+
+	skb_pull(skb, sizeof(*ev));
+	arg->err_code = ev->err_code;
+	arg->freq = ev->freq;
+	arg->cmd_flags = ev->cmd_flags;
+	arg->noise_floor = ev->noise_floor;
+	arg->rx_clear_count = ev->rx_clear_count;
+	arg->cycle_count = ev->cycle_count;
+	arg->chan_tx_pwr_range = ev->chan_tx_pwr_range;
+	arg->chan_tx_pwr_tp = ev->chan_tx_pwr_tp;
+	arg->rx_frame_count = ev->rx_frame_count;
 
 	return 0;
 }
@@ -2874,33 +2905,42 @@ exit:
 static void ath10k_wmi_update_tim(struct ath10k *ar,
 				  struct ath10k_vif *arvif,
 				  struct sk_buff *bcn,
-				  const struct wmi_tim_info *tim_info)
+				  const struct wmi_tim_info_arg *tim_info)
 {
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)bcn->data;
 	struct ieee80211_tim_ie *tim;
 	u8 *ies, *ie;
 	u8 ie_len, pvm_len;
 	__le32 t;
-	u32 v;
+	u32 v, tim_len;
+
+	/* When FW reports 0 in tim_len, ensure atleast first byte
+	 * in tim_bitmap is considered for pvm calculation.
+	 */
+	tim_len = tim_info->tim_len ? __le32_to_cpu(tim_info->tim_len) : 1;
 
 	/* if next SWBA has no tim_changed the tim_bitmap is garbage.
 	 * we must copy the bitmap upon change and reuse it later */
 	if (__le32_to_cpu(tim_info->tim_changed)) {
 		int i;
 
-		BUILD_BUG_ON(sizeof(arvif->u.ap.tim_bitmap) !=
-			     sizeof(tim_info->tim_bitmap));
+		if (sizeof(arvif->u.ap.tim_bitmap) < tim_len) {
+			ath10k_warn(ar, "SWBA TIM field is too big (%u), truncated it to %zu",
+				    tim_len, sizeof(arvif->u.ap.tim_bitmap));
+			tim_len = sizeof(arvif->u.ap.tim_bitmap);
+		}
 
-		for (i = 0; i < sizeof(arvif->u.ap.tim_bitmap); i++) {
+		for (i = 0; i < tim_len; i++) {
 			t = tim_info->tim_bitmap[i / 4];
 			v = __le32_to_cpu(t);
 			arvif->u.ap.tim_bitmap[i] = (v >> ((i % 4) * 8)) & 0xFF;
 		}
 
-		/* FW reports either length 0 or 16
-		 * so we calculate this on our own */
+		/* FW reports either length 0 or length based on max supported
+		 * station. so we calculate this on our own
+		 */
 		arvif->u.ap.tim_len = 0;
-		for (i = 0; i < sizeof(arvif->u.ap.tim_bitmap); i++)
+		for (i = 0; i < tim_len; i++)
 			if (arvif->u.ap.tim_bitmap[i])
 				arvif->u.ap.tim_len = i;
 
@@ -2924,7 +2964,7 @@ static void ath10k_wmi_update_tim(struct ath10k *ar,
 	pvm_len = ie_len - 3; /* exclude dtim count, dtim period, bmap ctl */
 
 	if (pvm_len < arvif->u.ap.tim_len) {
-		int expand_size = sizeof(arvif->u.ap.tim_bitmap) - pvm_len;
+		int expand_size = tim_len - pvm_len;
 		int move_size = skb_tail_pointer(bcn) - (ie + 2 + ie_len);
 		void *next_ie = ie + 2 + ie_len;
 
@@ -2939,7 +2979,7 @@ static void ath10k_wmi_update_tim(struct ath10k *ar,
 		}
 	}
 
-	if (pvm_len > sizeof(arvif->u.ap.tim_bitmap)) {
+	if (pvm_len > tim_len) {
 		ath10k_warn(ar, "tim pvm length is too great (%d)\n", pvm_len);
 		return;
 	}
@@ -3003,8 +3043,79 @@ static int ath10k_wmi_op_pull_swba_ev(struct ath10k *ar, struct sk_buff *skb,
 		if (WARN_ON_ONCE(i == ARRAY_SIZE(arg->tim_info)))
 			break;
 
-		arg->tim_info[i] = &ev->bcn_info[i].tim_info;
+		if (__le32_to_cpu(ev->bcn_info[i].tim_info.tim_len) >
+		     sizeof(ev->bcn_info[i].tim_info.tim_bitmap)) {
+			ath10k_warn(ar, "refusing to parse invalid swba structure\n");
+			return -EPROTO;
+		}
+
+		arg->tim_info[i].tim_len = ev->bcn_info[i].tim_info.tim_len;
+		arg->tim_info[i].tim_mcast = ev->bcn_info[i].tim_info.tim_mcast;
+		arg->tim_info[i].tim_bitmap =
+				ev->bcn_info[i].tim_info.tim_bitmap;
+		arg->tim_info[i].tim_changed =
+				ev->bcn_info[i].tim_info.tim_changed;
+		arg->tim_info[i].tim_num_ps_pending =
+				ev->bcn_info[i].tim_info.tim_num_ps_pending;
+
 		arg->noa_info[i] = &ev->bcn_info[i].p2p_noa_info;
+		i++;
+	}
+
+	return 0;
+}
+
+static int ath10k_wmi_10_4_op_pull_swba_ev(struct ath10k *ar,
+					   struct sk_buff *skb,
+					   struct wmi_swba_ev_arg *arg)
+{
+	struct wmi_10_4_host_swba_event *ev = (void *)skb->data;
+	u32 map, tim_len;
+	size_t i;
+
+	if (skb->len < sizeof(*ev))
+		return -EPROTO;
+
+	skb_pull(skb, sizeof(*ev));
+	arg->vdev_map = ev->vdev_map;
+
+	for (i = 0, map = __le32_to_cpu(ev->vdev_map); map; map >>= 1) {
+		if (!(map & BIT(0)))
+			continue;
+
+		/* If this happens there were some changes in firmware and
+		 * ath10k should update the max size of tim_info array.
+		 */
+		if (WARN_ON_ONCE(i == ARRAY_SIZE(arg->tim_info)))
+			break;
+
+		if (__le32_to_cpu(ev->bcn_info[i].tim_info.tim_len) >
+		      sizeof(ev->bcn_info[i].tim_info.tim_bitmap)) {
+			ath10k_warn(ar, "refusing to parse invalid swba structure\n");
+			return -EPROTO;
+		}
+
+		tim_len = __le32_to_cpu(ev->bcn_info[i].tim_info.tim_len);
+		if (tim_len) {
+			/* Exclude 4 byte guard length */
+			tim_len -= 4;
+			arg->tim_info[i].tim_len = __cpu_to_le32(tim_len);
+		} else {
+			arg->tim_info[i].tim_len = 0;
+		}
+
+		arg->tim_info[i].tim_mcast = ev->bcn_info[i].tim_info.tim_mcast;
+		arg->tim_info[i].tim_bitmap =
+				ev->bcn_info[i].tim_info.tim_bitmap;
+		arg->tim_info[i].tim_changed =
+				ev->bcn_info[i].tim_info.tim_changed;
+		arg->tim_info[i].tim_num_ps_pending =
+				ev->bcn_info[i].tim_info.tim_num_ps_pending;
+
+		/* 10.4 firmware doesn't have p2p support. notice of absence
+		 * info can be ignored for now.
+		 */
+
 		i++;
 	}
 
@@ -3016,7 +3127,7 @@ void ath10k_wmi_event_host_swba(struct ath10k *ar, struct sk_buff *skb)
 	struct wmi_swba_ev_arg arg = {};
 	u32 map;
 	int i = -1;
-	const struct wmi_tim_info *tim_info;
+	const struct wmi_tim_info_arg *tim_info;
 	const struct wmi_p2p_noa_info *noa_info;
 	struct ath10k_vif *arvif;
 	struct sk_buff *bcn;
@@ -3045,7 +3156,7 @@ void ath10k_wmi_event_host_swba(struct ath10k *ar, struct sk_buff *skb)
 			break;
 		}
 
-		tim_info = arg.tim_info[i];
+		tim_info = &arg.tim_info[i];
 		noa_info = arg.noa_info[i];
 
 		ath10k_dbg(ar, ATH10K_DBG_MGMT,
@@ -3059,6 +3170,10 @@ void ath10k_wmi_event_host_swba(struct ath10k *ar, struct sk_buff *skb)
 			   __le32_to_cpu(tim_info->tim_bitmap[2]),
 			   __le32_to_cpu(tim_info->tim_bitmap[1]),
 			   __le32_to_cpu(tim_info->tim_bitmap[0]));
+
+		/* TODO: Only first 4 word from tim_bitmap is dumped.
+		 * Extend debug code to dump full tim_bitmap.
+		 */
 
 		arvif = ath10k_get_arvif(ar, vdev_id);
 		if (arvif == NULL) {
@@ -3800,10 +3915,10 @@ void ath10k_wmi_event_service_ready(struct ath10k *ar, struct sk_buff *skb)
 	if (ar->fw_api == 1 && ar->fw_version_build > 636)
 		set_bit(ATH10K_FW_FEATURE_EXT_WMI_MGMT_RX, ar->fw_features);
 
-	if (ar->num_rf_chains > WMI_MAX_SPATIAL_STREAM) {
+	if (ar->num_rf_chains > ar->max_spatial_stream) {
 		ath10k_warn(ar, "hardware advertises support for more spatial streams than it should (%d > %d)\n",
-			    ar->num_rf_chains, WMI_MAX_SPATIAL_STREAM);
-		ar->num_rf_chains = WMI_MAX_SPATIAL_STREAM;
+			    ar->num_rf_chains, ar->max_spatial_stream);
+		ar->num_rf_chains = ar->max_spatial_stream;
 	}
 
 	ar->supp_tx_chainmask = (1 << ar->num_rf_chains) - 1;
@@ -4338,8 +4453,45 @@ static void ath10k_wmi_10_4_op_rx(struct ath10k *ar, struct sk_buff *skb)
 		ath10k_wmi_event_mgmt_rx(ar, skb);
 		/* mgmt_rx() owns the skb now! */
 		return;
+	case WMI_10_4_ECHO_EVENTID:
+		ath10k_wmi_event_echo(ar, skb);
+		break;
+	case WMI_10_4_DEBUG_MESG_EVENTID:
+		ath10k_wmi_event_debug_mesg(ar, skb);
+		break;
+	case WMI_10_4_SERVICE_READY_EVENTID:
+		ath10k_wmi_event_service_ready(ar, skb);
+		break;
+	case WMI_10_4_SCAN_EVENTID:
+		ath10k_wmi_event_scan(ar, skb);
+		break;
+	case WMI_10_4_CHAN_INFO_EVENTID:
+		ath10k_wmi_event_chan_info(ar, skb);
+		break;
 	case WMI_10_4_READY_EVENTID:
 		ath10k_wmi_event_ready(ar, skb);
+		break;
+	case WMI_10_4_PEER_STA_KICKOUT_EVENTID:
+		ath10k_wmi_event_peer_sta_kickout(ar, skb);
+		break;
+	case WMI_10_4_HOST_SWBA_EVENTID:
+		ath10k_wmi_event_host_swba(ar, skb);
+		break;
+	case WMI_10_4_TBTTOFFSET_UPDATE_EVENTID:
+		ath10k_wmi_event_tbttoffset_update(ar, skb);
+		break;
+	case WMI_10_4_DEBUG_PRINT_EVENTID:
+		ath10k_wmi_event_debug_print(ar, skb);
+		break;
+	case WMI_10_4_VDEV_START_RESP_EVENTID:
+		ath10k_wmi_event_vdev_start_resp(ar, skb);
+		break;
+	case WMI_10_4_VDEV_STOPPED_EVENTID:
+		ath10k_wmi_event_vdev_stopped(ar, skb);
+		break;
+	case WMI_10_4_WOW_WAKEUP_HOST_EVENTID:
+		ath10k_dbg(ar, ATH10K_DBG_WMI,
+			   "received event id %d not implemented\n", id);
 		break;
 	default:
 		ath10k_warn(ar, "Unknown eventid: %d\n", id);
@@ -6271,10 +6423,50 @@ static const struct wmi_ops wmi_10_2_4_ops = {
 static const struct wmi_ops wmi_10_4_ops = {
 	.rx = ath10k_wmi_10_4_op_rx,
 	.map_svc = wmi_10_4_svc_map,
+
+	.pull_scan = ath10k_wmi_op_pull_scan_ev,
 	.pull_mgmt_rx = ath10k_wmi_10_4_op_pull_mgmt_rx_ev,
+	.pull_ch_info = ath10k_wmi_10_4_op_pull_ch_info_ev,
+	.pull_vdev_start = ath10k_wmi_op_pull_vdev_start_ev,
+	.pull_peer_kick = ath10k_wmi_op_pull_peer_kick_ev,
+	.pull_swba = ath10k_wmi_10_4_op_pull_swba_ev,
 	.pull_svc_rdy = ath10k_wmi_main_op_pull_svc_rdy_ev,
 	.pull_rdy = ath10k_wmi_op_pull_rdy_ev,
+
+	.gen_pdev_suspend = ath10k_wmi_op_gen_pdev_suspend,
+	.gen_pdev_resume = ath10k_wmi_op_gen_pdev_resume,
+	.gen_pdev_set_rd = ath10k_wmi_10x_op_gen_pdev_set_rd,
+	.gen_pdev_set_param = ath10k_wmi_op_gen_pdev_set_param,
 	.gen_init = ath10k_wmi_10_4_op_gen_init,
+	.gen_start_scan = ath10k_wmi_op_gen_start_scan,
+	.gen_stop_scan = ath10k_wmi_op_gen_stop_scan,
+	.gen_vdev_create = ath10k_wmi_op_gen_vdev_create,
+	.gen_vdev_delete = ath10k_wmi_op_gen_vdev_delete,
+	.gen_vdev_start = ath10k_wmi_op_gen_vdev_start,
+	.gen_vdev_stop = ath10k_wmi_op_gen_vdev_stop,
+	.gen_vdev_up = ath10k_wmi_op_gen_vdev_up,
+	.gen_vdev_down = ath10k_wmi_op_gen_vdev_down,
+	.gen_vdev_set_param = ath10k_wmi_op_gen_vdev_set_param,
+	.gen_vdev_install_key = ath10k_wmi_op_gen_vdev_install_key,
+	.gen_peer_create = ath10k_wmi_op_gen_peer_create,
+	.gen_peer_delete = ath10k_wmi_op_gen_peer_delete,
+	.gen_peer_flush = ath10k_wmi_op_gen_peer_flush,
+	.gen_peer_set_param = ath10k_wmi_op_gen_peer_set_param,
+	.gen_set_psmode = ath10k_wmi_op_gen_set_psmode,
+	.gen_set_sta_ps = ath10k_wmi_op_gen_set_sta_ps,
+	.gen_set_ap_ps = ath10k_wmi_op_gen_set_ap_ps,
+	.gen_scan_chan_list = ath10k_wmi_op_gen_scan_chan_list,
+	.gen_beacon_dma = ath10k_wmi_op_gen_beacon_dma,
+	.gen_pdev_set_wmm = ath10k_wmi_op_gen_pdev_set_wmm,
+	.gen_force_fw_hang = ath10k_wmi_op_gen_force_fw_hang,
+	.gen_mgmt_tx = ath10k_wmi_op_gen_mgmt_tx,
+	.gen_dbglog_cfg = ath10k_wmi_op_gen_dbglog_cfg,
+	.gen_pktlog_enable = ath10k_wmi_op_gen_pktlog_enable,
+	.gen_pktlog_disable = ath10k_wmi_op_gen_pktlog_disable,
+	.gen_pdev_set_quiet_mode = ath10k_wmi_op_gen_pdev_set_quiet_mode,
+
+	/* shared with 10.2 */
+	.gen_peer_assoc = ath10k_wmi_10_2_op_gen_peer_assoc,
 };
 
 int ath10k_wmi_attach(struct ath10k *ar)

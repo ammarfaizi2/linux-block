@@ -1747,7 +1747,8 @@ enum wmi_channel_change_cause {
 /* Indicate reason for channel switch */
 #define WMI_CHANNEL_CHANGE_CAUSE_CSA (1 << 13)
 
-#define WMI_MAX_SPATIAL_STREAM   3
+#define WMI_MAX_SPATIAL_STREAM        3 /* default max ss */
+#define WMI_10_4_MAX_SPATIAL_STREAM   4
 
 /* HT Capabilities*/
 #define WMI_HT_CAP_ENABLED                0x0001   /* HT Enabled/ disabled */
@@ -2879,15 +2880,17 @@ enum wmi_bss_filter {
 };
 
 enum wmi_scan_event_type {
-	WMI_SCAN_EVENT_STARTED         = 0x1,
-	WMI_SCAN_EVENT_COMPLETED       = 0x2,
-	WMI_SCAN_EVENT_BSS_CHANNEL     = 0x4,
-	WMI_SCAN_EVENT_FOREIGN_CHANNEL = 0x8,
-	WMI_SCAN_EVENT_DEQUEUED        = 0x10,
-	WMI_SCAN_EVENT_PREEMPTED       = 0x20, /* possibly by high-prio scan */
-	WMI_SCAN_EVENT_START_FAILED    = 0x40,
-	WMI_SCAN_EVENT_RESTARTED       = 0x80,
-	WMI_SCAN_EVENT_MAX             = 0x8000
+	WMI_SCAN_EVENT_STARTED              = BIT(0),
+	WMI_SCAN_EVENT_COMPLETED            = BIT(1),
+	WMI_SCAN_EVENT_BSS_CHANNEL          = BIT(2),
+	WMI_SCAN_EVENT_FOREIGN_CHANNEL      = BIT(3),
+	WMI_SCAN_EVENT_DEQUEUED             = BIT(4),
+	/* possibly by high-prio scan */
+	WMI_SCAN_EVENT_PREEMPTED            = BIT(5),
+	WMI_SCAN_EVENT_START_FAILED         = BIT(6),
+	WMI_SCAN_EVENT_RESTARTED            = BIT(7),
+	WMI_SCAN_EVENT_FOREIGN_CHANNEL_EXIT = BIT(8),
+	WMI_SCAN_EVENT_MAX                  = BIT(15),
 };
 
 enum wmi_scan_completion_reason {
@@ -2895,6 +2898,7 @@ enum wmi_scan_completion_reason {
 	WMI_SCAN_REASON_CANCELLED,
 	WMI_SCAN_REASON_PREEMPTED,
 	WMI_SCAN_REASON_TIMEDOUT,
+	WMI_SCAN_REASON_INTERNAL_FAILURE,
 	WMI_SCAN_REASON_MAX,
 };
 
@@ -5160,6 +5164,14 @@ struct wmi_tim_info {
 	__le32 tim_num_ps_pending;
 } __packed;
 
+struct wmi_tim_info_arg {
+	__le32 tim_len;
+	__le32 tim_mcast;
+	const __le32 *tim_bitmap;
+	__le32 tim_changed;
+	__le32 tim_num_ps_pending;
+} __packed;
+
 /* Maximum number of NOA Descriptors supported */
 #define WMI_P2P_MAX_NOA_DESCRIPTORS 4
 #define WMI_P2P_OPPPS_ENABLE_BIT	BIT(0)
@@ -5189,6 +5201,47 @@ struct wmi_bcn_info {
 struct wmi_host_swba_event {
 	__le32 vdev_map;
 	struct wmi_bcn_info bcn_info[0];
+} __packed;
+
+/* 16 words = 512 client + 1 word = for guard */
+#define WMI_10_4_TIM_BITMAP_ARRAY_SIZE 17
+
+struct wmi_10_4_tim_info {
+	__le32 tim_len;
+	__le32 tim_mcast;
+	__le32 tim_bitmap[WMI_10_4_TIM_BITMAP_ARRAY_SIZE];
+	__le32 tim_changed;
+	__le32 tim_num_ps_pending;
+} __packed;
+
+#define WMI_10_4_P2P_MAX_NOA_DESCRIPTORS 1
+
+struct wmi_10_4_p2p_noa_info {
+	/* Bit 0 - Flag to indicate an update in NOA schedule
+	 * Bits 7-1 - Reserved
+	 */
+	u8 changed;
+	/* NOA index */
+	u8 index;
+	/* Bit 0 - Opp PS state of the AP
+	 * Bits 1-7 - Ctwindow in TUs
+	 */
+	u8 ctwindow_oppps;
+	/* Number of NOA descriptors */
+	u8 num_descriptors;
+
+	struct wmi_p2p_noa_descriptor
+		noa_descriptors[WMI_10_4_P2P_MAX_NOA_DESCRIPTORS];
+} __packed;
+
+struct wmi_10_4_bcn_info {
+	struct wmi_10_4_tim_info tim_info;
+	struct wmi_10_4_p2p_noa_info p2p_noa_info;
+} __packed;
+
+struct wmi_10_4_host_swba_event {
+	__le32 vdev_map;
+	struct wmi_10_4_bcn_info bcn_info[0];
 } __packed;
 
 #define WMI_MAX_AP_VDEV 16
@@ -5515,6 +5568,18 @@ struct wmi_chan_info_event {
 	__le32 cycle_count;
 } __packed;
 
+struct wmi_10_4_chan_info_event {
+	__le32 err_code;
+	__le32 freq;
+	__le32 cmd_flags;
+	__le32 noise_floor;
+	__le32 rx_clear_count;
+	__le32 cycle_count;
+	__le32 chan_tx_pwr_range;
+	__le32 chan_tx_pwr_tp;
+	__le32 rx_frame_count;
+} __packed;
+
 struct wmi_peer_sta_kickout_event {
 	struct wmi_mac_addr peer_macaddr;
 } __packed;
@@ -5695,6 +5760,9 @@ struct wmi_ch_info_ev_arg {
 	__le32 noise_floor;
 	__le32 rx_clear_count;
 	__le32 cycle_count;
+	__le32 chan_tx_pwr_range;
+	__le32 chan_tx_pwr_tp;
+	__le32 rx_frame_count;
 };
 
 struct wmi_vdev_start_ev_arg {
@@ -5710,7 +5778,7 @@ struct wmi_peer_kick_ev_arg {
 
 struct wmi_swba_ev_arg {
 	__le32 vdev_map;
-	const struct wmi_tim_info *tim_info[WMI_MAX_AP_VDEV];
+	struct wmi_tim_info_arg tim_info[WMI_MAX_AP_VDEV];
 	const struct wmi_p2p_noa_info *noa_info[WMI_MAX_AP_VDEV];
 };
 

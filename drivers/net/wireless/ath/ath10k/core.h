@@ -328,8 +328,8 @@ struct ath10k_vif {
 			u32 uapsd;
 		} sta;
 		struct {
-			/* 127 stations; wmi limit */
-			u8 tim_bitmap[16];
+			/* 512 stations */
+			u8 tim_bitmap[64];
 			u8 tim_len;
 			u32 ssid_len;
 			u8 ssid[IEEE80211_MAX_SSID_LEN];
@@ -546,6 +546,7 @@ struct ath10k {
 	u32 ht_cap_info;
 	u32 vht_cap_info;
 	u32 num_rf_chains;
+	u32 max_spatial_stream;
 	/* protected by conf_mutex */
 	bool ani_enabled;
 
@@ -580,6 +581,12 @@ struct ath10k {
 		 * by 2 so they never wraparound themselves.
 		 */
 		bool has_shifted_cc_wraparound;
+
+		/* Some of chip expects fragment descriptor to be continuous
+		 * memory for any TX operation. Set continuous_frag_desc flag
+		 * for the hardware which have such requirement.
+		 */
+		bool continuous_frag_desc;
 
 		struct ath10k_hw_params_fw {
 			const char *dir;
