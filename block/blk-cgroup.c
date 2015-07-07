@@ -232,7 +232,7 @@ static struct blkcg_gq *blkg_create(struct blkcg *blkcg,
 		struct blkcg_policy *pol = blkcg_policy[i];
 
 		if (blkg->pd[i] && pol->pd_init_fn)
-			pol->pd_init_fn(blkg);
+			pol->pd_init_fn(blkg->pd[i]);
 	}
 
 	/* insert */
@@ -246,7 +246,7 @@ static struct blkcg_gq *blkg_create(struct blkcg *blkcg,
 			struct blkcg_policy *pol = blkcg_policy[i];
 
 			if (blkg->pd[i] && pol->pd_online_fn)
-				pol->pd_online_fn(blkg);
+				pol->pd_online_fn(blkg->pd[i]);
 		}
 	}
 	blkg->online = true;
@@ -337,7 +337,7 @@ static void blkg_destroy(struct blkcg_gq *blkg)
 		struct blkcg_policy *pol = blkcg_policy[i];
 
 		if (blkg->pd[i] && pol->pd_offline_fn)
-			pol->pd_offline_fn(blkg);
+			pol->pd_offline_fn(blkg->pd[i]);
 	}
 	blkg->online = false;
 
@@ -471,9 +471,8 @@ static int blkcg_reset_stats(struct cgroup_subsys_state *css,
 		for (i = 0; i < BLKCG_MAX_POLS; i++) {
 			struct blkcg_policy *pol = blkcg_policy[i];
 
-			if (blkcg_policy_enabled(blkg->q, pol) &&
-			    pol->pd_reset_stats_fn)
-				pol->pd_reset_stats_fn(blkg);
+			if (blkg->pd[i] && pol->pd_reset_stats_fn)
+				pol->pd_reset_stats_fn(blkg->pd[i]);
 		}
 	}
 
@@ -1105,7 +1104,7 @@ no_cpd:
 		pd->blkg = blkg;
 		pd->plid = pol->plid;
 		if (pol->pd_init_fn)
-			pol->pd_init_fn(blkg);
+			pol->pd_init_fn(pd);
 
 		spin_unlock(&blkg->blkcg->lock);
 	}
@@ -1149,10 +1148,9 @@ void blkcg_deactivate_policy(struct request_queue *q,
 		/* grab blkcg lock too while removing @pd from @blkg */
 		spin_lock(&blkg->blkcg->lock);
 
-		if (pol->pd_offline_fn)
-			pol->pd_offline_fn(blkg);
-
 		if (blkg->pd[pol->plid]) {
+			if (pol->pd_offline_fn)
+				pol->pd_offline_fn(blkg->pd[pol->plid]);
 			pol->pd_free_fn(blkg->pd[pol->plid]);
 			blkg->pd[pol->plid] = NULL;
 		}
