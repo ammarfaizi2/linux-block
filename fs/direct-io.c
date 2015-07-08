@@ -33,6 +33,7 @@
 #include <linux/err.h>
 #include <linux/blkdev.h>
 #include <linux/buffer_head.h>
+#include <linux/backing-dev.h>
 #include <linux/rwsem.h>
 #include <linux/uio.h>
 #include <linux/atomic.h>
@@ -109,6 +110,7 @@ struct dio_submit {
 struct dio {
 	int flags;			/* doesn't change */
 	int rw;
+	blk_qc_t bio_cookie;
 	struct inode *inode;
 	loff_t i_size;			/* i_size when submitted */
 	dio_iodone_t *end_io;		/* IO completion function */
@@ -396,11 +398,12 @@ static inline void dio_bio_submit(struct dio *dio, struct dio_submit *sdio)
 	if (dio->is_async && dio->rw == READ)
 		bio_set_pages_dirty(bio);
 
-	if (sdio->submit_io)
+	if (sdio->submit_io) {
 		sdio->submit_io(dio->rw, bio, dio->inode,
 			       sdio->logical_offset_in_bio);
-	else
-		submit_bio(dio->rw, bio);
+		dio->bio_cookie = BLK_QC_T_NONE;
+	} else
+		dio->bio_cookie = submit_bio(dio->rw, bio);
 
 	sdio->bio = NULL;
 	sdio->boundary = 0;
@@ -439,7 +442,7 @@ static struct bio *dio_await_one(struct dio *dio)
 		__set_current_state(TASK_UNINTERRUPTIBLE);
 		dio->waiter = current;
 		spin_unlock_irqrestore(&dio->bio_lock, flags);
-		io_schedule();
+		bdi_io_wait(inode_to_bdi(dio->inode), dio->bio_cookie);
 		/* wake up sets us TASK_RUNNING */
 		spin_lock_irqsave(&dio->bio_lock, flags);
 		dio->waiter = NULL;

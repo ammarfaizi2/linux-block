@@ -138,6 +138,8 @@ struct backing_dev_info {
 	congested_fn *congested_fn; /* Function pointer if device is md/dm */
 	void *congested_data;	/* Pointer to aux data for congested func */
 
+	int (*io_poll)(struct backing_dev_info *, blk_qc_t);
+
 	char *name;
 
 	unsigned int min_ratio;
