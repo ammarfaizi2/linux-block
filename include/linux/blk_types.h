@@ -247,4 +247,12 @@ enum rq_flag_bits {
 #define REQ_MQ_INFLIGHT		(1ULL << __REQ_MQ_INFLIGHT)
 #define REQ_NO_TIMEOUT		(1ULL << __REQ_NO_TIMEOUT)
 
+typedef unsigned int blk_qc_t;
+#define BLK_QC_T_NONE	-1U
+
+static inline bool blk_qc_t_valid(blk_qc_t val)
+{
+	return val != BLK_QC_T_NONE;
+}
+
 #endif /* __LINUX_BLK_TYPES_H */

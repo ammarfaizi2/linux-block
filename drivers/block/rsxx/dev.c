@@ -142,7 +142,7 @@ static void bio_dma_done_cb(struct rsxx_cardinfo *card,
 	}
 }
 
-static void rsxx_make_request(struct request_queue *q, struct bio *bio)
+static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
 {
 	struct rsxx_cardinfo *card = q->queuedata;
 	struct rsxx_bio_meta *bio_meta;
@@ -194,12 +194,13 @@ static void rsxx_make_request(struct request_queue *q, struct bio *bio)
 	if (st)
 		goto queue_err;
 
-	return;
+	return BLK_QC_T_NONE;
 
 queue_err:
 	kmem_cache_free(bio_meta_pool, bio_meta);
 req_err:
 	bio_endio(bio, st);
+	return BLK_QC_T_NONE;
 }
 
 /*----------------- Device Setup -------------------*/

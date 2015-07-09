@@ -250,7 +250,7 @@ static DEFINE_SPINLOCK(all_mddevs_lock);
  * call has finished, the bio has been linked into some internal structure
  * and so is visible to ->quiesce(), so we don't need the refcount any more.
  */
-static void md_make_request(struct request_queue *q, struct bio *bio)
+static blk_qc_t md_make_request(struct request_queue *q, struct bio *bio)
 {
 	const int rw = bio_data_dir(bio);
 	struct mddev *mddev = q->queuedata;
@@ -260,11 +260,11 @@ static void md_make_request(struct request_queue *q, struct bio *bio)
 	if (mddev == NULL || mddev->pers == NULL
 	    || !mddev->ready) {
 		bio_io_error(bio);
-		return;
+		return BLK_QC_T_NONE;
 	}
 	if (mddev->ro == 1 && unlikely(rw == WRITE)) {
 		bio_endio(bio, bio_sectors(bio) == 0 ? 0 : -EROFS);
-		return;
+		return BLK_QC_T_NONE;
 	}
 	smp_rmb(); /* Ensure implications of  'active' are visible */
 	rcu_read_lock();
@@ -298,6 +298,8 @@ static void md_make_request(struct request_queue *q, struct bio *bio)
 
 	if (atomic_dec_and_test(&mddev->active_io) && mddev->suspended)
 		wake_up(&mddev->sb_wait);
+
+	return BLK_QC_T_NONE;
 }
 
 /* mddev_suspend makes sure no new requests are submitted
