@@ -249,10 +249,16 @@ enum rq_flag_bits {
 
 typedef unsigned int blk_qc_t;
 #define BLK_QC_T_NONE	-1U
+#define BLK_QC_T_SHIFT		16
 
 static inline bool blk_qc_t_valid(blk_qc_t val)
 {
 	return val != BLK_QC_T_NONE;
+}
+
+static inline blk_qc_t blk_tag_to_qc_t(int tag, int queue_num)
+{
+	return tag | (queue_num << BLK_QC_T_SHIFT);
 }
 
 #endif /* __LINUX_BLK_TYPES_H */

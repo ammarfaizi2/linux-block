@@ -1233,7 +1233,7 @@ static struct request *blk_mq_map_request(struct request_queue *q,
 	return rq;
 }
 
-static int blk_mq_direct_issue_request(struct request *rq)
+static int blk_mq_direct_issue_request(struct request *rq, blk_qc_t *cookie)
 {
 	int ret;
 	struct request_queue *q = rq->q;
@@ -1254,6 +1254,7 @@ static int blk_mq_direct_issue_request(struct request *rq)
 	if (ret == BLK_MQ_RQ_QUEUE_OK)
 		return 0;
 	else {
+		*cookie = BLK_QC_T_NONE;
 		__blk_mq_requeue_request(rq);
 
 		if (ret == BLK_MQ_RQ_QUEUE_ERROR) {
@@ -1279,6 +1280,7 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	unsigned int request_count = 0;
 	struct blk_plug *plug;
 	struct request *same_queue_rq = NULL;
+	blk_qc_t cookie;
 
 	blk_queue_bounce(q, &bio);
 
@@ -1294,6 +1296,8 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	rq = blk_mq_map_request(q, bio, &data);
 	if (unlikely(!rq))
 		return BLK_QC_T_NONE;
+
+	cookie = blk_tag_to_qc_t(rq->tag, data.hctx->queue_num);
 
 	if (unlikely(is_flush_fua)) {
 		blk_mq_bio_to_request(rq, bio);
@@ -1333,8 +1337,8 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
 		blk_mq_put_ctx(data.ctx);
 		if (!old_rq)
 			return BLK_QC_T_NONE;
-		if (!blk_mq_direct_issue_request(old_rq))
-			return BLK_QC_T_NONE;
+		if (!blk_mq_direct_issue_request(old_rq, &cookie))
+			goto done;
 		blk_mq_insert_request(old_rq, false, true, true);
 		return BLK_QC_T_NONE;
 	}
@@ -1350,7 +1354,8 @@ run_queue:
 		blk_mq_run_hw_queue(data.hctx, !is_sync || is_flush_fua);
 	}
 	blk_mq_put_ctx(data.ctx);
-	return BLK_QC_T_NONE;
+done:
+	return cookie;
 }
 
 /*
@@ -1365,6 +1370,7 @@ static blk_qc_t blk_sq_make_request(struct request_queue *q, struct bio *bio)
 	unsigned int request_count = 0;
 	struct blk_map_ctx data;
 	struct request *rq;
+	blk_qc_t cookie;
 
 	blk_queue_bounce(q, &bio);
 
@@ -1380,6 +1386,8 @@ static blk_qc_t blk_sq_make_request(struct request_queue *q, struct bio *bio)
 	rq = blk_mq_map_request(q, bio, &data);
 	if (unlikely(!rq))
 		return BLK_QC_T_NONE;
+
+	cookie = blk_tag_to_qc_t(rq->tag, data.hctx->queue_num);
 
 	if (unlikely(is_flush_fua)) {
 		blk_mq_bio_to_request(rq, bio);
@@ -1403,7 +1411,7 @@ static blk_qc_t blk_sq_make_request(struct request_queue *q, struct bio *bio)
 		}
 		list_add_tail(&rq->queuelist, &plug->mq_list);
 		blk_mq_put_ctx(data.ctx);
-		return BLK_QC_T_NONE;
+		return cookie;
 	}
 
 	if (!blk_mq_merge_queue_io(data.hctx, data.ctx, rq, bio)) {
@@ -1418,7 +1426,7 @@ run_queue:
 	}
 
 	blk_mq_put_ctx(data.ctx);
-	return BLK_QC_T_NONE;
+	return cookie;
 }
 
 /*
