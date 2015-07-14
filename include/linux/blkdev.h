@@ -1141,6 +1141,11 @@ enum blk_default_limits {
 	BLK_SAFE_MAX_SECTORS	= 255,
 	BLK_MAX_SEGMENT_SIZE	= 65536,
 	BLK_SEG_BOUNDARY_MASK	= 0xFFFFFFFFUL,
+
+	/*
+	 * Default to max 64MB of discards, to keep latencies in check
+	 */
+	BLK_DISCARD_MAX_SECTORS	= (64 * 1024 * 1024UL) >> 9,
 };
 
 #define blkdev_entry_to_request(entry) list_entry((entry), struct request, queuelist)

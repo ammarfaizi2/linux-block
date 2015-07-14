@@ -306,6 +306,8 @@ void blk_queue_max_discard_sectors(struct request_queue *q,
 {
 	q->limits.max_hw_discard_sectors = max_discard_sectors;
 	q->limits.max_discard_sectors = max_discard_sectors;
+	if (q->limits.max_discard_sectors > BLK_DISCARD_MAX_SECTORS)
+		q->limits.max_discard_sectors = BLK_DISCARD_MAX_SECTORS;
 }
 EXPORT_SYMBOL(blk_queue_max_discard_sectors);
 
