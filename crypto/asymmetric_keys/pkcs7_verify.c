@@ -208,7 +208,8 @@ static int pkcs7_verify_sig_chain(struct pkcs7_message *pkcs7,
 				   x509->raw_issuer_size) != 0)
 				return 0;
 
-			ret = x509_check_signature(x509->pub, x509);
+			ret = x509_check_signature(x509->pub, x509,
+						   KEY_VERIFYING_KEY_SELF_SIGNATURE);
 			if (ret < 0)
 				goto maybe_missing_crypto_in_x509;
 			x509->signer = x509;
@@ -262,7 +263,8 @@ static int pkcs7_verify_sig_chain(struct pkcs7_message *pkcs7,
 				sinfo->index);
 			return 0;
 		}
-		ret = x509_check_signature(p->pub, x509);
+		ret = x509_check_signature(p->pub, x509,
+					   KEY_VERIFYING_KEY_SIGNATURE);
 		if (ret < 0)
 			return ret;
 		x509->signer = p;
@@ -290,7 +292,8 @@ maybe_missing_crypto_in_x509:
  * Verify one signed information block from a PKCS#7 message.
  */
 static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
-			    struct pkcs7_signed_info *sinfo)
+			    struct pkcs7_signed_info *sinfo,
+			    enum key_being_used_for usage)
 {
 	int ret;
 
@@ -315,7 +318,8 @@ static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
 		 sinfo->signer->index, sinfo->index);
 
 	/* Verify the PKCS#7 binary against the key */
-	ret = public_key_verify_signature(sinfo->signer->pub, &sinfo->sig);
+	ret = public_key_verify_signature(sinfo->signer->pub, &sinfo->sig,
+					  usage);
 	if (ret < 0)
 		return ret;
 
@@ -328,6 +332,7 @@ static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
 /**
  * pkcs7_verify - Verify a PKCS#7 message
  * @pkcs7: The PKCS#7 message to be verified
+ * @usage: The use to which the key is being put
  *
  * Verify a PKCS#7 message is internally consistent - that is, the data digest
  * matches the digest in the AuthAttrs and any signature in the message or one
@@ -338,6 +343,9 @@ static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
  * external public keys.
  *
  * Returns, in order of descending priority:
+ *
+ *  (*) -EKEYREJECTED if a key was selected that had a usage restriction at
+ *      odds with the specified usage, or:
  *
  *  (*) -EKEYREJECTED if a signature failed to match for which we found an
  *	appropriate X.509 certificate, or:
@@ -350,7 +358,8 @@ static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
  *  (*) 0 if all the signature chains that don't incur -ENOPKG can be verified
  *	(note that a signature chain may be of zero length), or:
  */
-int pkcs7_verify(struct pkcs7_message *pkcs7)
+int pkcs7_verify(struct pkcs7_message *pkcs7,
+		 enum key_being_used_for usage)
 {
 	struct pkcs7_signed_info *sinfo;
 	struct x509_certificate *x509;
@@ -366,7 +375,7 @@ int pkcs7_verify(struct pkcs7_message *pkcs7)
 	}
 
 	for (sinfo = pkcs7->signed_infos; sinfo; sinfo = sinfo->next) {
-		ret = pkcs7_verify_one(pkcs7, sinfo);
+		ret = pkcs7_verify_one(pkcs7, sinfo, usage);
 		if (ret < 0) {
 			if (ret == -ENOPKG) {
 				sinfo->unsupported_crypto = true;

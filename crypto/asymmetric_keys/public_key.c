@@ -39,6 +39,7 @@ EXPORT_SYMBOL_GPL(pkey_algo);
 const char *const pkey_id_type_name[PKEY_ID_TYPE__LAST] = {
 	[PKEY_ID_PGP]		= "PGP",
 	[PKEY_ID_X509]		= "X509",
+	[PKEY_ID_PKCS7]		= "PKCS#7",
 };
 EXPORT_SYMBOL_GPL(pkey_id_type_name);
 
@@ -94,12 +95,56 @@ void public_key_destroy(void *payload)
 EXPORT_SYMBOL_GPL(public_key_destroy);
 
 /*
+ * Apply key usage policy.
+ */
+static int public_key_usage_policy(enum key_being_used_for usage,
+				   enum key_usage_restriction restriction)
+{
+	switch (usage) {
+	case KEY_VERIFYING_MODULE_SIGNATURE:
+		if (restriction != KEY_RESTRICTED_TO_MODULE_SIGNING &&
+		    restriction != KEY_USAGE_NOT_SPECIFIED)
+			goto wrong_purpose;
+		return 0;
+	case KEY_VERIFYING_FIRMWARE_SIGNATURE:
+		if (restriction != KEY_RESTRICTED_TO_FIRMWARE_SIGNING) {
+			pr_warn("Firmware signed with non-firmware key (%s)\n",
+				key_usage_restrictions[restriction]);
+			return -EKEYREJECTED;
+		}
+		return 0;
+	case KEY_VERIFYING_KEXEC_SIGNATURE:
+		if (restriction != KEY_RESTRICTED_TO_KEXEC_SIGNING &&
+		    restriction != KEY_USAGE_NOT_SPECIFIED)
+			goto wrong_purpose;
+		return 0;
+	case KEY_VERIFYING_KEY_SIGNATURE:
+		if (restriction != KEY_RESTRICTED_TO_KEY_SIGNING &&
+		    restriction != KEY_USAGE_NOT_SPECIFIED)
+			goto wrong_purpose;
+		return 0;
+	case KEY_VERIFYING_KEY_SELF_SIGNATURE:
+		return 0;
+	default:
+		BUG();
+	}
+
+wrong_purpose:
+	pr_warn("Restricted usage key (%s) used for wrong purpose (%s)\n",
+		key_usage_restrictions[restriction],
+		key_being_used_for[usage]);
+	return -EKEYREJECTED;
+}
+
+/*
  * Verify a signature using a public key.
  */
 int public_key_verify_signature(const struct public_key *pk,
-				const struct public_key_signature *sig)
+				const struct public_key_signature *sig,
+				enum key_being_used_for usage)
 {
 	const struct public_key_algorithm *algo;
+	int ret;
 
 	BUG_ON(!pk);
 	BUG_ON(!pk->mpi[0]);
@@ -126,15 +171,20 @@ int public_key_verify_signature(const struct public_key *pk,
 		return -EINVAL;
 	}
 
+	ret = public_key_usage_policy(usage, pk->usage_restriction);
+	if (ret < 0)
+		return ret;
+
 	return algo->verify_signature(pk, sig);
 }
 EXPORT_SYMBOL_GPL(public_key_verify_signature);
 
 static int public_key_verify_signature_2(const struct key *key,
-					 const struct public_key_signature *sig)
+					 const struct public_key_signature *sig,
+					 enum key_being_used_for usage)
 {
 	const struct public_key *pk = key->payload.data;
-	return public_key_verify_signature(pk, sig);
+	return public_key_verify_signature(pk, sig, usage);
 }
 
 /*

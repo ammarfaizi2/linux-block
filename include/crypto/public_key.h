@@ -53,6 +53,19 @@ enum key_usage_restriction {
 	NR__KEY_USAGE_RESTRICTIONS
 };
 
+/*
+ * The use to which an asymmetric key is being put when verifying a signature.
+ */
+enum key_being_used_for {
+	KEY_VERIFYING_MODULE_SIGNATURE,
+	KEY_VERIFYING_FIRMWARE_SIGNATURE,
+	KEY_VERIFYING_KEXEC_SIGNATURE,
+	KEY_VERIFYING_KEY_SIGNATURE,
+	KEY_VERIFYING_KEY_SELF_SIGNATURE,
+	KEY_VERIFYING_INTEGRITY_SIGNATURE,
+	NR__KEY_BEING_USED_FOR
+};
+extern const char *const key_being_used_for[NR__KEY_BEING_USED_FOR];
 
 /*
  * Cryptographic data for the public-key subtype of the asymmetric key type.
@@ -114,7 +127,8 @@ struct public_key_signature {
 
 struct key;
 extern int verify_signature(const struct key *key,
-			    const struct public_key_signature *sig);
+			    const struct public_key_signature *sig,
+			    enum key_being_used_for usage);
 
 struct asymmetric_key_id;
 extern struct key *x509_request_asymmetric_key(struct key *keyring,

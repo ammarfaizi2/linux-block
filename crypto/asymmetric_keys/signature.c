@@ -22,11 +22,13 @@
  * verify_signature - Initiate the use of an asymmetric key to verify a signature
  * @key: The asymmetric key to verify against
  * @sig: The signature to check
+ * @usage: The use to which the key is being put.
  *
  * Returns 0 if successful or else an error.
  */
 int verify_signature(const struct key *key,
-		     const struct public_key_signature *sig)
+		     const struct public_key_signature *sig,
+		     enum key_being_used_for usage)
 {
 	const struct asymmetric_key_subtype *subtype;
 	int ret;
@@ -42,7 +44,7 @@ int verify_signature(const struct key *key,
 	if (!subtype->verify_signature)
 		return -ENOTSUPP;
 
-	ret = subtype->verify_signature(key, sig);
+	ret = subtype->verify_signature(key, sig, usage);
 
 	pr_devel("<==%s() = %d\n", __func__, ret);
 	return ret;

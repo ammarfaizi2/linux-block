@@ -25,7 +25,8 @@
  */
 static int pkcs7_validate_trust_one(struct pkcs7_message *pkcs7,
 				    struct pkcs7_signed_info *sinfo,
-				    struct key *trust_keyring)
+				    struct key *trust_keyring,
+				    enum key_being_used_for usage)
 {
 	struct public_key_signature *sig = &sinfo->sig;
 	struct x509_certificate *x509, *last = NULL, *p;
@@ -65,6 +66,7 @@ static int pkcs7_validate_trust_one(struct pkcs7_message *pkcs7,
 			 */
 			pr_devel("sinfo %u: Cert %u as key %x\n",
 				 sinfo->index, x509->index, key_serial(key));
+			usage = KEY_VERIFYING_KEY_SIGNATURE;
 			goto matched;
 		}
 		if (key == ERR_PTR(-ENOMEM))
@@ -95,6 +97,7 @@ static int pkcs7_validate_trust_one(struct pkcs7_message *pkcs7,
 			x509 = last;
 			pr_devel("sinfo %u: Root cert %u signer is key %x\n",
 				 sinfo->index, x509->index, key_serial(key));
+			usage = KEY_VERIFYING_KEY_SIGNATURE;
 			goto matched;
 		}
 		if (PTR_ERR(key) != -ENOKEY)
@@ -121,7 +124,7 @@ static int pkcs7_validate_trust_one(struct pkcs7_message *pkcs7,
 	return -ENOKEY;
 
 matched:
-	ret = verify_signature(key, sig);
+	ret = verify_signature(key, sig, usage);
 	trusted = test_bit(KEY_FLAG_TRUSTED, &key->flags);
 	key_put(key);
 	if (ret < 0) {
@@ -148,7 +151,8 @@ verified:
  * pkcs7_validate_trust - Validate PKCS#7 trust chain
  * @pkcs7: The PKCS#7 certificate to validate
  * @trust_keyring: Signing certificates to use as starting points
- * @_trusted: Set to true if trustworth, false otherwise
+ * @usage: The use to which the key is being put.
+ * @_trusted: Set to true if trustworthy, false otherwise
  *
  * Validate that the certificate chain inside the PKCS#7 message intersects
  * keys we already know and trust.
@@ -171,6 +175,7 @@ verified:
  */
 int pkcs7_validate_trust(struct pkcs7_message *pkcs7,
 			 struct key *trust_keyring,
+			 enum key_being_used_for usage,
 			 bool *_trusted)
 {
 	struct pkcs7_signed_info *sinfo;
@@ -182,7 +187,8 @@ int pkcs7_validate_trust(struct pkcs7_message *pkcs7,
 		p->seen = false;
 
 	for (sinfo = pkcs7->signed_infos; sinfo; sinfo = sinfo->next) {
-		ret = pkcs7_validate_trust_one(pkcs7, sinfo, trust_keyring);
+		ret = pkcs7_validate_trust_one(pkcs7, sinfo, trust_keyring,
+					       usage);
 		switch (ret) {
 		case -ENOKEY:
 			continue;

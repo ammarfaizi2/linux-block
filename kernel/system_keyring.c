@@ -113,10 +113,12 @@ late_initcall(load_system_certificate_list);
  * @len: Size of @data.
  * @raw_pkcs7: The PKCS#7 message that is the signature.
  * @pkcs7_len: The size of @raw_pkcs7.
+ * @usage: The use to which the key is being put.
  * @firmware_name: The required firmware name or NULL.
  */
 int system_verify_data(const void *data, unsigned long len,
 		       const void *raw_pkcs7, size_t pkcs7_len,
+		       enum key_being_used_for usage,
 		       const char *firmware_name)
 {
 	struct pkcs7_message *pkcs7;
@@ -156,11 +158,12 @@ int system_verify_data(const void *data, unsigned long len,
 		goto error;
 	}
 
-	ret = pkcs7_verify(pkcs7);
+	ret = pkcs7_verify(pkcs7, usage);
 	if (ret < 0)
 		goto error;
 
-	ret = pkcs7_validate_trust(pkcs7, system_trusted_keyring, &trusted);
+	ret = pkcs7_validate_trust(pkcs7, system_trusted_keyring, usage,
+				   &trusted);
 	if (ret < 0)
 		goto error;
 

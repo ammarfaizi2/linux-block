@@ -12,6 +12,7 @@
  */
 #include <keys/asymmetric-subtype.h>
 #include <keys/asymmetric-parser.h>
+#include <crypto/public_key.h>
 #include <linux/seq_file.h>
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -19,6 +20,16 @@
 #include "asymmetric_keys.h"
 
 MODULE_LICENSE("GPL");
+
+const char *const key_being_used_for[NR__KEY_BEING_USED_FOR] = {
+	[KEY_VERIFYING_MODULE_SIGNATURE]	= "mod sig",
+	[KEY_VERIFYING_FIRMWARE_SIGNATURE]	= "firmware sig",
+	[KEY_VERIFYING_KEXEC_SIGNATURE]		= "kexec sig",
+	[KEY_VERIFYING_KEY_SIGNATURE]		= "key sig",
+	[KEY_VERIFYING_KEY_SELF_SIGNATURE]	= "key self sig",
+	[KEY_VERIFYING_INTEGRITY_SIGNATURE]	= "ima sig",
+};
+EXPORT_SYMBOL_GPL(key_being_used_for);
 
 static LIST_HEAD(asymmetric_key_parsers);
 static DECLARE_RWSEM(asymmetric_key_parsers_sem);

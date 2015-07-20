@@ -55,4 +55,5 @@ extern struct x509_certificate *x509_cert_parse(const void *data, size_t datalen
  */
 extern int x509_get_sig_params(struct x509_certificate *cert);
 extern int x509_check_signature(const struct public_key *pub,
-				struct x509_certificate *cert);
+				struct x509_certificate *cert,
+				enum key_being_used_for usage);

@@ -221,7 +221,8 @@ EXPORT_SYMBOL_GPL(x509_get_sig_params);
  * Check the signature on a certificate using the provided public key
  */
 int x509_check_signature(const struct public_key *pub,
-			 struct x509_certificate *cert)
+			 struct x509_certificate *cert,
+			 enum key_being_used_for usage)
 {
 	int ret;
 
@@ -231,7 +232,7 @@ int x509_check_signature(const struct public_key *pub,
 	if (ret < 0)
 		return ret;
 
-	ret = public_key_verify_signature(pub, &cert->sig);
+	ret = public_key_verify_signature(pub, &cert->sig, usage);
 	if (ret == -ENOPKG)
 		cert->unsupported_crypto = true;
 	pr_debug("Cert Verification: %d\n", ret);
@@ -264,9 +265,10 @@ static int x509_validate_trust(struct x509_certificate *cert,
 					  cert->akid_id, cert->akid_skid,
 					  false);
 	if (!IS_ERR(key))  {
-		if (!use_builtin_keys
-		    || test_bit(KEY_FLAG_BUILTIN, &key->flags))
-			ret = x509_check_signature(key->payload.data, cert);
+		if (!use_builtin_keys ||
+		    test_bit(KEY_FLAG_BUILTIN, &key->flags))
+			ret = x509_check_signature(key->payload.data, cert,
+						   KEY_VERIFYING_KEY_SIGNATURE);
 		key_put(key);
 	}
 	return ret;
@@ -321,7 +323,8 @@ static int x509_key_preparse(struct key_preparsed_payload *prep)
 	if ((!cert->akid_skid && !cert->akid_id) ||
 	    asymmetric_key_id_same(cert->skid, cert->akid_skid) ||
 	    asymmetric_key_id_same(cert->id, cert->akid_id)) {
-		ret = x509_check_signature(cert->pub, cert); /* self-signed */
+		ret = x509_check_signature(cert->pub, cert,
+					   KEY_VERIFYING_KEY_SELF_SIGNATURE);
 		if (ret < 0)
 			goto error_free_cert;
 	} else if (!prep->trusted) {

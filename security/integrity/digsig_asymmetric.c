@@ -96,7 +96,8 @@ int asymmetric_verify(struct key *keyring, const char *sig,
 	pks.rsa.s = mpi_read_raw_data(hdr->sig, siglen);
 
 	if (pks.rsa.s)
-		ret = verify_signature(key, &pks);
+		ret = verify_signature(key, &pks,
+				       KEY_VERIFYING_INTEGRITY_SIGNATURE);
 
 	mpi_free(pks.rsa.s);
 	key_put(key);
