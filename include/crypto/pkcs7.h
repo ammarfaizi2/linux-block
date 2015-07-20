@@ -22,6 +22,7 @@ extern void pkcs7_free_message(struct pkcs7_message *pkcs7);
 extern int pkcs7_get_content_data(const struct pkcs7_message *pkcs7,
 				  const void **_data, size_t *_datalen,
 				  bool want_wrapper);
+extern const char *pkcs7_get_firmware_name(const struct pkcs7_message *pkcs7);
 
 /*
  * pkcs7_trust.c

@@ -30,7 +30,8 @@ static inline struct key *get_system_trusted_keyring(void)
 
 #ifdef CONFIG_SYSTEM_DATA_VERIFICATION
 extern int system_verify_data(const void *data, unsigned long len,
-			      const void *raw_pkcs7, size_t pkcs7_len);
+			      const void *raw_pkcs7, size_t pkcs7_len,
+			      const char *firmware_name);
 #endif
 
 #endif /* _KEYS_SYSTEM_KEYRING_H */

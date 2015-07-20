@@ -113,17 +113,41 @@ late_initcall(load_system_certificate_list);
  * @len: Size of @data.
  * @raw_pkcs7: The PKCS#7 message that is the signature.
  * @pkcs7_len: The size of @raw_pkcs7.
+ * @firmware_name: The required firmware name or NULL.
  */
 int system_verify_data(const void *data, unsigned long len,
-		       const void *raw_pkcs7, size_t pkcs7_len)
+		       const void *raw_pkcs7, size_t pkcs7_len,
+		       const char *firmware_name)
 {
 	struct pkcs7_message *pkcs7;
+	const char *p7_firmware_name;
 	bool trusted;
 	int ret;
 
 	pkcs7 = pkcs7_parse_message(raw_pkcs7, pkcs7_len);
 	if (IS_ERR(pkcs7))
 		return PTR_ERR(pkcs7);
+
+	ret = -EINVAL;
+	p7_firmware_name = pkcs7_get_firmware_name(pkcs7);
+	if (firmware_name) {
+		if (!p7_firmware_name) {
+			pr_err("Expected name '%s' in firmware signature but not present\n",
+			       firmware_name);
+			goto error;
+		}
+		if (strcmp(p7_firmware_name, firmware_name) != 0) {
+			pr_err("Expected name '%s' in firmware signature but got '%s'\n",
+			       firmware_name, p7_firmware_name);
+			goto error;
+		}
+	} else {
+		if (p7_firmware_name) {
+			pr_err("Unexpected firmware name in signature '%s'\n",
+			       p7_firmware_name);
+			goto error;
+		}
+	}
 
 	/* The data should be detached - so we need to supply it. */
 	if (pkcs7_supply_detached_data(pkcs7, data, len) < 0) {

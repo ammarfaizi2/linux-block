@@ -43,6 +43,8 @@ void format(void)
 {
 	fprintf(stderr,
 		"Usage: scripts/sign-file [-dp] <hash algo> <key> <x509> <module> [<dest>]\n");
+	fprintf(stderr,
+		"       scripts/sign-file [-dp] -F <firmware name> <hash algo> <key> <x509> <firmware> [<dest>]\n");
 	exit(2);
 }
 
@@ -105,6 +107,7 @@ static int pem_pw_cb(char *buf, int len, int w, void *v)
 int main(int argc, char **argv)
 {
 	struct module_signature sig_info = { .id_type = PKEY_ID_PKCS7 };
+	const char *firmware_name = NULL;
 	char *hash_algo = NULL;
 	char *private_key_name, *x509_name, *module_name, *dest_name;
 	bool save_cms = false, replace_orig;
@@ -112,6 +115,7 @@ int main(int argc, char **argv)
 	unsigned char buf[4096];
 	unsigned long module_size, cms_size;
 	unsigned int use_keyid = 0;
+	CMS_SignerInfo *signer;
 	const EVP_MD *digest_algo;
 	EVP_PKEY *private_key;
 	CMS_ContentInfo *cms;
@@ -126,11 +130,12 @@ int main(int argc, char **argv)
 	key_pass = getenv("KBUILD_SIGN_PIN");
 
 	do {
-		opt = getopt(argc, argv, "dpk");
+		opt = getopt(argc, argv, "dpkF:");
 		switch (opt) {
 		case 'p': save_cms = true; break;
 		case 'd': sign_only = true; save_cms = true; break;
 		case 'k': use_keyid = CMS_USE_KEYID; break;
+		case 'F': firmware_name = optarg; break;
 		case -1: break;
 		default: format();
 		}
@@ -212,12 +217,36 @@ int main(int argc, char **argv)
 
 	/* Load the CMS message from the digest buffer. */
 	cms = CMS_sign(NULL, NULL, NULL, NULL,
-		       CMS_NOCERTS | CMS_PARTIAL | CMS_BINARY | CMS_DETACHED | CMS_STREAM);
+		       CMS_NOCERTS | CMS_PARTIAL | CMS_BINARY |
+		       CMS_DETACHED | CMS_STREAM);
 	ERR(!cms, "CMS_sign");
 
-	ERR(!CMS_add1_signer(cms, x509, private_key, digest_algo,
-			     CMS_NOCERTS | CMS_BINARY | CMS_NOSMIMECAP | use_keyid),
-	    "CMS_sign_add_signer");
+	signer = CMS_add1_signer(cms, x509, private_key, digest_algo,
+				 CMS_NOCERTS | CMS_BINARY | CMS_NOSMIMECAP |
+				 use_keyid);
+	ERR(!signer, "CMS_sign_add_signer");
+
+	if (firmware_name) {
+		/* Add an entry into the authenticated attributes to note the
+		 * firmware name if this is a firmware signature.
+		 */
+		ASN1_UTF8STRING *str;
+		X509_ATTRIBUTE *attr;
+		int nid;
+
+		nid = OBJ_create("1.3.6.1.4.1.2312.16.2.1", NULL, NULL);
+		ERR(!nid, "OBJ_create");
+
+		str = M_ASN1_UTF8STRING_new();
+		ERR(!str, "M_ASN1_UTF8STRING_new");
+		ERR(!ASN1_STRING_set(str, firmware_name, strlen(firmware_name)),
+		    "ASN1_STRING_set");
+		attr = X509_ATTRIBUTE_create(nid, V_ASN1_UTF8STRING, str);
+		ERR(!attr, "X509_ATTRIBUTE_create");
+		ERR(!CMS_signed_add1_attr(signer, attr),
+		    "CMS_signed_add1_attr");
+	}
+
 	ERR(CMS_final(cms, bm, NULL, CMS_NOCERTS | CMS_BINARY) < 0,
 	    "CMS_final");
 

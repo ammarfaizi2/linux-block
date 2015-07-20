@@ -93,6 +93,9 @@ enum OID {
 	OID_moduleSigningOnlyKey,	/* 1.3.6.1.4.1.2312.16.1.2 */
 	OID_kexecSigningOnlyKey,	/* 1.3.6.1.4.1.2312.16.1.3 */
 
+	/* Red Hat-space kernel OIDs for PKCS#7/CMS attributes */
+	OID_firmwareName,		/* 1.3.6.1.4.1.2312.16.2.1 */
+
 	OID__NR
 };
 

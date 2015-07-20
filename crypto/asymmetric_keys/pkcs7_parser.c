@@ -15,6 +15,7 @@
 #include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/oid_registry.h>
+#include <linux/ctype.h>
 #include "public_key.h"
 #include "pkcs7_parser.h"
 #include "pkcs7-asn1.h"
@@ -29,6 +30,13 @@ struct pkcs7_parse_context {
 	enum OID	last_oid;		/* Last OID encountered */
 	unsigned	x509_index;
 	unsigned	sinfo_index;
+	unsigned	firmware_name_len;
+	enum {
+		maybe_firmware_sig,
+		is_firmware_sig,
+		isnt_firmware_sig
+	} firmware_sig_state : 8;
+	bool		signer_has_firmware_name;
 	const void	*raw_serial;
 	unsigned	raw_serial_size;
 	unsigned	raw_issuer_size;
@@ -76,6 +84,7 @@ void pkcs7_free_message(struct pkcs7_message *pkcs7)
 			pkcs7->signed_infos = sinfo->next;
 			pkcs7_free_signed_info(sinfo);
 		}
+		kfree(pkcs7->firmware_name);
 		kfree(pkcs7);
 	}
 }
@@ -407,6 +416,8 @@ int pkcs7_sig_note_authenticated_attr(void *context, size_t hdrlen,
 				      const void *value, size_t vlen)
 {
 	struct pkcs7_parse_context *ctx = context;
+	char *p;
+	int i;
 
 	pr_devel("AuthAttr: %02x %zu [%*ph]\n", tag, vlen, (unsigned)vlen, value);
 
@@ -417,6 +428,45 @@ int pkcs7_sig_note_authenticated_attr(void *context, size_t hdrlen,
 		ctx->sinfo->msgdigest = value;
 		ctx->sinfo->msgdigest_len = vlen;
 		return 0;
+
+	case OID_firmwareName:
+		if (tag != ASN1_UTF8STR || vlen == 0)
+			return -EBADMSG;
+
+		/* If there's more than one signature, they must have the same
+		 * firmware name.
+		 */
+		switch (ctx->firmware_sig_state) {
+		case maybe_firmware_sig:
+			for (i = 0; i < vlen; i++)
+				if (!isprint(((const char *)value)[i]))
+					return -EBADMSG;
+			p = kmalloc(vlen + 1, GFP_KERNEL);
+			if (!p)
+				return -ENOMEM;
+			memcpy(p, value, vlen);
+			p[vlen] = 0;
+			ctx->msg->firmware_name = p;
+			ctx->firmware_name_len = vlen;
+			ctx->firmware_sig_state = is_firmware_sig;
+			pr_debug("Found firmware name '%s'\n", p);
+			ctx->signer_has_firmware_name = true;
+			return 0;
+
+		case is_firmware_sig:
+			if (ctx->firmware_name_len != vlen ||
+			    memcmp(ctx->msg->firmware_name, value, vlen) != 0) {
+				pr_warn("Mismatched firmware names\n");
+				return -EBADMSG;
+			}
+			ctx->signer_has_firmware_name = true;
+			return 0;
+
+		case isnt_firmware_sig:
+			pr_warn("Mismatched presence of firmware name\n");
+			return -EBADMSG;
+		}
+
 	default:
 		return 0;
 	}
@@ -431,10 +481,37 @@ int pkcs7_sig_note_set_of_authattrs(void *context, size_t hdrlen,
 {
 	struct pkcs7_parse_context *ctx = context;
 
+	/* Make sure we either have all or no firmware names */
+	switch (ctx->firmware_sig_state) {
+	case maybe_firmware_sig:
+		ctx->firmware_sig_state = isnt_firmware_sig;
+	case isnt_firmware_sig:
+		break;
+	case is_firmware_sig:
+		if (!ctx->signer_has_firmware_name) {
+			pr_warn("Mismatched presence of firmware name\n");
+			return -EBADMSG;
+		}
+		ctx->signer_has_firmware_name = false;
+		break;
+	}
+
 	/* We need to switch the 'CONT 0' to a 'SET OF' when we digest */
 	ctx->sinfo->authattrs = value - (hdrlen - 1);
 	ctx->sinfo->authattrs_len = vlen + (hdrlen - 1);
 	return 0;
+}
+
+/**
+ * pkcs7_get_firmware_name - Get firmware name extension value
+ * @pkcs7: The preparsed PKCS#7 message to access
+ *
+ * Get the value of the firmware name extension if there was one or NULL
+ * otherwise.
+ */
+const char *pkcs7_get_firmware_name(const struct pkcs7_message *pkcs7)
+{
+	return pkcs7->firmware_name;
 }
 
 /*
