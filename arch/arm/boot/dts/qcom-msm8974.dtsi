@@ -100,6 +100,16 @@
 		clock-frequency = <19200000>;
 	};
 
+	firmware {
+		compatible = "simple-bus";
+
+		scm {
+			compatible = "qcom,scm";
+			clocks = <&gcc GCC_CE1_CLK> , <&gcc GCC_CE1_AXI_CLK>, <&gcc GCC_CE1_AHB_CLK>;
+			clock-names = "core", "bus", "iface";
+		};
+	};
+
 	soc: soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
