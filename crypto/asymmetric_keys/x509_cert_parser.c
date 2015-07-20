@@ -15,6 +15,7 @@
 #include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/oid_registry.h>
+#include <linux/bitrev.h>
 #include "public_key.h"
 #include "x509_parser.h"
 #include "x509-asn1.h"
@@ -457,8 +458,43 @@ int x509_process_extension(void *context, size_t hdrlen,
 	struct x509_parse_context *ctx = context;
 	struct asymmetric_key_id *kid;
 	const unsigned char *v = value;
+	u32 nr_unused_bits, tmp;
 
 	pr_debug("Extension: %u\n", ctx->last_oid);
+
+	if (ctx->last_oid == OID_keyUsage) {
+		/* There's a bitstring inside the content that we want to get
+		 * at.  In the content of the bitstring, the first octet says
+		 * how many of the trailing bits are relevant.  Logical bits
+		 * 0-7 are in octet 1, bits 7-0 (note the inversion); 8-15 are
+		 * in octet 2, bits 7-0.
+		 *
+		 * [X.680 22.4, X.690 6.2 and X.690 8.6.2.1]
+		 */
+		if (vlen < 3)
+			return -EBADMSG;
+		if (v[0] != ASN1_BTS || v[1] != vlen - 2)
+			return -EBADMSG;
+		nr_unused_bits = v[2];
+		if (nr_unused_bits > 7)
+			return -EBADMSG;
+		vlen -= 3;
+		v += 3;
+		if (vlen == 0)
+			return 0;
+
+		tmp = v[0];
+		if (vlen == 1 && nr_unused_bits > 0)
+			tmp &= ~((1 << nr_unused_bits) - 1);
+		tmp = bitrev8(tmp);
+		pr_debug("keyUsage %x\n", tmp);
+
+		/* check for keyCertSign */
+		if (tmp & (1 << 5))
+			ctx->cert->pub->usage_restriction =
+				KEY_RESTRICTED_TO_KEY_SIGNING;
+		return 0;
+	}
 
 	if (ctx->last_oid == OID_subjectKeyIdentifier) {
 		/* Get hold of the key fingerprint */
@@ -490,7 +526,8 @@ int x509_process_extension(void *context, size_t hdrlen,
 		/* Get hold of the extended key usage information */
 		ctx->raw_extusage = v;
 		ctx->raw_extusage_size = vlen;
-		ctx->cert->pub->usage_restriction = KEY_RESTRICTED_USAGE;
+		if (ctx->cert->pub->usage_restriction == KEY_USAGE_NOT_SPECIFIED)
+			ctx->cert->pub->usage_restriction = KEY_RESTRICTED_USAGE;
 		return 0;
 	}
 
