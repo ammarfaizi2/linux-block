@@ -115,6 +115,7 @@ int sprint_oid(const void *data, size_t datasize, char *buffer, size_t bufsize)
 	size_t ret;
 	int count;
 
+	buffer[0] = 0;
 	if (v >= end)
 		return -EBADMSG;
 

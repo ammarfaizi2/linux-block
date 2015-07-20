@@ -19,6 +19,7 @@
 #include "x509_parser.h"
 #include "x509-asn1.h"
 #include "x509_akid-asn1.h"
+#include "x509_extusage-asn1.h"
 #include "x509_rsakey-asn1.h"
 
 struct x509_parse_context {
@@ -40,6 +41,8 @@ struct x509_parse_context {
 	const void	*raw_akid;		/* Raw authorityKeyId in ASN.1 */
 	const void	*akid_raw_issuer;	/* Raw directoryName in authorityKeyId */
 	unsigned	akid_raw_issuer_size;
+	unsigned	raw_extusage_size;
+	const void	*raw_extusage;		/* Raw extKeyUsage in ASN.1 */
 };
 
 /*
@@ -90,6 +93,20 @@ struct x509_certificate *x509_cert_parse(const void *data, size_t datalen)
 	ret = asn1_ber_decoder(&x509_decoder, ctx, data, datalen);
 	if (ret < 0)
 		goto error_decode;
+
+	/* Decode the extended key usage information */
+	if (ctx->raw_extusage) {
+		pr_devel("EXTUSAGE: %u %*phN\n",
+			 ctx->raw_extusage_size, ctx->raw_extusage_size,
+			 ctx->raw_extusage);
+		ret = asn1_ber_decoder(&x509_extusage_decoder, ctx,
+				       ctx->raw_extusage,
+				       ctx->raw_extusage_size);
+		if (ret < 0) {
+			pr_warn("Couldn't decode extKeyUsage\n");
+			goto error_decode;
+		}
+	}
 
 	/* Decode the AuthorityKeyIdentifier */
 	if (ctx->raw_akid) {
@@ -469,6 +486,14 @@ int x509_process_extension(void *context, size_t hdrlen,
 		return 0;
 	}
 
+	if (ctx->last_oid == OID_extKeyUsage) {
+		/* Get hold of the extended key usage information */
+		ctx->raw_extusage = v;
+		ctx->raw_extusage_size = vlen;
+		ctx->cert->pub->usage_restriction = KEY_RESTRICTED_USAGE;
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -599,5 +624,52 @@ int x509_akid_note_serial(void *context, size_t hdrlen,
 
 	pr_debug("authkeyid %*phN\n", kid->len, kid->data);
 	ctx->cert->akid_id = kid;
+	return 0;
+}
+
+/*
+ * Note restriction to a purpose
+ */
+int x509_extusage_note_purpose(void *context, size_t hdrlen,
+			       unsigned char tag,
+			       const void *value, size_t vlen)
+{
+	struct x509_parse_context *ctx = context;
+	enum key_usage_restriction restriction;
+	char buffer[50];
+	enum OID oid;
+
+	sprint_oid(value, vlen, buffer, sizeof(buffer));
+	pr_debug("ExtUsage: %s\n", buffer);
+
+	oid = look_up_OID(value, vlen);
+	if (oid == OID__NR) {
+		pr_debug("Unknown extension: [%lu] %s\n",
+			 (unsigned long)value - ctx->data, buffer);
+		return 0;
+	}
+
+	switch (oid) {
+	case OID_firmwareSigningOnlyKey:
+		restriction = KEY_RESTRICTED_TO_FIRMWARE_SIGNING;
+		break;
+	case OID_moduleSigningOnlyKey:
+		restriction = KEY_RESTRICTED_TO_MODULE_SIGNING;
+		break;
+	case OID_kexecSigningOnlyKey:
+		restriction = KEY_RESTRICTED_TO_KEXEC_SIGNING;
+		break;
+	default:
+		restriction = KEY_RESTRICTED_TO_OTHER;
+		break;
+	}
+
+	if (ctx->cert->pub->usage_restriction != KEY_RESTRICTED_USAGE) {
+		pr_warn("Rejecting certificate with multiple restrictions\n");
+		return -EKEYREJECTED;
+	}
+
+	ctx->cert->pub->usage_restriction = restriction;
+	pr_debug("usage restriction %u\n", restriction);
 	return 0;
 }

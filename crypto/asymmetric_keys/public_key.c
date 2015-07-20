@@ -42,6 +42,16 @@ const char *const pkey_id_type_name[PKEY_ID_TYPE__LAST] = {
 };
 EXPORT_SYMBOL_GPL(pkey_id_type_name);
 
+static const char *const key_usage_restrictions[NR__KEY_USAGE_RESTRICTIONS] = {
+	[KEY_USAGE_NOT_SPECIFIED]		= "unrestricted",
+	[KEY_RESTRICTED_USAGE]			= "unspecified",
+	[KEY_RESTRICTED_TO_OTHER]		= "other use",
+	[KEY_RESTRICTED_TO_MODULE_SIGNING]	= "module sig",
+	[KEY_RESTRICTED_TO_FIRMWARE_SIGNING]	= "firmware sig",
+	[KEY_RESTRICTED_TO_KEXEC_SIGNING]	= "kexec sig",
+	[KEY_RESTRICTED_TO_KEY_SIGNING]		= "key sig",
+};
+
 /*
  * Provide a part of a description of the key for /proc/keys.
  */
@@ -53,6 +63,18 @@ static void public_key_describe(const struct key *asymmetric_key,
 	if (key)
 		seq_printf(m, "%s.%s",
 			   pkey_id_type_name[key->id_type], key->algo->name);
+}
+
+/*
+ * Describe capabilities/restrictions of the key for /proc/keys.
+ */
+static void public_key_describe_caps(const struct key *asymmetric_key,
+				     struct seq_file *m)
+{
+	struct public_key *key = asymmetric_key->payload.data;
+
+	if (key)
+		seq_puts(m, key_usage_restrictions[key->usage_restriction]);
 }
 
 /*
@@ -123,6 +145,7 @@ struct asymmetric_key_subtype public_key_subtype = {
 	.name			= "public_key",
 	.name_len		= sizeof("public_key") - 1,
 	.describe		= public_key_describe,
+	.describe_caps		= public_key_describe_caps,
 	.destroy		= public_key_destroy,
 	.verify_signature	= public_key_verify_signature_2,
 };

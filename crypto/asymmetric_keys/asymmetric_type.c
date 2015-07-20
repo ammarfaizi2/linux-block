@@ -254,7 +254,8 @@ static void asymmetric_key_describe(const struct key *key, struct seq_file *m)
 		}
 
 		seq_puts(m, " [");
-		/* put something here to indicate the key's capabilities */
+		if (subtype->describe_caps)
+			subtype->describe_caps(key, m);
 		seq_putc(m, ']');
 	}
 }

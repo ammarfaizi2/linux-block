@@ -1,0 +1,3 @@
+ExtKeyUsageSyntax ::= SEQUENCE OF KeyPurposeId
+
+KeyPurposeId ::= OBJECT IDENTIFIER ({ x509_extusage_note_purpose })

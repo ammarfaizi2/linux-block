@@ -40,6 +40,21 @@ enum pkey_id_type {
 extern const char *const pkey_id_type_name[PKEY_ID_TYPE__LAST];
 
 /*
+ * The use to which an asymmetric key is restricted.
+ */
+enum key_usage_restriction {
+	KEY_USAGE_NOT_SPECIFIED,
+	KEY_RESTRICTED_USAGE,
+	KEY_RESTRICTED_TO_OTHER,
+	KEY_RESTRICTED_TO_MODULE_SIGNING,
+	KEY_RESTRICTED_TO_FIRMWARE_SIGNING,
+	KEY_RESTRICTED_TO_KEXEC_SIGNING,
+	KEY_RESTRICTED_TO_KEY_SIGNING,
+	NR__KEY_USAGE_RESTRICTIONS
+};
+
+
+/*
  * Cryptographic data for the public-key subtype of the asymmetric key type.
  *
  * Note that this may include private part of the key as well as the public
@@ -52,6 +67,7 @@ struct public_key {
 #define PKEY_CAN_DECRYPT	0x02
 #define PKEY_CAN_SIGN		0x04
 #define PKEY_CAN_VERIFY		0x08
+	enum key_usage_restriction usage_restriction : 8;
 	enum pkey_algo pkey_algo : 8;
 	enum pkey_id_type id_type : 8;
 	union {

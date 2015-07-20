@@ -31,6 +31,9 @@ struct asymmetric_key_subtype {
 	/* Describe a key of this subtype for /proc/keys */
 	void (*describe)(const struct key *key, struct seq_file *m);
 
+	/* Describe capabilities/restrictions of a key of this subtype */
+	void (*describe_caps)(const struct key *key, struct seq_file *m);
+
 	/* Destroy a key of this subtype */
 	void (*destroy)(void *payload);
 

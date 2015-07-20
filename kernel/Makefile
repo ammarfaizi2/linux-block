@@ -238,6 +238,8 @@ x509.genkey:
 	@echo >>x509.genkey "keyUsage=digitalSignature"
 	@echo >>x509.genkey "subjectKeyIdentifier=hash"
 	@echo >>x509.genkey "authorityKeyIdentifier=keyid"
+	@echo >>x509.genkey "# Set moduleSigningOnlyKey restriction"
+	@echo >>x509.genkey "extendedKeyUsage=critical,1.3.6.1.4.1.2312.16.1.2"
 endif
 
 $(eval $(call config_filename,MODULE_SIG_KEY))
