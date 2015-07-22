@@ -58,6 +58,11 @@ static DEFINE_PER_CPU(unsigned long, cpu_debugreg[HBP_NUM]);
  */
 static DEFINE_PER_CPU(struct perf_event *, bp_per_reg[HBP_NUM]);
 
+/*
+ * Each bit i (from 0 to 3) is set if breakpoint i might be an active
+ * kernel instruction breakpoint.  Must be NMI-safe.
+ */
+DEFINE_PER_CPU(unsigned int, cpu_nmi_kernel_insn_breakpoint_mask);
 
 static inline unsigned long
 __encode_dr7(int drnum, unsigned int len, unsigned int type)
@@ -121,6 +126,12 @@ int arch_install_hw_breakpoint(struct perf_event *bp)
 	if (WARN_ONCE(i == HBP_NUM, "Can't find any breakpoint slot"))
 		return -EBUSY;
 
+	if (bp->attr.bp_addr >= TASK_SIZE_MAX &&
+	    bp->attr.bp_type == HW_BREAKPOINT_X) {
+		this_cpu_or(cpu_nmi_kernel_insn_breakpoint_mask, (1U << i));
+		barrier();
+	}
+
 	set_debugreg(info->address, i);
 	__this_cpu_write(cpu_debugreg[i], info->address);
 
@@ -167,6 +178,9 @@ void arch_uninstall_hw_breakpoint(struct perf_event *bp)
 	set_debugreg(*dr7, 7);
 	if (info->mask)
 		set_dr_addr_mask(0, i);
+
+	barrier();
+	this_cpu_and(cpu_nmi_kernel_insn_breakpoint_mask, ~(1U << i));
 }
 
 /*

@@ -7,6 +7,7 @@
 #include <uapi/asm/debugreg.h>
 
 DECLARE_PER_CPU(unsigned long, cpu_dr7);
+DECLARE_PER_CPU(unsigned int, cpu_nmi_kernel_insn_breakpoint_mask);
 
 #ifndef CONFIG_PARAVIRT
 /*
