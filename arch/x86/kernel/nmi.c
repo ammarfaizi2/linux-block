@@ -492,6 +492,9 @@ static DEFINE_PER_CPU(int, update_debug_stack);
 dotraplinkage notrace void
 do_nmi(struct pt_regs *regs, long error_code)
 {
+	bool restore_dr7 = false;
+	unsigned long old_dr7;
+
 	if (this_cpu_read(nmi_state) != NMI_NOT_RUNNING) {
 		this_cpu_write(nmi_state, NMI_LATCHED);
 		return;
@@ -499,6 +502,18 @@ do_nmi(struct pt_regs *regs, long error_code)
 	this_cpu_write(nmi_state, NMI_EXECUTING);
 	this_cpu_write(nmi_cr2, read_cr2());
 nmi_restart:
+
+	/*
+	 * Prevent instruction breakpoints from tripping inside NMI code
+	 * that isn't protected by NOKPROBE_SYMBOL.  We need this
+	 * because we cannot return from an instruction breakpoint
+	 * without using IRET.
+	 */
+	if (this_cpu_read(cpu_nmi_kernel_insn_breakpoint_mask)) {
+		get_debugreg(old_dr7, 7);
+		set_debugreg(0, 7);
+		restore_dr7 = true;
+	}
 
 #ifdef CONFIG_X86_64
 	/*
@@ -528,6 +543,9 @@ nmi_restart:
 		this_cpu_write(update_debug_stack, 0);
 	}
 #endif
+
+	if (restore_dr7)
+		set_debugreg(old_dr7, 7);
 
 	if (unlikely(this_cpu_read(nmi_cr2) != read_cr2()))
 		write_cr2(this_cpu_read(nmi_cr2));
