@@ -211,11 +211,10 @@ static struct firmware_buf *__allocate_fw_buf(const char *fw_name,
 	}
 
 	strcpy(signed_name, buf->fw_id);
-	strncat(signed_name, sign_ext, strlen(sign_ext));
+	strlcpy(signed_name, sign_ext, sizeof(signed_name));
 	buf->fw_sig = kstrdup_const(signed_name, GFP_ATOMIC);
 	if (!buf->fw_sig)
 		goto out;
-
 
 	kref_init(&buf->ref);
 	buf->fwc = fwc;
@@ -406,7 +405,7 @@ static int read_file_signature_contents(struct file *file_sig,
 {
 	int rc;
 
-	rc = __read_file_contents(file,
+	rc = __read_file_contents(file_sig,
 				  &fw_buf->data_sig,
 				  &fw_buf->size_sig);
 	if (rc)
@@ -566,7 +565,8 @@ static int firmware_sig_check(struct firmware *fw, const char *name)
 	const void *data = buf->data;
 	const void *data_sig = buf->data_sig;
 
-	err = system_verify_data(data, buf->size, data_sig, buf->size_sig);
+	err = system_verify_data(data, buf->size, data_sig, buf->size_sig,
+				 KEY_VERIFYING_FIRMWARE_SIGNATURE, name);
 	if (!err) {
 		buf->sig_ok = true;
 		fw_set_page_data(buf, fw);
