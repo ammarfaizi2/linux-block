@@ -112,13 +112,13 @@ int arch_install_hw_breakpoint(struct perf_event *bp)
 {
 	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
 	unsigned long *dr7;
+	struct perf_event **slot;
 	int i;
 
 	for (i = 0; i < HBP_NUM; i++) {
-		struct perf_event **slot = this_cpu_ptr(&bp_per_reg[i]);
+		slot = this_cpu_ptr(&bp_per_reg[i]);
 
 		if (!*slot) {
-			*slot = bp;
 			break;
 		}
 	}
@@ -132,15 +132,24 @@ int arch_install_hw_breakpoint(struct perf_event *bp)
 		barrier();
 	}
 
+	/* We don't want a transient state of the registers to be dangerous. */
+
+	set_debugreg(0, 7);
+	barrier();
+
+	*slot = bp;
+
 	set_debugreg(info->address, i);
 	__this_cpu_write(cpu_debugreg[i], info->address);
 
 	dr7 = this_cpu_ptr(&cpu_dr7);
 	*dr7 |= encode_dr7(i, info->len, info->type);
 
-	set_debugreg(*dr7, 7);
 	if (info->mask)
 		set_dr_addr_mask(info->mask, i);
+
+	barrier();
+	set_debugreg(*dr7, 7);
 
 	return 0;
 }
