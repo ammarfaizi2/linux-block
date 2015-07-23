@@ -22,6 +22,7 @@ obj-$(CONFIG_REGMAP)	+= regmap/
 obj-$(CONFIG_SOC_BUS) += soc.o
 obj-$(CONFIG_PINCTRL) += pinctrl.o
 obj-$(CONFIG_DEV_COREDUMP) += devcoredump.o
+obj-$(CONFIG_FIRMWARE_LOAD_TEST) += fw_load_test.o
 
 ccflags-$(CONFIG_DEBUG_DRIVER) := -DDEBUG
 

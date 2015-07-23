@@ -103,6 +103,15 @@ config FIRMWARE_SIG_FORCE
 	  key.  Without this, you'll only get a record on the kernel ring
 	  buffer of firmware files loaded without a signature.
 
+config FIRMWARE_LOAD_TEST
+	tristate "Module to perform firmware load test"
+	depends on FW_LOADER
+	help
+	  This module can be used to perform a test of the firmware loading
+	  infrastructure.  Upon loading, it tries to load a firmware blob
+	  called /lib/firmware/fake.bin but otherwise ignores the blob it gets.
+	  It may also try and check the signature on it.
+
 config FIRMWARE_IN_KERNEL
 	bool "Include in-kernel firmware blobs in kernel binary"
 	depends on FW_LOADER
