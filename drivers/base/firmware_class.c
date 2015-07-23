@@ -190,31 +190,18 @@ static struct firmware_buf *__allocate_fw_buf(const char *fw_name,
 					      struct firmware_cache *fwc)
 {
 	struct firmware_buf *buf;
-	const char *sign_ext = ".p7s";
-	char *signed_name;
-
-	signed_name = kzalloc(PATH_MAX, GFP_ATOMIC);
-	if (!signed_name)
-		return NULL;
 
 	buf = kzalloc(sizeof(*buf), GFP_ATOMIC);
-	if (!buf) {
-		kfree(signed_name);
-		return NULL;
-	}
+	if (!buf)
+		goto err;
 
 	buf->fw_id = kstrdup_const(fw_name, GFP_ATOMIC);
-	if (!buf->fw_id) {
-		kfree(signed_name);
-		kfree(buf);
-		return NULL;
-	}
+	if (!buf->fw_id)
+		goto err_buf;
 
-	strcpy(signed_name, buf->fw_id);
-	strlcpy(signed_name, sign_ext, sizeof(signed_name));
-	buf->fw_sig = kstrdup_const(signed_name, GFP_ATOMIC);
-	if (!buf->fw_sig)
-		goto out;
+	buf->fw_sig = kasprintf(GFP_ATOMIC, "%s.p7s", buf->fw_id);
+	if (buf->fw_sig)
+		goto err_id;
 
 	kref_init(&buf->ref);
 	buf->fwc = fwc;
@@ -224,12 +211,13 @@ static struct firmware_buf *__allocate_fw_buf(const char *fw_name,
 #endif
 
 	pr_debug("%s: fw-%s buf=%p\n", __func__, fw_name, buf);
-
 	return buf;
-out:
-	kfree(signed_name);
+
+err_id:
 	kfree_const(buf->fw_id);
+err_buf:
 	kfree(buf);
+err:
 	return NULL;
 }
 
@@ -244,7 +232,7 @@ static struct firmware_buf *__fw_lookup_buf(const char *fw_name)
 	return NULL;
 }
 
-static int fw_lookup_and_allocate_buf(const char *fw_name,
+static int fw_lookup_or_allocate_buf(const char *fw_name,
 				      struct firmware_cache *fwc,
 				      struct firmware_buf **buf)
 {
@@ -258,13 +246,13 @@ static int fw_lookup_and_allocate_buf(const char *fw_name,
 		*buf = tmp;
 		return 1;
 	}
+
 	tmp = __allocate_fw_buf(fw_name, fwc);
 	if (tmp)
 		list_add(&tmp->list, &fwc->head);
 	spin_unlock(&fwc->lock);
 
 	*buf = tmp;
-
 	return tmp ? 0 : -ENOMEM;
 }
 
@@ -292,7 +280,7 @@ static void __fw_free_buf(struct kref *ref)
 #endif
 		vfree(buf->data);
 	kfree_const(buf->fw_id);
-	kfree_const(buf->fw_sig);
+	kfree(buf->fw_sig);
 	kfree(buf);
 }
 
@@ -349,8 +337,8 @@ static int __read_file_contents(struct file *file,
 
 	*dest_buf = buf;
 	*dest_size = size;
-
 	return 0;
+
 fail:
 	vfree(buf);
 	return rc;
@@ -362,7 +350,7 @@ static struct file *get_filesystem_file_sig(const char *sig_name)
 	return filp_open(sig_name, O_RDONLY, 0);
 }
 
-static bool get_filesystem_file_sig_ok(struct file *file_sig)
+static int get_filesystem_file_sig_ok(struct file *file_sig)
 {
 	if (IS_ERR(file_sig))
 		return -EINVAL;
@@ -372,15 +360,9 @@ static bool get_filesystem_file_sig_ok(struct file *file_sig)
 static int read_file_signature_contents(struct file *file_sig,
 					struct firmware_buf *fw_buf)
 {
-	int rc;
-
-	rc = __read_file_contents(file_sig,
-				  &fw_buf->data_sig,
-				  &fw_buf->size_sig);
-	if (rc)
-		return rc;
-
-	return 0;
+	return __read_file_contents(file_sig,
+				    &fw_buf->data_sig,
+				    &fw_buf->size_sig);
 }
 
 #elif CONFIG_FIRMWARE_SIG
@@ -390,12 +372,12 @@ static struct file *get_filesystem_file_sig(const char *sig_name)
 
 	file = filp_open(sig_name, O_RDONLY, 0);
 	if (IS_ERR(file))
-		pr_info("singature %s not present, but this is OK\n", sig_name);
+		pr_info("signature %s not present, but this is OK\n", sig_name);
 
 	return file;
 }
 
-static bool get_filesystem_file_sig_ok(struct file *file_sig)
+static int get_filesystem_file_sig_ok(struct file *file_sig)
 {
 	return 0;
 }
@@ -420,7 +402,7 @@ static struct file *get_filesystem_file_sig(const char *sig_name)
 	return NULL;
 }
 
-static bool get_filesystem_file_sig_ok(struct file *file_sig)
+static int get_filesystem_file_sig_ok(struct file *file_sig)
 {
 	return 0;
 }
@@ -1246,7 +1228,7 @@ _request_firmware_prepare(struct firmware **firmware_p, const char *name,
 		return 0; /* assigned */
 	}
 
-	ret = fw_lookup_and_allocate_buf(name, &fw_cache, &buf);
+	ret = fw_lookup_or_allocate_buf(name, &fw_cache, &buf);
 
 	/*
 	 * bind with 'buf' now to avoid warning in failure path
