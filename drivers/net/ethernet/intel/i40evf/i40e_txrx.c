@@ -484,6 +484,8 @@ int i40evf_setup_tx_descriptors(struct i40e_ring *tx_ring)
 	if (!dev)
 		return -ENOMEM;
 
+	/* warn if we are about to overwrite the pointer */
+	WARN_ON(tx_ring->tx_bi);
 	bi_size = sizeof(struct i40e_tx_buffer) * tx_ring->count;
 	tx_ring->tx_bi = kzalloc(bi_size, GFP_KERNEL);
 	if (!tx_ring->tx_bi)
@@ -644,6 +646,8 @@ int i40evf_setup_rx_descriptors(struct i40e_ring *rx_ring)
 	struct device *dev = rx_ring->dev;
 	int bi_size;
 
+	/* warn if we are about to overwrite the pointer */
+	WARN_ON(rx_ring->rx_bi);
 	bi_size = sizeof(struct i40e_rx_buffer) * rx_ring->count;
 	rx_ring->rx_bi = kzalloc(bi_size, GFP_KERNEL);
 	if (!rx_ring->rx_bi)
@@ -1608,14 +1612,12 @@ static void i40e_create_tx_ctx(struct i40e_ring *tx_ring,
  * i40e_chk_linearize - Check if there are more than 8 fragments per packet
  * @skb:      send buffer
  * @tx_flags: collected send information
- * @hdr_len:  size of the packet header
  *
  * Note: Our HW can't scatter-gather more than 8 fragments to build
  * a packet on the wire and so we need to figure out the cases where we
  * need to linearize the skb.
  **/
-static bool i40e_chk_linearize(struct sk_buff *skb, u32 tx_flags,
-			       const u8 hdr_len)
+static bool i40e_chk_linearize(struct sk_buff *skb, u32 tx_flags)
 {
 	struct skb_frag_struct *frag;
 	bool linearize = false;
@@ -1627,7 +1629,7 @@ static bool i40e_chk_linearize(struct sk_buff *skb, u32 tx_flags,
 	gso_segs = skb_shinfo(skb)->gso_segs;
 
 	if (tx_flags & (I40E_TX_FLAGS_TSO | I40E_TX_FLAGS_FSO)) {
-		u16 j = 1;
+		u16 j = 0;
 
 		if (num_frags < (I40E_MAX_BUFFER_TXD))
 			goto linearize_chk_done;
@@ -1638,21 +1640,18 @@ static bool i40e_chk_linearize(struct sk_buff *skb, u32 tx_flags,
 			goto linearize_chk_done;
 		}
 		frag = &skb_shinfo(skb)->frags[0];
-		size = hdr_len;
 		/* we might still have more fragments per segment */
 		do {
 			size += skb_frag_size(frag);
 			frag++; j++;
+			if ((size >= skb_shinfo(skb)->gso_size) &&
+			    (j < I40E_MAX_BUFFER_TXD)) {
+				size = (size % skb_shinfo(skb)->gso_size);
+				j = (size) ? 1 : 0;
+			}
 			if (j == I40E_MAX_BUFFER_TXD) {
-				if (size < skb_shinfo(skb)->gso_size) {
-					linearize = true;
-					break;
-				}
-				j = 1;
-				size -= skb_shinfo(skb)->gso_size;
-				if (size)
-					j++;
-				size += hdr_len;
+				linearize = true;
+				break;
 			}
 			num_frags--;
 		} while (num_frags);
@@ -1940,7 +1939,7 @@ static netdev_tx_t i40e_xmit_frame_ring(struct sk_buff *skb,
 	else if (tso)
 		tx_flags |= I40E_TX_FLAGS_TSO;
 
-	if (i40e_chk_linearize(skb, tx_flags, hdr_len))
+	if (i40e_chk_linearize(skb, tx_flags))
 		if (skb_linearize(skb))
 			goto out_drop;
 

@@ -11,6 +11,10 @@
 #ifndef __MV88E6XXX_H
 #define __MV88E6XXX_H
 
+#ifndef UINT64_MAX
+#define UINT64_MAX		(u64)(~((u64)0))
+#endif
+
 #define SMI_CMD			0x00
 #define SMI_CMD_BUSY		BIT(15)
 #define SMI_CMD_CLAUSE_22	BIT(12)
@@ -85,7 +89,12 @@
 #define PORT_SWITCH_ID_6182	0x1a60
 #define PORT_SWITCH_ID_6185	0x1a70
 #define PORT_SWITCH_ID_6240	0x2400
-#define PORT_SWITCH_ID_6320	0x1250
+#define PORT_SWITCH_ID_6320	0x1150
+#define PORT_SWITCH_ID_6320_A1	0x1151
+#define PORT_SWITCH_ID_6320_A2	0x1152
+#define PORT_SWITCH_ID_6321	0x3100
+#define PORT_SWITCH_ID_6321_A1	0x3101
+#define PORT_SWITCH_ID_6321_A2	0x3102
 #define PORT_SWITCH_ID_6350	0x3710
 #define PORT_SWITCH_ID_6351	0x3750
 #define PORT_SWITCH_ID_6352	0x3520
@@ -193,6 +202,9 @@
 #define GLOBAL_ATU_OP_FLUSH_NON_STATIC_DB ((6 << 12) | GLOBAL_ATU_OP_BUSY)
 #define GLOBAL_ATU_OP_GET_CLR_VIOLATION	  ((7 << 12) | GLOBAL_ATU_OP_BUSY)
 #define GLOBAL_ATU_DATA		0x0c
+#define GLOBAL_ATU_DATA_TRUNK			BIT(15)
+#define GLOBAL_ATU_DATA_PORT_VECTOR_MASK	0x3ff0
+#define GLOBAL_ATU_DATA_PORT_VECTOR_SHIFT	4
 #define GLOBAL_ATU_DATA_STATE_MASK		0x0f
 #define GLOBAL_ATU_DATA_STATE_UNUSED		0x00
 #define GLOBAL_ATU_DATA_STATE_UC_MGMT		0x0d
@@ -253,6 +265,7 @@
 #define GLOBAL2_DEVICE_MAPPING	0x06
 #define GLOBAL2_DEVICE_MAPPING_UPDATE		BIT(15)
 #define GLOBAL2_DEVICE_MAPPING_TARGET_SHIFT	8
+#define GLOBAL2_DEVICE_MAPPING_PORT_MASK	0x0f
 #define GLOBAL2_TRUNK_MASK	0x07
 #define GLOBAL2_TRUNK_MASK_UPDATE		BIT(15)
 #define GLOBAL2_TRUNK_MASK_NUM_SHIFT		12
@@ -289,6 +302,9 @@
 #define GLOBAL2_SMI_OP_45_READ_DATA	((2 << 10) | GLOBAL2_SMI_OP_BUSY)
 #define GLOBAL2_SMI_DATA	0x19
 #define GLOBAL2_SCRATCH_MISC	0x1a
+#define GLOBAL2_SCRATCH_BUSY		BIT(15)
+#define GLOBAL2_SCRATCH_REGISTER_SHIFT	8
+#define GLOBAL2_SCRATCH_VALUE_MASK	0xff
 #define GLOBAL2_WDOG_CONTROL	0x1b
 #define GLOBAL2_QOS_WEIGHT	0x1c
 #define GLOBAL2_MISC		0x1d
@@ -339,6 +355,8 @@ struct mv88e6xxx_priv_state {
 	u8 port_state[DSA_MAX_PORTS];
 
 	struct work_struct bridge_work;
+
+	struct dentry *dbgfs;
 };
 
 struct mv88e6xxx_hw_stat {
@@ -397,6 +415,7 @@ int mv88e6xxx_port_fdb_getnext(struct dsa_switch *ds, int port,
 int mv88e6xxx_phy_page_read(struct dsa_switch *ds, int port, int page, int reg);
 int mv88e6xxx_phy_page_write(struct dsa_switch *ds, int port, int page,
 			     int reg, int val);
+bool mv88e6xxx_6320_family(struct dsa_switch *ds);
 extern struct dsa_switch_driver mv88e6131_switch_driver;
 extern struct dsa_switch_driver mv88e6123_61_65_switch_driver;
 extern struct dsa_switch_driver mv88e6352_switch_driver;
