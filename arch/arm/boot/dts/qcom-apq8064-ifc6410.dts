@@ -207,6 +207,19 @@
 			status = "okay";
 		};
 
+		leds {
+			compatible = "gpio-leds";
+			pinctrl-names = "default";
+			pinctrl-0 = <&notify_led>;
+
+			led@1 {
+				label = "apq8064:green:user1";
+				gpios = <&pm8921_gpio 18 GPIO_ACTIVE_HIGH>;
+				linux,default-trigger = "heartbeat";
+				default-state = "on";
+			};
+		};
+
 		qcom,ssbi@500000 {
 			pmicintc: pmic@0 {
 				pm8921_gpio: gpio@150 {
@@ -215,6 +228,15 @@
 					wlan_default_gpios: wlan-gpios {
 						pios {
 							pins = "gpio43";
+							function = "normal";
+							bias-disable;
+							power-source = <PM8921_GPIO_S4>;
+						};
+					};
+
+					notify_led: nled {
+						pios {
+							pins = "gpio18";
 							function = "normal";
 							bias-disable;
 							power-source = <PM8921_GPIO_S4>;
