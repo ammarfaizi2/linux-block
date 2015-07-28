@@ -111,6 +111,16 @@
 			regulator-boot-on;
 		};
 
+		hdmi: qcom,hdmi-tx@4a00000 {
+			status = "okay";
+			core-vdda-supply = <&pm8921_hdmi_switch>;
+			hdmi-mux-supply = <&ext_3p3v>;
+		};
+
+		mdp: qcom,mdp@5100000 {
+			status = "okay";
+		};
+
 		gsbi3: gsbi@16200000 {
 			status = "okay";
 			qcom,mode = <GSBI_PROT_I2C>;
