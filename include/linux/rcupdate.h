@@ -297,12 +297,10 @@ void synchronize_rcu(void);
 
 static inline void __rcu_read_lock(void)
 {
-	preempt_disable();
 }
 
 static inline void __rcu_read_unlock(void)
 {
-	preempt_enable();
 }
 
 static inline void synchronize_rcu(void)
