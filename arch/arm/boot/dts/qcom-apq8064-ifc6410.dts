@@ -234,6 +234,10 @@
 			};
 		};
 
+		adm: dma@18320000 {
+			status = "okay";
+		};
+
 		sata_phy0: phy@1b400000 {
 			status = "okay";
 		};

@@ -569,6 +569,7 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 			ranges;
+			syscon-tcsr = <&tcsr>;
 
 			gsbi6_serial: serial@16540000 {
 				compatible = "qcom,msm-uartdm-v1.3", "qcom,msm-uartdm";
@@ -577,6 +578,13 @@
 				interrupts = <0 156 0x0>;
 				clocks = <&gcc GSBI6_UART_CLK>, <&gcc GSBI6_H_CLK>;
 				clock-names = "core", "iface";
+
+				qcom,rx-crci = <11>;
+				qcom,tx-crci = <6>;
+
+				dmas = <&adm 6>, <&adm 7>;
+				dma-names = "rx", "tx";
+
 				status = "disabled";
 			};
 
@@ -1089,6 +1097,26 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&sdc4_gpios>;
 			};
+		};
+
+		adm: dma@18320000 {
+			compatible = "qcom,adm";
+			reg = <0x18320000 0xE0000>;
+			interrupts = <GIC_SPI 171 IRQ_TYPE_NONE>;
+			#dma-cells = <1>;
+
+			clocks = <&gcc ADM0_CLK>, <&gcc ADM0_PBUS_CLK>;
+			clock-names = "core", "iface";
+
+			resets = <&gcc ADM0_RESET>,
+				 <&gcc ADM0_PBUS_RESET>,
+				 <&gcc ADM0_C0_RESET>,
+				 <&gcc ADM0_C1_RESET>,
+				 <&gcc ADM0_C2_RESET>;
+			reset-names = "clk", "pbus", "c0", "c1", "c2";
+			qcom,ee = <1>;
+
+			status = "disabled";
 		};
 
 		tcsr: syscon@1a400000 {
