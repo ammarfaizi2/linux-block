@@ -30,6 +30,7 @@ CONTENTS
     5-4-1. blkio
     5-4-2. cpuset
     5-4-3. memory
+    5-4-4. cpu, cpuacct
 6. Planned Changes
   6-1. CAP for resource control
 
@@ -536,6 +537,58 @@ may be specified in any order and not all pairs have to be specified.
 
   memory.low, memory.high, and memory.max will use the string "max" to
   indicate and set the highest possible value.
+
+5-4-4. cpu, cpuacct
+
+- cpuacct is no longer an independent controller.  It's implicitly
+  enabled by cpu and its information is reported in cpu.stat.
+
+- All time durations, including all stats, are now in microseconds.
+
+- The interface is updated as follows.
+
+  cpu.stat
+
+	Currently reports the following six stats.  All time stats are
+	in microseconds.
+
+	  usage_usec
+	  user_usec
+	  system_usec
+	  nr_periods
+	  nr_throttled
+	  throttled_usec
+
+  cpu.weight
+
+	The weight setting.  The weight is between 1 and 10000 and
+	defaults to 100.
+
+	This file is available only on non-root cgroups.
+
+  cpu.max
+
+	The maximum bandwidth setting.  It's in the following format.
+
+	  $MAX $PERIOD
+
+	which indicates that the group may consume upto $MAX in each
+	$PERIOD duration.  "max" for $MAX indicates no limit.  If only
+	one number is written, $MAX is updated.
+
+	This file is available only on non-root cgroups.
+
+  cpu.rt.max
+
+	The maximum realtime runtime setting.  It's in the following
+	format.
+
+	  $MAX $PERIOD
+
+	which indicates that the group may consume upto $MAX in each
+	$PERIOD duration.  If only one number is written, $MAX is
+	updated.
+
 
 6. Planned Changes
 
