@@ -101,8 +101,7 @@ static inline unsigned long pfn_to_mfn(unsigned long pfn)
 {
 	unsigned long mfn;
 
-	if (xen_feature(XENFEAT_auto_translated_physmap))
-		return pfn;
+	BUG_ON(xen_feature(XENFEAT_auto_translated_physmap));
 
 	mfn = __pfn_to_mfn(pfn);
 
@@ -147,8 +146,7 @@ static inline unsigned long mfn_to_pfn(unsigned long mfn)
 {
 	unsigned long pfn;
 
-	if (xen_feature(XENFEAT_auto_translated_physmap))
-		return mfn;
+	BUG_ON(xen_feature(XENFEAT_auto_translated_physmap));
 
 	pfn = mfn_to_pfn_no_overrides(mfn);
 	if (__pfn_to_mfn(pfn) != mfn)
@@ -176,9 +174,26 @@ static inline xpaddr_t machine_to_phys(xmaddr_t machine)
 	return XPADDR(PFN_PHYS(mfn_to_pfn(PFN_DOWN(machine.maddr))) | offset);
 }
 
+/* Pseudo-physical <-> Guest conversion */
+static inline unsigned long pfn_to_gfn(unsigned long pfn)
+{
+	if (xen_feature(XENFEAT_auto_translated_physmap))
+		return pfn;
+	else
+		return pfn_to_mfn(pfn);
+}
+
+static inline unsigned long gfn_to_pfn(unsigned long gfn)
+{
+	if (xen_feature(XENFEAT_auto_translated_physmap))
+		return gfn;
+	else
+		return mfn_to_pfn(gfn);
+}
+
 /* Pseudo-physical <-> Bus conversion */
-#define pfn_to_bfn(pfn)		pfn_to_mfn(pfn)
-#define bfn_to_pfn(bfn)		mfn_to_pfn(bfn)
+#define pfn_to_bfn(pfn)		pfn_to_gfn(pfn)
+#define bfn_to_pfn(bfn)		gfn_to_pfn(bfn)
 
 /*
  * We detect special mappings in one of two ways:
@@ -218,6 +233,10 @@ static inline unsigned long bfn_to_local_pfn(unsigned long mfn)
 #define virt_to_pfn(v)          (PFN_DOWN(__pa(v)))
 #define virt_to_mfn(v)		(pfn_to_mfn(virt_to_pfn(v)))
 #define mfn_to_virt(m)		(__va(mfn_to_pfn(m) << PAGE_SHIFT))
+
+/* VIRT <-> GUEST conversion */
+#define virt_to_gfn(v)		(pfn_to_gfn(virt_to_pfn(v)))
+#define gfn_to_virt(g)		(__va(gfn_to_pfn(g) << PAGE_SHIFT))
 
 static inline unsigned long pte_mfn(pte_t pte)
 {
