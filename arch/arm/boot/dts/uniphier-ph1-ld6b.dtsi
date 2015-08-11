@@ -1,5 +1,5 @@
 /*
- * Device Tree Source for UniPhier PH1-sLD3 Reference Board
+ * Device Tree Source for UniPhier PH1-LD6b SoC
  *
  * Copyright (C) 2015 Masahiro Yamada <yamada.masahiro@socionext.com>
  *
@@ -42,79 +42,26 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/dts-v1/;
-/include/ "uniphier-ph1-sld3.dtsi"
-/include/ "uniphier-ref-daughter.dtsi"
-/include/ "uniphier-support-card.dtsi"
+/*
+ * PH1-LD6b consists of two silicon dies: D-chip and A-chip.
+ * The D-chip (digital chip) is the same as the ProXstream2 die.
+ * Reuse the ProXstream2 device tree with some properties overridden.
+ */
+/include/ "uniphier-proxstream2.dtsi"
 
 / {
-	model = "UniPhier PH1-sLD3 Reference Board";
-	compatible = "socionext,ph1-sld3-ref", "socionext,ph1-sld3";
-
-	memory {
-		device_type = "memory";
-		reg = <0x80000000 0x20000000
-		       0xc0000000 0x20000000>;
-	};
-
-	chosen {
-		bootargs = "console=ttyS0,115200";
-		stdout-path = &serial0;
-	};
-
-	aliases {
-		serial0 = &serial0;
-		serial1 = &serial1;
-		serial2 = &serial2;
-		i2c0 = &i2c0;
-		i2c1 = &i2c1;
-		i2c2 = &i2c2;
-		i2c3 = &i2c3;
-		i2c4 = &i2c4;
-	};
+	compatible = "socionext,ph1-ld6b";
 };
 
-&extbus {
-	ranges = <0 0x00000000 0x0f000000 0x01000000
-		  1 0x00000000 0x00000000 0x08000000>;
+/* UART3 unavilable: the pads are not wired to the package balls */
+&serial3 {
+	status = "disabled";
 };
 
-&support_card {
-	ranges = <0x00000000 1 0x03f00000 0x00100000>;
-};
-
-&ethsc {
-	interrupts = <0 49 4>;
-};
-
-&serial0 {
-	status = "okay";
-};
-
-&serial1 {
-	status = "okay";
-};
-
-&serial2 {
-	status = "okay";
-};
-
-&i2c0 {
-	status = "okay";
-};
-
-&usb0 {
-	status = "okay";
-};
-
-&usb1 {
-	status = "okay";
-};
-
-&usb2 {
-	status = "okay";
-};
-
-&usb3 {
-	status = "okay";
+/*
+ * PH1-LD6b and ProXstream2 have completely different packages,
+ * which makes the pinctrl driver unshareable.
+ */
+&pinctrl {
+	compatible = "socionext,ph1-ld6b-pinctrl", "syscon";
 };
