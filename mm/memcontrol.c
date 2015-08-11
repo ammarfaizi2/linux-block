@@ -295,6 +295,9 @@ struct mem_cgroup {
 	/* OOM-Killer disable */
 	int		oom_kill_disable;
 
+	/* handle for "memory.events" */
+	struct cgroup_file events_file;
+
 	/* protect arrays of thresholds */
 	struct mutex thresholds_lock;
 
@@ -5499,6 +5502,7 @@ static struct cftype memory_files[] = {
 	{
 		.name = "events",
 		.flags = CFTYPE_NOT_ON_ROOT,
+		.file_offset = offsetof(struct mem_cgroup, events_file),
 		.seq_show = memory_events_show,
 	},
 	{ }	/* terminate */
@@ -5530,6 +5534,7 @@ void mem_cgroup_events(struct mem_cgroup *memcg,
 		       unsigned int nr)
 {
 	this_cpu_add(memcg->stat->events[idx], nr);
+	cgroup_file_notify(&memcg->events_file);
 }
 
 /**
