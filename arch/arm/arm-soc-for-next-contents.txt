@@ -1,6 +1,8 @@
 next/fixes-non-critical
 	samsung/non-critical
 		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-non-critical-1
+	brcm/maintainers
+		http://github.com/broadcom/stblinux tags/arm-soc/for-4.3/maintainers
 
 next/cleanup
 	renesas/cleanup
@@ -26,11 +28,18 @@ next/cleanup
 		git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip queue/irq/arm
 	renesas/marzen-removal
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-marzen-board-removal-for-v4.3
-	fixes
+	<no branch> (bf64dd262eaaece2ff560e86fabf94c6725f3b5c)
 		Merge branch 'fixes' into next/cleanup
 	patch
 		ARM: ux500: simplify secondary CPU boot
 		ARM: shmobile: Fix mismerges
+	samsung/cleanup
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-cleanup
+	patch
+		ARM: nomadik: move hog code to use DT hogs
+		ARM: nomadik: selectively enable UART0 on boards
+		ARM: nomadik: move l2x0 setup to device tree
+		ARM: nomadik: push accelerometer down to boards
 
 next/soc
 	rockchip/soc
@@ -59,6 +68,8 @@ next/soc
 	patch
 		soc: mediatek: Fix SCPSYS compilation
 		ARM: davinci: cp_intc: use IRQCHIP_SKIP_SET_WAKE instead of irq_set_wake callback
+		ARM: BCM: Enable ARM erratum 798181 for BRCMSTB
+		ARM: brcmstb: select ARCH_DMA_ADDR_T_64BIT for LPAE
 
 next/boards
 
@@ -119,6 +130,23 @@ next/dt
 		ARM: dts: lpc4350-hitex-eval: add emc pins and static memory devices
 	sunxi/dt
 		https://git.kernel.org/pub/scm/linux/kernel/git/mripard/linux tags/sunxi-dt-for-4.3
+	samsung/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-dt-1
+	patch
+		ARM: dts: uniphier: add I2C controller device nodes
+		ARM: dts: uniphier: add PH1-Pro5 SoC support
+		ARM: dts: uniphier: add ProXstream2 and PH1-LD6b SoC/board support
+	csr/sirf-dts
+		git://git.kernel.org/pub/scm/linux/kernel/git/baohua/linux tags/sirf-dts-for-4.3
+	patch
+		ARM: BCM5301X: activate some additional options in pl310 cache controller
+		ARM: BCM5301X: Add profiling support
+		ARM: dts: brcmstb: add BCM7445 GPIO nodes
+		ARM: dts: UniPhier: add reference daughter board
+	omap/dt3
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/dt-pt3
+	renesas/dt3
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-dt3-for-v4.3
 
 next/drivers
 	patch
@@ -194,4 +222,6 @@ fixes
 	patch
 		ARM: dts: keystone: fix dt bindings to use post div register for mainpll
 		ARM: ux500: add an SMP enablement type and move cpu nodes
+	<no branch> (cd4556733b30cc363adc7b1cea3bffa7e2dd0c7c)
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.2/fixes-rc5
 
