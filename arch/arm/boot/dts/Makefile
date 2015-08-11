@@ -394,6 +394,8 @@ dtb-$(CONFIG_ARCH_OMAP3) += \
 	omap3-cm-t3530.dtb \
 	omap3-cm-t3730.dtb \
 	omap3-devkit8000.dtb \
+	omap3-devkit8000-lcd43.dtb \
+	omap3-devkit8000-lcd70.dtb \
 	omap3-evm.dtb \
 	omap3-evm-37xx.dtb \
 	omap3-gta04a3.dtb \
@@ -530,6 +532,7 @@ dtb-$(CONFIG_ARCH_SHMOBILE_MULTI) += \
 	r8a7791-koelsch.dtb \
 	r8a7793-gose.dtb \
 	r8a7794-alt.dtb \
+	r8a7794-silk.dtb \
 	sh73a0-kzm9g.dtb
 dtb-$(CONFIG_ARCH_SOCFPGA) += \
 	socfpga_arria5_socdk.dtb \
