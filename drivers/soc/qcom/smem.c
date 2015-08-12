@@ -484,8 +484,9 @@ int qcom_smem_get(unsigned host, unsigned item, void **ptr, size_t *size)
 	if (ret)
 		return ret;
 
-	ret = qcom_smem_get_private(__smem, host, item, ptr, size);
-	if (ret == -ENOENT)
+	if (host < SMEM_HOST_COUNT && __smem->partitions[host])
+		ret = qcom_smem_get_private(__smem, host, item, ptr, size);
+	else
 		ret = qcom_smem_get_global(__smem, item, ptr, size);
 
 	hwspin_unlock_irqrestore(__smem->hwlock, &flags);
