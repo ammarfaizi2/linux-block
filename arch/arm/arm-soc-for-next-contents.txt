@@ -176,6 +176,8 @@ next/drivers
 	mvebu/soc2
 		git://git.infradead.org/linux-mvebu tags/mvebu-soc-4.3-2
 		contains mvebu/soc
+	qcom/soc
+		git://codeaurora.org/quic/kernel/agross-msm tags/qcom-soc-for-4.3
 
 next/defconfig
 	patch
@@ -237,6 +239,8 @@ next/arm64
 		arm64: Enable Marvell Berlin SoC family in defconfig
 	mtk/arm64-2
 		https://github.com/mbgg/linux-mediatek tags/v4.2-next-arm64-2
+	mvebu/berlin64-dts
+		git://git.infradead.org/users/hesselba/linux-berlin tags/berlin64-for-v4.3-1
 
 fixes
 	patch
@@ -247,4 +251,6 @@ fixes
 		https://github.com/krzk/linux tags/samsung-mach-fixes-4.2
 	<no branch> (1a9fa190956f45c1e58c4d8bfa5ac051691ea590)
 		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-4.2-3
+	<no branch> (e984a1791ac6a7c944911207e8a9c344763f0003)
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.2/fixes-rc6
 
