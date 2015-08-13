@@ -78,6 +78,8 @@ next/soc
 		ARM: uniphier: drop v7_invalidate_l1 call at secondary entry
 	rockchip/soc2
 		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v4.3-rockchip32-soc2
+	patch
+		clk: ti: fix for definition movement
 
 next/boards
 
