@@ -40,6 +40,10 @@ next/cleanup
 		ARM: nomadik: selectively enable UART0 on boards
 		ARM: nomadik: move l2x0 setup to device tree
 		ARM: nomadik: push accelerometer down to boards
+		ARM: ep93xx/timer: Migrate to new 'set-state' interface
+		ARM: gemini: Add missing register definitions for gemini timer
+		ARM: gemini: Use timer1 for clockevent
+		ARM: gemini: Setup timer3 as free running timer
 
 next/soc
 	rockchip/soc
@@ -147,12 +151,19 @@ next/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/dt-pt3
 	renesas/dt3
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-dt3-for-v4.3
+	at91/dt2
+		git://git.kernel.org/pub/scm/linux/kernel/git/abelloni/linux tags/at91-ab-dt2
+	mvebu/dt3
+		git://git.infradead.org/linux-mvebu tags/mvebu-dt-4.3-3
 
 next/drivers
 	patch
 		memory: add ARM PL172 MultiPort Memory Controller driver
 		doc: dt: add documentation for pl172 memory bindings
 		memory: pl172: fix modular build
+	mvebu/soc2
+		git://git.infradead.org/linux-mvebu tags/mvebu-soc-4.3-2
+		contains mvebu/soc
 
 next/defconfig
 	patch
