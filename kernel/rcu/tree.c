@@ -3670,7 +3670,6 @@ static void sync_sched_exp_select_cpus(struct rcu_state *rsp)
 	unsigned long mask;
 	unsigned long mask_ofl_test;
 	unsigned long mask_ofl_ipi;
-	struct rcu_data *rdp;
 	int ret;
 	struct rcu_node *rnp;
 
@@ -3706,7 +3705,6 @@ static void sync_sched_exp_select_cpus(struct rcu_state *rsp)
 		for (cpu = rnp->grplo; cpu <= rnp->grphi; cpu++, mask <<= 1) {
 			if (!(mask_ofl_ipi & mask))
 				continue;
-			rdp = per_cpu_ptr(rsp->rda, cpu);
 			ret = smp_call_function_single(cpu, synchronize_sched_expedited_cpu_stop, NULL, 0);
 			if (!ret)
 				mask_ofl_ipi &= ~mask;
