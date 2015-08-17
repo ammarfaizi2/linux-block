@@ -273,7 +273,6 @@ struct pktgen_dev {
 
 	/* runtime counters relating to clone_skb */
 
-	__u64 allocated_skbs;
 	__u32 clone_count;
 	int last_ok;		/* Was last skb sent?
 				 * Or a failed transmit of some sort?
@@ -2279,7 +2278,7 @@ static void spin(struct pktgen_dev *pkt_dev, ktime_t spin_until)
 
 static inline void set_pkt_overhead(struct pktgen_dev *pkt_dev)
 {
-	pkt_dev->pkt_overhead = 0;
+	pkt_dev->pkt_overhead = LL_RESERVED_SPACE(pkt_dev->odev);
 	pkt_dev->pkt_overhead += pkt_dev->nr_labels*sizeof(u32);
 	pkt_dev->pkt_overhead += VLAN_TAG_SIZE(pkt_dev);
 	pkt_dev->pkt_overhead += SVLAN_TAG_SIZE(pkt_dev);
@@ -2788,6 +2787,7 @@ static struct sk_buff *pktgen_alloc_skb(struct net_device *dev,
 	} else {
 		 skb = __netdev_alloc_skb(dev, size, GFP_NOWAIT);
 	}
+	skb_reserve(skb, LL_RESERVED_SPACE(dev));
 
 	return skb;
 }
@@ -3397,7 +3397,6 @@ static void pktgen_xmit(struct pktgen_dev *pkt_dev)
 			return;
 		}
 		pkt_dev->last_pkt_size = pkt_dev->skb->len;
-		pkt_dev->allocated_skbs++;
 		pkt_dev->clone_count = 0;	/* reset counter */
 	}
 
@@ -3570,13 +3569,6 @@ static int pktgen_thread_worker(void *arg)
 
 	pr_debug("%s removing thread\n", t->tsk->comm);
 	pktgen_rem_thread(t);
-
-	/* Wait for kthread_stop */
-	while (!kthread_should_stop()) {
-		set_current_state(TASK_INTERRUPTIBLE);
-		schedule();
-	}
-	__set_current_state(TASK_RUNNING);
 
 	return 0;
 }
@@ -3769,6 +3761,7 @@ static int __net_init pktgen_create_thread(int cpu, struct pktgen_net *pn)
 	}
 
 	t->net = pn;
+	get_task_struct(p);
 	wake_up_process(p);
 	wait_for_completion(&t->start_done);
 
@@ -3891,6 +3884,7 @@ static void __net_exit pg_net_exit(struct net *net)
 		t = list_entry(q, struct pktgen_thread, th_list);
 		list_del(&t->th_list);
 		kthread_stop(t->tsk);
+		put_task_struct(t->tsk);
 		kfree(t);
 	}
 

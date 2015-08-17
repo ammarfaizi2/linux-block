@@ -164,8 +164,6 @@ static int br_fill_ifvlaninfo_range(struct sk_buff *skb, u16 vid_start,
 			    sizeof(vinfo), &vinfo))
 			goto nla_put_failure;
 
-		vinfo.flags &= ~BRIDGE_VLAN_INFO_RANGE_BEGIN;
-
 		vinfo.vid = vid_end;
 		vinfo.flags = flags | BRIDGE_VLAN_INFO_RANGE_END;
 		if (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
@@ -693,9 +691,17 @@ static int br_port_slave_changelink(struct net_device *brdev,
 				    struct nlattr *tb[],
 				    struct nlattr *data[])
 {
+	struct net_bridge *br = netdev_priv(brdev);
+	int ret;
+
 	if (!data)
 		return 0;
-	return br_setport(br_port_get_rtnl(dev), data);
+
+	spin_lock_bh(&br->lock);
+	ret = br_setport(br_port_get_rtnl(dev), data);
+	spin_unlock_bh(&br->lock);
+
+	return ret;
 }
 
 static int br_port_fill_slave_info(struct sk_buff *skb,

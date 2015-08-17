@@ -15,6 +15,10 @@
 #include <net/ip_fib.h>
 #include <net/netevent.h>
 #include <net/netns/generic.h>
+#if IS_ENABLED(CONFIG_IPV6)
+#include <net/ipv6.h>
+#include <net/addrconf.h>
+#endif
 #include "internal.h"
 
 #define LABEL_NOT_SPECIFIED (1<<20)
@@ -58,10 +62,11 @@ static inline struct mpls_dev *mpls_dev_get(const struct net_device *dev)
 	return rcu_dereference_rtnl(dev->mpls_ptr);
 }
 
-static bool mpls_output_possible(const struct net_device *dev)
+bool mpls_output_possible(const struct net_device *dev)
 {
 	return dev && (dev->flags & IFF_UP) && netif_carrier_ok(dev);
 }
+EXPORT_SYMBOL_GPL(mpls_output_possible);
 
 static unsigned int mpls_rt_header_size(const struct mpls_route *rt)
 {
@@ -69,13 +74,14 @@ static unsigned int mpls_rt_header_size(const struct mpls_route *rt)
 	return rt->rt_labels * sizeof(struct mpls_shim_hdr);
 }
 
-static unsigned int mpls_dev_mtu(const struct net_device *dev)
+unsigned int mpls_dev_mtu(const struct net_device *dev)
 {
 	/* The amount of data the layer 2 frame can hold */
 	return dev->mtu;
 }
+EXPORT_SYMBOL_GPL(mpls_dev_mtu);
 
-static bool mpls_pkt_too_big(const struct sk_buff *skb, unsigned int mtu)
+bool mpls_pkt_too_big(const struct sk_buff *skb, unsigned int mtu)
 {
 	if (skb->len <= mtu)
 		return false;
@@ -85,6 +91,7 @@ static bool mpls_pkt_too_big(const struct sk_buff *skb, unsigned int mtu)
 
 	return true;
 }
+EXPORT_SYMBOL_GPL(mpls_pkt_too_big);
 
 static bool mpls_egress(struct mpls_route *rt, struct sk_buff *skb,
 			struct mpls_entry_decoded dec)
@@ -286,7 +293,7 @@ static void mpls_notify_route(struct net *net, unsigned index,
 	struct mpls_route *rt = new ? new : old;
 	unsigned nlm_flags = (old && new) ? NLM_F_REPLACE : 0;
 	/* Ignore reserved labels for now */
-	if (rt && (index >= 16))
+	if (rt && (index >= MPLS_LABEL_FIRST_UNRESERVED))
 		rtmsg_lfib(event, index, rt, nlh, net, portid, nlm_flags);
 }
 
@@ -320,11 +327,96 @@ static unsigned find_free_label(struct net *net)
 
 	platform_label = rtnl_dereference(net->mpls.platform_label);
 	platform_labels = net->mpls.platform_labels;
-	for (index = 16; index < platform_labels; index++) {
+	for (index = MPLS_LABEL_FIRST_UNRESERVED; index < platform_labels;
+	     index++) {
 		if (!rtnl_dereference(platform_label[index]))
 			return index;
 	}
 	return LABEL_NOT_SPECIFIED;
+}
+
+#if IS_ENABLED(CONFIG_INET)
+static struct net_device *inet_fib_lookup_dev(struct net *net, void *addr)
+{
+	struct net_device *dev = NULL;
+	struct rtable *rt;
+	struct in_addr daddr;
+
+	memcpy(&daddr, addr, sizeof(struct in_addr));
+	rt = ip_route_output(net, daddr.s_addr, 0, 0, 0);
+	if (IS_ERR(rt))
+		goto errout;
+
+	dev = rt->dst.dev;
+	dev_hold(dev);
+
+	ip_rt_put(rt);
+
+	return dev;
+errout:
+	return ERR_PTR(-ENODEV);
+}
+#else
+static struct net_device *inet_fib_lookup_dev(struct net *net, void *addr)
+{
+	return ERR_PTR(-EAFNOSUPPORT);
+}
+#endif
+
+#if IS_ENABLED(CONFIG_IPV6)
+static struct net_device *inet6_fib_lookup_dev(struct net *net, void *addr)
+{
+	struct net_device *dev = NULL;
+	struct dst_entry *dst;
+	struct flowi6 fl6;
+	int err;
+
+	if (!ipv6_stub)
+		return ERR_PTR(-EAFNOSUPPORT);
+
+	memset(&fl6, 0, sizeof(fl6));
+	memcpy(&fl6.daddr, addr, sizeof(struct in6_addr));
+	err = ipv6_stub->ipv6_dst_lookup(net, NULL, &dst, &fl6);
+	if (err)
+		goto errout;
+
+	dev = dst->dev;
+	dev_hold(dev);
+	dst_release(dst);
+
+	return dev;
+
+errout:
+	return ERR_PTR(err);
+}
+#else
+static struct net_device *inet6_fib_lookup_dev(struct net *net, void *addr)
+{
+	return ERR_PTR(-EAFNOSUPPORT);
+}
+#endif
+
+static struct net_device *find_outdev(struct net *net,
+				      struct mpls_route_config *cfg)
+{
+	struct net_device *dev = NULL;
+
+	if (!cfg->rc_ifindex) {
+		switch (cfg->rc_via_table) {
+		case NEIGH_ARP_TABLE:
+			dev = inet_fib_lookup_dev(net, cfg->rc_via);
+			break;
+		case NEIGH_ND_TABLE:
+			dev = inet6_fib_lookup_dev(net, cfg->rc_via);
+			break;
+		case NEIGH_LINK_TABLE:
+			break;
+		}
+	} else {
+		dev = dev_get_by_index(net, cfg->rc_ifindex);
+	}
+
+	return dev;
 }
 
 static int mpls_route_add(struct mpls_route_config *cfg)
@@ -345,8 +437,8 @@ static int mpls_route_add(struct mpls_route_config *cfg)
 		index = find_free_label(net);
 	}
 
-	/* The first 16 labels are reserved, and may not be set */
-	if (index < 16)
+	/* Reserved labels may not be set */
+	if (index < MPLS_LABEL_FIRST_UNRESERVED)
 		goto errout;
 
 	/* The full 20 bit range may not be supported. */
@@ -357,10 +449,12 @@ static int mpls_route_add(struct mpls_route_config *cfg)
 	if (cfg->rc_output_labels > MAX_NEW_LABELS)
 		goto errout;
 
-	err = -ENODEV;
-	dev = dev_get_by_index(net, cfg->rc_ifindex);
-	if (!dev)
+	dev = find_outdev(net, cfg);
+	if (IS_ERR(dev)) {
+		err = PTR_ERR(dev);
+		dev = NULL;
 		goto errout;
+	}
 
 	/* Ensure this is a supported device */
 	err = -EINVAL;
@@ -423,8 +517,8 @@ static int mpls_route_del(struct mpls_route_config *cfg)
 
 	index = cfg->rc_label;
 
-	/* The first 16 labels are reserved, and may not be removed */
-	if (index < 16)
+	/* Reserved labels may not be removed */
+	if (index < MPLS_LABEL_FIRST_UNRESERVED)
 		goto errout;
 
 	/* The full 20 bit range may not be supported */
@@ -626,6 +720,7 @@ int nla_put_labels(struct sk_buff *skb, int attrtype,
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(nla_put_labels);
 
 int nla_get_labels(const struct nlattr *nla,
 		   u32 max_labels, u32 *labels, u32 label[])
@@ -671,6 +766,7 @@ int nla_get_labels(const struct nlattr *nla,
 	*labels = nla_labels;
 	return 0;
 }
+EXPORT_SYMBOL_GPL(nla_get_labels);
 
 static int rtm_to_route_config(struct sk_buff *skb,  struct nlmsghdr *nlh,
 			       struct mpls_route_config *cfg)
@@ -740,8 +836,8 @@ static int rtm_to_route_config(struct sk_buff *skb,  struct nlmsghdr *nlh,
 					   &cfg->rc_label))
 				goto errout;
 
-			/* The first 16 labels are reserved, and may not be set */
-			if (cfg->rc_label < 16)
+			/* Reserved labels may not be set */
+			if (cfg->rc_label < MPLS_LABEL_FIRST_UNRESERVED)
 				goto errout;
 
 			break;
@@ -866,8 +962,8 @@ static int mpls_dump_routes(struct sk_buff *skb, struct netlink_callback *cb)
 	ASSERT_RTNL();
 
 	index = cb->args[0];
-	if (index < 16)
-		index = 16;
+	if (index < MPLS_LABEL_FIRST_UNRESERVED)
+		index = MPLS_LABEL_FIRST_UNRESERVED;
 
 	platform_label = rtnl_dereference(net->mpls.platform_label);
 	platform_labels = net->mpls.platform_labels;

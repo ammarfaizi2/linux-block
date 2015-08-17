@@ -5382,6 +5382,8 @@ static void __md_stop(struct mddev *mddev)
 {
 	struct md_personality *pers = mddev->pers;
 	mddev_detach(mddev);
+	/* Ensure ->event_work is done */
+	flush_workqueue(md_misc_wq);
 	spin_lock(&mddev->lock);
 	mddev->ready = 0;
 	mddev->pers = NULL;
@@ -5766,7 +5768,7 @@ static int get_bitmap_file(struct mddev *mddev, void __user * arg)
 	/* bitmap disabled, zero the first byte and copy out */
 	if (!mddev->bitmap_info.file)
 		file->pathname[0] = '\0';
-	else if ((ptr = d_path(&mddev->bitmap_info.file->f_path,
+	else if ((ptr = file_path(mddev->bitmap_info.file,
 			       file->pathname, sizeof(file->pathname))),
 		 IS_ERR(ptr))
 		err = PTR_ERR(ptr);
@@ -7437,7 +7439,7 @@ int md_setup_cluster(struct mddev *mddev, int nodes)
 	err = request_module("md-cluster");
 	if (err) {
 		pr_err("md-cluster module not found.\n");
-		return err;
+		return -ENOENT;
 	}
 
 	spin_lock(&pers_lock);
