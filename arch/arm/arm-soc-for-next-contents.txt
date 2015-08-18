@@ -80,6 +80,10 @@ next/soc
 		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v4.3-rockchip32-soc2
 	patch
 		clk: ti: fix for definition movement
+	imx/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-soc-4.3
+	omap/soc2
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/soc-pt2
 
 next/boards
 
@@ -167,6 +171,15 @@ next/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/dinguyen/linux tags/socfpga_dts_for_v4.3_part_2
 	brcm/rpi-dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/rpi/linux-rpi tags/rpi-dt-for-armsoc-4.3
+	imx/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-dt-4.3
+	patch
+		ARM: dts: vexpress: Use assigned-clock-parents for sp810
+	renesas/dt4
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-dt4-for-v4.3
+		contains renesas/clk
+	omap/dt4
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/dt-pt4-v2
 
 next/drivers
 	patch
@@ -178,6 +191,8 @@ next/drivers
 		contains mvebu/soc
 	qcom/soc
 		git://codeaurora.org/quic/kernel/agross-msm tags/qcom-soc-for-4.3
+	renesas/clk
+		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-clk-for-v4.3
 
 next/defconfig
 	patch
@@ -210,6 +225,8 @@ next/defconfig
 	patch
 		ARM: at91/defconfig: at91_dt: enable DRM hlcdc support
 		ARM: at91/defconfig: at91_dt: remove ARM_AT91_ETHER
+	imx/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-defconfig-4.3
 
 next/arm64
 	patch
@@ -241,6 +258,8 @@ next/arm64
 		https://github.com/mbgg/linux-mediatek tags/v4.2-next-arm64-2
 	mvebu/berlin64-dts
 		git://git.infradead.org/users/hesselba/linux-berlin tags/berlin64-for-v4.3-1
+	patch
+		ARM64: dts: vexpress: Use assigned-clock-parents for sp810
 
 fixes
 	patch
@@ -253,4 +272,6 @@ fixes
 		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-4.2-3
 	<no branch> (e984a1791ac6a7c944911207e8a9c344763f0003)
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.2/fixes-rc6
+	<no branch> (85ad3deea4525504355560649be7a41348111a60)
+		git://git.kernel.org/pub/scm/linux/kernel/git/ssantosh/linux-keystone tags/keystone-dts-late-fixes-v2
 
