@@ -37,6 +37,9 @@
 #include <asm/pgtable_types.h>
 #include <linux/err.h>
 
+#define NMI_NORECURSE_SS (GDT_ENTRY_FOO << 3)
+#define NMI_RECURSIVE_SS (GDT_ENTRY_BAR << 3)
+
 /* Avoid __ASSEMBLER__'ifying <linux/audit.h> just for this.  */
 #include <linux/elf-em.h>
 #define AUDIT_ARCH_X86_64			(EM_X86_64|__AUDIT_ARCH_64BIT|__AUDIT_ARCH_LE)
@@ -533,6 +536,10 @@ restore_c_regs_and_iret:
 	INTERRUPT_RETURN
 
 ENTRY(native_iret)
+	cmp	$NMI_NORECURSE_SS, 4*8(%rsp)
+	jne 1f
+	ud2
+1:
 	/*
 	 * Are we returning to a stack segment from the LDT?  Note: in
 	 * 64-bit mode SS:RSP on the exception stack is always valid.
@@ -1123,6 +1130,13 @@ ENTRY(nmi)
 	/* Use %rdx as our temp variable throughout */
 	pushq	%rdx
 
+	cmpl	$NMI_NORECURSE_SS, 4*8(%rsp)
+	jne	1f
+	ud2
+1:
+	movl	$NMI_NORECURSE_SS, %edx
+	mov	%dx, %ss
+
 	testb	$3, CS-RIP+8(%rsp)
 	jz	.Lnmi_from_kernel
 
@@ -1168,6 +1182,8 @@ ENTRY(nmi)
 	 * due to nesting -- we're on the normal thread stack and we're
 	 * done with the NMI stack.
 	 */
+	mov	$__KERNEL_DS, %edx
+	mov	%dx, %ss
 
 	movq	%rsp, %rdi
 	movq	$-1, %rsi
@@ -1250,6 +1266,11 @@ ENTRY(nmi)
 	cmpl	$1, -8(%rsp)
 	je	nested_nmi
 
+	cmpl	$0, -8(%rsp)
+	je	1f
+	ud2		/* corrupt */
+1:
+
 	/*
 	 * Now test if the previous stack was an NMI stack.  This covers
 	 * the case where we interrupt an outer NMI after it clears
@@ -1287,7 +1308,7 @@ nested_nmi:
 	 */
 	subq	$8, %rsp
 	leaq	-10*8(%rsp), %rdx
-	pushq	$__KERNEL_DS
+	pushq	$NMI_RECURSIVE_SS
 	pushq	%rdx
 	pushfq
 	pushq	$__KERNEL_CS
@@ -1303,6 +1324,11 @@ nested_nmi_out:
 	INTERRUPT_RETURN
 
 first_nmi:
+	cmpl	$NMI_RECURSIVE_SS, 4*8(%rsp)
+	jne	1f
+	ud2
+1:
+
 	/* Restore rdx. */
 	movq	(%rsp), %rdx
 
@@ -1319,12 +1345,12 @@ first_nmi:
 
 	/* Everything up to here is safe from nested NMIs */
 
-#ifdef CONFIG_DEBUG_ENTRY
+/*#ifdef CONFIG_DEBUG_ENTRY*/
 	/*
 	 * For ease of testing, unmask NMIs right away.  Disabled by
 	 * default because IRET is very expensive.
 	 */
-	pushq	$0		/* SS */
+	pushq	$NMI_RECURSIVE_SS	/* SS */
 	pushq	%rsp		/* RSP (minus 8 because of the previous push) */
 	addq	$8, (%rsp)	/* Fix up RSP */
 	pushfq			/* RFLAGS */
@@ -1332,7 +1358,7 @@ first_nmi:
 	pushq	$1f		/* RIP */
 	INTERRUPT_RETURN	/* continues at repeat_nmi below */
 1:
-#endif
+/*#endif*/
 
 repeat_nmi:
 	/*

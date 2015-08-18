@@ -176,6 +176,9 @@
 #define GDT_ENTRY_DEFAULT_USER_DS	5
 #define GDT_ENTRY_DEFAULT_USER_CS	6
 
+#define GDT_ENTRY_FOO			7
+#define GDT_ENTRY_BAR			16
+
 /* Needs two entries */
 #define GDT_ENTRY_TSS			8
 /* Needs two entries */
@@ -190,7 +193,7 @@
 /*
  * Number of entries in the GDT table:
  */
-#define GDT_ENTRIES			16
+#define GDT_ENTRIES			17
 
 /*
  * Segment selector values corresponding to the above entries:
