@@ -227,6 +227,8 @@ next/defconfig
 		ARM: at91/defconfig: at91_dt: remove ARM_AT91_ETHER
 	imx/defconfig
 		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-defconfig-4.3
+	patch
+		ARM: add TC2 PM support to multi_v7_defconfig
 
 next/arm64
 	patch
