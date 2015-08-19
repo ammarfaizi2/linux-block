@@ -129,12 +129,24 @@ void __show_regs(struct pt_regs *regs)
 	buf[4] = '\0';
 
 #ifndef CONFIG_CPU_V7M
-	printk("Flags: %s  IRQs o%s  FIQs o%s  Mode %s  ISA %s  Segment %s\n",
-		buf, interrupts_enabled(regs) ? "n" : "ff",
-		fast_interrupts_enabled(regs) ? "n" : "ff",
-		processor_modes[processor_mode(regs)],
-		isa_modes[isa_mode(regs)],
-		get_fs() == get_ds() ? "kernel" : "user");
+	{
+		unsigned int domain = get_domain();
+		const char *segment;
+
+		if ((domain & domain_mask(DOMAIN_USER)) ==
+		    domain_val(DOMAIN_USER, DOMAIN_NOACCESS))
+			segment = "none";
+		else if (get_fs() == get_ds())
+			segment = "kernel";
+		else
+			segment = "user";
+
+		printk("Flags: %s  IRQs o%s  FIQs o%s  Mode %s  ISA %s  Segment %s\n",
+			buf, interrupts_enabled(regs) ? "n" : "ff",
+			fast_interrupts_enabled(regs) ? "n" : "ff",
+			processor_modes[processor_mode(regs)],
+			isa_modes[isa_mode(regs)], segment);
+	}
 #else
 	printk("xPSR: %08lx\n", regs->ARM_cpsr);
 #endif
