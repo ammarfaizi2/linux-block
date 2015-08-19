@@ -497,7 +497,7 @@ static int fimc_lite_open(struct file *file)
 	    atomic_read(&fimc->out_path) != FIMC_IO_DMA)
 		goto unlock;
 
-	mutex_lock(&me->parent->graph_mutex);
+	mutex_lock(&me->graph_obj.mdev->graph_mutex);
 
 	ret = fimc_pipeline_call(&fimc->ve, open, me, true);
 
@@ -505,7 +505,7 @@ static int fimc_lite_open(struct file *file)
 	if (ret == 0)
 		me->use_count++;
 
-	mutex_unlock(&me->parent->graph_mutex);
+	mutex_unlock(&me->graph_obj.mdev->graph_mutex);
 
 	if (!ret) {
 		fimc_lite_clear_event_counters(fimc);
@@ -538,9 +538,9 @@ static int fimc_lite_release(struct file *file)
 		fimc_pipeline_call(&fimc->ve, close);
 		clear_bit(ST_FLITE_IN_USE, &fimc->state);
 
-		mutex_lock(&entity->parent->graph_mutex);
+		mutex_lock(&entity->graph_obj.mdev->graph_mutex);
 		entity->use_count--;
-		mutex_unlock(&entity->parent->graph_mutex);
+		mutex_unlock(&entity->graph_obj.mdev->graph_mutex);
 	}
 
 	_vb2_fop_release(file, NULL);
