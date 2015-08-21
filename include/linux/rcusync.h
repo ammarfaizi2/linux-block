@@ -17,9 +17,15 @@ struct rcu_sync_struct {
 	enum rcu_sync_type	gp_type;
 };
 
+extern bool __rcu_sync_is_idle(struct rcu_sync_struct *);
+
 static inline bool rcu_sync_is_idle(struct rcu_sync_struct *rss)
 {
+#ifdef CONFIG_PROVE_RCU
+	return __rcu_sync_is_idle(rss);
+#else
 	return !rss->gp_state; /* GP_IDLE */
+#endif
 }
 
 extern void rcu_sync_init(struct rcu_sync_struct *, enum rcu_sync_type);
