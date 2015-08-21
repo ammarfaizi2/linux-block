@@ -45,6 +45,8 @@ next/cleanup
 		ARM: gemini: Use timer1 for clockevent
 		ARM: gemini: Setup timer3 as free running timer
 		ARM/fb: ep93xx: switch framebuffer to use modedb only
+	tegra/cleanup
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-4.3-cleanup
 
 next/soc
 	rockchip/soc
@@ -180,6 +182,8 @@ next/dt
 		contains renesas/clk
 	omap/dt4
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/dt-pt4-v2
+	patch
+		ARM: dts: UniPhier: fix PPI interrupt CPU mask of timer nodes
 
 next/drivers
 	patch
@@ -193,6 +197,14 @@ next/drivers
 		git://codeaurora.org/quic/kernel/agross-msm tags/qcom-soc-for-4.3
 	renesas/clk
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-clk-for-v4.3
+	drivers/reset
+		git://git.pengutronix.de/git/pza/linux tags/reset-for-4.3
+	tegra/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-4.3-soc
+	tegra/cpufreq
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-4.3-cpufreq
+	tegra/memory
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-4.3-memory
 
 next/defconfig
 	patch
@@ -229,6 +241,8 @@ next/defconfig
 		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-defconfig-4.3
 	patch
 		ARM: add TC2 PM support to multi_v7_defconfig
+	tegra/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-4.3-defconfig
 
 next/arm64
 	patch
@@ -276,4 +290,17 @@ fixes
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.2/fixes-rc6
 	<no branch> (85ad3deea4525504355560649be7a41348111a60)
 		git://git.kernel.org/pub/scm/linux/kernel/git/ssantosh/linux-keystone tags/keystone-dts-late-fixes-v2
+
+next/late
+	samsung/clk-driver
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-clk-driver
+	samsung/late-dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-late-dt
+		contains samsung/dt
+	samsung/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-soc
+	samsung/late-cpufreq
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-late-cpufreq-driver
+	samsung/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-defconfig-new
 
