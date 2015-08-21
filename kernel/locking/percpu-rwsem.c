@@ -25,6 +25,13 @@ int __percpu_init_rwsem(struct percpu_rw_semaphore *brw,
 
 void percpu_free_rwsem(struct percpu_rw_semaphore *brw)
 {
+	/*
+	 * XXX: temporary kludge. The error path in alloc_super()
+	 * assumes that percpu_free_rwsem() is safe after kzalloc().
+	 */
+	if (!brw->fast_read_ctr)
+		return;
+
 	free_percpu(brw->fast_read_ctr);
 	brw->fast_read_ctr = NULL; /* catch use after free bugs */
 }
