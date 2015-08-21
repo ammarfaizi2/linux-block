@@ -3,6 +3,8 @@ next/fixes-non-critical
 		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-non-critical-1
 	brcm/maintainers
 		http://github.com/broadcom/stblinux tags/arm-soc/for-4.3/maintainers
+	mvebu/fixes
+		git://git.infradead.org/linux-mvebu tags/mvebu-fixes-4.2-1
 
 next/cleanup
 	renesas/cleanup
@@ -184,6 +186,7 @@ next/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/dt-pt4-v2
 	patch
 		ARM: dts: UniPhier: fix PPI interrupt CPU mask of timer nodes
+		ARM: dts: zynq: Add devicetree entry for Xilinx Zynq reset controller.
 
 next/drivers
 	patch
