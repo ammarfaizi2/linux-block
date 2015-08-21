@@ -10,6 +10,7 @@
 static const struct {
 	void (*sync)(void);
 	void (*call)(struct rcu_head *, void (*)(struct rcu_head *));
+	void (*wait)(void);
 #ifdef CONFIG_PROVE_RCU
 	int  (*held)(void);
 #endif
@@ -17,16 +18,19 @@ static const struct {
 	[RCU_SYNC] = {
 		.sync = synchronize_rcu,
 		.call = call_rcu,
+		.wait = rcu_barrier,
 		__INIT_HELD(rcu_read_lock_held)
 	},
 	[RCU_SCHED_SYNC] = {
 		.sync = synchronize_sched,
 		.call = call_rcu_sched,
+		.wait = rcu_barrier_sched,
 		__INIT_HELD(rcu_read_lock_sched_held)
 	},
 	[RCU_BH_SYNC] = {
 		.sync = synchronize_rcu_bh,
 		.call = call_rcu_bh,
+		.wait = rcu_barrier_bh,
 		__INIT_HELD(rcu_read_lock_bh_held)
 	},
 };
@@ -126,4 +130,22 @@ void rcu_sync_exit(struct rcu_sync_struct *rss)
 		}
 	}
 	spin_unlock_irq(&rss->rss_lock);
+}
+
+void rcu_sync_dtor(struct rcu_sync_struct *rss)
+{
+	int cb_state;
+
+	BUG_ON(rss->gp_count);
+
+	spin_lock_irq(&rss->rss_lock);
+	if (rss->cb_state == CB_REPLAY)
+		rss->cb_state = CB_PENDING;
+	cb_state = rss->cb_state;
+	spin_unlock_irq(&rss->rss_lock);
+
+	if (cb_state != CB_IDLE) {
+		gp_ops[rss->gp_type].wait();
+		BUG_ON(rss->cb_state != CB_IDLE);
+	}
 }
