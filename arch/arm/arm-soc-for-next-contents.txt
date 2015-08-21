@@ -88,6 +88,8 @@ next/soc
 		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-soc-4.3
 	omap/soc2
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/soc-pt2
+	patch
+		ARM: imx: mach-imx6ul: Fix allmodconfig build
 
 next/boards
 
@@ -187,6 +189,8 @@ next/dt
 	patch
 		ARM: dts: UniPhier: fix PPI interrupt CPU mask of timer nodes
 		ARM: dts: zynq: Add devicetree entry for Xilinx Zynq reset controller.
+	tegra/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-4.3-dt
 
 next/drivers
 	patch
@@ -280,6 +284,19 @@ next/arm64
 	patch
 		ARM64: dts: vexpress: Use assigned-clock-parents for sp810
 
+next/late
+	samsung/clk-driver
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-clk-driver
+	samsung/late-dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-late-dt
+		contains samsung/dt
+	samsung/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-soc
+	samsung/late-cpufreq
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-late-cpufreq-driver
+	samsung/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-defconfig-new
+
 fixes
 	patch
 		ARM: ux500: add an SMP enablement type and move cpu nodes
@@ -293,17 +310,4 @@ fixes
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.2/fixes-rc6
 	<no branch> (85ad3deea4525504355560649be7a41348111a60)
 		git://git.kernel.org/pub/scm/linux/kernel/git/ssantosh/linux-keystone tags/keystone-dts-late-fixes-v2
-
-next/late
-	samsung/clk-driver
-		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-clk-driver
-	samsung/late-dt
-		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-late-dt
-		contains samsung/dt
-	samsung/soc
-		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-soc
-	samsung/late-cpufreq
-		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-late-cpufreq-driver
-	samsung/defconfig
-		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-defconfig-new
 
