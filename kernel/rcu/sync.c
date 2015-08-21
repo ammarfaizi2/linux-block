@@ -1,6 +1,23 @@
-
 #include <linux/rcusync.h>
 #include <linux/sched.h>
+
+static const struct {
+	void (*sync)(void);
+	void (*call)(struct rcu_head *, void (*)(struct rcu_head *));
+} gp_ops[] = {
+	[RCU_SYNC] = {
+		.sync = synchronize_rcu,
+		.call = call_rcu,
+	},
+	[RCU_SCHED_SYNC] = {
+		.sync = synchronize_sched,
+		.call = call_rcu_sched,
+	},
+	[RCU_BH_SYNC] = {
+		.sync = synchronize_rcu_bh,
+		.call = call_rcu_bh,
+	},
+};
 
 enum { GP_IDLE = 0, GP_PENDING, GP_PASSED };
 enum { CB_IDLE = 0, CB_PENDING, CB_REPLAY };
@@ -11,23 +28,7 @@ void rcu_sync_init(struct rcu_sync_struct *rss, enum rcu_sync_type type)
 {
 	memset(rss, 0, sizeof(*rss));
 	init_waitqueue_head(&rss->gp_wait);
-
-	switch (type) {
-	case RCU_SYNC:
-		rss->sync = synchronize_rcu;
-		rss->call = call_rcu;
-		break;
-
-	case RCU_SCHED_SYNC:
-		rss->sync = synchronize_sched;
-		rss->call = call_rcu_sched;
-		break;
-
-	case RCU_BH_SYNC:
-		rss->sync = synchronize_rcu_bh;
-		rss->call = call_rcu_bh;
-		break;
-	}
+	rss->gp_type = type;
 }
 
 void rcu_sync_enter(struct rcu_sync_struct *rss)
@@ -44,7 +45,7 @@ void rcu_sync_enter(struct rcu_sync_struct *rss)
 	BUG_ON(need_wait && need_sync);
 
 	if (need_sync) {
-		rss->sync();
+		gp_ops[rss->gp_type].sync();
 		rss->gp_state = GP_PASSED;
 		wake_up_all(&rss->gp_wait);
 	} else if (need_wait) {
@@ -81,7 +82,7 @@ static void rcu_sync_func(struct rcu_head *rcu)
 		 * to catch a later GP.
 		 */
 		rss->cb_state = CB_PENDING;
-		rss->call(&rss->cb_head, rcu_sync_func);
+		gp_ops[rss->gp_type].call(&rss->cb_head, rcu_sync_func);
 	} else {
 		/*
 		 * We're at least a GP after rcu_sync_exit(); eveybody will now
@@ -99,7 +100,7 @@ void rcu_sync_exit(struct rcu_sync_struct *rss)
 	if (!--rss->gp_count) {
 		if (rss->cb_state == CB_IDLE) {
 			rss->cb_state = CB_PENDING;
-			rss->call(&rss->cb_head, rcu_sync_func);
+			gp_ops[rss->gp_type].call(&rss->cb_head, rcu_sync_func);
 		} else if (rss->cb_state == CB_PENDING) {
 			rss->cb_state = CB_REPLAY;
 		}
