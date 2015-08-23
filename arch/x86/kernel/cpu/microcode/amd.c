@@ -177,6 +177,53 @@ static unsigned int verify_patch_size(u8 family, u32 patch_size,
 	return patch_size;
 }
 
+/*
+ * Those patch levels cannot be updated to newer ones and thus should be final.
+ */
+static u32 final_levels[] = {
+	0x01000098,
+	0x0100009f,
+	0x010000af,
+	0, /* T-101 terminator */
+};
+
+/*
+ * Check the current patch level on this CPU.
+ *
+ * @rev: Use it to return the patch level. It is set to 0 in the case of
+ * error.
+ *
+ * Returns:
+ *  - true: if update should stop
+ *  - false: otherwise
+ */
+bool check_current_patch_level(u32 *rev, bool early)
+{
+	u32 lvl, dummy, i;
+	bool ret = false;
+	u32 *levels;
+
+	rdmsr(MSR_AMD64_PATCH_LEVEL, lvl, dummy);
+
+	if (IS_ENABLED(CONFIG_X86_32) && early)
+		levels = (u32 *)__pa_nodebug(&final_levels);
+	else
+		levels = final_levels;
+
+	for (i = 0; levels[i]; i++) {
+		if (lvl == levels[i]) {
+			lvl = 0;
+			ret = true;
+			break;
+		}
+	}
+
+	if (rev)
+		*rev = lvl;
+
+	return ret;
+}
+
 int __apply_microcode_amd(struct microcode_amd *mc_amd)
 {
 	u32 rev, dummy;
@@ -197,7 +244,7 @@ int apply_microcode_amd(int cpu)
 	struct microcode_amd *mc_amd;
 	struct ucode_cpu_info *uci;
 	struct ucode_patch *p;
-	u32 rev, dummy;
+	u32 rev;
 
 	BUG_ON(raw_smp_processor_id() != cpu);
 
@@ -210,7 +257,8 @@ int apply_microcode_amd(int cpu)
 	mc_amd  = p->data;
 	uci->mc = p->data;
 
-	rdmsr(MSR_AMD64_PATCH_LEVEL, rev, dummy);
+	if (check_current_patch_level(&rev, false))
+		return -1;
 
 	/* need to apply patch? */
 	if (rev >= mc_amd->hdr.patch_id) {
@@ -318,15 +366,13 @@ static int verify_and_add_patch(u8 family, u8 *fw, unsigned int leftover)
 		return -EINVAL;
 	}
 
-	patch->data = kzalloc(patch_size, GFP_KERNEL);
+	patch->data = kmemdup(fw + SECTION_HDR_SIZE, patch_size, GFP_KERNEL);
 	if (!patch->data) {
 		pr_err("Patch data allocation failure.\n");
 		kfree(patch);
 		return -EINVAL;
 	}
 
-	/* All looks ok, copy patch... */
-	memcpy(patch->data, fw + SECTION_HDR_SIZE, patch_size);
 	INIT_LIST_HEAD(&patch->plist);
 	patch->patch_id  = mc_hdr->patch_id;
 	patch->equiv_cpu = proc_id;

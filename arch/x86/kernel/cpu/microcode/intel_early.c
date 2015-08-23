@@ -207,13 +207,11 @@ save_microcode(struct mc_saved_data *mc_saved_data,
 		mc_hdr = &mc->hdr;
 		size   = get_totalsize(mc_hdr);
 
-		saved_ptr[i] = kmalloc(size, GFP_KERNEL);
+		saved_ptr[i] = kmemdup(mc, size, GFP_KERNEL);
 		if (!saved_ptr[i]) {
 			ret = -ENOMEM;
 			goto err;
 		}
-
-		memcpy(saved_ptr[i], mc, size);
 	}
 
 	/*
