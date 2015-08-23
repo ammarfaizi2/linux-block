@@ -318,6 +318,7 @@ static inline int path__join3(char *bf, size_t size,
 struct dso;
 struct symbol;
 
+extern bool srcline_full_filename;
 char *get_srcline(struct dso *dso, u64 addr, struct symbol *sym,
 		  bool show_sym);
 void free_srcline(char *srcline);
@@ -338,5 +339,19 @@ int gzip_decompress_to_file(const char *input, int output_fd);
 #ifdef HAVE_LZMA_SUPPORT
 int lzma_decompress_to_file(const char *input, int output_fd);
 #endif
+
+char *asprintf_expr_inout_ints(const char *var, bool in, size_t nints, int *ints);
+
+static inline char *asprintf_expr_in_ints(const char *var, size_t nints, int *ints)
+{
+	return asprintf_expr_inout_ints(var, true, nints, ints);
+}
+
+static inline char *asprintf_expr_not_in_ints(const char *var, size_t nints, int *ints)
+{
+	return asprintf_expr_inout_ints(var, false, nints, ints);
+}
+
+int get_stack_size(const char *str, unsigned long *_size);
 
 #endif /* GIT_COMPAT_UTIL_H */

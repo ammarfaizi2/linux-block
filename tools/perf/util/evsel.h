@@ -9,7 +9,7 @@
 #include "xyarray.h"
 #include "symbol.h"
 #include "cpumap.h"
-#include "stat.h"
+#include "counts.h"
 
 struct perf_evsel;
 
@@ -30,6 +30,33 @@ struct perf_sample_id {
 };
 
 struct cgroup_sel;
+
+/*
+ * The 'struct perf_evsel_config_term' is used to pass event
+ * specific configuration data to perf_evsel__config routine.
+ * It is allocated within event parsing and attached to
+ * perf_evsel::config_terms list head.
+*/
+enum {
+	PERF_EVSEL__CONFIG_TERM_PERIOD,
+	PERF_EVSEL__CONFIG_TERM_FREQ,
+	PERF_EVSEL__CONFIG_TERM_TIME,
+	PERF_EVSEL__CONFIG_TERM_CALLGRAPH,
+	PERF_EVSEL__CONFIG_TERM_STACK_USER,
+	PERF_EVSEL__CONFIG_TERM_MAX,
+};
+
+struct perf_evsel_config_term {
+	struct list_head	list;
+	int	type;
+	union {
+		u64	period;
+		u64	freq;
+		bool	time;
+		char	*callgraph;
+		u64	stack_user;
+	} val;
+};
 
 /** struct perf_evsel - event selector
  *
@@ -86,6 +113,8 @@ struct perf_evsel {
 	unsigned long		*per_pkg_mask;
 	struct perf_evsel	*leader;
 	char			*group_name;
+	bool			cmdline_group_boundary;
+	struct list_head	config_terms;
 };
 
 union u64_swap {
@@ -182,8 +211,11 @@ void __perf_evsel__reset_sample_bit(struct perf_evsel *evsel,
 void perf_evsel__set_sample_id(struct perf_evsel *evsel,
 			       bool use_sample_identifier);
 
-int perf_evsel__set_filter(struct perf_evsel *evsel, int ncpus, int nthreads,
-			   const char *filter);
+int perf_evsel__set_filter(struct perf_evsel *evsel, const char *filter);
+int perf_evsel__append_filter(struct perf_evsel *evsel,
+			      const char *op, const char *filter);
+int perf_evsel__apply_filter(struct perf_evsel *evsel, int ncpus, int nthreads,
+			     const char *filter);
 int perf_evsel__enable(struct perf_evsel *evsel, int ncpus, int nthreads);
 
 int perf_evsel__open_per_cpu(struct perf_evsel *evsel,

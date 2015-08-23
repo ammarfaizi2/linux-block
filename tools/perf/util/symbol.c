@@ -444,7 +444,12 @@ static struct symbol *symbols__find_by_name(struct rb_root *symbols,
 struct symbol *dso__find_symbol(struct dso *dso,
 				enum map_type type, u64 addr)
 {
-	return symbols__find(&dso->symbols[type], addr);
+	if (dso->last_find_result[type].addr != addr) {
+		dso->last_find_result[type].addr   = addr;
+		dso->last_find_result[type].symbol = symbols__find(&dso->symbols[type], addr);
+	}
+
+	return dso->last_find_result[type].symbol;
 }
 
 struct symbol *dso__first_symbol(struct dso *dso, enum map_type type)
@@ -1133,8 +1138,8 @@ static int dso__load_kcore(struct dso *dso, struct map *map,
 
 	fd = open(kcore_filename, O_RDONLY);
 	if (fd < 0) {
-		pr_err("%s requires CAP_SYS_RAWIO capability to access.\n",
-			kcore_filename);
+		pr_debug("Failed to open %s. Note /proc/kcore requires CAP_SYS_RAWIO capability to access.\n",
+			 kcore_filename);
 		return -EINVAL;
 	}
 
@@ -1906,7 +1911,7 @@ int setup_list(struct strlist **list, const char *list_str,
 	if (list_str == NULL)
 		return 0;
 
-	*list = strlist__new(true, list_str);
+	*list = strlist__new(list_str, NULL);
 	if (!*list) {
 		pr_err("problems parsing %s list\n", list_name);
 		return -1;
