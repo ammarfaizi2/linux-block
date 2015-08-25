@@ -1018,17 +1018,17 @@ leave:
 	if (handle)
 		ocfs2_commit_trans(osb, handle);
 
-	if (child_locked)
-		ocfs2_inode_unlock(inode, 1);
-
-	ocfs2_inode_unlock(dir, 1);
-
 	if (orphan_dir) {
 		/* This was locked for us in ocfs2_prepare_orphan_dir() */
 		ocfs2_inode_unlock(orphan_dir, 1);
 		mutex_unlock(&orphan_dir->i_mutex);
 		iput(orphan_dir);
 	}
+
+	if (child_locked)
+		ocfs2_inode_unlock(inode, 1);
+
+	ocfs2_inode_unlock(dir, 1);
 
 	brelse(fe_bh);
 	brelse(parent_node_bh);
@@ -1608,20 +1608,8 @@ static int ocfs2_rename(struct inode *old_dir,
 	ocfs2_dentry_move(old_dentry, new_dentry, old_dir, new_dir);
 	status = 0;
 bail:
-	if (rename_lock)
-		ocfs2_rename_unlock(osb);
-
 	if (handle)
 		ocfs2_commit_trans(osb, handle);
-
-	if (parents_locked)
-		ocfs2_double_unlock(old_dir, new_dir);
-
-	if (old_child_locked)
-		ocfs2_inode_unlock(old_inode, 1);
-
-	if (new_child_locked)
-		ocfs2_inode_unlock(new_inode, 1);
 
 	if (orphan_dir) {
 		/* This was locked for us in ocfs2_prepare_orphan_dir() */
@@ -1629,6 +1617,18 @@ bail:
 		mutex_unlock(&orphan_dir->i_mutex);
 		iput(orphan_dir);
 	}
+
+	if (new_child_locked)
+		ocfs2_inode_unlock(new_inode, 1);
+
+	if (old_child_locked)
+		ocfs2_inode_unlock(old_inode, 1);
+
+	if (parents_locked)
+		ocfs2_double_unlock(old_dir, new_dir);
+
+	if (rename_lock)
+		ocfs2_rename_unlock(osb);
 
 	if (new_inode)
 		sync_mapping_buffers(old_inode->i_mapping);
