@@ -13,8 +13,12 @@ obj-$(CONFIG_ISCSI_IBFT_FIND)	+= iscsi_ibft_find.o
 obj-$(CONFIG_ISCSI_IBFT)	+= iscsi_ibft.o
 obj-$(CONFIG_FIRMWARE_MEMMAP)	+= memmap.o
 obj-$(CONFIG_QCOM_SCM)		+= qcom_scm.o
+ifdef CONFIG_ARM64
+obj-$(CONFIG_QCOM_SCM)		+= qcom_scm-64.o
+else
 obj-$(CONFIG_QCOM_SCM)		+= qcom_scm-32.o
 CFLAGS_qcom_scm-32.o :=$(call as-instr,.arch_extension sec,-DREQUIRES_SEC=1)
+endif
 
 obj-y				+= broadcom/
 obj-$(CONFIG_GOOGLE_FIRMWARE)	+= google/

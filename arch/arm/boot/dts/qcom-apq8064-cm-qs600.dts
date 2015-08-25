@@ -1,4 +1,6 @@
 #include "qcom-apq8064-v2.0.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 
 / {
 	model = "CompuLab CM-QS600";
@@ -81,6 +83,16 @@
 			};
 		};
 
+		hdmi: qcom,hdmi-tx@4a00000 {
+			status = "okay";
+			core-vdda-supply = <&pm8921_hdmi_switch>;
+			hdmi-mux-supply = <&v3p3_fixed>;
+		};
+
+		mdp: qcom,mdp@5100000 {
+			status = "okay";
+		};
+
 		gsbi@12440000 {
 			status = "okay";
 			qcom,mode = <GSBI_PROT_I2C>;
@@ -155,6 +167,29 @@
 			regulator-always-on;
 		};
 
+		qcom,ssbi@500000 {
+			pmicintc: pmic@0 {
+				pm8921_gpio: gpio@150 {
+					pinctrl-names = "default";
+					pinctrl-0 = <&wlan_default_gpios>;
+					wlan_default_gpios: wlan-gpios {
+						pios {
+							pins = "gpio43";
+							function = "normal";
+							bias-disable;
+							power-source = <PM8921_GPIO_S4>;
+						};
+					};
+				};
+			};
+		};
+
+		sdcc4_pwrseq:pwrseq {
+			compatible = "mmc-pwrseq-simple";
+			/* WLAN reset */
+			reset-gpios = <&pm8921_gpio 42 GPIO_ACTIVE_LOW>;
+		};
+
 		amba {
 			/* eMMC */
 			sdcc1: sdcc@12400000 {
@@ -173,6 +208,7 @@
 				status = "okay";
 				vmmc-supply = <&v3p3_fixed>;
 				vqmmc-supply = <&v3p3_fixed>;
+				mmc-pwrseq = <&sdcc4_pwrseq>;
 			};
 		};
 	};
