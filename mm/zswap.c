@@ -104,12 +104,12 @@ static struct zpool *zswap_pool;
 
 struct zswap_pool {
 	struct zpool *zpool;
+	struct crypto_comp * __percpu *tfm;
 	struct kref kref;
 	struct list_head list;
 	struct rcu_head rcu_head;
 	struct notifier_block notifier;
 	char tfm_name[CRYPTO_MAX_ALG_NAME];
-	struct crypto_comp * __percpu *tfm;
 };
 
 /*
