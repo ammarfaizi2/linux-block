@@ -1206,9 +1206,13 @@ static int should_add_memory_movable(int nid, u64 start, u64 size)
 	pg_data_t *pgdat = NODE_DATA(nid);
 	struct zone *movable_zone = pgdat->node_zones + ZONE_MOVABLE;
 
-	if (zone_is_empty(movable_zone))
+	if (zone_is_empty(movable_zone)) {
+	#ifdef CONFIG_MOVABLE_NODE
+		return 1;
+	#else
 		return 0;
-
+	#endif
+	}
 	if (movable_zone->zone_start_pfn <= start_pfn)
 		return 1;
 
