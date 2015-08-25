@@ -483,18 +483,25 @@ static inline spinlock_t *huge_pte_lockptr(struct hstate *h,
 #define hugepages_supported() (HPAGE_SHIFT != 0)
 #endif
 
+struct hugetlb_usage {
+	atomic_long_t count[HUGE_MAX_HSTATE];
+};
+
 void hugetlb_report_usage(struct seq_file *m, struct mm_struct *mm);
+void exit_hugetlb_mmap(struct mm_struct *mm);
+int hugetlb_fork(struct mm_struct *new, struct mm_struct *old);
 
 static inline void inc_hugetlb_count(struct mm_struct *mm, struct hstate *h)
 {
-	atomic_long_inc(&mm->hugetlb_usage.count[hstate_index(h)]);
+	VM_BUG_ON_MM(!mm->hugetlb_usage, mm);
+	atomic_long_inc(&mm->hugetlb_usage->count[hstate_index(h)]);
 }
 
 static inline void dec_hugetlb_count(struct mm_struct *mm, struct hstate *h)
 {
-	atomic_long_dec(&mm->hugetlb_usage.count[hstate_index(h)]);
+	VM_BUG_ON_MM(!mm->hugetlb_usage, mm);
+	atomic_long_dec(&mm->hugetlb_usage->count[hstate_index(h)]);
 }
-
 #else	/* CONFIG_HUGETLB_PAGE */
 struct hstate {};
 #define alloc_huge_page(v, a, r) NULL
@@ -534,6 +541,15 @@ static inline spinlock_t *huge_pte_lockptr(struct hstate *h,
 
 static inline void hugetlb_report_usage(struct seq_file *f, struct mm_struct *m)
 {
+}
+
+static inline void exit_hugetlb_mmap(struct mm_struct *mm)
+{
+}
+
+static inline int hugetlb_fork(struct mm_struct *new, struct mm_struct *old)
+{
+	return 0;
 }
 
 static inline void dec_hugetlb_count(struct mm_struct *mm, struct hstate *h)

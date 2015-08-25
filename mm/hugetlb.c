@@ -2790,13 +2790,20 @@ void hugetlb_show_meminfo(void)
 				1UL << (huge_page_order(h) + PAGE_SHIFT - 10));
 }
 
+static unsigned long mm_hstate_usage(struct mm_struct *mm, int hs_idx)
+{
+	if (!mm->hugetlb_usage)
+		return 0;
+	return atomic_long_read(&mm->hugetlb_usage->count[hs_idx]);
+}
+
 void hugetlb_report_usage(struct seq_file *m, struct mm_struct *mm)
 {
 	int i;
 	unsigned long total_usage = 0;
 
 	for (i = 0; i < HUGE_MAX_HSTATE; i++) {
-		total_usage += atomic_long_read(&mm->hugetlb_usage.count[i]) *
+		total_usage += mm_hstate_usage(mm, i) *
 			(huge_page_size(&hstates[i]) >> 10);
 	}
 
@@ -2807,11 +2814,23 @@ void hugetlb_report_usage(struct seq_file *m, struct mm_struct *mm)
 		if (i > 0)
 			seq_puts(m, " ");
 
-		seq_printf(m, "%ldx%dkB",
-			atomic_long_read(&mm->hugetlb_usage.count[i]),
+		seq_printf(m, "%ld*%lukB", mm_hstate_usage(mm, i),
 			huge_page_size(&hstates[i]) >> 10);
 	}
 	seq_puts(m, ")\n");
+}
+
+int hugetlb_fork(struct mm_struct *new, struct mm_struct *old)
+{
+	if (old->hugetlb_usage) {
+		new->hugetlb_usage = kmalloc(sizeof(struct hugetlb_usage),
+							GFP_KERNEL);
+		if (!new->hugetlb_usage)
+			return -ENOMEM;
+		memcpy(new->hugetlb_usage, old->hugetlb_usage,
+			sizeof(struct hugetlb_usage));
+	}
+	return 0;
 }
 
 /* Return the number pages of memory we physically have, in PAGE_SIZE units. */

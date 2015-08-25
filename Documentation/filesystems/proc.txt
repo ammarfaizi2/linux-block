@@ -174,7 +174,7 @@ read the file /proc/PID/status:
   VmLib:      1412 kB
   VmPTE:        20 kb
   VmSwap:        0 kB
-  HugetlbPages:          0 kB (0x2048kB)
+  HugetlbPages:          0 kB (0*2048kB)
   Threads:        1
   SigQ:   0/28578
   SigPnd: 0000000000000000

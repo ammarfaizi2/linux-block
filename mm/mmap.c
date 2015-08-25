@@ -2860,6 +2860,7 @@ void exit_mmap(struct mm_struct *mm)
 			nr_accounted += vma_pages(vma);
 		vma = remove_vma(vma);
 	}
+	exit_hugetlb_mmap(mm);
 	vm_unacct_memory(nr_accounted);
 }
 

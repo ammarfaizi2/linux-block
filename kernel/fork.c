@@ -425,6 +425,9 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
 	retval = khugepaged_fork(mm, oldmm);
 	if (retval)
 		goto out;
+	retval = hugetlb_fork(mm, oldmm);
+	if (retval)
+		goto out;
 
 	prev = NULL;
 	for (mpnt = oldmm->mmap; mpnt; mpnt = mpnt->vm_next) {
