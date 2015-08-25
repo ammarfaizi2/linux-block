@@ -1296,7 +1296,7 @@ static void __init _samsung_clk_register_pll(struct samsung_clk_provider *ctx,
 	if (!pll_clk->alias)
 		return;
 
-	ret = clk_register_clkdev(clk, pll_clk->alias, pll_clk->dev_name);
+	ret = clk_register_clkdev(clk, pll_clk->alias, "%s", pll_clk->dev_name);
 	if (ret)
 		pr_err("%s: failed to register lookup for %s : %d",
 			__func__, pll_clk->name, ret);

@@ -296,7 +296,7 @@ void __init tegra_register_devclks(struct tegra_devclk *dev_clks, int num)
 
 	for (i = 0; i < num; i++, dev_clks++)
 		clk_register_clkdev(clks[dev_clks->dt_id], dev_clks->con_id,
-				dev_clks->dev_id);
+				"%s", dev_clks->dev_id);
 
 	for (i = 0; i < clk_num; i++) {
 		if (!IS_ERR_OR_NULL(clks[i]))

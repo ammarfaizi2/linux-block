@@ -47,7 +47,7 @@ static void __init moxart_of_pll_clk_init(struct device_node *node)
 		return;
 	}
 
-	clk_register_clkdev(clk, NULL, name);
+	clk_register_clkdev(clk, NULL, "%s", name);
 	of_clk_add_provider(node, of_clk_src_simple_get, clk);
 }
 CLK_OF_DECLARE(moxart_pll_clock, "moxa,moxart-pll-clock",
@@ -90,7 +90,7 @@ static void __init moxart_of_apb_clk_init(struct device_node *node)
 		return;
 	}
 
-	clk_register_clkdev(clk, NULL, name);
+	clk_register_clkdev(clk, NULL, "%s", name);
 	of_clk_add_provider(node, of_clk_src_simple_get, clk);
 }
 CLK_OF_DECLARE(moxart_apb_clock, "moxa,moxart-apb-clock",

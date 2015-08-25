@@ -992,9 +992,9 @@ static void mpc5121_clk_provide_migration_support(void)
 	clk = of_clk_get_by_name(np, clkname); \
 	if (IS_ERR(clk)) { \
 		clk = clkitem; \
-		clk_register_clkdev(clk, clkname, devname); \
+		clk_register_clkdev(clk, clkname, "%s", devname); \
 		if (regnode) \
-			clk_register_clkdev(clk, clkname, np->name); \
+			clk_register_clkdev(clk, clkname, "%s", np->name); \
 		did_register |= DID_REG_ ## regflag; \
 		pr_debug("clock alias name '%s' for dev '%s' pointer %p\n", \
 			 clkname, devname, clk); \

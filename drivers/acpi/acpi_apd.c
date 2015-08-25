@@ -65,7 +65,8 @@ static int acpi_apd_setup(struct apd_private_data *pdata)
 					dev_name(&pdata->adev->dev),
 					NULL, CLK_IS_ROOT,
 					dev_desc->fixed_clk_rate);
-		clk_register_clkdev(clk, NULL, dev_name(&pdata->adev->dev));
+		clk_register_clkdev(clk, NULL, "%s",
+				    dev_name(&pdata->adev->dev));
 		pdata->clk = clk;
 	}
 

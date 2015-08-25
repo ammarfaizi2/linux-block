@@ -110,7 +110,7 @@ void __init tegra_pmc_clk_init(void __iomem *pmc_base,
 					0, pmc_base + PMC_CLK_OUT_CNTRL,
 					data->gate_shift, 0, &clk_out_lock);
 		*dt_clk = clk;
-		clk_register_clkdev(clk, data->dev_name, data->gate_name);
+		clk_register_clkdev(clk, data->dev_name, "%s", data->gate_name);
 	}
 
 	/* blink */

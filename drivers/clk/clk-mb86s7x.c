@@ -370,7 +370,7 @@ static int mb86s7x_clclk_of_init(void)
 			pr_err("failed to register cpu%d clock\n", cpu);
 			continue;
 		}
-		if (clk_register_clkdev(clk, NULL, dev_name(cpu_dev))) {
+		if (clk_register_clkdev(clk, NULL, "%s", dev_name(cpu_dev))) {
 			pr_err("failed to register cpu%d clock lookup\n", cpu);
 			continue;
 		}

@@ -316,7 +316,7 @@ out:
 		return PTR_ERR(clk);
 
 	pdata->clk = clk;
-	clk_register_clkdev(clk, dev_desc->clk_con_id, devname);
+	clk_register_clkdev(clk, dev_desc->clk_con_id, "%s", devname);
 	return 0;
 }
 

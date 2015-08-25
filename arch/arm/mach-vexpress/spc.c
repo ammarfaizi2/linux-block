@@ -577,7 +577,7 @@ static int __init ve_spc_clk_init(void)
 			pr_warn("failed to register cpu%d clock\n", cpu);
 			continue;
 		}
-		if (clk_register_clkdev(clk, NULL, dev_name(cpu_dev))) {
+		if (clk_register_clkdev(clk, NULL, "%s", dev_name(cpu_dev))) {
 			pr_warn("failed to register cpu%d clock lookup\n", cpu);
 			continue;
 		}
