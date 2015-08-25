@@ -457,7 +457,8 @@ anonymous copy.
 
 "AnonHugePages" shows the ammount of memory backed by transparent hugepage.
 
-"HugetlbPages" shows the ammount of memory backed by hugetlbfs page.
+"HugetlbPages" shows the ammount of memory backed by hugetlbfs page (which is
+not counted in "Rss" or "Pss" field for historical reasons.)
 
 "Swap" shows how much would-be-anonymous memory is also used, but out on
 swap.  SwapPss" shows proportional swap share of this mapping.
