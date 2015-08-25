@@ -548,16 +548,37 @@ struct bad_iret_stack {
 asmlinkage __visible notrace
 struct bad_iret_stack *fixup_bad_iret(struct bad_iret_stack *s)
 {
+	unsigned long long gsbase;
+	struct bad_iret_stack *new_stack;
+
 	/*
 	 * This is called from entry_64.S early in handling a fault
-	 * caused by a bad iret to user mode.  To handle the fault
-	 * correctly, we want move our stack frame to task_pt_regs
-	 * and we want to pretend that the exception came from the
-	 * iret target.
+	 * caused by a bad IRET.  The only legitimate IRET failures
+	 * happen on return to user mode, and we only return to user
+	 * mode from the kernel stack or the espfix64 stack..
+	 * Performance is mostly irrelevant here.
 	 */
-	struct bad_iret_stack *new_stack =
-		container_of(task_pt_regs(current),
-			     struct bad_iret_stack, regs);
+
+	/* Verify GSBASE. */
+	rdmsrl(MSR_GS_BASE, gsbase);
+	if ((gsbase & (1ULL << 63)) == 0) {
+		/*
+		 * We have the wrong GSBASE.  If this happens, we need to
+		 * fix GSBASE before we try to panic.
+		 */
+		rdmsrl(MSR_KERNEL_GS_BASE, gsbase);
+		wrmsrl(MSR_GS_BASE, gsbase);
+		panic("IRET failure with wrong GSBASE");
+	}
+	barrier();	/* Make sure the check is before any gs accesses. */
+
+	/*
+	 * To handle the fault correctly, we want move our stack frame
+	 * to task_pt_regs and we want to pretend that the exception
+	 * came from the iret target.
+	 */
+	new_stack = container_of(task_pt_regs(current),
+				 struct bad_iret_stack, regs);
 
 	/* Copy the IRET target to the new stack. */
 	memmove(&new_stack->regs.ip, (void *)s->regs.sp, 5*8);
