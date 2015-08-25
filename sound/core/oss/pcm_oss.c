@@ -2875,6 +2875,7 @@ static void snd_pcm_oss_proc_write(struct snd_info_entry *entry,
 	const char *ptr;
 	int idx1;
 	struct snd_pcm_oss_setup *setup, *setup1, template;
+	int rv;
 
 	while (!snd_info_get_line(buffer, line, sizeof(line))) {
 		mutex_lock(&pstr->oss.setup_mutex);
@@ -2892,9 +2893,17 @@ static void snd_pcm_oss_proc_write(struct snd_info_entry *entry,
 			}
 		}
 		ptr = snd_info_get_str(str, ptr, sizeof(str));
-		template.periods = simple_strtoul(str, NULL, 10);
+		rv = parse_integer(str, 10, &template.periods);
+		if (rv < 0 || str[rv]) {
+			mutex_unlock(&pstr->oss.setup_mutex);
+			continue;
+		}
 		ptr = snd_info_get_str(str, ptr, sizeof(str));
-		template.period_size = simple_strtoul(str, NULL, 10);
+		rv = parse_integer(str, 10, &template.period_size);
+		if (rv < 0 || str[rv]) {
+			mutex_unlock(&pstr->oss.setup_mutex);
+			continue;
+		}
 		for (idx1 = 31; idx1 >= 0; idx1--)
 			if (template.period_size & (1 << idx1))
 				break;

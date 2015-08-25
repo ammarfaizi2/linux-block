@@ -1180,6 +1180,7 @@ static void snd_mixer_oss_proc_write(struct snd_info_entry *entry,
 	int ch, idx;
 	struct snd_mixer_oss_assign_table *tbl;
 	struct slot *slot;
+	int rv;
 
 	while (!snd_info_get_line(buffer, line, sizeof(line))) {
 		cptr = snd_info_get_str(str, line, sizeof(str));
@@ -1200,9 +1201,9 @@ static void snd_mixer_oss_proc_write(struct snd_info_entry *entry,
 			continue;
 		}
 		snd_info_get_str(idxstr, cptr, sizeof(idxstr));
-		idx = simple_strtoul(idxstr, NULL, 10);
-		if (idx >= 0x4000) { /* too big */
-			pr_err("ALSA: mixer_oss: invalid index %d\n", idx);
+		rv = parse_integer(idxstr, 10, (unsigned int *)&idx);
+		if (rv < 0 || idxstr[rv] || idx >= 0x4000) { /* too big */
+			pr_err("ALSA: mixer_oss: invalid index %s\n", idxstr);
 			continue;
 		}
 		mutex_lock(&mixer->reg_mutex);
