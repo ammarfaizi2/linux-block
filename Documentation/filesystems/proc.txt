@@ -463,6 +463,7 @@ manner. The codes are the following:
     rr  - random read advise provided
     dc  - do not copy area on fork
     de  - do not expand area on remapping
+    lf  - mark area to lock pages when faulted in, do not pre-populate
     ac  - area is accountable
     nr  - swap space is not reserved for the area
     ht  - area uses huge tlb pages
