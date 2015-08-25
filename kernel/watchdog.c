@@ -67,7 +67,7 @@ unsigned long *watchdog_cpumask_bits = cpumask_bits(&watchdog_cpumask);
 #define for_each_watchdog_cpu(cpu) \
 	for_each_cpu_and((cpu), cpu_online_mask, &watchdog_cpumask)
 
-static int __read_mostly watchdog_suspended = 0;
+static int __read_mostly watchdog_suspended;
 static int __read_mostly watchdog_running;
 static u64 __read_mostly sample_period;
 
