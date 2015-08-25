@@ -643,7 +643,7 @@ static int test_mlockall(int (test_function)(bool call_mlock))
 	return ret;
 }
 
-int main(char **argv, int argc)
+int main(int argc, char **argv)
 {
 	int ret = 0;
 	ret += test_mlock_lock();
