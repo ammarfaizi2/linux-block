@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <syscall.h>
 #include <errno.h>
 #include <stdbool.h>
 
