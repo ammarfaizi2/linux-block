@@ -1739,7 +1739,7 @@ int soft_offline_page(struct page *page, int flags)
 	if (PageHWPoison(page)) {
 		pr_info("soft offline: %#lx page already poisoned\n", pfn);
 		if (flags & MF_COUNT_INCREASED)
-			put_page(page);
+			put_hwpoison_page(page);
 		return -EBUSY;
 	}
 	if (!PageHuge(page) && PageTransHuge(hpage)) {
@@ -1747,7 +1747,7 @@ int soft_offline_page(struct page *page, int flags)
 			pr_info("soft offline: %#lx: failed to split THP\n",
 				pfn);
 			if (flags & MF_COUNT_INCREASED)
-				put_page(page);
+				put_hwpoison_page(page);
 			return -EBUSY;
 		}
 	}
