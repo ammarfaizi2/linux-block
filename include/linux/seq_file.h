@@ -155,7 +155,8 @@ static inline struct user_namespace *seq_user_ns(struct seq_file *seq)
  * @name: the mount option name
  * @value: the mount option name's value, can be NULL
  */
-static inline void seq_show_option(struct seq_file *m, char *name, char *value)
+static inline void seq_show_option(struct seq_file *m, const char *name,
+				   const char *value)
 {
 	seq_putc(m, ',');
 	seq_escape(m, name, ",= \t\n\\");
