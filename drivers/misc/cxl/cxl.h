@@ -34,7 +34,7 @@ extern uint cxl_verbose;
  * Bump version each time a user API change is made, whether it is
  * backwards compatible ot not.
  */
-#define CXL_API_VERSION 1
+#define CXL_API_VERSION 2
 #define CXL_API_VERSION_COMPATIBLE 1
 
 /*
@@ -418,6 +418,8 @@ struct cxl_context {
 	/* Used to unmap any mmaps when force detaching */
 	struct address_space *mapping;
 	struct mutex mapping_lock;
+	struct page *ff_page;
+	bool mmio_err_ff;
 
 	spinlock_t sste_lock; /* Protects segment table entries */
 	struct cxl_sste *sstp;
@@ -493,6 +495,7 @@ struct cxl {
 	bool user_image_loaded;
 	bool perst_loads_image;
 	bool perst_select_user;
+	bool perst_same_image;
 };
 
 int cxl_alloc_one_irq(struct cxl *adapter);
@@ -531,16 +534,33 @@ struct cxl_process_element {
 	__be32 software_state;
 } __packed;
 
+static inline bool cxl_adapter_link_ok(struct cxl *cxl)
+{
+	struct pci_dev *pdev;
+
+	pdev = to_pci_dev(cxl->dev.parent);
+	return !pci_channel_offline(pdev);
+}
+
 static inline void __iomem *_cxl_p1_addr(struct cxl *cxl, cxl_p1_reg_t reg)
 {
 	WARN_ON(!cpu_has_feature(CPU_FTR_HVMODE));
 	return cxl->p1_mmio + cxl_reg_off(reg);
 }
 
-#define cxl_p1_write(cxl, reg, val) \
-	out_be64(_cxl_p1_addr(cxl, reg), val)
-#define cxl_p1_read(cxl, reg) \
-	in_be64(_cxl_p1_addr(cxl, reg))
+static inline void cxl_p1_write(struct cxl *cxl, cxl_p1_reg_t reg, u64 val)
+{
+	if (likely(cxl_adapter_link_ok(cxl)))
+		out_be64(_cxl_p1_addr(cxl, reg), val);
+}
+
+static inline u64 cxl_p1_read(struct cxl *cxl, cxl_p1_reg_t reg)
+{
+	if (likely(cxl_adapter_link_ok(cxl)))
+		return in_be64(_cxl_p1_addr(cxl, reg));
+	else
+		return ~0ULL;
+}
 
 static inline void __iomem *_cxl_p1n_addr(struct cxl_afu *afu, cxl_p1n_reg_t reg)
 {
@@ -548,26 +568,56 @@ static inline void __iomem *_cxl_p1n_addr(struct cxl_afu *afu, cxl_p1n_reg_t reg
 	return afu->p1n_mmio + cxl_reg_off(reg);
 }
 
-#define cxl_p1n_write(afu, reg, val) \
-	out_be64(_cxl_p1n_addr(afu, reg), val)
-#define cxl_p1n_read(afu, reg) \
-	in_be64(_cxl_p1n_addr(afu, reg))
+static inline void cxl_p1n_write(struct cxl_afu *afu, cxl_p1n_reg_t reg, u64 val)
+{
+	if (likely(cxl_adapter_link_ok(afu->adapter)))
+		out_be64(_cxl_p1n_addr(afu, reg), val);
+}
+
+static inline u64 cxl_p1n_read(struct cxl_afu *afu, cxl_p1n_reg_t reg)
+{
+	if (likely(cxl_adapter_link_ok(afu->adapter)))
+		return in_be64(_cxl_p1n_addr(afu, reg));
+	else
+		return ~0ULL;
+}
 
 static inline void __iomem *_cxl_p2n_addr(struct cxl_afu *afu, cxl_p2n_reg_t reg)
 {
 	return afu->p2n_mmio + cxl_reg_off(reg);
 }
 
-#define cxl_p2n_write(afu, reg, val) \
-	out_be64(_cxl_p2n_addr(afu, reg), val)
-#define cxl_p2n_read(afu, reg) \
-	in_be64(_cxl_p2n_addr(afu, reg))
+static inline void cxl_p2n_write(struct cxl_afu *afu, cxl_p2n_reg_t reg, u64 val)
+{
+	if (likely(cxl_adapter_link_ok(afu->adapter)))
+		out_be64(_cxl_p2n_addr(afu, reg), val);
+}
 
+static inline u64 cxl_p2n_read(struct cxl_afu *afu, cxl_p2n_reg_t reg)
+{
+	if (likely(cxl_adapter_link_ok(afu->adapter)))
+		return in_be64(_cxl_p2n_addr(afu, reg));
+	else
+		return ~0ULL;
+}
 
-#define cxl_afu_cr_read64(afu, cr, off) \
-	in_le64((afu)->afu_desc_mmio + (afu)->crs_offset + ((cr) * (afu)->crs_len) + (off))
-#define cxl_afu_cr_read32(afu, cr, off) \
-	in_le32((afu)->afu_desc_mmio + (afu)->crs_offset + ((cr) * (afu)->crs_len) + (off))
+static inline u64 cxl_afu_cr_read64(struct cxl_afu *afu, int cr, u64 off)
+{
+	if (likely(cxl_adapter_link_ok(afu->adapter)))
+		return in_le64((afu)->afu_desc_mmio + (afu)->crs_offset +
+			       ((cr) * (afu)->crs_len) + (off));
+	else
+		return ~0ULL;
+}
+
+static inline u32 cxl_afu_cr_read32(struct cxl_afu *afu, int cr, u64 off)
+{
+	if (likely(cxl_adapter_link_ok(afu->adapter)))
+		return in_le32((afu)->afu_desc_mmio + (afu)->crs_offset +
+			       ((cr) * (afu)->crs_len) + (off));
+	else
+		return 0xffffffff;
+}
 u16 cxl_afu_cr_read16(struct cxl_afu *afu, int cr, u64 off);
 u8 cxl_afu_cr_read8(struct cxl_afu *afu, int cr, u64 off);
 
@@ -584,6 +634,9 @@ void unregister_cxl_calls(struct cxl_calls *calls);
 
 int cxl_alloc_adapter_nr(struct cxl *adapter);
 void cxl_remove_adapter_nr(struct cxl *adapter);
+
+int cxl_alloc_spa(struct cxl_afu *afu);
+void cxl_release_spa(struct cxl_afu *afu);
 
 int cxl_file_init(void);
 void cxl_file_exit(void);
@@ -675,6 +728,7 @@ int cxl_psl_purge(struct cxl_afu *afu);
 
 void cxl_stop_trace(struct cxl *cxl);
 int cxl_pci_vphb_add(struct cxl_afu *afu);
+void cxl_pci_vphb_reconfigure(struct cxl_afu *afu);
 void cxl_pci_vphb_remove(struct cxl_afu *afu);
 
 extern struct pci_driver cxl_pci_driver;

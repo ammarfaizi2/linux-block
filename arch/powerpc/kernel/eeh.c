@@ -750,14 +750,14 @@ int pcibios_set_pcie_reset_state(struct pci_dev *dev, enum pcie_reset_state stat
 		eeh_pe_state_clear(pe, EEH_PE_ISOLATED);
 		break;
 	case pcie_hot_reset:
-		eeh_pe_state_mark(pe, EEH_PE_ISOLATED);
+		eeh_pe_state_mark_with_cfg(pe, EEH_PE_ISOLATED);
 		eeh_ops->set_option(pe, EEH_OPT_FREEZE_PE);
 		eeh_pe_dev_traverse(pe, eeh_disable_and_save_dev_state, dev);
 		eeh_pe_state_mark(pe, EEH_PE_CFG_BLOCKED);
 		eeh_ops->reset(pe, EEH_RESET_HOT);
 		break;
 	case pcie_warm_reset:
-		eeh_pe_state_mark(pe, EEH_PE_ISOLATED);
+		eeh_pe_state_mark_with_cfg(pe, EEH_PE_ISOLATED);
 		eeh_ops->set_option(pe, EEH_OPT_FREEZE_PE);
 		eeh_pe_dev_traverse(pe, eeh_disable_and_save_dev_state, dev);
 		eeh_pe_state_mark(pe, EEH_PE_CFG_BLOCKED);
@@ -1116,9 +1116,6 @@ void eeh_add_device_late(struct pci_dev *dev)
 		return;
 	}
 
-	if (eeh_has_flag(EEH_PROBE_MODE_DEV))
-		eeh_ops->probe(pdn, NULL);
-
 	/*
 	 * The EEH cache might not be removed correctly because of
 	 * unbalanced kref to the device during unplug time, which
@@ -1141,6 +1138,9 @@ void eeh_add_device_late(struct pci_dev *dev)
 		edev->pdev = NULL;
 		dev->dev.archdata.edev = NULL;
 	}
+
+	if (eeh_has_flag(EEH_PROBE_MODE_DEV))
+		eeh_ops->probe(pdn, NULL);
 
 	edev->pdev = dev;
 	dev->dev.archdata.edev = edev;
