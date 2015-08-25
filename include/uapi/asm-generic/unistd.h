@@ -711,9 +711,11 @@ __SYSCALL(__NR_bpf, sys_bpf)
 __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
 #define __NR_mlock2 282
 __SYSCALL(__NR_mlock2, sys_mlock2)
+#define __NR_membarrier 283
+__SYSCALL(__NR_membarrier, sys_membarrier)
 
 #undef __NR_syscalls
-#define __NR_syscalls 283
+#define __NR_syscalls 284
 
 /*
  * All syscalls below here should go away really,
