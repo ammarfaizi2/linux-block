@@ -361,7 +361,7 @@ int venus_readlink(struct super_block *sb, struct CodaFid *fid,
 	error = coda_upcall(coda_vcp(sb), insize, &outsize, inp);
 	if (!error) {
 		retlen = outp->coda_readlink.count;
-		if ( retlen >= *length )
+		if (retlen >= *length)
 			retlen = *length - 1;
 		*length = retlen;
 		result =  (char *)outp + (long)outp->coda_readlink.data;
