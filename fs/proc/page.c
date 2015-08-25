@@ -454,7 +454,7 @@ static ssize_t kpageidle_write(struct file *file, const char __user *buf,
 	for (; pfn < end_pfn; pfn++) {
 		bit = pfn % KPMBITS;
 		if (bit == 0) {
-			if (get_user(idle_bitmap, in)) {
+			if (copy_from_user(&idle_bitmap, in, sizeof(u64))) {
 				ret = -EFAULT;
 				break;
 			}
