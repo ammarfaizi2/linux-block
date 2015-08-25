@@ -520,7 +520,7 @@ int ceph_print_client_options(struct seq_file *m, struct ceph_client *client)
 	if (opt->name) {
 		seq_puts(m, "name=");
 		seq_escape(m, opt->name, ", \t\n\\");
-		seq_putc(',');
+		seq_putc(m, ',');
 	}
 	if (opt->key)
 		seq_puts(m, "secret=<hidden>,");
