@@ -578,9 +578,9 @@ static int apply_vma_lock_flags(unsigned long start, size_t len,
 		prev = vma;
 
 	for (nstart = start ; ; ) {
-		vm_flags_t newflags;
+		vm_flags_t newflags =
+			vma->vm_flags & ~(VM_LOCKED | VM_LOCKONFAULT);
 
-		newflags = vma->vm_flags & ~(VM_LOCKED | VM_LOCKONFAULT);
 		newflags |= flags;
 
 		/* Here we know that  vma->vm_start <= nstart < vma->vm_end. */
@@ -678,7 +678,7 @@ SYSCALL_DEFINE2(munlock, unsigned long, start, size_t, len)
  * and translate into the appropriate modifications to mm->def_flags and/or the
  * flags for all current VMAs.
  *
- * There are a couple of sublties with this.  If mlockall() is called multiple
+ * There are a couple of subtleties with this.  If mlockall() is called multiple
  * times with different flags, the values do not necessarily stack.  If mlockall
  * is called once including the MCL_FUTURE flag and then a second time without
  * it, VM_LOCKED and VM_LOCKONFAULT will be cleared from mm->def_flags.
@@ -695,13 +695,6 @@ static int apply_mlockall_flags(int flags)
 		if (flags & MCL_ONFAULT)
 			current->mm->def_flags |= VM_LOCKONFAULT;
 
-		/*
-		 * When there were only two flags, we used to early out if only
-		 * MCL_FUTURE was set.  Now that we have MCL_ONFAULT, we can
-		 * only early out if MCL_FUTURE is set, but MCL_CURRENT is not.
-		 * This is done, even though it promotes odd behavior, to
-		 * maintain behavior from older kernels
-		 */
 		if (!(flags & MCL_CURRENT))
 			goto out;
 	}
