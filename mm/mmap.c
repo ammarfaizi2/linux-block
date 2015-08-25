@@ -2953,7 +2953,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
 	} else {
 		new_vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
 		if (!new_vma)
-			return NULL;
+			goto out;
 		*new_vma = *vma;
 		new_vma->vm_start = addr;
 		new_vma->vm_end = addr + len;
@@ -2972,10 +2972,11 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
 	}
 	return new_vma;
 
- out_free_mempol:
+out_free_mempol:
 	mpol_put(vma_policy(new_vma));
- out_free_vma:
+out_free_vma:
 	kmem_cache_free(vm_area_cachep, new_vma);
+out:
 	return NULL;
 }
 
