@@ -289,15 +289,6 @@ exit:
 }
 
 #ifdef PREBOOT
-STATIC int INIT decompress(unsigned char *buf, long len,
-			   long (*fill)(void*, unsigned long),
-			   long (*flush)(void*, unsigned long),
-			   unsigned char *out_buf,
-			   long *pos,
-			   void (*error)(char *x))
-{
-	return unlzo(buf, len, fill, flush, out_buf, pos, error);
-}
 STATIC int INIT __decompress(unsigned char *buf, long len,
 			   long (*fill)(void*, unsigned long),
 			   long (*flush)(void*, unsigned long),

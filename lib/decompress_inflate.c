@@ -182,6 +182,7 @@ gunzip_nomem1:
 	return rc; /* returns Z_OK (0) if successful */
 }
 
+#ifndef PREBOOT
 STATIC int INIT gunzip(unsigned char *buf, long len,
 		       long (*fill)(void*, unsigned long),
 		       long (*flush)(void*, unsigned long),
@@ -191,17 +192,7 @@ STATIC int INIT gunzip(unsigned char *buf, long len,
 {
 	return __gunzip(buf, len, fill, flush, out_buf, 0, pos, error);
 }
-
-#ifdef PREBOOT
-STATIC int INIT decompress(unsigned char *buf, long len,
-			   long (*fill)(void*, unsigned long),
-			   long (*flush)(void*, unsigned long),
-			   unsigned char *out_buf,
-			   long *pos,
-			   void (*error)(char *x))
-{
-	return gunzip(buf, len, fill, flush, out_buf, pos, error);
-}
+#else
 STATIC int INIT __decompress(unsigned char *buf, long len,
 			   long (*fill)(void*, unsigned long),
 			   long (*flush)(void*, unsigned long),
