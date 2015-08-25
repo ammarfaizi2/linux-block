@@ -752,4 +752,13 @@ STATIC int INIT decompress(unsigned char *buf, long len,
 {
 	return bunzip2(buf, len - 4, fill, flush, outbuf, pos, error);
 }
+STATIC int INIT __decompress(unsigned char *buf, long len,
+			long (*fill)(void*, unsigned long),
+			long (*flush)(void*, unsigned long),
+			unsigned char *outbuf, long olen,
+			long *pos,
+			void (*error)(char *x))
+{
+	return bunzip2(buf, len - 4, fill, flush, outbuf, pos, error);
+}
 #endif
