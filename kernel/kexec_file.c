@@ -102,8 +102,9 @@ void * __weak arch_kexec_kernel_image_load(struct kimage *image)
 	return ERR_PTR(-ENOEXEC);
 }
 
-void __weak arch_kimage_file_post_load_cleanup(struct kimage *image)
+int __weak arch_kimage_file_post_load_cleanup(struct kimage *image)
 {
+	return -EINVAL;
 }
 
 int __weak arch_kexec_kernel_verify_sig(struct kimage *image, void *buf,
