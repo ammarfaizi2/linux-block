@@ -232,7 +232,7 @@ void __init copy_from_early_mem(void *dest, phys_addr_t src, unsigned long size)
 			clen = MAX_MAP_CHUNK - slop;
 		p = early_memremap(src & PAGE_MASK, clen + slop);
 		memcpy(dest, p + slop, clen);
-		early_iounmap(p, clen + slop);
+		early_memunmap(p, clen + slop);
 		dest += clen;
 		src += clen;
 		size -= clen;
