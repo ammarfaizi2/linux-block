@@ -215,6 +215,7 @@
 	blne	trace_hardirqs_off
 #endif
 	.endif
+	uaccess_restore
 	msr	spsr_cxsf, \rpsr
 #if defined(CONFIG_CPU_V6) || defined(CONFIG_CPU_32v6K)
 	@ We must avoid clrex due to Cortex-A15 erratum #830321
@@ -241,6 +242,7 @@
 	@ on the stack remains correct).
 	@
 	.macro  svc_exit_via_fiq
+	uaccess_restore
 	mov	r0, sp
 	ldmib	r0, {r1 - r14}	@ abort is deadly from here onward (it will
 				@ clobber state restored below)
@@ -253,6 +255,7 @@
 	.endm
 
 	.macro	restore_user_regs, fast = 0, offset = 0
+	uaccess_enable r1, isb=0
 	mov	r2, sp
 	ldr	r1, [r2, #\offset + S_PSR]	@ get calling cpsr
 	ldr	lr, [r2, #\offset + S_PC]!	@ get pc
@@ -329,6 +332,7 @@
 	 * part of each exception entry and exit sequence.
 	 */
 	.macro	restore_user_regs, fast = 0, offset = 0
+	uaccess_enable r1, isb=0
 	.if	\offset
 	add	sp, #\offset
 	.endif
@@ -336,6 +340,7 @@
 	.endm
 #else	/* ifdef CONFIG_CPU_V7M */
 	.macro	restore_user_regs, fast = 0, offset = 0
+	uaccess_enable r1, isb=0
 	mov	r2, sp
 	load_user_sp_lr r2, r3, \offset + S_SP	@ calling sp, lr
 	ldr	r1, [sp, #\offset + S_PSR]	@ get calling cpsr
