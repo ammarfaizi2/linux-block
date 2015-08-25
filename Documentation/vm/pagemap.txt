@@ -5,7 +5,7 @@ pagemap is a new (as of 2.6.25) set of interfaces in the kernel that allow
 userspace programs to examine the page tables and related information by
 reading files in /proc.
 
-There are five components to pagemap:
+There are four components to pagemap:
 
  * /proc/pid/pagemap.  This file lets a userspace process find out which
    physical frame each virtual page is mapped to.  It contains one 64-bit
@@ -74,9 +74,6 @@ There are five components to pagemap:
  * /proc/kpagecgroup.  This file contains a 64-bit inode number of the
    memory cgroup each page is charged to, indexed by PFN. Only available when
    CONFIG_MEMCG is set.
-
- * /proc/kpageidle.  This file comprises API of the idle page tracking feature.
-   See Documentation/vm/idle_page_tracking.txt for more details.
 
 Short descriptions to the page flags:
 

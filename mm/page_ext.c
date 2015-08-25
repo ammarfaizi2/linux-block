@@ -6,6 +6,7 @@
 #include <linux/vmalloc.h>
 #include <linux/kmemleak.h>
 #include <linux/page_owner.h>
+#include <linux/page_idle.h>
 
 /*
  * struct page extension

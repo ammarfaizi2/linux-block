@@ -6,10 +6,12 @@ estimating the workload's working set size, which, in turn, can be taken into
 account when configuring the workload parameters, setting memory cgroup limits,
 or deciding where to place the workload within a compute cluster.
 
+It is enabled by CONFIG_IDLE_PAGE_TRACKING=y.
+
 USER API
 
-If CONFIG_IDLE_PAGE_TRACKING was enabled on compile time, a new read-write file
-is present on the proc filesystem, /proc/kpageidle.
+The idle page tracking API is located at /sys/kernel/mm/page_idle. Currently,
+it consists of the only read-write file, /sys/kernel/mm/page_idle/bitmap.
 
 The file implements a bitmap where each bit corresponds to a memory page. The
 bitmap is represented by an array of 8-byte integers, and the page at PFN #i is
@@ -30,24 +32,25 @@ and hence such pages are never reported idle.
 For huge pages the idle flag is set only on the head page, so one has to read
 /proc/kpageflags in order to correctly count idle huge pages.
 
-Reading from or writing to /proc/kpageidle will return -EINVAL if you are not
-starting the read/write on an 8-byte boundary, or if the size of the read/write
-is not a multiple of 8 bytes. Writing to this file beyond max PFN will return
--ENXIO.
+Reading from or writing to /sys/kernel/mm/page_idle/bitmap will return
+-EINVAL if you are not starting the read/write on an 8-byte boundary, or
+if the size of the read/write is not a multiple of 8 bytes. Writing to
+this file beyond max PFN will return -ENXIO.
 
 That said, in order to estimate the amount of pages that are not used by a
 workload one should:
 
- 1. Mark all the workload's pages as idle by setting corresponding bits in the
-    /proc/kpageidle bitmap. The pages can be found by reading /proc/pid/pagemap
-    if the workload is represented by a process, or by filtering out alien pages
-    using /proc/kpagecgroup in case the workload is placed in a memory cgroup.
+ 1. Mark all the workload's pages as idle by setting corresponding bits in
+    /sys/kernel/mm/page_idle/bitmap. The pages can be found by reading
+    /proc/pid/pagemap if the workload is represented by a process, or by
+    filtering out alien pages using /proc/kpagecgroup in case the workload is
+    placed in a memory cgroup.
 
  2. Wait until the workload accesses its working set.
 
- 3. Read /proc/kpageidle and count the number of bits set. If one wants to
-    ignore certain types of pages, e.g. mlocked pages since they are not
-    reclaimable, he or she can filter them out using /proc/kpageflags.
+ 3. Read /sys/kernel/mm/page_idle/bitmap and count the number of bits set. If
+    one wants to ignore certain types of pages, e.g. mlocked pages since they
+    are not reclaimable, he or she can filter them out using /proc/kpageflags.
 
 See Documentation/vm/pagemap.txt for more information about /proc/pid/pagemap,
 /proc/kpageflags, and /proc/kpagecgroup.
@@ -74,8 +77,9 @@ When a dirty page is written to swap or disk as a result of memory reclaim or
 exceeding the dirty memory limit, it is not marked referenced.
 
 The idle memory tracking feature adds a new page flag, the Idle flag. This flag
-is set manually, by writing to /proc/kpageidle (see the USER API section), and
-cleared automatically whenever a page is referenced as defined above.
+is set manually, by writing to /sys/kernel/mm/page_idle/bitmap (see the USER API
+section), and cleared automatically whenever a page is referenced as defined
+above.
 
 When a page is marked idle, the Accessed bit must be cleared in all PTEs it is
 mapped to, otherwise we will not be able to detect accesses to the page coming
@@ -90,5 +94,5 @@ Since the idle memory tracking feature is based on the memory reclaimer logic,
 it only works with pages that are on an LRU list, other pages are silently
 ignored. That means it will ignore a user memory page if it is isolated, but
 since there are usually not many of them, it should not affect the overall
-result noticeably. In order not to stall scanning of /proc/kpageidle, locked
-pages may be skipped too.
+result noticeably. In order not to stall scanning of the idle page bitmap,
+locked pages may be skipped too.

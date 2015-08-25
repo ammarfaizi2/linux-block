@@ -5,20 +5,18 @@
 #include <linux/ksm.h>
 #include <linux/mm.h>
 #include <linux/mmzone.h>
-#include <linux/rmap.h>
-#include <linux/mmu_notifier.h>
 #include <linux/huge_mm.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/hugetlb.h>
 #include <linux/memcontrol.h>
+#include <linux/page_idle.h>
 #include <linux/kernel-page-flags.h>
 #include <asm/uaccess.h>
 #include "internal.h"
 
 #define KPMSIZE sizeof(u64)
 #define KPMMASK (KPMSIZE - 1)
-#define KPMBITS (KPMSIZE * BITS_PER_BYTE)
 
 /* /proc/kpagecount - an array exposing page counts
  *
@@ -499,10 +497,6 @@ static int __init proc_page_init(void)
 	proc_create("kpageflags", S_IRUSR, NULL, &proc_kpageflags_operations);
 #ifdef CONFIG_MEMCG
 	proc_create("kpagecgroup", S_IRUSR, NULL, &proc_kpagecgroup_operations);
-#endif
-#ifdef CONFIG_IDLE_PAGE_TRACKING
-	proc_create("kpageidle", S_IRUSR | S_IWUSR, NULL,
-		    &proc_kpageidle_operations);
 #endif
 	return 0;
 }

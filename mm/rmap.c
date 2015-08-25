@@ -59,6 +59,7 @@
 #include <linux/migrate.h>
 #include <linux/hugetlb.h>
 #include <linux/backing-dev.h>
+#include <linux/page_idle.h>
 
 #include <asm/tlbflush.h>
 
