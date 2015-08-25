@@ -4,7 +4,6 @@ CFLAGS = -Wall -I ../../../../usr/include $(EXTRA_CFLAGS)
 BINARIES = compaction_test
 BINARIES += hugepage-mmap
 BINARIES += hugepage-shm
-BINARIES += hugetlbfstest
 BINARIES += map_hugetlb
 BINARIES += mlock2-tests
 BINARIES += on-fault-limit
