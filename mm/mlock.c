@@ -578,6 +578,7 @@ static int apply_vma_lock_flags(unsigned long start, size_t len,
 
 	for (nstart = start ; ; ) {
 		vm_flags_t newflags = vma->vm_flags & ~VM_LOCKED;
+
 		newflags |= flags;
 
 		/* Here we know that  vma->vm_start <= nstart < vma->vm_end. */
