@@ -1866,7 +1866,7 @@ static int xs_local_finish_connecting(struct rpc_xprt *xprt,
 		sk->sk_data_ready = xs_local_data_ready;
 		sk->sk_write_space = xs_udp_write_space;
 		sk->sk_error_report = xs_error_report;
-		sk->sk_allocation = GFP_ATOMIC;
+		sk->sk_allocation = GFP_NOIO;
 
 		xprt_clear_connected(xprt);
 
@@ -2051,7 +2051,7 @@ static void xs_udp_finish_connecting(struct rpc_xprt *xprt, struct socket *sock)
 		sk->sk_user_data = xprt;
 		sk->sk_data_ready = xs_udp_data_ready;
 		sk->sk_write_space = xs_udp_write_space;
-		sk->sk_allocation = GFP_ATOMIC;
+		sk->sk_allocation = GFP_NOIO;
 
 		xprt_set_connected(xprt);
 
@@ -2153,7 +2153,7 @@ static int xs_tcp_finish_connecting(struct rpc_xprt *xprt, struct socket *sock)
 		sk->sk_state_change = xs_tcp_state_change;
 		sk->sk_write_space = xs_tcp_write_space;
 		sk->sk_error_report = xs_error_report;
-		sk->sk_allocation = GFP_ATOMIC;
+		sk->sk_allocation = GFP_NOIO;
 
 		/* socket options */
 		sock_reset_flag(sk, SOCK_LINGER);
@@ -2279,13 +2279,14 @@ static void xs_connect(struct rpc_xprt *xprt, struct rpc_task *task)
 
 	WARN_ON_ONCE(!xprt_lock_connect(xprt, task, transport));
 
-	/* Start by resetting any existing state */
-	xs_reset_transport(transport);
-
-	if (transport->sock != NULL && !RPC_IS_SOFTCONN(task)) {
+	if (transport->sock != NULL) {
 		dprintk("RPC:       xs_connect delayed xprt %p for %lu "
 				"seconds\n",
 				xprt, xprt->reestablish_timeout / HZ);
+
+		/* Start by resetting any existing state */
+		xs_reset_transport(transport);
+
 		queue_delayed_work(rpciod_workqueue,
 				   &transport->connect_worker,
 				   xprt->reestablish_timeout);

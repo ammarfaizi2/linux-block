@@ -888,7 +888,7 @@ struct nfs_open_context *nfs_find_open_context(struct inode *inode, struct rpc_c
 	return ctx;
 }
 
-static void nfs_file_clear_open_context(struct file *filp)
+void nfs_file_clear_open_context(struct file *filp)
 {
 	struct nfs_open_context *ctx = nfs_file_open_context(filp);
 
@@ -916,12 +916,6 @@ int nfs_open(struct inode *inode, struct file *filp)
 	nfs_file_set_open_context(filp, ctx);
 	put_nfs_open_context(ctx);
 	nfs_fscache_open_file(inode, filp);
-	return 0;
-}
-
-int nfs_release(struct inode *inode, struct file *filp)
-{
-	nfs_file_clear_open_context(filp);
 	return 0;
 }
 
@@ -1273,13 +1267,6 @@ static int nfs_check_inode_attributes(struct inode *inode, struct nfs_fattr *fat
 	return 0;
 }
 
-static int nfs_ctime_need_update(const struct inode *inode, const struct nfs_fattr *fattr)
-{
-	if (!(fattr->valid & NFS_ATTR_FATTR_CTIME))
-		return 0;
-	return timespec_compare(&fattr->ctime, &inode->i_ctime) > 0;
-}
-
 static atomic_long_t nfs_attr_generation_counter;
 
 static unsigned long nfs_read_attr_generation_counter(void)
@@ -1428,7 +1415,6 @@ static int nfs_inode_attrs_need_update(const struct inode *inode, const struct n
 	const struct nfs_inode *nfsi = NFS_I(inode);
 
 	return ((long)fattr->gencount - (long)nfsi->attr_gencount) > 0 ||
-		nfs_ctime_need_update(inode, fattr) ||
 		((long)nfsi->attr_gencount - (long)nfs_read_attr_generation_counter() > 0);
 }
 
@@ -1490,6 +1476,13 @@ EXPORT_SYMBOL_GPL(nfs_refresh_inode);
 static int nfs_post_op_update_inode_locked(struct inode *inode, struct nfs_fattr *fattr)
 {
 	unsigned long invalid = NFS_INO_INVALID_ATTR|NFS_INO_REVAL_PAGECACHE;
+
+	/*
+	 * Don't revalidate the pagecache if we hold a delegation, but do
+	 * force an attribute update
+	 */
+	if (NFS_PROTO(inode)->have_delegation(inode, FMODE_READ))
+		invalid = NFS_INO_INVALID_ATTR|NFS_INO_REVAL_FORCED;
 
 	if (S_ISDIR(inode->i_mode))
 		invalid |= NFS_INO_INVALID_DATA;

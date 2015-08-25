@@ -82,7 +82,8 @@ nfs_file_release(struct inode *inode, struct file *filp)
 	dprintk("NFS: release(%pD2)\n", filp);
 
 	nfs_inc_stats(inode, NFSIOS_VFSRELEASE);
-	return nfs_release(inode, filp);
+	nfs_file_clear_open_context(filp);
+	return 0;
 }
 EXPORT_SYMBOL_GPL(nfs_file_release);
 
@@ -644,12 +645,10 @@ static const struct vm_operations_struct nfs_file_vm_ops = {
 	.page_mkwrite = nfs_vm_page_mkwrite,
 };
 
-static int nfs_need_sync_write(struct file *filp, struct inode *inode)
+static int nfs_need_check_write(struct file *filp, struct inode *inode)
 {
 	struct nfs_open_context *ctx;
 
-	if (IS_SYNC(inode) || (filp->f_flags & O_DSYNC))
-		return 1;
 	ctx = nfs_file_open_context(filp);
 	if (test_bit(NFS_CONTEXT_ERROR_WRITE, &ctx->flags) ||
 	    nfs_ctx_key_to_expire(ctx))
@@ -699,8 +698,8 @@ ssize_t nfs_file_write(struct kiocb *iocb, struct iov_iter *from)
 	if (result > 0)
 		written = result;
 
-	/* Return error values for O_DSYNC and IS_SYNC() */
-	if (result >= 0 && nfs_need_sync_write(file, inode)) {
+	/* Return error values */
+	if (result >= 0 && nfs_need_check_write(file, inode)) {
 		int err = vfs_fsync(file, 0);
 		if (err < 0)
 			result = err;

@@ -219,10 +219,6 @@ static inline void nfs_fs_proc_exit(void)
 }
 #endif
 
-#ifdef CONFIG_NFS_V4_1
-int nfs_sockaddr_match_ipaddr(const struct sockaddr *, const struct sockaddr *);
-#endif
-
 /* callback_xdr.c */
 extern struct svc_version nfs4_callback_version1;
 extern struct svc_version nfs4_callback_version4;
@@ -490,6 +486,9 @@ void nfs_retry_commit(struct list_head *page_list,
 void nfs_commitdata_release(struct nfs_commit_data *data);
 void nfs_request_add_commit_list(struct nfs_page *req, struct list_head *dst,
 				 struct nfs_commit_info *cinfo);
+void nfs_request_add_commit_list_locked(struct nfs_page *req,
+		struct list_head *dst,
+		struct nfs_commit_info *cinfo);
 void nfs_request_remove_commit_list(struct nfs_page *req,
 				    struct nfs_commit_info *cinfo);
 void nfs_init_cinfo(struct nfs_commit_info *cinfo,
@@ -623,13 +622,15 @@ void nfs_super_set_maxbytes(struct super_block *sb, __u64 maxfilesize)
  * Record the page as unstable and mark its inode as dirty.
  */
 static inline
-void nfs_mark_page_unstable(struct page *page)
+void nfs_mark_page_unstable(struct page *page, struct nfs_commit_info *cinfo)
 {
-	struct inode *inode = page_file_mapping(page)->host;
+	if (!cinfo->dreq) {
+		struct inode *inode = page_file_mapping(page)->host;
 
-	inc_zone_page_state(page, NR_UNSTABLE_NFS);
-	inc_wb_stat(&inode_to_bdi(inode)->wb, WB_RECLAIMABLE);
-	 __mark_inode_dirty(inode, I_DIRTY_DATASYNC);
+		inc_zone_page_state(page, NR_UNSTABLE_NFS);
+		inc_wb_stat(&inode_to_bdi(inode)->wb, WB_RECLAIMABLE);
+		__mark_inode_dirty(inode, I_DIRTY_DATASYNC);
+	}
 }
 
 /*

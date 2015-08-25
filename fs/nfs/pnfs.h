@@ -94,7 +94,6 @@ enum {
 	NFS_LAYOUT_RO_FAILED = 0,	/* get ro layout failed stop trying */
 	NFS_LAYOUT_RW_FAILED,		/* get rw layout failed stop trying */
 	NFS_LAYOUT_BULK_RECALL,		/* bulk recall affecting layout */
-	NFS_LAYOUT_ROC,			/* some lseg had roc bit set */
 	NFS_LAYOUT_RETURN,		/* Return this layout ASAP */
 	NFS_LAYOUT_RETURN_BEFORE_CLOSE,	/* Return this layout before close */
 	NFS_LAYOUT_INVALID_STID,	/* layout stateid id is invalid */
@@ -267,7 +266,7 @@ int pnfs_mark_matching_lsegs_invalid(struct pnfs_layout_hdr *lo,
 bool pnfs_roc(struct inode *ino);
 void pnfs_roc_release(struct inode *ino);
 void pnfs_roc_set_barrier(struct inode *ino, u32 barrier);
-bool pnfs_roc_drain(struct inode *ino, u32 *barrier, struct rpc_task *task);
+void pnfs_roc_get_barrier(struct inode *ino, u32 *barrier);
 void pnfs_set_layoutcommit(struct inode *, struct pnfs_layout_segment *, loff_t);
 void pnfs_cleanup_layoutcommit(struct nfs4_layoutcommit_data *data);
 int pnfs_layoutcommit_inode(struct inode *inode, bool sync);
@@ -529,12 +528,15 @@ pnfs_use_threshold(struct nfs4_threshold **dst, struct nfs4_threshold *src,
 					nfss->pnfs_curr_ld->id == src->l_type);
 }
 
+extern unsigned int layoutstats_timer;
+
 #ifdef NFS_DEBUG
 void nfs4_print_deviceid(const struct nfs4_deviceid *dev_id);
 #else
 static inline void nfs4_print_deviceid(const struct nfs4_deviceid *dev_id)
 {
 }
+
 #endif /* NFS_DEBUG */
 #else  /* CONFIG_NFS_V4_1 */
 
@@ -605,10 +607,9 @@ pnfs_roc_set_barrier(struct inode *ino, u32 barrier)
 {
 }
 
-static inline bool
-pnfs_roc_drain(struct inode *ino, u32 *barrier, struct rpc_task *task)
+static inline void
+pnfs_roc_get_barrier(struct inode *ino, u32 *barrier)
 {
-	return false;
 }
 
 static inline void set_pnfs_layoutdriver(struct nfs_server *s,
@@ -691,10 +692,10 @@ static inline void nfs4_pnfs_v3_ds_connect_unload(void)
 #endif /* CONFIG_NFS_V4_1 */
 
 #if IS_ENABLED(CONFIG_NFS_V4_2)
-int pnfs_report_layoutstat(struct inode *inode);
+int pnfs_report_layoutstat(struct inode *inode, gfp_t gfp_flags);
 #else
 static inline int
-pnfs_report_layoutstat(struct inode *inode)
+pnfs_report_layoutstat(struct inode *inode, gfp_t gfp_flags)
 {
 	return 0;
 }
