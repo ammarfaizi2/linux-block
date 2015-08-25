@@ -34,7 +34,7 @@
 
 static int _regmap_update_bits(struct regmap *map, unsigned int reg,
 			       unsigned int mask, unsigned int val,
-			       bool *change);
+			       bool *change, bool force_write);
 
 static int _regmap_bus_reg_read(void *context, unsigned int reg,
 				unsigned int *val);
@@ -1182,7 +1182,7 @@ static int _regmap_select_page(struct regmap *map, unsigned int *reg,
 		ret = _regmap_update_bits(map, range->selector_reg,
 					  range->selector_mask,
 					  win_page << range->selector_shift,
-					  &page_chg);
+					  &page_chg, false);
 
 		map->work_buf = orig_work_buf;
 
@@ -1628,6 +1628,18 @@ int regmap_fields_write(struct regmap_field *field, unsigned int id,
 }
 EXPORT_SYMBOL_GPL(regmap_fields_write);
 
+int regmap_fields_force_write(struct regmap_field *field, unsigned int id,
+			unsigned int val)
+{
+	if (id >= field->id_size)
+		return -EINVAL;
+
+	return regmap_write_bits(field->regmap,
+				  field->reg + (field->id_offset * id),
+				  field->mask, val << field->shift);
+}
+EXPORT_SYMBOL_GPL(regmap_fields_force_write);
+
 /**
  * regmap_fields_update_bits():	Perform a read/modify/write cycle
  *                              on the register field
@@ -1761,7 +1773,7 @@ EXPORT_SYMBOL_GPL(regmap_bulk_write);
  *
  * the (register,newvalue) pairs in regs have not been formatted, but
  * they are all in the same page and have been changed to being page
- * relative. The page register has been written if that was neccessary.
+ * relative. The page register has been written if that was necessary.
  */
 static int _regmap_raw_multi_reg_write(struct regmap *map,
 				       const struct reg_default *regs,
@@ -2071,7 +2083,7 @@ static int _regmap_raw_read(struct regmap *map, unsigned int reg, void *val,
 
 	/*
 	 * Some buses or devices flag reads by setting the high bits in the
-	 * register addresss; since it's always the high bits for all
+	 * register address; since it's always the high bits for all
 	 * current formats we can do this here rather than in
 	 * formatting.  This may break if we get interesting formats.
 	 */
@@ -2353,7 +2365,7 @@ EXPORT_SYMBOL_GPL(regmap_bulk_read);
 
 static int _regmap_update_bits(struct regmap *map, unsigned int reg,
 			       unsigned int mask, unsigned int val,
-			       bool *change)
+			       bool *change, bool force_write)
 {
 	int ret;
 	unsigned int tmp, orig;
@@ -2365,7 +2377,7 @@ static int _regmap_update_bits(struct regmap *map, unsigned int reg,
 	tmp = orig & ~mask;
 	tmp |= val & mask;
 
-	if (tmp != orig) {
+	if (force_write || (tmp != orig)) {
 		ret = _regmap_write(map, reg, tmp);
 		if (change)
 			*change = true;
@@ -2393,12 +2405,35 @@ int regmap_update_bits(struct regmap *map, unsigned int reg,
 	int ret;
 
 	map->lock(map->lock_arg);
-	ret = _regmap_update_bits(map, reg, mask, val, NULL);
+	ret = _regmap_update_bits(map, reg, mask, val, NULL, false);
 	map->unlock(map->lock_arg);
 
 	return ret;
 }
 EXPORT_SYMBOL_GPL(regmap_update_bits);
+
+/**
+ * regmap_write_bits: Perform a read/modify/write cycle on the register map
+ *
+ * @map: Register map to update
+ * @reg: Register to update
+ * @mask: Bitmask to change
+ * @val: New value for bitmask
+ *
+ * Returns zero for success, a negative number on error.
+ */
+int regmap_write_bits(struct regmap *map, unsigned int reg,
+		      unsigned int mask, unsigned int val)
+{
+	int ret;
+
+	map->lock(map->lock_arg);
+	ret = _regmap_update_bits(map, reg, mask, val, NULL, true);
+	map->unlock(map->lock_arg);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_write_bits);
 
 /**
  * regmap_update_bits_async: Perform a read/modify/write cycle on the register
@@ -2424,7 +2459,7 @@ int regmap_update_bits_async(struct regmap *map, unsigned int reg,
 
 	map->async = true;
 
-	ret = _regmap_update_bits(map, reg, mask, val, NULL);
+	ret = _regmap_update_bits(map, reg, mask, val, NULL, false);
 
 	map->async = false;
 
@@ -2453,7 +2488,7 @@ int regmap_update_bits_check(struct regmap *map, unsigned int reg,
 	int ret;
 
 	map->lock(map->lock_arg);
-	ret = _regmap_update_bits(map, reg, mask, val, change);
+	ret = _regmap_update_bits(map, reg, mask, val, change, false);
 	map->unlock(map->lock_arg);
 	return ret;
 }
@@ -2486,7 +2521,7 @@ int regmap_update_bits_check_async(struct regmap *map, unsigned int reg,
 
 	map->async = true;
 
-	ret = _regmap_update_bits(map, reg, mask, val, change);
+	ret = _regmap_update_bits(map, reg, mask, val, change, false);
 
 	map->async = false;
 
