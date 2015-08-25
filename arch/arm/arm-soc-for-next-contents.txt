@@ -90,6 +90,8 @@ next/soc
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.3/soc-pt2
 	patch
 		ARM: imx: mach-imx6ul: Fix allmodconfig build
+	rockchip/soc3
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v4.3-rockchip32-soc3
 
 next/boards
 
@@ -191,6 +193,8 @@ next/dt
 		ARM: dts: zynq: Add devicetree entry for Xilinx Zynq reset controller.
 	tegra/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-4.3-dt
+	rockchip/dt3
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v4.3-rockchip32-dts3
 
 next/drivers
 	patch
@@ -298,16 +302,4 @@ next/late
 		git://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung tags/samsung-defconfig-new
 
 fixes
-	patch
-		ARM: ux500: add an SMP enablement type and move cpu nodes
-	<no branch> (cd4556733b30cc363adc7b1cea3bffa7e2dd0c7c)
-		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.2/fixes-rc5
-	<no branch> (3e9f798784b30293012682021d5a0352f78658b8)
-		https://github.com/krzk/linux tags/samsung-mach-fixes-4.2
-	<no branch> (1a9fa190956f45c1e58c4d8bfa5ac051691ea590)
-		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-4.2-3
-	<no branch> (e984a1791ac6a7c944911207e8a9c344763f0003)
-		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.2/fixes-rc6
-	<no branch> (85ad3deea4525504355560649be7a41348111a60)
-		git://git.kernel.org/pub/scm/linux/kernel/git/ssantosh/linux-keystone tags/keystone-dts-late-fixes-v2
 
