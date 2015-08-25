@@ -3378,7 +3378,7 @@ static __init int fixup_ht_bug(void)
 	}
 
 	if (watchdog_suspend() != 0) {
-		pr_info("failed to disable PMU erratum BJ122, BV98, HSD29 workaround\n");
+		pr_debug("failed to disable PMU erratum BJ122, BV98, HSD29 workaround\n");
 		return 0;
 	}
 
