@@ -359,13 +359,13 @@ static void __init request_standard_resources(void)
 	}
 }
 
+#ifdef CONFIG_BLK_DEV_INITRD
 /*
  * Relocate initrd if it is not completely within the linear mapping.
  * This would be the case if mem= cuts out all or part of it.
  */
 static void __init relocate_initrd(void)
 {
-#ifdef CONFIG_BLK_DEV_INITRD
 	phys_addr_t orig_start = __virt_to_phys(initrd_start);
 	phys_addr_t orig_end = __virt_to_phys(initrd_end);
 	phys_addr_t ram_end = memblock_end_of_DRAM();
@@ -376,7 +376,10 @@ static void __init relocate_initrd(void)
 	if (orig_end <= ram_end)
 		return;
 
-	/* Note if any of original initrd will freeing below */
+	/*
+	 * Any of the original initrd which overlaps the linear map should
+	 * be freed after relocating.
+	 */
 	if (orig_start < ram_end)
 		to_free = ram_end - orig_start;
 
@@ -410,8 +413,12 @@ static void __init relocate_initrd(void)
 			orig_start, orig_start + to_free - 1);
 		memblock_free(orig_start, to_free);
 	}
-#endif
 }
+#else
+static inline void __init relocate_initrd(void)
+{
+}
+#endif
 
 u64 __cpu_logical_map[NR_CPUS] = { [0 ... NR_CPUS-1] = INVALID_HWID };
 
