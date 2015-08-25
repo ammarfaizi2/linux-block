@@ -666,4 +666,4 @@ config IDLE_PAGE_TRACKING
 	  be useful to tune memory cgroup limits and/or for job placement
 	  within a compute cluster.
 
-	  See Documentation/vm/pagemap.txt for more details.
+	  See Documentation/vm/idle_page_tracking.txt for more details.
