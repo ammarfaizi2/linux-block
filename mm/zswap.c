@@ -691,6 +691,11 @@ static int __zswap_param_set(const char *val, const struct kernel_param *kp,
 	char str[kp->str->maxlen], *s;
 	int ret;
 
+	/*
+	 * kp is either zswap_zpool_kparam or zswap_compressor_kparam, defined
+	 * at the top of this file, so maxlen is CRYPTO_MAX_ALG_NAME (64) or
+	 * 32 (arbitrary).
+	 */
 	strlcpy(str, val, kp->str->maxlen);
 	s = strim(str);
 
