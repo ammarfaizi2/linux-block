@@ -4672,12 +4672,12 @@ static int raid5_congested(struct mddev *mddev, int bits)
 
 static int in_chunk_boundary(struct mddev *mddev, struct bio *bio)
 {
+	struct r5conf *conf = mddev->private;
 	sector_t sector = bio->bi_iter.bi_sector + get_start_sect(bio->bi_bdev);
-	unsigned int chunk_sectors = mddev->chunk_sectors;
+	unsigned int chunk_sectors;
 	unsigned int bio_sectors = bio_sectors(bio);
 
-	if (mddev->new_chunk_sectors < mddev->chunk_sectors)
-		chunk_sectors = mddev->new_chunk_sectors;
+	chunk_sectors = min(conf->chunk_sectors, conf->prev_chunk_sectors);
 	return  chunk_sectors >=
 		((sector & (chunk_sectors - 1)) + bio_sectors);
 }
@@ -5325,6 +5325,7 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
 	sector_t stripe_addr;
 	int reshape_sectors;
 	struct list_head stripes;
+	sector_t retn;
 
 	if (sector_nr == 0) {
 		/* If restarting in the middle, skip the initial sectors */
@@ -5332,6 +5333,10 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
 		    conf->reshape_progress < raid5_size(mddev, 0, 0)) {
 			sector_nr = raid5_size(mddev, 0, 0)
 				- conf->reshape_progress;
+		} else if (mddev->reshape_backwards &&
+			   conf->reshape_progress == MaxSector) {
+			/* shouldn't happen, but just in case, finish up.*/
+			sector_nr = MaxSector;
 		} else if (!mddev->reshape_backwards &&
 			   conf->reshape_progress > 0)
 			sector_nr = conf->reshape_progress;
@@ -5340,7 +5345,8 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
 			mddev->curr_resync_completed = sector_nr;
 			sysfs_notify(&mddev->kobj, NULL, "sync_completed");
 			*skipped = 1;
-			return sector_nr;
+			retn = sector_nr;
+			goto finish;
 		}
 	}
 
@@ -5348,10 +5354,8 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
 	 * If old and new chunk sizes differ, we need to process the
 	 * largest of these
 	 */
-	if (mddev->new_chunk_sectors > mddev->chunk_sectors)
-		reshape_sectors = mddev->new_chunk_sectors;
-	else
-		reshape_sectors = mddev->chunk_sectors;
+
+	reshape_sectors = max(conf->chunk_sectors, conf->prev_chunk_sectors);
 
 	/* We update the metadata at least every 10 seconds, or when
 	 * the data about to be copied would over-write the source of
@@ -5366,11 +5370,16 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
 	safepos = conf->reshape_safe;
 	sector_div(safepos, data_disks);
 	if (mddev->reshape_backwards) {
-		writepos -= min_t(sector_t, reshape_sectors, writepos);
+		BUG_ON(writepos < reshape_sectors);
+		writepos -= reshape_sectors;
 		readpos += reshape_sectors;
 		safepos += reshape_sectors;
 	} else {
 		writepos += reshape_sectors;
+		/* readpos and safepos are worst-case calculations.
+		 * A negative number is overly pessimistic, and causes
+		 * obvious problems for unsigned storage.  So clip to 0.
+		 */
 		readpos -= min_t(sector_t, reshape_sectors, readpos);
 		safepos -= min_t(sector_t, reshape_sectors, safepos);
 	}
@@ -5513,7 +5522,10 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
 	 * then we need to write out the superblock.
 	 */
 	sector_nr += reshape_sectors;
-	if ((sector_nr - mddev->curr_resync_completed) * 2
+	retn = reshape_sectors;
+finish:
+	if (mddev->curr_resync_completed > mddev->resync_max ||
+	    (sector_nr - mddev->curr_resync_completed) * 2
 	    >= mddev->resync_max - mddev->curr_resync_completed) {
 		/* Cannot proceed until we've updated the superblock... */
 		wait_event(conf->wait_for_overlap,
@@ -5538,7 +5550,7 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
 		sysfs_notify(&mddev->kobj, NULL, "sync_completed");
 	}
 ret:
-	return reshape_sectors;
+	return retn;
 }
 
 static inline sector_t sync_request(struct mddev *mddev, sector_t sector_nr, int *skipped)
@@ -6234,8 +6246,8 @@ raid5_size(struct mddev *mddev, sector_t sectors, int raid_disks)
 		/* size is defined by the smallest of previous and new size */
 		raid_disks = min(conf->raid_disks, conf->previous_raid_disks);
 
-	sectors &= ~((sector_t)mddev->chunk_sectors - 1);
-	sectors &= ~((sector_t)mddev->new_chunk_sectors - 1);
+	sectors &= ~((sector_t)conf->chunk_sectors - 1);
+	sectors &= ~((sector_t)conf->prev_chunk_sectors - 1);
 	return sectors * (raid_disks - conf->max_degraded);
 }
 
@@ -6542,6 +6554,9 @@ static struct r5conf *setup_conf(struct mddev *mddev)
 	if (conf->reshape_progress != MaxSector) {
 		conf->prev_chunk_sectors = mddev->chunk_sectors;
 		conf->prev_algo = mddev->layout;
+	} else {
+		conf->prev_chunk_sectors = conf->chunk_sectors;
+		conf->prev_algo = conf->algorithm;
 	}
 
 	conf->min_nr_stripes = NR_STRIPES;
@@ -6661,6 +6676,8 @@ static int run(struct mddev *mddev)
 		sector_t here_new, here_old;
 		int old_disks;
 		int max_degraded = (mddev->level == 6 ? 2 : 1);
+		int chunk_sectors;
+		int new_data_disks;
 
 		if (mddev->new_level != mddev->level) {
 			printk(KERN_ERR "md/raid:%s: unsupported reshape "
@@ -6672,28 +6689,25 @@ static int run(struct mddev *mddev)
 		/* reshape_position must be on a new-stripe boundary, and one
 		 * further up in new geometry must map after here in old
 		 * geometry.
+		 * If the chunk sizes are different, then as we perform reshape
+		 * in units of the largest of the two, reshape_position needs
+		 * be a multiple of the largest chunk size times new data disks.
 		 */
 		here_new = mddev->reshape_position;
-		if (sector_div(here_new, mddev->new_chunk_sectors *
-			       (mddev->raid_disks - max_degraded))) {
+		chunk_sectors = max(mddev->chunk_sectors, mddev->new_chunk_sectors);
+		new_data_disks = mddev->raid_disks - max_degraded;
+		if (sector_div(here_new, chunk_sectors * new_data_disks)) {
 			printk(KERN_ERR "md/raid:%s: reshape_position not "
 			       "on a stripe boundary\n", mdname(mddev));
 			return -EINVAL;
 		}
-		reshape_offset = here_new * mddev->new_chunk_sectors;
+		reshape_offset = here_new * chunk_sectors;
 		/* here_new is the stripe we will write to */
 		here_old = mddev->reshape_position;
-		sector_div(here_old, mddev->chunk_sectors *
-			   (old_disks-max_degraded));
+		sector_div(here_old, chunk_sectors * (old_disks-max_degraded));
 		/* here_old is the first stripe that we might need to read
 		 * from */
 		if (mddev->delta_disks == 0) {
-			if ((here_new * mddev->new_chunk_sectors !=
-			     here_old * mddev->chunk_sectors)) {
-				printk(KERN_ERR "md/raid:%s: reshape position is"
-				       " confused - aborting\n", mdname(mddev));
-				return -EINVAL;
-			}
 			/* We cannot be sure it is safe to start an in-place
 			 * reshape.  It is only safe if user-space is monitoring
 			 * and taking constant backups.
@@ -6712,10 +6726,10 @@ static int run(struct mddev *mddev)
 				return -EINVAL;
 			}
 		} else if (mddev->reshape_backwards
-		    ? (here_new * mddev->new_chunk_sectors + min_offset_diff <=
-		       here_old * mddev->chunk_sectors)
-		    : (here_new * mddev->new_chunk_sectors >=
-		       here_old * mddev->chunk_sectors + (-min_offset_diff))) {
+		    ? (here_new * chunk_sectors + min_offset_diff <=
+		       here_old * chunk_sectors)
+		    : (here_new * chunk_sectors >=
+		       here_old * chunk_sectors + (-min_offset_diff))) {
 			/* Reading from the same stripe as writing to - bad */
 			printk(KERN_ERR "md/raid:%s: reshape_position too early for "
 			       "auto-recovery - aborting.\n",
@@ -6967,7 +6981,7 @@ static void status(struct seq_file *seq, struct mddev *mddev)
 	int i;
 
 	seq_printf(seq, " level %d, %dk chunk, algorithm %d", mddev->level,
-		mddev->chunk_sectors / 2, mddev->layout);
+		conf->chunk_sectors / 2, mddev->layout);
 	seq_printf (seq, " [%d/%d] [", conf->raid_disks, conf->raid_disks - mddev->degraded);
 	for (i = 0; i < conf->raid_disks; i++)
 		seq_printf (seq, "%s",
@@ -7173,7 +7187,9 @@ static int raid5_resize(struct mddev *mddev, sector_t sectors)
 	 * worth it.
 	 */
 	sector_t newsize;
-	sectors &= ~((sector_t)mddev->chunk_sectors - 1);
+	struct r5conf *conf = mddev->private;
+
+	sectors &= ~((sector_t)conf->chunk_sectors - 1);
 	newsize = raid5_size(mddev, sectors, mddev->raid_disks);
 	if (mddev->external_size &&
 	    mddev->array_sectors > newsize)
@@ -7412,6 +7428,7 @@ static void end_reshape(struct r5conf *conf)
 			rdev->data_offset = rdev->new_data_offset;
 		smp_wmb();
 		conf->reshape_progress = MaxSector;
+		conf->mddev->reshape_position = MaxSector;
 		spin_unlock_irq(&conf->device_lock);
 		wake_up(&conf->wait_for_overlap);
 
