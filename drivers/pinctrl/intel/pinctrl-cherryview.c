@@ -1169,9 +1169,12 @@ static int chv_gpio_get(struct gpio_chip *chip, unsigned offset)
 {
 	struct chv_pinctrl *pctrl = gpiochip_to_pinctrl(chip);
 	int pin = chv_gpio_offset_to_pin(pctrl, offset);
+	unsigned long flags;
 	u32 ctrl0, cfg;
 
+	spin_lock_irqsave(&pctrl->lock, flags);
 	ctrl0 = readl(chv_padreg(pctrl, pin, CHV_PADCTRL0));
+	spin_unlock_irqrestore(&pctrl->lock, flags);
 
 	cfg = ctrl0 & CHV_PADCTRL0_GPIOCFG_MASK;
 	cfg >>= CHV_PADCTRL0_GPIOCFG_SHIFT;
@@ -1209,8 +1212,11 @@ static int chv_gpio_get_direction(struct gpio_chip *chip, unsigned offset)
 	struct chv_pinctrl *pctrl = gpiochip_to_pinctrl(chip);
 	unsigned pin = chv_gpio_offset_to_pin(pctrl, offset);
 	u32 ctrl0, direction;
+	unsigned long flags;
 
+	spin_lock_irqsave(&pctrl->lock, flags);
 	ctrl0 = readl(chv_padreg(pctrl, pin, CHV_PADCTRL0));
+	spin_unlock_irqrestore(&pctrl->lock, flags);
 
 	direction = ctrl0 & CHV_PADCTRL0_GPIOCFG_MASK;
 	direction >>= CHV_PADCTRL0_GPIOCFG_SHIFT;
@@ -1313,6 +1319,7 @@ static unsigned chv_gpio_irq_startup(struct irq_data *d)
 		unsigned long flags;
 		u32 intsel, value;
 
+		spin_lock_irqsave(&pctrl->lock, flags);
 		intsel = readl(chv_padreg(pctrl, pin, CHV_PADCTRL0));
 		intsel &= CHV_PADCTRL0_INTSEL_MASK;
 		intsel >>= CHV_PADCTRL0_INTSEL_SHIFT;
@@ -1323,9 +1330,8 @@ static unsigned chv_gpio_irq_startup(struct irq_data *d)
 		else
 			handler = handle_edge_irq;
 
-		spin_lock_irqsave(&pctrl->lock, flags);
 		if (!pctrl->intr_lines[intsel]) {
-			__irq_set_handler_locked(d->irq, handler);
+			irq_set_handler_locked(d, handler);
 			pctrl->intr_lines[intsel] = offset;
 		}
 		spin_unlock_irqrestore(&pctrl->lock, flags);
@@ -1389,9 +1395,9 @@ static int chv_gpio_irq_type(struct irq_data *d, unsigned type)
 	pctrl->intr_lines[value] = offset;
 
 	if (type & IRQ_TYPE_EDGE_BOTH)
-		__irq_set_handler_locked(d->irq, handle_edge_irq);
+		irq_set_handler_locked(d, handle_edge_irq);
 	else if (type & IRQ_TYPE_LEVEL_MASK)
-		__irq_set_handler_locked(d->irq, handle_level_irq);
+		irq_set_handler_locked(d, handle_level_irq);
 
 	spin_unlock_irqrestore(&pctrl->lock, flags);
 
@@ -1412,7 +1418,7 @@ static void chv_gpio_irq_handler(unsigned irq, struct irq_desc *desc)
 {
 	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
 	struct chv_pinctrl *pctrl = gpiochip_to_pinctrl(gc);
-	struct irq_chip *chip = irq_get_chip(irq);
+	struct irq_chip *chip = irq_desc_get_chip(desc);
 	unsigned long pending;
 	u32 intr_line;
 
