@@ -5993,7 +5993,7 @@ F:	kernel/kexec.c
 
 KEYS/KEYRINGS:
 M:	David Howells <dhowells@redhat.com>
-L:	keyrings@linux-nfs.org
+L:	keyrings@vger.kernel.org
 S:	Maintained
 F:	Documentation/security/keys.txt
 F:	include/linux/key.h
@@ -6005,7 +6005,7 @@ KEYS-TRUSTED
 M:	David Safford <safford@us.ibm.com>
 M:	Mimi Zohar <zohar@linux.vnet.ibm.com>
 L:	linux-security-module@vger.kernel.org
-L:	keyrings@linux-nfs.org
+L:	keyrings@vger.kernel.org
 S:	Supported
 F:	Documentation/security/keys-trusted-encrypted.txt
 F:	include/keys/trusted-type.h
@@ -6016,7 +6016,7 @@ KEYS-ENCRYPTED
 M:	Mimi Zohar <zohar@linux.vnet.ibm.com>
 M:	David Safford <safford@us.ibm.com>
 L:	linux-security-module@vger.kernel.org
-L:	keyrings@linux-nfs.org
+L:	keyrings@vger.kernel.org
 S:	Supported
 F:	Documentation/security/keys-trusted-encrypted.txt
 F:	include/keys/encrypted-type.h
@@ -9253,6 +9253,12 @@ W:	apparmor.wiki.kernel.org
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jj/apparmor-dev.git
 S:	Supported
 F:	security/apparmor/
+
+YAMA SECURITY MODULE
+M:	Kees Cook <keescook@chromium.org>
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/kees/linux.git yama/tip
+S:	Supported
+F:	security/yama/
 
 SENSABLE PHANTOM
 M:	Jiri Slaby <jirislaby@gmail.com>
