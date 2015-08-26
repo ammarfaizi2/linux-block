@@ -19,7 +19,6 @@
 
 #include "exynos_drm_crtc.h"
 #include "exynos_drm_drv.h"
-#include "exynos_drm_encoder.h"
 #include "exynos_drm_plane.h"
 
 static void exynos_drm_crtc_enable(struct drm_crtc *crtc)
@@ -80,7 +79,8 @@ exynos_drm_crtc_mode_set_nofb(struct drm_crtc *crtc)
 		exynos_crtc->ops->commit(exynos_crtc);
 }
 
-static void exynos_crtc_atomic_begin(struct drm_crtc *crtc)
+static void exynos_crtc_atomic_begin(struct drm_crtc *crtc,
+				     struct drm_crtc_state *old_crtc_state)
 {
 	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
@@ -90,7 +90,8 @@ static void exynos_crtc_atomic_begin(struct drm_crtc *crtc)
 	}
 }
 
-static void exynos_crtc_atomic_flush(struct drm_crtc *crtc)
+static void exynos_crtc_atomic_flush(struct drm_crtc *crtc,
+				     struct drm_crtc_state *old_crtc_state)
 {
 }
 
@@ -175,7 +176,7 @@ int exynos_drm_crtc_enable_vblank(struct drm_device *dev, int pipe)
 		return -EPERM;
 
 	if (exynos_crtc->ops->enable_vblank)
-		exynos_crtc->ops->enable_vblank(exynos_crtc);
+		return exynos_crtc->ops->enable_vblank(exynos_crtc);
 
 	return 0;
 }
@@ -193,24 +194,22 @@ void exynos_drm_crtc_disable_vblank(struct drm_device *dev, int pipe)
 		exynos_crtc->ops->disable_vblank(exynos_crtc);
 }
 
-void exynos_drm_crtc_finish_pageflip(struct drm_device *dev, int pipe)
+void exynos_drm_crtc_finish_pageflip(struct exynos_drm_crtc *exynos_crtc)
 {
-	struct exynos_drm_private *dev_priv = dev->dev_private;
-	struct drm_crtc *drm_crtc = dev_priv->crtc[pipe];
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(drm_crtc);
+	struct drm_crtc *crtc = &exynos_crtc->base;
 	unsigned long flags;
 
-	spin_lock_irqsave(&dev->event_lock, flags);
+	spin_lock_irqsave(&crtc->dev->event_lock, flags);
 	if (exynos_crtc->event) {
 
-		drm_send_vblank_event(dev, -1, exynos_crtc->event);
-		drm_vblank_put(dev, pipe);
+		drm_crtc_send_vblank_event(crtc, exynos_crtc->event);
+		drm_crtc_vblank_put(crtc);
 		wake_up(&exynos_crtc->pending_flip_queue);
 
 	}
 
 	exynos_crtc->event = NULL;
-	spin_unlock_irqrestore(&dev->event_lock, flags);
+	spin_unlock_irqrestore(&crtc->dev->event_lock, flags);
 }
 
 void exynos_drm_crtc_complete_scanout(struct drm_framebuffer *fb)
@@ -237,7 +236,7 @@ void exynos_drm_crtc_complete_scanout(struct drm_framebuffer *fb)
 }
 
 int exynos_drm_crtc_get_pipe_from_type(struct drm_device *drm_dev,
-					unsigned int out_type)
+				       enum exynos_drm_output_type out_type)
 {
 	struct drm_crtc *crtc;
 
