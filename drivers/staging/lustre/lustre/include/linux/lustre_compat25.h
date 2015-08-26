@@ -86,7 +86,7 @@
 		vfs_rename(old, old_dir, new, new_dir, NULL, 0)
 
 #define cfs_bio_io_error(a, b)   bio_io_error((a))
-#define cfs_bio_endio(a, b, c)    bio_endio((a), (c))
+#define cfs_bio_endio(a, b, c)    bio_endio((a))
 
 #define cfs_path_put(nd)     path_put(&(nd)->path)
 
