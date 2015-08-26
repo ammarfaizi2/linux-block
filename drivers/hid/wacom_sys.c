@@ -335,7 +335,7 @@ static int wacom_set_device_mode(struct hid_device *hdev, int report_id,
 		if (error >= 0)
 			error = wacom_get_report(hdev, HID_FEATURE_REPORT,
 			                         rep_data, length, 1);
-	} while ((error < 0 || rep_data[1] != mode) && limit++ < WAC_MSG_RETRIES);
+	} while (error >= 0 && rep_data[1] != mode && limit++ < WAC_MSG_RETRIES);
 
 	kfree(rep_data);
 
@@ -453,12 +453,11 @@ static void wacom_retrieve_hid_descriptor(struct hid_device *hdev,
 	 * interface number.
 	 */
 	if (features->type == WIRELESS) {
-		if (intf->cur_altsetting->desc.bInterfaceNumber == 0) {
+		if (intf->cur_altsetting->desc.bInterfaceNumber == 0)
+			features->device_type = WACOM_DEVICETYPE_WL_MONITOR;
+		else
 			features->device_type = WACOM_DEVICETYPE_NONE;
-		} else if (intf->cur_altsetting->desc.bInterfaceNumber == 2) {
-			features->device_type |= WACOM_DEVICETYPE_TOUCH;
-			features->pktlen = WACOM_PKGLEN_BBTOUCH3;
-		}
+		return;
 	}
 
 	wacom_parse_hid(hdev, features);
@@ -1130,7 +1129,7 @@ static struct input_dev *wacom_allocate_input(struct wacom *wacom)
 	if (!input_dev)
 		return NULL;
 
-	input_dev->name = wacom_wac->pen_name;
+	input_dev->name = wacom_wac->features.name;
 	input_dev->phys = hdev->phys;
 	input_dev->dev.parent = &hdev->dev;
 	input_dev->open = wacom_open;
@@ -1143,43 +1142,6 @@ static struct input_dev *wacom_allocate_input(struct wacom *wacom)
 	input_set_drvdata(input_dev, wacom);
 
 	return input_dev;
-}
-
-static void wacom_free_inputs(struct wacom *wacom)
-{
-	struct wacom_wac *wacom_wac = &(wacom->wacom_wac);
-
-	if (wacom_wac->pen_input)
-		input_free_device(wacom_wac->pen_input);
-	if (wacom_wac->touch_input)
-		input_free_device(wacom_wac->touch_input);
-	if (wacom_wac->pad_input)
-		input_free_device(wacom_wac->pad_input);
-	wacom_wac->pen_input = NULL;
-	wacom_wac->touch_input = NULL;
-	wacom_wac->pad_input = NULL;
-}
-
-static int wacom_allocate_inputs(struct wacom *wacom)
-{
-	struct input_dev *pen_input_dev, *touch_input_dev, *pad_input_dev;
-	struct wacom_wac *wacom_wac = &(wacom->wacom_wac);
-
-	pen_input_dev = wacom_allocate_input(wacom);
-	touch_input_dev = wacom_allocate_input(wacom);
-	pad_input_dev = wacom_allocate_input(wacom);
-	if (!pen_input_dev || !touch_input_dev || !pad_input_dev) {
-		wacom_free_inputs(wacom);
-		return -ENOMEM;
-	}
-
-	wacom_wac->pen_input = pen_input_dev;
-	wacom_wac->touch_input = touch_input_dev;
-	wacom_wac->touch_input->name = wacom_wac->touch_name;
-	wacom_wac->pad_input = pad_input_dev;
-	wacom_wac->pad_input->name = wacom_wac->pad_name;
-
-	return 0;
 }
 
 static void wacom_clean_inputs(struct wacom *wacom)
@@ -1206,6 +1168,25 @@ static void wacom_clean_inputs(struct wacom *wacom)
 	wacom->wacom_wac.touch_input = NULL;
 	wacom->wacom_wac.pad_input = NULL;
 	wacom_destroy_leds(wacom);
+}
+
+static int wacom_allocate_inputs(struct wacom *wacom)
+{
+	struct wacom_wac *wacom_wac = &(wacom->wacom_wac);
+
+	wacom_wac->pen_input = wacom_allocate_input(wacom);
+	wacom_wac->touch_input = wacom_allocate_input(wacom);
+	wacom_wac->pad_input = wacom_allocate_input(wacom);
+	if (!wacom_wac->pen_input || !wacom_wac->touch_input || !wacom_wac->pad_input) {
+		wacom_clean_inputs(wacom);
+		return -ENOMEM;
+	}
+
+	wacom_wac->pen_input->name = wacom_wac->pen_name;
+	wacom_wac->touch_input->name = wacom_wac->touch_name;
+	wacom_wac->pad_input->name = wacom_wac->pad_name;
+
+	return 0;
 }
 
 static int wacom_register_inputs(struct wacom *wacom)
@@ -1556,11 +1537,9 @@ static int wacom_probe(struct hid_device *hdev,
 	mutex_init(&wacom->lock);
 	INIT_WORK(&wacom->work, wacom_wireless_work);
 
-	if (!(features->quirks & WACOM_QUIRK_NO_INPUT)) {
-		error = wacom_allocate_inputs(wacom);
-		if (error)
-			goto fail_allocate_inputs;
-	}
+	error = wacom_allocate_inputs(wacom);
+	if (error)
+		goto fail_allocate_inputs;
 
 	/*
 	 * Bamboo Pad has a generic hid handling for the Pen, and we switch it
@@ -1606,18 +1585,16 @@ static int wacom_probe(struct hid_device *hdev,
 	if (error)
 		goto fail_shared_data;
 
-	if (!(features->quirks & WACOM_QUIRK_MONITOR) &&
+	if (!(features->device_type & WACOM_DEVICETYPE_WL_MONITOR) &&
 	     (features->quirks & WACOM_QUIRK_BATTERY)) {
 		error = wacom_initialize_battery(wacom);
 		if (error)
 			goto fail_battery;
 	}
 
-	if (!(features->quirks & WACOM_QUIRK_NO_INPUT)) {
-		error = wacom_register_inputs(wacom);
-		if (error)
-			goto fail_register_inputs;
-	}
+	error = wacom_register_inputs(wacom);
+	if (error)
+		goto fail_register_inputs;
 
 	if (hdev->bus == BUS_BLUETOOTH) {
 		error = device_create_file(&hdev->dev, &dev_attr_speed);
@@ -1640,7 +1617,7 @@ static int wacom_probe(struct hid_device *hdev,
 	/* Note that if query fails it is not a hard failure */
 	wacom_query_tablet_data(hdev, features);
 
-	if (features->quirks & WACOM_QUIRK_MONITOR)
+	if (features->device_type & WACOM_DEVICETYPE_WL_MONITOR)
 		error = hid_hw_open(hdev);
 
 	if (wacom_wac->features.type == INTUOSHT && 
@@ -1714,7 +1691,6 @@ static struct hid_driver wacom_driver = {
 	.id_table =	wacom_ids,
 	.probe =	wacom_probe,
 	.remove =	wacom_remove,
-	.event =	wacom_wac_event,
 	.report =	wacom_wac_report,
 #ifdef CONFIG_PM
 	.resume =	wacom_resume,

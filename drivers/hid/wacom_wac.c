@@ -125,61 +125,47 @@ static int wacom_pl_irq(struct wacom_wac *wacom)
 
 	prox = data[1] & 0x40;
 
-	if (prox) {
-		wacom->id[0] = ERASER_DEVICE_ID;
-		pressure = (signed char)((data[7] << 1) | ((data[4] >> 2) & 1));
-		if (features->pressure_max > 255)
-			pressure = (pressure << 1) | ((data[4] >> 6) & 1);
-		pressure += (features->pressure_max + 1) / 2;
-
-		/*
-		 * if going from out of proximity into proximity select between the eraser
-		 * and the pen based on the state of the stylus2 button, choose eraser if
-		 * pressed else choose pen. if not a proximity change from out to in, send
-		 * an out of proximity for previous tool then a in for new tool.
-		 */
-		if (!wacom->tool[0]) {
-			/* Eraser bit set for DTF */
-			if (data[1] & 0x10)
-				wacom->tool[1] = BTN_TOOL_RUBBER;
-			else
-				/* Going into proximity select tool */
-				wacom->tool[1] = (data[4] & 0x20) ? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
-		} else {
-			/* was entered with stylus2 pressed */
-			if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[4] & 0x20)) {
-				/* report out proximity for previous tool */
-				input_report_key(input, wacom->tool[1], 0);
-				input_sync(input);
-				wacom->tool[1] = BTN_TOOL_PEN;
-				return 0;
-			}
+	if (!wacom->id[0]) {
+		if ((data[0] & 0x10) || (data[4] & 0x20)) {
+			wacom->tool[0] = BTN_TOOL_RUBBER;
+			wacom->id[0] = ERASER_DEVICE_ID;
 		}
-		if (wacom->tool[1] != BTN_TOOL_RUBBER) {
-			/* Unknown tool selected default to pen tool */
-			wacom->tool[1] = BTN_TOOL_PEN;
+		else {
+			wacom->tool[0] = BTN_TOOL_PEN;
 			wacom->id[0] = STYLUS_DEVICE_ID;
 		}
-		input_report_key(input, wacom->tool[1], prox); /* report in proximity for tool */
-		input_report_abs(input, ABS_MISC, wacom->id[0]); /* report tool id */
-		input_report_abs(input, ABS_X, data[3] | (data[2] << 7) | ((data[1] & 0x03) << 14));
-		input_report_abs(input, ABS_Y, data[6] | (data[5] << 7) | ((data[4] & 0x03) << 14));
-		input_report_abs(input, ABS_PRESSURE, pressure);
-
-		input_report_key(input, BTN_TOUCH, data[4] & 0x08);
-		input_report_key(input, BTN_STYLUS, data[4] & 0x10);
-		/* Only allow the stylus2 button to be reported for the pen tool. */
-		input_report_key(input, BTN_STYLUS2, (wacom->tool[1] == BTN_TOOL_PEN) && (data[4] & 0x20));
-	} else {
-		/* report proximity-out of a (valid) tool */
-		if (wacom->tool[1] != BTN_TOOL_RUBBER) {
-			/* Unknown tool selected default to pen tool */
-			wacom->tool[1] = BTN_TOOL_PEN;
-		}
-		input_report_key(input, wacom->tool[1], prox);
 	}
 
-	wacom->tool[0] = prox; /* Save proximity state */
+	/* If the eraser is in prox, STYLUS2 is always set. If we
+	 * mis-detected the type and notice that STYLUS2 isn't set
+	 * then force the eraser out of prox and let the pen in.
+	 */
+	if (wacom->tool[0] == BTN_TOOL_RUBBER && !(data[4] & 0x20)) {
+		input_report_key(input, BTN_TOOL_RUBBER, 0);
+		input_report_abs(input, ABS_MISC, 0);
+		input_sync(input);
+		wacom->tool[0] = BTN_TOOL_PEN;
+		wacom->id[0] = STYLUS_DEVICE_ID;
+	}
+
+	pressure = (signed char)((data[7] << 1) | ((data[4] >> 2) & 1));
+	if (features->pressure_max > 255)
+		pressure = (pressure << 1) | ((data[4] >> 6) & 1);
+	pressure += (features->pressure_max + 1) / 2;
+
+	input_report_abs(input, ABS_X, data[3] | (data[2] << 7) | ((data[1] & 0x03) << 14));
+	input_report_abs(input, ABS_Y, data[6] | (data[5] << 7) | ((data[4] & 0x03) << 14));
+	input_report_abs(input, ABS_PRESSURE, pressure);
+
+	input_report_key(input, BTN_TOUCH, data[4] & 0x08);
+	input_report_key(input, BTN_STYLUS, data[4] & 0x10);
+	/* Only allow the stylus2 button to be reported for the pen tool. */
+	input_report_key(input, BTN_STYLUS2, (wacom->tool[0] == BTN_TOOL_PEN) && (data[4] & 0x20));
+
+	if (!prox)
+		wacom->id[0] = 0;
+	input_report_key(input, wacom->tool[0], prox);
+	input_report_abs(input, ABS_MISC, wacom->id[0]);
 	return 1;
 }
 
@@ -1437,6 +1423,12 @@ static int wacom_wac_pen_event(struct hid_device *hdev, struct hid_field *field,
 	return 0;
 }
 
+static void wacom_wac_pen_pre_report(struct hid_device *hdev,
+		struct hid_report *report)
+{
+	return;
+}
+
 static void wacom_wac_pen_report(struct hid_device *hdev,
 		struct hid_report *report)
 {
@@ -1491,6 +1483,13 @@ static void wacom_wac_finger_usage_mapping(struct hid_device *hdev,
 			wacom_map_usage(input, usage, field, EV_ABS,
 					ABS_MT_POSITION_Y, 4);
 		break;
+	case HID_DG_WIDTH:
+	case HID_DG_HEIGHT:
+		features->last_slot_field = usage->hid;
+		wacom_map_usage(input, usage, field, EV_ABS, ABS_MT_TOUCH_MAJOR, 0);
+		wacom_map_usage(input, usage, field, EV_ABS, ABS_MT_TOUCH_MINOR, 0);
+		input_set_abs_params(input, ABS_MT_ORIENTATION, 0, 1, 0, 0);
+		break;
 	case HID_DG_CONTACTID:
 		features->last_slot_field = usage->hid;
 		break;
@@ -1504,6 +1503,10 @@ static void wacom_wac_finger_usage_mapping(struct hid_device *hdev,
 		features->last_slot_field = usage->hid;
 		wacom_map_usage(input, usage, field, EV_KEY, BTN_TOUCH, 0);
 		break;
+	case HID_DG_CONTACTCOUNT:
+		wacom_wac->hid_data.cc_index = field->index;
+		wacom_wac->hid_data.cc_value_index = usage->usage_index;
+		break;
 	}
 }
 
@@ -1514,6 +1517,10 @@ static void wacom_wac_finger_slot(struct wacom_wac *wacom_wac,
 	bool mt = wacom_wac->features.touch_max > 1;
 	bool prox = hid_data->tipswitch &&
 		    !wacom_wac->shared->stylus_in_proximity;
+
+	wacom_wac->hid_data.num_received++;
+	if (wacom_wac->hid_data.num_received > wacom_wac->hid_data.num_expected)
+		return;
 
 	if (mt) {
 		int slot;
@@ -1531,6 +1538,13 @@ static void wacom_wac_finger_slot(struct wacom_wac *wacom_wac,
 				 hid_data->x);
 		input_report_abs(input, mt ? ABS_MT_POSITION_Y : ABS_Y,
 				 hid_data->y);
+
+		if (test_bit(ABS_MT_TOUCH_MAJOR, input->absbit)) {
+			input_report_abs(input, ABS_MT_TOUCH_MAJOR, max(hid_data->width, hid_data->height));
+			input_report_abs(input, ABS_MT_TOUCH_MINOR, min(hid_data->width, hid_data->height));
+			if (hid_data->width != hid_data->height)
+				input_report_abs(input, ABS_MT_ORIENTATION, hid_data->width <= hid_data->height ? 0 : 1);
+		}
 	}
 }
 
@@ -1546,6 +1560,12 @@ static int wacom_wac_finger_event(struct hid_device *hdev,
 		break;
 	case HID_GD_Y:
 		wacom_wac->hid_data.y = value;
+		break;
+	case HID_DG_WIDTH:
+		wacom_wac->hid_data.width = value;
+		break;
+	case HID_DG_HEIGHT:
+		wacom_wac->hid_data.height = value;
 		break;
 	case HID_DG_CONTACTID:
 		wacom_wac->hid_data.id = value;
@@ -1564,6 +1584,24 @@ static int wacom_wac_finger_event(struct hid_device *hdev,
 	return 0;
 }
 
+static void wacom_wac_finger_pre_report(struct hid_device *hdev,
+		struct hid_report *report)
+{
+	struct wacom *wacom = hid_get_drvdata(hdev);
+	struct wacom_wac *wacom_wac = &wacom->wacom_wac;
+	struct hid_data* hid_data = &wacom_wac->hid_data;
+
+	if (hid_data->cc_index >= 0) {
+		struct hid_field *field = report->field[hid_data->cc_index];
+		int value = field->value[hid_data->cc_value_index];
+		if (value)
+			hid_data->num_expected = value;
+	}
+	else {
+		hid_data->num_expected = wacom_wac->features.touch_max;
+	}
+}
+
 static void wacom_wac_finger_report(struct hid_device *hdev,
 		struct hid_report *report)
 {
@@ -1572,10 +1610,18 @@ static void wacom_wac_finger_report(struct hid_device *hdev,
 	struct input_dev *input = wacom_wac->touch_input;
 	unsigned touch_max = wacom_wac->features.touch_max;
 
+	/* If more packets of data are expected, give us a chance to
+	 * process them rather than immediately syncing a partial
+	 * update.
+	 */
+	if (wacom_wac->hid_data.num_received < wacom_wac->hid_data.num_expected)
+		return;
+
 	if (touch_max > 1)
 		input_mt_sync_frame(input);
 
 	input_sync(input);
+	wacom_wac->hid_data.num_received = 0;
 
 	/* keep touch state for pen event */
 	wacom_wac->shared->touch_down = wacom_wac_finger_count_touches(wacom_wac);
@@ -1615,6 +1661,25 @@ int wacom_wac_event(struct hid_device *hdev, struct hid_field *field,
 	return 0;
 }
 
+static void wacom_report_events(struct hid_device *hdev, struct hid_report *report)
+{
+	int r;
+
+	for (r = 0; r < report->maxfield; r++) {
+		struct hid_field *field;
+		unsigned count, n;
+
+		field = report->field[r];
+		count = field->report_count;
+
+		if (!(HID_MAIN_ITEM_VARIABLE & field->flags))
+			continue;
+
+		for (n = 0; n < count; n++)
+			wacom_wac_event(hdev, field, &field->usage[n], field->value[n]);
+	}
+}
+
 void wacom_wac_report(struct hid_device *hdev, struct hid_report *report)
 {
 	struct wacom *wacom = hid_get_drvdata(hdev);
@@ -1623,6 +1688,14 @@ void wacom_wac_report(struct hid_device *hdev, struct hid_report *report)
 
 	if (wacom_wac->features.type != HID_GENERIC)
 		return;
+
+	if (WACOM_PEN_FIELD(field))
+		wacom_wac_pen_pre_report(hdev, report);
+
+	if (WACOM_FINGER_FIELD(field))
+		wacom_wac_finger_pre_report(hdev, report);
+
+	wacom_report_events(hdev, report);
 
 	if (WACOM_PEN_FIELD(field))
 		return wacom_wac_pen_report(hdev, report);
@@ -1699,7 +1772,7 @@ static void wacom_bpt3_touch_msg(struct wacom_wac *wacom, unsigned char *data)
 		int y = (data[3] << 4) | (data[4] & 0x0f);
 		int width, height;
 
-		if (features->type >= INTUOSPS && features->type <= INTUOSPL) {
+		if (features->type >= INTUOSPS && features->type <= INTUOSHT) {
 			width  = data[5] * 100;
 			height = data[6] * 100;
 		} else {
@@ -2223,10 +2296,10 @@ void wacom_setup_device_quirks(struct wacom *wacom)
 	 * 0, whose HID descriptor has an application usage of 0xFF0D
 	 * (i.e., WACOM_VENDORDEFINED_PEN). We route pen packets back
 	 * out through the HID_GENERIC device created for interface 1,
-	 * so rewrite this one to be of type BTN_TOOL_FINGER.
+	 * so rewrite this one to be of type WACOM_DEVICETYPE_TOUCH.
 	 */
 	if (features->type == BAMBOO_PAD)
-		features->device_type |= WACOM_DEVICETYPE_TOUCH;
+		features->device_type = WACOM_DEVICETYPE_TOUCH;
 
 	if (wacom->hdev->bus == BUS_BLUETOOTH)
 		features->quirks |= WACOM_QUIRK_BATTERY;
@@ -2242,13 +2315,7 @@ void wacom_setup_device_quirks(struct wacom *wacom)
 	}
 
 	if (features->type == WIRELESS) {
-
-		/* monitor never has input and pen/touch have delayed create */
-		features->quirks |= WACOM_QUIRK_NO_INPUT;
-
-		/* must be monitor interface if no device_type set */
-		if (features->device_type == WACOM_DEVICETYPE_NONE) {
-			features->quirks |= WACOM_QUIRK_MONITOR;
+		if (features->device_type == WACOM_DEVICETYPE_WL_MONITOR) {
 			features->quirks |= WACOM_QUIRK_BATTERY;
 		}
 	}
