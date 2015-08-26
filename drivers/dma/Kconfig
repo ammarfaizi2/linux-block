@@ -63,9 +63,18 @@ config AMBA_PL08X
 	  Platform has a PL08x DMAC device
 	  which can provide DMA engine support
 
+config LPC18XX_DMAMUX
+	bool "NXP LPC18xx/43xx DMA MUX for PL080"
+	depends on ARCH_LPC18XX || COMPILE_TEST
+	depends on OF && AMBA_PL08X
+	select MFD_SYSCON
+	help
+	  Enable support for DMA on NXP LPC18xx/43xx platforms
+	  with PL080 and multiplexed DMA request lines.
+
 config INTEL_IOATDMA
 	tristate "Intel I/OAT DMA support"
-	depends on PCI && X86
+	depends on PCI && X86_64
 	select DMA_ENGINE
 	select DMA_ENGINE_RAID
 	select DCA
@@ -433,6 +442,17 @@ config XILINX_VDMA
 	  channels, Memory Mapped to Stream (MM2S) and Stream to
 	  Memory Mapped (S2MM) for the data transfers.
 
+config DMA_SUN4I
+	tristate "Allwinner A10 DMA SoCs support"
+	depends on MACH_SUN4I || MACH_SUN5I || MACH_SUN7I || COMPILE_TEST
+	default (MACH_SUN4I || MACH_SUN5I || MACH_SUN7I)
+	select DMA_ENGINE
+	select DMA_OF
+	select DMA_VIRTUAL_CHANNELS
+	help
+	  Enable support for the DMA controller present in the sun4i,
+	  sun5i and sun7i Allwinner ARM SoCs.
+
 config DMA_SUN6I
 	tristate "Allwinner A31 SoCs DMA support"
 	depends on MACH_SUN6I || MACH_SUN8I || COMPILE_TEST
@@ -466,6 +486,13 @@ config XGENE_DMA
 	select ASYNC_TX_ENABLE_CHANNEL_SWITCH
 	help
 	  Enable support for the APM X-Gene SoC DMA engine.
+config ZX_DMA
+	tristate "ZTE ZX296702 DMA support"
+	depends on ARCH_ZX
+	select DMA_ENGINE
+	select DMA_VIRTUAL_CHANNELS
+	help
+	  Support the DMA engine for ZTE ZX296702 platform devices.
 
 config DMA_ENGINE
 	bool
@@ -514,5 +541,15 @@ config QCOM_BAM_DMA
 	---help---
 	  Enable support for the QCOM BAM DMA controller.  This controller
 	  provides DMA capabilities for a variety of on-chip devices.
+
+config AXI_DMAC
+	tristate "Analog Devices AXI-DMAC DMA support"
+	depends on MICROBLAZE || NIOS2 || ARCH_ZYNQ || ARCH_SOCFPGA || COMPILE_TEST
+	select DMA_ENGINE
+	select DMA_VIRTUAL_CHANNELS
+	help
+	  Enable support for the Analog Devices AXI-DMAC peripheral. This DMA
+	  controller is often used in Analog Device's reference designs for FPGA
+	  platforms.
 
 endif
