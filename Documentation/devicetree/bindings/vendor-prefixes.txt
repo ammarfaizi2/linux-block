@@ -155,6 +155,7 @@ nxp	NXP Semiconductors
 okaya	Okaya Electric America, Inc.
 onnn	ON Semiconductor Corp.
 opencores	OpenCores.org
+option	Option NV
 ortustech	Ortus Technology Co., Ltd.
 ovti	OmniVision Technologies
 panasonic	Panasonic Corporation
