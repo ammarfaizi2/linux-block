@@ -127,7 +127,8 @@ void __init samsung_clk_register_alias(struct samsung_clk_provider *ctx,
 			continue;
 		}
 
-		ret = clk_register_clkdev(clk, list->alias, list->dev_name);
+		ret = clk_register_clkdev(clk, list->alias, "%s",
+					  list->dev_name);
 		if (ret)
 			pr_err("%s: failed to register lookup %s\n",
 					__func__, list->alias);
@@ -207,7 +208,7 @@ void __init samsung_clk_register_mux(struct samsung_clk_provider *ctx,
 
 		/* register a clock lookup only if a clock alias is specified */
 		if (list->alias) {
-			ret = clk_register_clkdev(clk, list->alias,
+			ret = clk_register_clkdev(clk, list->alias, "%s",
 						list->dev_name);
 			if (ret)
 				pr_err("%s: failed to register lookup %s\n",
@@ -246,7 +247,7 @@ void __init samsung_clk_register_div(struct samsung_clk_provider *ctx,
 
 		/* register a clock lookup only if a clock alias is specified */
 		if (list->alias) {
-			ret = clk_register_clkdev(clk, list->alias,
+			ret = clk_register_clkdev(clk, list->alias, "%s",
 						list->dev_name);
 			if (ret)
 				pr_err("%s: failed to register lookup %s\n",
@@ -275,7 +276,7 @@ void __init samsung_clk_register_gate(struct samsung_clk_provider *ctx,
 
 		/* register a clock lookup only if a clock alias is specified */
 		if (list->alias) {
-			ret = clk_register_clkdev(clk, list->alias,
+			ret = clk_register_clkdev(clk, list->alias, "%s",
 							list->dev_name);
 			if (ret)
 				pr_err("%s: failed to register lookup %s\n",

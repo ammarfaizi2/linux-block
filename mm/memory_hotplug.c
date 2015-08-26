@@ -1207,7 +1207,7 @@ static int should_add_memory_movable(int nid, u64 start, u64 size)
 	struct zone *movable_zone = pgdat->node_zones + ZONE_MOVABLE;
 
 	if (zone_is_empty(movable_zone))
-		return 0;
+		return IS_ENABLED(CONFIG_MOVABLE_NODE);
 
 	if (movable_zone->zone_start_pfn <= start_pfn)
 		return 1;
@@ -1248,6 +1248,14 @@ int __ref add_memory(int nid, u64 start, u64 size)
 
 	mem_hotplug_begin();
 
+	/*
+	 * Add new range to memblock so that when hotadd_new_pgdat() is called
+	 * to allocate new pgdat, get_pfn_range_for_nid() will be able to find
+	 * this new range and calculate total pages correctly.  The range will
+	 * be removed at hot-remove time.
+	 */
+	memblock_add_node(start, size, nid);
+
 	new_node = !node_online(nid);
 	if (new_node) {
 		pgdat = hotadd_new_pgdat(nid, start);
@@ -1277,7 +1285,6 @@ int __ref add_memory(int nid, u64 start, u64 size)
 
 	/* create new memmap entry */
 	firmware_map_add_hotplug(start, start + size, "System RAM");
-	memblock_add_node(start, size, nid);
 
 	goto out;
 
@@ -1286,6 +1293,7 @@ error:
 	if (new_pgdat)
 		rollback_node_hotadd(nid, pgdat);
 	release_memory_resource(res);
+	memblock_remove(start, size);
 
 out:
 	mem_hotplug_done();
@@ -1342,7 +1350,7 @@ int is_mem_section_removable(unsigned long start_pfn, unsigned long nr_pages)
 }
 
 /*
- * Confirm all pages in a range [start, end) is belongs to the same zone.
+ * Confirm all pages in a range [start, end) belong to the same zone.
  */
 int test_pages_in_a_zone(unsigned long start_pfn, unsigned long end_pfn)
 {
@@ -1353,10 +1361,11 @@ int test_pages_in_a_zone(unsigned long start_pfn, unsigned long end_pfn)
 	for (pfn = start_pfn;
 	     pfn < end_pfn;
 	     pfn += MAX_ORDER_NR_PAGES) {
-		i = 0;
-		/* This is just a CONFIG_HOLES_IN_ZONE check.*/
-		while ((i < MAX_ORDER_NR_PAGES) && !pfn_valid_within(pfn + i))
-			i++;
+		/* Find the first valid pfn in this pageblock */
+		for (i = 0; i < MAX_ORDER_NR_PAGES; i++) {
+			if (pfn_valid(pfn + i))
+				break;
+		}
 		if (i == MAX_ORDER_NR_PAGES)
 			continue;
 		page = pfn_to_page(pfn + i);

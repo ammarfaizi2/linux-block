@@ -506,8 +506,17 @@ static void snd_pcm_xrun_debug_write(struct snd_info_entry *entry,
 {
 	struct snd_pcm_str *pstr = entry->private_data;
 	char line[64];
-	if (!snd_info_get_line(buffer, line, sizeof(line)))
-		pstr->xrun_debug = simple_strtoul(line, NULL, 10);
+	int rv;
+
+	if (!snd_info_get_line(buffer, line, sizeof(line))) {
+		rv = parse_integer(line, 10, &pstr->xrun_debug);
+		if (rv >= 0 && line[rv])
+			rv = -EINVAL;
+		if (rv < 0) {
+			buffer->error = rv;
+			return;
+		}
+	}
 }
 #endif
 

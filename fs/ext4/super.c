@@ -1251,18 +1251,19 @@ static ext4_fsblk_t get_sb_block(void **data)
 {
 	ext4_fsblk_t	sb_block;
 	char		*options = (char *) *data;
+	int rv;
 
 	if (!options || strncmp(options, "sb=", 3) != 0)
 		return 1;	/* Default location */
 
 	options += 3;
-	/* TODO: use simple_strtoll with >32bit ext4 */
-	sb_block = simple_strtoul(options, &options, 0);
-	if (*options && *options != ',') {
+	rv = parse_integer(options, 0, &sb_block);
+	if (rv < 0 || (options[rv] && options[rv] != ',')) {
 		printk(KERN_ERR "EXT4-fs: Invalid sb specification: %s\n",
 		       (char *) *data);
 		return 1;
 	}
+	options += rv;
 	if (*options == ',')
 		options++;
 	*data = (void *) options;
@@ -1776,10 +1777,10 @@ static inline void ext4_show_quota_options(struct seq_file *seq,
 	}
 
 	if (sbi->s_qf_names[USRQUOTA])
-		seq_printf(seq, ",usrjquota=%s", sbi->s_qf_names[USRQUOTA]);
+		seq_show_option(seq, "usrjquota", sbi->s_qf_names[USRQUOTA]);
 
 	if (sbi->s_qf_names[GRPQUOTA])
-		seq_printf(seq, ",grpjquota=%s", sbi->s_qf_names[GRPQUOTA]);
+		seq_show_option(seq, "grpjquota", sbi->s_qf_names[GRPQUOTA]);
 #endif
 }
 
@@ -2532,10 +2533,10 @@ static ssize_t inode_readahead_blks_store(struct ext4_attr *a,
 					  struct ext4_sb_info *sbi,
 					  const char *buf, size_t count)
 {
-	unsigned long t;
+	unsigned int t;
 	int ret;
 
-	ret = kstrtoul(skip_spaces(buf), 0, &t);
+	ret = kstrtouint(skip_spaces(buf), 0, &t);
 	if (ret)
 		return ret;
 
@@ -2559,13 +2560,11 @@ static ssize_t sbi_ui_store(struct ext4_attr *a,
 			    const char *buf, size_t count)
 {
 	unsigned int *ui = (unsigned int *) (((char *) sbi) + a->u.offset);
-	unsigned long t;
 	int ret;
 
-	ret = kstrtoul(skip_spaces(buf), 0, &t);
+	ret = kstrtouint(skip_spaces(buf), 0, ui);
 	if (ret)
 		return ret;
-	*ui = t;
 	return count;
 }
 

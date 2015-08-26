@@ -2877,6 +2877,8 @@ static int apply_quirk_str(struct snd_ac97 *ac97, const char *typestr)
 {
 	int i;
 	struct quirk_table *q;
+	unsigned int type;
+	int rv;
 
 	for (i = 0; i < ARRAY_SIZE(applicable_quirks); i++) {
 		q = &applicable_quirks[i];
@@ -2884,9 +2886,10 @@ static int apply_quirk_str(struct snd_ac97 *ac97, const char *typestr)
 			return apply_quirk(ac97, i);
 	}
 	/* for compatibility, accept the numbers, too */
-	if (*typestr >= '0' && *typestr <= '9')
-		return apply_quirk(ac97, (int)simple_strtoul(typestr, NULL, 10));
-	return -EINVAL;
+	rv = parse_integer(typestr, 10, &type);
+	if (rv < 0)
+		return rv;
+	return apply_quirk(ac97, type);
 }
 
 /**

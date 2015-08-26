@@ -542,6 +542,21 @@ void shmem_truncate_range(struct inode *inode, loff_t lstart, loff_t lend)
 }
 EXPORT_SYMBOL_GPL(shmem_truncate_range);
 
+static int shmem_getattr(struct vfsmount *mnt, struct dentry *dentry,
+			 struct kstat *stat)
+{
+	struct inode *inode = dentry->d_inode;
+	struct shmem_inode_info *info = SHMEM_I(inode);
+
+	spin_lock(&info->lock);
+	shmem_recalc_inode(inode);
+	spin_unlock(&info->lock);
+
+	generic_fillattr(inode, stat);
+
+	return 0;
+}
+
 static int shmem_setattr(struct dentry *dentry, struct iattr *attr)
 {
 	struct inode *inode = d_inode(dentry);
@@ -981,7 +996,7 @@ static int shmem_replace_page(struct page **pagep, gfp_t gfp,
 	copy_highpage(newpage, oldpage);
 	flush_dcache_page(newpage);
 
-	__set_page_locked(newpage);
+	__SetPageLocked(newpage);
 	SetPageUptodate(newpage);
 	SetPageSwapBacked(newpage);
 	set_page_private(newpage, swap_index);
@@ -1173,7 +1188,7 @@ repeat:
 		}
 
 		__SetPageSwapBacked(page);
-		__set_page_locked(page);
+		__SetPageLocked(page);
 		if (sgp == SGP_WRITE)
 			__SetPageReferenced(page);
 
@@ -2736,6 +2751,7 @@ static int shmem_parse_options(char *options, struct shmem_sb_info *sbinfo,
 	struct mempolicy *mpol = NULL;
 	uid_t uid;
 	gid_t gid;
+	int rv;
 
 	while (options != NULL) {
 		this_char = options;
@@ -2789,14 +2805,15 @@ static int shmem_parse_options(char *options, struct shmem_sb_info *sbinfo,
 		} else if (!strcmp(this_char,"mode")) {
 			if (remount)
 				continue;
-			sbinfo->mode = simple_strtoul(value, &rest, 8) & 07777;
-			if (*rest)
+			rv = parse_integer(value, 8, &sbinfo->mode);
+			if (rv < 0 || value[rv])
 				goto bad_val;
+			sbinfo->mode &= 07777;
 		} else if (!strcmp(this_char,"uid")) {
 			if (remount)
 				continue;
-			uid = simple_strtoul(value, &rest, 0);
-			if (*rest)
+			rv = parse_integer(value, 0, &uid);
+			if (rv < 0 || value[rv])
 				goto bad_val;
 			sbinfo->uid = make_kuid(current_user_ns(), uid);
 			if (!uid_valid(sbinfo->uid))
@@ -2804,8 +2821,8 @@ static int shmem_parse_options(char *options, struct shmem_sb_info *sbinfo,
 		} else if (!strcmp(this_char,"gid")) {
 			if (remount)
 				continue;
-			gid = simple_strtoul(value, &rest, 0);
-			if (*rest)
+			rv = parse_integer(value, 0, &gid);
+			if (rv < 0 || value[rv])
 				goto bad_val;
 			sbinfo->gid = make_kgid(current_user_ns(), gid);
 			if (!gid_valid(sbinfo->gid))
@@ -3122,6 +3139,7 @@ static const struct file_operations shmem_file_operations = {
 };
 
 static const struct inode_operations shmem_inode_operations = {
+	.getattr	= shmem_getattr,
 	.setattr	= shmem_setattr,
 #ifdef CONFIG_TMPFS_XATTR
 	.setxattr	= shmem_setxattr,
