@@ -143,9 +143,16 @@ static int ipmi_powernv_recv(struct ipmi_smi_powernv *smi)
 	pr_devel("%s:   -> %d (size %lld)\n", __func__,
 			rc, rc == 0 ? size : 0);
 	if (rc) {
-		spin_unlock_irqrestore(&smi->msg_lock, flags);
-		ipmi_free_smi_msg(msg);
-		return 0;
+		/* If came via the poll, and response was not yet ready */
+		if (rc == OPAL_EMPTY) {
+			spin_unlock_irqrestore(&smi->msg_lock, flags);
+			return 0;
+		} else {
+			smi->cur_msg = NULL;
+			spin_unlock_irqrestore(&smi->msg_lock, flags);
+			send_error_reply(smi, msg, IPMI_ERR_UNSPECIFIED);
+			return 0;
+		}
 	}
 
 	if (size < sizeof(*opal_msg)) {
@@ -300,7 +307,6 @@ static const struct of_device_id ipmi_powernv_match[] = {
 static struct platform_driver powernv_ipmi_driver = {
 	.driver = {
 		.name		= "ipmi-powernv",
-		.owner		= THIS_MODULE,
 		.of_match_table	= ipmi_powernv_match,
 	},
 	.probe	= ipmi_powernv_probe,
