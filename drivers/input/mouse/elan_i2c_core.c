@@ -98,6 +98,9 @@ static int elan_get_fwinfo(u8 ic_type, u16 *vaildpage_count,
 			   u16 *signature_address)
 {
 	switch(ic_type) {
+	case 0x08:
+		*vaildpage_count = 512;
+		break;
 	case 0x09:
 		*vaildpage_count = 768;
 		break;
@@ -1165,6 +1168,8 @@ MODULE_DEVICE_TABLE(i2c, elan_id);
 #ifdef CONFIG_ACPI
 static const struct acpi_device_id elan_acpi_id[] = {
 	{ "ELAN0000", 0 },
+	{ "ELAN0100", 0 },
+	{ "ELAN0600", 0 },
 	{ }
 };
 MODULE_DEVICE_TABLE(acpi, elan_acpi_id);
@@ -1181,10 +1186,10 @@ MODULE_DEVICE_TABLE(of, elan_of_match);
 static struct i2c_driver elan_driver = {
 	.driver = {
 		.name	= DRIVER_NAME,
-		.owner	= THIS_MODULE,
 		.pm	= &elan_pm_ops,
 		.acpi_match_table = ACPI_PTR(elan_acpi_id),
 		.of_match_table = of_match_ptr(elan_of_match),
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 	.probe		= elan_probe,
 	.id_table	= elan_id,
