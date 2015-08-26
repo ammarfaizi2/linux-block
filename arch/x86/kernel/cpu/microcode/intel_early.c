@@ -207,13 +207,11 @@ save_microcode(struct mc_saved_data *mc_saved_data,
 		mc_hdr = &mc->hdr;
 		size   = get_totalsize(mc_hdr);
 
-		saved_ptr[i] = kmalloc(size, GFP_KERNEL);
+		saved_ptr[i] = kmemdup(mc, size, GFP_KERNEL);
 		if (!saved_ptr[i]) {
 			ret = -ENOMEM;
 			goto err;
 		}
-
-		memcpy(saved_ptr[i], mc, size);
 	}
 
 	/*
@@ -390,7 +388,7 @@ static int collect_cpu_info_early(struct ucode_cpu_info *uci)
 }
 
 #ifdef DEBUG
-static void __ref show_saved_mc(void)
+static void show_saved_mc(void)
 {
 	int i, j;
 	unsigned int sig, pf, rev, total_size, data_size, date;

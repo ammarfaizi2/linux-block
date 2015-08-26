@@ -196,9 +196,8 @@ static void apply_ucode_in_initrd(void *ucode, size_t size, bool save_patch)
 		return;
 	}
 
-	/* find ucode and update if needed */
-
-	native_rdmsr(MSR_AMD64_PATCH_LEVEL, rev, eax);
+	if (check_current_patch_level(&rev, true))
+		return;
 
 	while (left > 0) {
 		struct microcode_amd *mc;
@@ -319,7 +318,6 @@ static void __init get_bsp_sig(void)
 void load_ucode_amd_ap(void)
 {
 	unsigned int cpu = smp_processor_id();
-	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
 	struct equiv_cpu_entry *eq;
 	struct microcode_amd *mc;
 	u32 rev, eax;
@@ -332,10 +330,11 @@ void load_ucode_amd_ap(void)
 	if (!container)
 		return;
 
-	rdmsr(MSR_AMD64_PATCH_LEVEL, rev, eax);
-
-	uci->cpu_sig.rev = rev;
-	uci->cpu_sig.sig = eax;
+	/*
+	 * 64-bit runs with paging enabled, thus early==false.
+	 */
+	if (check_current_patch_level(&rev, false))
+		return;
 
 	eax = cpuid_eax(0x00000001);
 	eq  = (struct equiv_cpu_entry *)(container + CONTAINER_HDR_SZ);
@@ -424,9 +423,14 @@ int __init save_microcode_in_initrd_amd(void)
 void reload_ucode_amd(void)
 {
 	struct microcode_amd *mc;
-	u32 rev, eax;
+	u32 rev;
 
-	rdmsr(MSR_AMD64_PATCH_LEVEL, rev, eax);
+	/*
+	 * early==false because this is a syscore ->resume path and by
+	 * that time paging is long enabled.
+	 */
+	if (check_current_patch_level(&rev, false))
+		return;
 
 	mc = (struct microcode_amd *)amd_ucode_patch;
 
