@@ -627,7 +627,7 @@ static int a2mp_chan_recv_cb(struct l2cap_chan *chan, struct sk_buff *skb)
 
 		switch (hdr->code) {
 		case A2MP_COMMAND_REJ:
-			a2mp_command_rej(mgr, skb, hdr);
+			err = a2mp_command_rej(mgr, skb, hdr);
 			break;
 
 		case A2MP_DISCOVER_REQ:
