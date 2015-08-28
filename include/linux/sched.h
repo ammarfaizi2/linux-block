@@ -1785,6 +1785,7 @@ struct task_struct {
 #endif /* CONFIG_TRACING */
 #ifdef CONFIG_MEMCG
 	struct mem_cgroup *memcg_in_oom;
+	struct mem_cgroup *memcg_over_high; /* reclaim on returning to user */
 	gfp_t memcg_oom_gfp_mask;
 	int memcg_oom_order;
 #endif

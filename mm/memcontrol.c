@@ -62,6 +62,7 @@
 #include <linux/oom.h>
 #include <linux/lockdep.h>
 #include <linux/file.h>
+#include <linux/tracehook.h>
 #include "internal.h"
 #include <net/sock.h>
 #include <net/ip.h>
@@ -1963,6 +1964,33 @@ static int memcg_cpu_hotplug_callback(struct notifier_block *nb,
 	return NOTIFY_OK;
 }
 
+/*
+ * Scheduled by try_charge() to be executed from the userland return path
+ * and reclaims memory over the high limit.
+ */
+void mem_cgroup_handle_over_high(void)
+{
+	struct mem_cgroup *memcg = current->memcg_over_high;
+
+	if (likely(!memcg))
+		return;
+
+	do {
+		unsigned long usage = page_counter_read(&memcg->memory);
+		unsigned long high = ACCESS_ONCE(memcg->high);
+
+		if (usage <= high)
+			continue;
+
+		mem_cgroup_events(memcg, MEMCG_HIGH, 1);
+		try_to_free_mem_cgroup_pages(memcg, usage - high,
+					     GFP_KERNEL, true);
+	} while ((memcg = parent_mem_cgroup(memcg)));
+
+	css_put(&current->memcg_over_high->css);
+	current->memcg_over_high = NULL;
+}
+
 static int try_charge(struct mem_cgroup *memcg, gfp_t gfp_mask,
 		      unsigned int nr_pages)
 {
@@ -2071,21 +2099,27 @@ done_restock:
 	css_get_many(&memcg->css, batch);
 	if (batch > nr_pages)
 		refill_stock(memcg, batch - nr_pages);
-	if (!(gfp_mask & __GFP_WAIT))
-		goto done;
-	/*
-	 * If the hierarchy is above the normal consumption range,
-	 * make the charging task trim their excess contribution.
-	 */
-	do {
-		unsigned long usage = page_counter_read(&memcg->memory);
-		unsigned long high = ACCESS_ONCE(memcg->high);
 
-		if (usage <= high)
-			continue;
-		mem_cgroup_events(memcg, MEMCG_HIGH, 1);
-		try_to_free_mem_cgroup_pages(memcg, high - usage, gfp_mask, true);
-	} while ((memcg = parent_mem_cgroup(memcg)));
+	/*
+	 * If the hierarchy is above the normal consumption range, schedule
+	 * direct reclaim on returning to userland.  We can perform direct
+	 * reclaim here if __GFP_WAIT; however, punting has the benefit of
+	 * avoiding surprise high stack usages and it's fine to breach the
+	 * high limit temporarily while control stays in kernel.
+	 */
+	if (!current->memcg_over_high) {
+		struct mem_cgroup *pos = memcg;
+
+		do {
+			if (page_counter_read(&pos->memory) > pos->high) {
+				/* make user return path rescan from leaf */
+				css_get(&memcg->css);
+				current->memcg_over_high = memcg;
+				set_notify_resume(current);
+				break;
+			}
+		} while ((pos = parent_mem_cgroup(pos)));
+	}
 done:
 	return ret;
 }
@@ -5053,6 +5087,13 @@ static void mem_cgroup_move_task(struct cgroup_subsys_state *css,
 }
 #endif
 
+static void mem_cgroup_exit(struct cgroup_subsys_state *css,
+			    struct cgroup_subsys_state *old_css,
+			    struct task_struct *task)
+{
+	mem_cgroup_handle_over_high();
+}
+
 /*
  * Cgroup retains root cgroups across [un]mount cycles making it necessary
  * to verify whether we're attached to the default hierarchy on each mount
@@ -5223,6 +5264,7 @@ struct cgroup_subsys memory_cgrp_subsys = {
 	.can_attach = mem_cgroup_can_attach,
 	.cancel_attach = mem_cgroup_cancel_attach,
 	.attach = mem_cgroup_move_task,
+	.exit = mem_cgroup_exit,
 	.bind = mem_cgroup_bind,
 	.dfl_cftypes = memory_files,
 	.legacy_cftypes = mem_cgroup_legacy_files,
