@@ -4362,6 +4362,13 @@ mem_cgroup_css_online(struct cgroup_subsys_state *css)
 	if (ret)
 		return ret;
 
+	/* kmem is always accounted together on the default hierarchy */
+	if (cgroup_on_dfl(css->cgroup)) {
+		ret = memcg_activate_kmem(memcg, PAGE_COUNTER_MAX);
+		if (ret)
+			return ret;
+	}
+
 	/*
 	 * Make sure the memcg is initialized: mem_cgroup_iter()
 	 * orders reading memcg->initialized against its callers
