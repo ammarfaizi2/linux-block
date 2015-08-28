@@ -2078,10 +2078,13 @@ done_restock:
 	 * make the charging task trim their excess contribution.
 	 */
 	do {
-		if (page_counter_read(&memcg->memory) <= memcg->high)
+		unsigned long usage = page_counter_read(&memcg->memory);
+		unsigned long high = ACCESS_ONCE(memcg->high);
+
+		if (usage <= high)
 			continue;
 		mem_cgroup_events(memcg, MEMCG_HIGH, 1);
-		try_to_free_mem_cgroup_pages(memcg, nr_pages, gfp_mask, true);
+		try_to_free_mem_cgroup_pages(memcg, high - usage, gfp_mask, true);
 	} while ((memcg = parent_mem_cgroup(memcg)));
 done:
 	return ret;
