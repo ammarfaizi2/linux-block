@@ -149,12 +149,16 @@ static int process_sample_event(struct perf_tool *tool,
 		.add_entry_cb 		= hist_iter__report_callback,
 	};
 	int ret = 0;
+	struct perf_env *env = evsel->evlist->env;
 
 	if (perf_event__preprocess_sample(event, machine, &al, sample) < 0) {
 		pr_debug("problem processing %d event, skipping it.\n",
 			 event->header.type);
 		return -1;
 	}
+
+	/* read socket id from perf.data for perf report */
+	al.socket = env->cpu[al.cpu].socket_id;
 
 	if (rep->hide_unresolved && al.sym == NULL)
 		goto out_put;

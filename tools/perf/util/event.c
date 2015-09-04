@@ -1021,6 +1021,7 @@ int perf_event__preprocess_sample(const union perf_event *event,
 
 	al->sym = NULL;
 	al->cpu = sample->cpu;
+	al->socket = cpu_map__get_socket_id(al->cpu);
 
 	if (al->map) {
 		struct dso *dso = al->map->dso;
