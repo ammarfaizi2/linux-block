@@ -421,6 +421,27 @@ struct sort_entry sort_cpu = {
 	.se_width_idx	= HISTC_CPU,
 };
 
+/* --sort socket */
+
+static int64_t
+sort__socket_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return right->socket - left->socket;
+}
+
+static int hist_entry__socket_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%*.*d", width, width-3, he->socket);
+}
+
+struct sort_entry sort_socket = {
+	.se_header      = "Socket",
+	.se_cmp	        = sort__socket_cmp,
+	.se_snprintf    = hist_entry__socket_snprintf,
+	.se_width_idx	= HISTC_SOCKET,
+};
+
 /* sort keys for branch stacks */
 
 static int64_t
@@ -1248,6 +1269,7 @@ static struct sort_dimension common_sort_dimensions[] = {
 	DIM(SORT_SYM, "symbol", sort_sym),
 	DIM(SORT_PARENT, "parent", sort_parent),
 	DIM(SORT_CPU, "cpu", sort_cpu),
+	DIM(SORT_SOCKET, "socket", sort_socket),
 	DIM(SORT_SRCLINE, "srcline", sort_srcline),
 	DIM(SORT_SRCFILE, "srcfile", sort_srcfile),
 	DIM(SORT_LOCAL_WEIGHT, "local_weight", sort_local_weight),
