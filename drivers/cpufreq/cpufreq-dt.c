@@ -48,11 +48,41 @@ static int set_target(struct cpufreq_policy *policy, unsigned int index)
 	struct private_data *priv = policy->driver_data;
 	int ret;
 	unsigned long target_freq = policy->freq_table[index].frequency * 1000;
+	struct clk *l2_clk = policy->l2_clk;
+	unsigned int l2_freq;
+	unsigned long new_l2_freq = 0;
 
 	mutex_lock(&priv->lock);
 	ret = dev_pm_opp_set_rate(priv->cpu_dev, target_freq);
-	if (!ret)
+
+	if (!ret) {
+		if (!IS_ERR(l2_clk) && policy->l2_rate[0] && policy->l2_rate[1] &&
+				policy->l2_rate[2]) {
+			static unsigned long krait_l2[CONFIG_NR_CPUS] = { };
+			int cpu, ret = 0;
+
+			if (target_freq >= policy->l2_rate[2])
+				new_l2_freq = policy->l2_rate[2];
+			else if (target_freq >= policy->l2_rate[1])
+				new_l2_freq = policy->l2_rate[1];
+			else
+				new_l2_freq = policy->l2_rate[0];
+
+			krait_l2[policy->cpu] = new_l2_freq;
+			for_each_present_cpu(cpu)
+				new_l2_freq = max(new_l2_freq, krait_l2[cpu]);
+
+			l2_freq = clk_get_rate(l2_clk);
+
+			if (l2_freq != new_l2_freq) {
+				/* scale l2 with the core */
+				ret = clk_set_rate(l2_clk, new_l2_freq);
+			}
+		}
+
 		priv->opp_freq = target_freq;
+	}
+
 	mutex_unlock(&priv->lock);
 
 	return ret;
@@ -196,6 +226,8 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 	const char *name;
 	int ret;
 	struct srcu_notifier_head *opp_srcu_head;
+	struct device_node *l2_np;
+	struct clk *l2_clk = NULL;
 
 	cpu_dev = get_cpu_device(policy->cpu);
 	if (!cpu_dev) {
@@ -312,6 +344,13 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 	policy->clk = cpu_clk;
 
 	policy->suspend_freq = dev_pm_opp_get_suspend_opp_freq(cpu_dev) / 1000;
+
+	l2_clk = clk_get(cpu_dev, "l2");
+	if (!IS_ERR(l2_clk))
+		policy->l2_clk = l2_clk;
+	l2_np = of_find_node_by_name(NULL, "qcom,l2");
+	if (l2_np)
+		of_property_read_u32_array(l2_np, "qcom,l2-rates", policy->l2_rate, 3);
 
 	ret = cpufreq_table_validate_and_show(policy, freq_table);
 	if (ret) {
