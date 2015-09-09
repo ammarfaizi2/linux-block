@@ -56,7 +56,6 @@ struct perf_evlist {
 	struct cpu_map	  *cpus;
 	struct perf_evsel *selected;
 	struct events_stats stats;
-	struct perf_env	*env;
 };
 
 struct perf_evsel_str_handler {

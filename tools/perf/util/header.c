@@ -2560,8 +2560,8 @@ int perf_session__read_header(struct perf_session *session)
 	if (session->evlist == NULL)
 		return -ENOMEM;
 
-	session->evlist->env = &header->env;
 	session->machines.host.env = &header->env;
+
 	if (perf_data_file__is_pipe(file))
 		return perf_header__read_pipe(session);
 
