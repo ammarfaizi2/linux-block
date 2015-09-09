@@ -98,7 +98,6 @@ static void perf_evlist__purge(struct perf_evlist *evlist)
 
 	evlist__for_each_safe(evlist, n, pos) {
 		list_del_init(&pos->node);
-		pos->evlist = NULL;
 		perf_evsel__delete(pos);
 	}
 
@@ -126,7 +125,6 @@ void perf_evlist__delete(struct perf_evlist *evlist)
 
 void perf_evlist__add(struct perf_evlist *evlist, struct perf_evsel *entry)
 {
-	entry->evlist = evlist;
 	list_add_tail(&entry->node, &evlist->entries);
 	entry->idx = evlist->nr_entries;
 	entry->tracking = !entry->idx;
