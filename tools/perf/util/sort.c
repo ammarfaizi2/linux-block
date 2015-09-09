@@ -21,6 +21,7 @@ int		sort__need_collapse = 0;
 int		sort__has_parent = 0;
 int		sort__has_sym = 0;
 int		sort__has_dso = 0;
+int		sort__has_socket = 0;
 enum sort_mode	sort__mode = SORT_MODE__NORMAL;
 
 
@@ -1572,6 +1573,8 @@ int sort_dimension__add(const char *tok)
 
 		} else if (sd->entry == &sort_dso) {
 			sort__has_dso = 1;
+		} else if (sd->entry == &sort_socket) {
+			sort__has_socket = 1;
 		}
 
 		return __sort_dimension__add(sd);
