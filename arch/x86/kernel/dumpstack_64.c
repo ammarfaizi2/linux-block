@@ -297,6 +297,40 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
 	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
 }
 
+static void show_top_of_special_stack(struct pt_regs *regs)
+{
+	int i = 0;
+	unsigned cpu = get_cpu();
+	unsigned usedp = 0;
+	char *idp;
+	unsigned long *top = in_exception_stack(cpu, regs->sp, &usedp, &idp);
+	unsigned long *pos;
+
+	if (!top)
+		return;
+
+	/* Show top 32 words of the special stack. */
+	pos = top - 32;
+	printk(KERN_DEFAULT "On %s stack, which ends at %p\n", idp, top);
+	printk(KERN_DEFAULT "Top of %s stack, starting at %p: ", idp, pos);
+
+	for (i = 0; pos < top; i++, pos++) {
+		if ((i % STACKSLOTS_PER_LINE) == 0) {
+			if (i != 0)
+				pr_cont("\n");
+			printk(KERN_DEFAULT " ");
+		}
+
+		if (regs->sp == (unsigned long)pos)
+			pr_cont(" <SP> ");
+		pr_cont(" %016lx", *pos);
+		touch_nmi_watchdog();
+	}
+
+	pr_cont("\n");
+	put_cpu();
+}
+
 void show_regs(struct pt_regs *regs)
 {
 	int i;
@@ -315,6 +349,8 @@ void show_regs(struct pt_regs *regs)
 		unsigned int code_len = code_bytes;
 		unsigned char c;
 		u8 *ip;
+
+		show_top_of_special_stack(regs);
 
 		printk(KERN_DEFAULT "Stack:\n");
 		show_stack_log_lvl(NULL, regs, (unsigned long *)sp,
