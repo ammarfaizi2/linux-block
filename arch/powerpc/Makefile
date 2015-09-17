@@ -273,6 +273,11 @@ bootwrapper_install:
 %.dtb: scripts
 	$(Q)$(MAKE) ARCH=ppc64 $(build)=$(boot) $(patsubst %,$(boot)/%,$@)
 
+PHONY += dtbs
+
+dtbs: prepare scripts
+	$(Q)$(MAKE) ARCH=ppc64 $(build)=$(boot)/dts
+
 # Used to create 'merged defconfigs'
 # To use it $(call) it with the first argument as the base defconfig
 # and the second argument as a space separated list of .config files to merge,
@@ -317,6 +322,7 @@ define archhelp
   @echo '  dtbImage.<dt>   - zImage with an embedded device tree blob'
   @echo '  simpleImage.<dt> - Firmware independent image.'
   @echo '  treeImage.<dt>  - Support for older IBM 4xx firmware (not U-Boot)'
+  echo  '  dtbs            - Build device tree blobs for enabled boards'
   @echo '  install         - Install kernel using'
   @echo '                    (your) ~/bin/$(INSTALLKERNEL) or'
   @echo '                    (distribution) /sbin/$(INSTALLKERNEL) or'
