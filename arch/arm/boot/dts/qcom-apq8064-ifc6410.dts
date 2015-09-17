@@ -25,9 +25,10 @@
 
 		sdcc4_pwrseq: sdcc4_pwrseq {
 			pinctrl-names = "default";
-			pinctrl-0 = <&wlan_default_gpios>;
+			pinctrl-0 = <&wlan_default_gpios &bt_gpios>;
 			compatible = "mmc-pwrseq-simple";
-			reset-gpios = <&pm8921_gpio 43 GPIO_ACTIVE_LOW>;
+			reset-gpios = <&pm8921_gpio 43 GPIO_ACTIVE_LOW>,
+				      <&pm8921_gpio 44 GPIO_ACTIVE_LOW>;
 		};
 	};
 
@@ -302,6 +303,15 @@
 					wlan_default_gpios: wlan-gpios {
 						pios {
 							pins = "gpio43";
+							function = "normal";
+							bias-disable;
+							power-source = <PM8921_GPIO_S4>;
+						};
+					};
+
+					bt_gpios: bt-gpio {
+						pios {
+							pins = "gpio44";
 							function = "normal";
 							bias-disable;
 							power-source = <PM8921_GPIO_S4>;
