@@ -28,6 +28,7 @@
 
 #define PON_RT_STS			0x10
 #define  PON_KPDPWR_N_SET		BIT(0)
+#define  PON_RESIN_N_SET		BIT(1)
 
 #define PON_PS_HOLD_RST_CTL		0x5a
 #define PON_PS_HOLD_RST_CTL2		0x5b
@@ -37,6 +38,7 @@
 #define  PON_PS_HOLD_TYPE_HARD_RESET	7
 
 #define PON_PULL_CTL			0x70
+#define  PON_RESIN_PULL_UP		BIT(0)
 #define  PON_KPDPWR_PULL_UP		BIT(1)
 
 #define PON_DBC_CTL			0x71
@@ -52,6 +54,7 @@ struct pm8941_pwrkey {
 
 	unsigned int revision;
 	struct notifier_block reboot_notifier;
+	unsigned int resin_code;
 };
 
 static int pm8941_reboot_notify(struct notifier_block *nb,
@@ -130,6 +133,25 @@ static irqreturn_t pm8941_pwrkey_irq(int irq, void *_data)
 	return IRQ_HANDLED;
 }
 
+static irqreturn_t pm8941_resin_irq(int irq, void *_data)
+{
+	struct pm8941_pwrkey *pwrkey = _data;
+	unsigned int sts;
+	int error;
+
+	error = regmap_read(pwrkey->regmap,
+			    pwrkey->baseaddr + PON_RT_STS, &sts);
+	if (error)
+		return IRQ_HANDLED;
+
+	input_report_key(pwrkey->input, pwrkey->resin_code,
+			 !!(sts & PON_RESIN_N_SET));
+
+	input_sync(pwrkey->input);
+
+	return IRQ_HANDLED;
+}
+
 static int __maybe_unused pm8941_pwrkey_suspend(struct device *dev)
 {
 	struct pm8941_pwrkey *pwrkey = dev_get_drvdata(dev);
@@ -152,6 +174,46 @@ static int __maybe_unused pm8941_pwrkey_resume(struct device *dev)
 
 static SIMPLE_DEV_PM_OPS(pm8941_pwr_key_pm_ops,
 			 pm8941_pwrkey_suspend, pm8941_pwrkey_resume);
+
+static void pm8941_resin_setup(struct platform_device *pdev,
+				struct pm8941_pwrkey *pwrkey)
+{
+	int irq, error;
+	bool pull_up;
+	u32 code;
+
+	irq = platform_get_irq(pdev, 1);
+	if (irq < 0)
+		return;
+
+	pull_up = of_property_read_bool(pdev->dev.of_node, "resin-pull-up");
+
+	error = regmap_update_bits(pwrkey->regmap,
+				   pwrkey->baseaddr + PON_PULL_CTL,
+				   PON_RESIN_PULL_UP,
+				   pull_up ? PON_RESIN_PULL_UP : 0);
+	if (error) {
+		dev_err(&pdev->dev, "failed to set pull: %d\n", error);
+		return;
+	}
+
+	error = of_property_read_u32(pdev->dev.of_node, "linux,code", &code);
+	if (error) {
+		dev_err(&pdev->dev, "resin no linux,code %d\n", error);
+		return;
+	}
+
+	pwrkey->resin_code = code;
+
+	input_set_capability(pwrkey->input, EV_KEY, code);
+
+	error = devm_request_threaded_irq(&pdev->dev, irq,
+					  NULL, pm8941_resin_irq,
+					  IRQF_ONESHOT,
+					  "pm8941_resin", pwrkey);
+	if (error)
+		dev_err(&pdev->dev, "failed requesting IRQ: %d\n", error);
+}
 
 static int pm8941_pwrkey_probe(struct platform_device *pdev)
 {
@@ -240,6 +302,8 @@ static int pm8941_pwrkey_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed requesting IRQ: %d\n", error);
 		return error;
 	}
+
+	pm8941_resin_setup(pdev, pwrkey);
 
 	error = input_register_device(pwrkey->input);
 	if (error) {
