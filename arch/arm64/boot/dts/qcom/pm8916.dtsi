@@ -1,4 +1,5 @@
 #include <dt-bindings/iio/qcom,spmi-vadc.h>
+#include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/spmi/spmi.h>
 
@@ -17,12 +18,15 @@
 			interrupts = <0x0 0x61 0x1 IRQ_TYPE_EDGE_RISING>;
 		};
 
-		pwrkey@800 {
+		spmi_pon: pwrkey@800 {
 			compatible = "qcom,pm8941-pwrkey";
 			reg = <0x800>;
-			interrupts = <0x0 0x8 0 IRQ_TYPE_EDGE_BOTH>;
+			interrupts = <0x0 0x8 0 IRQ_TYPE_EDGE_BOTH>,
+				     <0x0 0x8 1 IRQ_TYPE_EDGE_BOTH>;
 			debounce = <15625>;
 			bias-pull-up;
+			resin-pull-up;
+			linux,code = <KEY_RESTART>;
 		};
 
 		pm8916_gpios: gpios@c000 {
