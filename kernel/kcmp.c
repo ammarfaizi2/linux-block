@@ -31,6 +31,38 @@
  */
 static unsigned long cookies[KCMP_TYPES][2] __read_mostly;
 
+/*
+ * Defer kcmp cookie initialization as long as possible to maximize
+ * the chance that we have good random numbers.
+ */
+
+static int kcmp_cookies_inited;
+static DEFINE_MUTEX(kcmp_cookie_init_mutex);
+
+static void kcmp_cookies_init(void)
+{
+	int i;
+
+	if (smp_load_acquire(&kcmp_cookies_inited))
+		return;
+
+	mutex_lock(&kcmp_cookie_init_mutex);
+
+	if (kcmp_cookies_inited)
+		goto out_unlock;
+
+	get_random_bytes(cookies, sizeof(cookies));
+
+	for (i = 0; i < KCMP_TYPES; i++)
+		cookies[i][1] |= (~(~0UL >>  1) | 1);
+
+	smp_store_release(&kcmp_cookies_inited, 1);
+
+out_unlock:
+	mutex_unlock(&kcmp_cookie_init_mutex);
+	return 0;
+}
+
 static long kptr_obfuscate(long v, int type)
 {
 	return (v ^ cookies[type][0]) * cookies[type][1];
@@ -99,6 +131,8 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
 {
 	struct task_struct *task1, *task2;
 	int ret;
+
+	kcmp_cookies_init();
 
 	rcu_read_lock();
 
@@ -183,16 +217,3 @@ err_no_task:
 	rcu_read_unlock();
 	return -ESRCH;
 }
-
-static __init int kcmp_cookies_init(void)
-{
-	int i;
-
-	get_random_bytes(cookies, sizeof(cookies));
-
-	for (i = 0; i < KCMP_TYPES; i++)
-		cookies[i][1] |= (~(~0UL >>  1) | 1);
-
-	return 0;
-}
-arch_initcall(kcmp_cookies_init);
