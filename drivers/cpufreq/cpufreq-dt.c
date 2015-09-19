@@ -32,6 +32,9 @@ struct private_data {
 	struct device *cpu_dev;
 	struct thermal_cooling_device *cdev;
 	const char *reg_name;
+	struct notifier_block opp_nb;
+	struct mutex lock;
+	unsigned long opp_freq;
 };
 
 static struct freq_attr *cpufreq_dt_attr[] = {
@@ -43,9 +46,16 @@ static struct freq_attr *cpufreq_dt_attr[] = {
 static int set_target(struct cpufreq_policy *policy, unsigned int index)
 {
 	struct private_data *priv = policy->driver_data;
+	int ret;
+	unsigned long target_freq = policy->freq_table[index].frequency * 1000;
 
-	return dev_pm_opp_set_rate(priv->cpu_dev,
-				   policy->freq_table[index].frequency * 1000);
+	mutex_lock(&priv->lock);
+	ret = dev_pm_opp_set_rate(priv->cpu_dev, target_freq);
+	if (!ret)
+		priv->opp_freq = target_freq;
+	mutex_unlock(&priv->lock);
+
+	return ret;
 }
 
 /*
@@ -84,6 +94,39 @@ static const char *find_supply_name(struct device *dev)
 node_put:
 	of_node_put(np);
 	return name;
+}
+
+static int opp_notifier(struct notifier_block *nb, unsigned long event,
+			void *data)
+{
+	struct dev_pm_opp *opp = data;
+	struct private_data *priv = container_of(nb, struct private_data,
+						 opp_nb);
+	struct device *cpu_dev = priv->cpu_dev;
+	struct regulator *cpu_reg;
+	unsigned long volt, freq;
+	int ret = 0;
+
+	if (event == OPP_EVENT_ADJUST_VOLTAGE) {
+		cpu_reg = dev_pm_opp_get_regulator(cpu_dev);
+		if (IS_ERR(cpu_reg)) {
+			ret = PTR_ERR(cpu_reg);
+			goto out;
+		}
+		volt = dev_pm_opp_get_voltage(opp);
+		freq = dev_pm_opp_get_freq(opp);
+
+		mutex_lock(&priv->lock);
+		if (freq == priv->opp_freq) {
+			ret = regulator_set_voltage_triplet(cpu_reg, volt, volt, volt);
+		}
+		mutex_unlock(&priv->lock);
+		if (ret)
+			dev_err(cpu_dev, "failed to scale voltage: %d\n", ret);
+	}
+
+out:
+	return notifier_from_errno(ret);
 }
 
 static int resources_available(void)
@@ -152,6 +195,7 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 	bool fallback = false;
 	const char *name;
 	int ret;
+	struct srcu_notifier_head *opp_srcu_head;
 
 	cpu_dev = get_cpu_device(policy->cpu);
 	if (!cpu_dev) {
@@ -238,13 +282,29 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 		goto out_free_opp;
 	}
 
+	mutex_init(&priv->lock);
+
+	rcu_read_lock();
+	opp_srcu_head = dev_pm_opp_get_notifier(cpu_dev);
+	if (IS_ERR(opp_srcu_head)) {
+		ret = PTR_ERR(opp_srcu_head);
+		rcu_read_unlock();
+		goto out_free_priv;
+	}
+
+	priv->opp_nb.notifier_call = opp_notifier;
+	ret = srcu_notifier_chain_register(opp_srcu_head, &priv->opp_nb);
+	rcu_read_unlock();
+	if (ret)
+		goto out_free_priv;
+
 	priv->reg_name = name;
 	priv->opp_table = opp_table;
 
 	ret = dev_pm_opp_init_cpufreq_table(cpu_dev, &freq_table);
 	if (ret) {
 		dev_err(cpu_dev, "failed to init cpufreq table: %d\n", ret);
-		goto out_free_priv;
+		goto out_unregister_nb;
 	}
 
 	priv->cpu_dev = cpu_dev;
@@ -279,6 +339,8 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 
 out_free_cpufreq_table:
 	dev_pm_opp_free_cpufreq_table(cpu_dev, &freq_table);
+out_unregister_nb:
+	srcu_notifier_chain_unregister(opp_srcu_head, &priv->opp_nb);
 out_free_priv:
 	kfree(priv);
 out_free_opp:
