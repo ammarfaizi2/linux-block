@@ -1,0 +1,108 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-slave
+
+title: SPI Slave Devices
+
+maintainer:
+    -   name: Mark Brown <broonie@kernel.org>
+
+description: >
+    SPI (Serial Peripheral Interface) slave bus devices are children of
+    of a SPI master bus device.
+properties:
+    -   name: "reg"
+        category: required
+        type: int
+        description: chip select address of device
+
+    -   name: "compatible"
+        category: required
+        type: string
+        description: compatible strings
+
+    -   name: "spi-max-frequency"
+        category: required
+        type: int
+        description: Maximum SPI clocking speed of device in Hz
+
+    -   name: "spi-cpol"
+        category: optional
+        type: empty
+        description: >
+            Empty property indicating device requires
+            inverse clock polarity (CPOL) mode
+
+    -   name: "spi-cpha"
+        category: optional
+        type: empty
+        description: >
+            Empty property indicating device requires
+            shifted clock phase (CPHA) mode
+
+    -   name: "spi-cs-high"
+        category: optional
+        type: empty
+        description: >
+            Empty property indicating device requires
+            chip select active high
+
+    -   name: "spi-3wire"
+        category: optional
+        type: empty
+        description: >
+            Empty property indicating device requires
+            3-wire mode.
+
+    -   name: "spi-lsb-first"
+        category: optional
+        type: empty
+        description: >
+            Empty property indicating device requires
+            LSB first mode.
+
+    -   name: "spi-tx-bus-width"
+        category: optional
+        type: int
+        constraint: 1 || 2 || 4
+        description: >
+            The bus width(number of data wires) that
+            used for MOSI. Defaults to 1 if not present.
+
+    -   name: "spi-rx-bus-width"
+        category: optional
+        type: int
+        constraint: 1 || 2 || 4
+        description: >
+            The bus width(number of data wires) that
+            used for MISO. Defaults to 1 if not present.
+
+notes: >
+    Some SPI controllers and devices support Dual and Quad SPI transfer mode.
+    It allows data in the SPI system to be transferred in 2 wires(DUAL) or
+    4 wires(QUAD).
+    Now the value that spi-tx-bus-width and spi-rx-bus-width can receive is
+    only 1(SINGLE), 2(DUAL) and 4(QUAD). Dual/Quad mode is not allowed when
+    3-wire mode is used.
+    If a gpio chipselect is used for the SPI slave the gpio number will be
+    passed via the SPI master node cs-gpios property.
+
+examples:
+    -   dts: |
+            spi@f00 {
+                ...
+                ethernet-switch@0 {
+                    compatible = "micrel,ks8995m";
+                    spi-max-frequency = <1000000>;
+                    reg = <0>;
+                };
+
+                codec@1 {
+                    compatible = "ti,tlv320aic26";
+                    spi-max-frequency = <100000>;
+                    reg = <1>;
+                };
+            };
+...
