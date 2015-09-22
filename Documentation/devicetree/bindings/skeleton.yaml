@@ -1,0 +1,138 @@
+%YAML 1.2
+---
+version: 1
+
+id: skel-device
+
+title: Skeleton Device
+
+maintainer:
+    -   name: Skeleton Person <skel@kernel.org>
+
+description: >
+    The Skeleton Device binding represents the SK11 device produced by
+    the Skeleton Corporation. The binding can also support compatible
+    clones made by second source vendors.
+
+# This binding inherits property characteristics from the generic
+# spi-slave binding
+
+inherits:
+    -   id: spi-slave
+
+properties:
+
+# The compatible property is a reserved name. The type is always "string"
+# and should not be repeated device binding.
+
+    -   name: "compatible"
+        constraint: |
+            "skel,sk11" || "faux,fx11" , BASE("skel,sk11")
+        description: FX11 is a clone of the original SK11 device
+
+# The reg property is a reserved name. The type is always "int" and
+# should not be repeated in a device binding. Constraints are defined
+# only in the context of the parent node's address, size, and ranges
+# cells. The description is inherited from the spi-slave binding.
+
+    -   name: "reg"
+
+# spi-max-frequency needs the device-specific constraint to be supplied
+
+    -   name: "spi-max-frequency"
+        constraint: |
+            if (compatible == "skel,sk11") c <= 10000000 else c <= 1000000
+
+# This property overrides the generic binding description with
+# a device specific description in order to mention the chip's
+# h/w cfg strapping pins.
+
+    -   name: "spi-cs-high"
+        description: >
+            Set if skeleton device configuration pins are set for chip
+            select polarity high
+
+# Device specific properties don't inherit characteristic from a generic
+# binding so category, type, constraint, and description must be specified
+# if needed.
+
+    -   name: "skel,deprecated1"
+        category: deprecated
+        type: int
+        constraint: |
+            (c >= 100000) && (c <= 200000)
+        description: >
+            First of two deprecated properties.
+
+# There are no constraints for properties of empty type
+
+    -   name: "skel,deprecated2"
+        category: deprecated
+        type: empty
+        description: >
+            Second of two deprecated properties.
+
+# This example could be auto-generated rather than explicitly included
+# in the yaml source.
+
+example:
+    -   dts: |
+            sk11@0 {
+                compatible = "skel,sk11";
+                reg = <0>;
+                spi-max-frequency = <1000000>;
+                spi-cs-high;
+            };
+...
+
+---
+version: 1
+
+id: skel-mini
+
+title: Skeleton Mini Device
+
+maintainer:
+    -   name: Rogue Developer <rogue@gmail.com>
+
+description: >
+    The Skeleton Mini Device binding represents the SK47x series devices
+    produced by the Skeleton Corporation.
+
+properties:
+    -   name: "compatible"
+        category: required
+        constraint: |
+            "skel,sk472" || skel,sk473" || "skel,sk474" , BASE("skel,sk472")
+        deprecated: "skel,sk47x"
+        description: >
+            SK472 is the original part in the family. SK473/4 are later releases
+            with minor register changes.
+
+    -   name: "reg"
+        category: required
+        description: Address and size of Skeleton Mini register range.
+
+    -   name: "skel,sync-mode"
+        category: optional
+        type: empty
+        description: Enable synchronous transfer mode
+
+example:
+    -   dts: |
+            sk472@beef0000 {
+                compatible = "skel,sk472";
+                reg = <0xbeef0000 0x100>;
+            };
+        description: >
+            Demonstrates an SK472 in normal mode.
+
+    -   dts: |
+            sk474@dead0000 {
+                compatible = "skel,sk474", "skel,sk472";
+                reg = <0xdead0000 0x100>;
+                skel,sync-mode;
+            };
+        description: >
+            Demonstrates an SK474 in synchronous mode.
+...
