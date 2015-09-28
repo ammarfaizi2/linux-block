@@ -76,19 +76,16 @@ static int ovl_copy_up_data(struct path *old, struct path *new, loff_t len)
 	struct file *new_file;
 	loff_t old_pos = 0;
 	loff_t new_pos = 0;
-	int error = 0, o_flag = 0;
+	int error = 0;
 
 	if (len == 0)
 		return 0;
 
-	if (i_size_read(d_inode(old->dentry)) > MAX_NON_LFS)
-		o_flag |= O_LARGEFILE;
-	
-	old_file = ovl_path_open(old, o_flag | O_RDONLY);
+	old_file = ovl_path_open(old, O_LARGEFILE | O_RDONLY);
 	if (IS_ERR(old_file))
 		return PTR_ERR(old_file);
 
-	new_file = ovl_path_open(new, o_flag | O_WRONLY);
+	new_file = ovl_path_open(new, O_LARGEFILE | O_WRONLY);
 	if (IS_ERR(new_file)) {
 		error = PTR_ERR(new_file);
 		goto out_fput;
