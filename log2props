@@ -1,0 +1,5 @@
+#!/bin/sh
+
+grep -e '^".*": props' $1 | sort | uniq | sed -e 's/ props://g'
+
+#echo "$log"

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+log=$(grep -E '^".*": ' $1 | sed -e 's/ \(nodes\|props\)://g' | sort | uniq)
+compats=$(echo "$log" | cut -d':' -f1 | sort | uniq)
+
+IFS='
+ '
+
+ids=(interrupts interrupt-controller clock-provider clock-consumer \
+gpio-provider gpio-consumer pinctrl-consumer regulator-consumer regulator-provider \
+pwm-consumer pwm-provider phy-consumer phy-provider reset-consumer reset-provider \
+iommu-consumer iommu-provider mbox-consumer mbox-provider hwlock-consumer \
+hwlock-provider thermal-sensor-consumer thermal-sensor-provider of-graph)
+
+standard_props="interrupts interrupt-controller #clock-cells clocks \
+gpio-controller gpios pinctrl\- \-supply regulator-name \
+pwms #pwm-cells phys #phy-cells resets #reset-cells \
+iommus #iommu-cells mboxes #mbox-cells hwlocks \
+#hwlock-cells thermal-sensors #thermal-sensor-cells port"
+
+for c in $compats; do
+	props=$(echo "$log" | grep -E "^$c" | cut -d':' -f2-)
+
+	echo -n "$c:"
+	i=0
+	for p in $standard_props; do
+		if echo "$props" | grep -q "$p"; then
+			echo -n " ${ids[$i]}"
+		fi
+		i=$((i + 1))
+	done
+	echo ""
+done
+
+#echo "$log"

@@ -420,6 +420,58 @@ static void check_explicit_phandles(struct check *c, struct node *root,
 }
 PROP_ERROR(explicit_phandles, NULL);
 
+static void check_dump_properties(struct check *c, struct node *root,
+			    struct node *node)
+{
+	struct property **pp, *compat_prop = NULL;
+
+	for (pp = &node->proplist; *pp; pp = &((*pp)->next)) {
+		if (streq((*pp)->name, "compatible")) {
+			compat_prop = *pp;
+			break;
+		}
+	}
+	if (!compat_prop)
+		return;
+		
+	fprintf(stderr, "\"%s\": props:", compat_prop->val.val);
+
+	for (pp = &node->proplist; *pp; pp = &((*pp)->next)) {
+		if (streq((*pp)->name, "compatible"))
+			continue;
+
+		fprintf(stderr, " %s", (*pp)->name);
+	}
+	fprintf(stderr, "\n");
+}
+NODE_WARNING(dump_properties, NULL);
+
+static void check_dump_child_nodes(struct check *c, struct node *dt,
+				       struct node *node)
+{
+	char str[50];
+	struct property **pp, *compat_prop = NULL;
+	struct node *child;
+
+	for (pp = &node->proplist; *pp; pp = &((*pp)->next))
+		if (streq((*pp)->name, "compatible"))
+			compat_prop = *pp;
+
+	if (!compat_prop || !node->children)
+		return; /* No name property, that's fine */
+
+	fprintf(stderr, "\"%s\": nodes:", compat_prop->val.val);
+
+	for_each_child(node, child) {
+		strncpy(str, child->name, 49);
+		strtok(str, "@");
+		fprintf(stderr, " %s", str);
+	}
+	fprintf(stderr, "\n");
+}
+NODE_WARNING(dump_child_nodes, NULL);
+
+
 static void check_name_properties(struct check *c, struct node *root,
 				  struct node *node)
 {
@@ -656,6 +708,9 @@ static struct check *check_table[] = {
 	&duplicate_node_names, &duplicate_property_names,
 	&node_name_chars, &node_name_format, &property_name_chars,
 	&name_is_string, &name_properties,
+	
+	&dump_child_nodes,
+	&dump_properties,
 
 	&duplicate_label,
 
