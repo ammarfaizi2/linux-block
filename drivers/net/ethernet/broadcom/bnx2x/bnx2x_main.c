@@ -266,11 +266,14 @@ static const struct pci_device_id bnx2x_pci_tbl[] = {
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57810_MF), BCM57810_MF },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57840_O), BCM57840_O },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57840_4_10), BCM57840_4_10 },
+	{ PCI_VDEVICE(QLOGIC,	PCI_DEVICE_ID_NX2_57840_4_10), BCM57840_4_10 },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57840_2_20), BCM57840_2_20 },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57810_VF), BCM57810_VF },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57840_MFO), BCM57840_MFO },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57840_MF), BCM57840_MF },
+	{ PCI_VDEVICE(QLOGIC,	PCI_DEVICE_ID_NX2_57840_MF), BCM57840_MF },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57840_VF), BCM57840_VF },
+	{ PCI_VDEVICE(QLOGIC,	PCI_DEVICE_ID_NX2_57840_VF), BCM57840_VF },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57811), BCM57811 },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57811_MF), BCM57811_MF },
 	{ PCI_VDEVICE(BROADCOM, PCI_DEVICE_ID_NX2_57811_VF), BCM57811_VF },
@@ -2494,7 +2497,7 @@ static void bnx2x_calc_vn_max(struct bnx2x *bp, int vn,
 	else {
 		u32 maxCfg = bnx2x_extract_max_cfg(bp, vn_cfg);
 
-		if (IS_MF_SI(bp)) {
+		if (IS_MF_PERCENT_BW(bp)) {
 			/* maxCfg in percents of linkspeed */
 			vn_max_rate = (bp->link_vars.line_speed * maxCfg) / 100;
 		} else /* SD modes */
@@ -10075,6 +10078,81 @@ static void bnx2x_parity_recover(struct bnx2x *bp)
 	}
 }
 
+#ifdef CONFIG_BNX2X_VXLAN
+static int bnx2x_vxlan_port_update(struct bnx2x *bp, u16 port)
+{
+	struct bnx2x_func_switch_update_params *switch_update_params;
+	struct bnx2x_func_state_params func_params = {NULL};
+	int rc;
+
+	switch_update_params = &func_params.params.switch_update;
+
+	/* Prepare parameters for function state transitions */
+	__set_bit(RAMROD_COMP_WAIT, &func_params.ramrod_flags);
+	__set_bit(RAMROD_RETRY, &func_params.ramrod_flags);
+
+	func_params.f_obj = &bp->func_obj;
+	func_params.cmd = BNX2X_F_CMD_SWITCH_UPDATE;
+
+	/* Function parameters */
+	__set_bit(BNX2X_F_UPDATE_TUNNEL_CFG_CHNG,
+		  &switch_update_params->changes);
+	switch_update_params->vxlan_dst_port = port;
+	rc = bnx2x_func_state_change(bp, &func_params);
+	if (rc)
+		BNX2X_ERR("failed to change vxlan dst port to %d (rc = 0x%x)\n",
+			  port, rc);
+	return rc;
+}
+
+static void __bnx2x_add_vxlan_port(struct bnx2x *bp, u16 port)
+{
+	if (!netif_running(bp->dev))
+		return;
+
+	if (bp->vxlan_dst_port || !IS_PF(bp)) {
+		DP(BNX2X_MSG_SP, "Vxlan destination port limit reached\n");
+		return;
+	}
+
+	bp->vxlan_dst_port = port;
+	bnx2x_schedule_sp_rtnl(bp, BNX2X_SP_RTNL_ADD_VXLAN_PORT, 0);
+}
+
+static void bnx2x_add_vxlan_port(struct net_device *netdev,
+				 sa_family_t sa_family, __be16 port)
+{
+	struct bnx2x *bp = netdev_priv(netdev);
+	u16 t_port = ntohs(port);
+
+	__bnx2x_add_vxlan_port(bp, t_port);
+}
+
+static void __bnx2x_del_vxlan_port(struct bnx2x *bp, u16 port)
+{
+	if (!bp->vxlan_dst_port || bp->vxlan_dst_port != port || !IS_PF(bp)) {
+		DP(BNX2X_MSG_SP, "Invalid vxlan port\n");
+		return;
+	}
+
+	if (netif_running(bp->dev)) {
+		bnx2x_schedule_sp_rtnl(bp, BNX2X_SP_RTNL_DEL_VXLAN_PORT, 0);
+	} else {
+		bp->vxlan_dst_port = 0;
+		netdev_info(bp->dev, "Deleted vxlan dest port %d", port);
+	}
+}
+
+static void bnx2x_del_vxlan_port(struct net_device *netdev,
+				 sa_family_t sa_family, __be16 port)
+{
+	struct bnx2x *bp = netdev_priv(netdev);
+	u16 t_port = ntohs(port);
+
+	__bnx2x_del_vxlan_port(bp, t_port);
+}
+#endif
+
 static int bnx2x_close(struct net_device *dev);
 
 /* bnx2x_nic_unload() flushes the bnx2x_wq, thus reset task is
@@ -10083,6 +10161,9 @@ static int bnx2x_close(struct net_device *dev);
 static void bnx2x_sp_rtnl_task(struct work_struct *work)
 {
 	struct bnx2x *bp = container_of(work, struct bnx2x, sp_rtnl_task.work);
+#ifdef CONFIG_BNX2X_VXLAN
+	u16 port;
+#endif
 
 	rtnl_lock();
 
@@ -10180,6 +10261,27 @@ sp_rtnl_not_reset:
 	if (test_and_clear_bit(BNX2X_SP_RTNL_GET_DRV_VERSION,
 			       &bp->sp_rtnl_state))
 		bnx2x_update_mng_version(bp);
+
+#ifdef CONFIG_BNX2X_VXLAN
+	port = bp->vxlan_dst_port;
+	if (test_and_clear_bit(BNX2X_SP_RTNL_ADD_VXLAN_PORT,
+			       &bp->sp_rtnl_state)) {
+		if (!bnx2x_vxlan_port_update(bp, port))
+			netdev_info(bp->dev, "Added vxlan dest port %d", port);
+		else
+			bp->vxlan_dst_port = 0;
+	}
+
+	if (test_and_clear_bit(BNX2X_SP_RTNL_DEL_VXLAN_PORT,
+			       &bp->sp_rtnl_state)) {
+		if (!bnx2x_vxlan_port_update(bp, 0)) {
+			netdev_info(bp->dev,
+				    "Deleted vxlan dest port %d", port);
+			bp->vxlan_dst_port = 0;
+			vxlan_get_rx_port(bp->dev);
+		}
+	}
+#endif
 
 	/* work which needs rtnl lock not-taken (as it takes the lock itself and
 	 * can be called from other contexts as well)
@@ -12379,6 +12481,12 @@ static int bnx2x_open(struct net_device *dev)
 	rc = bnx2x_nic_load(bp, LOAD_OPEN);
 	if (rc)
 		return rc;
+
+#ifdef CONFIG_BNX2X_VXLAN
+	if (IS_PF(bp))
+		vxlan_get_rx_port(dev);
+#endif
+
 	return 0;
 }
 
@@ -12894,6 +13002,10 @@ static const struct net_device_ops bnx2x_netdev_ops = {
 	.ndo_get_phys_port_id	= bnx2x_get_phys_port_id,
 	.ndo_set_vf_link_state	= bnx2x_set_vf_link_state,
 	.ndo_features_check	= bnx2x_features_check,
+#ifdef CONFIG_BNX2X_VXLAN
+	.ndo_add_vxlan_port	= bnx2x_add_vxlan_port,
+	.ndo_del_vxlan_port	= bnx2x_del_vxlan_port,
+#endif
 };
 
 static int bnx2x_set_coherency_mask(struct bnx2x *bp)
@@ -14653,6 +14765,90 @@ static int bnx2x_drv_ctl(struct net_device *dev, struct drv_ctl_info *ctl)
 		rc = -EINVAL;
 	}
 
+	/* For storage-only interfaces, change driver state */
+	if (IS_MF_SD_STORAGE_PERSONALITY_ONLY(bp)) {
+		switch (ctl->drv_state) {
+		case DRV_NOP:
+			break;
+		case DRV_ACTIVE:
+			bnx2x_set_os_driver_state(bp,
+						  OS_DRIVER_STATE_ACTIVE);
+			break;
+		case DRV_INACTIVE:
+			bnx2x_set_os_driver_state(bp,
+						  OS_DRIVER_STATE_DISABLED);
+			break;
+		case DRV_UNLOADED:
+			bnx2x_set_os_driver_state(bp,
+						  OS_DRIVER_STATE_NOT_LOADED);
+			break;
+		default:
+		BNX2X_ERR("Unknown cnic driver state: %d\n", ctl->drv_state);
+		}
+	}
+
+	return rc;
+}
+
+static int bnx2x_get_fc_npiv(struct net_device *dev,
+			     struct cnic_fc_npiv_tbl *cnic_tbl)
+{
+	struct bnx2x *bp = netdev_priv(dev);
+	struct bdn_fc_npiv_tbl *tbl = NULL;
+	u32 offset, entries;
+	int rc = -EINVAL;
+	int i;
+
+	if (!SHMEM2_HAS(bp, fc_npiv_nvram_tbl_addr[0]))
+		goto out;
+
+	DP(BNX2X_MSG_MCP, "About to read the FC-NPIV table\n");
+
+	tbl = kmalloc(sizeof(*tbl), GFP_KERNEL);
+	if (!tbl) {
+		BNX2X_ERR("Failed to allocate fc_npiv table\n");
+		goto out;
+	}
+
+	offset = SHMEM2_RD(bp, fc_npiv_nvram_tbl_addr[BP_PORT(bp)]);
+	DP(BNX2X_MSG_MCP, "Offset of FC-NPIV in NVRAM: %08x\n", offset);
+
+	/* Read the table contents from nvram */
+	if (bnx2x_nvram_read(bp, offset, (u8 *)tbl, sizeof(*tbl))) {
+		BNX2X_ERR("Failed to read FC-NPIV table\n");
+		goto out;
+	}
+
+	/* Since bnx2x_nvram_read() returns data in be32, we need to convert
+	 * the number of entries back to cpu endianness.
+	 */
+	entries = tbl->fc_npiv_cfg.num_of_npiv;
+	entries = (__force u32)be32_to_cpu((__force __be32)entries);
+	tbl->fc_npiv_cfg.num_of_npiv = entries;
+
+	if (!tbl->fc_npiv_cfg.num_of_npiv) {
+		DP(BNX2X_MSG_MCP,
+		   "No FC-NPIV table [valid, simply not present]\n");
+		goto out;
+	} else if (tbl->fc_npiv_cfg.num_of_npiv > MAX_NUMBER_NPIV) {
+		BNX2X_ERR("FC-NPIV table with bad length 0x%08x\n",
+			  tbl->fc_npiv_cfg.num_of_npiv);
+		goto out;
+	} else {
+		DP(BNX2X_MSG_MCP, "Read 0x%08x entries from NVRAM\n",
+		   tbl->fc_npiv_cfg.num_of_npiv);
+	}
+
+	/* Copy the data into cnic-provided struct */
+	cnic_tbl->count = tbl->fc_npiv_cfg.num_of_npiv;
+	for (i = 0; i < cnic_tbl->count; i++) {
+		memcpy(cnic_tbl->wwpn[i], tbl->settings[i].npiv_wwpn, 8);
+		memcpy(cnic_tbl->wwnn[i], tbl->settings[i].npiv_wwnn, 8);
+	}
+
+	rc = 0;
+out:
+	kfree(tbl);
 	return rc;
 }
 
@@ -14798,6 +14994,7 @@ static struct cnic_eth_dev *bnx2x_cnic_probe(struct net_device *dev)
 	cp->starting_cid = bnx2x_cid_ilt_lines(bp) * ILT_PAGE_CIDS;
 	cp->drv_submit_kwqes_16 = bnx2x_cnic_sp_queue;
 	cp->drv_ctl = bnx2x_drv_ctl;
+	cp->drv_get_fc_npiv_tbl = bnx2x_get_fc_npiv;
 	cp->drv_register_cnic = bnx2x_register_cnic;
 	cp->drv_unregister_cnic = bnx2x_unregister_cnic;
 	cp->fcoe_init_cid = BNX2X_FCOE_ETH_CID(bp);

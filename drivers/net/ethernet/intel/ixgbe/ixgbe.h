@@ -539,8 +539,7 @@ struct hwmon_buff {
 #define IXGBE_MIN_RSC_ITR	24
 #define IXGBE_100K_ITR		40
 #define IXGBE_20K_ITR		200
-#define IXGBE_10K_ITR		400
-#define IXGBE_8K_ITR		500
+#define IXGBE_12K_ITR		336
 
 /* ixgbe_test_staterr - tests bits in Rx descriptor status and error fields */
 static inline __le32 ixgbe_test_staterr(union ixgbe_adv_rx_desc *rx_desc,
@@ -630,6 +629,7 @@ struct ixgbe_adapter {
 #define IXGBE_FLAG_FCOE_ENABLED                 (u32)(1 << 21)
 #define IXGBE_FLAG_SRIOV_CAPABLE                (u32)(1 << 22)
 #define IXGBE_FLAG_SRIOV_ENABLED                (u32)(1 << 23)
+#define IXGBE_FLAG_VXLAN_OFFLOAD_CAPABLE	BIT(24)
 
 	u32 flags2;
 #define IXGBE_FLAG2_RSC_CAPABLE                 (u32)(1 << 0)
@@ -644,6 +644,9 @@ struct ixgbe_adapter {
 #define IXGBE_FLAG2_RSS_FIELD_IPV6_UDP		(u32)(1 << 9)
 #define IXGBE_FLAG2_PTP_PPS_ENABLED		(u32)(1 << 10)
 #define IXGBE_FLAG2_PHY_INTERRUPT		(u32)(1 << 11)
+#ifdef CONFIG_IXGBE_VXLAN
+#define IXGBE_FLAG2_VXLAN_REREG_NEEDED		BIT(12)
+#endif
 
 	/* Tx fast path data */
 	int num_tx_queues;
@@ -757,7 +760,9 @@ struct ixgbe_adapter {
 	u32 timer_event_accumulator;
 	u32 vferr_refcount;
 	struct ixgbe_mac_addr *mac_table;
+#ifdef CONFIG_IXGBE_VXLAN
 	u16 vxlan_port;
+#endif
 	struct kobject *info_kobj;
 #ifdef CONFIG_IXGBE_HWMON
 	struct hwmon_buff *ixgbe_hwmon_buff;
@@ -967,4 +972,5 @@ netdev_tx_t ixgbe_xmit_frame_ring(struct sk_buff *skb,
 				  struct ixgbe_adapter *adapter,
 				  struct ixgbe_ring *tx_ring);
 u32 ixgbe_rss_indir_tbl_entries(struct ixgbe_adapter *adapter);
+void ixgbe_store_reta(struct ixgbe_adapter *adapter);
 #endif /* _IXGBE_H_ */

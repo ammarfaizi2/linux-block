@@ -641,6 +641,7 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 			IWL_UCODE_TLV_CAPA_TDLS_SUPPORT)) {
 		IWL_DEBUG_TDLS(mvm, "TDLS supported\n");
 		hw->wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS;
+		ieee80211_hw_set(hw, TDLS_WIDER_BW);
 	}
 
 	if (fw_has_capa(&mvm->fw->ucode_capa,
@@ -1124,8 +1125,13 @@ void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm)
 	u32 file_len, fifo_data_len = 0;
 	u32 smem_len = mvm->cfg->smem_len;
 	u32 sram2_len = mvm->cfg->dccm2_len;
+	bool monitor_dump_only = false;
 
 	lockdep_assert_held(&mvm->mutex);
+
+	if (mvm->fw_dump_trig &&
+	    mvm->fw_dump_trig->mode & IWL_FW_DBG_TRIGGER_MONITOR_ONLY)
+		monitor_dump_only = true;
 
 	fw_error_dump = kzalloc(sizeof(*fw_error_dump), GFP_KERNEL);
 	if (!fw_error_dump)
@@ -1178,6 +1184,20 @@ void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm)
 		   fifo_data_len +
 		   sizeof(*dump_info);
 
+	/* Make room for the SMEM, if it exists */
+	if (smem_len)
+		file_len += sizeof(*dump_data) + sizeof(*dump_mem) + smem_len;
+
+	/* Make room for the secondary SRAM, if it exists */
+	if (sram2_len)
+		file_len += sizeof(*dump_data) + sizeof(*dump_mem) + sram2_len;
+
+	/* If we only want a monitor dump, reset the file length */
+	if (monitor_dump_only) {
+		file_len = sizeof(*dump_file) + sizeof(*dump_data) +
+			   sizeof(*dump_info);
+	}
+
 	/*
 	 * In 8000 HW family B-step include the ICCM (which resides separately)
 	 */
@@ -1189,14 +1209,6 @@ void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm)
 	if (mvm->fw_dump_desc)
 		file_len += sizeof(*dump_data) + sizeof(*dump_trig) +
 			    mvm->fw_dump_desc->len;
-
-	/* Make room for the SMEM, if it exists */
-	if (smem_len)
-		file_len += sizeof(*dump_data) + sizeof(*dump_mem) + smem_len;
-
-	/* Make room for the secondary SRAM, if it exists */
-	if (sram2_len)
-		file_len += sizeof(*dump_data) + sizeof(*dump_mem) + sram2_len;
 
 	dump_file = vzalloc(file_len);
 	if (!dump_file) {
@@ -1243,6 +1255,10 @@ void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm)
 		dump_data = iwl_fw_error_next_data(dump_data);
 	}
 
+	/* In case we only want monitor dump, skip to dump trasport data */
+	if (monitor_dump_only)
+		goto dump_trans_data;
+
 	dump_data->type = cpu_to_le32(IWL_FW_ERROR_DUMP_MEM);
 	dump_data->len = cpu_to_le32(sram_len + sizeof(*dump_mem));
 	dump_mem = (void *)dump_data->data;
@@ -1286,7 +1302,9 @@ void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm)
 					 dump_mem->data, IWL8260_ICCM_LEN);
 	}
 
-	fw_error_dump->trans_ptr = iwl_trans_dump_data(mvm->trans);
+dump_trans_data:
+	fw_error_dump->trans_ptr = iwl_trans_dump_data(mvm->trans,
+						       mvm->fw_dump_trig);
 	fw_error_dump->op_mode_len = file_len;
 	if (fw_error_dump->trans_ptr)
 		file_len += fw_error_dump->trans_ptr->len;
@@ -1295,6 +1313,7 @@ void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm)
 	dev_coredumpm(mvm->trans->dev, THIS_MODULE, fw_error_dump, 0,
 		      GFP_KERNEL, iwl_mvm_read_coredump, iwl_mvm_free_coredump);
 
+	mvm->fw_dump_trig = NULL;
 	clear_bit(IWL_MVM_STATUS_DUMPING_FW_LOG, &mvm->status);
 }
 
@@ -1558,38 +1577,24 @@ static struct iwl_mvm_phy_ctxt *iwl_mvm_get_free_phy_ctxt(struct iwl_mvm *mvm)
 	return NULL;
 }
 
-static int iwl_mvm_set_tx_power_old(struct iwl_mvm *mvm,
-				    struct ieee80211_vif *vif, s8 tx_power)
-{
-	/* FW is in charge of regulatory enforcement */
-	struct iwl_reduce_tx_power_cmd reduce_txpwr_cmd = {
-		.mac_context_id = iwl_mvm_vif_from_mac80211(vif)->id,
-		.pwr_restriction = cpu_to_le16(tx_power),
-	};
-
-	return iwl_mvm_send_cmd_pdu(mvm, REDUCE_TX_POWER_CMD, 0,
-				    sizeof(reduce_txpwr_cmd),
-				    &reduce_txpwr_cmd);
-}
-
 static int iwl_mvm_set_tx_power(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 				s16 tx_power)
 {
 	struct iwl_dev_tx_power_cmd cmd = {
-		.set_mode = 0,
-		.mac_context_id =
+		.v2.set_mode = cpu_to_le32(IWL_TX_POWER_MODE_SET_MAC),
+		.v2.mac_context_id =
 			cpu_to_le32(iwl_mvm_vif_from_mac80211(vif)->id),
-		.pwr_restriction = cpu_to_le16(8 * tx_power),
+		.v2.pwr_restriction = cpu_to_le16(8 * tx_power),
 	};
-
-	if (!fw_has_api(&mvm->fw->ucode_capa, IWL_UCODE_TLV_API_TX_POWER_DEV))
-		return iwl_mvm_set_tx_power_old(mvm, vif, tx_power);
+	int len = sizeof(cmd);
 
 	if (tx_power == IWL_DEFAULT_MAX_TX_POWER)
-		cmd.pwr_restriction = cpu_to_le16(IWL_DEV_MAX_TX_POWER);
+		cmd.v2.pwr_restriction = cpu_to_le16(IWL_DEV_MAX_TX_POWER);
 
-	return iwl_mvm_send_cmd_pdu(mvm, REDUCE_TX_POWER_CMD, 0,
-				    sizeof(cmd), &cmd);
+	if (!fw_has_api(&mvm->fw->ucode_capa, IWL_UCODE_TLV_API_TX_POWER_CHAIN))
+		len = sizeof(cmd.v2);
+
+	return iwl_mvm_send_cmd_pdu(mvm, REDUCE_TX_POWER_CMD, 0, len, &cmd);
 }
 
 static int iwl_mvm_mac_add_interface(struct ieee80211_hw *hw,
@@ -2297,6 +2302,8 @@ static int iwl_mvm_start_ap_ibss(struct ieee80211_hw *hw,
 	if (vif->type == NL80211_IFTYPE_AP)
 		iwl_mvm_mac_ctxt_recalc_tsf_id(mvm, vif);
 
+	mvmvif->ap_assoc_sta_count = 0;
+
 	/* Add the mac context */
 	ret = iwl_mvm_mac_ctxt_add(mvm, vif);
 	if (ret)
@@ -2591,6 +2598,7 @@ static void iwl_mvm_sta_pre_rcu_remove(struct ieee80211_hw *hw,
 				       struct ieee80211_sta *sta)
 {
 	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
 	struct iwl_mvm_sta *mvm_sta = iwl_mvm_sta_from_mac80211(sta);
 
 	/*
@@ -2605,6 +2613,12 @@ static void iwl_mvm_sta_pre_rcu_remove(struct ieee80211_hw *hw,
 	if (sta == rcu_access_pointer(mvm->fw_id_to_mac_id[mvm_sta->sta_id]))
 		rcu_assign_pointer(mvm->fw_id_to_mac_id[mvm_sta->sta_id],
 				   ERR_PTR(-ENOENT));
+
+	if (mvm_sta->vif->type == NL80211_IFTYPE_AP) {
+		mvmvif->ap_assoc_sta_count--;
+		iwl_mvm_mac_ctxt_cmd_ap(mvm, vif, FW_CTXT_ACTION_MODIFY);
+	}
+
 	mutex_unlock(&mvm->mutex);
 }
 

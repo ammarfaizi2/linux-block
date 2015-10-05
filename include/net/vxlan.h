@@ -161,6 +161,7 @@ struct vxlan_dev {
 	struct timer_list age_timer;
 	spinlock_t	  hash_lock;
 	unsigned int	  addrcnt;
+	struct gro_cells  gro_cells;
 
 	struct vxlan_config	cfg;
 
@@ -181,7 +182,6 @@ struct vxlan_dev {
 #define VXLAN_F_GBP			0x800
 #define VXLAN_F_REMCSUM_NOPARTIAL	0x1000
 #define VXLAN_F_COLLECT_METADATA	0x2000
-#define VXLAN_F_FLOW_BASED		0x4000
 
 /* Flags that are used in the receive path. These flags must match in
  * order for a socket to be shareable
@@ -190,8 +190,7 @@ struct vxlan_dev {
 					 VXLAN_F_UDP_ZERO_CSUM6_RX |	\
 					 VXLAN_F_REMCSUM_RX |		\
 					 VXLAN_F_REMCSUM_NOPARTIAL |	\
-					 VXLAN_F_COLLECT_METADATA |	\
-					 VXLAN_F_FLOW_BASED)
+					 VXLAN_F_COLLECT_METADATA)
 
 struct net_device *vxlan_dev_create(struct net *net, const char *name,
 				    u8 name_assign_type, struct vxlan_config *conf);
@@ -242,4 +241,10 @@ static inline void vxlan_get_rx_port(struct net_device *netdev)
 {
 }
 #endif
+
+static inline unsigned short vxlan_get_sk_family(struct vxlan_sock *vs)
+{
+	return vs->sock->sk->sk_family;
+}
+
 #endif

@@ -829,8 +829,8 @@ static void __br_multicast_send_query(struct net_bridge *br,
 
 	if (port) {
 		skb->dev = port->dev;
-		NF_HOOK(NFPROTO_BRIDGE, NF_BR_LOCAL_OUT, NULL, skb,
-			NULL, skb->dev,
+		NF_HOOK(NFPROTO_BRIDGE, NF_BR_LOCAL_OUT,
+			dev_net(port->dev), NULL, skb, NULL, skb->dev,
 			br_dev_queue_push_xmit);
 	} else {
 		br_multicast_select_own_querier(br, ip, skb);
@@ -1608,7 +1608,7 @@ static int br_multicast_ipv4_rcv(struct net_bridge *br,
 		break;
 	}
 
-	if (skb_trimmed)
+	if (skb_trimmed && skb_trimmed != skb)
 		kfree_skb(skb_trimmed);
 
 	return err;
@@ -1653,7 +1653,7 @@ static int br_multicast_ipv6_rcv(struct net_bridge *br,
 		break;
 	}
 
-	if (skb_trimmed)
+	if (skb_trimmed && skb_trimmed != skb)
 		kfree_skb(skb_trimmed);
 
 	return err;

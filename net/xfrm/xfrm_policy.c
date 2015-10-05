@@ -115,7 +115,8 @@ static void xfrm_policy_put_afinfo(struct xfrm_policy_afinfo *afinfo)
 	rcu_read_unlock();
 }
 
-static inline struct dst_entry *__xfrm_dst_lookup(struct net *net, int tos,
+static inline struct dst_entry *__xfrm_dst_lookup(struct net *net,
+						  int tos, int oif,
 						  const xfrm_address_t *saddr,
 						  const xfrm_address_t *daddr,
 						  int family)
@@ -127,14 +128,15 @@ static inline struct dst_entry *__xfrm_dst_lookup(struct net *net, int tos,
 	if (unlikely(afinfo == NULL))
 		return ERR_PTR(-EAFNOSUPPORT);
 
-	dst = afinfo->dst_lookup(net, tos, saddr, daddr);
+	dst = afinfo->dst_lookup(net, tos, oif, saddr, daddr);
 
 	xfrm_policy_put_afinfo(afinfo);
 
 	return dst;
 }
 
-static inline struct dst_entry *xfrm_dst_lookup(struct xfrm_state *x, int tos,
+static inline struct dst_entry *xfrm_dst_lookup(struct xfrm_state *x,
+						int tos, int oif,
 						xfrm_address_t *prev_saddr,
 						xfrm_address_t *prev_daddr,
 						int family)
@@ -153,7 +155,7 @@ static inline struct dst_entry *xfrm_dst_lookup(struct xfrm_state *x, int tos,
 		daddr = x->coaddr;
 	}
 
-	dst = __xfrm_dst_lookup(net, tos, saddr, daddr, family);
+	dst = __xfrm_dst_lookup(net, tos, oif, saddr, daddr, family);
 
 	if (!IS_ERR(dst)) {
 		if (prev_saddr != saddr)
@@ -1373,15 +1375,15 @@ int __xfrm_sk_clone_policy(struct sock *sk)
 }
 
 static int
-xfrm_get_saddr(struct net *net, xfrm_address_t *local, xfrm_address_t *remote,
-	       unsigned short family)
+xfrm_get_saddr(struct net *net, int oif, xfrm_address_t *local,
+	       xfrm_address_t *remote, unsigned short family)
 {
 	int err;
 	struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
 
 	if (unlikely(afinfo == NULL))
 		return -EINVAL;
-	err = afinfo->get_saddr(net, local, remote);
+	err = afinfo->get_saddr(net, oif, local, remote);
 	xfrm_policy_put_afinfo(afinfo);
 	return err;
 }
@@ -1410,7 +1412,9 @@ xfrm_tmpl_resolve_one(struct xfrm_policy *policy, const struct flowi *fl,
 			remote = &tmpl->id.daddr;
 			local = &tmpl->saddr;
 			if (xfrm_addr_any(local, tmpl->encap_family)) {
-				error = xfrm_get_saddr(net, &tmp, remote, tmpl->encap_family);
+				error = xfrm_get_saddr(net, fl->flowi_oif,
+						       &tmp, remote,
+						       tmpl->encap_family);
 				if (error)
 					goto fail;
 				local = &tmp;
@@ -1579,8 +1583,6 @@ static inline struct xfrm_dst *xfrm_alloc_dst(struct net *net, int family)
 
 		memset(dst + 1, 0, sizeof(*xdst) - sizeof(*dst));
 		xdst->flo.ops = &xfrm_bundle_fc_ops;
-		if (afinfo->init_dst)
-			afinfo->init_dst(net, xdst);
 	} else
 		xdst = ERR_PTR(-ENOBUFS);
 
@@ -1690,8 +1692,8 @@ static struct dst_entry *xfrm_bundle_create(struct xfrm_policy *policy,
 
 		if (xfrm[i]->props.mode != XFRM_MODE_TRANSPORT) {
 			family = xfrm[i]->props.family;
-			dst = xfrm_dst_lookup(xfrm[i], tos, &saddr, &daddr,
-					      family);
+			dst = xfrm_dst_lookup(xfrm[i], tos, fl->flowi_oif,
+					      &saddr, &daddr, family);
 			err = PTR_ERR(dst);
 			if (IS_ERR(dst))
 				goto put_states;
@@ -1943,7 +1945,7 @@ static void xfrm_policy_queue_process(unsigned long arg)
 		skb_dst_drop(skb);
 		skb_dst_set(skb, dst);
 
-		dst_output(skb);
+		dst_output(skb->sk, skb);
 	}
 
 out:

@@ -233,7 +233,7 @@ static int arp_constructor(struct neighbour *neigh)
 		return -EINVAL;
 	}
 
-	neigh->type = inet_addr_type(dev_net(dev), addr);
+	neigh->type = inet_addr_type_dev_table(dev_net(dev), dev, addr);
 
 	parms = in_dev->arp_parms;
 	__neigh_parms_put(neigh->parms);
@@ -343,7 +343,7 @@ static void arp_solicit(struct neighbour *neigh, struct sk_buff *skb)
 	switch (IN_DEV_ARP_ANNOUNCE(in_dev)) {
 	default:
 	case 0:		/* By default announce any local IP */
-		if (skb && inet_addr_type(dev_net(dev),
+		if (skb && inet_addr_type_dev_table(dev_net(dev), dev,
 					  ip_hdr(skb)->saddr) == RTN_LOCAL)
 			saddr = ip_hdr(skb)->saddr;
 		break;
@@ -351,7 +351,8 @@ static void arp_solicit(struct neighbour *neigh, struct sk_buff *skb)
 		if (!skb)
 			break;
 		saddr = ip_hdr(skb)->saddr;
-		if (inet_addr_type(dev_net(dev), saddr) == RTN_LOCAL) {
+		if (inet_addr_type_dev_table(dev_net(dev), dev,
+					     saddr) == RTN_LOCAL) {
 			/* saddr should be known to target */
 			if (inet_addr_onlink(in_dev, target, saddr))
 				break;
@@ -620,14 +621,20 @@ out:
 }
 EXPORT_SYMBOL(arp_create);
 
+static int arp_xmit_finish(struct net *net, struct sock *sk, struct sk_buff *skb)
+{
+	return dev_queue_xmit(skb);
+}
+
 /*
  *	Send an arp packet.
  */
 void arp_xmit(struct sk_buff *skb)
 {
 	/* Send it off, maybe filter it using firewalling first.  */
-	NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, NULL, skb,
-		NULL, skb->dev, dev_queue_xmit_sk);
+	NF_HOOK(NFPROTO_ARP, NF_ARP_OUT,
+		dev_net(skb->dev), NULL, skb, NULL, skb->dev,
+		arp_xmit_finish);
 }
 EXPORT_SYMBOL(arp_xmit);
 
@@ -635,7 +642,7 @@ EXPORT_SYMBOL(arp_xmit);
  *	Process an arp request.
  */
 
-static int arp_process(struct sock *sk, struct sk_buff *skb)
+static int arp_process(struct net *net, struct sock *sk, struct sk_buff *skb)
 {
 	struct net_device *dev = skb->dev;
 	struct in_device *in_dev = __in_dev_get_rcu(dev);
@@ -647,7 +654,6 @@ static int arp_process(struct sock *sk, struct sk_buff *skb)
 	u16 dev_type = dev->type;
 	int addr_type;
 	struct neighbour *n;
-	struct net *net = dev_net(dev);
 	bool is_garp = false;
 
 	/* arp_rcv below verifies the ARP header and verifies the device
@@ -751,7 +757,7 @@ static int arp_process(struct sock *sk, struct sk_buff *skb)
 	/* Special case: IPv4 duplicate address detection packet (RFC2131) */
 	if (sip == 0) {
 		if (arp->ar_op == htons(ARPOP_REQUEST) &&
-		    inet_addr_type(net, tip) == RTN_LOCAL &&
+		    inet_addr_type_dev_table(net, dev, tip) == RTN_LOCAL &&
 		    !arp_ignore(in_dev, sip, tip))
 			arp_send(ARPOP_REPLY, ETH_P_ARP, sip, dev, tip, sha,
 				 dev->dev_addr, sha);
@@ -811,16 +817,18 @@ static int arp_process(struct sock *sk, struct sk_buff *skb)
 	n = __neigh_lookup(&arp_tbl, &sip, dev, 0);
 
 	if (IN_DEV_ARP_ACCEPT(in_dev)) {
+		unsigned int addr_type = inet_addr_type_dev_table(net, dev, sip);
+
 		/* Unsolicited ARP is not accepted by default.
 		   It is possible, that this option should be enabled for some
 		   devices (strip is candidate)
 		 */
 		is_garp = arp->ar_op == htons(ARPOP_REQUEST) && tip == sip &&
-			  inet_addr_type(net, sip) == RTN_UNICAST;
+			  addr_type == RTN_UNICAST;
 
 		if (!n &&
 		    ((arp->ar_op == htons(ARPOP_REPLY)  &&
-		      inet_addr_type(net, sip) == RTN_UNICAST) || is_garp))
+				addr_type == RTN_UNICAST) || is_garp))
 			n = __neigh_lookup(&arp_tbl, &sip, dev, 1);
 	}
 
@@ -856,7 +864,7 @@ out:
 
 static void parp_redo(struct sk_buff *skb)
 {
-	arp_process(NULL, skb);
+	arp_process(dev_net(skb->dev), NULL, skb);
 }
 
 
@@ -889,8 +897,9 @@ static int arp_rcv(struct sk_buff *skb, struct net_device *dev,
 
 	memset(NEIGH_CB(skb), 0, sizeof(struct neighbour_cb));
 
-	return NF_HOOK(NFPROTO_ARP, NF_ARP_IN, NULL, skb,
-		       dev, NULL, arp_process);
+	return NF_HOOK(NFPROTO_ARP, NF_ARP_IN,
+		       dev_net(dev), NULL, skb, dev, NULL,
+		       arp_process);
 
 consumeskb:
 	consume_skb(skb);

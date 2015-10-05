@@ -583,7 +583,7 @@ static struct scatterlist *scsi_sg_alloc(unsigned int nents, gfp_t gfp_mask)
 
 static void scsi_free_sgtable(struct scsi_data_buffer *sdb, bool mq)
 {
-	if (mq && sdb->table.nents <= SCSI_MAX_SG_SEGMENTS)
+	if (mq && sdb->table.orig_nents <= SCSI_MAX_SG_SEGMENTS)
 		return;
 	__sg_free_table(&sdb->table, SCSI_MAX_SG_SEGMENTS, mq, scsi_sg_free);
 }
@@ -597,8 +597,8 @@ static int scsi_alloc_sgtable(struct scsi_data_buffer *sdb, int nents, bool mq)
 
 	if (mq) {
 		if (nents <= SCSI_MAX_SG_SEGMENTS) {
-			sdb->table.nents = nents;
-			sg_init_table(sdb->table.sgl, sdb->table.nents);
+			sdb->table.nents = sdb->table.orig_nents = nents;
+			sg_init_table(sdb->table.sgl, nents);
 			return 0;
 		}
 		first_chunk = sdb->table.sgl;
@@ -2423,7 +2423,7 @@ scsi_mode_sense(struct scsi_device *sdev, int dbd, int modepage,
 	unsigned char cmd[12];
 	int use_10_for_ms;
 	int header_length;
-	int result;
+	int result, retry_count = retries;
 	struct scsi_sense_hdr my_sshdr;
 
 	memset(data, 0, sizeof(*data));
@@ -2502,6 +2502,11 @@ scsi_mode_sense(struct scsi_device *sdev, int dbd, int modepage,
 			data->block_descriptor_length = buffer[3];
 		}
 		data->header_length = header_length;
+	} else if ((status_byte(result) == CHECK_CONDITION) &&
+		   scsi_sense_valid(sshdr) &&
+		   sshdr->sense_key == UNIT_ATTENTION && retry_count) {
+		retry_count--;
+		goto retry;
 	}
 
 	return result;
@@ -2707,6 +2712,9 @@ static void scsi_evt_emit(struct scsi_device *sdev, struct scsi_event *evt)
 	case SDEV_EVT_LUN_CHANGE_REPORTED:
 		envp[idx++] = "SDEV_UA=REPORTED_LUNS_DATA_HAS_CHANGED";
 		break;
+	case SDEV_EVT_ALUA_STATE_CHANGE_REPORTED:
+		envp[idx++] = "SDEV_UA=ASYMMETRIC_ACCESS_STATE_CHANGED";
+		break;
 	default:
 		/* do nothing */
 		break;
@@ -2810,6 +2818,7 @@ struct scsi_event *sdev_evt_alloc(enum scsi_device_event evt_type,
 	case SDEV_EVT_SOFT_THRESHOLD_REACHED_REPORTED:
 	case SDEV_EVT_MODE_PARAMETER_CHANGE_REPORTED:
 	case SDEV_EVT_LUN_CHANGE_REPORTED:
+	case SDEV_EVT_ALUA_STATE_CHANGE_REPORTED:
 	default:
 		/* do nothing */
 		break;

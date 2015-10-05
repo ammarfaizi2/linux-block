@@ -84,12 +84,13 @@ struct dst_entry {
 	__u32			__pad2;
 #endif
 
+#ifdef CONFIG_64BIT
+	struct lwtunnel_state   *lwtstate;
 	/*
 	 * Align __refcnt to a 64 bytes alignment
 	 * (L1_CACHE_SIZE would be too much)
 	 */
-#ifdef CONFIG_64BIT
-	long			__pad_to_align_refcnt[2];
+	long			__pad_to_align_refcnt[1];
 #endif
 	/*
 	 * __refcnt wants to be on a different cache line from
@@ -98,6 +99,9 @@ struct dst_entry {
 	atomic_t		__refcnt;	/* client references	*/
 	int			__use;
 	unsigned long		lastuse;
+#ifndef CONFIG_64BIT
+	struct lwtunnel_state   *lwtstate;
+#endif
 	union {
 		struct dst_entry	*next;
 		struct rtable __rcu	*rt_next;
@@ -203,6 +207,12 @@ static inline void dst_metric_set(struct dst_entry *dst, int metric, u32 val)
 		p[metric-1] = val;
 }
 
+/* Kernel-internal feature bits that are unallocated in user space. */
+#define DST_FEATURE_ECN_CA	(1 << 31)
+
+#define DST_FEATURE_MASK	(DST_FEATURE_ECN_CA)
+#define DST_FEATURE_ECN_MASK	(DST_FEATURE_ECN_CA | RTAX_FEATURE_ECN)
+
 static inline u32
 dst_feature(const struct dst_entry *dst, u32 feature)
 {
@@ -285,11 +295,16 @@ static inline void skb_dst_drop(struct sk_buff *skb)
 	}
 }
 
-static inline void skb_dst_copy(struct sk_buff *nskb, const struct sk_buff *oskb)
+static inline void __skb_dst_copy(struct sk_buff *nskb, unsigned long refdst)
 {
-	nskb->_skb_refdst = oskb->_skb_refdst;
+	nskb->_skb_refdst = refdst;
 	if (!(nskb->_skb_refdst & SKB_DST_NOREF))
 		dst_clone(skb_dst(nskb));
+}
+
+static inline void skb_dst_copy(struct sk_buff *nskb, const struct sk_buff *oskb)
+{
+	__skb_dst_copy(nskb, oskb->_skb_refdst);
 }
 
 /**
@@ -439,13 +454,13 @@ static inline void dst_set_expires(struct dst_entry *dst, int timeout)
 }
 
 /* Output packet to network from transport.  */
-static inline int dst_output_sk(struct sock *sk, struct sk_buff *skb)
+static inline int dst_output(struct sock *sk, struct sk_buff *skb)
 {
 	return skb_dst(skb)->output(sk, skb);
 }
-static inline int dst_output(struct sk_buff *skb)
+static inline int dst_output_okfn(struct net *net, struct sock *sk, struct sk_buff *skb)
 {
-	return dst_output_sk(skb->sk, skb);
+	return dst_output(sk, skb);
 }
 
 /* Input packet from network to transport.  */

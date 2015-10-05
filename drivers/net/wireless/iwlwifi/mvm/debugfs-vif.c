@@ -911,9 +911,9 @@ static ssize_t iwl_dbgfs_tof_range_request_write(struct ieee80211_vif *vif,
 		int size = sizeof(struct iwl_tof_range_req_ap_entry);
 		u16 burst_period;
 		u8 *mac = ap.bssid;
-		int i;
+		unsigned int i;
 
-		if (sscanf(data, "%d %hhd %hhx %hhx"
+		if (sscanf(data, "%u %hhd %hhx %hhx"
 			   "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx"
 			   "%hhx %hhx %hx"
 			   "%hhx %hhx %x"
@@ -929,7 +929,7 @@ static ssize_t iwl_dbgfs_tof_range_request_write(struct ieee80211_vif *vif,
 			ret = -EINVAL;
 			goto out;
 		}
-		if (i > IWL_MVM_TOF_MAX_APS) {
+		if (i >= IWL_MVM_TOF_MAX_APS) {
 			IWL_ERR(mvm, "Invalid AP index %d\n", i);
 			ret = -EINVAL;
 			goto out;
@@ -1250,11 +1250,10 @@ static ssize_t iwl_dbgfs_low_latency_read(struct file *file,
 {
 	struct ieee80211_vif *vif = file->private_data;
 	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	char buf[3];
+	char buf[2];
 
 	buf[0] = mvmvif->low_latency ? '1' : '0';
 	buf[1] = '\n';
-	buf[2] = '\0';
 	return simple_read_from_buffer(user_buf, count, ppos, buf, sizeof(buf));
 }
 

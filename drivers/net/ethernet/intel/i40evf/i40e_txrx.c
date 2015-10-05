@@ -366,15 +366,32 @@ static bool i40e_clean_tx_irq(struct i40e_ring *tx_ring, int budget)
  **/
 static void i40e_force_wb(struct i40e_vsi *vsi, struct i40e_q_vector *q_vector)
 {
-	u32 val = I40E_VFINT_DYN_CTLN_INTENA_MASK |
-		  I40E_VFINT_DYN_CTLN1_ITR_INDX_MASK | /* set noitr */
-		  I40E_VFINT_DYN_CTLN_SWINT_TRIG_MASK |
-		  I40E_VFINT_DYN_CTLN_SW_ITR_INDX_ENA_MASK;
-		  /* allow 00 to be written to the index */
+	u16 flags = q_vector->tx.ring[0].flags;
 
-	wr32(&vsi->back->hw,
-	     I40E_VFINT_DYN_CTLN1(q_vector->v_idx + vsi->base_vector - 1),
-	     val);
+	if (flags & I40E_TXR_FLAGS_WB_ON_ITR) {
+		u32 val;
+
+		if (q_vector->arm_wb_state)
+			return;
+
+		val = I40E_VFINT_DYN_CTLN1_WB_ON_ITR_MASK;
+
+		wr32(&vsi->back->hw,
+		     I40E_VFINT_DYN_CTLN1(q_vector->v_idx +
+					  vsi->base_vector - 1),
+		     val);
+		q_vector->arm_wb_state = true;
+	} else {
+		u32 val = I40E_VFINT_DYN_CTLN1_INTENA_MASK |
+			  I40E_VFINT_DYN_CTLN1_ITR_INDX_MASK | /* set noitr */
+			  I40E_VFINT_DYN_CTLN1_SWINT_TRIG_MASK |
+			  I40E_VFINT_DYN_CTLN1_SW_ITR_INDX_ENA_MASK;
+			  /* allow 00 to be written to the index */
+
+		wr32(&vsi->back->hw,
+		     I40E_VFINT_DYN_CTLN1(q_vector->v_idx +
+					  vsi->base_vector - 1), val);
+	}
 }
 
 /**
@@ -1276,17 +1293,17 @@ static inline void i40e_update_enable_itr(struct i40e_vsi *vsi,
 		old_itr = q_vector->rx.itr;
 		i40e_set_new_dynamic_itr(&q_vector->rx);
 		if (old_itr != q_vector->rx.itr) {
-			val = I40E_VFINT_DYN_CTLN_INTENA_MASK |
-			I40E_VFINT_DYN_CTLN_CLEARPBA_MASK |
+			val = I40E_VFINT_DYN_CTLN1_INTENA_MASK |
+			I40E_VFINT_DYN_CTLN1_CLEARPBA_MASK |
 			(I40E_RX_ITR <<
-				I40E_VFINT_DYN_CTLN_ITR_INDX_SHIFT) |
+				I40E_VFINT_DYN_CTLN1_ITR_INDX_SHIFT) |
 			(q_vector->rx.itr <<
-				I40E_VFINT_DYN_CTLN_INTERVAL_SHIFT);
+				I40E_VFINT_DYN_CTLN1_INTERVAL_SHIFT);
 		} else {
-			val = I40E_VFINT_DYN_CTLN_INTENA_MASK |
-			I40E_VFINT_DYN_CTLN_CLEARPBA_MASK |
+			val = I40E_VFINT_DYN_CTLN1_INTENA_MASK |
+			I40E_VFINT_DYN_CTLN1_CLEARPBA_MASK |
 			(I40E_ITR_NONE <<
-				I40E_VFINT_DYN_CTLN_ITR_INDX_SHIFT);
+				I40E_VFINT_DYN_CTLN1_ITR_INDX_SHIFT);
 		}
 		if (!test_bit(__I40E_DOWN, &vsi->state))
 			wr32(hw, I40E_VFINT_DYN_CTLN1(vector - 1), val);
@@ -1298,18 +1315,18 @@ static inline void i40e_update_enable_itr(struct i40e_vsi *vsi,
 		old_itr = q_vector->tx.itr;
 		i40e_set_new_dynamic_itr(&q_vector->tx);
 		if (old_itr != q_vector->tx.itr) {
-			val = I40E_VFINT_DYN_CTLN_INTENA_MASK |
-				I40E_VFINT_DYN_CTLN_CLEARPBA_MASK |
+			val = I40E_VFINT_DYN_CTLN1_INTENA_MASK |
+				I40E_VFINT_DYN_CTLN1_CLEARPBA_MASK |
 				(I40E_TX_ITR <<
-				   I40E_VFINT_DYN_CTLN_ITR_INDX_SHIFT) |
+				   I40E_VFINT_DYN_CTLN1_ITR_INDX_SHIFT) |
 				(q_vector->tx.itr <<
-				   I40E_VFINT_DYN_CTLN_INTERVAL_SHIFT);
+				   I40E_VFINT_DYN_CTLN1_INTERVAL_SHIFT);
 
 		} else {
-			val = I40E_VFINT_DYN_CTLN_INTENA_MASK |
-				I40E_VFINT_DYN_CTLN_CLEARPBA_MASK |
+			val = I40E_VFINT_DYN_CTLN1_INTENA_MASK |
+				I40E_VFINT_DYN_CTLN1_CLEARPBA_MASK |
 				(I40E_ITR_NONE <<
-				   I40E_VFINT_DYN_CTLN_ITR_INDX_SHIFT);
+				   I40E_VFINT_DYN_CTLN1_ITR_INDX_SHIFT);
 		}
 		if (!test_bit(__I40E_DOWN, &vsi->state))
 			wr32(hw, I40E_VFINT_DYN_CTLN1(vector - 1), val);
@@ -1371,6 +1388,9 @@ int i40evf_napi_poll(struct napi_struct *napi, int budget)
 			i40e_force_wb(vsi, q_vector);
 		return budget;
 	}
+
+	if (vsi->back->flags & I40E_TXR_FLAGS_WB_ON_ITR)
+		q_vector->arm_wb_state = false;
 
 	/* Work is done so exit the polling mode and re-enable the interrupt */
 	napi_complete(napi);
@@ -1508,11 +1528,15 @@ static void i40e_tx_enable_csum(struct sk_buff *skb, u32 *tx_flags,
 	struct iphdr *this_ip_hdr;
 	u32 network_hdr_len;
 	u8 l4_hdr = 0;
+	struct udphdr *oudph;
+	struct iphdr *oiph;
 	u32 l4_tunnel = 0;
 
 	if (skb->encapsulation) {
 		switch (ip_hdr(skb)->protocol) {
 		case IPPROTO_UDP:
+			oudph = udp_hdr(skb);
+			oiph = ip_hdr(skb);
 			l4_tunnel = I40E_TXD_CTX_UDP_TUNNELING;
 			*tx_flags |= I40E_TX_FLAGS_VXLAN_TUNNEL;
 			break;
@@ -1551,6 +1575,15 @@ static void i40e_tx_enable_csum(struct sk_buff *skb, u32 *tx_flags,
 		}
 
 
+		if ((tx_ring->flags & I40E_TXR_FLAGS_OUTER_UDP_CSUM) &&
+		    (l4_tunnel == I40E_TXD_CTX_UDP_TUNNELING)        &&
+		    (*cd_tunneling & I40E_TXD_CTX_QW0_EXT_IP_MASK)) {
+			oudph->check = ~csum_tcpudp_magic(oiph->saddr,
+					oiph->daddr,
+					(skb->len - skb_transport_offset(skb)),
+					IPPROTO_UDP, 0);
+			*cd_tunneling |= I40E_TXD_CTX_QW0_L4T_CS_MASK;
+		}
 	} else {
 		network_hdr_len = skb_network_header_len(skb);
 		this_ip_hdr = ip_hdr(skb);

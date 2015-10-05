@@ -48,7 +48,6 @@
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 #include <linux/types.h>
-#include <linux/wait.h>
 #include <linux/string.h>
 #include <linux/gfp.h>
 #include <linux/random.h>
@@ -377,8 +376,8 @@ static int __mlxsw_emad_transmit(struct mlxsw_core *mlxsw_core,
 
 	err = mlxsw_core_skb_transmit(mlxsw_core->driver_priv, skb, tx_info);
 	if (err) {
-		dev_warn(mlxsw_core->bus_info->dev, "Failed to transmit EMAD (tid=%llx)\n",
-			 mlxsw_core->emad.tid);
+		dev_err(mlxsw_core->bus_info->dev, "Failed to transmit EMAD (tid=%llx)\n",
+			mlxsw_core->emad.tid);
 		dev_kfree_skb(skb);
 		return err;
 	}
@@ -865,6 +864,16 @@ static struct mlxsw_core *__mlxsw_core_get(void *driver_priv)
 	return container_of(driver_priv, struct mlxsw_core, driver_priv);
 }
 
+bool mlxsw_core_skb_transmit_busy(void *driver_priv,
+				  const struct mlxsw_tx_info *tx_info)
+{
+	struct mlxsw_core *mlxsw_core = __mlxsw_core_get(driver_priv);
+
+	return mlxsw_core->bus->skb_transmit_busy(mlxsw_core->bus_priv,
+						  tx_info);
+}
+EXPORT_SYMBOL(mlxsw_core_skb_transmit_busy);
+
 int mlxsw_core_skb_transmit(void *driver_priv, struct sk_buff *skb,
 			    const struct mlxsw_tx_info *tx_info)
 {
@@ -1063,7 +1072,7 @@ static int mlxsw_core_reg_access_emad(struct mlxsw_core *mlxsw_core,
 			mlxsw_core->emad.tid - 1);
 		mlxsw_core_buf_dump_dbg(mlxsw_core,
 					mlxsw_core->emad.resp_skb->data,
-					skb->len);
+					mlxsw_core->emad.resp_skb->len);
 
 		dev_kfree_skb(mlxsw_core->emad.resp_skb);
 	}

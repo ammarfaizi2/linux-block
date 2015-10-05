@@ -323,11 +323,11 @@ enum iwl_bt_force_ant_mode {
 struct iwl_mvm_vif_bf_data {
 	bool bf_enabled;
 	bool ba_enabled;
-	s8 ave_beacon_signal;
-	s8 last_cqm_event;
-	s8 bt_coex_min_thold;
-	s8 bt_coex_max_thold;
-	s8 last_bt_coex_event;
+	int ave_beacon_signal;
+	int last_cqm_event;
+	int bt_coex_min_thold;
+	int bt_coex_max_thold;
+	int last_bt_coex_event;
 };
 
 /**
@@ -338,6 +338,8 @@ struct iwl_mvm_vif_bf_data {
  * @bssid: BSSID for this (client) interface
  * @associated: indicates that we're currently associated, used only for
  *	managing the firmware state in iwl_mvm_bss_info_changed_station()
+ * @ap_assoc_sta_count: count of stations associated to us - valid only
+ *	if VIF type is AP
  * @uploaded: indicates the MAC context has been added to the device
  * @ap_ibss_active: indicates that AP/IBSS is configured and that the interface
  *	should get quota etc.
@@ -367,6 +369,7 @@ struct iwl_mvm_vif {
 
 	u8 bssid[ETH_ALEN];
 	bool associated;
+	u8 ap_assoc_sta_count;
 
 	bool uploaded;
 	bool ap_ibss_active;
@@ -610,6 +613,11 @@ struct iwl_mvm {
 	/* NVM sections */
 	struct iwl_nvm_section nvm_sections[NVM_MAX_NUM_SECTIONS];
 
+	/* Paging section */
+	struct iwl_fw_paging fw_paging_db[NUM_OF_FW_PAGING_BLOCKS];
+	u16 num_of_paging_blk;
+	u16 num_of_pages_in_last_blk;
+
 	/* EEPROM MAC addresses */
 	struct mac_address addresses[IWL_MVM_MAX_ADDRESSES];
 
@@ -703,6 +711,7 @@ struct iwl_mvm {
 	u8 fw_dbg_conf;
 	struct delayed_work fw_dump_wk;
 	struct iwl_mvm_dump_desc *fw_dump_desc;
+	struct iwl_fw_dbg_trigger_tlv *fw_dump_trig;
 
 #ifdef CONFIG_IWLWIFI_LEDS
 	struct led_classdev led;
@@ -928,11 +937,6 @@ static inline bool iwl_mvm_is_wifi_mcc_supported(struct iwl_mvm *mvm)
 			   IWL_UCODE_TLV_CAPA_LAR_MULTI_MCC);
 }
 
-static inline bool iwl_mvm_is_scd_cfg_supported(struct iwl_mvm *mvm)
-{
-	return fw_has_api(&mvm->fw->ucode_capa, IWL_UCODE_TLV_API_SCD_CFG);
-}
-
 static inline bool iwl_mvm_bt_is_plcr_supported(struct iwl_mvm *mvm)
 {
 	return fw_has_capa(&mvm->fw->ucode_capa,
@@ -1078,7 +1082,8 @@ bool iwl_mvm_bcast_filter_build_cmd(struct iwl_mvm *mvm,
  * Convention: iwl_mvm_rx_<NAME OF THE CMD>
  */
 void iwl_mvm_rx_rx_phy_cmd(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb);
-void iwl_mvm_rx_rx_mpdu(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb);
+void iwl_mvm_rx_rx_mpdu(struct iwl_mvm *mvm, struct napi_struct *napi,
+			struct iwl_rx_cmd_buffer *rxb);
 void iwl_mvm_rx_tx_cmd(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb);
 void iwl_mvm_rx_ba_notif(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb);
 void iwl_mvm_rx_ant_coupling_notif(struct iwl_mvm *mvm,
@@ -1124,6 +1129,9 @@ void iwl_mvm_mac_ctxt_recalc_tsf_id(struct iwl_mvm *mvm,
 				    struct ieee80211_vif *vif);
 unsigned long iwl_mvm_get_used_hw_queues(struct iwl_mvm *mvm,
 					 struct ieee80211_vif *exclude_vif);
+int iwl_mvm_mac_ctxt_cmd_ap(struct iwl_mvm *mvm,
+			    struct ieee80211_vif *vif,
+			    u32 action);
 
 /* Bindings */
 int iwl_mvm_binding_add_vif(struct iwl_mvm *mvm, struct ieee80211_vif *vif);
@@ -1438,10 +1446,11 @@ void iwl_mvm_fw_error_dump(struct iwl_mvm *mvm);
 
 int iwl_mvm_start_fw_dbg_conf(struct iwl_mvm *mvm, u8 id);
 int iwl_mvm_fw_dbg_collect(struct iwl_mvm *mvm, enum iwl_fw_dbg_trigger trig,
-			   const char *str, size_t len, unsigned int delay);
+			   const char *str, size_t len,
+			   struct iwl_fw_dbg_trigger_tlv *trigger);
 int iwl_mvm_fw_dbg_collect_desc(struct iwl_mvm *mvm,
 				struct iwl_mvm_dump_desc *desc,
-				unsigned int delay);
+				struct iwl_fw_dbg_trigger_tlv *trigger);
 void iwl_mvm_free_fw_dump_desc(struct iwl_mvm *mvm);
 int iwl_mvm_fw_dbg_collect_trig(struct iwl_mvm *mvm,
 				struct iwl_fw_dbg_trigger_tlv *trigger,

@@ -79,10 +79,13 @@
 #define I40E_MIN_MSIX                 2
 #define I40E_DEFAULT_NUM_VMDQ_VSI     8 /* max 256 VSIs */
 #define I40E_MIN_VSI_ALLOC            51 /* LAN, ATR, FCOE, 32 VF, 16 VMDQ */
-#define I40E_DEFAULT_QUEUES_PER_VMDQ  2 /* max 16 qps */
+/* max 16 qps */
+#define i40e_default_queues_per_vmdq(pf) \
+		(((pf)->flags & I40E_FLAG_RSS_AQ_CAPABLE) ? 4 : 1)
 #define I40E_DEFAULT_QUEUES_PER_VF    4
 #define I40E_DEFAULT_QUEUES_PER_TC    1 /* should be a power of 2 */
-#define I40E_MAX_QUEUES_PER_TC        64 /* should be a power of 2 */
+#define i40e_pf_get_max_q_per_tc(pf) \
+		(((pf)->flags & I40E_FLAG_128_QP_RSS_CAPABLE) ? 128 : 64)
 #define I40E_FDIR_RING                0
 #define I40E_FDIR_RING_COUNT          32
 #ifdef I40E_FCOE
@@ -298,6 +301,7 @@ struct i40e_pf {
 #define I40E_FLAG_VMDQ_ENABLED			BIT_ULL(7)
 #define I40E_FLAG_FDIR_REQUIRES_REINIT		BIT_ULL(8)
 #define I40E_FLAG_NEED_LINK_UPDATE		BIT_ULL(9)
+#define I40E_FLAG_IWARP_ENABLED			BIT_ULL(10)
 #ifdef I40E_FCOE
 #define I40E_FLAG_FCOE_ENABLED			BIT_ULL(11)
 #endif /* I40E_FCOE */
@@ -318,6 +322,12 @@ struct i40e_pf {
 #endif
 #define I40E_FLAG_PORT_ID_VALID			BIT_ULL(28)
 #define I40E_FLAG_DCB_CAPABLE			BIT_ULL(29)
+#define I40E_FLAG_RSS_AQ_CAPABLE		BIT_ULL(31)
+#define I40E_FLAG_HW_ATR_EVICT_CAPABLE		BIT_ULL(32)
+#define I40E_FLAG_OUTER_UDP_CSUM_CAPABLE	BIT_ULL(33)
+#define I40E_FLAG_128_QP_RSS_CAPABLE		BIT_ULL(34)
+#define I40E_FLAG_WB_ON_ITR_CAPABLE		BIT_ULL(35)
+#define I40E_FLAG_MULTIPLE_TCP_UDP_RSS_PCTYPE	BIT_ULL(38)
 #define I40E_FLAG_VEB_MODE_ENABLED		BIT_ULL(40)
 
 	/* tracks features that get auto disabled by errors */
@@ -362,6 +372,7 @@ struct i40e_pf {
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *i40e_dbg_pf;
 #endif /* CONFIG_DEBUG_FS */
+	bool cur_promisc;
 
 	u16 instance; /* A unique number per i40e_pf instance in the system */
 
@@ -432,6 +443,8 @@ struct i40e_veb {
 	bool stat_offsets_loaded;
 	struct i40e_eth_stats stats;
 	struct i40e_eth_stats stats_offsets;
+	struct i40e_veb_tc_stats tc_stats;
+	struct i40e_veb_tc_stats tc_stats_offsets;
 };
 
 /* struct that defines a VSI, associated with a dev */
@@ -550,6 +563,7 @@ struct i40e_q_vector {
 	cpumask_t affinity_mask;
 	struct rcu_head rcu;	/* to avoid race with update stats on free */
 	char name[I40E_INT_NAME_STR_LEN];
+	bool arm_wb_state;
 } ____cacheline_internodealigned_in_smp;
 
 /* lan device */

@@ -122,7 +122,7 @@ static inline void iwl_set_calib_hdr(struct iwl_calib_hdr *hdr, u8 cmd)
 void iwl_down(struct iwl_priv *priv);
 void iwl_cancel_deferred_work(struct iwl_priv *priv);
 void iwlagn_prepare_restart(struct iwl_priv *priv);
-void iwl_rx_dispatch(struct iwl_op_mode *op_mode,
+void iwl_rx_dispatch(struct iwl_op_mode *op_mode, struct napi_struct *napi,
 		     struct iwl_rx_cmd_buffer *rxb);
 
 bool iwl_check_for_ct_kill(struct iwl_priv *priv);
@@ -473,7 +473,7 @@ do {									\
 } while (0)
 #endif				/* CONFIG_IWLWIFI_DEBUG */
 
-extern const char *const iwl_dvm_cmd_strings[REPLY_MAX];
+extern const char *const iwl_dvm_cmd_strings[REPLY_MAX + 1];
 
 static inline const char *iwl_dvm_get_cmd_string(u8 cmd)
 {

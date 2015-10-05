@@ -107,7 +107,8 @@ static void xgene_enet_set_ring_state(struct xgene_enet_desc_ring *ring)
 {
 	xgene_enet_ring_set_type(ring);
 
-	if (xgene_enet_ring_owner(ring->id) == RING_OWNER_ETH0)
+	if (xgene_enet_ring_owner(ring->id) == RING_OWNER_ETH0 ||
+	    xgene_enet_ring_owner(ring->id) == RING_OWNER_ETH1)
 		xgene_enet_ring_set_recombbuf(ring);
 
 	xgene_enet_ring_init(ring);
@@ -801,6 +802,9 @@ int xgene_enet_mdio_config(struct xgene_enet_pdata *pdata)
 
 void xgene_enet_mdio_remove(struct xgene_enet_pdata *pdata)
 {
+	if (pdata->phy_dev)
+		phy_disconnect(pdata->phy_dev);
+
 	mdiobus_unregister(pdata->mdio_bus);
 	mdiobus_free(pdata->mdio_bus);
 	pdata->mdio_bus = NULL;

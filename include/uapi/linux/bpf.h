@@ -114,6 +114,7 @@ enum bpf_map_type {
 	BPF_MAP_TYPE_HASH,
 	BPF_MAP_TYPE_ARRAY,
 	BPF_MAP_TYPE_PROG_ARRAY,
+	BPF_MAP_TYPE_PERF_EVENT_ARRAY,
 };
 
 enum bpf_prog_type {
@@ -270,6 +271,15 @@ enum bpf_func_id {
 	 */
 	BPF_FUNC_skb_get_tunnel_key,
 	BPF_FUNC_skb_set_tunnel_key,
+	BPF_FUNC_perf_event_read,	/* u64 bpf_perf_event_read(&map, index) */
+	/**
+	 * bpf_redirect(ifindex, flags) - redirect to another netdev
+	 * @ifindex: ifindex of the net device
+	 * @flags: bit 0 - if set, redirect to ingress instead of egress
+	 *         other bits - reserved
+	 * Return: TC_ACT_REDIRECT
+	 */
+	BPF_FUNC_redirect,
 	__BPF_FUNC_MAX_ID,
 };
 
@@ -291,6 +301,7 @@ struct __sk_buff {
 	__u32 tc_index;
 	__u32 cb[5];
 	__u32 hash;
+	__u32 tc_classid;
 };
 
 struct bpf_tunnel_key {

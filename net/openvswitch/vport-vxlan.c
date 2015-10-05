@@ -90,7 +90,7 @@ static struct vport *vxlan_tnl_create(const struct vport_parms *parms)
 	int err;
 	struct vxlan_config conf = {
 		.no_share = true,
-		.flags = VXLAN_F_FLOW_BASED | VXLAN_F_COLLECT_METADATA,
+		.flags = VXLAN_F_COLLECT_METADATA,
 	};
 
 	if (!options) {
@@ -146,23 +146,8 @@ static struct vport *vxlan_create(const struct vport_parms *parms)
 	return ovs_netdev_link(vport, parms->name);
 }
 
-static void vxlan_destroy(struct vport *vport)
-{
-	rtnl_lock();
-	if (vport->dev->priv_flags & IFF_OVS_DATAPATH)
-		ovs_netdev_detach_dev(vport);
-
-	/* Early release so we can unregister the device */
-	dev_put(vport->dev);
-	rtnl_delete_link(vport->dev);
-	vport->dev = NULL;
-	rtnl_unlock();
-
-	call_rcu(&vport->rcu, ovs_vport_free_rcu);
-}
-
 static int vxlan_get_egress_tun_info(struct vport *vport, struct sk_buff *skb,
-				     struct ip_tunnel_info *egress_tun_info)
+				     struct dp_upcall_info *upcall)
 {
 	struct vxlan_dev *vxlan = netdev_priv(vport->dev);
 	struct net *net = ovs_dp_get_net(vport->dp);
@@ -174,16 +159,15 @@ static int vxlan_get_egress_tun_info(struct vport *vport, struct sk_buff *skb,
 	inet_get_local_port_range(net, &port_min, &port_max);
 	src_port = udp_flow_src_port(net, skb, 0, 0, true);
 
-	return ovs_tunnel_get_egress_info(egress_tun_info, net,
-					  OVS_CB(skb)->egress_tun_info,
-					  IPPROTO_UDP, skb->mark,
+	return ovs_tunnel_get_egress_info(upcall, net,
+					  skb, IPPROTO_UDP,
 					  src_port, dst_port);
 }
 
 static struct vport_ops ovs_vxlan_netdev_vport_ops = {
 	.type			= OVS_VPORT_TYPE_VXLAN,
 	.create			= vxlan_create,
-	.destroy		= vxlan_destroy,
+	.destroy		= ovs_netdev_tunnel_destroy,
 	.get_options		= vxlan_get_options,
 	.send			= ovs_netdev_send,
 	.get_egress_tun_info	= vxlan_get_egress_tun_info,

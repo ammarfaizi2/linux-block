@@ -39,7 +39,7 @@
 
 #define IWL_CMD_ENTRY(x) [x] = #x
 
-const char *const iwl_dvm_cmd_strings[REPLY_MAX] = {
+const char *const iwl_dvm_cmd_strings[REPLY_MAX + 1] = {
 	IWL_CMD_ENTRY(REPLY_ALIVE),
 	IWL_CMD_ENTRY(REPLY_ERROR),
 	IWL_CMD_ENTRY(REPLY_ECHO),
@@ -763,7 +763,7 @@ static void iwlagn_pass_packet_to_mac80211(struct iwl_priv *priv,
 
 	memcpy(IEEE80211_SKB_RXCB(skb), stats, sizeof(*stats));
 
-	ieee80211_rx(priv->hw, skb);
+	ieee80211_rx_napi(priv->hw, skb, priv->napi);
 }
 
 static u32 iwlagn_translate_rx_status(struct iwl_priv *priv, u32 decrypt_in)
@@ -1073,7 +1073,8 @@ void iwl_setup_rx_handlers(struct iwl_priv *priv)
 		iwlagn_bt_rx_handler_setup(priv);
 }
 
-void iwl_rx_dispatch(struct iwl_op_mode *op_mode, struct iwl_rx_cmd_buffer *rxb)
+void iwl_rx_dispatch(struct iwl_op_mode *op_mode, struct napi_struct *napi,
+		     struct iwl_rx_cmd_buffer *rxb)
 {
 	struct iwl_rx_packet *pkt = rxb_addr(rxb);
 	struct iwl_priv *priv = IWL_OP_MODE_GET_DVM(op_mode);

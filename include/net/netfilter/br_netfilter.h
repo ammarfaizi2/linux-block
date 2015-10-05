@@ -31,7 +31,7 @@ static inline void nf_bridge_push_encap_header(struct sk_buff *skb)
 	skb->network_header -= len;
 }
 
-int br_nf_pre_routing_finish_bridge(struct sock *sk, struct sk_buff *skb);
+int br_nf_pre_routing_finish_bridge(struct net *net, struct sock *sk, struct sk_buff *skb);
 
 static inline struct rtable *bridge_parent_rtable(const struct net_device *dev)
 {
@@ -59,7 +59,7 @@ static inline unsigned int
 br_nf_pre_routing_ipv6(const struct nf_hook_ops *ops, struct sk_buff *skb,
 		       const struct nf_hook_state *state)
 {
-	return NF_DROP;
+	return NF_ACCEPT;
 }
 #endif
 
