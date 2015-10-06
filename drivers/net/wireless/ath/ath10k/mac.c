@@ -197,9 +197,8 @@ static int ath10k_send_key(struct ath10k_vif *arvif,
 		return -EOPNOTSUPP;
 	}
 
-	if (test_bit(ATH10K_FLAG_RAW_MODE, &ar->dev_flags)) {
+	if (test_bit(ATH10K_FLAG_RAW_MODE, &ar->dev_flags))
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV;
-	}
 
 	if (cmd == DISABLE_KEY) {
 		arg.key_cipher = WMI_CIPHER_NONE;
@@ -1111,7 +1110,8 @@ static int ath10k_monitor_recalc(struct ath10k *ar)
 
 			ret = ath10k_monitor_stop(ar);
 			if (ret)
-				ath10k_warn(ar, "failed to stop disallowed monitor: %d\n", ret);
+				ath10k_warn(ar, "failed to stop disallowed monitor: %d\n",
+					    ret);
 				/* not serious */
 		}
 
@@ -4065,6 +4065,7 @@ static u32 get_nss_from_chainmask(u16 chain_mask)
 static int ath10k_mac_get_vht_cap_bf_sts(struct ath10k *ar)
 {
 	int nsts = ar->vht_cap_info;
+
 	nsts &= IEEE80211_VHT_CAP_BEAMFORMEE_STS_MASK;
 	nsts >>= IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT;
 
@@ -4081,8 +4082,9 @@ static int ath10k_mac_get_vht_cap_bf_sts(struct ath10k *ar)
 static int ath10k_mac_get_vht_cap_bf_sound_dim(struct ath10k *ar)
 {
 	int sound_dim = ar->vht_cap_info;
+
 	sound_dim &= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
-	sound_dim >>=IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
+	sound_dim >>= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
 
 	/* If the sounding dimension is not advertised by the firmware,
 	 * let's use a default value of 1
@@ -4656,7 +4658,7 @@ static void ath10k_bss_info_changed(struct ieee80211_hw *hw,
 						info->use_cts_prot ? 1 : 0);
 		if (ret)
 			ath10k_warn(ar, "failed to set protection mode %d on vdev %i: %d\n",
-					info->use_cts_prot, arvif->vdev_id, ret);
+				    info->use_cts_prot, arvif->vdev_id, ret);
 	}
 
 	if (changed & BSS_CHANGED_ERP_SLOT) {
@@ -6268,8 +6270,8 @@ ath10k_mac_update_rx_channel(struct ath10k *ar,
 	rcu_read_lock();
 	if (!ctx && ath10k_mac_num_chanctxs(ar) == 1) {
 		ieee80211_iter_chan_contexts_atomic(ar->hw,
-					ath10k_mac_get_any_chandef_iter,
-					&def);
+						    ath10k_mac_get_any_chandef_iter,
+						    &def);
 
 		if (vifs)
 			def = &vifs[0].new_ctx->def;
