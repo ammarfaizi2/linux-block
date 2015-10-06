@@ -531,6 +531,12 @@ static struct ui_browser_colorset {
 		.bg	  = "lightgray",
 	},
 	{
+		.colorset = HE_COLORSET_INLINED_CODE,
+		.name	  = "inlined_code",
+		.fg	  = "default",
+		.bg	  = "yellow",
+	},
+	{
 		.colorset = HE_COLORSET_CODE,
 		.name	  = "code",
 		.fg	  = "blue",

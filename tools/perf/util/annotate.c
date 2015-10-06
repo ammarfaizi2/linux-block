@@ -1069,6 +1069,55 @@ static void delete_last_nop(struct symbol *sym)
 	}
 }
 
+static int symbol__annotate_inline_expansions(struct symbol *sym, struct map *map __maybe_unused)
+{
+	struct disasm_line *dl;
+	struct annotation *notes;
+	struct inline_expansions *exps;
+	struct inline_expansion *exp;
+	bool in_inline_expansion = false;
+	int err = -1;
+	u32 current = 0;
+
+	exps = sym->priv;
+	if (exps == NULL)
+		goto out;
+
+	notes = symbol__annotation(sym);
+	exp = &exps->entries[current];
+
+	list_for_each_entry(dl, &notes->src->source, node) {
+		u64 offset;
+
+		if (dl->offset < 0)
+			goto no_inline_expansion;
+
+		offset = dl->offset;
+		if (offset >= exp->start && offset <= exp->start) {
+			dl->inline_expansion = current;
+			in_inline_expansion = true;
+			if (0) {
+				fprintf(stderr, "%s: dl->offset=%" PRIu64 ", exp=%d(%u=%s)\n",
+					__func__, offset, current, exp->start, exp->name);
+			}
+			continue;
+		}
+
+no_inline_expansion:
+		if (in_inline_expansion) {
+			in_inline_expansion = false;
+			if (++current == exps->nr_entries)
+				break;
+			exp = &exps->entries[current];
+		}
+		dl->inline_expansion = -1;
+	}
+
+	err = 0;
+out:
+	return err;
+}
+
 int symbol__annotate(struct symbol *sym, struct map *map, size_t privsize)
 {
 	struct dso *dso = map->dso;
@@ -1185,6 +1234,8 @@ fallback:
 		strcpy(symfs_filename, tmp);
 	}
 
+	map__load_inline_expansions(map);
+
 	snprintf(command, sizeof(command),
 		 "%s %s%s --start-address=0x%016" PRIx64
 		 " --stop-address=0x%016" PRIx64
@@ -1208,6 +1259,8 @@ fallback:
 		if (symbol__parse_objdump_line(sym, map, file, privsize,
 			    &lineno) < 0)
 			break;
+
+	symbol__annotate_inline_expansions(sym, map);
 
 	/*
 	 * kallsyms does not have symbol sizes so there may a nop at the end.

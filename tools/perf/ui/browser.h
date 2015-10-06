@@ -10,6 +10,7 @@
 #define HE_COLORSET_CODE	54
 #define HE_COLORSET_ADDR	55
 #define HE_COLORSET_ROOT	56
+#define HE_COLORSET_INLINED_CODE 57
 
 struct ui_browser {
 	u64	      index, top_idx;

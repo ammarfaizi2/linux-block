@@ -159,6 +159,7 @@ struct dso {
 	u8		 is_64_bit:1;
 	u8		 sorted_by_name;
 	u8		 loaded;
+	u8		 inline_expansions_loaded;
 	u8		 rel;
 	u8		 build_id[BUILD_ID_SIZE];
 	const char	 *short_name;
@@ -223,6 +224,8 @@ static inline void __dso__zput(struct dso **dso)
 #define dso__zput(dso) __dso__zput(&dso)
 
 bool dso__loaded(const struct dso *dso, enum map_type type);
+
+int map__load_inline_expansions(struct map *map);
 
 bool dso__sorted_by_name(const struct dso *dso, enum map_type type);
 void dso__set_sorted_by_name(struct dso *dso, enum map_type type);

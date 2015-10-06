@@ -178,6 +178,7 @@ static void annotate_browser__write(struct ui_browser *browser, void *entry, int
 		ui_browser__write_nstring(browser, bf, printed);
 		ui_browser__write_nstring(browser, dl->line, width - printed - pcnt_width + 1);
 	} else {
+		size_t dl_len;
 		u64 addr = dl->offset;
 		int color = -1;
 
@@ -234,10 +235,30 @@ static void annotate_browser__write(struct ui_browser *browser, void *entry, int
 			}
 		}
 
-		disasm_line__scnprintf(dl, bf, sizeof(bf), !annotate_browser__opts.use_offset);
+		dl_len = disasm_line__scnprintf(dl, bf, sizeof(bf), !annotate_browser__opts.use_offset);
+
+		if (dl->inline_expansion != -1) {
+			struct map_symbol *ms = ab->b.priv;
+			struct symbol *sym = ms->sym;
+			struct inline_expansions *exps = sym->priv;
+
+			if (exps != NULL) {
+				struct inline_expansion *exp = &exps->entries[dl->inline_expansion];
+
+				scnprintf(bf + dl_len, sizeof(bf) - dl_len, "  %*s     ",
+					  width - pcnt_width - 10 - printed - dl_len, exp->name);
+				if (!current_entry)
+					color = ui_browser__set_color(browser, HE_COLORSET_INLINED_CODE);
+				ui_browser__printf(browser, "%s", bf);
+				if (!current_entry)
+					ui_browser__set_color(browser, color);
+				goto out;
+			}
+		}
+
 		ui_browser__write_nstring(browser, bf, width - pcnt_width - 3 - printed);
 	}
-
+out:
 	if (current_entry)
 		ab->selection = dl;
 }
