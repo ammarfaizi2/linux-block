@@ -23,6 +23,18 @@
 
 #include "dso.h"
 
+struct inline_expansion {
+	u32	start;
+	u32	end;
+	char 	*name;
+};
+
+struct inline_expansions {
+	u32	nr_entries;
+	u32	nr_allocated;
+	struct inline_expansion entries[0];
+};
+
 /*
  * libelf 0.8.x and earlier do not support ELF_C_READ_MMAP;
  * for newer versions we can use mmap to reduce memory usage:
@@ -55,6 +67,7 @@ struct symbol {
 	u16		namelen;
 	u8		binding;
 	bool		ignore;
+	void		*priv;
 	char		name[0];
 };
 
