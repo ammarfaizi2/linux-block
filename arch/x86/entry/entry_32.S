@@ -393,7 +393,8 @@ sysenter_past_esp:
 1:	mov	PT_FS(%esp), %fs
 	PTGS_TO_GS
 	popl	%ebx			/* pt_regs->bx */
-	addl	$2*4, %esp		/* skip pt_regs->cx and pt_regs->dx */
+	popl	%eax			/* skip pt_regs->cx */
+	popl	%eax			/* skip pt_regs->dx */
 	popl	%esi			/* pt_regs->si */
 	popl	%edi			/* pt_regs->di */
 	popl	%ebp			/* pt_regs->bp */
