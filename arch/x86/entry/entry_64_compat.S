@@ -70,7 +70,6 @@ ENTRY(entry_SYSENTER_compat)
 	 * that later using TIF_SINGLESTEP.
 	 */
 	pushfq				/* pt_regs->flags (except IF = 0) */
-	orl	$X86_EFLAGS_IF, (%rsp)	/* Fix saved flags */
 	pushq	$__USER32_CS		/* pt_regs->cs */
 	xorq    %r8,%r8
 	pushq	%r8			/* pt_regs->ip = 0 (placeholder) */
@@ -91,6 +90,7 @@ ENTRY(entry_SYSENTER_compat)
 	pushq   %r8                     /* pt_regs->r14 = 0 */
 	pushq   %r8                     /* pt_regs->r15 = 0 */
 	cld
+	orl	$X86_EFLAGS_IF, EFLAGS(%rsp)	/* Fix saved flags */
 
 	/*
 	 * SYSENTER doesn't filter flags, so we need to clear NT and AC
