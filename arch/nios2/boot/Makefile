@@ -31,6 +31,9 @@ $(obj)/zImage: $(obj)/compressed/vmlinux FORCE
 $(obj)/compressed/vmlinux: $(obj)/vmlinux.gz FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/compressed $@
 
+# Let clean descend into subdirs
+subdir- := dts
+
 # Rule to build device tree blobs
 DTB_SRC := $(patsubst "%",%,$(CONFIG_NIOS2_DTB_SOURCE))
 
@@ -44,16 +47,6 @@ $(obj)/system.dtb: $(DTB_SRC) FORCE
 $(obj)/linked_dtb.o: $(obj)/system.dtb
 
 obj-$(CONFIG_NIOS2_DTB_SOURCE_BOOL) += linked_dtb.o
-
-targets += $(dtb-y)
-
-# Rule to build device tree blobs with make command
-$(obj)/%.dtb: $(src)/dts/%.dts FORCE
-	$(call if_changed_dep,dtc)
-
-$(obj)/dtbs: $(addprefix $(obj)/, $(dtb-y))
-
-clean-files := *.dtb
 
 install:
 	sh $(srctree)/$(src)/install.sh $(KERNELRELEASE) $(BOOTIMAGE) System.map "$(INSTALL_PATH)"
