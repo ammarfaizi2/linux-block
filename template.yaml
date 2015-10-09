@@ -1,0 +1,25 @@
+%YAML 1.2
+---
+version: 1
+
+id: %id%
+
+title: %title%
+
+maintainer:
+    -   name: %maintainer%
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            %compatible%
+
+%props%
+...
+
