@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: vt8500
+
+title: Device Tree Clock bindings for arch-vt8500
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wm,wm8850-pll-clock"
+            "wm,wm8750-pll-clock"
+            "wm,wm8650-pll-clock"
+            "via,vt8500-pll-clock"
+            "via,vt8500-device-clock"
+
+    #clock-cells:
+    clocks:
+    divisor-mask:
+    divisor-reg:
+    enable-bit:
+    enable-reg:
+
+...
+
 # Device Tree Clock bindings for arch-vt8500
 #
 # This binding uses the common clock binding[1].

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc1850-ccu
+
+title: NXP LPC1850 Clock Control Unit (CCU)
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc1850-ccu"
+
+    #clock-cells:
+    clock-names:
+    clocks:
+    reg:
+
+...
+
 # * NXP LPC1850 Clock Control Unit (CCU)
 #
 # Each CGU base clock has several clock branches which can be turned on

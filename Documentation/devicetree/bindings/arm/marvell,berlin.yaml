@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,berlin
+
+title: Marvell Berlin SoC Family Device Tree Bindings
+
+maintainer:
+    -   name: Antoine Tenart <antoine.tenart@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sony,nsz-gs7" && "marvell,berlin2" && "marvell,berlin"
+            "marvell,berlin-cpu-ctrl"
+            "marvell,berlin2q" && "marvell,berlin"
+            "marvell,berlin2q-dmp" && "marvell,berlin2q" && "marvell,berlin"
+            "marvell,berlin2" && "marvell,berlin"
+            "marvell,berlin2cd" && "marvell,berlin"
+            "google,chromecast" && "marvell,berlin2cd" && "marvell,berlin"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Marvell Berlin SoC Family Device Tree Bindings
 # ---------------------------------------------------------------
 #

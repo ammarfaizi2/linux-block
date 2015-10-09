@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: cc770
+
+title: Memory mapped Bosch CC770 and Intel AN82527 CAN controller
+
+maintainer:
+    -   name: Wolfgang Grandegger <wg@grandegger.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "intc,82527"
+            "bosch,cc770"
+
+    bosch,clock-out-frequency:
+    bosch,disconnect-rx1-input:
+    bosch,disconnect-tx1-output:
+    bosch,external-clock-frequency:
+    bosch,iso-low-speed-mux:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Memory mapped Bosch CC770 and Intel AN82527 CAN controller
 #
 # Note: The CC770 is a CAN controller from Bosch, which is 100%

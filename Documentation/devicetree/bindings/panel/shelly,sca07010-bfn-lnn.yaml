@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: shelly,sca07010-bfn-lnn
+
+title: Shelly SCA07010-BFN-LNN 7.0" WVGA TFT LCD panel
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qd,qd43003c0-40" && "simple-panel"
+            "chunghwa,claa101wb01" && "simple-panel"
+
+    backlight:
+    ddc-i2c-bus:
+    enable-gpios:
+    power-supply:
+
+...
+
 # Shelly SCA07010-BFN-LNN 7.0" WVGA TFT LCD panel
 #
 # Required properties:

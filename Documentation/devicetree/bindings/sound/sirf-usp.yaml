@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: sirf-usp
+
+title: SiRF SoC USP module
+
+maintainer:
+    -   name: Rongjun Ying <rongjun.ying@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,atlas7-bt-usp" && "sirf,prima2-usp-pcm"
+
+    cell-index:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    fifosize:
+    reg:
+
+...
+
 # * SiRF SoC USP module
 #
 # Required properties:

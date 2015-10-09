@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-usb
+
+title: Freescale SOC USB controllers
+
+maintainer:
+    -   name: harninder rai <harninder.rai@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl-usb2-mph"
+            "fsl-usb2-dr-v2"."5" && "fsl-usb2-dr"
+            "fsl-usb2-dr"
+            "fsl,mpc5121-usb2-dr"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    dr_mode:
+    fsl,invert-drvvbus:
+    fsl,invert-pwr-fault:
+    interrupts:
+    phy_type:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Freescale SOC USB controllers
 #
 # The device node for a USB controller that is part of a Freescale

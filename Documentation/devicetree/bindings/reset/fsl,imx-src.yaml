@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,imx-src
+
+title: Freescale i.MX System Reset Controller
+
+maintainer:
+    -   name: Philipp Zabel <p.zabel@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-src" && "syscon"
+            "fsl,imx7d-src" && "fsl,imx51-src" && "syscon"
+            "fsl,imx6ul-src" && "fsl,imx51-src"
+            "fsl,imx6sx-src" && "fsl,imx51-src"
+            "fsl,imx6sl-src" && "fsl,imx51-src"
+            "fsl,imx6q-src" && "fsl,imx51-src"
+            "fsl,imx53-src" && "fsl,imx51-src"
+            "fsl,imx51-src"
+            "fsl,imx50-src" && "fsl,imx51-src"
+
+    reg:
+    #reset-cells:
+
+...
+
 # Freescale i.MX System Reset Controller
 # ======================================
 #

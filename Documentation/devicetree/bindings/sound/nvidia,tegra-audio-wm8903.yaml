@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra-audio-wm8903
+
+title: NVIDIA Tegra audio complex
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra-audio-wm8903-ventana" && "nvidia,tegra-audio-wm8903"
+            "nvidia,tegra-audio-wm8903-seaboard" && "nvidia,tegra-audio-wm8903"
+            "nvidia,tegra-audio-wm8903-harmony" && "nvidia,tegra-audio-wm8903"
+            "nvidia,tegra-audio-wm8903-cardhu" && "nvidia,tegra-audio-wm8903"
+            "ad,tegra-audio-wm8903-tec" && "nvidia,tegra-audio-wm8903"
+            "ad,tegra-audio-wm8903-medcom-wide" && "nvidia,tegra-audio-wm8903"
+            "ad,tegra-audio-plutux" && "nvidia,tegra-audio-wm8903"
+
+    clock-names:
+    clocks:
+    nvidia,audio-codec:
+    nvidia,audio-routing:
+    nvidia,hp-det-gpios:
+    nvidia,i2s-controller:
+    nvidia,model:
+    nvidia,spkr-en-gpios:
+
+...
+
 # NVIDIA Tegra audio complex
 #
 # Required properties:

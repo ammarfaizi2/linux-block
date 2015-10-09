@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-samsung
+
+title: Samsung PWM timers
+
+maintainer:
+    -   name: Tomasz Figa <t.figa@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pc100-pwm"
+            "samsung,s5p6440-pwm"
+            "samsung,s3c6400-pwm"
+            "samsung,s3c2410-pwm"
+            "samsung,exynos4210-pwm"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    #pwm-cells:
+    reg:
+    samsung,pwm-outputs:
+    status:
+
+...
+
 # * Samsung PWM timers
 #
 # Samsung SoCs contain PWM timer blocks which can be used for system clock source

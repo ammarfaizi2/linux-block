@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-sata
+
+title: Freescale 8xxx/3.0 Gb/s SATA nodes
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8379-sata" && "fsl,pq-sata"
+            "fsl,mpc8377-sata" && "fsl,pq-sata"
+            "fsl,mpc8315-sata" && "fsl,pq-sata"
+
+    cell-index:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale 8xxx/3.0 Gb/s SATA nodes
 #
 # SATA nodes are defined to describe on-chip Serial ATA controllers.

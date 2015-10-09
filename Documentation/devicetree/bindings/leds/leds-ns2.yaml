@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: leds-ns2
+
+title: Binding for dual-GPIO LED found on Network Space v2 (and parents).
+
+maintainer:
+    -   name: Grant Likely <grant.likely@secretlab.ca>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lacie,ns2-leds"
+
+    "lacie,ns2-leds"::
+
+...
+
 # Binding for dual-GPIO LED found on Network Space v2 (and parents).
 #
 # Required properties:

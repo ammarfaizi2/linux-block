@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: twl4030-keypad
+
+title: TWL4030's Keypad Controller device tree bindings
+
+maintainer:
+    -   name: Sebastian Reichel <sre@debian.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,twl4030-keypad"
+
+    interrupts:
+    keypad,num-columns:
+    keypad,num-rows:
+    linux,keymap:
+    status:
+
+...
+
 # * TWL4030's Keypad Controller device tree bindings
 #
 # TWL4030's Keypad controller is used to interface a SoC with a matrix-type

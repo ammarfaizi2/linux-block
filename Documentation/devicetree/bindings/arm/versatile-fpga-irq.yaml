@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: versatile-fpga-irq
+
+title: ARM Versatile FPGA interrupt controller
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-fpga-irq"
+
+    clear-mask:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+    valid-mask:
+
+...
+
 # * ARM Versatile FPGA interrupt controller
 #
 # One or more FPGA IRQ controllers can be synthesized in an ARM reference board

@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,gsbi
+
+title: QCOM GSBI (General Serial Bus Interface) Driver
+
+maintainer:
+    -   name: Andy Gross <agross@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,msm-uartdm-v1"."3" && "qcom,msm-uartdm"
+            "qcom,i2c-qup-v1"."1"."1"
+            "qcom,gsbi-v1"."0"."0"
+
+    #address-cells:
+    cell-index:
+    clock-names:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    qcom,mode:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+    syscon-tcsr:
+
+...
+
 # QCOM GSBI (General Serial Bus Interface) Driver
 #
 # The GSBI controller is modeled as a node with zero or more child nodes, each

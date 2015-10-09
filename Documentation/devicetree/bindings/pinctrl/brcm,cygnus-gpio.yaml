@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,cygnus-gpio
+
+title: Broadcom Cygnus GPIO/PINCONF Controller
+
+maintainer:
+    -   name: Ray Jui <rjui@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,cygnus-crmu-gpio"
+            "brcm,cygnus-ccm-gpio"
+            "brcm,cygnus-asiu-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    interrupt-controller:
+    interrupts:
+    pinmux:
+    reg:
+
+...
+
 # Broadcom Cygnus GPIO/PINCONF Controller
 #
 # Required properties:

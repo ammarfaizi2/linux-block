@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: tegra-sata
+
+title: Tegra124 SoC SATA AHCI controller
+
+maintainer:
+    -   name: Mikko Perttunen <mperttunen@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-ahci"
+
+    avdd-supply:
+    clock-names:
+    clocks:
+    hvdd-supply:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    reset-names:
+    resets:
+    status:
+    target-12v-supply:
+    target-5v-supply:
+    vddio-supply:
+
+...
+
 # Tegra124 SoC SATA AHCI controller
 #
 # Required properties :

@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8731
+
+title: WM8731 audio CODEC
+
+maintainer:
+    -   name: Mark Brown <broonie@opensource.wolfsonmicro.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wm8731"
+
+    reg:
+
+...
+
 # WM8731 audio CODEC
 #
 # This device supports both I2C and SPI (configured with pin strapping

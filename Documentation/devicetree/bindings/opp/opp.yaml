@@ -1,3 +1,49 @@
+%YAML 1.2
+---
+version: 1
+
+id: opp
+
+title: Generic OPP (Operating Performance Points) Bindings
+
+maintainer:
+    -   name: Viresh Kumar <viresh.kumar@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,krait"
+            "operating-points-v2"
+            "arm,cortex-a9"
+            "arm,cortex-a7"
+            "arm,cortex-a15"
+
+    cci-control-port:
+    clock-frequency:
+    clock-latency:
+    clock-names:
+    clocks:
+    #cooling-cells:
+    cooling-max-level:
+    cooling-min-level:
+    cpu0-supply:
+    cpu-idle-states:
+    cpu-release-addr:
+    device_type:
+    operating-points:
+    power-domains:
+    reg:
+    vdd-cpu-supply:
+    voltage-tolerance:
+
+...
+
 # Generic OPP (Operating Performance Points) Bindings
 # ----------------------------------------------------
 #

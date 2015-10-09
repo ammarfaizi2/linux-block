@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: via,vt8500-fb
+
+title: VIA VT8500 Framebuffer
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "via,vt8500-fb"
+
+    bits-per-pixel:
+    interrupts:
+    reg:
+
+...
+
 # VIA VT8500 Framebuffer
 # -----------------------------------------------------
 #

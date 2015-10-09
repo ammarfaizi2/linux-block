@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-ppmu
+
+title: Samsung Exynos PPMU (Platform Performance Monitoring Unit) device
+
+maintainer:
+    -   name: Chanwoo Choi <cw00.choi@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos-ppmu"
+
+    clock-names:
+    clocks:
+    reg:
+    status:
+
+...
+
 #
 # * Samsung Exynos PPMU (Platform Performance Monitoring Unit) device
 #

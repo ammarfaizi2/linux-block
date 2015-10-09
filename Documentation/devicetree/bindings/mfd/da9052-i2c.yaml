@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: da9052-i2c
+
+title: Dialog DA9052/53 Power Management Integrated Circuit (PMIC)
+
+maintainer:
+    -   name: Ying-Chun Liu (PaulLiu) <paul.liu@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "dlg,da9053-aa" && "dlg,da9052"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * Dialog DA9052/53 Power Management Integrated Circuit (PMIC)
 #
 # Required properties:

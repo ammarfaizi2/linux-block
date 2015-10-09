@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxs-saif
+
+title: Freescale MXS Serial Audio Interface (SAIF)
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-saif"
+
+    #clock-cells:
+    clocks:
+    dma-names:
+    dmas:
+    fsl,saif-master:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Freescale MXS Serial Audio Interface (SAIF)
 #
 # Required properties:

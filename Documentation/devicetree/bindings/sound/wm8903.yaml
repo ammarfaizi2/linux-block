@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8903
+
+title: WM8903 audio CODEC
+
+maintainer:
+    -   name: Mark Brown <broonie@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wlf,wm8903"
+
+    #gpio-cells:
+    gpio-cfg:
+    gpio-controller:
+    interrupt-parent:
+    interrupts:
+    micdet-cfg:
+    micdet-delay:
+    reg:
+
+...
+
 # WM8903 audio CODEC
 #
 # This device supports I2C only.

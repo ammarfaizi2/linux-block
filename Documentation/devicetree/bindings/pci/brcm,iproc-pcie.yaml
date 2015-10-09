@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,iproc-pcie
+
+title: Broadcom iProc PCIe controller with the platform bus interface
+
+maintainer:
+    -   name: Ray Jui <rjui@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,iproc-pcie"
+
+    #address-cells:
+    bus-range:
+    device_type:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    linux,pci-domain:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Broadcom iProc PCIe controller with the platform bus interface
 #
 # Required properties:

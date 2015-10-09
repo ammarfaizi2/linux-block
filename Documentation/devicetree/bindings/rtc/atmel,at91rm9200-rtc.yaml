@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel,at91rm9200-rtc
+
+title: Atmel AT91RM9200 Real Time Clock
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9x5-rtc"
+            "atmel,at91rm9200-rtc"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Atmel AT91RM9200 Real Time Clock
 #
 # Required properties:

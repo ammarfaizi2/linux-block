@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap-hdq
+
+title: OMAP HDQ One wire bus master controller
+
+maintainer:
+    -   name: NeilBrown <neilb@suse.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap3-1w"
+
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    ti,hwmods:
+
+...
+
 # * OMAP HDQ One wire bus master controller
 #
 # Required properties:

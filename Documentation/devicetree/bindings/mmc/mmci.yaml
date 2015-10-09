@@ -1,3 +1,60 @@
+%YAML 1.2
+---
+version: 1
+
+id: mmci
+
+title: ARM PrimeCell MultiMedia Card Interface (MMCI) PL180/1
+
+maintainer:
+    -   name: Ulf Hansson <ulf.hansson@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,pl18x" && "arm,primecell"
+
+    arm,primecell-periphid:
+    bus-width:
+    cap-mmc-highspeed:
+    cap-sd-highspeed:
+    cd-gpios:
+    cd-inverted:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    full-pwr-cycle:
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    max-frequency:
+    no-1-8-v:
+    non-removable:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    power-domains:
+    reg:
+    sd-uhs-sdr12:
+    sd-uhs-sdr25:
+    status:
+    st,sig-dir-cmd:
+    st,sig-dir-dat0:
+    st,sig-dir-dat2:
+    st,sig-pin-fbclk:
+    vmmc-supply:
+    vqmmc-supply:
+    wp-gpios:
+
+...
+
 # * ARM PrimeCell MultiMedia Card Interface (MMCI) PL180/1
 #
 # The ARM PrimeCell MMCI PL180 and PL181 provides an interface for

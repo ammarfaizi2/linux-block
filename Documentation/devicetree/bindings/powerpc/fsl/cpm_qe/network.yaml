@@ -1,3 +1,50 @@
+%YAML 1.2
+---
+version: 1
+
+id: network
+
+title: Network
+
+maintainer:
+    -   name: Grant Likely <grant.likely@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,pq2fads-mdio-bitbang" && "fsl,mpc8280-mdio-bitbang" && "fsl,cpm2-mdio-bitbang"
+            "fsl,mpc885-scc-enet" && "fsl,cpm1-scc-enet"
+            "fsl,mpc885-fec-mdio" && "fsl,pq1-fec-mdio"
+            "fsl,mpc875-fec-mdio" && "fsl,pq1-fec-mdio"
+            "fsl,mpc866-scc-enet" && "fsl,cpm1-scc-enet"
+            "fsl,mpc866-fec-mdio" && "fsl,pq1-fec-mdio"
+            "fsl,mpc860-scc-enet" && "fsl,cpm1-scc-enet"
+            "fsl,mpc8560-fcc-enet" && "fsl,cpm2-fcc-enet"
+            "fsl,mpc8280-fcc-enet" && "fsl,cpm2-fcc-enet"
+            "fsl,mpc8272-fcc-enet" && "fsl,cpm2-fcc-enet"
+            "fsl,mpc8272ads-mdio-bitbang" && "fsl,mpc8272-mdio-bitbang" && "fsl,cpm2-mdio-bitbang"
+            "fsl,mpc8248-fcc-enet" && "fsl,cpm2-fcc-enet"
+            "fsl,mpc8247-scc-enet" && "fsl,cpm2-scc-enet"
+            "fsl,cpm2-mdio-bitbang"
+            "fsl,cpm2-fcc-enet"
+
+    device_type:
+    fsl,cpm-command:
+    interrupt-parent:
+    interrupts:
+    linux,network-index:
+    local-mac-address:
+    phy-handle:
+    reg:
+
+...
+
 # * Network
 #
 # Currently defined compatibles:

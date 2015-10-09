@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-wdt
+
+title: Atmel Watchdog Timers
+
+maintainer:
+    -   name: Fabio Porcedda <fabio.porcedda@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9260-wdt"
+
+    atmel,dbg-halt:
+    atmel,max-heartbeat-sec:
+    atmel,min-heartbeat-sec:
+    atmel,reset-type:
+    atmel,watchdog-type:
+    clocks:
+    interrupts:
+    reg:
+    status:
+    timeout-sec:
+
+...
+
 # * Atmel Watchdog Timers
 #
 # ** at91sam9-wdt

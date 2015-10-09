@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-cbus-gpio
+
+title: Device tree bindings for i2c-cbus-gpio driver
+
+maintainer:
+    -   name: Aaro Koskinen <aaro.koskinen@iki.fi>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "retu-mfd"
+            "i2c-cbus-gpio"
+
+    #address-cells:
+    gpios:
+    #size-cells:
+
+...
+
 # Device tree bindings for i2c-cbus-gpio driver
 #
 # Required properties:

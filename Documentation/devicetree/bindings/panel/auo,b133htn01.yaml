@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: auo,b133htn01
+
+title: AU Optronics Corporation 13.3" FHD (1920x1080) color TFT-LCD panel
+
+maintainer:
+    -   name: Ajay Kumar <ajaykumar.rs@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "auo,b133htn01"
+
+    backlight:
+    power-supply:
+
+...
+
 # AU Optronics Corporation 13.3" FHD (1920x1080) color TFT-LCD panel
 #
 # Required properties:

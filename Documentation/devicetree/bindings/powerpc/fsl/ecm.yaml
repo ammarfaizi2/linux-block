@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ecm
+
+title: =====================================================================
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8572-ecm" && "fsl,ecm"
+            "fsl,mpc8560-ecm" && "fsl,ecm"
+            "fsl,mpc8555-ecm" && "fsl,ecm"
+            "fsl,mpc8548-ecm" && "fsl,ecm"
+            "fsl,mpc8544-ecm" && "fsl,ecm"
+            "fsl,mpc8541-ecm" && "fsl,ecm"
+            "fsl,mpc8540-ecm" && "fsl,ecm"
+            "fsl,ecm-law"
+
+    fsl,num-laws:
+    reg:
+    status:
+
+...
+
 # =====================================================================
 # E500 LAW & Coherency Module Device Tree Binding
 # Copyright (C) 2009 Freescale Semiconductor Inc.

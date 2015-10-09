@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx-pwm
+
+title: LPC32XX PWM controller
+
+maintainer:
+    -   name: Alexandre Pereira da Silva <aletes.xgr@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-pwm"
+
+    reg:
+    status:
+
+...
+
 # LPC32XX PWM controller
 #
 # Required properties:

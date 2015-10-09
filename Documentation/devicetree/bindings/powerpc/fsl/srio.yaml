@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: srio
+
+title: Freescale Serial RapidIO (SRIO) Controller
+
+maintainer:
+    -   name: Liu Gang <Gang.Liu@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,srio"
+
+    #address-cells:
+    fsl,iommu-parent:
+    fsl,srio-rmu-handle:
+    interrupts:
+    ranges:
+    reg:
+    #size-cells:
+    sleep:
+    status:
+
+...
+
 # * Freescale Serial RapidIO (SRIO) Controller
 #
 # RapidIO port node:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-sun4i
+
+title: Allwinner sun4i and sun7i SoC PWM controller
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun7i-a20-pwm"
+            "allwinner,sun4i-a10-pwm"
+
+    clocks:
+    #pwm-cells:
+    reg:
+    status:
+
+...
+
 # Allwinner sun4i and sun7i SoC PWM controller
 #
 # Required properties:

@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,brcmstb-gpio
+
+title: Broadcom STB "UPG GIO" GPIO controller
+
+maintainer:
+    -   name: Gregory Fong <gregory.0xf0@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm7445-gpio" && "brcm,brcmstb-gpio"
+
+    brcm,gpio-bank-widths:
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    interrupts-extended:
+    reg:
+    wakeup-source:
+
+...
+
 # Broadcom STB "UPG GIO" GPIO controller
 #
 # The controller's registers are organized as sets of eight 32-bit

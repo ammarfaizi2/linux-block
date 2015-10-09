@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: pinctrl_spear
+
+title: ST Microelectronics, SPEAr pinmux controller
+
+maintainer:
+    -   name: Viresh Kumar <vireshk@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear320-pinmux"
+            "st,spear310-pinmux"
+            "st,spear300-pinmux"
+            "st,spear1340-pinmux"
+            "st,spear1310-pinmux"
+
+    #gpio-range-cells:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # ST Microelectronics, SPEAr pinmux controller
 #
 # Required properties:

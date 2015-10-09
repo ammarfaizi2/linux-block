@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-flowctrl
+
+title: NVIDIA Tegra Flow Controller
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-flowctrl"
+            "nvidia,tegra20-flowctrl"
+            "nvidia,tegra124-flowctrl"
+            "nvidia,tegra114-flowctrl"
+
+    reg:
+
+...
+
 # NVIDIA Tegra Flow Controller
 #
 # Required properties:

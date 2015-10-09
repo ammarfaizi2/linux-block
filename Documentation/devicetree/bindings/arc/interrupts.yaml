@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: interrupts
+
+title: ARC700 incore Interrupt Controller
+
+maintainer:
+    -   name: Vineet Gupta <vgupta@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,arc700-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+
+...
+
 # * ARC700 incore Interrupt Controller
 #
 #   The core interrupt controller provides 32 prioritised interrupts (2 levels)

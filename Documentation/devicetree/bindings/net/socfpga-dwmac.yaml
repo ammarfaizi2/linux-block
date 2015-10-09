@@ -1,3 +1,60 @@
+%YAML 1.2
+---
+version: 1
+
+id: socfpga-dwmac
+
+title: Altera SOCFPGA SoC DWMAC controller
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dwmac-3"."70a" && "snps,dwmac"
+            "snps,dwmac-3"."70a"
+            "altr,socfpga-stmmac" && "snps,dwmac-3"."72a" && "snps,dwmac"
+            "altr,socfpga-stmmac" && "snps,dwmac-3"."70a" && "snps,dwmac"
+
+    altr,sysmgr-syscon:
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    mac-address:
+    max-frame-size:
+    phy-addr:
+    phy-mode:
+    reg:
+    reset-names:
+    resets:
+    rxc-skew-ps:
+    rxd0-skew-ps:
+    rxd1-skew-ps:
+    rxd2-skew-ps:
+    rxd3-skew-ps:
+    rxdv-skew-ps:
+    rx-fifo-depth:
+    snps,multicast-filter-bins:
+    snps,perfect-filter-entries:
+    status:
+    txc-skew-ps:
+    txd0-skew-ps:
+    txd1-skew-ps:
+    txd2-skew-ps:
+    txd3-skew-ps:
+    txen-skew-ps:
+    tx-fifo-depth:
+
+...
+
 # Altera SOCFPGA SoC DWMAC controller
 #
 # This is a variant of the dwmac/stmmac driver an inherits all descriptions

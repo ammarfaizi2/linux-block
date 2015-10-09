@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-wdt
+
+title: Broadcom Kona Family Watchdog Timer
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm11351-wdt" && "brcm,kona-wdt"
+
+    reg:
+
+...
+
 # Broadcom Kona Family Watchdog Timer
 # -----------------------------------
 #

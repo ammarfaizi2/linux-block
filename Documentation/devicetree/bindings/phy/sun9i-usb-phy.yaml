@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: sun9i-usb-phy
+
+title: Allwinner sun9i USB PHY
+
+maintainer:
+    -   name: Chen-Yu Tsai <wens@csie.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun9i-a80-usb-phy"
+
+    clock-names:
+    clocks:
+    #phy-cells:
+    phy-supply:
+    phy_type:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # Allwinner sun9i USB PHY
 # -----------------------
 #

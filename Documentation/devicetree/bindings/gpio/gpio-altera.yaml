@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-altera
+
+title: Altera GPIO controller bindings
+
+maintainer:
+    -   name: Tien Hock Loh <thloh@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,pio-1"."0"
+
+    altr,gpio-bank-width:
+    altr,interrupt-type:
+    edge_type:
+    #gpio-cells:
+    gpio-controller:
+    interrupt-parent:
+    interrupts:
+    level_trigger:
+    reg:
+    resetvalue:
+
+...
+
 # Altera GPIO controller bindings
 #
 # Required properties:

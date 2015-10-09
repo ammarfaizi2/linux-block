@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-74x164
+
+title: Generic 8-bits shift register GPIO driver
+
+maintainer:
+    -   name: Maxime Ripard <maxime.ripard@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fairchild,74hc595"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+    registers-number:
+    spi-max-frequency:
+
+...
+
 # * Generic 8-bits shift register GPIO driver
 #
 # Required properties:

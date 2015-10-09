@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: dwc3
+
+title: synopsys DWC3 CORE
+
+maintainer:
+    -   name: Huang Rui <ray.huang@amd.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dwc3"
+
+    clock-names:
+    clocks:
+    dr_mode:
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    maximum-speed:
+    phy-names:
+    phys:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    snps,dis_u2_susphy_quirk:
+    snps,dis_u3_susphy_quirk:
+    status:
+    tx-fifo-resize:
+
+...
+
 # synopsys DWC3 CORE
 #
 # DWC3- USB3 CONTROLLER

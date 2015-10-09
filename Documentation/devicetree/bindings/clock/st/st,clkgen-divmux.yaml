@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,clkgen-divmux
+
+title: Binding for a ST divider and multiplexer clock driver.
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,clkgena-divmux-c65-ls" && "st,clkgena-divmux"
+            "st,clkgena-divmux-c32-odf3" && "st,clkgena-divmux"
+            "st,clkgena-divmux-c32-odf2" && "st,clkgena-divmux"
+            "st,clkgena-divmux-c32-odf1" && "st,clkgena-divmux"
+            "st,clkgena-divmux-c32-odf0" && "st,clkgena-divmux"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+
+...
+
 # Binding for a ST divider and multiplexer clock driver.
 #
 # This binding uses the common clock binding[1].

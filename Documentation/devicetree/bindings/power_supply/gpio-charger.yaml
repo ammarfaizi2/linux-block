@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-charger
+
+title: gpio-charger
+
+maintainer:
+    -   name: Heiko Stuebner <heiko.stuebner@bq.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-charger"
+
+    charger-type:
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # gpio-charger
 #
 # Required properties :

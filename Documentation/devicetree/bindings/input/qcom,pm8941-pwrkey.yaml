@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,pm8941-pwrkey
+
+title: Qualcomm PM8941 PMIC Power Key
+
+maintainer:
+    -   name: Courtney Cavin <courtney.cavin@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8941-pwrkey"
+
+    bias-pull-up:
+    debounce:
+    interrupts:
+    reg:
+
+...
+
 # Qualcomm PM8941 PMIC Power Key
 #
 # PROPERTIES

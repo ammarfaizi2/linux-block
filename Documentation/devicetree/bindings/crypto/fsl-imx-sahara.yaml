@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-sahara
+
+title: Freescale SAHARA Cryptographic Accelerator included in some i.MX chips.
+
+maintainer:
+    -   name: Javier Martin <javier.martin@vista-silicon.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx53-sahara"
+            "fsl,imx27-sahara"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Freescale SAHARA Cryptographic Accelerator included in some i.MX chips.
 # Currently only i.MX27 and i.MX53 are supported.
 #

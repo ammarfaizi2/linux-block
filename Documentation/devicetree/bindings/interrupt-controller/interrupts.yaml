@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: interrupts
+
+title: Specifying interrupt information for devices
+
+maintainer:
+    -   name: Bjorn Helgaas <bhelgaas@google.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-vic"
+            "arm,versatile-sic"
+
+    clear-mask:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+    valid-mask:
+
+...
+
 # Specifying interrupt information for devices
 # ============================================
 #

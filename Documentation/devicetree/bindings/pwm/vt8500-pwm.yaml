@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: vt8500-pwm
+
+title: VIA/Wondermedia VT8500/WM8xxx series SoC PWM controller
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "via,vt8500-pwm"
+
+    clocks:
+    #pwm-cells:
+    reg:
+
+...
+
 # VIA/Wondermedia VT8500/WM8xxx series SoC PWM controller
 #
 # Required properties:

@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8962
+
+title: WM8962 audio CODEC
+
+maintainer:
+    -   name: Fabio Estevam <fabio.estevam@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wlf,wm8962"
+
+    AVDD-supply:
+    clocks:
+    CPVDD-supply:
+    DBVDD-supply:
+    DCVDD-supply:
+    gpio-cfg:
+    MICVDD-supply:
+    PLLVDD-supply:
+    reg:
+    SPKVDD1-supply:
+    SPKVDD2-supply:
+
+...
+
 # WM8962 audio CODEC
 #
 # This device supports I2C only.

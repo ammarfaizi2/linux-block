@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra124-xusb-padctl
+
+title: Device tree binding for NVIDIA Tegra XUSB pad controller
+
+maintainer:
+    -   name: Paul Walmsley <paul@pwsan.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-xusb-padctl"
+
+    #phy-cells:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-names:
+    resets:
+
+...
+
 # Device tree binding for NVIDIA Tegra XUSB pad controller
 # ========================================================
 #

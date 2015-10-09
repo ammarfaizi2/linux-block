@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: fan53555
+
+title: Binding for Fairchild FAN53555 regulators
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "silergy,syr828"
+            "silergy,syr827"
+
+    fcs,suspend-voltage-selector:
+    reg:
+    regulator-always-on:
+    regulator-boot-on:
+    regulator-enable-ramp-delay:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+    regulator-ramp-delay:
+    vin-supply:
+
+...
+
 # Binding for Fairchild FAN53555 regulators
 #
 # Required properties:

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-gate-clock
+
+title: Binding for simple gpio gated clock.
+
+maintainer:
+    -   name: Jyri Sarha <jsarha@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-gate-clock"
+
+    #clock-cells:
+    enable-gpios:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # Binding for simple gpio gated clock.
 #
 # This binding uses the common clock binding[1].

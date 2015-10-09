@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-adc
+
+title: Samsung Exynos Analog to Digital Converter bindings
+
+maintainer:
+    -   name: Chanwoo Choi <cw00.choi@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos-adc-v2"
+            "samsung,exynos-adc-v1"
+            "samsung,exynos3250-adc" && "samsung,exynos-adc-v2"
+
+    assigned-clock-rates:
+    assigned-clocks:
+    clock-names:
+    clocks:
+    interrupts:
+    #io-channel-cells:
+    io-channel-ranges:
+    reg:
+    samsung,syscon-phandle:
+    status:
+    vdd-supply:
+
+...
+
 # Samsung Exynos Analog to Digital Converter bindings
 #
 # The devicetree bindings are for the new ADC driver written for

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: ps8622
+
+title: ps8622-bridge bindings
+
+maintainer:
+    -   name: Ajay Kumar <ajaykumar.rs@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "parade,ps8625"
+
+    lane-count:
+    reg:
+    reset-gpios:
+    sleep-gpios:
+    use-external-pwm:
+
+...
+
 # ps8622-bridge bindings
 #
 # Required properties:

@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-gpio
+
+title: Device-Tree bindings for i2c gpio driver
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rv3029c2"
+            "i2c-gpio"
+
+    #address-cells:
+    gpios:
+    i2c-gpio,delay-us:
+    i2c-gpio,scl-open-drain:
+    i2c-gpio,sda-open-drain:
+    pinctrl-0:
+    pinctrl-names:
+    #size-cells:
+    status:
+
+...
+
 # Device-Tree bindings for i2c gpio driver
 #
 # Required properties:

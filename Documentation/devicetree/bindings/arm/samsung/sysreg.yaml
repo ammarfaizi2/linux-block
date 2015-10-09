@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: sysreg
+
+title: SAMSUNG S5P/Exynos SoC series System Registers (SYSREG)
+
+maintainer:
+    -   name: Sachin Kamat <sachin.kamat@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5-sysreg" && "syscon"
+            "samsung,exynos4-sysreg" && "syscon"
+
+    reg:
+
+...
+
 # SAMSUNG S5P/Exynos SoC series System Registers (SYSREG)
 #
 # Properties:

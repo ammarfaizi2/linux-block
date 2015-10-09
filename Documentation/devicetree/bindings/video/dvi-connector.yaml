@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: dvi-connector
+
+title: DVI Connector
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "dvi-connector"
+
+    ddc-i2c-bus:
+    digital:
+    label:
+
+...
+
 # DVI Connector
 # ==============
 #

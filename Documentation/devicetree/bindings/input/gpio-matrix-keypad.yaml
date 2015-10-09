@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-matrix-keypad
+
+title: GPIO driven matrix keypad device tree bindings
+
+maintainer:
+    -   name: AnilKumar Ch <anilkumar@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-matrix-keypad"
+
+    col-gpios:
+    col-gpios-binary:
+    col-scan-delay-us:
+    col-switch-delay-ms:
+    debounce-delay-ms:
+    gpio-activelow:
+    linux,keymap:
+    linux,no-autorepeat:
+    linux,wakeup:
+    pinctrl-0:
+    pinctrl-names:
+    row-gpios:
+
+...
+
 # * GPIO driven matrix keypad device tree bindings
 #
 # GPIO driven matrix keypad is used to interface a SoC with a matrix keypad.

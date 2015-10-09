@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: s2mps11
+
+title: Samsung S2MPS11, S2MPS13, S2MPS14 and S2MPU02 Voltage and Current Regulator
+
+maintainer:
+    -   name: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5m8767-clk"
+            "samsung,s2mps14-pmic"
+            "samsung,s2mps14-clk"
+            "samsung,s2mps11-pmic"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    s2mps11,buck16-ramp-delay:
+    s2mps11,buck2-ramp-delay:
+    s2mps11,buck2-ramp-enable:
+    s2mps11,buck34-ramp-delay:
+    s2mps11,buck3-ramp-enable:
+    s2mps11,buck4-ramp-enable:
+    s2mps11,buck6-ramp-enable:
+
+...
+
 #
 # * Samsung S2MPS11, S2MPS13, S2MPS14 and S2MPU02 Voltage and Current Regulator
 #
@@ -43,6 +83,9 @@
 #
 # 	regulator_name {
 # 		[standard regulator constraints....];
+            "samsung,s5m8767-clk"
+            "samsung,s2mps14-pmic"
+            "samsung,s2mps14-clk"
 # 	};
 #
 #  regulator-ramp-delay for BUCKs = [6250/12500/25000(default)/50000] uV/us
@@ -72,6 +115,9 @@
 #
 #
 # The regulator constraints inside the regulator nodes use the standard regulator
+            "samsung,s5m8767-clk"
+            "samsung,s2mps14-pmic"
+            "samsung,s2mps14-clk"
 # bindings which are documented elsewhere.
 #
 # The following are the names of the regulators that the s2mps11 pmic block

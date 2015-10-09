@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,sysc-rmobile
+
+title: DT bindings for the Renesas R-Mobile System Controller
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,sysc-sh73a0" && "renesas,sysc-rmobile"
+            "renesas,sysc-r8a7740" && "renesas,sysc-rmobile"
+            "renesas,sysc-r8a73a4" && "renesas,sysc-rmobile"
+
+    reg:
+
+...
+
 # DT bindings for the Renesas R-Mobile System Controller
 #
 # == System Controller Node ==

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-timer
+
+title: Broadcom Kona Family timer
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,kona-timer"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Broadcom Kona Family timer
 # -----------------------------------------------------
 # This timer is used in the following Broadcom SoCs:

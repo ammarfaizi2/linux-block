@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: hisilicon-hix5hd2-gmac
+
+title: Hisilicon hix5hd2 gmac controller
+
+maintainer:
+    -   name: Zhangfei Gao <zhangfei.gao@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hisilicon,hix5hd2-gmac"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    mac-address:
+    phy-handle:
+    phy-mode:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Hisilicon hix5hd2 gmac controller
 #
 # Required properties:

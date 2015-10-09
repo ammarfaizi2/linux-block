@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: smsc-lan91c111
+
+title: SMSC LAN91c111 Ethernet mac
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "smsc,lan91c111"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    reg-io-width:
+    reset-gpios:
+
+...
+
 # SMSC LAN91c111 Ethernet mac
 #
 # Required properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-380-rtc
+
+title: Real Time Clock of the Armada 38x SoCs
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-380-rtc"
+
+    interrupts:
+    reg:
+    reg-names:
+
+...
+
 # * Real Time Clock of the Armada 38x SoCs
 #
 # RTC controller for the Armada 38x SoCs

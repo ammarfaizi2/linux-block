@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,s3c2443-clock
+
+title: Samsung S3C2443 Clock Controller
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s3c2416-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung S3C2443 Clock Controller
 #
 # The S3C2443 clock controller generates and supplies clock to various controllers

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: hix5hd2-ir
+
+title: Device-Tree bindings for hix5hd2 ir IP
+
+maintainer:
+    -   name: Guoxiong Yan <yanguoxiong@huawei.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hisilicon,hix5hd2-ir"
+
+    clocks:
+    hisilicon,power-syscon:
+    interrupts:
+    reg:
+
+...
+
 # Device-Tree bindings for hix5hd2 ir IP
 #
 # Required properties:

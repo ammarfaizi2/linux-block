@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: auo,b116xw03
+
+title: AU Optronics Corporation 11.6" HD (1366x768) color TFT-LCD panel
+
+maintainer:
+    -   name: Ajay Kumar <ajaykumar.rs@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "auo,b116xw03"
+
+    backlight:
+    power-supply:
+
+...
+
 # AU Optronics Corporation 11.6" HD (1366x768) color TFT-LCD panel
 #
 # Required properties:

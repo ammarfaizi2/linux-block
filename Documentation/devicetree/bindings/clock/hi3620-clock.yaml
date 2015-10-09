@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: hi3620-clock
+
+title: Hisilicon Hi3620 Clock Controller
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hisilicon,hi3620-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Hisilicon Hi3620 Clock Controller
 #
 # The Hi3620 clock controller generates and supplies clock to various

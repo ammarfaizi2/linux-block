@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: mem-ctrlr
+
+title: Calxeda DDR memory controller
+
+maintainer:
+    -   name: Rob Herring <rob.herring@calxeda.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "calxeda,hb-ddr-ctrl"
+            "calxeda,ecx-2000-ddr-ctrl"
+
+    interrupts:
+    reg:
+
+...
+
 # Calxeda DDR memory controller
 #
 # Properties:

@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: sunxi-mmc
+
+title: Allwinner sunxi MMC controller
+
+maintainer:
+    -   name: David Lanzendörfer <david.lanzendoerfer@o2s.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun5i-a13-mmc"
+            "allwinner,sun4i-a10-mmc"
+
+    #address-cells:
+    bus-width:
+    cd-gpios:
+    cd-inverted:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+    vmmc-supply:
+
+...
+
 # * Allwinner sunxi MMC controller
 #
 # The highspeed MMC host controller on Allwinner SoCs provides an interface

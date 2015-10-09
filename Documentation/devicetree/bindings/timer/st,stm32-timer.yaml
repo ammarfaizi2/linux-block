@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,stm32-timer
+
+title: . STMicroelectronics STM32 timer
+
+maintainer:
+    -   name: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stm32-timer"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # . STMicroelectronics STM32 timer
 #
 # The STM32 MCUs family has several general-purpose 16 and 32 bits timers.

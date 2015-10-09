@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,stih4xx
+
+title: STMicroelectronics stih4xx platforms
+
+maintainer:
+    -   name: Benjamin Gaignard <benjamin.gaignard@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,vtg"
+            "st,stih407-tvout"
+            "st,stih407-hdmi"
+            "st,stih407-hda"
+            "st,stih407-compositor"
+            "st,sti-display-subsystem"
+
+    #address-cells:
+    assigned-clock-parents:
+    assigned-clock-rates:
+    assigned-clocks:
+    ranges:
+    #size-cells:
+
+...
+
 # STMicroelectronics stih4xx platforms
 #
 # - sti-vtg: video timing generator

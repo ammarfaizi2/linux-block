@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: anatop-regulator
+
+title: Anatop Voltage regulators
+
+maintainer:
+    -   name: Anson Huang <b20788@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,anatop-regulator"
+
+    anatop-delay-bit-shift:
+    anatop-delay-bit-width:
+    anatop-delay-reg-offset:
+    anatop-enable-bit:
+    anatop-max-voltage:
+    anatop-min-bit-val:
+    anatop-min-voltage:
+    anatop-reg-offset:
+    anatop-vol-bit-shift:
+    anatop-vol-bit-width:
+    regulator-always-on:
+    regulator-enable-ramp-delay:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+
+...
+
 # Anatop Voltage regulators
 #
 # Required properties:

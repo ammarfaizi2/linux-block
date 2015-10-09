@@ -1,3 +1,48 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-audio-sgtl5000
+
+title: Freescale i.MX audio complex with SGTL5000 codec
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "tq,imx53-mba53-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "karo,tx53-audio-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "karo,imx6qdl-tx6qdl-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx-audio-sgtl5000"
+            "fsl,imx6-wandboard-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx6-rex-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx6q-ventana-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx6q-sabrelite-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx6q-nitrogen6x-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx6-armadeus-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx53-voipac-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx53-qsb-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx53-m53evk-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx51-babbage-sgtl5000" && "fsl,imx-audio-sgtl5000"
+            "fsl,imx25-pdk-sgtl5000" && "fsl,imx-audio-sgtl5000"
+
+    audio-codec:
+    audio-routing:
+    model:
+    mux-ext-port:
+    mux-int-port:
+    ssi-controller:
+
+...
+
 # Freescale i.MX audio complex with SGTL5000 codec
 #
 # Required properties:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,tpu-pwm
+
+title: Renesas R-Car Timer Pulse Unit PWM Controller
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,tpu-r8a7740" && "renesas,tpu"
+
+    clocks:
+    power-domains:
+    #pwm-cells:
+    reg:
+    status:
+
+...
+
 # * Renesas R-Car Timer Pulse Unit PWM Controller
 #
 # Required Properties:

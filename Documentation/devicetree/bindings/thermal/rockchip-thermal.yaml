@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-thermal
+
+title: Temperature Sensor ADC (TSADC) on rockchip SoCs
+
+maintainer:
+    -   name: Caesar Wang <caesar.wang@rock-chips.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-tsadc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-names:
+    resets:
+    rockchip,hw-tshut-mode:
+    rockchip,hw-tshut-polarity:
+    rockchip,hw-tshut-temp:
+    status:
+    #thermal-sensor-cells:
+
+...
+
 # * Temperature Sensor ADC (TSADC) on rockchip SoCs
 #
 # Required properties:

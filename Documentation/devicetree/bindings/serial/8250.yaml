@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: 8250
+
+title: UART (Universal Asynchronous Receiver/Transmitter)
+
+maintainer:
+    -   name: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-uart"
+            "nvidia,tegra30-uart" && "nvidia,tegra20-uart"
+            "nvidia,tegra20-uart"
+            "nvidia,tegra124-uart" && "nvidia,tegra20-uart"
+            "nvidia,tegra114-uart" && "nvidia,tegra20-uart"
+            "ns8250"
+            "ns16750" && "ns16550"
+            "fsl,ns16550" && "ns16550"
+            "fsl,16550-FIFO64" && "ns16550a"
+            "altr,16550-FIFO32" && "ns16550a"
+
+    auto-flow-control:
+    clock-frequency:
+    fifo-size:
+    interrupt-parent:
+    interrupts:
+    reg:
+    reg-io-width:
+    reg-shift:
+
+...
+
 # * UART (Universal Asynchronous Receiver/Transmitter)
 #
 # Required properties:

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: axs103
+
+title: Synopsys DesignWare ARC Software Development Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Vineet Gupta <vgupta@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,axs103" && "snps,arc-sdp"
+            "snps,axs103"
+
+    #address-cells:
+    clock-frequency:
+    #size-cells:
+
+...
+
 # Synopsys DesignWare ARC Software Development Platforms Device Tree Bindings
 # ---------------------------------------------------------------------------
 #

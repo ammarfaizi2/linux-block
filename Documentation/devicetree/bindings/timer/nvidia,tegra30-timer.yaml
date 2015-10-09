@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra30-timer
+
+title: NVIDIA Tegra30 timer
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-timer" && "nvidia,tegra20-timer"
+            "nvidia,tegra124-timer" && "nvidia,tegra20-timer"
+            "nvidia,tegra114-timer" && "nvidia,tegra20-timer"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # NVIDIA Tegra30 timer
 #
 # The Tegra30 timer provides ten 29-bit timer channels, a single 32-bit free

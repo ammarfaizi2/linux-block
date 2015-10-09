@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ov2640
+
+title: Omnivision OV2640 CMOS sensor
+
+maintainer:
+    -   name: Josh Wu <josh.wu@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ovti,ov2640"
+
+    assigned-clock-rates:
+    assigned-clocks:
+    clock-names:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    pwdn-gpios:
+    reg:
+    resetb-gpios:
+    status:
+
+...
+
 # * Omnivision OV2640 CMOS sensor
 #
 # The Omnivision OV2640 sensor support multiple resolutions output, such as

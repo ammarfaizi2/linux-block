@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,armada-370-xp-timer
+
+title: Marvell Armada 370 and Armada XP Timers
+
+maintainer:
+    -   name: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-xp-timer"
+            "marvell,armada-380-timer" && "marvell,armada-xp-timer"
+            "marvell,armada-375-timer" && "marvell,armada-370-timer"
+            "marvell,armada-370-timer"
+
+    clock-frequency:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Marvell Armada 370 and Armada XP Timers
 # ---------------------------------------
 #

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: phy-miphy28lp
+
+title: STMicroelectronics STi MIPHY28LP PHY binding
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,miphy28lp-phy"
+
+    #address-cells:
+    ranges:
+    #size-cells:
+    st,syscfg:
+
+...
+
 # STMicroelectronics STi MIPHY28LP PHY binding
 # ============================================
 #

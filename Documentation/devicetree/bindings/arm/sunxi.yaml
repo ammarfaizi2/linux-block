@@ -1,3 +1,86 @@
+%YAML 1.2
+---
+version: 1
+
+id: sunxi
+
+title: Allwinner sunXi Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Chen-Yu Tsai <wens@csie.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xunlong,orangepi-mini" && "allwinner,sun7i-a20"
+            "xunlong,orangepi" && "allwinner,sun7i-a20"
+            "wits,colombus" && "allwinner,sun6i-a31"
+            "wexler,tab7200" && "allwinner,sun7i-a20"
+            "utoo,p66" && "allwinner,sun5i-a13"
+            "sinlinx,sina33" && "allwinner,sun8i-a33"
+            "primux,inet97fv2" && "allwinner,sun4i-a10"
+            "pineriver,mini-xplus" && "allwinner,sun4i-a10"
+            "olimex,a20-olinuxino-micro" && "allwinner,sun7i-a20"
+            "olimex,a20-olinuxino-lime" && "allwinner,sun7i-a20"
+            "olimex,a20-olinuxino-lime2" && "allwinner,sun7i-a20"
+            "olimex,a13-olinuxino-micro" && "allwinner,sun5i-a13"
+            "olimex,a13-olinuxino" && "allwinner,sun5i-a13"
+            "olimex,a10s-olinuxino-micro" && "allwinner,sun5i-a10s"
+            "olimex,a10-olinuxino-lime" && "allwinner,sun4i-a10"
+            "miniand,hackberry" && "allwinner,sun4i-a10"
+            "merrii,a80-optimus" && "allwinner,sun9i-a80"
+            "merrii,a31-hummingbird" && "allwinner,sun6i-a31"
+            "merrii,a20-hummingbird" && "allwinner,sun7i-a20"
+            "mele,m9" && "allwinner,sun6i-a31"
+            "mele,m3" && "allwinner,sun7i-a20"
+            "mele,i7" && "allwinner,sun6i-a31"
+            "mele,a1000g-quad" && "allwinner,sun6i-a31"
+            "mele,a1000" && "allwinner,sun4i-a10"
+            "linksprite,pcduino3-nano" && "allwinner,sun7i-a20"
+            "linksprite,pcduino3" && "allwinner,sun7i-a20"
+            "linksprite,a10-pcduino" && "allwinner,sun4i-a10"
+            "lemaker,bananapro" && "allwinner,sun7i-a20"
+            "lemaker,bananapi" && "allwinner,sun7i-a20"
+            "jesurun,q5" && "allwinner,sun4i-a10"
+            "itead,iteaduino-plus-a10" && "allwinner,sun4i-a10"
+            "ippo,q8h-v5" && "allwinner,sun8i-a23"
+            "ippo,q8h-v1"."2" && "allwinner,sun8i-a23"
+            "ippo,a33-q8h-v1"."2" && "allwinner,sun8i-a33"
+            "hyundai,a7hd" && "allwinner,sun4i-a10"
+            "hsg,h702" && "allwinner,sun5i-a13"
+            "haoyu,a10-marsboard" && "allwinner,sun4i-a10"
+            "gemei,g9" && "allwinner,sun4i-a10"
+            "et,q8-v1"."6" && "allwinner,sun8i-a33"
+            "cubietech,cubietruck" && "allwinner,sun7i-a20"
+            "cubietech,cubieboard2" && "allwinner,sun7i-a20"
+            "cubietech,a80-cubieboard4" && "allwinner,sun9i-a80"
+            "cubietech,a10-cubieboard" && "allwinner,sun4i-a10"
+            "chuwi,v7-cw0825" && "allwinner,sun4i-a10"
+            "allwinner,sun8i-a23-evb" && "allwinner,sun8i-a23"
+            "allwinner,r7-tv-dongle" && "allwinner,sun5i-a10s"
+            "allwinner,mk808c" && "allwinner,sun7i-a20"
+            "allwinner,mk802ii" && "allwinner,sun4i-a10"
+            "allwinner,mk802" && "allwinner,sun4i-a10"
+            "allwinner,i12-tvbox" && "allwinner,sun7i-a20"
+            "allwinner,ga10h-v1"."1" && "allwinner,sun8i-a33"
+            "allwinner,ba10-tvbox" && "allwinner,sun4i-a10"
+            "allwinner,auxtek-t004" && "allwinner,sun5i-a10s"
+            "allwinner,app4-evb1" && "allwinner,sun6i-a31"
+            "allwinner,a10s-mk802" && "allwinner,sun5i-a10s"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Allwinner sunXi Platforms Device Tree Bindings
 #
 # Each device tree must specify which Allwinner SoC it uses,

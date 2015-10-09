@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-exynos5
+
+title: Samsung's High Speed I2C controller
+
+maintainer:
+    -   name: Naveen Krishna Ch <ch.naveen@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5-hsi2c"
+
+    #address-cells:
+    clock-frequency:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Samsung's High Speed I2C controller
 #
 # The Samsung's High Speed I2C controller is used to interface with I2C devices

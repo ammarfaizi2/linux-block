@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-chipid
+
+title: SAMSUNG Exynos SoCs Chipid driver.
+
+maintainer:
+    -   name: Pankaj Dubey <pankaj.dubey@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4210-chipid"
+
+    reg:
+
+...
+
 # SAMSUNG Exynos SoCs Chipid driver.
 #
 # Required properties:

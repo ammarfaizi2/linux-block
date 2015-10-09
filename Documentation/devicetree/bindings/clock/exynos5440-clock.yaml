@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos5440-clock
+
+title: Samsung Exynos5440 Clock Controller
+
+maintainer:
+    -   name: Andrzej Hajda <a.hajda@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5440-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Exynos5440 Clock Controller
 #
 # The Exynos5440 clock controller generates and supplies clock to various

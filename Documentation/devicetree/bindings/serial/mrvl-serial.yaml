@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: mrvl-serial
+
+title: PXA UART controller
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@marvell.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mrvl,pxa-uart"
+            "mrvl,mmp-uart"
+
+    clocks:
+    interrupts:
+    reg:
+    resets:
+    status:
+
+...
+
 # PXA UART controller
 #
 # Required properties:

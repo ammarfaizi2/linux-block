@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,intc-irqpin
+
+title: DT bindings for the R-/SH-Mobile irqpin controller
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,intc-irqpin-sh73a0" && "renesas,intc-irqpin"
+            "renesas,intc-irqpin-r8a7779" && "renesas,intc-irqpin"
+            "renesas,intc-irqpin-r8a7778" && "renesas,intc-irqpin"
+            "renesas,intc-irqpin-r8a7740" && "renesas,intc-irqpin"
+
+    clocks:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    power-domains:
+    reg:
+
+...
+
 # DT bindings for the R-/SH-Mobile irqpin controller
 #
 # Required properties:

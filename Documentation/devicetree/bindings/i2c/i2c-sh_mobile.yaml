@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-sh_mobile
+
+title: Device tree configuration for Renesas IIC (sh_mobile) driver
+
+maintainer:
+    -   name: Wolfram Sang <wsa+renesas@sang-engineering.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,iic-sh73a0" && "renesas,rmobile-iic"
+            "renesas,iic-r8a7791" && "renesas,rmobile-iic"
+            "renesas,iic-r8a7790" && "renesas,rmobile-iic"
+            "renesas,iic-r8a7740" && "renesas,rmobile-iic"
+            "renesas,iic-r8a73a4" && "renesas,rmobile-iic"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Device tree configuration for Renesas IIC (sh_mobile) driver
 #
 # Required properties:

@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: tegra20-apbdma
+
+title: NVIDIA Tegra APB DMA controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-apbdma" && "nvidia,tegra20-apbdma"
+            "nvidia,tegra20-apbdma"
+            "nvidia,tegra124-apbdma" && "nvidia,tegra148-apbdma"
+            "nvidia,tegra114-apbdma"
+
+    clocks:
+    #dma-cells:
+    interrupts:
+    reg:
+    reset-names:
+    resets:
+
+...
+
 # * NVIDIA Tegra APB DMA controller
 #
 # Required properties:

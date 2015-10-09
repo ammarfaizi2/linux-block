@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: phy-mvebu
+
+title: Marvell MVEBU SATA PHY
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,mvebu-sata-phy"
+            "marvell,armada-375-usb-cluster"
+
+    #phy-cells:
+    reg:
+
+...
+
 # * Marvell MVEBU SATA PHY
 #
 # Power control for the SATA phy found on Marvell MVEBU SoCs.

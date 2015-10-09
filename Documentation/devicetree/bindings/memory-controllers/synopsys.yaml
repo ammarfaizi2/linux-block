@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: synopsys
+
+title: Binding for Synopsys IntelliDDR Multi Protocol Memory Controller
+
+maintainer:
+    -   name: Punnaiah Choudary Kalluri <punnaiah.choudary.kalluri@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-ddrc-a05"
+
+    reg:
+
+...
+
 # Binding for Synopsys IntelliDDR Multi Protocol Memory Controller
 #
 # This controller has an optional ECC support in half-bus width (16-bit)

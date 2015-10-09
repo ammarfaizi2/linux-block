@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,imx-pinctrl
+
+title: Freescale IOMUX Controller (IOMUXC) for i.MX
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx7d-iomuxc"
+            "fsl,imx6ul-iomuxc"
+            "fsl,imx6sx-iomuxc"
+            "fsl,imx6sl-iomuxc"
+            "fsl,imx6q-iomuxc"
+            "fsl,imx6dl-iomuxc" && "fsl,imx6q-iomuxc"
+            "fsl,imx6dl-iomuxc"
+            "fsl,imx53-iomuxc"
+            "fsl,imx51-iomuxc"
+            "fsl,imx50-iomuxc" && "fsl,imx53-iomuxc"
+            "fsl,imx35-iomuxc"
+            "fsl,imx27-iomuxc"
+            "fsl,imx25-iomuxc"
+            "fsl,imx1-iomuxc"
+
+    #address-cells:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # * Freescale IOMUX Controller (IOMUXC) for i.MX
 #
 # The IOMUX Controller (IOMUXC), together with the IOMUX, enables the IC

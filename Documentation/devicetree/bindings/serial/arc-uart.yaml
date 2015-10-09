@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: arc-uart
+
+title: Synopsys ARC UART : Non standard UART used in some of the ARC FPGA boards
+
+maintainer:
+    -   name: Kumar Gala <galak@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,arc-uart"
+
+    clock-frequency:
+    current-speed:
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Synopsys ARC UART : Non standard UART used in some of the ARC FPGA boards
 #
 # Required properties:

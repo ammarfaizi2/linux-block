@@ -1,3 +1,49 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-usb-phy
+
+title: Tegra SOC USB PHY
+
+maintainer:
+    -   name: Venu Byravarasu <vbyravarasu@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-usb-phy"
+            "nvidia,tegra20-usb-phy"
+            "nvidia,tegra124-usb-phy" && "nvidia,tegra30-usb-phy"
+
+    clock-names:
+    clocks:
+    nvidia,elastic-limit:
+    nvidia,has-utmi-pad-registers:
+    nvidia,hsdiscon-level:
+    nvidia,hssquelch-level:
+    nvidia,hssync-start-delay:
+    nvidia,idle-wait-delay:
+    nvidia,term-range-adj:
+    nvidia,xcvr-hsslew:
+    nvidia,xcvr-lsfslew:
+    nvidia,xcvr-lsrslew:
+    nvidia,xcvr-setup:
+    phy_type:
+    reg:
+    reset-names:
+    resets:
+    status:
+    vbus-supply:
+
+...
+
 # Tegra SOC USB PHY
 #
 # The device node for Tegra SOC USB PHY:

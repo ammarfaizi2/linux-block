@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-at91rm9200-wdt
+
+title: Atmel AT91RM9200 System Timer Watchdog
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91rm9200-wdt"
+
+    "atmel,at91rm9200-wdt"::
+
+...
+
 # Atmel AT91RM9200 System Timer Watchdog
 #
 # Required properties:

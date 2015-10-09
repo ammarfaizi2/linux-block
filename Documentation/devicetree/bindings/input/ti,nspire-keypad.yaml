@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,nspire-keypad
+
+title: TI-NSPIRE Keypad
+
+maintainer:
+    -   name: Daniel Tang <dt.tangr@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,nspire-keypad"
+
+    active-low:
+    clocks:
+    interrupts:
+    linux,keymap:
+    reg:
+    row-delay:
+    scan-interval:
+
+...
+
 # TI-NSPIRE Keypad
 #
 # Required properties:

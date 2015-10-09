@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra114-car
+
+title: NVIDIA Tegra114 Clock And Reset Controller
+
+maintainer:
+    -   name: Hiroshi Doyu <hdoyu@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra114-car"
+
+    #clock-cells:
+    reg:
+    #reset-cells:
+
+...
+
 # NVIDIA Tegra114 Clock And Reset Controller
 #
 # This binding uses the common clock binding:

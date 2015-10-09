@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,clkgen-vcc
+
+title: Binding for a type of STMicroelectronics clock crossbar (VCC).
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-clkgenf" && "st,clkgen-vcc"
+            "st,stih416-clkgenc" && "st,clkgen-vcc"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # Binding for a type of STMicroelectronics clock crossbar (VCC).
 #
 # The crossbar can take up to 4 input clocks and control up to 16

@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos4415-clock
+
+title: Samsung Exynos4415 Clock Controller
+
+maintainer:
+    -   name: Chanwoo Choi <cw00.choi@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4415-cmu-dmc"
+            "samsung,exynos4415-cmu"
+
+
+...
+
 # * Samsung Exynos4415 Clock Controller
 #
 # The Exynos4415 clock controller generates and supplies clock to various

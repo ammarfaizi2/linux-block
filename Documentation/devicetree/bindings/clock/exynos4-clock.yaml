@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos4-clock
+
+title: Samsung Exynos4 Clock Controller
+
+maintainer:
+    -   name: Sylwester Nawrocki <s.nawrocki@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4412-clock"
+            "samsung,exynos4210-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Exynos4 Clock Controller
 #
 # The Exynos4 clock controller generates and supplies clock to various controllers

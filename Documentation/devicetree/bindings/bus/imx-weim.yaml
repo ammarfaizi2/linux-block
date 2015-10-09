@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-weim
+
+title: Device tree bindings for i.MX Wireless External Interface Module (WEIM)
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-weim" && "fsl,imx6q-weim"
+            "fsl,imx6q-weim"
+            "fsl,imx51-weim"
+            "fsl,imx35-weim" && "fsl,imx27-weim"
+            "fsl,imx27-weim"
+            "fsl,imx1-weim"
+
+    #address-cells:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Device tree bindings for i.MX Wireless External Interface Module (WEIM)
 #
 # The term "wireless" does not imply that the WEIM is literally an interface

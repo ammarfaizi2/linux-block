@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: digicolor-wdt
+
+title: Conexant Digicolor SoCs Watchdog timer
+
+maintainer:
+    -   name: Baruch Siach <baruch@tkos.co.il>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cnxt,cx92755-wdt"
+
+    clocks:
+    reg:
+    timeout-sec:
+
+...
+
 # Conexant Digicolor SoCs Watchdog timer
 #
 # The watchdog functionality in Conexant Digicolor SoCs relies on the so called

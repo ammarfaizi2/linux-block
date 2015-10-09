@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: ak8975
+
+title: AsahiKASEI AK8975 magnetometer sensor
+
+maintainer:
+    -   name: Jacek Anaszewski <j.anaszewski@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "asahi-kasei,ak8975"
+
+    gpios:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * AsahiKASEI AK8975 magnetometer sensor
 #
 # Required properties:

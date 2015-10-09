@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: hsta
+
+title: ppc476gtr High Speed Serial Assist (HSTA) node
+
+maintainer:
+    -   name: Alistair Popple <alistair@popple.id.au>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ibm,476gtr-hsta-msi" && "ibm,hsta-msi"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 #
 # ppc476gtr High Speed Serial Assist (HSTA) node
 # ==============================================

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: xlnx,zynq-pinctrl
+
+title: 	Binding for Xilinx Zynq Pinctrl
+
+maintainer:
+    -   name: Helmut Buchsbaum <helmut.buchsbaum@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,pinctrl-zynq"
+
+    reg:
+    syscon:
+
+...
+
 # 	Binding for Xilinx Zynq Pinctrl
 #
 # Required properties:

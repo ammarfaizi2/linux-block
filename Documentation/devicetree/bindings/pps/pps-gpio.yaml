@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: pps-gpio
+
+title: Device-Tree Bindings for a PPS Signal on GPIO
+
+maintainer:
+    -   name: Jan Luebbe <jlu@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pps-gpio"
+
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+    status:
+
+...
+
 # Device-Tree Bindings for a PPS Signal on GPIO
 #
 # These properties describe a PPS (pulse-per-second) signal connected to

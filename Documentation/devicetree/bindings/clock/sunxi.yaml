@@ -1,3 +1,90 @@
+%YAML 1.2
+---
+version: 1
+
+id: sunxi
+
+title: Device Tree Clock bindings for arch-sunxi
+
+maintainer:
+    -   name: Chen-Yu Tsai <wens@csie.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun9i-a80-usb-phy-clk"
+            "allwinner,sun9i-a80-usb-mod-clk"
+            "allwinner,sun9i-a80-pll4-clk"
+            "allwinner,sun9i-a80-mmc-config-clk"
+            "allwinner,sun9i-a80-mmc-clk"
+            "allwinner,sun9i-a80-gt-clk"
+            "allwinner,sun9i-a80-apb1-gates-clk"
+            "allwinner,sun9i-a80-apb1-clk"
+            "allwinner,sun9i-a80-apb0-gates-clk"
+            "allwinner,sun9i-a80-apb0-clk"
+            "allwinner,sun9i-a80-ahb-clk"
+            "allwinner,sun9i-a80-ahb2-gates-clk"
+            "allwinner,sun9i-a80-ahb1-gates-clk"
+            "allwinner,sun9i-a80-ahb0-gates-clk"
+            "allwinner,sun8i-a23-usb-clk"
+            "allwinner,sun8i-a23-pll1-clk"
+            "allwinner,sun8i-a23-mbus-clk"
+            "allwinner,sun8i-a23-axi-clk"
+            "allwinner,sun8i-a23-apb2-gates-clk"
+            "allwinner,sun8i-a23-apb1-gates-clk"
+            "allwinner,sun8i-a23-apb0-gates-clk"
+            "allwinner,sun8i-a23-apb0-clk"
+            "allwinner,sun8i-a23-ahb1-gates-clk"
+            "allwinner,sun7i-a20-out-clk"
+            "allwinner,sun7i-a20-apb1-gates-clk"
+            "allwinner,sun7i-a20-apb0-gates-clk"
+            "allwinner,sun7i-a20-ahb-gates-clk"
+            "allwinner,sun6i-a31-usb-clk"
+            "allwinner,sun6i-a31-pll6-clk"
+            "allwinner,sun6i-a31-pll1-clk"
+            "allwinner,sun6i-a31-apb2-gates-clk"
+            "allwinner,sun6i-a31-apb1-gates-clk"
+            "allwinner,sun6i-a31-ahb1-gates-clk"
+            "allwinner,sun6i-a31-ahb1-clk"
+            "allwinner,sun5i-a13-usb-clk"
+            "allwinner,sun5i-a13-mbus-clk"
+            "allwinner,sun5i-a13-apb1-gates-clk"
+            "allwinner,sun5i-a13-apb0-gates-clk"
+            "allwinner,sun5i-a13-ahb-gates-clk"
+            "allwinner,sun5i-a13-ahb-clk"
+            "allwinner,sun5i-a10s-apb1-gates-clk"
+            "allwinner,sun5i-a10s-apb0-gates-clk"
+            "allwinner,sun5i-a10s-ahb-gates-clk"
+            "allwinner,sun4i-a10-usb-clk"
+            "allwinner,sun4i-a10-pll6-clk"
+            "allwinner,sun4i-a10-pll5-clk"
+            "allwinner,sun4i-a10-pll1-clk"
+            "allwinner,sun4i-a10-osc-clk"
+            "allwinner,sun4i-a10-mod0-clk"
+            "allwinner,sun4i-a10-mmc-clk"
+            "allwinner,sun4i-a10-cpu-clk"
+            "allwinner,sun4i-a10-axi-gates-clk"
+            "allwinner,sun4i-a10-axi-clk"
+            "allwinner,sun4i-a10-apb1-gates-clk"
+            "allwinner,sun4i-a10-apb1-clk"
+            "allwinner,sun4i-a10-apb0-gates-clk"
+            "allwinner,sun4i-a10-apb0-clk"
+            "allwinner,sun4i-a10-ahb-gates-clk"
+            "allwinner,sun4i-a10-ahb-clk"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # Device Tree Clock bindings for arch-sunxi
 #
 # This binding uses the common clock binding[1].

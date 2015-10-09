@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip,iommu
+
+title: Rockchip IOMMU
+
+maintainer:
+    -   name: Daniel Kurtz <djkurtz@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,iommu"
+
+    interrupt-names:
+    interrupts:
+    #iommu-cells:
+    reg:
+    status:
+
+...
+
 # Rockchip IOMMU
 # ==============
 #

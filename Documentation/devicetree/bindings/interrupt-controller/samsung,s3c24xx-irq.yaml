@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,s3c24xx-irq
+
+title: Samsung S3C24XX Interrupt Controllers
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s3c2416-irq"
+            "samsung,s3c2410-irq"
+
+
+...
+
 # Samsung S3C24XX Interrupt Controllers
 #
 # The S3C24XX SoCs contain a custom set of interrupt controllers providing a

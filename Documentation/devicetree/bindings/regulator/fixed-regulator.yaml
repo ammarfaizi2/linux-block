@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: fixed-regulator
+
+title: Fixed Voltage regulators
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "regulator-fixed"
+
+    enable-active-high:
+    enable-active-low:
+    gpio:
+    gpio-open-drain:
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    regulator-always-on:
+    regulator-boot-on:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+    regulator-type:
+    startup-delay-us:
+    status:
+    vin-supply:
+
+...
+
 # Fixed Voltage regulators
 #
 # Required properties:

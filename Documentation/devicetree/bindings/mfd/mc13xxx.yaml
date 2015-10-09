@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: mc13xxx
+
+title: Freescale MC13783/MC13892 Power Management Integrated Circuit (PMIC)
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mc13892"
+            "fsl,mc13783"
+
+    fsl,mc13xxx-uses-adc:
+    fsl,mc13xxx-uses-rtc:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    spi-cs-high:
+    spi-max-frequency:
+
+...
+
 # * Freescale MC13783/MC13892 Power Management Integrated Circuit (PMIC)
 #
 # Required properties:

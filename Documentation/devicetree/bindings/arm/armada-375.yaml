@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-375
+
+title: Marvell Armada 375 Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada375"
+            "marvell,a375-db" && "marvell,armada375"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Marvell Armada 375 Platforms Device Tree Bindings
 # -------------------------------------------------
 #

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: digicolor-ic
+
+title: Conexant Digicolor Interrupt Controller
+
+maintainer:
+    -   name: Baruch Siach <baruch@tkos.co.il>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cnxt,cx92755-ic"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+    syscon:
+
+...
+
 # Conexant Digicolor Interrupt Controller
 #
 # Required properties:

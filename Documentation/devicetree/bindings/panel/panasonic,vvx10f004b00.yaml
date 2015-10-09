@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: panasonic,vvx10f004b00
+
+title: Panasonic Corporation 10.1" WUXGA TFT LCD panel
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "panasonic,vvx10f004b00" && "simple-panel"
+
+    backlight:
+    power-supply:
+    reg:
+
+...
+
 # Panasonic Corporation 10.1" WUXGA TFT LCD panel
 #
 # Required properties:

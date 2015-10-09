@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell
+
+title: Marvell Discovery mv64[345]6x System Controller chips
+
+maintainer:
+    -   name: Grant Likely <grant.likely@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,mv64360-wdt"
+            "marvell,mv64360-sram-ctrl"
+            "marvell,mv64360-sdma"
+            "marvell,mv64360-pic"
+            "marvell,mv64360-pci-error"
+            "marvell,mv64360-pci"
+            "marvell,mv64360-mpsc"
+            "marvell,mv64360-mpp"
+            "marvell,mv64360-mem-ctrl"
+            "marvell,mv64360-mdio"
+            "marvell,mv64360-i2c"
+            "marvell,mv64360-gpp"
+            "marvell,mv64360-eth"
+            "marvell,mv64360-cpu-error"
+            "marvell,mv64360-brg"
+            "marvell,mv64360"
+            "broadcom,bcm5421"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Marvell Discovery mv64[345]6x System Controller chips
 # ===========================================================
 #

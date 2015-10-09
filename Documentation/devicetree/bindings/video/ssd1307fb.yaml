@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ssd1307fb
+
+title: Solomon SSD1307 Framebuffer Driver
+
+maintainer:
+    -   name: Maxime Ripard <maxime.ripard@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "solomon,ssd1306fb-i2c"
+
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-gpios:
+    solomon,com-invdir:
+    solomon,com-lrremap:
+    solomon,com-offset:
+    solomon,height:
+    solomon,page-offset:
+    solomon,width:
+
+...
+
 # * Solomon SSD1307 Framebuffer Driver
 #
 # Required properties:

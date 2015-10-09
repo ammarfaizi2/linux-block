@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,rcar-gen2-cpg-clocks
+
+title: Renesas R-Car Gen2 Clock Pulse Generator (CPG)
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,r8a7794-cpg-clocks" && "renesas,rcar-gen2-cpg-clocks"
+            "renesas,r8a7793-cpg-clocks" && "renesas,rcar-gen2-cpg-clocks"
+            "renesas,r8a7791-cpg-clocks" && "renesas,rcar-gen2-cpg-clocks"
+            "renesas,r8a7790-cpg-clocks" && "renesas,rcar-gen2-cpg-clocks"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    #power-domain-cells:
+    reg:
+
+...
+
 # * Renesas R-Car Gen2 Clock Pulse Generator (CPG)
 #
 # The CPG generates core clocks for the R-Car Gen2 SoCs. It includes three PLLs

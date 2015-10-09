@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-tsec-phy
+
+title: MDIO IO device
+
+maintainer:
+    -   name: Aida Mynzhasova <aida.mynzhasova@skitlab.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gianfar"
+            "fsl,ucc-mdio"
+            "fsl,gianfar-tbi"
+            "fsl,gianfar-mdio"
+            "fsl,etsec-ptp"
+
+    fsl,max-adj:
+    fsl,tclk-period:
+    fsl,tmr-add:
+    fsl,tmr-fiper1:
+    fsl,tmr-fiper2:
+    fsl,tmr-prsc:
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * MDIO IO device
 #
 # The MDIO is a bus to which the PHY devices are connected.  For each

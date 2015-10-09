@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: ohci-nxp
+
+title: OHCI controller, NXP ohci-nxp variant
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,ohci-nxp" && "usb-ohci"
+
+    interrupts:
+    reg:
+    status:
+    transceiver:
+
+...
+
 # * OHCI controller, NXP ohci-nxp variant
 #
 # Required properties:

@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-keys-polled
+
+title: Device-Tree bindings for input/gpio_keys_polled.c keyboard driver
+
+maintainer:
+    -   name: Alexandre Pereira da Silva <aletes.xgr@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-keys-polled"
+
+    #address-cells:
+    autorepeat:
+    pinctrl-0:
+    pinctrl-names:
+    poll-interval:
+    #size-cells:
+
+...
+
 # Device-Tree bindings for input/gpio_keys_polled.c keyboard driver
 #
 # Required properties:

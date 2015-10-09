@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: hix5hd2-phy
+
+title: Hisilicon hix5hd2 SATA PHY
+
+maintainer:
+    -   name: Jiancheng Xue <xuejiancheng@huawei.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hisilicon,hix5hd2-sata-phy"
+
+    hisilicon,peripheral-syscon:
+    hisilicon,power-reg:
+    #phy-cells:
+    reg:
+
+...
+
 # Hisilicon hix5hd2 SATA PHY
 # -----------------------
 #

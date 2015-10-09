@@ -1,3 +1,56 @@
+%YAML 1.2
+---
+version: 1
+
+id: shmobile
+
+title: Renesas SH-Mobile, R-Mobile, and R-Car Platform Device Tree Bindings
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,silk" && "renesas,r8a7794"
+            "renesas,sh73a0"
+            "renesas,r8a7794"
+            "renesas,r8a7793"
+            "renesas,r8a7791"
+            "renesas,r8a7790"
+            "renesas,r8a7779"
+            "renesas,r8a7778"
+            "renesas,r8a7740"
+            "renesas,r8a73a4"
+            "renesas,r7s72100"
+            "renesas,marzen" && "renesas,r8a7779"
+            "renesas,lager" && "renesas,r8a7790"
+            "renesas,kzm9g" && "renesas,sh73a0"
+            "renesas,kzm9d" && "renesas,emev2"
+            "renesas,koelsch" && "renesas,r8a7791"
+            "renesas,henninger" && "renesas,r8a7791"
+            "renesas,gose" && "renesas,r8a7793"
+            "renesas,genmai" && "renesas,r7s72100"
+            "renesas,emev2"
+            "renesas,bockw" && "renesas,r8a7778"
+            "renesas,bockw-reference" && "renesas,r8a7778"
+            "renesas,armadillo800eva" && "renesas,r8a7740"
+            "renesas,ape6evm" && "renesas,r8a73a4"
+            "renesas,alt" && "renesas,r8a7794"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Renesas SH-Mobile, R-Mobile, and R-Car Platform Device Tree Bindings
 # --------------------------------------------------------------------
 #

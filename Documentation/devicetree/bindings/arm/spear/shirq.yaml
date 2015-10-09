@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: shirq
+
+title: SPEAr Shared IRQ layer (shirq)
+
+maintainer:
+    -   name: Anatol Pomozov <anatol.pomozov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear320-shirq"
+            "st,spear310-shirq"
+            "st,spear300-shirq"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # * SPEAr Shared IRQ layer (shirq)
 #
 # SPEAr3xx architecture includes shared/multiplexed irqs for certain set

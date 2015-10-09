@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-smc
+
+title: Broadcom Secure Monitor Bounce buffer
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm21664-smc" && "brcm,kona-smc"
+            "brcm,bcm11351-smc" && "brcm,kona-smc"
+
+    reg:
+
+...
+
 # Broadcom Secure Monitor Bounce buffer
 # -----------------------------------------------------
 # This binding defines the location of the bounce buffer

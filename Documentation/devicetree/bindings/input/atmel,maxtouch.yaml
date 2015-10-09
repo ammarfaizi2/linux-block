@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel,maxtouch
+
+title: Atmel maXTouch touchscreen/touchpad
+
+maintainer:
+    -   name: Nick Dyer <nick.dyer@itdev.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,maxtouch"
+
+    atmel,burst-length:
+    atmel,orientation:
+    atmel,threshold:
+    atmel,x-line:
+    atmel,x-size:
+    atmel,y-line:
+    atmel,y-size:
+    interrupt-parent:
+    interrupts:
+    linux,gpio-keymap:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    vdd-supply:
+    wakeup-source:
+
+...
+
 # Atmel maXTouch touchscreen/touchpad
 #
 # Required properties:

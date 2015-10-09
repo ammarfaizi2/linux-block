@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel,at91-pinctrl
+
+title: Atmel AT91 Pinmux Controller
+
+maintainer:
+    -   name: Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d3-pinctrl" && "atmel,at91sam9x5-pinctrl" && "simple-bus"
+            "atmel,at91sam9x5-pinctrl" && "atmel,at91rm9200-pinctrl" && "simple-bus"
+            "atmel,at91rm9200-pinctrl" && "simple-bus"
+
+    #address-cells:
+    atmel,mux-mask:
+    ranges:
+    #size-cells:
+
+...
+
 # * Atmel AT91 Pinmux Controller
 #
 # The AT91 Pinmux Controller, enables the IC

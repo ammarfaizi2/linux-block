@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx23-clock
+
+title: Clock bindings for Freescale i.MX23
+
+maintainer:
+    -   name: Fabio Estevam <fabio.estevam@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx23-clkctrl" && "fsl,clkctrl"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Clock bindings for Freescale i.MX23
 #
 # Required properties:

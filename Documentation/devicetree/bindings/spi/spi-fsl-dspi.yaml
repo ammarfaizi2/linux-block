@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-fsl-dspi
+
+title: ARM Freescale DSPI controller
+
+maintainer:
+    -   name: Chao Fu <B44548@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sst,sst25vf040b" && "m25p80"
+            "m25p80"
+            "m25p32" && "m25p80"
+            "fsl,vf610-dspi"
+            "fsl,ls1021a-v1"."0-dspi"
+            "atmel,at26df081a"
+
+    #address-cells:
+    reg:
+    #size-cells:
+    spi-cpha:
+    spi-cpol:
+    spi-max-frequency:
+
+...
+
 # ARM Freescale DSPI controller
 #
 # Required properties:

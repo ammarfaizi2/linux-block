@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb-uhci
+
+title: Generic Platform UHCI Controller
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "platform-uhci"
+
+    interrupts:
+    reg:
+
+...
+
 # Generic Platform UHCI Controller
 # -----------------------------------------------------
 #

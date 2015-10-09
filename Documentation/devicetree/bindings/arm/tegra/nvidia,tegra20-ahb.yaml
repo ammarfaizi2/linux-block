@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-ahb
+
+title: NVIDIA Tegra AHB
+
+maintainer:
+    -   name: Paul Walmsley <paul@pwsan.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-ahb"
+            "nvidia,tegra20-ahb"
+            "nvidia,tegra114-ahb" && "nvidia,tegra30-ahb"
+
+    reg:
+
+...
+
 # NVIDIA Tegra AHB
 #
 # Required properties:

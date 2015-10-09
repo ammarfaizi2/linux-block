@@ -1,3 +1,62 @@
+%YAML 1.2
+---
+version: 1
+
+id: twl-regulator
+
+title: TWL family of regulators
+
+maintainer:
+    -   name: Graeme Gregory <gg@slimlogic.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,twl6030-vusim"
+            "ti,twl6030-vusb"
+            "ti,twl6030-vpp"
+            "ti,twl6030-vmmc"
+            "ti,twl6030-vdac"
+            "ti,twl6030-vcxio"
+            "ti,twl6030-vaux3"
+            "ti,twl6030-vaux2"
+            "ti,twl6030-vaux1"
+            "ti,twl6030-vana"
+            "ti,twl6030-v2v1"
+            "ti,twl6030-v1v8"
+            "ti,twl4030-vusb3v1"
+            "ti,twl4030-vusb1v8"
+            "ti,twl4030-vusb1v5"
+            "ti,twl4030-vsim"
+            "ti,twl4030-vpll2"
+            "ti,twl4030-vpll1"
+            "ti,twl4030-vmmc2"
+            "ti,twl4030-vmmc1"
+            "ti,twl4030-vio"
+            "ti,twl4030-vintdig"
+            "ti,twl4030-vintana2"
+            "ti,twl4030-vintana1"
+            "ti,twl4030-vdd1"
+            "ti,twl4030-vdac"
+            "ti,twl4030-vaux4"
+            "ti,twl4030-vaux3"
+            "ti,twl4030-vaux2"
+            "ti,twl4030-vaux1"
+
+    regulator-always-on:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+    "ti,twl4030-vaux1"::
+
+...
+
 # TWL family of regulators
 #
 # Required properties:

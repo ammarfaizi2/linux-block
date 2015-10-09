@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: ssbi
+
+title: Qualcomm SSBI
+
+maintainer:
+    -   name: David Brown <davidb@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,ssbi"
+
+    qcom,controller-type:
+    reg:
+
+...
+
 # * Qualcomm SSBI
 #
 # Some Qualcomm MSM devices contain a point-to-point serial bus used to

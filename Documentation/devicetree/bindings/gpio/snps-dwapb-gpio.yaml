@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: snps-dwapb-gpio
+
+title: Synopsys DesignWare APB GPIO controller
+
+maintainer:
+    -   name: Alan Tull <atull@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dw-apb-gpio-port"
+            "snps,dw-apb-gpio"
+
+    #address-cells:
+    clocks:
+    reg:
+    reg-io-width:
+    #size-cells:
+    status:
+
+...
+
 # * Synopsys DesignWare APB GPIO controller
 #
 # Required properties:

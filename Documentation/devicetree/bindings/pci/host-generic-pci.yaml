@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: host-generic-pci
+
+title: Generic PCI host controller
+
+maintainer:
+    -   name: Hayato Suzuki <hytszk@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pci-host-ecam-generic"
+
+    #address-cells:
+    bus-range:
+    device_type:
+    dma-coherent:
+    dma-ranges:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    msi-parent:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Generic PCI host controller
 #
 # Firmware-initialised PCI host controllers and PCI emulations, such as the

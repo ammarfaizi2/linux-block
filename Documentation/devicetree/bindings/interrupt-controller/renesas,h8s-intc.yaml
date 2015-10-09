@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,h8s-intc
+
+title: H8S Interrupt controller
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,h8s-intc" && "renesas,h8300-intc"
+
+
+...
+
 # * H8S Interrupt controller
 #
 # Required properties:

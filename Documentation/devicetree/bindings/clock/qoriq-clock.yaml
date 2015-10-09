@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qoriq-clock
+
+title: Clock Block on Freescale QorIQ Platforms
+
+maintainer:
+    -   name: Emil Medve <Emilian.Medve@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,qoriq-core-pll-2"."0"
+            "fsl,qoriq-core-mux-2"."0"
+
+    #clock-cells:
+    clock-names:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # * Clock Block on Freescale QorIQ Platforms
 #
 # Freescale qoriq chips take primary clocking input from the external

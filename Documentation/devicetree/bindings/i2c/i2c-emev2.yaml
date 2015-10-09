@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-emev2
+
+title: Device tree configuration for Renesas EMEV2 IIC controller
+
+maintainer:
+    -   name: Wolfram Sang <wsa+renesas@sang-engineering.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,iic-emev2"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Device tree configuration for Renesas EMEV2 IIC controller
 #
 # Required properties:

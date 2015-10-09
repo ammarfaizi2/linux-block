@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,brcmstb-sata-phy
+
+title: Broadcom SATA3 PHY for STB
+
+maintainer:
+    -   name: Brian Norris <computersforpeace@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm7445-sata-phy" && "brcm,phy-sata3"
+
+    #address-cells:
+    reg:
+    reg-names:
+    #size-cells:
+
+...
+
 # * Broadcom SATA3 PHY for STB
 #
 # Required properties:

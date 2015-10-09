@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8904
+
+title: WM8904 audio CODEC
+
+maintainer:
+    -   name: Bo Shen <voice.shen@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wlf,wm8904"
+
+    clock-names:
+    clocks:
+    reg:
+
+...
+
 # WM8904 audio CODEC
 #
 # This device supports I2C only.

@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,imxgpt
+
+title: Freescale i.MX General Purpose Timer (GPT)
+
+maintainer:
+    -   name: Sascha Hauer <s.hauer@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc5200-gpt"
+            "fsl,mpc5200b-gpt" && "fsl,mpc5200-gpt"
+            "fsl,imx7d-gpt" && "fsl,imx6sx-gpt"
+            "fsl,imx6ul-gpt" && "fsl,imx6sx-gpt"
+            "fsl,imx6sx-gpt" && "fsl,imx31-gpt"
+            "fsl,imx6sl-gpt"
+            "fsl,imx6q-gpt" && "fsl,imx31-gpt"
+            "fsl,imx6dl-gpt" && "fsl,imx6q-gpt"
+            "fsl,imx53-gpt" && "fsl,imx31-gpt"
+            "fsl,imx51-gpt" && "fsl,imx31-gpt"
+            "fsl,imx50-gpt" && "fsl,imx31-gpt"
+            "fsl,imx35-gpt" && "fsl,imx31-gpt"
+            "fsl,imx31-gpt"
+            "fsl,imx27-gpt" && "fsl,imx21-gpt"
+            "fsl,imx25-gpt" && "fsl,imx31-gpt"
+            "fsl,imx1-gpt"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Freescale i.MX General Purpose Timer (GPT)
 #
 # Required properties:

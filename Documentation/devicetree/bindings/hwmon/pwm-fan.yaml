@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-fan
+
+title: Bindings for a fan connected to the PWM lines
+
+maintainer:
+    -   name: Kamil Debski <k.debski@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pwm-fan"
+
+    #cooling-cells:
+    cooling-levels:
+    cooling-max-state:
+    cooling-min-state:
+    pwms:
+
+...
+
 # Bindings for a fan connected to the PWM lines
 #
 # Required properties:

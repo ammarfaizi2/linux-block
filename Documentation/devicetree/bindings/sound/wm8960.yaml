@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8960
+
+title: WM8960 audio CODEC
+
+maintainer:
+    -   name: Zidan Wang <b50113@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wlf,wm8960"
+
+    clock-frequency:
+    clock-names:
+    clocks:
+    reg:
+    wlf,shared-lrclk:
+
+...
+
 # WM8960 audio CODEC
 #
 # This device supports I2C only.

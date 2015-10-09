@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-vop
+
+title: device-tree bindings for rockchip soc display controller (vop)
+
+maintainer:
+    -   name: Mark Yao <mark.yao@rock-chips.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-vop"
+
+    clock-names:
+    clocks:
+    interrupts:
+    iommus:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # device-tree bindings for rockchip soc display controller (vop)
 #
 # VOP (Visual Output Processor) is the Display Controller for the Rockchip

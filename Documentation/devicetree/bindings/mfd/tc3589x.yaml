@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: tc3589x
+
+title: Toshiba TC3589x multi-purpose expander
+
+maintainer:
+    -   name: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "toshiba,tc3589x-keypad"
+            "toshiba,tc3589x-gpio"
+            "toshiba,tc35893"
+            "toshiba,tc35892"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * Toshiba TC3589x multi-purpose expander
 #
 # The Toshiba TC3589x series are I2C-based MFD devices which may expose the

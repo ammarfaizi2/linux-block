@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra-audio-alc5632
+
+title: NVIDIA Tegra audio complex
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra-audio-alc5632-paz00" && "nvidia,tegra-audio-alc5632"
+
+    clock-names:
+    clocks:
+    nvidia,audio-codec:
+    nvidia,audio-routing:
+    nvidia,hp-det-gpios:
+    nvidia,i2s-controller:
+    nvidia,model:
+
+...
+
 # NVIDIA Tegra audio complex
 #
 # Required properties:

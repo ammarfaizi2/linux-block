@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra30-i2s
+
+title: NVIDIA Tegra30 I2S controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-i2s"
+            "nvidia,tegra124-i2s"
+            "nvidia,tegra114-i2s" && "nvidia,tegra30-i2s"
+
+    clocks:
+    nvidia,ahub-cif-ids:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # NVIDIA Tegra30 I2S controller
 #
 # Required properties:

@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: sun6i-prcm
+
+title: Allwinner PRCM (Power/Reset/Clock Management) Multi-Functional Device
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fixed-factor-clock"
+            "allwinner,sun8i-a23-prcm"
+            "allwinner,sun6i-a31-prcm"
+            "allwinner,sun6i-a31-ar100-clk"
+            "allwinner,sun6i-a31-apb0-gates-clk"
+            "allwinner,sun6i-a31-apb0-clk"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+
+...
+
 # * Allwinner PRCM (Power/Reset/Clock Management) Multi-Functional Device
 #
 # PRCM is an MFD device exposing several Power Management related devices

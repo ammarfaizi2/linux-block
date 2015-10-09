@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: twl4030-madc
+
+title: TWL4030 Monitoring Analog to Digital Converter (MADC)
+
+maintainer:
+    -   name: Sebastian Reichel <sre@debian.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,twl4030-madc"
+
+    interrupts:
+    #io-channel-cells:
+
+...
+
 # * TWL4030 Monitoring Analog to Digital Converter (MADC)
 #
 # The MADC subsystem in the TWL4030 consists of a 10-bit ADC

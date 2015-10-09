@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,s3c64xx-clock
+
+title: Samsung S3C64xx Clock Controller
+
+maintainer:
+    -   name: Tomasz Figa <tomasz.figa@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s3c6410-clock"
+            "samsung,s3c6400-clock"
+
+
+...
+
 # * Samsung S3C64xx Clock Controller
 #
 # The S3C64xx clock controller generates and supplies clock to various controllers

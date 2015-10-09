@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,l2-intc
+
+title: Broadcom Generic Level 2 Interrupt Controller
+
+maintainer:
+    -   name: Florian Fainelli <f.fainelli@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,l2-intc"
+
+    brcm,irq-can-wake:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Broadcom Generic Level 2 Interrupt Controller
 #
 # Required properties:

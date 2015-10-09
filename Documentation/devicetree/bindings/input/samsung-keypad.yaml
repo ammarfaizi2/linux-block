@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-keypad
+
+title: Samsung's Keypad Controller device tree bindings
+
+maintainer:
+    -   name: Thomas Abraham <thomas.abraham@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-keypad"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    linux,input-no-autorepeat:
+    linux,input-wakeup:
+    linux,keypad-no-autorepeat:
+    linux,keypad-wakeup:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    samsung,keypad-num-columns:
+    samsung,keypad-num-rows:
+    status:
+
+...
+
 # * Samsung's Keypad Controller device tree bindings
 #
 # Samsung's Keypad controller is used to interface a SoC with a matrix-type

@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,wlcore
+
+title: TI Wilink 6/7/8 (wl12xx/wl18xx) SDIO devices
+
+maintainer:
+    -   name: Eliad Peller <eliad@wizery.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,wl1835"
+            "ti,wl1283"
+            "ti,wl1281"
+            "ti,wl1271"
+
+    interrupt-parent:
+    interrupts:
+    ref-clock-frequency:
+    reg:
+    tcxo-clock-frequency:
+
+...
+
 # TI Wilink 6/7/8 (wl12xx/wl18xx) SDIO devices
 #
 # This node provides properties for controlling the wilink wireless device. The

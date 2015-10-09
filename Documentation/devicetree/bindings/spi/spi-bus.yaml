@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-bus
+
+title: SPI (Serial Peripheral Interface) busses
+
+maintainer:
+    -   name: Baruch Siach <baruch@tkos.co.il>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc5200-spi"
+            "fsl,mpc5200b-spi" && "fsl,mpc5200-spi"
+
+    #address-cells:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # SPI (Serial Peripheral Interface) busses
 #
 # SPI busses can be described with a node for the SPI master device

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: mvebu-corediv-clock
+
+title: Core Divider Clock bindings for Marvell MVEBU SoCs
+
+maintainer:
+    -   name: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-390-corediv-clock" && "marvell,armada-380-corediv-clock"
+            "marvell,armada-380-corediv-clock"
+            "marvell,armada-375-corediv-clock"
+            "marvell,armada-370-corediv-clock"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # * Core Divider Clock bindings for Marvell MVEBU SoCs
 #
 # The following is a list of provided IDs and clock names on Armada 370/XP:

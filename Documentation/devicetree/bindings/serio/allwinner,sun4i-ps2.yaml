@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: allwinner,sun4i-ps2
+
+title: Device tree bindings for Allwinner A10, A20 PS2 host controller
+
+maintainer:
+    -   name: Vishnu Patekar <vishnupatekar0510@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun4i-a10-ps2"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Device tree bindings for Allwinner A10, A20 PS2 host controller
 #
 # A20 PS2 is dual role controller (PS2 host and PS2 device). These bindings are

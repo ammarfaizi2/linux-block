@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-esdhc
+
+title: Freescale Enhanced Secure Digital Host Controller (eSDHC)
+
+maintainer:
+    -   name: Arnd Bergmann <arnd@arndb.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,esdhc"
+
+    big-endian:
+    bus-width:
+    clock-frequency:
+    fsl,iommu-parent:
+    fsl,liodn-reg:
+    fsl,sdhci-auto-cmd12:
+    interrupts:
+    reg:
+    sdhci,1-bit-only:
+    sdhci,auto-cmd12:
+    sleep:
+    status:
+    voltage-ranges:
+
+...
+
 # * Freescale Enhanced Secure Digital Host Controller (eSDHC)
 #
 # The Enhanced Secure Digital Host Controller provides an interface

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: via,vt8500-intc
+
+title: VIA/Wondermedia VT8500 Interrupt Controller
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "via,vt8500-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # VIA/Wondermedia VT8500 Interrupt Controller
 # -----------------------------------------------------
 #

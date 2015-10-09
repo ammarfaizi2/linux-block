@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos4-fimc-is
+
+title: Exynos4x12 SoC series Imaging Subsystem (FIMC-IS)
+
+maintainer:
+    -   name: Sylwester Nawrocki <s.nawrocki@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4212-i2c-isp"
+            "samsung,exynos4212-fimc-is" && "simple-bus"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    iommu-names:
+    iommus:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Exynos4x12 SoC series Imaging Subsystem (FIMC-IS)
 #
 # The FIMC-IS is a subsystem for processing image signal from an image sensor.

@@ -1,3 +1,51 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-thermal
+
+title: Exynos Thermal Management Unit (TMU)
+
+maintainer:
+    -   name: Naveen Krishna Chatradhi <ch.naveen@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5440-tmu"
+            "samsung,exynos5420-tmu-ext-triminfo"
+            "samsung,exynos5420-tmu"
+            "samsung,exynos5250-tmu"
+            "samsung,exynos4412-tmu"
+            "samsung,exynos4210-tmu"
+            "samsung,exynos3250-tmu"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    samsung,tmu_cal_type:
+    samsung,tmu_default_temp_offset:
+    samsung,tmu_efuse_value:
+    samsung,tmu_first_point_trim:
+    samsung,tmu_gain:
+    samsung,tmu_max_efuse_value:
+    samsung,tmu_min_efuse_value:
+    samsung,tmu_noise_cancel_mode:
+    samsung,tmu_reference_voltage:
+    samsung,tmu_second_point_trim:
+    status:
+    #thermal-sensor-cells:
+    vtmu-supply:
+
+...
+
 # * Exynos Thermal Management Unit (TMU)
 #
 # ** Required properties:

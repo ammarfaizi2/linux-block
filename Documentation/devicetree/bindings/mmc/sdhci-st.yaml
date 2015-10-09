@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: sdhci-st
+
+title: STMicroelectronics sdhci-st MMC/SD controller
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,sdhci-stih407" && "st,sdhci"
+            "st,sdhci"
+
+    bus-width:
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    non-removable:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * STMicroelectronics sdhci-st MMC/SD controller
 #
 # This file documents the differences between the core properties in

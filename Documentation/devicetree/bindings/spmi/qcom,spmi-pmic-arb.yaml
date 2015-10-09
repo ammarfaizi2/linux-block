@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,spmi-pmic-arb
+
+title: Qualcomm SPMI Controller (PMIC Arbiter)
+
+maintainer:
+    -   name: Gilad Avidov <gavidov@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,spmi-pmic-arb"
+
+    #address-cells:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-names:
+    interrupts:
+    qcom,channel:
+    qcom,ee:
+    reg:
+    reg-names:
+    #size-cells:
+
+...
+
 # Qualcomm SPMI Controller (PMIC Arbiter)
 #
 # The SPMI PMIC Arbiter is found on Snapdragon chipsets.  It is an SPMI

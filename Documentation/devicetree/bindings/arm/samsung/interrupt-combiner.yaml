@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: interrupt-combiner
+
+title: Samsung Exynos Interrupt Combiner Controller
+
+maintainer:
+    -   name: Anatol Pomozov <anatol.pomozov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4210-combiner"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+    samsung,combiner-nr:
+
+...
+
 # * Samsung Exynos Interrupt Combiner Controller
 #
 # Samsung's Exynos4 architecture includes a interrupt combiner controller which

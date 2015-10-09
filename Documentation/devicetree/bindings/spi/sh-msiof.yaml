@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: sh-msiof
+
+title: Renesas MSIOF spi controller
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@linux-m68k.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,msiof-r8a7791"
+            "renesas,msiof-r8a7790"
+
+    #address-cells:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Renesas MSIOF spi controller
 #
 # Required properties:

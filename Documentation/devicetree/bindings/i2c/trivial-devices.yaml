@@ -1,3 +1,98 @@
+%YAML 1.2
+---
+version: 1
+
+id: trivial-devices
+
+title: This is a list of trivial i2c devices that have simple device tree
+
+maintainer:
+    -   name: Arnaud Ebalard <arno@natisbad.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tsc2003"
+            "ti,tmp275"
+            "ti,tmp103"
+            "ti,tmp102"
+            "taos,tsl2550"
+            "stm,m41t80" && "m41st85"
+            "stm,m41t80"
+            "stm,m41t62"
+            "stm,m41t00" && "dallas,ds1338"
+            "stm,m41t00"
+            "st-micro,24c256"
+            "sii,s35390a"
+            "samsung,24ad0xd1"
+            "ricoh,rs5c372b"
+            "ricoh,rs5c372a"
+            "ricoh,r2025sd"
+            "ramtron,24c64"
+            "plx,pex8648"
+            "pericom,pt7c4338"
+            "ovti,ov5642"
+            "oki,ml86v7667"
+            "nxp,pcf8563"
+            "nxp,pca9557"
+            "nxp,pca9556"
+            "national,lm92"
+            "national,lm85"
+            "national,lm80"
+            "national,lm75"
+            "national,lm63"
+            "mc,rv3029c2"
+            "maxim,max6625"
+            "maxim,max1237"
+            "maxim,ds1050"
+            "isil,isl29028"
+            "infineon,slb9645tt"
+            "gmt,g751"
+            "fsl,mpr121"
+            "fsl,mma8452"
+            "fsl,mag3110"
+            "epson,rx8581"
+            "epson,rx8025"
+            "dlg,da9053" && "dlg,da9052"
+            "dallas,ds75"
+            "dallas,ds4510"
+            "dallas,ds3232"
+            "dallas,ds1775"
+            "dallas,ds1682"
+            "dallas,ds1631" && "dallas,ds1621"
+            "dallas,ds1374"
+            "dallas,ds1340"
+            "dallas,ds1338"
+            "cirrus,cs42l51"
+            "catalyst,24c32"
+            "atmel,24c64"
+            "atmel,24c512"
+            "atmel,24c32"
+            "atmel,24c256"
+            "atmel,24c128"
+            "atmel,24c04"
+            "atmel,24c02"
+            "atmel,24c01"
+            "at,24c08"
+            "adi,adxl345"
+            "adi,adt7476"
+            "adi,adt7473"
+            "adi,adt7461"
+            "ad,adm9240"
+            "ad,ad7414"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # This is a list of trivial i2c devices that have simple device tree
 # bindings, consisting only of a compatible field, an address and
 # possibly an interrupt line.

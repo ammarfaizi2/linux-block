@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: adi,adv7123
+
+title: Analog Device ADV7123 Video DAC
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "adi,adv7123"
+
+    "adi,adv7123"::
+
+...
+
 # Analog Device ADV7123 Video DAC
 # -------------------------------
 #

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: fapll
+
+title: Binding for Texas Instruments FAPLL clock.
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,dm816-fapll-clock"
+
+    #clock-cells:
+    clock-indices:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # Binding for Texas Instruments FAPLL clock.
 #
 # Binding status: Unstable - ABI compatibility may be broken in the future

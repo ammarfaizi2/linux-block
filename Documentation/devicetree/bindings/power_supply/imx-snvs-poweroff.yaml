@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-snvs-poweroff
+
+title: i.mx6 Poweroff Driver
+
+maintainer:
+    -   name: Robin Gong <b38343@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,sec-v4"."0-mon" && "syscon" && "simple-mfd"
+
+    interrupts:
+    reg:
+
+...
+
 # i.mx6 Poweroff Driver
 #
 # SNVS_LPCR in SNVS module can power off the whole system by pull

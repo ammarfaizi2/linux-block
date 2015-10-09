@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: ehci-orion
+
+title: EHCI controller, Orion Marvell variants
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-ehci"
+
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+    vbus-supply:
+    vcc-supply:
+
+...
+
 # * EHCI controller, Orion Marvell variants
 #
 # Required properties:

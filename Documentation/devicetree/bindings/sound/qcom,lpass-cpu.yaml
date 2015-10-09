@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,lpass-cpu
+
+title: Qualcomm Technologies LPASS CPU DAI
+
+maintainer:
+    -   name: Kenneth Westfield <kwestfie@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,lpass-cpu"
+
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    reg:
+    reg-names:
+    status:
+
+...
+
 # * Qualcomm Technologies LPASS CPU DAI
 #
 # This node models the Qualcomm Technologies Low-Power Audio SubSystem (LPASS).

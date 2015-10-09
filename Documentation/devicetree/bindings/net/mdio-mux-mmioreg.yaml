@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: mdio-mux-mmioreg
+
+title: Properties for an MDIO bus multiplexer controlled by a memory-mapped device
+
+maintainer:
+    -   name: Timur Tabi <timur@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mdio-mux-mmioreg"
+
+    #address-cells:
+    mdio-parent-bus:
+    mux-mask:
+    reg:
+    #size-cells:
+
+...
+
 # Properties for an MDIO bus multiplexer controlled by a memory-mapped device
 #
 # This is a special case of a MDIO bus multiplexer.  A memory-mapped device,

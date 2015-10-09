@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-usart
+
+title: Atmel Universal Synchronous Asynchronous Receiver/Transmitter (USART)
+
+maintainer:
+    -   name: Richard Genoud <richard.genoud@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9260-dbgu" && "atmel,at91sam9260-usart"
+            "atmel,at91rm9200-usart"
+            "atmel,at91rm9200-dbgu" && "atmel,at91rm9200-usart"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Atmel Universal Synchronous Asynchronous Receiver/Transmitter (USART)
 #
 # Required properties:

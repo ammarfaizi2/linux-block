@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-74xx-mmio
+
+title: 74XX MMIO GPIO driver
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,7416374"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # * 74XX MMIO GPIO driver
 #
 # Required properties:

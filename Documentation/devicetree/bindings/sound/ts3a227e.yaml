@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: ts3a227e
+
+title: Texas Instruments TS3A227E
+
+maintainer:
+    -   name: Anatol Pomozov <anatol.pomozov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "switches"
+
+    reg:
+
+...
+
 # Texas Instruments TS3A227E
 # Autonomous Audio Accessory Detection and Configuration Switch
 #

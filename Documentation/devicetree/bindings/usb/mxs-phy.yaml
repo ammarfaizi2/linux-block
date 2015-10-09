@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxs-phy
+
+title: Freescale MXS USB Phy Device
+
+maintainer:
+    -   name: Peter Chen <peter.chen@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-usbphy"
+            "fsl,imx6ul-usbphy" && "fsl,imx23-usbphy"
+            "fsl,imx6sx-usbphy" && "fsl,imx23-usbphy"
+            "fsl,imx6sl-usbphy" && "fsl,imx23-usbphy"
+            "fsl,imx6q-usbphy" && "fsl,imx23-usbphy"
+            "fsl,imx28-usbphy" && "fsl,imx23-usbphy"
+            "fsl,imx23-usbphy"
+
+    clocks:
+    reg:
+    status:
+
+...
+
 # * Freescale MXS USB Phy Device
 #
 # Required properties:

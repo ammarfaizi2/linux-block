@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,mmcc
+
+title: Qualcomm Multimedia Clock  %title% Reset Controller Binding
+
+maintainer:
+    -   name: Stephen Boyd <sboyd@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,mmcc-msm8974"
+            "qcom,mmcc-msm8960"
+            "qcom,mmcc-apq8064"
+
+    #clock-cells:
+    reg:
+    #reset-cells:
+
+...
+
 # Qualcomm Multimedia Clock & Reset Controller Binding
 # ----------------------------------------------------
 #

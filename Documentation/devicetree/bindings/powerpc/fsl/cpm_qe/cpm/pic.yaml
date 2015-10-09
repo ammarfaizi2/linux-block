@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: pic
+
+title: Interrupt Controllers
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc885-pic" && "fsl,pq1-pic"
+            "fsl,mpc885-cpm-pic" && "fsl,cpm1-pic"
+            "fsl,mpc875-pic" && "fsl,pq1-pic"
+            "fsl,mpc875-cpm-pic" && "fsl,cpm1-pic"
+            "fsl,mpc866-pic" && "fsl,pq1-pic"
+            "fsl,mpc866-cpm-pic" && "fsl,cpm1-pic"
+            "fsl,mpc860-pic" && "fsl,pq1-pic"
+            "fsl,mpc860-cpm-pic" && "fsl,cpm1-pic"
+            "fsl,mpc8560-cpm-pic" && "fsl,cpm2-pic"
+            "fsl,mpc8555-cpm-pic" && "fsl,cpm2-pic"
+            "fsl,mpc8541-cpm-pic" && "fsl,cpm2-pic"
+            "fsl,mpc8280-pic" && "fsl,cpm2-pic"
+            "fsl,mpc8272-pic" && "fsl,cpm2-pic"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # * Interrupt Controllers
 #
 # Currently defined compatibles:

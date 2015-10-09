@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: ahci-platform
+
+title: AHCI SATA Controller
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,spear-ahci"
+            "snps,exynos5440-ahci"
+            "marvell,armada-380-ahci"
+            "hisilicon,hisi-ahci"
+            "allwinner,sun4i-a10-ahci"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+    target-supply:
+
+...
+
 # * AHCI SATA Controller
 #
 # SATA nodes are defined to describe on-chip Serial ATA controllers.

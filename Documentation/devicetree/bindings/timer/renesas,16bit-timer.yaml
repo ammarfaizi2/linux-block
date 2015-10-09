@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,16bit-timer
+
+title: Renesas H8/300 16bit timer
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,16bit-timer"
+
+
+...
+
 # * Renesas H8/300 16bit timer
 #
 # The 16bit timer is a 16bit timer/counter with configurable clock inputs and

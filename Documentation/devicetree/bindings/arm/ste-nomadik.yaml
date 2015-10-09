@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: ste-nomadik
+
+title: ST-Ericsson Nomadik Device Tree Bindings
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,nomadik-nhk-15"
+            "calaosystems,usb-s8815"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # ST-Ericsson Nomadik Device Tree Bindings
 #
 # For various board the "board" node may contain specific properties

@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-atlas7
+
+title: CSR SiRFatlas7 GPIO controller bindings
+
+maintainer:
+    -   name: Wei Chen <Wei.Chen@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,atlas7-gpio"
+
+    clock-names:
+    clocks:
+    gpio-banks:
+    #gpio-cells:
+    gpio-controller:
+    gpio-ranges:
+    gpio-ranges-group-names:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # CSR SiRFatlas7 GPIO controller bindings
 #
 # Required properties:

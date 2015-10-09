@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: vt8500-uart
+
+title: VIA VT8500 and WonderMedia WM8xxx UART Controller
+
+maintainer:
+    -   name: Alexey Charkov <alchark@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "via,vt8500-uart"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * VIA VT8500 and WonderMedia WM8xxx UART Controller
 #
 # Required properties:

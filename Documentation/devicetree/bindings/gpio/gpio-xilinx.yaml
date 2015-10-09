@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-xilinx
+
+title: Xilinx plb/axi GPIO controller
+
+maintainer:
+    -   name: Michal Simek <michal.simek@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,xps-gpio-1"."00"."a"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    xlnx,all-inputs:
+    xlnx,all-inputs-2:
+    xlnx,dout-default:
+    xlnx,dout-default-2:
+    xlnx,family:
+    xlnx,gpio-width:
+    xlnx,interrupt-present:
+    xlnx,is-bidir:
+    xlnx,is-bidir-2:
+    xlnx,is-dual:
+    xlnx,tri-default:
+    xlnx,tri-default-2:
+
+...
+
 # Xilinx plb/axi GPIO controller
 #
 # Dual channel GPIO controller with configurable number of pins

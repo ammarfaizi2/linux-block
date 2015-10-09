@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: cdns,xtensa-mx
+
+title: Xtensa Interrupt Distributor and Programmable Interrupt Controller (MX)
+
+maintainer:
+    -   name: Max Filippov <jcmvbkbc@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cdns,xtensa-mx"
+
+    #interrupt-cells:
+    interrupt-controller:
+
+...
+
 # * Xtensa Interrupt Distributor and Programmable Interrupt Controller (MX)
 #
 # Required properties:

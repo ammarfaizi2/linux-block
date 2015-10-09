@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: gic
+
+title: ARM Generic Interrupt Controller
+
+maintainer:
+    -   name: Marc Zyngier <marc.zyngier@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,msm-qgic2"
+            "qcom,msm-8660-qgic"
+            "brcm,brahma-b15-gic" && "arm,cortex-a15-gic"
+            "arm,gic-400"
+            "arm,cortex-a7-gic" && "arm,cortex-a15-gic"
+            "arm,cortex-a7-gic"
+            "arm,cortex-a15-gic" && "arm,cortex-a9-gic"
+            "arm,cortex-a15-gic"
+            "arm,arm1176jzf-devchip-gic" && "arm,arm11mp-gic"
+
+    #address-cells:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * ARM Generic Interrupt Controller
 #
 # ARM SMP cores are often associated with a GIC, providing per processor

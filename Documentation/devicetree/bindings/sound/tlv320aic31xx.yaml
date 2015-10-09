@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: tlv320aic31xx
+
+title: Texas Instruments - tlv320aic31xx Codec module
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tlv320aic3111"
+
+    ai31xx-micbias-vg:
+    AVDD-supply:
+    DVDD-supply:
+    HPVDD-supply:
+    IOVDD-supply:
+    reg:
+    #sound-dai-cells:
+    SPLVDD-supply:
+    SPRVDD-supply:
+    status:
+
+...
+
 # Texas Instruments - tlv320aic31xx Codec module
 #
 # The tlv320aic31xx serial control bus communicates through I2C protocols

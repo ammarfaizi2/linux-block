@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: feroceon
+
+title: Marvell Feroceon Cache
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,kirkwood-cache"
+            "marvell,feroceon"
+
+    clock-names:
+    clocks:
+    device_type:
+    reg:
+
+...
+
 # * Marvell Feroceon Cache
 #
 # Required properties:

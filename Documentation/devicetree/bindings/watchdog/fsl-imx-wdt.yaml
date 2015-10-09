@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-wdt
+
+title: Freescale i.MX Watchdog Timer (WDT) Controller
+
+maintainer:
+    -   name: Xiubo Li <Li.Xiubo@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-wdt" && "fsl,imx21-wdt"
+            "fsl,mpc8610-wdt"
+            "fsl,mpc5121-wdt"
+            "fsl,imx7d-wdt" && "fsl,imx21-wdt"
+            "fsl,imx6ul-wdt" && "fsl,imx21-wdt"
+            "fsl,imx6sx-wdt" && "fsl,imx21-wdt"
+            "fsl,imx6sl-wdt" && "fsl,imx21-wdt"
+            "fsl,imx6q-wdt" && "fsl,imx21-wdt"
+            "fsl,imx53-wdt" && "fsl,imx21-wdt"
+            "fsl,imx51-wdt" && "fsl,imx21-wdt"
+            "fsl,imx50-wdt" && "fsl,imx21-wdt"
+            "fsl,imx35-wdt" && "fsl,imx21-wdt"
+            "fsl,imx27-wdt" && "fsl,imx21-wdt"
+            "fsl,imx25-wdt" && "fsl,imx21-wdt"
+            "fsl,imx21-wdt"
+
+    big-endian:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale i.MX Watchdog Timer (WDT) Controller
 #
 # Required properties:

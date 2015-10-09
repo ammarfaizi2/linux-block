@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-pxa
+
+title: Marvell MMP I2C controller
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mrvl,pxa-i2c"
+            "mrvl,mmp-twsi"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    mrvl,i2c-fast-mode:
+    reg:
+    resets:
+    #size-cells:
+    status:
+
+...
+
 # * Marvell MMP I2C controller
 #
 # Required properties :

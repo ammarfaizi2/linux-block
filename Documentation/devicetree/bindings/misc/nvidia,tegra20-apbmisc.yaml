@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-apbmisc
+
+title: NVIDIA Tegra20/Tegra30/Tegr114/Tegra124 apbmisc block
+
+maintainer:
+    -   name: Paul Walmsley <paul@pwsan.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-apbmisc" && "nvidia,tegra20-apbmisc"
+            "nvidia,tegra20-apbmisc"
+            "nvidia,tegra124-apbmisc" && "nvidia,tegra20-apbmisc"
+            "nvidia,tegra114-apbmisc" && "nvidia,tegra20-apbmisc"
+
+    reg:
+
+...
+
 # NVIDIA Tegra20/Tegra30/Tegr114/Tegra124 apbmisc block
 #
 # Required properties:

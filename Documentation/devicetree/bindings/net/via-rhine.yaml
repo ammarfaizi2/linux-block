@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: via-rhine
+
+title: VIA Rhine 10/100 Network Controller
+
+maintainer:
+    -   name: Alexey Charkov <alchark@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "via,vt8500-rhine"
+
+    interrupts:
+    reg:
+
+...
+
 # * VIA Rhine 10/100 Network Controller
 #
 # Required properties:

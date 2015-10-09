@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,tpu
+
+title: Renesas H8/300 Timer Pluse Unit
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,tpu"
+
+
+...
+
 # * Renesas H8/300 Timer Pluse Unit
 #
 # The TPU is a 16bit timer/counter with configurable clock inputs and

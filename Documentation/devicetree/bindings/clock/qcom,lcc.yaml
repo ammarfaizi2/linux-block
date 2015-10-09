@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,lcc
+
+title: Qualcomm LPASS Clock  %title% Reset Controller Binding
+
+maintainer:
+    -   name: Rajendra Nayak <rnayak@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,lcc-msm8960"
+            "qcom,lcc-ipq8064"
+            "qcom,lcc-apq8064"
+
+    #clock-cells:
+    reg:
+    #reset-cells:
+
+...
+
 # Qualcomm LPASS Clock & Reset Controller Binding
 # ------------------------------------------------
 #

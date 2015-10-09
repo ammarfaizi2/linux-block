@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-das
+
+title: NVIDIA Tegra 20 DAS (Digital Audio Switch) controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra20-das"
+
+    reg:
+
+...
+
 # NVIDIA Tegra 20 DAS (Digital Audio Switch) controller
 #
 # Required properties:

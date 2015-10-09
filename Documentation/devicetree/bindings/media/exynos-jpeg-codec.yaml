@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-jpeg-codec
+
+title: Samsung S5P/EXYNOS SoC series JPEG codec
+
+maintainer:
+    -   name: Andrzej Pietrasiewicz <andrzej.p@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5420-jpeg"
+            "samsung,exynos4210-jpeg"
+            "samsung,exynos3250-jpeg"
+
+    assigned-clock-parents:
+    assigned-clock-rates:
+    assigned-clocks:
+    clock-names:
+    clocks:
+    interrupts:
+    iommus:
+    power-domains:
+    reg:
+    status:
+
+...
+
 # Samsung S5P/EXYNOS SoC series JPEG codec
 #
 # Required properties:

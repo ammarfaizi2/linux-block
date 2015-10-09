@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: altera_jtaguart
+
+title: Altera JTAG UART
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,juart-1"."0"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Altera JTAG UART
 #
 # Required properties:

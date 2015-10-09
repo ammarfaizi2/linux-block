@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: sirfsoc-dma
+
+title: CSR SiRFSoC DMA controller
+
+maintainer:
+    -   name: Barry Song <Baohua.Song@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,prima2-dmac"
+            "sirf,atlas7-dmac-v2"
+            "sirf,atlas7-dmac"
+
+    cell-index:
+    clocks:
+    #dma-cells:
+    dma-channels:
+    interrupts:
+    reg:
+
+...
+
 # * CSR SiRFSoC DMA controller
 #
 # See dma.txt first

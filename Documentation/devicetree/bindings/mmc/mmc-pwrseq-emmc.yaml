@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: mmc-pwrseq-emmc
+
+title: The simple eMMC hardware reset provider
+
+maintainer:
+    -   name: Marek Szyprowski <m.szyprowski@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mmc-pwrseq-emmc"
+
+    pinctrl-0:
+    pinctrl-names:
+    reset-gpios:
+
+...
+
 # * The simple eMMC hardware reset provider
 #
 # The purpose of this driver is to perform standard eMMC hw reset

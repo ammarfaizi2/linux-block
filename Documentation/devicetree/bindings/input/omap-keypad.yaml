@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap-keypad
+
+title: TI's Keypad Controller device tree bindings
+
+maintainer:
+    -   name: Simon Glass <sjg@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-keypad"
+
+    interrupts:
+    keypad,num-columns:
+    keypad,num-rows:
+    linux,input-no-autorepeat:
+    linux,keymap:
+    reg:
+    reg-names:
+    status:
+    ti,hwmods:
+
+...
+
 # * TI's Keypad Controller device tree bindings
 #
 # TI's Keypad controller is used to interface a SoC with a matrix-type

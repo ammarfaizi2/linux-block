@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,r8a7740-cpg-clocks
+
+title: These bindings should be considered EXPERIMENTAL for now.
+
+maintainer:
+    -   name: Ulrich Hecht <ulrich.hecht@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,r8a7740-cpg-clocks"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    reg:
+    renesas,mode:
+
+...
+
 # These bindings should be considered EXPERIMENTAL for now.
 #
 # * Renesas R8A7740  Clock Pulse Generator (CPG)

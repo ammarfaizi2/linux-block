@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: clocks
+
+title: C6X PLL Clock Controllers
+
+maintainer:
+    -   name: Mark Salter <msalter@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,c6474-pll" && "ti,c64x"+"pll"
+            "ti,c6472-pll" && "ti,c64x"+"pll"
+            "ti,c6457-pll" && "ti,c64x"+"pll"
+            "ti,c6455-pll" && "ti,c64x"+"pll"
+
+
+...
+
 # C6X PLL Clock Controllers
 # -------------------------
 #

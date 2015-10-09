@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas-memory-controllers
+
+title: DT bindings for Renesas R-Mobile and SH-Mobile memory controllers
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,sbsc-sh73a0"
+            "renesas,dbsc-r8a73a4"
+            "renesas,dbsc3-r8a7740"
+
+    power-domains:
+    reg:
+
+...
+
 # DT bindings for Renesas R-Mobile and SH-Mobile memory controllers
 # =================================================================
 #

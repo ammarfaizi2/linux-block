@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: alc5632
+
+title: ALC5632 audio CODEC
+
+maintainer:
+    -   name: Leon Romanovsky <leon@leon.nu>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "realtek,alc5632"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # ALC5632 audio CODEC
 #
 # This device supports I2C only.

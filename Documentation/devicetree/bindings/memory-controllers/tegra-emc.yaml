@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: tegra-emc
+
+title: NVIDIA Tegra124 SoC EMC (external memory controller)
+
+maintainer:
+    -   name: Mikko Perttunen <mperttunen@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-emc"
+
+    nvidia,memory-controller:
+    reg:
+
+...
+
 # NVIDIA Tegra124 SoC EMC (external memory controller)
 # ====================================================
 #

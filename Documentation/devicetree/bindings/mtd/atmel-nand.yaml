@@ -1,3 +1,49 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-nand
+
+title: Atmel NAND flash
+
+maintainer:
+    -   name: Josh Wu <josh.wu@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d4-nand" && "atmel,at91rm9200-nand"
+            "atmel,sama5d3-nfc"
+            "atmel,at91rm9200-nand"
+
+    #address-cells:
+    atmel,has-pmecc:
+    atmel,nand-addr-offset:
+    atmel,nand-cmd-offset:
+    atmel,nand-has-dma:
+    atmel,pmecc-cap:
+    atmel,pmecc-lookup-table-offset:
+    atmel,pmecc-sector-size:
+    gpios:
+    interrupts:
+    nand-bus-width:
+    nand-ecc-mode:
+    nand-on-flash-bbt:
+    pinctrl-0:
+    pinctrl-names:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Atmel NAND flash
 #
 # Required properties:

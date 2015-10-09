@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: dw-apb
+
+title: Designware APB timer
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dw-apb-timer-osc"
+            "snps,dw-apb-timer"
+
+    clock-frequency:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Designware APB timer
 #
 # Required properties:

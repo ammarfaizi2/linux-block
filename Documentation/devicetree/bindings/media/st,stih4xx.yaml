@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,stih4xx
+
+title: STMicroelectronics stih4xx platforms
+
+maintainer:
+    -   name: Fabien Dessenne <fabien.dessenne@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih407-bdisp"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # STMicroelectronics stih4xx platforms
 #
 # bdisp: 2D blitter for STMicroelectronics SoC.

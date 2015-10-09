@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: snps,dw-apb-ssi
+
+title: Synopsys DesignWare AMBA 2.0 Synchronous Serial Interface.
+
+maintainer:
+    -   name: Michael van der Westhuizen <michael@smart-africa.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dw-apb-ssi"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    num-cs:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Synopsys DesignWare AMBA 2.0 Synchronous Serial Interface.
 #
 # Required properties:

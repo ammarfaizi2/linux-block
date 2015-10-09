@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: sdhci-msm
+
+title: Qualcomm SDHCI controller (sdhci-msm)
+
+maintainer:
+    -   name: Georgi Djakov <gdjakov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,sdhci-msm-v4"
+
+    bus-width:
+    cd-gpios:
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    non-removable:
+    reg:
+    reg-names:
+    status:
+
+...
+
 # * Qualcomm SDHCI controller (sdhci-msm)
 #
 # This file documents differences between the core properties in mmc.txt

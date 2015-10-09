@@ -1,3 +1,55 @@
+%YAML 1.2
+---
+version: 1
+
+id: max8907
+
+title: MAX8907 regulator
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max8907"
+
+    in10-supply:
+    in11-supply:
+    in12-supply:
+    in13-supply:
+    in14-supply:
+    in15-supply:
+    in16-supply:
+    in17-supply:
+    in18-supply:
+    in19-supply:
+    in1-supply:
+    in20-supply:
+    in2-supply:
+    in3-supply:
+    in4-supply:
+    in5-supply:
+    in6-supply:
+    in7-supply:
+    in8-supply:
+    in9-supply:
+    interrupts:
+    in-v1-supply:
+    in-v2-supply:
+    in-v3-supply:
+    maxim,system-power-controller:
+    mbatt-supply:
+    reg:
+
+...
+
 # MAX8907 regulator
 #
 # Required properties:

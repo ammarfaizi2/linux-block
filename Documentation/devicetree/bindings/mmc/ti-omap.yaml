@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti-omap
+
+title: TI MMC host controller for OMAP1 and 2420
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap2420-mmc"
+
+    dma-names:
+    dmas:
+    interrupts:
+    reg:
+    ti,hwmods:
+
+...
+
 # * TI MMC host controller for OMAP1 and 2420
 #
 # The MMC Host Controller on TI OMAP1 and 2420 family provides

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: davinci_mmc
+
+title: TI Highspeed MMC host controller for DaVinci
+
+maintainer:
+    -   name: Manjunathappa, Prakash <prakash.pm@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,da830-mmc"
+
+    bus-width:
+    interrupts:
+    max-frequency:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * TI Highspeed MMC host controller for DaVinci
 #
 # The Highspeed MMC Host Controller on TI DaVinci family

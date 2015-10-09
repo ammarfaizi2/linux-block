@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: lg,lb070wv8
+
+title: LG 7" (800x480 pixels) TFT LCD panel
+
+maintainer:
+    -   name: Heiko Schocher <hs@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lg,lb070wv8"
+
+    backlight:
+    enable-gpios:
+
+...
+
 # LG 7" (800x480 pixels) TFT LCD panel
 #
 # Required properties:

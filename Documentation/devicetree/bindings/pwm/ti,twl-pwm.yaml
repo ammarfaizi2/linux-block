@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,twl-pwm
+
+title: Texas Instruments TWL series PWM drivers
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,twl6030-pwm"
+            "ti,twl4030-pwm"
+
+    #pwm-cells:
+
+...
+
 # Texas Instruments TWL series PWM drivers
 #
 # Supported PWMs:

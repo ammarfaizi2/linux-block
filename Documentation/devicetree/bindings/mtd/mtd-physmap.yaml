@@ -1,3 +1,55 @@
+%YAML 1.2
+---
+version: 1
+
+id: mtd-physmap
+
+title: CFI or JEDEC memory-mapped NOR flash, MTD-RAM (NVRAM...)
+
+maintainer:
+    -   name: Aaron Sierra <asierra@xes-inc.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,xps-mch-emc-2"."00"."a" && "cfi-flash"
+            "numonyx,js28f128" && "cfi-flash"
+            "mtd-ram"
+            "intel,PC28F640P30T85" && "cfi-flash"
+            "intel,JS28F640" && "cfi-flash"
+            "intel,JS28F128" && "cfi-flash"
+            "intel,28F640J3A" && "cfi-flash"
+            "ge,imp3a-paged-flash" && "cfi-flash"
+            "ge,imp3a-firmware-mirror" && "cfi-flash"
+            "gef,sbc610-paged-flash" && "cfi-flash"
+            "gef,sbc610-firmware-mirror" && "cfi-flash"
+            "gef,sbc310-paged-flash" && "cfi-flash"
+            "gef,sbc310-firmware-mirror" && "cfi-flash"
+            "gef,ppc9a-paged-flash" && "cfi-flash"
+            "gef,ppc9a-firmware-mirror" && "cfi-flash"
+            "everspin,mram" && "mtd-ram"
+            "cfi-flash"
+            "arm,vexpress-psram" && "mtd-ram"
+            "arm,vexpress-flash" && "cfi-flash"
+            "amd,s29gl512n" && "cfi-flash"
+            "amd,s29gl256n" && "cfi-flash"
+            "amd,s29gl032a" && "cfi-flash"
+            "amd,s29gl01gp" && "cfi-flash"
+            "amd,am29lv652d" && "cfi-flash"
+            "amd,am29lv28ml" && "cfi-flash"
+
+    bank-width:
+    device-width:
+    reg:
+
+...
+
 # CFI or JEDEC memory-mapped NOR flash, MTD-RAM (NVRAM...)
 #
 # Flash chips (Memory Technology Devices) are often used for solid state

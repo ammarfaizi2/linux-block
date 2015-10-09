@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-sss
+
+title: Samsung SoC SSS (Security SubSystem) module
+
+maintainer:
+    -   name: Naveen Krishna Chatradhi <ch.naveen@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4210-secss"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Samsung SoC SSS (Security SubSystem) module
 #
 # The SSS module in S5PV210 SoC supports the following:

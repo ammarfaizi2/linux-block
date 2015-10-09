@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: mv_cesa
+
+title: Marvell Cryptographic Engines And Security Accelerator
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-crypto"
+
+    clocks:
+    interrupts:
+    reg:
+    reg-names:
+    status:
+
+...
+
 # Marvell Cryptographic Engines And Security Accelerator
 #
 # Required properties:

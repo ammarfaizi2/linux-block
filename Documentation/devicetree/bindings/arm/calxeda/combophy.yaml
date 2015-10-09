@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: combophy
+
+title: Calxeda Highbank Combination Phys for SATA
+
+maintainer:
+    -   name: Mark Langsdorf <mark.langsdorf@calxeda.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "calxeda,hb-combophy"
+
+    #phy-cells:
+    phydev:
+    reg:
+
+...
+
 # Calxeda Highbank Combination Phys for SATA
 #
 # Properties:

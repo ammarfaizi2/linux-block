@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: isp1301
+
+title: NXP ISP1301 USB transceiver
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,isp1301"
+
+    reg:
+
+...
+
 # * NXP ISP1301 USB transceiver
 #
 # Required properties:

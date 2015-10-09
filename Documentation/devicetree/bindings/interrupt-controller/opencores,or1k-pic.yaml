@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: opencores,or1k-pic
+
+title: OpenRISC 1000 Programmable Interrupt Controller
+
+maintainer:
+    -   name: Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "opencores,or1k-pic"
+
+
+...
+
 # OpenRISC 1000 Programmable Interrupt Controller
 #
 # Required properties:

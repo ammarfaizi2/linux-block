@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-restart
+
+title: Drive a GPIO line that can be used to restart the system from a restart
+
+maintainer:
+    -   name: David Riley <davidriley@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-restart"
+
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+    priority:
+
+...
+
 # Drive a GPIO line that can be used to restart the system from a restart
 # handler.
 #

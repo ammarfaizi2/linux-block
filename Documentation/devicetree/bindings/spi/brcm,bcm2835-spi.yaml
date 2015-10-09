@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-spi
+
+title: Broadcom BCM2835 SPI0 controller
+
+maintainer:
+    -   name: Anatol Pomozov <anatol.pomozov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-spi"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Broadcom BCM2835 SPI0 controller
 #
 # The BCM2835 contains two forms of SPI master controller, one known simply as

@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,h8300h-intc
+
+title: H8/300H Interrupt controller
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,h8300h-intc" && "renesas,h8300-intc"
+
+
+...
+
 # * H8/300H Interrupt controller
 #
 # Required properties:

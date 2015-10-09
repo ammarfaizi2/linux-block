@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: pixcir_i2c_ts
+
+title: Pixcir I2C touchscreen controllers
+
+maintainer:
+    -   name: Roger Quadros <rogerq@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pixcir,pixcir"_"tangoc"
+
+    attb-gpio:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    touchscreen-size-x:
+    touchscreen-size-y:
+
+...
+
 # * Pixcir I2C touchscreen controllers
 #
 # Required properties:

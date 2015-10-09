@@ -1,3 +1,101 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,kirkwood
+
+title: Marvell Kirkwood SoC Family Device Tree Bindings
+
+maintainer:
+    -   name: Roger Shimizu <rogershimizu@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "zyxel,nsa320" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "zyxel,nsa310" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "zyxel,nsa310a" && "zyxel,nsa310" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "usi,topkick-1281P2" && "usi,topkick" && "marvell,kirkwood-88f6282" && "marvell,kirkwood"
+            "synology,rs411" && "synology,rs812" && "marvell,kirkwood"
+            "synology,rs409" && "marvell,kirkwood"
+            "synology,rs212" && "marvell,kirkwood"
+            "synology,ds411" && "synology,ds413jv10" && "marvell,kirkwood"
+            "synology,ds411slim" && "marvell,kirkwood"
+            "synology,ds411j" && "marvell,kirkwood"
+            "synology,ds409" && "synology,ds410j" && "marvell,kirkwood"
+            "synology,ds409slim" && "marvell,kirkwood"
+            "synology,ds212" && "synology,ds212pv10" && "synology,ds212pv10" && "synology,ds212pv20" && "synology,ds213airv10" && "synology,ds213v10" && "marvell,kirkwood"
+            "synology,ds212jv10" && "synology,ds212jv20" && "marvell,kirkwood"
+            "synology,ds210jv10" && "synology,ds210jv20" && "synology,ds210jv30" && "synology,ds211j" && "marvell,kirkwood"
+            "synology,ds209" && "marvell,kirkwood"
+            "synology,ds111" && "marvell,kirkwood"
+            "synology,ds110jv10" && "synology,ds110jv30" && "marvell,kirkwood"
+            "synology,ds109" && "synology,ds110jv20" && "synology,ds110" && "marvell,kirkwood"
+            "seagate,goflexnet" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "seagate,dockstar" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "seagate,blackarmor-nas220" && "marvell,kirkwood-88f6192" && "marvell,kirkwood"
+            "raidsonic,ib-nas6210-b" && "raidsonic,ib-nas6220-b" && "raidsonic,ib-nas6210" && "raidsonic,ib-nas6220" && "raidsonic,ib-nas62x0" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "qnap,ts419" && "marvell,kirkwood"
+            "qnap,ts219" && "marvell,kirkwood"
+            "plathome,openblocks-a7" && "marvell,kirkwood-88f6283" && "marvell,kirkwood"
+            "plathome,openblocks-a6" && "marvell,kirkwood-88f6283" && "marvell,kirkwood"
+            "netgear,readynas-nv"+"-v2" && "netgear,readynas" && "marvell,kirkwood-88f6282" && "marvell,kirkwood"
+            "netgear,readynas-duo-v2" && "netgear,readynas" && "marvell,kirkwood-88f6282" && "marvell,kirkwood"
+            "mpl,cec4-10" && "mpl,cec4" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "marvell,rd88f6281-z0" && "marvell,rd88f6281" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "marvell,rd88f6281-a" && "marvell,rd88f6281" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "marvell,rd88f6192" && "marvell,kirkwood-88f6192" && "marvell,kirkwood"
+            "marvell,openrd-ultimate" && "marvell,openrd" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "marvell,openrd-client" && "marvell,openrd" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "marvell,openrd-base" && "marvell,openrd" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "marvell,mv88f6281gtw-ge" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "marvell,kirkwood"
+            "marvell,db-88f6282-bp" && "marvell,kirkwood-88f6282" && "marvell,kirkwood"
+            "marvell,db-88f6281-bp" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "lacie,netspace"_"v2" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "lacie,netspace"_"mini"_"v2" && "marvell,kirkwood-88f6192" && "marvell,kirkwood"
+            "lacie,netspace"_"max"_"v2" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "lacie,netspace"_"lite"_"v2" && "marvell,kirkwood-88f6192" && "marvell,kirkwood"
+            "lacie,net5big"_"v2" && "lacie,netxbig" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "lacie,net2big"_"v2" && "lacie,netxbig" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "lacie,nas2big" && "lacie,netxbig" && "marvell,kirkwood-88f6282" && "marvell,kirkwood"
+            "lacie,laplug" && "marvell,kirkwood-88f6192" && "marvell,kirkwood"
+            "lacie,inetspace"_"v2" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "lacie,d2net"_"v2" && "lacie,netxbig" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "lacie,cloudbox" && "marvell,kirkwood-88f6702" && "marvell,kirkwood"
+            "keymile,km"_"kirkwood" && "marvell,kirkwood-98DX4122" && "marvell,kirkwood"
+            "keymile,km"_"fixedeth" && "marvell,kirkwood-98DX4122" && "marvell,kirkwood"
+            "iom,ix2-200" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "iom,iconnect-1"."1" && "iom,iconnect" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "hp,t5325" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "globalscale,sheevaplug" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "globalscale,sheevaplug-esata-rev13" && "globalscale,sheevaplug-esata" && "globalscale,sheevaplug" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "globalscale,guruplug-server-plus" && "globalscale,guruplug" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "globalscale,dreamplug-003-ds2001" && "globalscale,dreamplug" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "excito,b3" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "dlink,dns-kirkwood" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "dlink,dns-325-a1" && "dlink,dns-325" && "dlink,dns-kirkwood" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "dlink,dns-320-a1" && "dlink,dns-320" && "dlink,dns-kirkwood" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "dlink,dir-665" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "cloudengines,pogoe02" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "buffalo,lsxhl" && "buffalo,lsxl" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "buffalo,lswxl" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+            "buffalo,lswvl" && "buffalo,lsvl" && "marvell,kirkwood-88f6282" && "marvell,kirkwood"
+            "buffalo,lschlv2" && "buffalo,lsxl" && "marvell,kirkwood-88f6281" && "marvell,kirkwood"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Marvell Kirkwood SoC Family Device Tree Bindings
 # ------------------------------------------------
 #

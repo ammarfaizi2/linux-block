@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: vexpress-scc
+
+title: ARM Versatile Express Serial Configuration Controller
+
+maintainer:
+    -   name: Pawel Moll <pawel.moll@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,vexpress-scc,v2p-ca15"_"a7" && "arm,vexpress-scc"
+
+    interrupts:
+    reg:
+
+...
+
 # ARM Versatile Express Serial Configuration Controller
 # -----------------------------------------------------
 #

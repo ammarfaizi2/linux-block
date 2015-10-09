@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835
+
+title: BCM2835 Random number generator
+
+maintainer:
+    -   name: Lubomir Rintel <lkundrak@v3.sk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-rng"
+
+    reg:
+
+...
+
 # BCM2835 Random number generator
 #
 # Required properties:

@@ -1,3 +1,57 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-vf610
+
+title: Freescale VF610 PORT/GPIO module
+
+maintainer:
+    -   name: Stefan Agner <stefan@agner.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-gpio"
+            "fsl,mpc8572-gpio"
+            "fsl,mpc8379-gpio" && "fsl,mpc8349-gpio"
+            "fsl,mpc8378-gpio" && "fsl,mpc8349-gpio"
+            "fsl,mpc8377-gpio" && "fsl,mpc8349-gpio"
+            "fsl,mpc8349-gpio"
+            "fsl,mpc8308-gpio" && "fsl,mpc8349-gpio"
+            "fsl,mpc5200b-gpio" && "fsl,mpc5200-gpio"
+            "fsl,mpc5125-gpio"
+            "fsl,mpc5121-gpio"
+            "fsl,imx7d-gpio" && "fsl,imx35-gpio"
+            "fsl,imx6ul-gpio" && "fsl,imx35-gpio"
+            "fsl,imx6sx-gpio" && "fsl,imx35-gpio"
+            "fsl,imx6sl-gpio" && "fsl,imx35-gpio"
+            "fsl,imx6q-gpio" && "fsl,imx35-gpio"
+            "fsl,imx53-gpio" && "fsl,imx35-gpio"
+            "fsl,imx51-gpio" && "fsl,imx35-gpio"
+            "fsl,imx50-gpio" && "fsl,imx35-gpio"
+            "fsl,imx35-gpio" && "fsl,imx31-gpio"
+            "fsl,imx28-gpio" && "fsl,mxs-gpio"
+            "fsl,imx27-gpio" && "fsl,imx21-gpio"
+            "fsl,imx25-gpio" && "fsl,imx35-gpio"
+            "fsl,imx23-gpio" && "fsl,mxs-gpio"
+            "fsl,imx1-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale VF610 PORT/GPIO module
 #
 # The Freescale PORT/GPIO modules are two adjacent modules providing GPIO

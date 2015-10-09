@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: clk-exynos-audss
+
+title: Samsung Audio Subsystem Clock Controller
+
+maintainer:
+    -   name: Andrew Bresticker <abrestic@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5420-audss-clock"
+            "samsung,exynos5250-audss-clock"
+            "samsung,exynos4210-audss-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Audio Subsystem Clock Controller
 #
 # The Samsung Audio Subsystem clock controller generates and supplies clocks

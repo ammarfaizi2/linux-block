@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: diu
+
+title: Freescale Display Interface Unit
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc5121-diu"
+            "fsl,diu"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    sleep:
+
+...
+
 # * Freescale Display Interface Unit
 #
 # The Freescale DIU is a LCD controller, with proper hardware, it can also

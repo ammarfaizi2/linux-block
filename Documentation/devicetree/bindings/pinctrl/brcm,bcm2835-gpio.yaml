@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-gpio
+
+title: Broadcom BCM2835 GPIO (and pinmux) controller
+
+maintainer:
+    -   name: Masanari Iida <standby24x7@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # Broadcom BCM2835 GPIO (and pinmux) controller
 #
 # The BCM2835 GPIO module is a combined GPIO controller, (GPIO) interrupt

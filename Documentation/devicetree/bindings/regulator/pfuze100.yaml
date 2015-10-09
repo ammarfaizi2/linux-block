@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: pfuze100
+
+title: PFUZE100 family of regulators
+
+maintainer:
+    -   name: Robin Gong <b38343@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,pfuze3000"
+            "fsl,pfuze200"
+            "fsl,pfuze100"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # PFUZE100 family of regulators
 #
 # Required properties:

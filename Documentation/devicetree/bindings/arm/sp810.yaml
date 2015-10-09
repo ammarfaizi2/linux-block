@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: sp810
+
+title: SP810 System Controller
+
+maintainer:
+    -   name: Pawel Moll <pawel.moll@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,sp810" && "arm,primecell"
+
+    assigned-clock-parents:
+    assigned-clocks:
+    #clock-cells:
+    clock-names:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # SP810 System Controller
 # -----------------------
 #

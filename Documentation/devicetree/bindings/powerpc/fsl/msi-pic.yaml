@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: msi-pic
+
+title: Freescale MSI interrupt controller
+
+maintainer:
+    -   name: Diana CRACIUN <Diana.Craciun@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8641-msi" && "fsl,mpic-msi"
+            "fsl,mpc8610-msi" && "fsl,mpic-msi"
+            "fsl,mpc8572-msi" && "fsl,mpic-msi"
+            "fsl,ipic-msi"
+
+    interrupt-parent:
+    interrupts:
+    msi-available-ranges:
+    reg:
+
+...
+
 # * Freescale MSI interrupt controller
 #
 # Required properties:

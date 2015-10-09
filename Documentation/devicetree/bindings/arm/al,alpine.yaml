@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: al,alpine
+
+title: Annapurna Labs Alpine Platform Device Tree Bindings
+
+maintainer:
+    -   name: Tsahee Zidenberg <tsahee@annapurnalabs.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "al,alpine-sysfabric-service" && "syscon"
+            "al,alpine"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Annapurna Labs Alpine Platform Device Tree Bindings
 # ---------------------------------------------------------------
 #

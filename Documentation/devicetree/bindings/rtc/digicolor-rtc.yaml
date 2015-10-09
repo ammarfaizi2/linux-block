@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: digicolor-rtc
+
+title: Conexant Digicolor Real Time Clock controller
+
+maintainer:
+    -   name: Baruch Siach <baruch@tkos.co.il>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cnxt,cx92755-rtc"
+
+    interrupts:
+    reg:
+
+...
+
 # Conexant Digicolor Real Time Clock controller
 #
 # This binding currently supports the CX92755 SoC.

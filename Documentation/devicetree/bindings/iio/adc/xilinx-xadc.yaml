@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: xilinx-xadc
+
+title: Xilinx XADC device driver
+
+maintainer:
+    -   name: Lars-Peter Clausen <lars@metafoo.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-xadc-1"."00"."a"
+
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Xilinx XADC device driver
 #
 # This binding document describes the bindings for both of them since the

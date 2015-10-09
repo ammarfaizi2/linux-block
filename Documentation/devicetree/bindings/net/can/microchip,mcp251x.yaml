@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: microchip,mcp251x
+
+title: Microchip MCP251X stand-alone CAN controller device tree bindings
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "microchip,mcp2515"
+
+    clocks:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    spi-max-frequency:
+    vdd-supply:
+
+...
+
 # * Microchip MCP251X stand-alone CAN controller device tree bindings
 #
 # Required properties:

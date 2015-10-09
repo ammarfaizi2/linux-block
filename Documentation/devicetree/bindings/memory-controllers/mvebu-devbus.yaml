@@ -1,3 +1,46 @@
+%YAML 1.2
+---
+version: 1
+
+id: mvebu-devbus
+
+title: Device tree bindings for MVEBU Device Bus controllers
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-devbus"
+            "marvell,mvebu-devbus"
+
+    #address-cells:
+    clocks:
+    devbus,acc-first-ps:
+    devbus,acc-next-ps:
+    devbus,ale-wr-ps:
+    devbus,badr-skew-ps:
+    devbus,bus-width:
+    devbus,rd-hold-ps:
+    devbus,rd-setup-ps:
+    devbus,sync-enable:
+    devbus,turn-off-ps:
+    devbus,wr-high-ps:
+    devbus,wr-low-ps:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Device tree bindings for MVEBU Device Bus controllers
 #
 # The Device Bus controller available in some Marvell's SoC allows to control

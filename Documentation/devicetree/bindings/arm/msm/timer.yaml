@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: timer
+
+title: MSM Timer
+
+maintainer:
+    -   name: Stephen Boyd <sboyd@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,scss-timer" && "qcom,msm-timer"
+            "qcom,kpss-timer" && "qcom,msm-timer"
+
+    clock-frequency:
+    clock-names:
+    clocks:
+    cpu-offset:
+    interrupts:
+    reg:
+
+...
+
 # * MSM Timer
 #
 # Properties:

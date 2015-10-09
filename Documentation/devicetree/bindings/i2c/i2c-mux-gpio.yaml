@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-mux-gpio
+
+title: GPIO-based I2C Bus Mux
+
+maintainer:
+    -   name: Maxime Ripard <maxime.ripard@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,pca9555"
+            "i2c-mux-gpio"
+
+    #address-cells:
+    i2c-parent:
+    mux-gpios:
+    pinctrl-0:
+    pinctrl-names:
+    #size-cells:
+
+...
+
 # GPIO-based I2C Bus Mux
 #
 # This binding describes an I2C bus multiplexer that uses GPIOs to

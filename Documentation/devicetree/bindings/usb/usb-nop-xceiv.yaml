@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb-nop-xceiv
+
+title: USB NOP PHY
+
+maintainer:
+    -   name: Roger Quadros <rogerq@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "usb-nop-xceiv"
+
+    clock-frequency:
+    clock-names:
+    clocks:
+    #phy-cells:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-gpios:
+    status:
+    "usb-nop-xceiv"::
+    vcc-supply:
+
+...
+
 # USB NOP PHY
 #
 # Required properties:

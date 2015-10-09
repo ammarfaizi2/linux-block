@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-hsuart
+
+title: NVIDIA Tegra20/Tegra30 high speed (DMA based) UART controller driver.
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-hsuart"
+
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    reg:
+    reg-shift:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # NVIDIA Tegra20/Tegra30 high speed (DMA based) UART controller driver.
 #
 # Required properties:

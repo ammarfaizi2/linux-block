@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx-slc
+
+title: NXP LPC32xx SoC NAND SLC controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-slc"
+
+    #address-cells:
+    gpios:
+    nand-on-flash-bbt:
+    nxp,rdr-clks:
+    nxp,rhold:
+    nxp,rsetup:
+    nxp,rwidth:
+    nxp,wdr-clks:
+    nxp,whold:
+    nxp,wsetup:
+    nxp,wwidth:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # NXP LPC32xx SoC NAND SLC controller
 #
 # Required properties:

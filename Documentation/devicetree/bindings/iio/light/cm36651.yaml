@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: cm36651
+
+title: Capella CM36651 I2C Proximity and Color Light sensor
+
+maintainer:
+    -   name: Beomho Seo <beomho.seo@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "capella,cm36651"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    vled-supply:
+
+...
+
 # * Capella CM36651 I2C Proximity and Color Light sensor
 #
 # Required properties:

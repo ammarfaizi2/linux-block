@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bus-axi
+
+title: Driver for ARM AXI Bus with Broadcom Plugins (bcma)
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bus-axi"
+
+    #address-cells:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # Driver for ARM AXI Bus with Broadcom Plugins (bcma)
 #
 # Required properties:

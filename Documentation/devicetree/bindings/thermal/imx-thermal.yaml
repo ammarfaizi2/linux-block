@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-thermal
+
+title: Temperature Monitor (TEMPMON) on Freescale i.MX SoCs
+
+maintainer:
+    -   name: Anson Huang <b20788@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-tempmon" && "fsl,imx6q-tempmon"
+            "fsl,imx6q-tempmon"
+
+    clocks:
+    fsl,tempmon:
+    fsl,tempmon-data:
+    interrupts:
+
+...
+
 # * Temperature Monitor (TEMPMON) on Freescale i.MX SoCs
 #
 # Required properties:

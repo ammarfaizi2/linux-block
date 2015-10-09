@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: twl4030-pwrbutton
+
+title: Texas Instruments TWL family (twl4030) pwrbutton module
+
+maintainer:
+    -   name: Sebastian Reichel <sre@debian.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,twl4030-pwrbutton"
+
+    interrupts:
+
+...
+
 # Texas Instruments TWL family (twl4030) pwrbutton module
 #
 # This module is part of the TWL4030. For more details about the whole

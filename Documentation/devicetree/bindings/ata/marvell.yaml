@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell
+
+title: Marvell Orion SATA
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-sata"
+            "marvell,armada-370-sata"
+
+    clock-names:
+    clocks:
+    interrupts:
+    nr-ports:
+    reg:
+    status:
+
+...
+
 # * Marvell Orion SATA
 #
 # Required Properties:

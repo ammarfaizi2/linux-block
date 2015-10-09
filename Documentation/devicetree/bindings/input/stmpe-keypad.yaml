@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: stmpe-keypad
+
+title: STMPE Keypad
+
+maintainer:
+    -   name: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stmpe-keypad"
+
+    debounce-interval:
+    keypad,num-columns:
+    keypad,num-rows:
+    linux,keymap:
+    st,no-autorepeat:
+    st,scan-count:
+
+...
+
 # * STMPE Keypad
 #
 # Required properties:

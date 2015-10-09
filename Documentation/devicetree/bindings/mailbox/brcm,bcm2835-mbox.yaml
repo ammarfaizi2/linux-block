@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-mbox
+
+title: Broadcom BCM2835 VideoCore mailbox IPC
+
+maintainer:
+    -   name: Lubomir Rintel <lkundrak@v3.sk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-mbox"
+
+    interrupts:
+    #mbox-cells:
+    reg:
+
+...
+
 # Broadcom BCM2835 VideoCore mailbox IPC
 #
 # Required properties:

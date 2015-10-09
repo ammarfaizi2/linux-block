@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,h8300-div-clock
+
+title: Renesas H8/300 divider clock
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,h8300-div-clock"
+
+
+...
+
 # * Renesas H8/300 divider clock
 #
 # Required Properties:

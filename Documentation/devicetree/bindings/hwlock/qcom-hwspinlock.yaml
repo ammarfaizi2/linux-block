@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom-hwspinlock
+
+title: Qualcomm Hardware Mutex Block:
+
+maintainer:
+    -   name: Bjorn Andersson <bjorn.andersson@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,tcsr-mutex"
+
+    #hwlock-cells:
+    syscon:
+
+...
+
 # Qualcomm Hardware Mutex Block:
 #
 # The hardware block provides mutexes utilized between different processors on

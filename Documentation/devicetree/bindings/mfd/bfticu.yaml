@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: bfticu
+
+title: KEYMILE bfticu Chassis Management FPGA
+
+maintainer:
+    -   name: Valentin Longchamp <valentin.longchamp@keymile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "keymile,bfticu"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # KEYMILE bfticu Chassis Management FPGA
 #
 # The bfticu is a multifunction device that manages the whole chassis.

@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb
+
+title: USB (Universal Serial Bus Controller)
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc885-usb" && "fsl,cpm1-usb"
+            "fsl,mpc8280-usb" && "fsl,cpm2-usb"
+            "fsl,mpc8248-usb" && "fsl,cpm2-usb"
+
+    #address-cells:
+    fsl,cpm-command:
+    interrupt-parent:
+    interrupts:
+    reg:
+    #size-cells:
+
+...
+
 # * USB (Universal Serial Bus Controller)
 #
 # Properties:

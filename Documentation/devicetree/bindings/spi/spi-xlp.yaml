@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-xlp
+
+title: SPI Master controller for Netlogic XLP MIPS64 SOCs
+
+maintainer:
+    -   name: Kamlakant Patel <kamlakant.patel@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "spansion,s25sl12801"
+
+    #address-cells:
+    reg:
+    #size-cells:
+    spi-max-frequency:
+
+...
+
 # SPI Master controller for Netlogic XLP MIPS64 SOCs
 # ==================================================
 #

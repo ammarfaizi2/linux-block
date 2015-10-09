@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,sti-softreset
+
+title: STMicroelectronics STi family Sysconfig Peripheral SoftReset Controller
+
+maintainer:
+    -   name: Philipp Zabel <p.zabel@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-softreset"
+            "st,stih415-softreset"
+            "st,stih407-softreset"
+
+    #reset-cells:
+
+...
+
 # STMicroelectronics STi family Sysconfig Peripheral SoftReset Controller
 # =============================================================================
 #

@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,pm8xxx-pwrkey
+
+title: Qualcomm PM8xxx PMIC Power Key
+
+maintainer:
+    -   name: Stephen Boyd <sboyd@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8921-pwrkey"
+            "qcom,pm8058-pwrkey"
+
+    debounce:
+    interrupt-parent:
+    interrupts:
+    pull-up:
+    reg:
+
+...
+
 # Qualcomm PM8xxx PMIC Power Key
 #
 # PROPERTIES

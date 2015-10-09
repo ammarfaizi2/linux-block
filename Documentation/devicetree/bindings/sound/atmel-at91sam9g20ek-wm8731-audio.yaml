@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-at91sam9g20ek-wm8731-audio
+
+title: Atmel at91sam9g20ek wm8731 audio complex
+
+maintainer:
+    -   name: Bo Shen <voice.shen@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9g20ek-wm8731-audio"
+
+    atmel,audio-codec:
+    atmel,audio-routing:
+    atmel,model:
+    atmel,ssc-controller:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # * Atmel at91sam9g20ek wm8731 audio complex
 #
 # Required properties:

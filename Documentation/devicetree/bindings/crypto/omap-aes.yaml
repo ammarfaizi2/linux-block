@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap-aes
+
+title: OMAP SoC AES crypto Module
+
+maintainer:
+    -   name: Mark A. Greer <mgreer@animalcreek.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-aes"
+            "ti,omap3-aes"
+            "ti,omap2-aes"
+
+    dma-names:
+    dmas:
+    reg:
+    ti,hwmods:
+
+...
+
 # OMAP SoC AES crypto Module
 #
 # Required properties:

@@ -1,3 +1,62 @@
+%YAML 1.2
+---
+version: 1
+
+id: at91-clock
+
+title: Device Tree Clock bindings for arch-at91
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d4-clk-h32mx"
+            "atmel,sama5d3-pmc"
+            "atmel,sama5d3-clk-pll"
+            "atmel,at91sam9x5-sckc"
+            "atmel,at91sam9x5-pmc"
+            "atmel,at91sam9x5-clk-utmi"
+            "atmel,at91sam9x5-clk-usb"
+            "atmel,at91sam9x5-clk-smd"
+            "atmel,at91sam9x5-clk-slow-rc-osc"
+            "atmel,at91sam9x5-clk-slow-osc"
+            "atmel,at91sam9x5-clk-slow"
+            "atmel,at91sam9x5-clk-programmable"
+            "atmel,at91sam9x5-clk-plldiv"
+            "atmel,at91sam9x5-clk-peripheral"
+            "atmel,at91sam9x5-clk-master"
+            "atmel,at91sam9x5-clk-main-rc-osc"
+            "atmel,at91sam9x5-clk-main"
+            "atmel,at91sam9n12-pmc"
+            "atmel,at91sam9n12-clk-usb"
+            "atmel,at91sam9g45-pmc"
+            "atmel,at91sam9g45-clk-programmable"
+            "atmel,at91sam9g20-clk-pllb"
+            "atmel,at91sam9260-clk-slow"
+            "atmel,at91rm9200-pmc"
+            "atmel,at91rm9200-clk-usb"
+            "atmel,at91rm9200-clk-system"
+            "atmel,at91rm9200-clk-programmable"
+            "atmel,at91rm9200-clk-pll"
+            "atmel,at91rm9200-clk-peripheral"
+            "atmel,at91rm9200-clk-master"
+            "atmel,at91rm9200-clk-main-osc"
+            "atmel,at91rm9200-clk-main"
+
+    #clock-cells:
+    clocks:
+    interrupts-extended:
+
+...
+
 # Device Tree Clock bindings for arch-at91
 #
 # This binding uses the common clock binding[1].

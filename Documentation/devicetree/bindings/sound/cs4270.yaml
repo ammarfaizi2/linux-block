@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: cs4270
+
+title: CS4270 audio CODEC
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cirrus,cs4270"
+
+    clock-frequency:
+    reg:
+
+...
+
 # CS4270 audio CODEC
 #
 # The driver for this device currently only supports I2C.

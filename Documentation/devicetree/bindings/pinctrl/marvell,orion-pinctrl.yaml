@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,orion-pinctrl
+
+title: Marvell Orion SoC pinctrl driver for mpp
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,88f5182-pinctrl"
+
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * Marvell Orion SoC pinctrl driver for mpp
 #
 # Please refer to marvell,mvebu-pinctrl.txt in this directory for common binding

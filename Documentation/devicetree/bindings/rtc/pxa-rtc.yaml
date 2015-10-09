@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: pxa-rtc
+
+title: PXA RTC
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa-rtc"
+
+
+...
+
 # * PXA RTC
 #
 # PXA specific RTC driver.

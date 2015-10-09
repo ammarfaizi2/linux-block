@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-crypto
+
+title: Atmel HW cryptographic accelerators
+
+maintainer:
+    -   name: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9g46-tdes"
+            "atmel,at91sam9g46-sha"
+            "atmel,at91sam9g46-aes"
+
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Atmel HW cryptographic accelerators
 #
 # These are the HW cryptographic accelerators found on some Atmel products.

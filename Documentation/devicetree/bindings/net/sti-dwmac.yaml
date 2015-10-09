@@ -1,3 +1,51 @@
+%YAML 1.2
+---
+version: 1
+
+id: sti-dwmac
+
+title: STMicroelectronics SoC DWMAC glue layer controller
+
+maintainer:
+    -   name: Giuseppe CAVALLARO <peppe.cavallaro@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-dwmac" && "snps,dwmac" && "snps,dwmac-3"."710"
+            "st,stih415-dwmac" && "snps,dwmac" && "snps,dwmac-3"."610"
+
+    clock-names:
+    clocks:
+    device_type:
+    interrupt-names:
+    interrupts:
+    max-speed:
+    phy-mode:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reg-names:
+    reset-names:
+    resets:
+    snps,force_sf_dma_mode:
+    snps,mixed-burst:
+    snps,pbl:
+    snps,reset-active-low:
+    snps,reset-delays-us:
+    snps,reset-gpio:
+    status:
+    st,syscon:
+    st,tx-retime-src:
+
+...
+
 # STMicroelectronics SoC DWMAC glue layer controller
 #
 # This file documents differences between the core properties in

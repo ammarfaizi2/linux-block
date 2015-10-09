@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-keypad
+
+title: Freescale i.MX Keypad Port(KPP) device tree bindings
+
+maintainer:
+    -   name: Liu Ying <Ying.Liu@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-kpp" && "fsl,imx21-kpp"
+            "fsl,imx6sl-kpp" && "fsl,imx21-kpp"
+            "fsl,imx6q-kpp" && "fsl,imx21-kpp"
+            "fsl,imx53-kpp" && "fsl,imx21-kpp"
+            "fsl,imx51-kpp" && "fsl,imx21-kpp"
+            "fsl,imx27-kpp" && "fsl,imx21-kpp"
+            "fsl,imx25-kpp" && "fsl,imx21-kpp"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    linux,keymap:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale i.MX Keypad Port(KPP) device tree bindings
 #
 # The KPP is designed to interface with a keypad matrix with 2-point contact

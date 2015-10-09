@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,rz-cpg-clocks
+
+title: Renesas RZ Clock Pulse Generator (CPG)
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,r7s72100-cpg-clocks" && "renesas,rz-cpg-clocks"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    #power-domain-cells:
+    reg:
+
+...
+
 # * Renesas RZ Clock Pulse Generator (CPG)
 #
 # The CPG generates core clocks for the RZ SoCs. It includes the PLL, variable

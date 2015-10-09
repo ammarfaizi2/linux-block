@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear-rtc
+
+title: SPEAr RTC
+
+maintainer:
+    -   name: Viresh Kumar <vireshk@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear600-rtc"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * SPEAr RTC
 #
 # Required properties:

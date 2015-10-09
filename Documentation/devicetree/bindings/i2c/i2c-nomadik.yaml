@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-nomadik
+
+title: I2C for Nomadik based systems
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,nomadik-i2c" && "arm,primecell"
+            "stericsson,db8500-i2c" && "st,nomadik-i2c" && "arm,primecell"
+
+    #address-cells:
+    clock-frequency:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+    v-i2c-supply:
+
+...
+
 # I2C for Nomadik based systems
 #
 # Required (non-standard) properties:

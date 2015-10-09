@@ -1,3 +1,50 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-esdhc
+
+title: Freescale Enhanced Secure Digital Host Controller (eSDHC) for i.MX
+
+maintainer:
+    -   name: Dong Aisheng <b29396@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,p2020-esdhc" && "fsl,esdhc"
+            "fsl,mpc8379-esdhc" && "fsl,esdhc"
+            "fsl,mpc8378-esdhc" && "fsl,esdhc"
+            "fsl,mpc8377-esdhc" && "fsl,esdhc"
+            "fsl,imx7d-usdhc" && "fsl,imx6sl-usdhc"
+            "fsl,imx6ul-usdhc" && "fsl,imx6sx-usdhc"
+            "fsl,imx6sx-usdhc" && "fsl,imx6sl-usdhc"
+            "fsl,imx6sl-usdhc" && "fsl,imx6q-usdhc"
+            "fsl,imx6q-usdhc"
+            "fsl,imx53-esdhc"
+            "fsl,imx51-esdhc"
+            "fsl,imx50-esdhc"
+            "fsl,imx35-esdhc"
+            "fsl,imx25-esdhc"
+
+    cd-gpios:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+    wp-gpios:
+
+...
+
 # * Freescale Enhanced Secure Digital Host Controller (eSDHC) for i.MX
 #
 # The Enhanced Secure Digital Host Controller on Freescale i.MX family

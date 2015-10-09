@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8580
+
+title: WM8580 audio CODEC
+
+maintainer:
+    -   name: Mark Brown <broonie@opensource.wolfsonmicro.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wlf,wm8580"
+
+    reg:
+
+...
+
 # WM8580 audio CODEC
 #
 # This device supports I2C only.

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: moxa,moxart-dma
+
+title: MOXA ART DMA Controller
+
+maintainer:
+    -   name: Jonas Jensen <jonas.jensen@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "moxa,moxart-sdhci"
+            "moxa,moxart-dma"
+
+    #dma-cells:
+    interrupts:
+    reg:
+
+...
+
 # MOXA ART DMA Controller
 #
 # See dma.txt first

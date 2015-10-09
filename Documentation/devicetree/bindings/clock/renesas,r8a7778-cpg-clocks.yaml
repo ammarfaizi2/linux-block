@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,r8a7778-cpg-clocks
+
+title: Renesas R8A7778 Clock Pulse Generator (CPG)
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,r8a7778-cpg-clocks"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    #power-domain-cells:
+    reg:
+
+...
+
 # * Renesas R8A7778 Clock Pulse Generator (CPG)
 #
 # The CPG generates core clocks for the R8A7778. It includes two PLLs and

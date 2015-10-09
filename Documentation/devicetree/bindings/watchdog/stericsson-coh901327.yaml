@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: stericsson-coh901327
+
+title: ST-Ericsson COH 901 327 Watchdog timer
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,coh901327"
+
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # ST-Ericsson COH 901 327 Watchdog timer
 #
 # Required properties:

@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-orion
+
+title: Marvell Orion SPI device
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-spi"
+            "marvell,armada-xp-spi" && "marvell,orion-spi"
+            "marvell,armada-390-spi" && "marvell,orion-spi"
+            "marvell,armada-380-spi" && "marvell,orion-spi"
+            "marvell,armada-375-spi" && "marvell,orion-spi"
+            "marvell,armada-370-spi" && "marvell,orion-spi"
+
+    #address-cells:
+    cell-index:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Marvell Orion SPI device
 #
 # Required properties:

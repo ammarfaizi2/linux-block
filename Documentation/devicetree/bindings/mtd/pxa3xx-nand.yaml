@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: pxa3xx-nand
+
+title: PXA3xx NAND DT bindings
+
+maintainer:
+    -   name: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa3xx-nand"
+            "marvell,armada370-nand"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    marvell,nand-enable-arbiter:
+    marvell,nand-keep-config:
+    nand-ecc-step-size:
+    nand-ecc-strength:
+    nand-on-flash-bbt:
+    num-cs:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # PXA3xx NAND DT bindings
 #
 # Required properties:

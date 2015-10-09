@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: elan_i2c
+
+title: Elantech I2C Touchpad
+
+maintainer:
+    -   name: Duson Lin <dusonlin@emc.com.tw>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "elan,ekth3000"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    vcc-supply:
+    wakeup-source:
+
+...
+
 # Elantech I2C Touchpad
 #
 # Required properties:

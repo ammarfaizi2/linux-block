@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: smsc911x
+
+title: Smart Mixed-Signal Connectivity (SMSC) LAN911x/912x Controller
+
+maintainer:
+    -   name: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "smsc,lan9220" && "smsc,lan9115"
+            "smsc,lan9118" && "smsc,lan9115"
+            "smsc,lan9117" && "smsc,lan9115"
+            "smsc,lan9115"
+
+    clocks:
+    interrupt-parent:
+    interrupts:
+    phy-mode:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reg-io-width:
+    reg-shift:
+    smsc,force-internal-phy:
+    smsc,irq-active-high:
+    smsc,irq-push-pull:
+    vdd33a-supply:
+    vddvario-supply:
+
+...
+
 # * Smart Mixed-Signal Connectivity (SMSC) LAN911x/912x Controller
 #
 # Required properties:

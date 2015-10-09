@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: sdhci-pxa
+
+title: Marvell sdhci-pxa v2/v3 controller
+
+maintainer:
+    -   name: Chris Ball <cjb@laptop.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mrvl,pxav3-mmc"
+            "marvell,armada-380-sdhci"
+
+    broken-cd:
+    bus-width:
+    cd-gpios:
+    clocks:
+    interrupts:
+    mrvl,clk-delay-cycles:
+    no-1-8-v:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reg-names:
+    status:
+    wp-inverted:
+
+...
+
 # * Marvell sdhci-pxa v2/v3 controller
 #
 # This file documents differences between the core properties in mmc.txt

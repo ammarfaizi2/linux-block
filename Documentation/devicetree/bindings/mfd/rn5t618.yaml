@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: rn5t618
+
+title: Ricoh RN5T618 PMIC
+
+maintainer:
+    -   name: Beniamino Galvani <b.galvani@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ricoh,rn5t618"
+
+    reg:
+
+...
+
 # * Ricoh RN5T618 PMIC
 #
 # Ricoh RN5T618 is a power management IC which integrates 3 step-down

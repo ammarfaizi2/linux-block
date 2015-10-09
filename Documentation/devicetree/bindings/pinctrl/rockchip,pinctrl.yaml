@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip,pinctrl
+
+title: Rockchip Pinmux Controller
+
+maintainer:
+    -   name: Heiko Stübner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-pinctrl"
+            "rockchip,rk3188-pinctrl"
+            "rockchip,rk3188-gpio-bank0"
+            "rockchip,rk3066a-pinctrl"
+            "rockchip,gpio-bank"
+
+    clocks:
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # * Rockchip Pinmux Controller
 #
 # The Rockchip Pinmux Controller, enables the IC

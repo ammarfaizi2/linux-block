@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm,wm8505-fb
+
+title: Wondermedia WM8505 Framebuffer
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wm,wm8505-fb"
+
+    bits-per-pixel:
+    reg:
+
+...
+
 # Wondermedia WM8505 Framebuffer
 # -----------------------------------------------------
 #

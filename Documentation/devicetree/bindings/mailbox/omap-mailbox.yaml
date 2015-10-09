@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap-mailbox
+
+title: OMAP2+ Mailbox Driver
+
+maintainer:
+    -   name: Suman Anna <s-anna@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-mailbox"
+            "ti,omap3-mailbox"
+            "ti,omap2-mailbox"
+
+    interrupt-names:
+    interrupts:
+    #mbox-cells:
+    reg:
+    ti,hwmods:
+    ti,mbox-num-fifos:
+    ti,mbox-num-users:
+
+...
+
 # OMAP2+ Mailbox Driver
 # =====================
 #

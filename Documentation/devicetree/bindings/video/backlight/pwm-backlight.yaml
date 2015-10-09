@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-backlight
+
+title: pwm-backlight bindings
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pwm-backlight"
+
+    backlight-boot-off:
+    brightness-levels:
+    default-brightness-level:
+    enable-gpios:
+    pinctrl-0:
+    pinctrl-names:
+    power-supply:
+    pwms:
+    status:
+
+...
+
 # pwm-backlight bindings
 #
 # Required properties:

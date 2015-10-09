@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: axxia
+
+title: Axxia AXM55xx device tree bindings
+
+maintainer:
+    -   name: Anders Berg <anders.berg@lsi.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lsi,axm5516-amarillo" && "lsi,axm5516"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Axxia AXM55xx device tree bindings
 #
 # Boards using the AXM55xx SoC need to have the following properties:

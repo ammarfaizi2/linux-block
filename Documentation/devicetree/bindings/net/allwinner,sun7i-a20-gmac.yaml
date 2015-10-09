@@ -1,3 +1,50 @@
+%YAML 1.2
+---
+version: 1
+
+id: allwinner,sun7i-a20-gmac
+
+title: Allwinner GMAC ethernet controller
+
+maintainer:
+    -   name: Chen-Yu Tsai <wens@csie.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun7i-a20-gmac-clk"
+            "allwinner,sun7i-a20-gmac"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    phy:
+    phy-mode:
+    phy-supply:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-names:
+    resets:
+    #size-cells:
+    snps,fixed-burst:
+    snps,force_sf_dma_mode:
+    snps,pbl:
+    snps,reset-active-low:
+    snps,reset-delays-us:
+    snps,reset-gpio:
+    status:
+
+...
+
 # * Allwinner GMAC ethernet controller
 #
 # This device is a platform glue layer for stmmac.

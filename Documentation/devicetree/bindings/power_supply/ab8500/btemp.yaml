@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: btemp
+
+title: === AB8500 Battery Temperature Monitor Driver ===
+
+maintainer:
+    -   name: Rajanikanth H.V <rajanikanth.hv@stericsson.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,ab8500-btemp"
+
+    battery:
+
+...
+
 # === AB8500 Battery Temperature Monitor Driver ===
 #
 # The properties below describes the node for btemp driver.

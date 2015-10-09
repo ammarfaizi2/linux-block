@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap-ssi
+
+title: OMAP SSI controller bindings
+
+maintainer:
+    -   name: Sebastian Reichel <sre@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap3-ssi-port"
+            "ti,omap3-ssi"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    ranges:
+    reg:
+    reg-names:
+    #size-cells:
+    status:
+    ti,hwmods:
+
+...
+
 # OMAP SSI controller bindings
 #
 # OMAP Synchronous Serial Interface (SSI) controller implements a legacy

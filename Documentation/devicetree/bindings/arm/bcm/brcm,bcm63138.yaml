@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm63138
+
+title: Broadcom BCM63138 DSL System-on-a-Chip device tree bindings
+
+maintainer:
+    -   name: Florian Fainelli <f.fainelli@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,BCM963138DVT" && "brcm,bcm63138"
+            "brcm,bcm6328-timer" && "syscon"
+            "brcm,bcm63138-bootlut"
+            "brcm,bcm63138"
+
+
+...
+
 # Broadcom BCM63138 DSL System-on-a-Chip device tree bindings
 # -----------------------------------------------------------
 #

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: max14577
+
+title: Maxim MAX14577/77836 Multi-Function Device
+
+maintainer:
+    -   name: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max77836-regulator"
+            "maxim,max77836-muic"
+            "maxim,max77836-charger"
+            "maxim,max77836"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    wakeup:
+
+...
+
 # Maxim MAX14577/77836 Multi-Function Device
 #
 # MAX14577 is a Multi-Function Device with Micro-USB Interface Circuit, Li+
@@ -51,6 +83,9 @@
 #
 # 	May contain a sub-node per regulator from the list below. Each
 # 	sub-node should contain the constraints and initialization information
+            "maxim,max77836-regulator"
+            "maxim,max77836-muic"
+            "maxim,max77836-charger"
 # 	for that regulator. See regulator.txt for a description of standard
 # 	properties for these sub-nodes.
 #

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,pmic-mpp
+
+title: Qualcomm PMIC Multi-Purpose Pin (MPP) block
+
+maintainer:
+    -   name: Bjorn Andersson <bjorn.andersson@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pma8084-mpp"
+            "qcom,pm8941-mpp"
+            "qcom,pm8921-mpp"
+            "qcom,pm8841-mpp"
+
+    #gpio-cells:
+    gpio-controller:
+    interrupts:
+    reg:
+
+...
+
 # Qualcomm PMIC Multi-Purpose Pin (MPP) block
 #
 # This binding describes the MPP block(s) found in the 8xxx series

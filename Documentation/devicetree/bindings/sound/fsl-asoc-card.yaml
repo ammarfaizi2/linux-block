@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-asoc-card
+
+title: Freescale Generic ASoC Sound Card with ASRC support
+
+maintainer:
+    -   name: Nicolin Chen <nicoleotsuka@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6-sabreauto-cs42888" && "fsl,imx-audio-cs42888"
+
+    audio-asrc:
+    audio-codec:
+    audio-cpu:
+    audio-routing:
+    model:
+
+...
+
 # Freescale Generic ASoC Sound Card with ASRC support
 #
 # The Freescale Generic ASoC Sound Card can be used, ideally, for all Freescale

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear-adc
+
+title: ST SPEAr ADC device driver
+
+maintainer:
+    -   name: Stefan Roese <sr@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear600-adc"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * ST SPEAr ADC device driver
 #
 # Required properties:

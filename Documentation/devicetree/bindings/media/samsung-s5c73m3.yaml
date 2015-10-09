@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-s5c73m3
+
+title: Samsung S5C73M3 8Mp camera ISP
+
+maintainer:
+    -   name: Sylwester Nawrocki <s.nawrocki@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5c73m3"
+
+    clock-frequency:
+    clock-names:
+    clocks:
+    reg:
+    spi-max-frequency:
+    standby-gpios:
+    vdd-af-supply:
+    vdda-supply:
+    vdd-int-supply:
+    vddio-cis-supply:
+    vddio-host-supply:
+    vdd-reg-supply:
+    xshutdown-gpios:
+
+...
+
 # Samsung S5C73M3 8Mp camera ISP
 # ------------------------------
 #

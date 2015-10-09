@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: altera_uart
+
+title: Altera UART
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,uart-1"."0"
+
+    clock-frequency:
+    current-speed:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Altera UART
 #
 # Required properties:

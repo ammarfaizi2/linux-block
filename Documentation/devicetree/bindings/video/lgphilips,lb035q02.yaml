@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: lgphilips,lb035q02
+
+title: LG.Philips LB035Q02 Panel
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lgphilips,lb035q02"
+
+    enable-gpios:
+    label:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    spi-cpha:
+    spi-cpol:
+    spi-max-frequency:
+
+...
+
 # LG.Philips LB035Q02 Panel
 # =========================
 #

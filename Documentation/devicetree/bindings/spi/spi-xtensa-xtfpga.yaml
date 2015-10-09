@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-xtensa-xtfpga
+
+title: Cadence Xtensa XTFPGA platform SPI controller.
+
+maintainer:
+    -   name: Max Filippov <jcmvbkbc@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cdns,xtfpga-spi"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 # Cadence Xtensa XTFPGA platform SPI controller.
 #
 # This simple SPI master controller is built into xtfpga bitstreams and is used

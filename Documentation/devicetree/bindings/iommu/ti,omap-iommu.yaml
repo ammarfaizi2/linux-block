@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,omap-iommu
+
+title: OMAP2+ IOMMU
+
+maintainer:
+    -   name: Florian Vaussard <florian.vaussard@epfl.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-iommu"
+            "ti,omap2-iommu"
+
+    interrupts:
+    #iommu-cells:
+    reg:
+    status:
+    ti,hwmods:
+    ti,#tlb-entries:
+
+...
+
 # OMAP2+ IOMMU
 #
 # Required properties:

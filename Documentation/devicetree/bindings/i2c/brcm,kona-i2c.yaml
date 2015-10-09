@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-i2c
+
+title: Broadcom Kona Family I2C
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm21664-i2c" && "brcm,kona-i2c"
+            "brcm,bcm11351-i2c" && "brcm,kona-i2c"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Broadcom Kona Family I2C
 # =========================
 #

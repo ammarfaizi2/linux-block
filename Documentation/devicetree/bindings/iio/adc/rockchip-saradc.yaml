@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-saradc
+
+title: Rockchip Successive Approximation Register (SAR) A/D Converter bindings
+
+maintainer:
+    -   name: Heiko Stübner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,saradc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    #io-channel-cells:
+    reg:
+    status:
+    vref-supply:
+
+...
+
 # Rockchip Successive Approximation Register (SAR) A/D Converter bindings
 #
 # Required properties:

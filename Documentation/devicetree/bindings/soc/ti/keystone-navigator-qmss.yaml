@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: keystone-navigator-qmss
+
+title: Texas Instruments Keystone Navigator Queue Management SubSystem driver
+
+maintainer:
+    -   name: Sandeep Nair <sandeep_n@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,keystone-navigator-qmss"
+
+    #address-cells:
+    clocks:
+    dma-coherent:
+    linkram0:
+    linkram1:
+    queue-range:
+    ranges:
+    #size-cells:
+
+...
+
 # * Texas Instruments Keystone Navigator Queue Management SubSystem driver
 #
 # The QMSS (Queue Manager Sub System) found on Keystone SOCs is one of

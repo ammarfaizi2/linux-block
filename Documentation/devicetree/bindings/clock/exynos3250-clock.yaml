@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos3250-clock
+
+title: Samsung Exynos3250 Clock Controller
+
+maintainer:
+    -   name: Chanwoo Choi <cw00.choi@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos3250-cmu-dmc"
+            "samsung,exynos3250-cmu"
+
+    assigned-clock-parents:
+    assigned-clocks:
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Exynos3250 Clock Controller
 #
 # The Exynos3250 clock controller generates and supplies clock to various

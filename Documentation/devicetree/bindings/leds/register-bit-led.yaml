@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: register-bit-led
+
+title: Device Tree Bindings for Register Bit LEDs
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "register-bit-led"
+            "arm,realview-pb1176-syscon" && "syscon" && "simple-mfd"
+
+    reg:
+
+...
+
 # Device Tree Bindings for Register Bit LEDs
 #
 # Register bit leds are used with syscon multifunctional devices

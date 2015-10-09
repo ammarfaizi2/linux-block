@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-mux-pinctrl
+
+title: Pinctrl-based I2C Bus Mux
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "i2c-mux-pinctrl"
+
+    #address-cells:
+    i2c-parent:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-2:
+    pinctrl-names:
+    #size-cells:
+
+...
+
 # Pinctrl-based I2C Bus Mux
 #
 # This binding describes an I2C bus multiplexer that uses pin multiplexing to

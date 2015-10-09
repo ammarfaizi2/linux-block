@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,saw2
+
+title: SPM AVS Wrapper 2 (SAW2)
+
+maintainer:
+    -   name: Lina Iyer <lina.iyer@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,saw2"
+            "qcom,msm8974-saw2-v2"."1-cpu" && "qcom,saw2"
+            "qcom,apq8084-saw2-v2"."1-cpu" && "qcom,saw2"
+            "qcom,apq8064-saw2-v1"."1-cpu" && "qcom,saw2"
+
+    reg:
+    regulator:
+
+...
+
 # SPM AVS Wrapper 2 (SAW2)
 #
 # The SAW2 is a wrapper around the Subsystem Power Manager (SPM) and the

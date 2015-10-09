@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,ltn101nt05
+
+title: Samsung Electronics 10.1" WSVGA TFT LCD panel
+
+maintainer:
+    -   name: Marc Dietrich <marvin24@gmx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,ltn101nt05" && "simple-panel"
+
+    backlight:
+    ddc-i2c-bus:
+    enable-gpios:
+    power-supply:
+
+...
+
 # Samsung Electronics 10.1" WSVGA TFT LCD panel
 #
 # Required properties:

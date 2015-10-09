@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: ak4642
+
+title: AK4642 I2C transmitter
+
+maintainer:
+    -   name: Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "asahi-kasei,ak4643"
+
+    reg:
+    #sound-dai-cells:
+
+...
+
 # AK4642 I2C transmitter
 #
 # This device supports I2C mode only.

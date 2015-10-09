@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,armada-370-xp-mpic
+
+title: Marvell Armada 370, 375, 38x, XP Interrupt Controller
+
+maintainer:
+    -   name: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,mpic"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    msi-controller:
+    reg:
+    #size-cells:
+
+...
+
 # Marvell Armada 370, 375, 38x, XP Interrupt Controller
 # -----------------------------------------------------
 #

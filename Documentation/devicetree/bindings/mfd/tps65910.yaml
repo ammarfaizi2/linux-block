@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: tps65910
+
+title: TPS65910 Power Management Integrated Circuit
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tps65911"
+            "ti,tps65910"
+
+    #gpio-cells:
+    gpio-controller:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    ti,en-ck32k-xtal:
+    vcc1-supply:
+    vcc2-supply:
+    vcc3-supply:
+    vcc4-supply:
+    vcc5-supply:
+    vcc6-supply:
+    vcc7-supply:
+    vccio-supply:
+
+...
+
 # TPS65910 Power Management Integrated Circuit
 #
 # Required properties:

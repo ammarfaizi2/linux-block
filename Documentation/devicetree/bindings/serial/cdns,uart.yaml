@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: cdns,uart
+
+title: Binding for Cadence UART Controller
+
+maintainer:
+    -   name: Soren Brinkmann <soren.brinkmann@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,xuartps" && "cdns,uart-r1p8"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # Binding for Cadence UART Controller
 #
 # Required properties:

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: simple-card
+
+title: Simple-Card:
+
+maintainer:
+    -   name: Xiubo Li <Li.Xiubo@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "asahi-kasei,ak4648"
+
+    reg:
+    #sound-dai-cells:
+
+...
+
 # Simple-Card:
 #
 # Simple-Card specifies audio DAI connections of SoC <-> codec.

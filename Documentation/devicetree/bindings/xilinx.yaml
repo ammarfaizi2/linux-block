@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: xilinx
+
+title:    d) Xilinx IP cores
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,compound"
+            ""	""	""	"compatible" && ""="" && "BCM21664"_"DT"_"SLAVE"_"CCU"_"COMPAT";""
+            ""	""	""	"compatible" && ""="" && "BCM21664"_"DT"_"ROOT"_"CCU"_"COMPAT";""
+            ""	""	""	"compatible" && ""="" && "BCM21664"_"DT"_"MASTER"_"CCU"_"COMPAT";""
+            ""	""	""	"compatible" && ""="" && "BCM21664"_"DT"_"AON"_"CCU"_"COMPAT";""
+
+
+...
+
 #    d) Xilinx IP cores
 #
 #    The Xilinx EDK toolchain ships with a set of IP cores (devices) for use

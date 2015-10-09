@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-trng
+
+title: Atmel TRNG (True Random Number Generator) block
+
+maintainer:
+    -   name: Boris Brezillon <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9g45-trng"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Atmel TRNG (True Random Number Generator) block
 #
 # Required properties:

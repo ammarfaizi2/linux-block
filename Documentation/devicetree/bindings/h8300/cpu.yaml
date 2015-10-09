@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: cpu
+
+title: H8/300 CPU bindings
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,h8300"
+
+
+...
+
 # * H8/300 CPU bindings
 #
 # Required properties:

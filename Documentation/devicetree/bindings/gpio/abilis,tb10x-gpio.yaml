@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: abilis,tb10x-gpio
+
+title: Abilis TB10x GPIO controller
+
+maintainer:
+    -   name: Christian Ruppert <christian.ruppert@abilis.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "abilis,tb10x-gpio"
+
+    abilis,ngpio:
+    #gpio-cells:
+    gpio-controller:
+    gpio-ranges:
+    gpio-ranges-group-names:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * Abilis TB10x GPIO controller
 #
 # Required Properties:

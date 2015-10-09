@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,omap4-wugen-mpu
+
+title: TI OMAP4 Wake-up Generator
+
+maintainer:
+    -   name: Marc Zyngier <marc.zyngier@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap5-wugen-mpu" && "ti,omap4-wugen-mpu"
+            "ti,omap4-wugen-mpu"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    reg:
+
+...
+
 # TI OMAP4 Wake-up Generator
 #
 # All TI OMAP4/5 (and their derivatives) an interrupt controller that

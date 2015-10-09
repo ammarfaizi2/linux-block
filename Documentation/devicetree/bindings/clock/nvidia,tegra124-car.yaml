@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra124-car
+
+title: NVIDIA Tegra124 and Tegra132 Clock And Reset Controller
+
+maintainer:
+    -   name: Peter De Schrijver <pdeschrijver@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-car"
+
+    #clock-cells:
+    nvidia,external-memory-controller:
+    reg:
+    #reset-cells:
+
+...
+
 # NVIDIA Tegra124 and Tegra132 Clock And Reset Controller
 #
 # This binding uses the common clock binding:

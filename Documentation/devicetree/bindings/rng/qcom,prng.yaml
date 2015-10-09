@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,prng
+
+title: Qualcomm MSM pseudo random number generator.
+
+maintainer:
+    -   name: Stanimir Varbanov <svarbanov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,prng"
+
+    clock-names:
+    clocks:
+    reg:
+
+...
+
 # Qualcomm MSM pseudo random number generator.
 #
 # Required properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra30-pinmux
+
+title: NVIDIA Tegra30 pinmux controller
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-pinmux"
+
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # NVIDIA Tegra30 pinmux controller
 #
 # The Tegra30 pinctrl binding is very similar to the Tegra20 pinctrl binding,

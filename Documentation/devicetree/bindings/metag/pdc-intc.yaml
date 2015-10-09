@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: pdc-intc
+
+title: ImgTec Powerdown Controller (PDC) Interrupt Controller Binding
+
+maintainer:
+    -   name: James Hogan <james.hogan@imgtec.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "img,pdc-intc"
+
+
+...
+
 # * ImgTec Powerdown Controller (PDC) Interrupt Controller Binding
 #
 # This binding specifies what properties must be available in the device tree

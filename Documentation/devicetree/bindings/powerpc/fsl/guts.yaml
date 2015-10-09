@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: guts
+
+title: Global Utilities Block
+
+maintainer:
+    -   name: Igal Liberman <Igal.Liberman@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8641-guts"
+            "fsl,mpc8610-guts"
+            "fsl,mpc8572-guts"
+            "fsl,mpc8548-guts"
+
+    fsl,has-rstcr:
+    reg:
+
+...
+
 # * Global Utilities Block
 #
 # The global utilities block controls power management, I/O device

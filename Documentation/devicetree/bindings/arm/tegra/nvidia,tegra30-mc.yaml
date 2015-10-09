@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra30-mc
+
+title: NVIDIA Tegra30 MC(Memory Controller)
+
+maintainer:
+    -   name: Hiroshi DOYU <hdoyu@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-mc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    #iommu-cells:
+    reg:
+
+...
+
 # NVIDIA Tegra30 MC(Memory Controller)
 #
 # Required properties:

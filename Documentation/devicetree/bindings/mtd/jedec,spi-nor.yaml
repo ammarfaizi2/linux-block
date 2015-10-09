@@ -1,3 +1,48 @@
+%YAML 1.2
+---
+version: 1
+
+id: jedec,spi-nor
+
+title: MTD SPI driver for ST M25Pxx (and similar) serial flash chips
+
+maintainer:
+    -   name: Brian Norris <computersforpeace@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "w25q32" && "jedec,spi-nor"
+            "st,m25p40" && "jedec,spi-nor"
+            "st,m25p16" && "jedec,spi-nor"
+            "st,m25p128" && "jedec,spi-nor"
+            "spansion,s25fl512s" && "jedec,spi-nor"
+            "spansion,s25fl008k" && "jedec,spi-nor"
+            "spansion,m25p80"
+            "n25q128a13" && "jedec,spi-nor"
+            "mxicy,mx25l4005a" && "jedec,spi-nor"
+            "mxicy,mx25l1606e" && "jedec,spi-nor"
+            "mxicy,mx25l12805d" && "jedec,spi-nor"
+            "mx25l25635e" && "jedec,spi-nor"
+            "micron,n25q064" && "jedec,spi-nor"
+            "m25p64" && "jedec,spi-nor"
+            "m25p40" && "jedec,spi-nor"
+            "m25p128" && "jedec,spi-nor"
+
+    #address-cells:
+    mode:
+    reg:
+    #size-cells:
+    spi-max-frequency:
+
+...
+
 # * MTD SPI driver for ST M25Pxx (and similar) serial flash chips
 #
 # Required properties:

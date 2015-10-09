@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-boards
+
+title: Samsung's Exynos SoC based boards
+
+maintainer:
+    -   name: Chanwoo Choi <cw00.choi@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,xyref5260" && "samsung,exynos5260" && "samsung,exynos5"
+            "samsung,universal"_"c210" && "samsung,exynos4210" && "samsung,exynos4"
+            "samsung,trats" && "samsung,exynos4210" && "samsung,exynos4"
+            "samsung,trats2" && "samsung,exynos4412" && "samsung,exynos4"
+            "samsung,ssdk5440" && "samsung,exynos5440" && "samsung,exynos5"
+            "samsung,smdkv310" && "samsung,exynos4210" && "samsung,exynos4"
+            "samsung,smdk5420" && "samsung,exynos5420" && "samsung,exynos5"
+            "samsung,smdk5410" && "samsung,exynos5410" && "samsung,exynos5"
+            "samsung,smdk5250" && "samsung,exynos5250" && "samsung,exynos5"
+            "samsung,smdk4412" && "samsung,exynos4412" && "samsung,exynos4"
+            "samsung,secure-firmware"
+            "samsung,sd5v1" && "samsung,exynos5440" && "samsung,exynos5"
+            "samsung,rinato" && "samsung,exynos3250" && "samsung,exynos3"
+            "samsung,monk" && "samsung,exynos3250" && "samsung,exynos3"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # * Samsung's Exynos SoC based boards
 #
 # Required root node properties:

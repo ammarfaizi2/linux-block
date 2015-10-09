@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: digicolor-usart
+
+title: Binding for Conexant Digicolor USART
+
+maintainer:
+    -   name: Baruch Siach <baruch@tkos.co.il>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cnxt,cx92755-usart"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Binding for Conexant Digicolor USART
 #
 # Note: this binding is only applicable for using the USART peripheral as

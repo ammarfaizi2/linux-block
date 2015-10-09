@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: lm90
+
+title: LM90 series thermometer.
+
+maintainer:
+    -   name: Wei Ni <wni@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "onnn,nct1008"
+            "gmt,g781"
+            "adi,adt7461a"
+
+    reg:
+
+...
+
 # * LM90 series thermometer.
 #
 # Required node properties:

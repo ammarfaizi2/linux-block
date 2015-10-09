@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: akebono
+
+title: IBM Akebono board device tree
+
+maintainer:
+    -   name: Alistair Popple <alistair@popple.id.au>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ibm,akebono" && "ibm,476gtr"
+            "ibm,akebono-fpga"
+            "ibm,akebono-avr"
+            "ibm,476gtr-sdhci" && "generic-sdhci"
+            "ibm,476gtr-ahci"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 #
 # IBM Akebono board device tree
 # =============================

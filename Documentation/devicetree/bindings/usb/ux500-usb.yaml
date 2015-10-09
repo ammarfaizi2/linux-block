@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ux500-usb
+
+title: Ux500 MUSB
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,db8500-musb"
+
+    clocks:
+    dma-names:
+    dmas:
+    dr_mode:
+    interrupt-names:
+    interrupts:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    reg:
+
+...
+
 # Ux500 MUSB
 #
 # Required properties:

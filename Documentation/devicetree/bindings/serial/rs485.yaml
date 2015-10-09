@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: rs485
+
+title: RS485 serial communications
+
+maintainer:
+    -   name: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9260-usart"
+
+    atmel,use-dma-rx:
+    atmel,use-dma-tx:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    linux,rs485-enabled-at-boot-time:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    rs485-rts-delay:
+    status:
+
+...
+
 # * RS485 serial communications
 #
 # The RTS signal is capable of automatically controlling line direction for

@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: qriox
+
+title: KEYMILE qrio Board Control CPLD
+
+maintainer:
+    -   name: Valentin Longchamp <valentin.longchamp@keymile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "keymile,qriox"
+
+    reg:
+
+...
+
 # KEYMILE qrio Board Control CPLD
 #
 # The qrio is a multifunction device that controls the KEYMILE boards based on

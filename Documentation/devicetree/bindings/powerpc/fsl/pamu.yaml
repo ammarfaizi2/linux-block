@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: pamu
+
+title: Freescale Peripheral Management Access Unit (PAMU) Device Tree Binding
+
+maintainer:
+    -   name: Diana Craciun <Diana.Craciun@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "direct-mapped"
+            "cache"
+
+    "cache"::
+    cache-level:
+    qcom,saw:
+
+...
+
 # Freescale Peripheral Management Access Unit (PAMU) Device Tree Binding
 #
 # DESCRIPTION

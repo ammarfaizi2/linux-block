@@ -1,3 +1,46 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos_hdmi
+
+title: Device-Tree bindings for drm hdmi driver
+
+maintainer:
+    -   name: Rahul Sharma <rahul.sharma@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5420-hdmi"
+            "samsung,exynos4212-hdmi"
+            "samsung,exynos4210-hdmi"
+
+    clock-names:
+    clocks:
+    ddc:
+    hdmi-en-supply:
+    hpd-gpio:
+    interrupts:
+    phy:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    reg:
+    samsung,syscon-phandle:
+    status:
+    vdd_osc-supply:
+    vdd_pll-supply:
+    vdd-supply:
+
+...
+
 # Device-Tree bindings for drm hdmi driver
 #
 # Required properties:

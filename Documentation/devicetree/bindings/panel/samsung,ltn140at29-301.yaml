@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,ltn140at29-301
+
+title: Samsung Electronics 14" WXGA (1366x768) TFT LCD panel
+
+maintainer:
+    -   name: Stéphane Marchesin <marcheu@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,ltn140at29-301"
+
+    backlight:
+    ddc-i2c-bus:
+
+...
+
 # Samsung Electronics 14" WXGA (1366x768) TFT LCD panel
 #
 # Required properties:

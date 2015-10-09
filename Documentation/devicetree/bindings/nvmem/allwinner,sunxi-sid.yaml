@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: allwinner,sunxi-sid
+
+title: Allwinner sunxi-sid
+
+maintainer:
+    -   name: Maxime Ripard <maxime.ripard@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun7i-a20-sid"
+            "allwinner,sun4i-a10-sid"
+
+    reg:
+
+...
+
 # Allwinner sunxi-sid
 #
 # Required properties:

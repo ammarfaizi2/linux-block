@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: axis,etraxfs-uart
+
+title: ETRAX FS UART
+
+maintainer:
+    -   name: Niklas Cassel <nks@flawful.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "axis,etraxfs-uart"
+
+
+...
+
 # ETRAX FS UART
 #
 # Required properties:

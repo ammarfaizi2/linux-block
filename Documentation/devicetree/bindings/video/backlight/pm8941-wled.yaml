@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: pm8941-wled
+
+title: Binding for Qualcomm PM8941 WLED driver
+
+maintainer:
+    -   name: Bjorn Andersson <bjorn.andersson@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8941-wled"
+            "led"
+
+    reg:
+
+...
+
 # Binding for Qualcomm PM8941 WLED driver
 #
 # Required properties:

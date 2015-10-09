@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: tca6507
+
+title: LEDs connected to tca6507
+
+maintainer:
+    -   name: Marek Belisko <marek.belisko@open-nandra.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tca6507"
+
+    #address-cells:
+    #gpio-cells:
+    gpio-controller:
+    reg:
+    #size-cells:
+
+...
+
 # LEDs connected to tca6507
 #
 # Required properties:

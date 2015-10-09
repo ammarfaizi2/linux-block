@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: orion-rtc
+
+title: Mvebu Real Time Clock
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-rtc"
+            "marvell,kirkwood-rtc" && "marvell,orion-rtc"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Mvebu Real Time Clock
 #
 # RTC controller for the Kirkwood, the Dove, the Armada 370 and the

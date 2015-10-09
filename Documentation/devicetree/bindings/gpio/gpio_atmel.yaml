@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio_atmel
+
+title: Atmel GPIO controller (PIO)
+
+maintainer:
+    -   name: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9x5-gpio" && "atmel,at91rm9200-gpio"
+            "atmel,at91rm9200-gpio"
+
+    clocks:
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # * Atmel GPIO controller (PIO)
 #
 # Required properties:

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm-versatile
+
+title: Flash device on ARM Versatile board
+
+maintainer:
+    -   name: Grant Likely <grant.likely@secretlab.ca>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-flash"
+
+    bank-width:
+    reg:
+
+...
+
 # Flash device on ARM Versatile board
 #
 # Required properties:

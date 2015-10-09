@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-meson
+
+title: Amlogic Meson SPI controllers
+
+maintainer:
+    -   name: Beniamino Galvani <b.galvani@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "amlogic,meson6-spifc"
+
+    #address-cells:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Amlogic Meson SPI controllers
 #
 # * SPIFC (SPI Flash Controller)

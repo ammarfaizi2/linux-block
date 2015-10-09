@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: tps65090
+
+title: TPS65090 Frontend PMU with Switchmode Charger
+
+maintainer:
+    -   name: Rhyland Klein <rklein@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tps65090-charger"
+
+    ti,enable-low-current-chrg:
+    "ti,tps65090-charger"::
+
+...
+
 # TPS65090 Frontend PMU with Switchmode Charger
 #
 # Required Properties:

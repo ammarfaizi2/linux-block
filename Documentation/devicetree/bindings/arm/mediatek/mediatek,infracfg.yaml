@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: mediatek,infracfg
+
+title: Mediatek infracfg controller
+
+maintainer:
+    -   name: Sascha Hauer <s.hauer@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt8135-infracfg" && "syscon"
+
+    #clock-cells:
+    reg:
+    #reset-cells:
+
+...
+
 # Mediatek infracfg controller
 # ============================
 #

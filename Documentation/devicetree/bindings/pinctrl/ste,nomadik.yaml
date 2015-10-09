@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: ste,nomadik
+
+title: ST Ericsson Nomadik pinmux controller
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,stn8815-pinctrl"
+            "stericsson,db8540-pinctrl"
+            "stericsson,db8500-pinctrl"
+
+    nomadik-gpio-chips:
+    pinctrl-0:
+    pinctrl-names:
+    prcm:
+
+...
+
 # ST Ericsson Nomadik pinmux controller
 #
 # Required properties:

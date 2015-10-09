@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: mcu-mpc8349emitx
+
+title: Freescale MPC8349E-mITX-compatible Power Management Micro Controller Unit (MCU)
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mc9s08qg8-mpc8379erdb" && "fsl,mcu-mpc8349emitx"
+            "fsl,mc9s08qg8-mpc8378erdb" && "fsl,mcu-mpc8349emitx"
+            "fsl,mc9s08qg8-mpc8377erdb" && "fsl,mcu-mpc8349emitx"
+            "fsl,mc9s08qg8-mpc8349emitx" && "fsl,mcu-mpc8349emitx"
+            "fsl,mc9s08qg8-mpc8315erdb" && "fsl,mcu-mpc8349emitx"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # Freescale MPC8349E-mITX-compatible Power Management Micro Controller Unit (MCU)
 #
 # Required properties:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: ipmi
+
+title: IPMI device
+
+maintainer:
+    -   name: Corey Minyard <cminyard@mvista.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ipmi-smic"
+
+    device_type:
+    interrupts:
+    reg:
+    reg-size:
+    reg-spacing:
+
+...
+
 # IPMI device
 #
 # Required properties:

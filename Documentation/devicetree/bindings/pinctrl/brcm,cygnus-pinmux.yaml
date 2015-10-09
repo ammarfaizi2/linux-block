@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,cygnus-pinmux
+
+title: Broadcom Cygnus IOMUX Controller
+
+maintainer:
+    -   name: Ray Jui <rjui@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,cygnus-pinmux"
+
+    reg:
+
+...
+
 # Broadcom Cygnus IOMUX Controller
 #
 # The Cygnus IOMUX controller supports group based mux configuration. In

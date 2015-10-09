@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,ravb
+
+title: Renesas Electronics Ethernet AVB
+
+maintainer:
+    -   name: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,etheravb-r8a7790"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Renesas Electronics Ethernet AVB
 #
 # This file provides information on what the device node for the Ethernet AVB

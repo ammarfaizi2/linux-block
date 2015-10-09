@@ -1,3 +1,46 @@
+%YAML 1.2
+---
+version: 1
+
+id: cpm
+
+title: Freescale Communications Processor Module
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc885-cpm" && "fsl,cpm1"
+            "fsl,mpc875-cpm" && "fsl,cpm1" && "simple-bus"
+            "fsl,mpc866-cpm" && "fsl,cpm1"
+            "fsl,mpc860-cpm" && "fsl,cpm1"
+            "fsl,mpc8560-cpm" && "fsl,cpm2" && "simple-bus"
+            "fsl,mpc8560-cpm" && "fsl,cpm2"
+            "fsl,mpc8555-cpm" && "fsl,cpm2" && "simple-bus"
+            "fsl,mpc8555-cpm" && "fsl,cpm2"
+            "fsl,mpc8541-cpm" && "fsl,cpm2" && "simple-bus"
+            "fsl,mpc8541-cpm" && "fsl,cpm2"
+            "fsl,mpc8280-cpm" && "fsl,cpm2"
+            "fsl,mpc8272-cpm" && "fsl,cpm2"
+            "fsl,mpc8248-cpm" && "fsl,cpm2" && "simple-bus"
+            "fsl,mpc8247-cpm" && "fsl,cpm2" && "simple-bus"
+
+    #address-cells:
+    #interrupt-cells:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # * Freescale Communications Processor Module
 #
 # NOTE: This is an interim binding, and will likely change slightly,

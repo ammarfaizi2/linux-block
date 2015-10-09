@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: meson6-wdt
+
+title: Meson SoCs Watchdog timer
+
+maintainer:
+    -   name: Carlo Caione <carlo@caione.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "amlogic,meson6-wdt"
+
+    reg:
+
+...
+
 # Meson SoCs Watchdog timer
 #
 # Required properties:

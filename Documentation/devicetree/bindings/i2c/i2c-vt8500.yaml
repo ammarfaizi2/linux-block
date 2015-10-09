@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-vt8500
+
+title: Wondermedia I2C Controller
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wm,wm8505-i2c"
+
+    clock-frequency:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * Wondermedia I2C Controller
 #
 # Required properties :

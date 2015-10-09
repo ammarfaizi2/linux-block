@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-sun6i
+
+title: Allwinner A31 SPI controller
+
+maintainer:
+    -   name: Maxime Ripard <maxime.ripard@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun6i-a31-spi"
+
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    reg:
+    resets:
+    status:
+
+...
+
 # Allwinner A31 SPI controller
 #
 # Required properties:

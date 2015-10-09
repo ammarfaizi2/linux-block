@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-usb-phy
+
+title: ROCKCHIP USB2 PHY
+
+maintainer:
+    -   name: Yunzhi Li <lyz@rock-chips.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-usb-phy"
+            "rockchip,rk3188-usb-phy" && "rockchip,rk3288-usb-phy"
+            "rockchip,rk3066a-usb-phy" && "rockchip,rk3288-usb-phy"
+
+    #address-cells:
+    rockchip,grf:
+    #size-cells:
+    status:
+
+...
+
 # ROCKCHIP USB2 PHY
 #
 # Required properties:

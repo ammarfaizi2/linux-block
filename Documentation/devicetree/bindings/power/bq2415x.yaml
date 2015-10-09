@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: bq2415x
+
+title: Binding for TI bq2415x Li-Ion Charger
+
+maintainer:
+    -   name: Sebastian Reichel <sre@debian.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,bq24150a"
+
+    reg:
+    ti,battery-regulation-voltage:
+    ti,charge-current:
+    ti,current-limit:
+    ti,resistor-sense:
+    ti,termination-current:
+    ti,usb-charger-detection:
+    ti,weak-battery-voltage:
+
+...
+
 # Binding for TI bq2415x Li-Ion Charger
 #
 # Required properties:

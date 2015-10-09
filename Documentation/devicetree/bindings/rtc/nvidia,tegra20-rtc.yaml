@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-rtc
+
+title: NVIDIA Tegra20 real-time clock
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-rtc" && "nvidia,tegra20-rtc"
+            "nvidia,tegra20-rtc"
+            "nvidia,tegra124-rtc" && "nvidia,tegra20-rtc"
+            "nvidia,tegra114-rtc" && "nvidia,tegra20-rtc"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # NVIDIA Tegra20 real-time clock
 #
 # The Tegra RTC maintains seconds and milliseconds counters, and five alarm

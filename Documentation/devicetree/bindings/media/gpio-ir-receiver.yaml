@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-ir-receiver
+
+title: Device-Tree bindings for GPIO IR receiver
+
+maintainer:
+    -   name: Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-ir-receiver"
+
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # Device-Tree bindings for GPIO IR receiver
 #
 # Required properties:

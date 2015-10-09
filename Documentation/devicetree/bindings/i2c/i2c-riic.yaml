@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-riic
+
+title: Device tree configuration for Renesas RIIC driver
+
+maintainer:
+    -   name: Wolfram Sang <wsa@sang-engineering.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,riic-r7s72100" && "renesas,riic-rz"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Device tree configuration for Renesas RIIC driver
 #
 # Required properties:

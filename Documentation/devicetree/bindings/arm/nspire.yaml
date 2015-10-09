@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: nspire
+
+title: TI-NSPIRE calculators
+
+maintainer:
+    -   name: Daniel Tang <dt.tangr@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,nspire-tp"
+            "ti,nspire-cx"
+            "ti,nspire-clp"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # TI-NSPIRE calculators
 #
 # Required properties:

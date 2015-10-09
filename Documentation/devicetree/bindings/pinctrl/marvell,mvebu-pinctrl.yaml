@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,mvebu-pinctrl
+
+title: Marvell SoC pinctrl core driver for mpp
+
+maintainer:
+    -   name: Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,mv88f6928-pinctrl"
+            "marvell,mv88f6920-pinctrl"
+            "marvell,mv88f6828-pinctrl"
+            "marvell,mv88f6820-pinctrl"
+            "marvell,mv88f6810-pinctrl"
+            "marvell,mv88f6720-pinctrl"
+            "marvell,mv88f6710-pinctrl"
+            "marvell,mv78460-pinctrl"
+            "marvell,mv78260-pinctrl"
+            "marvell,mv78230-pinctrl"
+            "marvell,98dx4122-pinctrl"
+            "marvell,88f6282-pinctrl"
+            "marvell,88f6281-pinctrl"
+            "marvell,88f6192-pinctrl"
+
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * Marvell SoC pinctrl core driver for mpp
 #
 # The pinctrl driver enables Marvell SoCs to configure the multi-purpose pins

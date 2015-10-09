@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: ifc
+
+title: Integrated Flash Controller
+
+maintainer:
+    -   name: Jaiprakash Singh <b44839@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,ifc" && "simple-bus"
+            "fsl,ifc-nand"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 # Integrated Flash Controller
 #
 # Properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: csr,atlas7-car
+
+title: Clock and reset bindings for CSR atlas7
+
+maintainer:
+    -   name: Zhiwu Song <Zhiwu.Song@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,atlas7-car"
+
+    #clock-cells:
+    reg:
+    #reset-cells:
+
+...
+
 # * Clock and reset bindings for CSR atlas7
 #
 # Required properties:

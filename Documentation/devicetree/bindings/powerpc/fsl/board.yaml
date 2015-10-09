@@ -1,3 +1,68 @@
+%YAML 1.2
+---
+version: 1
+
+id: board
+
+title: Freescale Reference Board Bindings
+
+maintainer:
+    -   name: Priyanka Jain <Priyanka.Jain@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,tetra-fpga" && "fsl,fpga-qixis"
+            "fsl,t4240qds-fpga" && "fsl,fpga-qixis"
+            "fsl,t2080-cpld"
+            "fsl,t1042rdb"_"pi-cpld"
+            "fsl,t1042rdb-cpld"
+            "fsl,t1040rdb-cpld"
+            "fsl,t1040d4rdb-cpld" && "fsl,deepsleep-cpld"
+            "fsl,t1040d4rdb-cpld"
+            "fsl,t1024-cpld"
+            "fsl,pq2fads-bcsr"
+            "fsl,p5040ds-fpga" && "fsl,fpga-ngpixis"
+            "fsl,p5020ds-fpga" && "fsl,fpga-ngpixis"
+            "fsl,p4080ds-fpga" && "fsl,fpga-ngpixis"
+            "fsl,p3041ds-fpga" && "fsl,fpga-ngpixis"
+            "fsl,p2020ds-fpga" && "fsl,fpga-ngpixis"
+            "fsl,p1022ds-fpga" && "fsl,fpga-ngpixis"
+            "fsl,p1021mds-bcsr"
+            "fsl,p1010rdb-cpld"
+            "fsl,mpc885ads-bcsr"
+            "fsl,mpc866ads-bcsr"
+            "fsl,mpc8569mds-bcsr-gpio"
+            "fsl,mpc8569mds-bcsr"
+            "fsl,mpc8568mds-bcsr-gpio"
+            "fsl,mpc8568mds-bcsr"
+            "fsl,mpc8548cds-fpga"
+            "fsl,mpc837xmds-bcsr"
+            "fsl,mpc8360mds-bcsr-gpio"
+            "fsl,mpc8360mds-bcsr"
+            "fsl,mpc8349mds-bcsr"
+            "fsl,mpc8323mds-bcsr"
+            "fsl,mpc5121ads-cpld"
+            "fsl,media5200-fpga"
+            "fsl,fpga-pixis"
+            "fsl,ep88xc-bcsr"
+            "fsl,ep8248e-bcsr"
+            "fsl,c293pcie-cpld"
+            "fsl,bsc9132qds-fpga" && "fsl,fpga-qixis-i2c"
+            "fsl,b4qds-fpga" && "fsl,fpga-qixis"
+            "fsl,b4860qds-fpga" && "fsl,fpga-qixis"
+            "fsl,b4420qds-fpga" && "fsl,fpga-qixis"
+
+    reg:
+
+...
+
 # Freescale Reference Board Bindings
 #
 # This document describes device tree bindings for various devices that

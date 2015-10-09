@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: emev2-clock
+
+title: Device tree Clock bindings for Renesas EMMA Mobile EV2
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,em-uart"
+            "renesas,emev2-smu-gclk"
+            "renesas,emev2-smu-clkdiv"
+            "renesas,emev2-smu"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 # Device tree Clock bindings for Renesas EMMA Mobile EV2
 #
 # This binding uses the common clock binding.

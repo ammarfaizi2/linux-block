@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: meson-ir
+
+title: Amlogic Meson IR remote control receiver
+
+maintainer:
+    -   name: Beniamino Galvani <b.galvani@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "amlogic,meson6-ir"
+
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Amlogic Meson IR remote control receiver
 #
 # Required properties:

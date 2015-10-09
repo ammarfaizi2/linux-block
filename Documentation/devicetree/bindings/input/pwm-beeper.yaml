@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-beeper
+
+title: PWM beeper device tree bindings
+
+maintainer:
+    -   name: Sascha Hauer <s.hauer@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pwm-beeper"
+
+    pinctrl-0:
+    pinctrl-names:
+    pwms:
+
+...
+
 # * PWM beeper device tree bindings
 #
 # Registers a PWM device as beeper.

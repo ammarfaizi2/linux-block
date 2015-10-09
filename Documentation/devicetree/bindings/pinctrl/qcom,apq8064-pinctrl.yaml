@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,apq8064-pinctrl
+
+title: Qualcomm APQ8064 TLMM block
+
+maintainer:
+    -   name: Bjorn Andersson <bjorn.andersson@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,apq8064-pinctrl"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # Qualcomm APQ8064 TLMM block
 #
 # Required properties:

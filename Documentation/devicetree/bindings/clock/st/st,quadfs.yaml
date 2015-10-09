@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,quadfs
+
+title: Binding for a type of quad channel digital frequency synthesizer found on
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-quadfs660-F" && "st,quadfs"
+            "st,stih416-quadfs660-E" && "st,quadfs"
+            "st,stih416-quadfs432" && "st,quadfs"
+            "st,stih416-quadfs216" && "st,quadfs"
+            "st,stih407-quadfs660-D" && "st,quadfs"
+            "st,stih407-quadfs660-C" && "st,quadfs"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # Binding for a type of quad channel digital frequency synthesizer found on
 # certain STMicroelectronics consumer electronics SoC devices.
 #

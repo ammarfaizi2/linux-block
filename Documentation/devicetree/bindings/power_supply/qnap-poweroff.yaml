@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: qnap-poweroff
+
+title: QNAP Power Off
+
+maintainer:
+    -   name: Andrew Lunn <andrew.lunn@ruag.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "synology,power-off"
+            "qnap,power-off"
+
+    clocks:
+    reg:
+
+...
+
 # * QNAP Power Off
 #
 # QNAP NAS devices have a microcontroller controlling the main power

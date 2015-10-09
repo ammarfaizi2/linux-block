@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: stmp3xxx-rtc
+
+title: STMP3xxx/i.MX28 Time Clock controller
+
+maintainer:
+    -   name: Marek Vasut <marex@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-rtc" && "fsl,stmp3xxx-rtc"
+            "fsl,imx23-rtc" && "fsl,stmp3xxx-rtc"
+
+    interrupts:
+    reg:
+
+...
+
 # * STMP3xxx/i.MX28 Time Clock controller
 #
 # Required properties:

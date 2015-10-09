@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: picochip-spacc
+
+title: Picochip picoXcell SPAcc (Security Protocol Accelerator) bindings
+
+maintainer:
+    -   name: Jamie Iles <jamie@jamieiles.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "picochip,spacc-l2"
+            "picochip,spacc-ipsec"
+
+    interrupt-parent:
+    interrupts:
+    ref-clock:
+    reg:
+
+...
+
 # Picochip picoXcell SPAcc (Security Protocol Accelerator) bindings
 #
 # Picochip picoXcell devices contain crypto offload engines that may be used for

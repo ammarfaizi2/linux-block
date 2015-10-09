@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: vt8500-sdmmc
+
+title: Wondermedia WM8505/WM8650 SD/MMC Host Controller
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wm,wm8505-sdhc"
+
+    bus-width:
+    clocks:
+    interrupts:
+    reg:
+    sdon-inverted:
+
+...
+
 # * Wondermedia WM8505/WM8650 SD/MMC Host Controller
 #
 # This file documents differences between the core properties described

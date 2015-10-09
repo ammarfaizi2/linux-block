@@ -1,3 +1,62 @@
+%YAML 1.2
+---
+version: 1
+
+id: davicom-dm9000
+
+title: Davicom DM9000 Fast Ethernet controller
+
+maintainer:
+    -   name: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "davicom,dm9000"
+
+    bank-width:
+    davicom,no-eeprom:
+    fsl,weim-cs-timing:
+    gpmc,access-ns:
+    gpmc,adv-on-ns:
+    gpmc,adv-rd-off-ns:
+    gpmc,adv-wr-off-ns:
+    gpmc,bus-turnaround-ns:
+    gpmc,clk-activation-ns:
+    gpmc,cs-on-ns:
+    gpmc,cs-rd-off-ns:
+    gpmc,cs-wr-off-ns:
+    gpmc,cycle2cycle-delay-ns:
+    gpmc,cycle2cycle-diffcsen:
+    gpmc,cycle2cycle-samecsen:
+    gpmc,device-width:
+    gpmc,mux-add-data:
+    gpmc,oe-off-ns:
+    gpmc,oe-on-ns:
+    gpmc,page-burst-access-ns:
+    gpmc,rd-cycle-ns:
+    gpmc,wait-monitoring-ns:
+    gpmc,wait-pin:
+    gpmc,we-off-ns:
+    gpmc,we-on-ns:
+    gpmc,wr-access-ns:
+    gpmc,wr-cycle-ns:
+    gpmc,wr-data-mux-bus-ns:
+    interrupt-parent:
+    interrupts:
+    local-mac-address:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # Davicom DM9000 Fast Ethernet controller
 #
 # Required properties:

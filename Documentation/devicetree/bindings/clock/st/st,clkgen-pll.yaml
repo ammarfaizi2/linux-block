@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,clkgen-pll
+
+title: Binding for a ST pll clock driver.
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-plls-c32-ddr" && "st,clkgen-plls-c32"
+            "st,stih416-plls-c32-a9" && "st,clkgen-plls-c32"
+            "st,stih416-gpu-pll-c32" && "st,clkgengpu-pll-c32"
+            "st,stih415-plls-c32-a9" && "st,clkgen-plls-c32"
+            "st,stih407-plls-c32-a9" && "st,clkgen-plls-c32"
+            "st,stih407-plls-c32-a0" && "st,clkgen-plls-c32"
+            "st,plls-c32-cx"_"1" && "st,clkgen-plls-c32"
+            "st,plls-c32-cx"_"0" && "st,clkgen-plls-c32"
+            "st,plls-c32-a1x-1" && "st,clkgen-plls-c32"
+            "st,plls-c32-a1x-0" && "st,clkgen-plls-c32"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+
+...
+
 # Binding for a ST pll clock driver.
 #
 # This binding uses the common clock binding[1].

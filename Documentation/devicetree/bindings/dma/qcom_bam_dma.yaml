@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom_bam_dma
+
+title: QCOM BAM DMA controller
+
+maintainer:
+    -   name: Archit Taneja <architt@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,bam-v1"."3"."0"
+
+    clock-names:
+    clocks:
+    #dma-cells:
+    interrupts:
+    qcom,ee:
+    reg:
+
+...
+
 # QCOM BAM DMA controller
 #
 # Required properties:

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwrap
+
+title: MediaTek PMIC Wrapper Driver
+
+maintainer:
+    -   name: Sascha Hauer <s.hauer@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt8135-pwrap"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    reg-names:
+    reset-names:
+    resets:
+
+...
+
 # MediaTek PMIC Wrapper Driver
 #
 # This document describes the binding for the MediaTek PMIC wrapper.

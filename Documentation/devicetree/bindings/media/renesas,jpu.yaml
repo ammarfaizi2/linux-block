@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,jpu
+
+title: Renesas JPEG Processing Unit
+
+maintainer:
+    -   name: Mikhail Ulyanov <mikhail.ulyanov@cogentembedded.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,jpu-r8a7791"
+            "renesas,jpu-r8a7790"
+
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+
+...
+
 # * Renesas JPEG Processing Unit
 #
 # The JPEG processing unit (JPU) incorporates the JPEG codec with an encoding

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra-ictlr
+
+title: NVIDIA Legacy Interrupt Controller
+
+maintainer:
+    -   name: Marc Zyngier <marc.zyngier@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-ictlr"
+            "nvidia,tegra20-ictlr"
+            "nvidia,tegra124-ictlr" && "nvidia,tegra30-ictlr"
+            "nvidia,tegra114-ictlr" && "nvidia,tegra30-ictlr"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    reg:
+
+...
+
 # NVIDIA Legacy Interrupt Controller
 #
 # All Tegra SoCs contain a legacy interrupt controller that routes

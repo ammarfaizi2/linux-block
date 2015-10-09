@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm7120-l2-intc
+
+title: Broadcom BCM7120-style Level 2 interrupt controller
+
+maintainer:
+    -   name: Kevin Cernekee <cernekee@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm7120-l2-intc"
+
+    brcm,int-fwd-mask:
+    brcm,int-map-mask:
+    brcm,irq-can-wake:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Broadcom BCM7120-style Level 2 interrupt controller
 #
 # This interrupt controller hardware is a second level interrupt controller that

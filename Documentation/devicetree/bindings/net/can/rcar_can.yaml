@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: rcar_can
+
+title: Renesas R-Car CAN controller Device Tree Bindings
+
+maintainer:
+    -   name: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,can-r8a7791"
+            "renesas,can-r8a7790"
+
+    clock-names:
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+    status:
+
+...
+
 # Renesas R-Car CAN controller Device Tree Bindings
 # -------------------------------------------------
 #

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-gpbr
+
+title: Device tree bindings for Atmel GPBR (General Purpose Backup Registers)
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9260-gpbr" && "syscon"
+
+    reg:
+    status:
+
+...
+
 # * Device tree bindings for Atmel GPBR (General Purpose Backup Registers)
 #
 # The GPBR are a set of battery-backed registers.

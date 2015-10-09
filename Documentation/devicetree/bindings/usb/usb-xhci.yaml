@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb-xhci
+
+title: USB xHCI controllers
+
+maintainer:
+    -   name: Al Cooper <alcooperx@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,xhci-r8a7791"
+            "renesas,xhci-r8a7790"
+            "marvell,armada-380-xhci"
+            "marvell,armada-375-xhci"
+
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+
+...
+
 # USB xHCI controllers
 #
 # Required properties:

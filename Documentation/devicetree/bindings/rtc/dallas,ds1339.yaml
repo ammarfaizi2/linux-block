@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: dallas,ds1339
+
+title: Dallas DS1339		I2C Serial Real-Time Clock
+
+maintainer:
+    -   name: Matti Vaittinen <matti.vaittinen@nsn.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "dallas,ds1339"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Dallas DS1339		I2C Serial Real-Time Clock
 #
 # Required properties:

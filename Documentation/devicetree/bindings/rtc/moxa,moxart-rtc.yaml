@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: moxa,moxart-rtc
+
+title: MOXA ART real-time clock
+
+maintainer:
+    -   name: Jonas Jensen <jonas.jensen@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "moxa,moxart-rtc"
+
+    gpio-rtc-data:
+    gpio-rtc-reset:
+    gpio-rtc-sclk:
+
+...
+
 # MOXA ART real-time clock
 #
 # Required properties:

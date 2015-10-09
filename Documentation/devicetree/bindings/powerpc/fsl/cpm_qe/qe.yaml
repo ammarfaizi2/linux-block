@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: qe
+
+title: Freescale QUICC Engine module (QE)
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,qe" && "simple-bus"
+            "fsl,qe-muram" && "fsl,cpm-muram"
+            "fsl,qe-muram-data" && "fsl,cpm-muram-data"
+            "fsl,qe"
+            "fsl,cpm-muram-data"
+            "fsl,cpm-muram"
+
+    #address-cells:
+    ranges:
+    #size-cells:
+
+...
+
 # * Freescale QUICC Engine module (QE)
 # This represents qe module that is installed on PowerQUICC II Pro.
 #

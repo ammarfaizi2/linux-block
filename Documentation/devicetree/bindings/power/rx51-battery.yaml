@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: rx51-battery
+
+title: Binding for Nokia N900 battery
+
+maintainer:
+    -   name: Sebastian Reichel <sre@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nokia,n900-battery"
+
+    io-channel-names:
+    io-channels:
+
+...
+
 # Binding for Nokia N900 battery
 #
 # The Nokia N900 battery status can be read via the TWL4030's A/D converter.

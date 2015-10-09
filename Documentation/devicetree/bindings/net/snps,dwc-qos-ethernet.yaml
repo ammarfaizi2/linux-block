@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: snps,dwc-qos-ethernet
+
+title: Synopsys DWC Ethernet QoS IP version 4.10 driver (GMAC)
+
+maintainer:
+    -   name: Lars Persson <lars.persson@axis.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "moxa,moxart-rtl8201cp" && "ethernet-phy-ieee802"."3-c22"
+            "marvell,88E1514" && "marvell,88E1510" && "ethernet-phy-ieee802"."3-c22"
+            "marvell,88E1111" && "ethernet-phy-ieee802"."3-c22"
+            "ethernet-phy-id0141"."0cb0" && "ethernet-phy-ieee802"."3-c22"
+
+    reg:
+
+...
+
 # * Synopsys DWC Ethernet QoS IP version 4.10 driver (GMAC)
 #
 #

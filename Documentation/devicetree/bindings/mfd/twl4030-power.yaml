@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: twl4030-power
+
+title: Texas Instruments TWL family (twl4030) reset and power management module
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,twl4030-power-reset"
+            "ti,twl4030-power-omap3-evm" && "ti,twl4030-power-idle"
+            "ti,twl4030-power-n900" && "ti,twl4030-power-idle-osc-off"
+            "ti,twl4030-power-idle-osc-off" && "ti,twl4030-power-idle"
+            "ti,twl4030-power-idle"
+            "ti,twl4030-power-beagleboard-xm" && "ti,twl4030-power-idle-osc-off"
+            "ti,twl4030-power"
+
+    ti,use_poweroff:
+
+...
+
 # Texas Instruments TWL family (twl4030) reset and power management module
 #
 # The power management module inside the TWL family provides several facilities

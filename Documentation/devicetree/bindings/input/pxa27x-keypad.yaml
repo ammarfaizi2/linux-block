@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: pxa27x-keypad
+
+title: Marvell PXA Keypad controller
+
+maintainer:
+    -   name: Chao Xie <chao.xie@marvell.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa27x-keypad"
+
+
+...
+
 # * Marvell PXA Keypad controller
 #
 # Required Properties

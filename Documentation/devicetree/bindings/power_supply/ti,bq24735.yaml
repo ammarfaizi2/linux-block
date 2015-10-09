@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,bq24735
+
+title: TI BQ24735 Charge Controller
+
+maintainer:
+    -   name: Darbha Sriharsha <dsriharsha@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,bq24735"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    ti,ac-detect-gpios:
+
+...
+
 # TI BQ24735 Charge Controller
 # ~~~~~~~~~~
 #

@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti-omap-hsmmc
+
+title: TI Highspeed MMC host controller for OMAP
+
+maintainer:
+    -   name: Andreas Fenkart <afenkart@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-hsmmc"
+            "ti,omap3-pre-es3-hsmmc"
+            "ti,omap3-hsmmc"
+            "ti,omap2-hsmmc"
+
+    bus-width:
+    dma-names:
+    dmas:
+    interrupts:
+    pbias-supply:
+    reg:
+    ti,dual-volt:
+    ti,hwmods:
+    vmmc-supply:
+
+...
+
 # * TI Highspeed MMC host controller for OMAP
 #
 # The Highspeed MMC Host Controller on TI OMAP family

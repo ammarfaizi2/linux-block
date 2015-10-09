@@ -1,3 +1,58 @@
+%YAML 1.2
+---
+version: 1
+
+id: mpc5200
+
+title: MPC5200 Device Tree Bindings
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc5200-xlb"
+            "fsl,mpc5200-rtc"
+            "fsl,mpc5200-psc-uart"
+            "fsl,mpc5200-pic"
+            "fsl,mpc5200-pci"
+            "fsl,mpc5200-ohci" && "ohci-be"
+            "fsl,mpc5200-mscan"
+            "fsl,mpc5200-immr"
+            "fsl,mpc5200-i2c" && "fsl-i2c"
+            "fsl,mpc5200-gpio-wkup"
+            "fsl,mpc5200-gpio"
+            "fsl,mpc5200-fec"
+            "fsl,mpc5200-cdm"
+            "fsl,mpc5200b-xlb" && "fsl,mpc5200-xlb"
+            "fsl,mpc5200b-rtc" && "fsl,mpc5200-rtc"
+            "fsl,mpc5200b-psc-spi" && "fsl,mpc5200-psc-spi"
+            "fsl,mpc5200b-psc-ac97" && "fsl,mpc5200-psc-ac97"
+            "fsl,mpc5200b-pic" && "fsl,mpc5200-pic"
+            "fsl,mpc5200b-pci" && "fsl,mpc5200-pci"
+            "fsl,mpc5200b-ohci" && "fsl,mpc5200-ohci" && "ohci-be"
+            "fsl,mpc5200b-mscan" && "fsl,mpc5200-mscan"
+            "fsl,mpc5200b-immr"
+            "fsl,mpc5200b-gpio-wkup" && "fsl,mpc5200-gpio-wkup"
+            "fsl,mpc5200b-fec" && "fsl,mpc5200-fec"
+            "fsl,mpc5200-bestcomm"
+            "fsl,mpc5200b-cdm" && "fsl,mpc5200-cdm"
+            "fsl,mpc5200b-bestcomm" && "fsl,mpc5200-bestcomm"
+            "fsl,mpc5200b-ata" && "fsl,mpc5200-ata"
+            "fsl,mpc5200-ata"
+
+    interrupts:
+    reg:
+
+...
+
 # MPC5200 Device Tree Bindings
 # ----------------------------
 #

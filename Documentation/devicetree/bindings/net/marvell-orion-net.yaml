@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell-orion-net
+
+title: Marvell Orion/Discovery ethernet controller
+
+maintainer:
+    -   name: Grant Likely <grant.likely@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-eth-port"
+            "marvell,orion-eth"
+            "marvell,kirkwood-eth-port"
+            "marvell,kirkwood-eth"
+
+    #address-cells:
+    clocks:
+    marvell,tx-checksum-limit:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Marvell Orion/Discovery ethernet controller
 # =============================================
 #

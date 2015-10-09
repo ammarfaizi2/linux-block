@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-pxa-pci-ce4100
+
+title: CE4100 I2C
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,pcf8575"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    lines-initial-states:
+    reg:
+
+...
+
 # CE4100 I2C
 # ----------
 #

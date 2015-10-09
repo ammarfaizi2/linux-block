@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ahci-st
+
+title: STMicroelectronics STi SATA controller
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,ahci"
+
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # STMicroelectronics STi SATA controller
 #
 # This binding describes a SATA device.

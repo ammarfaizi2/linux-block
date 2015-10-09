@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-pata
+
+title: Freescale i.MX PATA Controller
+
+maintainer:
+    -   name: Sascha Hauer <s.hauer@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx51-pata" && "fsl,imx27-pata"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Freescale i.MX PATA Controller
 #
 # Required properties:

@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-owire
+
+title: Freescale i.MX One wire bus master controller
+
+maintainer:
+    -   name: Martin Fuzzey <mfuzzey@parkeon.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx53-owire" && "fsl,imx21-owire"
+            "fsl,imx51-owire" && "fsl,imx21-owire"
+            "fsl,imx50-owire" && "fsl,imx21-owire"
+            "fsl,imx27-owire" && "fsl,imx21-owire"
+
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Freescale i.MX One wire bus master controller
 #
 # Required properties:

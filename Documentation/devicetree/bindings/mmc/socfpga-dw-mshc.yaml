@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: socfpga-dw-mshc
+
+title: Altera SOCFPGA specific extensions to the Synopsys Designware Mobile
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,socfpga-dw-mshc"
+
+    #address-cells:
+    broken-cd:
+    bus-width:
+    cap-mmc-highspeed:
+    cap-sd-highspeed:
+    card-detect-delay:
+    cd-gpios:
+    clock-names:
+    clocks:
+    fifo-depth:
+    interrupts:
+    num-slots:
+    reg:
+    #size-cells:
+    status:
+    vmmc-supply:
+    vqmmc-supply:
+
+...
+
 # * Altera SOCFPGA specific extensions to the Synopsys Designware Mobile
 #   Storage Host Controller
 #

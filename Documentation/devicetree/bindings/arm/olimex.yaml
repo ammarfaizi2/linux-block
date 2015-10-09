@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: olimex
+
+title: Olimex i.MX Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Fabio Estevam <fabio.estevam@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "olimex,imx23-olinuxino" && "fsl,imx23"
+            "fsl,stmp378x-devb" && "fsl,imx23"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Olimex i.MX Platforms Device Tree Bindings
 # ------------------------------------------
 #

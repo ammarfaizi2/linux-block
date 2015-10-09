@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-can
+
+title: AT91 CAN *
+
+maintainer:
+    -   name: Ludovic Desroches <ludovic.desroches@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9x5-can"
+            "atmel,at91sam9263-can"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * AT91 CAN *
 #
 # Required properties:

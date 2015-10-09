@@ -1,3 +1,51 @@
+%YAML 1.2
+---
+version: 1
+
+id: ci-hdrc-usb2
+
+title: USB2 ChipIdea USB controller for ci13xxx
+
+maintainer:
+    -   name: Peter Chen <peter.chen@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-usb-2"."20a" && "chipidea,usb2"
+            "qcom,ci-hdrc"
+            "lsi,zevio-usb"
+            "fsl,vf610-usb" && "fsl,imx27-usb"
+            "fsl,imx6ul-usb" && "fsl,imx27-usb"
+            "fsl,imx6sx-usb" && "fsl,imx27-usb"
+            "fsl,imx6sl-usb" && "fsl,imx27-usb"
+            "fsl,imx6q-usb" && "fsl,imx27-usb"
+            "fsl,imx53-usb" && "fsl,imx27-usb"
+            "fsl,imx51-usb" && "fsl,imx27-usb"
+            "fsl,imx50-usb" && "fsl,imx27-usb"
+            "fsl,imx35-usb" && "fsl,imx27-usb"
+            "fsl,imx28-usb" && "fsl,imx27-usb"
+            "fsl,imx27-usb"
+            "fsl,imx25-usb" && "fsl,imx27-usb"
+            "fsl,imx23-usb" && "fsl,imx27-usb"
+            "chipidea,usb2"
+
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+    vbus-supply:
+
+...
+
 # * USB2 ChipIdea USB controller for ci13xxx
 #
 # Required properties:

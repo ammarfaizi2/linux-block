@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: display-timing
+
+title: display-timing bindings
+
+maintainer:
+    -   name: Steffen Trumtrar <s.trumtrar@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "none"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # display-timing bindings
 # =======================
 #

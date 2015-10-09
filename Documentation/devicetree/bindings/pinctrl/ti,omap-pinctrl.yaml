@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,omap-pinctrl
+
+title: OMAP Pinctrl definitions
+
+maintainer:
+    -   name: Nishanth Menon <nm@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap5-padconf" && "pinctrl-single"
+            "ti,omap4-padconf" && "pinctrl-single"
+            "ti,omap3-padconf" && "pinctrl-single"
+            "ti,omap2430-padconf" && "pinctrl-single"
+            "ti,omap2420-padconf" && "pinctrl-single"
+            "ti,dra7-padconf" && "pinctrl-single"
+            "ti,am437-padconf" && "pinctrl-single"
+
+    #address-cells:
+    #interrupt-cells:
+    interrupt-controller:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    pinctrl-single,function-mask:
+    pinctrl-single,register-width:
+    reg:
+    #size-cells:
+
+...
+
 # OMAP Pinctrl definitions
 #
 # Required properties:

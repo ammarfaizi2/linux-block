@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: hid-over-i2c
+
+title: HID over I2C Device-Tree bindings
+
+maintainer:
+    -   name: Benjamin Tissoires <benjamin.tissoires@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hid-over-i2c"
+
+    hid-descr-addr:
+    interrupt-parent:
+    interrupts:
+    reg:
+    vcc-supply:
+    wakeup-source:
+
+...
+
 # * HID over I2C Device-Tree bindings
 #
 # HID over I2C provides support for various Human Interface Devices over the

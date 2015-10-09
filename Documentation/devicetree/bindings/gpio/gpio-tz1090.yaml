@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-tz1090
+
+title: ImgTec TZ1090 GPIO Controller
+
+maintainer:
+    -   name: James Hogan <james.hogan@imgtec.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "img,tz1090-gpio"
+
+
+...
+
 # ImgTec TZ1090 GPIO Controller
 #
 # Required properties:

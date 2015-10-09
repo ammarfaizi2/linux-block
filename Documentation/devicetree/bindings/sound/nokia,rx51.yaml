@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: nokia,rx51
+
+title: Nokia N900 audio setup
+
+maintainer:
+    -   name: Sebastian Reichel <sre@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nokia,n900-audio"
+
+    eci-switch-gpios:
+    jack-detection-gpios:
+    nokia,audio-codec:
+    nokia,cpu-dai:
+    nokia,headphone-amplifier:
+    speaker-amplifier-gpios:
+    tvout-selection-gpios:
+
+...
+
 # * Nokia N900 audio setup
 #
 # Required properties:

@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,ld9040
+
+title: Samsung LD9040 AMOLED LCD parallel RGB panel with SPI control bus
+
+maintainer:
+    -   name: Andrzej Hajda <a.hajda@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,ld9040"
+
+    panel-height-mm:
+    panel-width-mm:
+    power-on-delay:
+    reg:
+    reset-delay:
+    reset-gpios:
+    spi-cpha:
+    spi-cpol:
+    spi-max-frequency:
+    vci-supply:
+    vdd3-supply:
+
+...
+
 # Samsung LD9040 AMOLED LCD parallel RGB panel with SPI control bus
 #
 # Required properties:

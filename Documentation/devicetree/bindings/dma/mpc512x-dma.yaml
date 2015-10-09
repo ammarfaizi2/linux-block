@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: mpc512x-dma
+
+title: Freescale MPC512x and MPC8308 DMA Controller
+
+maintainer:
+    -   name: Alexander Popov <a13xp0p0v88@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8308-dma"
+            "fsl,mpc5121-dma"
+
+    #dma-cells:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale MPC512x and MPC8308 DMA Controller
 #
 # The DMA controller in Freescale MPC512x and MPC8308 SoCs can move

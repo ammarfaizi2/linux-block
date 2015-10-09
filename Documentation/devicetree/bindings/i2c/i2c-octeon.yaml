@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-octeon
+
+title: Two Wire Serial Interface (TWSI) / I2C
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tmp421"
+            "dallas,ds1337"
+
+    interrupts:
+    reg:
+
+...
+
 # * Two Wire Serial Interface (TWSI) / I2C
 #
 # - compatible: "cavium,octeon-3860-twsi"

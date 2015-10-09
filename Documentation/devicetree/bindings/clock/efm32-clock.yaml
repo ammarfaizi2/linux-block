@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: efm32-clock
+
+title: Clock bindings for Energy Micro efm32 Giant Gecko's Clock Management Unit
+
+maintainer:
+    -   name: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "efm32gg,cmu"
+
+    #clock-cells:
+    interrupts:
+    reg:
+
+...
+
 # * Clock bindings for Energy Micro efm32 Giant Gecko's Clock Management Unit
 #
 # Required properties:

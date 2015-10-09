@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: phy-miphy365x
+
+title: STMicroelectronics STi MIPHY365x PHY binding
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,miphy365x-phy"
+
+    #address-cells:
+    ranges:
+    #size-cells:
+    st,syscfg:
+
+...
+
 # STMicroelectronics STi MIPHY365x PHY binding
 # ============================================
 #

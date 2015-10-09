@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra-audio-max98090
+
+title: NVIDIA Tegra audio complex, with MAX98090 CODEC
+
+maintainer:
+    -   name: Dylan Reid <dgreid@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra-audio-max98090-venice2" && "nvidia,tegra-audio-max98090"
+            "nvidia,tegra-audio-max98090-nyan-blaze" && "nvidia,tegra-audio-max98090-nyan" && "nvidia,tegra-audio-max98090"
+            "nvidia,tegra-audio-max98090-nyan-big" && "nvidia,tegra-audio-max98090-nyan" && "nvidia,tegra-audio-max98090"
+
+    clock-names:
+    clocks:
+    nvidia,audio-codec:
+    nvidia,audio-routing:
+    nvidia,hp-det-gpios:
+    nvidia,i2s-controller:
+    nvidia,mic-det-gpios:
+    nvidia,model:
+
+...
+
 # NVIDIA Tegra audio complex, with MAX98090 CODEC
 #
 # Required properties:

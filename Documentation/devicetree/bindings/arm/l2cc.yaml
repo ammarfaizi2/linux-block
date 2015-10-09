@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: l2cc
+
+title: ARM L2 Cache Controller
+
+maintainer:
+    -   name: Christian Daudt <csd@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,tauros3-cache" && "arm,pl310-cache"
+            "marvell,aurora-system-cache"
+            "marvell,aurora-outer-cache"
+            "brcm,bcm11351-a2-pl310-cache"
+            "arm,pl310-cache"
+            "arm,l220-cache"
+            "arm,l210-cache"
+
+    arm,data-latency:
+    arm,dirty-latency:
+    arm,tag-latency:
+    cache-level:
+    cache-line-size:
+    cache-sets:
+    cache-size:
+    cache-unified:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * ARM L2 Cache Controller
 #
 # ARM cores often have a separate level 2 cache controller. There are various

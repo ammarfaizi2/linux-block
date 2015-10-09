@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: moxa,moxart-timer
+
+title: MOXA ART timer
+
+maintainer:
+    -   name: Jonas Jensen <jonas.jensen@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "moxa,moxart-timer"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # MOXA ART timer
 #
 # Required properties:

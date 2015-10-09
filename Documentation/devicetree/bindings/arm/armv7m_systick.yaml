@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: armv7m_systick
+
+title: ARMv7M System Timer
+
+maintainer:
+    -   name: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,armv7m-systick"
+
+    clocks:
+    reg:
+    status:
+
+...
+
 # * ARMv7M System Timer
 #
 # ARMv7-M includes a system timer, known as SysTick. Current driver only

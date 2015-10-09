@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-st
+
+title: ST SSC binding, for I2C mode operation
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,comms-ssc4-i2c"
+
+    clock-frequency:
+    clock-names:
+    clocks:
+    i2c-min-scl-pulse-width-us:
+    i2c-min-sda-pulse-width-us:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+    st,i2c-min-scl-pulse-width-us:
+    st,i2c-min-sda-pulse-width-us:
+
+...
+
 # ST SSC binding, for I2C mode operation
 #
 # Required properties :

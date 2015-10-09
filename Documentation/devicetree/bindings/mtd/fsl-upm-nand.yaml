@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-upm-nand
+
+title: Freescale Localbus UPM programmed to work with NAND flash
+
+maintainer:
+    -   name: Jamie Lentin <jm@lentin.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "tqc,tqm8548-upm-nand" && "fsl,upm-nand"
+            "fsl,upm-nand"
+
+    fsl,upm-addr-offset:
+    fsl,upm-cmd-offset:
+    gpios:
+    reg:
+
+...
+
 # Freescale Localbus UPM programmed to work with NAND flash
 #
 # Required properties:

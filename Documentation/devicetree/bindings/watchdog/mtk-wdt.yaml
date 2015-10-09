@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: mtk-wdt
+
+title: Mediatek SoCs Watchdog timer
+
+maintainer:
+    -   name: Matthias Brugger <matthias.bgg@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt6589-wdt"
+
+    reg:
+
+...
+
 # Mediatek SoCs Watchdog timer
 #
 # Required properties:

@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,gpio-rcar
+
+title: Renesas R-Car GPIO Controller
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,gpio-r8a7791" && "renesas,gpio-rcar"
+            "renesas,gpio-r8a7790" && "renesas,gpio-rcar"
+            "renesas,gpio-r8a7779" && "renesas,gpio-rcar"
+            "renesas,gpio-r8a7778" && "renesas,gpio-rcar"
+
+    #gpio-cells:
+    gpio-controller:
+    gpio-ranges:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # * Renesas R-Car GPIO Controller
 #
 # Required Properties:

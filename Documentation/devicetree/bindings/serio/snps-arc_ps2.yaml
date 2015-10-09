@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: snps-arc_ps2
+
+title: ARC PS/2 driver: PS/2 block used in some ARC FPGA's  %title% nSIM OSCI model
+
+maintainer:
+    -   name: Mischa Jonker <Mischa.Jonker@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,arc"_"ps2"
+
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * ARC PS/2 driver: PS/2 block used in some ARC FPGA's & nSIM OSCI model
 #
 # Required properties:

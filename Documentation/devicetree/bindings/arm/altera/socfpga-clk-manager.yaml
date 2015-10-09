@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: socfpga-clk-manager
+
+title: Altera SOCFPGA Clock Manager
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,clk-mgr"
+
+    reg:
+
+...
+
 # Altera SOCFPGA Clock Manager
 #
 # Required properties:

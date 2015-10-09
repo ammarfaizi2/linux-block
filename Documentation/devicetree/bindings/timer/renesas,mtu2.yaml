@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,mtu2
+
+title: Renesas Multi-Function Timer Pulse Unit 2 (MTU2)
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,mtu2-r7s72100" && "renesas,mtu2"
+
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    power-domains:
+    reg:
+    status:
+
+...
+
 # * Renesas Multi-Function Timer Pulse Unit 2 (MTU2)
 #
 # The MTU2 is a multi-purpose, multi-channel timer/counter with configurable

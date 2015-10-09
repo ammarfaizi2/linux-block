@@ -1,3 +1,54 @@
+%YAML 1.2
+---
+version: 1
+
+id: max77802
+
+title: Binding for Maxim MAX77802 regulators
+
+maintainer:
+    -   name: Javier Martinez Canillas <javier.martinez@collabora.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max77802"
+
+    #clock-cells:
+    inb10-supply:
+    inb1-supply:
+    inb2-supply:
+    inb3-supply:
+    inb4-supply:
+    inb5-supply:
+    inb6-supply:
+    inb7-supply:
+    inb8-supply:
+    inb9-supply:
+    inl10-supply:
+    inl1-supply:
+    inl2-supply:
+    inl3-supply:
+    inl4-supply:
+    inl5-supply:
+    inl6-supply:
+    inl7-supply:
+    inl9-supply:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    wakeup-source:
+
+...
+
 # Binding for Maxim MAX77802 regulators
 #
 # This is a part of device tree bindings of MAX77802 multi-function device.

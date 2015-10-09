@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: arch_timer
+
+title: ARM architected timer
+
+maintainer:
+    -   name: Mark Rutland <mark.rutland@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,cortex-a15-timer" && "arm,armv7-timer"
+            "arm,armv7-timer-mem"
+            "arm,armv7-timer"
+
+    arm,cpu-registers-not-fw-configured:
+    clock-frequency:
+    interrupt-parent:
+    interrupts:
+
+...
+
 # * ARM architected timer
 #
 # ARM cores may have a per-core architected timer, which provides per-cpu timers,

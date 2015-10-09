@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-system-timer
+
+title: BCM2835 System Timer
+
+maintainer:
+    -   name: Simon Arlott <simon@fire.lp0.eu>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-system-timer"
+
+    clock-frequency:
+    interrupts:
+    reg:
+
+...
+
 # BCM2835 System Timer
 #
 # The System Timer peripheral provides four 32-bit timer channels and a

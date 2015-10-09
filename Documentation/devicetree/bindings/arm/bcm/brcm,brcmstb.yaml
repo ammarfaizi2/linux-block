@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,brcmstb
+
+title: ARM Broadcom STB platforms Device Tree Bindings
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,brcmstb-smpboot"
+            "brcm,brcmstb-reboot"
+            "brcm,bcm7445-sun-top-ctrl" && "syscon"
+            "brcm,bcm7445-hif-cpubiuctrl" && "syscon"
+            "brcm,bcm7445-hif-continuation" && "syscon"
+            "brcm,bcm7445" && "brcm,brcmstb"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # ARM Broadcom STB platforms Device Tree Bindings
 # -----------------------------------------------
 # Boards with Broadcom Brahma15 ARM-based BCMxxxx (generally BCM7xxx variants)

@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel,aic
+
+title: Advanced Interrupt Controller (AIC)
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d4-aic"
+            "atmel,sama5d3-aic"
+            "atmel,sama5d2-aic"
+            "atmel,at91sam9g45-dma"
+            "atmel,at91rm9200-aic"
+
+    atmel,external-irqs:
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # * Advanced Interrupt Controller (AIC)
 #
 # Required properties:

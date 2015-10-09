@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-samsung
+
+title: Samsung SPI Controller
+
+maintainer:
+    -   name: Thomas Abraham <thomas.abraham@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "w25x80"
+            "samsung,exynos4210-spi"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    cs-gpios:
+    dma-names:
+    dmas:
+    interrupts:
+    num-cs:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    samsung,spi-src-clk:
+    #size-cells:
+    status:
+
+...
+
 # * Samsung SPI Controller
 #
 # The Samsung SPI controller is used to interface with various devices such as flash

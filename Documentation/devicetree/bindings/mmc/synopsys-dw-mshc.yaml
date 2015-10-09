@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: synopsys-dw-mshc
+
+title: Synopsys Designware Mobile Storage Host Controller
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dw-mshc"
+
+    #address-cells:
+    bus-width:
+    clock-names:
+    clocks:
+    disable-wp:
+    fifo-depth:
+    interrupts:
+    non-removable:
+    num-slots:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+    supports-highspeed:
+    vmmc-supply:
+
+...
+
 # * Synopsys Designware Mobile Storage Host Controller
 #
 # The Synopsys designware mobile storage host controller is used to interface

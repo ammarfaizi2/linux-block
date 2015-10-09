@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel,at91sam9-rtc
+
+title: Atmel AT91SAM9260 Real Time Timer
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9260-rtt"
+
+    atmel,rtt-rtc-time-reg:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Atmel AT91SAM9260 Real Time Timer
 #
 # Required properties:

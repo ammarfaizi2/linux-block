@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell-orion-mdio
+
+title: Marvell MDIO Ethernet Controller interface
+
+maintainer:
+    -   name: Florian Fainelli <florian@openwrt.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-mdio"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Marvell MDIO Ethernet Controller interface
 #
 # The Ethernet controllers of the Marvel Kirkwood, Dove, Orion5x,

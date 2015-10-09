@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: bmp085
+
+title: BMP085/BMP18x digital pressure sensors
+
+maintainer:
+    -   name: Eric Andersson <eric.andersson@unixphere.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "bosch,bmp085"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # BMP085/BMP18x digital pressure sensors
 #
 # Required properties:

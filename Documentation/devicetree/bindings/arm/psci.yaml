@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: psci
+
+title: Power State Coordination Interface (PSCI)
+
+maintainer:
+    -   name: Ashwin Chaugule <ashwin.chaugule@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,psci"
+
+    cpu_off:
+    cpu_on:
+    cpu_suspend:
+    method:
+
+...
+
 # * Power State Coordination Interface (PSCI)
 #
 # Firmware implementing the PSCI functions described in ARM document number

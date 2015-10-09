@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: tps62360-regulator
+
+title: TPS62360 Voltage regulators
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tps62362"
+            "ti,tps62361"
+
+    reg:
+    regulator-always-on:
+    regulator-boot-on:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+    ti,vsel0-state-high:
+    ti,vsel1-state-high:
+
+...
+
 # TPS62360 Voltage regulators
 #
 # Required properties:

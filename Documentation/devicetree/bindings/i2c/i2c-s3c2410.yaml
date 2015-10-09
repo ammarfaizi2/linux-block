@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-s3c2410
+
+title: Samsung's I2C controller
+
+maintainer:
+    -   name: Giridhar Maruthy <giridhar.m@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s3c2440-i2c"
+            "samsung,s3c2440-hdmiphy-i2c"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    samsung,i2c-max-bus-freq:
+    samsung,i2c-sda-delay:
+    samsung,i2c-slave-addr:
+    #size-cells:
+    status:
+
+...
+
 # * Samsung's I2C controller
 #
 # The Samsung's I2C controller is used to interface with I2C devices.

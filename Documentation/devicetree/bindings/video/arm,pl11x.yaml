@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm,pl11x
+
+title: ARM PrimeCell Color LCD Controller PL110/PL111
+
+maintainer:
+    -   name: Pawel Moll <pawel.moll@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,pl111" && "arm,primecell"
+            "arm,pl110" && "arm,primecell"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * ARM PrimeCell Color LCD Controller PL110/PL111
 #
 # See also Documentation/devicetree/bindings/arm/primecell.txt

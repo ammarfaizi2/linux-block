@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: mvebu-system-controller
+
+title: MVEBU System Controller
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-system-controller"
+            "marvell,armada-390-system-controller" && "marvell,armada-370-xp-system-controller"
+            "marvell,armada-380-system-controller" && "marvell,armada-370-xp-system-controller"
+            "marvell,armada-375-system-controller"
+            "marvell,armada-370-xp-system-controller"
+
+    reg:
+
+...
+
 # MVEBU System Controller
 # -----------------------
 # MVEBU (Marvell SOCs: Armada 370/375/XP, Dove, mv78xx0, Kirkwood, Orion5x)

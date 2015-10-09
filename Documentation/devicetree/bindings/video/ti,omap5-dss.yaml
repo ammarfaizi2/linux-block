@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,omap5-dss
+
+title: Texas Instruments OMAP5 Display Subsystem
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap5-rfbi"
+            "ti,omap5-hdmi"
+            "ti,omap5-dss"
+            "ti,omap5-dsi"
+            "ti,omap5-dispc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    ti,hwmods:
+
+...
+
 # Texas Instruments OMAP5 Display Subsystem
 # =========================================
 #

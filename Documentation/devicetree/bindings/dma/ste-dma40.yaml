@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: ste-dma40
+
+title: DMA40 DMA Controller
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,db8500-dma40" && "stericsson,dma40"
+
+    clocks:
+    #dma-cells:
+    interrupts:
+    memcpy-channels:
+    reg:
+    reg-names:
+
+...
+
 # * DMA40 DMA Controller
 #
 # Required properties:

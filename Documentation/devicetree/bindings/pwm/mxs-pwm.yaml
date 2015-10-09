@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxs-pwm
+
+title: Freescale MXS PWM controller
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-pwm" && "fsl,imx23-pwm"
+            "fsl,imx23-pwm"
+
+    clocks:
+    fsl,pwm-number:
+    pinctrl-0:
+    pinctrl-names:
+    #pwm-cells:
+    reg:
+    status:
+
+...
+
 # Freescale MXS PWM controller
 #
 # Required properties:

@@ -1,3 +1,46 @@
+%YAML 1.2
+---
+version: 1
+
+id: ads7846
+
+title: Device tree bindings for TI's ADS7843, ADS7845, ADS7846, ADS7873, TSC2046
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tsc2046"
+            "ti,ads7846"
+            "ti,ads7843"
+
+    interrupts-extended:
+    linux,wakeup:
+    pendown-gpio:
+    reg:
+    spi-max-frequency:
+    ti,debounce-max:
+    ti,debounce-rep:
+    ti,debounce-tol:
+    ti,pressure-max:
+    ti,vref-delay-usecs:
+    ti,x-max:
+    ti,x-min:
+    ti,x-plate-ohms:
+    ti,y-max:
+    ti,y-min:
+    ti,y-plate-ohms:
+
+...
+
 # Device tree bindings for TI's ADS7843, ADS7845, ADS7846, ADS7873, TSC2046
 # SPI driven touch screen controllers.
 #

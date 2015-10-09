@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: meta-intc
+
+title: Meta External Trigger Controller Binding
+
+maintainer:
+    -   name: James Hogan <james.hogan@imgtec.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "img,meta-intc"
+
+
+...
+
 # * Meta External Trigger Controller Binding
 #
 # This binding specifies what properties must be available in the device tree

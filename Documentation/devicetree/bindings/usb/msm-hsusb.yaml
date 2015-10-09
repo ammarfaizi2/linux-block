@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: msm-hsusb
+
+title: MSM SoC HSUSB controllers
+
+maintainer:
+    -   name: Ivan T. Ivanov <iivanov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,usb-otg-ci"
+            "qcom,ehci-host"
+
+    interrupts:
+    reg:
+    status:
+    usb-phy:
+
+...
+
 # MSM SoC HSUSB controllers
 #
 # EHCI

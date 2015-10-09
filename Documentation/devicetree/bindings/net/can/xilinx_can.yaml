@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: xilinx_can
+
+title: Xilinx Axi CAN/Zynq CANPS controller Device Tree Bindings
+
+maintainer:
+    -   name: Kedareswara rao Appana <appana.durga.rao@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-can-1"."0"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    rx-fifo-depth:
+    status:
+    tx-fifo-depth:
+
+...
+
 # Xilinx Axi CAN/Zynq CANPS controller Device Tree Bindings
 # ---------------------------------------------------------
 #

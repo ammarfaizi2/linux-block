@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8753
+
+title: WM8753 audio CODEC
+
+maintainer:
+    -   name: Mark Brown <broonie@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wlf,wm8753"
+
+    reg:
+
+...
+
 # WM8753 audio CODEC
 #
 # This device supports both I2C and SPI (configured with pin strapping

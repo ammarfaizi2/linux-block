@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: chunghwa,claa101wa01a
+
+title: Chunghwa Picture Tubes Ltd. 10.1" WXGA TFT LCD panel
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "chunghwa,claa101wa01a" && "simple-panel"
+
+    backlight:
+    ddc-i2c-bus:
+    enable-gpios:
+    power-supply:
+
+...
+
 # Chunghwa Picture Tubes Ltd. 10.1" WXGA TFT LCD panel
 #
 # Required properties:

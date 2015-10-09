@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell-pp2
+
+title: Marvell Armada 375 Ethernet Controller (PPv2)
+
+maintainer:
+    -   name: Marcin Wojtas <mw@semihalf.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-375-pp2"
+
+    clock-names:
+    clocks:
+    reg:
+    status:
+
+...
+
 # * Marvell Armada 375 Ethernet Controller (PPv2)
 #
 # Required properties:

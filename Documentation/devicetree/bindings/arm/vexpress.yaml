@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: vexpress
+
+title: ARM Versatile Express boards family
+
+maintainer:
+    -   name: Pawel Moll <pawel.moll@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,vexpress,v2p-ca9" && "arm,vexpress"
+            "arm,vexpress,v2p-ca5s" && "arm,vexpress"
+            "arm,vexpress,v2p-ca15,tc1" && "arm,vexpress,v2p-ca15" && "arm,vexpress"
+            "arm,vexpress,v2p-ca15"_"a7" && "arm,vexpress"
+            "arm,vexpress-osc"
+            "arm,vexpress,config-bus"
+            "arm,cortex-a9-gic"
+            "arm,cortex-a5-gic" && "arm,cortex-a9-gic"
+            "arm,cortex-a5"
+
+    device_type:
+    next-level-cache:
+    reg:
+
+...
+
 # ARM Versatile Express boards family
 # -----------------------------------
 #

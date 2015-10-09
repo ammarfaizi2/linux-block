@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-cpu-reset
+
+title: Marvell Armada CPU reset controller
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-370-cpu-reset"
+
+    reg:
+
+...
+
 # Marvell Armada CPU reset controller
 # ===================================
 #

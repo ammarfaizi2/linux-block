@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,vsp1
+
+title: Renesas VSP1 Video Processing Engine
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,vsp1"
+
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+    renesas,has-lif:
+    renesas,has-lut:
+    renesas,has-sru:
+    renesas,#rpf:
+    renesas,#uds:
+    renesas,#wpf:
+
+...
+
 # * Renesas VSP1 Video Processing Engine
 #
 # The VSP1 is a video processing engine that supports up-/down-scaling, alpha

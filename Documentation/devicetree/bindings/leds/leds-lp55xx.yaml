@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: leds-lp55xx
+
+title: Binding for TI/National Semiconductor LP55xx Led Drivers
+
+maintainer:
+    -   name: Kim, Milo <Milo.Kim@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "national,lp5523"
+            "national,lp5521"
+
+    clock-mode:
+    label:
+    reg:
+
+...
+
 # Binding for TI/National Semiconductor LP55xx Led Drivers
 #
 # Required properties:

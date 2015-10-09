@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,tcsr
+
+title: QCOM Top Control and Status Register
+
+maintainer:
+    -   name: Andy Gross <agross@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,tcsr-msm8960" && "syscon"
+            "qcom,tcsr-msm8660" && "syscon"
+            "qcom,tcsr-ipq8064" && "syscon"
+            "qcom,tcsr-apq8064" && "syscon"
+
+    reg:
+
+...
+
 # QCOM Top Control and Status Register
 #
 # Qualcomm devices have a set of registers that provide various control and status

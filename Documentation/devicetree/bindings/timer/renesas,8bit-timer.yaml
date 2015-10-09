@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,8bit-timer
+
+title: Renesas H8/300 8bit timer
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,8bit-timer"
+
+
+...
+
 # * Renesas H8/300 8bit timer
 #
 # The 8bit timer is a 8bit timer/counter with configurable clock inputs and

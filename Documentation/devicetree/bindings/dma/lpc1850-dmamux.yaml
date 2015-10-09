@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc1850-dmamux
+
+title: NXP LPC18xx/43xx DMA MUX (DMA request router)
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,pl080" && "arm,primecell"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # NXP LPC18xx/43xx DMA MUX (DMA request router)
 #
 # Required properties:

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,smdk-wm8994
+
+title: Samsung SMDK audio complex
+
+maintainer:
+    -   name: Padmavathi Venna <padma.v@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,smdk-wm8994"
+
+    samsung,audio-codec:
+    samsung,i2s-controller:
+
+...
+
 # Samsung SMDK audio complex
 #
 # Required properties:

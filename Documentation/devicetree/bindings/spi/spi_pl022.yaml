@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi_pl022
+
+title: ARM PL022 SPI controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,m25p80" && "jedec,spi-nor"
+            "st,m25p80"
+            "arm,pl022" && "arm,primecell"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    cs-gpios:
+    dma-names:
+    dmas:
+    #gpio-cells:
+    interrupt-parent:
+    interrupts:
+    num-cs:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    reg:
+    #size-cells:
+    spi-controller:
+    status:
+
+...
+
 # ARM PL022 SPI controller
 #
 # Required properties:

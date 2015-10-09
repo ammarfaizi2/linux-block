@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx-key
+
+title: NXP LPC32xx Key Scan Interface
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-key"
+
+    interrupts:
+    keypad,num-columns:
+    keypad,num-rows:
+    linux,keymap:
+    nxp,debounce-delay-ms:
+    nxp,scan-delay-ms:
+    reg:
+    status:
+
+...
+
 # NXP LPC32xx Key Scan Interface
 #
 # This binding is based on the matrix-keymap binding with the following

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: pata-arasan
+
+title: ARASAN PATA COMPACT FLASH CONTROLLER
+
+maintainer:
+    -   name: Arnd Bergmann <arnd@arndb.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arasan,cf-spear1340"
+
+    dma-names:
+    dmas:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * ARASAN PATA COMPACT FLASH CONTROLLER
 #
 # Required properties:

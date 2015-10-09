@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: timer
+
+title: Altera Timer
+
+maintainer:
+    -   name: Ley Foon Tan <lftan@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,timer-1"."0"
+
+    clock-frequency:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Altera Timer
 #
 # Required properties:

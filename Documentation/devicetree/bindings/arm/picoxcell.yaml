@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: picoxcell
+
+title: Picochip picoXcell device tree bindings.
+
+maintainer:
+    -   name: Jamie Iles <jamie@jamieiles.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "picochip,pc7302-pc3x3" && "picochip,pc3x3"
+            "picochip,pc7302-pc3x2" && "picochip,pc3x2"
+            "picochip,pc3x3"
+            "picochip,pc3x2-timer"
+            "picochip,pc3x2"
+
+
+...
+
 # Picochip picoXcell device tree bindings.
 # ========================================
 #

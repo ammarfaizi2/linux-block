@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: gamecube
+
+title: Nintendo GameCube device tree
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nintendo,flipper-di"
+            "nintendo,flipper-aram"
+            "nintendo,flipper"
+
+    #address-cells:
+    interrupt-parent:
+    ranges:
+    #size-cells:
+
+...
+
 #
 # Nintendo GameCube device tree
 # =============================

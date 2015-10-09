@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-sata
+
+title: Samsung AHCI SATA Controller
+
+maintainer:
+    -   name: Arnd Bergmann <arnd@arndb.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dwc-ahci"
+
+    clock-names:
+    clocks:
+    dma-coherent:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    samsung,sata-freq:
+    status:
+    ti,hwmods:
+
+...
+
 # * Samsung AHCI SATA Controller
 #
 # SATA nodes are defined to describe on-chip Serial ATA controllers.

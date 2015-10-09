@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb-ohci
+
+title: USB OHCI controllers
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ibm,476gtr-ohci" && "generic-ohci"
+            "generic-ohci"
+            "allwinner,sun9i-a80-ohci" && "generic-ohci"
+            "allwinner,sun8i-a23-ohci" && "generic-ohci"
+            "allwinner,sun7i-a20-ohci" && "generic-ohci"
+            "allwinner,sun6i-a31-ohci" && "generic-ohci"
+            "allwinner,sun5i-a13-ohci" && "generic-ohci"
+            "allwinner,sun4i-a10-ohci" && "generic-ohci"
+
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+
+...
+
 # USB OHCI controllers
 #
 # Required properties:

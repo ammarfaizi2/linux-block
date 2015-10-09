@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,gk20a
+
+title: NVIDIA GK20A Graphics Processing Unit
+
+maintainer:
+    -   name: Alexandre Courbot <acourbot@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,gk20a"
+
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    iommus:
+    reg:
+    reset-names:
+    resets:
+    status:
+    vdd-supply:
+
+...
+
 # NVIDIA GK20A Graphics Processing Unit
 #
 # Required properties:

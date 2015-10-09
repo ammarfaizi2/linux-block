@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-cadence
+
+title: Cadence SPI controller Device Tree Bindings
+
+maintainer:
+    -   name: Harini Katakam <harinik@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-spi-r1p6"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Cadence SPI controller Device Tree Bindings
 # -------------------------------------------
 #

@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: fixed-clock
+
+title: Binding for simple fixed-rate clock sources.
+
+maintainer:
+    -   name: Boris BREZILLON <b.brezillon@overkiz.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,clock-xxti" && "fixed-clock"
+            "samsung,clock-xusbxti" && "fixed-clock"
+            "fsl,imx-osc" && "fixed-clock"
+            "fsl,imx-osc26m" && "fixed-clock"
+            "fsl,imx-clk32" && "fixed-clock"
+            "fsl,imx-ckil" && "fixed-clock"
+            "fsl,imx-ckih2" && "fixed-clock"
+            "fsl,imx-ckih1" && "fixed-clock"
+            "fixed-clock"
+            "atmel,osc" && "fixed-clock"
+
+    clock-frequency:
+
+...
+
 # Binding for simple fixed-rate clock sources.
 #
 # This binding uses the common clock binding[1].

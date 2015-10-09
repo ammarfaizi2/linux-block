@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-39x
+
+title: Marvell Armada 39x Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada398" && "marvell,armada390"
+            "marvell,armada390"
+            "marvell,a398-db" && "marvell,armada398" && "marvell,armada390"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Marvell Armada 39x Platforms Device Tree Bindings
 # -------------------------------------------------
 #

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: lg,lh500wx1-sd03
+
+title: LG Corporation 5" HD TFT LCD panel
+
+maintainer:
+    -   name: Alexandre Courbot <acourbot@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lg,lh500wx1-sd03"
+
+    backlight:
+    power-supply:
+    reg:
+
+...
+
 # LG Corporation 5" HD TFT LCD panel
 #
 # Required properties:

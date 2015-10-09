@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: ifm-csi
+
+title: IFM camera sensor interface on mpc5200 LocalPlus bus
+
+maintainer:
+    -   name: Anatolij Gustschin <agust@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ifm,o2d-csi"
+
+    gpios:
+    ifm,csi-addr-bus-width:
+    ifm,csi-clk-handle:
+    ifm,csi-data-bus-width:
+    ifm,csi-wait-cycles:
+    interrupts:
+    reg:
+
+...
+
 # IFM camera sensor interface on mpc5200 LocalPlus bus
 #
 # Required properties:

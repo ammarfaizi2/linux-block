@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: sharp,ls037v7dw01
+
+title: SHARP LS037V7DW01 TFT-LCD panel
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sharp,ls037v7dw01"
+
+    enable-gpios:
+    label:
+    mode-gpios:
+    power-supply:
+    reset-gpios:
+
+...
+
 # SHARP LS037V7DW01 TFT-LCD panel
 # ===================================
 #

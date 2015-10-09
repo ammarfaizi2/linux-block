@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: raspberrypi,bcm2835-firmware
+
+title: Raspberry Pi VideoCore firmware driver
+
+maintainer:
+    -   name: Eric Anholt <eric@anholt.net>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "raspberrypi,bcm2835-firmware"
+
+    mboxes:
+
+...
+
 # Raspberry Pi VideoCore firmware driver
 #
 # Required properties:

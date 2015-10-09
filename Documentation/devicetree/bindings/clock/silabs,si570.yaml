@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: silabs,si570
+
+title: Binding for Silicon Labs 570, 571, 598 and 599 programmable
+
+maintainer:
+    -   name: Soren Brinkmann <soren.brinkmann@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "silabs,si570"
+
+    #clock-cells:
+    clock-frequency:
+    factory-fout:
+    reg:
+    temperature-stability:
+
+...
+
 # Binding for Silicon Labs 570, 571, 598 and 599 programmable
 # I2C clock generators.
 #

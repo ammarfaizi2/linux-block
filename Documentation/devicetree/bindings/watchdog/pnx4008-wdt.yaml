@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: pnx4008-wdt
+
+title: NXP PNX watchdog timer
+
+maintainer:
+    -   name: Fabio Porcedda <fabio.porcedda@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,pnx4008-wdt"
+
+    reg:
+
+...
+
 # * NXP PNX watchdog timer
 #
 # Required properties:

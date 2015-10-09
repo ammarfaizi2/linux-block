@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-gpio
+
+title: Broadcom Kona Family GPIO
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm21664-gpio" && "brcm,kona-gpio"
+            "brcm,bcm11351-gpio" && "brcm,kona-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # Broadcom Kona Family GPIO
 # =========================
 #

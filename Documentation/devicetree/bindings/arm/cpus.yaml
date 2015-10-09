@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: cpus
+
+title: =================
+
+maintainer:
+    -   name: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,scorpion"
+            "marvell,pj4b"
+            "marvell,pj4a" && "marvell,sheeva-v7"
+            "faraday,fa526"
+            "brcm,brahma-b15"
+            "arm,cortex-m4"
+            "arm,cortex-m3"
+            "arm,cortex-a8"
+            "arm,cortex-a12"
+            "arm,arm926ej-s"
+            "arm,arm920t"
+            "arm,arm1176jz-s"
+            "arm,arm1176jzf-s" && "arm,arm1176"
+            "arm,arm1136jf-s"
+
+    device_type:
+
+...
+
 # =================
 # ARM CPUs bindings
 # =================

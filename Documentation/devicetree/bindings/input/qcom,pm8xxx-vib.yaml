@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,pm8xxx-vib
+
+title: Qualcomm PM8xxx PMIC Vibrator
+
+maintainer:
+    -   name: Stephen Boyd <sboyd@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8058-vib"
+
+    reg:
+
+...
+
 # Qualcomm PM8xxx PMIC Vibrator
 #
 # PROPERTIES

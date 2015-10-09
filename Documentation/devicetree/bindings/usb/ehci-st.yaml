@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ehci-st
+
+title: ST USB EHCI controller
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,st-ehci-300x"
+
+    clock-names:
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-names:
+    resets:
+
+...
+
 # ST USB EHCI controller
 #
 # Required properties:

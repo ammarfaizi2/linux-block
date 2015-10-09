@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-sunxi-p2wi
+
+title: Allwinner P2WI (Push/Pull 2 Wire Interface) controller
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun6i-a31-p2wi"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    resets:
+    #size-cells:
+    status:
+
+...
+
 #
 # * Allwinner P2WI (Push/Pull 2 Wire Interface) controller
 #

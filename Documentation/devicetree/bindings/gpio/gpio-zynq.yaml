@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-zynq
+
+title: Xilinx Zynq GPIO controller Device Tree Bindings
+
+maintainer:
+    -   name: Anurag Kumar Vulisha <anurag.kumar.vulisha@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-gpio-1"."0"
+
+    clocks:
+    #gpio-cells:
+    gpio-controller:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # Xilinx Zynq GPIO controller Device Tree Bindings
 # -------------------------------------------
 #

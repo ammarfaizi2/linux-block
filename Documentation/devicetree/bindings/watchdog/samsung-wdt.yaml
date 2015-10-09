@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-wdt
+
+title: Samsung's Watchdog Timer Controller
+
+maintainer:
+    -   name: Fabio Porcedda <fabio.porcedda@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s3c2410-wdt"
+            "samsung,exynos5420-wdt"
+            "samsung,exynos5250-wdt"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    samsung,syscon-phandle:
+
+...
+
 # * Samsung's Watchdog Timer Controller
 #
 # The Samsung's Watchdog controller is used for resuming system operation

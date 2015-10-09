@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm,prizm-ge-rops
+
+title: VIA/Wondermedia Graphics Engine Controller
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wm,prizm-ge-rops"
+
+    reg:
+
+...
+
 # VIA/Wondermedia Graphics Engine Controller
 # -----------------------------------------------------
 #

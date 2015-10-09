@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: pinctrl-single
+
+title: One-register-per-pin type device tree based pinctrl driver
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pinctrl-single"
+            "pinconf-single"
+
+    #address-cells:
+    pinctrl-0:
+    pinctrl-names:
+    pinctrl-single,register-width:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # One-register-per-pin type device tree based pinctrl driver
 #
 # Required properties:

@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx5-clock
+
+title: Clock bindings for Freescale i.MX5
+
+maintainer:
+    -   name: Philipp Zabel <p.zabel@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx53-ccm"
+            "fsl,imx51-ccm"
+            "fsl,imx50-ccm"
+            "fsl,imx35-ccm"
+            "fsl,imx31-ccm"
+            "fsl,imx27-ccm"
+            "fsl,imx25-ccm"
+            "fsl,imx1-ccm"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Clock bindings for Freescale i.MX5
 #
 # Required properties:

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: mv-xor
+
+title: Marvell XOR engines
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-xor"
+            "marvell,armada-380-xor" && "marvell,orion-xor"
+
+    clocks:
+    reg:
+    status:
+
+...
+
 # * Marvell XOR engines
 #
 # Required properties:

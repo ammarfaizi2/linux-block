@@ -1,3 +1,50 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-pcie
+
+title: NVIDIA Tegra PCIe controller
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra20-pcie"
+
+    #address-cells:
+    avdd-pex-pll-supply:
+    avdd-pex-supply:
+    avdd-plle-supply:
+    bus-range:
+    clock-names:
+    clocks:
+    device_type:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    interrupt-names:
+    interrupts:
+    ranges:
+    reg:
+    reg-names:
+    reset-names:
+    resets:
+    #size-cells:
+    status:
+    vddio-pex-clk-supply:
+    vdd-pex-supply:
+
+...
+
 # NVIDIA Tegra PCIe controller
 #
 # Required properties:

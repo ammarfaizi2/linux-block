@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm59056
+
+title: -------------------------------
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm59056"
+
+    interrupts:
+    reg:
+
+...
+
 # -------------------------------
 # BCM590xx Power Management Units
 # -------------------------------

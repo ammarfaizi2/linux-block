@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: pxa-usb
+
+title: PXA USB controllers
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa-ohci"
+            "marvell,pxa270-udc"
+
+
+...
+
 # PXA USB controllers
 #
 # OHCI

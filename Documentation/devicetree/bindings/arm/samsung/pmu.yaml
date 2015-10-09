@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: pmu
+
+title: SAMSUNG Exynos SoC series PMU Registers
+
+maintainer:
+    -   name: Abhilash Kesavan <a.kesavan@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5420-pmu" && "syscon"
+            "samsung,exynos5410-pmu" && "syscon"
+            "samsung,exynos5260-pmu" && "syscon"
+            "samsung,exynos5250-pmu" && "syscon"
+            "samsung,exynos4412-pmu" && "syscon"
+            "samsung,exynos4212-pmu" && "syscon"
+            "samsung,exynos4210-pmu" && "syscon"
+            "samsung,exynos3250-pmu" && "syscon"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    reg:
+
+...
+
 # SAMSUNG Exynos SoC series PMU Registers
 #
 # Properties:

@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: pxa-camera
+
+title: Marvell PXA camera host interface
+
+maintainer:
+    -   name: Robert Jarzmik <robert.jarzmik@free.fr>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa270-qci"
+
+
+...
+
 # Marvell PXA camera host interface
 #
 # Required properties:

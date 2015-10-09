@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,wl1251
+
+title: Texas Instruments wl1251 wireless lan controller
+
+maintainer:
+    -   name: Sebastian Reichel <sre@debian.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,wl1251"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    spi-cpha:
+    spi-cpol:
+    spi-max-frequency:
+    ti,power-gpio:
+    vio-supply:
+
+...
+
 # * Texas Instruments wl1251 wireless lan controller
 #
 # The wl1251 chip can be connected via SPI or via SDIO. This

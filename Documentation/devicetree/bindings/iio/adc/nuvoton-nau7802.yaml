@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: nuvoton-nau7802
+
+title: Nuvoton NAU7802 Analog to Digital Converter (ADC)
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nuvoton,nau7802"
+
+    nuvoton,vldo:
+    reg:
+
+...
+
 # * Nuvoton NAU7802 Analog to Digital Converter (ADC)
 #
 # Required properties:

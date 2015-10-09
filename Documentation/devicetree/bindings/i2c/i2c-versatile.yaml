@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-versatile
+
+title: i2c Controller on ARM Versatile platform:
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-i2c"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 # i2c Controller on ARM Versatile platform:
 #
 # Required properties:

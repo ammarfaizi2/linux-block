@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: tegra-soctherm
+
+title: Tegra124 SOCTHERM thermal management system
+
+maintainer:
+    -   name: Mikko Perttunen <mperttunen@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-soctherm"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    reset-names:
+    resets:
+    #thermal-sensor-cells:
+
+...
+
 # Tegra124 SOCTHERM thermal management system
 #
 # The SOCTHERM IP block contains thermal sensors, support for polled

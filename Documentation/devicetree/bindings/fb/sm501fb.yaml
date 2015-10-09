@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: sm501fb
+
+title: SM SM501
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "smi,sm501"
+
+    interrupts:
+    little-endian:
+    mode:
+    reg:
+
+...
+
 # * SM SM501
 #
 # The SM SM501 is a LCD controller, with proper hardware, it can also

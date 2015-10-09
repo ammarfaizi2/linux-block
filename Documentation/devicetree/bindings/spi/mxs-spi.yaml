@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxs-spi
+
+title: Freescale MX233/MX28 SSP/SPI
+
+maintainer:
+    -   name: Marek Vasut <marex@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8610-spi" && "fsl,spi"
+            "fsl,imx28-spi"
+            "fsl,imx23-spi"
+
+    #address-cells:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale MX233/MX28 SSP/SPI
 #
 # Required properties:

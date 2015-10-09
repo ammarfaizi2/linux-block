@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: extcon-usb-gpio
+
+title: USB GPIO Extcon device
+
+maintainer:
+    -   name: Roger Quadros <rogerq@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "linux,extcon-usb-gpio"
+
+    id-gpio:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # USB GPIO Extcon device
 #
 # This is a virtual device used to generate USB cable states from the USB ID pin

@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: boards
+
+title: Boards based on the CRIS SoCs:
+
+maintainer:
+    -   name: Jesper Nilsson <jespern@axis.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "axis,dev88"
+
+
+...
+
 # Boards based on the CRIS SoCs:
 #
 # Required root node properties:

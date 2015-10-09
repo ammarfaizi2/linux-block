@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: pmu-sram
+
+title: Rockchip SRAM for pmu:
+
+maintainer:
+    -   name: Chris Zhong <zyw@rock-chips.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-pmu-sram" && "mmio-sram"
+
+    reg:
+
+...
+
 # Rockchip SRAM for pmu:
 # ------------------------------
 #

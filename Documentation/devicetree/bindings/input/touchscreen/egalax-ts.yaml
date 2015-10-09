@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: egalax-ts
+
+title: EETI eGalax Multiple Touch Controller
+
+maintainer:
+    -   name: Fabio Estevam <fabio.estevam@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "eeti,egalax"_"ts"
+
+    interrupt-parent:
+    interrupts:
+    linux,wakeup:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    wakeup-gpios:
+
+...
+
 # * EETI eGalax Multiple Touch Controller
 #
 # Required properties:

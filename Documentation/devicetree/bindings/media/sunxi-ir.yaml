@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: sunxi-ir
+
+title: Device-Tree bindings for SUNXI IR controller found in sunXi SoC family
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun5i-a13-ir"
+            "allwinner,sun4i-a10-ir"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # Device-Tree bindings for SUNXI IR controller found in sunXi SoC family
 #
 # Required properties:

@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,exynos5440-pcie
+
+title: Samsung Exynos 5440 PCIe interface
+
+maintainer:
+    -   name: Lucas Stach <l.stach@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5440-pcie" && "snps,dw-pcie"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    device_type:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    interrupts:
+    num-lanes:
+    ranges:
+    reg:
+    reset-gpio:
+    #size-cells:
+    status:
+
+...
+
 # * Samsung Exynos 5440 PCIe interface
 #
 # This PCIe host controller is based on the Synopsis Designware PCIe IP

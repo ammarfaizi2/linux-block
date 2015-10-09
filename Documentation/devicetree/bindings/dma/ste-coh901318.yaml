@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: ste-coh901318
+
+title: ST-Ericsson COH 901 318 DMA Controller
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,coh901318"
+
+    clocks:
+    #dma-cells:
+    dma-channels:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # ST-Ericsson COH 901 318 DMA Controller
 #
 # This is a DMA controller which has begun as a fork of the

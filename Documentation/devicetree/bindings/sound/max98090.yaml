@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: max98090
+
+title: MAX98090 audio CODEC
+
+maintainer:
+    -   name: Dylan Reid <dgreid@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max98091"
+            "maxim,max98090"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #sound-dai-cells:
+
+...
+
 # MAX98090 audio CODEC
 #
 # This device supports I2C only.

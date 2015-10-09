@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-sdhci
+
+title: Broadcom BCM2835 SDHCI controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@wwwdotorg.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-sdhci"
+
+    bus-width:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Broadcom BCM2835 SDHCI controller
 #
 # This file documents differences between the core properties described

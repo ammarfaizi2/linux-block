@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: dwc3-st
+
+title: ST DWC3 glue logic
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih407-dwc3"
+
+    #address-cells:
+    pinctrl-0:
+    pinctrl-names:
+    ranges:
+    reg:
+    reg-names:
+    reset-names:
+    resets:
+    #size-cells:
+    status:
+    st,syscfg:
+
+...
+
 # ST DWC3 glue logic
 #
 # This file documents the parameters for the dwc3-st driver.

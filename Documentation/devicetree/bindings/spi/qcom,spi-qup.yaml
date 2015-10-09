@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,spi-qup
+
+title: Qualcomm Universal Peripheral (QUP) Serial Peripheral Interface (SPI)
+
+maintainer:
+    -   name: Andy Gross <agross@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,spi-qup-v1"."1"."1"
+            "arm,pl022-dummy"
+
+    reg:
+    spi-max-frequency:
+
+...
+
 # Qualcomm Universal Peripheral (QUP) Serial Peripheral Interface (SPI)
 #
 # The QUP core is an AHB slave that provides a common data path (an output FIFO

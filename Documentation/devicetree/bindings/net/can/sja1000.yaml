@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: sja1000
+
+title: Memory mapped SJA1000 CAN controller from NXP (formerly Philips)
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,sja1000"
+
+    fsl,weim-cs-timing:
+    interrups-parent:
+    interrupt-parent:
+    interrupts:
+    nxp,external-clock-frequency:
+    nxp,no-comparator-bypass:
+    nxp,tx-output-config:
+    reg:
+
+...
+
 # Memory mapped SJA1000 CAN controller from NXP (formerly Philips)
 #
 # Required properties:

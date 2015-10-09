@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: pxa-mmc
+
+title: PXA MMC drivers
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa-mmc"
+
+
+...
+
 # * PXA MMC drivers
 #
 # Driver bindings for the PXA MCI (MMC/SDIO) interfaces

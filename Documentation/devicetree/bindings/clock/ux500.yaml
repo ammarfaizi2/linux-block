@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: ux500
+
+title: Clock bindings for ST-Ericsson Ux500 clocks
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,u8500-clks"
+
+    reg:
+
+...
+
 # Clock bindings for ST-Ericsson Ux500 clocks
 #
 # Required properties :

@@ -1,3 +1,70 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpmc-eth
+
+title: Device tree bindings for Ethernet chip connected to TI GPMC
+
+maintainer:
+    -   name: Javier Martinez Canillas <javier.martinez@collabora.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap3430-gpmc"
+            "smsc,lan9221" && "smsc,lan9115"
+
+    bank-width:
+    clocks:
+    fsl,weim-cs-timing:
+    gpmc,access-ns:
+    gpmc,adv-on-ns:
+    gpmc,adv-rd-off-ns:
+    gpmc,adv-wr-off-ns:
+    gpmc,bus-turnaround-ns:
+    gpmc,clk-activation-ns:
+    gpmc,cs-on-ns:
+    gpmc,cs-rd-off-ns:
+    gpmc,cs-wr-off-ns:
+    gpmc,cycle2cycle-delay-ns:
+    gpmc,cycle2cycle-diffcsen:
+    gpmc,cycle2cycle-samecsen:
+    gpmc,device-width:
+    gpmc,mux-add-data:
+    gpmc,oe-off-ns:
+    gpmc,oe-on-ns:
+    gpmc,page-burst-access-ns:
+    gpmc,rd-cycle-ns:
+    gpmc,sync-clk-ps:
+    gpmc,sync-read:
+    gpmc,sync-write:
+    gpmc,wait-monitoring-ns:
+    gpmc,we-off-ns:
+    gpmc,we-on-ns:
+    gpmc,wr-access-ns:
+    gpmc,wr-cycle-ns:
+    gpmc,wr-data-mux-bus-ns:
+    interrupt-parent:
+    interrupts:
+    phy-mode:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reg-io-width:
+    smsc,irq-push-pull:
+    smsc,save-mac-address:
+    vdd33a-supply:
+    vddvario-supply:
+
+...
+
 # Device tree bindings for Ethernet chip connected to TI GPMC
 #
 # Besides being used to interface with external memory devices, the

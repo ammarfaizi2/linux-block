@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom-sata
+
+title: Qualcomm AHCI SATA Controller
+
+maintainer:
+    -   name: Kumar Gala <galak@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,ipq806x-ahci" && "generic-ahci"
+            "marvell,berlin2q-ahci" && "generic-ahci"
+            "marvell,berlin2-ahci" && "generic-ahci"
+            "generic-ahci"
+
+    assigned-clock-rates:
+    assigned-clocks:
+    clock-names:
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+    target-supply:
+
+...
+
 # * Qualcomm AHCI SATA Controller
 #
 # SATA nodes are defined to describe on-chip Serial ATA controllers.

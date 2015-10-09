@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: mmc-pwrseq-simple
+
+title: The simple MMC power sequence provider
+
+maintainer:
+    -   name: Javier Martinez Canillas <javier.martinez@collabora.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mmc-pwrseq-simple"
+
+    clock-names:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    reset-gpios:
+
+...
+
 # * The simple MMC power sequence provider
 #
 # The purpose of the simple MMC power sequence provider is to supports a set of

@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: fixed-factor-clock
+
+title: Binding for TI fixed factor rate clock sources.
+
+maintainer:
+    -   name: Tero Kristo <t-kristo@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,fixed-factor-clock"
+
+    #clock-cells:
+    clocks:
+    reg:
+    ti,autoidle-shift:
+    ti,clock-div:
+    ti,clock-mult:
+    ti,invert-autoidle-bit:
+    ti,set-rate-parent:
+
+...
+
 # Binding for TI fixed factor rate clock sources.
 #
 # Binding status: Unstable - ABI compatibility may be broken in the future

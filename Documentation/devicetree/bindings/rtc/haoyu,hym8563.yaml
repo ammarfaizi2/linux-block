@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: haoyu,hym8563
+
+title: Haoyu Microelectronics HYM8563 Real Time Clock
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "haoyu,hym8563"
+
+    #clock-cells:
+    clock-frequency:
+    clock-output-names:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # Haoyu Microelectronics HYM8563 Real Time Clock
 #
 # The HYM8563 provides basic rtc and alarm functionality

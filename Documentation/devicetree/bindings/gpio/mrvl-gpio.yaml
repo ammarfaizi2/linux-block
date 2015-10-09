@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: mrvl-gpio
+
+title: Marvell PXA GPIO controller
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-gpio"
+            "marvell,mmp-gpio"
+            "marvell,mmp2-gpio"
+            "intel,pxa3xx-gpio"
+            "intel,pxa27x-gpio"
+
+
+...
+
 # * Marvell PXA GPIO controller
 #
 # Required properties:

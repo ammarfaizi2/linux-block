@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: axxia-reset
+
+title: Axxia Restart Driver
+
+maintainer:
+    -   name: Anders Berg <anders.berg@lsi.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lsi,axxia-syscon" && "syscon"
+            "lsi,axm55xx-reset"
+
+    syscon:
+
+...
+
 # Axxia Restart Driver
 #
 # This driver can do reset of the Axxia SoC. It uses the registers in the syscon

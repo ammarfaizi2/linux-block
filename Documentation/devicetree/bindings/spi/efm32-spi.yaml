@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: efm32-spi
+
+title: Energy Micro EFM32 SPI
+
+maintainer:
+    -   name: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ks8851"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    spi-max-frequency:
+    vdd-supply:
+
+...
+
 # * Energy Micro EFM32 SPI
 #
 # Required properties:

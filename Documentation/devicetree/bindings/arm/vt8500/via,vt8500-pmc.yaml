@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: via,vt8500-pmc
+
+title: VIA/Wondermedia VT8500 Power Management Controller
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "via,vt8500-pmc"
+
+    reg:
+
+...
+
 # VIA/Wondermedia VT8500 Power Management Controller
 # -----------------------------------------------------
 #

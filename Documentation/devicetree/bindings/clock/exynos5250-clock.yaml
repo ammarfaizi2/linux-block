@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos5250-clock
+
+title: Samsung Exynos5250 Clock Controller
+
+maintainer:
+    -   name: Rahul Sharma <rahul.sharma@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5250-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Exynos5250 Clock Controller
 #
 # The Exynos5250 clock controller generates and supplies clock to various

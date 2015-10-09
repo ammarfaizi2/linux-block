@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: nxp-lpc32xx-hsuart
+
+title: NXP LPC32xx SoC High Speed UART
+
+maintainer:
+    -   name: Kumar Gala <galak@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-hsuart"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * NXP LPC32xx SoC High Speed UART
 #
 # Required properties:

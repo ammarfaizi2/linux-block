@@ -1,3 +1,57 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-mxs
+
+title: Freescale MXS Inter IC (I2C) Controller
+
+maintainer:
+    -   name: Marek Vasut <marex@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-i2c"
+            "fsl,mpc885-i2c" && "fsl,cpm1-i2c"
+            "fsl,mpc866-i2c" && "fsl,cpm1-i2c"
+            "fsl,mpc8544-i2c" && "fsl-i2c"
+            "fsl,mpc8313-i2c" && "fsl-i2c"
+            "fsl,mpc8272-i2c" && "fsl,cpm2-i2c"
+            "fsl,mpc5200b-i2c" && "fsl,mpc5200-i2c" && "fsl-i2c"
+            "fsl,mpc5121-i2c" && "fsl-i2c"
+            "fsl,imx7d-i2c" && "fsl,imx21-i2c"
+            "fsl,imx6ul-i2c" && "fsl,imx21-i2c"
+            "fsl,imx6sx-i2c" && "fsl,imx21-i2c"
+            "fsl,imx6sl-i2c" && "fsl,imx21-i2c"
+            "fsl,imx6q-i2c" && "fsl,imx21-i2c"
+            "fsl,imx53-i2c" && "fsl,imx21-i2c"
+            "fsl,imx51-i2c" && "fsl,imx21-i2c"
+            "fsl,imx50-i2c" && "fsl,imx21-i2c"
+            "fsl,imx35-i2c" && "fsl,imx1-i2c"
+            "fsl,imx28-i2c"
+            "fsl,imx27-i2c" && "fsl,imx21-i2c"
+            "fsl,imx25-i2c" && "fsl,imx21-i2c"
+            "fsl,imx23-i2c"
+            "fsl,imx1-i2c"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale MXS Inter IC (I2C) Controller
 #
 # Required properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: lg,ld070wx3-sl01
+
+title: LG Corporation 7" WXGA TFT LCD panel
+
+maintainer:
+    -   name: Alexandre Courbot <acourbot@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lg,ld070wx3-sl01"
+
+    backlight:
+    power-supply:
+    reg:
+
+...
+
 # LG Corporation 7" WXGA TFT LCD panel
 #
 # Required properties:

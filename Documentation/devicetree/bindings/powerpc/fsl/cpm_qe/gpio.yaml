@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio
+
+title: Every GPIO controller node must have #gpio-cells property defined,
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,cpm2-pario-bank"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # Every GPIO controller node must have #gpio-cells property defined,
 # this information will be used to translate gpio-specifiers.
 #

@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-mipi-csis
+
+title: Samsung S5P/EXYNOS SoC series MIPI CSI-2 receiver (MIPI CSIS)
+
+maintainer:
+    -   name: Sylwester Nawrocki <s.nawrocki@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-csis"
+            "samsung,exynos4210-csis"
+
+    #address-cells:
+    assigned-clock-parents:
+    assigned-clock-rates:
+    assigned-clocks:
+    bus-width:
+    clock-names:
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+    vddcore-supply:
+    vddio-supply:
+
+...
+
 # Samsung S5P/EXYNOS SoC series MIPI CSI-2 receiver (MIPI CSIS)
 # -------------------------------------------------------------
 #

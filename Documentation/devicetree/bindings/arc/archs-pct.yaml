@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: archs-pct
+
+title: ARC HS Performance Counters
+
+maintainer:
+    -   name: Vineet Gupta <vgupta@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,archs-pct"
+
+    #interrupt-cells:
+    interrupt-parent:
+    interrupts:
+
+...
+
 # * ARC HS Performance Counters
 #
 # The ARC HS can be configured with a pipeline performance monitor for counting

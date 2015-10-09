@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpddr2
+
+title: LPDDR2 SDRAM memories compliant to JEDEC JESD209-2
+
+maintainer:
+    -   name: Aneesh V <aneesh@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "Samsung,K3PE0E000B" && "jedec,lpddr2-s4"
+            "Elpida,ECB240ABACN" && "jedec,lpddr2-s4"
+
+    density:
+    io-width:
+    tCKE-min-tck:
+    tCKESR-min-tck:
+    tFAW-min-tck:
+    tRASmin-min-tck:
+    tRCD-min-tck:
+    tRPab-min-tck:
+    tRRD-min-tck:
+    tRTP-min-tck:
+    tWR-min-tck:
+    tWTR-min-tck:
+    tXP-min-tck:
+
+...
+
 # * LPDDR2 SDRAM memories compliant to JEDEC JESD209-2
 #
 # Required properties:

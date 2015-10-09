@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-pcf857x
+
+title: PCF857x-compatible I/O expanders
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,pcf8575"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    lines-initial-states:
+    reg:
+
+...
+
 # * PCF857x-compatible I/O expanders
 #
 # The PCF857x-compatible chips have "quasi-bidirectional" I/O lines that can be

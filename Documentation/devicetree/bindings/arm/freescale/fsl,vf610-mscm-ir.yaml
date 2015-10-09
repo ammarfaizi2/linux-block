@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,vf610-mscm-ir
+
+title: Freescale Vybrid Miscellaneous System Control - Interrupt Router
+
+maintainer:
+    -   name: Stefan Agner <stefan@agner.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-mscm-ir"
+
+    fsl,cpucfg:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    reg:
+
+...
+
 # Freescale Vybrid Miscellaneous System Control - Interrupt Router
 #
 # The MSCM IP contains multiple sub modules, this binding describes the second

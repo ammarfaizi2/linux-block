@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: serial
+
+title: Serial
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc885-smc-uart" && "fsl,cpm1-smc-uart"
+            "fsl,mpc885-scc-uart" && "fsl,cpm1-scc-uart"
+            "fsl,mpc875-smc-uart" && "fsl,cpm1-smc-uart"
+            "fsl,mpc866-smc-uart" && "fsl,cpm1-smc-uart"
+            "fsl,mpc860-smc-uart" && "fsl,cpm1-smc-uart"
+            "fsl,mpc8560-scc-uart" && "fsl,cpm2-scc-uart"
+            "fsl,mpc8280-scc-uart" && "fsl,cpm2-scc-uart"
+            "fsl,mpc8272-scc-uart" && "fsl,cpm2-scc-uart"
+            "fsl,mpc8248-smc-uart" && "fsl,cpm2-smc-uart"
+            "fsl,mpc8248-scc-uart" && "fsl,cpm2-scc-uart"
+            "fsl,mpc8247-smc-uart" && "fsl,cpm2-smc-uart"
+
+    current-speed:
+    device_type:
+    fsl,cpm-brg:
+    fsl,cpm-command:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * Serial
 #
 # Currently defined compatibles:

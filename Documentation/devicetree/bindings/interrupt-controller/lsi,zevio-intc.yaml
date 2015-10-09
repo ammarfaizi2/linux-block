@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: lsi,zevio-intc
+
+title: TI-NSPIRE interrupt controller
+
+maintainer:
+    -   name: Daniel Tang <dt.tangr@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lsi,zevio-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # TI-NSPIRE interrupt controller
 #
 # Required properties:

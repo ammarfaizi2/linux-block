@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxs-lradc
+
+title: Freescale MXS LRADC device driver
+
+maintainer:
+    -   name: Marek Vasut <marex@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-lradc"
+            "fsl,imx23-lradc"
+
+    clocks:
+    fsl,lradc-touchscreen-wires:
+    interrupts:
+    #io-channel-cells:
+    reg:
+    status:
+
+...
+
 # * Freescale MXS LRADC device driver
 #
 # Required properties:

@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,i2c-qup
+
+title: Qualcomm Universal Peripheral (QUP) I2C controller
+
+maintainer:
+    -   name: Ivan T. Ivanov <iivanov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,i2c-qup-v2"."1"."1"
+
+    #address-cells:
+    clock-frequency:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Qualcomm Universal Peripheral (QUP) I2C controller
 #
 # Required properties:

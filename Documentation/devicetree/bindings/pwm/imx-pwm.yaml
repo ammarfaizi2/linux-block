@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-pwm
+
+title: Freescale i.MX PWM controller
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6ul-pwm" && "fsl,imx27-pwm"
+            "fsl,imx6sx-pwm" && "fsl,imx27-pwm"
+            "fsl,imx6sl-pwm" && "fsl,imx27-pwm"
+            "fsl,imx6q-pwm" && "fsl,imx27-pwm"
+            "fsl,imx53-pwm" && "fsl,imx27-pwm"
+            "fsl,imx51-pwm" && "fsl,imx27-pwm"
+            "fsl,imx50-pwm" && "fsl,imx27-pwm"
+            "fsl,imx27-pwm"
+            "fsl,imx25-pwm" && "fsl,imx27-pwm"
+            "fsl,imx1-pwm"
+
+    clock-names:
+    clocks:
+    interrupts:
+    #pwm-cells:
+    reg:
+
+...
+
 # Freescale i.MX PWM controller
 #
 # Required properties:

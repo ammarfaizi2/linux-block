@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,sti-irq-syscfg
+
+title: STMicroelectronics STi System Configuration Controlled IRQs
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-irq-syscfg"
+            "st,stih407-irq-syscfg"
+
+    st,fiq-device:
+    st,irq-device:
+    st,syscfg:
+
+...
+
 # STMicroelectronics STi System Configuration Controlled IRQs
 # -----------------------------------------------------------
 #

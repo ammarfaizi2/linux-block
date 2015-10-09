@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,pci
+
+title: Bus Enumeration by Freescale PCI-X Agent
+
+maintainer:
+    -   name: Aaron Sierra <asierra@xes-inc.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8540-pcix" && "fsl,mpc8540-pci"
+            "fsl,mpc8540-pci"
+
+    #address-cells:
+    bus-range:
+    clock-frequency:
+    device_type:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    interrupt-parent:
+    interrupts:
+    ranges:
+    reg:
+    #size-cells:
+    sleep:
+    status:
+
+...
+
 # * Bus Enumeration by Freescale PCI-X Agent
 #
 # Typically any Freescale PCI-X bridge hardware strapped into Agent mode

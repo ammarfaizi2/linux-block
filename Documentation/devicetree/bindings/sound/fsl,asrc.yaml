@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,asrc
+
+title: Freescale Asynchronous Sample Rate Converter (ASRC) Controller
+
+maintainer:
+    -   name: Nicolin Chen <nicoleotsuka@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx53-asrc"
+
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    fsl,asrc-rate:
+    fsl,asrc-width:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Freescale Asynchronous Sample Rate Converter (ASRC) Controller
 #
 # The Asynchronous Sample Rate Converter (ASRC) converts the sampling rate of a

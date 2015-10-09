@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,sti-powerdown
+
+title: STMicroelectronics STi family Sysconfig Peripheral Powerdown Reset Controller
+
+maintainer:
+    -   name: Philipp Zabel <p.zabel@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-powerdown"
+            "st,stih415-powerdown"
+            "st,stih407-powerdown"
+
+    #reset-cells:
+
+...
+
 # STMicroelectronics STi family Sysconfig Peripheral Powerdown Reset Controller
 # =============================================================================
 #

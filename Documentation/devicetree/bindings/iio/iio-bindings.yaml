@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: iio-bindings
+
+title: This binding is derived from clock bindings, and based on suggestions
+
+maintainer:
+    -   name: Guenter Roeck <linux@roeck-us.net>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "iio-hwmon"
+
+    io-channels:
+
+...
+
 # This binding is derived from clock bindings, and based on suggestions
 # from Lars-Peter Clausen [1].
 #

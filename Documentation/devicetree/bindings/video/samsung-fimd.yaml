@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-fimd
+
+title: Device-Tree bindings for Samsung SoC display controller (FIMD)
+
+maintainer:
+    -   name: Kukjin Kim <kgene.kim@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5250-fimd"
+            "samsung,exynos4415-fimd"
+            "samsung,exynos4210-fimd"
+            "samsung,exynos3250-fimd"
+
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    iommus:
+    power-domains:
+    reg:
+    samsung,sysreg:
+    status:
+
+...
+
 # Device-Tree bindings for Samsung SoC display controller (FIMD)
 #
 # FIMD (Fully Interactive Mobile Display) is the Display Controller for the

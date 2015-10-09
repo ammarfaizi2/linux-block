@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm21664-resetmgr
+
+title: Broadcom Kona Family Reset Manager
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm21664-resetmgr"
+
+    reg:
+
+...
+
 # Broadcom Kona Family Reset Manager
 # ----------------------------------
 #

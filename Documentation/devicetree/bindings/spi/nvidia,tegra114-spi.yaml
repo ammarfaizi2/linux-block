@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra114-spi
+
+title: NVIDIA Tegra114 SPI controller.
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-spi" && "nvidia,tegra114-spi"
+            "nvidia,tegra114-spi"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    reg:
+    reset-names:
+    resets:
+    #size-cells:
+    spi-max-frequency:
+    status:
+
+...
+
 # NVIDIA Tegra114 SPI controller.
 #
 # Required properties:

@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell-armada-370-neta
+
+title: Marvell Armada 370 / Armada XP Ethernet Controller (NETA)
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-xp-neta"
+            "marvell,armada-370-neta"
+
+    clocks:
+    interrupts:
+    interrupts-extended:
+    phy:
+    phy-mode:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Marvell Armada 370 / Armada XP Ethernet Controller (NETA)
 #
 # Required properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra114-mipi
+
+title: NVIDIA Tegra MIPI pad calibration controller
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra114-mipi"
+
+    clocks:
+    #nvidia,mipi-calibrate-cells:
+    reg:
+
+...
+
 # NVIDIA Tegra MIPI pad calibration controller
 #
 # Required properties:

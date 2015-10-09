@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: cdns,xtensa-pic
+
+title: Xtensa built-in Programmable Interrupt Controller (PIC)
+
+maintainer:
+    -   name: Max Filippov <jcmvbkbc@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cdns,xtensa-pic"
+
+    #interrupt-cells:
+    interrupt-controller:
+
+...
+
 # * Xtensa built-in Programmable Interrupt Controller (PIC)
 #
 # Required properties:

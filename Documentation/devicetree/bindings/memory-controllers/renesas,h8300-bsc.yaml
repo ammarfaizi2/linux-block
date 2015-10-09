@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,h8300-bsc
+
+title: H8/300 bus controller
+
+maintainer:
+    -   name: Yoshinori Sato <ysato@users.sourceforge.jp>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,h8s-bsc" && "renesas,h8300-bsc"
+            "renesas,h8300h-bsc" && "renesas,h8300-bsc"
+
+
+...
+
 # * H8/300 bus controller
 #
 # Required properties:

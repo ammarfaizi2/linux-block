@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm63138-pmb
+
+title: Broadcom BCM63138 Processor Monitor Bus binding
+
+maintainer:
+    -   name: Florian Fainelli <f.fainelli@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm63138-pmb"
+
+    reg:
+    #reset-cells:
+
+...
+
 # Broadcom BCM63138 Processor Monitor Bus binding
 # ===============================================
 #

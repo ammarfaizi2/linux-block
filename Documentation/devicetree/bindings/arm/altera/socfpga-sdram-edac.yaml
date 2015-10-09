@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: socfpga-sdram-edac
+
+title: Altera SOCFPGA SDRAM Error Detection  %title% Correction [EDAC]
+
+maintainer:
+    -   name: Thor Thayer <tthayer@opensource.altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,sdram-edac-a10"
+            "altr,sdram-edac"
+
+    altr,sdr-syscon:
+    interrupts:
+
+...
+
 # Altera SOCFPGA SDRAM Error Detection & Correction [EDAC]
 # The EDAC accesses a range of registers in the SDRAM controller.
 #

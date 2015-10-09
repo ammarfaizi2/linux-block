@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: max8973-regulator
+
+title: Maxim MAX8973 Voltage Regulator
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max8973"
+
+    reg:
+    regulator-always-on:
+    regulator-boot-on:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+
+...
+
 # * Maxim MAX8973 Voltage Regulator
 #
 # Required properties:

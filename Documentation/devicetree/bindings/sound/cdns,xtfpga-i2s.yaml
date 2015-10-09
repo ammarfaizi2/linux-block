@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: cdns,xtfpga-i2s
+
+title: Bindings for I2S controller built into xtfpga Xtensa bitstreams.
+
+maintainer:
+    -   name: Max Filippov <jcmvbkbc@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cdns,xtfpga-i2s"
+
+    clocks:
+    interrupts:
+    reg:
+    #sound-dai-cells:
+
+...
+
 # Bindings for I2S controller built into xtfpga Xtensa bitstreams.
 #
 # Required properties:

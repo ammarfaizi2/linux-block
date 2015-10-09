@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm43xx-fmac
+
+title: Broadcom BCM43xx Fullmac wireless SDIO devices
+
+maintainer:
+    -   name: Arend van Spriel <arend@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm4329-fmac"
+
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Broadcom BCM43xx Fullmac wireless SDIO devices
 #
 # This node provides properties for controlling the Broadcom wireless device. The

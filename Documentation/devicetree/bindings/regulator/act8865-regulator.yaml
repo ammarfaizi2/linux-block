@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: act8865-regulator
+
+title: ACT88xx regulators
+
+maintainer:
+    -   name: Romain Perier <romain.perier@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "active-semi,act8865"
+            "active-semi,act8846"
+
+    inl1-supply:
+    inl2-supply:
+    inl3-supply:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+    system-power-controller:
+    vp1-supply:
+    vp2-supply:
+    vp3-supply:
+    vp4-supply:
+
+...
+
 # ACT88xx regulators
 # -------------------
 #

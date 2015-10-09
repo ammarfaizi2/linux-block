@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-zevio
+
+title: Zevio GPIO controller
+
+maintainer:
+    -   name: Fabian Vogt <fabian@ritter-vogt.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lsi,zevio-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    interrupts:
+    reg:
+
+...
+
 # Zevio GPIO controller
 #
 # Required properties:

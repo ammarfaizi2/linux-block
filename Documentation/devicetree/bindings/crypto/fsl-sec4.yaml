@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-sec4
+
+title: =====================================================================
+
+maintainer:
+    -   name: Frank Li <Frank.Li@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,sec-v4"."0-pwrkey"
+            "fsl,sec-v4"."0-mon-rtc-lp"
+            "fsl,sec-v4"."0"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    fsl,iommu-parent:
+    fsl,sec-era:
+    interrupt-parent:
+    interrupts:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # =====================================================================
 # SEC 4 Device Tree Binding
 # Copyright (C) 2008-2011 Freescale Semiconductor Inc.

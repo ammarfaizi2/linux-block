@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,mmp2
+
+title: Marvell MMP2 Clock Controller
+
+maintainer:
+    -   name: Chao Xie <chao.xie@marvell.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,mmp2-clock"
+
+    #clock-cells:
+    reg:
+    reg-names:
+    #reset-cells:
+
+...
+
 # * Marvell MMP2 Clock Controller
 #
 # The MMP2 clock subsystem generates and supplies clock to various

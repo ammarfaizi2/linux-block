@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-ehci
+
+title: Tegra SOC USB controllers
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-ehci" && "usb-ehci"
+            "nvidia,tegra20-ehci" && "usb-ehci"
+            "nvidia,tegra124-ehci" && "nvidia,tegra30-ehci" && "usb-ehci"
+
+    clocks:
+    interrupts:
+    nvidia,phy:
+    phy_type:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # Tegra SOC USB controllers
 #
 # The device node for a USB controller that is part of a Tegra

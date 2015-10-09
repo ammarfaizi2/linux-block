@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: adi,adv7511
+
+title: Analog Device ADV7511(W)/13 HDMI Encoders
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "adi,adv7511w"
+
+    adi,input-clock:
+    adi,input-colorspace:
+    adi,input-depth:
+    adi,input-justification:
+    adi,input-style:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Analog Device ADV7511(W)/13 HDMI Encoders
 # -----------------------------------------
 #

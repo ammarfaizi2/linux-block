@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-nmk
+
+title: Nomadik GPIO controller
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,nomadik-gpio"
+            "stericsson,db8500-gpio" && "st,nomadik-gpio"
+
+    clocks:
+    gpio-bank:
+    #gpio-cells:
+    gpio-controller:
+    gpio-ranges:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+    st,supports-sleepmode:
+
+...
+
 # Nomadik GPIO controller
 #
 # Required properties:

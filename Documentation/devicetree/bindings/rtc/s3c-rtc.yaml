@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: s3c-rtc
+
+title: Samsung's S3C Real Time Clock controller
+
+maintainer:
+    -   name: Chanwoo Choi <cw00.choi@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s3c6410-rtc"
+            "samsung,s3c2416-rtc"
+            "samsung,s3c2410-rtc"
+
+
+...
+
 # * Samsung's S3C Real Time Clock controller
 #
 # Required properties:

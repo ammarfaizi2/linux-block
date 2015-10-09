@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-370-xp-pmsu
+
+title: Power Management Service Unit(PMSU)
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-390-pmsu" && "marvell,armada-380-pmsu"
+            "marvell,armada-380-pmsu"
+            "marvell,armada-370-pmsu"
+
+    reg:
+
+...
+
 # Power Management Service Unit(PMSU)
 # -----------------------------------
 # Available on Marvell SOCs: Armada 370, Armada 38x and Armada XP

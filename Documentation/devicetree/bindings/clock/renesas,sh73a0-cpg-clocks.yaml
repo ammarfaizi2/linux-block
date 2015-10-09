@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,sh73a0-cpg-clocks
+
+title: These bindings should be considered EXPERIMENTAL for now.
+
+maintainer:
+    -   name: Ulrich Hecht <ulrich.hecht+renesas@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,sh73a0-cpg-clocks"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # These bindings should be considered EXPERIMENTAL for now.
 #
 # * Renesas SH73A0 Clock Pulse Generator (CPG)

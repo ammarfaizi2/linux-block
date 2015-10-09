@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: abilis,tb10x-ictl
+
+title: TB10x Top Level Interrupt Controller
+
+maintainer:
+    -   name: Christian Ruppert <christian.ruppert@abilis.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "abilis,tb10x-ictl"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # TB10x Top Level Interrupt Controller
 # ====================================
 #

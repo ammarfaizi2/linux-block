@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: global_timer
+
+title: ARM Global Timer
+
+maintainer:
+    -   name: Matthew Leach <matthew.leach@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,cortex-a9-global-timer"
+            "arm,cortex-a5-global-timer" && "arm,cortex-a9-global-timer"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 #
 # * ARM Global Timer
 # 	Cortex-A9 are often associated with a per-core Global timer.

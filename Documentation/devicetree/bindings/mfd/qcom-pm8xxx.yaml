@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom-pm8xxx
+
+title: Qualcomm PM8xxx PMIC multi-function devices
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8941-rtc"
+            "qcom,pm8921-rtc"
+            "qcom,pm8921"
+            "qcom,pm8058-rtc"
+            "qcom,pm8058"
+
+    #address-cells:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    #size-cells:
+
+...
+
 # Qualcomm PM8xxx PMIC multi-function devices
 #
 # The PM8xxx family of Power Management ICs are used to provide regulated

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: sun4i-lradc-keys
+
+title: Allwinner sun4i low res adc attached tablet keys
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun4i-a10-lradc-keys"
+
+    interrupts:
+    reg:
+    status:
+    vref-supply:
+
+...
+
 # Allwinner sun4i low res adc attached tablet keys
 # ------------------------------------------------
 #

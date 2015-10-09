@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb-ehci
+
+title: USB EHCI controllers
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "socionext,uniphier-ehci" && "generic-ehci"
+            "nxp,lpc1850-ehci" && "generic-ehci"
+            "ibm,usb-ehci-460ex" && "usb-ehci"
+            "ibm,usb-ehci-440epx" && "usb-ehci"
+            "ibm,476gtr-ehci" && "generic-ehci"
+            "generic-ehci"
+            "allwinner,sun9i-a80-ehci" && "generic-ehci"
+            "allwinner,sun8i-a23-ehci" && "generic-ehci"
+            "allwinner,sun7i-a20-ehci" && "generic-ehci"
+            "allwinner,sun6i-a31-ehci" && "generic-ehci"
+            "allwinner,sun5i-a13-ehci" && "generic-ehci"
+            "allwinner,sun4i-a10-ehci" && "generic-ehci"
+
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+
+...
+
 # USB EHCI controllers
 #
 # Required properties:

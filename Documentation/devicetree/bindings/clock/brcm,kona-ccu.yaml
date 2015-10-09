@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-ccu
+
+title: Broadcom Kona Family Clocks
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm11351-slave-ccu"
+            "brcm,bcm11351-root-ccu"
+            "brcm,bcm11351-master-ccu"
+            "brcm,bcm11351-hub-ccu"
+            "brcm,bcm11351-dw-apb-uart" && "snps,dw-apb-uart"
+            "brcm,bcm11351-aon-ccu"
+
+    #clock-cells:
+    clock-output-names:
+    reg:
+
+...
+
 # Broadcom Kona Family Clocks
 #
 # This binding is associated with Broadcom SoCs having "Kona" style

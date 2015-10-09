@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: meta
+
+title: Meta Processor Binding
+
+maintainer:
+    -   name: James Hogan <james.hogan@imgtec.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "toumaz,tz1090" && "img,meta"
+            "img,meta"
+
+
+...
+
 # * Meta Processor Binding
 #
 # This binding specifies what properties must be available in the device tree

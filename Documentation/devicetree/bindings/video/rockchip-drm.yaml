@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-drm
+
+title: Rockchip DRM master device
+
+maintainer:
+    -   name: Mark Yao <mark.yao@rock-chips.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,display-subsystem"
+
+    ports:
+
+...
+
 # Rockchip DRM master device
 # ================================
 #

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,omap-intc-irq
+
+title: Omap2/3 intc controller
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap3-intc"
+            "ti,omap2-intc"
+            "ti,dm816-intc"
+            "ti,dm814-intc"
+            "ti,am33xx-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # Omap2/3 intc controller
 #
 # On TI omap2 and 3 the intc interrupt controller can provide

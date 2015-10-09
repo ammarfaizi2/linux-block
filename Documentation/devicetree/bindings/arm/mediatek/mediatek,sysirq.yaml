@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: mediatek,sysirq
+
+title: +Mediatek 65xx/67xx/81xx sysirq
+
+maintainer:
+    -   name: Mars Cheng <mars.cheng@mediatek.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt8135-sysirq" && "mediatek,mt6577-sysirq"
+            "mediatek,mt8127-sysirq" && "mediatek,mt6577-sysirq"
+            "mediatek,mt6592-sysirq" && "mediatek,mt6577-sysirq"
+            "mediatek,mt6589-sysirq" && "mediatek,mt6577-sysirq"
+            "mediatek,mt6580-sysirq" && "mediatek,mt6577-sysirq"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    reg:
+
+...
+
 # +Mediatek 65xx/67xx/81xx sysirq
 #
 # Mediatek SOCs sysirq support controllable irq inverter for each GIC SPI

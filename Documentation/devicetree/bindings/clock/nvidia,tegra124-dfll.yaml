@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra124-dfll
+
+title: NVIDIA Tegra124 DFLL FCPU clocksource
+
+maintainer:
+    -   name: Tuomas Tynkkynen <ttynkkynen@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-dfll"
+
+    #clock-cells:
+    clock-names:
+    clock-output-names:
+    clocks:
+    interrupts:
+    nvidia,cf:
+    nvidia,cg:
+    nvidia,ci:
+    nvidia,droop-ctrl:
+    nvidia,force-mode:
+    nvidia,i2c-fs-rate:
+    nvidia,sample-rate:
+    reg:
+    reset-names:
+    resets:
+    status:
+    vdd-cpu-supply:
+
+...
+
 # NVIDIA Tegra124 DFLL FCPU clocksource
 #
 # This binding uses the common clock binding:

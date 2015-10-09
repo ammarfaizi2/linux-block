@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: vf610-adc
+
+title: Freescale vf610 Analog to Digital Converter bindings
+
+maintainer:
+    -   name: Fugang Duan <B38611@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-adc"
+            "fsl,imx6sx-adc" && "fsl,vf610-adc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Freescale vf610 Analog to Digital Converter bindings
 #
 # The devicetree bindings are for the new ADC driver written for

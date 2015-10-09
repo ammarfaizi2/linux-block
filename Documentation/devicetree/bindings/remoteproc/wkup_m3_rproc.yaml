@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: wkup_m3_rproc
+
+title: TI Wakeup M3 Remoteproc Driver
+
+maintainer:
+    -   name: Dave Gerlach <d-gerlach@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,am4372-wkup-m3"
+            "ti,am3352-wkup-m3"
+
+    reg:
+    reg-names:
+    ti,hwmods:
+    ti,pm-firmware:
+
+...
+
 # TI Wakeup M3 Remoteproc Driver
 # ==============================
 #

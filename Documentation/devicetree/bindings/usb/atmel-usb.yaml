@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-usb
+
+title: Atmel SOC USB controllers
+
+maintainer:
+    -   name: Boris Brezillon <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d3-udc"
+            "atmel,at91sam9rl-udc"
+            "atmel,at91sam9g45-udc"
+            "atmel,at91sam9g45-ehci" && "usb-ehci"
+            "atmel,at91sam9263-udc"
+            "atmel,at91sam9261-udc"
+            "atmel,at91sam9260-udc"
+            "atmel,at91rm9200-udc"
+            "atmel,at91rm9200-ohci" && "usb-ohci"
+
+    atmel,vbus-gpio:
+    clock-names:
+    clocks:
+    interrupts:
+    num-ports:
+    reg:
+    status:
+
+...
+
 # Atmel SOC USB controllers
 #
 # OHCI

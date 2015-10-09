@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: thine,thc63lvdm83d
+
+title: THine Electronics THC63LVDM83D LVDS serializer
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "thine,thc63lvdm83d"
+
+    "thine,thc63lvdm83d"::
+
+...
+
 # THine Electronics THC63LVDM83D LVDS serializer
 # ----------------------------------------------
 #

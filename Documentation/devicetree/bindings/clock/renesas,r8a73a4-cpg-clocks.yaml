@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,r8a73a4-cpg-clocks
+
+title: Renesas R8A73A4 Clock Pulse Generator (CPG)
+
+maintainer:
+    -   name: Ulrich Hecht <ulrich.hecht+renesas@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,r8a73a4-cpg-clocks"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+    reg:
+
+...
+
 # * Renesas R8A73A4 Clock Pulse Generator (CPG)
 #
 # The CPG generates core clocks for the R8A73A4 SoC. It includes five PLLs

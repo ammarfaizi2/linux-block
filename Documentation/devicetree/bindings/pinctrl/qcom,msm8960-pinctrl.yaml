@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,msm8960-pinctrl
+
+title: Qualcomm MSM8960 TLMM block
+
+maintainer:
+    -   name: Bjorn Andersson <bjorn.andersson@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,msm8960-pinctrl"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # Qualcomm MSM8960 TLMM block
 #
 # This binding describes the Top Level Mode Multiplexer block found in the

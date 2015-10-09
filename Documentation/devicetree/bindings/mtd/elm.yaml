@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: elm
+
+title: Error location module
+
+maintainer:
+    -   name: Philip Avinash <avinashphilip@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,am3352-elm"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+    ti,hwmods:
+
+...
+
 # Error location module
 #
 # Required properties:

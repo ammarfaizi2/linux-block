@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: sx8654
+
+title: Semtech SX8654 I2C Touchscreen Controller
+
+maintainer:
+    -   name: Sébastien Szymanski <sebastien.szymanski@armadeus.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "semtech,sx8654"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * Semtech SX8654 I2C Touchscreen Controller
 #
 # Required properties:

@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm21664
+
+title: Broadcom BCM21664 device tree bindings
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm21664-garnet" && "brcm,bcm21664"
+            "brcm,bcm21664"
+
+
+...
+
 # Broadcom BCM21664 device tree bindings
 # --------------------------------------
 #

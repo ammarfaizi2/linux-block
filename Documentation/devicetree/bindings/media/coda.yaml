@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: coda
+
+title: Chips %title%Media Coda multi-standard codec IP
+
+maintainer:
+    -   name: Philipp Zabel <p.zabel@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6q-vpu" && "cnm,coda960"
+            "fsl,imx53-vpu" && "cnm,coda7541"
+            "fsl,imx27-vpu" && "cnm,codadx6"
+
+    clock-names:
+    clocks:
+    interrupts:
+    iram:
+    reg:
+
+...
+
 # Chips&Media Coda multi-standard codec IP
 # ========================================
 #

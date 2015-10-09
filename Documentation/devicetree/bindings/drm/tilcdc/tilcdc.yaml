@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: tilcdc
+
+title: Device-Tree bindings for tilcdc DRM driver
+
+maintainer:
+    -   name: Darren Etheridge <detheridge@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,am33xx-tilcdc"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+    ti,hwmods:
+
+...
+
 # Device-Tree bindings for tilcdc DRM driver
 #
 # Required properties:

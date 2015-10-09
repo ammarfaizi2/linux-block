@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: snps-dma
+
+title: Synopsys Designware DMA Controller
+
+maintainer:
+    -   name: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dma-spear1340"
+
+    block_size:
+    chan_allocation_order:
+    chan_priority:
+    clock-names:
+    clocks:
+    data_width:
+    #dma-cells:
+    dma-channels:
+    dma-masters:
+    dma-requests:
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Synopsys Designware DMA Controller
 #
 # Required properties:

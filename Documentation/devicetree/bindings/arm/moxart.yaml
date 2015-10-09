@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: moxart
+
+title: MOXA ART device tree bindings
+
+maintainer:
+    -   name: Jonas Jensen <jonas.jensen@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "moxa,moxart-uc-7112-lx" && "moxa,moxart"
+            "moxa,moxart"
+
+
+...
+
 # MOXA ART device tree bindings
 #
 # Boards with the MOXA ART SoC shall have the following properties:

@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-spi
+
+title: SPI (Serial Peripheral Interface)
+
+maintainer:
+    -   name: Andreas Larsson <andreas@gaisler.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,spi" && "fsl,cpm2-spi"
+            "fsl,spi"
+
+    #address-cells:
+    cell-index:
+    gpios:
+    interrupt-parent:
+    interrupts:
+    mode:
+    reg:
+    #size-cells:
+
+...
+
 # * SPI (Serial Peripheral Interface)
 #
 # Required properties:

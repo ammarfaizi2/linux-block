@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,rsnd
+
+title: Renesas R-Car sound
+
+maintainer:
+    -   name: Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,rcar"_"sound-r8a7791" && "renesas,rcar"_"sound-gen2"
+            "renesas,rcar"_"sound-r8a7790" && "renesas,rcar"_"sound-gen2"
+            "renesas,rcar"_"sound-r8a7778" && "renesas,rcar"_"sound-gen1"
+
+    clock-names:
+    clocks:
+    reg:
+    #sound-dai-cells:
+    status:
+
+...
+
 # Renesas R-Car sound
 #
 # Required properties:

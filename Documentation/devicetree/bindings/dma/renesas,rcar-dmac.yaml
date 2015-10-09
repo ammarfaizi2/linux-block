@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,rcar-dmac
+
+title: Renesas R-Car DMA Controller Device Tree bindings
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,rcar-dmac"
+
+    clock-names:
+    clocks:
+    #dma-cells:
+    dma-channels:
+    interrupt-names:
+    interrupts:
+    power-domains:
+    reg:
+
+...
+
 # * Renesas R-Car DMA Controller Device Tree bindings
 #
 # Renesas R-Car Generation 2 SoCs have multiple multi-channel DMA

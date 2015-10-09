@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: mvebu-mbus
+
+title: Marvell MBus
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion5x-88f5182-mbus" && "simple-bus"
+            "marvell,mbus-controller"
+            "marvell,kirkwood-mbus" && "simple-bus"
+            "marvell,dove-mbus" && "marvell,mbus" && "simple-bus"
+            "marvell,bootrom"
+            "marvell,armadaxp-mbus" && "simple-bus"
+            "marvell,armada390-mbus" && "marvell,armadaxp-mbus" && "simple-bus"
+            "marvell,armada380-mbus" && "simple-bus"
+            "marvell,armada375-mbus" && "simple-bus"
+            "marvell,armada370-mbus" && "simple-bus"
+
+    #address-cells:
+    controller:
+    interrupt-parent:
+    pcie-io-aperture:
+    pcie-mem-aperture:
+    ranges:
+    #size-cells:
+
+...
+
 #
 # * Marvell MBus
 #

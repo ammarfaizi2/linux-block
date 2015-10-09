@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: tsc2005
+
+title: Texas Instruments tsc2005 touchscreen controller
+
+maintainer:
+    -   name: Pavel Machek <pavel@ucw.cz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tsc2005"
+
+    interrupts-extended:
+    reg:
+    reset-gpios:
+    spi-max-frequency:
+    ti,esd-recovery-timeout-ms:
+    ti,x-plate-ohms:
+    touchscreen-fuzz-pressure:
+    touchscreen-fuzz-x:
+    touchscreen-fuzz-y:
+    touchscreen-max-pressure:
+    touchscreen-size-x:
+    touchscreen-size-y:
+    vio-supply:
+
+...
+
 # * Texas Instruments tsc2005 touchscreen controller
 #
 # Required properties:

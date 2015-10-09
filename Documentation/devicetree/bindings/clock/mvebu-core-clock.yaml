@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: mvebu-core-clock
+
+title: Core Clock bindings for Marvell MVEBU SoCs
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,mv88f5182-core-clock"
+            "marvell,kirkwood-core-clock"
+            "marvell,dove-core-clock"
+            "marvell,armada-xp-core-clock"
+            "marvell,armada-390-core-clock"
+            "marvell,armada-380-core-clock"
+            "marvell,armada-375-core-clock"
+            "marvell,armada-370-core-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Core Clock bindings for Marvell MVEBU SoCs
 #
 # Marvell MVEBU SoCs usually allow to determine core clock frequencies by

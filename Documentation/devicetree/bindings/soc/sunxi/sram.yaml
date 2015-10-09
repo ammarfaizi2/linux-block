@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: sram
+
+title: Allwinnner SoC SRAM controllers
+
+maintainer:
+    -   name: Maxime Ripard <maxime.ripard@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mmio-sram"
+            "allwinner,sun4i-a10-sram-d"
+            "allwinner,sun4i-a10-sram-controller"
+            "allwinner,sun4i-a10-sram-a3-a4"
+            "allwinner,sun4i-a10-emac"
+
+    allwinner,sram:
+    clocks:
+    interrupts:
+    phy:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # Allwinnner SoC SRAM controllers
 # -----------------------------------------------------
 #

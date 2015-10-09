@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: restart-poweroff
+
+title: Restart Power Off
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "restart-poweroff"
+
+    "restart-poweroff"::
+
+...
+
 # * Restart Power Off
 #
 # Buffalo Linkstation LS-XHL and LS-CHLv2, and other devices power off

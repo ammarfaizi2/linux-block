@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: al,alpine-smp
+
+title: ========================================================
+
+maintainer:
+    -   name: Tsahee Zidenberg <tsahee@annapurnalabs.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "al,alpine-cpu-resume"
+
+    reg:
+
+...
+
 # ========================================================
 # Secondary CPU enable-method "al,alpine-smp" binding
 # ========================================================

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,imx-fb
+
+title: Freescale imx21 Framebuffer
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx27-fb" && "fsl,imx21-fb"
+            "fsl,imx25-fb" && "fsl,imx21-fb"
+            "fsl,imx1-fb"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Freescale imx21 Framebuffer
 #
 # This framebuffer driver supports devices imx1, imx21, imx25, and imx27.

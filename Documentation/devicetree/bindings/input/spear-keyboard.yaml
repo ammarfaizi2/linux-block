@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear-keyboard
+
+title: SPEAr keyboard controller
+
+maintainer:
+    -   name: Viresh Kumar <vireshk@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear300-kbd"
+
+    autorepeat:
+    interrupt-parent:
+    interrupts:
+    linux,keymap:
+    reg:
+    status:
+    st,mode:
+    suspended_rate:
+
+...
+
 # * SPEAr keyboard controller
 #
 # Required properties:

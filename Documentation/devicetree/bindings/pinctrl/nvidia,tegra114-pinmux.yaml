@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra114-pinmux
+
+title: NVIDIA Tegra114 pinmux controller
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra114-pinmux"
+
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # NVIDIA Tegra114 pinmux controller
 #
 # The Tegra114 pinctrl binding is very similar to the Tegra20 and Tegra30

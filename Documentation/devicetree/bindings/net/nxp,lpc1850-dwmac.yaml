@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: nxp,lpc1850-dwmac
+
+title: NXP LPC1850 GMAC ethernet controller
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc1850-dwmac" && "snps,dwmac-3"."611" && "snps,dwmac"
+
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    phy-mode:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * NXP LPC1850 GMAC ethernet controller
 #
 # This device is a platform glue layer for stmmac.

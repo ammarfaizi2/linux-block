@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: pl011
+
+title: ARM AMBA Primecell PL011 serial UART
+
+maintainer:
+    -   name: Andrew Jackson <Andrew.Jackson@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "zte,zx296702-uart"
+            "brcm,bcm2835-pl011" && "arm,pl011" && "arm,primecell"
+            "arm,pl011" && "arm,primecell"
+
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * ARM AMBA Primecell PL011 serial UART
 #
 # Required properties:

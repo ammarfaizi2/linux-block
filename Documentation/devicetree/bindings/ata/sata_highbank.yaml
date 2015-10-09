@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: sata_highbank
+
+title: Calxeda AHCI SATA Controller
+
+maintainer:
+    -   name: Mark Langsdorf <mark.langsdorf@calxeda.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "calxeda,hb-ahci"
+
+    calxeda,led-order:
+    calxeda,port-phys:
+    calxeda,sgpio-gpio:
+    dma-coherent:
+    interrupts:
+    reg:
+
+...
+
 # * Calxeda AHCI SATA Controller
 #
 # SATA nodes are defined to describe on-chip Serial ATA controllers.

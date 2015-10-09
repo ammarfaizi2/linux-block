@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,cygnus
+
+title: Broadcom Cygnus device tree bindings
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,cygnus"
+            "brcm,bcm58305" && "brcm,cygnus"
+            "brcm,bcm58300" && "brcm,cygnus"
+            "brcm,bcm11360" && "brcm,cygnus"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Broadcom Cygnus device tree bindings
 # ------------------------------------
 #

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: micrel-ks8851
+
+title: Micrel KS8851 Ethernet mac (MLL)
+
+maintainer:
+    -   name: Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "micrel,ks8851"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    reset-gpios:
+    spi-max-frequency:
+    vdd-io-supply:
+    vdd-supply:
+
+...
+
 # Micrel KS8851 Ethernet mac (MLL)
 #
 # Required properties:

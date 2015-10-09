@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: ab8500
+
+title: AB8500 Multi-Functional Device (MFD)
+
+maintainer:
+    -   name: Rajanikanth H.V <rajanikanth.hv@stericsson.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,ab8500-usb"
+            "stericsson,ab8500-sysctrl"
+            "stericsson,ab8500-rtc"
+            "stericsson,ab8500-regulator"
+            "stericsson,ab8500-pwm"
+            "stericsson,ab8500-gpadc"
+            "stericsson,ab8500"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+
+...
+
 # * AB8500 Multi-Functional Device (MFD)
 #
 # Required parent device properties:

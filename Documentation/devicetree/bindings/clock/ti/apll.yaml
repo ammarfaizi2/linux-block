@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: apll
+
+title: Binding for Texas Instruments APLL clock.
+
+maintainer:
+    -   name: J Keerthy <j-keerthy@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap2-apll-clock"
+            "ti,dra7-apll-clock"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # Binding for Texas Instruments APLL clock.
 #
 # Binding status: Unstable - ABI compatibility may be broken in the future

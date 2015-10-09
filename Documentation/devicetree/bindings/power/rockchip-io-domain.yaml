@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-io-domain
+
+title: Rockchip SRAM for IO Voltage Domains:
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-io-voltage-domain"
+
+    bb-supply:
+    dvp-supply:
+    flash0-supply:
+    gpio1830-supply:
+    gpio30-supply:
+    lcdc-supply:
+    rockchip,grf:
+    sdcard-supply:
+    wifi-supply:
+
+...
+
 # Rockchip SRAM for IO Voltage Domains:
 # -------------------------------------
 #

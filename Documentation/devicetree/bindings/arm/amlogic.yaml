@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: amlogic
+
+title: Amlogic MesonX device tree bindings
+
+maintainer:
+    -   name: Beniamino Galvani <b.galvani@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "minix,neo-x8" && "amlogic,meson8"
+            "geniatech,atv1200" && "amlogic,meson6"
+            "amlogic,meson8"
+            "amlogic,meson6"
+
+
+...
+
 # Amlogic MesonX device tree bindings
 # -------------------------------------------
 #

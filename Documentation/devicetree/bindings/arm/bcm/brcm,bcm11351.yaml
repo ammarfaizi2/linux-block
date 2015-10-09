@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm11351
+
+title: Broadcom BCM11351 device tree bindings
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm28155-ap" && "brcm,bcm11351"
+            "brcm,bcm11351"
+
+
+...
+
 # Broadcom BCM11351 device tree bindings
 # -------------------------------------------
 #

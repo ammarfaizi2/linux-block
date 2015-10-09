@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-drm
+
+title: Freescale i.MX DRM master device
+
+maintainer:
+    -   name: Philipp Zabel <p.zabel@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx-parallel-display"
+            "fsl,imx-display-subsystem"
+            "fsl,imx6q-ipu"
+            "fsl,imx53-ipu"
+            "fsl,imx51-ipu"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    resets:
+    #size-cells:
+
+...
+
 # Freescale i.MX DRM master device
 # ================================
 #

@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,spmi-vadc
+
+title: Qualcomm's SPMI PMIC voltage ADC
+
+maintainer:
+    -   name: Stanimir Varbanov <svarbanov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,spmi-vadc"
+
+    #address-cells:
+    interrupts:
+    #io-channel-cells:
+    io-channel-ranges:
+    reg:
+    #size-cells:
+
+...
+
 # Qualcomm's SPMI PMIC voltage ADC
 #
 # SPMI PMIC voltage ADC (VADC) provides interface to clients to read

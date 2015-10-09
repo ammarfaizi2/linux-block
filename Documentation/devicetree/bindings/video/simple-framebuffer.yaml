@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: simple-framebuffer
+
+title: Simple Framebuffer
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,simple-framebuffer" && "simple-framebuffer"
+
+    allwinner,pipeline:
+    clocks:
+    status:
+
+...
+
 # Simple Framebuffer
 #
 # A simple frame-buffer describes a frame-buffer setup by firmware or

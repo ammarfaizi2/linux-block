@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: img,tz1090-pinctrl
+
+title: ImgTec TZ1090 pin controller
+
+maintainer:
+    -   name: James Hogan <james.hogan@imgtec.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "img,tz1090-pinctrl"
+
+
+...
+
 # ImgTec TZ1090 pin controller
 #
 # Required properties:

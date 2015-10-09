@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-mxs-auart
+
+title: Freescale MXS Application UART (AUART)
+
+maintainer:
+    -   name: Janusz Uzycki <j.uzycki@elproma.com.pl>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-auart" && "fsl,imx23-auart"
+            "fsl,imx23-auart"
+
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Freescale MXS Application UART (AUART)
 #
 # Required properties:

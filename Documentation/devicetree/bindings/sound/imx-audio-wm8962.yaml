@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-audio-wm8962
+
+title: Freescale i.MX audio complex with WM8962 codec
+
+maintainer:
+    -   name: Nicolin Chen <nicoleotsuka@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-sdb-wm8962" && "fsl,imx-audio-wm8962"
+            "fsl,imx6sl-evk-wm8962" && "fsl,imx-audio-wm8962"
+            "fsl,imx6q-sabresd-wm8962" && "fsl,imx-audio-wm8962"
+
+    audio-codec:
+    audio-routing:
+    model:
+    mux-ext-port:
+    mux-int-port:
+    ssi-controller:
+
+...
+
 # Freescale i.MX audio complex with WM8962 codec
 #
 # Required properties:

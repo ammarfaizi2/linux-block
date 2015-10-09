@@ -1,3 +1,71 @@
+%YAML 1.2
+---
+version: 1
+
+id: nxp,lpc1850-uart
+
+title: NXP LPC1850 UART
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "opencores,uart16550-rtlsvn105" && "ns16550a"
+            "nxp,lpc1850-uart" && "ns16550a"
+            "ns16550a"
+
+    bank-width:
+    clock-frequency:
+    clocks:
+    current-speed:
+    device_type:
+    gpmc,access-ns:
+    gpmc,adv-on-ns:
+    gpmc,adv-rd-off-ns:
+    gpmc,adv-wr-off-ns:
+    gpmc,bus-turnaround-ns:
+    gpmc,clk-activation-ns:
+    gpmc,cs-on-ns:
+    gpmc,cs-rd-off-ns:
+    gpmc,cs-wr-off-ns:
+    gpmc,cycle2cycle-delay-ns:
+    gpmc,cycle2cycle-diffcsen:
+    gpmc,cycle2cycle-samecsen:
+    gpmc,device-width:
+    gpmc,mux-add-data:
+    gpmc,oe-off-ns:
+    gpmc,oe-on-ns:
+    gpmc,page-burst-access-ns:
+    gpmc,rd-cycle-ns:
+    gpmc,wait-monitoring-ns:
+    gpmc,wait-pin:
+    gpmc,we-off-ns:
+    gpmc,we-on-ns:
+    gpmc,wr-access-ns:
+    gpmc,wr-cycle-ns:
+    gpmc,wr-data-mux-bus-ns:
+    interrupt-parent:
+    interrupts:
+    native-endian:
+    no-loopback-test:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reg-io-width:
+    reg-shift:
+    status:
+    virtual-reg:
+
+...
+
 # * NXP LPC1850 UART
 #
 # Required properties:

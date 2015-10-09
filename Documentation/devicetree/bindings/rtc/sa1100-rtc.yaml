@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: sa1100-rtc
+
+title: Marvell Real Time Clock controller
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@marvell.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mrvl,mmp-rtc"
+
+    clocks:
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    reg:
+    resets:
+    status:
+
+...
+
 # * Marvell Real Time Clock controller
 #
 # Required properties:

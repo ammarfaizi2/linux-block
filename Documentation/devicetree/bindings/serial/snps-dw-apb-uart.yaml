@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: snps-dw-apb-uart
+
+title: Synopsys DesignWare ABP UART
+
+maintainer:
+    -   name: Chen-Yu Tsai <wens@csie.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dw-apb-uart"
+            "rockchip,rk3288-uart" && "snps,dw-apb-uart"
+            "brcm,bcm21664-dw-apb-uart" && "snps,dw-apb-uart"
+
+    clocks:
+    interrupts:
+    reg:
+    reg-io-width:
+    reg-shift:
+    status:
+
+...
+
 # * Synopsys DesignWare ABP UART
 #
 # Required properties:

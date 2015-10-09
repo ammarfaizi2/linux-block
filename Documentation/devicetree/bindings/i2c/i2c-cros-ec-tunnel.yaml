@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-cros-ec-tunnel
+
+title: I2C bus that tunnels through the ChromeOS EC (cros-ec)
+
+maintainer:
+    -   name: Doug Anderson <dianders@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "google,cros-ec-i2c-tunnel"
+
+    #address-cells:
+    google,remote-bus:
+    #size-cells:
+
+...
+
 # I2C bus that tunnels through the ChromeOS EC (cros-ec)
 # ======================================================
 # On some ChromeOS board designs we've got a connection to the EC (embedded

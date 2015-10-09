@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-regulator
+
+title: Bindings for the Generic PWM Regulator
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pwm-regulator"
+
+    max-duty-cycle:
+    pwms:
+    regulator-always-on:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+    status:
+
+...
+
 # Bindings for the Generic PWM Regulator
 # ======================================
 #

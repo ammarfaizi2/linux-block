@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: zx296702-clk
+
+title: Device Tree Clock bindings for ZTE zx296702
+
+maintainer:
+    -   name: Jun Nie <jun.nie@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "zte,zx296702-topcrm-clk"
+            "zte,zx296702-lsp1crpm-clk"
+            "zte,zx296702-lsp0crpm-clk"
+
+    #clock-cells:
+    reg:
+
+...
+
 # Device Tree Clock bindings for ZTE zx296702
 #
 # This binding uses the common clock binding[1].

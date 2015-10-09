@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom-spmi-temp-alarm
+
+title: Qualcomm QPNP PMIC Temperature Alarm
+
+maintainer:
+    -   name: Ivan T. Ivanov <iivanov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,spmi-temp-alarm"
+
+    interrupts:
+    io-channel-names:
+    io-channels:
+    reg:
+    #thermal-sensor-cells:
+
+...
+
 # Qualcomm QPNP PMIC Temperature Alarm
 #
 # QPNP temperature alarm peripherals are found inside of Qualcomm PMIC chips

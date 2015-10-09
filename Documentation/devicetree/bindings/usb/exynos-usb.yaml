@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-usb
+
+title: Samsung Exynos SoC USB controller
+
+maintainer:
+    -   name: Vivek Gautam <gautam.vivek@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5250-dwusb3"
+            "samsung,exynos4210-ohci"
+            "samsung,exynos4210-ehci"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+    samsung,vbus-gpio:
+    #size-cells:
+    status:
+
+...
+
 # Samsung Exynos SoC USB controller
 #
 # The USB devices interface with USB controllers on Exynos SOCs.

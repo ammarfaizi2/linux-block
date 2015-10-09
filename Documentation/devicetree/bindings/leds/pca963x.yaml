@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: pca963x
+
+title: LEDs connected to pca9632, pca9633 or pca9634
+
+maintainer:
+    -   name: Peter Meerwald <pmeerw@pmeerw.net>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,pca9635"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 # LEDs connected to pca9632, pca9633 or pca9634
 #
 # Required properties:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: nxp,lpc1850-gpio
+
+title: NXP LPC18xx/43xx GPIO controller Device Tree Bindings
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc1850-gpio"
+
+    clocks:
+    #gpio-cells:
+    gpio-controller:
+    gpio-ranges:
+    reg:
+
+...
+
 # NXP LPC18xx/43xx GPIO controller Device Tree Bindings
 # -----------------------------------------------------
 #

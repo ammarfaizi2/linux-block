@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: zte
+
+title: ZTE platforms device tree bindings
+
+maintainer:
+    -   name: Jun Nie <jun.nie@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "zte,zx-bus-matrix"
+            "zte,zx296702-pcu"
+            "zte,zx296702-ad1" && "zte,zx296702"
+            "zte,sysctrl" && "syscon"
+
+    reg:
+
+...
+
 # ZTE platforms device tree bindings
 # ---------------------------------------
 #

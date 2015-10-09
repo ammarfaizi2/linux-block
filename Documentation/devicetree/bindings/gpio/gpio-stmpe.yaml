@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-stmpe
+
+title: STMPE gpio
+
+maintainer:
+    -   name: Vipul Kumar Samar <vipulkumar.samar@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stmpe-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    st,norequest-mask:
+
+...
+
 # STMPE gpio
 # ----------
 #

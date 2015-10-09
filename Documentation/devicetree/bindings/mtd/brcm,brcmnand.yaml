@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,brcmnand
+
+title: Broadcom STB NAND Controller
+
+maintainer:
+    -   name: Brian Norris <computersforpeace@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,nand-iproc" && "brcm,brcmnand-v6"."1" && "brcm,brcmnand"
+            "brcm,nandcs"
+            "brcm,nand-bcm63138" && "brcm,brcmnand-v7"."0" && "brcm,brcmnand"
+            "brcm,brcmnand-v7"."1" && "brcm,brcmnand"
+
+    #address-cells:
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    reg:
+    reg-names:
+    #size-cells:
+    status:
+
+...
+
 # * Broadcom STB NAND Controller
 #
 # The Broadcom Set-Top Box NAND controller supports low-level access to raw NAND

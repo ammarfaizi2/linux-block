@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,imx6q-pcie
+
+title: Freescale i.MX6 PCIe interface
+
+maintainer:
+    -   name: Lucas Stach <l.stach@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6q-pcie" && "snps,dw-pcie"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    device_type:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    interrupt-names:
+    interrupts:
+    num-lanes:
+    pinctrl-0:
+    pinctrl-name:
+    pinctrl-names:
+    ranges:
+    reg:
+    reg-names:
+    reset-gpio:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale i.MX6 PCIe interface
 #
 # This PCIe host controller is based on the Synopsis Designware PCIe IP

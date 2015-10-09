@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-pinctrl
+
+title: Samsung GPIO and Pin Mux/Config controller
+
+maintainer:
+    -   name: Tomasz Figa <t.figa@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-pinctrl"
+            "samsung,s3c64xx-pinctrl"
+            "samsung,s3c2416-pinctrl"
+            "samsung,exynos5420-pinctrl"
+            "samsung,exynos5260-pinctrl"
+            "samsung,exynos5250-pinctrl"
+            "samsung,exynos4x12-pinctrl"
+            "samsung,exynos4210-wakeup-eint"
+            "samsung,exynos4210-pinctrl"
+
+    interrupts:
+    reg:
+
+...
+
 # Samsung GPIO and Pin Mux/Config controller
 #
 # Samsung's ARM based SoC's integrates a GPIO and Pin mux/config hardware

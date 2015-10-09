@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: sunxi-rtc
+
+title: sun4i/sun7i Real Time Clock
+
+maintainer:
+    -   name: Carlo Caione <carlo.caione@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun7i-a20-rtc"
+            "allwinner,sun4i-a10-rtc"
+
+    interrupts:
+    reg:
+
+...
+
 # * sun4i/sun7i Real Time Clock
 #
 # RTC controller for the Allwinner A10/A20

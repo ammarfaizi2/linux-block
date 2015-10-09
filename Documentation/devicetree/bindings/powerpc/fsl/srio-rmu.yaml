@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: srio-rmu
+
+title: Message unit node:
+
+maintainer:
+    -   name: Liu Gang <Gang.Liu@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,srio-rmu"
+            "fsl,srio-port-write-unit"
+            "fsl,srio-msg-unit"
+            "fsl,srio-dbell-unit"
+
+    interrupts:
+    reg:
+
+...
+
 # Message unit node:
 #
 # For SRIO controllers that implement the message unit as part of the controller

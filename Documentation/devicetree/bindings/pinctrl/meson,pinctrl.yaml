@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: meson,pinctrl
+
+title: == Amlogic Meson pinmux controller ==
+
+maintainer:
+    -   name: Beniamino Galvani <b.galvani@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "amlogic,meson8-pinctrl"
+
+    #address-cells:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # == Amlogic Meson pinmux controller ==
 #
 # Required properties for the root node:

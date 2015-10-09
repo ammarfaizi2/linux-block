@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,fsi
+
+title: Renesas FSI
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,fsi2-sh73a0" && "renesas,sh"_"fsi2"
+            "renesas,fsi2-r8a7740" && "renesas,sh"_"fsi2"
+
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    reg:
+    #sound-dai-cells:
+    status:
+
+...
+
 # Renesas FSI
 #
 # Required properties:

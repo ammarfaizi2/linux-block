@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: dw_hdmi-rockchip
+
+title: Rockchip specific extensions to the Synopsys Designware HDMI
+
+maintainer:
+    -   name: Andy Yan <andy.yan@rock-chips.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-dw-hdmi"
+
+    clock-names:
+    clocks:
+    ddc-i2c-bus:
+    interrupts:
+    reg:
+    reg-io-width:
+    rockchip,grf:
+    status:
+
+...
+
 # Rockchip specific extensions to the Synopsys Designware HDMI
 # ================================
 #

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: mediatek,topckgen
+
+title: Mediatek topckgen controller
+
+maintainer:
+    -   name: Sascha Hauer <s.hauer@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt8135-topckgen"
+
+    #clock-cells:
+    reg:
+
+...
+
 # Mediatek topckgen controller
 # ============================
 #

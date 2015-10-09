@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb
+
+title: Freescale QUICC Engine USB Controller
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8360-qe-usb" && "fsl,mpc8323-qe-usb"
+
+    fsl,fullspeed-clock:
+    fsl,lowspeed-clock:
+    gpios:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Freescale QUICC Engine USB Controller
 #
 # Required properties:

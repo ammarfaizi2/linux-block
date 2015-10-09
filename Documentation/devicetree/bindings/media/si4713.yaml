@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: si4713
+
+title: Silicon Labs FM Radio transmitter
+
+maintainer:
+    -   name: Sebastian Reichel <sre@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "silabs,si4713"
+
+    interrupts-extended:
+    reg:
+    reset-gpios:
+    vdd-supply:
+    vio-supply:
+
+...
+
 # * Silicon Labs FM Radio transmitter
 #
 # The Silicon Labs Si4713 is an FM radio transmitter with receive power scan

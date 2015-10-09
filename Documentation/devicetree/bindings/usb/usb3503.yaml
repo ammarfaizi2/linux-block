@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: usb3503
+
+title: SMSC USB3503 High-Speed Hub Controller
+
+maintainer:
+    -   name: Mark Brown <broonie@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "smsc,usb3503a"
+            "smsc,usb3503"
+
+    clock-names:
+    clocks:
+    connect-gpios:
+    initial-mode:
+    intn-gpios:
+    refclk-frequency:
+    reg:
+    reset-gpios:
+
+...
+
 # SMSC USB3503 High-Speed Hub Controller
 #
 # Required properties:

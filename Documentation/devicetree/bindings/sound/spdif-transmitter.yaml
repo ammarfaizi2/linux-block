@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: spdif-transmitter
+
+title: Device-Tree bindings for dummy spdif transmitter
+
+maintainer:
+    -   name: Marek Belisko <marek.belisko@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "linux,spdif-dit"
+
+    #sound-dai-cells:
+
+...
+
 # Device-Tree bindings for dummy spdif transmitter
 #
 # Required properties:

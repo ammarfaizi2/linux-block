@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: max8998
+
+title: Maxim MAX8998, National/TI LP3974 multi-function device
+
+maintainer:
+    -   name: Tomasz Figa <t.figa@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "national,lp3974"
+
+    max8998,pmic-buck1-default-dvs-idx:
+    max8998,pmic-buck1-dvs-gpios:
+    max8998,pmic-buck1-dvs-voltage:
+    max8998,pmic-buck2-default-dvs-idx:
+    max8998,pmic-buck2-dvs-gpio:
+    max8998,pmic-buck2-dvs-voltage:
+    reg:
+
+...
+
 # * Maxim MAX8998, National/TI LP3974 multi-function device
 #
 # The Maxim MAX8998 is a multi-function device which includes voltage/current

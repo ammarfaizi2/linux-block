@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: cypress,cyapa
+
+title: Cypress I2C Touchpad
+
+maintainer:
+    -   name: Dudley Du <dudl@cypress.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cypress,cyapa"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    wakeup-source:
+
+...
+
 # Cypress I2C Touchpad
 #
 # Required properties:

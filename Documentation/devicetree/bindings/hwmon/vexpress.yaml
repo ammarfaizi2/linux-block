@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: vexpress
+
+title: Versatile Express hwmon sensors
+
+maintainer:
+    -   name: Pawel Moll <pawel.moll@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,vexpress-temp"
+            "arm,vexpress-power"
+            "arm,vexpress-energy"
+            "arm,vexpress-amp"
+
+    arm,vexpress-sysreg,func:
+    label:
+
+...
+
 # Versatile Express hwmon sensors
 # -------------------------------
 #

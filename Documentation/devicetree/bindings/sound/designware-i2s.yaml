@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: designware-i2s
+
+title: DesignWare I2S controller
+
+maintainer:
+    -   name: Andrew Jackson <Andrew.Jackson@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,designware-i2s"
+
+    channel:
+    interrupt-names:
+    interrupts:
+    play:
+    record:
+    reg:
+    status:
+
+...
+
 # DesignWare I2S controller
 #
 # Required properties:

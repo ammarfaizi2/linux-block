@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-38x
+
+title: Marvell Armada 38x Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada388" && "marvell,armada385" && "marvell,armada380"
+            "marvell,armada385" && "marvell,armada380"
+            "marvell,armada380"
+            "marvell,a385-rd" && "marvell,armada388" && "marvell,armada385" && "marvell,armada380"
+            "marvell,a385-gp" && "marvell,armada388" && "marvell,armada380"
+            "marvell,a385-db" && "marvell,armada388" && "marvell,armada385" && "marvell,armada380"
+            "marvell,a385-db-ap" && "marvell,armada385" && "marvell,armada38x"
+            "linksys,cobra" && "linksys,armada385" && "marvell,armada385" && "marvell,armada380"
+            "linksys,caiman" && "linksys,armada385" && "marvell,armada385" && "marvell,armada380"
+            "linksys,armada385" && "marvell,armada385" && "marvell,armada380"
+
+
+...
+
 # Marvell Armada 38x Platforms Device Tree Bindings
 # -------------------------------------------------
 #

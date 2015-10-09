@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: st-keyscan
+
+title: ST Keyscan controller Device Tree bindings
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,sti-keyscan"
+
+    clocks:
+    interrupts:
+    keypad,num-columns:
+    keypad,num-rows:
+    linux,keymap:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    resets:
+    status:
+    st,debounce-us:
+
+...
+
 # * ST Keyscan controller Device Tree bindings
 #
 # The ST keyscan controller Device Tree binding is based on the

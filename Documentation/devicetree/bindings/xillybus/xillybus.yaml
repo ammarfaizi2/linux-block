@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: xillybus
+
+title: Xillybus driver for generic FPGA interface
+
+maintainer:
+    -   name: Eli Billauer <eli.billauer@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            ""	""	""	""	""	""	""	"compatible" && ""="" && "altr,socfpga-a10-perip-clk"
+            ""	""	""	""	""	""	"compatible" && ""=""
+
+
+...
+
 # * Xillybus driver for generic FPGA interface
 #
 # Required properties:

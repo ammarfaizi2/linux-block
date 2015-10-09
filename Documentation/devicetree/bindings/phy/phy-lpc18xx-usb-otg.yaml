@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: phy-lpc18xx-usb-otg
+
+title: NXP LPC18xx/43xx internal USB OTG PHY binding
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "simple-mfd" && "syscon"
+            "nxp,lpc1850-usb-otg-phy"
+            "nxp,lpc1850-creg" && "syscon" && "simple-mfd"
+
+    clocks:
+    reg:
+
+...
+
 # NXP LPC18xx/43xx internal USB OTG PHY binding
 # ---------------------------------------------
 #

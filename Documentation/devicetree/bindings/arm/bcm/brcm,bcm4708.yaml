@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm4708
+
+title: Broadcom BCM4708 device tree bindings
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "smartrg,sr400ac" && "brcm,bcm4708"
+            "netgear,r8000" && "brcm,bcm4709" && "brcm,bcm4708"
+            "netgear,r6300v2" && "brcm,bcm4708"
+            "netgear,r6250v1" && "brcm,bcm4708"
+            "luxul,xwc-1000" && "brcm,bcm4708"
+            "buffalo,wzr-900dhp" && "brcm,bcm47081" && "brcm,bcm4708"
+            "buffalo,wzr-600dhp2" && "brcm,bcm47081" && "brcm,bcm4708"
+            "buffalo,wzr-1750dhp" && "brcm,bcm4708"
+            "buffalo,wxr-1900dhp" && "brcm,bcm4709" && "brcm,bcm4708"
+            "brcm,bcm4708"
+            "asus,rt-n18u" && "brcm,bcm47081" && "brcm,bcm4708"
+            "asus,rt-ac87u" && "brcm,bcm4709" && "brcm,bcm4708"
+            "asus,rt-ac68u" && "brcm,bcm4708"
+            "asus,rt-ac56u" && "brcm,bcm4708"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Broadcom BCM4708 device tree bindings
 # -------------------------------------------
 #

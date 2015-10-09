@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,berlin
+
+title: Device Tree Clock bindings for Marvell Berlin
+
+maintainer:
+    -   name: Antoine Tenart <antoine.tenart@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,berlin2q-clk"
+            "marvell,berlin2-clk"
+
+    #clock-cells:
+    clock-names:
+    clocks:
+
+...
+
 # Device Tree Clock bindings for Marvell Berlin
 #
 # This binding uses the common clock binding[1].

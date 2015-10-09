@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-g2d
+
+title: Samsung 2D Graphics Accelerator
+
+maintainer:
+    -   name: Sachin Kamat <sachin.kamat@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-g2d"
+            "samsung,exynos5250-g2d"
+            "samsung,exynos4212-g2d"
+
+    clock-names:
+    clocks:
+    interrupts:
+    iommus:
+    reg:
+    status:
+
+...
+
 # * Samsung 2D Graphics Accelerator
 #
 # Required properties:

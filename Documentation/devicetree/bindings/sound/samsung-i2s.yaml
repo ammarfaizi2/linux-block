@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-i2s
+
+title: Samsung I2S controller
+
+maintainer:
+    -   name: Padmavathi Venna <padma.v@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-i2s"
+
+    #clock-cells:
+    clock-names:
+    clock-output-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    samsung,idma-addr:
+    #sound-dai-cells:
+    status:
+
+...
+
 # * Samsung I2S controller
 #
 # Required SoC Specific Properties:

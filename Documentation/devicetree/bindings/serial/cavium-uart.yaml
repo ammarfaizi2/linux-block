@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: cavium-uart
+
+title: Universal Asynchronous Receiver/Transmitter (UART)
+
+maintainer:
+    -   name: David Daney <david.daney@cavium.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,xps-uart16550-2"."00"."b" && "ns16550"
+            "ns16550"
+
+    clock-frequency:
+    clocks:
+    current-speed:
+    device_type:
+    interrupt-parent:
+    interrupts:
+    no-loopback-test:
+    reg:
+    reg-io-width:
+    reg-shift:
+    status:
+    virtual-reg:
+
+...
+
 # * Universal Asynchronous Receiver/Transmitter (UART)
 #
 # - compatible: "cavium,octeon-3860-uart"

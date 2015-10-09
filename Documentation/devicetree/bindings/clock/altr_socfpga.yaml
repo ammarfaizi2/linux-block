@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: altr_socfpga
+
+title: Device Tree Clock bindings for Altera's SoCFPGA platform
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,socfpga-pll-clock"
+            "altr,socfpga-gate-clk"
+
+    clk-gate:
+    clk-phase:
+    #clock-cells:
+    clocks:
+    div-reg:
+    fixed-divider:
+
+...
+
 # Device Tree Clock bindings for Altera's SoCFPGA platform
 #
 # This binding uses the common clock binding[1].

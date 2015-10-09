@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: emac_rockchip
+
+title: ARC EMAC 10/100 Ethernet platform driver for Rockchip Rk3066/RK3188 SoCs
+
+maintainer:
+    -   name: Romain Perier <romain.perier@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3188-emac"
+            "rockchip,rk3066-emac"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    max-speed:
+    phy:
+    phy-mode:
+    phy-supply:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    rockchip,grf:
+    #size-cells:
+    status:
+
+...
+
 # * ARC EMAC 10/100 Ethernet platform driver for Rockchip Rk3066/RK3188 SoCs
 #
 # Required properties:

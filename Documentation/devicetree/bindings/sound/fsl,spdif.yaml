@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,spdif
+
+title: Freescale Sony/Philips Digital Interface Format (S/PDIF) Controller
+
+maintainer:
+    -   name: Nicolin Chen <b42378@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-spdif" && "fsl,imx35-spdif"
+            "fsl,imx35-spdif"
+
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # Freescale Sony/Philips Digital Interface Format (S/PDIF) Controller
 #
 # The Freescale S/PDIF audio block is a stereo transceiver that allows the

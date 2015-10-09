@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-pca953x
+
+title: NXP PCA953x I2C GPIO multiplexer
+
+maintainer:
+    -   name: Markus Pargmann <mpa@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tca6424"
+            "ti,tca6416"
+            "nxp,pca9554"
+            "nxp,pca9539"
+            "nxp,pca9536"
+            "nxp,pca9505"
+            "maxim,max7310"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # * NXP PCA953x I2C GPIO multiplexer
 #
 # Required properties:

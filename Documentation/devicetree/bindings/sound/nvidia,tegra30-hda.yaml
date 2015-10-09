@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra30-hda
+
+title: NVIDIA Tegra30 HDA controller
+
+maintainer:
+    -   name: Dylan Reid <dgreid@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-hda"
+            "nvidia,tegra124-hda" && "nvidia,tegra30-hda"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # NVIDIA Tegra30 HDA controller
 #
 # Required properties:

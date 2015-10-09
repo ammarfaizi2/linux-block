@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos_dsim
+
+title: Exynos MIPI DSI Master
+
+maintainer:
+    -   name: Hyungwon Hwang <human.hwang@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5410-mipi-dsi"
+            "samsung,exynos4415-mipi-dsi"
+            "samsung,exynos4210-mipi-dsi"
+            "samsung,exynos3250-mipi-dsi"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    power-domains:
+    reg:
+    samsung,phy-type:
+    samsung,pll-clock-frequency:
+    #size-cells:
+    status:
+    vddcore-supply:
+    vddio-supply:
+
+...
+
 # Exynos MIPI DSI Master
 #
 # Required properties:

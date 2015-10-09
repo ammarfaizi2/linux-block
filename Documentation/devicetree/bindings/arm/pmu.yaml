@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: pmu
+
+title: ARM Performance Monitor Units
+
+maintainer:
+    -   name: Will Deacon <will.deacon@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,scorpion-mp-pmu"
+            "qcom,krait-pmu"
+            "arm,cortex-a9-pmu"
+            "arm,cortex-a8-pmu"
+            "arm,cortex-a7-pmu" && "arm,cortex-a15-pmu"
+            "arm,cortex-a7-pmu"
+            "arm,cortex-a5-pmu"
+            "arm,cortex-a15-pmu" && "arm,cortex-a9-pmu"
+            "arm,cortex-a15-pmu"
+            "arm,cortex-a12-pmu"
+            "arm,arm1176-pmu"
+            "arm,arm1136-pmu"
+
+    interrupts:
+
+...
+
 # * ARM Performance Monitor Units
 #
 # ARM cores often have a PMU for counting cpu and cache events like cache misses

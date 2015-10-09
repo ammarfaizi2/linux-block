@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-arb-gpio-challenge
+
+title: GPIO-based I2C Arbitration Using a Challenge  %title% Response Mechanism
+
+maintainer:
+    -   name: Doug Anderson <dianders@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "i2c-arb-gpio-challenge"
+
+    #address-cells:
+    i2c-parent:
+    our-claim-gpio:
+    pinctrl-0:
+    pinctrl-names:
+    #size-cells:
+    slew-delay-us:
+    their-claim-gpios:
+    wait-free-us:
+    wait-retry-us:
+
+...
+
 # GPIO-based I2C Arbitration Using a Challenge & Response Mechanism
 # =================================================================
 # This uses GPIO lines and a challenge & response mechanism to arbitrate who is

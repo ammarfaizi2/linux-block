@@ -1,3 +1,52 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-dw-mshc
+
+title: Samsung Exynos specific extensions to the Synopsys Designware Mobile
+
+maintainer:
+    -   name: Abhilash Kesavan <a.kesavan@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5420-dw-mshc"
+            "samsung,exynos5250-dw-mshc"
+            "samsung,exynos4412-dw-mshc"
+
+    #address-cells:
+    broken-cd:
+    bus-width:
+    cap-mmc-highspeed:
+    card-detect-delay:
+    clock-frequency:
+    clock-names:
+    clocks:
+    fifo-depth:
+    interrupts:
+    mmc-pwrseq:
+    non-removable:
+    num-slots:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    samsung,dw-mshc-ciu-div:
+    samsung,dw-mshc-ddr-timing:
+    samsung,dw-mshc-sdr-timing:
+    #size-cells:
+    status:
+    vmmc-supply:
+
+...
+
 # * Samsung Exynos specific extensions to the Synopsys Designware Mobile
 #   Storage Host Controller
 #

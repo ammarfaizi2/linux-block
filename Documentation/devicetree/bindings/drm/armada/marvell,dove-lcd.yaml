@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,dove-lcd
+
+title: Device Tree bindings for Armada DRM CRTC driver
+
+maintainer:
+    -   name: Russell King <rmk+kernel@arm.linux.org.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,dove-lcd"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Device Tree bindings for Armada DRM CRTC driver
 #
 # Required properties:

@@ -1,3 +1,46 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpddr2-timings
+
+title: AC timing parameters of LPDDR2(JESD209-2) memories for a given speed-bin
+
+maintainer:
+    -   name: Aneesh V <aneesh@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "jedec,lpddr2-timings"
+
+    max-freq:
+    min-freq:
+    tCKESR:
+    tDQSCK-max:
+    tDQSCK-max-derated:
+    tFAW:
+    tRAS-max-ns:
+    tRAS-min:
+    tRCD:
+    tRPab:
+    tRRD:
+    tRTP:
+    tWR:
+    tWTR:
+    tXP:
+    tZQCL:
+    tZQCS:
+    tZQinit:
+
+...
+
 # * AC timing parameters of LPDDR2(JESD209-2) memories for a given speed-bin
 #
 # Required properties:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom-ipq806x-sata-phy
+
+title: Qualcomm IPQ806x SATA PHY Controller
+
+maintainer:
+    -   name: Kumar Gala <galak@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,ipq806x-sata-phy"
+
+    clock-names:
+    clocks:
+    #phy-cells:
+    reg:
+    status:
+
+...
+
 # Qualcomm IPQ806x SATA PHY Controller
 # ------------------------------------
 #

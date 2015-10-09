@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: macb
+
+title: Cadence MACB/GEM Ethernet controller
+
+maintainer:
+    -   name: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cdns,at91sam9260-macb" && "cdns,macb"
+            "atmel,sama5d4-gem"
+            "atmel,sama5d3-gem"
+            "atmel,sama5d2-gem"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    phy-mode:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Cadence MACB/GEM Ethernet controller
 #
 # Required properties:

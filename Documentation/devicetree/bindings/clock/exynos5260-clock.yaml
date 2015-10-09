@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos5260-clock
+
+title: Samsung Exynos5260 Clock Controller
+
+maintainer:
+    -   name: Rahul Sharma <rahul.sharma@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5260-clock-top"
+            "samsung,exynos5260-clock-peri"
+            "samsung,exynos5260-clock-mif"
+            "samsung,exynos5260-clock-mfc"
+            "samsung,exynos5260-clock-kfc"
+            "samsung,exynos5260-clock-isp"
+            "samsung,exynos5260-clock-gscl"
+            "samsung,exynos5260-clock-g3d"
+            "samsung,exynos5260-clock-g2d"
+            "samsung,exynos5260-clock-fsys"
+            "samsung,exynos5260-clock-egl"
+            "samsung,exynos5260-clock-disp"
+            "samsung,exynos5260-clock-aud"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Exynos5260 Clock Controller
 #
 # Exynos5260 has 13 clock controllers which are instantiated

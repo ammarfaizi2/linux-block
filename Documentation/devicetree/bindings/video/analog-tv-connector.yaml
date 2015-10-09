@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: analog-tv-connector
+
+title: Analog TV Connector
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "svideo-connector"
+            "composite-video-connector"
+
+    label:
+
+...
+
 # Analog TV Connector
 # ===================
 #

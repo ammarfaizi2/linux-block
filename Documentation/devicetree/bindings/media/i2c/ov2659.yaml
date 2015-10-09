@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: ov2659
+
+title: OV2659 1/5-Inch 2Mp SOC Camera
+
+maintainer:
+    -   name: Benoit Parrot <bparrot@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ovti,ov2659"
+
+    clock-names:
+    clocks:
+    reg:
+
+...
+
 # * OV2659 1/5-Inch 2Mp SOC Camera
 #
 # The Omnivision OV2659 is a 1/5-inch SOC camera, with an active array size of

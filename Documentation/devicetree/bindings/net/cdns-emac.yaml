@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: cdns-emac
+
+title: Cadence EMAC Ethernet controller
+
+maintainer:
+    -   name: Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cdns,zynq-gem" && "cdns,gem"
+            "cdns,at91rm9200-emac" && "cdns,emac"
+
+    clock-names:
+    clocks:
+    interrupts:
+    phy-mode:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Cadence EMAC Ethernet controller
 #
 # Required properties:

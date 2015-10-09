@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: pinctrl-st
+
+title: *ST pin controller.
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih415-sbc-pinctrl"
+            "st,stih415-front-pinctrl"
+
+    #address-cells:
+    interrupt-names:
+    interrupts:
+    ranges:
+    reg:
+    reg-names:
+    #size-cells:
+    st,syscfg:
+
+...
+
 # *ST pin controller.
 #
 # Each multi-function pin is controlled, driven and routed through the

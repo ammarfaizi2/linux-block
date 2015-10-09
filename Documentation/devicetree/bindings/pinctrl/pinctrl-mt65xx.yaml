@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: pinctrl-mt65xx
+
+title: Mediatek MT65XX Pin Controller
+
+maintainer:
+    -   name: Hongzhou Yang <hongzhou.yang@mediatek.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt8135-pinctrl"
+            "mediatek,mt8135-pctl-b-syscfg" && "syscon"
+            "mediatek,mt8135-pctl-a-syscfg" && "syscon"
+
+    reg:
+
+...
+
 # * Mediatek MT65XX Pin Controller
 #
 # The Mediatek's Pin controller is used to control SoC pins.

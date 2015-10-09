@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-dma
+
+title: BCM2835 DMA controller
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-dma"
+
+    brcm,dma-channel-mask:
+    #dma-cells:
+    interrupts:
+    reg:
+
+...
+
 # * BCM2835 DMA controller
 #
 # The BCM2835 DMA controller has 16 channels in total.

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx7d-clock
+
+title: Clock bindings for Freescale i.MX7 Dual
+
+maintainer:
+    -   name: Frank Li <Frank.Li@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx7d-ccm"
+
+    #clock-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * Clock bindings for Freescale i.MX7 Dual
 #
 # Required properties:

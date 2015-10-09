@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: tlv320aic3x
+
+title: Texas Instruments - tlv320aic3x Codec module
+
+maintainer:
+    -   name: Jyri Sarha <jsarha@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "tlv320aic3x"
+            "ti,tlv320aic3x"
+            "ti,tlv320aic3106"
+            "ti,tlv320aic3007"
+
+    ai3x-micbias-vg:
+    AVDD-supply:
+    DRVDD-supply:
+    DVDD-supply:
+    IOVDD-supply:
+    reg:
+    #sound-dai-cells:
+
+...
+
 # Texas Instruments - tlv320aic3x Codec module
 #
 # The tlv320aic3x serial control bus communicates through I2C protocols

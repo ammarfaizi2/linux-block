@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-hsmci
+
+title: Atmel High Speed MultiMedia Card Interface
+
+maintainer:
+    -   name: Boris BREZILLON <b.brezillon@overkiz.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,hsmci"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+    vmmc-supply:
+    vqmmc-supply:
+
+...
+
 # * Atmel High Speed MultiMedia Card Interface
 #
 # This controller on atmel products provides an interface for MMC, SD and SDIO

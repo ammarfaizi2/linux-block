@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: cpm
+
+title: PPC4xx Clock Power Management (CPM) node
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ibm,cpm"
+
+    dcr-access-method:
+    dcr-reg:
+    idle-doze:
+    standby:
+    unused-units:
+
+...
+
 # PPC4xx Clock Power Management (CPM) node
 #
 # Required properties:

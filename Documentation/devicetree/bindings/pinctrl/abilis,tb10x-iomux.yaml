@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: abilis,tb10x-iomux
+
+title: Abilis Systems TB10x pin controller
+
+maintainer:
+    -   name: Christian Ruppert <christian.ruppert@abilis.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "abilis,tb10x-iomux"
+
+    #gpio-range-cells:
+    reg:
+
+...
+
 # Abilis Systems TB10x pin controller
 # ===================================
 #

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-pwm
+
+title: Broadcom Kona PWM controller device tree bindings
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm11351-pwm" && "brcm,kona-pwm"
+
+    clocks:
+    #pwm-cells:
+    reg:
+    status:
+
+...
+
 # Broadcom Kona PWM controller device tree bindings
 #
 # This controller has 6 channels.

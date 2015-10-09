@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: berlin2_adc
+
+title: Berlin Analog to Digital Converter (ADC)
+
+maintainer:
+    -   name: Antoine Tenart <antoine.tenart@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,berlin2-adc"
+
+    interrupt-names:
+    interrupts:
+
+...
+
 # * Berlin Analog to Digital Converter (ADC)
 #
 # The Berlin ADC has 8 channels, with one connected to a temperature sensor.

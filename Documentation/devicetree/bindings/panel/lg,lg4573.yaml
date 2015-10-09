@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: lg,lg4573
+
+title: LG LG4573 TFT Liquid Crystal Display with SPI control bus
+
+maintainer:
+    -   name: Heiko Schocher <hs@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lg,lg4573"
+
+    #address-cells:
+    power-on-delay:
+    reg:
+    #size-cells:
+    spi-max-frequency:
+
+...
+
 # LG LG4573 TFT Liquid Crystal Display with SPI control bus
 #
 # Required properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: st-reset
+
+title: *Device-Tree bindings for ST SW reset functionality
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-restart"
+            "st,stih407-restart"
+
+    status:
+    st,syscfg:
+
+...
+
 # *Device-Tree bindings for ST SW reset functionality
 #
 # Required properties:

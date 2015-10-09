@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: insignal-boards
+
+title: Insignal's Exynos4210 based Origen evaluation board
+
+maintainer:
+    -   name: Thomas Abraham <thomas.abraham@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4210" && "samsung,exynos4"
+            "insignal,origen" && "samsung,exynos4210" && "samsung,exynos4"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # * Insignal's Exynos4210 based Origen evaluation board
 #
 # Origen low-cost evaluation board is based on Samsung's Exynos4210 SoC.

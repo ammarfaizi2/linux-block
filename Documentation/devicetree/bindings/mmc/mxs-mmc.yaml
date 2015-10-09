@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxs-mmc
+
+title: Freescale MXS MMC controller
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-mmc"
+            "fsl,imx27-mmc" && "fsl,imx21-mmc"
+            "fsl,imx23-mmc"
+
+    broken-cd:
+    bus-width:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+    vmmc-supply:
+    wp-gpios:
+
+...
+
 # * Freescale MXS MMC controller
 #
 # The Freescale MXS Synchronous Serial Ports (SSP) can act as a MMC controller

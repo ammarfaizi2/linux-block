@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear
+
+title: ST SPEAr Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Viresh Kumar <vireshk@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear600-evb" && "st,spear600"
+            "st,spear600"
+            "st,spear320-hmi" && "st,spear320"
+            "st,spear320-evb" && "st,spear320"
+            "st,spear310-evb" && "st,spear310"
+            "st,spear300-evb" && "st,spear300"
+            "st,spear1340-evb" && "st,spear1340"
+            "st,spear1340"
+            "st,spear1310-evb" && "st,spear1310"
+            "st,spear1310"
+
+
+...
+
 # ST SPEAr Platforms Device Tree Bindings
 # ---------------------------------------
 #

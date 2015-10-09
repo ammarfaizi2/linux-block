@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,exynos4210-mct
+
+title: Samsung's Multi Core Timer (MCT)
+
+maintainer:
+    -   name: Anatol Pomozov <anatol.pomozov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4412-mct"
+            "samsung,exynos4210-mct"
+
+    clock-names:
+    clocks:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Samsung's Multi Core Timer (MCT)
 #
 # The Samsung's Multi Core Timer (MCT) module includes two main blocks, the

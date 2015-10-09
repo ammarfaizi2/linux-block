@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-fimc
+
+title: Samsung S5P/EXYNOS SoC Camera Subsystem (FIMC)
+
+maintainer:
+    -   name: Sylwester Nawrocki <s.nawrocki@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-fimc"
+            "samsung,fimc" && "simple-bus"
+            "samsung,exynos4212-fimc"
+            "samsung,exynos4210-fimc"
+
+    assigned-clock-parents:
+    assigned-clock-rates:
+    assigned-clocks:
+    clock-names:
+    clocks:
+    interrupts:
+    iommus:
+    power-domains:
+    reg:
+    samsung,cam-if:
+    samsung,lcd-wb:
+    samsung,mainscaler-ext:
+    samsung,pix-limits:
+    samsung,rotators:
+    samsung,sysreg:
+    status:
+
+...
+
 # Samsung S5P/EXYNOS SoC Camera Subsystem (FIMC)
 # ----------------------------------------------
 #

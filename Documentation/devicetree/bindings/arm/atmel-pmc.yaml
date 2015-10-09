@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-pmc
+
+title: Power Management Controller (PMC)
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d2-pmc"
+            "atmel,at91sam9260-pmc"
+
+    #address-cells:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+    #size-cells:
+
+...
+
 # * Power Management Controller (PMC)
 #
 # Required properties:

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: bu21013
+
+title: Rohm BU21013 Touch Screen
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rohm,bu21013"_"tp"
+
+    avdd-supply:
+    reg:
+    reset-gpio:
+    rohm,flip-y:
+    rohm,touch-max-x:
+    rohm,touch-max-y:
+    touch-gpio:
+
+...
+
 # * Rohm BU21013 Touch Screen
 #
 # Required properties:

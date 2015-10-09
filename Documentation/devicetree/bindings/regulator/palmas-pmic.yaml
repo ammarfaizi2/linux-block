@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: palmas-pmic
+
+title: palmas regulator IP block devicetree bindings
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tps65917-pmic"
+            "ti,tps65913-pmic" && "ti,palmas-pmic"
+            "ti,palmas-pmic"
+
+    interrupt-name:
+    interrupt-parent:
+    interrupts:
+    ti,ldo6-vibrator:
+
+...
+
 # * palmas regulator IP block devicetree bindings
 #
 # Required properties:
@@ -21,6 +52,8 @@
 # Optional nodes:
 # - regulators : Must contain a sub-node per regulator from the list below.
 # 	       Each sub-node should contain the constraints and initialization
+            "ti,tps65917-pmic"
+            "ti,tps65913-pmic" && "ti,palmas-pmic"
 # 	       information for that regulator. See regulator.txt for a
 # 	       description of standard properties for these sub-nodes.
 # 	       Additional custom properties  are listed below.

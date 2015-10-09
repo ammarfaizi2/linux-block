@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: s5p-mfc
+
+title: Samsung Multi Format Codec (MFC)
+
+maintainer:
+    -   name: Arun Kumar K <arun.kk@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,mfc-v8"
+            "samsung,mfc-v7"
+            "samsung,mfc-v6"
+            "samsung,mfc-v5"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    iommu-names:
+    iommus:
+    power-domains:
+    reg:
+    samsung,mfc-l:
+    samsung,mfc-r:
+    status:
+
+...
+
 # * Samsung Multi Format Codec (MFC)
 #
 # Multi Format Codec (MFC) is the IP present in Samsung SoCs which

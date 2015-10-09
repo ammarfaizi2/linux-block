@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,tmu
+
+title: Renesas R-Mobile/R-Car Timer Unit (TMU)
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,tmu-r8a7779" && "renesas,tmu"
+            "renesas,tmu-r8a7778" && "renesas,tmu"
+            "renesas,tmu-r8a7740" && "renesas,tmu"
+
+    clock-names:
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+    #renesas,channels:
+    status:
+
+...
+
 # * Renesas R-Mobile/R-Car Timer Unit (TMU)
 #
 # The TMU is a 32-bit timer/counter with configurable clock inputs and

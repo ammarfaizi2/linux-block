@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: 88pm860x
+
+title: Marvell 88PM860x regulator
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,88pm860x"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    marvell,88pm860x-irq-read-clr:
+    marvell,88pm860x-slave-addr:
+    reg:
+
+...
+
 # Marvell 88PM860x regulator
 #
 # Required properties:

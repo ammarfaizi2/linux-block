@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: archs-intc
+
+title: ARC-HS incore Interrupt Controller (Provided by cores implementing ARCv2 ISA)
+
+maintainer:
+    -   name: Vineet Gupta <vgupta@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,archs-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+
+...
+
 # * ARC-HS incore Interrupt Controller (Provided by cores implementing ARCv2 ISA)
 #
 # Properties:

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: xilinx
+
+title: Xilinx Zynq Platforms Device Tree Bindings
+
+maintainer:
+    -   name: John Linn <john.linn@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-zed" && "xlnx,zynq-7000"
+            "xlnx,zynq-zc706" && "xlnx,zynq-7000"
+            "xlnx,zynq-zc702" && "xlnx,zynq-7000"
+            "xlnx,zynq-7000"
+            "digilent,zynq-zybo" && "xlnx,zynq-7000"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Xilinx Zynq Platforms Device Tree Bindings
 #
 # Boards with Zynq-7000 SOC based on an ARM Cortex A9 processor

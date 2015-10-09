@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: snps,dw-apb-ictl
+
+title: Synopsys DesignWare APB interrupt controller (dw_apb_ictl)
+
+maintainer:
+    -   name: Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dw-apb-ictl"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Synopsys DesignWare APB interrupt controller (dw_apb_ictl)
 #
 # Synopsys DesignWare provides interrupt controller IP for APB known as

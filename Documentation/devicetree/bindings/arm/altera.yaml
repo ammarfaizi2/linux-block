@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: altera
+
+title: Altera's SoCFPGA platform device tree bindings
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@opensource.altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ebv,socrates" && "altr,socfpga-cyclone5" && "altr,socfpga"
+            "altr,socfpga-vt" && "altr,socfpga"
+            "altr,socfpga-cyclone5" && "altr,socfpga"
+            "altr,socfpga-arria5" && "altr,socfpga"
+            "altr,socfpga-arria10" && "altr,socfpga"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Altera's SoCFPGA platform device tree bindings
 # ---------------------------------------------
 #

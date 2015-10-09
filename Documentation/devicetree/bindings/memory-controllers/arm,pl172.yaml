@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm,pl172
+
+title: Device tree bindings for ARM PL172 MultiPort Memory Controller
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sst,sst39vf320" && "cfi-flash"
+            "arm,pl172" && "arm,primecell"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Device tree bindings for ARM PL172 MultiPort Memory Controller
 #
 # Required properties:

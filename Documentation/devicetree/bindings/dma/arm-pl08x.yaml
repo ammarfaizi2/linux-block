@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm-pl08x
+
+title: ARM PrimeCells PL080 and PL081 and derivatives DMA controller
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,pl081" && "arm,primecell"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * ARM PrimeCells PL080 and PL081 and derivatives DMA controller
 #
 # Required properties:

@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-xiic
+
+title: Xilinx IIC controller:
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,xps-iic-2"."00"."a"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    xlnx,clk-freq:
+    xlnx,family:
+    xlnx,gpo-width:
+    xlnx,iic-freq:
+    xlnx,scl-inertial-delay:
+    xlnx,sda-inertial-delay:
+    xlnx,ten-bit-adr:
+
+...
+
 # Xilinx IIC controller:
 #
 # Required properties:

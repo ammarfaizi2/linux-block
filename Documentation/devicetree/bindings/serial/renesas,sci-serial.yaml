@@ -1,3 +1,58 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,sci-serial
+
+title: Renesas SH-Mobile Serial Communication Interface
+
+maintainer:
+    -   name: Simon Horman <horms+renesas@verge.net.au>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,scif-r8a7794" && "renesas,scif"
+            "renesas,scif-r8a7793" && "renesas,scif"
+            "renesas,scif-r8a7791" && "renesas,scif"
+            "renesas,scif-r8a7790" && "renesas,scif"
+            "renesas,scif-r8a7779" && "renesas,scif"
+            "renesas,scif-r8a7778" && "renesas,scif"
+            "renesas,scif-r7s72100" && "renesas,scif"
+            "renesas,scifb-sh73a0" && "renesas,scifb"
+            "renesas,scifb-r8a7794" && "renesas,scifb"
+            "renesas,scifb-r8a7791" && "renesas,scifb"
+            "renesas,scifb-r8a7790" && "renesas,scifb"
+            "renesas,scifb-r8a7740" && "renesas,scifb"
+            "renesas,scifb-r8a73a4" && "renesas,scifb"
+            "renesas,scifa-sh73a0" && "renesas,scifa"
+            "renesas,scifa-r8a7794" && "renesas,scifa"
+            "renesas,scifa-r8a7791" && "renesas,scifa"
+            "renesas,scifa-r8a7790" && "renesas,scifa"
+            "renesas,scifa-r8a7740" && "renesas,scifa"
+            "renesas,scifa-r8a73a4" && "renesas,scifa"
+            "renesas,sci"
+            "renesas,hscif-r8a7794" && "renesas,hscif"
+            "renesas,hscif-r8a7791" && "renesas,hscif"
+            "renesas,hscif-r8a7790" && "renesas,hscif"
+
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    power-domains:
+    reg:
+    status:
+
+...
+
 # * Renesas SH-Mobile Serial Communication Interface
 #
 # Required properties:

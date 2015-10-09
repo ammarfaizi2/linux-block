@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: archs-idu-intc
+
+title: ARC-HS Interrupt Distribution Unit
+
+maintainer:
+    -   name: Vineet Gupta <vgupta@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,archs-idu-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+
+...
+
 # * ARC-HS Interrupt Distribution Unit
 #
 #   This optional 2nd level interrupt controller can be used in SMP configurations for

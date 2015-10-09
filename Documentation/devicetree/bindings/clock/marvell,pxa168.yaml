@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,pxa168
+
+title: Marvell PXA168 Clock Controller
+
+maintainer:
+    -   name: Chao Xie <chao.xie@marvell.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa168-clock"
+
+    #clock-cells:
+    reg:
+    reg-names:
+    #reset-cells:
+
+...
+
 # * Marvell PXA168 Clock Controller
 #
 # The PXA168 clock subsystem generates and supplies clock to various

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,ipmmu-vmsa
+
+title: Renesas VMSA-Compatible IOMMU
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,ipmmu-vmsa"
+
+    interrupts:
+    #iommu-cells:
+    reg:
+    status:
+
+...
+
 # * Renesas VMSA-Compatible IOMMU
 #
 # The IPMMU is an IOMMU implementation compatible with the ARM VMSA page tables.

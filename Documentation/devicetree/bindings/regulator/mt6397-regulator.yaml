@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: mt6397-regulator
+
+title: Mediatek MT6397 Regulator Driver
+
+maintainer:
+    -   name: Flora Fu <flora.fu@mediatek.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt6397-regulator"
+
+    "mediatek,mt6397-regulator"::
+
+...
+
 # Mediatek MT6397 Regulator Driver
 #
 # Required properties:

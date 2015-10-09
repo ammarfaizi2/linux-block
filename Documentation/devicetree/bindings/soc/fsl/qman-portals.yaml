@@ -1,3 +1,100 @@
+%YAML 1.2
+---
+version: 1
+
+id: qman-portals
+
+title: QorIQ DPAA Queue Manager Portals Device Tree Binding
+
+maintainer:
+    -   name: Emil Medve <Emilian.Medve@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,plb-v46-1"."03"."a" && "xlnx,plb-v46-1"."00"."a" && "simple-bus"
+            "xlnx,plb-v46-1"."03"."a" && "simple-bus"
+            "ti,dm814-scm" && "simple-bus"
+            "ti,dm814-pllss" && "simple-bus"
+            "ti,dm814-l4ls" && "simple-bus"
+            "ti,dm814-l4hs" && "simple-bus"
+            "ti,c64x"+"emifa" && "simple-bus"
+            "st,stih418-clk" && "simple-bus"
+            "st,stih410-clk" && "simple-bus"
+            "sirf,prima2-rtciobg" && "sirf-prima2-rtciobg-bus" && "simple-bus"
+            "sirf,prima2-pciiobg" && "simple-bus"
+            "simple-bus"
+            "samsung,s5pv210-audss" && "simple-bus"
+            "mrvl,axi-bus" && "simple-bus"
+            "mrvl,apb-bus" && "simple-bus"
+            "marvell,dove-pmu" && "simple-bus"
+            "hawk-bridge" && "simple-bus"
+            "fsl,spba-bus" && "simple-bus"
+            "fsl,p1021-immr" && "simple-bus"
+            "fsl,mpc885-localbus" && "fsl,pq1-localbus" && "simple-bus"
+            "fsl,mpc875-immr" && "fsl,pq1-soc" && "simple-bus"
+            "fsl,mpc8641-soc" && "simple-bus"
+            "fsl,mpc8641-localbus" && "simple-bus"
+            "fsl,mpc8610-immr" && "simple-bus"
+            "fsl,mpc8610-elbc" && "fsl,elbc" && "simple-bus"
+            "fsl,mpc8572-immr" && "simple-bus"
+            "fsl,mpc8572-elbc" && "fsl,elbc" && "simple-bus"
+            "fsl,mpc8560-localbus" && "simple-bus"
+            "fsl,mpc8560-localbus" && "fsl,pq3-localbus" && "simple-bus"
+            "fsl,mpc8560-immr" && "simple-bus"
+            "fsl,mpc8555-immr" && "simple-bus"
+            "fsl,mpc8548-localbus" && "fsl,pq3-localbus" && "simple-bus"
+            "fsl,mpc8548-immr" && "simple-bus"
+            "fsl,mpc8544-localbus" && "fsl,pq3-localbus" && "simple-bus"
+            "fsl,mpc8544-immr" && "simple-bus"
+            "fsl,mpc8541-immr" && "simple-bus"
+            "fsl,mpc8540-localbus" && "fsl,pq3-localbus" && "simple-bus"
+            "fsl,mpc8540-immr" && "simple-bus"
+            "fsl,mpc8379-elbc" && "fsl,elbc" && "simple-bus"
+            "fsl,mpc8378-elbc" && "fsl,elbc" && "simple-bus"
+            "fsl,mpc8377-elbc" && "fsl,elbc" && "simple-bus"
+            "fsl,mpc8360-localbus" && "fsl,pq2pro-localbus" && "simple-bus"
+            "fsl,mpc8360-immr" && "simple-bus"
+            "fsl,mpc8360-immr" && "fsl,immr" && "fsl,soc" && "simple-bus"
+            "fsl,mpc8349-localbus" && "simple-bus"
+            "fsl,mpc8349e-localbus" && "fsl,pq2pro-localbus" && "simple-bus"
+            "fsl,mpc8347e-localbus" && "fsl,pq2pro-localbus" && "simple-bus"
+            "fsl,mpc8315-immr" && "simple-bus"
+            "fsl,mpc8315-elbc" && "fsl,elbc" && "simple-bus"
+            "fsl,mpc8313-elbc" && "fsl,elbc" && "simple-bus"
+            "fsl,mpc8308-immr" && "simple-bus"
+            "fsl,mpc8248-immr" && "fsl,pq2-soc" && "simple-bus"
+            "fsl,mpc8247-immr" && "fsl,pq2-soc" && "simple-bus"
+            "fsl,mpc5200-lpb" && "simple-bus"
+            "fsl,mpc5200b-lpb" && "simple-bus"
+            "fsl,mpc5200b-lpb" && "fsl,mpc5200-lpb" && "simple-bus"
+            "fsl,emi" && "simple-bus"
+            "fsl,emi-bus" && "simple-bus"
+            "fsl,eim-bus" && "simple-bus"
+            "fsl,aips" && "simple-bus"
+            "fsl,aips-bus" && "simple-bus"
+            "fsl,aipi-bus" && "simple-bus"
+            "arteris," && "flexnoc" && "simple-bus"
+            "arm,vexpress,v2m-p1" && "simple-bus"
+            "arm,versatile-fpga" && "simple-bus"
+            "arm,amba-bus" && "simple-bus"
+            "altr,avalon" && "simple-bus"
+            "abilis,tb10x" && "simple-bus"
+
+    #address-cells:
+    bus-frequency:
+    device_type:
+    ranges:
+    #size-cells:
+
+...
+
 # QorIQ DPAA Queue Manager Portals Device Tree Binding
 #
 # Copyright (C) 2008 - 2014 Freescale Semiconductor Inc.

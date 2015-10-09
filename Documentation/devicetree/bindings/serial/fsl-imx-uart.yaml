@@ -1,3 +1,48 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-uart
+
+title: Freescale i.MX Universal Asynchronous Receiver/Transmitter (UART)
+
+maintainer:
+    -   name: Kumar Gala <galak@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx7d-uart" && "fsl,imx6q-uart"
+            "fsl,imx6ul-uart" && "fsl,imx6q-uart"
+            "fsl,imx6sx-uart" && "fsl,imx21-uart"
+            "fsl,imx6sl-uart" && "fsl,imx6q-uart" && "fsl,imx21-uart"
+            "fsl,imx6q-uart" && "fsl,imx21-uart"
+            "fsl,imx53-uart" && "fsl,imx21-uart"
+            "fsl,imx51-uart" && "fsl,imx21-uart"
+            "fsl,imx50-uart" && "fsl,imx21-uart"
+            "fsl,imx35-uart" && "fsl,imx21-uart"
+            "fsl,imx31-uart" && "fsl,imx21-uart"
+            "fsl,imx27-uart" && "fsl,imx21-uart"
+            "fsl,imx25-uart" && "fsl,imx21-uart"
+            "fsl,imx1-uart"
+
+    clock-names:
+    clocks:
+    fsl,uart-has-rtscts:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Freescale i.MX Universal Asynchronous Receiver/Transmitter (UART)
 #
 # Required properties:

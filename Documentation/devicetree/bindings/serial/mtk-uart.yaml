@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: mtk-uart
+
+title: Mediatek Universal Asynchronous Receiver/Transmitter (UART)
+
+maintainer:
+    -   name: Eddie Huang <eddie.huang@mediatek.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt8135-uart" && "mediatek,mt6577-uart"
+            "mediatek,mt8127-uart" && "mediatek,mt6577-uart"
+            "mediatek,mt6580-uart" && "mediatek,mt6577-uart"
+            "mediatek,mt6577-uart"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Mediatek Universal Asynchronous Receiver/Transmitter (UART)
 #
 # Required properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio_lpc32xx
+
+title: NXP LPC32xx SoC GPIO controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # NXP LPC32xx SoC GPIO controller
 #
 # Required properties:

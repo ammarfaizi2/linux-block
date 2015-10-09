@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: meson-dwmac
+
+title: Amlogic Meson DWMAC Ethernet controller
+
+maintainer:
+    -   name: Beniamino Galvani <b.galvani@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "amlogic,meson6-dwmac" && "snps,dwmac"
+
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    pinctrl-0:
+    pnictrl-names:
+    reg:
+    status:
+
+...
+
 # * Amlogic Meson DWMAC Ethernet controller
 #
 # The device inherits all the properties of the dwmac/stmmac devices

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx-rtc
+
+title: NXP LPC32xx SoC Real Time Clock controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-rtc"
+
+    interrupts:
+    reg:
+
+...
+
 # * NXP LPC32xx SoC Real Time Clock controller
 #
 # Required properties:

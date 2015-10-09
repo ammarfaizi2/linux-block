@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: lsi,axm5516-clks
+
+title: AXM5516 clock driver bindings
+
+maintainer:
+    -   name: Anders Berg <anders.berg@lsi.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lsi,axm5516-clks"
+
+    #clock-cells:
+    reg:
+
+...
+
 # AXM5516 clock driver bindings
 # -----------------------------
 #

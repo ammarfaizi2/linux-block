@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear13xx-pcie
+
+title: SPEAr13XX PCIe DT detail:
+
+maintainer:
+    -   name: Pratyush Anand <pratyush.anand@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear1340-pcie" && "snps,dw-pcie"
+            "fsl,imx6sx-pcie" && "snps,dw-pcie"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    device_type:
+    interrupts:
+    num-lanes:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # SPEAr13XX PCIe DT detail:
 # ================================
 #

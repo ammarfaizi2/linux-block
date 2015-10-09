@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c
+
+title: I2C
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "dallas,ds1307"
+
+    interrupts:
+    reg:
+
+...
+
 # * I2C
 #
 # The I2C controller is expressed as a bus under the CPM node.

@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-designware
+
+title: Synopsys DesignWare I2C
+
+maintainer:
+    -   name: Christian Ruppert <christian.ruppert@abilis.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,designware-i2c"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    i2c-sda-hold-time-ns:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    speed-mode:
+    status:
+    write-16bit:
+
+...
+
 # * Synopsys DesignWare I2C
 #
 # Required properties :

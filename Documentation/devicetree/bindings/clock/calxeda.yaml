@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: calxeda
+
+title: Device Tree Clock bindings for Calxeda highbank platform
+
+maintainer:
+    -   name: Rob Herring <rob.herring@calxeda.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "calxeda,hb-pll-clock"
+            "calxeda,hb-emmc-clock"
+            "calxeda,hb-a9periph-clock"
+            "calxeda,hb-a9bus-clock"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # Device Tree Clock bindings for Calxeda highbank platform
 #
 # This binding uses the common clock binding[1].

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: armadeus
+
+title: Armadeus i.MX Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Laurent Cans <laurent.cans@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "armadeus,imx51-apf51" && "fsl,imx51"
+            "armadeus,imx51-apf51dev" && "armadeus,imx51-apf51" && "fsl,imx51"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Armadeus i.MX Platforms Device Tree Bindings
 # -----------------------------------------------
 #

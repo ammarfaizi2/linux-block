@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: dm816x-phy
+
+title: Device tree binding documentation for am816x USB PHY
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,dm8168-usb-phy"
+
+    clock-names:
+    clocks:
+    #phy-cells:
+    reg:
+    reg-names:
+    syscon:
+
+...
+
 # Device tree binding documentation for am816x USB PHY
 # =========================
 #

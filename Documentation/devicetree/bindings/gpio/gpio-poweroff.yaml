@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-poweroff
+
+title: Driver a GPIO line that can be used to turn the power off.
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-poweroff"
+
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # Driver a GPIO line that can be used to turn the power off.
 #
 # The driver supports both level triggered and edge triggered power off.

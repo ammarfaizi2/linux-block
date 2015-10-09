@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear-usb
+
+title: ST SPEAr SoC USB controllers:
+
+maintainer:
+    -   name: Stefan Roese <sr@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear600-ohci" && "usb-ohci"
+            "st,spear600-ehci" && "usb-ehci"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+    usbh0_id:
+    usbh1_id:
+
+...
+
 # ST SPEAr SoC USB controllers:
 # -----------------------------
 #

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos5420-clock
+
+title: Samsung Exynos5420 Clock Controller
+
+maintainer:
+    -   name: Rahul Sharma <rahul.sharma@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5800-clock"
+            "samsung,exynos5420-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Exynos5420 Clock Controller
 #
 # The Exynos5420 clock controller generates and supplies clock to various

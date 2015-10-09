@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: nokia-modem
+
+title: Nokia modem client bindings
+
+maintainer:
+    -   name: Sebastian Reichel <sre@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nokia,n900-modem"
+
+    gpio-names:
+    gpios:
+    hsi-arb-mode:
+    hsi-channel-ids:
+    hsi-channel-names:
+    hsi-flow:
+    hsi-mode:
+    hsi-speed-kbps:
+    interrupts-extended:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # Nokia modem client bindings
 #
 # The Nokia modem HSI client follows the common HSI client binding

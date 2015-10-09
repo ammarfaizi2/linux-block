@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: nxp,lpc1850-rgu
+
+title: NXP LPC1850  Reset Generation Unit (RGU)
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dwmac"
+
+    clock-names:
+    clocks:
+    #interrupt-cells:
+    interrupt-names:
+    interrupts:
+    phy-mode:
+    reg:
+    snps,pbl:
+    snps,phy-addr:
+
+...
+
 # NXP LPC1850  Reset Generation Unit (RGU)
 # ========================================
 #

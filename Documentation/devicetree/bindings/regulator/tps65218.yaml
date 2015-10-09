@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: tps65218
+
+title: TPS65218 family of regulators
+
+maintainer:
+    -   name: Keerthy <j-keerthy@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tps65218-ldo1"
+            "ti,tps65218-dcdc6"
+            "ti,tps65218-dcdc5"
+            "ti,tps65218-dcdc4"
+            "ti,tps65218-dcdc3"
+            "ti,tps65218-dcdc2"
+            "ti,tps65218-dcdc1"
+            "ti,tps65218"
+
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # TPS65218 family of regulators
 #
 # Required properties:

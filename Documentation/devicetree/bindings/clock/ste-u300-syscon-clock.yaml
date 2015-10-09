@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: ste-u300-syscon-clock
+
+title: Clock bindings for ST-Ericsson U300 System Controller Clocks
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,u300-syscon-mclk"
+            "stericsson,u300-syscon-clk"
+
+    #clock-cells:
+    clock-id:
+    clocks:
+    clock-type:
+
+...
+
 # Clock bindings for ST-Ericsson U300 System Controller Clocks
 #
 # Bindings for the gated system controller clocks:

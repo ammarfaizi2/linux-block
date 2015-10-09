@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: calxeda-xgmac
+
+title: Calxeda Highbank 10Gb XGMAC Ethernet
+
+maintainer:
+    -   name: Rob Herring <rob.herring@calxeda.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "calxeda,hb-xgmac"
+
+    dma-coherent:
+    interrupts:
+    reg:
+
+...
+
 # * Calxeda Highbank 10Gb XGMAC Ethernet
 #
 # Required properties:

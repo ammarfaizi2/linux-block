@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,msm8660-pinctrl
+
+title: Qualcomm MSM8660 TLMM block
+
+maintainer:
+    -   name: Bjorn Andersson <bjorn.andersson@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,msm8660-pinctrl"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # Qualcomm MSM8660 TLMM block
 #
 # Required properties:

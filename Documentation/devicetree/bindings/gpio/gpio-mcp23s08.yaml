@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-mcp23s08
+
+title: Microchip MCP2308/MCP23S08/MCP23017/MCP23S17 driver for
+
+maintainer:
+    -   name: Lars Poeschel <poeschel@lemonage.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "microchip,mcp23017"
+            "mcp,mcp23017"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # Microchip MCP2308/MCP23S08/MCP23017/MCP23S17 driver for
 # 8-/16-bit I/O expander with serial interface (I2C/SPI)
 #

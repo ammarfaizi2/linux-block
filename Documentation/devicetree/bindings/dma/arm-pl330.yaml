@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm-pl330
+
+title: ARM PrimeCell PL330 DMA Controller
+
+maintainer:
+    -   name: Padmavathi Venna <padma.v@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,pl330" && "arm,primecell"
+
+    clock-names:
+    clocks:
+    #dma-cells:
+    #dma-channels:
+    #dma-requests:
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * ARM PrimeCell PL330 DMA Controller
 #
 # The ARM PrimeCell PL330 DMA controller can move blocks of memory contents

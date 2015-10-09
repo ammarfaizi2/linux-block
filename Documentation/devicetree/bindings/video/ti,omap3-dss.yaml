@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,omap3-dss
+
+title: Texas Instruments OMAP3 Display Subsystem
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap3-venc"
+            "ti,omap3-rfbi"
+            "ti,omap3-dss"
+            "ti,omap3-dsi"
+            "ti,omap3-dispc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    ti,hwmods:
+
+...
+
 # Texas Instruments OMAP3 Display Subsystem
 # =========================================
 #

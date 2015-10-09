@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: rtc-palmas
+
+title: Palmas RTC controller bindings
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,palmas-rtc"
+
+    interrupt-parent:
+    interrupts:
+    wakeup-source:
+
+...
+
 # Palmas RTC controller bindings
 #
 # Required properties:

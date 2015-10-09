@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: tps6586x
+
+title: TPS6586x family of regulators
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tps6586x"
+
+    #gpio-cells:
+    gpio-controller:
+    interrupts:
+    reg:
+    sys-supply:
+    ti,system-power-controller:
+    vinldo01-supply:
+    vinldo23-supply:
+    vinldo4-supply:
+    vinldo678-supply:
+    vinldo9-supply:
+    vin-sm0-supply:
+    vin-sm1-supply:
+    vin-sm2-supply:
+
+...
+
 # TPS6586x family of regulators
 #
 # Required properties:

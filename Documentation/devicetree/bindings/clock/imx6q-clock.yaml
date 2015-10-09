@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx6q-clock
+
+title: Clock bindings for Freescale i.MX6 Quad
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6q-ccm"
+
+    assigned-clock-parents:
+    assigned-clock-rates:
+    assigned-clocks:
+    #clock-cells:
+    interrupts:
+    reg:
+
+...
+
 # * Clock bindings for Freescale i.MX6 Quad
 #
 # Required properties:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,nomadik
+
+title: ST Microelectronics Nomadik SRC System Reset and Control
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,nomadik-pll-clock"
+            "st,nomadik-hclk-clock"
+            "stericsson,nomadik-src"
+
+    disable-mxtalo:
+    disable-sxtalo:
+    reg:
+
+...
+
 # ST Microelectronics Nomadik SRC System Reset and Control
 #
 # This binding uses the common clock binding:

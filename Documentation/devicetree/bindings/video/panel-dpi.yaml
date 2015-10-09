@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: panel-dpi
+
+title: Generic MIPI DPI Panel
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "startek,startek-kd050c" && "panel-dpi"
+            "samsung,lte430wq-f0c" && "panel-dpi"
+            "panel-dpi"
+            "osddisplays,osd057T0559-34ts" && "panel-dpi"
+            "newhaven,nhd-4"."3-480272ef-atxl" && "panel-dpi"
+            "mitsubishi,aa104xd12" && "panel-dpi"
+            "innolux,at070tn83" && "panel-dpi"
+
+    label:
+
+...
+
 # Generic MIPI DPI Panel
 # ======================
 #

@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: isl9305
+
+title: Intersil ISL9305/ISL9305H voltage regulator
+
+maintainer:
+    -   name: Arnaud Ebalard <arno@natisbad.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "isil,isl9305"
+
+    reg:
+
+...
+
 # Intersil ISL9305/ISL9305H voltage regulator
 #
 # Required properties:

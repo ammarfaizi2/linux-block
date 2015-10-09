@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-sec2
+
+title: Freescale SoC SEC Security Engines versions 1.x-2.x-3.x
+
+maintainer:
+    -   name: Kim Phillips <kim.phillips@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,sec3"."3" && "fsl,sec3"."1" && "fsl,sec3"."0" && "fsl,sec2"."4" && "fsl,sec2"."2" && "fsl,sec2"."1" && "fsl,sec2"."0"
+            "fsl,sec3"."0" && "fsl,sec2"."4" && "fsl,sec2"."2" && "fsl,sec2"."1" && "fsl,sec2"."0"
+            "fsl,sec2"."2" && "fsl,sec2"."1" && "fsl,sec2"."0"
+            "fsl,sec2"."1" && "fsl,sec2"."0"
+            "fsl,sec2"."0"
+            "fsl,sec1"."0"
+
+    fsl,channel-fifo-len:
+    fsl,descriptor-types-mask:
+    fsl,exec-units-mask:
+    fsl,num-channels:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Freescale SoC SEC Security Engines versions 1.x-2.x-3.x
 #
 # Required properties:

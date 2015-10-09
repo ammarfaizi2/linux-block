@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: phy
+
+title: PHY nodes
+
+maintainer:
+    -   name: Florian Fainelli <f.fainelli@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ethernet-phy-id0141"."0e90" && "ethernet-phy-ieee802"."3-c22"
+
+    marvell,reg-init:
+    reg:
+
+...
+
 # PHY nodes
 #
 # Required properties:

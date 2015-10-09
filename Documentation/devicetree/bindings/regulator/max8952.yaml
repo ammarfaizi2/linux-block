@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: max8952
+
+title: Maxim MAX8952 voltage regulator
+
+maintainer:
+    -   name: Tomasz Figa <t.figa@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max8952"
+
+    max8952,default-mode:
+    max8952,dvs-mode-microvolt:
+    max8952,ramp-speed:
+    max8952,sync-freq:
+    max8952,vid-gpios:
+    reg:
+    regulator-always-on:
+    regulator-boot-on:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+
+...
+
 # Maxim MAX8952 voltage regulator
 #
 # Required properties:

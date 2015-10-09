@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: eukrea-tlv320
+
+title: Audio complex for Eukrea boards with tlv320aic23 codec.
+
+maintainer:
+    -   name: Denis Carikli <denis@eukrea.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "tlv320aic23"
+            "eukrea,asoc-tlv320"
+
+    eukrea,model:
+    fsl,mux-ext-port:
+    fsl,mux-int-port:
+    ssi-controller:
+
+...
+
 # Audio complex for Eukrea boards with tlv320aic23 codec.
 #
 # Required properties:

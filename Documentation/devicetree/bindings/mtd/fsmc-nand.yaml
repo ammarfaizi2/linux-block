@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsmc-nand
+
+title: ST Microelectronics Flexible Static Memory Controller (FSMC)
+
+maintainer:
+    -   name: Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear600-fsmc-nand"
+            "stericsson,fsmc-nand"
+
+    #address-cells:
+    clocks:
+    nand-skip-bbtscan:
+    reg:
+    reg-names:
+    #size-cells:
+    status:
+    timings:
+
+...
+
 # ST Microelectronics Flexible Static Memory Controller (FSMC)
 # NAND Interface
 #

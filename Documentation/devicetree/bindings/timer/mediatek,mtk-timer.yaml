@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: mediatek,mtk-timer
+
+title: Mediatek MT6577, MT6572 and MT6589 Timers
+
+maintainer:
+    -   name: Mars Cheng <mars.cheng@mediatek.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mediatek,mt8135-timer" && "mediatek,mt6577-timer"
+            "mediatek,mt8127-timer" && "mediatek,mt6577-timer"
+            "mediatek,mt6580-timer" && "mediatek,mt6577-timer"
+            "mediatek,mt6577-timer"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Mediatek MT6577, MT6572 and MT6589 Timers
 # ---------------------------------------
 #

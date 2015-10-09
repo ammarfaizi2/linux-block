@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-xdma
+
+title: Atmel Extensible Direct Memory Access Controller (XDMAC)
+
+maintainer:
+    -   name: Ludovic Desroches <ludovic.desroches@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d4-dma"
+            "atmel,at91sam9rl-dma"
+
+    clock-names:
+    clocks:
+    #dma-cells:
+    interrupts:
+    reg:
+
+...
+
 # * Atmel Extensible Direct Memory Access Controller (XDMAC)
 #
 # * XDMA Controller

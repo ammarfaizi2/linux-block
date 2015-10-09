@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,orion-timer
+
+title: Marvell Orion SoC timer
+
+maintainer:
+    -   name: Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-timer"
+
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Marvell Orion SoC timer
 #
 # Required properties:

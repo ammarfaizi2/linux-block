@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: vic
+
+title: ARM Vectored Interrupt Controller
+
+maintainer:
+    -   name: Jamie Iles <jamie@jamieiles.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,pl192-vic"
+            "arm,pl190-vic"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # * ARM Vectored Interrupt Controller
 #
 # One or more Vectored Interrupt Controllers (VIC's) can be connected in an ARM

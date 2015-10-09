@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: max77693
+
+title: Maxim MAX77693 multi-function device
+
+maintainer:
+    -   name: Jacek Anaszewski <j.anaszewski@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max77693-haptic"
+            "maxim,max77693-charger"
+            "maxim,max77693"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # Maxim MAX77693 multi-function device
 #
 # MAX77693 is a Multifunction device with the following submodules:

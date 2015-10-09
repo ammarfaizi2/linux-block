@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,sysmmu
+
+title: Samsung Exynos IOMMU H/W, System MMU (System Memory Management Unit)
+
+maintainer:
+    -   name: Cho KyongHo <pullip.cho@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos-sysmmu"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    #iommu-cells:
+    power-domains:
+    reg:
+
+...
+
 # Samsung Exynos IOMMU H/W, System MMU (System Memory Management Unit)
 #
 # Samsung's Exynos architecture contains System MMUs that enables scattered

@@ -1,3 +1,48 @@
+%YAML 1.2
+---
+version: 1
+
+id: db8500-thermal
+
+title: ST-Ericsson DB8500 Thermal
+
+maintainer:
+    -   name: hongbo.zhang <hongbo.zhang@linaro.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,db8500-thermal"
+
+    interrupt-names:
+    interrupts:
+    num-trips:
+    reg:
+    status:
+    trip0-cdev-name0:
+    trip0-cdev-num:
+    trip0-temp:
+    trip0-type:
+    trip1-cdev-name0:
+    trip1-cdev-num:
+    trip1-temp:
+    trip1-type:
+    trip2-cdev-name0:
+    trip2-cdev-num:
+    trip2-temp:
+    trip2-type:
+    trip3-cdev-num:
+    trip3-temp:
+    trip3-type:
+
+...
+
 # * ST-Ericsson DB8500 Thermal
 #
 # ** Thermal node properties:

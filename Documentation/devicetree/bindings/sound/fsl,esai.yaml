@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,esai
+
+title: Freescale Enhanced Serial Audio Interface (ESAI) Controller
+
+maintainer:
+    -   name: Fabio Estevam <fabio.estevam@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx35-esai"
+
+    assigned-clock-parents:
+    assigned-clock-rates:
+    assigned-clocks:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #sound-dai-cells:
+    status:
+
+...
+
 # Freescale Enhanced Serial Audio Interface (ESAI) Controller
 #
 # The Enhanced Serial Audio Interface (ESAI) provides a full-duplex serial port

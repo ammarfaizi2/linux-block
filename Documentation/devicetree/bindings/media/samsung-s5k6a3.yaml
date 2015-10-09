@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-s5k6a3
+
+title: Samsung S5K6A3(YX) raw image sensor
+
+maintainer:
+    -   name: Sylwester Nawrocki <s.nawrocki@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5k6a3"
+
+    afvdd-supply:
+    clock-frequency:
+    clock-names:
+    clocks:
+    gpios:
+    reg:
+    samsung,camclk-out:
+    svdda-supply:
+    svddio-supply:
+
+...
+
 # Samsung S5K6A3(YX) raw image sensor
 # ---------------------------------
 #

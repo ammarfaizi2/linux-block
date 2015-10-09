@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-quadspi
+
+title: Freescale Quad Serial Peripheral Interface(QuadSPI)
+
+maintainer:
+    -   name: Frank Li <Frank.Li@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-qspi"
+            "fsl,imx6ul-qspi" && "fsl,imx6sx-qspi"
+            "fsl,imx6sx-qspi"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reg-names:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale Quad Serial Peripheral Interface(QuadSPI)
 #
 # Required properties:

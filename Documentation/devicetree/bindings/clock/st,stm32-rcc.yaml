@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,stm32-rcc
+
+title: STMicroelectronics STM32 Reset and Clock Controller
+
+maintainer:
+    -   name: Daniel Thompson <daniel.thompson@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stm32f42xx-rcc" && "st,stm32-rcc"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # STMicroelectronics STM32 Reset and Clock Controller
 # ===================================================
 #

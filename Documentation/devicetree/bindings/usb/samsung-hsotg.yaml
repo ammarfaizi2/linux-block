@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung-hsotg
+
+title: Samsung High Speed USB OTG controller
+
+maintainer:
+    -   name: Tomasz Figa <t.figa@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s3c6400-hsotg"
+
+    clock-names:
+    clocks:
+    dr_mode:
+    interrupt-parent:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+    vusb_a-supply:
+    vusb_d-supply:
+
+...
+
 # Samsung High Speed USB OTG controller
 # -----------------------------
 #

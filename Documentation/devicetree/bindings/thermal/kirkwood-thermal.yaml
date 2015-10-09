@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: kirkwood-thermal
+
+title: Kirkwood Thermal
+
+maintainer:
+    -   name: Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,kirkwood-thermal"
+
+    reg:
+    status:
+
+...
+
 # * Kirkwood Thermal
 #
 # This version is for Kirkwood 88F8262 & 88F6283 SoCs. Other kirkwoods

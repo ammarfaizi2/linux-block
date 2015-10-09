@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: max77686
+
+title: Binding for Maxim MAX77686 regulators
+
+maintainer:
+    -   name: Javier Martinez Canillas <javier@osg.samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max77686"
+
+    #clock-cells:
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    wakeup-source:
+
+...
+
 # Binding for Maxim MAX77686 regulators
 #
 # This is a part of the device tree bindings of MAX77686 multi-function device.

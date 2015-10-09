@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,clkgen-mux
+
+title: Binding for a ST multiplexed clock driver.
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-clkgenf-vcc-sd" && "st,clkgen-mux"
+            "st,stih416-clkgenf-vcc-hva" && "st,clkgen-mux"
+            "st,stih416-clkgenf-vcc-hd" && "st,clkgen-mux"
+            "st,stih416-clkgenf-vcc-fvdp" && "st,clkgen-mux"
+            "st,stih416-clkgenc-vcc-hd" && "st,clkgen-mux"
+            "st,stih416-clkgen-a9-mux" && "st,clkgen-mux"
+            "st,stih415-clkgen-a9-mux" && "st,clkgen-mux"
+            "st,stih407-clkgen-a9-mux" && "st,clkgen-mux"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # Binding for a ST multiplexed clock driver.
 #
 # This binding supports only simple indexed multiplexers, it does not

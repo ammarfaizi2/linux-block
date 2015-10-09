@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: dwc2
+
+title: Platform DesignWare HS OTG USB 2.0 controller
+
+maintainer:
+    -   name: Gregory Herrero <gregory.herrero@intel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dwc2"
+            "rockchip,rk3288-usb" && "rockchip,rk3066-usb" && "snps,dwc2"
+            "rockchip,rk3066-usb" && "snps,dwc2"
+
+    clock-names:
+    clocks:
+    dr_mode:
+    g-np-tx-fifo-size:
+    g-rx-fifo-size:
+    g-tx-fifo-size:
+    g-use-dma:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+
+...
+
 # Platform DesignWare HS OTG USB 2.0 controller
 # -----------------------------------------------------
 #

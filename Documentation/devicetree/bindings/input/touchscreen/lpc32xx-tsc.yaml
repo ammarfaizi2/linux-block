@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx-tsc
+
+title: NXP LPC32xx SoC Touchscreen Controller (TSC)
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-tsc"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * NXP LPC32xx SoC Touchscreen Controller (TSC)
 #
 # Required properties:

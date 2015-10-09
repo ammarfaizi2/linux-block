@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: foxlink,fl500wvr00-a0t
+
+title: Foxlink Group 5" WVGA TFT LCD panel
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "foxlink,fl500wvr00-a0t" && "simple-panel"
+
+    #address-cells:
+    backlight:
+    power-supply:
+    #size-cells:
+    status:
+
+...
+
 # Foxlink Group 5" WVGA TFT LCD panel
 #
 # Required properties:

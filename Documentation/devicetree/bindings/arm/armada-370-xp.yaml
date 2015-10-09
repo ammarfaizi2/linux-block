@@ -1,3 +1,52 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-370-xp
+
+title: Marvell Armada 370 and Armada XP Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "synology,ds414" && "marvell,armadaxp-mv78230" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "synology,ds213j" && "marvell,armada370" && "marvell,armada-370-xp"
+            "plathome,openblocks-ax3-4" && "marvell,armadaxp-mv78260" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "netgear,readynas-2120" && "marvell,armadaxp-mv78230" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "netgear,readynas-104" && "marvell,armada370" && "marvell,armada-370-xp"
+            "netgear,readynas-102" && "marvell,armada370" && "marvell,armada-370-xp"
+            "marvell,rd-axpwifiap" && "marvell,armadaxp-mv78230" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,axp-matrix" && "marvell,armadaxp-mv78460" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,axp-gp" && "marvell,armadaxp-mv78460" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,axp-db" && "marvell,armadaxp-mv78460" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,armadaxp-mv78460" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,armadaxp-mv78260" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,armadaxp-mv78230" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,armadaxp" && "marvell,armada-370-xp"
+            "marvell,armada-370-xp"
+            "marvell,armada370" && "marvell,armada-370-xp"
+            "marvell,a370-rd" && "marvell,armada370" && "marvell,armada-370-xp"
+            "marvell,a370-db" && "marvell,armada370" && "marvell,armada-370-xp"
+            "linksys,mamba" && "marvell,armadaxp-mv78230" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "lenovo,ix4-300d" && "marvell,armadaxp-mv78230" && "marvell,armadaxp" && "marvell,armada-370-xp"
+            "globalscale,mirabox" && "marvell,armada370" && "marvell,armada-370-xp"
+            "dlink,dns327l" && "marvell,armada370" && "marvell,armada-370-xp"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Marvell Armada 370 and Armada XP Platforms Device Tree Bindings
 # ---------------------------------------------------------------
 #

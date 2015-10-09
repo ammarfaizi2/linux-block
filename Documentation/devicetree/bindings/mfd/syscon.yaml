@@ -1,3 +1,86 @@
+%YAML 1.2
+---
+version: 1
+
+id: syscon
+
+title: System Controller Registers R/W driver
+
+maintainer:
+    -   name: Dong Aisheng <dong.aisheng@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-slcr" && "syscon" && "simple-bus"
+            "syscon" && "simple-mfd"
+            "syscon" && "simple-bus"
+            "syscon"
+            "st,stih416-transport-syscfg" && "syscon"
+            "st,stih416-sbc-syscfg" && "syscon"
+            "st,stih416-rear-syscfg" && "syscon"
+            "st,stih416-lpm-syscfg" && "syscon"
+            "st,stih416-fvdp-lite-syscfg" && "syscon"
+            "st,stih416-fvdp-fe-syscfg" && "syscon"
+            "st,stih416-front-syscfg" && "syscon"
+            "st,stih416-cpu-syscfg" && "syscon"
+            "st,stih416-compo-syscfg" && "syscon"
+            "st,stih415-system-syscfg" && "syscon"
+            "st,stih415-sbc-syscfg" && "syscon"
+            "st,stih415-right-syscfg" && "syscon"
+            "st,stih415-rear-syscfg" && "syscon"
+            "st,stih415-lpm-syscfg" && "syscon"
+            "st,stih415-left-syscfg" && "syscon"
+            "st,stih415-front-syscfg" && "syscon"
+            "st,stih407-sbc-syscfg" && "syscon"
+            "st,stih407-sbc-reg-syscfg" && "syscon"
+            "st,stih407-rear-syscfg" && "syscon"
+            "st,stih407-lpm-syscfg" && "syscon"
+            "st,stih407-front-syscfg" && "syscon"
+            "st,stih407-flash-syscfg" && "syscon"
+            "st,stih407-core-syscfg" && "syscon"
+            "socionext,uniphier-system-bus-controller-misc" && "syscon"
+            "socionext,proxstream2-pinctrl" && "syscon"
+            "socionext,ph1-sld8-pinctrl" && "syscon"
+            "socionext,ph1-pro5-pinctrl" && "syscon"
+            "socionext,ph1-pro4-pinctrl" && "syscon"
+            "socionext,ph1-ld6b-pinctrl" && "syscon"
+            "socionext,ph1-ld4-pinctrl" && "syscon"
+            "samsung-s5pv210-pmu" && "syscon"
+            "samsung,exynos4415-pmu" && "syscon"
+            "samsung,exynos3-sysreg" && "syscon"
+            "rockchip,rk3288-sgrf" && "syscon"
+            "rockchip,rk3288-pmu" && "syscon"
+            "rockchip,rk3288-grf" && "syscon"
+            "fsl,vf610-anatop" && "syscon"
+            "fsl,imx7d-iomuxc-gpr" && "syscon"
+            "fsl,imx7d-anatop" && "fsl,imx6q-anatop" && "syscon" && "simple-bus"
+            "fsl,imx6ul-iomuxc-gpr" && "syscon"
+            "fsl,imx6ul-anatop" && "fsl,imx6q-anatop" && "syscon" && "simple-bus"
+            "fsl,imx6sx-ocotp" && "syscon"
+            "fsl,imx6sx-iomuxc-gpr" && "fsl,imx6q-iomuxc-gpr" && "syscon"
+            "fsl,imx6sx-anatop" && "fsl,imx6q-anatop" && "syscon" && "simple-bus"
+            "fsl,imx6sl-ocotp" && "syscon"
+            "fsl,imx6sl-iomuxc-gpr" && "fsl,imx6q-iomuxc-gpr" && "syscon"
+            "fsl,imx6sl-anatop" && "fsl,imx6q-anatop" && "syscon" && "simple-bus"
+            "fsl,imx6q-ocotp" && "syscon"
+            "fsl,imx6q-iomuxc-gpr" && "syscon"
+            "fsl,imx6q-anatop" && "syscon" && "simple-bus"
+            "fsl,imx53-iomuxc-gpr" && "syscon"
+            "fsl,imx50-iomuxc-gpr" && "syscon"
+            "cnxt,cx92755-uc" && "syscon"
+            "atmel,at91sam9260-bus-matrix" && "syscon"
+
+    reg:
+
+...
+
 # * System Controller Registers R/W driver
 #
 # System controller node represents a register region containing a set

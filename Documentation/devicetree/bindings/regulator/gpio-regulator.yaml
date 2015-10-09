@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-regulator
+
+title: GPIO controlled regulators
+
+maintainer:
+    -   name: Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "regulator-gpio"
+
+    enable-active-high:
+    enable-gpio:
+    gpios:
+    gpios-states:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+    regulator-name:
+    regulator-type:
+    startup-delay-us:
+    states:
+    vin-supply:
+
+...
+
 # GPIO controlled regulators
 #
 # Required properties:

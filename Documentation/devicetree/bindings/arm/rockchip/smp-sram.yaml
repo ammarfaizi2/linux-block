@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: smp-sram
+
+title: Rockchip SRAM for smp bringup:
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3066-smp-sram"
+
+    reg:
+
+...
+
 # Rockchip SRAM for smp bringup:
 # ------------------------------
 #

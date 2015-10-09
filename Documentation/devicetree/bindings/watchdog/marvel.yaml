@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvel
+
+title: Marvell Orion Watchdog Time
+
+maintainer:
+    -   name: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-wdt"
+            "marvell,armada-xp-wdt"
+            "marvell,armada-380-wdt"
+            "marvell,armada-375-wdt"
+            "marvell,armada-370-wdt"
+
+    clocks:
+    reg:
+
+...
+
 # * Marvell Orion Watchdog Time
 #
 # Required Properties:

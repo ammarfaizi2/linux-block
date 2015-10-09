@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: sun4i-dma
+
+title: Allwinner A10 DMA Controller
+
+maintainer:
+    -   name: Emilio López <emilio@elopez.com.ar>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun4i-a10-dma"
+
+    clocks:
+    #dma-cells:
+    interrupts:
+    reg:
+
+...
+
 # Allwinner A10 DMA Controller
 #
 # This driver follows the generic DMA bindings defined in dma.txt.

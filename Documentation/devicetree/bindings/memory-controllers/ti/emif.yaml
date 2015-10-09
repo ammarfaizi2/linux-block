@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: emif
+
+title: EMIF family of TI SDRAM controllers
+
+maintainer:
+    -   name: Aneesh V <aneesh@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,emif-4d"
+
+    cs1-used:
+    device-handle:
+    hw-caps-ll-interface:
+    hw-caps-read-idle-ctrl:
+    hw-caps-temp-alert:
+    interrupts:
+    phy-type:
+    reg:
+    ti,hwmods:
+    ti,no-idle-on-init:
+
+...
+
 # * EMIF family of TI SDRAM controllers
 #
 # EMIF - External Memory Interface - is an SDRAM controller used in

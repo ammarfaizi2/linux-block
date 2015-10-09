@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: at91_adc
+
+title: AT91's Analog to Digital Converter (ADC)
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9x5-adc"
+            "atmel,at91sam9rl-adc"
+            "atmel,at91sam9g45-adc"
+            "atmel,at91sam9260-adc"
+
+    #address-cells:
+    atmel,adc-channels-used:
+    atmel,adc-res:
+    atmel,adc-res-names:
+    atmel,adc-startup-time:
+    atmel,adc-use-external-triggers:
+    atmel,adc-use-res:
+    atmel,adc-vref:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    #size-cells:
+
+...
+
 # * AT91's Analog to Digital Converter (ADC)
 #
 # Required properties:

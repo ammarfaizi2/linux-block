@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: gtm601
+
+title: GTM601 UMTS modem audio interface CODEC
+
+maintainer:
+    -   name: Marek Belisko <marek@goldelico.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "option,gtm601"
+
+    #sound-dai-cells:
+
+...
+
 # GTM601 UMTS modem audio interface CODEC
 #
 # This device has no configuration interface. Sample rate is fixed - 8kHz.

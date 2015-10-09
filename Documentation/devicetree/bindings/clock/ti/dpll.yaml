@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: dpll
+
+title: Binding for Texas Instruments DPLL clock.
+
+maintainer:
+    -   name: Tero Kristo <t-kristo@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap5-mpu-dpll-clock"
+            "ti,omap4-dpll-x2-clock"
+            "ti,omap4-dpll-m4xen-clock"
+            "ti,omap4-dpll-j-type-clock"
+            "ti,omap4-dpll-core-clock"
+            "ti,omap4-dpll-clock"
+            "ti,omap3-dpll-per-j-type-clock"
+            "ti,omap3-dpll-per-clock"
+            "ti,omap3-dpll-core-clock"
+            "ti,omap3-dpll-clock"
+            "ti,omap2-dpll-core-clock"
+            "ti,am3-dpll-x2-clock"
+            "ti,am3-dpll-no-gate-j-type-clock"
+            "ti,am3-dpll-no-gate-clock"
+            "ti,am3-dpll-j-type-clock"
+            "ti,am3-dpll-core-clock"
+            "ti,am3-dpll-clock"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # Binding for Texas Instruments DPLL clock.
 #
 # Binding status: Unstable - ABI compatibility may be broken in the future

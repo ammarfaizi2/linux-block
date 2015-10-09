@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: regulator-haptic
+
+title: Regulator Haptic Device Tree Bindings
+
+maintainer:
+    -   name: Jaewon Kim <jaewon02.kim@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "regulator-haptic"
+
+    haptic-supply:
+    max-microvolt:
+    min-microvolt:
+
+...
+
 # * Regulator Haptic Device Tree Bindings
 #
 # Required Properties:

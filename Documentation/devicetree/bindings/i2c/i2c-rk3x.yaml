@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-rk3x
+
+title: Rockchip RK3xxx I2C controller
+
+maintainer:
+    -   name: Doug Anderson <dianders@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-i2c"
+            "rockchip,rk3188-i2c"
+            "rockchip,rk3066-i2c"
+
+    #address-cells:
+    clock-frequency:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    rockchip,grf:
+    #size-cells:
+    status:
+
+...
+
 # * Rockchip RK3xxx I2C controller
 #
 # This driver interfaces with the native I2C controller present in Rockchip

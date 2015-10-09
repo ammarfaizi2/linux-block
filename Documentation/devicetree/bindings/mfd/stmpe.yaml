@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: stmpe
+
+title: ST Microelectronics STMPE Multi-Functional Device
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stmpe1601"
+
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+    st,autosleep-timeout:
+    vcc-supply:
+    vio-supply:
+    wakeup-source:
+
+...
+
 # * ST Microelectronics STMPE Multi-Functional Device
 #
 # STMPE is an MFD device which may expose the following inbuilt devices: gpio,

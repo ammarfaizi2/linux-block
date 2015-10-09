@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: mrvl
+
+title: Marvell Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mrvl,pxa910-dkb" && "mrvl,pxa910"
+            "mrvl,pxa168-aspenite" && "mrvl,pxa168"
+            "mrvl,mmp2-brownstone" && "mrvl,mmp2"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Marvell Platforms Device Tree Bindings
 # ----------------------------------------------------
 #

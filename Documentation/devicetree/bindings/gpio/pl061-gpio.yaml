@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: pl061-gpio
+
+title: ARM PL061 GPIO controller
+
+maintainer:
+    -   name: Rob Herring <rob.herring@calxeda.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,pl061" && "arm,primecell"
+
+    clock-names:
+    clocks:
+    #gpio-cells:
+    gpio-controller:
+    gpio-ranges:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # ARM PL061 GPIO controller
 #
 # Required properties:

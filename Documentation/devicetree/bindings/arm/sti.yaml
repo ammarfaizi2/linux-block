@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: sti
+
+title: ST STi Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Fabrice GASNIER <fabrice.gasnier@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih418-b2199" && "st,stih418"
+            "st,stih416-b2020" && "st,stih416"
+            "st,stih416-b2000" && "st,stih416"
+            "st,stih415-b2020" && "st,stih415"
+            "st,stih415-b2000" && "st,stih415"
+            "st,stih410-b2120" && "st,stih410"
+            "st,stih407-b2120" && "st,stih407"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # ST STi Platforms Device Tree Bindings
 # ---------------------------------------
 #

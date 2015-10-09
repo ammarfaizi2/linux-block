@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos-fimc-lite
+
+title: Exynos4x12/Exynos5 SoC series camera host interface (FIMC-LITE)
+
+maintainer:
+    -   name: Sylwester Nawrocki <s.nawrocki@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4212-fimc-lite"
+
+    clock-names:
+    clocks:
+    interrupts:
+    iommus:
+    power-domains:
+    reg:
+    status:
+
+...
+
 # Exynos4x12/Exynos5 SoC series camera host interface (FIMC-LITE)
 #
 # Required properties:

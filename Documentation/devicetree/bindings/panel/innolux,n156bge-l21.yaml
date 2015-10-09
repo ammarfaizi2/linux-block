@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: innolux,n156bge-l21
+
+title: InnoLux 15.6" WXGA TFT LCD panel
+
+maintainer:
+    -   name: Alban Bedel <alban.bedel@avionic-design.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "innolux,n156bge-l21" && "simple-panel"
+
+    backlight:
+    enable-gpios:
+    power-supply:
+
+...
+
 # InnoLux 15.6" WXGA TFT LCD panel
 #
 # Required properties:

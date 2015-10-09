@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: orion-nand
+
+title: NAND support for Marvell Orion SoC platforms
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-nand"
+
+    #address-cells:
+    ale:
+    bank-width:
+    chip-delay:
+    cle:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # NAND support for Marvell Orion SoC platforms
 #
 # Required properties:

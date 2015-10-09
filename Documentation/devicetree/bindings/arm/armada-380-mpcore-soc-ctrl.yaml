@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-380-mpcore-soc-ctrl
+
+title: Marvell Armada 38x CA9 MPcore SoC Controller
+
+maintainer:
+    -   name: Gregory CLEMENT <gregory.clement@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-380-mpcore-soc-ctrl"
+
+    reg:
+
+...
+
 # Marvell Armada 38x CA9 MPcore SoC Controller
 # ============================================
 #

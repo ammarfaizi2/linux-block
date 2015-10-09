@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,clkgen-prediv
+
+title: Binding for a ST pre-divider clock driver.
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,clkgena-prediv-c32" && "st,clkgena-prediv"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+
+...
+
 # Binding for a ST pre-divider clock driver.
 #
 # This binding uses the common clock binding[1].

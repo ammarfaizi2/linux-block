@@ -1,3 +1,85 @@
+%YAML 1.2
+---
+version: 1
+
+id: emac
+
+title:     4xx/Axon EMAC ethernet nodes
+
+maintainer:
+    -   name: Anatol Pomozov <anatol.pomozov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ibm,zmii-460gt" && "ibm,zmii"
+            "ibm,zmii-460ex" && "ibm,zmii"
+            "ibm,zmii-440gx" && "ibm,zmii"
+            "ibm,zmii-440grx" && "ibm,zmii"
+            "ibm,zmii-440gp" && "ibm,zmii"
+            "ibm,zmii-440epx" && "ibm,zmii"
+            "ibm,zmii-440ep" && "ibm,zmii-440gp" && "ibm,zmii"
+            "ibm,rgmii-460sx" && "ibm,rgmii"
+            "ibm,rgmii-460gt" && "ibm,rgmii"
+            "ibm,rgmii-460ex" && "ibm,rgmii"
+            "ibm,rgmii-440grx" && "ibm,rgmii"
+            "ibm,rgmii-440epx" && "ibm,rgmii"
+            "ibm,rgmii-405exr" && "ibm,rgmii"
+            "ibm,rgmii-405ex" && "ibm,rgmii"
+            "ibm,rgmii"
+            "ibm,mcmal-476gtr" && "ibm,mcmal2"
+            "ibm,mcmal-460sx" && "ibm,mcmal2"
+            "ibm,mcmal-460gt" && "ibm,mcmal2"
+            "ibm,mcmal-460ex" && "ibm,mcmal2"
+            "ibm,mcmal-440spe" && "ibm,mcmal2"
+            "ibm,mcmal-440gx" && "ibm,mcmal2"
+            "ibm,mcmal-440grx" && "ibm,mcmal2"
+            "ibm,mcmal-440gp" && "ibm,mcmal"
+            "ibm,mcmal-440epx" && "ibm,mcmal2"
+            "ibm,mcmal-440ep" && "ibm,mcmal-440gp" && "ibm,mcmal"
+            "ibm,mcmal-405gp" && "ibm,mcmal"
+            "ibm,mcmal-405ez" && "ibm,mcmal"
+            "ibm,mcmal-405exr" && "ibm,mcmal2"
+            "ibm,mcmal-405ex" && "ibm,mcmal2"
+            "ibm,mcmal-405ep" && "ibm,mcmal"
+            "ibm,mcmal2"
+            "ibm,emac4" && "ibm-emac4sync"
+            "ibm,emac-460sx" && "ibm,emac4"
+            "ibm,emac-440spe" && "ibm,emac4"
+            "ibm,emac-440gx" && "ibm,emac4"
+            "ibm,emac-440grx" && "ibm,emac-440epx" && "ibm,emac4"
+            "ibm,emac-440gp" && "ibm,emac"
+            "ibm,emac-440epx" && "ibm,emac4"
+            "ibm,emac-440ep" && "ibm,emac-440gp" && "ibm,emac"
+            "ibm,emac-405gp" && "ibm,emac"
+            "ibm,emac-405ez" && "ibm,emac"
+            "ibm,emac-405ep" && "ibm,emac"
+
+    cell-index:
+    device_type:
+    interrupt-parent:
+    interrupts:
+    linux,network-index:
+    local-mac-address:
+    mal-device:
+    mal-rx-channel:
+    mal-tx-channel:
+    max-frame-size:
+    mdio-device:
+    phy-map:
+    phy-mode:
+    reg:
+    rx-fifo-size:
+    tx-fifo-size:
+
+...
+
 #     4xx/Axon EMAC ethernet nodes
 #
 #     The EMAC ethernet controller in IBM and AMCC 4xx chips, and also

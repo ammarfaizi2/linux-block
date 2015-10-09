@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-tipwmss
+
+title: TI SOC based PWM Subsystem
+
+maintainer:
+    -   name: Philip, Avinash <avinashphilip@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,am4372-pwmss" && "ti,am33xx-pwmss"
+            "ti,am33xx-pwmss"
+
+    #address-cells:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+    ti,hwmods:
+
+...
+
 # TI SOC based PWM Subsystem
 #
 # Required properties:

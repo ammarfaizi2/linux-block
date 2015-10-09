@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-lpuart
+
+title: Freescale low power universal asynchronous receiver/transmitter (lpuart)
+
+maintainer:
+    -   name: Yuan Yao <yao.yuan@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-lpuart"
+            "fsl,ls1021a-lpuart"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Freescale low power universal asynchronous receiver/transmitter (lpuart)
 #
 # Required properties:

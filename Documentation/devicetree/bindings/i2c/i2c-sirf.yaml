@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-sirf
+
+title: I2C for SiRFprimaII platforms
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,prima2-i2c"
+
+    #address-cells:
+    cell-index:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # I2C for SiRFprimaII platforms
 #
 # Required properties :

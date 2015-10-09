@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: ntc_thermistor
+
+title: NTC Thermistor hwmon sensors
+
+maintainer:
+    -   name: Naveen Krishna Chatradhi <ch.naveen@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ntc,ncp15wb473"
+            "murata,ncp15wb473"
+
+    io-channels:
+    pulldown-ohm:
+    pullup-ohm:
+    pullup-uv:
+
+...
+
 # NTC Thermistor hwmon sensors
 # -------------------------------
 #

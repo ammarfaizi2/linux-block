@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: sh_eth
+
+title: Renesas Electronics SH EtherMAC
+
+maintainer:
+    -   name: Hisashi Nakamura <hisashi.nakamura.ak@renesas.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,gether-r8a7740"
+            "renesas,ether-r8a7794"
+            "renesas,ether-r8a7793"
+            "renesas,ether-r8a7791"
+            "renesas,ether-r8a7790"
+            "renesas,ether-r8a7778"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    phy-mode:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Renesas Electronics SH EtherMAC
 #
 # This file provides information on what the device node for the SH EtherMAC

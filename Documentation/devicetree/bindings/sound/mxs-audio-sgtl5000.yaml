@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxs-audio-sgtl5000
+
+title: Freescale MXS audio complex with SGTL5000 codec
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-tx28-sgtl5000" && "fsl,mxs-audio-sgtl5000"
+            "fsl,imx28-mbmx28lc-sgtl5000" && "fsl,mxs-audio-sgtl5000"
+            "fsl,imx28-evk-sgtl5000" && "fsl,mxs-audio-sgtl5000"
+            "denx,m28evk-sgtl5000" && "fsl,mxs-audio-sgtl5000"
+            "bluegiga,apx4devkit-sgtl5000" && "fsl,mxs-audio-sgtl5000"
+
+    audio-codec:
+    model:
+    saif-controllers:
+
+...
+
 # * Freescale MXS audio complex with SGTL5000 codec
 #
 # Required properties:

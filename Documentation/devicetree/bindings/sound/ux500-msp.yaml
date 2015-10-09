@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: ux500-msp
+
+title: ux500 MSP (CPU-side Digital Audio Interface)
+
+maintainer:
+    -   name: Lee Jones <lee.jones@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,ux500-msp-i2s"
+            "stericsson,snd-soc-mop500"
+            "stericsson,ab8500-codec"
+
+    stericsson,earpeice-cmv:
+    V-AMIC1-supply:
+    V-AMIC2-supply:
+    V-AUD-supply:
+    V-DMIC-supply:
+
+...
+
 # * ux500 MSP (CPU-side Digital Audio Interface)
 #
 # Required properties:

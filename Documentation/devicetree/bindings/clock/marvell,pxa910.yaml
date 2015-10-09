@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,pxa910
+
+title: Marvell PXA910 Clock Controller
+
+maintainer:
+    -   name: Chao Xie <chao.xie@marvell.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa910-clock"
+
+    #clock-cells:
+    reg:
+    reg-names:
+    #reset-cells:
+
+...
+
 # * Marvell PXA910 Clock Controller
 #
 # The PXA910 clock subsystem generates and supplies clock to various

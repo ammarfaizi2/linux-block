@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: nxp,lpc1850-scu
+
+title: NXP LPC18xx/43xx SCU pin controller Device Tree Bindings
+
+maintainer:
+    -   name: Joachim Eastwood <manabian@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc1850-scu"
+
+    clocks:
+    reg:
+
+...
+
 # NXP LPC18xx/43xx SCU pin controller Device Tree Bindings
 # --------------------------------------------------------
 #

@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: versatile
+
+title: ARM Versatile Platform Baseboard PCI interface
+
+maintainer:
+    -   name: Rob Herring <robh@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-pci"
+
+    #address-cells:
+    bus-range:
+    device_type:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # * ARM Versatile Platform Baseboard PCI interface
 #
 # PCI host controller found on the ARM Versatile PB board's FPGA.

@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,imx-gpc
+
+title: Freescale i.MX General Power Controller
+
+maintainer:
+    -   name: Philipp Zabel <p.zabel@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6ul-gpc" && "fsl,imx6q-gpc"
+            "fsl,imx6sx-gpc" && "fsl,imx6q-gpc"
+            "fsl,imx6sl-gpc" && "fsl,imx6q-gpc"
+            "fsl,imx6q-gpc"
+
+    clocks:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupt-parent:
+    interrupts:
+    #power-domain-cells:
+    pu-supply:
+    reg:
+
+...
+
 # Freescale i.MX General Power Controller
 # =======================================
 #

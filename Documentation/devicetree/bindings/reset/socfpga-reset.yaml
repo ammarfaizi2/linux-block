@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: socfpga-reset
+
+title: Altera SOCFPGA Reset Manager
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@opensource.altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,rst-mgr"
+
+    altr,modrst-offset:
+    reg:
+    #reset-cells:
+
+...
+
 # Altera SOCFPGA Reset Manager
 #
 # Required properties:

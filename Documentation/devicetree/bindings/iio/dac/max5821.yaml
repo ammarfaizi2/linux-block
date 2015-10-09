@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: max5821
+
+title: Maxim max5821 DAC device driver
+
+maintainer:
+    -   name: Philippe Reynes <tremyfr@yahoo.fr>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max5821"
+
+    reg:
+    vref-supply:
+
+...
+
 # Maxim max5821 DAC device driver
 #
 # Required properties:

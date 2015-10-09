@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: orion-sdio
+
+title: Marvell orion-sdio controller
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,orion-sdio"
+
+    broken-cd:
+    bus-width:
+    cap-mmc-highspeed:
+    cap-sd-highspeed:
+    cap-sdio-irq:
+    cd-gpios:
+    clocks:
+    interrupts:
+    non-removable:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+    wp-gpios:
+
+...
+
 # * Marvell orion-sdio controller
 #
 # This file documents differences between the core properties in mmc.txt

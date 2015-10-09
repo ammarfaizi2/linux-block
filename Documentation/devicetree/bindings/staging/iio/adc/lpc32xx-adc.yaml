@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx-adc
+
+title: NXP LPC32xx SoC ADC controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-adc"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * NXP LPC32xx SoC ADC controller
 #
 # Required properties:

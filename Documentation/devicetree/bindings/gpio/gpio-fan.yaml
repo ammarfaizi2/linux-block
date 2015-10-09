@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-fan
+
+title: Bindings for fan connected to GPIO lines
+
+maintainer:
+    -   name: Jamie Lentin <jm@lentin.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-fan"
+
+    alarm-gpios:
+    #cooling-cells:
+    gpio-fan,speed-map:
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+    status:
+
+...
+
 # Bindings for fan connected to GPIO lines
 #
 # Required properties:

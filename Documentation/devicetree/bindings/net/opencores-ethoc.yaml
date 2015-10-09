@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: opencores-ethoc
+
+title: OpenCores MAC 10/100 Mbps
+
+maintainer:
+    -   name: Max Filippov <jcmvbkbc@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "opencores,ethoc"
+
+    clocks:
+    interrupts:
+    local-mac-address:
+    reg:
+
+...
+
 # * OpenCores MAC 10/100 Mbps
 #
 # Required properties:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: moxa,moxart-mac
+
+title: MOXA ART Ethernet Controller
+
+maintainer:
+    -   name: Jonas Jensen <jonas.jensen@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "moxa,moxart-mac"
+
+    interrupts:
+    phy-handle:
+    phy-mode:
+    reg:
+    status:
+
+...
+
 # MOXA ART Ethernet Controller
 #
 # Required properties:

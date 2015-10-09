@@ -1,3 +1,55 @@
+%YAML 1.2
+---
+version: 1
+
+id: submitting-patches
+
+title:   Submitting devicetree (DT) binding patches
+
+maintainer:
+    -   name: Jason Cooper <jason@lakedaemon.net>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-pcie"
+            "nvidia,tegra124-pcie"
+
+    #address-cells:
+    avddio-pex-supply:
+    avdd-pex-pll-supply:
+    avdd-pll-erefe-supply:
+    bus-range:
+    clock-names:
+    clocks:
+    device_type:
+    dvddio-pex-supply:
+    hvdd-pex-pll-e-supply:
+    hvdd-pex-supply:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    interrupt-names:
+    interrupts:
+    phy-names:
+    phys:
+    ranges:
+    reg:
+    reg-names:
+    reset-names:
+    resets:
+    #size-cells:
+    status:
+    vddio-pex-ctl-supply:
+
+...
+
 #
 #   Submitting devicetree (DT) binding patches
 #

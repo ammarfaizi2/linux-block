@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: ptn3460
+
+title: ptn3460 bridge bindings
+
+maintainer:
+    -   name: Ajay Kumar <ajaykumar.rs@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,ptn3460"
+
+    edid-emulation:
+    powerdown-gpios:
+    reg:
+    reset-gpios:
+
+...
+
 # ptn3460 bridge bindings
 #
 # Required properties:

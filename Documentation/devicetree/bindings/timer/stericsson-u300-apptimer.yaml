@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: stericsson-u300-apptimer
+
+title: ST-Ericsson U300 apptimer
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,u300-apptimer"
+
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # ST-Ericsson U300 apptimer
 #
 # Required properties:

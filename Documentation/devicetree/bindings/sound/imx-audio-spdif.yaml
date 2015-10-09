@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-audio-spdif
+
+title: Freescale i.MX audio complex with S/PDIF transceiver
+
+maintainer:
+    -   name: Nicolin Chen <b42378@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx-audio-spdif" && "fsl,imx-sabreauto-spdif"
+            "fsl,imx-audio-spdif"
+
+    model:
+    spdif-controller:
+    spdif-in:
+    spdif-out:
+
+...
+
 # Freescale i.MX audio complex with S/PDIF transceiver
 #
 # Required properties:

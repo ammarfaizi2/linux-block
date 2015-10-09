@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx
+
+title: NXP LPC32xx Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "phytec,phy3250" && "nxp,lpc3250"
+            "nxp,lpc3220"
+            "ea,ea3250" && "nxp,lpc3250"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # NXP LPC32xx Platforms Device Tree Bindings
 # ------------------------------------------
 #

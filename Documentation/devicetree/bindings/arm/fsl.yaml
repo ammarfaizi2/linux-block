@@ -1,3 +1,116 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl
+
+title: Freescale i.MX Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Fabio Estevam <fabio.estevam@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "zealz,imx6q-gk802" && "fsl,imx6q"
+            "wand,imx6q-wandboard" && "fsl,imx6q"
+            "voipac,imx53-dmm-668" && "fsl,imx53"
+            "udoo,imx6q-udoo" && "fsl,imx6q"
+            "tq,tqma53" && "fsl,imx53"
+            "tq,mba53" && "tq,tqma53" && "fsl,imx53"
+            "toradex,vf610-colibri"_"vf61-on-eval" && "toradex,vf610-colibri"_"vf61" && "fsl,vf610"
+            "toradex,vf610-colibri"_"vf61" && "fsl,vf610"
+            "toradex,vf610-colibri"_"vf50" && "fsl,vf500"
+            "toradex,vf500-colibri"_"vf50-on-eval" && "toradex,vf500-colibri"_"vf50" && "fsl,vf500"
+            "tbs,imx6q-tbs2910" && "fsl,imx6q"
+            "schulercontrol,imx28-sps1" && "fsl,imx28"
+            "rex,imx6q-rex-pro" && "fsl,imx6q"
+            "phytec,vf610-cosmic" && "fsl,vf610"
+            "phytec,imx6q-pfla02" && "fsl,imx6q"
+            "phytec,imx6q-pbab01" && "phytec,imx6q-pfla02" && "fsl,imx6q"
+            "phytec,imx27-pcm970" && "phytec,imx27-pcm038" && "fsl,imx27"
+            "phytec,imx27-pcm038" && "fsl,imx27"
+            "phytec,imx27-pca100-rdk" && "phytec,imx27-pca100" && "fsl,imx27"
+            "phytec,imx27-pca100" && "fsl,imx27"
+            "msr,m28cu3" && "fsl,imx28"
+            "microsys,sbc6x" && "fsl,imx6q"
+            "karo,tx53" && "fsl,imx53"
+            "karo,tx28" && "fsl,imx28"
+            "karo,imx6q-tx6q" && "fsl,imx6q"
+            "karo,imx25-tx25" && "fsl,imx25"
+            "i2se,duckbill" && "fsl,imx28"
+            "gw,imx6q-gw552x" && "gw,ventana" && "fsl,imx6q"
+            "gw,imx6q-gw551x" && "gw,ventana" && "fsl,imx6q"
+            "gw,imx6q-gw54xx" && "gw,ventana" && "fsl,imx6q"
+            "gw,imx6q-gw5400-a" && "gw,ventana" && "fsl,imx6q"
+            "gw,imx6q-gw53xx" && "gw,ventana" && "fsl,imx6q"
+            "gw,imx6q-gw52xx" && "gw,ventana" && "fsl,imx6q"
+            "gw,imx6q-gw51xx" && "gw,ventana" && "fsl,imx6q"
+            "fsl,vf610-twr" && "fsl,vf610"
+            "fsl,vf610m4"
+            "fsl,ls1021a-dcfg" && "syscon"
+            "fsl,ls1021a"
+            "fsl,imx6q-sabresd" && "fsl,imx6q"
+            "fsl,imx6q-sabrelite" && "fsl,imx6q"
+            "fsl,imx6q-sabreauto" && "fsl,imx6q"
+            "fsl,imx6q-nitrogen6x" && "fsl,imx6q"
+            "fsl,imx6q-arm2" && "fsl,imx6q"
+            "fsl,imx53-smd" && "fsl,imx53"
+            "fsl,imx53-qsrb" && "fsl,imx53"
+            "fsl,imx53-qsb" && "fsl,imx53"
+            "fsl,imx53-ard" && "fsl,imx53"
+            "fsl,imx51-babbage" && "fsl,imx51"
+            "fsl,imx28-evk" && "fsl,imx28"
+            "fsl,imx27-pdk" && "fsl,imx27"
+            "fsl,imx25-pdk" && "fsl,imx25"
+            "fsl,imx23-evk" && "fsl,imx23"
+            "eukrea,mbmx28lc" && "fsl,imx28"
+            "eukrea,mbmx287lc" && "eukrea,mbmx283lc" && "eukrea,mbmx28lc" && "fsl,imx28"
+            "eukrea,mbmx283lc" && "eukrea,mbmx28lc" && "fsl,imx28"
+            "eukrea,mbimxsd51" && "eukrea,cpuimx51" && "fsl,imx51"
+            "eukrea,mbimxsd27-baseboard" && "eukrea,cpuimx27" && "fsl,imx27"
+            "eukrea,mbimxsd25-baseboard" && "eukrea,cpuimx25" && "fsl,imx25"
+            "eukrea,mbimxsd25-baseboard-dvi-vga" && "eukrea,mbimxsd25-baseboard" && "eukrea,cpuimx25" && "fsl,imx25"
+            "eukrea,mbimxsd25-baseboard-dvi-svga" && "eukrea,mbimxsd25-baseboard" && "eukrea,cpuimx25" && "fsl,imx25"
+            "eukrea,mbimxsd25-baseboard-cmo-qvga" && "eukrea,mbimxsd25-baseboard" && "eukrea,cpuimx25" && "fsl,imx25"
+            "eukrea,cpuimx51" && "fsl,imx51"
+            "eukrea,cpuimx27" && "fsl,imx27"
+            "eukrea,cpuimx25" && "fsl,imx25"
+            "dmo,imx6q-edmqmx6" && "fsl,imx6q"
+            "digi,connectcore-ccxmx51-som" && "fsl,imx51"
+            "digi,connectcore-ccxmx51-jsk" && "digi,connectcore-ccxmx51-som" && "fsl,imx51"
+            "dfi,fs700-m60-6qd" && "dfi,fs700e-m60" && "fsl,imx6q"
+            "denx,m28" && "fsl,imx28"
+            "denx,m28evk" && "fsl,imx28"
+            "denx,imx53-m53" && "fsl,imx53"
+            "denx,imx53-m53evk" && "fsl,imx53"
+            "crystalfontz,cfa10058" && "crystalfontz,cfa10036" && "fsl,imx28"
+            "crystalfontz,cfa10057" && "crystalfontz,cfa10036" && "fsl,imx28"
+            "crystalfontz,cfa10056" && "crystalfontz,cfa10037" && "crystalfontz,cfa10036" && "fsl,imx28"
+            "crystalfontz,cfa10055" && "crystalfontz,cfa10037" && "crystalfontz,cfa10036" && "fsl,imx28"
+            "crystalfontz,cfa10049" && "crystalfontz,cfa10036" && "fsl,imx28"
+            "crystalfontz,cfa10037" && "crystalfontz,cfa10036" && "fsl,imx28"
+            "crystalfontz,cfa10036" && "fsl,imx28"
+            "compulab,cm-fx6" && "fsl,imx6q"
+            "bluegiga,apx4devkit" && "fsl,imx28"
+            "armadeus,imx6q-apf6dev" && "armadeus,imx6q-apf6" && "fsl,imx6q"
+            "armadeus,imx28-apf28" && "fsl,imx28"
+            "armadeus,imx28-apf28dev" && "armadeus,imx28-apf28" && "fsl,imx28"
+            "armadeus,imx27-apf27" && "fsl,imx27"
+            "armadeus,imx27-apf27dev" && "armadeus,imx27-apf27" && "fsl,imx27"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Freescale i.MX Platforms Device Tree Bindings
 # -----------------------------------------------
 #

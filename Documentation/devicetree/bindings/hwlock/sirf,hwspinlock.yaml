@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: sirf,hwspinlock
+
+title: SIRF Hardware spinlock device Binding
+
+maintainer:
+    -   name: Wei Chen <wei.chen@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,hwspinlock"
+
+    num-spinlocks:
+    reg:
+
+...
+
 # SIRF Hardware spinlock device Binding
 # -----------------------------------------------
 #

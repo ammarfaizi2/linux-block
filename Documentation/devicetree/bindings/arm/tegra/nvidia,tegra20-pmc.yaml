@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-pmc
+
+title: NVIDIA Tegra Power Management Controller (PMC)
+
+maintainer:
+    -   name: Joseph Lo <josephl@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-pmc"
+            "nvidia,tegra20-pmc"
+            "nvidia,tegra124-pmc"
+            "nvidia,tegra114-pmc"
+
+    clock-names:
+    clocks:
+    nvidia,core-power-req-active-high:
+    nvidia,core-pwr-good-time:
+    nvidia,core-pwr-off-time:
+    nvidia,cpu-pwr-good-time:
+    nvidia,cpu-pwr-off-time:
+    nvidia,invert-interrupt:
+    nvidia,suspend-mode:
+    nvidia,sys-clock-req-active-high:
+    reg:
+
+...
+
 # NVIDIA Tegra Power Management Controller (PMC)
 #
 # The PMC block interacts with an external Power Management Unit. The PMC

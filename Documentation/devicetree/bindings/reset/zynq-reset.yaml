@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: zynq-reset
+
+title: Xilinx Zynq Reset Manager
+
+maintainer:
+    -   name: Moritz Fischer <moritz.fischer@ettus.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,zynq-reset"
+
+    reg:
+    #reset-cells:
+    syscon:
+
+...
+
 # Xilinx Zynq Reset Manager
 #
 # The Zynq AP-SoC has several different resets.

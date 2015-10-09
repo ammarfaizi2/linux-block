@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,ipq8064-pinctrl
+
+title: Qualcomm IPQ8064 TLMM block
+
+maintainer:
+    -   name: Andy Gross <agross@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,ipq8064-pinctrl"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    reg:
+
+...
+
 # Qualcomm IPQ8064 TLMM block
 #
 # Required properties:

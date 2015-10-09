@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-omap
+
+title: I2C for OMAP platforms
+
+maintainer:
+    -   name: Tony Lindgren <tony@atomide.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-i2c"
+            "ti,omap3-i2c"
+            "ti,omap2430-i2c"
+            "ti,omap2420-i2c"
+            "ti,am4372-i2c" && "ti,omap4-i2c"
+
+    #address-cells:
+    clock-frequency:
+    interrupts:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+    ti,hwmods:
+
+...
+
 # I2C for OMAP platforms
 #
 # Required properties :

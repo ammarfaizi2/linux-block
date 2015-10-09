@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-hlcdc
+
+title: Device-Tree bindings for Atmel's HLCDC (High LCD Controller) MFD driver
+
+maintainer:
+    -   name: Boris Brezillon <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d4-hlcdc"
+            "atmel,hlcdc-display-controller"
+            "atmel,at91sam9x5-hlcdc"
+            "atmel,at91sam9n12-hlcdc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Device-Tree bindings for Atmel's HLCDC (High LCD Controller) MFD driver
 #
 # Required properties:

@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-sdhci
+
+title: NVIDIA Tegra Secure Digital Host Controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-sdhci" && "nvidia,tegra20-sdhci"
+            "nvidia,tegra20-sdhci"
+            "nvidia,tegra124-sdhci"
+            "nvidia,tegra114-sdhci" && "nvidia,tegra30-sdhci"
+
+    bus-width:
+    cd-gpios:
+    clocks:
+    interrupts:
+    non-removable:
+    power-gpios:
+    reg:
+    reset-names:
+    resets:
+    status:
+    vqmmc-supply:
+    wp-gpios:
+
+...
+
 # * NVIDIA Tegra Secure Digital Host Controller
 #
 # This controller on Tegra family SoCs provides an interface for MMC, SD,

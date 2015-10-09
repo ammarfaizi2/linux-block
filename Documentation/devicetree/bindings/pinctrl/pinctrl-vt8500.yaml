@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: pinctrl-vt8500
+
+title: VIA VT8500 and Wondermedia WM8xxx-series pinmux/gpio controller
+
+maintainer:
+    -   name: Tony Prisk <linux@prisktech.co.nz>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wm,wm8850-pinctrl"
+            "wm,wm8650-pinctrl"
+            "wm,wm8505-pinctrl"
+            "via,vt8500-pinctrl"
+
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # VIA VT8500 and Wondermedia WM8xxx-series pinmux/gpio controller
 #
 # These SoCs contain a combined Pinmux/GPIO module. Each pin may operate as

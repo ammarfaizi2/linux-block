@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835
+
+title: Broadcom BCM2835 device tree bindings
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "raspberrypi,model-b-plus" && "brcm,bcm2835"
+            "raspberrypi,model-b" && "brcm,bcm2835"
+            "brcm,bcm2835"
+
+
+...
+
 # Broadcom BCM2835 device tree bindings
 # -------------------------------------------
 #

@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: arc_emac
+
+title: Synopsys ARC EMAC 10/100 Ethernet driver (EMAC)
+
+maintainer:
+    -   name: Alexey Brodkin <Alexey.Brodkin@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,arc-emac"
+
+    #address-cells:
+    clock-frequency:
+    interrupts:
+    mac-address:
+    max-speed:
+    phy:
+    reg:
+    #size-cells:
+
+...
+
 # * Synopsys ARC EMAC 10/100 Ethernet driver (EMAC)
 #
 # Required properties:

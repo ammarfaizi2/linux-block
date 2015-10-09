@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: img,tz1090-pdc-pinctrl
+
+title: ImgTec TZ1090 PDC pin controller
+
+maintainer:
+    -   name: Heiko Stübner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "img,tz1090-pdc-pinctrl"
+
+
+...
+
 # ImgTec TZ1090 PDC pin controller
 #
 # Required properties:

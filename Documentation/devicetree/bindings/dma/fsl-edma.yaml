@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-edma
+
+title: Freescale enhanced Direct Memory Access(eDMA) Controller
+
+maintainer:
+    -   name: Jingchang Lu <b35083@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-edma"
+
+    big-endian:
+    clock-names:
+    clocks:
+    #dma-cells:
+    dma-channels:
+    interrupt-names:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Freescale enhanced Direct Memory Access(eDMA) Controller
 #
 #   The eDMA channels have multiplex capability by programmble memory-mapped

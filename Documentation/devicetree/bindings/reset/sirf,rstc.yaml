@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: sirf,rstc
+
+title: CSR SiRFSoC Reset Controller
+
+maintainer:
+    -   name: Barry Song <Baohua.Song@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,prima2-vpp"
+            "sirf,prima2-rstc"
+
+    reg:
+    #reset-cells:
+
+...
+
 # CSR SiRFSoC Reset Controller
 # ======================================
 #

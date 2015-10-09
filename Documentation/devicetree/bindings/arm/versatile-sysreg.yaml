@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: versatile-sysreg
+
+title: ARM Versatile system registers
+
+maintainer:
+    -   name: Rob Herring <robh@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-sysreg" && "syscon"
+
+    reg:
+
+...
+
 # ARM Versatile system registers
 # --------------------------------------
 #

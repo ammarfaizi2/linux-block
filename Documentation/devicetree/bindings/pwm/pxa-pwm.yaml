@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: pxa-pwm
+
+title: Marvell PWM controller
+
+maintainer:
+    -   name: Mike Dunn <mikedunn@newsguy.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa270-pwm" && "marvell,pxa250-pwm"
+
+
+...
+
 # Marvell PWM controller
 #
 # Required properties:

@@ -1,3 +1,53 @@
+%YAML 1.2
+---
+version: 1
+
+id: tegra
+
+title: NVIDIA Tegra device tree bindings
+
+maintainer:
+    -   name: Bryan Wu <pengw@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "toradex,iris" && "toradex,colibri"_"t20-512" && "nvidia,tegra20"
+            "toradex,colibri"_"t30" && "nvidia,tegra30"
+            "toradex,colibri"_"t30-eval-v3" && "toradex,colibri"_"t30" && "nvidia,tegra30"
+            "toradex,colibri"_"t20-512" && "nvidia,tegra20"
+            "toradex,apalis"_"t30" && "nvidia,tegra30"
+            "toradex,apalis"_"t30-eval" && "toradex,apalis"_"t30" && "nvidia,tegra30"
+            "nvidia,whistler" && "nvidia,tegra20"
+            "nvidia,ventana" && "nvidia,tegra20"
+            "nvidia,tegra30"
+            "nvidia,tegra20"
+            "nvidia,seaboard" && "nvidia,tegra20"
+            "nvidia,harmony" && "nvidia,tegra20"
+            "nvidia,cardhu" && "nvidia,tegra30"
+            "nvidia,cardhu-a04" && "nvidia,cardhu" && "nvidia,tegra30"
+            "nvidia,cardhu-a02" && "nvidia,cardhu" && "nvidia,tegra30"
+            "nvidia,beaver" && "nvidia,tegra30"
+            "compulab,trimslice" && "nvidia,tegra20"
+            "compal,paz00" && "nvidia,tegra20"
+            "ad,tec" && "ad,tamonten" && "nvidia,tegra20"
+            "ad,tamonten" && "nvidia,tegra20"
+            "ad,plutux" && "ad,tamonten" && "nvidia,tegra20"
+            "ad,medcom-wide" && "ad,tamonten" && "nvidia,tegra20"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # NVIDIA Tegra device tree bindings
 # -------------------------------------------
 #

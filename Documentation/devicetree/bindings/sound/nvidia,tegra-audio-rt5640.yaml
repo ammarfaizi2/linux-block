@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra-audio-rt5640
+
+title: NVIDIA Tegra audio complex, with RT5640 CODEC
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra-audio-rt5640-jetson-tk1" && "nvidia,tegra-audio-rt5640"
+            "nvidia,tegra-audio-rt5640-dalmore" && "nvidia,tegra-audio-rt5640"
+            "nvidia,tegra-audio-rt5640-beaver" && "nvidia,tegra-audio-rt5640"
+
+    clock-names:
+    clocks:
+    nvidia,audio-codec:
+    nvidia,audio-routing:
+    nvidia,hp-det-gpios:
+    nvidia,i2s-controller:
+    nvidia,model:
+
+...
+
 # NVIDIA Tegra audio complex, with RT5640 CODEC
 #
 # Required properties:

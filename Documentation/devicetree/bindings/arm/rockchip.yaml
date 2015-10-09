@@ -1,3 +1,48 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip
+
+title: Rockchip platforms device tree bindings
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-evb-rk808" && "rockchip,rk3288"
+            "rockchip,rk3288-evb-act8846" && "rockchip,rk3288"
+            "rockchip,rk3288"
+            "rockchip,rk3188"
+            "rockchip,rk3066a"
+            "radxa,rock" && "rockchip,rk3188"
+            "netxeon,r89" && "rockchip,rk3288"
+            "mundoreader,bq-curie2" && "rockchip,rk3066a"
+            "haoyu,marsboard-rk3066" && "rockchip,rk3066a"
+            "google,veyron-speedy-rev9" && "google,veyron-speedy-rev8" && "google,veyron-speedy-rev7" && "google,veyron-speedy-rev6" && "google,veyron-speedy-rev5" && "google,veyron-speedy-rev4" && "google,veyron-speedy-rev3" && "google,veyron-speedy-rev2" && "google,veyron-speedy" && "google,veyron" && "rockchip,rk3288"
+            "google,veyron-pinky-rev2" && "google,veyron-pinky" && "google,veyron" && "rockchip,rk3288"
+            "google,veyron-minnie-rev4" && "google,veyron-minnie-rev3" && "google,veyron-minnie-rev2" && "google,veyron-minnie-rev1" && "google,veyron-minnie-rev0" && "google,veyron-minnie" && "google,veyron" && "rockchip,rk3288"
+            "google,veyron-jerry-rev7" && "google,veyron-jerry-rev6" && "google,veyron-jerry-rev5" && "google,veyron-jerry-rev4" && "google,veyron-jerry-rev3" && "google,veyron-jerry" && "google,veyron" && "rockchip,rk3288"
+            "firefly,firefly-rk3288" && "rockchip,rk3288"
+            "firefly,firefly-rk3288-beta" && "rockchip,rk3288"
+            "chipspark,rayeager-px2" && "rockchip,rk3066a"
+            "chipspark,popmetal-rk3288" && "rockchip,rk3288"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # Rockchip platforms device tree bindings
 # ---------------------------------------
 #

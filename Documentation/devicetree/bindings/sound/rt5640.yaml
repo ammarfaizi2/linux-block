@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: rt5640
+
+title: RT5640/RT5639 audio CODEC
+
+maintainer:
+    -   name: Mark Brown <broonie@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "realtek,rt5640"
+            "realtek,rt5639"
+
+    interrupt-parent:
+    interrupts:
+    realtek,ldo1-en-gpios:
+    reg:
+
+...
+
 # RT5640/RT5639 audio CODEC
 #
 # This device supports I2C only.

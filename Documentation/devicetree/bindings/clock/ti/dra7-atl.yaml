@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: dra7-atl
+
+title: Device Tree Clock bindings for ATL (Audio Tracking Logic) of DRA7 SoC.
+
+maintainer:
+    -   name: Peter Ujfalusi <peter.ujfalusi@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,dra7-atl-clock"
+            "ti,dra7-atl"
+
+    clock-names:
+    clocks:
+    reg:
+    status:
+    ti,hwmods:
+    ti,provided-clocks:
+
+...
+
 # Device Tree Clock bindings for ATL (Audio Tracking Logic) of DRA7 SoC.
 #
 # The ATL IP is used to generate clock to be used to synchronize baseband and

@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-fsl-ftm
+
+title: Freescale FlexTimer Module (FTM) PWM controller
+
+maintainer:
+    -   name: Xiubo Li <Li.Xiubo@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-ftm-pwm"
+
+    clock-names:
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    #pwm-cells:
+    reg:
+    status:
+
+...
+
 # Freescale FlexTimer Module (FTM) PWM controller
 #
 # The same FTM PWM device can have a different endianness on different SoCs. The

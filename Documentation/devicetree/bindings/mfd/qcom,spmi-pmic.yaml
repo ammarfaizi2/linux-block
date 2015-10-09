@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,spmi-pmic
+
+title:           Qualcomm SPMI PMICs multi-function device bindings
+
+maintainer:
+    -   name: Ivan T. Ivanov <iivanov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,spmi-pmic"
+            "qcom,spmi-pmic"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 #           Qualcomm SPMI PMICs multi-function device bindings
 #
 # The Qualcomm SPMI series presently includes PM8941, PM8841 and PMA8084

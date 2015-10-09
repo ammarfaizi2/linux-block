@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear-thermal
+
+title: SPEAr Thermal
+
+maintainer:
+    -   name: Viresh Kumar <vireshk@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,thermal-spear1340"
+
+    reg:
+    st,thermal-flags:
+    thermal_flags:
+
+...
+
 # * SPEAr Thermal
 #
 # Required properties:

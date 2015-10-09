@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: sun6i-dma
+
+title: Allwinner A31 DMA Controller
+
+maintainer:
+    -   name: Chen-Yu Tsai <wens@csie.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun8i-a23-dma"
+            "allwinner,sun6i-a31-dma"
+
+    clocks:
+    #dma-cells:
+    interrupts:
+    reg:
+    resets:
+
+...
+
 # Allwinner A31 DMA Controller
 #
 # This driver follows the generic DMA bindings defined in dma.txt.

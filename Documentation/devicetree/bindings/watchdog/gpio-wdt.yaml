@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-wdt
+
+title: GPIO-controlled Watchdog
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio"
+
+    reg:
+
+...
+
 # * GPIO-controlled Watchdog
 #
 # Required Properties:

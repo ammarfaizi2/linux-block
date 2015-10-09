@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: st-asc
+
+title: *st-asc(Serial Port)
+
+maintainer:
+    -   name: Kumar Gala <galak@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,asc"
+
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # *st-asc(Serial Port)
 #
 # Required properties:

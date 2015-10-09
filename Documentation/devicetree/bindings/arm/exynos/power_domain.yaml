@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: power_domain
+
+title: Samsung Exynos Power Domains
+
+maintainer:
+    -   name: Marek Szyprowski <m.szyprowski@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4210-pd"
+
+    clock-names:
+    clocks:
+    #power-domain-cells:
+    power-domains:
+    reg:
+
+...
+
 # * Samsung Exynos Power Domains
 #
 # Exynos processors include support for multiple power domains which are used

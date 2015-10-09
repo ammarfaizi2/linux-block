@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: cpufreq-exynos5440
+
+title: Exynos5440 cpufreq driver
+
+maintainer:
+    -   name: Amit Daniel Kachhap <amit.daniel@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5440-cpufreq"
+
+    interrupts:
+    operating-points:
+    reg:
+
+...
+
 #
 # Exynos5440 cpufreq driver
 # -------------------

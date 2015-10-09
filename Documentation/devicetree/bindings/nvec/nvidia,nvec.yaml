@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,nvec
+
+title: NVIDIA compliant embedded controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,nvec"
+
+    #address-cells:
+    clock-frequency:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    request-gpios:
+    reset-names:
+    resets:
+    #size-cells:
+    slave-addr:
+
+...
+
 # NVIDIA compliant embedded controller
 #
 # Required properties:

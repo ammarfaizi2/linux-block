@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-i2s
+
+title: NVIDIA Tegra 20 I2S controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra20-i2s"
+
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # NVIDIA Tegra 20 I2S controller
 #
 # Required properties:

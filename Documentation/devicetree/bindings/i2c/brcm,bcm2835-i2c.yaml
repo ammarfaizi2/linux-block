@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-i2c
+
+title: Broadcom BCM2835 I2C controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@wwwdotorg.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-i2c"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Broadcom BCM2835 I2C controller
 #
 # Required properties:

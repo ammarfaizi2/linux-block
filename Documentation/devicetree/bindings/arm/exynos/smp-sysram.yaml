@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: smp-sysram
+
+title: Samsung Exynos SYSRAM for SMP bringup:
+
+maintainer:
+    -   name: Sachin Kamat <sachin.kamat@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos4210-sysram-ns"
+            "samsung,exynos4210-sysram"
+
+    reg:
+    status:
+
+...
+
 # Samsung Exynos SYSRAM for SMP bringup:
 # ------------------------------------
 #

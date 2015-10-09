@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: adapteva
+
+title: Adapteva Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Andreas Färber <afaerber@suse.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "adapteva,parallella" && "xlnx,zynq-7000"
+
+    #address-cells:
+    model:
+    #size-cells:
+
+...
+
 # Adapteva Platforms Device Tree Bindings
 # ---------------------------------------
 #

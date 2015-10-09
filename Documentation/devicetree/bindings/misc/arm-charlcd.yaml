@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm-charlcd
+
+title: ARM Versatile Character LCD
+
+maintainer:
+    -   name: Rob Herring <robh@kernel.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-lcd"
+
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # ARM Versatile Character LCD
 # -----------------------------------------------------
 # This binding defines the character LCD interface found on ARM Versatile AB

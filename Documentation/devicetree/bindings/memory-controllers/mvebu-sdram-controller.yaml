@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: mvebu-sdram-controller
+
+title: Device Tree bindings for MVEBU SDRAM controllers
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armada-xp-sdram-controller"
+
+    reg:
+
+...
+
 # Device Tree bindings for MVEBU SDRAM controllers
 #
 # The Marvell EBU SoCs all have a SDRAM controller. The SDRAM controller

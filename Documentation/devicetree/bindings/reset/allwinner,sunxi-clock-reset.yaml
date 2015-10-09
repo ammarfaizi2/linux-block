@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: allwinner,sunxi-clock-reset
+
+title: Allwinner sunxi Peripheral Reset Controller
+
+maintainer:
+    -   name: Boris BREZILLON <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun6i-a31-clock-reset"
+            "allwinner,sun6i-a31-ahb1-reset"
+
+    reg:
+    #reset-cells:
+
+...
+
 # Allwinner sunxi Peripheral Reset Controller
 # ===========================================
 #

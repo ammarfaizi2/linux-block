@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear_spics
+
+title: === ST Microelectronics SPEAr SPI CS Driver ===
+
+maintainer:
+    -   name: Shiraz Hashim <shiraz.linux.kernel@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear-spics-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+    status:
+    st-spics,cs-enable-mask:
+    st-spics,cs-enable-shift:
+    st-spics,cs-value-bit:
+    st-spics,peripcfg-reg:
+    st-spics,sw-enable-bit:
+
+...
+
 # === ST Microelectronics SPEAr SPI CS Driver ===
 #
 # SPEAr platform provides a provision to control chipselects of ARM PL022 Prime

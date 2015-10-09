@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm,sp804
+
+title: ARM sp804 Dual Timers
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,sp804" && "arm,primecell"
+
+    arm,sp804-has-irq:
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # ARM sp804 Dual Timers
 # ---------------------------------------
 #

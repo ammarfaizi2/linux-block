@@ -1,3 +1,126 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap
+
+title: Texas Instruments OMAP
+
+maintainer:
+    -   name: Florian Vaussard <florian.vaussard@epfl.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "vscom,onrisc" && "ti,am33xx"
+            "variscite,var-stk-om44" && "variscite,var-som-om44" && "ti,omap4460" && "ti,omap4"
+            "variscite,var-som-om44" && "ti,omap4460" && "ti,omap4"
+            "variscite,var-dvk-om44" && "variscite,var-som-om44" && "ti,omap4460" && "ti,omap4"
+            "ti,omap5-uevm" && "ti,omap5"
+            "ti,omap5"
+            "ti,omap4-sdp" && "ti,omap4430" && "ti,omap4"
+            "ti,omap4-panda" && "ti,omap4430" && "ti,omap4"
+            "ti,omap4-panda-es" && "ti,omap4-panda" && "ti,omap4460" && "ti,omap4430" && "ti,omap4"
+            "ti,omap4430" && "ti,omap4"
+            "ti,omap3-zoom3" && "ti,omap36xx" && "ti,omap3"
+            "ti,omap3-ldp" && "ti,omap3"
+            "ti,omap3-gta04" && "ti,omap36xx" && "ti,omap3"
+            "ti,omap3-evm" && "ti,omap3"
+            "ti,omap3-evm-37xx" && "ti,omap36xx"
+            "ti,omap3-beagle-xm" && "ti,omap36xx" && "ti,omap3"
+            "ti,omap3-beagle" && "ti,omap3"
+            "ti,omap3430" && "ti,omap3"
+            "ti,omap3430-sdp" && "ti,omap3"
+            "ti,omap2430" && "ti,omap2420" && "ti,omap2"
+            "ti,omap2430" && "ti,omap2"
+            "ti,omap2430-sdp" && "ti,omap2430" && "ti,omap2"
+            "ti,omap2420" && "ti,omap2"
+            "ti,omap2420-h4" && "ti,omap2420" && "ti,omap2"
+            "timll,omap3-devkit8000" && "ti,omap3"
+            "ti,dra7-evm" && "ti,dra742" && "ti,dra74" && "ti,dra7"
+            "ti,dra742" && "ti,dra74" && "ti,dra7"
+            "ti,dra72-evm" && "ti,dra722" && "ti,dra72" && "ti,dra7"
+            "ti,dra722" && "ti,dra72" && "ti,dra7"
+            "ti,am572x-beagle-x15" && "ti,am5728" && "ti,dra742" && "ti,dra74" && "ti,dra7"
+            "ti,am43x-epos-evm" && "ti,am4372" && "ti,am43"
+            "ti,am437x-sk-evm" && "ti,am4372" && "ti,am43"
+            "ti,am437x-idk-evm" && "ti,am4372" && "ti,am43"
+            "ti,am437x-gp-evm" && "ti,am4372" && "ti,am43"
+            "ti,am4372" && "ti,am43"
+            "ti,am3517-evm" && "ti,am3517" && "ti,omap3"
+            "ti,am3517-craneboard" && "ti,am3517" && "ti,omap3"
+            "ti,am33xx"
+            "ti,am335x-evm" && "ti,am33xx"
+            "ti,am335x-evmsk" && "ti,am33xx"
+            "ti,am335x-bone" && "ti,am33xx"
+            "ti,am335x-bone-black" && "ti,am335x-bone" && "ti,am33xx"
+            "teejet,mt"_"ventoux" && "ti,omap3"
+            "technexion,omap3-thunder" && "technexion,omap3-tao3530" && "ti,omap34xx" && "ti,omap3"
+            "tcl,am335x-sl50" && "ti,am33xx"
+            "phytec,am335x-wega" && "phytec,am335x-phycore-som" && "ti,am33xx"
+            "phytec,am335x-phycore-som" && "ti,am33xx"
+            "openpandora,omap3-pandora-600mhz" && "ti,omap3430" && "ti,omap3"
+            "openpandora,omap3-pandora-1ghz" && "ti,omap36xx" && "ti,omap3"
+            "novatech,am335x-lxm" && "ti,am33xx"
+            "nokia,omap3-n9" && "ti,omap36xx" && "ti,omap3"
+            "nokia,omap3-n950" && "ti,omap36xx" && "ti,omap3"
+            "nokia,omap3-n900" && "ti,omap3430" && "ti,omap3"
+            "nokia,n810-wimax" && "nokia,n8x0" && "ti,omap2420" && "ti,omap2"
+            "nokia,n810" && "nokia,n8x0" && "ti,omap2420" && "ti,omap2"
+            "nokia,n800" && "nokia,n8x0" && "ti,omap2420" && "ti,omap2"
+            "logicpd,dm3730-torpedo-devkit" && "ti,omap36xx"
+            "isee,omap3-igep0030" && "ti,omap36xx" && "ti,omap3"
+            "isee,omap3-igep0030-rev-g" && "ti,omap36xx" && "ti,omap3"
+            "isee,omap3-igep0020" && "ti,omap36xx" && "ti,omap3"
+            "isee,omap3-igep0020-rev-f" && "ti,omap36xx" && "ti,omap3"
+            "isee,am335x-base0033" && "isee,am335x-igep0033" && "ti,am33xx"
+            "incostartec,omap3-lilly-dbb056" && "incostartec,omap3-lilly-a83x" && "ti,omap36xx" && "ti,omap3"
+            "incostartec,omap3-lilly-a83x" && "ti,omap36xx" && "ti,omap3"
+            "headacoustics,omap3-ha" && "technexion,omap3-tao3530" && "ti,omap34xx" && "ti,omap3"
+            "headacoustics,omap3-ha-lcd" && "technexion,omap3-tao3530" && "ti,omap34xx" && "ti,omap3"
+            "gumstix,omap4-duovero" && "ti,omap4430" && "ti,omap4"
+            "gumstix,omap4-duovero-parlor" && "gumstix,omap4-duovero" && "ti,omap4430" && "ti,omap4"
+            "gumstix,omap3-overo-tobi" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-tobi" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,omap3-overo-tobiduo" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-tobiduo" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,omap3-overo-summit" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-summit" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,omap3-overo-palo43" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-palo43" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,omap3-overo-palo35" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-palo35" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,omap3-overo-gallop43" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-gallop43" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,omap3-overo-chestnut43" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-chestnut43" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,omap3-overo-alto35" && "gumstix,omap3-overo" && "ti,omap36xx" && "ti,omap3"
+            "gumstix,omap3-overo-alto35" && "gumstix,omap3-overo" && "ti,omap3430" && "ti,omap3"
+            "gumstix,am335x-pepper" && "ti,am33xx"
+            "grinn,am335x-chilisom" && "ti,am33xx"
+            "grinn,am335x-chiliboard" && "grinn,am335x-chilisom" && "ti,am33xx"
+            "compulab,omap5-sbc-t54" && "compulab,omap5-cm-t54" && "ti,omap5"
+            "compulab,omap5-cm-t54" && "ti,omap5"
+            "compulab,omap3-sbc-t3730" && "compulab,omap3-cm-t3730" && "ti,omap36xx" && "ti,omap3"
+            "compulab,omap3-sbc-t3530" && "compulab,omap3-cm-t3530" && "ti,omap34xx" && "ti,omap3"
+            "compulab,omap3-sbc-t3517" && "compulab,omap3-cm-t3517" && "ti,am3517" && "ti,omap3"
+            "compulab,omap3-cm-t3730" && "ti,omap36xx" && "ti,omap3"
+            "compulab,omap3-cm-t3530" && "ti,omap34xx" && "ti,omap3"
+            "compulab,omap3-cm-t3517" && "ti,am3517" && "ti,omap3"
+
+    #address-cells:
+    interrupt-parent:
+    model:
+    #size-cells:
+
+...
+
 # * Texas Instruments OMAP
 #
 # OMAP is currently using a static file per SoC family to describe the

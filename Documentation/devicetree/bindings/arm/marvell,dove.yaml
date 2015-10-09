@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell,dove
+
+title: Marvell Dove Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "solidrun,cubox" && "marvell,dove"
+            "solidrun,cubox-es" && "solidrun,cubox" && "marvell,dove"
+            "marvell,dove-global-config" && "syscon"
+            "marvell,dove-db" && "marvell,dove"
+            "marvell,dove"
+            "globalscale,d3plug" && "marvell,dove"
+            "globalscale,d2plug" && "marvell,dove"
+            "compulab,sbc-a510" && "compulab,cm-a510" && "marvell,dove"
+            "compulab,cm-a510" && "marvell,dove"
+
+
+...
+
 # Marvell Dove Platforms Device Tree Bindings
 # -----------------------------------------------
 #

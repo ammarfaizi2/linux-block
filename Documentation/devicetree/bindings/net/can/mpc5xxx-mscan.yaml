@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: mpc5xxx-mscan
+
+title: CAN Device Tree Bindings
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc5121-mscan"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # CAN Device Tree Bindings
 # ------------------------
 #

@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: fg
+
+title: === AB8500 Fuel Gauge Driver ===
+
+maintainer:
+    -   name: Rajanikanth H.V <rajanikanth.hv@stericsson.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,ab8500-fg"
+
+    battery:
+
+...
+
 # === AB8500 Fuel Gauge Driver ===
 #
 # AB8500 is a mixed signal multimedia and power management

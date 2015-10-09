@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-gpio
+
+title: SPI-GPIO devicetree bindings
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "spi-gpio"
+
+    #address-cells:
+    cs-gpios:
+    gpio-miso:
+    gpio-mosi:
+    gpio-sck:
+    num-chipselects:
+    pinctrl-0:
+    pinctrl-names:
+    #size-cells:
+    status:
+
+...
+
 # SPI-GPIO devicetree bindings
 #
 # Required properties:

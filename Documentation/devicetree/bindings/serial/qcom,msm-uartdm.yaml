@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,msm-uartdm
+
+title: MSM Serial UARTDM
+
+maintainer:
+    -   name: Frank Rowand <frank.rowand@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,msm-uartdm-v1"."4" && "qcom,msm-uartdm"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * MSM Serial UARTDM
 #
 # The MSM serial UARTDM hardware is designed for high-speed use cases where the

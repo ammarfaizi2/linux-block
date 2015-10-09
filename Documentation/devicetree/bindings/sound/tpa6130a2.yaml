@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: tpa6130a2
+
+title: Texas Instruments - tpa6130a2 Codec module
+
+maintainer:
+    -   name: Sebastian Reichel <sre@debian.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tpa6130a2"
+
+    power-gpio:
+    reg:
+    Vdd-supply:
+
+...
+
 # Texas Instruments - tpa6130a2 Codec module
 #
 # The tpa6130a2 serial control bus communicates through I2C protocols

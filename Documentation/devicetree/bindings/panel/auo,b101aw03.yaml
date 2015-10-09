@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: auo,b101aw03
+
+title: AU Optronics Corporation 10.1" WSVGA TFT LCD panel
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "auo,b101aw03" && "simple-panel"
+
+    backlight:
+    enable-gpios:
+    power-supply:
+
+...
+
 # AU Optronics Corporation 10.1" WSVGA TFT LCD panel
 #
 # Required properties:

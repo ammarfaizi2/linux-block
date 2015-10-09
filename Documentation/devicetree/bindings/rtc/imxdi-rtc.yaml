@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: imxdi-rtc
+
+title: i.MX25 Real Time Clock controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx25-dryice" && "fsl,imx25-rtc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * i.MX25 Real Time Clock controller
 #
 # This binding supports the following chips: i.MX25, i.MX53

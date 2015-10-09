@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: bma180
+
+title: Bosch BMA180 / BMA250 triaxial acceleration sensor
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "bosch,bma250"
+            "bosch,bma180"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * Bosch BMA180 / BMA250 triaxial acceleration sensor
 #
 # http://omapworld.com/BMA180_111_1002839.pdf

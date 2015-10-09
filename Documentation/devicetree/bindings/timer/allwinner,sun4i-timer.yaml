@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: allwinner,sun4i-timer
+
+title: Allwinner A1X SoCs Timer Controller
+
+maintainer:
+    -   name: Maxime Ripard <maxime.ripard@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun4i-a10-timer"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Allwinner A1X SoCs Timer Controller
 #
 # Required properties:

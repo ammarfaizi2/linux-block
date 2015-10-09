@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: ucc
+
+title: UCC (Unified Communications Controllers)
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ucc"_"geth"
+
+    cell-index:
+    device_type:
+    interrupt-parent:
+    interrupts:
+    local-mac-address:
+    phy-connection-type:
+    phy-handle:
+    pio-handle:
+    reg:
+    rx-clock-name:
+    tbi-handle:
+    tx-clock-name:
+
+...
+
 # * UCC (Unified Communications Controllers)
 #
 # Required properties:

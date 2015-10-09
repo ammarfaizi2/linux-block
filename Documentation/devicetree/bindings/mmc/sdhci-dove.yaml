@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: sdhci-dove
+
+title: Marvell sdhci-dove controller
+
+maintainer:
+    -   name: Sebastian Hesselbarth <sebastian.hesselbarth@googlemail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,dove-sdhci"
+
+    bus-width:
+    cd-gpios:
+    clocks:
+    interrupts:
+    non-removable:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-gpio:
+    status:
+    vmmc-supply:
+    wp-gpios:
+
+...
+
 # * Marvell sdhci-dove controller
 #
 # This file documents differences between the core properties in mmc.txt

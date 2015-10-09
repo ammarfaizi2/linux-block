@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: dw_wdt
+
+title: Synopsys Designware Watchdog Timer
+
+maintainer:
+    -   name: Dinh Nguyen <dinguyen@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,dw-wdt"
+            "rockchip,rk3288-wdt" && "snps,dw-wdt"
+            "rockchip,rk3188-wdt" && "snps,dw-wdt"
+            "rockchip,rk3066-wdt" && "snps,dw-wdt"
+
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Synopsys Designware Watchdog Timer
 #
 # Required Properties:

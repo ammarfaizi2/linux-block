@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: lg,lp129qe
+
+title: LG 12.9" (2560x1700 pixels) TFT LCD panel
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "lg,lp129qe" && "simple-panel"
+
+    backlight:
+    ddc-i2c-bus:
+
+...
+
 # LG 12.9" (2560x1700 pixels) TFT LCD panel
 #
 # Required properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: sirfsoc_wdt
+
+title: SiRFSoC Timer and Watchdog Timer(WDT) Controller
+
+maintainer:
+    -   name: Xianglong Du <Xianglong.Du@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,prima2-tick"
+
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # SiRFSoC Timer and Watchdog Timer(WDT) Controller
 #
 # Required properties:

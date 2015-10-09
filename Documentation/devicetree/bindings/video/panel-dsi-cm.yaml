@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: panel-dsi-cm
+
+title: Generic MIPI DSI Command Mode Panel
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "tpo,taal" && "panel-dsi-cm"
+
+    label:
+    reset-gpios:
+
+...
+
 # Generic MIPI DSI Command Mode Panel
 # ===================================
 #

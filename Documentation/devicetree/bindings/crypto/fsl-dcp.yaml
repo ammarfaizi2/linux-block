@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-dcp
+
+title: Freescale DCP (Data Co-Processor) found on i.MX23/i.MX28 .
+
+maintainer:
+    -   name: Marek Vasut <marex@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-dcp" && "fsl,imx23-dcp"
+            "fsl,imx23-dcp"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Freescale DCP (Data Co-Processor) found on i.MX23/i.MX28 .
 #
 # Required properties:

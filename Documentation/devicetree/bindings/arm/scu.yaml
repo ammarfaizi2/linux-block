@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: scu
+
+title: ARM Snoop Control Unit (SCU)
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,cortex-a5-scu"
+
+    reg:
+
+...
+
 # * ARM Snoop Control Unit (SCU)
 #
 # As part of the MPCore complex, Cortex-A5 and Cortex-A9 are provided

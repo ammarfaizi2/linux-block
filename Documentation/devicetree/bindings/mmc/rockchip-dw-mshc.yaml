@@ -1,3 +1,45 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-dw-mshc
+
+title: Rockchip specific extensions to the Synopsys Designware Mobile
+
+maintainer:
+    -   name: Addy Ke <addy.ke@rock-chips.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-dw-mshc"
+            "rockchip,rk2928-dw-mshc"
+
+    broken-cd:
+    bus-width:
+    cap-mmc-highspeed:
+    clock-names:
+    clocks:
+    disable-wp:
+    fifo-depth:
+    interrupts:
+    non-removable:
+    num-slots:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+    vmmc-supply:
+    vqmmc-supply:
+
+...
+
 # * Rockchip specific extensions to the Synopsys Designware Mobile
 #   Storage Host Controller
 #

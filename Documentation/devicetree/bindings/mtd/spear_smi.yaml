@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear_smi
+
+title: SPEAr SMI
+
+maintainer:
+    -   name: Stefan Roese <sr@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear600-smi"
+
+    #address-cells:
+    clock-rate:
+    interrupt-parent:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * SPEAr SMI
 #
 # Required properties:

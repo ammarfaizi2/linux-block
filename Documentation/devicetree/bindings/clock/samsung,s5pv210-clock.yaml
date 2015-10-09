@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung,s5pv210-clock
+
+title: Samsung S5P6442/S5PC110/S5PV210 Clock Controller
+
+maintainer:
+    -   name: Mateusz Krawczuk <m.krawczuk@partner.samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-clock" && "simple-bus"
+
+    #address-cells:
+    #clock-cells:
+    clock-names:
+    clocks:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # * Samsung S5P6442/S5PC110/S5PV210 Clock Controller
 #
 # Samsung S5P6442, S5PC110 and S5PV210 SoCs contain integrated clock

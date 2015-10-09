@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: prima2-clock
+
+title: Clock bindings for CSR SiRFprimaII
+
+maintainer:
+    -   name: Barry Song <Baohua.Song@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,prima2-clkc"
+
+    #clock-cells:
+    interrupts:
+    reg:
+
+...
+
 # * Clock bindings for CSR SiRFprimaII
 #
 # Required properties:

@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: ndfc
+
+title: AMCC NDFC (NanD Flash Controller)
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ibm,ndfc"
+
+    #address-cells:
+    bank-settings:
+    ccr:
+    reg:
+    #size-cells:
+
+...
+
 # AMCC NDFC (NanD Flash Controller)
 #
 # Required properties:

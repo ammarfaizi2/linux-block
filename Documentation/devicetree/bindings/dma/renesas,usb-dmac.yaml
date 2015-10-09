@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,usb-dmac
+
+title: Renesas USB DMA Controller Device Tree bindings
+
+maintainer:
+    -   name: Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,usb-dmac"
+
+    clocks:
+    #dma-cells:
+    dma-channels:
+    interrupt-names:
+    interrupts:
+    power-domains:
+    reg:
+
+...
+
 # * Renesas USB DMA Controller Device Tree bindings
 #
 # Required Properties:

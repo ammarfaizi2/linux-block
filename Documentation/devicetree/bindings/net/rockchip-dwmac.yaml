@@ -1,3 +1,49 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip-dwmac
+
+title: Rockchip SoC RK3288 10/100/1000 Ethernet driver(GMAC)
+
+maintainer:
+    -   name: Heiko Stübner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-gmac"
+
+    assigned-clock-parents:
+    assigned-clocks:
+    clock_in_out:
+    clock-names:
+    clocks:
+    interrupt-names:
+    interrupts:
+    phy-mode:
+    phy-supply:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reset-names:
+    resets:
+    rockchip,grf:
+    rx_delay:
+    snps,reset-active-low:
+    snps,reset-delays-us:
+    snps,reset-gpio:
+    status:
+    tx_delay:
+
+...
+
 # Rockchip SoC RK3288 10/100/1000 Ethernet driver(GMAC)
 #
 # The device node has following properties.

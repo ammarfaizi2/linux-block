@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-ocores
+
+title: Device tree configuration for i2c-ocores
+
+maintainer:
+    -   name: Ganesan Ramalingam <ganesanr@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "opencores,i2c-ocores"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    reg:
+    reg-io-width:
+    reg-shift:
+    #size-cells:
+
+...
+
 # Device tree configuration for i2c-ocores
 #
 # Required properties:

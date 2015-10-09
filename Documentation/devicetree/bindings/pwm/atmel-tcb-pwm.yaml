@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-tcb-pwm
+
+title: Atmel TCB PWM controller
+
+maintainer:
+    -   name: Boris BREZILLON <linux-arm@overkiz.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,tcb-pwm"
+
+    pinctrl-0:
+    pinctrl-names:
+    #pwm-cells:
+    tc-block:
+
+...
+
 # Atmel TCB PWM controller
 #
 # Required properties:

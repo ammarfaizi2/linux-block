@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel,lcdc
+
+title: Atmel LCDC Framebuffer
+
+maintainer:
+    -   name: Alexander Stein <alexander.stein@systec-electronic.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91sam9rl-lcdc"
+            "atmel,at91sam9g45-lcdc"
+            "atmel,at91sam9263-lcdc"
+            "atmel,at91sam9261-lcdc"
+
+    atmel,power-control-gpio:
+    clock-names:
+    clocks:
+    display:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # Atmel LCDC Framebuffer
 # -----------------------------------------------------
 #

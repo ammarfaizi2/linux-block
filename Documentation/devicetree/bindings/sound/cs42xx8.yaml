@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: cs42xx8
+
+title: CS42448/CS42888 audio CODEC
+
+maintainer:
+    -   name: Nicolin Chen <Guangyu.Chen@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cirrus,cs42888"
+
+    clock-names:
+    clocks:
+    reg:
+    VA-supply:
+    VD-supply:
+    VLC-supply:
+    VLS-supply:
+
+...
+
 # CS42448/CS42888 audio CODEC
 #
 # Required properties:

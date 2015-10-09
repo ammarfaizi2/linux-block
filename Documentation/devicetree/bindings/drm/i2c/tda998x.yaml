@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: tda998x
+
+title: Device-Tree bindings for the NXP TDA998x HDMI transmitter
+
+maintainer:
+    -   name: Jean-Francois Moine <moinejf@free.fr>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,tda998x"
+
+    pinctrl-0:
+    pinctrl-1:
+    pinctrl-names:
+    reg:
+
+...
+
 # Device-Tree bindings for the NXP TDA998x HDMI transmitter
 #
 # Required properties;

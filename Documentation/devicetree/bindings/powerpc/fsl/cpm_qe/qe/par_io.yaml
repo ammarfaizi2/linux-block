@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: par_io
+
+title: Parallel I/O Ports
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8569-qe-pario-bank" && "fsl,mpc8323-qe-pario-bank"
+            "fsl,mpc8360-qe-pario-bank" && "fsl,mpc8323-qe-pario-bank"
+            "fsl,mpc8323-qe-pario-bank"
+
+    #gpio-cells:
+    gpio-controller:
+    reg:
+
+...
+
 # * Parallel I/O Ports
 #
 # This node configures Parallel I/O ports for CPUs with QE support.

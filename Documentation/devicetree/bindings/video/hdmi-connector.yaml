@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: hdmi-connector
+
+title: HDMI Connector
+
+maintainer:
+    -   name: Tomi Valkeinen <tomi.valkeinen@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hdmi-connector"
+
+    hpd-gpios:
+    label:
+    pinctrl-0:
+    pinctrl-names:
+    type:
+
+...
+
 # HDMI Connector
 # ==============
 #

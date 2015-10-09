@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-fuse
+
+title: NVIDIA Tegra20/Tegra30/Tegr114/Tegra124 fuse block.
+
+maintainer:
+    -   name: Paul Walmsley <paul@pwsan.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-efuse"
+            "nvidia,tegra20-efuse"
+            "nvidia,tegra124-efuse"
+            "nvidia,tegra114-efuse"
+
+    clock-names:
+    clocks:
+    reg:
+    reset-names:
+    resets:
+
+...
+
 # NVIDIA Tegra20/Tegra30/Tegr114/Tegra124 fuse block.
 #
 # Required properties:

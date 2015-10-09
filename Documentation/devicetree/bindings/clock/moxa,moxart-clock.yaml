@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: moxa,moxart-clock
+
+title: Device Tree Clock bindings for arch-moxart
+
+maintainer:
+    -   name: Jonas Jensen <jonas.jensen@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "moxa,moxart-pll-clock"
+            "moxa,moxart-apb-clock"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # Device Tree Clock bindings for arch-moxart
 #
 # This binding uses the common clock binding[1].

@@ -1,3 +1,28 @@
+%YAML 1.2
+---
+version: 1
+
+id: interrupts
+
+title: CRISv32 Interrupt Controller
+
+maintainer:
+    -   name: Jesper Nilsson <jespern@axis.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "axis,crisv32-intc"
+
+
+...
+
 # * CRISv32 Interrupt Controller
 #
 # Interrupt controller for the CRISv32 SoCs.

@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: ohci-st
+
+title: ST USB OHCI controller
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,st-ohci-300x"
+
+    clock-names:
+    clocks:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # ST USB OHCI controller
 #
 # Required properties:

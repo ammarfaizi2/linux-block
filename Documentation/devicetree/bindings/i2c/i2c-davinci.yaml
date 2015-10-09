@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-davinci
+
+title: Texas Instruments Davinci I2C
+
+maintainer:
+    -   name: Grygorii Strashko <grygorii.strashko@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,davinci-i2c"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Texas Instruments Davinci I2C
 #
 # This file provides information, what the device node for the

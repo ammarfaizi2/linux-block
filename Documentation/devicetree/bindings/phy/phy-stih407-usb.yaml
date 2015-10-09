@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: phy-stih407-usb
+
+title: ST STiH407 USB PHY controller
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih407-usb2-phy"
+
+    #phy-cells:
+    reset-names:
+    resets:
+    st,syscfg:
+
+...
+
 # ST STiH407 USB PHY controller
 #
 # This file documents the dt bindings for the usb picoPHY driver which is the PHY for both USB2 and USB3

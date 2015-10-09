@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: syscon-reboot
+
+title: Generic SYSCON mapped register reset driver
+
+maintainer:
+    -   name: Feng Kan <fkan@apm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "syscon-reboot"
+
+    mask:
+    offset:
+    regmap:
+
+...
+
 # Generic SYSCON mapped register reset driver
 #
 # This is a generic reset driver using syscon to map the reset register.

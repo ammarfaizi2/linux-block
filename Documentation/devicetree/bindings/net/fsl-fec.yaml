@@ -1,3 +1,50 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-fec
+
+title: Freescale Fast Ethernet Controller (FEC)
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mvf600-fec"
+            "fsl,mpc5125-fec"
+            "fsl,mpc5121-fec"
+            "fsl,imx6ul-fec" && "fsl,imx6q-fec"
+            "fsl,imx6sx-fec" && "fsl,imx6q-fec"
+            "fsl,imx6sl-fec" && "fsl,imx25-fec"
+            "fsl,imx6q-fec"
+            "fsl,imx53-fec" && "fsl,imx25-fec"
+            "fsl,imx51-fec" && "fsl,imx27-fec"
+            "fsl,imx35-fec" && "fsl,imx27-fec"
+            "fsl,imx28-fec"
+            "fsl,imx27-fec"
+            "fsl,imx25-fec"
+
+    clock-names:
+    clocks:
+    interrupts:
+    phy-mode:
+    phy-reset-gpios:
+    phy-supply:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Freescale Fast Ethernet Controller (FEC)
 #
 # Required properties:

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: rtc-mxc
+
+title: Real Time Clock of the i.MX SoCs
+
+maintainer:
+    -   name: Philippe Reynes <tremyfr@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx21-rtc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * Real Time Clock of the i.MX SoCs
 #
 # RTC controller for the i.MX SoCs

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-backlight
+
+title: gpio-backlight bindings
+
+maintainer:
+    -   name: Denis Carikli <denis@eukrea.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-backlight"
+
+    default-on:
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # gpio-backlight bindings
 #
 # Required properties:

@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: msm-poweroff
+
+title: MSM Restart Driver
+
+maintainer:
+    -   name: Abhimanyu Kapur <abhimany@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pshold"
+
+    reg:
+
+...
+
 # MSM Restart Driver
 #
 # A power supply hold (ps-hold) bit is set to power the msm chipsets.

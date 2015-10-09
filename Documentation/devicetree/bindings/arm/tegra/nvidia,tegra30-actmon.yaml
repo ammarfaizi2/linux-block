@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra30-actmon
+
+title: NVIDIA Tegra Activity Monitor
+
+maintainer:
+    -   name: Tomeu Vizoso <tomeu.vizoso@collabora.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra124-actmon"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    reset-names:
+    resets:
+
+...
+
 # NVIDIA Tegra Activity Monitor
 #
 # The activity monitor block collects statistics about the behaviour of other

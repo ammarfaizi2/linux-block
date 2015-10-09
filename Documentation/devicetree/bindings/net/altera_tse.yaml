@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: altera_tse
+
+title: Altera Triple-Speed Ethernet MAC driver (TSE)
+
+maintainer:
+    -   name: Vince Bridgers <vbridgers2013@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,tse-msgdma-1"."0" && "altr,tse-1"."0"
+            "altr,tse-mdio"
+            "altr,tse-1"."0"
+
+    interrupt-names:
+    interrupt-parent:
+    interrupts:
+    local-mac-address:
+    max-frame-size:
+    phy-handle:
+    phy-mode:
+    reg:
+    reg-names:
+    rx-fifo-depth:
+    tx-fifo-depth:
+
+...
+
 # * Altera Triple-Speed Ethernet MAC driver (TSE)
 #
 # Required properties:

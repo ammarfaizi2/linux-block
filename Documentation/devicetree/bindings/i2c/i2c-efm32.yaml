@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-efm32
+
+title: Energymicro efm32 i2c controller
+
+maintainer:
+    -   name: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "microchip,24c02"
+
+    pagesize:
+    reg:
+
+...
+
 # * Energymicro efm32 i2c controller
 #
 # Required properties :

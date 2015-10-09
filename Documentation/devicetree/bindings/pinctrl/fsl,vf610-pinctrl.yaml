@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,vf610-pinctrl
+
+title: Freescale Vybrid VF610 IOMUX Controller
+
+maintainer:
+    -   name: Jingchang Lu <b35083@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-iomuxc"
+
+    reg:
+
+...
+
 # Freescale Vybrid VF610 IOMUX Controller
 #
 # Please refer to fsl,imx-pinctrl.txt in this directory for common binding part

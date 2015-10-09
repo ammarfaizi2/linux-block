@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: snow
+
+title: Audio Binding for Snow boards
+
+maintainer:
+    -   name: Tushar Behera <tushar.b@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "google,snow" && "samsung,exynos5250" && "samsung,exynos5"
+            "google,snow-audio-max98095"
+            "google,snow-audio-max98091"
+            "google,snow-audio-max98090"
+
+    samsung,audio-codec:
+    samsung,i2s-controller:
+    samsung,model:
+
+...
+
 # Audio Binding for Snow boards
 #
 # Required properties:

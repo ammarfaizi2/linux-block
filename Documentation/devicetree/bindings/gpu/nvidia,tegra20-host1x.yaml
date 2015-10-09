@@ -1,3 +1,69 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-host1x
+
+title: NVIDIA Tegra host1x
+
+maintainer:
+    -   name: Thierry Reding <treding@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-vi"
+            "nvidia,tegra30-tvo"
+            "nvidia,tegra30-mpe"
+            "nvidia,tegra30-isp"
+            "nvidia,tegra30-host1x" && "simple-bus"
+            "nvidia,tegra30-hdmi"
+            "nvidia,tegra30-gr3d"
+            "nvidia,tegra30-gr2d"
+            "nvidia,tegra30-epp"
+            "nvidia,tegra30-dsi"
+            "nvidia,tegra30-dc" && "nvidia,tegra20-dc"
+            "nvidia,tegra30-dc"
+            "nvidia,tegra20-vi"
+            "nvidia,tegra20-tvo"
+            "nvidia,tegra20-mpe"
+            "nvidia,tegra20-isp"
+            "nvidia,tegra20-host1x" && "simple-bus"
+            "nvidia,tegra20-hdmi"
+            "nvidia,tegra20-gr3d"
+            "nvidia,tegra20-gr2d"
+            "nvidia,tegra20-epp"
+            "nvidia,tegra20-dsi"
+            "nvidia,tegra20-dc"
+            "nvidia,tegra124-sor"
+            "nvidia,tegra124-host1x" && "simple-bus"
+            "nvidia,tegra124-hdmi"
+            "nvidia,tegra124-dpaux"
+            "nvidia,tegra124-dc"
+            "nvidia,tegra114-host1x" && "simple-bus"
+            "nvidia,tegra114-hdmi"
+            "nvidia,tegra114-gr3d" && "nvidia,tegra20-gr3d"
+            "nvidia,tegra114-gr2d" && "nvidia,tegra20-gr2d"
+            "nvidia,tegra114-dsi"
+            "nvidia,tegra114-dc" && "nvidia,tegra20-dc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    iommus:
+    nvidia,head:
+    reg:
+    reset-names:
+    resets:
+
+...
+
 # NVIDIA Tegra host1x
 #
 # Required properties:

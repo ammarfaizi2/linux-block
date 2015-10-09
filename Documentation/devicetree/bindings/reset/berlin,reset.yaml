@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: berlin,reset
+
+title: Marvell Berlin reset controller
+
+maintainer:
+    -   name: Antoine Tenart <antoine.tenart@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,berlin2-reset"
+
+    #reset-cells:
+
+...
+
 # Marvell Berlin reset controller
 # ===============================
 #

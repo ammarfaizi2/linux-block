@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,pm8xxx-keypad
+
+title: Qualcomm PM8xxx PMIC Keypad
+
+maintainer:
+    -   name: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8921-keypad"
+            "qcom,pm8058-keypad"
+
+    debounce:
+    interrupt-parent:
+    interrupts:
+    keypad,num-columns:
+    keypad,num-rows:
+    linux,keymap:
+    reg:
+    row-hold:
+    scan-delay:
+
+...
+
 # Qualcomm PM8xxx PMIC Keypad
 #
 # PROPERTIES

@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-sdma
+
+title: Freescale Smart Direct Memory Access (SDMA) Controller for i.MX
+
+maintainer:
+    -   name: Nicolin Chen <nicoleotsuka@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-sdma" && "fsl,imx6q-sdma"
+            "fsl,imx6sl-sdma" && "fsl,imx6q-sdma"
+            "fsl,imx6q-sdma" && "fsl,imx35-sdma"
+            "fsl,imx53-sdma" && "fsl,imx35-sdma"
+            "fsl,imx51-sdma" && "fsl,imx35-sdma"
+            "fsl,imx50-sdma" && "fsl,imx35-sdma"
+            "fsl,imx35-sdma"
+            "fsl,imx25-sdma"
+
+    clock-names:
+    clocks:
+    #dma-cells:
+    fsl,sdma-ram-script-name:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale Smart Direct Memory Access (SDMA) Controller for i.MX
 #
 # Required properties:

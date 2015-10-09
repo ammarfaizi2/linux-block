@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: gtm
+
+title: Freescale General-purpose Timers Module
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8360-qe-gtm" && "fsl,qe-gtm" && "fsl,gtm"
+            "fsl,mpc8315-gtm" && "fsl,gtm"
+            "fsl,mpc8313-gtm" && "fsl,gtm"
+            "fsl,mpc8308-gtm" && "fsl,gtm"
+
+    clock-frequency:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale General-purpose Timers Module
 #
 # Required properties:

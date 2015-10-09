@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: renesas,du
+
+title: Renesas R-Car Display Unit (DU)
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,du-r8a7791"
+            "renesas,du-r8a7790"
+            "renesas,du-r8a7779"
+
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    reg:
+    status:
+
+...
+
 # * Renesas R-Car Display Unit (DU)
 #
 # Required Properties:

@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-kbc
+
+title: Tegra keyboard controller
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-kbc" && "nvidia,tegra20-kbc"
+            "nvidia,tegra20-kbc"
+
+    clocks:
+    interrupts:
+    linux,keymap:
+    nvidia,debounce-delay-ms:
+    nvidia,ghost-filter:
+    nvidia,kbc-col-pins:
+    nvidia,kbc-row-pins:
+    nvidia,repeat-delay-ms:
+    nvidia,wakeup-source:
+    reg:
+    reset-names:
+    resets:
+    status:
+
+...
+
 # * Tegra keyboard controller
 # The key controller has maximum 24 pins to make matrix keypad. Any pin
 # can be configured as row or column. The maximum column pin can be 8

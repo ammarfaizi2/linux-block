@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-wm8904
+
+title: Atmel ASoC driver with wm8904 audio codec complex
+
+maintainer:
+    -   name: Bo Shen <voice.shen@atmel.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,asoc-wm8904"
+
+    atmel,audio-codec:
+    atmel,audio-routing:
+    atmel,model:
+    atmel,ssc-controller:
+    pinctrl-0:
+    pinctrl-names:
+    status:
+
+...
+
 # Atmel ASoC driver with wm8904 audio codec complex
 #
 # Required properties:

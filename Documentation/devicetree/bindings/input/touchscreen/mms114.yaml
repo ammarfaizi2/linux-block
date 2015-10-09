@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: mms114
+
+title: MELFAS MMS114 touchscreen controller
+
+maintainer:
+    -   name: Tomasz Figa <t.figa@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "melfas,mms114"
+
+    avdd-supply:
+    interrupt-parent:
+    interrupts:
+    reg:
+    vdd-supply:
+    x-size:
+    y-size:
+
+...
+
 # * MELFAS MMS114 touchscreen controller
 #
 # Required properties:

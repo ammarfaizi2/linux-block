@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-rspi
+
+title: Device tree configuration for Renesas RSPI/QSPI driver
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@linux-m68k.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,rspi-r7s72100" && "renesas,rspi-rz"
+            "renesas,qspi-r8a7791" && "renesas,qspi"
+            "renesas,qspi-r8a7790" && "renesas,qspi"
+
+    #address-cells:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    num-cs:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Device tree configuration for Renesas RSPI/QSPI driver
 #
 # Required properties:

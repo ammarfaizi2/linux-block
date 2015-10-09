@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi-sirf
+
+title: CSR SiRFprimaII Serial Peripheral Interface
+
+maintainer:
+    -   name: Barry Song <Baohua.Song@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,prima2-usp"
+            "sirf,prima2-spi"
+
+    #address-cells:
+    cell-index:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    resets:
+    sirf,spi-num-chipselects:
+    #size-cells:
+    status:
+
+...
+
 # * CSR SiRFprimaII Serial Peripheral Interface
 #
 # Required properties:

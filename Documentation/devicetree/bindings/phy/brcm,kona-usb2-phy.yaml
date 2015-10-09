@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-usb2-phy
+
+title: BROADCOM KONA USB2 PHY
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,kona-usb2-phy"
+
+    #phy-cells:
+    reg:
+    status:
+
+...
+
 # BROADCOM KONA USB2 PHY
 #
 # Required properties:

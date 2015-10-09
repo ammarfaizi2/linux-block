@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: syscon-poweroff
+
+title: Generic SYSCON mapped register poweroff driver
+
+maintainer:
+    -   name: Moritz Fischer <moritz.fischer@ettus.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "syscon-poweroff"
+
+    mask:
+    offset:
+    regmap:
+    status:
+
+...
+
 # Generic SYSCON mapped register poweroff driver
 #
 # This is a generic poweroff driver using syscon to map the poweroff register.

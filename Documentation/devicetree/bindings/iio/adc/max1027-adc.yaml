@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: max1027-adc
+
+title: Maxim 1027/1029/1031 Analog to Digital Converter (ADC)
+
+maintainer:
+    -   name: Philippe Reynes <tremyfr@yahoo.fr>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max1027"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    spi-max-frequency:
+
+...
+
 # * Maxim 1027/1029/1031 Analog to Digital Converter (ADC)
 #
 # Required properties:

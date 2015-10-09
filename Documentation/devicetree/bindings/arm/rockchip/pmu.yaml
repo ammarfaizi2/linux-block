@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: pmu
+
+title: Rockchip power-management-unit:
+
+maintainer:
+    -   name: Heiko Stuebner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3066-pmu" && "syscon"
+
+    reg:
+
+...
+
 # Rockchip power-management-unit:
 # -------------------------------
 #

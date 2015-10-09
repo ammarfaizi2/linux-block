@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,spmi-iadc
+
+title: Qualcomm's SPMI PMIC current ADC
+
+maintainer:
+    -   name: Ivan T. Ivanov <iivanov@mm-sol.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8941-iadc" && "qcom,spmi-iadc"
+
+    interrupts:
+    qcom,external-resistor-micro-ohms:
+    reg:
+
+...
+
 # Qualcomm's SPMI PMIC current ADC
 #
 # QPNP PMIC current ADC (IADC) provides interface to clients to read current.

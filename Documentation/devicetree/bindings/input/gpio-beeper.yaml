@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-beeper
+
+title: GPIO beeper device tree bindings
+
+maintainer:
+    -   name: Alexander Shiyan <shc_work@mail.ru>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-beeper"
+
+    gpios:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # * GPIO beeper device tree bindings
 #
 # Register a beeper connected to GPIO pin.

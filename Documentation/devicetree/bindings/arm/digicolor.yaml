@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: digicolor
+
+title: Conexant Digicolor Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Baruch Siach <baruch@tkos.co.il>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cnxt,equinox" && "cnxt,cx92755"
+            "cnxt,cx92755"
+
+
+...
+
 # Conexant Digicolor Platforms Device Tree Bindings
 #
 # Each device tree must specify which Conexant Digicolor SoC it uses.

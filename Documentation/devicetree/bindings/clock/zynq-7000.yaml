@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: zynq-7000
+
+title: Device Tree Clock bindings for the Zynq 7000 EPP
+
+maintainer:
+    -   name: Soren Brinkmann <soren.brinkmann@xilinx.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xlnx,ps7-clkc"
+
+    #clock-cells:
+    clock-output-names:
+    fclk-enable:
+    ps-clk-frequency:
+    reg:
+
+...
+
 # Device Tree Clock bindings for the Zynq 7000 EPP
 #
 # The Zynq EPP has several different clk providers, each with there own bindings.

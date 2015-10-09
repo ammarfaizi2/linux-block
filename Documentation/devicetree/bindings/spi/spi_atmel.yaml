@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: spi_atmel
+
+title: Atmel SPI device
+
+maintainer:
+    -   name: Boris BREZILLON <b.brezillon@overkiz.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at91rm9200-spi"
+
+    #address-cells:
+    atmel,fifo-size:
+    clock-names:
+    clocks:
+    cs-gpios:
+    dma-names:
+    dmas:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Atmel SPI device
 #
 # Required properties:

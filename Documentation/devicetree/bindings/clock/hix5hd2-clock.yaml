@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: hix5hd2-clock
+
+title: Hisilicon Hix5hd2 Clock Controller
+
+maintainer:
+    -   name: Zhangfei Gao <zhangfei.gao@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hisilicon,hix5hd2-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Hisilicon Hix5hd2 Clock Controller
 #
 # The hix5hd2 clock controller generates and supplies clock to various

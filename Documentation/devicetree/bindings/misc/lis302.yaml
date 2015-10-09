@@ -1,3 +1,60 @@
+%YAML 1.2
+---
+version: 1
+
+id: lis302
+
+title: LIS302 accelerometer devicetree bindings
+
+maintainer:
+    -   name: AnilKumar Ch <anilkumar@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,lis3lv02d"
+            "st,lis33de" && "st,lis3lv02d"
+            "st,lis331dlh" && "st,lis3lv02d"
+            "st,lis331dlh"
+
+    interrupt-parent:
+    interrupts:
+    interrupts-extended:
+    reg:
+    status:
+    st,click-click-time-limit:
+    st,click-latency:
+    st,click-single-x:
+    st,click-single-y:
+    st,click-single-z:
+    st,click-thresh-x:
+    st,click-thresh-y:
+    st,click-thresh-z:
+    st,irq1-click:
+    st,irq2-click:
+    st,max-limit-x:
+    st,max-limit-y:
+    st,max-limit-z:
+    st,min-limit-x:
+    st,min-limit-y:
+    st,min-limit-z:
+    st,wakeup-x-hi:
+    st,wakeup-x-lo:
+    st,wakeup-y-hi:
+    st,wakeup-y-lo:
+    st,wakeup-z-hi:
+    st,wakeup-z-lo:
+    Vdd_IO-supply:
+    Vdd-supply:
+
+...
+
 # LIS302 accelerometer devicetree bindings
 #
 # This device is matched via its bus drivers, and has a number of properties

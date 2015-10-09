@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: sirf-uart
+
+title: CSR SiRFprimaII/atlasVI Universal Synchronous Asynchronous Receiver/Transmitter *
+
+maintainer:
+    -   name: Qipan Li <Qipan.Li@csr.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "sirf,prima2-uart"
+            "sirf,atlas7-uart"
+            "sirf," && "atlas7-g2d"
+            "sirf,atlas7-bt-uart" && "sirf,atlas7-uart"
+
+    cell-index:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    fifosize:
+    interrupts:
+    reg:
+    sirf,uart-has-rtscts:
+    status:
+
+...
+
 # * CSR SiRFprimaII/atlasVI Universal Synchronous Asynchronous Receiver/Transmitter *
 #
 # Required properties:

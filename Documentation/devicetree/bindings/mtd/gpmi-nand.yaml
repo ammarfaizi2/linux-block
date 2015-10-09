@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpmi-nand
+
+title: Freescale General-Purpose Media Interface (GPMI)
+
+maintainer:
+    -   name: Huang Shijie <b32955@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-gpmi-nand"
+            "fsl,imx6q-gpmi-nand"
+            "fsl,imx28-gpmi-nand"
+            "fsl,imx23-gpmi-nand"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupt-names:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    reg-names:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale General-Purpose Media Interface (GPMI)
 #
 # The GPMI nand controller provides an interface to control the

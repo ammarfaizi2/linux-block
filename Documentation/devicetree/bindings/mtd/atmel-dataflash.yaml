@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-dataflash
+
+title: Atmel Data Flash
+
+maintainer:
+    -   name: Jamie Lentin <jm@lentin.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at45db321d" && "atmel,at45" && "atmel,dataflash"
+            "atmel,at45db021d" && "atmel,at45" && "atmel,dataflash"
+            "atmel,at45" && "atmel,dataflash"
+
+    reg:
+    spi-max-frequency:
+
+...
+
 # * Atmel Data Flash
 #
 # Required properties:

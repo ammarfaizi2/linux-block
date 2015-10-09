@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: mvebu-pci
+
+title: Marvell EBU PCIe interfaces
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,kirkwood-pcie"
+            "marvell,dove-pcie"
+            "marvell,armada-xp-pcie"
+            "marvell,armada-370-pcie"
+
+    #address-cells:
+    bus-range:
+    device_type:
+    msi-parent:
+    ranges:
+    #size-cells:
+    status:
+
+...
+
 # * Marvell EBU PCIe interfaces
 #
 # Mandatory properties:

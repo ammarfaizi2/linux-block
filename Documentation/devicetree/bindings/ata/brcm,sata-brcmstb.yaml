@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,sata-brcmstb
+
+title: Broadcom SATA3 AHCI Controller for STB
+
+maintainer:
+    -   name: Brian Norris <computersforpeace@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm7445-ahci" && "brcm,sata3-ahci"
+
+    #address-cells:
+    interrupts:
+    reg:
+    reg-names:
+    #size-cells:
+
+...
+
 # * Broadcom SATA3 AHCI Controller for STB
 #
 # SATA nodes are defined to describe on-chip Serial ATA controllers.

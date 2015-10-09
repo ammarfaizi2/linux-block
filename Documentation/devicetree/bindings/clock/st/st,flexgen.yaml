@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,flexgen
+
+title: Binding for a type of flexgen structure found on certain
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,flexgen"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+
+...
+
 # Binding for a type of flexgen structure found on certain
 # STMicroelectronics consumer electronics SoC devices
 #

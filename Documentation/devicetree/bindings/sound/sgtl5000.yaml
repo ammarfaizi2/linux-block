@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: sgtl5000
+
+title: Freescale SGTL5000 Stereo Codec
+
+maintainer:
+    -   name: Fabio Estevam <fabio.estevam@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,sgtl5000"
+
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #sound-dai-cells:
+    VDDA-supply:
+    VDDIO-supply:
+
+...
+
 # * Freescale SGTL5000 Stereo Codec
 #
 # Required properties:

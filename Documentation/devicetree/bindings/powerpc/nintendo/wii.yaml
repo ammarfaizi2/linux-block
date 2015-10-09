@@ -1,3 +1,52 @@
+%YAML 1.2
+---
+version: 1
+
+id: wii
+
+title: Nintendo Wii device tree
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nintendo,wii"
+            "nintendo,hollywood-vi" && "nintendo,flipper-vi"
+            "nintendo,hollywood-usb-ohci" && "usb-ohci"
+            "nintendo,hollywood-usb-ehci" && "usb-ehci"
+            "nintendo,hollywood-si" && "nintendo,flipper-si"
+            "nintendo,hollywood-sdhci" && "sdhci"
+            "nintendo,hollywood-pi" && "nintendo,flipper-pi"
+            "nintendo,hollywood-pic"
+            "nintendo,hollywood-ipc"
+            "nintendo,hollywood-gpio"
+            "nintendo,hollywood-exi" && "nintendo,flipper-exi"
+            "nintendo,hollywood-dsp" && "nintendo,flipper-dsp"
+            "nintendo,hollywood-di"
+            "nintendo,hollywood-control"
+            "nintendo,hollywood-ai" && "nintendo,flipper-ai"
+            "nintendo,hollywood"
+            "nintendo,flipper-vi"
+            "nintendo,flipper-si"
+            "nintendo,flipper-pic"
+            "nintendo,flipper-pi"
+            "nintendo,flipper-exi"
+            "nintendo,flipper-dsp"
+            "nintendo,flipper-ai"
+
+    interrupts:
+    reg:
+
+...
+
 #
 # Nintendo Wii device tree
 # ========================

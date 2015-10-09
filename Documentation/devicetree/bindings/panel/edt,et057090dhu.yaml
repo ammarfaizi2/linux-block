@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: edt,et057090dhu
+
+title: Emerging Display Technology Corp. 5.7" VGA TFT LCD panel
+
+maintainer:
+    -   name: Stefan Agner <stefan@agner.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "edt,et057090dhu" && "simple-panel"
+
+    backlight:
+
+...
+
 # Emerging Display Technology Corp. 5.7" VGA TFT LCD panel
 #
 # Required properties:

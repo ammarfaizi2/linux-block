@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: interface
+
+title: Binding for Texas Instruments interface clock.
+
+maintainer:
+    -   name: Tero Kristo <t-kristo@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap3-ssi-interface-clock"
+            "ti,omap3-no-wait-interface-clock"
+            "ti,omap3-interface-clock"
+            "ti,omap3-hsotgusb-interface-clock"
+            "ti,omap3-dss-interface-clock"
+            "ti,omap2430-interface-clock"
+            "ti,am35xx-interface-clock"
+
+    #clock-cells:
+    clocks:
+    reg:
+    ti,bit-shift:
+
+...
+
 # Binding for Texas Instruments interface clock.
 #
 # Binding status: Unstable - ABI compatibility may be broken in the future

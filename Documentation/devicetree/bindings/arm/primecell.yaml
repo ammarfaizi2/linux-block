@@ -1,3 +1,44 @@
+%YAML 1.2
+---
+version: 1
+
+id: primecell
+
+title: ARM Primecell Peripherals
+
+maintainer:
+    -   name: Grant Likely <grant.likely@secretlab.ca>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,sp805" && "arm,primecell"
+            "arm,rtc-pl031" && "arm,primecell"
+            "arm,primecell"
+            "arm,pl354" && "arm,primecell"
+            "arm,pl341" && "arm,primecell"
+            "arm,pl320" && "arm,primecell"
+            "arm,pl180" && "arm,primecell"
+            "arm,pl050" && "arm,primecell"
+            "arm,pl041" && "arm,primecell"
+            "arm,pl031" && "arm,primecell"
+            "arm,pl030" && "arm,primecell"
+            "arm,pl010" && "arm,primecell"
+
+    arm,primecell-periphid:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * ARM Primecell Peripherals
 #
 # ARM, Ltd. Primecell peripherals have a standard id register that can be used to

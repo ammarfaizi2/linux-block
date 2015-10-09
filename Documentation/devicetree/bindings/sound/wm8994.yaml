@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: wm8994
+
+title: WM1811/WM8994/WM8958 audio CODEC
+
+maintainer:
+    -   name: Mark Brown <broonie@opensource.wolfsonmicro.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "wlf,wm8994"
+            "wlf,wm1811"
+
+    AVDD2-supply:
+    clock-names:
+    clocks:
+    CPVDD-supply:
+    DBVDD1-supply:
+    DBVDD2-supply:
+    DBVDD3-supply:
+    DCVDD-supply:
+    LDO1VDD-supply:
+    reg:
+    SPKVDD1-supply:
+    SPKVDD2-supply:
+    wlf,ldo1ena:
+    wlf,ldo2ena:
+
+...
+
 # WM1811/WM8994/WM8958 audio CODEC
 #
 # These devices support both I2C and SPI (configured with pin strapping

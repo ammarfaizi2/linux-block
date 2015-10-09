@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-lp3943
+
+title: TI/National Semiconductor LP3943 PWM controller
+
+maintainer:
+    -   name: Milo Kim <milo.kim@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "pwm-leds"
+
+    pinctrl-0:
+    pinctrl-names:
+    "pwm-leds"::
+
+...
+
 # TI/National Semiconductor LP3943 PWM controller
 #
 # Required properties:

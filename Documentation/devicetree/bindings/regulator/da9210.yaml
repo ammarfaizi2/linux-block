@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: da9210
+
+title: Dialog Semiconductor DA9210 Voltage Regulator
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "dlg,da9210"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+    regulator-always-on:
+    regulator-boot-on:
+    regulator-max-microvolt:
+    regulator-min-microvolt:
+
+...
+
 # * Dialog Semiconductor DA9210 Voltage Regulator
 #
 # Required properties:

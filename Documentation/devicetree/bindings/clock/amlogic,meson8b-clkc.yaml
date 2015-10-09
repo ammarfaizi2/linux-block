@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: amlogic,meson8b-clkc
+
+title: Amlogic Meson8b Clock and Reset Unit
+
+maintainer:
+    -   name: Carlo Caione <carlo@endlessm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "amlogic,meson-uart"
+
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Amlogic Meson8b Clock and Reset Unit
 #
 # The Amlogic Meson8b clock controller generates and supplies clock to various

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: cp-intc
+
+title: TI Common Platform Interrupt Controller
+
+maintainer:
+    -   name: Heiko Schocher <hs@denx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,cp-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+    ti,intc-size:
+
+...
+
 # * TI Common Platform Interrupt Controller
 #
 # Common Platform Interrupt Controller (cp_intc) is used on

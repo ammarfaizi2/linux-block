@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: as3722
+
+title: ams AS3722 Power management IC.
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ams,as3722"
+
+    ams,system-power-controller:
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * ams AS3722 Power management IC.
 #
 # Required properties:

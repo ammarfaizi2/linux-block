@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: vexpress-sysreg
+
+title: ARM Versatile Express system registers
+
+maintainer:
+    -   name: Pawel Moll <pawel.moll@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,vexpress-sysreg,sys"_"mci"
+            "arm,vexpress-sysreg,sys"_"led"
+            "arm,vexpress-sysreg,sys"_"flash"
+            "arm,vexpress-sysreg"
+            "arm,vexpress-shutdown"
+            "arm,vexpress-reset"
+            "arm,vexpress-reboot"
+            "arm,vexpress-muxfpga"
+            "arm,vexpress-dvimode"
+
+    arm,vexpress-sysreg,func:
+
+...
+
 # ARM Versatile Express system registers
 # --------------------------------------
 #

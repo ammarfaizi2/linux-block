@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: arm-integrator
+
+title: Clock bindings for ARM Integrator and Versatile Core Module clocks
+
+maintainer:
+    -   name: Hayato Suzuki <hytszk@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,versatile-cm-auxosc"
+            "arm,integrator-cm-auxosc"
+
+    #clock-cells:
+    clocks:
+
+...
+
 # Clock bindings for ARM Integrator and Versatile Core Module clocks
 #
 # Auxiliary Oscillator Clock

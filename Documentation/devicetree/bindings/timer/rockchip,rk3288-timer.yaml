@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip,rk3288-timer
+
+title: Rockchip rk3288 timer
+
+maintainer:
+    -   name: Daniel Lezcano <daniel.lezcano@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-timer"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # Rockchip rk3288 timer
 #
 # Required properties:

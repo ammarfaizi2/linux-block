@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: ste,abx500
+
+title: ST Ericsson abx500 pinmux controller
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,ab8500-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    pinctrl-0:
+    pinctrl-names:
+
+...
+
 # ST Ericsson abx500 pinmux controller
 #
 # Required properties:

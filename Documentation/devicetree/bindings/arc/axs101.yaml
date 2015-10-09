@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: axs101
+
+title: Synopsys DesignWare ARC Software Development Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Alexey Brodkin <abrodkin@synopsys.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "snps,axs101" && "snps,arc-sdp"
+
+    #address-cells:
+    clock-frequency:
+    #size-cells:
+
+...
+
 # Synopsys DesignWare ARC Software Development Platforms Device Tree Bindings
 # ---------------------------------------------------------------------------
 #

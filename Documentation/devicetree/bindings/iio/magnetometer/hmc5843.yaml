@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: hmc5843
+
+title: Honeywell HMC5843 magnetometer sensor
+
+maintainer:
+    -   name: Josef Gajdusek <atx@atalax.net>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "honeywell,hmc5883l"
+            "honeywell,hmc5843"
+
+    reg:
+
+...
+
 # * Honeywell HMC5843 magnetometer sensor
 #
 # Required properties:

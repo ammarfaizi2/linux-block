@@ -1,3 +1,43 @@
+%YAML 1.2
+---
+version: 1
+
+id: 83xx-512x-pci
+
+title: Freescale 83xx and 512x PCI bridges
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8360-pci" && "fsl,mpc8349-pci"
+            "fsl,mpc8349-pci"
+
+    #address-cells:
+    bus-range:
+    cell-index:
+    clock-frequency:
+    device_type:
+    #interrupt-cells:
+    interrupt-map:
+    interrupt-map-mask:
+    interrupt-parent:
+    interrupts:
+    ranges:
+    reg:
+    #size-cells:
+    sleep:
+
+...
+
 # * Freescale 83xx and 512x PCI bridges
 #
 # Freescale 83xx and 512x SOCs include the same pci bridge core.

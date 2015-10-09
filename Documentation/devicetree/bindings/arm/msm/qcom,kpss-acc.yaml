@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,kpss-acc
+
+title: Krait Processor Sub-system (KPSS) Application Clock Controller (ACC)
+
+maintainer:
+    -   name: Stephen Boyd <sboyd@codeaurora.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,kpss-acc-v2"
+            "qcom,kpss-acc-v1"
+
+    reg:
+
+...
+
 # Krait Processor Sub-system (KPSS) Application Clock Controller (ACC)
 #
 # The KPSS ACC provides clock, power domain, and reset control to a Krait CPU.

@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: intc
+
+title: Marvell MMP Interrupt controller
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mrvl,mmp-intc"
+            "mrvl,mmp2-mux-intc"
+            "mrvl,mmp2-intc"
+
+    #interrupt-cells:
+    interrupt-controller:
+    mrvl,intc-nr-irqs:
+    reg:
+
+...
+
 # * Marvell MMP Interrupt controller
 #
 # Required properties:

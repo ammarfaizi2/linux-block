@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos_mixer
+
+title: Device-Tree bindings for mixer driver
+
+maintainer:
+    -   name: Rahul Sharma <rahul.sharma@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5420-mixer"
+            "samsung,exynos5250-mixer"
+            "samsung,exynos4212-mixer"
+            "samsung,exynos4210-mixer"
+
+    clock-names:
+    clocks:
+    interrupts:
+    iommus:
+    power-domains:
+    reg:
+    status:
+
+...
+
 # Device-Tree bindings for mixer driver
 #
 # Required properties:

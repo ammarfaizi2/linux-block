@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-i2s
+
+title: Broadcom BCM2835 SoC I2S/PCM module
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-i2s"
+
+    dma-names:
+    dmas:
+    reg:
+    status:
+
+...
+
 # * Broadcom BCM2835 SoC I2S/PCM module
 #
 # Required properties:

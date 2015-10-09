@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: mpic
+
+title: =====================================================================
+
+maintainer:
+    -   name: Kyle Moffett <Kyle.D.Moffett@boeing.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl-i2c"
+
+    #address-cells:
+    cell-index:
+    dfsrr:
+    interrupt-parent:
+    interrupts:
+    reg:
+    #size-cells:
+    sleep:
+    status:
+
+...
+
 # =====================================================================
 # Freescale MPIC Interrupt Controller Node
 # Copyright (C) 2010,2011 Freescale Semiconductor Inc.

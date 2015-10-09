@@ -1,3 +1,49 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos_dp
+
+title: The Exynos display port interface should be configured based on
+
+maintainer:
+    -   name: Ajay Kumar <ajaykumar.rs@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5-dp"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    interrupt-parent:
+    interrupts:
+    panel:
+    phy-names:
+    phys:
+    pinctrl-0:
+    pinctrl-names:
+    power-domains:
+    reg:
+    samsung,color-depth:
+    samsung,color-space:
+    samsung,dynamic-range:
+    samsung,hpd-gpio:
+    samsung,lane-count:
+    samsung,link-rate:
+    samsung,ycbcr-coeff:
+    #size-cells:
+    status:
+
+...
+
 # The Exynos display port interface should be configured based on
 # the type of panel connected to it.
 #

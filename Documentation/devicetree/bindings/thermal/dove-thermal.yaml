@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: dove-thermal
+
+title: Dove Thermal
+
+maintainer:
+    -   name: Andrew Lunn <andrew@lunn.ch>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,dove-thermal"
+
+    reg:
+
+...
+
 # * Dove Thermal
 #
 # This driver is for Dove SoCs which contain a thermal sensor.

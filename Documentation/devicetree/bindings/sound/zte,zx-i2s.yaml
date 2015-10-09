@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: zte,zx-i2s
+
+title: ZTE ZX296702 I2S controller
+
+maintainer:
+    -   name: Jun Nie <jun.nie@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "simple-audio-card"
+
+    assigned-clock-parents:
+    assigned-clock-rates:
+    assigned-clocks:
+    simple-audio-card,bitclock-inversion:
+    simple-audio-card,bitclock-master:
+    simple-audio-card,format:
+    simple-audio-card,frame-master:
+    simple-audio-card,mclk-fs:
+    simple-audio-card,name:
+    simple-audio-card,routing:
+    simple-audio-card,widgets:
+    status:
+
+...
+
 # ZTE ZX296702 I2S controller
 #
 # Required properties:

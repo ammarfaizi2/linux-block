@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: ssd1289fb
+
+title: Solomon SSD1289 Framebuffer Driver
+
+maintainer:
+    -   name: Xie Xiaobo <X.Xie@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "solomon,ssd1289fb"
+
+    reg:
+
+...
+
 # * Solomon SSD1289 Framebuffer Driver
 #
 # Required properties:

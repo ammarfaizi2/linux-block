@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: st-spear-miphy
+
+title: ST SPEAr miphy DT details
+
+maintainer:
+    -   name: Pratyush Anand <pratyush.anand@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear1340-miphy"
+            "st,spear1310-miphy"
+
+    misc:
+    #phy-cells:
+    phy-id:
+    reg:
+    status:
+
+...
+
 # ST SPEAr miphy DT details
 # =========================
 #

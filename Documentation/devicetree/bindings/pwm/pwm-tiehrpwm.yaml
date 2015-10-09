@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-tiehrpwm
+
+title: TI SOC EHRPWM based PWM controller
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,da850-ehrpwm" && "ti,am33xx-ehrpwm"
+            "ti,am4372-ehrpwm" && "ti,am33xx-ehrpwm"
+            "ti,am33xx-ehrpwm"
+
+    pinctrl-0:
+    pinctrl-names:
+    #pwm-cells:
+    reg:
+    status:
+    ti,hwmods:
+
+...
+
 # TI SOC EHRPWM based PWM controller
 #
 # Required properties:

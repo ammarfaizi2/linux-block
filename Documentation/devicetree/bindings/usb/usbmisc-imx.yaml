@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: usbmisc-imx
+
+title: Freescale i.MX non-core registers
+
+maintainer:
+    -   name: Peter Chen <peter.chen@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-usbmisc"
+            "fsl,imx6ul-usbmisc" && "fsl,imx6q-usbmisc"
+            "fsl,imx6sx-usbmisc" && "fsl,imx6q-usbmisc"
+            "fsl,imx6sl-usbmisc" && "fsl,imx6q-usbmisc"
+            "fsl,imx6q-usbmisc"
+
+    clocks:
+    #index-cells:
+    reg:
+
+...
+
 # * Freescale i.MX non-core registers
 #
 # Required properties:

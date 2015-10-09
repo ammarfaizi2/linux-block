@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx-audmux
+
+title: Freescale Digital Audio Mux (AUDMUX) device
+
+maintainer:
+    -   name: Markus Pargmann <mpa@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-audmux" && "fsl,imx31-audmux"
+            "fsl,imx6sl-audmux" && "fsl,imx31-audmux"
+            "fsl,imx6q-audmux" && "fsl,imx31-audmux"
+            "fsl,imx53-audmux" && "fsl,imx31-audmux"
+            "fsl,imx51-audmux" && "fsl,imx31-audmux"
+            "fsl,imx50-audmux" && "fsl,imx31-audmux"
+            "fsl,imx35-audmux" && "fsl,imx31-audmux"
+            "fsl,imx27-audmux" && "fsl,imx21-audmux"
+            "fsl,imx25-audmux" && "fsl,imx31-audmux"
+
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # Freescale Digital Audio Mux (AUDMUX) device
 #
 # Required properties:

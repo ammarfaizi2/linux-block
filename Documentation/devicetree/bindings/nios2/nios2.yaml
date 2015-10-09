@@ -1,3 +1,49 @@
+%YAML 1.2
+---
+version: 1
+
+id: nios2
+
+title: Nios II Processor Binding
+
+maintainer:
+    -   name: Ley Foon Tan <lftan@altera.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "altr,nios2-1"."0"
+
+    altr,exception-addr:
+    altr,fast-tlb-miss-addr:
+    altr,has-div:
+    altr,has-initda:
+    altr,has-mmu:
+    altr,has-mul:
+    altr,implementation:
+    altr,pid-num-bits:
+    altr,reset-addr:
+    altr,tlb-num-entries:
+    altr,tlb-num-ways:
+    altr,tlb-ptr-sz:
+    clock-frequency:
+    dcache-line-size:
+    dcache-size:
+    device_type:
+    icache-line-size:
+    icache-size:
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # * Nios II Processor Binding
 #
 # This binding specifies what properties available in the device tree

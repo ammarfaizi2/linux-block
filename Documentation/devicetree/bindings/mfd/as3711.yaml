@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: as3711
+
+title: AS3711 is an I2C PMIC from Austria MicroSystems with multiple DCDC and LDO power
+
+maintainer:
+    -   name: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ams,as3711"
+
+    reg:
+
+...
+
 # AS3711 is an I2C PMIC from Austria MicroSystems with multiple DCDC and LDO power
 # supplies, a battery charger and an RTC. So far only bindings for the two stepup
 # DCDC converters are defined. Other DCDC and LDO supplies are configured, using

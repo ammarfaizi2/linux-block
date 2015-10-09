@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: spear-misc
+
+title: SPEAr Misc configuration
+
+maintainer:
+    -   name: Pratyush Anand <pratyush.anand@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,spear1340-misc" && "syscon"
+
+    reg:
+
+...
+
 # SPEAr Misc configuration
 # ===========================
 # SPEAr SOCs have some miscellaneous registers which are used to configure

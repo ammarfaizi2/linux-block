@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: armada-thermal
+
+title: Marvell Armada 370/375/380/XP thermal management
+
+maintainer:
+    -   name: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,armadaxp-thermal"
+            "marvell,armada380-thermal"
+            "marvell,armada375-thermal"
+            "marvell,armada370-thermal"
+
+    reg:
+    status:
+
+...
+
 # * Marvell Armada 370/375/380/XP thermal management
 #
 # Required properties:

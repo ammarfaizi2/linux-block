@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm11351-pinctrl
+
+title: Broadcom BCM281xx Pin Controller
+
+maintainer:
+    -   name: Sherman Yin <syin@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm11351-pinctrl"
+
+    reg:
+
+...
+
 # Broadcom BCM281xx Pin Controller
 #
 # This is a pin controller for the Broadcom BCM281xx SoC family, which includes

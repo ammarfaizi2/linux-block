@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: ste-u300
+
+title: ST-Ericsson U300 Device Tree Bindings
+
+maintainer:
+    -   name: Linus Walleij <linus.walleij@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "stericsson,u300-syscon" && "syscon"
+            "stericsson,u300"
+            "stericsson,s365"
+
+    syscon:
+    vana15-supply:
+
+...
+
 # ST-Ericsson U300 Device Tree Bindings
 #
 # For various board the "board" node may contain specific properties

@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: exynos5410-clock
+
+title: Samsung Exynos5410 Clock Controller
+
+maintainer:
+    -   name: Tarek Dakhran <t.dakhran@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,exynos5410-clock"
+
+    #clock-cells:
+    reg:
+
+...
+
 # * Samsung Exynos5410 Clock Controller
 #
 # The Exynos5410 clock controller generates and supplies clock to various

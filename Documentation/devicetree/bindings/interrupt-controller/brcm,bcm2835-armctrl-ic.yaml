@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-armctrl-ic
+
+title: BCM2835 Top-Level ("ARMCTRL") Interrupt Controller
+
+maintainer:
+    -   name: Eric Anholt <eric@anholt.net>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-armctrl-ic"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # BCM2835 Top-Level ("ARMCTRL") Interrupt Controller
 #
 # The BCM2835 contains a custom top-level interrupt controller, which supports

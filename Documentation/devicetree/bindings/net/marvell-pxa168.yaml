@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: marvell-pxa168
+
+title: Marvell PXA168 Ethernet Controller
+
+maintainer:
+    -   name: Antoine Ténart <antoine.tenart@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,pxa168-eth"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    local-mac-address:
+    phy-connection-type:
+    phy-handle:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Marvell PXA168 Ethernet Controller
 #
 # Required properties:

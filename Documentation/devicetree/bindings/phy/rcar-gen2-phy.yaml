@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: rcar-gen2-phy
+
+title: Renesas R-Car generation 2 USB PHY
+
+maintainer:
+    -   name: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,usb-phy-r8a7791"
+            "renesas,usb-phy-r8a7790"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    power-domains:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Renesas R-Car generation 2 USB PHY
 #
 # This file provides information on what the device node for the R-Car generation

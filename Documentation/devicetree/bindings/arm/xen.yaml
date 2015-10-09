@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: xen
+
+title: Xen hypervisor device tree bindings
+
+maintainer:
+    -   name: Stefano Stabellini <stefano.stabellini@eu.citrix.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "xen,xen-4"."2" && "xen,xen"
+
+    interrupts:
+    reg:
+
+...
+
 # * Xen hypervisor device tree bindings
 #
 # Xen ARM virtual platforms shall have a top-level "hypervisor" node with

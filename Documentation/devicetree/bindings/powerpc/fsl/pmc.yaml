@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: pmc
+
+title: Power Management Controller
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8610-pmc" && "fsl,mpc8641d-pmc"
+            "fsl,mpc8379-pmc" && "fsl,mpc8349-pmc"
+            "fsl,mpc8378-pmc" && "fsl,mpc8349-pmc"
+            "fsl,mpc8377-pmc" && "fsl,mpc8349-pmc"
+            "fsl,mpc8360-pmc" && "fsl,mpc8349-pmc"
+            "fsl,mpc8323-pmc" && "fsl,mpc8349-pmc"
+            "fsl,mpc8315-pmc" && "fsl,mpc8313-pmc" && "fsl,mpc8349-pmc"
+            "fsl,mpc8313-pmc" && "fsl,mpc8349-pmc"
+            "fsl,mpc5121-pmc"
+
+    interrupts:
+    reg:
+
+...
+
 # * Power Management Controller
 #
 # Properties:

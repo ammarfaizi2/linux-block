@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: berlin-sata-phy
+
+title: Berlin SATA PHY
+
+maintainer:
+    -   name: Antoine Ténart <antoine.tenart@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,berlin2-sata-phy"
+            "marvell,berlin2q-sata-phy"
+
+    #address-cells:
+    clocks:
+    #phy-cells:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Berlin SATA PHY
 # ---------------
 #

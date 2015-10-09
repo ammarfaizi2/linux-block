@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,mxs-pinctrl
+
+title: Freescale MXS Pin Controller
+
+maintainer:
+    -   name: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx28-pinctrl" && "simple-bus"
+            "fsl,imx23-pinctrl" && "simple-bus"
+
+    #address-cells:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+
+...
+
 # * Freescale MXS Pin Controller
 #
 # The pins controlled by mxs pin controller are organized in banks, each bank

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: max98095
+
+title: MAX98095 audio CODEC
+
+maintainer:
+    -   name: Tushar Behera <tushar.behera@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "maxim,max98095"
+
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # MAX98095 audio CODEC
 #
 # This device supports I2C only.

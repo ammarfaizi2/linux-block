@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-mux-pca954x
+
+title: NXP PCA954x I2C bus switch
+
+maintainer:
+    -   name: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,pca9547"
+            "nxp,pca9546"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 # * NXP PCA954x I2C bus switch
 #
 # Required Properties:

@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: coherency-fabric
+
+title: Coherency fabric
+
+maintainer:
+    -   name: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,coherency-fabric"
+            "marvell,armada-380-coherency-fabric"
+            "marvell,armada-375-coherency-fabric"
+
+    reg:
+
+...
+
 # Coherency fabric
 # ----------------
 # Available on Marvell SOCs: Armada 370, Armada 375, Armada 38x and Armada XP

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: alphascale,acc
+
+title: Alphascale Clock Controller
+
+maintainer:
+    -   name: Oleksij Rempel <linux@rempel-privat.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "alphascale,asm9260-timer"
+            "alphascale,asm9260-clock-controller"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # Alphascale Clock Controller
 #
 # The ACC (Alphascale Clock Controller) is responsible of choising proper

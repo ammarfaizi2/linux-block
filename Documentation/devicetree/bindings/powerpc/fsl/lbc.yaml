@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: lbc
+
+title: Chipselect/Local Bus
+
+maintainer:
+    -   name: John Ogness <john.ogness@linutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "jedec-flash"
+            "fsl,mpc8280-localbus" && "fsl,pq2-localbus"
+            "fsl,mpc8272-localbus" && "fsl,pq2-localbus"
+            "fsl,mpc8272ads-bcsr"
+            "fsl,mpc8248-localbus" && "fsl,pq2-localbus" && "simple-bus"
+            "fsl,mpc8247-localbus" && "fsl,pq2-localbus" && "simple-bus"
+
+    #address-cells:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # * Chipselect/Local Bus
 #
 # Properties:

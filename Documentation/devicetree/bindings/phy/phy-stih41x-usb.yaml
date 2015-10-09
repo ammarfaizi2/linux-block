@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: phy-stih41x-usb
+
+title: STMicroelectronics STiH41x USB PHY binding
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih416-usb-phy"
+
+    clock-names:
+    clocks:
+    #phy-cells:
+    st,syscfg:
+
+...
+
 # STMicroelectronics STiH41x USB PHY binding
 # ------------------------------------------
 #

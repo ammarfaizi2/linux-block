@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: vf610-clock
+
+title: Clock bindings for Freescale Vybrid VF610 SOC
+
+maintainer:
+    -   name: Jingchang Lu <b35083@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-ccm"
+
+    #clock-cells:
+    clock-names:
+    clocks:
+    reg:
+
+...
+
 # * Clock bindings for Freescale Vybrid VF610 SOC
 #
 # Required properties:

@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: mpc5121-psc
+
+title: MPC5121 PSC Device Tree Bindings
+
+maintainer:
+    -   name: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc5200b-psc-uart" && "fsl,mpc5200-psc-uart"
+            "fsl,mpc5200b-psc" && "fsl,mpc5200-psc"
+            "fsl,mpc5125-psc-uart" && "fsl,mpc5125-psc"
+            "fsl,mpc5121-psc-uart" && "fsl,mpc5121-psc"
+            "fsl,mpc5121-psc-spi" && "fsl,mpc5121-psc"
+            "fsl,mpc5121-psc-fifo"
+            "fsl,mpc5121-psc-ac97" && "fsl,mpc5121-psc"
+            "fsl,mpc5121-psc"
+            "fsl,mpc5121-immr"
+
+    #address-cells:
+    bus-frequency:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # MPC5121 PSC Device Tree Bindings
 #
 # PSC in UART mode

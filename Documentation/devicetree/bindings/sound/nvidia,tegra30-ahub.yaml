@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra30-ahub
+
+title: NVIDIA Tegra30 AHUB (Audio Hub)
+
+maintainer:
+    -   name: Stephen Warren <swarren@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra30-ahub"
+            "nvidia,tegra124-ahub"
+            "nvidia,tegra114-ahub"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    interrupts:
+    ranges:
+    reg:
+    reset-names:
+    resets:
+    #size-cells:
+
+...
+
 # NVIDIA Tegra30 AHUB (Audio Hub)
 #
 # Required properties:

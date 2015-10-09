@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-digicolor
+
+title: Conexant Digicolor I2C controller
+
+maintainer:
+    -   name: Baruch Siach <baruch@tkos.co.il>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "cnxt,cx92755-i2c"
+
+    #address-cells:
+    clock-frequency:
+    clocks:
+    interrupts:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # Conexant Digicolor I2C controller
 #
 # Required properties:

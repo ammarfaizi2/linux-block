@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: ti,omap-dss
+
+title: Texas Instruments OMAP Display Subsystem
+
+maintainer:
+    -   name: Javier Martinez Canillas <javier.martinez@collabora.co.uk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-hdmi"
+            "ti,omap4-dispc"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    ti,hwmods:
+
+...
+
 # Texas Instruments OMAP Display Subsystem
 # ========================================
 #

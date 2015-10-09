@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: tauros2
+
+title: Marvell Tauros2 Cache
+
+maintainer:
+    -   name: Chao Xie <xiechao.mail@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "marvell,tauros2-cache"
+
+    marvell,tauros2-cache-features:
+
+...
+
 # * Marvell Tauros2 Cache
 #
 # Required properties:

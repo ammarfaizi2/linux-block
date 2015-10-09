@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: cros-ec-keyb
+
+title: ChromeOS EC Keyboard
+
+maintainer:
+    -   name: Simon Glass <sjg@chromium.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "google,cros-ec-keyb"
+
+    google,needs-ghost-filter:
+    keypad,num-columns:
+    keypad,num-rows:
+    linux,keymap:
+
+...
+
 # ChromeOS EC Keyboard
 #
 # Google's ChromeOS EC Keyboard is a simple matrix keyboard implemented on

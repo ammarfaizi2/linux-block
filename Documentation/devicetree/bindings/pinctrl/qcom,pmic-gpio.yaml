@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,pmic-gpio
+
+title: Qualcomm PMIC GPIO block
+
+maintainer:
+    -   name: Bjorn Andersson <bjorn.andersson@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pma8084-gpio"
+            "qcom,pm8941-gpio"
+            "qcom,pm8921-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+    interrupts:
+    reg:
+
+...
+
 # Qualcomm PMIC GPIO block
 #
 # This binding describes the GPIO block(s) found in the 8xxx series of

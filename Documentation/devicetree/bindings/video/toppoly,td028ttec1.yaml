@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: toppoly,td028ttec1
+
+title: Toppoly TD028TTEC1 Panel
+
+maintainer:
+    -   name: Marek Belisko <marek@goldelico.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "toppoly,td028ttec1"
+
+    label:
+    reg:
+    spi-cpha:
+    spi-cpol:
+    spi-max-frequency:
+
+...
+
 # Toppoly TD028TTEC1 Panel
 # ========================
 #

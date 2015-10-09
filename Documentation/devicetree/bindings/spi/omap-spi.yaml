@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap-spi
+
+title: OMAP2+ McSPI device
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,omap4-mcspi"
+            "ti,omap2-mcspi"
+            "ti,am4372-mcspi" && "ti,omap4-mcspi"
+
+    #address-cells:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+    ti,hwmods:
+
+...
+
 # OMAP2+ McSPI device
 #
 # Required properties:

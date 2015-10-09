@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: rotary-encoder
+
+title: Rotary encoder DT bindings
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rotary-encoder"
+
+    gpios:
+    linux,axis:
+    pinctrl-0:
+    pinctrl-names:
+    rotary-encoder,relative-axis:
+
+...
+
 # Rotary encoder DT bindings
 #
 # Required properties:

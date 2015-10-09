@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: hisilicon
+
+title: Hisilicon Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hisilicon,sysctrl" && "syscon"
+            "hisilicon,sysctrl"
+            "hisilicon,hip04-fabric"
+            "hisilicon,hip04-d01"
+            "hisilicon,hip04-bootwrapper"
+            "hisilicon,hip01-sysctrl" && "hisilicon,sysctrl"
+            "hisilicon,hip01-ca9x2" && "hisilicon,hip01"
+            "hisilicon,hi3620-hi4511"
+            "hisilicon,cpuctrl"
+
+    #address-cells:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # Hisilicon Platforms Device Tree Bindings
 # ----------------------------------------------------
 # Hi6220 SoC

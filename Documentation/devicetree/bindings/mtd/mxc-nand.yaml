@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxc-nand
+
+title: Freescale's mxc_nand
+
+maintainer:
+    -   name: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx27-nand"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    nand-bus-width:
+    nand-ecc-mode:
+    nand-on-flash-bbt:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale's mxc_nand
 #
 # Required properties:

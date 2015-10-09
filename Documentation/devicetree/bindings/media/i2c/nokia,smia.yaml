@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: nokia,smia
+
+title: SMIA/SMIA++ sensor
+
+maintainer:
+    -   name: Sakari Ailus <sakari.ailus@iki.fi>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nokia,smia"
+
+    clock-frequency:
+    clocks:
+    nokia,nvm-size:
+    reg:
+    vana-supply:
+
+...
+
 # SMIA/SMIA++ sensor
 #
 # SMIA (Standard Mobile Imaging Architecture) is an image sensor standard

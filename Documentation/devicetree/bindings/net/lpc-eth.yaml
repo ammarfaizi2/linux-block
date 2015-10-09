@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc-eth
+
+title: NXP LPC32xx SoC Ethernet Controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc-eth"
+
+    interrupts:
+    phy-mode:
+    reg:
+    use-iram:
+
+...
+
 # * NXP LPC32xx SoC Ethernet Controller
 #
 # Required properties:

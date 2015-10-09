@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-sec6
+
+title: SEC 6 is as Freescale's Cryptographic Accelerator and Assurance Module (CAAM).
+
+maintainer:
+    -   name: Hayato Suzuki <hytszk@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,sec-v4"."0-job-ring"
+
+    interrupts:
+    reg:
+
+...
+
 # SEC 6 is as Freescale's Cryptographic Accelerator and Assurance Module (CAAM).
 # Currently Freescale powerpc chip C29X is embedded with SEC 6.
 # SEC 6 device tree binding include:

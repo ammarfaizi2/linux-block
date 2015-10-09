@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl,ftm-timer
+
+title: Freescale FlexTimer Module (FTM) Timer
+
+maintainer:
+    -   name: Xiubo Li <Li.Xiubo@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,ftm-timer"
+
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Freescale FlexTimer Module (FTM) Timer
 #
 # Required properties:

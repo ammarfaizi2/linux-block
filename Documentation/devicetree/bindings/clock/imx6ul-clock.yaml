@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: imx6ul-clock
+
+title: Clock bindings for Freescale i.MX6 UltraLite
+
+maintainer:
+    -   name: Frank Li <Frank.Li@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6ul-ccm"
+
+    #clock-cells:
+    clock-names:
+    clocks:
+    interrupts:
+    reg:
+
+...
+
 # * Clock bindings for Freescale i.MX6 UltraLite
 #
 # Required properties:

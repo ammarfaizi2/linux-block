@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: rcar-thermal
+
+title: Renesas R-Car Thermal
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,thermal-r8a7791" && "renesas,rcar-thermal"
+            "renesas,thermal-r8a7790" && "renesas,rcar-thermal"
+            "renesas,thermal-r8a7779" && "renesas,rcar-thermal"
+            "renesas,thermal-r8a73a4" && "renesas,rcar-thermal"
+
+    clocks:
+    interrupts:
+    power-domains:
+    reg:
+
+...
+
 # * Renesas R-Car Thermal
 #
 # Required properties:

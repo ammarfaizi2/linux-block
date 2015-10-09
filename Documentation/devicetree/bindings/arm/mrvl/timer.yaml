@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: timer
+
+title: Marvell MMP Timer controller
+
+maintainer:
+    -   name: Haojian Zhuang <haojian.zhuang@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mrvl,mmp-timer"
+
+    interrupts:
+    reg:
+    status:
+
+...
+
 # * Marvell MMP Timer controller
 #
 # Required properties:

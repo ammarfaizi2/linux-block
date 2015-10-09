@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: i2c-mux
+
+title: Common i2c bus multiplexer/switch properties.
+
+maintainer:
+    -   name: Wolfram Sang <wolfram@the-dreams.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,pca9548"
+
+    #address-cells:
+    reg:
+    #size-cells:
+
+...
+
 # Common i2c bus multiplexer/switch properties.
 #
 # An i2c bus multiplexer/switch will have several child busses that are

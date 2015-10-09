@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: mediatek
+
+title: MediaTek mt65xx, mt67xx  %title% mt81xx Platforms Device Tree Bindings
+
+maintainer:
+    -   name: Mars Cheng <mars.cheng@mediatek.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "mundoreader,bq-aquaris5" && "mediatek,mt6589"
+            "mediatek,mt8135-evbp1" && "mediatek,mt8135"
+            "mediatek,mt8135"
+            "mediatek,mt8127-moose" && "mediatek,mt8127"
+            "mediatek,mt8127"
+            "mediatek,mt6592-evb" && "mediatek,mt6592"
+            "mediatek,mt6592"
+            "mediatek,mt6589"
+            "mediatek,mt6580-evbp1" && "mediatek,mt6580"
+            "mediatek,mt6580"
+
+
+...
+
 # MediaTek mt65xx, mt67xx & mt81xx Platforms Device Tree Bindings
 #
 # Boards with a MediaTek mt65xx/mt67xx/mt81xx SoC shall have the

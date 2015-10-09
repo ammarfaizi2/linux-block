@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: hannstar,hsd100pxn1
+
+title: HannStar Display Corp. HSD100PXN1 10.1" XGA LVDS panel
+
+maintainer:
+    -   name: Eric Nelson <eric.nelson@boundarydevices.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "hannstar,hsd100pxn1"
+
+    backlight:
+
+...
+
 # HannStar Display Corp. HSD100PXN1 10.1" XGA LVDS panel
 #
 # Required properties:

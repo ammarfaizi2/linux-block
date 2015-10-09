@@ -1,3 +1,47 @@
+%YAML 1.2
+---
+version: 1
+
+id: stmpe
+
+title: STMPE Touchscreen
+
+maintainer:
+    -   name: Vipul Kumar Samar <vipulkumar.samar@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stmpe-ts"
+
+    reg:
+    st,adc-freq:
+    st,ave-ctrl:
+    st,fraction-z:
+    st,i-drive:
+    st,mod-12b:
+    st,ref-sel:
+    st,sample-time:
+    st,settling:
+    st,touch-det-delay:
+    ts,adc-freq:
+    ts,ave-ctrl:
+    ts,fraction-z:
+    ts,i-drive:
+    ts,mod-12b:
+    ts,ref-sel:
+    ts,sample-time:
+    ts,settling:
+    ts,touch-det-delay:
+
+...
+
 # STMPE Touchscreen
 # ----------------
 #

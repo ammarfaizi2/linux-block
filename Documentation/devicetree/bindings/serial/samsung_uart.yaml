@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: samsung_uart
+
+title: Samsung's UART Controller
+
+maintainer:
+    -   name: Naveen Krishna Chatradhi <ch.naveen@samsung.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5pv210-uart"
+            "samsung,s3c6400-uart"
+            "samsung,s3c2440-uart"
+            "samsung,s3c2410-uart"
+            "samsung,exynos4210-uart"
+
+    assigned-clock-rates:
+    assigned-clocks:
+    clock-names:
+    clocks:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Samsung's UART Controller
 #
 # The Samsung's UART controller is used for interfacing SoC with serial

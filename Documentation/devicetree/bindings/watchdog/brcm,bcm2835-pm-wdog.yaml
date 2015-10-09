@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,bcm2835-pm-wdog
+
+title: BCM2835 Watchdog timer
+
+maintainer:
+    -   name: Lubomir Rintel <lkundrak@v3.sk>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,bcm2835-pm-wdt"
+
+    reg:
+
+...
+
 # BCM2835 Watchdog timer
 #
 # Required properties:

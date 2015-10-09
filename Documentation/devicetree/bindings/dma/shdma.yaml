@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: shdma
+
+title: SHDMA Device Tree bindings
+
+maintainer:
+    -   name: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,shdma-r8a73a4"
+            "renesas,shdma-mux"
+
+    #address-cells:
+    #dma-cells:
+    dma-channels:
+    dma-requests:
+    ranges:
+    #size-cells:
+
+...
+
 # * SHDMA Device Tree bindings
 #
 # Sh-/r-mobile and r-car systems often have multiple identical DMA controller

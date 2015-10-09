@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,kona-sdhci
+
+title: Broadcom BCM281xx SDHCI
+
+maintainer:
+    -   name: Scott Branden <sbranden@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,kona-sdhci"
+
+    cd-gpios:
+    clocks:
+    interrupts:
+    max-frequency:
+    non-removable:
+    reg:
+    status:
+    vmmc-supply:
+    vqmmc-supply:
+
+...
+
 # Broadcom BCM281xx SDHCI
 #
 # This file documents differences between the core properties in mmc.txt

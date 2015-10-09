@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: at25
+
+title: EEPROMs (SPI) compatible with Atmel at25.
+
+maintainer:
+    -   name: Alexandre Pereira da Silva <aletes.xgr@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,at25"
+
+    at25,addr-mode:
+    at25,byte-len:
+    at25,page-size:
+    pl022,com-mode:
+    pl022,ctrl-len:
+    pl022,duplex:
+    pl022,interface:
+    pl022,rx-level-trig:
+    pl022,tx-level-trig:
+    pl022,wait-state:
+    reg:
+    spi-max-frequency:
+
+...
+
 # EEPROMs (SPI) compatible with Atmel at25.
 #
 # Required properties:

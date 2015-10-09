@@ -1,3 +1,58 @@
+%YAML 1.2
+---
+version: 1
+
+id: s5m8767-regulator
+
+title: Samsung S5M8767 Voltage and Current Regulator
+
+maintainer:
+    -   name: Sachin Kamat <sachin.kamat@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "samsung,s5m8767-pmic"
+
+    interrupt-parent:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    s5m8767,pmic-buck2-dvs-voltage:
+    s5m8767,pmic-buck3-dvs-voltage:
+    s5m8767,pmic-buck4-dvs-voltage:
+    s5m8767,pmic-buck-default-dvs-idx:
+    s5m8767,pmic-buck-ds-gpios:
+    s5m8767,pmic-buck-dvs-gpios:
+    vinb1-supply:
+    vinb2-supply:
+    vinb3-supply:
+    vinb4-supply:
+    vinb5-supply:
+    vinb6-supply:
+    vinb7-supply:
+    vinb8-supply:
+    vinb9-supply:
+    vinl1-supply:
+    vinl2-supply:
+    vinl3-supply:
+    vinl4-supply:
+    vinl5-supply:
+    vinl6-supply:
+    vinl7-supply:
+    vinl8-supply:
+    vinl9-supply:
+    wakeup-source:
+
+...
+
 # * Samsung S5M8767 Voltage and Current Regulator
 #
 # The Samsung S5M8767 is a multi-function device which includes voltage and

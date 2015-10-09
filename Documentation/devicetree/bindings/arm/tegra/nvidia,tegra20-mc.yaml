@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: nvidia,tegra20-mc
+
+title: NVIDIA Tegra20 MC(Memory Controller)
+
+maintainer:
+    -   name: Hiroshi DOYU <hdoyu@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nvidia,tegra20-mc"
+
+    interrupts:
+    reg:
+
+...
+
 # NVIDIA Tegra20 MC(Memory Controller)
 #
 # Required properties:

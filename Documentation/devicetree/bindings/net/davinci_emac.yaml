@@ -1,3 +1,41 @@
+%YAML 1.2
+---
+version: 1
+
+id: davinci_emac
+
+title: Texas Instruments Davinci EMAC
+
+maintainer:
+    -   name: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,dm816-emac"
+            "ti,davinci-dm6467-emac"
+            "ti,am3517-emac"
+
+    interrupts:
+    local-mac-address:
+    reg:
+    status:
+    syscon:
+    ti,davinci-ctrl-mod-reg-offset:
+    ti,davinci-ctrl-ram-offset:
+    ti,davinci-ctrl-ram-size:
+    ti,davinci-ctrl-reg-offset:
+    ti,davinci-rmii-en:
+    ti,hwmods:
+
+...
+
 # * Texas Instruments Davinci EMAC
 #
 # This file provides information, what the device node

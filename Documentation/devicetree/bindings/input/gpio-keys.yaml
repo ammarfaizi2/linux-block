@@ -1,3 +1,36 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-keys
+
+title: Device-Tree bindings for input/gpio_keys.c keyboard driver
+
+maintainer:
+    -   name: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gpio-keys"
+
+    #address-cells:
+    autorepeat:
+    "gpio-keys"::
+    pinctrl-0:
+    pinctrl-names:
+    #size-cells:
+    status:
+    vdd-supply:
+
+...
+
 # Device-Tree bindings for input/gpio_keys.c keyboard driver
 #
 # Required properties:

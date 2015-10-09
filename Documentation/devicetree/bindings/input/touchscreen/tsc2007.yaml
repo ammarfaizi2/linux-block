@@ -1,3 +1,38 @@
+%YAML 1.2
+---
+version: 1
+
+id: tsc2007
+
+title: Texas Instruments tsc2007 touchscreen controller
+
+maintainer:
+    -   name: Denis Carikli <denis@eukrea.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,tsc2007"
+
+    gpios:
+    interrupt-parent:
+    interrupts:
+    linux,wakeup:
+    pendown-gpio:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+    ti,x-plate-ohms:
+
+...
+
 # * Texas Instruments tsc2007 touchscreen controller
 #
 # Required properties:

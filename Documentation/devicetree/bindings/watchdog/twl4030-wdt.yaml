@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: twl4030-wdt
+
+title: Device tree bindings for twl4030-wdt driver (TWL4030 watchdog)
+
+maintainer:
+    -   name: Aaro Koskinen <aaro.koskinen@iki.fi>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,twl4030-wdt"
+
+    "ti,twl4030-wdt"::
+
+...
+
 # Device tree bindings for twl4030-wdt driver (TWL4030 watchdog)
 #
 # Required properties:

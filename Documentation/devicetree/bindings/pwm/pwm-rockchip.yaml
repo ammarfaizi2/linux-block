@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: pwm-rockchip
+
+title: Rockchip PWM controller
+
+maintainer:
+    -   name: Beniamino Galvani <b.galvani@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3288-pwm"
+            "rockchip,rk2928-pwm"
+
+    clocks:
+    pinctrl-0:
+    pinctrl-names:
+    #pwm-cells:
+    reg:
+    status:
+
+...
+
 # Rockchip PWM controller
 #
 # Required properties:

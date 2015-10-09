@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: dma
+
+title: Freescale DMA Controllers
+
+maintainer:
+    -   name: Hongbo Zhang <hongbo.zhang@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8540-dma" && "fsl,eloplus-dma"
+            "fsl,mpc8540-dma-channel" && "fsl,eloplus-dma-channel"
+            "fsl,mpc8349-dma" && "fsl,elo-dma"
+            "fsl,mpc8349-dma-channel" && "fsl,elo-dma-channel"
+
+    cell-index:
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale DMA Controllers
 #
 # ** Freescale Elo DMA Controller

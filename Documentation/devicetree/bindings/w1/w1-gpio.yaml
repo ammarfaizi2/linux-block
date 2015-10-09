@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: w1-gpio
+
+title: w1-gpio devicetree bindings
+
+maintainer:
+    -   name: Daniel Mack <zonque@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "w1-gpio"
+
+    gpios:
+    linux,open-drain:
+    pinctrl-0:
+    pinctrl-names:
+    status:
+
+...
+
 # w1-gpio devicetree bindings
 #
 # Required properties:

@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: brg
+
+title: Baud Rate Generators
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc885-brg" && "fsl,cpm1-brg" && "fsl,cpm-brg"
+            "fsl,mpc875-brg" && "fsl,cpm1-brg" && "fsl,cpm-brg"
+            "fsl,mpc866-brg" && "fsl,cpm1-brg" && "fsl,cpm-brg"
+            "fsl,mpc860-brg" && "fsl,cpm1-brg" && "fsl,cpm-brg"
+            "fsl,mpc8560-brg" && "fsl,cpm2-brg" && "fsl,cpm-brg"
+            "fsl,mpc8555-brg" && "fsl,cpm2-brg" && "fsl,cpm-brg"
+            "fsl,mpc8541-brg" && "fsl,cpm2-brg" && "fsl,cpm-brg"
+            "fsl,mpc8280-brg" && "fsl,cpm2-brg" && "fsl,cpm-brg"
+            "fsl,mpc8272-brg" && "fsl,cpm2-brg" && "fsl,cpm-brg"
+            "fsl,mpc8248-brg" && "fsl,cpm2-brg" && "fsl,cpm-brg"
+            "fsl,mpc8247-brg" && "fsl,cpm2-brg" && "fsl,cpm-brg"
+
+    reg:
+
+...
+
 # * Baud Rate Generators
 #
 # Currently defined compatibles:

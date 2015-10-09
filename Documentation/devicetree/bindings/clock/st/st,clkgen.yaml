@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,clkgen
+
+title: Binding for a Clockgen hardware block found on
+
+maintainer:
+    -   name: Gabriel FERNANDEZ <gabriel.fernandez@st.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,clkgena-prediv-c65" && "st,clkgena-prediv"
+            "st,clkgena-plls-c65"
+            "st,clkgena-divmux-c65-hs" && "st,clkgena-divmux"
+
+    #clock-cells:
+    clock-output-names:
+    clocks:
+
+...
+
 # Binding for a Clockgen hardware block found on
 # certain STMicroelectronics consumer electronics SoC devices.
 #

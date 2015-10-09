@@ -1,3 +1,40 @@
+%YAML 1.2
+---
+version: 1
+
+id: allwinner,sun4i-a10-musb
+
+title: Allwinner sun4i A10 musb DRC/OTG controller
+
+maintainer:
+    -   name: Hans de Goede <hdegoede@redhat.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun8i-a33-musb"
+            "allwinner,sun6i-a31-musb"
+            "allwinner,sun4i-a10-musb"
+
+    allwinner,sram:
+    clocks:
+    dr_mode:
+    extcon:
+    interrupt-names:
+    interrupts:
+    phy-names:
+    phys:
+    reg:
+    status:
+
+...
+
 # Allwinner sun4i A10 musb DRC/OTG controller
 # -------------------------------------------
 #

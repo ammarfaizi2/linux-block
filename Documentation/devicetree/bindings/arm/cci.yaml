@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: cci
+
+title: =======================================================
+
+maintainer:
+    -   name: Punit Agrawal <punit.agrawal@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,cci-400-pmu,r0"
+            "arm,cci-400-ctrl-if"
+            "arm,cci-400"
+
+    #address-cells:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # =======================================================
 # ARM CCI cache coherent interconnect binding description
 # =======================================================

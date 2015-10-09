@@ -1,3 +1,31 @@
+%YAML 1.2
+---
+version: 1
+
+id: lpc32xx-mic
+
+title: NXP LPC32xx Main Interrupt Controller
+
+maintainer:
+    -   name: Roland Stigge <stigge@antcom.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "nxp,lpc3220-mic"
+
+    #interrupt-cells:
+    interrupt-controller:
+    reg:
+
+...
+
 # * NXP LPC32xx Main Interrupt Controller
 #   (MIC, including SIC1 and SIC2 secondary controllers)
 #

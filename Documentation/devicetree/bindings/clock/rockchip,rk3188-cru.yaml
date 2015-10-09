@@ -1,3 +1,33 @@
+%YAML 1.2
+---
+version: 1
+
+id: rockchip,rk3188-cru
+
+title: Rockchip RK3188/RK3066 Clock and Reset Unit
+
+maintainer:
+    -   name: Heiko Stübner <heiko@sntech.de>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "rockchip,rk3188-cru"
+            "rockchip,rk3066a-cru"
+
+    #clock-cells:
+    reg:
+    #reset-cells:
+    rockchip,grf:
+
+...
+
 # * Rockchip RK3188/RK3066 Clock and Reset Unit
 #
 # The RK3188/RK3066 clock controller generates and supplies clock to various

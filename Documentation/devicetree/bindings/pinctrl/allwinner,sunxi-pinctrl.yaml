@@ -1,3 +1,46 @@
+%YAML 1.2
+---
+version: 1
+
+id: allwinner,sunxi-pinctrl
+
+title: Allwinner A1X Pin Controller
+
+maintainer:
+    -   name: Chen-Yu Tsai <wens@csie.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "allwinner,sun8i-a33-pinctrl"
+            "allwinner,sun8i-a23-r-pinctrl"
+            "allwinner,sun8i-a23-pinctrl"
+            "allwinner,sun7i-a20-pinctrl"
+            "allwinner,sun6i-a31s-pinctrl"
+            "allwinner,sun6i-a31-r-pinctrl"
+            "allwinner,sun6i-a31-pinctrl"
+            "allwinner,sun5i-a13-pinctrl"
+            "allwinner,sun5i-a10s-pinctrl"
+            "allwinner,sun4i-a10-pinctrl"
+
+    clocks:
+    #gpio-cells:
+    gpio-controller:
+    #interrupt-cells:
+    interrupt-controller:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+
+...
+
 # * Allwinner A1X Pin Controller
 #
 # The pins controlled by sunXi pin controller are organized in banks,

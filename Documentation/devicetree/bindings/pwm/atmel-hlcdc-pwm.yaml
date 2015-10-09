@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: atmel-hlcdc-pwm
+
+title: Device-Tree bindings for Atmel's HLCDC (High-end LCD Controller) PWM driver
+
+maintainer:
+    -   name: Boris Brezillon <boris.brezillon@free-electrons.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "atmel,sama5d3-hlcdc"
+            "atmel,hlcdc-pwm"
+
+    pinctrl-0:
+    pinctrl-names:
+    #pwm-cells:
+
+...
+
 # Device-Tree bindings for Atmel's HLCDC (High-end LCD Controller) PWM driver
 #
 # The Atmel HLCDC PWM is subdevice of the HLCDC MFD device.

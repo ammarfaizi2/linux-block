@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: isil,isl12057
+
+title: Intersil ISL12057 I2C RTC/Alarm chip
+
+maintainer:
+    -   name: Arnaud Ebalard <arno@natisbad.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "isil,isl12057"
+
+    isil,irq2-can-wakeup-machine:
+    reg:
+
+...
+
 # Intersil ISL12057 I2C RTC/Alarm chip
 #
 # ISL12057 is a trivial I2C device (it has simple device tree bindings,

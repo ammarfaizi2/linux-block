@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: mcm
+
+title: =====================================================================
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,mpc8641-mcm" && "fsl,mcm"
+            "fsl,mpc8610-mcm" && "fsl,mcm"
+            "fsl,mcm-law"
+
+    fsl,num-laws:
+    reg:
+
+...
+
 # =====================================================================
 # MPX LAW & Coherency Module Device Tree Binding
 # Copyright (C) 2009 Freescale Semiconductor Inc.

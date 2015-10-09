@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: ppc440spe-adma
+
+title: PPC440SPe DMA/XOR (DMA Controller and XOR Accelerator)
+
+maintainer:
+    -   name: 
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ibm,mq-440spe"
+            "ibm,i2o-440spe"
+            "ibm,dma-440spe"
+            "amcc,xor-accelerator"
+
+    interrupt-parent:
+    interrupts:
+    reg:
+
+...
+
 # PPC440SPe DMA/XOR (DMA Controller and XOR Accelerator)
 #
 # Device nodes needed for operation of the ppc440spe-adma driver

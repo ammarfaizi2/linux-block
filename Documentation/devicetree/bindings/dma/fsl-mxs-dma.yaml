@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-mxs-dma
+
+title: Freescale MXS DMA
+
+maintainer:
+    -   name: Dong Aisheng <dong.aisheng@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-dma-apbh" && "fsl,imx28-dma-apbh"
+            "fsl,imx6q-dma-apbh" && "fsl,imx28-dma-apbh"
+            "fsl,imx28-dma-apbx"
+            "fsl,imx28-dma-apbh"
+            "fsl,imx23-dma-apbx"
+            "fsl,imx23-dma-apbh"
+
+    clocks:
+    #dma-cells:
+    dma-channels:
+    interrupt-names:
+    interrupts:
+    reg:
+
+...
+
 # * Freescale MXS DMA
 #
 # Required properties:

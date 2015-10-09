@@ -1,3 +1,39 @@
+%YAML 1.2
+---
+version: 1
+
+id: mxsfb
+
+title: Freescale MXS LCD Interface (LCDIF)
+
+maintainer:
+    -   name: Shawn Guo <shawn.guo@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6sx-lcdif" && "fsl,imx28-lcdif"
+            "fsl,imx6sl-lcdif" && "fsl,imx28-lcdif"
+            "fsl,imx28-lcdif"
+            "fsl,imx23-lcdif"
+
+    clocks:
+    display:
+    interrupts:
+    lcd-supply:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # * Freescale MXS LCD Interface (LCDIF)
 #
 # Required properties:

@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: twd
+
+title: ARM Timer Watchdog
+
+maintainer:
+    -   name: Marc Zyngier <marc.zyngier@arm.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "arm,cortex-a9-twd-wdt"
+            "arm,cortex-a5-twd-wdt"
+            "arm,cortex-a5-twd-timer"
+
+    interrupts:
+    reg:
+
+...
+
 # * ARM Timer Watchdog
 #
 # ARM 11MP, Cortex-A5 and Cortex-A9 are often associated with a per-core

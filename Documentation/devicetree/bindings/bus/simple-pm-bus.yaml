@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: simple-pm-bus
+
+title: Simple Power-Managed Bus
+
+maintainer:
+    -   name: Geert Uytterhoeven <geert+renesas@glider.be>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "renesas,bsc-sh73a0" && "renesas,bsc" && "simple-pm-bus"
+
+    #address-cells:
+    clocks:
+    interrupts:
+    power-domains:
+    ranges:
+    reg:
+    #size-cells:
+
+...
+
 # Simple Power-Managed Bus
 # ========================
 #

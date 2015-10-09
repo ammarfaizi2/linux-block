@@ -1,3 +1,34 @@
+%YAML 1.2
+---
+version: 1
+
+id: g762
+
+title: GMT G762/G763 PWM Fan controller
+
+maintainer:
+    -   name: Arnaud Ebalard <arno@natisbad.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "gmt,g762"
+
+    clocks:
+    fan_gear_mode:
+    fan_startv:
+    pwm_polarity:
+    reg:
+    status:
+
+...
+
 # GMT G762/G763 PWM Fan controller
 #
 # Required node properties:

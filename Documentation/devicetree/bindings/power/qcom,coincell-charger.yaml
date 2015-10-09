@@ -1,3 +1,32 @@
+%YAML 1.2
+---
+version: 1
+
+id: qcom,coincell-charger
+
+title: Qualcomm Coincell Charger:
+
+maintainer:
+    -   name: Tim Bird <tim.bird@sonymobile.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "qcom,pm8941-coincell"
+
+    qcom,rset-ohms:
+    qcom,vset-millivolts:
+    reg:
+    status:
+
+...
+
 # Qualcomm Coincell Charger:
 #
 # The hardware block controls charging for a coincell or capacitor that is

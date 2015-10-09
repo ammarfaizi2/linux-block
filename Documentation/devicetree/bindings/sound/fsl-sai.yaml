@@ -1,3 +1,37 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-sai
+
+title: Freescale Synchronous Audio Interface (SAI).
+
+maintainer:
+    -   name: Nicolin Chen <Guangyu.Chen@freescale.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,vf610-sai"
+            "fsl,imx6sx-sai"
+
+    clock-names:
+    clocks:
+    dma-names:
+    dmas:
+    dma-source:
+    interrupts:
+    reg:
+    status:
+
+...
+
 # Freescale Synchronous Audio Interface (SAI).
 #
 # The SAI is based on I2S module that used communicating with audio codecs,

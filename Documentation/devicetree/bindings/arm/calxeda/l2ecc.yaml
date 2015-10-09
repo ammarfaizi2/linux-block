@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: l2ecc
+
+title: Calxeda Highbank L2 cache ECC
+
+maintainer:
+    -   name: Rob Herring <rob.herring@calxeda.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "calxeda,hb-sregs-l2-ecc"
+
+    interrupts:
+    reg:
+
+...
+
 # Calxeda Highbank L2 cache ECC
 #
 # Properties:

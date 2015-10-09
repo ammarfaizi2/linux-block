@@ -1,3 +1,51 @@
+%YAML 1.2
+---
+version: 1
+
+id: fsl-imx-cspi
+
+title: Freescale (Enhanced) Configurable Serial Peripheral Interface
+
+maintainer:
+    -   name: Fabio Estevam <festevam@gmail.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "fsl,imx6ul-ecspi" && "fsl,imx51-ecspi"
+            "fsl,imx6sx-ecspi" && "fsl,imx51-ecspi"
+            "fsl,imx6sl-ecspi" && "fsl,imx51-ecspi"
+            "fsl,imx6q-ecspi" && "fsl,imx51-ecspi"
+            "fsl,imx53-ecspi" && "fsl,imx51-ecspi"
+            "fsl,imx53-cspi" && "fsl,imx35-cspi"
+            "fsl,imx51-ecspi"
+            "fsl,imx51-cspi" && "fsl,imx35-cspi"
+            "fsl,imx50-ecspi" && "fsl,imx51-ecspi"
+            "fsl,imx50-cspi" && "fsl,imx35-cspi"
+            "fsl,imx35-cspi"
+            "fsl,imx27-cspi"
+            "fsl,imx25-cspi" && "fsl,imx35-cspi"
+            "fsl,imx1-cspi"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    cs-gpios:
+    fsl,spi-num-chipselects:
+    interrupts:
+    pinctrl-0:
+    reg:
+    #size-cells:
+    status:
+
+...
+
 # * Freescale (Enhanced) Configurable Serial Peripheral Interface
 #   (CSPI/eCSPI) for i.MX
 #

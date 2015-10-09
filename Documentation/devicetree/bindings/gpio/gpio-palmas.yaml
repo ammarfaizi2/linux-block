@@ -1,3 +1,30 @@
+%YAML 1.2
+---
+version: 1
+
+id: gpio-palmas
+
+title: Palmas GPIO controller bindings
+
+maintainer:
+    -   name: Laxman Dewangan <ldewangan@nvidia.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,palmas-gpio"
+
+    #gpio-cells:
+    gpio-controller:
+
+...
+
 # Palmas GPIO controller bindings
 #
 # Required properties:

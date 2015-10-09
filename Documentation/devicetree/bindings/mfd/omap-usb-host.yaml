@@ -1,3 +1,42 @@
+%YAML 1.2
+---
+version: 1
+
+id: omap-usb-host
+
+title: OMAP HS USB Host
+
+maintainer:
+    -   name: Roger Quadros <rogerq@ti.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "ti,usbhs-host"
+
+    #address-cells:
+    clock-names:
+    clocks:
+    num-ports:
+    pinctrl-0:
+    pinctrl-names:
+    port1-mode:
+    port2-mode:
+    port3-mode:
+    ranges:
+    reg:
+    #size-cells:
+    status:
+    ti,hwmods:
+
+...
+
 # OMAP HS USB Host
 #
 # Required properties:

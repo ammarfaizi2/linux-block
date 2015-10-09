@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: uniphier-uart
+
+title: UniPhier UART controller
+
+maintainer:
+    -   name: Masahiro Yamada <yamada.masahiro@socionext.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "socionext,uniphier-uart"
+
+    clocks:
+    fifo-size:
+    interrupts:
+    pinctrl-0:
+    pinctrl-names:
+    reg:
+    status:
+
+...
+
 # UniPhier UART controller
 #
 # Required properties:

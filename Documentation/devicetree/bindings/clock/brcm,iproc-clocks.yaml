@@ -1,3 +1,35 @@
+%YAML 1.2
+---
+version: 1
+
+id: brcm,iproc-clocks
+
+title: Broadcom iProc Family Clocks
+
+maintainer:
+    -   name: Ray Jui <rjui@broadcom.com>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "brcm,cygnus-mipipll"
+            "brcm,cygnus-lcpll0"
+            "brcm,cygnus-genpll"
+            "brcm,cygnus-asiu-clk"
+            "brcm,cygnus-armpll"
+
+    #clock-cells:
+    clocks:
+    reg:
+
+...
+
 # Broadcom iProc Family Clocks
 #
 # This binding uses the common clock binding:

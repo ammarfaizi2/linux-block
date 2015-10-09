@@ -1,3 +1,29 @@
+%YAML 1.2
+---
+version: 1
+
+id: st,sti-picophyreset
+
+title: STMicroelectronics STi family Sysconfig Picophy SoftReset Controller
+
+maintainer:
+    -   name: Peter Griffin <peter.griffin@linaro.org>
+
+description: >
+    TODO
+
+inherits:
+    -   id: %ids%
+
+properties:
+    -   name: "compatible"
+        constraint: |
+            "st,stih407-picophyreset"
+
+    #reset-cells:
+
+...
+
 # STMicroelectronics STi family Sysconfig Picophy SoftReset Controller
 # =============================================================================
 #
