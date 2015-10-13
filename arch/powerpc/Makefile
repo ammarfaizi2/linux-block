@@ -271,7 +271,7 @@ bootwrapper_install:
 	$(Q)$(MAKE) ARCH=ppc64 $(build)=$(boot) $(patsubst %,$(boot)/%,$@)
 
 %.dtb: scripts
-	$(Q)$(MAKE) ARCH=ppc64 $(build)=$(boot) $(patsubst %,$(boot)/%,$@)
+	$(MAKE) $(build)=$(boot)/dts $(boot)/dts/$@
 
 PHONY += dtbs
 
