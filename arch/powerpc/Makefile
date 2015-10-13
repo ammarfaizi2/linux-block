@@ -276,7 +276,7 @@ bootwrapper_install:
 PHONY += dtbs
 
 dtbs: prepare scripts
-	$(Q)$(MAKE) ARCH=ppc64 $(build)=$(boot)/dts
+	$(Q)$(MAKE) $(build)=$(boot)/dts
 
 # Used to create 'merged defconfigs'
 # To use it $(call) it with the first argument as the base defconfig
