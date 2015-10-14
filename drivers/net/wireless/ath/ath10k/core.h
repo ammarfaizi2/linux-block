@@ -676,10 +676,19 @@ struct ath10k {
 		struct ath10k_swap_code_seg_info *firmware_swap_code_seg_info;
 	} swap;
 
-	char spec_board_id[100];
-	bool spec_board_loaded;
+	struct {
+		u32 vendor;
+		u32 device;
+		u32 subsystem_vendor;
+		u32 subsystem_device;
+
+		bool bmi_ids_valid;
+		u8 bmi_board_id;
+		u8 bmi_chip_id;
+	} id;
 
 	int fw_api;
+	int bd_api;
 	enum ath10k_cal_mode cal_mode;
 
 	struct {
