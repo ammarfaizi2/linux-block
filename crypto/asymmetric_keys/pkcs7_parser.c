@@ -44,9 +44,7 @@ struct pkcs7_parse_context {
 static void pkcs7_free_signed_info(struct pkcs7_signed_info *sinfo)
 {
 	if (sinfo) {
-		mpi_free(sinfo->sig.mpi[0]);
-		kfree(sinfo->sig.digest);
-		kfree(sinfo->signing_cert_id);
+		public_key_free(NULL, sinfo->sig);
 		kfree(sinfo);
 	}
 }
@@ -125,6 +123,10 @@ struct pkcs7_message *pkcs7_parse_message(const void *data, size_t datalen)
 	ctx->sinfo = kzalloc(sizeof(struct pkcs7_signed_info), GFP_KERNEL);
 	if (!ctx->sinfo)
 		goto out_no_sinfo;
+	ctx->sinfo->sig = kzalloc(sizeof(struct public_key_signature),
+				  GFP_KERNEL);
+	if (!ctx->sinfo->sig)
+		goto out_no_sig;
 
 	ctx->data = (unsigned long)data;
 	ctx->ppcerts = &ctx->certs;
@@ -150,6 +152,7 @@ out:
 		ctx->certs = cert->next;
 		x509_free_certificate(cert);
 	}
+out_no_sig:
 	pkcs7_free_signed_info(ctx->sinfo);
 out_no_sinfo:
 	pkcs7_free_message(ctx->msg);
@@ -219,25 +222,25 @@ int pkcs7_sig_note_digest_algo(void *context, size_t hdrlen,
 
 	switch (ctx->last_oid) {
 	case OID_md4:
-		ctx->sinfo->sig.pkey_hash_algo = HASH_ALGO_MD4;
+		ctx->sinfo->sig->pkey_hash_algo = HASH_ALGO_MD4;
 		break;
 	case OID_md5:
-		ctx->sinfo->sig.pkey_hash_algo = HASH_ALGO_MD5;
+		ctx->sinfo->sig->pkey_hash_algo = HASH_ALGO_MD5;
 		break;
 	case OID_sha1:
-		ctx->sinfo->sig.pkey_hash_algo = HASH_ALGO_SHA1;
+		ctx->sinfo->sig->pkey_hash_algo = HASH_ALGO_SHA1;
 		break;
 	case OID_sha256:
-		ctx->sinfo->sig.pkey_hash_algo = HASH_ALGO_SHA256;
+		ctx->sinfo->sig->pkey_hash_algo = HASH_ALGO_SHA256;
 		break;
 	case OID_sha384:
-		ctx->sinfo->sig.pkey_hash_algo = HASH_ALGO_SHA384;
+		ctx->sinfo->sig->pkey_hash_algo = HASH_ALGO_SHA384;
 		break;
 	case OID_sha512:
-		ctx->sinfo->sig.pkey_hash_algo = HASH_ALGO_SHA512;
+		ctx->sinfo->sig->pkey_hash_algo = HASH_ALGO_SHA512;
 		break;
 	case OID_sha224:
-		ctx->sinfo->sig.pkey_hash_algo = HASH_ALGO_SHA224;
+		ctx->sinfo->sig->pkey_hash_algo = HASH_ALGO_SHA224;
 	default:
 		printk("Unsupported digest algo: %u\n", ctx->last_oid);
 		return -ENOPKG;
@@ -256,7 +259,7 @@ int pkcs7_sig_note_pkey_algo(void *context, size_t hdrlen,
 
 	switch (ctx->last_oid) {
 	case OID_rsaEncryption:
-		ctx->sinfo->sig.pkey_algo = PKEY_ALGO_RSA;
+		ctx->sinfo->sig->pkey_algo = PKEY_ALGO_RSA;
 		break;
 	default:
 		printk("Unsupported pkey algo: %u\n", ctx->last_oid);
@@ -617,16 +620,17 @@ int pkcs7_sig_note_signature(void *context, size_t hdrlen,
 			     const void *value, size_t vlen)
 {
 	struct pkcs7_parse_context *ctx = context;
+	struct public_key_signature *sig = ctx->sinfo->sig;
 	MPI mpi;
 
-	BUG_ON(ctx->sinfo->sig.pkey_algo != PKEY_ALGO_RSA);
+	BUG_ON(sig->pkey_algo != PKEY_ALGO_RSA);
 
 	mpi = mpi_read_raw_data(value, vlen);
 	if (!mpi)
 		return -ENOMEM;
 
-	ctx->sinfo->sig.mpi[0] = mpi;
-	ctx->sinfo->sig.nr_mpi = 1;
+	sig->mpi[0] = mpi;
+	sig->nr_mpi = 1;
 	return 0;
 }
 
@@ -662,12 +666,16 @@ int pkcs7_note_signed_info(void *context, size_t hdrlen,
 
 	pr_devel("SINFO KID: %u [%*phN]\n", kid->len, kid->len, kid->data);
 
-	sinfo->signing_cert_id = kid;
+	sinfo->sig->auth_ids[0] = kid;
 	sinfo->index = ++ctx->sinfo_index;
 	*ctx->ppsinfo = sinfo;
 	ctx->ppsinfo = &sinfo->next;
 	ctx->sinfo = kzalloc(sizeof(struct pkcs7_signed_info), GFP_KERNEL);
 	if (!ctx->sinfo)
+		return -ENOMEM;
+	ctx->sinfo->sig = kzalloc(sizeof(struct public_key_signature),
+				  GFP_KERNEL);
+	if (!ctx->sinfo->sig)
 		return -ENOMEM;
 	return 0;
 }

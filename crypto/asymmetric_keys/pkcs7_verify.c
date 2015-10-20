@@ -25,35 +25,38 @@
 static int pkcs7_digest(struct pkcs7_message *pkcs7,
 			struct pkcs7_signed_info *sinfo)
 {
+	struct public_key_signature *sig = sinfo->sig;
 	struct crypto_shash *tfm;
 	struct shash_desc *desc;
-	size_t digest_size, desc_size;
-	void *digest;
+	size_t desc_size;
 	int ret;
 
-	kenter(",%u,%u", sinfo->index, sinfo->sig.pkey_hash_algo);
+	kenter(",%u,%u", sinfo->index, sig->pkey_hash_algo);
 
-	if (sinfo->sig.pkey_hash_algo >= PKEY_HASH__LAST ||
-	    !hash_algo_name[sinfo->sig.pkey_hash_algo])
+	if (sig->pkey_hash_algo >= PKEY_HASH__LAST ||
+	    !hash_algo_name[sig->pkey_hash_algo])
 		return -ENOPKG;
 
 	/* Allocate the hashing algorithm we're going to need and find out how
 	 * big the hash operational data will be.
 	 */
-	tfm = crypto_alloc_shash(hash_algo_name[sinfo->sig.pkey_hash_algo],
+	tfm = crypto_alloc_shash(hash_algo_name[sinfo->sig->pkey_hash_algo],
 				 0, 0);
 	if (IS_ERR(tfm))
 		return (PTR_ERR(tfm) == -ENOENT) ? -ENOPKG : PTR_ERR(tfm);
 
 	desc_size = crypto_shash_descsize(tfm) + sizeof(*desc);
-	sinfo->sig.digest_size = digest_size = crypto_shash_digestsize(tfm);
+	sig->digest_size = crypto_shash_digestsize(tfm);
 
 	ret = -ENOMEM;
-	digest = kzalloc(digest_size + desc_size, GFP_KERNEL);
-	if (!digest)
+	sig->digest = kmalloc(sig->digest_size, GFP_KERNEL);
+	if (!sig->digest)
 		goto error_no_desc;
 
-	desc = digest + digest_size;
+	desc = kzalloc(desc_size, GFP_KERNEL);
+	if (!desc)
+		goto error_no_desc;
+
 	desc->tfm   = tfm;
 	desc->flags = CRYPTO_TFM_REQ_MAY_SLEEP;
 
@@ -61,10 +64,11 @@ static int pkcs7_digest(struct pkcs7_message *pkcs7,
 	ret = crypto_shash_init(desc);
 	if (ret < 0)
 		goto error;
-	ret = crypto_shash_finup(desc, pkcs7->data, pkcs7->data_len, digest);
+	ret = crypto_shash_finup(desc, pkcs7->data, pkcs7->data_len,
+				 sig->digest);
 	if (ret < 0)
 		goto error;
-	pr_devel("MsgDigest = [%*ph]\n", 8, digest);
+	pr_devel("MsgDigest = [%*ph]\n", 8, sig->digest);
 
 	/* However, if there are authenticated attributes, there must be a
 	 * message digest attribute amongst them which corresponds to the
@@ -79,14 +83,15 @@ static int pkcs7_digest(struct pkcs7_message *pkcs7,
 			goto error;
 		}
 
-		if (sinfo->msgdigest_len != sinfo->sig.digest_size) {
+		if (sinfo->msgdigest_len != sig->digest_size) {
 			pr_debug("Sig %u: Invalid digest size (%u)\n",
 				 sinfo->index, sinfo->msgdigest_len);
 			ret = -EBADMSG;
 			goto error;
 		}
 
-		if (memcmp(digest, sinfo->msgdigest, sinfo->msgdigest_len) != 0) {
+		if (memcmp(sig->digest, sinfo->msgdigest,
+			   sinfo->msgdigest_len) != 0) {
 			pr_debug("Sig %u: Message digest doesn't match\n",
 				 sinfo->index);
 			ret = -EKEYREJECTED;
@@ -98,7 +103,7 @@ static int pkcs7_digest(struct pkcs7_message *pkcs7,
 		 * convert the attributes from a CONT.0 into a SET before we
 		 * hash it.
 		 */
-		memset(digest, 0, sinfo->sig.digest_size);
+		memset(sig->digest, 0, sig->digest_size);
 
 		ret = crypto_shash_init(desc);
 		if (ret < 0)
@@ -108,17 +113,14 @@ static int pkcs7_digest(struct pkcs7_message *pkcs7,
 		if (ret < 0)
 			goto error;
 		ret = crypto_shash_finup(desc, sinfo->authattrs,
-					 sinfo->authattrs_len, digest);
+					 sinfo->authattrs_len, sig->digest);
 		if (ret < 0)
 			goto error;
-		pr_devel("AADigest = [%*ph]\n", 8, digest);
+		pr_devel("AADigest = [%*ph]\n", 8, sig->digest);
 	}
 
-	sinfo->sig.digest = digest;
-	digest = NULL;
-
 error:
-	kfree(digest);
+	kfree(desc);
 error_no_desc:
 	crypto_free_shash(tfm);
 	kleave(" = %d", ret);
@@ -145,12 +147,12 @@ static int pkcs7_find_key(struct pkcs7_message *pkcs7,
 		 * PKCS#7 message - but I can't be 100% sure of that.  It's
 		 * possible this will need element-by-element comparison.
 		 */
-		if (!asymmetric_key_id_same(x509->id, sinfo->signing_cert_id))
+		if (!asymmetric_key_id_same(x509->id, sinfo->sig->auth_ids[0]))
 			continue;
 		pr_devel("Sig %u: Found cert serial match X.509[%u]\n",
 			 sinfo->index, certix);
 
-		if (x509->pub->pkey_algo != sinfo->sig.pkey_algo) {
+		if (x509->pub->pkey_algo != sinfo->sig->pkey_algo) {
 			pr_warn("Sig %u: X.509 algo and PKCS#7 sig algo don't match\n",
 				sinfo->index);
 			continue;
@@ -165,7 +167,7 @@ static int pkcs7_find_key(struct pkcs7_message *pkcs7,
 	 */
 	pr_debug("Sig %u: Issuing X.509 cert not found (#%*phN)\n",
 		 sinfo->index,
-		 sinfo->signing_cert_id->len, sinfo->signing_cert_id->data);
+		 sinfo->sig->auth_ids[0]->len, sinfo->sig->auth_ids[0]->data);
 	return 0;
 }
 
@@ -324,7 +326,7 @@ static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
 	}
 
 	/* Verify the PKCS#7 binary against the key */
-	ret = public_key_verify_signature(sinfo->signer->pub, &sinfo->sig);
+	ret = public_key_verify_signature(sinfo->signer->pub, sinfo->sig);
 	if (ret < 0)
 		return ret;
 
