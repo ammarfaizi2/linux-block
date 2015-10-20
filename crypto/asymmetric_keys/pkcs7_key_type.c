@@ -71,7 +71,7 @@ static int pkcs7_preparse(struct key_preparsed_payload *prep)
 
 	ret = verify_pkcs7_signature(NULL, 0,
 				     prep->data, prep->datalen,
-				     NULL, -ENOKEY, usage,
+				     NULL, usage,
 				     pkcs7_view_content, prep);
 
 	kleave(" = %d", ret);
