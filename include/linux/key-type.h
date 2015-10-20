@@ -45,7 +45,6 @@ struct key_preparsed_payload {
 	size_t		datalen;	/* Raw datalen */
 	size_t		quotalen;	/* Quota length for proposed payload */
 	time_t		expiry;		/* Expiry time of key */
-	bool		trusted;	/* True if key is trusted */
 };
 
 typedef int (*request_key_actor_t)(struct key_construction *key,
@@ -94,6 +93,15 @@ struct key_type {
 	/* Free a preparse data structure.
 	 */
 	void (*free_preparse)(struct key_preparsed_payload *prep);
+
+	/* Verify the trust on a key when added to a trusted-only keyring.
+	 *
+	 * If this method isn't provided then it is assumed that the concept of
+	 * trust is irrelevant to keys of this type and an attempt to add one
+	 * to a trusted-only keyring will be rejected.
+	 */
+	int (*verify_trust)(const union key_payload *payload,
+			    struct key *keyring);
 
 	/* instantiate a key of this type
 	 * - this method should call key_payload_reserve() to determine if the

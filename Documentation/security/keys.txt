@@ -1183,6 +1183,23 @@ The structure has a number of fields, some of which are mandatory:
      successfully, even if instantiate() or update() succeed.
 
 
+ (*) int (*verify_trust)(const union key_payload *payload, struct key *keyring);
+
+     If the keyring to which a candidate key is being added/linked is marked as
+     KEY_FLAG_TRUSTED_ONLY then this function will get called in the candidate
+     key type to verify the key or proposed key based on its payload.  It is
+     expected to use the contents of the supplied destination keyring to
+     determine whether the candidate key is to be trusted and added to the
+     keyring.
+
+     The method should return 0 to allow the addition and an error otherwise,
+     typically ENOKEY if there's no key in the keyring to verify this key and
+     EKEYREJECTED if the selected key fails to verify the candidate.
+
+     This method is optional.  If it is not supplied, keys of this type cannot
+     be added to trusted-only keyrings and EPERM will be returned.
+
+
  (*) int (*instantiate)(struct key *key, struct key_preparsed_payload *prep);
 
      This method is called to attach a payload to a key during construction.

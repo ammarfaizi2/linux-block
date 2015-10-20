@@ -1191,6 +1191,18 @@ void __key_link_end(struct key *keyring,
 	up_write(&keyring->sem);
 }
 
+/*
+ * Verify a trusted-only keyring link.
+ */
+static int __key_link_verify(struct key *keyring, struct key *key)
+{
+	if (!test_bit(KEY_FLAG_TRUSTED_ONLY, &keyring->flags))
+		return 0;
+	if (!key->type->verify_trust)
+		return -EPERM;
+	return key->type->verify_trust(&key->payload, keyring);
+}
+
 /**
  * key_link - Link a key to a keyring
  * @keyring: The keyring to make the link in.
@@ -1222,13 +1234,15 @@ int key_link(struct key *keyring, struct key *key)
 	key_check(key);
 
 	if (test_bit(KEY_FLAG_TRUSTED_ONLY, &keyring->flags) &&
-	    !test_bit(KEY_FLAG_TRUSTED, &key->flags))
+	    !key->type->verify_trust)
 		return -EPERM;
 
 	ret = __key_link_begin(keyring, &key->index_key, &edit);
 	if (ret == 0) {
 		kdebug("begun {%d,%d}", keyring->serial, atomic_read(&keyring->usage));
-		ret = __key_link_check_live_key(keyring, key);
+		ret = __key_link_verify(keyring, key);
+		if (ret == 0)
+			ret = __key_link_check_live_key(keyring, key);
 		if (ret == 0)
 			__key_link(key, &edit);
 		__key_link_end(keyring, &key->index_key, edit);

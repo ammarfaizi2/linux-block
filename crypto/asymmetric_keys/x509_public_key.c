@@ -318,10 +318,10 @@ static int x509_key_preparse(struct key_preparsed_payload *prep)
 		ret = x509_check_signature(cert->pub, cert); /* self-signed */
 		if (ret < 0)
 			goto error_free_cert;
-	} else if (!prep->trusted) {
+	} else {
 		ret = x509_validate_trust(cert, get_system_trusted_keyring());
-		if (!ret)
-			prep->trusted = 1;
+		if (ret == -EKEYREJECTED)
+			goto error_free_cert;
 	}
 
 	/* Propose a description */

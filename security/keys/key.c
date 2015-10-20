@@ -294,8 +294,6 @@ struct key *key_alloc(struct key_type *type, const char *desc,
 
 	if (!(flags & KEY_ALLOC_NOT_IN_QUOTA))
 		key->flags |= 1 << KEY_FLAG_IN_QUOTA;
-	if (flags & KEY_ALLOC_TRUSTED)
-		key->flags |= 1 << KEY_FLAG_TRUSTED;
 
 #ifdef KEY_DEBUGGING
 	key->magic = KEY_DEBUG_MAGIC;
@@ -478,6 +476,11 @@ int key_instantiate_and_link(struct key *key,
 	struct assoc_array_edit *edit;
 	int ret;
 
+	if (keyring &&
+	    unlikely(test_bit(KEY_FLAG_TRUSTED_ONLY, &keyring->flags)) &&
+	    !key->type->verify_trust)
+		return -EPERM;
+
 	memset(&prep, 0, sizeof(prep));
 	prep.data = data;
 	prep.datalen = datalen;
@@ -490,6 +493,13 @@ int key_instantiate_and_link(struct key *key,
 	}
 
 	if (keyring) {
+		if (unlikely(test_bit(KEY_FLAG_TRUSTED_ONLY,
+				      &keyring->flags)) &&
+		    key->type->verify_trust) {
+			ret = key->type->verify_trust(&prep.payload, keyring);
+			if (ret < 0)
+				goto error;
+		}
 		ret = __key_link_begin(keyring, &key->index_key, &edit);
 		if (ret < 0)
 			goto error;
@@ -545,8 +555,12 @@ int key_reject_and_link(struct key *key,
 	awaken = 0;
 	ret = -EBUSY;
 
-	if (keyring)
+	if (keyring) {
+		if (unlikely(test_bit(KEY_FLAG_TRUSTED_ONLY, &keyring->flags)))
+			return -EPERM;
+
 		link_ret = __key_link_begin(keyring, &key->index_key, &edit);
+	}
 
 	mutex_lock(&key_construction_mutex);
 
@@ -786,6 +800,7 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 	const struct cred *cred = current_cred();
 	struct key *keyring, *key = NULL;
 	key_ref_t key_ref;
+	bool verify_trust;
 	int ret;
 
 	/* look up the key type to see if it's one of the registered kernel
@@ -802,8 +817,17 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 		goto error_put_type;
 
 	keyring = key_ref_to_ptr(keyring_ref);
-
 	key_check(keyring);
+
+	key_ref = ERR_PTR(-EPERM);
+	if (!test_bit(KEY_FLAG_TRUSTED_ONLY, &keyring->flags))
+		verify_trust = false;
+	else if (flags & KEY_ALLOC_TRUSTED)
+		verify_trust = false;
+	else if (index_key.type->verify_trust)
+		verify_trust = true;
+	else
+		goto error_put_type;
 
 	key_ref = ERR_PTR(-ENOTDIR);
 	if (keyring->type != &key_type_keyring)
@@ -813,7 +837,6 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 	prep.data = payload;
 	prep.datalen = plen;
 	prep.quotalen = index_key.type->def_datalen;
-	prep.trusted = flags & KEY_ALLOC_TRUSTED;
 	prep.expiry = TIME_T_MAX;
 	if (index_key.type->preparse) {
 		ret = index_key.type->preparse(&prep);
@@ -829,10 +852,13 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 	}
 	index_key.desc_len = strlen(index_key.description);
 
-	key_ref = ERR_PTR(-EPERM);
-	if (!prep.trusted && test_bit(KEY_FLAG_TRUSTED_ONLY, &keyring->flags))
-		goto error_free_prep;
-	flags |= prep.trusted ? KEY_ALLOC_TRUSTED : 0;
+	if (verify_trust) {
+		ret = index_key.type->verify_trust(&prep.payload, keyring);
+		if (ret < 0) {
+			key_ref = ERR_PTR(ret);
+			goto error_free_prep;
+		}
+	}
 
 	ret = __key_link_begin(keyring, &index_key, &edit);
 	if (ret < 0) {
