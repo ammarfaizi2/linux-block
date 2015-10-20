@@ -29,15 +29,37 @@ MODULE_PARM_DESC(pkcs7_usage,
 		 "Usage to specify when verifying the PKCS#7 message");
 
 /*
+ * Retrieve the PKCS#7 message content.
+ */
+static int pkcs7_view_content(void *ctx, const void *data, size_t len,
+			      size_t asn1hdrlen)
+{
+	struct key_preparsed_payload *prep = ctx;
+	const void *saved_prep_data;
+	size_t saved_prep_datalen;
+	int ret;
+
+	kenter(",%zu", len);
+
+	saved_prep_data = prep->data;
+	saved_prep_datalen = prep->datalen;
+	prep->data = data;
+	prep->datalen = len;
+
+	ret = user_preparse(prep);
+
+	prep->data = saved_prep_data;
+	prep->datalen = saved_prep_datalen;
+	kleave(" = %d", ret);
+	return ret;
+}
+
+/*
  * Preparse a PKCS#7 wrapped and validated data blob.
  */
 static int pkcs7_preparse(struct key_preparsed_payload *prep)
 {
 	enum key_being_used_for usage = pkcs7_usage;
-	struct pkcs7_message *pkcs7;
-	const void *data, *saved_prep_data;
-	size_t datalen, saved_prep_datalen;
-	bool trusted;
 	int ret;
 
 	kenter("");
@@ -47,37 +69,11 @@ static int pkcs7_preparse(struct key_preparsed_payload *prep)
 		return -EINVAL;
 	}
 
-	saved_prep_data = prep->data;
-	saved_prep_datalen = prep->datalen;
-	pkcs7 = pkcs7_parse_message(saved_prep_data, saved_prep_datalen);
-	if (IS_ERR(pkcs7)) {
-		ret = PTR_ERR(pkcs7);
-		goto error;
-	}
+	ret = verify_pkcs7_signature(NULL, 0,
+				     prep->data, prep->datalen,
+				     NULL, -ENOKEY, usage,
+				     pkcs7_view_content, prep);
 
-	ret = pkcs7_verify(pkcs7, usage);
-	if (ret < 0)
-		goto error_free;
-
-	ret = pkcs7_validate_trust(pkcs7, system_trusted_keyring, &trusted);
-	if (ret < 0)
-		goto error_free;
-	if (!trusted)
-		pr_warn("PKCS#7 message doesn't chain back to a trusted key\n");
-
-	ret = pkcs7_get_content_data(pkcs7, &data, &datalen, false);
-	if (ret < 0)
-		goto error_free;
-
-	prep->data = data;
-	prep->datalen = datalen;
-	ret = user_preparse(prep);
-	prep->data = saved_prep_data;
-	prep->datalen = saved_prep_datalen;
-
-error_free:
-	pkcs7_free_message(pkcs7);
-error:
 	kleave(" = %d", ret);
 	return ret;
 }
