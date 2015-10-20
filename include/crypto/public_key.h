@@ -76,6 +76,7 @@ struct public_key {
  * Public key cryptography signature data
  */
 struct public_key_signature {
+	struct asymmetric_key_id *auth_ids[2];
 	u8 *digest;
 	u8 digest_size;			/* Number of bytes in digest */
 	u8 nr_mpi;			/* Occupancy of mpi[] */

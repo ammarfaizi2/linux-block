@@ -72,6 +72,8 @@ void public_key_free(struct public_key *key,
 	}
 
 	if (sig) {
+		for (i = 0; i < ARRAY_SIZE(sig->auth_ids); i++)
+			kfree(sig->auth_ids[i]);
 		for (i = 0; i < ARRAY_SIZE(sig->mpi); i++)
 			mpi_free(sig->mpi[i]);
 		kfree(sig->digest);
