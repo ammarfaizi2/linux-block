@@ -34,6 +34,10 @@ struct asymmetric_key_subtype {
 	/* Destroy a key of this subtype */
 	void (*destroy)(void *payload_crypto, void *payload_auth);
 
+	/* Verify the trust on a key against a keyring of keys */
+	int (*verify_trust)(const union key_payload *payload,
+			    struct key *keyring);
+
 	/* Verify the signature on a key of this subtype (optional) */
 	int (*verify_signature)(const struct key *key,
 				const struct public_key_signature *sig);

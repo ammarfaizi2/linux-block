@@ -97,7 +97,6 @@ error:
 	pr_devel("<==%s() = %d\n", __func__, ret);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(x509_get_sig_params);
 
 /*
  * Check for self-signedness in an X.509 cert and if found, check the signature
@@ -204,11 +203,6 @@ static int x509_key_preparse(struct key_preparsed_payload *prep)
 			/* There's no point retaining the signature */
 			public_key_free(NULL, cert->sig);
 			cert->sig = NULL;
-		} else {
-			ret = x509_validate_trust(cert,
-						  get_system_trusted_keyring());
-			if (ret == -EKEYREJECTED)
-				goto error_free_cert;
 		}
 	}
 

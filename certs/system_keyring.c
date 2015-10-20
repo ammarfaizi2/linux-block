@@ -35,7 +35,8 @@ static __init int system_trusted_keyring_init(void)
 		keyring_alloc(".system_keyring",
 			      KUIDT_INIT(0), KGIDT_INIT(0), current_cred(),
 			      ((KEY_POS_ALL & ~KEY_POS_SETATTR) |
-			      KEY_USR_VIEW | KEY_USR_READ | KEY_USR_SEARCH),
+			       KEY_USR_VIEW | KEY_USR_READ | KEY_USR_SEARCH |
+			       KEY_USR_WRITE),
 			      KEY_ALLOC_NOT_IN_QUOTA, NULL);
 	if (IS_ERR(system_trusted_keyring))
 		panic("Can't allocate system trusted keyring\n");

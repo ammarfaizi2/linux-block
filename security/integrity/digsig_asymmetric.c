@@ -23,7 +23,8 @@
 /*
  * Request an asymmetric key.
  */
-static struct key *request_asymmetric_key(struct key *keyring, uint32_t keyid)
+static struct key *ds_request_asymmetric_key(struct key *keyring,
+					     uint32_t keyid)
 {
 	struct key *key;
 	char name[12];
@@ -83,7 +84,7 @@ int asymmetric_verify(struct key *keyring, const char *sig,
 	if (hdr->hash_algo >= PKEY_HASH__LAST)
 		return -ENOPKG;
 
-	key = request_asymmetric_key(keyring, __be32_to_cpu(hdr->keyid));
+	key = ds_request_asymmetric_key(keyring, __be32_to_cpu(hdr->keyid));
 	if (IS_ERR(key))
 		return PTR_ERR(key);
 

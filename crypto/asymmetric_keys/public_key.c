@@ -135,6 +135,24 @@ static int public_key_verify_signature_2(const struct key *key,
 }
 
 /*
+ * Verify the trust on an asymmetric key when added to a trusted-only keyring.
+ * The keyring provides a list of keys to check against.
+ */
+static int public_key_verify_trust(const union key_payload *payload,
+				   struct key *keyring)
+{
+	const struct public_key_signature *sig = payload->data[asym_auth];
+	int ret;
+
+	pr_devel("==>%s()\n", __func__);
+
+	ret = public_key_validate_trust(sig, keyring);
+	if (ret == -ENOKEY)
+		ret = -EPERM;
+	return ret;
+}
+
+/*
  * Public key algorithm asymmetric key subtype
  */
 struct asymmetric_key_subtype public_key_subtype = {
@@ -143,6 +161,7 @@ struct asymmetric_key_subtype public_key_subtype = {
 	.name_len		= sizeof("public_key") - 1,
 	.describe		= public_key_describe,
 	.destroy		= public_key_destroy,
+	.verify_trust		= public_key_verify_trust,
 	.verify_signature	= public_key_verify_signature_2,
 };
 EXPORT_SYMBOL_GPL(public_key_subtype);

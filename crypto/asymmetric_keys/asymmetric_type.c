@@ -362,10 +362,25 @@ static void asymmetric_key_destroy(struct key *key)
 	asymmetric_key_free_kids(kids);
 }
 
+/*
+ * Verify the trust on an asymmetric key when added to a trusted-only keyring.
+ * The keyring provides a list of keys to check against.
+ */
+static int asymmetric_key_verify_trust(const union key_payload *payload,
+				       struct key *keyring)
+{
+	struct asymmetric_key_subtype *subtype = payload->data[asym_subtype];
+
+	pr_devel("==>%s()\n", __func__);
+
+	return subtype->verify_trust(payload, keyring);
+}
+
 struct key_type key_type_asymmetric = {
 	.name		= "asymmetric",
 	.preparse	= asymmetric_key_preparse,
 	.free_preparse	= asymmetric_key_free_preparse,
+	.verify_trust	= asymmetric_key_verify_trust,
 	.instantiate	= generic_key_instantiate,
 	.match_preparse	= asymmetric_key_match_preparse,
 	.match_free	= asymmetric_key_match_free,

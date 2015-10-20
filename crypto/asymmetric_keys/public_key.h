@@ -34,3 +34,9 @@ extern const struct public_key_algorithm RSA_public_key_algorithm;
  */
 extern int public_key_verify_signature(const struct public_key *pk,
 				       const struct public_key_signature *sig);
+
+/*
+ * public_key_trust.c
+ */
+extern int public_key_validate_trust(const struct public_key_signature *sig,
+				     struct key *trust_keyring);
