@@ -39,7 +39,9 @@ struct x509_certificate {
 	unsigned	index;
 	bool		seen;			/* Infinite recursion prevention */
 	bool		verified;
-	bool		unsupported_crypto;	/* T if can't be verified due to missing crypto */
+	bool		self_signed;		/* T if self-signed (check unsupported_sig too) */
+	bool		unsupported_key;	/* T if key uses unsupported crypto */
+	bool		unsupported_sig;	/* T if signature uses unsupported crypto */
 };
 
 /*
@@ -55,5 +57,4 @@ extern int x509_decode_time(time64_t *_t,  size_t hdrlen,
  * x509_public_key.c
  */
 extern int x509_get_sig_params(struct x509_certificate *cert);
-extern int x509_check_signature(const struct public_key *pub,
-				struct x509_certificate *cert);
+extern int x509_check_for_self_signed(struct x509_certificate *cert);
