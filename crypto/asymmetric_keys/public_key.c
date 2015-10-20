@@ -59,18 +59,34 @@ static void public_key_describe(const struct key *asymmetric_key,
 /*
  * Destroy a public key algorithm key.
  */
-void public_key_destroy(void *payload)
+void public_key_free(struct public_key *key,
+		     struct public_key_signature *sig)
 {
-	struct public_key *key = payload;
 	int i;
 
 	if (key) {
 		for (i = 0; i < ARRAY_SIZE(key->mpi); i++)
 			mpi_free(key->mpi[i]);
 		kfree(key);
+		key = NULL;
+	}
+
+	if (sig) {
+		for (i = 0; i < ARRAY_SIZE(sig->mpi); i++)
+			mpi_free(sig->mpi[i]);
+		kfree(sig->digest);
+		kfree(sig);
 	}
 }
-EXPORT_SYMBOL_GPL(public_key_destroy);
+EXPORT_SYMBOL_GPL(public_key_free);
+
+/*
+ * Destroy a public key algorithm key.
+ */
+static void public_key_destroy(void *payload0, void *payload3)
+{
+	public_key_free(payload0, payload3);
+}
 
 /*
  * Verify a signature using a public key.

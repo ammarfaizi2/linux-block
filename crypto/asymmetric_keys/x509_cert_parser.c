@@ -48,7 +48,7 @@ struct x509_parse_context {
 void x509_free_certificate(struct x509_certificate *cert)
 {
 	if (cert) {
-		public_key_destroy(cert->pub);
+		public_key_free(cert->pub, NULL);
 		kfree(cert->issuer);
 		kfree(cert->subject);
 		kfree(cert->id);

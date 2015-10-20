@@ -72,8 +72,6 @@ struct public_key {
 	};
 };
 
-extern void public_key_destroy(void *payload);
-
 /*
  * Public key cryptography signature data
  */
@@ -94,6 +92,9 @@ struct public_key_signature {
 		} dsa;
 	};
 };
+
+extern void public_key_free(struct public_key *key,
+			    struct public_key_signature *sig);
 
 struct key;
 extern int verify_signature(const struct key *key,
