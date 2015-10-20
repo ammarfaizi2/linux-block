@@ -12,7 +12,7 @@ obj-$(CONFIG_PUBLIC_KEY_ALGO_RSA) += rsa.o
 #
 # X.509 Certificate handling
 #
-obj-$(CONFIG_X509_CERTIFICATE_PARSER) += x509_key_parser.o
+obj-$(CONFIG_X509_CERTIFICATE_PARSER) += x509_key_parser.o public_key_trust.o
 x509_key_parser-y := \
 	x509-asn1.o \
 	x509_akid-asn1.o \
