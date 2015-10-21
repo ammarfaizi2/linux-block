@@ -820,7 +820,7 @@ static int iwl_mvm_mac_ampdu_action(struct ieee80211_hw *hw,
 				    struct ieee80211_vif *vif,
 				    enum ieee80211_ampdu_mlme_action action,
 				    struct ieee80211_sta *sta, u16 tid,
-				    u16 *ssn, u8 buf_size)
+				    u16 *ssn, u8 buf_size, bool amsdu)
 {
 	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
 	int ret;
@@ -2616,7 +2616,7 @@ static void iwl_mvm_sta_pre_rcu_remove(struct ieee80211_hw *hw,
 
 	if (mvm_sta->vif->type == NL80211_IFTYPE_AP) {
 		mvmvif->ap_assoc_sta_count--;
-		iwl_mvm_mac_ctxt_cmd_ap(mvm, vif, FW_CTXT_ACTION_MODIFY);
+		iwl_mvm_mac_ctxt_changed(mvm, vif, false, NULL);
 	}
 
 	mutex_unlock(&mvm->mutex);

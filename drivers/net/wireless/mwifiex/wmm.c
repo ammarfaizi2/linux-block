@@ -117,22 +117,15 @@ mwifiex_wmm_allocate_ralist_node(struct mwifiex_adapter *adapter, const u8 *ra)
  */
 static u8 mwifiex_get_random_ba_threshold(void)
 {
-	u32 sec, usec;
-	struct timeval ba_tstamp;
-	u8 ba_threshold;
-
+	u64 ns;
 	/* setup ba_packet_threshold here random number between
 	 * [BA_SETUP_PACKET_OFFSET,
 	 * BA_SETUP_PACKET_OFFSET+BA_SETUP_MAX_PACKET_THRESHOLD-1]
 	 */
+	ns = ktime_get_ns();
+	ns += (ns >> 32) + (ns >> 16);
 
-	do_gettimeofday(&ba_tstamp);
-	sec = (ba_tstamp.tv_sec & 0xFFFF) + (ba_tstamp.tv_sec >> 16);
-	usec = (ba_tstamp.tv_usec & 0xFFFF) + (ba_tstamp.tv_usec >> 16);
-	ba_threshold = (((sec << 16) + usec) % BA_SETUP_MAX_PACKET_THRESHOLD)
-						      + BA_SETUP_PACKET_OFFSET;
-
-	return ba_threshold;
+	return ((u8)ns % BA_SETUP_MAX_PACKET_THRESHOLD) + BA_SETUP_PACKET_OFFSET;
 }
 
 /*
@@ -691,7 +684,7 @@ void mwifiex_update_ralist_tx_pause_in_tdls_cs(struct mwifiex_private *priv,
 			if (!memcmp(ra_list->ra, mac, ETH_ALEN))
 				continue;
 
-			if (ra_list && ra_list->tx_paused != tx_pause) {
+			if (ra_list->tx_paused != tx_pause) {
 				pkt_cnt += ra_list->total_pkt_count;
 				ra_list->tx_paused = tx_pause;
 				if (tx_pause)
