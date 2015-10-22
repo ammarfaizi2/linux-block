@@ -41,7 +41,7 @@ core-y		+= arch/nios2/platform/
 INSTALL_PATH ?= /tftpboot
 nios2-boot := arch/$(ARCH)/boot
 BOOT_TARGETS = vmImage zImage
-PHONY += $(BOOT_TARGETS) install
+PHONY += $(BOOT_TARGETS) install dtbs
 KBUILD_IMAGE := $(nios2-boot)/vmImage
 
 ifneq ($(CONFIG_NIOS2_DTB_SOURCE),"")
@@ -53,11 +53,11 @@ all: vmImage
 archclean:
 	$(Q)$(MAKE) $(clean)=$(nios2-boot)
 
-%.dtb:
-	$(Q)$(MAKE) $(build)=$(nios2-boot) $(nios2-boot)/$@
+%.dtb: scripts
+	$(Q)$(MAKE) $(build)=$(nios2-boot)/dts $(nios2-boot)/dts/$@
 
-dtbs:
-	$(Q)$(MAKE) $(build)=$(nios2-boot) $(nios2-boot)/$@
+dtbs: prepare scripts
+	$(Q)$(MAKE) $(build)=$(nios2-boot)/dts
 
 $(BOOT_TARGETS): vmlinux
 	$(Q)$(MAKE) $(build)=$(nios2-boot) $(nios2-boot)/$@
