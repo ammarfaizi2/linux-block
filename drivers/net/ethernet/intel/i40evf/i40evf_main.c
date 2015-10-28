@@ -34,7 +34,7 @@ char i40evf_driver_name[] = "i40evf";
 static const char i40evf_driver_string[] =
 	"Intel(R) XL710/X710 Virtual Function Network Driver";
 
-#define DRV_VERSION "1.3.13"
+#define DRV_VERSION "1.3.33"
 const char i40evf_driver_version[] = DRV_VERSION;
 static const char i40evf_copyright[] =
 	"Copyright (c) 2013 - 2015 Intel Corporation.";
@@ -282,6 +282,7 @@ static void i40evf_fire_sw_int(struct i40evf_adapter *adapter, u32 mask)
 /**
  * i40evf_irq_enable - Enable default interrupt generation settings
  * @adapter: board private structure
+ * @flush: boolean value whether to run rd32()
  **/
 void i40evf_irq_enable(struct i40evf_adapter *adapter, bool flush)
 {
@@ -305,15 +306,14 @@ static irqreturn_t i40evf_msix_aq(int irq, void *data)
 	struct i40evf_adapter *adapter = netdev_priv(netdev);
 	struct i40e_hw *hw = &adapter->hw;
 	u32 val;
-	u32 ena_mask;
 
 	/* handle non-queue interrupts */
-	val = rd32(hw, I40E_VFINT_ICR01);
-	ena_mask = rd32(hw, I40E_VFINT_ICR0_ENA1);
+	rd32(hw, I40E_VFINT_ICR01);
+	rd32(hw, I40E_VFINT_ICR0_ENA1);
 
 
-	val = rd32(hw, I40E_VFINT_DYN_CTL01);
-	val = val | I40E_VFINT_DYN_CTL01_CLEARPBA_MASK;
+	val = rd32(hw, I40E_VFINT_DYN_CTL01) |
+	      I40E_VFINT_DYN_CTL01_CLEARPBA_MASK;
 	wr32(hw, I40E_VFINT_DYN_CTL01, val);
 
 	/* schedule work on the private workqueue */
@@ -334,7 +334,7 @@ static irqreturn_t i40evf_msix_clean_rings(int irq, void *data)
 	if (!q_vector->tx.ring && !q_vector->rx.ring)
 		return IRQ_HANDLED;
 
-	napi_schedule(&q_vector->napi);
+	napi_schedule_irqoff(&q_vector->napi);
 
 	return IRQ_HANDLED;
 }
@@ -357,6 +357,7 @@ i40evf_map_vector_to_rxq(struct i40evf_adapter *adapter, int v_idx, int r_idx)
 	q_vector->rx.ring = rx_ring;
 	q_vector->rx.count++;
 	q_vector->rx.latency_range = I40E_LOW_LATENCY;
+	q_vector->itr_countdown = ITR_COUNTDOWN_START;
 }
 
 /**
@@ -377,6 +378,7 @@ i40evf_map_vector_to_txq(struct i40evf_adapter *adapter, int v_idx, int t_idx)
 	q_vector->tx.ring = tx_ring;
 	q_vector->tx.count++;
 	q_vector->tx.latency_range = I40E_LOW_LATENCY;
+	q_vector->itr_countdown = ITR_COUNTDOWN_START;
 	q_vector->num_ringpairs++;
 	q_vector->ring_mask |= BIT(t_idx);
 }
@@ -444,6 +446,29 @@ out:
 	return err;
 }
 
+#ifdef CONFIG_NET_POLL_CONTROLLER
+/**
+ * i40evf_netpoll - A Polling 'interrupt' handler
+ * @netdev: network interface device structure
+ *
+ * This is used by netconsole to send skbs without having to re-enable
+ * interrupts.  It's not called while the normal interrupt routine is executing.
+ **/
+static void i40evf_netpoll(struct net_device *netdev)
+{
+	struct i40evf_adapter *adapter = netdev_priv(netdev);
+	int q_vectors = adapter->num_msix_vectors - NONQ_VECS;
+	int i;
+
+	/* if interface is down do nothing */
+	if (test_bit(__I40E_DOWN, &adapter->vsi.state))
+		return;
+
+	for (i = 0; i < q_vectors; i++)
+		i40evf_msix_clean_rings(0, adapter->q_vector[i]);
+}
+
+#endif
 /**
  * i40evf_request_traffic_irqs - Initialize MSI-X interrupts
  * @adapter: board private structure
@@ -841,6 +866,15 @@ static int i40evf_set_mac(struct net_device *netdev, void *p)
 	if (ether_addr_equal(netdev->dev_addr, addr->sa_data))
 		return 0;
 
+	if (adapter->flags & I40EVF_FLAG_ADDR_SET_BY_PF)
+		return -EPERM;
+
+	f = i40evf_find_filter(adapter, hw->mac.addr);
+	if (f) {
+		f->remove = true;
+		adapter->aq_required |= I40EVF_FLAG_AQ_DEL_MAC_FILTER;
+	}
+
 	f = i40evf_add_filter(adapter, addr->sa_data);
 	if (f) {
 		ether_addr_copy(hw->mac.addr, addr->sa_data);
@@ -1114,6 +1148,8 @@ static int i40evf_alloc_queues(struct i40evf_adapter *adapter)
 		tx_ring->netdev = adapter->netdev;
 		tx_ring->dev = &adapter->pdev->dev;
 		tx_ring->count = adapter->tx_desc_count;
+		if (adapter->flags & I40E_FLAG_WB_ON_ITR_CAPABLE)
+			tx_ring->flags |= I40E_TXR_FLAGS_WB_ON_ITR;
 		adapter->tx_rings[i] = tx_ring;
 
 		rx_ring = &tx_ring[1];
@@ -1573,6 +1609,7 @@ static void i40evf_reset_task(struct work_struct *work)
 						      reset_task);
 	struct net_device *netdev = adapter->netdev;
 	struct i40e_hw *hw = &adapter->hw;
+	struct i40evf_vlan_filter *vlf;
 	struct i40evf_mac_filter *f;
 	u32 reg_val;
 	int i = 0, err;
@@ -1617,7 +1654,7 @@ static void i40evf_reset_task(struct work_struct *work)
 	/* extra wait to make sure minimum wait is met */
 	msleep(I40EVF_RESET_WAIT_MS);
 	if (i == I40EVF_RESET_WAIT_COUNT) {
-		struct i40evf_mac_filter *f, *ftmp;
+		struct i40evf_mac_filter *ftmp;
 		struct i40evf_vlan_filter *fv, *fvtmp;
 
 		/* reset never finished */
@@ -1696,8 +1733,8 @@ continue_reset:
 		f->add = true;
 	}
 	/* re-add all VLAN filters */
-	list_for_each_entry(f, &adapter->vlan_filter_list, list) {
-		f->add = true;
+	list_for_each_entry(vlf, &adapter->vlan_filter_list, list) {
+		vlf->add = true;
 	}
 	adapter->aq_required |= I40EVF_FLAG_AQ_ADD_MAC_FILTER;
 	adapter->aq_required |= I40EVF_FLAG_AQ_ADD_VLAN_FILTER;
@@ -2038,6 +2075,9 @@ static const struct net_device_ops i40evf_netdev_ops = {
 	.ndo_tx_timeout		= i40evf_tx_timeout,
 	.ndo_vlan_rx_add_vid	= i40evf_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid	= i40evf_vlan_rx_kill_vid,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= i40evf_netpoll,
+#endif
 };
 
 /**
@@ -2086,7 +2126,10 @@ int i40evf_process_config(struct i40evf_adapter *adapter)
 
 	if (adapter->vf_res->vf_offload_flags
 	    & I40E_VIRTCHNL_VF_OFFLOAD_VLAN) {
-		netdev->vlan_features = netdev->features;
+		netdev->vlan_features = netdev->features &
+					~(NETIF_F_HW_VLAN_CTAG_TX |
+					  NETIF_F_HW_VLAN_CTAG_RX |
+					  NETIF_F_HW_VLAN_CTAG_FILTER);
 		netdev->features |= NETIF_F_HW_VLAN_CTAG_TX |
 				    NETIF_F_HW_VLAN_CTAG_RX |
 				    NETIF_F_HW_VLAN_CTAG_FILTER;
@@ -2244,10 +2287,13 @@ static void i40evf_init_task(struct work_struct *work)
 	if (!is_valid_ether_addr(adapter->hw.mac.addr)) {
 		dev_info(&pdev->dev, "Invalid MAC address %pM, using random\n",
 			 adapter->hw.mac.addr);
-		random_ether_addr(adapter->hw.mac.addr);
+		eth_hw_addr_random(netdev);
+		ether_addr_copy(adapter->hw.mac.addr, netdev->dev_addr);
+	} else {
+		adapter->flags |= I40EVF_FLAG_ADDR_SET_BY_PF;
+		ether_addr_copy(netdev->dev_addr, adapter->hw.mac.addr);
+		ether_addr_copy(netdev->perm_addr, adapter->hw.mac.addr);
 	}
-	ether_addr_copy(netdev->dev_addr, adapter->hw.mac.addr);
-	ether_addr_copy(netdev->perm_addr, adapter->hw.mac.addr);
 
 	init_timer(&adapter->watchdog_timer);
 	adapter->watchdog_timer.function = &i40evf_watchdog_timer;
@@ -2263,6 +2309,9 @@ static void i40evf_init_task(struct work_struct *work)
 	if (err)
 		goto err_sw_init;
 	i40evf_map_rings_to_vectors(adapter);
+	if (adapter->vf_res->vf_offload_flags &
+		    I40E_VIRTCHNL_VF_OFFLOAD_WB_ON_ITR)
+		adapter->flags |= I40EVF_FLAG_WB_ON_ITR_CAPABLE;
 	if (!RSS_AQ(adapter))
 		i40evf_configure_rss(adapter);
 	err = i40evf_request_misc_irq(adapter);
@@ -2311,11 +2360,14 @@ err_alloc:
 err:
 	/* Things went into the weeds, so try again later */
 	if (++adapter->aq_wait_count > I40EVF_AQ_MAX_ERR) {
-		dev_err(&pdev->dev, "Failed to communicate with PF; giving up\n");
+		dev_err(&pdev->dev, "Failed to communicate with PF; waiting before retry\n");
 		adapter->flags |= I40EVF_FLAG_PF_COMMS_FAILED;
-		return; /* do not reschedule */
+		i40evf_shutdown_adminq(hw);
+		adapter->state = __I40EVF_STARTUP;
+		schedule_delayed_work(&adapter->init_task, HZ * 5);
+		return;
 	}
-	schedule_delayed_work(&adapter->init_task, HZ * 3);
+	schedule_delayed_work(&adapter->init_task, HZ);
 }
 
 /**

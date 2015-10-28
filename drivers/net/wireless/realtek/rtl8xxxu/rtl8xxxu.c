@@ -1818,6 +1818,8 @@ static int rtl8723au_parse_efuse(struct rtl8xxxu_priv *priv)
 	return 0;
 }
 
+#ifdef CONFIG_RTL8XXXU_UNTESTED
+
 static int rtl8192cu_parse_efuse(struct rtl8xxxu_priv *priv)
 {
 	int i;
@@ -1884,6 +1886,8 @@ static int rtl8192cu_parse_efuse(struct rtl8xxxu_priv *priv)
 	}
 	return 0;
 }
+
+#endif
 
 static int
 rtl8xxxu_read_efuse8(struct rtl8xxxu_priv *priv, u16 offset, u8 *data)
@@ -2217,6 +2221,8 @@ static int rtl8723au_load_firmware(struct rtl8xxxu_priv *priv)
 	return ret;
 }
 
+#ifdef CONFIG_RTL8XXXU_UNTESTED
+
 static int rtl8192cu_load_firmware(struct rtl8xxxu_priv *priv)
 {
 	char *fw_name;
@@ -2233,6 +2239,8 @@ static int rtl8192cu_load_firmware(struct rtl8xxxu_priv *priv)
 
 	return ret;
 }
+
+#endif
 
 static void rtl8xxxu_firmware_self_reset(struct rtl8xxxu_priv *priv)
 {
@@ -3815,6 +3823,8 @@ exit:
 	return ret;
 }
 
+#ifdef CONFIG_RTL8XXXU_UNTESTED
+
 static int rtl8192cu_power_on(struct rtl8xxxu_priv *priv)
 {
 	u8 val8;
@@ -3917,6 +3927,8 @@ static int rtl8192cu_power_on(struct rtl8xxxu_priv *priv)
 	}
 	return 0;
 }
+
+#endif
 
 static void rtl8xxxu_power_off(struct rtl8xxxu_priv *priv)
 {
@@ -5783,12 +5795,16 @@ static struct rtl8xxxu_fileops rtl8723au_fops = {
 	.writeN_block_size = 1024,
 };
 
+#ifdef CONFIG_RTL8XXXU_UNTESTED
+
 static struct rtl8xxxu_fileops rtl8192cu_fops = {
 	.parse_efuse = rtl8192cu_parse_efuse,
 	.load_firmware = rtl8192cu_load_firmware,
 	.power_on = rtl8192cu_power_on,
 	.writeN_block_size = 128,
 };
+
+#endif
 
 static struct usb_device_id dev_table[] = {
 {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_REALTEK, 0x8724, 0xff, 0xff, 0xff),
@@ -5797,6 +5813,8 @@ static struct usb_device_id dev_table[] = {
 	.driver_info = (unsigned long)&rtl8723au_fops},
 {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_REALTEK, 0x0724, 0xff, 0xff, 0xff),
 	.driver_info = (unsigned long)&rtl8723au_fops},
+#ifdef CONFIG_RTL8XXXU_UNTESTED
+/* Still supported by rtlwifi */
 {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_REALTEK, 0x8176, 0xff, 0xff, 0xff),
 	.driver_info = (unsigned long)&rtl8192cu_fops},
 {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_REALTEK, 0x8178, 0xff, 0xff, 0xff),
@@ -5806,7 +5824,6 @@ static struct usb_device_id dev_table[] = {
 /* Tested by Larry Finger */
 {USB_DEVICE_AND_INTERFACE_INFO(0x7392, 0x7811, 0xff, 0xff, 0xff),
 	.driver_info = (unsigned long)&rtl8192cu_fops},
-#ifdef CONFIG_RTL8XXXU_UNTESTED
 /* Currently untested 8188 series devices */
 {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_REALTEK, 0x8191, 0xff, 0xff, 0xff),
 	.driver_info = (unsigned long)&rtl8192cu_fops},

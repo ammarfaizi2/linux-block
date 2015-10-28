@@ -93,7 +93,7 @@
 #endif /* I40E_FCOE */
 #define I40E_MAX_AQ_BUF_SIZE          4096
 #define I40E_AQ_LEN                   256
-#define I40E_AQ_WORK_LIMIT            32
+#define I40E_AQ_WORK_LIMIT            66 /* max number of VFs + a little */
 #define I40E_MAX_USER_PRIORITY        8
 #define I40E_DEFAULT_MSG_ENABLE       4
 #define I40E_QUEUE_WAIT_RETRY_LIMIT   10
@@ -102,11 +102,17 @@
 /* Ethtool Private Flags */
 #define I40E_PRIV_FLAGS_NPAR_FLAG	BIT(0)
 #define I40E_PRIV_FLAGS_LINKPOLL_FLAG	BIT(1)
+#define I40E_PRIV_FLAGS_FD_ATR		BIT(2)
+#define I40E_PRIV_FLAGS_VEB_STATS	BIT(3)
 
 #define I40E_NVM_VERSION_LO_SHIFT  0
 #define I40E_NVM_VERSION_LO_MASK   (0xff << I40E_NVM_VERSION_LO_SHIFT)
 #define I40E_NVM_VERSION_HI_SHIFT  12
 #define I40E_NVM_VERSION_HI_MASK   (0xf << I40E_NVM_VERSION_HI_SHIFT)
+#define I40E_OEM_VER_BUILD_MASK    0xffff
+#define I40E_OEM_VER_PATCH_MASK    0xff
+#define I40E_OEM_VER_BUILD_SHIFT   8
+#define I40E_OEM_VER_SHIFT         24
 
 /* The values in here are decimal coded as hex as is the case in the NVM map*/
 #define I40E_CURRENT_NVM_VERSION_HI 0x2
@@ -304,7 +310,6 @@ struct i40e_pf {
 #ifdef I40E_FCOE
 #define I40E_FLAG_FCOE_ENABLED			BIT_ULL(11)
 #endif /* I40E_FCOE */
-#define I40E_FLAG_IN_NETPOLL			BIT_ULL(12)
 #define I40E_FLAG_16BYTE_RX_DESC_ENABLED	BIT_ULL(13)
 #define I40E_FLAG_CLEAN_ADMINQ			BIT_ULL(14)
 #define I40E_FLAG_FILTER_SYNC			BIT_ULL(15)
@@ -330,6 +335,7 @@ struct i40e_pf {
 #define I40E_FLAG_MULTIPLE_TCP_UDP_RSS_PCTYPE	BIT_ULL(38)
 #define I40E_FLAG_LINK_POLLING_ENABLED		BIT_ULL(39)
 #define I40E_FLAG_VEB_MODE_ENABLED		BIT_ULL(40)
+#define I40E_FLAG_NO_PCI_LINK_CHECK		BIT_ULL(42)
 
 	/* tracks features that get auto disabled by errors */
 	u64 auto_disable_flags;
@@ -464,6 +470,8 @@ struct i40e_vsi {
 #define I40E_VSI_FLAG_VEB_OWNER		BIT(1)
 	unsigned long flags;
 
+	/* Per VSI lock to protect elements/list (MAC filter) */
+	spinlock_t mac_filter_list_lock;
 	struct list_head mac_filter_list;
 
 	/* VSI stats */
@@ -494,6 +502,7 @@ struct i40e_vsi {
 	 */
 	u16 rx_itr_setting;
 	u16 tx_itr_setting;
+	u16 int_rate_limit;  /* value in usecs */
 
 	u16 rss_table_size;
 	u16 rss_size;
@@ -570,6 +579,8 @@ struct i40e_q_vector {
 	struct rcu_head rcu;	/* to avoid race with update stats on free */
 	char name[I40E_INT_NAME_STR_LEN];
 	bool arm_wb_state;
+#define ITR_COUNTDOWN_START 100
+	u8 itr_countdown;	/* when 0 should adjust ITR */
 } ____cacheline_internodealigned_in_smp;
 
 /* lan device */
@@ -579,22 +590,29 @@ struct i40e_device {
 };
 
 /**
- * i40e_fw_version_str - format the FW and NVM version strings
+ * i40e_nvm_version_str - format the NVM version strings
  * @hw: ptr to the hardware info
  **/
-static inline char *i40e_fw_version_str(struct i40e_hw *hw)
+static inline char *i40e_nvm_version_str(struct i40e_hw *hw)
 {
 	static char buf[32];
+	u32 full_ver;
+	u8 ver, patch;
+	u16 build;
+
+	full_ver = hw->nvm.oem_ver;
+	ver = (u8)(full_ver >> I40E_OEM_VER_SHIFT);
+	build = (u16)((full_ver >> I40E_OEM_VER_BUILD_SHIFT)
+		 & I40E_OEM_VER_BUILD_MASK);
+	patch = (u8)(full_ver & I40E_OEM_VER_PATCH_MASK);
 
 	snprintf(buf, sizeof(buf),
-		 "f%d.%d.%05d a%d.%d n%x.%02x e%x",
-		 hw->aq.fw_maj_ver, hw->aq.fw_min_ver, hw->aq.fw_build,
-		 hw->aq.api_maj_ver, hw->aq.api_min_ver,
+		 "%x.%02x 0x%x %d.%d.%d",
 		 (hw->nvm.version & I40E_NVM_VERSION_HI_MASK) >>
 			I40E_NVM_VERSION_HI_SHIFT,
 		 (hw->nvm.version & I40E_NVM_VERSION_LO_MASK) >>
 			I40E_NVM_VERSION_LO_SHIFT,
-		 (hw->nvm.eetrack & 0xffffff));
+		 hw->nvm.eetrack, ver, build, patch);
 
 	return buf;
 }

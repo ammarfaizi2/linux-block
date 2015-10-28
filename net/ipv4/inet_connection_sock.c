@@ -523,15 +523,15 @@ static bool reqsk_queue_unlink(struct request_sock_queue *queue,
 			       struct request_sock *req)
 {
 	struct inet_hashinfo *hashinfo = req_to_sk(req)->sk_prot->h.hashinfo;
-	spinlock_t *lock;
-	bool found;
+	bool found = false;
 
-	lock = inet_ehash_lockp(hashinfo, req->rsk_hash);
+	if (sk_hashed(req_to_sk(req))) {
+		spinlock_t *lock = inet_ehash_lockp(hashinfo, req->rsk_hash);
 
-	spin_lock(lock);
-	found = __sk_nulls_del_node_init_rcu(req_to_sk(req));
-	spin_unlock(lock);
-
+		spin_lock(lock);
+		found = __sk_nulls_del_node_init_rcu(req_to_sk(req));
+		spin_unlock(lock);
+	}
 	if (timer_pending(&req->rsk_timer) && del_timer_sync(&req->rsk_timer))
 		reqsk_put(req);
 	return found;
@@ -545,6 +545,13 @@ void inet_csk_reqsk_queue_drop(struct sock *sk, struct request_sock *req)
 	}
 }
 EXPORT_SYMBOL(inet_csk_reqsk_queue_drop);
+
+void inet_csk_reqsk_queue_drop_and_put(struct sock *sk, struct request_sock *req)
+{
+	inet_csk_reqsk_queue_drop(sk, req);
+	reqsk_put(req);
+}
+EXPORT_SYMBOL(inet_csk_reqsk_queue_drop_and_put);
 
 static void reqsk_timer_handler(unsigned long data)
 {
@@ -608,8 +615,7 @@ static void reqsk_timer_handler(unsigned long data)
 		return;
 	}
 drop:
-	inet_csk_reqsk_queue_drop(sk_listener, req);
-	reqsk_put(req);
+	inet_csk_reqsk_queue_drop_and_put(sk_listener, req);
 }
 
 static void reqsk_queue_hash_req(struct request_sock *req,
@@ -727,14 +733,14 @@ void inet_csk_prepare_forced_close(struct sock *sk)
 }
 EXPORT_SYMBOL(inet_csk_prepare_forced_close);
 
-int inet_csk_listen_start(struct sock *sk, const int nr_table_entries)
+int inet_csk_listen_start(struct sock *sk, int backlog)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct inet_sock *inet = inet_sk(sk);
 
 	reqsk_queue_alloc(&icsk->icsk_accept_queue);
 
-	sk->sk_max_ack_backlog = 0;
+	sk->sk_max_ack_backlog = backlog;
 	sk->sk_ack_backlog = 0;
 	inet_csk_delack_init(sk);
 
@@ -757,6 +763,72 @@ int inet_csk_listen_start(struct sock *sk, const int nr_table_entries)
 	return -EADDRINUSE;
 }
 EXPORT_SYMBOL_GPL(inet_csk_listen_start);
+
+static void inet_child_forget(struct sock *sk, struct request_sock *req,
+			      struct sock *child)
+{
+	sk->sk_prot->disconnect(child, O_NONBLOCK);
+
+	sock_orphan(child);
+
+	percpu_counter_inc(sk->sk_prot->orphan_count);
+
+	if (sk->sk_protocol == IPPROTO_TCP && tcp_rsk(req)->tfo_listener) {
+		BUG_ON(tcp_sk(child)->fastopen_rsk != req);
+		BUG_ON(sk != req->rsk_listener);
+
+		/* Paranoid, to prevent race condition if
+		 * an inbound pkt destined for child is
+		 * blocked by sock lock in tcp_v4_rcv().
+		 * Also to satisfy an assertion in
+		 * tcp_v4_destroy_sock().
+		 */
+		tcp_sk(child)->fastopen_rsk = NULL;
+	}
+	inet_csk_destroy_sock(child);
+	reqsk_put(req);
+}
+
+void inet_csk_reqsk_queue_add(struct sock *sk, struct request_sock *req,
+			      struct sock *child)
+{
+	struct request_sock_queue *queue = &inet_csk(sk)->icsk_accept_queue;
+
+	spin_lock(&queue->rskq_lock);
+	if (unlikely(sk->sk_state != TCP_LISTEN)) {
+		inet_child_forget(sk, req, child);
+	} else {
+		req->sk = child;
+		req->dl_next = NULL;
+		if (queue->rskq_accept_head == NULL)
+			queue->rskq_accept_head = req;
+		else
+			queue->rskq_accept_tail->dl_next = req;
+		queue->rskq_accept_tail = req;
+		sk_acceptq_added(sk);
+	}
+	spin_unlock(&queue->rskq_lock);
+}
+EXPORT_SYMBOL(inet_csk_reqsk_queue_add);
+
+struct sock *inet_csk_complete_hashdance(struct sock *sk, struct sock *child,
+					 struct request_sock *req, bool own_req)
+{
+	if (own_req) {
+		inet_csk_reqsk_queue_drop(sk, req);
+		reqsk_queue_removed(&inet_csk(sk)->icsk_accept_queue, req);
+		inet_csk_reqsk_queue_add(sk, req, child);
+		/* Warning: caller must not call reqsk_put(req);
+		 * child stole last reference on it.
+		 */
+		return child;
+	}
+	/* Too bad, another child took ownership of the request, undo. */
+	bh_unlock_sock(child);
+	sock_put(child);
+	return NULL;
+}
+EXPORT_SYMBOL(inet_csk_complete_hashdance);
 
 /*
  *	This routine closes sockets which have been at least partially
@@ -784,31 +856,11 @@ void inet_csk_listen_stop(struct sock *sk)
 		WARN_ON(sock_owned_by_user(child));
 		sock_hold(child);
 
-		sk->sk_prot->disconnect(child, O_NONBLOCK);
-
-		sock_orphan(child);
-
-		percpu_counter_inc(sk->sk_prot->orphan_count);
-
-		if (sk->sk_protocol == IPPROTO_TCP && tcp_rsk(req)->tfo_listener) {
-			BUG_ON(tcp_sk(child)->fastopen_rsk != req);
-			BUG_ON(sk != req->rsk_listener);
-
-			/* Paranoid, to prevent race condition if
-			 * an inbound pkt destined for child is
-			 * blocked by sock lock in tcp_v4_rcv().
-			 * Also to satisfy an assertion in
-			 * tcp_v4_destroy_sock().
-			 */
-			tcp_sk(child)->fastopen_rsk = NULL;
-		}
-		inet_csk_destroy_sock(child);
-
+		inet_child_forget(sk, req, child);
 		bh_unlock_sock(child);
 		local_bh_enable();
 		sock_put(child);
 
-		reqsk_put(req);
 		cond_resched();
 	}
 	if (queue->fastopenq.rskq_rst_head) {
@@ -823,7 +875,7 @@ void inet_csk_listen_stop(struct sock *sk)
 			req = next;
 		}
 	}
-	WARN_ON(sk->sk_ack_backlog);
+	WARN_ON_ONCE(sk->sk_ack_backlog);
 }
 EXPORT_SYMBOL_GPL(inet_csk_listen_stop);
 

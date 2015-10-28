@@ -547,6 +547,8 @@ static int i40e_alloc_vsi_res(struct i40e_vf *vf, enum i40e_vsi_type type)
 		 */
 		if (vf->port_vlan_id)
 			i40e_vsi_add_pvid(vsi, vf->port_vlan_id);
+
+		spin_lock_bh(&vsi->mac_filter_list_lock);
 		f = i40e_add_filter(vsi, vf->default_lan_addr.addr,
 				    vf->port_vlan_id ? vf->port_vlan_id : -1,
 				    true, false);
@@ -559,6 +561,7 @@ static int i40e_alloc_vsi_res(struct i40e_vf *vf, enum i40e_vsi_type type)
 		if (!f)
 			dev_info(&pf->pdev->dev,
 				 "Could not allocate VF broadcast filter\n");
+		spin_unlock_bh(&vsi->mac_filter_list_lock);
 	}
 
 	/* program mac filter */
@@ -703,6 +706,7 @@ static void i40e_free_vf_res(struct i40e_vf *vf)
 	 */
 	vf->num_queue_pairs = 0;
 	vf->vf_states = 0;
+	clear_bit(I40E_VF_STAT_INIT, &vf->vf_states);
 }
 
 /**
@@ -841,11 +845,11 @@ void i40e_reset_vf(struct i40e_vf *vf, bool flr)
 complete_reset:
 	/* reallocate VF resources to reset the VSI state */
 	i40e_free_vf_res(vf);
-	i40e_alloc_vf_res(vf);
-	i40e_enable_vf_mappings(vf);
-	set_bit(I40E_VF_STAT_ACTIVE, &vf->vf_states);
-	clear_bit(I40E_VF_STAT_DISABLED, &vf->vf_states);
-
+	if (!i40e_alloc_vf_res(vf)) {
+		i40e_enable_vf_mappings(vf);
+		set_bit(I40E_VF_STAT_ACTIVE, &vf->vf_states);
+		clear_bit(I40E_VF_STAT_DISABLED, &vf->vf_states);
+	}
 	/* tell the VF the reset is done */
 	wr32(hw, I40E_VFGEN_RSTAT1(vf->vf_id), I40E_VFR_VFACTIVE);
 	i40e_flush(hw);
@@ -940,6 +944,7 @@ int i40e_alloc_vfs(struct i40e_pf *pf, u16 num_alloc_vfs)
 	if (pci_num_vf(pf->pdev) != num_alloc_vfs) {
 		ret = pci_enable_sriov(pf->pdev, num_alloc_vfs);
 		if (ret) {
+			pf->flags &= ~I40E_FLAG_VEB_MODE_ENABLED;
 			pf->num_alloc_vfs = 0;
 			goto err_iov;
 		}
@@ -964,8 +969,6 @@ int i40e_alloc_vfs(struct i40e_pf *pf, u16 num_alloc_vfs)
 		/* VF resources get allocated during reset */
 		i40e_reset_vf(&vfs[i], false);
 
-		/* enable VF vplan_qtable mappings */
-		i40e_enable_vf_mappings(&vfs[i]);
 	}
 	pf->num_alloc_vfs = num_alloc_vfs;
 
@@ -1103,6 +1106,8 @@ static int i40e_vc_send_msg_to_vf(struct i40e_vf *vf, u32 v_opcode,
 		}
 	} else {
 		vf->num_valid_msgs++;
+		/* reset the invalid counter, if a valid message is received. */
+		vf->num_invalid_msgs = 0;
 	}
 
 	aq_ret = i40e_aq_send_msg_to_vf(hw, abs_vf_id,	v_opcode, v_retval,
@@ -1204,6 +1209,10 @@ static int i40e_vc_get_vf_resources_msg(struct i40e_vf *vf, u8 *msg)
 	} else {
 		vfres->vf_offload_flags |= I40E_VIRTCHNL_VF_OFFLOAD_RSS_REG;
 	}
+
+	if (vf->driver_caps & I40E_VIRTCHNL_VF_OFFLOAD_RX_POLLING)
+		vfres->vf_offload_flags |= I40E_VIRTCHNL_VF_OFFLOAD_RX_POLLING;
+
 	vfres->num_vsis = num_vsis;
 	vfres->num_queue_pairs = vf->num_queue_pairs;
 	vfres->max_vectors = pf->hw.func_caps.num_msix_vectors_vf;
@@ -1593,6 +1602,11 @@ static int i40e_vc_add_mac_addr_msg(struct i40e_vf *vf, u8 *msg, u16 msglen)
 	}
 	vsi = pf->vsi[vf->lan_vsi_idx];
 
+	/* Lock once, because all function inside for loop accesses VSI's
+	 * MAC filter list which needs to be protected using same lock.
+	 */
+	spin_lock_bh(&vsi->mac_filter_list_lock);
+
 	/* add new addresses to the list */
 	for (i = 0; i < al->num_elements; i++) {
 		struct i40e_mac_filter *f;
@@ -1611,9 +1625,11 @@ static int i40e_vc_add_mac_addr_msg(struct i40e_vf *vf, u8 *msg, u16 msglen)
 			dev_err(&pf->pdev->dev,
 				"Unable to add VF MAC filter\n");
 			ret = I40E_ERR_PARAM;
+			spin_unlock_bh(&vsi->mac_filter_list_lock);
 			goto error_param;
 		}
 	}
+	spin_unlock_bh(&vsi->mac_filter_list_lock);
 
 	/* program the updated filter list */
 	if (i40e_sync_vsi_filters(vsi, false))
@@ -1661,10 +1677,12 @@ static int i40e_vc_del_mac_addr_msg(struct i40e_vf *vf, u8 *msg, u16 msglen)
 	}
 	vsi = pf->vsi[vf->lan_vsi_idx];
 
+	spin_lock_bh(&vsi->mac_filter_list_lock);
 	/* delete addresses from the list */
 	for (i = 0; i < al->num_elements; i++)
 		i40e_del_filter(vsi, al->list[i].addr,
 				I40E_VLAN_ANY, true, false);
+	spin_unlock_bh(&vsi->mac_filter_list_lock);
 
 	/* program the updated filter list */
 	if (i40e_sync_vsi_filters(vsi, false))
@@ -2061,6 +2079,11 @@ int i40e_ndo_set_vf_mac(struct net_device *netdev, int vf_id, u8 *mac)
 		goto error_param;
 	}
 
+	/* Lock once because below invoked function add/del_filter requires
+	 * mac_filter_list_lock to be held
+	 */
+	spin_lock_bh(&vsi->mac_filter_list_lock);
+
 	/* delete the temporary mac address */
 	i40e_del_filter(vsi, vf->default_lan_addr.addr,
 			vf->port_vlan_id ? vf->port_vlan_id : -1,
@@ -2071,6 +2094,8 @@ int i40e_ndo_set_vf_mac(struct net_device *netdev, int vf_id, u8 *mac)
 	 */
 	list_for_each_entry(f, &vsi->mac_filter_list, list)
 		i40e_del_filter(vsi, f->macaddr, f->vlan, true, false);
+
+	spin_unlock_bh(&vsi->mac_filter_list_lock);
 
 	dev_info(&pf->pdev->dev, "Setting MAC %pM on VF %d\n", mac, vf_id);
 	/* program mac filter */
@@ -2104,6 +2129,7 @@ int i40e_ndo_set_vf_port_vlan(struct net_device *netdev,
 	u16 vlanprio = vlan_id | (qos << I40E_VLAN_PRIORITY_SHIFT);
 	struct i40e_netdev_priv *np = netdev_priv(netdev);
 	struct i40e_pf *pf = np->vsi->back;
+	bool is_vsi_in_vlan = false;
 	struct i40e_vsi *vsi;
 	struct i40e_vf *vf;
 	int ret = 0;
@@ -2133,7 +2159,11 @@ int i40e_ndo_set_vf_port_vlan(struct net_device *netdev,
 		/* duplicate request, so just return success */
 		goto error_pvid;
 
-	if (le16_to_cpu(vsi->info.pvid) == 0 && i40e_is_vsi_in_vlan(vsi)) {
+	spin_lock_bh(&vsi->mac_filter_list_lock);
+	is_vsi_in_vlan = i40e_is_vsi_in_vlan(vsi);
+	spin_unlock_bh(&vsi->mac_filter_list_lock);
+
+	if (le16_to_cpu(vsi->info.pvid) == 0 && is_vsi_in_vlan) {
 		dev_err(&pf->pdev->dev,
 			"VF %d has already configured VLAN filters and the administrator is requesting a port VLAN override.\nPlease unload and reload the VF driver for this change to take effect.\n",
 			vf_id);

@@ -99,6 +99,7 @@
 #include <linux/rtnetlink.h>
 #include <linux/stat.h>
 #include <net/dst.h>
+#include <net/dst_metadata.h>
 #include <net/pkt_sched.h>
 #include <net/checksum.h>
 #include <net/xfrm.h>
@@ -680,6 +681,32 @@ int dev_get_iflink(const struct net_device *dev)
 	return dev->ifindex;
 }
 EXPORT_SYMBOL(dev_get_iflink);
+
+/**
+ *	dev_fill_metadata_dst - Retrieve tunnel egress information.
+ *	@dev: targeted interface
+ *	@skb: The packet.
+ *
+ *	For better visibility of tunnel traffic OVS needs to retrieve
+ *	egress tunnel information for a packet. Following API allows
+ *	user to get this info.
+ */
+int dev_fill_metadata_dst(struct net_device *dev, struct sk_buff *skb)
+{
+	struct ip_tunnel_info *info;
+
+	if (!dev->netdev_ops  || !dev->netdev_ops->ndo_fill_metadata_dst)
+		return -EINVAL;
+
+	info = skb_tunnel_info_unclone(skb);
+	if (!info)
+		return -ENOMEM;
+	if (unlikely(!(info->mode & IP_TUNNEL_INFO_TX)))
+		return -EINVAL;
+
+	return dev->netdev_ops->ndo_fill_metadata_dst(dev, skb);
+}
+EXPORT_SYMBOL_GPL(dev_fill_metadata_dst);
 
 /**
  *	__dev_get_by_name	- find a device by its name
@@ -5346,6 +5373,12 @@ static int __netdev_upper_dev_link(struct net_device *dev,
 	changeupper_info.master = master;
 	changeupper_info.linking = true;
 
+	ret = call_netdevice_notifiers_info(NETDEV_PRECHANGEUPPER, dev,
+					    &changeupper_info.info);
+	ret = notifier_to_errno(ret);
+	if (ret)
+		return ret;
+
 	ret = __netdev_adjacent_dev_link_neighbour(dev, upper_dev, private,
 						   master);
 	if (ret)
@@ -5487,6 +5520,9 @@ void netdev_upper_dev_unlink(struct net_device *dev,
 	changeupper_info.upper_dev = upper_dev;
 	changeupper_info.master = netdev_master_upper_dev_get(dev) == upper_dev;
 	changeupper_info.linking = false;
+
+	call_netdevice_notifiers_info(NETDEV_PRECHANGEUPPER, dev,
+				      &changeupper_info.info);
 
 	__netdev_adjacent_dev_unlink_neighbour(dev, upper_dev);
 
