@@ -1,0 +1,16 @@
+%YAML 1.2
+---
+version: 1
+
+id: interrupts
+
+properties:
+    "interrupt-parent":
+        category: required
+        type: phandle
+    "interrupts":
+        category: required
+        type: int
+
+...
+

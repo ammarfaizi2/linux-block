@@ -1335,6 +1335,9 @@ $(help-board-dirs): help-%:
 
 # Documentation targets
 # ---------------------------------------------------------------------------
+bindingdocs: FORCE
+	$(Q)$(MAKE) $(build)=Documentation/devicetree/bindings $@
+
 %docs: scripts_basic FORCE
 	$(Q)$(MAKE) $(build)=scripts build_docproc
 	$(Q)$(MAKE) $(build)=Documentation/DocBook $@

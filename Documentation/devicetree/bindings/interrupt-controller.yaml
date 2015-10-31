@@ -1,0 +1,16 @@
+%YAML 1.2
+---
+version: 1
+
+id: interrupt-controller
+
+properties:
+    "#interrupt-cells":
+        category: required
+        type: int
+    "interrupt-controller":
+        category: required
+        type: empty
+
+...
+

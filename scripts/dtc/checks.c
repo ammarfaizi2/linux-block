@@ -424,6 +424,7 @@ static void check_dump_properties(struct check *c, struct node *root,
 			    struct node *node)
 {
 	struct property **pp, *compat_prop = NULL;
+	char type = 0;
 
 	for (pp = &node->proplist; *pp; pp = &((*pp)->next)) {
 		if (streq((*pp)->name, "compatible")) {
@@ -440,7 +441,14 @@ static void check_dump_properties(struct check *c, struct node *root,
 		if (streq((*pp)->name, "compatible"))
 			continue;
 
-		fprintf(stderr, " %s", (*pp)->name);
+		if (data_is_one_string((*pp)->val))
+			type = 'S';
+		if ((*pp)->val.len == 0)
+			type = 'E';
+		if (strstr((*pp)->name, "-cells") && (*pp)->val.len == sizeof(cell_t))
+			type = 'C';
+
+		fprintf(stderr, " %s%c%c", (*pp)->name, type ? ':' : ' ', type);
 	}
 	fprintf(stderr, "\n");
 }

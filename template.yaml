@@ -4,21 +4,23 @@ version: 1
 
 id: %id%
 
-title: %title%
+title: '%title%'
 
 maintainer:
-    -   name: %maintainer%
+    name: %maintainer%
 
 description: >
     TODO
 
 inherits:
-    -   id: %ids%
+%inherits%
 
 properties:
-    -   name: "compatible"
+    "compatible":
+        type: string
+        category: required
         constraint: |
-            %compatible%
+%compatible%
 
 %props%
 ...
