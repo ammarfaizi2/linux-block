@@ -151,6 +151,7 @@ struct ath10k_wmi {
 	struct wmi_vdev_param_map *vdev_param;
 	struct wmi_pdev_param_map *pdev_param;
 	const struct wmi_ops *ops;
+	const struct wmi_peer_flags_map *peer_flags;
 
 	u32 num_mem_chunks;
 	u32 rx_decap_mode;
@@ -512,6 +513,9 @@ enum ath10k_fw_features {
 	/* Firmware Supports Adaptive CCA*/
 	ATH10K_FW_FEATURE_SUPPORTS_ADAPTIVE_CCA = 11,
 
+	/* Firmware supports management frame protection */
+	ATH10K_FW_FEATURE_MFP_SUPPORT = 12,
+
 	/* keep last */
 	ATH10K_FW_FEATURE_COUNT,
 };
@@ -534,6 +538,9 @@ enum ath10k_dev_flags {
 
 	/* Disable HW crypto engine */
 	ATH10K_FLAG_HW_CRYPTO_DISABLED,
+
+	/* Bluetooth coexistance enabled */
+	ATH10K_FLAG_BTCOEX,
 };
 
 enum ath10k_cal_mode {
