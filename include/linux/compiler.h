@@ -266,14 +266,10 @@ static __always_inline void __write_once_size(volatile void *p, void *res, int s
  * Control dependencies are tricky.  See Documentation/memory-barriers.txt
  * for important information on how to use them.  Note that in many cases,
  * use of smp_load_acquire() will be much simpler.  Control dependencies
- * should be avoided except on the hottest of hotpaths.
+ * should be avoided except on the hottest of hotpaths because although
+ * hardware is good about respecting them, compilers are not so kind.
  */
-#define READ_ONCE_CTRL(x) \
-({ \
-	typeof(x) __val = READ_ONCE(x); \
-	smp_read_barrier_depends(); /* Enforce control dependency. */ \
-	__val; \
-})
+#define READ_ONCE_CTRL(x) READ_ONCE(x)
 
 #endif /* __KERNEL__ */
 
