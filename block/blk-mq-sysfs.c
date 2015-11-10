@@ -247,6 +247,35 @@ static ssize_t blk_mq_hw_sysfs_cpus_show(struct blk_mq_hw_ctx *hctx, char *page)
 	return ret;
 }
 
+static ssize_t blk_mq_hw_sysfs_stat_store(struct blk_mq_hw_ctx *hctx,
+					  const char *page, size_t count)
+{
+	blk_mq_hctx_clear_stat(hctx);
+	return count;
+}
+
+static ssize_t print_stat(char *page, struct blk_rq_stat *stat, const char *pre)
+{
+	return sprintf(page, "%s samples=%llu, mean=%lld, min=%lld, max=%lld\n",
+			pre, (long long) stat->nr_samples,
+			(long long) stat->mean, (long long) stat->min,
+			(long long) stat->max);
+}
+
+static ssize_t blk_mq_hw_sysfs_stat_show(struct blk_mq_hw_ctx *hctx, char *page)
+{
+	struct blk_rq_stat stat[2];
+	ssize_t ret;
+
+	blk_mq_init_stat(&stat[0]);
+	blk_mq_init_stat(&stat[1]);
+
+	blk_mq_hctx_get_stat(hctx, stat);
+	ret = print_stat(page, &stat[0], "read :");
+	ret += print_stat(page + ret, &stat[1], "write:");
+	return ret;
+}
+
 static struct blk_mq_ctx_sysfs_entry blk_mq_sysfs_dispatched = {
 	.attr = {.name = "dispatched", .mode = S_IRUGO },
 	.show = blk_mq_sysfs_dispatched_show,
@@ -304,6 +333,11 @@ static struct blk_mq_hw_ctx_sysfs_entry blk_mq_hw_sysfs_poll = {
 	.attr = {.name = "io_poll", .mode = S_IRUGO },
 	.show = blk_mq_hw_sysfs_poll_show,
 };
+static struct blk_mq_hw_ctx_sysfs_entry blk_mq_hw_sysfs_stat = {
+	.attr = {.name = "stats", .mode = S_IRUGO | S_IWUSR },
+	.show = blk_mq_hw_sysfs_stat_show,
+	.store = blk_mq_hw_sysfs_stat_store,
+};
 
 static struct attribute *default_hw_ctx_attrs[] = {
 	&blk_mq_hw_sysfs_queued.attr,
@@ -314,6 +348,7 @@ static struct attribute *default_hw_ctx_attrs[] = {
 	&blk_mq_hw_sysfs_cpus.attr,
 	&blk_mq_hw_sysfs_active.attr,
 	&blk_mq_hw_sysfs_poll.attr,
+	&blk_mq_hw_sysfs_stat.attr,
 	NULL,
 };
 

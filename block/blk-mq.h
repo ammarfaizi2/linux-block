@@ -3,10 +3,25 @@
 
 struct blk_mq_tag_set;
 
+/*
+ * 0.5s window
+ */
+#define BLK_MQ_STAT_NSEC	500000000ULL
+
+struct blk_rq_stat {
+	s64 mean;
+	u64 min;
+	u64 max;
+	s64 nr_samples;
+	s64 time;
+};
+
 struct blk_mq_ctx {
 	struct {
 		spinlock_t		lock;
 		struct list_head	rq_list;
+		unsigned int		rq_list_cnt;
+		unsigned int		in_flight;
 	}  ____cacheline_aligned_in_smp;
 
 	unsigned int		cpu;
@@ -20,6 +35,7 @@ struct blk_mq_ctx {
 
 	/* incremented at completion time */
 	unsigned long		____cacheline_aligned_in_smp rq_completed[2];
+	struct blk_rq_stat	stat[2];
 
 	struct request_queue	*queue;
 	struct kobject		kobj;
@@ -121,5 +137,10 @@ static inline bool blk_mq_hw_queue_mapped(struct blk_mq_hw_ctx *hctx)
 {
 	return hctx->nr_ctx && hctx->tags;
 }
+
+
+void blk_mq_hctx_get_stat(struct blk_mq_hw_ctx *, struct blk_rq_stat *);
+void blk_mq_hctx_clear_stat(struct blk_mq_hw_ctx *);
+void blk_mq_init_stat(struct blk_rq_stat *);
 
 #endif

@@ -158,6 +158,84 @@ bool blk_mq_can_queue(struct blk_mq_hw_ctx *hctx)
 }
 EXPORT_SYMBOL(blk_mq_can_queue);
 
+void blk_mq_hctx_clear_stat(struct blk_mq_hw_ctx *hctx)
+{
+	struct blk_mq_ctx *ctx;
+	unsigned int i;
+
+	hctx_for_each_ctx(hctx, ctx, i) {
+		blk_mq_init_stat(&ctx->stat[0]);
+		blk_mq_init_stat(&ctx->stat[1]);
+	}
+}
+
+static void sum_stat(struct blk_rq_stat *dst, struct blk_rq_stat *src)
+{
+	if (!src->nr_samples)
+		return;
+
+	dst->min = min(dst->min, src->min);
+	dst->max = max(dst->max, src->max);
+
+	if (!dst->nr_samples)
+		dst->mean = src->mean;
+	else {
+		dst->mean = div64_s64((src->mean * src->nr_samples) +
+					(dst->mean * dst->nr_samples),
+					dst->nr_samples + src->nr_samples);
+	}
+	dst->nr_samples += src->nr_samples;
+}
+
+void blk_mq_hctx_get_stat(struct blk_mq_hw_ctx *hctx, struct blk_rq_stat *dst)
+{
+	struct blk_mq_ctx *ctx;
+	unsigned int i;
+
+	hctx_for_each_ctx(hctx, ctx, i) {
+		sum_stat(&dst[0], &ctx->stat[0]);
+		sum_stat(&dst[1], &ctx->stat[1]);
+	}
+}
+
+static void __blk_mq_init_stat(struct blk_rq_stat *stat, s64 time_now)
+{
+	memset(stat, 0, sizeof(*stat));
+	stat->min = -1ULL;
+	stat->time = time_now;
+}
+
+void blk_mq_init_stat(struct blk_rq_stat *stat)
+{
+	__blk_mq_init_stat(stat, ktime_to_ns(ktime_get()));
+}
+
+static void blk_mq_add_stat(struct request *rq)
+{
+	struct blk_mq_ctx *ctx = rq->mq_ctx;
+	struct blk_rq_stat *stat = &ctx->stat[rq_data_dir(rq)];
+	s64 delta, now, value;
+
+	now = ktime_to_ns(ktime_get());
+	if (now < rq->issue_time)
+		return;
+
+	if (now - stat->time >= BLK_MQ_STAT_NSEC)
+		__blk_mq_init_stat(stat, now);
+
+	value = now - rq->issue_time;
+	if (value > stat->max)
+		stat->max = value;
+	if (value < stat->min)
+		stat->min = value;
+
+	delta = value - stat->mean;
+	if (delta)
+		stat->mean += div64_s64(delta, stat->nr_samples + 1);
+
+	stat->nr_samples++;
+}
+
 static void blk_mq_rq_ctx_init(struct request_queue *q, struct blk_mq_ctx *ctx,
 			       struct request *rq, unsigned int rw_flags)
 {
@@ -362,6 +440,8 @@ void __blk_mq_complete_request(struct request *rq)
 {
 	struct request_queue *q = rq->q;
 
+	blk_mq_add_stat(rq);
+
 	if (!q->softirq_done_fn)
 		blk_mq_end_request(rq, rq->errors);
 	else
@@ -404,6 +484,8 @@ void blk_mq_start_request(struct request *rq)
 	rq->resid_len = blk_rq_bytes(rq);
 	if (unlikely(blk_bidi_rq(rq)))
 		rq->next_rq->resid_len = blk_rq_bytes(rq->next_rq);
+
+	rq->issue_time = ktime_to_ns(ktime_get());
 
 	blk_add_timer(rq);
 
@@ -1778,6 +1860,8 @@ static void blk_mq_init_cpu_queues(struct request_queue *q,
 		spin_lock_init(&__ctx->lock);
 		INIT_LIST_HEAD(&__ctx->rq_list);
 		__ctx->queue = q;
+		blk_mq_init_stat(&__ctx->stat[0]);
+		blk_mq_init_stat(&__ctx->stat[1]);
 
 		/* If the cpu isn't online, the cpu is mapped to first hctx */
 		if (!cpu_online(i))
