@@ -83,6 +83,7 @@ struct hdmi_spec_per_pin {
 	struct mutex lock;
 	struct delayed_work work;
 	struct snd_kcontrol *eld_ctl;
+	struct snd_jack *acomp_jack; /* jack via audio component */
 	int repoll_count;
 	bool setup; /* the stream has been set up by prepare callback */
 	int channels; /* current number of channels */
@@ -141,6 +142,7 @@ struct hdmi_spec {
 	struct hdmi_ops ops;
 
 	bool dyn_pin_out;
+	bool use_acomp; /* use audio component for ELD notify/update */
 
 	/*
 	 * Non-generic VIA/NVIDIA specific
@@ -1580,6 +1582,9 @@ static void update_eld(struct hda_codec *codec,
 			       &per_pin->eld_ctl->id);
 }
 
+static void sync_eld_via_acomp(struct hda_codec *codec,
+			       struct hdmi_spec_per_pin *per_pin);
+
 static bool hdmi_present_sense(struct hdmi_spec_per_pin *per_pin, int repoll)
 {
 	struct hda_jack_tbl *jack;
@@ -1598,6 +1603,11 @@ static bool hdmi_present_sense(struct hdmi_spec_per_pin *per_pin, int repoll)
 	 */
 	int present;
 	bool ret;
+
+	if (spec->use_acomp) {
+		sync_eld_via_acomp(codec, per_pin);
+		return false; /* don't call snd_hda_jack_report_sync() */
+	}
 
 	snd_hda_power_up_pm(codec);
 	present = snd_hda_pin_sense(codec, pin_nid);
@@ -2091,6 +2101,68 @@ static int generic_hdmi_build_pcms(struct hda_codec *codec)
 	return 0;
 }
 
+/* update ELD and jack state via audio component */
+static void sync_eld_via_acomp(struct hda_codec *codec,
+			       struct hdmi_spec_per_pin *per_pin)
+{
+	struct i915_audio_component *acomp = codec->bus->core.audio_component;
+	struct hdmi_spec *spec = codec->spec;
+	struct hdmi_eld *eld = &spec->temp_eld;
+	int size;
+
+	if (acomp && acomp->ops && acomp->ops->get_eld) {
+		mutex_lock(&per_pin->lock);
+		size = acomp->ops->get_eld(acomp->dev,
+					   intel_pin2port(per_pin->pin_nid),
+					   &eld->monitor_present,
+					   eld->eld_buffer,
+					   ELD_MAX_SIZE);
+		if (size > 0) {
+			memset(&eld->info, 0, sizeof(eld->info));
+			if (snd_hdmi_parse_eld(codec, &eld->info,
+					       eld->eld_buffer, size) < 0)
+				size = -EINVAL;
+		}
+
+		if (size > 0) {
+			eld->eld_valid = true;
+			eld->eld_size = size;
+		} else {
+			eld->eld_valid = false;
+			eld->eld_size = 0;
+		}
+
+		update_eld(codec, per_pin, eld);
+		snd_jack_report(per_pin->acomp_jack,
+				eld->monitor_present ? SND_JACK_AVOUT : 0);
+		mutex_unlock(&per_pin->lock);
+	}
+}
+
+static void free_acomp_jack_priv(struct snd_jack *jack)
+{
+	struct hdmi_spec_per_pin *per_pin = jack->private_data;
+
+	per_pin->acomp_jack = NULL;
+}
+
+static int add_acomp_jack_kctl(struct hda_codec *codec,
+			       struct hdmi_spec_per_pin *per_pin,
+			       const char *name)
+{
+	struct snd_jack *jack;
+	int err;
+
+	err = snd_jack_new(codec->card, name, SND_JACK_AVOUT, &jack,
+			   true, false);
+	if (err < 0)
+		return err;
+	per_pin->acomp_jack = jack;
+	jack->private_data = per_pin;
+	jack->private_free = free_acomp_jack_priv;
+	return 0;
+}
+
 static int generic_hdmi_build_jack(struct hda_codec *codec, int pin_idx)
 {
 	char hdmi_str[32] = "HDMI/DP";
@@ -2101,6 +2173,8 @@ static int generic_hdmi_build_jack(struct hda_codec *codec, int pin_idx)
 
 	if (pcmdev > 0)
 		sprintf(hdmi_str + strlen(hdmi_str), ",pcm=%d", pcmdev);
+	if (spec->use_acomp)
+		return add_acomp_jack_kctl(codec, per_pin, hdmi_str);
 	phantom_jack = !is_jack_detectable(codec, per_pin->pin_nid);
 	if (phantom_jack)
 		strncat(hdmi_str, " Phantom",
@@ -2196,6 +2270,8 @@ static int generic_hdmi_init(struct hda_codec *codec)
 		hda_nid_t pin_nid = per_pin->pin_nid;
 
 		hdmi_init_pin(codec, pin_nid);
+		if (spec->use_acomp)
+			continue;
 		snd_hda_jack_detect_enable_callback(codec, pin_nid,
 			codec->jackpoll_interval > 0 ? jack_callback : NULL);
 	}
@@ -2219,7 +2295,7 @@ static void generic_hdmi_free(struct hda_codec *codec)
 	struct hdmi_spec *spec = codec->spec;
 	int pin_idx;
 
-	if (is_haswell_plus(codec) || is_valleyview_plus(codec))
+	if (spec->use_acomp)
 		snd_hdac_i915_register_notifier(NULL);
 
 	for (pin_idx = 0; pin_idx < spec->num_pins; pin_idx++) {
@@ -2227,6 +2303,8 @@ static void generic_hdmi_free(struct hda_codec *codec)
 
 		cancel_delayed_work_sync(&per_pin->work);
 		eld_proc_free(per_pin);
+		if (per_pin->acomp_jack)
+			snd_device_free(codec->card, per_pin->acomp_jack);
 	}
 
 	hdmi_array_free(spec);
@@ -2388,7 +2466,9 @@ static int patch_generic_hdmi(struct hda_codec *codec)
 			is_broxton(codec))
 		codec->core.link_power_control = 1;
 
-	if (is_haswell_plus(codec) || is_valleyview_plus(codec)) {
+	spec->use_acomp =
+		is_haswell_plus(codec) || is_valleyview_plus(codec);
+	if (spec->use_acomp) {
 		codec->depop_delay = 0;
 		spec->i915_audio_ops.audio_ptr = codec;
 		spec->i915_audio_ops.pin_eld_notify = intel_pin_eld_notify;
