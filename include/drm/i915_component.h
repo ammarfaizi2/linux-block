@@ -38,6 +38,7 @@
  * @codec_wake_override: Enable/Disable generating the codec wake signal
  * @get_cdclk_freq: get the Core Display Clock in KHz
  * @sync_audio_rate: set n/cts based on the sample rate
+ * @get_eld: fill the audio state and ELD bytes for the given port
  */
 struct i915_audio_component_ops {
 	struct module *owner;
@@ -46,6 +47,8 @@ struct i915_audio_component_ops {
 	void (*codec_wake_override)(struct device *, bool enable);
 	int (*get_cdclk_freq)(struct device *);
 	int (*sync_audio_rate)(struct device *, int port, int rate);
+	int (*get_eld)(struct device *, int port, bool *enabled,
+		       unsigned char *buf, int max_bytes);
 };
 
 struct i915_audio_component_audio_ops {
