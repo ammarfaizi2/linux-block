@@ -42,6 +42,10 @@ static LIST_HEAD(ftrace_common_fields);
 static struct kmem_cache *field_cachep;
 static struct kmem_cache *file_cachep;
 
+static struct workqueue_struct *pid_filter_wq;
+
+static DEFINE_RAW_SPINLOCK(event_pid_filter_lock);
+
 static inline int system_refcount(struct event_subsystem *system)
 {
 	return system->ref_count;
@@ -481,10 +485,38 @@ static int cmp_pid(const void *key, const void *elt)
 	return 1;
 }
 
+static pid_t *
+find_ignored_pid(struct trace_pid_list *filtered_pids, pid_t search_pid)
+{
+	unsigned int nr_pids;
+	pid_t *pid;
+	int nr_fork;
+	int i;
+
+	pid = bsearch(&search_pid, filtered_pids->pids,
+		      filtered_pids->nr_pids, sizeof(pid_t),
+		      cmp_pid);
+
+	if (pid)
+		return pid;
+
+	/* Could be a forked pid */
+	nr_fork = smp_load_acquire(&filtered_pids->nr_fork);
+	if (nr_fork) {
+		/* Gotta check linearly */
+		nr_pids = filtered_pids->nr_pids;
+		for (i = 0; i < nr_fork; i++) {
+			if (filtered_pids->pids[nr_pids + i] == search_pid)
+				return &filtered_pids->pids[nr_pids + i];
+		}
+	}
+
+	return NULL;
+}
+
 static bool
 check_ignore_pid(struct trace_pid_list *filtered_pids, struct task_struct *task)
 {
-	pid_t search_pid;
 	pid_t *pid;
 
 	/*
@@ -494,15 +526,367 @@ check_ignore_pid(struct trace_pid_list *filtered_pids, struct task_struct *task)
 	if (!filtered_pids)
 		return false;
 
-	search_pid = task->pid;
+	pid = find_ignored_pid(filtered_pids, task->pid);
 
-	pid = bsearch(&search_pid, filtered_pids->pids,
-		      filtered_pids->nr_pids, sizeof(pid_t),
-		      cmp_pid);
-	if (!pid)
-		return true;
+	return pid == NULL;
+}
 
-	return false;
+static int calculate_pid_filter_order(struct trace_array *tr, int nr_pids)
+{
+	int size = nr_pids * sizeof(pid_t);
+
+	/* FIXME, only add one if filtering child processes too */
+	if (!size)
+		return 1;
+
+	return get_order(size) + 1;
+}
+
+static int max_pid_size(struct trace_pid_list *pid_list)
+{
+	return (PAGE_SIZE << pid_list->order) / sizeof(pid_t);
+}
+
+/*
+ * event_mutex must be held.
+ */
+static void copy_pid_filters(struct trace_pid_list *pid_list,
+			     struct trace_pid_list *filtered_pids,
+			     int nr_fork, int nr_free)
+{
+	pid_t *pid;
+	int fork_index;
+	int free_index;
+	int nr_pids;
+	int index;
+	int max_fork;
+	int old_max;
+	int max;
+	int i;
+
+	nr_pids = filtered_pids->nr_pids;
+	pid_list->nr_pids = nr_pids + nr_fork;
+	old_max = max_pid_size(filtered_pids);
+	max = max_pid_size(pid_list);
+	max_fork = pid_list->nr_pids + nr_fork;
+
+	/*
+	 * filtered_pids->pids [0 .. nr_pids] is immutable.
+	 * Copy the fork pids and the free pids list from filtered_pids to
+	 * pid_list after pid_list->pids[nr_pids]. Then we can sort the copied
+	 * fork list and the free list that's on the pid_list->pids.
+	 * Skip over the -1 pids in the free list (they are deleted pids).
+	 * Finally, do a merge sort of the three lists, where if the pid is
+	 * in the free list, it is just ignored.
+	 *
+	 */
+	if (nr_fork) {
+		/*
+		 * Copy a temp list at pid_list->pids using the filtered_pids
+		 * nr_pids, as this list is only a temporary location on pid_list.
+		 */
+		memcpy(&pid_list->pids[nr_pids], &filtered_pids->pids[nr_pids],
+		       nr_fork * sizeof(pid_t));
+		if (nr_fork > 1)
+			sort(&pid_list->pids[nr_pids], nr_fork,
+			     sizeof(pid_t), cmp_pid, NULL);
+
+		/* Skip the -1s */;
+		for (fork_index = nr_pids;
+		     fork_index < max_fork && pid_list->pids[fork_index] == -1;
+		     fork_index++)
+			nr_fork--;
+	}
+
+	if (nr_free) {
+		free_index = max - nr_free;
+		memcpy(&pid_list->pids[free_index],
+		       &filtered_pids->pids[old_max - nr_free],
+		       nr_free * sizeof(pid_t));
+		if (nr_free > 1)
+			sort(&pid_list->pids[free_index], nr_free,
+			     sizeof(pid_t), cmp_pid, NULL);
+	}
+
+	/*
+	 * Merge sort filtered_pids->pids with pid_list->pids+free_index.
+	 * Use pid_list->pids+(max-nr_free) as an exclude list.
+	 */
+	for (index = 0, i = 0; i < filtered_pids->nr_pids; /* no update here */) {
+		/* Immutable part of filtered_pids->pids and also sorted */
+		pid = &filtered_pids->pids[i];
+		if (nr_fork && *pid > pid_list->pids[fork_index]) {
+			pid = &pid_list->pids[fork_index++];
+			nr_fork--;
+		} else
+			i++;
+
+		/* Check if this is on the free list */
+		if (nr_free && *pid >= pid_list->pids[free_index]) {
+			nr_free--;
+			if (*pid == pid_list->pids[free_index++])
+				continue;
+			/* Hmm, this pid doesn't exist. Warn? */
+		}
+
+		pid_list->pids[index++] = *pid;
+	}
+
+	/* Get the rest of the fork pids */
+	while (nr_fork) {
+		pid_list->pids[index++] = pid_list->pids[fork_index++];
+		nr_fork--;
+	}
+
+	pid_list->nr_pids = index;
+#if 0
+	sort(&pid_list->pids[0], pid_list->nr_pids,
+	     sizeof(pid_t), cmp_pid, NULL);
+#endif
+}
+
+/*
+ * Either new pids were added to the pid filter list via a fork, or
+ * pids need to be removed because of an exit. The readers use a bsearch
+ * and the sorted list must change via careful RCU synchronization.
+ *
+ * New pids are appended to the sorted list and readers search them
+ * linearly. Old pids that need to be removed are added to the end
+ * of the allocated memory. The linear lists are updated under the
+ * event_pid_filter_lock spin lock.
+ *
+ * Create a new sorted list from the old, and swap it out under the
+ * event_pid_filter_lock to prevent further modifications to the lists.
+ */
+static void pid_filter_update(struct work_struct *work)
+{
+	struct trace_array *tr = container_of(work, struct trace_array, pid_work);
+	struct trace_pid_list *filtered_pids;
+	struct trace_pid_list *pid_list;
+	int new_order;
+	int nr_fork;
+	int nr_free;
+	int frame;
+	int new_cnt;
+
+	mutex_lock(&event_mutex);
+
+	filtered_pids = rcu_dereference_protected(tr->filtered_pids,
+						  lockdep_is_held(&event_mutex));
+	if (!filtered_pids)
+		goto out;
+
+	raw_spin_lock(&event_pid_filter_lock);
+	nr_fork = filtered_pids->nr_fork;
+	nr_free = filtered_pids->nr_free;
+	frame = filtered_pids->frame;
+	raw_spin_unlock(&event_pid_filter_lock);
+
+	/* Nothing to do? */
+	if (!nr_fork && !nr_free)
+		goto out;
+
+	/*
+	 * The nr_fork and nr_free can not become less than what we got
+	 * from above, and neither can the contents of the list up to
+	 * those points change without the frame changing, in which case
+	 * we start over and try again. The list can only grow (with the
+	 * event_mutex held).
+	 */
+
+	pid_list = kzalloc(sizeof(*pid_list), GFP_KERNEL);
+	if (!pid_list)
+		goto out; /* Try again later? */
+
+	/*
+	 * Calculate new order. Only let it get bigger. Only the clearing
+	 * of all pids makes it smaller.
+	 */
+
+	new_cnt = filtered_pids->nr_pids + nr_fork - nr_free;
+	new_order = calculate_pid_filter_order(tr, new_cnt);
+
+	if (new_order < filtered_pids->order)
+		new_order = filtered_pids->order;
+
+ restart:
+	pid_list->pids = (void *)__get_free_pages(GFP_KERNEL, new_order);
+	if (!pid_list->pids) {
+		kfree(pid_list);
+		/* Oh well, try again later */
+		goto out;
+	}
+
+	pid_list->order = new_order;
+	copy_pid_filters(pid_list, filtered_pids, nr_fork, nr_free);
+
+	raw_spin_lock(&event_pid_filter_lock);
+
+	/* Now lets see if things changed since we last locked */
+	if (nr_fork != filtered_pids->nr_fork ||
+	    nr_free != filtered_pids->nr_free ||
+	    frame != filtered_pids->frame) {
+		/* And update was made. */
+		new_cnt = filtered_pids->nr_pids + nr_fork - nr_free;
+		new_order = calculate_pid_filter_order(tr, new_cnt);
+
+		nr_fork = filtered_pids->nr_fork;
+		nr_free = filtered_pids->nr_free;
+		frame = filtered_pids->frame;
+
+		if (new_order > pid_list->order) {
+			/* Darn it, need to start all over */
+			raw_spin_unlock(&event_pid_filter_lock);
+			free_pages((unsigned long)pid_list->pids, pid_list->order);
+			memset(pid_list, 0, sizeof(*pid_list));
+			goto restart;
+		}
+
+		/* Screw it, do the entire work under the spin_lock */
+		copy_pid_filters(pid_list, filtered_pids, nr_fork, nr_free);
+	}
+
+	/*
+	 * Updating the pointer under the event_pid_filter_lock will prevent
+	 * new additions to the old pointer.
+	 */
+	rcu_assign_pointer(tr->filtered_pids, pid_list);
+
+	raw_spin_unlock(&event_pid_filter_lock);
+
+	/*
+	 * Any growth will now only happen to the new pointer, but there may
+	 * still be readers of the old pointer under RCU.
+	 */
+	synchronize_sched();
+
+	free_pages((unsigned long)filtered_pids->pids, filtered_pids->order);
+	kfree(filtered_pids);
+ out:
+	mutex_unlock(&event_mutex);
+}
+
+static void event_filter_pid_irq_work(struct irq_work *work)
+{
+	struct trace_array *tr = container_of(work, struct trace_array, work);
+
+	/*
+	 * This can't be called from a tracepoint callback, hence
+	 * the irq_work.
+	 */
+	queue_work(pid_filter_wq, &tr->pid_work);
+}
+
+static void pid_filter_add_remove(struct trace_array *tr,
+				  struct task_struct *task,
+				  bool add)
+{
+	struct trace_pid_list *pid_list;
+	pid_t *pid;
+	int nr_fork;
+	int nr_free;
+	int index;
+	int max;
+	int i;
+
+ again:
+	pid_list = rcu_dereference_sched(tr->filtered_pids);
+	if (!pid_list)
+		return;
+
+	pid = find_ignored_pid(pid_list, task->pid);
+	/*
+	 * Don't add a pid if it exists.
+	 * Don't remove a pid if it does not.
+	 */
+	if (add == (pid != NULL))
+		return;
+
+	raw_spin_lock(&event_pid_filter_lock);
+
+	/*
+	 * When adding or removing a pid from the sorted list. The update
+	 * to the filtered_pids is done under the event_pid_filter_lock.
+	 * This check is not protected by RCU, but the spin lock.
+	 * Updates to the pid list must be done to the current pointer,
+	 * not the one that is going away.
+	 *
+	 * We don't care if the old readers do not see this update.
+	 */
+	if (pid_list != rcu_dereference_sched(tr->filtered_pids)) {
+		raw_spin_unlock(&event_pid_filter_lock);
+		goto again;
+	}
+
+	/*
+	 * If we are removing a pid that's in the added list, don't
+	 * bother adding it to the remove list, Simply replace the
+	 * pid with a -1.
+	 */
+	if (!add) {
+		if (pid - pid_list->pids >= pid_list->nr_pids) {
+			*pid = -1;
+			goto out;
+		}
+	} else {
+		/* Check if there's a free slot */
+		for (i = 0; i < pid_list->nr_fork; i++) {
+			if (pid_list->pids[i + pid_list->nr_pids] == -1) {
+				pid_list->pids[i + pid_list->nr_pids] = task->pid;
+				goto out;
+			}
+		}
+	}
+
+	max = max_pid_size(pid_list);
+
+	nr_fork = pid_list->nr_fork;
+	nr_free = pid_list->nr_free;
+
+	/*
+	 * We add pids to the end of the free zone, if available.
+	 * If not. Oh well, either don't add the pid, nor remove it.
+	 */
+	if (pid_list->nr_pids + nr_fork >= max - nr_free - 1) {
+		/* missing one is worse than not removing one */
+		WARN_ON_ONCE(add);
+		goto out;
+	}
+
+	if (add) {
+		index = pid_list->nr_pids + nr_fork++;
+		pid_list->pids[index] = task->pid;
+		smp_store_release(&pid_list->nr_fork, nr_fork);
+	} else {
+		index = max - ++nr_free;
+		pid_list->pids[index] = task->pid;
+		smp_store_release(&pid_list->nr_free, nr_free);
+	}
+
+	/* We can't remove the pid from this context */
+	irq_work_queue(&tr->work);
+ out:
+	/* The frame denotes we had an update */
+	pid_list->frame++;
+	raw_spin_unlock(&event_pid_filter_lock);
+}
+
+static void
+event_filter_pid_sched_process_exit(void *data, struct task_struct *task)
+{
+	struct trace_array *tr = data;
+
+	pid_filter_add_remove(tr, task, false);
+}
+
+static void
+event_filter_pid_sched_process_fork(void *data,
+				    struct task_struct *self,
+				    struct task_struct *task)
+{
+	struct trace_array *tr = data;
+
+	pid_filter_add_remove(tr, task, true);
 }
 
 static void
@@ -1546,11 +1930,6 @@ show_header(struct file *filp, char __user *ubuf, size_t cnt, loff_t *ppos)
 	return r;
 }
 
-static int max_pids(struct trace_pid_list *pid_list)
-{
-	return (PAGE_SIZE << pid_list->order) / sizeof(pid_t);
-}
-
 static void ignore_task_cpu(void *data)
 {
 	struct trace_array *tr = data;
@@ -1578,6 +1957,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 	struct trace_event_file *file;
 	struct trace_parser parser;
 	unsigned long val;
+	int new_order;
 	loff_t this_pos;
 	ssize_t read = 0;
 	ssize_t ret = 0;
@@ -1623,7 +2003,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 
 		ret = -ENOMEM;
 		if (!pid_list) {
-			pid_list = kmalloc(sizeof(*pid_list), GFP_KERNEL);
+			pid_list = kzalloc(sizeof(*pid_list), GFP_KERNEL);
 			if (!pid_list)
 				break;
 
@@ -1631,8 +2011,6 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 							lockdep_is_held(&event_mutex));
 			if (filtered_pids)
 				pid_list->order = filtered_pids->order;
-			else
-				pid_list->order = 0;
 
 			pid_list->pids = (void *)__get_free_pages(GFP_KERNEL,
 								  pid_list->order);
@@ -1647,18 +2025,19 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 				pid_list->nr_pids = 0;
 		}
 
-		if (pid_list->nr_pids >= max_pids(pid_list)) {
+		new_order = calculate_pid_filter_order(tr, pid_list->nr_pids);
+
+		if (new_order > pid_list->order) {
 			pid_t *pid_page;
 
-			pid_page = (void *)__get_free_pages(GFP_KERNEL,
-							    pid_list->order + 1);
+			pid_page = (void *)__get_free_pages(GFP_KERNEL, new_order);
 			if (!pid_page)
 				break;
 			memcpy(pid_page, pid_list->pids,
 			       pid_list->nr_pids * sizeof(pid_t));
 			free_pages((unsigned long)pid_list->pids, pid_list->order);
 
-			pid_list->order++;
+			pid_list->order = new_order;
 			pid_list->pids = pid_page;
 		}
 
@@ -2956,6 +3335,9 @@ int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr)
 
 	mutex_lock(&event_mutex);
 
+	INIT_WORK(&tr->pid_work, pid_filter_update);
+	init_irq_work(&tr->work, event_filter_pid_irq_work);
+
 	ret = create_event_toplevel_files(parent, tr);
 	if (ret)
 		goto out_unlock;
@@ -3019,6 +3401,10 @@ int event_trace_del_tracer(struct trace_array *tr)
 	tr->event_dir = NULL;
 
 	mutex_unlock(&event_mutex);
+
+	/* Make sure the pid filter work is cleared */
+	irq_work_sync(&tr->work);
+	cancel_work_sync(&tr->pid_work);
 
 	return 0;
 }
@@ -3130,6 +3516,13 @@ static __init int event_trace_init(void)
 	tr = top_trace_array();
 	if (!tr)
 		return -ENODEV;
+
+	pid_filter_wq = alloc_workqueue("pid_filter", WQ_UNBOUND, 0);
+	if (!pid_filter_wq)
+		return -ENOMEM;
+
+	INIT_WORK(&tr->pid_work, pid_filter_update);
+	init_irq_work(&tr->work, event_filter_pid_irq_work);
 
 	d_tracer = tracing_init_dentry();
 	if (IS_ERR(d_tracer))
@@ -3281,7 +3674,6 @@ static __init void event_trace_self_tests(void)
 	/* Now test at the sub system level */
 
 	pr_info("Running tests on trace event systems:\n");
-
 	list_for_each_entry(dir, &tr->systems, list) {
 
 		system = dir->subsystem;

@@ -176,7 +176,11 @@ struct trace_options {
 };
 
 struct trace_pid_list {
+	struct trace_array		*tr;
+	unsigned long			frame;
 	unsigned int			nr_pids;
+	unsigned int			nr_fork;
+	unsigned int			nr_free;
 	int				order;
 	pid_t				*pids;
 };
@@ -236,6 +240,8 @@ struct trace_array {
 	unsigned char		trace_flags_index[TRACE_FLAGS_MAX_SIZE];
 	unsigned int		flags;
 	raw_spinlock_t		start_lock;
+	struct irq_work		work;
+	struct work_struct	pid_work;
 	struct dentry		*dir;
 	struct dentry		*options;
 	struct dentry		*percpu_dir;
