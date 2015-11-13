@@ -1628,7 +1628,6 @@ static bool hdmi_present_sense(struct hdmi_spec_per_pin *per_pin, int repoll)
 						     &eld->eld_size) < 0)
 			eld->eld_valid = false;
 		else {
-			memset(&eld->info, 0, sizeof(struct parsed_hdmi_eld));
 			if (snd_hdmi_parse_eld(codec, &eld->info, eld->eld_buffer,
 						    eld->eld_size) < 0)
 				eld->eld_valid = false;
@@ -2118,7 +2117,6 @@ static void sync_eld_via_acomp(struct hda_codec *codec,
 					   eld->eld_buffer,
 					   ELD_MAX_SIZE);
 		if (size > 0) {
-			memset(&eld->info, 0, sizeof(eld->info));
 			if (snd_hdmi_parse_eld(codec, &eld->info,
 					       eld->eld_buffer, size) < 0)
 				size = -EINVAL;
