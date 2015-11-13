@@ -211,6 +211,7 @@ struct trace_array {
 	unsigned long		max_latency;
 #endif
 	struct trace_pid_list	__rcu *filtered_pids;
+	struct trace_pid_list	*cached_pid_list;
 	/*
 	 * max_lock is used to protect the swapping of buffers
 	 * when taking a max snapshot. The buffers themselves are

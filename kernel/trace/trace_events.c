@@ -663,6 +663,7 @@ static void pid_filter_update(struct work_struct *work)
 	struct trace_array *tr = container_of(work, struct trace_array, pid_work);
 	struct trace_pid_list *filtered_pids;
 	struct trace_pid_list *pid_list;
+	struct pid_t *pids;
 	int new_order;
 	int nr_fork;
 	int nr_free;
@@ -694,9 +695,14 @@ static void pid_filter_update(struct work_struct *work)
 	 * event_mutex held).
 	 */
 
-	pid_list = kzalloc(sizeof(*pid_list), GFP_KERNEL);
-	if (!pid_list)
-		goto out; /* Try again later? */
+	if (tr->cached_pid_list) {
+		pid_list = tr->cached_pid_list;
+		tr->cached_pid_list = NULL;
+	} else {
+		pid_list = kzalloc(sizeof(*pid_list), GFP_KERNEL);
+		if (!pid_list)
+			goto out; /* Try again later? */
+	}
 
 	/*
 	 * Calculate new order. Only let it get bigger. Only the clearing
@@ -710,11 +716,18 @@ static void pid_filter_update(struct work_struct *work)
 		new_order = filtered_pids->order;
 
  restart:
-	pid_list->pids = (void *)__get_free_pages(GFP_KERNEL, new_order);
+	if (pid_list->pids && new_order > pid_list->order) {
+		free_pages((unsigned long)pid_list->pids, pid_list->order);
+		memset(pid_list, 0, sizeof(*pid_list));
+	}
+
 	if (!pid_list->pids) {
-		kfree(pid_list);
-		/* Oh well, try again later */
-		goto out;
+		pid_list->pids = (void *)__get_free_pages(GFP_KERNEL, new_order);
+		if (!pid_list->pids) {
+			kfree(pid_list);
+			/* Oh well, try again later */
+			goto out;
+		}
 	}
 
 	pid_list->order = new_order;
@@ -737,8 +750,6 @@ static void pid_filter_update(struct work_struct *work)
 		if (new_order > pid_list->order) {
 			/* Darn it, need to start all over */
 			raw_spin_unlock(&event_pid_filter_lock);
-			free_pages((unsigned long)pid_list->pids, pid_list->order);
-			memset(pid_list, 0, sizeof(*pid_list));
 			goto restart;
 		}
 
@@ -760,8 +771,12 @@ static void pid_filter_update(struct work_struct *work)
 	 */
 	synchronize_sched();
 
-	free_pages((unsigned long)filtered_pids->pids, filtered_pids->order);
-	kfree(filtered_pids);
+	new_order = filtered_pids->order;
+	pids = filtered_pids->pids;
+	memset(filtered_pids, 0, sizeof(*filtered_pids));
+	filtered_pids->pids = pids;
+	filtered_pids->order = new_order;
+	tr->cached_pid_list = filtered_pids;
  out:
 	mutex_unlock(&event_mutex);
 }
@@ -995,6 +1010,13 @@ static void __ftrace_clear_event_pids(struct trace_array *tr)
 
 	free_pages((unsigned long)pid_list->pids, pid_list->order);
 	kfree(pid_list);
+	/* Also nuke the cached_pid_list */
+	pid_list = tr->cached_pid_list;
+	if (pid_list) {
+		tr->cached_pid_list = NULL;
+		free_pages((unsigned long)pid_list->pids, pid_list->order);
+		kfree(pid_list);
+	}
 }
 
 static void ftrace_clear_event_pids(struct trace_array *tr)
@@ -1968,7 +1990,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 	struct seq_file *m = filp->private_data;
 	struct trace_array *tr = m->private;
 	struct trace_pid_list *filtered_pids = NULL;
-	struct trace_pid_list *pid_list = NULL;
+	struct trace_pid_list *pid_list = tr->cached_pid_list;
 	struct trace_event_file *file;
 	struct trace_parser parser;
 	unsigned long val;
@@ -1990,6 +2012,9 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 		return -ENOMEM;
 
 	mutex_lock(&event_mutex);
+
+	tr->cached_pid_list = NULL;
+
 	/*
 	 * Load as many pids into the array before doing a
 	 * swap from the tr->filtered_pids to the new list.
