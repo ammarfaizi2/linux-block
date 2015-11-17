@@ -1,6 +1,8 @@
 #ifndef TESTS_H
 #define TESTS_H
 
+#include <stdbool.h>
+
 #define TEST_ASSERT_VAL(text, cond)					 \
 do {									 \
 	if (!(cond)) {							 \
@@ -26,7 +28,19 @@ enum {
 
 struct test {
 	const char *desc;
-	int (*func)(void);
+
+	bool need_subtests;
+
+	union {
+		int (*func)(void);
+
+		struct {
+			bool skip_if_fail;
+			int (*get_nr)(void);
+			const char *(*get_desc)(int i);
+			int (*func)(int i);
+		} subtest;
+	};
 };
 
 /* Tests */
@@ -65,7 +79,11 @@ int test__fdarray__filter(void);
 int test__fdarray__add(void);
 int test__kmod_path__parse(void);
 int test__thread_map(void);
-int test__llvm(void);
+
+const char *test__llvm_subtest_get_desc(int i);
+int test__llvm_subtest_get_nr(void);
+int test__llvm_subtest(int i);
+
 int test__bpf(void);
 int test_session_topology(void);
 

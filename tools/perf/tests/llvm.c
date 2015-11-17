@@ -46,7 +46,7 @@ static struct {
 	},
 	[LLVM_TESTCASE_BPF_PROLOGUE] = {
 		.source = test_llvm__bpf_test_prologue_prog,
-		.desc = "Test BPF prologue generation",
+		.desc = "Compile source for BPF prologue generation test",
 	},
 };
 
@@ -131,44 +131,39 @@ out:
 	return ret;
 }
 
-int test__llvm(void)
+int test__llvm_subtest(int i)
 {
-	enum test_llvm__testcase i;
+	int ret;
+	void *obj_buf = NULL;
+	size_t obj_buf_sz = 0;
 
-	for (i = 0; i < __LLVM_TESTCASE_MAX; i++) {
-		int ret;
-		void *obj_buf = NULL;
-		size_t obj_buf_sz = 0;
+	if ((i < 0) || (i >= __LLVM_TESTCASE_MAX))
+		return TEST_FAIL;
 
-		ret = test_llvm__fetch_bpf_obj(&obj_buf, &obj_buf_sz,
-					       i, false);
+	ret = test_llvm__fetch_bpf_obj(&obj_buf, &obj_buf_sz,
+				       i, false);
 
-		if (ret == TEST_OK) {
-			ret = test__bpf_parsing(obj_buf, obj_buf_sz);
-			if (ret != TEST_OK)
-				pr_debug("Failed to parse test case '%s'\n",
-					 bpf_source_table[i].desc);
-		}
-		free(obj_buf);
-
-		switch (ret) {
-		case TEST_SKIP:
-			return TEST_SKIP;
-		case TEST_OK:
-			break;
-		default:
-			/*
-			 * Test 0 is the basic LLVM test. If test 0
-			 * fail, the basic LLVM support not functional
-			 * so the whole test should fail. If other test
-			 * case fail, it can be fixed by adjusting
-			 * config so don't report error.
-			 */
-			if (i == 0)
-				return TEST_FAIL;
-			else
-				return TEST_SKIP;
+	if (ret == TEST_OK) {
+		ret = test__bpf_parsing(obj_buf, obj_buf_sz);
+		if (ret != TEST_OK) {
+			pr_debug("Failed to parse test case '%s'\n",
+				 bpf_source_table[i].desc);
 		}
 	}
-	return TEST_OK;
+	free(obj_buf);
+
+	return ret;
+}
+
+int test__llvm_subtest_get_nr(void)
+{
+	return __LLVM_TESTCASE_MAX;
+}
+
+const char *test__llvm_subtest_get_desc(int i)
+{
+	if ((i < 0) || (i >= __LLVM_TESTCASE_MAX))
+		return NULL;
+
+	return bpf_source_table[i].desc;
 }
