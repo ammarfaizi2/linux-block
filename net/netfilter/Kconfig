@@ -974,6 +974,15 @@ config NETFILTER_XT_MATCH_BPF
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
+config NETFILTER_XT_MATCH_CGROUP2
+	tristate '"cgroup2" match support'
+	depends on NETFILTER_ADVANCED
+	depends on CGROUPS
+	help
+	  cgroup2 matching allows you to match locally generated and
+	  early demuxed packets based on the v2 cgroup the socket is
+	  associated with on creation.
+
 config NETFILTER_XT_MATCH_CGROUP
 	tristate '"control group" match support'
 	depends on NETFILTER_ADVANCED
