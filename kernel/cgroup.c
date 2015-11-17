@@ -57,8 +57,8 @@
 #include <linux/vmalloc.h> /* TODO: replace with more sophisticated array */
 #include <linux/kthread.h>
 #include <linux/delay.h>
-
 #include <linux/atomic.h>
+#include <net/sock.h>
 
 /*
  * pidlists linger the following amount before being destroyed.  The goal
@@ -5779,6 +5779,29 @@ struct cgroup *cgroup_get_from_path(const char *path)
 
 	mutex_unlock(&cgroup_mutex);
 	return cgrp;
+}
+
+void cgroup_sk_alloc(struct sock *sk)
+{
+	rcu_read_lock();
+
+	while (true) {
+		struct css_set *cset;
+
+		cset = task_css_set(current);
+		if (likely(cgroup_tryget(cset->dfl_cgrp))) {
+			sk->sk_cgroup = cset->dfl_cgrp;
+			break;
+		}
+		cpu_relax();
+	}
+
+	rcu_read_unlock();
+}
+
+void cgroup_sk_free(struct sock *sk)
+{
+	cgroup_put(sk->sk_cgroup);
 }
 
 #ifdef CONFIG_CGROUP_DEBUG

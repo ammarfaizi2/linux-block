@@ -310,6 +310,7 @@ struct cg_proto;
   *	@sk_security: used by security modules
   *	@sk_mark: generic packet mark
   *	@sk_classid: this socket's cgroup classid
+  *	@sk_cgroup: the v2 cgroup this socket is associated with
   *	@sk_cgrp: this socket's cgroup-specific proto data
   *	@sk_write_pending: a write to stream socket waits to start
   *	@sk_state_change: callback to indicate change in the state of the sock
@@ -446,6 +447,9 @@ struct sock {
 	__u32			sk_mark;
 #ifdef CONFIG_CGROUP_NET_CLASSID
 	u32			sk_classid;
+#endif
+#ifdef CONFIG_CGROUPS
+	struct cgroup		*sk_cgroup;
 #endif
 	struct cg_proto		*sk_cgrp;
 	void			(*sk_state_change)(struct sock *sk);

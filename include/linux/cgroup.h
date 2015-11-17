@@ -20,6 +20,8 @@
 
 #include <linux/cgroup-defs.h>
 
+struct sock;
+
 #ifdef CONFIG_CGROUPS
 
 /*
@@ -107,6 +109,9 @@ void cgroup_free(struct task_struct *p);
 
 int cgroup_init_early(void);
 int cgroup_init(void);
+
+void cgroup_sk_alloc(struct sock *sk);
+void cgroup_sk_free(struct sock *sk);
 
 /*
  * Iteration helpers and macros.
@@ -575,6 +580,9 @@ static inline void cgroup_free(struct task_struct *p) {}
 
 static inline int cgroup_init_early(void) { return 0; }
 static inline int cgroup_init(void) { return 0; }
+
+static inline void cgroup_sk_alloc(struct sock *sk) {}
+static inline void cgroup_sk_free(struct sock *sk) {}
 
 #endif /* !CONFIG_CGROUPS */
 
