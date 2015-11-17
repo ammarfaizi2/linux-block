@@ -227,7 +227,22 @@ static int run_test(struct test *test, int subtest)
 	}
 
 	if (!child) {
+		int nullfd;
+
 		pr_debug("test child forked, pid %d\n", getpid());
+
+		if (!verbose) {
+			nullfd = open("/dev/null", O_WRONLY);
+			if (nullfd >= 0) {
+				close(STDERR_FILENO);
+				close(STDOUT_FILENO);
+
+				dup2(nullfd, STDOUT_FILENO);
+				dup2(STDOUT_FILENO, STDERR_FILENO);
+				close(nullfd);
+			}
+		}
+
 		if (!test->need_subtests)
 			err = test->func();
 		else
