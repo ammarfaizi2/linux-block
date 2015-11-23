@@ -81,26 +81,20 @@ static inline const char *ath10k_bus_str(enum ath10k_bus bus)
 	return "unknown";
 }
 
+enum ath10k_skb_flags {
+	ATH10K_SKB_F_NO_HWCRYPT = BIT(0),
+	ATH10K_SKB_F_DTIM_ZERO = BIT(1),
+	ATH10K_SKB_F_DELIVER_CAB = BIT(2),
+	ATH10K_SKB_F_MGMT = BIT(3),
+	ATH10K_SKB_F_QOS = BIT(4),
+};
+
 struct ath10k_skb_cb {
 	dma_addr_t paddr;
+	u8 flags;
 	u8 eid;
-	u8 vdev_id;
-	enum ath10k_hw_txrx_mode txmode;
-	bool is_protected;
-
-	struct {
-		u8 tid;
-		u16 freq;
-		bool is_offchan;
-		bool nohwcrypt;
-		struct ath10k_htt_txbuf *txbuf;
-		u32 txbuf_paddr;
-	} __packed htt;
-
-	struct {
-		bool dtim_zero;
-		bool deliver_cab;
-	} bcn;
+	u16 msdu_id;
+	struct ieee80211_vif *vif;
 } __packed;
 
 struct ath10k_skb_rxcb {
@@ -668,6 +662,9 @@ struct ath10k {
 		 * frames.
 		 */
 		u32 max_probe_resp_desc_thres;
+
+		/* The padding bytes's location is different on various chips */
+		enum ath10k_hw_4addr_pad hw_4addr_pad;
 
 		struct ath10k_hw_params_fw {
 			const char *dir;
