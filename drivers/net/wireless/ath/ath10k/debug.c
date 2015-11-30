@@ -19,6 +19,8 @@
 #include <linux/debugfs.h>
 #include <linux/vmalloc.h>
 #include <linux/utsname.h>
+#include <linux/crc32.h>
+#include <linux/firmware.h>
 
 #include "core.h"
 #include "debug.h"
@@ -122,28 +124,51 @@ void ath10k_info(struct ath10k *ar, const char *fmt, ...)
 }
 EXPORT_SYMBOL(ath10k_info);
 
-void ath10k_print_driver_info(struct ath10k *ar)
+void ath10k_debug_print_hwfw_info(struct ath10k *ar)
 {
 	char fw_features[128] = {};
-	char boardinfo[100];
 
 	ath10k_core_get_fw_features_str(ar, fw_features, sizeof(fw_features));
 
-	if (ar->id.bmi_ids_valid)
-		scnprintf(boardinfo, sizeof(boardinfo), "bmi %d:%d",
-			  ar->id.bmi_chip_id, ar->id.bmi_board_id);
-	else
-		scnprintf(boardinfo, sizeof(boardinfo), "sub %04x:%04x",
-			  ar->id.subsystem_vendor, ar->id.subsystem_device);
-
-	ath10k_info(ar, "%s (0x%08x, 0x%08x %s) fw %s fwapi %d bdapi %d htt-ver %d.%d wmi-op %d htt-op %d cal %s max-sta %d raw %d hwcrypto %d features %s\n",
+	ath10k_info(ar, "%s target 0x%08x chip_id 0x%08x sub %04x:%04x",
 		    ar->hw_params.name,
 		    ar->target_version,
 		    ar->chip_id,
-		    boardinfo,
+		    ar->id.subsystem_vendor, ar->id.subsystem_device);
+
+	ath10k_info(ar, "kconfig debug %d debugfs %d tracing %d dfs %d testmode %d\n",
+		    config_enabled(CONFIG_ATH10K_DEBUG),
+		    config_enabled(CONFIG_ATH10K_DEBUGFS),
+		    config_enabled(CONFIG_ATH10K_TRACING),
+		    config_enabled(CONFIG_ATH10K_DFS_CERTIFIED),
+		    config_enabled(CONFIG_NL80211_TESTMODE));
+
+	ath10k_info(ar, "firmware ver %s api %d features %s crc32 %08x\n",
 		    ar->hw->wiphy->fw_version,
 		    ar->fw_api,
+		    fw_features,
+		    crc32_le(0, ar->firmware->data, ar->firmware->size));
+}
+
+void ath10k_debug_print_board_info(struct ath10k *ar)
+{
+	char boardinfo[100];
+
+	if (ar->id.bmi_ids_valid)
+		scnprintf(boardinfo, sizeof(boardinfo), "%d:%d",
+			  ar->id.bmi_chip_id, ar->id.bmi_board_id);
+	else
+		scnprintf(boardinfo, sizeof(boardinfo), "N/A");
+
+	ath10k_info(ar, "board_file api %d bmi_id %s crc32 %08x",
 		    ar->bd_api,
+		    boardinfo,
+		    crc32_le(0, ar->board->data, ar->board->size));
+}
+
+void ath10k_debug_print_boot_info(struct ath10k *ar)
+{
+	ath10k_info(ar, "htt-ver %d.%d wmi-op %d htt-op %d cal %s max-sta %d raw %d hwcrypto %d\n",
 		    ar->htt.target_version_major,
 		    ar->htt.target_version_minor,
 		    ar->wmi.op_version,
@@ -151,14 +176,14 @@ void ath10k_print_driver_info(struct ath10k *ar)
 		    ath10k_cal_mode_str(ar->cal_mode),
 		    ar->max_num_stations,
 		    test_bit(ATH10K_FLAG_RAW_MODE, &ar->dev_flags),
-		    !test_bit(ATH10K_FLAG_HW_CRYPTO_DISABLED, &ar->dev_flags),
-		    fw_features);
-	ath10k_info(ar, "debug %d debugfs %d tracing %d dfs %d testmode %d\n",
-		    config_enabled(CONFIG_ATH10K_DEBUG),
-		    config_enabled(CONFIG_ATH10K_DEBUGFS),
-		    config_enabled(CONFIG_ATH10K_TRACING),
-		    config_enabled(CONFIG_ATH10K_DFS_CERTIFIED),
-		    config_enabled(CONFIG_NL80211_TESTMODE));
+		    !test_bit(ATH10K_FLAG_HW_CRYPTO_DISABLED, &ar->dev_flags));
+}
+
+void ath10k_print_driver_info(struct ath10k *ar)
+{
+	ath10k_debug_print_hwfw_info(ar);
+	ath10k_debug_print_board_info(ar);
+	ath10k_debug_print_boot_info(ar);
 }
 EXPORT_SYMBOL(ath10k_print_driver_info);
 
@@ -2136,6 +2161,59 @@ static const struct file_operations fops_btcoex = {
 	.open = simple_open
 };
 
+static ssize_t ath10k_debug_fw_checksums_read(struct file *file,
+					      char __user *user_buf,
+					      size_t count, loff_t *ppos)
+{
+	struct ath10k *ar = file->private_data;
+	unsigned int len = 0, buf_len = 4096;
+	ssize_t ret_cnt;
+	char *buf;
+
+	buf = kzalloc(buf_len, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+
+	mutex_lock(&ar->conf_mutex);
+
+	if (len > buf_len)
+		len = buf_len;
+
+	len += scnprintf(buf + len, buf_len - len,
+			 "firmware-N.bin\t\t%08x\n",
+			 crc32_le(0, ar->firmware->data, ar->firmware->size));
+	len += scnprintf(buf + len, buf_len - len,
+			 "athwlan\t\t\t%08x\n",
+			 crc32_le(0, ar->firmware_data, ar->firmware_len));
+	len += scnprintf(buf + len, buf_len - len,
+			 "otp\t\t\t%08x\n",
+			 crc32_le(0, ar->otp_data, ar->otp_len));
+	len += scnprintf(buf + len, buf_len - len,
+			 "codeswap\t\t%08x\n",
+			 crc32_le(0, ar->swap.firmware_codeswap_data,
+				  ar->swap.firmware_codeswap_len));
+	len += scnprintf(buf + len, buf_len - len,
+			 "board-N.bin\t\t%08x\n",
+			 crc32_le(0, ar->board->data, ar->board->size));
+	len += scnprintf(buf + len, buf_len - len,
+			 "board\t\t\t%08x\n",
+			 crc32_le(0, ar->board_data, ar->board_len));
+
+	ret_cnt = simple_read_from_buffer(user_buf, count, ppos, buf, len);
+
+	mutex_unlock(&ar->conf_mutex);
+
+	kfree(buf);
+	return ret_cnt;
+}
+
+static const struct file_operations fops_fw_checksums = {
+	.read = ath10k_debug_fw_checksums_read,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 int ath10k_debug_create(struct ath10k *ar)
 {
 	ar->debug.fw_crash_data = vzalloc(sizeof(*ar->debug.fw_crash_data));
@@ -2185,8 +2263,8 @@ int ath10k_debug_register(struct ath10k *ar)
 	debugfs_create_file("wmi_services", S_IRUSR, ar->debug.debugfs_phy, ar,
 			    &fops_wmi_services);
 
-	debugfs_create_file("simulate_fw_crash", S_IRUSR, ar->debug.debugfs_phy,
-			    ar, &fops_simulate_fw_crash);
+	debugfs_create_file("simulate_fw_crash", S_IRUSR | S_IWUSR,
+			    ar->debug.debugfs_phy, ar, &fops_simulate_fw_crash);
 
 	debugfs_create_file("fw_crash_dump", S_IRUSR, ar->debug.debugfs_phy,
 			    ar, &fops_fw_crash_dump);
@@ -2203,15 +2281,15 @@ int ath10k_debug_register(struct ath10k *ar)
 	debugfs_create_file("chip_id", S_IRUSR, ar->debug.debugfs_phy,
 			    ar, &fops_chip_id);
 
-	debugfs_create_file("htt_stats_mask", S_IRUSR, ar->debug.debugfs_phy,
-			    ar, &fops_htt_stats_mask);
+	debugfs_create_file("htt_stats_mask", S_IRUSR | S_IWUSR,
+			    ar->debug.debugfs_phy, ar, &fops_htt_stats_mask);
 
 	debugfs_create_file("htt_max_amsdu_ampdu", S_IRUSR | S_IWUSR,
 			    ar->debug.debugfs_phy, ar,
 			    &fops_htt_max_amsdu_ampdu);
 
-	debugfs_create_file("fw_dbglog", S_IRUSR, ar->debug.debugfs_phy,
-			    ar, &fops_fw_dbglog);
+	debugfs_create_file("fw_dbglog", S_IRUSR | S_IWUSR,
+			    ar->debug.debugfs_phy, ar, &fops_fw_dbglog);
 
 	debugfs_create_file("cal_data", S_IRUSR, ar->debug.debugfs_phy,
 			    ar, &fops_cal_data);
@@ -2248,6 +2326,9 @@ int ath10k_debug_register(struct ath10k *ar)
 	if (test_bit(WMI_SERVICE_COEX_GPIO, ar->wmi.svc_map))
 		debugfs_create_file("btcoex", S_IRUGO | S_IWUSR,
 				    ar->debug.debugfs_phy, ar, &fops_btcoex);
+
+	debugfs_create_file("fw_checksums", S_IRUSR,
+			    ar->debug.debugfs_phy, ar, &fops_fw_checksums);
 
 	return 0;
 }

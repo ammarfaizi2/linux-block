@@ -4364,7 +4364,9 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
 		arvif->vdev_type = WMI_VDEV_TYPE_IBSS;
 		break;
 	case NL80211_IFTYPE_MESH_POINT:
-		if (!test_bit(ATH10K_FLAG_RAW_MODE, &ar->dev_flags)) {
+		if (test_bit(WMI_SERVICE_MESH, ar->wmi.svc_map)) {
+			arvif->vdev_subtype = WMI_VDEV_SUBTYPE_MESH;
+		} else if (!test_bit(ATH10K_FLAG_RAW_MODE, &ar->dev_flags)) {
 			ret = -EINVAL;
 			ath10k_warn(ar, "must load driver with rawmode=1 to add mesh interfaces\n");
 			goto err;
@@ -6921,34 +6923,38 @@ void ath10k_mac_destroy(struct ath10k *ar)
 
 static const struct ieee80211_iface_limit ath10k_if_limits[] = {
 	{
-	.max	= 8,
-	.types	= BIT(NL80211_IFTYPE_STATION)
-		| BIT(NL80211_IFTYPE_P2P_CLIENT)
+		.max	= 8,
+		.types	= BIT(NL80211_IFTYPE_STATION)
+			| BIT(NL80211_IFTYPE_P2P_CLIENT)
 	},
 	{
-	.max	= 3,
-	.types	= BIT(NL80211_IFTYPE_P2P_GO)
+		.max	= 3,
+		.types	= BIT(NL80211_IFTYPE_P2P_GO)
 	},
 	{
-	.max	= 1,
-	.types	= BIT(NL80211_IFTYPE_P2P_DEVICE)
+		.max	= 1,
+		.types	= BIT(NL80211_IFTYPE_P2P_DEVICE)
 	},
 	{
-	.max	= 7,
-	.types	= BIT(NL80211_IFTYPE_AP)
+		.max	= 7,
+		.types	= BIT(NL80211_IFTYPE_AP)
 #ifdef CONFIG_MAC80211_MESH
-		| BIT(NL80211_IFTYPE_MESH_POINT)
+			| BIT(NL80211_IFTYPE_MESH_POINT)
 #endif
 	},
 };
 
 static const struct ieee80211_iface_limit ath10k_10x_if_limits[] = {
 	{
-	.max	= 8,
-	.types	= BIT(NL80211_IFTYPE_AP)
+		.max	= 8,
+		.types	= BIT(NL80211_IFTYPE_AP)
 #ifdef CONFIG_MAC80211_MESH
-		| BIT(NL80211_IFTYPE_MESH_POINT)
+			| BIT(NL80211_IFTYPE_MESH_POINT)
 #endif
+	},
+	{
+		.max	= 1,
+		.types	= BIT(NL80211_IFTYPE_STATION)
 	},
 };
 
