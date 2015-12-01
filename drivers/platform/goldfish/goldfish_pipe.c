@@ -52,6 +52,7 @@
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 #include <linux/sched.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>

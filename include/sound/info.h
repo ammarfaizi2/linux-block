@@ -23,6 +23,7 @@
  */
 
 #include <linux/poll.h>
+#include <linux/fs.h>
 #include <linux/seq_file.h>
 #include <sound/core.h>
 

@@ -13,6 +13,7 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/serio.h>
 #include <linux/major.h>

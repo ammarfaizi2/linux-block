@@ -55,6 +55,7 @@
 
 #include <linux/types.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 #include <linux/device.h>
 #include <linux/scif_ioctl.h>
 

@@ -41,6 +41,7 @@
 #include <linux/wait.h>
 #include <linux/spinlock.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/slab.h>
 #include <linux/screen_info.h>

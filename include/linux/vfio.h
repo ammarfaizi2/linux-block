@@ -16,6 +16,7 @@
 #include <linux/mm.h>
 #include <linux/workqueue.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 #include <uapi/linux/vfio.h>
 
 /**

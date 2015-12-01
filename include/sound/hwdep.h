@@ -24,6 +24,7 @@
 
 #include <sound/asound.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 
 struct snd_hwdep;
 

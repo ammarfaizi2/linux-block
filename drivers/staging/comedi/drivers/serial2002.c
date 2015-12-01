@@ -37,6 +37,7 @@
 #include <asm/ioctls.h>
 #include <linux/serial.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 
 struct serial2002_range_table_t {
 	/*  HACK... */

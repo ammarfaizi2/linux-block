@@ -54,6 +54,7 @@ static inline int rtc_tm_to_time(struct rtc_time *tm, unsigned long *time)
 #include <linux/seq_file.h>
 #include <linux/cdev.h>
 #include <linux/poll.h>
+#include <linux/fs.h>
 #include <linux/mutex.h>
 #include <linux/timerqueue.h>
 #include <linux/workqueue.h>
