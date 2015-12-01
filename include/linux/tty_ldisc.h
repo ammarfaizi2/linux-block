@@ -198,8 +198,8 @@ struct tty_ldisc_ops {
 	long	(*compat_ioctl)(struct tty_struct *tty, struct file *file,
 				unsigned int cmd, unsigned long arg);
 	void	(*set_termios)(struct tty_struct *tty, struct ktermios *old);
-	unsigned int (*poll)(struct tty_struct *, struct file *,
-			     struct poll_table_struct *);
+	__poll_t (*poll)(struct tty_struct *, struct file *,
+			 struct poll_table_struct *);
 	int	(*hangup)(struct tty_struct *tty);
 
 	/*

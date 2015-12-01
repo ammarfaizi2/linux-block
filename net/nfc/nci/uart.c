@@ -312,12 +312,6 @@ static ssize_t nci_uart_tty_write(struct tty_struct *tty, struct file *file,
 	return 0;
 }
 
-static unsigned int nci_uart_tty_poll(struct tty_struct *tty,
-				      struct file *filp, poll_table *wait)
-{
-	return 0;
-}
-
 static int nci_uart_send(struct nci_uart *nu, struct sk_buff *skb)
 {
 	/* Queue TX packet */
@@ -468,7 +462,6 @@ static struct tty_ldisc_ops nci_uart_ldisc = {
 	.close		= nci_uart_tty_close,
 	.read		= nci_uart_tty_read,
 	.write		= nci_uart_tty_write,
-	.poll		= nci_uart_tty_poll,
 	.receive_buf	= nci_uart_tty_receive,
 	.write_wakeup	= nci_uart_tty_wakeup,
 	.ioctl		= nci_uart_tty_ioctl,

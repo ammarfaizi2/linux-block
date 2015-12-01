@@ -751,12 +751,6 @@ static ssize_t hci_uart_tty_write(struct tty_struct *tty, struct file *file,
 	return 0;
 }
 
-static unsigned int hci_uart_tty_poll(struct tty_struct *tty,
-				      struct file *filp, poll_table *wait)
-{
-	return 0;
-}
-
 static int __init hci_uart_init(void)
 {
 	static struct tty_ldisc_ops hci_uart_ldisc;
@@ -774,7 +768,6 @@ static int __init hci_uart_init(void)
 	hci_uart_ldisc.read		= hci_uart_tty_read;
 	hci_uart_ldisc.write		= hci_uart_tty_write;
 	hci_uart_ldisc.ioctl		= hci_uart_tty_ioctl;
-	hci_uart_ldisc.poll		= hci_uart_tty_poll;
 	hci_uart_ldisc.receive_buf	= hci_uart_tty_receive;
 	hci_uart_ldisc.write_wakeup	= hci_uart_tty_wakeup;
 	hci_uart_ldisc.owner		= THIS_MODULE;
