@@ -447,7 +447,7 @@ static ssize_t hung_up_tty_write(struct file *file, const char __user *buf,
 }
 
 /* No kernel lock held - none needed ;) */
-static unsigned int hung_up_tty_poll(struct file *filp, poll_table *wait)
+static __poll_t hung_up_tty_poll(struct file *filp, poll_table *wait)
 {
 	return POLLIN | POLLOUT | POLLERR | POLLHUP | POLLRDNORM | POLLWRNORM;
 }

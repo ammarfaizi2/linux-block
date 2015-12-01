@@ -206,7 +206,7 @@ static ssize_t hfi1_snoop_read(struct file *fp, char __user *data,
 static ssize_t hfi1_snoop_write(struct file *fp, const char __user *data,
 				 size_t count, loff_t *off);
 static long hfi1_ioctl(struct file *fp, unsigned int cmd, unsigned long arg);
-static unsigned int hfi1_snoop_poll(struct file *fp,
+static __poll_t hfi1_snoop_poll(struct file *fp,
 					struct poll_table_struct *wait);
 static int hfi1_snoop_release(struct inode *in, struct file *fp);
 
@@ -785,10 +785,10 @@ static int hfi1_snoop_release(struct inode *in, struct file *fp)
 	return 0;
 }
 
-static unsigned int hfi1_snoop_poll(struct file *fp,
+static __poll_t hfi1_snoop_poll(struct file *fp,
 				    struct poll_table_struct *wait)
 {
-	int ret = 0;
+	__poll_t ret = 0;
 	unsigned long flags = 0;
 
 	struct hfi1_devdata *dd;

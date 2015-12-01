@@ -204,7 +204,7 @@ out:
 	return retval;
 }
 
-static unsigned int gen_rtc_poll(struct file *file,
+static __poll_t gen_rtc_poll(struct file *file,
 				 struct poll_table_struct *wait)
 {
 	poll_wait(file, &gen_rtc_wait, wait);

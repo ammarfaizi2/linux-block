@@ -562,10 +562,10 @@ ssize_t drm_read(struct file *filp, char __user *buffer,
 }
 EXPORT_SYMBOL(drm_read);
 
-unsigned int drm_poll(struct file *filp, struct poll_table_struct *wait)
+__poll_t drm_poll(struct file *filp, struct poll_table_struct *wait)
 {
 	struct drm_file *file_priv = filp->private_data;
-	unsigned int mask = 0;
+	__poll_t mask = 0;
 
 	poll_wait(filp, &file_priv->event_wait, wait);
 

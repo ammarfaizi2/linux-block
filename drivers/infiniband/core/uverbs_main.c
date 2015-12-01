@@ -398,10 +398,10 @@ static ssize_t ib_uverbs_event_read(struct file *filp, char __user *buf,
 	return ret;
 }
 
-static unsigned int ib_uverbs_event_poll(struct file *filp,
+static __poll_t ib_uverbs_event_poll(struct file *filp,
 					 struct poll_table_struct *wait)
 {
-	unsigned int pollflags = 0;
+	__poll_t pollflags = 0;
 	struct ib_uverbs_event_file *file = filp->private_data;
 
 	poll_wait(filp, &file->poll_wait, wait);

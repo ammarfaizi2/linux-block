@@ -541,7 +541,7 @@ static int sync_fence_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static unsigned int sync_fence_poll(struct file *file, poll_table *wait)
+static __poll_t sync_fence_poll(struct file *file, poll_table *wait)
 {
 	struct sync_fence *fence = file->private_data;
 	int status;

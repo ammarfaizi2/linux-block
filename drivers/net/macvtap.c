@@ -570,10 +570,10 @@ static int macvtap_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static unsigned int macvtap_poll(struct file *file, poll_table * wait)
+static __poll_t macvtap_poll(struct file *file, poll_table * wait)
 {
 	struct macvtap_queue *q = file->private_data;
-	unsigned int mask = POLLERR;
+	__poll_t mask = POLLERR;
 
 	if (!q)
 		goto out;

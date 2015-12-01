@@ -56,7 +56,7 @@ static int qib_open(struct inode *, struct file *);
 static int qib_close(struct inode *, struct file *);
 static ssize_t qib_write(struct file *, const char __user *, size_t, loff_t *);
 static ssize_t qib_write_iter(struct kiocb *, struct iov_iter *);
-static unsigned int qib_poll(struct file *, struct poll_table_struct *);
+static __poll_t qib_poll(struct file *, struct poll_table_struct *);
 static int qib_mmapf(struct file *, struct vm_area_struct *);
 
 /*
@@ -1100,12 +1100,12 @@ bail:
 	return ret;
 }
 
-static unsigned int qib_poll_urgent(struct qib_ctxtdata *rcd,
+static __poll_t qib_poll_urgent(struct qib_ctxtdata *rcd,
 				    struct file *fp,
 				    struct poll_table_struct *pt)
 {
 	struct qib_devdata *dd = rcd->dd;
-	unsigned pollflag;
+	__poll_t pollflag;
 
 	poll_wait(fp, &rcd->wait, pt);
 
@@ -1122,12 +1122,12 @@ static unsigned int qib_poll_urgent(struct qib_ctxtdata *rcd,
 	return pollflag;
 }
 
-static unsigned int qib_poll_next(struct qib_ctxtdata *rcd,
+static __poll_t qib_poll_next(struct qib_ctxtdata *rcd,
 				  struct file *fp,
 				  struct poll_table_struct *pt)
 {
 	struct qib_devdata *dd = rcd->dd;
-	unsigned pollflag;
+	__poll_t pollflag;
 
 	poll_wait(fp, &rcd->wait, pt);
 
@@ -1143,10 +1143,10 @@ static unsigned int qib_poll_next(struct qib_ctxtdata *rcd,
 	return pollflag;
 }
 
-static unsigned int qib_poll(struct file *fp, struct poll_table_struct *pt)
+static __poll_t qib_poll(struct file *fp, struct poll_table_struct *pt)
 {
 	struct qib_ctxtdata *rcd;
-	unsigned pollflag;
+	__poll_t pollflag;
 
 	rcd = ctxt_fp(fp);
 	if (!rcd)

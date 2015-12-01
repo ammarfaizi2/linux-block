@@ -277,10 +277,10 @@ static inline bool __must_check IS_ERR_OR_FALSE(int x)
 	return x <= 0;
 }
 
-static unsigned int aim_poll(struct file *filp, poll_table *wait)
+static __poll_t aim_poll(struct file *filp, poll_table *wait)
 {
 	struct aim_channel *c = filp->private_data;
-	unsigned int mask = 0;
+	__poll_t mask = 0;
 
 	poll_wait(filp, &c->wq, wait);
 

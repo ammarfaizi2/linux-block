@@ -1177,7 +1177,7 @@ out:
 	return ret;
 }
 
-static unsigned int hid_debug_events_poll(struct file *file, poll_table *wait)
+static __poll_t hid_debug_events_poll(struct file *file, poll_table *wait)
 {
 	struct hid_debug_list *list = file->private_data;
 

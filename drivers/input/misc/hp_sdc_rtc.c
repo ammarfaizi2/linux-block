@@ -70,7 +70,7 @@ static ssize_t hp_sdc_rtc_read(struct file *file, char __user *buf,
 static long hp_sdc_rtc_unlocked_ioctl(struct file *file,
 				      unsigned int cmd, unsigned long arg);
 
-static unsigned int hp_sdc_rtc_poll(struct file *file, poll_table *wait);
+static __poll_t hp_sdc_rtc_poll(struct file *file, poll_table *wait);
 
 static int hp_sdc_rtc_open(struct inode *inode, struct file *file);
 static int hp_sdc_rtc_fasync (int fd, struct file *filp, int on);
@@ -408,7 +408,7 @@ static ssize_t hp_sdc_rtc_read(struct file *file, char __user *buf,
 	return retval;
 }
 
-static unsigned int hp_sdc_rtc_poll(struct file *file, poll_table *wait)
+static __poll_t hp_sdc_rtc_poll(struct file *file, poll_table *wait)
 {
         unsigned long l;
 

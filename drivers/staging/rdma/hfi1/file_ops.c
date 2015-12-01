@@ -83,7 +83,7 @@ static int hfi1_file_close(struct inode *, struct file *);
 static ssize_t hfi1_file_write(struct file *, const char __user *,
 			       size_t, loff_t *);
 static ssize_t hfi1_write_iter(struct kiocb *, struct iov_iter *);
-static unsigned int hfi1_poll(struct file *, struct poll_table_struct *);
+static __poll_t hfi1_poll(struct file *, struct poll_table_struct *);
 static int hfi1_file_mmap(struct file *, struct vm_area_struct *);
 
 static u64 kvirt_to_phys(void *);
@@ -99,8 +99,8 @@ static int get_user_context(struct file *, struct hfi1_user_info *,
 static int find_shared_ctxt(struct file *, const struct hfi1_user_info *);
 static int allocate_ctxt(struct file *, struct hfi1_devdata *,
 			 struct hfi1_user_info *);
-static unsigned int poll_urgent(struct file *, struct poll_table_struct *);
-static unsigned int poll_next(struct file *, struct poll_table_struct *);
+static __poll_t poll_urgent(struct file *, struct poll_table_struct *);
+static __poll_t poll_next(struct file *, struct poll_table_struct *);
 static int user_event_ack(struct hfi1_ctxtdata *, int, unsigned long);
 static int set_ctxt_pkey(struct hfi1_ctxtdata *, unsigned, u16);
 static int manage_rcvq(struct hfi1_ctxtdata *, unsigned, int);
@@ -725,10 +725,10 @@ static int vma_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	return 0;
 }
 
-static unsigned int hfi1_poll(struct file *fp, struct poll_table_struct *pt)
+static __poll_t hfi1_poll(struct file *fp, struct poll_table_struct *pt)
 {
 	struct hfi1_ctxtdata *uctxt;
-	unsigned pollflag;
+	__poll_t pollflag;
 
 	uctxt = ctxt_fp(fp);
 	if (!uctxt)
@@ -1365,12 +1365,12 @@ static int get_base_info(struct file *fp, void __user *ubase, __u32 len)
 	return ret;
 }
 
-static unsigned int poll_urgent(struct file *fp,
+static __poll_t poll_urgent(struct file *fp,
 				struct poll_table_struct *pt)
 {
 	struct hfi1_ctxtdata *uctxt = ctxt_fp(fp);
 	struct hfi1_devdata *dd = uctxt->dd;
-	unsigned pollflag;
+	__poll_t pollflag;
 
 	poll_wait(fp, &uctxt->wait, pt);
 
@@ -1387,12 +1387,12 @@ static unsigned int poll_urgent(struct file *fp,
 	return pollflag;
 }
 
-static unsigned int poll_next(struct file *fp,
+static __poll_t poll_next(struct file *fp,
 			      struct poll_table_struct *pt)
 {
 	struct hfi1_ctxtdata *uctxt = ctxt_fp(fp);
 	struct hfi1_devdata *dd = uctxt->dd;
-	unsigned pollflag;
+	__poll_t pollflag;
 
 	poll_wait(fp, &uctxt->wait, pt);
 

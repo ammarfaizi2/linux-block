@@ -355,10 +355,10 @@ int mei_amthif_write(struct mei_cl *cl, struct mei_cl_cb *cb)
  * Locking: called under "dev->device_lock" lock
  */
 
-unsigned int mei_amthif_poll(struct mei_device *dev,
+__poll_t mei_amthif_poll(struct mei_device *dev,
 		struct file *file, poll_table *wait)
 {
-	unsigned int mask = 0;
+	__poll_t mask = 0;
 
 	poll_wait(file, &dev->iamthif_cl.wait, wait);
 

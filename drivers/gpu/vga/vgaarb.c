@@ -1159,7 +1159,7 @@ done:
 	return ret_val;
 }
 
-static unsigned int vga_arb_fpoll(struct file *file, poll_table *wait)
+static __poll_t vga_arb_fpoll(struct file *file, poll_table *wait)
 {
 	struct vga_arb_private *priv = file->private_data;
 

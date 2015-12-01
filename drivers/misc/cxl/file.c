@@ -288,10 +288,10 @@ int afu_mmap(struct file *file, struct vm_area_struct *vm)
 	return cxl_context_iomap(ctx, vm);
 }
 
-unsigned int afu_poll(struct file *file, struct poll_table_struct *poll)
+__poll_t afu_poll(struct file *file, struct poll_table_struct *poll)
 {
 	struct cxl_context *ctx = file->private_data;
-	int mask = 0;
+	__poll_t mask = 0;
 	unsigned long flags;
 
 

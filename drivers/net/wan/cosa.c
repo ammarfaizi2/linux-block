@@ -296,7 +296,7 @@ static ssize_t cosa_read(struct file *file,
 	char __user *buf, size_t count, loff_t *ppos);
 static ssize_t cosa_write(struct file *file,
 	const char __user *buf, size_t count, loff_t *ppos);
-static unsigned int cosa_poll(struct file *file, poll_table *poll);
+static __poll_t cosa_poll(struct file *file, poll_table *poll);
 static int cosa_open(struct inode *inode, struct file *file);
 static int cosa_release(struct inode *inode, struct file *file);
 static long cosa_chardev_ioctl(struct file *file, unsigned int cmd,
@@ -925,7 +925,7 @@ static int chrdev_tx_done(struct channel_data *chan, int size)
 	return 1;
 }
 
-static unsigned int cosa_poll(struct file *file, poll_table *poll)
+static __poll_t cosa_poll(struct file *file, poll_table *poll)
 {
 	pr_info("cosa_poll is here\n");
 	return 0;

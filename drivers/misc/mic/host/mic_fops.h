@@ -27,6 +27,6 @@ ssize_t mic_read(struct file *filp, char __user *buf,
 			size_t count, loff_t *pos);
 long mic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 int mic_mmap(struct file *f, struct vm_area_struct *vma);
-unsigned int mic_poll(struct file *f, poll_table *wait);
+__poll_t mic_poll(struct file *f, poll_table *wait);
 
 #endif

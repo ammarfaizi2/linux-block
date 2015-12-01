@@ -54,7 +54,7 @@ static int ipath_close(struct inode *, struct file *);
 static ssize_t ipath_write(struct file *, const char __user *, size_t,
 			   loff_t *);
 static ssize_t ipath_write_iter(struct kiocb *, struct iov_iter *from);
-static unsigned int ipath_poll(struct file *, struct poll_table_struct *);
+static __poll_t ipath_poll(struct file *, struct poll_table_struct *);
 static int ipath_mmap(struct file *, struct vm_area_struct *);
 
 /*
@@ -1356,9 +1356,9 @@ bail:
 	return ret;
 }
 
-static unsigned ipath_poll_hdrqfull(struct ipath_portdata *pd)
+static __poll_t ipath_poll_hdrqfull(struct ipath_portdata *pd)
 {
-	unsigned pollflag = 0;
+	__poll_t pollflag = 0;
 
 	if ((pd->poll_type & IPATH_POLL_TYPE_OVERFLOW) &&
 	    pd->port_hdrqfull != pd->port_hdrqfull_poll) {
@@ -1369,11 +1369,11 @@ static unsigned ipath_poll_hdrqfull(struct ipath_portdata *pd)
 	return pollflag;
 }
 
-static unsigned int ipath_poll_urgent(struct ipath_portdata *pd,
+static __poll_t ipath_poll_urgent(struct ipath_portdata *pd,
 				      struct file *fp,
 				      struct poll_table_struct *pt)
 {
-	unsigned pollflag = 0;
+	__poll_t pollflag = 0;
 	struct ipath_devdata *dd;
 
 	dd = pd->port_dd;
@@ -1398,13 +1398,13 @@ static unsigned int ipath_poll_urgent(struct ipath_portdata *pd,
 	return pollflag;
 }
 
-static unsigned int ipath_poll_next(struct ipath_portdata *pd,
+static __poll_t ipath_poll_next(struct ipath_portdata *pd,
 				    struct file *fp,
 				    struct poll_table_struct *pt)
 {
 	u32 head;
 	u32 tail;
-	unsigned pollflag = 0;
+	__poll_t pollflag = 0;
 	struct ipath_devdata *dd;
 
 	dd = pd->port_dd;
@@ -1444,11 +1444,11 @@ static unsigned int ipath_poll_next(struct ipath_portdata *pd,
 	return pollflag;
 }
 
-static unsigned int ipath_poll(struct file *fp,
+static __poll_t ipath_poll(struct file *fp,
 			       struct poll_table_struct *pt)
 {
 	struct ipath_portdata *pd;
-	unsigned pollflag;
+	__poll_t pollflag;
 
 	pd = port_fp(fp);
 	if (!pd)

@@ -134,10 +134,10 @@ long mic_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
  * in the card->host (TX) path, when userspace is unblocked by poll it
  * must drain all available descriptors or it can stall.
  */
-unsigned int mic_poll(struct file *f, poll_table *wait)
+__poll_t mic_poll(struct file *f, poll_table *wait)
 {
 	struct mic_vdev *mvdev = (struct mic_vdev *)f->private_data;
-	int mask = 0;
+	__poll_t mask = 0;
 
 	poll_wait(f, &mvdev->waitq, wait);
 
