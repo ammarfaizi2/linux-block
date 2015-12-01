@@ -387,7 +387,7 @@ get_max:
 
 static inline void wait_key_set(poll_table *wait, unsigned long in,
 				unsigned long out, unsigned long bit,
-				unsigned int ll_flag)
+				__poll_t ll_flag)
 {
 	wait->_key = POLLEX_SET | ll_flag;
 	if (in & bit)
@@ -403,7 +403,7 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 	poll_table *wait;
 	int retval, i, timed_out = 0;
 	unsigned long slack = 0;
-	unsigned int busy_flag = net_busy_loop_on() ? POLL_BUSY_LOOP : 0;
+	__poll_t busy_flag = net_busy_loop_on() ? POLL_BUSY_LOOP : 0;
 	unsigned long busy_end = 0;
 
 	rcu_read_lock();
@@ -433,8 +433,9 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 		rinp = fds->res_in; routp = fds->res_out; rexp = fds->res_ex;
 
 		for (i = 0; i < n; ++rinp, ++routp, ++rexp) {
-			unsigned long in, out, ex, all_bits, bit = 1, mask, j;
+			unsigned long in, out, ex, all_bits, bit = 1, j;
 			unsigned long res_in = 0, res_out = 0, res_ex = 0;
+			__poll_t mask;
 
 			in = *inp++; out = *outp++; ex = *exp++;
 			all_bits = in | out | ex;
@@ -747,15 +748,12 @@ struct poll_list {
  * pwait poll_table will be used by the fd-provided poll handler for waiting,
  * if pwait->_qproc is non-NULL.
  */
-static inline unsigned int do_pollfd(struct pollfd *pollfd, poll_table *pwait,
-				     bool *can_busy_poll,
-				     unsigned int busy_flag)
+static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
+				 bool *can_busy_poll, __poll_t busy_flag)
 {
-	unsigned int mask;
-	int fd;
+	__poll_t mask = 0;
+	int fd = pollfd->fd;
 
-	mask = 0;
-	fd = pollfd->fd;
 	if (fd >= 0) {
 		struct fd f = fdget(fd);
 		mask = POLLNVAL;
@@ -785,7 +783,7 @@ static int do_poll(unsigned int nfds,  struct poll_list *list,
 	ktime_t expire, *to = NULL;
 	int timed_out = 0, count = 0;
 	unsigned long slack = 0;
-	unsigned int busy_flag = net_busy_loop_on() ? POLL_BUSY_LOOP : 0;
+	__poll_t busy_flag = net_busy_loop_on() ? POLL_BUSY_LOOP : 0;
 	unsigned long busy_end = 0;
 
 	/* Optimise the no-wait case */
