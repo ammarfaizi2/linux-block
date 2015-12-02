@@ -26,6 +26,7 @@
 #include <linux/major.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
+#include <linux/uaccess.h>
 #include "input-compat.h"
 
 enum evdev_clock_type {

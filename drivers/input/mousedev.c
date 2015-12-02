@@ -26,6 +26,7 @@
 #include <linux/device.h>
 #include <linux/cdev.h>
 #include <linux/kernel.h>
+#include <linux/uaccess.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Mouse (ExplorerPS/2) device interfaces");

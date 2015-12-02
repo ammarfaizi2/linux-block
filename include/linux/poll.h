@@ -3,7 +3,6 @@
 
 #include <linux/compiler.h>
 #include <linux/wait.h>
-#include <asm/uaccess.h>
 #include <uapi/linux/poll.h>
 
 #define DEFAULT_POLLMASK (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM)

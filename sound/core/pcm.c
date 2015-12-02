@@ -25,6 +25,7 @@
 #include <linux/time.h>
 #include <linux/mutex.h>
 #include <linux/device.h>
+#include <linux/uaccess.h>
 #include <sound/core.h>
 #include <sound/minors.h>
 #include <sound/pcm.h>

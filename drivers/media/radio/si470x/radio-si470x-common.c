@@ -112,6 +112,7 @@
 
 
 /* kernel includes */
+#include <linux/uaccess.h>
 #include "radio-si470x.h"
 
 

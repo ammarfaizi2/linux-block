@@ -17,6 +17,7 @@
 #include <linux/module.h>
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
+#include <linux/uaccess.h>
 #include <media/v4l2-dev.h>
 #include <media/v4l2-ioctl.h>
 

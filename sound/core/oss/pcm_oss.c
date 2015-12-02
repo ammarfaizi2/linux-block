@@ -33,6 +33,7 @@
 #include <linux/module.h>
 #include <linux/math64.h>
 #include <linux/string.h>
+#include <linux/uaccess.h>
 #include <sound/core.h>
 #include <sound/minors.h>
 #include <sound/pcm.h>

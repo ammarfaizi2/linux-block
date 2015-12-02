@@ -31,6 +31,7 @@
 #include <linux/syscalls.h>
 #include <linux/proc_fs.h>
 #include <linux/compat.h>
+#include <linux/uaccess.h>
 
 void signalfd_cleanup(struct sighand_struct *sighand)
 {

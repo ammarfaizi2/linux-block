@@ -25,6 +25,7 @@
 #include <linux/ioctl.h>
 #include <linux/media.h>
 #include <linux/types.h>
+#include <linux/uaccess.h>
 
 #include <media/media-device.h>
 #include <media/media-devnode.h>

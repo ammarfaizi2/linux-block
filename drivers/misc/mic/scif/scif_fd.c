@@ -15,6 +15,7 @@
  * Intel SCIF driver.
  *
  */
+#include <linux/uaccess.h>
 #include "scif_main.h"
 
 static int scif_fdopen(struct inode *inode, struct file *f)

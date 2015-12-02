@@ -37,6 +37,7 @@
 #include <linux/spinlock.h>
 #include <linux/sched.h>
 #include <linux/kthread.h>
+#include <linux/uaccess.h>
 
 #include "dvb_ca_en50221.h"
 #include "dvb_ringbuffer.h"

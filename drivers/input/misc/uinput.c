@@ -38,6 +38,7 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
+#include <linux/uaccess.h>
 #include <linux/uinput.h>
 #include <linux/input/mt.h>
 #include "../input-compat.h"

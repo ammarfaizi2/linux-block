@@ -23,6 +23,7 @@
 #include <linux/sched.h>
 #include <linux/freezer.h>
 #include <linux/kthread.h>
+#include <linux/uaccess.h>
 
 #include <media/v4l2-dev.h>
 #include <media/v4l2-fh.h>

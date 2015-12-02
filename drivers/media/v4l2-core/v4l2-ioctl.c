@@ -17,6 +17,7 @@
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/version.h>
+#include <linux/uaccess.h>
 
 #include <linux/videodev2.h>
 

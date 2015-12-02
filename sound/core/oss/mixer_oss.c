@@ -30,6 +30,7 @@
 #include <sound/info.h>
 #include <sound/mixer_oss.h>
 #include <linux/soundcard.h>
+#include <linux/uaccess.h>
 
 #define OSS_ALSAEMULVER         _SIOR ('M', 249, int)
 

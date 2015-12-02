@@ -43,6 +43,7 @@
 
 #include <linux/ctype.h>
 #include <linux/poll.h>
+#include <linux/uaccess.h>
 #include <asm/io.h>
 
 #include "videocodec.h"

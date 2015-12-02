@@ -32,6 +32,7 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/mutex.h>
+#include <linux/uaccess.h>
 #include "dvbdev.h"
 
 static DEFINE_MUTEX(dvbdev_mutex);

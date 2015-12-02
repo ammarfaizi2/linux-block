@@ -14,6 +14,7 @@
 #include <linux/debugfs.h>
 #include <linux/poll.h>
 #include <linux/sched.h>
+#include <linux/uaccess.h>
 
 #include "wilc_wlan_if.h"
 

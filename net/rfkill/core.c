@@ -33,6 +33,7 @@
 #include <linux/poll.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
+#include <linux/uaccess.h>
 
 #include "rfkill.h"
 

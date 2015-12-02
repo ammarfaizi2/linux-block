@@ -54,6 +54,7 @@
 #include <linux/i2c.h>
 #include <linux/firmware.h>
 #include <linux/vmalloc.h>
+#include <linux/uaccess.h>
 
 #include <linux/mutex.h>
 #include <linux/kthread.h>

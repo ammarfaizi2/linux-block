@@ -43,6 +43,7 @@
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/compat.h>
+#include <linux/uaccess.h>
 
 struct ipmi_file_private
 {

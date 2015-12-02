@@ -34,6 +34,7 @@
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
+#include <linux/uaccess.h>
 
 #include <media/rc-core.h>
 #include <media/lirc.h>
