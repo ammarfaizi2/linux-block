@@ -16,6 +16,7 @@
  *
  */
 #include <linux/scif.h>
+#include <linux/poll_internals.h>
 #include "scif_main.h"
 #include "scif_map.h"
 

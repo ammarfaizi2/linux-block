@@ -42,7 +42,7 @@
 #include <linux/security.h>
 #include <linux/highmem.h>
 #include <linux/signal.h>
-#include <linux/poll.h>
+#include <linux/poll_internals.h>
 #include <linux/mm.h>
 #include <linux/fs_struct.h>
 #include <linux/slab.h>

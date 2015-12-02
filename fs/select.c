@@ -19,7 +19,7 @@
 #include <linux/syscalls.h>
 #include <linux/export.h>
 #include <linux/slab.h>
-#include <linux/poll.h>
+#include <linux/poll_internals.h>
 #include <linux/personality.h> /* for STICKY_TIMEOUTS */
 #include <linux/file.h>
 #include <linux/fdtable.h>

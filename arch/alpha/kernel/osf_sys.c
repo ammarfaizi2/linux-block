@@ -27,7 +27,7 @@
 #include <linux/stat.h>
 #include <linux/mman.h>
 #include <linux/shm.h>
-#include <linux/poll.h>
+#include <linux/poll_internals.h>
 #include <linux/file.h>
 #include <linux/types.h>
 #include <linux/ipc.h>

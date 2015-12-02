@@ -36,7 +36,7 @@
 #include <linux/termios.h>
 #include <asm/ioctls.h>
 #include <linux/serial.h>
-#include <linux/poll.h>
+#include <linux/poll_internals.h>
 #include <linux/fs.h>
 
 struct serial2002_range_table_t {

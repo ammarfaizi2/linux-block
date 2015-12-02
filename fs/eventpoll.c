@@ -20,7 +20,7 @@
 #include <linux/errno.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
-#include <linux/poll.h>
+#include <linux/poll_internals.h>
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/hash.h>
