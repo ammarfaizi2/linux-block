@@ -59,6 +59,7 @@ struct regmap {
 	regmap_lock lock;
 	regmap_unlock unlock;
 	void *lock_arg; /* This is passed to lock/unlock functions */
+	gfp_t alloc_flags;
 
 	struct device *dev; /* Device we do I/O on */
 	void *work_buf;     /* Scratch buffer used to format I/O */
@@ -124,9 +125,9 @@ struct regmap {
 	unsigned int num_reg_defaults_raw;
 
 	/* if set, only the cache is modified not the HW */
-	u32 cache_only;
+	bool cache_only;
 	/* if set, only the HW is modified not the cache */
-	u32 cache_bypass;
+	bool cache_bypass;
 	/* if set, remember to free reg_defaults_raw */
 	bool cache_free;
 
@@ -134,7 +135,7 @@ struct regmap {
 	const void *reg_defaults_raw;
 	void *cache;
 	/* if set, the cache contains newer data than the HW */
-	u32 cache_dirty;
+	bool cache_dirty;
 	/* if set, the HW registers are known to match map->reg_defaults */
 	bool no_sync_defaults;
 

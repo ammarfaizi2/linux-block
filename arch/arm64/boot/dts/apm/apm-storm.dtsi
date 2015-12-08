@@ -97,6 +97,11 @@
 		clock-frequency = <50000000>;
 	};
 
+	pmu {
+		compatible = "apm,potenza-pmu", "arm,armv8-pmuv3";
+		interrupts = <1 12 0xff04>;
+	};
+
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
@@ -407,6 +412,18 @@
 					0x0 0x1f 0x4>;
 		};
 
+		scu: system-clk-controller@17000000 {
+			compatible = "apm,xgene-scu","syscon";
+			reg = <0x0 0x17000000 0x0 0x400>;
+		};
+
+		reboot: reboot@17000014 {
+			compatible = "syscon-reboot";
+			regmap = <&scu>;
+			offset = <0x14>;
+			mask = <0x1>;
+		};
+
 		csw: csw@7e200000 {
 			compatible = "apm,xgene-csw", "syscon";
 			reg = <0x0 0x7e200000 0x0 0x1000>;
@@ -487,6 +504,16 @@
 				compatible = "apm,xgene-edac-pmd";
 				reg = <0x0 0x7c600000 0x0 0x200000>;
 				pmd-controller = <3>;
+			};
+
+			edacl3@7e600000 {
+				compatible = "apm,xgene-edac-l3";
+				reg = <0x0 0x7e600000 0x0 0x1000>;
+			};
+
+			edacsoc@7e930000 {
+				compatible = "apm,xgene-edac-soc-v1";
+				reg = <0x0 0x7e930000 0x0 0x1000>;
 			};
 		};
 
