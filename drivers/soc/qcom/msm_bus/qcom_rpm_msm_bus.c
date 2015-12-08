@@ -18,7 +18,7 @@
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/msm-bus.h>
-#include <linux/mfd/qcom-smd-rpm.h>
+#include <linux/soc/qcom/smd-rpm.h>
 
 struct qcom_rpm_msm_bus_info {
 	struct qcom_smd_rpm *rpm;

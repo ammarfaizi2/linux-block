@@ -352,7 +352,8 @@ msm_bus_dbg_add_client(const struct msm_bus_client_handle *pdata)
 }
 #endif
 
-#ifdef CONFIG_CORESIGHT
+#if 0
+//#ifdef CONFIG_CORESIGHT
 int msmbus_coresight_init(struct platform_device *pdev);
 void msmbus_coresight_remove(struct platform_device *pdev);
 int msmbus_coresight_init_adhoc(struct platform_device *pdev,

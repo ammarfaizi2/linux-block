@@ -17,7 +17,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <linux/mfd/qcom-smd-rpm.h>
+#include <linux/soc/qcom/smd-rpm.h>
 #include "msm_bus_core.h"
 #include "msm_bus_adhoc.h"
 #include "msm_bus_noc.h"
