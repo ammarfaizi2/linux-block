@@ -108,6 +108,7 @@ static void intel_mst_disable_dp(struct intel_encoder *encoder)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = encoder->base.crtc;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
+	enum port port = intel_dig_port->port;
 
 	int ret;
 
@@ -122,6 +123,9 @@ static void intel_mst_disable_dp(struct intel_encoder *encoder)
 	if (intel_crtc->config->has_audio) {
 		intel_audio_codec_disable(encoder);
 		intel_display_power_put(dev_priv, POWER_DOMAIN_AUDIO);
+		mutex_lock(&dev_priv->av_mutex);
+		dev_priv->dig_port_map[port] = NULL;
+		mutex_unlock(&dev_priv->av_mutex);
 	}
 }
 
@@ -236,6 +240,9 @@ static void intel_mst_enable_dp(struct intel_encoder *encoder)
 	if (crtc->config->has_audio) {
 		DRM_DEBUG_DRIVER("Enabling DP audio on pipe %c\n",
 				 pipe_name(crtc->pipe));
+		mutex_lock(&dev_priv->av_mutex);
+		dev_priv->dig_port_map[port] = encoder;
+		mutex_unlock(&dev_priv->av_mutex);
 		intel_display_power_get(dev_priv, POWER_DOMAIN_AUDIO);
 		intel_audio_codec_enable(encoder);
 	}
