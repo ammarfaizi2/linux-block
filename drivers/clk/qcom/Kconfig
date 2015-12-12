@@ -215,3 +215,12 @@ config KRAITCC
 config KRAIT_CLOCKS
 	bool
 	select KRAIT_L2_ACCESSORS
+
+config QCOM_A53PLL
+	bool "A53 PLL"
+	depends on COMMON_CLK_QCOM
+	help
+	  Support for the A53 PLL on some Qualcomm devices. It provides
+	  support for CPU frequencies above 1GHz.
+	  Say Y if you want to support CPU frequency scaling on devices
+	  such as MSM8916.

@@ -1,0 +1,18 @@
+A53 PLL Binding
+---------------
+The A53 PLL is the main CPU PLL used for frequencies above 1GHz.
+
+Required properties :
+- compatible : Shall contain only one of the following:
+
+		"qcom,a53-pll"
+
+- reg : shall contain base register location and length
+
+Example:
+
+	a53pll: a53pll@0b016000 {
+		compatible = "qcom,a53-pll";
+		reg = <0x0b016000 0x40>;
+	};
+
