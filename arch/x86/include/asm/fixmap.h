@@ -71,7 +71,11 @@ extern unsigned long __FIXADDR_TOP;
  * physical memory with fixmap indices.
  *
  * TLB entries of such buffers will not be flushed across
- * task switches.
+ * task switches unless explicitly enabled.
+ *
+ * On 64-bit kernels, the vsyscall mode sets and clears the _PAGE_USER
+ * bit on the PGD covering the fixmap per mm.  Other code must not
+ * rely on a particular value for the _PAGE_USER bit.
  */
 enum fixed_addresses {
 #ifdef CONFIG_X86_32

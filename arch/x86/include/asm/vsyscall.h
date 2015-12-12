@@ -10,13 +10,16 @@ extern void map_vsyscall(void);
 extern void set_vsyscall_pgtable_user_bits(pgd_t *root);
 
 /*
- * Called on instruction fetch fault in vsyscall page.
+ * Called on a page fault in the vsyscall page.
  * Returns true if handled.
  */
-extern bool emulate_vsyscall(struct pt_regs *regs, unsigned long address);
+extern bool handle_vsyscall_fault(struct pt_regs *regs, unsigned long address,
+				  unsigned long error_code);
 #else
 static inline void map_vsyscall(void) {}
-static inline bool emulate_vsyscall(struct pt_regs *regs, unsigned long address)
+static inline bool handle_vsyscall_fault(struct pt_regs *regs,
+					 unsigned long address,
+					 unsigned long error_code)
 {
 	return false;
 }

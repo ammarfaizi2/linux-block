@@ -393,7 +393,7 @@ NEXT_PGD_PAGE(init_top_pgt)
 	.quad   level3_ident_pgt - __START_KERNEL_map + _KERNPG_TABLE_NOENC
 	.org    init_top_pgt + L4_START_KERNEL*8, 0
 	/* (2^48-(2*1024*1024*1024))/(2^39) = 511 */
-	.quad   level3_kernel_pgt - __START_KERNEL_map + _PAGE_TABLE_NOENC
+	.quad   level3_kernel_pgt - __START_KERNEL_map + _KERNPG_TABLE_NOENC
 	.fill	PTI_USER_PGD_FILL,8,0
 
 NEXT_PAGE(level3_ident_pgt)
@@ -418,14 +418,14 @@ NEXT_PGD_PAGE(init_top_pgt)
 #ifdef CONFIG_X86_5LEVEL
 NEXT_PAGE(level4_kernel_pgt)
 	.fill	511,8,0
-	.quad	level3_kernel_pgt - __START_KERNEL_map + _PAGE_TABLE_NOENC
+	.quad	level3_kernel_pgt - __START_KERNEL_map + _KERNPG_TABLE_NOENC
 #endif
 
 NEXT_PAGE(level3_kernel_pgt)
 	.fill	L3_START_KERNEL,8,0
 	/* (2^48-(2*1024*1024*1024)-((2^39)*511))/(2^30) = 510 */
 	.quad	level2_kernel_pgt - __START_KERNEL_map + _KERNPG_TABLE_NOENC
-	.quad	level2_fixmap_pgt - __START_KERNEL_map + _PAGE_TABLE_NOENC
+	.quad	level2_fixmap_pgt - __START_KERNEL_map + _KERNPG_TABLE_NOENC
 
 NEXT_PAGE(level2_kernel_pgt)
 	/*
@@ -450,7 +450,7 @@ NEXT_PAGE(level2_fixmap_pgt)
 	pgtno = 0
 	.rept (FIXMAP_PMD_NUM)
 	.quad level1_fixmap_pgt + (pgtno << PAGE_SHIFT) - __START_KERNEL_map \
-		+ _PAGE_TABLE_NOENC;
+		+ _KERNPG_TABLE_NOENC;
 	pgtno = pgtno + 1
 	.endr
 	/* 6 MB reserved space + a 2MB hole */

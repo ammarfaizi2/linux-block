@@ -21,13 +21,8 @@ typedef unsigned long size_t;
 extern char __kernel_vsyscall[] __attribute__((visibility("hidden")));
 extern char int80_landing_pad[] __attribute__((visibility("hidden")));
 
-static unsigned long *pending_syscall_retaddr_ptr(const void *context)
+static int is_pending_syscall(unsigned long eip)
 {
-	const struct ucontext *uc = context;
-	unsigned long ctx_eip = uc->uc_mcontext.eip;
-	unsigned long offset_into_vsyscall;
-	unsigned long *retaddr;
-
 	/*
 	 * An AT_SYSINFO system call is pending if and only if we're in
 	 * __kernel_vsyscall before int80_landing_pad.  If we're at
@@ -36,13 +31,20 @@ static unsigned long *pending_syscall_retaddr_ptr(const void *context)
 	 *
 	 * If we're at int80_landing_pad-2, then either we're using the
 	 * int $0x80 slow path because we have no fast system call
-	 * support or we are restarting a fast system call.  Either way,
+	 * support or we're restarting a fast system call.  Either way,
 	 * the system call is still pending.
 	 */
 
-	if (ctx_eip < (unsigned long)__kernel_vsyscall ||
-	    ctx_eip >= (unsigned long)int80_landing_pad)
-		return NULL;
+	return eip >= (unsigned long)__kernel_vsyscall &&
+		eip < (unsigned long)int80_landing_pad;
+}
+
+static unsigned long *pending_syscall_retaddr_ptr(const void *context)
+{
+	const struct ucontext *uc = context;
+	unsigned long ctx_eip = uc->uc_mcontext.eip;
+	unsigned long offset_into_vsyscall;
+	unsigned long *retaddr;
 
 	/*
 	 * The first three instructions of __kernel_vsyscall are one-byte
@@ -55,15 +57,6 @@ static unsigned long *pending_syscall_retaddr_ptr(const void *context)
 	else
 		retaddr += 3;
 
-	/*
-	 * GCC (correctly) fails to deduce out that retaddr can't be NULL
-	 * in the success path.  Helping it out reduces code size.
-	 * Use __builtin_unreachable() because unreachable() has an asm
-	 * statement and thus forces the branch to be generated.
-	 */
-	if (!retaddr)
-		__builtin_unreachable();
-
 	return retaddr;
 }
 
@@ -73,8 +66,12 @@ static unsigned long *pending_syscall_retaddr_ptr(const void *context)
  */
 unsigned long __vdso_pending_syscall_return_address(const void *context)
 {
-	unsigned long *retaddr = pending_syscall_retaddr_ptr(context);
-	return retaddr ? *retaddr : -1UL;
+	const struct ucontext *uc = context;
+
+	if (!is_pending_syscall(uc->uc_mcontext.eip))
+		return -1UL;
+	else
+		return *pending_syscall_retaddr_ptr(context);
 }
 
 /*
@@ -97,7 +94,7 @@ long __vdso_abort_pending_syscall(void *context)
 	struct ucontext *uc = context;
 	unsigned long *retaddr = pending_syscall_retaddr_ptr(context);
 
-	if (!retaddr)
+	if (!is_pending_syscall(uc->uc_mcontext.eip))
 		return -EINVAL;
 
 	uc->uc_mcontext.eip = *retaddr;

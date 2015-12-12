@@ -34,6 +34,7 @@
 #include <linux/ratelimit.h>
 
 #include <asm/vsyscall.h>
+#include <asm/tlbflush.h>
 #include <asm/unistd.h>
 #include <asm/fixmap.h>
 #include <asm/traps.h>
@@ -113,7 +114,7 @@ static bool write_ok_or_segv(unsigned long ptr, size_t size)
 	}
 }
 
-bool emulate_vsyscall(struct pt_regs *regs, unsigned long address)
+static bool emulate_vsyscall(struct pt_regs *regs, unsigned long address)
 {
 	struct task_struct *tsk;
 	unsigned long caller;
@@ -272,6 +273,54 @@ sigsegv:
 	return true;
 }
 
+bool handle_vsyscall_fault(struct pt_regs *regs, unsigned long address,
+			   unsigned long error_code)
+{
+	pgd_t *pgd;
+
+	if (error_code & X86_PF_INSTR)
+		return emulate_vsyscall(regs, address);
+
+	if (error_code & X86_PF_WRITE)
+		return false;		/* writes are never allowed */
+
+	/*
+	 * Well, well, well.  User code just tried to read the vsyscall
+	 * page.  There are only three reasons that this could happen:
+	 *
+	 * 1. Dynamic binary instrumentation code along with old userspace
+	 *    (e.g. pin).  This is awkward but legitimate.
+	 *
+	 * 2. Various debugging tools.  The need to support this is
+	 *    debatable.
+	 *
+	 * 3. Userspace exploits using the vsycall address as a known-
+	 *    readable pointer.  We'd prefer not to support this use case.
+	 *
+	 * The page table containing the vsyscall PTE is shared by
+	 * all processes, so we can't change it.  We can, however, change
+	 * the PGD entry.
+	 */
+
+	if (vsyscall_mode == NONE)
+		return false;		/* it's not even worth warning */
+
+	pr_info("User reads the vsyscall page.\n");
+
+	pgd = pgd_offset(current->mm, VSYSCALL_ADDR);
+	set_pgd(pgd, __pgd(pgd_val(*pgd) | _PAGE_USER));
+
+	/*
+	 * Because the old state had a valid *kernel* page at VSYSCALL_ADDR,
+	 * the TLB can remember the old state, so we need to flush it.
+	 * There's no need to broadcast the flush, though -- if another
+	 * CPU has it cached, we'll fix it up there when we get a spurious
+	 * page fault.
+	 */
+	__flush_tlb_one_user(VSYSCALL_ADDR);
+	return true;
+}
+
 /*
  * A pseudo VMA to allow ptrace access for the vsyscall page.  This only
  * covers the 64bit vsyscall page now. 32bit has a real VMA now and does
@@ -359,7 +408,7 @@ void __init map_vsyscall(void)
 
 	if (vsyscall_mode != NONE) {
 		__set_fixmap(VSYSCALL_PAGE, physaddr_vsyscall,
-			     PAGE_KERNEL_VVAR);
+			     PAGE_KERNEL_VSYSCALL);
 		set_vsyscall_pgtable_user_bits(swapper_pg_dir);
 	}
 
