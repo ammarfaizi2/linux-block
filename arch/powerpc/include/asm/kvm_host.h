@@ -223,7 +223,7 @@ struct kvm_arch_memory_slot {
 struct kvm_arch {
 	unsigned int lpid;
 #ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	unsigned long hpt_virt;
+	void *hpt_virt;
 	struct revmap_entry *revmap;
 	unsigned int host_lpid;
 	unsigned long host_lpcr;

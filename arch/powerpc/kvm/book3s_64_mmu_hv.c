@@ -50,7 +50,7 @@ static void kvmppc_rmap_reset(struct kvm *kvm);
 
 long kvmppc_alloc_hpt(struct kvm *kvm, u32 *htab_orderp)
 {
-	unsigned long hpt = 0;
+	void *hpt = NULL;
 	struct revmap_entry *rev;
 	struct page *page = NULL;
 	long order = KVM_DEFAULT_HPT_ORDER;
@@ -64,16 +64,17 @@ long kvmppc_alloc_hpt(struct kvm *kvm, u32 *htab_orderp)
 	kvm->arch.hpt_cma_alloc = 0;
 	page = kvm_alloc_hpt(1ul << (order - PAGE_SHIFT));
 	if (page) {
-		hpt = (unsigned long)pfn_to_kaddr(page_to_pfn(page));
-		memset((void *)hpt, 0, (1ul << order));
+		hpt = pfn_to_kaddr(page_to_pfn(page));
+		memset(hpt, 0, (1ul << order));
 		kvm->arch.hpt_cma_alloc = 1;
 	}
 
 	/* Lastly try successively smaller sizes from the page allocator */
 	/* Only do this if userspace didn't specify a size via ioctl */
 	while (!hpt && order > PPC_MIN_HPT_ORDER && !htab_orderp) {
-		hpt = __get_free_pages(GFP_KERNEL|__GFP_ZERO|__GFP_REPEAT|
-				       __GFP_NOWARN, order - PAGE_SHIFT);
+		hpt = (void *)__get_free_pages(GFP_KERNEL|__GFP_ZERO|
+					__GFP_REPEAT| __GFP_NOWARN,
+					order - PAGE_SHIFT);
 		if (!hpt)
 			--order;
 	}
@@ -97,7 +98,7 @@ long kvmppc_alloc_hpt(struct kvm *kvm, u32 *htab_orderp)
 	kvm->arch.revmap = rev;
 	kvm->arch.sdr1 = __pa(hpt) | (order - 18);
 
-	pr_info("KVM guest htab at %lx (order %ld), LPID %x\n",
+	pr_info("KVM guest htab at %p (order %ld), LPID %x\n",
 		hpt, order, kvm->arch.lpid);
 
 	if (htab_orderp)
@@ -108,7 +109,7 @@ long kvmppc_alloc_hpt(struct kvm *kvm, u32 *htab_orderp)
 	if (kvm->arch.hpt_cma_alloc)
 		kvm_release_hpt(page, 1 << (order - PAGE_SHIFT));
 	else
-		free_pages((void *)hpt, order - PAGE_SHIFT);
+		free_pages(hpt, order - PAGE_SHIFT);
 	return -ENOMEM;
 }
 
@@ -130,7 +131,7 @@ long kvmppc_alloc_reset_hpt(struct kvm *kvm, u32 *htab_orderp)
 	if (kvm->arch.hpt_virt) {
 		order = kvm->arch.hpt_order;
 		/* Set the entire HPT to 0, i.e. invalid HPTEs */
-		memset((void *)kvm->arch.hpt_virt, 0, 1ul << order);
+		memset(kvm->arch.hpt_virt, 0, 1ul << order);
 		/*
 		 * Reset all the reverse-mapping chains for all memslots
 		 */
@@ -156,7 +157,7 @@ void kvmppc_free_hpt(struct kvm *kvm)
 		kvm_release_hpt(virt_to_page(kvm->arch.hpt_virt),
 				1 << (kvm->arch.hpt_order - PAGE_SHIFT));
 	else
-		free_pages((void *)kvm->arch.hpt_virt,
+		free_pages(kvm->arch.hpt_virt,
 			   kvm->arch.hpt_order - PAGE_SHIFT);
 }
 
