@@ -151,8 +151,8 @@ static void *dma_4v_alloc_coherent(struct device *dev, size_t size,
 	if (unlikely(!page))
 		return NULL;
 
-	first_page = (unsigned long) page_address(page);
-	memset((char *)first_page, 0, PAGE_SIZE << order);
+	ret =  page_address(page);
+	memset(ret, 0, PAGE_SIZE << order);
 
 	iommu = dev->archdata.iommu;
 
@@ -163,8 +163,7 @@ static void *dma_4v_alloc_coherent(struct device *dev, size_t size,
 		goto range_alloc_fail;
 
 	*dma_addrp = (iommu->tbl.table_map_base + (entry << IO_PAGE_SHIFT));
-	ret = (void *) first_page;
-	first_page = __pa(first_page);
+	first_page = __pa(ret);
 
 	local_irq_save(flags);
 
@@ -190,7 +189,7 @@ iommu_map_fail:
 	iommu_tbl_range_free(&iommu->tbl, *dma_addrp, npages, IOMMU_ERROR_CODE);
 
 range_alloc_fail:
-	free_pages((void *)first_page, order);
+	free_pages(ret, order);
 	return NULL;
 }
 
