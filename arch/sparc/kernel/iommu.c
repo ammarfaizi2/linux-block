@@ -215,23 +215,22 @@ static void *dma_4u_alloc_coherent(struct device *dev, size_t size,
 	if (unlikely(!page))
 		return NULL;
 
-	first_page = (unsigned long) page_address(page);
-	memset((char *)first_page, 0, PAGE_SIZE << order);
+	ret =  page_address(page);
+	memset(ret, 0, PAGE_SIZE << order);
 
 	iommu = dev->archdata.iommu;
 
 	iopte = alloc_npages(dev, iommu, size >> IO_PAGE_SHIFT);
 
 	if (unlikely(iopte == NULL)) {
-		free_pages((void *)first_page, order);
+		free_pages(ret, order);
 		return NULL;
 	}
 
 	*dma_addrp = (iommu->tbl.table_map_base +
 		      ((iopte - iommu->page_table) << IO_PAGE_SHIFT));
-	ret = (void *) first_page;
 	npages = size >> IO_PAGE_SHIFT;
-	first_page = __pa(first_page);
+	first_page = __pa(ret);
 	while (npages--) {
 		iopte_val(*iopte) = (IOPTE_CONSISTENT(0UL) |
 				     IOPTE_WRITE |
