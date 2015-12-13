@@ -267,7 +267,7 @@ static int set_next_request(void);
 /* Dma Memory related stuff */
 
 #ifndef fd_dma_mem_free
-#define fd_dma_mem_free(addr, size) free_pages((void *)addr, get_order(size))
+#define fd_dma_mem_free(addr, size) free_pages(addr, get_order(size))
 #endif
 
 #ifndef fd_dma_mem_alloc
@@ -3099,7 +3099,7 @@ static void raw_cmd_free(struct floppy_raw_cmd **ptr)
 	*ptr = NULL;
 	while (this) {
 		if (this->buffer_length) {
-			fd_dma_mem_free((unsigned long)this->kernel_data,
+			fd_dma_mem_free(this->kernel_data,
 					this->buffer_length);
 			this->buffer_length = 0;
 		}
@@ -3686,7 +3686,7 @@ static int floppy_open(struct block_device *bdev, fmode_t mode)
 		}
 		if (floppy_track_buffer) {
 			if (tmp)
-				fd_dma_mem_free((unsigned long)tmp, try * 1024);
+				fd_dma_mem_free(tmp, try * 1024);
 		} else {
 			buffer_min = buffer_max = -1;
 			floppy_track_buffer = tmp;
@@ -4508,7 +4508,7 @@ static void floppy_release_irq_and_dma(void)
 	int drive;
 #endif
 	long tmpsize;
-	unsigned long tmpaddr;
+	void *tmpaddr;
 
 	if (!atomic_dec_and_test(&usage_count))
 		return;
@@ -4526,7 +4526,7 @@ static void floppy_release_irq_and_dma(void)
 
 	if (floppy_track_buffer && max_buffer_sectors) {
 		tmpsize = max_buffer_sectors * 1024;
-		tmpaddr = (unsigned long)floppy_track_buffer;
+		tmpaddr = floppy_track_buffer;
 		floppy_track_buffer = NULL;
 		max_buffer_sectors = 0;
 		buffer_min = buffer_max = -1;

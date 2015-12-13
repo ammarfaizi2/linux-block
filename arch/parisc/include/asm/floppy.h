@@ -177,12 +177,12 @@ static unsigned long vdma_mem_alloc(unsigned long size)
 
 #define nodma_mem_alloc(size) vdma_mem_alloc(size)
 
-static void _fd_dma_mem_free(unsigned long addr, unsigned long size)
+static void _fd_dma_mem_free(void *addr, unsigned long size)
 {
 	if((unsigned int) addr >= (unsigned int) high_memory)
-		return vfree((void *)addr);
+		return vfree(addr);
 	else
-		free_pages((void *)addr, get_order(size));		
+		free_pages(addr, get_order(size));		
 }
 
 #define fd_dma_mem_free(addr, size)  _fd_dma_mem_free(addr, size) 

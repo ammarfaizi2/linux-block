@@ -147,9 +147,9 @@ static unsigned long vdma_mem_alloc(unsigned long size)
 
 }
 
-static void _fd_dma_mem_free(unsigned long addr, unsigned long size)
+static void _fd_dma_mem_free(void *addr, unsigned long size)
 {
-        vfree((void *)addr);
+        vfree(addr);
 }
 #define fd_dma_mem_free(addr,size) _fd_dma_mem_free(addr, size)
 
