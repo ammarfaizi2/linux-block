@@ -30,7 +30,7 @@ struct group_info *groups_alloc(int gidsetsize)
 	else {
 		for (i = 0; i < nblocks; i++) {
 			kgid_t *b;
-			b = (void *)__get_free_page(GFP_USER);
+			b = get_free_page(GFP_USER);
 			if (!b)
 				goto out_undo_partial_alloc;
 			group_info->blocks[i] = b;

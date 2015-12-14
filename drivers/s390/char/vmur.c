@@ -524,7 +524,7 @@ static ssize_t diag14_read(struct file *file, char __user *ubuf, size_t count,
 		return rc;
 
 	len = min((size_t) PAGE_SIZE, count);
-	buf = (char *) __get_free_page(GFP_KERNEL | GFP_DMA);
+	buf = get_free_page(GFP_KERNEL | GFP_DMA);
 	if (!buf)
 		return -ENOMEM;
 
@@ -616,7 +616,7 @@ static int verify_uri_device(struct urdev *urd)
 	}
 
 	/* open file on virtual reader	*/
-	buf = (char *) __get_free_page(GFP_KERNEL | GFP_DMA);
+	buf = get_free_page(GFP_KERNEL | GFP_DMA);
 	if (!buf) {
 		rc = -ENOMEM;
 		goto fail_free_fcb;

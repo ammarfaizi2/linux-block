@@ -175,7 +175,7 @@ void show_regs(struct pt_regs *regs)
 	struct callee_regs *cregs;
 	char *buf;
 
-	buf = (char *)__get_free_page(GFP_TEMPORARY);
+	buf = get_free_page(GFP_TEMPORARY);
 	if (!buf)
 		return;
 
@@ -272,7 +272,7 @@ static int fill_display_data(char *kbuf)
 
 static int tlb_stats_open(struct inode *inode, struct file *file)
 {
-	file->private_data = (void *)__get_free_page(GFP_KERNEL);
+	file->private_data = get_free_page(GFP_KERNEL);
 	return 0;
 }
 

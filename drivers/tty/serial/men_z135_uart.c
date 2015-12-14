@@ -824,7 +824,7 @@ static int men_z135_probe(struct mcb_device *mdev,
 	if (!uart)
 		return -ENOMEM;
 
-	uart->rxbuf = (unsigned char *)__get_free_page(GFP_KERNEL);
+	uart->rxbuf = get_free_page(GFP_KERNEL);
 	if (!uart->rxbuf)
 		return -ENOMEM;
 

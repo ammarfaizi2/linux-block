@@ -1258,7 +1258,7 @@ static int selinux_genfs_get_sid(struct dentry *dentry,
 	struct super_block *sb = dentry->d_inode->i_sb;
 	char *buffer, *path;
 
-	buffer = (char *)__get_free_page(GFP_KERNEL);
+	buffer = get_free_page(GFP_KERNEL);
 	if (!buffer)
 		return -ENOMEM;
 

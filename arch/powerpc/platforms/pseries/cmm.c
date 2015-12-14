@@ -145,8 +145,7 @@ static long cmm_alloc_pages(long nr)
 		if (!pa || pa->index >= CMM_NR_PAGES) {
 			/* Need a new page for the page list. */
 			spin_unlock(&cmm_lock);
-			npa = (struct cmm_page_array *)__get_free_page(
-					GFP_NOIO | __GFP_NOWARN |
+			npa = get_free_page(GFP_NOIO | __GFP_NOWARN |
 					__GFP_NORETRY | __GFP_NOMEMALLOC);
 			if (!npa) {
 				pr_info("%s: Can not allocate new page list\n", __func__);
@@ -566,8 +565,7 @@ static int cmm_mem_going_offline(void *arg)
 	while (pa_curr) {
 		if (((unsigned long)pa_curr >= start_page) &&
 				((unsigned long)pa_curr < end_page)) {
-			npa = (struct cmm_page_array *)__get_free_page(
-					GFP_NOIO | __GFP_NOWARN |
+			npa = get_free_page(GFP_NOIO | __GFP_NOWARN |
 					__GFP_NORETRY | __GFP_NOMEMALLOC);
 			if (!npa) {
 				spin_unlock(&cmm_lock);

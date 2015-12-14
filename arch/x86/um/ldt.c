@@ -157,8 +157,7 @@ static int write_ldt(void __user * ptr, unsigned long bytecount, int func)
 			if (i == 0)
 				memcpy(&entry0, ldt->u.entries,
 				       sizeof(entry0));
-			ldt->u.pages[i] = (struct ldt_entry *)
-				__get_free_page(GFP_KERNEL|__GFP_ZERO);
+			ldt->u.pages[i] = get_free_page(GFP_KERNEL|__GFP_ZERO);
 			if (!ldt->u.pages[i]) {
 				err = -ENOMEM;
 				/* Undo the change in host */

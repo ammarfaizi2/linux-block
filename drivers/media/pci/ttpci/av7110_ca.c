@@ -152,7 +152,7 @@ static ssize_t ci_ll_write(struct dvb_ringbuffer *cibuf, struct file *file,
 {
 	int free;
 	int non_blocking = file->f_flags & O_NONBLOCK;
-	u8 *page = (u8 *)__get_free_page(GFP_USER);
+	u8 *page = get_free_page(GFP_USER);
 	int res;
 
 	if (!page)

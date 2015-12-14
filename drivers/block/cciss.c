@@ -514,7 +514,7 @@ cciss_proc_write(struct file *file, const char __user *buf,
 	if (!buf || length > PAGE_SIZE - 1)
 		return -EINVAL;
 
-	buffer = (char *)__get_free_page(GFP_KERNEL);
+	buffer = get_free_page(GFP_KERNEL);
 	if (!buffer)
 		return -ENOMEM;
 

@@ -356,7 +356,7 @@ static int write_page(void *buf, sector_t offset, struct hib_bio_batch *hb)
 		return -ENOSPC;
 
 	if (hb) {
-		src = (void *)__get_free_page(__GFP_RECLAIM | __GFP_NOWARN |
+		src = get_free_page(__GFP_RECLAIM | __GFP_NOWARN |
 		                              __GFP_NORETRY);
 		if (src) {
 			copy_page(src, buf);
@@ -364,7 +364,7 @@ static int write_page(void *buf, sector_t offset, struct hib_bio_batch *hb)
 			ret = hib_wait_io(hb); /* Free pages */
 			if (ret)
 				return ret;
-			src = (void *)__get_free_page(__GFP_RECLAIM |
+			src = get_free_page(__GFP_RECLAIM |
 			                              __GFP_NOWARN |
 			                              __GFP_NORETRY);
 			if (src) {
@@ -672,7 +672,7 @@ static int save_image_lzo(struct swap_map_handle *handle,
 	nr_threads = num_online_cpus() - 1;
 	nr_threads = clamp_val(nr_threads, 1, LZO_THREADS);
 
-	page = (void *)__get_free_page(__GFP_RECLAIM | __GFP_HIGH);
+	page = get_free_page(__GFP_RECLAIM | __GFP_HIGH);
 	if (!page) {
 		printk(KERN_ERR "PM: Failed to allocate LZO page\n");
 		ret = -ENOMEM;
@@ -974,8 +974,7 @@ static int get_swap_reader(struct swap_map_handle *handle,
 			last->next = tmp;
 		last = tmp;
 
-		tmp->map = (struct swap_map_page *)
-			   __get_free_page(__GFP_RECLAIM | __GFP_HIGH);
+		tmp->map = get_free_page(__GFP_RECLAIM | __GFP_HIGH);
 		if (!tmp->map) {
 			release_swap_reader(handle);
 			return -ENOMEM;
@@ -1241,7 +1240,7 @@ static int load_image_lzo(struct swap_map_handle *handle,
 	read_pages = clamp_val(read_pages, LZO_MIN_RD_PAGES, LZO_MAX_RD_PAGES);
 
 	for (i = 0; i < read_pages; i++) {
-		page[i] = (void *)__get_free_page(i < LZO_CMP_PAGES ?
+		page[i] = get_free_page(i < LZO_CMP_PAGES ?
 						  __GFP_RECLAIM | __GFP_HIGH :
 						  __GFP_RECLAIM | __GFP_NOWARN |
 						  __GFP_NORETRY);
@@ -1580,7 +1579,7 @@ int swsusp_unmark(void)
 
 static int swsusp_header_init(void)
 {
-	swsusp_header = (struct swsusp_header*) __get_free_page(GFP_KERNEL);
+	swsusp_header =  get_free_page(GFP_KERNEL);
 	if (!swsusp_header)
 		panic("Could not allocate memory for swsusp_header\n");
 	return 0;

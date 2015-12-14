@@ -139,7 +139,7 @@ static long ioctl_rio(struct file *file, unsigned int cmd, unsigned long arg)
 			retval = -EINVAL;
 			goto err_out;
 		}
-		buffer = (unsigned char *) __get_free_page(GFP_KERNEL);
+		buffer = get_free_page(GFP_KERNEL);
 		if (buffer == NULL) {
 			retval = -ENOMEM;
 			goto err_out;
@@ -210,7 +210,7 @@ static long ioctl_rio(struct file *file, unsigned int cmd, unsigned long arg)
 			retval = -EINVAL;
 			goto err_out;
 		}
-		buffer = (unsigned char *) __get_free_page(GFP_KERNEL);
+		buffer = get_free_page(GFP_KERNEL);
 		if (buffer == NULL) {
 			retval = -ENOMEM;
 			goto err_out;

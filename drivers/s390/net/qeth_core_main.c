@@ -265,7 +265,7 @@ static int qeth_alloc_buffer_pool(struct qeth_card *card)
 			return -ENOMEM;
 		}
 		for (j = 0; j < QETH_MAX_BUFFER_ELEMENTS(card); ++j) {
-			ptr = (void *) __get_free_page(GFP_KERNEL);
+			ptr = get_free_page(GFP_KERNEL);
 			if (!ptr) {
 				while (j > 0)
 					free_page(pool_entry->elements[--j]);

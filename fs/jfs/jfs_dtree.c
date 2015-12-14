@@ -3180,7 +3180,7 @@ int jfs_readdir(struct file *file, struct dir_context *ctx)
 		}
 	}
 
-	dirent_buf = (void *)__get_free_page(GFP_KERNEL);
+	dirent_buf = get_free_page(GFP_KERNEL);
 	if (!dirent_buf) {
 		DT_PUTPAGE(mp);
 		jfs_warn("jfs_readdir: __get_free_page failed!");

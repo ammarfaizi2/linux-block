@@ -33,7 +33,7 @@ static struct kmem_cache *pgd_cache;
 pgd_t *pgd_alloc(struct mm_struct *mm)
 {
 	if (PGD_SIZE == PAGE_SIZE)
-		return (pgd_t *)__get_free_page(PGALLOC_GFP);
+		return get_free_page(PGALLOC_GFP);
 	else
 		return kmem_cache_alloc(pgd_cache, PGALLOC_GFP);
 }

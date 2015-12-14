@@ -1323,7 +1323,7 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
 	int err;
 
 	err = -ENOMEM;
-	pm = (struct page_to_node *)__get_free_page(GFP_KERNEL);
+	pm = get_free_page(GFP_KERNEL);
 	if (!pm)
 		goto out;
 

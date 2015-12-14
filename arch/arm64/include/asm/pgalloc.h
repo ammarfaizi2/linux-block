@@ -33,7 +33,7 @@
 
 static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-	return (pmd_t *)__get_free_page(PGALLOC_GFP);
+	return get_free_page(PGALLOC_GFP);
 }
 
 static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
@@ -53,7 +53,7 @@ static inline void pud_populate(struct mm_struct *mm, pud_t *pud, pmd_t *pmd)
 
 static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-	return (pud_t *)__get_free_page(PGALLOC_GFP);
+	return get_free_page(PGALLOC_GFP);
 }
 
 static inline void pud_free(struct mm_struct *mm, pud_t *pud)
@@ -75,7 +75,7 @@ extern void pgd_free(struct mm_struct *mm, pgd_t *pgd);
 static inline pte_t *
 pte_alloc_one_kernel(struct mm_struct *mm, unsigned long addr)
 {
-	return (pte_t *)__get_free_page(PGALLOC_GFP);
+	return get_free_page(PGALLOC_GFP);
 }
 
 static inline pgtable_t

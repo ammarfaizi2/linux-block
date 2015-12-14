@@ -224,7 +224,7 @@ static ssize_t proc_pid_cmdline_read(struct file *file, char __user *buf,
 		goto out_mmput;
 	}
 
-	page = (char *)__get_free_page(GFP_TEMPORARY);
+	page = get_free_page(GFP_TEMPORARY);
 	if (!page) {
 		rv = -ENOMEM;
 		goto out_mmput;
@@ -855,7 +855,7 @@ static ssize_t mem_rw(struct file *file, char __user *buf,
 	if (!mm)
 		return 0;
 
-	page = (char *)__get_free_page(GFP_TEMPORARY);
+	page = get_free_page(GFP_TEMPORARY);
 	if (!page)
 		return -ENOMEM;
 
@@ -956,7 +956,7 @@ static ssize_t environ_read(struct file *file, char __user *buf,
 	if (!mm)
 		return 0;
 
-	page = (char *)__get_free_page(GFP_TEMPORARY);
+	page = get_free_page(GFP_TEMPORARY);
 	if (!page)
 		return -ENOMEM;
 
@@ -1586,7 +1586,7 @@ out:
 
 static int do_proc_readlink(struct path *path, char __user *buffer, int buflen)
 {
-	char *tmp = (char*)__get_free_page(GFP_TEMPORARY);
+	char *tmp = get_free_page(GFP_TEMPORARY);
 	char *pathname;
 	int len;
 
@@ -2375,7 +2375,7 @@ static ssize_t proc_pid_attr_write(struct file * file, const char __user * buf,
 		goto out;
 
 	length = -ENOMEM;
-	page = (char*)__get_free_page(GFP_TEMPORARY);
+	page = get_free_page(GFP_TEMPORARY);
 	if (!page)
 		goto out;
 

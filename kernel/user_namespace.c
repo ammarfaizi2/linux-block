@@ -639,7 +639,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 
 	/* Get a buffer */
 	ret = -ENOMEM;
-	kbuf = (char *)__get_free_page(GFP_TEMPORARY);
+	kbuf = get_free_page(GFP_TEMPORARY);
 	if (!kbuf)
 		goto out;
 

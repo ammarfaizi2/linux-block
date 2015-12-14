@@ -237,7 +237,7 @@ static ssize_t event_trigger_regex_write(struct file *file,
 	if (cnt >= PAGE_SIZE)
 		return -EINVAL;
 
-	buf = (char *)__get_free_page(GFP_TEMPORARY);
+	buf = get_free_page(GFP_TEMPORARY);
 	if (!buf)
 		return -ENOMEM;
 

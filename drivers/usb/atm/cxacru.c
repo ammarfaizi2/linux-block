@@ -942,7 +942,7 @@ static int cxacru_fw(struct usb_device *usb_dev, enum cxacru_fw_request fw,
 	int offd, offb;
 	const int stride = CMD_PACKET_SIZE - 8;
 
-	buf = (u8 *) __get_free_page(GFP_KERNEL);
+	buf = get_free_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -1152,13 +1152,13 @@ static int cxacru_bind(struct usbatm_data *usbatm_instance,
 
 	mutex_init(&instance->adsl_state_serialize);
 
-	instance->rcv_buf = (u8 *) __get_free_page(GFP_KERNEL);
+	instance->rcv_buf = get_free_page(GFP_KERNEL);
 	if (!instance->rcv_buf) {
 		usb_dbg(usbatm_instance, "cxacru_bind: no memory for rcv_buf\n");
 		ret = -ENOMEM;
 		goto fail;
 	}
-	instance->snd_buf = (u8 *) __get_free_page(GFP_KERNEL);
+	instance->snd_buf = get_free_page(GFP_KERNEL);
 	if (!instance->snd_buf) {
 		usb_dbg(usbatm_instance, "cxacru_bind: no memory for snd_buf\n");
 		ret = -ENOMEM;

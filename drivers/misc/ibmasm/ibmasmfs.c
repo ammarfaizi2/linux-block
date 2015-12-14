@@ -519,7 +519,7 @@ static ssize_t remote_settings_file_read(struct file *file, char __user *buf, si
 	if (*offset != 0)
 		return 0;
 
-	page = (unsigned char *)__get_free_page(GFP_KERNEL);
+	page = get_free_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

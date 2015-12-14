@@ -779,7 +779,7 @@ static void show_implementation_id(struct seq_file *m, struct nfs_server *nfss)
 
 int nfs_show_devname(struct seq_file *m, struct dentry *root)
 {
-	char *page = (char *) __get_free_page(GFP_KERNEL);
+	char *page = get_free_page(GFP_KERNEL);
 	char *devname, *dummy;
 	int err = 0;
 	if (!page)

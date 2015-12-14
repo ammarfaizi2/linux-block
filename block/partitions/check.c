@@ -147,7 +147,7 @@ check_partition(struct gendisk *hd, struct block_device *bdev)
 	state = allocate_partitions(hd);
 	if (!state)
 		return NULL;
-	state->pp_buf = (char *)__get_free_page(GFP_KERNEL);
+	state->pp_buf = get_free_page(GFP_KERNEL);
 	if (!state->pp_buf) {
 		free_partitions(state);
 		return NULL;

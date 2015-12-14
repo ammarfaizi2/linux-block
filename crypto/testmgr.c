@@ -166,7 +166,7 @@ static int testmgr_alloc_buf(char *buf[XBUFSIZE])
 	int i;
 
 	for (i = 0; i < XBUFSIZE; i++) {
-		buf[i] = (void *)__get_free_page(GFP_KERNEL);
+		buf[i] = get_free_page(GFP_KERNEL);
 		if (!buf[i])
 			goto err_free_buf;
 	}

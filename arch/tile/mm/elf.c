@@ -48,7 +48,7 @@ static int notify_exec(struct mm_struct *mm)
 	if (!sim_is_simulator())
 		return 1;
 
-	buf = (char *) __get_free_page(GFP_KERNEL);
+	buf = get_free_page(GFP_KERNEL);
 	if (buf == NULL)
 		return 0;
 

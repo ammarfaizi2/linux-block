@@ -248,7 +248,7 @@ struct vfsmount *nfs_do_submount(struct dentry *dentry, struct nfs_fh *fh,
 		.authflavor = authflavor,
 	};
 	struct vfsmount *mnt = ERR_PTR(-ENOMEM);
-	char *page = (char *) __get_free_page(GFP_USER);
+	char *page = get_free_page(GFP_USER);
 	char *devname;
 
 	dprintk("--> nfs_do_submount()\n");

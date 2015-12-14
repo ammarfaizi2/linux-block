@@ -145,7 +145,7 @@ static int xpram_present(void)
 	void *mem_page;
 	int rc;
 
-	mem_page = (void *)__get_free_page(GFP_KERNEL);
+	mem_page = get_free_page(GFP_KERNEL);
 	if (!mem_page)
 		return -ENOMEM;
 	rc = xpram_page_in(mem_page, 0);
@@ -161,7 +161,7 @@ static unsigned long xpram_highest_page_index(void)
 	unsigned int page_index, add_bit;
 	void *mem_page;
 
-	mem_page = (void *) __get_free_page(GFP_KERNEL);
+	mem_page = get_free_page(GFP_KERNEL);
 	if (!mem_page)
 		return 0;
 

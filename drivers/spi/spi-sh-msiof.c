@@ -1092,11 +1092,11 @@ static int sh_msiof_request_dma(struct sh_msiof_spi_priv *p)
 	if (!master->dma_rx)
 		goto free_tx_chan;
 
-	p->tx_dma_page = (void *)__get_free_page(GFP_KERNEL | GFP_DMA);
+	p->tx_dma_page = get_free_page(GFP_KERNEL | GFP_DMA);
 	if (!p->tx_dma_page)
 		goto free_rx_chan;
 
-	p->rx_dma_page = (void *)__get_free_page(GFP_KERNEL | GFP_DMA);
+	p->rx_dma_page = get_free_page(GFP_KERNEL | GFP_DMA);
 	if (!p->rx_dma_page)
 		goto free_tx_page;
 

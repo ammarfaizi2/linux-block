@@ -134,7 +134,7 @@ static char *ovl_read_symlink(struct dentry *realdentry)
 		goto err;
 
 	res = -ENOMEM;
-	buf = (char *) __get_free_page(GFP_KERNEL);
+	buf = get_free_page(GFP_KERNEL);
 	if (!buf)
 		goto err;
 

@@ -215,7 +215,7 @@ static ssize_t proc_mpc_write(struct file *file, const char __user *buff,
 	if (nbytes >= PAGE_SIZE)
 		nbytes = PAGE_SIZE-1;
 
-	page = (char *)__get_free_page(GFP_KERNEL);
+	page = get_free_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

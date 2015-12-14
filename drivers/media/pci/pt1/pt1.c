@@ -651,7 +651,7 @@ pt1_alloc_adapter(struct pt1 *pt1)
 	adap->voltage = SEC_VOLTAGE_OFF;
 	adap->sleep = 1;
 
-	buf = (u8 *)__get_free_page(GFP_KERNEL);
+	buf = get_free_page(GFP_KERNEL);
 	if (!buf) {
 		ret = -ENOMEM;
 		goto err_kfree;

@@ -445,7 +445,7 @@ static int xencons_probe(struct xenbus_device *dev,
 	dev_set_drvdata(&dev->dev, info);
 	info->xbdev = dev;
 	info->vtermno = xenbus_devid_to_vtermno(devid);
-	info->intf = (void *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+	info->intf = get_free_page(GFP_KERNEL | __GFP_ZERO);
 	if (!info->intf)
 		goto error_nomem;
 

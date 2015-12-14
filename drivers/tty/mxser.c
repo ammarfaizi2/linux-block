@@ -865,7 +865,7 @@ static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
 	unsigned char *page;
 	unsigned long flags;
 
-	page = (unsigned char *)__get_free_page(GFP_KERNEL);
+	page = get_free_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

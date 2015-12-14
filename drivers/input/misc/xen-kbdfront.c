@@ -123,7 +123,7 @@ static int xenkbd_probe(struct xenbus_device *dev,
 	info->gref = -1;
 	snprintf(info->phys, sizeof(info->phys), "xenbus/%s", dev->nodename);
 
-	info->page = (void *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+	info->page = get_free_page(GFP_KERNEL | __GFP_ZERO);
 	if (!info->page)
 		goto error_nomem;
 

@@ -1373,7 +1373,7 @@ static const char *fuse_follow_link(struct dentry *dentry, void **cookie)
 	char *link;
 	ssize_t ret;
 
-	link = (char *) __get_free_page(GFP_KERNEL);
+	link = get_free_page(GFP_KERNEL);
 	if (!link)
 		return ERR_PTR(-ENOMEM);
 

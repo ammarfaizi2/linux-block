@@ -93,7 +93,7 @@ static inline pgd_t *pgd_alloc(struct mm_struct *mm)
 {
 	pgd_t *new_pgd;
 
-	new_pgd = (pgd_t *)__get_free_page(GFP_DMA | __GFP_NOWARN);
+	new_pgd = get_free_page(GFP_DMA | __GFP_NOWARN);
 	if (!new_pgd)
 		return NULL;
 	memcpy(new_pgd, swapper_pg_dir, PAGE_SIZE);

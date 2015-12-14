@@ -195,7 +195,7 @@ static int setup_ring(struct xenbus_device *dev, struct tpm_private *priv)
 	int rv;
 	grant_ref_t gref;
 
-	priv->shr = (void *)__get_free_page(GFP_KERNEL|__GFP_ZERO);
+	priv->shr = get_free_page(GFP_KERNEL|__GFP_ZERO);
 	if (!priv->shr) {
 		xenbus_dev_fatal(dev, -ENOMEM, "allocating shared ring");
 		return -ENOMEM;

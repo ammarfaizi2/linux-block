@@ -2999,7 +2999,7 @@ static struct fw_iso_context *ohci_allocate_iso_context(struct fw_card *card,
 
 	memset(ctx, 0, sizeof(*ctx));
 	ctx->header_length = 0;
-	ctx->header = (void *) __get_free_page(GFP_KERNEL);
+	ctx->header = get_free_page(GFP_KERNEL);
 	if (ctx->header == NULL) {
 		ret = -ENOMEM;
 		goto out;

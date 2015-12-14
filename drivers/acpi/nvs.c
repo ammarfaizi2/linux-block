@@ -155,7 +155,7 @@ int suspend_nvs_alloc(void)
 	struct nvs_page *entry;
 
 	list_for_each_entry(entry, &nvs_list, node) {
-		entry->data = (void *)__get_free_page(GFP_KERNEL);
+		entry->data = get_free_page(GFP_KERNEL);
 		if (!entry->data) {
 			suspend_nvs_free();
 			return -ENOMEM;

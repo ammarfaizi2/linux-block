@@ -514,7 +514,7 @@ static int __init sclp_detect_standby_memory(void)
 	if ((sclp.facilities & 0xe00000000000ULL) != 0xe00000000000ULL)
 		return 0;
 	rc = -ENOMEM;
-	sccb = (void *) __get_free_page(GFP_KERNEL | GFP_DMA);
+	sccb = get_free_page(GFP_KERNEL | GFP_DMA);
 	if (!sccb)
 		goto out;
 	assigned = 0;

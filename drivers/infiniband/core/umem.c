@@ -147,7 +147,7 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 	/* We assume the memory is from hugetlb until proved otherwise */
 	umem->hugetlb   = 1;
 
-	page_list = (struct page **) __get_free_page(GFP_KERNEL);
+	page_list = get_free_page(GFP_KERNEL);
 	if (!page_list) {
 		kfree(umem);
 		return ERR_PTR(-ENOMEM);
@@ -157,7 +157,7 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 	 * if we can't alloc the vma_list, it's not so bad;
 	 * just assume the memory is not hugetlb memory
 	 */
-	vma_list = (struct vm_area_struct **) __get_free_page(GFP_KERNEL);
+	vma_list = get_free_page(GFP_KERNEL);
 	if (!vma_list)
 		umem->hugetlb = 0;
 

@@ -27,7 +27,7 @@ static void dma_alloc_init(unsigned long start, unsigned long end)
 	spin_lock_init(&dma_page_lock);
 	dma_initialized = 0;
 
-	dma_page = (unsigned long *)__get_free_page(GFP_KERNEL);
+	dma_page = get_free_page(GFP_KERNEL);
 	memset(dma_page, 0, PAGE_SIZE);
 	dma_base = PAGE_ALIGN(start);
 	dma_size = PAGE_ALIGN(end) - PAGE_ALIGN(start);

@@ -315,7 +315,7 @@ void tmio_mmc_request_dma(struct tmio_mmc_host *host, struct tmio_mmc_data *pdat
 		if (ret < 0)
 			goto ecfgrx;
 
-		host->bounce_buf = (u8 *)__get_free_page(GFP_KERNEL | GFP_DMA);
+		host->bounce_buf = get_free_page(GFP_KERNEL | GFP_DMA);
 		if (!host->bounce_buf)
 			goto ebouncebuf;
 

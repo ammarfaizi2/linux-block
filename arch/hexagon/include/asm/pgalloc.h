@@ -35,7 +35,7 @@ static inline pgd_t *pgd_alloc(struct mm_struct *mm)
 {
 	pgd_t *pgd;
 
-	pgd = (pgd_t *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+	pgd = get_free_page(GFP_KERNEL | __GFP_ZERO);
 
 	/*
 	 * There may be better ways to do this, but to ensure
@@ -79,7 +79,7 @@ static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
 					  unsigned long address)
 {
 	gfp_t flags =  GFP_KERNEL | __GFP_REPEAT | __GFP_ZERO;
-	return (pte_t *) __get_free_page(flags);
+	return get_free_page(flags);
 }
 
 static inline void pte_free(struct mm_struct *mm, struct page *pte)

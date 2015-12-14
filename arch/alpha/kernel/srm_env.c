@@ -82,7 +82,7 @@ static int srm_env_proc_show(struct seq_file *m, void *v)
 	unsigned long	id = (unsigned long)m->private;
 	char		*page;
 
-	page = (char *)__get_free_page(GFP_USER);
+	page = get_free_page(GFP_USER);
 	if (!page)
 		return -ENOMEM;
 
@@ -107,7 +107,7 @@ static ssize_t srm_env_proc_write(struct file *file, const char __user *buffer,
 {
 	int res;
 	unsigned long	id = (unsigned long)PDE_DATA(file_inode(file));
-	char		*buf = (char *) __get_free_page(GFP_USER);
+	char		*buf = get_free_page(GFP_USER);
 	unsigned long	ret1, ret2;
 
 	if (!buf)

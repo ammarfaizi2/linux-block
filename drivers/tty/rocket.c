@@ -891,7 +891,7 @@ static int rp_open(struct tty_struct *tty, struct file *filp)
 		return -ENXIO;
 	port = &info->port;
 	
-	page = (unsigned char *)__get_free_page(GFP_KERNEL);
+	page = get_free_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

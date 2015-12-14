@@ -1046,7 +1046,7 @@ static int init_hyp_mode(void)
 	 * Allocate stack pages for Hypervisor-mode
 	 */
 	for_each_possible_cpu(cpu) {
-		void *stack_page = (void *)__get_free_page(GFP_KERNEL);
+		void *stack_page = get_free_page(GFP_KERNEL);
 		if (!stack_page) {
 			err = -ENOMEM;
 			goto out_free_stack_pages;

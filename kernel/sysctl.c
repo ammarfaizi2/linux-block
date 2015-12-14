@@ -2077,7 +2077,7 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 
 		if (left > PAGE_SIZE - 1)
 			left = PAGE_SIZE - 1;
-		kbuf = (char *)__get_free_page(GFP_TEMPORARY);
+		kbuf = get_free_page(GFP_TEMPORARY);
 		if (!kbuf)
 			return -ENOMEM;
 		if (copy_from_user(kbuf, buffer, left)) {
@@ -2337,7 +2337,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int 
 
 		if (left > PAGE_SIZE - 1)
 			left = PAGE_SIZE - 1;
-		kbuf = (char *)__get_free_page(GFP_TEMPORARY);
+		kbuf = get_free_page(GFP_TEMPORARY);
 		if (!kbuf)
 			return -ENOMEM;
 		if (copy_from_user(kbuf, buffer, left)) {
@@ -2646,7 +2646,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 	}
 
 	if (write) {
-		char *kbuf = (char *)__get_free_page(GFP_TEMPORARY);
+		char *kbuf = get_free_page(GFP_TEMPORARY);
 		if (!kbuf)
 			return -ENOMEM;
 

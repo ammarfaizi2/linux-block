@@ -96,7 +96,7 @@ int mlx4_ib_umem_write_mtt(struct mlx4_ib_dev *dev, struct mlx4_mtt *mtt,
 	int err = 0;
 	struct scatterlist *sg;
 
-	pages = (u64 *) __get_free_page(GFP_KERNEL);
+	pages = get_free_page(GFP_KERNEL);
 	if (!pages)
 		return -ENOMEM;
 

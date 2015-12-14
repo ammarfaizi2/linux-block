@@ -131,7 +131,7 @@ static int mmu_topup_memory_cache(struct kvm_mmu_memory_cache *cache,
 	if (cache->nobjs >= min)
 		return 0;
 	while (cache->nobjs < max) {
-		page = (void *)__get_free_page(PGALLOC_GFP);
+		page = get_free_page(PGALLOC_GFP);
 		if (!page)
 			return -ENOMEM;
 		cache->objects[cache->nobjs++] = page;
@@ -1679,7 +1679,7 @@ int kvm_mmu_init(void)
 	}
 
 	if (__kvm_cpu_uses_extended_idmap()) {
-		merged_hyp_pgd = (pgd_t *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+		merged_hyp_pgd = get_free_page(GFP_KERNEL | __GFP_ZERO);
 		if (!merged_hyp_pgd) {
 			kvm_err("Failed to allocate extra HYP pgd\n");
 			goto out;

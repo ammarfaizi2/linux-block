@@ -22,7 +22,7 @@ pgd_t swapper_pg_dir[PTRS_PER_PGD] __attribute__((aligned(PAGE_SIZE)));
 
 pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 {
-	pte_t *pte = (pte_t *)__get_free_page(GFP_KERNEL|__GFP_REPEAT);
+	pte_t *pte = get_free_page(GFP_KERNEL|__GFP_REPEAT);
 	if (pte)
 		clear_page(pte);
 	return pte;

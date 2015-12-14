@@ -1340,7 +1340,7 @@ event_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
 	if (cnt >= PAGE_SIZE)
 		return -EINVAL;
 
-	buf = (char *)__get_free_page(GFP_TEMPORARY);
+	buf = get_free_page(GFP_TEMPORARY);
 	if (!buf)
 		return -ENOMEM;
 
@@ -1507,7 +1507,7 @@ subsystem_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
 	if (cnt >= PAGE_SIZE)
 		return -EINVAL;
 
-	buf = (char *)__get_free_page(GFP_TEMPORARY);
+	buf = get_free_page(GFP_TEMPORARY);
 	if (!buf)
 		return -ENOMEM;
 

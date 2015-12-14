@@ -1113,8 +1113,7 @@ void tlb_remove_table(struct mmu_gather *tlb, void *table)
 
 	tlb->mm->context.flush_mm = 1;
 	if (*batch == NULL) {
-		*batch = (struct mmu_table_batch *)
-			__get_free_page(GFP_NOWAIT | __GFP_NOWARN);
+		*batch = get_free_page(GFP_NOWAIT | __GFP_NOWARN);
 		if (*batch == NULL) {
 			__tlb_flush_mm_lazy(tlb->mm);
 			tlb_remove_table_one(table);

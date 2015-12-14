@@ -184,7 +184,7 @@ void free_initrd_mem(unsigned long start, unsigned long end)
 
 pgd_t *pgd_alloc(struct mm_struct *mm)
 {
-	pgd_t *pgd = (pgd_t *)__get_free_page(GFP_KERNEL);
+	pgd_t *pgd = get_free_page(GFP_KERNEL);
 
 	if (pgd) {
 		memset(pgd, 0, USER_PTRS_PER_PGD * sizeof(pgd_t));
@@ -204,7 +204,7 @@ pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 {
 	pte_t *pte;
 
-	pte = (pte_t *)__get_free_page(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO);
+	pte = get_free_page(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO);
 	return pte;
 }
 
@@ -225,7 +225,7 @@ pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long address)
 #ifdef CONFIG_3_LEVEL_PGTABLES
 pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
 {
-	pmd_t *pmd = (pmd_t *) __get_free_page(GFP_KERNEL);
+	pmd_t *pmd = get_free_page(GFP_KERNEL);
 
 	if (pmd)
 		memset(pmd, 0, PAGE_SIZE);

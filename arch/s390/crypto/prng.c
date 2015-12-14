@@ -116,7 +116,7 @@ static int generate_entropy(u8 *ebuf, size_t nbytes)
 	int n, ret = 0;
 	u8 *pg, *h, hash[32];
 
-	pg = (u8 *) __get_free_page(GFP_KERNEL);
+	pg = get_free_page(GFP_KERNEL);
 	if (!pg) {
 		prng_errorflag = PRNG_GEN_ENTROPY_FAILED;
 		return -ENOMEM;

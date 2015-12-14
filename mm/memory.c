@@ -371,7 +371,7 @@ void tlb_remove_table(struct mmu_gather *tlb, void *table)
 	}
 
 	if (*batch == NULL) {
-		*batch = (struct mmu_table_batch *)__get_free_page(GFP_NOWAIT | __GFP_NOWARN);
+		*batch = get_free_page(GFP_NOWAIT | __GFP_NOWARN);
 		if (*batch == NULL) {
 			tlb_remove_table_one(table);
 			return;
@@ -3762,7 +3762,7 @@ void print_vma_addr(char *prefix, unsigned long ip)
 	vma = find_vma(mm, ip);
 	if (vma && vma->vm_file) {
 		struct file *f = vma->vm_file;
-		char *buf = (char *)__get_free_page(GFP_KERNEL);
+		char *buf = get_free_page(GFP_KERNEL);
 		if (buf) {
 			char *p;
 

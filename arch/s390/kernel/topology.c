@@ -481,7 +481,7 @@ static int __init s390_topology_init(void)
 
 	if (!MACHINE_HAS_TOPOLOGY)
 		return 0;
-	tl_info = (struct sysinfo_15_1_x *)__get_free_page(GFP_KERNEL);
+	tl_info = get_free_page(GFP_KERNEL);
 	info = tl_info;
 	store_topology(info);
 	pr_info("The CPU configuration topology of the machine is:");

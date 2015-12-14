@@ -279,7 +279,7 @@ visorchannel_clear(struct visorchannel *channel, ulong offset, u8 ch,
 	int written = 0;
 	u8 *buf;
 
-	buf = (u8 *)__get_free_page(GFP_KERNEL);
+	buf = get_free_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 

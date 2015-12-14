@@ -46,7 +46,7 @@ static inline void *quicklist_alloc(int nr, gfp_t flags, void (*ctor)(void *))
 	if (likely(p))
 		return p;
 
-	p = (void *)__get_free_page(flags | __GFP_ZERO);
+	p = get_free_page(flags | __GFP_ZERO);
 	if (ctor && p)
 		ctor(p);
 	return p;

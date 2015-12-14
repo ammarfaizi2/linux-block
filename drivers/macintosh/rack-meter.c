@@ -441,7 +441,7 @@ static int rackmeter_probe(struct macio_dev* mdev,
 	pr_debug("  dma @0x%08x\n", (unsigned int)rdma.start);
 	pr_debug("  irq %d\n", rm->irq);
 
-	rm->ubuf = (u8 *)__get_free_page(GFP_KERNEL);
+	rm->ubuf = get_free_page(GFP_KERNEL);
 	if (rm->ubuf == NULL) {
 		printk(KERN_ERR
 		       "rackmeter: failed to allocate samples page !\n");

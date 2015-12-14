@@ -607,7 +607,7 @@ bm_entry_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
 	ssize_t res;
 	char *page;
 
-	page = (char *) __get_free_page(GFP_KERNEL);
+	page = get_free_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

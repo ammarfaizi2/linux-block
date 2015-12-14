@@ -424,7 +424,7 @@ static ssize_t read_kmem(struct file *file, char __user *buf,
 	}
 
 	if (count > 0) {
-		kbuf = (char *)__get_free_page(GFP_KERNEL);
+		kbuf = get_free_page(GFP_KERNEL);
 		if (!kbuf)
 			return -ENOMEM;
 		while (count > 0) {
@@ -524,7 +524,7 @@ static ssize_t write_kmem(struct file *file, const char __user *buf,
 	}
 
 	if (count > 0) {
-		kbuf = (char *)__get_free_page(GFP_KERNEL);
+		kbuf = get_free_page(GFP_KERNEL);
 		if (!kbuf)
 			return wrote ? wrote : -ENOMEM;
 		while (count > 0) {

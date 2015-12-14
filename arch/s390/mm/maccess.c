@@ -137,7 +137,7 @@ int copy_to_user_real(void __user *dest, void *src, unsigned long count)
 	int offs = 0, size, rc;
 	char *buf;
 
-	buf = (char *) __get_free_page(GFP_KERNEL);
+	buf = get_free_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 	rc = -EFAULT;
@@ -189,7 +189,7 @@ void *xlate_dev_mem_ptr(phys_addr_t addr)
 	preempt_disable();
 	if (is_swapped(addr)) {
 		size = PAGE_SIZE - (addr & ~PAGE_MASK);
-		bounce = (void *) __get_free_page(GFP_ATOMIC);
+		bounce = get_free_page(GFP_ATOMIC);
 		if (bounce)
 			memcpy_absolute(bounce, (void *) addr, size);
 	}

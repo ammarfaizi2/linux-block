@@ -988,7 +988,7 @@ static int proc_control(struct usb_dev_state *ps, void __user *arg)
 			sizeof(struct usb_ctrlrequest));
 	if (ret)
 		return ret;
-	tbuf = (unsigned char *)__get_free_page(GFP_KERNEL);
+	tbuf = get_free_page(GFP_KERNEL);
 	if (!tbuf) {
 		ret = -ENOMEM;
 		goto done;

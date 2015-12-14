@@ -206,7 +206,7 @@ vcs_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 	ssize_t ret;
 	char *con_buf;
 
-	con_buf = (char *) __get_free_page(GFP_KERNEL);
+	con_buf = get_free_page(GFP_KERNEL);
 	if (!con_buf)
 		return -ENOMEM;
 
@@ -384,7 +384,7 @@ vcs_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 	size_t ret;
 	char *con_buf;
 
-	con_buf = (char *) __get_free_page(GFP_KERNEL);
+	con_buf = get_free_page(GFP_KERNEL);
 	if (!con_buf)
 		return -ENOMEM;
 

@@ -5118,7 +5118,7 @@ dasd_eckd_init(void)
 		kfree(dasd_reserve_req);
 		return -ENOMEM;
 	}
-	rawpadpage = (void *)__get_free_page(GFP_KERNEL);
+	rawpadpage = get_free_page(GFP_KERNEL);
 	if (!rawpadpage) {
 		kfree(path_verification_worker);
 		kfree(dasd_reserve_req);

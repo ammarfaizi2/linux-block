@@ -407,7 +407,7 @@ static int xenfb_probe(struct xenbus_device *dev,
 		goto error_nomem;
 
 	/* set up shared page */
-	info->page = (void *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+	info->page = get_free_page(GFP_KERNEL | __GFP_ZERO);
 	if (!info->page)
 		goto error_nomem;
 

@@ -695,7 +695,7 @@ static int hwarc_neep_init(struct uwb_rc *rc)
 	struct usb_endpoint_descriptor *epd;
 
 	epd = &iface->cur_altsetting->endpoint[0].desc;
-	hwarc->rd_buffer = (void *) __get_free_page(GFP_KERNEL);
+	hwarc->rd_buffer = get_free_page(GFP_KERNEL);
 	if (hwarc->rd_buffer == NULL) {
 		dev_err(dev, "Unable to allocate notification's read buffer\n");
 		goto error_rd_buffer;

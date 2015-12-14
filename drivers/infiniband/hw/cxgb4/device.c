@@ -848,8 +848,7 @@ static int c4iw_rdev_open(struct c4iw_rdev *rdev)
 		printk(KERN_ERR MOD "error %d initializing ocqp pool\n", err);
 		goto err4;
 	}
-	rdev->status_page = (struct t4_dev_status_page *)
-			    __get_free_page(GFP_KERNEL);
+	rdev->status_page = get_free_page(GFP_KERNEL);
 	if (!rdev->status_page) {
 		pr_err(MOD "error allocating status page\n");
 		goto err4;

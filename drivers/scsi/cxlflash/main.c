@@ -776,7 +776,7 @@ static int alloc_mem(struct cxlflash_cfg *cfg)
 
 	for (i = 0; i < CXLFLASH_NUM_CMDS; buf += CMD_BUFSIZE, i++) {
 		if (!((u64)buf & (PAGE_SIZE - 1))) {
-			buf = (void *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+			buf = get_free_page(GFP_KERNEL | __GFP_ZERO);
 			if (unlikely(!buf)) {
 				dev_err(dev,
 					"%s: Allocate command buffers fail!\n",

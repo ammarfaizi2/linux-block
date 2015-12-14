@@ -456,7 +456,7 @@ hwicap_write(struct file *file, const char __user *buf,
 		goto error;
 	}
 
-	kbuf = (u32 *) __get_free_page(GFP_KERNEL);
+	kbuf = get_free_page(GFP_KERNEL);
 	if (!kbuf) {
 		status = -ENOMEM;
 		goto error;

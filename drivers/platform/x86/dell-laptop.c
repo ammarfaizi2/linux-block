@@ -2145,7 +2145,7 @@ static int __init dell_init(void)
 	 * Allocate buffer below 4GB for SMI data--only 32-bit physical addr
 	 * is passed to SMI handler.
 	 */
-	buffer = (void *)__get_free_page(GFP_KERNEL | GFP_DMA32);
+	buffer = get_free_page(GFP_KERNEL | GFP_DMA32);
 	if (!buffer) {
 		ret = -ENOMEM;
 		goto fail_buffer;

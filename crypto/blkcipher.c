@@ -240,7 +240,7 @@ static int blkcipher_walk_next(struct blkcipher_desc *desc,
 	    !scatterwalk_aligned(&walk->out, walk->alignmask)) {
 		walk->flags |= BLKCIPHER_WALK_COPY;
 		if (!walk->page) {
-			walk->page = (void *)__get_free_page(GFP_ATOMIC);
+			walk->page = get_free_page(GFP_ATOMIC);
 			if (!walk->page)
 				n = 0;
 		}

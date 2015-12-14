@@ -144,7 +144,7 @@ static int __qdio_allocate_qs(struct qdio_q **irq_ptr_qs, int nr_queues)
 		if (!q)
 			return -ENOMEM;
 
-		q->slib = (struct slib *) __get_free_page(GFP_KERNEL);
+		q->slib = get_free_page(GFP_KERNEL);
 		if (!q->slib) {
 			kmem_cache_free(qdio_q_cache, q);
 			return -ENOMEM;
@@ -305,7 +305,7 @@ int qdio_setup_get_ssqd(struct qdio_irq *irq_ptr,
 
 	DBF_EVENT("getssqd:%4x", schid->sch_no);
 	if (!irq_ptr) {
-		ssqd = (struct chsc_ssqd_area *)__get_free_page(GFP_KERNEL);
+		ssqd = get_free_page(GFP_KERNEL);
 		if (!ssqd)
 			return -ENOMEM;
 	} else {

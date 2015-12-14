@@ -349,7 +349,7 @@ static ssize_t ide_settings_proc_write(struct file *file, const char __user *buf
 	if (count >= PAGE_SIZE)
 		return -EINVAL;
 
-	s = buf = (char *)__get_free_page(GFP_USER);
+	s = buf = get_free_page(GFP_USER);
 	if (!buf)
 		return -ENOMEM;
 

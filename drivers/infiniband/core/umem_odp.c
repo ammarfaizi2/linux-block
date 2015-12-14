@@ -535,7 +535,7 @@ int ib_umem_odp_map_dma_pages(struct ib_umem *umem, u64 user_virt, u64 bcnt,
 	    user_virt + bcnt > ib_umem_end(umem))
 		return -EFAULT;
 
-	local_page_list = (struct page **)__get_free_page(GFP_KERNEL);
+	local_page_list = get_free_page(GFP_KERNEL);
 	if (!local_page_list)
 		return -ENOMEM;
 

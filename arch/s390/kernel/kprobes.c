@@ -43,7 +43,7 @@ DEFINE_INSN_CACHE_OPS(dmainsn);
 
 static void *alloc_dmainsn_page(void)
 {
-	return (void *)__get_free_page(GFP_KERNEL | GFP_DMA);
+	return get_free_page(GFP_KERNEL | GFP_DMA);
 }
 
 static void free_dmainsn_page(void *page)

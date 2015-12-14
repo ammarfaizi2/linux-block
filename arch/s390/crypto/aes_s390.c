@@ -936,7 +936,7 @@ static int __init aes_s390_init(void)
 				CRYPT_S390_MSA | CRYPT_S390_MSA4) &&
 	    crypt_s390_func_available(KMCTR_AES_256_ENCRYPT,
 				CRYPT_S390_MSA | CRYPT_S390_MSA4)) {
-		ctrblk = (u8 *) __get_free_page(GFP_KERNEL);
+		ctrblk = get_free_page(GFP_KERNEL);
 		if (!ctrblk) {
 			ret = -ENOMEM;
 			goto ctr_aes_err;

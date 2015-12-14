@@ -616,7 +616,7 @@ static int __init zcore_reipl_init(void)
 		return rc;
 	if (ipib_info.ipib == 0)
 		return 0;
-	ipl_block = (void *) __get_free_page(GFP_KERNEL);
+	ipl_block = get_free_page(GFP_KERNEL);
 	if (!ipl_block)
 		return -ENOMEM;
 	if (ipib_info.ipib < sclp.hsa_size)

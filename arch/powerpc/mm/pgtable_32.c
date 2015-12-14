@@ -109,7 +109,7 @@ __init_refok pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long add
 	pte_t *pte;
 
 	if (slab_is_available()) {
-		pte = (pte_t *)__get_free_page(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO);
+		pte = get_free_page(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO);
 	} else {
 		pte = __va(memblock_alloc(PAGE_SIZE, PAGE_SIZE));
 		if (pte)

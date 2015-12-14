@@ -310,11 +310,11 @@ static struct vfsmount *nfs_follow_referral(struct dentry *dentry,
 
 	dprintk("%s: referral at %pd2\n", __func__, dentry);
 
-	page = (char *) __get_free_page(GFP_USER);
+	page = get_free_page(GFP_USER);
 	if (!page)
 		goto out;
 
-	page2 = (char *) __get_free_page(GFP_USER);
+	page2 = get_free_page(GFP_USER);
 	if (!page2)
 		goto out;
 
@@ -495,10 +495,10 @@ int nfs4_replace_transport(struct nfs_server *server,
 		goto out;
 
 	error = -ENOMEM;
-	page = (char *) __get_free_page(GFP_USER);
+	page = get_free_page(GFP_USER);
 	if (!page)
 		goto out;
-	page2 = (char *) __get_free_page(GFP_USER);
+	page2 = get_free_page(GFP_USER);
 	if (!page2)
 		goto out;
 

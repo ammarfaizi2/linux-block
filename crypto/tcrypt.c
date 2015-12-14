@@ -255,7 +255,7 @@ static int testmgr_alloc_buf(char *buf[XBUFSIZE])
 	int i;
 
 	for (i = 0; i < XBUFSIZE; i++) {
-		buf[i] = (void *)__get_free_page(GFP_KERNEL);
+		buf[i] = get_free_page(GFP_KERNEL);
 		if (!buf[i])
 			goto err_free_buf;
 	}
@@ -2204,7 +2204,7 @@ static int __init tcrypt_mod_init(void)
 	int i;
 
 	for (i = 0; i < TVMEMSIZE; i++) {
-		tvmem[i] = (void *)__get_free_page(GFP_KERNEL);
+		tvmem[i] = get_free_page(GFP_KERNEL);
 		if (!tvmem[i])
 			goto err_free_tv;
 	}

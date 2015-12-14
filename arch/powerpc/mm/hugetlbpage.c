@@ -497,7 +497,7 @@ static void hugepd_free(struct mmu_gather *tlb, void *hugepte)
 	}
 
 	if (*batchp == NULL) {
-		*batchp = (struct hugepd_freelist *)__get_free_page(GFP_ATOMIC);
+		*batchp = get_free_page(GFP_ATOMIC);
 		(*batchp)->index = 0;
 	}
 

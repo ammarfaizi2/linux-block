@@ -18,7 +18,7 @@ gfp_t __userpte_alloc_gfp = PGALLOC_GFP | PGALLOC_USER_GFP;
 
 pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 {
-	return (pte_t *)__get_free_page(PGALLOC_GFP);
+	return get_free_page(PGALLOC_GFP);
 }
 
 pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long address)
@@ -209,7 +209,7 @@ static int preallocate_pmds(struct mm_struct *mm, pmd_t *pmds[])
 	bool failed = false;
 
 	for(i = 0; i < PREALLOCATED_PMDS; i++) {
-		pmd_t *pmd = (pmd_t *)__get_free_page(PGALLOC_GFP);
+		pmd_t *pmd = get_free_page(PGALLOC_GFP);
 		if (!pmd)
 			failed = true;
 		if (pmd && !pgtable_pmd_page_ctor(virt_to_page(pmd))) {
@@ -323,7 +323,7 @@ static inline pgd_t *_pgd_alloc(void)
 	 * We allocate one page for pgd.
 	 */
 	if (!SHARED_KERNEL_PMD)
-		return (pgd_t *)__get_free_page(PGALLOC_GFP);
+		return get_free_page(PGALLOC_GFP);
 
 	/*
 	 * Now PAE kernel is not running as a Xen domain. We can allocate
@@ -342,7 +342,7 @@ static inline void _pgd_free(pgd_t *pgd)
 #else
 static inline pgd_t *_pgd_alloc(void)
 {
-	return (pgd_t *)__get_free_page(PGALLOC_GFP);
+	return get_free_page(PGALLOC_GFP);
 }
 
 static inline void _pgd_free(pgd_t *pgd)

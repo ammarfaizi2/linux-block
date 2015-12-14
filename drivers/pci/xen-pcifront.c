@@ -725,8 +725,7 @@ static struct pcifront_device *alloc_pdev(struct xenbus_device *xdev)
 	if (pdev == NULL)
 		goto out;
 
-	pdev->sh_info =
-	    (struct xen_pci_sharedinfo *)__get_free_page(GFP_KERNEL);
+	pdev->sh_info = get_free_page(GFP_KERNEL);
 	if (pdev->sh_info == NULL) {
 		kfree(pdev);
 		pdev = NULL;

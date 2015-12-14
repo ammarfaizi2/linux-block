@@ -43,7 +43,7 @@ static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd,
  */
 static inline pgd_t *pgd_alloc(struct mm_struct *mm)
 {
-	pgd_t *ret = (pgd_t *)__get_free_page(GFP_KERNEL);
+	pgd_t *ret = get_free_page(GFP_KERNEL);
 
 	if (ret) {
 		memset(ret, 0, USER_PTRS_PER_PGD * sizeof(pgd_t));

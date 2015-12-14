@@ -267,7 +267,7 @@ static void *late_alloc(unsigned long size)
 	void *ptr;
 
 	BUG_ON(size > PAGE_SIZE);
-	ptr = (void *)__get_free_page(PGALLOC_GFP);
+	ptr = get_free_page(PGALLOC_GFP);
 	BUG_ON(!ptr);
 	return ptr;
 }

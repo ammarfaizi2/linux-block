@@ -379,7 +379,7 @@ static int startup(struct m68k_serial *info, struct tty_struct *tty)
 		return 0;
 
 	if (!info->xmit_buf) {
-		info->xmit_buf = (unsigned char *) __get_free_page(GFP_KERNEL);
+		info->xmit_buf = get_free_page(GFP_KERNEL);
 		if (!info->xmit_buf)
 			return -ENOMEM;
 	}

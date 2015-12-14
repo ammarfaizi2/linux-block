@@ -718,7 +718,7 @@ static int scsifront_alloc_ring(struct vscsifrnt_info *info)
 	int err = -ENOMEM;
 
 	/***** Frontend to Backend ring start *****/
-	sring = (struct vscsiif_sring *)__get_free_page(GFP_KERNEL);
+	sring = get_free_page(GFP_KERNEL);
 	if (!sring) {
 		xenbus_dev_fatal(dev, err,
 			"fail to allocate shared ring (Front to Back)");

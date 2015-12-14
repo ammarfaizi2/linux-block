@@ -6088,44 +6088,41 @@ static __init int hardware_setup(void)
 	for (i = 0; i < ARRAY_SIZE(vmx_msr_index); ++i)
 		kvm_define_shared_msr(i, vmx_msr_index[i]);
 
-	vmx_io_bitmap_a = (unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_io_bitmap_a = get_free_page(GFP_KERNEL);
 	if (!vmx_io_bitmap_a)
 		return r;
 
-	vmx_io_bitmap_b = (unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_io_bitmap_b = get_free_page(GFP_KERNEL);
 	if (!vmx_io_bitmap_b)
 		goto out;
 
-	vmx_msr_bitmap_legacy = (unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_msr_bitmap_legacy = get_free_page(GFP_KERNEL);
 	if (!vmx_msr_bitmap_legacy)
 		goto out1;
 
-	vmx_msr_bitmap_legacy_x2apic =
-				(unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_msr_bitmap_legacy_x2apic = get_free_page(GFP_KERNEL);
 	if (!vmx_msr_bitmap_legacy_x2apic)
 		goto out2;
 
-	vmx_msr_bitmap_longmode = (unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_msr_bitmap_longmode = get_free_page(GFP_KERNEL);
 	if (!vmx_msr_bitmap_longmode)
 		goto out3;
 
-	vmx_msr_bitmap_longmode_x2apic =
-				(unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_msr_bitmap_longmode_x2apic = get_free_page(GFP_KERNEL);
 	if (!vmx_msr_bitmap_longmode_x2apic)
 		goto out4;
 
 	if (nested) {
-		vmx_msr_bitmap_nested =
-			(unsigned long *)__get_free_page(GFP_KERNEL);
+		vmx_msr_bitmap_nested = get_free_page(GFP_KERNEL);
 		if (!vmx_msr_bitmap_nested)
 			goto out5;
 	}
 
-	vmx_vmread_bitmap = (unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_vmread_bitmap = get_free_page(GFP_KERNEL);
 	if (!vmx_vmread_bitmap)
 		goto out6;
 
-	vmx_vmwrite_bitmap = (unsigned long *)__get_free_page(GFP_KERNEL);
+	vmx_vmwrite_bitmap = get_free_page(GFP_KERNEL);
 	if (!vmx_vmwrite_bitmap)
 		goto out7;
 

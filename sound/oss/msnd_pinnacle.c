@@ -899,7 +899,7 @@ static __inline__ int pack_DAPF_to_DAPQ(register int start)
 static int dsp_read(char __user *buf, size_t len)
 {
 	int count = len;
-	char *page = (char *)__get_free_page(GFP_KERNEL);
+	char *page = get_free_page(GFP_KERNEL);
 	int timeout = get_rec_delay_jiffies(DAR_BUFF_SIZE);
 
 	if (!page)
@@ -958,7 +958,7 @@ static int dsp_read(char __user *buf, size_t len)
 static int dsp_write(const char __user *buf, size_t len)
 {
 	int count = len;
-	char *page = (char *)__get_free_page(GFP_KERNEL);
+	char *page = get_free_page(GFP_KERNEL);
 	int timeout = get_play_delay_jiffies(DAP_BUFF_SIZE);
 
 	if (!page)

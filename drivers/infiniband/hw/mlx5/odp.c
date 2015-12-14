@@ -538,7 +538,7 @@ static void mlx5_ib_mr_wqe_pfault_handler(struct mlx5_ib_qp *qp,
 	u16 wqe_index = pfault->mpfault.wqe.wqe_index;
 	int requestor = pfault->mpfault.flags & MLX5_PFAULT_REQUESTOR;
 
-	buffer = (char *)__get_free_page(GFP_KERNEL);
+	buffer = get_free_page(GFP_KERNEL);
 	if (!buffer) {
 		mlx5_ib_err(dev, "Error allocating memory for IO page fault handling.\n");
 		resume_with_error = 1;

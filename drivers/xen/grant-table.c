@@ -577,7 +577,7 @@ static int grow_gnttab_list(unsigned int more_frames)
 	new_nr_glist_frames =
 		(new_nr_grant_frames * grefs_per_grant_frame + RPP - 1) / RPP;
 	for (i = nr_glist_frames; i < new_nr_glist_frames; i++) {
-		gnttab_list[i] = (grant_ref_t *)__get_free_page(GFP_ATOMIC);
+		gnttab_list[i] = get_free_page(GFP_ATOMIC);
 		if (!gnttab_list[i])
 			goto grow_nomem;
 	}
@@ -1109,7 +1109,7 @@ int gnttab_init(void)
 
 	nr_glist_frames = (nr_grant_frames * grefs_per_grant_frame + RPP - 1) / RPP;
 	for (i = 0; i < nr_glist_frames; i++) {
-		gnttab_list[i] = (grant_ref_t *)__get_free_page(GFP_KERNEL);
+		gnttab_list[i] = get_free_page(GFP_KERNEL);
 		if (gnttab_list[i] == NULL) {
 			ret = -ENOMEM;
 			goto ini_nomem;

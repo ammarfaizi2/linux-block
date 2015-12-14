@@ -173,7 +173,7 @@ static struct scatterlist *sg_kmalloc(unsigned int nents, gfp_t gfp_mask)
 		 * false-positive) we need to inform kmemleak of all the
 		 * intermediate allocations.
 		 */
-		void *ptr = (void *) __get_free_page(gfp_mask);
+		void *ptr = get_free_page(gfp_mask);
 		kmemleak_alloc(ptr, PAGE_SIZE, 1, gfp_mask);
 		return ptr;
 	} else

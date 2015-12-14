@@ -573,7 +573,7 @@ static int __init des_s390_init(void)
 		ret = crypto_register_alg(&ctr_des3_alg);
 		if (ret)
 			goto ctr_des3_err;
-		ctrblk = (u8 *) __get_free_page(GFP_KERNEL);
+		ctrblk = get_free_page(GFP_KERNEL);
 		if (!ctrblk) {
 			ret = -ENOMEM;
 			goto ctr_mem_err;

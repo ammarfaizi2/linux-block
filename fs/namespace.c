@@ -2611,7 +2611,7 @@ int copy_mount_options(const void __user * data, void **where)
 	if (!data)
 		return 0;
 
-	if (!(page = (char *)__get_free_page(GFP_KERNEL)))
+	if (!(page = get_free_page(GFP_KERNEL)))
 		return -ENOMEM;
 
 	/* We only care that *some* data at the address the user

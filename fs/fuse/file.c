@@ -2458,7 +2458,7 @@ long fuse_do_ioctl(struct file *file, unsigned int cmd, unsigned long arg,
 
 	err = -ENOMEM;
 	pages = kcalloc(FUSE_MAX_PAGES_PER_REQ, sizeof(pages[0]), GFP_KERNEL);
-	iov_page = (struct iovec *) __get_free_page(GFP_KERNEL);
+	iov_page = get_free_page(GFP_KERNEL);
 	if (!pages || !iov_page)
 		goto out;
 

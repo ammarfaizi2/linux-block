@@ -277,8 +277,7 @@ via_alloc_desc_pages(drm_via_sg_info_t *vsg)
 
 	vsg->state = dr_via_desc_pages_alloc;
 	for (i = 0; i < vsg->num_desc_pages; ++i) {
-		if (NULL == (vsg->desc_pages[i] =
-			     (drm_via_descriptor_t *) __get_free_page(GFP_KERNEL)))
+		if (NULL == (vsg->desc_pages[i] = get_free_page(GFP_KERNEL)))
 			return -ENOMEM;
 	}
 	DRM_DEBUG("Allocated %d pages for %d descriptors.\n", vsg->num_desc_pages,

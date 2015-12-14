@@ -1523,7 +1523,7 @@ static int xen_pgd_alloc(struct mm_struct *mm)
 
 		ret = -ENOMEM;
 
-		user_pgd = (pgd_t *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+		user_pgd = get_free_page(GFP_KERNEL | __GFP_ZERO);
 		page->private = (unsigned long)user_pgd;
 
 		if (user_pgd != NULL) {
