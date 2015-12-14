@@ -271,7 +271,7 @@ static int set_next_request(void);
 #endif
 
 #ifndef fd_dma_mem_alloc
-#define fd_dma_mem_alloc(size) __get_dma_pages(GFP_KERNEL, get_order(size))
+#define fd_dma_mem_alloc(size) get_dma_pages(GFP_KERNEL, get_order(size))
 #endif
 
 static inline void fallback_on_nodma_alloc(char **addr, size_t l)
@@ -282,7 +282,7 @@ static inline void fallback_on_nodma_alloc(char **addr, size_t l)
 	if (can_use_virtual_dma != 2)
 		return;		/* no fallback allowed */
 	pr_info("DMA memory shortage. Temporarily falling back on virtual DMA\n");
-	*addr = (char *)nodma_mem_alloc(l);
+	*addr = nodma_mem_alloc(l);
 #else
 	return;
 #endif
@@ -3148,7 +3148,7 @@ loop:
 	if (ptr->flags & (FD_RAW_READ | FD_RAW_WRITE)) {
 		if (ptr->length <= 0)
 			return -EINVAL;
-		ptr->kernel_data = (char *)fd_dma_mem_alloc(ptr->length);
+		ptr->kernel_data = fd_dma_mem_alloc(ptr->length);
 		fallback_on_nodma_alloc(&ptr->kernel_data, ptr->length);
 		if (!ptr->kernel_data)
 			return -ENOMEM;
@@ -3672,11 +3672,11 @@ static int floppy_open(struct block_device *bdev, fmode_t mode)
 		else
 			try = 32;	/* Only 24 actually useful */
 
-		tmp = (char *)fd_dma_mem_alloc(1024 * try);
+		tmp = fd_dma_mem_alloc(1024 * try);
 		if (!tmp && !floppy_track_buffer) {
 			try >>= 1;	/* buffer only one side */
 			INFBOUND(try, 16);
-			tmp = (char *)fd_dma_mem_alloc(1024 * try);
+			tmp = fd_dma_mem_alloc(1024 * try);
 		}
 		if (!tmp && !floppy_track_buffer)
 			fallback_on_nodma_alloc(&tmp, 2048 * try);

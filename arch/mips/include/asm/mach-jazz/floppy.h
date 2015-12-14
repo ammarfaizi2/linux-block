@@ -102,14 +102,12 @@ static inline unsigned long fd_getfdaddr1(void)
 	return JAZZ_FDC_BASE;
 }
 
-static inline unsigned long fd_dma_mem_alloc(unsigned long size)
+static inline void *fd_dma_mem_alloc(unsigned long size)
 {
-	unsigned long mem;
+	void *mem = get_dma_pages(GFP_KERNEL, get_order(size));
 
-	mem = __get_dma_pages(GFP_KERNEL, get_order(size));
-	if(!mem)
-		return 0;
-	vdma_alloc(CPHYSADDR(mem), size);	/* XXX error checking */
+	if (mem)	/* XXX error checking */
+		vdma_alloc(CPHYSADDR((unsigned long)mem), size);
 
 	return mem;
 }

@@ -141,9 +141,9 @@ static int vdma_get_dma_residue(unsigned int dummy)
 }
 
 
-static unsigned long vdma_mem_alloc(unsigned long size)
+static void *vdma_mem_alloc(unsigned long size)
 {
-	return (unsigned long) vmalloc(size);
+	return vmalloc(size);
 
 }
 

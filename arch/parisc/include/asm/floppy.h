@@ -163,19 +163,14 @@ static int fd_request_irq(void)
 				   0, "floppy", NULL);
 }
 
-static unsigned long dma_mem_alloc(unsigned long size)
+static void *dma_mem_alloc(unsigned long size)
 {
-	return __get_dma_pages(GFP_KERNEL, get_order(size));
+	return get_dma_pages(GFP_KERNEL, get_order(size));
 }
 
 
-static unsigned long vdma_mem_alloc(unsigned long size)
-{
-	return (unsigned long) vmalloc(size);
-
-}
-
-#define nodma_mem_alloc(size) vdma_mem_alloc(size)
+#define vdma_mem_alloc vmalloc
+#define nodma_mem_alloc vmalloc
 
 static void _fd_dma_mem_free(void *addr, unsigned long size)
 {
@@ -237,7 +232,7 @@ static struct fd_routine_l {
 	int (*_request_dma)(unsigned int dmanr, const char * device_id);
 	void (*_free_dma)(unsigned int dmanr);
 	int (*_get_dma_residue)(unsigned int dummy);
-	unsigned long (*_dma_mem_alloc) (unsigned long size);
+	void *(*_dma_mem_alloc) (unsigned long size);
 	int (*_dma_setup)(char *addr, unsigned long size, int mode, int io);
 } fd_routine[] = {
 	{
