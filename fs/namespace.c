@@ -2601,17 +2601,17 @@ static long exact_copy_from_user(void *to, const void __user * from,
 	return n;
 }
 
-int copy_mount_options(const void __user * data, unsigned long *where)
+int copy_mount_options(const void __user * data, void **where)
 {
 	int i;
-	unsigned long page;
+	char *page;
 	unsigned long size;
 
-	*where = 0;
+	*where = NULL;
 	if (!data)
 		return 0;
 
-	if (!(page = __get_free_page(GFP_KERNEL)))
+	if (!(page = (char *)__get_free_page(GFP_KERNEL)))
 		return -ENOMEM;
 
 	/* We only care that *some* data at the address the user
@@ -2623,13 +2623,13 @@ int copy_mount_options(const void __user * data, unsigned long *where)
 	if (size > PAGE_SIZE)
 		size = PAGE_SIZE;
 
-	i = size - exact_copy_from_user((void *)page, data, size);
+	i = size - exact_copy_from_user(page, data, size);
 	if (!i) {
-		free_page((void *)page);
+		free_page(page);
 		return -EFAULT;
 	}
 	if (i != PAGE_SIZE)
-		memset((char *)page + i, 0, PAGE_SIZE - i);
+		memset(page + i, 0, PAGE_SIZE - i);
 	*where = page;
 	return 0;
 }
@@ -2896,7 +2896,7 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 	int ret;
 	char *kernel_type;
 	char *kernel_dev;
-	unsigned long data_page;
+	void *data_page;
 
 	kernel_type = copy_mount_string(type);
 	ret = PTR_ERR(kernel_type);
@@ -2912,10 +2912,9 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 	if (ret < 0)
 		goto out_data;
 
-	ret = do_mount(kernel_dev, dir_name, kernel_type, flags,
-		(void *) data_page);
+	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, data_page);
 
-	free_page((void *)data_page);
+	free_page(data_page);
 out_data:
 	kfree(kernel_dev);
 out_dev:
