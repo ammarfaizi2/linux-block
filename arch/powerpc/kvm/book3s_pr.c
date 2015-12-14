@@ -1375,7 +1375,7 @@ static struct kvm_vcpu *kvmppc_core_vcpu_create_pr(struct kvm *kvm,
 	struct kvmppc_vcpu_book3s *vcpu_book3s;
 	struct kvm_vcpu *vcpu;
 	int err = -ENOMEM;
-	unsigned long p;
+	void *p;
 
 	vcpu = kmem_cache_zalloc(kvm_vcpu_cache, GFP_KERNEL);
 	if (!vcpu)
@@ -1398,10 +1398,10 @@ static struct kvm_vcpu *kvmppc_core_vcpu_create_pr(struct kvm *kvm,
 		goto free_shadow_vcpu;
 
 	err = -ENOMEM;
-	p = __get_free_page(GFP_KERNEL|__GFP_ZERO);
+	p = get_free_page(GFP_KERNEL|__GFP_ZERO);
 	if (!p)
 		goto uninit_vcpu;
-	vcpu->arch.shared = (void *)p;
+	vcpu->arch.shared = p;
 #ifdef CONFIG_PPC_BOOK3S_64
 	/* Always start the shared struct in native endian mode */
 #ifdef __BIG_ENDIAN__
