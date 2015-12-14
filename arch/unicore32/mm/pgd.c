@@ -30,7 +30,7 @@ pgd_t *get_pgd_slow(struct mm_struct *mm)
 	pmd_t *new_pmd, *init_pmd;
 	pte_t *new_pte, *init_pte;
 
-	new_pgd = (pgd_t *)__get_free_pages(GFP_KERNEL, 0);
+	new_pgd = get_free_pages(GFP_KERNEL, 0);
 	if (!new_pgd)
 		goto no_pgd;
 

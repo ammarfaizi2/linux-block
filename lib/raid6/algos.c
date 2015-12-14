@@ -218,7 +218,7 @@ int __init raid6_select_algo(void)
 		dptrs[i] = ((char *)raid6_gfmul) + PAGE_SIZE*i;
 
 	/* Normal code - use a 2-page allocation to avoid D$ conflict */
-	syndromes = (void *) __get_free_pages(GFP_KERNEL, 1);
+	syndromes = get_free_pages(GFP_KERNEL, 1);
 
 	if (!syndromes) {
 		pr_err("raid6: Yikes!  No memory available.\n");

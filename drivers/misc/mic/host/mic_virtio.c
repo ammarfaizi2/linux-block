@@ -649,8 +649,7 @@ int mic_virtio_add_device(struct mic_vdev *mvdev,
 		mutex_init(&mvr->vr_mutex);
 		vr_size = PAGE_ALIGN(vring_size(num, MIC_VIRTIO_RING_ALIGN) +
 			sizeof(struct _mic_vring_info));
-		vr->va = (void *)
-			__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+		vr->va = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					 get_order(vr_size));
 		if (!vr->va) {
 			ret = -ENOMEM;
@@ -688,7 +687,7 @@ int mic_virtio_add_device(struct mic_vdev *mvdev,
 		dev_dbg(&mdev->pdev->dev,
 			"%s %d index %d va %p info %p vr_size 0x%x\n",
 			__func__, __LINE__, i, vr->va, vr->info, vr_size);
-		mvr->buf = (void *)__get_free_pages(GFP_KERNEL,
+		mvr->buf = get_free_pages(GFP_KERNEL,
 					get_order(MIC_INT_DMA_BUF_SIZE));
 		mvr->buf_da = mic_map_single(mvdev->mdev, mvr->buf,
 					  MIC_INT_DMA_BUF_SIZE);

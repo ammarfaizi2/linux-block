@@ -232,7 +232,7 @@ static int pci_fire_msiq_alloc(struct pci_pbm_info *pbm)
 	void *pages;
 
 	order = get_order(512 * 1024);
-	pages = (void *)__get_free_pages(GFP_KERNEL | __GFP_COMP, order);
+	pages = get_free_pages(GFP_KERNEL | __GFP_COMP, order);
 	if (!pages) {
 		printk(KERN_ERR "MSI: Cannot allocate MSI queues (o=%lu).\n",
 		       order);

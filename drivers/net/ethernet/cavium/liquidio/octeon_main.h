@@ -136,9 +136,7 @@ cnnic_alloc_aligned_dma(struct pci_dev *pci_dev,
 
 #define OCTEON_MAX_ALLOC_RETRIES     1
 	do {
-		ptr =
-		    (void *)__get_free_pages(GFP_KERNEL,
-					     get_order(size));
+		ptr = get_free_pages(GFP_KERNEL, get_order(size));
 		retries++;
 	} while ((retries <= OCTEON_MAX_ALLOC_RETRIES) && !ptr);
 

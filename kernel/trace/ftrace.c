@@ -2924,7 +2924,7 @@ static int ftrace_allocate_records(struct ftrace_page *pg, int count)
 		order--;
 
  again:
-	pg->records = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
+	pg->records = get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
 
 	if (!pg->records) {
 		/* if we can't allocate this size, try something smaller */

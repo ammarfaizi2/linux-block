@@ -52,7 +52,7 @@ void *snd_malloc_pages(size_t size, gfp_t gfp_flags)
 		return NULL;
 	gfp_flags |= __GFP_COMP;	/* compound page lets parts be mapped */
 	pg = get_order(size);
-	return (void *) __get_free_pages(gfp_flags, pg);
+	return get_free_pages(gfp_flags, pg);
 }
 
 /**

@@ -84,7 +84,7 @@ static void *ccio_alloc_consistent(struct pci_dev *dev, size_t size,
 {
 	void *ret;
 	
-	ret = (void *)__get_free_pages(GFP_ATOMIC, get_order(size));
+	ret = get_free_pages(GFP_ATOMIC, get_order(size));
 
 	if (ret != NULL) {
 		memset(ret, 0, size);

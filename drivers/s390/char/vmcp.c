@@ -102,7 +102,7 @@ vmcp_write(struct file *file, const char __user *buff, size_t count,
 		return -ERESTARTSYS;
 	}
 	if (!session->response)
-		session->response = (char *)__get_free_pages(GFP_KERNEL
+		session->response = get_free_pages(GFP_KERNEL
 						| __GFP_REPEAT | GFP_DMA,
 						get_order(session->bufsize));
 	if (!session->response) {

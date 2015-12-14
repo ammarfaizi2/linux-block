@@ -1894,8 +1894,7 @@ void __init dn_route_init(void)
 			sizeof(struct dn_rt_hash_bucket);
 		while(dn_rt_hash_mask & (dn_rt_hash_mask - 1))
 			dn_rt_hash_mask--;
-		dn_rt_hash_table = (struct dn_rt_hash_bucket *)
-			__get_free_pages(GFP_ATOMIC, order);
+		dn_rt_hash_table = get_free_pages(GFP_ATOMIC, order);
 	} while (dn_rt_hash_table == NULL && --order > 0);
 
 	if (!dn_rt_hash_table)

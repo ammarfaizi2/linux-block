@@ -390,7 +390,7 @@ static int uninorth_create_gatt_table(struct agp_bridge_data *bridge)
 		page_order = A_SIZE_32(temp)->page_order;
 		num_entries = A_SIZE_32(temp)->num_entries;
 
-		table = (char *) __get_free_pages(GFP_KERNEL, page_order);
+		table = get_free_pages(GFP_KERNEL, page_order);
 
 		if (table == NULL) {
 			i++;

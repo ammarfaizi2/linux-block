@@ -6233,8 +6233,7 @@ lpfc_setup_bg(struct lpfc_hba *phba, struct Scsi_Host *shost)
 	if (!_dump_buf_data) {
 		while (pagecnt) {
 			spin_lock_init(&_dump_buf_lock);
-			_dump_buf_data =
-				(char *) __get_free_pages(GFP_KERNEL, pagecnt);
+			_dump_buf_data = get_free_pages(GFP_KERNEL, pagecnt);
 			if (_dump_buf_data) {
 				lpfc_printf_log(phba, KERN_ERR, LOG_BG,
 					"9043 BLKGRD: allocated %d pages for "
@@ -6257,8 +6256,7 @@ lpfc_setup_bg(struct lpfc_hba *phba, struct Scsi_Host *shost)
 		       "\n", _dump_buf_data);
 	if (!_dump_buf_dif) {
 		while (pagecnt) {
-			_dump_buf_dif =
-				(char *) __get_free_pages(GFP_KERNEL, pagecnt);
+			_dump_buf_dif = get_free_pages(GFP_KERNEL, pagecnt);
 			if (_dump_buf_dif) {
 				lpfc_printf_log(phba, KERN_ERR, LOG_BG,
 					"9046 BLKGRD: allocated %d pages for "

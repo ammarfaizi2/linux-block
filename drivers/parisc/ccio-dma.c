@@ -847,7 +847,7 @@ ccio_alloc_consistent(struct device *dev, size_t size, dma_addr_t *dma_handle, g
 		return 0;
 	}
 #endif
-        ret = (void *) __get_free_pages(flag, get_order(size));
+        ret = get_free_pages(flag, get_order(size));
 
 	if (ret) {
 		memset(ret, 0, size);
@@ -1299,8 +1299,7 @@ ccio_ioc_init(struct ioc *ioc)
 			iova_space_size>>20,
 			iov_order + PAGE_SHIFT);
 
-	ioc->pdir_base = (u64 *)__get_free_pages(GFP_KERNEL, 
-						 get_order(ioc->pdir_size));
+	ioc->pdir_base = get_free_pages(GFP_KERNEL, get_order(ioc->pdir_size));
 	if(NULL == ioc->pdir_base) {
 		panic("%s() could not allocate I/O Page Table\n", __func__);
 	}
@@ -1313,8 +1312,7 @@ ccio_ioc_init(struct ioc *ioc)
  	ioc->res_size = (ioc->pdir_size / sizeof(u64)) >> 3;
 	DBG_INIT("%s() res_size 0x%x\n", __func__, ioc->res_size);
 	
-	ioc->res_map = (u8 *)__get_free_pages(GFP_KERNEL, 
-					      get_order(ioc->res_size));
+	ioc->res_map = get_free_pages(GFP_KERNEL, get_order(ioc->res_size));
 	if(NULL == ioc->res_map) {
 		panic("%s() could not allocate resource map\n", __func__);
 	}

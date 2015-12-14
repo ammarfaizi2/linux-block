@@ -94,11 +94,11 @@ int vmbus_open(struct vmbus_channel *newchannel, u32 send_ringbuffer_size,
 				recv_ringbuffer_size));
 
 	if (!page)
-		out = (void *)__get_free_pages(GFP_KERNEL|__GFP_ZERO,
-					       get_order(send_ringbuffer_size +
+		out = get_free_pages(GFP_KERNEL|__GFP_ZERO,
+				       get_order(send_ringbuffer_size +
 					       recv_ringbuffer_size));
 	else
-		out = (void *)page_address(page);
+		out = page_address(page);
 
 	if (!out) {
 		err = -ENOMEM;

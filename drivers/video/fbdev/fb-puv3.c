@@ -671,7 +671,7 @@ static int unifb_probe(struct platform_device *dev)
 	struct resource *iomem;
 	void *videomemory;
 
-	videomemory = (void *)__get_free_pages(GFP_KERNEL | __GFP_COMP,
+	videomemory = get_free_pages(GFP_KERNEL | __GFP_COMP,
 				get_order(UNIFB_MEMSIZE));
 	if (!videomemory)
 		goto err;

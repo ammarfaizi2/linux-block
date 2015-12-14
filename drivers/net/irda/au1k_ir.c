@@ -229,7 +229,7 @@ static void *dma_alloc(size_t size, dma_addr_t *dma_handle)
 	void *ret;
 	int gfp = GFP_ATOMIC | GFP_DMA;
 
-	ret = (void *)__get_free_pages(gfp, get_order(size));
+	ret = get_free_pages(gfp, get_order(size));
 
 	if (ret != NULL) {
 		memset(ret, 0, size);

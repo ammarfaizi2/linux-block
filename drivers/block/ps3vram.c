@@ -644,8 +644,7 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
 	ps3_system_bus_set_drvdata(dev, priv);
 
 	/* Allocate XDR buffer (1MiB aligned) */
-	priv->xdr_buf = (void *)__get_free_pages(GFP_KERNEL,
-		get_order(XDR_BUF_SIZE));
+	priv->xdr_buf = get_free_pages(GFP_KERNEL, get_order(XDR_BUF_SIZE));
 	if (priv->xdr_buf == NULL) {
 		dev_err(&dev->core, "Could not allocate XDR buffer\n");
 		error = -ENOMEM;

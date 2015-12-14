@@ -93,7 +93,7 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	size = PAGE_ALIGN(size);
 	order = get_order(size);
 
-	page = (void *)__get_free_pages(gfp, order);
+	page = get_free_pages(gfp, order);
 	if (!page) {
 		BUG();
 		return NULL;

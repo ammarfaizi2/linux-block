@@ -628,8 +628,7 @@ static struct hlist_head *qdisc_class_hash_alloc(unsigned int n)
 	if (size <= PAGE_SIZE)
 		h = kmalloc(size, GFP_KERNEL);
 	else
-		h = (struct hlist_head *)
-			__get_free_pages(GFP_KERNEL, get_order(size));
+		h = get_free_pages(GFP_KERNEL, get_order(size));
 
 	if (h != NULL) {
 		for (i = 0; i < n; i++)

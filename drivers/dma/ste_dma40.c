@@ -3425,7 +3425,7 @@ static int __init d40_lcla_allocate(struct d40_base *base)
 	base->lcla_pool.pages = SZ_1K * base->num_phy_chans / PAGE_SIZE;
 
 	for (i = 0; i < MAX_LCLA_ALLOC_ATTEMPTS; i++) {
-		page_list[i] = (void *)__get_free_pages(GFP_KERNEL,
+		page_list[i] = get_free_pages(GFP_KERNEL,
 						base->lcla_pool.pages);
 		if (!page_list[i]) {
 

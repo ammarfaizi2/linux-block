@@ -140,7 +140,7 @@ fill_write_buffer(struct configfs_buffer * buffer, const char __user * buf, size
 	int error;
 
 	if (!buffer->page)
-		buffer->page = (char *)__get_free_pages(GFP_KERNEL, 0);
+		buffer->page = get_free_pages(GFP_KERNEL, 0);
 	if (!buffer->page)
 		return -ENOMEM;
 

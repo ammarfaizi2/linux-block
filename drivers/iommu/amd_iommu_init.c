@@ -500,7 +500,7 @@ static int __init find_last_devid_acpi(struct acpi_table_header *table)
  */
 static int __init alloc_command_buffer(struct amd_iommu *iommu)
 {
-	iommu->cmd_buf = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	iommu->cmd_buf = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 						  get_order(CMD_BUFFER_SIZE));
 
 	return iommu->cmd_buf ? 0 : -ENOMEM;
@@ -547,7 +547,7 @@ static void __init free_command_buffer(struct amd_iommu *iommu)
 /* allocates the memory where the IOMMU will log its events to */
 static int __init alloc_event_buffer(struct amd_iommu *iommu)
 {
-	iommu->evt_buf = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	iommu->evt_buf = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 						  get_order(EVT_BUFFER_SIZE));
 
 	return iommu->evt_buf ? 0 : -ENOMEM;
@@ -579,7 +579,7 @@ static void __init free_event_buffer(struct amd_iommu *iommu)
 /* allocates the memory where the IOMMU will log its events to */
 static int __init alloc_ppr_log(struct amd_iommu *iommu)
 {
-	iommu->ppr_log = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	iommu->ppr_log = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 						  get_order(PPR_LOG_SIZE));
 
 	return iommu->ppr_log ? 0 : -ENOMEM;
@@ -1833,7 +1833,7 @@ static int __init early_amd_iommu_init(void)
 
 	/* Device table - directly used by all IOMMUs */
 	ret = -ENOMEM;
-	amd_iommu_dev_table = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	amd_iommu_dev_table = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 				      get_order(dev_table_size));
 	if (amd_iommu_dev_table == NULL)
 		goto out;
@@ -1842,19 +1842,19 @@ static int __init early_amd_iommu_init(void)
 	 * Alias table - map PCI Bus/Dev/Func to Bus/Dev/Func the
 	 * IOMMU see for that device
 	 */
-	amd_iommu_alias_table = (void *)__get_free_pages(GFP_KERNEL,
+	amd_iommu_alias_table = get_free_pages(GFP_KERNEL,
 			get_order(alias_table_size));
 	if (amd_iommu_alias_table == NULL)
 		goto out;
 
 	/* IOMMU rlookup table - find the IOMMU for a specific device */
-	amd_iommu_rlookup_table = (void *)__get_free_pages(
+	amd_iommu_rlookup_table = get_free_pages(
 			GFP_KERNEL | __GFP_ZERO,
 			get_order(rlookup_table_size));
 	if (amd_iommu_rlookup_table == NULL)
 		goto out;
 
-	amd_iommu_pd_alloc_bitmap = (void *)__get_free_pages(
+	amd_iommu_pd_alloc_bitmap = get_free_pages(
 					    GFP_KERNEL | __GFP_ZERO,
 					    get_order(MAX_DOMAIN_ID/8));
 	if (amd_iommu_pd_alloc_bitmap == NULL)
@@ -1898,7 +1898,7 @@ static int __init early_amd_iommu_init(void)
 		if (!amd_iommu_irq_cache)
 			goto out;
 
-		irq_lookup_table = (void *)__get_free_pages(
+		irq_lookup_table = get_free_pages(
 				GFP_KERNEL | __GFP_ZERO,
 				get_order(rlookup_table_size));
 		if (!irq_lookup_table)

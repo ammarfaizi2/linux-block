@@ -119,7 +119,7 @@ static void *mips_dma_alloc_noncoherent(struct device *dev, size_t size,
 
 	gfp = massage_gfp_flags(dev, gfp);
 
-	ret = (void *) __get_free_pages(gfp, get_order(size));
+	ret = get_free_pages(gfp, get_order(size));
 
 	if (ret != NULL) {
 		memset(ret, 0, size);

@@ -221,11 +221,11 @@ static int solo_p2m_test(struct solo_dev *solo_dev, int base, int size)
 	int ret = -EIO;
 	int order = get_order(size);
 
-	wr_buf = (u32 *)__get_free_pages(GFP_KERNEL, order);
+	wr_buf = get_free_pages(GFP_KERNEL, order);
 	if (wr_buf == NULL)
 		return -1;
 
-	rd_buf = (u32 *)__get_free_pages(GFP_KERNEL, order);
+	rd_buf = get_free_pages(GFP_KERNEL, order);
 	if (rd_buf == NULL) {
 		free_pages(wr_buf, order);
 		return -1;

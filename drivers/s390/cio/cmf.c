@@ -572,7 +572,7 @@ static int alloc_cmb(struct ccw_device *cdev)
 		WARN_ON(!list_empty(&cmb_area.list));
 
 		spin_unlock(&cmb_area.lock);
-		mem = (void*)__get_free_pages(GFP_KERNEL | GFP_DMA,
+		mem = get_free_pages(GFP_KERNEL | GFP_DMA,
 				 get_order(size));
 		spin_lock(&cmb_area.lock);
 

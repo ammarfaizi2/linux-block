@@ -166,7 +166,7 @@ int hfs_mdb_get(struct super_block *sb)
 		pr_warn("continuing without an alternate MDB\n");
 	}
 
-	HFS_SB(sb)->bitmap = (__be32 *)__get_free_pages(GFP_KERNEL, PAGE_SIZE < 8192 ? 1 : 0);
+	HFS_SB(sb)->bitmap = get_free_pages(GFP_KERNEL, PAGE_SIZE < 8192 ? 1 : 0);
 	if (!HFS_SB(sb)->bitmap)
 		goto out;
 

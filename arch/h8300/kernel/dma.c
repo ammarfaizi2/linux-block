@@ -21,7 +21,7 @@ static void *dma_alloc(struct device *dev, size_t size,
 
 	if (dev == NULL || (*dev->dma_mask < 0xffffffff))
 		gfp |= GFP_DMA;
-	ret = (void *)__get_free_pages(gfp, get_order(size));
+	ret = get_free_pages(gfp, get_order(size));
 
 	if (ret != NULL) {
 		memset(ret, 0, size);

@@ -340,7 +340,7 @@ static void *alloc_one_pg_vec_page(unsigned long order)
 	gfp_t gfp_flags = GFP_KERNEL | __GFP_COMP | __GFP_ZERO |
 			  __GFP_NOWARN | __GFP_NORETRY;
 
-	buffer = (void *)__get_free_pages(gfp_flags, order);
+	buffer = get_free_pages(gfp_flags, order);
 	if (buffer != NULL)
 		return buffer;
 
@@ -349,7 +349,7 @@ static void *alloc_one_pg_vec_page(unsigned long order)
 		return buffer;
 
 	gfp_flags &= ~__GFP_NORETRY;
-	return (void *)__get_free_pages(gfp_flags, order);
+	return get_free_pages(gfp_flags, order);
 }
 
 static void **alloc_pg_vec(struct netlink_sock *nlk,

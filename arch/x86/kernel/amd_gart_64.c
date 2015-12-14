@@ -671,7 +671,7 @@ static __init int init_amd_gatt(struct agp_kern_info *info)
 	info->aper_size = aper_size >> 20;
 
 	gatt_size = (aper_size >> PAGE_SHIFT) * sizeof(u32);
-	gatt = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	gatt = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					get_order(gatt_size));
 	if (!gatt)
 		panic("Cannot allocate GATT table");
@@ -776,7 +776,7 @@ int __init gart_iommu_init(void)
 	iommu_size = check_iommu_size(info.aper_base, aper_size);
 	iommu_pages = iommu_size >> PAGE_SHIFT;
 
-	iommu_gart_bitmap = (void *) __get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	iommu_gart_bitmap = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 						      get_order(iommu_pages/8));
 	if (!iommu_gart_bitmap)
 		panic("Cannot allocate iommu bitmap\n");

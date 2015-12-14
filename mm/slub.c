@@ -4206,7 +4206,7 @@ static int alloc_loc_track(struct loc_track *t, unsigned long max, gfp_t flags)
 
 	order = get_order(sizeof(struct location) * max);
 
-	l = (void *)__get_free_pages(flags, order);
+	l = get_free_pages(flags, order);
 	if (!l)
 		return 0;
 

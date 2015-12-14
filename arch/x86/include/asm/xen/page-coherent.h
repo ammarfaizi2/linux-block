@@ -9,7 +9,7 @@ static inline void *xen_alloc_coherent_pages(struct device *hwdev, size_t size,
 		dma_addr_t *dma_handle, gfp_t flags,
 		struct dma_attrs *attrs)
 {
-	void *vstart = (void*)__get_free_pages(flags, get_order(size));
+	void *vstart = get_free_pages(flags, get_order(size));
 	*dma_handle = virt_to_phys(vstart);
 	return vstart;
 }

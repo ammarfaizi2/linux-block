@@ -876,7 +876,7 @@ static void *sba_alloc_consistent(struct device *hwdev, size_t size,
 		return NULL;
 	}
 
-        ret = (void *) __get_free_pages(gfp, get_order(size));
+        ret = get_free_pages(gfp, get_order(size));
 
 	if (ret) {
 		memset(ret, 0, size);
@@ -1283,8 +1283,7 @@ sba_ioc_init_pluto(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 		__func__, ioc->ioc_hpa, iova_space_size >> 20,
 		iov_order + PAGE_SHIFT);
 
-	ioc->pdir_base = (void *) __get_free_pages(GFP_KERNEL,
-						   get_order(ioc->pdir_size));
+	ioc->pdir_base = get_free_pages(GFP_KERNEL, get_order(ioc->pdir_size));
 	if (!ioc->pdir_base)
 		panic("Couldn't allocate I/O Page Table\n");
 
@@ -1697,7 +1696,7 @@ sba_common_init(struct sba_device *sba_dev)
 			__func__, res_size);
 
 		sba_dev->ioc[i].res_size = res_size;
-		sba_dev->ioc[i].res_map = (char *) __get_free_pages(GFP_KERNEL, get_order(res_size));
+		sba_dev->ioc[i].res_map = get_free_pages(GFP_KERNEL, get_order(res_size));
 
 #ifdef DEBUG_DMB_TRAP
 		iterate_pages( sba_dev->ioc[i].res_map, res_size,

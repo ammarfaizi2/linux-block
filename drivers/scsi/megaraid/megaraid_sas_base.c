@@ -5382,7 +5382,7 @@ static int megasas_probe_one(struct pci_dev *pdev,
 	{
 		instance->ctrl_context_pages =
 			get_order(sizeof(struct fusion_context));
-		instance->ctrl_context = (void *)__get_free_pages(GFP_KERNEL,
+		instance->ctrl_context = get_free_pages(GFP_KERNEL,
 				instance->ctrl_context_pages);
 		if (!instance->ctrl_context) {
 			dev_printk(KERN_DEBUG, &pdev->dev, "Failed to allocate "

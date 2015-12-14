@@ -117,10 +117,10 @@ static inline void tlb_add_flush(struct mmu_gather *tlb, unsigned long addr)
 
 static inline void __tlb_alloc_page(struct mmu_gather *tlb)
 {
-	unsigned long addr = __get_free_pages(GFP_NOWAIT | __GFP_NOWARN, 0);
+	void *addr = get_free_pages(GFP_NOWAIT | __GFP_NOWARN, 0);
 
 	if (addr) {
-		tlb->pages = (void *)addr;
+		tlb->pages = addr;
 		tlb->max = PAGE_SIZE / sizeof(struct page *);
 	}
 }

@@ -315,19 +315,19 @@ int bch_btree_keys_alloc(struct btree_keys *b, unsigned page_order, gfp_t gfp)
 
 	b->page_order = page_order;
 
-	t->data = (void *) __get_free_pages(gfp, b->page_order);
+	t->data = get_free_pages(gfp, b->page_order);
 	if (!t->data)
 		goto err;
 
 	t->tree = bset_tree_bytes(b) < PAGE_SIZE
 		? kmalloc(bset_tree_bytes(b), gfp)
-		: (void *) __get_free_pages(gfp, get_order(bset_tree_bytes(b)));
+		: get_free_pages(gfp, get_order(bset_tree_bytes(b)));
 	if (!t->tree)
 		goto err;
 
 	t->prev = bset_prev_bytes(b) < PAGE_SIZE
 		? kmalloc(bset_prev_bytes(b), gfp)
-		: (void *) __get_free_pages(gfp, get_order(bset_prev_bytes(b)));
+		: get_free_pages(gfp, get_order(bset_prev_bytes(b)));
 	if (!t->prev)
 		goto err;
 
@@ -1180,7 +1180,7 @@ static void __btree_sort(struct btree_keys *b, struct btree_iter *iter,
 {
 	uint64_t start_time;
 	bool used_mempool = false;
-	struct bset *out = (void *) __get_free_pages(__GFP_NOWARN|GFP_NOWAIT,
+	struct bset *out = get_free_pages(__GFP_NOWARN|GFP_NOWAIT,
 						     order);
 	if (!out) {
 		struct page *outp;

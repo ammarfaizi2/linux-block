@@ -67,8 +67,7 @@ static int __init vdma_init(void)
 	 * aligned and should be uncached to avoid cache flushing after every
 	 * update.
 	 */
-	pgtbl = (VDMA_PGTBL_ENTRY *)__get_free_pages(GFP_KERNEL | GFP_DMA,
-						    get_order(VDMA_PGTBL_SIZE));
+	pgtbl = get_free_pages(GFP_KERNEL | GFP_DMA, get_order(VDMA_PGTBL_SIZE));
 	BUG_ON(!pgtbl);
 	dma_cache_wback_inv((unsigned long)pgtbl, VDMA_PGTBL_SIZE);
 	pgtbl = (VDMA_PGTBL_ENTRY *)KSEG1ADDR(pgtbl);

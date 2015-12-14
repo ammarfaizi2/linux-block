@@ -327,8 +327,7 @@ static struct neigh_hash_table *neigh_hash_alloc(unsigned int shift)
 	if (size <= PAGE_SIZE)
 		buckets = kzalloc(size, GFP_ATOMIC);
 	else
-		buckets = (struct neighbour __rcu **)
-			  __get_free_pages(GFP_ATOMIC | __GFP_ZERO,
+		buckets = get_free_pages(GFP_ATOMIC | __GFP_ZERO,
 					   get_order(size));
 	if (!buckets) {
 		kfree(ret);

@@ -975,7 +975,7 @@ static int alloc_queue(const char *name, unsigned long num_entries,
 	size = num_entries * LDC_PACKET_SIZE;
 	order = get_order(size);
 
-	q = (void *) __get_free_pages(GFP_KERNEL, order);
+	q = get_free_pages(GFP_KERNEL, order);
 	if (!q) {
 		printk(KERN_ERR PFX "Alloc of %s queue failed with "
 		       "size=%lu order=%lu\n", name, size, order);
@@ -1059,8 +1059,7 @@ static int ldc_iommu_init(const char *name, struct ldc_channel *lp)
 
 	order = get_order(tsbsize);
 
-	table = (struct ldc_mtable_entry *)
-		__get_free_pages(GFP_KERNEL, order);
+	table = get_free_pages(GFP_KERNEL, order);
 	err = -ENOMEM;
 	if (!table) {
 		printk(KERN_ERR PFX "Alloc of MTE table failed, "

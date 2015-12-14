@@ -195,8 +195,8 @@ int cxl_alloc_spa(struct cxl_afu *afu)
 
 	WARN_ON(afu->spa_size > 0x100000); /* Max size supported by the hardware */
 
-	if (!(afu->spa = (struct cxl_process_element *)
-	      __get_free_pages(GFP_KERNEL | __GFP_ZERO, afu->spa_order))) {
+	if (!(afu->spa = 
+	      get_free_pages(GFP_KERNEL | __GFP_ZERO, afu->spa_order))) {
 		pr_err("cxl_alloc_spa: Unable to allocate scheduled process area\n");
 		return -ENOMEM;
 	}

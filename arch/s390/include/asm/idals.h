@@ -132,8 +132,7 @@ idal_buffer_alloc(size_t size, int page_order)
 			ib->data[i] = ib->data[i-1] + IDA_BLOCK_SIZE;
 			continue;
 		}
-		ib->data[i] = (void *)
-			__get_free_pages(GFP_KERNEL, page_order);
+		ib->data[i] = get_free_pages(GFP_KERNEL, page_order);
 		if (ib->data[i] != NULL)
 			continue;
 		// Not enough memory

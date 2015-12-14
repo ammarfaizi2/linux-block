@@ -59,8 +59,7 @@ struct sctp_ssnmap *sctp_ssnmap_new(__u16 in, __u16 out,
 	if (size <= KMALLOC_MAX_SIZE)
 		retval = kmalloc(size, gfp);
 	else
-		retval = (struct sctp_ssnmap *)
-			  __get_free_pages(gfp, get_order(size));
+		retval = get_free_pages(gfp, get_order(size));
 	if (!retval)
 		goto fail;
 

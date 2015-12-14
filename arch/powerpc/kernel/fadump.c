@@ -551,7 +551,7 @@ static void *fadump_cpu_notes_buf_alloc(unsigned long size)
 	unsigned long order, count, i;
 
 	order = get_order(size);
-	vaddr = (void *)__get_free_pages(GFP_KERNEL|__GFP_ZERO, order);
+	vaddr = get_free_pages(GFP_KERNEL|__GFP_ZERO, order);
 	if (!vaddr)
 		return NULL;
 

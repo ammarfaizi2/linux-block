@@ -1147,8 +1147,8 @@ static int __init dccp_init(void)
 		while (hash_size & (hash_size - 1))
 			hash_size--;
 		dccp_hashinfo.ehash_mask = hash_size - 1;
-		dccp_hashinfo.ehash = (struct inet_ehash_bucket *)
-			__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
+		dccp_hashinfo.ehash = 
+			get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
 	} while (!dccp_hashinfo.ehash && --ehash_order > 0);
 
 	if (!dccp_hashinfo.ehash) {
@@ -1170,8 +1170,8 @@ static int __init dccp_init(void)
 		if ((dccp_hashinfo.bhash_size > (64 * 1024)) &&
 		    bhash_order > 0)
 			continue;
-		dccp_hashinfo.bhash = (struct inet_bind_hashbucket *)
-			__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
+		dccp_hashinfo.bhash =
+			get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
 	} while (!dccp_hashinfo.bhash && --bhash_order >= 0);
 
 	if (!dccp_hashinfo.bhash) {

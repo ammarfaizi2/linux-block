@@ -268,8 +268,7 @@ static int ccdc_update_raw_params(struct ccdc_config_params_raw *raw_params)
 		}
 
 		/* Allocate memory for FPC table */
-		fpc_virtaddr =
-			(unsigned int *)__get_free_pages(GFP_KERNEL | GFP_DMA,
+		fpc_virtaddr = get_free_pages(GFP_KERNEL | GFP_DMA,
 							 get_order(raw_params->
 							 fault_pxl.fp_num *
 							 FP_NUM_BYTES));

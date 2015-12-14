@@ -2912,8 +2912,7 @@ iscsi_conn_setup(struct iscsi_cls_session *cls_session, int dd_size,
 	}
 	spin_unlock_bh(&session->frwd_lock);
 
-	data = (char *) __get_free_pages(GFP_KERNEL,
-					 get_order(ISCSI_DEF_MAX_RECV_SEG_LEN));
+	data = get_free_pages(GFP_KERNEL, get_order(ISCSI_DEF_MAX_RECV_SEG_LEN));
 	if (!data)
 		goto login_task_data_alloc_fail;
 	conn->login_task->data = conn->data = data;

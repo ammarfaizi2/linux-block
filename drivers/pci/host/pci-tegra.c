@@ -1296,7 +1296,7 @@ static int tegra_pcie_enable_msi(struct tegra_pcie *pcie)
 	}
 
 	/* setup AFI/FPCI range */
-	msi->pages = (void *)__get_free_pages(GFP_KERNEL, 0);
+	msi->pages = get_free_pages(GFP_KERNEL, 0);
 	base = virt_to_phys(msi->pages);
 
 	afi_writel(pcie, base >> soc->msi_base_shift, AFI_MSI_FPCI_BAR_ST);

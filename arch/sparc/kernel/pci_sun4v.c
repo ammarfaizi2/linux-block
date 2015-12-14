@@ -753,7 +753,7 @@ static int pci_sun4v_msiq_alloc(struct pci_pbm_info *pbm)
 	q_size = pbm->msiq_ent_count * sizeof(struct pci_sun4v_msiq_entry);
 	alloc_size = (pbm->msiq_num * q_size);
 	order = get_order(alloc_size);
-	pages = (void *)__get_free_pages(GFP_KERNEL | __GFP_COMP, order);
+	pages = get_free_pages(GFP_KERNEL | __GFP_COMP, order);
 	if (!pages) {
 		printk(KERN_ERR "MSI: Cannot allocate MSI queues (o=%lu).\n",
 		       order);

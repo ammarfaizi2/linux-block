@@ -278,7 +278,7 @@ static void *sbus_alloc_coherent(struct device *dev, size_t len,
 	}
 
 	order = get_order(len_total);
-	va = (void *)__get_free_pages(gfp, order);
+	va = get_free_pages(gfp, order);
 	if (!va)
 		goto err_nopages;
 
@@ -444,7 +444,7 @@ static void *pci32_alloc_coherent(struct device *dev, size_t len,
 	}
 
 	order = get_order(len_total);
-	va = (void *) __get_free_pages(gfp, order);
+	va = get_free_pages(gfp, order);
 	if (va == NULL) {
 		printk("pci_alloc_consistent: no %ld pages\n", len_total>>PAGE_SHIFT);
 		goto err_nopages;

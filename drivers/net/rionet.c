@@ -467,7 +467,7 @@ static int rionet_setup_netdev(struct rio_mport *mport, struct net_device *ndev)
 	const size_t rionet_active_bytes = sizeof(void *) *
 				RIO_MAX_ROUTE_ENTRIES(mport->sys_size);
 
-	nets[mport->id].active = (struct rio_dev **)__get_free_pages(GFP_KERNEL,
+	nets[mport->id].active = get_free_pages(GFP_KERNEL,
 						get_order(rionet_active_bytes));
 	if (!nets[mport->id].active) {
 		rc = -ENOMEM;

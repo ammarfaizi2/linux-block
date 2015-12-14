@@ -652,8 +652,8 @@ static int atmel_aes_buff_init(struct atmel_aes_dev *dd)
 {
 	int err = -ENOMEM;
 
-	dd->buf_in = (void *)__get_free_pages(GFP_KERNEL, 0);
-	dd->buf_out = (void *)__get_free_pages(GFP_KERNEL, 0);
+	dd->buf_in = get_free_pages(GFP_KERNEL, 0);
+	dd->buf_out = get_free_pages(GFP_KERNEL, 0);
 	dd->buflen = PAGE_SIZE;
 	dd->buflen &= ~(AES_BLOCK_SIZE - 1);
 

@@ -173,8 +173,8 @@ static inline int
 init_new_context(struct task_struct *tsk, struct mm_struct *mm)
 {
 #ifdef CONFIG_MPU
-	unsigned long p = __get_free_pages(GFP_KERNEL, page_mask_order);
-	mm->context.page_rwx_mask = (unsigned long *)p;
+	unsigned long *p = get_free_pages(GFP_KERNEL, page_mask_order);
+	mm->context.page_rwx_mask = p;
 	memset(mm->context.page_rwx_mask, 0,
 	       page_mask_nelts * 3 * sizeof(long));
 #endif

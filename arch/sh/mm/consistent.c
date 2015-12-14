@@ -41,7 +41,7 @@ void *dma_generic_alloc_coherent(struct device *dev, size_t size,
 
 	gfp |= __GFP_ZERO;
 
-	ret = (void *)__get_free_pages(gfp, order);
+	ret = get_free_pages(gfp, order);
 	if (!ret)
 		return NULL;
 

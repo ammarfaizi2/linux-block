@@ -592,7 +592,7 @@ static int ssd1307fb_probe(struct i2c_client *client,
 
 	vmem_size = par->width * par->height / 8;
 
-	vmem = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	vmem = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					get_order(vmem_size));
 	if (!vmem) {
 		dev_err(&client->dev, "Couldn't allocate graphical memory.\n");

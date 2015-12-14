@@ -840,8 +840,7 @@ static struct hlist_head *fib_info_hash_alloc(int bytes)
 	if (bytes <= PAGE_SIZE)
 		return kzalloc(bytes, GFP_KERNEL);
 	else
-		return (struct hlist_head *)
-			__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+		return get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					 get_order(bytes));
 }
 

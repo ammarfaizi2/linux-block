@@ -880,7 +880,7 @@ void *get_output_buffer(int *len_out)
 {
 	void *ret;
 
-	ret = (void *) __get_free_pages(GFP_KERNEL, 0);
+	ret = get_free_pages(GFP_KERNEL, 0);
 	if (ret) *len_out = PAGE_SIZE;
 	else *len_out = 0;
 	return ret;

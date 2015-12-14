@@ -294,7 +294,7 @@ hp_zx1_create_gatt_table (struct agp_bridge_data *bridge)
 	int i;
 
 	if (hp->io_pdir_owner) {
-		hp->io_pdir = (u64 *) __get_free_pages(GFP_KERNEL,
+		hp->io_pdir = get_free_pages(GFP_KERNEL,
 						get_order(hp->io_pdir_size));
 		if (!hp->io_pdir) {
 			printk(KERN_ERR PFX "Couldn't allocate contiguous "

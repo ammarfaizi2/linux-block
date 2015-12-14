@@ -947,7 +947,7 @@ void *devm_get_free_pages(struct device *dev,
 				  gfp_t gfp_mask, unsigned int order)
 {
 	struct pages_devres *devres;
-	void *addr = (void *)__get_free_pages(gfp_mask, order);
+	void *addr = get_free_pages(gfp_mask, order);
 
 	if (unlikely(!addr))
 		return 0;

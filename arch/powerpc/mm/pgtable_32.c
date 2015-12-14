@@ -89,7 +89,7 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 #ifndef CONFIG_PPC_4K_PAGES
 	ret = kmem_cache_alloc(pgtable_cache, GFP_KERNEL | __GFP_ZERO);
 #else
-	ret = (pgd_t *)__get_free_pages(GFP_KERNEL|__GFP_ZERO,
+	ret = get_free_pages(GFP_KERNEL|__GFP_ZERO,
 			PGDIR_ORDER - PAGE_SHIFT);
 #endif
 	return ret;

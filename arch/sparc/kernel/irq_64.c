@@ -1095,8 +1095,7 @@ static void __init irq_ivector_init(void)
 	ivecs = size_nr_ivec();
 	size = sizeof(struct ino_bucket) * ivecs;
 	order = get_order(size);
-	ivector_table = (struct ino_bucket *)
-		__get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
+	ivector_table = get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
 	if (!ivector_table) {
 		prom_printf("Fatal error, cannot allocate ivector_table\n");
 		prom_halt();

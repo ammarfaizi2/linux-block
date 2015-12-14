@@ -183,8 +183,7 @@ static int pcpu_alloc_lowcore(struct pcpu *pcpu, int cpu)
 	struct _lowcore *lc;
 
 	if (pcpu != &pcpu_devices[0]) {
-		pcpu->lowcore =	(struct _lowcore *)
-			__get_free_pages(GFP_KERNEL | GFP_DMA, LC_ORDER);
+		pcpu->lowcore =	get_free_pages(GFP_KERNEL | GFP_DMA, LC_ORDER);
 		async_stack = __get_free_pages(GFP_KERNEL, ASYNC_ORDER);
 		panic_stack = __get_free_page(GFP_KERNEL);
 		if (!pcpu->lowcore || !panic_stack || !async_stack)

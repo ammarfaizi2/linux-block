@@ -396,7 +396,7 @@ static void *diag204_alloc_vbuf(int pages)
 
 static void *diag204_alloc_rbuf(void)
 {
-	diag204_buf = (void*)__get_free_pages(GFP_KERNEL,0);
+	diag204_buf = get_free_pages(GFP_KERNEL,0);
 	if (!diag204_buf)
 		return ERR_PTR(-ENOMEM);
 	diag204_buf_pages = 1;

@@ -3386,7 +3386,7 @@ _base_allocate_memory_pools(struct MPT3SAS_ADAPTER *ioc,  int sleep_flag)
 
 	sz = ioc->scsiio_depth * sizeof(struct scsiio_tracker);
 	ioc->scsi_lookup_pages = get_order(sz);
-	ioc->scsi_lookup = (struct scsiio_tracker *)__get_free_pages(
+	ioc->scsi_lookup = get_free_pages(
 	    GFP_KERNEL, ioc->scsi_lookup_pages);
 	if (!ioc->scsi_lookup) {
 		pr_err(MPT3SAS_FMT "scsi_lookup: get_free_pages failed, sz(%d)\n",
@@ -3400,8 +3400,7 @@ _base_allocate_memory_pools(struct MPT3SAS_ADAPTER *ioc,  int sleep_flag)
 	ioc->chain_depth = min_t(u32, ioc->chain_depth, MAX_CHAIN_DEPTH);
 	sz = ioc->chain_depth * sizeof(struct chain_tracker);
 	ioc->chain_pages = get_order(sz);
-	ioc->chain_lookup = (struct chain_tracker *)__get_free_pages(
-	    GFP_KERNEL, ioc->chain_pages);
+	ioc->chain_lookup = get_free_pages(GFP_KERNEL, ioc->chain_pages);
 	if (!ioc->chain_lookup) {
 		pr_err(MPT3SAS_FMT "chain_lookup: __get_free_pages failed\n",
 			ioc->name);

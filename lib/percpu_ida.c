@@ -303,7 +303,7 @@ int __percpu_ida_init(struct percpu_ida *pool, unsigned long nr_tags,
 	}
 
 	order = get_order(nr_tags * sizeof(unsigned));
-	pool->freelist = (void *) __get_free_pages(GFP_KERNEL, order);
+	pool->freelist = get_free_pages(GFP_KERNEL, order);
 	if (!pool->freelist)
 		return -ENOMEM;
 

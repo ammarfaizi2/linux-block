@@ -763,7 +763,7 @@ static int alloc_mem(struct cxlflash_cfg *cfg)
 	struct device *dev = &cfg->dev->dev;
 
 	/* AFU is ~12k, i.e. only one 64k page or up to four 4k pages */
-	cfg->afu = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	cfg->afu = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					    get_order(sizeof(struct afu)));
 	if (unlikely(!cfg->afu)) {
 		dev_err(dev, "%s: cannot get %d free pages\n",

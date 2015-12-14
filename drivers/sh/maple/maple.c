@@ -738,8 +738,7 @@ static int maple_set_vblank_interrupt_handler(void)
 
 static int maple_get_dma_buffer(void)
 {
-	maple_sendbuf =
-	    (void *) __get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	maple_sendbuf = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 				      MAPLE_DMA_PAGES);
 	if (!maple_sendbuf)
 		return -ENOMEM;

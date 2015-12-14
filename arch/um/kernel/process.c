@@ -66,7 +66,7 @@ void *alloc_stack(int order, int atomic)
 
 	if (atomic)
 		flags = GFP_ATOMIC;
-	return (void *)__get_free_pages(flags, order);
+	return get_free_pages(flags, order);
 }
 
 static inline void set_current(struct task_struct *task)

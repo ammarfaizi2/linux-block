@@ -115,7 +115,7 @@ static void *alpha_noop_alloc_coherent(struct device *dev, size_t size,
 
 	if (!dev || *dev->dma_mask >= 0xffffffffUL)
 		gfp &= ~GFP_DMA;
-	ret = (void *)__get_free_pages(gfp, get_order(size));
+	ret = get_free_pages(gfp, get_order(size));
 	if (ret) {
 		memset(ret, 0, size);
 		*dma_handle = virt_to_phys(ret);

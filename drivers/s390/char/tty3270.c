@@ -690,8 +690,8 @@ tty3270_alloc_view(void)
 	tp->rcl_max = 20;
 
 	for (pages = 0; pages < TTY3270_STRING_PAGES; pages++) {
-		tp->freemem_pages[pages] = (void *)
-			__get_free_pages(GFP_KERNEL|GFP_DMA, 0);
+		tp->freemem_pages[pages] = 
+			get_free_pages(GFP_KERNEL|GFP_DMA, 0);
 		if (!tp->freemem_pages[pages])
 			goto out_pages;
 		add_string_memory(&tp->freemem,

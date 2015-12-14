@@ -30,7 +30,7 @@ void *dma_alloc_coherent(struct device *dev, size_t size,
 	if (dev == NULL || (dev->coherent_dma_mask < 0xffffffff))
 		gfp |= GFP_DMA;
 
-	ret = (void *)__get_free_pages(gfp, order);
+	ret = get_free_pages(gfp, order);
 
 	if (ret != NULL) {
 		memset(ret, 0, size);

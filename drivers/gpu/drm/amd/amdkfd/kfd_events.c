@@ -137,7 +137,7 @@ static bool allocate_signal_page(struct file *devkfd, struct kfd_process *p)
 
 	page->free_slots = SLOTS_PER_PAGE;
 
-	backing_store = (void *) __get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	backing_store = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					get_order(KFD_SIGNAL_EVENT_LIMIT * 8));
 	if (!backing_store)
 		goto fail_alloc_signal_store;

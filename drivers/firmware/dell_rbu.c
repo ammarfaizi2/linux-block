@@ -160,8 +160,7 @@ static int create_packet(void *data, size_t length)
 	}
 
 	while (!packet_data_temp_buf) {
-		packet_data_temp_buf = (unsigned char *)
-			__get_free_pages(GFP_KERNEL, ordernum);
+		packet_data_temp_buf = get_free_pages(GFP_KERNEL, ordernum);
 		if (!packet_data_temp_buf) {
 			printk(KERN_WARNING
 				"dell_rbu:%s: failed to allocate new "
@@ -434,8 +433,7 @@ static int img_update_realloc(unsigned long size)
 	spin_unlock(&rbu_data.lock);
 
 	ordernum = get_order(size);
-	image_update_buffer =
-		(unsigned char *) __get_free_pages(GFP_KERNEL, ordernum);
+	image_update_buffer = get_free_pages(GFP_KERNEL, ordernum);
 
 	img_buf_phys_addr =
 		(unsigned long) virt_to_phys(image_update_buffer);

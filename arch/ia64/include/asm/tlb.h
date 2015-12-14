@@ -158,10 +158,10 @@ ia64_tlb_flush_mmu (struct mmu_gather *tlb, unsigned long start, unsigned long e
 
 static inline void __tlb_alloc_page(struct mmu_gather *tlb)
 {
-	unsigned long addr = __get_free_pages(GFP_NOWAIT | __GFP_NOWARN, 0);
+	void *addr = get_free_pages(GFP_NOWAIT | __GFP_NOWARN, 0);
 
 	if (addr) {
-		tlb->pages = (void *)addr;
+		tlb->pages = addr;
 		tlb->max = PAGE_SIZE / sizeof(void *);
 	}
 }

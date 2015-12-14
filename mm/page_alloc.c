@@ -3276,7 +3276,7 @@ EXPORT_SYMBOL(get_free_pages);
 
 void *get_zeroed_page(gfp_t gfp_mask)
 {
-	return (void *)__get_free_pages(gfp_mask | __GFP_ZERO, 0);
+	return get_free_pages(gfp_mask | __GFP_ZERO, 0);
 }
 EXPORT_SYMBOL(get_zeroed_page);
 
@@ -3481,7 +3481,7 @@ static void *make_alloc_exact(void *addr, unsigned int order,
 void *alloc_pages_exact(size_t size, gfp_t gfp_mask)
 {
 	unsigned int order = get_order(size);
-	void *addr = (void *)__get_free_pages(gfp_mask, order);
+	void *addr = get_free_pages(gfp_mask, order);
 	return make_alloc_exact(addr, order, size);
 }
 EXPORT_SYMBOL(alloc_pages_exact);

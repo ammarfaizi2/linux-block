@@ -229,7 +229,7 @@ static ssize_t b43legacy_debugfs_read(struct file *file, char __user *userbuf,
 	dfile = fops_to_dfs_file(dev, dfops);
 
 	if (!dfile->buffer) {
-		buf = (char *)__get_free_pages(GFP_KERNEL, buforder);
+		buf = get_free_pages(GFP_KERNEL, buforder);
 		if (!buf) {
 			err = -ENOMEM;
 			goto out_unlock;

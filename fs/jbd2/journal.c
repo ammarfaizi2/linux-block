@@ -2301,12 +2301,12 @@ void *jbd2_alloc(size_t size, gfp_t flags)
 
 	flags |= __GFP_REPEAT;
 	if (size == PAGE_SIZE)
-		ptr = (void *)__get_free_pages(flags, 0);
+		ptr = get_free_pages(flags, 0);
 	else if (size > PAGE_SIZE) {
 		int order = get_order(size);
 
 		if (order < 3)
-			ptr = (void *)__get_free_pages(flags, order);
+			ptr = get_free_pages(flags, order);
 		else
 			ptr = vmalloc(size);
 	} else

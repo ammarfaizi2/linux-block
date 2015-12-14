@@ -247,8 +247,7 @@ static void ldt_get_host_info(void)
 	for (i = LDT_PAGES_MAX-1, order=0; i; i>>=1, order++)
 		;
 
-	ldt = (struct ldt_entry *)
-	      __get_free_pages(GFP_KERNEL|__GFP_ZERO, order);
+	ldt = get_free_pages(GFP_KERNEL|__GFP_ZERO, order);
 	if (ldt == NULL) {
 		printk(KERN_ERR "ldt_get_host_info: couldn't allocate buffer "
 		       "for host ldt\n");

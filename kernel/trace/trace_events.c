@@ -1640,8 +1640,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 			else
 				pid_list->order = 0;
 
-			pid_list->pids = (void *)__get_free_pages(GFP_KERNEL,
-								  pid_list->order);
+			pid_list->pids = get_free_pages(GFP_KERNEL, pid_list->order);
 			if (!pid_list->pids)
 				break;
 
@@ -1656,8 +1655,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 		if (pid_list->nr_pids >= max_pids(pid_list)) {
 			pid_t *pid_page;
 
-			pid_page = (void *)__get_free_pages(GFP_KERNEL,
-							    pid_list->order + 1);
+			pid_page = get_free_pages(GFP_KERNEL, pid_list->order + 1);
 			if (!pid_page)
 				break;
 			memcpy(pid_page, pid_list->pids,

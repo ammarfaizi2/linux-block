@@ -1186,7 +1186,7 @@ megasas_init_adapter_fusion(struct megasas_instance *instance)
 	fusion->drv_map_pages = get_order(fusion->drv_map_sz);
 	for (i = 0; i < 2; i++) {
 		fusion->ld_map[i] = NULL;
-		fusion->ld_drv_map[i] = (void *)__get_free_pages(GFP_KERNEL,
+		fusion->ld_drv_map[i] = get_free_pages(GFP_KERNEL,
 			fusion->drv_map_pages);
 		if (!fusion->ld_drv_map[i]) {
 			dev_err(&instance->pdev->dev, "Could not allocate "
@@ -2462,7 +2462,7 @@ megasas_alloc_host_crash_buffer(struct megasas_instance *instance)
 
 	instance->crash_buf_pages = get_order(CRASH_DMA_BUF_SIZE);
 	for (i = 0; i < MAX_CRASH_DUMP_SIZE; i++) {
-		instance->crash_buf[i] = (void	*)__get_free_pages(GFP_KERNEL,
+		instance->crash_buf[i] = get_free_pages(GFP_KERNEL,
 				instance->crash_buf_pages);
 		if (!instance->crash_buf[i]) {
 			dev_info(&instance->pdev->dev, "Firmware crash dump "

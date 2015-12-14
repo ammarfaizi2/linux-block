@@ -279,7 +279,7 @@ static struct virtqueue *mic_find_vq(struct virtio_device *vdev,
 	mvdev->used_size[index] = PAGE_ALIGN(sizeof(__u16) * 3 +
 					     sizeof(struct vring_used_elem) *
 					     le16_to_cpu(config.num));
-	used = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	used = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					get_order(mvdev->used_size[index]));
 	if (!used) {
 		err = -ENOMEM;

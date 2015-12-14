@@ -668,7 +668,7 @@ spufs_init_isolated_loader(void)
 		return;
 
 	/* the loader must be align on a 16 byte boundary */
-	isolated_loader = (char *)__get_free_pages(GFP_KERNEL, get_order(size));
+	isolated_loader = get_free_pages(GFP_KERNEL, get_order(size));
 	if (!isolated_loader)
 		return;
 

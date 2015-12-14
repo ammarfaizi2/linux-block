@@ -30,7 +30,7 @@
 static inline pgd_t*
 pgd_alloc(struct mm_struct *mm)
 {
-	return (pgd_t*) __get_free_pages(GFP_KERNEL | __GFP_ZERO, PGD_ORDER);
+	return get_free_pages(GFP_KERNEL | __GFP_ZERO, PGD_ORDER);
 }
 
 static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)

@@ -563,8 +563,8 @@ static int omap_des_copy_sgs(struct omap_des_dev *dd)
 
 	BUG_ON(!pages);
 
-	buf_in = (void *)__get_free_pages(GFP_ATOMIC, pages);
-	buf_out = (void *)__get_free_pages(GFP_ATOMIC, pages);
+	buf_in = get_free_pages(GFP_ATOMIC, pages);
+	buf_out = get_free_pages(GFP_ATOMIC, pages);
 
 	if (!buf_in || !buf_out) {
 		pr_err("Couldn't allocated pages for unaligned cases.\n");

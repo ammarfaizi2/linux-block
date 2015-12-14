@@ -932,7 +932,7 @@ static void ioc3_alloc_rings(struct net_device *dev)
 
 	if (ip->txr == NULL) {
 		/* Allocate and initialize tx rings.  16kb = 128 bufs.  */
-		ip->txr = (struct ioc3_etxd *)__get_free_pages(GFP_KERNEL, 2);
+		ip->txr = get_free_pages(GFP_KERNEL, 2);
 		if (!ip->txr)
 			printk("ioc3_alloc_rings(): __get_free_pages() failed!\n");
 		ip->tx_pi = 0;

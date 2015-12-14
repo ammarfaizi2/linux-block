@@ -114,7 +114,7 @@ calibrate_xor_blocks(void)
 	 * test the XOR speed, we don't really want kmemcheck to warn about
 	 * reading uninitialized bytes here.
 	 */
-	b1 = (void *) __get_free_pages(GFP_KERNEL | __GFP_NOTRACK, 2);
+	b1 = get_free_pages(GFP_KERNEL | __GFP_NOTRACK, 2);
 	if (!b1) {
 		printk(KERN_WARNING "xor: Yikes!  No memory available.\n");
 		return -ENOMEM;

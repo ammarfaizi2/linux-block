@@ -64,7 +64,7 @@ static inline pgd_t *get_pgd_slow(void)
 {
 	pgd_t *ret;
 
-	ret = (pgd_t *)__get_free_pages(GFP_KERNEL, PGDIR_ORDER);
+	ret = get_free_pages(GFP_KERNEL, PGDIR_ORDER);
 	if (ret != NULL)
 		clear_page(ret);
 	return ret;

@@ -402,7 +402,7 @@ static inline void *scif_zalloc(size_t size)
 	size_t align = ALIGN(size, PAGE_SIZE);
 
 	if (align && get_order(align) < MAX_ORDER)
-		ret = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+		ret = get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					       get_order(align));
 	return ret ? ret : vzalloc(align);
 }

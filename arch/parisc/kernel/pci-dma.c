@@ -393,8 +393,7 @@ pcxl_dma_init(void)
 	spin_lock_init(&pcxl_res_lock);
 	pcxl_res_size = PCXL_DMA_MAP_SIZE >> (PAGE_SHIFT + 3);
 	pcxl_res_hint = 0;
-	pcxl_res_map = (char *)__get_free_pages(GFP_KERNEL,
-					    get_order(pcxl_res_size));
+	pcxl_res_map = get_free_pages(GFP_KERNEL, get_order(pcxl_res_size));
 	memset(pcxl_res_map, 0, pcxl_res_size);
 	proc_gsc_root = proc_mkdir("gsc", NULL);
 	if (!proc_gsc_root)
@@ -571,7 +570,7 @@ static void *pa11_dma_alloc_noncoherent(struct device *dev, size_t size,
 {
 	void *addr;
 
-	addr = (void *)__get_free_pages(flag, get_order(size));
+	addr = get_free_pages(flag, get_order(size));
 	if (addr)
 		*dma_handle = (dma_addr_t)virt_to_phys(addr);
 

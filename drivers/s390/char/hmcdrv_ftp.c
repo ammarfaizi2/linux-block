@@ -245,7 +245,7 @@ ssize_t hmcdrv_ftp_cmd(char __kernel *cmd, loff_t offset,
 		return retlen;
 
 	order = get_order(ftp.len);
-	ftp.buf = (void *) __get_free_pages(GFP_KERNEL | GFP_DMA, order);
+	ftp.buf = get_free_pages(GFP_KERNEL | GFP_DMA, order);
 
 	if (!ftp.buf)
 		return -ENOMEM;

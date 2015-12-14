@@ -582,8 +582,8 @@ static int omap_aes_copy_sgs(struct omap_aes_dev *dd)
 	total = ALIGN(dd->total, AES_BLOCK_SIZE);
 	pages = get_order(total);
 
-	buf_in = (void *)__get_free_pages(GFP_ATOMIC, pages);
-	buf_out = (void *)__get_free_pages(GFP_ATOMIC, pages);
+	buf_in = get_free_pages(GFP_ATOMIC, pages);
+	buf_out = get_free_pages(GFP_ATOMIC, pages);
 
 	if (!buf_in || !buf_out) {
 		pr_err("Couldn't allocated pages for unaligned cases.\n");

@@ -883,7 +883,7 @@ static int its_alloc_tables(const char *node_name, struct its_node *its)
 				node_name, order, alloc_pages);
 		}
 
-		base = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
+		base = get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
 		if (!base) {
 			err = -ENOMEM;
 			goto out_free;

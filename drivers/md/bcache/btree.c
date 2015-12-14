@@ -792,8 +792,7 @@ int bch_btree_cache_alloc(struct cache_set *c)
 #ifdef CONFIG_BCACHE_DEBUG
 	mutex_init(&c->verify_lock);
 
-	c->verify_ondisk = (void *)
-		__get_free_pages(GFP_KERNEL, ilog2(bucket_pages(c)));
+	c->verify_ondisk = get_free_pages(GFP_KERNEL, ilog2(bucket_pages(c)));
 
 	c->verify_data = mca_bucket_alloc(c, &ZERO_KEY, GFP_KERNEL);
 

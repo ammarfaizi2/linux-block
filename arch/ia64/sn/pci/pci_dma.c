@@ -100,7 +100,7 @@ static void *sn_dma_alloc_coherent(struct device *dev, size_t size,
 		else
 			return NULL;
 	} else
-		cpuaddr = (void *)__get_free_pages(flags, get_order(size));
+		cpuaddr = get_free_pages(flags, get_order(size));
 
 	if (unlikely(!cpuaddr))
 		return NULL;

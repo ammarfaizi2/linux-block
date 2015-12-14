@@ -380,8 +380,7 @@ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
 	if (c->block_size <= DM_BUFIO_BLOCK_SIZE_GFP_LIMIT &&
 	    gfp_mask & __GFP_NORETRY) {
 		*data_mode = DATA_MODE_GET_FREE_PAGES;
-		return (void *)__get_free_pages(gfp_mask,
-						c->pages_per_block_bits);
+		return get_free_pages(gfp_mask, c->pages_per_block_bits);
 	}
 
 	*data_mode = DATA_MODE_VMALLOC;

@@ -1149,7 +1149,7 @@ sba_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle,
 		addr = page_address(page);
 	}
 #else
-	addr = (void *) __get_free_pages(flags, get_order(size));
+	addr = get_free_pages(flags, get_order(size));
 #endif
 	if (unlikely(!addr))
 		return NULL;
@@ -1631,8 +1631,7 @@ ioc_iova_init(struct ioc *ioc)
 	WRITE_REG(tcnfg, ioc->ioc_hpa + IOC_TCNFG);
 
 	ioc->pdir_size = (ioc->iov_size / iovp_size) * PDIR_ENTRY_SIZE;
-	ioc->pdir_base = (void *) __get_free_pages(GFP_KERNEL,
-						   get_order(ioc->pdir_size));
+	ioc->pdir_base = get_free_pages(GFP_KERNEL, get_order(ioc->pdir_size));
 	if (!ioc->pdir_base)
 		panic(PFX "Couldn't allocate I/O Page Table\n");
 
@@ -1671,7 +1670,7 @@ ioc_iova_init(struct ioc *ioc)
 		int poison_size = 16;
 		void *poison_addr, *addr;
 
-		addr = (void *)__get_free_pages(GFP_KERNEL, get_order(iovp_size));
+		addr = get_free_pages(GFP_KERNEL, get_order(iovp_size));
 		if (!addr)
 			panic(PFX "Couldn't allocate PDIR spill page\n");
 
@@ -1712,8 +1711,7 @@ ioc_resource_init(struct ioc *ioc)
 	ioc->res_size >>= 3;  /* convert bit count to byte count */
 	DBG_INIT("%s() res_size 0x%x\n", __func__, ioc->res_size);
 
-	ioc->res_map = (char *) __get_free_pages(GFP_KERNEL,
-						 get_order(ioc->res_size));
+	ioc->res_map = get_free_pages(GFP_KERNEL, get_order(ioc->res_size));
 	if (!ioc->res_map)
 		panic(PFX "Couldn't allocate resource map\n");
 
