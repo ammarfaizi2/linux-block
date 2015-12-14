@@ -37,13 +37,13 @@ do {							\
 static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
 					  unsigned long address)
 {
-	unsigned long page = __get_free_page(GFP_KERNEL|__GFP_REPEAT);
+	pte_t *page = get_free_page(GFP_KERNEL|__GFP_REPEAT);
 
 	if (!page)
 		return NULL;
 
-	memset((void *)page, 0, PAGE_SIZE);
-	return (pte_t *) (page);
+	memset(page, 0, PAGE_SIZE);
+	return page;
 }
 
 static inline pgtable_t pte_alloc_one(struct mm_struct *mm,

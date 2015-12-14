@@ -14,13 +14,13 @@ extern const char bad_pmd_string[];
 extern inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
 	unsigned long address)
 {
-	unsigned long page = __get_free_page(GFP_DMA|__GFP_REPEAT);
+	pte_t *page = get_free_page(GFP_DMA|__GFP_REPEAT);
 
 	if (!page)
 		return NULL;
 
-	memset((void *)page, 0, PAGE_SIZE);
-	return (pte_t *) (page);
+	memset(page, 0, PAGE_SIZE);
+	return page;
 }
 
 extern inline pmd_t *pmd_alloc_kernel(pgd_t *pgd, unsigned long address)
