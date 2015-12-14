@@ -229,7 +229,7 @@ static void put_free_pages(struct page **page, int num)
 	spin_unlock_irqrestore(&free_pages_lock, flags);
 }
 
-static int get_free_page(struct page **page)
+static int xen_get_free_page(struct page **page)
 {
 	unsigned long flags;
 
@@ -439,7 +439,7 @@ static int scsiback_gnttab_data_map_list(struct vscsibk_pend *pending_req,
 	struct vscsibk_info *info = pending_req->info;
 
 	for (i = 0; i < cnt; i++) {
-		if (get_free_page(pg + mapcount)) {
+		if (xen_get_free_page(pg + mapcount)) {
 			put_free_pages(pg, mapcount);
 			pr_err("no grant page\n");
 			return -ENOMEM;
@@ -1902,7 +1902,7 @@ static void __exit scsiback_exit(void)
 	struct page *page;
 
 	while (free_pages_num) {
-		if (get_free_page(&page))
+		if (xen_get_free_page(&page))
 			BUG();
 		gnttab_free_pages(1, &page);
 	}

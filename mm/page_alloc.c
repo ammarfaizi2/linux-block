@@ -3257,7 +3257,7 @@ EXPORT_SYMBOL(__alloc_pages_nodemask);
 /*
  * Common helper functions.
  */
-unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order)
+void *get_free_pages(gfp_t gfp_mask, unsigned int order)
 {
 	struct page *page;
 
@@ -3269,10 +3269,10 @@ unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order)
 
 	page = alloc_pages(gfp_mask, order);
 	if (!page)
-		return 0;
-	return (unsigned long) page_address(page);
+		return NULL;
+	return page_address(page);
 }
-EXPORT_SYMBOL(__get_free_pages);
+EXPORT_SYMBOL(get_free_pages);
 
 void *get_zeroed_page(gfp_t gfp_mask)
 {

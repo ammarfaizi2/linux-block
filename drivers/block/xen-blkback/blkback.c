@@ -113,7 +113,7 @@ module_param(log_stats, int, 0644);
 /* Number of free pages to remove on each call to gnttab_free_pages */
 #define NUM_BATCH_FREE_PAGES 10
 
-static inline int get_free_page(struct xen_blkif *blkif, struct page **page)
+static inline int xen_get_free_page(struct xen_blkif *blkif, struct page **page)
 {
 	unsigned long flags;
 
@@ -819,7 +819,7 @@ again:
 			pages[i]->page = persistent_gnt->page;
 			pages[i]->persistent_gnt = persistent_gnt;
 		} else {
-			if (get_free_page(blkif, &pages[i]->page))
+			if (xen_get_free_page(blkif, &pages[i]->page))
 				goto out_of_memory;
 			addr = vaddr(pages[i]->page);
 			pages_to_gnt[segs_to_map] = pages[i]->page;

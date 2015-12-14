@@ -473,18 +473,23 @@ extern struct page *alloc_kmem_pages(gfp_t gfp_mask, unsigned int order);
 extern struct page *alloc_kmem_pages_node(int nid, gfp_t gfp_mask,
 					  unsigned int order);
 
-extern unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order);
+extern void *get_free_pages(gfp_t gfp_mask, unsigned int order);
+#define __get_free_pages(gfp_mask, order) \
+	((unsigned long)get_free_pages(gfp_mask, order))
 extern void *get_zeroed_page(gfp_t gfp_mask);
 
 void *alloc_pages_exact(size_t size, gfp_t gfp_mask);
 void free_pages_exact(void *virt, size_t size);
 void * __meminit alloc_pages_exact_nid(int nid, size_t size, gfp_t gfp_mask);
 
+#define get_free_page(gfp_mask) \
+		get_free_pages((gfp_mask), 0)
+
 #define __get_free_page(gfp_mask) \
 		__get_free_pages((gfp_mask), 0)
 
 #define get_dma_pages(gfp_mask, order) \
-		((void *)__get_free_pages((gfp_mask) | GFP_DMA, (order)))
+		get_free_pages((gfp_mask) | GFP_DMA, (order))
 
 extern void __free_pages(struct page *page, unsigned int order);
 extern void free_pages(const void *addr, unsigned int order);
