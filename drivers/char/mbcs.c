@@ -404,22 +404,22 @@ static ssize_t mbcs_sram_read(struct file * fp, char __user *buf, size_t len, lo
 {
 	struct cx_dev *cx_dev = fp->private_data;
 	struct mbcs_soft *soft = cx_dev->soft;
-	uint64_t hostAddr;
+	void *hostAddr;
 	int rv = 0;
 
-	hostAddr = __get_dma_pages(GFP_KERNEL, get_order(len));
-	if (hostAddr == 0)
+	hostAddr = get_dma_pages(GFP_KERNEL, get_order(len));
+	if (!hostAddr)
 		return -ENOMEM;
 
-	rv = do_mbcs_sram_dmawrite(soft, hostAddr, len, off);
+	rv = do_mbcs_sram_dmawrite(soft, (unsigned long)hostAddr, len, off);
 	if (rv < 0)
 		goto exit;
 
-	if (copy_to_user(buf, (void *)hostAddr, len))
+	if (copy_to_user(buf, hostAddr, len))
 		rv = -EFAULT;
 
       exit:
-	free_pages((void *)hostAddr, get_order(len));
+	free_pages(hostAddr, get_order(len));
 
 	return rv;
 }
@@ -429,22 +429,22 @@ mbcs_sram_write(struct file * fp, const char __user *buf, size_t len, loff_t * o
 {
 	struct cx_dev *cx_dev = fp->private_data;
 	struct mbcs_soft *soft = cx_dev->soft;
-	uint64_t hostAddr;
+	void *hostAddr;
 	int rv = 0;
 
-	hostAddr = __get_dma_pages(GFP_KERNEL, get_order(len));
-	if (hostAddr == 0)
+	hostAddr = get_dma_pages(GFP_KERNEL, get_order(len));
+	if (!hostAddr)
 		return -ENOMEM;
 
-	if (copy_from_user((void *)hostAddr, buf, len)) {
+	if (copy_from_user(hostAddr, buf, len)) {
 		rv = -EFAULT;
 		goto exit;
 	}
 
-	rv = do_mbcs_sram_dmaread(soft, hostAddr, len, off);
+	rv = do_mbcs_sram_dmaread(soft, (unsigned long)hostAddr, len, off);
 
       exit:
-	free_pages((void *)hostAddr, get_order(len));
+	free_pages(hostAddr, get_order(len));
 
 	return rv;
 }

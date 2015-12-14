@@ -883,8 +883,7 @@ net_open(struct net_device *dev)
 #if ALLOW_DMA
 	if (lp->use_dma && (lp->isa_config & ANY_ISA_DMA)) {
 		unsigned long flags;
-		lp->dma_buff = (unsigned char *)__get_dma_pages(GFP_KERNEL,
-								get_order(lp->dmasize * 1024));
+		lp->dma_buff = get_dma_pages(GFP_KERNEL, get_order(lp->dmasize * 1024));
 		if (!lp->dma_buff) {
 			pr_err("%s: cannot get %dK memory for DMA\n",
 			       dev->name, lp->dmasize);

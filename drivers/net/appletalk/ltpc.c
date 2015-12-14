@@ -245,11 +245,9 @@ static int sendup_buffer (struct net_device *dev);
 
 /* Dma Memory related stuff, cribbed directly from 3c505.c */
 
-static unsigned long dma_mem_alloc(int size)
+static void *dma_mem_alloc(int size)
 {
-        int order = get_order(size);
-
-        return __get_dma_pages(GFP_KERNEL, order);
+        return get_dma_pages(GFP_KERNEL, get_order(size));
 }
 
 /* DMA data buffer, DMA command buffer */
@@ -1075,7 +1073,7 @@ struct net_device * __init ltpc_probe(void)
 	}
 
 	/* allocate a DMA buffer */
-	ltdmabuf = (unsigned char *) dma_mem_alloc(1000);
+	ltdmabuf = dma_mem_alloc(1000);
 	if (!ltdmabuf) {
 		printk(KERN_ERR "ltpc: mem alloc failed\n");
 		err = -ENOMEM;
