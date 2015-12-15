@@ -77,10 +77,6 @@ struct thread_struct {
 #define task_pt_regs(task) \
 	((struct pt_regs *)(THREAD_START_SP + task_stack_page(task)) - 1)
 
-#define alloc_kernel_stack()	__get_free_page(GFP_KERNEL)
-#define free_kernel_stack(page) free_page((void *)(page))
-
-
 /* Forward declaration, a strange C thing */
 struct task_struct;
 
