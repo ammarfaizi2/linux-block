@@ -297,7 +297,7 @@ long init_new_ldt(struct mm_context *new_mm, struct mm_context *from_mm)
 	struct user_desc desc;
 	short * num_p;
 	int i;
-	long page, err=0;
+	long err=0;
 	void *addr = NULL;
 
 
@@ -336,13 +336,12 @@ long init_new_ldt(struct mm_context *new_mm, struct mm_context *from_mm)
 	else {
 		i = from_mm->arch.ldt.entry_count / LDT_ENTRIES_PER_PAGE;
 		while (i-->0) {
-			page = __get_free_page(GFP_KERNEL|__GFP_ZERO);
+			void *page = get_free_page(GFP_KERNEL|__GFP_ZERO);
 			if (!page) {
 				err = -ENOMEM;
 				break;
 			}
-			new_mm->arch.ldt.u.pages[i] =
-				(struct ldt_entry *) page;
+			new_mm->arch.ldt.u.pages[i] = page;
 			memcpy(new_mm->arch.ldt.u.pages[i],
 			       from_mm->arch.ldt.u.pages[i], PAGE_SIZE);
 		}
