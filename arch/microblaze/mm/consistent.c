@@ -61,8 +61,8 @@
  */
 void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 {
-	unsigned long order, vaddr;
-	void *ret;
+	unsigned long order;
+	void *vaddr, *ret;
 	unsigned int i, err = 0;
 	struct page *page, *end;
 
@@ -79,7 +79,7 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	size = PAGE_ALIGN(size);
 	order = get_order(size);
 
-	vaddr = __get_free_pages(gfp, order);
+	vaddr = (void *)__get_free_pages(gfp, order);
 	if (!vaddr)
 		return NULL;
 
@@ -87,11 +87,11 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	 * we need to ensure that there are no cachelines in use,
 	 * or worse dirty in this area.
 	 */
-	flush_dcache_range(virt_to_phys((void *)vaddr),
-					virt_to_phys((void *)vaddr) + size);
+	flush_dcache_range(virt_to_phys(vaddr),
+					virt_to_phys(vaddr) + size);
 
 #ifndef CONFIG_MMU
-	ret = (void *)vaddr;
+	ret = vaddr;
 	/*
 	 * Here's the magic!  Note if the uncached shadow is not implemented,
 	 * it's up to the calling code to also test that condition and make
@@ -110,14 +110,14 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	/* Allocate some common virtual space to map the new pages. */
 	area = get_vm_area(size, VM_ALLOC);
 	if (!area) {
-		free_pages((void *)vaddr, order);
+		free_pages(vaddr, order);
 		return NULL;
 	}
 	va = (unsigned long) area->addr;
 	ret = (void *)va;
 
 	/* This gives us the real physical address of the first page. */
-	*dma_handle = pa = __virt_to_phys(vaddr);
+	*dma_handle = pa = __pa(vaddr);
 #endif
 
 	/*
@@ -148,7 +148,7 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	}
 
 	if (err) {
-		free_pages((void *)vaddr, order);
+		free_pages(vaddr, order);
 		return NULL;
 	}
 
