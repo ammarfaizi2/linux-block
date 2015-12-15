@@ -22,7 +22,7 @@
 #include <asm/xen/hypercall.h>
 #include <asm/xen/interface.h>
 
-unsigned long xen_get_swiotlb_free_pages(unsigned int order)
+void *xen_get_swiotlb_free_pages(unsigned int order)
 {
 	struct memblock_region *reg;
 	gfp_t flags = __GFP_NOWARN|__GFP_KSWAPD_RECLAIM;
@@ -33,7 +33,7 @@ unsigned long xen_get_swiotlb_free_pages(unsigned int order)
 			break;
 		}
 	}
-	return __get_free_pages(flags, order);
+	return get_free_pages(flags, order);
 }
 
 enum dma_cache_op {
