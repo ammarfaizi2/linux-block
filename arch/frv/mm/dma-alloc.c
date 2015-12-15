@@ -81,7 +81,8 @@ static int map_page(unsigned long va, unsigned long pa, pgprot_t prot)
 void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 {
 	struct vm_struct *area;
-	unsigned long page, va, pa;
+	unsigned long va, pa;
+	void *page;
 	void *ret;
 	int order, err, i;
 
@@ -92,7 +93,7 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	size = PAGE_ALIGN(size);
 	order = get_order(size);
 
-	page = __get_free_pages(gfp, order);
+	page = (void *)__get_free_pages(gfp, order);
 	if (!page) {
 		BUG();
 		return NULL;
@@ -101,14 +102,14 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	/* allocate some common virtual space to map the new pages */
 	area = get_vm_area(size, VM_ALLOC);
 	if (area == 0) {
-		free_pages((void *)page, order);
+		free_pages(page, order);
 		return NULL;
 	}
 	va = VMALLOC_VMADDR(area->addr);
 	ret = (void *) va;
 
 	/* this gives us the real physical address of the first page */
-	*dma_handle = pa = virt_to_bus((void *) page);
+	*dma_handle = pa = virt_to_bus(page);
 
 	/* set refcount=1 on all pages in an order>0 allocation so that vfree() will actually free
 	 * all pages that were allocated.
