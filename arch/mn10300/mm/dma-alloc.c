@@ -23,17 +23,16 @@ static unsigned long pci_sram_allocated = 0xbc000000;
 void *dma_alloc_coherent(struct device *dev, size_t size,
 			 dma_addr_t *dma_handle, int gfp)
 {
-	unsigned long addr;
-	void *ret;
+	void *addr, *ret;
 
 	pr_debug("dma_alloc_coherent(%s,%zu,%x)\n",
 		 dev ? dev_name(dev) : "?", size, gfp);
 
 	if (0xbe000000 - pci_sram_allocated >= size) {
 		size = (size + 255) & ~255;
-		addr = pci_sram_allocated;
+		addr = (void *)pci_sram_allocated;
 		pci_sram_allocated += size;
-		ret = (void *) addr;
+		ret = addr;
 		goto done;
 	}
 
@@ -43,21 +42,21 @@ void *dma_alloc_coherent(struct device *dev, size_t size,
 	if (dev == NULL || dev->coherent_dma_mask < 0xffffffff)
 		gfp |= GFP_DMA;
 
-	addr = __get_free_pages(gfp, get_order(size));
+	addr = get_free_pages(gfp, get_order(size));
 	if (!addr)
 		return NULL;
 
 	/* map the coherent memory through the uncached memory window */
-	ret = (void *) (addr | 0x20000000);
+	ret = (void *) ((unsigned long)addr | 0x20000000);
 
 	/* fill the memory with obvious rubbish */
-	memset((void *) addr, 0xfb, size);
+	memset(addr, 0xfb, size);
 
 	/* write back and evict all cache lines covering this region */
-	mn10300_dcache_flush_inv_range2(virt_to_phys((void *) addr), PAGE_SIZE);
+	mn10300_dcache_flush_inv_range2(virt_to_phys(addr), PAGE_SIZE);
 
 done:
-	*dma_handle = virt_to_bus((void *) addr);
+	*dma_handle = virt_to_bus(addr);
 	printk("dma_alloc_coherent() = %p [%x]\n", ret, *dma_handle);
 	return ret;
 }
