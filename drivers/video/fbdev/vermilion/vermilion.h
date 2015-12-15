@@ -203,7 +203,7 @@ struct vml_par {
 };
 
 struct vram_area {
-	unsigned long logical;
+	void *logical;
 	unsigned long phys;
 	unsigned long size;
 	unsigned order;

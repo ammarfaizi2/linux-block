@@ -88,7 +88,7 @@ static int vmlfb_alloc_vram_area(struct vram_area *va, unsigned max_order,
 				 unsigned min_order)
 {
 	gfp_t flags;
-	unsigned long i;
+	void *i;
 
 	max_order++;
 	do {
@@ -100,14 +100,13 @@ static int vmlfb_alloc_vram_area(struct vram_area *va, unsigned max_order,
 		 */
 
 		flags = __GFP_DMA | __GFP_HIGH | __GFP_KSWAPD_RECLAIM;
-		va->logical =
-			 __get_free_pages(flags, --max_order);
-	} while (va->logical == 0 && max_order > min_order);
+		va->logical = get_free_pages(flags, --max_order);
+	} while (va->logical == NULL && max_order > min_order);
 
 	if (!va->logical)
 		return -ENOMEM;
 
-	va->phys = virt_to_phys((void *)va->logical);
+	va->phys = virt_to_phys(va->logical);
 	va->size = PAGE_SIZE << max_order;
 	va->order = max_order;
 
@@ -118,7 +117,7 @@ static int vmlfb_alloc_vram_area(struct vram_area *va, unsigned max_order,
 	 * compound page).
 	 */
 
-	memset((void *)va->logical, 0x00, va->size);
+	memset(va->logical, 0x00, va->size);
 	for (i = va->logical; i < va->logical + va->size; i += PAGE_SIZE) {
 		get_page(virt_to_page(i));
 	}
@@ -143,7 +142,7 @@ static int vmlfb_alloc_vram_area(struct vram_area *va, unsigned max_order,
 
 static void vmlfb_free_vram_area(struct vram_area *va)
 {
-	unsigned long j;
+	void *j;
 
 	if (va->logical) {
 
@@ -167,9 +166,9 @@ static void vmlfb_free_vram_area(struct vram_area *va)
 		printk(KERN_DEBUG MODULE_NAME
 		       ": Freeing %ld bytes vram area at 0x%08lx\n",
 		       va->size, va->phys);
-		free_pages((void *)va->logical, va->order);
+		free_pages(va->logical, va->order);
 
-		va->logical = 0;
+		va->logical = NULL;
 	}
 }
 

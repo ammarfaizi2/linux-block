@@ -333,7 +333,7 @@ static int grvga_probe(struct platform_device *dev)
 {
 	struct fb_info *info;
 	int retval = -ENOMEM;
-	unsigned long virtual_start;
+	void *virtual_start;
 	unsigned long grvga_fix_addr = 0;
 	unsigned long physical_start = 0;
 	unsigned long grvga_mem_size = 0;
@@ -435,8 +435,7 @@ static int grvga_probe(struct platform_device *dev)
 			goto dealloc_cmap;
 		}
 
-		virtual_start = (unsigned long) ioremap(physical_start, grvga_mem_size);
-
+		virtual_start = ioremap(physical_start, grvga_mem_size);
 		if (!virtual_start) {
 			dev_err(&dev->dev, "error mapping framebuffer memory\n");
 			retval = -ENOMEM;
@@ -444,10 +443,9 @@ static int grvga_probe(struct platform_device *dev)
 		}
 	} else {	/* Allocate frambuffer memory */
 
-		unsigned long page;
+		void *page;
 
-		virtual_start = (unsigned long) __get_free_pages(GFP_DMA,
-								 get_order(grvga_mem_size));
+		virtual_start = get_free_pages(GFP_DMA, get_order(grvga_mem_size));
 		if (!virtual_start) {
 			dev_err(&dev->dev,
 				"unable to allocate framebuffer memory (%lu bytes)\n",
@@ -456,13 +454,13 @@ static int grvga_probe(struct platform_device *dev)
 			goto dealloc_cmap;
 		}
 
-		physical_start = dma_map_single(&dev->dev, (void *)virtual_start, grvga_mem_size, DMA_TO_DEVICE);
+		physical_start = dma_map_single(&dev->dev, virtual_start, grvga_mem_size, DMA_TO_DEVICE);
 
 		/* Set page reserved so that mmap will work. This is necessary
 		 * since we'll be remapping normal memory.
 		 */
 		for (page = virtual_start;
-		     page < PAGE_ALIGN(virtual_start + grvga_mem_size);
+		     page < virtual_start + ALIGN(grvga_mem_size, PAGE_SIZE);
 		     page += PAGE_SIZE) {
 			SetPageReserved(virt_to_page(page));
 		}
@@ -470,7 +468,7 @@ static int grvga_probe(struct platform_device *dev)
 		par->fb_alloced = 1;
 	}
 
-	memset((unsigned long *) virtual_start, 0, grvga_mem_size);
+	memset(virtual_start, 0, grvga_mem_size);
 
 	info->screen_base = (char __iomem *) virtual_start;
 	info->fix.smem_start = physical_start;
@@ -497,9 +495,9 @@ static int grvga_probe(struct platform_device *dev)
 
 free_mem:
 	if (grvga_fix_addr)
-		iounmap((void *)virtual_start);
+		iounmap(virtual_start);
 	else
-		kfree((void *)virtual_start);
+		kfree(virtual_start);
 dealloc_cmap:
 	fb_dealloc_cmap(&info->cmap);
 unmap_regs:
