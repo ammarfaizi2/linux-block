@@ -328,7 +328,9 @@ static int camif_media_dev_init(struct camif_dev *camif)
 	if (ret < 0)
 		return ret;
 
-	media_device_init(md);
+	ret = media_device_init(md);
+	if (ret < 0)
+		v4l2_device_unregister(v4l2_dev);
 
 	return ret;
 }

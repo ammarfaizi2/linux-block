@@ -95,7 +95,7 @@ static int dvb_usb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	return dvb_usb_ctrl_feed(dvbdmxfeed, 0);
 }
 
-static void dvb_usb_media_device_init(struct dvb_usb_adapter *adap)
+static int dvb_usb_media_device_init(struct dvb_usb_adapter *adap)
 {
 #ifdef CONFIG_MEDIA_CONTROLLER_DVB
 	struct media_device *mdev;
@@ -105,7 +105,7 @@ static void dvb_usb_media_device_init(struct dvb_usb_adapter *adap)
 
 	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
 	if (!mdev)
-		return;
+		return -EINVAL;
 
 	mdev->dev = &udev->dev;
 	strlcpy(mdev->model, d->desc->name, sizeof(mdev->model));
@@ -115,18 +115,27 @@ static void dvb_usb_media_device_init(struct dvb_usb_adapter *adap)
 	mdev->hw_revision = le16_to_cpu(udev->descriptor.bcdDevice);
 	mdev->driver_version = LINUX_VERSION_CODE;
 
-	media_device_init(mdev);
-
+	ret = media_device_init(mdev);
+	if (ret) {
+		dev_err(&d->udev->dev,
+			"Couldn't create a media device. Error: %d\n",
+			ret);
+		kfree(mdev);
+		return ret;
+	}
 	dvb_register_media_controller(&adap->dvb_adap, mdev);
 
 	dev_info(&d->udev->dev, "media controller created\n");
 #endif
+	return 0;
 }
 
-static void dvb_usb_media_device_register(struct dvb_usb_adapter *adap)
+static int dvb_usb_media_device_register(struct dvb_usb_adapter *adap)
 {
 #ifdef CONFIG_MEDIA_CONTROLLER_DVB
-	media_device_register(adap->dvb_adap.mdev);
+	return media_device_register(adap->dvb_adap.mdev);
+#else
+	return 0;
 #endif
 }
 
@@ -156,7 +165,11 @@ int dvb_usb_adapter_dvb_init(struct dvb_usb_adapter *adap, short *adapter_nums)
 	}
 	adap->dvb_adap.priv = adap;
 
-	dvb_usb_media_device_init(adap);
+	ret = dvb_usb_media_device_init(adap);
+	if (ret < 0) {
+		deb_info("dvb_usb_media_device_init failed: error %d", ret);
+		goto err_mc;
+	}
 
 	if (adap->dev->props.read_mac_address) {
 		if (adap->dev->props.read_mac_address(adap->dev, adap->dvb_adap.proposed_mac) == 0)
@@ -206,6 +219,7 @@ err_dmx_dev:
 	dvb_dmx_release(&adap->demux);
 err_dmx:
 	dvb_usb_media_device_unregister(adap);
+err_mc:
 	dvb_unregister_adapter(&adap->dvb_adap);
 err:
 	return ret;
@@ -324,8 +338,10 @@ int dvb_usb_adapter_frontend_init(struct dvb_usb_adapter *adap)
 		return ret;
 
 	ret = dvb_create_media_graph(&adap->dvb_adap);
+	if (ret)
+		return ret;
 
-	dvb_usb_media_device_register(adap);
+	ret = dvb_usb_media_device_register(adap);
 
 	return ret;
 }

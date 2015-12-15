@@ -351,7 +351,7 @@ struct media_device {
  * within the media device, create pad to pad links and then finally register
  * the media device by calling media_device_register() as a final step.
  */
-void media_device_init(struct media_device *mdev);
+int __must_check media_device_init(struct media_device *mdev);
 
 /**
  * media_device_cleanup() - Cleanups a media device element

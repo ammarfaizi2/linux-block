@@ -585,7 +585,12 @@ static int xvip_composite_v4l2_init(struct xvip_composite_device *xdev)
 		sizeof(xdev->media_dev.model));
 	xdev->media_dev.hw_revision = 0;
 
-	media_device_init(&xdev->media_dev);
+	ret = media_device_init(&xdev->media_dev);
+	if (ret < 0) {
+		dev_err(xdev->dev, "media device registration failed (%d)\n",
+			ret);
+		return ret;
+	}
 
 	xdev->v4l2_dev.mdev = &xdev->media_dev;
 	ret = v4l2_device_register(xdev->dev, &xdev->v4l2_dev);

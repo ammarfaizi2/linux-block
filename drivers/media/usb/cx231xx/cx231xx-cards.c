@@ -1206,15 +1206,16 @@ void cx231xx_release_resources(struct cx231xx *dev)
 	clear_bit(dev->devno, &cx231xx_devused);
 }
 
-static void cx231xx_media_device_init(struct cx231xx *dev,
-				      struct usb_device *udev)
+static int cx231xx_media_device_init(struct cx231xx *dev,
+				     struct usb_device *udev)
 {
 #ifdef CONFIG_MEDIA_CONTROLLER
 	struct media_device *mdev;
+	int ret;
 
 	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
 	if (!mdev)
-		return;
+		return -ENOMEM;
 
 	mdev->dev = dev->dev;
 	strlcpy(mdev->model, dev->board.name, sizeof(mdev->model));
@@ -1224,10 +1225,18 @@ static void cx231xx_media_device_init(struct cx231xx *dev,
 	mdev->hw_revision = le16_to_cpu(udev->descriptor.bcdDevice);
 	mdev->driver_version = LINUX_VERSION_CODE;
 
-	media_device_init(mdev);
+	ret = media_device_init(mdev);
+	if (ret) {
+		dev_err(dev->dev,
+			"Couldn't create a media device. Error: %d\n",
+			ret);
+		kfree(mdev);
+		return ret;
+	}
 
 	dev->media_dev = mdev;
 #endif
+	return 0;
 }
 
 static int cx231xx_create_media_graph(struct cx231xx *dev)
@@ -1663,7 +1672,11 @@ static int cx231xx_usb_probe(struct usb_interface *interface,
 	usb_set_intfdata(interface, dev);
 
 	/* Initialize the media controller */
-	cx231xx_media_device_init(dev, udev);
+	retval = cx231xx_media_device_init(dev, udev);
+	if (retval) {
+		dev_err(d, "cx231xx_media_device_init failed\n");
+		goto err_v4l2;
+	}
 
 	/* Create v4l2 device */
 #ifdef CONFIG_MEDIA_CONTROLLER

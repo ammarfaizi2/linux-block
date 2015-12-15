@@ -1876,7 +1876,12 @@ static int isp_register_entities(struct isp_device *isp)
 		sizeof(isp->media_dev.model));
 	isp->media_dev.hw_revision = isp->revision;
 	isp->media_dev.link_notify = isp_pipeline_link_notify;
-	media_device_init(&isp->media_dev);
+	ret = media_device_init(&isp->media_dev);
+	if (ret < 0) {
+		dev_err(isp->dev, "%s: Media device registration failed (%d)\n",
+			__func__, ret);
+		return ret;
+	}
 
 	isp->v4l2_dev.mdev = &isp->media_dev;
 	ret = v4l2_device_register(isp->dev, &isp->v4l2_dev);
@@ -2361,7 +2366,7 @@ static int isp_subdev_notifier_complete(struct v4l2_async_notifier *async)
 		}
 	}
 
-	ret = v4l2_device_register_subdev_nodes(&isp->v4l2_dev);
+	ret = v4l2_device_register_subdev_nodes(v4l2_dev);
 	if (ret < 0)
 		return ret;
 

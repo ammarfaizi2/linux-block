@@ -625,10 +625,10 @@ EXPORT_SYMBOL_GPL(media_device_unregister_entity);
  * - dev must point to the parent device
  * - model must be filled with the device model name
  */
-void media_device_init(struct media_device *mdev)
+int __must_check media_device_init(struct media_device *mdev)
 {
-
-	BUG_ON(mdev->dev == NULL);
+	if (WARN_ON(mdev->dev == NULL))
+		return -EINVAL;
 
 	INIT_LIST_HEAD(&mdev->entities);
 	INIT_LIST_HEAD(&mdev->interfaces);
@@ -638,6 +638,8 @@ void media_device_init(struct media_device *mdev)
 	mutex_init(&mdev->graph_mutex);
 
 	dev_dbg(mdev->dev, "Media device initialized\n");
+
+	return 0;
 }
 EXPORT_SYMBOL_GPL(media_device_init);
 

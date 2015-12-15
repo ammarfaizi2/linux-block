@@ -1353,7 +1353,11 @@ static int fimc_md_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	media_device_init(&fmd->media_dev);
+	ret = media_device_init(&fmd->media_dev);
+	if (ret < 0) {
+		v4l2_err(v4l2_dev, "Failed to register media device: %d\n", ret);
+		goto err_v4l2_dev;
+	}
 
 	ret = fimc_md_get_clocks(fmd);
 	if (ret)
@@ -1424,6 +1428,7 @@ err_m_ent:
 	fimc_md_unregister_entities(fmd);
 err_md:
 	media_device_cleanup(&fmd->media_dev);
+err_v4l2_dev:
 	v4l2_device_unregister(&fmd->v4l2_dev);
 	return ret;
 }
