@@ -2658,6 +2658,10 @@ static void rcu_cleanup_dead_cpu(int cpu, struct rcu_state *rsp)
 	WARN_ONCE(rdp->qlen != 0 || rdp->nxtlist != NULL,
 		  "rcu_cleanup_dead_cpu: Callbacks on offline CPU %d: qlen=%lu, nxtlist=%p\n",
 		  cpu, rdp->qlen, rdp->nxtlist);
+
+	/* Horrible debug hack for stalled grace-period kthreads post-v4.1. */
+	if (rsp->gp_kthread)
+		wake_up_process(rsp->gp_kthread);
 }
 
 /*
@@ -4271,6 +4275,9 @@ int rcu_cpu_notify(struct notifier_block *self,
 	case CPU_DOWN_FAILED:
 		sync_sched_exp_online_cleanup(cpu);
 		rcu_boost_kthread_setaffinity(rnp, -1);
+		for_each_rcu_flavor(rsp)
+			if (rsp->gp_kthread)
+				wake_up_process(rsp->gp_kthread);
 		break;
 	case CPU_DOWN_PREPARE:
 		rcu_boost_kthread_setaffinity(rnp, cpu);
