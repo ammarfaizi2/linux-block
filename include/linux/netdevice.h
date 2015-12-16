@@ -132,7 +132,9 @@ static inline bool dev_xmit_complete(int rc)
  *	used.
  */
 
-#if defined(CONFIG_WLAN) || IS_ENABLED(CONFIG_AX25)
+#if defined(CONFIG_HYPERV_NET)
+# define LL_MAX_HEADER 128
+#elif defined(CONFIG_WLAN) || IS_ENABLED(CONFIG_AX25)
 # if defined(CONFIG_MAC80211_MESH)
 #  define LL_MAX_HEADER 128
 # else
@@ -326,7 +328,8 @@ enum {
 	NAPI_STATE_SCHED,	/* Poll is scheduled */
 	NAPI_STATE_DISABLE,	/* Disable pending */
 	NAPI_STATE_NPSVC,	/* Netpoll - don't dequeue from poll_list */
-	NAPI_STATE_HASHED,	/* In NAPI hash */
+	NAPI_STATE_HASHED,	/* In NAPI hash (busy polling possible) */
+	NAPI_STATE_NO_BUSY_POLL,/* Do not add in napi_hash, no busy polling */
 };
 
 enum gro_result {
@@ -461,19 +464,13 @@ static inline void napi_complete(struct napi_struct *n)
 }
 
 /**
- *	napi_by_id - lookup a NAPI by napi_id
- *	@napi_id: hashed napi_id
- *
- * lookup @napi_id in napi_hash table
- * must be called under rcu_read_lock()
- */
-struct napi_struct *napi_by_id(unsigned int napi_id);
-
-/**
  *	napi_hash_add - add a NAPI to global hashtable
  *	@napi: napi context
  *
  * generate a new napi_id and store a @napi under it in napi_hash
+ * Used for busy polling (CONFIG_NET_RX_BUSY_POLL)
+ * Note: This is normally automatically done from netif_napi_add(),
+ * so might disappear in a future linux version.
  */
 void napi_hash_add(struct napi_struct *napi);
 
@@ -482,9 +479,14 @@ void napi_hash_add(struct napi_struct *napi);
  *	@napi: napi context
  *
  * Warning: caller must observe rcu grace period
- * before freeing memory containing @napi
+ * before freeing memory containing @napi, if
+ * this function returns true.
+ * Note: core networking stack automatically calls it
+ * from netif_napi_del()
+ * Drivers might want to call this helper to combine all
+ * the needed rcu grace periods into a single one.
  */
-void napi_hash_del(struct napi_struct *napi);
+bool napi_hash_del(struct napi_struct *napi);
 
 /**
  *	napi_disable - prevent NAPI from scheduling
@@ -1271,6 +1273,7 @@ struct net_device_ops {
  * @IFF_NO_QUEUE: device can run without qdisc attached
  * @IFF_OPENVSWITCH: device is a Open vSwitch master
  * @IFF_L3MDEV_SLAVE: device is enslaved to an L3 master device
+ * @IFF_TEAM: device is a team device
  */
 enum netdev_priv_flags {
 	IFF_802_1Q_VLAN			= 1<<0,
@@ -1297,6 +1300,7 @@ enum netdev_priv_flags {
 	IFF_NO_QUEUE			= 1<<21,
 	IFF_OPENVSWITCH			= 1<<22,
 	IFF_L3MDEV_SLAVE		= 1<<23,
+	IFF_TEAM			= 1<<24,
 };
 
 #define IFF_802_1Q_VLAN			IFF_802_1Q_VLAN
@@ -1323,6 +1327,7 @@ enum netdev_priv_flags {
 #define IFF_NO_QUEUE			IFF_NO_QUEUE
 #define IFF_OPENVSWITCH			IFF_OPENVSWITCH
 #define IFF_L3MDEV_SLAVE		IFF_L3MDEV_SLAVE
+#define IFF_TEAM			IFF_TEAM
 
 /**
  *	struct net_device - The DEVICE structure.
@@ -1398,7 +1403,8 @@ enum netdev_priv_flags {
  *	@dma:		DMA channel
  *	@mtu:		Interface MTU value
  *	@type:		Interface hardware type
- *	@hard_header_len: Hardware header length
+ *	@hard_header_len: Hardware header length, which means that this is the
+ *			  minimum size of a packet.
  *
  *	@needed_headroom: Extra headroom the hardware may need, but not in all
  *			  cases can this be guaranteed
@@ -1948,6 +1954,26 @@ void netif_napi_add(struct net_device *dev, struct napi_struct *napi,
 		    int (*poll)(struct napi_struct *, int), int weight);
 
 /**
+ *	netif_tx_napi_add - initialize a napi context
+ *	@dev:  network device
+ *	@napi: napi context
+ *	@poll: polling function
+ *	@weight: default weight
+ *
+ * This variant of netif_napi_add() should be used from drivers using NAPI
+ * to exclusively poll a TX queue.
+ * This will avoid we add it into napi_hash[], thus polluting this hash table.
+ */
+static inline void netif_tx_napi_add(struct net_device *dev,
+				     struct napi_struct *napi,
+				     int (*poll)(struct napi_struct *, int),
+				     int weight)
+{
+	set_bit(NAPI_STATE_NO_BUSY_POLL, &napi->state);
+	netif_napi_add(dev, napi, poll, weight);
+}
+
+/**
  *  netif_napi_del - remove a napi context
  *  @napi: napi context
  *
@@ -2068,19 +2094,40 @@ struct pcpu_sw_netstats {
 	struct u64_stats_sync   syncp;
 };
 
-#define netdev_alloc_pcpu_stats(type)				\
-({								\
-	typeof(type) __percpu *pcpu_stats = alloc_percpu(type); \
-	if (pcpu_stats)	{					\
-		int __cpu;					\
-		for_each_possible_cpu(__cpu) {			\
-			typeof(type) *stat;			\
-			stat = per_cpu_ptr(pcpu_stats, __cpu);	\
-			u64_stats_init(&stat->syncp);		\
-		}						\
-	}							\
-	pcpu_stats;						\
+#define __netdev_alloc_pcpu_stats(type, gfp)				\
+({									\
+	typeof(type) __percpu *pcpu_stats = alloc_percpu_gfp(type, gfp);\
+	if (pcpu_stats)	{						\
+		int __cpu;						\
+		for_each_possible_cpu(__cpu) {				\
+			typeof(type) *stat;				\
+			stat = per_cpu_ptr(pcpu_stats, __cpu);		\
+			u64_stats_init(&stat->syncp);			\
+		}							\
+	}								\
+	pcpu_stats;							\
 })
+
+#define netdev_alloc_pcpu_stats(type)					\
+	__netdev_alloc_pcpu_stats(type, GFP_KERNEL);
+
+enum netdev_lag_tx_type {
+	NETDEV_LAG_TX_TYPE_UNKNOWN,
+	NETDEV_LAG_TX_TYPE_RANDOM,
+	NETDEV_LAG_TX_TYPE_BROADCAST,
+	NETDEV_LAG_TX_TYPE_ROUNDROBIN,
+	NETDEV_LAG_TX_TYPE_ACTIVEBACKUP,
+	NETDEV_LAG_TX_TYPE_HASH,
+};
+
+struct netdev_lag_upper_info {
+	enum netdev_lag_tx_type tx_type;
+};
+
+struct netdev_lag_lower_state_info {
+	u8 link_up : 1,
+	   tx_enabled : 1;
+};
 
 #include <linux/notifier.h>
 
@@ -2117,6 +2164,7 @@ struct pcpu_sw_netstats {
 #define NETDEV_CHANGEINFODATA	0x0018
 #define NETDEV_BONDING_INFO	0x0019
 #define NETDEV_PRECHANGEUPPER	0x001A
+#define NETDEV_CHANGELOWERSTATE	0x001B
 
 int register_netdevice_notifier(struct notifier_block *nb);
 int unregister_netdevice_notifier(struct notifier_block *nb);
@@ -2135,6 +2183,12 @@ struct netdev_notifier_changeupper_info {
 	struct net_device *upper_dev; /* new upper dev */
 	bool master; /* is upper dev master */
 	bool linking; /* is the nofication for link or unlink */
+	void *upper_info; /* upper dev info */
+};
+
+struct netdev_notifier_changelowerstate_info {
+	struct netdev_notifier_info info; /* must be first */
+	void *lower_state_info; /* is lower dev state */
 };
 
 static inline void netdev_notifier_info_init(struct netdev_notifier_info *info,
@@ -3591,15 +3645,15 @@ struct net_device *netdev_master_upper_dev_get(struct net_device *dev);
 struct net_device *netdev_master_upper_dev_get_rcu(struct net_device *dev);
 int netdev_upper_dev_link(struct net_device *dev, struct net_device *upper_dev);
 int netdev_master_upper_dev_link(struct net_device *dev,
-				 struct net_device *upper_dev);
-int netdev_master_upper_dev_link_private(struct net_device *dev,
-					 struct net_device *upper_dev,
-					 void *private);
+				 struct net_device *upper_dev,
+				 void *upper_priv, void *upper_info);
 void netdev_upper_dev_unlink(struct net_device *dev,
 			     struct net_device *upper_dev);
 void netdev_adjacent_rename_links(struct net_device *dev, char *oldname);
 void *netdev_lower_dev_get_private(struct net_device *dev,
 				   struct net_device *lower_dev);
+void netdev_lower_state_changed(struct net_device *lower_dev,
+				void *lower_state_info);
 
 /* RSS keys are 40 or 52 bytes long */
 #define NETDEV_RSS_KEY_LEN 52
@@ -3607,7 +3661,7 @@ extern u8 netdev_rss_key[NETDEV_RSS_KEY_LEN];
 void netdev_rss_key_fill(void *buffer, size_t len);
 
 int dev_get_nest_level(struct net_device *dev,
-		       bool (*type_check)(struct net_device *dev));
+		       bool (*type_check)(const struct net_device *dev));
 int skb_checksum_help(struct sk_buff *skb);
 struct sk_buff *__skb_gso_segment(struct sk_buff *skb,
 				  netdev_features_t features, bool tx_path);
@@ -3804,32 +3858,32 @@ static inline void skb_gso_error_unwind(struct sk_buff *skb, __be16 protocol,
 	skb->mac_len = mac_len;
 }
 
-static inline bool netif_is_macvlan(struct net_device *dev)
+static inline bool netif_is_macvlan(const struct net_device *dev)
 {
 	return dev->priv_flags & IFF_MACVLAN;
 }
 
-static inline bool netif_is_macvlan_port(struct net_device *dev)
+static inline bool netif_is_macvlan_port(const struct net_device *dev)
 {
 	return dev->priv_flags & IFF_MACVLAN_PORT;
 }
 
-static inline bool netif_is_ipvlan(struct net_device *dev)
+static inline bool netif_is_ipvlan(const struct net_device *dev)
 {
 	return dev->priv_flags & IFF_IPVLAN_SLAVE;
 }
 
-static inline bool netif_is_ipvlan_port(struct net_device *dev)
+static inline bool netif_is_ipvlan_port(const struct net_device *dev)
 {
 	return dev->priv_flags & IFF_IPVLAN_MASTER;
 }
 
-static inline bool netif_is_bond_master(struct net_device *dev)
+static inline bool netif_is_bond_master(const struct net_device *dev)
 {
 	return dev->flags & IFF_MASTER && dev->priv_flags & IFF_BONDING;
 }
 
-static inline bool netif_is_bond_slave(struct net_device *dev)
+static inline bool netif_is_bond_slave(const struct net_device *dev)
 {
 	return dev->flags & IFF_SLAVE && dev->priv_flags & IFF_BONDING;
 }
@@ -3854,9 +3908,34 @@ static inline bool netif_is_bridge_master(const struct net_device *dev)
 	return dev->priv_flags & IFF_EBRIDGE;
 }
 
+static inline bool netif_is_bridge_port(const struct net_device *dev)
+{
+	return dev->priv_flags & IFF_BRIDGE_PORT;
+}
+
 static inline bool netif_is_ovs_master(const struct net_device *dev)
 {
 	return dev->priv_flags & IFF_OPENVSWITCH;
+}
+
+static inline bool netif_is_team_master(const struct net_device *dev)
+{
+	return dev->priv_flags & IFF_TEAM;
+}
+
+static inline bool netif_is_team_port(const struct net_device *dev)
+{
+	return dev->priv_flags & IFF_TEAM_PORT;
+}
+
+static inline bool netif_is_lag_master(const struct net_device *dev)
+{
+	return netif_is_bond_master(dev) || netif_is_team_master(dev);
+}
+
+static inline bool netif_is_lag_port(const struct net_device *dev)
+{
+	return netif_is_bond_slave(dev) || netif_is_team_port(dev);
 }
 
 /* This device needs to keep skb dst for qdisc enqueue or ndo_start_xmit() */

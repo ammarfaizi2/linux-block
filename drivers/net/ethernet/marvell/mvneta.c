@@ -36,7 +36,7 @@
 
 /* Registers */
 #define MVNETA_RXQ_CONFIG_REG(q)                (0x1400 + ((q) << 2))
-#define      MVNETA_RXQ_HW_BUF_ALLOC            BIT(1)
+#define      MVNETA_RXQ_HW_BUF_ALLOC            BIT(0)
 #define      MVNETA_RXQ_PKT_OFFSET_ALL_MASK     (0xf    << 8)
 #define      MVNETA_RXQ_PKT_OFFSET_MASK(offs)   ((offs) << 8)
 #define MVNETA_RXQ_THRESHOLD_REG(q)             (0x14c0 + ((q) << 2))
@@ -62,6 +62,7 @@
 #define MVNETA_WIN_SIZE(w)                      (0x2204 + ((w) << 3))
 #define MVNETA_WIN_REMAP(w)                     (0x2280 + ((w) << 2))
 #define MVNETA_BASE_ADDR_ENABLE                 0x2290
+#define MVNETA_ACCESS_PROTECT_ENABLE            0x2294
 #define MVNETA_PORT_CONFIG                      0x2400
 #define      MVNETA_UNI_PROMISC_MODE            BIT(0)
 #define      MVNETA_DEF_RXQ(q)                  ((q) << 1)
@@ -159,7 +160,7 @@
 
 #define MVNETA_INTR_ENABLE                       0x25b8
 #define      MVNETA_TXQ_INTR_ENABLE_ALL_MASK     0x0000ff00
-#define      MVNETA_RXQ_INTR_ENABLE_ALL_MASK     0xff000000  // note: neta says it's 0x000000FF
+#define      MVNETA_RXQ_INTR_ENABLE_ALL_MASK     0x000000ff
 
 #define MVNETA_RXQ_CMD                           0x2680
 #define      MVNETA_RXQ_DISABLE_SHIFT            8
@@ -242,6 +243,7 @@
 #define MVNETA_VLAN_TAG_LEN             4
 
 #define MVNETA_CPU_D_CACHE_LINE_SIZE    32
+#define MVNETA_TX_CSUM_DEF_SIZE		1600
 #define MVNETA_TX_CSUM_MAX_SIZE		9800
 #define MVNETA_ACC_MODE_EXT		1
 
@@ -369,7 +371,7 @@ struct mvneta_port {
 	unsigned int duplex;
 	unsigned int speed;
 	unsigned int tx_csum_limit;
-	int use_inband_status:1;
+	unsigned int use_inband_status:1;
 
 	u64 ethtool_stats[ARRAY_SIZE(mvneta_statistics)];
 };
@@ -971,6 +973,44 @@ static void mvneta_set_other_mcast_table(struct mvneta_port *pp, int queue)
 		mvreg_write(pp, MVNETA_DA_FILT_OTH_MCAST + offset, val);
 }
 
+static void mvneta_set_autoneg(struct mvneta_port *pp, int enable)
+{
+	u32 val;
+
+	if (enable) {
+		val = mvreg_read(pp, MVNETA_GMAC_AUTONEG_CONFIG);
+		val &= ~(MVNETA_GMAC_FORCE_LINK_PASS |
+			 MVNETA_GMAC_FORCE_LINK_DOWN |
+			 MVNETA_GMAC_AN_FLOW_CTRL_EN);
+		val |= MVNETA_GMAC_INBAND_AN_ENABLE |
+		       MVNETA_GMAC_AN_SPEED_EN |
+		       MVNETA_GMAC_AN_DUPLEX_EN;
+		mvreg_write(pp, MVNETA_GMAC_AUTONEG_CONFIG, val);
+
+		val = mvreg_read(pp, MVNETA_GMAC_CLOCK_DIVIDER);
+		val |= MVNETA_GMAC_1MS_CLOCK_ENABLE;
+		mvreg_write(pp, MVNETA_GMAC_CLOCK_DIVIDER, val);
+
+		val = mvreg_read(pp, MVNETA_GMAC_CTRL_2);
+		val |= MVNETA_GMAC2_INBAND_AN_ENABLE;
+		mvreg_write(pp, MVNETA_GMAC_CTRL_2, val);
+	} else {
+		val = mvreg_read(pp, MVNETA_GMAC_AUTONEG_CONFIG);
+		val &= ~(MVNETA_GMAC_INBAND_AN_ENABLE |
+		       MVNETA_GMAC_AN_SPEED_EN |
+		       MVNETA_GMAC_AN_DUPLEX_EN);
+		mvreg_write(pp, MVNETA_GMAC_AUTONEG_CONFIG, val);
+
+		val = mvreg_read(pp, MVNETA_GMAC_CLOCK_DIVIDER);
+		val &= ~MVNETA_GMAC_1MS_CLOCK_ENABLE;
+		mvreg_write(pp, MVNETA_GMAC_CLOCK_DIVIDER, val);
+
+		val = mvreg_read(pp, MVNETA_GMAC_CTRL_2);
+		val &= ~MVNETA_GMAC2_INBAND_AN_ENABLE;
+		mvreg_write(pp, MVNETA_GMAC_CTRL_2, val);
+	}
+}
+
 /* This method sets defaults to the NETA port:
  *	Clears interrupt Cause and Mask registers.
  *	Clears all MAC tables.
@@ -1056,26 +1096,7 @@ static void mvneta_defaults_set(struct mvneta_port *pp)
 	val &= ~MVNETA_PHY_POLLING_ENABLE;
 	mvreg_write(pp, MVNETA_UNIT_CONTROL, val);
 
-	if (pp->use_inband_status) {
-		val = mvreg_read(pp, MVNETA_GMAC_AUTONEG_CONFIG);
-		val &= ~(MVNETA_GMAC_FORCE_LINK_PASS |
-			 MVNETA_GMAC_FORCE_LINK_DOWN |
-			 MVNETA_GMAC_AN_FLOW_CTRL_EN);
-		val |= MVNETA_GMAC_INBAND_AN_ENABLE |
-		       MVNETA_GMAC_AN_SPEED_EN |
-		       MVNETA_GMAC_AN_DUPLEX_EN;
-		mvreg_write(pp, MVNETA_GMAC_AUTONEG_CONFIG, val);
-		val = mvreg_read(pp, MVNETA_GMAC_CLOCK_DIVIDER);
-		val |= MVNETA_GMAC_1MS_CLOCK_ENABLE;
-		mvreg_write(pp, MVNETA_GMAC_CLOCK_DIVIDER, val);
-	} else {
-		val = mvreg_read(pp, MVNETA_GMAC_AUTONEG_CONFIG);
-		val &= ~(MVNETA_GMAC_INBAND_AN_ENABLE |
-		       MVNETA_GMAC_AN_SPEED_EN |
-		       MVNETA_GMAC_AN_DUPLEX_EN);
-		mvreg_write(pp, MVNETA_GMAC_AUTONEG_CONFIG, val);
-	}
-
+	mvneta_set_autoneg(pp, pp->use_inband_status);
 	mvneta_set_ucast_table(pp, -1);
 	mvneta_set_special_mcast_table(pp, -1);
 	mvneta_set_other_mcast_table(pp, -1);
@@ -1579,11 +1600,15 @@ static int mvneta_rx(struct mvneta_port *pp, int rx_todo,
 		}
 
 		skb = build_skb(data, pp->frag_size > PAGE_SIZE ? 0 : pp->frag_size);
-		if (!skb)
-			goto err_drop_frame;
 
+		/* After refill old buffer has to be unmapped regardless
+		 * the skb is successfully built or not.
+		 */
 		dma_unmap_single(dev->dev.parent, phys_addr,
 				 MVNETA_RX_BUF_SIZE(pp->pkt_size), DMA_FROM_DEVICE);
+
+		if (!skb)
+			goto err_drop_frame;
 
 		rcvd_pkts++;
 		rcvd_bytes += rx_bytes;
@@ -2937,9 +2962,42 @@ int mvneta_ethtool_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 int mvneta_ethtool_set_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 {
 	struct mvneta_port *pp = netdev_priv(dev);
+	struct phy_device *phydev = pp->phy_dev;
 
-	if (!pp->phy_dev)
+	if (!phydev)
 		return -ENODEV;
+
+	if ((cmd->autoneg == AUTONEG_ENABLE) != pp->use_inband_status) {
+		u32 val;
+
+		mvneta_set_autoneg(pp, cmd->autoneg == AUTONEG_ENABLE);
+
+		if (cmd->autoneg == AUTONEG_DISABLE) {
+			val = mvreg_read(pp, MVNETA_GMAC_AUTONEG_CONFIG);
+			val &= ~(MVNETA_GMAC_CONFIG_MII_SPEED |
+				 MVNETA_GMAC_CONFIG_GMII_SPEED |
+				 MVNETA_GMAC_CONFIG_FULL_DUPLEX);
+
+			if (phydev->duplex)
+				val |= MVNETA_GMAC_CONFIG_FULL_DUPLEX;
+
+			if (phydev->speed == SPEED_1000)
+				val |= MVNETA_GMAC_CONFIG_GMII_SPEED;
+			else if (phydev->speed == SPEED_100)
+				val |= MVNETA_GMAC_CONFIG_MII_SPEED;
+
+			mvreg_write(pp, MVNETA_GMAC_AUTONEG_CONFIG, val);
+		}
+
+		pp->use_inband_status = (cmd->autoneg == AUTONEG_ENABLE);
+		netdev_info(pp->dev, "autoneg status set to %i\n",
+			    pp->use_inband_status);
+
+		if (netif_running(dev)) {
+			mvneta_port_down(pp);
+			mvneta_port_up(pp);
+		}
+	}
 
 	return phy_ethtool_sset(pp->phy_dev, cmd);
 }
@@ -3191,6 +3249,7 @@ static void mvneta_conf_mbus_windows(struct mvneta_port *pp,
 	}
 
 	mvreg_write(pp, MVNETA_BASE_ADDR_ENABLE, win_enable);
+	mvreg_write(pp, MVNETA_ACCESS_PROTECT_ENABLE, win_protect);
 }
 
 /* Power up the port */
@@ -3223,9 +3282,6 @@ static int mvneta_port_power_up(struct mvneta_port *pp, int phy_mode)
 		return -EINVAL;
 	}
 
-	if (pp->use_inband_status)
-		ctrl |= MVNETA_GMAC2_INBAND_AN_ENABLE;
-
 	/* Cancel Port Reset */
 	ctrl &= ~MVNETA_GMAC2_PORT_RESET;
 	mvreg_write(pp, MVNETA_GMAC_CTRL_2, ctrl);
@@ -3250,6 +3306,7 @@ static int mvneta_probe(struct platform_device *pdev)
 	char hw_mac_addr[ETH_ALEN];
 	const char *mac_from;
 	const char *managed;
+	int tx_csum_limit;
 	int phy_mode;
 	int err;
 	int cpu;
@@ -3350,8 +3407,21 @@ static int mvneta_probe(struct platform_device *pdev)
 		}
 	}
 
-	if (of_device_is_compatible(dn, "marvell,armada-370-neta"))
-		pp->tx_csum_limit = 1600;
+	if (!of_property_read_u32(dn, "tx-csum-limit", &tx_csum_limit)) {
+		if (tx_csum_limit < 0 ||
+		    tx_csum_limit > MVNETA_TX_CSUM_MAX_SIZE) {
+			tx_csum_limit = MVNETA_TX_CSUM_DEF_SIZE;
+			dev_info(&pdev->dev,
+				 "Wrong TX csum limit in DT, set to %dB\n",
+				 MVNETA_TX_CSUM_DEF_SIZE);
+		}
+	} else if (of_device_is_compatible(dn, "marvell,armada-370-neta")) {
+		tx_csum_limit = MVNETA_TX_CSUM_DEF_SIZE;
+	} else {
+		tx_csum_limit = MVNETA_TX_CSUM_MAX_SIZE;
+	}
+
+	pp->tx_csum_limit = tx_csum_limit;
 
 	pp->tx_ring_size = MVNETA_MAX_TXD;
 	pp->rx_ring_size = MVNETA_MAX_RXD;
