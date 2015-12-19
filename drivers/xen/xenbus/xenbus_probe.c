@@ -702,12 +702,12 @@ device_initcall(xenbus_probe_initcall);
  */
 static int __init xenstored_local_init(void)
 {
-	int err = 0;
-	unsigned long page = 0;
 	struct evtchn_alloc_unbound alloc_unbound;
+	void *page;
+	int err = 0;
 
 	/* Allocate Xenstore page */
-	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	page = get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		goto out_err;
 
@@ -729,8 +729,7 @@ static int __init xenstored_local_init(void)
 	return 0;
 
  out_err:
-	if (page != 0)
-		free_page((void *)page);
+	free_page(page);
 	return err;
 }
 
