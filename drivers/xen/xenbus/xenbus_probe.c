@@ -707,7 +707,7 @@ static int __init xenstored_local_init(void)
 	struct evtchn_alloc_unbound alloc_unbound;
 
 	/* Allocate Xenstore page */
-	page = get_zeroed_page(GFP_KERNEL);
+	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		goto out_err;
 

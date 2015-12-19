@@ -120,7 +120,7 @@ static const u16 credit_table[31] = {
 
 static void get_map_page(struct hfi1_qpn_table *qpt, struct qpn_map *map)
 {
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
+	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 
 	/*
 	 * Free the page if someone raced with us installing it.

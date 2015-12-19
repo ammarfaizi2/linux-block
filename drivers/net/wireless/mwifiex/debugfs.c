@@ -79,7 +79,7 @@ mwifiex_info_read(struct file *file, char __user *ubuf,
 	struct net_device *netdev = priv->netdev;
 	struct netdev_hw_addr *ha;
 	struct netdev_queue *txq;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
+	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *p = (char *) page, fmt[64];
 	struct mwifiex_bss_info info;
 	ssize_t ret;
@@ -201,7 +201,7 @@ mwifiex_getlog_read(struct file *file, char __user *ubuf,
 {
 	struct mwifiex_private *priv =
 		(struct mwifiex_private *) file->private_data;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
+	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *p = (char *) page;
 	ssize_t ret;
 	struct mwifiex_ds_get_stats stats;
@@ -280,7 +280,7 @@ mwifiex_histogram_read(struct file *file, char __user *ubuf,
 	ssize_t ret;
 	struct mwifiex_histogram_data *phist_data;
 	int i, value;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
+	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *p = (char *)page;
 
 	if (!p)
@@ -413,7 +413,7 @@ mwifiex_debug_read(struct file *file, char __user *ubuf,
 {
 	struct mwifiex_private *priv =
 		(struct mwifiex_private *) file->private_data;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
+	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *p = (char *) page;
 	ssize_t ret;
 
@@ -447,7 +447,7 @@ static ssize_t
 mwifiex_regrdwr_write(struct file *file,
 		      const char __user *ubuf, size_t count, loff_t *ppos)
 {
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *) addr;
 	size_t buf_size = min_t(size_t, count, PAGE_SIZE - 1);
 	int ret;
@@ -491,7 +491,7 @@ mwifiex_regrdwr_read(struct file *file, char __user *ubuf,
 {
 	struct mwifiex_private *priv =
 		(struct mwifiex_private *) file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *) addr;
 	int pos = 0, ret = 0;
 	u32 reg_value;
@@ -545,7 +545,7 @@ mwifiex_debug_mask_read(struct file *file, char __user *ubuf,
 {
 	struct mwifiex_private *priv =
 		(struct mwifiex_private *)file->private_data;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
+	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *)page;
 	size_t ret = 0;
 	int pos = 0;
@@ -572,7 +572,7 @@ mwifiex_debug_mask_write(struct file *file, const char __user *ubuf,
 	int ret;
 	unsigned long debug_mask;
 	struct mwifiex_private *priv = (void *)file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (void *)addr;
 	size_t buf_size = min(count, (size_t)(PAGE_SIZE - 1));
 
@@ -609,7 +609,7 @@ mwifiex_memrw_write(struct file *file, const char __user *ubuf, size_t count,
 	struct mwifiex_ds_mem_rw mem_rw;
 	u16 cmd_action;
 	struct mwifiex_private *priv = (void *)file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (void *)addr;
 	size_t buf_size = min(count, (size_t)(PAGE_SIZE - 1));
 
@@ -658,7 +658,7 @@ mwifiex_memrw_read(struct file *file, char __user *ubuf,
 		   size_t count, loff_t *ppos)
 {
 	struct mwifiex_private *priv = (void *)file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *)addr;
 	int ret, pos = 0;
 
@@ -686,7 +686,7 @@ static ssize_t
 mwifiex_rdeeprom_write(struct file *file,
 		       const char __user *ubuf, size_t count, loff_t *ppos)
 {
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *) addr;
 	size_t buf_size = min_t(size_t, count, PAGE_SIZE - 1);
 	int ret = 0;
@@ -729,7 +729,7 @@ mwifiex_rdeeprom_read(struct file *file, char __user *ubuf,
 {
 	struct mwifiex_private *priv =
 		(struct mwifiex_private *) file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *) addr;
 	int pos, ret, i;
 	u8 value[MAX_EEPROM_DATA];
@@ -771,7 +771,7 @@ mwifiex_hscfg_write(struct file *file, const char __user *ubuf,
 		    size_t count, loff_t *ppos)
 {
 	struct mwifiex_private *priv = (void *)file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *)addr;
 	size_t buf_size = min_t(size_t, count, PAGE_SIZE - 1);
 	int ret, arg_num;
@@ -836,7 +836,7 @@ mwifiex_hscfg_read(struct file *file, char __user *ubuf,
 		   size_t count, loff_t *ppos)
 {
 	struct mwifiex_private *priv = (void *)file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
+	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	char *buf = (char *)addr;
 	int pos, ret;
 	struct mwifiex_ds_hs_cfg hscfg;

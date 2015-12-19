@@ -54,7 +54,7 @@ int init_new_context(struct task_struct *task, struct mm_struct *mm)
 	unsigned long stack = 0;
 	int ret = -ENOMEM;
 
-	stack = get_zeroed_page(GFP_KERNEL);
+	stack = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (stack == 0)
 		goto out;
 

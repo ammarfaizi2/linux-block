@@ -382,7 +382,7 @@ static ssize_t proc_dev_atm_read(struct file *file, char __user *buf,
 
 	if (count == 0)
 		return 0;
-	page = get_zeroed_page(GFP_KERNEL);
+	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 	dev = PDE_DATA(file_inode(file));

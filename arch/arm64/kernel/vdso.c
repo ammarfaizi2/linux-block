@@ -64,7 +64,7 @@ static int alloc_vectors_page(void)
 	int sigret_sz = __aarch32_sigret_code_end - __aarch32_sigret_code_start;
 	unsigned long vpage;
 
-	vpage = get_zeroed_page(GFP_ATOMIC);
+	vpage = (unsigned long)get_zeroed_page(GFP_ATOMIC);
 
 	if (!vpage)
 		return -ENOMEM;

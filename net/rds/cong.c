@@ -149,7 +149,7 @@ static struct rds_cong_map *rds_cong_from_addr(__be32 addr)
 	INIT_LIST_HEAD(&map->m_conn_list);
 
 	for (i = 0; i < RDS_CONG_MAP_PAGES; i++) {
-		zp = get_zeroed_page(GFP_KERNEL);
+		zp = (unsigned long)get_zeroed_page(GFP_KERNEL);
 		if (zp == 0)
 			goto out;
 		map->m_page_addrs[i] = zp;

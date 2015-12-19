@@ -1037,7 +1037,7 @@ static void __init init_cpu_send_mondo_info(struct trap_per_cpu *tb)
 
 	BUILD_BUG_ON((NR_CPUS * sizeof(u16)) > (PAGE_SIZE - 64));
 
-	page = get_zeroed_page(GFP_KERNEL);
+	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!page) {
 		prom_printf("SUN4V: Error, cannot allocate cpu mondo page.\n");
 		prom_halt();

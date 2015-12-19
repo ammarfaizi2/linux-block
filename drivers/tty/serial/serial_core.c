@@ -152,7 +152,7 @@ static int uart_port_startup(struct tty_struct *tty, struct uart_state *state,
 	 */
 	if (!state->xmit.buf) {
 		/* This is protected by the per port mutex */
-		page = get_zeroed_page(GFP_KERNEL);
+		page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 		if (!page)
 			return -ENOMEM;
 

@@ -938,7 +938,7 @@ static int pci_sun4v_probe(struct platform_device *op)
 	err = -ENOMEM;
 	if (!iommu_batch_initialized) {
 		for_each_possible_cpu(i) {
-			unsigned long page = get_zeroed_page(GFP_KERNEL);
+			unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 
 			if (!page)
 				goto out_err;

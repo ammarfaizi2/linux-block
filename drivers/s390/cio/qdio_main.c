@@ -1282,7 +1282,7 @@ int qdio_allocate(struct qdio_initialize *init_data)
 	 * qdio_establish. In case of low memory and swap on a zfcp disk
 	 * we may not be able to allocate memory otherwise.
 	 */
-	irq_ptr->chsc_page = get_zeroed_page(GFP_KERNEL);
+	irq_ptr->chsc_page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!irq_ptr->chsc_page)
 		goto out_rel;
 

@@ -1300,7 +1300,7 @@ static int cs_char_open(struct inode *unused, struct file *file)
 	cs_char_data.dataind_pending = 0;
 	spin_unlock_bh(&cs_char_data.lock);
 
-	p = get_zeroed_page(GFP_KERNEL);
+	p = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!p) {
 		ret = -ENOMEM;
 		goto out2;

@@ -2593,7 +2593,7 @@ startup(struct e100_serial * info)
 	unsigned long xmit_page;
 	int i;
 
-	xmit_page = get_zeroed_page(GFP_KERNEL);
+	xmit_page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!xmit_page)
 		return -ENOMEM;
 

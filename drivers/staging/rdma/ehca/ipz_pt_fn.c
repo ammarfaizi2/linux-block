@@ -140,7 +140,7 @@ static int alloc_small_queue_page(struct ipz_queue *queue, struct ehca_pd *pd)
 		if (!page)
 			goto out;
 
-		page->page = get_zeroed_page(GFP_KERNEL);
+		page->page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 		if (!page->page) {
 			kmem_cache_free(small_qp_cache, page);
 			goto out;

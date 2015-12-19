@@ -474,7 +474,7 @@ extern struct page *alloc_kmem_pages_node(int nid, gfp_t gfp_mask,
 					  unsigned int order);
 
 extern unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order);
-extern unsigned long get_zeroed_page(gfp_t gfp_mask);
+extern void *get_zeroed_page(gfp_t gfp_mask);
 
 void *alloc_pages_exact(size_t size, gfp_t gfp_mask);
 void free_pages_exact(void *virt, size_t size);

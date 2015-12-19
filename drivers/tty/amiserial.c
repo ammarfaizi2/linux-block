@@ -520,7 +520,7 @@ static int startup(struct tty_struct *tty, struct serial_state *info)
 	int	retval=0;
 	unsigned long page;
 
-	page = get_zeroed_page(GFP_KERNEL);
+	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

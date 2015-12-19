@@ -158,7 +158,7 @@ static int alloc_sample_data_block(unsigned long *sdbt, gfp_t gfp_flags)
 	unsigned long sdb, *trailer;
 
 	/* Allocate and initialize sample-data-block */
-	sdb = get_zeroed_page(gfp_flags);
+	sdb = (unsigned long)get_zeroed_page(gfp_flags);
 	if (!sdb)
 		return -ENOMEM;
 	trailer = trailer_entry_ptr(sdb);

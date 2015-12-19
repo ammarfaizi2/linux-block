@@ -279,7 +279,7 @@ static int allocate_sdbt(int cpu)
 
 		for (k = 0; k < num_sdb; k++) {
 			/* get and set SDB page */
-			sdb = get_zeroed_page(GFP_KERNEL);
+			sdb = (unsigned long)get_zeroed_page(GFP_KERNEL);
 
 			mutex_lock(&hws_sem_oom);
 			/* OOM killer might have been activated */

@@ -68,7 +68,7 @@ static void pm_enter(void)
 
 	/* set interrupt handler */
 	asm volatile("stc vbr, %0" : "=r" (vbr_old));
-	vbr_new = get_zeroed_page(GFP_ATOMIC);
+	vbr_new = (unsigned long)get_zeroed_page(GFP_ATOMIC);
 	udelay(50);
 	memcpy((void*)(vbr_new + INTR_OFFSET),
 	       &wakeup_start, &wakeup_end - &wakeup_start);

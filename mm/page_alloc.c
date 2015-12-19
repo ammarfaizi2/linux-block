@@ -3274,9 +3274,9 @@ unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order)
 }
 EXPORT_SYMBOL(__get_free_pages);
 
-unsigned long get_zeroed_page(gfp_t gfp_mask)
+void *get_zeroed_page(gfp_t gfp_mask)
 {
-	return __get_free_pages(gfp_mask | __GFP_ZERO, 0);
+	return (void *)__get_free_pages(gfp_mask | __GFP_ZERO, 0);
 }
 EXPORT_SYMBOL(get_zeroed_page);
 

@@ -170,7 +170,7 @@ static int lg_cpu_start(struct lg_cpu *cpu, unsigned id, unsigned long start_ip)
 	 * We need a complete page for the Guest registers: they are accessible
 	 * to the Guest and we can only grant it access to whole pages.
 	 */
-	cpu->regs_page = get_zeroed_page(GFP_KERNEL);
+	cpu->regs_page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!cpu->regs_page)
 		return -ENOMEM;
 

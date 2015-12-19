@@ -105,7 +105,7 @@ static int alloc_kuser_page(void)
 	int kuser_sz = __kuser_helper_end - __kuser_helper_start;
 	unsigned long vpage;
 
-	vpage = get_zeroed_page(GFP_ATOMIC);
+	vpage = (unsigned long)get_zeroed_page(GFP_ATOMIC);
 	if (!vpage)
 		return -ENOMEM;
 

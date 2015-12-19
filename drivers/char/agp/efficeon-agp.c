@@ -214,7 +214,7 @@ static int efficeon_create_gatt_table(struct agp_bridge_data *bridge)
 		page = efficeon_private.l1_table[index];
 		BUG_ON(page);
 
-		page = get_zeroed_page(GFP_KERNEL);
+		page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 		if (!page) {
 			efficeon_free_gatt_table(agp_bridge);
 			return -ENOMEM;

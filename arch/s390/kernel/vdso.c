@@ -102,8 +102,8 @@ int vdso_alloc_per_cpu(struct _lowcore *lowcore)
 		return 0;
 
 	segment_table = __get_free_pages(GFP_KERNEL, SEGMENT_ORDER);
-	page_table = get_zeroed_page(GFP_KERNEL | GFP_DMA);
-	page_frame = get_zeroed_page(GFP_KERNEL);
+	page_table = (unsigned long)get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	page_frame = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!segment_table || !page_table || !page_frame)
 		goto out;
 

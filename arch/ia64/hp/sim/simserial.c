@@ -367,7 +367,7 @@ static int activate(struct tty_port *port, struct tty_struct *tty)
 	unsigned long flags, page;
 	int retval = 0;
 
-	page = get_zeroed_page(GFP_KERNEL);
+	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

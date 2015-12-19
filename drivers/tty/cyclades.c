@@ -1273,7 +1273,7 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 	card = info->card;
 	channel = info->line - card->first_line;
 
-	page = get_zeroed_page(GFP_KERNEL);
+	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 

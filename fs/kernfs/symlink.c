@@ -115,7 +115,7 @@ static int kernfs_getlink(struct dentry *dentry, char *path)
 static const char *kernfs_iop_follow_link(struct dentry *dentry, void **cookie)
 {
 	int error = -ENOMEM;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
+	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return ERR_PTR(-ENOMEM);
 	error = kernfs_getlink(dentry, (char *)page);
