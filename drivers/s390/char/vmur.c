@@ -551,7 +551,7 @@ static ssize_t diag14_read(struct file *file, char __user *ubuf, size_t count,
 	*offs += copied;
 	rc = copied;
 fail:
-	free_page((unsigned long) buf);
+	free_page(buf);
 	return rc;
 }
 
@@ -636,7 +636,7 @@ static int verify_uri_device(struct urdev *urd)
 	rc = 0;
 
 fail_free_buf:
-	free_page((unsigned long) buf);
+	free_page(buf);
 fail_free_fcb:
 	kfree(fcb);
 	return rc;

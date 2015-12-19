@@ -150,7 +150,7 @@ static long cmm_alloc_pages(long nr)
 					__GFP_NORETRY | __GFP_NOMEMALLOC);
 			if (!npa) {
 				pr_info("%s: Can not allocate new page list\n", __func__);
-				free_page(addr);
+				free_page((void *)addr);
 				break;
 			}
 			spin_lock(&cmm_lock);
@@ -162,13 +162,13 @@ static long cmm_alloc_pages(long nr)
 				pa = npa;
 				cmm_page_list = pa;
 			} else
-				free_page((unsigned long) npa);
+				free_page(npa);
 		}
 
 		if ((rc = plpar_page_set_loaned(__pa(addr)))) {
 			pr_err("%s: Can not set page to loaned. rc=%ld\n", __func__, rc);
 			spin_unlock(&cmm_lock);
-			free_page(addr);
+			free_page((void *)addr);
 			break;
 		}
 
@@ -205,12 +205,12 @@ static long cmm_free_pages(long nr)
 
 		if (pa->index == 0) {
 			pa = pa->next;
-			free_page((unsigned long) cmm_page_list);
+			free_page(cmm_page_list);
 			cmm_page_list = pa;
 		}
 
 		plpar_page_set_active(__pa(addr));
-		free_page(addr);
+		free_page((void *)addr);
 		loaned_pages--;
 		nr--;
 		totalram_pages++;
@@ -544,7 +544,7 @@ static int cmm_mem_going_offline(void *arg)
 				continue;
 
 			plpar_page_set_active(__pa(pa_curr->page[idx]));
-			free_page(pa_curr->page[idx]);
+			free_page((void *)pa_curr->page[idx]);
 			freed++;
 			loaned_pages--;
 			totalram_pages++;
@@ -553,7 +553,7 @@ static int cmm_mem_going_offline(void *arg)
 				if (pa_curr == pa_last)
 					pa_curr = pa_last->next;
 				pa_last = pa_last->next;
-				free_page((unsigned long)cmm_page_list);
+				free_page(cmm_page_list);
 				cmm_page_list = pa_last;
 			}
 		}
@@ -581,7 +581,7 @@ static int cmm_mem_going_offline(void *arg)
 				cmm_page_list = npa;
 			if (pa_last)
 				pa_last->next = npa;
-			free_page((unsigned long) pa_curr);
+			free_page(pa_curr);
 			freed++;
 			pa_curr = npa;
 		}

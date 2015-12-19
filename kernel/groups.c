@@ -40,7 +40,7 @@ struct group_info *groups_alloc(int gidsetsize)
 
 out_undo_partial_alloc:
 	while (--i >= 0) {
-		free_page((unsigned long)group_info->blocks[i]);
+		free_page(group_info->blocks[i]);
 	}
 	kfree(group_info);
 	return NULL;
@@ -53,7 +53,7 @@ void groups_free(struct group_info *group_info)
 	if (group_info->blocks[0] != group_info->small_block) {
 		int i;
 		for (i = 0; i < group_info->nblocks; i++)
-			free_page((unsigned long)group_info->blocks[i]);
+			free_page(group_info->blocks[i]);
 	}
 	kfree(group_info);
 }

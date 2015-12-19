@@ -909,7 +909,7 @@ static int start_rx(struct atm_dev *dev)
 	if (!eni_dev->rx_map) {
 		printk(KERN_ERR DEV_LABEL "(itf %d): couldn't get free page\n",
 		    dev->number);
-		free_page((unsigned long) eni_dev->free_list);
+		free_page(eni_dev->free_list);
 		return -ENOMEM;
 	}
 	eni_dev->rx_mult = DEFAULT_RX_MULT;

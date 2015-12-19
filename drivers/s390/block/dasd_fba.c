@@ -571,7 +571,7 @@ dasd_fba_dump_sense(struct dasd_device *device, struct dasd_ccw_req * req,
 	}
 	if (len > 0)
 		printk(KERN_ERR "%s", page);
-	free_page((unsigned long) page);
+	free_page(page);
 }
 
 /*

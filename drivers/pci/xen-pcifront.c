@@ -774,7 +774,7 @@ static void free_pdev(struct pcifront_device *pdev)
 		gnttab_end_foreign_access(pdev->gnt_ref, 0 /* r/w page */,
 					  (unsigned long)pdev->sh_info);
 	else
-		free_page((unsigned long)pdev->sh_info);
+		free_page(pdev->sh_info);
 
 	dev_set_drvdata(&pdev->xdev->dev, NULL);
 

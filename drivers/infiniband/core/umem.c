@@ -235,8 +235,8 @@ out:
 
 	up_write(&current->mm->mmap_sem);
 	if (vma_list)
-		free_page((unsigned long) vma_list);
-	free_page((unsigned long) page_list);
+		free_page(vma_list);
+	free_page(page_list);
 
 	return ret < 0 ? ERR_PTR(ret) : umem;
 }

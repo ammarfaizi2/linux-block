@@ -467,11 +467,11 @@ static void hv_synic_free_cpu(int cpu)
 	kfree(hv_context.event_dpc[cpu]);
 	kfree(hv_context.clk_evt[cpu]);
 	if (hv_context.synic_event_page[cpu])
-		free_page((unsigned long)hv_context.synic_event_page[cpu]);
+		free_page(hv_context.synic_event_page[cpu]);
 	if (hv_context.synic_message_page[cpu])
-		free_page((unsigned long)hv_context.synic_message_page[cpu]);
+		free_page(hv_context.synic_message_page[cpu]);
 	if (hv_context.post_msg_page[cpu])
-		free_page((unsigned long)hv_context.post_msg_page[cpu]);
+		free_page(hv_context.post_msg_page[cpu]);
 }
 
 void hv_synic_free(void)

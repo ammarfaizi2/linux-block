@@ -445,7 +445,7 @@ static ssize_t read_kmem(struct file *file, char __user *buf,
 			read += sz;
 			p += sz;
 		}
-		free_page((unsigned long)kbuf);
+		free_page(kbuf);
 	}
 	*ppos = p;
 	return read ? read : err;
@@ -546,7 +546,7 @@ static ssize_t write_kmem(struct file *file, const char __user *buf,
 			virtr += sz;
 			p += sz;
 		}
-		free_page((unsigned long)kbuf);
+		free_page(kbuf);
 	}
 
 	*ppos = p;

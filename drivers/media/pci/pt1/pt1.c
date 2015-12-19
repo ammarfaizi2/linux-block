@@ -624,7 +624,7 @@ static void pt1_free_adapter(struct pt1_adapter *adap)
 	dvb_dmxdev_release(&adap->dmxdev);
 	dvb_dmx_release(&adap->demux);
 	dvb_unregister_adapter(&adap->adap);
-	free_page((unsigned long)adap->buf);
+	free_page(adap->buf);
 	kfree(adap);
 }
 
@@ -696,7 +696,7 @@ err_dmx_release:
 err_unregister_adapter:
 	dvb_unregister_adapter(dvb_adap);
 err_free_page:
-	free_page((unsigned long)buf);
+	free_page(buf);
 err_kfree:
 	kfree(adap);
 err:

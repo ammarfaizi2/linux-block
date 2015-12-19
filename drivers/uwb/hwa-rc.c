@@ -720,7 +720,7 @@ error_neep_submit:
 	usb_free_urb(hwarc->neep_urb);
 	hwarc->neep_urb = NULL;
 error_urb_alloc:
-	free_page((unsigned long)hwarc->rd_buffer);
+	free_page(hwarc->rd_buffer);
 	hwarc->rd_buffer = NULL;
 error_rd_buffer:
 	return -ENOMEM;
@@ -736,7 +736,7 @@ static void hwarc_neep_release(struct uwb_rc *rc)
 	usb_free_urb(hwarc->neep_urb);
 	hwarc->neep_urb = NULL;
 
-	free_page((unsigned long)hwarc->rd_buffer);
+	free_page(hwarc->rd_buffer);
 	hwarc->rd_buffer = NULL;
 }
 

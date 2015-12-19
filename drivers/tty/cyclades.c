@@ -1288,7 +1288,7 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 	}
 
 	if (info->port.xmit_buf)
-		free_page(page);
+		free_page((void *)page);
 	else
 		info->port.xmit_buf = (unsigned char *)page;
 
@@ -1383,7 +1383,7 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 
 errout:
 	spin_unlock_irqrestore(&card->card_lock, flags);
-	free_page(page);
+	free_page((void *)page);
 	return retval;
 }				/* startup */
 
@@ -1438,7 +1438,7 @@ static void cy_shutdown(struct cyclades_port *info, struct tty_struct *tty)
 			unsigned char *temp;
 			temp = info->port.xmit_buf;
 			info->port.xmit_buf = NULL;
-			free_page((unsigned long)temp);
+			free_page(temp);
 		}
 		if (tty->termios.c_cflag & HUPCL)
 			cyy_change_rts_dtr(info, 0, TIOCM_RTS | TIOCM_DTR);
@@ -1466,7 +1466,7 @@ static void cy_shutdown(struct cyclades_port *info, struct tty_struct *tty)
 			unsigned char *temp;
 			temp = info->port.xmit_buf;
 			info->port.xmit_buf = NULL;
-			free_page((unsigned long)temp);
+			free_page(temp);
 		}
 
 		if (tty->termios.c_cflag & HUPCL)

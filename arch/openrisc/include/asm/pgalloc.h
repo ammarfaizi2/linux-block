@@ -68,7 +68,7 @@ extern inline pgd_t *pgd_alloc(struct mm_struct *mm)
 
 static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
-	free_page((unsigned long)pgd);
+	free_page(pgd);
 }
 
 extern pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address);
@@ -90,7 +90,7 @@ static inline struct page *pte_alloc_one(struct mm_struct *mm,
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long)pte);
+	free_page(pte);
 }
 
 static inline void pte_free(struct mm_struct *mm, struct page *pte)

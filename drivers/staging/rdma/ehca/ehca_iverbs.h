@@ -210,7 +210,7 @@ void *ehca_alloc_fw_ctrlblock(gfp_t flags);
 void ehca_free_fw_ctrlblock(void *ptr);
 #else
 #define ehca_alloc_fw_ctrlblock(flags) ((void *)get_zeroed_page(flags))
-#define ehca_free_fw_ctrlblock(ptr) free_page((unsigned long)(ptr))
+#define ehca_free_fw_ctrlblock(ptr) free_page(ptr)
 #endif
 
 void ehca_recover_sqp(struct ib_qp *sqp);

@@ -344,7 +344,7 @@ static void tlb_remove_table_rcu(struct rcu_head *head)
 	for (i = 0; i < batch->nr; i++)
 		__tlb_remove_table(batch->tables[i]);
 
-	free_page((unsigned long)batch);
+	free_page(batch);
 }
 
 void tlb_table_flush(struct mmu_gather *tlb)
@@ -3772,7 +3772,7 @@ void print_vma_addr(char *prefix, unsigned long ip)
 			printk("%s%s[%lx+%lx]", prefix, kbasename(p),
 					vma->vm_start,
 					vma->vm_end - vma->vm_start);
-			free_page((unsigned long)buf);
+			free_page(buf);
 		}
 	}
 	up_read(&mm->mmap_sem);

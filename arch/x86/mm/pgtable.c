@@ -198,7 +198,7 @@ static void free_pmds(struct mm_struct *mm, pmd_t *pmds[])
 	for(i = 0; i < PREALLOCATED_PMDS; i++)
 		if (pmds[i]) {
 			pgtable_pmd_page_dtor(virt_to_page(pmds[i]));
-			free_page((unsigned long)pmds[i]);
+			free_page(pmds[i]);
 			mm_dec_nr_pmds(mm);
 		}
 }
@@ -213,7 +213,7 @@ static int preallocate_pmds(struct mm_struct *mm, pmd_t *pmds[])
 		if (!pmd)
 			failed = true;
 		if (pmd && !pgtable_pmd_page_ctor(virt_to_page(pmd))) {
-			free_page((unsigned long)pmd);
+			free_page(pmd);
 			pmd = NULL;
 			failed = true;
 		}
@@ -335,7 +335,7 @@ static inline pgd_t *_pgd_alloc(void)
 static inline void _pgd_free(pgd_t *pgd)
 {
 	if (!SHARED_KERNEL_PMD)
-		free_page((unsigned long)pgd);
+		free_page(pgd);
 	else
 		kmem_cache_free(pgd_cache, pgd);
 }
@@ -347,7 +347,7 @@ static inline pgd_t *_pgd_alloc(void)
 
 static inline void _pgd_free(pgd_t *pgd)
 {
-	free_page((unsigned long)pgd);
+	free_page(pgd);
 }
 #endif /* CONFIG_X86_PAE */
 

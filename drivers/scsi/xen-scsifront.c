@@ -729,7 +729,7 @@ static int scsifront_alloc_ring(struct vscsifrnt_info *info)
 
 	err = xenbus_grant_ring(dev, sring, 1, &gref);
 	if (err < 0) {
-		free_page((unsigned long)sring);
+		free_page(sring);
 		xenbus_dev_fatal(dev, err,
 			"fail to grant shared ring (Front to Back)");
 		return err;

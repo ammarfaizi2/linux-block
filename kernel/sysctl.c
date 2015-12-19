@@ -2128,7 +2128,7 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 		left -= proc_skip_spaces(&kbuf);
 free:
 	if (write) {
-		free_page(page);
+		free_page((void *)page);
 		if (first)
 			return err ? : -EINVAL;
 	}
@@ -2388,7 +2388,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int 
 		left -= proc_skip_spaces(&kbuf);
 free:
 	if (write) {
-		free_page(page);
+		free_page((void *)page);
 		if (first)
 			return err ? : -EINVAL;
 	}
@@ -2661,7 +2661,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 		if (!kbuf)
 			return -ENOMEM;
 		if (copy_from_user(kbuf, buffer, left)) {
-			free_page(page);
+			free_page((void *)page);
 			return -EFAULT;
                 }
 		kbuf[left] = 0;
@@ -2669,7 +2669,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 		tmp_bitmap = kzalloc(BITS_TO_LONGS(bitmap_len) * sizeof(unsigned long),
 				     GFP_KERNEL);
 		if (!tmp_bitmap) {
-			free_page(page);
+			free_page((void *)page);
 			return -ENOMEM;
 		}
 		proc_skip_char(&kbuf, &left, '\n');
@@ -2713,7 +2713,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 			first = 0;
 			proc_skip_char(&kbuf, &left, '\n');
 		}
-		free_page(page);
+		free_page((void *)page);
 	} else {
 		unsigned long bit_a, bit_b = 0;
 

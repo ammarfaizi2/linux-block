@@ -943,7 +943,7 @@ static int __init aes_s390_init(void)
 		}
 		ret = crypto_register_alg(&ctr_aes_alg);
 		if (ret) {
-			free_page((unsigned long) ctrblk);
+			free_page(ctrblk);
 			goto ctr_aes_err;
 		}
 		ctr_aes_alg_reg = 1;
@@ -968,7 +968,7 @@ static void __exit aes_s390_fini(void)
 {
 	if (ctr_aes_alg_reg) {
 		crypto_unregister_alg(&ctr_aes_alg);
-		free_page((unsigned long) ctrblk);
+		free_page(ctrblk);
 	}
 	if (xts_aes_alg_reg)
 		crypto_unregister_alg(&xts_aes_alg);

@@ -143,7 +143,7 @@ int iommu_table_init(struct iommu *iommu, int tsbsize,
 	return 0;
 
 out_free_dummy_page:
-	free_page(iommu->dummy_page);
+	free_page((void *)iommu->dummy_page);
 	iommu->dummy_page = 0UL;
 
 out_free_map:

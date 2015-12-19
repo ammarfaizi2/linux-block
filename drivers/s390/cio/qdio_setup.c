@@ -44,7 +44,7 @@ void qdio_free_buffers(struct qdio_buffer **buf, unsigned int count)
 	int pos;
 
 	for (pos = 0; pos < count; pos += QBUFF_PER_PAGE)
-		free_page((unsigned long) buf[pos]);
+		free_page(buf[pos]);
 }
 EXPORT_SYMBOL_GPL(qdio_free_buffers);
 
@@ -326,7 +326,7 @@ int qdio_setup_get_ssqd(struct qdio_irq *irq_ptr,
 
 out:
 	if (!irq_ptr)
-		free_page((unsigned long)ssqd);
+		free_page(ssqd);
 
 	return rc;
 }
@@ -364,7 +364,7 @@ void qdio_release_memory(struct qdio_irq *irq_ptr)
 	for (i = 0; i < QDIO_MAX_QUEUES_PER_IRQ; i++) {
 		q = irq_ptr->input_qs[i];
 		if (q) {
-			free_page((unsigned long) q->slib);
+			free_page(q->slib);
 			kmem_cache_free(qdio_q_cache, q);
 		}
 	}
@@ -384,13 +384,13 @@ void qdio_release_memory(struct qdio_irq *irq_ptr)
 
 				qdio_disable_async_operation(&q->u.out);
 			}
-			free_page((unsigned long) q->slib);
+			free_page(q->slib);
 			kmem_cache_free(qdio_q_cache, q);
 		}
 	}
-	free_page((unsigned long) irq_ptr->qdr);
-	free_page(irq_ptr->chsc_page);
-	free_page((unsigned long) irq_ptr);
+	free_page(irq_ptr->qdr);
+	free_page((void *)irq_ptr->chsc_page);
+	free_page(irq_ptr);
 }
 
 static void __qdio_allocate_fill_qdr(struct qdio_irq *irq_ptr,

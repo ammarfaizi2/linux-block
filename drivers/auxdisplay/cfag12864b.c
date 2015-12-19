@@ -371,7 +371,7 @@ cachealloced:
 	kfree(cfag12864b_cache);
 
 bufferalloced:
-	free_page((unsigned long) cfag12864b_buffer);
+	free_page(cfag12864b_buffer);
 
 none:
 	return ret;
@@ -383,7 +383,7 @@ static void __exit cfag12864b_exit(void)
 	cfag12864b_off();
 	destroy_workqueue(cfag12864b_workqueue);
 	kfree(cfag12864b_cache);
-	free_page((unsigned long) cfag12864b_buffer);
+	free_page(cfag12864b_buffer);
 }
 
 module_init(cfag12864b_init);

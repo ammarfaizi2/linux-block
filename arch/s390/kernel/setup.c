@@ -807,7 +807,7 @@ static void __init setup_randomness(void)
 	vmms = (struct sysinfo_3_2_2 *) alloc_page(GFP_KERNEL);
 	if (vmms && stsi(vmms, 3, 2, 2) == 0 && vmms->count)
 		add_device_randomness(&vmms, vmms->count);
-	free_page((unsigned long) vmms);
+	free_page(vmms);
 }
 
 /*

@@ -341,7 +341,7 @@ size_t ring_buffer_page_len(void *page)
  */
 static void free_buffer_page(struct buffer_page *bpage)
 {
-	free_page((unsigned long)bpage->page);
+	free_page(bpage->page);
 	kfree(bpage);
 }
 
@@ -4437,7 +4437,7 @@ EXPORT_SYMBOL_GPL(ring_buffer_alloc_read_page);
  */
 void ring_buffer_free_read_page(struct ring_buffer *buffer, void *data)
 {
-	free_page((unsigned long)data);
+	free_page(data);
 }
 EXPORT_SYMBOL_GPL(ring_buffer_free_read_page);
 

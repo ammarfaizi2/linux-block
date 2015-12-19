@@ -1118,9 +1118,9 @@ static int sh_msiof_request_dma(struct sh_msiof_spi_priv *p)
 unmap_tx_page:
 	dma_unmap_single(tx_dev, p->tx_dma_addr, PAGE_SIZE, DMA_TO_DEVICE);
 free_rx_page:
-	free_page((unsigned long)p->rx_dma_page);
+	free_page(p->rx_dma_page);
 free_tx_page:
-	free_page((unsigned long)p->tx_dma_page);
+	free_page(p->tx_dma_page);
 free_rx_chan:
 	dma_release_channel(master->dma_rx);
 free_tx_chan:
@@ -1142,8 +1142,8 @@ static void sh_msiof_release_dma(struct sh_msiof_spi_priv *p)
 			 PAGE_SIZE, DMA_FROM_DEVICE);
 	dma_unmap_single(master->dma_tx->device->dev, p->tx_dma_addr,
 			 PAGE_SIZE, DMA_TO_DEVICE);
-	free_page((unsigned long)p->rx_dma_page);
-	free_page((unsigned long)p->tx_dma_page);
+	free_page(p->rx_dma_page);
+	free_page(p->tx_dma_page);
 	dma_release_channel(master->dma_rx);
 	dma_release_channel(master->dma_tx);
 }

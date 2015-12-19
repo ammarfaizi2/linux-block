@@ -882,7 +882,7 @@ err1:
 static void c4iw_rdev_close(struct c4iw_rdev *rdev)
 {
 	kfree(rdev->wr_log);
-	free_page((unsigned long)rdev->status_page);
+	free_page(rdev->status_page);
 	c4iw_pblpool_destroy(rdev);
 	c4iw_rqtpool_destroy(rdev);
 	c4iw_destroy_resource(&rdev->resource);

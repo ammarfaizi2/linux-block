@@ -509,7 +509,7 @@ static int rackmeter_probe(struct macio_dev* mdev,
 			  sizeof(struct rackmeter_dma),
 			  rm->dma_buf_v, rm->dma_buf_p);
  bail_free_samples:
-	free_page((unsigned long)rm->ubuf);
+	free_page(rm->ubuf);
  bail_release:
 #if 0
 	macio_release_resources(mdev);
@@ -549,7 +549,7 @@ static int rackmeter_remove(struct macio_dev* mdev)
 			  rm->dma_buf_v, rm->dma_buf_p);
 
 	/* Free samples */
-	free_page((unsigned long)rm->ubuf);
+	free_page(rm->ubuf);
 
 #if 0
 	/* Release resources */

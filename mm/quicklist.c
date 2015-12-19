@@ -79,7 +79,7 @@ void quicklist_trim(int nr, void (*dtor)(void *),
 
 			if (dtor)
 				dtor(p);
-			free_page((unsigned long)p);
+			free_page(p);
 			pages_to_free--;
 		}
 	}

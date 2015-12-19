@@ -2599,7 +2599,7 @@ long fuse_do_ioctl(struct file *file, unsigned int cmd, unsigned long arg,
  out:
 	if (req)
 		fuse_put_request(fc, req);
-	free_page((unsigned long) iov_page);
+	free_page(iov_page);
 	while (num_pages)
 		__free_page(pages[--num_pages]);
 	kfree(pages);

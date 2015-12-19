@@ -66,7 +66,7 @@ static int serverworks_create_page_map(struct serverworks_page_map *page_map)
 static void serverworks_free_page_map(struct serverworks_page_map *page_map)
 {
 	set_memory_wb((unsigned long)page_map->real, 1);
-	free_page((unsigned long) page_map->real);
+	free_page(page_map->real);
 }
 
 static void serverworks_free_gatt_pages(void)

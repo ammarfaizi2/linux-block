@@ -873,7 +873,7 @@ static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
 
 	if (!info->ioaddr || !info->type) {
 		set_bit(TTY_IO_ERROR, &tty->flags);
-		free_page(page);
+		free_page((void *)page);
 		spin_unlock_irqrestore(&info->slock, flags);
 		return 0;
 	}
@@ -969,7 +969,7 @@ static void mxser_shutdown_port(struct tty_port *port)
 	 * Free the xmit buffer, if necessary
 	 */
 	if (info->port.xmit_buf) {
-		free_page((unsigned long) info->port.xmit_buf);
+		free_page(info->port.xmit_buf);
 		info->port.xmit_buf = NULL;
 	}
 

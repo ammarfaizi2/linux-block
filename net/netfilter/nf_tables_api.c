@@ -2438,7 +2438,7 @@ cont:
 			memset(inuse, 0, PAGE_SIZE);
 			goto cont;
 		}
-		free_page((unsigned long)inuse);
+		free_page(inuse);
 	}
 
 	snprintf(set->name, sizeof(set->name), name, min + n);

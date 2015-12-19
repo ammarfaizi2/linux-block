@@ -268,8 +268,7 @@ static int qeth_alloc_buffer_pool(struct qeth_card *card)
 			ptr = (void *) __get_free_page(GFP_KERNEL);
 			if (!ptr) {
 				while (j > 0)
-					free_page((unsigned long)
-						  pool_entry->elements[--j]);
+					free_page(pool_entry->elements[--j]);
 				kfree(pool_entry);
 				qeth_free_buffer_pool(card);
 				return -ENOMEM;
@@ -1311,7 +1310,7 @@ static void qeth_free_buffer_pool(struct qeth_card *card)
 	list_for_each_entry_safe(pool_entry, tmp,
 				 &card->qdio.init_pool.entry_list, init_list){
 		for (i = 0; i < QETH_MAX_BUFFER_ELEMENTS(card); ++i)
-			free_page((unsigned long)pool_entry->elements[i]);
+			free_page(pool_entry->elements[i]);
 		list_del(&pool_entry->init_list);
 		kfree(pool_entry);
 	}
@@ -2763,7 +2762,7 @@ static inline struct qeth_buffer_pool_entry *qeth_find_free_buffer_pool_entry(
 			if (!page) {
 				return NULL;
 			} else {
-				free_page((unsigned long)entry->elements[i]);
+				free_page(entry->elements[i]);
 				entry->elements[i] = page_address(page);
 				if (card->options.performance_stats)
 					card->perf_stats.sg_alloc_page_rx++;
@@ -3180,7 +3179,7 @@ static void qeth_get_trap_id(struct qeth_card *card, struct qeth_trap_id *tid)
 		EBCASC(info322->vm[0].name, sizeof(info322->vm[0].name));
 		memcpy(tid->vmname, info322->vm[0].name, sizeof(tid->vmname));
 	}
-	free_page(info);
+	free_page((void *)info);
 	return;
 }
 

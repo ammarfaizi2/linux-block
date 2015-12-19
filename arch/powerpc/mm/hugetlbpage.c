@@ -479,7 +479,7 @@ static void hugepd_free_rcu_callback(struct rcu_head *head)
 	for (i = 0; i < batch->index; i++)
 		kmem_cache_free(hugepte_cache, batch->ptes[i]);
 
-	free_page((unsigned long)batch);
+	free_page(batch);
 }
 
 static void hugepd_free(struct mmu_gather *tlb, void *hugepte)

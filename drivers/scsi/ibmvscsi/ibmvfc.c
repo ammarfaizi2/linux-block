@@ -665,7 +665,7 @@ static void ibmvfc_release_crq_queue(struct ibmvfc_host *vhost)
 	vhost->state = IBMVFC_NO_CRQ;
 	vhost->logged_in = 0;
 	dma_unmap_single(vhost->dev, crq->msg_token, PAGE_SIZE, DMA_BIDIRECTIONAL);
-	free_page((unsigned long)crq->msgs);
+	free_page(crq->msgs);
 }
 
 /**
@@ -4565,7 +4565,7 @@ req_irq_failed:
 reg_crq_failed:
 	dma_unmap_single(dev, crq->msg_token, PAGE_SIZE, DMA_BIDIRECTIONAL);
 map_failed:
-	free_page((unsigned long)crq->msgs);
+	free_page(crq->msgs);
 	return retrc;
 }
 
@@ -4590,7 +4590,7 @@ static void ibmvfc_free_mem(struct ibmvfc_host *vhost)
 	dma_pool_destroy(vhost->sg_pool);
 	dma_unmap_single(vhost->dev, async_q->msg_token,
 			 async_q->size * sizeof(*async_q->msgs), DMA_BIDIRECTIONAL);
-	free_page((unsigned long)async_q->msgs);
+	free_page(async_q->msgs);
 	LEAVE;
 }
 
@@ -4680,7 +4680,7 @@ unmap_async_crq:
 	dma_unmap_single(dev, async_q->msg_token,
 			 async_q->size * sizeof(*async_q->msgs), DMA_BIDIRECTIONAL);
 free_async_crq:
-	free_page((unsigned long)async_q->msgs);
+	free_page(async_q->msgs);
 nomem:
 	LEAVE;
 	return -ENOMEM;

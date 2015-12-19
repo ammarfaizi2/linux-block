@@ -190,7 +190,7 @@ out:
 		current->mm->locked_vm = locked;
 
 	up_write(&current->mm->mmap_sem);
-	free_page((unsigned long) page_list);
+	free_page(page_list);
 	return ret;
 }
 

@@ -757,7 +757,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 out:
 	mutex_unlock(&userns_state_mutex);
 	if (page)
-		free_page(page);
+		free_page((void *)page);
 	return ret;
 }
 

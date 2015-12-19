@@ -341,7 +341,7 @@ static void xencons_disconnect_backend(struct xencons_info *info)
 
 static void xencons_free(struct xencons_info *info)
 {
-	free_page((unsigned long)info->intf);
+	free_page(info->intf);
 	info->intf = NULL;
 	info->vtermno = 0;
 	kfree(info);

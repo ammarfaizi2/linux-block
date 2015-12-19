@@ -418,13 +418,13 @@ static void jpg_fbuffer_free(struct zoran_fh *fh)
 				if (!frag_tab)
 					break;
 				ClearPageReserved(virt_to_page(bus_to_virt(le32_to_cpu(frag_tab))));
-				free_page((unsigned long)bus_to_virt(le32_to_cpu(frag_tab)));
+				free_page(bus_to_virt(le32_to_cpu(frag_tab)));
 				buffer->jpg.frag_tab[2 * j] = 0;
 				buffer->jpg.frag_tab[2 * j + 1] = 0;
 			}
 		}
 
-		free_page((unsigned long)buffer->jpg.frag_tab);
+		free_page(buffer->jpg.frag_tab);
 		buffer->jpg.frag_tab = NULL;
 	}
 

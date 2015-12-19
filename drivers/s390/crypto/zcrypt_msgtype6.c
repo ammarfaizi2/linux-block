@@ -941,7 +941,7 @@ static long zcrypt_msgtype6_modexpo(struct zcrypt_device *zdev,
 		/* Signal pending. */
 		ap_cancel_message(zdev->ap_dev, &ap_msg);
 out_free:
-	free_page((unsigned long) ap_msg.message);
+	free_page(ap_msg.message);
 	return rc;
 }
 
@@ -985,7 +985,7 @@ static long zcrypt_msgtype6_modexpo_crt(struct zcrypt_device *zdev,
 		/* Signal pending. */
 		ap_cancel_message(zdev->ap_dev, &ap_msg);
 out_free:
-	free_page((unsigned long) ap_msg.message);
+	free_page(ap_msg.message);
 	return rc;
 }
 

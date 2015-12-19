@@ -867,11 +867,11 @@ static void rk_iommu_domain_free(struct iommu_domain *domain)
 		if (rk_dte_is_pt_valid(dte)) {
 			phys_addr_t pt_phys = rk_dte_pt_address(dte);
 			u32 *page_table = phys_to_virt(pt_phys);
-			free_page((unsigned long)page_table);
+			free_page(page_table);
 		}
 	}
 
-	free_page((unsigned long)rk_domain->dt);
+	free_page(rk_domain->dt);
 	kfree(rk_domain);
 }
 

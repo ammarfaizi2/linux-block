@@ -808,7 +808,7 @@ static void its_free_tables(struct its_node *its)
 
 	for (i = 0; i < GITS_BASER_NR_REGS; i++) {
 		if (its->tables[i]) {
-			free_page((unsigned long)its->tables[i]);
+			free_page(its->tables[i]);
 			its->tables[i] = NULL;
 		}
 	}

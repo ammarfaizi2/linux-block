@@ -709,7 +709,7 @@ char *simple_transaction_get(struct file *file, const char __user *buf, size_t s
 	/* only one write allowed per open */
 	if (file->private_data) {
 		spin_unlock(&simple_transaction_lock);
-		free_page((unsigned long)ar);
+		free_page(ar);
 		return ERR_PTR(-EBUSY);
 	}
 
@@ -736,7 +736,7 @@ EXPORT_SYMBOL(simple_transaction_read);
 
 int simple_transaction_release(struct inode *inode, struct file *file)
 {
-	free_page((unsigned long)file->private_data);
+	free_page(file->private_data);
 	return 0;
 }
 EXPORT_SYMBOL(simple_transaction_release);
@@ -1027,7 +1027,7 @@ EXPORT_SYMBOL(kfree_put_link);
 
 void free_page_put_link(struct inode *unused, void *cookie)
 {
-	free_page((unsigned long) cookie);
+	free_page(cookie);
 }
 EXPORT_SYMBOL(free_page_put_link);
 

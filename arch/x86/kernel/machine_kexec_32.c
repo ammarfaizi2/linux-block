@@ -70,13 +70,13 @@ static void load_segments(void)
 
 static void machine_kexec_free_page_tables(struct kimage *image)
 {
-	free_page((unsigned long)image->arch.pgd);
+	free_page(image->arch.pgd);
 #ifdef CONFIG_X86_PAE
-	free_page((unsigned long)image->arch.pmd0);
-	free_page((unsigned long)image->arch.pmd1);
+	free_page(image->arch.pmd0);
+	free_page(image->arch.pmd1);
 #endif
-	free_page((unsigned long)image->arch.pte0);
-	free_page((unsigned long)image->arch.pte1);
+	free_page(image->arch.pte0);
+	free_page(image->arch.pte1);
 }
 
 static int machine_kexec_alloc_page_tables(struct kimage *image)

@@ -150,7 +150,7 @@ void poll_freewait(struct poll_wqueues *pwq)
 		} while (entry > p->entries);
 		old = p;
 		p = p->next;
-		free_page((unsigned long) old);
+		free_page(old);
 	}
 }
 EXPORT_SYMBOL(poll_freewait);

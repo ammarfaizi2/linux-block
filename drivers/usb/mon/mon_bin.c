@@ -1311,7 +1311,7 @@ static int mon_alloc_buff(struct mon_pgmap *map, int npages)
 		vaddr = get_zeroed_page(GFP_KERNEL);
 		if (vaddr == 0) {
 			while (n-- != 0)
-				free_page((unsigned long) map[n].ptr);
+				free_page(map[n].ptr);
 			return -ENOMEM;
 		}
 		map[n].ptr = (unsigned char *) vaddr;
@@ -1325,7 +1325,7 @@ static void mon_free_buff(struct mon_pgmap *map, int npages)
 	int n;
 
 	for (n = 0; n < npages; n++)
-		free_page((unsigned long) map[n].ptr);
+		free_page(map[n].ptr);
 }
 
 int mon_bin_add(struct mon_bus *mbus, const struct usb_bus *ubus)

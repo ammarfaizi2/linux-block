@@ -1277,7 +1277,7 @@ static int selinux_genfs_get_sid(struct dentry *dentry,
 		}
 		rc = security_genfs_sid(sb->s_type->name, path, tclass, sid);
 	}
-	free_page((unsigned long)buffer);
+	free_page(buffer);
 	return rc;
 }
 
@@ -2579,7 +2579,7 @@ static int selinux_sb_copy_data(char *orig, char *copy)
 	} while (*in_end++);
 
 	strcpy(in_save, nosec_save);
-	free_page((unsigned long)nosec_save);
+	free_page(nosec_save);
 out:
 	return rc;
 }

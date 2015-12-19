@@ -93,7 +93,7 @@ static int srm_env_proc_show(struct seq_file *m, void *v)
 		ret = 0;
 	} else
 		ret = -EFAULT;
-	free_page((unsigned long)page);
+	free_page(page);
 	return ret;
 }
 
@@ -131,7 +131,7 @@ static ssize_t srm_env_proc_write(struct file *file, const char __user *buffer,
 	}
 
  out:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	return res;
 }
 

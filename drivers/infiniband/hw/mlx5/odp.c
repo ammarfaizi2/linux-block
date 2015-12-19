@@ -588,7 +588,7 @@ resolve_page_fault:
 	mlx5_ib_dbg(dev, "PAGE FAULT completed. QP 0x%x resume_with_error=%d, flags: 0x%x\n",
 		    qp->mqp.qpn, resume_with_error, pfault->mpfault.flags);
 
-	free_page((unsigned long)buffer);
+	free_page(buffer);
 }
 
 static int pages_in_range(u64 address, u32 length)

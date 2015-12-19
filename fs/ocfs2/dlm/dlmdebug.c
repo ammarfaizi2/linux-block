@@ -332,7 +332,7 @@ void dlm_print_one_mle(struct dlm_master_list_entry *mle)
 	buf = (char *) get_zeroed_page(GFP_NOFS);
 	if (buf) {
 		dump_mle(mle, buf, PAGE_SIZE - 1);
-		free_page((unsigned long)buf);
+		free_page(buf);
 	}
 }
 
@@ -369,7 +369,7 @@ static void dlm_debug_get(struct dlm_debug_ctxt *dc)
 
 static int debug_release(struct inode *inode, struct file *file)
 {
-	free_page((unsigned long)file->private_data);
+	free_page(file->private_data);
 	return 0;
 }
 

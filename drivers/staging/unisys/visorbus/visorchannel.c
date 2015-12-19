@@ -301,7 +301,7 @@ visorchannel_clear(struct visorchannel *channel, ulong offset, u8 ch,
 	err = 0;
 
 cleanup:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	return err;
 }
 EXPORT_SYMBOL_GPL(visorchannel_clear);

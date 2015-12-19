@@ -373,7 +373,7 @@ static struct topa *topa_alloc(int cpu, gfp_t gfp)
  */
 static void topa_free(struct topa *topa)
 {
-	free_page((unsigned long)topa);
+	free_page(topa);
 }
 
 /**

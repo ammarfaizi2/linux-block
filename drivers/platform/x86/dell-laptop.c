@@ -2208,7 +2208,7 @@ static int __init dell_init(void)
 fail_backlight:
 	dell_cleanup_rfkill();
 fail_rfkill:
-	free_page((unsigned long)buffer);
+	free_page(buffer);
 fail_buffer:
 	platform_device_del(platform_device);
 fail_platform_device2:
@@ -2233,7 +2233,7 @@ static void __exit dell_exit(void)
 		platform_driver_unregister(&platform_driver);
 	}
 	kfree(da_tokens);
-	free_page((unsigned long)buffer);
+	free_page(buffer);
 }
 
 /* dell-rbtn.c driver export functions which will not work correctly (and could

@@ -182,7 +182,7 @@ static ssize_t ci_ll_write(struct dvb_ringbuffer *cibuf, struct file *file,
 
 	res = dvb_ringbuffer_write(cibuf, page, count);
 out:
-	free_page((unsigned long)page);
+	free_page(page);
 	return res;
 }
 

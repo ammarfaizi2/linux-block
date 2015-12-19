@@ -95,7 +95,7 @@ static void free_ldt_struct(struct ldt_struct *ldt)
 	if (ldt->size * LDT_ENTRY_SIZE > PAGE_SIZE)
 		vfree(ldt->entries);
 	else
-		free_page((unsigned long)ldt->entries);
+		free_page(ldt->entries);
 	kfree(ldt);
 }
 

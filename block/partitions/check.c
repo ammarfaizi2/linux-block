@@ -176,7 +176,7 @@ check_partition(struct gendisk *hd, struct block_device *bdev)
 	if (res > 0) {
 		printk(KERN_INFO "%s", state->pp_buf);
 
-		free_page((unsigned long)state->pp_buf);
+		free_page(state->pp_buf);
 		return state;
 	}
 	if (state->access_beyond_eod)
@@ -191,7 +191,7 @@ check_partition(struct gendisk *hd, struct block_device *bdev)
 		printk(KERN_INFO "%s", state->pp_buf);
 	}
 
-	free_page((unsigned long)state->pp_buf);
+	free_page(state->pp_buf);
 	free_partitions(state);
 	return ERR_PTR(res);
 }

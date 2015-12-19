@@ -101,7 +101,7 @@ static inline pgtable_t pte_alloc_one(struct mm_struct *mm,
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long)pte);
+	free_page(pte);
 }
 
 static inline void pte_free(struct mm_struct *mm, pgtable_t ptepage)
@@ -113,7 +113,7 @@ static inline void pte_free(struct mm_struct *mm, pgtable_t ptepage)
 static inline void pgtable_free(void *table, unsigned index_size)
 {
 	if (!index_size)
-		free_page((unsigned long)table);
+		free_page(table);
 	else {
 		BUG_ON(index_size > MAX_PGTABLE_INDEX_SIZE);
 		kmem_cache_free(PGT_CACHE(index_size), table);

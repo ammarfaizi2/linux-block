@@ -488,7 +488,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 	seq_printf(m, arc_extn_mumbojumbo(cpu_id, str, PAGE_SIZE));
 	seq_printf(m, arc_platform_smp_cpuinfo());
 
-	free_page((unsigned long)str);
+	free_page(str);
 done:
 	seq_printf(m, "\n");
 

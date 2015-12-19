@@ -263,7 +263,7 @@ struct vfsmount *nfs_do_submount(struct dentry *dentry, struct nfs_fh *fh,
 		goto free_page;
 	mnt = nfs_do_clone_mount(NFS_SB(dentry->d_sb), devname, &mountdata);
 free_page:
-	free_page((unsigned long)page);
+	free_page(page);
 out:
 	dprintk("%s: done\n", __func__);
 

@@ -1430,7 +1430,7 @@ static struct iw_statistics *gelic_wl_get_wireless_stats(
 		is->qual.updated = IW_QUAL_ALL_INVALID;
 
 	kfree(cmd);
-	free_page((unsigned long)buf);
+	free_page(buf);
 	pr_debug("%s: ->\n", __func__);
 	return is;
 }
@@ -1498,7 +1498,7 @@ static int gelic_wl_start_scan(struct gelic_wl_info *wl, int always_scan,
 	}
 	kfree(cmd);
 out:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	mutex_unlock(&wl->scan_lock);
 	pr_debug("%s: ->\n", __func__);
 	return ret;
@@ -1642,7 +1642,7 @@ static void gelic_wl_scan_complete_event(struct gelic_wl_info *wl)
 	wireless_send_event(port_to_netdev(wl_port(wl)), SIOCGIWSCAN, &data,
 			    NULL);
 out:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	complete(&wl->scan_done);
 	mutex_unlock(&wl->scan_lock);
 	pr_debug("%s:end\n", __func__);
@@ -1817,7 +1817,7 @@ static int gelic_wl_do_wep_setup(struct gelic_wl_info *wl)
 
 	kfree(cmd);
 out:
-	free_page((unsigned long)wep);
+	free_page(wep);
 	pr_debug("%s: ->\n", __func__);
 	return ret;
 }
@@ -1916,7 +1916,7 @@ static int gelic_wl_do_wpa_setup(struct gelic_wl_info *wl)
 	else if (cmd->status || cmd->cmd_status)
 		ret = -ENXIO;
 	kfree(cmd);
-	free_page((unsigned long)wpa);
+	free_page(wpa);
 	pr_debug("%s: --> %d\n", __func__, ret);
 	return ret;
 }
@@ -2027,7 +2027,7 @@ static int gelic_wl_associate_bss(struct gelic_wl_info *wl,
 		pr_info("%s: connected\n", __func__);
 	}
 out:
-	free_page((unsigned long)common);
+	free_page(common);
 	pr_debug("%s: ->\n", __func__);
 	return ret;
 }

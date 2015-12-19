@@ -5290,7 +5290,7 @@ static void memcg_propagate_slab_attrs(struct kmem_cache *s)
 	}
 
 	if (buffer)
-		free_page((unsigned long)buffer);
+		free_page(buffer);
 #endif
 }
 

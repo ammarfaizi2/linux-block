@@ -387,7 +387,7 @@ skip_argv_envp:
 	}
 
 out_free_page:
-	free_page((unsigned long)page);
+	free_page(page);
 out_mmput:
 	mmput(mm);
 	if (rv > 0)
@@ -892,7 +892,7 @@ static ssize_t mem_rw(struct file *file, char __user *buf,
 
 	mmput(mm);
 free:
-	free_page((unsigned long) page);
+	free_page(page);
 	return copied;
 }
 
@@ -997,7 +997,7 @@ static ssize_t environ_read(struct file *file, char __user *buf,
 	mmput(mm);
 
 free:
-	free_page((unsigned long) page);
+	free_page(page);
 	return ret;
 }
 
@@ -1604,7 +1604,7 @@ static int do_proc_readlink(struct path *path, char __user *buffer, int buflen)
 	if (copy_to_user(buffer, pathname, len))
 		len = -EFAULT;
  out:
-	free_page((unsigned long)tmp);
+	free_page(tmp);
 	return len;
 }
 
@@ -2393,7 +2393,7 @@ static ssize_t proc_pid_attr_write(struct file * file, const char __user * buf,
 				      (void*)page, count);
 	mutex_unlock(&task->signal->cred_guard_mutex);
 out_free:
-	free_page((unsigned long) page);
+	free_page(page);
 out:
 	put_task_struct(task);
 out_no_task:

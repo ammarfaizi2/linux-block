@@ -146,7 +146,7 @@ static long ioctl_rio(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		if (copy_from_user(buffer, rio_cmd.buffer, rio_cmd.length)) {
 			retval = -EFAULT;
-			free_page((unsigned long) buffer);
+			free_page(buffer);
 			goto err_out;
 		}
 
@@ -180,7 +180,7 @@ static long ioctl_rio(struct file *file, unsigned int cmd, unsigned long arg)
 					result, buffer[0]);
 				if (copy_to_user(rio_cmd.buffer, buffer,
 						 rio_cmd.length)) {
-					free_page((unsigned long) buffer);
+					free_page(buffer);
 					retval = -EFAULT;
 					goto err_out;
 				}
@@ -195,7 +195,7 @@ static long ioctl_rio(struct file *file, unsigned int cmd, unsigned long arg)
 			   be swapped at the app level */
 
 		}
-		free_page((unsigned long) buffer);
+		free_page(buffer);
 		break;
 
 	case RIO_SEND_COMMAND:
@@ -216,7 +216,7 @@ static long ioctl_rio(struct file *file, unsigned int cmd, unsigned long arg)
 			goto err_out;
 		}
 		if (copy_from_user(buffer, rio_cmd.buffer, rio_cmd.length)) {
-			free_page((unsigned long)buffer);
+			free_page(buffer);
 			retval = -EFAULT;
 			goto err_out;
 		}
@@ -253,7 +253,7 @@ static long ioctl_rio(struct file *file, unsigned int cmd, unsigned long arg)
 			}
 
 		}
-		free_page((unsigned long) buffer);
+		free_page(buffer);
 		break;
 
 	default:

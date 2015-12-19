@@ -274,7 +274,7 @@ affs_evict_inode(struct inode *inode)
 		pr_debug("freeing ext cache\n");
 		AFFS_I(inode)->i_lc = NULL;
 		AFFS_I(inode)->i_ac = NULL;
-		free_page(cache_page);
+		free_page((void *)cache_page);
 	}
 	affs_brelse(AFFS_I(inode)->i_ext_bh);
 	AFFS_I(inode)->i_ext_last = ~1;

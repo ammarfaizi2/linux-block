@@ -275,7 +275,7 @@ static void ring_free(struct tpm_private *priv)
 		gnttab_end_foreign_access(priv->ring_ref, 0,
 				(unsigned long)priv->shr);
 	else
-		free_page((unsigned long)priv->shr);
+		free_page(priv->shr);
 
 	if (priv->chip && priv->chip->vendor.irq)
 		unbind_from_irqhandler(priv->chip->vendor.irq, priv);

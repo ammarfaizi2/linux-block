@@ -149,7 +149,7 @@ static int xpram_present(void)
 	if (!mem_page)
 		return -ENOMEM;
 	rc = xpram_page_in(mem_page, 0);
-	free_page(mem_page);
+	free_page((void *)mem_page);
 	return rc ? -ENXIO : 0;
 }
 
@@ -173,7 +173,7 @@ static unsigned long xpram_highest_page_index(void)
 		add_bit >>= 1;
 	}
 
-	free_page (mem_page);
+	free_page((void *)mem_page);
 
 	return page_index;
 }

@@ -200,7 +200,7 @@ static int zcrypt_pcixcc_mcl(struct ap_device *ap_dev)
 	else
 		rc = ZCRYPT_PCIXCC_MCL3;
 out_free:
-	free_page((unsigned long) reply);
+	free_page(reply);
 	return rc;
 }
 
@@ -253,7 +253,7 @@ static int zcrypt_pcixcc_rng_supported(struct ap_device *ap_dev)
 	else
 		rc = 0;
 out_free:
-	free_page((unsigned long) ap_msg.message);
+	free_page(ap_msg.message);
 	return rc;
 }
 

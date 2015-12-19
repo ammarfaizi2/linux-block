@@ -288,7 +288,7 @@ static int tpm_ibmvtpm_remove(struct vio_dev *vdev)
 
 	dma_unmap_single(ibmvtpm->dev, ibmvtpm->crq_dma_handle,
 			 CRQ_RES_BUF_SIZE, DMA_BIDIRECTIONAL);
-	free_page((unsigned long)ibmvtpm->crq_queue.crq_addr);
+	free_page(ibmvtpm->crq_queue.crq_addr);
 
 	if (ibmvtpm->rtce_buf) {
 		dma_unmap_single(ibmvtpm->dev, ibmvtpm->rtce_dma_handle,
@@ -652,7 +652,7 @@ reg_crq_cleanup:
 cleanup:
 	if (ibmvtpm) {
 		if (crq_q->crq_addr)
-			free_page((unsigned long)crq_q->crq_addr);
+			free_page(crq_q->crq_addr);
 		kfree(ibmvtpm);
 	}
 

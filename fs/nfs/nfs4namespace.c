@@ -338,8 +338,8 @@ static struct vfsmount *nfs_follow_referral(struct dentry *dentry,
 	}
 
 out:
-	free_page((unsigned long) page);
-	free_page((unsigned long) page2);
+	free_page(page);
+	free_page(page2);
 	dprintk("%s: done\n", __func__);
 	return mnt;
 }
@@ -517,7 +517,7 @@ int nfs4_replace_transport(struct nfs_server *server,
 	}
 
 out:
-	free_page((unsigned long)page);
-	free_page((unsigned long)page2);
+	free_page(page);
+	free_page(page2);
 	return error;
 }

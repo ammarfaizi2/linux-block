@@ -180,7 +180,7 @@ via_free_sg_info(struct pci_dev *pdev, drm_via_sg_info_t *vsg)
 	case dr_via_desc_pages_alloc:
 		for (i = 0; i < vsg->num_desc_pages; ++i) {
 			if (vsg->desc_pages[i] != NULL)
-				free_page((unsigned long)vsg->desc_pages[i]);
+				free_page(vsg->desc_pages[i]);
 		}
 		kfree(vsg->desc_pages);
 	case dr_via_pages_locked:

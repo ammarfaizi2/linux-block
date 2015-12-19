@@ -538,7 +538,7 @@ cciss_proc_write(struct file *file, const char __user *buf,
 	   safely possible. (only 1 module use count, lock issues.) */
 
 out:
-	free_page((unsigned long)buffer);
+	free_page(buffer);
 	return err;
 }
 

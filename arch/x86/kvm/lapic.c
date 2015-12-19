@@ -1551,7 +1551,7 @@ void kvm_free_lapic(struct kvm_vcpu *vcpu)
 		static_key_slow_dec_deferred(&apic_sw_disabled);
 
 	if (apic->regs)
-		free_page((unsigned long)apic->regs);
+		free_page(apic->regs);
 
 	kfree(apic);
 }

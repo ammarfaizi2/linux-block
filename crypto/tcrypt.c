@@ -264,7 +264,7 @@ static int testmgr_alloc_buf(char *buf[XBUFSIZE])
 
 err_free_buf:
 	while (i-- > 0)
-		free_page((unsigned long)buf[i]);
+		free_page(buf[i]);
 
 	return -ENOMEM;
 }
@@ -274,7 +274,7 @@ static void testmgr_free_buf(char *buf[XBUFSIZE])
 	int i;
 
 	for (i = 0; i < XBUFSIZE; i++)
-		free_page((unsigned long)buf[i]);
+		free_page(buf[i]);
 }
 
 static void sg_init_aead(struct scatterlist *sg, char *xbuf[XBUFSIZE],
@@ -2228,7 +2228,7 @@ static int __init tcrypt_mod_init(void)
 
 err_free_tv:
 	for (i = 0; i < TVMEMSIZE && tvmem[i]; i++)
-		free_page((unsigned long)tvmem[i]);
+		free_page(tvmem[i]);
 
 	return err;
 }

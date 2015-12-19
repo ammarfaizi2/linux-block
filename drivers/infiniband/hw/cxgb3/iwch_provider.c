@@ -687,7 +687,7 @@ static struct ib_mr *iwch_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
 		err = iwch_write_pbl(mhp, pages, i, n);
 
 pbl_done:
-	free_page((unsigned long) pages);
+	free_page(pages);
 	if (err)
 		goto err_pbl;
 

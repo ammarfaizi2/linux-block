@@ -268,7 +268,7 @@ static void reclaim_ctx(struct rcu_head *rcu)
 {
 	struct cxl_context *ctx = container_of(rcu, struct cxl_context, rcu);
 
-	free_page((u64)ctx->sstp);
+	free_page(ctx->sstp);
 	if (ctx->ff_page)
 		__free_page(ctx->ff_page);
 	ctx->sstp = NULL;

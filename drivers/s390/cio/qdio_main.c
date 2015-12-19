@@ -1836,7 +1836,7 @@ int qdio_pnso_brinfo(struct subchannel_id schid,
 	(*response) = rr->response.code;
 
 out:
-	free_page((unsigned long)rr);
+	free_page(rr);
 	return rc;
 }
 EXPORT_SYMBOL_GPL(qdio_pnso_brinfo);

@@ -744,7 +744,7 @@ int ftrace_profile_pages_init(struct ftrace_profile_stat *stat)
 		unsigned long tmp = (unsigned long)pg;
 
 		pg = pg->next;
-		free_page(tmp);
+		free_page((void *)tmp);
 	}
 
 	stat->pages = NULL;

@@ -184,7 +184,7 @@ static void sg_kfree(struct scatterlist *sg, unsigned int nents)
 {
 	if (nents == SG_MAX_SINGLE_ALLOC) {
 		kmemleak_free(sg);
-		free_page((unsigned long) sg);
+		free_page(sg);
 	} else
 		kfree(sg);
 }

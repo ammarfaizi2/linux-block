@@ -167,7 +167,7 @@ static struct rds_cong_map *rds_cong_from_addr(__be32 addr)
 out:
 	if (map) {
 		for (i = 0; i < RDS_CONG_MAP_PAGES && map->m_page_addrs[i]; i++)
-			free_page(map->m_page_addrs[i]);
+			free_page((void *)map->m_page_addrs[i]);
 		kfree(map);
 	}
 
@@ -399,7 +399,7 @@ void rds_cong_exit(void)
 		rdsdebug("freeing map %p\n", map);
 		rb_erase(&map->m_rb_node, &rds_cong_tree);
 		for (i = 0; i < RDS_CONG_MAP_PAGES && map->m_page_addrs[i]; i++)
-			free_page(map->m_page_addrs[i]);
+			free_page((void *)map->m_page_addrs[i]);
 		kfree(map);
 	}
 }

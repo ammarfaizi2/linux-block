@@ -222,7 +222,7 @@ void show_regs(struct pt_regs *regs)
 	if (cregs)
 		show_callee_regs(cregs);
 
-	free_page((unsigned long)buf);
+	free_page(buf);
 }
 
 void show_kernel_fault_diag(const char *str, struct pt_regs *regs,
@@ -309,7 +309,7 @@ static ssize_t tlb_stats_clear(struct file *file, const char __user *user_buf,
 
 static int tlb_stats_close(struct inode *inode, struct file *file)
 {
-	free_page((unsigned long)(file->private_data));
+	free_page(file->private_data);
 	return 0;
 }
 

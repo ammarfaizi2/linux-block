@@ -192,7 +192,7 @@ static void __ref free_p2m_page(void *p)
 		return;
 	}
 
-	free_page((unsigned long)p);
+	free_page(p);
 }
 
 /*

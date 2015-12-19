@@ -260,8 +260,7 @@ static void msm_iommu_domain_free(struct iommu_domain *domain)
 
 	for (i = 0; i < NUM_FL_PTE; i++)
 		if ((fl_table[i] & 0x03) == FL_TYPE_TABLE)
-			free_page((unsigned long) __va(((fl_table[i]) &
-							FL_BASE_MASK)));
+			free_page(__va(((fl_table[i]) & FL_BASE_MASK)));
 
 	free_pages((unsigned long)priv->pgtable, get_order(SZ_16K));
 	priv->pgtable = NULL;
@@ -536,7 +535,7 @@ static size_t msm_iommu_unmap(struct iommu_domain *domain, unsigned long va,
 			if (sl_table[i])
 				used = 1;
 		if (!used) {
-			free_page((unsigned long)sl_table);
+			free_page(sl_table);
 			*fl_pte = 0;
 		}
 	}

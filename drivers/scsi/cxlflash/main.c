@@ -619,7 +619,7 @@ static void free_mem(struct cxlflash_cfg *cfg)
 		for (i = 0; i < CXLFLASH_NUM_CMDS; i++) {
 			buf = afu->cmd[i].buf;
 			if (!((u64)buf & (PAGE_SIZE - 1)))
-				free_page((ulong)buf);
+				free_page(buf);
 		}
 
 		free_pages((ulong)afu, get_order(sizeof(struct afu)));

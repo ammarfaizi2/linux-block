@@ -186,7 +186,7 @@ static int __init sclp_async_init(void)
 		goto out;
 out_mem:
 	kfree(request);
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	unregister_sysctl_table(callhome_sysctl_header);
 out_sclp:
 	sclp_unregister(&sclp_async_register);
@@ -201,7 +201,7 @@ static void __exit sclp_async_exit(void)
 					 &call_home_panic_nb);
 	unregister_sysctl_table(callhome_sysctl_header);
 	sclp_unregister(&sclp_async_register);
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	kfree(request);
 }
 module_exit(sclp_async_exit);

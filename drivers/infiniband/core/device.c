@@ -157,7 +157,7 @@ static int alloc_name(char *name)
 	}
 
 	i = find_first_zero_bit(inuse, PAGE_SIZE * 8);
-	free_page((unsigned long) inuse);
+	free_page(inuse);
 	snprintf(buf, sizeof buf, name, i);
 
 	if (__ib_device_get_by_name(buf))

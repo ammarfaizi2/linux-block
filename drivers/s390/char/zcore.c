@@ -626,7 +626,7 @@ static int __init zcore_reipl_init(void)
 	if (rc || csum_partial(ipl_block, ipl_block->hdr.len, 0) !=
 	    ipib_info.checksum) {
 		TRACE("Checksum does not match\n");
-		free_page((unsigned long) ipl_block);
+		free_page(ipl_block);
 		ipl_block = NULL;
 	}
 	return 0;
@@ -733,7 +733,7 @@ static void __exit zcore_exit(void)
 {
 	debug_unregister(zcore_dbf);
 	sclp_sdias_exit();
-	free_page((unsigned long) ipl_block);
+	free_page(ipl_block);
 	debugfs_remove(zcore_hsa_file);
 	debugfs_remove(zcore_reipl_file);
 	debugfs_remove(zcore_memmap_file);

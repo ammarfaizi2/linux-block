@@ -611,7 +611,7 @@ static int smack_sb_copy_data(char *orig, char *smackopts)
 	}
 
 	strcpy(orig, otheropts);
-	free_page((unsigned long)otheropts);
+	free_page(otheropts);
 
 	return 0;
 }

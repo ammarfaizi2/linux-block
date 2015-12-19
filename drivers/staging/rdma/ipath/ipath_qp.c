@@ -94,7 +94,7 @@ static void get_map_page(struct ipath_qp_table *qpt, struct qpn_map *map)
 
 	spin_lock_irqsave(&qpt->lock, flags);
 	if (map->page)
-		free_page(page);
+		free_page((void *)page);
 	else
 		map->page = (void *)page;
 	spin_unlock_irqrestore(&qpt->lock, flags);
@@ -285,7 +285,7 @@ unsigned ipath_free_all_qps(struct ipath_qp_table *qpt)
 
 	for (n = 0; n < ARRAY_SIZE(qpt->map); n++)
 		if (qpt->map[n].page)
-			free_page((unsigned long) qpt->map[n].page);
+			free_page(qpt->map[n].page);
 	return qp_inuse;
 }
 

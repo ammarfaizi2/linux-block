@@ -1240,14 +1240,14 @@ static int __init reipl_fcp_init(void)
 	reipl_fcp_kset = kset_create_and_add(IPL_FCP_STR, NULL,
 					     &reipl_kset->kobj);
 	if (!reipl_fcp_kset) {
-		free_page((unsigned long) reipl_block_fcp);
+		free_page(reipl_block_fcp);
 		return -ENOMEM;
 	}
 
 	rc = sysfs_create_group(&reipl_fcp_kset->kobj, &reipl_fcp_attr_group);
 	if (rc) {
 		kset_unregister(reipl_fcp_kset);
-		free_page((unsigned long) reipl_block_fcp);
+		free_page(reipl_block_fcp);
 		return rc;
 	}
 
@@ -1474,7 +1474,7 @@ static int __init dump_ccw_init(void)
 		return -ENOMEM;
 	rc = sysfs_create_group(&dump_kset->kobj, &dump_ccw_attr_group);
 	if (rc) {
-		free_page((unsigned long)dump_block_ccw);
+		free_page(dump_block_ccw);
 		return rc;
 	}
 	dump_block_ccw->hdr.len = IPL_PARM_BLK_CCW_LEN;
@@ -1498,7 +1498,7 @@ static int __init dump_fcp_init(void)
 		return -ENOMEM;
 	rc = sysfs_create_group(&dump_kset->kobj, &dump_fcp_attr_group);
 	if (rc) {
-		free_page((unsigned long)dump_block_fcp);
+		free_page(dump_block_fcp);
 		return rc;
 	}
 	dump_block_fcp->hdr.len = IPL_PARM_BLK_FCP_LEN;

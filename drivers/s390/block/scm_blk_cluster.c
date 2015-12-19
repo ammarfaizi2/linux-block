@@ -29,7 +29,7 @@ void __scm_free_rq_cluster(struct scm_request *scmrq)
 		return;
 
 	for (i = 0; i < 2 * write_cluster_size; i++)
-		free_page((unsigned long) scmrq->cluster.buf[i]);
+		free_page(scmrq->cluster.buf[i]);
 
 	kfree(scmrq->cluster.buf);
 }

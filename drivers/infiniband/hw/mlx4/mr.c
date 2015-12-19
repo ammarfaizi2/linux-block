@@ -126,7 +126,7 @@ int mlx4_ib_umem_write_mtt(struct mlx4_ib_dev *dev, struct mlx4_mtt *mtt,
 		err = mlx4_write_mtt(dev->dev, mtt, n, i, pages);
 
 out:
-	free_page((unsigned long) pages);
+	free_page(pages);
 	return err;
 }
 

@@ -887,7 +887,7 @@ static void ioc3_free_rings(struct ioc3_private *ip)
 
 			n_entry = (n_entry + 1) & 511;
 		}
-		free_page((unsigned long)ip->rxr);
+		free_page(ip->rxr);
 		ip->rxr = NULL;
 	}
 }

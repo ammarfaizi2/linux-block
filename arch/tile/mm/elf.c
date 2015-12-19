@@ -97,7 +97,7 @@ static int notify_exec(struct mm_struct *mm)
 done_put:
 	fput(exe_file);
 done_free:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	return ret;
 }
 

@@ -41,7 +41,7 @@ extern struct page *pte_alloc_one(struct mm_struct *, unsigned long);
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long) pte);
+	free_page(pte);
 }
 
 static inline void pte_free(struct mm_struct *mm, struct page *pte)

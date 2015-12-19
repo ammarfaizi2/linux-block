@@ -385,7 +385,7 @@ static void ehea_update_stats(struct work_struct *work)
 	stats->rx_errors = cb2->rxuerr;
 
 out_herr:
-	free_page((unsigned long)cb2);
+	free_page(cb2);
 resched:
 	schedule_delayed_work(&port->stats_work,
 			      round_jiffies_relative(msecs_to_jiffies(1000)));
@@ -1074,7 +1074,7 @@ int ehea_sense_port_attr(struct ehea_port *port)
 out_free:
 	if (ret || netif_msg_probe(port))
 		ehea_dump(cb0, sizeof(*cb0), "ehea_sense_port_attr");
-	free_page((unsigned long)cb0);
+	free_page(cb0);
 out:
 	return ret;
 }
@@ -1153,7 +1153,7 @@ int ehea_set_portspeed(struct ehea_port *port, u32 port_speed)
 	if (!prop_carrier_state || (port->phy_link == EHEA_PHY_LINK_UP))
 		netif_carrier_on(port->netdev);
 
-	free_page((unsigned long)cb4);
+	free_page(cb4);
 out:
 	return ret;
 }
@@ -1410,7 +1410,7 @@ static int ehea_configure_port(struct ehea_port *port)
 	ret = 0;
 
 out_free:
-	free_page((unsigned long)cb0);
+	free_page(cb0);
 out:
 	return ret;
 }
@@ -1795,7 +1795,7 @@ static int ehea_set_mac_addr(struct net_device *dev, void *sa)
 out_upregs:
 	ehea_update_bcmc_registrations();
 out_free:
-	free_page((unsigned long)cb0);
+	free_page(cb0);
 out:
 	return ret;
 }
@@ -1838,7 +1838,7 @@ static void ehea_promiscuous(struct net_device *dev, int enable)
 
 	port->promisc = enable;
 out:
-	free_page((unsigned long)cb7);
+	free_page(cb7);
 }
 
 static u64 ehea_multicast_reg_helper(struct ehea_port *port, u64 mc_mac_addr,
@@ -2156,7 +2156,7 @@ static int ehea_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
 		err = -EINVAL;
 	}
 out:
-	free_page((unsigned long)cb1);
+	free_page(cb1);
 	return err;
 }
 
@@ -2194,7 +2194,7 @@ static int ehea_vlan_rx_kill_vid(struct net_device *dev, __be16 proto, u16 vid)
 		err = -EINVAL;
 	}
 out:
-	free_page((unsigned long)cb1);
+	free_page(cb1);
 	return err;
 }
 
@@ -2269,7 +2269,7 @@ static int ehea_activate_qp(struct ehea_adapter *adapter, struct ehea_qp *qp)
 
 	ret = 0;
 out:
-	free_page((unsigned long)cb0);
+	free_page(cb0);
 	return ret;
 }
 
@@ -2604,7 +2604,7 @@ static int ehea_stop_qps(struct net_device *dev)
 
 	ret = 0;
 out:
-	free_page((unsigned long)cb0);
+	free_page(cb0);
 
 	return ret;
 }
@@ -2707,7 +2707,7 @@ static int ehea_restart_qps(struct net_device *dev)
 		ehea_refill_rq3(pr, 0);
 	}
 out:
-	free_page((unsigned long)cb0);
+	free_page(cb0);
 
 	return ret;
 }
@@ -2856,7 +2856,7 @@ static int ehea_sense_adapter_attr(struct ehea_adapter *adapter)
 	ret = 0;
 
 out_herr:
-	free_page((unsigned long)cb);
+	free_page(cb);
 out:
 	return ret;
 }
@@ -2898,7 +2898,7 @@ static int ehea_get_jumboframe_status(struct ehea_port *port, int *jumbo)
 		} else
 			ret = -EINVAL;
 
-		free_page((unsigned long)cb4);
+		free_page(cb4);
 	}
 out:
 	return ret;

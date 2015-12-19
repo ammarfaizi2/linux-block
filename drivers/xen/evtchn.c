@@ -308,7 +308,7 @@ static ssize_t evtchn_write(struct file *file, const char __user *buf,
 	rc = count;
 
  out:
-	free_page((unsigned long)kbuf);
+	free_page(kbuf);
 	return rc;
 }
 

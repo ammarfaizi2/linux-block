@@ -497,7 +497,7 @@ irq_failed:
 dma_failed:
 mem_failed:
 	for (i = 0; i < 2; i++)
-		free_page(dma_buf[i]);
+		free_page((void *)dma_buf[i]);
 	sound_unload_mixerdev(audio_devs[adev]->mixer_dev);
 mixer_failed:
 	sound_unload_audiodev(adev);
@@ -528,7 +528,7 @@ static void __exit unload_vidc(struct address_info *hw_config)
 		sound_unload_mixerdev(audio_devs[adev]->mixer_dev);
 		sound_unload_audiodev(adev);
 		for (i = 0; i < 2; i++)
-			free_page(dma_buf[i]);
+			free_page((void *)dma_buf[i]);
 	}
 }
 

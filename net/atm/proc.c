@@ -398,7 +398,7 @@ static ssize_t proc_dev_atm_read(struct file *file, char __user *buf,
 			length = -EFAULT;
 		(*pos)++;
 	}
-	free_page(page);
+	free_page((void *)page);
 	return length;
 }
 

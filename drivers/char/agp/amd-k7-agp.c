@@ -55,7 +55,7 @@ static int amd_create_page_map(struct amd_page_map *page_map)
 static void amd_free_page_map(struct amd_page_map *page_map)
 {
 	set_memory_wb((unsigned long)page_map->real, 1);
-	free_page((unsigned long) page_map->real);
+	free_page(page_map->real);
 }
 
 static void amd_free_gatt_pages(void)

@@ -7,7 +7,7 @@
 #include <asm/module.h>
 
 #define get_user_page(vaddr)		__get_free_page(GFP_KERNEL)
-#define free_user_page(page, addr)	free_page(addr)
+#define free_user_page(page, addr)	free_page((void *)addr)
 
 /*
  * We don't need to check for alignment etc.

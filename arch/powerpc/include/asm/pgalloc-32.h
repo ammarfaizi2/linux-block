@@ -39,7 +39,7 @@ extern pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long addr);
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long)pte);
+	free_page(pte);
 }
 
 static inline void pte_free(struct mm_struct *mm, pgtable_t ptepage)
@@ -51,7 +51,7 @@ static inline void pte_free(struct mm_struct *mm, pgtable_t ptepage)
 static inline void pgtable_free(void *table, unsigned index_size)
 {
 	BUG_ON(index_size); /* 32-bit doesn't use this */
-	free_page((unsigned long)table);
+	free_page(table);
 }
 
 #define check_pgt_cache()	do { } while (0)

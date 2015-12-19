@@ -7589,7 +7589,7 @@ fail_free_lapic:
 fail_mmu_destroy:
 	kvm_mmu_destroy(vcpu);
 fail_free_pio_data:
-	free_page((unsigned long)vcpu->arch.pio_data);
+	free_page(vcpu->arch.pio_data);
 fail:
 	return r;
 }
@@ -7604,7 +7604,7 @@ void kvm_arch_vcpu_uninit(struct kvm_vcpu *vcpu)
 	idx = srcu_read_lock(&vcpu->kvm->srcu);
 	kvm_mmu_destroy(vcpu);
 	srcu_read_unlock(&vcpu->kvm->srcu, idx);
-	free_page((unsigned long)vcpu->arch.pio_data);
+	free_page(vcpu->arch.pio_data);
 	if (!lapic_in_kernel(vcpu))
 		static_key_slow_dec(&kvm_no_apic_vcpu);
 }

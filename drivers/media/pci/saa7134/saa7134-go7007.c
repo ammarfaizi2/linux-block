@@ -475,9 +475,9 @@ static int saa7134_go7007_init(struct saa7134_dev *dev)
 
 allocfail:
 	if (saa->top)
-		free_page((unsigned long)saa->top);
+		free_page(saa->top);
 	if (saa->bottom)
-		free_page((unsigned long)saa->bottom);
+		free_page(saa->bottom);
 	kfree(saa);
 	kfree(go);
 	return -ENOMEM;
@@ -497,8 +497,8 @@ static int saa7134_go7007_fini(struct saa7134_dev *dev)
 
 	saa = go->hpi_context;
 	go->status = STATUS_SHUTDOWN;
-	free_page((unsigned long)saa->top);
-	free_page((unsigned long)saa->bottom);
+	free_page(saa->top);
+	free_page(saa->bottom);
 	v4l2_device_unregister_subdev(&saa->sd);
 	kfree(saa);
 	video_unregister_device(&go->vdev);

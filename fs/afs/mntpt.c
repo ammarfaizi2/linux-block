@@ -205,17 +205,17 @@ static struct vfsmount *afs_mntpt_do_automount(struct dentry *mntpt)
 	mnt = vfs_kern_mount(&afs_fs_type, 0, devname, options);
 	_debug("--- mount result %p ---", mnt);
 
-	free_page((unsigned long) devname);
-	free_page((unsigned long) options);
+	free_page(devname);
+	free_page(options);
 	_leave(" = %p", mnt);
 	return mnt;
 
 error:
 	page_cache_release(page);
 error_no_page:
-	free_page((unsigned long) options);
+	free_page(options);
 error_no_options:
-	free_page((unsigned long) devname);
+	free_page(devname);
 error_no_devname:
 	_leave(" = %d", ret);
 	return ERR_PTR(ret);

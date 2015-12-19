@@ -650,9 +650,9 @@ struct ring_buffer *rb_alloc(int nr_pages, long watermark, int cpu, int flags)
 
 fail_data_pages:
 	for (i--; i >= 0; i--)
-		free_page((unsigned long)rb->data_pages[i]);
+		free_page(rb->data_pages[i]);
 
-	free_page((unsigned long)rb->user_page);
+	free_page(rb->user_page);
 
 fail_user_page:
 	kfree(rb);

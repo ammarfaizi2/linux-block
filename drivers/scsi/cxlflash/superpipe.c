@@ -733,7 +733,7 @@ static void destroy_context(struct cxlflash_cfg *cfg,
 	}
 
 	/* Free memory associated with context */
-	free_page((ulong)ctxi->rht_start);
+	free_page(ctxi->rht_start);
 	kfree(ctxi->rht_needs_ws);
 	kfree(ctxi->rht_lun);
 	kfree(ctxi);

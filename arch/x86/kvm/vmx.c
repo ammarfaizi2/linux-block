@@ -6276,40 +6276,40 @@ static __init int hardware_setup(void)
 	return alloc_kvm_area();
 
 out8:
-	free_page((unsigned long)vmx_vmwrite_bitmap);
+	free_page(vmx_vmwrite_bitmap);
 out7:
-	free_page((unsigned long)vmx_vmread_bitmap);
+	free_page(vmx_vmread_bitmap);
 out6:
 	if (nested)
-		free_page((unsigned long)vmx_msr_bitmap_nested);
+		free_page(vmx_msr_bitmap_nested);
 out5:
-	free_page((unsigned long)vmx_msr_bitmap_longmode_x2apic);
+	free_page(vmx_msr_bitmap_longmode_x2apic);
 out4:
-	free_page((unsigned long)vmx_msr_bitmap_longmode);
+	free_page(vmx_msr_bitmap_longmode);
 out3:
-	free_page((unsigned long)vmx_msr_bitmap_legacy_x2apic);
+	free_page(vmx_msr_bitmap_legacy_x2apic);
 out2:
-	free_page((unsigned long)vmx_msr_bitmap_legacy);
+	free_page(vmx_msr_bitmap_legacy);
 out1:
-	free_page((unsigned long)vmx_io_bitmap_b);
+	free_page(vmx_io_bitmap_b);
 out:
-	free_page((unsigned long)vmx_io_bitmap_a);
+	free_page(vmx_io_bitmap_a);
 
     return r;
 }
 
 static __exit void hardware_unsetup(void)
 {
-	free_page((unsigned long)vmx_msr_bitmap_legacy_x2apic);
-	free_page((unsigned long)vmx_msr_bitmap_longmode_x2apic);
-	free_page((unsigned long)vmx_msr_bitmap_legacy);
-	free_page((unsigned long)vmx_msr_bitmap_longmode);
-	free_page((unsigned long)vmx_io_bitmap_b);
-	free_page((unsigned long)vmx_io_bitmap_a);
-	free_page((unsigned long)vmx_vmwrite_bitmap);
-	free_page((unsigned long)vmx_vmread_bitmap);
+	free_page(vmx_msr_bitmap_legacy_x2apic);
+	free_page(vmx_msr_bitmap_longmode_x2apic);
+	free_page(vmx_msr_bitmap_legacy);
+	free_page(vmx_msr_bitmap_longmode);
+	free_page(vmx_io_bitmap_b);
+	free_page(vmx_io_bitmap_a);
+	free_page(vmx_vmwrite_bitmap);
+	free_page(vmx_vmread_bitmap);
 	if (nested)
-		free_page((unsigned long)vmx_msr_bitmap_nested);
+		free_page(vmx_msr_bitmap_nested);
 
 	free_kvm_area();
 }

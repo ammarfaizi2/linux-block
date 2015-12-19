@@ -1054,7 +1054,7 @@ static int __dev_alloc_name(struct net *net, const char *name, char *buf)
 		}
 
 		i = find_first_zero_bit(inuse, max_netdevices);
-		free_page((unsigned long) inuse);
+		free_page(inuse);
 	}
 
 	if (buf != name)

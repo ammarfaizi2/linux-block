@@ -2498,8 +2498,8 @@ static int drbd_alloc_socket(struct drbd_socket *socket)
 
 static void drbd_free_socket(struct drbd_socket *socket)
 {
-	free_page((unsigned long) socket->sbuf);
-	free_page((unsigned long) socket->rbuf);
+	free_page(socket->sbuf);
+	free_page(socket->rbuf);
 }
 
 void conn_free_crypto(struct drbd_connection *connection)

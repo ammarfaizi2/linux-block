@@ -918,7 +918,7 @@ static int dsp_read(char __user *buf, size_t len)
 		n = msnd_fifo_read(&dev.DARF, page, k);
 		spin_unlock_irqrestore(&dev.lock, flags);
 		if (copy_to_user(buf, page, n)) {
-			free_page((unsigned long)page);
+			free_page(page);
 			return -EFAULT;
 		}
 		buf += n;
@@ -934,7 +934,7 @@ static int dsp_read(char __user *buf, size_t len)
 		}
 
 		if (dev.rec_ndelay) {
-			free_page((unsigned long)page);
+			free_page(page);
 			return count == len ? -EAGAIN : len - count;
 		}
 
@@ -946,12 +946,12 @@ static int dsp_read(char __user *buf, size_t len)
 					timeout) <= 0)
 				clear_bit(F_READING, &dev.flags);
 			if (signal_pending(current)) {
-				free_page((unsigned long)page);
+				free_page(page);
 				return -EINTR;
 			}
 		}
 	}
-	free_page((unsigned long)page);
+	free_page(page);
 	return len - count;
 }
 
@@ -973,7 +973,7 @@ static int dsp_write(const char __user *buf, size_t len)
 			k = count;
 
 		if (copy_from_user(page, buf, k)) {
-			free_page((unsigned long)page);
+			free_page(page);
 			return -EFAULT;
 		}
 
@@ -994,7 +994,7 @@ static int dsp_write(const char __user *buf, size_t len)
 		}
 
 		if (dev.play_ndelay) {
-			free_page((unsigned long)page);
+			free_page(page);
 			return count == len ? -EAGAIN : len - count;
 		}
 
@@ -1005,13 +1005,13 @@ static int dsp_write(const char __user *buf, size_t len)
 				test_bit(F_WRITEBLOCK, &dev.flags),
 				timeout);
 			if (signal_pending(current)) {
-				free_page((unsigned long)page);
+				free_page(page);
 				return -EINTR;
 			}
 		}
 	}
 
-	free_page((unsigned long)page);
+	free_page(page);
 	return len - count;
 }
 

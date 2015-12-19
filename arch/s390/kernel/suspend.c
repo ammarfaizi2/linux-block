@@ -65,7 +65,7 @@ void page_key_free(void)
 	while (page_key_data) {
 		pkd = page_key_data;
 		page_key_data = pkd->next;
-		free_page((unsigned long) pkd);
+		free_page(pkd);
 	}
 }
 

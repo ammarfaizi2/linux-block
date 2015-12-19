@@ -534,7 +534,7 @@ static ssize_t remote_settings_file_read(struct file *file, char __user *buf, si
 	retval = len;
 
 exit:
-	free_page((unsigned long)page);
+	free_page(page);
 	return retval;
 }
 

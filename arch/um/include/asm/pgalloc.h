@@ -30,7 +30,7 @@ extern pgtable_t pte_alloc_one(struct mm_struct *, unsigned long);
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long) pte);
+	free_page(pte);
 }
 
 static inline void pte_free(struct mm_struct *mm, pgtable_t pte)
@@ -49,7 +49,7 @@ do {							\
 
 static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
 {
-	free_page((unsigned long)pmd);
+	free_page(pmd);
 }
 
 #define __pmd_free_tlb(tlb,x, address)   tlb_remove_page((tlb),virt_to_page(x))

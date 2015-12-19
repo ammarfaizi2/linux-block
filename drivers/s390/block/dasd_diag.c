@@ -460,7 +460,7 @@ dasd_diag_check_device(struct dasd_device *device)
 		rc = 0;
 	}
 out_label:
-	free_page((long) label);
+	free_page(label);
 out:
 	if (rc) {
 		device->block = NULL;

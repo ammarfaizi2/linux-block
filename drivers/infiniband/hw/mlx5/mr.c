@@ -966,7 +966,7 @@ int mlx5_ib_update_mtt(struct mlx5_ib_mr *mr, u64 start_page_index, int npages,
 
 free_pas:
 	if (!use_emergency_buf)
-		free_page((unsigned long)pas);
+		free_page(pas);
 	else
 		mutex_unlock(&mlx5_ib_update_mtt_emergency_buffer_mutex);
 

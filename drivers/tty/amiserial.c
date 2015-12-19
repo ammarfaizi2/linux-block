@@ -527,12 +527,12 @@ static int startup(struct tty_struct *tty, struct serial_state *info)
 	local_irq_save(flags);
 
 	if (port->flags & ASYNC_INITIALIZED) {
-		free_page(page);
+		free_page((void *)page);
 		goto errout;
 	}
 
 	if (info->xmit.buf)
-		free_page(page);
+		free_page((void *)page);
 	else
 		info->xmit.buf = (unsigned char *) page;
 
@@ -628,7 +628,7 @@ static void shutdown(struct tty_struct *tty, struct serial_state *info)
 	free_irq(IRQ_AMIGA_VERTB, info);
 
 	if (info->xmit.buf) {
-		free_page((unsigned long) info->xmit.buf);
+		free_page(info->xmit.buf);
 		info->xmit.buf = NULL;
 	}
 

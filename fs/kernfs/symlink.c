@@ -120,7 +120,7 @@ static const char *kernfs_iop_follow_link(struct dentry *dentry, void **cookie)
 		return ERR_PTR(-ENOMEM);
 	error = kernfs_getlink(dentry, (char *)page);
 	if (unlikely(error < 0)) {
-		free_page((unsigned long)page);
+		free_page((void *)page);
 		return ERR_PTR(error);
 	}
 	return *cookie = (char *)page;

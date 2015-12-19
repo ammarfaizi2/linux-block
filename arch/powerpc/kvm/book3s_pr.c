@@ -1452,7 +1452,7 @@ static void kvmppc_core_vcpu_free_pr(struct kvm_vcpu *vcpu)
 {
 	struct kvmppc_vcpu_book3s *vcpu_book3s = to_book3s(vcpu);
 
-	free_page((unsigned long)vcpu->arch.shared & PAGE_MASK);
+	free_page((void *)((unsigned long)vcpu->arch.shared & PAGE_MASK));
 	kvm_vcpu_uninit(vcpu);
 #ifdef CONFIG_KVM_BOOK3S_32_HANDLER
 	kfree(vcpu->arch.shadow_vcpu);

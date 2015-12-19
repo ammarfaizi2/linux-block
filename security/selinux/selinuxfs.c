@@ -186,7 +186,7 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 	}
 	length = count;
 out:
-	free_page((unsigned long) page);
+	free_page(page);
 	return length;
 }
 #else
@@ -313,7 +313,7 @@ static ssize_t sel_write_disable(struct file *file, const char __user *buf,
 
 	length = count;
 out:
-	free_page((unsigned long) page);
+	free_page(page);
 	return length;
 }
 #else
@@ -644,7 +644,7 @@ static ssize_t sel_write_checkreqprot(struct file *file, const char __user *buf,
 	selinux_checkreqprot = new_value ? 1 : 0;
 	length = count;
 out:
-	free_page((unsigned long) page);
+	free_page(page);
 	return length;
 }
 static const struct file_operations sel_checkreqprot_ops = {
@@ -1068,7 +1068,7 @@ static ssize_t sel_read_bool(struct file *filep, char __user *buf,
 	ret = simple_read_from_buffer(buf, count, ppos, page, length);
 out:
 	mutex_unlock(&sel_mutex);
-	free_page((unsigned long)page);
+	free_page(page);
 	return ret;
 }
 
@@ -1121,7 +1121,7 @@ static ssize_t sel_write_bool(struct file *filep, const char __user *buf,
 
 out:
 	mutex_unlock(&sel_mutex);
-	free_page((unsigned long) page);
+	free_page(page);
 	return length;
 }
 
@@ -1176,7 +1176,7 @@ static ssize_t sel_commit_bools_write(struct file *filep,
 
 out:
 	mutex_unlock(&sel_mutex);
-	free_page((unsigned long) page);
+	free_page(page);
 	return length;
 }
 
@@ -1257,10 +1257,10 @@ static int sel_make_bools(void)
 	bool_pending_names = names;
 	bool_pending_values = values;
 
-	free_page((unsigned long)page);
+	free_page(page);
 	return 0;
 out:
-	free_page((unsigned long)page);
+	free_page(page);
 
 	if (names) {
 		for (i = 0; i < num; i++)
@@ -1326,7 +1326,7 @@ static ssize_t sel_write_avc_cache_threshold(struct file *file,
 
 	ret = count;
 out:
-	free_page((unsigned long)page);
+	free_page(page);
 	return ret;
 }
 
@@ -1343,7 +1343,7 @@ static ssize_t sel_read_avc_hash_stats(struct file *filp, char __user *buf,
 	length = avc_get_hash_stats(page);
 	if (length >= 0)
 		length = simple_read_from_buffer(buf, count, ppos, page, length);
-	free_page((unsigned long)page);
+	free_page(page);
 
 	return length;
 }

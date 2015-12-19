@@ -839,7 +839,7 @@ static void vmlogrdr_cleanup(void)
 	}
 	for (i=0; i < MAXMINOR; ++i ) {
 		vmlogrdr_unregister_device(&sys_ser[i]);
-		free_page((unsigned long)sys_ser[i].buffer);
+		free_page(sys_ser[i].buffer);
 	}
 	vmlogrdr_unregister_driver();
 	if (vmlogrdr_major) {

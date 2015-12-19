@@ -130,7 +130,7 @@ out_err:
 void kvm_coalesced_mmio_free(struct kvm *kvm)
 {
 	if (kvm->coalesced_mmio_ring)
-		free_page((unsigned long)kvm->coalesced_mmio_ring);
+		free_page(kvm->coalesced_mmio_ring);
 }
 
 int kvm_vm_ioctl_register_coalesced_mmio(struct kvm *kvm,

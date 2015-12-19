@@ -43,7 +43,7 @@ static unsigned long hypfs_sprp_diag304(void *data, unsigned long cmd)
 
 static void hypfs_sprp_free(const void *data)
 {
-	free_page((unsigned long) data);
+	free_page(data);
 }
 
 static int hypfs_sprp_create(void **data_ptr, void **free_ptr, size_t *size)
@@ -58,7 +58,7 @@ static int hypfs_sprp_create(void **data_ptr, void **free_ptr, size_t *size)
 	if (rc != 1) {
 		*data_ptr = *free_ptr = NULL;
 		*size = 0;
-		free_page((unsigned long) data);
+		free_page(data);
 		return -EIO;
 	}
 	*data_ptr = *free_ptr = data;
@@ -102,7 +102,7 @@ static int __hypfs_sprp_ioctl(void __user *user_area)
 
 	rc = copy_to_user(user_area, &diag304, sizeof(diag304)) ? -EFAULT : 0;
 out:
-	free_page((unsigned long) data);
+	free_page(data);
 	return rc;
 }
 

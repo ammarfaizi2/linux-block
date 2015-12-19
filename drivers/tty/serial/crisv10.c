@@ -2603,12 +2603,12 @@ startup(struct e100_serial * info)
 
 	if (info->port.flags & ASYNC_INITIALIZED) {
 		local_irq_restore(flags);
-		free_page(xmit_page);
+		free_page((void *)xmit_page);
 		return 0;
 	}
 
 	if (info->xmit.buf)
-		free_page(xmit_page);
+		free_page((void *)xmit_page);
 	else
 		info->xmit.buf = (unsigned char *) xmit_page;
 
@@ -2758,7 +2758,7 @@ shutdown(struct e100_serial * info)
 	local_irq_save(flags);
 
 	if (info->xmit.buf) {
-		free_page((unsigned long)info->xmit.buf);
+		free_page(info->xmit.buf);
 		info->xmit.buf = NULL;
 	}
 

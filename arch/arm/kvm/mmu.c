@@ -142,7 +142,7 @@ static int mmu_topup_memory_cache(struct kvm_mmu_memory_cache *cache,
 static void mmu_free_memory_cache(struct kvm_mmu_memory_cache *mc)
 {
 	while (mc->nobjs)
-		free_page((unsigned long)mc->objects[--mc->nobjs]);
+		free_page(mc->objects[--mc->nobjs]);
 }
 
 static void *mmu_memory_cache_alloc(struct kvm_mmu_memory_cache *mc)
@@ -441,7 +441,7 @@ void free_hyp_pgds(void)
 	}
 	if (merged_hyp_pgd) {
 		clear_page(merged_hyp_pgd);
-		free_page((unsigned long)merged_hyp_pgd);
+		free_page(merged_hyp_pgd);
 		merged_hyp_pgd = NULL;
 	}
 

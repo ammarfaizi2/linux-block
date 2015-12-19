@@ -1547,7 +1547,7 @@ static void xen_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	pgd_t *user_pgd = xen_get_user_pgd(pgd);
 
 	if (user_pgd)
-		free_page((unsigned long)user_pgd);
+		free_page(user_pgd);
 #endif
 }
 

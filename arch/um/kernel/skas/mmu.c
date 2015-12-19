@@ -85,7 +85,7 @@ int init_new_context(struct task_struct *task, struct mm_struct *mm)
 
  out_free:
 	if (to_mm->id.stack != 0)
-		free_page(to_mm->id.stack);
+		free_page((void *)to_mm->id.stack);
  out:
 	return ret;
 }
@@ -153,6 +153,6 @@ void destroy_context(struct mm_struct *mm)
 	}
 	os_kill_ptraced_process(mmu->id.u.pid, 1);
 
-	free_page(mmu->id.stack);
+	free_page((void *)mmu->id.stack);
 	free_ldt(mmu);
 }

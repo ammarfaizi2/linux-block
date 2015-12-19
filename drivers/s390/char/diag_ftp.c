@@ -207,7 +207,7 @@ ssize_t diag_ftp_cmd(const struct hmcdrv_ftp_cmdspec *ftp, size_t *fsize)
 	}
 
 out_free:
-	free_page((unsigned long) ldfpl);
+	free_page(ldfpl);
 out:
 	return len;
 }

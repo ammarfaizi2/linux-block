@@ -125,7 +125,7 @@ static void free_unused_array_pages(void)
 	for (i = event_array_pages; i < MAX_EVENT_ARRAY_PAGES; i++) {
 		if (!event_array[i])
 			break;
-		free_page((unsigned long)event_array[i]);
+		free_page(event_array[i]);
 		event_array[i] = NULL;
 	}
 }
@@ -353,7 +353,7 @@ static void evtchn_fifo_resume(void)
 		 * used.
 		 */
 		if (!cpu_online(cpu)) {
-			free_page((unsigned long)control_block);
+			free_page(control_block);
 			per_cpu(cpu_control_block, cpu) = NULL;
 			continue;
 		}
@@ -404,7 +404,7 @@ static int evtchn_fifo_alloc_control_block(unsigned cpu)
 	return 0;
 
   error:
-	free_page((unsigned long)control_block);
+	free_page(control_block);
 	return ret;
 }
 

@@ -887,7 +887,7 @@ int z8530_sync_dma_open(struct net_device *dev, struct z8530_channel *c)
 	c->tx_dma_buf[0]=(void *)get_zeroed_page(GFP_KERNEL|GFP_DMA);
 	if(c->tx_dma_buf[0]==NULL)
 	{
-		free_page((unsigned long)c->rx_buf[0]);
+		free_page(c->rx_buf[0]);
 		c->rx_buf[0]=NULL;
 		return -ENOBUFS;
 	}
@@ -1020,12 +1020,12 @@ int z8530_sync_dma_close(struct net_device *dev, struct z8530_channel *c)
 	
 	if(c->rx_buf[0])
 	{
-		free_page((unsigned long)c->rx_buf[0]);
+		free_page(c->rx_buf[0]);
 		c->rx_buf[0]=NULL;
 	}
 	if(c->tx_dma_buf[0])
 	{
-		free_page((unsigned  long)c->tx_dma_buf[0]);
+		free_page(c->tx_dma_buf[0]);
 		c->tx_dma_buf[0]=NULL;
 	}
 	chk=read_zsreg(c,R0);
@@ -1189,7 +1189,7 @@ int z8530_sync_txdma_close(struct net_device *dev, struct z8530_channel *c)
 	
 	if(c->tx_dma_buf[0])
 	{
-		free_page((unsigned long)c->tx_dma_buf[0]);
+		free_page(c->tx_dma_buf[0]);
 		c->tx_dma_buf[0]=NULL;
 	}
 	chk=read_zsreg(c,R0);

@@ -1047,7 +1047,7 @@ static int proc_control(struct usb_dev_state *ps, void __user *arg)
 	}
 	ret = i;
  done:
-	free_page((unsigned long) tbuf);
+	free_page(tbuf);
 	usbfs_decrease_memory_usage(PAGE_SIZE + sizeof(struct urb) +
 			sizeof(struct usb_ctrlrequest));
 	return ret;

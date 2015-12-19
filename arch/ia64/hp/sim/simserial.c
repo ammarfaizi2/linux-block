@@ -339,7 +339,7 @@ static void shutdown(struct tty_port *port)
 		free_irq(info->irq, info);
 
 	if (info->xmit.buf) {
-		free_page((unsigned long) info->xmit.buf);
+		free_page(info->xmit.buf);
 		info->xmit.buf = NULL;
 	}
 	local_irq_restore(flags);
@@ -374,7 +374,7 @@ static int activate(struct tty_port *port, struct tty_struct *tty)
 	local_irq_save(flags);
 
 	if (state->xmit.buf)
-		free_page(page);
+		free_page((void *)page);
 	else
 		state->xmit.buf = (unsigned char *) page;
 

@@ -129,7 +129,7 @@ int sclp_get_core_info(struct sclp_core_info *info)
 	}
 	sclp_fill_core_info(info, sccb);
 out:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	return rc;
 }
 
@@ -237,7 +237,7 @@ static int do_assign_storage(sclp_cmdw_t cmd, u16 rn)
 		break;
 	}
 out:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	return rc;
 }
 
@@ -294,7 +294,7 @@ static int sclp_attach_storage(u8 id)
 		break;
 	}
 out:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	return rc;
 }
 
@@ -570,7 +570,7 @@ static int __init sclp_detect_standby_memory(void)
 out_driver:
 	platform_driver_unregister(&sclp_mem_pdrv);
 out:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	return rc;
 }
 __initcall(sclp_detect_standby_memory);
@@ -622,7 +622,7 @@ static int do_pci_configure(sclp_cmdw_t cmd, u32 fid)
 		break;
 	}
 out:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	return rc;
 }
 
@@ -682,7 +682,7 @@ static int do_chp_configure(sclp_cmdw_t cmd)
 		break;
 	}
 out:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	return rc;
 }
 
@@ -753,6 +753,6 @@ int sclp_chp_read_info(struct sclp_chp_info *info)
 	memcpy(info->standby, sccb->standby, SCLP_CHP_INFO_MASK_SIZE);
 	memcpy(info->configured, sccb->configured, SCLP_CHP_INFO_MASK_SIZE);
 out:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	return rc;
 }

@@ -247,7 +247,7 @@ int scm_update_information(void)
 		token = scm_info->restok;
 	} while (token);
 
-	free_page((unsigned long)scm_info);
+	free_page(scm_info);
 
 	return ret;
 }

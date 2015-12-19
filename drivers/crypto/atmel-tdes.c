@@ -381,8 +381,8 @@ err_map_out:
 		DMA_TO_DEVICE);
 err_map_in:
 err_alloc:
-	free_page((unsigned long)dd->buf_out);
-	free_page((unsigned long)dd->buf_in);
+	free_page(dd->buf_out);
+	free_page(dd->buf_in);
 	if (err)
 		pr_err("error: %d\n", err);
 	return err;
@@ -394,8 +394,8 @@ static void atmel_tdes_buff_cleanup(struct atmel_tdes_dev *dd)
 			 DMA_FROM_DEVICE);
 	dma_unmap_single(dd->dev, dd->dma_addr_in, dd->buflen,
 		DMA_TO_DEVICE);
-	free_page((unsigned long)dd->buf_out);
-	free_page((unsigned long)dd->buf_in);
+	free_page(dd->buf_out);
+	free_page(dd->buf_in);
 }
 
 static int atmel_tdes_crypt_pdc(struct crypto_tfm *tfm, dma_addr_t dma_addr_in,

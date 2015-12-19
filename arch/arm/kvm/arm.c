@@ -1136,7 +1136,7 @@ out_free_mappings:
 	free_hyp_pgds();
 out_free_stack_pages:
 	for_each_possible_cpu(cpu)
-		free_page(per_cpu(kvm_arm_hyp_stack_page, cpu));
+		free_page((void *)per_cpu(kvm_arm_hyp_stack_page, cpu));
 out_err:
 	kvm_err("error initializing Hyp mode: %d\n", err);
 	return err;

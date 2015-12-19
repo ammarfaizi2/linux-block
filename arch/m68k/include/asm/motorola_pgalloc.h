@@ -24,7 +24,7 @@ static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long ad
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
 	cache_page(pte);
-	free_page((unsigned long) pte);
+	free_page(pte);
 }
 
 static inline pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long address)

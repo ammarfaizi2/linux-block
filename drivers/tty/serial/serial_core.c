@@ -257,7 +257,7 @@ static void uart_shutdown(struct tty_struct *tty, struct uart_state *state)
 	 * Free the transmit buffer page.
 	 */
 	if (state->xmit.buf) {
-		free_page((unsigned long)state->xmit.buf);
+		free_page(state->xmit.buf);
 		state->xmit.buf = NULL;
 	}
 }

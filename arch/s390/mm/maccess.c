@@ -151,7 +151,7 @@ int copy_to_user_real(void __user *dest, void *src, unsigned long count)
 	}
 	rc = 0;
 out:
-	free_page((unsigned long) buf);
+	free_page(buf);
 	return rc;
 }
 
@@ -204,5 +204,5 @@ void *xlate_dev_mem_ptr(phys_addr_t addr)
 void unxlate_dev_mem_ptr(phys_addr_t addr, void *buf)
 {
 	if ((void *) addr != buf)
-		free_page((unsigned long) buf);
+		free_page(buf);
 }

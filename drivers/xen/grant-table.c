@@ -384,7 +384,7 @@ void gnttab_end_foreign_access(grant_ref_t ref, int readonly,
 	if (gnttab_end_foreign_access_ref(ref, readonly)) {
 		put_free_entry(ref);
 		if (page != 0)
-			free_page(page);
+			free_page((void *)page);
 	} else
 		gnttab_add_deferred(ref, readonly,
 				    page ? virt_to_page(page) : NULL);
@@ -599,7 +599,7 @@ static int grow_gnttab_list(unsigned int more_frames)
 
 grow_nomem:
 	while (i-- > nr_glist_frames)
-		free_page((unsigned long) gnttab_list[i]);
+		free_page(gnttab_list[i]);
 	return -ENOMEM;
 }
 
@@ -1139,7 +1139,7 @@ int gnttab_init(void)
 
  ini_nomem:
 	for (i--; i >= 0; i--)
-		free_page((unsigned long)gnttab_list[i]);
+		free_page(gnttab_list[i]);
 	kfree(gnttab_list);
 	return ret;
 }

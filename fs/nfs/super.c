@@ -789,7 +789,7 @@ int nfs_show_devname(struct seq_file *m, struct dentry *root)
 		err = PTR_ERR(devname);
 	else
 		seq_escape(m, devname, " \t\n\\");
-	free_page((unsigned long)page);
+	free_page(page);
 	return err;
 }
 EXPORT_SYMBOL_GPL(nfs_show_devname);

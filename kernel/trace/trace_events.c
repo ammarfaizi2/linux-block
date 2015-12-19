@@ -1345,7 +1345,7 @@ event_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
 		return -ENOMEM;
 
 	if (copy_from_user(buf, ubuf, cnt)) {
-		free_page((unsigned long) buf);
+		free_page(buf);
 		return -EFAULT;
 	}
 	buf[cnt] = '\0';
@@ -1356,7 +1356,7 @@ event_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
 		err = apply_event_filter(file, buf);
 	mutex_unlock(&event_mutex);
 
-	free_page((unsigned long) buf);
+	free_page(buf);
 	if (err < 0)
 		return err;
 
@@ -1512,13 +1512,13 @@ subsystem_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
 		return -ENOMEM;
 
 	if (copy_from_user(buf, ubuf, cnt)) {
-		free_page((unsigned long) buf);
+		free_page(buf);
 		return -EFAULT;
 	}
 	buf[cnt] = '\0';
 
 	err = apply_subsystem_event_filter(dir, buf);
-	free_page((unsigned long) buf);
+	free_page(buf);
 	if (err < 0)
 		return err;
 

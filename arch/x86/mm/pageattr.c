@@ -725,7 +725,7 @@ static bool try_to_free_pte_page(pte_t *pte)
 		if (!pte_none(pte[i]))
 			return false;
 
-	free_page((unsigned long)pte);
+	free_page(pte);
 	return true;
 }
 
@@ -737,7 +737,7 @@ static bool try_to_free_pmd_page(pmd_t *pmd)
 		if (!pmd_none(pmd[i]))
 			return false;
 
-	free_page((unsigned long)pmd);
+	free_page(pmd);
 	return true;
 }
 
@@ -749,7 +749,7 @@ static bool try_to_free_pud_page(pud_t *pud)
 		if (!pud_none(pud[i]))
 			return false;
 
-	free_page((unsigned long)pud);
+	free_page(pud);
 	return true;
 }
 

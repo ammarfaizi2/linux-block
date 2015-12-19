@@ -132,7 +132,7 @@ void suspend_nvs_free(void)
 
 	list_for_each_entry(entry, &nvs_list, node)
 		if (entry->data) {
-			free_page((unsigned long)entry->data);
+			free_page(entry->data);
 			entry->data = NULL;
 			if (entry->kaddr) {
 				if (entry->unmap) {

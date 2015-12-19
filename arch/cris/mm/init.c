@@ -42,7 +42,7 @@ void free_init_pages(const char *what, unsigned long begin, unsigned long end)
 	for (addr = begin; addr < end; addr += PAGE_SIZE) {
 		ClearPageReserved(virt_to_page(addr));
 		init_page_count(virt_to_page(addr));
-		free_page(addr);
+		free_page((void *)addr);
 		totalram_pages++;
 	}
 

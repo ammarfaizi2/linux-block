@@ -145,7 +145,7 @@ static char *ovl_read_symlink(struct dentry *realdentry)
 				    (char __user *)buf, PAGE_SIZE - 1);
 	set_fs(old_fs);
 	if (res < 0) {
-		free_page((unsigned long) buf);
+		free_page(buf);
 		goto err;
 	}
 	buf[res] = '\0';
@@ -359,7 +359,7 @@ out_unlock:
 
 out_free_link:
 	if (link)
-		free_page((unsigned long) link);
+		free_page(link);
 
 	return err;
 }

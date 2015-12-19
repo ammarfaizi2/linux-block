@@ -1466,7 +1466,7 @@ static int alloc_new_range(struct dma_ops_domain *dma_dom,
 out_free:
 	update_domain(&dma_dom->domain);
 
-	free_page((unsigned long)dma_dom->aperture[index]->bitmap);
+	free_page(dma_dom->aperture[index]->bitmap);
 
 	kfree(dma_dom->aperture[index]);
 	dma_dom->aperture[index] = NULL;
@@ -1642,9 +1642,9 @@ static void domain_id_free(int id)
 }
 
 #define DEFINE_FREE_PT_FN(LVL, FN)				\
-static void free_pt_##LVL (unsigned long __pt)			\
+static void free_pt_##LVL (void *__pt)				\
 {								\
-	unsigned long p;					\
+	void *p;						\
 	u64 *pt;						\
 	int i;							\
 								\
@@ -1660,10 +1660,10 @@ static void free_pt_##LVL (unsigned long __pt)			\
 		    PM_PTE_LEVEL(pt[i]) == 7)			\
 			continue;				\
 								\
-		p = (unsigned long)IOMMU_PTE_PAGE(pt[i]);	\
+		p = IOMMU_PTE_PAGE(pt[i]);			\
 		FN(p);						\
 	}							\
-	free_page((unsigned long)pt);				\
+	free_page(pt);						\
 }
 
 DEFINE_FREE_PT_FN(l2, free_page)
@@ -1674,7 +1674,7 @@ DEFINE_FREE_PT_FN(l6, free_pt_l5)
 
 static void free_pagetable(struct protection_domain *domain)
 {
-	unsigned long root = (unsigned long)domain->pt_root;
+	void *root = domain->pt_root;
 
 	switch (domain->mode) {
 	case PAGE_MODE_NONE:
@@ -1713,7 +1713,7 @@ static void free_gcr3_tbl_level1(u64 *tbl)
 
 		ptr = __va(tbl[i] & PAGE_MASK);
 
-		free_page((unsigned long)ptr);
+		free_page(ptr);
 	}
 }
 
@@ -1741,7 +1741,7 @@ static void free_gcr3_table(struct protection_domain *domain)
 	else
 		BUG_ON(domain->glx != 0);
 
-	free_page((unsigned long)domain->gcr3_tbl);
+	free_page(domain->gcr3_tbl);
 }
 
 /*
@@ -1762,7 +1762,7 @@ static void dma_ops_domain_free(struct dma_ops_domain *dom)
 	for (i = 0; i < APERTURE_MAX_RANGES; ++i) {
 		if (!dom->aperture[i])
 			continue;
-		free_page((unsigned long)dom->aperture[i]->bitmap);
+		free_page(dom->aperture[i]->bitmap);
 		kfree(dom->aperture[i]);
 	}
 

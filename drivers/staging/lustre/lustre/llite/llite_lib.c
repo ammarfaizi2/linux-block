@@ -2286,5 +2286,5 @@ void ll_dirty_page_discard_warn(struct page *page, int ioret)
 		dput(dentry);
 
 	if (buf != NULL)
-		free_page((unsigned long)buf);
+		free_page(buf);
 }

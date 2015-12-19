@@ -354,7 +354,7 @@ static ssize_t ide_settings_proc_write(struct file *file, const char __user *buf
 		return -ENOMEM;
 
 	if (copy_from_user(buf, buffer, count)) {
-		free_page((unsigned long)buf);
+		free_page(buf);
 		return -EFAULT;
 	}
 
@@ -424,10 +424,10 @@ static ssize_t ide_settings_proc_write(struct file *file, const char __user *buf
 			mutex_unlock(&ide_setting_mtx);
 		}
 	} while (!for_real++);
-	free_page((unsigned long)buf);
+	free_page(buf);
 	return count;
 parse_error:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	printk("%s(): parse error\n", __func__);
 	return -EINVAL;
 }

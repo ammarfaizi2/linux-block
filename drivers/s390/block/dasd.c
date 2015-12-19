@@ -136,8 +136,8 @@ struct dasd_device *dasd_alloc_device(void)
 void dasd_free_device(struct dasd_device *device)
 {
 	kfree(device->private);
-	free_page((unsigned long) device->erp_mem);
-	free_pages((unsigned long) device->ccw_mem, 1);
+	free_page(device->erp_mem);
+	free_pages((unsigned long)device->ccw_mem, 1);
 	kfree(device);
 }
 

@@ -3016,7 +3016,7 @@ static struct fw_iso_context *ohci_allocate_iso_context(struct fw_card *card,
 	return &ctx->base;
 
  out_with_header:
-	free_page((unsigned long)ctx->header);
+	free_page(ctx->header);
  out:
 	spin_lock_irq(&ohci->lock);
 
@@ -3120,7 +3120,7 @@ static void ohci_free_iso_context(struct fw_iso_context *base)
 
 	ohci_stop_iso(base);
 	context_release(&ctx->context);
-	free_page((unsigned long)ctx->header);
+	free_page(ctx->header);
 
 	spin_lock_irqsave(&ohci->lock, flags);
 

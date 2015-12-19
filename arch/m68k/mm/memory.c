@@ -114,7 +114,7 @@ int free_pointer_table (pmd_t *ptable)
 		/* all tables in page are free, free page */
 		list_del(dp);
 		cache_page((void *)page);
-		free_page (page);
+		free_page((void *)page);
 		return 1;
 	} else if (ptable_list.next != dp) {
 		/*

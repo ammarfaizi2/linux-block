@@ -150,7 +150,7 @@ static int generate_entropy(u8 *ebuf, size_t nbytes)
 	}
 
 out:
-	free_page((unsigned long)pg);
+	free_page(pg);
 	return ret;
 }
 

@@ -1385,7 +1385,7 @@ static const char *fuse_follow_link(struct dentry *dentry, void **cookie)
 	args.out.args[0].value = link;
 	ret = fuse_simple_request(fc, &args);
 	if (ret < 0) {
-		free_page((unsigned long) link);
+		free_page(link);
 		link = ERR_PTR(ret);
 	} else {
 		link[ret] = '\0';

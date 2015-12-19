@@ -296,7 +296,7 @@ static int configfs_release(struct inode * inode, struct file * filp)
 
 	if (buffer) {
 		if (buffer->page)
-			free_page((unsigned long)buffer->page);
+			free_page(buffer->page);
 		mutex_destroy(&buffer->mutex);
 		kfree(buffer);
 	}

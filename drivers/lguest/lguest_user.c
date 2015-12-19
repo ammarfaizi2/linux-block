@@ -275,7 +275,7 @@ static int initialize(struct file *file, const unsigned long __user *input)
 
 free_regs:
 	/* FIXME: This should be in free_vcpu */
-	free_page(lg->cpus[0].regs_page);
+	free_page((void *)lg->cpus[0].regs_page);
 free_lg:
 	kfree(lg);
 unlock:
@@ -377,7 +377,7 @@ static int close(struct inode *inode, struct file *file)
 		/* Cancels the hrtimer set via LHCALL_SET_CLOCKEVENT. */
 		hrtimer_cancel(&lg->cpus[i].hrt);
 		/* We can free up the register page we allocated. */
-		free_page(lg->cpus[i].regs_page);
+		free_page((void *)lg->cpus[i].regs_page);
 		/*
 		 * Now all the memory cleanups are done, it's safe to release
 		 * the Launcher's memory management structure.

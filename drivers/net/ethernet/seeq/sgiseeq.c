@@ -800,7 +800,7 @@ static int sgiseeq_probe(struct platform_device *pdev)
 	return 0;
 
 err_out_free_page:
-	free_page((unsigned long) sp->srings);
+	free_page(sp->srings);
 err_out_free_dev:
 	free_netdev(dev);
 

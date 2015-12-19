@@ -825,7 +825,7 @@ COMPAT_SYSCALL_DEFINE5(mount, const char __user *, dev_name,
 			flags, (void*)data_page);
 
  out3:
-	free_page(data_page);
+	free_page((void *)data_page);
  out2:
 	kfree(kernel_dev);
  out1:

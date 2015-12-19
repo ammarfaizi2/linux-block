@@ -835,7 +835,7 @@ fail_release_rx:
 	dma_release_channel(espi->dma_rx);
 	espi->dma_rx = NULL;
 fail_free_page:
-	free_page((unsigned long)espi->zeropage);
+	free_page(espi->zeropage);
 
 	return ret;
 }
@@ -852,7 +852,7 @@ static void ep93xx_spi_release_dma(struct ep93xx_spi *espi)
 	}
 
 	if (espi->zeropage)
-		free_page((unsigned long)espi->zeropage);
+		free_page(espi->zeropage);
 }
 
 static int ep93xx_spi_probe(struct platform_device *pdev)

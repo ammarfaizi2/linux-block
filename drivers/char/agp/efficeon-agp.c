@@ -164,7 +164,7 @@ static int efficeon_free_gatt_table(struct agp_bridge_data *bridge)
 		if (page) {
 			efficeon_private.l1_table[index] = 0;
 			ClearPageReserved(virt_to_page((char *)page));
-			free_page(page);
+			free_page((void *)page);
 			freed++;
 		}
 		printk(KERN_DEBUG PFX "efficeon_free_gatt_table(%p, %02x, %08x)\n",

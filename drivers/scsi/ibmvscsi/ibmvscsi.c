@@ -165,7 +165,7 @@ static void ibmvscsi_release_crq_queue(struct crq_queue *queue,
 	dma_unmap_single(hostdata->dev,
 			 queue->msg_token,
 			 queue->size * sizeof(*queue->msgs), DMA_BIDIRECTIONAL);
-	free_page((unsigned long)queue->msgs);
+	free_page(queue->msgs);
 }
 
 /**
@@ -410,7 +410,7 @@ static int ibmvscsi_init_crq_queue(struct crq_queue *queue,
 			 queue->msg_token,
 			 queue->size * sizeof(*queue->msgs), DMA_BIDIRECTIONAL);
       map_failed:
-	free_page((unsigned long)queue->msgs);
+	free_page(queue->msgs);
       malloc_failed:
 	return -1;
 }

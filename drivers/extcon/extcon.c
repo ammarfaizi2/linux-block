@@ -316,7 +316,7 @@ int extcon_update_state(struct extcon_dev *edev, u32 mask, u32 state)
 			spin_unlock_irqrestore(&edev->lock, flags);
 
 			kobject_uevent_env(&edev->dev.kobj, KOBJ_CHANGE, envp);
-			free_page((unsigned long)prop_buf);
+			free_page(prop_buf);
 		} else {
 			/* Unlock early before uevent */
 			spin_unlock_irqrestore(&edev->lock, flags);

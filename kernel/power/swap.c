@@ -384,7 +384,7 @@ static int write_page(void *buf, sector_t offset, struct hib_bio_batch *hb)
 static void release_swap_writer(struct swap_map_handle *handle)
 {
 	if (handle->cur)
-		free_page((unsigned long)handle->cur);
+		free_page(handle->cur);
 	handle->cur = NULL;
 }
 
@@ -853,7 +853,7 @@ out_clean:
 				kthread_stop(data[thr].thr);
 		vfree(data);
 	}
-	if (page) free_page((unsigned long)page);
+	if (page) free_page(page);
 
 	return ret;
 }
@@ -938,7 +938,7 @@ static void release_swap_reader(struct swap_map_handle *handle)
 
 	while (handle->maps) {
 		if (handle->maps->map)
-			free_page((unsigned long)handle->maps->map);
+			free_page(handle->maps->map);
 		tmp = handle->maps;
 		handle->maps = handle->maps->next;
 		kfree(tmp);
@@ -1010,7 +1010,7 @@ static int swap_read_page(struct swap_map_handle *handle, void *buf,
 		return error;
 	if (++handle->k >= MAP_PAGE_ENTRIES) {
 		handle->k = 0;
-		free_page((unsigned long)handle->maps->map);
+		free_page(handle->maps->map);
 		tmp = handle->maps;
 		handle->maps = handle->maps->next;
 		kfree(tmp);
@@ -1440,7 +1440,7 @@ out_finish:
 	swsusp_show_speed(start, stop, nr_to_read, "Read");
 out_clean:
 	for (i = 0; i < ring_size; i++)
-		free_page((unsigned long)page[i]);
+		free_page(page[i]);
 	if (crc) {
 		if (crc->thr)
 			kthread_stop(crc->thr);

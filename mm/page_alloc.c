@@ -3458,7 +3458,7 @@ static void *make_alloc_exact(unsigned long addr, unsigned int order,
 
 		split_page(virt_to_page((void *)addr), order);
 		while (used < alloc_end) {
-			free_page(used);
+			free_page((void *)used);
 			used += PAGE_SIZE;
 		}
 	}
@@ -3520,7 +3520,7 @@ void free_pages_exact(void *virt, size_t size)
 	unsigned long end = addr + PAGE_ALIGN(size);
 
 	while (addr < end) {
-		free_page(addr);
+		free_page((void *)addr);
 		addr += PAGE_SIZE;
 	}
 }

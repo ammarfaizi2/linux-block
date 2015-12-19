@@ -264,7 +264,7 @@ static int allocate_sdbt(int cpu)
 		barrier();
 		if (oom_killer_was_active || !sdbt) {
 			if (sdbt)
-				free_page((unsigned long)sdbt);
+				free_page(sdbt);
 
 			goto allocate_sdbt_error;
 		}
@@ -286,7 +286,7 @@ static int allocate_sdbt(int cpu)
 			barrier();
 			if (oom_killer_was_active || !sdb) {
 				if (sdb)
-					free_page(sdb);
+					free_page((void *)sdb);
 
 				goto allocate_sdbt_error;
 			}
@@ -353,7 +353,7 @@ static int deallocate_sdbt(void)
 			if (is_link_entry(curr)) {
 				curr = get_next_sdbt(curr);
 				if (sdbt)
-					free_page(sdbt);
+					free_page((void *)sdbt);
 
 				/* we are done if we reach the start */
 				if ((unsigned long) curr == start)
@@ -363,7 +363,7 @@ static int deallocate_sdbt(void)
 			} else {
 				/* process SDB pointer */
 				if (*curr) {
-					free_page(*curr);
+					free_page((void *)*curr);
 					curr++;
 				}
 			}

@@ -436,7 +436,7 @@ static void shutdown(struct m68k_serial *info, struct tty_struct *tty)
 	local_irq_save(flags);
 	
 	if (info->xmit_buf) {
-		free_page((unsigned long) info->xmit_buf);
+		free_page(info->xmit_buf);
 		info->xmit_buf = 0;
 	}
 

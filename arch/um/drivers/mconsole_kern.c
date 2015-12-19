@@ -334,7 +334,7 @@ static int mem_config(char *str, char **error_out)
 				unplug_index = UNPLUGGED_PER_PAGE;
 			}
 
-			free_page((unsigned long) addr);
+			free_page(addr);
 			unplugged_pages_count--;
 		}
 		else {

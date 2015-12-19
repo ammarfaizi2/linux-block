@@ -93,7 +93,7 @@ static inline void free_pgd_fast(pgd_t *pgd)
 
 static inline void free_pgd_slow(pgd_t *pgd)
 {
-	free_page((unsigned long)pgd);
+	free_page(pgd);
 }
 
 #define pgd_free(mm, pgd)        free_pgd_fast(pgd)
@@ -155,7 +155,7 @@ static inline void pte_free_fast(pte_t *pte)
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long)pte);
+	free_page(pte);
 }
 
 static inline void pte_free_slow(struct page *ptepage)

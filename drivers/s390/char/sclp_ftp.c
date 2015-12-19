@@ -152,7 +152,7 @@ static int sclp_ftp_et7(const struct hmcdrv_ftp_cmdspec *ftp)
 	}
 
 out_free:
-	free_page((unsigned long) sccb);
+	free_page(sccb);
 	kfree(req);
 	return rc;
 }
@@ -260,7 +260,7 @@ int sclp_ftp_startup(void)
 				 info222->lpar_number, info222->name);
 		}
 
-		free_page(info);
+		free_page((void *)info);
 	}
 #endif	/* DEBUG */
 	return 0;

@@ -798,7 +798,7 @@ ssize_t cxl_afu_read_err_buffer(struct cxl_afu *afu, char *buf,
 	memcpy_fromio(tbuf, ebuf + aligned_start, aligned_length);
 	memcpy(buf, tbuf + (off & 0x7), count);
 
-	free_page((unsigned long)tbuf);
+	free_page(tbuf);
 
 	return count;
 }

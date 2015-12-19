@@ -226,7 +226,7 @@ static int xenkbd_remove(struct xenbus_device *dev)
 		input_unregister_device(info->kbd);
 	if (info->ptr)
 		input_unregister_device(info->ptr);
-	free_page((unsigned long)info->page);
+	free_page(info->page);
 	kfree(info);
 	return 0;
 }

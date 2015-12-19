@@ -1337,7 +1337,7 @@ static void shutdown(MGSLPC_INFO * info, struct tty_struct *tty)
 	del_timer_sync(&info->tx_timer);
 
 	if (info->tx_buf) {
-		free_page((unsigned long) info->tx_buf);
+		free_page(info->tx_buf);
 		info->tx_buf = NULL;
 	}
 

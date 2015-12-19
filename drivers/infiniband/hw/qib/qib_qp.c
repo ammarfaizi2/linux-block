@@ -110,7 +110,7 @@ static void get_map_page(struct qib_qpn_table *qpt, struct qpn_map *map)
 
 	spin_lock(&qpt->lock);
 	if (map->page)
-		free_page(page);
+		free_page((void *)page);
 	else
 		map->page = (void *)page;
 	spin_unlock(&qpt->lock);
@@ -1252,7 +1252,7 @@ void qib_free_qpn_table(struct qib_qpn_table *qpt)
 
 	for (i = 0; i < ARRAY_SIZE(qpt->map); i++)
 		if (qpt->map[i].page)
-			free_page((unsigned long) qpt->map[i].page);
+			free_page(qpt->map[i].page);
 }
 
 /**

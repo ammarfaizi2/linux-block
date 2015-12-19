@@ -1466,7 +1466,7 @@ static void __init stp_reset(void)
 	else if (stp_online) {
 		pr_warning("The real or virtual hardware system does "
 			   "not provide an STP interface\n");
-		free_page((unsigned long) stp_page);
+		free_page(stp_page);
 		stp_page = NULL;
 		stp_online = 0;
 	}

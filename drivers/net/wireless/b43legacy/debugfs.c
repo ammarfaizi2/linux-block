@@ -312,7 +312,7 @@ static ssize_t b43legacy_debugfs_write(struct file *file,
 		goto out_freepage;
 
 out_freepage:
-	free_page((unsigned long)buf);
+	free_page(buf);
 out_unlock:
 	mutex_unlock(&dev->wl->mutex);
 

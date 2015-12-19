@@ -202,7 +202,7 @@ static void ghes_estatus_pool_free_chunk_page(struct gen_pool *pool,
 					      struct gen_pool_chunk *chunk,
 					      void *data)
 {
-	free_page(chunk->start_addr);
+	free_page((void *)chunk->start_addr);
 }
 
 static void ghes_estatus_pool_exit(void)

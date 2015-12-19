@@ -77,9 +77,9 @@ static inline unsigned long __get_free_page(gfp_t gfp)
 	return (unsigned long)p;
 }
 
-static inline void free_page(unsigned long addr)
+static inline void free_page(void *addr)
 {
-	free((void *)addr);
+	free(addr);
 }
 
 #define container_of(ptr, type, member) ({			\

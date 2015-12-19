@@ -1389,7 +1389,7 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
 	err = 0;
 
 out_pm:
-	free_page((unsigned long)pm);
+	free_page(pm);
 out:
 	return err;
 }

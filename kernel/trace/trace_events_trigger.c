@@ -242,7 +242,7 @@ static ssize_t event_trigger_regex_write(struct file *file,
 		return -ENOMEM;
 
 	if (copy_from_user(buf, ubuf, cnt)) {
-		free_page((unsigned long)buf);
+		free_page(buf);
 		return -EFAULT;
 	}
 	buf[cnt] = '\0';
@@ -252,13 +252,13 @@ static ssize_t event_trigger_regex_write(struct file *file,
 	event_file = event_file_data(file);
 	if (unlikely(!event_file)) {
 		mutex_unlock(&event_mutex);
-		free_page((unsigned long)buf);
+		free_page(buf);
 		return -ENODEV;
 	}
 	ret = trigger_process_regex(event_file, buf);
 	mutex_unlock(&event_mutex);
 
-	free_page((unsigned long)buf);
+	free_page(buf);
 	if (ret < 0)
 		goto out;
 

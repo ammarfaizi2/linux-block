@@ -1623,7 +1623,7 @@ static inline char *alloc_secdata(void)
 
 static inline void free_secdata(void *secdata)
 {
-	free_page((unsigned long)secdata);
+	free_page(secdata);
 }
 
 #else

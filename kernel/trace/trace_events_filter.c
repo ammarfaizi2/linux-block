@@ -684,7 +684,7 @@ static void append_filter_err(struct filter_parse_state *ps,
 
 	sprintf(pbuf, "\nparse_error: %s\n", err_text[ps->lasterr]);
 	append_filter_string(filter, buf);
-	free_page((unsigned long) buf);
+	free_page(buf);
 }
 
 static inline struct event_filter *event_filter(struct trace_event_file *file)

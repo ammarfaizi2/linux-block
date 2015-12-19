@@ -2738,7 +2738,7 @@ pgtable_t pte_alloc_one(struct mm_struct *mm,
 
 void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long)pte);
+	free_page(pte);
 }
 
 static void __pte_free(pgtable_t pte)

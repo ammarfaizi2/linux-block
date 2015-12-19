@@ -41,7 +41,7 @@ static void __scm_free_rq(struct scm_request *scmrq)
 {
 	struct aob_rq_header *aobrq = to_aobrq(scmrq);
 
-	free_page((unsigned long) scmrq->aob);
+	free_page(scmrq->aob);
 	__scm_free_rq_cluster(scmrq);
 	kfree(scmrq->request);
 	kfree(aobrq);

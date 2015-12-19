@@ -48,7 +48,7 @@ static void comedi_buf_map_kref_release(struct kref *kref)
 						  buf->dma_addr);
 #endif
 			} else {
-				free_page((unsigned long)buf->virt_addr);
+				free_page(buf->virt_addr);
 			}
 		}
 		vfree(bm->page_list);

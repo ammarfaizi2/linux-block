@@ -250,7 +250,7 @@ int kvm_vcpu_init(struct kvm_vcpu *vcpu, struct kvm *kvm, unsigned id)
 	return 0;
 
 fail_free_run:
-	free_page((unsigned long)vcpu->run);
+	free_page(vcpu->run);
 fail:
 	return r;
 }
@@ -260,7 +260,7 @@ void kvm_vcpu_uninit(struct kvm_vcpu *vcpu)
 {
 	put_pid(vcpu->pid);
 	kvm_arch_vcpu_uninit(vcpu);
-	free_page((unsigned long)vcpu->run);
+	free_page(vcpu->run);
 }
 EXPORT_SYMBOL_GPL(kvm_vcpu_uninit);
 

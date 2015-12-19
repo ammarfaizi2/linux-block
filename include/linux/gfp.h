@@ -500,7 +500,7 @@ extern void __free_kmem_pages(struct page *page, unsigned int order);
 extern void free_kmem_pages(unsigned long addr, unsigned int order);
 
 #define __free_page(page) __free_pages((page), 0)
-#define free_page(addr) free_pages((addr), 0)
+#define free_page(addr) free_pages((unsigned long)(addr), 0)
 
 void page_alloc_init(void);
 void drain_zone_pages(struct zone *zone, struct per_cpu_pages *pcp);

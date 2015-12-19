@@ -595,7 +595,7 @@ static void release_pmd(pmd_t *spmd)
 		for (i = 0; i < PTRS_PER_PTE; i++)
 			release_pte(ptepage[i]);
 		/* Now we can free the page of PTEs */
-		free_page((long)ptepage);
+		free_page(ptepage);
 		/* And zero out the PMD entry so we never release it twice. */
 		set_pmd(spmd, __pmd(0));
 	}
@@ -612,7 +612,7 @@ static void release_pgd(pgd_t *spgd)
 			release_pmd(&pmdpage[i]);
 
 		/* Now we can free the page of PMDs */
-		free_page((long)pmdpage);
+		free_page(pmdpage);
 		/* And zero out the PGD entry so we never release it twice. */
 		set_pgd(spgd, __pgd(0));
 	}
@@ -639,7 +639,7 @@ static void release_pgd(pgd_t *spgd)
 		for (i = 0; i < PTRS_PER_PTE; i++)
 			release_pte(ptepage[i]);
 		/* Now we can free the page of PTEs */
-		free_page((long)ptepage);
+		free_page(ptepage);
 		/* And zero out the PGD entry so we never release it twice. */
 		*spgd = __pgd(0);
 	}
@@ -1133,7 +1133,7 @@ void free_guest_pagetable(struct lguest *lg)
 	release_all_pagetables(lg);
 	/* Now free the top levels: free_page() can handle 0 just fine. */
 	for (i = 0; i < ARRAY_SIZE(lg->pgdirs); i++)
-		free_page((long)lg->pgdirs[i].pgdir);
+		free_page(lg->pgdirs[i].pgdir);
 }
 
 /*H:481

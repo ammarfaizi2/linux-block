@@ -41,7 +41,7 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
 	if (PGD_SIZE == PAGE_SIZE)
-		free_page((unsigned long)pgd);
+		free_page(pgd);
 	else
 		kmem_cache_free(pgd_cache, pgd);
 }

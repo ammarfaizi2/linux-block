@@ -1158,7 +1158,7 @@ static int __init hvc_iucv_alloc(int id, unsigned int is_console)
 out_error_dev:
 	hvc_remove(priv->hvc);
 out_error_hvc:
-	free_page((unsigned long) priv->sndbuf);
+	free_page(priv->sndbuf);
 	kfree(priv);
 
 	return rc;
@@ -1171,7 +1171,7 @@ static void __init hvc_iucv_destroy(struct hvc_iucv_private *priv)
 {
 	hvc_remove(priv->hvc);
 	device_unregister(priv->dev);
-	free_page((unsigned long) priv->sndbuf);
+	free_page(priv->sndbuf);
 	kfree(priv);
 }
 

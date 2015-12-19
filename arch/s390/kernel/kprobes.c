@@ -48,7 +48,7 @@ static void *alloc_dmainsn_page(void)
 
 static void free_dmainsn_page(void *page)
 {
-	free_page((unsigned long)page);
+	free_page(page);
 }
 
 struct kprobe_insn_cache kprobe_dmainsn_slots = {

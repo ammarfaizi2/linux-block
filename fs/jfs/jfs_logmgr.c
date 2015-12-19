@@ -1845,7 +1845,7 @@ static int lbmLogInit(struct jfs_log * log)
 			lbuf = kmalloc(sizeof(struct lbuf), GFP_KERNEL);
 			if (lbuf == NULL) {
 				if (offset == 0)
-					free_page((unsigned long) buffer);
+					free_page(buffer);
 				goto error;
 			}
 			if (offset) /* we already have one reference */

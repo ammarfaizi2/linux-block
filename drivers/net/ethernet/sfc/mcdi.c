@@ -119,7 +119,7 @@ int efx_mcdi_init(struct efx_nic *efx)
 	return 0;
 fail2:
 #ifdef CONFIG_SFC_MCDI_LOGGING
-	free_page((unsigned long)mcdi->logging_buffer);
+	free_page(mcdi->logging_buffer);
 fail1:
 #endif
 	kfree(efx->mcdi);
@@ -139,7 +139,7 @@ void efx_mcdi_fini(struct efx_nic *efx)
 	efx_mcdi_drv_attach(efx, false, NULL);
 
 #ifdef CONFIG_SFC_MCDI_LOGGING
-	free_page((unsigned long)efx->mcdi->iface.logging_buffer);
+	free_page(efx->mcdi->iface.logging_buffer);
 #endif
 
 	kfree(efx->mcdi);

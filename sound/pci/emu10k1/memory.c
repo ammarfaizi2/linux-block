@@ -453,7 +453,7 @@ static void __synth_free_pages(struct snd_emu10k1 *emu, int first_page,
 	int page;
 
 	for (page = first_page; page <= last_page; page++) {
-		free_page((unsigned long)emu->page_ptr_table[page]);
+		free_page(emu->page_ptr_table[page]);
 		emu->page_addr_table[page] = 0;
 		emu->page_ptr_table[page] = NULL;
 	}

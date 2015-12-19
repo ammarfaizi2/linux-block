@@ -175,10 +175,10 @@ static int spufs_arch_write_note(struct spu_context *ctx, int i,
 		       roundup(cprm->written - total + sz, 4) - cprm->written))
 		goto Eio;
 out:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	return rc;
 Eio:
-	free_page((unsigned long)buf);
+	free_page(buf);
 	return -EIO;
 }
 

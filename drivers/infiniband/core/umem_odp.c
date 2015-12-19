@@ -613,7 +613,7 @@ int ib_umem_odp_map_dma_pages(struct ib_umem *umem, u64 user_virt, u64 bcnt,
 out_put_task:
 	put_task_struct(owning_process);
 out_no_task:
-	free_page((unsigned long)local_page_list);
+	free_page(local_page_list);
 	return ret;
 }
 EXPORT_SYMBOL(ib_umem_odp_map_dma_pages);

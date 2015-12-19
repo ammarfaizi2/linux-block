@@ -1175,9 +1175,9 @@ int kvm_arch_init_vm(struct kvm *kvm, unsigned long type)
 	return 0;
 out_err:
 	kfree(kvm->arch.crypto.crycb);
-	free_page((unsigned long)kvm->arch.model.fac);
+	free_page(kvm->arch.model.fac);
 	debug_unregister(kvm->arch.dbf);
-	free_page((unsigned long)(kvm->arch.sca));
+	free_page(kvm->arch.sca);
 	KVM_EVENT(3, "creation of vm failed: %d", rc);
 	return rc;
 }
@@ -1202,7 +1202,7 @@ void kvm_arch_vcpu_destroy(struct kvm_vcpu *vcpu)
 
 	if (vcpu->kvm->arch.use_cmma)
 		kvm_s390_vcpu_unsetup_cmma(vcpu);
-	free_page((unsigned long)(vcpu->arch.sie_block));
+	free_page(vcpu->arch.sie_block);
 
 	kvm_vcpu_uninit(vcpu);
 	kmem_cache_free(kvm_vcpu_cache, vcpu);
@@ -1227,8 +1227,8 @@ static void kvm_free_vcpus(struct kvm *kvm)
 void kvm_arch_destroy_vm(struct kvm *kvm)
 {
 	kvm_free_vcpus(kvm);
-	free_page((unsigned long)kvm->arch.model.fac);
-	free_page((unsigned long)(kvm->arch.sca));
+	free_page(kvm->arch.model.fac);
+	free_page(kvm->arch.sca);
 	debug_unregister(kvm->arch.dbf);
 	kfree(kvm->arch.crypto.crycb);
 	if (!kvm_is_ucontrol(kvm))
@@ -1390,7 +1390,7 @@ static void kvm_s390_vcpu_crypto_setup(struct kvm_vcpu *vcpu)
 
 void kvm_s390_vcpu_unsetup_cmma(struct kvm_vcpu *vcpu)
 {
-	free_page(vcpu->arch.sie_block->cbrlo);
+	free_page((void *)vcpu->arch.sie_block->cbrlo);
 	vcpu->arch.sie_block->cbrlo = 0;
 }
 
@@ -1523,7 +1523,7 @@ struct kvm_vcpu *kvm_arch_vcpu_create(struct kvm *kvm,
 
 	return vcpu;
 out_free_sie_block:
-	free_page((unsigned long)(vcpu->arch.sie_block));
+	free_page(vcpu->arch.sie_block);
 out_free_cpu:
 	kmem_cache_free(kvm_vcpu_cache, vcpu);
 out:

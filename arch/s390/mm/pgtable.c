@@ -1094,7 +1094,7 @@ static void tlb_remove_table_rcu(struct rcu_head *head)
 	for (i = 0; i < batch->nr; i++)
 		__tlb_remove_table(batch->tables[i]);
 
-	free_page((unsigned long)batch);
+	free_page(batch);
 }
 
 void tlb_table_flush(struct mmu_gather *tlb)

@@ -631,7 +631,7 @@ static ssize_t do_register_entry(enum cname which, struct file *f,
 	if (!buf)
 		return -ENOMEM;
 	if (copy_from_user(buf, user_buf, count)) {
-		free_page((unsigned long) buf);
+		free_page(buf);
 		return -EFAULT;
 	}
 	/* NULL-terminate and remove enter */
@@ -639,7 +639,7 @@ static ssize_t do_register_entry(enum cname which, struct file *f,
 	strim(buf);
 
 	cptype = parse_cp_type(buf, count);
-	free_page((unsigned long) buf);
+	free_page(buf);
 
 	if (cptype == CT_NONE)
 		return -EINVAL;
@@ -671,7 +671,7 @@ static ssize_t lkdtm_debugfs_read(struct file *f, char __user *user_buf,
 
 	out = simple_read_from_buffer(user_buf, count, off,
 				      buf, n);
-	free_page((unsigned long) buf);
+	free_page(buf);
 
 	return out;
 }
@@ -746,7 +746,7 @@ static ssize_t direct_entry(struct file *f, const char __user *user_buf,
 	if (!buf)
 		return -ENOMEM;
 	if (copy_from_user(buf, user_buf, count)) {
-		free_page((unsigned long) buf);
+		free_page(buf);
 		return -EFAULT;
 	}
 	/* NULL-terminate and remove enter */
@@ -754,7 +754,7 @@ static ssize_t direct_entry(struct file *f, const char __user *user_buf,
 	strim(buf);
 
 	type = parse_cp_type(buf, count);
-	free_page((unsigned long) buf);
+	free_page(buf);
 	if (type == CT_NONE)
 		return -EINVAL;
 

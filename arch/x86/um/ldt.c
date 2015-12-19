@@ -364,7 +364,7 @@ void free_ldt(struct mm_context *mm)
 	if (mm->arch.ldt.entry_count > LDT_DIRECT_ENTRIES) {
 		i = mm->arch.ldt.entry_count / LDT_ENTRIES_PER_PAGE;
 		while (i-- > 0)
-			free_page((long) mm->arch.ldt.u.pages[i]);
+			free_page(mm->arch.ldt.u.pages[i]);
 	}
 	mm->arch.ldt.entry_count = 0;
 }

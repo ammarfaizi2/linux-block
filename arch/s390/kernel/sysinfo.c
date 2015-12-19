@@ -271,7 +271,7 @@ static int sysinfo_show(struct seq_file *m, void *v)
 		stsi_2_2_2(m, info);
 	if (level >= 3)
 		stsi_3_2_2(m, info);
-	free_page((unsigned long)info);
+	free_page(info);
 	return 0;
 }
 
@@ -449,7 +449,7 @@ void s390_adjust_jiffies(void)
 		 */
 		capability = 42;
 	loops_per_jiffy = capability * (500000/HZ);
-	free_page((unsigned long) info);
+	free_page(info);
 }
 
 /*

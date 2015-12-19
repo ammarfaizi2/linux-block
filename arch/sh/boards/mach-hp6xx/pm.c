@@ -81,7 +81,7 @@ static void pm_enter(void)
 
 	asm volatile("ldc %0, vbr" : : "r" (vbr_old));
 
-	free_page(vbr_new);
+	free_page((void *)vbr_new);
 
 	/* enable PLL1 */
 	frqcr = __raw_readw(FRQCR);

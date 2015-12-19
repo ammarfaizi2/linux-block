@@ -96,7 +96,7 @@ out_nomem:
 	for (i = 0; i < nr_of_pages; i += pages_per_kpage) {
 		if (!(queue->queue_pages)[i])
 			break;
-		free_page((unsigned long)(queue->queue_pages)[i]);
+		free_page((queue->queue_pages)[i]);
 	}
 	return -ENOMEM;
 }
@@ -114,7 +114,7 @@ static void hw_queue_dtor(struct hw_queue *queue)
 	nr_pages = queue->queue_length / queue->pagesize;
 
 	for (i = 0; i < nr_pages; i += pages_per_kpage)
-		free_page((unsigned long)(queue->queue_pages)[i]);
+		free_page((queue->queue_pages)[i]);
 
 	kfree(queue->queue_pages);
 }
@@ -930,7 +930,7 @@ int ehea_reg_kernel_mr(struct ehea_adapter *adapter, struct ehea_mr *mr)
 	mr->adapter = adapter;
 	ret = 0;
 out:
-	free_page((unsigned long)pt);
+	free_page(pt);
 	return ret;
 }
 
@@ -1016,7 +1016,7 @@ u64 ehea_error_data(struct ehea_adapter *adapter, u64 res_handle,
 	} else
 		pr_err("Error data could not be fetched: %llX\n", res_handle);
 
-	free_page((unsigned long)rblock);
+	free_page(rblock);
 out:
 	return type;
 }

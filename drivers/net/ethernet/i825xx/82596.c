@@ -1230,7 +1230,7 @@ out2:
 	kernel_set_cachemode((void *)(dev->mem_start), 4096,
 			IOMAP_FULL_CACHING);
 #endif
-	free_page ((u32)(dev->mem_start));
+	free_page ((void *)(dev->mem_start));
 out1:
 out:
 	free_netdev(dev);
@@ -1541,7 +1541,7 @@ void __exit cleanup_module(void)
 	kernel_set_cachemode((void *)(dev_82596->mem_start), 4096,
 			IOMAP_FULL_CACHING);
 #endif
-	free_page ((u32)(dev_82596->mem_start));
+	free_page ((void *)(dev_82596->mem_start));
 	free_netdev(dev_82596);
 }
 

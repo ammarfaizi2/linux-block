@@ -6,7 +6,7 @@
 
 extern inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_page((unsigned long) pte);
+	free_page(pte);
 }
 
 extern const char bad_pmd_string[];
@@ -86,7 +86,7 @@ extern inline void pte_free(struct mm_struct *mm, struct page *page)
 
 static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
-	free_page((unsigned long) pgd);
+	free_page(pgd);
 }
 
 static inline pgd_t *pgd_alloc(struct mm_struct *mm)

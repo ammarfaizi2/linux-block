@@ -995,7 +995,7 @@ static void rcar_dmac_free_chan_resources(struct dma_chan *chan)
 
 	list_for_each_entry_safe(page, _page, &rchan->desc.pages, node) {
 		list_del(&page->node);
-		free_page((unsigned long)page);
+		free_page(page);
 	}
 
 	pm_runtime_put(chan->device->dev);

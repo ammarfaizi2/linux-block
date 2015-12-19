@@ -2625,7 +2625,7 @@ int copy_mount_options(const void __user * data, unsigned long *where)
 
 	i = size - exact_copy_from_user((void *)page, data, size);
 	if (!i) {
-		free_page(page);
+		free_page((void *)page);
 		return -EFAULT;
 	}
 	if (i != PAGE_SIZE)
@@ -2915,7 +2915,7 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 	ret = do_mount(kernel_dev, dir_name, kernel_type, flags,
 		(void *) data_page);
 
-	free_page(data_page);
+	free_page((void *)data_page);
 out_data:
 	kfree(kernel_dev);
 out_dev:

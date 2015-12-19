@@ -423,7 +423,7 @@ struct irq_routing_table * pcibios_get_irq_routing_table(void)
 			printk(KERN_INFO "PCI: Using BIOS Interrupt Routing Table\n");
 		}
 	}
-	free_page(page);
+	free_page((void *)page);
 	return rt;
 }
 EXPORT_SYMBOL(pcibios_get_irq_routing_table);

@@ -1065,7 +1065,7 @@ static void nbpf_free_chan_resources(struct dma_chan *dchan)
 		     i++, ldesc++)
 			dma_unmap_single(dchan->device->dev, ldesc->hwdesc_dma_addr,
 					 sizeof(*ldesc->hwdesc), DMA_TO_DEVICE);
-		free_page((unsigned long)dpage);
+		free_page(dpage);
 	}
 }
 

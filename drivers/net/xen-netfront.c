@@ -1587,11 +1587,11 @@ static int setup_netfront(struct xenbus_device *dev,
 alloc_evtchn_fail:
 	gnttab_end_foreign_access_ref(queue->rx_ring_ref, 0);
 grant_rx_ring_fail:
-	free_page((unsigned long)rxs);
+	free_page(rxs);
 alloc_rx_ring_fail:
 	gnttab_end_foreign_access_ref(queue->tx_ring_ref, 0);
 grant_tx_ring_fail:
-	free_page((unsigned long)txs);
+	free_page(txs);
 fail:
 	return err;
 }

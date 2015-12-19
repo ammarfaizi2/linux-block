@@ -292,7 +292,7 @@ static const char *configfs_follow_link(struct dentry *dentry, void **cookie)
 		return *cookie = (void *)page;
 	}
 
-	free_page(page);
+	free_page((void *)page);
 	return ERR_PTR(error);
 }
 

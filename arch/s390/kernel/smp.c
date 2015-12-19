@@ -210,7 +210,7 @@ static int pcpu_alloc_lowcore(struct pcpu *pcpu, int cpu)
 	return 0;
 out:
 	if (pcpu != &pcpu_devices[0]) {
-		free_page(panic_stack);
+		free_page((void *)panic_stack);
 		free_pages(async_stack, ASYNC_ORDER);
 		free_pages((unsigned long) pcpu->lowcore, LC_ORDER);
 	}
@@ -226,7 +226,7 @@ static void pcpu_free_lowcore(struct pcpu *pcpu)
 	vdso_free_per_cpu(pcpu->lowcore);
 	if (pcpu == &pcpu_devices[0])
 		return;
-	free_page(pcpu->lowcore->panic_stack-PANIC_FRAME_OFFSET);
+	free_page((void *)(pcpu->lowcore->panic_stack-PANIC_FRAME_OFFSET));
 	free_pages(pcpu->lowcore->async_stack-ASYNC_FRAME_OFFSET, ASYNC_ORDER);
 	free_pages((unsigned long) pcpu->lowcore, LC_ORDER);
 }

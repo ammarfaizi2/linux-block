@@ -309,7 +309,7 @@ static void free_pasid_states_level1(struct pasid_state **tbl)
 		if (tbl[i] == NULL)
 			continue;
 
-		free_page((unsigned long)tbl[i]);
+		free_page(tbl[i]);
 	}
 }
 
@@ -359,7 +359,7 @@ static void free_pasid_states(struct device_state *dev_state)
 	else
 		BUG_ON(dev_state->pasid_levels != 0);
 
-	free_page((unsigned long)dev_state->states);
+	free_page(dev_state->states);
 }
 
 static struct pasid_state *mn_to_state(struct mmu_notifier *mn)
@@ -823,7 +823,7 @@ out_free_domain:
 	iommu_domain_free(dev_state->domain);
 
 out_free_states:
-	free_page((unsigned long)dev_state->states);
+	free_page(dev_state->states);
 
 out_free_dev_state:
 	kfree(dev_state);

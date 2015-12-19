@@ -120,7 +120,7 @@ static int alloc_queue_pages(struct ipz_queue *queue, const u32 nr_of_pages)
 out:
 	for (f = 0; f < nr_of_pages && queue->queue_pages[f];
 	     f += PAGES_PER_KPAGE)
-		free_page((unsigned long)(queue->queue_pages)[f]);
+		free_page(queue->queue_pages[f]);
 	return 0;
 }
 
@@ -196,7 +196,7 @@ static void free_small_queue_page(struct ipz_queue *queue, struct ehca_pd *pd)
 	mutex_unlock(&pd->lock);
 
 	if (free_page) {
-		free_page(page->page);
+		free_page((void *)page->page);
 		kmem_cache_free(small_qp_cache, page);
 	}
 }
@@ -264,7 +264,7 @@ int ipz_queue_dtor(struct ehca_pd *pd, struct ipz_queue *queue)
 	else {
 		nr_pages = queue->queue_length / queue->pagesize;
 		for (i = 0; i < nr_pages; i += PAGES_PER_KPAGE)
-			free_page((unsigned long)queue->queue_pages[i]);
+			free_page(queue->queue_pages[i]);
 	}
 
 	kvfree(queue->queue_pages);

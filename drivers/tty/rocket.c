@@ -899,7 +899,7 @@ static int rp_open(struct tty_struct *tty, struct file *filp)
 	 * We must not sleep from here until the port is marked fully in use.
 	 */
 	if (info->xmit_buf)
-		free_page(page);
+		free_page((void *)page);
 	else
 		info->xmit_buf = (unsigned char *) page;
 
@@ -1038,7 +1038,7 @@ static void rp_close(struct tty_struct *tty, struct file *filp)
 		wake_up_interruptible(&port->open_wait);
 	} else {
 		if (info->xmit_buf) {
-			free_page((unsigned long) info->xmit_buf);
+			free_page(info->xmit_buf);
 			info->xmit_buf = NULL;
 		}
 	}

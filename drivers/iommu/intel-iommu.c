@@ -655,7 +655,7 @@ static inline void *alloc_pgtable_page(int node)
 
 static inline void free_pgtable_page(void *vaddr)
 {
-	free_page((unsigned long)vaddr);
+	free_page(vaddr);
 }
 
 static inline void *alloc_domain_mem(void)

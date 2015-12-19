@@ -864,8 +864,8 @@ chsc_secm(struct channel_subsystem *css, int enable)
 		css->cub_addr1 = (void *)get_zeroed_page(GFP_KERNEL | GFP_DMA);
 		css->cub_addr2 = (void *)get_zeroed_page(GFP_KERNEL | GFP_DMA);
 		if (!css->cub_addr1 || !css->cub_addr2) {
-			free_page((unsigned long)css->cub_addr1);
-			free_page((unsigned long)css->cub_addr2);
+			free_page(css->cub_addr1);
+			free_page(css->cub_addr2);
 			return -ENOMEM;
 		}
 	}
@@ -882,8 +882,8 @@ chsc_secm(struct channel_subsystem *css, int enable)
 			chsc_remove_cmg_attr(css);
 	}
 	if (!css->cm_enabled) {
-		free_page((unsigned long)css->cub_addr1);
-		free_page((unsigned long)css->cub_addr2);
+		free_page(css->cub_addr1);
+		free_page(css->cub_addr2);
 	}
 	return ret;
 }
@@ -1068,16 +1068,16 @@ int __init chsc_init(void)
 		goto out_err;
 	return ret;
 out_err:
-	free_page((unsigned long)chsc_page);
-	free_page((unsigned long)sei_page);
+	free_page(chsc_page);
+	free_page(sei_page);
 	return ret;
 }
 
 void __init chsc_init_cleanup(void)
 {
 	crw_unregister_handler(CRW_RSC_CSS);
-	free_page((unsigned long)chsc_page);
-	free_page((unsigned long)sei_page);
+	free_page(chsc_page);
+	free_page(sei_page);
 }
 
 int __chsc_enable_facility(struct chsc_sda_area *sda_area, int operation_code)

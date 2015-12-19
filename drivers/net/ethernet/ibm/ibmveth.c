@@ -475,7 +475,7 @@ static void ibmveth_cleanup(struct ibmveth_adapter *adapter)
 					DMA_BIDIRECTIONAL);
 			adapter->buffer_list_dma = DMA_ERROR_CODE;
 		}
-		free_page((unsigned long)adapter->buffer_list_addr);
+		free_page(adapter->buffer_list_addr);
 		adapter->buffer_list_addr = NULL;
 	}
 
@@ -485,7 +485,7 @@ static void ibmveth_cleanup(struct ibmveth_adapter *adapter)
 					DMA_BIDIRECTIONAL);
 			adapter->filter_list_dma = DMA_ERROR_CODE;
 		}
-		free_page((unsigned long)adapter->filter_list_addr);
+		free_page(adapter->filter_list_addr);
 		adapter->filter_list_addr = NULL;
 	}
 

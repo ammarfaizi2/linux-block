@@ -70,7 +70,7 @@ pte_alloc_one(struct mm_struct *mm, unsigned long addr)
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
 	if (pte)
-		free_page((unsigned long)pte);
+		free_page(pte);
 }
 
 static inline void pte_free(struct mm_struct *mm, pgtable_t pte)
