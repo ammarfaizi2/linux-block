@@ -38,7 +38,7 @@ MODULE_PARM_DESC(sender,
 struct cmm_page_array {
 	struct cmm_page_array *next;
 	unsigned long index;
-	unsigned long pages[CMM_NR_PAGES];
+	void *pages[CMM_NR_PAGES];
 };
 
 static long cmm_pages;
@@ -64,10 +64,10 @@ static long cmm_alloc_pages(long nr, long *counter,
 			    struct cmm_page_array **list)
 {
 	struct cmm_page_array *pa, *npa;
-	unsigned long addr;
+	void *addr;
 
 	while (nr) {
-		addr = __get_free_page(GFP_NOIO);
+		addr = (void *)__get_free_page(GFP_NOIO);
 		if (!addr)
 			break;
 		spin_lock(&cmm_lock);
@@ -78,7 +78,7 @@ static long cmm_alloc_pages(long nr, long *counter,
 			npa = (struct cmm_page_array *)
 				__get_free_page(GFP_NOIO);
 			if (!npa) {
-				free_page((void *)addr);
+				free_page(addr);
 				break;
 			}
 			spin_lock(&cmm_lock);
@@ -91,7 +91,7 @@ static long cmm_alloc_pages(long nr, long *counter,
 			} else
 				free_page(npa);
 		}
-		diag10_range(addr >> PAGE_SHIFT, 1);
+		diag10_range((unsigned long)addr >> PAGE_SHIFT, 1);
 		pa->pages[pa->index++] = addr;
 		(*counter)++;
 		spin_unlock(&cmm_lock);
@@ -103,7 +103,7 @@ static long cmm_alloc_pages(long nr, long *counter,
 static long cmm_free_pages(long nr, long *counter, struct cmm_page_array **list)
 {
 	struct cmm_page_array *pa;
-	unsigned long addr;
+	void *addr;
 
 	spin_lock(&cmm_lock);
 	pa = *list;
@@ -116,7 +116,7 @@ static long cmm_free_pages(long nr, long *counter, struct cmm_page_array **list)
 			free_page(*list);
 			*list = pa;
 		}
-		free_page((void *)addr);
+		free_page(addr);
 		(*counter)--;
 		nr--;
 	}
