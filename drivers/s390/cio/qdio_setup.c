@@ -309,7 +309,7 @@ int qdio_setup_get_ssqd(struct qdio_irq *irq_ptr,
 		if (!ssqd)
 			return -ENOMEM;
 	} else {
-		ssqd = (struct chsc_ssqd_area *)irq_ptr->chsc_page;
+		ssqd = irq_ptr->chsc_page;
 	}
 
 	rc = chsc_ssqd(*schid, ssqd);
@@ -389,7 +389,7 @@ void qdio_release_memory(struct qdio_irq *irq_ptr)
 		}
 	}
 	free_page(irq_ptr->qdr);
-	free_page((void *)irq_ptr->chsc_page);
+	free_page(irq_ptr->chsc_page);
 	free_page(irq_ptr);
 }
 

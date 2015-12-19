@@ -213,7 +213,7 @@ static void tiqdio_thinint_handler(struct airq_struct *airq)
 
 static int set_subchannel_ind(struct qdio_irq *irq_ptr, int reset)
 {
-	struct chsc_scssc_area *scssc = (void *)irq_ptr->chsc_page;
+	struct chsc_scssc_area *scssc = irq_ptr->chsc_page;
 	u64 summary_indicator_addr, subchannel_indicator_addr;
 	int rc;
 

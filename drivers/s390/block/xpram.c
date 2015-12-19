@@ -87,7 +87,7 @@ MODULE_LICENSE("GPL");
  *           -EIO:         if pgin failed
  *           -ENXIO:       if xpram has vanished
  */
-static int xpram_page_in (unsigned long page_addr, unsigned int xpage_index)
+static int xpram_page_in (void *page_addr, unsigned int xpage_index)
 {
 	int cc = 2;	/* return unused cc 2 if pgin traps */
 
@@ -117,7 +117,7 @@ static int xpram_page_in (unsigned long page_addr, unsigned int xpage_index)
  *           -EIO:         if pgout failed
  *           -ENXIO:       if xpram has vanished
  */
-static long xpram_page_out (unsigned long page_addr, unsigned int xpage_index)
+static long xpram_page_out (void *page_addr, unsigned int xpage_index)
 {
 	int cc = 2;	/* return unused cc 2 if pgin traps */
 
@@ -142,14 +142,14 @@ static long xpram_page_out (unsigned long page_addr, unsigned int xpage_index)
  */
 static int xpram_present(void)
 {
-	unsigned long mem_page;
+	void *mem_page;
 	int rc;
 
-	mem_page = (unsigned long) __get_free_page(GFP_KERNEL);
+	mem_page = (void *)__get_free_page(GFP_KERNEL);
 	if (!mem_page)
 		return -ENOMEM;
 	rc = xpram_page_in(mem_page, 0);
-	free_page((void *)mem_page);
+	free_page(mem_page);
 	return rc ? -ENXIO : 0;
 }
 
@@ -159,9 +159,9 @@ static int xpram_present(void)
 static unsigned long xpram_highest_page_index(void)
 {
 	unsigned int page_index, add_bit;
-	unsigned long mem_page;
+	void *mem_page;
 
-	mem_page = (unsigned long) __get_free_page(GFP_KERNEL);
+	mem_page = (void *) __get_free_page(GFP_KERNEL);
 	if (!mem_page)
 		return 0;
 
@@ -173,7 +173,7 @@ static unsigned long xpram_highest_page_index(void)
 		add_bit >>= 1;
 	}
 
-	free_page((void *)mem_page);
+	free_page(mem_page);
 
 	return page_index;
 }
@@ -187,7 +187,7 @@ static blk_qc_t xpram_make_request(struct request_queue *q, struct bio *bio)
 	struct bio_vec bvec;
 	struct bvec_iter iter;
 	unsigned int index;
-	unsigned long page_addr;
+	void *page_addr;
 	unsigned long bytes;
 
 	blk_queue_split(q, &bio, q->bio_split);
@@ -203,10 +203,10 @@ static blk_qc_t xpram_make_request(struct request_queue *q, struct bio *bio)
 		goto fail;
 	index = (bio->bi_iter.bi_sector >> 3) + xdev->offset;
 	bio_for_each_segment(bvec, bio, iter) {
-		page_addr = (unsigned long)
-			kmap(bvec.bv_page) + bvec.bv_offset;
+		page_addr = kmap(bvec.bv_page) + bvec.bv_offset;
 		bytes = bvec.bv_len;
-		if ((page_addr & 4095) != 0 || (bytes & 4095) != 0)
+		if (((unsigned long)page_addr & 4095) != 0 ||
+		    (bytes & 4095) != 0)
 			/* More paranoia. */
 			goto fail;
 		while (bytes > 0) {
