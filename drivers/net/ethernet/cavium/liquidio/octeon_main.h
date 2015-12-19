@@ -141,7 +141,7 @@ cnnic_alloc_aligned_dma(struct pci_dev *pci_dev,
 		    (void *)__get_free_pages(GFP_KERNEL,
 					     get_order(size));
 		if ((unsigned long)ptr & 0x07) {
-			free_pages((unsigned long)ptr, get_order(size));
+			free_pages(ptr, get_order(size));
 			ptr = NULL;
 			/* Increment the size required if the first
 			 * attempt failed.
@@ -160,7 +160,7 @@ cnnic_alloc_aligned_dma(struct pci_dev *pci_dev,
 }
 
 #define cnnic_free_aligned_dma(pci_dev, ptr, size, orig_ptr, dma_addr) \
-		free_pages(orig_ptr, get_order(size))
+		free_pages((void *)orig_ptr, get_order(size))
 
 static inline void
 sleep_cond(wait_queue_head_t *wait_queue, int *condition)

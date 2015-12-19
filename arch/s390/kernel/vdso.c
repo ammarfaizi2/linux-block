@@ -134,7 +134,7 @@ int vdso_alloc_per_cpu(struct _lowcore *lowcore)
 out:
 	free_page((void *)page_frame);
 	free_page((void *)page_table);
-	free_pages(segment_table, SEGMENT_ORDER);
+	free_pages((void *)segment_table, SEGMENT_ORDER);
 	return -ENOMEM;
 }
 
@@ -154,7 +154,7 @@ void vdso_free_per_cpu(struct _lowcore *lowcore)
 
 	free_page((void *)page_frame);
 	free_page((void *)page_table);
-	free_pages(segment_table, SEGMENT_ORDER);
+	free_pages((void *)segment_table, SEGMENT_ORDER);
 }
 
 static void vdso_init_cr5(void)

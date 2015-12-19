@@ -292,16 +292,14 @@ void bch_btree_keys_free(struct btree_keys *b)
 	if (bset_prev_bytes(b) < PAGE_SIZE)
 		kfree(t->prev);
 	else
-		free_pages((unsigned long) t->prev,
-			   get_order(bset_prev_bytes(b)));
+		free_pages(t->prev, get_order(bset_prev_bytes(b)));
 
 	if (bset_tree_bytes(b) < PAGE_SIZE)
 		kfree(t->tree);
 	else
-		free_pages((unsigned long) t->tree,
-			   get_order(bset_tree_bytes(b)));
+		free_pages(t->tree, get_order(bset_tree_bytes(b)));
 
-	free_pages((unsigned long) t->data, b->page_order);
+	free_pages(t->data, b->page_order);
 
 	t->prev = NULL;
 	t->tree = NULL;
@@ -1220,7 +1218,7 @@ static void __btree_sort(struct btree_keys *b, struct btree_iter *iter,
 	if (used_mempool)
 		mempool_free(virt_to_page(out), state->pool);
 	else
-		free_pages((unsigned long) out, order);
+		free_pages(out, order);
 
 	bch_bset_build_written_tree(b);
 

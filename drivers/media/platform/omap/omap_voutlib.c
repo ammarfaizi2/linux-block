@@ -335,7 +335,7 @@ void omap_vout_free_buffer(unsigned long virtaddr, u32 buf_size)
 		addr += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	free_pages((unsigned long) virtaddr, order);
+	free_pages((void *)virtaddr, order);
 }
 
 bool omap_vout_dss_omap24xx(void)

@@ -234,7 +234,7 @@ int __init raid6_select_algo(void)
 	/* select raid recover functions */
 	rec_best = raid6_choose_recov();
 
-	free_pages((unsigned long)syndromes, 1);
+	free_pages(syndromes, 1);
 
 	return gen_best && rec_best ? 0 : -EINVAL;
 }

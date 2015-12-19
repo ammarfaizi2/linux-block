@@ -420,7 +420,7 @@ static inline void scif_free(void *addr, size_t size)
 	if (is_vmalloc_addr(addr))
 		vfree(addr);
 	else
-		free_pages((unsigned long)addr, get_order(align));
+		free_pages(addr, get_order(align));
 }
 
 static inline void scif_get_window(struct scif_window *window, int nr_pages)

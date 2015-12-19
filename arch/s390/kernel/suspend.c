@@ -169,7 +169,7 @@ static int suspend_pm_cb(struct notifier_block *nb, unsigned long action,
 		break;
 	case PM_POST_SUSPEND:
 	case PM_POST_HIBERNATION:
-		free_pages(suspend_zero_pages, LC_ORDER);
+		free_pages((void *)suspend_zero_pages, LC_ORDER);
 		break;
 	default:
 		return NOTIFY_DONE;

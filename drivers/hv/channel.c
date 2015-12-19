@@ -210,7 +210,7 @@ error_gpadl:
 	vmbus_teardown_gpadl(newchannel, newchannel->ringbuffer_gpadlhandle);
 
 error0:
-	free_pages((unsigned long)out,
+	free_pages(out,
 		get_order(send_ringbuffer_size + recv_ringbuffer_size));
 	kfree(open_info);
 	newchannel->state = CHANNEL_OPEN_STATE;
@@ -546,7 +546,7 @@ static int vmbus_close_internal(struct vmbus_channel *channel)
 	hv_ringbuffer_cleanup(&channel->outbound);
 	hv_ringbuffer_cleanup(&channel->inbound);
 
-	free_pages((unsigned long)channel->ringbuffer_pages,
+	free_pages(channel->ringbuffer_pages,
 		get_order(channel->ringbuffer_pagecount * PAGE_SIZE));
 
 	/*

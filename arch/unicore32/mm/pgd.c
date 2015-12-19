@@ -71,7 +71,7 @@ no_pte:
 	pmd_free(mm, new_pmd);
 	mm_dec_nr_pmds(mm);
 no_pmd:
-	free_pages((unsigned long)new_pgd, 0);
+	free_pages(new_pgd, 0);
 no_pgd:
 	return NULL;
 }
@@ -101,5 +101,5 @@ void free_pgd_slow(struct mm_struct *mm, pgd_t *pgd)
 	pmd_free(mm, pmd);
 	mm_dec_nr_pmds(mm);
 free:
-	free_pages((unsigned long) pgd, 0);
+	free_pages(pgd, 0);
 }

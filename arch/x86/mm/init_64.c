@@ -727,7 +727,7 @@ static void __meminit free_pagetable(struct page *page, int order)
 			while (nr_pages--)
 				free_reserved_page(page++);
 	} else
-		free_pages((unsigned long)page_address(page), order);
+		free_pages(page_address(page), order);
 }
 
 static void __meminit free_pte_table(pte_t *pte_start, pmd_t *pmd)

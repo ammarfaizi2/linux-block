@@ -352,7 +352,7 @@ static void neigh_hash_free_rcu(struct rcu_head *head)
 	if (size <= PAGE_SIZE)
 		kfree(buckets);
 	else
-		free_pages((unsigned long)buckets, get_order(size));
+		free_pages(buckets, get_order(size));
 	kfree(nht);
 }
 

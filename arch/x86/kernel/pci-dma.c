@@ -126,7 +126,7 @@ void dma_generic_free_coherent(struct device *dev, size_t size, void *vaddr,
 	struct page *page = virt_to_page(vaddr);
 
 	if (!dma_release_from_contiguous(dev, page, count))
-		free_pages((unsigned long)vaddr, get_order(size));
+		free_pages(vaddr, get_order(size));
 }
 
 bool arch_dma_alloc_attrs(struct device **dev, gfp_t *gfp)

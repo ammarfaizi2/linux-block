@@ -11476,14 +11476,14 @@ lpfc_exit(void)
 		printk(KERN_ERR	"9062 BLKGRD: freeing %lu pages for "
 				"_dump_buf_data at 0x%p\n",
 				(1L << _dump_buf_data_order), _dump_buf_data);
-		free_pages((unsigned long)_dump_buf_data, _dump_buf_data_order);
+		free_pages(_dump_buf_data, _dump_buf_data_order);
 	}
 
 	if (_dump_buf_dif) {
 		printk(KERN_ERR	"9049 BLKGRD: freeing %lu pages for "
 				"_dump_buf_dif at 0x%p\n",
 				(1L << _dump_buf_dif_order), _dump_buf_dif);
-		free_pages((unsigned long)_dump_buf_dif, _dump_buf_dif_order);
+		free_pages(_dump_buf_dif, _dump_buf_dif_order);
 	}
 	kfree(lpfc_used_cpu);
 	idr_destroy(&lpfc_hba_index);

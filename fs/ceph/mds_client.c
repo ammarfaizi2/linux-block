@@ -339,7 +339,7 @@ static void destroy_reply_info(struct ceph_mds_reply_info_parsed *info)
 {
 	if (!info->dir_in)
 		return;
-	free_pages((unsigned long)info->dir_in, get_order(info->dir_buf_size));
+	free_pages(info->dir_in, get_order(info->dir_buf_size));
 }
 
 

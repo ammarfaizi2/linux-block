@@ -154,7 +154,7 @@ tioca_gart_init(struct tioca_kernel *tioca_kern)
 	tioca_kern->ca_pcigart_pagemap =
 	    kzalloc(tioca_kern->ca_pcigart_entries / 8, GFP_KERNEL);
 	if (!tioca_kern->ca_pcigart_pagemap) {
-		free_pages((unsigned long)tioca_kern->ca_gart,
+		free_pages(tioca_kern->ca_gart,
 			   get_order(tioca_kern->ca_gart_size));
 		return -1;
 	}

@@ -2323,7 +2323,7 @@ static void pnv_pci_ioda2_table_do_free_pages(__be64 *addr,
 		}
 	}
 
-	free_pages(addr_ul, get_order(size << 3));
+	free_pages((void *)addr_ul, get_order(size << 3));
 }
 
 static void pnv_pci_ioda2_table_free_pages(struct iommu_table *tbl)

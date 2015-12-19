@@ -663,7 +663,7 @@ int mic_virtio_add_device(struct mic_vdev *mvdev,
 		vr->info->magic = cpu_to_le32(MIC_MAGIC + mvdev->virtio_id + i);
 		vr_addr = mic_map_single(mdev, vr->va, vr_size);
 		if (mic_map_error(vr_addr)) {
-			free_pages((unsigned long)vr->va, get_order(vr_size));
+			free_pages(vr->va, get_order(vr_size));
 			ret = -ENOMEM;
 			dev_err(mic_dev(mvdev), "%s %d err %d\n",
 				__func__, __LINE__, ret);
@@ -732,8 +732,7 @@ err:
 		struct mic_vringh *mvr = &mvdev->mvr[j];
 		mic_unmap_single(mdev, le64_to_cpu(vqconfig[j].address),
 				 mvr->vring.len);
-		free_pages((unsigned long)mvr->vring.va,
-			   get_order(mvr->vring.len));
+		free_pages(mvr->vring.va, get_order(mvr->vring.len));
 	}
 	mutex_unlock(&mdev->mic_mutex);
 	return ret;
@@ -779,14 +778,12 @@ skip_hot_remove:
 
 		mic_unmap_single(mvdev->mdev, mvr->buf_da,
 				 MIC_INT_DMA_BUF_SIZE);
-		free_pages((unsigned long)mvr->buf,
-			   get_order(MIC_INT_DMA_BUF_SIZE));
+		free_pages(mvr->buf, get_order(MIC_INT_DMA_BUF_SIZE));
 		vringh_kiov_cleanup(&mvr->riov);
 		vringh_kiov_cleanup(&mvr->wiov);
 		mic_unmap_single(mdev, le64_to_cpu(vqconfig[i].address),
 				 mvr->vring.len);
-		free_pages((unsigned long)mvr->vring.va,
-			   get_order(mvr->vring.len));
+		free_pages(mvr->vring.va, get_order(mvr->vring.len));
 	}
 
 	list_for_each_safe(pos, tmp, &mdev->vdev_list) {

@@ -680,8 +680,8 @@ static void omap_des_done_task(unsigned long data)
 		sg_copy_buf(buf_out, dd->orig_out, 0, dd->total_save, 1);
 
 		pages = get_order(dd->total_save);
-		free_pages((unsigned long)buf_in, pages);
-		free_pages((unsigned long)buf_out, pages);
+		free_pages(buf_in, pages);
+		free_pages(buf_out, pages);
 	}
 
 	omap_des_finish_req(dd, 0);

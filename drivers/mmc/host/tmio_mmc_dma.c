@@ -350,7 +350,7 @@ void tmio_mmc_release_dma(struct tmio_mmc_host *host)
 		dma_release_channel(chan);
 	}
 	if (host->bounce_buf) {
-		free_pages((unsigned long)host->bounce_buf, 0);
+		free_pages(host->bounce_buf, 0);
 		host->bounce_buf = NULL;
 	}
 }

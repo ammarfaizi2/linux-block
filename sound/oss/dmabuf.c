@@ -141,7 +141,7 @@ static void sound_free_dmap(struct dma_buffparms *dmap)
 		ClearPageReserved(page);
 
 	dma_unmap_single(NULL, dmap->raw_buf_phys, dmap->buffsize, DMA_BIDIRECTIONAL);
-	free_pages((unsigned long) dmap->raw_buf, sz);
+	free_pages(dmap->raw_buf, sz);
 	dmap->raw_buf = NULL;
 }
 

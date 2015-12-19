@@ -648,7 +648,7 @@ static void __kfree_section_memmap(struct page *memmap)
 	if (is_vmalloc_addr(memmap))
 		vfree(memmap);
 	else
-		free_pages((unsigned long)memmap,
+		free_pages(memmap,
 			   get_order(sizeof(struct page) * PAGES_PER_SECTION));
 }
 

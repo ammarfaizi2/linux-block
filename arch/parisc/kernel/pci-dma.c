@@ -447,7 +447,7 @@ static void pa11_dma_free_consistent (struct device *dev, size_t size, void *vad
 	size = 1 << (order + PAGE_SHIFT);
 	unmap_uncached_pages((unsigned long)vaddr, size);
 	pcxl_free_range((unsigned long)vaddr, size);
-	free_pages((unsigned long)__va(dma_handle), order);
+	free_pages(__va(dma_handle), order);
 }
 
 static dma_addr_t pa11_dma_map_single(struct device *dev, void *addr, size_t size, enum dma_data_direction direction)
@@ -581,7 +581,7 @@ static void *pa11_dma_alloc_noncoherent(struct device *dev, size_t size,
 static void pa11_dma_free_noncoherent(struct device *dev, size_t size,
 					void *vaddr, dma_addr_t iova)
 {
-	free_pages((unsigned long)vaddr, get_order(size));
+	free_pages(vaddr, get_order(size));
 	return;
 }
 

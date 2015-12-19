@@ -602,7 +602,7 @@ static void intel_teardown_irq_remapping(struct intel_iommu *iommu)
 			irq_domain_remove(iommu->ir_domain);
 			iommu->ir_domain = NULL;
 		}
-		free_pages((unsigned long)iommu->ir_table->base,
+		free_pages(iommu->ir_table->base,
 			   INTR_REMAP_PAGE_ORDER);
 		kfree(iommu->ir_table->bitmap);
 		kfree(iommu->ir_table);

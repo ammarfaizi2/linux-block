@@ -648,7 +648,7 @@ spufs_parse_options(struct super_block *sb, char *options, struct inode *root)
 
 static void spufs_exit_isolated_loader(void)
 {
-	free_pages((unsigned long) isolated_loader,
+	free_pages(isolated_loader,
 			get_order(isolated_loader_size));
 }
 

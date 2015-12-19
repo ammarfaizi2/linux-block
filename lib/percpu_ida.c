@@ -266,7 +266,7 @@ EXPORT_SYMBOL_GPL(percpu_ida_free);
 void percpu_ida_destroy(struct percpu_ida *pool)
 {
 	free_percpu(pool->tag_cpu);
-	free_pages((unsigned long) pool->freelist,
+	free_pages(pool->freelist,
 		   get_order(pool->nr_tags * sizeof(unsigned)));
 }
 EXPORT_SYMBOL_GPL(percpu_ida_destroy);

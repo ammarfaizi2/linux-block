@@ -872,7 +872,7 @@ static void ioc3_free_rings(struct ioc3_private *ip)
 
 	if (ip->txr) {
 		ioc3_clean_tx_ring(ip);
-		free_pages((unsigned long)ip->txr, 2);
+		free_pages(ip->txr, 2);
 		ip->txr = NULL;
 	}
 

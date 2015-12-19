@@ -179,7 +179,7 @@ static void xtensa_dma_free(struct device *hwdev, size_t size, void *vaddr,
 	BUG_ON(addr < XCHAL_KSEG_CACHED_VADDR ||
 	       addr > XCHAL_KSEG_CACHED_VADDR + XCHAL_KSEG_SIZE - 1);
 
-	free_pages(addr, get_order(size));
+	free_pages((void *)addr, get_order(size));
 }
 
 static dma_addr_t xtensa_map_page(struct device *dev, struct page *page,

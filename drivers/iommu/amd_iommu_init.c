@@ -541,7 +541,7 @@ static void iommu_enable_command_buffer(struct amd_iommu *iommu)
 
 static void __init free_command_buffer(struct amd_iommu *iommu)
 {
-	free_pages((unsigned long)iommu->cmd_buf, get_order(CMD_BUFFER_SIZE));
+	free_pages(iommu->cmd_buf, get_order(CMD_BUFFER_SIZE));
 }
 
 /* allocates the memory where the IOMMU will log its events to */
@@ -573,7 +573,7 @@ static void iommu_enable_event_buffer(struct amd_iommu *iommu)
 
 static void __init free_event_buffer(struct amd_iommu *iommu)
 {
-	free_pages((unsigned long)iommu->evt_buf, get_order(EVT_BUFFER_SIZE));
+	free_pages(iommu->evt_buf, get_order(EVT_BUFFER_SIZE));
 }
 
 /* allocates the memory where the IOMMU will log its events to */
@@ -610,7 +610,7 @@ static void __init free_ppr_log(struct amd_iommu *iommu)
 	if (iommu->ppr_log == NULL)
 		return;
 
-	free_pages((unsigned long)iommu->ppr_log, get_order(PPR_LOG_SIZE));
+	free_pages(iommu->ppr_log, get_order(PPR_LOG_SIZE));
 }
 
 static void iommu_enable_gt(struct amd_iommu *iommu)
@@ -1692,20 +1692,16 @@ static struct syscore_ops amd_iommu_syscore_ops = {
 
 static void __init free_on_init_error(void)
 {
-	free_pages((unsigned long)irq_lookup_table,
-		   get_order(rlookup_table_size));
+	free_pages(irq_lookup_table, get_order(rlookup_table_size));
 
 	kmem_cache_destroy(amd_iommu_irq_cache);
 	amd_iommu_irq_cache = NULL;
 
-	free_pages((unsigned long)amd_iommu_rlookup_table,
-		   get_order(rlookup_table_size));
+	free_pages(amd_iommu_rlookup_table, get_order(rlookup_table_size));
 
-	free_pages((unsigned long)amd_iommu_alias_table,
-		   get_order(alias_table_size));
+	free_pages(amd_iommu_alias_table, get_order(alias_table_size));
 
-	free_pages((unsigned long)amd_iommu_dev_table,
-		   get_order(dev_table_size));
+	free_pages(amd_iommu_dev_table, get_order(dev_table_size));
 
 	free_iommu_all();
 
@@ -1773,8 +1769,7 @@ static bool __init check_ioapic_information(void)
 
 static void __init free_dma_resources(void)
 {
-	free_pages((unsigned long)amd_iommu_pd_alloc_bitmap,
-		   get_order(MAX_DOMAIN_ID/8));
+	free_pages(amd_iommu_pd_alloc_bitmap, get_order(MAX_DOMAIN_ID/8));
 
 	free_unity_maps();
 }

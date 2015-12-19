@@ -626,7 +626,7 @@ static void __exit rionet_exit(void)
 				kfree(peer);
 			}
 
-			free_pages((unsigned long)nets[i].active,
+			free_pages(nets[i].active,
 				 get_order(sizeof(void *) *
 				 RIO_MAX_ROUTE_ENTRIES(rnet->mport->sys_size)));
 			nets[i].active = NULL;

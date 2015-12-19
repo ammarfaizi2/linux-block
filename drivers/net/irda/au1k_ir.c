@@ -242,7 +242,7 @@ static void *dma_alloc(size_t size, dma_addr_t *dma_handle)
 static void dma_free(void *vaddr, size_t size)
 {
 	vaddr = (void *)KSEG0ADDR(vaddr);
-	free_pages((unsigned long) vaddr, get_order(size));
+	free_pages(vaddr, get_order(size));
 }
 
 

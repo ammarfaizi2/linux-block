@@ -328,7 +328,7 @@ static void free_pg_vec(void **pg_vec, unsigned int order, unsigned int len)
 			if (is_vmalloc_addr(pg_vec[i]))
 				vfree(pg_vec[i]);
 			else
-				free_pages((unsigned long)pg_vec[i], order);
+				free_pages(pg_vec[i], order);
 		}
 	}
 	kfree(pg_vec);

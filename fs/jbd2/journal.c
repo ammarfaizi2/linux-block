@@ -2322,14 +2322,14 @@ void *jbd2_alloc(size_t size, gfp_t flags)
 void jbd2_free(void *ptr, size_t size)
 {
 	if (size == PAGE_SIZE) {
-		free_pages((unsigned long)ptr, 0);
+		free_pages(ptr, 0);
 		return;
 	}
 	if (size > PAGE_SIZE) {
 		int order = get_order(size);
 
 		if (order < 3)
-			free_pages((unsigned long)ptr, order);
+			free_pages(ptr, order);
 		else
 			vfree(ptr);
 		return;

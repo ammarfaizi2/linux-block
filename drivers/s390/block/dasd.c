@@ -104,7 +104,7 @@ struct dasd_device *dasd_alloc_device(void)
 	/* Get one page for error recovery. */
 	device->erp_mem = (void *) get_zeroed_page(GFP_ATOMIC | GFP_DMA);
 	if (!device->erp_mem) {
-		free_pages((unsigned long) device->ccw_mem, 1);
+		free_pages(device->ccw_mem, 1);
 		kfree(device);
 		return ERR_PTR(-ENOMEM);
 	}
@@ -137,7 +137,7 @@ void dasd_free_device(struct dasd_device *device)
 {
 	kfree(device->private);
 	free_page(device->erp_mem);
-	free_pages((unsigned long)device->ccw_mem, 1);
+	free_pages(device->ccw_mem, 1);
 	kfree(device);
 }
 

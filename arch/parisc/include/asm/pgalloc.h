@@ -48,7 +48,7 @@ static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 #if CONFIG_PGTABLE_LEVELS == 3
 	pgd -= PTRS_PER_PGD;
 #endif
-	free_pages((unsigned long)pgd, PGD_ALLOC_ORDER);
+	free_pages(pgd, PGD_ALLOC_ORDER);
 }
 
 #if CONFIG_PGTABLE_LEVELS == 3
@@ -82,7 +82,7 @@ static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
 		mm_inc_nr_pmds(mm);
 		return;
 	}
-	free_pages((unsigned long)pmd, PMD_ORDER);
+	free_pages(pmd, PMD_ORDER);
 }
 
 #else

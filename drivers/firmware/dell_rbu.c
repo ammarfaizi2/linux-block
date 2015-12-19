@@ -207,7 +207,7 @@ out_alloc_packet_array:
 		pr_debug("freeing unused packet below floor 0x%lx.\n",
 			(unsigned long)virt_to_phys(
 				invalid_addr_packet_array[idx-1]));
-		free_pages((unsigned long)invalid_addr_packet_array[idx-1],
+		free_pages(invalid_addr_packet_array[idx-1],
 			ordernum);
 	}
 	kfree(invalid_addr_packet_array);
@@ -349,8 +349,7 @@ static void packet_empty_list(void)
 		 * to make sure there are no stale RBU packets left in memory
 		 */
 		memset(newpacket->data, 0, rbu_data.packetsize);
-		free_pages((unsigned long) newpacket->data,
-			newpacket->ordernum);
+		free_pages(newpacket->data, newpacket->ordernum);
 		kfree(newpacket);
 	}
 	rbu_data.packet_read_count = 0;
@@ -376,7 +375,7 @@ static void img_update_free(void)
 		dma_free_coherent(NULL, rbu_data.bios_image_size,
 			rbu_data.image_update_buffer, dell_rbu_dmaaddr);
 	else
-		free_pages((unsigned long) rbu_data.image_update_buffer,
+		free_pages(rbu_data.image_update_buffer,
 			rbu_data.image_update_ordernum);
 
 	/*
@@ -442,7 +441,7 @@ static int img_update_realloc(unsigned long size)
 		(unsigned long) virt_to_phys(image_update_buffer);
 
 	if (img_buf_phys_addr > BIOS_SCAN_LIMIT) {
-		free_pages((unsigned long) image_update_buffer, ordernum);
+		free_pages(image_update_buffer, ordernum);
 		ordernum = -1;
 		image_update_buffer = dma_alloc_coherent(NULL, size,
 			&dell_rbu_dmaaddr, GFP_KERNEL);

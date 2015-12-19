@@ -197,7 +197,7 @@ tlb_finish_mmu(struct mmu_gather *tlb, unsigned long start, unsigned long end)
 	check_pgt_cache();
 
 	if (tlb->pages != tlb->local)
-		free_pages((unsigned long)tlb->pages, 0);
+		free_pages(tlb->pages, 0);
 }
 
 /*

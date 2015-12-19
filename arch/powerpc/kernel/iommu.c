@@ -739,7 +739,7 @@ void iommu_free_table(struct iommu_table *tbl, const char *node_name)
 
 	/* free bitmap */
 	order = get_order(bitmap_sz);
-	free_pages((unsigned long) tbl->it_map, order);
+	free_pages(tbl->it_map, order);
 
 	/* free table */
 	kfree(tbl);
@@ -847,7 +847,7 @@ void *iommu_alloc_coherent(struct device *dev, struct iommu_table *tbl,
 	mapping = iommu_alloc(dev, tbl, ret, nio_pages, DMA_BIDIRECTIONAL,
 			      mask >> tbl->it_page_shift, io_order, NULL);
 	if (mapping == DMA_ERROR_CODE) {
-		free_pages((unsigned long)ret, order);
+		free_pages(ret, order);
 		return NULL;
 	}
 	*dma_handle = mapping;
@@ -864,7 +864,7 @@ void iommu_free_coherent(struct iommu_table *tbl, size_t size,
 		nio_pages = size >> tbl->it_page_shift;
 		iommu_free(tbl, dma_handle, nio_pages);
 		size = PAGE_ALIGN(size);
-		free_pages((unsigned long)vaddr, get_order(size));
+		free_pages(vaddr, get_order(size));
 	}
 }
 

@@ -204,7 +204,7 @@ static void mic_del_vq(struct virtqueue *vq, int n)
 	struct mic_vdev *mvdev = to_micvdev(vq->vdev);
 	struct vring *vr = (struct vring *)(vq + 1);
 
-	free_pages((unsigned long) vr->used, get_order(mvdev->used_size[n]));
+	free_pages(vr->used, get_order(mvdev->used_size[n]));
 	vring_del_virtqueue(vq);
 	mic_card_unmap(mvdev->mdev, mvdev->vr[n]);
 	mvdev->vr[n] = NULL;

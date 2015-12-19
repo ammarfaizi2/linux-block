@@ -278,7 +278,7 @@ ssize_t hmcdrv_ftp_cmd(char __kernel *cmd, loff_t offset,
 		break;
 	}
 
-	free_pages((unsigned long) ftp.buf, order);
+	free_pages(ftp.buf, order);
 	return retlen;
 }
 

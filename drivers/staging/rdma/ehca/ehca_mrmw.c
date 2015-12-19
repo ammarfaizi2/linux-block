@@ -2560,7 +2560,7 @@ static void *ehca_dma_alloc_coherent(struct ib_device *dev, size_t size,
 		addr = page_address(p);
 		dma_addr = ehca_map_vaddr(addr);
 		if (ehca_dma_mapping_error(dev, dma_addr)) {
-			free_pages((unsigned long)addr,	get_order(size));
+			free_pages(addr,	get_order(size));
 			return NULL;
 		}
 		if (dma_handle)
@@ -2574,7 +2574,7 @@ static void ehca_dma_free_coherent(struct ib_device *dev, size_t size,
 				   void *cpu_addr, u64 dma_handle)
 {
 	if (cpu_addr && size)
-		free_pages((unsigned long)cpu_addr, get_order(size));
+		free_pages(cpu_addr, get_order(size));
 }
 
 

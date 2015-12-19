@@ -227,7 +227,7 @@ static int solo_p2m_test(struct solo_dev *solo_dev, int base, int size)
 
 	rd_buf = (u32 *)__get_free_pages(GFP_KERNEL, order);
 	if (rd_buf == NULL) {
-		free_pages((unsigned long)wr_buf, order);
+		free_pages(wr_buf, order);
 		return -1;
 	}
 
@@ -253,8 +253,8 @@ static int solo_p2m_test(struct solo_dev *solo_dev, int base, int size)
 	ret = 0;
 
 test_fail:
-	free_pages((unsigned long)wr_buf, order);
-	free_pages((unsigned long)rd_buf, order);
+	free_pages(wr_buf, order);
+	free_pages(rd_buf, order);
 
 	return ret;
 }

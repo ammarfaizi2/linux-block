@@ -126,7 +126,7 @@ void __dma_direct_free_coherent(struct device *dev, size_t size,
 #ifdef CONFIG_NOT_COHERENT_CACHE
 	__dma_free_coherent(size, vaddr);
 #else
-	free_pages((unsigned long)vaddr, get_order(size));
+	free_pages(vaddr, get_order(size));
 #endif
 }
 

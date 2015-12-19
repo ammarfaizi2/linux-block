@@ -166,7 +166,7 @@ failed:
 	for (i = 0; i < (IA64_GRANULE_SIZE / PAGE_SIZE); i++)
 		ClearPageUncached(&page[i]);
 
-	free_pages(c_addr, IA64_GRANULE_SHIFT-PAGE_SHIFT);
+	free_pages((void *)c_addr, IA64_GRANULE_SHIFT-PAGE_SHIFT);
 	mutex_unlock(&uc_pool->add_chunk_mutex);
 	return -1;
 }

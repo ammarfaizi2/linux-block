@@ -3300,7 +3300,7 @@ static struct vmcs *alloc_vmcs(void)
 
 static void free_vmcs(struct vmcs *vmcs)
 {
-	free_pages((unsigned long)vmcs, vmcs_config.order);
+	free_pages(vmcs, vmcs_config.order);
 }
 
 /*

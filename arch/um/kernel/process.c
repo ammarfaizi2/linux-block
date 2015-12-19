@@ -57,7 +57,7 @@ int pid_to_processor_id(int pid)
 
 void free_stack(unsigned long stack, int order)
 {
-	free_pages(stack, order);
+	free_pages((void *)stack, order);
 }
 
 unsigned long alloc_stack(int order, int atomic)

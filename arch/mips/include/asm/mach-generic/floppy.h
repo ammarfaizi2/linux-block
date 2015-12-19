@@ -124,7 +124,7 @@ static inline unsigned long fd_dma_mem_alloc(unsigned long size)
 
 static inline void fd_dma_mem_free(unsigned long addr, unsigned long size)
 {
-	free_pages(addr, get_order(size));
+	free_pages((void *)addr, get_order(size));
 }
 
 static inline unsigned long fd_drive_type(unsigned long n)

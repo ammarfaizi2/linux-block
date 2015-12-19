@@ -265,7 +265,7 @@ static void pci_fire_msiq_free(struct pci_pbm_info *pbm)
 	order = get_order(512 * 1024);
 	pages = (unsigned long) pbm->msi_queues;
 
-	free_pages(pages, order);
+	free_pages((void *)pages, order);
 
 	pbm->msi_queues = NULL;
 }

@@ -802,7 +802,7 @@ out_free_memory:
 out_close_gpu:
 	ps3_close_hv_device(dev);
 out_free_xdr_buf:
-	free_pages((unsigned long) priv->xdr_buf, get_order(XDR_BUF_SIZE));
+	free_pages(priv->xdr_buf, get_order(XDR_BUF_SIZE));
 fail_free_priv:
 	kfree(priv);
 	ps3_system_bus_set_drvdata(dev, NULL);
@@ -827,7 +827,7 @@ static int ps3vram_remove(struct ps3_system_bus_device *dev)
 	lv1_gpu_context_free(priv->context_handle);
 	lv1_gpu_memory_free(priv->memory_handle);
 	ps3_close_hv_device(dev);
-	free_pages((unsigned long) priv->xdr_buf, get_order(XDR_BUF_SIZE));
+	free_pages(priv->xdr_buf, get_order(XDR_BUF_SIZE));
 	kfree(priv);
 	ps3_system_bus_set_drvdata(dev, NULL);
 	return 0;

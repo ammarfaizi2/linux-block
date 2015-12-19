@@ -1174,7 +1174,7 @@ free_shadow:
 			info->ring_ref[i] = GRANT_INVALID_REF;
 		}
 	}
-	free_pages((unsigned long)info->ring.sring, get_order(info->nr_ring_pages * PAGE_SIZE));
+	free_pages(info->ring.sring, get_order(info->nr_ring_pages * PAGE_SIZE));
 	info->ring.sring = NULL;
 
 	if (info->irq)
@@ -1429,7 +1429,7 @@ static int setup_blkring(struct xenbus_device *dev,
 
 	err = xenbus_grant_ring(dev, info->ring.sring, info->nr_ring_pages, gref);
 	if (err < 0) {
-		free_pages((unsigned long)sring, get_order(ring_size));
+		free_pages(sring, get_order(ring_size));
 		info->ring.sring = NULL;
 		goto fail;
 	}

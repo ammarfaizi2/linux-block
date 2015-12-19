@@ -66,7 +66,7 @@ static void zcomp_strm_free(struct zcomp *comp, struct zcomp_strm *zstrm)
 {
 	if (zstrm->private)
 		comp->backend->destroy(zstrm->private);
-	free_pages((unsigned long)zstrm->buffer, 1);
+	free_pages(zstrm->buffer, 1);
 	kfree(zstrm);
 }
 

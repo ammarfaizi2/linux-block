@@ -170,7 +170,7 @@ static void _fd_dma_mem_free(unsigned long addr, unsigned long size)
 	if ((unsigned long)addr >= (unsigned long)high_memory)
 		vfree((void *)addr);
 	else
-		free_pages(addr, get_order(size));
+		free_pages((void *)addr, get_order(size));
 }
 
 #define fd_dma_mem_free(addr, size)  _fd_dma_mem_free(addr, size)

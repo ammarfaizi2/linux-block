@@ -373,7 +373,7 @@ static void diag204_free_buffer(void)
 		vfree(diag204_buf_vmalloc);
 		diag204_buf_vmalloc = NULL;
 	} else {
-		free_pages((unsigned long) diag204_buf, 0);
+		free_pages(diag204_buf, 0);
 	}
 	diag204_buf = NULL;
 }

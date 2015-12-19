@@ -11,6 +11,6 @@
 #define alloc_gatt_pages(order)		\
 	((char *)__get_free_pages(GFP_KERNEL, (order)))
 #define free_gatt_pages(table, order)	\
-	free_pages((unsigned long)(table), (order))
+	free_pages((table), (order))
 
 #endif

@@ -151,7 +151,7 @@ static void *qib_dma_alloc_coherent(struct ib_device *dev, size_t size,
 static void qib_dma_free_coherent(struct ib_device *dev, size_t size,
 				  void *cpu_addr, u64 dma_handle)
 {
-	free_pages((unsigned long) cpu_addr, get_order(size));
+	free_pages(cpu_addr, get_order(size));
 }
 
 struct ib_dma_mapping_ops qib_dma_mapping_ops = {

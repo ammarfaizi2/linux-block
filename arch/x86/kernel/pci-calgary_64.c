@@ -458,7 +458,7 @@ static void* calgary_alloc_coherent(struct device *dev, size_t size,
 	*dma_handle = mapping;
 	return ret;
 free:
-	free_pages((unsigned long)ret, get_order(size));
+	free_pages(ret, get_order(size));
 	ret = NULL;
 error:
 	return ret;
@@ -475,7 +475,7 @@ static void calgary_free_coherent(struct device *dev, size_t size,
 	npages = size >> PAGE_SHIFT;
 
 	iommu_free(tbl, dma_handle, npages);
-	free_pages((unsigned long)vaddr, get_order(size));
+	free_pages(vaddr, get_order(size));
 }
 
 static struct dma_map_ops calgary_dma_ops = {
@@ -815,7 +815,7 @@ static void __init calgary_free_bus(struct pci_dev *dev)
 	readq(target); /* flush */
 
 	bitmapsz = tbl->it_size / BITS_PER_BYTE;
-	free_pages((unsigned long)tbl->it_map, get_order(bitmapsz));
+	free_pages(tbl->it_map, get_order(bitmapsz));
 	tbl->it_map = NULL;
 
 	kfree(tbl);

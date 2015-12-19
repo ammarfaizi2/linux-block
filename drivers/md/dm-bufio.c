@@ -419,7 +419,7 @@ static void free_buffer_data(struct dm_bufio_client *c,
 		break;
 
 	case DATA_MODE_GET_FREE_PAGES:
-		free_pages((unsigned long)data, c->pages_per_block_bits);
+		free_pages(data, c->pages_per_block_bits);
 		break;
 
 	case DATA_MODE_VMALLOC:

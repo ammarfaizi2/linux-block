@@ -51,7 +51,7 @@ static int vmcp_release(struct inode *inode, struct file *file)
 
 	session = file->private_data;
 	file->private_data = NULL;
-	free_pages((unsigned long)session->response, get_order(session->bufsize));
+	free_pages(session->response, get_order(session->bufsize));
 	kfree(session);
 	return 0;
 }
@@ -151,8 +151,7 @@ static long vmcp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		mutex_unlock(&session->mutex);
 		return put_user(temp, argp);
 	case VMCP_SETBUF:
-		free_pages((unsigned long)session->response,
-				get_order(session->bufsize));
+		free_pages(session->response, get_order(session->bufsize));
 		session->response=NULL;
 		temp = get_user(session->bufsize, argp);
 		if (get_order(session->bufsize) > 8) {

@@ -342,7 +342,7 @@ struct iwl_host_cmd {
 
 static inline void iwl_free_resp(struct iwl_host_cmd *cmd)
 {
-	free_pages(cmd->_rx_page_addr, cmd->_rx_page_order);
+	free_pages((void *)cmd->_rx_page_addr, cmd->_rx_page_order);
 }
 
 struct iwl_rx_cmd_buffer {

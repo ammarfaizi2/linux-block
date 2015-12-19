@@ -278,7 +278,7 @@ swiotlb_late_init_with_default_size(size_t default_size)
 	}
 	rc = swiotlb_late_init_with_tbl(vstart, io_tlb_nslabs);
 	if (rc)
-		free_pages((unsigned long)vstart, order);
+		free_pages(vstart, order);
 	return rc;
 }
 
@@ -336,12 +336,10 @@ swiotlb_late_init_with_tbl(char *tlb, unsigned long nslabs)
 	return 0;
 
 cleanup4:
-	free_pages((unsigned long)io_tlb_list, get_order(io_tlb_nslabs *
-	                                                 sizeof(int)));
+	free_pages(io_tlb_list, get_order(io_tlb_nslabs * sizeof(int)));
 	io_tlb_list = NULL;
 cleanup3:
-	free_pages((unsigned long)v_overflow_buffer,
-		   get_order(io_tlb_overflow));
+	free_pages(v_overflow_buffer, get_order(io_tlb_overflow));
 	io_tlb_overflow_buffer = 0;
 cleanup2:
 	io_tlb_end = 0;
@@ -356,13 +354,12 @@ void __init swiotlb_free(void)
 		return;
 
 	if (late_alloc) {
-		free_pages((unsigned long)phys_to_virt(io_tlb_overflow_buffer),
+		free_pages(phys_to_virt(io_tlb_overflow_buffer),
 			   get_order(io_tlb_overflow));
-		free_pages((unsigned long)io_tlb_orig_addr,
+		free_pages(io_tlb_orig_addr,
 			   get_order(io_tlb_nslabs * sizeof(phys_addr_t)));
-		free_pages((unsigned long)io_tlb_list, get_order(io_tlb_nslabs *
-								 sizeof(int)));
-		free_pages((unsigned long)phys_to_virt(io_tlb_start),
+		free_pages(io_tlb_list, get_order(io_tlb_nslabs * sizeof(int)));
+		free_pages(phys_to_virt(io_tlb_start),
 			   get_order(io_tlb_nslabs << IO_TLB_SHIFT));
 	} else {
 		memblock_free_late(io_tlb_overflow_buffer,
@@ -644,7 +641,7 @@ swiotlb_alloc_coherent(struct device *hwdev, size_t size,
 			/*
 			 * The allocated memory isn't reachable by the device.
 			 */
-			free_pages((unsigned long) ret, order);
+			free_pages(ret, order);
 			ret = NULL;
 		}
 	}
@@ -696,7 +693,7 @@ swiotlb_free_coherent(struct device *hwdev, size_t size, void *vaddr,
 
 	WARN_ON(irqs_disabled());
 	if (!is_swiotlb_buffer(paddr))
-		free_pages((unsigned long)vaddr, get_order(size));
+		free_pages(vaddr, get_order(size));
 	else
 		/* DMA_TO_DEVICE to avoid memcpy in swiotlb_tbl_unmap_single */
 		swiotlb_tbl_unmap_single(hwdev, paddr, size, DMA_TO_DEVICE);

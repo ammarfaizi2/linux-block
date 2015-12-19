@@ -1193,7 +1193,7 @@ error:
 		iounmap(guts_regs);
 
 	if (ppaact)
-		free_pages((unsigned long)ppaact, order);
+		free_pages(ppaact, order);
 
 	ppaact = NULL;
 

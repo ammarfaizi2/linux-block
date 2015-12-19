@@ -5939,7 +5939,7 @@ static void megasas_detach_one(struct pci_dev *pdev)
 						  fusion->ld_map[i],
 						  fusion->ld_map_phys[i]);
 			if (fusion->ld_drv_map[i])
-				free_pages((ulong)fusion->ld_drv_map[i],
+				free_pages(fusion->ld_drv_map[i],
 					fusion->drv_map_pages);
 				if (fusion->pd_seq_sync)
 					dma_free_coherent(&instance->pdev->dev,
@@ -5947,7 +5947,7 @@ static void megasas_detach_one(struct pci_dev *pdev)
 						fusion->pd_seq_sync[i],
 						fusion->pd_seq_phys[i]);
 		}
-		free_pages((ulong)instance->ctrl_context,
+		free_pages(instance->ctrl_context,
 			instance->ctrl_context_pages);
 	} else {
 		megasas_release_mfi(instance);

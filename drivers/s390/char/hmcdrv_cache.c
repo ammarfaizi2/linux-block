@@ -240,7 +240,7 @@ int hmcdrv_cache_startup(size_t cachesize)
 void hmcdrv_cache_shutdown(void)
 {
 	if (hmcdrv_cache_file.content) {
-		free_pages((unsigned long) hmcdrv_cache_file.content,
+		free_pages(hmcdrv_cache_file.content,
 			   hmcdrv_cache_order);
 		hmcdrv_cache_file.content = NULL;
 	}

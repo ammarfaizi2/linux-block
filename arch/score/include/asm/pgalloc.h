@@ -34,7 +34,7 @@ static inline pgd_t *pgd_alloc(struct mm_struct *mm)
 
 static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
-	free_pages((unsigned long)pgd, PGD_ORDER);
+	free_pages(pgd, PGD_ORDER);
 }
 
 static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
@@ -66,7 +66,7 @@ static inline struct page *pte_alloc_one(struct mm_struct *mm,
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_pages((unsigned long)pte, PTE_ORDER);
+	free_pages(pte, PTE_ORDER);
 }
 
 static inline void pte_free(struct mm_struct *mm, pgtable_t pte)

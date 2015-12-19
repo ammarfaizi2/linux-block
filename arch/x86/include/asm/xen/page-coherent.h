@@ -18,7 +18,7 @@ static inline void xen_free_coherent_pages(struct device *hwdev, size_t size,
 		void *cpu_addr, dma_addr_t dma_handle,
 		struct dma_attrs *attrs)
 {
-	free_pages((unsigned long) cpu_addr, get_order(size));
+	free_pages(cpu_addr, get_order(size));
 }
 
 static inline void xen_dma_map_page(struct device *hwdev, struct page *page,

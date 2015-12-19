@@ -645,7 +645,7 @@ static void qdisc_class_hash_free(struct hlist_head *h, unsigned int n)
 	if (size <= PAGE_SIZE)
 		kfree(h);
 	else
-		free_pages((unsigned long)h, get_order(size));
+		free_pages(h, get_order(size));
 }
 
 void qdisc_class_hash_grow(struct Qdisc *sch, struct Qdisc_class_hash *clhash)

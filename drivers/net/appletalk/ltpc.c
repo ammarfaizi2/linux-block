@@ -1182,7 +1182,7 @@ out4:
 	if (dev->irq)
 		free_irq(dev->irq, dev);
 out3:
-	free_pages((unsigned long)ltdmabuf, get_order(1000));
+	free_pages(ltdmabuf, get_order(1000));
 out2:
 	release_region(io, 8);
 out1:
@@ -1277,7 +1277,7 @@ static void __exit ltpc_cleanup(void)
 
 	if(debug & DEBUG_VERBOSE) printk("free_pages\n");
 
-	free_pages( (unsigned long) ltdmabuf, get_order(1000));
+	free_pages(ltdmabuf, get_order(1000));
 
 	if(debug & DEBUG_VERBOSE) printk("returning from cleanup_module\n");
 }

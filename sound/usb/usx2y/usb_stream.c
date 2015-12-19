@@ -143,9 +143,9 @@ void usb_stream_free(struct usb_stream_kernel *sk)
 	if (!s)
 		return;
 
-	free_pages((unsigned long)sk->write_page, get_order(s->write_size));
+	free_pages(sk->write_page, get_order(s->write_size));
 	sk->write_page = NULL;
-	free_pages((unsigned long)s, get_order(s->read_size));
+	free_pages(s, get_order(s->read_size));
 	sk->s = NULL;
 }
 

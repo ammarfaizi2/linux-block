@@ -261,7 +261,7 @@ retry:
 		if (early)
 			free_bootmem(__pa(xen_io_tlb_start), PAGE_ALIGN(bytes));
 		else {
-			free_pages((unsigned long)xen_io_tlb_start, order);
+			free_pages(xen_io_tlb_start, order);
 			xen_io_tlb_start = NULL;
 		}
 		m_ret = XEN_SWIOTLB_EFIXUP;
@@ -288,7 +288,7 @@ error:
 	if (early)
 		panic("%s (rc:%d)", xen_swiotlb_error(m_ret), rc);
 	else
-		free_pages((unsigned long)xen_io_tlb_start, order);
+		free_pages(xen_io_tlb_start, order);
 	return rc;
 }
 void *

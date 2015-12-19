@@ -167,7 +167,7 @@ static void vmlfb_free_vram_area(struct vram_area *va)
 		printk(KERN_DEBUG MODULE_NAME
 		       ": Freeing %ld bytes vram area at 0x%08lx\n",
 		       va->size, va->phys);
-		free_pages(va->logical, va->order);
+		free_pages((void *)va->logical, va->order);
 
 		va->logical = 0;
 	}

@@ -888,7 +888,7 @@ void *get_output_buffer(int *len_out)
 
 void free_output_buffer(void *buffer)
 {
-	free_pages((unsigned long) buffer, 0);
+	free_pages(buffer, 0);
 }
 
 int tap_setup_common(char *str, char *type, char **dev_name, char **mac_out,

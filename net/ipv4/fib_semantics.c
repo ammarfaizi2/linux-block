@@ -853,7 +853,7 @@ static void fib_info_hash_free(struct hlist_head *hash, int bytes)
 	if (bytes <= PAGE_SIZE)
 		kfree(hash);
 	else
-		free_pages((unsigned long) hash, get_order(bytes));
+		free_pages(hash, get_order(bytes));
 }
 
 static void fib_info_hash_move(struct hlist_head *new_info_hash,

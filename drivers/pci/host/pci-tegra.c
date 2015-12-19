@@ -1347,7 +1347,7 @@ static int tegra_pcie_disable_msi(struct tegra_pcie *pcie)
 	afi_writel(pcie, 0, AFI_MSI_EN_VEC6);
 	afi_writel(pcie, 0, AFI_MSI_EN_VEC7);
 
-	free_pages(msi->pages, 0);
+	free_pages((void *)msi->pages, 0);
 
 	if (msi->irq > 0)
 		free_irq(msi->irq, pcie);

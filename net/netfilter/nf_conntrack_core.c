@@ -1444,8 +1444,7 @@ void nf_ct_free_hashtable(void *hash, unsigned int size)
 	if (is_vmalloc_addr(hash))
 		vfree(hash);
 	else
-		free_pages((unsigned long)hash,
-			   get_order(sizeof(struct hlist_head) * size));
+		free_pages(hash, get_order(sizeof(struct hlist_head) * size));
 }
 EXPORT_SYMBOL_GPL(nf_ct_free_hashtable);
 

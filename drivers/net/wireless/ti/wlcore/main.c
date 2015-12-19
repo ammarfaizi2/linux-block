@@ -6354,7 +6354,7 @@ err_dummy_packet:
 	dev_kfree_skb(wl->dummy_packet);
 
 err_aggr:
-	free_pages((unsigned long)wl->aggr_buf, order);
+	free_pages(wl->aggr_buf, order);
 
 err_wq:
 	destroy_workqueue(wl->freezable_wq);
@@ -6386,7 +6386,7 @@ int wlcore_free_hw(struct wl1271 *wl)
 	kfree(wl->mbox);
 	free_page(wl->fwlog);
 	dev_kfree_skb(wl->dummy_packet);
-	free_pages((unsigned long)wl->aggr_buf, get_order(wl->aggr_buf_size));
+	free_pages(wl->aggr_buf, get_order(wl->aggr_buf_size));
 
 	wl1271_debugfs_exit(wl);
 

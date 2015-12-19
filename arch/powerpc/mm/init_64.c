@@ -397,8 +397,7 @@ void __ref vmemmap_free(unsigned long start, unsigned long end)
 						free_reserved_page(page++);
 				}
 			} else
-				free_pages((unsigned long)(__va(addr)),
-							get_order(page_size));
+				free_pages(__va(addr), get_order(page_size));
 
 			vmemmap_remove_mapping(start, page_size);
 		}

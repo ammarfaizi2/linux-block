@@ -306,7 +306,7 @@ static int gru_init_tables(unsigned long gru_base_paddr, void *gru_base_vaddr)
 
 fail:
 	for (bid--; bid >= 0; bid--)
-		free_pages((unsigned long)gru_base[bid], order);
+		free_pages(gru_base[bid], order);
 	return -ENOMEM;
 }
 
@@ -317,7 +317,7 @@ static void gru_free_tables(void)
 			      GRU_CHIPLETS_PER_BLADE);
 
 	for (bid = 0; bid < GRU_MAX_BLADES; bid++)
-		free_pages((unsigned long)gru_base[bid], order);
+		free_pages(gru_base[bid], order);
 }
 
 static unsigned long gru_chiplet_cpu_to_mmr(int chiplet, int cpu, int *corep)

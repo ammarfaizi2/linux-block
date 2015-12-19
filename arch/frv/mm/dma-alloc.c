@@ -101,7 +101,7 @@ void *consistent_alloc(gfp_t gfp, size_t size, dma_addr_t *dma_handle)
 	/* allocate some common virtual space to map the new pages */
 	area = get_vm_area(size, VM_ALLOC);
 	if (area == 0) {
-		free_pages(page, order);
+		free_pages((void *)page, order);
 		return NULL;
 	}
 	va = VMALLOC_VMADDR(area->addr);

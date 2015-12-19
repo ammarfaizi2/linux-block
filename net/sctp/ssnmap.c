@@ -75,7 +75,7 @@ fail_map:
 	if (size <= KMALLOC_MAX_SIZE)
 		kfree(retval);
 	else
-		free_pages((unsigned long)retval, get_order(size));
+		free_pages(retval, get_order(size));
 fail:
 	return NULL;
 }
@@ -119,7 +119,7 @@ void sctp_ssnmap_free(struct sctp_ssnmap *map)
 	if (size <= KMALLOC_MAX_SIZE)
 		kfree(map);
 	else
-		free_pages((unsigned long)map, get_order(size));
+		free_pages(map, get_order(size));
 
 	SCTP_DBG_OBJCNT_DEC(ssnmap);
 }

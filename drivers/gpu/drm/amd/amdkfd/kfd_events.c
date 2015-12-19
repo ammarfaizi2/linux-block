@@ -381,7 +381,7 @@ static void shutdown_signal_pages(struct kfd_process *p)
 
 	list_for_each_entry_safe(page, tmp, &p->signal_event_pages,
 					event_pages) {
-		free_pages((unsigned long)page->kernel_address,
+		free_pages(page->kernel_address,
 				get_order(KFD_SIGNAL_EVENT_LIMIT * 8));
 		kfree(page);
 	}

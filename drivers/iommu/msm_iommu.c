@@ -262,7 +262,7 @@ static void msm_iommu_domain_free(struct iommu_domain *domain)
 		if ((fl_table[i] & 0x03) == FL_TYPE_TABLE)
 			free_page(__va(((fl_table[i]) & FL_BASE_MASK)));
 
-	free_pages((unsigned long)priv->pgtable, get_order(SZ_16K));
+	free_pages(priv->pgtable, get_order(SZ_16K));
 	priv->pgtable = NULL;
 
 	kfree(priv);

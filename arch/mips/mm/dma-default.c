@@ -171,7 +171,7 @@ static void mips_dma_free_noncoherent(struct device *dev, size_t size,
 		void *vaddr, dma_addr_t dma_handle)
 {
 	plat_unmap_dma_mem(dev, dma_handle, size, DMA_BIDIRECTIONAL);
-	free_pages((unsigned long) vaddr, get_order(size));
+	free_pages(vaddr, get_order(size));
 }
 
 static void mips_dma_free_coherent(struct device *dev, size_t size, void *vaddr,

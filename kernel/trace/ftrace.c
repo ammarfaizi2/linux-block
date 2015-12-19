@@ -2985,7 +2985,7 @@ ftrace_allocate_pages(unsigned long num_to_init)
 	pg = start_pg;
 	while (pg) {
 		order = get_count_order(pg->size / ENTRIES_PER_PAGE);
-		free_pages((unsigned long)pg->records, order);
+		free_pages(pg->records, order);
 		start_pg = pg->next;
 		kfree(pg);
 		pg = start_pg;
@@ -4931,7 +4931,7 @@ void ftrace_release_mod(struct module *mod)
 
 			*last_pg = pg->next;
 			order = get_count_order(pg->size / ENTRIES_PER_PAGE);
-			free_pages((unsigned long)pg->records, order);
+			free_pages(pg->records, order);
 			kfree(pg);
 		} else
 			last_pg = &pg->next;

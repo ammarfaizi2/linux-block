@@ -134,7 +134,7 @@ struct net_device * __init mvme147lance_probe(int unit)
 
 	err = register_netdev(dev);
 	if (err) {
-		free_pages(lp->ram, 3);
+		free_pages((void *)lp->ram, 3);
 		free_netdev(dev);
 		return ERR_PTR(err);
 	}
@@ -193,7 +193,7 @@ void __exit cleanup_module(void)
 {
 	struct m147lance_private *lp = netdev_priv(dev_mvme147_lance);
 	unregister_netdev(dev_mvme147_lance);
-	free_pages(lp->ram, 3);
+	free_pages((void *)lp->ram, 3);
 	free_netdev(dev_mvme147_lance);
 }
 

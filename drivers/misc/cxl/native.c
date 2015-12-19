@@ -228,7 +228,7 @@ static inline void detach_spa(struct cxl_afu *afu)
 void cxl_release_spa(struct cxl_afu *afu)
 {
 	if (afu->spa) {
-		free_pages((unsigned long) afu->spa, afu->spa_order);
+		free_pages(afu->spa, afu->spa_order);
 		afu->spa = NULL;
 	}
 }

@@ -81,7 +81,7 @@ struct thread_info {
 										\
 	ret;									\
 })
-#define free_task_struct(tsk)	free_pages((unsigned long) (tsk), KERNEL_STACK_SIZE_ORDER)
+#define free_task_struct(tsk)	free_pages((tsk), KERNEL_STACK_SIZE_ORDER)
 
 #endif /* !__ASSEMBLY */
 

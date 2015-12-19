@@ -1193,7 +1193,7 @@ megasas_init_adapter_fusion(struct megasas_instance *instance)
 				"memory for local map info for %d pages\n",
 				fusion->drv_map_pages);
 			if (i == 1)
-				free_pages((ulong)fusion->ld_drv_map[0],
+				free_pages(fusion->ld_drv_map[0],
 					fusion->drv_map_pages);
 			goto fail_ioc_init;
 		}
@@ -2486,7 +2486,7 @@ megasas_free_host_crash_buffer(struct megasas_instance *instance)
 ;
 	for (i = 0; i < instance->drv_buf_alloc; i++) {
 		if (instance->crash_buf[i])
-			free_pages((ulong)instance->crash_buf[i],
+			free_pages(instance->crash_buf[i],
 					instance->crash_buf_pages);
 	}
 	instance->drv_buf_index = 0;

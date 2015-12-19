@@ -622,7 +622,7 @@ static void free_mem(struct cxlflash_cfg *cfg)
 				free_page(buf);
 		}
 
-		free_pages((ulong)afu, get_order(sizeof(struct afu)));
+		free_pages(afu, get_order(sizeof(struct afu)));
 		cfg->afu = NULL;
 	}
 }

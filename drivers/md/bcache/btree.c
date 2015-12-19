@@ -751,7 +751,7 @@ void bch_btree_cache_free(struct cache_set *c)
 	if (c->verify_data)
 		list_move(&c->verify_data->list, &c->btree_cache);
 
-	free_pages((unsigned long) c->verify_ondisk, ilog2(bucket_pages(c)));
+	free_pages(c->verify_ondisk, ilog2(bucket_pages(c)));
 #endif
 
 	list_splice(&c->btree_cache_freeable,

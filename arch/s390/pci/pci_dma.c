@@ -369,7 +369,7 @@ static void *s390_dma_alloc(struct device *dev, size_t size,
 	map = s390_dma_map_pages(dev, page, pa % PAGE_SIZE,
 				 size, DMA_BIDIRECTIONAL, NULL);
 	if (dma_mapping_error(dev, map)) {
-		free_pages(pa, get_order(size));
+		free_pages((void *)pa, get_order(size));
 		return NULL;
 	}
 
@@ -388,7 +388,7 @@ static void s390_dma_free(struct device *dev, size_t size,
 	size = PAGE_ALIGN(size);
 	atomic64_sub(size / PAGE_SIZE, &zdev->allocated_pages);
 	s390_dma_unmap_pages(dev, dma_handle, size, DMA_BIDIRECTIONAL, NULL);
-	free_pages((unsigned long) pa, get_order(size));
+	free_pages(pa, get_order(size));
 }
 
 static int s390_dma_map_sg(struct device *dev, struct scatterlist *sg,

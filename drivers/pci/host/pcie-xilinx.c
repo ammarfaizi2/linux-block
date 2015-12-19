@@ -527,7 +527,7 @@ static void xilinx_pcie_free_irq_domain(struct xilinx_pcie_port *port)
 	/* Free IRQ Domain */
 	if (IS_ENABLED(CONFIG_PCI_MSI)) {
 
-		free_pages(port->msi_pages, 0);
+		free_pages((void *)port->msi_pages, 0);
 
 		num_irqs = XILINX_NUM_MSI_IRQS;
 	} else {

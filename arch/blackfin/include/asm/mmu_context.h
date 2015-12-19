@@ -203,7 +203,7 @@ static inline void destroy_context(struct mm_struct *mm)
 #ifdef CONFIG_MPU
 	if (current_rwx_mask[cpu] == mm->context.page_rwx_mask)
 		current_rwx_mask[cpu] = NULL;
-	free_pages((unsigned long)mm->context.page_rwx_mask, page_mask_order);
+	free_pages(mm->context.page_rwx_mask, page_mask_order);
 #endif
 }
 

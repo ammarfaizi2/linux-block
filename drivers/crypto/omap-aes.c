@@ -701,8 +701,8 @@ static void omap_aes_done_task(unsigned long data)
 
 		len = ALIGN(dd->total_save, AES_BLOCK_SIZE);
 		pages = get_order(len);
-		free_pages((unsigned long)buf_in, pages);
-		free_pages((unsigned long)buf_out, pages);
+		free_pages(buf_in, pages);
+		free_pages(buf_out, pages);
 	}
 
 	omap_aes_finish_req(dd, 0);

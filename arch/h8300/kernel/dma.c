@@ -35,7 +35,7 @@ static void dma_free(struct device *dev, size_t size,
 		     struct dma_attrs *attrs)
 
 {
-	free_pages((unsigned long)vaddr, get_order(size));
+	free_pages(vaddr, get_order(size));
 }
 
 static dma_addr_t map_page(struct device *dev, struct page *page,

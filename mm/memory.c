@@ -279,7 +279,7 @@ void tlb_finish_mmu(struct mmu_gather *tlb, unsigned long start, unsigned long e
 
 	for (batch = tlb->local.next; batch; batch = next) {
 		next = batch->next;
-		free_pages((unsigned long)batch, 0);
+		free_pages(batch, 0);
 	}
 	tlb->local.next = NULL;
 }

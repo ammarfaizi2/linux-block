@@ -927,7 +927,7 @@ static void devm_pages_release(struct device *dev, void *res)
 {
 	struct pages_devres *devres = res;
 
-	free_pages(devres->addr, devres->order);
+	free_pages((void *)devres->addr, devres->order);
 }
 
 /**
@@ -957,7 +957,7 @@ unsigned long devm_get_free_pages(struct device *dev,
 	devres = devres_alloc(devm_pages_release,
 			      sizeof(struct pages_devres), GFP_KERNEL);
 	if (unlikely(!devres)) {
-		free_pages(addr, order);
+		free_pages((void *)addr, order);
 		return 0;
 	}
 

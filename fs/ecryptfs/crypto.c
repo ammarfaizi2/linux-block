@@ -1233,7 +1233,7 @@ int ecryptfs_write_metadata(struct dentry *ecryptfs_dentry,
 		goto out_free;
 	}
 out_free:
-	free_pages((unsigned long)virt, order);
+	free_pages(virt, order);
 out:
 	return rc;
 }

@@ -1262,12 +1262,10 @@ static void tile_net_init_mpipe_fail(int instance)
 
 	for_each_online_cpu(cpu) {
 		struct tile_net_info *info = &per_cpu(per_cpu_info, cpu);
-		free_pages(
-			(unsigned long)(
-				info->mpipe[instance].comps_for_echannel[0]),
+		free_pages(info->mpipe[instance].comps_for_echannel[0],
 			get_order(COMPS_SIZE));
 		info->mpipe[instance].comps_for_echannel[0] = NULL;
-		free_pages((unsigned long)(info->mpipe[instance].iqueue.idescs),
+		free_pages(info->mpipe[instance].iqueue.idescs,
 			   get_order(NOTIF_RING_SIZE));
 		info->mpipe[instance].iqueue.idescs = NULL;
 	}

@@ -75,11 +75,11 @@ int intel_svm_free_pasid_tables(struct intel_iommu *iommu)
 		order = 0;
 
 	if (iommu->pasid_table) {
-		free_pages((unsigned long)iommu->pasid_table, order);
+		free_pages(iommu->pasid_table, order);
 		iommu->pasid_table = NULL;
 	}
 	if (iommu->pasid_state_table) {
-		free_pages((unsigned long)iommu->pasid_state_table, order);
+		free_pages(iommu->pasid_state_table, order);
 		iommu->pasid_state_table = NULL;
 	}
 	idr_destroy(&iommu->pasid_idr);
@@ -107,7 +107,7 @@ int intel_svm_enable_prq(struct intel_iommu *iommu)
 		       iommu->name);
 		ret = -EINVAL;
 	err:
-		free_pages((unsigned long)iommu->prq, PRQ_ORDER);
+		free_pages(iommu->prq, PRQ_ORDER);
 		iommu->prq = NULL;
 		return ret;
 	}
@@ -140,7 +140,7 @@ int intel_svm_finish_prq(struct intel_iommu *iommu)
 	dmar_free_hwirq(iommu->pr_irq);
 	iommu->pr_irq = 0;
 
-	free_pages((unsigned long)iommu->prq, PRQ_ORDER);
+	free_pages(iommu->prq, PRQ_ORDER);
 	iommu->prq = NULL;
 
 	return 0;

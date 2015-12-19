@@ -797,8 +797,8 @@ void bch_journal_meta(struct cache_set *c, struct closure *cl)
 
 void bch_journal_free(struct cache_set *c)
 {
-	free_pages((unsigned long) c->journal.w[1].data, JSET_BITS);
-	free_pages((unsigned long) c->journal.w[0].data, JSET_BITS);
+	free_pages(c->journal.w[1].data, JSET_BITS);
+	free_pages(c->journal.w[0].data, JSET_BITS);
 	free_fifo(&c->journal.pin);
 }
 

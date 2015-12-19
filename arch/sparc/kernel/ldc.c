@@ -1000,7 +1000,7 @@ static void free_queue(unsigned long num_entries, struct ldc_packet *q)
 	size = num_entries * LDC_PACKET_SIZE;
 	order = get_order(size);
 
-	free_pages((unsigned long)q, order);
+	free_pages(q, order);
 }
 
 static unsigned long ldc_cookie_to_index(u64 cookie, void *arg)
@@ -1081,7 +1081,7 @@ static int ldc_iommu_init(const char *name, struct ldc_channel *lp)
 	return 0;
 
 out_free_table:
-	free_pages((unsigned long) table, order);
+	free_pages(table, order);
 	ldc_iommu->page_table = NULL;
 
 out_free_map:
@@ -1103,7 +1103,7 @@ static void ldc_iommu_release(struct ldc_channel *lp)
 	tsbsize = num_tsb_entries * sizeof(struct ldc_mtable_entry);
 	order = get_order(tsbsize);
 
-	free_pages((unsigned long) ldc_iommu->page_table, order);
+	free_pages(ldc_iommu->page_table, order);
 	ldc_iommu->page_table = NULL;
 
 	kfree(iommu->map);

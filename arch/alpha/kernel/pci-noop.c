@@ -127,7 +127,7 @@ static void alpha_noop_free_coherent(struct device *dev, size_t size,
 				     void *cpu_addr, dma_addr_t dma_addr,
 				     struct dma_attrs *attrs)
 {
-	free_pages((unsigned long)cpu_addr, get_order(size));
+	free_pages(cpu_addr, get_order(size));
 }
 
 static dma_addr_t alpha_noop_map_page(struct device *dev, struct page *page,

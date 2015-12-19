@@ -1159,7 +1159,7 @@ static void pvscsi_free_sgls(const struct pvscsi_adapter *adapter)
 	unsigned i;
 
 	for (i = 0; i < adapter->req_depth; ++i, ++ctx)
-		free_pages((unsigned long)ctx->sgl, get_order(SGL_SIZE));
+		free_pages(ctx->sgl, get_order(SGL_SIZE));
 }
 
 static int pvscsi_setup_msix(const struct pvscsi_adapter *adapter,
@@ -1257,8 +1257,7 @@ static int pvscsi_allocate_sg(struct pvscsi_adapter *adapter)
 		BUG_ON(!IS_ALIGNED(((unsigned long)ctx->sgl), PAGE_SIZE));
 		if (!ctx->sgl) {
 			for (; i >= 0; --i, --ctx) {
-				free_pages((unsigned long)ctx->sgl,
-					   get_order(SGL_SIZE));
+				free_pages(ctx->sgl, get_order(SGL_SIZE));
 				ctx->sgl = NULL;
 			}
 			return -ENOMEM;

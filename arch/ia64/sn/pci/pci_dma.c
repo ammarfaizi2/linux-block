@@ -120,7 +120,7 @@ static void *sn_dma_alloc_coherent(struct device *dev, size_t size,
 						   SN_DMA_ADDR_PHYS);
 	if (!*dma_handle) {
 		printk(KERN_ERR "%s: out of ATEs\n", __func__);
-		free_pages((unsigned long)cpuaddr, get_order(size));
+		free_pages(cpuaddr, get_order(size));
 		return NULL;
 	}
 
@@ -146,7 +146,7 @@ static void sn_dma_free_coherent(struct device *dev, size_t size, void *cpu_addr
 	BUG_ON(!dev_is_pci(dev));
 
 	provider->dma_unmap(pdev, dma_handle, 0);
-	free_pages((unsigned long)cpu_addr, get_order(size));
+	free_pages(cpu_addr, get_order(size));
 }
 
 /**

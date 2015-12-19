@@ -9974,7 +9974,7 @@ static void niu_phys_free_coherent(struct device *dev, size_t size,
 {
 	unsigned long order = get_order(size);
 
-	free_pages((unsigned long) cpu_addr, order);
+	free_pages(cpu_addr, order);
 }
 
 static u64 niu_phys_map_page(struct device *dev, struct page *page,

@@ -3434,7 +3434,7 @@ static int __init d40_lcla_allocate(struct d40_base *base)
 			ret = -ENOMEM;
 
 			for (j = 0; j < i; j++)
-				free_pages(page_list[j], base->lcla_pool.pages);
+				free_pages((void *)page_list[j], base->lcla_pool.pages);
 			goto failure;
 		}
 
@@ -3444,7 +3444,7 @@ static int __init d40_lcla_allocate(struct d40_base *base)
 	}
 
 	for (j = 0; j < i; j++)
-		free_pages(page_list[j], base->lcla_pool.pages);
+		free_pages((void *)page_list[j], base->lcla_pool.pages);
 
 	if (i < MAX_LCLA_ALLOC_ATTEMPTS) {
 		base->lcla_pool.base = (void *)page_list[i];
@@ -3710,7 +3710,7 @@ failure:
 					 DMA_TO_DEVICE);
 
 		if (!base->lcla_pool.base_unaligned && base->lcla_pool.base)
-			free_pages((unsigned long)base->lcla_pool.base,
+			free_pages(base->lcla_pool.base,
 				   base->lcla_pool.pages);
 
 		kfree(base->lcla_pool.base_unaligned);

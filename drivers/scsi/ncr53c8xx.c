@@ -366,7 +366,7 @@ static m_addr_t ___mp0_getp(m_pool_s *mp)
 
 static void ___mp0_freep(m_pool_s *mp, m_addr_t m)
 {
-	free_pages(m, MEMO_PAGE_ORDER);
+	free_pages((void *)m, MEMO_PAGE_ORDER);
 	--mp->nump;
 }
 

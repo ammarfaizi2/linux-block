@@ -419,7 +419,7 @@ static ssize_t mbcs_sram_read(struct file * fp, char __user *buf, size_t len, lo
 		rv = -EFAULT;
 
       exit:
-	free_pages(hostAddr, get_order(len));
+	free_pages((void *)hostAddr, get_order(len));
 
 	return rv;
 }
@@ -444,7 +444,7 @@ mbcs_sram_write(struct file * fp, const char __user *buf, size_t len, loff_t * o
 	rv = do_mbcs_sram_dmaread(soft, hostAddr, len, off);
 
       exit:
-	free_pages(hostAddr, get_order(len));
+	free_pages((void *)hostAddr, get_order(len));
 
 	return rv;
 }

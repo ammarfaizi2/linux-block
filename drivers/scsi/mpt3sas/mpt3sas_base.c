@@ -3115,7 +3115,7 @@ _base_release_memory_pools(struct MPT3SAS_ADAPTER *ioc)
 	}
 
 	if (ioc->scsi_lookup) {
-		free_pages((ulong)ioc->scsi_lookup, ioc->scsi_lookup_pages);
+		free_pages(ioc->scsi_lookup, ioc->scsi_lookup_pages);
 		ioc->scsi_lookup = NULL;
 	}
 	kfree(ioc->hpr_lookup);
@@ -3129,7 +3129,7 @@ _base_release_memory_pools(struct MPT3SAS_ADAPTER *ioc)
 		}
 		if (ioc->chain_dma_pool)
 			pci_pool_destroy(ioc->chain_dma_pool);
-		free_pages((ulong)ioc->chain_lookup, ioc->chain_pages);
+		free_pages(ioc->chain_lookup, ioc->chain_pages);
 		ioc->chain_lookup = NULL;
 	}
 }

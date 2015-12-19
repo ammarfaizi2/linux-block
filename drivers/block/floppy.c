@@ -267,7 +267,7 @@ static int set_next_request(void);
 /* Dma Memory related stuff */
 
 #ifndef fd_dma_mem_free
-#define fd_dma_mem_free(addr, size) free_pages(addr, get_order(size))
+#define fd_dma_mem_free(addr, size) free_pages((void *)addr, get_order(size))
 #endif
 
 #ifndef fd_dma_mem_alloc

@@ -291,7 +291,7 @@ static void ldt_get_host_info(void)
 	host_ldt_entries[k] = -1;
 
 out_free:
-	free_pages((unsigned long)ldt, order);
+	free_pages(ldt, order);
 }
 
 long init_new_ldt(struct mm_context *new_mm, struct mm_context *from_mm)

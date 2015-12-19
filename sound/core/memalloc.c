@@ -69,7 +69,7 @@ void snd_free_pages(void *ptr, size_t size)
 	if (ptr == NULL)
 		return;
 	pg = get_order(size);
-	free_pages((unsigned long) ptr, pg);
+	free_pages(ptr, pg);
 }
 
 /*

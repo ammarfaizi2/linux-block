@@ -53,7 +53,7 @@ void *dma_generic_alloc_coherent(struct device *dev, size_t size,
 
 	ret_nocache = (void __force *)ioremap_nocache(virt_to_phys(ret), size);
 	if (!ret_nocache) {
-		free_pages((unsigned long)ret, order);
+		free_pages(ret, order);
 		return NULL;
 	}
 

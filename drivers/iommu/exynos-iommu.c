@@ -702,7 +702,7 @@ static struct iommu_domain *exynos_iommu_domain_alloc(unsigned type)
 	return &domain->domain;
 
 err_counter:
-	free_pages((unsigned long)domain->pgtable, 2);
+	free_pages(domain->pgtable, 2);
 err_pgtable:
 	kfree(domain);
 	return NULL;
@@ -732,8 +732,8 @@ static void exynos_iommu_domain_free(struct iommu_domain *iommu_domain)
 			kmem_cache_free(lv2table_kmem_cache,
 				phys_to_virt(lv2table_base(domain->pgtable + i)));
 
-	free_pages((unsigned long)domain->pgtable, 2);
-	free_pages((unsigned long)domain->lv2entcnt, 1);
+	free_pages(domain->pgtable, 2);
+	free_pages(domain->lv2entcnt, 1);
 	kfree(domain);
 }
 

@@ -100,7 +100,7 @@ void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 #ifndef CONFIG_PPC_4K_PAGES
 	kmem_cache_free(pgtable_cache, (void *)pgd);
 #else
-	free_pages((unsigned long)pgd, PGDIR_ORDER - PAGE_SHIFT);
+	free_pages(pgd, PGDIR_ORDER - PAGE_SHIFT);
 #endif
 }
 

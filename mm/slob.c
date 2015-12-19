@@ -208,7 +208,7 @@ static void slob_free_pages(void *b, int order)
 {
 	if (current->reclaim_state)
 		current->reclaim_state->reclaimed_slab += 1 << order;
-	free_pages((unsigned long)b, order);
+	free_pages(b, order);
 }
 
 /*

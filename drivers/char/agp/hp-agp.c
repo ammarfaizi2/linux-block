@@ -321,7 +321,7 @@ hp_zx1_free_gatt_table (struct agp_bridge_data *bridge)
 	struct _hp_private *hp = &hp_private;
 
 	if (hp->io_pdir_owner)
-		free_pages((unsigned long) hp->io_pdir,
+		free_pages(hp->io_pdir,
 			    get_order(hp->io_pdir_size));
 	else
 		hp->gatt[0] = HP_ZX1_SBA_IOMMU_COOKIE;

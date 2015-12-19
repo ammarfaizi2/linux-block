@@ -309,7 +309,7 @@ err_noiommu:
 err_nova:
 	kfree(res);
 err_nomem:
-	free_pages(va, order);
+	free_pages((void *)va, order);
 err_nopages:
 	return NULL;
 }
@@ -468,7 +468,7 @@ static void *pci32_alloc_coherent(struct device *dev, size_t len,
 err_nova:
 	kfree(res);
 err_nomem:
-	free_pages((unsigned long)va, order);
+	free_pages(va, order);
 err_nopages:
 	return NULL;
 }
@@ -509,7 +509,7 @@ static void pci32_free_coherent(struct device *dev, size_t n, void *p,
 
 	release_resource(res);
 	kfree(res);
-	free_pages((unsigned long)phys_to_virt(ba), get_order(n));
+	free_pages(phys_to_virt(ba), get_order(n));
 }
 
 /*

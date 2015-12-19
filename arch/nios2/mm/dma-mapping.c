@@ -52,7 +52,7 @@ void dma_free_coherent(struct device *dev, size_t size, void *vaddr,
 {
 	unsigned long addr = (unsigned long) CAC_ADDR((unsigned long) vaddr);
 
-	free_pages(addr, get_order(size));
+	free_pages((void *)addr, get_order(size));
 }
 EXPORT_SYMBOL(dma_free_coherent);
 

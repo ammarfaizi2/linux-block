@@ -1504,7 +1504,7 @@ __il_free_pages(struct il_priv *il, struct page *page)
 static inline void
 il_free_pages(struct il_priv *il, unsigned long page)
 {
-	free_pages(page, il->hw_params.rx_page_order);
+	free_pages((void *)page, il->hw_params.rx_page_order);
 	il->alloc_rxb_page--;
 }
 

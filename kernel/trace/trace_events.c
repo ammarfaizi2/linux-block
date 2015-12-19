@@ -600,7 +600,7 @@ static void __ftrace_clear_event_pids(struct trace_array *tr)
 	/* Wait till all users are no longer using pid filtering */
 	synchronize_sched();
 
-	free_pages((unsigned long)pid_list->pids, pid_list->order);
+	free_pages(pid_list->pids, pid_list->order);
 	kfree(pid_list);
 }
 
@@ -1662,7 +1662,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 				break;
 			memcpy(pid_page, pid_list->pids,
 			       pid_list->nr_pids * sizeof(pid_t));
-			free_pages((unsigned long)pid_list->pids, pid_list->order);
+			free_pages(pid_list->pids, pid_list->order);
 
 			pid_list->order++;
 			pid_list->pids = pid_page;
@@ -1676,7 +1676,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 
 	if (ret < 0) {
 		if (pid_list)
-			free_pages((unsigned long)pid_list->pids, pid_list->order);
+			free_pages(pid_list->pids, pid_list->order);
 		kfree(pid_list);
 		mutex_unlock(&event_mutex);
 		return ret;
@@ -1717,7 +1717,7 @@ ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
 	if (filtered_pids) {
 		synchronize_sched();
 
-		free_pages((unsigned long)filtered_pids->pids, filtered_pids->order);
+		free_pages(filtered_pids->pids, filtered_pids->order);
 		kfree(filtered_pids);
 	} else {
 		/*

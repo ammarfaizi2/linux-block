@@ -35,7 +35,7 @@ unsigned long *crst_table_alloc(struct mm_struct *mm)
 
 void crst_table_free(struct mm_struct *mm, unsigned long *table)
 {
-	free_pages((unsigned long) table, 2);
+	free_pages(table, 2);
 }
 
 static void __crst_table_upgrade(void *arg)
@@ -1051,7 +1051,7 @@ static void __tlb_remove_table(void *_table)
 
 	switch (mask) {
 	case 0:		/* pmd or pud */
-		free_pages((unsigned long) table, 2);
+		free_pages(table, 2);
 		break;
 	case 1:		/* lower 2K of a 4K page table */
 	case 2:		/* higher 2K of a 4K page table */

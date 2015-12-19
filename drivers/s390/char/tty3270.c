@@ -728,7 +728,7 @@ out_write:
 	raw3270_request_free(tp->write);
 out_pages:
 	while (pages--)
-		free_pages((unsigned long) tp->freemem_pages[pages], 0);
+		free_pages(tp->freemem_pages[pages], 0);
 	kfree(tp->freemem_pages);
 	tty_port_destroy(&tp->port);
 out_tp:
@@ -750,7 +750,7 @@ tty3270_free_view(struct tty3270 *tp)
 	raw3270_request_free(tp->read);
 	raw3270_request_free(tp->write);
 	for (pages = 0; pages < TTY3270_STRING_PAGES; pages++)
-		free_pages((unsigned long) tp->freemem_pages[pages], 0);
+		free_pages(tp->freemem_pages[pages], 0);
 	kfree(tp->freemem_pages);
 	tty_port_destroy(&tp->port);
 	kfree(tp);

@@ -73,7 +73,7 @@ static inline pgd_t *pgd_alloc(struct mm_struct *mm)
 
 static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
-	free_pages((unsigned long)pgd, __get_order_pgd());
+	free_pages(pgd, __get_order_pgd());
 }
 
 
@@ -122,13 +122,13 @@ pte_alloc_one(struct mm_struct *mm, unsigned long address)
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
-	free_pages((unsigned long)pte, __get_order_pte()); /* takes phy addr */
+	free_pages(pte, __get_order_pte()); /* takes phy addr */
 }
 
 static inline void pte_free(struct mm_struct *mm, pgtable_t ptep)
 {
 	pgtable_page_dtor(virt_to_page(ptep));
-	free_pages((unsigned long)ptep, __get_order_pte());
+	free_pages(ptep, __get_order_pte());
 }
 
 #define __pte_free_tlb(tlb, pte, addr)  pte_free((tlb)->mm, pte)

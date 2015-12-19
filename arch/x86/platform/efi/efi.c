@@ -700,7 +700,7 @@ static void *realloc_pages(void *old_memmap, int old_shift)
 	memcpy(ret, old_memmap, PAGE_SIZE << old_shift);
 
 out:
-	free_pages((unsigned long)old_memmap, old_shift);
+	free_pages(old_memmap, old_shift);
 	return ret;
 }
 
@@ -979,7 +979,7 @@ static void __init __efi_enter_virtual_mode(void)
 	 *
 	 * efi_cleanup_page_tables(__pa(new_memmap), 1 << pg_shift);
 	 */
-	free_pages((unsigned long)new_memmap, pg_shift);
+	free_pages(new_memmap, pg_shift);
 
 	/* clean DUMMY object */
 	efi_delete_dummy_variable();

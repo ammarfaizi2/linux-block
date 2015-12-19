@@ -165,7 +165,7 @@ static void ima_free_pages(void *ptr, size_t size)
 {
 	if (!ptr)
 		return;
-	free_pages((unsigned long)ptr, get_order(size));
+	free_pages(ptr, get_order(size));
 }
 
 static struct crypto_ahash *ima_alloc_atfm(enum hash_algo algo)

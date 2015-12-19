@@ -139,8 +139,7 @@ idal_buffer_alloc(size_t size, int page_order)
 		// Not enough memory
 		while (i >= nr_chunks) {
 			i -= nr_chunks;
-			free_pages((unsigned long) ib->data[i],
-				   ib->page_order);
+			free_pages(ib->data[i], ib->page_order);
 		}
 		kfree(ib);
 		return ERR_PTR(-ENOMEM);
@@ -159,7 +158,7 @@ idal_buffer_free(struct idal_buffer *ib)
 	nr_ptrs = (ib->size + IDA_BLOCK_SIZE - 1) >> IDA_SIZE_LOG;
 	nr_chunks = (4096 << ib->page_order) >> IDA_SIZE_LOG;
 	for (i = 0; i < nr_ptrs; i += nr_chunks)
-		free_pages((unsigned long) ib->data[i], ib->page_order);
+		free_pages(ib->data[i], ib->page_order);
 	kfree(ib);
 }
 

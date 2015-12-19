@@ -96,7 +96,7 @@ static void *ccio_alloc_consistent(struct pci_dev *dev, size_t size,
 static void ccio_free_consistent(struct pci_dev *dev, size_t size,
 			       void *vaddr, dma_addr_t handle)
 {
-	free_pages((unsigned long)vaddr, get_order(size));
+	free_pages(vaddr, get_order(size));
 }
 
 static dma_addr_t ccio_map_single(struct pci_dev *dev, void *ptr, size_t size,
