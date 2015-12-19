@@ -111,7 +111,7 @@
 struct xilinx_pcie_port {
 	void __iomem *reg_base;
 	u32 irq;
-	unsigned long msi_pages;
+	void *msi_pages;
 	u8 root_busno;
 	struct device *dev;
 	struct irq_domain *irq_domain;
@@ -297,7 +297,7 @@ static int xilinx_pcie_msi_setup_irq(struct msi_controller *chip,
 
 	irq_set_msi_desc(irq, desc);
 
-	msg_addr = virt_to_phys((void *)port->msi_pages);
+	msg_addr = virt_to_phys(port->msi_pages);
 
 	msg.address_hi = 0;
 	msg.address_lo = msg_addr;
@@ -353,8 +353,8 @@ static void xilinx_pcie_enable_msi(struct xilinx_pcie_port *port)
 {
 	phys_addr_t msg_addr;
 
-	port->msi_pages = __get_free_pages(GFP_KERNEL, 0);
-	msg_addr = virt_to_phys((void *)port->msi_pages);
+	port->msi_pages = (void *)__get_free_pages(GFP_KERNEL, 0);
+	msg_addr = virt_to_phys(port->msi_pages);
 	pcie_write(port, 0x0, XILINX_PCIE_REG_MSIBASE1);
 	pcie_write(port, msg_addr, XILINX_PCIE_REG_MSIBASE2);
 }
@@ -527,7 +527,7 @@ static void xilinx_pcie_free_irq_domain(struct xilinx_pcie_port *port)
 	/* Free IRQ Domain */
 	if (IS_ENABLED(CONFIG_PCI_MSI)) {
 
-		free_pages((void *)port->msi_pages, 0);
+		free_pages(port->msi_pages, 0);
 
 		num_irqs = XILINX_NUM_MSI_IRQS;
 	} else {

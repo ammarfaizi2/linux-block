@@ -241,7 +241,7 @@ struct tegra_msi {
 	struct msi_controller chip;
 	DECLARE_BITMAP(used, INT_PCI_MSI_NR);
 	struct irq_domain *domain;
-	unsigned long pages;
+	void *pages;
 	struct mutex lock;
 	int irq;
 };
@@ -1214,7 +1214,7 @@ static int tegra_msi_setup_irq(struct msi_controller *chip,
 
 	irq_set_msi_desc(irq, desc);
 
-	msg.address_lo = virt_to_phys((void *)msi->pages);
+	msg.address_lo = virt_to_phys(msi->pages);
 	/* 32 bit address only */
 	msg.address_hi = 0;
 	msg.data = hwirq;
@@ -1296,8 +1296,8 @@ static int tegra_pcie_enable_msi(struct tegra_pcie *pcie)
 	}
 
 	/* setup AFI/FPCI range */
-	msi->pages = __get_free_pages(GFP_KERNEL, 0);
-	base = virt_to_phys((void *)msi->pages);
+	msi->pages = (void *)__get_free_pages(GFP_KERNEL, 0);
+	base = virt_to_phys(msi->pages);
 
 	afi_writel(pcie, base >> soc->msi_base_shift, AFI_MSI_FPCI_BAR_ST);
 	afi_writel(pcie, base, AFI_MSI_AXI_BAR_ST);
@@ -1347,7 +1347,7 @@ static int tegra_pcie_disable_msi(struct tegra_pcie *pcie)
 	afi_writel(pcie, 0, AFI_MSI_EN_VEC6);
 	afi_writel(pcie, 0, AFI_MSI_EN_VEC7);
 
-	free_pages((void *)msi->pages, 0);
+	free_pages(msi->pages, 0);
 
 	if (msi->irq > 0)
 		free_irq(msi->irq, pcie);

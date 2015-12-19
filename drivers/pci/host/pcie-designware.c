@@ -206,8 +206,8 @@ void dw_pcie_msi_init(struct pcie_port *pp)
 {
 	u64 msi_target;
 
-	pp->msi_data = __get_free_pages(GFP_KERNEL, 0);
-	msi_target = virt_to_phys((void *)pp->msi_data);
+	pp->msi_data = (void *)__get_free_pages(GFP_KERNEL, 0);
+	msi_target = virt_to_phys(pp->msi_data);
 
 	/* program the msi_data */
 	dw_pcie_wr_own_conf(pp, PCIE_MSI_ADDR_LO, 4,
@@ -307,7 +307,7 @@ static void dw_msi_setup_msg(struct pcie_port *pp, unsigned int irq, u32 pos)
 	if (pp->ops->get_msi_addr)
 		msi_target = pp->ops->get_msi_addr(pp);
 	else
-		msi_target = virt_to_phys((void *)pp->msi_data);
+		msi_target = virt_to_phys(pp->msi_data);
 
 	msg.address_lo = (u32)(msi_target & 0xffffffff);
 	msg.address_hi = (u32)(msi_target >> 32 & 0xffffffff);

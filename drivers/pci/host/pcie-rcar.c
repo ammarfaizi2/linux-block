@@ -114,7 +114,7 @@ struct rcar_msi {
 	DECLARE_BITMAP(used, INT_PCI_MSI_NR);
 	struct irq_domain *domain;
 	struct msi_controller chip;
-	unsigned long pages;
+	void *pages;
 	struct mutex lock;
 	int irq1;
 	int irq2;
@@ -734,8 +734,8 @@ static int rcar_pcie_enable_msi(struct rcar_pcie *pcie)
 	}
 
 	/* setup MSI data target */
-	msi->pages = __get_free_pages(GFP_KERNEL, 0);
-	base = virt_to_phys((void *)msi->pages);
+	msi->pages = (void *)__get_free_pages(GFP_KERNEL, 0);
+	base = virt_to_phys(msi->pages);
 
 	rcar_pci_write_reg(pcie, base | MSIFE, PCIEMSIALR);
 	rcar_pci_write_reg(pcie, 0, PCIEMSIAUR);
