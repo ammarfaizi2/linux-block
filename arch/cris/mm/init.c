@@ -40,9 +40,10 @@ void free_init_pages(const char *what, unsigned long begin, unsigned long end)
 	unsigned long addr;
 
 	for (addr = begin; addr < end; addr += PAGE_SIZE) {
-		ClearPageReserved(virt_to_page(addr));
-		init_page_count(virt_to_page(addr));
-		free_page((void *)addr);
+		struct page *page = virt_to_page(addr);
+		ClearPageReserved(page);
+		init_page_count(page);
+		__free_page(page);
 		totalram_pages++;
 	}
 
