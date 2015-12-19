@@ -64,7 +64,7 @@ struct ipz_page {
 #define IPZ_SPAGE_PER_KPAGE (PAGE_SIZE / 512)
 
 struct ipz_small_queue_page {
-	unsigned long page;
+	void *page;
 	unsigned long bitmap[IPZ_SPAGE_PER_KPAGE / BITS_PER_LONG];
 	int fill;
 	void *mapped_addr;

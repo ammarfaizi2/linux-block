@@ -85,7 +85,7 @@ static u32 credit_table[31] = {
 
 static void get_map_page(struct ipath_qp_table *qpt, struct qpn_map *map)
 {
-	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	void *page = get_zeroed_page(GFP_KERNEL);
 	unsigned long flags;
 
 	/*
@@ -94,9 +94,9 @@ static void get_map_page(struct ipath_qp_table *qpt, struct qpn_map *map)
 
 	spin_lock_irqsave(&qpt->lock, flags);
 	if (map->page)
-		free_page((void *)page);
+		free_page(page);
 	else
-		map->page = (void *)page;
+		map->page = page;
 	spin_unlock_irqrestore(&qpt->lock, flags);
 }
 

@@ -92,7 +92,7 @@ int ehca_dealloc_pd(struct ib_pd *pd)
 		list_splice(&my_pd->full[i], &my_pd->free[i]);
 		list_for_each_entry_safe(page, tmp, &my_pd->free[i], list) {
 			leftovers = 1;
-			free_page((void *)page->page);
+			free_page(page->page);
 			kmem_cache_free(small_qp_cache, page);
 		}
 	}

@@ -140,7 +140,7 @@ static int alloc_small_queue_page(struct ipz_queue *queue, struct ehca_pd *pd)
 		if (!page)
 			goto out;
 
-		page->page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+		page->page = get_zeroed_page(GFP_KERNEL);
 		if (!page->page) {
 			kmem_cache_free(small_qp_cache, page);
 			goto out;
@@ -158,7 +158,7 @@ static int alloc_small_queue_page(struct ipz_queue *queue, struct ehca_pd *pd)
 
 	mutex_unlock(&pd->lock);
 
-	queue->queue_pages[0] = (void *)(page->page | (bit << (order + 9)));
+	queue->queue_pages[0] = page->page + (bit << (order + 9));
 	queue->small_page = page;
 	queue->offset = bit << (order + 9);
 	return 1;
@@ -196,7 +196,7 @@ static void free_small_queue_page(struct ipz_queue *queue, struct ehca_pd *pd)
 	mutex_unlock(&pd->lock);
 
 	if (free_page) {
-		free_page((void *)page->page);
+		free_page(page->page);
 		kmem_cache_free(small_qp_cache, page);
 	}
 }
