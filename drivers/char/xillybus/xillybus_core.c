@@ -359,7 +359,7 @@ static int xilly_get_dma_buffers(struct xilly_endpoint *ep,
 				allocorder++;
 			}
 
-			s->salami = (void *) devm_get_free_pages(
+			s->salami = devm_get_free_pages(
 				dev,
 				GFP_KERNEL | __GFP_DMA32 | __GFP_ZERO,
 				allocorder);

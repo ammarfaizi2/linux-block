@@ -671,9 +671,9 @@ extern char *devm_kstrdup(struct device *dev, const char *s, gfp_t gfp);
 extern void *devm_kmemdup(struct device *dev, const void *src, size_t len,
 			  gfp_t gfp);
 
-extern unsigned long devm_get_free_pages(struct device *dev,
+extern void *devm_get_free_pages(struct device *dev,
 					 gfp_t gfp_mask, unsigned int order);
-extern void devm_free_pages(struct device *dev, unsigned long addr);
+extern void devm_free_pages(struct device *dev, void *addr);
 
 void __iomem *devm_ioremap_resource(struct device *dev, struct resource *res);
 
