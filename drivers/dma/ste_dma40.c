@@ -3404,7 +3404,7 @@ static void __init d40_hw_init(struct d40_base *base)
 static int __init d40_lcla_allocate(struct d40_base *base)
 {
 	struct d40_lcla_pool *pool = &base->lcla_pool;
-	unsigned long *page_list;
+	void **page_list;
 	int i, j;
 	int ret = 0;
 
@@ -3413,7 +3413,7 @@ static int __init d40_lcla_allocate(struct d40_base *base)
 	 * To full fill this hardware requirement without wasting 256 kb
 	 * we allocate pages until we get an aligned one.
 	 */
-	page_list = kmalloc(sizeof(unsigned long) * MAX_LCLA_ALLOC_ATTEMPTS,
+	page_list = kmalloc(sizeof(void *) * MAX_LCLA_ALLOC_ATTEMPTS,
 			    GFP_KERNEL);
 
 	if (!page_list) {
@@ -3425,7 +3425,7 @@ static int __init d40_lcla_allocate(struct d40_base *base)
 	base->lcla_pool.pages = SZ_1K * base->num_phy_chans / PAGE_SIZE;
 
 	for (i = 0; i < MAX_LCLA_ALLOC_ATTEMPTS; i++) {
-		page_list[i] = __get_free_pages(GFP_KERNEL,
+		page_list[i] = (void *)__get_free_pages(GFP_KERNEL,
 						base->lcla_pool.pages);
 		if (!page_list[i]) {
 
@@ -3434,20 +3434,20 @@ static int __init d40_lcla_allocate(struct d40_base *base)
 			ret = -ENOMEM;
 
 			for (j = 0; j < i; j++)
-				free_pages((void *)page_list[j], base->lcla_pool.pages);
+				free_pages(page_list[j], base->lcla_pool.pages);
 			goto failure;
 		}
 
-		if ((virt_to_phys((void *)page_list[i]) &
+		if ((virt_to_phys(page_list[i]) &
 		     (LCLA_ALIGNMENT - 1)) == 0)
 			break;
 	}
 
 	for (j = 0; j < i; j++)
-		free_pages((void *)page_list[j], base->lcla_pool.pages);
+		free_pages(page_list[j], base->lcla_pool.pages);
 
 	if (i < MAX_LCLA_ALLOC_ATTEMPTS) {
-		base->lcla_pool.base = (void *)page_list[i];
+		base->lcla_pool.base = page_list[i];
 	} else {
 		/*
 		 * After many attempts and no succees with finding the correct
