@@ -306,9 +306,6 @@ struct octeon_droq {
 	/** DMA mapped address of the DROQ descriptor ring. */
 	size_t desc_ring_dma;
 
-	/** Info ptr list are allocated at this virtual address. */
-	size_t info_base_addr;
-
 	/** DMA mapped address of the info list */
 	size_t info_list_dma;
 

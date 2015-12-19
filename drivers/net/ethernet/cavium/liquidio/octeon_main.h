@@ -129,7 +129,6 @@ static inline void *
 cnnic_alloc_aligned_dma(struct pci_dev *pci_dev,
 			u32 size,
 			u32 *alloc_size,
-			size_t *orig_ptr,
 			size_t *dma_addr __attribute__((unused)))
 {
 	int retries = 0;
@@ -140,27 +139,15 @@ cnnic_alloc_aligned_dma(struct pci_dev *pci_dev,
 		ptr =
 		    (void *)__get_free_pages(GFP_KERNEL,
 					     get_order(size));
-		if ((unsigned long)ptr & 0x07) {
-			free_pages(ptr, get_order(size));
-			ptr = NULL;
-			/* Increment the size required if the first
-			 * attempt failed.
-			 */
-			if (!retries)
-				size += 7;
-		}
 		retries++;
 	} while ((retries <= OCTEON_MAX_ALLOC_RETRIES) && !ptr);
 
 	*alloc_size = size;
-	*orig_ptr = (unsigned long)ptr;
-	if ((unsigned long)ptr & 0x07)
-		ptr = (void *)(((unsigned long)ptr + 7) & ~(7UL));
 	return ptr;
 }
 
-#define cnnic_free_aligned_dma(pci_dev, ptr, size, orig_ptr, dma_addr) \
-		free_pages((void *)orig_ptr, get_order(size))
+#define cnnic_free_aligned_dma(pci_dev, ptr, size, dma_addr) \
+		free_pages(ptr, get_order(size))
 
 static inline void
 sleep_cond(wait_queue_head_t *wait_queue, int *condition)

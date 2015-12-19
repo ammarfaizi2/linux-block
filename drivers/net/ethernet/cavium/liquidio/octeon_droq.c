@@ -218,10 +218,9 @@ int octeon_delete_droq(struct octeon_device *oct, u32 q_no)
 	octeon_droq_destroy_ring_buffers(oct, droq);
 	vfree(droq->recv_buf_list);
 
-	if (droq->info_base_addr)
+	if (droq->info_list)
 		cnnic_free_aligned_dma(oct->pci_dev, droq->info_list,
 				       droq->info_alloc_size,
-				       droq->info_base_addr,
 				       droq->info_list_dma);
 
 	if (droq->desc_ring)
@@ -286,7 +285,6 @@ int octeon_init_droq(struct octeon_device *oct,
 		cnnic_alloc_aligned_dma(oct->pci_dev,
 					(droq->max_count * OCT_DROQ_INFO_SIZE),
 					&droq->info_alloc_size,
-					&droq->info_base_addr,
 					&droq->info_list_dma);
 
 	if (!droq->info_list) {
