@@ -57,7 +57,7 @@
 #define EFFICEON_PRESENT	(1 << 8)
 
 static struct _efficeon_private {
-	unsigned long l1_table[EFFICEON_L1_SIZE];
+	unsigned int *l1_table[EFFICEON_L1_SIZE];
 } efficeon_private;
 
 static const struct gatt_mask efficeon_generic_masks[] =
@@ -160,11 +160,11 @@ static int efficeon_free_gatt_table(struct agp_bridge_data *bridge)
 	int index, freed = 0;
 
 	for (index = 0; index < EFFICEON_L1_SIZE; index++) {
-		unsigned long page = efficeon_private.l1_table[index];
+		void *page = efficeon_private.l1_table[index];
 		if (page) {
-			efficeon_private.l1_table[index] = 0;
-			ClearPageReserved(virt_to_page((char *)page));
-			free_page((void *)page);
+			efficeon_private.l1_table[index] = NULL;
+			ClearPageReserved(virt_to_page(page));
+			free_page(page);
 			freed++;
 		}
 		printk(KERN_DEBUG PFX "efficeon_free_gatt_table(%p, %02x, %08x)\n",
@@ -208,25 +208,25 @@ static int efficeon_create_gatt_table(struct agp_bridge_data *bridge)
 
 	for (index = 0 ; index < l1_pages ; index++) {
 		int offset;
-		unsigned long page;
+		void *page;
 		unsigned long value;
 
 		page = efficeon_private.l1_table[index];
 		BUG_ON(page);
 
-		page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+		page = get_zeroed_page(GFP_KERNEL);
 		if (!page) {
 			efficeon_free_gatt_table(agp_bridge);
 			return -ENOMEM;
 		}
-		SetPageReserved(virt_to_page((char *)page));
+		SetPageReserved(virt_to_page(page));
 
 		for (offset = 0; offset < PAGE_SIZE; offset += clflush_chunk)
-			clflush((char *)page+offset);
+			clflush(page+offset);
 
 		efficeon_private.l1_table[index] = page;
 
-		value = virt_to_phys((unsigned long *)page) | pati | present | index;
+		value = virt_to_phys(page) | pati | present | index;
 
 		pci_write_config_dword(agp_bridge->dev,
 			EFFICEON_ATTPAGE, value);
@@ -260,7 +260,7 @@ static int efficeon_insert_memory(struct agp_memory * mem, off_t pg_start, int t
 		int index = pg_start + i;
 		unsigned long insert = efficeon_mask_memory(mem->pages[i]);
 
-		page = (unsigned int *) efficeon_private.l1_table[index >> 10];
+		page = efficeon_private.l1_table[index >> 10];
 
 		if (!page)
 			continue;
@@ -299,7 +299,7 @@ static int efficeon_remove_memory(struct agp_memory * mem, off_t pg_start, int t
 
 	for (i = 0; i < count; i++) {
 		int index = pg_start + i;
-		unsigned int *page = (unsigned int *) efficeon_private.l1_table[index >> 10];
+		unsigned int *page = efficeon_private.l1_table[index >> 10];
 
 		if (!page)
 			continue;
