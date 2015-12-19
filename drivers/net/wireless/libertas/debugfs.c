@@ -34,8 +34,7 @@ static ssize_t lbs_dev_info(struct file *file, char __user *userbuf,
 {
 	struct lbs_private *priv = file->private_data;
 	size_t pos = 0;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	ssize_t res;
 	if (!buf)
 		return -ENOMEM;
@@ -47,7 +46,7 @@ static ssize_t lbs_dev_info(struct file *file, char __user *userbuf,
 
 	res = simple_read_from_buffer(userbuf, count, ppos, buf, pos);
 
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
@@ -59,8 +58,7 @@ static ssize_t lbs_sleepparams_write(struct file *file,
 	ssize_t buf_size, ret;
 	struct sleep_params sp;
 	int p1, p2, p3, p4, p5, p6;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -88,7 +86,7 @@ static ssize_t lbs_sleepparams_write(struct file *file,
 		ret = -EINVAL;
 
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return ret;
 }
 
@@ -99,8 +97,7 @@ static ssize_t lbs_sleepparams_read(struct file *file, char __user *userbuf,
 	ssize_t ret;
 	size_t pos = 0;
 	struct sleep_params sp;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -116,7 +113,7 @@ static ssize_t lbs_sleepparams_read(struct file *file, char __user *userbuf,
 	ret = simple_read_from_buffer(userbuf, count, ppos, buf, pos);
 
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return ret;
 }
 
@@ -127,8 +124,7 @@ static ssize_t lbs_host_sleep_write(struct file *file,
 	struct lbs_private *priv = file->private_data;
 	ssize_t buf_size, ret;
 	int host_sleep;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -162,7 +158,7 @@ static ssize_t lbs_host_sleep_write(struct file *file,
 		ret = count;
 
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return ret;
 }
 
@@ -172,8 +168,7 @@ static ssize_t lbs_host_sleep_read(struct file *file, char __user *userbuf,
 	struct lbs_private *priv = file->private_data;
 	ssize_t ret;
 	size_t pos = 0;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -181,7 +176,7 @@ static ssize_t lbs_host_sleep_read(struct file *file, char __user *userbuf,
 
 	ret = simple_read_from_buffer(userbuf, count, ppos, buf, pos);
 
-	free_page((void *)addr);
+	free_page(buf);
 	return ret;
 }
 
@@ -230,12 +225,11 @@ static ssize_t lbs_threshold_read(uint16_t tlv_type, uint16_t event_mask,
 	struct lbs_private *priv = file->private_data;
 	ssize_t ret = 0;
 	size_t pos = 0;
-	char *buf;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	u8 value;
 	u8 freq;
 	int events = 0;
 
-	buf = (char *)get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -284,10 +278,9 @@ static ssize_t lbs_threshold_write(uint16_t tlv_type, uint16_t event_mask,
 	ssize_t buf_size;
 	int value, freq, new_mask;
 	uint16_t curr_mask;
-	char *buf;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	int ret;
 
-	buf = (char *)get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -449,8 +442,7 @@ static ssize_t lbs_rdmac_read(struct file *file, char __user *userbuf,
 	struct lbs_private *priv = file->private_data;
 	ssize_t pos = 0;
 	int ret;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	u32 val = 0;
 
 	if (!buf)
@@ -463,7 +455,7 @@ static ssize_t lbs_rdmac_read(struct file *file, char __user *userbuf,
 				priv->mac_offset, val);
 		ret = simple_read_from_buffer(userbuf, count, ppos, buf, pos);
 	}
-	free_page((void *)addr);
+	free_page(buf);
 	return ret;
 }
 
@@ -473,8 +465,7 @@ static ssize_t lbs_rdmac_write(struct file *file,
 {
 	struct lbs_private *priv = file->private_data;
 	ssize_t res, buf_size;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -486,7 +477,7 @@ static ssize_t lbs_rdmac_write(struct file *file,
 	priv->mac_offset = simple_strtoul(buf, NULL, 16);
 	res = count;
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
@@ -498,8 +489,7 @@ static ssize_t lbs_wrmac_write(struct file *file,
 	struct lbs_private *priv = file->private_data;
 	ssize_t res, buf_size;
 	u32 offset, value;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -520,7 +510,7 @@ static ssize_t lbs_wrmac_write(struct file *file,
 	if (!res)
 		res = count;
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
@@ -530,8 +520,7 @@ static ssize_t lbs_rdbbp_read(struct file *file, char __user *userbuf,
 	struct lbs_private *priv = file->private_data;
 	ssize_t pos = 0;
 	int ret;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	u32 val;
 
 	if (!buf)
@@ -544,7 +533,7 @@ static ssize_t lbs_rdbbp_read(struct file *file, char __user *userbuf,
 				priv->bbp_offset, val);
 		ret = simple_read_from_buffer(userbuf, count, ppos, buf, pos);
 	}
-	free_page((void *)addr);
+	free_page(buf);
 
 	return ret;
 }
@@ -555,8 +544,7 @@ static ssize_t lbs_rdbbp_write(struct file *file,
 {
 	struct lbs_private *priv = file->private_data;
 	ssize_t res, buf_size;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -568,7 +556,7 @@ static ssize_t lbs_rdbbp_write(struct file *file,
 	priv->bbp_offset = simple_strtoul(buf, NULL, 16);
 	res = count;
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
@@ -580,8 +568,7 @@ static ssize_t lbs_wrbbp_write(struct file *file,
 	struct lbs_private *priv = file->private_data;
 	ssize_t res, buf_size;
 	u32 offset, value;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -602,7 +589,7 @@ static ssize_t lbs_wrbbp_write(struct file *file,
 	if (!res)
 		res = count;
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
@@ -612,8 +599,7 @@ static ssize_t lbs_rdrf_read(struct file *file, char __user *userbuf,
 	struct lbs_private *priv = file->private_data;
 	ssize_t pos = 0;
 	int ret;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	u32 val;
 
 	if (!buf)
@@ -626,7 +612,7 @@ static ssize_t lbs_rdrf_read(struct file *file, char __user *userbuf,
 				priv->rf_offset, val);
 		ret = simple_read_from_buffer(userbuf, count, ppos, buf, pos);
 	}
-	free_page((void *)addr);
+	free_page(buf);
 
 	return ret;
 }
@@ -637,8 +623,7 @@ static ssize_t lbs_rdrf_write(struct file *file,
 {
 	struct lbs_private *priv = file->private_data;
 	ssize_t res, buf_size;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -650,7 +635,7 @@ static ssize_t lbs_rdrf_write(struct file *file,
 	priv->rf_offset = simple_strtoul(buf, NULL, 16);
 	res = count;
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
@@ -662,8 +647,7 @@ static ssize_t lbs_wrrf_write(struct file *file,
 	struct lbs_private *priv = file->private_data;
 	ssize_t res, buf_size;
 	u32 offset, value;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -684,7 +668,7 @@ static ssize_t lbs_wrrf_write(struct file *file,
 	if (!res)
 		res = count;
 out_unlock:
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
@@ -863,8 +847,7 @@ static ssize_t lbs_debugfs_read(struct file *file, char __user *userbuf,
 	char *p;
 	int i;
 	struct debug_data *d;
-	unsigned long addr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
+	char *buf = get_zeroed_page(GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
@@ -887,7 +870,7 @@ static ssize_t lbs_debugfs_read(struct file *file, char __user *userbuf,
 
 	res = simple_read_from_buffer(userbuf, count, ppos, p, pos);
 
-	free_page((void *)addr);
+	free_page(buf);
 	return res;
 }
 
