@@ -377,28 +377,28 @@ static ssize_t proc_dev_atm_read(struct file *file, char __user *buf,
 				 size_t count, loff_t *pos)
 {
 	struct atm_dev *dev;
-	unsigned long page;
+	char *page;
 	int length;
 
 	if (count == 0)
 		return 0;
-	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	page = get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 	dev = PDE_DATA(file_inode(file));
 	if (!dev->ops->proc_read)
 		length = -EINVAL;
 	else {
-		length = dev->ops->proc_read(dev, pos, (char *)page);
+		length = dev->ops->proc_read(dev, pos, page);
 		if (length > count)
 			length = -EINVAL;
 	}
 	if (length >= 0) {
-		if (copy_to_user(buf, (char *)page, length))
+		if (copy_to_user(buf, page, length))
 			length = -EFAULT;
 		(*pos)++;
 	}
-	free_page((void *)page);
+	free_page(page);
 	return length;
 }
 
