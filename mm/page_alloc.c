@@ -3449,20 +3449,20 @@ void free_kmem_pages(unsigned long addr, unsigned int order)
 	}
 }
 
-static void *make_alloc_exact(unsigned long addr, unsigned int order,
+static void *make_alloc_exact(void *addr, unsigned int order,
 		size_t size)
 {
 	if (addr) {
-		unsigned long alloc_end = addr + (PAGE_SIZE << order);
-		unsigned long used = addr + PAGE_ALIGN(size);
+		void *alloc_end = addr + (PAGE_SIZE << order);
+		void *used = addr + PAGE_ALIGN(size);
 
-		split_page(virt_to_page((void *)addr), order);
+		split_page(virt_to_page(addr), order);
 		while (used < alloc_end) {
-			free_page((void *)used);
+			free_page(used);
 			used += PAGE_SIZE;
 		}
 	}
-	return (void *)addr;
+	return addr;
 }
 
 /**
@@ -3481,9 +3481,7 @@ static void *make_alloc_exact(unsigned long addr, unsigned int order,
 void *alloc_pages_exact(size_t size, gfp_t gfp_mask)
 {
 	unsigned int order = get_order(size);
-	unsigned long addr;
-
-	addr = __get_free_pages(gfp_mask, order);
+	void *addr = (void *)__get_free_pages(gfp_mask, order);
 	return make_alloc_exact(addr, order, size);
 }
 EXPORT_SYMBOL(alloc_pages_exact);
@@ -3504,7 +3502,7 @@ void * __meminit alloc_pages_exact_nid(int nid, size_t size, gfp_t gfp_mask)
 	struct page *p = alloc_pages_node(nid, gfp_mask, order);
 	if (!p)
 		return NULL;
-	return make_alloc_exact((unsigned long)page_address(p), order, size);
+	return make_alloc_exact(page_address(p), order, size);
 }
 
 /**
@@ -3516,12 +3514,11 @@ void * __meminit alloc_pages_exact_nid(int nid, size_t size, gfp_t gfp_mask)
  */
 void free_pages_exact(void *virt, size_t size)
 {
-	unsigned long addr = (unsigned long)virt;
-	unsigned long end = addr + PAGE_ALIGN(size);
+	void *end = virt + PAGE_ALIGN(size);
 
-	while (addr < end) {
-		free_page((void *)addr);
-		addr += PAGE_SIZE;
+	while (virt < end) {
+		free_page(virt);
+		virt += PAGE_SIZE;
 	}
 }
 EXPORT_SYMBOL(free_pages_exact);
