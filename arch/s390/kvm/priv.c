@@ -504,7 +504,7 @@ static int handle_stsi(struct kvm_vcpu *vcpu)
 	int fc = (vcpu->run->s.regs.gprs[0] & 0xf0000000) >> 28;
 	int sel1 = vcpu->run->s.regs.gprs[0] & 0xff;
 	int sel2 = vcpu->run->s.regs.gprs[1] & 0xffff;
-	unsigned long mem = 0;
+	void *mem = NULL;
 	u64 operand2;
 	int rc = 0;
 	ar_t ar;
@@ -538,23 +538,23 @@ static int handle_stsi(struct kvm_vcpu *vcpu)
 	switch (fc) {
 	case 1: /* same handling for 1 and 2 */
 	case 2:
-		mem = (unsigned long)get_zeroed_page(GFP_KERNEL);
+		mem = get_zeroed_page(GFP_KERNEL);
 		if (!mem)
 			goto out_no_data;
-		if (stsi((void *) mem, fc, sel1, sel2))
+		if (stsi(mem, fc, sel1, sel2))
 			goto out_no_data;
 		break;
 	case 3:
 		if (sel1 != 2 || sel2 != 2)
 			goto out_no_data;
-		mem = (unsigned long)get_zeroed_page(GFP_KERNEL);
+		mem = get_zeroed_page(GFP_KERNEL);
 		if (!mem)
 			goto out_no_data;
-		handle_stsi_3_2_2(vcpu, (void *) mem);
+		handle_stsi_3_2_2(vcpu, mem);
 		break;
 	}
 
-	rc = write_guest(vcpu, operand2, ar, (void *)mem, PAGE_SIZE);
+	rc = write_guest(vcpu, operand2, ar, mem, PAGE_SIZE);
 	if (rc) {
 		rc = kvm_s390_inject_prog_cond(vcpu, rc);
 		goto out;
@@ -564,14 +564,14 @@ static int handle_stsi(struct kvm_vcpu *vcpu)
 		rc = -EREMOTE;
 	}
 	trace_kvm_s390_handle_stsi(vcpu, fc, sel1, sel2, operand2);
-	free_page((void *)mem);
+	free_page(mem);
 	kvm_s390_set_psw_cc(vcpu, 0);
 	vcpu->run->s.regs.gprs[0] = 0;
 	return rc;
 out_no_data:
 	kvm_s390_set_psw_cc(vcpu, 3);
 out:
-	free_page((void *)mem);
+	free_page(mem);
 	return rc;
 }
 
