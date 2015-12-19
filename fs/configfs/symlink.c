@@ -281,18 +281,18 @@ static int configfs_getlink(struct dentry *dentry, char * path)
 
 static const char *configfs_follow_link(struct dentry *dentry, void **cookie)
 {
-	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	void *page = get_zeroed_page(GFP_KERNEL);
 	int error;
 
 	if (!page)
 		return ERR_PTR(-ENOMEM);
 
-	error = configfs_getlink(dentry, (char *)page);
+	error = configfs_getlink(dentry, page);
 	if (!error) {
-		return *cookie = (void *)page;
+		return *cookie = page;
 	}
 
-	free_page((void *)page);
+	free_page(page);
 	return ERR_PTR(error);
 }
 
