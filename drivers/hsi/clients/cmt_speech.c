@@ -54,7 +54,7 @@ struct cs_char {
 	struct list_head	dataind_queue;
 	int			dataind_pending;
 	/* mmap things */
-	unsigned long		mmap_base;
+	void			*mmap_base;
 	unsigned long		mmap_size;
 	spinlock_t		lock;
 	struct fasync_struct	*async_queue;
@@ -101,7 +101,7 @@ struct cs_hsi_iface {
 	/* state exposed to application */
 	struct cs_mmap_config_block	*mmap_cfg;
 
-	unsigned long			mmap_base;
+	void				*mmap_base;
 	unsigned long			mmap_size;
 
 	unsigned int			rx_slot;
@@ -677,7 +677,7 @@ static void cs_hsi_read_on_data(struct cs_hsi_iface *hi)
 	spin_unlock(&hi->lock);
 
 	rxmsg = hi->data_rx_msg;
-	sg_init_one(rxmsg->sgt.sgl, (void *)hi->mmap_base, 0);
+	sg_init_one(rxmsg->sgt.sgl, hi->mmap_base, 0);
 	rxmsg->sgt.nents = 0;
 	rxmsg->complete = cs_hsi_peek_on_data_complete;
 
@@ -996,7 +996,7 @@ error:
 }
 
 static int cs_hsi_start(struct cs_hsi_iface **hi, struct hsi_client *cl,
-			unsigned long mmap_base, unsigned long mmap_size)
+			void *mmap_base, unsigned long mmap_size)
 {
 	int err = 0;
 	struct cs_hsi_iface *hsi_if = kzalloc(sizeof(*hsi_if), GFP_KERNEL);
@@ -1288,7 +1288,7 @@ static int cs_char_mmap(struct file *file, struct vm_area_struct *vma)
 static int cs_char_open(struct inode *unused, struct file *file)
 {
 	int ret = 0;
-	unsigned long p;
+	void *p;
 
 	spin_lock_bh(&cs_char_data.lock);
 	if (cs_char_data.opened) {
@@ -1300,7 +1300,7 @@ static int cs_char_open(struct inode *unused, struct file *file)
 	cs_char_data.dataind_pending = 0;
 	spin_unlock_bh(&cs_char_data.lock);
 
-	p = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	p = get_zeroed_page(GFP_KERNEL);
 	if (!p) {
 		ret = -ENOMEM;
 		goto out2;
@@ -1321,7 +1321,7 @@ static int cs_char_open(struct inode *unused, struct file *file)
 	return 0;
 
 out3:
-	free_page((void *)p);
+	free_page(p);
 out2:
 	spin_lock_bh(&cs_char_data.lock);
 	cs_char_data.opened = 0;
@@ -1352,7 +1352,7 @@ static int cs_char_release(struct inode *unused, struct file *file)
 	cs_hsi_stop(csdata->hi);
 	spin_lock_bh(&csdata->lock);
 	csdata->hi = NULL;
-	free_page((void *)csdata->mmap_base);
+	free_page(csdata->mmap_base);
 	cs_free_char_queue(&csdata->chardev_queue);
 	cs_free_char_queue(&csdata->dataind_queue);
 	csdata->opened = 0;
