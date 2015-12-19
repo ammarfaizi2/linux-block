@@ -2047,9 +2047,8 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 		  void *data)
 {
 	int *i, vleft, first = 1, err = 0;
-	unsigned long page = 0;
 	size_t left;
-	char *kbuf;
+	char *kbuf = NULL;
 	
 	if (!tbl_data || !table->maxlen || !*lenp || (*ppos && !write)) {
 		*lenp = 0;
@@ -2078,8 +2077,7 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 
 		if (left > PAGE_SIZE - 1)
 			left = PAGE_SIZE - 1;
-		page = __get_free_page(GFP_TEMPORARY);
-		kbuf = (char *) page;
+		kbuf = (char *)__get_free_page(GFP_TEMPORARY);
 		if (!kbuf)
 			return -ENOMEM;
 		if (copy_from_user(kbuf, buffer, left)) {
@@ -2128,7 +2126,7 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 		left -= proc_skip_spaces(&kbuf);
 free:
 	if (write) {
-		free_page((void *)page);
+		free_page(kbuf);
 		if (first)
 			return err ? : -EINVAL;
 	}
@@ -2310,9 +2308,8 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int 
 {
 	unsigned long *i, *min, *max;
 	int vleft, first = 1, err = 0;
-	unsigned long page = 0;
 	size_t left;
-	char *kbuf;
+	char *kbuf = NULL;
 
 	if (!data || !table->maxlen || !*lenp || (*ppos && !write)) {
 		*lenp = 0;
@@ -2340,8 +2337,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int 
 
 		if (left > PAGE_SIZE - 1)
 			left = PAGE_SIZE - 1;
-		page = __get_free_page(GFP_TEMPORARY);
-		kbuf = (char *) page;
+		kbuf = (char *)__get_free_page(GFP_TEMPORARY);
 		if (!kbuf)
 			return -ENOMEM;
 		if (copy_from_user(kbuf, buffer, left)) {
@@ -2388,7 +2384,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int 
 		left -= proc_skip_spaces(&kbuf);
 free:
 	if (write) {
-		free_page((void *)page);
+		free_page(kbuf);
 		if (first)
 			return err ? : -EINVAL;
 	}
@@ -2650,18 +2646,15 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 	}
 
 	if (write) {
-		unsigned long page = 0;
-		char *kbuf;
+		char *kbuf = (char *)__get_free_page(GFP_TEMPORARY);
+		if (!kbuf)
+			return -ENOMEM;
 
 		if (left > PAGE_SIZE - 1)
 			left = PAGE_SIZE - 1;
 
-		page = __get_free_page(GFP_TEMPORARY);
-		kbuf = (char *) page;
-		if (!kbuf)
-			return -ENOMEM;
 		if (copy_from_user(kbuf, buffer, left)) {
-			free_page((void *)page);
+			free_page(kbuf);
 			return -EFAULT;
                 }
 		kbuf[left] = 0;
@@ -2669,7 +2662,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 		tmp_bitmap = kzalloc(BITS_TO_LONGS(bitmap_len) * sizeof(unsigned long),
 				     GFP_KERNEL);
 		if (!tmp_bitmap) {
-			free_page((void *)page);
+			free_page(kbuf);
 			return -ENOMEM;
 		}
 		proc_skip_char(&kbuf, &left, '\n');
@@ -2713,7 +2706,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 			first = 0;
 			proc_skip_char(&kbuf, &left, '\n');
 		}
-		free_page((void *)page);
+		free_page(kbuf);
 	} else {
 		unsigned long bit_a, bit_b = 0;
 
