@@ -379,12 +379,12 @@ static void gnttab_add_deferred(grant_ref_t ref, bool readonly,
 }
 
 void gnttab_end_foreign_access(grant_ref_t ref, int readonly,
-			       unsigned long page)
+			       void *page)
 {
 	if (gnttab_end_foreign_access_ref(ref, readonly)) {
 		put_free_entry(ref);
-		if (page != 0)
-			free_page((void *)page);
+		if (page)
+			free_page(page);
 	} else
 		gnttab_add_deferred(ref, readonly,
 				    page ? virt_to_page(page) : NULL);

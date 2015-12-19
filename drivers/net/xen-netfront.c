@@ -1117,7 +1117,7 @@ static void xennet_release_tx_bufs(struct netfront_queue *queue)
 		get_page(queue->grant_tx_page[i]);
 		gnttab_end_foreign_access(queue->grant_tx_ref[i],
 					  GNTMAP_readonly,
-					  (unsigned long)page_address(queue->grant_tx_page[i]));
+					  page_address(queue->grant_tx_page[i]));
 		queue->grant_tx_page[i] = NULL;
 		queue->grant_tx_ref[i] = GRANT_INVALID_REF;
 		add_id_to_freelist(&queue->tx_skb_freelist, queue->tx_skbs, i);
@@ -1150,7 +1150,7 @@ static void xennet_release_rx_bufs(struct netfront_queue *queue)
 		 */
 		get_page(page);
 		gnttab_end_foreign_access(ref, 0,
-					  (unsigned long)page_address(page));
+					  page_address(page));
 		queue->grant_rx_ref[id] = GRANT_INVALID_REF;
 
 		kfree_skb(skb);
@@ -1378,7 +1378,7 @@ static void xennet_end_access(int ref, void *page)
 {
 	/* This frees the page as a side-effect */
 	if (ref != GRANT_INVALID_REF)
-		gnttab_end_foreign_access(ref, 0, (unsigned long)page);
+		gnttab_end_foreign_access(ref, 0, page);
 }
 
 static void xennet_disconnect_backend(struct netfront_info *info)

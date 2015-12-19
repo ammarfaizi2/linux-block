@@ -1094,7 +1094,7 @@ static void blkif_free(struct blkfront_info *info, int suspend)
 			list_del(&persistent_gnt->node);
 			if (persistent_gnt->gref != GRANT_INVALID_REF) {
 				gnttab_end_foreign_access(persistent_gnt->gref,
-				                          0, 0UL);
+				                          0, NULL);
 				info->persistent_gnts_c--;
 			}
 			if (info->feature_persistent)
@@ -1131,7 +1131,7 @@ static void blkif_free(struct blkfront_info *info, int suspend)
 		       info->shadow[i].req.u.rw.nr_segments;
 		for (j = 0; j < segs; j++) {
 			persistent_gnt = info->shadow[i].grants_used[j];
-			gnttab_end_foreign_access(persistent_gnt->gref, 0, 0UL);
+			gnttab_end_foreign_access(persistent_gnt->gref, 0, NULL);
 			if (info->feature_persistent)
 				__free_page(persistent_gnt->page);
 			kfree(persistent_gnt);
@@ -1146,7 +1146,7 @@ static void blkif_free(struct blkfront_info *info, int suspend)
 
 		for (j = 0; j < INDIRECT_GREFS(segs); j++) {
 			persistent_gnt = info->shadow[i].indirect_grants[j];
-			gnttab_end_foreign_access(persistent_gnt->gref, 0, 0UL);
+			gnttab_end_foreign_access(persistent_gnt->gref, 0, NULL);
 			__free_page(persistent_gnt->page);
 			kfree(persistent_gnt);
 		}
@@ -1170,7 +1170,7 @@ free_shadow:
 	/* Free resources associated with old device channel. */
 	for (i = 0; i < info->nr_ring_pages; i++) {
 		if (info->ring_ref[i] != GRANT_INVALID_REF) {
-			gnttab_end_foreign_access(info->ring_ref[i], 0, 0);
+			gnttab_end_foreign_access(info->ring_ref[i], 0, NULL);
 			info->ring_ref[i] = GRANT_INVALID_REF;
 		}
 	}
@@ -1261,7 +1261,7 @@ static void blkif_completion(struct blk_shadow *s, struct blkfront_info *info,
 			 * so it will not be picked again unless we run out of
 			 * persistent grants.
 			 */
-			gnttab_end_foreign_access(s->grants_used[i]->gref, 0, 0UL);
+			gnttab_end_foreign_access(s->grants_used[i]->gref, 0, NULL);
 			s->grants_used[i]->gref = GRANT_INVALID_REF;
 			list_add_tail(&s->grants_used[i]->node, &info->grants);
 		}
@@ -1277,7 +1277,7 @@ static void blkif_completion(struct blk_shadow *s, struct blkfront_info *info,
 			} else {
 				struct page *indirect_page;
 
-				gnttab_end_foreign_access(s->indirect_grants[i]->gref, 0, 0UL);
+				gnttab_end_foreign_access(s->indirect_grants[i]->gref, 0, NULL);
 				/*
 				 * Add the used indirect page back to the list of
 				 * available pages for indirect grefs.

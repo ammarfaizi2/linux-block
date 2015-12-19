@@ -215,7 +215,7 @@ static void scsifront_gnttab_done(struct vscsifrnt_info *info, uint32_t id)
 				     "grant still in use by backend\n");
 			BUG();
 		}
-		gnttab_end_foreign_access(s->gref[i], 0, 0UL);
+		gnttab_end_foreign_access(s->gref[i], 0, NULL);
 	}
 
 	kfree(s->sg);
@@ -763,8 +763,7 @@ static int scsifront_alloc_ring(struct vscsifrnt_info *info)
 free_irq:
 	unbind_from_irqhandler(info->irq, info);
 free_gnttab:
-	gnttab_end_foreign_access(info->ring_ref, 0,
-				  (unsigned long)info->ring.sring);
+	gnttab_end_foreign_access(info->ring_ref, 0, info->ring.sring);
 
 	return err;
 }
@@ -772,8 +771,7 @@ free_gnttab:
 static void scsifront_free_ring(struct vscsifrnt_info *info)
 {
 	unbind_from_irqhandler(info->irq, info);
-	gnttab_end_foreign_access(info->ring_ref, 0,
-				  (unsigned long)info->ring.sring);
+	gnttab_end_foreign_access(info->ring_ref, 0, info->ring.sring);
 }
 
 static int scsifront_init_ring(struct vscsifrnt_info *info)

@@ -98,8 +98,7 @@ int gnttab_end_foreign_access_ref(grant_ref_t ref, int readonly);
  * immediately iff the grant entry is not in use, otherwise it will happen
  * some time later.  page may be 0, in which case no freeing will occur.
  */
-void gnttab_end_foreign_access(grant_ref_t ref, int readonly,
-			       unsigned long page);
+void gnttab_end_foreign_access(grant_ref_t ref, int readonly, void *page);
 
 int gnttab_grant_foreign_transfer(domid_t domid, unsigned long pfn);
 

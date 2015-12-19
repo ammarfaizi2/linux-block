@@ -273,7 +273,7 @@ static void ring_free(struct tpm_private *priv)
 
 	if (priv->ring_ref)
 		gnttab_end_foreign_access(priv->ring_ref, 0,
-				(unsigned long)priv->shr);
+				priv->shr);
 	else
 		free_page(priv->shr);
 
