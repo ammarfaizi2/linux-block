@@ -190,7 +190,7 @@ int handle_exit(struct kvm_vcpu *vcpu, struct kvm_run *run,
 
 static inline void __cpu_init_hyp_mode(phys_addr_t boot_pgd_ptr,
 				       phys_addr_t pgd_ptr,
-				       unsigned long hyp_stack_ptr,
+				       void *hyp_stack_ptr,
 				       unsigned long vector_ptr)
 {
 	/*
@@ -211,7 +211,7 @@ static inline void __cpu_init_hyp_mode(phys_addr_t boot_pgd_ptr,
 
 	kvm_call_hyp(NULL, 0, boot_pgd_ptr);
 
-	kvm_call_hyp((void*)hyp_stack_ptr, vector_ptr, pgd_ptr);
+	kvm_call_hyp(hyp_stack_ptr, vector_ptr, pgd_ptr);
 }
 
 static inline int kvm_arch_dev_ioctl_check_extension(long ext)

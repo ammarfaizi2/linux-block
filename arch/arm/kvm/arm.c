@@ -49,7 +49,7 @@
 __asm__(".arch_extension	virt");
 #endif
 
-static DEFINE_PER_CPU(unsigned long, kvm_arm_hyp_stack_page);
+static DEFINE_PER_CPU(void *, kvm_arm_hyp_stack_page);
 static kvm_cpu_context_t __percpu *kvm_host_cpu_state;
 static unsigned long hyp_default_vectors;
 
@@ -958,8 +958,7 @@ static void cpu_init_hyp_mode(void *dummy)
 {
 	phys_addr_t boot_pgd_ptr;
 	phys_addr_t pgd_ptr;
-	unsigned long hyp_stack_ptr;
-	unsigned long stack_page;
+	void *hyp_stack_ptr, *stack_page;
 	unsigned long vector_ptr;
 
 	/* Switch from the HYP stub to our own HYP init vector */
@@ -1047,9 +1046,7 @@ static int init_hyp_mode(void)
 	 * Allocate stack pages for Hypervisor-mode
 	 */
 	for_each_possible_cpu(cpu) {
-		unsigned long stack_page;
-
-		stack_page = __get_free_page(GFP_KERNEL);
+		void *stack_page = (void *)__get_free_page(GFP_KERNEL);
 		if (!stack_page) {
 			err = -ENOMEM;
 			goto out_free_stack_pages;
@@ -1071,7 +1068,7 @@ static int init_hyp_mode(void)
 	 * Map the Hyp stack pages
 	 */
 	for_each_possible_cpu(cpu) {
-		char *stack_page = (char *)per_cpu(kvm_arm_hyp_stack_page, cpu);
+		char *stack_page = per_cpu(kvm_arm_hyp_stack_page, cpu);
 		err = create_hyp_mappings(stack_page, stack_page + PAGE_SIZE);
 
 		if (err) {
@@ -1136,7 +1133,7 @@ out_free_mappings:
 	free_hyp_pgds();
 out_free_stack_pages:
 	for_each_possible_cpu(cpu)
-		free_page((void *)per_cpu(kvm_arm_hyp_stack_page, cpu));
+		free_page(per_cpu(kvm_arm_hyp_stack_page, cpu));
 out_err:
 	kvm_err("error initializing Hyp mode: %d\n", err);
 	return err;
