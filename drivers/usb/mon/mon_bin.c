@@ -1305,17 +1305,16 @@ static int mon_bin_wait_event(struct file *file, struct mon_reader_bin *rp)
 static int mon_alloc_buff(struct mon_pgmap *map, int npages)
 {
 	int n;
-	unsigned long vaddr;
 
 	for (n = 0; n < npages; n++) {
-		vaddr = (unsigned long)get_zeroed_page(GFP_KERNEL);
-		if (vaddr == 0) {
+		void *vaddr = get_zeroed_page(GFP_KERNEL);
+		if (!vaddr) {
 			while (n-- != 0)
 				free_page(map[n].ptr);
 			return -ENOMEM;
 		}
-		map[n].ptr = (unsigned char *) vaddr;
-		map[n].pg = virt_to_page((void *) vaddr);
+		map[n].ptr = vaddr;
+		map[n].pg = virt_to_page(vaddr);
 	}
 	return 0;
 }
