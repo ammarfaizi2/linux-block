@@ -56,7 +56,7 @@ struct lg_cpu {
 	unsigned long *reg_read; /* register from LHREQ_GETREG */
 
 	/* At end of a page shared mapped over lguest_pages in guest. */
-	unsigned long regs_page;
+	void *regs_page;
 	struct lguest_regs *regs;
 
 	struct lguest_pages *last_pages;

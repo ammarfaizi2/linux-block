@@ -170,12 +170,12 @@ static int lg_cpu_start(struct lg_cpu *cpu, unsigned id, unsigned long start_ip)
 	 * We need a complete page for the Guest registers: they are accessible
 	 * to the Guest and we can only grant it access to whole pages.
 	 */
-	cpu->regs_page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	cpu->regs_page = get_zeroed_page(GFP_KERNEL);
 	if (!cpu->regs_page)
 		return -ENOMEM;
 
 	/* We actually put the registers at the end of the page. */
-	cpu->regs = (void *)cpu->regs_page + PAGE_SIZE - sizeof(*cpu->regs);
+	cpu->regs = cpu->regs_page + PAGE_SIZE - sizeof(*cpu->regs);
 
 	/*
 	 * Now we initialize the Guest's registers, handing it the start
@@ -275,7 +275,7 @@ static int initialize(struct file *file, const unsigned long __user *input)
 
 free_regs:
 	/* FIXME: This should be in free_vcpu */
-	free_page((void *)lg->cpus[0].regs_page);
+	free_page(lg->cpus[0].regs_page);
 free_lg:
 	kfree(lg);
 unlock:
@@ -377,7 +377,7 @@ static int close(struct inode *inode, struct file *file)
 		/* Cancels the hrtimer set via LHCALL_SET_CLOCKEVENT. */
 		hrtimer_cancel(&lg->cpus[i].hrt);
 		/* We can free up the register page we allocated. */
-		free_page((void *)lg->cpus[i].regs_page);
+		free_page(lg->cpus[i].regs_page);
 		/*
 		 * Now all the memory cleanups are done, it's safe to release
 		 * the Launcher's memory management structure.

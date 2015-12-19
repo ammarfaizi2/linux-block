@@ -313,13 +313,13 @@ static pte_t *find_spte(struct lg_cpu *cpu, unsigned long vaddr, bool allocate,
 	spgd = spgd_addr(cpu, cpu->cpu_pgd, vaddr);
 	if (!(pgd_flags(*spgd) & _PAGE_PRESENT)) {
 		/* No shadow entry: allocate a new shadow PTE page. */
-		unsigned long ptepage;
+		pte_t *ptepage;
 
 		/* If they didn't want us to allocate anything, stop. */
 		if (!allocate)
 			return NULL;
 
-		ptepage = (unsigned long)get_zeroed_page(GFP_KERNEL);
+		ptepage = get_zeroed_page(GFP_KERNEL);
 		/*
 		 * This is not really the Guest's fault, but killing it is
 		 * simple for this corner case.
@@ -345,13 +345,13 @@ static pte_t *find_spte(struct lg_cpu *cpu, unsigned long vaddr, bool allocate,
 
 	if (!(pmd_flags(*spmd) & _PAGE_PRESENT)) {
 		/* No shadow entry: allocate a new shadow PTE page. */
-		unsigned long ptepage;
+		pte_t *ptepage;
 
 		/* If they didn't want us to allocate anything, stop. */
 		if (!allocate)
 			return NULL;
 
-		ptepage = (unsigned long)get_zeroed_page(GFP_KERNEL);
+		ptepage = get_zeroed_page(GFP_KERNEL);
 
 		/*
 		 * This is not really the Guest's fault, but killing it is
