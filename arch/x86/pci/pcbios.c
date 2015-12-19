@@ -381,14 +381,14 @@ struct irq_routing_table * pcibios_get_irq_routing_table(void)
 	struct irq_routing_options opt;
 	struct irq_routing_table *rt = NULL;
 	int ret, map;
-	unsigned long page;
+	void *page;
 
 	if (!pci_bios_present)
 		return NULL;
-	page = __get_free_page(GFP_KERNEL);
+	page = (void *)__get_free_page(GFP_KERNEL);
 	if (!page)
 		return NULL;
-	opt.table = (struct irq_info *) page;
+	opt.table = page;
 	opt.size = PAGE_SIZE;
 	opt.segment = __KERNEL_DS;
 
@@ -419,11 +419,11 @@ struct irq_routing_table * pcibios_get_irq_routing_table(void)
 			memset(rt, 0, sizeof(struct irq_routing_table));
 			rt->size = opt.size + sizeof(struct irq_routing_table);
 			rt->exclusive_irqs = map;
-			memcpy(rt->slots, (void *) page, opt.size);
+			memcpy(rt->slots, page, opt.size);
 			printk(KERN_INFO "PCI: Using BIOS Interrupt Routing Table\n");
 		}
 	}
-	free_page((void *)page);
+	free_page(page);
 	return rt;
 }
 EXPORT_SYMBOL(pcibios_get_irq_routing_table);
