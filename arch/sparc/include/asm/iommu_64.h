@@ -36,7 +36,7 @@ struct iommu {
 	unsigned long		iommu_tags;
 	unsigned long		iommu_ctxflush;
 	unsigned long		write_complete_reg;
-	unsigned long		dummy_page;
+	void			*dummy_page;
 	unsigned long		dummy_page_pa;
 	unsigned long		ctx_lowest_free;
 	DECLARE_BITMAP(ctx_bitmap, IOMMU_NUM_CTXS);

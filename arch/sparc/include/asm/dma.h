@@ -101,7 +101,7 @@ struct sparc32_dma_ops {
 	void (*release_scsi_one)(struct device *, __u32, unsigned long);
 	void (*release_scsi_sgl)(struct device *, struct scatterlist *,int);
 #ifdef CONFIG_SBUS
-	int (*map_dma_area)(struct device *, dma_addr_t *, unsigned long, unsigned long, int);
+	int (*map_dma_area)(struct device *, dma_addr_t *, void *, unsigned long, int);
 	void (*unmap_dma_area)(struct device *, unsigned long, int);
 #endif
 };

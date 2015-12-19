@@ -1033,11 +1033,11 @@ static void __init alloc_one_queue(unsigned long *pa_ptr, unsigned long qmask)
 static void __init init_cpu_send_mondo_info(struct trap_per_cpu *tb)
 {
 #ifdef CONFIG_SMP
-	unsigned long page;
+	void *page;
 
 	BUILD_BUG_ON((NR_CPUS * sizeof(u16)) > (PAGE_SIZE - 64));
 
-	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	page = get_zeroed_page(GFP_KERNEL);
 	if (!page) {
 		prom_printf("SUN4V: Error, cannot allocate cpu mondo page.\n");
 		prom_halt();

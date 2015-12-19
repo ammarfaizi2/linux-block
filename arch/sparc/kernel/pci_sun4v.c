@@ -746,20 +746,21 @@ static int pci_sun4v_msi_teardown(struct pci_pbm_info *pbm, unsigned long msi)
 
 static int pci_sun4v_msiq_alloc(struct pci_pbm_info *pbm)
 {
-	unsigned long q_size, alloc_size, pages, order;
+	unsigned long q_size, alloc_size, order;
+	void *pages;
 	int i;
 
 	q_size = pbm->msiq_ent_count * sizeof(struct pci_sun4v_msiq_entry);
 	alloc_size = (pbm->msiq_num * q_size);
 	order = get_order(alloc_size);
-	pages = __get_free_pages(GFP_KERNEL | __GFP_COMP, order);
-	if (pages == 0UL) {
+	pages = (void *)__get_free_pages(GFP_KERNEL | __GFP_COMP, order);
+	if (!pages) {
 		printk(KERN_ERR "MSI: Cannot allocate MSI queues (o=%lu).\n",
 		       order);
 		return -ENOMEM;
 	}
-	memset((char *)pages, 0, PAGE_SIZE << order);
-	pbm->msi_queues = (void *) pages;
+	memset(pages, 0, PAGE_SIZE << order);
+	pbm->msi_queues = pages;
 
 	for (i = 0; i < pbm->msiq_num; i++) {
 		unsigned long err, base = __pa(pages + (i * q_size));
@@ -794,13 +795,14 @@ static int pci_sun4v_msiq_alloc(struct pci_pbm_info *pbm)
 	return 0;
 
 h_error:
-	free_pages((void *)pages, order);
+	free_pages(pages, order);
 	return -EINVAL;
 }
 
 static void pci_sun4v_msiq_free(struct pci_pbm_info *pbm)
 {
-	unsigned long q_size, alloc_size, pages, order;
+	unsigned long q_size, alloc_size, order;
+	void *pages;
 	int i;
 
 	for (i = 0; i < pbm->msiq_num; i++) {
@@ -813,9 +815,9 @@ static void pci_sun4v_msiq_free(struct pci_pbm_info *pbm)
 	alloc_size = (pbm->msiq_num * q_size);
 	order = get_order(alloc_size);
 
-	pages = (unsigned long) pbm->msi_queues;
+	pages = pbm->msi_queues;
 
-	free_pages((void *)pages, order);
+	free_pages(pages, order);
 
 	pbm->msi_queues = NULL;
 }
@@ -937,12 +939,12 @@ static int pci_sun4v_probe(struct platform_device *op)
 	err = -ENOMEM;
 	if (!iommu_batch_initialized) {
 		for_each_possible_cpu(i) {
-			unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+			u64 *page = get_zeroed_page(GFP_KERNEL);
 
 			if (!page)
 				goto out_err;
 
-			per_cpu(iommu_batch, i).pglist = (u64 *) page;
+			per_cpu(iommu_batch, i).pglist = page;
 		}
 		iommu_batch_initialized = 1;
 	}

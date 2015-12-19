@@ -228,17 +228,18 @@ static int pci_fire_msi_teardown(struct pci_pbm_info *pbm, unsigned long msi)
 
 static int pci_fire_msiq_alloc(struct pci_pbm_info *pbm)
 {
-	unsigned long pages, order, i;
+	unsigned long order, i;
+	void *pages;
 
 	order = get_order(512 * 1024);
-	pages = __get_free_pages(GFP_KERNEL | __GFP_COMP, order);
-	if (pages == 0UL) {
+	pages = (void *)__get_free_pages(GFP_KERNEL | __GFP_COMP, order);
+	if (!pages) {
 		printk(KERN_ERR "MSI: Cannot allocate MSI queues (o=%lu).\n",
 		       order);
 		return -ENOMEM;
 	}
-	memset((char *)pages, 0, PAGE_SIZE << order);
-	pbm->msi_queues = (void *) pages;
+	memset(pages, 0, PAGE_SIZE << order);
+	pbm->msi_queues = pages;
 
 	upa_writeq((EVENT_QUEUE_BASE_ADDR_ALL_ONES |
 		    __pa(pbm->msi_queues)),
@@ -260,12 +261,9 @@ static int pci_fire_msiq_alloc(struct pci_pbm_info *pbm)
 
 static void pci_fire_msiq_free(struct pci_pbm_info *pbm)
 {
-	unsigned long pages, order;
+	void *pages = pbm->msi_queues;
 
-	order = get_order(512 * 1024);
-	pages = (unsigned long) pbm->msi_queues;
-
-	free_pages((void *)pages, order);
+	free_pages(pages, get_order(512 * 1024));
 
 	pbm->msi_queues = NULL;
 }

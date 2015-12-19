@@ -264,7 +264,7 @@ static void *sbus_alloc_coherent(struct device *dev, size_t len,
 {
 	struct platform_device *op = to_platform_device(dev);
 	unsigned long len_total = PAGE_ALIGN(len);
-	unsigned long va;
+	void *va;
 	struct resource *res;
 	int order;
 
@@ -278,8 +278,8 @@ static void *sbus_alloc_coherent(struct device *dev, size_t len,
 	}
 
 	order = get_order(len_total);
-	va = __get_free_pages(gfp, order);
-	if (va == 0)
+	va = (void *)__get_free_pages(gfp, order);
+	if (!va)
 		goto err_nopages;
 
 	if ((res = kzalloc(sizeof(struct resource), GFP_KERNEL)) == NULL)
@@ -309,7 +309,7 @@ err_noiommu:
 err_nova:
 	kfree(res);
 err_nomem:
-	free_pages((void *)va, order);
+	free_pages(va, order);
 err_nopages:
 	return NULL;
 }

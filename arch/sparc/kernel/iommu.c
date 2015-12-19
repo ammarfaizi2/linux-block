@@ -124,8 +124,8 @@ int iommu_table_init(struct iommu *iommu, int tsbsize,
 		printk(KERN_ERR "IOMMU: Error, gfp(dummy_page) failed.\n");
 		goto out_free_map;
 	}
-	iommu->dummy_page = (unsigned long) page_address(page);
-	memset((void *)iommu->dummy_page, 0, PAGE_SIZE);
+	iommu->dummy_page = page_address(page);
+	memset(iommu->dummy_page, 0, PAGE_SIZE);
 	iommu->dummy_page_pa = (unsigned long) __pa(iommu->dummy_page);
 
 	/* Now allocate and setup the IOMMU page table itself.  */
@@ -143,8 +143,8 @@ int iommu_table_init(struct iommu *iommu, int tsbsize,
 	return 0;
 
 out_free_dummy_page:
-	free_page((void *)iommu->dummy_page);
-	iommu->dummy_page = 0UL;
+	free_page(iommu->dummy_page);
+	iommu->dummy_page = NULL;
 
 out_free_map:
 	kfree(iommu->tbl.map);

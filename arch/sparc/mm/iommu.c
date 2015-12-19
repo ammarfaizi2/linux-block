@@ -321,7 +321,7 @@ static void iommu_release_scsi_sgl(struct device *dev, struct scatterlist *sg, i
 }
 
 #ifdef CONFIG_SBUS
-static int iommu_map_dma_area(struct device *dev, dma_addr_t *pba, unsigned long va,
+static int iommu_map_dma_area(struct device *dev, dma_addr_t *pba, void *va,
 			      unsigned long addr, int len)
 {
 	struct iommu_struct *iommu = dev->archdata.iommu;
@@ -330,7 +330,7 @@ static int iommu_map_dma_area(struct device *dev, dma_addr_t *pba, unsigned long
 	iopte_t *first;
 	int ioptex;
 
-	BUG_ON((va & ~PAGE_MASK) != 0);
+	BUG_ON(((unsigned long)va & ~PAGE_MASK) != 0);
 	BUG_ON((addr & ~PAGE_MASK) != 0);
 	BUG_ON((len & ~PAGE_MASK) != 0);
 
@@ -344,7 +344,7 @@ static int iommu_map_dma_area(struct device *dev, dma_addr_t *pba, unsigned long
 	first = iopte;
 	end = addr + len;
 	while(addr < end) {
-		page = va;
+		page = (unsigned long)va;
 		{
 			pgd_t *pgdp;
 			pmd_t *pmdp;
@@ -361,10 +361,10 @@ static int iommu_map_dma_area(struct device *dev, dma_addr_t *pba, unsigned long
 			pmdp = pmd_offset(pgdp, addr);
 			ptep = pte_offset_map(pmdp, addr);
 
-			set_pte(ptep, mk_pte(virt_to_page(page), dvma_prot));
+			set_pte(ptep, mk_pte(virt_to_page(va), dvma_prot));
 		}
 		iopte_val(*iopte++) =
-		    MKIOPTE(page_to_pfn(virt_to_page(page)), ioperm_noc);
+		    MKIOPTE(page_to_pfn(virt_to_page(va)), ioperm_noc);
 		addr += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
