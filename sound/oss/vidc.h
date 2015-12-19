@@ -53,7 +53,8 @@ extern irqreturn_t (*dma_interrupt) (void);
  */
 
 extern unsigned long dma_start, dma_count, dma_bufsize;
-extern unsigned long dma_buf[2], dma_pbuf[2];
+extern unsigned long dma_pbuf[2];
+extern void *dma_buf[2];
 
 /* vidc_synth.c */
 

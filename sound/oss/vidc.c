@@ -468,13 +468,13 @@ static void __init attach_vidc(struct address_info *hw_config)
 		goto mixer_failed;
 
 	for (i = 0; i < 2; i++) {
-		dma_buf[i] = (unsigned long)get_zeroed_page(GFP_KERNEL);
+		dma_buf[i] = get_zeroed_page(GFP_KERNEL);
 		if (!dma_buf[i]) {
 			printk(KERN_ERR "%s: can't allocate required buffers\n",
 				name);
 			goto mem_failed;
 		}
-		dma_pbuf[i] = virt_to_phys((void *)dma_buf[i]);
+		dma_pbuf[i] = virt_to_phys(dma_buf[i]);
 	}
 
 	if (sound_alloc_dma(hw_config->dma, hw_config->name)) {
@@ -497,7 +497,7 @@ irq_failed:
 dma_failed:
 mem_failed:
 	for (i = 0; i < 2; i++)
-		free_page((void *)dma_buf[i]);
+		free_page(dma_buf[i]);
 	sound_unload_mixerdev(audio_devs[adev]->mixer_dev);
 mixer_failed:
 	sound_unload_audiodev(adev);
@@ -528,7 +528,7 @@ static void __exit unload_vidc(struct address_info *hw_config)
 		sound_unload_mixerdev(audio_devs[adev]->mixer_dev);
 		sound_unload_audiodev(adev);
 		for (i = 0; i < 2; i++)
-			free_page((void *)dma_buf[i]);
+			free_page(dma_buf[i]);
 	}
 }
 
