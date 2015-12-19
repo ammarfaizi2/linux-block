@@ -102,7 +102,7 @@ static u32 credit_table[31] = {
 
 static void get_map_page(struct qib_qpn_table *qpt, struct qpn_map *map)
 {
-	unsigned long page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	void *page = get_zeroed_page(GFP_KERNEL);
 
 	/*
 	 * Free the page if someone raced with us installing it.
@@ -110,9 +110,9 @@ static void get_map_page(struct qib_qpn_table *qpt, struct qpn_map *map)
 
 	spin_lock(&qpt->lock);
 	if (map->page)
-		free_page((void *)page);
+		free_page(page);
 	else
-		map->page = (void *)page;
+		map->page = page;
 	spin_unlock(&qpt->lock);
 }
 
