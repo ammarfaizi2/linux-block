@@ -256,7 +256,7 @@ out:
 void
 affs_evict_inode(struct inode *inode)
 {
-	unsigned long cache_page;
+	void *cache_page;
 	pr_debug("evict_inode(ino=%lu, nlink=%u)\n",
 		 inode->i_ino, inode->i_nlink);
 	truncate_inode_pages_final(&inode->i_data);
@@ -269,12 +269,12 @@ affs_evict_inode(struct inode *inode)
 	invalidate_inode_buffers(inode);
 	clear_inode(inode);
 	affs_free_prealloc(inode);
-	cache_page = (unsigned long)AFFS_I(inode)->i_lc;
+	cache_page = AFFS_I(inode)->i_lc;
 	if (cache_page) {
 		pr_debug("freeing ext cache\n");
 		AFFS_I(inode)->i_lc = NULL;
 		AFFS_I(inode)->i_ac = NULL;
-		free_page((void *)cache_page);
+		free_page(cache_page);
 	}
 	affs_brelse(AFFS_I(inode)->i_ext_bh);
 	AFFS_I(inode)->i_ext_last = ~1;
