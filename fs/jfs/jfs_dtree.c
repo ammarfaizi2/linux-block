@@ -3023,7 +3023,7 @@ int jfs_readdir(struct file *file, struct dir_context *ctx)
 	struct ldtentry *d;
 	struct dtslot *t;
 	int d_namleft, len, outlen;
-	unsigned long dirent_buf;
+	void *dirent_buf;
 	char *name_ptr;
 	u32 dir_index;
 	int do_index = 0;
@@ -3180,8 +3180,8 @@ int jfs_readdir(struct file *file, struct dir_context *ctx)
 		}
 	}
 
-	dirent_buf = __get_free_page(GFP_KERNEL);
-	if (dirent_buf == 0) {
+	dirent_buf = (void *)__get_free_page(GFP_KERNEL);
+	if (!dirent_buf) {
 		DT_PUTPAGE(mp);
 		jfs_warn("jfs_readdir: __get_free_page failed!");
 		ctx->pos = DIREND;
@@ -3198,7 +3198,7 @@ int jfs_readdir(struct file *file, struct dir_context *ctx)
 		for (i = index; i < p->header.nextindex; i++) {
 			d = (struct ldtentry *) & p->slot[stbl[i]];
 
-			if (((long) jfs_dirent + d->namlen + 1) >
+			if (((void *) jfs_dirent + d->namlen + 1) >
 			    (dirent_buf + PAGE_SIZE)) {
 				/* DBCS codepages could overrun dirent_buf */
 				index = i;
@@ -3324,13 +3324,13 @@ skip_one:
 
 		DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
 		if (rc) {
-			free_page((void *)dirent_buf);
+			free_page(dirent_buf);
 			return rc;
 		}
 	}
 
       out:
-	free_page((void *)dirent_buf);
+	free_page(dirent_buf);
 
 	return rc;
 }
