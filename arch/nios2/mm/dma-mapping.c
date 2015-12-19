@@ -50,9 +50,7 @@ EXPORT_SYMBOL(dma_alloc_coherent);
 void dma_free_coherent(struct device *dev, size_t size, void *vaddr,
 			dma_addr_t dma_handle)
 {
-	unsigned long addr = (unsigned long) CAC_ADDR((unsigned long) vaddr);
-
-	free_pages((void *)addr, get_order(size));
+	free_pages(CAC_ADDR(vaddr), get_order(size));
 }
 EXPORT_SYMBOL(dma_free_coherent);
 
