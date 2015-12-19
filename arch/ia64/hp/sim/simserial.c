@@ -364,19 +364,20 @@ static int activate(struct tty_port *port, struct tty_struct *tty)
 {
 	struct serial_state *state = container_of(port, struct serial_state,
 			port);
-	unsigned long flags, page;
+	unsigned long flags;
+	unsigned char *page;
 	int retval = 0;
 
-	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	page = get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 
 	local_irq_save(flags);
 
 	if (state->xmit.buf)
-		free_page((void *)page);
+		free_page(page);
 	else
-		state->xmit.buf = (unsigned char *) page;
+		state->xmit.buf = page;
 
 	if (state->irq) {
 		retval = request_irq(state->irq, rs_interrupt_single, 0,
