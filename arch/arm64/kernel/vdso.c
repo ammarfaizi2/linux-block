@@ -62,22 +62,21 @@ static int alloc_vectors_page(void)
 
 	int kuser_sz = __kuser_helper_end - __kuser_helper_start;
 	int sigret_sz = __aarch32_sigret_code_end - __aarch32_sigret_code_start;
-	unsigned long vpage;
-
-	vpage = (unsigned long)get_zeroed_page(GFP_ATOMIC);
+	void *vpage = get_zeroed_page(GFP_ATOMIC);
 
 	if (!vpage)
 		return -ENOMEM;
 
 	/* kuser helpers */
-	memcpy((void *)vpage + 0x1000 - kuser_sz, __kuser_helper_start,
+	memcpy(vpage + 0x1000 - kuser_sz, __kuser_helper_start,
 		kuser_sz);
 
 	/* sigreturn code */
-	memcpy((void *)vpage + AARCH32_KERN_SIGRET_CODE_OFFSET,
+	memcpy(vpage + AARCH32_KERN_SIGRET_CODE_OFFSET,
                __aarch32_sigret_code_start, sigret_sz);
 
-	flush_icache_range(vpage, vpage + PAGE_SIZE);
+	flush_icache_range((unsigned long)vpage,
+			   (unsigned long)vpage + PAGE_SIZE);
 	vectors_page[0] = virt_to_page(vpage);
 
 	return 0;
