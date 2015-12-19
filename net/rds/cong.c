@@ -136,7 +136,7 @@ static struct rds_cong_map *rds_cong_from_addr(__be32 addr)
 {
 	struct rds_cong_map *map;
 	struct rds_cong_map *ret = NULL;
-	unsigned long zp;
+	void *zp;
 	unsigned long i;
 	unsigned long flags;
 
@@ -149,8 +149,8 @@ static struct rds_cong_map *rds_cong_from_addr(__be32 addr)
 	INIT_LIST_HEAD(&map->m_conn_list);
 
 	for (i = 0; i < RDS_CONG_MAP_PAGES; i++) {
-		zp = (unsigned long)get_zeroed_page(GFP_KERNEL);
-		if (zp == 0)
+		zp = get_zeroed_page(GFP_KERNEL);
+		if (!zp)
 			goto out;
 		map->m_page_addrs[i] = zp;
 	}
@@ -167,7 +167,7 @@ static struct rds_cong_map *rds_cong_from_addr(__be32 addr)
 out:
 	if (map) {
 		for (i = 0; i < RDS_CONG_MAP_PAGES && map->m_page_addrs[i]; i++)
-			free_page((void *)map->m_page_addrs[i]);
+			free_page(map->m_page_addrs[i]);
 		kfree(map);
 	}
 
@@ -299,7 +299,7 @@ void rds_cong_set_bit(struct rds_cong_map *map, __be16 port)
 	i = be16_to_cpu(port) / RDS_CONG_MAP_PAGE_BITS;
 	off = be16_to_cpu(port) % RDS_CONG_MAP_PAGE_BITS;
 
-	__set_bit_le(off, (void *)map->m_page_addrs[i]);
+	__set_bit_le(off, map->m_page_addrs[i]);
 }
 
 void rds_cong_clear_bit(struct rds_cong_map *map, __be16 port)
@@ -313,7 +313,7 @@ void rds_cong_clear_bit(struct rds_cong_map *map, __be16 port)
 	i = be16_to_cpu(port) / RDS_CONG_MAP_PAGE_BITS;
 	off = be16_to_cpu(port) % RDS_CONG_MAP_PAGE_BITS;
 
-	__clear_bit_le(off, (void *)map->m_page_addrs[i]);
+	__clear_bit_le(off, map->m_page_addrs[i]);
 }
 
 static int rds_cong_test_bit(struct rds_cong_map *map, __be16 port)
@@ -324,7 +324,7 @@ static int rds_cong_test_bit(struct rds_cong_map *map, __be16 port)
 	i = be16_to_cpu(port) / RDS_CONG_MAP_PAGE_BITS;
 	off = be16_to_cpu(port) % RDS_CONG_MAP_PAGE_BITS;
 
-	return test_bit_le(off, (void *)map->m_page_addrs[i]);
+	return test_bit_le(off, map->m_page_addrs[i]);
 }
 
 void rds_cong_add_socket(struct rds_sock *rs)
@@ -399,7 +399,7 @@ void rds_cong_exit(void)
 		rdsdebug("freeing map %p\n", map);
 		rb_erase(&map->m_rb_node, &rds_cong_tree);
 		for (i = 0; i < RDS_CONG_MAP_PAGES && map->m_page_addrs[i]; i++)
-			free_page((void *)map->m_page_addrs[i]);
+			free_page(map->m_page_addrs[i]);
 		kfree(map);
 	}
 }

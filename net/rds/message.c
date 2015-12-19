@@ -235,7 +235,7 @@ struct scatterlist *rds_message_alloc_sgs(struct rds_message *rm, int nents)
 	return sg_ret;
 }
 
-struct rds_message *rds_message_map_pages(unsigned long *page_addrs, unsigned int total_len)
+struct rds_message *rds_message_map_pages(void **page_addrs, unsigned int total_len)
 {
 	struct rds_message *rm;
 	unsigned int i;

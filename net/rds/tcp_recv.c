@@ -130,7 +130,7 @@ static void rds_tcp_cong_recv(struct rds_connection *conn,
 
 			/* only returns 0 or -error */
 			ret = skb_copy_bits(skb, skb_off,
-				(void *)map->m_page_addrs[map_page] + map_off,
+				map->m_page_addrs[map_page] + map_off,
 				to_copy);
 			BUG_ON(ret != 0);
 

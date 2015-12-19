@@ -586,7 +586,7 @@ static void rds_iw_cong_recv(struct rds_connection *conn,
 		addr = kmap_atomic(frag->f_page);
 
 		src = addr + frag_off;
-		dst = (void *)map->m_page_addrs[map_page] + map_off;
+		dst = map->m_page_addrs[map_page] + map_off;
 		for (k = 0; k < to_copy; k += 8) {
 			/* Record ports that became uncongested, ie
 			 * bits that changed from 0 to 1. */

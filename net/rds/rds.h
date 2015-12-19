@@ -59,7 +59,7 @@ struct rds_cong_map {
 	__be32			m_addr;
 	wait_queue_head_t	m_waitq;
 	struct list_head	m_conn_list;
-	unsigned long		m_page_addrs[RDS_CONG_MAP_PAGES];
+	void *			m_page_addrs[RDS_CONG_MAP_PAGES];
 };
 
 
@@ -676,7 +676,7 @@ rds_conn_connecting(struct rds_connection *conn)
 struct rds_message *rds_message_alloc(unsigned int nents, gfp_t gfp);
 struct scatterlist *rds_message_alloc_sgs(struct rds_message *rm, int nents);
 int rds_message_copy_from_user(struct rds_message *rm, struct iov_iter *from);
-struct rds_message *rds_message_map_pages(unsigned long *page_addrs, unsigned int total_len);
+struct rds_message *rds_message_map_pages(void **page_addrs, unsigned int total_len);
 void rds_message_populate_header(struct rds_header *hdr, __be16 sport,
 				 __be16 dport, u64 seq);
 int rds_message_add_extension(struct rds_header *hdr,
