@@ -518,23 +518,23 @@ static int startup(struct tty_struct *tty, struct serial_state *info)
 	struct tty_port *port = &info->tport;
 	unsigned long flags;
 	int	retval=0;
-	unsigned long page;
+	unsigned char *page;
 
-	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	page = get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 
 	local_irq_save(flags);
 
 	if (port->flags & ASYNC_INITIALIZED) {
-		free_page((void *)page);
+		free_page(page);
 		goto errout;
 	}
 
 	if (info->xmit.buf)
-		free_page((void *)page);
+		free_page(page);
 	else
-		info->xmit.buf = (unsigned char *) page;
+		info->xmit.buf = page;
 
 #ifdef SERIAL_DEBUG_OPEN
 	printk("starting up ttys%d ...", info->line);

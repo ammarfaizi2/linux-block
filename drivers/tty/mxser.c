@@ -862,10 +862,10 @@ static void mxser_check_modem_status(struct tty_struct *tty,
 static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
 {
 	struct mxser_port *info = container_of(port, struct mxser_port, port);
-	unsigned long page;
+	unsigned char *page;
 	unsigned long flags;
 
-	page = __get_free_page(GFP_KERNEL);
+	page = (unsigned char *)__get_free_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 
@@ -873,11 +873,11 @@ static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
 
 	if (!info->ioaddr || !info->type) {
 		set_bit(TTY_IO_ERROR, &tty->flags);
-		free_page((void *)page);
+		free_page(page);
 		spin_unlock_irqrestore(&info->slock, flags);
 		return 0;
 	}
-	info->port.xmit_buf = (unsigned char *) page;
+	info->port.xmit_buf = page;
 
 	/*
 	 * Clear the FIFO buffers and disable them

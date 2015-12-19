@@ -1268,12 +1268,12 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 	unsigned long flags;
 	int retval = 0;
 	int channel;
-	unsigned long page;
+	unsigned char *page;
 
 	card = info->card;
 	channel = info->line - card->first_line;
 
-	page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	page = get_zeroed_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 
@@ -1288,9 +1288,9 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 	}
 
 	if (info->port.xmit_buf)
-		free_page((void *)page);
+		free_page(page);
 	else
-		info->port.xmit_buf = (unsigned char *)page;
+		info->port.xmit_buf = page;
 
 	spin_unlock_irqrestore(&card->card_lock, flags);
 
@@ -1383,7 +1383,7 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 
 errout:
 	spin_unlock_irqrestore(&card->card_lock, flags);
-	free_page((void *)page);
+	free_page(page);
 	return retval;
 }				/* startup */
 

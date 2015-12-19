@@ -884,14 +884,14 @@ static int rp_open(struct tty_struct *tty, struct file *filp)
 	struct tty_port *port;
 	int retval;
 	CHANNEL_t *cp;
-	unsigned long page;
+	unsigned char *page;
 
 	info = rp_table[tty->index];
 	if (info == NULL)
 		return -ENXIO;
 	port = &info->port;
 	
-	page = __get_free_page(GFP_KERNEL);
+	page = (unsigned char *)__get_free_page(GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
 
@@ -899,9 +899,9 @@ static int rp_open(struct tty_struct *tty, struct file *filp)
 	 * We must not sleep from here until the port is marked fully in use.
 	 */
 	if (info->xmit_buf)
-		free_page((void *)page);
+		free_page(page);
 	else
-		info->xmit_buf = (unsigned char *) page;
+		info->xmit_buf = page;
 
 	tty->driver_data = info;
 	tty_port_tty_set(port, tty);

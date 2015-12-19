@@ -2590,10 +2590,10 @@ static int
 startup(struct e100_serial * info)
 {
 	unsigned long flags;
-	unsigned long xmit_page;
+	unsigned char *xmit_page;
 	int i;
 
-	xmit_page = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	xmit_page = get_zeroed_page(GFP_KERNEL);
 	if (!xmit_page)
 		return -ENOMEM;
 
@@ -2603,14 +2603,14 @@ startup(struct e100_serial * info)
 
 	if (info->port.flags & ASYNC_INITIALIZED) {
 		local_irq_restore(flags);
-		free_page((void *)xmit_page);
+		free_page(xmit_page);
 		return 0;
 	}
 
 	if (info->xmit.buf)
-		free_page((void *)xmit_page);
+		free_page(xmit_page);
 	else
-		info->xmit.buf = (unsigned char *) xmit_page;
+		info->xmit.buf = xmit_page;
 
 #ifdef SERIAL_DEBUG_OPEN
 	printk("starting up ttyS%d (xmit_buf 0x%p)...\n", info->line, info->xmit.buf);
