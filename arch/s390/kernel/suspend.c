@@ -41,7 +41,7 @@ struct page_key_data {
 static struct page_key_data *page_key_data;
 static struct page_key_data *page_key_rp, *page_key_wp;
 static unsigned long page_key_rx, page_key_wx;
-unsigned long suspend_zero_pages;
+void *suspend_zero_pages;
 
 /*
  * For each page in the hibernation image one additional byte is
@@ -163,13 +163,13 @@ static int suspend_pm_cb(struct notifier_block *nb, unsigned long action,
 	switch (action) {
 	case PM_SUSPEND_PREPARE:
 	case PM_HIBERNATION_PREPARE:
-		suspend_zero_pages = __get_free_pages(GFP_KERNEL, LC_ORDER);
+		suspend_zero_pages = get_free_pages(GFP_KERNEL, LC_ORDER);
 		if (!suspend_zero_pages)
 			return NOTIFY_BAD;
 		break;
 	case PM_POST_SUSPEND:
 	case PM_POST_HIBERNATION:
-		free_pages((void *)suspend_zero_pages, LC_ORDER);
+		free_pages(suspend_zero_pages, LC_ORDER);
 		break;
 	default:
 		return NOTIFY_DONE;
