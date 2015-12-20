@@ -736,7 +736,7 @@ int __init gart_iommu_init(void)
 	unsigned long iommu_start;
 	unsigned long aper_base, aper_size;
 	unsigned long start_pfn, end_pfn;
-	unsigned long scratch;
+	void *scratch;
 	long i;
 
 	if (!amd_nb_has_feature(AMD_NB_GART))
@@ -841,7 +841,7 @@ int __init gart_iommu_init(void)
 	 * Any prefetches that hit unmapped entries won't get an bus abort
 	 * then. (P2P bridge may be prefetching on DMA reads).
 	 */
-	scratch = (unsigned long)get_zeroed_page(GFP_KERNEL);
+	scratch = get_zeroed_page(GFP_KERNEL);
 	if (!scratch)
 		panic("Cannot allocate iommu scratch page");
 	gart_unmapped_entry = GPTE_ENCODE(__pa(scratch));
