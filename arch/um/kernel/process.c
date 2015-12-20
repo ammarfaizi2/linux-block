@@ -55,21 +55,18 @@ int pid_to_processor_id(int pid)
 	return -1;
 }
 
-void free_stack(unsigned long stack, int order)
+void free_stack(void *stack, int order)
 {
-	free_pages((void *)stack, order);
+	free_pages(stack, order);
 }
 
-unsigned long alloc_stack(int order, int atomic)
+void *alloc_stack(int order, int atomic)
 {
-	unsigned long page;
 	gfp_t flags = GFP_KERNEL;
 
 	if (atomic)
 		flags = GFP_ATOMIC;
-	page = __get_free_pages(flags, order);
-
-	return page;
+	return (void *)__get_free_pages(flags, order);
 }
 
 static inline void set_current(struct task_struct *task)

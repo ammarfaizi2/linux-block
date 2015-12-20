@@ -210,7 +210,7 @@ extern int execvp_noalloc(char *buf, const char *file, char *const argv[]);
 /* helper.c */
 extern int run_helper(void (*pre_exec)(void *), void *pre_data, char **argv);
 extern int run_helper_thread(int (*proc)(void *), void *arg,
-			     unsigned int flags, unsigned long *stack_out);
+			     unsigned int flags, void **stack_out);
 extern int helper_wait(int pid);
 
 
@@ -270,8 +270,8 @@ extern int protect(struct mm_id * mm_idp, unsigned long addr,
 
 /* skas/process.c */
 extern int is_skas_winch(int pid, int fd, void *data);
-extern int start_userspace(unsigned long stub_stack);
-extern int copy_context_skas0(unsigned long stack, int pid);
+extern int start_userspace(void *stub_stack);
+extern int copy_context_skas0(void *stack, int pid);
 extern void userspace(struct uml_pt_regs *regs);
 extern int map_stub_pages(int fd, unsigned long code, unsigned long data,
 			  unsigned long stack);

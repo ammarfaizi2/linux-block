@@ -11,7 +11,7 @@ struct mm_id {
 		int mm_fd;
 		int pid;
 	} u;
-	unsigned long stack;
+	void *stack;
 };
 
 #endif

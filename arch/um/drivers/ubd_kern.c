@@ -1082,7 +1082,7 @@ static int __init ubd_init(void)
 late_initcall(ubd_init);
 
 static int __init ubd_driver_init(void){
-	unsigned long stack;
+	void *stack;
 	int err;
 
 	/* Set by CONFIG_BLK_DEV_UBD_SYNC or ubd=sync.*/

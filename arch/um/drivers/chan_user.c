@@ -217,7 +217,7 @@ static int winch_thread(void *arg)
 }
 
 static int winch_tramp(int fd, struct tty_port *port, int *fd_out,
-		       unsigned long *stack_out)
+		       void **stack_out)
 {
 	struct winch_data data;
 	int fds[2], n, err;
@@ -273,7 +273,7 @@ static int winch_tramp(int fd, struct tty_port *port, int *fd_out,
 
 void register_winch(int fd, struct tty_port *port)
 {
-	unsigned long stack;
+	void *stack;
 	int pid, thread, count, thread_fd = -1;
 	char c = 1;
 
@@ -282,7 +282,7 @@ void register_winch(int fd, struct tty_port *port)
 
 	pid = tcgetpgrp(fd);
 	if (is_skas_winch(pid, fd, port)) {
-		register_winch_irq(-1, fd, -1, port, 0);
+		register_winch_irq(-1, fd, -1, port, NULL);
 		return;
 	}
 

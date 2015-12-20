@@ -15,7 +15,7 @@
 #include <skas.h>
 
 static int init_stub_pte(struct mm_struct *mm, unsigned long proc,
-			 unsigned long kernel)
+			 void *kernel)
 {
 	pgd_t *pgd;
 	pud_t *pud;
@@ -51,11 +51,11 @@ int init_new_context(struct task_struct *task, struct mm_struct *mm)
 {
  	struct mm_context *from_mm = NULL;
 	struct mm_context *to_mm = &mm->context;
-	unsigned long stack = 0;
+	void *stack;
 	int ret = -ENOMEM;
 
-	stack = (unsigned long)get_zeroed_page(GFP_KERNEL);
-	if (stack == 0)
+	stack = get_zeroed_page(GFP_KERNEL);
+	if (!stack)
 		goto out;
 
 	to_mm->id.stack = stack;
@@ -84,8 +84,8 @@ int init_new_context(struct task_struct *task, struct mm_struct *mm)
 	return 0;
 
  out_free:
-	if (to_mm->id.stack != 0)
-		free_page((void *)to_mm->id.stack);
+	if (to_mm->id.stack)
+		free_page(to_mm->id.stack);
  out:
 	return ret;
 }
@@ -94,8 +94,7 @@ void uml_setup_stubs(struct mm_struct *mm)
 {
 	int err, ret;
 
-	ret = init_stub_pte(mm, STUB_CODE,
-			    (unsigned long) __syscall_stub_start);
+	ret = init_stub_pte(mm, STUB_CODE, __syscall_stub_start);
 	if (ret)
 		goto out;
 
@@ -153,6 +152,6 @@ void destroy_context(struct mm_struct *mm)
 	}
 	os_kill_ptraced_process(mmu->id.u.pid, 1);
 
-	free_page((void *)mmu->id.stack);
+	free_page(mmu->id.stack);
 	free_ldt(mmu);
 }

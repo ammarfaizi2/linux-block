@@ -21,7 +21,7 @@
 #include "ubd.h"
 #include <os.h>
 
-int start_io_thread(unsigned long sp, int *fd_out)
+int start_io_thread(void *sp, int *fd_out)
 {
 	int pid, fds[2], err;
 
@@ -40,7 +40,7 @@ int start_io_thread(unsigned long sp, int *fd_out)
 		goto out_close;
 	}
 
-	pid = clone(io_thread, (void *) sp, CLONE_FILES | CLONE_VM, NULL);
+	pid = clone(io_thread, sp, CLONE_FILES | CLONE_VM, NULL);
 	if(pid < 0){
 		err = -errno;
 		printk("start_io_thread - clone failed : errno = %d\n", errno);

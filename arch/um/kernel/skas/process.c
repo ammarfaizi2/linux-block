@@ -43,10 +43,10 @@ int __init start_uml(void)
 				 &init_task.thread.switch_buf);
 }
 
-unsigned long current_stub_stack(void)
+void *current_stub_stack(void)
 {
 	if (current->mm == NULL)
-		return 0;
+		return NULL;
 
 	return current->mm->context.id.stack;
 }

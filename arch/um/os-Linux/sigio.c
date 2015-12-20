@@ -22,7 +22,7 @@
  * exitcall.
  */
 static int write_sigio_pid = -1;
-static unsigned long write_sigio_stack;
+static void *write_sigio_stack;
 
 /*
  * These arrays are initialized before the sigio thread is started, and

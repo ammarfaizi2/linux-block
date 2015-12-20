@@ -164,7 +164,7 @@ static int do_not_aio(struct aio_thread_req *req)
 static int aio_req_fd_r = -1;
 static int aio_req_fd_w = -1;
 static int aio_pid = -1;
-static unsigned long aio_stack;
+static void *aio_stack;
 
 static int not_aio_thread(void *arg)
 {

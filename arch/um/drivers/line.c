@@ -598,7 +598,7 @@ struct winch {
 	int tty_fd;
 	int pid;
 	struct tty_port *port;
-	unsigned long stack;
+	void *stack;
 	struct work_struct work;
 };
 
@@ -609,7 +609,7 @@ static void __free_winch(struct work_struct *work)
 
 	if (winch->pid != -1)
 		os_kill_process(winch->pid, 1);
-	if (winch->stack != 0)
+	if (winch->stack)
 		free_stack(winch->stack, 0);
 	kfree(winch);
 }
@@ -672,7 +672,7 @@ static irqreturn_t winch_interrupt(int irq, void *data)
 }
 
 void register_winch_irq(int fd, int tty_fd, int pid, struct tty_port *port,
-			unsigned long stack)
+			void *stack)
 {
 	struct winch *winch;
 
@@ -707,7 +707,7 @@ void register_winch_irq(int fd, int tty_fd, int pid, struct tty_port *port,
  cleanup:
 	os_kill_process(pid, 1);
 	os_close_file(fd);
-	if (stack != 0)
+	if (stack)
 		free_stack(stack, 0);
 }
 

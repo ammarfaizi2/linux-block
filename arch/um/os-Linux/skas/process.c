@@ -85,7 +85,7 @@ bad_wait:
 	fatal_sigsegv();
 }
 
-extern unsigned long current_stub_stack(void);
+extern void *current_stub_stack(void);
 
 static void get_skas_faultinfo(int pid, struct faultinfo *fi)
 {
@@ -110,7 +110,7 @@ static void get_skas_faultinfo(int pid, struct faultinfo *fi)
 	 * faultinfo is prepared by the stub-segv-handler at start of
 	 * the stub stack page. We just have to copy it.
 	 */
-	memcpy(fi, (void *)current_stub_stack(), sizeof(*fi));
+	memcpy(fi, current_stub_stack(), sizeof(*fi));
 
 	err = put_fp_registers(pid, fpregs);
 	if (err < 0) {
@@ -245,10 +245,9 @@ static int userspace_tramp(void *stack)
 #define NR_CPUS 1
 int userspace_pid[NR_CPUS];
 
-int start_userspace(unsigned long stub_stack)
+int start_userspace(void *stub_stack)
 {
-	void *stack;
-	unsigned long sp;
+	void *stack, *sp;
 	int pid, status, n, flags, err;
 
 	stack = mmap(NULL, UM_KERN_PAGE_SIZE,
@@ -261,11 +260,11 @@ int start_userspace(unsigned long stub_stack)
 		return err;
 	}
 
-	sp = (unsigned long) stack + UM_KERN_PAGE_SIZE - sizeof(void *);
+	sp = stack + UM_KERN_PAGE_SIZE - sizeof(void *);
 
 	flags = CLONE_FILES | SIGCHLD;
 
-	pid = clone(userspace_tramp, (void *) sp, flags, (void *) stub_stack);
+	pid = clone(userspace_tramp, sp, flags, stub_stack);
 	if (pid < 0) {
 		err = -errno;
 		printk(UM_KERN_ERR "start_userspace : clone failed, "
@@ -439,14 +438,14 @@ static int __init init_thread_regs(void)
 
 __initcall(init_thread_regs);
 
-int copy_context_skas0(unsigned long new_stack, int pid)
+int copy_context_skas0(void *new_stack, int pid)
 {
 	int err;
-	unsigned long current_stack = current_stub_stack();
+	void *current_stack = current_stub_stack();
 	struct stub_data *data = (struct stub_data *) current_stack;
 	struct stub_data *child_data = (struct stub_data *) new_stack;
 	unsigned long long new_offset;
-	int new_fd = phys_mapping(to_phys((void *)new_stack), &new_offset);
+	int new_fd = phys_mapping(to_phys(new_stack), &new_offset);
 
 	/*
 	 * prepare offset and fd of child's stack as argument for parent's
