@@ -485,9 +485,6 @@ void * __meminit alloc_pages_exact_nid(int nid, size_t size, gfp_t gfp_mask);
 #define get_free_page(gfp_mask) \
 		get_free_pages((gfp_mask), 0)
 
-#define __get_free_page(gfp_mask) \
-		__get_free_pages((gfp_mask), 0)
-
 #define get_dma_pages(gfp_mask, order) \
 		get_free_pages((gfp_mask) | GFP_DMA, (order))
 

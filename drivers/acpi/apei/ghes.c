@@ -223,7 +223,7 @@ static int ghes_estatus_pool_expand(unsigned long len)
 		return 0;
 	pages = (ghes_estatus_pool_size_request - size) / PAGE_SIZE;
 	for (i = 0; i < pages; i++) {
-		addr = __get_free_page(GFP_KERNEL);
+		addr = (unsigned long)get_free_page(GFP_KERNEL);
 		if (!addr)
 			return -ENOMEM;
 		ret = gen_pool_add(ghes_estatus_pool, addr, PAGE_SIZE, -1);
