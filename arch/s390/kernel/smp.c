@@ -179,24 +179,24 @@ static void pcpu_ec_call(struct pcpu *pcpu, int ec_bit)
 
 static int pcpu_alloc_lowcore(struct pcpu *pcpu, int cpu)
 {
-	unsigned long async_stack, panic_stack;
+	void *async_stack, *panic_stack;
 	struct _lowcore *lc;
 
 	if (pcpu != &pcpu_devices[0]) {
 		pcpu->lowcore =	get_free_pages(GFP_KERNEL | GFP_DMA, LC_ORDER);
-		async_stack = __get_free_pages(GFP_KERNEL, ASYNC_ORDER);
-		panic_stack = __get_free_page(GFP_KERNEL);
+		async_stack = get_free_pages(GFP_KERNEL, ASYNC_ORDER);
+		panic_stack = get_free_page(GFP_KERNEL);
 		if (!pcpu->lowcore || !panic_stack || !async_stack)
 			goto out;
 	} else {
-		async_stack = pcpu->lowcore->async_stack - ASYNC_FRAME_OFFSET;
-		panic_stack = pcpu->lowcore->panic_stack - PANIC_FRAME_OFFSET;
+		async_stack = (void *)(pcpu->lowcore->async_stack - ASYNC_FRAME_OFFSET);
+		panic_stack = (void *)(pcpu->lowcore->panic_stack - PANIC_FRAME_OFFSET);
 	}
 	lc = pcpu->lowcore;
 	memcpy(lc, &S390_lowcore, 512);
 	memset((char *) lc + 512, 0, sizeof(*lc) - 512);
-	lc->async_stack = async_stack + ASYNC_FRAME_OFFSET;
-	lc->panic_stack = panic_stack + PANIC_FRAME_OFFSET;
+	lc->async_stack = (u64)async_stack + ASYNC_FRAME_OFFSET;
+	lc->panic_stack = (u64)panic_stack + PANIC_FRAME_OFFSET;
 	lc->cpu_nr = cpu;
 	lc->spinlock_lockval = arch_spin_lockval(cpu);
 	if (MACHINE_HAS_VX)
@@ -209,8 +209,8 @@ static int pcpu_alloc_lowcore(struct pcpu *pcpu, int cpu)
 	return 0;
 out:
 	if (pcpu != &pcpu_devices[0]) {
-		free_page((void *)panic_stack);
-		free_pages((void *)async_stack, ASYNC_ORDER);
+		free_page(panic_stack);
+		free_pages(async_stack, ASYNC_ORDER);
 		free_pages(pcpu->lowcore, LC_ORDER);
 	}
 	return -ENOMEM;
