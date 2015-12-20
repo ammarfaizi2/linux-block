@@ -355,7 +355,7 @@ static void *s390_dma_alloc(struct device *dev, size_t size,
 {
 	struct zpci_dev *zdev = to_zpci(to_pci_dev(dev));
 	struct page *page;
-	unsigned long pa;
+	void *p;
 	dma_addr_t map;
 
 	size = PAGE_ALIGN(size);
@@ -363,20 +363,20 @@ static void *s390_dma_alloc(struct device *dev, size_t size,
 	if (!page)
 		return NULL;
 
-	pa = page_to_phys(page);
-	memset((void *) pa, 0, size);
+	p = page_address(page);
+	memset(p, 0, size);
 
 	map = s390_dma_map_pages(dev, page, 0,
 				 size, DMA_BIDIRECTIONAL, NULL);
 	if (dma_mapping_error(dev, map)) {
-		free_pages((void *)pa, get_order(size));
+		free_pages(p, get_order(size));
 		return NULL;
 	}
 
 	atomic64_add(size / PAGE_SIZE, &zdev->allocated_pages);
 	if (dma_handle)
 		*dma_handle = map;
-	return (void *) pa;
+	return p;
 }
 
 static void s390_dma_free(struct device *dev, size_t size,
