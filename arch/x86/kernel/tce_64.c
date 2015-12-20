@@ -98,7 +98,7 @@ static inline unsigned int table_size_to_number_of_entries(unsigned char size)
 static int tce_table_setparms(struct pci_dev *dev, struct iommu_table *tbl)
 {
 	unsigned int bitmapsz;
-	unsigned long bmppages;
+	unsigned long *bmppages;
 	int ret;
 
 	tbl->it_busno = dev->bus->number;
@@ -111,14 +111,14 @@ static int tce_table_setparms(struct pci_dev *dev, struct iommu_table *tbl)
 	 * entries; we need one bit per entry
 	 */
 	bitmapsz = tbl->it_size / BITS_PER_BYTE;
-	bmppages = __get_free_pages(GFP_KERNEL, get_order(bitmapsz));
+	bmppages = get_free_pages(GFP_KERNEL, get_order(bitmapsz));
 	if (!bmppages) {
 		printk(KERN_ERR "Calgary: cannot allocate bitmap\n");
 		ret = -ENOMEM;
 		goto done;
 	}
 
-	tbl->it_map = (unsigned long*)bmppages;
+	tbl->it_map = bmppages;
 
 	memset(tbl->it_map, 0, bitmapsz);
 
