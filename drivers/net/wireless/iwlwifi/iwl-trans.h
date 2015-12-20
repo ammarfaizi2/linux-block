@@ -331,7 +331,7 @@ enum iwl_hcmd_dataflag {
 struct iwl_host_cmd {
 	const void *data[IWL_MAX_CMD_TBS_PER_TFD];
 	struct iwl_rx_packet *resp_pkt;
-	unsigned long _rx_page_addr;
+	void *_rx_page_addr;
 	u32 _rx_page_order;
 
 	u32 flags;
@@ -342,7 +342,7 @@ struct iwl_host_cmd {
 
 static inline void iwl_free_resp(struct iwl_host_cmd *cmd)
 {
-	free_pages((void *)cmd->_rx_page_addr, cmd->_rx_page_order);
+	free_pages(cmd->_rx_page_addr, cmd->_rx_page_order);
 }
 
 struct iwl_rx_cmd_buffer {
