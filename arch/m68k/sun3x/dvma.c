@@ -79,17 +79,13 @@ void dvma_print (unsigned long dvma_addr)
 
 /* create a virtual mapping for a page assigned within the IOMMU
    so that the cpu can reach it easily */
-inline int dvma_map_cpu(unsigned long kaddr,
-			       unsigned long vaddr, int len)
+int dvma_map_cpu(void *k, void *v, int len)
 {
 	pgd_t *pgd;
-	unsigned long end;
+	unsigned long kaddr = (unsigned long)k & PAGE_MASK;
+	unsigned long vaddr = (unsigned long)v & PAGE_MASK;
+	unsigned long end = PAGE_ALIGN(vaddr + len);
 	int ret = 0;
-
-	kaddr &= PAGE_MASK;
-	vaddr &= PAGE_MASK;
-
-	end = PAGE_ALIGN(vaddr + len);
 
 #ifdef DEBUG
 	printk("dvma: mapping kern %08lx to virt %08lx\n",
@@ -148,8 +144,7 @@ inline int dvma_map_cpu(unsigned long kaddr,
 }
 
 
-inline int dvma_map_iommu(unsigned long kaddr, unsigned long baddr,
-				 int len)
+int dvma_map_iommu(void *kaddr, unsigned long baddr, int len)
 {
 	unsigned long end, index;
 

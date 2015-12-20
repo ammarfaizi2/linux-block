@@ -20,47 +20,42 @@
 
 static unsigned long ptelist[120];
 
-static unsigned long dvma_page(unsigned long kaddr, unsigned long vaddr)
+static void *dvma_page(void *kaddr, void *vaddr)
 {
 	unsigned long pte;
 	unsigned long j;
 	pte_t ptep;
+	int idx;
 
 	j = *(volatile unsigned long *)kaddr;
 	*(volatile unsigned long *)kaddr = j;
 
 	ptep = pfn_pte(virt_to_pfn(kaddr), PAGE_KERNEL);
 	pte = pte_val(ptep);
-//		printk("dvma_remap: addr %lx -> %lx pte %08lx len %x\n",
+//		printk("dvma_remap: addr %p -> %lx pte %08lx len %x\n",
 //		       kaddr, vaddr, pte, len);
-	if(ptelist[(vaddr & 0xff000) >> PAGE_SHIFT] != pte) {
-		sun3_put_pte(vaddr, pte);
-		ptelist[(vaddr & 0xff000) >> PAGE_SHIFT] = pte;
+	idx = ((unsigned long)vaddr & 0xff000) >> PAGE_SHIFT;
+
+	if (ptelist[idx] != pte) {
+		sun3_put_pte((unsigned long)vaddr, pte);
+		ptelist[idx] = pte;
 	}
 
-	return (vaddr + (kaddr & ~PAGE_MASK));
-
+	return vaddr + offset_in_page(kaddr);
 }
 
-int dvma_map_iommu(unsigned long kaddr, unsigned long baddr,
-			      int len)
+int dvma_map_iommu(void *kaddr, unsigned long baddr, int len)
 {
+	void *vaddr = dvma_btov(baddr);
+	void *end = vaddr + len;
 
-	unsigned long end;
-	unsigned long vaddr;
-
-	vaddr = dvma_btov(baddr);
-
-	end = vaddr + len;
-
-	while(vaddr < end) {
+	while (vaddr < end) {
 		dvma_page(kaddr, vaddr);
 		kaddr += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
 	}
 
 	return 0;
-
 }
 
 void __init sun3_dvma_init(void)

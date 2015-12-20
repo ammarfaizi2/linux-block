@@ -131,7 +131,7 @@ static void    sun3_82586_dump(struct net_device *,void *);
 
 /* helper-functions */
 static int     init586(struct net_device *dev);
-static int     check586(struct net_device *dev,char *where,unsigned size);
+static int     check586(struct net_device *dev,unsigned long where,unsigned size);
 static void    alloc586(struct net_device *dev);
 static void    startrecv586(struct net_device *dev);
 static void   *alloc_rfa(struct net_device *dev,void *ptr);
@@ -203,7 +203,7 @@ static int sun3_82586_open(struct net_device *dev)
 /**********************************************
  * Check to see if there's an 82586 out there.
  */
-static int check586(struct net_device *dev,char *where,unsigned size)
+static int check586(struct net_device *dev,unsigned long where,unsigned size)
 {
 	struct priv pb;
 	struct priv *p = &pb;
@@ -211,7 +211,7 @@ static int check586(struct net_device *dev,char *where,unsigned size)
 	int i;
 
 	p->base = (unsigned long) dvma_btov(0);
-	p->memtop = (char *)dvma_btov((unsigned long)where);
+	p->memtop = dvma_btov(where);
 	p->scp = (struct scp_struct *)(p->base + SCP_DEFAULT_ADDRESS);
 	memset((char *)p->scp,0, sizeof(struct scp_struct));
 	for(i=0;i<sizeof(struct scp_struct);i++) /* memory was writeable? */
@@ -221,7 +221,7 @@ static int check586(struct net_device *dev,char *where,unsigned size)
 	if(p->scp->sysbus != SYSBUSVAL)
 		return 0;
 
-	iscp_addr = (char *)dvma_btov((unsigned long)where);
+	iscp_addr = dvma_btov(where);
 
 	p->iscp = (struct iscp_struct *) iscp_addr;
 	memset((char *)p->iscp,0, sizeof(struct iscp_struct));
@@ -366,14 +366,13 @@ static int __init sun3_82586_probe1(struct net_device *dev,int ioaddr)
 		retval = -ENODEV;
 		goto out;
 	}
-	if(!check586(dev,(char *) dev->mem_start,size)) {
+	if(!check586(dev, dev->mem_start,size)) {
 		printk("?memcheck, Can't find memory at 0x%lx with size %d!\n",dev->mem_start,size);
 		retval = -ENODEV;
 		goto out;
 	}
 
-	((struct priv *)netdev_priv(dev))->memtop =
-					(char *)dvma_btov(dev->mem_start);
+	((struct priv *)netdev_priv(dev))->memtop = dvma_btov(dev->mem_start);
 	((struct priv *)netdev_priv(dev))->base = (unsigned long) dvma_btov(0);
 	alloc586(dev);
 

@@ -100,7 +100,7 @@ static struct scsi_cmnd *sun3_dma_setup_done;
 static unsigned char *sun3_scsi_regp;
 static volatile struct sun3_dma_regs *dregs;
 static struct sun3_udc_regs *udc_regs;
-static unsigned char *sun3_dma_orig_addr = NULL;
+static unsigned long sun3_dma_orig_addr;
 static unsigned long sun3_dma_orig_count = 0;
 static int sun3_dma_active = 0;
 static unsigned long last_residual = 0;
@@ -237,15 +237,15 @@ void sun3_sun3_debug (void)
 /* sun3scsi_dma_setup() -- initialize the dma controller for a read/write */
 static unsigned long sun3scsi_dma_setup(void *data, unsigned long count, int write_flag)
 {
-	void *addr;
+	unsigned long addr;
 
-	if(sun3_dma_orig_addr != NULL)
+	if (sun3_dma_orig_addr)
 		dvma_unmap(sun3_dma_orig_addr);
 
 #ifdef SUN3_SCSI_VME
-	addr = (void *)dvma_map_vme((unsigned long) data, count);
+	addr = dvma_map_vme(data, count);
 #else
-	addr = (void *)dvma_map((unsigned long) data, count);
+	addr = dvma_map(data, count);
 #endif
 		
 	sun3_dma_orig_addr = addr;
@@ -399,9 +399,7 @@ static int sun3scsi_dma_finish(int write_flag)
 	last_residual = fifo;
 	/* empty bytes from the fifo which didn't make it */
 	if ((!write_flag) && (dregs->csr & CSR_LEFT)) {
-		unsigned char *vaddr;
-
-		vaddr = (unsigned char *)dvma_vmetov(sun3_dma_orig_addr);
+		unsigned char *vaddr = dvma_vmetov(sun3_dma_orig_addr);
 
 		vaddr += (sun3_dma_orig_count - fifo);
 		vaddr--;
@@ -444,11 +442,8 @@ static int sun3scsi_dma_finish(int write_flag)
 
 	/* empty bytes from the fifo which didn't make it */
 	if((!write_flag) && (count - fifo) == 2) {
-		unsigned short data;
-		unsigned char *vaddr;
-
-		data = dregs->fifo_data;
-		vaddr = (unsigned char *)dvma_btov(sun3_dma_orig_addr);
+		unsigned short data = dregs->fifo_data;
+		unsigned char *vaddr = dvma_btov(sun3_dma_orig_addr);
 		
 		vaddr += (sun3_dma_orig_count - fifo);
 
@@ -458,7 +453,7 @@ static int sun3scsi_dma_finish(int write_flag)
 #endif
 
 	dvma_unmap(sun3_dma_orig_addr);
-	sun3_dma_orig_addr = NULL;
+	sun3_dma_orig_addr = 0;
 
 #ifdef SUN3_SCSI_VME
 	dregs->dma_addr_hi = 0;

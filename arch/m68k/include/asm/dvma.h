@@ -16,18 +16,16 @@
 #define DVMA_PAGE_ALIGN(addr)	ALIGN(addr, DVMA_PAGE_SIZE)
 
 extern void dvma_init(void);
-extern int dvma_map_iommu(unsigned long kaddr, unsigned long baddr,
-			  int len);
+extern int dvma_map_iommu(void *kaddr, unsigned long baddr, int len);
 
 #define dvma_malloc(x) dvma_malloc_align(x, 0)
 #define dvma_map(x, y) dvma_map_align(x, y, 0)
 #define dvma_map_vme(x, y) (dvma_map(x, y) & 0xfffff)
 #define dvma_map_align_vme(x, y, z) (dvma_map_align (x, y, z) & 0xfffff)
-extern unsigned long dvma_map_align(unsigned long kaddr, int len,
-			    int align);
+extern unsigned long dvma_map_align(void *kaddr, int len, int align);
 extern void *dvma_malloc_align(unsigned long len, unsigned long align);
 
-extern void dvma_unmap(void *baddr);
+extern void dvma_unmap(unsigned long);
 extern void dvma_free(void *vaddr);
 
 
@@ -51,14 +49,13 @@ extern void dvma_free(void *vaddr);
 
 /* virt <-> phys conversions */
 #define dvma_vtop(x) ((unsigned long)(x) & 0xffffff)
-#define dvma_ptov(x) ((unsigned long)(x) | 0xf000000)
+#define dvma_ptov(x) ((void *)((unsigned long)(x) | 0xf000000))
 #define dvma_vtovme(x) ((unsigned long)(x) & 0x00fffff)
-#define dvma_vmetov(x) ((unsigned long)(x) | 0xff00000)
+#define dvma_vmetov(x) ((void*)((unsigned long)(x) | 0xff00000))
 #define dvma_vtob(x) dvma_vtop(x)
 #define dvma_btov(x) dvma_ptov(x)
 
-static inline int dvma_map_cpu(unsigned long kaddr, unsigned long vaddr,
-			       int len)
+static inline int dvma_map_cpu(void *kaddr, void *vaddr, int len)
 {
 	return 0;
 }
@@ -75,11 +72,9 @@ static inline int dvma_map_cpu(unsigned long kaddr, unsigned long vaddr,
 #define IOMMU_ENTRIES              (IOMMU_TOTAL_ENTRIES - 0x80)
 
 #define dvma_vtob(x) ((unsigned long)(x) & 0x00ffffff)
-#define dvma_btov(x) ((unsigned long)(x) | 0xff000000)
+#define dvma_btov(x) ((void *)((unsigned long)(x) | 0xff000000))
 
-extern int dvma_map_cpu(unsigned long kaddr, unsigned long vaddr, int len);
-
-
+extern int dvma_map_cpu(void *kaddr, void *vaddr, int len);
 
 /* everything below this line is specific to dma used for the onboard
    ESP scsi on sun3x */

@@ -277,7 +277,7 @@ void __init dvma_init(void)
 
 }
 
-unsigned long dvma_map_align(unsigned long kaddr, int len, int align)
+unsigned long dvma_map_align(void *kaddr, int len, int align)
 {
 
 	unsigned long baddr;
@@ -287,58 +287,52 @@ unsigned long dvma_map_align(unsigned long kaddr, int len, int align)
 		len = 0x800;
 
 	if(!kaddr || !len) {
-//		printk("error: kaddr %lx len %x\n", kaddr, len);
+//		printk("error: kaddr %p len %x\n", kaddr, len);
 //		*(int *)4 = 0;
 		return 0;
 	}
 
 #ifdef DEBUG
-	printk("dvma_map request %08lx bytes from %08lx\n",
+	printk("dvma_map request %08lx bytes from %p\n",
 	       len, kaddr);
 #endif
-	off = kaddr & ~DVMA_PAGE_MASK;
-	kaddr &= PAGE_MASK;
+	off = (unsigned long)kaddr % DVMA_PAGE_SIZE;
+	kaddr -= off;
 	len += off;
-	len = ((len + (DVMA_PAGE_SIZE-1)) & DVMA_PAGE_MASK);
+	len = ALIGN(len, DVMA_PAGE_SIZE);
 
 	if(align == 0)
 		align = DVMA_PAGE_SIZE;
 	else
-		align = ((align + (DVMA_PAGE_SIZE-1)) & DVMA_PAGE_MASK);
+		align = ALIGN(align, DVMA_PAGE_SIZE);
 
 	baddr = get_baddr(len, align);
 //	printk("using baddr %lx\n", baddr);
 
-	if(!dvma_map_iommu(kaddr, baddr, len))
+	if (!dvma_map_iommu(kaddr, baddr, len))
 		return (baddr + off);
 
-	printk("dvma_map failed kaddr %lx baddr %lx len %x\n", kaddr, baddr, len);
+	printk("dvma_map failed kaddr %p baddr %lx len %x\n", kaddr, baddr, len);
 	BUG();
 	return 0;
 }
 EXPORT_SYMBOL(dvma_map_align);
 
-void dvma_unmap(void *baddr)
+void dvma_unmap(unsigned long baddr)
 {
-	unsigned long addr;
-
-	addr = (unsigned long)baddr;
 	/* check if this is a vme mapping */
-	if(!(addr & 0x00f00000))
-		addr |= 0xf00000;
+	if (!(baddr & 0x00f00000))
+		baddr |= 0xf00000;
 
-	free_baddr(addr);
-
-	return;
-
+	free_baddr(baddr);
 }
 EXPORT_SYMBOL(dvma_unmap);
 
 void *dvma_malloc_align(unsigned long len, unsigned long align)
 {
-	unsigned long kaddr;
+	void *kaddr;
 	unsigned long baddr;
-	unsigned long vaddr;
+	void *vaddr;
 
 	if(!len)
 		return NULL;
@@ -348,28 +342,28 @@ void *dvma_malloc_align(unsigned long len, unsigned long align)
 #endif
 	len = ((len + (DVMA_PAGE_SIZE-1)) & DVMA_PAGE_MASK);
 
-        if((kaddr = __get_free_pages(GFP_ATOMIC, get_order(len))) == 0)
+        if((kaddr = get_free_pages(GFP_ATOMIC, get_order(len))) == NULL)
 		return NULL;
 
-	if((baddr = (unsigned long)dvma_map_align(kaddr, len, align)) == 0) {
-		free_pages((void *)kaddr, get_order(len));
+	if((baddr = dvma_map_align(kaddr, len, align)) == 0) {
+		free_pages(kaddr, get_order(len));
 		return NULL;
 	}
 
 	vaddr = dvma_btov(baddr);
 
-	if(dvma_map_cpu(kaddr, vaddr, len) < 0) {
-		dvma_unmap((void *)baddr);
-		free_pages((void *)kaddr, get_order(len));
+	if (dvma_map_cpu(kaddr, vaddr, len) < 0) {
+		dvma_unmap(baddr);
+		free_pages(kaddr, get_order(len));
 		return NULL;
 	}
 
 #ifdef DEBUG
-	printk("mapped %08lx bytes %08lx kern -> %08lx bus\n",
+	printk("mapped %08lx bytes %p kern -> %08lx bus\n",
 	       len, kaddr, baddr);
 #endif
 
-	return (void *)vaddr;
+	return vaddr;
 
 }
 EXPORT_SYMBOL(dvma_malloc_align);
