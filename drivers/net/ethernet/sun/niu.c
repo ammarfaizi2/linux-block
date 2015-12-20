@@ -9959,14 +9959,14 @@ static void *niu_phys_alloc_coherent(struct device *dev, size_t size,
 				     u64 *dma_addr, gfp_t flag)
 {
 	unsigned long order = get_order(size);
-	unsigned long page = __get_free_pages(flag, order);
+	void *page = get_free_pages(flag, order);
 
 	if (page == 0UL)
 		return NULL;
-	memset((char *)page, 0, PAGE_SIZE << order);
+	memset(page, 0, PAGE_SIZE << order);
 	*dma_addr = __pa(page);
 
-	return (void *) page;
+	return page;
 }
 
 static void niu_phys_free_coherent(struct device *dev, size_t size,
