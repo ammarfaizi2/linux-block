@@ -75,11 +75,11 @@ extern unsigned long _page_cachable_default;
  * for zero-mapped memory areas etc..
  */
 
-extern unsigned long empty_zero_page;
+extern void *empty_zero_page;
 extern unsigned long zero_page_mask;
 
 #define ZERO_PAGE(vaddr) \
-	(virt_to_page((void *)(empty_zero_page + (((unsigned long)(vaddr)) & zero_page_mask))))
+	(virt_to_page((empty_zero_page + (((unsigned long)(vaddr)) & zero_page_mask))))
 #define __HAVE_COLOR_ZERO_PAGE
 
 extern void paging_init(void);

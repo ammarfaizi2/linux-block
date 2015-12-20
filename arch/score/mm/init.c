@@ -38,18 +38,18 @@
 #include <asm/sections.h>
 #include <asm/tlb.h>
 
-unsigned long empty_zero_page;
+void *empty_zero_page;
 EXPORT_SYMBOL_GPL(empty_zero_page);
 
 static void setup_zero_page(void)
 {
 	struct page *page;
 
-	empty_zero_page = __get_free_pages(GFP_KERNEL | __GFP_ZERO, 0);
+	empty_zero_page = get_free_pages(GFP_KERNEL | __GFP_ZERO, 0);
 	if (!empty_zero_page)
 		panic("Oh boy, that early out of memory?");
 
-	page = virt_to_page((void *) empty_zero_page);
+	page = virt_to_page(empty_zero_page);
 	mark_page_reserved(page);
 }
 

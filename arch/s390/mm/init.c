@@ -42,7 +42,8 @@
 
 pgd_t swapper_pg_dir[PTRS_PER_PGD] __attribute__((__aligned__(PAGE_SIZE)));
 
-unsigned long empty_zero_page, zero_page_mask;
+void *empty_zero_page;
+unsigned long zero_page_mask;
 EXPORT_SYMBOL(empty_zero_page);
 EXPORT_SYMBOL(zero_page_mask);
 
@@ -59,11 +60,11 @@ static void __init setup_zero_pages(void)
 	while (order > 2 && (totalram_pages >> 10) < (1UL << order))
 		order--;
 
-	empty_zero_page = __get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
+	empty_zero_page = get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
 	if (!empty_zero_page)
 		panic("Out of memory in setup_zero_pages");
 
-	page = virt_to_page((void *) empty_zero_page);
+	page = virt_to_page(empty_zero_page);
 	split_page(page, order);
 	for (i = 1 << order; i > 0; i--) {
 		mark_page_reserved(page);

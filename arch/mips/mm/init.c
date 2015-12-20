@@ -53,7 +53,8 @@
  * any price.  Since page is never written to after the initialization we
  * don't have to care about aliases on other CPUs.
  */
-unsigned long empty_zero_page, zero_page_mask;
+void *empty_zero_page;
+unsigned long zero_page_mask;
 EXPORT_SYMBOL_GPL(empty_zero_page);
 EXPORT_SYMBOL(zero_page_mask);
 
@@ -70,11 +71,11 @@ void setup_zero_pages(void)
 	else
 		order = 0;
 
-	empty_zero_page = __get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
+	empty_zero_page = get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
 	if (!empty_zero_page)
 		panic("Oh boy, that early out of memory?");
 
-	page = virt_to_page((void *)empty_zero_page);
+	page = virt_to_page(empty_zero_page);
 	split_page(page, order);
 	for (i = 0; i < (1 << order); i++, page++)
 		mark_page_reserved(page);

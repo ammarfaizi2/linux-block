@@ -163,12 +163,12 @@ static inline pgprot_t pgprot_noncached(pgprot_t _prot)
 #define __swp_offset(x) 	((x).val >> 10)
 #define __swp_entry(type, offset) ((swp_entry_t){(type) | ((offset) << 10)})
 
-extern unsigned long empty_zero_page;
+extern void *empty_zero_page;
 extern unsigned long zero_page_mask;
 
 #define ZERO_PAGE(vaddr) \
-	(virt_to_page((void *)(empty_zero_page + \
-	 (((unsigned long)(vaddr)) & zero_page_mask))))
+	(virt_to_page(empty_zero_page + \
+	 (((unsigned long)(vaddr)) & zero_page_mask)))
 
 #define pgtable_cache_init()	do {} while (0)
 
