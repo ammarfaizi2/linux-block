@@ -41,7 +41,8 @@ static void pm_enter(void)
 {
 	u8 stbcr, csr;
 	u16 frqcr, mcr;
-	u32 vbr_new, vbr_old;
+	void *vbr_new;
+	u32 vbr_old;
 
 	set_bl_bit();
 
@@ -68,9 +69,9 @@ static void pm_enter(void)
 
 	/* set interrupt handler */
 	asm volatile("stc vbr, %0" : "=r" (vbr_old));
-	vbr_new = (unsigned long)get_zeroed_page(GFP_ATOMIC);
+	vbr_new = get_zeroed_page(GFP_ATOMIC);
 	udelay(50);
-	memcpy((void*)(vbr_new + INTR_OFFSET),
+	memcpy(vbr_new + INTR_OFFSET,
 	       &wakeup_start, &wakeup_end - &wakeup_start);
 	asm volatile("ldc %0, vbr" : : "r" (vbr_new));
 
@@ -81,7 +82,7 @@ static void pm_enter(void)
 
 	asm volatile("ldc %0, vbr" : : "r" (vbr_old));
 
-	free_page((void *)vbr_new);
+	free_page(vbr_new);
 
 	/* enable PLL1 */
 	frqcr = __raw_readw(FRQCR);
