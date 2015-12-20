@@ -1704,7 +1704,7 @@ il3945_send_rxon_assoc(struct il_priv *il)
 	if (rc)
 		return rc;
 
-	pkt = (struct il_rx_pkt *)cmd.reply_page;
+	pkt = cmd.reply_page;
 	if (pkt->hdr.flags & IL_CMD_FAILED_MSK) {
 		IL_ERR("Bad return from C_RXON_ASSOC command\n");
 		rc = -EIO;

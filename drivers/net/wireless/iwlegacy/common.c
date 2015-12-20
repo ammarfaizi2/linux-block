@@ -384,7 +384,7 @@ cancel:
 fail:
 	if (cmd->reply_page) {
 		il_free_pages(il, cmd->reply_page);
-		cmd->reply_page = 0;
+		cmd->reply_page = NULL;
 	}
 out:
 	return ret;
@@ -1288,7 +1288,7 @@ il_send_scan_abort(struct il_priv *il)
 	if (ret)
 		return ret;
 
-	pkt = (struct il_rx_pkt *)cmd.reply_page;
+	pkt = cmd.reply_page;
 	if (pkt->u.status != CAN_ABORT_STATUS) {
 		/* The scan abort will return 1 for success or
 		 * 2 for "failure".  A failure condition can be
@@ -1870,7 +1870,7 @@ il_send_add_sta(struct il_priv *il, struct il_addsta_cmd *sta, u8 flags)
 		return ret;
 
 	if (ret == 0) {
-		pkt = (struct il_rx_pkt *)cmd.reply_page;
+		pkt = cmd.reply_page;
 		ret = il_process_add_sta_resp(il, sta, pkt, true);
 	}
 	il_free_pages(il, cmd.reply_page);
@@ -2124,7 +2124,7 @@ il_send_remove_station(struct il_priv *il, const u8 * addr, int sta_id,
 	if (ret)
 		return ret;
 
-	pkt = (struct il_rx_pkt *)cmd.reply_page;
+	pkt = cmd.reply_page;
 	if (pkt->hdr.flags & IL_CMD_FAILED_MSK) {
 		IL_ERR("Bad return from C_REM_STA (0x%08X)\n", pkt->hdr.flags);
 		ret = -EIO;
@@ -3319,7 +3319,7 @@ il_tx_cmd_complete(struct il_priv *il, struct il_rx_buf *rxb)
 
 	/* Input error checking is done when commands are added to queue. */
 	if (meta->flags & CMD_WANT_SKB) {
-		meta->source->reply_page = (unsigned long)rxb_addr(rxb);
+		meta->source->reply_page = rxb_addr(rxb);
 		rxb->page = NULL;
 	} else if (meta->callback)
 		meta->callback(il, cmd, pkt);
