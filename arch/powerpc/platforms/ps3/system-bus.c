@@ -532,7 +532,7 @@ static void * ps3_alloc_coherent(struct device *_dev, size_t size,
 		goto clean_none;
 	}
 
-	result = ps3_dma_map(dev->d_region, virt_addr, size, dma_handle,
+	result = ps3_dma_map(dev->d_region, __pa(virt_addr), size, dma_handle,
 			     CBE_IOPTE_PP_W | CBE_IOPTE_PP_R |
 			     CBE_IOPTE_SO_RW | CBE_IOPTE_M);
 
@@ -576,7 +576,7 @@ static dma_addr_t ps3_sb_map_page(struct device *_dev, struct page *page,
 	dma_addr_t bus_addr;
 	void *ptr = page_address(page) + offset;
 
-	result = ps3_dma_map(dev->d_region, (unsigned long)ptr, size,
+	result = ps3_dma_map(dev->d_region, __pa(ptr), size,
 			     &bus_addr,
 			     CBE_IOPTE_PP_R | CBE_IOPTE_PP_W |
 			     CBE_IOPTE_SO_RW | CBE_IOPTE_M);
@@ -615,7 +615,7 @@ static dma_addr_t ps3_ioc0_map_page(struct device *_dev, struct page *page,
 		/* not happned */
 		BUG();
 	};
-	result = ps3_dma_map(dev->d_region, (unsigned long)ptr, size,
+	result = ps3_dma_map(dev->d_region, __pa(ptr), size,
 			     &bus_addr, iopte_flag);
 
 	if (result) {

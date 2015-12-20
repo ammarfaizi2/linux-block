@@ -110,7 +110,7 @@ struct ps3_dma_region_ops {
 	int (*create)(struct ps3_dma_region *);
 	int (*free)(struct ps3_dma_region *);
 	int (*map)(struct ps3_dma_region *,
-		   unsigned long virt_addr,
+		   unsigned long phys_addr,
 		   unsigned long len,
 		   dma_addr_t *bus_addr,
 		   u64 iopte_pp);
@@ -132,7 +132,7 @@ int ps3_dma_region_init(struct ps3_system_bus_device *dev,
 	enum ps3_dma_region_type region_type, void *addr, unsigned long len);
 int ps3_dma_region_create(struct ps3_dma_region *r);
 int ps3_dma_region_free(struct ps3_dma_region *r);
-int ps3_dma_map(struct ps3_dma_region *r, unsigned long virt_addr,
+int ps3_dma_map(struct ps3_dma_region *r, unsigned long phys_addr,
 	unsigned long len, dma_addr_t *bus_addr,
 	u64 iopte_pp);
 int ps3_dma_unmap(struct ps3_dma_region *r, dma_addr_t bus_addr,
