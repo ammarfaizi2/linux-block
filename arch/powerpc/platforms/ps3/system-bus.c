@@ -520,12 +520,12 @@ static void * ps3_alloc_coherent(struct device *_dev, size_t size,
 {
 	int result;
 	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
-	unsigned long virt_addr;
+	void *virt_addr;
 
 	flag &= ~(__GFP_DMA | __GFP_HIGHMEM);
 	flag |= __GFP_ZERO;
 
-	virt_addr = __get_free_pages(flag, get_order(size));
+	virt_addr = get_free_pages(flag, get_order(size));
 
 	if (!virt_addr) {
 		pr_debug("%s:%d: get_free_pages failed\n", __func__, __LINE__);
@@ -543,10 +543,10 @@ static void * ps3_alloc_coherent(struct device *_dev, size_t size,
 		goto clean_alloc;
 	}
 
-	return (void*)virt_addr;
+	return virt_addr;
 
 clean_alloc:
-	free_pages((void *)virt_addr, get_order(size));
+	free_pages(virt_addr, get_order(size));
 clean_none:
 	dma_handle = NULL;
 	return NULL;
