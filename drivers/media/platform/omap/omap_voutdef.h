@@ -126,7 +126,7 @@ struct omap_vout_device {
 	/* allow to reuse previously allocated buffer which is big enough */
 	int buffer_size;
 	/* keep buffer info across opens */
-	unsigned long buf_virt_addr[VIDEO_MAX_FRAME];
+	void *buf_virt_addr[VIDEO_MAX_FRAME];
 	unsigned long buf_phy_addr[VIDEO_MAX_FRAME];
 	enum omap_color_mode dss_mode;
 
@@ -161,7 +161,7 @@ struct omap_vout_device {
 
 	struct vid_vrfb_dma vrfb_dma_tx;
 	unsigned int smsshado_phy_addr[MAC_VRFB_CTXS];
-	unsigned int smsshado_virt_addr[MAC_VRFB_CTXS];
+	void *smsshado_virt_addr[MAC_VRFB_CTXS];
 	struct vrfb vrfb_context[MAC_VRFB_CTXS];
 	bool vrfb_static_allocation;
 	unsigned int smsshado_size;

@@ -30,8 +30,8 @@ int omap_vout_new_window(struct v4l2_rect *crop,
 void omap_vout_new_format(struct v4l2_pix_format *pix,
 		struct v4l2_framebuffer *fbuf, struct v4l2_rect *crop,
 		struct v4l2_window *win);
-unsigned long omap_vout_alloc_buffer(u32 buf_size, u32 *phys_addr);
-void omap_vout_free_buffer(unsigned long virtaddr, u32 buf_size);
+void *omap_vout_alloc_buffer(u32 buf_size, u32 *phys_addr);
+void omap_vout_free_buffer(void *virtaddr, u32 buf_size);
 
 bool omap_vout_dss_omap24xx(void);
 bool omap_vout_dss_omap34xx(void);

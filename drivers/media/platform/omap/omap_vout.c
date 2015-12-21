@@ -240,7 +240,7 @@ void omap_vout_free_buffers(struct omap_vout_device *vout)
 		omap_vout_free_buffer(vout->buf_virt_addr[i],
 				vout->buffer_size);
 		vout->buf_phy_addr[i] = 0;
-		vout->buf_virt_addr[i] = 0;
+		vout->buf_virt_addr[i] = NULL;
 	}
 }
 
@@ -656,7 +656,8 @@ static int omap_vout_buffer_setup(struct videobuf_queue *q, unsigned int *count,
 			  unsigned int *size)
 {
 	int startindex = 0, i, j;
-	u32 phy_addr = 0, virt_addr = 0;
+	u32 phy_addr = 0;
+	void *virt_addr = NULL;
 	struct omap_vout_device *vout = q->priv_data;
 	struct omapvideo_info *ovid = &vout->vid_info;
 	int vid_max_buf_size;
@@ -712,7 +713,7 @@ static int omap_vout_buffer_setup(struct videobuf_queue *q, unsigned int *count,
 				omap_vout_free_buffer(
 						vout->smsshado_virt_addr[j],
 						vout->smsshado_size);
-				vout->smsshado_virt_addr[j] = 0;
+				vout->smsshado_virt_addr[j] = NULL;
 				vout->smsshado_phy_addr[j] = 0;
 				}
 			}
@@ -741,7 +742,7 @@ static void omap_vout_free_extra_buffers(struct omap_vout_device *vout)
 			omap_vout_free_buffer(vout->buf_virt_addr[i],
 					vout->buffer_size);
 
-		vout->buf_virt_addr[i] = 0;
+		vout->buf_virt_addr[i] = NULL;
 		vout->buf_phy_addr[i] = 0;
 	}
 	vout->buffer_allocated = num_buffers;
@@ -782,13 +783,14 @@ static int omap_vout_buffer_prepare(struct videobuf_queue *q,
 		if (ret < 0)
 			return ret;
 	} else {
-		unsigned long addr, dma_addr;
+		void *addr;
+		unsigned long dma_addr;
 		unsigned long size;
 
-		addr = (unsigned long) vout->buf_virt_addr[vb->i];
+		addr = vout->buf_virt_addr[vb->i];
 		size = (unsigned long) vb->size;
 
-		dma_addr = dma_map_single(vout->vid_dev->v4l2_dev.dev, (void *) addr,
+		dma_addr = dma_map_single(vout->vid_dev->v4l2_dev.dev, addr,
 				size, DMA_TO_DEVICE);
 		if (dma_mapping_error(vout->vid_dev->v4l2_dev.dev, dma_addr))
 			v4l2_err(&vout->vid_dev->v4l2_dev, "dma_map_single failed\n");
@@ -913,11 +915,11 @@ static int omap_vout_mmap(struct file *file, struct vm_area_struct *vma)
 	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
 	vma->vm_ops = &omap_vout_vm_ops;
 	vma->vm_private_data = (void *) vout;
-	pos = (void *)vout->buf_virt_addr[i];
-	vma->vm_pgoff = virt_to_phys((void *)pos) >> PAGE_SHIFT;
+	pos = vout->buf_virt_addr[i];
+	vma->vm_pgoff = virt_to_phys(pos) >> PAGE_SHIFT;
 	while (size > 0) {
 		unsigned long pfn;
-		pfn = virt_to_phys((void *) pos) >> PAGE_SHIFT;
+		pfn = virt_to_phys(pos) >> PAGE_SHIFT;
 		if (remap_pfn_range(vma, start, pfn, PAGE_SIZE, PAGE_SHARED))
 			return -EAGAIN;
 		start += PAGE_SIZE;
@@ -1501,7 +1503,7 @@ static int vidioc_reqbufs(struct file *file, void *fh,
 		for (i = num_buffers; i < vout->buffer_allocated; i++) {
 			omap_vout_free_buffer(vout->buf_virt_addr[i],
 					vout->buffer_size);
-			vout->buf_virt_addr[i] = 0;
+			vout->buf_virt_addr[i] = NULL;
 			vout->buf_phy_addr[i] = 0;
 		}
 		vout->buffer_allocated = num_buffers;
@@ -1979,7 +1981,7 @@ free_buffers:
 	for (i = 0; i < numbuffers; i++) {
 		omap_vout_free_buffer(vout->buf_virt_addr[i],
 						vout->buffer_size);
-		vout->buf_virt_addr[i] = 0;
+		vout->buf_virt_addr[i] = NULL;
 		vout->buf_phy_addr[i] = 0;
 	}
 	return ret;

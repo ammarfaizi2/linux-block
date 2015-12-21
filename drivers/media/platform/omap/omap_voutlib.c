@@ -298,15 +298,14 @@ EXPORT_SYMBOL_GPL(omap_vout_new_format);
 /*
  * Allocate buffers
  */
-unsigned long omap_vout_alloc_buffer(u32 buf_size, u32 *phys_addr)
+void *omap_vout_alloc_buffer(u32 buf_size, u32 *phys_addr)
 {
 	u32 order, size;
-	unsigned long virt_addr, addr;
+	void *virt_addr, *addr;
 
 	size = PAGE_ALIGN(buf_size);
 	order = get_order(size);
-	virt_addr = __get_free_pages(GFP_KERNEL, order);
-	addr = virt_addr;
+	addr = virt_addr = get_free_pages(GFP_KERNEL, order);
 
 	if (virt_addr) {
 		while (size > 0) {
@@ -315,17 +314,17 @@ unsigned long omap_vout_alloc_buffer(u32 buf_size, u32 *phys_addr)
 			size -= PAGE_SIZE;
 		}
 	}
-	*phys_addr = (u32) virt_to_phys((void *) virt_addr);
+	*phys_addr = (u32) virt_to_phys(virt_addr);
 	return virt_addr;
 }
 
 /*
  * Free buffers
  */
-void omap_vout_free_buffer(unsigned long virtaddr, u32 buf_size)
+void omap_vout_free_buffer(void *virtaddr, u32 buf_size)
 {
 	u32 order, size;
-	unsigned long addr = virtaddr;
+	void *addr = virtaddr;
 
 	size = PAGE_ALIGN(buf_size);
 	order = get_order(size);
@@ -335,7 +334,7 @@ void omap_vout_free_buffer(unsigned long virtaddr, u32 buf_size)
 		addr += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	free_pages((void *)virtaddr, order);
+	free_pages(virtaddr, order);
 }
 
 bool omap_vout_dss_omap24xx(void)
