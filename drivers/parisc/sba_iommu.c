@@ -1113,11 +1113,11 @@ PAT_MOD(mod)->mod_info.ioc         = PAT_GET_IOC(temp);
 static void *
 sba_alloc_pdir(unsigned int pdir_size)
 {
-        unsigned long pdir_base;
+        void *pdir_base;
 	unsigned long pdir_order = get_order(pdir_size);
 
-	pdir_base = __get_free_pages(GFP_KERNEL, pdir_order);
-	if (NULL == (void *) pdir_base)	{
+	pdir_base = get_free_pages(GFP_KERNEL, pdir_order);
+	if (!pdir_base)	{
 		panic("%s() could not allocate I/O Page Table\n",
 			__func__);
 	}
@@ -1131,7 +1131,7 @@ sba_alloc_pdir(unsigned int pdir_size)
 	if ( ((boot_cpu_data.pdc.cpuid >> 5) & 0x7f) != 0x13
 			|| (boot_cpu_data.pdc.versions > 0x202)
 			|| (boot_cpu_data.pdc.capabilities & 0x08L) )
-		return (void *) pdir_base;
+		return pdir_base;
 
 	/*
 	 * PA8700 (PCX-W2, aka piranha) silent data corruption fix
@@ -1154,16 +1154,16 @@ sba_alloc_pdir(unsigned int pdir_size)
 	if (pdir_order <= (19-12)) {
 		if (((virt_to_phys(pdir_base)+pdir_size-1) & PIRANHA_ADDR_MASK) == PIRANHA_ADDR_VAL) {
 			/* allocate a new one on 512k alignment */
-			unsigned long new_pdir = __get_free_pages(GFP_KERNEL, (19-12));
+			void *new_pdir = get_free_pages(GFP_KERNEL, (19-12));
 			/* release original */
-			free_pages((void *)pdir_base, pdir_order);
+			free_pages(pdir_base, pdir_order);
 
 			pdir_base = new_pdir;
 
 			/* release excess */
 			while (pdir_order < (19-12)) {
 				new_pdir += pdir_size;
-				free_pages((void *)new_pdir, pdir_order);
+				free_pages(new_pdir, pdir_order);
 				pdir_order +=1;
 				pdir_size <<=1;
 			}
@@ -1173,13 +1173,13 @@ sba_alloc_pdir(unsigned int pdir_size)
 		** 1MB or 2MB Pdir
 		** Needs to be aligned on an "odd" 1MB boundary.
 		*/
-		unsigned long new_pdir = __get_free_pages(GFP_KERNEL, pdir_order+1); /* 2 or 4MB */
+		void *new_pdir = get_free_pages(GFP_KERNEL, pdir_order+1); /* 2 or 4MB */
 
 		/* release original */
-		free_pages((void *)pdir_base, pdir_order);
+		free_pages(pdir_base, pdir_order);
 
 		/* release first 1MB */
-		free_pages((void *)new_pdir, 20-12);
+		free_pages(new_pdir, 20-12);
 
 		pdir_base = new_pdir + 1024*1024;
 
@@ -1194,17 +1194,17 @@ sba_alloc_pdir(unsigned int pdir_size)
 
 			new_pdir += 3*1024*1024;
 			/* release last 1MB */
-			free_pages((void *)new_pdir, 20-12);
+			free_pages(new_pdir, 20-12);
 
 			/* release unusable 128KB */
-			free_pages((void *)new_pdir - 128*1024 , 17-12);
+			free_pages(new_pdir - 128*1024 , 17-12);
 
 			pdir_size -= 128*1024;
 		}
 	}
 
-	memset((void *) pdir_base, 0, pdir_size);
-	return (void *) pdir_base;
+	memset(pdir_base, 0, pdir_size);
+	return pdir_base;
 }
 
 struct ibase_data_struct {
