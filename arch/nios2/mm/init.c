@@ -103,16 +103,16 @@ static int alloc_kuser_page(void)
 {
 	extern char __kuser_helper_start[], __kuser_helper_end[];
 	int kuser_sz = __kuser_helper_end - __kuser_helper_start;
-	unsigned long vpage;
+	void *vpage = get_zeroed_page(GFP_ATOMIC);
 
-	vpage = (unsigned long)get_zeroed_page(GFP_ATOMIC);
 	if (!vpage)
 		return -ENOMEM;
 
 	/* Copy kuser helpers */
-	memcpy((void *)vpage, __kuser_helper_start, kuser_sz);
+	memcpy(vpage, __kuser_helper_start, kuser_sz);
 
-	flush_icache_range(vpage, vpage + KUSER_SIZE);
+	flush_icache_range((unsigned long)vpage,
+			   (unsigned long)vpage + KUSER_SIZE);
 	kuser_page[0] = virt_to_page(vpage);
 
 	return 0;
