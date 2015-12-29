@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 config METAG
 	def_bool y
+	select ARCH_32BIT_OFF_T
 	select EMBEDDED
 	select GENERIC_ATOMIC64
 	select GENERIC_CLOCKEVENTS
