@@ -4275,6 +4275,9 @@ int rcu_cpu_notify(struct notifier_block *self,
 	case CPU_DOWN_FAILED:
 		sync_sched_exp_online_cleanup(cpu);
 		rcu_boost_kthread_setaffinity(rnp, -1);
+		for_each_rcu_flavor(rsp)
+			if (rsp->gp_kthread)
+				wake_up_process(rsp->gp_kthread);
 		break;
 	case CPU_DOWN_PREPARE:
 		rcu_boost_kthread_setaffinity(rnp, cpu);
