@@ -152,7 +152,8 @@ static int rcu_scheduler_fully_active __read_mostly;
 
 static void rcu_init_new_rnp(struct rcu_node *rnp_leaf);
 static void rcu_cleanup_dead_rnp(struct rcu_node *rnp_leaf);
-static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu);
+static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu,
+					  cpumask_var_t cm);
 static void invoke_rcu_core(void);
 static void invoke_rcu_callbacks(struct rcu_state *rsp, struct rcu_data *rdp);
 static void rcu_report_exp_rdp(struct rcu_state *rsp,
@@ -2711,9 +2712,6 @@ static void rcu_cleanup_dead_cpu(int cpu, struct rcu_state *rsp)
 	if (!IS_ENABLED(CONFIG_HOTPLUG_CPU))
 		return;
 
-	/* Adjust any no-longer-needed kthreads. */
-	rcu_boost_kthread_setaffinity(rnp, -1);
-
 	/* Orphan the dead CPU's callbacks, and adopt them if appropriate. */
 	raw_spin_lock_irqsave(&rsp->orphan_lock, flags);
 	rcu_send_cbs_to_orphanage(cpu, rsp, rnp, rdp);
@@ -4319,14 +4317,39 @@ static void rcu_prepare_cpu(int cpu)
 }
 
 /*
+ * Adjust kthreads to accommodate incoming or outgoing CPU.
+ */
+static void rcu_kthread_setaffinity(long cpu, bool outgoing)
+{
+	cpumask_var_t cm;
+	struct rcu_data *rdp = per_cpu_ptr(rcu_state_p->rda, cpu);
+	struct rcu_node *rnp = rdp->mynode;
+	struct rcu_state *rsp;
+	struct task_struct *t;
+
+	if (!zalloc_cpumask_var(&cm, GFP_KERNEL))
+		return;
+	rcu_boost_kthread_setaffinity(rnp, outgoing ? cpu : -1, cm);
+	cpumask_copy(cm, cpu_online_mask);
+	if (outgoing)
+		cpumask_clear_cpu(cpu, cm);
+	for_each_rcu_flavor(rsp) {
+		t = rsp->gp_kthread;
+		if (!t)
+			continue;
+		set_cpus_allowed_ptr(t, cm);
+		wake_up_process(t);
+	}
+	free_cpumask_var(cm);
+}
+
+/*
  * Handle CPU online/offline notification events.
  */
 int rcu_cpu_notify(struct notifier_block *self,
 		   unsigned long action, void *hcpu)
 {
 	long cpu = (long)hcpu;
-	struct rcu_data *rdp = per_cpu_ptr(rcu_state_p->rda, cpu);
-	struct rcu_node *rnp = rdp->mynode;
 	struct rcu_state *rsp;
 
 	switch (action) {
@@ -4339,13 +4362,13 @@ int rcu_cpu_notify(struct notifier_block *self,
 	case CPU_ONLINE:
 	case CPU_DOWN_FAILED:
 		sync_sched_exp_online_cleanup(cpu);
-		rcu_boost_kthread_setaffinity(rnp, -1);
+		rcu_kthread_setaffinity(cpu, false);
 		for_each_rcu_flavor(rsp)
 			if (rsp->gp_kthread)
 				wake_up_process(rsp->gp_kthread);
 		break;
 	case CPU_DOWN_PREPARE:
-		rcu_boost_kthread_setaffinity(rnp, cpu);
+		rcu_kthread_setaffinity(cpu, true);
 		break;
 	case CPU_DYING:
 	case CPU_DYING_FROZEN:
