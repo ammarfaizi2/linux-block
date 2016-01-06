@@ -1248,16 +1248,14 @@ static void rcu_cpu_kthread(unsigned int cpu)
  * no outgoing CPU.  If there are no CPUs left in the affinity set,
  * this function allows the kthread to execute on any CPU.
  */
-static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
+static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu,
+					  cpumask_var_t cm)
 {
 	struct task_struct *t = rnp->boost_kthread_task;
 	unsigned long mask = rcu_rnp_online_cpus(rnp);
-	cpumask_var_t cm;
 	int cpu;
 
 	if (!t)
-		return;
-	if (!zalloc_cpumask_var(&cm, GFP_KERNEL))
 		return;
 	for (cpu = rnp->grplo; cpu <= rnp->grphi; cpu++, mask >>= 1)
 		if ((mask & 0x1) && cpu != outgoingcpu)
@@ -1265,7 +1263,6 @@ static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
 	if (cpumask_weight(cm) == 0)
 		cpumask_setall(cm);
 	set_cpus_allowed_ptr(t, cm);
-	free_cpumask_var(cm);
 }
 
 static struct smp_hotplug_thread rcu_cpu_thread_spec = {
@@ -1324,7 +1321,8 @@ static void rcu_preempt_boost_start_gp(struct rcu_node *rnp)
 {
 }
 
-static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
+static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu,
+					  cpumask_var_t cm)
 {
 }
 
