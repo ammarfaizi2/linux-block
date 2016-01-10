@@ -87,8 +87,10 @@ typedef struct				  /* per scheduler state */
 	int                     kss_nconns;     /* # connections assigned to
 						 * this scheduler */
 	struct ksock_sched_info *kss_info;	/* owner of it */
-	struct page             *kss_rx_scratch_pgs[LNET_MAX_IOV];
-	struct kvec             kss_scratch_iov[LNET_MAX_IOV];
+	union {
+		struct bio_vec          kss_scratch_bvec[LNET_MAX_IOV];
+		struct kvec             kss_scratch_iov[LNET_MAX_IOV];
+	};
 } ksock_sched_t;
 
 struct ksock_sched_info {
