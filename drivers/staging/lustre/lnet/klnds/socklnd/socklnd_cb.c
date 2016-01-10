@@ -164,13 +164,13 @@ ksocknal_send_kiov(ksock_conn_t *conn, ksock_tx_t *tx)
 	do {
 		LASSERT(tx->tx_nkiov > 0);
 
-		if (nob < (int)kiov->kiov_len) {
-			kiov->kiov_offset += nob;
-			kiov->kiov_len -= nob;
+		if (nob < (int)kiov->bv_len) {
+			kiov->bv_offset += nob;
+			kiov->bv_len -= nob;
 			return rc;
 		}
 
-		nob -= (int)kiov->kiov_len;
+		nob -= (int)kiov->bv_len;
 		tx->tx_kiov = ++kiov;
 		tx->tx_nkiov--;
 	} while (nob);
@@ -326,13 +326,13 @@ ksocknal_recv_kiov(ksock_conn_t *conn)
 	do {
 		LASSERT(conn->ksnc_rx_nkiov > 0);
 
-		if (nob < (int) kiov->kiov_len) {
-			kiov->kiov_offset += nob;
-			kiov->kiov_len -= nob;
+		if (nob < (int) kiov->bv_len) {
+			kiov->bv_offset += nob;
+			kiov->bv_len -= nob;
 			return -EAGAIN;
 		}
 
-		nob -= kiov->kiov_len;
+		nob -= kiov->bv_len;
 		conn->ksnc_rx_kiov = ++kiov;
 		conn->ksnc_rx_nkiov--;
 	} while (nob);

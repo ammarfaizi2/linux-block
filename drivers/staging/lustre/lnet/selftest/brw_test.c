@@ -231,7 +231,7 @@ brw_fill_bulk(srpc_bulk_t *bk, int pattern, __u64 magic)
 	struct page *pg;
 
 	for (i = 0; i < bk->bk_niov; i++) {
-		pg = bk->bk_iovs[i].kiov_page;
+		pg = bk->bk_iovs[i].bv_page;
 		brw_fill_page(pg, pattern, magic);
 	}
 }
@@ -243,7 +243,7 @@ brw_check_bulk(srpc_bulk_t *bk, int pattern, __u64 magic)
 	struct page *pg;
 
 	for (i = 0; i < bk->bk_niov; i++) {
-		pg = bk->bk_iovs[i].kiov_page;
+		pg = bk->bk_iovs[i].bv_page;
 		if (brw_check_page(pg, pattern, magic)) {
 			CERROR("Bulk page %p (%d/%d) is corrupted!\n",
 			       pg, i, bk->bk_niov);

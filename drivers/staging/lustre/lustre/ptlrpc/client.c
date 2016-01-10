@@ -206,7 +206,7 @@ void __ptlrpc_free_bulk(struct ptlrpc_bulk_desc *desc, int unpin)
 
 	if (unpin) {
 		for (i = 0; i < desc->bd_iov_count; i++)
-			page_cache_release(desc->bd_iov[i].kiov_page);
+			page_cache_release(desc->bd_iov[i].bv_page);
 	}
 
 	kfree(desc);
