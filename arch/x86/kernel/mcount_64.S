@@ -7,6 +7,7 @@
 #include <linux/linkage.h>
 #include <asm/ptrace.h>
 #include <asm/ftrace.h>
+#include <asm/export.h>
 
 
 	.code64
@@ -291,6 +292,7 @@ trace:
 	jmp fgraph_trace
 END(function_hook)
 #endif /* CONFIG_DYNAMIC_FTRACE */
+EXPORT_SYMBOL(function_hook)
 #endif /* CONFIG_FUNCTION_TRACER */
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
