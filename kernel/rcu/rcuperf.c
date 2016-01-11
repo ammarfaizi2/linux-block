@@ -58,10 +58,10 @@ MODULE_AUTHOR("Paul E. McKenney <paulmck@linux.vnet.ibm.com>");
 #define VERBOSE_PERFOUT_ERRSTRING(s) \
 	do { if (verbose) pr_alert("%s" PERF_FLAG "!!! %s\n", perf_type, s); } while (0)
 
-torture_param(bool, gp_exp, false, "Use expedited GP wait primitives");
+torture_param(bool, gp_exp, true, "Use expedited GP wait primitives");
 torture_param(int, nreaders, -1, "Number of RCU reader threads");
 torture_param(int, nwriters, -1, "Number of RCU updater threads");
-torture_param(bool, shutdown, 0, "Shutdown at end of performance tests.");
+torture_param(bool, shutdown, false, "Shutdown at end of performance tests.");
 torture_param(bool, verbose, true, "Enable verbose debugging printk()s");
 
 static char *perf_type = "rcu";
@@ -301,23 +301,6 @@ static bool __maybe_unused torturing_tasks(void)
 #endif /* #else #ifdef CONFIG_TASKS_RCU */
 
 /*
- * RCU perf shutdown kthread.  Just waits to be awakened, then shuts
- * down system.
- */
-static int
-rcu_perf_shutdown(void *arg)
-{
-	do {
-		wait_event(shutdown_wq,
-			   atomic_read(&n_rcu_perf_writer_finished) ==
-			   nrealwriters);
-	} while (atomic_read(&n_rcu_perf_writer_finished) < nrealwriters);
-	smp_mb(); /* Wake before output. */
-	kernel_power_off();
-	return -EINVAL;
-}
-
-/*
  * If performance tests complete, wait for shutdown to commence.
  */
 static void rcu_perf_wait_shutdown(void)
@@ -361,13 +344,14 @@ rcu_perf_writer(void *arg)
 {
 	int i = 0;
 	long me = (long)arg;
+	bool started = false, done = false, alldone = false;
 	u64 t;
 
 	VERBOSE_PERFOUT_STRING("rcu_perf_writer task started");
 	WARN_ON(rcu_gp_is_expedited() && !rcu_gp_is_normal() && !gp_exp);
 	WARN_ON(rcu_gp_is_normal() && gp_exp);
 	t = ktime_get_mono_fast_ns();
-	if (atomic_inc_return(&n_rcu_perf_writer_started) == nrealwriters)
+	if (atomic_inc_return(&n_rcu_perf_writer_started) >= nrealwriters)
 		t_rcu_perf_writer_started = t;
 
 	do {
@@ -382,12 +366,15 @@ rcu_perf_writer(void *arg)
 		rcu_perf_writer_state = RTWS_IDLE;
 		t = ktime_get_mono_fast_ns();
 		writer_durations[me][i] = t - writer_durations[me][i];
-		if (i < MAX_MEAS - 1 &&
-		    atomic_read(&n_rcu_perf_writer_started) == nrealwriters &&
-		    atomic_read(&n_rcu_perf_writer_finished) < nrealwriters) {
-			i++;
-			if (i == MIN_MEAS &&
-			    atomic_inc_return(&n_rcu_perf_writer_finished) ==
+		if (!started &&
+		    atomic_read(&n_rcu_perf_writer_started) >= nrealwriters)
+			started = true;
+		if (!done && i >= MIN_MEAS) {
+			done = true;
+			pr_alert("%s" PERF_FLAG
+				 "rcu_perf_writer %ld has %d measurements\n",
+				 perf_type, me, MIN_MEAS);
+			if (atomic_inc_return(&n_rcu_perf_writer_finished) >=
 			    nrealwriters) {
 				PERFOUT_STRING("Test complete");
 				t_rcu_perf_writer_finished = t;
@@ -395,6 +382,11 @@ rcu_perf_writer(void *arg)
 				wake_up(&shutdown_wq);
 			}
 		}
+		if (done && !alldone &&
+		    atomic_read(&n_rcu_perf_writer_finished) >= nrealwriters)
+			alldone = true;
+		if (started && !alldone)
+			i++;
 		rcu_perf_wait_shutdown();
 	} while (!torture_must_stop());
 	rcu_perf_writer_state = RTWS_STOPPING;
@@ -430,7 +422,7 @@ rcu_perf_cleanup(void)
 			torture_stop_kthread(rcu_perf_writer,
 					     writer_tasks[i]);
 			for (j = 1; j < writer_n_durations[i]; j++) {
-				pr_alert("%s%s %4d %5d %llu\n",
+				pr_alert("%s%s %4d writer-duration: %5d %llu\n",
 					perf_type, PERF_FLAG,
 					i, j, writer_durations[i][j]);
 				if (j % 100 == 0)
@@ -469,11 +461,29 @@ static int compute_real(int n)
 	if (n >= 0) {
 		nr = n;
 	} else {
-		nr = num_online_cpus() + 1 - n;
+		nr = num_online_cpus() + 1 + n;
 		if (nr <= 0)
 			nr = 1;
 	}
 	return nr;
+}
+
+/*
+ * RCU perf shutdown kthread.  Just waits to be awakened, then shuts
+ * down system.
+ */
+static int
+rcu_perf_shutdown(void *arg)
+{
+	do {
+		wait_event(shutdown_wq,
+			   atomic_read(&n_rcu_perf_writer_finished) >=
+			   nrealwriters);
+	} while (atomic_read(&n_rcu_perf_writer_finished) < nrealwriters);
+	smp_mb(); /* Wake before output. */
+	rcu_perf_cleanup();
+	kernel_power_off();
+	return -EINVAL;
 }
 
 static int __init
@@ -538,7 +548,7 @@ rcu_perf_init(void)
 		if (firsterr)
 			goto unwind;
 	}
-	while (atomic_read(&n_rcu_perf_reader_started))
+	while (atomic_read(&n_rcu_perf_reader_started) < nrealreaders)
 		schedule_timeout_uninterruptible(1);
 	writer_tasks = kcalloc(nrealwriters, sizeof(reader_tasks[0]),
 			       GFP_KERNEL);
