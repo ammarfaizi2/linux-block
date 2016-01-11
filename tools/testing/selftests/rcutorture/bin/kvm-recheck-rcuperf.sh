@@ -43,7 +43,10 @@ awk '
 
 END {
 	asort(gptimes);
-	pct90 = int(NR * 9 / 10);
+	pct50 = int(NR * 50 / 100);
+	if (pct50 < 1)
+		pct50 = 1;
+	pct90 = int(NR * 90 / 100);
 	if (pct90 < 1)
 		pct90 = 1;
 	pct99 = int(NR * 99 / 100);
@@ -69,6 +72,7 @@ END {
 		print last, count;
 	print "Average grace-period duration: " sum / NR " microseconds";
 	print "Minimum grace-period duration: " gptimes[1];
+	print "50th percentile grace-period duration: " gptimes[pct50];
 	print "90th percentile grace-period duration: " gptimes[pct90];
 	print "99th percentile grace-period duration: " gptimes[pct99];
 	print "Maximum grace-period duration: " gptimes[NR];
