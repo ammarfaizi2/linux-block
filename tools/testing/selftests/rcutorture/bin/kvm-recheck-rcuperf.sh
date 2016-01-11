@@ -52,9 +52,7 @@ END {
 	pct99 = int(NR * 99 / 100);
 	if (pct99 < 1)
 		pct99 = 1;
-	print "NR = " NR " pct90 = " pct90 " gptimes[pct90] = " gptimes[pct90];
 	div = 10 ** int(log(gptimes[pct90]) / log(10) + .5) / 100;
-	print "div = " div;
 	last = gptimes[1] - 10;
 	count = 0;
 	for (i = 1; i <= NR; i++) {
