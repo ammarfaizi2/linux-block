@@ -34,16 +34,11 @@ struct seq_file;
 
 /* define the enumeration of all cgroup subsystems */
 #define SUBSYS(_x) _x ## _cgrp_id,
-#define SUBSYS_TAG(_t) CGROUP_ ## _t, \
-	__unused_tag_ ## _t = CGROUP_ ## _t - 1,
 enum cgroup_subsys_id {
 #include <linux/cgroup_subsys.h>
 	CGROUP_SUBSYS_COUNT,
 };
-#undef SUBSYS_TAG
 #undef SUBSYS
-
-#define CGROUP_CANFORK_COUNT (CGROUP_CANFORK_END - CGROUP_CANFORK_START)
 
 /* bits in struct cgroup_subsys_state flags field */
 enum {
@@ -66,7 +61,6 @@ enum {
 
 /* cgroup_root->flags */
 enum {
-	CGRP_ROOT_SANE_BEHAVIOR	= (1 << 0), /* __DEVEL__sane_behavior specified */
 	CGRP_ROOT_NOPREFIX	= (1 << 1), /* mounted subsystems have no named prefix */
 	CGRP_ROOT_XATTR		= (1 << 2), /* supports extended attributes */
 };
@@ -231,6 +225,14 @@ struct cgroup {
 	int id;
 
 	/*
+	 * The depth this cgroup is at.  The root is at depth zero and each
+	 * step down the hierarchy increments the level.  This along with
+	 * ancestor_ids[] can determine whether a given cgroup is a
+	 * descendant of another without traversing the hierarchy.
+	 */
+	int level;
+
+	/*
 	 * Each non-empty css_set associated with this cgroup contributes
 	 * one to populated_cnt.  All children with non-zero popuplated_cnt
 	 * of their own contribute one.  The count is zero iff there's no
@@ -285,6 +287,9 @@ struct cgroup {
 
 	/* used to schedule release agent */
 	struct work_struct release_agent_work;
+
+	/* ids of the ancestors at each level including self */
+	int ancestor_ids[];
 };
 
 /*
@@ -303,6 +308,9 @@ struct cgroup_root {
 
 	/* The root cgroup.  Root is destroyed on its release. */
 	struct cgroup cgrp;
+
+	/* for cgrp->ancestor_ids[0] */
+	int cgrp_ancestor_id_storage;
 
 	/* Number of cgroups in the hierarchy, used only for /proc/cgroups */
 	atomic_t nr_cgrps;
@@ -425,9 +433,9 @@ struct cgroup_subsys {
 	int (*can_attach)(struct cgroup_taskset *tset);
 	void (*cancel_attach)(struct cgroup_taskset *tset);
 	void (*attach)(struct cgroup_taskset *tset);
-	int (*can_fork)(struct task_struct *task, void **priv_p);
-	void (*cancel_fork)(struct task_struct *task, void *priv);
-	void (*fork)(struct task_struct *task, void *priv);
+	int (*can_fork)(struct task_struct *task);
+	void (*cancel_fork)(struct task_struct *task);
+	void (*fork)(struct task_struct *task);
 	void (*exit)(struct task_struct *task);
 	void (*free)(struct task_struct *task);
 	void (*bind)(struct cgroup_subsys_state *root_css);
@@ -513,7 +521,6 @@ static inline void cgroup_threadgroup_change_end(struct task_struct *tsk)
 
 #else	/* CONFIG_CGROUPS */
 
-#define CGROUP_CANFORK_COUNT 0
 #define CGROUP_SUBSYS_COUNT 0
 
 static inline void cgroup_threadgroup_change_begin(struct task_struct *tsk) {}
