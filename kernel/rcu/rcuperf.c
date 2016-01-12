@@ -76,12 +76,14 @@ static struct task_struct *shutdown_task;
 
 static u64 **writer_durations;
 static int *writer_n_durations;
-atomic_t n_rcu_perf_reader_started;
-atomic_t n_rcu_perf_writer_started;
-atomic_t n_rcu_perf_writer_finished;
+static atomic_t n_rcu_perf_reader_started;
+static atomic_t n_rcu_perf_writer_started;
+static atomic_t n_rcu_perf_writer_finished;
 static wait_queue_head_t shutdown_wq;
-u64 t_rcu_perf_writer_started;
-u64 t_rcu_perf_writer_finished;
+static u64 t_rcu_perf_writer_started;
+static u64 t_rcu_perf_writer_finished;
+static unsigned long b_rcu_perf_writer_started;
+static unsigned long b_rcu_perf_writer_finished;
 
 static int rcu_perf_writer_state;
 #define RTWS_INIT		0
@@ -114,6 +116,7 @@ struct rcu_perf_ops {
 	void (*readunlock)(int idx);
 	unsigned long (*started)(void);
 	unsigned long (*completed)(void);
+	unsigned long (*exp_completed)(void);
 	void (*sync)(void);
 	void (*exp_sync)(void);
 	const char *name;
@@ -152,6 +155,7 @@ static struct rcu_perf_ops rcu_ops = {
 	.readunlock	= rcu_perf_read_unlock,
 	.started	= rcu_batches_started,
 	.completed	= rcu_batches_completed,
+	.exp_completed	= rcu_exp_batches_completed,
 	.sync		= synchronize_rcu,
 	.exp_sync	= synchronize_rcu_expedited,
 	.name		= "rcu"
@@ -179,6 +183,7 @@ static struct rcu_perf_ops rcu_bh_ops = {
 	.readunlock	= rcu_bh_perf_read_unlock,
 	.started	= rcu_batches_started_bh,
 	.completed	= rcu_batches_completed_bh,
+	.exp_completed	= rcu_exp_batches_completed_sched,
 	.sync		= synchronize_rcu_bh,
 	.exp_sync	= synchronize_rcu_bh_expedited,
 	.name		= "rcu_bh"
@@ -223,6 +228,7 @@ static struct rcu_perf_ops srcu_ops = {
 	.readunlock	= srcu_perf_read_unlock,
 	.started	= NULL,
 	.completed	= srcu_perf_completed,
+	.exp_completed	= srcu_perf_completed,
 	.sync		= srcu_perf_synchronize,
 	.exp_sync	= srcu_perf_synchronize_expedited,
 	.name		= "srcu"
@@ -250,6 +256,7 @@ static struct rcu_perf_ops sched_ops = {
 	.readunlock	= sched_perf_read_unlock,
 	.started	= rcu_batches_started_sched,
 	.completed	= rcu_batches_completed_sched,
+	.exp_completed	= rcu_exp_batches_completed_sched,
 	.sync		= synchronize_sched,
 	.exp_sync	= synchronize_sched_expedited,
 	.name		= "sched"
@@ -344,6 +351,7 @@ static int
 rcu_perf_writer(void *arg)
 {
 	int i = 0;
+	int i_max;
 	long me = (long)arg;
 	bool started = false, done = false, alldone = false;
 	u64 t;
@@ -352,8 +360,16 @@ rcu_perf_writer(void *arg)
 	WARN_ON(rcu_gp_is_expedited() && !rcu_gp_is_normal() && !gp_exp);
 	WARN_ON(rcu_gp_is_normal() && gp_exp);
 	t = ktime_get_mono_fast_ns();
-	if (atomic_inc_return(&n_rcu_perf_writer_started) >= nrealwriters)
+	if (atomic_inc_return(&n_rcu_perf_writer_started) >= nrealwriters) {
 		t_rcu_perf_writer_started = t;
+		if (gp_exp) {
+			b_rcu_perf_writer_started =
+				cur_ops->exp_completed() / 2;
+		} else {
+			b_rcu_perf_writer_started =
+				cur_ops->completed();
+		}
+	}
 
 	do {
 		writer_durations[me][i] = ktime_get_mono_fast_ns();
@@ -367,6 +383,7 @@ rcu_perf_writer(void *arg)
 		rcu_perf_writer_state = RTWS_IDLE;
 		t = ktime_get_mono_fast_ns();
 		writer_durations[me][i] = t - writer_durations[me][i];
+		i_max = i;
 		if (!started &&
 		    atomic_read(&n_rcu_perf_writer_started) >= nrealwriters)
 			started = true;
@@ -379,6 +396,13 @@ rcu_perf_writer(void *arg)
 			    nrealwriters) {
 				PERFOUT_STRING("Test complete");
 				t_rcu_perf_writer_finished = t;
+				if (gp_exp) {
+					b_rcu_perf_writer_finished =
+						cur_ops->exp_completed() / 2;
+				} else {
+					b_rcu_perf_writer_finished =
+						cur_ops->completed();
+				}
 				smp_mb(); /* Assign before wake. */
 				wake_up(&shutdown_wq);
 			}
@@ -391,7 +415,7 @@ rcu_perf_writer(void *arg)
 		rcu_perf_wait_shutdown();
 	} while (!torture_must_stop());
 	rcu_perf_writer_state = RTWS_STOPPING;
-	writer_n_durations[me] = i + 1;
+	writer_n_durations[me] = i_max;
 	torture_kthread_stopping("rcu_perf_writer");
 	return 0;
 }
@@ -409,20 +433,37 @@ rcu_perf_cleanup(void)
 {
 	int i;
 	int j;
+	int ngps = 0;
 
 	if (torture_cleanup_begin())
 		return;
 
+	if (reader_tasks) {
+		for (i = 0; i < nrealreaders; i++)
+			torture_stop_kthread(rcu_perf_reader,
+					     reader_tasks[i]);
+		kfree(reader_tasks);
+	}
+
 	if (writer_tasks) {
-		pr_alert("%s%s start: %llu end: %llu duration: %llu\n",
-			 perf_type, PERF_FLAG,
-			 t_rcu_perf_writer_started, t_rcu_perf_writer_finished,
-			 t_rcu_perf_writer_finished -
-			 t_rcu_perf_writer_started);
 		for (i = 0; i < nrealwriters; i++) {
 			torture_stop_kthread(rcu_perf_writer,
 					     writer_tasks[i]);
-			for (j = 1; j < writer_n_durations[i]; j++) {
+			j = writer_n_durations[i];
+			pr_alert("%s%s writer %d gps: %d\n",
+				 perf_type, PERF_FLAG, i, j);
+			ngps += j;
+		}
+		pr_alert("%s%s start: %llu end: %llu duration: %llu gps: %d batches: %ld\n",
+			 perf_type, PERF_FLAG,
+			 t_rcu_perf_writer_started, t_rcu_perf_writer_finished,
+			 t_rcu_perf_writer_finished -
+			 t_rcu_perf_writer_started,
+			 ngps,
+			 b_rcu_perf_writer_finished -
+			 b_rcu_perf_writer_started);
+		for (i = 0; i < nrealwriters; i++) {
+			for (j = 0; j <= writer_n_durations[i]; j++) {
 				pr_alert("%s%s %4d writer-duration: %5d %llu\n",
 					perf_type, PERF_FLAG,
 					i, j, writer_durations[i][j]);
@@ -435,12 +476,6 @@ rcu_perf_cleanup(void)
 		kfree(writer_tasks);
 		kfree(writer_durations);
 		kfree(writer_n_durations);
-	}
-	if (reader_tasks) {
-		for (i = 0; i < nrealreaders; i++)
-			torture_stop_kthread(rcu_perf_reader,
-					     reader_tasks[i]);
-		kfree(reader_tasks);
 	}
 
 	/* Do flavor-specific cleanup operations.  */
