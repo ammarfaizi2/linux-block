@@ -355,6 +355,7 @@ rcu_perf_writer(void *arg)
 	int i = 0;
 	int i_max;
 	long me = (long)arg;
+	struct sched_param sp;
 	bool started = false, done = false, alldone = false;
 	u64 t;
 
@@ -362,6 +363,8 @@ rcu_perf_writer(void *arg)
 	WARN_ON(rcu_gp_is_expedited() && !rcu_gp_is_normal() && !gp_exp);
 	WARN_ON(rcu_gp_is_normal() && gp_exp);
 	set_cpus_allowed_ptr(current, cpumask_of(me % nr_cpu_ids));
+	sp.sched_priority = 1;
+	sched_setscheduler_nocheck(current, SCHED_FIFO, &sp);
 	t = ktime_get_mono_fast_ns();
 	if (atomic_inc_return(&n_rcu_perf_writer_started) >= nrealwriters) {
 		t_rcu_perf_writer_started = t;
