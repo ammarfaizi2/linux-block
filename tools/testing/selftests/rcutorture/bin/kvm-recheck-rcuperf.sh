@@ -57,6 +57,7 @@ END {
 	if (pct99 < 1)
 		pct99 = 1;
 	div = 10 ** int(log(gptimes[pct90]) / log(10) + .5) / 100;
+	print "Histogram bucket size: " div;
 	last = gptimes[1] - 10;
 	count = 0;
 	for (i = 1; i <= NR; i++) {
