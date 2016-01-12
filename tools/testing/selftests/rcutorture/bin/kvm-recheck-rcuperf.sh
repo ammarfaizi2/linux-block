@@ -42,6 +42,10 @@ awk '
 }
 
 END {
+	if (NR <= 0) {
+		print "No rcuperf records found???"
+		exit;
+	}
 	asort(gptimes);
 	pct50 = int(NR * 50 / 100);
 	if (pct50 < 1)
