@@ -34,7 +34,7 @@ fi
 
 configfile=`echo $i | sed -e 's/^.*\///'`
 
-grep 'rcu-perf:.*writer-duration' $i/console.log | sed -e 's/^\[[^]]*]//' |
+grep -e '-perf:.*writer-duration' $i/console.log | sed -e 's/^\[[^]]*]//' |
 awk '
 {
 	gptimes[++n] = $5 / 1000.;
