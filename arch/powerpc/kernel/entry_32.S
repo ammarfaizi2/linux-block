@@ -33,6 +33,7 @@
 #include <asm/unistd.h>
 #include <asm/ftrace.h>
 #include <asm/ptrace.h>
+#include <asm/export.h>
 
 /*
  * MSR_KERNEL is > 0x10000 on 4xx/Book-E since it include MSR_CE.
@@ -1342,6 +1343,7 @@ _GLOBAL(_mcount)
 	MCOUNT_RESTORE_FRAME
 	bctr
 #endif
+EXPORT_SYMBOL(_mcount)
 
 _GLOBAL(ftrace_stub)
 	blr

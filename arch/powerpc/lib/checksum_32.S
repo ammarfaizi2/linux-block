@@ -16,6 +16,7 @@
 #include <asm/processor.h>
 #include <asm/errno.h>
 #include <asm/ppc_asm.h>
+#include <asm/export.h>
 
 	.text
 
@@ -39,6 +40,7 @@ _GLOBAL(ip_fast_csum)
 	not	r3,r3
 	srwi	r3,r3,16
 	blr
+EXPORT_SYMBOL(ip_fast_csum)
 
 /*
  * computes the checksum of a memory block at buff, length len,
@@ -77,6 +79,7 @@ _GLOBAL(csum_partial)
 	adde	r0,r0,r5
 5:	addze	r3,r0		/* add in final carry */
 	blr
+EXPORT_SYMBOL(csum_partial)
 
 /*
  * Computes the checksum of a memory block at src, length len,
@@ -207,3 +210,4 @@ dst_error:
 	.long	95b,dst_error
 	.long	96b,dst_error
 	.long	97b,dst_error
+EXPORT_SYMBOL(csum_partial_copy_generic)

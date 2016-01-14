@@ -11,6 +11,7 @@
 #include <asm/processor.h>
 #include <asm/errno.h>
 #include <asm/ppc_asm.h>
+#include <asm/export.h>
 
 	.section __ex_table,"a"
 	PPC_LONG_ALIGN
@@ -24,6 +25,7 @@ _GLOBAL(strcpy)
 	stbu	r0,1(r5)
 	bne	1b
 	blr
+EXPORT_SYMBOL(strcpy)
 
 /* This clears out any unused part of the destination buffer,
    just as the libc version does.  -- paulus */
@@ -44,6 +46,7 @@ _GLOBAL(strncpy)
 2:	stbu	r0,1(r6)	/* clear it out if so */
 	bdnz	2b
 	blr
+EXPORT_SYMBOL(strncpy)
 
 _GLOBAL(strcat)
 	addi	r5,r3,-1
@@ -57,6 +60,7 @@ _GLOBAL(strcat)
 	stbu	r0,1(r5)
 	bne	1b
 	blr
+EXPORT_SYMBOL(strcat)
 
 _GLOBAL(strcmp)
 	addi	r5,r3,-1
@@ -68,6 +72,7 @@ _GLOBAL(strcmp)
 	beqlr	1
 	beq	1b
 	blr
+EXPORT_SYMBOL(strcmp)
 
 _GLOBAL(strncmp)
 	PPC_LCMPI 0,r5,0
@@ -84,6 +89,7 @@ _GLOBAL(strncmp)
 	blr
 2:	li	r3,0
 	blr
+EXPORT_SYMBOL(strncmp)
 
 _GLOBAL(strlen)
 	addi	r4,r3,-1
@@ -92,6 +98,7 @@ _GLOBAL(strlen)
 	bne	1b
 	subf	r3,r3,r4
 	blr
+EXPORT_SYMBOL(strlen)
 
 #ifdef CONFIG_PPC32
 _GLOBAL(memcmp)
@@ -107,6 +114,7 @@ _GLOBAL(memcmp)
 	blr
 2:	li	r3,0
 	blr
+EXPORT_SYMBOL(memcmp)
 #endif
 
 _GLOBAL(memchr)
@@ -120,6 +128,7 @@ _GLOBAL(memchr)
 	beqlr
 2:	li	r3,0
 	blr
+EXPORT_SYMBOL(memchr)
 
 #ifdef CONFIG_PPC32
 _GLOBAL(__clear_user)
@@ -163,4 +172,5 @@ _GLOBAL(__clear_user)
 	PPC_LONG	1b,91b
 	PPC_LONG	8b,92b
 	.text
+EXPORT_SYMBOL(__clear_user)
 #endif

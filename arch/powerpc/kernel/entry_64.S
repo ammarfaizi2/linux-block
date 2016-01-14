@@ -36,6 +36,7 @@
 #include <asm/hw_irq.h>
 #include <asm/context_tracking.h>
 #include <asm/tm.h>
+#include <asm/export.h>
 
 /*
  * System calls.
@@ -1143,6 +1144,7 @@ _GLOBAL(enter_prom)
 #ifdef CONFIG_DYNAMIC_FTRACE
 _GLOBAL(mcount)
 _GLOBAL(_mcount)
+EXPORT_SYMBOL(_mcount)
 	blr
 
 _GLOBAL_TOC(ftrace_caller)
@@ -1170,6 +1172,7 @@ _GLOBAL(ftrace_stub)
 	blr
 #else
 _GLOBAL_TOC(_mcount)
+EXPORT_SYMBOL(_mcount)
 	/* Taken from output of objdump from lib64/glibc */
 	mflr	r3
 	ld	r11, 0(r1)

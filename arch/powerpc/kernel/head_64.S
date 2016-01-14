@@ -40,6 +40,7 @@
 #include <asm/kvm_book3s_asm.h>
 #include <asm/ptrace.h>
 #include <asm/hw_irq.h>
+#include <asm/export.h>
 
 /* The physical memory is laid out such that the secondary processor
  * spin code sits at 0x0000...0x00ff. On server, the vectors follow
@@ -881,6 +882,7 @@ start_here_common:
 	.globl	empty_zero_page
 empty_zero_page:
 	.space	PAGE_SIZE
+EXPORT_SYMBOL(empty_zero_page)
 
 	.globl	swapper_pg_dir
 swapper_pg_dir:

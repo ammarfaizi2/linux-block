@@ -16,6 +16,7 @@
 #include <asm/processor.h>
 #include <asm/errno.h>
 #include <asm/ppc_asm.h>
+#include <asm/export.h>
 
 /*
  * ip_fast_csum(r3=buf, r4=len) -- Optimized for IP header
@@ -43,6 +44,7 @@ _GLOBAL(ip_fast_csum)
 	not	r3,r3
 	srwi	r3,r3,16
 	blr
+EXPORT_SYMBOL(ip_fast_csum)
 
 /*
  * Computes the checksum of a memory block at buff, length len,
@@ -203,6 +205,7 @@ _GLOBAL(csum_partial)
 	add	r3,r4,r0
 	srdi	r3,r3,32
 	blr
+EXPORT_SYMBOL(csum_partial)
 
 
 	.macro srcnr
@@ -457,3 +460,4 @@ dstnr;	stb	r6,0(r4)
 	li	r6,-EFAULT
 	stw	r6,0(r8)
 	blr
+EXPORT_SYMBOL(csum_partial_copy_generic)

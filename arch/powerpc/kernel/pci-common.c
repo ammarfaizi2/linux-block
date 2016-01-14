@@ -49,6 +49,7 @@ static int global_phb_number;		/* Global phb counter */
 
 /* ISA Memory physical address */
 resource_size_t isa_mem_base;
+EXPORT_SYMBOL(isa_mem_base);
 
 
 static struct dma_map_ops *pci_dma_ops = &dma_direct_ops;
