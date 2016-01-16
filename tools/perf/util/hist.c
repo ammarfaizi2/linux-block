@@ -1009,6 +1009,95 @@ void hist_entry__delete(struct hist_entry *he)
  * collapse the histogram
  */
 
+static void hists__apply_filters(struct hists *hists, struct hist_entry *he);
+
+static struct hist_entry *hierarchy_insert_entry(struct hists *hists,
+						 struct rb_root *root,
+						 struct hist_entry *he,
+						 struct perf_hpp_fmt *fmt)
+{
+	struct rb_node **p = &root->rb_node;
+	struct rb_node *parent = NULL;
+	struct hist_entry *iter, *new;
+	int64_t cmp;
+
+	while (*p != NULL) {
+		parent = *p;
+		iter = rb_entry(parent, struct hist_entry, rb_node_in);
+
+		cmp = fmt->collapse(fmt, iter, he);
+		if (!cmp) {
+			he_stat__add_stat(&iter->stat, &he->stat);
+			return iter;
+		}
+
+		if (cmp < 0)
+			p = &parent->rb_left;
+		else
+			p = &parent->rb_right;
+	}
+
+	new = hist_entry__new(he, true);
+	if (new == NULL)
+		return false;
+
+	hists__apply_filters(hists, new);
+	hists->nr_entries++;
+
+	/* save related format for output */
+	new->fmt = fmt;
+
+	/* it's now passed to 'new' */
+	he->trace_output = NULL;
+
+	rb_link_node(&new->rb_node_in, parent, p);
+	rb_insert_color(&new->rb_node_in, root);
+	return new;
+}
+
+static bool hists__hierarchy_insert_entry(struct hists *hists,
+					  struct rb_root *root,
+					  struct hist_entry *he)
+{
+	struct perf_hpp_fmt *fmt;
+	struct hist_entry *new = NULL;
+	struct hist_entry *parent = NULL;
+	int depth = 0;
+
+	perf_hpp__for_each_sort_list(fmt) {
+		if (!perf_hpp__is_sort_entry(fmt) &&
+		    !perf_hpp__is_dynamic_entry(fmt))
+			continue;
+
+		/* insert copy of 'he' for each fmt into the hierarchy */
+		new = hierarchy_insert_entry(hists, root, he, fmt);
+		if (new == NULL)
+			break;
+
+		root = &new->hroot_in;
+		new->parent_he = parent;
+		new->depth = depth++;
+		parent = new;
+	}
+
+	if (new) {
+		new->leaf = true;
+
+		if (symbol_conf.use_callchain) {
+			callchain_cursor_reset(&callchain_cursor);
+			callchain_merge(&callchain_cursor,
+					new->callchain,
+					he->callchain);
+		}
+	}
+
+	/* 'he' is no longer used */
+	hist_entry__delete(he);
+
+	/* it already applied filters */
+	return false;
+}
+
 bool hists__collapse_insert_entry(struct hists *hists __maybe_unused,
 				  struct rb_root *root, struct hist_entry *he)
 {
@@ -1016,6 +1105,9 @@ bool hists__collapse_insert_entry(struct hists *hists __maybe_unused,
 	struct rb_node *parent = NULL;
 	struct hist_entry *iter;
 	int64_t cmp;
+
+	if (symbol_conf.report_hierarchy)
+		return hists__hierarchy_insert_entry(hists, root, he);
 
 	while (*p != NULL) {
 		parent = *p;
@@ -1044,6 +1136,7 @@ bool hists__collapse_insert_entry(struct hists *hists __maybe_unused,
 			p = &(*p)->rb_right;
 	}
 	hists->nr_entries++;
+	he->leaf = true;
 
 	rb_link_node(&he->rb_node_in, parent, p);
 	rb_insert_color(&he->rb_node_in, root);
