@@ -270,6 +270,8 @@ bool perf_hpp__same_sort_entry(struct perf_hpp_fmt *a, struct perf_hpp_fmt *b);
 bool perf_hpp__is_dynamic_entry(struct perf_hpp_fmt *format);
 bool perf_hpp__defined_dynamic_entry(struct perf_hpp_fmt *fmt, struct hists *hists);
 
+int hist_entry__filter(struct hist_entry *he, int type, const void *arg);
+
 static inline bool perf_hpp__should_skip(struct perf_hpp_fmt *format,
 					 struct hists *hists)
 {
