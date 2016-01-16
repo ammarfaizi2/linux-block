@@ -679,3 +679,17 @@ void perf_hpp__set_user_width(const char *width_list_str)
 			break;
 	}
 }
+
+int perf_hpp__count_sort_keys(void)
+{
+	int nr_sort = 0;
+	struct perf_hpp_fmt *fmt;
+
+	perf_hpp__for_each_format(fmt) {
+		if (perf_hpp__is_sort_entry(fmt) ||
+		    perf_hpp__is_dynamic_entry(fmt))
+			nr_sort++;
+	}
+
+	return nr_sort;
+}
