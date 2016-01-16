@@ -1392,6 +1392,51 @@ void hists__output_resort(struct hists *hists, struct ui_progress *prog)
 	}
 }
 
+struct rb_node *rb_hierarchy_last(struct rb_node *node)
+{
+	struct hist_entry *he = rb_entry(node, struct hist_entry, rb_node);
+
+	while (he->unfolded && !he->leaf) {
+		node = rb_last(&he->hroot_out);
+		he = rb_entry(node, struct hist_entry, rb_node);
+	}
+	return node;
+}
+
+struct rb_node *rb_hierarchy_next(struct rb_node *node)
+{
+	struct hist_entry *he = rb_entry(node, struct hist_entry, rb_node);
+
+	if (!he->leaf && he->unfolded)
+		node = rb_first(&he->hroot_out);
+	else
+		node = rb_next(node);
+
+	while (node == NULL) {
+		he = he->parent_he;
+		if (he == NULL)
+			break;
+
+		node = rb_next(&he->rb_node);
+	}
+	return node;
+}
+
+struct rb_node *rb_hierarchy_prev(struct rb_node *node)
+{
+	struct hist_entry *he = rb_entry(node, struct hist_entry, rb_node);
+
+	node = rb_prev(node);
+	if (node)
+		return rb_hierarchy_last(node);
+
+	he = he->parent_he;
+	if (he == NULL)
+		return NULL;
+
+	return &he->rb_node;
+}
+
 static void hists__remove_entry_filter(struct hists *hists, struct hist_entry *h,
 				       enum hist_filter filter)
 {

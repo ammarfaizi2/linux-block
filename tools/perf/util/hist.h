@@ -381,4 +381,12 @@ int parse_filter_percentage(const struct option *opt __maybe_unused,
 			    const char *arg, int unset __maybe_unused);
 int perf_hist_config(const char *var, const char *value);
 
+#define HIERARCHY_INDENT  3
+
+int perf_hpp__count_sort_keys(void);
+
+struct rb_node *rb_hierarchy_last(struct rb_node *node);
+struct rb_node *rb_hierarchy_next(struct rb_node *node);
+struct rb_node *rb_hierarchy_prev(struct rb_node *node);
+
 #endif	/* __PERF_HIST_H */
