@@ -6,6 +6,7 @@
 #include <linux/linkage.h>
 #include <asm/asi.h>
 #include <asm/backoff.h>
+#include <asm/export.h>
 
 	.text
 
@@ -28,6 +29,7 @@ ENTRY(atomic_##op) /* %o0 = increment, %o1 = atomic_ptr */		\
 	 nop;								\
 2:	BACKOFF_SPIN(%o2, %o3, 1b);					\
 ENDPROC(atomic_##op);							\
+EXPORT_SYMBOL(atomic_##op);						\
 
 #define ATOMIC_OP_RETURN(op)						\
 ENTRY(atomic_##op##_return) /* %o0 = increment, %o1 = atomic_ptr */	\
@@ -41,7 +43,8 @@ ENTRY(atomic_##op##_return) /* %o0 = increment, %o1 = atomic_ptr */	\
 	retl;								\
 	 sra	%g1, 0, %o0;						\
 2:	BACKOFF_SPIN(%o2, %o3, 1b);					\
-ENDPROC(atomic_##op##_return);
+ENDPROC(atomic_##op##_return);						\
+EXPORT_SYMBOL(atomic_##op##_return);					\
 
 #define ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_OP_RETURN(op)
 
@@ -68,6 +71,7 @@ ENTRY(atomic64_##op) /* %o0 = increment, %o1 = atomic_ptr */		\
 	 nop;								\
 2:	BACKOFF_SPIN(%o2, %o3, 1b);					\
 ENDPROC(atomic64_##op);							\
+EXPORT_SYMBOL(atomic64_##op);						\
 
 #define ATOMIC64_OP_RETURN(op)						\
 ENTRY(atomic64_##op##_return) /* %o0 = increment, %o1 = atomic_ptr */	\
@@ -81,7 +85,8 @@ ENTRY(atomic64_##op##_return) /* %o0 = increment, %o1 = atomic_ptr */	\
 	retl;								\
 	 op	%g1, %o0, %o0;						\
 2:	BACKOFF_SPIN(%o2, %o3, 1b);					\
-ENDPROC(atomic64_##op##_return);
+ENDPROC(atomic64_##op##_return);					\
+EXPORT_SYMBOL(atomic64_##op##_return);
 
 #define ATOMIC64_OPS(op) ATOMIC64_OP(op) ATOMIC64_OP_RETURN(op)
 
@@ -108,3 +113,4 @@ ENTRY(atomic64_dec_if_positive) /* %o0 = atomic_ptr */
 	 sub	%g1, 1, %o0
 2:	BACKOFF_SPIN(%o2, %o3, 1b)
 ENDPROC(atomic64_dec_if_positive)
+EXPORT_SYMBOL(atomic64_dec_if_positive)

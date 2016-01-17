@@ -29,6 +29,7 @@
 #include <asm/unistd.h>
 
 #include <asm/asmmacro.h>
+#include <asm/export.h>
 
 #define curptr      g6
 
@@ -1190,6 +1191,8 @@ delay_continue:
 	
 	ret
 	restore
+EXPORT_SYMBOL(__udelay)
+EXPORT_SYMBOL(__ndelay)
 
 	/* Handle a software breakpoint */
 	/* We have to inform parent that child has stopped */
