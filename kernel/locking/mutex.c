@@ -256,7 +256,7 @@ static inline int mutex_can_spin_on_owner(struct mutex *lock)
 	struct task_struct *owner;
 	int retval = 1;
 
-	if (need_resched())
+	if (need_resched() || atomic_read(&lock->count) == -1)
 		return 0;
 
 	rcu_read_lock();
@@ -283,10 +283,11 @@ static inline bool mutex_try_to_acquire(struct mutex *lock)
 /*
  * Optimistic spinning.
  *
- * We try to spin for acquisition when we find that the lock owner
- * is currently running on a (different) CPU and while we don't
- * need to reschedule. The rationale is that if the lock owner is
- * running, it is likely to release the lock soon.
+ * We try to spin for acquisition when we find that there are no
+ * pending waiters and the lock owner is currently running on a
+ * (different) CPU and while we don't need to reschedule. The
+ * rationale is that if the lock owner is running, it is likely
+ * to release the lock soon.
  *
  * Since this needs the lock owner, and this mutex implementation
  * doesn't track the owner atomically in the lock field, we need to
