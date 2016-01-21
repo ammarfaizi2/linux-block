@@ -307,4 +307,10 @@ static inline int is_compat_task(void)
 	return test_thread_flag(TIF_32BIT);
 }
 
+static inline bool in_compat_syscall(void)
+{
+	return pt_regs_trap_type(current_pt_regs()) == 0x110;
+}
+#define in_compat_syscall in_compat_syscall
+
 #endif /* _ASM_SPARC64_COMPAT_H */
