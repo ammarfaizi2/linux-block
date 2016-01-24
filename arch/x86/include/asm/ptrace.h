@@ -138,6 +138,11 @@ static inline bool user_64bit_mode(struct pt_regs *regs)
 
 #define current_user_stack_pointer()	current_pt_regs()->sp
 #define compat_user_stack_pointer()	current_pt_regs()->sp
+#else
+static inline bool user_64bit_mode(struct pt_regs *regs)
+{
+	return false;
+}
 #endif
 
 #ifdef CONFIG_X86_32

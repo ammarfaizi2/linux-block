@@ -180,7 +180,7 @@ static int mpx_insn_decode(struct insn *insn,
 			   struct pt_regs *regs)
 {
 	unsigned char buf[MAX_INSN_SIZE];
-	int x86_64 = !test_thread_flag(TIF_IA32);
+	int x86_64 = user_64bit_mode(regs);
 	int not_copied;
 	int nr_copied;
 
