@@ -1363,6 +1363,7 @@ static void nfp_net_tx_ring_free(struct nfp_net_tx_ring *tx_ring)
 	tx_ring->wr_p = 0;
 	tx_ring->rd_p = 0;
 	tx_ring->qcp_rd_p = 0;
+	tx_ring->wr_ptr_add = 0;
 
 	tx_ring->txbufs = NULL;
 	tx_ring->txds = NULL;
@@ -1437,6 +1438,7 @@ static void nfp_net_rx_ring_free(struct nfp_net_rx_ring *rx_ring)
 	rx_ring->cnt = 0;
 	rx_ring->wr_p = 0;
 	rx_ring->rd_p = 0;
+	rx_ring->wr_ptr_add = 0;
 
 	rx_ring->rxbufs = NULL;
 	rx_ring->rxds = NULL;
@@ -2071,7 +2073,7 @@ nfp_net_features_check(struct sk_buff *skb, struct net_device *dev,
 		l4_hdr = ipv6_hdr(skb)->nexthdr;
 		break;
 	default:
-		return features & ~(NETIF_F_ALL_CSUM | NETIF_F_GSO_MASK);
+		return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
 	}
 
 	if (skb->inner_protocol_type != ENCAP_TYPE_ETHER ||
@@ -2080,7 +2082,7 @@ nfp_net_features_check(struct sk_buff *skb, struct net_device *dev,
 	    (l4_hdr == IPPROTO_UDP &&
 	     (skb_inner_mac_header(skb) - skb_transport_header(skb) !=
 	      sizeof(struct udphdr) + sizeof(struct vxlanhdr))))
-		return features & ~(NETIF_F_ALL_CSUM | NETIF_F_GSO_MASK);
+		return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
 
 	return features;
 }
@@ -2415,6 +2417,7 @@ int nfp_net_netdev_init(struct net_device *netdev)
 	ether_setup(netdev);
 	netdev->netdev_ops = &nfp_net_netdev_ops;
 	netdev->watchdog_timeo = msecs_to_jiffies(5 * 1000);
+	netif_carrier_off(netdev);
 
 	nfp_net_set_ethtool_ops(netdev);
 	nfp_net_irqs_assign(netdev);

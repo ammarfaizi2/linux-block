@@ -211,7 +211,10 @@ static void bnxt_get_channels(struct net_device *dev,
 	struct bnxt *bp = netdev_priv(dev);
 	int max_rx_rings, max_tx_rings, tcs;
 
-	bnxt_get_max_rings(bp, &max_rx_rings, &max_tx_rings);
+	bnxt_get_max_rings(bp, &max_rx_rings, &max_tx_rings, true);
+	channel->max_combined = max_rx_rings;
+
+	bnxt_get_max_rings(bp, &max_rx_rings, &max_tx_rings, false);
 	tcs = netdev_get_num_tc(dev);
 	if (tcs > 1)
 		max_tx_rings /= tcs;
@@ -219,9 +222,12 @@ static void bnxt_get_channels(struct net_device *dev,
 	channel->max_rx = max_rx_rings;
 	channel->max_tx = max_tx_rings;
 	channel->max_other = 0;
-	channel->max_combined = 0;
-	channel->rx_count = bp->rx_nr_rings;
-	channel->tx_count = bp->tx_nr_rings_per_tc;
+	if (bp->flags & BNXT_FLAG_SHARED_RINGS) {
+		channel->combined_count = bp->rx_nr_rings;
+	} else {
+		channel->rx_count = bp->rx_nr_rings;
+		channel->tx_count = bp->tx_nr_rings_per_tc;
+	}
 }
 
 static int bnxt_set_channels(struct net_device *dev,
@@ -230,19 +236,35 @@ static int bnxt_set_channels(struct net_device *dev,
 	struct bnxt *bp = netdev_priv(dev);
 	int max_rx_rings, max_tx_rings, tcs;
 	u32 rc = 0;
+	bool sh = false;
 
-	if (channel->other_count || channel->combined_count ||
-	    !channel->rx_count || !channel->tx_count)
+	if (channel->other_count)
 		return -EINVAL;
 
-	bnxt_get_max_rings(bp, &max_rx_rings, &max_tx_rings);
+	if (!channel->combined_count &&
+	    (!channel->rx_count || !channel->tx_count))
+		return -EINVAL;
+
+	if (channel->combined_count &&
+	    (channel->rx_count || channel->tx_count))
+		return -EINVAL;
+
+	if (channel->combined_count)
+		sh = true;
+
+	bnxt_get_max_rings(bp, &max_rx_rings, &max_tx_rings, sh);
+
 	tcs = netdev_get_num_tc(dev);
 	if (tcs > 1)
 		max_tx_rings /= tcs;
 
-	if (channel->rx_count > max_rx_rings ||
-	    channel->tx_count > max_tx_rings)
-		return -EINVAL;
+	if (sh && (channel->combined_count > max_rx_rings ||
+		   channel->combined_count > max_tx_rings))
+		return -ENOMEM;
+
+	if (!sh && (channel->rx_count > max_rx_rings ||
+		    channel->tx_count > max_tx_rings))
+		return -ENOMEM;
 
 	if (netif_running(dev)) {
 		if (BNXT_PF(bp)) {
@@ -258,14 +280,27 @@ static int bnxt_set_channels(struct net_device *dev,
 		}
 	}
 
-	bp->rx_nr_rings = channel->rx_count;
-	bp->tx_nr_rings_per_tc = channel->tx_count;
+	if (sh) {
+		bp->flags |= BNXT_FLAG_SHARED_RINGS;
+		bp->rx_nr_rings = channel->combined_count;
+		bp->tx_nr_rings_per_tc = channel->combined_count;
+	} else {
+		bp->flags &= ~BNXT_FLAG_SHARED_RINGS;
+		bp->rx_nr_rings = channel->rx_count;
+		bp->tx_nr_rings_per_tc = channel->tx_count;
+	}
+
 	bp->tx_nr_rings = bp->tx_nr_rings_per_tc;
 	if (tcs > 1)
 		bp->tx_nr_rings = bp->tx_nr_rings_per_tc * tcs;
-	bp->cp_nr_rings = max_t(int, bp->tx_nr_rings, bp->rx_nr_rings);
+
+	bp->cp_nr_rings = sh ? max_t(int, bp->tx_nr_rings, bp->rx_nr_rings) :
+			       bp->tx_nr_rings + bp->rx_nr_rings;
+
 	bp->num_stat_ctxs = bp->cp_nr_rings;
 
+	/* After changing number of rx channels, update NTUPLE feature. */
+	netdev_update_features(dev);
 	if (netif_running(dev)) {
 		rc = bnxt_open_nic(bp, true, false);
 		if ((!rc) && BNXT_PF(bp)) {
@@ -817,6 +852,9 @@ static int bnxt_flash_firmware(struct net_device *dev,
 	case BNX_DIR_TYPE_BOOTCODE:
 	case BNX_DIR_TYPE_BOOTCODE_2:
 		code_type = CODE_BOOT;
+		break;
+	case BNX_DIR_TYPE_APE_FW:
+		code_type = CODE_MCTP_PASSTHRU;
 		break;
 	default:
 		netdev_err(dev, "Unsupported directory entry type: %u\n",

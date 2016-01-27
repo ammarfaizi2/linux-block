@@ -65,6 +65,9 @@ do {									\
 		(__dev)->priv.name, __func__, __LINE__, current->pid,	\
 		##__VA_ARGS__)
 
+#define mlx5_core_info(__dev, format, ...)				\
+	dev_info(&(__dev)->pdev->dev, format, ##__VA_ARGS__)
+
 enum {
 	MLX5_CMD_DATA, /* print command payload only */
 	MLX5_CMD_TIME, /* print command execution time */
@@ -95,6 +98,7 @@ int mlx5_core_sriov_configure(struct pci_dev *dev, int num_vfs);
 int mlx5_core_enable_hca(struct mlx5_core_dev *dev, u16 func_id);
 int mlx5_core_disable_hca(struct mlx5_core_dev *dev, u16 func_id);
 int mlx5_wait_for_vf_pages(struct mlx5_core_dev *dev);
+cycle_t mlx5_read_internal_timer(struct mlx5_core_dev *dev);
 
 void mlx5e_init(void);
 void mlx5e_cleanup(void);
