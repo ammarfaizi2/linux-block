@@ -416,7 +416,7 @@ rcu_perf_writer(void *arg)
 		if (done && !alldone &&
 		    atomic_read(&n_rcu_perf_writer_finished) >= nrealwriters)
 			alldone = true;
-		if (started && !alldone)
+		if (started && !alldone && i < MAX_MEAS - 1)
 			i++;
 		rcu_perf_wait_shutdown();
 	} while (!torture_must_stop());
