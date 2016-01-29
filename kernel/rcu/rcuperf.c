@@ -358,10 +358,13 @@ rcu_perf_writer(void *arg)
 	struct sched_param sp;
 	bool started = false, done = false, alldone = false;
 	u64 t;
+	u64 *wdp;
+	u64 *wdpp = writer_durations[me];
 
 	VERBOSE_PERFOUT_STRING("rcu_perf_writer task started");
 	WARN_ON(rcu_gp_is_expedited() && !rcu_gp_is_normal() && !gp_exp);
 	WARN_ON(rcu_gp_is_normal() && gp_exp);
+	WARN_ON(!wdpp);
 	set_cpus_allowed_ptr(current, cpumask_of(me % nr_cpu_ids));
 	sp.sched_priority = 1;
 	sched_setscheduler_nocheck(current, SCHED_FIFO, &sp);
@@ -378,7 +381,8 @@ rcu_perf_writer(void *arg)
 	}
 
 	do {
-		writer_durations[me][i] = ktime_get_mono_fast_ns();
+		wdp = &wdpp[i];
+		*wdp = ktime_get_mono_fast_ns();
 		if (gp_exp) {
 			rcu_perf_writer_state = RTWS_EXP_SYNC;
 			cur_ops->exp_sync();
@@ -388,7 +392,7 @@ rcu_perf_writer(void *arg)
 		}
 		rcu_perf_writer_state = RTWS_IDLE;
 		t = ktime_get_mono_fast_ns();
-		writer_durations[me][i] = t - writer_durations[me][i];
+		*wdp = t - *wdp;
 		i_max = i;
 		if (!started &&
 		    atomic_read(&n_rcu_perf_writer_started) >= nrealwriters)
@@ -440,6 +444,8 @@ rcu_perf_cleanup(void)
 	int i;
 	int j;
 	int ngps = 0;
+	u64 *wdp;
+	u64 *wdpp;
 
 	if (torture_cleanup_begin())
 		return;
@@ -455,6 +461,8 @@ rcu_perf_cleanup(void)
 		for (i = 0; i < nrealwriters; i++) {
 			torture_stop_kthread(rcu_perf_writer,
 					     writer_tasks[i]);
+			if (!writer_n_durations)
+				continue;
 			j = writer_n_durations[i];
 			pr_alert("%s%s writer %d gps: %d\n",
 				 perf_type, PERF_FLAG, i, j);
@@ -469,15 +477,20 @@ rcu_perf_cleanup(void)
 			 b_rcu_perf_writer_finished -
 			 b_rcu_perf_writer_started);
 		for (i = 0; i < nrealwriters; i++) {
+			if (!writer_durations)
+				break;
+			wdpp = writer_durations[i];
+			if (!wdpp)
+				continue;
 			for (j = 0; j <= writer_n_durations[i]; j++) {
+				wdp = &wdpp[j];
 				pr_alert("%s%s %4d writer-duration: %5d %llu\n",
 					perf_type, PERF_FLAG,
-					i, j, writer_durations[i][j]);
+					i, j, *wdp);
 				if (j % 100 == 0)
 					schedule_timeout_uninterruptible(1);
 			}
-			if (writer_durations)
-				kfree(writer_durations[i]);
+			kfree(writer_durations[i]);
 		}
 		kfree(writer_tasks);
 		kfree(writer_durations);
