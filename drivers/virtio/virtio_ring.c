@@ -135,6 +135,10 @@ struct vring_virtqueue {
  * API.
  */
 
+static bool force_dma_api = false;
+module_param(force_dma_api, bool, 0644);
+MODULE_PARM_DESC(force_dma_api, "force-enable the DMA API");
+
 static bool vring_use_dma_api(struct virtio_device *vdev)
 {
 	/*
@@ -148,7 +152,7 @@ static bool vring_use_dma_api(struct virtio_device *vdev)
 	if (xen_domain())
 		return true;
 
-	return false;
+	return force_dma_api;
 }
 
 /*
