@@ -3669,6 +3669,7 @@ static bool sync_exp_work_done(struct rcu_state *rsp, struct rcu_node *rnp,
 			       atomic_long_t *stat, unsigned long s)
 {
 	if (rcu_exp_gp_seq_done(rsp, s)) {
+		trace_rcu_exp_grace_period(rsp->name, s, TPS("done"));
 		if (rnp) {
 			mutex_unlock(&rnp->exp_funnel_mutex);
 			trace_rcu_exp_funnel_lock(rsp->name, rnp->level,
@@ -3980,17 +3981,22 @@ void synchronize_sched_expedited(void)
 
 	/* Take a snapshot of the sequence number.  */
 	s = rcu_exp_gp_seq_snap(rsp);
+	trace_rcu_exp_grace_period(rsp->name, s, TPS("snap"));
 
 	rnp = exp_funnel_lock(rsp, s);
 	if (rnp == NULL)
 		return;  /* Someone else did our work for us. */
 
 	rcu_exp_gp_seq_start(rsp);
+	trace_rcu_exp_grace_period(rsp->name, s, TPS("start"));
 	sync_rcu_exp_select_cpus(rsp, sync_sched_exp_handler);
 	synchronize_sched_expedited_wait(rsp);
 
 	rcu_exp_gp_seq_end(rsp);
+	trace_rcu_exp_grace_period(rsp->name, s, TPS("end"));
 	mutex_unlock(&rnp->exp_funnel_mutex);
+	trace_rcu_exp_funnel_lock(rsp->name, rnp->level,
+				  rnp->grplo, rnp->grphi, TPS("rel"));
 }
 EXPORT_SYMBOL_GPL(synchronize_sched_expedited);
 
