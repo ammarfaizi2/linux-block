@@ -69,7 +69,6 @@
 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0 }
 #  define RCU_NODE_NAME_INIT  { "rcu_node_0" }
 #  define RCU_FQS_NAME_INIT   { "rcu_node_fqs_0" }
-#  define RCU_EXP_NAME_INIT   { "rcu_node_exp_0" }
 #elif NR_CPUS <= RCU_FANOUT_2
 #  define RCU_NUM_LVLS	      2
 #  define NUM_RCU_LVL_0	      1
@@ -78,7 +77,6 @@
 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0, NUM_RCU_LVL_1 }
 #  define RCU_NODE_NAME_INIT  { "rcu_node_0", "rcu_node_1" }
 #  define RCU_FQS_NAME_INIT   { "rcu_node_fqs_0", "rcu_node_fqs_1" }
-#  define RCU_EXP_NAME_INIT   { "rcu_node_exp_0", "rcu_node_exp_1" }
 #elif NR_CPUS <= RCU_FANOUT_3
 #  define RCU_NUM_LVLS	      3
 #  define NUM_RCU_LVL_0	      1
@@ -88,7 +86,6 @@
 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0, NUM_RCU_LVL_1, NUM_RCU_LVL_2 }
 #  define RCU_NODE_NAME_INIT  { "rcu_node_0", "rcu_node_1", "rcu_node_2" }
 #  define RCU_FQS_NAME_INIT   { "rcu_node_fqs_0", "rcu_node_fqs_1", "rcu_node_fqs_2" }
-#  define RCU_EXP_NAME_INIT   { "rcu_node_exp_0", "rcu_node_exp_1", "rcu_node_exp_2" }
 #elif NR_CPUS <= RCU_FANOUT_4
 #  define RCU_NUM_LVLS	      4
 #  define NUM_RCU_LVL_0	      1
@@ -99,7 +96,6 @@
 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0, NUM_RCU_LVL_1, NUM_RCU_LVL_2, NUM_RCU_LVL_3 }
 #  define RCU_NODE_NAME_INIT  { "rcu_node_0", "rcu_node_1", "rcu_node_2", "rcu_node_3" }
 #  define RCU_FQS_NAME_INIT   { "rcu_node_fqs_0", "rcu_node_fqs_1", "rcu_node_fqs_2", "rcu_node_fqs_3" }
-#  define RCU_EXP_NAME_INIT   { "rcu_node_exp_0", "rcu_node_exp_1", "rcu_node_exp_2", "rcu_node_exp_3" }
 #else
 # error "CONFIG_RCU_FANOUT insufficient for NR_CPUS"
 #endif /* #if (NR_CPUS) <= RCU_FANOUT_1 */
@@ -251,7 +247,7 @@ struct rcu_node {
 				/* Counts of upcoming no-CB GP requests. */
 	raw_spinlock_t fqslock ____cacheline_internodealigned_in_smp;
 
-	struct mutex exp_funnel_mutex ____cacheline_internodealigned_in_smp;
+	struct rt_mutex exp_funnel_mutex ____cacheline_internodealigned_in_smp;
 } ____cacheline_internodealigned_in_smp;
 
 /*
@@ -386,7 +382,7 @@ struct rcu_data {
 #ifdef CONFIG_RCU_FAST_NO_HZ
 	struct rcu_head oom_head;
 #endif /* #ifdef CONFIG_RCU_FAST_NO_HZ */
-	struct mutex exp_funnel_mutex;
+	struct rt_mutex exp_funnel_mutex;
 	atomic_long_t expedited_workdone1;	/* # done by others #1. */
 	atomic_long_t expedited_workdone2;	/* # done by others #2. */
 	atomic_long_t expedited_workdone3;	/* # done by others #3. */

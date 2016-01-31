@@ -3674,13 +3674,13 @@ static bool sync_exp_work_done(struct rcu_state *rsp, struct rcu_node *rnp,
 			trace_rcu_exp_funnel_lock(rsp->name, rnp->level,
 						  rnp->grplo, rnp->grphi,
 						  TPS("rel"));
-			mutex_unlock(&rnp->exp_funnel_mutex);
+			rt_mutex_unlock(&rnp->exp_funnel_mutex);
 		} else if (rdp) {
 			trace_rcu_exp_funnel_lock(rsp->name,
 						  rdp->mynode->level + 1,
 						  rdp->cpu, rdp->cpu,
 						  TPS("rel"));
-			mutex_unlock(&rdp->exp_funnel_mutex);
+			rt_mutex_unlock(&rdp->exp_funnel_mutex);
 		}
 		/* Ensure test happens before caller kfree(). */
 		smp_mb__before_atomic(); /* ^^^ */
@@ -3711,7 +3711,7 @@ static struct rcu_node *exp_funnel_lock(struct rcu_state *rsp, unsigned long s)
 	 */
 	if (sync_exp_work_done(rsp, NULL, NULL, &rdp->expedited_workdone1, s))
 		return NULL;
-	mutex_lock(&rdp->exp_funnel_mutex);
+	rt_mutex_lock(&rdp->exp_funnel_mutex);
 	trace_rcu_exp_funnel_lock(rsp->name, rdp->mynode->level + 1,
 				  rdp->cpu, rdp->cpu, TPS("acq"));
 	rnp0 = rdp->mynode;
@@ -3719,20 +3719,20 @@ static struct rcu_node *exp_funnel_lock(struct rcu_state *rsp, unsigned long s)
 		if (sync_exp_work_done(rsp, rnp1, rdp,
 				       &rdp->expedited_workdone2, s))
 			return NULL;
-		mutex_lock(&rnp0->exp_funnel_mutex);
+		rt_mutex_lock(&rnp0->exp_funnel_mutex);
 		trace_rcu_exp_funnel_lock(rsp->name, rnp0->level,
 					  rnp0->grplo, rnp0->grphi, TPS("acq"));
 		if (rnp1) {
 			trace_rcu_exp_funnel_lock(rsp->name, rnp1->level,
 						  rnp1->grplo, rnp1->grphi,
 						  TPS("rel"));
-			mutex_unlock(&rnp1->exp_funnel_mutex);
+			rt_mutex_unlock(&rnp1->exp_funnel_mutex);
 		} else {
 			trace_rcu_exp_funnel_lock(rsp->name,
 						  rdp->mynode->level + 1,
 						  rdp->cpu, rdp->cpu,
 						  TPS("rel"));
-			mutex_unlock(&rdp->exp_funnel_mutex);
+			rt_mutex_unlock(&rdp->exp_funnel_mutex);
 		}
 		rnp1 = rnp0;
 	}
@@ -3977,7 +3977,7 @@ void synchronize_sched_expedited(void)
 	trace_rcu_exp_grace_period(rsp->name, s, TPS("end"));
 	trace_rcu_exp_funnel_lock(rsp->name, rnp->level,
 				  rnp->grplo, rnp->grphi, TPS("rel"));
-	mutex_unlock(&rnp->exp_funnel_mutex);
+	rt_mutex_unlock(&rnp->exp_funnel_mutex);
 }
 EXPORT_SYMBOL_GPL(synchronize_sched_expedited);
 
@@ -4277,7 +4277,7 @@ rcu_boot_init_percpu_data(int cpu, struct rcu_state *rsp)
 	WARN_ON_ONCE(atomic_read(&rdp->dynticks->dynticks) != 1);
 	rdp->cpu = cpu;
 	rdp->rsp = rsp;
-	mutex_init(&rdp->exp_funnel_mutex);
+	rt_mutex_init(&rdp->exp_funnel_mutex);
 	rcu_boot_init_nocb_percpu_data(rdp);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 }
@@ -4506,10 +4506,8 @@ static void __init rcu_init_one(struct rcu_state *rsp)
 {
 	static const char * const buf[] = RCU_NODE_NAME_INIT;
 	static const char * const fqs[] = RCU_FQS_NAME_INIT;
-	static const char * const exp[] = RCU_EXP_NAME_INIT;
 	static struct lock_class_key rcu_node_class[RCU_NUM_LVLS];
 	static struct lock_class_key rcu_fqs_class[RCU_NUM_LVLS];
-	static struct lock_class_key rcu_exp_class[RCU_NUM_LVLS];
 	static u8 fl_mask = 0x1;
 
 	int levelcnt[RCU_NUM_LVLS];		/* # nodes in each level. */
@@ -4568,9 +4566,7 @@ static void __init rcu_init_one(struct rcu_state *rsp)
 			rnp->level = i;
 			INIT_LIST_HEAD(&rnp->blkd_tasks);
 			rcu_init_one_nocb(rnp);
-			mutex_init(&rnp->exp_funnel_mutex);
-			lockdep_set_class_and_name(&rnp->exp_funnel_mutex,
-						   &rcu_exp_class[i], exp[i]);
+			rt_mutex_init(&rnp->exp_funnel_mutex);
 		}
 	}
 
