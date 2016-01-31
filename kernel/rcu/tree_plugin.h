@@ -769,7 +769,7 @@ void synchronize_rcu_expedited(void)
 	/* Clean up and exit. */
 	rcu_exp_gp_seq_end(rsp);
 	trace_rcu_exp_grace_period(rsp->name, s, TPS("end"));
-	mutex_unlock(&rnp_unlock->exp_funnel_mutex);
+	rt_mutex_unlock(&rnp_unlock->exp_funnel_mutex);
 	trace_rcu_exp_funnel_lock(rsp->name, rnp_unlock->level,
 				  rnp_unlock->grplo, rnp_unlock->grphi,
 				  TPS("rel"));

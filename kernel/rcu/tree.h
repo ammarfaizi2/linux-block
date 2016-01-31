@@ -251,7 +251,7 @@ struct rcu_node {
 				/* Counts of upcoming no-CB GP requests. */
 	raw_spinlock_t fqslock ____cacheline_internodealigned_in_smp;
 
-	struct mutex exp_funnel_mutex ____cacheline_internodealigned_in_smp;
+	struct rt_mutex exp_funnel_mutex ____cacheline_internodealigned_in_smp;
 } ____cacheline_internodealigned_in_smp;
 
 /*
@@ -386,7 +386,7 @@ struct rcu_data {
 #ifdef CONFIG_RCU_FAST_NO_HZ
 	struct rcu_head oom_head;
 #endif /* #ifdef CONFIG_RCU_FAST_NO_HZ */
-	struct mutex exp_funnel_mutex;
+	struct rt_mutex exp_funnel_mutex;
 	atomic_long_t expedited_workdone1;	/* # done by others #1. */
 	atomic_long_t expedited_workdone2;	/* # done by others #2. */
 	atomic_long_t expedited_workdone3;	/* # done by others #3. */
