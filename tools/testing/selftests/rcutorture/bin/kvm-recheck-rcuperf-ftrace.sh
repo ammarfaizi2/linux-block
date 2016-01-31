@@ -54,6 +54,7 @@ $8 == "end" {
 		sum += curgpdur;
 		if (curgpdur > 1000)
 			print "Long GP " starttime "us to " $3 "us (" curgpdur "us)";
+		starttask = "";
 	} else {
 		# Lost a message or some such, reset.
 		starttask = "";
@@ -114,7 +115,7 @@ END {
 	print "90th percentile grace-period duration: " gptimes[pct90];
 	print "99th percentile grace-period duration: " gptimes[pct99];
 	print "Maximum grace-period duration: " gptimes[newNR];
-	print "Grace periods: " ngps + 0 " Batches: " nbatches + 0 " Ratio: " ngps / nbatches " Lost: " nlost;
+	print "Grace periods: " ngps + 0 " Batches: " nbatches + 0 " Ratio: " ngps / nbatches " Lost: " nlost + 0;
 	print "Computed from ftrace data.";
 }'
 exit 0
