@@ -24,8 +24,3 @@ EXPORT_SYMBOL(xor_ia64_3);
 EXPORT_SYMBOL(xor_ia64_4);
 EXPORT_SYMBOL(xor_ia64_5);
 #endif
-
-#if defined(CONFIG_IA64_ESI) || defined(CONFIG_IA64_ESI_MODULE)
-extern void esi_call_phys (void);
-EXPORT_SYMBOL_GPL(esi_call_phys);
-#endif
