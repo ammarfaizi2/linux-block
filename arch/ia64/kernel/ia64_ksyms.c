@@ -29,5 +29,3 @@ EXPORT_SYMBOL(xor_ia64_5);
 extern void esi_call_phys (void);
 EXPORT_SYMBOL_GPL(esi_call_phys);
 #endif
-extern char ia64_ivt[];
-EXPORT_SYMBOL(ia64_ivt);
