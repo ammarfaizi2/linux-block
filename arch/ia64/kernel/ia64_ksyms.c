@@ -30,13 +30,6 @@ EXPORT_SYMBOL(ia64_cpu_info);
 EXPORT_SYMBOL(local_per_cpu_offset);
 #endif
 
-#include <asm/uaccess.h>
-EXPORT_SYMBOL(__copy_user);
-EXPORT_SYMBOL(__do_clear_user);
-EXPORT_SYMBOL(__strlen_user);
-EXPORT_SYMBOL(__strncpy_from_user);
-EXPORT_SYMBOL(__strnlen_user);
-
 #if defined(CONFIG_MD_RAID456) || defined(CONFIG_MD_RAID456_MODULE)
 extern void xor_ia64_2(void);
 extern void xor_ia64_3(void);

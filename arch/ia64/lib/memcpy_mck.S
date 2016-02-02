@@ -666,3 +666,4 @@ EK(.ex_handler,  (p17)	st8	[dst1]=r39,8);						\
 
 /* end of McKinley specific optimization */
 END(__copy_user)
+EXPORT_SYMBOL(__copy_user)
