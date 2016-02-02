@@ -7,9 +7,6 @@
 
 #include <linux/module.h>
 
-#include <asm/pgtable.h>
-EXPORT_SYMBOL_GPL(empty_zero_page);
-
 #ifdef CONFIG_VIRTUAL_MEM_MAP
 #include <linux/bootmem.h>
 EXPORT_SYMBOL(min_low_pfn);	/* defined by bootmem.c, but not exported by generic code */
