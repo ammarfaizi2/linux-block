@@ -10,10 +10,6 @@
 #include <asm/pgtable.h>
 EXPORT_SYMBOL_GPL(empty_zero_page);
 
-#include <asm/checksum.h>
-EXPORT_SYMBOL(ip_fast_csum);		/* hand-coded assembly */
-EXPORT_SYMBOL(csum_ipv6_magic);
-
 #include <asm/page.h>
 EXPORT_SYMBOL(clear_page);
 EXPORT_SYMBOL(copy_page);
