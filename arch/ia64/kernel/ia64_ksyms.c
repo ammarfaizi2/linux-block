@@ -12,15 +12,3 @@
 EXPORT_SYMBOL(min_low_pfn);	/* defined by bootmem.c, but not exported by generic code */
 EXPORT_SYMBOL(max_low_pfn);	/* defined by bootmem.c, but not exported by generic code */
 #endif
-
-#if defined(CONFIG_MD_RAID456) || defined(CONFIG_MD_RAID456_MODULE)
-extern void xor_ia64_2(void);
-extern void xor_ia64_3(void);
-extern void xor_ia64_4(void);
-extern void xor_ia64_5(void);
-
-EXPORT_SYMBOL(xor_ia64_2);
-EXPORT_SYMBOL(xor_ia64_3);
-EXPORT_SYMBOL(xor_ia64_4);
-EXPORT_SYMBOL(xor_ia64_5);
-#endif
