@@ -15,6 +15,7 @@
  */
 #include <asm/asmmacro.h>
 #include <asm/page.h>
+#include <asm/export.h>
 
 #define EK(y...) EX(y)
 
@@ -78,6 +79,7 @@ GLOBAL_ENTRY(memcpy)
 	br.cond.sptk .common_code
 	;;
 END(memcpy)
+EXPORT_SYMBOL(memcpy)
 GLOBAL_ENTRY(__copy_user)
 	.prologue
 // check dest alignment
