@@ -37,25 +37,6 @@ EXPORT_SYMBOL(__strlen_user);
 EXPORT_SYMBOL(__strncpy_from_user);
 EXPORT_SYMBOL(__strnlen_user);
 
-/* from arch/ia64/lib */
-extern void __divsi3(void);
-extern void __udivsi3(void);
-extern void __modsi3(void);
-extern void __umodsi3(void);
-extern void __divdi3(void);
-extern void __udivdi3(void);
-extern void __moddi3(void);
-extern void __umoddi3(void);
-
-EXPORT_SYMBOL(__divsi3);
-EXPORT_SYMBOL(__udivsi3);
-EXPORT_SYMBOL(__modsi3);
-EXPORT_SYMBOL(__umodsi3);
-EXPORT_SYMBOL(__divdi3);
-EXPORT_SYMBOL(__udivdi3);
-EXPORT_SYMBOL(__moddi3);
-EXPORT_SYMBOL(__umoddi3);
-
 #if defined(CONFIG_MD_RAID456) || defined(CONFIG_MD_RAID456_MODULE)
 extern void xor_ia64_2(void);
 extern void xor_ia64_3(void);
