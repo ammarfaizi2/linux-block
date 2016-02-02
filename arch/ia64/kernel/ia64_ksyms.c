@@ -38,14 +38,6 @@ EXPORT_SYMBOL(xor_ia64_4);
 EXPORT_SYMBOL(xor_ia64_5);
 #endif
 
-#include <asm/pal.h>
-EXPORT_SYMBOL(ia64_pal_call_phys_stacked);
-EXPORT_SYMBOL(ia64_pal_call_phys_static);
-EXPORT_SYMBOL(ia64_pal_call_stacked);
-EXPORT_SYMBOL(ia64_pal_call_static);
-EXPORT_SYMBOL(ia64_load_scratch_fpregs);
-EXPORT_SYMBOL(ia64_save_scratch_fpregs);
-
 #include <asm/unwind.h>
 EXPORT_SYMBOL(unw_init_running);
 
