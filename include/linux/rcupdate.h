@@ -608,6 +608,13 @@ static inline void rcu_preempt_sleep_check(void)
 #define rcu_dereference_sparse(p, space)
 #endif /* #else #ifdef __CHECKER__ */
 
+#ifdef CONFIG_RCU_LOCKED_ACCESS
+extern struct locked_access_class rcu_laclass;
+#define rcu_dereference_access() \
+	locked_access_point(&rcu_laclass, LOCKED_ACCESS_TYPE_READ)
+#else /* #ifdef CONFIG_LOCKED_ACCESS */
+#define rcu_dereference_access()
+#endif /* #else #ifdef CONFIG_LOCKED_ACCESS */
 #define __rcu_access_pointer(p, space) \
 ({ \
 	typeof(*p) *_________p1 = (typeof(*p) *__force)READ_ONCE(p); \
@@ -620,6 +627,7 @@ static inline void rcu_preempt_sleep_check(void)
 	typeof(*p) *________p1 = (typeof(*p) *__force)lockless_dereference(p); \
 	RCU_LOCKDEP_WARN(!(c), "suspicious rcu_dereference_check() usage"); \
 	rcu_dereference_sparse(p, space); \
+	rcu_dereference_access(); \
 	((typeof(*p) __force __kernel *)(________p1)); \
 })
 #define __rcu_dereference_protected(p, c, space) \

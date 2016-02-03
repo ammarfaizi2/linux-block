@@ -64,12 +64,18 @@ struct srcu_struct {
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 
+# ifdef CONFIG_RCU_LOCKED_ACCESS
+# define RCU_KEY { .laclass = &rcu_laclass }
+# else
+# define RCU_KEY { 0 }
+# endif
+
 int __init_srcu_struct(struct srcu_struct *sp, const char *name,
 		       struct lock_class_key *key);
 
 #define init_srcu_struct(sp) \
 ({ \
-	static struct lock_class_key __srcu_key; \
+	static struct lock_class_key __srcu_key = RCU_KEY; \
 	\
 	__init_srcu_struct((sp), #sp, &__srcu_key); \
 })
