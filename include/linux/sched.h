@@ -1643,6 +1643,9 @@ struct task_struct {
 	unsigned int lockdep_recursion;
 	struct held_lock held_locks[MAX_LOCK_DEPTH];
 	gfp_t lockdep_reclaim_gfp;
+#ifdef CONFIG_LOCKED_ACCESS
+	u64 curr_acqchain_key;
+#endif
 #endif
 #ifdef CONFIG_UBSAN
 	unsigned int in_ubsan;
