@@ -4,6 +4,7 @@
 #include <linux/list.h>
 #include <linux/kobject.h>
 #include <linux/mod_devicetable.h>
+#include <linux/fwnode.h>
 
 /* enum dmi_field is in mod_devicetable.h */
 
@@ -80,6 +81,7 @@ struct dmi_header {
 
 struct dmi_device {
 	struct list_head list;
+	struct fwnode_handle fwnode;
 	int type;
 	const char *name;
 	void *device_data;	/* Type specific data */
@@ -112,6 +114,18 @@ extern int dmi_walk(void (*decode)(const struct dmi_header *, void *),
 	void *private_data);
 extern bool dmi_match(enum dmi_field f, const char *str);
 extern void dmi_memdev_name(u16 handle, const char **bank, const char **device);
+
+static inline bool is_dmi_fwnode(struct fwnode_handle *fwnode)
+{
+	return fwnode && fwnode->type == FWNODE_DMI;
+}
+
+static inline struct dmi_device *to_dmi_device(struct fwnode_handle *fwnode)
+{
+	if (is_dmi_fwnode(fwnode))
+		return container_of(fwnode, struct dmi_device, fwnode);
+	return NULL;
+}
 
 #else
 

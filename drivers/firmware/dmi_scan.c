@@ -242,6 +242,12 @@ static void __init dmi_save_type(const struct dmi_header *dm, int slot,
 	dmi_ident[slot] = s;
 }
 
+static void __init dmi_devices_list_add(struct dmi_device *dev)
+{
+	dev->fwnode.type = FWNODE_DMI;
+	list_add(&dev->list, &dmi_devices);
+}
+
 static void __init dmi_save_one_device(int type, const char *name)
 {
 	struct dmi_device *dev;
@@ -257,8 +263,7 @@ static void __init dmi_save_one_device(int type, const char *name)
 	dev->type = type;
 	strcpy((char *)(dev + 1), name);
 	dev->name = (char *)(dev + 1);
-	dev->device_data = NULL;
-	list_add(&dev->list, &dmi_devices);
+	dmi_devices_list_add(dev);
 }
 
 static void __init dmi_save_devices(const struct dmi_header *dm)
@@ -293,9 +298,8 @@ static void __init dmi_save_oem_strings_devices(const struct dmi_header *dm)
 
 		dev->type = DMI_DEV_TYPE_OEM_STRING;
 		dev->name = devname;
-		dev->device_data = NULL;
 
-		list_add(&dev->list, &dmi_devices);
+		dmi_devices_list_add(dev);
 	}
 }
 
@@ -318,7 +322,7 @@ static void __init dmi_save_ipmi_device(const struct dmi_header *dm)
 	dev->name = "IPMI controller";
 	dev->device_data = data;
 
-	list_add_tail(&dev->list, &dmi_devices);
+	dmi_devices_list_add(dev);
 }
 
 static void __init dmi_save_dev_pciaddr(int instance, int segment, int bus,
@@ -345,7 +349,7 @@ static void __init dmi_save_dev_pciaddr(int instance, int segment, int bus,
 	dev->dev.name = (char *)&dev[1];
 	dev->dev.device_data = dev;
 
-	list_add(&dev->dev.list, &dmi_devices);
+	dmi_devices_list_add(&dev->dev);
 }
 
 static void __init dmi_save_extended_devices(const struct dmi_header *dm)
