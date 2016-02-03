@@ -98,9 +98,9 @@ struct dmi_dev_onboard {
 extern struct kobject *dmi_kobj;
 extern int dmi_check_system(const struct dmi_system_id *list);
 const struct dmi_system_id *dmi_first_match(const struct dmi_system_id *list);
-extern const char * dmi_get_system_info(int field);
-extern const struct dmi_device * dmi_find_device(int type, const char *name,
-	const struct dmi_device *from);
+extern const char *dmi_get_system_info(int field);
+extern struct dmi_device *dmi_find_device(int type, const char *name,
+	 const struct dmi_device *from);
 extern void dmi_scan_machine(void);
 extern void dmi_memdev_walk(void);
 extern void dmi_set_dump_stack_arch_desc(void);
@@ -116,8 +116,8 @@ extern void dmi_memdev_name(u16 handle, const char **bank, const char **device);
 #else
 
 static inline int dmi_check_system(const struct dmi_system_id *list) { return 0; }
-static inline const char * dmi_get_system_info(int field) { return NULL; }
-static inline const struct dmi_device * dmi_find_device(int type, const char *name,
+static inline const char *dmi_get_system_info(int field) { return NULL; }
+static inline struct dmi_device *dmi_find_device(int type, const char *name,
 	const struct dmi_device *from) { return NULL; }
 static inline void dmi_scan_machine(void) { return; }
 static inline void dmi_memdev_walk(void) { }

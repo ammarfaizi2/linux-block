@@ -896,14 +896,13 @@ EXPORT_SYMBOL(dmi_name_in_vendors);
  *	A new search is initiated by passing %NULL as the @from argument.
  *	If @from is not %NULL, searches continue from next device.
  */
-const struct dmi_device *dmi_find_device(int type, const char *name,
-				    const struct dmi_device *from)
+struct dmi_device *dmi_find_device(int type, const char *name,
+				   const struct dmi_device *from)
 {
-	const struct list_head *head = from ? &from->list : &dmi_devices;
-	struct list_head *d;
+	struct list_head *d = from ? from->list.next : dmi_devices.next;
 
-	for (d = head->next; d != &dmi_devices; d = d->next) {
-		const struct dmi_device *dev =
+	for (; d != &dmi_devices; d = d->next) {
+		struct dmi_device *dev =
 			list_entry(d, struct dmi_device, list);
 
 		if (((type == DMI_DEV_TYPE_ANY) || (dev->type == type)) &&
