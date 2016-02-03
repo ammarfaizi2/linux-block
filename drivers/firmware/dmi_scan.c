@@ -303,9 +303,105 @@ static void __init dmi_save_oem_strings_devices(const struct dmi_header *dm)
 	}
 }
 
+#define DMI_IPMI_MIN_LENGTH	0x10
+#define DMI_IPMI_VER2_LENGTH	0x12
+#define DMI_IPMI_TYPE		4
+#define DMI_IPMI_SLAVEADDR	6
+#define DMI_IPMI_ADDR		8
+#define DMI_IPMI_ACCESS		0x10
+#define DMI_IPMI_IRQ		0x11
+#define DMI_IPMI_IO_MASK	0xfffe
+
+static void __init dmi_decode_ipmi(struct dmi_dev_ipmi *dev,
+				   const struct dmi_header *dm)
+{
+	const u8	*data = (const u8 *) dm;
+	unsigned long	base_addr;
+	u8              len = dm->length;
+	bool            slave_addr_set;
+
+	if (len < DMI_IPMI_MIN_LENGTH)
+		return;
+
+	dev->type = data[DMI_IPMI_TYPE];
+
+	memcpy(&base_addr, data + DMI_IPMI_ADDR, sizeof(unsigned long));
+	if (len >= DMI_IPMI_VER2_LENGTH) {
+		if (dev->type == IPMI_DMI_TYPE_SSIF) {
+			if ((data[DMI_IPMI_ADDR] >> 1) == 0) {
+				/*
+				 * Some broken systems put the I2C address in
+				 * the slave address field.  We try to
+				 * accommodate them here.
+				 */
+				dev->base_addr = data[DMI_IPMI_SLAVEADDR] >> 1;
+				dev->slave_addr = 0;
+				slave_addr_set = true;
+			} else {
+				dev->base_addr = data[DMI_IPMI_ADDR] >> 1;
+			}
+		} else {
+			if (base_addr & 1) {
+				/* I/O */
+				base_addr &= DMI_IPMI_IO_MASK;
+				dev->is_io_space = 1;
+			} else {
+				/* Memory */
+				dev->is_io_space = 0;
+			}
+
+			/*
+			 * If bit 4 of byte 0x10 is set, then the lsb
+			 * for the address is odd.
+			 */
+			base_addr |= (data[DMI_IPMI_ACCESS] >> 4) & 1;
+
+			dev->base_addr = base_addr;
+			dev->irq = data[DMI_IPMI_IRQ];
+
+			/*
+			 * The top two bits of byte 0x10 hold the
+			 * register spacing.
+			 */
+			switch ((data[DMI_IPMI_ACCESS] >> 6) & 3) {
+			case 0: /* Byte boundaries */
+				dev->offset = 1;
+				break;
+			case 1: /* 32-bit boundaries */
+				dev->offset = 4;
+				break;
+			case 2: /* 16-byte boundaries */
+				dev->offset = 16;
+				break;
+			default:
+				/* Leave 0 for undefined. */
+				return;
+			}
+		}
+	} else {
+		/* Old DMI spec. */
+		/*
+		 * Note that technically, the lower bit of the base
+		 * address should be 1 if the address is I/O and 0 if
+		 * the address is in memory.  So many systems get that
+		 * wrong (and all that I have seen are I/O) so we just
+		 * ignore that bit and assume I/O.  Systems that use
+		 * memory should use the newer spec, anyway.
+		 */
+		dev->base_addr = base_addr & DMI_IPMI_IO_MASK;
+		dev->is_io_space = 1;
+		dev->offset = 1;
+	}
+
+	if (!slave_addr_set)
+		dev->slave_addr = data[DMI_IPMI_SLAVEADDR];
+
+	dev->good_data = 1;
+}
+
 static void __init dmi_save_ipmi_device(const struct dmi_header *dm)
 {
-	struct dmi_device *dev;
+	struct dmi_dev_ipmi *dev;
 	void *data;
 
 	data = dmi_alloc(dm->length);
@@ -318,11 +414,13 @@ static void __init dmi_save_ipmi_device(const struct dmi_header *dm)
 	if (!dev)
 		return;
 
-	dev->type = DMI_DEV_TYPE_IPMI;
-	dev->name = "IPMI controller";
-	dev->device_data = data;
+	dev->dev.type = DMI_DEV_TYPE_IPMI;
+	dev->dev.name = "IPMI controller";
+	dev->dev.device_data = data;
 
-	dmi_devices_list_add(dev);
+	dmi_decode_ipmi(dev, dm);
+
+	dmi_devices_list_add(&dev->dev);
 }
 
 static void __init dmi_save_dev_pciaddr(int instance, int segment, int bus,

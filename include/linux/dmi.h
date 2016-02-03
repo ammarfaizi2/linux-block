@@ -97,6 +97,24 @@ struct dmi_dev_onboard {
 	int devfn;
 };
 
+/* Device data for an IPMI entry. */
+struct dmi_dev_ipmi {
+	struct dmi_device dev;
+	u8		good_data;
+	u8		type;
+	u8		is_io_space;
+	u8		irq;
+	u8		offset;
+	u8		slave_addr;
+	unsigned long	base_addr;
+};
+
+/* dmi_ipmi_data type field */
+#define IPMI_DMI_TYPE_KCS	0x01
+#define IPMI_DMI_TYPE_SMIC	0x02
+#define IPMI_DMI_TYPE_BT	0x03
+#define IPMI_DMI_TYPE_SSIF	0x04
+
 extern struct kobject *dmi_kobj;
 extern int dmi_check_system(const struct dmi_system_id *list);
 const struct dmi_system_id *dmi_first_match(const struct dmi_system_id *list);
@@ -125,6 +143,14 @@ static inline struct dmi_device *to_dmi_device(struct fwnode_handle *fwnode)
 	if (is_dmi_fwnode(fwnode))
 		return container_of(fwnode, struct dmi_device, fwnode);
 	return NULL;
+}
+
+static inline struct dmi_dev_ipmi *to_dmi_dev_ipmi(struct dmi_device *dev)
+{
+	if (!dev || dev->type != DMI_DEV_TYPE_IPMI)
+		return NULL;
+
+	return container_of(dev, struct dmi_dev_ipmi, dev);
 }
 
 #else
