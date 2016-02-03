@@ -7,6 +7,7 @@
 #include <linux/efi.h>
 #include <linux/bootmem.h>
 #include <linux/random.h>
+#include <linux/platform_device.h>
 #include <asm/dmi.h>
 #include <asm/unaligned.h>
 
@@ -783,6 +784,52 @@ static ssize_t raw_table_read(struct file *file, struct kobject *kobj,
 	return count;
 }
 
+static void __init dmi_add_platform_ipmi(struct dmi_device *dev, int *nr)
+{
+	struct platform_device *pdev;
+	struct dmi_dev_ipmi *ipmi_dev = to_dmi_dev_ipmi(dev);
+	int rv;
+
+	if (!ipmi_dev->good_data) {
+		pr_err("dmi: Invalid IPMI data, not creating platform device");
+		return;
+	}
+
+	if (ipmi_dev->type == IPMI_DMI_TYPE_SSIF)
+		pdev = platform_device_alloc("dmi-ipmi-ssif", *nr);
+	else
+		pdev = platform_device_alloc("dmi-ipmi-si", *nr);
+	if (!pdev) {
+		pr_err("dmi: Error allocation IPMI platform device");
+		return;
+	}
+	if (ipmi_dev->type == IPMI_DMI_TYPE_SSIF)
+		pdev->driver_override = "ipmi_ssif";
+	else
+		pdev->driver_override = "ipmi_si";
+
+	pdev->dev.fwnode = &dev->fwnode;
+	rv = platform_device_add(pdev);
+	if (rv) {
+		dev_err(&pdev->dev, "dmi: Unable to add device: %d\n", rv);
+		platform_device_del(pdev);
+		return;
+	}
+
+	(*nr)++;
+}
+
+static void __init dmi_add_platform_devices(void)
+{
+	struct dmi_device *dev;
+	int nr_ipmi = 0;
+
+	list_for_each_entry(dev, &dmi_devices, list) {
+		if (dev->type == DMI_DEV_TYPE_IPMI)
+			dmi_add_platform_ipmi(dev, &nr_ipmi);
+	}
+}
+
 static BIN_ATTR(smbios_entry_point, S_IRUSR, raw_table_read, NULL, 0);
 static BIN_ATTR(DMI, S_IRUSR, raw_table_read, NULL, 0);
 
@@ -823,9 +870,13 @@ static int __init dmi_init(void)
 	bin_attr_DMI.size = dmi_len;
 	bin_attr_DMI.private = dmi_table;
 	ret = sysfs_create_bin_file(tables_kobj, &bin_attr_DMI);
-	if (!ret)
-		return 0;
+	if (ret)
+		goto out_remove_bin_file;
 
+	dmi_add_platform_devices();
+	return 0;
+
+ out_remove_bin_file:
 	sysfs_remove_bin_file(tables_kobj,
 			      &bin_attr_smbios_entry_point);
  err_unmap:
