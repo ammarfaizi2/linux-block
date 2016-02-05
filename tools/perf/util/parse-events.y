@@ -64,6 +64,7 @@ static inc_group_count(struct list_head *list,
 %type <str> PE_PMU_EVENT_PRE PE_PMU_EVENT_SUF PE_KERNEL_PMU_EVENT
 %type <num> value_sym
 %type <head> event_config
+%type <head> opt_event_config
 %type <term> event_term
 %type <head> event_pmu
 %type <head> event_legacy_symbol
@@ -455,25 +456,37 @@ PE_RAW
 }
 
 event_bpf_file:
-PE_BPF_OBJECT
+PE_BPF_OBJECT opt_event_config
 {
 	struct parse_events_evlist *data = _data;
 	struct parse_events_error *error = data->error;
 	struct list_head *list;
 
 	ALLOC_LIST(list);
-	ABORT_ON(parse_events_load_bpf(data, list, $1, false));
+	ABORT_ON(parse_events_load_bpf(data, list, $1, false, $2));
+	parse_events_terms__delete($2);
 	$$ = list;
 }
 |
-PE_BPF_SOURCE
+PE_BPF_SOURCE opt_event_config
 {
 	struct parse_events_evlist *data = _data;
 	struct list_head *list;
 
 	ALLOC_LIST(list);
-	ABORT_ON(parse_events_load_bpf(data, list, $1, true));
+	ABORT_ON(parse_events_load_bpf(data, list, $1, true, $2));
+	parse_events_terms__delete($2);
 	$$ = list;
+}
+
+opt_event_config:
+'/' event_config '/'
+{
+	$$ = $2;
+}
+|
+{
+	$$ = NULL;
 }
 
 start_terms: event_config
