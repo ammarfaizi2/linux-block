@@ -498,12 +498,14 @@ TRACE_EVENT(rcu_prep_idle,
  * number of lazy callbacks queued, and the fourth element is the
  * total number of callbacks queued.
  */
-TRACE_EVENT(rcu_callback,
+TRACE_EVENT_CONDITION(rcu_callback,
 
 	TP_PROTO(const char *rcuname, struct rcu_head *rhp, long qlen_lazy,
 		 long qlen),
 
 	TP_ARGS(rcuname, rhp, qlen_lazy, qlen),
+
+	TP_CONDITION(cpu_online(raw_smp_processor_id())),
 
 	TP_STRUCT__entry(
 		__field(const char *, rcuname)
