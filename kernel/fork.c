@@ -1404,6 +1404,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	p->lockdep_depth = 0; /* no locks held yet */
 	p->curr_chain_key = 0;
 	p->lockdep_recursion = 0;
+# ifdef CONFIG_LOCKED_ACCESS
+	p->curr_acqchain_key = 0;
+# endif
 #endif
 
 #ifdef CONFIG_DEBUG_MUTEXES

@@ -244,6 +244,9 @@ struct held_lock {
 	 * with zero), here we store the previous hash value:
 	 */
 	u64				prev_chain_key;
+#ifdef CONFIG_LOCKED_ACCESS
+	u64				prev_acqchain_key;
+#endif
 	unsigned long			acquire_ip;
 	struct lockdep_map		*instance;
 	struct lockdep_map		*nest_lock;
