@@ -4310,3 +4310,159 @@ void lockdep_rcu_suspicious(const char *file, const int line, const char *s)
 	dump_stack();
 }
 EXPORT_SYMBOL_GPL(lockdep_rcu_suspicious);
+
+#ifdef CONFIG_LOCKED_ACCESS
+static void locked_access_class_init(struct locked_access_class *laclass)
+{
+	int i;
+	unsigned long flags;
+
+	local_irq_save(flags);
+	arch_spin_lock(&laclass->lock);
+
+	if (laclass->initialized) {
+		arch_spin_unlock(&laclass->lock);
+		return;
+	}
+
+	for (i = 0; i < ACQCHAIN_HASH_SIZE; i++)
+		INIT_LIST_HEAD(laclass->acqchain_hashtable + i);
+
+	laclass->nr_acqchains = 0;
+	laclass->nr_acqchain_hlocks = 0;
+	laclass->nr_access_structs = 0;
+
+	/*
+	 * Make sure the members of laclass have been initialized before
+	 * setting ->initialized.
+	 */
+	smp_store_release(&laclass->initialized, 1);
+	arch_spin_unlock(&laclass->lock);
+	local_irq_restore(flags);
+}
+
+static struct acqchain *lookup_acqchain(struct locked_access_class *laclass,
+					struct task_struct *task,
+					u64 acqchain_key)
+{
+	struct list_head *hash_head;
+	struct acqchain *acqchain;
+
+	hash_head = acqchainhashentry(laclass, acqchain_key);
+
+	list_for_each_entry_lockless(acqchain, hash_head, entry) {
+		if (acqchain->chain_key == acqchain_key
+		    && is_same_irq_context(acqchain->irq_context,
+					   task_irq_context(task)))
+			return acqchain;
+	}
+
+	return NULL;
+}
+
+static struct acqchain *add_acqchain(struct locked_access_class *laclass,
+				     struct task_struct *task,
+				     u64 acqchain_key)
+{
+	unsigned long flags;
+	struct acqchain *acqchain = NULL;
+	struct held_lock *hlock, *hlock_curr;
+	struct lockdep_map *instance;
+	int i, j, max_depth;
+	struct list_head *hash_head;
+
+	local_irq_save(flags);
+	arch_spin_lock(&laclass->lock);
+
+	/* Lookup again while holding the lock */
+	acqchain = lookup_acqchain(laclass, task, acqchain_key);
+
+	if (acqchain)
+		goto out;
+
+	if (laclass->nr_acqchains >= MAX_ACQCHAINS)
+		goto out;
+
+	hash_head = acqchainhashentry(laclass, acqchain_key);
+	acqchain = laclass->acqchains + laclass->nr_acqchains;
+	acqchain->chain_key = acqchain_key;
+
+	hlock = task->held_locks + task->lockdep_depth - 1;
+	acqchain->irq_context = task_irq_context(task);
+
+	for (i = task->lockdep_depth - 1; i >= 0; i--) {
+		hlock_curr = task->held_locks + i;
+		if (!is_same_irq_context(hlock_curr->irq_context,
+				acqchain->irq_context))
+			break;
+	}
+
+	i++;
+	max_depth = task->lockdep_depth - i;
+
+	j = 0;
+	if (likely(laclass->nr_acqchain_hlocks + max_depth
+			<= MAX_ACQCHAIN_HLOCKS)) {
+		acqchain->base = laclass->nr_acqchain_hlocks;
+		for (; i < task->lockdep_depth; i++) {
+			hlock_curr = task->held_locks + i;
+			instance = hlock_curr->instance;
+
+			/*
+			 * The a lock instance may use its address as * ->key,
+			 * in which case the lock instance doesn't belong to
+			 * a locked access class.
+			 */
+			if (instance != (void *)instance->key &&
+			    instance->key->laclass == laclass) {
+				laclass->acqchain_hlocks[acqchain->base + j]
+						= hlock_curr->acquire_ip;
+				j++;
+			}
+		}
+		laclass->nr_acqchain_hlocks += j;
+	}
+
+	acqchain->depth = j;
+
+	/*
+	 * Make sure stores to the members of acqchain observed after publish
+	 * it.
+	 */
+	smp_store_release(&laclass->nr_acqchains, laclass->nr_acqchains + 1);
+	INIT_LIST_HEAD(&acqchain->accesses);
+
+	/*
+	 * Pair with the list_for_each_entry_lockless() in lookup_acqchain()
+	 */
+	list_add_tail_rcu(&acqchain->entry, hash_head);
+out:
+	arch_spin_unlock(&laclass->lock);
+	local_irq_restore(flags);
+	return acqchain;
+}
+
+/*
+ * Lookup the acqchain with a key of @acqchain_key in the hash table of
+ * @laclass, if none exists, add a new one.
+ *
+ * Return the acqchain if one is found or if one is added, otherwise return
+ * NULL.
+ *
+ * Must be called after @laclass is initialized.
+ */
+static struct acqchain *
+lookup_or_add_acqchain(struct locked_access_class *laclass,
+		      struct task_struct *task,
+		      u64 acqchain_key)
+{
+	struct acqchain *acqchain = NULL;
+
+	acqchain = lookup_acqchain(laclass, task, acqchain_key);
+	if (!acqchain)
+		acqchain = add_acqchain(laclass, task, acqchain_key);
+
+	return acqchain;
+}
+
+#endif /* CONFIG_LOCKED_ACCESS */

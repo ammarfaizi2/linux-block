@@ -51,9 +51,26 @@ struct lockdep_subclass_key {
 	char __one_byte;
 } __attribute__ ((__packed__));
 
+#ifdef CONFIG_LOCKED_ACCESS
+struct locked_access_class;
+
+struct lock_class_key {
+	union {
+		struct lockdep_subclass_key subkeys[MAX_LOCKDEP_SUBCLASSES];
+		/*
+		 * Use the content of the lock_class_key to store locked access
+		 * class, as lockdep only use the address of a lock_class_key.
+		 * However, please note by doing so, we will change the align
+		 * requirement of lock_class_key
+		 */
+		struct locked_access_class *laclass;
+	};
+};
+#else
 struct lock_class_key {
 	struct lockdep_subclass_key	subkeys[MAX_LOCKDEP_SUBCLASSES];
 };
+#endif
 
 extern struct lock_class_key __lockdep_no_validate__;
 
