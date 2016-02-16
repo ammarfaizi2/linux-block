@@ -2839,6 +2839,16 @@ static int mark_irqflags(struct task_struct *curr, struct held_lock *hlock)
 	return 1;
 }
 
+static unsigned int task_irq_context(struct task_struct *task)
+{
+	return 2 * (task->hardirq_context ? 1 : 0) + task->softirq_context;
+}
+
+static bool is_same_irq_context(unsigned int ctx1, unsigned int ctx2)
+{
+	return ctx1 == ctx2;
+}
+
 static int separate_irq_context(struct task_struct *curr,
 		struct held_lock *hlock)
 {
@@ -2847,8 +2857,7 @@ static int separate_irq_context(struct task_struct *curr,
 	/*
 	 * Keep track of points where we cross into an interrupt context:
 	 */
-	hlock->irq_context = 2*(curr->hardirq_context ? 1 : 0) +
-				curr->softirq_context;
+	hlock->irq_context = task_irq_context(curr);
 	if (depth) {
 		struct held_lock *prev_hlock;
 
@@ -2879,6 +2888,9 @@ static inline int mark_irqflags(struct task_struct *curr,
 {
 	return 1;
 }
+
+#define task_irq_context(task)			0
+#define is_same_irq_context(ctx1, ctx2)		true
 
 static inline int separate_irq_context(struct task_struct *curr,
 		struct held_lock *hlock)
