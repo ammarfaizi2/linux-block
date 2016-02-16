@@ -100,6 +100,29 @@ On the other hand, you can set <tt>CONFIG_RCU_FANOUT</tt> to be
 as small as 2 if you wish, which would permit only 16 CPUs, which
 is useful for testing.
 
+</p><p>This multi-level combining tree allows us to get most of the
+performance and scalability
+benefits of partitioning, even though RCU grace-period detection is
+inherently a global operation.
+The trick here is that only the last CPU to report a quiescent state
+into a given <tt>rcu_node</tt> structure need advance to the <tt>rcu_node</tt>
+structure at the next level up the tree.
+This means that at the leaf-level <tt>rcu_node</tt> structure, only
+one access out of sixteen will progress up the tree.
+For the internal <tt>rcu_node</tt> structures, the situation is even
+more extreme:  Only one access out of sixty-four will progress up
+the tree.
+Because the vast majority of the CPUs do not progress up the tree,
+the lock contention remains roughly constant up the tree.
+No matter how many CPUs there are in the system, at most 64 quiescent-state
+reports per grace period will progress all the way to the root
+<tt>rcu_node</tt> structure, thus ensuring that the lock contention
+on that root <tt>rcu_node</tt> structure remains acceptably low.
+
+</p><p>In effect, the combining tree acts like a big shock absorber,
+keeping lock contention under control at all tree levels regardless
+of the level of loading on the system.
+
 </p><p>The Linux kernel actually supports multiple flavors of RCU
 running concurrently, so RCU builds separate data structures for each
 flavor.
