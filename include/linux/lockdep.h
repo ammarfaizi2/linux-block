@@ -570,4 +570,33 @@ lockdep_rcu_suspicious(const char *file, const int line, const char *s)
 }
 #endif
 
+#ifdef CONFIG_LOCKED_ACCESS
+struct locked_access_location {
+	/* Filename of the access */
+	const char			*filename;
+	/* Line number of the access */
+	long				lineno;
+};
+
+#define LOCKED_ACCESS_TYPE_READ		1 /* read */
+
+extern void locked_access(struct locked_access_class *laclass,
+			  struct locked_access_location *access,
+			  int type);
+
+/*
+ * Entry point of LOCKED_ACCESS, should be called at every place the data
+ * accesses of the laclass happen.
+ *
+ * @_type must be one of the LOCKED_ACCESS_TYPE_*
+ */
+#define locked_access_point(_laclass, _type) \
+({ \
+	static struct locked_access_location a = { \
+				.filename = __FILE__, \
+				.lineno = __LINE__, \
+	}; \
+	locked_access(_laclass, &a, _type); \
+})
+#endif /* CONFIG_LOCKED_ACCESS */
 #endif /* __LINUX_LOCKDEP_H */
