@@ -2195,8 +2195,10 @@ static int __noreturn rcu_gp_kthread(void *arg)
 					       READ_ONCE(rsp->gpnum),
 					       TPS("fqswait"));
 			rsp->gp_state = RCU_GP_WAIT_FQS;
-			ret = wait_event_interruptible_timeout(rsp->gp_wq,
-					rcu_gp_fqs_check_wake(rsp, &gf), j);
+			ret = schedule_timeout_interruptible(j > 0 ? j : 1);
+			rcu_gp_fqs_check_wake(rsp, &gf);
+			// ret = wait_event_interruptible_timeout(rsp->gp_wq,
+			//		rcu_gp_fqs_check_wake(rsp, &gf), j);
 			rsp->gp_state = RCU_GP_DOING_FQS;
 			/* Locking provides needed memory barriers. */
 			/* If grace period done, leave loop. */
