@@ -135,8 +135,8 @@ more extreme:  Only one access out of sixty-four will progress up
 the tree.
 Because the vast majority of the CPUs do not progress up the tree,
 the lock contention remains roughly constant up the tree.
-No matter how many CPUs there are in the system, only one quiescent-state
-report per grace period will progress all the way to the root
+No matter how many CPUs there are in the system, at most 64 quiescent-state
+reports per grace period will progress all the way to the root
 <tt>rcu_node</tt> structure, thus ensuring that the lock contention
 on that root <tt>rcu_node</tt> structure remains acceptably low.
 
