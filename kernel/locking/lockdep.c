@@ -4496,4 +4496,125 @@ lookup_or_add_acqchain(struct locked_access_class *laclass,
 	return acqchain;
 }
 
+/*
+ * Lookup the data access at @loc in the ->accesses list of @acqchain.
+ *
+ * Must be called after @laclass is initialized.
+ */
+static int lookup_locked_access(struct acqchain *acqchain,
+				struct locked_access_location *loc)
+{
+	struct locked_access_struct *s;
+
+	list_for_each_entry_lockless(s, &acqchain->accesses, list) {
+		if (s->loc == loc)
+			return 1;
+	}
+	return 0;
+
+}
+
+/*
+ * Add the data access at @loc into the ->accesses list of @acqchain.
+ *
+ * Return 1 if one access is added, otherwise return 0.
+ *
+ * Must be called after @laclass is initialized.
+ */
+static int add_locked_access(struct locked_access_class *laclass,
+			     struct acqchain *acqchain,
+			     struct locked_access_location *loc,
+			     int type)
+{
+	unsigned long flags;
+	struct locked_access_struct *s;
+
+	local_irq_save(flags);
+	arch_spin_lock(&laclass->lock);
+
+	/* Lookup again while holding the lock */
+	if (lookup_locked_access(acqchain, loc)) {
+		arch_spin_unlock(&laclass->lock);
+		local_irq_restore(flags);
+		return 1;
+	}
+
+	if (unlikely(laclass->nr_access_structs >= MAX_LOCKED_ACCESS_STRUCTS)) {
+		arch_spin_unlock(&laclass->lock);
+		local_irq_restore(flags);
+		return 0;
+	}
+
+	s = laclass->access_structs + laclass->nr_access_structs;
+	s->loc = loc;
+	s->type = type;
+	laclass->nr_access_structs++;
+
+	/*
+	 * Pair with the list_for_each_entry_lockless() in
+	 * lookup_locked_access()
+	 */
+	list_add_tail_rcu(&s->list, &acqchain->accesses);
+
+	arch_spin_unlock(&laclass->lock);
+	local_irq_restore(flags);
+	return 1;
+}
+
+/*
+ * Correlate the data access at @loc with @acqchain for @laclass
+ *
+ * Must be called after @laclass is initialized.
+ */
+static int correlate_locked_access(struct locked_access_class *laclass,
+				   struct acqchain *acqchain,
+				   struct locked_access_location *loc,
+				   int type)
+{
+	if (lookup_locked_access(acqchain, loc))
+		return 1;
+
+	return add_locked_access(laclass, acqchain, loc, type);
+}
+
+/*
+ * The implementation of entry point locked_access_point(), called when a data
+ * access belonging to @laclass happens.
+ */
+void locked_access(struct locked_access_class *laclass,
+		   struct locked_access_location *loc,
+		   int type)
+{
+	u64 acqchain_key = current->curr_acqchain_key;
+	struct acqchain *acqchain;
+
+	if (unlikely(!laclass))
+		return;
+
+	/*
+	 * Don't track for data access for lockdep itself, because we rely
+	 * on the ->held_locks lockdep maintains, and if ->lockdep_recursion is
+	 * not 0, the lock is not being maintained in ->held_locks.
+	 */
+	if (unlikely(current->lockdep_recursion))
+		return;
+
+	/* Data access outside a critical section */
+	if (current->lockdep_depth <= 0)
+		return;
+
+	/*
+	 * we only check whether laclass is initialized in locked_access,
+	 * because this is the entry point of LOCKED_ACCESS.
+	 */
+	if (unlikely(!smp_load_acquire(&laclass->initialized)))
+		locked_access_class_init(laclass);
+
+	acqchain = lookup_or_add_acqchain(laclass, current, acqchain_key);
+
+	if (acqchain)
+		correlate_locked_access(laclass, acqchain, loc, type);
+}
+EXPORT_SYMBOL(locked_access);
+
 #endif /* CONFIG_LOCKED_ACCESS */
