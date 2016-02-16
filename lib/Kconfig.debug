@@ -1065,6 +1065,18 @@ config LOCK_STAT
 	 CONFIG_LOCK_STAT defines "contended" and "acquired" lock events.
 	 (CONFIG_LOCKDEP defines "acquire" and "release" events.)
 
+config LOCKED_ACCESS
+	bool
+	depends on DEBUG_KERNEL && TRACE_IRQFLAGS_SUPPORT && STACKTRACE_SUPPORT && LOCKDEP_SUPPORT
+	select DEBUG_LOCK_ALLOC
+	default n
+	help
+	  Provide a way to correlate data accesses with critical sections,
+	  LOCKED_ACCESS is designed for the users of locking mechanisms to see
+	  which data access happens inside which lock critical section. This
+	  could help the users of a lock mechanism to gain more detailed
+	  information about their lock usage.
+
 config DEBUG_LOCKDEP
 	bool "Lock dependency engine debugging"
 	depends on DEBUG_KERNEL && LOCKDEP

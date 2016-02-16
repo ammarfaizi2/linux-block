@@ -168,3 +168,77 @@ DECLARE_PER_CPU(struct lockdep_stats, lockdep_stats);
 # define debug_atomic_dec(ptr)		do { } while (0)
 # define debug_atomic_read(ptr)		0
 #endif
+
+#ifdef CONFIG_LOCKED_ACCESS
+/*
+ * A chain of lock acquisitions, keyed by the hash sum of all the
+ * instruction positions of lock acquisitions
+ */
+struct acqchain {
+	u8				irq_context;
+	s8				depth;
+	s16				base;
+	/* Entry in hash table */
+	struct list_head		entry;
+	u64				chain_key;
+	/* List of data accesses that happen after this chain */
+	struct list_head		accesses;
+};
+
+#define iterate_acqchain_key(key, ip) \
+	(((key) << MAX_LOCKDEP_KEYS_BITS) ^ \
+	((key) >> (64 - MAX_LOCKDEP_KEYS_BITS)) ^ \
+	(ip))
+
+#define MAX_ACQCHAINS_BITS	16
+#define MAX_ACQCHAINS		(1UL << MAX_ACQCHAINS_BITS)
+#define MAX_ACQCHAIN_HLOCKS	(MAX_ACQCHAINS * 5)
+
+#define ACQCHAIN_HASH_BITS	(MAX_ACQCHAINS_BITS-1)
+#define ACQCHAIN_HASH_SIZE	(1UL << ACQCHAIN_HASH_BITS)
+#define __acqchainhashfn(chain)	hash_long(chain, ACQCHAIN_HASH_BITS)
+#define acqchainhashentry(lad, chain) \
+	(lad->acqchain_hashtable + __acqchainhashfn((chain)))
+
+#define MAX_LOCKED_ACCESS_STRUCTS	(1UL << 16)
+
+/* Records of data accesses in LOCKED_ACCESS */
+struct locked_access_struct {
+	struct list_head		list;
+	struct locked_access_location	*loc;
+	int				type;
+};
+
+/*
+ * locked_access_class represent a group of critical sections and related data
+ * accesses. Locked access class should be only defined statically, and the
+ * address of a locked_access_class is used as the 'key' of a locked access
+ * class.
+ */
+struct locked_access_class {
+	const char                   *name;
+	/* Hash table of acqchains, for lookup */
+	struct list_head             acqchain_hashtable[ACQCHAIN_HASH_SIZE];
+	/* Storage of acqchains, for allocation */
+	struct acqchain	             acqchains[MAX_ACQCHAINS];
+	long                         nr_acqchains;
+	/* Storage of acquired IPs of acqchains, for allocation */
+	unsigned long                acqchain_hlocks[MAX_ACQCHAIN_HLOCKS];
+	long                         nr_acqchain_hlocks;
+	/* Storage of data accesses, for allocation */
+	struct locked_access_struct  access_structs[MAX_LOCKED_ACCESS_STRUCTS];
+	long                         nr_access_structs;
+	arch_spinlock_t              lock;
+	int                          initialized;
+};
+
+#define INIT_LOCKED_ACCESS_DATA(_name) \
+	{ \
+		.name = #_name, \
+		.lock = __ARCH_SPIN_LOCK_UNLOCKED, \
+		.initialized = 0, \
+		.nr_acqchains = 0, \
+		.nr_acqchain_hlocks = 0,\
+		.nr_access_structs = 0, \
+	}
+#endif /* CONFIG_LOCKED_ACCESS */
