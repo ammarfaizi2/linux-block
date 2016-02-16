@@ -673,6 +673,130 @@ static const struct file_operations proc_lock_stat_operations = {
 };
 #endif /* CONFIG_LOCK_STAT */
 
+#ifdef CONFIG_LOCKED_ACCESS
+#include <linux/slab.h>
+static struct proc_dir_entry *locked_access_dir;
+static int seq_laclass_show(struct seq_file *m, void *v)
+{
+	struct locked_access_class *laclass;
+	loff_t *pos = v;
+	struct acqchain *acqchain;
+	struct locked_access_struct *s;
+	struct locked_access_location *loc;
+	unsigned long acq_ip;
+	int i;
+
+	laclass = (struct locked_access_class *)m->private;
+
+	/* Pair with the smp_store_release() in add_acqchain() */
+	if (*pos >= smp_load_acquire(&laclass->nr_acqchains) || *pos < 0)
+		return SEQ_SKIP;
+
+	acqchain = laclass->acqchains + *pos;
+
+	seq_printf(m, "ACQCHAIN 0x%llx, %d locks, irq_context %x:\n",
+			acqchain->chain_key, acqchain->depth,
+			acqchain->irq_context);
+	for (i = 0; i < acqchain->depth; i++) {
+		acq_ip = laclass->acqchain_hlocks[acqchain->base + i];
+		seq_printf(m, "%*sLOCK at [<%p>] %pSR\n",
+				(i+1) * 2, "", (void *) acq_ip,
+				(void *) acq_ip);
+	}
+
+	/* Pair with the list_add_tail_rcu() in add_locked_access() */
+	list_for_each_entry_lockless(s, &acqchain->accesses, list) {
+		loc = s->loc;
+		seq_printf(m, "%*sACCESS TYPE %x at %s:%ld\n",
+				(i+1) * 2, "", s->type, loc->filename,
+				loc->lineno);
+
+	}
+	return 0;
+}
+
+static void *seq_laclass_start(struct seq_file *m, loff_t *pos)
+{
+	struct locked_access_class *laclass;
+	loff_t *rpos;
+
+	laclass = (struct locked_access_class *)m->private;
+
+	/* Pair with the smp_store_release() in add_acqchain() */
+	if (*pos >= smp_load_acquire(&laclass->nr_acqchains) || *pos < 0)
+		return NULL;
+
+	rpos = kzalloc(sizeof(loff_t), GFP_KERNEL);
+
+	if (!rpos)
+		return NULL;
+
+	*rpos = *pos;
+
+	return rpos;
+}
+
+static void *seq_laclass_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	struct locked_access_class *laclass;
+	loff_t *rpos = v;
+
+	laclass = (struct locked_access_class *)m->private;
+
+	/* Pair with the smp_store_release() in add_acqchain() */
+	if (*pos + 1 < smp_load_acquire(&laclass->nr_acqchains) && *pos >= 0) {
+		*pos = ++*rpos;
+		return rpos;
+	}
+
+	return NULL;
+}
+
+static void seq_laclass_stop(struct seq_file *m, void *v)
+{
+	kfree(v);
+}
+
+static const struct seq_operations seq_laclass_ops = {
+	.start = seq_laclass_start,
+	.next = seq_laclass_next,
+	.stop = seq_laclass_stop,
+	.show = seq_laclass_show
+};
+
+static int proc_laclass_open(struct inode *inode, struct file *file)
+{
+	struct seq_file *seq;
+	int rc;
+
+	rc = seq_open(file, &seq_laclass_ops);
+
+	if (rc != 0)
+		return rc;
+
+	if (!PDE_DATA(inode))
+		return -ENOENT;
+
+	seq = file->private_data;
+	seq->private = PDE_DATA(inode);
+
+	return 0;
+}
+
+static const struct file_operations proc_laclass_operations = {
+	.open		= proc_laclass_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= seq_release
+};
+
+int create_laclass_proc(const char *name, struct locked_access_class *laclass)
+{
+	return !proc_create_data(name, S_IRUSR, locked_access_dir,
+			&proc_laclass_operations, laclass);
+}
+#endif /* CONFIG_LOCKED_ACCESS */
+
 static int __init lockdep_proc_init(void)
 {
 	proc_create("lockdep", S_IRUSR, NULL, &proc_lockdep_operations);
@@ -688,6 +812,9 @@ static int __init lockdep_proc_init(void)
 		    &proc_lock_stat_operations);
 #endif
 
+#ifdef CONFIG_LOCKED_ACCESS
+	locked_access_dir = proc_mkdir("locked_access", NULL);
+#endif /* CONFIG_LOCKED_ACCESS */
 	return 0;
 }
 
