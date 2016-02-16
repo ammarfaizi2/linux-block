@@ -236,20 +236,17 @@ EXPORT_SYMBOL_GPL(__rcu_read_unlock);
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
-static struct lock_class_key rcu_lock_key;
-struct lockdep_map rcu_lock_map =
-	STATIC_LOCKDEP_MAP_INIT("rcu_read_lock", &rcu_lock_key);
-EXPORT_SYMBOL_GPL(rcu_lock_map);
 
-static struct lock_class_key rcu_bh_lock_key;
-struct lockdep_map rcu_bh_lock_map =
-	STATIC_LOCKDEP_MAP_INIT("rcu_read_lock_bh", &rcu_bh_lock_key);
-EXPORT_SYMBOL_GPL(rcu_bh_lock_map);
+#define DEFINE_RCU_LOCKDEP_MAP(flavor)					\
+	STATIC_DEFINE_RCU_LOCK_CLASS_KEY(rcu##flavor##_lock_key);	\
+	struct lockdep_map rcu##flavor##_lock_map =			\
+		STATIC_LOCKDEP_MAP_INIT("rcu" #flavor "_read_lock",	\
+					&rcu##flavor##_lock_key);	\
+	EXPORT_SYMBOL_GPL(rcu##flavor##_lock_map)
 
-static struct lock_class_key rcu_sched_lock_key;
-struct lockdep_map rcu_sched_lock_map =
-	STATIC_LOCKDEP_MAP_INIT("rcu_read_lock_sched", &rcu_sched_lock_key);
-EXPORT_SYMBOL_GPL(rcu_sched_lock_map);
+DEFINE_RCU_LOCKDEP_MAP();
+DEFINE_RCU_LOCKDEP_MAP(_bh);
+DEFINE_RCU_LOCKDEP_MAP(_sched);
 
 static struct lock_class_key rcu_callback_key;
 struct lockdep_map rcu_callback_map =
