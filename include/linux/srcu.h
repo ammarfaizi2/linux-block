@@ -69,7 +69,7 @@ int __init_srcu_struct(struct srcu_struct *sp, const char *name,
 
 #define init_srcu_struct(sp) \
 ({ \
-	static struct lock_class_key __srcu_key; \
+	STATIC_DEFINE_RCU_LOCK_CLASS_KEY(__srcu_key); \
 	\
 	__init_srcu_struct((sp), #sp, &__srcu_key); \
 })
