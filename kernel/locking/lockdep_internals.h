@@ -241,4 +241,21 @@ struct locked_access_class {
 		.nr_acqchain_hlocks = 0,\
 		.nr_access_structs = 0, \
 	}
+
+extern int create_laclass_proc(const char *name,
+			   struct locked_access_class *laclass);
+
+#define DEFINE_CREATE_LACLASS_PROC(name) \
+static int __init ___create_##name##_laclass_proc(void) \
+{ \
+	return create_laclass_proc(#name, &name##_laclass); \
+} \
+late_initcall(___create_##name##_laclass_proc)
+
+/* Define a Locked Access Class and create its proc file */
+#define DEFINE_LACLASS(name) \
+	struct locked_access_class name##_laclass = \
+			INIT_LOCKED_ACCESS_DATA(name); \
+	EXPORT_SYMBOL(name##_laclass); \
+	DEFINE_CREATE_LACLASS_PROC(name)
 #endif /* CONFIG_LOCKED_ACCESS */
