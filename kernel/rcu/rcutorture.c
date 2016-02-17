@@ -1350,6 +1350,8 @@ rcu_torture_stats(void *arg)
 	VERBOSE_TOROUT_STRING("rcu_torture_stats task started");
 	do {
 		schedule_timeout_interruptible(stat_interval * HZ);
+		if (writer_task != NULL)
+			wake_up_process(writer_task);
 		rcu_torture_stats_print();
 		torture_shutdown_absorb("rcu_torture_stats");
 	} while (!torture_must_stop());
