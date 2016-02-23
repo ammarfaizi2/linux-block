@@ -181,13 +181,13 @@ EXPORT_SYMBOL_GPL(cgrp_dfl_root);
  * The default hierarchy always exists but is hidden until mounted for the
  * first time.  This is for backward compatibility.
  */
-static bool cgrp_dfl_root_visible;
+static bool cgrp_dfl_visible;
 
 /* Controllers blocked by the commandline in v1 */
 static u16 cgroup_no_v1_mask;
 
 /* some controllers are not supported in the default hierarchy */
-static u16 cgrp_dfl_root_inhibit_ss_mask;
+static u16 cgrp_dfl_inhibit_ss_mask;
 
 /* The list of hierarchy roots */
 
@@ -1498,7 +1498,7 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
 	/* skip creating root files on dfl_root for inhibited subsystems */
 	tmp_ss_mask = ss_mask;
 	if (dst_root == &cgrp_dfl_root)
-		tmp_ss_mask &= ~cgrp_dfl_root_inhibit_ss_mask;
+		tmp_ss_mask &= ~cgrp_dfl_inhibit_ss_mask;
 
 	do_each_subsys_mask(ss, ssid, tmp_ss_mask) {
 		struct cgroup *scgrp = &ss->root->cgrp;
@@ -1515,7 +1515,7 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
 		 * Just warn about it and continue.
 		 */
 		if (dst_root == &cgrp_dfl_root) {
-			if (cgrp_dfl_root_visible) {
+			if (cgrp_dfl_visible) {
 				pr_warn("failed to create files (%d) while rebinding 0x%x to default root\n",
 					ret, ss_mask);
 				pr_warn("you may retry by moving them to a different hierarchy and unbinding\n");
@@ -2028,7 +2028,7 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
 			put_cgroup_ns(ns);
 			return ERR_PTR(-EINVAL);
 		}
-		cgrp_dfl_root_visible = true;
+		cgrp_dfl_visible = true;
 		root = &cgrp_dfl_root;
 		cgroup_get(&root->cgrp);
 		goto out_mount;
@@ -2616,11 +2616,11 @@ static int cgroup_migrate_prepare_dst(struct cgroup *dst_cgrp,
 	lockdep_assert_held(&cgroup_mutex);
 
 	/*
-	 * Except for the root, subtree_ss_mask must be zero for a cgroup
+	 * Except for the root, subtree_control must be zero for a cgroup
 	 * with tasks so that child cgroups don't compete against tasks.
 	 */
 	if (dst_cgrp && cgroup_on_dfl(dst_cgrp) && cgroup_parent(dst_cgrp) &&
-	    dst_cgrp->subtree_ss_mask)
+	    dst_cgrp->subtree_control)
 		return -EBUSY;
 
 	/* look up the dst cset for each src cset and link it to src */
@@ -2947,7 +2947,7 @@ static int cgroup_root_controllers_show(struct seq_file *seq, void *v)
 	struct cgroup *cgrp = seq_css(seq)->cgroup;
 
 	cgroup_print_ss_mask(seq, cgrp->root->subsys_mask &
-			     ~cgrp_dfl_root_inhibit_ss_mask);
+			     ~cgrp_dfl_inhibit_ss_mask);
 	return 0;
 }
 
@@ -3051,7 +3051,7 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 	while ((tok = strsep(&buf, " "))) {
 		if (tok[0] == '\0')
 			continue;
-		do_each_subsys_mask(ss, ssid, ~cgrp_dfl_root_inhibit_ss_mask) {
+		do_each_subsys_mask(ss, ssid, ~cgrp_dfl_inhibit_ss_mask) {
 			if (!cgroup_ssid_enabled(ssid) ||
 			    strcmp(tok + 1, ss->name))
 				continue;
@@ -5406,7 +5406,7 @@ int __init cgroup_init(void)
 		cgrp_dfl_root.subsys_mask |= 1 << ss->id;
 
 		if (!ss->dfl_cftypes)
-			cgrp_dfl_root_inhibit_ss_mask |= 1 << ss->id;
+			cgrp_dfl_inhibit_ss_mask |= 1 << ss->id;
 
 		if (ss->dfl_cftypes == ss->legacy_cftypes) {
 			WARN_ON(cgroup_add_cftypes(ss, ss->dfl_cftypes));
@@ -5477,7 +5477,7 @@ int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
 		struct cgroup *cgrp;
 		int ssid, count = 0;
 
-		if (root == &cgrp_dfl_root && !cgrp_dfl_root_visible)
+		if (root == &cgrp_dfl_root && !cgrp_dfl_visible)
 			continue;
 
 		seq_printf(m, "%d:", root->hierarchy_id);
@@ -5875,12 +5875,13 @@ struct cgroup_subsys_state *css_tryget_online_from_dir(struct dentry *dentry,
 						       struct cgroup_subsys *ss)
 {
 	struct kernfs_node *kn = kernfs_node_from_dentry(dentry);
+	struct file_system_type *s_type = dentry->d_sb->s_type;
 	struct cgroup_subsys_state *css = NULL;
 	struct cgroup *cgrp;
 
 	/* is @dentry a cgroup dir? */
-	if (dentry->d_sb->s_type != &cgroup_fs_type || !kn ||
-	    kernfs_type(kn) != KERNFS_DIR)
+	if ((s_type != &cgroup_fs_type && s_type != &cgroup2_fs_type) ||
+	    !kn || kernfs_type(kn) != KERNFS_DIR)
 		return ERR_PTR(-EBADF);
 
 	rcu_read_lock();
