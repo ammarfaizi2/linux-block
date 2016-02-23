@@ -58,7 +58,7 @@ warn_32bit_failure:
 	echo "";							\
 	echo "If you are using a Fedora-like distribution, try:";	\
 	echo "";							\
-	echo "  yum install glibc-devel.*i686";				\
+	echo "  yum install glibc-devel.*i686 glibc-static.i686";	\
 	exit 0;
 endif
 
