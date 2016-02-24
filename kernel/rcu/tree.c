@@ -1450,6 +1450,7 @@ static void check_cpu_stall(struct rcu_state *rsp, struct rcu_data *rdp)
 	if ((rcu_cpu_stall_suppress && !rcu_kick_kthreads) ||
 	    !rcu_gp_in_progress(rsp))
 		return;
+	rcu_stall_kick_kthreads(rsp);
 	j = jiffies;
 
 	/*
