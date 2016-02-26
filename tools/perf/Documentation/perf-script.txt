@@ -116,7 +116,7 @@ OPTIONS
 --fields::
         Comma separated list of fields to print. Options are:
         comm, tid, pid, time, cpu, event, trace, ip, sym, dso, addr, symoff,
-        srcline, period, iregs, brstack, brstacksym, flags, bpf-output,
+        srcline, period, iregs, brstack, brstacksym, flags, bpf-output, asm.
         callindent, insn, insnlen. Field list can be prepended with the type, trace, sw or hw,
         to indicate to which event type the field list applies.
         e.g., -F sw:comm,tid,time,ip,sym  and -F trace:time,cpu,trace
@@ -197,6 +197,8 @@ OPTIONS
 	A/- : A=TSX abort entry, -=not aborted region or not supported
 
 	The brstacksym is identical to brstack, except that the FROM and TO addresses are printed in a symbolic form if possible.
+
+	When asm is specified the assembler instruction of each sample is printed in disassembled form.
 
 -k::
 --vmlinux=<file>::

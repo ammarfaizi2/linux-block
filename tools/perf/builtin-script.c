@@ -28,6 +28,7 @@
 #include <linux/time64.h>
 #include "asm/bug.h"
 #include "util/mem-events.h"
+#include "util/dis.h"
 
 static char const		*script_name;
 static char const		*generate_script_lang;
@@ -69,6 +70,7 @@ enum perf_output_field {
 	PERF_OUTPUT_CALLINDENT	    = 1U << 20,
 	PERF_OUTPUT_INSN	    = 1U << 21,
 	PERF_OUTPUT_INSNLEN	    = 1U << 22,
+	PERF_OUTPUT_ASM		    = 1U << 23,
 };
 
 struct output_option {
@@ -98,6 +100,7 @@ struct output_option {
 	{.str = "callindent", .field = PERF_OUTPUT_CALLINDENT},
 	{.str = "insn", .field = PERF_OUTPUT_INSN},
 	{.str = "insnlen", .field = PERF_OUTPUT_INSNLEN},
+	{.str = "asm", .field = PERF_OUTPUT_ASM},
 };
 
 /* default set to maintain compatibility with current format */
@@ -292,7 +295,11 @@ static int perf_evsel__check_attr(struct perf_evsel *evsel,
 		       "selected. Hence, no address to lookup the source line number.\n");
 		return -EINVAL;
 	}
-
+	if (PRINT_FIELD(ASM) && !PRINT_FIELD(IP)) {
+		pr_err("Display of assembler requested but sample IP is not\n"
+		       "selected.\n");
+		return -EINVAL;
+	}
 	if ((PRINT_FIELD(PID) || PRINT_FIELD(TID)) &&
 		perf_evsel__check_stype(evsel, PERF_SAMPLE_TID, "TID",
 					PERF_OUTPUT_TID|PERF_OUTPUT_PID))
@@ -434,6 +441,39 @@ static void print_sample_iregs(struct perf_sample *sample,
 		u64 val = regs->regs[i++];
 		printf("%5s:0x%"PRIx64" ", perf_reg_name(r), val);
 	}
+}
+
+static void print_sample_asm(union perf_event *event,
+			     struct perf_sample *sample,
+			     struct thread *thread,
+			     struct addr_location *al,
+			     struct machine *machine)
+{
+	struct perf_dis x;
+	u8 buffer[32];
+	int len;
+	u64 offset;
+
+	x.thread = thread;
+	x.cpumode = event->header.misc & PERF_RECORD_MISC_CPUMODE_MASK;
+	x.cpu = sample->cpu;
+
+	if (!al->map || !al->map->dso)
+		return;
+	if (al->map->dso->data.status == DSO_DATA_STATUS_ERROR)
+		return;
+
+	/* Load maps to ensure dso->is_64_bit has been updated */
+	map__load(al->map);
+	x.is64bit = al->map->dso->is_64_bit;
+
+	offset = al->map->map_ip(al->map, sample->ip);
+	len = dso__data_read_offset(al->map->dso, machine,
+				    offset, buffer, MAXINSN);
+	if (len <= 0)
+		return;
+
+	printf("\t%s", disas_inst(&x, sample->ip, buffer, len, NULL));
 }
 
 static void print_sample_start(struct perf_sample *sample,
@@ -631,8 +671,12 @@ static void print_sample_callindent(struct perf_sample *sample,
 		printf("%*s", spacing - len, "");
 }
 
-static void print_insn(struct perf_sample *sample,
-		       struct perf_event_attr *attr)
+static void print_insn(union perf_event *event,
+		       struct perf_sample *sample,
+		       struct perf_event_attr *attr,
+		       struct thread *thread,
+		       struct addr_location *al,
+		       struct machine *machine)
 {
 	if (PRINT_FIELD(INSNLEN))
 		printf(" ilen: %d", sample->insn_len);
@@ -643,12 +687,16 @@ static void print_insn(struct perf_sample *sample,
 		for (i = 0; i < sample->insn_len; i++)
 			printf(" %02x", (unsigned char)sample->insn[i]);
 	}
+	if (PRINT_FIELD(ASM))
+		print_sample_asm(event, sample, thread, al, machine);
 }
 
-static void print_sample_bts(struct perf_sample *sample,
+static void print_sample_bts(union perf_event *event,
+			     struct perf_sample *sample,
 			     struct perf_evsel *evsel,
 			     struct thread *thread,
-			     struct addr_location *al)
+			     struct addr_location *al,
+			     struct machine *machine)
 {
 	struct perf_event_attr *attr = &evsel->attr;
 	bool print_srcline_last = false;
@@ -689,7 +737,7 @@ static void print_sample_bts(struct perf_sample *sample,
 	if (print_srcline_last)
 		map__fprintf_srcline(al->map, al->addr, "\n  ", stdout);
 
-	print_insn(sample, attr);
+	print_insn(event, sample, attr, thread, al, machine);
 
 	printf("\n");
 }
@@ -871,7 +919,9 @@ static size_t data_src__printf(u64 data_src)
 
 static void process_event(struct perf_script *script,
 			  struct perf_sample *sample, struct perf_evsel *evsel,
-			  struct addr_location *al)
+			  struct addr_location *al,
+			  struct machine *machine,
+			  union perf_event *event)
 {
 	struct thread *thread = al->thread;
 	struct perf_event_attr *attr = &evsel->attr;
@@ -898,7 +948,7 @@ static void process_event(struct perf_script *script,
 		print_sample_flags(sample->flags);
 
 	if (is_bts_event(attr)) {
-		print_sample_bts(sample, evsel, thread, al);
+		print_sample_bts(event, sample, evsel, thread, al, machine);
 		return;
 	}
 
@@ -936,7 +986,7 @@ static void process_event(struct perf_script *script,
 
 	if (perf_evsel__is_bpf_output(evsel) && PRINT_FIELD(BPF_OUTPUT))
 		print_sample_bpf_output(sample);
-	print_insn(sample, attr);
+	print_insn(event, sample, attr, thread, al, machine);
 	printf("\n");
 }
 
@@ -1046,7 +1096,7 @@ static int process_sample_event(struct perf_tool *tool,
 	if (scripting_ops)
 		scripting_ops->process_event(event, sample, evsel, &al);
 	else
-		process_event(scr, sample, evsel, &al);
+		process_event(scr, sample, evsel, &al, machine, event);
 
 out_put:
 	addr_location__put(&al);
@@ -2152,7 +2202,7 @@ int cmd_script(int argc, const char **argv, const char *prefix __maybe_unused)
 		     "Valid types: hw,sw,trace,raw. "
 		     "Fields: comm,tid,pid,time,cpu,event,trace,ip,sym,dso,"
 		     "addr,symoff,period,iregs,brstack,brstacksym,flags,"
-		     "bpf-output,callindent,insn,insnlen", parse_output_fields),
+		     "bpf-output,callindent,insn,insnlen,asm", parse_output_fields),
 	OPT_BOOLEAN('a', "all-cpus", &system_wide,
 		    "system-wide collection from all CPUs"),
 	OPT_STRING('S', "symbols", &symbol_conf.sym_list_str, "symbol[,symbol...]",
