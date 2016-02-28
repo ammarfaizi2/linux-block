@@ -54,6 +54,8 @@
 #include <asm/traps.h>
 #include <asm/vm86.h>
 
+#include <xen/xen.h>
+
 /*
  * Known problems:
  *
@@ -236,6 +238,25 @@ static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus)
 	struct kernel_vm86_regs vm86regs;
 	struct pt_regs *regs = current_pt_regs();
 	unsigned long err = 0;
+
+	if (xen_pv_domain()) {
+		/*
+		 * If we're a Xen PV guest, we don't know whether we're in
+		 * real 32-bit mode or whether we're in compat mode.  In
+		 * compat mode, there is no v8086 support.  Instead Xen will
+		 * synthesize a #GP if we try to use EFLAGS.VM.  That doesn't
+		 * cause security issues, but it will make vm86 worse than
+		 * useless.
+		 *
+		 * Xen 4.3 and up don't support 32-bit hypervisors at all, and
+		 * v8086 mode has historically been very buggy in older Xen
+		 * versions.  So just disable it entirely.  This will cause
+		 * the more sensible v8086 users to switch to emulation rather
+		 * than failing outright on 64-bit hypervisors or possibly
+		 * failing more subtly on old 32-bit hypervisors.
+		 */
+		return -ENOSYS;
+	}
 
 	err = security_mmap_addr(0);
 	if (err) {
