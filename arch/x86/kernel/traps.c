@@ -40,6 +40,7 @@
 #include <linux/hardirq.h>
 #include <linux/atomic.h>
 
+#include <asm/hw_breakpoint.h>
 #include <asm/stacktrace.h>
 #include <asm/processor.h>
 #include <asm/debugreg.h>
@@ -822,6 +823,49 @@ static void handle_debug(struct pt_regs *regs, unsigned long dr6, bool user)
 		return;
 	}
 #endif
+
+	/*
+	 * Historically, we try to handle breakpoints/watchpoints only if
+	 * this is not a single-step trap.  Preserve that behavior for now.
+	 * This is based on an old comment that said:
+	 *
+	 *     If it's a single step, TRAP bits are random
+	 */
+	if ((dr6 & DR_TRAP_BITS) && !(dr6 & DR_STEP)) {
+		int i;
+		bool keep_going;
+
+		/*
+		 * Reset the DRn bits in the virtualized register value.
+		 * The ptrace trigger routine will add in whatever is needed.
+		 */
+		current->thread.debugreg6 &= ~DR_TRAP_BITS;
+
+		/* Handle all the breakpoints that were triggered */
+		for (i = 0; i < HBP_NUM; ++i) {
+			if (likely(!(dr6 & (DR_TRAP0 << i))))
+				continue;
+
+			/*
+			 * Reset the 'i'th TRAP bit in dr6 to denote
+			 * completion of exception handling
+			 */
+			dr6 &= ~(DR_TRAP0 << i);
+
+			hw_breakpoint_handle_single_event(i, regs);
+		}
+
+		/*
+		 * Further processing in do_debug() is needed for a) user-space
+		 * breakpoints (to generate signals) and b) when the system has
+		 * taken exception due to multiple causes
+		 */
+		keep_going = ((current->thread.debugreg6 & DR_TRAP_BITS) ||
+			      (dr6 & (~DR_TRAP_BITS)));
+
+		if (!keep_going)
+			goto out;
+	}
 
 	if (notify_die(DIE_DEBUG, "debug", regs, (long)&dr6, 0,
 		       SIGTRAP) == NOTIFY_STOP) {

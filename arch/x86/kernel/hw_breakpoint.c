@@ -541,83 +541,15 @@ out:
 
 /*
  * Handle debug exception notifications.
- *
- * Return value is either NOTIFY_STOP or NOTIFY_DONE as explained below.
- *
- * NOTIFY_DONE returned if one of the following conditions is true.
- * i) When the causative address is from user-space and the exception
- * is a valid one, i.e. not triggered as a result of lazy debug register
- * switching
- * ii) When there are more bits than trap<n> set in DR6 register (such
- * as BD, BS or BT) indicating that more than one debug condition is
- * met and requires some more action in do_debug().
- *
- * NOTIFY_STOP returned for all other cases
- *
- */
-static int hw_breakpoint_handler(struct die_args *args)
-{
-	int i, rc = NOTIFY_STOP;
-	unsigned long dr6;
-	unsigned long *dr6_p;
-
-	/* The DR6 value is pointed by args->err */
-	dr6_p = (unsigned long *)ERR_PTR(args->err);
-	dr6 = *dr6_p;
-
-	/* If it's a single step, TRAP bits are random */
-	if (dr6 & DR_STEP)
-		return NOTIFY_DONE;
-
-	/* Do an early return if no trap bits are set in DR6 */
-	if ((dr6 & DR_TRAP_BITS) == 0)
-		return NOTIFY_DONE;
-
-	/*
-	 * Assert that local interrupts are disabled
-	 * Reset the DRn bits in the virtualized register value.
-	 * The ptrace trigger routine will add in whatever is needed.
-	 */
-	current->thread.debugreg6 &= ~DR_TRAP_BITS;
-	get_cpu();
-
-	/* Handle all the breakpoints that were triggered */
-	for (i = 0; i < HBP_NUM; ++i) {
-		if (likely(!(dr6 & (DR_TRAP0 << i))))
-			continue;
-
-		/*
-		 * Reset the 'i'th TRAP bit in dr6 to denote completion of
-		 * exception handling
-		 */
-		(*dr6_p) &= ~(DR_TRAP0 << i);
-
-		hw_breakpoint_handle_single_event(i, args->regs);
-	}
-	/*
-	 * Further processing in do_debug() is needed for a) user-space
-	 * breakpoints (to generate signals) and b) when the system has
-	 * taken exception due to multiple causes
-	 */
-	if ((current->thread.debugreg6 & DR_TRAP_BITS) ||
-	    (dr6 & (~DR_TRAP_BITS)))
-		rc = NOTIFY_DONE;
-
-	put_cpu();
-
-	return rc;
-}
-
-/*
- * Handle debug exception notifications.
  */
 int hw_breakpoint_exceptions_notify(
 		struct notifier_block *unused, unsigned long val, void *data)
 {
-	if (val != DIE_DEBUG)
-		return NOTIFY_DONE;
-
-	return hw_breakpoint_handler(data);
+	/*
+	 * Unused.  We can delete this once the core code stops requiring
+	 * that this function exist.
+	 */
+	return NOTIFY_DONE;
 }
 
 void hw_breakpoint_pmu_read(struct perf_event *bp)
