@@ -691,11 +691,8 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 		goto exit;
 #endif
 
-	/*
-	 * Historically, we try to handle breakpoints/watchpoints only if
-	 * this is not a single-step trap.  Preserve that behavior for now.
-	 */
-	if ((dr6 & DR_TRAP_BITS) && !(dr6 & DR_STEP)) {
+	/* Handle breakpoint and watchpoint events. */
+	if (dr6 & DR_TRAP_BITS) {
 		int i;
 		bool keep_going;
 		unsigned long dr7;
