@@ -84,6 +84,9 @@ include ../scripts/utilities.mak
 # Define NO_SDT if you do not want to define SDT event in perf tools,
 # note that it doesn't disable SDT scanning support.
 #
+# Define XED=1 to build WITH the XED disassembler for perf script
+# Can also set XED_DIR=/path to set XED directory.
+#
 # Define FEATURES_DUMP to provide features detection dump file
 # and bypass the feature detection
 #

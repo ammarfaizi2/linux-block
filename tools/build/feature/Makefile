@@ -48,7 +48,8 @@ FILES=                                          \
          test-get_cpuid.bin                     \
          test-sdt.bin                           \
          test-cxx.bin                           \
-         test-jvmti.bin
+         test-jvmti.bin				\
+         test-xed.bin
 
 FILES := $(addprefix $(OUTPUT),$(FILES))
 
@@ -122,6 +123,9 @@ $(OUTPUT)test-numa_num_possible_cpus.bin:
 
 $(OUTPUT)test-libunwind.bin:
 	$(BUILD) -lelf
+
+$(OUTPUT)test-xed.bin:
+	$(BUILD) -lxed
 
 $(OUTPUT)test-libunwind-debug-frame.bin:
 	$(BUILD) -lelf

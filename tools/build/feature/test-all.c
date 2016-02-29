@@ -129,6 +129,19 @@
 #undef main
 #endif
 
+#if 0
+/*
+ * Disable xed check for test-all, because it is not available
+ * in most distributions. Will reenable when it becomes generally
+ * available in major distros.
+ */
+#define main main_test_xed
+#  include "test-xed.c"
+#endif
+#else
+#define main_test_xed while(0)
+#endif
+
 #define main main_test_lzma
 # include "test-lzma.c"
 #undef main
@@ -183,6 +196,7 @@ int main(int argc, char *argv[])
 	main_test_bpf();
 	main_test_libcrypto();
 	main_test_sdt();
+	main_test_xed();
 
 	return 0;
 }
