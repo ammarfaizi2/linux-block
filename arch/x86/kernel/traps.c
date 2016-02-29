@@ -115,7 +115,7 @@ void ist_enter(struct pt_regs *regs)
 	 * on x86_64 and entered from user mode, in which case we're
 	 * still atomic unless ist_begin_non_atomic is called.
 	 */
-	preempt_count_add(HARDIRQ_OFFSET);
+	preempt_count_inc();
 
 	/* This code is a bit fragile.  Test it. */
 	RCU_LOCKDEP_WARN(!rcu_is_watching(), "ist_enter didn't work");
@@ -123,7 +123,7 @@ void ist_enter(struct pt_regs *regs)
 
 void ist_exit(struct pt_regs *regs)
 {
-	preempt_count_sub(HARDIRQ_OFFSET);
+	preempt_count_dec();
 
 	if (!user_mode(regs))
 		rcu_nmi_exit();
@@ -154,7 +154,7 @@ void ist_begin_non_atomic(struct pt_regs *regs)
 	BUG_ON((unsigned long)(current_top_of_stack() -
 			       current_stack_pointer()) >= THREAD_SIZE);
 
-	preempt_count_sub(HARDIRQ_OFFSET);
+	preempt_count_dec();
 }
 
 /**
@@ -164,7 +164,7 @@ void ist_begin_non_atomic(struct pt_regs *regs)
  */
 void ist_end_non_atomic(void)
 {
-	preempt_count_add(HARDIRQ_OFFSET);
+	preempt_count_inc();
 }
 
 static nokprobe_inline int
