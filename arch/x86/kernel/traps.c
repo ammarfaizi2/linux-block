@@ -757,17 +757,38 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 		goto disable_irqs_exit;
 	}
 
-	if (WARN_ON_ONCE((dr6 & DR_STEP) && !user_mode(regs))) {
+	/*
+	 * If the exception came from kernel mode and we don't know why,
+	 * OOPS.  Do it carefully because the usual do_exit on OOPS is
+	 * counterproductive here (we're on an IST stack, so do_exit
+	 * is dangerous, and killing the task is pointless since the
+	 * problem is a debug register misconfiguration, not a synchronous
+	 * task-specific error.
+	 */
+	if (dr6 && !user_mode(regs)) {
+		unsigned long flags;
+
+		/* First clear DR7 to give us a prayer of surviving. */
+		set_debugreg(0, 7);
+
+		flags = oops_begin();
+		report_bug(regs->ip, regs);
+		if (__die("unhandled debug exception", regs, 0))
+			;	/* A die handler asks us not to crash. */
+		oops_end(flags, regs, 0);
+
+		if (panic_on_oops)
+			panic("Unhandled kernel debug exception");
+
 		/*
-		 * Historical junk that used to handle SYSENTER single-stepping.
-		 * This should be unreachable now.  If we survive for a while
-		 * without anyone hitting this warning, we'll turn this into
-		 * an oops.
+		 * Do our best to clear the error and continue: turn off
+		 * debugging and single-stepping and set RF.
 		 */
-		tsk->thread.debugreg6 &= ~DR_STEP;
-		set_tsk_thread_flag(tsk, TIF_SINGLESTEP);
 		regs->flags &= ~X86_EFLAGS_TF;
+		regs->flags |= X86_EFLAGS_RF;
+		goto disable_irqs_exit;
 	}
+
 	si_code = get_si_code(tsk->thread.debugreg6);
 	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
 		send_sigtrap(tsk, regs, error_code, si_code);
