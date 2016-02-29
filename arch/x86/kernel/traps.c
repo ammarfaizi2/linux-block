@@ -46,6 +46,7 @@
 #include <linux/edac.h>
 #endif
 
+#include <asm/hw_breakpoint.h>
 #include <asm/kmemcheck.h>
 #include <asm/stacktrace.h>
 #include <asm/processor.h>
@@ -689,6 +690,55 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 	if (kprobe_debug_handler(regs))
 		goto exit;
 #endif
+
+	/*
+	 * Historically, we try to handle breakpoints/watchpoints only if
+	 * this is not a single-step trap.  Preserve that behavior for now.
+	 */
+	if ((dr6 & DR_TRAP_BITS) && !(dr6 & DR_STEP)) {
+		int i;
+		bool keep_going;
+		unsigned long dr7;
+
+		get_debugreg(dr7, 7);
+		/* Disable breakpoints during exception handling */
+		set_debugreg(0UL, 7);
+		/*
+		 * Assert that local interrupts are disabled
+		 * Reset the DRn bits in the virtualized register value.
+		 * The ptrace trigger routine will add in whatever is needed.
+		 */
+		current->thread.debugreg6 &= ~DR_TRAP_BITS;
+		get_cpu();
+
+		/* Handle all the breakpoints that were triggered */
+		for (i = 0; i < HBP_NUM; ++i) {
+			if (likely(!(dr6 & (DR_TRAP0 << i))))
+				continue;
+
+			/*
+			 * Reset the 'i'th TRAP bit in dr6 to denote
+			 * completion of exception handling
+			 */
+			dr6 &= ~(DR_TRAP0 << i);
+
+			hw_breakpoint_handle_single_event(i, regs);
+		}
+
+		/*
+		 * Further processing in do_debug() is needed for a) user-space
+		 * breakpoints (to generate signals) and b) when the system has
+		 * taken exception due to multiple causes
+		 */
+		keep_going = ((current->thread.debugreg6 & DR_TRAP_BITS) ||
+			      (dr6 & (~DR_TRAP_BITS)));
+
+		set_debugreg(dr7, 7);
+		put_cpu();
+
+		if (!keep_going)
+			goto exit;
+	}
 
 	if (notify_die(DIE_DEBUG, "debug", regs, (long)&dr6, error_code,
 							SIGTRAP) == NOTIFY_STOP)
