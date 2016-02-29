@@ -77,4 +77,6 @@ extern int arch_bp_generic_fields(int x86_len, int x86_type,
 
 extern struct pmu perf_ops_bp;
 
+extern void hw_breakpoint_handle_single_event(int i, struct pt_regs *regs);
+
 #endif	/* _I386_HW_BREAKPOINT_H */

@@ -505,6 +505,40 @@ void hw_breakpoint_restore(void)
 }
 EXPORT_SYMBOL_GPL(hw_breakpoint_restore);
 
+void hw_breakpoint_handle_single_event(int i, struct pt_regs *regs)
+{
+	struct perf_event *bp;
+
+	/*
+	 * The counter may be concurrently released but that can only
+	 * occur from a call_rcu() path. We can then safely fetch
+	 * the breakpoint, use its callback, touch its counter
+	 * while we are in an rcu_read_lock() path.
+	 */
+	rcu_read_lock();
+
+	bp = this_cpu_read(bp_per_reg[i]);
+
+	/*
+	 * bp can be NULL due to lazy debug register switching
+	 * or due to concurrent perf counter removing.
+	 */
+	if (!bp)
+		goto out;
+
+	perf_bp_event(bp, regs);
+
+	/*
+	 * Set up resume flag to avoid breakpoint recursion when
+	 * returning back to origin.
+	 */
+	if (bp->hw.info.type == X86_BREAKPOINT_EXECUTE)
+		regs->flags |= X86_EFLAGS_RF;
+
+out:
+	rcu_read_unlock();
+}
+
 /*
  * Handle debug exception notifications.
  *
@@ -523,8 +557,7 @@ EXPORT_SYMBOL_GPL(hw_breakpoint_restore);
  */
 static int hw_breakpoint_handler(struct die_args *args)
 {
-	int i, cpu, rc = NOTIFY_STOP;
-	struct perf_event *bp;
+	int i, rc = NOTIFY_STOP;
 	unsigned long dr6;
 	unsigned long *dr6_p;
 
@@ -546,7 +579,7 @@ static int hw_breakpoint_handler(struct die_args *args)
 	 * The ptrace trigger routine will add in whatever is needed.
 	 */
 	current->thread.debugreg6 &= ~DR_TRAP_BITS;
-	cpu = get_cpu();
+	get_cpu();
 
 	/* Handle all the breakpoints that were triggered */
 	for (i = 0; i < HBP_NUM; ++i) {
@@ -554,38 +587,12 @@ static int hw_breakpoint_handler(struct die_args *args)
 			continue;
 
 		/*
-		 * The counter may be concurrently released but that can only
-		 * occur from a call_rcu() path. We can then safely fetch
-		 * the breakpoint, use its callback, touch its counter
-		 * while we are in an rcu_read_lock() path.
-		 */
-		rcu_read_lock();
-
-		bp = per_cpu(bp_per_reg[i], cpu);
-		/*
 		 * Reset the 'i'th TRAP bit in dr6 to denote completion of
 		 * exception handling
 		 */
 		(*dr6_p) &= ~(DR_TRAP0 << i);
-		/*
-		 * bp can be NULL due to lazy debug register switching
-		 * or due to concurrent perf counter removing.
-		 */
-		if (!bp) {
-			rcu_read_unlock();
-			break;
-		}
 
-		perf_bp_event(bp, args->regs);
-
-		/*
-		 * Set up resume flag to avoid breakpoint recursion when
-		 * returning back to origin.
-		 */
-		if (bp->hw.info.type == X86_BREAKPOINT_EXECUTE)
-			args->regs->flags |= X86_EFLAGS_RF;
-
-		rcu_read_unlock();
+		hw_breakpoint_handle_single_event(i, args->regs);
 	}
 	/*
 	 * Further processing in do_debug() is needed for a) user-space
