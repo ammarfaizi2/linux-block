@@ -281,6 +281,7 @@ alloc_new:
 				min_t(int, nr_pages, BIO_MAX_PAGES), gfp);
 		if (bio == NULL)
 			goto confused;
+		bio_set_streamid(bio, inode_streamid(inode));
 	}
 
 	length = first_hole << blkbits;
