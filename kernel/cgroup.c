@@ -4876,6 +4876,9 @@ static void offline_css(struct cgroup_subsys_state *css)
 	if (!(css->flags & CSS_ONLINE))
 		return;
 
+	if (ss->css_reset)
+		ss->css_reset(css);
+
 	if (ss->css_offline)
 		ss->css_offline(css);
 
