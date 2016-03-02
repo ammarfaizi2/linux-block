@@ -584,6 +584,7 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
 	bio->bi_rw = bio_src->bi_rw;
 	bio->bi_iter = bio_src->bi_iter;
 	bio->bi_io_vec = bio_src->bi_io_vec;
+	bio_set_streamid(bio, bio_get_streamid(bio_src));
 }
 EXPORT_SYMBOL(__bio_clone_fast);
 
@@ -689,6 +690,7 @@ integrity_clone:
 		}
 	}
 
+	bio_set_streamid(bio, bio_get_streamid(bio_src));
 	return bio;
 }
 EXPORT_SYMBOL(bio_clone_bioset);
@@ -2037,6 +2039,9 @@ static void __init biovec_init_slabs(void)
 
 static int __init init_bio(void)
 {
+	BUILD_BUG_ON(BIO_FLAG_LAST > ((8 * sizeof(unsigned int)) -
+			BIO_POOL_BITS - BIO_STREAM_BITS));
+
 	bio_slab_max = 2;
 	bio_slab_nr = 0;
 	bio_slabs = kzalloc(bio_slab_max * sizeof(struct bio_slab), GFP_KERNEL);

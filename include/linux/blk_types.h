@@ -112,21 +112,23 @@ struct bio {
 /*
  * bio flags
  */
-#define BIO_SEG_VALID	1	/* bi_phys_segments valid */
-#define BIO_CLONED	2	/* doesn't own data */
-#define BIO_BOUNCED	3	/* bio is a bounce bio */
-#define BIO_USER_MAPPED 4	/* contains user pages */
-#define BIO_NULL_MAPPED 5	/* contains invalid user pages */
-#define BIO_QUIET	6	/* Make BIO Quiet */
-#define BIO_CHAIN	7	/* chained bio, ->bi_remaining in effect */
-#define BIO_REFFED	8	/* bio has elevated ->bi_cnt */
-
-/*
- * Flags starting here get preserved by bio_reset() - this includes
- * BIO_POOL_IDX()
- */
-#define BIO_RESET_BITS	13
-#define BIO_OWNS_VEC	13	/* bio_free() should free bvec */
+enum {
+	BIO_SEG_VALID	= 0,	/* bi_phys_segments valid */
+	BIO_CLONED,		/* doesn't own data */
+	BIO_BOUNCED,		/* bio is a bounce bio */
+	BIO_USER_MAPPED,	/* contains user pages */
+	BIO_NULL_MAPPED,	/* contains invalid user pages */
+	BIO_QUIET,		/* Mnake BIO Quiet */
+	BIO_CHAIN,		/* chained bio, ->bi_remaining in effect */
+	BIO_REFFED,		/* bio has elevated ->bi_cnt */
+	BIO_OWNS_VEC,		/* bio_free() should free bvec */
+	BIO_FLAG_LAST,		/* end of bits */
+	/*
+	 * Flags starting here get preserved by bio_reset() - this includes
+	 * BIO_POOL_IDX()
+	 */
+	BIO_RESET_BITS = BIO_FLAG_LAST,
+};
 
 /*
  * top 4 bits of bio flags indicate the pool this bio came from
@@ -134,8 +136,34 @@ struct bio {
 #define BIO_POOL_BITS		(4)
 #define BIO_POOL_NONE		((1UL << BIO_POOL_BITS) - 1)
 #define BIO_POOL_OFFSET		(32 - BIO_POOL_BITS)
-#define BIO_POOL_MASK		(1UL << BIO_POOL_OFFSET)
 #define BIO_POOL_IDX(bio)	((bio)->bi_flags >> BIO_POOL_OFFSET)
+
+/*
+ * after the pool bits, next 16 bits are for the stream id
+ */
+#define BIO_STREAM_BITS		(16)
+#define BIO_STREAM_OFFSET	(BIO_POOL_OFFSET - BIO_STREAM_BITS)
+#define BIO_STREAM_MASK		((1 << BIO_STREAM_BITS) - 1)
+
+static inline unsigned long streamid_to_flags(unsigned int id)
+{
+	return (unsigned long) (id & BIO_STREAM_MASK) << BIO_STREAM_OFFSET;
+}
+
+static inline void bio_set_streamid(struct bio *bio, unsigned int id)
+{
+	bio->bi_flags |= streamid_to_flags(id);
+}
+
+static inline unsigned int bio_get_streamid(struct bio *bio)
+{
+	return (bio->bi_flags >> BIO_STREAM_OFFSET) & BIO_STREAM_MASK;
+}
+
+static inline bool bio_streamid_valid(struct bio *bio)
+{
+	return bio_get_streamid(bio) != 0;
+}
 
 #endif /* CONFIG_BLOCK */
 

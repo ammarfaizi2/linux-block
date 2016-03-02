@@ -2071,6 +2071,10 @@ blk_qc_t generic_make_request(struct bio *bio)
 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
 		if (likely(blk_queue_enter(q, false) == 0)) {
+			if (bio_streamid_valid(bio))
+				blk_add_trace_msg(q, "StreamID=%u",
+							bio_get_streamid(bio));
+
 			ret = q->make_request_fn(q, bio);
 
 			blk_queue_exit(q);
