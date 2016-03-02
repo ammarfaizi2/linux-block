@@ -1007,7 +1007,7 @@ EXPORT_SYMBOL(ida_get_new_above);
  * @ida:	ida handle
  * @id:		ID to free
  */
-void ida_remove(struct ida *ida, int id)
+int __ida_remove(struct ida *ida, int id)
 {
 	struct idr_layer *p = ida->idr.top;
 	int shift = (ida->idr.layers - 1) * IDR_BITS;
@@ -1017,7 +1017,7 @@ void ida_remove(struct ida *ida, int id)
 	struct ida_bitmap *bitmap;
 
 	if (idr_id > idr_max(ida->idr.layers))
-		goto err;
+		return -EINVAL;
 
 	/* clear full bits while looking up the leaf idr_layer */
 	while ((shift > 0) && p) {
@@ -1028,14 +1028,14 @@ void ida_remove(struct ida *ida, int id)
 	}
 
 	if (p == NULL)
-		goto err;
+		return -EINVAL;
 
 	n = idr_id & IDR_MASK;
 	__clear_bit(n, p->bitmap);
 
 	bitmap = (void *)p->ary[n];
 	if (!bitmap || !test_bit(offset, bitmap->bitmap))
-		goto err;
+		return -EINVAL;
 
 	/* update bitmap and remove it if empty */
 	__clear_bit(offset, bitmap->bitmap);
@@ -1045,10 +1045,19 @@ void ida_remove(struct ida *ida, int id)
 		free_bitmap(ida, bitmap);
 	}
 
-	return;
+	return 0;
+}
+EXPORT_SYMBOL(__ida_remove);
 
- err:
-	WARN(1, "ida_remove called for id=%d which is not allocated.\n", id);
+/**
+ * ida_remove - remove the given ID
+ * @ida:	ida handle
+ * @id:		ID to free
+ */
+void ida_remove(struct ida *ida, int id)
+{
+	if (__ida_remove(ida, id))
+		WARN(1, "ida_remove called for id=%d which is not allocated.\n", id);
 }
 EXPORT_SYMBOL(ida_remove);
 
@@ -1120,14 +1129,17 @@ EXPORT_SYMBOL(ida_simple_get);
  * @ida: the (initialized) ida.
  * @id: the id returned by ida_simple_get.
  */
-void ida_simple_remove(struct ida *ida, unsigned int id)
+int ida_simple_remove(struct ida *ida, unsigned int id)
 {
 	unsigned long flags;
+	int ret;
 
 	BUG_ON((int)id < 0);
 	spin_lock_irqsave(&simple_ida_lock, flags);
-	ida_remove(ida, id);
+	ret = __ida_remove(ida, id);
 	spin_unlock_irqrestore(&simple_ida_lock, flags);
+
+	return ret;
 }
 EXPORT_SYMBOL(ida_simple_remove);
 
