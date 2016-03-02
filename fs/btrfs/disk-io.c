@@ -1748,6 +1748,72 @@ static int btrfs_congested_fn(void *congested_data, int bdi_bits)
 	return ret;
 }
 
+static int btrfs_streamid_close(struct btrfs_fs_info *info, int id)
+{
+	struct btrfs_device *device;
+
+	mutex_lock(&info->fs_devices->device_list_mutex);
+	list_for_each_entry_rcu(device, &info->fs_devices->devices, dev_list) {
+		struct backing_dev_info *bdi;
+
+		if (!device->bdev)
+			continue;
+
+		bdi = blk_get_backing_dev_info(device->bdev);
+		bdi_streamid_close(bdi, id);
+	}
+	mutex_unlock(&info->fs_devices->device_list_mutex);
+
+	return 0;
+}
+
+static int btrfs_streamid_open(struct btrfs_fs_info *info, int id)
+{
+	struct btrfs_device *device;
+	int ret = -EINVAL;
+
+	mutex_lock(&info->fs_devices->device_list_mutex);
+	list_for_each_entry_rcu(device, &info->fs_devices->devices, dev_list) {
+		struct backing_dev_info *bdi;
+
+		if (!device->bdev)
+			continue;
+
+		bdi = blk_get_backing_dev_info(device->bdev);
+		ret = bdi_streamid_open(bdi, id);
+		if (ret < 0)
+			break;
+	}
+	mutex_unlock(&info->fs_devices->device_list_mutex);
+
+	return ret;
+}
+
+static int btrfs_streamid_open_fn(void *data, unsigned int id)
+{
+	struct btrfs_fs_info *info = (struct btrfs_fs_info *) data;
+	int ret = 0;
+
+	/*
+	 * > 0 is success, return it. If we fail, fall through to
+	 * freeing the ID, if we did set it on a device.
+	 */
+	ret = btrfs_streamid_open(info, id);
+	if (ret > 0)
+		return ret;
+
+	btrfs_streamid_close(info, id);
+	return ret;
+}
+
+static int btrfs_streamid_close_fn(void *data, unsigned int id)
+{
+	struct btrfs_fs_info *info = (struct btrfs_fs_info *) data;
+
+	btrfs_streamid_close(info, id);
+	return 0;
+}
+
 static int setup_bdi(struct btrfs_fs_info *info, struct backing_dev_info *bdi)
 {
 	int err;
@@ -1760,6 +1826,9 @@ static int setup_bdi(struct btrfs_fs_info *info, struct backing_dev_info *bdi)
 	bdi->congested_fn	= btrfs_congested_fn;
 	bdi->congested_data	= info;
 	bdi->capabilities |= BDI_CAP_CGROUP_WRITEBACK;
+	bdi->streamid_open	= btrfs_streamid_open_fn;
+	bdi->streamid_close	= btrfs_streamid_close_fn;
+	bdi->streamid_data	= info;
 	return 0;
 }
 
