@@ -18,6 +18,7 @@
 #include <linux/compat.h>
 #include <linux/mount.h>
 #include <linux/fs.h>
+#include <linux/streamid.h>
 #include "internal.h"
 
 #include <asm/uaccess.h>
@@ -1668,3 +1669,65 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL(vfs_dedupe_file_range);
+
+SYSCALL_DEFINE4(streamid, int, fd, int, cmd,
+		unsigned int, flags, int, streamid)
+{
+	struct inode *inode;
+	ssize_t ret = 0;
+	struct fd f;
+
+	if (cmd != STREAMID_OPEN && cmd != STREAMID_CLOSE &&
+	    cmd != STREAMID_GET)
+		return -EINVAL;
+	if (flags & ~(STREAMID_F_INODE | STREAMID_F_FILE))
+		return -EINVAL;
+
+	f = fdget(fd);
+	if (!f.file)
+		return -EBADF;
+
+	inode = file_inode(f.file);
+	if (S_ISFIFO(inode->i_mode)) {
+		ret = -ESPIPE;
+		goto done;
+	}
+
+	if (cmd == STREAMID_OPEN) {
+		if (flags & STREAMID_F_FILE) {
+			if (f.file->f_streamid) {
+				ret = -EBUSY;
+				goto done;
+			}
+			f.file->f_streamid = ret;
+		}
+		if (flags & STREAMID_F_INODE) {
+			spin_lock(&inode->i_lock);
+			if (inode_streamid(inode))
+				ret = -EBUSY;
+			else
+				inode->i_streamid = ret;
+			spin_unlock(&inode->i_lock);
+		}
+	} else if (cmd == STREAMID_CLOSE) {
+		if (f.file->f_streamid == streamid)
+			f.file->f_streamid = 0;
+		if (inode_streamid(inode) == streamid) {
+			spin_lock(&inode->i_lock);
+			inode->i_streamid = 0;
+			spin_unlock(&inode->i_lock);
+		}
+	} else if (cmd == STREAMID_GET) {
+		ret = 0;
+		if (flags & STREAMID_F_FILE)
+			ret = f.file->f_streamid;
+		if (!ret && (flags & STREAMID_F_INODE))
+			ret = inode_streamid(inode);
+		if (!(flags & (STREAMID_F_FILE | STREAMID_F_INODE)))
+			ret = file_streamid(f.file);
+	}
+
+done:
+	fdput(f);
+	return ret;
+}
