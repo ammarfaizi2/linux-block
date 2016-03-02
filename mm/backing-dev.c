@@ -10,6 +10,7 @@
 #include <linux/module.h>
 #include <linux/writeback.h>
 #include <linux/device.h>
+#include <linux/streamid.h>
 #include <trace/events/writeback.h>
 
 static atomic_long_t bdi_seq = ATOMIC_LONG_INIT(0);
@@ -809,6 +810,7 @@ int bdi_register(struct backing_dev_info *bdi, struct device *parent,
 
 	bdi_debug_register(bdi, dev_name(dev));
 	set_bit(WB_registered, &bdi->wb.state);
+	ida_init(&bdi->stream_ids);
 
 	spin_lock_bh(&bdi_lock);
 	list_add_tail_rcu(&bdi->bdi_list, &bdi_list);
@@ -843,6 +845,7 @@ void bdi_unregister(struct backing_dev_info *bdi)
 	bdi_remove_from_list(bdi);
 	wb_shutdown(&bdi->wb);
 	cgwb_bdi_destroy(bdi);
+	ida_destroy(&bdi->stream_ids);
 
 	if (bdi->dev) {
 		bdi_debug_unregister(bdi);
@@ -1013,6 +1016,56 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL(wait_iff_congested);
+
+/*
+ * Get a new stream ID for backing device 'bdi'. If 'id' is zero, then get
+ * any new ID. If 'id' is non-zero, attempt to get that specific ID. If
+ * the bdi has a streamid_fn assigned, use that.
+ */
+int bdi_streamid_open(struct backing_dev_info *bdi, unsigned int id)
+{
+	if (bdi->streamid_open)
+		return bdi->streamid_open(bdi->streamid_data, id);
+
+	if (id)
+		return ida_simple_get(&bdi->stream_ids, id, id + 1, GFP_NOIO);
+
+	return ida_simple_get(&bdi->stream_ids, 1, STREAMID_MAX, GFP_NOIO);
+}
+EXPORT_SYMBOL(bdi_streamid_open);
+
+/*
+ * Close stream ID 'id' on bdi 'bdi'.
+ */
+int bdi_streamid_close(struct backing_dev_info *bdi, unsigned int id)
+{
+	if (bdi->streamid_close)
+		return bdi->streamid_close(bdi->streamid_data, id);
+
+	/*
+	 * If we don't have a specific open, free the ID we allocated
+	 */
+	if (!bdi->streamid_open)
+		return ida_simple_remove(&bdi->stream_ids, id);
+
+	return 0;
+}
+EXPORT_SYMBOL(bdi_streamid_close);
+
+ssize_t bdi_streamid(struct inode *inode, int cmd, int streamid)
+{
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
+
+	if (bdi == &noop_backing_dev_info)
+		return -ENXIO;
+
+	if (cmd == STREAMID_OPEN)
+		return bdi_streamid_open(bdi, streamid);
+	else if (cmd == STREAMID_CLOSE)
+		return bdi_streamid_close(bdi, streamid);
+
+	return -EINVAL;
+}
 
 int pdflush_proc_obsolete(struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp, loff_t *ppos)

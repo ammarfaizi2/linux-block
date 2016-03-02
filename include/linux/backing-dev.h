@@ -514,4 +514,7 @@ static inline int bdi_rw_congested(struct backing_dev_info *bdi)
 				  (1 << WB_async_congested));
 }
 
+int bdi_streamid_open(struct backing_dev_info *bdi, unsigned int id);
+int bdi_streamid_close(struct backing_dev_info *bdi, unsigned int id);
+
 #endif	/* _LINUX_BACKING_DEV_H */

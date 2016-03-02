@@ -1674,13 +1674,16 @@ SYSCALL_DEFINE4(streamid, int, fd, int, cmd,
 		unsigned int, flags, int, streamid)
 {
 	struct inode *inode;
-	ssize_t ret = 0;
+	int alloc_id;
+	ssize_t ret;
 	struct fd f;
 
 	if (cmd != STREAMID_OPEN && cmd != STREAMID_CLOSE &&
 	    cmd != STREAMID_GET)
 		return -EINVAL;
 	if (flags & ~(STREAMID_F_INODE | STREAMID_F_FILE))
+		return -EINVAL;
+	if (streamid > STREAMID_MAX)
 		return -EINVAL;
 
 	f = fdget(fd);
@@ -1693,11 +1696,26 @@ SYSCALL_DEFINE4(streamid, int, fd, int, cmd,
 		goto done;
 	}
 
+	if (cmd == STREAMID_GET) {
+		ret = 0;
+		if (flags & STREAMID_F_FILE)
+			ret = f.file->f_streamid;
+		if (!ret && (flags & STREAMID_F_INODE))
+			ret = inode_streamid(inode);
+		if (!(flags & (STREAMID_F_FILE | STREAMID_F_INODE)))
+			ret = file_streamid(f.file);
+		goto done;
+	}
+
+	alloc_id = ret = bdi_streamid(f.file->f_mapping->host, cmd, streamid);
+	if (ret < 0)
+		goto done;
+
 	if (cmd == STREAMID_OPEN) {
 		if (flags & STREAMID_F_FILE) {
 			if (f.file->f_streamid) {
 				ret = -EBUSY;
-				goto done;
+				goto error_close;
 			}
 			f.file->f_streamid = ret;
 		}
@@ -1708,6 +1726,8 @@ SYSCALL_DEFINE4(streamid, int, fd, int, cmd,
 			else
 				inode->i_streamid = ret;
 			spin_unlock(&inode->i_lock);
+			if (ret < 0)
+				goto error_close;
 		}
 	} else if (cmd == STREAMID_CLOSE) {
 		if (f.file->f_streamid == streamid)
@@ -1717,17 +1737,12 @@ SYSCALL_DEFINE4(streamid, int, fd, int, cmd,
 			inode->i_streamid = 0;
 			spin_unlock(&inode->i_lock);
 		}
-	} else if (cmd == STREAMID_GET) {
-		ret = 0;
-		if (flags & STREAMID_F_FILE)
-			ret = f.file->f_streamid;
-		if (!ret && (flags & STREAMID_F_INODE))
-			ret = inode_streamid(inode);
-		if (!(flags & (STREAMID_F_FILE | STREAMID_F_INODE)))
-			ret = file_streamid(f.file);
 	}
 
 done:
 	fdput(f);
 	return ret;
+error_close:
+	bdi_streamid(f.file->f_mapping->host, STREAMID_CLOSE, alloc_id);
+	goto done;
 }

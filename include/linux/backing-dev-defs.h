@@ -10,6 +10,7 @@
 #include <linux/flex_proportions.h>
 #include <linux/timer.h>
 #include <linux/workqueue.h>
+#include <linux/idr.h>
 
 struct page;
 struct device;
@@ -30,6 +31,7 @@ enum wb_congested_state {
 };
 
 typedef int (congested_fn)(void *, int);
+typedef int (streamid_fn)(void *, unsigned int);
 
 enum wb_stat_item {
 	WB_RECLAIMABLE,
@@ -170,6 +172,11 @@ struct backing_dev_info {
 	struct dentry *debug_dir;
 	struct dentry *debug_stats;
 #endif
+
+	struct ida stream_ids;
+	streamid_fn *streamid_open;
+	streamid_fn *streamid_close;
+	void *streamid_data;
 };
 
 enum {
