@@ -660,6 +660,7 @@ struct inode {
 #ifdef CONFIG_IMA
 	atomic_t		i_readcount; /* struct files open RO */
 #endif
+	unsigned int		i_streamid;
 	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
 	struct file_lock_context	*i_flctx;
 	struct address_space	i_data;
@@ -680,6 +681,14 @@ struct inode {
 
 	void			*i_private; /* fs or device private pointer */
 };
+
+static inline unsigned int inode_streamid(struct inode *inode)
+{
+	if (inode)
+		return inode->i_streamid;
+
+	return 0;
+}
 
 static inline int inode_unhashed(struct inode *inode)
 {
@@ -877,6 +886,7 @@ struct file {
 	 * Must not be taken from IRQ context.
 	 */
 	spinlock_t		f_lock;
+	unsigned int		f_streamid;
 	atomic_long_t		f_count;
 	unsigned int 		f_flags;
 	fmode_t			f_mode;
@@ -907,6 +917,18 @@ struct file_handle {
 	/* file identifier */
 	unsigned char f_handle[0];
 };
+
+/*
+ * If the file doesn't have a stream ID set, return the inode stream ID
+ * in case that has been set.
+ */
+static inline unsigned int file_streamid(struct file *f)
+{
+	if (f->f_streamid)
+		return f->f_streamid;
+
+	return inode_streamid(f->f_inode);
+}
 
 static inline struct file *get_file(struct file *f)
 {
