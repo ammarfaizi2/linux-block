@@ -176,8 +176,10 @@ enum wmi_service {
 	WMI_SERVICE_AUX_CHAN_LOAD_INTF,
 	WMI_SERVICE_BSS_CHANNEL_INFO_64,
 	WMI_SERVICE_EXT_RES_CFG_SUPPORT,
-	WMI_SERVICE_MESH,
+	WMI_SERVICE_MESH_11S,
+	WMI_SERVICE_MESH_NON_11S,
 	WMI_SERVICE_PEER_STATS,
+	WMI_SERVICE_RESTRT_CHNL_SUPPORT,
 
 	/* keep last */
 	WMI_SERVICE_MAX,
@@ -296,7 +298,10 @@ enum wmi_10_4_service {
 	WMI_10_4_SERVICE_AUX_CHAN_LOAD_INTF,
 	WMI_10_4_SERVICE_BSS_CHANNEL_INFO_64,
 	WMI_10_4_SERVICE_EXT_RES_CFG_SUPPORT,
-	WMI_10_4_SERVICE_MESH,
+	WMI_10_4_SERVICE_MESH_NON_11S,
+	WMI_10_4_SERVICE_RESTRT_CHNL_SUPPORT,
+	WMI_10_4_SERVICE_PEER_STATS,
+	WMI_10_4_SERVICE_MESH_11S,
 };
 
 static inline char *wmi_service_name(int service_id)
@@ -387,8 +392,10 @@ static inline char *wmi_service_name(int service_id)
 	SVCSTR(WMI_SERVICE_AUX_CHAN_LOAD_INTF);
 	SVCSTR(WMI_SERVICE_BSS_CHANNEL_INFO_64);
 	SVCSTR(WMI_SERVICE_EXT_RES_CFG_SUPPORT);
-	SVCSTR(WMI_SERVICE_MESH);
+	SVCSTR(WMI_SERVICE_MESH_11S);
+	SVCSTR(WMI_SERVICE_MESH_NON_11S);
 	SVCSTR(WMI_SERVICE_PEER_STATS);
+	SVCSTR(WMI_SERVICE_RESTRT_CHNL_SUPPORT);
 	default:
 		return NULL;
 	}
@@ -463,7 +470,7 @@ static inline void wmi_10x_svc_map(const __le32 *in, unsigned long *out,
 	SVCMAP(WMI_10X_SERVICE_BSS_CHANNEL_INFO_64,
 	       WMI_SERVICE_BSS_CHANNEL_INFO_64, len);
 	SVCMAP(WMI_10X_SERVICE_MESH,
-	       WMI_SERVICE_MESH, len);
+	       WMI_SERVICE_MESH_11S, len);
 	SVCMAP(WMI_10X_SERVICE_EXT_RES_CFG_SUPPORT,
 	       WMI_SERVICE_EXT_RES_CFG_SUPPORT, len);
 	SVCMAP(WMI_10X_SERVICE_PEER_STATS,
@@ -628,8 +635,14 @@ static inline void wmi_10_4_svc_map(const __le32 *in, unsigned long *out,
 	       WMI_SERVICE_BSS_CHANNEL_INFO_64, len);
 	SVCMAP(WMI_10_4_SERVICE_EXT_RES_CFG_SUPPORT,
 	       WMI_SERVICE_EXT_RES_CFG_SUPPORT, len);
-	SVCMAP(WMI_10_4_SERVICE_MESH,
-	       WMI_SERVICE_MESH, len);
+	SVCMAP(WMI_10_4_SERVICE_MESH_NON_11S,
+	       WMI_SERVICE_MESH_NON_11S, len);
+	SVCMAP(WMI_10_4_SERVICE_RESTRT_CHNL_SUPPORT,
+	       WMI_SERVICE_RESTRT_CHNL_SUPPORT, len);
+	SVCMAP(WMI_10_4_SERVICE_PEER_STATS,
+	       WMI_SERVICE_PEER_STATS, len);
+	SVCMAP(WMI_10_4_SERVICE_MESH_11S,
+	       WMI_SERVICE_MESH_11S, len);
 }
 
 #undef SVCMAP
@@ -1805,7 +1818,6 @@ enum wmi_channel_change_cause {
 #define WMI_CHANNEL_CHANGE_CAUSE_CSA (1 << 13)
 
 #define WMI_MAX_SPATIAL_STREAM        3 /* default max ss */
-#define WMI_10_4_MAX_SPATIAL_STREAM   4
 
 /* HT Capabilities*/
 #define WMI_HT_CAP_ENABLED                0x0001   /* HT Enabled/ disabled */
@@ -4282,12 +4294,40 @@ enum wmi_vdev_type {
 };
 
 enum wmi_vdev_subtype {
-	WMI_VDEV_SUBTYPE_NONE       = 0,
-	WMI_VDEV_SUBTYPE_P2P_DEVICE = 1,
-	WMI_VDEV_SUBTYPE_P2P_CLIENT = 2,
-	WMI_VDEV_SUBTYPE_P2P_GO     = 3,
-	WMI_VDEV_SUBTYPE_PROXY_STA	= 4,
-	WMI_VDEV_SUBTYPE_MESH		= 5,
+	WMI_VDEV_SUBTYPE_NONE,
+	WMI_VDEV_SUBTYPE_P2P_DEVICE,
+	WMI_VDEV_SUBTYPE_P2P_CLIENT,
+	WMI_VDEV_SUBTYPE_P2P_GO,
+	WMI_VDEV_SUBTYPE_PROXY_STA,
+	WMI_VDEV_SUBTYPE_MESH_11S,
+	WMI_VDEV_SUBTYPE_MESH_NON_11S,
+};
+
+enum wmi_vdev_subtype_legacy {
+	WMI_VDEV_SUBTYPE_LEGACY_NONE      = 0,
+	WMI_VDEV_SUBTYPE_LEGACY_P2P_DEV   = 1,
+	WMI_VDEV_SUBTYPE_LEGACY_P2P_CLI   = 2,
+	WMI_VDEV_SUBTYPE_LEGACY_P2P_GO    = 3,
+	WMI_VDEV_SUBTYPE_LEGACY_PROXY_STA = 4,
+};
+
+enum wmi_vdev_subtype_10_2_4 {
+	WMI_VDEV_SUBTYPE_10_2_4_NONE      = 0,
+	WMI_VDEV_SUBTYPE_10_2_4_P2P_DEV   = 1,
+	WMI_VDEV_SUBTYPE_10_2_4_P2P_CLI   = 2,
+	WMI_VDEV_SUBTYPE_10_2_4_P2P_GO    = 3,
+	WMI_VDEV_SUBTYPE_10_2_4_PROXY_STA = 4,
+	WMI_VDEV_SUBTYPE_10_2_4_MESH_11S  = 5,
+};
+
+enum wmi_vdev_subtype_10_4 {
+	WMI_VDEV_SUBTYPE_10_4_NONE         = 0,
+	WMI_VDEV_SUBTYPE_10_4_P2P_DEV      = 1,
+	WMI_VDEV_SUBTYPE_10_4_P2P_CLI      = 2,
+	WMI_VDEV_SUBTYPE_10_4_P2P_GO       = 3,
+	WMI_VDEV_SUBTYPE_10_4_PROXY_STA    = 4,
+	WMI_VDEV_SUBTYPE_10_4_MESH_NON_11S = 5,
+	WMI_VDEV_SUBTYPE_10_4_MESH_11S     = 6,
 };
 
 /* values for vdev_subtype */
@@ -6458,5 +6498,7 @@ size_t ath10k_wmi_fw_stats_num_vdevs(struct list_head *head);
 void ath10k_wmi_10_4_op_fw_stats_fill(struct ath10k *ar,
 				      struct ath10k_fw_stats *fw_stats,
 				      char *buf);
+int ath10k_wmi_op_get_vdev_subtype(struct ath10k *ar,
+				   enum wmi_vdev_subtype subtype);
 
 #endif /* _WMI_H_ */

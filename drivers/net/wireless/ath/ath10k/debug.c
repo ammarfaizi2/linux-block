@@ -348,8 +348,13 @@ void ath10k_debug_fw_stats_process(struct ath10k *ar, struct sk_buff *skb)
 	 */
 
 	peer_stats_svc = test_bit(WMI_SERVICE_PEER_STATS, ar->wmi.svc_map);
-	if (ar->debug.fw_stats_done && !peer_stats_svc) {
-		ath10k_warn(ar, "received unsolicited stats update event\n");
+	if (peer_stats_svc)
+		ath10k_sta_update_rx_duration(ar, &stats.peers);
+
+	if (ar->debug.fw_stats_done) {
+		if (!peer_stats_svc)
+			ath10k_warn(ar, "received unsolicited stats update event\n");
+
 		goto free;
 	}
 
@@ -383,9 +388,6 @@ void ath10k_debug_fw_stats_process(struct ath10k *ar, struct sk_buff *skb)
 			ath10k_warn(ar, "dropping fw vdev stats\n");
 			goto free;
 		}
-
-		if (peer_stats_svc)
-			ath10k_sta_update_rx_duration(ar, &stats.peers);
 
 		list_splice_tail_init(&stats.peers, &ar->debug.fw_stats.peers);
 		list_splice_tail_init(&stats.vdevs, &ar->debug.fw_stats.vdevs);
@@ -2112,6 +2114,7 @@ static ssize_t ath10k_write_btcoex(struct file *file,
 	struct ath10k *ar = file->private_data;
 	char buf[32];
 	size_t buf_size;
+	int ret = 0;
 	bool val;
 
 	buf_size = min(count, (sizeof(buf) - 1));
@@ -2125,6 +2128,12 @@ static ssize_t ath10k_write_btcoex(struct file *file,
 
 	mutex_lock(&ar->conf_mutex);
 
+	if (ar->state != ATH10K_STATE_ON &&
+	    ar->state != ATH10K_STATE_RESTARTED) {
+		ret = -ENETDOWN;
+		goto exit;
+	}
+
 	if (!(test_bit(ATH10K_FLAG_BTCOEX, &ar->dev_flags) ^ val))
 		goto exit;
 
@@ -2133,17 +2142,15 @@ static ssize_t ath10k_write_btcoex(struct file *file,
 	else
 		clear_bit(ATH10K_FLAG_BTCOEX, &ar->dev_flags);
 
-	if (ar->state != ATH10K_STATE_ON)
-		goto exit;
-
 	ath10k_info(ar, "restarting firmware due to btcoex change");
 
 	queue_work(ar->workqueue, &ar->restart_work);
+	ret = count;
 
 exit:
 	mutex_unlock(&ar->conf_mutex);
 
-	return count;
+	return ret;
 }
 
 static ssize_t ath10k_read_btcoex(struct file *file, char __user *ubuf,
@@ -2181,9 +2188,6 @@ static ssize_t ath10k_debug_fw_checksums_read(struct file *file,
 		return -ENOMEM;
 
 	mutex_lock(&ar->conf_mutex);
-
-	if (len > buf_len)
-		len = buf_len;
 
 	len += scnprintf(buf + len, buf_len - len,
 			 "firmware-N.bin\t\t%08x\n",
