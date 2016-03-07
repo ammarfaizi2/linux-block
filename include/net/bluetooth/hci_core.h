@@ -25,6 +25,7 @@
 #ifndef __HCI_CORE_H
 #define __HCI_CORE_H
 
+#include <linux/leds.h>
 #include <net/bluetooth/hci.h>
 #include <net/bluetooth/hci_sock.h>
 
@@ -77,6 +78,7 @@ struct discovery_state {
 	u8			last_adv_data_len;
 	bool			report_invalid_rssi;
 	bool			result_filtering;
+	bool			limited;
 	s8			rssi;
 	u16			uuid_count;
 	u8			(*uuids)[16];
@@ -394,6 +396,8 @@ struct hci_dev {
 	__u32			rpa_timeout;
 	struct delayed_work	rpa_expired;
 	bdaddr_t		rpa;
+
+	struct led_trigger	*power_led;
 
 	int (*open)(struct hci_dev *hdev);
 	int (*close)(struct hci_dev *hdev);
@@ -1283,31 +1287,41 @@ static inline void hci_role_switch_cfm(struct hci_conn *conn, __u8 status,
 	mutex_unlock(&hci_cb_list_lock);
 }
 
-static inline bool eir_has_data_type(u8 *data, size_t data_len, u8 type)
+static inline void *eir_get_data(u8 *eir, size_t eir_len, u8 type,
+				 size_t *data_len)
 {
 	size_t parsed = 0;
 
-	if (data_len < 2)
-		return false;
+	if (eir_len < 2)
+		return NULL;
 
-	while (parsed < data_len - 1) {
-		u8 field_len = data[0];
+	while (parsed < eir_len - 1) {
+		u8 field_len = eir[0];
 
 		if (field_len == 0)
 			break;
 
 		parsed += field_len + 1;
 
-		if (parsed > data_len)
+		if (parsed > eir_len)
 			break;
 
-		if (data[1] == type)
-			return true;
+		if (eir[1] != type) {
+			eir += field_len + 1;
+			continue;
+		}
 
-		data += field_len + 1;
+		/* Zero length data */
+		if (field_len == 1)
+			return NULL;
+
+		if (data_len)
+			*data_len = field_len - 1;
+
+		return &eir[2];
 	}
 
-	return false;
+	return NULL;
 }
 
 static inline bool hci_bdaddr_is_rpa(bdaddr_t *bdaddr, u8 addr_type)

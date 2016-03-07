@@ -624,6 +624,7 @@ struct nvsp_message {
 #define RNDIS_PKT_ALIGN_DEFAULT 8
 
 struct multi_send_data {
+	struct sk_buff *skb; /* skb containing the pkt */
 	struct hv_netvsc_packet *pkt; /* netvsc pkt pending */
 	u32 count; /* counter of batched packets */
 };
@@ -657,6 +658,10 @@ struct net_device_context {
 
 	struct netvsc_stats __percpu *tx_stats;
 	struct netvsc_stats __percpu *rx_stats;
+
+	/* Ethtool settings */
+	u8 duplex;
+	u32 speed;
 };
 
 /* Per netvsc device */

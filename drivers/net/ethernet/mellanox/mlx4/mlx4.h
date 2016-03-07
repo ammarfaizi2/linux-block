@@ -45,6 +45,7 @@
 #include <linux/workqueue.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
+#include <net/devlink.h>
 
 #include <linux/mlx4/device.h>
 #include <linux/mlx4/driver.h>
@@ -780,7 +781,10 @@ struct mlx4_set_port_general_context {
 	u16 reserved1;
 	u8 v_ignore_fcs;
 	u8 flags;
-	u8 ignore_fcs;
+	union {
+		u8 ignore_fcs;
+		u8 roce_mode;
+	};
 	u8 reserved2;
 	__be16 mtu;
 	u8 pptx;
@@ -825,6 +829,7 @@ struct mlx4_port_info {
 	struct mlx4_roce_gid_table gid_table;
 	int			base_qpn;
 	struct cpu_rmap		*rmap;
+	struct devlink_port	devlink_port;
 };
 
 struct mlx4_sense {

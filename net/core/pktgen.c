@@ -2787,7 +2787,9 @@ static struct sk_buff *pktgen_alloc_skb(struct net_device *dev,
 	} else {
 		 skb = __netdev_alloc_skb(dev, size, GFP_NOWAIT);
 	}
-	skb_reserve(skb, LL_RESERVED_SPACE(dev));
+
+	if (likely(skb))
+		skb_reserve(skb, LL_RESERVED_SPACE(dev));
 
 	return skb;
 }
@@ -2854,7 +2856,7 @@ static struct sk_buff *fill_packet_ipv4(struct net_device *odev,
 		*vlan_encapsulated_proto = htons(ETH_P_IP);
 	}
 
-	skb_set_mac_header(skb, 0);
+	skb_reset_mac_header(skb);
 	skb_set_network_header(skb, skb->len);
 	iph = (struct iphdr *) skb_put(skb, sizeof(struct iphdr));
 
@@ -2981,7 +2983,7 @@ static struct sk_buff *fill_packet_ipv6(struct net_device *odev,
 		*vlan_encapsulated_proto = htons(ETH_P_IPV6);
 	}
 
-	skb_set_mac_header(skb, 0);
+	skb_reset_mac_header(skb);
 	skb_set_network_header(skb, skb->len);
 	iph = (struct ipv6hdr *) skb_put(skb, sizeof(struct ipv6hdr));
 
