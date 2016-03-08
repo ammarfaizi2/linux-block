@@ -27,6 +27,7 @@
 #include <linux/parser.h>
 #include <linux/fsnotify.h>
 #include <linux/seq_file.h>
+#include <linux/user_namespace.h>
 
 #define DEVPTS_DEFAULT_MODE 0600
 /*
@@ -247,13 +248,33 @@ static int mknod_ptmx(struct super_block *sb)
 	struct dentry *root = sb->s_root;
 	struct pts_fs_info *fsi = DEVPTS_SB(sb);
 	struct pts_mount_opts *opts = &fsi->mount_opts;
+	struct user_namespace *userns = current_user_ns();
 	kuid_t root_uid;
 	kgid_t root_gid;
 
-	root_uid = make_kuid(current_user_ns(), 0);
-	root_gid = make_kgid(current_user_ns(), 0);
-	if (!uid_valid(root_uid) || !gid_valid(root_gid))
-		return -EINVAL;
+	/*
+	 * For a new devpts instance, ptmx is owned by 0:0 if that uid
+	 * and gid are mapped in the creating namespace.
+	 */
+	root_uid = make_kuid(userns, 0);
+	root_gid = make_kgid(userns, 0);
+
+	if (!uid_valid(root_uid) || !gid_valid(root_gid)) {
+		/*
+		 * If the creating namespace does not have 0:0 mapped
+		 * but does have the owner mapped (this is rare in
+		 * container-style namespaces but common in
+		 * sandbox-style namespaces), then let ptmx be owned by
+		 * the namespace owner.
+		 */
+		root_uid = userns->owner;
+		root_gid = userns->group;
+
+		/* If this still doesn't work, give up. */
+		if (!kuid_has_mapping(userns, root_uid) ||
+		    !kgid_has_mapping(userns, root_gid))
+			return -EINVAL;
+	}
 
 	inode_lock(d_inode(root));
 
