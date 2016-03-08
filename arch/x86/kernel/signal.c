@@ -748,8 +748,19 @@ handle_signal(struct ksignal *ksig, struct pt_regs *regs)
 		 *
 		 * Clear TF for the case when it wasn't set by debugger to
 		 * avoid the recursive send_sigtrap() in SIGTRAP handler.
+		 *
+		 * Clear NT to avoid confusion -- we'll be running a signal
+		 * handler, which will return via some sigreturn variant,
+		 * not via a task-switching IRET.  (Of course, we don't allow
+		 * user mode task switching at all, so if NT was set in the
+		 * first place it was just because the user was messing
+		 * around.)
+		 *
+		 * Don't clear AC.  The user might want to alignment-check
+		 * their whole program, and we don't want to get in the way.
 		 */
-		regs->flags &= ~(X86_EFLAGS_DF|X86_EFLAGS_RF|X86_EFLAGS_TF);
+		regs->flags &= ~(X86_EFLAGS_DF|X86_EFLAGS_RF|
+				 X86_EFLAGS_TF|X86_EFLAGS_NT);
 		/*
 		 * Ensure the signal handler starts with the new fpu state.
 		 */
