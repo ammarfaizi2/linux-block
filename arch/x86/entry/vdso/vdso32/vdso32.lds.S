@@ -26,6 +26,8 @@ VERSION
 		__vdso_clock_gettime;
 		__vdso_gettimeofday;
 		__vdso_time;
+		__vdso_pending_syscall_return_address;
+		__vdso_abort_pending_syscall;
 	};
 
 	LINUX_2.5 {

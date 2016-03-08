@@ -35,6 +35,7 @@ int main()
 #include <syscall.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <sys/mman.h>
 #include <signal.h>
@@ -88,8 +89,12 @@ static unsigned long sysinfo;
 static bool got_sysinfo = false;
 static unsigned long return_address;
 
+static unsigned long (*vdso_pending_syscall_return_address)(
+	const void *context);
+
 struct unwind_state {
 	unsigned long ip;	/* trap source */
+	unsigned long ax;	/* ax at call site */
 	int depth;		/* -1 until we hit the trap source */
 };
 
@@ -115,7 +120,7 @@ _Unwind_Reason_Code trace_fn(struct _Unwind_Context * ctx, void *opaque)
 		unsigned long ebp = _Unwind_GetGR(ctx, 5);
 		unsigned long esi = _Unwind_GetGR(ctx, 6);
 		unsigned long edi = _Unwind_GetGR(ctx, 7);
-		bool ok = (eax == SYS_getpid || eax == getpid()) &&
+		bool ok = (eax == SYS_break || eax == -ENOSYS) &&
 			ebx == 1 && ecx == 2 && edx == 3 &&
 			esi == 4 && edi == 5 && ebp == 6;
 
@@ -124,6 +129,8 @@ _Unwind_Reason_Code trace_fn(struct _Unwind_Context * ctx, void *opaque)
 		printf("[%s]\t  NR = %ld, args = %ld, %ld, %ld, %ld, %ld, %ld\n",
 		       (ok ? "OK" : "FAIL"),
 		       eax, ebx, ecx, edx, esi, edi, ebp);
+
+		state->ax = eax;
 
 		return _URC_NORMAL_STOP;
 	} else {
@@ -137,6 +144,7 @@ static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
 	ucontext_t *ctx = (ucontext_t *)ctx_void;
 	struct unwind_state state;
 	unsigned long ip = ctx->uc_mcontext.gregs[REG_EIP];
+	unsigned long reported_return_address = 0;
 
 	if (!got_sysinfo && ip == sysinfo) {
 		got_sysinfo = true;
@@ -148,8 +156,15 @@ static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
 		       ip, return_address);
 	}
 
-	if (!got_sysinfo)
-		return;		/* Not there yet */
+	if (!got_sysinfo) {
+		if (vdso_pending_syscall_return_address &&
+		    vdso_pending_syscall_return_address(ctx_void) != -1UL) {
+			printf("[FAIL]\t__vdso_pending_syscall_return_address incorrectly detected a pending syscall\n");
+			nerrs++;
+		}
+
+		return;		/* We haven't started AT_SYSINFO yet */
+	}
 
 	if (ip == return_address) {
 		ctx->uc_mcontext.gregs[REG_EFL] &= ~X86_EFLAGS_TF;
@@ -157,11 +172,32 @@ static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
 		return;
 	}
 
-	printf("\tSIGTRAP at 0x%lx\n", ip);
+	if (vdso_pending_syscall_return_address) {
+		reported_return_address =
+			vdso_pending_syscall_return_address(ctx_void);
+		if (reported_return_address != -1UL)
+			printf("\tSIGTRAP at 0x%lx, pending syscall will return to 0x%lx\n",
+			       ip, reported_return_address);
+		else
+			printf("\tSIGTRAP at 0x%lx, no syscall pending\n", ip);
+	} else {
+		printf("\tSIGTRAP at 0x%lx\n", ip);
+	}
 
 	state.ip = ip;
 	state.depth = -1;
 	_Unwind_Backtrace(trace_fn, &state);
+
+	if (vdso_pending_syscall_return_address) {
+		unsigned long expected =
+			(state.ax == SYS_break ? return_address : -1UL);
+		if (reported_return_address != expected) {
+			printf("[FAIL]\t  __vdso_pending_syscall_return_address returned 0x%lx; expected 0x%lx\n", reported_return_address, expected);
+			nerrs++;
+		} else {
+			printf("[OK]\t  __vdso_pending_syscall_return_address returned the correct value\n");
+		}
+	}
 }
 
 int main()
@@ -177,12 +213,21 @@ int main()
 		       info.dli_fname, info.dli_fbase);
 	}
 
+	void *vdso = dlopen("linux-gate.so.1", RTLD_NOW);
+	if (vdso)
+		vdso_pending_syscall_return_address = dlsym(vdso, "__vdso_pending_syscall_return_address");
+
 	sethandler(SIGTRAP, sigtrap, 0);
 
-	syscall(SYS_getpid);  /* Force symbol binding without TF set. */
+	syscall(SYS_break);  /* Force symbol binding without TF set. */
 	printf("[RUN]\tSet TF and check a fast syscall\n");
 	set_eflags(get_eflags() | X86_EFLAGS_TF);
-	syscall(SYS_getpid, 1, 2, 3, 4, 5, 6);
+
+	/*
+	 * We need a harmless syscall that will never return its own syscall
+	 * nr.  SYS_break is not implemented and returns -ENOSYS.
+	 */
+	syscall(SYS_break, 1, 2, 3, 4, 5, 6);
 	if (!got_sysinfo) {
 		set_eflags(get_eflags() & ~X86_EFLAGS_TF);
 

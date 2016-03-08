@@ -127,7 +127,7 @@ VDSO_LDFLAGS_vdso32.lds = -m elf_i386 -soname linux-gate.so.1
 
 targets += vdso32/vdso32.lds
 targets += vdso32/note.o vdso32/system_call.o vdso32/sigreturn.o
-targets += vdso32/vclock_gettime.o
+targets += vdso32/vclock_gettime.o vdso32/cancellation_helpers.o
 
 KBUILD_AFLAGS_32 := $(filter-out -m64,$(KBUILD_AFLAGS)) -DBUILD_VDSO
 $(obj)/vdso32.so.dbg: KBUILD_AFLAGS = $(KBUILD_AFLAGS_32)
@@ -139,6 +139,7 @@ KBUILD_CFLAGS_32 := $(filter-out -fno-pic,$(KBUILD_CFLAGS_32))
 KBUILD_CFLAGS_32 := $(filter-out -mfentry,$(KBUILD_CFLAGS_32))
 KBUILD_CFLAGS_32 := $(filter-out $(GCC_PLUGINS_CFLAGS),$(KBUILD_CFLAGS_32))
 KBUILD_CFLAGS_32 := $(filter-out $(RETPOLINE_CFLAGS),$(KBUILD_CFLAGS_32))
+KBUILD_CFLAGS_32 := $(filter-out -pg,$(KBUILD_CFLAGS_32))
 KBUILD_CFLAGS_32 += -m32 -msoft-float -mregparm=0 -fpic
 KBUILD_CFLAGS_32 += $(call cc-option, -fno-stack-protector)
 KBUILD_CFLAGS_32 += $(call cc-option, -foptimize-sibling-calls)
@@ -153,9 +154,17 @@ endif
 
 $(obj)/vdso32.so.dbg: KBUILD_CFLAGS = $(KBUILD_CFLAGS_32)
 
+# cancellation_helpers.c wants to be build with uapi headers only.
+# This is because trying to get the full kernel headers to generate
+# valid 32-bit code in a 64-bit-configured kernel tree would be a big
+# mess.
+$(obj)/vdso32/cancellation_helpers.o: LINUXINCLUDE :=
+$(obj)/vdso32/cancellation_helpers.o: KBUILD_CFLAGS = $(KBUILD_CFLAGS_32) $(USERINCLUDE)
+
 $(obj)/vdso32.so.dbg: FORCE \
 		      $(obj)/vdso32/vdso32.lds \
 		      $(obj)/vdso32/vclock_gettime.o \
+		      $(obj)/vdso32/cancellation_helpers.o \
 		      $(obj)/vdso32/note.o \
 		      $(obj)/vdso32/system_call.o \
 		      $(obj)/vdso32/sigreturn.o
