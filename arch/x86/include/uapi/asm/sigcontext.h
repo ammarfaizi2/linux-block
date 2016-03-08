@@ -15,7 +15,6 @@
  * won't have to grow new quirks for quite some time. Promise!
  */
 
-#include <linux/compiler.h>
 #include <linux/types.h>
 
 #define FP_XSTATE_MAGIC1		0x46505853U
