@@ -56,16 +56,16 @@ extern void __chk_io_ptr(const volatile void __iomem *);
 #ifdef __KERNEL__
 
 /* Attributes */
-#include <linux/compiler_attributes.h>
+#include "compiler_attributes.h"
 
 /* Compiler specific macros. */
 #ifdef __clang__
-#include <linux/compiler-clang.h>
+#include "compiler-clang.h"
 #elif defined(__INTEL_COMPILER)
-#include <linux/compiler-intel.h>
+#include "compiler-intel.h"
 #elif defined(__GNUC__)
 /* The above compilers also define __GNUC__, so order is important here. */
-#include <linux/compiler-gcc.h>
+#include "compiler-gcc.h"
 #else
 #error "Unknown compiler"
 #endif

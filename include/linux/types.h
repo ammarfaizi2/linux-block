@@ -2,7 +2,9 @@
 #ifndef _LINUX_TYPES_H
 #define _LINUX_TYPES_H
 
+#ifndef __EXPORTED_HEADERS__
 #define __EXPORTED_HEADERS__
+#endif
 #include <uapi/linux/types.h>
 
 #ifndef __ASSEMBLY__
