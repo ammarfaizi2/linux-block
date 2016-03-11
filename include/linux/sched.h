@@ -781,6 +781,10 @@ struct signal_struct {
 #ifdef CONFIG_CGROUPS
 	struct list_head rgrps;		/* top-level rgroups under this sig */
 	struct list_head rgrp_node;	/* parent_sgrp->child_rgrp_sigs list */
+	u16 rgrp_subtree_control;	/* control for top-level rgroups */
+	u16 rgrp_subtree_ss_mask;	/* ss_mask for top-level rgroups */
+	u16 rgrp_old_subtree_control;	/* used during control updates */
+	u16 rgrp_old_subtree_ss_mask;	/* used during control updates */
 #endif
 
 	oom_flags_t oom_flags;

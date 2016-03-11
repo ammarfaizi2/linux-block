@@ -413,8 +413,8 @@ static u16 cgroup_control(struct cgroup *cgrp)
 	struct cgroup *parent = cgroup_parent(cgrp);
 	u16 root_ss_mask = cgrp->root->subsys_mask;
 
-	if (is_rgroup(cgrp))
-		return 0;
+	if (is_rgroup(cgrp) && !is_rgroup(parent))
+		return cgrp->rgrp_sig->rgrp_subtree_control;
 
 	if (parent)
 		return parent->subtree_control;
@@ -430,8 +430,8 @@ static u16 cgroup_ss_mask(struct cgroup *cgrp)
 {
 	struct cgroup *parent = cgroup_parent(cgrp);
 
-	if (is_rgroup(cgrp))
-		return 0;
+	if (is_rgroup(cgrp) && !is_rgroup(parent))
+		return cgrp->rgrp_sig->rgrp_subtree_ss_mask;
 
 	if (parent)
 		return parent->subtree_ss_mask;
@@ -1565,6 +1565,9 @@ static void css_clear_dir(struct cgroup_subsys_state *css)
 
 	css->flags &= ~CSS_VISIBLE;
 
+	if (is_rgroup(cgrp))
+		return;
+
 	list_for_each_entry(cfts, &css->ss->cfts, node)
 		cgroup_addrm_files(css, cgrp, cfts, false);
 }
@@ -1584,6 +1587,9 @@ static int css_populate_dir(struct cgroup_subsys_state *css)
 	if ((css->flags & CSS_VISIBLE) || !cgrp->kn)
 		return 0;
 
+	if (is_rgroup(cgrp))
+		goto done;
+
 	if (!css->ss) {
 		if (cgroup_on_dfl(cgrp))
 			cfts = cgroup_dfl_base_files;
@@ -1600,9 +1606,8 @@ static int css_populate_dir(struct cgroup_subsys_state *css)
 			goto err;
 		}
 	}
-
+done:
 	css->flags |= CSS_VISIBLE;
-
 	return 0;
 err:
 	list_for_each_entry(cfts, &css->ss->cfts, node) {
@@ -3116,8 +3121,15 @@ static void cgroup_save_control(struct cgroup *cgrp)
 	struct cgroup_subsys_state *d_css;
 
 	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
+		struct signal_struct *sig;
+
 		dsct->old_subtree_control = dsct->subtree_control;
 		dsct->old_subtree_ss_mask = dsct->subtree_ss_mask;
+
+		list_for_each_entry(sig, &dsct->rgrp_child_sigs, rgrp_node) {
+			sig->rgrp_old_subtree_control = sig->rgrp_subtree_control;
+			sig->rgrp_old_subtree_ss_mask = sig->rgrp_subtree_ss_mask;
+		}
 	}
 }
 
@@ -3135,10 +3147,19 @@ static void cgroup_propagate_control(struct cgroup *cgrp)
 	struct cgroup_subsys_state *d_css;
 
 	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
+		struct signal_struct *sig;
+
 		dsct->subtree_control &= cgroup_control(dsct);
 		dsct->subtree_ss_mask =
 			cgroup_calc_subtree_ss_mask(dsct->subtree_control,
 						    cgroup_ss_mask(dsct));
+
+		list_for_each_entry(sig, &dsct->rgrp_child_sigs, rgrp_node) {
+			sig->rgrp_subtree_control &= cgroup_control(dsct);
+			sig->rgrp_subtree_ss_mask =
+				cgroup_calc_subtree_ss_mask(sig->rgrp_subtree_control,
+							    cgroup_ss_mask(dsct));
+		}
 	}
 }
 
@@ -3155,6 +3176,13 @@ static void cgroup_restore_control(struct cgroup *cgrp)
 	struct cgroup_subsys_state *d_css;
 
 	cgroup_for_each_live_descendant_post(dsct, d_css, cgrp) {
+		struct signal_struct *sig;
+
+		list_for_each_entry(sig, &dsct->rgrp_child_sigs, rgrp_node) {
+			sig->rgrp_subtree_control = sig->rgrp_old_subtree_control;
+			sig->rgrp_subtree_ss_mask = sig->rgrp_old_subtree_ss_mask;
+		}
+
 		dsct->subtree_control = dsct->old_subtree_control;
 		dsct->subtree_ss_mask = dsct->old_subtree_ss_mask;
 	}
@@ -5325,6 +5353,15 @@ static struct cgroup *rgroup_create(struct cgroup *parent,
 	struct cgroup *rgrp;
 
 	lockdep_assert_held(&cgroup_mutex);
+
+	if (list_empty(&sig->rgrps)) {
+		WARN_ON_ONCE(is_rgroup(parent));
+
+		sig->rgrp_subtree_control = 0;
+		sig->rgrp_subtree_ss_mask =
+			cgroup_calc_subtree_ss_mask(sig->rgrp_subtree_control,
+						    cgroup_ss_mask(parent));
+	}
 
 	rgrp = cgroup_create(parent, sig);
 	if (IS_ERR(rgrp))
