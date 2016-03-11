@@ -126,6 +126,13 @@ static struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
 static struct workqueue_struct *cgroup_destroy_wq;
 
 /*
+ * rgroups are automatically destroyed when they become unpopulated.
+ * Destructions are bounced through the following workqueue which is
+ * ordered to avoid trying to destroy a parent before its children.
+ */
+static struct workqueue_struct *rgroup_destroy_wq;
+
+/*
  * pidlist destructions need to be flushed on cgroup destruction.  Use a
  * separate workqueue as flush domain.
  */
@@ -228,6 +235,7 @@ static int cgroup_apply_control(struct cgroup *cgrp);
 static void cgroup_finalize_control(struct cgroup *cgrp, int ret);
 static void css_task_iter_advance(struct css_task_iter *it);
 static int cgroup_destroy_locked(struct cgroup *cgrp);
+static void rgroup_destroy_schedule(struct cgroup *rgrp);
 static struct cgroup_subsys_state *css_create(struct cgroup *cgrp,
 					      struct cgroup_subsys *ss);
 static void css_release(struct percpu_ref *ref);
@@ -242,6 +250,16 @@ static int cgroup_addrm_files(struct cgroup_subsys_state *css,
 static void cgroup_lock(void)
 	__acquires(&cgroup_mutex)
 {
+	/*
+	 * In-flight rgroup destructions can interfere with subsequent
+	 * operations.  For example, rmdir of the nearest sgroup would fail
+	 * while rgroup destructions are in flight.  rgroup destructions
+	 * don't involve any time-consuming operations and the following
+	 * flush shouldn't be noticeable.
+	 */
+	if (rgroup_destroy_wq)
+		flush_workqueue(rgroup_destroy_wq);
+
 	mutex_lock(&cgroup_mutex);
 }
 
@@ -330,6 +348,11 @@ static bool cgroup_on_dfl(const struct cgroup *cgrp)
 	return cgrp->root == &cgrp_dfl_root;
 }
 
+static bool is_rgroup(struct cgroup *cgrp)
+{
+	return cgrp->rgrp_sig;
+}
+
 /* IDR wrappers which synchronize using cgroup_idr_lock */
 static int cgroup_idr_alloc(struct idr *idr, void *ptr, int start, int end,
 			    gfp_t gfp_mask)
@@ -370,11 +393,28 @@ static struct cgroup *cgroup_parent(struct cgroup *cgrp)
 	return NULL;
 }
 
+/**
+ * nearest_sgroup - find the nearest system group
+ * @cgrp: cgroup of question
+ *
+ * Find the closest sgroup ancestor.  If @cgrp is not a rgroup, @cgrp is
+ * returned.  A rgroup subtree is always nested under a sgroup.
+ */
+static struct cgroup *nearest_sgroup(struct cgroup *cgrp)
+{
+	while (is_rgroup(cgrp))
+		cgrp = cgroup_parent(cgrp);
+	return cgrp;
+}
+
 /* subsystems visibly enabled on a cgroup */
 static u16 cgroup_control(struct cgroup *cgrp)
 {
 	struct cgroup *parent = cgroup_parent(cgrp);
 	u16 root_ss_mask = cgrp->root->subsys_mask;
+
+	if (is_rgroup(cgrp))
+		return 0;
 
 	if (parent)
 		return parent->subtree_control;
@@ -389,6 +429,9 @@ static u16 cgroup_control(struct cgroup *cgrp)
 static u16 cgroup_ss_mask(struct cgroup *cgrp)
 {
 	struct cgroup *parent = cgroup_parent(cgrp);
+
+	if (is_rgroup(cgrp))
+		return 0;
 
 	if (parent)
 		return parent->subtree_ss_mask;
@@ -620,22 +663,26 @@ static void check_for_release(struct cgroup *cgrp);
 
 int cgroup_name(struct cgroup *cgrp, char *buf, size_t buflen)
 {
+	cgrp = nearest_sgroup(cgrp);
 	return kernfs_name(cgrp->kn, buf, buflen);
 }
 
 char * __must_check cgroup_path(struct cgroup *cgrp, char *buf, size_t buflen)
 {
+	cgrp = nearest_sgroup(cgrp);
 	return kernfs_path(cgrp->kn, buf, buflen);
 }
 EXPORT_SYMBOL_GPL(cgroup_path);
 
 void pr_cont_cgroup_name(struct cgroup *cgrp)
 {
+	cgrp = nearest_sgroup(cgrp);
 	pr_cont_kernfs_name(cgrp->kn);
 }
 
 void pr_cont_cgroup_path(struct cgroup *cgrp)
 {
+	cgrp = nearest_sgroup(cgrp);
 	pr_cont_kernfs_path(cgrp->kn);
 }
 
@@ -720,8 +767,14 @@ static void cgroup_update_populated(struct cgroup *cgrp, bool populated)
 		if (!trigger)
 			break;
 
-		check_for_release(cgrp);
-		cgroup_file_notify(&cgrp->events_file);
+		/* rgroups are automatically destroyed when empty */
+		if (is_rgroup(cgrp)) {
+			if (!cgrp->populated_cnt)
+				rgroup_destroy_schedule(cgrp);
+		} else {
+			check_for_release(cgrp);
+			cgroup_file_notify(&cgrp->events_file);
+		}
 
 		cgrp = cgroup_parent(cgrp);
 	} while (cgrp);
@@ -855,6 +908,9 @@ static void put_css_set_locked(struct css_set *cset)
 			cgroup_put(link->cgrp);
 		kfree(link);
 	}
+
+	if (cset->sgrp_cset)
+		put_css_set_locked(cset->sgrp_cset);
 
 	kfree_rcu(cset, rcu_head);
 }
@@ -1153,6 +1209,16 @@ static struct css_set *find_css_set(struct css_set *old_cset,
 	}
 
 	spin_unlock_bh(&css_set_lock);
+
+	if (is_rgroup(cset->dfl_cgrp)) {
+		struct cgroup *c = nearest_sgroup(cset->dfl_cgrp);
+
+		cset->sgrp_cset = find_css_set(cset, c);
+		if (!cset->sgrp_cset) {
+			put_css_set(cset);
+			return NULL;
+		}
+	}
 
 	return cset;
 }
@@ -1909,6 +1975,8 @@ static void init_cgroup_housekeeping(struct cgroup *cgrp)
 	INIT_LIST_HEAD(&cgrp->self.sibling);
 	INIT_LIST_HEAD(&cgrp->self.children);
 	INIT_LIST_HEAD(&cgrp->cset_links);
+	INIT_LIST_HEAD(&cgrp->rgrp_child_sigs);
+	INIT_LIST_HEAD(&cgrp->rgrp_node);
 	INIT_LIST_HEAD(&cgrp->pidlists);
 	mutex_init(&cgrp->pidlist_mutex);
 	cgrp->self.cgroup = cgrp;
@@ -3307,9 +3375,10 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 				continue;
 			}
 
-			/* a child has it enabled? */
+			/* a child sgroup has it enabled? */
 			cgroup_for_each_live_child(child, cgrp) {
-				if (child->subtree_control & (1 << ssid)) {
+				if (!is_rgroup(child) &&
+				    child->subtree_control & (1 << ssid)) {
 					ret = -EBUSY;
 					goto out_unlock;
 				}
@@ -5060,7 +5129,8 @@ err_free_css:
 	return ERR_PTR(err);
 }
 
-static struct cgroup *cgroup_create(struct cgroup *parent)
+static struct cgroup *cgroup_create(struct cgroup *parent,
+				    struct signal_struct *rgrp_sig)
 {
 	struct cgroup_root *root = parent->root;
 	struct cgroup *cgrp, *tcgrp;
@@ -5103,6 +5173,7 @@ static struct cgroup *cgroup_create(struct cgroup *parent)
 		set_bit(CGRP_CPUSET_CLONE_CHILDREN, &cgrp->flags);
 
 	cgrp->self.serial_nr = css_serial_nr_next++;
+	cgrp->rgrp_sig = rgrp_sig;
 
 	/* allocation complete, commit to creation */
 	list_add_tail_rcu(&cgrp->self.sibling, &cgroup_parent(cgrp)->self.children);
@@ -5156,7 +5227,7 @@ static int cgroup_mkdir(struct kernfs_node *parent_kn, const char *name,
 	if (!parent)
 		return -ENODEV;
 
-	cgrp = cgroup_create(parent);
+	cgrp = cgroup_create(parent, NULL);
 	if (IS_ERR(cgrp)) {
 		ret = PTR_ERR(cgrp);
 		goto out_unlock;
@@ -5199,6 +5270,75 @@ out_destroy:
 out_unlock:
 	cgroup_kn_unlock(parent_kn);
 	return ret;
+}
+
+static void rgroup_destroy_work_fn(struct work_struct *work)
+{
+	struct cgroup *rgrp = container_of(work, struct cgroup,
+					   self.destroy_work);
+	struct signal_struct *sig = rgrp->rgrp_sig;
+
+	/*
+	 * cgroup_lock() flushes rgroup_destroy_wq and using it here would
+	 * lead to deadlock.  Grab cgroup_mutex directly.
+	 */
+	mutex_lock(&cgroup_mutex);
+
+	if (WARN_ON_ONCE(cgroup_destroy_locked(rgrp))) {
+		mutex_unlock(&cgroup_mutex);
+		return;
+	}
+
+	list_del(&rgrp->rgrp_node);
+
+	if (sig && list_empty(&sig->rgrps)) {
+		list_del(&sig->rgrp_node);
+		put_signal_struct(sig);
+	}
+
+	mutex_unlock(&cgroup_mutex);
+}
+
+/**
+ * rgroup_destroy_schedule - schedule destruction of a rgroup
+ * @rgrp: rgroup to be destroyed
+ *
+ * Schedule destruction of @rgrp.  Destructions are guarantee to be
+ * performed in order and flushed on cgroup_lock().
+ */
+static void rgroup_destroy_schedule(struct cgroup *rgrp)
+{
+	INIT_WORK(&rgrp->self.destroy_work, rgroup_destroy_work_fn);
+	queue_work(rgroup_destroy_wq, &rgrp->self.destroy_work);
+}
+
+/**
+ * rgroup_create - create a rgroup
+ * @parent: parent cgroup (sgroup or rgroup)
+ * @sig: signal_struct of the target process
+ *
+ * Create a rgroup under @parent for the process associated with @sig.
+ */
+static struct cgroup *rgroup_create(struct cgroup *parent,
+				    struct signal_struct *sig)
+{
+	struct cgroup *rgrp;
+
+	lockdep_assert_held(&cgroup_mutex);
+
+	rgrp = cgroup_create(parent, sig);
+	if (IS_ERR(rgrp))
+		return rgrp;
+
+	if (!is_rgroup(parent))
+		list_add_tail(&rgrp->rgrp_node, &sig->rgrps);
+
+	if (list_empty(&sig->rgrp_node)) {
+		atomic_inc(&sig->sigcnt);
+		list_add_tail(&sig->rgrp_node, &parent->rgrp_child_sigs);
+	}
+
+	return rgrp;
 }
 
 /*
@@ -5562,6 +5702,9 @@ static int __init cgroup_wq_init(void)
 	cgroup_destroy_wq = alloc_workqueue("cgroup_destroy", 0, 1);
 	BUG_ON(!cgroup_destroy_wq);
 
+	rgroup_destroy_wq = alloc_ordered_workqueue("rgroup_destroy", 0);
+	BUG_ON(!rgroup_destroy_wq);
+
 	/*
 	 * Used to destroy pidlists and separate to serve as flush domain.
 	 * Cap @max_active to 1 too.
@@ -5694,7 +5837,8 @@ static const struct file_operations proc_cgroupstats_operations = {
  * @clone_flags: clone flags if forking
  *
  * Called from threadgroup_change_begin() and allows cgroup operations to
- * synchronize against threadgroup changes using a percpu_rw_semaphore.
+ * synchronize against threadgroup changes using a percpu_rw_semaphore.  If
+ * clone(2) is requesting a new rgroup, also grab cgroup_mutex.
  */
 void cgroup_threadgroup_change_begin(struct task_struct *tsk,
 				     struct task_struct *child,
@@ -5709,6 +5853,9 @@ void cgroup_threadgroup_change_begin(struct task_struct *tsk,
 		 */
 		RCU_INIT_POINTER(child->cgroups, &init_css_set);
 		INIT_LIST_HEAD(&child->cg_list);
+
+		if (clone_flags & CLONE_NEWRGRP)
+			cgroup_lock();
 	}
 
 	percpu_down_read(&cgroup_threadgroup_rwsem);
@@ -5728,6 +5875,9 @@ void cgroup_threadgroup_change_end(struct task_struct *tsk,
 				   unsigned long clone_flags)
 {
 	percpu_up_read(&cgroup_threadgroup_rwsem);
+
+	if (child && (clone_flags & CLONE_NEWRGRP))
+		cgroup_unlock();
 }
 
 /**
@@ -5745,6 +5895,23 @@ int cgroup_can_fork(struct task_struct *child, unsigned long clone_flags,
 {
 	struct cgroup_subsys *ss;
 	int i, j, ret;
+
+	if (clone_flags & CLONE_NEWRGRP) {
+		struct css_set *cset = task_css_set(current);
+		struct cgroup *rgrp;
+
+		rgrp = rgroup_create(cset->dfl_cgrp, current->signal);
+		if (IS_ERR(rgrp))
+			return PTR_ERR(rgrp);
+
+		*new_rgrp_csetp = find_css_set(cset, rgrp);
+		if (IS_ERR(*new_rgrp_csetp)) {
+			rgroup_destroy_schedule(rgrp);
+			return PTR_ERR(*new_rgrp_csetp);
+		}
+	} else {
+		*new_rgrp_csetp = NULL;
+	}
 
 	do_each_subsys_mask(ss, i, have_canfork_callback) {
 		ret = ss->can_fork(child);
@@ -5779,6 +5946,11 @@ void cgroup_cancel_fork(struct task_struct *child, unsigned long clone_flags,
 {
 	struct cgroup_subsys *ss;
 	int i;
+
+	if (new_rgrp_cset) {
+		rgroup_destroy_schedule(new_rgrp_cset->dfl_cgrp);
+		put_css_set(new_rgrp_cset);
+	}
 
 	for_each_subsys(ss, i)
 		if (ss->cancel_fork)
@@ -5828,11 +6000,29 @@ void cgroup_post_fork(struct task_struct *child, unsigned long clone_flags,
 		struct css_set *cset;
 
 		spin_lock_bh(&css_set_lock);
-		cset = task_css_set(current);
+
+		/*
+		 * If @new_rgrp_cset is set, it contains the requested new
+		 * rgroup created by cgroup_can_fork().
+		 */
+		if (new_rgrp_cset) {
+			cset = new_rgrp_cset;
+		} else {
+			cset = task_css_set(current);
+			/*
+			 * If a new process is being created, it shouldn't
+			 * be put in this process's rgroup.  Escape it to
+			 * the nearest sgroup.
+			 */
+			if (!(clone_flags & CLONE_THREAD) && cset->sgrp_cset)
+				cset = cset->sgrp_cset;
+		}
+
 		if (list_empty(&child->cg_list)) {
 			get_css_set(cset);
 			css_set_move_task(child, NULL, cset, false);
 		}
+
 		spin_unlock_bh(&css_set_lock);
 	}
 
@@ -5844,6 +6034,29 @@ void cgroup_post_fork(struct task_struct *child, unsigned long clone_flags,
 	do_each_subsys_mask(ss, i, have_fork_callback) {
 		ss->fork(child);
 	} while_each_subsys_mask();
+}
+
+int cgroup_exec(void)
+{
+	struct cgroup *cgrp;
+	bool is_rgrp;
+	int ret;
+
+	/* whether a task is in a sgroup or rgroup is immutable */
+	rcu_read_lock();
+	is_rgrp = is_rgroup(task_css_set(current)->dfl_cgrp);
+	rcu_read_unlock();
+
+	if (!is_rgrp)
+		return 0;
+
+	/* exec should reset rgroup, escape to the nearest sgroup */
+	cgroup_lock();
+	cgrp = nearest_sgroup(task_css_set(current)->dfl_cgrp);
+	ret = cgroup_attach_task(cgrp, current, CGRP_MIGRATE_PROCESS);
+	cgroup_unlock();
+
+	return ret;
 }
 
 /**

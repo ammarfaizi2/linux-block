@@ -778,6 +778,10 @@ struct signal_struct {
 	unsigned audit_tty_log_passwd;
 	struct tty_audit_buf *tty_audit_buf;
 #endif
+#ifdef CONFIG_CGROUPS
+	struct list_head rgrps;		/* top-level rgroups under this sig */
+	struct list_head rgrp_node;	/* parent_sgrp->child_rgrp_sigs list */
+#endif
 
 	oom_flags_t oom_flags;
 	short oom_score_adj;		/* OOM kill score adjustment */

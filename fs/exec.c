@@ -1044,7 +1044,7 @@ no_thread_group:
 	}
 
 	BUG_ON(!thread_group_leader(tsk));
-	return 0;
+	return cgroup_exec();
 
 killed:
 	/* protects against exit_notify() and __exit_signal() */

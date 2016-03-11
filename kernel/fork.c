@@ -234,6 +234,9 @@ EXPORT_SYMBOL(free_task);
 
 static inline void free_signal_struct(struct signal_struct *sig)
 {
+#ifdef CONFIG_CGROUPS
+	WARN_ON_ONCE(!list_empty(&sig->rgrps));
+#endif
 	taskstats_tgid_free(sig);
 	sched_autogroup_exit(sig);
 	kmem_cache_free(signal_cachep, sig);
@@ -1159,6 +1162,10 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 
 	mutex_init(&sig->cred_guard_mutex);
 
+#ifdef CONFIG_CGROUPS
+	INIT_LIST_HEAD(&sig->rgrps);
+	INIT_LIST_HEAD(&sig->rgrp_node);
+#endif
 	return 0;
 }
 
@@ -1292,6 +1299,10 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 				current->nsproxy->pid_ns_for_children))
 			return ERR_PTR(-EINVAL);
 	}
+
+	/* Only threads can be put in child resource groups. */
+	if (!(clone_flags & CLONE_THREAD) && (clone_flags & CLONE_NEWRGRP))
+		return ERR_PTR(-EINVAL);
 
 	retval = security_task_create(clone_flags);
 	if (retval)

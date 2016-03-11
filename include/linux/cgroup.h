@@ -107,6 +107,7 @@ extern void cgroup_cancel_fork(struct task_struct *p, unsigned long clone_flags,
 			       struct css_set *new_rgrp_cset);
 extern void cgroup_post_fork(struct task_struct *p, unsigned long clone_flags,
 			     struct css_set *new_rgrp_cset);
+int cgroup_exec(void);
 void cgroup_exit(struct task_struct *p);
 void cgroup_free(struct task_struct *p);
 
@@ -548,6 +549,7 @@ static inline void cgroup_cancel_fork(struct task_struct *p,
 static inline void cgroup_post_fork(struct task_struct *p,
 				    unsigned long clone_flags,
 				    struct css_set *new_rgrp_cset) {}
+static inline int cgroup_exec(void) { return 0; }
 static inline void cgroup_exit(struct task_struct *p) {}
 static inline void cgroup_free(struct task_struct *p) {}
 

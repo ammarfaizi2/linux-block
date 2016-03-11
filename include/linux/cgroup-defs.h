@@ -201,6 +201,14 @@ struct css_set {
 	struct css_set *mg_dst_cset;
 
 	/*
+	 * If this cset points to a rgroup, the following is a cset which
+	 * is equivalent except that it points to the nearest sgroup.  This
+	 * allows tasks to be escaped to the nearest sgroup without
+	 * introducing deeply nested error cases.
+	 */
+	struct css_set *sgrp_cset;
+
+	/*
 	 * On the default hierarhcy, ->subsys[ssid] may point to a css
 	 * attached to an ancestor instead of the cgroup this css_set is
 	 * associated with.  The following node is anchored at
@@ -283,6 +291,24 @@ struct cgroup {
 	 * for the given subsystem.
 	 */
 	struct list_head e_csets[CGROUP_SUBSYS_COUNT];
+
+	/*
+	 * If not NULL, the cgroup is a rgroup (resource group) of the
+	 * process associated with the following signal struct.  A rgroup
+	 * is used for in-process resource control.  rgroups are created by
+	 * specifying CLONE_NEWRGRP during clone(2), tied to the associated
+	 * process, and invisible and transparent to cgroupfs.
+	 *
+	 * The term "sgroup" (system group) is used for a cgroup which is
+	 * explicitly not a rgroup.
+	 */
+	struct signal_struct *rgrp_sig;
+
+	/* top-level rgroups linked on rgrp_sig->rgrps */
+	struct list_head rgrp_node;
+
+	/* signal structs with rgroups below this cgroup */
+	struct list_head rgrp_child_sigs;
 
 	/*
 	 * list of pidlists, up to two for each namespace (one for procs, one
