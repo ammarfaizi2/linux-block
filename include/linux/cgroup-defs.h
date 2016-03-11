@@ -310,6 +310,9 @@ struct cgroup {
 	/* signal structs with rgroups below this cgroup */
 	struct list_head rgrp_child_sigs;
 
+	/* target rgroup, used during rgroup subtree migration */
+	struct cgroup *rgrp_target;
+
 	/*
 	 * list of pidlists, up to two for each namespace (one for procs, one
 	 * for tasks); created on demand.
@@ -462,6 +465,8 @@ struct cgroup_subsys {
 	void (*css_offline)(struct cgroup_subsys_state *css);
 	void (*css_released)(struct cgroup_subsys_state *css);
 	void (*css_free)(struct cgroup_subsys_state *css);
+	int (*css_copy)(struct cgroup_subsys_state *to,
+			struct cgroup_subsys_state *from);
 	void (*css_reset)(struct cgroup_subsys_state *css);
 
 	int (*can_attach)(struct cgroup_taskset *tset);
