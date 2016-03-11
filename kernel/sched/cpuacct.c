@@ -305,6 +305,30 @@ static struct cftype files[] = {
 	{ }	/* terminate */
 };
 
+/* used to print cpuacct stats in cpu.stat on the unified hierarchy */
+void cpuacct_cpu_stats_show(struct seq_file *sf)
+{
+	struct cgroup_subsys_state *css;
+	u64 usage, user, sys;
+
+	css = cgroup_get_e_css(seq_css(sf)->cgroup, &cpuacct_cgrp_subsys);
+
+	usage = cpuusage_read(css, seq_cft(sf));
+	cpuacct_stats_read(css_ca(css), &user, &sys);
+
+	user *= TICK_NSEC;
+	sys *= TICK_NSEC;
+	do_div(usage, NSEC_PER_USEC);
+	do_div(user, NSEC_PER_USEC);
+	do_div(sys, NSEC_PER_USEC);
+
+	seq_printf(sf, "usage_usec %llu\n"
+		   "user_usec %llu\n"
+		   "system_usec %llu\n", usage, user, sys);
+
+	css_put(css);
+}
+
 /*
  * charge this task's execution time to its accounting group.
  *
