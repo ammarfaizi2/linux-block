@@ -5704,12 +5704,15 @@ void cgroup_fork(struct task_struct *child)
 /**
  * cgroup_can_fork - called on a new task before the process is exposed
  * @child: the task in question.
+ * @clone_flags: CLONE_* flags for @child
+ * @new_rgrp_csetp: rgroup out parameter to be passed to post/cancel_fork
  *
  * This calls the subsystem can_fork() callbacks. If the can_fork() callback
  * returns an error, the fork aborts with that error code. This allows for
  * a cgroup subsystem to conditionally allow or deny new forks.
  */
-int cgroup_can_fork(struct task_struct *child)
+int cgroup_can_fork(struct task_struct *child, unsigned long clone_flags,
+		    struct css_set **new_rgrp_csetp)
 {
 	struct cgroup_subsys *ss;
 	int i, j, ret;
@@ -5736,11 +5739,14 @@ out_revert:
 /**
  * cgroup_cancel_fork - called if a fork failed after cgroup_can_fork()
  * @child: the task in question
+ * @clone_flags: CLONE_* flags for @child
+ * @new_rgrp_cset: *@new_rgrp_csetp from cgroup_can_fork()
  *
  * This calls the cancel_fork() callbacks if a fork failed *after*
  * cgroup_can_fork() succeded.
  */
-void cgroup_cancel_fork(struct task_struct *child)
+void cgroup_cancel_fork(struct task_struct *child, unsigned long clone_flags,
+			struct css_set *new_rgrp_cset)
 {
 	struct cgroup_subsys *ss;
 	int i;
@@ -5753,6 +5759,8 @@ void cgroup_cancel_fork(struct task_struct *child)
 /**
  * cgroup_post_fork - called on a new task after adding it to the task list
  * @child: the task in question
+ * @clone_flags: CLONE_* flags for @child
+ * @new_rgrp_cset: *@new_rgrp_csetp from cgroup_can_fork()
  *
  * Adds the task to the list running through its css_set if necessary and
  * call the subsystem fork() callbacks.  Has to be after the task is
@@ -5760,7 +5768,8 @@ void cgroup_cancel_fork(struct task_struct *child)
  * cgroup_task_iter_start() - to guarantee that the new task ends up on its
  * list.
  */
-void cgroup_post_fork(struct task_struct *child)
+void cgroup_post_fork(struct task_struct *child, unsigned long clone_flags,
+		      struct css_set *new_rgrp_cset)
 {
 	struct cgroup_subsys *ss;
 	int i;
