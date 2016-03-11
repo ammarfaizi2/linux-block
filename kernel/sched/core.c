@@ -8747,6 +8747,35 @@ static int cpu_weight_write_u64(struct cgroup_subsys_state *css,
 
 	return sched_group_set_shares(css_tg(css), scale_load(weight));
 }
+
+static int cpu_cgroup_css_copy(struct cgroup_subsys_state *to,
+			       struct cgroup_subsys_state *from)
+{
+	struct task_group *to_tg = css_tg(to);
+	struct task_group *from_tg = css_tg(from);
+
+	return sched_group_set_shares(to_tg, from_tg->shares);
+}
+
+int cpu_cgroup_setpriority(struct cgroup_subsys_state *css, int nice)
+{
+	int prio = NICE_TO_PRIO(clamp_val(nice, MIN_NICE, MAX_NICE));
+	int weight = sched_prio_to_weight[prio - MAX_RT_PRIO];
+
+	return sched_group_set_shares(css_tg(css), scale_load(weight));
+}
+
+int cpu_cgroup_getpriority(struct cgroup_subsys_state *css)
+{
+	int weight = css_tg(css)->shares;
+	int idx;
+
+	for (idx = 0; idx < ARRAY_SIZE(sched_prio_to_weight) - 1; idx++)
+		if (weight >= sched_prio_to_weight[idx])
+			break;
+
+	return PRIO_TO_NICE(idx + MAX_RT_PRIO);
+}
 #endif
 
 static void __maybe_unused cpu_period_quota_print(struct seq_file *sf,
@@ -8835,6 +8864,9 @@ struct cgroup_subsys cpu_cgrp_subsys = {
 	.css_free	= cpu_cgroup_css_free,
 	.css_online	= cpu_cgroup_css_online,
 	.css_offline	= cpu_cgroup_css_offline,
+#ifdef CONFIG_FAIR_GROUP_SCHED
+	.css_copy	= cpu_cgroup_css_copy,
+#endif
 	.fork		= cpu_cgroup_fork,
 	.can_attach	= cpu_cgroup_can_attach,
 	.attach		= cpu_cgroup_attach,

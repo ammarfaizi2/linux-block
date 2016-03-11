@@ -57,6 +57,7 @@ struct rlimit64 {
 #define	PRIO_PROCESS	0
 #define	PRIO_PGRP	1
 #define	PRIO_USER	2
+#define	PRIO_RGRP	3
 
 /*
  * Limit the stack by to some sane default: root can always

@@ -41,6 +41,7 @@
 #include <linux/syscore_ops.h>
 #include <linux/version.h>
 #include <linux/ctype.h>
+#include <linux/cgroup.h>
 
 #include <linux/compat.h>
 #include <linux/syscalls.h>
@@ -181,7 +182,7 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 	struct pid *pgrp;
 	kuid_t uid;
 
-	if (which > PRIO_USER || which < PRIO_PROCESS)
+	if (which > PRIO_RGRP || which < PRIO_PROCESS)
 		goto out;
 
 	/* normalize: avoid signed division (rounding problems) */
@@ -190,6 +191,9 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 		niceval = MIN_NICE;
 	if (niceval > MAX_NICE)
 		niceval = MAX_NICE;
+
+	if (which == PRIO_RGRP)
+		return rgroup_setpriority(who, niceval);
 
 	rcu_read_lock();
 	read_lock(&tasklist_lock);
@@ -251,8 +255,11 @@ SYSCALL_DEFINE2(getpriority, int, which, int, who)
 	struct pid *pgrp;
 	kuid_t uid;
 
-	if (which > PRIO_USER || which < PRIO_PROCESS)
+	if (which > PRIO_RGRP || which < PRIO_PROCESS)
 		return -EINVAL;
+
+	if (which == PRIO_RGRP)
+		return rgroup_getpriority(who);
 
 	rcu_read_lock();
 	read_lock(&tasklist_lock);

@@ -6305,6 +6305,196 @@ void cgroup_free(struct task_struct *task)
 	put_css_set(cset);
 }
 
+/**
+ * task_rgroup_lock_and_drain_offline - lock a task's rgroup and drain
+ * @task: target task
+ *
+ * Look up @task's rgroup, lock, drain and return it.  If @task doesn't
+ * belong to a rgroup, ERR_PTR(-ENODEV) is returned.
+ */
+static struct cgroup *
+task_rgroup_lock_and_drain_offline(struct task_struct *task)
+{
+	struct cgroup *rgrp;
+
+retry:
+	rcu_read_lock();
+
+	do {
+		rgrp = task_css_set(task)->dfl_cgrp;
+		if (!is_rgroup(rgrp)) {
+			rcu_read_unlock();
+			return ERR_PTR(-ENODEV);
+		}
+
+		if (!cgroup_tryget(rgrp)) {
+			cpu_relax();
+			continue;
+		}
+	} while (false);
+
+	rcu_read_unlock();
+
+	cgroup_lock_and_drain_offline(rgrp);
+
+	/* did we race against migration? */
+	if (rgrp != task_css_set(task)->dfl_cgrp) {
+		cgroup_unlock();
+		goto retry;
+	}
+
+	/*
+	 * @task can't be moved to another cgroup while cgroup_mutex is
+	 * held.  No need to hold the extra reference.
+	 */
+	cgroup_put(rgrp);
+
+	return rgrp;
+}
+
+/**
+ * vpid_rgroup_lock_and_drain_offline - lock a vpid's rgroup and drain
+ * @vpid: target vpid
+ * @taskp: out paramter for the found task
+ *
+ * Look up the task for @vpid.  If @vpid is zero, %current is used.  If the
+ * task is found, look up its rgroup, lock, drain and return it.  On
+ * success, the task's refcnt is incremented and the *@taskp points to it.
+ * An ERR_PTR() value is returned on failure.
+ */
+static struct cgroup *
+vpid_rgroup_lock_and_drain_offline(pid_t vpid, struct task_struct **taskp)
+{
+	struct task_struct *task;
+	struct cgroup *rgrp;
+
+	rcu_read_lock();
+	if (vpid) {
+		task = find_task_by_vpid(vpid);
+		if (!task) {
+			rcu_read_unlock();
+			return ERR_PTR(-ESRCH);
+		}
+	} else {
+		task = current;
+	}
+	get_task_struct(task);
+	rcu_read_unlock();
+
+	rgrp = task_rgroup_lock_and_drain_offline(task);
+	if (IS_ERR(rgrp))
+		put_task_struct(task);
+	else
+		*taskp = task;
+
+	return rgrp;
+}
+
+/**
+ * rgroup_enable_subsys - enable a subsystem on a rgroup
+ * @rgrp: target rgroup
+ * @sgrp: nearest sgroup of @rgrp
+ * @ss: subsystem to enable
+ *
+ * Try to enable @ss on @rgrp.  On success, 0 is returned and @ss is
+ * enabled on @rgrp; otherwise, -errno is returned.  The caller must always
+ * call cgroup_finalize_control() afterwards.
+ */
+static int __maybe_unused rgroup_enable_subsys(struct cgroup *rgrp,
+					       struct cgroup *sgrp,
+					       struct cgroup_subsys *ss)
+{
+	struct cgroup *pos;
+	int ret;
+
+	lockdep_assert_held(&cgroup_mutex);
+
+	cgroup_save_control(sgrp);
+
+	for (pos = rgrp; pos != sgrp; pos = cgroup_parent(pos)) {
+		struct cgroup *parent = cgroup_parent(pos);
+
+		if (parent == sgrp)
+			pos->rgrp_sig->rgrp_subtree_control |= 1 << ss->id;
+		else
+			parent->subtree_control |= 1 << ss->id;
+	}
+
+	ret = cgroup_apply_control(sgrp);
+	if (ret)
+		return ret;
+
+	/* did control propagtion disable @ss? */
+	if (!cgroup_css(rgrp, ss))
+		return -ENODEV;
+
+	return 0;
+}
+
+int rgroup_setpriority(pid_t vpid, int nice)
+{
+	struct task_struct *task;
+	struct cgroup *rgrp;
+	struct cgroup *sgrp __maybe_unused;
+	int ret;
+
+	rgrp = vpid_rgroup_lock_and_drain_offline(vpid, &task);
+	if (IS_ERR(rgrp))
+		return PTR_ERR(rgrp);
+
+	/*
+	 * If @rgrp is top-level, it should be put under the same nice
+	 * level restriction as @task; otherwise, limits are already
+	 * applied higher up the hierarchy and there's no reason to
+	 * restrict nice levels.
+	 */
+	if (!is_rgroup(cgroup_parent(rgrp)) && !can_nice(task, nice)) {
+		ret = -EPERM;
+		goto out_unlock;
+	}
+
+	ret = -ENODEV;
+	/* do ifdef late to preserve the correct error response */
+#ifdef CONFIG_FAIR_GROUP_SCHED
+	sgrp = nearest_sgroup(rgrp);
+
+	/* enable cpu and apply weight */
+	ret = rgroup_enable_subsys(rgrp, sgrp, &cpu_cgrp_subsys);
+	if (!ret)
+		ret = cpu_cgroup_setpriority(cgroup_css(rgrp, &cpu_cgrp_subsys),
+					     nice);
+	cgroup_finalize_control(sgrp, ret);
+#endif
+
+out_unlock:
+	cgroup_unlock();
+	put_task_struct(task);
+	return ret;
+}
+
+int rgroup_getpriority(pid_t vpid)
+{
+	struct task_struct *task;
+	struct cgroup *rgrp;
+	int ret;
+
+	rgrp = vpid_rgroup_lock_and_drain_offline(vpid, &task);
+	if (IS_ERR(rgrp))
+		return PTR_ERR(rgrp);
+
+	ret = -ENODEV;
+	/* do ifdef late to preserve the correct error response */
+#ifdef CONFIG_FAIR_GROUP_SCHED
+	if (cgroup_css(rgrp, &cpu_cgrp_subsys)) {
+		ret = cpu_cgroup_getpriority(cgroup_css(rgrp, &cpu_cgrp_subsys));
+		ret = nice_to_rlimit(ret);
+	}
+#endif
+	cgroup_unlock();
+	put_task_struct(task);
+	return ret;
+}
+
 static void check_for_release(struct cgroup *cgrp)
 {
 	if (notify_on_release(cgrp) && !cgroup_is_populated(cgrp) &&

@@ -2371,6 +2371,11 @@ extern u64 scheduler_tick_max_deferment(void);
 static inline bool sched_can_stop_tick(void) { return false; }
 #endif
 
+#ifdef CONFIG_FAIR_GROUP_SCHED
+extern int cpu_cgroup_setpriority(struct cgroup_subsys_state *css, int nice);
+extern int cpu_cgroup_getpriority(struct cgroup_subsys_state *css);
+#endif
+
 #ifdef CONFIG_SCHED_AUTOGROUP
 extern void sched_autogroup_create_attach(struct task_struct *p);
 extern void sched_autogroup_detach(struct task_struct *p);
