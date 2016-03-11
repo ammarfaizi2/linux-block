@@ -47,6 +47,8 @@ CONTENTS
   5-3. IO
     5-3-1. IO Interface Files
     5-3-2. Writeback
+  5-4. Misc
+    5-4-1. perf_event
 P. Information on Kernel Programming
   P-1. Filesystem Support for Writeback
 D. Deprecated v1 Core Features
@@ -1089,6 +1091,16 @@ writeback as follows.
 	For cgroup writeback, this is calculated into ratio against
 	total available memory and applied the same way as
 	vm.dirty[_background]_ratio.
+
+
+5-4. Misc
+
+5-4-1. perf_event
+
+perf_event controller, if not mounted on a legacy hierarchy, is
+automatically enabled on the v2 hierarchy so that perf events can
+always be filtered by cgroup v2 path.  The controller can still be
+moved to a legacy hierarchy after v2 hierarchy is populated.
 
 
 P. Information on Kernel Programming
