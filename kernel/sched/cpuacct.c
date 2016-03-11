@@ -242,36 +242,33 @@ static int cpuacct_percpu_seq_show(struct seq_file *m, void *V)
 	return __cpuacct_percpu_seq_show(m, CPUACCT_USAGE_NRUSAGE);
 }
 
-static const char * const cpuacct_stat_desc[] = {
-	[CPUACCT_STAT_USER] = "user",
-	[CPUACCT_STAT_SYSTEM] = "system",
-};
+static void cpuacct_stats_read(struct cpuacct *ca, u64 *userp, u64 *sysp)
+{
+	int cpu;
+
+	*userp = 0;
+	for_each_possible_cpu(cpu) {
+		struct kernel_cpustat *kcpustat = per_cpu_ptr(ca->cpustat, cpu);
+		*userp += kcpustat->cpustat[CPUTIME_USER];
+		*userp += kcpustat->cpustat[CPUTIME_NICE];
+	}
+
+	*sysp = 0;
+	for_each_possible_cpu(cpu) {
+		struct kernel_cpustat *kcpustat = per_cpu_ptr(ca->cpustat, cpu);
+		*sysp += kcpustat->cpustat[CPUTIME_SYSTEM];
+		*sysp += kcpustat->cpustat[CPUTIME_IRQ];
+		*sysp += kcpustat->cpustat[CPUTIME_SOFTIRQ];
+	}
+}
 
 static int cpuacct_stats_show(struct seq_file *sf, void *v)
 {
-	struct cpuacct *ca = css_ca(seq_css(sf));
-	int cpu;
-	s64 val = 0;
+	cputime64_t user, sys;
 
-	for_each_possible_cpu(cpu) {
-		struct kernel_cpustat *kcpustat = per_cpu_ptr(ca->cpustat, cpu);
-		val += kcpustat->cpustat[CPUTIME_USER];
-		val += kcpustat->cpustat[CPUTIME_NICE];
-	}
-	val = cputime64_to_clock_t(val);
-	seq_printf(sf, "%s %lld\n", cpuacct_stat_desc[CPUACCT_STAT_USER], val);
-
-	val = 0;
-	for_each_possible_cpu(cpu) {
-		struct kernel_cpustat *kcpustat = per_cpu_ptr(ca->cpustat, cpu);
-		val += kcpustat->cpustat[CPUTIME_SYSTEM];
-		val += kcpustat->cpustat[CPUTIME_IRQ];
-		val += kcpustat->cpustat[CPUTIME_SOFTIRQ];
-	}
-
-	val = cputime64_to_clock_t(val);
-	seq_printf(sf, "%s %lld\n", cpuacct_stat_desc[CPUACCT_STAT_SYSTEM], val);
-
+	cpuacct_stats_read(css_ca(seq_css(sf)), &user, &sys);
+	seq_printf(sf, "user %lld\n", cputime64_to_clock_t(user));
+	seq_printf(sf, "system %lld\n", cputime64_to_clock_t(sys));
 	return 0;
 }
 
