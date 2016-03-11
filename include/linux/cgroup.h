@@ -101,7 +101,6 @@ int cgroupstats_build(struct cgroupstats *stats, struct dentry *dentry);
 int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
 		     struct pid *pid, struct task_struct *tsk);
 
-void cgroup_fork(struct task_struct *p);
 extern int cgroup_can_fork(struct task_struct *p, unsigned long clone_flags,
 			   struct css_set **new_rgrp_csetp);
 extern void cgroup_cancel_fork(struct task_struct *p, unsigned long clone_flags,
@@ -540,7 +539,6 @@ static inline int cgroup_attach_task_all(struct task_struct *from,
 static inline int cgroupstats_build(struct cgroupstats *stats,
 				    struct dentry *dentry) { return -EINVAL; }
 
-static inline void cgroup_fork(struct task_struct *p) {}
 static inline int cgroup_can_fork(struct task_struct *p,
 				  unsigned long clone_flags,
 				  struct css_set **new_rgrp_csetp) { return 0; }

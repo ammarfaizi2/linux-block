@@ -110,7 +110,7 @@ static DEFINE_SPINLOCK(cgroup_file_kn_lock);
  */
 static DEFINE_SPINLOCK(release_agent_path_lock);
 
-struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
+static struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
 
 #define cgroup_assert_mutex_or_rcu_locked()				\
 	RCU_LOCKDEP_WARN(!rcu_read_lock_held() &&			\
@@ -5688,17 +5688,46 @@ static const struct file_operations proc_cgroupstats_operations = {
 };
 
 /**
- * cgroup_fork - initialize cgroup related fields during copy_process()
- * @child: pointer to task_struct of forking parent process.
+ * cgroup_threadgroup_change_begin - threadgroup exclusion for cgroups
+ * @tsk: target task
+ * @child: child task if forking, NULL otherwise
+ * @clone_flags: clone flags if forking
  *
- * A task is associated with the init_css_set until cgroup_post_fork()
- * attaches it to the parent's css_set.  Empty cg_list indicates that
- * @child isn't holding reference to its css_set.
+ * Called from threadgroup_change_begin() and allows cgroup operations to
+ * synchronize against threadgroup changes using a percpu_rw_semaphore.
  */
-void cgroup_fork(struct task_struct *child)
+void cgroup_threadgroup_change_begin(struct task_struct *tsk,
+				     struct task_struct *child,
+				     unsigned long clone_flags)
 {
-	RCU_INIT_POINTER(child->cgroups, &init_css_set);
-	INIT_LIST_HEAD(&child->cg_list);
+	if (child) {
+		/*
+		 * A task is associated with the init_css_set until
+		 * cgroup_post_fork() attaches it to the parent's css_set.
+		 * Empty cg_list indicates that @child isn't holding
+		 * reference to its css_set.
+		 */
+		RCU_INIT_POINTER(child->cgroups, &init_css_set);
+		INIT_LIST_HEAD(&child->cg_list);
+	}
+
+	percpu_down_read(&cgroup_threadgroup_rwsem);
+}
+
+/**
+ * cgroup_threadgroup_change_end - threadgroup exclusion for cgroups
+ * @tsk: target task
+ * @child: child task if forking, NULL otherwise
+ * @clone_flags: clone flags if forking
+ *
+ * Called from threadgroup_change_end().  Counterpart of
+ * cgroup_threadcgroup_change_begin().
+ */
+void cgroup_threadgroup_change_end(struct task_struct *tsk,
+				   struct task_struct *child,
+				   unsigned long clone_flags)
+{
+	percpu_up_read(&cgroup_threadgroup_rwsem);
 }
 
 /**

@@ -2783,6 +2783,8 @@ static inline void unlock_task_sighand(struct task_struct *tsk,
 /**
  * threadgroup_change_begin - mark the beginning of changes to a threadgroup
  * @tsk: task causing the changes
+ * @child: child task if forking, NULL otherwise
+ * @clone_flags: clone flags if forking
  *
  * All operations which modify a threadgroup - a new thread joining the
  * group, death of a member thread (the assertion of PF_EXITING) and
@@ -2791,21 +2793,27 @@ static inline void unlock_task_sighand(struct task_struct *tsk,
  * subsystems needing threadgroup stability can hook into for
  * synchronization.
  */
-static inline void threadgroup_change_begin(struct task_struct *tsk)
+static inline void threadgroup_change_begin(struct task_struct *tsk,
+					    struct task_struct *child,
+					    unsigned long clone_flags)
 {
 	might_sleep();
-	cgroup_threadgroup_change_begin(tsk);
+	cgroup_threadgroup_change_begin(tsk, child, clone_flags);
 }
 
 /**
  * threadgroup_change_end - mark the end of changes to a threadgroup
  * @tsk: task causing the changes
+ * @child: child task if forking, NULL otherwise
+ * @clone_flags: clone flags if forking
  *
  * See threadgroup_change_begin().
  */
-static inline void threadgroup_change_end(struct task_struct *tsk)
+static inline void threadgroup_change_end(struct task_struct *tsk,
+					  struct task_struct *child,
+					  unsigned long clone_flags)
 {
-	cgroup_threadgroup_change_end(tsk);
+	cgroup_threadgroup_change_end(tsk, child, clone_flags);
 }
 
 #ifndef __HAVE_THREAD_FUNCTIONS
