@@ -2034,6 +2034,8 @@ static inline int is_global_init(struct task_struct *tsk)
 
 extern struct pid *cad_pid;
 
+extern void put_signal_struct(struct signal_struct *sig);
+
 extern void free_task(struct task_struct *tsk);
 #define get_task_struct(tsk) do { atomic_inc(&(tsk)->usage); } while(0)
 

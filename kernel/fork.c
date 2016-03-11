@@ -239,7 +239,7 @@ static inline void free_signal_struct(struct signal_struct *sig)
 	kmem_cache_free(signal_cachep, sig);
 }
 
-static inline void put_signal_struct(struct signal_struct *sig)
+void put_signal_struct(struct signal_struct *sig)
 {
 	if (atomic_dec_and_test(&sig->sigcnt))
 		free_signal_struct(sig);
