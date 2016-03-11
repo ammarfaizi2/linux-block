@@ -74,6 +74,11 @@ extern struct css_set init_css_set;
 #define cgroup_subsys_on_dfl(ss)						\
 	static_branch_likely(&ss ## _on_dfl_key)
 
+int cgroup_name(struct cgroup *cgrp, char *buf, size_t buflen);
+char * __must_check cgroup_path(struct cgroup *cgrp, char *buf, size_t buflen);
+void pr_cont_cgroup_name(struct cgroup *cgrp);
+void pr_cont_cgroup_path(struct cgroup *cgrp);
+
 bool css_has_online_children(struct cgroup_subsys_state *css);
 struct cgroup_subsys_state *css_from_id(int id, struct cgroup_subsys *ss);
 struct cgroup_subsys_state *cgroup_get_e_css(struct cgroup *cgroup,
@@ -520,32 +525,6 @@ static inline struct cftype *seq_cft(struct seq_file *seq)
 static inline struct cgroup_subsys_state *seq_css(struct seq_file *seq)
 {
 	return of_css(seq->private);
-}
-
-/*
- * Name / path handling functions.  All are thin wrappers around the kernfs
- * counterparts and can be called under any context.
- */
-
-static inline int cgroup_name(struct cgroup *cgrp, char *buf, size_t buflen)
-{
-	return kernfs_name(cgrp->kn, buf, buflen);
-}
-
-static inline char * __must_check cgroup_path(struct cgroup *cgrp, char *buf,
-					      size_t buflen)
-{
-	return kernfs_path(cgrp->kn, buf, buflen);
-}
-
-static inline void pr_cont_cgroup_name(struct cgroup *cgrp)
-{
-	pr_cont_kernfs_name(cgrp->kn);
-}
-
-static inline void pr_cont_cgroup_path(struct cgroup *cgrp)
-{
-	pr_cont_kernfs_path(cgrp->kn);
 }
 
 #else /* !CONFIG_CGROUPS */

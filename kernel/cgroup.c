@@ -618,6 +618,27 @@ static int notify_on_release(const struct cgroup *cgrp)
 static void cgroup_release_agent(struct work_struct *work);
 static void check_for_release(struct cgroup *cgrp);
 
+int cgroup_name(struct cgroup *cgrp, char *buf, size_t buflen)
+{
+	return kernfs_name(cgrp->kn, buf, buflen);
+}
+
+char * __must_check cgroup_path(struct cgroup *cgrp, char *buf, size_t buflen)
+{
+	return kernfs_path(cgrp->kn, buf, buflen);
+}
+EXPORT_SYMBOL_GPL(cgroup_path);
+
+void pr_cont_cgroup_name(struct cgroup *cgrp)
+{
+	pr_cont_kernfs_name(cgrp->kn);
+}
+
+void pr_cont_cgroup_path(struct cgroup *cgrp)
+{
+	pr_cont_kernfs_path(cgrp->kn);
+}
+
 /*
  * A cgroup can be associated with multiple css_sets as different tasks may
  * belong to different cgroups on different hierarchies.  In the other
