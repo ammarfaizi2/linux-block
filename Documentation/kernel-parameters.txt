@@ -1496,6 +1496,11 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			could change it dynamically, usually by
 			/sys/module/printk/parameters/ignore_loglevel.
 
+	ignore_rlimit_data
+			Ignore RLIMIT_DATA setting for data mappings,
+			print warning at first misuse.  Can be changed via
+			/sys/module/kernel/parameters/ignore_rlimit_data.
+
 	ihash_entries=	[KNL]
 			Set number of hash buckets for inode cache.
 
@@ -3522,6 +3527,11 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 	sbni=		[NET] Granch SBNI12 leased line adapter
 
 	sched_debug	[KNL] Enables verbose scheduler debug messages.
+
+	schedstats=	[KNL,X86] Enable or disable scheduled statistics.
+			Allowed values are enable and disable. This feature
+			incurs a small amount of overhead in the scheduler
+			but is useful for debugging and performance tuning.
 
 	skew_tick=	[KNL] Offset the periodic timer tick per cpu to mitigate
 			xtime_lock contention on larger systems, and/or RCU lock
