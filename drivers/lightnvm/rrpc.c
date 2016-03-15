@@ -310,8 +310,10 @@ static int rrpc_move_valid_pages(struct rrpc *rrpc, struct rrpc_block *rblk)
 	}
 
 	page = mempool_alloc(rrpc->page_pool, GFP_NOIO);
-	if (!page)
+	if (!page) {
+		bio_put(bio);
 		return -ENOMEM;
+	}
 
 	while ((slot = find_first_zero_bit(rblk->invalid_pages,
 					    nr_sec_per_blk)) < nr_sec_per_blk) {
