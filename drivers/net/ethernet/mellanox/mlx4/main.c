@@ -2849,7 +2849,8 @@ static int mlx4_init_affinity_hint(struct mlx4_dev *dev, int port, int eqn)
 	if (!zalloc_cpumask_var(&eq->affinity_mask, GFP_KERNEL))
 		return -ENOMEM;
 
-	cpumask_set_cpu(requested_cpu, eq->affinity_mask);
+	cpumask_set_cpu(cpumask_local_spread(requested_cpu, dev->numa_node),
+			eq->affinity_mask);
 
 	return 0;
 }
