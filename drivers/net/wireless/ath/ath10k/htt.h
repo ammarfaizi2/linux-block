@@ -1461,6 +1461,14 @@ struct htt_tx_mode_switch_ind {
 	struct htt_tx_mode_switch_record records[0];
 } __packed;
 
+struct htt_channel_change {
+	u8 pad[3];
+	__le32 freq;
+	__le32 center_freq1;
+	__le32 center_freq2;
+	__le32 phymode;
+} __packed;
+
 union htt_rx_pn_t {
 	/* WEP: 24-bit PN */
 	u32 pn24;
@@ -1511,6 +1519,7 @@ struct htt_resp {
 		struct htt_tx_fetch_ind tx_fetch_ind;
 		struct htt_tx_fetch_confirm tx_fetch_confirm;
 		struct htt_tx_mode_switch_ind tx_mode_switch_ind;
+		struct htt_channel_change chan_change;
 	};
 } __packed;
 
@@ -1767,11 +1776,11 @@ void ath10k_htt_tx_txq_update(struct ieee80211_hw *hw,
 void ath10k_htt_tx_txq_recalc(struct ieee80211_hw *hw,
 			      struct ieee80211_txq *txq);
 void ath10k_htt_tx_txq_sync(struct ath10k *ar);
-void ath10k_htt_tx_dec_pending(struct ath10k_htt *htt,
-			       bool is_mgmt);
-int ath10k_htt_tx_inc_pending(struct ath10k_htt *htt,
-			      bool is_mgmt,
-			      bool is_presp);
+void ath10k_htt_tx_dec_pending(struct ath10k_htt *htt);
+int ath10k_htt_tx_inc_pending(struct ath10k_htt *htt);
+void ath10k_htt_tx_mgmt_dec_pending(struct ath10k_htt *htt);
+int ath10k_htt_tx_mgmt_inc_pending(struct ath10k_htt *htt, bool is_mgmt,
+				   bool is_presp);
 
 int ath10k_htt_tx_alloc_msdu_id(struct ath10k_htt *htt, struct sk_buff *skb);
 void ath10k_htt_tx_free_msdu_id(struct ath10k_htt *htt, u16 msdu_id);
