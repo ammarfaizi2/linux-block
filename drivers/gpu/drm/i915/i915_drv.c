@@ -950,6 +950,19 @@ static int i915_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	struct intel_device_info *intel_info =
 		(struct intel_device_info *) ent->driver_data;
 
+	if (!(driver.driver_features & DRIVER_MODESET)) {
+		/*
+		 * Notify the HDA driver so that it doesn't block waiting for
+		 * i915 to become ready.
+		 */
+		i915_audio_component_stub_init(&pdev->dev);
+
+		/* Silently fail loading to not upset userspace. */
+		DRM_DEBUG_DRIVER("KMS and UMS disabled.\n");
+
+		return 0;
+	}
+
 	if (IS_PRELIMINARY_HW(intel_info) && !i915.preliminary_hw_support) {
 		DRM_INFO("This hardware requires preliminary hardware support.\n"
 			 "See CONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT, and/or modparam preliminary_hw_support\n");
@@ -979,8 +992,14 @@ static int i915_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 static void
 i915_pci_remove(struct pci_dev *pdev)
 {
-	struct drm_device *dev = pci_get_drvdata(pdev);
+	struct drm_device *dev;
 
+	if (!(driver.driver_features & DRIVER_MODESET)) {
+		i915_audio_component_stub_cleanup(&pdev->dev);
+		return;
+	}
+
+	dev = pci_get_drvdata(pdev);
 	drm_put_dev(dev);
 }
 
@@ -1747,24 +1766,15 @@ static int __init i915_init(void)
 		driver.driver_features &= ~DRIVER_MODESET;
 #endif
 
-	if (!(driver.driver_features & DRIVER_MODESET)) {
-		/* Silently fail loading to not upset userspace. */
-		DRM_DEBUG_DRIVER("KMS and UMS disabled.\n");
-		return 0;
-	}
-
 	if (i915.nuclear_pageflip)
 		driver.driver_features |= DRIVER_ATOMIC;
 
-	return drm_pci_init(&driver, &i915_pci_driver);
+	return pci_register_driver(&i915_pci_driver);
 }
 
 static void __exit i915_exit(void)
 {
-	if (!(driver.driver_features & DRIVER_MODESET))
-		return; /* Never loaded a driver. */
-
-	drm_pci_exit(&driver, &i915_pci_driver);
+	pci_unregister_driver(&i915_pci_driver);
 }
 
 module_init(i915_init);

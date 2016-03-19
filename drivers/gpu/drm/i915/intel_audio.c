@@ -835,3 +835,64 @@ void i915_audio_component_cleanup(struct drm_i915_private *dev_priv)
 	component_del(dev_priv->dev->dev, &i915_audio_component_bind_ops);
 	dev_priv->audio_component_registered = false;
 }
+
+static const struct i915_audio_component_ops i915_audio_component_stub_ops = {
+	.owner		= THIS_MODULE,
+	.disabled	= true,
+};
+
+static int i915_audio_component_stub_bind(struct device *i915_stub_dev,
+					  struct device *hda_dev, void *data)
+{
+	struct i915_audio_component *acomp = data;
+
+	if (WARN_ON(acomp->ops || acomp->dev))
+		return -EEXIST;
+
+	acomp->ops = &i915_audio_component_stub_ops;
+	acomp->dev = i915_stub_dev;
+
+	return 0;
+}
+
+static void i915_audio_component_stub_unbind(struct device *i915_stub_dev,
+					     struct device *hda_dev, void *data)
+{
+	struct i915_audio_component *acomp = data;
+
+	acomp->ops = NULL;
+	acomp->dev = NULL;
+}
+
+static const struct component_ops i915_audio_component_stub_bind_ops = {
+	.bind	= i915_audio_component_stub_bind,
+	.unbind	= i915_audio_component_stub_unbind,
+};
+
+static const struct file_operations component_stub_dev_ops = {
+	.owner = THIS_MODULE,
+};
+
+static bool i915_audio_component_stub_registered;
+
+void i915_audio_component_stub_init(struct device *dev)
+{
+	int ret;
+
+	ret = component_add(dev, &i915_audio_component_stub_bind_ops);
+	if (ret < 0) {
+		DRM_ERROR("failed to add audio stub component (%d)\n", ret);
+		return;
+	}
+
+	i915_audio_component_stub_registered = true;
+}
+
+void i915_audio_component_stub_cleanup(struct device *dev)
+{
+	if (!i915_audio_component_stub_registered)
+		return;
+
+	component_del(dev, &i915_audio_component_stub_bind_ops);
+	i915_audio_component_stub_registered = false;
+}

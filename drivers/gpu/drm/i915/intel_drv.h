@@ -1056,6 +1056,8 @@ void intel_audio_codec_enable(struct intel_encoder *encoder);
 void intel_audio_codec_disable(struct intel_encoder *encoder);
 void i915_audio_component_init(struct drm_i915_private *dev_priv);
 void i915_audio_component_cleanup(struct drm_i915_private *dev_priv);
+void i915_audio_component_stub_init(struct device *dev);
+void i915_audio_component_stub_cleanup(struct device *dev);
 
 /* intel_display.c */
 extern const struct drm_plane_funcs intel_plane_funcs;

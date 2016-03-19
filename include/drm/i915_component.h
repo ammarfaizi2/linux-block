@@ -39,6 +39,11 @@ struct i915_audio_component_ops {
 	 */
 	struct module *owner;
 	/**
+	 * @disabled: i915 driver loaded with modeset=0, the services provided
+	 * via the audio component interface are not available.
+	 */
+	bool disabled;
+	/**
 	 * @get_power: get the POWER_DOMAIN_AUDIO power well
 	 *
 	 * Request the power well to be turned on.
