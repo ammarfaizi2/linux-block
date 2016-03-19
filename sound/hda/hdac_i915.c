@@ -223,8 +223,18 @@ static int hdac_component_master_bind(struct device *dev)
 	if (ret < 0)
 		return ret;
 
-	if (WARN_ON(!(acomp->dev && acomp->ops && acomp->ops->get_power &&
-		      acomp->ops->put_power && acomp->ops->get_cdclk_freq))) {
+	if (WARN_ON(!(acomp->dev && acomp->ops))) {
+		ret = -EINVAL;
+		goto out_unbind;
+	}
+
+	if (acomp->ops->disabled) {
+		ret = -ENODEV;
+		goto out_unbind;
+	}
+
+	if (WARN_ON(!(acomp->ops->get_power && acomp->ops->put_power &&
+		      acomp->ops->get_cdclk_freq))) {
 		ret = -EINVAL;
 		goto out_unbind;
 	}
@@ -342,7 +352,7 @@ int snd_hdac_i915_init(struct hdac_bus *bus)
 	 */
 	request_module("i915");
 
-	if (!acomp->ops) {
+	if (!acomp->ops || acomp->ops->disabled) {
 		ret = -ENODEV;
 		goto out_master_del;
 	}
