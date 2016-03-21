@@ -3665,7 +3665,6 @@ static void rcu_report_exp_cpu_mult(struct rcu_state *rsp, struct rcu_node *rnp,
 
 /*
  * Report expedited quiescent state for specified rcu_data (CPU).
- * Caller must hold the rcu_state's exp_mutex.
  */
 static void rcu_report_exp_rdp(struct rcu_state *rsp, struct rcu_data *rdp,
 			       bool wake)
