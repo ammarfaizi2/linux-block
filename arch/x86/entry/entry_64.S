@@ -37,6 +37,8 @@
 #include <asm/pgtable_types.h>
 #include <asm/export.h>
 #include <asm/frame.h>
+#include <asm/alternative-asm.h>
+#include <asm/fsgs.h>
 #include <linux/err.h>
 
 .code64
@@ -852,6 +854,7 @@ ENTRY(\sym)
 	jnz	1f
 	.endif
 	call	paranoid_entry
+	/* r15: previous gs if FSGSBASE, otherwise %ebx: swapgs flag */
 	.else
 	call	error_entry
 	.endif
@@ -1121,6 +1124,7 @@ ENTRY(paranoid_entry)
 	SAVE_C_REGS 8
 	SAVE_EXTRA_REGS 8
 	ENCODE_FRAME_POINTER 8
+	ALTERNATIVE "", "jmp .Lparanoid_entry_wrgsbase", X86_FEATURE_FSGSBASE
 	movl	$1, %ebx
 	movl	$MSR_GS_BASE, %ecx
 	rdmsr
@@ -1129,6 +1133,24 @@ ENTRY(paranoid_entry)
 	SWAPGS
 	xorl	%ebx, %ebx
 1:	ret
+
+	/*
+	 * Faster version not using RDMSR, and also not assuming
+	 * anything about the previous GS value.
+	 * This allows the user to arbitarily change GS using
+	 * WRGSBASE. The kernel GS is at the bottom of the
+	 * IST stack.
+	 *
+	 * We don't use the %ebx flag in this case, gs is always
+	 * conditionally saved/restored in R15
+	 */
+.Lparanoid_entry_wrgsbase:
+	RDGSBASE_R15				# read previous gs
+	movq $~(EXCEPTION_STKSZ-1), %rax	# get ist stack mask
+	andq %rsp,%rax				# get bottom of stack
+	movq (%rax),%rdi			# get expected GS
+	WRGSBASE_RDI				# set gs for kernel
+	ret
 END(paranoid_entry)
 
 /*
@@ -1147,14 +1169,17 @@ ENTRY(paranoid_exit)
 	UNWIND_HINT_REGS
 	DISABLE_INTERRUPTS(CLBR_ANY)
 	TRACE_IRQS_OFF_DEBUG
+	ALTERNATIVE "", "jmp .Lparanoid_exit_wrgsbase", X86_FEATURE_FSGSBASE
 	testl	%ebx, %ebx			/* swapgs needed? */
-	jnz	paranoid_exit_no_swapgs
+	jnz	.Lparanoid_exit_no_swapgs
 	TRACE_IRQS_IRETQ
 	SWAPGS_UNSAFE_STACK
-	jmp	paranoid_exit_restore
-paranoid_exit_no_swapgs:
+	jmp	.Lparanoid_exit_restore
+.Lparanoid_exit_wrgsbase:
+	WRGSBASE_R15
+.Lparanoid_exit_no_swapgs:
 	TRACE_IRQS_IRETQ_DEBUG
-paranoid_exit_restore:
+.Lparanoid_exit_restore:
 	RESTORE_EXTRA_REGS
 	RESTORE_C_REGS
 	REMOVE_PT_GPREGS_FROM_STACK 8
@@ -1577,6 +1602,7 @@ end_repeat_nmi:
 	 * exceptions might do.
 	 */
 	call	paranoid_entry
+	/* r15: previous gs if FSGSBASE, otherwise %ebx swapgs flag */
 	UNWIND_HINT_REGS
 
 	/* paranoidentry do_nmi, 0; without TRACE_IRQS_OFF */
@@ -1584,10 +1610,14 @@ end_repeat_nmi:
 	movq	$-1, %rsi
 	call	do_nmi
 
+	ALTERNATIVE "", "jmp nmi_restore_wrgsbase", X86_FEATURE_FSGSBASE
 	testl	%ebx, %ebx			/* swapgs needed? */
 	jnz	nmi_restore
 nmi_swapgs:
 	SWAPGS_UNSAFE_STACK
+	jmp nmi_restore
+nmi_restore_wrgsbase:
+	WRGSBASE_R15
 nmi_restore:
 	RESTORE_EXTRA_REGS
 	RESTORE_C_REGS

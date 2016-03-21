@@ -1150,6 +1150,10 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 			clear_cpu_cap(c, X86_CR4_FSGSBASE);
 	}
 
+	/* Enable FSGSBASE instructions if available. */
+	if (cpu_has(c, X86_FEATURE_FSGSBASE))
+		cr4_set_bits(X86_CR4_FSGSBASE);
+
 	/*
 	 * The vendor-specific functions might have changed features.
 	 * Now we do "generic changes."
@@ -1555,14 +1559,24 @@ void cpu_init(void)
 	 */
 	if (!oist->ist[0]) {
 		char *estacks = per_cpu(exception_stacks, cpu);
+		char *top_of_this_stack = estacks;
+		void *kernel_gsbase = per_cpu(irq_stack_union.gs_base, cpu);
+		int i;
 
 		for (v = 0; v < N_EXCEPTION_STACKS; v++) {
-			estacks += exception_stack_sizes[v];
+			top_of_this_stack += exception_stack_sizes[v];
 			oist->ist[v] = t->x86_tss.ist[v] =
-					(unsigned long)estacks;
+					(unsigned long)top_of_this_stack;
 			if (v == DEBUG_STACK-1)
-				per_cpu(debug_stack_addr, cpu) = (unsigned long)estacks;
+				per_cpu(debug_stack_addr, cpu) = (unsigned long)top_of_this_stack;
 		}
+
+		/*
+		 * Store the kernel gsbase at the bottom of every IST
+		 * stack page so that paranoid_entry can find it.
+		 */
+		for (i = 0; estacks + i * PAGE_SIZE < top_of_this_stack; i++)
+			*(void **)(estacks + i * PAGE_SIZE) = kernel_gsbase;
 	}
 
 	t->x86_tss.io_bitmap_base = offsetof(struct tss_struct, io_bitmap);
