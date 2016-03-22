@@ -192,6 +192,7 @@ cache_type_store(struct device *dev, struct device_attribute *attr,
 		sdkp->WCE = wce;
 		sdkp->RCD = rcd;
 		sd_set_flush_flag(sdkp);
+		blk_queue_write_cache(sdp->request_queue, wce != 0);
 		return count;
 	}
 
@@ -2571,7 +2572,7 @@ sd_read_cache_type(struct scsi_disk *sdkp, unsigned char *buffer)
 				  sdkp->DPOFUA ? "supports DPO and FUA"
 				  : "doesn't support DPO or FUA");
 
-		return;
+		goto done;
 	}
 
 bad_sense:
@@ -2596,6 +2597,8 @@ defaults:
 	}
 	sdkp->RCD = 0;
 	sdkp->DPOFUA = 0;
+done:
+	blk_queue_write_cache(sdp->request_queue, sdkp->WCE != 0);
 }
 
 /*
