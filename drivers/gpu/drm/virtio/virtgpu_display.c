@@ -139,6 +139,8 @@ static void virtio_gpu_crtc_atomic_flush(struct drm_crtc *crtc,
 {
 	unsigned long flags;
 
+	msleep(16); /* simulate real hw */
+
 	spin_lock_irqsave(&crtc->dev->event_lock, flags);
 	if (crtc->state->event)
 		drm_crtc_send_vblank_event(crtc, crtc->state->event);
