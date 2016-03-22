@@ -906,6 +906,7 @@ static void nvme_set_queue_limits(struct nvme_ctrl *ctrl,
 	if (ctrl->vwc & NVME_CTRL_VWC_PRESENT)
 		blk_queue_flush(q, REQ_FLUSH | REQ_FUA);
 	blk_queue_virt_boundary(q, ctrl->page_size - 1);
+	blk_queue_write_cache(q, ctrl->vwc & NVME_CTRL_VWC_PRESENT);
 }
 
 /*
