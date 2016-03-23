@@ -102,7 +102,7 @@ struct writeback_control {
 
 static inline int wbc_to_write(struct writeback_control *wbc)
 {
-	if (wbc->sync_mode == WB_SYNC_ALL)
+	if (wbc->sync_mode == WB_SYNC_ALL || wbc->for_reclaim || wbc->for_sync)
 		return WRITE_SYNC;
 
 	return WRITE;
