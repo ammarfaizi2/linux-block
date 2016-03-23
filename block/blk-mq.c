@@ -29,6 +29,7 @@
 #include "blk.h"
 #include "blk-mq.h"
 #include "blk-mq-tag.h"
+#include "blk-wb.h"
 
 static DEFINE_MUTEX(all_q_mutex);
 static LIST_HEAD(all_q_list);
@@ -274,6 +275,9 @@ static void __blk_mq_free_request(struct blk_mq_hw_ctx *hctx,
 
 	if (rq->cmd_flags & REQ_MQ_INFLIGHT)
 		atomic_dec(&hctx->nr_active);
+
+	blk_buffered_writeback_done(q->rq_wb, rq);
+
 	rq->cmd_flags = 0;
 
 	clear_bit(REQ_ATOM_STARTED, &rq->atomic_flags);
@@ -1253,6 +1257,7 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	struct blk_plug *plug;
 	struct request *same_queue_rq = NULL;
 	blk_qc_t cookie;
+	bool wb_acct;
 
 	blk_queue_bounce(q, &bio);
 
@@ -1270,9 +1275,17 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
 	} else
 		request_count = blk_plug_queued_count(q);
 
+	wb_acct = blk_buffered_writeback_wait(q->rq_wb, bio, NULL);
+
 	rq = blk_mq_map_request(q, bio, &data);
-	if (unlikely(!rq))
+	if (unlikely(!rq)) {
+		if (wb_acct)
+			__blk_buffered_writeback_done(q->rq_wb);
 		return BLK_QC_T_NONE;
+	}
+
+	if (wb_acct)
+		rq->cmd_flags |= REQ_BUF_INFLIGHT;
 
 	cookie = blk_tag_to_qc_t(rq->tag, data.hctx->queue_num);
 
@@ -1349,6 +1362,7 @@ static blk_qc_t blk_sq_make_request(struct request_queue *q, struct bio *bio)
 	struct blk_map_ctx data;
 	struct request *rq;
 	blk_qc_t cookie;
+	bool wb_acct;
 
 	blk_queue_bounce(q, &bio);
 
@@ -1363,9 +1377,17 @@ static blk_qc_t blk_sq_make_request(struct request_queue *q, struct bio *bio)
 	    blk_attempt_plug_merge(q, bio, &request_count, NULL))
 		return BLK_QC_T_NONE;
 
+	wb_acct = blk_buffered_writeback_wait(q->rq_wb, bio, NULL);
+
 	rq = blk_mq_map_request(q, bio, &data);
-	if (unlikely(!rq))
+	if (unlikely(!rq)) {
+		if (wb_acct)
+			__blk_buffered_writeback_done(q->rq_wb);
 		return BLK_QC_T_NONE;
+	}
+
+	if (wb_acct)
+		rq->cmd_flags |= REQ_BUF_INFLIGHT;
 
 	cookie = blk_tag_to_qc_t(rq->tag, data.hctx->queue_num);
 
@@ -2018,6 +2040,9 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
 	/* mark the queue as mq asap */
 	q->mq_ops = set->ops;
 
+	if (blk_buffered_writeback_init(q))
+		return ERR_PTR(-ENOMEM);
+
 	q->queue_ctx = alloc_percpu(struct blk_mq_ctx);
 	if (!q->queue_ctx)
 		return ERR_PTR(-ENOMEM);
@@ -2084,6 +2109,7 @@ err_map:
 	kfree(q->queue_hw_ctx);
 err_percpu:
 	free_percpu(q->queue_ctx);
+	blk_buffered_writeback_exit(q);
 	return ERR_PTR(-ENOMEM);
 }
 EXPORT_SYMBOL(blk_mq_init_allocated_queue);
@@ -2095,6 +2121,8 @@ void blk_mq_free_queue(struct request_queue *q)
 	mutex_lock(&all_q_mutex);
 	list_del_init(&q->all_q_node);
 	mutex_unlock(&all_q_mutex);
+
+	blk_buffered_writeback_exit(q);
 
 	blk_mq_del_queue_tag_set(q);
 
