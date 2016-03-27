@@ -38,4 +38,3 @@ DECLARE_EXPORT(__hexagon_divsi3);
 DECLARE_EXPORT(__hexagon_modsi3);
 DECLARE_EXPORT(__hexagon_udivsi3);
 DECLARE_EXPORT(__hexagon_umodsi3);
-DECLARE_EXPORT(csum_tcpudp_magic);

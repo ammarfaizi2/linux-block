@@ -47,15 +47,6 @@ csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 		   __u8 proto, __wsum sum);
 #endif
 
-#ifndef csum_tcpudp_magic
-static inline __sum16
-csum_tcpudp_magic(__be32 saddr, __be32 daddr, __u32 len,
-		  __u8 proto, __wsum sum)
-{
-	return csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
-}
-#endif
-
 /*
  * this routine is used for miscellaneous IP-like checksums, mainly
  * in icmp.c

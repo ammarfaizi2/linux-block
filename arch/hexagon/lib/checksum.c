@@ -54,6 +54,7 @@ __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
 		(__force u64)saddr + (__force u64)daddr +
 		(__force u64)sum + ((len + proto) << 8));
 }
+EXPORT_SYMBOL(csum_tcpudp_magic);
 
 __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 			  __u32 len, __u8 proto, __wsum sum)

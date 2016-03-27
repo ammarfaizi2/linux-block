@@ -99,24 +99,6 @@ csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 
 
 /**
- * csum_tcpup_magic - Compute an IPv4 pseudo header checksum.
- * @saddr: source address
- * @daddr: destination address
- * @len: length of packet
- * @proto: ip protocol of packet
- * @sum: initial sum to be added in (32bit unfolded)
- *
- * Returns the 16bit pseudo header checksum the input data already
- * complemented and ready to be filled in.
- */
-static inline __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
-					__u32 len, __u8 proto,
-					__wsum sum)
-{
-	return csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
-}
-
-/**
  * csum_partial - Compute an internet checksum.
  * @buff: buffer to be checksummed
  * @len: length of buffer.

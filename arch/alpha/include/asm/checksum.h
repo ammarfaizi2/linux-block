@@ -10,12 +10,7 @@
  */
 extern __sum16 ip_fast_csum(const void *iph, unsigned int ihl);
 
-/*
- * computes the checksum of the TCP/UDP pseudo-header
- * returns a 16-bit checksum, already complemented
- */
-__sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
-			  __u32 len, __u8 proto, __wsum sum);
+#define _HAVE_ARCH_CSUM_TCPUDP_MAGIC
 
 __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 			  __u32 len, __u8 proto, __wsum sum);

@@ -64,17 +64,6 @@ csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 	return sum;
 }
 
-/*
- * computes the checksum of the TCP/UDP pseudo-header
- * returns a 16-bit checksum, already complemented
- */
-static inline __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
-					__u32 len, __u8 proto,
-					__wsum sum)
-{
-	return csum_fold(csum_tcpudp_nofold(saddr,daddr,len,proto,sum));
-}
-
 /**
  * ip_fast_csum - Compute the IPv4 header checksum efficiently.
  * iph: ipv4 header

@@ -17,9 +17,7 @@ unsigned int do_csum(const void *voidptr, int len);
 __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 			  __u32 len, __u8 proto, __wsum sum);
 
-#define csum_tcpudp_magic csum_tcpudp_magic
-__sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
-			  __u32 len, __u8 proto, __wsum sum);
+#define _HAVE_ARCH_CSUM_TCPUDP_MAGIC
 
 #include <asm-generic/checksum.h>
 
