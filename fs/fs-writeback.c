@@ -52,6 +52,7 @@ struct wb_writeback_work {
 	unsigned int range_cyclic:1;
 	unsigned int for_background:1;
 	unsigned int for_sync:1;	/* sync(2) WB_SYNC_ALL writeback */
+	unsigned int for_reclaim:1;	/* for mem reclaim */
 	unsigned int auto_free:1;	/* free on completion */
 	enum wb_reason reason;		/* why was writeback initiated? */
 
@@ -944,6 +945,17 @@ void wb_start_writeback(struct bdi_writeback *wb, long nr_pages,
 	work->reason	= reason;
 	work->auto_free	= 1;
 
+	switch (reason) {
+	case WB_REASON_TRY_TO_FREE_PAGES:
+	case WB_REASON_FREE_MORE_MEM:
+		work->for_reclaim = 1;
+	case WB_REASON_SYNC:
+		work->for_sync = 1;
+		break;
+	default:
+		break;
+	}
+
 	wb_queue_work(wb, work);
 }
 
@@ -1446,6 +1458,7 @@ static long writeback_sb_inodes(struct super_block *sb,
 		.for_kupdate		= work->for_kupdate,
 		.for_background		= work->for_background,
 		.for_sync		= work->for_sync,
+		.for_reclaim		= work->for_reclaim,
 		.range_cyclic		= work->range_cyclic,
 		.range_start		= 0,
 		.range_end		= LLONG_MAX,
