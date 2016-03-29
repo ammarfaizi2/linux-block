@@ -3,7 +3,6 @@
 #
 
 menu "I2C Hardware Bus support"
-	depends on HAS_IOMEM
 
 comment "PC SMBus host controller drivers"
 	depends on PCI
@@ -955,7 +954,6 @@ config I2C_OCTEON
 
 config I2C_XILINX
 	tristate "Xilinx I2C Controller"
-	depends on HAS_IOMEM
 	help
 	  If you say yes to this option, support will be included for the
 	  Xilinx I2C controller.

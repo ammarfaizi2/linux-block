@@ -5,7 +5,6 @@
 menuconfig MCB
 	   tristate "MCB support"
 	   default n
-	   depends on HAS_IOMEM
 	   help
 
 	   The MCB (MEN Chameleon Bus) is a Bus specific to MEN Mikroelektronik

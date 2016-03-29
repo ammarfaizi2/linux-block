@@ -74,7 +74,6 @@ config MTD_NAND_DENALI_SCRATCH_REG_ADDR
 config MTD_NAND_GPIO
 	tristate "GPIO assisted NAND Flash driver"
 	depends on GPIOLIB || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  This enables a NAND flash driver where control signals are
 	  connected to GPIO pins, and commands and data are communicated
@@ -207,7 +206,6 @@ config MTD_NAND_S3C2410_CLKSTOP
 
 config MTD_NAND_DISKONCHIP
 	tristate "DiskOnChip 2000, Millennium and Millennium Plus (NAND reimplementation)"
-	depends on HAS_IOMEM
 	select REED_SOLOMON
 	select REED_SOLOMON_DEC16
 	help
@@ -277,7 +275,6 @@ config MTD_NAND_DISKONCHIP_BBTWRITE
 
 config MTD_NAND_DOCG4
 	tristate "Support for DiskOnChip G4"
-	depends on HAS_IOMEM
 	select BCH
 	select BITREVERSE
 	help
@@ -311,7 +308,7 @@ config MTD_NAND_CAFE
 config MTD_NAND_CS553X
 	tristate "NAND support for CS5535/CS5536 (AMD Geode companion chip)"
 	depends on X86_32
-	depends on !UML && HAS_IOMEM
+	depends on !UML
 	help
 	  The CS553x companion chips for the AMD Geode processor
 	  include NAND flash controllers with built-in hardware ECC
@@ -411,7 +408,6 @@ config MTD_NAND_BCM47XXNFLASH
 
 config MTD_NAND_PLATFORM
 	tristate "Support for generic platform NAND driver"
-	depends on HAS_IOMEM
 	help
 	  This implements a generic NAND driver for on-SOC platform
 	  devices. You will need to provide platform-specific functions
@@ -465,7 +461,6 @@ config MTD_NAND_MPC5121_NFC
 config MTD_NAND_VF610_NFC
 	tristate "Support for Freescale NFC for VF610/MPC5125"
 	depends on (SOC_VF610 || COMPILE_TEST)
-	depends on HAS_IOMEM
 	help
 	  Enables support for NAND Flash Controller on some Freescale
 	  processors like the VF610, MPC5125, MCF54418 or Kinetis K70.
@@ -484,7 +479,6 @@ config MTD_NAND_MXC
 config MTD_NAND_SH_FLCTL
 	tristate "Support for NAND on Renesas SuperH FLCTL"
 	depends on SUPERH || COMPILE_TEST
-	depends on HAS_IOMEM
 	depends on HAS_DMA
 	help
 	  Several Renesas SuperH CPU has FLCTL. This option enables support

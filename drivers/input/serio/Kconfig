@@ -211,7 +211,6 @@ config SERIO_XILINX_XPS_PS2
 
 config SERIO_ALTERA_PS2
 	tristate "Altera UP PS/2 controller"
-	depends on HAS_IOMEM
 	help
 	  Say Y here if you have Altera University Program PS/2 ports.
 
@@ -244,7 +243,6 @@ config SERIO_PS2MULT
 
 config SERIO_ARC_PS2
 	tristate "ARC PS/2 support"
-	depends on HAS_IOMEM
 	help
 	  Say Y here if you have an ARC FPGA platform with a PS/2
 	  controller in it.

@@ -2,7 +2,6 @@ menuconfig STAGING_RDMA
         tristate "RDMA staging drivers"
 	depends on INFINIBAND
 	depends on PCI || BROKEN
-	depends on HAS_IOMEM
 	depends on NET
 	depends on INET
         default n

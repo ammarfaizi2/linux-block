@@ -1,6 +1,5 @@
 menuconfig CAN_C_CAN
 	tristate "Bosch C_CAN/D_CAN devices"
-	depends on HAS_IOMEM
 
 if CAN_C_CAN
 

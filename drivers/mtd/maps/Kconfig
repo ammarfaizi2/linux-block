@@ -1,6 +1,5 @@
 menu "Mapping drivers for chip access"
 	depends on MTD!=n
-	depends on HAS_IOMEM
 
 config MTD_COMPLEX_MAPPINGS
 	bool "Support non-linear mappings of flash chips"

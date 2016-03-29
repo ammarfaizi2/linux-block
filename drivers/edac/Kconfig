@@ -11,7 +11,7 @@ config EDAC_SUPPORT
 
 menuconfig EDAC
 	bool "EDAC (Error Detection And Correction) reporting"
-	depends on HAS_IOMEM && EDAC_SUPPORT
+	depends on EDAC_SUPPORT
 	help
 	  EDAC is designed to report errors in the core system.
 	  These are low-level errors that are reported in the CPU or

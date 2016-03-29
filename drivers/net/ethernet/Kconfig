@@ -56,7 +56,6 @@ source "drivers/net/ethernet/davicom/Kconfig"
 
 config DNET
 	tristate "Dave ethernet support (DNET)"
-	depends on HAS_IOMEM
 	select PHYLIB
 	---help---
 	  The Dave ethernet interface (DNET) is found on Qong Board FPGA.
@@ -143,7 +142,7 @@ source "drivers/net/ethernet/oki-semi/Kconfig"
 
 config ETHOC
 	tristate "OpenCores 10/100 Mbps Ethernet MAC support"
-	depends on HAS_IOMEM && HAS_DMA
+	depends on HAS_DMA
 	select MII
 	select PHYLIB
 	select CRC32

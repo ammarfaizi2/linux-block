@@ -1,5 +1,4 @@
 config CAN_IFI_CANFD
-	depends on HAS_IOMEM
 	tristate "IFI CAN_FD IP"
 	---help---
 	  This driver adds support for the I/F/I CAN_FD soft IP block

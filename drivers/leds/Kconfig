@@ -52,7 +52,6 @@ config LEDS_AAT1290
 config LEDS_BCM6328
 	tristate "LED Support for Broadcom BCM6328"
 	depends on LEDS_CLASS
-	depends on HAS_IOMEM
 	depends on OF
 	help
 	  This option enables support for LEDs connected to the BCM6328
@@ -61,7 +60,6 @@ config LEDS_BCM6328
 config LEDS_BCM6358
 	tristate "LED Support for Broadcom BCM6358"
 	depends on LEDS_CLASS
-	depends on HAS_IOMEM
 	depends on OF
 	help
 	  This option enables support for LEDs connected to the BCM6358
@@ -535,7 +533,7 @@ config LEDS_LM355x
 
 config LEDS_OT200
 	tristate "LED support for the Bachmann OT200"
-	depends on LEDS_CLASS && HAS_IOMEM && (X86_32 || COMPILE_TEST)
+	depends on LEDS_CLASS && (X86_32 || COMPILE_TEST)
 	help
 	  This option enables support for the LEDs on the Bachmann OT200.
 	  Say Y to enable LEDs on the Bachmann OT200.

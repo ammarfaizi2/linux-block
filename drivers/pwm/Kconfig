@@ -123,7 +123,6 @@ config PWM_BRCMSTB
 config PWM_CLPS711X
 	tristate "CLPS711X PWM support"
 	depends on ARCH_CLPS711X || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  Generic PWM framework driver for Cirrus Logic CLPS711X.
 
@@ -148,7 +147,6 @@ config PWM_EP93XX
 
 config PWM_FSL_FTM
 	tristate "Freescale FlexTimer Module (FTM) PWM support"
-	depends on HAS_IOMEM
 	depends on OF
 	select REGMAP_MMIO
 	help
@@ -160,7 +158,6 @@ config PWM_FSL_FTM
 
 config PWM_IMG
 	tristate "Imagination Technologies PWM driver"
-	depends on HAS_IOMEM
 	depends on MFD_SYSCON
 	depends on COMMON_CLK
 	depends on MIPS || COMPILE_TEST
@@ -248,7 +245,6 @@ config PWM_LPSS_PLATFORM
 config PWM_MTK_DISP
 	tristate "MediaTek display PWM driver"
 	depends on ARCH_MEDIATEK || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  Generic PWM framework driver for MediaTek disp-pwm device.
 	  The PWM is used to control the backlight brightness for display.
@@ -306,7 +302,6 @@ config PWM_PXA
 config PWM_RCAR
 	tristate "Renesas R-Car PWM support"
 	depends on ARCH_RCAR_GEN1 || ARCH_RCAR_GEN2 || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  This driver exposes the PWM Timer controller found in Renesas
 	  R-Car chips through the PWM API.
@@ -317,7 +312,6 @@ config PWM_RCAR
 config PWM_RENESAS_TPU
 	tristate "Renesas TPU PWM support"
 	depends on ARCH_RENESAS || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  This driver exposes the Timer Pulse Unit (TPU) PWM controller found
 	  in Renesas chips through the PWM API.
@@ -365,7 +359,7 @@ config PWM_STI
 config PWM_SUN4I
 	tristate "Allwinner PWM support"
 	depends on ARCH_SUNXI || COMPILE_TEST
-	depends on HAS_IOMEM && COMMON_CLK
+	depends on COMMON_CLK
 	help
 	  Generic PWM framework driver for Allwinner SoCs.
 

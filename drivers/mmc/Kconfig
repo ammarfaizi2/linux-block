@@ -4,7 +4,6 @@
 
 menuconfig MMC
 	tristate "MMC/SD/SDIO card support"
-	depends on HAS_IOMEM
 	help
 	  This selects MultiMediaCard, Secure Digital and Secure
 	  Digital I/O support.

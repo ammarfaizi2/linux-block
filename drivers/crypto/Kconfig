@@ -18,7 +18,7 @@ config CRYPTO_DEV_PADLOCK
 	  (so called VIA PadLock ACE, Advanced Cryptography Engine)
 	  that provides instructions for very fast cryptographic
 	  operations with supported algorithms.
-	  
+
 	  The instructions are used only when the CPU supports them.
 	  Otherwise software encryption is used.
 
@@ -423,7 +423,7 @@ config CRYPTO_DEV_ATMEL_SHA
 
 config CRYPTO_DEV_CCP
 	bool "Support for AMD Cryptographic Coprocessor"
-	depends on ((X86 && PCI) || (ARM64 && (OF_ADDRESS || ACPI))) && HAS_IOMEM
+	depends on ((X86 && PCI) || (ARM64 && (OF_ADDRESS || ACPI)))
 	help
 	  The AMD Cryptographic Coprocessor provides hardware offload support
 	  for encryption, hashing and related operations.
@@ -452,7 +452,7 @@ source "drivers/crypto/qat/Kconfig"
 
 config CRYPTO_DEV_QCE
 	tristate "Qualcomm crypto engine accelerator"
-	depends on (ARCH_QCOM || COMPILE_TEST) && HAS_DMA && HAS_IOMEM
+	depends on (ARCH_QCOM || COMPILE_TEST) && HAS_DMA
 	select CRYPTO_AES
 	select CRYPTO_DES
 	select CRYPTO_ECB

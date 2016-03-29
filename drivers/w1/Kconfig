@@ -1,6 +1,5 @@
 menuconfig W1
 	tristate "Dallas's 1-wire support"
-	depends on HAS_IOMEM
 	---help---
 	  Dallas' 1-wire bus is useful to connect slow 1-pin devices
 	  such as iButtons and thermal sensors.

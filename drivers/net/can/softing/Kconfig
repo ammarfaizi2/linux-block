@@ -1,6 +1,5 @@
 config CAN_SOFTING
 	tristate "Softing Gmbh CAN generic support"
-	depends on HAS_IOMEM
 	---help---
 	  Support for CAN cards from Softing Gmbh & some cards
 	  from Vector Gmbh.

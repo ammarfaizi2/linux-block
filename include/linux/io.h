@@ -73,6 +73,7 @@ static inline void devm_ioport_unmap(struct device *dev, void __iomem *addr)
 
 #define IOMEM_ERR_PTR(err) (__force void __iomem *)ERR_PTR(err)
 
+#ifdef CONFIG_HAS_IOMEM
 void __iomem *devm_ioremap(struct device *dev, resource_size_t offset,
 			   resource_size_t size);
 void __iomem *devm_ioremap_nocache(struct device *dev, resource_size_t offset,
@@ -89,6 +90,24 @@ void *devm_memremap(struct device *dev, resource_size_t offset,
 void devm_memunmap(struct device *dev, void *addr);
 
 void *__devm_memremap_pages(struct device *dev, struct resource *res);
+#else
+static inline void __iomem *devm_ioremap(struct device *dev, resource_size_t offset,
+			   resource_size_t size) { return NULL; }
+static inline void __iomem *devm_ioremap_nocache(struct device *dev, resource_size_t offset,
+				   resource_size_t size) { return NULL; }
+static inline void __iomem *devm_ioremap_wc(struct device *dev, resource_size_t offset,
+				   resource_size_t size) { return NULL; }
+static inline void devm_iounmap(struct device *dev, void __iomem *addr) {}
+static inline int check_signature(const volatile void __iomem *io_addr,
+			const unsigned char *signature, int length) { return -EINVAL; }
+static inline void devm_ioremap_release(struct device *dev, void *res) {}
+
+static inline void *devm_memremap(struct device *dev, resource_size_t offset,
+		size_t size, unsigned long flags) { return NULL; }
+static inline void devm_memunmap(struct device *dev, void *addr) {}
+
+//void *__devm_memremap_pages(struct device *dev, struct resource *res);
+#endif
 
 /*
  * Some systems do not have legacy ISA devices.

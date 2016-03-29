@@ -1,6 +1,6 @@
 config SSB_POSSIBLE
 	bool
-	depends on HAS_IOMEM && HAS_DMA
+	depends on HAS_DMA
 	default y
 
 menu "Sonics Silicon Backplane"

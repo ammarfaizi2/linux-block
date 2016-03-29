@@ -161,7 +161,7 @@ config BERLIN2_ADC
 
 config CC10001_ADC
 	tristate "Cosmic Circuits 10001 ADC driver"
-	depends on HAS_IOMEM && HAVE_CLK && REGULATOR
+	depends on HAVE_CLK && REGULATOR
 	select IIO_BUFFER
 	select IIO_TRIGGERED_BUFFER
 	help
@@ -185,7 +185,6 @@ config DA9150_GPADC
 config EXYNOS_ADC
 	tristate "Exynos ADC driver support"
 	depends on ARCH_EXYNOS || ARCH_S3C24XX || ARCH_S3C64XX || (OF && COMPILE_TEST)
-	depends on HAS_IOMEM
 	help
 	  Core support for the ADC block found in the Samsung EXYNOS series
 	  of SoCs for drivers such as the touchscreen and hwmon to use to share
@@ -225,7 +224,6 @@ config INA2XX_ADC
 config IMX7D_ADC
 	tristate "IMX7D ADC driver"
 	depends on ARCH_MXC || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  Say yes here to build support for IMX7D ADC.
 
@@ -306,7 +304,7 @@ config MEN_Z188_ADC
 
 config MXS_LRADC
         tristate "Freescale i.MX23/i.MX28 LRADC"
-        depends on (ARCH_MXS || COMPILE_TEST) && HAS_IOMEM
+        depends on (ARCH_MXS || COMPILE_TEST)
         depends on INPUT
         select STMP_DEVICE
         select IIO_BUFFER
@@ -465,7 +463,6 @@ config TWL6030_GPADC
 config VF610_ADC
 	tristate "Freescale vf610 ADC driver"
 	depends on OF
-	depends on HAS_IOMEM
 	select IIO_BUFFER
 	select IIO_TRIGGERED_BUFFER
 	help
@@ -488,7 +485,6 @@ config VIPERBOARD_ADC
 config XILINX_XADC
 	tristate "Xilinx XADC driver"
 	depends on ARCH_ZYNQ || MICROBLAZE || COMPILE_TEST
-	depends on HAS_IOMEM
 	select IIO_BUFFER
 	select IIO_TRIGGERED_BUFFER
 	help

@@ -33,7 +33,7 @@ config MARVELL_PHY
 	tristate "Drivers for Marvell PHYs"
 	---help---
 	  Currently has a driver for the 88E1011S
-	
+
 config DAVICOM_PHY
 	tristate "Drivers for Davicom PHYs"
 	---help---
@@ -189,7 +189,6 @@ config MDIO_CAVIUM
 config MDIO_OCTEON
 	tristate "Support for MDIO buses on Octeon and some ThunderX SOCs"
 	depends on 64BIT
-	depends on HAS_IOMEM
 	select MDIO_CAVIUM
 	help
 	  This module provides a driver for the Octeon and ThunderX MDIO
@@ -243,7 +242,7 @@ config MDIO_BUS_MUX_GPIO
 
 config MDIO_BUS_MUX_MMIOREG
 	tristate "Support for MMIO device-controlled MDIO bus multiplexers"
-	depends on OF_MDIO && HAS_IOMEM
+	depends on OF_MDIO
 	select MDIO_BUS_MUX
 	help
 	  This module provides a driver for MDIO bus multiplexers that
@@ -256,7 +255,6 @@ config MDIO_BUS_MUX_MMIOREG
 
 config MDIO_BCM_UNIMAC
 	tristate "Broadcom UniMAC MDIO bus controller"
-	depends on HAS_IOMEM
 	help
 	  This module provides a driver for the Broadcom UniMAC MDIO busses.
 	  This hardware can be found in the Broadcom GENET Ethernet MAC
@@ -266,7 +264,7 @@ config MDIO_BCM_UNIMAC
 config MDIO_BCM_IPROC
 	tristate "Broadcom iProc MDIO bus controller"
 	depends on ARCH_BCM_IPROC || COMPILE_TEST
-	depends on HAS_IOMEM && OF_MDIO
+	depends on OF_MDIO
 	help
 	  This module provides a driver for the MDIO busses found in the
 	  Broadcom iProc SoC's.

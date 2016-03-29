@@ -6,7 +6,6 @@ menu "Analog to digital converters"
 config AD7606
 	tristate "Analog Devices AD7606 ADC driver"
 	depends on GPIOLIB || COMPILE_TEST
-	depends on HAS_IOMEM
 	select IIO_BUFFER
 	select IIO_TRIGGERED_BUFFER
 	help
@@ -83,7 +82,6 @@ config AD7280
 config LPC32XX_ADC
 	tristate "NXP LPC32XX ADC"
 	depends on ARCH_LPC32XX || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  Say yes here to build support for the integrated ADC inside the
 	  LPC32XX SoC. Note that this feature uses the same hardware as the
@@ -95,7 +93,6 @@ config LPC32XX_ADC
 config SPEAR_ADC
 	tristate "ST SPEAr ADC"
 	depends on PLAT_SPEAR || COMPILE_TEST
-	depends on HAS_IOMEM
 	help
 	  Say yes here to build support for the integrated ADC inside the
 	  ST SPEAr SoC. Provides direct access via sysfs.

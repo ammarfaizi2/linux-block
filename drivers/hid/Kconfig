@@ -719,7 +719,7 @@ config HID_SONY
 	  * Logitech Harmony adapter for Sony Playstation 3 (Bluetooth)
 
 config SONY_FF
-	bool "Sony PS2/3/4 accessories force feedback support" 
+	bool "Sony PS2/3/4 accessories force feedback support"
 	depends on HID_SONY
 	select INPUT_FF_MEMLESS
 	---help---
@@ -899,7 +899,7 @@ config HID_ZYDACRON
 
 config HID_SENSOR_HUB
 	tristate "HID Sensors framework support"
-	depends on HID && HAS_IOMEM
+	depends on HID
 	select MFD_CORE
 	default n
 	---help---

@@ -17,14 +17,14 @@ config GENERIC_PHY
 
 config PHY_BERLIN_USB
 	tristate "Marvell Berlin USB PHY Driver"
-	depends on ARCH_BERLIN && RESET_CONTROLLER && HAS_IOMEM && OF
+	depends on ARCH_BERLIN && RESET_CONTROLLER && OF
 	select GENERIC_PHY
 	help
 	  Enable this to support the USB PHY on Marvell Berlin SoCs.
 
 config PHY_BERLIN_SATA
 	tristate "Marvell Berlin SATA PHY driver"
-	depends on ARCH_BERLIN && HAS_IOMEM && OF
+	depends on ARCH_BERLIN && OF
 	select GENERIC_PHY
 	help
 	  Enable this to support the SATA PHY on Marvell Berlin SoCs.
@@ -32,7 +32,7 @@ config PHY_BERLIN_SATA
 config ARMADA375_USBCLUSTER_PHY
 	def_bool y
 	depends on MACH_ARMADA_375 || COMPILE_TEST
-	depends on OF && HAS_IOMEM
+	depends on OF
 	select GENERIC_PHY
 
 config PHY_DM816X_USB
@@ -46,7 +46,6 @@ config PHY_DM816X_USB
 
 config PHY_EXYNOS_MIPI_VIDEO
 	tristate "S5P/EXYNOS SoC series MIPI CSI-2/DSI PHY driver"
-	depends on HAS_IOMEM
 	depends on ARCH_S5PV210 || ARCH_EXYNOS || COMPILE_TEST
 	select GENERIC_PHY
 	default y if ARCH_S5PV210 || ARCH_EXYNOS
@@ -67,7 +66,6 @@ config PHY_LPC18XX_USB_OTG
 
 config PHY_PXA_28NM_HSIC
 	tristate "Marvell USB HSIC 28nm PHY Driver"
-	depends on HAS_IOMEM
 	select GENERIC_PHY
 	help
 	  Enable this to support Marvell USB HSIC PHY driver for Marvell
@@ -78,7 +76,6 @@ config PHY_PXA_28NM_HSIC
 
 config PHY_PXA_28NM_USB2
 	tristate "Marvell USB 2.0 28nm PHY Driver"
-	depends on HAS_IOMEM
 	select GENERIC_PHY
 	help
 	  Enable this to support Marvell USB 2.0 PHY driver for Marvell
@@ -104,7 +101,6 @@ config PHY_MIPHY28LP
 config PHY_MIPHY365X
 	tristate "STMicroelectronics MIPHY365X PHY driver for STiH41x series"
 	depends on ARCH_STI
-	depends on HAS_IOMEM
 	depends on OF
 	select GENERIC_PHY
 	help
@@ -193,7 +189,6 @@ config BCM_KONA_USB2_PHY
 config PHY_EXYNOS5250_SATA
 	tristate "Exynos5250 Sata SerDes/PHY driver"
 	depends on SOC_EXYNOS5250
-	depends on HAS_IOMEM
 	depends on OF
 	select GENERIC_PHY
 	select I2C
@@ -207,7 +202,7 @@ config PHY_EXYNOS5250_SATA
 
 config PHY_HIX5HD2_SATA
 	tristate "HIX5HD2 SATA PHY Driver"
-	depends on ARCH_HIX5HD2 && OF && HAS_IOMEM
+	depends on ARCH_HIX5HD2 && OF
 	select GENERIC_PHY
 	select MFD_SYSCON
 	help
@@ -234,7 +229,7 @@ config PHY_HI6220_USB
 
 config PHY_SUN4I_USB
 	tristate "Allwinner sunxi SoC USB PHY driver"
-	depends on ARCH_SUNXI && HAS_IOMEM && OF
+	depends on ARCH_SUNXI && OF
 	depends on RESET_CONTROLLER
 	depends on EXTCON
 	depends on POWER_SUPPLY
@@ -248,7 +243,7 @@ config PHY_SUN4I_USB
 
 config PHY_SUN9I_USB
 	tristate "Allwinner sun9i SoC USB PHY driver"
-	depends on ARCH_SUNXI && HAS_IOMEM && OF
+	depends on ARCH_SUNXI && OF
 	depends on RESET_CONTROLLER
 	depends on USB_COMMON
 	select GENERIC_PHY
@@ -260,7 +255,6 @@ config PHY_SUN9I_USB
 
 config PHY_SAMSUNG_USB2
 	tristate "Samsung USB 2.0 PHY driver"
-	depends on HAS_IOMEM
 	depends on USB_EHCI_EXYNOS || USB_OHCI_EXYNOS || USB_DWC2
 	select GENERIC_PHY
 	select MFD_SYSCON
@@ -299,7 +293,6 @@ config PHY_EXYNOS5250_USB2
 config PHY_EXYNOS5_USBDRD
 	tristate "Exynos5 SoC series USB DRD PHY driver"
 	depends on ARCH_EXYNOS && OF
-	depends on HAS_IOMEM
 	depends on USB_DWC3_EXYNOS
 	select GENERIC_PHY
 	select MFD_SYSCON
@@ -319,14 +312,12 @@ config PHY_PISTACHIO_USB
 config PHY_QCOM_APQ8064_SATA
 	tristate "Qualcomm APQ8064 SATA SerDes/PHY driver"
 	depends on ARCH_QCOM
-	depends on HAS_IOMEM
 	depends on OF
 	select GENERIC_PHY
 
 config PHY_QCOM_IPQ806X_SATA
 	tristate "Qualcomm IPQ806x SATA SerDes/PHY driver"
 	depends on ARCH_QCOM
-	depends on HAS_IOMEM
 	depends on OF
 	select GENERIC_PHY
 
@@ -367,7 +358,7 @@ config PHY_ST_SPEAR1340_MIPHY
 
 config PHY_XGENE
 	tristate "APM X-Gene 15Gbps PHY support"
-	depends on HAS_IOMEM && OF && (ARM64 || COMPILE_TEST)
+	depends on OF && (ARM64 || COMPILE_TEST)
 	select GENERIC_PHY
 	help
 	  This option enables support for APM X-Gene SoC multi-purpose PHY.

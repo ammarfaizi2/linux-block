@@ -12,7 +12,6 @@ config HAVE_PATA_PLATFORM
 
 menuconfig ATA
 	tristate "Serial ATA and Parallel ATA drivers (libata)"
-	depends on HAS_IOMEM
 	depends on BLOCK
 	depends on !(M32R || M68K || S390) || BROKEN
 	select SCSI

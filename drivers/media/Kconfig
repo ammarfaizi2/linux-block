@@ -4,7 +4,6 @@
 
 menuconfig MEDIA_SUPPORT
 	tristate "Multimedia support"
-	depends on HAS_IOMEM
 	help
 	  If you want to use Webcams, Video grabber devices and/or TV devices
 	  enable this option and other options below.
@@ -186,7 +185,6 @@ comment "Media ancillary drivers (tuners, sensors, i2c, frontends)"
 config MEDIA_SUBDRV_AUTOSELECT
 	bool "Autoselect ancillary drivers (tuners, sensors, i2c, frontends)"
 	depends on MEDIA_ANALOG_TV_SUPPORT || MEDIA_DIGITAL_TV_SUPPORT || MEDIA_CAMERA_SUPPORT || MEDIA_SDR_SUPPORT
-	depends on HAS_IOMEM
 	select I2C
 	select I2C_MUX
 	default y

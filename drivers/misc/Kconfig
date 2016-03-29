@@ -192,7 +192,7 @@ config ICS932S401
 
 config ATMEL_SSC
 	tristate "Device driver for Atmel SSC peripheral"
-	depends on HAS_IOMEM && (AVR32 || ARCH_AT91 || COMPILE_TEST)
+	depends on AVR32 || ARCH_AT91 || COMPILE_TEST
 	---help---
 	  This option enables device driver support for Atmel Synchronized
 	  Serial Communication peripheral (SSC).
@@ -510,7 +510,6 @@ config LATTICE_ECP3_CONFIG
 
 config SRAM
 	bool "Generic on-chip SRAM driver"
-	depends on HAS_IOMEM
 	select GENERIC_ALLOCATOR
 	help
 	  This driver allows you to declare a memory region to be managed by

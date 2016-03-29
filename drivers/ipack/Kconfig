@@ -4,7 +4,6 @@
 
 menuconfig IPACK_BUS
 	tristate "IndustryPack bus support"
-	depends on HAS_IOMEM
 	---help---
 	  This option provides support for the IndustryPack framework.  There
 	  are IndustryPack carrier boards, which interface another bus (such as
