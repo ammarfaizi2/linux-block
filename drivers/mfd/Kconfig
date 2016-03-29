@@ -2,7 +2,6 @@
 # Multifunction miscellaneous devices
 #
 
-if HAS_IOMEM
 menu "Multifunction device drivers"
 
 config MFD_CORE
@@ -1579,4 +1578,3 @@ config MFD_VEXPRESS_SYSREG
 	  on the ARM Ltd. Versatile Express board.
 
 endmenu
-endif
