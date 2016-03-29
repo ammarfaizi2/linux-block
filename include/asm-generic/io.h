@@ -753,7 +753,7 @@ static inline void *phys_to_virt(unsigned long address)
  * ioremap_*() variant as defined to itself to avoid the default NULL return.
  */
 
-#ifdef CONFIG_MMU
+#if defined(CONFIG_MMU) && defined(CONFIG_HAS_IOMEM)
 
 #ifndef ioremap_uc
 #define ioremap_uc ioremap_uc
