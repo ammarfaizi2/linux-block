@@ -128,6 +128,9 @@ EXPORT_SYMBOL_GPL(snd_hdac_get_display_clk);
  * Pin Widget 4 - PORT B (port = 1 in i915 driver)
  * Pin Widget 5 - PORT C (port = 2 in i915 driver)
  * Pin Widget 6 - PORT D (port = 3 in i915 driver)
+ *
+ * on earlier models:
+ * Pin Widget 3 - PORT B
  */
 static int pin2port(struct hdac_device *codec, hda_nid_t pin_nid)
 {
@@ -139,6 +142,11 @@ static int pin2port(struct hdac_device *codec, hda_nid_t pin_nid)
 	case 0x80862882: /* VLV */
 		base_nid = 3;
 		break;
+	case 0x80862802: /* Cantiga */
+	case 0x80862803: /* Eaglelake */
+		if (WARN_ON(pin_nid != 0x03))
+			return -1;
+		return 1; /* only port B */
 	default:
 		base_nid = 4;
 		break;

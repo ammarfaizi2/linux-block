@@ -2286,6 +2286,12 @@ static void intel_pin_eld_notify(void *audio_ptr, int port)
 	case 0x80862882: /* VLV */
 		pin_nid = port + 0x03;
 		break;
+	case 0x80862802: /* Cantiga */
+	case 0x80862803: /* Eaglelake */
+		if (WARN_ON(port != 1)) /* assume only port B */
+			return;
+		pin_nid = 0x03;
+		break;
 	default:
 		pin_nid = port + 0x04;
 		break;
@@ -2424,7 +2430,7 @@ static int patch_i915_byt_hdmi(struct hda_codec *codec)
 	return 0;
 }
 
-/* Intel IronLake, SandyBridge and IvyBridge; with eld notifier */
+/* Intel Gen4, IronLake, SandyBridge and IvyBridge; with eld notifier */
 static int patch_i915_cpt_hdmi(struct hda_codec *codec)
 {
 	struct hdmi_spec *spec;
@@ -3628,8 +3634,8 @@ HDA_CODEC_ENTRY(0x11069f84, "VX11 HDMI/DP",	patch_generic_hdmi),
 HDA_CODEC_ENTRY(0x11069f85, "VX11 HDMI/DP",	patch_generic_hdmi),
 HDA_CODEC_ENTRY(0x80860054, "IbexPeak HDMI",	patch_i915_cpt_hdmi),
 HDA_CODEC_ENTRY(0x80862801, "Bearlake HDMI",	patch_generic_hdmi),
-HDA_CODEC_ENTRY(0x80862802, "Cantiga HDMI",	patch_generic_hdmi),
-HDA_CODEC_ENTRY(0x80862803, "Eaglelake HDMI",	patch_generic_hdmi),
+HDA_CODEC_ENTRY(0x80862802, "Cantiga HDMI",	patch_i915_cpt_hdmi),
+HDA_CODEC_ENTRY(0x80862803, "Eaglelake HDMI",	patch_i915_cpt_hdmi),
 HDA_CODEC_ENTRY(0x80862804, "IbexPeak HDMI",	patch_i915_cpt_hdmi),
 HDA_CODEC_ENTRY(0x80862805, "CougarPoint HDMI",	patch_i915_cpt_hdmi),
 HDA_CODEC_ENTRY(0x80862806, "PantherPoint HDMI", patch_i915_cpt_hdmi),
