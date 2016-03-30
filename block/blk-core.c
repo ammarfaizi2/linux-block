@@ -39,6 +39,7 @@
 
 #include "blk.h"
 #include "blk-mq.h"
+#include "blk-wb.h"
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
@@ -863,6 +864,9 @@ blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
 	 */
 	blk_queue_make_request(q, blk_queue_bio);
 
+	if (blk_wb_init(q))
+		goto fail;
+
 	q->sg_reserved_size = INT_MAX;
 
 	/* Protect q->elevator from elevator_change */
@@ -880,6 +884,7 @@ blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
 
 fail:
 	blk_free_flush_queue(q->fq);
+	blk_wb_exit(q);
 	return NULL;
 }
 EXPORT_SYMBOL(blk_init_allocated_queue);
@@ -1485,6 +1490,8 @@ void __blk_put_request(struct request_queue *q, struct request *req)
 	/* this is a bio leak */
 	WARN_ON(req->bio != NULL);
 
+	blk_wb_done(q->rq_wb, req);
+
 	/*
 	 * Request may not have originated from ll_rw_blk. if not,
 	 * it didn't come out of our reserved rq pools
@@ -1714,6 +1721,7 @@ static blk_qc_t blk_queue_bio(struct request_queue *q, struct bio *bio)
 	int el_ret, rw_flags, where = ELEVATOR_INSERT_SORT;
 	struct request *req;
 	unsigned int request_count = 0;
+	bool wb_acct;
 
 	/*
 	 * low level driver can indicate that it wants pages above a
@@ -1766,6 +1774,8 @@ static blk_qc_t blk_queue_bio(struct request_queue *q, struct bio *bio)
 	}
 
 get_rq:
+	wb_acct = blk_wb_wait(q->rq_wb, bio, q->queue_lock);
+
 	/*
 	 * This sync check and mask will be re-done in init_request_from_bio(),
 	 * but we need to set it earlier to expose the sync flag to the
@@ -1781,10 +1791,15 @@ get_rq:
 	 */
 	req = get_request(q, rw_flags, bio, GFP_NOIO);
 	if (IS_ERR(req)) {
+		if (wb_acct)
+			__blk_wb_done(q->rq_wb);
 		bio->bi_error = PTR_ERR(req);
 		bio_endio(bio);
 		goto out_unlock;
 	}
+
+	if (wb_acct)
+		req->cmd_flags |= REQ_BUF_INFLIGHT;
 
 	/*
 	 * After dropping the lock and possibly sleeping here, our request

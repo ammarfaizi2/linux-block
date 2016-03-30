@@ -13,6 +13,7 @@
 
 #include "blk.h"
 #include "blk-mq.h"
+#include "blk-wb.h"
 
 struct queue_sysfs_entry {
 	struct attribute attr;
@@ -347,6 +348,76 @@ static ssize_t queue_poll_store(struct request_queue *q, const char *page,
 	return ret;
 }
 
+static ssize_t queue_wb_stats_show(struct request_queue *q, char *page)
+{
+	struct rq_wb *wb = q->rq_wb;
+
+	if (!q->rq_wb)
+		return -EINVAL;
+
+	return sprintf(page, "idle=%d, normal=%d, max=%d, inflight=%d, wait=%d,"
+				" timer=%d, bdp_wait=%d\n", wb->wb_idle,
+					wb->wb_normal, wb->wb_max,
+					atomic_read(&wb->inflight),
+					waitqueue_active(&wb->wait),
+					timer_pending(&wb->timer),
+					*wb->bdp_wait);
+}
+
+static ssize_t queue_wb_perc_show(struct request_queue *q, char *page)
+{
+	if (!q->rq_wb)
+		return -EINVAL;
+
+	return queue_var_show(q->rq_wb->perc, page);
+}
+
+static ssize_t queue_wb_perc_store(struct request_queue *q, const char *page,
+				   size_t count)
+{
+	unsigned long perc;
+	ssize_t ret;
+
+	if (!q->rq_wb)
+		return -EINVAL;
+
+	ret = queue_var_store(&perc, page, count);
+	if (ret < 0)
+		return ret;
+	if (perc > 100)
+		return -EINVAL;
+
+	q->rq_wb->perc = perc;
+	blk_wb_update_limits(q->rq_wb, blk_queue_depth(q));
+	return ret;
+}
+
+static ssize_t queue_wb_cache_delay_show(struct request_queue *q, char *page)
+{
+	if (!q->rq_wb)
+		return -EINVAL;
+
+	return queue_var_show(q->rq_wb->cache_delay_usecs, page);
+}
+
+static ssize_t queue_wb_cache_delay_store(struct request_queue *q,
+					  const char *page, size_t count)
+{
+	unsigned long var;
+	ssize_t ret;
+
+	if (!q->rq_wb)
+		return -EINVAL;
+
+	ret = queue_var_store(&var, page, count);
+	if (ret < 0)
+		return ret;
+
+	q->rq_wb->cache_delay_usecs = var;
+	q->rq_wb->cache_delay = usecs_to_jiffies(var);
+	return ret;
+}
+
 static ssize_t queue_wc_show(struct request_queue *q, char *page)
 {
 	if (test_bit(QUEUE_FLAG_WC, &q->queue_flags))
@@ -516,6 +587,21 @@ static struct queue_sysfs_entry queue_wc_entry = {
 	.store = queue_wc_store,
 };
 
+static struct queue_sysfs_entry queue_wb_stats_entry = {
+	.attr = {.name = "wb_stats", .mode = S_IRUGO },
+	.show = queue_wb_stats_show,
+};
+static struct queue_sysfs_entry queue_wb_cache_delay_entry = {
+	.attr = {.name = "wb_cache_usecs", .mode = S_IRUGO | S_IWUSR },
+	.show = queue_wb_cache_delay_show,
+	.store = queue_wb_cache_delay_store,
+};
+static struct queue_sysfs_entry queue_wb_perc_entry = {
+	.attr = {.name = "wb_percent", .mode = S_IRUGO | S_IWUSR },
+	.show = queue_wb_perc_show,
+	.store = queue_wb_perc_store,
+};
+
 static struct attribute *default_attrs[] = {
 	&queue_requests_entry.attr,
 	&queue_ra_entry.attr,
@@ -542,6 +628,9 @@ static struct attribute *default_attrs[] = {
 	&queue_random_entry.attr,
 	&queue_poll_entry.attr,
 	&queue_wc_entry.attr,
+	&queue_wb_stats_entry.attr,
+	&queue_wb_cache_delay_entry.attr,
+	&queue_wb_perc_entry.attr,
 	NULL,
 };
 
