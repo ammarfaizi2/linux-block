@@ -658,6 +658,24 @@ cpu_needs_another_gp(struct rcu_state *rsp, struct rcu_data *rdp)
 	return false; /* No grace period needed. */
 }
 
+
+/*
+ * Test call_rcu() from idle.  Used only when rcutorture is built directly
+ * into the kernel.
+ */
+struct rcu_fi_cb {
+	struct rcu_head rcu;
+	bool inflight;
+};
+
+static DEFINE_PER_CPU(struct rcu_fi_cb, rcu_inflight);
+static void rcu_callback_fi(struct rcu_head *rhp)
+{
+	struct rcu_fi_cb *sp = container_of(rhp, struct rcu_fi_cb, rcu);
+
+	smp_store_release(&sp->inflight, false); /* Prevent early retrigger. */
+}
+
 /*
  * rcu_eqs_enter_common - current CPU is moving towards extended quiescent state
  *
@@ -748,6 +766,15 @@ void rcu_idle_enter(void)
 	local_irq_save(flags);
 	rcu_eqs_enter(false);
 	rcu_sysidle_enter(0);
+	if (IS_ENABLED(CONFIG_RCU_TORTURE_TEST)) {
+		struct rcu_fi_cb *sp = this_cpu_ptr(&rcu_inflight);
+
+		/* Do this only when rcutorture is built in. */
+		if (!smp_load_acquire(&sp->inflight)) { /* Pair with CB. */
+			smp_store_release(&sp->inflight, true);
+			call_rcu(&sp->rcu, rcu_callback_fi);
+		}
+	}
 	local_irq_restore(flags);
 }
 EXPORT_SYMBOL_GPL(rcu_idle_enter);
