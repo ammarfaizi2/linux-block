@@ -31,6 +31,8 @@
 /* when under memory pressure rx ring refill may fail and needs a retry */
 #define HTT_RX_RING_REFILL_RETRY_MS 50
 
+#define HTT_RX_RING_REFILL_RESCHED_MS 5
+
 static int ath10k_htt_rx_get_csum_state(struct sk_buff *skb);
 static void ath10k_htt_txrx_compl_task(unsigned long ptr);
 
@@ -192,7 +194,8 @@ static void ath10k_htt_rx_msdu_buff_replenish(struct ath10k_htt *htt)
 		mod_timer(&htt->rx_ring.refill_retry_timer, jiffies +
 			  msecs_to_jiffies(HTT_RX_RING_REFILL_RETRY_MS));
 	} else if (num_deficit > 0) {
-		tasklet_schedule(&htt->rx_replenish_task);
+		mod_timer(&htt->rx_ring.refill_retry_timer, jiffies +
+			  msecs_to_jiffies(HTT_RX_RING_REFILL_RESCHED_MS));
 	}
 	spin_unlock_bh(&htt->rx_ring.lock);
 }
@@ -223,10 +226,8 @@ int ath10k_htt_rx_ring_refill(struct ath10k *ar)
 void ath10k_htt_rx_free(struct ath10k_htt *htt)
 {
 	del_timer_sync(&htt->rx_ring.refill_retry_timer);
-	tasklet_kill(&htt->rx_replenish_task);
 	tasklet_kill(&htt->txrx_compl_task);
 
-	skb_queue_purge(&htt->tx_compl_q);
 	skb_queue_purge(&htt->rx_compl_q);
 	skb_queue_purge(&htt->rx_in_ord_compl_q);
 	skb_queue_purge(&htt->tx_fetch_ind_q);
@@ -282,7 +283,6 @@ static inline struct sk_buff *ath10k_htt_rx_netbuf_pop(struct ath10k_htt *htt)
 
 /* return: < 0 fatal error, 0 - non chained msdu, 1 chained msdu */
 static int ath10k_htt_rx_amsdu_pop(struct ath10k_htt *htt,
-				   u8 **fw_desc, int *fw_desc_len,
 				   struct sk_buff_head *amsdu)
 {
 	struct ath10k *ar = htt->ar;
@@ -322,48 +322,6 @@ static int ath10k_htt_rx_amsdu_pop(struct ath10k_htt *htt,
 				& RX_ATTENTION_FLAGS_MSDU_DONE)) {
 			__skb_queue_purge(amsdu);
 			return -EIO;
-		}
-
-		/*
-		 * Copy the FW rx descriptor for this MSDU from the rx
-		 * indication message into the MSDU's netbuf. HL uses the
-		 * same rx indication message definition as LL, and simply
-		 * appends new info (fields from the HW rx desc, and the
-		 * MSDU payload itself). So, the offset into the rx
-		 * indication message only has to account for the standard
-		 * offset of the per-MSDU FW rx desc info within the
-		 * message, and how many bytes of the per-MSDU FW rx desc
-		 * info have already been consumed. (And the endianness of
-		 * the host, since for a big-endian host, the rx ind
-		 * message contents, including the per-MSDU rx desc bytes,
-		 * were byteswapped during upload.)
-		 */
-		if (*fw_desc_len > 0) {
-			rx_desc->fw_desc.info0 = **fw_desc;
-			/*
-			 * The target is expected to only provide the basic
-			 * per-MSDU rx descriptors. Just to be sure, verify
-			 * that the target has not attached extension data
-			 * (e.g. LRO flow ID).
-			 */
-
-			/* or more, if there's extension data */
-			(*fw_desc)++;
-			(*fw_desc_len)--;
-		} else {
-			/*
-			 * When an oversized AMSDU happened, FW will lost
-			 * some of MSDU status - in this case, the FW
-			 * descriptors provided will be less than the
-			 * actual MSDUs inside this MPDU. Mark the FW
-			 * descriptors so that it will still deliver to
-			 * upper stack, if no CRC error for this MPDU.
-			 *
-			 * FIX THIS - the FW descriptors are actually for
-			 * MSDUs in the end of this A-MSDU instead of the
-			 * beginning.
-			 */
-			rx_desc->fw_desc.info0 = 0;
 		}
 
 		msdu_len_invalid = !!(__le32_to_cpu(rx_desc->attention.flags)
@@ -422,13 +380,6 @@ static int ath10k_htt_rx_amsdu_pop(struct ath10k_htt *htt,
 	 */
 
 	return msdu_chaining;
-}
-
-static void ath10k_htt_rx_replenish_task(unsigned long ptr)
-{
-	struct ath10k_htt *htt = (struct ath10k_htt *)ptr;
-
-	ath10k_htt_rx_msdu_buff_replenish(htt);
 }
 
 static struct sk_buff *ath10k_htt_rx_pop_paddr(struct ath10k_htt *htt,
@@ -564,13 +515,10 @@ int ath10k_htt_rx_alloc(struct ath10k_htt *htt)
 	htt->rx_ring.sw_rd_idx.msdu_payld = 0;
 	hash_init(htt->rx_ring.skb_table);
 
-	tasklet_init(&htt->rx_replenish_task, ath10k_htt_rx_replenish_task,
-		     (unsigned long)htt);
-
-	skb_queue_head_init(&htt->tx_compl_q);
 	skb_queue_head_init(&htt->rx_compl_q);
 	skb_queue_head_init(&htt->rx_in_ord_compl_q);
 	skb_queue_head_init(&htt->tx_fetch_ind_q);
+	atomic_set(&htt->num_mpdus_ready, 0);
 
 	tasklet_init(&htt->txrx_compl_task, ath10k_htt_txrx_compl_task,
 		     (unsigned long)htt);
@@ -1573,25 +1521,49 @@ static void ath10k_htt_rx_h_filter(struct ath10k *ar,
 	__skb_queue_purge(amsdu);
 }
 
-static void ath10k_htt_rx_handler(struct ath10k_htt *htt,
-				  struct htt_rx_indication *rx)
+static int ath10k_htt_rx_handle_amsdu(struct ath10k_htt *htt)
 {
 	struct ath10k *ar = htt->ar;
-	struct ieee80211_rx_status *rx_status = &htt->rx_status;
-	struct htt_rx_indication_mpdu_range *mpdu_ranges;
+	static struct ieee80211_rx_status rx_status;
 	struct sk_buff_head amsdu;
+	int ret;
+
+	__skb_queue_head_init(&amsdu);
+
+	spin_lock_bh(&htt->rx_ring.lock);
+	if (htt->rx_confused) {
+		spin_unlock_bh(&htt->rx_ring.lock);
+		return -EIO;
+	}
+	ret = ath10k_htt_rx_amsdu_pop(htt, &amsdu);
+	spin_unlock_bh(&htt->rx_ring.lock);
+
+	if (ret < 0) {
+		ath10k_warn(ar, "rx ring became corrupted: %d\n", ret);
+		__skb_queue_purge(&amsdu);
+		/* FIXME: It's probably a good idea to reboot the
+		 * device instead of leaving it inoperable.
+		 */
+		htt->rx_confused = true;
+		return ret;
+	}
+
+	ath10k_htt_rx_h_ppdu(ar, &amsdu, &rx_status, 0xffff);
+	ath10k_htt_rx_h_unchain(ar, &amsdu, ret > 0);
+	ath10k_htt_rx_h_filter(ar, &amsdu, &rx_status);
+	ath10k_htt_rx_h_mpdu(ar, &amsdu, &rx_status);
+	ath10k_htt_rx_h_deliver(ar, &amsdu, &rx_status);
+
+	return 0;
+}
+
+static void ath10k_htt_rx_proc_rx_ind(struct ath10k_htt *htt,
+				      struct htt_rx_indication *rx)
+{
+	struct ath10k *ar = htt->ar;
+	struct htt_rx_indication_mpdu_range *mpdu_ranges;
 	int num_mpdu_ranges;
-	int fw_desc_len;
-	u8 *fw_desc;
-	int i, ret, mpdu_count = 0;
-
-	lockdep_assert_held(&htt->rx_ring.lock);
-
-	if (htt->rx_confused)
-		return;
-
-	fw_desc_len = __le16_to_cpu(rx->prefix.fw_rx_desc_bytes);
-	fw_desc = (u8 *)&rx->fw_desc;
+	int i, mpdu_count = 0;
 
 	num_mpdu_ranges = MS(__le32_to_cpu(rx->hdr.info1),
 			     HTT_RX_INDICATION_INFO1_NUM_MPDU_RANGES);
@@ -1605,80 +1577,19 @@ static void ath10k_htt_rx_handler(struct ath10k_htt *htt,
 	for (i = 0; i < num_mpdu_ranges; i++)
 		mpdu_count += mpdu_ranges[i].mpdu_count;
 
-	while (mpdu_count--) {
-		__skb_queue_head_init(&amsdu);
-		ret = ath10k_htt_rx_amsdu_pop(htt, &fw_desc,
-					      &fw_desc_len, &amsdu);
-		if (ret < 0) {
-			ath10k_warn(ar, "rx ring became corrupted: %d\n", ret);
-			__skb_queue_purge(&amsdu);
-			/* FIXME: It's probably a good idea to reboot the
-			 * device instead of leaving it inoperable.
-			 */
-			htt->rx_confused = true;
-			break;
-		}
+	atomic_add(mpdu_count, &htt->num_mpdus_ready);
 
-		ath10k_htt_rx_h_ppdu(ar, &amsdu, rx_status, 0xffff);
-		ath10k_htt_rx_h_unchain(ar, &amsdu, ret > 0);
-		ath10k_htt_rx_h_filter(ar, &amsdu, rx_status);
-		ath10k_htt_rx_h_mpdu(ar, &amsdu, rx_status);
-		ath10k_htt_rx_h_deliver(ar, &amsdu, rx_status);
-	}
-
-	tasklet_schedule(&htt->rx_replenish_task);
+	tasklet_schedule(&htt->txrx_compl_task);
 }
 
-static void ath10k_htt_rx_frag_handler(struct ath10k_htt *htt,
-				       struct htt_rx_fragment_indication *frag)
+static void ath10k_htt_rx_frag_handler(struct ath10k_htt *htt)
 {
-	struct ath10k *ar = htt->ar;
-	struct ieee80211_rx_status *rx_status = &htt->rx_status;
-	struct sk_buff_head amsdu;
-	int ret;
-	u8 *fw_desc;
-	int fw_desc_len;
+	atomic_inc(&htt->num_mpdus_ready);
 
-	fw_desc_len = __le16_to_cpu(frag->fw_rx_desc_bytes);
-	fw_desc = (u8 *)frag->fw_msdu_rx_desc;
-
-	__skb_queue_head_init(&amsdu);
-
-	spin_lock_bh(&htt->rx_ring.lock);
-	ret = ath10k_htt_rx_amsdu_pop(htt, &fw_desc, &fw_desc_len,
-				      &amsdu);
-	spin_unlock_bh(&htt->rx_ring.lock);
-
-	tasklet_schedule(&htt->rx_replenish_task);
-
-	ath10k_dbg(ar, ATH10K_DBG_HTT_DUMP, "htt rx frag ahead\n");
-
-	if (ret) {
-		ath10k_warn(ar, "failed to pop amsdu from httr rx ring for fragmented rx %d\n",
-			    ret);
-		__skb_queue_purge(&amsdu);
-		return;
-	}
-
-	if (skb_queue_len(&amsdu) != 1) {
-		ath10k_warn(ar, "failed to pop frag amsdu: too many msdus\n");
-		__skb_queue_purge(&amsdu);
-		return;
-	}
-
-	ath10k_htt_rx_h_ppdu(ar, &amsdu, rx_status, 0xffff);
-	ath10k_htt_rx_h_filter(ar, &amsdu, rx_status);
-	ath10k_htt_rx_h_mpdu(ar, &amsdu, rx_status);
-	ath10k_htt_rx_h_deliver(ar, &amsdu, rx_status);
-
-	if (fw_desc_len > 0) {
-		ath10k_dbg(ar, ATH10K_DBG_HTT,
-			   "expecting more fragmented rx in one indication %d\n",
-			   fw_desc_len);
-	}
+	tasklet_schedule(&htt->txrx_compl_task);
 }
 
-static void ath10k_htt_rx_frm_tx_compl(struct ath10k *ar,
+static void ath10k_htt_rx_tx_compl_ind(struct ath10k *ar,
 				       struct sk_buff *skb)
 {
 	struct ath10k_htt *htt = &ar->htt;
@@ -1690,19 +1601,19 @@ static void ath10k_htt_rx_frm_tx_compl(struct ath10k *ar,
 
 	switch (status) {
 	case HTT_DATA_TX_STATUS_NO_ACK:
-		tx_done.no_ack = true;
+		tx_done.status = HTT_TX_COMPL_STATE_NOACK;
 		break;
 	case HTT_DATA_TX_STATUS_OK:
-		tx_done.success = true;
+		tx_done.status = HTT_TX_COMPL_STATE_ACK;
 		break;
 	case HTT_DATA_TX_STATUS_DISCARD:
 	case HTT_DATA_TX_STATUS_POSTPONE:
 	case HTT_DATA_TX_STATUS_DOWNLOAD_FAIL:
-		tx_done.discard = true;
+		tx_done.status = HTT_TX_COMPL_STATE_DISCARD;
 		break;
 	default:
 		ath10k_warn(ar, "unhandled tx completion status %d\n", status);
-		tx_done.discard = true;
+		tx_done.status = HTT_TX_COMPL_STATE_DISCARD;
 		break;
 	}
 
@@ -1712,7 +1623,20 @@ static void ath10k_htt_rx_frm_tx_compl(struct ath10k *ar,
 	for (i = 0; i < resp->data_tx_completion.num_msdus; i++) {
 		msdu_id = resp->data_tx_completion.msdus[i];
 		tx_done.msdu_id = __le16_to_cpu(msdu_id);
-		ath10k_txrx_tx_unref(htt, &tx_done);
+
+		/* kfifo_put: In practice firmware shouldn't fire off per-CE
+		 * interrupt and main interrupt (MSI/-X range case) for the same
+		 * HTC service so it should be safe to use kfifo_put w/o lock.
+		 *
+		 * From kfifo_put() documentation:
+		 *  Note that with only one concurrent reader and one concurrent
+		 *  writer, you don't need extra locking to use these macro.
+		 */
+		if (!kfifo_put(&htt->txdone_fifo, tx_done)) {
+			ath10k_warn(ar, "txdone fifo overrun, msdu_id %d status %d\n",
+				    tx_done.msdu_id, tx_done.status);
+			ath10k_txrx_tx_unref(htt, &tx_done);
+		}
 	}
 }
 
@@ -1980,8 +1904,7 @@ static void ath10k_htt_rx_in_ord_ind(struct ath10k *ar, struct sk_buff *skb)
 			return;
 		}
 	}
-
-	tasklet_schedule(&htt->rx_replenish_task);
+	ath10k_htt_rx_msdu_buff_replenish(htt);
 }
 
 static void ath10k_htt_rx_tx_fetch_resp_id_confirm(struct ath10k *ar,
@@ -2287,7 +2210,18 @@ static inline enum ieee80211_band phy_mode_to_band(u32 phy_mode)
 	return band;
 }
 
-void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
+void ath10k_htt_htc_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
+{
+	bool release;
+
+	release = ath10k_htt_t2h_msg_handler(ar, skb);
+
+	/* Free the indication buffer */
+	if (release)
+		dev_kfree_skb_any(skb);
+}
+
+bool ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 {
 	struct ath10k_htt *htt = &ar->htt;
 	struct htt_resp *resp = (struct htt_resp *)skb->data;
@@ -2303,8 +2237,7 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 	if (resp->hdr.msg_type >= ar->htt.t2h_msg_types_max) {
 		ath10k_dbg(ar, ATH10K_DBG_HTT, "htt rx, unsupported msg_type: 0x%0X\n max: 0x%0X",
 			   resp->hdr.msg_type, ar->htt.t2h_msg_types_max);
-		dev_kfree_skb_any(skb);
-		return;
+		return true;
 	}
 	type = ar->htt.t2h_msg_types[resp->hdr.msg_type];
 
@@ -2316,9 +2249,8 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	}
 	case HTT_T2H_MSG_TYPE_RX_IND:
-		skb_queue_tail(&htt->rx_compl_q, skb);
-		tasklet_schedule(&htt->txrx_compl_task);
-		return;
+		ath10k_htt_rx_proc_rx_ind(htt, &resp->rx_ind);
+		break;
 	case HTT_T2H_MSG_TYPE_PEER_MAP: {
 		struct htt_peer_map_event ev = {
 			.vdev_id = resp->peer_map.vdev_id,
@@ -2339,18 +2271,17 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 		struct htt_tx_done tx_done = {};
 		int status = __le32_to_cpu(resp->mgmt_tx_completion.status);
 
-		tx_done.msdu_id =
-			__le32_to_cpu(resp->mgmt_tx_completion.desc_id);
+		tx_done.msdu_id = __le32_to_cpu(resp->mgmt_tx_completion.desc_id);
 
 		switch (status) {
 		case HTT_MGMT_TX_STATUS_OK:
-			tx_done.success = true;
+			tx_done.status = HTT_TX_COMPL_STATE_ACK;
 			break;
 		case HTT_MGMT_TX_STATUS_RETRY:
-			tx_done.no_ack = true;
+			tx_done.status = HTT_TX_COMPL_STATE_NOACK;
 			break;
 		case HTT_MGMT_TX_STATUS_DROP:
-			tx_done.discard = true;
+			tx_done.status = HTT_TX_COMPL_STATE_DISCARD;
 			break;
 		}
 
@@ -2364,9 +2295,9 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	}
 	case HTT_T2H_MSG_TYPE_TX_COMPL_IND:
-		skb_queue_tail(&htt->tx_compl_q, skb);
+		ath10k_htt_rx_tx_compl_ind(htt->ar, skb);
 		tasklet_schedule(&htt->txrx_compl_task);
-		return;
+		break;
 	case HTT_T2H_MSG_TYPE_SEC_IND: {
 		struct ath10k *ar = htt->ar;
 		struct htt_security_indication *ev = &resp->security_indication;
@@ -2382,7 +2313,7 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 	case HTT_T2H_MSG_TYPE_RX_FRAG_IND: {
 		ath10k_dbg_dump(ar, ATH10K_DBG_HTT_DUMP, NULL, "htt event: ",
 				skb->data, skb->len);
-		ath10k_htt_rx_frag_handler(htt, &resp->rx_frag_ind);
+		ath10k_htt_rx_frag_handler(htt);
 		break;
 	}
 	case HTT_T2H_MSG_TYPE_TEST:
@@ -2422,7 +2353,7 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 	case HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND: {
 		skb_queue_tail(&htt->rx_in_ord_compl_q, skb);
 		tasklet_schedule(&htt->txrx_compl_task);
-		return;
+		return false;
 	}
 	case HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND:
 		break;
@@ -2439,10 +2370,17 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 	}
 	case HTT_T2H_MSG_TYPE_AGGR_CONF:
 		break;
-	case HTT_T2H_MSG_TYPE_TX_FETCH_IND:
-		skb_queue_tail(&htt->tx_fetch_ind_q, skb);
+	case HTT_T2H_MSG_TYPE_TX_FETCH_IND: {
+		struct sk_buff *tx_fetch_ind = skb_copy(skb, GFP_ATOMIC);
+
+		if (!tx_fetch_ind) {
+			ath10k_warn(ar, "failed to copy htt tx fetch ind\n");
+			break;
+		}
+		skb_queue_tail(&htt->tx_fetch_ind_q, tx_fetch_ind);
 		tasklet_schedule(&htt->txrx_compl_task);
-		return;
+		break;
+	}
 	case HTT_T2H_MSG_TYPE_TX_FETCH_CONFIRM:
 		ath10k_htt_rx_tx_fetch_confirm(ar, skb);
 		break;
@@ -2457,9 +2395,7 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 				skb->data, skb->len);
 		break;
 	};
-
-	/* Free the indication buffer */
-	dev_kfree_skb_any(skb);
+	return true;
 }
 EXPORT_SYMBOL(ath10k_htt_t2h_msg_handler);
 
@@ -2475,26 +2411,17 @@ static void ath10k_htt_txrx_compl_task(unsigned long ptr)
 {
 	struct ath10k_htt *htt = (struct ath10k_htt *)ptr;
 	struct ath10k *ar = htt->ar;
-	struct sk_buff_head tx_q;
+	struct htt_tx_done tx_done = {};
 	struct sk_buff_head rx_q;
 	struct sk_buff_head rx_ind_q;
 	struct sk_buff_head tx_ind_q;
-	struct htt_resp *resp;
 	struct sk_buff *skb;
 	unsigned long flags;
+	int num_mpdus;
 
-	__skb_queue_head_init(&tx_q);
 	__skb_queue_head_init(&rx_q);
 	__skb_queue_head_init(&rx_ind_q);
 	__skb_queue_head_init(&tx_ind_q);
-
-	spin_lock_irqsave(&htt->tx_compl_q.lock, flags);
-	skb_queue_splice_init(&htt->tx_compl_q, &tx_q);
-	spin_unlock_irqrestore(&htt->tx_compl_q.lock, flags);
-
-	spin_lock_irqsave(&htt->rx_compl_q.lock, flags);
-	skb_queue_splice_init(&htt->rx_compl_q, &rx_q);
-	spin_unlock_irqrestore(&htt->rx_compl_q.lock, flags);
 
 	spin_lock_irqsave(&htt->rx_in_ord_compl_q.lock, flags);
 	skb_queue_splice_init(&htt->rx_in_ord_compl_q, &rx_ind_q);
@@ -2504,10 +2431,13 @@ static void ath10k_htt_txrx_compl_task(unsigned long ptr)
 	skb_queue_splice_init(&htt->tx_fetch_ind_q, &tx_ind_q);
 	spin_unlock_irqrestore(&htt->tx_fetch_ind_q.lock, flags);
 
-	while ((skb = __skb_dequeue(&tx_q))) {
-		ath10k_htt_rx_frm_tx_compl(htt->ar, skb);
-		dev_kfree_skb_any(skb);
-	}
+	/* kfifo_get: called only within txrx_tasklet so it's neatly serialized.
+	 * From kfifo_get() documentation:
+	 *  Note that with only one concurrent reader and one concurrent writer,
+	 *  you don't need extra locking to use these macro.
+	 */
+	while (kfifo_get(&htt->txdone_fifo, &tx_done))
+		ath10k_txrx_tx_unref(htt, &tx_done);
 
 	while ((skb = __skb_dequeue(&tx_ind_q))) {
 		ath10k_htt_rx_tx_fetch_ind(ar, skb);
@@ -2516,12 +2446,12 @@ static void ath10k_htt_txrx_compl_task(unsigned long ptr)
 
 	ath10k_mac_tx_push_pending(ar);
 
-	while ((skb = __skb_dequeue(&rx_q))) {
-		resp = (struct htt_resp *)skb->data;
-		spin_lock_bh(&htt->rx_ring.lock);
-		ath10k_htt_rx_handler(htt, &resp->rx_ind);
-		spin_unlock_bh(&htt->rx_ring.lock);
-		dev_kfree_skb_any(skb);
+	num_mpdus = atomic_read(&htt->num_mpdus_ready);
+	atomic_sub(num_mpdus, &htt->num_mpdus_ready);
+
+	while (num_mpdus--) {
+		if (ath10k_htt_rx_handle_amsdu(htt))
+			break;
 	}
 
 	while ((skb = __skb_dequeue(&rx_ind_q))) {
@@ -2530,4 +2460,6 @@ static void ath10k_htt_txrx_compl_task(unsigned long ptr)
 		spin_unlock_bh(&htt->rx_ring.lock);
 		dev_kfree_skb_any(skb);
 	}
+
+	ath10k_htt_rx_msdu_buff_replenish(htt);
 }

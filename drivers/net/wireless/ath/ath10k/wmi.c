@@ -705,6 +705,7 @@ static struct wmi_cmd_map wmi_10_4_cmd_map = {
 	.set_cca_params_cmdid = WMI_10_4_SET_CCA_PARAMS_CMDID,
 	.pdev_bss_chan_info_request_cmdid =
 			WMI_10_4_PDEV_BSS_CHAN_INFO_REQUEST_CMDID,
+	.ext_resource_cfg_cmdid = WMI_10_4_EXT_RESOURCE_CFG_CMDID,
 };
 
 /* MAIN WMI VDEV param map */
@@ -2191,6 +2192,8 @@ static int ath10k_wmi_10_4_op_pull_mgmt_rx_ev(struct ath10k *ar,
 	struct wmi_10_4_mgmt_rx_hdr *ev_hdr;
 	size_t pull_len;
 	u32 msdu_len;
+	struct wmi_mgmt_rx_ext_info *ext_info;
+	u32 len;
 
 	ev = (struct wmi_10_4_mgmt_rx_event *)skb->data;
 	ev_hdr = &ev->hdr;
@@ -2210,6 +2213,13 @@ static int ath10k_wmi_10_4_op_pull_mgmt_rx_ev(struct ath10k *ar,
 	msdu_len = __le32_to_cpu(arg->buf_len);
 	if (skb->len < msdu_len)
 		return -EPROTO;
+
+	if (le32_to_cpu(arg->status) & WMI_RX_STATUS_EXT_INFO) {
+		len = ALIGN(le32_to_cpu(arg->buf_len), 4);
+		ext_info = (struct wmi_mgmt_rx_ext_info *)(skb->data + len);
+		memcpy(&arg->ext_info, ext_info,
+		       sizeof(struct wmi_mgmt_rx_ext_info));
+	}
 
 	/* Make sure bytes added for padding are removed. */
 	skb_trim(skb, msdu_len);
@@ -2603,6 +2613,16 @@ void ath10k_wmi_pull_peer_stats(const struct wmi_peer_stats *src,
 	dst->peer_tx_rate = __le32_to_cpu(src->peer_tx_rate);
 }
 
+static void
+ath10k_wmi_10_4_pull_peer_stats(const struct wmi_10_4_peer_stats *src,
+				struct ath10k_fw_stats_peer *dst)
+{
+	ether_addr_copy(dst->peer_macaddr, src->peer_macaddr.addr);
+	dst->peer_rssi = __le32_to_cpu(src->peer_rssi);
+	dst->peer_tx_rate = __le32_to_cpu(src->peer_tx_rate);
+	dst->peer_rx_rate = __le32_to_cpu(src->peer_rx_rate);
+}
+
 static int ath10k_wmi_main_op_pull_fw_stats(struct ath10k *ar,
 					    struct sk_buff *skb,
 					    struct ath10k_fw_stats *stats)
@@ -2856,11 +2876,8 @@ static int ath10k_wmi_10_2_4_op_pull_fw_stats(struct ath10k *ar,
 		const struct wmi_10_2_4_ext_peer_stats *src;
 		struct ath10k_fw_stats_peer *dst;
 		int stats_len;
-		bool ext_peer_stats_support;
 
-		ext_peer_stats_support = test_bit(WMI_SERVICE_PEER_STATS,
-						  ar->wmi.svc_map);
-		if (ext_peer_stats_support)
+		if (test_bit(WMI_SERVICE_PEER_STATS, ar->wmi.svc_map))
 			stats_len = sizeof(struct wmi_10_2_4_ext_peer_stats);
 		else
 			stats_len = sizeof(struct wmi_10_2_4_peer_stats);
@@ -2877,7 +2894,7 @@ static int ath10k_wmi_10_2_4_op_pull_fw_stats(struct ath10k *ar,
 
 		dst->peer_rx_rate = __le32_to_cpu(src->common.peer_rx_rate);
 
-		if (ext_peer_stats_support)
+		if (ath10k_peer_stats_enabled(ar))
 			dst->rx_duration = __le32_to_cpu(src->rx_duration);
 		/* FIXME: expose 10.2 specific values */
 
@@ -2896,6 +2913,7 @@ static int ath10k_wmi_10_4_op_pull_fw_stats(struct ath10k *ar,
 	u32 num_pdev_ext_stats;
 	u32 num_vdev_stats;
 	u32 num_peer_stats;
+	u32 stats_id;
 	int i;
 
 	if (!skb_pull(skb, sizeof(*ev)))
@@ -2905,6 +2923,7 @@ static int ath10k_wmi_10_4_op_pull_fw_stats(struct ath10k *ar,
 	num_pdev_ext_stats = __le32_to_cpu(ev->num_pdev_ext_stats);
 	num_vdev_stats = __le32_to_cpu(ev->num_vdev_stats);
 	num_peer_stats = __le32_to_cpu(ev->num_peer_stats);
+	stats_id = __le32_to_cpu(ev->stats_id);
 
 	for (i = 0; i < num_pdev_stats; i++) {
 		const struct wmi_10_4_pdev_stats *src;
@@ -2944,22 +2963,28 @@ static int ath10k_wmi_10_4_op_pull_fw_stats(struct ath10k *ar,
 	/* fw doesn't implement vdev stats */
 
 	for (i = 0; i < num_peer_stats; i++) {
-		const struct wmi_10_4_peer_stats *src;
+		const struct wmi_10_4_peer_extd_stats *src;
 		struct ath10k_fw_stats_peer *dst;
+		int stats_len;
+		bool extd_peer_stats = !!(stats_id & WMI_10_4_STAT_PEER_EXTD);
+
+		if (extd_peer_stats)
+			stats_len = sizeof(struct wmi_10_4_peer_extd_stats);
+		else
+			stats_len = sizeof(struct wmi_10_4_peer_stats);
 
 		src = (void *)skb->data;
-		if (!skb_pull(skb, sizeof(*src)))
+		if (!skb_pull(skb, stats_len))
 			return -EPROTO;
 
 		dst = kzalloc(sizeof(*dst), GFP_ATOMIC);
 		if (!dst)
 			continue;
 
-		ether_addr_copy(dst->peer_macaddr, src->peer_macaddr.addr);
-		dst->peer_rssi = __le32_to_cpu(src->peer_rssi);
-		dst->peer_tx_rate = __le32_to_cpu(src->peer_tx_rate);
-		dst->peer_rx_rate = __le32_to_cpu(src->peer_rx_rate);
+		ath10k_wmi_10_4_pull_peer_stats(&src->common, dst);
 		/* FIXME: expose 10.4 specific values */
+		if (extd_peer_stats)
+			dst->rx_duration = __le32_to_cpu(src->rx_duration);
 
 		list_add_tail(&dst->list, &stats->peers);
 	}
@@ -5514,7 +5539,8 @@ static struct sk_buff *ath10k_wmi_10_2_op_gen_init(struct ath10k *ar)
 
 	config.num_vdevs = __cpu_to_le32(TARGET_10X_NUM_VDEVS);
 	config.num_peer_keys = __cpu_to_le32(TARGET_10X_NUM_PEER_KEYS);
-	if (test_bit(WMI_SERVICE_PEER_STATS, ar->wmi.svc_map)) {
+
+	if (ath10k_peer_stats_enabled(ar)) {
 		config.num_peers = __cpu_to_le32(TARGET_10X_TX_STATS_NUM_PEERS);
 		config.num_tids = __cpu_to_le32(TARGET_10X_TX_STATS_NUM_TIDS);
 	} else {
@@ -5576,7 +5602,7 @@ static struct sk_buff *ath10k_wmi_10_2_op_gen_init(struct ath10k *ar)
 	    test_bit(WMI_SERVICE_COEX_GPIO, ar->wmi.svc_map))
 		features |= WMI_10_2_COEX_GPIO;
 
-	if (test_bit(WMI_SERVICE_PEER_STATS, ar->wmi.svc_map))
+	if (ath10k_peer_stats_enabled(ar))
 		features |= WMI_10_2_PEER_STATS;
 
 	cmd->resource_config.feature_mask = __cpu_to_le32(features);
@@ -7481,6 +7507,28 @@ static int ath10k_wmi_10_4_op_get_vdev_subtype(struct ath10k *ar,
 	return -ENOTSUPP;
 }
 
+static struct sk_buff *
+ath10k_wmi_10_4_ext_resource_config(struct ath10k *ar,
+				    enum wmi_host_platform_type type,
+				    u32 fw_feature_bitmap)
+{
+	struct wmi_ext_resource_config_10_4_cmd *cmd;
+	struct sk_buff *skb;
+
+	skb = ath10k_wmi_alloc_skb(ar, sizeof(*cmd));
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	cmd = (struct wmi_ext_resource_config_10_4_cmd *)skb->data;
+	cmd->host_platform_config = __cpu_to_le32(type);
+	cmd->fw_feature_bitmap = __cpu_to_le32(fw_feature_bitmap);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI,
+		   "wmi ext resource config host type %d firmware feature bitmap %08x\n",
+		   type, fw_feature_bitmap);
+	return skb;
+}
+
 static const struct wmi_ops wmi_ops = {
 	.rx = ath10k_wmi_op_rx,
 	.map_svc = wmi_main_svc_map,
@@ -7807,6 +7855,7 @@ static const struct wmi_ops wmi_10_4_ops = {
 	.gen_addba_set_resp = ath10k_wmi_op_gen_addba_set_resp,
 	.gen_delba_send = ath10k_wmi_op_gen_delba_send,
 	.fw_stats_fill = ath10k_wmi_10_4_op_fw_stats_fill,
+	.ext_resource_config = ath10k_wmi_10_4_ext_resource_config,
 
 	/* shared with 10.2 */
 	.gen_request_stats = ath10k_wmi_op_gen_request_stats,

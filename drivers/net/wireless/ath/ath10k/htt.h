@@ -22,6 +22,7 @@
 #include <linux/interrupt.h>
 #include <linux/dmapool.h>
 #include <linux/hashtable.h>
+#include <linux/kfifo.h>
 #include <net/mac80211.h>
 
 #include "htc.h"
@@ -1526,10 +1527,15 @@ struct htt_resp {
 /*** host side structures follow ***/
 
 struct htt_tx_done {
-	u32 msdu_id;
-	bool discard;
-	bool no_ack;
-	bool success;
+	u16 msdu_id;
+	u16 status;
+};
+
+enum htt_tx_compl_state {
+	HTT_TX_COMPL_STATE_NONE,
+	HTT_TX_COMPL_STATE_ACK,
+	HTT_TX_COMPL_STATE_NOACK,
+	HTT_TX_COMPL_STATE_DISCARD,
 };
 
 struct htt_peer_map_event {
@@ -1650,15 +1656,17 @@ struct ath10k_htt {
 	struct idr pending_tx;
 	wait_queue_head_t empty_tx_wq;
 
+	/* FIFO for storing tx done status {ack, no-ack, discard} and msdu id */
+	DECLARE_KFIFO_PTR(txdone_fifo, struct htt_tx_done);
+
 	/* set if host-fw communication goes haywire
 	 * used to avoid further failures */
 	bool rx_confused;
-	struct tasklet_struct rx_replenish_task;
+	atomic_t num_mpdus_ready;
 
 	/* This is used to group tx/rx completions separately and process them
 	 * in batches to reduce cache stalls */
 	struct tasklet_struct txrx_compl_task;
-	struct sk_buff_head tx_compl_q;
 	struct sk_buff_head rx_compl_q;
 	struct sk_buff_head rx_in_ord_compl_q;
 	struct sk_buff_head tx_fetch_ind_q;
@@ -1728,7 +1736,7 @@ struct htt_rx_desc {
 
 /* Refill a bunch of RX buffers for each refill round so that FW/HW can handle
  * aggregated traffic more nicely. */
-#define ATH10K_HTT_MAX_NUM_REFILL 16
+#define ATH10K_HTT_MAX_NUM_REFILL 100
 
 /*
  * DMA_MAP expects the buffer to be an integral number of cache lines.
@@ -1756,7 +1764,8 @@ int ath10k_htt_rx_ring_refill(struct ath10k *ar);
 void ath10k_htt_rx_free(struct ath10k_htt *htt);
 
 void ath10k_htt_htc_tx_complete(struct ath10k *ar, struct sk_buff *skb);
-void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_htt_htc_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb);
+bool ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb);
 int ath10k_htt_h2t_ver_req_msg(struct ath10k_htt *htt);
 int ath10k_htt_h2t_stats_req(struct ath10k_htt *htt, u8 mask, u64 cookie);
 int ath10k_htt_send_frag_desc_bank_cfg(struct ath10k_htt *htt);

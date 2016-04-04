@@ -816,6 +816,7 @@ struct wmi_cmd_map {
 	u32 set_cca_params_cmdid;
 	u32 pdev_bss_chan_info_request_cmdid;
 	u32 pdev_enable_adaptive_cca_cmdid;
+	u32 ext_resource_cfg_cmdid;
 };
 
 /*
@@ -2667,6 +2668,31 @@ struct wmi_resource_config_10_4 {
 	__le32 qwrap_config;
 } __packed;
 
+/**
+ * enum wmi_10_4_feature_mask - WMI 10.4 feature enable/disable flags
+ * @WMI_10_4_LTEU_SUPPORT: LTEU config
+ * @WMI_10_4_COEX_GPIO_SUPPORT: COEX GPIO config
+ * @WMI_10_4_AUX_RADIO_SPECTRAL_INTF: AUX Radio Enhancement for spectral scan
+ * @WMI_10_4_AUX_RADIO_CHAN_LOAD_INTF: AUX Radio Enhancement for chan load scan
+ * @WMI_10_4_BSS_CHANNEL_INFO_64: BSS channel info stats
+ * @WMI_10_4_PEER_STATS: Per station stats
+ */
+enum wmi_10_4_feature_mask {
+	WMI_10_4_LTEU_SUPPORT			= BIT(0),
+	WMI_10_4_COEX_GPIO_SUPPORT		= BIT(1),
+	WMI_10_4_AUX_RADIO_SPECTRAL_INTF	= BIT(2),
+	WMI_10_4_AUX_RADIO_CHAN_LOAD_INTF	= BIT(3),
+	WMI_10_4_BSS_CHANNEL_INFO_64		= BIT(4),
+	WMI_10_4_PEER_STATS			= BIT(5),
+};
+
+struct wmi_ext_resource_config_10_4_cmd {
+	/* contains enum wmi_host_platform_type */
+	__le32 host_platform_config;
+	/* see enum wmi_10_4_feature_mask */
+	__le32 fw_feature_bitmap;
+};
+
 /* strucutre describing host memory chunk. */
 struct host_memory_chunk {
 	/* id of the request that is passed up in service ready */
@@ -4078,6 +4104,13 @@ enum wmi_stats_id {
 	WMI_STAT_VDEV_RATE = BIT(5),
 };
 
+enum wmi_10_4_stats_id {
+	WMI_10_4_STAT_PEER		= BIT(0),
+	WMI_10_4_STAT_AP		= BIT(1),
+	WMI_10_4_STAT_INST		= BIT(2),
+	WMI_10_4_STAT_PEER_EXTD		= BIT(3),
+};
+
 struct wlan_inst_rssi_args {
 	__le16 cfg_retry_count;
 	__le16 retry_count;
@@ -4275,6 +4308,15 @@ struct wmi_10_4_peer_stats {
 	__le32 num_pkt_loss_overflow[4];
 	__le32 num_pkt_loss_excess_retry[4];
 	__le32 peer_rssi_changed;
+} __packed;
+
+struct wmi_10_4_peer_extd_stats {
+	struct wmi_10_4_peer_stats common;
+	struct wmi_mac_addr peer_macaddr;
+	__le32 inactive_time;
+	__le32 peer_chain_rssi;
+	__le32 rx_duration;
+	__le32 reserved[10];
 } __packed;
 
 struct wmi_10_2_pdev_ext_stats {
@@ -6407,6 +6449,11 @@ struct wmi_pdev_set_adaptive_cca_params {
 	__le32 cca_detect_level;
 	__le32 cca_detect_margin;
 } __packed;
+
+enum wmi_host_platform_type {
+	WMI_HOST_PLATFORM_HIGH_PERF,
+	WMI_HOST_PLATFORM_LOW_PERF,
+};
 
 struct ath10k;
 struct ath10k_vif;
