@@ -22,6 +22,7 @@
 #include <sound/hda_i915.h>
 
 static struct i915_audio_component *hdac_acomp;
+static DECLARE_COMPLETION(bind_comp);
 
 /**
  * snd_hdac_set_codec_wakeup - Enable / disable HDMI/DP codec wakeup
@@ -248,10 +249,12 @@ static int hdac_component_master_bind(struct device *dev)
 		goto out_unbind;
 	}
 
+	complete_all(&bind_comp);
 	return 0;
 
 out_unbind:
 	component_unbind_all(dev, acomp);
+	complete_all(&bind_comp);
 
 	return ret;
 }
@@ -339,6 +342,7 @@ int snd_hdac_i915_init(struct hdac_bus *bus)
 		return -ENOMEM;
 	bus->audio_component = acomp;
 	hdac_acomp = acomp;
+	init_completion(&bind_comp);
 
 	component_match_add(dev, &match, hdac_component_master_match, bus);
 	ret = component_master_add_with_match(dev, &hdac_component_master_ops,
@@ -346,12 +350,10 @@ int snd_hdac_i915_init(struct hdac_bus *bus)
 	if (ret < 0)
 		goto out_err;
 
-	/*
-	 * Atm, we don't support deferring the component binding, so make sure
-	 * i915 is loaded and that the binding successfully completes.
-	 */
-	request_module("i915");
+	if (!acomp->ops)
+		request_module("i915");
 
+	wait_for_completion_timeout(&bind_comp, msecs_to_jiffies(60 * 1000));
 	if (!acomp->ops || acomp->ops->disabled) {
 		ret = -ENODEV;
 		goto out_master_del;
