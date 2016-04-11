@@ -1772,11 +1772,11 @@ void d_instantiate(struct dentry *entry, struct inode * inode)
 {
 	BUG_ON(!hlist_unhashed(&entry->d_u.d_alias));
 	if (inode) {
+		security_d_instantiate(entry, inode);
 		spin_lock(&inode->i_lock);
 		__d_instantiate(entry, inode);
 		spin_unlock(&inode->i_lock);
 	}
-	security_d_instantiate(entry, inode);
 }
 EXPORT_SYMBOL(d_instantiate);
 
@@ -1793,6 +1793,7 @@ int d_instantiate_no_diralias(struct dentry *entry, struct inode *inode)
 {
 	BUG_ON(!hlist_unhashed(&entry->d_u.d_alias));
 
+	security_d_instantiate(entry, inode);
 	spin_lock(&inode->i_lock);
 	if (S_ISDIR(inode->i_mode) && !hlist_empty(&inode->i_dentry)) {
 		spin_unlock(&inode->i_lock);
@@ -1801,7 +1802,6 @@ int d_instantiate_no_diralias(struct dentry *entry, struct inode *inode)
 	}
 	__d_instantiate(entry, inode);
 	spin_unlock(&inode->i_lock);
-	security_d_instantiate(entry, inode);
 
 	return 0;
 }
@@ -1875,6 +1875,7 @@ static struct dentry *__d_obtain_alias(struct inode *inode, int disconnected)
 		goto out_iput;
 	}
 
+	security_d_instantiate(tmp, inode);
 	spin_lock(&inode->i_lock);
 	res = __d_find_any_alias(inode);
 	if (res) {
@@ -1897,13 +1898,10 @@ static struct dentry *__d_obtain_alias(struct inode *inode, int disconnected)
 	hlist_bl_unlock(&tmp->d_sb->s_anon);
 	spin_unlock(&tmp->d_lock);
 	spin_unlock(&inode->i_lock);
-	security_d_instantiate(tmp, inode);
 
 	return tmp;
 
  out_iput:
-	if (res && !IS_ERR(res))
-		security_d_instantiate(res, inode);
 	iput(inode);
 	return res;
 }
@@ -2369,7 +2367,6 @@ static inline void __d_add(struct dentry *dentry, struct inode *inode)
 		__d_instantiate(dentry, inode);
 		spin_unlock(&inode->i_lock);
 	}
-	security_d_instantiate(dentry, inode);
 	d_rehash(dentry);
 }
 
@@ -2384,8 +2381,10 @@ static inline void __d_add(struct dentry *dentry, struct inode *inode)
 
 void d_add(struct dentry *entry, struct inode *inode)
 {
-	if (inode)
+	if (inode) {
+		security_d_instantiate(entry, inode);
 		spin_lock(&inode->i_lock);
+	}
 	__d_add(entry, inode);
 }
 EXPORT_SYMBOL(d_add);
@@ -2779,6 +2778,7 @@ struct dentry *d_splice_alias(struct inode *inode, struct dentry *dentry)
 	if (!inode)
 		goto out;
 
+	security_d_instantiate(dentry, inode);
 	spin_lock(&inode->i_lock);
 	if (S_ISDIR(inode->i_mode)) {
 		struct dentry *new = __d_find_any_alias(inode);
@@ -2806,7 +2806,6 @@ struct dentry *d_splice_alias(struct inode *inode, struct dentry *dentry)
 			} else {
 				__d_move(new, dentry, false);
 				write_sequnlock(&rename_lock);
-				security_d_instantiate(new, inode);
 			}
 			iput(inode);
 			return new;
