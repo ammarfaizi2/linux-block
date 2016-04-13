@@ -795,7 +795,7 @@ posix_acl_to_xattr(struct user_namespace *user_ns, const struct posix_acl *acl,
 }
 EXPORT_SYMBOL (posix_acl_to_xattr);
 
-static int
+int
 posix_acl_xattr_get(const struct xattr_handler *handler,
 		    struct dentry *unused, struct inode *inode,
 		    const char *name, void *value, size_t size)
@@ -819,8 +819,9 @@ posix_acl_xattr_get(const struct xattr_handler *handler,
 
 	return error;
 }
+EXPORT_SYMBOL(posix_acl_xattr_get);
 
-static int
+int
 posix_acl_xattr_set(const struct xattr_handler *handler,
 		    struct dentry *dentry, const char *name,
 		    const void *value, size_t size, int flags)
@@ -856,12 +857,14 @@ out:
 	posix_acl_release(acl);
 	return ret;
 }
+EXPORT_SYMBOL(posix_acl_xattr_set);
 
-static bool
+bool
 posix_acl_xattr_list(struct dentry *dentry)
 {
 	return IS_POSIXACL(d_backing_inode(dentry));
 }
+EXPORT_SYMBOL(posix_acl_xattr_list);
 
 const struct xattr_handler posix_acl_access_xattr_handler = {
 	.name = XATTR_NAME_POSIX_ACL_ACCESS,

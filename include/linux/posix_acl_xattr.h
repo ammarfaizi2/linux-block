@@ -65,6 +65,14 @@ struct posix_acl *posix_acl_from_xattr(struct user_namespace *user_ns,
 int posix_acl_to_xattr(struct user_namespace *user_ns,
 		       const struct posix_acl *acl, void *buffer, size_t size);
 
+int posix_acl_xattr_get(const struct xattr_handler *handler,
+			struct dentry *unused, struct inode *inode,
+			const char *name, void *value, size_t size);
+int posix_acl_xattr_set(const struct xattr_handler *handler,
+			struct dentry *dentry, const char *name,
+			const void *value, size_t size, int flags);
+bool posix_acl_xattr_list(struct dentry *dentry);
+
 extern const struct xattr_handler posix_acl_access_xattr_handler;
 extern const struct xattr_handler posix_acl_default_xattr_handler;
 
