@@ -142,6 +142,7 @@ enum iwl_ucode_tlv_type {
 	IWL_UCODE_TLV_FW_DBG_CONF	= 39,
 	IWL_UCODE_TLV_FW_DBG_TRIGGER	= 40,
 	IWL_UCODE_TLV_FW_GSCAN_CAPA	= 50,
+	IWL_UCODE_TLV_FW_MEM_SEG	= 51,
 };
 
 struct iwl_ucode_tlv {
@@ -245,13 +246,11 @@ typedef unsigned int __bitwise__ iwl_ucode_tlv_api_t;
 
 /**
  * enum iwl_ucode_tlv_api - ucode api
- * @IWL_UCODE_TLV_API_BT_COEX_SPLIT: new API for BT Coex
  * @IWL_UCODE_TLV_API_FRAGMENTED_SCAN: This ucode supports active dwell time
  *	longer than the passive one, which is essential for fragmented scan.
  * @IWL_UCODE_TLV_API_WIFI_MCC_UPDATE: ucode supports MCC updates with source.
  * @IWL_UCODE_TLV_API_WIDE_CMD_HDR: ucode supports wide command header
  * @IWL_UCODE_TLV_API_LQ_SS_PARAMS: Configure STBC/BFER via LQ CMD ss_params
- * @IWL_UCODE_TLV_API_NEW_VERSION: new versioning format
  * @IWL_UCODE_TLV_API_EXT_SCAN_PRIORITY: scan APIs use 8-level priority
  *	instead of 3.
  * @IWL_UCODE_TLV_API_TX_POWER_CHAIN: TX power API has larger command size
@@ -260,12 +259,10 @@ typedef unsigned int __bitwise__ iwl_ucode_tlv_api_t;
  * @NUM_IWL_UCODE_TLV_API: number of bits used
  */
 enum iwl_ucode_tlv_api {
-	IWL_UCODE_TLV_API_BT_COEX_SPLIT         = (__force iwl_ucode_tlv_api_t)3,
 	IWL_UCODE_TLV_API_FRAGMENTED_SCAN	= (__force iwl_ucode_tlv_api_t)8,
 	IWL_UCODE_TLV_API_WIFI_MCC_UPDATE	= (__force iwl_ucode_tlv_api_t)9,
 	IWL_UCODE_TLV_API_WIDE_CMD_HDR		= (__force iwl_ucode_tlv_api_t)14,
 	IWL_UCODE_TLV_API_LQ_SS_PARAMS		= (__force iwl_ucode_tlv_api_t)18,
-	IWL_UCODE_TLV_API_NEW_VERSION		= (__force iwl_ucode_tlv_api_t)20,
 	IWL_UCODE_TLV_API_EXT_SCAN_PRIORITY	= (__force iwl_ucode_tlv_api_t)24,
 	IWL_UCODE_TLV_API_TX_POWER_CHAIN	= (__force iwl_ucode_tlv_api_t)27,
 
@@ -318,6 +315,15 @@ typedef unsigned int __bitwise__ iwl_ucode_tlv_capa_t;
  * @IWL_UCODE_TLV_CAPA_BEACON_STORING: firmware will store the latest beacon
  *	from AP and will send it upon d0i3 exit.
  * @IWL_UCODE_TLV_CAPA_LAR_SUPPORT_V2: support LAR API V2
+ * @IWL_UCODE_TLV_CAPA_CT_KILL_BY_FW: firmware responsible for CT-kill
+ * @IWL_UCODE_TLV_CAPA_TEMP_THS_REPORT_SUPPORT: supports temperature
+ *	thresholds reporting
+ * @IWL_UCODE_TLV_CAPA_CTDP_SUPPORT: supports cTDP command
+ * @IWL_UCODE_TLV_CAPA_USNIFFER_UNIFIED: supports usniffer enabled in
+ *	regular image.
+ * @IWL_UCODE_TLV_CAPA_EXTEND_SHARED_MEM_CFG: support getting more shared
+ *	memory addresses from the firmware.
+ * @IWL_UCODE_TLV_CAPA_LQM_SUPPORT: supports Link Quality Measurement
  *
  * @NUM_IWL_UCODE_TLV_CAPA: number of bits used
  */
@@ -351,6 +357,12 @@ enum iwl_ucode_tlv_capa {
 	IWL_UCODE_TLV_CAPA_BEACON_ANT_SELECTION		= (__force iwl_ucode_tlv_capa_t)71,
 	IWL_UCODE_TLV_CAPA_BEACON_STORING		= (__force iwl_ucode_tlv_capa_t)72,
 	IWL_UCODE_TLV_CAPA_LAR_SUPPORT_V2		= (__force iwl_ucode_tlv_capa_t)73,
+	IWL_UCODE_TLV_CAPA_CT_KILL_BY_FW		= (__force iwl_ucode_tlv_capa_t)74,
+	IWL_UCODE_TLV_CAPA_TEMP_THS_REPORT_SUPPORT	= (__force iwl_ucode_tlv_capa_t)75,
+	IWL_UCODE_TLV_CAPA_CTDP_SUPPORT			= (__force iwl_ucode_tlv_capa_t)76,
+	IWL_UCODE_TLV_CAPA_USNIFFER_UNIFIED		= (__force iwl_ucode_tlv_capa_t)77,
+	IWL_UCODE_TLV_CAPA_EXTEND_SHARED_MEM_CFG	= (__force iwl_ucode_tlv_capa_t)80,
+	IWL_UCODE_TLV_CAPA_LQM_SUPPORT			= (__force iwl_ucode_tlv_capa_t)81,
 
 	NUM_IWL_UCODE_TLV_CAPA
 #ifdef __CHECKER__
@@ -479,6 +491,37 @@ enum iwl_fw_dbg_monitor_mode {
 	MARBH_MODE = 2,
 	MIPI_MODE = 3,
 };
+
+/**
+ * enum iwl_fw_mem_seg_type - data types for dumping on error
+ *
+ * @FW_DBG_MEM_SMEM: the data type is SMEM
+ * @FW_DBG_MEM_DCCM_LMAC: the data type is DCCM_LMAC
+ * @FW_DBG_MEM_DCCM_UMAC: the data type is DCCM_UMAC
+ */
+enum iwl_fw_dbg_mem_seg_type {
+	FW_DBG_MEM_DCCM_LMAC = 0,
+	FW_DBG_MEM_DCCM_UMAC,
+	FW_DBG_MEM_SMEM,
+
+	/* Must be last */
+	FW_DBG_MEM_MAX,
+};
+
+/**
+ * struct iwl_fw_dbg_mem_seg_tlv - configures the debug data memory segments
+ *
+ * @data_type: enum %iwl_fw_mem_seg_type
+ * @ofs: the memory segment offset
+ * @len: the memory segment length, in bytes
+ *
+ * This parses IWL_UCODE_TLV_FW_MEM_SEG
+ */
+struct iwl_fw_dbg_mem_seg_tlv {
+	__le32 data_type;
+	__le32 ofs;
+	__le32 len;
+} __packed;
 
 /**
  * struct iwl_fw_dbg_dest_tlv - configures the destination of the debug data
@@ -799,6 +842,12 @@ struct iwl_fw_dbg_conf_tlv {
  *	change APs.
  * @max_bssid_history_entries: number of BSSID/RSSI entries that the device can
  *	hold.
+ * @max_hotlist_ssids: maximum number of entries for hotlist SSIDs.
+ * @max_number_epno_networks: max number of epno entries.
+ * @max_number_epno_networks_by_ssid: max number of epno entries if ssid is
+ *	specified.
+ * @max_number_of_white_listed_ssid: max number of white listed SSIDs.
+ * @max_number_of_black_listed_ssid: max number of black listed SSIDs.
  */
 struct iwl_fw_gscan_capabilities {
 	__le32 max_scan_cache_size;
@@ -809,6 +858,11 @@ struct iwl_fw_gscan_capabilities {
 	__le32 max_hotlist_aps;
 	__le32 max_significant_change_aps;
 	__le32 max_bssid_history_entries;
+	__le32 max_hotlist_ssids;
+	__le32 max_number_epno_networks;
+	__le32 max_number_epno_networks_by_ssid;
+	__le32 max_number_of_white_listed_ssid;
+	__le32 max_number_of_black_listed_ssid;
 } __packed;
 
 #endif  /* __iwl_fw_file_h__ */

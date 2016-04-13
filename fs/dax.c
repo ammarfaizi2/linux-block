@@ -79,15 +79,14 @@ struct page *read_dax_sector(struct block_device *bdev, sector_t n)
 }
 
 /*
- * dax_clear_blocks() is called from within transaction context from XFS,
+ * dax_clear_sectors() is called from within transaction context from XFS,
  * and hence this means the stack from this point must follow GFP_NOFS
  * semantics for all operations.
  */
-int dax_clear_blocks(struct inode *inode, sector_t block, long _size)
+int dax_clear_sectors(struct block_device *bdev, sector_t _sector, long _size)
 {
-	struct block_device *bdev = inode->i_sb->s_bdev;
 	struct blk_dax_ctl dax = {
-		.sector = block << (inode->i_blkbits - 9),
+		.sector = _sector,
 		.size = _size,
 	};
 
@@ -109,7 +108,7 @@ int dax_clear_blocks(struct inode *inode, sector_t block, long _size)
 	wmb_pmem();
 	return 0;
 }
-EXPORT_SYMBOL_GPL(dax_clear_blocks);
+EXPORT_SYMBOL_GPL(dax_clear_sectors);
 
 /* the clear_pmem() calls are ordered by a wmb_pmem() in the caller */
 static void dax_new_buf(void __pmem *addr, unsigned size, unsigned first,
@@ -287,8 +286,13 @@ ssize_t dax_do_io(struct kiocb *iocb, struct inode *inode,
 	if ((flags & DIO_LOCKING) && iov_iter_rw(iter) == READ)
 		inode_unlock(inode);
 
-	if ((retval > 0) && end_io)
-		end_io(iocb, pos, retval, bh.b_private);
+	if (end_io) {
+		int err;
+
+		err = end_io(iocb, pos, retval, bh.b_private);
+		if (err)
+			retval = err;
+	}
 
 	if (!(flags & DIO_SKIP_DIO_COUNT))
 		inode_dio_end(inode);
@@ -319,7 +323,7 @@ static int dax_load_hole(struct address_space *mapping, struct page *page,
 	size = (i_size_read(inode) + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	if (vmf->pgoff >= size) {
 		unlock_page(page);
-		page_cache_release(page);
+		put_page(page);
 		return VM_FAULT_SIGBUS;
 	}
 
@@ -347,7 +351,7 @@ static int copy_user_bh(struct page *to, struct inode *inode,
 }
 
 #define NO_SECTOR -1
-#define DAX_PMD_INDEX(page_index) (page_index & (PMD_MASK >> PAGE_CACHE_SHIFT))
+#define DAX_PMD_INDEX(page_index) (page_index & (PMD_MASK >> PAGE_SHIFT))
 
 static int dax_radix_entry(struct address_space *mapping, pgoff_t index,
 		sector_t sector, bool pmd_entry, bool dirty)
@@ -485,11 +489,10 @@ static int dax_writeback_one(struct block_device *bdev,
  * end]. This is required by data integrity operations to ensure file data is
  * on persistent storage prior to completion of the operation.
  */
-int dax_writeback_mapping_range(struct address_space *mapping, loff_t start,
-		loff_t end)
+int dax_writeback_mapping_range(struct address_space *mapping,
+		struct block_device *bdev, struct writeback_control *wbc)
 {
 	struct inode *inode = mapping->host;
-	struct block_device *bdev = inode->i_sb->s_bdev;
 	pgoff_t start_index, end_index, pmd_index;
 	pgoff_t indices[PAGEVEC_SIZE];
 	struct pagevec pvec;
@@ -500,8 +503,11 @@ int dax_writeback_mapping_range(struct address_space *mapping, loff_t start,
 	if (WARN_ON_ONCE(inode->i_blkbits != PAGE_SHIFT))
 		return -EIO;
 
-	start_index = start >> PAGE_CACHE_SHIFT;
-	end_index = end >> PAGE_CACHE_SHIFT;
+	if (!mapping->nrexceptional || wbc->sync_mode != WB_SYNC_ALL)
+		return 0;
+
+	start_index = wbc->range_start >> PAGE_SHIFT;
+	end_index = wbc->range_end >> PAGE_SHIFT;
 	pmd_index = DAX_PMD_INDEX(start_index);
 
 	rcu_read_lock();
@@ -636,12 +642,12 @@ int __dax_fault(struct vm_area_struct *vma, struct vm_fault *vmf,
 	page = find_get_page(mapping, vmf->pgoff);
 	if (page) {
 		if (!lock_page_or_retry(page, vma->vm_mm, vmf->flags)) {
-			page_cache_release(page);
+			put_page(page);
 			return VM_FAULT_RETRY;
 		}
 		if (unlikely(page->mapping != mapping)) {
 			unlock_page(page);
-			page_cache_release(page);
+			put_page(page);
 			goto repeat;
 		}
 		size = (i_size_read(inode) + PAGE_SIZE - 1) >> PAGE_SHIFT;
@@ -705,10 +711,10 @@ int __dax_fault(struct vm_area_struct *vma, struct vm_fault *vmf,
 
 	if (page) {
 		unmap_mapping_range(mapping, vmf->pgoff << PAGE_SHIFT,
-							PAGE_CACHE_SIZE, 0);
+							PAGE_SIZE, 0);
 		delete_from_page_cache(page);
 		unlock_page(page);
-		page_cache_release(page);
+		put_page(page);
 		page = NULL;
 	}
 
@@ -741,7 +747,7 @@ int __dax_fault(struct vm_area_struct *vma, struct vm_fault *vmf,
  unlock_page:
 	if (page) {
 		unlock_page(page);
-		page_cache_release(page);
+		put_page(page);
 	}
 	goto out;
 }
@@ -1055,6 +1061,7 @@ EXPORT_SYMBOL_GPL(dax_pmd_fault);
 int dax_pfn_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct file *file = vma->vm_file;
+	int error;
 
 	/*
 	 * We pass NO_SECTOR to dax_radix_entry() because we expect that a
@@ -1064,7 +1071,13 @@ int dax_pfn_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 	 * saves us from having to make a call to get_block() here to look
 	 * up the sector.
 	 */
-	dax_radix_entry(file->f_mapping, vmf->pgoff, NO_SECTOR, false, true);
+	error = dax_radix_entry(file->f_mapping, vmf->pgoff, NO_SECTOR, false,
+			true);
+
+	if (error == -ENOMEM)
+		return VM_FAULT_OOM;
+	if (error)
+		return VM_FAULT_SIGBUS;
 	return VM_FAULT_NOPAGE;
 }
 EXPORT_SYMBOL_GPL(dax_pfn_mkwrite);
@@ -1081,7 +1094,7 @@ EXPORT_SYMBOL_GPL(dax_pfn_mkwrite);
  * you are truncating a file, the helper function dax_truncate_page() may be
  * more convenient.
  *
- * We work in terms of PAGE_CACHE_SIZE here for commonality with
+ * We work in terms of PAGE_SIZE here for commonality with
  * block_truncate_page(), but we could go down to PAGE_SIZE if the filesystem
  * took care of disposing of the unnecessary blocks.  Even if the filesystem
  * block size is smaller than PAGE_SIZE, we have to zero the rest of the page
@@ -1091,18 +1104,18 @@ int dax_zero_page_range(struct inode *inode, loff_t from, unsigned length,
 							get_block_t get_block)
 {
 	struct buffer_head bh;
-	pgoff_t index = from >> PAGE_CACHE_SHIFT;
-	unsigned offset = from & (PAGE_CACHE_SIZE-1);
+	pgoff_t index = from >> PAGE_SHIFT;
+	unsigned offset = from & (PAGE_SIZE-1);
 	int err;
 
 	/* Block boundary? Nothing to do */
 	if (!length)
 		return 0;
-	BUG_ON((offset + length) > PAGE_CACHE_SIZE);
+	BUG_ON((offset + length) > PAGE_SIZE);
 
 	memset(&bh, 0, sizeof(bh));
 	bh.b_bdev = inode->i_sb->s_bdev;
-	bh.b_size = PAGE_CACHE_SIZE;
+	bh.b_size = PAGE_SIZE;
 	err = get_block(inode, index, &bh, 0);
 	if (err < 0)
 		return err;
@@ -1110,7 +1123,7 @@ int dax_zero_page_range(struct inode *inode, loff_t from, unsigned length,
 		struct block_device *bdev = bh.b_bdev;
 		struct blk_dax_ctl dax = {
 			.sector = to_sector(&bh, inode),
-			.size = PAGE_CACHE_SIZE,
+			.size = PAGE_SIZE,
 		};
 
 		if (dax_map_atomic(bdev, &dax) < 0)
@@ -1133,7 +1146,7 @@ EXPORT_SYMBOL_GPL(dax_zero_page_range);
  * Similar to block_truncate_page(), this function can be called by a
  * filesystem when it is truncating a DAX file to handle the partial page.
  *
- * We work in terms of PAGE_CACHE_SIZE here for commonality with
+ * We work in terms of PAGE_SIZE here for commonality with
  * block_truncate_page(), but we could go down to PAGE_SIZE if the filesystem
  * took care of disposing of the unnecessary blocks.  Even if the filesystem
  * block size is smaller than PAGE_SIZE, we have to zero the rest of the page
@@ -1141,7 +1154,7 @@ EXPORT_SYMBOL_GPL(dax_zero_page_range);
  */
 int dax_truncate_page(struct inode *inode, loff_t from, get_block_t get_block)
 {
-	unsigned length = PAGE_CACHE_ALIGN(from) - from;
+	unsigned length = PAGE_ALIGN(from) - from;
 	return dax_zero_page_range(inode, from, length, get_block);
 }
 EXPORT_SYMBOL_GPL(dax_truncate_page);

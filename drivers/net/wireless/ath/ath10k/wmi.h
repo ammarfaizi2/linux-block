@@ -2661,9 +2661,14 @@ struct wmi_resource_config_10_4 {
 	 */
 	__le32 iphdr_pad_config;
 
-	/* qwrap configuration
+	/* qwrap configuration (bits 15-0)
 	 * 1  - This is qwrap configuration
 	 * 0  - This is not qwrap
+	 *
+	 * Bits 31-16 is alloc_frag_desc_for_data_pkt (1 enables, 0 disables)
+	 * In order to get ack-RSSI reporting and to specify the tx-rate for
+	 * individual frames, this option must be enabled.  This uses an extra
+	 * 4 bytes per tx-msdu descriptor, so don't enable it unless you need it.
 	 */
 	__le32 qwrap_config;
 } __packed;
@@ -4630,6 +4635,7 @@ struct wmi_vdev_param_map {
 	u32 meru_vc;
 	u32 rx_decap_type;
 	u32 bw_nss_ratemask;
+	u32 set_tsf;
 };
 
 #define WMI_VDEV_PARAM_UNSUPPORTED 0
@@ -4886,6 +4892,7 @@ enum wmi_10x_vdev_param {
 	WMI_10X_VDEV_PARAM_RTS_FIXED_RATE,
 	WMI_10X_VDEV_PARAM_VHT_SGIMASK,
 	WMI_10X_VDEV_PARAM_VHT80_RATEMASK,
+	WMI_10X_VDEV_PARAM_TSF_INCREMENT,
 };
 
 enum wmi_10_4_vdev_param {
@@ -4955,6 +4962,12 @@ enum wmi_10_4_vdev_param {
 	WMI_10_4_VDEV_PARAM_MERU_VC,
 	WMI_10_4_VDEV_PARAM_RX_DECAP_TYPE,
 	WMI_10_4_VDEV_PARAM_BW_NSS_RATEMASK,
+	WMI_10_4_VDEV_PARAM_SENSOR_AP,
+	WMI_10_4_VDEV_PARAM_BEACON_RATE,
+	WMI_10_4_VDEV_PARAM_DTIM_ENABLE_CTS,
+	WMI_10_4_VDEV_PARAM_STA_KICKOUT,
+	WMI_10_4_VDEV_PARAM_CAPABILITIES,
+	WMI_10_4_VDEV_PARAM_TSF_INCREMENT,
 };
 
 #define WMI_VDEV_PARAM_TXBF_SU_TX_BFEE BIT(0)

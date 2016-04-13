@@ -264,17 +264,29 @@ enum iwl_rx_mpdu_mac_flags2 {
 };
 
 enum iwl_rx_mpdu_amsdu_info {
-	IWL_RX_MPDU_AMSDU_SUBFRAME_IDX_MASK	= 0x3f,
-	IWL_RX_MPDU_AMSDU_LAST_SUBFRAME		= 0x40,
-	/* 0x80 bit reserved for now */
+	IWL_RX_MPDU_AMSDU_SUBFRAME_IDX_MASK	= 0x7f,
+	IWL_RX_MPDU_AMSDU_LAST_SUBFRAME		= 0x80,
 };
+
+enum iwl_rx_l3_proto_values {
+	IWL_RX_L3_TYPE_NONE,
+	IWL_RX_L3_TYPE_IPV4,
+	IWL_RX_L3_TYPE_IPV4_FRAG,
+	IWL_RX_L3_TYPE_IPV6_FRAG,
+	IWL_RX_L3_TYPE_IPV6,
+	IWL_RX_L3_TYPE_IPV6_IN_IPV4,
+	IWL_RX_L3_TYPE_ARP,
+	IWL_RX_L3_TYPE_EAPOL,
+};
+
+#define IWL_RX_L3_PROTO_POS 4
 
 enum iwl_rx_l3l4_flags {
 	IWL_RX_L3L4_IP_HDR_CSUM_OK		= BIT(0),
 	IWL_RX_L3L4_TCP_UDP_CSUM_OK		= BIT(1),
 	IWL_RX_L3L4_TCP_FIN_SYN_RST_PSH		= BIT(2),
 	IWL_RX_L3L4_TCP_ACK			= BIT(3),
-	IWL_RX_L3L4_L3_PROTO_MASK		= 0xf << 4,
+	IWL_RX_L3L4_L3_PROTO_MASK		= 0xf << IWL_RX_L3_PROTO_POS,
 	IWL_RX_L3L4_L4_PROTO_MASK		= 0xf << 8,
 	IWL_RX_L3L4_RSS_HASH_MASK		= 0xf << 12,
 };
@@ -390,5 +402,57 @@ struct iwl_rss_config_cmd {
 	__le32 secret_key[IWL_RSS_HASH_KEY_CNT];
 	u8 indirection_table[IWL_RSS_INDIRECTION_TABLE_SIZE];
 } __packed; /* RSS_CONFIG_CMD_API_S_VER_1 */
+
+#define IWL_MULTI_QUEUE_SYNC_MSG_MAX_SIZE 128
+#define IWL_MULTI_QUEUE_SYNC_SENDER_POS 0
+#define IWL_MULTI_QUEUE_SYNC_SENDER_MSK 0xf
+
+/**
+ * struct iwl_rxq_sync_cmd - RXQ notification trigger
+ *
+ * @flags: flags of the notification. bit 0:3 are the sender queue
+ * @rxq_mask: rx queues to send the notification on
+ * @count: number of bytes in payload, should be DWORD aligned
+ * @payload: data to send to rx queues
+ */
+struct iwl_rxq_sync_cmd {
+	__le32 flags;
+	__le32 rxq_mask;
+	__le32 count;
+	u8 payload[];
+} __packed; /* MULTI_QUEUE_DRV_SYNC_HDR_CMD_API_S_VER_1 */
+
+/**
+ * struct iwl_rxq_sync_notification - Notification triggered by RXQ
+ * sync command
+ *
+ * @count: number of bytes in payload
+ * @payload: data to send to rx queues
+ */
+struct iwl_rxq_sync_notification {
+	__le32 count;
+	u8 payload[];
+} __packed; /* MULTI_QUEUE_DRV_SYNC_HDR_CMD_API_S_VER_1 */
+
+/**
+* Internal message identifier
+*
+* @IWL_MVM_RXQ_NOTIF_DEL_BA: notify RSS queues of delBA
+*/
+enum iwl_mvm_rxq_notif_type {
+	IWL_MVM_RXQ_NOTIF_DEL_BA,
+};
+
+/**
+* struct iwl_mvm_internal_rxq_notif - Internal representation of the data sent
+* in &iwl_rxq_sync_cmd. Should be DWORD aligned.
+*
+* @type: value from &iwl_mvm_rxq_notif_type
+* @data: payload
+*/
+struct iwl_mvm_internal_rxq_notif {
+	u32 type;
+	u8 data[];
+} __packed;
 
 #endif /* __fw_api_rx_h__ */

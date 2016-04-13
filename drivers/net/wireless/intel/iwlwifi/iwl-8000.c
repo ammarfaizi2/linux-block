@@ -70,15 +70,11 @@
 #include "iwl-agn-hw.h"
 
 /* Highest firmware API version supported */
-#define IWL8000_UCODE_API_MAX	20
-#define IWL8265_UCODE_API_MAX	20
-
-/* Oldest version we won't warn about */
-#define IWL8000_UCODE_API_OK	13
-#define IWL8265_UCODE_API_OK	20
+#define IWL8000_UCODE_API_MAX	21
+#define IWL8265_UCODE_API_MAX	21
 
 /* Lowest firmware API version supported */
-#define IWL8000_UCODE_API_MIN	13
+#define IWL8000_UCODE_API_MIN	16
 #define IWL8265_UCODE_API_MIN	20
 
 /* NVM versions */
@@ -175,19 +171,16 @@ static const struct iwl_tt_params iwl8000_tt_params = {
 #define IWL_DEVICE_8000							\
 	IWL_DEVICE_8000_COMMON,						\
 	.ucode_api_max = IWL8000_UCODE_API_MAX,				\
-	.ucode_api_ok = IWL8000_UCODE_API_OK,				\
 	.ucode_api_min = IWL8000_UCODE_API_MIN				\
 
 #define IWL_DEVICE_8260							\
 	IWL_DEVICE_8000_COMMON,						\
 	.ucode_api_max = IWL8000_UCODE_API_MAX,				\
-	.ucode_api_ok = IWL8000_UCODE_API_OK,				\
 	.ucode_api_min = IWL8000_UCODE_API_MIN				\
 
 #define IWL_DEVICE_8265							\
 	IWL_DEVICE_8000_COMMON,						\
 	.ucode_api_max = IWL8265_UCODE_API_MAX,				\
-	.ucode_api_ok = IWL8265_UCODE_API_OK,				\
 	.ucode_api_min = IWL8265_UCODE_API_MIN				\
 
 const struct iwl_cfg iwl8260_2n_cfg = {
@@ -217,6 +210,7 @@ const struct iwl_cfg iwl8265_2ac_cfg = {
 	.nvm_ver = IWL8000_NVM_VERSION,
 	.nvm_calib_ver = IWL8000_TX_POWER_VERSION,
 	.max_ht_ampdu_exponent = IEEE80211_HT_MAX_AMPDU_64K,
+	.vht_mu_mimo_supported = true,
 };
 
 const struct iwl_cfg iwl4165_2ac_cfg = {
@@ -258,5 +252,5 @@ const struct iwl_cfg iwl4165_2ac_sdio_cfg = {
 	.max_vht_ampdu_exponent = MAX_VHT_AMPDU_EXPONENT_8260_SDIO,
 };
 
-MODULE_FIRMWARE(IWL8000_MODULE_FIRMWARE(IWL8000_UCODE_API_OK));
-MODULE_FIRMWARE(IWL8265_MODULE_FIRMWARE(IWL8265_UCODE_API_OK));
+MODULE_FIRMWARE(IWL8000_MODULE_FIRMWARE(IWL8000_UCODE_API_MAX));
+MODULE_FIRMWARE(IWL8265_MODULE_FIRMWARE(IWL8265_UCODE_API_MAX));

@@ -10,6 +10,7 @@
 #include <uapi/linux/bpf.h>
 #include <linux/workqueue.h>
 #include <linux/file.h>
+#include <linux/percpu.h>
 
 struct bpf_map;
 
@@ -36,6 +37,7 @@ struct bpf_map {
 	u32 key_size;
 	u32 value_size;
 	u32 max_entries;
+	u32 map_flags;
 	u32 pages;
 	struct user_struct *user;
 	const struct bpf_map_ops *ops;
@@ -129,6 +131,7 @@ struct bpf_prog_type_list {
 struct bpf_prog_aux {
 	atomic_t refcnt;
 	u32 used_map_cnt;
+	u32 max_ctx_offset;
 	const struct bpf_verifier_ops *ops;
 	struct bpf_map **used_maps;
 	struct bpf_prog *prog;
@@ -158,11 +161,14 @@ struct bpf_array {
 #define MAX_TAIL_CALL_CNT 32
 
 u64 bpf_tail_call(u64 ctx, u64 r2, u64 index, u64 r4, u64 r5);
+u64 bpf_get_stackid(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5);
 void bpf_fd_array_map_clear(struct bpf_map *map);
 bool bpf_prog_array_compatible(struct bpf_array *array, const struct bpf_prog *fp);
 const struct bpf_func_proto *bpf_get_trace_printk_proto(void);
 
 #ifdef CONFIG_BPF_SYSCALL
+DECLARE_PER_CPU(int, bpf_prog_active);
+
 void bpf_register_prog_type(struct bpf_prog_type_list *tl);
 void bpf_register_map_type(struct bpf_map_type_list *tl);
 
@@ -175,6 +181,7 @@ struct bpf_map *__bpf_map_get(struct fd f);
 void bpf_map_inc(struct bpf_map *map, bool uref);
 void bpf_map_put_with_uref(struct bpf_map *map);
 void bpf_map_put(struct bpf_map *map);
+int bpf_map_precharge_memlock(u32 pages);
 
 extern int sysctl_unprivileged_bpf_disabled;
 
@@ -190,6 +197,7 @@ int bpf_percpu_hash_update(struct bpf_map *map, void *key, void *value,
 			   u64 flags);
 int bpf_percpu_array_update(struct bpf_map *map, void *key, void *value,
 			    u64 flags);
+int bpf_stackmap_copy(struct bpf_map *map, void *key, void *value);
 
 /* memcpy that is used with 8-byte aligned pointers, power-of-8 size and
  * forced to use 'long' read/writes to try to atomically copy long counters.

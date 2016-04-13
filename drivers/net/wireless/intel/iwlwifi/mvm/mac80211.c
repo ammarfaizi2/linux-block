@@ -7,6 +7,7 @@
  *
  * Copyright(c) 2012 - 2014 Intel Corporation. All rights reserved.
  * Copyright(c) 2013 - 2014 Intel Mobile Communications GmbH
+ * Copyright(c) 2016 Intel Deutschland GmbH
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -69,7 +70,6 @@
 #include <linux/etherdevice.h>
 #include <linux/ip.h>
 #include <linux/if_arp.h>
-#include <linux/devcoredump.h>
 #include <linux/time.h>
 #include <net/mac80211.h>
 #include <net/ieee80211_radiotap.h>
@@ -85,7 +85,6 @@
 #include "testmode.h"
 #include "iwl-fw-error-dump.h"
 #include "iwl-prph.h"
-#include "iwl-csr.h"
 #include "iwl-nvm-parse.h"
 #include "fw-dbg.h"
 
@@ -666,12 +665,13 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 	}
 
 	hw->netdev_features |= mvm->cfg->features;
-	if (!iwl_mvm_is_csum_supported(mvm))
-		hw->netdev_features &= ~NETIF_F_RXCSUM;
-
-	if (IWL_MVM_SW_TX_CSUM_OFFLOAD)
-		hw->netdev_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
-			NETIF_F_TSO | NETIF_F_TSO6;
+	if (!iwl_mvm_is_csum_supported(mvm)) {
+		hw->netdev_features &= ~(IWL_TX_CSUM_NETIF_FLAGS |
+					 NETIF_F_RXCSUM);
+		/* We may support SW TX CSUM */
+		if (IWL_MVM_SW_TX_CSUM_OFFLOAD)
+			hw->netdev_features |= IWL_TX_CSUM_NETIF_FLAGS;
+	}
 
 	ret = ieee80211_register_hw(mvm->hw);
 	if (ret)
@@ -847,6 +847,7 @@ static int iwl_mvm_mac_ampdu_action(struct ieee80211_hw *hw,
 	u16 tid = params->tid;
 	u16 *ssn = &params->ssn;
 	u8 buf_size = params->buf_size;
+	bool amsdu = params->amsdu;
 
 	IWL_DEBUG_HT(mvm, "A-MPDU action on addr %pM tid %d: action %d\n",
 		     sta->addr, tid, action);
@@ -907,7 +908,8 @@ static int iwl_mvm_mac_ampdu_action(struct ieee80211_hw *hw,
 		ret = iwl_mvm_sta_tx_agg_flush(mvm, vif, sta, tid);
 		break;
 	case IEEE80211_AMPDU_TX_OPERATIONAL:
-		ret = iwl_mvm_sta_tx_agg_oper(mvm, vif, sta, tid, buf_size);
+		ret = iwl_mvm_sta_tx_agg_oper(mvm, vif, sta, tid,
+					      buf_size, amsdu);
 		break;
 	default:
 		WARN_ON_ONCE(1);
@@ -969,7 +971,7 @@ static void iwl_mvm_restart_cleanup(struct iwl_mvm *mvm)
 	 */
 	iwl_mvm_unref_all_except(mvm, IWL_MVM_REF_UCODE_DOWN);
 
-	iwl_trans_stop_device(mvm->trans);
+	iwl_mvm_stop_device(mvm);
 
 	mvm->scan_status = 0;
 	mvm->ps_disabled = false;
@@ -991,6 +993,7 @@ static void iwl_mvm_restart_cleanup(struct iwl_mvm *mvm)
 	iwl_mvm_reset_phy_ctxts(mvm);
 	memset(mvm->fw_key_table, 0, sizeof(mvm->fw_key_table));
 	memset(mvm->sta_drained, 0, sizeof(mvm->sta_drained));
+	memset(mvm->sta_deferred_frames, 0, sizeof(mvm->sta_deferred_frames));
 	memset(mvm->tfd_drained, 0, sizeof(mvm->tfd_drained));
 	memset(&mvm->last_bt_notif, 0, sizeof(mvm->last_bt_notif));
 	memset(&mvm->last_bt_notif_old, 0, sizeof(mvm->last_bt_notif_old));
@@ -1138,7 +1141,7 @@ void __iwl_mvm_mac_stop(struct iwl_mvm *mvm)
 	 */
 	flush_work(&mvm->roc_done_wk);
 
-	iwl_trans_stop_device(mvm->trans);
+	iwl_mvm_stop_device(mvm);
 
 	iwl_mvm_async_handlers_purge(mvm);
 	/* async_handlers_list is empty and will stay empty: HW is stopped */
@@ -1169,8 +1172,6 @@ void __iwl_mvm_mac_stop(struct iwl_mvm *mvm)
 				mvm->scan_uid_status[i] = 0;
 		}
 	}
-
-	mvm->ucode_loaded = false;
 }
 
 static void iwl_mvm_mac_stop(struct ieee80211_hw *hw)
@@ -1179,6 +1180,7 @@ static void iwl_mvm_mac_stop(struct ieee80211_hw *hw)
 
 	flush_work(&mvm->d0i3_exit_work);
 	flush_work(&mvm->async_handlers_wk);
+	flush_work(&mvm->add_stream_wk);
 	cancel_delayed_work_sync(&mvm->fw_dump_wk);
 	iwl_mvm_free_fw_dump_desc(mvm);
 
@@ -1762,6 +1764,50 @@ static inline int iwl_mvm_configure_bcast_filter(struct iwl_mvm *mvm)
 }
 #endif
 
+static int iwl_mvm_update_mu_groups(struct iwl_mvm *mvm,
+				    struct ieee80211_vif *vif)
+{
+	struct iwl_mu_group_mgmt_cmd cmd = {};
+
+	memcpy(cmd.membership_status, vif->bss_conf.mu_group.membership,
+	       WLAN_MEMBERSHIP_LEN);
+	memcpy(cmd.user_position, vif->bss_conf.mu_group.position,
+	       WLAN_USER_POSITION_LEN);
+
+	return iwl_mvm_send_cmd_pdu(mvm,
+				    WIDE_ID(DATA_PATH_GROUP,
+					    UPDATE_MU_GROUPS_CMD),
+				    0, sizeof(cmd), &cmd);
+}
+
+static void iwl_mvm_mu_mimo_iface_iterator(void *_data, u8 *mac,
+					   struct ieee80211_vif *vif)
+{
+	if (vif->mu_mimo_owner) {
+		struct iwl_mu_group_mgmt_notif *notif = _data;
+
+		/*
+		 * MU-MIMO Group Id action frame is little endian. We treat
+		 * the data received from firmware as if it came from the
+		 * action frame, so no conversion is needed.
+		 */
+		ieee80211_update_mu_groups(vif,
+					   (u8 *)&notif->membership_status,
+					   (u8 *)&notif->user_position);
+	}
+}
+
+void iwl_mvm_mu_mimo_grp_notif(struct iwl_mvm *mvm,
+			       struct iwl_rx_cmd_buffer *rxb)
+{
+	struct iwl_rx_packet *pkt = rxb_addr(rxb);
+	struct iwl_mu_group_mgmt_notif *notif = (void *)pkt->data;
+
+	ieee80211_iterate_active_interfaces_atomic(
+			mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
+			iwl_mvm_mu_mimo_iface_iterator, notif);
+}
+
 static void iwl_mvm_bss_info_changed_station(struct iwl_mvm *mvm,
 					     struct ieee80211_vif *vif,
 					     struct ieee80211_bss_conf *bss_conf,
@@ -1777,6 +1823,11 @@ static void iwl_mvm_bss_info_changed_station(struct iwl_mvm *mvm,
 	 */
 	if (changes & BSS_CHANGED_ASSOC && bss_conf->assoc)
 		iwl_mvm_mac_ctxt_recalc_tsf_id(mvm, vif);
+
+	if (changes & BSS_CHANGED_ASSOC && !bss_conf->assoc &&
+	    mvmvif->lqm_active)
+		iwl_mvm_send_lqm_cmd(vif, LQM_CMD_OPERATION_STOP_MEASUREMENT,
+				     0, 0);
 
 	/*
 	 * If we're not associated yet, take the (new) BSSID before associating
@@ -1870,6 +1921,18 @@ static void iwl_mvm_bss_info_changed_station(struct iwl_mvm *mvm,
 					vif->addr);
 		}
 
+		/*
+		 * The firmware tracks the MU-MIMO group on its own.
+		 * However, on HW restart we should restore this data.
+		 */
+		if (test_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status) &&
+		    (changes & BSS_CHANGED_MU_GROUPS) && vif->mu_mimo_owner) {
+			ret = iwl_mvm_update_mu_groups(mvm, vif);
+			if (ret)
+				IWL_ERR(mvm,
+					"failed to update VHT MU_MIMO groups\n");
+		}
+
 		iwl_mvm_recalc_multicast(mvm);
 		iwl_mvm_configure_bcast_filter(mvm);
 
@@ -1896,7 +1959,12 @@ static void iwl_mvm_bss_info_changed_station(struct iwl_mvm *mvm,
 		WARN_ON(iwl_mvm_enable_beacon_filter(mvm, vif, 0));
 	}
 
-	if (changes & (BSS_CHANGED_PS | BSS_CHANGED_P2P_PS | BSS_CHANGED_QOS)) {
+	if (changes & (BSS_CHANGED_PS | BSS_CHANGED_P2P_PS | BSS_CHANGED_QOS |
+		       /*
+			* Send power command on every beacon change,
+			* because we may have not enabled beacon abort yet.
+			*/
+		       BSS_CHANGED_BEACON_INFO)) {
 		ret = iwl_mvm_power_update_mac(mvm);
 		if (ret)
 			IWL_ERR(mvm, "failed to update power mode\n");
@@ -2083,7 +2151,6 @@ iwl_mvm_bss_info_changed_ap_ibss(struct iwl_mvm *mvm,
 				bss_conf->txpower);
 		iwl_mvm_set_tx_power(mvm, vif, bss_conf->txpower);
 	}
-
 }
 
 static void iwl_mvm_bss_info_changed(struct ieee80211_hw *hw,
@@ -2276,7 +2343,13 @@ static void iwl_mvm_check_uapsd(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 	if (!(mvm->fw->ucode_capa.flags & IWL_UCODE_TLV_FLAGS_UAPSD_SUPPORT))
 		return;
 
-	if (iwlwifi_mod_params.uapsd_disable) {
+	if (vif->p2p && !iwl_mvm_is_p2p_standalone_uapsd_supported(mvm)) {
+		vif->driver_flags &= ~IEEE80211_VIF_SUPPORTS_UAPSD;
+		return;
+	}
+
+	if (!vif->p2p &&
+	    (iwlwifi_mod_params.uapsd_disable & IWL_DISABLE_UAPSD_BSS)) {
 		vif->driver_flags &= ~IEEE80211_VIF_SUPPORTS_UAPSD;
 		return;
 	}
@@ -2312,6 +2385,22 @@ iwl_mvm_tdls_check_trigger(struct iwl_mvm *mvm,
 				    peer_addr, action);
 }
 
+static void iwl_mvm_purge_deferred_tx_frames(struct iwl_mvm *mvm,
+					     struct iwl_mvm_sta *mvm_sta)
+{
+	struct iwl_mvm_tid_data *tid_data;
+	struct sk_buff *skb;
+	int i;
+
+	spin_lock_bh(&mvm_sta->lock);
+	for (i = 0; i <= IWL_MAX_TID_COUNT; i++) {
+		tid_data = &mvm_sta->tid_data[i];
+		while ((skb = __skb_dequeue(&tid_data->deferred_tx_frames)))
+			ieee80211_free_txskb(mvm->hw, skb);
+	}
+	spin_unlock_bh(&mvm_sta->lock);
+}
+
 static int iwl_mvm_mac_sta_state(struct ieee80211_hw *hw,
 				 struct ieee80211_vif *vif,
 				 struct ieee80211_sta *sta,
@@ -2331,6 +2420,33 @@ static int iwl_mvm_mac_sta_state(struct ieee80211_hw *hw,
 
 	/* if a STA is being removed, reuse its ID */
 	flush_work(&mvm->sta_drained_wk);
+
+	/*
+	 * If we are in a STA removal flow and in DQA mode:
+	 *
+	 * This is after the sync_rcu part, so the queues have already been
+	 * flushed. No more TXs on their way in mac80211's path, and no more in
+	 * the queues.
+	 * Also, we won't be getting any new TX frames for this station.
+	 * What we might have are deferred TX frames that need to be taken care
+	 * of.
+	 *
+	 * Drop any still-queued deferred-frame before removing the STA, and
+	 * make sure the worker is no longer handling frames for this STA.
+	 */
+	if (old_state == IEEE80211_STA_NONE &&
+	    new_state == IEEE80211_STA_NOTEXIST &&
+	    iwl_mvm_is_dqa_supported(mvm)) {
+		struct iwl_mvm_sta *mvm_sta = iwl_mvm_sta_from_mac80211(sta);
+
+		iwl_mvm_purge_deferred_tx_frames(mvm, mvm_sta);
+		flush_work(&mvm->add_stream_wk);
+
+		/*
+		 * No need to make sure deferred TX indication is off since the
+		 * worker will already remove it if it was on
+		 */
+	}
 
 	mutex_lock(&mvm->mutex);
 	if (old_state == IEEE80211_STA_NOTEXIST &&
@@ -2490,10 +2606,8 @@ static void iwl_mvm_mac_mgd_prepare_tx(struct ieee80211_hw *hw,
 				      struct ieee80211_vif *vif)
 {
 	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
-	u32 duration = min(IWL_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS,
-			   200 + vif->bss_conf.beacon_int);
-	u32 min_duration = min(IWL_MVM_TE_SESSION_PROTECTION_MIN_TIME_MS,
-			       100 + vif->bss_conf.beacon_int);
+	u32 duration = IWL_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS;
+	u32 min_duration = IWL_MVM_TE_SESSION_PROTECTION_MIN_TIME_MS;
 
 	if (WARN_ON_ONCE(vif->bss_conf.assoc))
 		return;
@@ -2624,8 +2738,12 @@ static int iwl_mvm_mac_set_key(struct ieee80211_hw *hw,
 			 * GTK on AP interface is a TX-only key, return 0;
 			 * on IBSS they're per-station and because we're lazy
 			 * we don't support them for RX, so do the same.
+			 * CMAC in AP/IBSS modes must be done in software.
 			 */
-			ret = 0;
+			if (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC)
+				ret = -EOPNOTSUPP;
+			else
+				ret = 0;
 			key->hw_key_idx = STA_KEY_IDX_INVALID;
 			break;
 		}
@@ -3562,6 +3680,11 @@ static int iwl_mvm_pre_channel_switch(struct ieee80211_hw *hw,
 
 		break;
 	case NL80211_IFTYPE_STATION:
+		if (mvmvif->lqm_active)
+			iwl_mvm_send_lqm_cmd(vif,
+					     LQM_CMD_OPERATION_STOP_MEASUREMENT,
+					     0, 0);
+
 		/* Schedule the time event to a bit before beacon 1,
 		 * to make sure we're in the new channel when the
 		 * GO/AP arrives.
@@ -3660,6 +3783,10 @@ static void iwl_mvm_mac_flush(struct ieee80211_hw *hw,
 
 	if (!vif || vif->type != NL80211_IFTYPE_STATION)
 		return;
+
+	/* Make sure we're done with the deferred traffic before flushing */
+	if (iwl_mvm_is_dqa_supported(mvm))
+		flush_work(&mvm->add_stream_wk);
 
 	mutex_lock(&mvm->mutex);
 	mvmvif = iwl_mvm_vif_from_mac80211(vif);

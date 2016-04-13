@@ -7,6 +7,7 @@
  *
  * Copyright(c) 2012 - 2014 Intel Corporation. All rights reserved.
  * Copyright(c) 2013 - 2015 Intel Mobile Communications GmbH
+ * Copyright(c) 2016        Intel Deutschland GmbH
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -65,6 +66,8 @@
 #include <linux/ieee80211.h>
 #include <linux/etherdevice.h>
 #include <linux/tcp.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
 
 #include "iwl-trans.h"
 #include "iwl-eeprom-parse.h"
@@ -96,6 +99,111 @@ iwl_mvm_bar_check_trigger(struct iwl_mvm *mvm, const u8 *addr,
 				    addr, tid, ssn);
 }
 
+#define OPT_HDR(type, skb, off) \
+	(type *)(skb_network_header(skb) + (off))
+
+static void iwl_mvm_tx_csum(struct iwl_mvm *mvm, struct sk_buff *skb,
+			    struct ieee80211_hdr *hdr,
+			    struct ieee80211_tx_info *info,
+			    struct iwl_tx_cmd *tx_cmd)
+{
+#if IS_ENABLED(CONFIG_INET)
+	u16 mh_len = ieee80211_hdrlen(hdr->frame_control);
+	u16 offload_assist = le16_to_cpu(tx_cmd->offload_assist);
+	u8 protocol = 0;
+
+	/*
+	 * Do not compute checksum if already computed or if transport will
+	 * compute it
+	 */
+	if (skb->ip_summed != CHECKSUM_PARTIAL || IWL_MVM_SW_TX_CSUM_OFFLOAD)
+		return;
+
+	/* We do not expect to be requested to csum stuff we do not support */
+	if (WARN_ONCE(!(mvm->hw->netdev_features & IWL_TX_CSUM_NETIF_FLAGS) ||
+		      (skb->protocol != htons(ETH_P_IP) &&
+		       skb->protocol != htons(ETH_P_IPV6)),
+		      "No support for requested checksum\n")) {
+		skb_checksum_help(skb);
+		return;
+	}
+
+	if (skb->protocol == htons(ETH_P_IP)) {
+		protocol = ip_hdr(skb)->protocol;
+	} else {
+#if IS_ENABLED(CONFIG_IPV6)
+		struct ipv6hdr *ipv6h =
+			(struct ipv6hdr *)skb_network_header(skb);
+		unsigned int off = sizeof(*ipv6h);
+
+		protocol = ipv6h->nexthdr;
+		while (protocol != NEXTHDR_NONE && ipv6_ext_hdr(protocol)) {
+			/* only supported extension headers */
+			if (protocol != NEXTHDR_ROUTING &&
+			    protocol != NEXTHDR_HOP &&
+			    protocol != NEXTHDR_DEST &&
+			    protocol != NEXTHDR_FRAGMENT) {
+				skb_checksum_help(skb);
+				return;
+			}
+
+			if (protocol == NEXTHDR_FRAGMENT) {
+				struct frag_hdr *hp =
+					OPT_HDR(struct frag_hdr, skb, off);
+
+				protocol = hp->nexthdr;
+				off += sizeof(struct frag_hdr);
+			} else {
+				struct ipv6_opt_hdr *hp =
+					OPT_HDR(struct ipv6_opt_hdr, skb, off);
+
+				protocol = hp->nexthdr;
+				off += ipv6_optlen(hp);
+			}
+		}
+		/* if we get here - protocol now should be TCP/UDP */
+#endif
+	}
+
+	if (protocol != IPPROTO_TCP && protocol != IPPROTO_UDP) {
+		WARN_ON_ONCE(1);
+		skb_checksum_help(skb);
+		return;
+	}
+
+	/* enable L4 csum */
+	offload_assist |= BIT(TX_CMD_OFFLD_L4_EN);
+
+	/*
+	 * Set offset to IP header (snap).
+	 * We don't support tunneling so no need to take care of inner header.
+	 * Size is in words.
+	 */
+	offload_assist |= (4 << TX_CMD_OFFLD_IP_HDR);
+
+	/* Do IPv4 csum for AMSDU only (no IP csum for Ipv6) */
+	if (skb->protocol == htons(ETH_P_IP) &&
+	    (offload_assist & BIT(TX_CMD_OFFLD_AMSDU))) {
+		ip_hdr(skb)->check = 0;
+		offload_assist |= BIT(TX_CMD_OFFLD_L3_EN);
+	}
+
+	/* reset UDP/TCP header csum */
+	if (protocol == IPPROTO_TCP)
+		tcp_hdr(skb)->check = 0;
+	else
+		udp_hdr(skb)->check = 0;
+
+	/* mac header len should include IV, size is in words */
+	if (info->control.hw_key)
+		mh_len += info->control.hw_key->iv_len;
+	mh_len /= 2;
+	offload_assist |= mh_len << TX_CMD_OFFLD_MH_SIZE;
+
+	tx_cmd->offload_assist = cpu_to_le16(offload_assist);
+#endif
+}
+
 /*
  * Sets most of the Tx cmd's fields
  */
@@ -124,6 +232,9 @@ void iwl_mvm_set_tx_cmd(struct iwl_mvm *mvm, struct sk_buff *skb,
 		u8 *qc = ieee80211_get_qos_ctl(hdr);
 		tx_cmd->tid_tspec = qc[0] & 0xf;
 		tx_flags &= ~TX_CMD_FLG_SEQ_CTL;
+		if (*qc & IEEE80211_QOS_CTL_A_MSDU_PRESENT)
+			tx_cmd->offload_assist |=
+				cpu_to_le16(BIT(TX_CMD_OFFLD_AMSDU));
 	} else if (ieee80211_is_back_req(fc)) {
 		struct ieee80211_bar *bar = (void *)skb->data;
 		u16 control = le16_to_cpu(bar->control);
@@ -182,10 +293,17 @@ void iwl_mvm_set_tx_cmd(struct iwl_mvm *mvm, struct sk_buff *skb,
 
 	tx_cmd->tx_flags = cpu_to_le32(tx_flags);
 	/* Total # bytes to be transmitted */
-	tx_cmd->len = cpu_to_le16((u16)skb->len);
-	tx_cmd->next_frame_len = 0;
+	tx_cmd->len = cpu_to_le16((u16)skb->len +
+		(uintptr_t)info->driver_data[0]);
 	tx_cmd->life_time = cpu_to_le32(TX_CMD_LIFE_TIME_INFINITE);
 	tx_cmd->sta_id = sta_id;
+
+	/* padding is inserted later in transport */
+	if (ieee80211_hdrlen(fc) % 4 &&
+	    !(tx_cmd->offload_assist & cpu_to_le16(BIT(TX_CMD_OFFLD_AMSDU))))
+		tx_cmd->offload_assist |= cpu_to_le16(BIT(TX_CMD_OFFLD_PAD));
+
+	iwl_mvm_tx_csum(mvm, skb, hdr, info, tx_cmd);
 }
 
 /*
@@ -372,6 +490,9 @@ int iwl_mvm_tx_skb_non_sta(struct iwl_mvm *mvm, struct sk_buff *skb)
 			  info->hw_queue != info->control.vif->cab_queue)))
 		return -1;
 
+	/* This holds the amsdu headers length */
+	info->driver_data[0] = (void *)(uintptr_t)0;
+
 	/*
 	 * IWL_MVM_OFFCHANNEL_QUEUE is used for ROC packets that can be used
 	 * in 2 different types of vifs, P2P & STATION. P2P uses the offchannel
@@ -425,35 +546,248 @@ int iwl_mvm_tx_skb_non_sta(struct iwl_mvm *mvm, struct sk_buff *skb)
 		return -1;
 	}
 
+	/*
+	 * Increase the pending frames counter, so that later when a reply comes
+	 * in and the counter is decreased - we don't start getting negative
+	 * values.
+	 * Note that we don't need to make sure it isn't agg'd, since we're
+	 * TXing non-sta
+	 */
+	atomic_inc(&mvm->pending_frames[sta_id]);
+
 	return 0;
 }
 
-static int iwl_mvm_tx_tso(struct iwl_mvm *mvm, struct sk_buff *skb_gso,
+#ifdef CONFIG_INET
+static int iwl_mvm_tx_tso(struct iwl_mvm *mvm, struct sk_buff *skb,
 			  struct ieee80211_sta *sta,
 			  struct sk_buff_head *mpdus_skb)
 {
+	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_hdr *hdr = (void *)skb->data;
+	unsigned int mss = skb_shinfo(skb)->gso_size;
 	struct sk_buff *tmp, *next;
-	char cb[sizeof(skb_gso->cb)];
+	char cb[sizeof(skb->cb)];
+	unsigned int num_subframes, tcp_payload_len, subf_len, max_amsdu_len;
+	bool ipv4 = (skb->protocol == htons(ETH_P_IP));
+	u16 ip_base_id = ipv4 ? ntohs(ip_hdr(skb)->id) : 0;
+	u16 amsdu_add, snap_ip_tcp, pad, i = 0;
+	unsigned int dbg_max_amsdu_len;
+	netdev_features_t netdev_features = NETIF_F_CSUM_MASK | NETIF_F_SG;
+	u8 *qc, tid, txf;
 
-	memcpy(cb, skb_gso->cb, sizeof(cb));
-	next = skb_gso_segment(skb_gso, 0);
-	if (IS_ERR(next))
+	snap_ip_tcp = 8 + skb_transport_header(skb) - skb_network_header(skb) +
+		tcp_hdrlen(skb);
+
+	qc = ieee80211_get_qos_ctl(hdr);
+	tid = *qc & IEEE80211_QOS_CTL_TID_MASK;
+	if (WARN_ON_ONCE(tid >= IWL_MAX_TID_COUNT))
+		return -EINVAL;
+
+	if (!sta->max_amsdu_len ||
+	    !ieee80211_is_data_qos(hdr->frame_control) ||
+	    !mvmsta->tlc_amsdu) {
+		num_subframes = 1;
+		pad = 0;
+		goto segment;
+	}
+
+	/*
+	 * Do not build AMSDU for IPv6 with extension headers.
+	 * ask stack to segment and checkum the generated MPDUs for us.
+	 */
+	if (skb->protocol == htons(ETH_P_IPV6) &&
+	    ((struct ipv6hdr *)skb_network_header(skb))->nexthdr !=
+	    IPPROTO_TCP) {
+		num_subframes = 1;
+		pad = 0;
+		netdev_features &= ~NETIF_F_CSUM_MASK;
+		goto segment;
+	}
+
+	/*
+	 * No need to lock amsdu_in_ampdu_allowed since it can't be modified
+	 * during an BA session.
+	 */
+	if (info->flags & IEEE80211_TX_CTL_AMPDU &&
+	    !mvmsta->tid_data[tid].amsdu_in_ampdu_allowed) {
+		num_subframes = 1;
+		pad = 0;
+		goto segment;
+	}
+
+	max_amsdu_len = sta->max_amsdu_len;
+	dbg_max_amsdu_len = ACCESS_ONCE(mvm->max_amsdu_len);
+
+	/* the Tx FIFO to which this A-MSDU will be routed */
+	txf = iwl_mvm_ac_to_tx_fifo[tid_to_mac80211_ac[tid]];
+
+	/*
+	 * Don't send an AMSDU that will be longer than the TXF.
+	 * Add a security margin of 256 for the TX command + headers.
+	 * We also want to have the start of the next packet inside the
+	 * fifo to be able to send bursts.
+	 */
+	max_amsdu_len = min_t(unsigned int, max_amsdu_len,
+			      mvm->shared_mem_cfg.txfifo_size[txf] - 256);
+
+	if (dbg_max_amsdu_len)
+		max_amsdu_len = min_t(unsigned int, max_amsdu_len,
+				      dbg_max_amsdu_len);
+
+	/*
+	 * Limit A-MSDU in A-MPDU to 4095 bytes when VHT is not
+	 * supported. This is a spec requirement (IEEE 802.11-2015
+	 * section 8.7.3 NOTE 3).
+	 */
+	if (info->flags & IEEE80211_TX_CTL_AMPDU &&
+	    !sta->vht_cap.vht_supported)
+		max_amsdu_len = min_t(unsigned int, max_amsdu_len, 4095);
+
+	/* Sub frame header + SNAP + IP header + TCP header + MSS */
+	subf_len = sizeof(struct ethhdr) + snap_ip_tcp + mss;
+	pad = (4 - subf_len) & 0x3;
+
+	/*
+	 * If we have N subframes in the A-MSDU, then the A-MSDU's size is
+	 * N * subf_len + (N - 1) * pad.
+	 */
+	num_subframes = (max_amsdu_len + pad) / (subf_len + pad);
+	if (num_subframes > 1)
+		*qc |= IEEE80211_QOS_CTL_A_MSDU_PRESENT;
+
+	tcp_payload_len = skb_tail_pointer(skb) - skb_transport_header(skb) -
+		tcp_hdrlen(skb) + skb->data_len;
+
+	/*
+	 * Make sure we have enough TBs for the A-MSDU:
+	 *	2 for each subframe
+	 *	1 more for each fragment
+	 *	1 more for the potential data in the header
+	 */
+	num_subframes =
+		min_t(unsigned int, num_subframes,
+		      (mvm->trans->max_skb_frags - 1 -
+		       skb_shinfo(skb)->nr_frags) / 2);
+
+	/* This skb fits in one single A-MSDU */
+	if (num_subframes * mss >= tcp_payload_len) {
+		/*
+		 * Compute the length of all the data added for the A-MSDU.
+		 * This will be used to compute the length to write in the TX
+		 * command. We have: SNAP + IP + TCP for n -1 subframes and
+		 * ETH header for n subframes. Note that the original skb
+		 * already had one set of SNAP / IP / TCP headers.
+		 */
+		num_subframes = DIV_ROUND_UP(tcp_payload_len, mss);
+		info = IEEE80211_SKB_CB(skb);
+		amsdu_add = num_subframes * sizeof(struct ethhdr) +
+			(num_subframes - 1) * (snap_ip_tcp + pad);
+		/* This holds the amsdu headers length */
+		info->driver_data[0] = (void *)(uintptr_t)amsdu_add;
+
+		__skb_queue_tail(mpdus_skb, skb);
+		return 0;
+	}
+
+	/*
+	 * Trick the segmentation function to make it
+	 * create SKBs that can fit into one A-MSDU.
+	 */
+segment:
+	skb_shinfo(skb)->gso_size = num_subframes * mss;
+	memcpy(cb, skb->cb, sizeof(cb));
+
+	next = skb_gso_segment(skb, netdev_features);
+	skb_shinfo(skb)->gso_size = mss;
+	if (WARN_ON_ONCE(IS_ERR(next)))
 		return -EINVAL;
 	else if (next)
-		consume_skb(skb_gso);
+		consume_skb(skb);
 
 	while (next) {
 		tmp = next;
 		next = tmp->next;
+
 		memcpy(tmp->cb, cb, sizeof(tmp->cb));
+		/*
+		 * Compute the length of all the data added for the A-MSDU.
+		 * This will be used to compute the length to write in the TX
+		 * command. We have: SNAP + IP + TCP for n -1 subframes and
+		 * ETH header for n subframes.
+		 */
+		tcp_payload_len = skb_tail_pointer(tmp) -
+			skb_transport_header(tmp) -
+			tcp_hdrlen(tmp) + tmp->data_len;
+
+		if (ipv4)
+			ip_hdr(tmp)->id = htons(ip_base_id + i * num_subframes);
+
+		if (tcp_payload_len > mss) {
+			num_subframes = DIV_ROUND_UP(tcp_payload_len, mss);
+			info = IEEE80211_SKB_CB(tmp);
+			amsdu_add = num_subframes * sizeof(struct ethhdr) +
+				(num_subframes - 1) * (snap_ip_tcp + pad);
+			info->driver_data[0] = (void *)(uintptr_t)amsdu_add;
+			skb_shinfo(tmp)->gso_size = mss;
+		} else {
+			qc = ieee80211_get_qos_ctl((void *)tmp->data);
+
+			if (ipv4)
+				ip_send_check(ip_hdr(tmp));
+			*qc &= ~IEEE80211_QOS_CTL_A_MSDU_PRESENT;
+			skb_shinfo(tmp)->gso_size = 0;
+		}
 
 		tmp->prev = NULL;
 		tmp->next = NULL;
 
 		__skb_queue_tail(mpdus_skb, tmp);
+		i++;
 	}
 
 	return 0;
+}
+#else /* CONFIG_INET */
+static int iwl_mvm_tx_tso(struct iwl_mvm *mvm, struct sk_buff *skb,
+			  struct ieee80211_sta *sta,
+			  struct sk_buff_head *mpdus_skb)
+{
+	/* Impossible to get TSO with CONFIG_INET */
+	WARN_ON(1);
+
+	return -1;
+}
+#endif
+
+static void iwl_mvm_tx_add_stream(struct iwl_mvm *mvm,
+				  struct iwl_mvm_sta *mvm_sta, u8 tid,
+				  struct sk_buff *skb)
+{
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	u8 mac_queue = info->hw_queue;
+	struct sk_buff_head *deferred_tx_frames;
+
+	lockdep_assert_held(&mvm_sta->lock);
+
+	mvm_sta->deferred_traffic_tid_map |= BIT(tid);
+	set_bit(mvm_sta->sta_id, mvm->sta_deferred_frames);
+
+	deferred_tx_frames = &mvm_sta->tid_data[tid].deferred_tx_frames;
+
+	skb_queue_tail(deferred_tx_frames, skb);
+
+	/*
+	 * The first deferred frame should've stopped the MAC queues, so we
+	 * should never get a second deferred frame for the RA/TID.
+	 */
+	if (!WARN(skb_queue_len(deferred_tx_frames) != 1,
+		  "RATID %d/%d has %d deferred frames\n", mvm_sta->sta_id, tid,
+		  skb_queue_len(deferred_tx_frames))) {
+		iwl_mvm_stop_mac_queues(mvm, BIT(mac_queue));
+		schedule_work(&mvm->add_stream_wk);
+	}
 }
 
 /*
@@ -471,7 +805,7 @@ static int iwl_mvm_tx_mpdu(struct iwl_mvm *mvm, struct sk_buff *skb,
 	u16 seq_number = 0;
 	u8 tid = IWL_MAX_TID_COUNT;
 	u8 txq_id = info->hw_queue;
-	bool is_data_qos = false, is_ampdu = false;
+	bool is_ampdu = false;
 	int hdrlen;
 
 	mvmsta = iwl_mvm_sta_from_mac80211(sta);
@@ -511,8 +845,15 @@ static int iwl_mvm_tx_mpdu(struct iwl_mvm *mvm, struct sk_buff *skb,
 		seq_number &= IEEE80211_SCTL_SEQ;
 		hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
 		hdr->seq_ctrl |= cpu_to_le16(seq_number);
-		is_data_qos = true;
 		is_ampdu = info->flags & IEEE80211_TX_CTL_AMPDU;
+	} else if (iwl_mvm_is_dqa_supported(mvm) &&
+		   (ieee80211_is_qos_nullfunc(fc) ||
+		    ieee80211_is_nullfunc(fc))) {
+		/*
+		 * nullfunc frames should go to the MGMT queue regardless of QOS
+		 */
+		tid = IWL_MAX_TID_COUNT;
+		txq_id = mvmsta->tid_data[tid].txq_id;
 	}
 
 	/* Copy MAC header from skb into command buffer */
@@ -533,13 +874,30 @@ static int iwl_mvm_tx_mpdu(struct iwl_mvm *mvm, struct sk_buff *skb,
 		txq_id = mvmsta->tid_data[tid].txq_id;
 	}
 
+	if (iwl_mvm_is_dqa_supported(mvm)) {
+		if (unlikely(mvmsta->tid_data[tid].txq_id ==
+			     IEEE80211_INVAL_HW_QUEUE)) {
+			iwl_mvm_tx_add_stream(mvm, mvmsta, tid, skb);
+
+			/*
+			 * The frame is now deferred, and the worker scheduled
+			 * will re-allocate it, so we can free it for now.
+			 */
+			iwl_trans_free_tx_cmd(mvm->trans, dev_cmd);
+			spin_unlock(&mvmsta->lock);
+			return 0;
+		}
+
+		txq_id = mvmsta->tid_data[tid].txq_id;
+	}
+
 	IWL_DEBUG_TX(mvm, "TX to [%d|%d] Q:%d - seq: 0x%x\n", mvmsta->sta_id,
 		     tid, txq_id, IEEE80211_SEQ_TO_SN(seq_number));
 
 	if (iwl_trans_tx(mvm->trans, skb, dev_cmd, txq_id))
 		goto drop_unlock_sta;
 
-	if (is_data_qos && !ieee80211_has_morefrags(fc))
+	if (tid < IWL_MAX_TID_COUNT && !ieee80211_has_morefrags(fc))
 		mvmsta->tid_data[tid].seq_number = seq_number + 0x10;
 
 	spin_unlock(&mvmsta->lock);
@@ -560,6 +918,7 @@ int iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 		   struct ieee80211_sta *sta)
 {
 	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	struct sk_buff_head mpdus_skbs;
 	unsigned int payload_len;
 	int ret;
@@ -569,6 +928,9 @@ int iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 
 	if (WARN_ON_ONCE(mvmsta->sta_id == IWL_MVM_STATION_COUNT))
 		return -1;
+
+	/* This holds the amsdu headers length */
+	info->driver_data[0] = (void *)(uintptr_t)0;
 
 	if (!skb_is_gso(skb))
 		return iwl_mvm_tx_mpdu(mvm, skb, sta);
@@ -589,7 +951,7 @@ int iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 		return ret;
 
 	while (!skb_queue_empty(&mpdus_skbs)) {
-		struct sk_buff *skb = __skb_dequeue(&mpdus_skbs);
+		skb = __skb_dequeue(&mpdus_skbs);
 
 		ret = iwl_mvm_tx_mpdu(mvm, skb, sta);
 		if (ret) {
@@ -784,6 +1146,7 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 	struct sk_buff_head skbs;
 	u8 skb_freed = 0;
 	u16 next_reclaimed, seq_ctl;
+	bool is_ndp = false;
 
 	__skb_queue_head_init(&skbs);
 
@@ -835,6 +1198,20 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 		if (status != TX_STATUS_SUCCESS) {
 			struct ieee80211_hdr *hdr = (void *)skb->data;
 			seq_ctl = le16_to_cpu(hdr->seq_ctrl);
+		}
+
+		if (unlikely(!seq_ctl)) {
+			struct ieee80211_hdr *hdr = (void *)skb->data;
+
+			/*
+			 * If it is an NDP, we can't update next_reclaim since
+			 * its sequence control is 0. Note that for that same
+			 * reason, NDPs are never sent to A-MPDU'able queues
+			 * so that we can never have more than one freed frame
+			 * for a single Tx resonse (see WARN_ON below).
+			 */
+			if (ieee80211_is_qos_nullfunc(hdr->frame_control))
+				is_ndp = true;
 		}
 
 		/*
@@ -900,9 +1277,16 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 			bool send_eosp_ndp = false;
 
 			spin_lock_bh(&mvmsta->lock);
-			tid_data->next_reclaimed = next_reclaimed;
-			IWL_DEBUG_TX_REPLY(mvm, "Next reclaimed packet:%d\n",
-					   next_reclaimed);
+			if (!is_ndp) {
+				tid_data->next_reclaimed = next_reclaimed;
+				IWL_DEBUG_TX_REPLY(mvm,
+						   "Next reclaimed packet:%d\n",
+						   next_reclaimed);
+			} else {
+				IWL_DEBUG_TX_REPLY(mvm,
+						   "NDP - don't update next_reclaimed\n");
+			}
+
 			iwl_mvm_check_ratid_empty(mvm, sta, tid);
 
 			if (mvmsta->sleep_tx_count) {

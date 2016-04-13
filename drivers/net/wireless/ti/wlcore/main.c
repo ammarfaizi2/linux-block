@@ -243,7 +243,7 @@ static void wl12xx_tx_watchdog_work(struct work_struct *work)
 	struct delayed_work *dwork;
 	struct wl1271 *wl;
 
-	dwork = container_of(work, struct delayed_work, work);
+	dwork = to_delayed_work(work);
 	wl = container_of(dwork, struct wl1271, tx_watchdog_work);
 
 	mutex_lock(&wl->mutex);
@@ -2011,7 +2011,7 @@ static void wlcore_channel_switch_work(struct work_struct *work)
 	struct wl12xx_vif *wlvif;
 	int ret;
 
-	dwork = container_of(work, struct delayed_work, work);
+	dwork = to_delayed_work(work);
 	wlvif = container_of(dwork, struct wl12xx_vif, channel_switch_work);
 	wl = wlvif->wl;
 
@@ -2047,7 +2047,7 @@ static void wlcore_connection_loss_work(struct work_struct *work)
 	struct ieee80211_vif *vif;
 	struct wl12xx_vif *wlvif;
 
-	dwork = container_of(work, struct delayed_work, work);
+	dwork = to_delayed_work(work);
 	wlvif = container_of(dwork, struct wl12xx_vif, connection_loss_work);
 	wl = wlvif->wl;
 
@@ -2076,7 +2076,7 @@ static void wlcore_pending_auth_complete_work(struct work_struct *work)
 	unsigned long time_spare;
 	int ret;
 
-	dwork = container_of(work, struct delayed_work, work);
+	dwork = to_delayed_work(work);
 	wlvif = container_of(dwork, struct wl12xx_vif,
 			     pending_auth_complete_work);
 	wl = wlvif->wl;
@@ -5495,7 +5495,7 @@ static int wlcore_op_remain_on_channel(struct ieee80211_hw *hw,
 {
 	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
 	struct wl1271 *wl = hw->priv;
-	int channel, ret = 0;
+	int channel, active_roc, ret = 0;
 
 	channel = ieee80211_frequency_to_channel(chan->center_freq);
 
@@ -5508,9 +5508,9 @@ static int wlcore_op_remain_on_channel(struct ieee80211_hw *hw,
 		goto out;
 
 	/* return EBUSY if we can't ROC right now */
-	if (WARN_ON(wl->roc_vif ||
-		    find_first_bit(wl->roc_map,
-				   WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES)) {
+	active_roc = find_first_bit(wl->roc_map, WL12XX_MAX_ROLES);
+	if (wl->roc_vif || active_roc < WL12XX_MAX_ROLES) {
+		wl1271_warning("active roc on role %d", active_roc);
 		ret = -EBUSY;
 		goto out;
 	}
@@ -5588,7 +5588,7 @@ static void wlcore_roc_complete_work(struct work_struct *work)
 	struct wl1271 *wl;
 	int ret;
 
-	dwork = container_of(work, struct delayed_work, work);
+	dwork = to_delayed_work(work);
 	wl = container_of(dwork, struct wl1271, roc_complete_work);
 
 	ret = wlcore_roc_completed(wl);

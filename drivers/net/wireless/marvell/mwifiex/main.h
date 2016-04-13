@@ -223,6 +223,11 @@ struct mwifiex_dbg {
 	u16 last_cmd_resp_index;
 	u16 last_event[DBG_CMD_NUM];
 	u16 last_event_index;
+	u32 last_mp_wr_bitmap[MWIFIEX_DBG_SDIO_MP_NUM];
+	u32 last_mp_wr_ports[MWIFIEX_DBG_SDIO_MP_NUM];
+	u32 last_mp_wr_len[MWIFIEX_DBG_SDIO_MP_NUM];
+	u32 last_mp_curr_wr_port[MWIFIEX_DBG_SDIO_MP_NUM];
+	u8 last_sdio_mp_index;
 };
 
 enum MWIFIEX_HARDWARE_STATUS {
@@ -1014,6 +1019,8 @@ int mwifiex_shutdown_fw_complete(struct mwifiex_adapter *adapter);
 int mwifiex_dnld_fw(struct mwifiex_adapter *, struct mwifiex_fw_image *);
 
 int mwifiex_recv_packet(struct mwifiex_private *priv, struct sk_buff *skb);
+int mwifiex_uap_recv_packet(struct mwifiex_private *priv,
+			    struct sk_buff *skb);
 
 int mwifiex_process_mgmt_packet(struct mwifiex_private *priv,
 				struct sk_buff *skb);

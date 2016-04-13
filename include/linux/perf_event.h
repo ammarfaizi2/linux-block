@@ -121,12 +121,17 @@ struct hw_perf_event {
 		struct { /* intel_cqm */
 			int			cqm_state;
 			u32			cqm_rmid;
+			int			is_group_event;
 			struct list_head	cqm_events_entry;
 			struct list_head	cqm_groups_entry;
 			struct list_head	cqm_group_entry;
 		};
 		struct { /* itrace */
 			int			itrace_started;
+		};
+		struct { /* amd_power */
+			u64	pwr_acc;
+			u64	ptsc;
 		};
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
 		struct { /* breakpoint */
@@ -397,6 +402,7 @@ struct pmu {
  * enum perf_event_active_state - the states of a event
  */
 enum perf_event_active_state {
+	PERF_EVENT_STATE_DEAD		= -4,
 	PERF_EVENT_STATE_EXIT		= -3,
 	PERF_EVENT_STATE_ERROR		= -2,
 	PERF_EVENT_STATE_OFF		= -1,
@@ -467,6 +473,7 @@ struct perf_event {
 	int				group_flags;
 	struct perf_event		*group_leader;
 	struct pmu			*pmu;
+	void				*pmu_private;
 
 	enum perf_event_active_state	state;
 	unsigned int			attach_state;
@@ -875,8 +882,6 @@ static inline void perf_arch_fetch_caller_regs(struct pt_regs *regs, unsigned lo
  */
 static inline void perf_fetch_caller_regs(struct pt_regs *regs)
 {
-	memset(regs, 0, sizeof(*regs));
-
 	perf_arch_fetch_caller_regs(regs, CALLER_ADDR0);
 }
 
@@ -905,7 +910,7 @@ perf_sw_event_sched(u32 event_id, u64 nr, u64 addr)
 	}
 }
 
-extern struct static_key_deferred perf_sched_events;
+extern struct static_key_false perf_sched_events;
 
 static __always_inline bool
 perf_sw_migrate_enabled(void)
@@ -924,7 +929,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
 static inline void perf_event_task_sched_in(struct task_struct *prev,
 					    struct task_struct *task)
 {
-	if (static_key_false(&perf_sched_events.key))
+	if (static_branch_unlikely(&perf_sched_events))
 		__perf_event_task_sched_in(prev, task);
 
 	if (perf_sw_migrate_enabled() && task->sched_migrated) {
@@ -941,7 +946,7 @@ static inline void perf_event_task_sched_out(struct task_struct *prev,
 {
 	perf_sw_event_sched(PERF_COUNT_SW_CONTEXT_SWITCHES, 1, 0);
 
-	if (static_key_false(&perf_sched_events.key))
+	if (static_branch_unlikely(&perf_sched_events))
 		__perf_event_task_sched_out(prev, next);
 }
 
@@ -1011,7 +1016,7 @@ static inline bool perf_paranoid_kernel(void)
 }
 
 extern void perf_event_init(void);
-extern void perf_tp_event(u64 addr, u64 count, void *record,
+extern void perf_tp_event(u16 event_type, u64 count, void *record,
 			  int entry_size, struct pt_regs *regs,
 			  struct hlist_head *head, int rctx,
 			  struct task_struct *task);
@@ -1115,12 +1120,6 @@ static inline void perf_event_disable(struct perf_event *event)		{ }
 static inline int __perf_event_disable(void *info)			{ return -1; }
 static inline void perf_event_task_tick(void)				{ }
 static inline int perf_event_release_kernel(struct perf_event *event)	{ return 0; }
-#endif
-
-#if defined(CONFIG_PERF_EVENTS) && defined(CONFIG_NO_HZ_FULL)
-extern bool perf_event_can_stop_tick(void);
-#else
-static inline bool perf_event_can_stop_tick(void)			{ return true; }
 #endif
 
 #if defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_INTEL)

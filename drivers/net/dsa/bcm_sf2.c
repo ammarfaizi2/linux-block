@@ -516,7 +516,7 @@ static int bcm_sf2_sw_br_join(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static int bcm_sf2_sw_br_leave(struct dsa_switch *ds, int port)
+static void bcm_sf2_sw_br_leave(struct dsa_switch *ds, int port)
 {
 	struct bcm_sf2_priv *priv = ds_to_priv(ds);
 	struct net_device *bridge = priv->port_sts[port].bridge_dev;
@@ -543,16 +543,13 @@ static int bcm_sf2_sw_br_leave(struct dsa_switch *ds, int port)
 	core_writel(priv, p_ctl, CORE_PORT_VLAN_CTL_PORT(port));
 	priv->port_sts[port].vlan_ctl_mask = p_ctl;
 	priv->port_sts[port].bridge_dev = NULL;
-
-	return 0;
 }
 
-static int bcm_sf2_sw_br_set_stp_state(struct dsa_switch *ds, int port,
-				       u8 state)
+static void bcm_sf2_sw_br_set_stp_state(struct dsa_switch *ds, int port,
+					u8 state)
 {
 	struct bcm_sf2_priv *priv = ds_to_priv(ds);
 	u8 hw_state, cur_hw_state;
-	int ret = 0;
 	u32 reg;
 
 	reg = core_readl(priv, CORE_G_PCTL_PORT(port));
@@ -576,7 +573,7 @@ static int bcm_sf2_sw_br_set_stp_state(struct dsa_switch *ds, int port,
 		break;
 	default:
 		pr_err("%s: invalid STP state: %d\n", __func__, state);
-		return -EINVAL;
+		return;
 	}
 
 	/* Fast-age ARL entries if we are moving a port from Learning or
@@ -586,10 +583,9 @@ static int bcm_sf2_sw_br_set_stp_state(struct dsa_switch *ds, int port,
 	if (cur_hw_state != hw_state) {
 		if (cur_hw_state >= G_MISTP_LEARN_STATE &&
 		    hw_state <= G_MISTP_LISTEN_STATE) {
-			ret = bcm_sf2_sw_fast_age_port(ds, port);
-			if (ret) {
+			if (bcm_sf2_sw_fast_age_port(ds, port)) {
 				pr_err("%s: fast-ageing failed\n", __func__);
-				return ret;
+				return;
 			}
 		}
 	}
@@ -598,8 +594,6 @@ static int bcm_sf2_sw_br_set_stp_state(struct dsa_switch *ds, int port,
 	reg &= ~(G_MISTP_STATE_MASK << G_MISTP_STATE_SHIFT);
 	reg |= hw_state;
 	core_writel(priv, reg, CORE_G_PCTL_PORT(port));
-
-	return 0;
 }
 
 /* Address Resolution Logic routines */
@@ -730,13 +724,14 @@ static int bcm_sf2_sw_fdb_prepare(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static int bcm_sf2_sw_fdb_add(struct dsa_switch *ds, int port,
-			      const struct switchdev_obj_port_fdb *fdb,
-			      struct switchdev_trans *trans)
+static void bcm_sf2_sw_fdb_add(struct dsa_switch *ds, int port,
+			       const struct switchdev_obj_port_fdb *fdb,
+			       struct switchdev_trans *trans)
 {
 	struct bcm_sf2_priv *priv = ds_to_priv(ds);
 
-	return bcm_sf2_arl_op(priv, 0, port, fdb->addr, fdb->vid, true);
+	if (bcm_sf2_arl_op(priv, 0, port, fdb->addr, fdb->vid, true))
+		pr_err("%s: failed to add MAC address\n", __func__);
 }
 
 static int bcm_sf2_sw_fdb_del(struct dsa_switch *ds, int port,
@@ -1387,9 +1382,9 @@ static struct dsa_switch_driver bcm_sf2_switch_driver = {
 	.port_disable		= bcm_sf2_port_disable,
 	.get_eee		= bcm_sf2_sw_get_eee,
 	.set_eee		= bcm_sf2_sw_set_eee,
-	.port_join_bridge	= bcm_sf2_sw_br_join,
-	.port_leave_bridge	= bcm_sf2_sw_br_leave,
-	.port_stp_update	= bcm_sf2_sw_br_set_stp_state,
+	.port_bridge_join	= bcm_sf2_sw_br_join,
+	.port_bridge_leave	= bcm_sf2_sw_br_leave,
+	.port_stp_state_set	= bcm_sf2_sw_br_set_stp_state,
 	.port_fdb_prepare	= bcm_sf2_sw_fdb_prepare,
 	.port_fdb_add		= bcm_sf2_sw_fdb_add,
 	.port_fdb_del		= bcm_sf2_sw_fdb_del,

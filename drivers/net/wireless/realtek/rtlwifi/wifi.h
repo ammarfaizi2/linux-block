@@ -1318,14 +1318,13 @@ struct rtl_tid_data {
 
 struct rtl_sta_info {
 	struct list_head list;
-	u8 ratr_index;
-	u8 wireless_mode;
-	u8 mimo_ps;
-	u8 mac_addr[ETH_ALEN];
 	struct rtl_tid_data tids[MAX_TID_COUNT];
-
 	/* just used for ap adhoc or mesh*/
 	struct rssi_sta rssi_stat;
+	u16 wireless_mode;
+	u8 ratr_index;
+	u8 mimo_ps;
+	u8 mac_addr[ETH_ALEN];
 } __packed;
 
 struct rtl_priv;
@@ -2189,7 +2188,7 @@ struct rtl_hal_ops {
 	bool (*get_btc_status) (void);
 	bool (*is_fw_header)(struct rtlwifi_firmware_header *hdr);
 	u32 (*rx_command_packet)(struct ieee80211_hw *hw,
-				 struct rtl_stats status, struct sk_buff *skb);
+				 const struct rtl_stats *status, struct sk_buff *skb);
 	void (*add_wowlan_pattern)(struct ieee80211_hw *hw,
 				   struct rtl_wow_pattern *rtl_pattern,
 				   u8 index);
@@ -2247,6 +2246,9 @@ struct rtl_mod_params {
 
 	/* default 0: 1 means do not disable interrupts */
 	bool int_clear;
+
+	/* select antenna */
+	int ant_sel;
 };
 
 struct rtl_hal_usbint_cfg {
@@ -2868,7 +2870,7 @@ value to host byte ordering.*/
 	(ppsc->cur_ps_level |= _ps_flg)
 
 #define container_of_dwork_rtl(x, y, z) \
-	container_of(container_of(x, struct delayed_work, work), y, z)
+	container_of(to_delayed_work(x), y, z)
 
 #define FILL_OCTET_STRING(_os, _octet, _len)	\
 		(_os).octet = (u8 *)(_octet);		\

@@ -64,6 +64,7 @@
  *
  *****************************************************************************/
 #include <net/mac80211.h>
+#include <linux/netdevice.h>
 
 #include "iwl-trans.h"
 #include "iwl-op-mode.h"
@@ -114,19 +115,23 @@ static int iwl_send_rss_cfg_cmd(struct iwl_mvm *mvm)
 	struct iwl_rss_config_cmd cmd = {
 		.flags = cpu_to_le32(IWL_RSS_ENABLE),
 		.hash_mask = IWL_RSS_HASH_TYPE_IPV4_TCP |
+			     IWL_RSS_HASH_TYPE_IPV4_UDP |
 			     IWL_RSS_HASH_TYPE_IPV4_PAYLOAD |
 			     IWL_RSS_HASH_TYPE_IPV6_TCP |
+			     IWL_RSS_HASH_TYPE_IPV6_UDP |
 			     IWL_RSS_HASH_TYPE_IPV6_PAYLOAD,
 	};
 
+	/* Do not direct RSS traffic to Q 0 which is our fallback queue */
 	for (i = 0; i < ARRAY_SIZE(cmd.indirection_table); i++)
-		cmd.indirection_table[i] = i % mvm->trans->num_rx_queues;
-	memcpy(cmd.secret_key, mvm->secret_key, ARRAY_SIZE(cmd.secret_key));
+		cmd.indirection_table[i] =
+			1 + (i % (mvm->trans->num_rx_queues - 1));
+	netdev_rss_key_fill(cmd.secret_key, sizeof(cmd.secret_key));
 
 	return iwl_mvm_send_cmd_pdu(mvm, RSS_CONFIG_CMD, 0, sizeof(cmd), &cmd);
 }
 
-static void iwl_free_fw_paging(struct iwl_mvm *mvm)
+void iwl_free_fw_paging(struct iwl_mvm *mvm)
 {
 	int i;
 
@@ -146,6 +151,8 @@ static void iwl_free_fw_paging(struct iwl_mvm *mvm)
 			     get_order(mvm->fw_paging_db[i].fw_paging_size));
 	}
 	kfree(mvm->trans->paging_download_buf);
+	mvm->trans->paging_download_buf = NULL;
+
 	memset(mvm->fw_paging_db, 0, sizeof(mvm->fw_paging_db));
 }
 
@@ -172,8 +179,12 @@ static int iwl_fill_paging_mem(struct iwl_mvm *mvm, const struct fw_img *image)
 		}
 	}
 
-	if (sec_idx >= IWL_UCODE_SECTION_MAX) {
-		IWL_ERR(mvm, "driver didn't find paging image\n");
+	/*
+	 * If paging is enabled there should be at least 2 more sections left
+	 * (one for CSS and one for Paging data)
+	 */
+	if (sec_idx >= ARRAY_SIZE(image->sec) - 1) {
+		IWL_ERR(mvm, "Paging: Missing CSS and/or paging sections\n");
 		iwl_free_fw_paging(mvm);
 		return -EINVAL;
 	}
@@ -408,7 +419,9 @@ static int iwl_trans_get_paging_item(struct iwl_mvm *mvm)
 		goto exit;
 	}
 
-	mvm->trans->paging_download_buf = kzalloc(MAX_PAGING_IMAGE_SIZE,
+	/* Add an extra page for headers */
+	mvm->trans->paging_download_buf = kzalloc(PAGING_BLOCK_SIZE +
+						  FW_PAGING_SIZE,
 						  GFP_KERNEL);
 	if (!mvm->trans->paging_download_buf) {
 		ret = -ENOMEM;
@@ -537,7 +550,9 @@ static int iwl_mvm_load_ucode_wait_alive(struct iwl_mvm *mvm,
 	struct iwl_sf_region st_fwrd_space;
 
 	if (ucode_type == IWL_UCODE_REGULAR &&
-	    iwl_fw_dbg_conf_usniffer(mvm->fw, FW_DBG_START_FROM_ALIVE))
+	    iwl_fw_dbg_conf_usniffer(mvm->fw, FW_DBG_START_FROM_ALIVE) &&
+	    !(fw_has_capa(&mvm->fw->ucode_capa,
+			  IWL_UCODE_TLV_CAPA_USNIFFER_UNIFIED)))
 		fw = iwl_get_ucode_image(mvm, IWL_UCODE_REGULAR_USNIFFER);
 	else
 		fw = iwl_get_ucode_image(mvm, ucode_type);
@@ -637,7 +652,10 @@ static int iwl_mvm_load_ucode_wait_alive(struct iwl_mvm *mvm,
 	 */
 
 	memset(&mvm->queue_info, 0, sizeof(mvm->queue_info));
-	mvm->queue_info[IWL_MVM_CMD_QUEUE].hw_queue_refcount = 1;
+	if (iwl_mvm_is_dqa_supported(mvm))
+		mvm->queue_info[IWL_MVM_DQA_CMD_QUEUE].hw_queue_refcount = 1;
+	else
+		mvm->queue_info[IWL_MVM_CMD_QUEUE].hw_queue_refcount = 1;
 
 	for (i = 0; i < IEEE80211_MAX_QUEUES; i++)
 		atomic_set(&mvm->mac80211_queue_stop_count[i], 0);
@@ -784,16 +802,21 @@ out:
 static void iwl_mvm_get_shared_mem_conf(struct iwl_mvm *mvm)
 {
 	struct iwl_host_cmd cmd = {
-		.id = SHARED_MEM_CFG,
 		.flags = CMD_WANT_SKB,
 		.data = { NULL, },
 		.len = { 0, },
 	};
-	struct iwl_rx_packet *pkt;
 	struct iwl_shared_mem_cfg *mem_cfg;
+	struct iwl_rx_packet *pkt;
 	u32 i;
 
 	lockdep_assert_held(&mvm->mutex);
+
+	if (fw_has_capa(&mvm->fw->ucode_capa,
+			IWL_UCODE_TLV_CAPA_EXTEND_SHARED_MEM_CFG))
+		cmd.id = iwl_cmd_id(SHARED_MEM_CFG_CMD, SYSTEM_GROUP, 0);
+	else
+		cmd.id = SHARED_MEM_CFG;
 
 	if (WARN_ON(iwl_mvm_send_cmd(mvm, &cmd)))
 		return;
@@ -820,6 +843,25 @@ static void iwl_mvm_get_shared_mem_conf(struct iwl_mvm *mvm)
 		le32_to_cpu(mem_cfg->page_buff_addr);
 	mvm->shared_mem_cfg.page_buff_size =
 		le32_to_cpu(mem_cfg->page_buff_size);
+
+	/* new API has more data */
+	if (fw_has_capa(&mvm->fw->ucode_capa,
+			IWL_UCODE_TLV_CAPA_EXTEND_SHARED_MEM_CFG)) {
+		mvm->shared_mem_cfg.rxfifo_addr =
+			le32_to_cpu(mem_cfg->rxfifo_addr);
+		mvm->shared_mem_cfg.internal_txfifo_addr =
+			le32_to_cpu(mem_cfg->internal_txfifo_addr);
+
+		BUILD_BUG_ON(sizeof(mvm->shared_mem_cfg.internal_txfifo_size) !=
+			     sizeof(mem_cfg->internal_txfifo_size));
+
+		for (i = 0;
+		     i < ARRAY_SIZE(mvm->shared_mem_cfg.internal_txfifo_size);
+		     i++)
+			mvm->shared_mem_cfg.internal_txfifo_size[i] =
+				le32_to_cpu(mem_cfg->internal_txfifo_size[i]);
+	}
+
 	IWL_DEBUG_INFO(mvm, "SHARED MEM CFG: got memory offsets/sizes\n");
 
 	iwl_free_resp(&cmd);
@@ -952,8 +994,26 @@ int iwl_mvm_up(struct iwl_mvm *mvm)
 			goto error;
 	}
 
+#ifdef CONFIG_THERMAL
+	if (iwl_mvm_is_tt_in_fw(mvm)) {
+		/* in order to give the responsibility of ct-kill and
+		 * TX backoff to FW we need to send empty temperature reporting
+		 * cmd during init time
+		 */
+		iwl_mvm_send_temp_report_ths_cmd(mvm);
+	} else {
+		/* Initialize tx backoffs to the minimal possible */
+		iwl_mvm_tt_tx_backoff(mvm, 0);
+	}
+
+	/* TODO: read the budget from BIOS / Platform NVM */
+	if (iwl_mvm_is_ctdp_supported(mvm) && mvm->cooling_dev.cur_state > 0)
+		ret = iwl_mvm_ctdp_command(mvm, CTDP_CMD_OPERATION_START,
+					   mvm->cooling_dev.cur_state);
+#else
 	/* Initialize tx backoffs to the minimal possible */
 	iwl_mvm_tt_tx_backoff(mvm, 0);
+#endif
 
 	WARN_ON(iwl_mvm_config_ltr(mvm));
 
@@ -989,7 +1049,7 @@ int iwl_mvm_up(struct iwl_mvm *mvm)
 	IWL_DEBUG_INFO(mvm, "RT uCode started.\n");
 	return 0;
  error:
-	iwl_trans_stop_device(mvm->trans);
+	iwl_mvm_stop_device(mvm);
 	return ret;
 }
 
@@ -1033,7 +1093,7 @@ int iwl_mvm_load_d3_fw(struct iwl_mvm *mvm)
 
 	return 0;
  error:
-	iwl_trans_stop_device(mvm->trans);
+	iwl_mvm_stop_device(mvm);
 	return ret;
 }
 

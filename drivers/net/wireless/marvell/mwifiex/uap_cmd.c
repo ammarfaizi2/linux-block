@@ -192,7 +192,7 @@ mwifiex_set_ht_params(struct mwifiex_private *priv,
 		}
 		priv->ap_11n_enabled = 1;
 	} else {
-		memset(&bss_cfg->ht_cap , 0, sizeof(struct ieee80211_ht_cap));
+		memset(&bss_cfg->ht_cap, 0, sizeof(struct ieee80211_ht_cap));
 		bss_cfg->ht_cap.cap_info = cpu_to_le16(MWIFIEX_DEF_HT_CAP);
 		bss_cfg->ht_cap.ampdu_params_info = MWIFIEX_DEF_AMPDU;
 	}
@@ -694,7 +694,7 @@ static int mwifiex_uap_custom_ie_prepare(u8 *tlv, void *cmd_buf, u16 *ie_size)
 	struct mwifiex_ie_list *ap_ie = cmd_buf;
 	struct mwifiex_ie_types_header *tlv_ie = (void *)tlv;
 
-	if (!ap_ie || !ap_ie->len || !ap_ie->ie_list)
+	if (!ap_ie || !ap_ie->len)
 		return -1;
 
 	*ie_size += le16_to_cpu(ap_ie->len) +

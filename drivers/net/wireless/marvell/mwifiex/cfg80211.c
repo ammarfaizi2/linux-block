@@ -20,6 +20,7 @@
 #include "cfg80211.h"
 #include "main.h"
 #include "11n.h"
+#include "wmm.h"
 
 static char *reg_alpha2;
 module_param(reg_alpha2, charp, 0);
@@ -676,7 +677,7 @@ mwifiex_cfg80211_set_wiphy_params(struct wiphy *wiphy, u32 changed)
 		}
 		break;
 
-		case MWIFIEX_BSS_ROLE_STA:
+	case MWIFIEX_BSS_ROLE_STA:
 		if (priv->media_connected) {
 			mwifiex_dbg(adapter, ERROR,
 				    "cannot change wiphy params when connected");
@@ -3259,7 +3260,7 @@ static int mwifiex_cfg80211_suspend(struct wiphy *wiphy,
 {
 	struct mwifiex_adapter *adapter = mwifiex_cfg80211_get_adapter(wiphy);
 	struct mwifiex_ds_hs_cfg hs_cfg;
-	int i, ret = 0;
+	int i, ret = 0, retry_num = 10;
 	struct mwifiex_private *priv;
 
 	for (i = 0; i < adapter->priv_num; i++) {
@@ -3268,6 +3269,24 @@ static int mwifiex_cfg80211_suspend(struct wiphy *wiphy,
 	}
 
 	mwifiex_cancel_all_pending_cmd(adapter);
+
+	for (i = 0; i < adapter->priv_num; i++) {
+		priv = adapter->priv[i];
+		if (priv && priv->netdev) {
+			mwifiex_stop_net_dev_queue(priv->netdev, adapter);
+			if (netif_carrier_ok(priv->netdev))
+				netif_carrier_off(priv->netdev);
+		}
+	}
+
+	for (i = 0; i < retry_num; i++) {
+		if (!mwifiex_wmm_lists_empty(adapter) ||
+		    !mwifiex_bypass_txlist_empty(adapter) ||
+		    !skb_queue_empty(&adapter->tx_data_q))
+			usleep_range(10000, 15000);
+		else
+			break;
+	}
 
 	if (!wowlan) {
 		mwifiex_dbg(adapter, ERROR,
@@ -3321,12 +3340,21 @@ static int mwifiex_cfg80211_suspend(struct wiphy *wiphy,
 static int mwifiex_cfg80211_resume(struct wiphy *wiphy)
 {
 	struct mwifiex_adapter *adapter = mwifiex_cfg80211_get_adapter(wiphy);
-	struct mwifiex_private *priv =
-		mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA);
+	struct mwifiex_private *priv;
 	struct mwifiex_ds_wakeup_reason wakeup_reason;
 	struct cfg80211_wowlan_wakeup wakeup_report;
 	int i;
 
+	for (i = 0; i < adapter->priv_num; i++) {
+		priv = adapter->priv[i];
+		if (priv && priv->netdev) {
+			if (!netif_carrier_ok(priv->netdev))
+				netif_carrier_on(priv->netdev);
+			mwifiex_wake_up_net_dev_queue(priv->netdev, adapter);
+		}
+	}
+
+	priv = mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA);
 	mwifiex_get_wakeup_reason(priv, HostCmd_ACT_GEN_GET, MWIFIEX_SYNC_CMD,
 				  &wakeup_reason);
 	memset(&wakeup_report, 0, sizeof(struct cfg80211_wowlan_wakeup));
@@ -3362,6 +3390,10 @@ static int mwifiex_cfg80211_resume(struct wiphy *wiphy)
 		break;
 	case	MANAGEMENT_FRAME_MATCHED:
 		break;
+	case GTK_REKEY_FAILURE:
+		if (wiphy->wowlan_config->gtk_rekey_failure)
+			wakeup_report.gtk_rekey_failure = true;
+		break;
 	default:
 		break;
 	}
@@ -3388,6 +3420,16 @@ static void mwifiex_cfg80211_set_wakeup(struct wiphy *wiphy,
 
 	device_set_wakeup_enable(adapter->dev, enabled);
 }
+
+static int mwifiex_set_rekey_data(struct wiphy *wiphy, struct net_device *dev,
+				  struct cfg80211_gtk_rekey_data *data)
+{
+	struct mwifiex_private *priv = mwifiex_netdev_get_priv(dev);
+
+	return mwifiex_send_cmd(priv, HostCmd_CMD_GTK_REKEY_OFFLOAD_CFG,
+				HostCmd_ACT_GEN_SET, 0, data, true);
+}
+
 #endif
 
 static int mwifiex_get_coalesce_pkt_type(u8 *byte_seq)
@@ -3910,6 +3952,7 @@ static struct cfg80211_ops mwifiex_cfg80211_ops = {
 	.suspend = mwifiex_cfg80211_suspend,
 	.resume = mwifiex_cfg80211_resume,
 	.set_wakeup = mwifiex_cfg80211_set_wakeup,
+	.set_rekey_data = mwifiex_set_rekey_data,
 #endif
 	.set_coalesce = mwifiex_cfg80211_set_coalesce,
 	.tdls_mgmt = mwifiex_cfg80211_tdls_mgmt,
@@ -3926,7 +3969,8 @@ static struct cfg80211_ops mwifiex_cfg80211_ops = {
 #ifdef CONFIG_PM
 static const struct wiphy_wowlan_support mwifiex_wowlan_support = {
 	.flags = WIPHY_WOWLAN_MAGIC_PKT | WIPHY_WOWLAN_DISCONNECT |
-		WIPHY_WOWLAN_NET_DETECT,
+		WIPHY_WOWLAN_NET_DETECT | WIPHY_WOWLAN_SUPPORTS_GTK_REKEY |
+		WIPHY_WOWLAN_GTK_REKEY_FAILURE,
 	.n_patterns = MWIFIEX_MEF_MAX_FILTERS,
 	.pattern_min_len = 1,
 	.pattern_max_len = MWIFIEX_MAX_PATTERN_LEN,
@@ -4064,6 +4108,7 @@ int mwifiex_register_cfg80211(struct mwifiex_adapter *adapter)
 
 	wiphy->features |= NL80211_FEATURE_HT_IBSS |
 			   NL80211_FEATURE_INACTIVITY_TIMER |
+			   NL80211_FEATURE_LOW_PRIORITY_SCAN |
 			   NL80211_FEATURE_NEED_OBSS_SCAN;
 
 	if (ISSUPP_TDLS_ENABLED(adapter->fw_cap_info))

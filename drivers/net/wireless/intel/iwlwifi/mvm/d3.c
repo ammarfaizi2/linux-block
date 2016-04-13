@@ -723,7 +723,7 @@ static int iwl_mvm_d3_reprogram(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 		return -EIO;
 	}
 
-	ret = iwl_mvm_sta_send_to_fw(mvm, ap_sta, false);
+	ret = iwl_mvm_sta_send_to_fw(mvm, ap_sta, false, 0);
 	if (ret)
 		return ret;
 	rcu_assign_pointer(mvm->fw_id_to_mac_id[mvmvif->ap_sta_id], ap_sta);
@@ -816,8 +816,7 @@ static int iwl_mvm_switch_to_d3(struct iwl_mvm *mvm)
 {
 	iwl_mvm_scan_stop(mvm, IWL_MVM_SCAN_REGULAR, true);
 
-	iwl_trans_stop_device(mvm->trans);
-
+	iwl_mvm_stop_device(mvm);
 	/*
 	 * Set the HW restart bit -- this is mostly true as we're
 	 * going to load new firmware and reprogram that, though
@@ -856,8 +855,7 @@ iwl_mvm_get_wowlan_config(struct iwl_mvm *mvm,
 	wowlan_config_cmd->is_11n_connection =
 					ap_sta->ht_cap.ht_supported;
 	wowlan_config_cmd->flags = ENABLE_L3_FILTERING |
-		ENABLE_NBNS_FILTERING | ENABLE_DHCP_FILTERING |
-		ENABLE_STORE_BEACON;
+		ENABLE_NBNS_FILTERING | ENABLE_DHCP_FILTERING;
 
 	/* Query the last used seqno and set it */
 	ret = iwl_mvm_get_last_nonqos_seq(mvm, vif);

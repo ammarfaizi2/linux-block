@@ -97,16 +97,16 @@ trace_find_event_field(struct trace_event_call *call, char *name)
 	struct ftrace_event_field *field;
 	struct list_head *head;
 
+	head = trace_get_fields(call);
+	field = __find_event_field(head, name);
+	if (field)
+		return field;
+
 	field = __find_event_field(&ftrace_generic_fields, name);
 	if (field)
 		return field;
 
-	field = __find_event_field(&ftrace_common_fields, name);
-	if (field)
-		return field;
-
-	head = trace_get_fields(call);
-	return __find_event_field(head, name);
+	return __find_event_field(&ftrace_common_fields, name);
 }
 
 static int __trace_define_field(struct list_head *head, const char *type,
@@ -171,8 +171,10 @@ static int trace_define_generic_fields(void)
 {
 	int ret;
 
-	__generic_field(int, cpu, FILTER_OTHER);
-	__generic_field(char *, comm, FILTER_PTR_STRING);
+	__generic_field(int, CPU, FILTER_CPU);
+	__generic_field(int, cpu, FILTER_CPU);
+	__generic_field(char *, COMM, FILTER_COMM);
+	__generic_field(char *, comm, FILTER_COMM);
 
 	return ret;
 }
@@ -200,6 +202,24 @@ static void trace_destroy_fields(struct trace_event_call *call)
 		list_del(&field->link);
 		kmem_cache_free(field_cachep, field);
 	}
+}
+
+/*
+ * run-time version of trace_event_get_offsets_<call>() that returns the last
+ * accessible offset of trace fields excluding __dynamic_array bytes
+ */
+int trace_event_get_offsets(struct trace_event_call *call)
+{
+	struct ftrace_event_field *tail;
+	struct list_head *head;
+
+	head = trace_get_fields(call);
+	/*
+	 * head->next points to the last field with the largest offset,
+	 * since it was added last by trace_define_field()
+	 */
+	tail = list_first_entry(head, struct ftrace_event_field, link);
+	return tail->offset + tail->size;
 }
 
 int trace_event_raw_init(struct trace_event_call *call)
@@ -869,7 +889,8 @@ t_next(struct seq_file *m, void *v, loff_t *pos)
 		 * The ftrace subsystem is for showing formats only.
 		 * They can not be enabled or disabled via the event files.
 		 */
-		if (call->class && call->class->reg)
+		if (call->class && call->class->reg &&
+		    !(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
 			return file;
 	}
 

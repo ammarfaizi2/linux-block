@@ -131,6 +131,8 @@ enum iwl_led_mode {
 #define IWL_MAX_WD_TIMEOUT	120000
 
 #define IWL_DEFAULT_MAX_TX_POWER 22
+#define IWL_TX_CSUM_NETIF_FLAGS (NETIF_F_IPV6_CSUM | NETIF_F_IP_CSUM |\
+				 NETIF_F_TSO | NETIF_F_TSO6)
 
 /* Antenna presence definitions */
 #define	ANT_NONE	0x0
@@ -277,8 +279,6 @@ struct iwl_pwr_tx_backoff {
  *	(.ucode) will be added to filename before loading from disk. The
  *	filename is constructed as fw_name_pre<api>.ucode.
  * @ucode_api_max: Highest version of uCode API supported by driver.
- * @ucode_api_ok: oldest version of the uCode API that is OK to load
- *	without a warning, for use in transitions
  * @ucode_api_min: Lowest version of uCode API supported by driver.
  * @max_inst_size: The maximal length of the fw inst section
  * @max_data_size: The maximal length of the fw data section
@@ -297,6 +297,7 @@ struct iwl_pwr_tx_backoff {
  * @host_interrupt_operation_mode: device needs host interrupt operation
  *	mode set
  * @nvm_hw_section_num: the ID of the HW NVM section
+ * @mac_addr_from_csr: read HW address from CSR registers
  * @features: hw features, any combination of feature_whitelist
  * @pwr_tx_backoffs: translation table between power limits and backoffs
  * @max_rx_agg_size: max RX aggregation size of the ADDBA request/response
@@ -312,6 +313,7 @@ struct iwl_pwr_tx_backoff {
  * @smem_offset: offset from which the SMEM begins
  * @smem_len: the length of SMEM
  * @mq_rx_supported: multi-queue rx support
+ * @vht_mu_mimo_supported: VHT MU-MIMO support
  *
  * We enable the driver to be backward compatible wrt. hardware features.
  * API differences in uCode shouldn't be handled here but through TLVs
@@ -322,7 +324,6 @@ struct iwl_cfg {
 	const char *name;
 	const char *fw_name_pre;
 	const unsigned int ucode_api_max;
-	const unsigned int ucode_api_ok;
 	const unsigned int ucode_api_min;
 	const enum iwl_device_family device_family;
 	const u32 max_data_size;
@@ -344,6 +345,7 @@ struct iwl_cfg {
 	const bool host_interrupt_operation_mode;
 	bool high_temp;
 	u8   nvm_hw_section_num;
+	bool mac_addr_from_csr;
 	bool lp_xtal_workaround;
 	const struct iwl_pwr_tx_backoff *pwr_tx_backoffs;
 	bool no_power_up_nic_in_init;
@@ -364,6 +366,7 @@ struct iwl_cfg {
 	const struct iwl_tt_params *thermal_params;
 	bool apmg_not_supported;
 	bool mq_rx_supported;
+	bool vht_mu_mimo_supported;
 };
 
 /*
@@ -435,7 +438,7 @@ extern const struct iwl_cfg iwl8265_2ac_cfg;
 extern const struct iwl_cfg iwl4165_2ac_cfg;
 extern const struct iwl_cfg iwl8260_2ac_sdio_cfg;
 extern const struct iwl_cfg iwl4165_2ac_sdio_cfg;
-extern const struct iwl_cfg iwl9260_2ac_cfg;
+extern const struct iwl_cfg iwl9560_2ac_cfg;
 extern const struct iwl_cfg iwl5165_2ac_cfg;
 #endif /* CONFIG_IWLMVM */
 
