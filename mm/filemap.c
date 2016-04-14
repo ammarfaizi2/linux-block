@@ -764,37 +764,73 @@ wait_queue_head_t *page_waitqueue(struct page *page)
 }
 EXPORT_SYMBOL(page_waitqueue);
 
+static bool inc_dirty_wait(struct page *page)
+{
+	if (!page->mapping || !PageDirty(page) || !PageWriteback(page))
+		return false;
+	else {
+		struct bdi_writeback *wb = inode_to_wb(page->mapping->host);
+
+		atomic_inc(&wb->dirty_sleeping);
+		return true;
+	}
+}
+
+static void dec_dirty_wait(struct page *page)
+{
+	struct bdi_writeback *wb = inode_to_wb(page->mapping->host);
+
+	atomic_dec(&wb->dirty_sleeping);
+}
+
 void wait_on_page_bit(struct page *page, int bit_nr)
 {
 	DEFINE_WAIT_BIT(wait, &page->flags, bit_nr);
 
-	if (test_bit(bit_nr, &page->flags))
+	if (test_bit(bit_nr, &page->flags)) {
+		bool did_inc = inc_dirty_wait(page);
 		__wait_on_bit(page_waitqueue(page), &wait, bit_wait_io,
 							TASK_UNINTERRUPTIBLE);
+		if (did_inc)
+			dec_dirty_wait(page);
+	}
 }
 EXPORT_SYMBOL(wait_on_page_bit);
 
 int wait_on_page_bit_killable(struct page *page, int bit_nr)
 {
 	DEFINE_WAIT_BIT(wait, &page->flags, bit_nr);
+	bool did_inc;
+	int ret;
 
 	if (!test_bit(bit_nr, &page->flags))
 		return 0;
 
-	return __wait_on_bit(page_waitqueue(page), &wait,
+	did_inc = inc_dirty_wait(page);
+	ret = __wait_on_bit(page_waitqueue(page), &wait,
 			     bit_wait_io, TASK_KILLABLE);
+	if (did_inc)
+		dec_dirty_wait(page);
+	return ret;
 }
 
 int wait_on_page_bit_killable_timeout(struct page *page,
 				       int bit_nr, unsigned long timeout)
 {
 	DEFINE_WAIT_BIT(wait, &page->flags, bit_nr);
+	bool did_inc;
+	int ret;
 
 	wait.key.timeout = jiffies + timeout;
 	if (!test_bit(bit_nr, &page->flags))
 		return 0;
-	return __wait_on_bit(page_waitqueue(page), &wait,
+
+	did_inc = inc_dirty_wait(page);
+	ret = __wait_on_bit(page_waitqueue(page), &wait,
 			     bit_wait_io_timeout, TASK_KILLABLE);
+	if (did_inc)
+		dec_dirty_wait(page);
+	return ret;
 }
 EXPORT_SYMBOL_GPL(wait_on_page_bit_killable_timeout);
 
