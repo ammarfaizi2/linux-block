@@ -34,6 +34,7 @@
 #include "util/parse-regs-options.h"
 #include "util/llvm-utils.h"
 #include "util/bpf-loader.h"
+#include "util/trigger.h"
 #include "asm/bug.h"
 
 #include <unistd.h>
@@ -127,42 +128,7 @@ static volatile int done;
 static volatile int signr = -1;
 static volatile int child_finished;
 
-static volatile enum {
-	AUXTRACE_SNAPSHOT_OFF = -1,
-	AUXTRACE_SNAPSHOT_DISABLED = 0,
-	AUXTRACE_SNAPSHOT_ENABLED = 1,
-} auxtrace_snapshot_state = AUXTRACE_SNAPSHOT_OFF;
-
-static inline void
-auxtrace_snapshot_on(void)
-{
-	auxtrace_snapshot_state = AUXTRACE_SNAPSHOT_DISABLED;
-}
-
-static inline void
-auxtrace_snapshot_enable(void)
-{
-	if (auxtrace_snapshot_state == AUXTRACE_SNAPSHOT_OFF)
-		return;
-	auxtrace_snapshot_state = AUXTRACE_SNAPSHOT_ENABLED;
-}
-
-static inline void
-auxtrace_snapshot_disable(void)
-{
-	if (auxtrace_snapshot_state == AUXTRACE_SNAPSHOT_OFF)
-		return;
-	auxtrace_snapshot_state = AUXTRACE_SNAPSHOT_DISABLED;
-}
-
-static inline bool
-auxtrace_snapshot_is_enabled(void)
-{
-	if (auxtrace_snapshot_state == AUXTRACE_SNAPSHOT_OFF)
-		return false;
-	return auxtrace_snapshot_state == AUXTRACE_SNAPSHOT_ENABLED;
-}
-
+static DEFINE_TRIGGER(auxtrace_snapshot, OFF);
 static volatile int auxtrace_snapshot_err;
 static volatile int auxtrace_record__snapshot_started;
 
