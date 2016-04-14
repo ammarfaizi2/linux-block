@@ -761,6 +761,8 @@ repeat:
 	/* Slow case: now with the dentry lock held */
 	rcu_read_unlock();
 
+	WARN_ON(dentry->d_flags & DCACHE_PAR_LOOKUP);
+
 	/* Unreachable? Get rid of it */
 	if (unlikely(d_unhashed(dentry)))
 		goto kill_it;
@@ -1743,6 +1745,7 @@ type_determined:
 static void __d_instantiate(struct dentry *dentry, struct inode *inode)
 {
 	unsigned add_flags = d_flags_for_inode(inode);
+	WARN_ON(dentry->d_flags & DCACHE_PAR_LOOKUP);
 
 	spin_lock(&dentry->d_lock);
 	hlist_add_head(&dentry->d_u.d_alias, &inode->i_dentry);
@@ -2358,12 +2361,19 @@ void d_rehash(struct dentry * entry)
 }
 EXPORT_SYMBOL(d_rehash);
 
+void __d_not_in_lookup(struct dentry *dentry)
+{
+	dentry->d_flags &= ~DCACHE_PAR_LOOKUP;
+	/* more stuff will land here */
+}
 
 /* inode->i_lock held if inode is non-NULL */
 
 static inline void __d_add(struct dentry *dentry, struct inode *inode)
 {
 	spin_lock(&dentry->d_lock);
+	if (unlikely(dentry->d_flags & DCACHE_PAR_LOOKUP))
+		__d_not_in_lookup(dentry);
 	if (inode) {
 		unsigned add_flags = d_flags_for_inode(inode);
 		hlist_add_head(&dentry->d_u.d_alias, &inode->i_dentry);
@@ -2609,6 +2619,8 @@ static void __d_move(struct dentry *dentry, struct dentry *target,
 	BUG_ON(d_ancestor(target, dentry));
 
 	dentry_lock_for_move(dentry, target);
+	if (unlikely(target->d_flags & DCACHE_PAR_LOOKUP))
+		__d_not_in_lookup(target);
 
 	write_seqcount_begin(&dentry->d_seq);
 	write_seqcount_begin_nested(&target->d_seq, DENTRY_D_LOCK_NESTED);
