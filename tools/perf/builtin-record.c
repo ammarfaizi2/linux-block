@@ -58,6 +58,7 @@ struct record {
 	bool			no_buildid_cache_set;
 	bool			buildid_all;
 	bool			timestamp_filename;
+	bool			switch_output;
 	unsigned long long	samples;
 };
 
@@ -131,6 +132,8 @@ static volatile int child_finished;
 static DEFINE_TRIGGER(auxtrace_snapshot, OFF);
 static volatile int auxtrace_snapshot_err;
 static volatile int auxtrace_record__snapshot_started;
+
+static DEFINE_TRIGGER(switch_output, OFF);
 
 static void sig_handler(int sig)
 {
@@ -650,9 +653,12 @@ static int __cmd_record(struct record *rec, int argc, const char **argv)
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 
-	if (rec->opts.auxtrace_snapshot_mode) {
+	if (rec->opts.auxtrace_snapshot_mode || rec->switch_output) {
 		signal(SIGUSR2, snapshot_sig_handler);
-		auxtrace_snapshot_on();
+		if (rec->opts.auxtrace_snapshot_mode)
+			auxtrace_snapshot_on();
+		if (rec->switch_output)
+			switch_output_on();
 	} else {
 		signal(SIGUSR2, SIG_IGN);
 	}
@@ -782,6 +788,7 @@ static int __cmd_record(struct record *rec, int argc, const char **argv)
 	}
 
 	auxtrace_snapshot_enable();
+	switch_output_enable();
 	for (;;) {
 		unsigned long long hits = rec->samples;
 
@@ -798,6 +805,21 @@ static int __cmd_record(struct record *rec, int argc, const char **argv)
 			if (auxtrace_snapshot_err) {
 				pr_err("AUX area tracing snapshot failed\n");
 				err = -1;
+				goto out_child;
+			}
+		}
+
+		if (switch_output_is_disabled()) {
+			switch_output_enable();
+
+			if (!quiet)
+				fprintf(stderr, "[ perf record: dump data: Woken up %ld times ]\n",
+					waking);
+			waking = 0;
+			fd = record__switch_output(rec, false);
+			if (fd < 0) {
+				pr_err("Failed to switch to new file\n");
+				err = fd;
 				goto out_child;
 			}
 		}
@@ -1260,6 +1282,8 @@ struct option __record_options[] = {
 		    "Record build-id of all DSOs regardless of hits"),
 	OPT_BOOLEAN(0, "timestamp-filename", &record.timestamp_filename,
 		    "append timestamp to output filename"),
+	OPT_BOOLEAN(0, "switch-output", &record.switch_output,
+		    "Switch output when receive SIGUSR2"),
 	OPT_END()
 };
 
@@ -1408,9 +1432,12 @@ out_symbol_exit:
 
 static void snapshot_sig_handler(int sig __maybe_unused)
 {
-	if (!auxtrace_snapshot_is_enabled())
-		return;
-	auxtrace_snapshot_disable();
-	auxtrace_snapshot_err = auxtrace_record__snapshot_start(record.itr);
-	auxtrace_record__snapshot_started = 1;
+	if (auxtrace_snapshot_is_enabled()) {
+		auxtrace_snapshot_disable();
+		auxtrace_snapshot_err = auxtrace_record__snapshot_start(record.itr);
+		auxtrace_record__snapshot_started = 1;
+	}
+
+	if (switch_output_is_enabled())
+		switch_output_disable();
 }

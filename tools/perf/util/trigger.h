@@ -33,6 +33,13 @@ static inline bool trigger_is_enabled(struct trigger *s)
 	return false;
 }
 
+static inline bool trigger_is_disabled(struct trigger *s)
+{
+	if (s->state != TRIGGER_OFF)
+		return s->state == TRIGGER_DISABLED;
+	return false;
+}
+
 #define __TRIGGER_VAR(n) n##_state
 #define __DEF_TRIGGER_VOID_FUNC(n, op)	\
 static inline void n##_##op(void) {trigger_##op(&__TRIGGER_VAR(n)); }
@@ -45,6 +52,7 @@ struct trigger n##_state = {.state = TRIGGER_##def};\
 __DEF_TRIGGER_VOID_FUNC(n, on)				\
 __DEF_TRIGGER_VOID_FUNC(n, enable)			\
 __DEF_TRIGGER_VOID_FUNC(n, disable)			\
-__DEF_TRIGGER_FUNC(n, bool, is_enabled)
+__DEF_TRIGGER_FUNC(n, bool, is_enabled)			\
+__DEF_TRIGGER_FUNC(n, bool, is_disabled)
 
 #endif
