@@ -501,6 +501,8 @@ record__finish_output(struct record *rec)
 	return;
 }
 
+static int record__synthesize(struct record *rec);
+
 static int
 record__switch_output(struct record *rec, bool at_exit)
 {
@@ -529,6 +531,11 @@ record__switch_output(struct record *rec, bool at_exit)
 	if (!quiet)
 		fprintf(stderr, "[ perf record: Dump %s.%s ]\n",
 			file->path, timestamp);
+
+	/* Output tracking events */
+	if (!at_exit)
+		record__synthesize(rec);
+
 	return fd;
 }
 
