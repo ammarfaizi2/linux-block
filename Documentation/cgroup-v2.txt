@@ -1150,7 +1150,7 @@ init_cgroup_ns, this is the real root ('/') cgroup.
 The cgroupns root cgroup does not change even if the namespace creator
 process later moves to a different cgroup.
 
-  # ~/unshare -c # unshare cgroupns in some cgroup
+  # ~/unshare -C # unshare cgroupns in some cgroup
   # cat /proc/self/cgroup
   0::/
   # mkdir sub_cgrp_1
