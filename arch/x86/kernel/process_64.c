@@ -717,7 +717,10 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 		task->thread.gsbase = arg2;
 		if (doit) {
 			load_gs_index(0);
-			ret = wrmsrl_safe(MSR_KERNEL_GS_BASE, arg2);
+			if (static_cpu_has(X86_FEATURE_FSGSBASE))
+				wrgsbase_inactive(arg2);
+			else
+				wrmsrl(MSR_KERNEL_GS_BASE, arg2);
 		}
 		put_cpu();
 		break;
@@ -732,7 +735,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 		if (doit) {
 			/* set the selector to 0 to not confuse __switch_to */
 			loadsegment(fs, 0);
-			ret = wrmsrl_safe(MSR_FS_BASE, arg2);
+			write_fs_base(arg2);
 		}
 		put_cpu();
 		break;
