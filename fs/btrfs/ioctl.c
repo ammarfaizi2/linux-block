@@ -837,9 +837,11 @@ static noinline int btrfs_mksubvol(struct path *parent,
 	struct dentry *dentry;
 	int error;
 
-	error = mutex_lock_killable_nested(&dir->i_mutex, I_MUTEX_PARENT);
-	if (error == -EINTR)
-		return error;
+	inode_lock_nested(dir, I_MUTEX_PARENT);
+	// XXX: should've been
+	// mutex_lock_killable_nested(&dir->i_mutex, I_MUTEX_PARENT);
+	// if (error == -EINTR)
+	//	return error;
 
 	dentry = lookup_one_len(name, parent->dentry, namelen);
 	error = PTR_ERR(dentry);
@@ -2366,9 +2368,11 @@ static noinline int btrfs_ioctl_snap_destroy(struct file *file,
 		goto out;
 
 
-	err = mutex_lock_killable_nested(&dir->i_mutex, I_MUTEX_PARENT);
-	if (err == -EINTR)
-		goto out_drop_write;
+	inode_lock_nested(dir, I_MUTEX_PARENT);
+	// XXX: should've been
+	// err = mutex_lock_killable_nested(&dir->i_mutex, I_MUTEX_PARENT);
+	// if (err == -EINTR)
+	//	goto out_drop_write;
 	dentry = lookup_one_len(vol_args->name, parent, namelen);
 	if (IS_ERR(dentry)) {
 		err = PTR_ERR(dentry);
