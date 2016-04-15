@@ -2516,6 +2516,8 @@
 			emulation library even if a 387 maths coprocessor
 			is present.
 
+	nofsgsbase	[X86] Disables FSGSBASE instructions.
+
 	no_console_suspend
 			[HW] Never suspend the console
 			Disable suspending of consoles during suspend and
