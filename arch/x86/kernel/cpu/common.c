@@ -312,6 +312,23 @@ static __always_inline void setup_smap(struct cpuinfo_x86 *c)
 }
 
 /*
+ * Temporary hack: FSGSBASE is unsafe until a few kernel code paths are updated.
+ * This allows us to get the kernel ready incrementally.  Setting
+ * unsafe_fsgsbase will allow the series to be bisected if necessary.
+ *
+ * Once all the pieces are in place, this will go away and be replaced with
+ * a nofsgsbase chicken flag.
+ */
+static bool unsafe_fsgsbase;
+
+static __init int setup_unsafe_fsgsbase(char *arg)
+{
+	unsafe_fsgsbase = true;
+	return 1;
+}
+__setup("unsafe_fsgsbase", setup_unsafe_fsgsbase);
+
+/*
  * Protection Keys are not available in 32-bit mode.
  */
 static bool pku_disabled;
@@ -1124,6 +1141,14 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 	/* Set up SMEP/SMAP */
 	setup_smep(c);
 	setup_smap(c);
+
+	/* Enable FSGSBASE instructions if available. */
+	if (cpu_has(c, X86_FEATURE_FSGSBASE)) {
+		if (unsafe_fsgsbase)
+			cr4_set_bits(X86_CR4_FSGSBASE);
+		else
+			clear_cpu_cap(c, X86_CR4_FSGSBASE);
+	}
 
 	/*
 	 * The vendor-specific functions might have changed features.
