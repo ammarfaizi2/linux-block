@@ -32,6 +32,8 @@ static inline unsigned long read_inactive_gs_base(void)
 extern unsigned long read_task_fsbase(struct task_struct *task);
 extern unsigned long read_task_gsbase(struct task_struct *task);
 
+#include <asm/cpufeature.h>
+
 static __always_inline void swapgs(void)
 {
 	asm volatile("swapgs" ::: "memory");
@@ -69,6 +71,29 @@ static __always_inline void wrfsbase(unsigned long fsbase)
 	asm volatile(".byte 0xf3,0x48,0x0f,0xae,0xd0 # wrfsbaseq %%rax"
 			:: "a" (fsbase)
 			: "memory");
+}
+
+/* Helpers that work on all CPUs */
+
+static inline void write_fs_base(unsigned long fsbase)
+{
+	if (static_cpu_has(X86_FEATURE_FSGSBASE))
+		wrfsbase(fsbase);
+	else
+		wrmsrl(MSR_FS_BASE, fsbase);
+}
+
+static inline void write_active_gs_base(unsigned long gsbase)
+{
+	if (static_cpu_has(X86_FEATURE_FSGSBASE))
+		wrgsbase(gsbase);
+	else
+		wrmsrl(MSR_GS_BASE, gsbase);
+}
+
+static inline void write_inactive_gs_base(unsigned long gsbase)
+{
+	wrmsrl(MSR_KERNEL_GS_BASE, gsbase);
 }
 
 #endif /* CONFIG_X86_64 */
