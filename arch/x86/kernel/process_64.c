@@ -213,6 +213,31 @@ enum which_selector {
 	GS
 };
 
+/* Interrupts are disabled here.   Out of line to be protected from kprobes. */
+static noinline __kprobes void wrgsbase_inactive(unsigned long gsbase)
+{
+	unsigned long flags;
+
+	local_irq_save(flags);
+	swapgs();
+	wrgsbase(gsbase);
+	swapgs();
+	local_irq_restore(flags);
+}
+
+/* Interrupts are disabled here.   Out of line to be protected from kprobes. */
+static noinline __kprobes unsigned long rdgsbase_inactive(void)
+{
+	unsigned long gsbase, flags;
+
+	local_irq_save(flags);
+	swapgs();
+	gsbase = rdgsbase();
+	swapgs();
+	local_irq_restore(flags);
+	return gsbase;
+}
+
 /*
  * Saves the FS or GS base for an outgoing thread if FSGSBASE extensions are
  * not available.  The goal is to be reasonably fast on non-FSGSBASE systems.
@@ -258,8 +283,18 @@ static __always_inline void save_fsgs(struct task_struct *task)
 {
 	savesegment(fs, task->thread.fsindex);
 	savesegment(gs, task->thread.gsindex);
-	save_base_legacy(task, task->thread.fsindex, FS);
-	save_base_legacy(task, task->thread.gsindex, GS);
+	if (static_cpu_has(X86_FEATURE_FSGSBASE)) {
+		/*
+		 * If FSGSBASE is enabled, we can't make any useful guesses
+		 * about the base, and user code expects us to save the current
+		 * value.  Fortunately, reading the base directly is efficient.
+		 */
+		task->thread.fsbase = rdfsbase();
+		task->thread.gsbase = rdgsbase_inactive();
+	} else {
+		save_base_legacy(task, task->thread.fsindex, FS);
+		save_base_legacy(task, task->thread.gsindex, GS);
+	}
 }
 
 static __always_inline void loadseg(enum which_selector which,
@@ -467,7 +502,6 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	 * (e.g. xen_load_tls())
 	 */
 	save_fsgs(prev_p);
-
 	/*
 	 * Load TLS before restoring any segments so that segment loads
 	 * reference the correct GDT entries.
@@ -505,10 +539,22 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	if (unlikely(next->ds | prev->ds))
 		loadsegment(ds, next->ds);
 
-	load_seg_legacy(prev->fsindex, prev->fsbase,
-			next->fsindex, next->fsbase, FS);
-	load_seg_legacy(prev->gsindex, prev->gsbase,
-			next->gsindex, next->gsbase, GS);
+	if (static_cpu_has(X86_FEATURE_FSGSBASE)) {
+		/* Update the FS and GS selectors if they could have changed. */
+		if (unlikely(prev->fsindex || next->fsindex))
+			loadsegment(fs, next->fsindex);
+		if (unlikely(prev->gsindex || next->gsindex))
+			load_gs_index(next->gsindex);
+
+		/* Update the bases. */
+		wrfsbase(next->fsbase);
+		wrgsbase_inactive(next->gsbase);
+	} else {
+		load_seg_legacy(prev->fsindex, prev->fsbase,
+				next->fsindex, next->fsbase, FS);
+		load_seg_legacy(prev->gsindex, prev->gsbase,
+				next->gsindex, next->gsbase, GS);
+	}
 
 	switch_fpu_finish(next_fpu, cpu);
 
