@@ -111,6 +111,17 @@ static inline struct hlist_bl_head *d_hash(const struct dentry *parent,
 	return dentry_hashtable + hash_32(hash, d_hash_shift);
 }
 
+#define IN_LOOKUP_SHIFT 10
+static struct hlist_bl_head in_lookup_hashtable[1 << IN_LOOKUP_SHIFT];
+
+static inline struct hlist_bl_head *in_lookup_hash(const struct dentry *parent,
+					unsigned int hash)
+{
+	hash += (unsigned long) parent / L1_CACHE_BYTES;
+	return in_lookup_hashtable + hash_32(hash, IN_LOOKUP_SHIFT);
+}
+
+
 /* Statistics gathering. */
 struct dentry_stat_t dentry_stat = {
 	.age_limit = 45,
@@ -2377,9 +2388,85 @@ static inline void end_dir_add(struct inode *dir, unsigned n)
 	smp_store_release(&dir->i_dir_seq, n + 2);
 }
 
+struct dentry *d_alloc_parallel(struct dentry *parent,
+				const struct qstr *name)
+{
+	unsigned int len = name->len;
+	unsigned int hash = name->hash;
+	const unsigned char *str = name->name;
+	struct hlist_bl_head *b = in_lookup_hash(parent, hash);
+	struct hlist_bl_node *node;
+	struct dentry *new = d_alloc(parent, name);
+	struct dentry *dentry;
+	unsigned seq;
+
+	if (unlikely(!new))
+		return ERR_PTR(-ENOMEM);
+
+retry:
+	seq = smp_load_acquire(&parent->d_inode->i_dir_seq) & ~1;
+	dentry = d_lookup(parent, name);
+	if (unlikely(dentry)) {
+		dput(new);
+		return dentry;
+	}
+
+	hlist_bl_lock(b);
+	smp_rmb();
+	if (unlikely(parent->d_inode->i_dir_seq != seq)) {
+		hlist_bl_unlock(b);
+		goto retry;
+	}
+	/*
+	 * No changes for the parent since the beginning of d_lookup().
+	 * Since all removals from the chain happen with hlist_bl_lock(),
+	 * any potential in-lookup matches are going to stay here until
+	 * we unlock the chain.  All fields are stable in everything
+	 * we encounter.
+	 */
+	hlist_bl_for_each_entry(dentry, node, b, d_u.d_in_lookup_hash) {
+		if (dentry->d_name.hash != hash)
+			continue;
+		if (dentry->d_parent != parent)
+			continue;
+		if (d_unhashed(dentry))
+			continue;
+		if (parent->d_flags & DCACHE_OP_COMPARE) {
+			int tlen = dentry->d_name.len;
+			const char *tname = dentry->d_name.name;
+			if (parent->d_op->d_compare(parent, dentry, tlen, tname, name))
+				continue;
+		} else {
+			if (dentry->d_name.len != len)
+				continue;
+			if (dentry_cmp(dentry, str, len))
+				continue;
+		}
+		dget(dentry);
+		hlist_bl_unlock(b);
+		/* impossible until we actually enable parallel lookups */
+		BUG();
+		/* and this will be "wait for it to stop being in-lookup" */
+		/* this one will be handled in the next commit */
+		dput(new);
+		return dentry;
+	}
+	/* we can't take ->d_lock here; it's OK, though. */
+	new->d_flags |= DCACHE_PAR_LOOKUP;
+	hlist_bl_add_head_rcu(&new->d_u.d_in_lookup_hash, b);
+	hlist_bl_unlock(b);
+	return new;
+}
+
 void __d_not_in_lookup(struct dentry *dentry)
 {
+	struct hlist_bl_head *b = in_lookup_hash(dentry->d_parent,
+						 dentry->d_name.hash);
+	hlist_bl_lock(b);
 	dentry->d_flags &= ~DCACHE_PAR_LOOKUP;
+	__hlist_bl_del(&dentry->d_u.d_in_lookup_hash);
+	hlist_bl_unlock(b);
+	INIT_HLIST_NODE(&dentry->d_u.d_alias);
 	/* more stuff will land here */
 }
 
