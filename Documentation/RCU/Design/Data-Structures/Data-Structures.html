@@ -70,7 +70,7 @@ All of these events are combined at each level of the tree until finally
 grace periods are completed at the tree's root <tt>rcu_node</tt>
 structure.
 A grace period can be completed at the root once every CPU
-(or, in the case of <tt>CONFIG_TREE_PREEMPT_RCU</tt>, task)
+(or, in the case of <tt>CONFIG_PREEMPT_RCU</tt>, task)
 has passed through a quiescent state.
 Once a grace period has completed, record of that fact is propagated
 back down the tree.
@@ -184,7 +184,7 @@ Therefore, a single <tt>rcu_dynticks</tt> structure is allocated per
 CPU, and all of a given CPU's <tt>rcu_data</tt> structures share
 that <tt>rcu_dynticks</tt>, as shown in the figure.
 
-</p><p>Kernels built with <tt>CONFIG_TREE_PREEMPT_RCU</tt> support
+</p><p>Kernels built with <tt>CONFIG_PREEMPT_RCU</tt> support
 rcu_preempt in addition to rcu_sched and rcu_bh, as shown below:
 
 </p><p><img src="BigTreePreemptRCUBHdyntick.svg" alt="BigTreePreemptRCUBHdyntick.svg" width="35%">
@@ -201,7 +201,7 @@ waiting for a grace period to elapse, as shown in the following figure:
 </p><p><img src="BigTreePreemptRCUBHdyntickCB.svg" alt="BigTreePreemptRCUBHdyntickCB.svg" width="40%">
 
 </p><p>This figure shows how <tt>TREE_RCU</tt>'s and
-<tt>TREE_PREEMPT_RCU</tt>'s major data structures are related.
+<tt>PREEMPT_RCU</tt>'s major data structures are related.
 Lesser data structures will be introduced with the algorithms that
 make use of them.
 
@@ -252,10 +252,10 @@ follows:
 	to allow this information to be accessed in a synchronized
 	manner without suffering the scalability limitations that
 	would otherwise be imposed by global locking.
-	In <tt>CONFIG_TREE_PREEMPT_RCU</tt> kernels, it manages the lists
+	In <tt>CONFIG_PREEMPT_RCU</tt> kernels, it manages the lists
 	of tasks that have blocked while in their current
 	RCU read-side critical section.
-	In <tt>CONFIG_TREE_PREEMPT_RCU</tt> with
+	In <tt>CONFIG_PREEMPT_RCU</tt> with
 	<tt>CONFIG_RCU_BOOST</tt>, it manages the
 	per-<tt>rcu_node</tt> priority-boosting
 	kernel threads (kthreads) and state.
@@ -441,10 +441,10 @@ They provides local copies of the grace-period state in order
 to allow this information to be accessed in a synchronized
 manner without suffering the scalability limitations that
 would otherwise be imposed by global locking.
-In <tt>CONFIG_TREE_PREEMPT_RCU</tt> kernels, they manage the lists
+In <tt>CONFIG_PREEMPT_RCU</tt> kernels, they manage the lists
 of tasks that have blocked while in their current
 RCU read-side critical section.
-In <tt>CONFIG_TREE_PREEMPT_RCU</tt> with
+In <tt>CONFIG_PREEMPT_RCU</tt> with
 <tt>CONFIG_RCU_BOOST</tt>, they manage the
 per-<tt>rcu_node</tt> priority-boosting
 kernel threads (kthreads) and state.
@@ -636,7 +636,7 @@ normal and expedited grace periods, respectively.
 
 <h5>Blocked-Task Management</h5>
 
-<p><tt>TREE_PREEMPT_RCU</tt> allows tasks to be preempted in the
+<p><tt>PREEMPT_RCU</tt> allows tasks to be preempted in the
 midst of their RCU read-side critical sections, and these tasks
 must be tracked explicitly.
 The details of exactly why and how they are tracked will be covered
@@ -1199,7 +1199,7 @@ opaque &ldquo;cookie&rdquo;.
 <h3><a name="RCU-Specific Fields in the task_struct Structure">
 RCU-Specific Fields in the <tt>task_struct</tt> Structure</a></h3>
 
-<p>The <tt>CONFIG_TREE_PREEMPT_RCU</tt> implementation uses some
+<p>The <tt>CONFIG_PREEMPT_RCU</tt> implementation uses some
 additional fields in the <tt>task_struct</tt> structure:
 
 <pre>
