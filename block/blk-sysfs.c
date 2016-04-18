@@ -13,6 +13,7 @@
 
 #include "blk.h"
 #include "blk-mq.h"
+#include "blk-wb.h"
 
 struct queue_sysfs_entry {
 	struct attribute attr;
@@ -347,6 +348,47 @@ static ssize_t queue_poll_store(struct request_queue *q, const char *page,
 	return ret;
 }
 
+static ssize_t queue_wb_stats_show(struct request_queue *q, char *page)
+{
+	struct rq_wb *rwb = q->rq_wb;
+
+	if (!rwb)
+		return -EINVAL;
+
+	return sprintf(page, "background=%d, normal=%d, max=%d, inflight=%d,"
+				" wait=%d, bdp_wait=%d\n", rwb->wb_background,
+					rwb->wb_normal, rwb->wb_max,
+					atomic_read(&rwb->inflight),
+					waitqueue_active(&rwb->wait),
+					atomic_read(rwb->bdp_wait));
+}
+
+static ssize_t queue_wb_lat_show(struct request_queue *q, char *page)
+{
+	if (!q->rq_wb)
+		return -EINVAL;
+
+	return sprintf(page, "%llu\n", q->rq_wb->min_lat_nsec / 1000ULL);
+}
+
+static ssize_t queue_wb_lat_store(struct request_queue *q, const char *page,
+				  size_t count)
+{
+	u64 val;
+	int err;
+
+	if (!q->rq_wb)
+		return -EINVAL;
+
+	err = kstrtou64(page, 10, &val);
+	if (err < 0)
+		return err;
+
+	q->rq_wb->min_lat_nsec = val * 1000ULL;
+	blk_wb_update_limits(q->rq_wb);
+	return count;
+}
+
 static ssize_t queue_wc_show(struct request_queue *q, char *page)
 {
 	if (test_bit(QUEUE_FLAG_WC, &q->queue_flags))
@@ -541,6 +583,17 @@ static struct queue_sysfs_entry queue_stats_entry = {
 	.show = queue_stats_show,
 };
 
+static struct queue_sysfs_entry queue_wb_stats_entry = {
+	.attr = {.name = "wb_stats", .mode = S_IRUGO },
+	.show = queue_wb_stats_show,
+};
+
+static struct queue_sysfs_entry queue_wb_lat_entry = {
+	.attr = {.name = "wb_lat_usec", .mode = S_IRUGO | S_IWUSR },
+	.show = queue_wb_lat_show,
+	.store = queue_wb_lat_store,
+};
+
 static struct attribute *default_attrs[] = {
 	&queue_requests_entry.attr,
 	&queue_ra_entry.attr,
@@ -568,6 +621,8 @@ static struct attribute *default_attrs[] = {
 	&queue_poll_entry.attr,
 	&queue_wc_entry.attr,
 	&queue_stats_entry.attr,
+	&queue_wb_stats_entry.attr,
+	&queue_wb_lat_entry.attr,
 	NULL,
 };
 
@@ -720,6 +775,8 @@ int blk_register_queue(struct gendisk *disk)
 
 	if (q->mq_ops)
 		blk_mq_register_disk(disk);
+
+	blk_wb_init(q);
 
 	if (!q->request_fn)
 		return 0;
