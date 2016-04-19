@@ -85,12 +85,7 @@ static DEFINE_MUTEX(waiter_mutex);
 static DEFINE_PER_CPU(u64, waiter_cputime); /* Nanoseconds. */
 static u64 starttime;
 
-#if defined(MODULE)
-#define WAKETORTURE_RUNNABLE_INIT 1
-#else
-#define WAKETORTURE_RUNNABLE_INIT 0
-#endif
-static int torture_runnable = WAKETORTURE_RUNNABLE_INIT;
+static int torture_runnable = IS_ENABLED(MODULE);
 module_param(torture_runnable, int, 0444);
 MODULE_PARM_DESC(torture_runnable, "Start waketorture at boot");
 
