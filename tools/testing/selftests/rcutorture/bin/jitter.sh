@@ -55,10 +55,17 @@ do
 		srand(n + me + systime());
 		ncpus = split(cpus, ca);
 		curcpu = ca[int(rand() * ncpus + 1)];
-		printf("%#x\n", lshift(1, curcpu));
+		mask = lshift(1, curcpu);
+		if (mask + 0 <= 0)
+			mask = 1;
+		printf("%#x\n", mask);
 	}' < /dev/null`
 	n=$(($n+1))
-	taskset -p $cpumask $$ > /dev/null
+	if ! taskset -p $cpumask $$ > /dev/null 2>&1
+	then
+		echo taskset failure: '"taskset -p ' $cpumask $$ '"'
+		exit 1
+	fi
 
 	# Sleep a random duration
 	sleeptime=`awk -v me=$me -v n=$n -v sleepmax=$sleepmax 'BEGIN {
