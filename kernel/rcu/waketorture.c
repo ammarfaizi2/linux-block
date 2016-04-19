@@ -85,7 +85,7 @@ static DEFINE_MUTEX(waiter_mutex);
 static DEFINE_PER_CPU(u64, waiter_cputime); /* Nanoseconds. */
 static u64 starttime;
 
-#if defined(MODULE) || defined(CONFIG_WAKE_TORTURE_TEST_RUNNABLE)
+#if defined(MODULE)
 #define WAKETORTURE_RUNNABLE_INIT 1
 #else
 #define WAKETORTURE_RUNNABLE_INIT 0
