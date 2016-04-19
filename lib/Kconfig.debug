@@ -1434,7 +1434,7 @@ config RCU_TORTURE_TEST_SLOW_CLEANUP_DELAY
 config WAKE_TORTURE_TEST
 	tristate "Torture test for wakeups and CPU hotplug"
 	depends on DEBUG_KERNEL
-	depends on X86_64 || ARM64 || PPC64 || MIPS
+	depends on 64BIT
 	select TORTURE_TEST
 	default n
 	help
