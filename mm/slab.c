@@ -3770,9 +3770,10 @@ EXPORT_SYMBOL(kmem_cache_free);
 void kmem_cache_free_bulk(struct kmem_cache *orig_s, size_t size, void **p)
 {
 	struct kmem_cache *s;
+	unsigned long flags;
 	size_t i;
 
-	local_irq_disable();
+	local_irq_save(flags);
 	for (i = 0; i < size; i++) {
 		void *objp = p[i];
 
@@ -3787,7 +3788,7 @@ void kmem_cache_free_bulk(struct kmem_cache *orig_s, size_t size, void **p)
 
 		__cache_free(s, objp, _RET_IP_);
 	}
-	local_irq_enable();
+	local_irq_restore(flags);
 
 	/* FIXME: add tracing */
 }
