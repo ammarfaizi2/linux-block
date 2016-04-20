@@ -37,12 +37,16 @@
 #include <linux/uio.h>
 #include <linux/atomic.h>
 #include <linux/prefetch.h>
+#include <linux/pcpu_cache.h>
 
 /*
  * How many user pages to map in one call to get_user_pages().  This determines
  * the size of a structure in the slab cache
  */
 #define DIO_PAGES	64
+
+static struct pcpu_alloc_cache alloc_cache;
+static DEFINE_PER_CPU(struct pcpu_cache, dio_alloc_cache);
 
 /*
  * This code generally works in units of "dio_blocks".  A dio_block is
@@ -283,7 +287,7 @@ static ssize_t dio_complete(struct dio *dio, ssize_t ret, bool is_async)
 		dio->iocb->ki_complete(dio->iocb, ret, 0);
 	}
 
-	kmem_cache_free(dio_cache, dio);
+	pcpu_cache_free(&alloc_cache, dio);
 	return ret;
 }
 
@@ -1142,7 +1146,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	if (iov_iter_rw(iter) == READ && !iov_iter_count(iter))
 		return 0;
 
-	dio = kmem_cache_alloc(dio_cache, GFP_KERNEL);
+	dio = pcpu_cache_alloc(&alloc_cache, GFP_KERNEL);
 	retval = -ENOMEM;
 	if (!dio)
 		goto out;
@@ -1166,7 +1170,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 							      end - 1);
 			if (retval) {
 				inode_unlock(inode);
-				kmem_cache_free(dio_cache, dio);
+				pcpu_cache_free(&alloc_cache, dio);
 				goto out;
 			}
 		}
@@ -1177,7 +1181,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	if (iov_iter_rw(iter) == READ && offset >= dio->i_size) {
 		if (dio->flags & DIO_LOCKING)
 			inode_unlock(inode);
-		kmem_cache_free(dio_cache, dio);
+		pcpu_cache_free(&alloc_cache, dio);
 		retval = 0;
 		goto out;
 	}
@@ -1219,7 +1223,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 			 * We grab i_mutex only for reads so we don't have
 			 * to release it here
 			 */
-			kmem_cache_free(dio_cache, dio);
+			pcpu_cache_free(&alloc_cache, dio);
 			goto out;
 		}
 	}
@@ -1357,6 +1361,7 @@ EXPORT_SYMBOL(__blockdev_direct_IO);
 static __init int dio_init(void)
 {
 	dio_cache = KMEM_CACHE(dio, SLAB_PANIC);
+	pcpu_cache_init(&alloc_cache, &dio_alloc_cache, dio_cache);
 	return 0;
 }
 module_init(dio_init)
