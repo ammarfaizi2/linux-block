@@ -2616,6 +2616,15 @@ MODULE_DEVICE_TABLE(of, mmcc_msm8974_match_table);
 static int mmcc_msm8974_probe(struct platform_device *pdev)
 {
 	struct regmap *regmap;
+	struct device_node *node;
+
+	node = of_find_compatible_node(NULL, NULL, "qcom,rpmcc-msm8974");
+
+	if (IS_ENABLED(CONFIG_QCOM_CLK_SMD_RPM) &&
+	    of_device_is_available(node)) {
+		/* skip registration for gfx3d, as it is controlled by RPMCC */
+		mmcc_msm8974_desc.clks[GFX3D_CLK_SRC] = NULL;
+	}
 
 	regmap = qcom_cc_map(pdev, &mmcc_msm8974_desc);
 	if (IS_ERR(regmap))
