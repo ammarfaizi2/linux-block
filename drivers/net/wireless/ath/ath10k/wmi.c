@@ -2149,7 +2149,8 @@ static int ath10k_wmi_op_pull_mgmt_rx_ev(struct ath10k *ar, struct sk_buff *skb,
 	u32 msdu_len;
 	u32 len;
 
-	if (test_bit(ATH10K_FW_FEATURE_EXT_WMI_MGMT_RX, ar->fw_features)) {
+	if (test_bit(ATH10K_FW_FEATURE_EXT_WMI_MGMT_RX,
+		     ar->running_fw->fw_file.fw_features)) {
 		ev_v2 = (struct wmi_mgmt_rx_event_v2 *)skb->data;
 		ev_hdr = &ev_v2->hdr.v1;
 		pull_len = sizeof(*ev_v2);
@@ -4604,10 +4605,6 @@ static void ath10k_wmi_event_service_ready_work(struct work_struct *work)
 	ath10k_dbg_dump(ar, ATH10K_DBG_WMI, NULL, "wmi svc: ",
 			arg.service_map, arg.service_map_len);
 
-	/* only manually set fw features when not using FW IE format */
-	if (ar->fw_api == 1 && ar->fw_version_build > 636)
-		set_bit(ATH10K_FW_FEATURE_EXT_WMI_MGMT_RX, ar->fw_features);
-
 	if (ar->num_rf_chains > ar->max_spatial_stream) {
 		ath10k_warn(ar, "hardware advertises support for more spatial streams than it should (%d > %d)\n",
 			    ar->num_rf_chains, ar->max_spatial_stream);
@@ -4638,7 +4635,7 @@ static void ath10k_wmi_event_service_ready_work(struct work_struct *work)
 
 	if (test_bit(WMI_SERVICE_PEER_CACHING, ar->wmi.svc_map)) {
 		if (test_bit(ATH10K_FW_FEATURE_PEER_FLOW_CONTROL,
-			     ar->fw_features))
+			     ar->running_fw->fw_file.fw_features))
 			ar->num_active_peers = TARGET_10_4_QCACHE_ACTIVE_PEERS_PFC +
 					       ar->max_num_vdevs;
 		else
@@ -7868,7 +7865,7 @@ static const struct wmi_ops wmi_10_4_ops = {
 
 int ath10k_wmi_attach(struct ath10k *ar)
 {
-	switch (ar->wmi.op_version) {
+	switch (ar->running_fw->fw_file.wmi_op_version) {
 	case ATH10K_FW_WMI_OP_VERSION_10_4:
 		ar->wmi.ops = &wmi_10_4_ops;
 		ar->wmi.cmd = &wmi_10_4_cmd_map;
@@ -7910,7 +7907,7 @@ int ath10k_wmi_attach(struct ath10k *ar)
 	case ATH10K_FW_WMI_OP_VERSION_UNSET:
 	case ATH10K_FW_WMI_OP_VERSION_MAX:
 		ath10k_err(ar, "unsupported WMI op version: %d\n",
-			   ar->wmi.op_version);
+			   ar->running_fw->fw_file.wmi_op_version);
 		return -EINVAL;
 	}
 
