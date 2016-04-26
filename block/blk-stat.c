@@ -143,15 +143,16 @@ void blk_stat_init(struct blk_rq_stat *stat)
 void blk_stat_add(struct blk_rq_stat *stat, struct request *rq)
 {
 	s64 delta, now, value;
+	u64 rq_time = wbt_issue_stat_get_time(&rq->wb_stat);
 
 	now = ktime_to_ns(ktime_get());
-	if (now < rq->issue_time)
+	if (now < rq_time)
 		return;
 
 	if ((now & BLK_STAT_MASK) != (stat->time & BLK_STAT_MASK))
 		__blk_stat_init(stat, now);
 
-	value = now - rq->issue_time;
+	value = now - rq_time;
 	if (value > stat->max)
 		stat->max = value;
 	if (value < stat->min)

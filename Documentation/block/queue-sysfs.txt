@@ -151,5 +151,18 @@ device state. This means that it might not be safe to toggle the
 setting from "write back" to "write through", since that will also
 eliminate cache flushes issued by the kernel.
 
+wb_lat_usec (RW)
+----------------
+If the device is registered for writeback throttling, then this file shows
+the target minimum read latency. If this latency is exceeded in a given
+window of time (see wb_window_usec), then the writeback throttling will start
+scaling back writes.
+
+wb_window_usec (RW)
+-------------------
+If the device is registered for writeback throttling, then this file shows
+the value of the monitoring window in which we'll look at the target
+latency. See wb_lat_usec.
+
 
 Jens Axboe <jens.axboe@oracle.com>, February 2009
