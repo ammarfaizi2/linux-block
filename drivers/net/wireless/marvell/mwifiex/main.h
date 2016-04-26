@@ -37,6 +37,17 @@
 #include <linux/idr.h>
 #include <linux/inetdevice.h>
 #include <linux/devcoredump.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/gfp.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/of_gpio.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/of_irq.h>
 
 #include "decl.h"
 #include "ioctl.h"
@@ -1042,9 +1053,8 @@ int mwifiex_alloc_cmd_buffer(struct mwifiex_adapter *adapter);
 int mwifiex_free_cmd_buffer(struct mwifiex_adapter *adapter);
 void mwifiex_cancel_all_pending_cmd(struct mwifiex_adapter *adapter);
 void mwifiex_cancel_pending_ioctl(struct mwifiex_adapter *adapter);
+void mwifiex_cancel_pending_scan_cmd(struct mwifiex_adapter *adapter);
 
-void mwifiex_insert_cmd_to_free_q(struct mwifiex_adapter *adapter,
-				  struct cmd_ctrl_node *cmd_node);
 void mwifiex_recycle_cmd_node(struct mwifiex_adapter *adapter,
 			      struct cmd_ctrl_node *cmd_node);
 

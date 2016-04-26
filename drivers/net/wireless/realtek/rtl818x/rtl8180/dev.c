@@ -526,7 +526,7 @@ static void rtl8180_tx(struct ieee80211_hw *dev,
 		 * ieee80211_generic_frame_duration
 		 */
 		duration = ieee80211_generic_frame_duration(dev, priv->vif,
-					IEEE80211_BAND_2GHZ, skb->len,
+					NL80211_BAND_2GHZ, skb->len,
 					ieee80211_get_tx_rate(dev, info));
 
 		frame_duration =  priv->ack_time + le16_to_cpu(duration);
@@ -1018,6 +1018,8 @@ static int rtl8180_init_rx_ring(struct ieee80211_hw *dev)
 		dma_addr_t *mapping;
 		entry = priv->rx_ring + priv->rx_ring_sz*i;
 		if (!skb) {
+			pci_free_consistent(priv->pdev, priv->rx_ring_sz * 32,
+					priv->rx_ring, priv->rx_ring_dma);
 			wiphy_err(dev->wiphy, "Cannot allocate RX skb\n");
 			return -ENOMEM;
 		}
@@ -1028,6 +1030,8 @@ static int rtl8180_init_rx_ring(struct ieee80211_hw *dev)
 
 		if (pci_dma_mapping_error(priv->pdev, *mapping)) {
 			kfree_skb(skb);
+			pci_free_consistent(priv->pdev, priv->rx_ring_sz * 32,
+					priv->rx_ring, priv->rx_ring_dma);
 			wiphy_err(dev->wiphy, "Cannot map DMA for RX skb\n");
 			return -ENOMEM;
 		}
@@ -1529,7 +1533,7 @@ static void rtl8180_bss_info_changed(struct ieee80211_hw *dev,
 		priv->ack_time =
 			le16_to_cpu(ieee80211_generic_frame_duration(dev,
 					priv->vif,
-					IEEE80211_BAND_2GHZ, 10,
+					NL80211_BAND_2GHZ, 10,
 					&priv->rates[0])) - 10;
 
 		rtl8180_conf_erp(dev, info);
@@ -1795,12 +1799,12 @@ static int rtl8180_probe(struct pci_dev *pdev,
 	memcpy(priv->channels, rtl818x_channels, sizeof(rtl818x_channels));
 	memcpy(priv->rates, rtl818x_rates, sizeof(rtl818x_rates));
 
-	priv->band.band = IEEE80211_BAND_2GHZ;
+	priv->band.band = NL80211_BAND_2GHZ;
 	priv->band.channels = priv->channels;
 	priv->band.n_channels = ARRAY_SIZE(rtl818x_channels);
 	priv->band.bitrates = priv->rates;
 	priv->band.n_bitrates = 4;
-	dev->wiphy->bands[IEEE80211_BAND_2GHZ] = &priv->band;
+	dev->wiphy->bands[NL80211_BAND_2GHZ] = &priv->band;
 
 	ieee80211_hw_set(dev, HOST_BROADCAST_PS_BUFFERING);
 	ieee80211_hw_set(dev, RX_INCLUDES_FCS);
