@@ -95,6 +95,7 @@ struct callchain_param {
 	u32			dump_size;
 	enum chain_mode 	mode;
 	u32			print_limit;
+	u32			max_stack;
 	double			min_percent;
 	sort_chain_func_t	sort;
 	enum chain_order	order;

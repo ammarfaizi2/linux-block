@@ -608,6 +608,7 @@ do { 						\
 	bswap_field_64(sample_regs_user);
 	bswap_field_32(sample_stack_user);
 	bswap_field_32(aux_watermark);
+	bswap_field_32(sample_max_stack);
 
 	/*
 	 * After read_format are bitfields. Check read_format because
