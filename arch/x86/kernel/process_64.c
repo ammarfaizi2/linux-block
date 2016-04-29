@@ -53,6 +53,7 @@
 #include <asm/xen/hypervisor.h>
 #include <asm/vdso.h>
 #include <asm/intel_rdt.h>
+#include <asm/fsgs.h>
 #include <asm/unistd.h>
 #ifdef CONFIG_IA32_EMULATION
 /* Not included via unistd.h */
@@ -147,6 +148,64 @@ void release_thread(struct task_struct *dead_task)
 		}
 #endif
 	}
+}
+
+static unsigned long task_seg_base(struct task_struct *task,
+				   unsigned short selector)
+{
+	unsigned short idx = selector >> 3;
+	if (likely((selector & SEGMENT_TI_MASK) == 0)) {
+		if (unlikely(idx >= GDT_ENTRIES))
+			return 0;
+
+		/*
+		 * There are no user segments in the GDT with nonzero bases
+		 * other than the TLS segments.
+		 */
+		if (idx < GDT_ENTRY_TLS_MIN || idx > GDT_ENTRY_TLS_MAX)
+			return 0;
+
+		return get_desc_base(
+			&task->thread.tls_array[idx - GDT_ENTRY_TLS_MIN]);
+	} else {
+#ifdef CONFIG_MODIFY_LDT_SYSCALL
+		struct ldt_struct *ldt;
+		unsigned long base;
+
+		/*
+		 * If performance here mattered, we could protect the LDT
+		 * with RCU.  This is a slow path, though, so we can just
+		 * take the mutex.
+		 */
+		mutex_lock(&task->mm->context.lock);
+		ldt = task->mm->context.ldt;
+		if (unlikely(idx >= ldt->nr_entries))
+			base = 0;
+		else
+			base = get_desc_base(ldt->entries + idx);
+		mutex_unlock(&task->mm->context.lock);
+
+		return base;
+#else
+		return 0;
+#endif
+	}
+}
+
+unsigned long read_task_fsbase(struct task_struct *task)
+{
+	if (task->thread.fsindex == 0)
+		return task->thread.fsbase;
+	else
+		return task_seg_base(task, task->thread.fsindex);
+}
+
+unsigned long read_task_gsbase(struct task_struct *task)
+{
+	if (task->thread.gsindex == 0)
+		return task->thread.gsbase;
+	else
+		return task_seg_base(task, task->thread.gsindex);
 }
 
 enum which_selector {
@@ -600,6 +659,8 @@ static long prctl_map_vdso(const struct vdso_image *image, unsigned long addr)
 
 long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 {
+	/* This can be called using ptrace. */
+
 	int ret = 0;
 	int doit = task == current;
 	int cpu;
@@ -638,7 +699,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 		if (doit)
 			rdmsrl(MSR_FS_BASE, base);
 		else
-			base = task->thread.fsbase;
+			base = read_task_fsbase(task);
 		ret = put_user(base, (unsigned long __user *)arg2);
 		break;
 	}
@@ -648,7 +709,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 		if (doit)
 			rdmsrl(MSR_KERNEL_GS_BASE, base);
 		else
-			base = task->thread.gsbase;
+			base = read_task_gsbase(task);
 		ret = put_user(base, (unsigned long __user *)arg2);
 		break;
 	}

@@ -25,6 +25,13 @@ static inline unsigned long read_inactive_gs_base(void)
 	return base;
 }
 
+/*
+ * Read an inactive task's fsbase or gsbase.  This returns the value
+ * that the segment base would have if the task were to be resumed.
+ */
+extern unsigned long read_task_fsbase(struct task_struct *task);
+extern unsigned long read_task_gsbase(struct task_struct *task);
+
 #endif /* CONFIG_X86_64 */
 
 #endif /* __ASSEMBLY__ */
