@@ -152,6 +152,24 @@ config I2C_ISMT
 	  This driver can also be built as a module.  If so, the module will be
 	  called i2c-ismt.
 
+config I2C_IMC
+	tristate "Intel iMC (LGA 2011) SMBus Controller"
+	depends on PCI && X86
+	help
+	  If you say yes to this option, support will be included for the Intel
+	  Integrated Memory Controller SMBus host controller interface.  This
+	  controller is found on LGA 2011 Sandy Bridge Xeons and Core i7
+	  Extremes.
+
+	  There are currently no systems on which the kernel knows that it can
+	  safely enable this driver.  For now, you need to pass this driver a
+	  scary module parameter, and you should only pass that parameter if you
+	  have a special motherboard and know exactly what you are doing.
+	  Special motherboards include the Supermicro X9DRH-iF-NV.
+
+	  This driver can also be built as a module.  If so, the module will be
+	  called i2c-imc.
+
 config I2C_PIIX4
 	tristate "Intel PIIX4 and compatible (ATI/AMD/Serverworks/Broadcom/SMSC)"
 	depends on PCI
