@@ -697,7 +697,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 		unsigned long base;
 
 		if (doit)
-			rdmsrl(MSR_FS_BASE, base);
+			base = read_fs_base();
 		else
 			base = read_task_fsbase(task);
 		ret = put_user(base, (unsigned long __user *)arg2);
@@ -707,7 +707,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 		unsigned long base;
 
 		if (doit)
-			rdmsrl(MSR_KERNEL_GS_BASE, base);
+			base = read_inactive_gs_base();
 		else
 			base = read_task_gsbase(task);
 		ret = put_user(base, (unsigned long __user *)arg2);
