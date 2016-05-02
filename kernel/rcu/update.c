@@ -557,6 +557,7 @@ void call_rcu_tasks(struct rcu_head *rhp, rcu_callback_t func)
 {
 	unsigned long flags;
 	bool needwake;
+	bool havetask = READ_ONCE(rcu_tasks_kthread_ptr);
 
 	rhp->next = NULL;
 	rhp->func = func;
@@ -565,7 +566,9 @@ void call_rcu_tasks(struct rcu_head *rhp, rcu_callback_t func)
 	*rcu_tasks_cbs_tail = rhp;
 	rcu_tasks_cbs_tail = &rhp->next;
 	raw_spin_unlock_irqrestore(&rcu_tasks_cbs_lock, flags);
-	if (needwake) {
+	/* We can't create the thread unless interrupts are enabled. */
+	if ((needwake && havetask) ||
+	    (!havetask && !irqs_disabled_flags(flags))) {
 		rcu_spawn_tasks_kthread();
 		wake_up(&rcu_tasks_cbs_wq);
 	}
