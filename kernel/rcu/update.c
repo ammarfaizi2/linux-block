@@ -548,6 +548,7 @@ static int rcu_task_stall_timeout __read_mostly = HZ * 60 * 10;
 module_param(rcu_task_stall_timeout, int, 0644);
 
 static void rcu_spawn_tasks_kthread(void);
+static struct task_struct *rcu_tasks_kthread_ptr;
 
 /*
  * Post an RCU-tasks callback.  First call must be from process context
@@ -813,7 +814,6 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 static void rcu_spawn_tasks_kthread(void)
 {
 	static DEFINE_MUTEX(rcu_tasks_kthread_mutex);
-	static struct task_struct *rcu_tasks_kthread_ptr;
 	struct task_struct *t;
 
 	if (READ_ONCE(rcu_tasks_kthread_ptr)) {
