@@ -650,7 +650,16 @@ static inline void rcu_preempt_sleep_check(void)
  * please be careful when making changes to rcu_assign_pointer() and the
  * other macros that it invokes.
  */
-#define rcu_assign_pointer(p, v) smp_store_release(&p, RCU_INITIALIZER(v))
+#define rcu_assign_pointer(p, v) \
+({ \
+	typeof(v) _r_a_p__v = (v); \
+	\
+	if (__builtin_constant_p(v) && (_r_a_p__v) == NULL) \
+		WRITE_ONCE((p), (_r_a_p__v)); \
+	else \
+		smp_store_release(&p, RCU_INITIALIZER(_r_a_p__v)); \
+	_r_a_p__v; \
+})
 
 /**
  * rcu_access_pointer() - fetch RCU pointer with no dereferencing
