@@ -2124,7 +2124,7 @@ void task_numa_free(struct task_struct *p)
 
 		grp->nr_tasks--;
 		spin_unlock_irqrestore(&grp->lock, flags);
-		RCU_INIT_POINTER(p->numa_group, NULL);
+		rcu_assign_pointer(p->numa_group, NULL);
 		put_numa_group(grp);
 	}
 
