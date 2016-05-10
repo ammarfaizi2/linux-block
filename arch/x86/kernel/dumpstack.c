@@ -414,6 +414,12 @@ void show_regs(struct pt_regs *regs)
 	if (IS_ENABLED(CONFIG_X86_32))
 		all = !user_mode(regs);
 
+	if (all) {
+		if (!segment_eq(get_fs(), USER_DS))
+			printk(KERN_DEFAULT "task.addr_limit: 0x%lx\n",
+			       get_fs().seg);
+	}
+
 	__show_regs(regs, all);
 
 	/*
