@@ -301,13 +301,7 @@ config DEBUG_ENTRY
 	  If unsure, say N.
 
 config DEBUG_UACCESS
-	bool "Debug user memory access"
-	depends on DEBUG_KERNEL
-	---help---
-	  This option enables a check that user memory access and set_fs
-	  are used correctly.  This check only works on systems with SMAP.
-
-	  If unsure, say N.
+	def_bool y
 
 config DEBUG_NMI_SELFTEST
 	bool "NMI Selftest"
