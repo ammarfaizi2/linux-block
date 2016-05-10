@@ -122,7 +122,19 @@ extern int __get_user_4(void);
 extern int __get_user_8(void);
 extern int __get_user_bad(void);
 
-#define __uaccess_begin() stac()
+static inline void __uaccess_begin(void)
+{
+	/*
+	 * If CONFIG_DEBUG_UACCESS, then try to catch invalid user memory
+	 * access under KERNEL_DS by leaving AC clear.
+	 */
+	if (IS_ENABLED(CONFIG_DEBUG_UACCESS) &&
+	    unlikely(!segment_eq(get_fs(), USER_DS)))
+		return;
+
+	stac();
+}
+
 #define __uaccess_end()   clac()
 #define __uaccess_begin_nospec()	\
 ({					\

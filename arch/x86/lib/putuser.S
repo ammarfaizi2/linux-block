@@ -40,6 +40,9 @@ ENTRY(__put_user_1)
 	ENTER
 	cmp TASK_addr_limit(%_ASM_BX),%_ASM_CX
 	jae bad_put_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_put_user_oops
+#endif
 	ASM_STAC
 1:	movb %al,(%_ASM_CX)
 	xor %eax,%eax
@@ -53,6 +56,9 @@ ENTRY(__put_user_2)
 	sub $1,%_ASM_BX
 	cmp %_ASM_BX,%_ASM_CX
 	jae bad_put_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_put_user_oops
+#endif
 	ASM_STAC
 2:	movw %ax,(%_ASM_CX)
 	xor %eax,%eax
@@ -66,6 +72,9 @@ ENTRY(__put_user_4)
 	sub $3,%_ASM_BX
 	cmp %_ASM_BX,%_ASM_CX
 	jae bad_put_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_put_user_oops
+#endif
 	ASM_STAC
 3:	movl %eax,(%_ASM_CX)
 	xor %eax,%eax
@@ -79,6 +88,9 @@ ENTRY(__put_user_8)
 	sub $7,%_ASM_BX
 	cmp %_ASM_BX,%_ASM_CX
 	jae bad_put_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_put_user_oops
+#endif
 	ASM_STAC
 4:	mov %_ASM_AX,(%_ASM_CX)
 #ifdef CONFIG_X86_32
@@ -93,6 +105,17 @@ bad_put_user:
 	movl $-EFAULT,%eax
 	EXIT
 END(bad_put_user)
+
+#ifdef CONFIG_DEBUG_UACCESS
+bad_put_user_oops:
+#ifdef CONFIG_X86_64
+	movq %rcx, %rdi
+#else
+	movl %ecx, %eax
+#endif
+	jmp bad_uaccess_kernel_ds
+END(bad_put_user_oops)
+#endif
 
 	_ASM_EXTABLE_UA(1b, bad_put_user)
 	_ASM_EXTABLE_UA(2b, bad_put_user)

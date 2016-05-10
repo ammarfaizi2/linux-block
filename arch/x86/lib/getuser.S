@@ -40,6 +40,9 @@ ENTRY(__get_user_1)
 	mov PER_CPU_VAR(current_task), %_ASM_DX
 	cmp TASK_addr_limit(%_ASM_DX),%_ASM_AX
 	jae bad_get_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_get_user_oops
+#endif
 	sbb %_ASM_DX, %_ASM_DX		/* array_index_mask_nospec() */
 	and %_ASM_DX, %_ASM_AX
 	ASM_STAC
@@ -56,6 +59,9 @@ ENTRY(__get_user_2)
 	mov PER_CPU_VAR(current_task), %_ASM_DX
 	cmp TASK_addr_limit(%_ASM_DX),%_ASM_AX
 	jae bad_get_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_get_user_oops
+#endif
 	sbb %_ASM_DX, %_ASM_DX		/* array_index_mask_nospec() */
 	and %_ASM_DX, %_ASM_AX
 	ASM_STAC
@@ -72,6 +78,9 @@ ENTRY(__get_user_4)
 	mov PER_CPU_VAR(current_task), %_ASM_DX
 	cmp TASK_addr_limit(%_ASM_DX),%_ASM_AX
 	jae bad_get_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_get_user_oops
+#endif
 	sbb %_ASM_DX, %_ASM_DX		/* array_index_mask_nospec() */
 	and %_ASM_DX, %_ASM_AX
 	ASM_STAC
@@ -89,6 +98,9 @@ ENTRY(__get_user_8)
 	mov PER_CPU_VAR(current_task), %_ASM_DX
 	cmp TASK_addr_limit(%_ASM_DX),%_ASM_AX
 	jae bad_get_user
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_get_user_oops
+#endif
 	sbb %_ASM_DX, %_ASM_DX		/* array_index_mask_nospec() */
 	and %_ASM_DX, %_ASM_AX
 	ASM_STAC
@@ -102,6 +114,9 @@ ENTRY(__get_user_8)
 	mov PER_CPU_VAR(current_task), %_ASM_DX
 	cmp TASK_addr_limit(%_ASM_DX),%_ASM_AX
 	jae bad_get_user_8
+#ifdef CONFIG_DEBUG_UACCESS
+	jge bad_get_user_oops
+#endif
 	sbb %_ASM_DX, %_ASM_DX		/* array_index_mask_nospec() */
 	and %_ASM_DX, %_ASM_AX
 	ASM_STAC
@@ -130,6 +145,15 @@ bad_get_user_8:
 	ASM_CLAC
 	ret
 END(bad_get_user_8)
+#endif
+
+#ifdef CONFIG_DEBUG_UACCESS
+bad_get_user_oops:
+#ifdef CONFIG_X86_64
+	movq %rax, %rdi
+#endif
+	jmp bad_uaccess_kernel_ds
+END(bad_get_user_oops)
 #endif
 
 	_ASM_EXTABLE_UA(1b, bad_get_user)

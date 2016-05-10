@@ -344,3 +344,12 @@ halt_loop:
 	while (true)
 		halt();
 }
+
+#ifdef CONFIG_DEBUG_UACCESS
+void __noreturn bad_uaccess_kernel_ds(unsigned long address)
+{
+	pr_crit("BUG: tried to access memory at 0x%lx while not in USER_DS\n",
+		address);
+	BUG();
+}
+#endif
