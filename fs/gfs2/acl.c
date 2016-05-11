@@ -41,30 +41,35 @@ static const char *gfs2_acl_name(int type)
 struct posix_acl *gfs2_get_acl(struct inode *inode, int type)
 {
 	struct gfs2_inode *ip = GFS2_I(inode);
-	struct posix_acl *acl;
-	const char *name;
-	char *data;
-	int len;
+	struct gfs2_holder gh;
+	bool locked = gfs2_glock_is_locked_by_me(ip->i_gl);
+	struct posix_acl *acl = NULL;
+	int ret;
 
-	if (!ip->i_eattr)
-		return NULL;
+	if (!locked) {
+		ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY,
+					 &gh);
+		if (unlikely(ret))
+			return ERR_PTR(ret);
+	}
+	if (ip->i_eattr) {
+		const char *name = gfs2_acl_name(type);
+		char *data;
 
-	name = gfs2_acl_name(type);
-	if (name == NULL)
-		return ERR_PTR(-EINVAL);
-
-	len = gfs2_xattr_acl_get(ip, name, &data);
-	if (len < 0)
-		return ERR_PTR(len);
-	if (len == 0)
-		return NULL;
-
-	acl = posix_acl_from_xattr(&init_user_ns, data, len);
-	kfree(data);
+		ret = gfs2_xattr_acl_get(ip, name, &data);
+		if (ret <= 0) {
+			acl = ERR_PTR(ret);
+		} else {
+			acl = posix_acl_from_xattr(&init_user_ns, data, ret);
+			kfree(data);
+		}
+	}
+	if (!locked)
+		gfs2_glock_dq_uninit(&gh);
 	return acl;
 }
 
-int gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+int __gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 {
 	int error;
 	int len;
@@ -114,4 +119,16 @@ int gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 out:
 	kfree(data);
 	return error;
+}
+
+int gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+{
+	struct gfs2_inode *ip = GFS2_I(inode);
+	struct gfs2_holder gh;
+	int ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE, 0, &gh);
+	if (ret == 0) {
+		ret = __gfs2_set_acl(inode, acl, type);
+		gfs2_glock_dq_uninit(&gh);
+	}
+	return ret;
 }

@@ -1472,63 +1472,6 @@ out_quota:
 	return error;
 }
 
-static int gfs2_posix_acl_xattr_get(const struct xattr_handler *handler,
-				    struct dentry *dentry, struct inode *inode,
-				    const char *name, void *buffer, size_t size)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
-	int ret;
-
-	/* For selinux during lookup */
-	if (gfs2_glock_is_locked_by_me(ip->i_gl))
-		return posix_acl_xattr_get(handler, dentry, inode, name, buffer, size);
-
-	gfs2_holder_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY, &gh);
-	ret = gfs2_glock_nq(&gh);
-	if (ret == 0) {
-		ret = posix_acl_xattr_get(handler, dentry, inode, name, buffer, size);
-		gfs2_glock_dq(&gh);
-	}
-	gfs2_holder_uninit(&gh);
-	return ret;
-}
-
-static int gfs2_posix_acl_xattr_set(const struct xattr_handler *handler,
-				    struct dentry *dentry, const char *name,
-				    const void *value, size_t size, int flags)
-{
-	struct inode *inode = d_inode(dentry);
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
-	int ret;
-
-	gfs2_holder_init(ip->i_gl, LM_ST_EXCLUSIVE, 0, &gh);
-	ret = gfs2_glock_nq(&gh);
-	if (ret == 0) {
-		ret = posix_acl_xattr_set(handler, dentry, name, value, size, flags);
-		gfs2_glock_dq(&gh);
-	}
-	gfs2_holder_uninit(&gh);
-	return ret;
-}
-
-static const struct xattr_handler gfs2_posix_acl_access_xattr_handler = {
-	.name = XATTR_NAME_POSIX_ACL_ACCESS,
-	.flags = ACL_TYPE_ACCESS,
-	.list = posix_acl_xattr_list,
-	.get = gfs2_posix_acl_xattr_get,
-	.set = gfs2_posix_acl_xattr_set,
-};
-
-static const struct xattr_handler gfs2_posix_acl_default_xattr_handler = {
-	.name = XATTR_NAME_POSIX_ACL_DEFAULT,
-	.flags = ACL_TYPE_DEFAULT,
-	.list = posix_acl_xattr_list,
-	.get = gfs2_posix_acl_xattr_get,
-	.set = gfs2_posix_acl_xattr_set,
-};
-
 static const struct xattr_handler gfs2_xattr_user_handler = {
 	.prefix = XATTR_USER_PREFIX,
 	.flags  = GFS2_EATYPE_USR,
@@ -1546,8 +1489,8 @@ static const struct xattr_handler gfs2_xattr_security_handler = {
 const struct xattr_handler *gfs2_xattr_handlers[] = {
 	&gfs2_xattr_user_handler,
 	&gfs2_xattr_security_handler,
-	&gfs2_posix_acl_access_xattr_handler,
-	&gfs2_posix_acl_default_xattr_handler,
+	&posix_acl_access_xattr_handler,
+	&posix_acl_default_xattr_handler,
 	NULL,
 };
 

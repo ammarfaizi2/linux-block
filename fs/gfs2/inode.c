@@ -692,12 +692,12 @@ static int gfs2_create_inode(struct inode *dir, struct dentry *dentry,
 			       considered free. Any failures need to undo
 			       the gfs2 structures. */
 	if (default_acl) {
-		error = gfs2_set_acl(inode, default_acl, ACL_TYPE_DEFAULT);
+		error = __gfs2_set_acl(inode, default_acl, ACL_TYPE_DEFAULT);
 		posix_acl_release(default_acl);
 	}
 	if (acl) {
 		if (!error)
-			error = gfs2_set_acl(inode, acl, ACL_TYPE_ACCESS);
+			error = __gfs2_set_acl(inode, acl, ACL_TYPE_ACCESS);
 		posix_acl_release(acl);
 	}
 
