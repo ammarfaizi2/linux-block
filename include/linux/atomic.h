@@ -372,6 +372,8 @@
 
 #endif /* !_ASM_GENERIC_ISO_ATOMIC64_H */
 
+#ifndef _ASM_GENERIC_ISO_CMPXCHG_H
+
 /* cmpxchg_relaxed */
 #ifndef cmpxchg_relaxed
 #define  cmpxchg_relaxed		cmpxchg
@@ -441,6 +443,7 @@
 #endif
 #endif /* xchg_relaxed */
 
+#endif /* !_ASM_GENERIC_ISO_CMPXCHG_H */
 
 #ifndef _ASM_GENERIC_ISO_ATOMIC_H
 
