@@ -55,7 +55,7 @@ static inline bool virt_spin_lock(struct qspinlock *lock)
 	do {
 		while (atomic_read(&lock->val) != 0)
 			cpu_relax();
-	} while (atomic_cmpxchg(&lock->val, 0, _Q_LOCKED_VAL) != 0);
+	} while (!atomic_try_cmpxchg_acquire(&lock->val, 0, _Q_LOCKED_VAL));
 
 	return true;
 }
