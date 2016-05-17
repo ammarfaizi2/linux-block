@@ -213,8 +213,9 @@
 #endif
 #endif /* atomic_cmpxchg_relaxed */
 
-#endif /* _ASM_GENERIC_ISO_ATOMIC_H */
+#endif /* !_ASM_GENERIC_ISO_ATOMIC_H */
 
+#ifndef _ASM_GENERIC_ISO_ATOMIC64_H
 
 #ifndef atomic64_read_acquire
 #define  atomic64_read_acquire(v)	smp_load_acquire(&(v)->counter)
@@ -368,6 +369,8 @@
 	__atomic_op_fence(atomic64_cmpxchg, __VA_ARGS__)
 #endif
 #endif /* atomic64_cmpxchg_relaxed */
+
+#endif /* !_ASM_GENERIC_ISO_ATOMIC64_H */
 
 /* cmpxchg_relaxed */
 #ifndef cmpxchg_relaxed
@@ -587,7 +590,9 @@ static inline int atomic_fetch_or(atomic_t *p, int mask)
 }
 #endif
 
-#endif /* _ASM_GENERIC_ISO_ATOMIC_H */
+#endif /* !_ASM_GENERIC_ISO_ATOMIC_H */
+
+#ifndef _ASM_GENERIC_ISO_ATOMIC64_H
 
 #ifdef CONFIG_GENERIC_ATOMIC64
 #include <asm-generic/atomic64.h>
@@ -600,6 +605,10 @@ static inline void atomic64_andnot(long long i, atomic64_t *v)
 }
 #endif
 
+#endif /* !_ASM_GENERIC_ISO_ATOMIC64_H */
+
+#ifndef _ASM_GENERIC_ISO_ATOMIC_LONG_H
 #include <asm-generic/atomic-long.h>
+#endif /* !_ASM_GENERIC_ISO_ATOMIC_LONG_H */
 
 #endif /* _LINUX_ATOMIC_H */
