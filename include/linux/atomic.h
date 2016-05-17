@@ -4,6 +4,8 @@
 #include <asm/atomic.h>
 #include <asm/barrier.h>
 
+#ifndef _ASM_GENERIC_ISO_ATOMIC_H
+
 /*
  * Relaxed variants of xchg, cmpxchg and some atomic operations.
  *
@@ -210,6 +212,9 @@
 	__atomic_op_fence(atomic_cmpxchg, __VA_ARGS__)
 #endif
 #endif /* atomic_cmpxchg_relaxed */
+
+#endif /* _ASM_GENERIC_ISO_ATOMIC_H */
+
 
 #ifndef atomic64_read_acquire
 #define  atomic64_read_acquire(v)	smp_load_acquire(&(v)->counter)
@@ -433,6 +438,9 @@
 #endif
 #endif /* xchg_relaxed */
 
+
+#ifndef _ASM_GENERIC_ISO_ATOMIC_H
+
 /**
  * atomic_add_unless - add unless the number is already a given value
  * @v: pointer of type atomic_t
@@ -440,9 +448,9 @@
  * @u: ...unless v is equal to u.
  *
  * Atomically adds @a to @v, so long as @v was not already @u.
- * Returns non-zero if @v was not @u, and zero otherwise.
+ * Returns true if @v was not @u, and false otherwise.
  */
-static inline int atomic_add_unless(atomic_t *v, int a, int u)
+static inline bool atomic_add_unless(atomic_t *v, int a, int u)
 {
 	return __atomic_add_unless(v, a, u) != u;
 }
@@ -578,6 +586,8 @@ static inline int atomic_fetch_or(atomic_t *p, int mask)
 	return old;
 }
 #endif
+
+#endif /* _ASM_GENERIC_ISO_ATOMIC_H */
 
 #ifdef CONFIG_GENERIC_ATOMIC64
 #include <asm-generic/atomic64.h>
