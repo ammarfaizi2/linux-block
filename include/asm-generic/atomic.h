@@ -37,28 +37,33 @@
 
 #ifdef CONFIG_SMP
 
-/* we can build all atomic primitives from cmpxchg */
+/*
+ * We can build all atomic primitives from cmpxchg(), but we have to beware of
+ * implicit casting of signed int parameters to signed long and thence to
+ * unsigned long on a 64-bit machine if we don't explicitly cast to unsigned
+ * int.
+ */
 
 #define ATOMIC_OP(op, c_op)						\
 static inline void atomic_##op(int i, atomic_t *v)			\
 {									\
-	int c, old;							\
+	unsigned int c, old;						\
 									\
 	c = v->counter;							\
-	while ((old = cmpxchg(&v->counter, c, c c_op i)) != c)		\
+	while ((old = cmpxchg(&v->counter, c, c c_op (unsigned int)i)) != c) \
 		c = old;						\
 }
 
 #define ATOMIC_OP_RETURN(op, c_op)					\
 static inline int atomic_##op##_return(int i, atomic_t *v)		\
 {									\
-	int c, old;							\
+	unsigned int c, old;						\
 									\
 	c = v->counter;							\
-	while ((old = cmpxchg(&v->counter, c, c c_op i)) != c)		\
+	while ((old = cmpxchg(&v->counter, c, c c_op (unsigned int)i)) != c) \
 		c = old;						\
 									\
-	return c c_op i;						\
+	return c c_op (unsigned int)i;					\
 }
 
 #else
