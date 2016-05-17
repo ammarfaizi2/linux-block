@@ -86,7 +86,7 @@ static inline long ldsem_atomic_update(long delta, struct ld_semaphore *sem)
  */
 static inline int ldsem_cmpxchg(long *old, long new, struct ld_semaphore *sem)
 {
-	long tmp = atomic_long_cmpxchg(&sem->count, *old, new);
+	long tmp = cmpxchg(&sem->count, *old, new);
 	if (tmp == *old) {
 		*old = new;
 		return 1;
