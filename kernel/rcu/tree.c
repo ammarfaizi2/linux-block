@@ -1279,15 +1279,16 @@ static void rcu_check_gp_kthread_starvation(struct rcu_state *rsp)
 static void rcu_dump_cpu_stacks(struct rcu_state *rsp)
 {
 	int cpu;
+	unsigned long bit;
 	unsigned long flags;
 	struct rcu_node *rnp;
 
 	rcu_for_each_leaf_node(rsp, rnp) {
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 		if (rnp->qsmask != 0) {
-			for (cpu = 0; cpu <= rnp->grphi - rnp->grplo; cpu++)
-				if (rnp->qsmask & (1UL << cpu))
-					dump_cpu_task(rnp->grplo + cpu);
+			for_each_leaf_node_possible_cpu_bit(rnp, cpu, bit)
+				if (rnp->qsmask & bit)
+					dump_cpu_task(cpu);
 		}
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	}
@@ -1316,6 +1317,7 @@ static void rcu_stall_kick_kthreads(struct rcu_state *rsp)
 static void print_other_cpu_stall(struct rcu_state *rsp, unsigned long gpnum)
 {
 	int cpu;
+	unsigned long bit;
 	long delta;
 	unsigned long flags;
 	unsigned long gpa;
@@ -1353,10 +1355,9 @@ static void print_other_cpu_stall(struct rcu_state *rsp, unsigned long gpnum)
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 		ndetected += rcu_print_task_stall(rnp);
 		if (rnp->qsmask != 0) {
-			for (cpu = 0; cpu <= rnp->grphi - rnp->grplo; cpu++)
-				if (rnp->qsmask & (1UL << cpu)) {
-					print_cpu_stall_info(rsp,
-							     rnp->grplo + cpu);
+			for_each_leaf_node_possible_cpu_bit(rnp, cpu, bit)
+				if (rnp->qsmask & bit) {
+					print_cpu_stall_info(rsp, cpu);
 					ndetected++;
 				}
 		}
@@ -2908,9 +2909,7 @@ static void force_qs_rnp(struct rcu_state *rsp,
 				continue;
 			}
 		}
-		cpu = rnp->grplo;
-		bit = 1;
-		for (; cpu <= rnp->grphi; cpu++, bit <<= 1) {
+		for_each_leaf_node_possible_cpu_bit(rnp, cpu, bit) {
 			if ((rnp->qsmask & bit) != 0) {
 				if (f(per_cpu_ptr(rsp->rda, cpu), isidle, maxj))
 					mask |= bit;

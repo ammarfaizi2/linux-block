@@ -1157,6 +1157,7 @@ static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
 {
 	struct task_struct *t = rnp->boost_kthread_task;
 	unsigned long mask = rcu_rnp_online_cpus(rnp);
+	unsigned long bit;
 	cpumask_var_t cm;
 	int cpu;
 
@@ -1164,8 +1165,8 @@ static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
 		return;
 	if (!zalloc_cpumask_var(&cm, GFP_KERNEL))
 		return;
-	for (cpu = rnp->grplo; cpu <= rnp->grphi; cpu++, mask >>= 1)
-		if ((mask & 0x1) && cpu != outgoingcpu)
+	for_each_leaf_node_cpu_bit(rnp, cpu, bit)
+		if ((mask & bit) && cpu != outgoingcpu)
 			cpumask_set_cpu(cpu, cm);
 	if (cpumask_weight(cm) == 0)
 		cpumask_setall(cm);
