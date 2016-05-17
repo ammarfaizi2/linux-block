@@ -281,6 +281,24 @@ struct rcu_node {
 	     (rnp) < &(rsp)->node[rcu_num_nodes]; (rnp)++)
 
 /*
+ * Iterate over all possible CPUs in a leaf RCU node.
+ */
+#define for_each_leaf_node_possible_cpu(rnp, cpu) \
+	for ((cpu) = rnp->grplo; \
+	     cpu <= rnp->grphi; \
+	     cpu = cpumask_next((cpu), cpu_possible_mask))
+
+/*
+ * Iterate over all possible CPUs in a leaf RCU node, at each step providing a
+ * bit for comparison against rcu_node bitmasks.
+ */
+#define for_each_leaf_node_possible_cpu_bit(rnp, cpu, bit) \
+	for ((cpu) = rnp->grplo, (bit) = 1; \
+	     cpu <= rnp->grphi; \
+	     cpu = cpumask_next((cpu), cpu_possible_mask), \
+		   (bit) = 1UL << (cpu - rnp->grplo))
+
+/*
  * Union to allow "aggregate OR" operation on the need for a quiescent
  * state by the normal and expedited grace periods.
  */
