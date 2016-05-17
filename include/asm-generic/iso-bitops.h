@@ -18,11 +18,12 @@
 static __always_inline
 bool test_bit(long bit, const volatile unsigned long *addr)
 {
-	unsigned long mask = 1UL << (bit & (BITS_PER_LONG - 1));
-	unsigned long old;
+	const volatile unsigned int *addr32 = (const volatile unsigned int *)addr;
+	unsigned int mask = 1U << (bit & (32 - 1));
+	unsigned int old;
 
-	addr += bit >> _BITOPS_LONG_SHIFT;
-	old = __atomic_load_n(addr, __ATOMIC_RELAXED);
+	addr32 += bit >> 5;
+	old = __atomic_load_n(addr32, __ATOMIC_RELAXED);
 	return old & mask;
 }
 
@@ -44,10 +45,11 @@ bool test_bit(long bit, const volatile unsigned long *addr)
 static __always_inline
 void iso_set_bit(long bit, volatile unsigned long *addr, int memorder)
 {
-	unsigned long mask = 1UL << (bit & (BITS_PER_LONG - 1));
+	volatile unsigned int *addr32 = (volatile unsigned int *)addr;
+	unsigned int mask = 1U << (bit & (32 - 1));
 
-	addr += bit >> _BITOPS_LONG_SHIFT;
-	__atomic_fetch_or(addr, mask, memorder);
+	addr32 += bit >> 5;
+	__atomic_fetch_or(addr32, mask, memorder);
 }
 
 #define set_bit(b, a) iso_set_bit((b), (a), __ATOMIC_ACQ_REL)
@@ -75,10 +77,11 @@ void iso_set_bit(long bit, volatile unsigned long *addr, int memorder)
 static __always_inline
 void iso_clear_bit(long bit, volatile unsigned long *addr, int memorder)
 {
-	unsigned long mask = 1UL << (bit & (BITS_PER_LONG - 1));
+	volatile unsigned int *addr32 = (volatile unsigned int *)addr;
+	unsigned int mask = 1U << (bit & (32 - 1));
 
-	addr += bit >> _BITOPS_LONG_SHIFT;
-	__atomic_fetch_and(addr, ~mask, memorder);
+	addr32 += bit >> 5;
+	__atomic_fetch_and(addr32, ~mask, memorder);
 }
 
 #define clear_bit(b, a) iso_clear_bit((b), (a), __ATOMIC_ACQ_REL)
@@ -105,10 +108,11 @@ void iso_clear_bit(long bit, volatile unsigned long *addr, int memorder)
 static __always_inline
 void iso_change_bit(long bit, volatile unsigned long *addr, int memorder)
 {
-	unsigned long mask = 1UL << (bit & (BITS_PER_LONG - 1));
+	volatile unsigned int *addr32 = (volatile unsigned int *)addr;
+	unsigned int mask = 1U << (bit & (32 - 1));
 
-	addr += bit >> _BITOPS_LONG_SHIFT;
-	__atomic_fetch_xor(addr, mask, memorder);
+	addr32 += bit >> 5;
+	__atomic_fetch_xor(addr32, mask, memorder);
 }
 
 #define change_bit(b, a) iso_change_bit((b), (a), __ATOMIC_ACQ_REL)
@@ -124,11 +128,12 @@ void iso_change_bit(long bit, volatile unsigned long *addr, int memorder)
 static __always_inline
 bool iso_test_and_set_bit(long bit, volatile unsigned long *addr, int memorder)
 {
-	unsigned long mask = 1UL << (bit & (BITS_PER_LONG - 1));
-	unsigned long old;
+	volatile unsigned int *addr32 = (volatile unsigned int *)addr;
+	unsigned int mask = 1U << (bit & (32 - 1));
+	unsigned int old;
 
-	addr += bit >> _BITOPS_LONG_SHIFT;
-	old = __atomic_fetch_or(addr, mask, memorder);
+	addr32 += bit >> 5;
+	old = __atomic_fetch_or(addr32, mask, memorder);
 	return old & mask;
 }
 
@@ -146,11 +151,12 @@ bool iso_test_and_set_bit(long bit, volatile unsigned long *addr, int memorder)
 static __always_inline
 bool iso_test_and_clear_bit(long bit, volatile unsigned long *addr, int memorder)
 {
-	unsigned long mask = 1UL << (bit & (BITS_PER_LONG - 1));
-	unsigned long old;
+	volatile unsigned int *addr32 = (volatile unsigned int *)addr;
+	unsigned int mask = 1U << (bit & (32 - 1));
+	unsigned int old;
 
-	addr += bit >> _BITOPS_LONG_SHIFT;
-	old = __atomic_fetch_and(addr, ~mask, memorder);
+	addr32 += bit >> 5;
+	old = __atomic_fetch_and(addr32, ~mask, memorder);
 	return old & mask;
 }
 
@@ -168,11 +174,12 @@ bool iso_test_and_clear_bit(long bit, volatile unsigned long *addr, int memorder
 static __always_inline
 bool iso_test_and_change_bit(long bit, volatile unsigned long *addr, int memorder)
 {
-	unsigned long mask = 1UL << (bit & (BITS_PER_LONG - 1));
-	unsigned long old;
+	volatile unsigned int *addr32 = (volatile unsigned int *)addr;
+	unsigned int mask = 1U << (bit & (32 - 1));
+	unsigned int old;
 
-	addr += bit >> _BITOPS_LONG_SHIFT;
-	old = __atomic_fetch_xor(addr, mask, memorder);
+	addr32 += bit >> 5;
+	old = __atomic_fetch_xor(addr32, mask, memorder);
 	return old & mask;
 }
 
