@@ -407,8 +407,7 @@ static unsigned int reserve_eilvt_offset(int offset, unsigned int new)
 		if (vector && !eilvt_entry_is_changeable(vector, new))
 			/* may not change if vectors are different */
 			return rsvd;
-		rsvd = atomic_cmpxchg(&eilvt_offsets[offset], rsvd, new);
-	} while (rsvd != new);
+	} while (!atomic_cmpxchg_return(&eilvt_offsets[offset], rsvd, new, &rsvd));
 
 	rsvd &= ~APIC_EILVT_MASKED;
 	if (rsvd && rsvd != vector)

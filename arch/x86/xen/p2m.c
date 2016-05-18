@@ -575,8 +575,7 @@ int xen_alloc_p2m_entry(unsigned long pfn)
 
 			missing_mfn = virt_to_mfn(p2m_mid_missing_mfn);
 			mid_mfn_mfn = virt_to_mfn(mid_mfn);
-			old_mfn = cmpxchg(top_mfn_p, missing_mfn, mid_mfn_mfn);
-			if (old_mfn != missing_mfn) {
+			if (!cmpxchg_return(top_mfn_p, missing_mfn, mid_mfn_mfn, &old_mfn) {
 				free_p2m_page(mid_mfn);
 				mid_mfn = mfn_to_virt(old_mfn);
 			} else {

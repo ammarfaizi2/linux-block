@@ -135,7 +135,7 @@ static int amd_uncore_add(struct perf_event *event, int flags)
 	/* if not, take the first available counter */
 	hwc->idx = -1;
 	for (i = 0; i < uncore->num_counters; i++) {
-		if (cmpxchg(&uncore->events[i], NULL, event) == NULL) {
+		if (try_cmpxchg(&uncore->events[i], NULL, event)) {
 			hwc->idx = i;
 			break;
 		}
@@ -165,7 +165,7 @@ static void amd_uncore_del(struct perf_event *event, int flags)
 	amd_uncore_stop(event, PERF_EF_UPDATE);
 
 	for (i = 0; i < uncore->num_counters; i++) {
-		if (cmpxchg(&uncore->events[i], event, NULL) == event)
+		if (try_cmpxchg(&uncore->events[i], event, NULL))
 			break;
 	}
 

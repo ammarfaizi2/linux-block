@@ -2911,7 +2911,7 @@ fast_pf_fix_direct_spte(struct kvm_vcpu *vcpu, struct kvm_mmu_page *sp,
 	 *
 	 * Compare with set_spte where instead shadow_dirty_mask is set.
 	 */
-	if (cmpxchg64(sptep, spte, spte | PT_WRITABLE_MASK) == spte)
+	if (try_cmpxchg(sptep, spte, spte | PT_WRITABLE_MASK))
 		kvm_vcpu_mark_page_dirty(vcpu, gfn);
 
 	return true;

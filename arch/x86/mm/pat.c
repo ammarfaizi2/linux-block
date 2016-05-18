@@ -130,7 +130,7 @@ static inline void set_page_memtype(struct page *pg,
 	do {
 		old_flags = pg->flags;
 		new_flags = (old_flags & _PGMT_CLEAR_MASK) | memtype_flags;
-	} while (cmpxchg(&pg->flags, old_flags, new_flags) != old_flags);
+	} while (!cmpxchg_return(&pg->flags, old_flags, new_flags, &old_flags));
 }
 #else
 static inline enum page_cache_mode get_page_memtype(struct page *pg)

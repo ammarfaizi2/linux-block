@@ -186,7 +186,7 @@ void mce_log(struct mce *mce)
 		}
 		smp_rmb();
 		next = entry + 1;
-		if (cmpxchg(&mcelog.next, entry, next) == entry)
+		if (try_cmpxchg(&mcelog.next, entry, next))
 			break;
 	}
 	memcpy(mcelog.entry + entry, mce, sizeof(struct mce));
@@ -1880,8 +1880,7 @@ timeout:
 		memset(mcelog.entry + prev, 0,
 		       (next - prev) * sizeof(struct mce));
 		prev = next;
-		next = cmpxchg(&mcelog.next, prev, 0);
-	} while (next != prev);
+	} while (!cmpxchg_return(&mcelog.next, prev, 0, &next));
 
 	synchronize_sched();
 
@@ -1940,7 +1939,7 @@ static long mce_chrdev_ioctl(struct file *f, unsigned int cmd,
 
 		do {
 			flags = mcelog.flags;
-		} while (cmpxchg(&mcelog.flags, flags, 0) != flags);
+		} while (!try_cmpxchg(&mcelog.flags, flags, 0));
 
 		return put_user(flags, p);
 	}

@@ -247,7 +247,7 @@ static void __amd_put_nb_event_constraints(struct cpu_hw_events *cpuc,
 	 * when we come here
 	 */
 	for (i = 0; i < x86_pmu.num_counters; i++) {
-		if (cmpxchg(nb->owners + i, event, NULL) == event)
+		if (try_cmpxchg(nb->owners + i, event, NULL))
 			break;
 	}
 }
@@ -316,7 +316,7 @@ __amd_get_nb_event_constraints(struct cpu_hw_events *cpuc, struct perf_event *ev
 	for_each_set_bit(idx, c->idxmsk, x86_pmu.num_counters) {
 		if (new == -1 || hwc->idx == idx)
 			/* assign free slot, prefer hwc->idx */
-			old = cmpxchg(nb->owners + idx, NULL, event);
+			cmpxchg_return(nb->owners + idx, NULL, event, &old);
 		else if (nb->owners[idx] == event)
 			/* event already present */
 			old = event;
@@ -328,7 +328,7 @@ __amd_get_nb_event_constraints(struct cpu_hw_events *cpuc, struct perf_event *ev
 
 		/* reassign to this slot */
 		if (new != -1)
-			cmpxchg(nb->owners + new, event, NULL);
+			try_cmpxchg(nb->owners + new, event, NULL);
 		new = idx;
 
 		/* already present, reuse */

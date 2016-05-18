@@ -45,9 +45,7 @@ extern u64 __pure __using_nonexistent_pte_bit(void)
 	#define PT_GUEST_ACCESSED_SHIFT PT_ACCESSED_SHIFT
 	#ifdef CONFIG_X86_64
 	#define PT_MAX_FULL_LEVELS 4
-	#define CMPXCHG cmpxchg
 	#else
-	#define CMPXCHG cmpxchg64
 	#define PT_MAX_FULL_LEVELS 2
 	#endif
 #elif PTTYPE == 32
@@ -64,7 +62,6 @@ extern u64 __pure __using_nonexistent_pte_bit(void)
 	#define PT_GUEST_DIRTY_MASK PT_DIRTY_MASK
 	#define PT_GUEST_DIRTY_SHIFT PT_DIRTY_SHIFT
 	#define PT_GUEST_ACCESSED_SHIFT PT_ACCESSED_SHIFT
-	#define CMPXCHG cmpxchg
 #elif PTTYPE == PTTYPE_EPT
 	#define pt_element_t u64
 	#define guest_walker guest_walkerEPT
@@ -78,7 +75,6 @@ extern u64 __pure __using_nonexistent_pte_bit(void)
 	#define PT_GUEST_DIRTY_MASK 0
 	#define PT_GUEST_DIRTY_SHIFT __using_nonexistent_pte_bit()
 	#define PT_GUEST_ACCESSED_SHIFT __using_nonexistent_pte_bit()
-	#define CMPXCHG cmpxchg64
 	#define PT_MAX_FULL_LEVELS 4
 #else
 	#error Invalid PTTYPE value
@@ -142,7 +138,7 @@ static int FNAME(cmpxchg_gpte)(struct kvm_vcpu *vcpu, struct kvm_mmu *mmu,
 			       pt_element_t orig_pte, pt_element_t new_pte)
 {
 	int npages;
-	pt_element_t ret;
+	bool ret;
 	pt_element_t *table;
 	struct page *page;
 
@@ -152,12 +148,12 @@ static int FNAME(cmpxchg_gpte)(struct kvm_vcpu *vcpu, struct kvm_mmu *mmu,
 		return -EFAULT;
 
 	table = kmap_atomic(page);
-	ret = CMPXCHG(&table[index], orig_pte, new_pte);
+	ret = try_cmpxchg(&table[index], orig_pte, new_pte);
 	kunmap_atomic(table);
 
 	kvm_release_page_dirty(page);
 
-	return (ret != orig_pte);
+	return ret;
 }
 
 static bool FNAME(prefetch_invalid_gpte)(struct kvm_vcpu *vcpu,
@@ -1014,7 +1010,6 @@ static int FNAME(sync_page)(struct kvm_vcpu *vcpu, struct kvm_mmu_page *sp)
 #undef PT_MAX_FULL_LEVELS
 #undef gpte_to_gfn
 #undef gpte_to_gfn_lvl
-#undef CMPXCHG
 #undef PT_GUEST_ACCESSED_MASK
 #undef PT_GUEST_DIRTY_MASK
 #undef PT_GUEST_DIRTY_SHIFT

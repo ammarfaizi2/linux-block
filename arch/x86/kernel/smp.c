@@ -200,7 +200,7 @@ static void native_stop_other_cpus(int wait)
 	 */
 	if (num_online_cpus() > 1) {
 		/* did someone beat us here? */
-		if (atomic_cmpxchg(&stopping_cpu, -1, safe_smp_processor_id()) != -1)
+		if (atomic_try_cmpxchg(&stopping_cpu, -1, safe_smp_processor_id()))
 			return;
 
 		/* sync above data before sending IRQ */

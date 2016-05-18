@@ -2075,8 +2075,9 @@ static void vmx_vcpu_pi_load(struct kvm_vcpu *vcpu, int cpu)
 		!irq_remapping_cap(IRQ_POSTING_CAP))
 		return;
 
+	old.control = pi_desc->control;
 	do {
-		old.control = new.control = pi_desc->control;
+		new.control = old.control;
 
 		/*
 		 * If 'nv' field is POSTED_INTR_WAKEUP_VECTOR, there
@@ -2108,8 +2109,8 @@ static void vmx_vcpu_pi_load(struct kvm_vcpu *vcpu, int cpu)
 
 		/* Allow posting non-urgent interrupts */
 		new.sn = 0;
-	} while (cmpxchg(&pi_desc->control, old.control,
-			new.control) != old.control);
+	} while (!cmpxchg_return(&pi_desc->control, old.control,
+				 new.control, &old.control));
 }
 
 /*
@@ -10714,8 +10715,9 @@ static int vmx_pre_block(struct kvm_vcpu *vcpu)
 	spin_unlock_irqrestore(&per_cpu(blocked_vcpu_on_cpu_lock,
 			       vcpu->pre_pcpu), flags);
 
+	old.control = pi_desc->control;
 	do {
-		old.control = new.control = pi_desc->control;
+		new.control = old.control;
 
 		/*
 		 * We should not block the vCPU if
@@ -10754,8 +10756,8 @@ static int vmx_pre_block(struct kvm_vcpu *vcpu)
 
 		/* set 'NV' to 'wakeup vector' */
 		new.nv = POSTED_INTR_WAKEUP_VECTOR;
-	} while (cmpxchg(&pi_desc->control, old.control,
-			new.control) != old.control);
+	} while (!cmpxchg_return(&pi_desc->control, old.control,
+				 new.control, &old.control));
 
 	return 0;
 }
@@ -10771,8 +10773,9 @@ static void vmx_post_block(struct kvm_vcpu *vcpu)
 		!irq_remapping_cap(IRQ_POSTING_CAP))
 		return;
 
+	old.control = pi_desc->control;
 	do {
-		old.control = new.control = pi_desc->control;
+		new.control = old.control;
 
 		dest = cpu_physical_id(vcpu->cpu);
 
@@ -10786,8 +10789,8 @@ static void vmx_post_block(struct kvm_vcpu *vcpu)
 
 		/* set 'NV' to 'notification vector' */
 		new.nv = POSTED_INTR_VECTOR;
-	} while (cmpxchg(&pi_desc->control, old.control,
-			new.control) != old.control);
+	} while (!cmpxchg_return(&pi_desc->control, old.control,
+				 new.control, &old.control));
 
 	if(vcpu->pre_pcpu != -1) {
 		spin_lock_irqsave(
