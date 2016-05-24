@@ -380,7 +380,7 @@ ENTRY(vectors)
 	kernel_ventry	el0_fiq_invalid			// FIQ 64-bit EL0
 	kernel_ventry	el0_error_invalid		// Error 64-bit EL0
 
-#ifdef CONFIG_COMPAT
+#ifdef CONFIG_AARCH32_EL0
 	kernel_ventry	el0_sync_compat			// Synchronous 32-bit EL0
 	kernel_ventry	el0_irq_compat			// IRQ 32-bit EL0
 	kernel_ventry	el0_fiq_invalid_compat		// FIQ 32-bit EL0
@@ -449,7 +449,7 @@ el0_error_invalid:
 	inv_entry 0, BAD_ERROR
 ENDPROC(el0_error_invalid)
 
-#ifdef CONFIG_COMPAT
+#ifdef CONFIG_AARCH32_EL0
 el0_fiq_invalid_compat:
 	inv_entry 0, BAD_FIQ, 32
 ENDPROC(el0_fiq_invalid_compat)
@@ -621,7 +621,7 @@ el0_sync:
 	b.ge	el0_dbg
 	b	el0_inv
 
-#ifdef CONFIG_COMPAT
+#ifdef CONFIG_AARCH32_EL0
 	.align	6
 el0_sync_compat:
 	kernel_entry 0, 32
