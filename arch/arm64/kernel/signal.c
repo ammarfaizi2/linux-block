@@ -566,6 +566,8 @@ static void setup_return(struct pt_regs *regs, struct k_sigaction *ka,
 
 	if (ka->sa.sa_flags & SA_RESTORER)
 		sigtramp = ka->sa.sa_restorer;
+	else if (is_ilp32_compat_task())
+		sigtramp = VDSO_SYMBOL(current->mm->context.vdso, sigtramp_ilp32);
 	else
 		sigtramp = VDSO_SYMBOL(current->mm->context.vdso, sigtramp);
 
