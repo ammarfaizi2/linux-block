@@ -38,6 +38,7 @@
 #include <asm/fpsimd.h>
 #include <asm/signal32.h>
 #include <asm/vdso.h>
+#include <asm/signal_common.h>
 
 /*
  * Do a signal return; undo the signal stack. These are aligned to 128-bit.
