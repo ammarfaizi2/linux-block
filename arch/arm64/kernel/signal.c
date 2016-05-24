@@ -39,6 +39,7 @@
 #include <asm/signal32.h>
 #include <asm/vdso.h>
 #include <asm/signal_common.h>
+#include <asm/signal_ilp32.h>
 
 /*
  * Do a signal return; undo the signal stack. These are aligned to 128-bit.
@@ -626,6 +627,8 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
 			ret = a32_setup_rt_frame(usig, ksig, oldset, regs);
 		else
 			ret = a32_setup_frame(usig, ksig, oldset, regs);
+	} else if (is_ilp32_compat_task()) {
+		ret = ilp32_setup_rt_frame(usig, ksig, oldset, regs);
 	} else {
 		ret = setup_rt_frame(usig, ksig, oldset, regs);
 	}
