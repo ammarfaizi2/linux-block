@@ -360,6 +360,23 @@ tsk	.req	x28		// current thread_info
 
 	.text
 
+#ifdef CONFIG_ARM64_ILP32
+/*
+ * AARCH64/ILP32. Zero top halves of x0-x7
+ * registers as userspace may put garbage there.
+ */
+	.macro	delouse_input_regs
+	mov w0, w0
+	mov w1, w1
+	mov w2, w2
+	mov w3, w3
+	mov w4, w4
+	mov w5, w5
+	mov w6, w6
+	mov w7, w7
+	.endm
+#endif
+
 /*
  * Exception vectors.
  */
@@ -654,6 +671,7 @@ el0_svc_compat:
 	 */
 	ldr	x16, [tsk, #TSK_TI_FLAGS]	// load thread flags
 	adrp	stbl, compat_sys_call_table	// load compat syscall table pointer
+	ldr     x19, [tsk, #TSK_TI_FLAGS]
 	mov	wscno, w7			// syscall number in w7 (r7)
 	mov     wsc_nr, #__NR_compat_syscalls
 	b	el0_svc_naked
@@ -864,14 +882,15 @@ ENDPROC(ret_to_user)
 el0_svc:
 	ldr	x16, [tsk, #TSK_TI_FLAGS]	// load thread flags
 	adrp	stbl, sys_call_table		// load syscall table pointer
+	ldr	x19, [tsk, #TSK_TI_FLAGS]
 	mov	wscno, w8			// syscall number in w8
 	mov	wsc_nr, #__NR_syscalls
 
 #ifdef CONFIG_ARM64_SVE
 alternative_if_not ARM64_SVE
-	b	el0_svc_naked
+	b	el0_svc_select_table
 alternative_else_nop_endif
-	tbz	x16, #TIF_SVE, el0_svc_naked	// Skip unless TIF_SVE set:
+	tbz	x16, #TIF_SVE, el0_svc_select_table	// Skip unless TIF_SVE set:
 	bic	x16, x16, #_TIF_SVE		// discard SVE state
 	str	x16, [tsk, #TSK_TI_FLAGS]
 
@@ -887,12 +906,19 @@ alternative_else_nop_endif
 	msr	cpacr_el1, x9			// synchronised by eret to el0
 #endif
 
+el0_svc_select_table:
+#ifdef CONFIG_ARM64_ILP32
+	tst	x19, #_TIF_32BIT_AARCH64
+	b.eq	el0_svc_naked			// We are using LP64  syscall table
+	adrp	stbl, sys_call_ilp32_table	// load ilp32 syscall table pointer
+	delouse_input_regs
+#endif
 el0_svc_naked:					// compat entry point
 	stp	x0, xscno, [sp, #S_ORIG_X0]	// save the original x0 and syscall number
 	enable_daif
 	ct_user_exit 1
 
-	tst	x16, #_TIF_SYSCALL_WORK		// check for syscall hooks
+	tst	x19, #_TIF_SYSCALL_WORK		// check for syscall hooks
 	b.ne	__sys_trace
 	cmp     wscno, wsc_nr			// check upper syscall limit
 	b.hs	ni_sys
