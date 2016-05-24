@@ -630,12 +630,20 @@ static inline void sk_add_node(struct sock *sk, struct hlist_head *list)
 static inline void sk_add_node_rcu(struct sock *sk, struct hlist_head *list)
 {
 	sock_hold(sk);
-	hlist_add_head_rcu(&sk->sk_node, list);
+	if (IS_ENABLED(CONFIG_IPV6) && sk->sk_reuseport &&
+	    sk->sk_family == AF_INET6)
+		hlist_add_tail_rcu(&sk->sk_node, list);
+	else
+		hlist_add_head_rcu(&sk->sk_node, list);
 }
 
 static inline void __sk_nulls_add_node_rcu(struct sock *sk, struct hlist_nulls_head *list)
 {
-	hlist_nulls_add_head_rcu(&sk->sk_nulls_node, list);
+	if (IS_ENABLED(CONFIG_IPV6) && sk->sk_reuseport &&
+	    sk->sk_family == AF_INET6)
+		hlist_nulls_add_tail_rcu(&sk->sk_nulls_node, list);
+	else
+		hlist_nulls_add_head_rcu(&sk->sk_nulls_node, list);
 }
 
 static inline void sk_nulls_add_node_rcu(struct sock *sk, struct hlist_nulls_head *list)
@@ -917,6 +925,17 @@ int sk_stream_error(struct sock *sk, int flags, int err);
 void sk_stream_kill_queues(struct sock *sk);
 void sk_set_memalloc(struct sock *sk);
 void sk_clear_memalloc(struct sock *sk);
+
+void __sk_flush_backlog(struct sock *sk);
+
+static inline bool sk_flush_backlog(struct sock *sk)
+{
+	if (unlikely(READ_ONCE(sk->sk_backlog.tail))) {
+		__sk_flush_backlog(sk);
+		return true;
+	}
+	return false;
+}
 
 int sk_wait_data(struct sock *sk, long *timeo, const struct sk_buff *skb);
 
@@ -1405,7 +1424,7 @@ static inline void unlock_sock_fast(struct sock *sk, bool slow)
 static inline bool sock_owned_by_user(const struct sock *sk)
 {
 #ifdef CONFIG_LOCKDEP
-	WARN_ON(!lockdep_sock_is_held(sk));
+	WARN_ON_ONCE(!lockdep_sock_is_held(sk) && debug_locks);
 #endif
 	return sk->sk_lock.owned;
 }
@@ -1932,11 +1951,19 @@ static inline unsigned long sock_wspace(struct sock *sk)
  */
 static inline void sk_set_bit(int nr, struct sock *sk)
 {
+	if ((nr == SOCKWQ_ASYNC_NOSPACE || nr == SOCKWQ_ASYNC_WAITDATA) &&
+	    !sock_flag(sk, SOCK_FASYNC))
+		return;
+
 	set_bit(nr, &sk->sk_wq_raw->flags);
 }
 
 static inline void sk_clear_bit(int nr, struct sock *sk)
 {
+	if ((nr == SOCKWQ_ASYNC_NOSPACE || nr == SOCKWQ_ASYNC_WAITDATA) &&
+	    !sock_flag(sk, SOCK_FASYNC))
+		return;
+
 	clear_bit(nr, &sk->sk_wq_raw->flags);
 }
 

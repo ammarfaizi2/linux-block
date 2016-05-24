@@ -111,6 +111,11 @@ struct dsa_switch_tree {
 	enum dsa_tag_protocol	tag_protocol;
 
 	/*
+	 * Original copy of the master netdev ethtool_ops
+	 */
+	struct ethtool_ops	master_ethtool_ops;
+
+	/*
 	 * The switch and port to which the CPU is attached.
 	 */
 	s8			cpu_switch;
@@ -134,11 +139,6 @@ struct dsa_switch {
 	 * structure.
 	 */
 	void *priv;
-
-	/*
-	 * Tagging protocol understood by this switch
-	 */
-	enum dsa_tag_protocol	tag_protocol;
 
 	/*
 	 * Configuration data for this switch.
@@ -217,8 +217,9 @@ struct dsa_switch_driver {
 	/*
 	 * Probing and setup.
 	 */
-	char	*(*probe)(struct device *dsa_dev, struct device *host_dev,
-			  int sw_addr, void **priv);
+	const char	*(*probe)(struct device *dsa_dev,
+				  struct device *host_dev, int sw_addr,
+				  void **priv);
 	int	(*setup)(struct dsa_switch *ds);
 	int	(*set_addr)(struct dsa_switch *ds, u8 *addr);
 	u32	(*get_phy_flags)(struct dsa_switch *ds, int port);

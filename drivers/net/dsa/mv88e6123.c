@@ -17,21 +17,31 @@
 #include <net/dsa.h>
 #include "mv88e6xxx.h"
 
-static const struct mv88e6xxx_switch_id mv88e6123_table[] = {
-	{ PORT_SWITCH_ID_6123, "Marvell 88E6123" },
-	{ PORT_SWITCH_ID_6123_A1, "Marvell 88E6123 (A1)" },
-	{ PORT_SWITCH_ID_6123_A2, "Marvell 88E6123 (A2)" },
-	{ PORT_SWITCH_ID_6161, "Marvell 88E6161" },
-	{ PORT_SWITCH_ID_6161_A1, "Marvell 88E6161 (A1)" },
-	{ PORT_SWITCH_ID_6161_A2, "Marvell 88E6161 (A2)" },
-	{ PORT_SWITCH_ID_6165, "Marvell 88E6165" },
-	{ PORT_SWITCH_ID_6165_A1, "Marvell 88E6165 (A1)" },
-	{ PORT_SWITCH_ID_6165_A2, "Marvell 88e6165 (A2)" },
+static const struct mv88e6xxx_info mv88e6123_table[] = {
+	{
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6123,
+		.family = MV88E6XXX_FAMILY_6165,
+		.name = "Marvell 88E6123",
+		.num_databases = 4096,
+		.num_ports = 3,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6161,
+		.family = MV88E6XXX_FAMILY_6165,
+		.name = "Marvell 88E6161",
+		.num_databases = 4096,
+		.num_ports = 6,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6165,
+		.family = MV88E6XXX_FAMILY_6165,
+		.name = "Marvell 88E6165",
+		.num_databases = 4096,
+		.num_ports = 6,
+	}
 };
 
-static char *mv88e6123_drv_probe(struct device *dsa_dev,
-				 struct device *host_dev,
-				 int sw_addr, void **priv)
+static const char *mv88e6123_drv_probe(struct device *dsa_dev,
+				       struct device *host_dev, int sw_addr,
+				       void **priv)
 {
 	return mv88e6xxx_drv_probe(dsa_dev, host_dev, sw_addr, priv,
 				   mv88e6123_table,
@@ -40,6 +50,7 @@ static char *mv88e6123_drv_probe(struct device *dsa_dev,
 
 static int mv88e6123_setup_global(struct dsa_switch *ds)
 {
+	struct mv88e6xxx_priv_state *ps = ds_to_priv(ds);
 	u32 upstream_port = dsa_upstream_port(ds);
 	int ret;
 	u32 reg;
@@ -52,7 +63,9 @@ static int mv88e6123_setup_global(struct dsa_switch *ds)
 	 * external PHYs to poll), don't discard packets with
 	 * excessive collisions, and mask all interrupt sources.
 	 */
-	REG_WRITE(REG_GLOBAL, GLOBAL_CONTROL, 0x0000);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_CONTROL, 0x0000);
+	if (ret)
+		return ret;
 
 	/* Configure the upstream port, and configure the upstream
 	 * port as the port to which ingress and egress monitor frames
@@ -61,14 +74,15 @@ static int mv88e6123_setup_global(struct dsa_switch *ds)
 	reg = upstream_port << GLOBAL_MONITOR_CONTROL_INGRESS_SHIFT |
 		upstream_port << GLOBAL_MONITOR_CONTROL_EGRESS_SHIFT |
 		upstream_port << GLOBAL_MONITOR_CONTROL_ARP_SHIFT;
-	REG_WRITE(REG_GLOBAL, GLOBAL_MONITOR_CONTROL, reg);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_MONITOR_CONTROL, reg);
+	if (ret)
+		return ret;
 
 	/* Disable remote management for now, and set the switch's
 	 * DSA device number.
 	 */
-	REG_WRITE(REG_GLOBAL, GLOBAL_CONTROL_2, ds->index & 0x1f);
-
-	return 0;
+	return mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_CONTROL_2,
+				   ds->index & 0x1f);
 }
 
 static int mv88e6123_setup(struct dsa_switch *ds)
@@ -78,23 +92,11 @@ static int mv88e6123_setup(struct dsa_switch *ds)
 
 	ps->ds = ds;
 
-	ret = mv88e6xxx_setup_common(ds);
+	ret = mv88e6xxx_setup_common(ps);
 	if (ret < 0)
 		return ret;
 
-	switch (ps->id) {
-	case PORT_SWITCH_ID_6123:
-		ps->num_ports = 3;
-		break;
-	case PORT_SWITCH_ID_6161:
-	case PORT_SWITCH_ID_6165:
-		ps->num_ports = 6;
-		break;
-	default:
-		return -ENODEV;
-	}
-
-	ret = mv88e6xxx_switch_reset(ds, false);
+	ret = mv88e6xxx_switch_reset(ps, false);
 	if (ret < 0)
 		return ret;
 

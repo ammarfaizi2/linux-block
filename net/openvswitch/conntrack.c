@@ -367,6 +367,7 @@ static int handle_fragments(struct net *net, struct sw_flow_key *key,
 	} else if (key->eth.type == htons(ETH_P_IPV6)) {
 		enum ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
 
+		skb_orphan(skb);
 		memset(IP6CB(skb), 0, sizeof(struct inet6_skb_parm));
 		err = nf_ct_frag6_gather(net, skb, user);
 		if (err)
@@ -1344,7 +1345,7 @@ void ovs_ct_init(struct net *net)
 	unsigned int n_bits = sizeof(struct ovs_key_ct_labels) * BITS_PER_BYTE;
 	struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
 
-	if (nf_connlabels_get(net, n_bits)) {
+	if (nf_connlabels_get(net, n_bits - 1)) {
 		ovs_net->xt_label = false;
 		OVS_NLERR(true, "Failed to set connlabel length");
 	} else {

@@ -68,52 +68,23 @@
 #define PORT_PCS_CTRL_UNFORCED		0x03
 #define PORT_PAUSE_CTRL		0x02
 #define PORT_SWITCH_ID		0x03
-#define PORT_SWITCH_ID_PROD_NUM_MASK	0xfff0
-#define PORT_SWITCH_ID_REV_MASK		0x000f
-#define PORT_SWITCH_ID_6031	0x0310
-#define PORT_SWITCH_ID_6035	0x0350
-#define PORT_SWITCH_ID_6046	0x0480
-#define PORT_SWITCH_ID_6061	0x0610
-#define PORT_SWITCH_ID_6065	0x0650
-#define PORT_SWITCH_ID_6085	0x04a0
-#define PORT_SWITCH_ID_6092	0x0970
-#define PORT_SWITCH_ID_6095	0x0950
-#define PORT_SWITCH_ID_6096	0x0980
-#define PORT_SWITCH_ID_6097	0x0990
-#define PORT_SWITCH_ID_6108	0x1070
-#define PORT_SWITCH_ID_6121	0x1040
-#define PORT_SWITCH_ID_6122	0x1050
-#define PORT_SWITCH_ID_6123	0x1210
-#define PORT_SWITCH_ID_6123_A1	0x1212
-#define PORT_SWITCH_ID_6123_A2	0x1213
-#define PORT_SWITCH_ID_6131	0x1060
-#define PORT_SWITCH_ID_6131_B2	0x1066
-#define PORT_SWITCH_ID_6152	0x1a40
-#define PORT_SWITCH_ID_6155	0x1a50
-#define PORT_SWITCH_ID_6161	0x1610
-#define PORT_SWITCH_ID_6161_A1	0x1612
-#define PORT_SWITCH_ID_6161_A2	0x1613
-#define PORT_SWITCH_ID_6165	0x1650
-#define PORT_SWITCH_ID_6165_A1	0x1652
-#define PORT_SWITCH_ID_6165_A2	0x1653
-#define PORT_SWITCH_ID_6171	0x1710
-#define PORT_SWITCH_ID_6172	0x1720
-#define PORT_SWITCH_ID_6175	0x1750
-#define PORT_SWITCH_ID_6176	0x1760
-#define PORT_SWITCH_ID_6182	0x1a60
-#define PORT_SWITCH_ID_6185	0x1a70
-#define PORT_SWITCH_ID_6240	0x2400
-#define PORT_SWITCH_ID_6320	0x1150
-#define PORT_SWITCH_ID_6320_A1	0x1151
-#define PORT_SWITCH_ID_6320_A2	0x1152
-#define PORT_SWITCH_ID_6321	0x3100
-#define PORT_SWITCH_ID_6321_A1	0x3101
-#define PORT_SWITCH_ID_6321_A2	0x3102
-#define PORT_SWITCH_ID_6350	0x3710
-#define PORT_SWITCH_ID_6351	0x3750
-#define PORT_SWITCH_ID_6352	0x3520
-#define PORT_SWITCH_ID_6352_A0	0x3521
-#define PORT_SWITCH_ID_6352_A1	0x3522
+#define PORT_SWITCH_ID_PROD_NUM_6085	0x04a
+#define PORT_SWITCH_ID_PROD_NUM_6095	0x095
+#define PORT_SWITCH_ID_PROD_NUM_6131	0x106
+#define PORT_SWITCH_ID_PROD_NUM_6320	0x115
+#define PORT_SWITCH_ID_PROD_NUM_6123	0x121
+#define PORT_SWITCH_ID_PROD_NUM_6161	0x161
+#define PORT_SWITCH_ID_PROD_NUM_6165	0x165
+#define PORT_SWITCH_ID_PROD_NUM_6171	0x171
+#define PORT_SWITCH_ID_PROD_NUM_6172	0x172
+#define PORT_SWITCH_ID_PROD_NUM_6175	0x175
+#define PORT_SWITCH_ID_PROD_NUM_6176	0x176
+#define PORT_SWITCH_ID_PROD_NUM_6185	0x1a7
+#define PORT_SWITCH_ID_PROD_NUM_6240	0x240
+#define PORT_SWITCH_ID_PROD_NUM_6321	0x310
+#define PORT_SWITCH_ID_PROD_NUM_6352	0x352
+#define PORT_SWITCH_ID_PROD_NUM_6350	0x371
+#define PORT_SWITCH_ID_PROD_NUM_6351	0x375
 #define PORT_CONTROL		0x04
 #define PORT_CONTROL_USE_CORE_TAG	BIT(15)
 #define PORT_CONTROL_DROP_ON_LOCK	BIT(14)
@@ -367,9 +338,24 @@
 
 #define MV88E6XXX_N_FID		4096
 
-struct mv88e6xxx_switch_id {
-	u16 id;
-	char *name;
+enum mv88e6xxx_family {
+	MV88E6XXX_FAMILY_NONE,
+	MV88E6XXX_FAMILY_6065,	/* 6031 6035 6061 6065 */
+	MV88E6XXX_FAMILY_6095,	/* 6092 6095 */
+	MV88E6XXX_FAMILY_6097,	/* 6046 6085 6096 6097 */
+	MV88E6XXX_FAMILY_6165,	/* 6123 6161 6165 */
+	MV88E6XXX_FAMILY_6185,	/* 6108 6121 6122 6131 6152 6155 6182 6185 */
+	MV88E6XXX_FAMILY_6320,	/* 6320 6321 */
+	MV88E6XXX_FAMILY_6351,	/* 6171 6175 6350 6351 */
+	MV88E6XXX_FAMILY_6352,	/* 6172 6176 6240 6352 */
+};
+
+struct mv88e6xxx_info {
+	enum mv88e6xxx_family family;
+	u16 prod_num;
+	const char *name;
+	unsigned int num_databases;
+	unsigned int num_ports;
 };
 
 struct mv88e6xxx_atu_entry {
@@ -397,8 +383,13 @@ struct mv88e6xxx_priv_port {
 };
 
 struct mv88e6xxx_priv_state {
+	const struct mv88e6xxx_info *info;
+
 	/* The dsa_switch this private structure is related to */
 	struct dsa_switch *ds;
+
+	/* The device this structure is associated to */
+	struct device *dev;
 
 	/* When using multi-chip addressing, this mutex protects
 	 * access to the indirect access registers.  (In single-chip
@@ -438,9 +429,6 @@ struct mv88e6xxx_priv_state {
 	 */
 	struct mutex eeprom_mutex;
 
-	int		id; /* switch product id */
-	int		num_ports;	/* number of switch ports */
-
 	struct mv88e6xxx_priv_port	ports[DSA_MAX_PORTS];
 
 	DECLARE_BITMAP(port_state_update_mask, DSA_MAX_PORTS);
@@ -461,17 +449,18 @@ struct mv88e6xxx_hw_stat {
 	enum stat_type type;
 };
 
-int mv88e6xxx_switch_reset(struct dsa_switch *ds, bool ppu_active);
-char *mv88e6xxx_drv_probe(struct device *dsa_dev, struct device *host_dev,
-			  int sw_addr, void **priv,
-			  const struct mv88e6xxx_switch_id *table,
-			  unsigned int num);
+int mv88e6xxx_switch_reset(struct mv88e6xxx_priv_state *ps, bool ppu_active);
+const char *mv88e6xxx_drv_probe(struct device *dsa_dev, struct device *host_dev,
+				int sw_addr, void **priv,
+				const struct mv88e6xxx_info *table,
+				unsigned int num);
 
 int mv88e6xxx_setup_ports(struct dsa_switch *ds);
-int mv88e6xxx_setup_common(struct dsa_switch *ds);
+int mv88e6xxx_setup_common(struct mv88e6xxx_priv_state *ps);
 int mv88e6xxx_setup_global(struct dsa_switch *ds);
-int mv88e6xxx_reg_read(struct dsa_switch *ds, int addr, int reg);
-int mv88e6xxx_reg_write(struct dsa_switch *ds, int addr, int reg, u16 val);
+int mv88e6xxx_reg_read(struct mv88e6xxx_priv_state *ps, int addr, int reg);
+int mv88e6xxx_reg_write(struct mv88e6xxx_priv_state *ps, int addr,
+			int reg, u16 val);
 int mv88e6xxx_set_addr_direct(struct dsa_switch *ds, u8 *addr);
 int mv88e6xxx_set_addr_indirect(struct dsa_switch *ds, u8 *addr);
 int mv88e6xxx_phy_read(struct dsa_switch *ds, int port, int regnum);
@@ -479,7 +468,7 @@ int mv88e6xxx_phy_write(struct dsa_switch *ds, int port, int regnum, u16 val);
 int mv88e6xxx_phy_read_indirect(struct dsa_switch *ds, int port, int regnum);
 int mv88e6xxx_phy_write_indirect(struct dsa_switch *ds, int port, int regnum,
 				 u16 val);
-void mv88e6xxx_ppu_state_init(struct dsa_switch *ds);
+void mv88e6xxx_ppu_state_init(struct mv88e6xxx_priv_state *ps);
 int mv88e6xxx_phy_read_ppu(struct dsa_switch *ds, int addr, int regnum);
 int mv88e6xxx_phy_write_ppu(struct dsa_switch *ds, int addr,
 			    int regnum, u16 val);
@@ -541,26 +530,5 @@ extern struct dsa_switch_driver mv88e6131_switch_driver;
 extern struct dsa_switch_driver mv88e6123_switch_driver;
 extern struct dsa_switch_driver mv88e6352_switch_driver;
 extern struct dsa_switch_driver mv88e6171_switch_driver;
-
-#define REG_READ(addr, reg)						\
-	({								\
-		int __ret;						\
-									\
-		__ret = mv88e6xxx_reg_read(ds, addr, reg);		\
-		if (__ret < 0)						\
-			return __ret;					\
-		__ret;							\
-	})
-
-#define REG_WRITE(addr, reg, val)					\
-	({								\
-		int __ret;						\
-									\
-		__ret = mv88e6xxx_reg_write(ds, addr, reg, val);	\
-		if (__ret < 0)						\
-			return __ret;					\
-	})
-
-
 
 #endif

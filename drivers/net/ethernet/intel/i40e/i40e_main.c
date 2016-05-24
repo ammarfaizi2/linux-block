@@ -46,7 +46,7 @@ static const char i40e_driver_string[] =
 
 #define DRV_VERSION_MAJOR 1
 #define DRV_VERSION_MINOR 5
-#define DRV_VERSION_BUILD 5
+#define DRV_VERSION_BUILD 10
 #define DRV_VERSION __stringify(DRV_VERSION_MAJOR) "." \
 	     __stringify(DRV_VERSION_MINOR) "." \
 	     __stringify(DRV_VERSION_BUILD)    DRV_KERN
@@ -91,6 +91,7 @@ static const struct pci_device_id i40e_pci_tbl[] = {
 	{PCI_VDEVICE(INTEL, I40E_DEV_ID_1G_BASE_T_X722), 0},
 	{PCI_VDEVICE(INTEL, I40E_DEV_ID_10G_BASE_T_X722), 0},
 	{PCI_VDEVICE(INTEL, I40E_DEV_ID_SFP_I_X722), 0},
+	{PCI_VDEVICE(INTEL, I40E_DEV_ID_QSFP_I_X722), 0},
 	{PCI_VDEVICE(INTEL, I40E_DEV_ID_20G_KR2), 0},
 	{PCI_VDEVICE(INTEL, I40E_DEV_ID_20G_KR2_A), 0},
 	/* required last entry */
@@ -394,24 +395,6 @@ static void i40e_tx_timeout(struct net_device *netdev)
 
 	i40e_service_event_schedule(pf);
 	pf->tx_timeout_recovery_level++;
-}
-
-/**
- * i40e_release_rx_desc - Store the new tail and head values
- * @rx_ring: ring to bump
- * @val: new head index
- **/
-static inline void i40e_release_rx_desc(struct i40e_ring *rx_ring, u32 val)
-{
-	rx_ring->next_to_use = val;
-
-	/* Force memory writes to complete before letting h/w
-	 * know there are new descriptors to fetch.  (Only
-	 * applicable for weak-ordered memory model archs,
-	 * such as IA-64).
-	 */
-	wmb();
-	writel(val, rx_ring->tail);
 }
 
 /**
@@ -2096,6 +2079,12 @@ int i40e_sync_vsi_filters(struct i40e_vsi *vsi)
 				dev_info(&pf->pdev->dev, "promiscuous mode forced on\n");
 			}
 		}
+	}
+
+	/* if the VF is not trusted do not do promisc */
+	if ((vsi->type == I40E_VSI_SRIOV) && !pf->vf[vsi->vf_id].trusted) {
+		clear_bit(__I40E_FILTER_OVERFLOW_PROMISC, &vsi->state);
+		goto out;
 	}
 
 	/* check for changes in promiscuous modes */
@@ -8082,24 +8071,45 @@ static int i40e_config_rss_reg(struct i40e_vsi *vsi, const u8 *seed,
 {
 	struct i40e_pf *pf = vsi->back;
 	struct i40e_hw *hw = &pf->hw;
+	u16 vf_id = vsi->vf_id;
 	u8 i;
 
 	/* Fill out hash function seed */
 	if (seed) {
 		u32 *seed_dw = (u32 *)seed;
 
-		for (i = 0; i <= I40E_PFQF_HKEY_MAX_INDEX; i++)
-			i40e_write_rx_ctl(hw, I40E_PFQF_HKEY(i), seed_dw[i]);
+		if (vsi->type == I40E_VSI_MAIN) {
+			for (i = 0; i <= I40E_PFQF_HKEY_MAX_INDEX; i++)
+				i40e_write_rx_ctl(hw, I40E_PFQF_HKEY(i),
+						  seed_dw[i]);
+		} else if (vsi->type == I40E_VSI_SRIOV) {
+			for (i = 0; i <= I40E_VFQF_HKEY1_MAX_INDEX; i++)
+				i40e_write_rx_ctl(hw,
+						  I40E_VFQF_HKEY1(i, vf_id),
+						  seed_dw[i]);
+		} else {
+			dev_err(&pf->pdev->dev, "Cannot set RSS seed - invalid VSI type\n");
+		}
 	}
 
 	if (lut) {
 		u32 *lut_dw = (u32 *)lut;
 
-		if (lut_size != I40E_HLUT_ARRAY_SIZE)
-			return -EINVAL;
-
-		for (i = 0; i <= I40E_PFQF_HLUT_MAX_INDEX; i++)
-			wr32(hw, I40E_PFQF_HLUT(i), lut_dw[i]);
+		if (vsi->type == I40E_VSI_MAIN) {
+			if (lut_size != I40E_HLUT_ARRAY_SIZE)
+				return -EINVAL;
+			for (i = 0; i <= I40E_PFQF_HLUT_MAX_INDEX; i++)
+				wr32(hw, I40E_PFQF_HLUT(i), lut_dw[i]);
+		} else if (vsi->type == I40E_VSI_SRIOV) {
+			if (lut_size != I40E_VF_HLUT_ARRAY_SIZE)
+				return -EINVAL;
+			for (i = 0; i <= I40E_VFQF_HLUT_MAX_INDEX; i++)
+				i40e_write_rx_ctl(hw,
+						  I40E_VFQF_HLUT1(i, vf_id),
+						  lut_dw[i]);
+		} else {
+			dev_err(&pf->pdev->dev, "Cannot set RSS LUT - invalid VSI type\n");
+		}
 	}
 	i40e_flush(hw);
 
@@ -9111,40 +9121,44 @@ static int i40e_config_netdev(struct i40e_vsi *vsi)
 	np = netdev_priv(netdev);
 	np->vsi = vsi;
 
-	netdev->hw_enc_features |= NETIF_F_IP_CSUM	       |
-				   NETIF_F_IPV6_CSUM	       |
-				   NETIF_F_TSO		       |
-				   NETIF_F_TSO6		       |
-				   NETIF_F_TSO_ECN	       |
-				   NETIF_F_GSO_GRE	       |
-				   NETIF_F_GSO_UDP_TUNNEL      |
-				   NETIF_F_GSO_UDP_TUNNEL_CSUM |
+	netdev->hw_enc_features |= NETIF_F_SG			|
+				   NETIF_F_IP_CSUM		|
+				   NETIF_F_IPV6_CSUM		|
+				   NETIF_F_HIGHDMA		|
+				   NETIF_F_SOFT_FEATURES	|
+				   NETIF_F_TSO			|
+				   NETIF_F_TSO_ECN		|
+				   NETIF_F_TSO6			|
+				   NETIF_F_GSO_GRE		|
+				   NETIF_F_GSO_GRE_CSUM		|
+				   NETIF_F_GSO_IPIP		|
+				   NETIF_F_GSO_SIT		|
+				   NETIF_F_GSO_UDP_TUNNEL	|
+				   NETIF_F_GSO_UDP_TUNNEL_CSUM	|
+				   NETIF_F_GSO_PARTIAL		|
+				   NETIF_F_SCTP_CRC		|
+				   NETIF_F_RXHASH		|
+				   NETIF_F_RXCSUM		|
 				   0;
 
-	netdev->features = NETIF_F_SG		       |
-			   NETIF_F_IP_CSUM	       |
-			   NETIF_F_SCTP_CRC	       |
-			   NETIF_F_HIGHDMA	       |
-			   NETIF_F_GSO_UDP_TUNNEL      |
-			   NETIF_F_GSO_GRE	       |
-			   NETIF_F_HW_VLAN_CTAG_TX     |
-			   NETIF_F_HW_VLAN_CTAG_RX     |
-			   NETIF_F_HW_VLAN_CTAG_FILTER |
-			   NETIF_F_IPV6_CSUM	       |
-			   NETIF_F_TSO		       |
-			   NETIF_F_TSO_ECN	       |
-			   NETIF_F_TSO6		       |
-			   NETIF_F_RXCSUM	       |
-			   NETIF_F_RXHASH	       |
-			   0;
+	if (!(pf->flags & I40E_FLAG_OUTER_UDP_CSUM_CAPABLE))
+		netdev->gso_partial_features |= NETIF_F_GSO_UDP_TUNNEL_CSUM;
+
+	netdev->gso_partial_features |= NETIF_F_GSO_GRE_CSUM;
+
+	/* record features VLANs can make use of */
+	netdev->vlan_features |= netdev->hw_enc_features |
+				 NETIF_F_TSO_MANGLEID;
 
 	if (!(pf->flags & I40E_FLAG_MFP_ENABLED))
-		netdev->features |= NETIF_F_NTUPLE;
-	if (pf->flags & I40E_FLAG_OUTER_UDP_CSUM_CAPABLE)
-		netdev->features |= NETIF_F_GSO_UDP_TUNNEL_CSUM;
+		netdev->hw_features |= NETIF_F_NTUPLE;
 
-	/* copy netdev features into list of user selectable features */
-	netdev->hw_features |= netdev->features;
+	netdev->hw_features |= netdev->hw_enc_features	|
+			       NETIF_F_HW_VLAN_CTAG_TX	|
+			       NETIF_F_HW_VLAN_CTAG_RX;
+
+	netdev->features |= netdev->hw_features | NETIF_F_HW_VLAN_CTAG_FILTER;
+	netdev->hw_enc_features |= NETIF_F_TSO_MANGLEID;
 
 	if (vsi->type == I40E_VSI_MAIN) {
 		SET_NETDEV_DEV(netdev, &pf->pdev->dev);
@@ -9183,12 +9197,7 @@ static int i40e_config_netdev(struct i40e_vsi *vsi)
 
 	ether_addr_copy(netdev->dev_addr, mac_addr);
 	ether_addr_copy(netdev->perm_addr, mac_addr);
-	/* vlan gets same features (except vlan offload)
-	 * after any tweaks for specific VSI types
-	 */
-	netdev->vlan_features = netdev->features & ~(NETIF_F_HW_VLAN_CTAG_TX |
-						     NETIF_F_HW_VLAN_CTAG_RX |
-						   NETIF_F_HW_VLAN_CTAG_FILTER);
+
 	netdev->priv_flags |= IFF_UNICAST_FLT;
 	netdev->priv_flags |= IFF_SUPP_NOFCS;
 	/* Setup netdev TC information */

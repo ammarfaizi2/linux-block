@@ -52,11 +52,11 @@ EXPORT_SYMBOL_GPL(unregister_switch_driver);
 
 static struct dsa_switch_driver *
 dsa_switch_probe(struct device *parent, struct device *host_dev, int sw_addr,
-		 char **_name, void **priv)
+		 const char **_name, void **priv)
 {
 	struct dsa_switch_driver *ret;
 	struct list_head *list;
-	char *name;
+	const char *name;
 
 	ret = NULL;
 	name = NULL;
@@ -267,7 +267,7 @@ static int dsa_switch_setup_one(struct dsa_switch *ds, struct device *parent)
 	 * switch.
 	 */
 	if (dst->cpu_switch == index) {
-		switch (ds->tag_protocol) {
+		switch (drv->tag_protocol) {
 #ifdef CONFIG_NET_DSA_TAG_DSA
 		case DSA_TAG_PROTO_DSA:
 			dst->rcv = dsa_netdev_ops.rcv;
@@ -295,7 +295,7 @@ static int dsa_switch_setup_one(struct dsa_switch *ds, struct device *parent)
 			goto out;
 		}
 
-		dst->tag_protocol = ds->tag_protocol;
+		dst->tag_protocol = drv->tag_protocol;
 	}
 
 	/*
@@ -383,7 +383,7 @@ dsa_switch_setup(struct dsa_switch_tree *dst, int index,
 	struct dsa_switch_driver *drv;
 	struct dsa_switch *ds;
 	int ret;
-	char *name;
+	const char *name;
 	void *priv;
 
 	/*
@@ -411,7 +411,6 @@ dsa_switch_setup(struct dsa_switch_tree *dst, int index,
 	ds->pd = pd;
 	ds->drv = drv;
 	ds->priv = priv;
-	ds->tag_protocol = drv->tag_protocol;
 	ds->master_dev = host_dev;
 
 	ret = dsa_switch_setup_one(ds, parent);

@@ -184,9 +184,7 @@ struct vxlan_metadata {
 /* per UDP socket information */
 struct vxlan_sock {
 	struct hlist_node hlist;
-	struct work_struct del_work;
 	struct socket	 *sock;
-	struct rcu_head	  rcu;
 	struct hlist_head vni_list[VNI_HASH_SIZE];
 	atomic_t	  refcnt;
 	u32		  flags;
@@ -392,13 +390,11 @@ static inline __be32 vxlan_compute_rco(unsigned int start, unsigned int offset)
 	return vni_field;
 }
 
-#if IS_ENABLED(CONFIG_VXLAN)
-void vxlan_get_rx_port(struct net_device *netdev);
-#else
 static inline void vxlan_get_rx_port(struct net_device *netdev)
 {
+	ASSERT_RTNL();
+	call_netdevice_notifiers(NETDEV_OFFLOAD_PUSH_VXLAN, netdev);
 }
-#endif
 
 static inline unsigned short vxlan_get_sk_family(struct vxlan_sock *vs)
 {

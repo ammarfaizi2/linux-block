@@ -66,6 +66,11 @@ enum bpf_arg_type {
 	 * functions that access data on eBPF program stack
 	 */
 	ARG_PTR_TO_STACK,	/* any pointer to eBPF program stack */
+	ARG_PTR_TO_RAW_STACK,	/* any pointer to eBPF program stack, area does not
+				 * need to be initialized, helper function must fill
+				 * all bytes or clear them in error case.
+				 */
+
 	ARG_CONST_STACK_SIZE,	/* number of bytes accessed from stack */
 	ARG_CONST_STACK_SIZE_OR_ZERO, /* number of bytes accessed from stack or 0 */
 
@@ -164,7 +169,9 @@ u64 bpf_tail_call(u64 ctx, u64 r2, u64 index, u64 r4, u64 r5);
 u64 bpf_get_stackid(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5);
 void bpf_fd_array_map_clear(struct bpf_map *map);
 bool bpf_prog_array_compatible(struct bpf_array *array, const struct bpf_prog *fp);
+
 const struct bpf_func_proto *bpf_get_trace_printk_proto(void);
+const struct bpf_func_proto *bpf_get_event_output_proto(void);
 
 #ifdef CONFIG_BPF_SYSCALL
 DECLARE_PER_CPU(int, bpf_prog_active);

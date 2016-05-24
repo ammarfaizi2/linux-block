@@ -22,24 +22,49 @@
 #include <net/dsa.h>
 #include "mv88e6xxx.h"
 
-static const struct mv88e6xxx_switch_id mv88e6352_table[] = {
-	{ PORT_SWITCH_ID_6172, "Marvell 88E6172" },
-	{ PORT_SWITCH_ID_6176, "Marvell 88E6176" },
-	{ PORT_SWITCH_ID_6240, "Marvell 88E6240" },
-	{ PORT_SWITCH_ID_6320, "Marvell 88E6320" },
-	{ PORT_SWITCH_ID_6320_A1, "Marvell 88E6320 (A1)" },
-	{ PORT_SWITCH_ID_6320_A2, "Marvell 88e6320 (A2)" },
-	{ PORT_SWITCH_ID_6321, "Marvell 88E6321" },
-	{ PORT_SWITCH_ID_6321_A1, "Marvell 88E6321 (A1)" },
-	{ PORT_SWITCH_ID_6321_A2, "Marvell 88e6321 (A2)" },
-	{ PORT_SWITCH_ID_6352, "Marvell 88E6352" },
-	{ PORT_SWITCH_ID_6352_A0, "Marvell 88E6352 (A0)" },
-	{ PORT_SWITCH_ID_6352_A1, "Marvell 88E6352 (A1)" },
+static const struct mv88e6xxx_info mv88e6352_table[] = {
+	{
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6320,
+		.family = MV88E6XXX_FAMILY_6320,
+		.name = "Marvell 88E6320",
+		.num_databases = 4096,
+		.num_ports = 7,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6321,
+		.family = MV88E6XXX_FAMILY_6320,
+		.name = "Marvell 88E6321",
+		.num_databases = 4096,
+		.num_ports = 7,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6172,
+		.family = MV88E6XXX_FAMILY_6352,
+		.name = "Marvell 88E6172",
+		.num_databases = 4096,
+		.num_ports = 7,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6176,
+		.family = MV88E6XXX_FAMILY_6352,
+		.name = "Marvell 88E6176",
+		.num_databases = 4096,
+		.num_ports = 7,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6240,
+		.family = MV88E6XXX_FAMILY_6352,
+		.name = "Marvell 88E6240",
+		.num_databases = 4096,
+		.num_ports = 7,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6352,
+		.family = MV88E6XXX_FAMILY_6352,
+		.name = "Marvell 88E6352",
+		.num_databases = 4096,
+		.num_ports = 7,
+	}
 };
 
-static char *mv88e6352_drv_probe(struct device *dsa_dev,
-				 struct device *host_dev,
-				 int sw_addr, void **priv)
+static const char *mv88e6352_drv_probe(struct device *dsa_dev,
+				       struct device *host_dev, int sw_addr,
+				       void **priv)
 {
 	return mv88e6xxx_drv_probe(dsa_dev, host_dev, sw_addr, priv,
 				   mv88e6352_table,
@@ -48,6 +73,7 @@ static char *mv88e6352_drv_probe(struct device *dsa_dev,
 
 static int mv88e6352_setup_global(struct dsa_switch *ds)
 {
+	struct mv88e6xxx_priv_state *ps = ds_to_priv(ds);
 	u32 upstream_port = dsa_upstream_port(ds);
 	int ret;
 	u32 reg;
@@ -59,8 +85,11 @@ static int mv88e6352_setup_global(struct dsa_switch *ds)
 	/* Discard packets with excessive collisions,
 	 * mask all interrupt sources, enable PPU (bit 14, undocumented).
 	 */
-	REG_WRITE(REG_GLOBAL, GLOBAL_CONTROL,
-		  GLOBAL_CONTROL_PPU_ENABLE | GLOBAL_CONTROL_DISCARD_EXCESS);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_CONTROL,
+				  GLOBAL_CONTROL_PPU_ENABLE |
+				  GLOBAL_CONTROL_DISCARD_EXCESS);
+	if (ret)
+		return ret;
 
 	/* Configure the upstream port, and configure the upstream
 	 * port as the port to which ingress and egress monitor frames
@@ -69,14 +98,14 @@ static int mv88e6352_setup_global(struct dsa_switch *ds)
 	reg = upstream_port << GLOBAL_MONITOR_CONTROL_INGRESS_SHIFT |
 		upstream_port << GLOBAL_MONITOR_CONTROL_EGRESS_SHIFT |
 		upstream_port << GLOBAL_MONITOR_CONTROL_ARP_SHIFT;
-	REG_WRITE(REG_GLOBAL, GLOBAL_MONITOR_CONTROL, reg);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_MONITOR_CONTROL, reg);
+	if (ret)
+		return ret;
 
 	/* Disable remote management for now, and set the switch's
 	 * DSA device number.
 	 */
-	REG_WRITE(REG_GLOBAL, 0x1c, ds->index & 0x1f);
-
-	return 0;
+	return mv88e6xxx_reg_write(ps, REG_GLOBAL, 0x1c, ds->index & 0x1f);
 }
 
 static int mv88e6352_setup(struct dsa_switch *ds)
@@ -86,15 +115,13 @@ static int mv88e6352_setup(struct dsa_switch *ds)
 
 	ps->ds = ds;
 
-	ret = mv88e6xxx_setup_common(ds);
+	ret = mv88e6xxx_setup_common(ps);
 	if (ret < 0)
 		return ret;
 
-	ps->num_ports = 7;
-
 	mutex_init(&ps->eeprom_mutex);
 
-	ret = mv88e6xxx_switch_reset(ds, true);
+	ret = mv88e6xxx_switch_reset(ps, true);
 	if (ret < 0)
 		return ret;
 
@@ -112,7 +139,7 @@ static int mv88e6352_read_eeprom_word(struct dsa_switch *ds, int addr)
 
 	mutex_lock(&ps->eeprom_mutex);
 
-	ret = mv88e6xxx_reg_write(ds, REG_GLOBAL2, GLOBAL2_EEPROM_OP,
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL2, GLOBAL2_EEPROM_OP,
 				  GLOBAL2_EEPROM_OP_READ |
 				  (addr & GLOBAL2_EEPROM_OP_ADDR_MASK));
 	if (ret < 0)
@@ -122,7 +149,7 @@ static int mv88e6352_read_eeprom_word(struct dsa_switch *ds, int addr)
 	if (ret < 0)
 		goto error;
 
-	ret = mv88e6xxx_reg_read(ds, REG_GLOBAL2, GLOBAL2_EEPROM_DATA);
+	ret = mv88e6xxx_reg_read(ps, REG_GLOBAL2, GLOBAL2_EEPROM_DATA);
 error:
 	mutex_unlock(&ps->eeprom_mutex);
 	return ret;
@@ -193,9 +220,10 @@ static int mv88e6352_get_eeprom(struct dsa_switch *ds,
 
 static int mv88e6352_eeprom_is_readonly(struct dsa_switch *ds)
 {
+	struct mv88e6xxx_priv_state *ps = ds_to_priv(ds);
 	int ret;
 
-	ret = mv88e6xxx_reg_read(ds, REG_GLOBAL2, GLOBAL2_EEPROM_OP);
+	ret = mv88e6xxx_reg_read(ps, REG_GLOBAL2, GLOBAL2_EEPROM_OP);
 	if (ret < 0)
 		return ret;
 
@@ -213,11 +241,11 @@ static int mv88e6352_write_eeprom_word(struct dsa_switch *ds, int addr,
 
 	mutex_lock(&ps->eeprom_mutex);
 
-	ret = mv88e6xxx_reg_write(ds, REG_GLOBAL2, GLOBAL2_EEPROM_DATA, data);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL2, GLOBAL2_EEPROM_DATA, data);
 	if (ret < 0)
 		goto error;
 
-	ret = mv88e6xxx_reg_write(ds, REG_GLOBAL2, GLOBAL2_EEPROM_OP,
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL2, GLOBAL2_EEPROM_OP,
 				  GLOBAL2_EEPROM_OP_WRITE |
 				  (addr & GLOBAL2_EEPROM_OP_ADDR_MASK));
 	if (ret < 0)

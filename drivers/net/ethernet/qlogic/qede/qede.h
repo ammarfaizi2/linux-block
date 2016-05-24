@@ -59,16 +59,16 @@ struct qede_stats {
 
 	/* port */
 	u64 rx_64_byte_packets;
-	u64 rx_127_byte_packets;
-	u64 rx_255_byte_packets;
-	u64 rx_511_byte_packets;
-	u64 rx_1023_byte_packets;
-	u64 rx_1518_byte_packets;
-	u64 rx_1522_byte_packets;
-	u64 rx_2047_byte_packets;
-	u64 rx_4095_byte_packets;
-	u64 rx_9216_byte_packets;
-	u64 rx_16383_byte_packets;
+	u64 rx_65_to_127_byte_packets;
+	u64 rx_128_to_255_byte_packets;
+	u64 rx_256_to_511_byte_packets;
+	u64 rx_512_to_1023_byte_packets;
+	u64 rx_1024_to_1518_byte_packets;
+	u64 rx_1519_to_1522_byte_packets;
+	u64 rx_1519_to_2047_byte_packets;
+	u64 rx_2048_to_4095_byte_packets;
+	u64 rx_4096_to_9216_byte_packets;
+	u64 rx_9217_to_16383_byte_packets;
 	u64 rx_crc_errors;
 	u64 rx_mac_crtl_frames;
 	u64 rx_pause_frames;
@@ -169,6 +169,8 @@ struct qede_dev {
 	bool accept_any_vlan;
 	struct delayed_work		sp_task;
 	unsigned long			sp_flags;
+	u16				vxlan_dst_port;
+	u16				geneve_dst_port;
 };
 
 enum QEDE_STATE {
@@ -288,8 +290,11 @@ struct qede_fastpath {
 
 #define QEDE_CSUM_ERROR			BIT(0)
 #define QEDE_CSUM_UNNECESSARY		BIT(1)
+#define QEDE_TUNN_CSUM_UNNECESSARY	BIT(2)
 
-#define QEDE_SP_RX_MODE		1
+#define QEDE_SP_RX_MODE			1
+#define QEDE_SP_VXLAN_PORT_CONFIG	2
+#define QEDE_SP_GENEVE_PORT_CONFIG	3
 
 union qede_reload_args {
 	u16 mtu;
@@ -303,6 +308,10 @@ void qede_reload(struct qede_dev *edev,
 		 union qede_reload_args *args);
 int qede_change_mtu(struct net_device *dev, int new_mtu);
 void qede_fill_by_demand_stats(struct qede_dev *edev);
+bool qede_has_rx_work(struct qede_rx_queue *rxq);
+int qede_txq_has_work(struct qede_tx_queue *txq);
+void qede_recycle_rx_bd_ring(struct qede_rx_queue *rxq, struct qede_dev *edev,
+			     u8 count);
 
 #define RX_RING_SIZE_POW	13
 #define RX_RING_SIZE		((u16)BIT(RX_RING_SIZE_POW))

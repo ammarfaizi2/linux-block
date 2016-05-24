@@ -17,17 +17,37 @@
 #include <net/dsa.h>
 #include "mv88e6xxx.h"
 
-static const struct mv88e6xxx_switch_id mv88e6131_table[] = {
-	{ PORT_SWITCH_ID_6085, "Marvell 88E6085" },
-	{ PORT_SWITCH_ID_6095, "Marvell 88E6095/88E6095F" },
-	{ PORT_SWITCH_ID_6131, "Marvell 88E6131" },
-	{ PORT_SWITCH_ID_6131_B2, "Marvell 88E6131 (B2)" },
-	{ PORT_SWITCH_ID_6185, "Marvell 88E6185" },
+static const struct mv88e6xxx_info mv88e6131_table[] = {
+	{
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6095,
+		.family = MV88E6XXX_FAMILY_6095,
+		.name = "Marvell 88E6095/88E6095F",
+		.num_databases = 256,
+		.num_ports = 11,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6085,
+		.family = MV88E6XXX_FAMILY_6097,
+		.name = "Marvell 88E6085",
+		.num_databases = 4096,
+		.num_ports = 10,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6131,
+		.family = MV88E6XXX_FAMILY_6185,
+		.name = "Marvell 88E6131",
+		.num_databases = 256,
+		.num_ports = 8,
+	}, {
+		.prod_num = PORT_SWITCH_ID_PROD_NUM_6185,
+		.family = MV88E6XXX_FAMILY_6185,
+		.name = "Marvell 88E6185",
+		.num_databases = 256,
+		.num_ports = 10,
+	}
 };
 
-static char *mv88e6131_drv_probe(struct device *dsa_dev,
-				 struct device *host_dev,
-				 int sw_addr, void **priv)
+static const char *mv88e6131_drv_probe(struct device *dsa_dev,
+				       struct device *host_dev, int sw_addr,
+				       void **priv)
 {
 	return mv88e6xxx_drv_probe(dsa_dev, host_dev, sw_addr, priv,
 				   mv88e6131_table,
@@ -36,6 +56,7 @@ static char *mv88e6131_drv_probe(struct device *dsa_dev,
 
 static int mv88e6131_setup_global(struct dsa_switch *ds)
 {
+	struct mv88e6xxx_priv_state *ps = ds_to_priv(ds);
 	u32 upstream_port = dsa_upstream_port(ds);
 	int ret;
 	u32 reg;
@@ -49,11 +70,16 @@ static int mv88e6131_setup_global(struct dsa_switch *ds)
 	 * to arbitrate between packet queues, set the maximum frame
 	 * size to 1632, and mask all interrupt sources.
 	 */
-	REG_WRITE(REG_GLOBAL, GLOBAL_CONTROL,
-		  GLOBAL_CONTROL_PPU_ENABLE | GLOBAL_CONTROL_MAX_FRAME_1632);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_CONTROL,
+				  GLOBAL_CONTROL_PPU_ENABLE |
+				  GLOBAL_CONTROL_MAX_FRAME_1632);
+	if (ret)
+		return ret;
 
 	/* Set the VLAN ethertype to 0x8100. */
-	REG_WRITE(REG_GLOBAL, GLOBAL_CORE_TAG_TYPE, 0x8100);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_CORE_TAG_TYPE, 0x8100);
+	if (ret)
+		return ret;
 
 	/* Disable ARP mirroring, and configure the upstream port as
 	 * the port to which ingress and egress monitor frames are to
@@ -62,31 +88,33 @@ static int mv88e6131_setup_global(struct dsa_switch *ds)
 	reg = upstream_port << GLOBAL_MONITOR_CONTROL_INGRESS_SHIFT |
 		upstream_port << GLOBAL_MONITOR_CONTROL_EGRESS_SHIFT |
 		GLOBAL_MONITOR_CONTROL_ARP_DISABLED;
-	REG_WRITE(REG_GLOBAL, GLOBAL_MONITOR_CONTROL, reg);
+	ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_MONITOR_CONTROL, reg);
+	if (ret)
+		return ret;
 
 	/* Disable cascade port functionality unless this device
 	 * is used in a cascade configuration, and set the switch's
 	 * DSA device number.
 	 */
 	if (ds->dst->pd->nr_chips > 1)
-		REG_WRITE(REG_GLOBAL, GLOBAL_CONTROL_2,
-			  GLOBAL_CONTROL_2_MULTIPLE_CASCADE |
-			  (ds->index & 0x1f));
+		ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_CONTROL_2,
+					  GLOBAL_CONTROL_2_MULTIPLE_CASCADE |
+					  (ds->index & 0x1f));
 	else
-		REG_WRITE(REG_GLOBAL, GLOBAL_CONTROL_2,
-			  GLOBAL_CONTROL_2_NO_CASCADE |
-			  (ds->index & 0x1f));
+		ret = mv88e6xxx_reg_write(ps, REG_GLOBAL, GLOBAL_CONTROL_2,
+					  GLOBAL_CONTROL_2_NO_CASCADE |
+					  (ds->index & 0x1f));
+	if (ret)
+		return ret;
 
 	/* Force the priority of IGMP/MLD snoop frames and ARP frames
 	 * to the highest setting.
 	 */
-	REG_WRITE(REG_GLOBAL2, GLOBAL2_PRIO_OVERRIDE,
-		  GLOBAL2_PRIO_OVERRIDE_FORCE_SNOOP |
-		  7 << GLOBAL2_PRIO_OVERRIDE_SNOOP_SHIFT |
-		  GLOBAL2_PRIO_OVERRIDE_FORCE_ARP |
-		  7 << GLOBAL2_PRIO_OVERRIDE_ARP_SHIFT);
-
-	return 0;
+	return mv88e6xxx_reg_write(ps, REG_GLOBAL2, GLOBAL2_PRIO_OVERRIDE,
+				   GLOBAL2_PRIO_OVERRIDE_FORCE_SNOOP |
+				   7 << GLOBAL2_PRIO_OVERRIDE_SNOOP_SHIFT |
+				   GLOBAL2_PRIO_OVERRIDE_FORCE_ARP |
+				   7 << GLOBAL2_PRIO_OVERRIDE_ARP_SHIFT);
 }
 
 static int mv88e6131_setup(struct dsa_switch *ds)
@@ -96,29 +124,13 @@ static int mv88e6131_setup(struct dsa_switch *ds)
 
 	ps->ds = ds;
 
-	ret = mv88e6xxx_setup_common(ds);
+	ret = mv88e6xxx_setup_common(ps);
 	if (ret < 0)
 		return ret;
 
-	mv88e6xxx_ppu_state_init(ds);
+	mv88e6xxx_ppu_state_init(ps);
 
-	switch (ps->id) {
-	case PORT_SWITCH_ID_6085:
-	case PORT_SWITCH_ID_6185:
-		ps->num_ports = 10;
-		break;
-	case PORT_SWITCH_ID_6095:
-		ps->num_ports = 11;
-		break;
-	case PORT_SWITCH_ID_6131:
-	case PORT_SWITCH_ID_6131_B2:
-		ps->num_ports = 8;
-		break;
-	default:
-		return -ENODEV;
-	}
-
-	ret = mv88e6xxx_switch_reset(ds, false);
+	ret = mv88e6xxx_switch_reset(ps, false);
 	if (ret < 0)
 		return ret;
 
@@ -133,7 +145,7 @@ static int mv88e6131_port_to_phy_addr(struct dsa_switch *ds, int port)
 {
 	struct mv88e6xxx_priv_state *ps = ds_to_priv(ds);
 
-	if (port >= 0 && port < ps->num_ports)
+	if (port >= 0 && port < ps->info->num_ports)
 		return port;
 
 	return -EINVAL;

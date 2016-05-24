@@ -5831,6 +5831,7 @@ F:	drivers/net/wireless/intel/iwlegacy/
 INTEL WIRELESS WIFI LINK (iwlwifi)
 M:	Johannes Berg <johannes.berg@intel.com>
 M:	Emmanuel Grumbach <emmanuel.grumbach@intel.com>
+M:	Luca Coelho <luciano.coelho@intel.com>
 M:	Intel Linux Wireless <linuxwifi@intel.com>
 L:	linux-wireless@vger.kernel.org
 W:	http://intellinuxwireless.org
@@ -6253,8 +6254,8 @@ S:	Maintained
 F:	tools/testing/selftests
 
 KERNEL VIRTUAL MACHINE (KVM)
-M:	Gleb Natapov <gleb@kernel.org>
 M:	Paolo Bonzini <pbonzini@redhat.com>
+M:	Radim Krčmář <rkrcmar@redhat.com>
 L:	kvm@vger.kernel.org
 W:	http://www.linux-kvm.org
 T:	git git://git.kernel.org/pub/scm/virt/kvm/kvm.git
@@ -11071,6 +11072,15 @@ L:	linux-omap@vger.kernel.org
 S:	Maintained
 F:	drivers/clk/ti/
 F:	include/linux/clk/ti.h
+
+TI ETHERNET SWITCH DRIVER (CPSW)
+M:	Mugunthan V N <mugunthanvnm@ti.com>
+R:	Grygorii Strashko <grygorii.strashko@ti.com>
+L:	linux-omap@vger.kernel.org
+L:	netdev@vger.kernel.org
+S:	Maintained
+F:	drivers/net/ethernet/ti/cpsw*
+F:	drivers/net/ethernet/ti/davinci*
 
 TI FLASH MEDIA INTERFACE DRIVER
 M:	Alex Dubov <oakad@yahoo.com>

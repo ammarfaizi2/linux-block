@@ -333,7 +333,7 @@ int __mdiobus_register(struct mii_bus *bus, struct module *owner)
 			struct phy_device *phydev;
 
 			phydev = mdiobus_scan(bus, i);
-			if (IS_ERR(phydev)) {
+			if (IS_ERR(phydev) && (PTR_ERR(phydev) != -ENODEV)) {
 				err = PTR_ERR(phydev);
 				goto error;
 			}
@@ -419,7 +419,7 @@ struct phy_device *mdiobus_scan(struct mii_bus *bus, int addr)
 	int err;
 
 	phydev = get_phy_device(bus, addr, false);
-	if (IS_ERR(phydev) || phydev == NULL)
+	if (IS_ERR(phydev))
 		return phydev;
 
 	/*

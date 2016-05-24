@@ -1415,16 +1415,16 @@ static void __qed_get_vport_port_stats(struct qed_hwfn *p_hwfn,
 			sizeof(port_stats));
 
 	p_stats->rx_64_byte_packets		+= port_stats.pmm.r64;
-	p_stats->rx_127_byte_packets		+= port_stats.pmm.r127;
-	p_stats->rx_255_byte_packets		+= port_stats.pmm.r255;
-	p_stats->rx_511_byte_packets		+= port_stats.pmm.r511;
-	p_stats->rx_1023_byte_packets		+= port_stats.pmm.r1023;
-	p_stats->rx_1518_byte_packets		+= port_stats.pmm.r1518;
-	p_stats->rx_1522_byte_packets		+= port_stats.pmm.r1522;
-	p_stats->rx_2047_byte_packets		+= port_stats.pmm.r2047;
-	p_stats->rx_4095_byte_packets		+= port_stats.pmm.r4095;
-	p_stats->rx_9216_byte_packets		+= port_stats.pmm.r9216;
-	p_stats->rx_16383_byte_packets		+= port_stats.pmm.r16383;
+	p_stats->rx_65_to_127_byte_packets	+= port_stats.pmm.r127;
+	p_stats->rx_128_to_255_byte_packets	+= port_stats.pmm.r255;
+	p_stats->rx_256_to_511_byte_packets	+= port_stats.pmm.r511;
+	p_stats->rx_512_to_1023_byte_packets	+= port_stats.pmm.r1023;
+	p_stats->rx_1024_to_1518_byte_packets	+= port_stats.pmm.r1518;
+	p_stats->rx_1519_to_1522_byte_packets	+= port_stats.pmm.r1522;
+	p_stats->rx_1519_to_2047_byte_packets	+= port_stats.pmm.r2047;
+	p_stats->rx_2048_to_4095_byte_packets	+= port_stats.pmm.r4095;
+	p_stats->rx_4096_to_9216_byte_packets	+= port_stats.pmm.r9216;
+	p_stats->rx_9217_to_16383_byte_packets	+= port_stats.pmm.r16383;
 	p_stats->rx_crc_errors			+= port_stats.pmm.rfcs;
 	p_stats->rx_mac_crtl_frames		+= port_stats.pmm.rxcf;
 	p_stats->rx_pause_frames		+= port_stats.pmm.rxpf;
@@ -1884,6 +1884,36 @@ static int qed_stop_txq(struct qed_dev *cdev,
 	return 0;
 }
 
+static int qed_tunn_configure(struct qed_dev *cdev,
+			      struct qed_tunn_params *tunn_params)
+{
+	struct qed_tunn_update_params tunn_info;
+	int i, rc;
+
+	memset(&tunn_info, 0, sizeof(tunn_info));
+	if (tunn_params->update_vxlan_port == 1) {
+		tunn_info.update_vxlan_udp_port = 1;
+		tunn_info.vxlan_udp_port = tunn_params->vxlan_port;
+	}
+
+	if (tunn_params->update_geneve_port == 1) {
+		tunn_info.update_geneve_udp_port = 1;
+		tunn_info.geneve_udp_port = tunn_params->geneve_port;
+	}
+
+	for_each_hwfn(cdev, i) {
+		struct qed_hwfn *hwfn = &cdev->hwfns[i];
+
+		rc = qed_sp_pf_update_tunn_cfg(hwfn, &tunn_info,
+					       QED_SPQ_MODE_EBLOCK, NULL);
+
+		if (rc)
+			return rc;
+	}
+
+	return 0;
+}
+
 static int qed_configure_filter_rx_mode(struct qed_dev *cdev,
 					enum qed_filter_rx_mode_type type)
 {
@@ -2026,6 +2056,7 @@ static const struct qed_eth_ops qed_eth_ops_pass = {
 	.fastpath_stop = &qed_fastpath_stop,
 	.eth_cqe_completion = &qed_fp_cqe_completion,
 	.get_vport_stats = &qed_get_vport_stats,
+	.tunn_config = &qed_tunn_configure,
 };
 
 const struct qed_eth_ops *qed_get_eth_ops(void)

@@ -360,7 +360,7 @@ static int __inet_check_established(struct inet_timewait_death_row *death_row,
 	__sk_nulls_add_node_rcu(sk, &head->chain);
 	if (tw) {
 		sk_nulls_del_node_init_rcu((struct sock *)tw);
-		NET_INC_STATS_BH(net, LINUX_MIB_TIMEWAITRECYCLED);
+		__NET_INC_STATS(net, LINUX_MIB_TIMEWAITRECYCLED);
 	}
 	spin_unlock(lock);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, 1);
@@ -479,7 +479,11 @@ int __inet_hash(struct sock *sk, struct sock *osk,
 		if (err)
 			goto unlock;
 	}
-	hlist_add_head_rcu(&sk->sk_node, &ilb->head);
+	if (IS_ENABLED(CONFIG_IPV6) && sk->sk_reuseport &&
+		sk->sk_family == AF_INET6)
+		hlist_add_tail_rcu(&sk->sk_node, &ilb->head);
+	else
+		hlist_add_head_rcu(&sk->sk_node, &ilb->head);
 	sock_set_flag(sk, SOCK_RCU_FREE);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, 1);
 unlock:

@@ -545,12 +545,16 @@ static void __tipc_node_link_up(struct tipc_node *n, int bearer_id,
 	pr_debug("Established link <%s> on network plane %c\n",
 		 tipc_link_name(nl), tipc_link_plane(nl));
 
+	/* Ensure that a STATE message goes first */
+	tipc_link_build_state_msg(nl, xmitq);
+
 	/* First link? => give it both slots */
 	if (!ol) {
 		*slot0 = bearer_id;
 		*slot1 = bearer_id;
 		tipc_node_fsm_evt(n, SELF_ESTABL_CONTACT_EVT);
 		n->action_flags |= TIPC_NOTIFY_NODE_UP;
+		tipc_link_set_active(nl, true);
 		tipc_bcast_add_peer(n->net, nl, xmitq);
 		return;
 	}
@@ -581,8 +585,12 @@ static void __tipc_node_link_up(struct tipc_node *n, int bearer_id,
 static void tipc_node_link_up(struct tipc_node *n, int bearer_id,
 			      struct sk_buff_head *xmitq)
 {
+	struct tipc_media_addr *maddr;
+
 	tipc_node_write_lock(n);
 	__tipc_node_link_up(n, bearer_id, xmitq);
+	maddr = &n->links[bearer_id].maddr;
+	tipc_bearer_xmit(n->net, bearer_id, xmitq, maddr);
 	tipc_node_write_unlock(n);
 }
 
@@ -1279,7 +1287,7 @@ static void tipc_node_bc_rcv(struct net *net, struct sk_buff *skb, int bearer_id
 	/* Broadcast ACKs are sent on a unicast link */
 	if (rc & TIPC_LINK_SND_BC_ACK) {
 		tipc_node_read_lock(n);
-		tipc_link_build_ack_msg(le->link, &xmitq);
+		tipc_link_build_state_msg(le->link, &xmitq);
 		tipc_node_read_unlock(n);
 	}
 

@@ -106,7 +106,6 @@ enum netdev_tx {
 	__NETDEV_TX_MIN	 = INT_MIN,	/* make sure enum is signed */
 	NETDEV_TX_OK	 = 0x00,	/* driver took care of packet */
 	NETDEV_TX_BUSY	 = 0x10,	/* driver tx path was busy*/
-	NETDEV_TX_LOCKED = 0x20,	/* driver tx lock was already taken */
 };
 typedef enum netdev_tx netdev_tx_t;
 
@@ -570,6 +569,12 @@ struct netdev_queue {
 #if defined(CONFIG_XPS) && defined(CONFIG_NUMA)
 	int			numa_node;
 #endif
+	unsigned long		tx_maxrate;
+	/*
+	 * Number of TX timeouts for this queue
+	 * (/sys/class/net/DEV/Q/trans_timeout)
+	 */
+	unsigned long		trans_timeout;
 /*
  * write-mostly part
  */
@@ -580,18 +585,11 @@ struct netdev_queue {
 	 */
 	unsigned long		trans_start;
 
-	/*
-	 * Number of TX timeouts for this queue
-	 * (/sys/class/net/DEV/Q/trans_timeout)
-	 */
-	unsigned long		trans_timeout;
-
 	unsigned long		state;
 
 #ifdef CONFIG_BQL
 	struct dql		dql;
 #endif
-	unsigned long		tx_maxrate;
 } ____cacheline_aligned_in_smp;
 
 static inline int netdev_queue_numa_node_read(const struct netdev_queue *q)
@@ -831,7 +829,6 @@ struct tc_to_netdev {
  *	the queue before that can happen; it's for obsolete devices and weird
  *	corner cases, but the stack really does a non-trivial amount
  *	of useless work if you return NETDEV_TX_BUSY.
- *        (can also return NETDEV_TX_LOCKED iff NETIF_F_LLTX)
  *	Required; cannot be NULL.
  *
  * netdev_features_t (*ndo_fix_features)(struct net_device *dev,
@@ -1654,6 +1651,7 @@ struct net_device {
 	netdev_features_t	vlan_features;
 	netdev_features_t	hw_enc_features;
 	netdev_features_t	mpls_features;
+	netdev_features_t	gso_partial_features;
 
 	int			ifindex;
 	int			group;
@@ -2121,7 +2119,10 @@ struct napi_gro_cb {
 	/* Used in GRE, set in fou/gue_gro_receive */
 	u8	is_fou:1;
 
-	/* 6 bit hole */
+	/* Used to determine if flush_id can be ignored */
+	u8	is_atomic:1;
+
+	/* 5 bit hole */
 
 	/* used to support CHECKSUM_COMPLETE for tunneling protocols */
 	__wsum	csum;
@@ -2240,6 +2241,8 @@ struct netdev_lag_lower_state_info {
 #define NETDEV_BONDING_INFO	0x0019
 #define NETDEV_PRECHANGEUPPER	0x001A
 #define NETDEV_CHANGELOWERSTATE	0x001B
+#define NETDEV_OFFLOAD_PUSH_VXLAN	0x001C
+#define NETDEV_OFFLOAD_PUSH_GENEVE	0x001D
 
 int register_netdevice_notifier(struct notifier_block *nb);
 int unregister_netdevice_notifier(struct notifier_block *nb);
@@ -2731,7 +2734,6 @@ struct softnet_data {
 	/* stats */
 	unsigned int		processed;
 	unsigned int		time_squeeze;
-	unsigned int		cpu_collision;
 	unsigned int		received_rps;
 #ifdef CONFIG_RPS
 	struct softnet_data	*rps_ipi_list;
@@ -2744,11 +2746,15 @@ struct softnet_data {
 	struct sk_buff		*completion_queue;
 
 #ifdef CONFIG_RPS
-	/* Elements below can be accessed between CPUs for RPS */
+	/* input_queue_head should be written by cpu owning this struct,
+	 * and only read by other cpus. Worth using a cache line.
+	 */
+	unsigned int		input_queue_head ____cacheline_aligned_in_smp;
+
+	/* Elements below can be accessed between CPUs for RPS/RFS */
 	struct call_single_data	csd ____cacheline_aligned_in_smp;
 	struct softnet_data	*rps_ipi_next;
 	unsigned int		cpu;
-	unsigned int		input_queue_head;
 	unsigned int		input_queue_tail;
 #endif
 	unsigned int		dropped;
@@ -3257,7 +3263,8 @@ struct sk_buff *dev_hard_start_xmit(struct sk_buff *skb, struct net_device *dev,
 				    struct netdev_queue *txq, int *ret);
 int __dev_forward_skb(struct net_device *dev, struct sk_buff *skb);
 int dev_forward_skb(struct net_device *dev, struct sk_buff *skb);
-bool is_skb_forwardable(struct net_device *dev, struct sk_buff *skb);
+bool is_skb_forwardable(const struct net_device *dev,
+			const struct sk_buff *skb);
 
 extern int		netdev_budget;
 
@@ -3992,6 +3999,7 @@ static inline bool net_gso_ok(netdev_features_t features, int gso_type)
 	BUILD_BUG_ON(SKB_GSO_UDP     != (NETIF_F_UFO >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_DODGY   != (NETIF_F_GSO_ROBUST >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_TCP_ECN != (NETIF_F_TSO_ECN >> NETIF_F_GSO_SHIFT));
+	BUILD_BUG_ON(SKB_GSO_TCP_FIXEDID != (NETIF_F_TSO_MANGLEID >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_TCPV6   != (NETIF_F_TSO6 >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_FCOE    != (NETIF_F_FSO >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_GRE     != (NETIF_F_GSO_GRE >> NETIF_F_GSO_SHIFT));
@@ -4000,6 +4008,7 @@ static inline bool net_gso_ok(netdev_features_t features, int gso_type)
 	BUILD_BUG_ON(SKB_GSO_SIT     != (NETIF_F_GSO_SIT >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_UDP_TUNNEL != (NETIF_F_GSO_UDP_TUNNEL >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_UDP_TUNNEL_CSUM != (NETIF_F_GSO_UDP_TUNNEL_CSUM >> NETIF_F_GSO_SHIFT));
+	BUILD_BUG_ON(SKB_GSO_PARTIAL != (NETIF_F_GSO_PARTIAL >> NETIF_F_GSO_SHIFT));
 	BUILD_BUG_ON(SKB_GSO_TUNNEL_REMCSUM != (NETIF_F_GSO_TUNNEL_REMCSUM >> NETIF_F_GSO_SHIFT));
 
 	return (features & feature) == feature;

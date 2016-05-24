@@ -98,7 +98,6 @@ struct vxlan_fdb {
 
 /* salt for hash table */
 static u32 vxlan_salt __read_mostly;
-static struct workqueue_struct *vxlan_wq;
 
 static inline bool vxlan_collect_metadata(struct vxlan_sock *vs)
 {
@@ -1038,14 +1037,14 @@ static bool vxlan_group_used(struct vxlan_net *vn, struct vxlan_dev *dev)
 	return false;
 }
 
-static void __vxlan_sock_release(struct vxlan_sock *vs)
+static bool __vxlan_sock_release_prep(struct vxlan_sock *vs)
 {
 	struct vxlan_net *vn;
 
 	if (!vs)
-		return;
+		return false;
 	if (!atomic_dec_and_test(&vs->refcnt))
-		return;
+		return false;
 
 	vn = net_generic(sock_net(vs->sock->sk), vxlan_net_id);
 	spin_lock(&vn->sock_lock);
@@ -1053,14 +1052,28 @@ static void __vxlan_sock_release(struct vxlan_sock *vs)
 	vxlan_notify_del_rx_port(vs);
 	spin_unlock(&vn->sock_lock);
 
-	queue_work(vxlan_wq, &vs->del_work);
+	return true;
 }
 
 static void vxlan_sock_release(struct vxlan_dev *vxlan)
 {
-	__vxlan_sock_release(vxlan->vn4_sock);
+	bool ipv4 = __vxlan_sock_release_prep(vxlan->vn4_sock);
 #if IS_ENABLED(CONFIG_IPV6)
-	__vxlan_sock_release(vxlan->vn6_sock);
+	bool ipv6 = __vxlan_sock_release_prep(vxlan->vn6_sock);
+#endif
+
+	synchronize_net();
+
+	if (ipv4) {
+		udp_tunnel_sock_release(vxlan->vn4_sock->sock);
+		kfree(vxlan->vn4_sock);
+	}
+
+#if IS_ENABLED(CONFIG_IPV6)
+	if (ipv6) {
+		udp_tunnel_sock_release(vxlan->vn6_sock->sock);
+		kfree(vxlan->vn6_sock);
+	}
 #endif
 }
 
@@ -1784,9 +1797,9 @@ static int vxlan_build_skb(struct sk_buff *skb, struct dst_entry *dst,
 	if (WARN_ON(!skb))
 		return -ENOMEM;
 
-	skb = iptunnel_handle_offloads(skb, type);
-	if (IS_ERR(skb))
-		return PTR_ERR(skb);
+	err = iptunnel_handle_offloads(skb, type);
+	if (err)
+		goto out_free;
 
 	vxh = (struct vxlanhdr *) __skb_push(skb, sizeof(*vxh));
 	vxh->vx_flags = VXLAN_HF_VNI;
@@ -2514,7 +2527,7 @@ static struct device_type vxlan_type = {
  * supply the listening VXLAN udp ports. Callers are expected
  * to implement the ndo_add_vxlan_port.
  */
-void vxlan_get_rx_port(struct net_device *dev)
+static void vxlan_push_rx_ports(struct net_device *dev)
 {
 	struct vxlan_sock *vs;
 	struct net *net = dev_net(dev);
@@ -2522,6 +2535,9 @@ void vxlan_get_rx_port(struct net_device *dev)
 	sa_family_t sa_family;
 	__be16 port;
 	unsigned int i;
+
+	if (!dev->netdev_ops->ndo_add_vxlan_port)
+		return;
 
 	spin_lock(&vn->sock_lock);
 	for (i = 0; i < PORT_HASH_SIZE; ++i) {
@@ -2534,13 +2550,15 @@ void vxlan_get_rx_port(struct net_device *dev)
 	}
 	spin_unlock(&vn->sock_lock);
 }
-EXPORT_SYMBOL_GPL(vxlan_get_rx_port);
 
 /* Initialize the device structure. */
 static void vxlan_setup(struct net_device *dev)
 {
 	struct vxlan_dev *vxlan = netdev_priv(dev);
 	unsigned int h;
+
+	eth_hw_addr_random(dev);
+	ether_setup(dev);
 
 	dev->destructor = free_netdev;
 	SET_NETDEV_DEVTYPE(dev, &vxlan_type);
@@ -2577,8 +2595,6 @@ static void vxlan_setup(struct net_device *dev)
 
 static void vxlan_ether_setup(struct net_device *dev)
 {
-	eth_hw_addr_random(dev);
-	ether_setup(dev);
 	dev->priv_flags &= ~IFF_TX_SKB_SHARING;
 	dev->priv_flags |= IFF_LIVE_ADDR_CHANGE;
 	dev->netdev_ops = &vxlan_netdev_ether_ops;
@@ -2586,11 +2602,10 @@ static void vxlan_ether_setup(struct net_device *dev)
 
 static void vxlan_raw_setup(struct net_device *dev)
 {
+	dev->header_ops = NULL;
 	dev->type = ARPHRD_NONE;
 	dev->hard_header_len = 0;
 	dev->addr_len = 0;
-	dev->mtu = ETH_DATA_LEN;
-	dev->tx_queue_len = 1000;
 	dev->flags = IFF_POINTOPOINT | IFF_NOARP | IFF_MULTICAST;
 	dev->netdev_ops = &vxlan_netdev_raw_ops;
 }
@@ -2674,13 +2689,6 @@ static const struct ethtool_ops vxlan_ethtool_ops = {
 	.get_link	= ethtool_op_get_link,
 };
 
-static void vxlan_del_work(struct work_struct *work)
-{
-	struct vxlan_sock *vs = container_of(work, struct vxlan_sock, del_work);
-	udp_tunnel_sock_release(vs->sock);
-	kfree_rcu(vs, rcu);
-}
-
 static struct socket *vxlan_create_sock(struct net *net, bool ipv6,
 					__be16 port, u32 flags)
 {
@@ -2725,8 +2733,6 @@ static struct vxlan_sock *vxlan_socket_create(struct net *net, bool ipv6,
 
 	for (h = 0; h < VNI_HASH_SIZE; ++h)
 		INIT_HLIST_HEAD(&vs->vni_list[h]);
-
-	INIT_WORK(&vs->del_work, vxlan_del_work);
 
 	sock = vxlan_create_sock(net, ipv6, port, flags);
 	if (IS_ERR(sock)) {
@@ -3279,20 +3285,22 @@ static void vxlan_handle_lowerdev_unregister(struct vxlan_net *vn,
 	unregister_netdevice_many(&list_kill);
 }
 
-static int vxlan_lowerdev_event(struct notifier_block *unused,
-				unsigned long event, void *ptr)
+static int vxlan_netdevice_event(struct notifier_block *unused,
+				 unsigned long event, void *ptr)
 {
 	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 	struct vxlan_net *vn = net_generic(dev_net(dev), vxlan_net_id);
 
 	if (event == NETDEV_UNREGISTER)
 		vxlan_handle_lowerdev_unregister(vn, dev);
+	else if (event == NETDEV_OFFLOAD_PUSH_VXLAN)
+		vxlan_push_rx_ports(dev);
 
 	return NOTIFY_DONE;
 }
 
 static struct notifier_block vxlan_notifier_block __read_mostly = {
-	.notifier_call = vxlan_lowerdev_event,
+	.notifier_call = vxlan_netdevice_event,
 };
 
 static __net_init int vxlan_init_net(struct net *net)
@@ -3346,10 +3354,6 @@ static int __init vxlan_init_module(void)
 {
 	int rc;
 
-	vxlan_wq = alloc_workqueue("vxlan", 0, 0);
-	if (!vxlan_wq)
-		return -ENOMEM;
-
 	get_random_bytes(&vxlan_salt, sizeof(vxlan_salt));
 
 	rc = register_pernet_subsys(&vxlan_net_ops);
@@ -3370,7 +3374,6 @@ out3:
 out2:
 	unregister_pernet_subsys(&vxlan_net_ops);
 out1:
-	destroy_workqueue(vxlan_wq);
 	return rc;
 }
 late_initcall(vxlan_init_module);
@@ -3379,7 +3382,6 @@ static void __exit vxlan_cleanup_module(void)
 {
 	rtnl_link_unregister(&vxlan_link_ops);
 	unregister_netdevice_notifier(&vxlan_notifier_block);
-	destroy_workqueue(vxlan_wq);
 	unregister_pernet_subsys(&vxlan_net_ops);
 	/* rcu_barrier() is called by netns */
 }

@@ -748,7 +748,7 @@ ath10k_htt_rx_h_peer_channel(struct ath10k *ar, struct htt_rx_desc *rxd)
 	if (WARN_ON_ONCE(!arvif))
 		return NULL;
 
-	if (WARN_ON(ath10k_mac_vif_chan(arvif->vif, &def)))
+	if (WARN_ON_ONCE(ath10k_mac_vif_chan(arvif->vif, &def)))
 		return NULL;
 
 	return def.chan;
@@ -939,7 +939,8 @@ static void ath10k_process_rx(struct ath10k *ar,
 		   is_multicast_ether_addr(ieee80211_get_DA(hdr)) ?
 							"mcast" : "ucast",
 		   (__le16_to_cpu(hdr->seq_ctrl) & IEEE80211_SCTL_SEQ) >> 4,
-		   status->flag == 0 ? "legacy" : "",
+		   (status->flag & (RX_FLAG_HT | RX_FLAG_VHT)) == 0 ?
+							"legacy" : "",
 		   status->flag & RX_FLAG_HT ? "ht" : "",
 		   status->flag & RX_FLAG_VHT ? "vht" : "",
 		   status->flag & RX_FLAG_40MHZ ? "40" : "",
@@ -2291,7 +2292,6 @@ bool ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
 			ath10k_htt_tx_mgmt_dec_pending(htt);
 			spin_unlock_bh(&htt->tx_lock);
 		}
-		ath10k_mac_tx_push_pending(ar);
 		break;
 	}
 	case HTT_T2H_MSG_TYPE_TX_COMPL_IND:
@@ -2441,8 +2441,6 @@ static void ath10k_htt_txrx_compl_task(unsigned long ptr)
 		ath10k_htt_rx_tx_fetch_ind(ar, skb);
 		dev_kfree_skb_any(skb);
 	}
-
-	ath10k_mac_tx_push_pending(ar);
 
 	num_mpdus = atomic_read(&htt->num_mpdus_ready);
 

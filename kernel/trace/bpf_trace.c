@@ -62,17 +62,21 @@ EXPORT_SYMBOL_GPL(trace_call_bpf);
 static u64 bpf_probe_read(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	void *dst = (void *) (long) r1;
-	int size = (int) r2;
+	int ret, size = (int) r2;
 	void *unsafe_ptr = (void *) (long) r3;
 
-	return probe_kernel_read(dst, unsafe_ptr, size);
+	ret = probe_kernel_read(dst, unsafe_ptr, size);
+	if (unlikely(ret < 0))
+		memset(dst, 0, size);
+
+	return ret;
 }
 
 static const struct bpf_func_proto bpf_probe_read_proto = {
 	.func		= bpf_probe_read,
 	.gpl_only	= true,
 	.ret_type	= RET_INTEGER,
-	.arg1_type	= ARG_PTR_TO_STACK,
+	.arg1_type	= ARG_PTR_TO_RAW_STACK,
 	.arg2_type	= ARG_CONST_STACK_SIZE,
 	.arg3_type	= ARG_ANYTHING,
 };
@@ -221,11 +225,12 @@ static const struct bpf_func_proto bpf_perf_event_read_proto = {
 	.arg2_type	= ARG_ANYTHING,
 };
 
-static u64 bpf_perf_event_output(u64 r1, u64 r2, u64 index, u64 r4, u64 size)
+static u64 bpf_perf_event_output(u64 r1, u64 r2, u64 flags, u64 r4, u64 size)
 {
 	struct pt_regs *regs = (struct pt_regs *) (long) r1;
 	struct bpf_map *map = (struct bpf_map *) (long) r2;
 	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	u64 index = flags & BPF_F_INDEX_MASK;
 	void *data = (void *) (long) r4;
 	struct perf_sample_data sample_data;
 	struct perf_event *event;
@@ -235,6 +240,10 @@ static u64 bpf_perf_event_output(u64 r1, u64 r2, u64 index, u64 r4, u64 size)
 		.data = data,
 	};
 
+	if (unlikely(flags & ~(BPF_F_INDEX_MASK)))
+		return -EINVAL;
+	if (index == BPF_F_CURRENT_CPU)
+		index = raw_smp_processor_id();
 	if (unlikely(index >= array->map.max_entries))
 		return -E2BIG;
 
@@ -267,6 +276,33 @@ static const struct bpf_func_proto bpf_perf_event_output_proto = {
 	.arg4_type	= ARG_PTR_TO_STACK,
 	.arg5_type	= ARG_CONST_STACK_SIZE,
 };
+
+static DEFINE_PER_CPU(struct pt_regs, bpf_pt_regs);
+
+static u64 bpf_event_output(u64 r1, u64 r2, u64 flags, u64 r4, u64 size)
+{
+	struct pt_regs *regs = this_cpu_ptr(&bpf_pt_regs);
+
+	perf_fetch_caller_regs(regs);
+
+	return bpf_perf_event_output((long)regs, r2, flags, r4, size);
+}
+
+static const struct bpf_func_proto bpf_event_output_proto = {
+	.func		= bpf_event_output,
+	.gpl_only	= true,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_PTR_TO_CTX,
+	.arg2_type	= ARG_CONST_MAP_PTR,
+	.arg3_type	= ARG_ANYTHING,
+	.arg4_type	= ARG_PTR_TO_STACK,
+	.arg5_type	= ARG_CONST_STACK_SIZE,
+};
+
+const struct bpf_func_proto *bpf_get_event_output_proto(void)
+{
+	return &bpf_event_output_proto;
+}
 
 static const struct bpf_func_proto *tracing_func_proto(enum bpf_func_id func_id)
 {
@@ -347,7 +383,7 @@ static u64 bpf_perf_event_output_tp(u64 r1, u64 r2, u64 index, u64 r4, u64 size)
 	 * from bpf program and contain a pointer to 'struct pt_regs'. Fetch it
 	 * from there and call the same bpf_perf_event_output() helper
 	 */
-	u64 ctx = *(long *)r1;
+	u64 ctx = *(long *)(uintptr_t)r1;
 
 	return bpf_perf_event_output(ctx, r2, index, r4, size);
 }
@@ -365,7 +401,7 @@ static const struct bpf_func_proto bpf_perf_event_output_proto_tp = {
 
 static u64 bpf_get_stackid_tp(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
-	u64 ctx = *(long *)r1;
+	u64 ctx = *(long *)(uintptr_t)r1;
 
 	return bpf_get_stackid(ctx, r2, r3, r4, r5);
 }

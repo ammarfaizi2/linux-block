@@ -24,7 +24,12 @@
 #include <linux/netdev_features.h>
 #include <linux/udp.h>
 #include <linux/tcp.h>
+#ifdef CONFIG_QEDE_VXLAN
 #include <net/vxlan.h>
+#endif
+#ifdef CONFIG_QEDE_GENEVE
+#include <net/geneve.h>
+#endif
 #include <linux/ip.h>
 #include <net/ipv6.h>
 #include <net/tcp.h>
@@ -310,6 +315,9 @@ static u32 qede_xmit_type(struct qede_dev *edev,
 	    (ipv6_hdr(skb)->nexthdr == NEXTHDR_IPV6))
 		*ipv6_ext = 1;
 
+	if (skb->encapsulation)
+		rc |= XMIT_ENC;
+
 	if (skb_is_gso(skb))
 		rc |= XMIT_LSO;
 
@@ -371,6 +379,16 @@ static int map_frag_to_bd(struct qede_dev *edev,
 	return 0;
 }
 
+static u16 qede_get_skb_hlen(struct sk_buff *skb, bool is_encap_pkt)
+{
+	if (is_encap_pkt)
+		return (skb_inner_transport_header(skb) +
+			inner_tcp_hdrlen(skb) - skb->data);
+	else
+		return (skb_transport_header(skb) +
+			tcp_hdrlen(skb) - skb->data);
+}
+
 /* +2 for 1st BD for headers and 2nd BD for headlen (if required) */
 #if ((MAX_SKB_FRAGS + 2) > ETH_TX_MAX_BDS_PER_NON_LSO_PACKET)
 static bool qede_pkt_req_lin(struct qede_dev *edev, struct sk_buff *skb,
@@ -381,8 +399,7 @@ static bool qede_pkt_req_lin(struct qede_dev *edev, struct sk_buff *skb,
 	if (xmit_type & XMIT_LSO) {
 		int hlen;
 
-		hlen = skb_transport_header(skb) +
-		       tcp_hdrlen(skb) - skb->data;
+		hlen = qede_get_skb_hlen(skb, xmit_type & XMIT_ENC);
 
 		/* linear payload would require its own BD */
 		if (skb_headlen(skb) > hlen)
@@ -490,7 +507,18 @@ netdev_tx_t qede_start_xmit(struct sk_buff *skb,
 		first_bd->data.bd_flags.bitfields |=
 			1 << ETH_TX_1ST_BD_FLAGS_L4_CSUM_SHIFT;
 
-		first_bd->data.bitfields |= cpu_to_le16(temp);
+		if (xmit_type & XMIT_ENC) {
+			first_bd->data.bd_flags.bitfields |=
+				1 << ETH_TX_1ST_BD_FLAGS_IP_CSUM_SHIFT;
+		} else {
+			/* In cases when OS doesn't indicate for inner offloads
+			 * when packet is tunnelled, we need to override the HW
+			 * tunnel configuration so that packets are treated as
+			 * regular non tunnelled packets and no inner offloads
+			 * are done by the hardware.
+			 */
+			first_bd->data.bitfields |= cpu_to_le16(temp);
+		}
 
 		/* If the packet is IPv6 with extension header, indicate that
 		 * to FW and pass few params, since the device cracker doesn't
@@ -506,10 +534,15 @@ netdev_tx_t qede_start_xmit(struct sk_buff *skb,
 		third_bd->data.lso_mss =
 			cpu_to_le16(skb_shinfo(skb)->gso_size);
 
-		first_bd->data.bd_flags.bitfields |=
-		1 << ETH_TX_1ST_BD_FLAGS_IP_CSUM_SHIFT;
-		hlen = skb_transport_header(skb) +
-		       tcp_hdrlen(skb) - skb->data;
+		if (unlikely(xmit_type & XMIT_ENC)) {
+			first_bd->data.bd_flags.bitfields |=
+				1 << ETH_TX_1ST_BD_FLAGS_TUNN_IP_CSUM_SHIFT;
+			hlen = qede_get_skb_hlen(skb, true);
+		} else {
+			first_bd->data.bd_flags.bitfields |=
+				1 << ETH_TX_1ST_BD_FLAGS_IP_CSUM_SHIFT;
+			hlen = qede_get_skb_hlen(skb, false);
+		}
 
 		/* @@@TBD - if will not be removed need to check */
 		third_bd->data.bitfields |=
@@ -635,7 +668,7 @@ netdev_tx_t qede_start_xmit(struct sk_buff *skb,
 	return NETDEV_TX_OK;
 }
 
-static int qede_txq_has_work(struct qede_tx_queue *txq)
+int qede_txq_has_work(struct qede_tx_queue *txq)
 {
 	u16 hw_bd_cons;
 
@@ -718,7 +751,7 @@ static int qede_tx_int(struct qede_dev *edev,
 	return 0;
 }
 
-static bool qede_has_rx_work(struct qede_rx_queue *rxq)
+bool qede_has_rx_work(struct qede_rx_queue *rxq)
 {
 	u16 hw_comp_cons, sw_comp_cons;
 
@@ -739,6 +772,12 @@ static bool qede_has_tx_work(struct qede_fastpath *fp)
 		if (qede_txq_has_work(&fp->txqs[tc]))
 			return true;
 	return false;
+}
+
+static inline void qede_rx_bd_ring_consume(struct qede_rx_queue *rxq)
+{
+	qed_chain_consume(&rxq->rx_bd_ring);
+	rxq->sw_rx_cons++;
 }
 
 /* This function reuses the buffer(from an offset) from
@@ -764,6 +803,21 @@ static inline void qede_reuse_page(struct qede_dev *edev,
 	curr_cons->data = NULL;
 }
 
+/* In case of allocation failures reuse buffers
+ * from consumer index to produce buffers for firmware
+ */
+void qede_recycle_rx_bd_ring(struct qede_rx_queue *rxq,
+			     struct qede_dev *edev, u8 count)
+{
+	struct sw_rx_data *curr_cons;
+
+	for (; count > 0; count--) {
+		curr_cons = &rxq->sw_rx_ring[rxq->sw_rx_cons & NUM_RX_BDS_MAX];
+		qede_reuse_page(edev, rxq, curr_cons);
+		qede_rx_bd_ring_consume(rxq);
+	}
+}
+
 static inline int qede_realloc_rx_buffer(struct qede_dev *edev,
 					 struct qede_rx_queue *rxq,
 					 struct sw_rx_data *curr_cons)
@@ -772,8 +826,14 @@ static inline int qede_realloc_rx_buffer(struct qede_dev *edev,
 	curr_cons->page_offset += rxq->rx_buf_seg_size;
 
 	if (curr_cons->page_offset == PAGE_SIZE) {
-		if (unlikely(qede_alloc_rx_buffer(edev, rxq)))
+		if (unlikely(qede_alloc_rx_buffer(edev, rxq))) {
+			/* Since we failed to allocate new buffer
+			 * current buffer can be used again.
+			 */
+			curr_cons->page_offset -= rxq->rx_buf_seg_size;
+
 			return -ENOMEM;
+		}
 
 		dma_unmap_page(&edev->pdev->dev, curr_cons->mapping,
 			       PAGE_SIZE, DMA_FROM_DEVICE);
@@ -843,6 +903,9 @@ static void qede_set_skb_csum(struct sk_buff *skb, u8 csum_flag)
 
 	if (csum_flag & QEDE_CSUM_UNNECESSARY)
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
+
+	if (csum_flag & QEDE_TUNN_CSUM_UNNECESSARY)
+		skb->csum_level = 1;
 }
 
 static inline void qede_skb_receive(struct qede_dev *edev,
@@ -892,7 +955,10 @@ static int qede_fill_frag_skb(struct qede_dev *edev,
 			   len_on_bd);
 
 	if (unlikely(qede_realloc_rx_buffer(edev, rxq, current_bd))) {
-		tpa_info->agg_state = QEDE_AGG_STATE_ERROR;
+		/* Incr page ref count to reuse on allocation failure
+		 * so that it doesn't get freed while freeing SKB.
+		 */
+		atomic_inc(&current_bd->data->_count);
 		goto out;
 	}
 
@@ -906,6 +972,8 @@ static int qede_fill_frag_skb(struct qede_dev *edev,
 	return 0;
 
 out:
+	tpa_info->agg_state = QEDE_AGG_STATE_ERROR;
+	qede_recycle_rx_bd_ring(rxq, edev, 1);
 	return -ENOMEM;
 }
 
@@ -957,8 +1025,9 @@ static void qede_tpa_start(struct qede_dev *edev,
 	tpa_info->skb = netdev_alloc_skb(edev->ndev,
 					 le16_to_cpu(cqe->len_on_first_bd));
 	if (unlikely(!tpa_info->skb)) {
+		DP_NOTICE(edev, "Failed to allocate SKB for gro\n");
 		tpa_info->agg_state = QEDE_AGG_STATE_ERROR;
-		return;
+		goto cons_buf;
 	}
 
 	skb_put(tpa_info->skb, le16_to_cpu(cqe->len_on_first_bd));
@@ -981,6 +1050,7 @@ static void qede_tpa_start(struct qede_dev *edev,
 	/* This is needed in order to enable forwarding support */
 	qede_set_gro_params(edev, tpa_info->skb, cqe);
 
+cons_buf: /* We still need to handle bd_len_list to consume buffers */
 	if (likely(cqe->ext_bd_len_list[0]))
 		qede_fill_frag_skb(edev, rxq, cqe->tpa_agg_index,
 				   le16_to_cpu(cqe->ext_bd_len_list[0]));
@@ -998,7 +1068,6 @@ static void qede_gro_ip_csum(struct sk_buff *skb)
 	const struct iphdr *iph = ip_hdr(skb);
 	struct tcphdr *th;
 
-	skb_set_network_header(skb, 0);
 	skb_set_transport_header(skb, sizeof(struct iphdr));
 	th = tcp_hdr(skb);
 
@@ -1013,7 +1082,6 @@ static void qede_gro_ipv6_csum(struct sk_buff *skb)
 	struct ipv6hdr *iph = ipv6_hdr(skb);
 	struct tcphdr *th;
 
-	skb_set_network_header(skb, 0);
 	skb_set_transport_header(skb, sizeof(struct ipv6hdr));
 	th = tcp_hdr(skb);
 
@@ -1028,8 +1096,21 @@ static void qede_gro_receive(struct qede_dev *edev,
 			     struct sk_buff *skb,
 			     u16 vlan_tag)
 {
+	/* FW can send a single MTU sized packet from gro flow
+	 * due to aggregation timeout/last segment etc. which
+	 * is not expected to be a gro packet. If a skb has zero
+	 * frags then simply push it in the stack as non gso skb.
+	 */
+	if (unlikely(!skb->data_len)) {
+		skb_shinfo(skb)->gso_type = 0;
+		skb_shinfo(skb)->gso_size = 0;
+		goto send_skb;
+	}
+
 #ifdef CONFIG_INET
 	if (skb_shinfo(skb)->gso_size) {
+		skb_set_network_header(skb, 0);
+
 		switch (skb->protocol) {
 		case htons(ETH_P_IP):
 			qede_gro_ip_csum(skb);
@@ -1044,6 +1125,8 @@ static void qede_gro_receive(struct qede_dev *edev,
 		}
 	}
 #endif
+
+send_skb:
 	skb_record_rx_queue(skb, fp->rss_id);
 	qede_skb_receive(edev, fp, skb, vlan_tag);
 }
@@ -1132,13 +1215,47 @@ err:
 	tpa_info->skb = NULL;
 }
 
-static u8 qede_check_csum(u16 flag)
+static bool qede_tunn_exist(u16 flag)
+{
+	return !!(flag & (PARSING_AND_ERR_FLAGS_TUNNELEXIST_MASK <<
+			  PARSING_AND_ERR_FLAGS_TUNNELEXIST_SHIFT));
+}
+
+static u8 qede_check_tunn_csum(u16 flag)
+{
+	u16 csum_flag = 0;
+	u8 tcsum = 0;
+
+	if (flag & (PARSING_AND_ERR_FLAGS_TUNNELL4CHKSMWASCALCULATED_MASK <<
+		    PARSING_AND_ERR_FLAGS_TUNNELL4CHKSMWASCALCULATED_SHIFT))
+		csum_flag |= PARSING_AND_ERR_FLAGS_TUNNELL4CHKSMERROR_MASK <<
+			     PARSING_AND_ERR_FLAGS_TUNNELL4CHKSMERROR_SHIFT;
+
+	if (flag & (PARSING_AND_ERR_FLAGS_L4CHKSMWASCALCULATED_MASK <<
+		    PARSING_AND_ERR_FLAGS_L4CHKSMWASCALCULATED_SHIFT)) {
+		csum_flag |= PARSING_AND_ERR_FLAGS_L4CHKSMERROR_MASK <<
+			     PARSING_AND_ERR_FLAGS_L4CHKSMERROR_SHIFT;
+		tcsum = QEDE_TUNN_CSUM_UNNECESSARY;
+	}
+
+	csum_flag |= PARSING_AND_ERR_FLAGS_TUNNELIPHDRERROR_MASK <<
+		     PARSING_AND_ERR_FLAGS_TUNNELIPHDRERROR_SHIFT |
+		     PARSING_AND_ERR_FLAGS_IPHDRERROR_MASK <<
+		     PARSING_AND_ERR_FLAGS_IPHDRERROR_SHIFT;
+
+	if (csum_flag & flag)
+		return QEDE_CSUM_ERROR;
+
+	return QEDE_CSUM_UNNECESSARY | tcsum;
+}
+
+static u8 qede_check_notunn_csum(u16 flag)
 {
 	u16 csum_flag = 0;
 	u8 csum = 0;
 
-	if ((PARSING_AND_ERR_FLAGS_L4CHKSMWASCALCULATED_MASK <<
-	     PARSING_AND_ERR_FLAGS_L4CHKSMWASCALCULATED_SHIFT) & flag) {
+	if (flag & (PARSING_AND_ERR_FLAGS_L4CHKSMWASCALCULATED_MASK <<
+		    PARSING_AND_ERR_FLAGS_L4CHKSMWASCALCULATED_SHIFT)) {
 		csum_flag |= PARSING_AND_ERR_FLAGS_L4CHKSMERROR_MASK <<
 			     PARSING_AND_ERR_FLAGS_L4CHKSMERROR_SHIFT;
 		csum = QEDE_CSUM_UNNECESSARY;
@@ -1151,6 +1268,14 @@ static u8 qede_check_csum(u16 flag)
 		return QEDE_CSUM_ERROR;
 
 	return csum;
+}
+
+static u8 qede_check_csum(u16 flag)
+{
+	if (!qede_tunn_exist(flag))
+		return qede_check_notunn_csum(flag);
+	else
+		return qede_check_tunn_csum(flag);
 }
 
 static int qede_rx_int(struct qede_fastpath *fp, int budget)
@@ -1235,17 +1360,17 @@ static int qede_rx_int(struct qede_fastpath *fp, int budget)
 				  "CQE in CONS = %u has error, flags = %x, dropping incoming packet\n",
 				  sw_comp_cons, parse_flag);
 			rxq->rx_hw_errors++;
-			qede_reuse_page(edev, rxq, sw_rx_data);
-			goto next_rx;
+			qede_recycle_rx_bd_ring(rxq, edev, fp_cqe->bd_num);
+			goto next_cqe;
 		}
 
 		skb = netdev_alloc_skb(edev->ndev, QEDE_RX_HDR_SIZE);
 		if (unlikely(!skb)) {
 			DP_NOTICE(edev,
 				  "Build_skb failed, dropping incoming packet\n");
-			qede_reuse_page(edev, rxq, sw_rx_data);
+			qede_recycle_rx_bd_ring(rxq, edev, fp_cqe->bd_num);
 			rxq->rx_alloc_errors++;
-			goto next_rx;
+			goto next_cqe;
 		}
 
 		/* Copy data into SKB */
@@ -1279,10 +1404,21 @@ static int qede_rx_int(struct qede_fastpath *fp, int budget)
 			if (unlikely(qede_realloc_rx_buffer(edev, rxq,
 							    sw_rx_data))) {
 				DP_ERR(edev, "Failed to allocate rx buffer\n");
+				/* Incr page ref count to reuse on allocation
+				 * failure so that it doesn't get freed while
+				 * freeing SKB.
+				 */
+
+				atomic_inc(&sw_rx_data->data->_count);
 				rxq->rx_alloc_errors++;
+				qede_recycle_rx_bd_ring(rxq, edev,
+							fp_cqe->bd_num);
+				dev_kfree_skb_any(skb);
 				goto next_cqe;
 			}
 		}
+
+		qede_rx_bd_ring_consume(rxq);
 
 		if (fp_cqe->bd_num != 1) {
 			u16 pkt_len = le16_to_cpu(fp_cqe->pkt_len);
@@ -1294,18 +1430,27 @@ static int qede_rx_int(struct qede_fastpath *fp, int budget)
 			     num_frags--) {
 				u16 cur_size = pkt_len > rxq->rx_buf_size ?
 						rxq->rx_buf_size : pkt_len;
-
-				WARN_ONCE(!cur_size,
-					  "Still got %d BDs for mapping jumbo, but length became 0\n",
-					  num_frags);
-
-				if (unlikely(qede_alloc_rx_buffer(edev, rxq)))
+				if (unlikely(!cur_size)) {
+					DP_ERR(edev,
+					       "Still got %d BDs for mapping jumbo, but length became 0\n",
+					       num_frags);
+					qede_recycle_rx_bd_ring(rxq, edev,
+								num_frags);
+					dev_kfree_skb_any(skb);
 					goto next_cqe;
+				}
 
-				rxq->sw_rx_cons++;
+				if (unlikely(qede_alloc_rx_buffer(edev, rxq))) {
+					qede_recycle_rx_bd_ring(rxq, edev,
+								num_frags);
+					dev_kfree_skb_any(skb);
+					goto next_cqe;
+				}
+
 				sw_rx_index = rxq->sw_rx_cons & NUM_RX_BDS_MAX;
 				sw_rx_data = &rxq->sw_rx_ring[sw_rx_index];
-				qed_chain_consume(&rxq->rx_bd_ring);
+				qede_rx_bd_ring_consume(rxq);
+
 				dma_unmap_page(&edev->pdev->dev,
 					       sw_rx_data->mapping,
 					       PAGE_SIZE, DMA_FROM_DEVICE);
@@ -1321,7 +1466,7 @@ static int qede_rx_int(struct qede_fastpath *fp, int budget)
 				pkt_len -= cur_size;
 			}
 
-			if (pkt_len)
+			if (unlikely(pkt_len))
 				DP_ERR(edev,
 				       "Mapped all BDs of jumbo, but still have %d bytes\n",
 				       pkt_len);
@@ -1340,10 +1485,6 @@ static int qede_rx_int(struct qede_fastpath *fp, int budget)
 		skb_record_rx_queue(skb, fp->rss_id);
 
 		qede_skb_receive(edev, fp, skb, le16_to_cpu(fp_cqe->vlan_tag));
-
-		qed_chain_consume(&rxq->rx_bd_ring);
-next_rx:
-		rxq->sw_rx_cons++;
 next_rx_only:
 		rx_pkt++;
 
@@ -1497,16 +1638,25 @@ void qede_fill_by_demand_stats(struct qede_dev *edev)
 	edev->stats.coalesced_bytes = stats.tpa_coalesced_bytes;
 
 	edev->stats.rx_64_byte_packets = stats.rx_64_byte_packets;
-	edev->stats.rx_127_byte_packets = stats.rx_127_byte_packets;
-	edev->stats.rx_255_byte_packets = stats.rx_255_byte_packets;
-	edev->stats.rx_511_byte_packets = stats.rx_511_byte_packets;
-	edev->stats.rx_1023_byte_packets = stats.rx_1023_byte_packets;
-	edev->stats.rx_1518_byte_packets = stats.rx_1518_byte_packets;
-	edev->stats.rx_1522_byte_packets = stats.rx_1522_byte_packets;
-	edev->stats.rx_2047_byte_packets = stats.rx_2047_byte_packets;
-	edev->stats.rx_4095_byte_packets = stats.rx_4095_byte_packets;
-	edev->stats.rx_9216_byte_packets = stats.rx_9216_byte_packets;
-	edev->stats.rx_16383_byte_packets = stats.rx_16383_byte_packets;
+	edev->stats.rx_65_to_127_byte_packets = stats.rx_65_to_127_byte_packets;
+	edev->stats.rx_128_to_255_byte_packets =
+				stats.rx_128_to_255_byte_packets;
+	edev->stats.rx_256_to_511_byte_packets =
+				stats.rx_256_to_511_byte_packets;
+	edev->stats.rx_512_to_1023_byte_packets =
+				stats.rx_512_to_1023_byte_packets;
+	edev->stats.rx_1024_to_1518_byte_packets =
+				stats.rx_1024_to_1518_byte_packets;
+	edev->stats.rx_1519_to_1522_byte_packets =
+				stats.rx_1519_to_1522_byte_packets;
+	edev->stats.rx_1519_to_2047_byte_packets =
+				stats.rx_1519_to_2047_byte_packets;
+	edev->stats.rx_2048_to_4095_byte_packets =
+				stats.rx_2048_to_4095_byte_packets;
+	edev->stats.rx_4096_to_9216_byte_packets =
+				stats.rx_4096_to_9216_byte_packets;
+	edev->stats.rx_9217_to_16383_byte_packets =
+				stats.rx_9217_to_16383_byte_packets;
 	edev->stats.rx_crc_errors = stats.rx_crc_errors;
 	edev->stats.rx_mac_crtl_frames = stats.rx_mac_crtl_frames;
 	edev->stats.rx_pause_frames = stats.rx_pause_frames;
@@ -1821,6 +1971,76 @@ static void qede_vlan_mark_nonconfigured(struct qede_dev *edev)
 	edev->accept_any_vlan = false;
 }
 
+#ifdef CONFIG_QEDE_VXLAN
+static void qede_add_vxlan_port(struct net_device *dev,
+				sa_family_t sa_family, __be16 port)
+{
+	struct qede_dev *edev = netdev_priv(dev);
+	u16 t_port = ntohs(port);
+
+	if (edev->vxlan_dst_port)
+		return;
+
+	edev->vxlan_dst_port = t_port;
+
+	DP_VERBOSE(edev, QED_MSG_DEBUG, "Added vxlan port=%d", t_port);
+
+	set_bit(QEDE_SP_VXLAN_PORT_CONFIG, &edev->sp_flags);
+	schedule_delayed_work(&edev->sp_task, 0);
+}
+
+static void qede_del_vxlan_port(struct net_device *dev,
+				sa_family_t sa_family, __be16 port)
+{
+	struct qede_dev *edev = netdev_priv(dev);
+	u16 t_port = ntohs(port);
+
+	if (t_port != edev->vxlan_dst_port)
+		return;
+
+	edev->vxlan_dst_port = 0;
+
+	DP_VERBOSE(edev, QED_MSG_DEBUG, "Deleted vxlan port=%d", t_port);
+
+	set_bit(QEDE_SP_VXLAN_PORT_CONFIG, &edev->sp_flags);
+	schedule_delayed_work(&edev->sp_task, 0);
+}
+#endif
+
+#ifdef CONFIG_QEDE_GENEVE
+static void qede_add_geneve_port(struct net_device *dev,
+				 sa_family_t sa_family, __be16 port)
+{
+	struct qede_dev *edev = netdev_priv(dev);
+	u16 t_port = ntohs(port);
+
+	if (edev->geneve_dst_port)
+		return;
+
+	edev->geneve_dst_port = t_port;
+
+	DP_VERBOSE(edev, QED_MSG_DEBUG, "Added geneve port=%d", t_port);
+	set_bit(QEDE_SP_GENEVE_PORT_CONFIG, &edev->sp_flags);
+	schedule_delayed_work(&edev->sp_task, 0);
+}
+
+static void qede_del_geneve_port(struct net_device *dev,
+				 sa_family_t sa_family, __be16 port)
+{
+	struct qede_dev *edev = netdev_priv(dev);
+	u16 t_port = ntohs(port);
+
+	if (t_port != edev->geneve_dst_port)
+		return;
+
+	edev->geneve_dst_port = 0;
+
+	DP_VERBOSE(edev, QED_MSG_DEBUG, "Deleted geneve port=%d", t_port);
+	set_bit(QEDE_SP_GENEVE_PORT_CONFIG, &edev->sp_flags);
+	schedule_delayed_work(&edev->sp_task, 0);
+}
+#endif
+
 static const struct net_device_ops qede_netdev_ops = {
 	.ndo_open = qede_open,
 	.ndo_stop = qede_close,
@@ -1832,6 +2052,14 @@ static const struct net_device_ops qede_netdev_ops = {
 	.ndo_vlan_rx_add_vid = qede_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid = qede_vlan_rx_kill_vid,
 	.ndo_get_stats64 = qede_get_stats64,
+#ifdef CONFIG_QEDE_VXLAN
+	.ndo_add_vxlan_port = qede_add_vxlan_port,
+	.ndo_del_vxlan_port = qede_del_vxlan_port,
+#endif
+#ifdef CONFIG_QEDE_GENEVE
+	.ndo_add_geneve_port = qede_add_geneve_port,
+	.ndo_del_geneve_port = qede_del_geneve_port,
+#endif
 };
 
 /* -------------------------------------------------------------------------
@@ -1903,6 +2131,14 @@ static void qede_init_ndev(struct qede_dev *edev)
 	hw_features = NETIF_F_GRO | NETIF_F_SG |
 		      NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
 		      NETIF_F_TSO | NETIF_F_TSO6;
+
+	/* Encap features*/
+	hw_features |= NETIF_F_GSO_GRE | NETIF_F_GSO_UDP_TUNNEL |
+		       NETIF_F_TSO_ECN;
+	ndev->hw_enc_features = NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
+				NETIF_F_SG | NETIF_F_TSO | NETIF_F_TSO_ECN |
+				NETIF_F_TSO6 | NETIF_F_GSO_GRE |
+				NETIF_F_GSO_UDP_TUNNEL | NETIF_F_RXCSUM;
 
 	ndev->vlan_features = hw_features | NETIF_F_RXHASH | NETIF_F_RXCSUM |
 			      NETIF_F_HIGHDMA;
@@ -2004,11 +2240,31 @@ static void qede_sp_task(struct work_struct *work)
 {
 	struct qede_dev *edev = container_of(work, struct qede_dev,
 					     sp_task.work);
+	struct qed_dev *cdev = edev->cdev;
+
 	mutex_lock(&edev->qede_lock);
 
 	if (edev->state == QEDE_STATE_OPEN) {
 		if (test_and_clear_bit(QEDE_SP_RX_MODE, &edev->sp_flags))
 			qede_config_rx_mode(edev->ndev);
+	}
+
+	if (test_and_clear_bit(QEDE_SP_VXLAN_PORT_CONFIG, &edev->sp_flags)) {
+		struct qed_tunn_params tunn_params;
+
+		memset(&tunn_params, 0, sizeof(tunn_params));
+		tunn_params.update_vxlan_port = 1;
+		tunn_params.vxlan_port = edev->vxlan_dst_port;
+		qed_ops->tunn_config(cdev, &tunn_params);
+	}
+
+	if (test_and_clear_bit(QEDE_SP_GENEVE_PORT_CONFIG, &edev->sp_flags)) {
+		struct qed_tunn_params tunn_params;
+
+		memset(&tunn_params, 0, sizeof(tunn_params));
+		tunn_params.update_geneve_port = 1;
+		tunn_params.geneve_port = edev->geneve_dst_port;
+		qed_ops->tunn_config(cdev, &tunn_params);
 	}
 
 	mutex_unlock(&edev->qede_lock);
@@ -2248,7 +2504,7 @@ static void qede_free_sge_mem(struct qede_dev *edev,
 		struct qede_agg_info *tpa_info = &rxq->tpa_info[i];
 		struct sw_rx_data *replace_buf = &tpa_info->replace_buf;
 
-		if (replace_buf) {
+		if (replace_buf->data) {
 			dma_unmap_page(&edev->pdev->dev,
 				       dma_unmap_addr(replace_buf, mapping),
 				       PAGE_SIZE, DMA_FROM_DEVICE);
@@ -2368,7 +2624,7 @@ err:
 static int qede_alloc_mem_rxq(struct qede_dev *edev,
 			      struct qede_rx_queue *rxq)
 {
-	int i, rc, size, num_allocated;
+	int i, rc, size;
 
 	rxq->num_rx_buffers = edev->q_num_rx_buffers;
 
@@ -2385,6 +2641,7 @@ static int qede_alloc_mem_rxq(struct qede_dev *edev,
 	rxq->sw_rx_ring = kzalloc(size, GFP_KERNEL);
 	if (!rxq->sw_rx_ring) {
 		DP_ERR(edev, "Rx buffers ring allocation failed\n");
+		rc = -ENOMEM;
 		goto err;
 	}
 
@@ -2412,26 +2669,16 @@ static int qede_alloc_mem_rxq(struct qede_dev *edev,
 	/* Allocate buffers for the Rx ring */
 	for (i = 0; i < rxq->num_rx_buffers; i++) {
 		rc = qede_alloc_rx_buffer(edev, rxq);
-		if (rc)
-			break;
-	}
-	num_allocated = i;
-	if (!num_allocated) {
-		DP_ERR(edev, "Rx buffers allocation failed\n");
-		goto err;
-	} else if (num_allocated < rxq->num_rx_buffers) {
-		DP_NOTICE(edev,
-			  "Allocated less buffers than desired (%d allocated)\n",
-			  num_allocated);
+		if (rc) {
+			DP_ERR(edev,
+			       "Rx buffers allocation failed at index %d\n", i);
+			goto err;
+		}
 	}
 
-	qede_alloc_sge_mem(edev, rxq);
-
-	return 0;
-
+	rc = qede_alloc_sge_mem(edev, rxq);
 err:
-	qede_free_mem_rxq(edev, rxq);
-	return -ENOMEM;
+	return rc;
 }
 
 static void qede_free_mem_txq(struct qede_dev *edev,
@@ -2514,10 +2761,8 @@ static int qede_alloc_mem_fp(struct qede_dev *edev,
 	}
 
 	return 0;
-
 err:
-	qede_free_mem_fp(edev, fp);
-	return -ENOMEM;
+	return rc;
 }
 
 static void qede_free_mem_load(struct qede_dev *edev)
@@ -2540,22 +2785,13 @@ static int qede_alloc_mem_load(struct qede_dev *edev)
 		struct qede_fastpath *fp = &edev->fp_array[rss_id];
 
 		rc = qede_alloc_mem_fp(edev, fp);
-		if (rc)
-			break;
-	}
-
-	if (rss_id != QEDE_RSS_CNT(edev)) {
-		/* Failed allocating memory for all the queues */
-		if (!rss_id) {
+		if (rc) {
 			DP_ERR(edev,
-			       "Failed to allocate memory for the leading queue\n");
-			rc = -ENOMEM;
-		} else {
-			DP_NOTICE(edev,
-				  "Failed to allocate memory for all of RSS queues\n Desired: %d queues, allocated: %d queues\n",
-				  QEDE_RSS_CNT(edev), rss_id);
+			       "Failed to allocate memory for fastpath - rss id = %d\n",
+			       rss_id);
+			qede_free_mem_load(edev);
+			return rc;
 		}
-		edev->num_rss = rss_id;
 	}
 
 	return 0;
@@ -3149,12 +3385,24 @@ void qede_reload(struct qede_dev *edev,
 static int qede_open(struct net_device *ndev)
 {
 	struct qede_dev *edev = netdev_priv(ndev);
+	int rc;
 
 	netif_carrier_off(ndev);
 
 	edev->ops->common->set_power_state(edev->cdev, PCI_D0);
 
-	return qede_load(edev, QEDE_LOAD_NORMAL);
+	rc = qede_load(edev, QEDE_LOAD_NORMAL);
+
+	if (rc)
+		return rc;
+
+#ifdef CONFIG_QEDE_VXLAN
+	vxlan_get_rx_port(ndev);
+#endif
+#ifdef CONFIG_QEDE_GENEVE
+	geneve_get_rx_port(ndev);
+#endif
+	return 0;
 }
 
 static int qede_close(struct net_device *ndev)

@@ -46,6 +46,10 @@
 #include <linux/mlx5/doorbell.h>
 
 enum {
+	MLX5_RQ_BITMASK_VSD = 1 << 1,
+};
+
+enum {
 	MLX5_BOARD_ID_LEN = 64,
 	MLX5_MAX_NAME_LEN = 16,
 };
@@ -112,9 +116,12 @@ enum {
 	MLX5_REG_PMPE		 = 0x5010,
 	MLX5_REG_PELC		 = 0x500e,
 	MLX5_REG_PVLC		 = 0x500f,
-	MLX5_REG_PMLP		 = 0, /* TBD */
+	MLX5_REG_PCMR		 = 0x5041,
+	MLX5_REG_PMLP		 = 0x5002,
 	MLX5_REG_NODE_DESC	 = 0x6001,
 	MLX5_REG_HOST_ENDIANNESS = 0x7004,
+	MLX5_REG_MCIA		 = 0x9014,
+	MLX5_REG_MLCR		 = 0x902b,
 };
 
 enum {
@@ -519,8 +526,9 @@ enum mlx5_device_state {
 };
 
 enum mlx5_interface_state {
-	MLX5_INTERFACE_STATE_DOWN,
-	MLX5_INTERFACE_STATE_UP,
+	MLX5_INTERFACE_STATE_DOWN = BIT(0),
+	MLX5_INTERFACE_STATE_UP = BIT(1),
+	MLX5_INTERFACE_STATE_SHUTDOWN = BIT(2),
 };
 
 enum mlx5_pci_status {
@@ -544,7 +552,7 @@ struct mlx5_core_dev {
 	enum mlx5_device_state	state;
 	/* sync interface state */
 	struct mutex		intf_state_mutex;
-	enum mlx5_interface_state interface_state;
+	unsigned long		intf_state;
 	void			(*event) (struct mlx5_core_dev *dev,
 					  enum mlx5_dev_event event,
 					  unsigned long param);
@@ -552,6 +560,9 @@ struct mlx5_core_dev {
 	struct mlx5_profile	*profile;
 	atomic_t		num_qps;
 	u32			issi;
+#ifdef CONFIG_RFS_ACCEL
+	struct cpu_rmap         *rmap;
+#endif
 };
 
 struct mlx5_db {
