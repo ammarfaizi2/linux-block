@@ -60,6 +60,7 @@ struct perf_evlist {
 	struct perf_evsel *selected;
 	struct events_stats stats;
 	struct perf_env	*env;
+	struct perf_evlist *parent;
 };
 
 struct perf_evsel_str_handler {
@@ -70,6 +71,8 @@ struct perf_evsel_str_handler {
 struct perf_evlist *perf_evlist__new(void);
 struct perf_evlist *perf_evlist__new_default(void);
 struct perf_evlist *perf_evlist__new_dummy(void);
+struct perf_evlist *perf_evlist__new_aux(struct perf_evlist *);
+
 void perf_evlist__init(struct perf_evlist *evlist, struct cpu_map *cpus,
 		       struct thread_map *threads);
 void perf_evlist__exit(struct perf_evlist *evlist);

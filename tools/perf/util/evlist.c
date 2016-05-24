@@ -45,6 +45,7 @@ void perf_evlist__init(struct perf_evlist *evlist, struct cpu_map *cpus,
 	fdarray__init(&evlist->pollfd, 64);
 	evlist->workload.pid = -1;
 	evlist->backward = false;
+	evlist->parent = evlist;
 }
 
 struct perf_evlist *perf_evlist__new(void)
@@ -1009,7 +1010,7 @@ static int perf_evlist__mmap_per_evsel(struct perf_evlist *evlist, int idx,
 	struct perf_evsel *evsel;
 	int revent;
 
-	evlist__for_each(evlist, evsel) {
+	evlist__for_each(evlist->parent, evsel) {
 		int fd;
 
 		if (evsel->overwrite != (evlist->overwrite && evlist->backward))
@@ -1041,16 +1042,16 @@ static int perf_evlist__mmap_per_evsel(struct perf_evlist *evlist, int idx,
 		 * Therefore don't add it for polling.
 		 */
 		if (!evsel->system_wide &&
-		    __perf_evlist__add_pollfd(evlist, fd, idx, revent) < 0) {
+		    __perf_evlist__add_pollfd(evlist->parent, fd, idx, revent) < 0) {
 			perf_evlist__mmap_put(evlist, idx);
 			return -1;
 		}
 
 		if (evsel->attr.read_format & PERF_FORMAT_ID) {
-			if (perf_evlist__id_add_fd(evlist, evsel, cpu, thread,
+			if (perf_evlist__id_add_fd(evlist->parent, evsel, cpu, thread,
 						   fd) < 0)
 				return -1;
-			perf_evlist__set_sid_idx(evlist, evsel, idx, cpu,
+			perf_evlist__set_sid_idx(evlist->parent, evsel, idx, cpu,
 						 thread);
 		}
 	}
@@ -1091,13 +1092,13 @@ static int perf_evlist__mmap_per_thread(struct perf_evlist *evlist,
 					struct mmap_params *mp)
 {
 	int thread;
-	int nr_threads = thread_map__nr(evlist->threads);
+	int nr_threads = thread_map__nr(evlist->parent->threads);
 
 	pr_debug2("perf event ring buffer mmapped per thread\n");
 	for (thread = 0; thread < nr_threads; thread++) {
 		int output = -1;
 
-		auxtrace_mmap_params__set_idx(&mp->auxtrace_mp, evlist, thread,
+		auxtrace_mmap_params__set_idx(&mp->auxtrace_mp, evlist->parent, thread,
 					      false);
 
 		if (perf_evlist__mmap_per_evsel(evlist, thread, mp, 0, thread,
@@ -1236,8 +1237,8 @@ int perf_evlist__mmap_ex(struct perf_evlist *evlist, unsigned int pages,
 			 bool auxtrace_overwrite)
 {
 	struct perf_evsel *evsel;
-	const struct cpu_map *cpus = evlist->cpus;
-	const struct thread_map *threads = evlist->threads;
+	const struct cpu_map *cpus = evlist->parent->cpus;
+	const struct thread_map *threads = evlist->parent->threads;
 	struct mmap_params mp = {
 		.prot = PROT_READ | (overwrite ? 0 : PROT_WRITE),
 	};
@@ -1245,7 +1246,7 @@ int perf_evlist__mmap_ex(struct perf_evlist *evlist, unsigned int pages,
 	if (evlist->mmap == NULL && perf_evlist__alloc_mmap(evlist) < 0)
 		return -ENOMEM;
 
-	if (evlist->pollfd.entries == NULL && perf_evlist__alloc_pollfd(evlist) < 0)
+	if (evlist->parent->pollfd.entries == NULL && perf_evlist__alloc_pollfd(evlist->parent) < 0)
 		return -ENOMEM;
 
 	evlist->overwrite = overwrite;
@@ -1256,7 +1257,7 @@ int perf_evlist__mmap_ex(struct perf_evlist *evlist, unsigned int pages,
 	auxtrace_mmap_params__init(&mp.auxtrace_mp, evlist->mmap_len,
 				   auxtrace_pages, auxtrace_overwrite);
 
-	evlist__for_each(evlist, evsel) {
+	evlist__for_each(evlist->parent, evsel) {
 		if ((evsel->attr.read_format & PERF_FORMAT_ID) &&
 		    evsel->sample_id == NULL &&
 		    perf_evsel__alloc_id(evsel, cpu_map__nr(cpus), threads->nr) < 0)
@@ -1912,4 +1913,14 @@ perf_evlist__find_evsel_by_str(struct perf_evlist *evlist,
 	}
 
 	return NULL;
+}
+
+struct perf_evlist *perf_evlist__new_aux(struct perf_evlist *parent)
+{
+	struct perf_evlist *evlist = zalloc(sizeof(*evlist));
+
+	if (evlist != NULL)
+		perf_evlist__init(evlist, parent->cpus, parent->threads);
+	evlist->parent = parent->parent;
+	return evlist;
 }
