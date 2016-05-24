@@ -13,6 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifndef __ASM_SIGNAL32_H
 #define __ASM_SIGNAL32_H
 
@@ -21,6 +22,7 @@
 #ifdef CONFIG_AARCH32_EL0
 
 #include <linux/compat.h>
+#include <asm/signal32_common.h>
 
 #define AARCH32_KERN_SIGRET_CODE_OFFSET	0x500
 
