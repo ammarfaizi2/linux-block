@@ -71,7 +71,7 @@ static const char *const hwcap_str[] = {
 	NULL
 };
 
-#ifdef CONFIG_COMPAT
+#ifdef CONFIG_AARCH32_EL0
 static const char *const compat_hwcap_str[] = {
 	"swp",
 	"half",
@@ -106,7 +106,7 @@ static const char *const compat_hwcap2_str[] = {
 	"crc32",
 	NULL
 };
-#endif /* CONFIG_COMPAT */
+#endif /* CONFIG_AARCH32_EL0 */
 
 static int c_show(struct seq_file *m, void *v)
 {
@@ -139,7 +139,7 @@ static int c_show(struct seq_file *m, void *v)
 		 */
 		seq_puts(m, "Features\t:");
 		if (compat) {
-#ifdef CONFIG_COMPAT
+#ifdef CONFIG_AARCH32_EL0
 			for (j = 0; compat_hwcap_str[j]; j++)
 				if (compat_elf_hwcap & (1 << j))
 					seq_printf(m, " %s", compat_hwcap_str[j]);
@@ -147,7 +147,7 @@ static int c_show(struct seq_file *m, void *v)
 			for (j = 0; compat_hwcap2_str[j]; j++)
 				if (compat_elf_hwcap2 & (1 << j))
 					seq_printf(m, " %s", compat_hwcap2_str[j]);
-#endif /* CONFIG_COMPAT */
+#endif /* CONFIG_AARCH32_EL0 */
 		} else {
 			for (j = 0; hwcap_str[j]; j++)
 				if (elf_hwcap & (1 << j))
