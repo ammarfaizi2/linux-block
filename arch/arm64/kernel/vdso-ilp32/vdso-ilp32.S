@@ -12,36 +12,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Author: Will Deacon <will.deacon@arm.com>
  */
-#ifndef __ASM_VDSO_H
-#define __ASM_VDSO_H
 
-#ifdef __KERNEL__
+#include <linux/init.h>
+#include <linux/linkage.h>
+#include <linux/const.h>
+#include <asm/page.h>
 
-/*
- * Default link address for the vDSO.
- * Since we randomise the VDSO mapping, there's little point in trying
- * to prelink this.
- */
-#define VDSO_LBASE	0x0
+	__PAGE_ALIGNED_DATA
 
-#ifndef __ASSEMBLY__
+	.globl vdso_ilp32_start, vdso_ilp32_end
+	.balign PAGE_SIZE
+vdso_ilp32_start:
+	.incbin "arch/arm64/kernel/vdso-ilp32/vdso-ilp32.so"
+	.balign PAGE_SIZE
+vdso_ilp32_end:
 
-#include <generated/vdso-offsets.h>
-
-#ifdef CONFIG_ARM64_ILP32
-#include <generated/vdso-ilp32-offsets.h>
-#else
-#define vdso_offset_sigtramp_ilp32	({ BUILD_BUG(); 0; })
-#endif
-
-#define VDSO_SYMBOL(base, name)						   \
-({									   \
-	(void *)(vdso_offset_##name - VDSO_LBASE + (unsigned long)(base)); \
-})
-
-#endif /* !__ASSEMBLY__ */
-
-#endif /* __KERNEL__ */
-
-#endif /* __ASM_VDSO_H */
+	.previous
