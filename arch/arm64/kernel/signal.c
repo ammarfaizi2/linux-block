@@ -35,6 +35,7 @@
 #include <asm/signal32.h>
 #include <asm/vdso.h>
 #include <asm/signal_common.h>
+#include <asm/signal_ilp32.h>
 
 #define RT_SIGFRAME_FP_POS (offsetof(struct rt_sigframe, sig)	\
 			+ offsetof(struct sigframe, fp))
@@ -325,6 +326,8 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
 			ret = a32_setup_rt_frame(usig, ksig, oldset, regs);
 		else
 			ret = a32_setup_frame(usig, ksig, oldset, regs);
+	} else if (is_ilp32_compat_task()) {
+		ret = ilp32_setup_rt_frame(usig, ksig, oldset, regs);
 	} else {
 		ret = setup_rt_frame(usig, ksig, oldset, regs);
 	}
