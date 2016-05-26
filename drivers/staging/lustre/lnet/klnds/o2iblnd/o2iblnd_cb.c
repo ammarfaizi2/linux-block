@@ -1498,6 +1498,7 @@ kiblnd_send(lnet_ni_t *ni, void *private, lnet_msg_t *lntmsg)
 	lnet_kiov_t *payload_kiov = lntmsg->msg_kiov;
 	unsigned int payload_offset = lntmsg->msg_offset;
 	unsigned int payload_nob = lntmsg->msg_len;
+	struct iov_iter from;
 	kib_msg_t *ibmsg;
 	kib_rdma_desc_t  *rd;
 	kib_tx_t *tx;
@@ -1516,6 +1517,14 @@ kiblnd_send(lnet_ni_t *ni, void *private, lnet_msg_t *lntmsg)
 	LASSERT(!in_interrupt());
 	/* payload is either all vaddrs or all pages */
 	LASSERT(!(payload_kiov && payload_iov));
+
+	if (payload_kiov)
+		iov_iter_bvec(&from, ITER_BVEC | WRITE,
+				payload_kiov, payload_niov, payload_nob);
+	else
+		iov_iter_kvec(&from, ITER_BVEC | WRITE,
+				payload_iov, payload_niov, payload_nob);
+	iov_iter_advance(&from, payload_offset);
 
 	switch (type) {
 	default:
@@ -1636,17 +1645,8 @@ kiblnd_send(lnet_ni_t *ni, void *private, lnet_msg_t *lntmsg)
 	ibmsg = tx->tx_msg;
 	ibmsg->ibm_u.immediate.ibim_hdr = *hdr;
 
-	if (payload_kiov)
-		lnet_copy_kiov2flat(IBLND_MSG_SIZE, ibmsg,
-				    offsetof(kib_msg_t, ibm_u.immediate.ibim_payload),
-				    payload_niov, payload_kiov,
-				    payload_offset, payload_nob);
-	else
-		lnet_copy_iov2flat(IBLND_MSG_SIZE, ibmsg,
-				   offsetof(kib_msg_t, ibm_u.immediate.ibim_payload),
-				   payload_niov, payload_iov,
-				   payload_offset, payload_nob);
-
+	copy_from_iter(&ibmsg->ibm_u.immediate.ibim_payload, IBLND_MSG_SIZE,
+		       &from);
 	nob = offsetof(kib_immediate_msg_t, ibim_payload[payload_nob]);
 	kiblnd_init_tx_msg(ni, tx, IBLND_MSG_IMMEDIATE, nob);
 
@@ -1746,16 +1746,7 @@ kiblnd_recv(lnet_ni_t *ni, void *private, lnet_msg_t *lntmsg, int delayed,
 			break;
 		}
 
-		if (to->type & ITER_BVEC)
-			lnet_copy_flat2kiov(to->nr_segs, to->bvec, to->iov_offset,
-					    IBLND_MSG_SIZE, rxmsg,
-					    offsetof(kib_msg_t, ibm_u.immediate.ibim_payload),
-					    iov_iter_count(to));
-		else
-			lnet_copy_flat2iov(to->nr_segs, to->kvec, to->iov_offset,
-					   IBLND_MSG_SIZE, rxmsg,
-					   offsetof(kib_msg_t, ibm_u.immediate.ibim_payload),
-					   iov_iter_count(to));
+		copy_to_iter(&rxmsg->ibm_u.immediate.ibim_payload, IBLND_MSG_SIZE, to);
 		lnet_finalize(ni, lntmsg, 0);
 		break;
 
