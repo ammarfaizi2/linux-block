@@ -47,6 +47,10 @@
 #include <linux/random.h>
 #include <linux/stringify.h>
 
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
+
 #ifndef O_CLOEXEC
 # define O_CLOEXEC		02000000
 #endif
@@ -101,6 +105,7 @@ struct trace {
 	bool			kernel_syscallchains;
 	bool			force;
 	bool			vfs_getname;
+	bool			sockaddr;
 	int			trace_pgfaults;
 	int			open_id;
 };
@@ -466,6 +471,11 @@ static size_t syscall_arg__scnprintf_filename(char *bf, size_t size,
 
 #define SCA_FILENAME syscall_arg__scnprintf_filename
 
+static size_t syscall_arg__scnprintf_sockaddr_set_fd(char *bf, size_t size,
+						     struct syscall_arg *arg);
+
+#define SCA_SOCKADDR_SET_FD syscall_arg__scnprintf_sockaddr_set_fd
+
 static size_t syscall_arg__scnprintf_pipe_flags(char *bf, size_t size,
 						struct syscall_arg *arg)
 {
@@ -574,6 +584,7 @@ static struct syscall_fmt {
 	bool	   errpid;
 	bool	   timeout;
 	bool	   hexret;
+	bool	   errfd;
 } syscall_fmts[] = {
 	{ .name	    = "access",	    .errmsg = true,
 	  .arg_scnprintf = { [1] = SCA_ACCMODE,  /* mode */ }, },
@@ -588,7 +599,8 @@ static struct syscall_fmt {
 	{ .name	    = "clone",	    .errpid = true, },
 	{ .name	    = "close",	    .errmsg = true,
 	  .arg_scnprintf = { [0] = SCA_CLOSE_FD, /* fd */ }, },
-	{ .name	    = "connect",    .errmsg = true, },
+	{ .name	    = "connect",    .errmsg = true,
+	  .arg_scnprintf = { [1] = SCA_SOCKADDR_SET_FD, /* uservaddr */ }, },
 	{ .name	    = "creat",	    .errmsg = true, },
 	{ .name	    = "dup",	    .errmsg = true, },
 	{ .name	    = "dup2",	    .errmsg = true, },
@@ -756,7 +768,7 @@ static struct syscall_fmt {
 	{ .name	    = "setrlimit",  .errmsg = true, STRARRAY(0, resource, rlimit_resources), },
 	{ .name	    = "setxattr",   .errmsg = true, },
 	{ .name	    = "shutdown",   .errmsg = true, },
-	{ .name	    = "socket",	    .errmsg = true,
+	{ .name	    = "socket",	    .errmsg = true, .errfd = true,
 	  .arg_scnprintf = { [0] = SCA_STRARRAY, /* family */
 			     [1] = SCA_SK_TYPE, /* type */ },
 	  .arg_parm	 = { [0] = &strarray__socket_families, /* family */ }, },
@@ -808,7 +820,7 @@ static struct syscall_fmt *syscall_fmt__find(const char *name)
 struct syscall {
 	struct event_format *tp_format;
 	int		    nr_args;
-	struct format_field *args;
+	struct format_field *args, *fd;
 	const char	    *name;
 	bool		    is_exit;
 	struct syscall_fmt  *fmt;
@@ -831,6 +843,7 @@ static size_t fprintf_duration(unsigned long t, FILE *fp)
 }
 
 /**
+ * fd: Current fd, if the syscall has one, set at trace__sys_enter
  * filename.ptr: The filename char pointer that will be vfs_getname'd
  * filename.entry_str_pos: Where to insert the string translated from
  *                         filename.ptr by the vfs_getname tracepoint/kprobe.
@@ -839,6 +852,7 @@ struct thread_trace {
 	u64		  entry_time;
 	u64		  exit_time;
 	bool		  entry_pending;
+	int		  fd;
 	unsigned long	  nr_events;
 	unsigned long	  pfmaj, pfmin;
 	char		  *entry_str;
@@ -850,6 +864,14 @@ struct thread_trace {
 		unsigned int  namelen;
 		char	      *name;
 	} filename;
+        struct {
+		unsigned long	ptr;
+		short int	entry_str_pos;
+		bool		pending;
+		bool		set_fd;
+		unsigned short  slen;
+		struct sockaddr *addr;
+	} sockaddr;
 	struct {
 		int	  max;
 		char	  **table;
@@ -877,15 +899,16 @@ static struct thread_trace *thread__trace(struct thread *thread, FILE *fp)
 	if (thread == NULL)
 		goto fail;
 
-	if (thread__priv(thread) == NULL)
-		thread__set_priv(thread, thread_trace__new());
-
-	if (thread__priv(thread) == NULL)
-		goto fail;
-
 	ttrace = thread__priv(thread);
-	++ttrace->nr_events;
+	if (ttrace == NULL) {
+		thread__set_priv(thread, thread_trace__new());
+		ttrace = thread__priv(thread);
+		if (ttrace == NULL)
+			goto fail;
+		ttrace->fd = -1;
+	}
 
+	++ttrace->nr_events;
 	return ttrace;
 fail:
 	color_fprintf(fp, PERF_COLOR_RED,
@@ -898,7 +921,7 @@ fail:
 
 static const size_t trace__entry_str_size = 2048;
 
-static int trace__set_fd_pathname(struct thread *thread, int fd, const char *pathname)
+static int __trace__set_fd_pathname(struct thread *thread, int fd, char *pathname)
 {
 	struct thread_trace *ttrace = thread__priv(thread);
 
@@ -919,9 +942,16 @@ static int trace__set_fd_pathname(struct thread *thread, int fd, const char *pat
 		ttrace->paths.max   = fd;
 	}
 
-	ttrace->paths.table[fd] = strdup(pathname);
+	if (ttrace->paths.table[fd])
+		free(ttrace->paths.table[fd]);
+	ttrace->paths.table[fd] = pathname;
 
 	return ttrace->paths.table[fd] != NULL ? 0 : -1;
+}
+
+static int trace__set_fd_pathname(struct thread *thread, int fd, const char *pathname)
+{
+	return __trace__set_fd_pathname(thread, fd, strdup(pathname));
 }
 
 static int thread__read_fd_path(struct thread *thread, int fd)
@@ -1016,6 +1046,33 @@ static size_t syscall_arg__scnprintf_filename(char *bf, size_t size,
 		return scnprintf(bf, size, "%#x", ptr);
 
 	thread__set_filename_pos(arg->thread, bf, ptr);
+	return 0;
+}
+
+static void thread__set_sockaddr_pos(struct thread *thread, const char *bf,
+				     unsigned long ptr, bool set_fd)
+{
+	struct thread_trace *ttrace = thread__priv(thread);
+
+	ttrace->sockaddr.ptr = ptr;
+	ttrace->sockaddr.entry_str_pos = bf - ttrace->entry_str;
+	ttrace->sockaddr.set_fd = set_fd;
+}
+
+static size_t syscall_arg__scnprintf_sockaddr_set_fd(char *bf, size_t size,
+						     struct syscall_arg *arg)
+{
+	unsigned long ptr = arg->val;
+
+	if (!arg->trace->sockaddr)
+		return scnprintf(bf, size, "%#x", ptr);
+	/*
+	 * This is done at trace__sys_enter() time, so we need just to save
+	 * where we need to insert the formatted sockaddr, because this will
+	 * take place _after_ sys_enter, at the move_addr_to_kernel() time,
+	 * in the middle of processing a syscall.
+	 */
+	thread__set_sockaddr_pos(arg->thread, bf, ptr, true);
 	return 0;
 }
 
@@ -1137,6 +1194,24 @@ static int syscall__set_arg_fmts(struct syscall *sc)
 		sc->arg_parm = sc->fmt->arg_parm;
 
 	for (field = sc->args; field; field = field->next) {
+		bool is_fd = false;
+
+		if ((strcmp(field->type, "int") == 0 ||
+		     strcmp(field->type, "unsigned int") == 0 ||
+		     strcmp(field->type, "long") == 0) &&
+		    (len = strlen(field->name)) >= 2 &&
+		    strcmp(field->name + len - 2, "fd") == 0) {
+			/*
+			 * /sys/kernel/tracing/events/syscalls/sys_enter*
+			 * egrep 'field:.*fd;' .../format|sed -r 's/.*field:([a-z ]+) [a-z_]*fd.+/\1/g'|sort|uniq -c
+			 * 65 int
+			 * 23 unsigned int
+			 * 7 unsigned long
+			 */
+			sc->fd = field;
+			is_fd = true;
+		}
+
 		if (sc->fmt && sc->fmt->arg_scnprintf[idx])
 			sc->arg_scnprintf[idx] = sc->fmt->arg_scnprintf[idx];
 		else if (strcmp(field->type, "const char *") == 0 &&
@@ -1150,20 +1225,8 @@ static int syscall__set_arg_fmts(struct syscall *sc)
 			sc->arg_scnprintf[idx] = SCA_PID;
 		else if (strcmp(field->type, "umode_t") == 0)
 			sc->arg_scnprintf[idx] = SCA_MODE_T;
-		else if ((strcmp(field->type, "int") == 0 ||
-			  strcmp(field->type, "unsigned int") == 0 ||
-			  strcmp(field->type, "long") == 0) &&
-			 (len = strlen(field->name)) >= 2 &&
-			 strcmp(field->name + len - 2, "fd") == 0) {
-			/*
-			 * /sys/kernel/tracing/events/syscalls/sys_enter*
-			 * egrep 'field:.*fd;' .../format|sed -r 's/.*field:([a-z ]+) [a-z_]*fd.+/\1/g'|sort|uniq -c
-			 * 65 int
-			 * 23 unsigned int
-			 * 7 unsigned long
-			 */
+		else if (is_fd)
 			sc->arg_scnprintf[idx] = SCA_FD;
-		}
 		++idx;
 	}
 
@@ -1500,6 +1563,7 @@ static int trace__sys_enter(struct trace *trace, struct perf_evsel *evsel,
 		ttrace->entry_pending = true;
 		/* See trace__vfs_getname & trace__sys_exit */
 		ttrace->filename.pending_open = false;
+		ttrace->fd = sc->fd ? (int)format_field__intval(sc->fd, sample, evsel->needs_swap) : -1;
 	}
 
 	if (trace->current != thread) {
@@ -1541,17 +1605,12 @@ static int trace__sys_exit(struct trace *trace, struct perf_evsel *evsel,
 {
 	long ret;
 	u64 duration = 0;
-	struct thread *thread;
 	int id = perf_evsel__sc_tp_uint(evsel, id, sample), err = -1, callchain_ret = 0;
 	struct syscall *sc = trace__syscall_info(trace, evsel, id);
-	struct thread_trace *ttrace;
+	struct thread *thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
+	struct thread_trace *ttrace = thread__trace(thread, trace->output);
 
-	if (sc == NULL)
-		return -1;
-
-	thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
-	ttrace = thread__trace(thread, trace->output);
-	if (ttrace == NULL)
+	if (ttrace == NULL || sc == NULL)
 		goto out_put;
 
 	if (trace->summary)
@@ -1559,10 +1618,20 @@ static int trace__sys_exit(struct trace *trace, struct perf_evsel *evsel,
 
 	ret = perf_evsel__sc_tp_uint(evsel, ret, sample);
 
-	if (id == trace->open_id && ret >= 0 && ttrace->filename.pending_open) {
-		trace__set_fd_pathname(thread, ret, ttrace->filename.name);
-		ttrace->filename.pending_open = false;
-		++trace->stats.vfs_getname;
+	if (id == trace->open_id) {
+		if (ret >= 0 && ttrace->filename.pending_open) {
+			trace__set_fd_pathname(thread, ret, ttrace->filename.name);
+			ttrace->filename.pending_open = false;
+			++trace->stats.vfs_getname;
+		}
+	} else if (ttrace->sockaddr.set_fd) {
+		if (ret < 0 && ttrace->fd != -1 && ttrace->fd <= ttrace->paths.max)
+			zfree(&ttrace->paths.table[ttrace->fd]);
+	}
+
+	if (sc->fmt && sc->fmt->errfd && ret >= 0 && ret <= ttrace->paths.max) {
+		//fprintf(trace->output, "(((fd=%ld))", ret);
+		zfree(&ttrace->paths.table[ret]);
 	}
 
 	ttrace->exit_time = sample->time;
@@ -1631,6 +1700,8 @@ out:
 	ttrace->entry_pending = false;
 	err = 0;
 out_put:
+	if (ttrace != NULL)
+		ttrace->fd = -1;
 	thread__put(thread);
 	return err;
 }
@@ -2710,12 +2781,127 @@ static int parse_pagefaults(const struct option *opt, const char *str,
 	return 0;
 }
 
-static void evlist__set_evsel_handler(struct perf_evlist *evlist, void *handler)
+static int trace__null_handler(struct trace *trace __maybe_unused,
+			       struct perf_evsel *evsel __maybe_unused,
+			       union perf_event *event __maybe_unused,
+			       struct perf_sample *sample __maybe_unused)
 {
+	return 0;
+}
+
+static int sockaddr__asprintf(char **bf, struct sockaddr_storage *ss)
+{
+	union {
+		struct sockaddr_in	in;
+		struct sockaddr_in6	in6;
+		struct sockaddr_un	un;
+	} *us = (void *)ss;
+	char dst[INET6_ADDRSTRLEN + 1];
+
+	switch (ss->ss_family) {
+	case AF_INET:
+		return asprintf(bf, "{family=INET, port=%d, addr=%s}",
+				ntohs(us->in.sin_port), inet_ntoa(us->in.sin_addr));
+	case AF_LOCAL:
+		return asprintf(bf, "{family=LOCAL,path=%s}", us->un.sun_path);
+	case AF_INET6:
+		return asprintf(bf, "{family=INET6, port=%d, addr=%s, flowinfo=%d, scope_id=%d}",
+				ntohs(us->in6.sin6_port),
+				inet_ntop(AF_INET6, &us->in6.sin6_addr, dst, sizeof(us->in6.sin6_addr)),
+				ntohl(us->in6.sin6_flowinfo), us->in6.sin6_scope_id);
+	default:
+		return asprintf(bf, "{family=%d}", ss->ss_family);
+	}
+}
+
+static int trace__move_addr_to_kernel_handler(struct trace *trace,
+					      struct perf_evsel *evsel __maybe_unused,
+					      union perf_event *event __maybe_unused,
+					      struct perf_sample *sample)
+{
+	struct thread *thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
+	struct thread_trace *ttrace;
+	size_t entry_str_len, to_move;
+	ssize_t remaining_space, formatted_addr_len;
+	char *pos, *formatted_addr;
+	struct {
+		void			*uaddr;
+		int			ulen;
+		struct sockaddr_storage ss;
+	} *data = sample->raw_data;
+
+	if (!thread)
+		goto out;
+
+	ttrace = thread__priv(thread);
+	if (!ttrace)
+		goto out;
+
+	if (ttrace->sockaddr.slen < data->ulen) {
+		struct sockaddr *s = realloc(ttrace->sockaddr.addr, data->ulen);
+
+		if (s == NULL)
+			goto out;
+
+		ttrace->sockaddr.slen = data->ulen;
+		ttrace->sockaddr.addr = s;
+	}
+
+	memcpy(ttrace->sockaddr.addr, &data->ss, data->ulen);
+
+	formatted_addr_len = sockaddr__asprintf(&formatted_addr, &data->ss);
+	if (formatted_addr_len < 0)
+		goto out;
+
+	if (!ttrace->sockaddr.ptr)
+		goto out_free;
+
+	entry_str_len = strlen(ttrace->entry_str);
+	remaining_space = trace__entry_str_size - entry_str_len - 1; /* \0 */
+	if (remaining_space <= 0)
+		goto out_free;
+
+	if (formatted_addr_len > remaining_space) {
+		formatted_addr += formatted_addr_len - remaining_space;
+		formatted_addr_len = remaining_space;
+	}
+
+	to_move = entry_str_len - ttrace->sockaddr.entry_str_pos + 1; /* \0 */
+	pos = ttrace->entry_str + ttrace->sockaddr.entry_str_pos;
+	memmove(pos + formatted_addr_len, pos, to_move);
+	memcpy(pos, formatted_addr, formatted_addr_len);
+
+	ttrace->sockaddr.ptr = 0;
+	ttrace->sockaddr.entry_str_pos = 0;
+
+	if (ttrace->fd == -1 || __trace__set_fd_pathname(thread, ttrace->fd, formatted_addr)) {
+out_free:
+		free(formatted_addr);
+	} else
+		ttrace->sockaddr.pending = true;
+out:
+	return 0;
+}
+
+static void trace__set_evsel_handler(struct trace *trace, void *handler)
+{
+	struct perf_evlist *evlist = trace->evlist;
 	struct perf_evsel *evsel;
 
-	evlist__for_each(evlist, evsel)
+	evlist__for_each(evlist, evsel) {
+		if (perf_evsel__is_bpf_output(evsel)) {
+			if (strcmp(perf_evsel__name(evsel), "__move_addr_to_kernel") == 0) {
+				evsel->handler = trace__move_addr_to_kernel_handler;
+				trace->sockaddr = true;
+				continue;
+			}
+		} else if (strcmp(perf_evsel__name(evsel), "perf_bpf_probe:move_addr_to_kernel") == 0) {
+			evsel->handler = trace__null_handler;
+			continue;
+		}
+
 		evsel->handler = handler;
+	}
 }
 
 int cmd_trace(int argc, const char **argv, const char *prefix __maybe_unused)
@@ -2864,7 +3050,7 @@ int cmd_trace(int argc, const char **argv, const char *prefix __maybe_unused)
 	}
 
 	if (trace.evlist->nr_entries > 0)
-		evlist__set_evsel_handler(trace.evlist, trace__event_handler);
+		trace__set_evsel_handler(&trace, trace__event_handler);
 
 	if ((argc >= 1) && (strcmp(argv[0], "record") == 0))
 		return trace__record(&trace, argc-1, &argv[1]);
