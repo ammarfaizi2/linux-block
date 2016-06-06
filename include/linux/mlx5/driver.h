@@ -41,6 +41,8 @@
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/radix-tree.h>
+#include <linux/workqueue.h>
+#include <linux/interrupt.h>
 
 #include <linux/mlx5/device.h>
 #include <linux/mlx5/doorbell.h>
@@ -311,6 +313,14 @@ struct mlx5_buf {
 	u8			page_shift;
 };
 
+struct mlx5_eq_tasklet {
+	struct list_head list;
+	struct list_head process_list;
+	struct tasklet_struct task;
+	/* lock on completion tasklet list */
+	spinlock_t lock;
+};
+
 struct mlx5_eq {
 	struct mlx5_core_dev   *dev;
 	__be32 __iomem	       *doorbell;
@@ -324,6 +334,7 @@ struct mlx5_eq {
 	struct list_head	list;
 	int			index;
 	struct mlx5_rsc_debug	*dbg;
+	struct mlx5_eq_tasklet	tasklet_ctx;
 };
 
 struct mlx5_core_psv {
@@ -457,6 +468,17 @@ struct mlx5_irq_info {
 	char name[MLX5_MAX_IRQ_NAME];
 };
 
+struct mlx5_fc_stats {
+	struct list_head list;
+	struct list_head addlist;
+	/* protect addlist add/splice operations */
+	spinlock_t addlist_lock;
+
+	struct workqueue_struct *wq;
+	struct delayed_work work;
+	unsigned long next_query;
+};
+
 struct mlx5_eswitch;
 
 struct mlx5_priv {
@@ -518,6 +540,10 @@ struct mlx5_priv {
 	unsigned long		pci_dev_data;
 	struct mlx5_flow_root_namespace *root_ns;
 	struct mlx5_flow_root_namespace *fdb_root_ns;
+	struct mlx5_flow_root_namespace *esw_egress_root_ns;
+	struct mlx5_flow_root_namespace *esw_ingress_root_ns;
+
+	struct mlx5_fc_stats		fc_stats;
 };
 
 enum mlx5_device_state {

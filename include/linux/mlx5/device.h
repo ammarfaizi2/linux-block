@@ -393,6 +393,17 @@ enum {
 	MLX5_CAP_OFF_CMDIF_CSUM		= 46,
 };
 
+enum {
+	/*
+	 * Max wqe size for rdma read is 512 bytes, so this
+	 * limits our max_sge_rd as the wqe needs to fit:
+	 * - ctrl segment (16 bytes)
+	 * - rdma segment (16 bytes)
+	 * - scatter elements (16 bytes each)
+	 */
+	MLX5_MAX_SGE_RD	= (512 - 16 - 16) / 16
+};
+
 struct mlx5_inbox_hdr {
 	__be16		opcode;
 	u8		rsvd[4];
@@ -673,6 +684,40 @@ struct mlx5_cqe64 {
 	u8		signature;
 	u8		op_own;
 };
+
+struct mlx5_mini_cqe8 {
+	union {
+		__be32 rx_hash_result;
+		struct {
+			__be16 checksum;
+			__be16 rsvd;
+		};
+		struct {
+			__be16 wqe_counter;
+			u8  s_wqe_opcode;
+			u8  reserved;
+		} s_wqe_info;
+	};
+	__be32 byte_cnt;
+};
+
+enum {
+	MLX5_NO_INLINE_DATA,
+	MLX5_INLINE_DATA32_SEG,
+	MLX5_INLINE_DATA64_SEG,
+	MLX5_COMPRESSED,
+};
+
+enum {
+	MLX5_CQE_FORMAT_CSUM = 0x1,
+};
+
+#define MLX5_MINI_CQE_ARRAY_SIZE 8
+
+static inline int mlx5_get_cqe_format(struct mlx5_cqe64 *cqe)
+{
+	return (cqe->op_own >> 2) & 0x3;
+}
 
 static inline int get_cqe_lro_tcppsh(struct mlx5_cqe64 *cqe)
 {
@@ -1337,6 +1382,18 @@ enum mlx5_cap_type {
 
 #define MLX5_CAP_ESW_FLOWTABLE_FDB_MAX(mdev, cap) \
 	MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, flow_table_properties_nic_esw_fdb.cap)
+
+#define MLX5_CAP_ESW_EGRESS_ACL(mdev, cap) \
+	MLX5_CAP_ESW_FLOWTABLE(mdev, flow_table_properties_esw_acl_egress.cap)
+
+#define MLX5_CAP_ESW_EGRESS_ACL_MAX(mdev, cap) \
+	MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, flow_table_properties_esw_acl_egress.cap)
+
+#define MLX5_CAP_ESW_INGRESS_ACL(mdev, cap) \
+	MLX5_CAP_ESW_FLOWTABLE(mdev, flow_table_properties_esw_acl_ingress.cap)
+
+#define MLX5_CAP_ESW_INGRESS_ACL_MAX(mdev, cap) \
+	MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, flow_table_properties_esw_acl_ingress.cap)
 
 #define MLX5_CAP_ESW(mdev, cap) \
 	MLX5_GET(e_switch_cap, \

@@ -471,7 +471,7 @@ static void fjes_tx_stall_task(struct work_struct *work)
 	int i;
 
 	if (((long)jiffies -
-		(long)(netdev->trans_start)) > FJES_TX_TX_STALL_TIMEOUT) {
+		dev_trans_start(netdev)) > FJES_TX_TX_STALL_TIMEOUT) {
 		netif_wake_queue(netdev);
 		return;
 	}
@@ -718,7 +718,7 @@ fjes_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
 
 					ret = NETDEV_TX_OK;
 				} else {
-					netdev->trans_start = jiffies;
+					netif_trans_update(netdev);
 					netif_tx_stop_queue(cur_queue);
 
 					if (!work_pending(&adapter->tx_stall_task))
@@ -819,7 +819,6 @@ static int fjes_change_mtu(struct net_device *netdev, int new_mtu)
 	netdev->mtu = new_mtu;
 
 	if (running) {
-		spin_lock_irqsave(&hw->rx_status_lock, flags);
 		for (epidx = 0; epidx < hw->max_epid; epidx++) {
 			if (epidx == hw->my_epid)
 				continue;

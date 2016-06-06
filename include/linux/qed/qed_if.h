@@ -25,6 +25,15 @@
 #include <linux/qed/common_hsi.h>
 #include <linux/qed/qed_chain.h>
 
+enum dcbx_protocol_type {
+	DCBX_PROTOCOL_ISCSI,
+	DCBX_PROTOCOL_FCOE,
+	DCBX_PROTOCOL_ROCE,
+	DCBX_PROTOCOL_ROCE_V2,
+	DCBX_PROTOCOL_ETH,
+	DCBX_MAX_PROTOCOL_TYPE
+};
+
 enum qed_led_mode {
 	QED_LED_MODE_OFF,
 	QED_LED_MODE_ON,
@@ -93,6 +102,7 @@ struct qed_dev_info {
 
 	u32		flash_size;
 	u8		mf_mode;
+	bool		tx_switching;
 };
 
 enum qed_sb_type {
@@ -138,6 +148,13 @@ struct qed_link_output {
 	u8	port;                   /* In PORT defs */
 	bool	autoneg;
 	u32	pause_config;
+};
+
+struct qed_probe_params {
+	enum qed_protocol protocol;
+	u32 dp_module;
+	u8 dp_level;
+	bool is_vf;
 };
 
 #define QED_DRV_VER_STR_SIZE 12
@@ -207,8 +224,7 @@ struct qed_common_ops {
 	struct qed_selftest_ops *selftest;
 
 	struct qed_dev*	(*probe)(struct pci_dev *dev,
-				 enum qed_protocol protocol,
-				 u32 dp_module, u8 dp_level);
+				 struct qed_probe_params *params);
 
 	void		(*remove)(struct qed_dev *cdev);
 

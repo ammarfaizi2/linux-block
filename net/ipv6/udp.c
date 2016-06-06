@@ -315,13 +315,13 @@ static struct sock *__udp6_lib_lookup_skb(struct sk_buff *skb,
 					  __be16 sport, __be16 dport,
 					  struct udp_table *udptable)
 {
-	struct sock *sk;
 	const struct ipv6hdr *iph = ipv6_hdr(skb);
+	struct sock *sk;
 
 	sk = skb_steal_sock(skb);
 	if (unlikely(sk))
 		return sk;
-	return __udp6_lib_lookup(dev_net(skb_dst(skb)->dev), &iph->saddr, sport,
+	return __udp6_lib_lookup(dev_net(skb->dev), &iph->saddr, sport,
 				 &iph->daddr, dport, inet6_iif(skb),
 				 udptable, skb);
 }
@@ -330,10 +330,8 @@ struct sock *udp6_lib_lookup_skb(struct sk_buff *skb,
 				 __be16 sport, __be16 dport)
 {
 	const struct ipv6hdr *iph = ipv6_hdr(skb);
-	const struct net_device *dev =
-	    skb_dst(skb) ? skb_dst(skb)->dev : skb->dev;
 
-	return __udp6_lib_lookup(dev_net(dev), &iph->saddr, sport,
+	return __udp6_lib_lookup(dev_net(skb->dev), &iph->saddr, sport,
 				 &iph->daddr, dport, inet6_iif(skb),
 				 &udp_table, skb);
 }
@@ -619,7 +617,7 @@ int udpv6_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
 
 		/* if we're overly short, let UDP handle it */
 		encap_rcv = ACCESS_ONCE(up->encap_rcv);
-		if (skb->len > sizeof(struct udphdr) && encap_rcv) {
+		if (encap_rcv) {
 			int ret;
 
 			/* Verify checksum before giving to encap */
@@ -1064,17 +1062,19 @@ int udpv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	struct ip6_flowlabel *flowlabel = NULL;
 	struct flowi6 fl6;
 	struct dst_entry *dst;
+	struct ipcm6_cookie ipc6;
 	int addr_len = msg->msg_namelen;
 	int ulen = len;
-	int hlimit = -1;
-	int tclass = -1;
-	int dontfrag = -1;
 	int corkreq = up->corkflag || msg->msg_flags&MSG_MORE;
 	int err;
 	int connected = 0;
 	int is_udplite = IS_UDPLITE(sk);
 	int (*getfrag)(void *, char *, int, int, int, struct sk_buff *);
 	struct sockcm_cookie sockc;
+
+	ipc6.hlimit = -1;
+	ipc6.tclass = -1;
+	ipc6.dontfrag = -1;
 
 	/* destination address check */
 	if (sin6) {
@@ -1200,10 +1200,9 @@ do_udp_sendmsg:
 		opt = &opt_space;
 		memset(opt, 0, sizeof(struct ipv6_txoptions));
 		opt->tot_len = sizeof(*opt);
+		ipc6.opt = opt;
 
-		err = ip6_datagram_send_ctl(sock_net(sk), sk, msg, &fl6, opt,
-					    &hlimit, &tclass, &dontfrag,
-					    &sockc);
+		err = ip6_datagram_send_ctl(sock_net(sk), sk, msg, &fl6, &ipc6, &sockc);
 		if (err < 0) {
 			fl6_sock_release(flowlabel);
 			return err;
@@ -1224,6 +1223,7 @@ do_udp_sendmsg:
 	if (flowlabel)
 		opt = fl6_merge_options(&opt_space, flowlabel, opt);
 	opt = ipv6_fixup_options(&opt_space, opt);
+	ipc6.opt = opt;
 
 	fl6.flowi6_proto = sk->sk_protocol;
 	if (!ipv6_addr_any(daddr))
@@ -1253,11 +1253,11 @@ do_udp_sendmsg:
 		goto out;
 	}
 
-	if (hlimit < 0)
-		hlimit = ip6_sk_dst_hoplimit(np, &fl6, dst);
+	if (ipc6.hlimit < 0)
+		ipc6.hlimit = ip6_sk_dst_hoplimit(np, &fl6, dst);
 
-	if (tclass < 0)
-		tclass = np->tclass;
+	if (ipc6.tclass < 0)
+		ipc6.tclass = np->tclass;
 
 	if (msg->msg_flags&MSG_CONFIRM)
 		goto do_confirm;
@@ -1268,9 +1268,9 @@ back_from_confirm:
 		struct sk_buff *skb;
 
 		skb = ip6_make_skb(sk, getfrag, msg, ulen,
-				   sizeof(struct udphdr), hlimit, tclass, opt,
+				   sizeof(struct udphdr), &ipc6,
 				   &fl6, (struct rt6_info *)dst,
-				   msg->msg_flags, dontfrag, &sockc);
+				   msg->msg_flags, &sockc);
 		err = PTR_ERR(skb);
 		if (!IS_ERR_OR_NULL(skb))
 			err = udp_v6_send_skb(skb, &fl6);
@@ -1291,14 +1291,12 @@ back_from_confirm:
 	up->pending = AF_INET6;
 
 do_append_data:
-	if (dontfrag < 0)
-		dontfrag = np->dontfrag;
+	if (ipc6.dontfrag < 0)
+		ipc6.dontfrag = np->dontfrag;
 	up->len += ulen;
-	err = ip6_append_data(sk, getfrag, msg, ulen,
-		sizeof(struct udphdr), hlimit, tclass, opt, &fl6,
-		(struct rt6_info *)dst,
-		corkreq ? msg->msg_flags|MSG_MORE : msg->msg_flags, dontfrag,
-		&sockc);
+	err = ip6_append_data(sk, getfrag, msg, ulen, sizeof(struct udphdr),
+			      &ipc6, &fl6, (struct rt6_info *)dst,
+			      corkreq ? msg->msg_flags|MSG_MORE : msg->msg_flags, &sockc);
 	if (err)
 		udp_v6_flush_pending_frames(sk);
 	else if (!corkreq)

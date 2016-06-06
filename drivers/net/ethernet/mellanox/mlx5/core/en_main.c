@@ -114,6 +114,8 @@ static void mlx5e_update_sw_counters(struct mlx5e_priv *priv)
 		s->rx_mpwqe_filler += rq_stats->mpwqe_filler;
 		s->rx_mpwqe_frag   += rq_stats->mpwqe_frag;
 		s->rx_buff_alloc_err += rq_stats->buff_alloc_err;
+		s->rx_cqe_compress_blks += rq_stats->cqe_compress_blks;
+		s->rx_cqe_compress_pkts += rq_stats->cqe_compress_pkts;
 
 		for (j = 0; j < priv->params.num_tc; j++) {
 			sq_stats = &priv->channel[i]->sq[j].stats;
@@ -231,9 +233,8 @@ static void mlx5e_update_stats_work(struct work_struct *work)
 	mutex_lock(&priv->state_lock);
 	if (test_bit(MLX5E_STATE_OPENED, &priv->state)) {
 		mlx5e_update_stats(priv);
-		schedule_delayed_work(dwork,
-				      msecs_to_jiffies(
-					      MLX5E_UPDATE_STATS_INTERVAL));
+		queue_delayed_work(priv->wq, dwork,
+				   msecs_to_jiffies(MLX5E_UPDATE_STATS_INTERVAL));
 	}
 	mutex_unlock(&priv->state_lock);
 }
@@ -249,7 +250,7 @@ static void mlx5e_async_event(struct mlx5_core_dev *mdev, void *vpriv,
 	switch (event) {
 	case MLX5_DEV_EVENT_PORT_UP:
 	case MLX5_DEV_EVENT_PORT_DOWN:
-		schedule_work(&priv->update_carrier_work);
+		queue_work(priv->wq, &priv->update_carrier_work);
 		break;
 
 	default:
@@ -306,7 +307,9 @@ static int mlx5e_create_rq(struct mlx5e_channel *c,
 		rq->handle_rx_cqe = mlx5e_handle_rx_cqe_mpwrq;
 		rq->alloc_wqe = mlx5e_alloc_rx_mpwqe;
 
-		rq->wqe_sz = MLX5_MPWRQ_NUM_STRIDES * MLX5_MPWRQ_STRIDE_SIZE;
+		rq->mpwqe_stride_sz = BIT(priv->params.mpwqe_log_stride_sz);
+		rq->mpwqe_num_strides = BIT(priv->params.mpwqe_log_num_strides);
+		rq->wqe_sz = rq->mpwqe_stride_sz * rq->mpwqe_num_strides;
 		byte_count = rq->wqe_sz;
 		break;
 	default: /* MLX5_WQ_TYPE_LINKED_LIST */
@@ -1129,9 +1132,9 @@ static void mlx5e_build_rq_param(struct mlx5e_priv *priv,
 	switch (priv->params.rq_wq_type) {
 	case MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ:
 		MLX5_SET(wq, wq, log_wqe_num_of_strides,
-			 MLX5_MPWRQ_LOG_NUM_STRIDES - 9);
+			 priv->params.mpwqe_log_num_strides - 9);
 		MLX5_SET(wq, wq, log_wqe_stride_size,
-			 MLX5_MPWRQ_LOG_STRIDE_SIZE - 6);
+			 priv->params.mpwqe_log_stride_sz - 6);
 		MLX5_SET(wq, wq, wq_type, MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ);
 		break;
 	default: /* MLX5_WQ_TYPE_LINKED_LIST */
@@ -1198,13 +1201,17 @@ static void mlx5e_build_rx_cq_param(struct mlx5e_priv *priv,
 	switch (priv->params.rq_wq_type) {
 	case MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ:
 		log_cq_size = priv->params.log_rq_size +
-			MLX5_MPWRQ_LOG_NUM_STRIDES;
+			priv->params.mpwqe_log_num_strides;
 		break;
 	default: /* MLX5_WQ_TYPE_LINKED_LIST */
 		log_cq_size = priv->params.log_rq_size;
 	}
 
 	MLX5_SET(cqc, cqc, log_cq_size, log_cq_size);
+	if (priv->params.rx_cqe_compress) {
+		MLX5_SET(cqc, cqc, mini_cqe_res_format, MLX5_CQE_FORMAT_CSUM);
+		MLX5_SET(cqc, cqc, cqe_comp_en, 1);
+	}
 
 	mlx5e_build_common_cq_param(priv, param);
 }
@@ -1695,7 +1702,7 @@ int mlx5e_open_locked(struct net_device *netdev)
 	priv->netdev->rx_cpu_rmap = priv->mdev->rmap;
 #endif
 
-	schedule_delayed_work(&priv->update_stats_work, 0);
+	queue_delayed_work(priv->wq, &priv->update_stats_work, 0);
 
 	return 0;
 
@@ -2147,6 +2154,8 @@ static int mlx5e_ndo_setup_tc(struct net_device *dev, u32 handle,
 			return mlx5e_configure_flower(priv, proto, tc->cls_flower);
 		case TC_CLSFLOWER_DESTROY:
 			return mlx5e_delete_flower(priv, tc->cls_flower);
+		case TC_CLSFLOWER_STATS:
+			return mlx5e_stats_flower(priv, tc->cls_flower);
 		}
 	default:
 		return -EOPNOTSUPP;
@@ -2202,7 +2211,7 @@ static void mlx5e_set_rx_mode(struct net_device *dev)
 {
 	struct mlx5e_priv *priv = netdev_priv(dev);
 
-	schedule_work(&priv->set_rx_mode_work);
+	queue_work(priv->wq, &priv->set_rx_mode_work);
 }
 
 static int mlx5e_set_mac(struct net_device *netdev, void *addr)
@@ -2217,7 +2226,7 @@ static int mlx5e_set_mac(struct net_device *netdev, void *addr)
 	ether_addr_copy(netdev->dev_addr, saddr->sa_data);
 	netif_addr_unlock_bh(netdev);
 
-	schedule_work(&priv->set_rx_mode_work);
+	queue_work(priv->wq, &priv->set_rx_mode_work);
 
 	return 0;
 }
@@ -2439,6 +2448,21 @@ static int mlx5e_set_vf_vlan(struct net_device *dev, int vf, u16 vlan, u8 qos)
 					   vlan, qos);
 }
 
+static int mlx5e_set_vf_spoofchk(struct net_device *dev, int vf, bool setting)
+{
+	struct mlx5e_priv *priv = netdev_priv(dev);
+	struct mlx5_core_dev *mdev = priv->mdev;
+
+	return mlx5_eswitch_set_vport_spoofchk(mdev->priv.eswitch, vf + 1, setting);
+}
+
+static int mlx5e_set_vf_trust(struct net_device *dev, int vf, bool setting)
+{
+	struct mlx5e_priv *priv = netdev_priv(dev);
+	struct mlx5_core_dev *mdev = priv->mdev;
+
+	return mlx5_eswitch_set_vport_trust(mdev->priv.eswitch, vf + 1, setting);
+}
 static int mlx5_vport_link2ifla(u8 esw_link)
 {
 	switch (esw_link) {
@@ -2503,7 +2527,7 @@ static void mlx5e_add_vxlan_port(struct net_device *netdev,
 	if (!mlx5e_vxlan_allowed(priv->mdev))
 		return;
 
-	mlx5e_vxlan_add_port(priv, be16_to_cpu(port));
+	mlx5e_vxlan_queue_work(priv, sa_family, be16_to_cpu(port), 1);
 }
 
 static void mlx5e_del_vxlan_port(struct net_device *netdev,
@@ -2514,7 +2538,7 @@ static void mlx5e_del_vxlan_port(struct net_device *netdev,
 	if (!mlx5e_vxlan_allowed(priv->mdev))
 		return;
 
-	mlx5e_vxlan_del_port(priv, be16_to_cpu(port));
+	mlx5e_vxlan_queue_work(priv, sa_family, be16_to_cpu(port), 0);
 }
 
 static netdev_features_t mlx5e_vxlan_features_check(struct mlx5e_priv *priv,
@@ -2608,6 +2632,8 @@ static const struct net_device_ops mlx5e_netdev_ops_sriov = {
 #endif
 	.ndo_set_vf_mac          = mlx5e_set_vf_mac,
 	.ndo_set_vf_vlan         = mlx5e_set_vf_vlan,
+	.ndo_set_vf_spoofchk     = mlx5e_set_vf_spoofchk,
+	.ndo_set_vf_trust        = mlx5e_set_vf_trust,
 	.ndo_get_vf_config       = mlx5e_get_vf_config,
 	.ndo_set_vf_link_state   = mlx5e_set_vf_link_state,
 	.ndo_get_vf_stats        = mlx5e_get_vf_stats,
@@ -2692,11 +2718,49 @@ static bool mlx5e_check_fragmented_striding_rq_cap(struct mlx5_core_dev *mdev)
 		MLX5_CAP_ETH(mdev, reg_umr_sq);
 }
 
+static int mlx5e_get_pci_bw(struct mlx5_core_dev *mdev, u32 *pci_bw)
+{
+	enum pcie_link_width width;
+	enum pci_bus_speed speed;
+	int err = 0;
+
+	err = pcie_get_minimum_link(mdev->pdev, &speed, &width);
+	if (err)
+		return err;
+
+	if (speed == PCI_SPEED_UNKNOWN || width == PCIE_LNK_WIDTH_UNKNOWN)
+		return -EINVAL;
+
+	switch (speed) {
+	case PCIE_SPEED_2_5GT:
+		*pci_bw = 2500 * width;
+		break;
+	case PCIE_SPEED_5_0GT:
+		*pci_bw = 5000 * width;
+		break;
+	case PCIE_SPEED_8_0GT:
+		*pci_bw = 8000 * width;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static bool cqe_compress_heuristic(u32 link_speed, u32 pci_bw)
+{
+	return (link_speed && pci_bw &&
+		(pci_bw < 40000) && (pci_bw < link_speed));
+}
+
 static void mlx5e_build_netdev_priv(struct mlx5_core_dev *mdev,
 				    struct net_device *netdev,
 				    int num_channels)
 {
 	struct mlx5e_priv *priv = netdev_priv(netdev);
+	u32 link_speed = 0;
+	u32 pci_bw = 0;
 
 	priv->params.log_sq_size           =
 		MLX5E_PARAMS_DEFAULT_LOG_SQ_SIZE;
@@ -2704,14 +2768,41 @@ static void mlx5e_build_netdev_priv(struct mlx5_core_dev *mdev,
 		MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ :
 		MLX5_WQ_TYPE_LINKED_LIST;
 
+	/* set CQE compression */
+	priv->params.rx_cqe_compress_admin = false;
+	if (MLX5_CAP_GEN(mdev, cqe_compression) &&
+	    MLX5_CAP_GEN(mdev, vport_group_manager)) {
+		mlx5e_get_max_linkspeed(mdev, &link_speed);
+		mlx5e_get_pci_bw(mdev, &pci_bw);
+		mlx5_core_dbg(mdev, "Max link speed = %d, PCI BW = %d\n",
+			      link_speed, pci_bw);
+		priv->params.rx_cqe_compress_admin =
+			cqe_compress_heuristic(link_speed, pci_bw);
+	}
+
+	priv->params.rx_cqe_compress = priv->params.rx_cqe_compress_admin;
+
 	switch (priv->params.rq_wq_type) {
 	case MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ:
 		priv->params.log_rq_size = MLX5E_PARAMS_DEFAULT_LOG_RQ_SIZE_MPW;
+		priv->params.mpwqe_log_stride_sz =
+			priv->params.rx_cqe_compress ?
+			MLX5_MPWRQ_LOG_STRIDE_SIZE_CQE_COMPRESS :
+			MLX5_MPWRQ_LOG_STRIDE_SIZE;
+		priv->params.mpwqe_log_num_strides = MLX5_MPWRQ_LOG_WQE_SZ -
+			priv->params.mpwqe_log_stride_sz;
 		priv->params.lro_en = true;
 		break;
 	default: /* MLX5_WQ_TYPE_LINKED_LIST */
 		priv->params.log_rq_size = MLX5E_PARAMS_DEFAULT_LOG_RQ_SIZE;
 	}
+
+	mlx5_core_info(mdev,
+		       "MLX5E: StrdRq(%d) RqSz(%ld) StrdSz(%ld) RxCqeCmprss(%d)\n",
+		       priv->params.rq_wq_type == MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ,
+		       BIT(priv->params.log_rq_size),
+		       BIT(priv->params.mpwqe_log_stride_sz),
+		       priv->params.rx_cqe_compress_admin);
 
 	priv->params.min_rx_wqes = mlx5_min_rx_wqes(priv->params.rq_wq_type,
 					    BIT(priv->params.log_rq_size));
@@ -2803,13 +2894,17 @@ static void mlx5e_build_netdev(struct net_device *netdev)
 	netdev->hw_features      |= NETIF_F_HW_VLAN_CTAG_FILTER;
 
 	if (mlx5e_vxlan_allowed(mdev)) {
-		netdev->hw_features     |= NETIF_F_GSO_UDP_TUNNEL;
+		netdev->hw_features     |= NETIF_F_GSO_UDP_TUNNEL |
+					   NETIF_F_GSO_UDP_TUNNEL_CSUM |
+					   NETIF_F_GSO_PARTIAL;
 		netdev->hw_enc_features |= NETIF_F_IP_CSUM;
-		netdev->hw_enc_features |= NETIF_F_RXCSUM;
+		netdev->hw_enc_features |= NETIF_F_IPV6_CSUM;
 		netdev->hw_enc_features |= NETIF_F_TSO;
 		netdev->hw_enc_features |= NETIF_F_TSO6;
-		netdev->hw_enc_features |= NETIF_F_RXHASH;
 		netdev->hw_enc_features |= NETIF_F_GSO_UDP_TUNNEL;
+		netdev->hw_enc_features |= NETIF_F_GSO_UDP_TUNNEL_CSUM |
+					   NETIF_F_GSO_PARTIAL;
+		netdev->gso_partial_features = NETIF_F_GSO_UDP_TUNNEL_CSUM;
 	}
 
 	mlx5_query_port_fcs(mdev, &fcs_supported, &fcs_enabled);
@@ -2947,10 +3042,14 @@ static void *mlx5e_create_netdev(struct mlx5_core_dev *mdev)
 
 	priv = netdev_priv(netdev);
 
+	priv->wq = create_singlethread_workqueue("mlx5e");
+	if (!priv->wq)
+		goto err_free_netdev;
+
 	err = mlx5_alloc_map_uar(mdev, &priv->cq_uar, false);
 	if (err) {
 		mlx5_core_err(mdev, "alloc_map uar failed, %d\n", err);
-		goto err_free_netdev;
+		goto err_destroy_wq;
 	}
 
 	err = mlx5_core_alloc_pd(mdev, &priv->pdn);
@@ -3034,7 +3133,7 @@ static void *mlx5e_create_netdev(struct mlx5_core_dev *mdev)
 	}
 
 	mlx5e_enable_async_events(priv);
-	schedule_work(&priv->set_rx_mode_work);
+	queue_work(priv->wq, &priv->set_rx_mode_work);
 
 	return priv;
 
@@ -3072,6 +3171,9 @@ err_dealloc_pd:
 err_unmap_free_uar:
 	mlx5_unmap_free_uar(mdev, &priv->cq_uar);
 
+err_destroy_wq:
+	destroy_workqueue(priv->wq);
+
 err_free_netdev:
 	free_netdev(netdev);
 
@@ -3085,9 +3187,9 @@ static void mlx5e_destroy_netdev(struct mlx5_core_dev *mdev, void *vpriv)
 
 	set_bit(MLX5E_STATE_DESTROYING, &priv->state);
 
-	schedule_work(&priv->set_rx_mode_work);
+	queue_work(priv->wq, &priv->set_rx_mode_work);
 	mlx5e_disable_async_events(priv);
-	flush_scheduled_work();
+	flush_workqueue(priv->wq);
 	if (test_bit(MLX5_INTERFACE_STATE_SHUTDOWN, &mdev->intf_state)) {
 		netif_device_detach(netdev);
 		mutex_lock(&priv->state_lock);
@@ -3111,6 +3213,8 @@ static void mlx5e_destroy_netdev(struct mlx5_core_dev *mdev, void *vpriv)
 	mlx5_core_dealloc_transport_domain(priv->mdev, priv->tdn);
 	mlx5_core_dealloc_pd(priv->mdev, priv->pdn);
 	mlx5_unmap_free_uar(priv->mdev, &priv->cq_uar);
+	cancel_delayed_work_sync(&priv->update_stats_work);
+	destroy_workqueue(priv->wq);
 
 	if (!test_bit(MLX5_INTERFACE_STATE_SHUTDOWN, &mdev->intf_state))
 		free_netdev(netdev);

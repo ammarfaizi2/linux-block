@@ -60,8 +60,9 @@ int gre_del_protocol(const struct gre_protocol *proto, u8 version)
 }
 EXPORT_SYMBOL_GPL(gre_del_protocol);
 
+/* Fills in tpi and returns header length to be pulled. */
 int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
-		     bool *csum_err, int *ret_hdr_len)
+		     bool *csum_err, __be16 proto)
 {
 	const struct gre_base_hdr *greh;
 	__be32 *options;
@@ -108,19 +109,15 @@ int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 		tpi->seq = 0;
 	}
 	/* WCCP version 1 and 2 protocol decoding.
-	 * - Change protocol to IP
+	 * - Change protocol to IPv4/IPv6
 	 * - When dealing with WCCPv2, Skip extra 4 bytes in GRE header
 	 */
 	if (greh->flags == 0 && tpi->proto == htons(ETH_P_WCCP)) {
-		tpi->proto = htons(ETH_P_IP);
-		if ((*(u8 *)options & 0xF0) != 0x40) {
+		tpi->proto = proto;
+		if ((*(u8 *)options & 0xF0) != 0x40)
 			hdr_len += 4;
-			if (!pskb_may_pull(skb, hdr_len))
-				return -EINVAL;
-		}
 	}
-	*ret_hdr_len = hdr_len;
-	return 0;
+	return hdr_len;
 }
 EXPORT_SYMBOL(gre_parse_header);
 

@@ -36,14 +36,15 @@ static DEFINE_SPINLOCK(mirred_list_lock);
 static void tcf_mirred_release(struct tc_action *a, int bind)
 {
 	struct tcf_mirred *m = to_mirred(a);
-	struct net_device *dev = rcu_dereference_protected(m->tcfm_dev, 1);
+	struct net_device *dev;
 
 	/* We could be called either in a RCU callback or with RTNL lock held. */
 	spin_lock_bh(&mirred_list_lock);
 	list_del(&m->tcfm_list);
-	spin_unlock_bh(&mirred_list_lock);
+	dev = rcu_dereference_protected(m->tcfm_dev, 1);
 	if (dev)
 		dev_put(dev);
+	spin_unlock_bh(&mirred_list_lock);
 }
 
 static const struct nla_policy mirred_policy[TCA_MIRRED_MAX + 1] = {
@@ -61,7 +62,7 @@ static int tcf_mirred_init(struct net *net, struct nlattr *nla,
 	struct tc_mirred *parm;
 	struct tcf_mirred *m;
 	struct net_device *dev;
-	int ret, ok_push = 0;
+	int ret, ok_push = 0, exists = 0;
 
 	if (nla == NULL)
 		return -EINVAL;
@@ -71,17 +72,27 @@ static int tcf_mirred_init(struct net *net, struct nlattr *nla,
 	if (tb[TCA_MIRRED_PARMS] == NULL)
 		return -EINVAL;
 	parm = nla_data(tb[TCA_MIRRED_PARMS]);
+
+	exists = tcf_hash_check(tn, parm->index, a, bind);
+	if (exists && bind)
+		return 0;
+
 	switch (parm->eaction) {
 	case TCA_EGRESS_MIRROR:
 	case TCA_EGRESS_REDIR:
 		break;
 	default:
+		if (exists)
+			tcf_hash_release(a, bind);
 		return -EINVAL;
 	}
 	if (parm->ifindex) {
 		dev = __dev_get_by_index(net, parm->ifindex);
-		if (dev == NULL)
+		if (dev == NULL) {
+			if (exists)
+				tcf_hash_release(a, bind);
 			return -ENODEV;
+		}
 		switch (dev->type) {
 		case ARPHRD_TUNNEL:
 		case ARPHRD_TUNNEL6:
@@ -99,7 +110,7 @@ static int tcf_mirred_init(struct net *net, struct nlattr *nla,
 		dev = NULL;
 	}
 
-	if (!tcf_hash_check(tn, parm->index, a, bind)) {
+	if (!exists) {
 		if (dev == NULL)
 			return -EINVAL;
 		ret = tcf_hash_create(tn, parm->index, est, a,
@@ -108,9 +119,6 @@ static int tcf_mirred_init(struct net *net, struct nlattr *nla,
 			return ret;
 		ret = ACT_P_CREATED;
 	} else {
-		if (bind)
-			return 0;
-
 		tcf_hash_release(a, bind);
 		if (!ovr)
 			return -EEXIST;

@@ -46,7 +46,7 @@ static const char i40e_driver_string[] =
 
 #define DRV_VERSION_MAJOR 1
 #define DRV_VERSION_MINOR 5
-#define DRV_VERSION_BUILD 10
+#define DRV_VERSION_BUILD 16
 #define DRV_VERSION __stringify(DRV_VERSION_MAJOR) "." \
 	     __stringify(DRV_VERSION_MINOR) "." \
 	     __stringify(DRV_VERSION_BUILD)    DRV_KERN
@@ -328,7 +328,7 @@ static void i40e_tx_timeout(struct net_device *netdev)
 		unsigned long trans_start;
 
 		q = netdev_get_tx_queue(netdev, i);
-		trans_start = q->trans_start ? : netdev->trans_start;
+		trans_start = q->trans_start;
 		if (netif_xmit_stopped(q) &&
 		    time_after(jiffies,
 			       (trans_start + netdev->watchdog_timeo))) {
@@ -2128,7 +2128,8 @@ int i40e_sync_vsi_filters(struct i40e_vsi *vsi)
 			aq_ret = i40e_aq_set_vsi_unicast_promiscuous(
 							  &vsi->back->hw,
 							  vsi->seid,
-							  cur_promisc, NULL);
+							  cur_promisc, NULL,
+							  true);
 			if (aq_ret) {
 				retval =
 				i40e_aq_rc_to_posix(aq_ret,
@@ -2855,34 +2856,21 @@ static int i40e_configure_rx_ring(struct i40e_ring *ring)
 	memset(&rx_ctx, 0, sizeof(rx_ctx));
 
 	ring->rx_buf_len = vsi->rx_buf_len;
-	ring->rx_hdr_len = vsi->rx_hdr_len;
 
 	rx_ctx.dbuff = ring->rx_buf_len >> I40E_RXQ_CTX_DBUFF_SHIFT;
-	rx_ctx.hbuff = ring->rx_hdr_len >> I40E_RXQ_CTX_HBUFF_SHIFT;
 
 	rx_ctx.base = (ring->dma / 128);
 	rx_ctx.qlen = ring->count;
 
-	if (vsi->back->flags & I40E_FLAG_16BYTE_RX_DESC_ENABLED) {
-		set_ring_16byte_desc_enabled(ring);
-		rx_ctx.dsize = 0;
-	} else {
-		rx_ctx.dsize = 1;
-	}
+	/* use 32 byte descriptors */
+	rx_ctx.dsize = 1;
 
-	rx_ctx.dtype = vsi->dtype;
-	if (vsi->dtype) {
-		set_ring_ps_enabled(ring);
-		rx_ctx.hsplit_0 = I40E_RX_SPLIT_L2      |
-				  I40E_RX_SPLIT_IP      |
-				  I40E_RX_SPLIT_TCP_UDP |
-				  I40E_RX_SPLIT_SCTP;
-	} else {
-		rx_ctx.hsplit_0 = 0;
-	}
+	/* descriptor type is always zero
+	 * rx_ctx.dtype = 0;
+	 */
+	rx_ctx.hsplit_0 = 0;
 
-	rx_ctx.rxmax = min_t(u16, vsi->max_frame,
-				  (chain_len * ring->rx_buf_len));
+	rx_ctx.rxmax = min_t(u16, vsi->max_frame, chain_len * ring->rx_buf_len);
 	if (hw->revision_id == 0)
 		rx_ctx.lrxqthresh = 0;
 	else
@@ -2919,12 +2907,7 @@ static int i40e_configure_rx_ring(struct i40e_ring *ring)
 	ring->tail = hw->hw_addr + I40E_QRX_TAIL(pf_q);
 	writel(0, ring->tail);
 
-	if (ring_is_ps_enabled(ring)) {
-		i40e_alloc_rx_headers(ring);
-		i40e_alloc_rx_buffers_ps(ring, I40E_DESC_UNUSED(ring));
-	} else {
-		i40e_alloc_rx_buffers_1buf(ring, I40E_DESC_UNUSED(ring));
-	}
+	i40e_alloc_rx_buffers(ring, I40E_DESC_UNUSED(ring));
 
 	return 0;
 }
@@ -2963,40 +2946,18 @@ static int i40e_vsi_configure_rx(struct i40e_vsi *vsi)
 	else
 		vsi->max_frame = I40E_RXBUFFER_2048;
 
-	/* figure out correct receive buffer length */
-	switch (vsi->back->flags & (I40E_FLAG_RX_1BUF_ENABLED |
-				    I40E_FLAG_RX_PS_ENABLED)) {
-	case I40E_FLAG_RX_1BUF_ENABLED:
-		vsi->rx_hdr_len = 0;
-		vsi->rx_buf_len = vsi->max_frame;
-		vsi->dtype = I40E_RX_DTYPE_NO_SPLIT;
-		break;
-	case I40E_FLAG_RX_PS_ENABLED:
-		vsi->rx_hdr_len = I40E_RX_HDR_SIZE;
-		vsi->rx_buf_len = I40E_RXBUFFER_2048;
-		vsi->dtype = I40E_RX_DTYPE_HEADER_SPLIT;
-		break;
-	default:
-		vsi->rx_hdr_len = I40E_RX_HDR_SIZE;
-		vsi->rx_buf_len = I40E_RXBUFFER_2048;
-		vsi->dtype = I40E_RX_DTYPE_SPLIT_ALWAYS;
-		break;
-	}
+	vsi->rx_buf_len = I40E_RXBUFFER_2048;
 
 #ifdef I40E_FCOE
 	/* setup rx buffer for FCoE */
 	if ((vsi->type == I40E_VSI_FCOE) &&
 	    (vsi->back->flags & I40E_FLAG_FCOE_ENABLED)) {
-		vsi->rx_hdr_len = 0;
 		vsi->rx_buf_len = I40E_RXBUFFER_3072;
 		vsi->max_frame = I40E_RXBUFFER_3072;
-		vsi->dtype = I40E_RX_DTYPE_NO_SPLIT;
 	}
 
 #endif /* I40E_FCOE */
 	/* round up for the chip's needs */
-	vsi->rx_hdr_len = ALIGN(vsi->rx_hdr_len,
-				BIT_ULL(I40E_RXQ_CTX_HBUFF_SHIFT));
 	vsi->rx_buf_len = ALIGN(vsi->rx_buf_len,
 				BIT_ULL(I40E_RXQ_CTX_DBUFF_SHIFT));
 
@@ -7512,10 +7473,6 @@ static int i40e_alloc_rings(struct i40e_vsi *vsi)
 		rx_ring->count = vsi->num_desc;
 		rx_ring->size = 0;
 		rx_ring->dcb_tc = 0;
-		if (pf->flags & I40E_FLAG_16BYTE_RX_DESC_ENABLED)
-			set_ring_16byte_desc_enabled(rx_ring);
-		else
-			clear_ring_16byte_desc_enabled(rx_ring);
 		rx_ring->rx_itr_setting = pf->rx_itr_default;
 		vsi->rx_rings[i] = rx_ring;
 	}
@@ -8460,11 +8417,6 @@ static int i40e_sw_init(struct i40e_pf *pf)
 		    I40E_FLAG_MSI_ENABLED     |
 		    I40E_FLAG_MSIX_ENABLED;
 
-	if (iommu_present(&pci_bus_type))
-		pf->flags |= I40E_FLAG_RX_PS_ENABLED;
-	else
-		pf->flags |= I40E_FLAG_RX_1BUF_ENABLED;
-
 	/* Set default ITR */
 	pf->rx_itr_default = I40E_ITR_DYNAMIC | I40E_ITR_RX_DEF;
 	pf->tx_itr_default = I40E_ITR_DYNAMIC | I40E_ITR_TX_DEF;
@@ -9131,8 +9083,8 @@ static int i40e_config_netdev(struct i40e_vsi *vsi)
 				   NETIF_F_TSO6			|
 				   NETIF_F_GSO_GRE		|
 				   NETIF_F_GSO_GRE_CSUM		|
-				   NETIF_F_GSO_IPIP		|
-				   NETIF_F_GSO_SIT		|
+				   NETIF_F_GSO_IPXIP4		|
+				   NETIF_F_GSO_IPXIP6		|
 				   NETIF_F_GSO_UDP_TUNNEL	|
 				   NETIF_F_GSO_UDP_TUNNEL_CSUM	|
 				   NETIF_F_GSO_PARTIAL		|
@@ -9410,7 +9362,8 @@ static int i40e_add_vsi(struct i40e_vsi *vsi)
 			ctxt.info.valid_sections |=
 				cpu_to_le16(I40E_AQ_VSI_PROP_QUEUE_OPT_VALID);
 			ctxt.info.queueing_opt_flags |=
-						I40E_AQ_VSI_QUE_OPT_TCP_ENA;
+				(I40E_AQ_VSI_QUE_OPT_TCP_ENA |
+				 I40E_AQ_VSI_QUE_OPT_RSS_LUT_VSI);
 		}
 
 		ctxt.info.valid_sections |= cpu_to_le16(I40E_AQ_VSI_PROP_VLAN_VALID);
@@ -10456,6 +10409,7 @@ int i40e_fetch_switch_configuration(struct i40e_pf *pf, bool printconfig)
  **/
 static int i40e_setup_pf_switch(struct i40e_pf *pf, bool reinit)
 {
+	u16 flags = 0;
 	int ret;
 
 	/* find out what's out there already */
@@ -10468,6 +10422,32 @@ static int i40e_setup_pf_switch(struct i40e_pf *pf, bool reinit)
 		return ret;
 	}
 	i40e_pf_reset_stats(pf);
+
+	/* set the switch config bit for the whole device to
+	 * support limited promisc or true promisc
+	 * when user requests promisc. The default is limited
+	 * promisc.
+	*/
+
+	if ((pf->hw.pf_id == 0) &&
+	    !(pf->flags & I40E_FLAG_TRUE_PROMISC_SUPPORT))
+		flags = I40E_AQ_SET_SWITCH_CFG_PROMISC;
+
+	if (pf->hw.pf_id == 0) {
+		u16 valid_flags;
+
+		valid_flags = I40E_AQ_SET_SWITCH_CFG_PROMISC;
+		ret = i40e_aq_set_switch_config(&pf->hw, flags, valid_flags,
+						NULL);
+		if (ret && pf->hw.aq.asq_last_status != I40E_AQ_RC_ESRCH) {
+			dev_info(&pf->pdev->dev,
+				 "couldn't set switch config bits, err %s aq_err %s\n",
+				 i40e_stat_str(&pf->hw, ret),
+				 i40e_aq_str(&pf->hw,
+					     pf->hw.aq.asq_last_status));
+			/* not a fatal problem, just keep going */
+		}
+	}
 
 	/* first time setup */
 	if (pf->lan_vsi == I40E_NO_VSI || reinit) {
@@ -10696,11 +10676,9 @@ static void i40e_print_features(struct i40e_pf *pf)
 #ifdef CONFIG_PCI_IOV
 	i += snprintf(&buf[i], REMAIN(i), " VFs: %d", pf->num_req_vfs);
 #endif
-	i += snprintf(&buf[i], REMAIN(i), " VSIs: %d QP: %d RX: %s",
+	i += snprintf(&buf[i], REMAIN(i), " VSIs: %d QP: %d",
 		      pf->hw.func_caps.num_vsis,
-		      pf->vsi[pf->lan_vsi]->num_queue_pairs,
-		      pf->flags & I40E_FLAG_RX_PS_ENABLED ? "PS" : "1BUF");
-
+		      pf->vsi[pf->lan_vsi]->num_queue_pairs);
 	if (pf->flags & I40E_FLAG_RSS_ENABLED)
 		i += snprintf(&buf[i], REMAIN(i), " RSS");
 	if (pf->flags & I40E_FLAG_FD_ATR_ENABLED)

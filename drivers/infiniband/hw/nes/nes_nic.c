@@ -498,9 +498,6 @@ static int nes_netdev_start_xmit(struct sk_buff *skb, struct net_device *netdev)
 	 *		skb_shinfo(skb)->nr_frags, skb_is_gso(skb));
 	 */
 
-	if (!netif_carrier_ok(netdev))
-		return NETDEV_TX_OK;
-
 	if (netif_queue_stopped(netdev))
 		return NETDEV_TX_BUSY;
 
@@ -685,7 +682,7 @@ tso_sq_no_longer_full:
 		nes_write32(nesdev->regs+NES_WQE_ALLOC,
 				(wqe_count << 24) | (1 << 23) | nesvnic->nic.qp_id);
 
-	netdev->trans_start = jiffies;
+	netif_trans_update(netdev);
 
 	return NETDEV_TX_OK;
 }

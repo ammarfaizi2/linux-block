@@ -590,7 +590,7 @@ static int i40e_config_vsi_rx_queue(struct i40e_vf *vf, u16 vsi_id,
 		}
 		rx_ctx.hbuff = info->hdr_size >> I40E_RXQ_CTX_HBUFF_SHIFT;
 
-		/* set splitalways mode 10b */
+		/* set split mode 10b */
 		rx_ctx.dtype = I40E_RX_DTYPE_HEADER_SPLIT;
 	}
 
@@ -665,8 +665,6 @@ static int i40e_alloc_vsi_res(struct i40e_vf *vf, enum i40e_vsi_type type)
 		goto error_alloc_vsi_res;
 	}
 	if (type == I40E_VSI_SRIOV) {
-		u8 brdcast[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-
 		vf->lan_vsi_idx = vsi->idx;
 		vf->lan_vsi_id = vsi->id;
 		/* If the port VLAN has been configured and then the
@@ -688,12 +686,6 @@ static int i40e_alloc_vsi_res(struct i40e_vf *vf, enum i40e_vsi_type type)
 					 "Could not add MAC filter %pM for VF %d\n",
 					vf->default_lan_addr.addr, vf->vf_id);
 		}
-		f = i40e_add_filter(vsi, brdcast,
-				    vf->port_vlan_id ? vf->port_vlan_id : -1,
-				    true, false);
-		if (!f)
-			dev_info(&pf->pdev->dev,
-				 "Could not allocate VF broadcast filter\n");
 		spin_unlock_bh(&vsi->mac_filter_list_lock);
 	}
 
@@ -1474,12 +1466,16 @@ static int i40e_vc_config_promiscuous_mode_msg(struct i40e_vf *vf,
 
 	vsi = i40e_find_vsi_from_id(pf, info->vsi_id);
 	if (!test_bit(I40E_VF_STAT_ACTIVE, &vf->vf_states) ||
-	    !test_bit(I40E_VIRTCHNL_VF_CAP_PRIVILEGE, &vf->vf_caps) ||
 	    !i40e_vc_isvalid_vsi_id(vf, info->vsi_id)) {
-		dev_err(&pf->pdev->dev,
-			"VF %d doesn't meet requirements to enter promiscuous mode\n",
-			vf->vf_id);
 		aq_ret = I40E_ERR_PARAM;
+		goto error_param;
+	}
+	if (!test_bit(I40E_VIRTCHNL_VF_CAP_PRIVILEGE, &vf->vf_caps)) {
+		dev_err(&pf->pdev->dev,
+			"Unprivileged VF %d is attempting to configure promiscuous mode\n",
+			vf->vf_id);
+		/* Lie to the VF on purpose. */
+		aq_ret = 0;
 		goto error_param;
 	}
 	/* Multicast promiscuous handling*/
@@ -1544,7 +1540,7 @@ static int i40e_vc_config_promiscuous_mode_msg(struct i40e_vf *vf,
 	} else if (i40e_getnum_vf_vsi_vlan_filters(vsi)) {
 		list_for_each_entry(f, &vsi->mac_filter_list, list) {
 			aq_ret = 0;
-			if (f->vlan >= 0 && f->vlan <= I40E_MAX_VLANID)
+			if (f->vlan >= 0 && f->vlan <= I40E_MAX_VLANID) {
 				aq_ret =
 				i40e_aq_set_vsi_uc_promisc_on_vlan(hw,
 								   vsi->seid,
@@ -1552,6 +1548,7 @@ static int i40e_vc_config_promiscuous_mode_msg(struct i40e_vf *vf,
 								   f->vlan,
 								   NULL);
 				aq_err = pf->hw.aq.asq_last_status;
+			}
 			if (aq_ret)
 				dev_err(&pf->pdev->dev,
 					"Could not add VLAN %d to Unicast promiscuous domain err %s aq_err %s\n",
@@ -1561,7 +1558,8 @@ static int i40e_vc_config_promiscuous_mode_msg(struct i40e_vf *vf,
 		}
 	} else {
 		aq_ret = i40e_aq_set_vsi_unicast_promiscuous(hw, vsi->seid,
-							     allmulti, NULL);
+							     allmulti, NULL,
+							     true);
 		aq_err = pf->hw.aq.asq_last_status;
 		if (aq_ret)
 			dev_err(&pf->pdev->dev,

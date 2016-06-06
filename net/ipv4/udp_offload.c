@@ -209,16 +209,6 @@ static struct sk_buff *udp4_ufo_fragment(struct sk_buff *skb,
 
 	if (skb_gso_ok(skb, features | NETIF_F_GSO_ROBUST)) {
 		/* Packet is from an untrusted source, reset gso_segs. */
-		int type = skb_shinfo(skb)->gso_type;
-
-		if (unlikely(type & ~(SKB_GSO_UDP | SKB_GSO_DODGY |
-				      SKB_GSO_UDP_TUNNEL |
-				      SKB_GSO_UDP_TUNNEL_CSUM |
-				      SKB_GSO_TUNNEL_REMCSUM |
-				      SKB_GSO_IPIP |
-				      SKB_GSO_GRE | SKB_GSO_GRE_CSUM) ||
-			     !(type & (SKB_GSO_UDP))))
-			goto out;
 
 		skb_shinfo(skb)->gso_segs = DIV_ROUND_UP(skb->len, mss);
 
@@ -350,6 +340,11 @@ int udp_gro_complete(struct sk_buff *skb, int nhoff,
 
 	uh->len = newlen;
 
+	/* Set encapsulation before calling into inner gro_complete() functions
+	 * to make them set up the inner offsets.
+	 */
+	skb->encapsulation = 1;
+
 	rcu_read_lock();
 	sk = (*lookup)(skb, uh->source, uh->dest);
 	if (sk && udp_sk(sk)->gro_complete)
@@ -359,9 +354,6 @@ int udp_gro_complete(struct sk_buff *skb, int nhoff,
 
 	if (skb->remcsum_offload)
 		skb_shinfo(skb)->gso_type |= SKB_GSO_TUNNEL_REMCSUM;
-
-	skb->encapsulation = 1;
-	skb_set_inner_mac_header(skb, nhoff + sizeof(struct udphdr));
 
 	return err;
 }

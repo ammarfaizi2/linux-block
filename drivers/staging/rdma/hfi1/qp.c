@@ -167,8 +167,12 @@ static inline int opa_mtu_enum_to_int(int mtu)
  */
 static inline int verbs_mtu_enum_to_int(struct ib_device *dev, enum ib_mtu mtu)
 {
-	int val = opa_mtu_enum_to_int((int)mtu);
+	int val;
 
+	/* Constraining 10KB packets to 8KB packets */
+	if (mtu == (enum ib_mtu)OPA_MTU_10240)
+		mtu = OPA_MTU_8192;
+	val = opa_mtu_enum_to_int((int)mtu);
 	if (val > 0)
 		return val;
 	return ib_mtu_enum_to_int(mtu);
@@ -519,10 +523,12 @@ static void iowait_sdma_drained(struct iowait *wait)
 	 * do the flush work until that QP's
 	 * sdma work has finished.
 	 */
+	spin_lock(&qp->s_lock);
 	if (qp->s_flags & RVT_S_WAIT_DMA) {
 		qp->s_flags &= ~RVT_S_WAIT_DMA;
 		hfi1_schedule_send(qp);
 	}
+	spin_unlock(&qp->s_lock);
 }
 
 /**

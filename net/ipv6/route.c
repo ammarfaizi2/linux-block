@@ -1190,7 +1190,7 @@ struct dst_entry *ip6_route_output_flags(struct net *net, const struct sock *sk,
 	struct dst_entry *dst;
 	bool any_src;
 
-	dst = l3mdev_rt6_dst_by_oif(net, fl6);
+	dst = l3mdev_get_rt6_dst(net, fl6);
 	if (dst)
 		return dst;
 
@@ -1750,6 +1750,8 @@ static int ip6_convert_metrics(struct mx6_config *mxc,
 		} else {
 			val = nla_get_u32(nla);
 		}
+		if (type == RTAX_HOPLIMIT && val > 255)
+			val = 255;
 		if (type == RTAX_FEATURES && (val & ~RTAX_FEATURE_MASK))
 			goto err;
 

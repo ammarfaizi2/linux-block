@@ -47,6 +47,9 @@ static DEFINE_PER_CPU(struct pagevec, lru_add_pvec);
 static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
 static DEFINE_PER_CPU(struct pagevec, lru_deactivate_file_pvecs);
 static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
+#ifdef CONFIG_SMP
+static DEFINE_PER_CPU(struct pagevec, activate_page_pvecs);
+#endif
 
 /*
  * This path almost never happens for VM activity - pages are normally
@@ -274,8 +277,6 @@ static void __activate_page(struct page *page, struct lruvec *lruvec,
 }
 
 #ifdef CONFIG_SMP
-static DEFINE_PER_CPU(struct pagevec, activate_page_pvecs);
-
 static void activate_page_drain(int cpu)
 {
 	struct pagevec *pvec = &per_cpu(activate_page_pvecs, cpu);
@@ -726,6 +727,11 @@ void release_pages(struct page **pages, int nr, bool cold)
 		if (zone && ++lock_batch == SWAP_CLUSTER_MAX) {
 			spin_unlock_irqrestore(&zone->lru_lock, flags);
 			zone = NULL;
+		}
+
+		if (is_huge_zero_page(page)) {
+			put_huge_zero_page();
+			continue;
 		}
 
 		page = compound_head(page);

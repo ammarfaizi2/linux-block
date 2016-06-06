@@ -15,11 +15,13 @@
 #include "qed.h"
 #include <linux/qed/qed_chain.h>
 #include "qed_cxt.h"
+#include "qed_dcbx.h"
 #include "qed_hsi.h"
 #include "qed_hw.h"
 #include "qed_int.h"
 #include "qed_reg_addr.h"
 #include "qed_sp.h"
+#include "qed_sriov.h"
 
 int qed_sp_init_request(struct qed_hwfn *p_hwfn,
 			struct qed_spq_entry **pp_ent,
@@ -298,7 +300,7 @@ qed_tunn_set_pf_start_params(struct qed_hwfn *p_hwfn,
 
 int qed_sp_pf_start(struct qed_hwfn *p_hwfn,
 		    struct qed_tunn_start_params *p_tunn,
-		    enum qed_mf_mode mode)
+		    enum qed_mf_mode mode, bool allow_npar_tx_switch)
 {
 	struct pf_start_ramrod_data *p_ramrod = NULL;
 	u16 sb = qed_int_get_sp_sb_id(p_hwfn);
@@ -357,10 +359,52 @@ int qed_sp_pf_start(struct qed_hwfn *p_hwfn,
 				     &p_ramrod->tunnel_config);
 	p_hwfn->hw_info.personality = PERSONALITY_ETH;
 
+	if (IS_MF_SI(p_hwfn))
+		p_ramrod->allow_npar_tx_switching = allow_npar_tx_switch;
+
+	if (p_hwfn->cdev->p_iov_info) {
+		struct qed_hw_sriov_info *p_iov = p_hwfn->cdev->p_iov_info;
+
+		p_ramrod->base_vf_id = (u8) p_iov->first_vf_in_pf;
+		p_ramrod->num_vfs = (u8) p_iov->total_vfs;
+	}
+
 	DP_VERBOSE(p_hwfn, QED_MSG_SPQ,
 		   "Setting event_ring_sb [id %04x index %02x], outer_tag [%d]\n",
 		   sb, sb_index,
 		   p_ramrod->outer_tag);
+
+	rc = qed_spq_post(p_hwfn, p_ent, NULL);
+
+	if (p_tunn) {
+		qed_set_hw_tunn_mode(p_hwfn, p_hwfn->p_main_ptt,
+				     p_tunn->tunn_mode);
+		p_hwfn->cdev->tunn_mode = p_tunn->tunn_mode;
+	}
+
+	return rc;
+}
+
+int qed_sp_pf_update(struct qed_hwfn *p_hwfn)
+{
+	struct qed_spq_entry *p_ent = NULL;
+	struct qed_sp_init_data init_data;
+	int rc = -EINVAL;
+
+	/* Get SPQ entry */
+	memset(&init_data, 0, sizeof(init_data));
+	init_data.cid = qed_spq_get_cid(p_hwfn);
+	init_data.opaque_fid = p_hwfn->hw_info.opaque_fid;
+	init_data.comp_mode = QED_SPQ_MODE_CB;
+
+	rc = qed_sp_init_request(p_hwfn, &p_ent,
+				 COMMON_RAMROD_PF_UPDATE, PROTOCOLID_COMMON,
+				 &init_data);
+	if (rc)
+		return rc;
+
+	qed_dcbx_set_pf_update_params(&p_hwfn->p_dcbx_info->results,
+				      &p_ent->ramrod.pf_update);
 
 	return qed_spq_post(p_hwfn, p_ent, NULL);
 }

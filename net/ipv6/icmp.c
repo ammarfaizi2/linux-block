@@ -401,10 +401,10 @@ static void icmp6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info)
 	struct flowi6 fl6;
 	struct icmpv6_msg msg;
 	struct sockcm_cookie sockc_unused = {0};
+	struct ipcm6_cookie ipc6;
 	int iif = 0;
 	int addr_type = 0;
 	int len;
-	int hlimit;
 	int err = 0;
 	u32 mark = IP6_REPLY_MARK(net, skb->mark);
 
@@ -446,6 +446,8 @@ static void icmp6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info)
 
 	if (__ipv6_addr_needs_scope_id(addr_type))
 		iif = skb->dev->ifindex;
+	else
+		iif = l3mdev_master_ifindex(skb->dev);
 
 	/*
 	 *	Must not send error if the source does not uniquely
@@ -500,14 +502,14 @@ static void icmp6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info)
 	else if (!fl6.flowi6_oif)
 		fl6.flowi6_oif = np->ucast_oif;
 
-	if (!fl6.flowi6_oif)
-		fl6.flowi6_oif = l3mdev_master_ifindex(skb->dev);
-
 	dst = icmpv6_route_lookup(net, skb, sk, &fl6);
 	if (IS_ERR(dst))
 		goto out;
 
-	hlimit = ip6_sk_dst_hoplimit(np, &fl6, dst);
+	ipc6.hlimit = ip6_sk_dst_hoplimit(np, &fl6, dst);
+	ipc6.tclass = np->tclass;
+	ipc6.dontfrag = np->dontfrag;
+	ipc6.opt = NULL;
 
 	msg.skb = skb;
 	msg.offset = skb_network_offset(skb);
@@ -526,9 +528,9 @@ static void icmp6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info)
 
 	err = ip6_append_data(sk, icmpv6_getfrag, &msg,
 			      len + sizeof(struct icmp6hdr),
-			      sizeof(struct icmp6hdr), hlimit,
-			      np->tclass, NULL, &fl6, (struct rt6_info *)dst,
-			      MSG_DONTWAIT, np->dontfrag, &sockc_unused);
+			      sizeof(struct icmp6hdr),
+			      &ipc6, &fl6, (struct rt6_info *)dst,
+			      MSG_DONTWAIT, &sockc_unused);
 	if (err) {
 		ICMP6_INC_STATS(net, idev, ICMP6_MIB_OUTERRORS);
 		ip6_flush_pending_frames(sk);
@@ -563,9 +565,8 @@ static void icmpv6_echo_reply(struct sk_buff *skb)
 	struct flowi6 fl6;
 	struct icmpv6_msg msg;
 	struct dst_entry *dst;
+	struct ipcm6_cookie ipc6;
 	int err = 0;
-	int hlimit;
-	u8 tclass;
 	u32 mark = IP6_REPLY_MARK(net, skb->mark);
 	struct sockcm_cookie sockc_unused = {0};
 
@@ -607,19 +608,21 @@ static void icmpv6_echo_reply(struct sk_buff *skb)
 	if (IS_ERR(dst))
 		goto out;
 
-	hlimit = ip6_sk_dst_hoplimit(np, &fl6, dst);
-
 	idev = __in6_dev_get(skb->dev);
 
 	msg.skb = skb;
 	msg.offset = 0;
 	msg.type = ICMPV6_ECHO_REPLY;
 
-	tclass = ipv6_get_dsfield(ipv6_hdr(skb));
+	ipc6.hlimit = ip6_sk_dst_hoplimit(np, &fl6, dst);
+	ipc6.tclass = ipv6_get_dsfield(ipv6_hdr(skb));
+	ipc6.dontfrag = np->dontfrag;
+	ipc6.opt = NULL;
+
 	err = ip6_append_data(sk, icmpv6_getfrag, &msg, skb->len + sizeof(struct icmp6hdr),
-				sizeof(struct icmp6hdr), hlimit, tclass, NULL, &fl6,
+				sizeof(struct icmp6hdr), &ipc6, &fl6,
 				(struct rt6_info *)dst, MSG_DONTWAIT,
-				np->dontfrag, &sockc_unused);
+				&sockc_unused);
 
 	if (err) {
 		__ICMP6_INC_STATS(net, idev, ICMP6_MIB_OUTERRORS);

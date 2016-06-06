@@ -1,7 +1,7 @@
 /*
  * net/tipc/node.c: TIPC node management routines
  *
- * Copyright (c) 2000-2006, 2012-2015, Ericsson AB
+ * Copyright (c) 2000-2006, 2012-2016, Ericsson AB
  * Copyright (c) 2005-2006, 2010-2014, Wind River Systems
  * All rights reserved.
  *
@@ -191,6 +191,20 @@ int tipc_node_get_mtu(struct net *net, u32 addr, u32 sel)
 	tipc_node_put(n);
 	return mtu;
 }
+
+u16 tipc_node_get_capabilities(struct net *net, u32 addr)
+{
+	struct tipc_node *n;
+	u16 caps;
+
+	n = tipc_node_find(net, addr);
+	if (unlikely(!n))
+		return TIPC_NODE_CAPABILITIES;
+	caps = n->capabilities;
+	tipc_node_put(n);
+	return caps;
+}
+
 /*
  * A trivial power-of-two bitmask technique is used for speed, since this
  * operation is done for every incoming TIPC packet. The number of hash table
@@ -304,8 +318,11 @@ struct tipc_node *tipc_node_create(struct net *net, u32 addr, u16 capabilities)
 
 	spin_lock_bh(&tn->node_list_lock);
 	n = tipc_node_find(net, addr);
-	if (n)
+	if (n) {
+		/* Same node may come back with new capabilities */
+		n->capabilities = capabilities;
 		goto exit;
+	}
 	n = kzalloc(sizeof(*n), GFP_ATOMIC);
 	if (!n) {
 		pr_warn("Node creation failed, no memory\n");
@@ -525,7 +542,7 @@ static void __tipc_node_link_up(struct tipc_node *n, int bearer_id,
 	struct tipc_link *ol = node_active_link(n, 0);
 	struct tipc_link *nl = n->links[bearer_id].link;
 
-	if (!nl)
+	if (!nl || tipc_link_is_up(nl))
 		return;
 
 	tipc_link_fsm_evt(nl, LINK_ESTABLISH_EVT);
@@ -1452,6 +1469,7 @@ void tipc_rcv(struct net *net, struct sk_buff *skb, struct tipc_bearer *b)
 	int bearer_id = b->identity;
 	struct tipc_link_entry *le;
 	u16 bc_ack = msg_bcast_ack(hdr);
+	u32 self = tipc_own_addr(net);
 	int rc = 0;
 
 	__skb_queue_head_init(&xmitq);
@@ -1467,6 +1485,10 @@ void tipc_rcv(struct net *net, struct sk_buff *skb, struct tipc_bearer *b)
 		else
 			return tipc_node_bc_rcv(net, skb, bearer_id);
 	}
+
+	/* Discard unicast link messages destined for another node */
+	if (unlikely(!msg_short(hdr) && (msg_destnode(hdr) != self)))
+		goto discard;
 
 	/* Locate neighboring node that sent packet */
 	n = tipc_node_find(net, msg_prevnode(hdr));

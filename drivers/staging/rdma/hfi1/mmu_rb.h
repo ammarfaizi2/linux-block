@@ -59,7 +59,8 @@ struct mmu_rb_node {
 struct mmu_rb_ops {
 	bool (*filter)(struct mmu_rb_node *, unsigned long, unsigned long);
 	int (*insert)(struct rb_root *, struct mmu_rb_node *);
-	void (*remove)(struct rb_root *, struct mmu_rb_node *, bool);
+	void (*remove)(struct rb_root *, struct mmu_rb_node *,
+		       struct mm_struct *);
 	int (*invalidate)(struct rb_root *, struct mmu_rb_node *);
 };
 
@@ -69,5 +70,7 @@ int hfi1_mmu_rb_insert(struct rb_root *, struct mmu_rb_node *);
 void hfi1_mmu_rb_remove(struct rb_root *, struct mmu_rb_node *);
 struct mmu_rb_node *hfi1_mmu_rb_search(struct rb_root *, unsigned long,
 				       unsigned long);
+struct mmu_rb_node *hfi1_mmu_rb_extract(struct rb_root *, unsigned long,
+					unsigned long);
 
 #endif /* _HFI1_MMU_RB_H */

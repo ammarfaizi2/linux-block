@@ -994,7 +994,11 @@ static struct bpf_prog *bpf_migrate_filter(struct bpf_prog *fp)
 		 */
 		goto out_err_free;
 
-	bpf_prog_select_runtime(fp);
+	/* We are guaranteed to never error here with cBPF to eBPF
+	 * transitions, since there's no issue with type compatibility
+	 * checks on program arrays.
+	 */
+	fp = bpf_prog_select_runtime(fp, &err);
 
 	kfree(old_prog);
 	return fp;
@@ -1344,6 +1348,21 @@ struct bpf_scratchpad {
 
 static DEFINE_PER_CPU(struct bpf_scratchpad, bpf_sp);
 
+static inline int bpf_try_make_writable(struct sk_buff *skb,
+					unsigned int write_len)
+{
+	int err;
+
+	if (!skb_cloned(skb))
+		return 0;
+	if (skb_clone_writable(skb, write_len))
+		return 0;
+	err = pskb_expand_head(skb, 0, 0, GFP_ATOMIC);
+	if (!err)
+		bpf_compute_data_end(skb);
+	return err;
+}
+
 static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 flags)
 {
 	struct bpf_scratchpad *sp = this_cpu_ptr(&bpf_sp);
@@ -1366,7 +1385,7 @@ static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 flags)
 	 */
 	if (unlikely((u32) offset > 0xffff || len > sizeof(sp->buff)))
 		return -EFAULT;
-	if (unlikely(skb_try_make_writable(skb, offset + len)))
+	if (unlikely(bpf_try_make_writable(skb, offset + len)))
 		return -EFAULT;
 
 	ptr = skb_header_pointer(skb, offset, len, sp->buff);
@@ -1444,7 +1463,7 @@ static u64 bpf_l3_csum_replace(u64 r1, u64 r2, u64 from, u64 to, u64 flags)
 		return -EINVAL;
 	if (unlikely((u32) offset > 0xffff))
 		return -EFAULT;
-	if (unlikely(skb_try_make_writable(skb, offset + sizeof(sum))))
+	if (unlikely(bpf_try_make_writable(skb, offset + sizeof(sum))))
 		return -EFAULT;
 
 	ptr = skb_header_pointer(skb, offset, sizeof(sum), &sum);
@@ -1499,7 +1518,7 @@ static u64 bpf_l4_csum_replace(u64 r1, u64 r2, u64 from, u64 to, u64 flags)
 		return -EINVAL;
 	if (unlikely((u32) offset > 0xffff))
 		return -EFAULT;
-	if (unlikely(skb_try_make_writable(skb, offset + sizeof(sum))))
+	if (unlikely(bpf_try_make_writable(skb, offset + sizeof(sum))))
 		return -EFAULT;
 
 	ptr = skb_header_pointer(skb, offset, sizeof(sum), &sum);
@@ -1699,12 +1718,15 @@ static u64 bpf_skb_vlan_push(u64 r1, u64 r2, u64 vlan_tci, u64 r4, u64 r5)
 {
 	struct sk_buff *skb = (struct sk_buff *) (long) r1;
 	__be16 vlan_proto = (__force __be16) r2;
+	int ret;
 
 	if (unlikely(vlan_proto != htons(ETH_P_8021Q) &&
 		     vlan_proto != htons(ETH_P_8021AD)))
 		vlan_proto = htons(ETH_P_8021Q);
 
-	return skb_vlan_push(skb, vlan_proto, vlan_tci);
+	ret = skb_vlan_push(skb, vlan_proto, vlan_tci);
+	bpf_compute_data_end(skb);
+	return ret;
 }
 
 const struct bpf_func_proto bpf_skb_vlan_push_proto = {
@@ -1720,8 +1742,11 @@ EXPORT_SYMBOL_GPL(bpf_skb_vlan_push_proto);
 static u64 bpf_skb_vlan_pop(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	struct sk_buff *skb = (struct sk_buff *) (long) r1;
+	int ret;
 
-	return skb_vlan_pop(skb);
+	ret = skb_vlan_pop(skb);
+	bpf_compute_data_end(skb);
+	return ret;
 }
 
 const struct bpf_func_proto bpf_skb_vlan_pop_proto = {
@@ -2048,16 +2073,12 @@ tc_cls_act_func_proto(enum bpf_func_id func_id)
 
 static bool __is_valid_access(int off, int size, enum bpf_access_type type)
 {
-	/* check bounds */
 	if (off < 0 || off >= sizeof(struct __sk_buff))
 		return false;
-
-	/* disallow misaligned access */
+	/* The verifier guarantees that size > 0. */
 	if (off % size != 0)
 		return false;
-
-	/* all __sk_buff fields are __u32 */
-	if (size != 4)
+	if (size != sizeof(__u32))
 		return false;
 
 	return true;
@@ -2066,13 +2087,17 @@ static bool __is_valid_access(int off, int size, enum bpf_access_type type)
 static bool sk_filter_is_valid_access(int off, int size,
 				      enum bpf_access_type type)
 {
-	if (off == offsetof(struct __sk_buff, tc_classid))
+	switch (off) {
+	case offsetof(struct __sk_buff, tc_classid):
+	case offsetof(struct __sk_buff, data):
+	case offsetof(struct __sk_buff, data_end):
 		return false;
+	}
 
 	if (type == BPF_WRITE) {
 		switch (off) {
 		case offsetof(struct __sk_buff, cb[0]) ...
-			offsetof(struct __sk_buff, cb[4]):
+		     offsetof(struct __sk_buff, cb[4]):
 			break;
 		default:
 			return false;
@@ -2215,6 +2240,20 @@ static u32 bpf_net_convert_ctx_access(enum bpf_access_type type, int dst_reg,
 			*insn++ = BPF_LDX_MEM(BPF_H, dst_reg, src_reg, ctx_off);
 		break;
 
+	case offsetof(struct __sk_buff, data):
+		*insn++ = BPF_LDX_MEM(bytes_to_bpf_size(FIELD_SIZEOF(struct sk_buff, data)),
+				      dst_reg, src_reg,
+				      offsetof(struct sk_buff, data));
+		break;
+
+	case offsetof(struct __sk_buff, data_end):
+		ctx_off -= offsetof(struct __sk_buff, data_end);
+		ctx_off += offsetof(struct sk_buff, cb);
+		ctx_off += offsetof(struct bpf_skb_data_end, data_end);
+		*insn++ = BPF_LDX_MEM(bytes_to_bpf_size(sizeof(void *)),
+				      dst_reg, src_reg, ctx_off);
+		break;
+
 	case offsetof(struct __sk_buff, tc_index):
 #ifdef CONFIG_NET_SCHED
 		BUILD_BUG_ON(FIELD_SIZEOF(struct sk_buff, tc_index) != 2);
@@ -2239,30 +2278,30 @@ static u32 bpf_net_convert_ctx_access(enum bpf_access_type type, int dst_reg,
 }
 
 static const struct bpf_verifier_ops sk_filter_ops = {
-	.get_func_proto = sk_filter_func_proto,
-	.is_valid_access = sk_filter_is_valid_access,
-	.convert_ctx_access = bpf_net_convert_ctx_access,
+	.get_func_proto		= sk_filter_func_proto,
+	.is_valid_access	= sk_filter_is_valid_access,
+	.convert_ctx_access	= bpf_net_convert_ctx_access,
 };
 
 static const struct bpf_verifier_ops tc_cls_act_ops = {
-	.get_func_proto = tc_cls_act_func_proto,
-	.is_valid_access = tc_cls_act_is_valid_access,
-	.convert_ctx_access = bpf_net_convert_ctx_access,
+	.get_func_proto		= tc_cls_act_func_proto,
+	.is_valid_access	= tc_cls_act_is_valid_access,
+	.convert_ctx_access	= bpf_net_convert_ctx_access,
 };
 
 static struct bpf_prog_type_list sk_filter_type __read_mostly = {
-	.ops = &sk_filter_ops,
-	.type = BPF_PROG_TYPE_SOCKET_FILTER,
+	.ops	= &sk_filter_ops,
+	.type	= BPF_PROG_TYPE_SOCKET_FILTER,
 };
 
 static struct bpf_prog_type_list sched_cls_type __read_mostly = {
-	.ops = &tc_cls_act_ops,
-	.type = BPF_PROG_TYPE_SCHED_CLS,
+	.ops	= &tc_cls_act_ops,
+	.type	= BPF_PROG_TYPE_SCHED_CLS,
 };
 
 static struct bpf_prog_type_list sched_act_type __read_mostly = {
-	.ops = &tc_cls_act_ops,
-	.type = BPF_PROG_TYPE_SCHED_ACT,
+	.ops	= &tc_cls_act_ops,
+	.type	= BPF_PROG_TYPE_SCHED_ACT,
 };
 
 static int __init register_sk_filter_ops(void)
