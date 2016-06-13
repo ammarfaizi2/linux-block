@@ -348,6 +348,10 @@ extern int get_nohz_timer_target(void);
 #else
 static inline void nohz_balance_enter_idle(int cpu) { }
 static inline void set_cpu_sd_state_idle(void) { }
+static inline int get_nohz_timer_target(void)
+{
+	return raw_smp_processor_id();
+}
 #endif
 
 /*
