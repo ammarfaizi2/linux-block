@@ -64,6 +64,8 @@ struct timer_list {
 #define TIMER_DEFERRABLE	0x00100000
 #define TIMER_PINNED		0x00200000
 #define TIMER_IRQSAFE		0x00400000
+#define TIMER_ARRAYSHIFT	23
+#define TIMER_ARRAYMASK		0xFF800000
 
 #define __TIMER_INITIALIZER(_function, _expires, _data, _flags) { \
 		.entry = { .next = TIMER_ENTRY_STATIC },	\
