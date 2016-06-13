@@ -1099,6 +1099,7 @@ static int cascade(struct tvec_base *base, struct tvec *tv, int index)
 	 * don't have to detach them individually.
 	 */
 	hlist_for_each_entry_safe(timer, tmp, &tv_list, entry) {
+		trace_timer_cascade(timer);
 		/* No accounting, while moving them */
 		__internal_add_timer(base, timer);
 	}

@@ -126,6 +126,17 @@ DEFINE_EVENT(timer_class, timer_cancel,
 );
 
 /**
+ * timer_cascade - called when the timer is cascaded
+ * @timer:	pointer to struct timer_list
+ */
+DEFINE_EVENT(timer_class, timer_cascade,
+
+	TP_PROTO(struct timer_list *timer),
+
+	TP_ARGS(timer)
+);
+
+/**
  * hrtimer_init - called when the hrtimer is initialized
  * @hrtimer:	pointer to struct hrtimer
  * @clockid:	the hrtimers clock
