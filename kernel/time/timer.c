@@ -456,12 +456,9 @@ static inline unsigned calc_index(unsigned expires, unsigned gran,
 	return base + (((expires + gran) >> sft) & LVL_MASK);
 }
 
-static void
-__internal_add_timer(struct timer_base *base, struct timer_list *timer)
+static int calc_wheel_index(unsigned long expires, unsigned long clk)
 {
-	unsigned long expires = timer->expires;
-	unsigned long delta = expires - base->clk;
-	struct hlist_head *vec;
+	unsigned long delta = expires - clk;
 	unsigned int idx;
 
 	if (delta < LVL1_TSTART) {
@@ -475,7 +472,7 @@ __internal_add_timer(struct timer_base *base, struct timer_list *timer)
 	} else if (delta < LVL5_TSTART) {
 		idx = calc_index(expires, LVL4_GRAN, LVL4_SHIFT, LVL4_OFFS);
 	} else if ((long) delta < 0) {
-		idx = base->clk & LVL_MASK;
+		idx = clk & LVL_MASK;
 	} else {
 		/*
 		 * The long timeouts go into the last array level. They
@@ -484,6 +481,18 @@ __internal_add_timer(struct timer_base *base, struct timer_list *timer)
 		 */
 		idx = calc_index(expires, LVL5_GRAN, LVL5_SHIFT, LVL5_OFFS);
 	}
+
+	return idx;
+}
+
+/*
+ * Enqueue the timer into the hash bucket, mark it pending in
+ * the bitmap and store the index in the timer flags.
+ */
+static void enqueue_timer(struct timer_base *base, struct timer_list *timer,
+			  unsigned int idx)
+{
+	struct hlist_head *vec;
 
 	/*
 	 * Enqueue the timer into the array bucket, mark it pending in
@@ -495,10 +504,19 @@ __internal_add_timer(struct timer_base *base, struct timer_list *timer)
 	timer_set_idx(timer, idx);
 }
 
-static void internal_add_timer(struct timer_base *base, struct timer_list *timer)
+static void
+__internal_add_timer(struct timer_base *base, struct timer_list *timer)
 {
-	__internal_add_timer(base, timer);
+	unsigned long expires = timer->expires;
+	unsigned int idx;
 
+	idx = calc_wheel_index(expires, base->clk);
+	enqueue_timer(base, timer, idx);
+}
+
+static void
+trigger_dyntick_cpu(struct timer_base *base, struct timer_list *timer)
+{
 	/*
 	 * We might have to IPI the remote CPU if the base is idle and the
 	 * timer is not deferrable. If the other cpu is on the way to idle
@@ -521,6 +539,13 @@ static void internal_add_timer(struct timer_base *base, struct timer_list *timer
 	 */
 	if (tick_nohz_full_cpu(base->cpu))
 		wake_up_nohz_cpu(base->cpu);
+}
+
+static void
+internal_add_timer(struct timer_base *base, struct timer_list *timer)
+{
+	__internal_add_timer(base, timer);
+	trigger_dyntick_cpu(base, timer);
 }
 
 #ifdef CONFIG_TIMER_STATS
