@@ -713,18 +713,22 @@ struct ath10k {
 		int uart_pin;
 		u32 otp_exe_param;
 
-		/* This is true if given HW chip has a quirky Cycle Counter
-		 * wraparound which resets to 0x7fffffff instead of 0. All
-		 * other CC related counters (e.g. Rx Clear Count) are divided
-		 * by 2 so they never wraparound themselves.
+		/* Type of hw cycle counter wraparound logic, for more info
+		 * refer enum ath10k_hw_cc_wraparound_type.
 		 */
-		bool has_shifted_cc_wraparound;
+		enum ath10k_hw_cc_wraparound_type cc_wraparound_type;
 
 		/* Some of chip expects fragment descriptor to be continuous
 		 * memory for any TX operation. Set continuous_frag_desc flag
 		 * for the hardware which have such requirement.
 		 */
 		bool continuous_frag_desc;
+
+		/* CCK hardware rate table mapping for the newer chipsets
+		 * like QCA99X0, QCA4019 got revised. The CCK h/w rate values
+		 * are in a proper order with respect to the rate/preamble
+		 */
+		bool cck_rate_map_rev2;
 
 		u32 channel_counters_freq_hz;
 

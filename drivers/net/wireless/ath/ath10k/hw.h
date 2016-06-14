@@ -336,9 +336,39 @@ enum ath10k_hw_rate_cck {
 	ATH10K_HW_RATE_CCK_SP_2M,
 };
 
+enum ath10k_hw_rate_rev2_cck {
+	ATH10K_HW_RATE_REV2_CCK_LP_1M = 1,
+	ATH10K_HW_RATE_REV2_CCK_LP_2M,
+	ATH10K_HW_RATE_REV2_CCK_LP_5_5M,
+	ATH10K_HW_RATE_REV2_CCK_LP_11M,
+	ATH10K_HW_RATE_REV2_CCK_SP_2M,
+	ATH10K_HW_RATE_REV2_CCK_SP_5_5M,
+	ATH10K_HW_RATE_REV2_CCK_SP_11M,
+};
+
 enum ath10k_hw_4addr_pad {
 	ATH10K_HW_4ADDR_PAD_AFTER,
 	ATH10K_HW_4ADDR_PAD_BEFORE,
+};
+
+enum ath10k_hw_cc_wraparound_type {
+	ATH10K_HW_CC_WRAP_DISABLED = 0,
+
+	/* This type is when the HW chip has a quirky Cycle Counter
+	 * wraparound which resets to 0x7fffffff instead of 0. All
+	 * other CC related counters (e.g. Rx Clear Count) are divided
+	 * by 2 so they never wraparound themselves.
+	 */
+	ATH10K_HW_CC_WRAP_SHIFTED_ALL = 1,
+
+	/* Each hw counter wrapsaround independently. When the
+	 * counter overflows the repestive counter is right shifted
+	 * by 1, i.e reset to 0x7fffffff, and other counters will be
+	 * running unaffected. In this type of wraparound, it should
+	 * be possible to report accurate Rx busy time unlike the
+	 * first type.
+	 */
+	ATH10K_HW_CC_WRAP_SHIFTED_EACH = 2,
 };
 
 /* Target specific defines for MAIN firmware */
