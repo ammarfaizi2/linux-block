@@ -43,6 +43,7 @@
 #include <linux/stat.h>
 #include <linux/slab.h>
 #include <linux/trace_clock.h>
+#include <linux/ktime.h>
 #include <asm/byteorder.h>
 #include <linux/torture.h>
 
@@ -446,9 +447,9 @@ EXPORT_SYMBOL_GPL(torture_shuffle_cleanup);
  * Variables for auto-shutdown.  This allows "lights out" torture runs
  * to be fully scripted.
  */
-static int shutdown_secs;		/* desired test duration in seconds. */
+static ktime_t shutdown_ms;		/* desired test duration in seconds. */
 static struct task_struct *shutdown_task;
-static unsigned long shutdown_time;	/* jiffies to system shutdown. */
+static ktime_t shutdown_time;		/* jiffies to system shutdown. */
 static void (*torture_shutdown_hook)(void);
 
 /*
@@ -471,20 +472,21 @@ EXPORT_SYMBOL_GPL(torture_shutdown_absorb);
  */
 static int torture_shutdown(void *arg)
 {
-	long delta;
-	unsigned long jiffies_snap;
+	ktime_t delta;
+	ktime_t ktime_snap;
 
 	VERBOSE_TOROUT_STRING("torture_shutdown task started");
-	jiffies_snap = jiffies;
-	while (ULONG_CMP_LT(jiffies_snap, shutdown_time) &&
+	ktime_snap = ktime_get();
+	while (ktime_before(ktime_snap, shutdown_time) &&
 	       !torture_must_stop()) {
-		delta = shutdown_time - jiffies_snap;
+		delta = ktime_sub(shutdown_time, ktime_snap);
 		if (verbose)
 			pr_alert("%s" TORTURE_FLAG
-				 "torture_shutdown task: %lu jiffies remaining\n",
-				 torture_type, delta);
-		schedule_timeout_interruptible(delta);
-		jiffies_snap = jiffies;
+				 "torture_shutdown task: %llu ms remaining\n",
+				 torture_type, ktime_to_ms(delta));
+		set_current_state(TASK_INTERRUPTIBLE);
+		schedule_hrtimeout(&delta, HRTIMER_MODE_REL);
+		ktime_snap = ktime_get();
 	}
 	if (torture_must_stop()) {
 		torture_kthread_stopping("torture_shutdown");
@@ -511,10 +513,10 @@ int torture_shutdown_init(int ssecs, void (*cleanup)(void))
 {
 	int ret = 0;
 
-	shutdown_secs = ssecs;
 	torture_shutdown_hook = cleanup;
-	if (shutdown_secs > 0) {
-		shutdown_time = jiffies + shutdown_secs * HZ;
+	if (ssecs > 0) {
+		shutdown_ms = ms_to_ktime(ssecs * 1000ULL);
+		shutdown_time = ktime_add(ktime_get(), shutdown_ms);
 		ret = torture_create_kthread(torture_shutdown, NULL,
 					     shutdown_task);
 	}
