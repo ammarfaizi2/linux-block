@@ -471,8 +471,9 @@ EXPORT_SYMBOL_GPL(torture_shutdown_absorb);
  */
 static int torture_shutdown(void *arg)
 {
-	long delta;
+	unsigned long long delta;
 	unsigned long jiffies_snap;
+	ktime_t wait_duration;
 
 	VERBOSE_TOROUT_STRING("torture_shutdown task started");
 	jiffies_snap = jiffies;
@@ -481,9 +482,12 @@ static int torture_shutdown(void *arg)
 		delta = shutdown_time - jiffies_snap;
 		if (verbose)
 			pr_alert("%s" TORTURE_FLAG
-				 "torture_shutdown task: %lu jiffies remaining\n",
+				 "torture_shutdown task: %llu jiffies remaining\n",
 				 torture_type, delta);
-		schedule_timeout_interruptible(delta);
+		delta = delta * 1000ULL * 1000ULL * 1000ULL / HZ;
+		wait_duration = ns_to_ktime(delta);
+		set_current_state(TASK_INTERRUPTIBLE);
+		schedule_hrtimeout(&wait_duration, HRTIMER_MODE_REL);
 		jiffies_snap = jiffies;
 	}
 	if (torture_must_stop()) {
