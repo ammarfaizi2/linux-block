@@ -336,6 +336,9 @@
 327	64	preadv2			sys_preadv2
 328	64	pwritev2		sys_pwritev2
 
+# Same as restart_syscall but with the same nr for all ABIs.
+380	common	restart_syscall2	sys_restart_syscall
+
 #
 # x32-specific system call numbers start at 512 to avoid cache impact
 # for native 64-bit operation.
