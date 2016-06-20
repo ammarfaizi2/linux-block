@@ -891,6 +891,10 @@ long arch_ptrace(struct task_struct *child, long request,
 	case offsetof(struct user32, regs.l):				\
 		regs->q = value; break
 
+#define R32_SIGNED(l,q)							\
+	case offsetof(struct user32, regs.l):				\
+		regs->q = (long)(s32)value; break
+
 #define SEG32(rs)							\
 	case offsetof(struct user32, regs.rs):				\
 		return set_segment_reg(child,				\
@@ -917,25 +921,27 @@ static int putreg32(struct task_struct *child, unsigned regno, u32 value)
 	R32(edi, di);
 	R32(esi, si);
 	R32(ebp, bp);
-	R32(eax, ax);
 	R32(eip, ip);
 	R32(esp, sp);
 
-	case offsetof(struct user32, regs.orig_eax):
-		/*
-		 * Warning: bizarre corner case fixup here.  A 32-bit
-		 * debugger setting orig_eax to -1 wants to disable
-		 * syscall restart.  Make sure that the syscall
-		 * restart code sign-extends orig_ax.  Also make sure
-		 * we interpret the -ERESTART* codes correctly if
-		 * loaded into regs->ax in case the task is not
-		 * actually still sitting at the exit from a 32-bit
-		 * syscall with TS_COMPAT still set.
-		 */
-		regs->orig_ax = value;
-		if (syscall_get_nr(child, regs) >= 0)
-			task_thread_info(child)->status |= TS_I386_REGS_POKED;
-		break;
+	/*
+	 * A 32-bit ptracer has the following expectations:
+	 *
+	 * - Storing -1 (i.e. 0xffffffff) to orig_eax will prevent
+	 *   syscall restart handling.
+	 *
+	 * - Restoring regs saved on exit from an interrupted
+	 *   restartable syscall will trigger syscall restart.  Such
+	 *   regs will have non-negative orig_eax and negative eax.
+	 *
+	 * The kernel's syscall restart code treats regs->ax as a 64-bit
+	 * signed quantities.  32-bit user code doesn't care about the
+	 * high bits.  Keep it simple and just sign-extend both values.
+	 * regs->orig_ax is treated as a 32-bit value (see
+	 * syscall_get_nr()), so we don't need to sign-extend it.
+	 */
+	R32(orig_eax, orig_ax);
+	R32_SIGNED(eax, ax);
 
 	case offsetof(struct user32, regs.eflags):
 		return set_flags(child, value);

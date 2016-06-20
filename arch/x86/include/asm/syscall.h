@@ -60,7 +60,7 @@ static inline long syscall_get_error(struct task_struct *task,
 	 * TS_COMPAT is set for 32-bit syscall entries and then
 	 * remains set until we return to user mode.
 	 */
-	if (task_thread_info(task)->status & (TS_COMPAT|TS_I386_REGS_POKED))
+	if (task_thread_info(task)->status & TS_COMPAT)
 		/*
 		 * Sign-extend the value so (int)-EFOO becomes (long)-EFOO
 		 * and will match correctly in comparisons.
