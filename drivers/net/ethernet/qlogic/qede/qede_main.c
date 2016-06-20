@@ -577,8 +577,6 @@ netdev_tx_t qede_start_xmit(struct sk_buff *skb,
 
 	/* Fill the parsing flags & params according to the requested offload */
 	if (xmit_type & XMIT_L4_CSUM) {
-		u16 temp = 1 << ETH_TX_DATA_1ST_BD_TUNN_CFG_OVERRIDE_SHIFT;
-
 		/* We don't re-calculate IP checksum as it is already done by
 		 * the upper stack
 		 */
@@ -588,14 +586,8 @@ netdev_tx_t qede_start_xmit(struct sk_buff *skb,
 		if (xmit_type & XMIT_ENC) {
 			first_bd->data.bd_flags.bitfields |=
 				1 << ETH_TX_1ST_BD_FLAGS_IP_CSUM_SHIFT;
-		} else {
-			/* In cases when OS doesn't indicate for inner offloads
-			 * when packet is tunnelled, we need to override the HW
-			 * tunnel configuration so that packets are treated as
-			 * regular non tunnelled packets and no inner offloads
-			 * are done by the hardware.
-			 */
-			first_bd->data.bitfields |= cpu_to_le16(temp);
+			first_bd->data.bitfields |=
+			    1 << ETH_TX_DATA_1ST_BD_TUNN_FLAG_SHIFT;
 		}
 
 		/* If the packet is IPv6 with extension header, indicate that
@@ -653,6 +645,10 @@ netdev_tx_t qede_start_xmit(struct sk_buff *skb,
 			tx_data_bd = (struct eth_tx_bd *)third_bd;
 			data_split = true;
 		}
+	} else {
+		first_bd->data.bitfields |=
+		    (skb->len & ETH_TX_DATA_1ST_BD_PKT_LEN_MASK) <<
+		    ETH_TX_DATA_1ST_BD_PKT_LEN_SHIFT;
 	}
 
 	/* Handle fragmented skb */
@@ -2821,6 +2817,7 @@ static int qede_alloc_mem_rxq(struct qede_dev *edev,
 	rc = edev->ops->common->chain_alloc(edev->cdev,
 					    QED_CHAIN_USE_TO_CONSUME_PRODUCE,
 					    QED_CHAIN_MODE_NEXT_PTR,
+					    QED_CHAIN_CNT_TYPE_U16,
 					    RX_RING_SIZE,
 					    sizeof(struct eth_rx_bd),
 					    &rxq->rx_bd_ring);
@@ -2832,6 +2829,7 @@ static int qede_alloc_mem_rxq(struct qede_dev *edev,
 	rc = edev->ops->common->chain_alloc(edev->cdev,
 					    QED_CHAIN_USE_TO_CONSUME,
 					    QED_CHAIN_MODE_PBL,
+					    QED_CHAIN_CNT_TYPE_U16,
 					    RX_RING_SIZE,
 					    sizeof(union eth_rx_cqe),
 					    &rxq->rx_comp_ring);
@@ -2883,9 +2881,9 @@ static int qede_alloc_mem_txq(struct qede_dev *edev,
 	rc = edev->ops->common->chain_alloc(edev->cdev,
 					    QED_CHAIN_USE_TO_CONSUME_PRODUCE,
 					    QED_CHAIN_MODE_PBL,
+					    QED_CHAIN_CNT_TYPE_U16,
 					    NUM_TX_BDS_MAX,
-					    sizeof(*p_virt),
-					    &txq->tx_pbl);
+					    sizeof(*p_virt), &txq->tx_pbl);
 	if (rc)
 		goto err;
 

@@ -168,7 +168,7 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
 	return next;
 }
 
-static unsigned long do_brk(unsigned long addr, unsigned long len);
+static int do_brk(unsigned long addr, unsigned long len);
 
 SYSCALL_DEFINE1(brk, unsigned long, brk)
 {
@@ -178,7 +178,8 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	unsigned long min_brk;
 	bool populate;
 
-	down_write(&mm->mmap_sem);
+	if (down_write_killable(&mm->mmap_sem))
+		return -EINTR;
 
 #ifdef CONFIG_COMPAT_BRK
 	/*
@@ -223,7 +224,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 		goto out;
 
 	/* Ok, looks good - let it rip. */
-	if (do_brk(oldbrk, newbrk-oldbrk) != oldbrk)
+	if (do_brk(oldbrk, newbrk-oldbrk) < 0)
 		goto out;
 
 set_brk:
@@ -2493,7 +2494,9 @@ int vm_munmap(unsigned long start, size_t len)
 	int ret;
 	struct mm_struct *mm = current->mm;
 
-	down_write(&mm->mmap_sem);
+	if (down_write_killable(&mm->mmap_sem))
+		return -EINTR;
+
 	ret = do_munmap(mm, start, len);
 	up_write(&mm->mmap_sem);
 	return ret;
@@ -2502,8 +2505,15 @@ EXPORT_SYMBOL(vm_munmap);
 
 SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
 {
+	int ret;
+	struct mm_struct *mm = current->mm;
+
 	profile_munmap(addr);
-	return vm_munmap(addr, len);
+	if (down_write_killable(&mm->mmap_sem))
+		return -EINTR;
+	ret = do_munmap(mm, addr, len);
+	up_write(&mm->mmap_sem);
+	return ret;
 }
 
 
@@ -2535,7 +2545,9 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
 	if (pgoff + (size >> PAGE_SHIFT) < pgoff)
 		return ret;
 
-	down_write(&mm->mmap_sem);
+	if (down_write_killable(&mm->mmap_sem))
+		return -EINTR;
+
 	vma = find_vma(mm, start);
 
 	if (!vma || !(vma->vm_flags & VM_SHARED))
@@ -2613,7 +2625,7 @@ static inline void verify_mm_writelocked(struct mm_struct *mm)
  *  anonymous maps.  eventually we may be able to do some
  *  brk-specific accounting here.
  */
-static unsigned long do_brk(unsigned long addr, unsigned long len)
+static int do_brk(unsigned long addr, unsigned long len)
 {
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma, *prev;
@@ -2624,7 +2636,7 @@ static unsigned long do_brk(unsigned long addr, unsigned long len)
 
 	len = PAGE_ALIGN(len);
 	if (!len)
-		return addr;
+		return 0;
 
 	flags = VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
 
@@ -2691,20 +2703,22 @@ out:
 	if (flags & VM_LOCKED)
 		mm->locked_vm += (len >> PAGE_SHIFT);
 	vma->vm_flags |= VM_SOFTDIRTY;
-	return addr;
+	return 0;
 }
 
-unsigned long vm_brk(unsigned long addr, unsigned long len)
+int vm_brk(unsigned long addr, unsigned long len)
 {
 	struct mm_struct *mm = current->mm;
-	unsigned long ret;
+	int ret;
 	bool populate;
 
-	down_write(&mm->mmap_sem);
+	if (down_write_killable(&mm->mmap_sem))
+		return -EINTR;
+
 	ret = do_brk(addr, len);
 	populate = ((mm->def_flags & VM_LOCKED) != 0);
 	up_write(&mm->mmap_sem);
-	if (populate)
+	if (populate && !ret)
 		mm_populate(addr, len);
 	return ret;
 }

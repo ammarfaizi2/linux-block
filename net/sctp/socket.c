@@ -4003,6 +4003,8 @@ static int sctp_init_sock(struct sock *sk)
 		return -ESOCKTNOSUPPORT;
 	}
 
+	sk->sk_gso_type = SKB_GSO_SCTP;
+
 	/* Initialize default send parameters. These parameters can be
 	 * modified with the SCTP_DEFAULT_SEND_PARAM socket option.
 	 */
@@ -4220,6 +4222,7 @@ int sctp_get_sctp_info(struct sock *sk, struct sctp_association *asoc,
 		info->sctpi_s_disable_fragments = sp->disable_fragments;
 		info->sctpi_s_v4mapped = sp->v4mapped;
 		info->sctpi_s_frag_interleave = sp->frag_interleave;
+		info->sctpi_s_type = sp->type;
 
 		return 0;
 	}
