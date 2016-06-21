@@ -404,4 +404,34 @@ bool sg_miter_skip(struct sg_mapping_iter *miter, off_t offset);
 bool sg_miter_next(struct sg_mapping_iter *miter);
 void sg_miter_stop(struct sg_mapping_iter *miter);
 
+/*
+ * If for some reason you need to create an sg referring to a stack buffer,
+ * use these helpers.  Keep in mind the following caveats:
+ *
+ * - You cannot use the resulting SG for DMA.  (DMA to or from the stack
+ *   is disallowed in general.)
+ *
+ * - You can't use a buffer in excess of PAGE_SIZE.  (Allowing this
+ *   would complicate the implementation, and you shouldn't have a
+ *   buffer anywhere near PAGE_SIZE in length on the stack in the first
+ *   place.)
+ *
+ * - If you are doing this at all, something is probably wrong with your
+ *   design.
+ */
+struct stack_scatterlist {
+	struct scatterlist sg[1];
+};
+
+static inline void sg_init_stackbuf(struct stack_scatterlist *ssg,
+				    void *buf, size_t len)
+{
+	BUILD_BUG_ON(__builtin_constant_p(len >= PAGE_SIZE) &&
+		     len >= PAGE_SIZE);
+#ifdef CONFIG_DEBUG_SG
+	BUG_ON(len >= PAGE_SIZE);
+#endif
+	sg_init_one(ssg->sg, buf, len);
+}
+
 #endif /* _LINUX_SCATTERLIST_H */
