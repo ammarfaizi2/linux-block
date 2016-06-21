@@ -12,6 +12,10 @@
 #include <linux/highmem.h>
 #include <linux/kmemleak.h>
 
+#ifdef CONFIG_VMAP_STACK
+#include <linux/vmalloc.h>
+#endif
+
 /**
  * sg_next - return the next scatterlist entry in a list
  * @sg:		The current sg entry
@@ -755,3 +759,46 @@ size_t sg_pcopy_to_buffer(struct scatterlist *sgl, unsigned int nents,
 	return sg_copy_buffer(sgl, nents, buf, buflen, skip, true);
 }
 EXPORT_SYMBOL(sg_pcopy_to_buffer);
+
+#ifdef CONFIG_VMAP_STACK
+
+void __sg_init_stackbuf(struct stack_scatterlist *ssg,
+			void *buf, size_t len)
+{
+	unsigned long first_vaddr = (unsigned long)buf;
+	unsigned long last_vaddr = first_vaddr + len - 1;
+	unsigned long stack_vaddr = (unsigned long)current->stack;
+	unsigned long offset = offset_in_page(first_vaddr);
+	int page_idx;
+
+	/*
+	 * Any code path that get here is so slow that there's no
+	 * reason to make the sanity checks conditional on any debug
+	 * option.
+	 */
+	BUG_ON(len >= PAGE_SIZE);
+	BUG_ON(first_vaddr < stack_vaddr ||
+	       last_vaddr > (stack_vaddr + THREAD_SIZE - 1));
+
+	page_idx = (first_vaddr - stack_vaddr) >> PAGE_SHIFT;
+
+	if (len <= PAGE_SIZE - offset) {
+		/* The buffer is entirely contained within one page. */
+		sg_init_table(ssg->sg, 1);
+		sg_set_page(&ssg->sg[0],
+			    current->stack_vm_area->pages[page_idx],
+			    len, offset);
+	} else {
+		/* The buffer spans two pages. */
+		sg_init_table(ssg->sg, 2);
+		sg_set_page(&ssg->sg[0],
+			    current->stack_vm_area->pages[page_idx],
+			    PAGE_SIZE - offset, offset);
+		sg_set_page(&ssg->sg[1],
+			    current->stack_vm_area->pages[page_idx+1],
+			    len - (PAGE_SIZE - offset), 0);
+	}
+}
+EXPORT_SYMBOL(__sg_init_stackbuf);
+
+#endif	/* CONFIG_VMAP_STACK */

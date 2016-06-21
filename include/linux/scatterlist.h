@@ -419,6 +419,8 @@ void sg_miter_stop(struct sg_mapping_iter *miter);
  * - If you are doing this at all, something is probably wrong with your
  *   design.
  */
+#ifndef CONFIG_VMAP_STACK
+
 struct stack_scatterlist {
 	struct scatterlist sg[1];
 };
@@ -433,5 +435,24 @@ static inline void sg_init_stackbuf(struct stack_scatterlist *ssg,
 #endif
 	sg_init_one(ssg->sg, buf, len);
 }
+
+#else
+
+struct stack_scatterlist {
+	struct scatterlist sg[2];
+};
+
+extern void __sg_init_stackbuf(struct stack_scatterlist *ssg,
+			       void *buf, size_t len);
+
+static inline void sg_init_stackbuf(struct stack_scatterlist *ssg,
+				    void *buf, size_t len)
+{
+	BUILD_BUG_ON(__builtin_constant_p(len >= PAGE_SIZE) &&
+		     len >= PAGE_SIZE);
+	__sg_init_stackbuf(ssg, buf, len);
+}
+
+#endif /* CONFIG_VMAP_STACK */
 
 #endif /* _LINUX_SCATTERLIST_H */
