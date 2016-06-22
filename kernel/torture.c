@@ -447,9 +447,8 @@ EXPORT_SYMBOL_GPL(torture_shuffle_cleanup);
  * Variables for auto-shutdown.  This allows "lights out" torture runs
  * to be fully scripted.
  */
-static ktime_t shutdown_secs;		/* desired test duration in seconds. */
 static struct task_struct *shutdown_task;
-static ktime_t shutdown_time;		/* jiffies to system shutdown. */
+static ktime_t shutdown_time;		/* time to system shutdown. */
 static void (*torture_shutdown_hook)(void);
 
 /*
@@ -514,8 +513,7 @@ int torture_shutdown_init(int ssecs, void (*cleanup)(void))
 
 	torture_shutdown_hook = cleanup;
 	if (ssecs > 0) {
-		shutdown_secs = ktime_set(ssecs, 0);
-		shutdown_time = ktime_add(ktime_get(), shutdown_secs);
+		shutdown_time = ktime_add(ktime_get(), ktime_set(ssecs, 0));
 		ret = torture_create_kthread(torture_shutdown, NULL,
 					     shutdown_task);
 	}
