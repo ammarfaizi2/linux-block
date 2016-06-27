@@ -185,6 +185,36 @@
 			};
 		};
 	};
+
+	disp0: disp0 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "fsl,imx-parallel-display";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_disp0>;
+
+		port@0 {
+			reg = <0>;
+
+			disp0_in_0: endpoint {
+				remote-endpoint = <&ipu1_di0_disp0>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+
+			disp0_out: endpoint {
+				remote-endpoint = <&tc358767_in>;
+			};
+		};
+	};
+
+	edp_refclk: edp-refclk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <19200000>;
+	};
 };
 
 /* connections between PFUZE100 and i.MX6 */
@@ -309,6 +339,29 @@
 		reg = <0x60>;
 		power-gpio = <&gpio1 5 GPIO_ACTIVE_HIGH>;
 		Vdd-supply = <&reg_5p0v_main>;
+	};
+
+	edp-bridge@68 {
+		compatible = "toshiba,tc358767";
+		reg = <0x68>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_tc358767>;
+		shutdown-gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+		clock-names = "ref";
+		clocks = <&edp_refclk>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@1 {
+				reg = <1>;
+
+				tc358767_in: endpoint {
+					remote-endpoint = <&disp0_out>;
+				};
+			};
+		};
 	};
 };
 
@@ -518,6 +571,10 @@
 		power-gpio = <&gpio1 4 GPIO_ACTIVE_HIGH>;
 		Vdd-supply = <&reg_5p0v_main>;
 	};
+};
+
+&ipu1_di0_disp0 {
+        remote-endpoint = <&disp0_in_0>;
 };
 
 &pcie {
@@ -1000,6 +1057,46 @@
 				/* Bitbang MDIO for DEB Switch */
 				MX6QDL_PAD_CSI0_DAT19__GPIO6_IO05	0x4001b030 /*SWITCH_MDC*/
 				MX6QDL_PAD_CSI0_DAT18__GPIO6_IO04	0x40018830 /*SWITCH_MDIO*/
+			>;
+		};
+
+		pinctrl_disp0: disp0grp {
+			fsl,pins = <
+				MX6QDL_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK 0x100f9
+				MX6QDL_PAD_DI0_PIN15__IPU1_DI0_PIN15       0x100f9
+				MX6QDL_PAD_DI0_PIN2__IPU1_DI0_PIN02        0x100f9
+				MX6QDL_PAD_DI0_PIN3__IPU1_DI0_PIN03        0x100f9
+				MX6QDL_PAD_DISP0_DAT0__IPU1_DISP0_DATA00   0x100f9
+				MX6QDL_PAD_DISP0_DAT1__IPU1_DISP0_DATA01   0x100f9
+				MX6QDL_PAD_DISP0_DAT2__IPU1_DISP0_DATA02   0x100f9
+				MX6QDL_PAD_DISP0_DAT3__IPU1_DISP0_DATA03   0x100f9
+				MX6QDL_PAD_DISP0_DAT4__IPU1_DISP0_DATA04   0x100f9
+				MX6QDL_PAD_DISP0_DAT5__IPU1_DISP0_DATA05   0x100f9
+				MX6QDL_PAD_DISP0_DAT6__IPU1_DISP0_DATA06   0x100f9
+				MX6QDL_PAD_DISP0_DAT7__IPU1_DISP0_DATA07   0x100f9
+				MX6QDL_PAD_DISP0_DAT8__IPU1_DISP0_DATA08   0x100f9
+				MX6QDL_PAD_DISP0_DAT9__IPU1_DISP0_DATA09   0x100f9
+				MX6QDL_PAD_DISP0_DAT10__IPU1_DISP0_DATA10  0x100f9
+				MX6QDL_PAD_DISP0_DAT11__IPU1_DISP0_DATA11  0x100f9
+				MX6QDL_PAD_DISP0_DAT12__IPU1_DISP0_DATA12  0x100f9
+				MX6QDL_PAD_DISP0_DAT13__IPU1_DISP0_DATA13  0x100f9
+				MX6QDL_PAD_DISP0_DAT14__IPU1_DISP0_DATA14  0x100f9
+				MX6QDL_PAD_DISP0_DAT15__IPU1_DISP0_DATA15  0x100f9
+				MX6QDL_PAD_DISP0_DAT16__IPU1_DISP0_DATA16  0x100f9
+				MX6QDL_PAD_DISP0_DAT17__IPU1_DISP0_DATA17  0x100f9
+				MX6QDL_PAD_DISP0_DAT18__IPU1_DISP0_DATA18  0x100f9
+				MX6QDL_PAD_DISP0_DAT19__IPU1_DISP0_DATA19  0x100f9
+				MX6QDL_PAD_DISP0_DAT20__IPU1_DISP0_DATA20  0x100f9
+				MX6QDL_PAD_DISP0_DAT21__IPU1_DISP0_DATA21  0x100f9
+				MX6QDL_PAD_DISP0_DAT22__IPU1_DISP0_DATA22  0x100f9
+				MX6QDL_PAD_DISP0_DAT23__IPU1_DISP0_DATA23  0x100f9
+			>;
+		};
+
+		pinctrl_tc358767: tc358767grp {
+			fsl,pins = <
+				/* SD pin */
+				MX6QDL_PAD_GPIO_9__GPIO1_IO09              0x10
 			>;
 		};
 	};
