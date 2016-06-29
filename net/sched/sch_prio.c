@@ -67,7 +67,7 @@ prio_classify(struct sk_buff *skb, struct Qdisc *sch, int *qerr)
 }
 
 static int
-prio_enqueue(struct sk_buff *skb, struct Qdisc *sch)
+prio_enqueue(struct sk_buff *skb, struct Qdisc *sch, struct sk_buff **to_free)
 {
 	struct Qdisc *qdisc;
 	int ret;
@@ -83,8 +83,9 @@ prio_enqueue(struct sk_buff *skb, struct Qdisc *sch)
 	}
 #endif
 
-	ret = qdisc_enqueue(skb, qdisc);
+	ret = qdisc_enqueue(skb, qdisc, to_free);
 	if (ret == NET_XMIT_SUCCESS) {
+		qdisc_qstats_backlog_inc(sch, skb);
 		sch->q.qlen++;
 		return NET_XMIT_SUCCESS;
 	}
@@ -117,6 +118,7 @@ static struct sk_buff *prio_dequeue(struct Qdisc *sch)
 		struct sk_buff *skb = qdisc_dequeue_peeked(qdisc);
 		if (skb) {
 			qdisc_bstats_update(sch, skb);
+			qdisc_qstats_backlog_dec(sch, skb);
 			sch->q.qlen--;
 			return skb;
 		}
@@ -124,24 +126,6 @@ static struct sk_buff *prio_dequeue(struct Qdisc *sch)
 	return NULL;
 
 }
-
-static unsigned int prio_drop(struct Qdisc *sch)
-{
-	struct prio_sched_data *q = qdisc_priv(sch);
-	int prio;
-	unsigned int len;
-	struct Qdisc *qdisc;
-
-	for (prio = q->bands-1; prio >= 0; prio--) {
-		qdisc = q->queues[prio];
-		if (qdisc->ops->drop && (len = qdisc->ops->drop(qdisc)) != 0) {
-			sch->q.qlen--;
-			return len;
-		}
-	}
-	return 0;
-}
-
 
 static void
 prio_reset(struct Qdisc *sch)
@@ -151,6 +135,7 @@ prio_reset(struct Qdisc *sch)
 
 	for (prio = 0; prio < q->bands; prio++)
 		qdisc_reset(q->queues[prio]);
+	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
 }
 
@@ -319,7 +304,8 @@ static int prio_dump_class_stats(struct Qdisc *sch, unsigned long cl,
 	struct Qdisc *cl_q;
 
 	cl_q = q->queues[cl - 1];
-	if (gnet_stats_copy_basic(d, NULL, &cl_q->bstats) < 0 ||
+	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
+				  d, NULL, &cl_q->bstats) < 0 ||
 	    gnet_stats_copy_queue(d, NULL, &cl_q->qstats, cl_q->q.qlen) < 0)
 		return -1;
 
@@ -378,7 +364,6 @@ static struct Qdisc_ops prio_qdisc_ops __read_mostly = {
 	.enqueue	=	prio_enqueue,
 	.dequeue	=	prio_dequeue,
 	.peek		=	prio_peek,
-	.drop		=	prio_drop,
 	.init		=	prio_init,
 	.reset		=	prio_reset,
 	.destroy	=	prio_destroy,

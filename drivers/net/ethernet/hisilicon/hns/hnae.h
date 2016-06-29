@@ -27,6 +27,7 @@
  * "cb" means control block
  */
 
+#include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/module.h>
@@ -453,7 +454,6 @@ struct hnae_ae_ops {
 	int (*get_info)(struct hnae_handle *handle,
 			u8 *auto_neg, u16 *speed, u8 *duplex);
 	void (*toggle_ring_irq)(struct hnae_ring *ring, u32 val);
-	void (*toggle_queue_status)(struct hnae_queue *queue, u32 val);
 	void (*adjust_link)(struct hnae_handle *handle, int speed, int duplex);
 	int (*set_loopback)(struct hnae_handle *handle,
 			    enum hnae_loop loop_mode, int en);
@@ -472,6 +472,11 @@ struct hnae_ae_ops {
 	int (*set_coalesce_usecs)(struct hnae_handle *handle, u32 timeout);
 	int (*set_coalesce_frames)(struct hnae_handle *handle,
 				   u32 coalesce_frames);
+	void (*get_coalesce_range)(struct hnae_handle *handle,
+				   u32 *tx_frames_low, u32 *rx_frames_low,
+				   u32 *tx_frames_high, u32 *rx_frames_high,
+				   u32 *tx_usecs_low, u32 *rx_usecs_low,
+				   u32 *tx_usecs_high, u32 *rx_usecs_high);
 	void (*set_promisc_mode)(struct hnae_handle *handle, u32 en);
 	int (*get_mac_addr)(struct hnae_handle *handle, void **p);
 	int (*set_mac_addr)(struct hnae_handle *handle, void *p);
@@ -512,7 +517,7 @@ struct hnae_ae_dev {
 struct hnae_handle {
 	struct device *owner_dev; /* the device which make use of this handle */
 	struct hnae_ae_dev *dev;  /* the device who provides this handle */
-	struct device_node *phy_node;
+	struct phy_device *phy_dev;
 	phy_interface_t phy_if;
 	u32 if_support;
 	int q_num;
@@ -528,7 +533,7 @@ struct hnae_handle {
 #define ring_to_dev(ring) ((ring)->q->dev->dev)
 
 struct hnae_handle *hnae_get_handle(struct device *owner_dev,
-				    const struct device_node *ae_node,
+				    const struct fwnode_handle	*fwnode,
 				    u32 port_id,
 				    struct hnae_buf_ops *bops);
 
