@@ -1826,7 +1826,7 @@ static struct sk_buff *
 ath10k_wmi_op_gen_mgmt_tx(struct ath10k *ar, struct sk_buff *msdu)
 {
 	struct ath10k_skb_cb *cb = ATH10K_SKB_CB(msdu);
-	struct ath10k_vif *arvif = (void *)cb->vif->drv_priv;
+	struct ath10k_vif *arvif;
 	struct wmi_mgmt_tx_cmd *cmd;
 	struct ieee80211_hdr *hdr;
 	struct sk_buff *skb;
@@ -1838,10 +1838,12 @@ ath10k_wmi_op_gen_mgmt_tx(struct ath10k *ar, struct sk_buff *msdu)
 	hdr = (struct ieee80211_hdr *)msdu->data;
 	fc = le16_to_cpu(hdr->frame_control);
 
-	if (cb->vif)
+	if (cb->vif) {
+		arvif = (void *)cb->vif->drv_priv;
 		vdev_id = arvif->vdev_id;
-	else
+	} else {
 		vdev_id = 0;
+	}
 
 	if (WARN_ON_ONCE(!ieee80211_is_mgmt(hdr->frame_control)))
 		return ERR_PTR(-EINVAL);
@@ -5257,6 +5259,9 @@ static void ath10k_wmi_10_4_op_rx(struct ath10k *ar, struct sk_buff *skb)
 	case WMI_10_4_PEER_STA_KICKOUT_EVENTID:
 		ath10k_wmi_event_peer_sta_kickout(ar, skb);
 		break;
+	case WMI_10_4_ROAM_EVENTID:
+		ath10k_wmi_event_roam(ar, skb);
+		break;
 	case WMI_10_4_HOST_SWBA_EVENTID:
 		ath10k_wmi_event_host_swba(ar, skb);
 		break;
@@ -7903,6 +7908,7 @@ static const struct wmi_ops wmi_10_4_ops = {
 	.pull_phyerr = ath10k_wmi_10_4_op_pull_phyerr_ev,
 	.pull_svc_rdy = ath10k_wmi_main_op_pull_svc_rdy_ev,
 	.pull_rdy = ath10k_wmi_op_pull_rdy_ev,
+	.pull_roam_ev = ath10k_wmi_op_pull_roam_ev,
 	.get_txbf_conf_scheme = ath10k_wmi_10_4_txbf_conf_scheme,
 
 	.gen_pdev_suspend = ath10k_wmi_op_gen_pdev_suspend,
