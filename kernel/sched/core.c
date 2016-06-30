@@ -590,9 +590,14 @@ static bool wake_up_full_nohz_cpu(int cpu)
 	return false;
 }
 
+/*
+ * Wake up the specified CPU.  If the CPU is going offline, it is the
+ * caller's responsibility to deal with the lost wakeup, for example,
+ * by hooking into the CPU_DEAD notifier like timers and hrtimers do.
+ */
 void wake_up_nohz_cpu(int cpu)
 {
-	if (!wake_up_full_nohz_cpu(cpu))
+	if (cpu_online(cpu) && !wake_up_full_nohz_cpu(cpu))
 		wake_up_idle_cpu(cpu);
 }
 
