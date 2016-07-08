@@ -534,7 +534,7 @@
 
 &i2c3 {
 	/* 3.3 V IO voltage */
-	clock-frequency = <100000>;
+	clock-frequency = <400000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c3>;
 	status = "okay";
@@ -554,14 +554,29 @@
 		DVDD-supply = <&vgen4_reg>;
 	};
 
-	/* Touch Screen */
-	synaptics_10_1: synaptics_rmi4_i2c@20 {
-		pinctrl-names = "default";
-		pinctrl-0 = <&synaptics_rmi4_irq>;
-		compatible = "synaptics_rmi4_i2c";
+	rmi-i2c-dev@20 {
+		compatible = "syna,rmi4_i2c";
 		reg = <0x20>;
-		interrupts-extended = <&gpio1 8 GPIO_ACTIVE_LOW>;
-	};
+		#address-cells = <1>;
+		#size-cells = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_ts>;
+
+		interrupt-parent = <&gpio1>;
+		interrupts = <8 IRQ_TYPE_EDGE_FALLING>;
+
+		rmi4-f01@1 {
+			reg = <0x1>;
+			syna,nosleep-mode = <1>;
+		};
+
+                rmi4-f11@11 {
+			reg = <0x11>;
+			touchscreen-inverted-y;
+			touchscreen-swapped-x-y;
+			syna,sensor-type = <1>;
+                };
+        };
 
 	hpa1: tpa6130a2@60 {
 		pinctrl-names = "default";
@@ -792,10 +807,10 @@
 		};
 
 		/* touch screen controller interrupt */
-		synaptics_rmi4_irq: rmi4grp {
+		pinctrl_ts: tsgrp {
 			fsl,pins = <
-				/* external 10k pull-up */
-				MX6QDL_PAD_GPIO_8__GPIO1_IO08		0x40010000
+				MX6QDL_PAD_GPIO_8__GPIO1_IO08		0x1b0b0 /* INT_TOUCH# */
+				MX6QDL_PAD_GPIO_7__GPIO1_IO07		0x1b0b0 /* RST_TOUCH# */
 			>;
 		};
 
