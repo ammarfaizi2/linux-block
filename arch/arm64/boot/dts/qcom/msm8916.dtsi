@@ -111,8 +111,8 @@
 			reg = <0x0>;
 			next-level-cache = <&L2_0>;
 			clocks = <&apcs 0>;
-			clock-latency = <200000>;
 			cpu-supply = <&pm8916_spmi_s2>;
+			operating-points-v2 = <&cpu_opp_table>;
 		};
 
 		CPU1: cpu@1 {
@@ -121,8 +121,8 @@
 			reg = <0x1>;
 			next-level-cache = <&L2_0>;
 			clocks = <&apcs 0>;
-			clock-latency = <200000>;
 			cpu-supply = <&pm8916_spmi_s2>;
+			operating-points-v2 = <&cpu_opp_table>;
 		};
 
 		CPU2: cpu@2 {
@@ -131,8 +131,8 @@
 			reg = <0x2>;
 			next-level-cache = <&L2_0>;
 			clocks = <&apcs 0>;
-			clock-latency = <200000>;
 			cpu-supply = <&pm8916_spmi_s2>;
+			operating-points-v2 = <&cpu_opp_table>;
 		};
 
 		CPU3: cpu@3 {
@@ -141,8 +141,8 @@
 			reg = <0x3>;
 			next-level-cache = <&L2_0>;
 			clocks = <&apcs 0>;
-			clock-latency = <200000>;
 			cpu-supply = <&pm8916_spmi_s2>;
+			operating-points-v2 = <&cpu_opp_table>;
 		};
 
 		L2_0: l2-cache {
@@ -165,6 +165,21 @@
 	psci {
 		compatible = "arm,psci-1.0";
 		method = "smc";
+	};
+
+	/*
+	 * The CPR driver reads the initial voltage settings in efuse
+	 * and populates OPPs.
+	 */
+	cpu_opp_table: opp_table0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp00 {
+			opp-hz = /bits/ 64 <200000000>;
+			opp-microvolt = <1050000>;
+			clock-latency-ns = <200000>;
+		};
 	};
 
 	pmu {
