@@ -20,7 +20,6 @@
 #include <linux/platform_device.h>
 #include <linux/pm_opp.h>
 #include <linux/slab.h>
-#include <linux/cpufreq-dt.h>
 
 static void __init get_krait_bin_format_a(int *speed, int *pvs, int *pvs_ver)
 {
@@ -168,12 +167,6 @@ static int __init qcom_cpufreq_populate_opps(void)
 
 static int __init qcom_cpufreq_driver_init(void)
 {
-	struct cpufreq_dt_platform_data pdata = { .independent_clocks = true };
-	struct platform_device_info devinfo = {
-		.name = "cpufreq-dt",
-		.data = &pdata,
-		.size_data = sizeof(pdata),
-	};
 	struct device *cpu_dev;
 	struct device_node *np;
 	int ret;
@@ -196,9 +189,10 @@ static int __init qcom_cpufreq_driver_init(void)
 	if (ret)
 		return ret;
 
-	return PTR_ERR_OR_ZERO(platform_device_register_full(&devinfo));
+	return PTR_ERR_OR_ZERO(platform_device_register_simple("cpufreq-dt", -1,
+							       NULL, 0));
 }
-module_init(qcom_cpufreq_driver_init);
+late_initcall(qcom_cpufreq_driver_init);
 
 MODULE_DESCRIPTION("Qualcomm CPUfreq driver");
 MODULE_LICENSE("GPL v2");
