@@ -395,28 +395,60 @@
 			reg = <0x020b8000 0x1000>, <0x02008000 0x1000>;
 		};
 
-		saw0: power-controller@2089000 {
-			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2";
+                saw0: power-controller@2089000 {
+			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2", "syscon", "simple-mfd";
 			reg = <0x02089000 0x1000>, <0x02009000 0x1000>;
-			regulator;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			saw0_regulator: regulator@2089000 {
+				compatible = "qcom,apq8064-saw2-v1.1-regulator";
+				regulator-always-on;
+				regulator-min-microvolt = <825000>;
+				regulator-max-microvolt = <1250000>;
+			};
 		};
 
 		saw1: power-controller@2099000 {
-			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2";
+			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2", "syscon", "simple-mfd";
 			reg = <0x02099000 0x1000>, <0x02009000 0x1000>;
-			regulator;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			saw1_regulator: regulator@2099000 {
+				compatible = "qcom,apq8064-saw2-v1.1-regulator";
+				regulator-always-on;
+				regulator-min-microvolt = <825000>;
+				regulator-max-microvolt = <1250000>;
+			};
 		};
 
 		saw2: power-controller@20a9000 {
-			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2";
+			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2", "syscon", "simple-mfd";
 			reg = <0x020a9000 0x1000>, <0x02009000 0x1000>;
-			regulator;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			saw2_regulator: regulator@20a9000 {
+				compatible = "qcom,apq8064-saw2-v1.1-regulator";
+				regulator-always-on;
+				regulator-min-microvolt = <825000>;
+				regulator-max-microvolt = <1250000>;
+			};
 		};
 
 		saw3: power-controller@20b9000 {
-			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2";
+			compatible = "qcom,apq8064-saw2-v1.1-cpu", "qcom,saw2", "syscon", "simple-mfd";
 			reg = <0x020b9000 0x1000>, <0x02009000 0x1000>;
-			regulator;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			saw3_regulator: regulator@20b9000 {
+				compatible = "qcom,apq8064-saw2-v1.1-regulator";
+				regulator-always-on;
+				regulator-min-microvolt = <825000>;
+				regulator-max-microvolt = <1250000>;
+			};
 		};
 
 		sps_sic_non_secure: sps-sic-non-secure@12100000 {
