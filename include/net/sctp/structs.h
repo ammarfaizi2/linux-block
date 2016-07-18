@@ -59,6 +59,7 @@
 #include <linux/workqueue.h>	/* We need tq_struct.	 */
 #include <linux/sctp.h>		/* We need sctp* header structs.  */
 #include <net/sctp/auth.h>	/* We need auth specific structs */
+#include <net/ip.h>		/* For inet_skb_parm */
 
 /* A convenience structure for handling sockaddr structures.
  * We should wean ourselves off this.
@@ -602,6 +603,16 @@ struct sctp_chunk {
 	/* This needs to be recoverable for SCTP_SEND_FAILED events. */
 	struct sctp_sndrcvinfo sinfo;
 
+	/* We use this field to record param for prsctp policies,
+	 * for TTL policy, it is the time_to_drop of this chunk,
+	 * for RTX policy, it is the max_sent_count of this chunk,
+	 * for PRIO policy, it is the priority of this chunk.
+	 */
+	unsigned long prsctp_param;
+
+	/* How many times this chunk have been sent, for prsctp RTX policy */
+	int sent_count;
+
 	/* Which association does this belong to?  */
 	struct sctp_association *asoc;
 
@@ -1074,10 +1085,34 @@ void sctp_retransmit(struct sctp_outq *, struct sctp_transport *,
 		     sctp_retransmit_reason_t);
 void sctp_retransmit_mark(struct sctp_outq *, struct sctp_transport *, __u8);
 int sctp_outq_uncork(struct sctp_outq *, gfp_t gfp);
+void sctp_prsctp_prune(struct sctp_association *asoc,
+		       struct sctp_sndrcvinfo *sinfo, int msg_len);
 /* Uncork and flush an outqueue.  */
 static inline void sctp_outq_cork(struct sctp_outq *q)
 {
 	q->cork = 1;
+}
+
+/* SCTP skb control block.
+ * sctp_input_cb is currently used on rx and sock rx queue
+ */
+struct sctp_input_cb {
+	union {
+		struct inet_skb_parm	h4;
+#if IS_ENABLED(CONFIG_IPV6)
+		struct inet6_skb_parm	h6;
+#endif
+	} header;
+	struct sctp_chunk *chunk;
+	struct sctp_af *af;
+};
+#define SCTP_INPUT_CB(__skb)	((struct sctp_input_cb *)&((__skb)->cb[0]))
+
+static inline const struct sk_buff *sctp_gso_headskb(const struct sk_buff *skb)
+{
+	const struct sctp_chunk *chunk = SCTP_INPUT_CB(skb)->chunk;
+
+	return chunk->head_skb ? : skb;
 }
 
 /* These bind address data fields common between endpoints and associations */
@@ -1256,7 +1291,8 @@ struct sctp_endpoint {
 	/* SCTP-AUTH: endpoint shared keys */
 	struct list_head endpoint_shared_keys;
 	__u16 active_key_id;
-	__u8  auth_enable;
+	__u8  auth_enable:1,
+	      prsctp_enable:1;
 };
 
 /* Recover the outter endpoint structure. */
@@ -1848,9 +1884,15 @@ struct sctp_association {
 	__u16 active_key_id;
 
 	__u8 need_ecne:1,	/* Need to send an ECNE Chunk? */
-	     temp:1;		/* Is it a temporary association? */
+	     temp:1,		/* Is it a temporary association? */
+	     prsctp_enable:1;
 
 	struct sctp_priv_assoc_stats stats;
+
+	int sent_cnt_removable;
+
+	__u64 abandoned_unsent[SCTP_PR_INDEX(MAX) + 1];
+	__u64 abandoned_sent[SCTP_PR_INDEX(MAX) + 1];
 };
 
 

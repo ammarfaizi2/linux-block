@@ -166,11 +166,6 @@ static int mlxsw_sp_port_attr_stp_state_set(struct mlxsw_sp_port *mlxsw_sp_port,
 	return mlxsw_sp_port_stp_state_set(mlxsw_sp_port, state);
 }
 
-static bool mlxsw_sp_vfid_is_vport_br(u16 vfid)
-{
-	return vfid >= MLXSW_SP_VFID_PORT_MAX;
-}
-
 static int __mlxsw_sp_port_flood_set(struct mlxsw_sp_port *mlxsw_sp_port,
 				     u16 idx_begin, u16 idx_end, bool set,
 				     bool only_uc)
@@ -182,15 +177,10 @@ static int __mlxsw_sp_port_flood_set(struct mlxsw_sp_port *mlxsw_sp_port,
 	char *sftr_pl;
 	int err;
 
-	if (mlxsw_sp_port_is_vport(mlxsw_sp_port)) {
+	if (mlxsw_sp_port_is_vport(mlxsw_sp_port))
 		table_type = MLXSW_REG_SFGC_TABLE_TYPE_FID;
-		if (mlxsw_sp_vfid_is_vport_br(idx_begin))
-			local_port = mlxsw_sp_port->local_port;
-		else
-			local_port = MLXSW_PORT_CPU_PORT;
-	} else {
+	else
 		table_type = MLXSW_REG_SFGC_TABLE_TYPE_FID_OFFEST;
-	}
 
 	sftr_pl = kmalloc(MLXSW_REG_SFTR_LEN, GFP_KERNEL);
 	if (!sftr_pl)
@@ -384,18 +374,6 @@ static int mlxsw_sp_port_attr_set(struct net_device *dev,
 	return err;
 }
 
-static struct mlxsw_sp_fid *mlxsw_sp_fid_find(struct mlxsw_sp *mlxsw_sp,
-					      u16 fid)
-{
-	struct mlxsw_sp_fid *f;
-
-	list_for_each_entry(f, &mlxsw_sp->fids, list)
-		if (f->fid == fid)
-			return f;
-
-	return NULL;
-}
-
 static int mlxsw_sp_fid_op(struct mlxsw_sp *mlxsw_sp, u16 fid, bool create)
 {
 	char sfmr_pl[MLXSW_REG_SFMR_LEN];
@@ -426,8 +404,7 @@ static struct mlxsw_sp_fid *mlxsw_sp_fid_alloc(u16 fid)
 	return f;
 }
 
-static struct mlxsw_sp_fid *mlxsw_sp_fid_create(struct mlxsw_sp *mlxsw_sp,
-						u16 fid)
+struct mlxsw_sp_fid *mlxsw_sp_fid_create(struct mlxsw_sp *mlxsw_sp, u16 fid)
 {
 	struct mlxsw_sp_fid *f;
 	int err;
@@ -462,12 +439,14 @@ err_fid_map:
 	return ERR_PTR(err);
 }
 
-static void mlxsw_sp_fid_destroy(struct mlxsw_sp *mlxsw_sp,
-				 struct mlxsw_sp_fid *f)
+void mlxsw_sp_fid_destroy(struct mlxsw_sp *mlxsw_sp, struct mlxsw_sp_fid *f)
 {
 	u16 fid = f->fid;
 
 	list_del(&f->list);
+
+	if (f->r)
+		mlxsw_sp_rif_bridge_destroy(mlxsw_sp, f->r);
 
 	kfree(f);
 
@@ -633,25 +612,6 @@ err_port_allow_untagged_set:
 	return err;
 }
 
-static int mlxsw_sp_port_add_vids(struct net_device *dev, u16 vid_begin,
-				  u16 vid_end)
-{
-	u16 vid;
-	int err;
-
-	for (vid = vid_begin; vid <= vid_end; vid++) {
-		err = mlxsw_sp_port_add_vid(dev, 0, vid);
-		if (err)
-			goto err_port_add_vid;
-	}
-	return 0;
-
-err_port_add_vid:
-	for (vid--; vid >= vid_begin; vid--)
-		mlxsw_sp_port_kill_vid(dev, 0, vid);
-	return err;
-}
-
 static int __mlxsw_sp_port_vlans_set(struct mlxsw_sp_port *mlxsw_sp_port,
 				     u16 vid_begin, u16 vid_end, bool is_member,
 				     bool untagged)
@@ -681,12 +641,8 @@ static int __mlxsw_sp_port_vlans_add(struct mlxsw_sp_port *mlxsw_sp_port,
 	u16 vid, old_pvid;
 	int err;
 
-	/* In case this is invoked with BRIDGE_FLAGS_SELF and port is
-	 * not bridged, then packets ingressing through the port with
-	 * the specified VIDs will be directed to CPU.
-	 */
 	if (!mlxsw_sp_port->bridged)
-		return mlxsw_sp_port_add_vids(dev, vid_begin, vid_end);
+		return -EINVAL;
 
 	err = mlxsw_sp_port_fid_join(mlxsw_sp_port, vid_begin, vid_end);
 	if (err) {
@@ -776,9 +732,10 @@ static enum mlxsw_reg_sfd_op mlxsw_sp_sfd_op(bool adding)
 			MLXSW_REG_SFD_OP_WRITE_REMOVE;
 }
 
-static int mlxsw_sp_port_fdb_uc_op(struct mlxsw_sp *mlxsw_sp, u8 local_port,
-				   const char *mac, u16 fid, bool adding,
-				   bool dynamic)
+static int __mlxsw_sp_port_fdb_uc_op(struct mlxsw_sp *mlxsw_sp, u8 local_port,
+				     const char *mac, u16 fid, bool adding,
+				     enum mlxsw_reg_sfd_rec_action action,
+				     bool dynamic)
 {
 	char *sfd_pl;
 	int err;
@@ -789,12 +746,27 @@ static int mlxsw_sp_port_fdb_uc_op(struct mlxsw_sp *mlxsw_sp, u8 local_port,
 
 	mlxsw_reg_sfd_pack(sfd_pl, mlxsw_sp_sfd_op(adding), 0);
 	mlxsw_reg_sfd_uc_pack(sfd_pl, 0, mlxsw_sp_sfd_rec_policy(dynamic),
-			      mac, fid, MLXSW_REG_SFD_REC_ACTION_NOP,
-			      local_port);
+			      mac, fid, action, local_port);
 	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sfd), sfd_pl);
 	kfree(sfd_pl);
 
 	return err;
+}
+
+static int mlxsw_sp_port_fdb_uc_op(struct mlxsw_sp *mlxsw_sp, u8 local_port,
+				   const char *mac, u16 fid, bool adding,
+				   bool dynamic)
+{
+	return __mlxsw_sp_port_fdb_uc_op(mlxsw_sp, local_port, mac, fid, adding,
+					 MLXSW_REG_SFD_REC_ACTION_NOP, dynamic);
+}
+
+int mlxsw_sp_rif_fdb_op(struct mlxsw_sp *mlxsw_sp, const char *mac, u16 fid,
+			bool adding)
+{
+	return __mlxsw_sp_port_fdb_uc_op(mlxsw_sp, 0, mac, fid, adding,
+					 MLXSW_REG_SFD_REC_ACTION_FORWARD_IP_ROUTER,
+					 false);
 }
 
 static int mlxsw_sp_port_fdb_uc_lag_op(struct mlxsw_sp *mlxsw_sp, u16 lag_id,
@@ -1001,6 +973,11 @@ static int mlxsw_sp_port_obj_add(struct net_device *dev,
 					      SWITCHDEV_OBJ_PORT_VLAN(obj),
 					      trans);
 		break;
+	case SWITCHDEV_OBJ_ID_IPV4_FIB:
+		err = mlxsw_sp_router_fib4_add(mlxsw_sp_port,
+					       SWITCHDEV_OBJ_IPV4_FIB(obj),
+					       trans);
+		break;
 	case SWITCHDEV_OBJ_ID_PORT_FDB:
 		err = mlxsw_sp_port_fdb_static_add(mlxsw_sp_port,
 						   SWITCHDEV_OBJ_PORT_FDB(obj),
@@ -1019,21 +996,6 @@ static int mlxsw_sp_port_obj_add(struct net_device *dev,
 	return err;
 }
 
-static int mlxsw_sp_port_kill_vids(struct net_device *dev, u16 vid_begin,
-				   u16 vid_end)
-{
-	u16 vid;
-	int err;
-
-	for (vid = vid_begin; vid <= vid_end; vid++) {
-		err = mlxsw_sp_port_kill_vid(dev, 0, vid);
-		if (err)
-			return err;
-	}
-
-	return 0;
-}
-
 static int __mlxsw_sp_port_vlans_del(struct mlxsw_sp_port *mlxsw_sp_port,
 				     u16 vid_begin, u16 vid_end, bool init)
 {
@@ -1041,12 +1003,8 @@ static int __mlxsw_sp_port_vlans_del(struct mlxsw_sp_port *mlxsw_sp_port,
 	u16 vid, pvid;
 	int err;
 
-	/* In case this is invoked with BRIDGE_FLAGS_SELF and port is
-	 * not bridged, then prevent packets ingressing through the
-	 * port with the specified VIDs from being trapped to CPU.
-	 */
 	if (!init && !mlxsw_sp_port->bridged)
-		return mlxsw_sp_port_kill_vids(dev, vid_begin, vid_end);
+		return -EINVAL;
 
 	err = __mlxsw_sp_port_vlans_set(mlxsw_sp_port, vid_begin, vid_end,
 					false, false);
@@ -1164,6 +1122,10 @@ static int mlxsw_sp_port_obj_del(struct net_device *dev,
 
 		err = mlxsw_sp_port_vlans_del(mlxsw_sp_port,
 					      SWITCHDEV_OBJ_PORT_VLAN(obj));
+		break;
+	case SWITCHDEV_OBJ_ID_IPV4_FIB:
+		err = mlxsw_sp_router_fib4_del(mlxsw_sp_port,
+					       SWITCHDEV_OBJ_IPV4_FIB(obj));
 		break;
 	case SWITCHDEV_OBJ_ID_PORT_FDB:
 		err = mlxsw_sp_port_fdb_static_del(mlxsw_sp_port,

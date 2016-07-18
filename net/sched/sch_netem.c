@@ -487,10 +487,14 @@ static int netem_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 		skb = segs;
 		segs = segs->next;
 
-		if (!(skb = skb_unshare(skb, GFP_ATOMIC)) ||
-		    (skb->ip_summed == CHECKSUM_PARTIAL &&
-		     skb_checksum_help(skb))) {
-			rc = qdisc_drop(skb, sch, to_free);
+		skb = skb_unshare(skb, GFP_ATOMIC);
+		if (unlikely(!skb)) {
+			qdisc_qstats_drop(sch);
+			goto finish_segs;
+		}
+		if (skb->ip_summed == CHECKSUM_PARTIAL &&
+		    skb_checksum_help(skb)) {
+			qdisc_drop(skb, sch, to_free);
 			goto finish_segs;
 		}
 
@@ -617,17 +621,17 @@ deliver:
 #endif
 
 			if (q->qdisc) {
+				unsigned int pkt_len = qdisc_pkt_len(skb);
 				struct sk_buff *to_free = NULL;
 				int err;
 
 				err = qdisc_enqueue(skb, q->qdisc, &to_free);
 				kfree_skb_list(to_free);
-				if (unlikely(err != NET_XMIT_SUCCESS)) {
-					if (net_xmit_drop_count(err)) {
-						qdisc_qstats_drop(sch);
-						qdisc_tree_reduce_backlog(sch, 1,
-									  qdisc_pkt_len(skb));
-					}
+				if (err != NET_XMIT_SUCCESS &&
+				    net_xmit_drop_count(err)) {
+					qdisc_qstats_drop(sch);
+					qdisc_tree_reduce_backlog(sch, 1,
+								  pkt_len);
 				}
 				goto tfifo_dequeue;
 			}

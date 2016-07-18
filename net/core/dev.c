@@ -4972,7 +4972,7 @@ bool sk_busy_loop(struct sock *sk, int nonblock)
 
 			if (test_bit(NAPI_STATE_SCHED, &napi->state)) {
 				rc = napi->poll(napi, BUSY_POLL_BUDGET);
-				trace_napi_poll(napi);
+				trace_napi_poll(napi, rc, BUSY_POLL_BUDGET);
 				if (rc == BUSY_POLL_BUDGET) {
 					napi_complete_done(napi, rc);
 					napi_schedule(napi);
@@ -5128,7 +5128,7 @@ static int napi_poll(struct napi_struct *n, struct list_head *repoll)
 	work = 0;
 	if (test_bit(NAPI_STATE_SCHED, &n->state)) {
 		work = n->poll(n, weight);
-		trace_napi_poll(n);
+		trace_napi_poll(n, work, weight);
 	}
 
 	WARN_ON_ONCE(work > weight);
@@ -5443,6 +5443,52 @@ void *netdev_lower_get_next(struct net_device *dev, struct list_head **iter)
 	return lower->dev;
 }
 EXPORT_SYMBOL(netdev_lower_get_next);
+
+/**
+ * netdev_all_lower_get_next - Get the next device from all lower neighbour list
+ * @dev: device
+ * @iter: list_head ** of the current position
+ *
+ * Gets the next netdev_adjacent from the dev's all lower neighbour
+ * list, starting from iter position. The caller must hold RTNL lock or
+ * its own locking that guarantees that the neighbour all lower
+ * list will remain unchanged.
+ */
+struct net_device *netdev_all_lower_get_next(struct net_device *dev, struct list_head **iter)
+{
+	struct netdev_adjacent *lower;
+
+	lower = list_entry(*iter, struct netdev_adjacent, list);
+
+	if (&lower->list == &dev->all_adj_list.lower)
+		return NULL;
+
+	*iter = lower->list.next;
+
+	return lower->dev;
+}
+EXPORT_SYMBOL(netdev_all_lower_get_next);
+
+/**
+ * netdev_all_lower_get_next_rcu - Get the next device from all
+ *				   lower neighbour list, RCU variant
+ * @dev: device
+ * @iter: list_head ** of the current position
+ *
+ * Gets the next netdev_adjacent from the dev's all lower neighbour
+ * list, starting from iter position. The caller must hold RCU read lock.
+ */
+struct net_device *netdev_all_lower_get_next_rcu(struct net_device *dev,
+						 struct list_head **iter)
+{
+	struct netdev_adjacent *lower;
+
+	lower = list_first_or_null_rcu(&dev->all_adj_list.lower,
+				       struct netdev_adjacent, list);
+
+	return lower ? lower->dev : NULL;
+}
+EXPORT_SYMBOL(netdev_all_lower_get_next_rcu);
 
 /**
  * netdev_lower_get_first_private_rcu - Get the first ->private from the
@@ -6040,6 +6086,50 @@ void netdev_lower_state_changed(struct net_device *lower_dev,
 				      &changelowerstate_info.info);
 }
 EXPORT_SYMBOL(netdev_lower_state_changed);
+
+int netdev_default_l2upper_neigh_construct(struct net_device *dev,
+					   struct neighbour *n)
+{
+	struct net_device *lower_dev, *stop_dev;
+	struct list_head *iter;
+	int err;
+
+	netdev_for_each_lower_dev(dev, lower_dev, iter) {
+		if (!lower_dev->netdev_ops->ndo_neigh_construct)
+			continue;
+		err = lower_dev->netdev_ops->ndo_neigh_construct(lower_dev, n);
+		if (err) {
+			stop_dev = lower_dev;
+			goto rollback;
+		}
+	}
+	return 0;
+
+rollback:
+	netdev_for_each_lower_dev(dev, lower_dev, iter) {
+		if (lower_dev == stop_dev)
+			break;
+		if (!lower_dev->netdev_ops->ndo_neigh_destroy)
+			continue;
+		lower_dev->netdev_ops->ndo_neigh_destroy(lower_dev, n);
+	}
+	return err;
+}
+EXPORT_SYMBOL_GPL(netdev_default_l2upper_neigh_construct);
+
+void netdev_default_l2upper_neigh_destroy(struct net_device *dev,
+					  struct neighbour *n)
+{
+	struct net_device *lower_dev;
+	struct list_head *iter;
+
+	netdev_for_each_lower_dev(dev, lower_dev, iter) {
+		if (!lower_dev->netdev_ops->ndo_neigh_destroy)
+			continue;
+		lower_dev->netdev_ops->ndo_neigh_destroy(lower_dev, n);
+	}
+}
+EXPORT_SYMBOL_GPL(netdev_default_l2upper_neigh_destroy);
 
 static void dev_change_rx_flags(struct net_device *dev, int flags)
 {

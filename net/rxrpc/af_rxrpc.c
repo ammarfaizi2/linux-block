@@ -766,9 +766,9 @@ error_key_type:
 error_sock:
 	proto_unregister(&rxrpc_proto);
 error_proto:
-	destroy_workqueue(rxrpc_workqueue);
-error_security:
 	rxrpc_exit_security();
+error_security:
+	destroy_workqueue(rxrpc_workqueue);
 error_work_queue:
 	kmem_cache_destroy(rxrpc_call_jar);
 error_call_jar:
@@ -788,27 +788,7 @@ static void __exit af_rxrpc_exit(void)
 	proto_unregister(&rxrpc_proto);
 	rxrpc_destroy_all_calls();
 	rxrpc_destroy_all_connections();
-
 	ASSERTCMP(atomic_read(&rxrpc_n_skbs), ==, 0);
-
-	/* We need to flush the scheduled work twice because the local endpoint
-	 * records involve a work item in their destruction as they can only be
-	 * destroyed from process context.  However, a connection may have a
-	 * work item outstanding - and this will pin the local endpoint record
-	 * until the connection goes away.
-	 *
-	 * Peers don't pin locals and calls pin sockets - which prevents the
-	 * module from being unloaded - so we should only need two flushes.
-	 */
-	_debug("flush scheduled work");
-	flush_workqueue(rxrpc_workqueue);
-	_debug("flush scheduled work 2");
-	flush_workqueue(rxrpc_workqueue);
-	_debug("synchronise RCU");
-	rcu_barrier();
-	_debug("destroy locals");
-	ASSERT(idr_is_empty(&rxrpc_client_conn_ids));
-	idr_destroy(&rxrpc_client_conn_ids);
 	rxrpc_destroy_all_locals();
 
 	remove_proc_entry("rxrpc_conns", init_net.proc_net);

@@ -1209,8 +1209,10 @@ struct net_device_ops {
 						    netdev_features_t features);
 	int			(*ndo_set_features)(struct net_device *dev,
 						    netdev_features_t features);
-	int			(*ndo_neigh_construct)(struct neighbour *n);
-	void			(*ndo_neigh_destroy)(struct neighbour *n);
+	int			(*ndo_neigh_construct)(struct net_device *dev,
+						       struct neighbour *n);
+	void			(*ndo_neigh_destroy)(struct net_device *dev,
+						     struct neighbour *n);
 
 	int			(*ndo_fdb_add)(struct ndmsg *ndm,
 					       struct nlattr *tb[],
@@ -2237,6 +2239,7 @@ struct netdev_lag_lower_state_info {
 #define NETDEV_PRECHANGEUPPER	0x001A
 #define NETDEV_CHANGELOWERSTATE	0x001B
 #define NETDEV_UDP_TUNNEL_PUSH_INFO	0x001C
+#define NETDEV_CHANGE_TX_QUEUE_LEN	0x001E
 
 int register_netdevice_notifier(struct notifier_block *nb);
 int unregister_netdevice_notifier(struct notifier_block *nb);
@@ -3803,11 +3806,29 @@ void *netdev_lower_get_next_private_rcu(struct net_device *dev,
 
 void *netdev_lower_get_next(struct net_device *dev,
 				struct list_head **iter);
+
 #define netdev_for_each_lower_dev(dev, ldev, iter) \
 	for (iter = (dev)->adj_list.lower.next, \
 	     ldev = netdev_lower_get_next(dev, &(iter)); \
 	     ldev; \
 	     ldev = netdev_lower_get_next(dev, &(iter)))
+
+struct net_device *netdev_all_lower_get_next(struct net_device *dev,
+					     struct list_head **iter);
+struct net_device *netdev_all_lower_get_next_rcu(struct net_device *dev,
+						 struct list_head **iter);
+
+#define netdev_for_each_all_lower_dev(dev, ldev, iter) \
+	for (iter = (dev)->all_adj_list.lower.next, \
+	     ldev = netdev_all_lower_get_next(dev, &(iter)); \
+	     ldev; \
+	     ldev = netdev_all_lower_get_next(dev, &(iter)))
+
+#define netdev_for_each_all_lower_dev_rcu(dev, ldev, iter) \
+	for (iter = (dev)->all_adj_list.lower.next, \
+	     ldev = netdev_all_lower_get_next_rcu(dev, &(iter)); \
+	     ldev; \
+	     ldev = netdev_all_lower_get_next_rcu(dev, &(iter)))
 
 void *netdev_adjacent_get_private(struct list_head *adj_list);
 void *netdev_lower_get_first_private_rcu(struct net_device *dev);
@@ -3824,6 +3845,10 @@ void *netdev_lower_dev_get_private(struct net_device *dev,
 				   struct net_device *lower_dev);
 void netdev_lower_state_changed(struct net_device *lower_dev,
 				void *lower_state_info);
+int netdev_default_l2upper_neigh_construct(struct net_device *dev,
+					   struct neighbour *n);
+void netdev_default_l2upper_neigh_destroy(struct net_device *dev,
+					  struct neighbour *n);
 
 /* RSS keys are 40 or 52 bytes long */
 #define NETDEV_RSS_KEY_LEN 52

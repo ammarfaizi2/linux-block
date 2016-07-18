@@ -46,7 +46,6 @@
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/vmalloc.h>
-#include <linux/version.h>
 
 #include <linux/device.h>
 #include <linux/bitrev.h>
@@ -2878,7 +2877,7 @@ static int dwceqos_probe(struct platform_device *pdev)
 		ret = of_phy_register_fixed_link(lp->pdev->dev.of_node);
 		if (ret < 0) {
 			dev_err(&pdev->dev, "invalid fixed-link");
-			goto err_out_unregister_netdev;
+			goto err_out_unregister_clk_notifier;
 		}
 
 		lp->phy_node = of_node_get(lp->pdev->dev.of_node);
@@ -2911,7 +2910,8 @@ static int dwceqos_probe(struct platform_device *pdev)
 		     (unsigned long)ndev);
 	tasklet_disable(&lp->tx_bdreclaim_tasklet);
 
-	lp->txtimeout_handler_wq = create_singlethread_workqueue(DRIVER_NAME);
+	lp->txtimeout_handler_wq = alloc_workqueue(DRIVER_NAME,
+						   WQ_MEM_RECLAIM, 0);
 	INIT_WORK(&lp->txtimeout_reinit, dwceqos_reinit_for_txtimeout);
 
 	platform_set_drvdata(pdev, ndev);

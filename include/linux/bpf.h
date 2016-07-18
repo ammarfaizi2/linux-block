@@ -115,6 +115,31 @@ enum bpf_access_type {
 	BPF_WRITE = 2
 };
 
+/* types of values stored in eBPF registers */
+enum bpf_reg_type {
+	NOT_INIT = 0,		 /* nothing was written into register */
+	UNKNOWN_VALUE,		 /* reg doesn't contain a valid pointer */
+	PTR_TO_CTX,		 /* reg points to bpf_context */
+	CONST_PTR_TO_MAP,	 /* reg points to struct bpf_map */
+	PTR_TO_MAP_VALUE,	 /* reg points to map element value */
+	PTR_TO_MAP_VALUE_OR_NULL,/* points to map elem value or NULL */
+	FRAME_PTR,		 /* reg == frame_pointer */
+	PTR_TO_STACK,		 /* reg == frame_pointer + imm */
+	CONST_IMM,		 /* constant integer value */
+
+	/* PTR_TO_PACKET represents:
+	 * skb->data
+	 * skb->data + imm
+	 * skb->data + (u16) var
+	 * skb->data + (u16) var + imm
+	 * if (range > 0) then [ptr, ptr + range - off) is safe to access
+	 * if (id > 0) means that some 'var' was added
+	 * if (off > 0) menas that 'imm' was added
+	 */
+	PTR_TO_PACKET,
+	PTR_TO_PACKET_END,	 /* skb->data + headlen */
+};
+
 struct bpf_prog;
 
 struct bpf_verifier_ops {
@@ -124,7 +149,8 @@ struct bpf_verifier_ops {
 	/* return true if 'size' wide access at offset 'off' within bpf_context
 	 * with 'type' (read or write) is allowed
 	 */
-	bool (*is_valid_access)(int off, int size, enum bpf_access_type type);
+	bool (*is_valid_access)(int off, int size, enum bpf_access_type type,
+				enum bpf_reg_type *reg_type);
 
 	u32 (*convert_ctx_access)(enum bpf_access_type type, int dst_reg,
 				  int src_reg, int ctx_off,
@@ -183,7 +209,12 @@ u64 bpf_get_stackid(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5);
 bool bpf_prog_array_compatible(struct bpf_array *array, const struct bpf_prog *fp);
 
 const struct bpf_func_proto *bpf_get_trace_printk_proto(void);
-const struct bpf_func_proto *bpf_get_event_output_proto(void);
+
+typedef unsigned long (*bpf_ctx_copy_t)(void *dst, const void *src,
+					unsigned long len);
+
+u64 bpf_event_output(struct bpf_map *map, u64 flags, void *meta, u64 meta_size,
+		     void *ctx, u64 ctx_size, bpf_ctx_copy_t ctx_copy);
 
 #ifdef CONFIG_BPF_SYSCALL
 DECLARE_PER_CPU(int, bpf_prog_active);
@@ -192,9 +223,9 @@ void bpf_register_prog_type(struct bpf_prog_type_list *tl);
 void bpf_register_map_type(struct bpf_map_type_list *tl);
 
 struct bpf_prog *bpf_prog_get(u32 ufd);
+struct bpf_prog *bpf_prog_get_type(u32 ufd, enum bpf_prog_type type);
 struct bpf_prog *bpf_prog_inc(struct bpf_prog *prog);
 void bpf_prog_put(struct bpf_prog *prog);
-void bpf_prog_put_rcu(struct bpf_prog *prog);
 
 struct bpf_map *bpf_map_get_with_uref(u32 ufd);
 struct bpf_map *__bpf_map_get(struct fd f);
@@ -248,6 +279,12 @@ static inline void bpf_register_prog_type(struct bpf_prog_type_list *tl)
 }
 
 static inline struct bpf_prog *bpf_prog_get(u32 ufd)
+{
+	return ERR_PTR(-EOPNOTSUPP);
+}
+
+static inline struct bpf_prog *bpf_prog_get_type(u32 ufd,
+						 enum bpf_prog_type type)
 {
 	return ERR_PTR(-EOPNOTSUPP);
 }

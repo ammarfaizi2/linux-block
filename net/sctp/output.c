@@ -316,6 +316,8 @@ static sctp_xmit_t __sctp_packet_append_chunk(struct sctp_packet *packet,
 		packet->has_data = 1;
 		/* timestamp the chunk for rtx purposes */
 		chunk->sent_at = jiffies;
+		/* Mainly used for prsctp RTX policy */
+		chunk->sent_count++;
 		break;
 	case SCTP_CID_COOKIE_ECHO:
 		packet->has_cookie_echo = 1;
@@ -582,9 +584,7 @@ int sctp_packet_transmit(struct sctp_packet *packet, gfp_t gfp)
 			 */
 			pkt_size -= WORD_ROUND(chunk->skb->len);
 
-			if (chunk == packet->auth && !list_empty(&packet->chunk_list))
-				list_add(&chunk->list, &packet->chunk_list);
-			else if (!sctp_chunk_is_data(chunk))
+			if (!sctp_chunk_is_data(chunk) && chunk != packet->auth)
 				sctp_chunk_free(chunk);
 
 			if (!pkt_size)
@@ -604,6 +604,18 @@ int sctp_packet_transmit(struct sctp_packet *packet, gfp_t gfp)
 			sctp_auth_calculate_hmac(asoc, nskb,
 						 (struct sctp_auth_chunk *)auth,
 						 gfp);
+
+		if (packet->auth) {
+			if (!list_empty(&packet->chunk_list)) {
+				/* We will generate more packets, so re-queue
+				 * auth chunk.
+				 */
+				list_add(&chunk->list, &packet->chunk_list);
+			} else {
+				sctp_chunk_free(packet->auth);
+				packet->auth = NULL;
+			}
+		}
 
 		if (!gso)
 			break;
@@ -735,6 +747,8 @@ err:
 	}
 	goto out;
 nomem:
+	if (packet->auth && list_empty(&packet->auth->list))
+		sctp_chunk_free(packet->auth);
 	err = -ENOMEM;
 	goto err;
 }

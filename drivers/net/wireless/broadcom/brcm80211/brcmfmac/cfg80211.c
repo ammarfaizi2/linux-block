@@ -775,13 +775,50 @@ s32 brcmf_notify_escan_complete(struct brcmf_cfg80211_info *cfg,
 		if (!aborted)
 			cfg80211_sched_scan_results(cfg_to_wiphy(cfg));
 	} else if (scan_request) {
+		struct cfg80211_scan_info info = {
+			.aborted = aborted,
+		};
+
 		brcmf_dbg(SCAN, "ESCAN Completed scan: %s\n",
 			  aborted ? "Aborted" : "Done");
-		cfg80211_scan_done(scan_request, aborted);
+		cfg80211_scan_done(scan_request, &info);
 	}
 	if (!test_and_clear_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
 		brcmf_dbg(SCAN, "Scan complete, probably P2P scan\n");
 
+	return err;
+}
+
+static int brcmf_cfg80211_del_ap_iface(struct wiphy *wiphy,
+				       struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_priv(wiphy);
+	struct net_device *ndev = wdev->netdev;
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	int ret;
+	int err;
+
+	brcmf_cfg80211_arm_vif_event(cfg, ifp->vif);
+
+	err = brcmf_fil_bsscfg_data_set(ifp, "interface_remove", NULL, 0);
+	if (err) {
+		brcmf_err("interface_remove failed %d\n", err);
+		goto err_unarm;
+	}
+
+	/* wait for firmware event */
+	ret = brcmf_cfg80211_wait_vif_event(cfg, BRCMF_E_IF_DEL,
+					    BRCMF_VIF_EVENT_TIMEOUT);
+	if (!ret) {
+		brcmf_err("timeout occurred\n");
+		err = -EIO;
+		goto err_unarm;
+	}
+
+	brcmf_remove_interface(ifp, true);
+
+err_unarm:
+	brcmf_cfg80211_arm_vif_event(cfg, NULL);
 	return err;
 }
 
@@ -790,6 +827,9 @@ int brcmf_cfg80211_del_iface(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
 	struct brcmf_cfg80211_info *cfg = wiphy_priv(wiphy);
 	struct net_device *ndev = wdev->netdev;
+
+	if (ndev && ndev == cfg_to_ndev(cfg))
+		return -ENOTSUPP;
 
 	/* vif event pending in firmware */
 	if (brcmf_cfg80211_vif_event_armed(cfg))
@@ -807,12 +847,13 @@ int brcmf_cfg80211_del_iface(struct wiphy *wiphy, struct wireless_dev *wdev)
 	switch (wdev->iftype) {
 	case NL80211_IFTYPE_ADHOC:
 	case NL80211_IFTYPE_STATION:
-	case NL80211_IFTYPE_AP:
 	case NL80211_IFTYPE_AP_VLAN:
 	case NL80211_IFTYPE_WDS:
 	case NL80211_IFTYPE_MONITOR:
 	case NL80211_IFTYPE_MESH_POINT:
 		return -EOPNOTSUPP;
+	case NL80211_IFTYPE_AP:
+		return brcmf_cfg80211_del_ap_iface(wiphy, wdev);
 	case NL80211_IFTYPE_P2P_CLIENT:
 	case NL80211_IFTYPE_P2P_GO:
 	case NL80211_IFTYPE_P2P_DEVICE:
@@ -4625,6 +4666,15 @@ brcmf_cfg80211_start_ap(struct wiphy *wiphy, struct net_device *ndev,
 			brcmf_err("SET SSID error (%d)\n", err);
 			goto exit;
 		}
+
+		if (settings->hidden_ssid) {
+			err = brcmf_fil_iovar_int_set(ifp, "closednet", 1);
+			if (err) {
+				brcmf_err("closednet error (%d)\n", err);
+				goto exit;
+			}
+		}
+
 		brcmf_dbg(TRACE, "AP mode configuration complete\n");
 	} else if (dev_role == NL80211_IFTYPE_P2P_GO) {
 		err = brcmf_fil_iovar_int_set(ifp, "chanspec", chanspec);
@@ -4682,6 +4732,10 @@ static int brcmf_cfg80211_stop_ap(struct wiphy *wiphy, struct net_device *ndev)
 			err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_DOWN, 1);
 			return err;
 		}
+
+		/* First BSS doesn't get a full reset */
+		if (ifp->bsscfgidx == 0)
+			brcmf_fil_iovar_int_set(ifp, "closednet", 0);
 
 		memset(&join_params, 0, sizeof(join_params));
 		err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_SSID,
