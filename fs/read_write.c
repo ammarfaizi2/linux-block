@@ -1737,6 +1737,8 @@ SYSCALL_DEFINE4(streamid, int, fd, int, cmd,
 			inode->i_streamid = 0;
 			spin_unlock(&inode->i_lock);
 		}
+		bdi_streamid(f.file->f_mapping->host, STREAMID_CLOSE, alloc_id);
+		bdi_streamid(f.file->f_mapping->host, STREAMID_CLOSE, streamid);
 	}
 
 done:
