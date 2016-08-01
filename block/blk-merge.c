@@ -186,7 +186,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
 
 	if (split) {
 		/* there isn't chance to merge the splitted bio */
-		split->bi_rw |= REQ_NOMERGE;
+		split->bi_rwf |= REQ_NOMERGE;
 
 		bio_chain(split, *bio);
 		trace_block_split(q, split, (*bio)->bi_iter.bi_sector);
@@ -616,9 +616,9 @@ void blk_rq_set_mixed_merge(struct request *rq)
 	 * Distributes the attributs to each bio.
 	 */
 	for (bio = rq->bio; bio; bio = bio->bi_next) {
-		WARN_ON_ONCE((bio->bi_rw & REQ_FAILFAST_MASK) &&
-			     (bio->bi_rw & REQ_FAILFAST_MASK) != ff);
-		bio->bi_rw |= ff;
+		WARN_ON_ONCE((bio->bi_rwf & REQ_FAILFAST_MASK) &&
+			     (bio->bi_rwf & REQ_FAILFAST_MASK) != ff);
+		bio->bi_rwf |= ff;
 	}
 	rq->cmd_flags |= REQ_MIXED_MERGE;
 }

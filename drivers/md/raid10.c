@@ -1060,8 +1060,8 @@ static void __make_request(struct mddev *mddev, struct bio *bio)
 	int i;
 	const int op = bio_op(bio);
 	const int rw = bio_data_dir(bio);
-	const unsigned long do_sync = (bio->bi_rw & REQ_SYNC);
-	const unsigned long do_fua = (bio->bi_rw & REQ_FUA);
+	const unsigned long do_sync = (bio->bi_rwf & REQ_SYNC);
+	const unsigned long do_fua = (bio->bi_rwf & REQ_FUA);
 	unsigned long flags;
 	struct md_rdev *blocked_rdev;
 	struct blk_plug_cb *cb;
@@ -1446,7 +1446,7 @@ static void raid10_make_request(struct mddev *mddev, struct bio *bio)
 
 	struct bio *split;
 
-	if (unlikely(bio->bi_rw & REQ_PREFLUSH)) {
+	if (unlikely(bio->bi_rwf & REQ_PREFLUSH)) {
 		md_flush_request(mddev, bio);
 		return;
 	}
@@ -2530,7 +2530,7 @@ read_more:
 		return;
 	}
 
-	do_sync = (r10_bio->master_bio->bi_rw & REQ_SYNC);
+	do_sync = (r10_bio->master_bio->bi_rwf & REQ_SYNC);
 	slot = r10_bio->read_slot;
 	printk_ratelimited(
 		KERN_ERR
