@@ -1982,8 +1982,19 @@ config MODULE_SIG_ALL
 	  Sign all modules during make modules_install. Without this option,
 	  modules must be signed manually, using the scripts/sign-file tool.
 
+config MODULE_RECOGNIZE_INTREE
+	bool "Recognize in-tree modules"
+	default y
+	depends on MODULE_SIG
+	select SHA256
+	help
+	  If enabled, the kernel will recognize all in-tree modules by their
+	  SHA256 hashes.  This eliminates the need for in-tree modules to
+	  be signed.  Enabling it will currently bloat the kernel image
+	  by 32 bytes per in-tree module.
+
 comment "Do not forget to sign required modules with scripts/sign-file"
-	depends on MODULE_SIG_FORCE && !MODULE_SIG_ALL
+	depends on MODULE_SIG_FORCE && !MODULE_SIG_ALL && !MODULE_RECOGNIZE_INTREE
 
 choice
 	prompt "Which hash algorithm should modules be signed with?"

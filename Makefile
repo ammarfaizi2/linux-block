@@ -611,6 +611,12 @@ endif # $(dot-config)
 # Defaults to vmlinux, but the arch makefile usually adds further targets
 all: vmlinux
 
+# If we have CONFIG_MODULE_RECOGNIZE_INTREE, then we need to build modules
+# so that we can hash them.
+ifeq ($(CONFIG_MODULE_RECOGNIZE_INTREE)$(KBUILD_MODULES),y)
+KBUILD_MODULES := 1
+endif
+
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default
 # values of the respective KBUILD_* variables
 ARCH_CPPFLAGS :=
@@ -1181,12 +1187,21 @@ all: modules
 # duplicate lines in modules.order files.  Those are removed
 # using awk while concatenating to the final file.
 
-PHONY += modules
-modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux) modules.builtin
+modules.order: $(filter-out certs,$(vmlinux-dirs))
 	$(Q)$(AWK) '!x[$$0]++' $(vmlinux-dirs:%=$(objtree)/%/modules.order) > $(objtree)/modules.order
+
+ifdef CONFIG_MODULE_RECOGNIZE_INTREE
+# If CONFIG_MODULE_RECOGNIZE_INTREE is set, then the data in certs/ depends
+# on all module objects.
+certs: $(filter-out certs,$(vmlinux-dirs)) module_ko_files
+endif
+
+PHONY += modules module_ko_files
+module_ko_files: $(filter-out certs,$(vmlinux-dirs)) modules.builtin modules.order
 	@$(kecho) '  Building modules, stage 2.';
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.fwinst obj=firmware __fw_modbuild
+modules: module_ko_files $(if $(KBUILD_BUILTIN),vmlinux)
 
 modules.builtin: $(vmlinux-dirs:%=%/modules.builtin)
 	$(Q)$(AWK) '!x[$$0]++' $^ > $(objtree)/modules.builtin

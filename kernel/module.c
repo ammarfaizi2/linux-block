@@ -61,6 +61,9 @@
 #include <linux/pfn.h>
 #include <linux/bsearch.h>
 #include <uapi/linux/module.h>
+#ifdef CONFIG_MODULE_RECOGNIZE_INTREE
+#include <crypto/hash.h>
+#endif
 #include "module-internal.h"
 
 #define CREATE_TRACE_POINTS
@@ -2686,12 +2689,66 @@ static inline void kmemleak_load_module(const struct module *mod,
 }
 #endif
 
+#ifdef CONFIG_MODULE_RECOGNIZE_INTREE
+struct sha256hash {
+	unsigned char val[32];
+};
+
+extern const struct sha256hash intree_module_hashes, __end_intree_module_hashes;
+
+static int cmp_hashes(const void *a, const void *b)
+{
+	return memcmp(a, b, sizeof(struct sha256hash));
+}
+
+static bool is_module_intree(const struct load_info *info)
+{
+	bool ok = false;
+	struct crypto_shash *tfm = crypto_alloc_shash("sha256", 0, 0);
+
+	if (tfm) {
+		struct sha256hash hash;
+		SHASH_DESC_ON_STACK(shash, tfm);
+
+		shash->tfm = tfm;
+		shash->flags = 0;
+
+		if (crypto_shash_digest(shash, (const u8 *)info->hdr,
+					info->len, hash.val) != 0) {
+			pr_err("crypto_shash_digest failed\n");
+			goto out;
+		}
+
+		if (bsearch(&hash, &intree_module_hashes,
+			    &__end_intree_module_hashes - &intree_module_hashes,
+			    sizeof(struct sha256hash), cmp_hashes))
+			ok = true;
+	} else {
+		pr_err("failed to allocate sha256 hash context\n");
+	}
+
+out:
+	crypto_free_shash(tfm);
+	return ok;
+}
+#else
+static bool is_module_intree(const struct load_info *info)
+{
+	return false;
+}
+#endif
+
 #ifdef CONFIG_MODULE_SIG
 static int module_sig_check(struct load_info *info)
 {
 	int err = -ENOKEY;
 	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
 	const void *mod = info->hdr;
+
+	if (is_module_intree(info)) {
+		info->sig_ok = true;
+		return 0;
+	}
 
 	if (info->len > markerlen &&
 	    memcmp(mod + info->len - markerlen, MODULE_SIG_STRING, markerlen) == 0) {
