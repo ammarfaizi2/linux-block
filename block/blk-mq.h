@@ -119,4 +119,14 @@ static inline bool blk_mq_hw_queue_mapped(struct blk_mq_hw_ctx *hctx)
 	return hctx->nr_ctx && hctx->tags;
 }
 
+struct blk_map_ctx {
+	struct blk_mq_hw_ctx *hctx;
+	struct blk_mq_ctx *ctx;
+};
+
+struct request *blk_mq_map_request(struct request_queue *q, struct bio *bio,
+				   struct blk_map_ctx *data);
+void blk_mq_bio_to_request(struct request *rq, struct bio *bio);
+int blk_mq_direct_issue_request(struct request *rq, blk_qc_t *cookie);
+
 #endif

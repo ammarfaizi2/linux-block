@@ -179,10 +179,16 @@ blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
 {
 	struct file *file = iocb->ki_filp;
 	struct inode *inode = bdev_file_inode(file);
+	ssize_t ret = 0;
 
 	if (IS_DAX(inode))
 		return dax_do_io(iocb, inode, iter, blkdev_get_block,
 				NULL, DIO_SKIP_DIO_COUNT);
+
+	ret = blk_direct_IO(iocb, inode, iter);
+	if (ret != -EINVAL)
+		return ret;
+
 	return __blockdev_direct_IO(iocb, inode, I_BDEV(inode), iter,
 				    blkdev_get_block, NULL, NULL,
 				    DIO_SKIP_DIO_COUNT);

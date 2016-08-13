@@ -107,6 +107,8 @@ struct request {
 	struct bio *bio;
 	struct bio *biotail;
 
+	struct hrtimer hrtimer;
+
 	/*
 	 * The hash is used inside the scheduler, and killed once the
 	 * request reaches the dispatch list. The ipi_list is only used
@@ -420,6 +422,7 @@ struct request_queue {
 	unsigned int		request_fn_active;
 
 	unsigned int		rq_timeout;
+	unsigned int		poll_nsec;
 	struct timer_list	timeout;
 	struct work_struct	timeout_work;
 	struct list_head	timeout_list;
@@ -505,6 +508,7 @@ struct request_queue {
 #define QUEUE_FLAG_FUA	       24	/* device supports FUA writes */
 #define QUEUE_FLAG_FLUSH_NQ    25	/* flush not queueuable */
 #define QUEUE_FLAG_DAX         26	/* device supports DAX */
+#define QUEUE_FLAG_OLDDIO      27	/* use old O_DIRECT code */
 
 #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
@@ -838,6 +842,8 @@ extern void blk_execute_rq_nowait(struct request_queue *, struct gendisk *,
 				  struct request *, int, rq_end_io_fn *);
 
 bool blk_poll(struct request_queue *q, blk_qc_t cookie);
+ssize_t blk_direct_IO(struct kiocb *iocb, struct inode *inode,
+		      struct iov_iter *iter);
 
 static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 {

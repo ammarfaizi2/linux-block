@@ -319,6 +319,56 @@ queue_rq_affinity_store(struct request_queue *q, const char *page, size_t count)
 	return ret;
 }
 
+static ssize_t queue_dio_show(struct request_queue *q, char *page)
+{
+	return queue_var_show(test_bit(QUEUE_FLAG_OLDDIO, &q->queue_flags), page);
+}
+
+static ssize_t queue_dio_store(struct request_queue *q, const char *page,
+				size_t count)
+{
+	unsigned long old_dio;
+	ssize_t ret;
+
+	if (!q->mq_ops)
+		return -EINVAL;
+
+	ret = queue_var_store(&old_dio, page, count);
+	if (ret < 0)
+		return ret;
+
+	spin_lock_irq(q->queue_lock);
+	if (old_dio)
+		queue_flag_set(QUEUE_FLAG_OLDDIO, q);
+	else
+		queue_flag_clear(QUEUE_FLAG_OLDDIO, q);
+	spin_unlock_irq(q->queue_lock);
+
+	return ret;
+}
+
+static ssize_t queue_poll_delay_show(struct request_queue *q, char *page)
+{
+	return queue_var_show(q->poll_nsec / 1000, page);
+}
+
+static ssize_t queue_poll_delay_store(struct request_queue *q, const char *page,
+				size_t count)
+{
+	unsigned long poll_usec;
+	ssize_t ret;
+
+	if (!q->mq_ops || !q->mq_ops->poll)
+		return -EINVAL;
+
+	ret = queue_var_store(&poll_usec, page, count);
+	if (ret < 0)
+		return ret;
+
+	q->poll_nsec = poll_usec * 1000;
+	return ret;
+}
+
 static ssize_t queue_poll_show(struct request_queue *q, char *page)
 {
 	return queue_var_show(test_bit(QUEUE_FLAG_POLL, &q->queue_flags), page);
@@ -515,6 +565,18 @@ static struct queue_sysfs_entry queue_poll_entry = {
 	.store = queue_poll_store,
 };
 
+static struct queue_sysfs_entry queue_poll_delay_entry = {
+	.attr = {.name = "io_poll_delay", .mode = S_IRUGO | S_IWUSR },
+	.show = queue_poll_delay_show,
+	.store = queue_poll_delay_store,
+};
+
+static struct queue_sysfs_entry queue_old_dio_entry = {
+	.attr = {.name = "old_dio", .mode = S_IRUGO | S_IWUSR },
+	.show = queue_dio_show,
+	.store = queue_dio_store,
+};
+
 static struct queue_sysfs_entry queue_wc_entry = {
 	.attr = {.name = "write_cache", .mode = S_IRUGO | S_IWUSR },
 	.show = queue_wc_show,
@@ -553,6 +615,8 @@ static struct attribute *default_attrs[] = {
 	&queue_poll_entry.attr,
 	&queue_wc_entry.attr,
 	&queue_dax_entry.attr,
+	&queue_poll_delay_entry.attr,
+	&queue_old_dio_entry.attr,
 	NULL,
 };
 

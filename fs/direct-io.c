@@ -1210,6 +1210,8 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	} else {
 		dio->op = REQ_OP_READ;
 	}
+	if (iocb->ki_flags & IOCB_HIPRI)
+		dio->op_flags |= REQ_POLL;
 
 	/*
 	 * For AIO O_(D)SYNC writes we need to defer completions to a workqueue

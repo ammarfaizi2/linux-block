@@ -116,6 +116,7 @@ void blk_account_io_done(struct request *req);
 enum rq_atomic_flags {
 	REQ_ATOM_COMPLETE = 0,
 	REQ_ATOM_STARTED,
+	REQ_ATOM_POLL_SLEPT,
 };
 
 /*
@@ -218,6 +219,7 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio);
 int blk_try_merge(struct request *rq, struct bio *bio);
 
 void blk_queue_congestion_threshold(struct request_queue *q);
+void blk_partition_remap(struct bio *);
 
 int blk_dev_init(void);
 

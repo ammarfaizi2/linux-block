@@ -1165,7 +1165,7 @@ void blk_mq_flush_plug_list(struct blk_plug *plug, bool from_schedule)
 	}
 }
 
-static void blk_mq_bio_to_request(struct request *rq, struct bio *bio)
+void blk_mq_bio_to_request(struct request *rq, struct bio *bio)
 {
 	init_request_from_bio(rq, bio);
 
@@ -1204,14 +1204,8 @@ insert_rq:
 	}
 }
 
-struct blk_map_ctx {
-	struct blk_mq_hw_ctx *hctx;
-	struct blk_mq_ctx *ctx;
-};
-
-static struct request *blk_mq_map_request(struct request_queue *q,
-					  struct bio *bio,
-					  struct blk_map_ctx *data)
+struct request *blk_mq_map_request(struct request_queue *q, struct bio *bio,
+				   struct blk_map_ctx *data)
 {
 	struct blk_mq_hw_ctx *hctx;
 	struct blk_mq_ctx *ctx;
@@ -1220,12 +1214,14 @@ static struct request *blk_mq_map_request(struct request_queue *q,
 	int op_flags = 0;
 	struct blk_mq_alloc_data alloc_data;
 
+	if (rw_is_sync(bio_op(bio), bio->bi_opf))
+		op_flags |= REQ_SYNC;
+	if (bio->bi_opf & REQ_POLL)
+		op_flags |= REQ_POLL;
+
 	blk_queue_enter_live(q);
 	ctx = blk_mq_get_ctx(q);
 	hctx = q->mq_ops->map_queue(q, ctx->cpu);
-
-	if (rw_is_sync(bio_op(bio), bio->bi_opf))
-		op_flags |= REQ_SYNC;
 
 	trace_block_getrq(q, bio, op);
 	blk_mq_set_alloc_data(&alloc_data, q, BLK_MQ_REQ_NOWAIT, ctx, hctx);
@@ -1249,7 +1245,7 @@ static struct request *blk_mq_map_request(struct request_queue *q,
 	return rq;
 }
 
-static int blk_mq_direct_issue_request(struct request *rq, blk_qc_t *cookie)
+int blk_mq_direct_issue_request(struct request *rq, blk_qc_t *cookie)
 {
 	int ret;
 	struct request_queue *q = rq->q;
@@ -1573,7 +1569,11 @@ static struct blk_mq_tags *blk_mq_init_rq_map(struct blk_mq_tag_set *set,
 		to_do = min(entries_per_page, set->queue_depth - i);
 		left -= to_do * rq_size;
 		for (j = 0; j < to_do; j++) {
+			struct request *rq = p;
+
 			tags->rqs[i] = p;
+			hrtimer_init(&rq->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+
 			if (set->ops->init_request) {
 				if (set->ops->init_request(set->driver_data,
 						tags->rqs[i], hctx_idx, i,
