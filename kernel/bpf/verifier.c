@@ -194,6 +194,7 @@ struct verifier_env {
 	struct verifier_state_list **explored_states; /* search pruning optimization */
 	struct bpf_map *used_maps[MAX_USED_MAPS]; /* array of map's used by eBPF program */
 	u32 used_map_cnt;		/* number of used maps */
+	u32 id_gen;			/* used to generate unique reg IDs */
 	bool allow_ptr_leaks;
 };
 
@@ -653,6 +654,16 @@ static int check_map_access(struct verifier_env *env, u32 regno, int off,
 
 #define MAX_PACKET_OFF 0xffff
 
+static bool may_write_pkt_data(enum bpf_prog_type type)
+{
+	switch (type) {
+	case BPF_PROG_TYPE_XDP:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static int check_packet_access(struct verifier_env *env, u32 regno, int off,
 			       int size)
 {
@@ -713,6 +724,7 @@ static int check_ptr_alignment(struct verifier_env *env, struct reg_state *reg,
 	switch (env->prog->type) {
 	case BPF_PROG_TYPE_SCHED_CLS:
 	case BPF_PROG_TYPE_SCHED_ACT:
+	case BPF_PROG_TYPE_XDP:
 		break;
 	default:
 		verbose("verifier is misconfigured\n");
@@ -805,8 +817,13 @@ static int check_mem_access(struct verifier_env *env, u32 regno, int off,
 			err = check_stack_read(state, off, size, value_regno);
 		}
 	} else if (state->regs[regno].type == PTR_TO_PACKET) {
-		if (t == BPF_WRITE) {
+		if (t == BPF_WRITE && !may_write_pkt_data(env->prog->type)) {
 			verbose("cannot write into packet\n");
+			return -EACCES;
+		}
+		if (t == BPF_WRITE && value_regno >= 0 &&
+		    is_pointer_value(env, value_regno)) {
+			verbose("R%d leaks addr into packet\n", value_regno);
 			return -EACCES;
 		}
 		err = check_packet_access(env, regno, off, size);
@@ -913,14 +930,14 @@ static int check_func_arg(struct verifier_env *env, u32 regno,
 			  enum bpf_arg_type arg_type,
 			  struct bpf_call_arg_meta *meta)
 {
-	struct reg_state *reg = env->cur_state.regs + regno;
-	enum bpf_reg_type expected_type;
+	struct reg_state *regs = env->cur_state.regs, *reg = &regs[regno];
+	enum bpf_reg_type expected_type, type = reg->type;
 	int err = 0;
 
 	if (arg_type == ARG_DONTCARE)
 		return 0;
 
-	if (reg->type == NOT_INIT) {
+	if (type == NOT_INIT) {
 		verbose("R%d !read_ok\n", regno);
 		return -EACCES;
 	}
@@ -933,16 +950,29 @@ static int check_func_arg(struct verifier_env *env, u32 regno,
 		return 0;
 	}
 
+	if (type == PTR_TO_PACKET && !may_write_pkt_data(env->prog->type)) {
+		verbose("helper access to the packet is not allowed for clsact\n");
+		return -EACCES;
+	}
+
 	if (arg_type == ARG_PTR_TO_MAP_KEY ||
 	    arg_type == ARG_PTR_TO_MAP_VALUE) {
 		expected_type = PTR_TO_STACK;
+		if (type != PTR_TO_PACKET && type != expected_type)
+			goto err_type;
 	} else if (arg_type == ARG_CONST_STACK_SIZE ||
 		   arg_type == ARG_CONST_STACK_SIZE_OR_ZERO) {
 		expected_type = CONST_IMM;
+		if (type != expected_type)
+			goto err_type;
 	} else if (arg_type == ARG_CONST_MAP_PTR) {
 		expected_type = CONST_PTR_TO_MAP;
+		if (type != expected_type)
+			goto err_type;
 	} else if (arg_type == ARG_PTR_TO_CTX) {
 		expected_type = PTR_TO_CTX;
+		if (type != expected_type)
+			goto err_type;
 	} else if (arg_type == ARG_PTR_TO_STACK ||
 		   arg_type == ARG_PTR_TO_RAW_STACK) {
 		expected_type = PTR_TO_STACK;
@@ -950,18 +980,14 @@ static int check_func_arg(struct verifier_env *env, u32 regno,
 		 * passed in as argument, it's a CONST_IMM type. Final test
 		 * happens during stack boundary checking.
 		 */
-		if (reg->type == CONST_IMM && reg->imm == 0)
-			expected_type = CONST_IMM;
+		if (type == CONST_IMM && reg->imm == 0)
+			/* final test in check_stack_boundary() */;
+		else if (type != PTR_TO_PACKET && type != expected_type)
+			goto err_type;
 		meta->raw_mode = arg_type == ARG_PTR_TO_RAW_STACK;
 	} else {
 		verbose("unsupported arg_type %d\n", arg_type);
 		return -EFAULT;
-	}
-
-	if (reg->type != expected_type) {
-		verbose("R%d type=%s expected=%s\n", regno,
-			reg_type_str[reg->type], reg_type_str[expected_type]);
-		return -EACCES;
 	}
 
 	if (arg_type == ARG_CONST_MAP_PTR) {
@@ -981,8 +1007,13 @@ static int check_func_arg(struct verifier_env *env, u32 regno,
 			verbose("invalid map_ptr to access map->key\n");
 			return -EACCES;
 		}
-		err = check_stack_boundary(env, regno, meta->map_ptr->key_size,
-					   false, NULL);
+		if (type == PTR_TO_PACKET)
+			err = check_packet_access(env, regno, 0,
+						  meta->map_ptr->key_size);
+		else
+			err = check_stack_boundary(env, regno,
+						   meta->map_ptr->key_size,
+						   false, NULL);
 	} else if (arg_type == ARG_PTR_TO_MAP_VALUE) {
 		/* bpf_map_xxx(..., map_ptr, ..., value) call:
 		 * check [value, value + map->value_size) validity
@@ -992,9 +1023,13 @@ static int check_func_arg(struct verifier_env *env, u32 regno,
 			verbose("invalid map_ptr to access map->value\n");
 			return -EACCES;
 		}
-		err = check_stack_boundary(env, regno,
-					   meta->map_ptr->value_size,
-					   false, NULL);
+		if (type == PTR_TO_PACKET)
+			err = check_packet_access(env, regno, 0,
+						  meta->map_ptr->value_size);
+		else
+			err = check_stack_boundary(env, regno,
+						   meta->map_ptr->value_size,
+						   false, NULL);
 	} else if (arg_type == ARG_CONST_STACK_SIZE ||
 		   arg_type == ARG_CONST_STACK_SIZE_OR_ZERO) {
 		bool zero_size_allowed = (arg_type == ARG_CONST_STACK_SIZE_OR_ZERO);
@@ -1008,11 +1043,18 @@ static int check_func_arg(struct verifier_env *env, u32 regno,
 			verbose("ARG_CONST_STACK_SIZE cannot be first argument\n");
 			return -EACCES;
 		}
-		err = check_stack_boundary(env, regno - 1, reg->imm,
-					   zero_size_allowed, meta);
+		if (regs[regno - 1].type == PTR_TO_PACKET)
+			err = check_packet_access(env, regno - 1, 0, reg->imm);
+		else
+			err = check_stack_boundary(env, regno - 1, reg->imm,
+						   zero_size_allowed, meta);
 	}
 
 	return err;
+err_type:
+	verbose("R%d type=%s expected=%s\n", regno,
+		reg_type_str[type], reg_type_str[expected_type]);
+	return -EACCES;
 }
 
 static int check_map_func_compatibility(struct bpf_map *map, int func_id)
@@ -1036,7 +1078,8 @@ static int check_map_func_compatibility(struct bpf_map *map, int func_id)
 			goto error;
 		break;
 	case BPF_MAP_TYPE_CGROUP_ARRAY:
-		if (func_id != BPF_FUNC_skb_in_cgroup)
+		if (func_id != BPF_FUNC_skb_under_cgroup &&
+		    func_id != BPF_FUNC_current_task_under_cgroup)
 			goto error;
 		break;
 	default:
@@ -1058,7 +1101,8 @@ static int check_map_func_compatibility(struct bpf_map *map, int func_id)
 		if (map->map_type != BPF_MAP_TYPE_STACK_TRACE)
 			goto error;
 		break;
-	case BPF_FUNC_skb_in_cgroup:
+	case BPF_FUNC_current_task_under_cgroup:
+	case BPF_FUNC_skb_under_cgroup:
 		if (map->map_type != BPF_MAP_TYPE_CGROUP_ARRAY)
 			goto error;
 		break;
@@ -1285,7 +1329,7 @@ add_imm:
 		/* dst_reg stays as pkt_ptr type and since some positive
 		 * integer value was added to the pointer, increment its 'id'
 		 */
-		dst_reg->id++;
+		dst_reg->id = ++env->id_gen;
 
 		/* something was added to pkt_ptr, set range and off to zero */
 		dst_reg->off = 0;

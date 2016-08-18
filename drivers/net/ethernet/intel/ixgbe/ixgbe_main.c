@@ -2887,7 +2887,7 @@ int ixgbe_poll(struct napi_struct *napi, int budget)
 	if (!test_bit(__IXGBE_DOWN, &adapter->state))
 		ixgbe_irq_enable_queues(adapter, BIT_ULL(q_vector->v_idx));
 
-	return 0;
+	return min(work_done, budget - 1);
 }
 
 /**
@@ -3084,7 +3084,7 @@ static void ixgbe_free_irq(struct ixgbe_adapter *adapter)
 		free_irq(entry->vector, q_vector);
 	}
 
-	free_irq(adapter->msix_entries[vector++].vector, adapter);
+	free_irq(adapter->msix_entries[vector].vector, adapter);
 }
 
 /**
@@ -4100,6 +4100,8 @@ static void ixgbe_vlan_promisc_enable(struct ixgbe_adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32 vlnctrl, i;
 
+	vlnctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
+
 	switch (hw->mac.type) {
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
@@ -4112,8 +4114,7 @@ static void ixgbe_vlan_promisc_enable(struct ixgbe_adapter *adapter)
 		/* fall through */
 	case ixgbe_mac_82598EB:
 		/* legacy case, we can just disable VLAN filtering */
-		vlnctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
-		vlnctrl &= ~(IXGBE_VLNCTRL_VFE | IXGBE_VLNCTRL_CFIEN);
+		vlnctrl &= ~IXGBE_VLNCTRL_VFE;
 		IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
 		return;
 	}
@@ -4124,6 +4125,10 @@ static void ixgbe_vlan_promisc_enable(struct ixgbe_adapter *adapter)
 
 	/* Set flag so we don't redo unnecessary work */
 	adapter->flags2 |= IXGBE_FLAG2_VLAN_PROMISC;
+
+	/* For VMDq and SR-IOV we must leave VLAN filtering enabled */
+	vlnctrl |= IXGBE_VLNCTRL_VFE;
+	IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
 
 	/* Add PF to all active pools */
 	for (i = IXGBE_VLVF_ENTRIES; --i;) {
@@ -4191,6 +4196,11 @@ static void ixgbe_vlan_promisc_disable(struct ixgbe_adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32 vlnctrl, i;
 
+	/* Set VLAN filtering to enabled */
+	vlnctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
+	vlnctrl |= IXGBE_VLNCTRL_VFE;
+	IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
+
 	switch (hw->mac.type) {
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
@@ -4202,10 +4212,6 @@ static void ixgbe_vlan_promisc_disable(struct ixgbe_adapter *adapter)
 			break;
 		/* fall through */
 	case ixgbe_mac_82598EB:
-		vlnctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
-		vlnctrl &= ~IXGBE_VLNCTRL_CFIEN;
-		vlnctrl |= IXGBE_VLNCTRL_VFE;
-		IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
 		return;
 	}
 
@@ -5625,7 +5631,6 @@ static int ixgbe_sw_init(struct ixgbe_adapter *adapter)
 	struct pci_dev *pdev = adapter->pdev;
 	unsigned int rss, fdir;
 	u32 fwsm;
-	u16 device_caps;
 	int i;
 
 	/* PCI config space info */
@@ -5770,22 +5775,6 @@ static int ixgbe_sw_init(struct ixgbe_adapter *adapter)
 	/* set default ring sizes */
 	adapter->tx_ring_count = IXGBE_DEFAULT_TXD;
 	adapter->rx_ring_count = IXGBE_DEFAULT_RXD;
-
-	/* Cache bit indicating need for crosstalk fix */
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		hw->mac.ops.get_device_caps(hw, &device_caps);
-		if (device_caps & IXGBE_DEVICE_CAPS_NO_CROSSTALK_WR)
-			adapter->need_crosstalk_fix = false;
-		else
-			adapter->need_crosstalk_fix = true;
-		break;
-	default:
-		adapter->need_crosstalk_fix = false;
-		break;
-	}
 
 	/* set default work limits */
 	adapter->tx_work_limit = IXGBE_DEFAULT_TX_WORK;
@@ -6707,18 +6696,6 @@ static void ixgbe_watchdog_update_link(struct ixgbe_adapter *adapter)
 		link_up = true;
 	}
 
-	/* If Crosstalk fix enabled do the sanity check of making sure
-	 * the SFP+ cage is empty.
-	 */
-	if (adapter->need_crosstalk_fix) {
-		u32 sfp_cage_full;
-
-		sfp_cage_full = IXGBE_READ_REG(hw, IXGBE_ESDP) &
-				IXGBE_ESDP_SDP2;
-		if (ixgbe_is_sfp(hw) && link_up && !sfp_cage_full)
-			link_up = false;
-	}
-
 	if (adapter->ixgbe_ieee_pfc)
 		pfc_en |= !!(adapter->ixgbe_ieee_pfc->pfc_en);
 
@@ -7064,16 +7041,6 @@ static void ixgbe_sfp_detection_subtask(struct ixgbe_adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	s32 err;
-
-	/* If crosstalk fix enabled verify the SFP+ cage is full */
-	if (adapter->need_crosstalk_fix) {
-		u32 sfp_cage_full;
-
-		sfp_cage_full = IXGBE_READ_REG(hw, IXGBE_ESDP) &
-				IXGBE_ESDP_SDP2;
-		if (!sfp_cage_full)
-			return;
-	}
 
 	/* not searching for SFP so there is nothing to do here */
 	if (!(adapter->flags2 & IXGBE_FLAG2_SEARCH_FOR_SFP) &&
@@ -8429,12 +8396,14 @@ static int parse_tc_actions(struct ixgbe_adapter *adapter,
 			    struct tcf_exts *exts, u64 *action, u8 *queue)
 {
 	const struct tc_action *a;
+	LIST_HEAD(actions);
 	int err;
 
 	if (tc_no_actions(exts))
 		return -EINVAL;
 
-	tc_for_each_action(a, exts) {
+	tcf_exts_to_list(exts, &actions);
+	list_for_each_entry(a, &actions, list) {
 
 		/* Drop action */
 		if (is_tcf_gact_shot(a)) {
@@ -9392,8 +9361,7 @@ static int ixgbe_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		pci_using_dac = 0;
 	}
 
-	err = pci_request_selected_regions(pdev, pci_select_bars(pdev,
-					   IORESOURCE_MEM), ixgbe_driver_name);
+	err = pci_request_mem_regions(pdev, ixgbe_driver_name);
 	if (err) {
 		dev_err(&pdev->dev,
 			"pci_request_selected_regions failed 0x%x\n", err);
@@ -9557,6 +9525,7 @@ skip_sriov:
 
 	/* copy netdev features into list of user selectable features */
 	netdev->hw_features |= netdev->features |
+			       NETIF_F_HW_VLAN_CTAG_FILTER |
 			       NETIF_F_HW_VLAN_CTAG_RX |
 			       NETIF_F_HW_VLAN_CTAG_TX |
 			       NETIF_F_RXALL |
@@ -9779,8 +9748,7 @@ err_ioremap:
 	disable_dev = !test_and_set_bit(__IXGBE_DISABLED, &adapter->state);
 	free_netdev(netdev);
 err_alloc_etherdev:
-	pci_release_selected_regions(pdev,
-				     pci_select_bars(pdev, IORESOURCE_MEM));
+	pci_release_mem_regions(pdev);
 err_pci_reg:
 err_dma:
 	if (!adapter || disable_dev)
@@ -9847,8 +9815,7 @@ static void ixgbe_remove(struct pci_dev *pdev)
 
 #endif
 	iounmap(adapter->io_addr);
-	pci_release_selected_regions(pdev, pci_select_bars(pdev,
-				     IORESOURCE_MEM));
+	pci_release_mem_regions(pdev);
 
 	e_dev_info("complete\n");
 
@@ -10112,6 +10079,7 @@ static int __init ixgbe_init_module(void)
 
 	ret = pci_register_driver(&ixgbe_driver);
 	if (ret) {
+		destroy_workqueue(ixgbe_wq);
 		ixgbe_dbg_exit();
 		return ret;
 	}

@@ -862,7 +862,7 @@ static int uhdlc_suspend(struct device *dev)
 static int uhdlc_resume(struct device *dev)
 {
 	struct ucc_hdlc_private *priv = dev_get_drvdata(dev);
-	struct ucc_tdm *utdm = priv->utdm;
+	struct ucc_tdm *utdm;
 	struct ucc_tdm_info *ut_info;
 	struct ucc_fast __iomem *uf_regs;
 	struct ucc_fast_private *uccf;
@@ -877,6 +877,7 @@ static int uhdlc_resume(struct device *dev)
 	if (!netif_running(priv->ndev))
 		return 0;
 
+	utdm = priv->utdm;
 	ut_info = priv->ut_info;
 	uf_info = &ut_info->uf_info;
 	uf_regs = priv->uf_regs;
@@ -1168,22 +1169,10 @@ static struct platform_driver ucc_hdlc_driver = {
 	.probe	= ucc_hdlc_probe,
 	.remove	= ucc_hdlc_remove,
 	.driver	= {
-		.owner		= THIS_MODULE,
 		.name		= DRV_NAME,
 		.pm		= HDLC_PM_OPS,
 		.of_match_table	= fsl_ucc_hdlc_of_match,
 	},
 };
 
-static int __init ucc_hdlc_init(void)
-{
-	return platform_driver_register(&ucc_hdlc_driver);
-}
-
-static void __exit ucc_hdlc_exit(void)
-{
-	platform_driver_unregister(&ucc_hdlc_driver);
-}
-
-module_init(ucc_hdlc_init);
-module_exit(ucc_hdlc_exit);
+module_platform_driver(ucc_hdlc_driver);

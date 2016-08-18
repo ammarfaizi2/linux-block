@@ -86,7 +86,7 @@ struct cpdma_desc_pool {
 	void __iomem		*iomap;		/* ioremap map */
 	void			*cpumap;	/* dma_alloc map */
 	int			desc_size, mem_size;
-	int			num_desc, used_desc;
+	int			num_desc;
 	struct device		*dev;
 	struct gen_pool		*gen_pool;
 };
@@ -96,8 +96,6 @@ enum cpdma_state {
 	CPDMA_STATE_ACTIVE,
 	CPDMA_STATE_TEARDOWN,
 };
-
-static const char *cpdma_state_str[] = { "idle", "active", "teardown" };
 
 struct cpdma_ctlr {
 	enum cpdma_state	state;
@@ -150,7 +148,10 @@ static void cpdma_desc_pool_destroy(struct cpdma_desc_pool *pool)
 	if (!pool)
 		return;
 
-	WARN_ON(pool->used_desc);
+	WARN(gen_pool_size(pool->gen_pool) != gen_pool_avail(pool->gen_pool),
+	     "cpdma_desc_pool size %d != avail %d",
+	     gen_pool_size(pool->gen_pool),
+	     gen_pool_avail(pool->gen_pool));
 	if (pool->cpumap)
 		dma_free_coherent(pool->dev, pool->mem_size, pool->cpumap,
 				  pool->phys);
@@ -234,21 +235,14 @@ desc_from_phys(struct cpdma_desc_pool *pool, dma_addr_t dma)
 static struct cpdma_desc __iomem *
 cpdma_desc_alloc(struct cpdma_desc_pool *pool)
 {
-	struct cpdma_desc __iomem *desc = NULL;
-
-	desc = (struct cpdma_desc __iomem *)gen_pool_alloc(pool->gen_pool,
-							   pool->desc_size);
-	if (desc)
-		pool->used_desc++;
-
-	return desc;
+	return (struct cpdma_desc __iomem *)
+		gen_pool_alloc(pool->gen_pool, pool->desc_size);
 }
 
 static void cpdma_desc_free(struct cpdma_desc_pool *pool,
 			    struct cpdma_desc __iomem *desc, int num_desc)
 {
 	gen_pool_free(pool->gen_pool, (unsigned long)desc, pool->desc_size);
-	pool->used_desc--;
 }
 
 struct cpdma_ctlr *cpdma_ctlr_create(struct cpdma_params *params)
@@ -357,86 +351,13 @@ int cpdma_ctlr_stop(struct cpdma_ctlr *ctlr)
 }
 EXPORT_SYMBOL_GPL(cpdma_ctlr_stop);
 
-int cpdma_ctlr_dump(struct cpdma_ctlr *ctlr)
-{
-	struct device *dev = ctlr->dev;
-	unsigned long flags;
-	int i;
-
-	spin_lock_irqsave(&ctlr->lock, flags);
-
-	dev_info(dev, "CPDMA: state: %s", cpdma_state_str[ctlr->state]);
-
-	dev_info(dev, "CPDMA: txidver: %x",
-		 dma_reg_read(ctlr, CPDMA_TXIDVER));
-	dev_info(dev, "CPDMA: txcontrol: %x",
-		 dma_reg_read(ctlr, CPDMA_TXCONTROL));
-	dev_info(dev, "CPDMA: txteardown: %x",
-		 dma_reg_read(ctlr, CPDMA_TXTEARDOWN));
-	dev_info(dev, "CPDMA: rxidver: %x",
-		 dma_reg_read(ctlr, CPDMA_RXIDVER));
-	dev_info(dev, "CPDMA: rxcontrol: %x",
-		 dma_reg_read(ctlr, CPDMA_RXCONTROL));
-	dev_info(dev, "CPDMA: softreset: %x",
-		 dma_reg_read(ctlr, CPDMA_SOFTRESET));
-	dev_info(dev, "CPDMA: rxteardown: %x",
-		 dma_reg_read(ctlr, CPDMA_RXTEARDOWN));
-	dev_info(dev, "CPDMA: txintstatraw: %x",
-		 dma_reg_read(ctlr, CPDMA_TXINTSTATRAW));
-	dev_info(dev, "CPDMA: txintstatmasked: %x",
-		 dma_reg_read(ctlr, CPDMA_TXINTSTATMASKED));
-	dev_info(dev, "CPDMA: txintmaskset: %x",
-		 dma_reg_read(ctlr, CPDMA_TXINTMASKSET));
-	dev_info(dev, "CPDMA: txintmaskclear: %x",
-		 dma_reg_read(ctlr, CPDMA_TXINTMASKCLEAR));
-	dev_info(dev, "CPDMA: macinvector: %x",
-		 dma_reg_read(ctlr, CPDMA_MACINVECTOR));
-	dev_info(dev, "CPDMA: maceoivector: %x",
-		 dma_reg_read(ctlr, CPDMA_MACEOIVECTOR));
-	dev_info(dev, "CPDMA: rxintstatraw: %x",
-		 dma_reg_read(ctlr, CPDMA_RXINTSTATRAW));
-	dev_info(dev, "CPDMA: rxintstatmasked: %x",
-		 dma_reg_read(ctlr, CPDMA_RXINTSTATMASKED));
-	dev_info(dev, "CPDMA: rxintmaskset: %x",
-		 dma_reg_read(ctlr, CPDMA_RXINTMASKSET));
-	dev_info(dev, "CPDMA: rxintmaskclear: %x",
-		 dma_reg_read(ctlr, CPDMA_RXINTMASKCLEAR));
-	dev_info(dev, "CPDMA: dmaintstatraw: %x",
-		 dma_reg_read(ctlr, CPDMA_DMAINTSTATRAW));
-	dev_info(dev, "CPDMA: dmaintstatmasked: %x",
-		 dma_reg_read(ctlr, CPDMA_DMAINTSTATMASKED));
-	dev_info(dev, "CPDMA: dmaintmaskset: %x",
-		 dma_reg_read(ctlr, CPDMA_DMAINTMASKSET));
-	dev_info(dev, "CPDMA: dmaintmaskclear: %x",
-		 dma_reg_read(ctlr, CPDMA_DMAINTMASKCLEAR));
-
-	if (!ctlr->params.has_ext_regs) {
-		dev_info(dev, "CPDMA: dmacontrol: %x",
-			 dma_reg_read(ctlr, CPDMA_DMACONTROL));
-		dev_info(dev, "CPDMA: dmastatus: %x",
-			 dma_reg_read(ctlr, CPDMA_DMASTATUS));
-		dev_info(dev, "CPDMA: rxbuffofs: %x",
-			 dma_reg_read(ctlr, CPDMA_RXBUFFOFS));
-	}
-
-	for (i = 0; i < ARRAY_SIZE(ctlr->channels); i++)
-		if (ctlr->channels[i])
-			cpdma_chan_dump(ctlr->channels[i]);
-
-	spin_unlock_irqrestore(&ctlr->lock, flags);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(cpdma_ctlr_dump);
-
 int cpdma_ctlr_destroy(struct cpdma_ctlr *ctlr)
 {
-	unsigned long flags;
 	int ret = 0, i;
 
 	if (!ctlr)
 		return -EINVAL;
 
-	spin_lock_irqsave(&ctlr->lock, flags);
 	if (ctlr->state != CPDMA_STATE_IDLE)
 		cpdma_ctlr_stop(ctlr);
 
@@ -444,7 +365,6 @@ int cpdma_ctlr_destroy(struct cpdma_ctlr *ctlr)
 		cpdma_chan_destroy(ctlr->channels[i]);
 
 	cpdma_desc_pool_destroy(ctlr->pool);
-	spin_unlock_irqrestore(&ctlr->lock, flags);
 	return ret;
 }
 EXPORT_SYMBOL_GPL(cpdma_ctlr_destroy);
@@ -568,54 +488,6 @@ int cpdma_chan_get_stats(struct cpdma_chan *chan,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(cpdma_chan_get_stats);
-
-int cpdma_chan_dump(struct cpdma_chan *chan)
-{
-	unsigned long flags;
-	struct device *dev = chan->ctlr->dev;
-
-	spin_lock_irqsave(&chan->lock, flags);
-
-	dev_info(dev, "channel %d (%s %d) state %s",
-		 chan->chan_num, is_rx_chan(chan) ? "rx" : "tx",
-		 chan_linear(chan), cpdma_state_str[chan->state]);
-	dev_info(dev, "\thdp: %x\n", chan_read(chan, hdp));
-	dev_info(dev, "\tcp: %x\n", chan_read(chan, cp));
-	if (chan->rxfree) {
-		dev_info(dev, "\trxfree: %x\n",
-			 chan_read(chan, rxfree));
-	}
-
-	dev_info(dev, "\tstats head_enqueue: %d\n",
-		 chan->stats.head_enqueue);
-	dev_info(dev, "\tstats tail_enqueue: %d\n",
-		 chan->stats.tail_enqueue);
-	dev_info(dev, "\tstats pad_enqueue: %d\n",
-		 chan->stats.pad_enqueue);
-	dev_info(dev, "\tstats misqueued: %d\n",
-		 chan->stats.misqueued);
-	dev_info(dev, "\tstats desc_alloc_fail: %d\n",
-		 chan->stats.desc_alloc_fail);
-	dev_info(dev, "\tstats pad_alloc_fail: %d\n",
-		 chan->stats.pad_alloc_fail);
-	dev_info(dev, "\tstats runt_receive_buff: %d\n",
-		 chan->stats.runt_receive_buff);
-	dev_info(dev, "\tstats runt_transmit_buff: %d\n",
-		 chan->stats.runt_transmit_buff);
-	dev_info(dev, "\tstats empty_dequeue: %d\n",
-		 chan->stats.empty_dequeue);
-	dev_info(dev, "\tstats busy_dequeue: %d\n",
-		 chan->stats.busy_dequeue);
-	dev_info(dev, "\tstats good_dequeue: %d\n",
-		 chan->stats.good_dequeue);
-	dev_info(dev, "\tstats requeue: %d\n",
-		 chan->stats.requeue);
-	dev_info(dev, "\tstats teardown_dequeue: %d\n",
-		 chan->stats.teardown_dequeue);
-
-	spin_unlock_irqrestore(&chan->lock, flags);
-	return 0;
-}
 
 static void __cpdma_chan_submit(struct cpdma_chan *chan,
 				struct cpdma_desc __iomem *desc)

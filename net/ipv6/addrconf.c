@@ -3543,7 +3543,7 @@ static int addrconf_ifdown(struct net_device *dev, int how)
 	/* combine the user config with event to determine if permanent
 	 * addresses are to be removed from address hash table
 	 */
-	keep_addr = !(how || _keep_addr <= 0);
+	keep_addr = !(how || _keep_addr <= 0 || idev->cnf.disable_ipv6);
 
 	/* Step 2: clear hash table */
 	for (i = 0; i < IN6_ADDR_HSIZE; i++) {
@@ -3599,7 +3599,7 @@ restart:
 	/* re-combine the user config with event to determine if permanent
 	 * addresses are to be removed from the interface list
 	 */
-	keep_addr = (!how && _keep_addr > 0);
+	keep_addr = (!how && _keep_addr > 0 && !idev->cnf.disable_ipv6);
 
 	INIT_LIST_HEAD(&del_list);
 	list_for_each_entry_safe(ifa, tmp, &idev->addr_list, if_list) {
@@ -3624,8 +3624,7 @@ restart:
 			state = ifa->state;
 			ifa->state = INET6_IFADDR_STATE_DEAD;
 
-			list_del(&ifa->if_list);
-			list_add(&ifa->if_list, &del_list);
+			list_move(&ifa->if_list, &del_list);
 		}
 
 		spin_unlock_bh(&ifa->lock);
@@ -3636,6 +3635,10 @@ restart:
 		if (state != INET6_IFADDR_STATE_DEAD) {
 			__ipv6_ifa_notify(RTM_DELADDR, ifa);
 			inet6addr_notifier_call_chain(NETDEV_DOWN, ifa);
+		} else {
+			if (idev->cnf.forwarding)
+				addrconf_leave_anycast(ifa);
+			addrconf_leave_solict(ifa->idev, &ifa->addr);
 		}
 
 		write_lock_bh(&idev->lock);

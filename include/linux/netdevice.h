@@ -52,6 +52,7 @@
 #include <uapi/linux/netdevice.h>
 #include <uapi/linux/if_bonding.h>
 #include <uapi/linux/pkt_cls.h>
+#include <linux/hashtable.h>
 
 struct netpoll_info;
 struct device;
@@ -63,6 +64,7 @@ struct wpan_dev;
 struct mpls_dev;
 /* UDP Tunnel offloads */
 struct udp_tunnel_info;
+struct bpf_prog;
 
 void netdev_set_default_ethtool_ops(struct net_device *dev,
 				    const struct ethtool_ops *ops);
@@ -786,6 +788,7 @@ enum {
 	TC_SETUP_MQPRIO,
 	TC_SETUP_CLSU32,
 	TC_SETUP_CLSFLOWER,
+	TC_SETUP_MATCHALL,
 };
 
 struct tc_cls_u32_offload;
@@ -796,9 +799,37 @@ struct tc_to_netdev {
 		u8 tc;
 		struct tc_cls_u32_offload *cls_u32;
 		struct tc_cls_flower_offload *cls_flower;
+		struct tc_cls_matchall_offload *cls_mall;
 	};
 };
 
+/* These structures hold the attributes of xdp state that are being passed
+ * to the netdevice through the xdp op.
+ */
+enum xdp_netdev_command {
+	/* Set or clear a bpf program used in the earliest stages of packet
+	 * rx. The prog will have been loaded as BPF_PROG_TYPE_XDP. The callee
+	 * is responsible for calling bpf_prog_put on any old progs that are
+	 * stored. In case of error, the callee need not release the new prog
+	 * reference, but on success it takes ownership and must bpf_prog_put
+	 * when it is no longer used.
+	 */
+	XDP_SETUP_PROG,
+	/* Check if a bpf program is set on the device.  The callee should
+	 * return true if a program is currently attached and running.
+	 */
+	XDP_QUERY_PROG,
+};
+
+struct netdev_xdp {
+	enum xdp_netdev_command command;
+	union {
+		/* XDP_SETUP_PROG */
+		struct bpf_prog *prog;
+		/* XDP_QUERY_PROG */
+		bool prog_attached;
+	};
+};
 
 /*
  * This structure defines the management hooks for network devices.
@@ -1087,6 +1118,9 @@ struct tc_to_netdev {
  *	appropriate rx headroom value allows avoiding skb head copy on
  *	forward. Setting a negative value resets the rx headroom to the
  *	default value.
+ * int (*ndo_xdp)(struct net_device *dev, struct netdev_xdp *xdp);
+ *	This function is used to set or query state related to XDP on the
+ *	netdevice. See definition of enum xdp_netdev_command for details.
  *
  */
 struct net_device_ops {
@@ -1271,6 +1305,8 @@ struct net_device_ops {
 						       struct sk_buff *skb);
 	void			(*ndo_set_rx_headroom)(struct net_device *dev,
 						       int needed_headroom);
+	int			(*ndo_xdp)(struct net_device *dev,
+					   struct netdev_xdp *xdp);
 };
 
 /**
@@ -1765,6 +1801,9 @@ struct net_device {
 	unsigned int		num_tx_queues;
 	unsigned int		real_num_tx_queues;
 	struct Qdisc		*qdisc;
+#ifdef CONFIG_NET_SCHED
+	DECLARE_HASHTABLE	(qdisc_hash, 4);
+#endif
 	unsigned long		tx_queue_len;
 	spinlock_t		tx_global_lock;
 	int			watchdog_timeo;
@@ -3257,6 +3296,7 @@ int dev_get_phys_port_id(struct net_device *dev,
 int dev_get_phys_port_name(struct net_device *dev,
 			   char *name, size_t len);
 int dev_change_proto_down(struct net_device *dev, bool proto_down);
+int dev_change_xdp_fd(struct net_device *dev, int fd);
 struct sk_buff *validate_xmit_skb_list(struct sk_buff *skb, struct net_device *dev);
 struct sk_buff *dev_hard_start_xmit(struct sk_buff *skb, struct net_device *dev,
 				    struct netdev_queue *txq, int *ret);
@@ -3855,8 +3895,7 @@ void netdev_default_l2upper_neigh_destroy(struct net_device *dev,
 extern u8 netdev_rss_key[NETDEV_RSS_KEY_LEN] __read_mostly;
 void netdev_rss_key_fill(void *buffer, size_t len);
 
-int dev_get_nest_level(struct net_device *dev,
-		       bool (*type_check)(const struct net_device *dev));
+int dev_get_nest_level(struct net_device *dev);
 int skb_checksum_help(struct sk_buff *skb);
 struct sk_buff *__skb_gso_segment(struct sk_buff *skb,
 				  netdev_features_t features, bool tx_path);
@@ -4173,6 +4212,13 @@ static inline bool netif_is_rxfh_configured(const struct net_device *dev)
 static inline void netif_keep_dst(struct net_device *dev)
 {
 	dev->priv_flags &= ~(IFF_XMIT_DST_RELEASE | IFF_XMIT_DST_RELEASE_PERM);
+}
+
+/* return true if dev can't cope with mtu frames that need vlan tag insertion */
+static inline bool netif_reduces_vlan_mtu(struct net_device *dev)
+{
+	/* TODO: reserve and use an additional IFF bit, if we get more users */
+	return dev->priv_flags & IFF_MACSEC;
 }
 
 extern struct pernet_operations __net_initdata loopback_net_ops;

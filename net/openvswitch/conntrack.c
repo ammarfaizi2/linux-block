@@ -135,7 +135,7 @@ static void ovs_ct_get_labels(const struct nf_conn *ct,
 	struct nf_conn_labels *cl = ct ? nf_ct_labels_find(ct) : NULL;
 
 	if (cl) {
-		size_t len = cl->words * sizeof(long);
+		size_t len = sizeof(cl->bits);
 
 		if (len > OVS_CT_LABELS_LEN)
 			len = OVS_CT_LABELS_LEN;
@@ -274,7 +274,7 @@ static int ovs_ct_set_labels(struct sk_buff *skb, struct sw_flow_key *key,
 		nf_ct_labels_ext_add(ct);
 		cl = nf_ct_labels_find(ct);
 	}
-	if (!cl || cl->words * sizeof(long) < OVS_CT_LABELS_LEN)
+	if (!cl || sizeof(cl->bits) < OVS_CT_LABELS_LEN)
 		return -ENOSPC;
 
 	err = nf_connlabels_replace(ct, (u32 *)labels, (u32 *)mask,
@@ -433,7 +433,6 @@ ovs_ct_find_existing(struct net *net, const struct nf_conntrack_zone *zone,
 	struct nf_conntrack_l4proto *l4proto;
 	struct nf_conntrack_tuple tuple;
 	struct nf_conntrack_tuple_hash *h;
-	enum ip_conntrack_info ctinfo;
 	struct nf_conn *ct;
 	unsigned int dataoff;
 	u8 protonum;
@@ -458,13 +457,8 @@ ovs_ct_find_existing(struct net *net, const struct nf_conntrack_zone *zone,
 
 	ct = nf_ct_tuplehash_to_ctrack(h);
 
-	ctinfo = ovs_ct_get_info(h);
-	if (ctinfo == IP_CT_NEW) {
-		/* This should not happen. */
-		WARN_ONCE(1, "ovs_ct_find_existing: new packet for %p\n", ct);
-	}
 	skb->nfct = &ct->ct_general;
-	skb->nfctinfo = ctinfo;
+	skb->nfctinfo = ovs_ct_get_info(h);
 	return ct;
 }
 

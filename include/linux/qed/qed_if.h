@@ -70,8 +70,16 @@ struct qed_dbcx_pfc_params {
 	u8 max_tc;
 };
 
+enum qed_dcbx_sf_ieee_type {
+	QED_DCBX_SF_IEEE_ETHTYPE,
+	QED_DCBX_SF_IEEE_TCP_PORT,
+	QED_DCBX_SF_IEEE_UDP_PORT,
+	QED_DCBX_SF_IEEE_TCP_UDP_PORT
+};
+
 struct qed_app_entry {
 	bool ethtype;
+	enum qed_dcbx_sf_ieee_type sf_ieee;
 	bool enabled;
 	u8 prio;
 	u16 proto_id;
@@ -266,6 +274,21 @@ enum qed_sb_type {
 enum qed_protocol {
 	QED_PROTOCOL_ETH,
 	QED_PROTOCOL_ISCSI,
+};
+
+enum qed_link_mode_bits {
+	QED_LM_FIBRE_BIT = BIT(0),
+	QED_LM_Autoneg_BIT = BIT(1),
+	QED_LM_Asym_Pause_BIT = BIT(2),
+	QED_LM_Pause_BIT = BIT(3),
+	QED_LM_1000baseT_Half_BIT = BIT(4),
+	QED_LM_1000baseT_Full_BIT = BIT(5),
+	QED_LM_10000baseKR_Full_BIT = BIT(6),
+	QED_LM_25000baseKR_Full_BIT = BIT(7),
+	QED_LM_40000baseLR4_Full_BIT = BIT(8),
+	QED_LM_50000baseKR2_Full_BIT = BIT(9),
+	QED_LM_100000baseKR4_Full_BIT = BIT(10),
+	QED_LM_COUNT = 11
 };
 
 struct qed_link_params {

@@ -722,6 +722,7 @@ static void ipmr_update_thresholds(struct mr_table *mrt, struct mfc_cache *cache
 				cache->mfc_un.res.maxvif = vifi + 1;
 		}
 	}
+	cache->mfc_un.res.lastuse = jiffies;
 }
 
 static int vif_add(struct net *net, struct mr_table *mrt,
@@ -1150,7 +1151,6 @@ static int ipmr_mfc_add(struct net *net, struct mr_table *mrt,
 	c->mfc_origin = mfc->mfcc_origin.s_addr;
 	c->mfc_mcastgrp = mfc->mfcc_mcastgrp.s_addr;
 	c->mfc_parent = mfc->mfcc_parent;
-	c->mfc_un.res.lastuse = jiffies;
 	ipmr_update_thresholds(mrt, c, mfc->mfcc_ttls);
 	if (!mrtsock)
 		c->mfc_flags |= MFC_STATIC;
@@ -1749,7 +1749,7 @@ static void ipmr_queue_xmit(struct net *net, struct mr_table *mrt,
 		vif->dev->stats.tx_bytes += skb->len;
 	}
 
-	IPCB(skb)->flags |= IPSKB_FORWARDED;
+	IPCB(skb)->flags |= IPSKB_FORWARDED | IPSKB_FRAG_SEGS;
 
 	/* RFC1584 teaches, that DVMRP/PIM router must deliver packets locally
 	 * not only before forwarding, but after forwarding on all output

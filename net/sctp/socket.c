@@ -2079,7 +2079,7 @@ static int sctp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 	lock_sock(sk);
 
 	if (sctp_style(sk, TCP) && !sctp_sstate(sk, ESTABLISHED) &&
-	    !sctp_sstate(sk, CLOSING)) {
+	    !sctp_sstate(sk, CLOSING) && !sctp_sstate(sk, CLOSED)) {
 		err = -ENOTCONN;
 		goto out;
 	}
@@ -4393,6 +4393,7 @@ int sctp_transport_walk_start(struct rhashtable_iter *iter)
 
 	err = rhashtable_walk_start(iter);
 	if (err && err != -EAGAIN) {
+		rhashtable_walk_stop(iter);
 		rhashtable_walk_exit(iter);
 		return err;
 	}

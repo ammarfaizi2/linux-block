@@ -301,6 +301,24 @@ config MDIO_HISI_FEMAC
 	  This module provides a driver for the MDIO busses found in the
 	  Hisilicon SoC that have an Fast Ethernet MAC.
 
+config MDIO_XGENE
+	tristate "APM X-Gene SoC MDIO bus controller"
+	help
+	  This module provides a driver for the MDIO busses found in the
+	  APM X-Gene SoC's.
+
+config MICROSEMI_PHY
+    tristate "Drivers for the Microsemi PHYs"
+    ---help---
+      Currently supports the VSC8531 and VSC8541 PHYs
+
+config XILINX_GMII2RGMII
+       tristate "Xilinx GMII2RGMII converter driver"
+       ---help---
+         This driver support xilinx GMII to RGMII IP core it provides
+         the Reduced Gigabit Media Independent Interface(RGMII) between
+         Ethernet physical media devices and the Gigabit Ethernet controller.
+
 endif # PHYLIB
 
 config MICREL_KS8995MA

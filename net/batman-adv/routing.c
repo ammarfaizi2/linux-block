@@ -74,11 +74,23 @@ static void _batadv_update_route(struct batadv_priv *bat_priv,
 	if (!orig_ifinfo)
 		return;
 
-	rcu_read_lock();
-	curr_router = rcu_dereference(orig_ifinfo->router);
-	if (curr_router && !kref_get_unless_zero(&curr_router->refcount))
-		curr_router = NULL;
-	rcu_read_unlock();
+	spin_lock_bh(&orig_node->neigh_list_lock);
+	/* curr_router used earlier may not be the current orig_ifinfo->router
+	 * anymore because it was dereferenced outside of the neigh_list_lock
+	 * protected region. After the new best neighbor has replace the current
+	 * best neighbor the reference counter needs to decrease. Consequently,
+	 * the code needs to ensure the curr_router variable contains a pointer
+	 * to the replaced best neighbor.
+	 */
+	curr_router = rcu_dereference_protected(orig_ifinfo->router, true);
+
+	/* increase refcount of new best neighbor */
+	if (neigh_node)
+		kref_get(&neigh_node->refcount);
+
+	rcu_assign_pointer(orig_ifinfo->router, neigh_node);
+	spin_unlock_bh(&orig_node->neigh_list_lock);
+	batadv_orig_ifinfo_put(orig_ifinfo);
 
 	/* route deleted */
 	if ((curr_router) && (!neigh_node)) {
@@ -99,27 +111,6 @@ static void _batadv_update_route(struct batadv_priv *bat_priv,
 			   orig_node->orig, neigh_node->addr,
 			   curr_router->addr);
 	}
-
-	if (curr_router)
-		batadv_neigh_node_put(curr_router);
-
-	spin_lock_bh(&orig_node->neigh_list_lock);
-	/* curr_router used earlier may not be the current orig_ifinfo->router
-	 * anymore because it was dereferenced outside of the neigh_list_lock
-	 * protected region. After the new best neighbor has replace the current
-	 * best neighbor the reference counter needs to decrease. Consequently,
-	 * the code needs to ensure the curr_router variable contains a pointer
-	 * to the replaced best neighbor.
-	 */
-	curr_router = rcu_dereference_protected(orig_ifinfo->router, true);
-
-	/* increase refcount of new best neighbor */
-	if (neigh_node)
-		kref_get(&neigh_node->refcount);
-
-	rcu_assign_pointer(orig_ifinfo->router, neigh_node);
-	spin_unlock_bh(&orig_node->neigh_list_lock);
-	batadv_orig_ifinfo_put(orig_ifinfo);
 
 	/* decrease refcount of previous best neighbor */
 	if (curr_router)
@@ -470,6 +461,29 @@ static int batadv_check_unicast_packet(struct batadv_priv *bat_priv,
 }
 
 /**
+ * batadv_last_bonding_replace - Replace last_bonding_candidate of orig_node
+ * @orig_node: originator node whose bonding candidates should be replaced
+ * @new_candidate: new bonding candidate or NULL
+ */
+static void
+batadv_last_bonding_replace(struct batadv_orig_node *orig_node,
+			    struct batadv_orig_ifinfo *new_candidate)
+{
+	struct batadv_orig_ifinfo *old_candidate;
+
+	spin_lock_bh(&orig_node->neigh_list_lock);
+	old_candidate = orig_node->last_bonding_candidate;
+
+	if (new_candidate)
+		kref_get(&new_candidate->refcount);
+	orig_node->last_bonding_candidate = new_candidate;
+	spin_unlock_bh(&orig_node->neigh_list_lock);
+
+	if (old_candidate)
+		batadv_orig_ifinfo_put(old_candidate);
+}
+
+/**
  * batadv_find_router - find a suitable router for this originator
  * @bat_priv: the bat priv with all the soft interface information
  * @orig_node: the destination node
@@ -576,10 +590,6 @@ next:
 	}
 	rcu_read_unlock();
 
-	/* last_bonding_candidate is reset below, remove the old reference. */
-	if (orig_node->last_bonding_candidate)
-		batadv_orig_ifinfo_put(orig_node->last_bonding_candidate);
-
 	/* After finding candidates, handle the three cases:
 	 * 1) there is a next candidate, use that
 	 * 2) there is no next candidate, use the first of the list
@@ -588,21 +598,28 @@ next:
 	if (next_candidate) {
 		batadv_neigh_node_put(router);
 
-		/* remove references to first candidate, we don't need it. */
-		if (first_candidate) {
-			batadv_neigh_node_put(first_candidate_router);
-			batadv_orig_ifinfo_put(first_candidate);
-		}
+		kref_get(&next_candidate_router->refcount);
 		router = next_candidate_router;
-		orig_node->last_bonding_candidate = next_candidate;
+		batadv_last_bonding_replace(orig_node, next_candidate);
 	} else if (first_candidate) {
 		batadv_neigh_node_put(router);
 
-		/* refcounting has already been done in the loop above. */
+		kref_get(&first_candidate_router->refcount);
 		router = first_candidate_router;
-		orig_node->last_bonding_candidate = first_candidate;
+		batadv_last_bonding_replace(orig_node, first_candidate);
 	} else {
-		orig_node->last_bonding_candidate = NULL;
+		batadv_last_bonding_replace(orig_node, NULL);
+	}
+
+	/* cleanup of candidates */
+	if (first_candidate) {
+		batadv_neigh_node_put(first_candidate_router);
+		batadv_orig_ifinfo_put(first_candidate);
+	}
+
+	if (next_candidate) {
+		batadv_neigh_node_put(next_candidate_router);
+		batadv_orig_ifinfo_put(next_candidate);
 	}
 
 	return router;

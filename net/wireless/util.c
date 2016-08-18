@@ -721,6 +721,8 @@ __ieee80211_amsdu_copy(struct sk_buff *skb, unsigned int hlen,
 	 * alignment since sizeof(struct ethhdr) is 14.
 	 */
 	frame = dev_alloc_skb(hlen + sizeof(struct ethhdr) + 2 + cur_len);
+	if (!frame)
+		return NULL;
 
 	skb_reserve(frame, hlen + sizeof(struct ethhdr) + 2);
 	skb_copy_bits(skb, offset, skb_put(frame, cur_len), cur_len);
@@ -1557,7 +1559,7 @@ int cfg80211_validate_beacon_int(struct cfg80211_registered_device *rdev,
 	struct wireless_dev *wdev;
 	int res = 0;
 
-	if (!beacon_int)
+	if (beacon_int < 10 || beacon_int > 10000)
 		return -EINVAL;
 
 	list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list) {

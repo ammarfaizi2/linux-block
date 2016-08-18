@@ -53,9 +53,10 @@
 #include <net/sock_reuseport.h>
 
 /**
- *	sk_filter - run a packet through a socket filter
+ *	sk_filter_trim_cap - run a packet through a socket filter
  *	@sk: sock associated with &sk_buff
  *	@skb: buffer to filter
+ *	@cap: limit on how short the eBPF program may trim the packet
  *
  * Run the eBPF program and then cut skb->data to correct size returned by
  * the program. If pkt_len is 0 we toss packet. If skb->len is smaller
@@ -64,7 +65,7 @@
  * be accepted or -EPERM if the packet should be tossed.
  *
  */
-int sk_filter(struct sock *sk, struct sk_buff *skb)
+int sk_filter_trim_cap(struct sock *sk, struct sk_buff *skb, unsigned int cap)
 {
 	int err;
 	struct sk_filter *filter;
@@ -85,14 +86,13 @@ int sk_filter(struct sock *sk, struct sk_buff *skb)
 	filter = rcu_dereference(sk->sk_filter);
 	if (filter) {
 		unsigned int pkt_len = bpf_prog_run_save_cb(filter->prog, skb);
-
-		err = pkt_len ? pskb_trim(skb, pkt_len) : -EPERM;
+		err = pkt_len ? pskb_trim(skb, max(cap, pkt_len)) : -EPERM;
 	}
 	rcu_read_unlock();
 
 	return err;
 }
-EXPORT_SYMBOL(sk_filter);
+EXPORT_SYMBOL(sk_filter_trim_cap);
 
 static u64 __skb_get_pay_offset(u64 ctx, u64 a, u64 x, u64 r4, u64 r5)
 {
@@ -1355,56 +1355,47 @@ static inline int bpf_try_make_writable(struct sk_buff *skb,
 {
 	int err;
 
-	if (!skb_cloned(skb))
-		return 0;
-	if (skb_clone_writable(skb, write_len))
-		return 0;
-	err = pskb_expand_head(skb, 0, 0, GFP_ATOMIC);
-	if (!err)
-		bpf_compute_data_end(skb);
+	err = skb_ensure_writable(skb, write_len);
+	bpf_compute_data_end(skb);
+
 	return err;
+}
+
+static inline void bpf_push_mac_rcsum(struct sk_buff *skb)
+{
+	if (skb_at_tc_ingress(skb))
+		skb_postpush_rcsum(skb, skb_mac_header(skb), skb->mac_len);
+}
+
+static inline void bpf_pull_mac_rcsum(struct sk_buff *skb)
+{
+	if (skb_at_tc_ingress(skb))
+		skb_postpull_rcsum(skb, skb_mac_header(skb), skb->mac_len);
 }
 
 static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 flags)
 {
-	struct bpf_scratchpad *sp = this_cpu_ptr(&bpf_sp);
 	struct sk_buff *skb = (struct sk_buff *) (long) r1;
-	int offset = (int) r2;
+	unsigned int offset = (unsigned int) r2;
 	void *from = (void *) (long) r3;
 	unsigned int len = (unsigned int) r4;
 	void *ptr;
 
 	if (unlikely(flags & ~(BPF_F_RECOMPUTE_CSUM | BPF_F_INVALIDATE_HASH)))
 		return -EINVAL;
-
-	/* bpf verifier guarantees that:
-	 * 'from' pointer points to bpf program stack
-	 * 'len' bytes of it were initialized
-	 * 'len' > 0
-	 * 'skb' is a valid pointer to 'struct sk_buff'
-	 *
-	 * so check for invalid 'offset' and too large 'len'
-	 */
-	if (unlikely((u32) offset > 0xffff || len > sizeof(sp->buff)))
+	if (unlikely(offset > 0xffff))
 		return -EFAULT;
 	if (unlikely(bpf_try_make_writable(skb, offset + len)))
 		return -EFAULT;
 
-	ptr = skb_header_pointer(skb, offset, len, sp->buff);
-	if (unlikely(!ptr))
-		return -EFAULT;
-
+	ptr = skb->data + offset;
 	if (flags & BPF_F_RECOMPUTE_CSUM)
-		skb_postpull_rcsum(skb, ptr, len);
+		__skb_postpull_rcsum(skb, ptr, len, offset);
 
 	memcpy(ptr, from, len);
 
-	if (ptr == sp->buff)
-		/* skb_store_bits cannot return -EFAULT here */
-		skb_store_bits(skb, offset, ptr, len);
-
 	if (flags & BPF_F_RECOMPUTE_CSUM)
-		skb_postpush_rcsum(skb, ptr, len);
+		__skb_postpush_rcsum(skb, ptr, len, offset);
 	if (flags & BPF_F_INVALIDATE_HASH)
 		skb_clear_hash(skb);
 
@@ -1425,12 +1416,12 @@ static const struct bpf_func_proto bpf_skb_store_bytes_proto = {
 static u64 bpf_skb_load_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	const struct sk_buff *skb = (const struct sk_buff *)(unsigned long) r1;
-	int offset = (int) r2;
+	unsigned int offset = (unsigned int) r2;
 	void *to = (void *)(unsigned long) r3;
 	unsigned int len = (unsigned int) r4;
 	void *ptr;
 
-	if (unlikely((u32) offset > 0xffff))
+	if (unlikely(offset > 0xffff))
 		goto err_clear;
 
 	ptr = skb_header_pointer(skb, offset, len, to);
@@ -1458,20 +1449,17 @@ static const struct bpf_func_proto bpf_skb_load_bytes_proto = {
 static u64 bpf_l3_csum_replace(u64 r1, u64 r2, u64 from, u64 to, u64 flags)
 {
 	struct sk_buff *skb = (struct sk_buff *) (long) r1;
-	int offset = (int) r2;
-	__sum16 sum, *ptr;
+	unsigned int offset = (unsigned int) r2;
+	__sum16 *ptr;
 
 	if (unlikely(flags & ~(BPF_F_HDR_FIELD_MASK)))
 		return -EINVAL;
-	if (unlikely((u32) offset > 0xffff))
+	if (unlikely(offset > 0xffff || offset & 1))
 		return -EFAULT;
-	if (unlikely(bpf_try_make_writable(skb, offset + sizeof(sum))))
-		return -EFAULT;
-
-	ptr = skb_header_pointer(skb, offset, sizeof(sum), &sum);
-	if (unlikely(!ptr))
+	if (unlikely(bpf_try_make_writable(skb, offset + sizeof(*ptr))))
 		return -EFAULT;
 
+	ptr = (__sum16 *)(skb->data + offset);
 	switch (flags & BPF_F_HDR_FIELD_MASK) {
 	case 0:
 		if (unlikely(from != 0))
@@ -1488,10 +1476,6 @@ static u64 bpf_l3_csum_replace(u64 r1, u64 r2, u64 from, u64 to, u64 flags)
 	default:
 		return -EINVAL;
 	}
-
-	if (ptr == &sum)
-		/* skb_store_bits guaranteed to not return -EFAULT here */
-		skb_store_bits(skb, offset, ptr, sizeof(sum));
 
 	return 0;
 }
@@ -1512,20 +1496,18 @@ static u64 bpf_l4_csum_replace(u64 r1, u64 r2, u64 from, u64 to, u64 flags)
 	struct sk_buff *skb = (struct sk_buff *) (long) r1;
 	bool is_pseudo = flags & BPF_F_PSEUDO_HDR;
 	bool is_mmzero = flags & BPF_F_MARK_MANGLED_0;
-	int offset = (int) r2;
-	__sum16 sum, *ptr;
+	unsigned int offset = (unsigned int) r2;
+	__sum16 *ptr;
 
 	if (unlikely(flags & ~(BPF_F_MARK_MANGLED_0 | BPF_F_PSEUDO_HDR |
 			       BPF_F_HDR_FIELD_MASK)))
 		return -EINVAL;
-	if (unlikely((u32) offset > 0xffff))
+	if (unlikely(offset > 0xffff || offset & 1))
 		return -EFAULT;
-	if (unlikely(bpf_try_make_writable(skb, offset + sizeof(sum))))
+	if (unlikely(bpf_try_make_writable(skb, offset + sizeof(*ptr))))
 		return -EFAULT;
 
-	ptr = skb_header_pointer(skb, offset, sizeof(sum), &sum);
-	if (unlikely(!ptr))
-		return -EFAULT;
+	ptr = (__sum16 *)(skb->data + offset);
 	if (is_mmzero && !*ptr)
 		return 0;
 
@@ -1548,10 +1530,6 @@ static u64 bpf_l4_csum_replace(u64 r1, u64 r2, u64 from, u64 to, u64 flags)
 
 	if (is_mmzero && !*ptr)
 		*ptr = CSUM_MANGLED_0;
-	if (ptr == &sum)
-		/* skb_store_bits guaranteed to not return -EFAULT here */
-		skb_store_bits(skb, offset, ptr, sizeof(sum));
-
 	return 0;
 }
 
@@ -1607,9 +1585,6 @@ static const struct bpf_func_proto bpf_csum_diff_proto = {
 
 static inline int __bpf_rx_skb(struct net_device *dev, struct sk_buff *skb)
 {
-	if (skb_at_tc_ingress(skb))
-		skb_postpush_rcsum(skb, skb_mac_header(skb), skb->mac_len);
-
 	return dev_forward_skb(dev, skb);
 }
 
@@ -1647,6 +1622,8 @@ static u64 bpf_clone_redirect(u64 r1, u64 ifindex, u64 flags, u64 r4, u64 r5)
 	skb = skb_clone(skb, GFP_ATOMIC);
 	if (unlikely(!skb))
 		return -ENOMEM;
+
+	bpf_push_mac_rcsum(skb);
 
 	return flags & BPF_F_INGRESS ?
 	       __bpf_rx_skb(dev, skb) : __bpf_tx_skb(dev, skb);
@@ -1692,6 +1669,8 @@ int skb_do_redirect(struct sk_buff *skb)
 		kfree_skb(skb);
 		return -EINVAL;
 	}
+
+	bpf_push_mac_rcsum(skb);
 
 	return ri->flags & BPF_F_INGRESS ?
 	       __bpf_rx_skb(dev, skb) : __bpf_tx_skb(dev, skb);
@@ -1756,7 +1735,10 @@ static u64 bpf_skb_vlan_push(u64 r1, u64 r2, u64 vlan_tci, u64 r4, u64 r5)
 		     vlan_proto != htons(ETH_P_8021AD)))
 		vlan_proto = htons(ETH_P_8021Q);
 
+	bpf_push_mac_rcsum(skb);
 	ret = skb_vlan_push(skb, vlan_proto, vlan_tci);
+	bpf_pull_mac_rcsum(skb);
+
 	bpf_compute_data_end(skb);
 	return ret;
 }
@@ -1776,7 +1758,10 @@ static u64 bpf_skb_vlan_pop(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 	struct sk_buff *skb = (struct sk_buff *) (long) r1;
 	int ret;
 
+	bpf_push_mac_rcsum(skb);
 	ret = skb_vlan_pop(skb);
+	bpf_pull_mac_rcsum(skb);
+
 	bpf_compute_data_end(skb);
 	return ret;
 }
@@ -2026,9 +2011,9 @@ bool bpf_helper_changes_skb_data(void *func)
 }
 
 static unsigned long bpf_skb_copy(void *dst_buff, const void *skb,
-				  unsigned long len)
+				  unsigned long off, unsigned long len)
 {
-	void *ptr = skb_header_pointer(skb, 0, len, dst_buff);
+	void *ptr = skb_header_pointer(skb, off, len, dst_buff);
 
 	if (unlikely(!ptr))
 		return len;
@@ -2298,7 +2283,7 @@ bpf_get_skb_set_tunnel_proto(enum bpf_func_id which)
 }
 
 #ifdef CONFIG_SOCK_CGROUP_DATA
-static u64 bpf_skb_in_cgroup(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+static u64 bpf_skb_under_cgroup(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	struct sk_buff *skb = (struct sk_buff *)(long)r1;
 	struct bpf_map *map = (struct bpf_map *)(long)r2;
@@ -2321,8 +2306,8 @@ static u64 bpf_skb_in_cgroup(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 	return cgroup_is_descendant(sock_cgroup_ptr(&sk->sk_cgrp_data), cgrp);
 }
 
-static const struct bpf_func_proto bpf_skb_in_cgroup_proto = {
-	.func		= bpf_skb_in_cgroup,
+static const struct bpf_func_proto bpf_skb_under_cgroup_proto = {
+	.func		= bpf_skb_under_cgroup,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_CTX,
@@ -2402,12 +2387,18 @@ tc_cls_act_func_proto(enum bpf_func_id func_id)
 	case BPF_FUNC_get_smp_processor_id:
 		return &bpf_get_smp_processor_id_proto;
 #ifdef CONFIG_SOCK_CGROUP_DATA
-	case BPF_FUNC_skb_in_cgroup:
-		return &bpf_skb_in_cgroup_proto;
+	case BPF_FUNC_skb_under_cgroup:
+		return &bpf_skb_under_cgroup_proto;
 #endif
 	default:
 		return sk_filter_func_proto(func_id);
 	}
+}
+
+static const struct bpf_func_proto *
+xdp_func_proto(enum bpf_func_id func_id)
+{
+	return sk_filter_func_proto(func_id);
 }
 
 static bool __is_valid_access(int off, int size, enum bpf_access_type type)
@@ -2476,6 +2467,44 @@ static bool tc_cls_act_is_valid_access(int off, int size,
 
 	return __is_valid_access(off, size, type);
 }
+
+static bool __is_valid_xdp_access(int off, int size,
+				  enum bpf_access_type type)
+{
+	if (off < 0 || off >= sizeof(struct xdp_md))
+		return false;
+	if (off % size != 0)
+		return false;
+	if (size != 4)
+		return false;
+
+	return true;
+}
+
+static bool xdp_is_valid_access(int off, int size,
+				enum bpf_access_type type,
+				enum bpf_reg_type *reg_type)
+{
+	if (type == BPF_WRITE)
+		return false;
+
+	switch (off) {
+	case offsetof(struct xdp_md, data):
+		*reg_type = PTR_TO_PACKET;
+		break;
+	case offsetof(struct xdp_md, data_end):
+		*reg_type = PTR_TO_PACKET_END;
+		break;
+	}
+
+	return __is_valid_xdp_access(off, size, type);
+}
+
+void bpf_warn_invalid_xdp_action(u32 act)
+{
+	WARN_ONCE(1, "Illegal XDP return value %u, expect packet loss\n", act);
+}
+EXPORT_SYMBOL_GPL(bpf_warn_invalid_xdp_action);
 
 static u32 bpf_net_convert_ctx_access(enum bpf_access_type type, int dst_reg,
 				      int src_reg, int ctx_off,
@@ -2628,6 +2657,29 @@ static u32 bpf_net_convert_ctx_access(enum bpf_access_type type, int dst_reg,
 	return insn - insn_buf;
 }
 
+static u32 xdp_convert_ctx_access(enum bpf_access_type type, int dst_reg,
+				  int src_reg, int ctx_off,
+				  struct bpf_insn *insn_buf,
+				  struct bpf_prog *prog)
+{
+	struct bpf_insn *insn = insn_buf;
+
+	switch (ctx_off) {
+	case offsetof(struct xdp_md, data):
+		*insn++ = BPF_LDX_MEM(bytes_to_bpf_size(FIELD_SIZEOF(struct xdp_buff, data)),
+				      dst_reg, src_reg,
+				      offsetof(struct xdp_buff, data));
+		break;
+	case offsetof(struct xdp_md, data_end):
+		*insn++ = BPF_LDX_MEM(bytes_to_bpf_size(FIELD_SIZEOF(struct xdp_buff, data_end)),
+				      dst_reg, src_reg,
+				      offsetof(struct xdp_buff, data_end));
+		break;
+	}
+
+	return insn - insn_buf;
+}
+
 static const struct bpf_verifier_ops sk_filter_ops = {
 	.get_func_proto		= sk_filter_func_proto,
 	.is_valid_access	= sk_filter_is_valid_access,
@@ -2638,6 +2690,12 @@ static const struct bpf_verifier_ops tc_cls_act_ops = {
 	.get_func_proto		= tc_cls_act_func_proto,
 	.is_valid_access	= tc_cls_act_is_valid_access,
 	.convert_ctx_access	= bpf_net_convert_ctx_access,
+};
+
+static const struct bpf_verifier_ops xdp_ops = {
+	.get_func_proto		= xdp_func_proto,
+	.is_valid_access	= xdp_is_valid_access,
+	.convert_ctx_access	= xdp_convert_ctx_access,
 };
 
 static struct bpf_prog_type_list sk_filter_type __read_mostly = {
@@ -2655,11 +2713,17 @@ static struct bpf_prog_type_list sched_act_type __read_mostly = {
 	.type	= BPF_PROG_TYPE_SCHED_ACT,
 };
 
+static struct bpf_prog_type_list xdp_type __read_mostly = {
+	.ops	= &xdp_ops,
+	.type	= BPF_PROG_TYPE_XDP,
+};
+
 static int __init register_sk_filter_ops(void)
 {
 	bpf_register_prog_type(&sk_filter_type);
 	bpf_register_prog_type(&sched_cls_type);
 	bpf_register_prog_type(&sched_act_type);
+	bpf_register_prog_type(&xdp_type);
 
 	return 0;
 }
