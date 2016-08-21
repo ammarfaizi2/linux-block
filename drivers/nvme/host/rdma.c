@@ -1573,6 +1573,8 @@ static int nvme_rdma_configure_admin_queue(struct nvme_rdma_ctrl *ctrl)
 
 	nvme_start_keep_alive(&ctrl->ctrl);
 
+	nvme_configure_apst(&dev->ctrl);
+
 	return 0;
 
 out_cleanup_queue:

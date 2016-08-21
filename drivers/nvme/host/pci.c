@@ -1805,6 +1805,8 @@ static void nvme_reset_work(struct work_struct *work)
 	if (result)
 		goto out;
 
+	nvme_configure_apst(&dev->ctrl);
+
 	/*
 	 * A controller that can not execute IO typically requires user
 	 * intervention to correct. For such degraded controllers, the driver
