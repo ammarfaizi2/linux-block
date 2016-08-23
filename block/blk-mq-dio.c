@@ -280,7 +280,6 @@ ssize_t blk_direct_IO(struct kiocb *iocb, struct inode *inode,
 	bio = bio_alloc(GFP_KERNEL, (ret + pgoff + PAGE_SIZE - 1) >> PAGE_SHIFT);
 	bio->bi_bdev = bdev;
 	bio->bi_iter.bi_sector = offset >> blkbits;
-	blk_partition_remap(bio);
 
 	total_len = ret;
 	i = ret = 0;
@@ -299,6 +298,8 @@ ssize_t blk_direct_IO(struct kiocb *iocb, struct inode *inode,
 		pgoff = 0;
 		i++;
 	}
+
+	blk_partition_remap(bio);
 
 	if (iov_iter_rw(iter) == WRITE) {
 		op = REQ_OP_WRITE;
