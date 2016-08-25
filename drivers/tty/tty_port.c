@@ -72,6 +72,9 @@ struct device *tty_port_register_device(struct tty_port *port,
 }
 EXPORT_SYMBOL_GPL(tty_port_register_device);
 
+int tty_port_test(struct tty_port *port);
+
+
 /**
  * tty_port_register_device_attr - register tty device
  * @port: tty_port of the device
@@ -90,9 +93,15 @@ struct device *tty_port_register_device_attr(struct tty_port *port,
 		struct device *device, void *drvdata,
 		const struct attribute_group **attr_grp)
 {
+	struct device *dev;
 	tty_port_link_device(port, driver, index);
-	return tty_register_device_attr(driver, index, device, drvdata,
+	dev = tty_register_device_attr(driver, index, device, drvdata,
 			attr_grp);
+
+	if (index == 1)
+		tty_port_test(port);
+	return dev;
+
 }
 EXPORT_SYMBOL_GPL(tty_port_register_device_attr);
 
@@ -595,3 +604,43 @@ int tty_port_open(struct tty_port *port, struct tty_struct *tty,
 }
 
 EXPORT_SYMBOL(tty_port_open);
+
+int tty_port_activate(struct tty_port *port)
+{
+	spin_lock_irq(&port->lock);
+	++port->count;
+	spin_unlock_irq(&port->lock);
+
+	/*
+	 * Do the device-specific open only if the hardware isn't
+	 * already initialized. Serialize open and shutdown using the
+	 * port mutex.
+	 */
+
+//	mutex_lock(&port->mutex);
+
+	if (!tty_port_initialized(port)) {
+		if (port->ops->activate) {
+			int retval = port->ops->activate(port, NULL);
+			if (retval) {
+				//mutex_unlock(&port->mutex);
+				return retval;
+			}
+		}
+		tty_port_set_initialized(port, 1);
+	}
+//	mutex_unlock(&port->mutex);
+	tty_port_set_active(port, 1);
+	return 0;
+}
+
+EXPORT_SYMBOL(tty_port_activate);
+
+int tty_port_test(struct tty_port *port)
+{
+	int ret;
+
+	ret = tty_port_activate(port);
+	printk("tty_port_test - %d\n", ret);
+	port->ops->write(port, "abcd", 4);
+}
