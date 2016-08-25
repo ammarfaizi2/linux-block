@@ -1588,6 +1588,7 @@ int dev_pm_opp_adjust_voltage(struct device *dev, unsigned long freq,
 	struct opp_table *opp_table;
 	struct dev_pm_opp *new_opp, *tmp_opp, *opp = ERR_PTR(-ENODEV);
 	int r = 0;
+	unsigned long tol;
 
 	/* keep the node allocated */
 	new_opp = kmalloc(sizeof(*new_opp), GFP_KERNEL);
@@ -1624,6 +1625,10 @@ int dev_pm_opp_adjust_voltage(struct device *dev, unsigned long freq,
 
 	/* plug in new node */
 	new_opp->u_volt = u_volt;
+	tol = u_volt * opp_table->voltage_tolerance_v1 / 100;
+	new_opp->u_volt = u_volt;
+	new_opp->u_volt_min = u_volt - tol;
+	new_opp->u_volt_max = u_volt + tol;
 
 	list_replace_rcu(&opp->node, &new_opp->node);
 	mutex_unlock(&opp_table_lock);
