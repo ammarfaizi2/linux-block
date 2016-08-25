@@ -1216,6 +1216,11 @@ void tty_write_message(struct tty_struct *tty, char *msg)
 	return;
 }
 
+int tty_op_write(struct tty_struct *tty, const unsigned char *buf, int count)
+{
+	return tty->port->ops->write(tty->port, buf, count);
+}
+
 
 /**
  *	tty_write		-	write method for tty device file

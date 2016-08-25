@@ -217,6 +217,7 @@ struct tty_port_operations {
 	/* Called on the final put of a port */
 	void (*destruct)(struct tty_port *port);
 
+	int (*write)(struct tty_port *port, const unsigned char *buf, size_t count);
 };
 
 struct tty_port_client_operations {
@@ -542,6 +543,9 @@ extern int tty_standard_install(struct tty_driver *driver,
 extern struct mutex tty_mutex;
 
 #define tty_is_writelocked(tty)  (mutex_is_locked(&tty->atomic_write_lock))
+
+extern int tty_op_write(struct tty_struct *tty,
+			const unsigned char *buf, int count);
 
 extern void tty_port_init(struct tty_port *port);
 extern void tty_port_link_device(struct tty_port *port,
