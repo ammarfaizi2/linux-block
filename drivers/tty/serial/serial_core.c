@@ -93,6 +93,11 @@ static inline void uart_port_deref(struct uart_port *uport)
 		uart_port_deref(__uport);				\
 	})
 
+static inline struct uart_state *tty_port_to_uart_state(struct tty_port *port)
+{
+	return container_of(port, struct uart_state, port);
+}
+
 static inline struct uart_port *uart_port_check(struct uart_state *state)
 {
 	lockdep_assert_held(&state->port.mutex);
@@ -720,7 +725,7 @@ static void uart_unthrottle(struct tty_struct *tty)
 
 static int uart_get_info(struct tty_port *port, struct serial_struct *retinfo)
 {
-	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport;
 	int ret = -ENODEV;
 
@@ -1603,7 +1608,7 @@ static void uart_hangup(struct tty_struct *tty)
 /* uport == NULL if uart_port has already been removed */
 static void uart_port_shutdown(struct tty_port *port)
 {
-	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport = uart_port_check(state);
 
 	/*
@@ -1630,7 +1635,7 @@ static void uart_port_shutdown(struct tty_port *port)
 
 static int uart_carrier_raised(struct tty_port *port)
 {
-	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport;
 	int mctrl;
 
@@ -1655,7 +1660,7 @@ static int uart_carrier_raised(struct tty_port *port)
 
 static void uart_dtr_rts(struct tty_port *port, int onoff)
 {
-	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport;
 
 	uport = uart_port_ref(state);
