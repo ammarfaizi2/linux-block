@@ -216,13 +216,19 @@ struct tty_port_operations {
 	int (*activate)(struct tty_port *port, struct tty_struct *tty);
 	/* Called on the final put of a port */
 	void (*destruct)(struct tty_port *port);
+
 };
-	
+
+struct tty_port_client_operations {
+	int (*receive_buf)(struct tty_port *port, const unsigned char *, const unsigned char *, size_t);
+};
+
 struct tty_port {
 	struct tty_bufhead	buf;		/* Locked internally */
 	struct tty_struct	*tty;		/* Back pointer */
 	struct tty_struct	*itty;		/* internal back ptr */
 	const struct tty_port_operations *ops;	/* Port operations */
+	const struct tty_port_client_operations *client_ops;	/* Port operations */
 	spinlock_t		lock;		/* Lock protecting tty field */
 	int			blocked_open;	/* Waiting to open */
 	int			count;		/* Usage count */

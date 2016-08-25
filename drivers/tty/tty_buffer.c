@@ -448,6 +448,18 @@ receive_buf(struct tty_ldisc *ld, struct tty_buffer *head, int count)
 	return tty_ldisc_receive_buf(ld, p, f, count);
 }
 
+static int
+tty_port_receive_buf(struct tty_port *port, struct tty_buffer *head, int count)
+{
+	unsigned char *p = char_buf_ptr(head, head->read);
+	char	      *f = NULL;
+
+	if (~head->flags & TTYB_NORMAL)
+		f = flag_buf_ptr(head, head->read);
+
+	return port->client_ops->receive_buf(port, p, f, count);
+}
+
 /**
  *	flush_to_ldisc
  *	@work: tty structure passed from work queue.
@@ -469,12 +481,11 @@ static void flush_to_ldisc(struct work_struct *work)
 	struct tty_ldisc *disc;
 
 	tty = READ_ONCE(port->itty);
-	if (tty == NULL)
-		return;
-
-	disc = tty_ldisc_ref(tty);
-	if (disc == NULL)
-		return;
+	if (tty) {
+		disc = tty_ldisc_ref(tty);
+		if (disc == NULL)
+			return;
+	}
 
 	mutex_lock(&buf->lock);
 
@@ -504,7 +515,10 @@ static void flush_to_ldisc(struct work_struct *work)
 			continue;
 		}
 
-		count = receive_buf(disc, head, count);
+		if (disc)
+			count = receive_buf(disc, head, count);
+		else
+			count = tty_port_receive_buf(port, head, count);
 		if (!count)
 			break;
 		head->read += count;
@@ -512,7 +526,8 @@ static void flush_to_ldisc(struct work_struct *work)
 
 	mutex_unlock(&buf->lock);
 
-	tty_ldisc_deref(disc);
+	if (disc)
+		tty_ldisc_deref(disc);
 }
 
 /**
