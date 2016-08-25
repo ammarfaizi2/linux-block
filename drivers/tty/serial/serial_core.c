@@ -543,10 +543,10 @@ static void uart_flush_chars(struct tty_struct *tty)
 	uart_start(tty);
 }
 
-static int uart_write(struct tty_struct *tty,
-					const unsigned char *buf, int count)
+static int uart_write(struct tty_port *port,
+					const unsigned char *buf, size_t count)
 {
-	struct uart_state *state = tty_port_to_uart_state(tty->port);
+	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport;
 	struct circ_buf *circ;
 	unsigned long flags;
@@ -2392,7 +2392,7 @@ static void uart_poll_put_char(struct tty_driver *driver, int line, char ch)
 static const struct tty_operations uart_ops = {
 	.open		= uart_open,
 	.close		= uart_close,
-	.write		= uart_write,
+	.write		= tty_op_write,
 	.put_char	= uart_put_char,
 	.flush_chars	= uart_flush_chars,
 	.write_room	= uart_write_room,
@@ -2427,6 +2427,7 @@ static const struct tty_port_operations uart_port_ops = {
 	.dtr_rts	= uart_dtr_rts,
 	.activate	= uart_port_activate,
 	.shutdown	= uart_tty_port_shutdown,
+	.write		= uart_write,
 };
 
 /**
