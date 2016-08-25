@@ -120,7 +120,7 @@ void uart_write_wakeup(struct uart_port *port)
 
 static void uart_stop(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	unsigned long flags;
 
@@ -138,7 +138,7 @@ static void __uart_start(struct uart_port *port)
 
 static void uart_start(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	unsigned long flags;
 
@@ -518,7 +518,7 @@ static void uart_change_speed(struct tty_port *port, struct ktermios *old_termio
 
 static int uart_put_char(struct tty_struct *tty, unsigned char c)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	struct circ_buf *circ;
 	unsigned long flags;
@@ -546,7 +546,7 @@ static void uart_flush_chars(struct tty_struct *tty)
 static int uart_write(struct tty_struct *tty,
 					const unsigned char *buf, int count)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *uport;
 	struct circ_buf *circ;
 	unsigned long flags;
@@ -586,7 +586,7 @@ static int uart_write(struct tty_struct *tty,
 
 static int uart_write_room(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	unsigned long flags;
 	int ret;
@@ -599,7 +599,7 @@ static int uart_write_room(struct tty_struct *tty)
 
 static int uart_chars_in_buffer(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	unsigned long flags;
 	int ret;
@@ -612,7 +612,7 @@ static int uart_chars_in_buffer(struct tty_struct *tty)
 
 static void uart_flush_buffer(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	unsigned long flags;
 
@@ -643,7 +643,7 @@ static void uart_flush_buffer(struct tty_struct *tty)
  */
 static void uart_send_xchar(struct tty_struct *tty, char ch)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	unsigned long flags;
 
@@ -665,7 +665,7 @@ static void uart_send_xchar(struct tty_struct *tty, char ch)
 
 static void uart_throttle(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	upstat_t mask = 0;
 
@@ -694,7 +694,7 @@ static void uart_throttle(struct tty_struct *tty)
 
 static void uart_unthrottle(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	upstat_t mask = 0;
 
@@ -1027,7 +1027,7 @@ static int uart_get_lsr_info(struct tty_struct *tty,
 
 static int uart_tiocmget(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct tty_port *port = &state->port;
 	struct uart_port *uport;
 	int result = -EIO;
@@ -1051,7 +1051,7 @@ out:
 static int
 uart_tiocmset(struct tty_struct *tty, unsigned int set, unsigned int clear)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct tty_port *port = &state->port;
 	struct uart_port *uport;
 	int ret = -EIO;
@@ -1072,7 +1072,7 @@ out:
 
 static int uart_break_ctl(struct tty_struct *tty, int break_state)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct tty_port *port = &state->port;
 	struct uart_port *uport;
 	int ret = -EIO;
@@ -1222,7 +1222,7 @@ static int uart_wait_modem_status(struct uart_state *state, unsigned long arg)
 static int uart_get_icount(struct tty_struct *tty,
 			  struct serial_icounter_struct *icount)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_icount cnow;
 	struct uart_port *uport;
 
@@ -1296,7 +1296,7 @@ static int uart_set_rs485_config(struct uart_port *port,
 static int
 uart_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct tty_port *port = &state->port;
 	struct uart_port *uport;
 	void __user *uarg = (void __user *)arg;
@@ -1387,7 +1387,7 @@ out:
 
 static void uart_set_ldisc(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *uport;
 
 	mutex_lock(&state->port.mutex);
@@ -1401,7 +1401,7 @@ static void uart_set_termios(struct tty_struct *tty,
 						struct ktermios *old_termios)
 {
 	struct tty_port *port = tty->port;
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport;
 	unsigned int cflag = tty->termios.c_cflag;
 	unsigned int iflag_mask = IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK;
@@ -1462,7 +1462,7 @@ out:
  */
 static void uart_close(struct tty_struct *tty, struct file *filp)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct tty_port *port;
 
 	if (!state) {
@@ -1513,7 +1513,7 @@ static void uart_tty_port_shutdown(struct tty_port *port)
 
 static void uart_wait_until_sent(struct tty_struct *tty, int timeout)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct uart_port *port;
 	unsigned long char_time, expire;
 
@@ -1577,7 +1577,7 @@ static void uart_wait_until_sent(struct tty_struct *tty, int timeout)
  */
 static void uart_hangup(struct tty_struct *tty)
 {
-	struct uart_state *state = tty->driver_data;
+	struct uart_state *state = tty_port_to_uart_state(tty->port);
 	struct tty_port *port = &state->port;
 	struct uart_port *uport;
 	unsigned long flags;
