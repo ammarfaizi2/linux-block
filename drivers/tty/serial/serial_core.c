@@ -1406,10 +1406,9 @@ static void uart_port_set_termios(struct tty_port *port,
 	unsigned int iflag_mask = IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK;
 	bool sw_changed = false;
 
-	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
 	if (!uport)
-		goto out;
+		return;
 
 	/*
 	 * Drivers doing software flow control also need to know
@@ -1433,7 +1432,7 @@ static void uart_port_set_termios(struct tty_port *port,
 	    termios->c_ispeed == old_termios->c_ispeed &&
 	    ((termios->c_iflag ^ old_termios->c_iflag) & iflag_mask) == 0 &&
 	    !sw_changed) {
-		goto out;
+		return;
 	}
 
 	uart_change_speed(port, termios, old_termios);
@@ -1446,18 +1445,19 @@ static void uart_port_set_termios(struct tty_port *port,
 	/* Handle transition away from B0 status */
 	else if (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) {
 		unsigned int mask = TIOCM_DTR;
-		if (!(cflag & CRTSCTS) || !tty_throttled(port->tty)) //FIXME
+		if (!(cflag & CRTSCTS) || !port->tty || !tty_throttled(port->tty))
 			mask |= TIOCM_RTS;
 		uart_set_mctrl(uport, mask);
 	}
-out:
-	mutex_unlock(&port->mutex);
 }
 
 static void uart_set_termios(struct tty_struct *tty,
 			     struct ktermios *old_termios)
 {
-	uart_port_set_termios(tty->port, &tty->termios, old_termios);
+	struct tty_port *port = tty->port;
+	mutex_lock(&port->mutex);
+	uart_port_set_termios(port, &tty->termios, old_termios);
+	mutex_unlock(&port->mutex);
 }
 
 /*
