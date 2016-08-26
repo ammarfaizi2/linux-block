@@ -51,7 +51,8 @@ static struct lock_class_key port_lock_key;
 
 #define HIGH_BITS_OFFSET	((sizeof(long)-sizeof(int))*8)
 
-static void uart_change_speed(struct tty_port *port, struct ktermios *old_termios);
+static void uart_change_speed(struct tty_port *port, struct ktermios *termios,
+			      struct ktermios *old_termios);
 static void uart_wait_until_sent(struct tty_struct *tty, int timeout);
 static void uart_change_pm(struct uart_state *state,
 			   enum uart_pm_state pm_state);
@@ -207,7 +208,7 @@ static int uart_port_startup(struct tty_port *port, int init_hw)
 		/*
 		 * Initialise the hardware port settings.
 		 */
-		uart_change_speed(port, NULL);
+		uart_change_speed(port, &tty->termios, NULL);
 
 		/*
 		 * Setup the RTS and DTR signals once the
@@ -470,22 +471,20 @@ uart_get_divisor(struct uart_port *port, unsigned int baud)
 EXPORT_SYMBOL(uart_get_divisor);
 
 /* Caller holds port mutex */
-static void uart_change_speed(struct tty_port *port, struct ktermios *old_termios)
+static void uart_change_speed(struct tty_port *port, struct ktermios *termios,
+			      struct ktermios *old_termios)
 {
-	struct tty_struct *tty = port->tty;
 	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport = uart_port_check(state);
-	struct ktermios *termios;
 	int hw_stopped;
 
 	/*
 	 * If we have no tty, termios, or the port does not exist,
 	 * then we can't set the parameters for this port.
 	 */
-	if (!tty || uport->type == PORT_UNKNOWN)
+	if (!termios || uport->type == PORT_UNKNOWN)
 		return;
 
-	termios = &tty->termios;
 	uport->ops->set_termios(uport, termios, old_termios);
 
 	/*
@@ -963,7 +962,7 @@ static int uart_set_info(struct tty_port *port,
 				      current->comm,
 				      tty_name(port->tty));
 			}
-			uart_change_speed(port, NULL);
+			uart_change_speed(port, &port->tty->termios, NULL);
 		}
 	} else {
 		retval = uart_startup(port, 1);
@@ -1397,17 +1396,17 @@ static void uart_set_ldisc(struct tty_struct *tty)
 	mutex_unlock(&state->port.mutex);
 }
 
-static void uart_set_termios(struct tty_struct *tty,
-						struct ktermios *old_termios)
+static void uart_port_set_termios(struct tty_port *port,
+				  struct ktermios *termios,
+				  struct ktermios *old_termios)
 {
-	struct tty_port *port = tty->port;
 	struct uart_state *state = tty_port_to_uart_state(port);
 	struct uart_port *uport;
-	unsigned int cflag = tty->termios.c_cflag;
+	unsigned int cflag = termios->c_cflag;
 	unsigned int iflag_mask = IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK;
 	bool sw_changed = false;
 
-	mutex_lock(&state->port.mutex);
+	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
 	if (!uport)
 		goto out;
@@ -1419,8 +1418,8 @@ static void uart_set_termios(struct tty_struct *tty,
 	if (uport->flags & UPF_SOFT_FLOW) {
 		iflag_mask |= IXANY|IXON|IXOFF;
 		sw_changed =
-		   tty->termios.c_cc[VSTART] != old_termios->c_cc[VSTART] ||
-		   tty->termios.c_cc[VSTOP] != old_termios->c_cc[VSTOP];
+		   termios->c_cc[VSTART] != old_termios->c_cc[VSTART] ||
+		   termios->c_cc[VSTOP] != old_termios->c_cc[VSTOP];
 	}
 
 	/*
@@ -1430,16 +1429,16 @@ static void uart_set_termios(struct tty_struct *tty,
 	 * appropriately by set_termios() in tty_ioctl.c
 	 */
 	if ((cflag ^ old_termios->c_cflag) == 0 &&
-	    tty->termios.c_ospeed == old_termios->c_ospeed &&
-	    tty->termios.c_ispeed == old_termios->c_ispeed &&
-	    ((tty->termios.c_iflag ^ old_termios->c_iflag) & iflag_mask) == 0 &&
+	    termios->c_ospeed == old_termios->c_ospeed &&
+	    termios->c_ispeed == old_termios->c_ispeed &&
+	    ((termios->c_iflag ^ old_termios->c_iflag) & iflag_mask) == 0 &&
 	    !sw_changed) {
 		goto out;
 	}
 
-	uart_change_speed(port, old_termios);
+	uart_change_speed(port, termios, old_termios);
 	/* reload cflag from termios; port driver may have overriden flags */
-	cflag = tty->termios.c_cflag;
+	cflag = termios->c_cflag;
 
 	/* Handle transition to B0 status */
 	if ((old_termios->c_cflag & CBAUD) && !(cflag & CBAUD))
@@ -1447,12 +1446,18 @@ static void uart_set_termios(struct tty_struct *tty,
 	/* Handle transition away from B0 status */
 	else if (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) {
 		unsigned int mask = TIOCM_DTR;
-		if (!(cflag & CRTSCTS) || !tty_throttled(tty))
+		if (!(cflag & CRTSCTS) || !tty_throttled(port->tty)) //FIXME
 			mask |= TIOCM_RTS;
 		uart_set_mctrl(uport, mask);
 	}
 out:
-	mutex_unlock(&state->port.mutex);
+	mutex_unlock(&port->mutex);
+}
+
+static void uart_set_termios(struct tty_struct *tty,
+			     struct ktermios *old_termios)
+{
+	uart_port_set_termios(tty->port, &tty->termios, old_termios);
 }
 
 /*
@@ -2189,7 +2194,8 @@ int uart_resume_port(struct uart_driver *drv, struct uart_port *uport)
 			/* Protected by port mutex for now */
 			ret = ops->startup(uport);
 			if (ret == 0) {
-				uart_change_speed(port, NULL);
+				if (port->tty)
+					uart_change_speed(port, &port->tty->termios, NULL);
 				spin_lock_irq(&uport->lock);
 				ops->set_mctrl(uport, uport->mctrl);
 				ops->start_tx(uport);
@@ -2428,6 +2434,7 @@ static const struct tty_port_operations uart_port_ops = {
 	.activate	= uart_port_activate,
 	.shutdown	= uart_tty_port_shutdown,
 	.write		= uart_write,
+	.set_termios	= uart_port_set_termios,
 };
 
 /**
