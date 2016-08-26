@@ -1969,19 +1969,19 @@ static void mgsl_change_params(struct mgsl_struct *info)
 	/* process tty input control flags */
 	
 	info->read_status_mask = RXSTATUS_OVERRUN;
-	if (I_INPCK(info->port.tty))
+	if (I_INPCK(&info->port.tty->termios))
 		info->read_status_mask |= RXSTATUS_PARITY_ERROR | RXSTATUS_FRAMING_ERROR;
- 	if (I_BRKINT(info->port.tty) || I_PARMRK(info->port.tty))
+ 	if (I_BRKINT(&info->port.tty->termios) || I_PARMRK(&info->port.tty->termios))
  		info->read_status_mask |= RXSTATUS_BREAK_RECEIVED;
 	
-	if (I_IGNPAR(info->port.tty))
+	if (I_IGNPAR(&info->port.tty->termios))
 		info->ignore_status_mask |= RXSTATUS_PARITY_ERROR | RXSTATUS_FRAMING_ERROR;
-	if (I_IGNBRK(info->port.tty)) {
+	if (I_IGNBRK(&info->port.tty->termios)) {
 		info->ignore_status_mask |= RXSTATUS_BREAK_RECEIVED;
 		/* If ignoring parity and break indicators, ignore 
 		 * overruns too.  (For real raw support).
 		 */
-		if (I_IGNPAR(info->port.tty))
+		if (I_IGNPAR(&info->port.tty->termios))
 			info->ignore_status_mask |= RXSTATUS_OVERRUN;
 	}
 
@@ -2350,10 +2350,10 @@ static void mgsl_throttle(struct tty_struct * tty)
 	if (mgsl_paranoia_check(info, tty->name, "mgsl_throttle"))
 		return;
 	
-	if (I_IXOFF(tty))
-		mgsl_send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		mgsl_send_xchar(tty, STOP_CHAR(&tty->termios));
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		spin_lock_irqsave(&info->irq_spinlock,flags);
 		info->serial_signals &= ~SerialSignal_RTS;
 	 	usc_set_serial_signals(info);
@@ -2380,14 +2380,14 @@ static void mgsl_unthrottle(struct tty_struct * tty)
 	if (mgsl_paranoia_check(info, tty->name, "mgsl_unthrottle"))
 		return;
 	
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			mgsl_send_xchar(tty, START_CHAR(tty));
+			mgsl_send_xchar(tty, START_CHAR(&tty->termios));
 	}
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		spin_lock_irqsave(&info->irq_spinlock,flags);
 		info->serial_signals |= SerialSignal_RTS;
 	 	usc_set_serial_signals(info);
@@ -3029,7 +3029,7 @@ static void mgsl_set_termios(struct tty_struct *tty, struct ktermios *old_termio
 	mgsl_change_params(info);
 
 	/* Handle transition to B0 status */
-	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(tty)) {
+	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(&tty->termios)) {
 		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
 		spin_lock_irqsave(&info->irq_spinlock,flags);
 	 	usc_set_serial_signals(info);
@@ -3037,9 +3037,9 @@ static void mgsl_set_termios(struct tty_struct *tty, struct ktermios *old_termio
 	}
 
 	/* Handle transition away from B0 status */
-	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(tty)) {
+	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(&tty->termios)) {
 		info->serial_signals |= SerialSignal_DTR;
-		if (!C_CRTSCTS(tty) || !tty_throttled(tty))
+		if (!C_CRTSCTS(&tty->termios) || !tty_throttled(tty))
 			info->serial_signals |= SerialSignal_RTS;
 		spin_lock_irqsave(&info->irq_spinlock,flags);
 	 	usc_set_serial_signals(info);
@@ -3047,7 +3047,7 @@ static void mgsl_set_termios(struct tty_struct *tty, struct ktermios *old_termio
 	}
 
 	/* Handle turning off CRTSCTS */
-	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(tty)) {
+	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(&tty->termios)) {
 		tty->hw_stopped = 0;
 		mgsl_start(tty);
 	}
@@ -3266,7 +3266,7 @@ static int block_til_ready(struct tty_struct *tty, struct file * filp,
 		return 0;
 	}
 
-	if (C_CLOCAL(tty))
+	if (C_CLOCAL(&tty->termios))
 		do_clocal = true;
 
 	/* Wait for carrier detect and the line to become
@@ -3289,7 +3289,7 @@ static int block_til_ready(struct tty_struct *tty, struct file * filp,
 	port->blocked_open++;
 
 	while (1) {
-		if (C_BAUD(tty) && tty_port_initialized(port))
+		if (C_BAUD(&tty->termios) && tty_port_initialized(port))
 			tty_port_raise_dtr_rts(port);
 
 		set_current_state(TASK_INTERRUPTIBLE);

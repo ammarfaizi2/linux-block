@@ -230,7 +230,7 @@ static int mct_u232_set_baud_rate(struct tty_struct *tty,
 			"failed (error = %d)\n", MCT_U232_SET_UNKNOWN1_REQUEST,
 			rc);
 
-	if (port && C_CRTSCTS(tty))
+	if (port && C_CRTSCTS(&tty->termios))
 	   cts_enable_byte = 1;
 
 	dev_dbg(&port->dev, "set_baud_rate: send second control message, data = %02X\n",
@@ -435,7 +435,7 @@ static int  mct_u232_open(struct tty_struct *tty, struct usb_serial_port *port)
 	 * either.
 	 */
 	spin_lock_irqsave(&priv->lock, flags);
-	if (tty && C_BAUD(tty))
+	if (tty && C_BAUD(&tty->termios))
 		priv->control_state = TIOCM_DTR | TIOCM_RTS;
 	else
 		priv->control_state = 0;
@@ -743,7 +743,7 @@ static void mct_u232_throttle(struct tty_struct *tty)
 
 	spin_lock_irq(&priv->lock);
 	priv->rx_flags |= THROTTLED;
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		priv->control_state &= ~TIOCM_RTS;
 		control_state = priv->control_state;
 		spin_unlock_irq(&priv->lock);
@@ -760,7 +760,7 @@ static void mct_u232_unthrottle(struct tty_struct *tty)
 	unsigned int control_state;
 
 	spin_lock_irq(&priv->lock);
-	if ((priv->rx_flags & THROTTLED) && C_CRTSCTS(tty)) {
+	if ((priv->rx_flags & THROTTLED) && C_CRTSCTS(&tty->termios)) {
 		priv->rx_flags &= ~THROTTLED;
 		priv->control_state |= TIOCM_RTS;
 		control_state = priv->control_state;

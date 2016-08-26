@@ -321,8 +321,8 @@ static void qt2_set_termios(struct tty_struct *tty,
 		dev_err(&port->dev, "%s - set HW flow control failed: %i\n",
 			__func__, status);
 
-	if (I_IXOFF(tty) || I_IXON(tty)) {
-		u16 x = ((u16) (START_CHAR(tty) << 8) | (u16) (STOP_CHAR(tty)));
+	if (I_IXOFF(&tty->termios) || I_IXON(&tty->termios)) {
+		u16 x = ((u16) (START_CHAR(&tty->termios) << 8) | (u16) (STOP_CHAR(&tty->termios)));
 
 		status = qt2_control_msg(dev, QT_SW_FLOW_CONTROL_MASK,
 					 x, port_priv->device_port);

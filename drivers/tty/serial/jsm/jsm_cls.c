@@ -718,7 +718,7 @@ static void cls_param(struct jsm_channel *ch)
 		return;
 	}
 
-	cflag = C_BAUD(ch->uart_port.state->port.tty);
+	cflag = C_BAUD(&ch->uart_port.state->port.tty->termios);
 	baud = 9600;
 	for (i = 0; i < ARRAY_SIZE(baud_rates); i++) {
 		if (baud_rates[i].cflag == cflag) {

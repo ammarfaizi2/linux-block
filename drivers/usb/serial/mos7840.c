@@ -1418,14 +1418,14 @@ static void mos7840_throttle(struct tty_struct *tty)
 	}
 
 	/* if we are implementing XON/XOFF, send the stop character */
-	if (I_IXOFF(tty)) {
-		unsigned char stop_char = STOP_CHAR(tty);
+	if (I_IXOFF(&tty->termios)) {
+		unsigned char stop_char = STOP_CHAR(&tty->termios);
 		status = mos7840_write(tty, port, &stop_char, 1);
 		if (status <= 0)
 			return;
 	}
 	/* if we are implementing RTS/CTS, toggle that line */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		mos7840_port->shadowMCR &= ~MCR_RTS;
 		status = mos7840_set_uart_reg(port, MODEM_CONTROL_REGISTER,
 					 mos7840_port->shadowMCR);
@@ -1458,15 +1458,15 @@ static void mos7840_unthrottle(struct tty_struct *tty)
 	}
 
 	/* if we are implementing XON/XOFF, send the start character */
-	if (I_IXOFF(tty)) {
-		unsigned char start_char = START_CHAR(tty);
+	if (I_IXOFF(&tty->termios)) {
+		unsigned char start_char = START_CHAR(&tty->termios);
 		status = mos7840_write(tty, port, &start_char, 1);
 		if (status <= 0)
 			return;
 	}
 
 	/* if we are implementing RTS/CTS, toggle that line */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		mos7840_port->shadowMCR |= MCR_RTS;
 		status = mos7840_set_uart_reg(port, MODEM_CONTROL_REGISTER,
 					 mos7840_port->shadowMCR);

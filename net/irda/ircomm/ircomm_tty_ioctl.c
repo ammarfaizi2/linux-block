@@ -162,13 +162,13 @@ void ircomm_tty_set_termios(struct tty_struct *tty,
 	/* Handle transition away from B0 status */
 	if (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) {
 		self->settings.dte |= IRCOMM_DTR;
-		if (!C_CRTSCTS(tty) || !tty_throttled(tty))
+		if (!C_CRTSCTS(&tty->termios) || !tty_throttled(tty))
 			self->settings.dte |= IRCOMM_RTS;
 		ircomm_param_request(self, IRCOMM_DTE, TRUE);
 	}
 
 	/* Handle turning off CRTSCTS */
-	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty))
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios))
 	{
 		tty->hw_stopped = 0;
 		ircomm_tty_start(tty);

@@ -246,7 +246,7 @@ static void hvsi_recv_control(struct hvsi_struct *hp, uint8_t *packet,
 				/* CD went away; no more connection */
 				pr_debug("hvsi%i: CD dropped\n", hp->index);
 				hp->mctrl &= TIOCM_CD;
-				if (tty && !C_CLOCAL(tty))
+				if (tty && !C_CLOCAL(&tty->termios))
 					tty_hangup(tty);
 			}
 			break;

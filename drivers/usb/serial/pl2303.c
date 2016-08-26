@@ -499,7 +499,7 @@ static void pl2303_set_termios(struct tty_struct *tty,
 
 	pl2303_get_line_request(port, buf);
 
-	switch (C_CSIZE(tty)) {
+	switch (C_CSIZE(&tty->termios)) {
 	case CS5:
 		buf[6] = 5;
 		break;
@@ -521,12 +521,12 @@ static void pl2303_set_termios(struct tty_struct *tty,
 	/* For reference buf[4]=0 is 1 stop bits */
 	/* For reference buf[4]=1 is 1.5 stop bits */
 	/* For reference buf[4]=2 is 2 stop bits */
-	if (C_CSTOPB(tty)) {
+	if (C_CSTOPB(&tty->termios)) {
 		/*
 		 * NOTE: Comply with "real" UARTs / RS232:
 		 *       use 1.5 instead of 2 stop bits with 5 data bits
 		 */
-		if (C_CSIZE(tty) == CS5) {
+		if (C_CSIZE(&tty->termios) == CS5) {
 			buf[4] = 1;
 			dev_dbg(&port->dev, "stop bits = 1.5\n");
 		} else {
@@ -538,14 +538,14 @@ static void pl2303_set_termios(struct tty_struct *tty,
 		dev_dbg(&port->dev, "stop bits = 1\n");
 	}
 
-	if (C_PARENB(tty)) {
+	if (C_PARENB(&tty->termios)) {
 		/* For reference buf[5]=0 is none parity */
 		/* For reference buf[5]=1 is odd parity */
 		/* For reference buf[5]=2 is even parity */
 		/* For reference buf[5]=3 is mark parity */
 		/* For reference buf[5]=4 is space parity */
-		if (C_PARODD(tty)) {
-			if (C_CMSPAR(tty)) {
+		if (C_PARODD(&tty->termios)) {
+			if (C_CMSPAR(&tty->termios)) {
 				buf[5] = 3;
 				dev_dbg(&port->dev, "parity = mark\n");
 			} else {
@@ -553,7 +553,7 @@ static void pl2303_set_termios(struct tty_struct *tty,
 				dev_dbg(&port->dev, "parity = odd\n");
 			}
 		} else {
-			if (C_CMSPAR(tty)) {
+			if (C_CMSPAR(&tty->termios)) {
 				buf[5] = 4;
 				dev_dbg(&port->dev, "parity = space\n");
 			} else {
@@ -587,7 +587,7 @@ static void pl2303_set_termios(struct tty_struct *tty,
 	/* change control lines if we are switching to or from B0 */
 	spin_lock_irqsave(&priv->lock, flags);
 	control = priv->line_control;
-	if (C_BAUD(tty) == B0)
+	if (C_BAUD(&tty->termios) == B0)
 		priv->line_control &= ~(CONTROL_DTR | CONTROL_RTS);
 	else if (old_termios && (old_termios->c_cflag & CBAUD) == B0)
 		priv->line_control |= (CONTROL_DTR | CONTROL_RTS);
@@ -599,7 +599,7 @@ static void pl2303_set_termios(struct tty_struct *tty,
 		spin_unlock_irqrestore(&priv->lock, flags);
 	}
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		if (spriv->quirks & PL2303_QUIRK_LEGACY)
 			pl2303_vendor_write(serial, 0x0, 0x41);
 		else

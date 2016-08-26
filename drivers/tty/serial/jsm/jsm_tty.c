@@ -568,7 +568,7 @@ void jsm_input(struct jsm_channel *ch)
 	 *If the device is not open, or CREAD is off, flush
 	 *input data and return immediately.
 	 */
-	if (!tp || !C_CREAD(tp)) {
+	if (!tp || !C_CREAD(&tp->termios)) {
 
 		jsm_dbg(READ, &ch->ch_bd->pci_dev,
 			"input. dropping %d bytes on port %d...\n",
@@ -616,7 +616,7 @@ void jsm_input(struct jsm_channel *ch)
 			 * a time.
 			 */
 
-		if (I_PARMRK(tp) || I_BRKINT(tp) || I_INPCK(tp)) {
+		if (I_PARMRK(&tp->termios) || I_BRKINT(&tp->termios) || I_INPCK(&tp->termios)) {
 			for (i = 0; i < s; i++) {
 				/*
 				 * Give the Linux ld the flags in the

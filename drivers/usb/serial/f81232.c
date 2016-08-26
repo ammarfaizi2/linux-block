@@ -447,7 +447,7 @@ static void f81232_set_termios(struct tty_struct *tty,
 	if (old_termios && !tty_termios_hw_change(&tty->termios, old_termios))
 		return;
 
-	if (C_BAUD(tty) == B0)
+	if (C_BAUD(&tty->termios) == B0)
 		f81232_set_mctrl(port, 0, TIOCM_DTR | TIOCM_RTS);
 	else if (old_termios && (old_termios->c_cflag & CBAUD) == B0)
 		f81232_set_mctrl(port, TIOCM_DTR | TIOCM_RTS, 0);
@@ -461,20 +461,20 @@ static void f81232_set_termios(struct tty_struct *tty,
 		f81232_set_baudrate(port, baudrate);
 	}
 
-	if (C_PARENB(tty)) {
+	if (C_PARENB(&tty->termios)) {
 		new_lcr |= UART_LCR_PARITY;
 
-		if (!C_PARODD(tty))
+		if (!C_PARODD(&tty->termios))
 			new_lcr |= UART_LCR_EPAR;
 
-		if (C_CMSPAR(tty))
+		if (C_CMSPAR(&tty->termios))
 			new_lcr |= UART_LCR_SPAR;
 	}
 
-	if (C_CSTOPB(tty))
+	if (C_CSTOPB(&tty->termios))
 		new_lcr |= UART_LCR_STOP;
 
-	switch (C_CSIZE(tty)) {
+	switch (C_CSIZE(&tty->termios)) {
 	case CS5:
 		new_lcr |= UART_LCR_WLEN5;
 		break;

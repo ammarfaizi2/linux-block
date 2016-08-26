@@ -777,7 +777,7 @@ etraxfs_uart_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	if (up->port.state && up->port.state->port.tty &&
 	    (up->port.state->port.tty->termios.c_iflag & IXON)) {
-		xoff.chr = STOP_CHAR(up->port.state->port.tty);
+		xoff.chr = STOP_CHAR(&up->port.state->port.tty->termios);
 		xoff.automatic = regk_ser_yes;
 	} else
 		xoff.automatic = regk_ser_no;

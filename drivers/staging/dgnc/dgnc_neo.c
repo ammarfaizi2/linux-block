@@ -668,9 +668,9 @@ static void neo_param(struct tty_struct *tty)
 		/* Only use the TXPrint baud rate if the terminal unit is NOT open */
 		if (!(ch->ch_tun.un_flags & UN_ISOPEN) &&
 		    (un->un_type == DGNC_PRINT))
-			baud = C_BAUD(ch->ch_pun.un_tty) & 0xff;
+			baud = C_BAUD(&ch->ch_pun.un_tty->termios) & 0xff;
 		else
-			baud = C_BAUD(ch->ch_tun.un_tty) & 0xff;
+			baud = C_BAUD(&ch->ch_tun.un_tty->termios) & 0xff;
 
 		if (ch->ch_c_cflag & CBAUDEX)
 			iindex = 1;

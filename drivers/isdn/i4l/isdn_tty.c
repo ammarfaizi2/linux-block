@@ -1290,8 +1290,8 @@ isdn_tty_throttle(struct tty_struct *tty)
 
 	if (isdn_tty_paranoia_check(info, tty->name, "isdn_tty_throttle"))
 		return;
-	if (I_IXOFF(tty))
-		info->x_char = STOP_CHAR(tty);
+	if (I_IXOFF(&tty->termios))
+		info->x_char = STOP_CHAR(&tty->termios);
 	info->mcr &= ~UART_MCR_RTS;
 }
 
@@ -1302,11 +1302,11 @@ isdn_tty_unthrottle(struct tty_struct *tty)
 
 	if (isdn_tty_paranoia_check(info, tty->name, "isdn_tty_unthrottle"))
 		return;
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			info->x_char = START_CHAR(tty);
+			info->x_char = START_CHAR(&tty->termios);
 	}
 	info->mcr |= UART_MCR_RTS;
 }

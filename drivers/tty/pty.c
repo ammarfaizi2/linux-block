@@ -261,13 +261,13 @@ static void pty_set_termios(struct tty_struct *tty,
 {
 	/* See if packet mode change of state. */
 	if (tty->link && tty->link->packet) {
-		int extproc = (old_termios->c_lflag & EXTPROC) | L_EXTPROC(tty);
+		int extproc = (old_termios->c_lflag & EXTPROC) | L_EXTPROC(&tty->termios);
 		int old_flow = ((old_termios->c_iflag & IXON) &&
 				(old_termios->c_cc[VSTOP] == '\023') &&
 				(old_termios->c_cc[VSTART] == '\021'));
-		int new_flow = (I_IXON(tty) &&
-				STOP_CHAR(tty) == '\023' &&
-				START_CHAR(tty) == '\021');
+		int new_flow = (I_IXON(&tty->termios) &&
+				STOP_CHAR(&tty->termios) == '\023' &&
+				START_CHAR(&tty->termios) == '\021');
 		if ((old_flow != new_flow) || extproc) {
 			spin_lock_irq(&tty->ctrl_lock);
 			if (old_flow != new_flow) {

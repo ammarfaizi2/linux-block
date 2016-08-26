@@ -871,7 +871,7 @@ static void set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 	change_params(info);
 
 	/* Handle transition to B0 status */
-	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(tty)) {
+	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(&tty->termios)) {
 		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
 		spin_lock_irqsave(&info->lock,flags);
 	 	set_signals(info);
@@ -879,9 +879,9 @@ static void set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 	}
 
 	/* Handle transition away from B0 status */
-	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(tty)) {
+	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(&tty->termios)) {
 		info->serial_signals |= SerialSignal_DTR;
-		if (!C_CRTSCTS(tty) || !tty_throttled(tty))
+		if (!C_CRTSCTS(&tty->termios) || !tty_throttled(tty))
 			info->serial_signals |= SerialSignal_RTS;
 		spin_lock_irqsave(&info->lock,flags);
 	 	set_signals(info);
@@ -889,7 +889,7 @@ static void set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 	}
 
 	/* Handle turning off CRTSCTS */
-	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(tty)) {
+	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(&tty->termios)) {
 		tty->hw_stopped = 0;
 		tx_release(tty);
 	}
@@ -1464,10 +1464,10 @@ static void throttle(struct tty_struct * tty)
 	if (sanity_check(info, tty->name, "throttle"))
 		return;
 
-	if (I_IXOFF(tty))
-		send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		send_xchar(tty, STOP_CHAR(&tty->termios));
 
- 	if (C_CRTSCTS(tty)) {
+ 	if (C_CRTSCTS(&tty->termios)) {
 		spin_lock_irqsave(&info->lock,flags);
 		info->serial_signals &= ~SerialSignal_RTS;
 	 	set_signals(info);
@@ -1489,14 +1489,14 @@ static void unthrottle(struct tty_struct * tty)
 	if (sanity_check(info, tty->name, "unthrottle"))
 		return;
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			send_xchar(tty, START_CHAR(tty));
+			send_xchar(tty, START_CHAR(&tty->termios));
 	}
 
- 	if (C_CRTSCTS(tty)) {
+ 	if (C_CRTSCTS(&tty->termios)) {
 		spin_lock_irqsave(&info->lock,flags);
 		info->serial_signals |= SerialSignal_RTS;
 	 	set_signals(info);
@@ -2819,18 +2819,18 @@ static void change_params(SLMP_INFO *info)
 	/* process tty input control flags */
 
 	info->read_status_mask2 = OVRN;
-	if (I_INPCK(info->port.tty))
+	if (I_INPCK(&info->port.tty->termios))
 		info->read_status_mask2 |= PE | FRME;
- 	if (I_BRKINT(info->port.tty) || I_PARMRK(info->port.tty))
+ 	if (I_BRKINT(&info->port.tty->termios) || I_PARMRK(&info->port.tty->termios))
  		info->read_status_mask1 |= BRKD;
-	if (I_IGNPAR(info->port.tty))
+	if (I_IGNPAR(&info->port.tty->termios))
 		info->ignore_status_mask2 |= PE | FRME;
-	if (I_IGNBRK(info->port.tty)) {
+	if (I_IGNBRK(&info->port.tty->termios)) {
 		info->ignore_status_mask1 |= BRKD;
 		/* If ignoring parity and break indicators, ignore
 		 * overruns too.  (For real raw support).
 		 */
-		if (I_IGNPAR(info->port.tty))
+		if (I_IGNPAR(&info->port.tty->termios))
 			info->ignore_status_mask2 |= OVRN;
 	}
 
@@ -3285,7 +3285,7 @@ static int block_til_ready(struct tty_struct *tty, struct file *filp,
 		return 0;
 	}
 
-	if (C_CLOCAL(tty))
+	if (C_CLOCAL(&tty->termios))
 		do_clocal = true;
 
 	/* Wait for carrier detect and the line to become
@@ -3308,7 +3308,7 @@ static int block_til_ready(struct tty_struct *tty, struct file *filp,
 	port->blocked_open++;
 
 	while (1) {
-		if (C_BAUD(tty) && tty_port_initialized(port))
+		if (C_BAUD(&tty->termios) && tty_port_initialized(port))
 			tty_port_raise_dtr_rts(port);
 
 		set_current_state(TASK_INTERRUPTIBLE);

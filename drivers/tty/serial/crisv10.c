@@ -1411,9 +1411,9 @@ rs_stop(struct tty_struct *tty)
 					 info->xmit.tail,SERIAL_XMIT_SIZE)));
 
 		xoff = IO_FIELD(R_SERIAL0_XOFF, xoff_char,
-				STOP_CHAR(info->port.tty));
+				STOP_CHAR(&info->port.tty->termios));
 		xoff |= IO_STATE(R_SERIAL0_XOFF, tx_stop, stop);
-		if (I_IXON(tty))
+		if (I_IXON(&tty->termios))
 			xoff |= IO_STATE(R_SERIAL0_XOFF, auto_xoff, enable);
 
 		*((unsigned long *)&info->ioport[REG_XOFF]) = xoff;
@@ -1433,9 +1433,10 @@ rs_start(struct tty_struct *tty)
 		DFLOW(DEBUG_LOG(info->line, "XOFF rs_start xmit %i\n",
 				CIRC_CNT(info->xmit.head,
 					 info->xmit.tail,SERIAL_XMIT_SIZE)));
-		xoff = IO_FIELD(R_SERIAL0_XOFF, xoff_char, STOP_CHAR(tty));
+		xoff = IO_FIELD(R_SERIAL0_XOFF, xoff_char,
+				STOP_CHAR(&tty->termios));
 		xoff |= IO_STATE(R_SERIAL0_XOFF, tx_stop, enable);
-		if (I_IXON(tty))
+		if (I_IXON(&tty->termios))
 			xoff |= IO_STATE(R_SERIAL0_XOFF, auto_xoff, enable);
 
 		*((unsigned long *)&info->ioport[REG_XOFF]) = xoff;
@@ -2906,7 +2907,8 @@ change_speed(struct e100_serial *info)
 
 	info->ioport[REG_TR_CTRL] = info->tx_ctrl;
 	info->ioport[REG_REC_CTRL] = info->rx_ctrl;
-	xoff = IO_FIELD(R_SERIAL0_XOFF, xoff_char, STOP_CHAR(info->port.tty));
+	xoff = IO_FIELD(R_SERIAL0_XOFF, xoff_char,
+			STOP_CHAR(&info->port.tty->termios));
 	xoff |= IO_STATE(R_SERIAL0_XOFF, tx_stop, enable);
 	if (info->port.tty->termios.c_iflag & IXON ) {
 		DFLOW(DEBUG_LOG(info->line, "FLOW XOFF enabled 0x%02X\n",
@@ -3164,12 +3166,12 @@ rs_throttle(struct tty_struct * tty)
 	DFLOW(DEBUG_LOG(info->line,"rs_throttle\n"));
 
 	/* Do RTS before XOFF since XOFF might take some time */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		/* Turn off RTS line */
 		e100_rts(info, 0);
 	}
-	if (I_IXOFF(tty))
-		rs_send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		rs_send_xchar(tty, STOP_CHAR(&tty->termios));
 
 }
 
@@ -3183,16 +3185,16 @@ rs_unthrottle(struct tty_struct * tty)
 	DFLOW(DEBUG_LOG(info->line,"rs_unthrottle ldisc\n"));
 	DFLOW(DEBUG_LOG(info->line,"rs_unthrottle flip.count: %i\n", tty->flip.count));
 	/* Do RTS before XOFF since XOFF might take some time */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		/* Assert RTS line  */
 		e100_rts(info, 1);
 	}
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			rs_send_xchar(tty, START_CHAR(tty));
+			rs_send_xchar(tty, START_CHAR(&tty->termios));
 	}
 
 }
@@ -3551,7 +3553,7 @@ rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 	change_speed(info);
 
 	/* Handle turning off CRTSCTS */
-	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty))
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios))
 		rs_start(tty);
 
 }
@@ -3760,7 +3762,7 @@ block_til_ready(struct tty_struct *tty, struct file * filp,
 		return 0;
 	}
 
-	if (C_CLOCAL(tty))
+	if (C_CLOCAL(&tty->termios))
 		do_clocal = 1;
 
 	/*

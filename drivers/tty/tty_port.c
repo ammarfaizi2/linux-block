@@ -210,7 +210,7 @@ static void tty_port_shutdown(struct tty_port *port, struct tty_struct *tty)
 		 * Drop DTR/RTS if HUPCL is set. This causes any attached
 		 * modem to hang up the line.
 		 */
-		if (tty && C_HUPCL(tty))
+		if (tty && C_HUPCL(&tty->termios))
 			tty_port_lower_dtr_rts(port);
 
 		if (port->ops->shutdown)
@@ -260,7 +260,7 @@ void tty_port_tty_hangup(struct tty_port *port, bool check_clocal)
 {
 	struct tty_struct *tty = tty_port_tty_get(port);
 
-	if (tty && (!check_clocal || !C_CLOCAL(tty)))
+	if (tty && (!check_clocal || !C_CLOCAL(&tty->termios)))
 		tty_hangup(tty);
 	tty_kref_put(tty);
 }
@@ -371,13 +371,13 @@ int tty_port_block_til_ready(struct tty_port *port,
 	}
 	if (filp->f_flags & O_NONBLOCK) {
 		/* Indicate we are open */
-		if (C_BAUD(tty))
+		if (C_BAUD(&tty->termios))
 			tty_port_raise_dtr_rts(port);
 		tty_port_set_active(port, 1);
 		return 0;
 	}
 
-	if (C_CLOCAL(tty))
+	if (C_CLOCAL(&tty->termios))
 		do_clocal = 1;
 
 	/* Block waiting until we can proceed. We may need to wait for the
@@ -394,7 +394,7 @@ int tty_port_block_til_ready(struct tty_port *port,
 
 	while (1) {
 		/* Indicate we are open */
-		if (C_BAUD(tty) && tty_port_initialized(port))
+		if (C_BAUD(&tty->termios) && tty_port_initialized(port))
 			tty_port_raise_dtr_rts(port);
 
 		prepare_to_wait(&port->open_wait, &wait, TASK_INTERRUPTIBLE);

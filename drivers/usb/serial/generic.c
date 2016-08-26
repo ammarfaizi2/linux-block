@@ -596,7 +596,7 @@ void usb_serial_handle_dcd_change(struct usb_serial_port *usb_port,
 
 	if (status)
 		wake_up_interruptible(&port->open_wait);
-	else if (tty && !C_CLOCAL(tty))
+	else if (tty && !C_CLOCAL(&tty->termios))
 		tty_hangup(tty);
 }
 EXPORT_SYMBOL_GPL(usb_serial_handle_dcd_change);

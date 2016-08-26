@@ -560,7 +560,7 @@ static int at_xdmac_compute_chan_conf(struct dma_chan *chan,
 			dev_err(chan2dev(chan), "invalid src maxburst value\n");
 			return -EINVAL;
 		}
-		atchan->cfg |= AT_XDMAC_CC_CSIZE(csize);
+		atchan->cfg |= AT_XDMAC_CC_CSIZE(&csize->termios);
 		dwidth = ffs(atchan->sconfig.src_addr_width) - 1;
 		if (dwidth < 0) {
 			dev_err(chan2dev(chan), "invalid src addr width value\n");
@@ -583,7 +583,7 @@ static int at_xdmac_compute_chan_conf(struct dma_chan *chan,
 			dev_err(chan2dev(chan), "invalid src maxburst value\n");
 			return -EINVAL;
 		}
-		atchan->cfg |= AT_XDMAC_CC_CSIZE(csize);
+		atchan->cfg |= AT_XDMAC_CC_CSIZE(&csize->termios);
 		dwidth = ffs(atchan->sconfig.dst_addr_width) - 1;
 		if (dwidth < 0) {
 			dev_err(chan2dev(chan), "invalid dst addr width value\n");

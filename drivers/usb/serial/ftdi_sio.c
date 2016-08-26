@@ -2224,7 +2224,7 @@ static void ftdi_set_termios(struct tty_struct *tty,
 	 *       The vendor didn't bother with a custom VID/PID of
 	 *       course.
 	 */
-	if (C_CSIZE(tty) == CS6) {
+	if (C_CSIZE(&tty->termios) == CS6) {
 		dev_warn(ddev, "requested CSIZE setting not supported\n");
 
 		termios->c_cflag &= ~CSIZE;

@@ -719,16 +719,16 @@ static int get_sgflags(struct tty_struct *tty)
 {
 	int flags = 0;
 
-	if (!L_ICANON(tty)) {
-		if (L_ISIG(tty))
+	if (!L_ICANON(&tty->termios)) {
+		if (L_ISIG(&tty->termios))
 			flags |= 0x02;		/* cbreak */
 		else
 			flags |= 0x20;		/* raw */
 	}
-	if (L_ECHO(tty))
+	if (L_ECHO(&tty->termios))
 		flags |= 0x08;			/* echo */
-	if (O_OPOST(tty))
-		if (O_ONLCR(tty))
+	if (O_OPOST(&tty->termios))
+		if (O_ONLCR(&tty->termios))
 			flags |= 0x10;		/* crmod */
 	return flags;
 }
@@ -908,7 +908,7 @@ static int tty_change_softcar(struct tty_struct *tty, int arg)
 	tty->termios.c_cflag |= bit;
 	if (tty->ops->set_termios)
 		tty->ops->set_termios(tty, &old);
-	if (C_CLOCAL(tty) != bit)
+	if (C_CLOCAL(&tty->termios) != bit)
 		ret = -EINVAL;
 	up_write(&tty->termios_rwsem);
 	return ret;
@@ -1140,12 +1140,14 @@ int n_tty_ioctl_helper(struct tty_struct *tty, struct file *file,
 			spin_unlock_irq(&tty->flow_lock);
 			break;
 		case TCIOFF:
-			if (STOP_CHAR(tty) != __DISABLED_CHAR)
-				retval = tty_send_xchar(tty, STOP_CHAR(tty));
+			if (STOP_CHAR(&tty->termios) != __DISABLED_CHAR)
+				retval = tty_send_xchar(tty,
+							STOP_CHAR(&tty->termios));
 			break;
 		case TCION:
-			if (START_CHAR(tty) != __DISABLED_CHAR)
-				retval = tty_send_xchar(tty, START_CHAR(tty));
+			if (START_CHAR(&tty->termios) != __DISABLED_CHAR)
+				retval = tty_send_xchar(tty,
+							START_CHAR(&tty->termios));
 			break;
 		default:
 			return -EINVAL;

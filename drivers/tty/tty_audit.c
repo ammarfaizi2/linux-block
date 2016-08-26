@@ -204,7 +204,7 @@ static struct tty_audit_buf *tty_audit_buf_get(void)
 void tty_audit_add_data(struct tty_struct *tty, const void *data, size_t size)
 {
 	struct tty_audit_buf *buf;
-	unsigned int icanon = !!L_ICANON(tty);
+	unsigned int icanon = !!L_ICANON(&tty->termios);
 	unsigned int audit_tty;
 	dev_t dev;
 
@@ -219,7 +219,7 @@ void tty_audit_add_data(struct tty_struct *tty, const void *data, size_t size)
 	    && tty->driver->subtype == PTY_TYPE_MASTER)
 		return;
 
-	if ((~audit_tty & AUDIT_TTY_LOG_PASSWD) && icanon && !L_ECHO(tty))
+	if ((~audit_tty & AUDIT_TTY_LOG_PASSWD) && icanon && !L_ECHO(&tty->termios))
 		return;
 
 	buf = tty_audit_buf_get();

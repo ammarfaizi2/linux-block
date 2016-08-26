@@ -509,7 +509,7 @@ void dgnc_input(struct channel_t *ch)
 	 */
 	if (!tp || (tp->magic != TTY_MAGIC) ||
 	    !(ch->ch_tun.un_flags & UN_ISOPEN) ||
-	    !C_CREAD(tp) ||
+	    !C_CREAD(&tp->termios) ||
 	    (ch->ch_tun.un_flags & UN_CLOSING)) {
 		ch->ch_r_head = tail;
 
@@ -592,7 +592,7 @@ void dgnc_input(struct channel_t *ch)
 		 * and error byte and send them to the buffer one at
 		 * a time.
 		 */
-		if (I_PARMRK(tp) || I_BRKINT(tp) || I_INPCK(tp)) {
+		if (I_PARMRK(&tp->termios) || I_BRKINT(&tp->termios) || I_INPCK(&tp->termios)) {
 			for (i = 0; i < s; i++) {
 				unsigned char ch = *(ch_pos + i);
 				char flag = TTY_NORMAL;
@@ -2593,7 +2593,7 @@ static int dgnc_tty_ioctl(struct tty_struct *tty, unsigned int cmd,
 
 		spin_unlock_irqrestore(&ch->ch_lock, flags);
 
-		rc = put_user(C_CLOCAL(tty) ? 1 : 0,
+		rc = put_user(C_CLOCAL(&tty->termios) ? 1 : 0,
 			      (unsigned long __user *)arg);
 		return rc;
 

@@ -615,7 +615,7 @@ static int mxser_set_baud(struct tty_struct *tty, long newspd)
 	outb(cval, info->ioaddr + UART_LCR);	/* reset DLAB */
 
 #ifdef BOTHER
-	if (C_BAUD(tty) == BOTHER) {
+	if (C_BAUD(&tty->termios) == BOTHER) {
 		quot = info->baud_base % newspd;
 		quot *= 8;
 		if (quot % newspd > newspd / 2) {
@@ -755,21 +755,21 @@ static int mxser_change_speed(struct tty_struct *tty,
 	 * Set up parity check flag
 	 */
 	info->read_status_mask = UART_LSR_OE | UART_LSR_THRE | UART_LSR_DR;
-	if (I_INPCK(tty))
+	if (I_INPCK(&tty->termios))
 		info->read_status_mask |= UART_LSR_FE | UART_LSR_PE;
-	if (I_BRKINT(tty) || I_PARMRK(tty))
+	if (I_BRKINT(&tty->termios) || I_PARMRK(&tty->termios))
 		info->read_status_mask |= UART_LSR_BI;
 
 	info->ignore_status_mask = 0;
 
-	if (I_IGNBRK(tty)) {
+	if (I_IGNBRK(&tty->termios)) {
 		info->ignore_status_mask |= UART_LSR_BI;
 		info->read_status_mask |= UART_LSR_BI;
 		/*
 		 * If we're ignore parity and break indicators, ignore
 		 * overruns too.  (For real raw support).
 		 */
-		if (I_IGNPAR(tty)) {
+		if (I_IGNPAR(&tty->termios)) {
 			info->ignore_status_mask |=
 						UART_LSR_OE |
 						UART_LSR_PE |
@@ -781,16 +781,18 @@ static int mxser_change_speed(struct tty_struct *tty,
 		}
 	}
 	if (info->board->chip_flag) {
-		mxser_set_must_xon1_value(info->ioaddr, START_CHAR(tty));
-		mxser_set_must_xoff1_value(info->ioaddr, STOP_CHAR(tty));
-		if (I_IXON(tty)) {
+		mxser_set_must_xon1_value(info->ioaddr,
+					  START_CHAR(&tty->termios));
+		mxser_set_must_xoff1_value(info->ioaddr,
+					   STOP_CHAR(&tty->termios));
+		if (I_IXON(&tty->termios)) {
 			mxser_enable_must_rx_software_flow_control(
 					info->ioaddr);
 		} else {
 			mxser_disable_must_rx_software_flow_control(
 					info->ioaddr);
 		}
-		if (I_IXOFF(tty)) {
+		if (I_IXOFF(&tty->termios)) {
 			mxser_enable_must_tx_software_flow_control(
 					info->ioaddr);
 		} else {
@@ -1081,7 +1083,7 @@ static void mxser_close(struct tty_struct *tty, struct file *filp)
 	mutex_lock(&port->mutex);
 	mxser_close_port(port);
 	mxser_flush_buffer(tty);
-	if (tty_port_initialized(port) && C_HUPCL(tty))
+	if (tty_port_initialized(port) && C_HUPCL(&tty->termios))
 		tty_port_lower_dtr_rts(port);
 	mxser_shutdown_port(port);
 	tty_port_set_initialized(port, 0);
@@ -1846,19 +1848,19 @@ static void mxser_stoprx(struct tty_struct *tty)
 	struct mxser_port *info = tty->driver_data;
 
 	info->ldisc_stop_rx = 1;
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->board->chip_flag) {
 			info->IER &= ~MOXA_MUST_RECV_ISR;
 			outb(info->IER, info->ioaddr + UART_IER);
 		} else {
-			info->x_char = STOP_CHAR(tty);
+			info->x_char = STOP_CHAR(&tty->termios);
 			outb(0, info->ioaddr + UART_IER);
 			info->IER |= UART_IER_THRI;
 			outb(info->IER, info->ioaddr + UART_IER);
 		}
 	}
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		info->MCR &= ~UART_MCR_RTS;
 		outb(info->MCR, info->ioaddr + UART_MCR);
 	}
@@ -1879,7 +1881,7 @@ static void mxser_unthrottle(struct tty_struct *tty)
 
 	/* startrx */
 	info->ldisc_stop_rx = 0;
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else {
@@ -1887,7 +1889,7 @@ static void mxser_unthrottle(struct tty_struct *tty)
 				info->IER |= MOXA_MUST_RECV_ISR;
 				outb(info->IER, info->ioaddr + UART_IER);
 			} else {
-				info->x_char = START_CHAR(tty);
+				info->x_char = START_CHAR(&tty->termios);
 				outb(0, info->ioaddr + UART_IER);
 				info->IER |= UART_IER_THRI;
 				outb(info->IER, info->ioaddr + UART_IER);
@@ -1895,7 +1897,7 @@ static void mxser_unthrottle(struct tty_struct *tty)
 		}
 	}
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		info->MCR |= UART_MCR_RTS;
 		outb(info->MCR, info->ioaddr + UART_MCR);
 	}
@@ -1943,13 +1945,13 @@ static void mxser_set_termios(struct tty_struct *tty, struct ktermios *old_termi
 	mxser_change_speed(tty, old_termios);
 	spin_unlock_irqrestore(&info->slock, flags);
 
-	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) {
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
 		tty->hw_stopped = 0;
 		mxser_start(tty);
 	}
 
 	/* Handle sw stopped */
-	if ((old_termios->c_iflag & IXON) && !I_IXON(tty)) {
+	if ((old_termios->c_iflag & IXON) && !I_IXON(&tty->termios)) {
 		tty->stopped = 0;
 
 		if (info->board->chip_flag) {
