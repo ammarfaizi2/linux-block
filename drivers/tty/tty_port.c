@@ -639,8 +639,28 @@ EXPORT_SYMBOL(tty_port_activate);
 int tty_port_test(struct tty_port *port)
 {
 	int ret;
+	struct ktermios termios, old_termios;
+
+	memset(&old_termios, 0, sizeof(old_termios));
+	memset(&termios, 0, sizeof(termios));
+
+	/* Bring the UART into a known 8 bits no parity hw fc state */
+	termios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP |
+			      INLCR | IGNCR | ICRNL | IXON);
+	termios.c_oflag &= ~OPOST;
+	termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	termios.c_cflag &= ~(CSIZE | PARENB);
+	termios.c_cflag |= CS8;
+// doesn't work with 8250
+//	termios.c_cflag |= CRTSCTS;
+	tty_termios_encode_baud_rate(&termios, 9600, 9600);
 
 	ret = tty_port_activate(port);
 	printk("tty_port_test - %d\n", ret);
+	if (ret)
+		return ret;
+
+	port->ops->set_termios(port, &termios, &old_termios);
+
 	port->ops->write(port, "abcd", 4);
 }
