@@ -199,7 +199,7 @@ static int uart_port_startup(struct tty_port *port, int init_hw)
 	}
 
 	retval = uport->ops->startup(uport);
-	if (retval == 0) {
+	if (retval == 0 && tty) {
 		if (uart_console(uport) && uport->cons->cflag) {
 			tty->termios.c_cflag = uport->cons->cflag;
 			uport->cons->cflag = 0;
