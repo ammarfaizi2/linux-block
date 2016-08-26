@@ -526,7 +526,7 @@ static void flush_to_ldisc(struct work_struct *work)
 
 	mutex_unlock(&buf->lock);
 
-	if (disc)
+	if (tty && disc)
 		tty_ldisc_deref(disc);
 }
 
