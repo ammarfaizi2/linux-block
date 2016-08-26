@@ -726,14 +726,14 @@ static void firm_setup_port(struct tty_struct *tty)
 	    (port_settings.hflow & WHITEHEAT_HFLOW_DTR) ? "DTR" : "");
 
 	/* determine software flow control */
-	if (I_IXOFF(tty))
+	if (I_IXOFF(&tty->termios))
 		port_settings.sflow = WHITEHEAT_SFLOW_RXTX;
 	else
 		port_settings.sflow = WHITEHEAT_SFLOW_NONE;
 	dev_dbg(dev, "%s - software flow control = %c\n", __func__, port_settings.sflow);
 
-	port_settings.xon = START_CHAR(tty);
-	port_settings.xoff = STOP_CHAR(tty);
+	port_settings.xon = START_CHAR(&tty->termios);
+	port_settings.xoff = STOP_CHAR(&tty->termios);
 	dev_dbg(dev, "%s - XON = %2x, XOFF = %2x\n", __func__, port_settings.xon, port_settings.xoff);
 
 	/* get the baud rate wanted */

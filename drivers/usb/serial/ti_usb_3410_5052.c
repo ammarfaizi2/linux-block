@@ -903,7 +903,7 @@ static void ti_throttle(struct tty_struct *tty)
 	if (tport == NULL)
 		return;
 
-	if (I_IXOFF(tty) || C_CRTSCTS(tty))
+	if (I_IXOFF(&tty->termios) || C_CRTSCTS(&tty->termios))
 		ti_stop_read(tport, tty);
 
 }
@@ -918,7 +918,7 @@ static void ti_unthrottle(struct tty_struct *tty)
 	if (tport == NULL)
 		return;
 
-	if (I_IXOFF(tty) || C_CRTSCTS(tty)) {
+	if (I_IXOFF(&tty->termios) || C_CRTSCTS(&tty->termios)) {
 		status = ti_restart_read(tport, tty);
 		if (status)
 			dev_err(&port->dev, "%s - cannot restart read, %d\n",
@@ -1027,16 +1027,16 @@ static void ti_set_termios(struct tty_struct *tty,
 		ti_restart_read(tport, tty);
 	}
 
-	if (I_IXOFF(tty) || I_IXON(tty)) {
-		config->cXon  = START_CHAR(tty);
-		config->cXoff = STOP_CHAR(tty);
+	if (I_IXOFF(&tty->termios) || I_IXON(&tty->termios)) {
+		config->cXon  = START_CHAR(&tty->termios);
+		config->cXoff = STOP_CHAR(&tty->termios);
 
-		if (I_IXOFF(tty))
+		if (I_IXOFF(&tty->termios))
 			config->wFlags |= TI_UART_ENABLE_X_IN;
 		else
 			ti_restart_read(tport, tty);
 
-		if (I_IXON(tty))
+		if (I_IXON(&tty->termios))
 			config->wFlags |= TI_UART_ENABLE_X_OUT;
 	}
 
@@ -1549,7 +1549,7 @@ static void ti_handle_new_msr(struct ti_port *tport, __u8 msr)
 
 	/* handle CTS flow control */
 	tty = tty_port_tty_get(&tport->tp_port->port);
-	if (tty && C_CRTSCTS(tty)) {
+	if (tty && C_CRTSCTS(&tty->termios)) {
 		if (msr & TI_MSR_CTS)
 			tty_wakeup(tty);
 	}

@@ -562,7 +562,7 @@ static int startup(struct tty_struct *tty, struct serial_state *info)
 	current_ctl_bits = ciab.pra & (SER_DCD | SER_CTS | SER_DSR);
 
 	info->MCR = 0;
-	if (C_BAUD(tty))
+	if (C_BAUD(&tty->termios))
 	  info->MCR = SER_DTR | SER_RTS;
 	rtsdtr_ctrl(info->MCR);
 
@@ -639,7 +639,7 @@ static void shutdown(struct tty_struct *tty, struct serial_state *info)
 	custom.adkcon = AC_UARTBRK;
 	mb();
 
-	if (C_HUPCL(tty))
+	if (C_HUPCL(&tty->termios))
 		info->MCR &= ~(SER_DTR|SER_RTS);
 	rtsdtr_ctrl(info->MCR);
 
@@ -742,24 +742,24 @@ static void change_speed(struct tty_struct *tty, struct serial_state *info,
 	 */
 
 	info->read_status_mask = UART_LSR_OE | UART_LSR_DR;
-	if (I_INPCK(tty))
+	if (I_INPCK(&tty->termios))
 		info->read_status_mask |= UART_LSR_FE | UART_LSR_PE;
-	if (I_BRKINT(tty) || I_PARMRK(tty))
+	if (I_BRKINT(&tty->termios) || I_PARMRK(&tty->termios))
 		info->read_status_mask |= UART_LSR_BI;
 
 	/*
 	 * Characters to ignore
 	 */
 	info->ignore_status_mask = 0;
-	if (I_IGNPAR(tty))
+	if (I_IGNPAR(&tty->termios))
 		info->ignore_status_mask |= UART_LSR_PE | UART_LSR_FE;
-	if (I_IGNBRK(tty)) {
+	if (I_IGNBRK(&tty->termios)) {
 		info->ignore_status_mask |= UART_LSR_BI;
 		/*
 		 * If we're ignore parity and break indicators, ignore 
 		 * overruns too.  (For real raw support).
 		 */
-		if (I_IGNPAR(tty))
+		if (I_IGNPAR(&tty->termios))
 			info->ignore_status_mask |= UART_LSR_OE;
 	}
 	/*
@@ -966,10 +966,10 @@ static void rs_throttle(struct tty_struct * tty)
 	if (serial_paranoia_check(info, tty->name, "rs_throttle"))
 		return;
 
-	if (I_IXOFF(tty))
-		rs_send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		rs_send_xchar(tty, STOP_CHAR(&tty->termios));
 
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		info->MCR &= ~SER_RTS;
 
 	local_irq_save(flags);
@@ -988,13 +988,13 @@ static void rs_unthrottle(struct tty_struct * tty)
 	if (serial_paranoia_check(info, tty->name, "rs_unthrottle"))
 		return;
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			rs_send_xchar(tty, START_CHAR(tty));
+			rs_send_xchar(tty, START_CHAR(&tty->termios));
 	}
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		info->MCR |= SER_RTS;
 	local_irq_save(flags);
 	rtsdtr_ctrl(info->MCR);
@@ -1337,7 +1337,7 @@ static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 	/* Handle transition away from B0 status */
 	if (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) {
 		info->MCR |= SER_DTR;
-		if (!C_CRTSCTS(tty) || !tty_throttled(tty))
+		if (!C_CRTSCTS(&tty->termios) || !tty_throttled(tty))
 			info->MCR |= SER_RTS;
 		local_irq_save(flags);
 		rtsdtr_ctrl(info->MCR);
@@ -1345,7 +1345,7 @@ static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 	}
 
 	/* Handle turning off CRTSCTS */
-	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) {
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
 		tty->hw_stopped = 0;
 		rs_start(tty);
 	}

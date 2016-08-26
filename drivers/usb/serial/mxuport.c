@@ -775,8 +775,8 @@ static int mxuport_set_termios_flow(struct tty_struct *tty,
 				    struct usb_serial_port *port,
 				    struct usb_serial *serial)
 {
-	u8 xon = START_CHAR(tty);
-	u8 xoff = STOP_CHAR(tty);
+	u8 xon = START_CHAR(&tty->termios);
+	u8 xoff = STOP_CHAR(&tty->termios);
 	int enable;
 	int err;
 	u8 *buf;
@@ -787,7 +787,7 @@ static int mxuport_set_termios_flow(struct tty_struct *tty,
 		return -ENOMEM;
 
 	/* S/W flow control settings */
-	if (I_IXOFF(tty) || I_IXON(tty)) {
+	if (I_IXOFF(&tty->termios) || I_IXON(&tty->termios)) {
 		enable = 1;
 		buf[0] = xon;
 		buf[1] = xoff;
@@ -813,17 +813,17 @@ static int mxuport_set_termios_flow(struct tty_struct *tty,
 
 	/* H/W flow control settings */
 	if (!old_termios ||
-	    C_CRTSCTS(tty) != (old_termios->c_cflag & CRTSCTS)) {
-		if (C_CRTSCTS(tty))
+	    C_CRTSCTS(&tty->termios) != (old_termios->c_cflag & CRTSCTS)) {
+		if (C_CRTSCTS(&tty->termios))
 			rts = MX_RTS_HW;
 		else
 			rts = MX_RTS_ENABLE;
 	}
 
-	if (C_BAUD(tty)) {
+	if (C_BAUD(&tty->termios)) {
 		if (old_termios && (old_termios->c_cflag & CBAUD) == B0) {
 			/* Raise DTR and RTS */
-			if (C_CRTSCTS(tty))
+			if (C_CRTSCTS(&tty->termios))
 				rts = MX_RTS_HW;
 			else
 				rts = MX_RTS_ENABLE;
@@ -867,7 +867,7 @@ static void mxuport_set_termios(struct tty_struct *tty,
 		return;
 
 	/* Set data bit of termios */
-	switch (C_CSIZE(tty)) {
+	switch (C_CSIZE(&tty->termios)) {
 	case CS5:
 		data_bits = MX_WORDLENGTH_5;
 		break;
@@ -884,14 +884,14 @@ static void mxuport_set_termios(struct tty_struct *tty,
 	}
 
 	/* Set parity of termios */
-	if (C_PARENB(tty)) {
-		if (C_CMSPAR(tty)) {
-			if (C_PARODD(tty))
+	if (C_PARENB(&tty->termios)) {
+		if (C_CMSPAR(&tty->termios)) {
+			if (C_PARODD(&tty->termios))
 				parity = MX_PARITY_MARK;
 			else
 				parity = MX_PARITY_SPACE;
 		} else {
-			if (C_PARODD(tty))
+			if (C_PARODD(&tty->termios))
 				parity = MX_PARITY_ODD;
 			else
 				parity = MX_PARITY_EVEN;
@@ -901,7 +901,7 @@ static void mxuport_set_termios(struct tty_struct *tty,
 	}
 
 	/* Set stop bit of termios */
-	if (C_CSTOPB(tty))
+	if (C_CSTOPB(&tty->termios))
 		stop_bits = MX_STOP_BITS_2;
 	else
 		stop_bits = MX_STOP_BITS_1;

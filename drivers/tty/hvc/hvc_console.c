@@ -368,7 +368,7 @@ static int hvc_open(struct tty_struct *tty, struct file * filp)
 		printk(KERN_ERR "hvc_open: request_irq failed with rc %d.\n", rc);
 	} else
 		/* We are ready... raise DTR/RTS */
-		if (C_BAUD(tty))
+		if (C_BAUD(&tty->termios))
 			if (hp->ops->dtr_rts)
 				hp->ops->dtr_rts(hp, 1);
 
@@ -403,7 +403,7 @@ static void hvc_close(struct tty_struct *tty, struct file * filp)
 		/* We are done with the tty pointer now. */
 		tty_port_tty_set(&hp->port, NULL);
 
-		if (C_HUPCL(tty))
+		if (C_HUPCL(&tty->termios))
 			if (hp->ops->dtr_rts)
 				hp->ops->dtr_rts(hp, 0);
 

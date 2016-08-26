@@ -1585,7 +1585,7 @@ static void handle_new_msr(struct edgeport_port *edge_port, __u8 msr)
 
 	tty = tty_port_tty_get(&edge_port->port->port);
 	/* handle CTS flow control */
-	if (tty && C_CRTSCTS(tty)) {
+	if (tty && C_CRTSCTS(&tty->termios)) {
 		if (msr & EDGEPORT_MSR_CTS)
 			tty_wakeup(tty);
 	}
@@ -2155,8 +2155,8 @@ static void edge_throttle(struct tty_struct *tty)
 		return;
 
 	/* if we are implementing XON/XOFF, send the stop character */
-	if (I_IXOFF(tty)) {
-		unsigned char stop_char = STOP_CHAR(tty);
+	if (I_IXOFF(&tty->termios)) {
+		unsigned char stop_char = STOP_CHAR(&tty->termios);
 		status = edge_write(tty, port, &stop_char, 1);
 		if (status <= 0) {
 			dev_err(&port->dev, "%s - failed to write stop character, %d\n", __func__, status);
@@ -2167,7 +2167,7 @@ static void edge_throttle(struct tty_struct *tty)
 	 * if we are implementing RTS/CTS, stop reads
 	 * and the Edgeport will clear the RTS line
 	 */
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		stop_read(edge_port);
 
 }
@@ -2182,8 +2182,8 @@ static void edge_unthrottle(struct tty_struct *tty)
 		return;
 
 	/* if we are implementing XON/XOFF, send the start character */
-	if (I_IXOFF(tty)) {
-		unsigned char start_char = START_CHAR(tty);
+	if (I_IXOFF(&tty->termios)) {
+		unsigned char start_char = START_CHAR(&tty->termios);
 		status = edge_write(tty, port, &start_char, 1);
 		if (status <= 0) {
 			dev_err(&port->dev, "%s - failed to write start character, %d\n", __func__, status);
@@ -2193,7 +2193,7 @@ static void edge_unthrottle(struct tty_struct *tty)
 	 * if we are implementing RTS/CTS, restart reads
 	 * are the Edgeport will assert the RTS line
 	 */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		status = restart_read(edge_port);
 		if (status)
 			dev_err(&port->dev,
@@ -2318,11 +2318,11 @@ static void change_port_settings(struct tty_struct *tty,
 	 * if we are implementing XON/XOFF, set the start and stop
 	 * character in the device
 	 */
-	config->cXon  = START_CHAR(tty);
-	config->cXoff = STOP_CHAR(tty);
+	config->cXon  = START_CHAR(&tty->termios);
+	config->cXoff = STOP_CHAR(&tty->termios);
 
 	/* if we are implementing INBOUND XON/XOFF */
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		config->wFlags |= UMP_MASK_UART_FLAGS_IN_X;
 		dev_dbg(dev, "%s - INBOUND XON/XOFF is enabled, XON = %2x, XOFF = %2x\n",
 			__func__, config->cXon, config->cXoff);
@@ -2330,7 +2330,7 @@ static void change_port_settings(struct tty_struct *tty,
 		dev_dbg(dev, "%s - INBOUND XON/XOFF is disabled\n", __func__);
 
 	/* if we are implementing OUTBOUND XON/XOFF */
-	if (I_IXON(tty)) {
+	if (I_IXON(&tty->termios)) {
 		config->wFlags |= UMP_MASK_UART_FLAGS_OUT_X;
 		dev_dbg(dev, "%s - OUTBOUND XON/XOFF is enabled, XON = %2x, XOFF = %2x\n",
 			__func__, config->cXon, config->cXoff);

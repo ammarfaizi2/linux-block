@@ -493,7 +493,7 @@ static void sdio_uart_check_modem_status(struct sdio_uart_port *port)
 	if (status & UART_MSR_DCTS) {
 		port->icount.cts++;
 		tty = tty_port_tty_get(&port->port);
-		if (tty && C_CRTSCTS(tty)) {
+		if (tty && C_CRTSCTS(&tty->termios)) {
 			int cts = (status & UART_MSR_CTS);
 			if (tty->hw_stopped) {
 				if (cts) {
@@ -648,10 +648,10 @@ static int sdio_uart_activate(struct tty_port *tport, struct tty_struct *tty)
 
 	sdio_uart_change_speed(port, &tty->termios, NULL);
 
-	if (C_BAUD(tty))
+	if (C_BAUD(&tty->termios))
 		sdio_uart_set_mctrl(port, TIOCM_RTS | TIOCM_DTR);
 
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		if (!(sdio_uart_get_mctrl(port) & TIOCM_CTS))
 			tty->hw_stopped = 1;
 
@@ -833,18 +833,18 @@ static void sdio_uart_throttle(struct tty_struct *tty)
 {
 	struct sdio_uart_port *port = tty->driver_data;
 
-	if (!I_IXOFF(tty) && !C_CRTSCTS(tty))
+	if (!I_IXOFF(&tty->termios) && !C_CRTSCTS(&tty->termios))
 		return;
 
 	if (sdio_uart_claim_func(port) != 0)
 		return;
 
-	if (I_IXOFF(tty)) {
-		port->x_char = STOP_CHAR(tty);
+	if (I_IXOFF(&tty->termios)) {
+		port->x_char = STOP_CHAR(&tty->termios);
 		sdio_uart_start_tx(port);
 	}
 
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		sdio_uart_clear_mctrl(port, TIOCM_RTS);
 
 	sdio_uart_irq(port->func);
@@ -855,22 +855,22 @@ static void sdio_uart_unthrottle(struct tty_struct *tty)
 {
 	struct sdio_uart_port *port = tty->driver_data;
 
-	if (!I_IXOFF(tty) && !C_CRTSCTS(tty))
+	if (!I_IXOFF(&tty->termios) && !C_CRTSCTS(&tty->termios))
 		return;
 
 	if (sdio_uart_claim_func(port) != 0)
 		return;
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (port->x_char) {
 			port->x_char = 0;
 		} else {
-			port->x_char = START_CHAR(tty);
+			port->x_char = START_CHAR(&tty->termios);
 			sdio_uart_start_tx(port);
 		}
 	}
 
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		sdio_uart_set_mctrl(port, TIOCM_RTS);
 
 	sdio_uart_irq(port->func);

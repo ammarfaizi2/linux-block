@@ -1390,15 +1390,15 @@ static void edge_throttle(struct tty_struct *tty)
 	}
 
 	/* if we are implementing XON/XOFF, send the stop character */
-	if (I_IXOFF(tty)) {
-		unsigned char stop_char = STOP_CHAR(tty);
+	if (I_IXOFF(&tty->termios)) {
+		unsigned char stop_char = STOP_CHAR(&tty->termios);
 		status = edge_write(tty, port, &stop_char, 1);
 		if (status <= 0)
 			return;
 	}
 
 	/* if we are implementing RTS/CTS, toggle that line */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		edge_port->shadowMCR &= ~MCR_RTS;
 		status = send_cmd_write_uart_register(edge_port, MCR,
 							edge_port->shadowMCR);
@@ -1428,14 +1428,14 @@ static void edge_unthrottle(struct tty_struct *tty)
 	}
 
 	/* if we are implementing XON/XOFF, send the start character */
-	if (I_IXOFF(tty)) {
-		unsigned char start_char = START_CHAR(tty);
+	if (I_IXOFF(&tty->termios)) {
+		unsigned char start_char = START_CHAR(&tty->termios);
 		status = edge_write(tty, port, &start_char, 1);
 		if (status <= 0)
 			return;
 	}
 	/* if we are implementing RTS/CTS, toggle that line */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		edge_port->shadowMCR |= MCR_RTS;
 		send_cmd_write_uart_register(edge_port, MCR,
 						edge_port->shadowMCR);
@@ -2457,9 +2457,9 @@ static void change_port_settings(struct tty_struct *tty,
 
 	/* if we are implementing XON/XOFF, set the start and stop character
 	   in the device */
-	if (I_IXOFF(tty) || I_IXON(tty)) {
-		unsigned char stop_char  = STOP_CHAR(tty);
-		unsigned char start_char = START_CHAR(tty);
+	if (I_IXOFF(&tty->termios) || I_IXON(&tty->termios)) {
+		unsigned char stop_char  = STOP_CHAR(&tty->termios);
+		unsigned char start_char = START_CHAR(&tty->termios);
 
 		if (!edge_serial->is_epic ||
 		    edge_serial->epic_descriptor.Supports.IOSPSetXChar) {
@@ -2470,7 +2470,7 @@ static void change_port_settings(struct tty_struct *tty,
 		}
 
 		/* if we are implementing INBOUND XON/XOFF */
-		if (I_IXOFF(tty)) {
+		if (I_IXOFF(&tty->termios)) {
 			rxFlow |= IOSP_RX_FLOW_XON_XOFF;
 			dev_dbg(dev, "%s - INBOUND XON/XOFF is enabled, XON = %2x, XOFF = %2x\n",
 				__func__, start_char, stop_char);
@@ -2479,7 +2479,7 @@ static void change_port_settings(struct tty_struct *tty,
 		}
 
 		/* if we are implementing OUTBOUND XON/XOFF */
-		if (I_IXON(tty)) {
+		if (I_IXON(&tty->termios)) {
 			txFlow |= IOSP_TX_FLOW_XON_XOFF;
 			dev_dbg(dev, "%s - OUTBOUND XON/XOFF is enabled, XON = %2x, XOFF = %2x\n",
 				__func__, start_char, stop_char);

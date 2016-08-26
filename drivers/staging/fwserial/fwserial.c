@@ -328,7 +328,7 @@ static void fwtty_update_port_status(struct fwtty_port *port,
 
 	if (delta & TIOCM_CAR) {
 		tty = tty_port_tty_get(&port->port);
-		if (tty && !C_CLOCAL(tty)) {
+		if (tty && !C_CLOCAL(&tty->termios)) {
 			if (status & TIOCM_CAR)
 				wake_up_interruptible(&port->port.open_wait);
 			else
@@ -339,7 +339,7 @@ static void fwtty_update_port_status(struct fwtty_port *port,
 
 	if (delta & TIOCM_CTS) {
 		tty = tty_port_tty_get(&port->port);
-		if (tty && C_CRTSCTS(tty)) {
+		if (tty && C_CRTSCTS(&tty->termios)) {
 			if (tty->hw_stopped) {
 				if (status & TIOCM_CTS) {
 					tty->hw_stopped = 0;
@@ -465,7 +465,7 @@ static void fwtty_throttle_port(struct fwtty_port *port)
 
 	old = port->mctrl;
 	port->mctrl |= OOB_RX_THROTTLE;
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		port->mctrl &= ~TIOCM_RTS;
 	if (~old & OOB_RX_THROTTLE)
 		__fwtty_write_port_status(port);
@@ -943,11 +943,11 @@ static unsigned int set_termios(struct fwtty_port *port, struct tty_struct *tty)
 	tty_termios_encode_baud_rate(&tty->termios, baud, baud);
 
 	/* compute bit count of 2 frames */
-	frame = 12 + ((C_CSTOPB(tty)) ? 4 : 2) + ((C_PARENB(tty)) ? 2 : 0);
+	frame = 12 + ((C_CSTOPB(&tty->termios)) ? 4 : 2) + ((C_PARENB(&tty->termios)) ? 2 : 0);
 
-	switch (C_CSIZE(tty)) {
+	switch (C_CSIZE(&tty->termios)) {
 	case CS5:
-		frame -= (C_CSTOPB(tty)) ? 1 : 0;
+		frame -= (C_CSTOPB(&tty->termios)) ? 1 : 0;
 		break;
 	case CS6:
 		frame += 2;
@@ -963,17 +963,17 @@ static unsigned int set_termios(struct fwtty_port *port, struct tty_struct *tty)
 	port->cps = (baud << 1) / frame;
 
 	port->status_mask = UART_LSR_OE;
-	if (_I_FLAG(tty, BRKINT | PARMRK))
+	if (_I_FLAG(&tty->termios, BRKINT | PARMRK))
 		port->status_mask |= UART_LSR_BI;
 
 	port->ignore_mask = 0;
-	if (I_IGNBRK(tty)) {
+	if (I_IGNBRK(&tty->termios)) {
 		port->ignore_mask |= UART_LSR_BI;
-		if (I_IGNPAR(tty))
+		if (I_IGNPAR(&tty->termios))
 			port->ignore_mask |= UART_LSR_OE;
 	}
 
-	port->write_only = !C_CREAD(tty);
+	port->write_only = !C_CREAD(&tty->termios);
 
 	/* turn off echo and newline xlat if loopback */
 	if (port->loopback) {
@@ -1013,7 +1013,7 @@ static int fwtty_port_activate(struct tty_port *tty_port,
 			port->mctrl = TIOCM_DTR | TIOCM_RTS;
 	}
 
-	if (C_CRTSCTS(tty) && ~port->mstatus & TIOCM_CTS)
+	if (C_CRTSCTS(&tty->termios) && ~port->mstatus & TIOCM_CTS)
 		tty->hw_stopped = 1;
 
 	__fwtty_write_port_status(port);
@@ -1185,13 +1185,13 @@ static void fwtty_unthrottle(struct tty_struct *tty)
 {
 	struct fwtty_port *port = tty->driver_data;
 
-	fwtty_dbg(port, "CRTSCTS: %d\n", C_CRTSCTS(tty) != 0);
+	fwtty_dbg(port, "CRTSCTS: %d\n", C_CRTSCTS(&tty->termios) != 0);
 
 	fwtty_profile_fifo(port, port->stats.unthrottle);
 
 	spin_lock_bh(&port->lock);
 	port->mctrl &= ~OOB_RX_THROTTLE;
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		port->mctrl |= TIOCM_RTS;
 	__fwtty_write_port_status(port);
 	spin_unlock_bh(&port->lock);
@@ -1306,7 +1306,7 @@ static void fwtty_set_termios(struct tty_struct *tty, struct ktermios *old)
 	if ((baud == 0) && (old->c_cflag & CBAUD)) {
 		port->mctrl &= ~(TIOCM_DTR | TIOCM_RTS);
 	} else if ((baud != 0) && !(old->c_cflag & CBAUD)) {
-		if (C_CRTSCTS(tty) || !tty_throttled(tty))
+		if (C_CRTSCTS(&tty->termios) || !tty_throttled(tty))
 			port->mctrl |= TIOCM_DTR | TIOCM_RTS;
 		else
 			port->mctrl |= TIOCM_DTR;
@@ -1315,11 +1315,11 @@ static void fwtty_set_termios(struct tty_struct *tty, struct ktermios *old)
 	spin_unlock_bh(&port->lock);
 
 	if (old->c_cflag & CRTSCTS) {
-		if (!C_CRTSCTS(tty)) {
+		if (!C_CRTSCTS(&tty->termios)) {
 			tty->hw_stopped = 0;
 			fwtty_restart_tx(port);
 		}
-	} else if (C_CRTSCTS(tty) && ~port->mstatus & TIOCM_CTS) {
+	} else if (C_CRTSCTS(&tty->termios) && ~port->mstatus & TIOCM_CTS) {
 		tty->hw_stopped = 1;
 	}
 }

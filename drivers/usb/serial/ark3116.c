@@ -324,7 +324,7 @@ static void ark3116_set_termios(struct tty_struct *tty,
 	mutex_unlock(&priv->hw_lock);
 
 	/* check for software flow control */
-	if (I_IXOFF(tty) || I_IXON(tty)) {
+	if (I_IXOFF(&tty->termios) || I_IXON(&tty->termios)) {
 		dev_warn(&serial->dev->dev,
 			 "%s: don't know how to do software flow control\n",
 			 KBUILD_MODNAME);

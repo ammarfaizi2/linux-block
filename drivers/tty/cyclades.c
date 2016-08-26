@@ -1438,7 +1438,7 @@ static void cy_shutdown(struct cyclades_port *info, struct tty_struct *tty)
 			info->port.xmit_buf = NULL;
 			free_page((unsigned long)temp);
 		}
-		if (C_HUPCL(tty))
+		if (C_HUPCL(&tty->termios))
 			cyy_change_rts_dtr(info, 0, TIOCM_RTS | TIOCM_DTR);
 
 		cyy_issue_cmd(info, CyCHAN_CTL | CyDIS_RCVR);
@@ -1467,7 +1467,7 @@ static void cy_shutdown(struct cyclades_port *info, struct tty_struct *tty)
 			free_page((unsigned long)temp);
 		}
 
-		if (C_HUPCL(tty))
+		if (C_HUPCL(&tty->termios))
 			tty_port_lower_dtr_rts(&info->port);
 
 		set_bit(TTY_IO_ERROR, &tty->flags);
@@ -2112,8 +2112,8 @@ static void cy_set_line_char(struct cyclades_port *info, struct tty_struct *tty)
 
 		/* set line characteristics  according configuration */
 
-		cyy_writeb(info, CySCHR1, START_CHAR(tty));
-		cyy_writeb(info, CySCHR2, STOP_CHAR(tty));
+		cyy_writeb(info, CySCHR1, START_CHAR(&tty->termios));
+		cyy_writeb(info, CySCHR2, STOP_CHAR(&tty->termios));
 		cyy_writeb(info, CyCOR1, info->cor1);
 		cyy_writeb(info, CyCOR2, info->cor2);
 		cyy_writeb(info, CyCOR3, info->cor3);
@@ -2130,7 +2130,7 @@ static void cy_set_line_char(struct cyclades_port *info, struct tty_struct *tty)
 		/* 10ms rx timeout */
 
 		cflags = CyCTS;
-		if (!C_CLOCAL(tty))
+		if (!C_CLOCAL(&tty->termios))
 			cflags |= CyDSR | CyRI | CyDCD;
 		/* without modem intr */
 		cyy_writeb(info, CySRER, cyy_readb(info, CySRER) | CyMdmCh);
@@ -2784,7 +2784,7 @@ static void cy_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 
 	cy_set_line_char(info, tty);
 
-	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) {
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
 		tty->hw_stopped = 0;
 		cy_start(tty);
 	}
@@ -2821,9 +2821,9 @@ static void cy_send_xchar(struct tty_struct *tty, char ch)
 	channel = info->line - card->first_line;
 
 	if (cy_is_Z(card)) {
-		if (ch == STOP_CHAR(tty))
+		if (ch == STOP_CHAR(&tty->termios))
 			cyz_issue_cmd(card, channel, C_CM_SENDXOFF, 0L);
-		else if (ch == START_CHAR(tty))
+		else if (ch == START_CHAR(&tty->termios))
 			cyz_issue_cmd(card, channel, C_CM_SENDXON, 0L);
 	}
 }
@@ -2848,14 +2848,14 @@ static void cy_throttle(struct tty_struct *tty)
 
 	card = info->card;
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (!cy_is_Z(card))
-			cy_send_xchar(tty, STOP_CHAR(tty));
+			cy_send_xchar(tty, STOP_CHAR(&tty->termios));
 		else
 			info->throttle = 1;
 	}
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		if (!cy_is_Z(card)) {
 			spin_lock_irqsave(&card->card_lock, flags);
 			cyy_change_rts_dtr(info, 0, TIOCM_RTS);
@@ -2885,14 +2885,14 @@ static void cy_unthrottle(struct tty_struct *tty)
 	if (serial_paranoia_check(info, tty->name, "cy_unthrottle"))
 		return;
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			cy_send_xchar(tty, START_CHAR(tty));
+			cy_send_xchar(tty, START_CHAR(&tty->termios));
 	}
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		card = info->card;
 		if (!cy_is_Z(card)) {
 			spin_lock_irqsave(&card->card_lock, flags);

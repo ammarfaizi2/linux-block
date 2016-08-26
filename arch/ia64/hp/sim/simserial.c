@@ -276,8 +276,8 @@ static void rs_send_xchar(struct tty_struct *tty, char ch)
  */
 static void rs_throttle(struct tty_struct * tty)
 {
-	if (I_IXOFF(tty))
-		rs_send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		rs_send_xchar(tty, STOP_CHAR(&tty->termios));
 
 	printk(KERN_INFO "simrs_throttle called\n");
 }
@@ -286,11 +286,11 @@ static void rs_unthrottle(struct tty_struct * tty)
 {
 	struct serial_state *info = tty->driver_data;
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			rs_send_xchar(tty, START_CHAR(tty));
+			rs_send_xchar(tty, START_CHAR(&tty->termios));
 	}
 	printk(KERN_INFO "simrs_unthrottle called\n");
 }

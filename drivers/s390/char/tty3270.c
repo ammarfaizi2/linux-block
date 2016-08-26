@@ -1782,8 +1782,8 @@ tty3270_set_termios(struct tty_struct *tty, struct ktermios *old)
 	if (!tp)
 		return;
 	spin_lock_bh(&tp->view.lock);
-	if (L_ICANON(tty)) {
-		new = L_ECHO(tty) ? TF_INPUT: TF_INPUTN;
+	if (L_ICANON(&tty->termios)) {
+		new = L_ECHO(&tty->termios) ? TF_INPUT: TF_INPUTN;
 		if (new != tp->inattr) {
 			tp->inattr = new;
 			tty3270_update_prompt(tp, NULL, 0);

@@ -913,10 +913,10 @@ ppp_async_input(struct asyncppp *ap, const unsigned char *buf,
 			process_input_packet(ap);
 		} else if (c == PPP_ESCAPE) {
 			ap->state |= SC_ESCAPE;
-		} else if (I_IXON(ap->tty)) {
-			if (c == START_CHAR(ap->tty))
+		} else if (I_IXON(&ap->tty->termios)) {
+			if (c == START_CHAR(&ap->tty->termios))
 				start_tty(ap->tty);
-			else if (c == STOP_CHAR(ap->tty))
+			else if (c == STOP_CHAR(&ap->tty->termios))
 				stop_tty(ap->tty);
 		}
 		/* otherwise it's a char in the recv ACCM */

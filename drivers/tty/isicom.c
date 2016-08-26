@@ -691,7 +691,7 @@ static void isicom_config_port(struct tty_struct *tty)
 	unsigned char flow_ctrl;
 
 	/* FIXME: Switch to new tty baud API */
-	baud = C_BAUD(tty);
+	baud = C_BAUD(&tty->termios);
 	if (baud & CBAUDEX) {
 		baud &= ~CBAUDEX;
 
@@ -733,7 +733,7 @@ static void isicom_config_port(struct tty_struct *tty)
 		outw(0x8000 | (channel << shift_count) | 0x03, base);
 		outw(linuxb_to_isib[baud] << 8 | 0x03, base);
 		channel_setup = 0;
-		switch (C_CSIZE(tty)) {
+		switch (C_CSIZE(&tty->termios)) {
 		case CS5:
 			channel_setup |= ISICOM_CS5;
 			break;
@@ -748,37 +748,38 @@ static void isicom_config_port(struct tty_struct *tty)
 			break;
 		}
 
-		if (C_CSTOPB(tty))
+		if (C_CSTOPB(&tty->termios))
 			channel_setup |= ISICOM_2SB;
-		if (C_PARENB(tty)) {
+		if (C_PARENB(&tty->termios)) {
 			channel_setup |= ISICOM_EVPAR;
-			if (C_PARODD(tty))
+			if (C_PARODD(&tty->termios))
 				channel_setup |= ISICOM_ODPAR;
 		}
 		outw(channel_setup, base);
 		InterruptTheCard(base);
 	}
-	tty_port_set_check_carrier(&port->port, !C_CLOCAL(tty));
+	tty_port_set_check_carrier(&port->port, !C_CLOCAL(&tty->termios));
 
 	/* flow control settings ...*/
 	flow_ctrl = 0;
-	tty_port_set_cts_flow(&port->port, C_CRTSCTS(tty));
-	if (C_CRTSCTS(tty))
+	tty_port_set_cts_flow(&port->port, C_CRTSCTS(&tty->termios));
+	if (C_CRTSCTS(&tty->termios))
 		flow_ctrl |= ISICOM_CTSRTS;
-	if (I_IXON(tty))
+	if (I_IXON(&tty->termios))
 		flow_ctrl |= ISICOM_RESPOND_XONXOFF;
-	if (I_IXOFF(tty))
+	if (I_IXOFF(&tty->termios))
 		flow_ctrl |= ISICOM_INITIATE_XONXOFF;
 
 	if (WaitTillCardIsFree(base) == 0) {
 		outw(0x8000 | (channel << shift_count) | 0x04, base);
 		outw(flow_ctrl << 8 | 0x05, base);
-		outw((STOP_CHAR(tty)) << 8 | (START_CHAR(tty)), base);
+		outw((STOP_CHAR(&tty->termios)) << 8 | (START_CHAR(&tty->termios)),
+		     base);
 		InterruptTheCard(base);
 	}
 
 	/*	rx enabled -> enable port for rx on the card	*/
-	if (C_CREAD(tty)) {
+	if (C_CREAD(&tty->termios)) {
 		card->port_status |= (1 << channel);
 		outw(card->port_status, base + 0x02);
 	}
@@ -1199,7 +1200,7 @@ static void isicom_set_termios(struct tty_struct *tty,
 	isicom_config_port(tty);
 	spin_unlock_irqrestore(&port->card->card_lock, flags);
 
-	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) {
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
 		tty->hw_stopped = 0;
 		isicom_start(tty);
 	}

@@ -288,14 +288,14 @@ static int ircomm_tty_block_til_ready(struct ircomm_tty_cb *self,
 
 	if (filp->f_flags & O_NONBLOCK) {
 		/* nonblock mode is set */
-		if (C_BAUD(tty))
+		if (C_BAUD(&tty->termios))
 			tty_port_raise_dtr_rts(port);
 		tty_port_set_active(port, 1);
 		pr_debug("%s(), O_NONBLOCK requested!\n", __func__);
 		return 0;
 	}
 
-	if (C_CLOCAL(tty)) {
+	if (C_CLOCAL(&tty->termios)) {
 		pr_debug("%s(), doing CLOCAL!\n", __func__);
 		do_clocal = 1;
 	}
@@ -319,7 +319,7 @@ static int ircomm_tty_block_til_ready(struct ircomm_tty_cb *self,
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	while (1) {
-		if (C_BAUD(tty) && tty_port_initialized(port))
+		if (C_BAUD(&tty->termios) && tty_port_initialized(port))
 			tty_port_raise_dtr_rts(port);
 
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -802,11 +802,11 @@ static void ircomm_tty_throttle(struct tty_struct *tty)
 	IRDA_ASSERT(self->magic == IRCOMM_TTY_MAGIC, return;);
 
 	/* Software flow control? */
-	if (I_IXOFF(tty))
-		ircomm_tty_send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		ircomm_tty_send_xchar(tty, STOP_CHAR(&tty->termios));
 
 	/* Hardware flow control? */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		self->settings.dte &= ~IRCOMM_RTS;
 		self->settings.dte |= IRCOMM_DELTA_RTS;
 
@@ -831,11 +831,11 @@ static void ircomm_tty_unthrottle(struct tty_struct *tty)
 	IRDA_ASSERT(self->magic == IRCOMM_TTY_MAGIC, return;);
 
 	/* Using software flow control? */
-	if (I_IXOFF(tty))
-		ircomm_tty_send_xchar(tty, START_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		ircomm_tty_send_xchar(tty, START_CHAR(&tty->termios));
 
 	/* Using hardware flow control? */
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		self->settings.dte |= (IRCOMM_RTS|IRCOMM_DELTA_RTS);
 
 		ircomm_param_request(self, IRCOMM_DTE, TRUE);

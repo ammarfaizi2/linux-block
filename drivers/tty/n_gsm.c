@@ -1066,7 +1066,7 @@ static void gsm_process_modem(struct tty_struct *tty, struct gsm_dlci *dlci,
 	/* Carrier drop -> hangup */
 	if (tty) {
 		if ((mlines & TIOCM_CD) == 0 && (dlci->modem_rx & TIOCM_CD))
-			if (!C_CLOCAL(tty))
+			if (!C_CLOCAL(&tty->termios))
 				tty_hangup(tty);
 	}
 	if (brk & 0x01)
@@ -2972,7 +2972,7 @@ static void gsmtty_close(struct tty_struct *tty, struct file *filp)
 	if (tty_port_close_start(&dlci->port, tty, filp) == 0)
 		return;
 	gsm_dlci_begin_close(dlci);
-	if (tty_port_initialized(&dlci->port) && C_HUPCL(tty))
+	if (tty_port_initialized(&dlci->port) && C_HUPCL(&tty->termios))
 		tty_port_lower_dtr_rts(&dlci->port);
 	tty_port_close_end(&dlci->port, tty);
 	tty_port_tty_set(&dlci->port, NULL);
@@ -3116,7 +3116,7 @@ static void gsmtty_throttle(struct tty_struct *tty)
 	struct gsm_dlci *dlci = tty->driver_data;
 	if (dlci->state == DLCI_CLOSED)
 		return;
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		dlci->modem_tx &= ~TIOCM_DTR;
 	dlci->throttled = 1;
 	/* Send an MSC with DTR cleared */
@@ -3128,7 +3128,7 @@ static void gsmtty_unthrottle(struct tty_struct *tty)
 	struct gsm_dlci *dlci = tty->driver_data;
 	if (dlci->state == DLCI_CLOSED)
 		return;
-	if (C_CRTSCTS(tty))
+	if (C_CRTSCTS(&tty->termios))
 		dlci->modem_tx |= TIOCM_DTR;
 	dlci->throttled = 0;
 	/* Send an MSC with DTR set */

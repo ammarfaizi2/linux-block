@@ -786,15 +786,15 @@ static void configure_r_port(struct tty_struct *tty, struct r_port *info,
 	 * Handle software flow control in the board
 	 */
 #ifdef ROCKET_SOFT_FLOW
-	if (I_IXON(tty)) {
+	if (I_IXON(&tty->termios)) {
 		sEnTxSoftFlowCtl(cp);
-		if (I_IXANY(tty)) {
+		if (I_IXANY(&tty->termios)) {
 			sEnIXANY(cp);
 		} else {
 			sDisIXANY(cp);
 		}
-		sSetTxXONChar(cp, START_CHAR(tty));
-		sSetTxXOFFChar(cp, STOP_CHAR(tty));
+		sSetTxXONChar(cp, START_CHAR(&tty->termios));
+		sSetTxXOFFChar(cp, STOP_CHAR(&tty->termios));
 	} else {
 		sDisTxSoftFlowCtl(cp);
 		sDisIXANY(cp);
@@ -806,24 +806,24 @@ static void configure_r_port(struct tty_struct *tty, struct r_port *info,
 	 * Set up ignore/read mask words
 	 */
 	info->read_status_mask = STMRCVROVRH | 0xFF;
-	if (I_INPCK(tty))
+	if (I_INPCK(&tty->termios))
 		info->read_status_mask |= STMFRAMEH | STMPARITYH;
-	if (I_BRKINT(tty) || I_PARMRK(tty))
+	if (I_BRKINT(&tty->termios) || I_PARMRK(&tty->termios))
 		info->read_status_mask |= STMBREAKH;
 
 	/*
 	 * Characters to ignore
 	 */
 	info->ignore_status_mask = 0;
-	if (I_IGNPAR(tty))
+	if (I_IGNPAR(&tty->termios))
 		info->ignore_status_mask |= STMFRAMEH | STMPARITYH;
-	if (I_IGNBRK(tty)) {
+	if (I_IGNBRK(&tty->termios)) {
 		info->ignore_status_mask |= STMBREAKH;
 		/*
 		 * If we're ignoring parity and break indicators,
 		 * ignore overruns too.  (For real raw support).
 		 */
-		if (I_IGNPAR(tty))
+		if (I_IGNPAR(&tty->termios))
 			info->ignore_status_mask |= STMRCVROVRH;
 	}
 
@@ -960,7 +960,7 @@ static int rp_open(struct tty_struct *tty, struct file *filp)
 			tty->alt_speed = 460800;
 
 		configure_r_port(tty, info, NULL);
-		if (C_BAUD(tty)) {
+		if (C_BAUD(&tty->termios)) {
 			sSetDTR(cp);
 			sSetRTS(cp);
 		}
@@ -1019,7 +1019,7 @@ static void rp_close(struct tty_struct *tty, struct file *filp)
 	sFlushRxFIFO(cp);
 	sFlushTxFIFO(cp);
 	sClrRTS(cp);
-	if (C_HUPCL(tty))
+	if (C_HUPCL(&tty->termios))
 		sClrDTR(cp);
 
 	rp_flush_buffer(tty);
@@ -1086,18 +1086,18 @@ static void rp_set_termios(struct tty_struct *tty,
 	cp = &info->channel;
 
 	/* Handle transition to B0 status */
-	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(tty)) {
+	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(&tty->termios)) {
 		sClrDTR(cp);
 		sClrRTS(cp);
 	}
 
 	/* Handle transition away from B0 status */
-	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(tty)) {
+	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(&tty->termios)) {
 		sSetRTS(cp);
 		sSetDTR(cp);
 	}
 
-	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty))
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios))
 		rp_start(tty);
 }
 
@@ -1366,8 +1366,8 @@ static void rp_throttle(struct tty_struct *tty)
 	if (rocket_paranoia_check(info, "rp_throttle"))
 		return;
 
-	if (I_IXOFF(tty))
-		rp_send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		rp_send_xchar(tty, STOP_CHAR(&tty->termios));
 
 	sClrRTS(&info->channel);
 }
@@ -1382,8 +1382,8 @@ static void rp_unthrottle(struct tty_struct *tty)
 	if (rocket_paranoia_check(info, "rp_unthrottle"))
 		return;
 
-	if (I_IXOFF(tty))
-		rp_send_xchar(tty, START_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		rp_send_xchar(tty, START_CHAR(&tty->termios));
 
 	sSetRTS(&info->channel);
 }

@@ -1067,7 +1067,7 @@ static void acm_tty_set_termios(struct tty_struct *tty,
 	/* FIXME: Needs to clear unsupported bits in the termios */
 	acm->clocal = ((termios->c_cflag & CLOCAL) != 0);
 
-	if (C_BAUD(tty) == B0) {
+	if (C_BAUD(&tty->termios) == B0) {
 		newline.dwDTERate = acm->line.dwDTERate;
 		newctrl &= ~ACM_CTRL_DTR;
 	} else if (termios_old && (termios_old->c_cflag & CBAUD) == B0) {

@@ -211,7 +211,7 @@ mv64xxx_i2c_hw_init(struct mv64xxx_i2c_data *drv_data)
 	}
 
 	writel(0, drv_data->reg_base + drv_data->reg_offsets.soft_reset);
-	writel(MV64XXX_I2C_BAUD_DIV_M(drv_data->freq_m) | MV64XXX_I2C_BAUD_DIV_N(drv_data->freq_n),
+	writel(MV64XXX_I2C_BAUD_DIV_M(&drv_data->freq_m->termios) | MV64XXX_I2C_BAUD_DIV_N(&drv_data->freq_n->termios),
 		drv_data->reg_base + drv_data->reg_offsets.clock);
 	writel(0, drv_data->reg_base + drv_data->reg_offsets.addr);
 	writel(0, drv_data->reg_base + drv_data->reg_offsets.ext_addr);

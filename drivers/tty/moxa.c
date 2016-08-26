@@ -1323,7 +1323,7 @@ static void moxa_set_termios(struct tty_struct *tty,
 	if (ch == NULL)
 		return;
 	moxa_set_tty_param(tty, old_termios);
-	if (!(old_termios->c_cflag & CLOCAL) && C_CLOCAL(tty))
+	if (!(old_termios->c_cflag & CLOCAL) && C_CLOCAL(&tty->termios))
 		wake_up_interruptible(&ch->port.open_wait);
 }
 
@@ -1420,7 +1420,7 @@ static int moxa_poll_port(struct moxa_port *p, unsigned int handle,
 	if (!inited)
 		goto put;
 
-	if (tty && (intr & IntrBreak) && !I_IGNBRK(tty)) { /* BREAK */
+	if (tty && (intr & IntrBreak) && !I_IGNBRK(&tty->termios)) { /* BREAK */
 		tty_insert_flip_char(&p->port, 0, TTY_BREAK);
 		tty_schedule_flip(&p->port);
 	}

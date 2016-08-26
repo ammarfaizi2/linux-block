@@ -1349,7 +1349,7 @@ static void shutdown(MGSLPC_INFO * info, struct tty_struct *tty)
 	/* TODO:disable interrupts instead of reset to preserve signal states */
 	reset_device(info);
 
-	if (!tty || C_HUPCL(tty)) {
+	if (!tty || C_HUPCL(&tty->termios)) {
 		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
 		set_signals(info);
 	}
@@ -1390,7 +1390,7 @@ static void mgslpc_program_hw(MGSLPC_INFO *info, struct tty_struct *tty)
 	port_irq_enable(info, (unsigned char) PVR_DSR | PVR_RI);
 	get_signals(info);
 
-	if (info->netcount || (tty && C_CREAD(tty)))
+	if (info->netcount || (tty && C_CREAD(&tty->termios)))
 		rx_start(info);
 
 	spin_unlock_irqrestore(&info->lock, flags);
@@ -1472,9 +1472,9 @@ static void mgslpc_change_params(MGSLPC_INFO *info, struct tty_struct *tty)
 	/* process tty input control flags */
 
 	info->read_status_mask = 0;
-	if (I_INPCK(tty))
+	if (I_INPCK(&tty->termios))
 		info->read_status_mask |= BIT7 | BIT6;
-	if (I_IGNPAR(tty))
+	if (I_IGNPAR(&tty->termios))
 		info->ignore_status_mask |= BIT7 | BIT6;
 
 	mgslpc_program_hw(info, tty);
@@ -1723,10 +1723,10 @@ static void mgslpc_throttle(struct tty_struct * tty)
 	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_throttle"))
 		return;
 
-	if (I_IXOFF(tty))
-		mgslpc_send_xchar(tty, STOP_CHAR(tty));
+	if (I_IXOFF(&tty->termios))
+		mgslpc_send_xchar(tty, STOP_CHAR(&tty->termios));
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		spin_lock_irqsave(&info->lock, flags);
 		info->serial_signals &= ~SerialSignal_RTS;
 		set_signals(info);
@@ -1748,14 +1748,14 @@ static void mgslpc_unthrottle(struct tty_struct * tty)
 	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_unthrottle"))
 		return;
 
-	if (I_IXOFF(tty)) {
+	if (I_IXOFF(&tty->termios)) {
 		if (info->x_char)
 			info->x_char = 0;
 		else
-			mgslpc_send_xchar(tty, START_CHAR(tty));
+			mgslpc_send_xchar(tty, START_CHAR(&tty->termios));
 	}
 
-	if (C_CRTSCTS(tty)) {
+	if (C_CRTSCTS(&tty->termios)) {
 		spin_lock_irqsave(&info->lock, flags);
 		info->serial_signals |= SerialSignal_RTS;
 		set_signals(info);
@@ -2299,7 +2299,7 @@ static void mgslpc_set_termios(struct tty_struct *tty, struct ktermios *old_term
 	mgslpc_change_params(info, tty);
 
 	/* Handle transition to B0 status */
-	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(tty)) {
+	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(&tty->termios)) {
 		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
 		spin_lock_irqsave(&info->lock, flags);
 		set_signals(info);
@@ -2307,9 +2307,9 @@ static void mgslpc_set_termios(struct tty_struct *tty, struct ktermios *old_term
 	}
 
 	/* Handle transition away from B0 status */
-	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(tty)) {
+	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(&tty->termios)) {
 		info->serial_signals |= SerialSignal_DTR;
-		if (!C_CRTSCTS(tty) || !tty_throttled(tty))
+		if (!C_CRTSCTS(&tty->termios) || !tty_throttled(tty))
 			info->serial_signals |= SerialSignal_RTS;
 		spin_lock_irqsave(&info->lock, flags);
 		set_signals(info);
@@ -2317,7 +2317,7 @@ static void mgslpc_set_termios(struct tty_struct *tty, struct ktermios *old_term
 	}
 
 	/* Handle turning off CRTSCTS */
-	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(tty)) {
+	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(&tty->termios)) {
 		tty->hw_stopped = 0;
 		tx_release(tty);
 	}

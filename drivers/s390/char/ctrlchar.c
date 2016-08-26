@@ -68,11 +68,11 @@ ctrlchar_handle(const unsigned char *buf, int len, struct tty_struct *tty)
 
 	switch (tolower(buf[1])) {
 	case 'c':
-		return INTR_CHAR(tty) | CTRLCHAR_CTRL;
+		return INTR_CHAR(&tty->termios) | CTRLCHAR_CTRL;
 	case 'd':
-		return EOF_CHAR(tty)  | CTRLCHAR_CTRL;
+		return EOF_CHAR(&tty->termios)  | CTRLCHAR_CTRL;
 	case 'z':
-		return SUSP_CHAR(tty) | CTRLCHAR_CTRL;
+		return SUSP_CHAR(&tty->termios) | CTRLCHAR_CTRL;
 	}
 	return CTRLCHAR_NONE;
 }
