@@ -218,6 +218,7 @@ struct tty_port_operations {
 	void (*destruct)(struct tty_port *port);
 
 	int (*write)(struct tty_port *port, const unsigned char *buf, size_t count);
+	int (*set_termios)(struct tty_port *port, struct ktermios *termios, struct ktermios *old_termios);
 };
 
 struct tty_port_client_operations {
