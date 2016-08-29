@@ -239,7 +239,7 @@ void tty_port_hangup(struct tty_port *port)
 	port->count = 0;
 	tty = port->tty;
 	if (tty)
-		set_bit(TTY_IO_ERROR, &tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	port->tty = NULL;
 	spin_unlock_irqrestore(&port->lock, flags);
 	tty_port_set_active(port, 0);
@@ -531,7 +531,7 @@ void tty_port_close(struct tty_port *port, struct tty_struct *tty,
 	if (tty_port_close_start(port, tty, filp) == 0)
 		return;
 	tty_port_shutdown(port, tty);
-	set_bit(TTY_IO_ERROR, &tty->flags);
+	set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	tty_port_close_end(port, tty);
 	tty_port_tty_set(port, NULL);
 }
@@ -580,7 +580,7 @@ int tty_port_open(struct tty_port *port, struct tty_struct *tty,
 	mutex_lock(&port->mutex);
 
 	if (!tty_port_initialized(port)) {
-		clear_bit(TTY_IO_ERROR, &tty->flags);
+		clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 		if (port->ops->activate) {
 			int retval = port->ops->activate(port, tty);
 			if (retval) {

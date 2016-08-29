@@ -992,7 +992,7 @@ static int fwtty_port_activate(struct tty_port *tty_port,
 	unsigned int baud;
 	int err;
 
-	set_bit(TTY_IO_ERROR, &tty->flags);
+	set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 
 	err = dma_fifo_alloc(&port->tx_fifo, FWTTY_PORT_TXFIFO_LEN,
 			     cache_line_size(),
@@ -1019,7 +1019,7 @@ static int fwtty_port_activate(struct tty_port *tty_port,
 	__fwtty_write_port_status(port);
 	spin_unlock_bh(&port->lock);
 
-	clear_bit(TTY_IO_ERROR, &tty->flags);
+	clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 
 	return 0;
 }

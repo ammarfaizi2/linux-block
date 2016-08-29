@@ -1060,7 +1060,7 @@ isdn_tty_startup(modem_info *info)
 	 */
 	info->mcr = UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2;
 	if (info->port.tty)
-		clear_bit(TTY_IO_ERROR, &info->port.tty->flags);
+		clear_bit(TTY_PORT_IO_ERROR, &info->port.iflags);
 	/*
 	 * and set the speed of the serial port
 	 */
@@ -1097,7 +1097,7 @@ isdn_tty_shutdown(modem_info *info)
 		}
 	}
 	if (info->port.tty)
-		set_bit(TTY_IO_ERROR, &info->port.tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &info->port.iflags);
 
 	tty_port_set_initialized(&info->port, 0);
 }

@@ -1281,7 +1281,7 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 		goto errout;
 
 	if (!info->type) {
-		set_bit(TTY_IO_ERROR, &tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 		goto errout;
 	}
 
@@ -1364,7 +1364,7 @@ static int cy_startup(struct cyclades_port *info, struct tty_struct *tty)
 
 	tty_port_set_initialized(&info->port, 1);
 
-	clear_bit(TTY_IO_ERROR, &tty->flags);
+	clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	info->xmit_cnt = info->xmit_head = info->xmit_tail = 0;
 	info->breakon = info->breakoff = 0;
 	memset((char *)&info->idle_stats, 0, sizeof(info->idle_stats));
@@ -1445,7 +1445,7 @@ static void cy_shutdown(struct cyclades_port *info, struct tty_struct *tty)
 		/* it may be appropriate to clear _XMIT at
 		   some later date (after testing)!!! */
 
-		set_bit(TTY_IO_ERROR, &tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 		tty_port_set_initialized(&info->port, 0);
 		spin_unlock_irqrestore(&card->card_lock, flags);
 	} else {
@@ -1470,7 +1470,7 @@ static void cy_shutdown(struct cyclades_port *info, struct tty_struct *tty)
 		if (C_HUPCL(&tty->termios))
 			tty_port_lower_dtr_rts(&info->port);
 
-		set_bit(TTY_IO_ERROR, &tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 		tty_port_set_initialized(&info->port, 0);
 
 		spin_unlock_irqrestore(&card->card_lock, flags);
@@ -2147,7 +2147,7 @@ static void cy_set_line_char(struct cyclades_port *info, struct tty_struct *tty)
 		else
 			cyy_change_rts_dtr(info, TIOCM_DTR, 0);
 
-		clear_bit(TTY_IO_ERROR, &tty->flags);
+		clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 		spin_unlock_irqrestore(&card->card_lock, flags);
 
 	} else {
@@ -2267,7 +2267,7 @@ static void cy_set_line_char(struct cyclades_port *info, struct tty_struct *tty)
 				"was %x\n", info->line, retval);
 		}
 
-		clear_bit(TTY_IO_ERROR, &tty->flags);
+		clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	}
 }				/* set_line_char */
 

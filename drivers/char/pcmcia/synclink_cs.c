@@ -1300,7 +1300,7 @@ static int startup(MGSLPC_INFO * info, struct tty_struct *tty)
 
 	if (retval) {
 		if (capable(CAP_SYS_ADMIN) && tty)
-			set_bit(TTY_IO_ERROR, &tty->flags);
+			set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 		release_resources(info);
 		return retval;
 	}
@@ -1309,7 +1309,7 @@ static int startup(MGSLPC_INFO * info, struct tty_struct *tty)
 	mgslpc_change_params(info, tty);
 
 	if (tty)
-		clear_bit(TTY_IO_ERROR, &tty->flags);
+		clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 
 	tty_port_set_initialized(&info->port, 1);
 
@@ -1359,7 +1359,7 @@ static void shutdown(MGSLPC_INFO * info, struct tty_struct *tty)
 	release_resources(info);
 
 	if (tty)
-		set_bit(TTY_IO_ERROR, &tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 
 	tty_port_set_initialized(&info->port, 0);
 }

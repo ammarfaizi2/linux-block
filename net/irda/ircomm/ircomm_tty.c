@@ -927,7 +927,7 @@ static void ircomm_tty_hangup(struct tty_struct *tty)
 
 	spin_lock_irqsave(&port->lock, flags);
 	if (port->tty) {
-		set_bit(TTY_IO_ERROR, &port->tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &port->iflags);
 		tty_kref_put(port->tty);
 	}
 	port->tty = NULL;

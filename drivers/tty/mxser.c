@@ -870,7 +870,7 @@ static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
 	spin_lock_irqsave(&info->slock, flags);
 
 	if (!info->ioaddr || !info->type) {
-		set_bit(TTY_IO_ERROR, &tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 		free_page(page);
 		spin_unlock_irqrestore(&info->slock, flags);
 		return 0;
@@ -897,7 +897,7 @@ static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
 	if (inb(info->ioaddr + UART_LSR) == 0xff) {
 		spin_unlock_irqrestore(&info->slock, flags);
 		if (capable(CAP_SYS_ADMIN)) {
-			set_bit(TTY_IO_ERROR, &tty->flags);
+			set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 			return 0;
 		} else
 			return -ENODEV;
@@ -935,7 +935,7 @@ static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
 	(void) inb(info->ioaddr + UART_IIR);
 	(void) inb(info->ioaddr + UART_MSR);
 
-	clear_bit(TTY_IO_ERROR, &tty->flags);
+	clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	info->xmit_cnt = info->xmit_head = info->xmit_tail = 0;
 
 	/*

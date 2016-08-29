@@ -547,7 +547,7 @@ static int startup(struct tty_struct *tty, struct serial_state *info)
 	retval = request_irq(IRQ_AMIGA_VERTB, ser_vbl_int, 0, "serial status", info);
 	if (retval) {
 	  if (serial_isroot()) {
-	      set_bit(TTY_IO_ERROR, &tty->flags);
+	      set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	    retval = 0;
 	  }
 	  goto errout;
@@ -566,7 +566,7 @@ static int startup(struct tty_struct *tty, struct serial_state *info)
 	  info->MCR = SER_DTR | SER_RTS;
 	rtsdtr_ctrl(info->MCR);
 
-	clear_bit(TTY_IO_ERROR, &tty->flags);
+	clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	info->xmit.head = info->xmit.tail = 0;
 
 	/*
@@ -643,7 +643,7 @@ static void shutdown(struct tty_struct *tty, struct serial_state *info)
 		info->MCR &= ~(SER_DTR|SER_RTS);
 	rtsdtr_ctrl(info->MCR);
 
-	set_bit(TTY_IO_ERROR, &tty->flags);
+	set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 
 	tty_port_set_initialized(&info->tport, 0);
 	local_irq_restore(flags);

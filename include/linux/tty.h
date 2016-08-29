@@ -256,6 +256,8 @@ struct tty_port {
 #define TTY_PORT_CTS_FLOW	3	/* h/w flow control enabled */
 #define TTY_PORT_CHECK_CD	4	/* carrier detect enabled */
 
+#define TTY_PORT_IO_ERROR	3	/* device has I/O error */
+
 /*
  * Where all of the state associated with a tty is kept while the tty
  * is open.  Since the termios state should be kept even if the tty
@@ -347,7 +349,6 @@ struct tty_file_private {
  * clear_bit() to make things atomic.
  */
 #define TTY_THROTTLED 		0	/* Call unthrottle() at threshold min */
-#define TTY_IO_ERROR 		1	/* Cause an I/O error (may be no ldisc too) */
 #define TTY_OTHER_CLOSED 	2	/* Other side (if any) has closed */
 #define TTY_EXCLUSIVE 		3	/* Exclusive open mode */
 #define TTY_DO_WRITE_WAKEUP 	5	/* Call write_wakeup after queuing new */
@@ -374,7 +375,7 @@ static inline void tty_set_flow_change(struct tty_struct *tty, int val)
 
 static inline bool tty_io_error(struct tty_struct *tty)
 {
-	return test_bit(TTY_IO_ERROR, &tty->flags);
+	return test_bit(TTY_PORT_IO_ERROR, &tty->port->flags);
 }
 
 static inline bool tty_throttled(struct tty_struct *tty)

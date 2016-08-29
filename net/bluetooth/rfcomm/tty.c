@@ -115,7 +115,7 @@ static int rfcomm_dev_activate(struct tty_port *port, struct tty_struct *tty)
 
 	err = rfcomm_dlc_open(dev->dlc, &dev->src, &dev->dst, dev->channel);
 	if (err)
-		set_bit(TTY_IO_ERROR, &tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 	return err;
 }
 
