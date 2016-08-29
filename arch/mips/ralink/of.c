@@ -88,7 +88,12 @@ void __init plat_mem_setup(void)
 
 static int __init plat_of_setup(void)
 {
-	__dt_register_buses(soc_info.compatible, "palmbus");
+	static struct of_device_id match[2] = {
+		{ .compatible = "palmbus", },
+		{}
+	};
+
+	of_platform_set_arch_match_table(match);
 
 	/* make sure that the reset controller is setup early */
 	ralink_rst_init();
