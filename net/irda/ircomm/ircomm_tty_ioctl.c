@@ -170,7 +170,7 @@ void ircomm_tty_set_termios(struct tty_struct *tty,
 	/* Handle turning off CRTSCTS */
 	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios))
 	{
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		ircomm_tty_start(tty);
 	}
 }

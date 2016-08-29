@@ -443,7 +443,7 @@ static void isicom_tx(unsigned long _data)
 			continue;
 
 		txcount = min_t(short, TX_SIZE, port->xmit_cnt);
-		if (txcount <= 0 || tty->stopped || tty->hw_stopped)
+		if (txcount <= 0 || tty->stopped || tty->port->hw_stopped)
 			continue;
 
 		if (!(inw(base + 0x02) & (1 << port->channel)))
@@ -601,16 +601,16 @@ static irqreturn_t isicom_interrupt(int irq, void *dev_id)
 			}
 
 			if (tty_port_cts_enabled(&port->port)) {
-				if (tty->hw_stopped) {
+				if (tty->port->hw_stopped) {
 					if (header & ISI_CTS) {
-						tty->hw_stopped = 0;
+						tty->port->hw_stopped = 0;
 						/* start tx ing */
 						port->status |= (ISI_TXOK
 							| ISI_CTS);
 						tty_wakeup(tty);
 					}
 				} else if (!(header & ISI_CTS)) {
-					tty->hw_stopped = 1;
+					tty->port->hw_stopped = 1;
 					/* stop tx ing */
 					port->status &= ~(ISI_TXOK | ISI_CTS);
 				}
@@ -966,7 +966,7 @@ static int isicom_write(struct tty_struct *tty,	const unsigned char *buf,
 		count -= cnt;
 		total += cnt;
 	}
-	if (port->xmit_cnt && !tty->stopped && !tty->hw_stopped)
+	if (port->xmit_cnt && !tty->stopped && !tty->port->hw_stopped)
 		port->status |= ISI_TXOK;
 	spin_unlock_irqrestore(&card->card_lock, flags);
 	return total;
@@ -1003,7 +1003,7 @@ static void isicom_flush_chars(struct tty_struct *tty)
 	if (isicom_paranoia_check(port, tty->name, "isicom_flush_chars"))
 		return;
 
-	if (port->xmit_cnt <= 0 || tty->stopped || tty->hw_stopped ||
+	if (port->xmit_cnt <= 0 || tty->stopped || tty->port->hw_stopped ||
 			!port->port.xmit_buf)
 		return;
 
@@ -1201,7 +1201,7 @@ static void isicom_set_termios(struct tty_struct *tty,
 	spin_unlock_irqrestore(&port->card->card_lock, flags);
 
 	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		isicom_start(tty);
 	}
 }

@@ -718,9 +718,9 @@ static int mxser_change_speed(struct tty_struct *tty,
 			info->MCR |= UART_MCR_AFE;
 		} else {
 			status = inb(info->ioaddr + UART_MSR);
-			if (tty->hw_stopped) {
+			if (tty->port->hw_stopped) {
 				if (status & UART_MSR_CTS) {
-					tty->hw_stopped = 0;
+					tty->port->hw_stopped = 0;
 					if (info->type != PORT_16550A &&
 							!info->board->chip_flag) {
 						outb(info->IER & ~UART_IER_THRI,
@@ -734,7 +734,7 @@ static int mxser_change_speed(struct tty_struct *tty,
 				}
 			} else {
 				if (!(status & UART_MSR_CTS)) {
-					tty->hw_stopped = 1;
+					tty->port->hw_stopped = 1;
 					if ((info->type != PORT_16550A) &&
 							(!info->board->chip_flag)) {
 						info->IER &= ~UART_IER_THRI;
@@ -829,9 +829,9 @@ static void mxser_check_modem_status(struct tty_struct *tty,
 	}
 
 	if (tty_port_cts_enabled(&port->port)) {
-		if (tty->hw_stopped) {
+		if (tty->port->hw_stopped) {
 			if (status & UART_MSR_CTS) {
-				tty->hw_stopped = 0;
+				tty->port->hw_stopped = 0;
 
 				if ((port->type != PORT_16550A) &&
 						(!port->board->chip_flag)) {
@@ -845,7 +845,7 @@ static void mxser_check_modem_status(struct tty_struct *tty,
 			}
 		} else {
 			if (!(status & UART_MSR_CTS)) {
-				tty->hw_stopped = 1;
+				tty->port->hw_stopped = 1;
 				if (port->type != PORT_16550A &&
 						!port->board->chip_flag) {
 					port->IER &= ~UART_IER_THRI;
@@ -1123,7 +1123,7 @@ static int mxser_write(struct tty_struct *tty, const unsigned char *buf, int cou
 	}
 
 	if (info->xmit_cnt && !tty->stopped) {
-		if (!tty->hw_stopped ||
+		if (!tty->port->hw_stopped ||
 				(info->type == PORT_16550A) ||
 				(info->board->chip_flag)) {
 			spin_lock_irqsave(&info->slock, flags);
@@ -1154,7 +1154,7 @@ static int mxser_put_char(struct tty_struct *tty, unsigned char ch)
 	info->xmit_cnt++;
 	spin_unlock_irqrestore(&info->slock, flags);
 	if (!tty->stopped) {
-		if (!tty->hw_stopped ||
+		if (!tty->port->hw_stopped ||
 				(info->type == PORT_16550A) ||
 				info->board->chip_flag) {
 			spin_lock_irqsave(&info->slock, flags);
@@ -1174,7 +1174,7 @@ static void mxser_flush_chars(struct tty_struct *tty)
 	unsigned long flags;
 
 	if (info->xmit_cnt <= 0 || tty->stopped || !info->port.xmit_buf ||
-			(tty->hw_stopped && info->type != PORT_16550A &&
+			(tty->port->hw_stopped && info->type != PORT_16550A &&
 			 !info->board->chip_flag))
 		return;
 
@@ -1778,7 +1778,7 @@ static int mxser_ioctl(struct tty_struct *tty,
 		else
 			info->mon_data.hold_reason |= NPPI_NOTIFY_XOFFXENT;
 
-		if (tty->hw_stopped)
+		if (tty->port->hw_stopped)
 			info->mon_data.hold_reason |= NPPI_NOTIFY_CTSHOLD;
 		else
 			info->mon_data.hold_reason &= ~NPPI_NOTIFY_CTSHOLD;
@@ -1946,7 +1946,7 @@ static void mxser_set_termios(struct tty_struct *tty, struct ktermios *old_termi
 	spin_unlock_irqrestore(&info->slock, flags);
 
 	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		mxser_start(tty);
 	}
 
@@ -2172,9 +2172,9 @@ static void mxser_transmit_chars(struct tty_struct *tty, struct mxser_port *port
 		return;
 
 	if (port->xmit_cnt <= 0 || tty->stopped ||
-			(tty->hw_stopped &&
-			(port->type != PORT_16550A) &&
-			(!port->board->chip_flag))) {
+			(tty->port->hw_stopped &&
+			 (port->type != PORT_16550A) &&
+			 (!port->board->chip_flag))) {
 		port->IER &= ~UART_IER_THRI;
 		outb(port->IER, port->ioaddr + UART_IER);
 		return;

@@ -890,7 +890,7 @@ static void set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 
 	/* Handle turning off CRTSCTS */
 	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		tx_release(tty);
 	}
 }
@@ -969,7 +969,7 @@ static int write(struct tty_struct *tty,
 		tx_load_dma_buffer(info, info->tx_buf, info->tx_count);
 	}
 start:
- 	if (info->tx_count && !tty->stopped && !tty->hw_stopped) {
+ 	if (info->tx_count && !tty->stopped && !tty->port->hw_stopped) {
 		spin_lock_irqsave(&info->lock,flags);
 		if (!info->tx_active)
 		 	tx_start(info);
@@ -1149,7 +1149,7 @@ static void flush_chars(struct tty_struct *tty)
 	if (sanity_check(info, tty->name, "flush_chars"))
 		return;
 
-	if (info->tx_count <= 0 || tty->stopped || tty->hw_stopped ||
+	if (info->tx_count <= 0 || tty->stopped || tty->port->hw_stopped ||
 	    !info->tx_buf)
 		return;
 
@@ -2261,7 +2261,7 @@ static void isr_txeom(SLMP_INFO * info, unsigned char status)
 		else
 #endif
 		{
-			if (info->port.tty && (info->port.tty->stopped || info->port.tty->hw_stopped)) {
+			if (info->port.tty && (info->port.tty->stopped || info->port.hw_stopped)) {
 				tx_stop(info);
 				return;
 			}
@@ -2316,7 +2316,7 @@ static void isr_txrdy(SLMP_INFO * info)
 		return;
 	}
 
-	if (info->port.tty && (info->port.tty->stopped || info->port.tty->hw_stopped)) {
+	if (info->port.tty && (info->port.tty->stopped || info->port.hw_stopped)) {
 		tx_stop(info);
 		return;
 	}
@@ -2481,11 +2481,11 @@ static void isr_io_pin( SLMP_INFO *info, u16 status )
 		if (tty_port_cts_enabled(&info->port) &&
 		     (status & MISCSTATUS_CTS_LATCHED) ) {
 			if ( info->port.tty ) {
-				if (info->port.tty->hw_stopped) {
+				if (info->port.hw_stopped) {
 					if (status & SerialSignal_CTS) {
 						if ( debug_level >= DEBUG_LEVEL_ISR )
 							printk("CTS tx start...");
-			 			info->port.tty->hw_stopped = 0;
+			 			info->port.hw_stopped = 0;
 						tx_start(info);
 						info->pending_bh |= BH_TRANSMIT;
 						return;
@@ -2494,7 +2494,7 @@ static void isr_io_pin( SLMP_INFO *info, u16 status )
 					if (!(status & SerialSignal_CTS)) {
 						if ( debug_level >= DEBUG_LEVEL_ISR )
 							printk("CTS tx stop...");
-			 			info->port.tty->hw_stopped = 1;
+			 			info->port.hw_stopped = 1;
 						tx_stop(info);
 					}
 				}

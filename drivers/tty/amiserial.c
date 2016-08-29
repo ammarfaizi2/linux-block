@@ -347,7 +347,7 @@ static void transmit_chars(struct serial_state *info)
 	}
 	if (info->xmit.head == info->xmit.tail
 	    || info->tport.tty->stopped
-	    || info->tport.tty->hw_stopped) {
+	    || info->tport.hw_stopped) {
 		info->IER &= ~UART_IER_THRI;
 	        custom.intena = IF_TBE;
 		mb();
@@ -824,7 +824,7 @@ static void rs_flush_chars(struct tty_struct *tty)
 
 	if (info->xmit.head == info->xmit.tail
 	    || tty->stopped
-	    || tty->hw_stopped
+	    || tty->port->hw_stopped
 	    || !info->xmit.buf)
 		return;
 
@@ -871,7 +871,7 @@ static int rs_write(struct tty_struct * tty, const unsigned char *buf, int count
 
 	if (info->xmit.head != info->xmit.tail
 	    && !tty->stopped
-	    && !tty->hw_stopped
+	    && !tty->port->hw_stopped
 	    && !(info->IER & UART_IER_THRI)) {
 		info->IER |= UART_IER_THRI;
 		local_irq_disable();
@@ -1346,7 +1346,7 @@ static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 
 	/* Handle turning off CRTSCTS */
 	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		rs_start(tty);
 	}
 

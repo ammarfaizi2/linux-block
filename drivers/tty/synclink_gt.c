@@ -793,7 +793,7 @@ static void set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 
 	/* Handle turning off CRTSCTS */
 	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		tx_release(tty);
 	}
 }
@@ -825,7 +825,7 @@ static int write(struct tty_struct *tty,
 	if (!info->tx_buf || (count > info->max_frame_size))
 		return -EIO;
 
-	if (!count || tty->stopped || tty->hw_stopped)
+	if (!count || tty->stopped || tty->port->hw_stopped)
 		return 0;
 
 	spin_lock_irqsave(&info->lock, flags);
@@ -947,7 +947,7 @@ static void flush_chars(struct tty_struct *tty)
 	DBGINFO(("%s flush_chars entry tx_count=%d\n", info->device_name, info->tx_count));
 
 	if (info->tx_count <= 0 || tty->stopped ||
-	    tty->hw_stopped || !info->tx_buf)
+	    tty->port->hw_stopped || !info->tx_buf)
 		return;
 
 	DBGINFO(("%s flush_chars start transmit\n", info->device_name));
@@ -2039,15 +2039,15 @@ static void cts_change(struct slgt_info *info, unsigned short status)
 
 	if (tty_port_cts_enabled(&info->port)) {
 		if (info->port.tty) {
-			if (info->port.tty->hw_stopped) {
+			if (info->port.hw_stopped) {
 				if (info->signals & SerialSignal_CTS) {
-		 			info->port.tty->hw_stopped = 0;
+		 			info->port.hw_stopped = 0;
 					info->pending_bh |= BH_TRANSMIT;
 					return;
 				}
 			} else {
 				if (!(info->signals & SerialSignal_CTS))
-		 			info->port.tty->hw_stopped = 1;
+		 			info->port.hw_stopped = 1;
 			}
 		}
 	}
@@ -2323,7 +2323,7 @@ static void isr_txeom(struct slgt_info *info, unsigned short status)
 		else
 #endif
 		{
-			if (info->port.tty && (info->port.tty->stopped || info->port.tty->hw_stopped)) {
+			if (info->port.tty && (info->port.tty->stopped || info->port.hw_stopped)) {
 				tx_stop(info);
 				return;
 			}

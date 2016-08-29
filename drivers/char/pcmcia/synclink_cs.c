@@ -987,7 +987,7 @@ static void tx_done(MGSLPC_INFO *info, struct tty_struct *tty)
 	else
 #endif
 	{
-		if (tty && (tty->stopped || tty->hw_stopped)) {
+		if (tty && (tty->stopped || tty->port->hw_stopped)) {
 			tx_stop(info);
 			return;
 		}
@@ -1007,7 +1007,7 @@ static void tx_ready(MGSLPC_INFO *info, struct tty_struct *tty)
 		if (!info->tx_active)
 			return;
 	} else {
-		if (tty && (tty->stopped || tty->hw_stopped)) {
+		if (tty && (tty->stopped || tty->port->hw_stopped)) {
 			tx_stop(info);
 			return;
 		}
@@ -1058,11 +1058,11 @@ static void cts_change(MGSLPC_INFO *info, struct tty_struct *tty)
 	wake_up_interruptible(&info->event_wait_q);
 
 	if (tty && tty_port_cts_enabled(&info->port)) {
-		if (tty->hw_stopped) {
+		if (tty->port->hw_stopped) {
 			if (info->serial_signals & SerialSignal_CTS) {
 				if (debug_level >= DEBUG_LEVEL_ISR)
 					printk("CTS tx start...");
-				tty->hw_stopped = 0;
+				tty->port->hw_stopped = 0;
 				tx_start(info, tty);
 				info->pending_bh |= BH_TRANSMIT;
 				return;
@@ -1071,7 +1071,7 @@ static void cts_change(MGSLPC_INFO *info, struct tty_struct *tty)
 			if (!(info->serial_signals & SerialSignal_CTS)) {
 				if (debug_level >= DEBUG_LEVEL_ISR)
 					printk("CTS tx stop...");
-				tty->hw_stopped = 1;
+				tty->port->hw_stopped = 1;
 				tx_stop(info);
 			}
 		}
@@ -1528,7 +1528,7 @@ static void mgslpc_flush_chars(struct tty_struct *tty)
 		return;
 
 	if (info->tx_count <= 0 || tty->stopped ||
-	    tty->hw_stopped || !info->tx_buf)
+	    tty->port->hw_stopped || !info->tx_buf)
 		return;
 
 	if (debug_level >= DEBUG_LEVEL_INFO)
@@ -1596,7 +1596,7 @@ static int mgslpc_write(struct tty_struct * tty,
 		ret += c;
 	}
 start:
-	if (info->tx_count && !tty->stopped && !tty->hw_stopped) {
+	if (info->tx_count && !tty->stopped && !tty->port->hw_stopped) {
 		spin_lock_irqsave(&info->lock, flags);
 		if (!info->tx_active)
 			tx_start(info, tty);
@@ -2318,7 +2318,7 @@ static void mgslpc_set_termios(struct tty_struct *tty, struct ktermios *old_term
 
 	/* Handle turning off CRTSCTS */
 	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		tx_release(tty);
 	}
 }

@@ -140,7 +140,7 @@ int ircomm_tty_attach_cable(struct ircomm_tty_cb *self)
 	/* Make sure nobody tries to write before the link is up */
 	tty = tty_port_tty_get(&self->port);
 	if (tty) {
-		tty->hw_stopped = 1;
+		tty->port->hw_stopped = 1;
 		tty_kref_put(tty);
 	}
 
@@ -405,7 +405,7 @@ void ircomm_tty_disconnect_indication(void *instance, void *sap,
 	self->flow = FLOW_STOP;
 
 	/* Stop data transfers */
-	tty->hw_stopped = 1;
+	tty->port->hw_stopped = 1;
 
 	ircomm_tty_do_event(self, IRCOMM_TTY_DISCONNECT_INDICATION, NULL,
 			    NULL);
@@ -563,7 +563,7 @@ void ircomm_tty_link_established(struct ircomm_tty_cb *self)
 	} else {
 		pr_debug("%s(), starting hardware!\n", __func__);
 
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 
 		/* Wake up processes blocked on open */
 		wake_up_interruptible(&self->port.open_wait);
