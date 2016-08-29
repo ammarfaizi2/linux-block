@@ -108,10 +108,3 @@ void __init prom_init(void)
 		panic("failed to register_vsmp_smp_ops()");
 #endif
 }
-
-int __init plat_of_setup(void)
-{
-	return __dt_register_buses(soc_info.compatible, "simple-bus");
-}
-
-arch_initcall(plat_of_setup);
