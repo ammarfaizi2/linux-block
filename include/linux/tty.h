@@ -228,6 +228,7 @@ struct tty_port {
 	int			count;		/* Usage count */
 	wait_queue_head_t	open_wait;	/* Open waiters */
 	wait_queue_head_t	delta_msr_wait;	/* Modem status change */
+	int hw_stopped;
 	unsigned long		flags;		/* User TTY flags ASYNC_ */
 	unsigned long		iflags;		/* Internal flags TTY_PORT_ */
 	unsigned char		console:1,	/* port is a console */
@@ -300,7 +301,6 @@ struct tty_struct {
 	unsigned long stopped:1,	/* flow_lock */
 		      flow_stopped:1,
 		      unused:BITS_PER_LONG - 2;
-	int hw_stopped;
 	unsigned long ctrl_status:8,	/* ctrl_lock */
 		      packet:1,
 		      unused_ctrl:BITS_PER_LONG - 9;

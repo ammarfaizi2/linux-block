@@ -1259,7 +1259,7 @@ static void mgsl_isr_transmit_status( struct mgsl_struct *info )
 	else 
 #endif
 	{
-		if (info->port.tty->stopped || info->port.tty->hw_stopped) {
+		if (info->port.tty->stopped || info->port.hw_stopped) {
 			usc_stop_transmitter(info);
 			return;
 		}
@@ -1357,11 +1357,11 @@ static void mgsl_isr_io_pin( struct mgsl_struct *info )
 	
 		if (tty_port_cts_enabled(&info->port) &&
 		     (status & MISCSTATUS_CTS_LATCHED) ) {
-			if (info->port.tty->hw_stopped) {
+			if (info->port.hw_stopped) {
 				if (status & MISCSTATUS_CTS) {
 					if ( debug_level >= DEBUG_LEVEL_ISR )
 						printk("CTS tx start...");
-					info->port.tty->hw_stopped = 0;
+					info->port.hw_stopped = 0;
 					usc_start_transmitter(info);
 					info->pending_bh |= BH_TRANSMIT;
 					return;
@@ -1371,7 +1371,7 @@ static void mgsl_isr_io_pin( struct mgsl_struct *info )
 					if ( debug_level >= DEBUG_LEVEL_ISR )
 						printk("CTS tx stop...");
 					if (info->port.tty)
-						info->port.tty->hw_stopped = 1;
+						info->port.hw_stopped = 1;
 					usc_stop_transmitter(info);
 				}
 			}
@@ -1405,7 +1405,7 @@ static void mgsl_isr_transmit_data( struct mgsl_struct *info )
 			
 	usc_ClearIrqPendingBits( info, TRANSMIT_DATA );
 	
-	if (info->port.tty->stopped || info->port.tty->hw_stopped) {
+	if (info->port.tty->stopped || info->port.hw_stopped) {
 		usc_stop_transmitter(info);
 		return;
 	}
@@ -2050,7 +2050,7 @@ static void mgsl_flush_chars(struct tty_struct *tty)
 	if (mgsl_paranoia_check(info, tty->name, "mgsl_flush_chars"))
 		return;
 
-	if (info->xmit_cnt <= 0 || tty->stopped || tty->hw_stopped ||
+	if (info->xmit_cnt <= 0 || tty->stopped || tty->port->hw_stopped ||
 	    !info->xmit_buf)
 		return;
 
@@ -2190,7 +2190,7 @@ static int mgsl_write(struct tty_struct * tty,
 		}
 	}	
 	
- 	if (info->xmit_cnt && !tty->stopped && !tty->hw_stopped) {
+ 	if (info->xmit_cnt && !tty->stopped && !tty->port->hw_stopped) {
 		spin_lock_irqsave(&info->irq_spinlock,flags);
 		if (!info->tx_active)
 		 	usc_start_transmitter(info);
@@ -3048,7 +3048,7 @@ static void mgsl_set_termios(struct tty_struct *tty, struct ktermios *old_termio
 
 	/* Handle turning off CRTSCTS */
 	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		mgsl_start(tty);
 	}
 

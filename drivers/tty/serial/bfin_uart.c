@@ -113,14 +113,14 @@ static irqreturn_t bfin_serial_mctrl_cts_int(int irq, void *dev_id)
 #ifdef SERIAL_BFIN_HARD_CTSRTS
 
 	UART_CLEAR_SCTS(uart);
-	if (uport->hw_stopped) {
+	if (uport->port->hw_stopped) {
 		if (status) {
-			uport->hw_stopped = 0;
+			uport->port->hw_stopped = 0;
 			uart_write_wakeup(uport);
 		}
 	} else {
 		if (!status)
-			uport->hw_stopped = 1;
+			uport->port->hw_stopped = 1;
 	}
 #else
 	uart_handle_cts_change(uport, status & TIOCM_CTS);

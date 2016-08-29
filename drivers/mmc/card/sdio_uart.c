@@ -445,7 +445,7 @@ static void sdio_uart_transmit_chars(struct sdio_uart_port *port)
 	tty = tty_port_tty_get(&port->port);
 
 	if (tty == NULL || !kfifo_len(xmit) ||
-				tty->stopped || tty->hw_stopped) {
+				tty->stopped || tty->port->hw_stopped) {
 		sdio_uart_stop_tx(port);
 		tty_kref_put(tty);
 		return;
@@ -495,15 +495,15 @@ static void sdio_uart_check_modem_status(struct sdio_uart_port *port)
 		tty = tty_port_tty_get(&port->port);
 		if (tty && C_CRTSCTS(&tty->termios)) {
 			int cts = (status & UART_MSR_CTS);
-			if (tty->hw_stopped) {
+			if (tty->port->hw_stopped) {
 				if (cts) {
-					tty->hw_stopped = 0;
+					tty->port->hw_stopped = 0;
 					sdio_uart_start_tx(port);
 					tty_wakeup(tty);
 				}
 			} else {
 				if (!cts) {
-					tty->hw_stopped = 1;
+					tty->port->hw_stopped = 1;
 					sdio_uart_stop_tx(port);
 				}
 			}
@@ -653,7 +653,7 @@ static int sdio_uart_activate(struct tty_port *tport, struct tty_struct *tty)
 
 	if (C_CRTSCTS(&tty->termios))
 		if (!(sdio_uart_get_mctrl(port) & TIOCM_CTS))
-			tty->hw_stopped = 1;
+			tty->port->hw_stopped = 1;
 
 	clear_bit(TTY_IO_ERROR, &tty->flags);
 
@@ -902,14 +902,14 @@ static void sdio_uart_set_termios(struct tty_struct *tty,
 
 	/* Handle turning off CRTSCTS */
 	if ((old_termios->c_cflag & CRTSCTS) && !(cflag & CRTSCTS)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		sdio_uart_start_tx(port);
 	}
 
 	/* Handle turning on CRTSCTS */
 	if (!(old_termios->c_cflag & CRTSCTS) && (cflag & CRTSCTS)) {
 		if (!(sdio_uart_get_mctrl(port) & TIOCM_CTS)) {
-			tty->hw_stopped = 1;
+			tty->port->hw_stopped = 1;
 			sdio_uart_stop_tx(port);
 		}
 	}

@@ -552,7 +552,7 @@ static void ircomm_tty_do_softint(struct work_struct *work)
 		dev_kfree_skb(ctrl_skb);
 	}
 
-	if (tty->hw_stopped)
+	if (tty->port->hw_stopped)
 		goto put;
 
 	/* Unlink transmit buffer */
@@ -595,7 +595,7 @@ static int ircomm_tty_write(struct tty_struct *tty,
 	int size;
 
 	pr_debug("%s(), count=%d, hw_stopped=%d\n", __func__ , count,
-		 tty->hw_stopped);
+		 tty->port->hw_stopped);
 
 	IRDA_ASSERT(self != NULL, return -1;);
 	IRDA_ASSERT(self->magic == IRCOMM_TTY_MAGIC, return -1;);
@@ -736,7 +736,7 @@ static int ircomm_tty_write_room(struct tty_struct *tty)
 	/* Check if we are allowed to transmit any data.
 	 * hw_stopped is the regular flow control.
 	 * Jean II */
-	if (tty->hw_stopped)
+	if (tty->port->hw_stopped)
 		ret = 0;
 	else {
 		spin_lock_irqsave(&self->spinlock, flags);
@@ -1016,10 +1016,10 @@ void ircomm_tty_check_modem_status(struct ircomm_tty_cb *self)
 		}
 	}
 	if (tty && tty_port_cts_enabled(&self->port)) {
-		if (tty->hw_stopped) {
+		if (tty->port->hw_stopped) {
 			if (status & IRCOMM_CTS) {
 				pr_debug("%s(), CTS tx start...\n", __func__);
-				tty->hw_stopped = 0;
+				tty->port->hw_stopped = 0;
 
 				/* Wake up processes blocked on open */
 				wake_up_interruptible(&self->port.open_wait);
@@ -1030,7 +1030,7 @@ void ircomm_tty_check_modem_status(struct ircomm_tty_cb *self)
 		} else {
 			if (!(status & IRCOMM_CTS)) {
 				pr_debug("%s(), CTS tx stop...\n", __func__);
-				tty->hw_stopped = 1;
+				tty->port->hw_stopped = 1;
 			}
 		}
 	}
@@ -1066,7 +1066,7 @@ static int ircomm_tty_data_indication(void *instance, void *sap,
 	 * Devices like WinCE can do this, and since they don't send any
 	 * params, we can just as well declare the hardware for running.
 	 */
-	if (tty->hw_stopped && (self->flow == FLOW_START)) {
+	if (tty->port->hw_stopped && (self->flow == FLOW_START)) {
 		pr_debug("%s(), polling for line settings!\n", __func__);
 		ircomm_param_request(self, IRCOMM_POLL, TRUE);
 
@@ -1136,7 +1136,7 @@ static void ircomm_tty_flow_indication(void *instance, void *sap,
 	case FLOW_START:
 		pr_debug("%s(), hw start!\n", __func__);
 		if (tty)
-			tty->hw_stopped = 0;
+			tty->port->hw_stopped = 0;
 
 		/* ircomm_tty_do_softint will take care of the rest */
 		schedule_work(&self->tqueue);
@@ -1145,7 +1145,7 @@ static void ircomm_tty_flow_indication(void *instance, void *sap,
 	case FLOW_STOP:
 		pr_debug("%s(), hw stopped!\n", __func__);
 		if (tty)
-			tty->hw_stopped = 1;
+			tty->port->hw_stopped = 1;
 		break;
 	}
 
@@ -1282,7 +1282,7 @@ static void ircomm_tty_line_info(struct ircomm_tty_cb *self, struct seq_file *m)
 	tty = tty_port_tty_get(&self->port);
 	if (tty) {
 		seq_printf(m, "Hardware: %s\n",
-			       tty->hw_stopped ? "Stopped" : "Running");
+			       tty->port->hw_stopped ? "Stopped" : "Running");
 		tty_kref_put(tty);
 	}
 }

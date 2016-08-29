@@ -633,7 +633,7 @@ static void cyy_chip_tx(struct cyclades_card *cinfo, unsigned int chip,
 				cyy_readb(info, CySRER) & ~CyTxRdy);
 			goto done;
 		}
-		if (tty->stopped || tty->hw_stopped) {
+		if (tty->stopped || tty->port->hw_stopped) {
 			cyy_writeb(info, CySRER,
 				cyy_readb(info, CySRER) & ~CyTxRdy);
 			goto done;
@@ -719,11 +719,11 @@ static void cyy_chip_modem(struct cyclades_card *cinfo, int chip,
 			tty_hangup(tty);
 	}
 	if ((mdm_change & CyCTS) && tty_port_cts_enabled(&info->port)) {
-		if (tty->hw_stopped) {
+		if (tty->port->hw_stopped) {
 			if (mdm_status & CyCTS) {
 				/* cy_start isn't used
 				   because... !!! */
-				tty->hw_stopped = 0;
+				tty->port->hw_stopped = 0;
 				cyy_writeb(info, CySRER,
 					cyy_readb(info, CySRER) | CyTxRdy);
 				tty_wakeup(tty);
@@ -732,7 +732,7 @@ static void cyy_chip_modem(struct cyclades_card *cinfo, int chip,
 			if (!(mdm_status & CyCTS)) {
 				/* cy_stop isn't used
 				   because ... !!! */
-				tty->hw_stopped = 1;
+				tty->port->hw_stopped = 1;
 				cyy_writeb(info, CySRER,
 					cyy_readb(info, CySRER) & ~CyTxRdy);
 			}
@@ -1800,7 +1800,7 @@ static int cy_write(struct tty_struct *tty, const unsigned char *buf, int count)
 	info->idle_stats.xmit_bytes += ret;
 	info->idle_stats.xmit_idle = jiffies;
 
-	if (info->xmit_cnt && !tty->stopped && !tty->hw_stopped)
+	if (info->xmit_cnt && !tty->stopped && !tty->port->hw_stopped)
 		start_xmit(info);
 
 	return ret;
@@ -1858,7 +1858,7 @@ static void cy_flush_chars(struct tty_struct *tty)
 	if (serial_paranoia_check(info, tty->name, "cy_flush_chars"))
 		return;
 
-	if (info->xmit_cnt <= 0 || tty->stopped || tty->hw_stopped ||
+	if (info->xmit_cnt <= 0 || tty->stopped || tty->port->hw_stopped ||
 			!info->port.xmit_buf)
 		return;
 
@@ -2785,7 +2785,7 @@ static void cy_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 	cy_set_line_char(info, tty);
 
 	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		cy_start(tty);
 	}
 #if 0

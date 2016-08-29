@@ -340,9 +340,9 @@ static void fwtty_update_port_status(struct fwtty_port *port,
 	if (delta & TIOCM_CTS) {
 		tty = tty_port_tty_get(&port->port);
 		if (tty && C_CRTSCTS(&tty->termios)) {
-			if (tty->hw_stopped) {
+			if (tty->port->hw_stopped) {
 				if (status & TIOCM_CTS) {
-					tty->hw_stopped = 0;
+					tty->port->hw_stopped = 0;
 					if (port->loopback)
 						__fwtty_restart_tx(port);
 					else
@@ -350,7 +350,7 @@ static void fwtty_update_port_status(struct fwtty_port *port,
 				}
 			} else {
 				if (~status & TIOCM_CTS)
-					tty->hw_stopped = 1;
+					tty->port->hw_stopped = 1;
 			}
 		}
 		tty_kref_put(tty);
@@ -358,9 +358,9 @@ static void fwtty_update_port_status(struct fwtty_port *port,
 	} else if (delta & OOB_TX_THROTTLE) {
 		tty = tty_port_tty_get(&port->port);
 		if (tty) {
-			if (tty->hw_stopped) {
+			if (tty->port->hw_stopped) {
 				if (~status & OOB_TX_THROTTLE) {
-					tty->hw_stopped = 0;
+					tty->port->hw_stopped = 0;
 					if (port->loopback)
 						__fwtty_restart_tx(port);
 					else
@@ -368,7 +368,7 @@ static void fwtty_update_port_status(struct fwtty_port *port,
 				}
 			} else {
 				if (status & OOB_TX_THROTTLE)
-					tty->hw_stopped = 1;
+					tty->port->hw_stopped = 1;
 			}
 		}
 		tty_kref_put(tty);
@@ -735,7 +735,7 @@ static int fwtty_tx(struct fwtty_port *port, bool drain)
 
 	/* try to write as many dma transactions out as possible */
 	n = -EAGAIN;
-	while (!tty->stopped && !tty->hw_stopped &&
+	while (!tty->stopped && !tty->port->hw_stopped &&
 	       !test_bit(STOP_TX, &port->flags)) {
 		txn = kmem_cache_alloc(fwtty_txn_cache, GFP_ATOMIC);
 		if (!txn) {
@@ -1014,7 +1014,7 @@ static int fwtty_port_activate(struct tty_port *tty_port,
 	}
 
 	if (C_CRTSCTS(&tty->termios) && ~port->mstatus & TIOCM_CTS)
-		tty->hw_stopped = 1;
+		tty->port->hw_stopped = 1;
 
 	__fwtty_write_port_status(port);
 	spin_unlock_bh(&port->lock);
@@ -1316,11 +1316,11 @@ static void fwtty_set_termios(struct tty_struct *tty, struct ktermios *old)
 
 	if (old->c_cflag & CRTSCTS) {
 		if (!C_CRTSCTS(&tty->termios)) {
-			tty->hw_stopped = 0;
+			tty->port->hw_stopped = 0;
 			fwtty_restart_tx(port);
 		}
 	} else if (C_CRTSCTS(&tty->termios) && ~port->mstatus & TIOCM_CTS) {
-		tty->hw_stopped = 1;
+		tty->port->hw_stopped = 1;
 	}
 }
 

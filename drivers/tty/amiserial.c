@@ -16,7 +16,7 @@
  * Richard Lucock 28/12/99
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
- *  Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 
+ *  Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997,
  * 		1998, 1999  Theodore Ts'o
  *
  */
@@ -237,7 +237,7 @@ static void rs_start(struct tty_struct *tty)
  * rs_interrupt() should try to keep the interrupt handler as fast as
  * possible.  After you are done making modifications, it is not a bad
  * idea to do:
- * 
+ *
  * gcc -S -DKERNEL -Wall -Wstrict-prototypes -O6 -fomit-frame-pointer serial.c
  *
  * and look at the resulting assemble code in serial.s.
@@ -347,7 +347,7 @@ static void transmit_chars(struct serial_state *info)
 	}
 	if (info->xmit.head == info->xmit.tail
 	    || info->tport.tty->stopped
-	    || info->tport.tty->hw_stopped) {
+	    || info->tport.hw_stopped) {
 		info->IER &= ~UART_IER_THRI;
 	        custom.intena = IF_TBE;
 		mb();
@@ -414,12 +414,12 @@ static void check_modem_status(struct serial_state *info)
 		}
 	}
 	if (tty_port_cts_enabled(port)) {
-		if (port->tty->hw_stopped) {
+		if (port->hw_stopped) {
 			if (!(status & SER_CTS)) {
 #if (defined(SERIAL_DEBUG_INTR) || defined(SERIAL_DEBUG_FLOW))
 				printk("CTS tx start...");
 #endif
-				port->tty->hw_stopped = 0;
+				port->hw_stopped = 0;
 				info->IER |= UART_IER_THRI;
 				custom.intena = IF_SETCLR | IF_TBE;
 				mb();
@@ -434,7 +434,7 @@ static void check_modem_status(struct serial_state *info)
 #if (defined(SERIAL_DEBUG_INTR) || defined(SERIAL_DEBUG_FLOW))
 				printk("CTS tx stop...");
 #endif
-				port->tty->hw_stopped = 1;
+				port->hw_stopped = 1;
 				info->IER &= ~UART_IER_THRI;
 				/* disable Tx interrupt and remove any pending interrupts */
 				custom.intena = IF_TBE;
@@ -756,7 +756,7 @@ static void change_speed(struct tty_struct *tty, struct serial_state *info,
 	if (I_IGNBRK(&tty->termios)) {
 		info->ignore_status_mask |= UART_LSR_BI;
 		/*
-		 * If we're ignore parity and break indicators, ignore 
+		 * If we're ignore parity and break indicators, ignore
 		 * overruns too.  (For real raw support).
 		 */
 		if (I_IGNPAR(&tty->termios))
@@ -824,7 +824,7 @@ static void rs_flush_chars(struct tty_struct *tty)
 
 	if (info->xmit.head == info->xmit.tail
 	    || tty->stopped
-	    || tty->hw_stopped
+	    || tty->port->hw_stopped
 	    || !info->xmit.buf)
 		return;
 
@@ -871,7 +871,7 @@ static int rs_write(struct tty_struct * tty, const unsigned char *buf, int count
 
 	if (info->xmit.head != info->xmit.tail
 	    && !tty->stopped
-	    && !tty->hw_stopped
+	    && !tty->port->hw_stopped
 	    && !(info->IER & UART_IER_THRI)) {
 		info->IER |= UART_IER_THRI;
 		local_irq_disable();
@@ -950,7 +950,7 @@ static void rs_send_xchar(struct tty_struct *tty, char ch)
 /*
  * ------------------------------------------------------------
  * rs_throttle()
- * 
+ *
  * This routine is called by the upper-layer tty layer to signal that
  * incoming characters should be throttled.
  * ------------------------------------------------------------
@@ -1011,7 +1011,7 @@ static int get_serial_info(struct tty_struct *tty, struct serial_state *state,
 			   struct serial_struct __user * retinfo)
 {
 	struct serial_struct tmp;
-   
+
 	if (!retinfo)
 		return -EFAULT;
 	memset(&tmp, 0, sizeof(tmp));
@@ -1049,7 +1049,7 @@ static int set_serial_info(struct tty_struct *tty, struct serial_state *state,
 		tty_unlock(tty);
 		return -EINVAL;
 	}
-  
+
 	if (!serial_isroot()) {
 		if ((new_serial.baud_base != state->baud_base) ||
 		    (new_serial.close_delay != port->close_delay) ||
@@ -1111,7 +1111,7 @@ check_and_exit:
  * 	    release the bus after transmitting. This must be done when
  * 	    the transmit shift register is empty, not be done when the
  * 	    transmit holding register is empty.  This functionality
- * 	    allows an RS485 driver to be written in user space. 
+ * 	    allows an RS485 driver to be written in user space.
  */
 static int get_lsr_info(struct serial_state *info, unsigned int __user *value)
 {
@@ -1283,7 +1283,7 @@ static int rs_ioctl(struct tty_struct *tty,
 				local_irq_save(flags);
 				cnow = info->icount; /* atomic copy */
 				local_irq_restore(flags);
-				if (cnow.rng == cprev.rng && cnow.dsr == cprev.dsr && 
+				if (cnow.rng == cprev.rng && cnow.dsr == cprev.dsr &&
 				    cnow.dcd == cprev.dcd && cnow.cts == cprev.cts) {
 					ret = -EIO; /* no change => error */
 					break;
@@ -1346,7 +1346,7 @@ static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 
 	/* Handle turning off CRTSCTS */
 	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(&tty->termios)) {
-		tty->hw_stopped = 0;
+		tty->port->hw_stopped = 0;
 		rs_start(tty);
 	}
 
@@ -1365,7 +1365,7 @@ static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 /*
  * ------------------------------------------------------------
  * rs_close()
- * 
+ *
  * This routine is called when the serial port gets closed.  First, we
  * wait for the last remaining data to be sent.  Then, we unlink its
  * async structure from the interrupt chain if necessary, and we free
@@ -1407,7 +1407,7 @@ static void rs_close(struct tty_struct *tty, struct file * filp)
 	}
 	shutdown(tty, state);
 	rs_flush_buffer(tty);
-		
+
 	tty_ldisc_flush(tty);
 	port->tty = NULL;
 
@@ -1435,7 +1435,7 @@ static void rs_wait_until_sent(struct tty_struct *tty, int timeout)
 	 * Set the check interval to be 1/5 of the estimated time to
 	 * send a single character, and make it at least 1.  The check
 	 * interval should also be less than the timeout.
-	 * 
+	 *
 	 * Note: we have to use pretty tight timings here to satisfy
 	 * the NIST-PCTS.
 	 */
@@ -1699,7 +1699,7 @@ static int __init amiga_serial_probe(struct platform_device *pdev)
 	state = rs_table;
 	state->port = (int)&custom.serdatr; /* Just to give it a value */
 	state->custom_divisor = 0;
-	state->icount.cts = state->icount.dsr = 
+	state->icount.cts = state->icount.dsr =
 	  state->icount.rng = state->icount.dcd = 0;
 	state->icount.rx = state->icount.tx = 0;
 	state->icount.frame = state->icount.parity = 0;
