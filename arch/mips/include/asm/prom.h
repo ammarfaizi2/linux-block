@@ -22,7 +22,6 @@ extern void device_tree_init(void);
 struct boot_param_header;
 
 extern void __dt_setup_arch(void *bph);
-extern int __dt_register_buses(const char *bus0, const char *bus1);
 
 #else /* CONFIG_OF */
 static inline void device_tree_init(void) { }
