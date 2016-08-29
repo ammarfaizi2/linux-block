@@ -498,10 +498,19 @@ int of_platform_default_populate(struct device_node *root,
 }
 EXPORT_SYMBOL_GPL(of_platform_default_populate);
 
+static const struct of_device_id *arch_matches __initdata = NULL;
+
+void __init of_platform_set_arch_match_table(const struct of_device_id *matches)
+{
+	arch_matches = matches;
+}
+
 #ifndef CONFIG_PPC
 static int __init of_platform_default_populate_init(void)
 {
 	struct device_node *node;
+	struct of_device_id *matches;
+	int cnt;
 
 	if (!of_have_populated_dt())
 		return -ENODEV;
@@ -517,9 +526,27 @@ static int __init of_platform_default_populate_init(void)
 			of_platform_device_create(node, NULL, NULL);
 	}
 
-	/* Populate everything else. */
-	of_platform_default_populate(NULL, NULL, NULL);
 
+	/* Merge arch match table and the default */
+	for (cnt = 0; arch_matches; cnt++, arch_matches++) {
+		if (!arch_matches->name[0] &&
+		    !arch_matches->compatible[0] &&
+		    !arch_matches->type[0])
+			break;
+	}
+	matches = kcalloc(cnt + ARRAY_SIZE(of_default_bus_match_table),
+			  sizeof(struct of_device_id), GFP_KERNEL);
+	if (!matches)
+		return -ENOMEM;
+
+	memcpy(matches, arch_matches, sizeof(struct of_device_id) * cnt);
+	memcpy(matches + cnt, of_default_bus_match_table,
+	       sizeof(of_default_bus_match_table));
+
+	/* Populate everything else. */
+	of_platform_populate(NULL, matches, NULL, NULL);
+
+	kfree(matches);
 	return 0;
 }
 arch_initcall_sync(of_platform_default_populate_init);
