@@ -2659,7 +2659,7 @@ startup(struct e100_serial * info)
 	}
 
 	if (info->port.tty)
-		clear_bit(TTY_IO_ERROR, &info->port.tty->flags);
+		clear_bit(TTY_PORT_IO_ERROR, &info->port.iflags);
 
 	info->xmit.head = info->xmit.tail = 0;
 	info->first_recv_buffer = info->last_recv_buffer = NULL;
@@ -2775,7 +2775,7 @@ shutdown(struct e100_serial * info)
 	}
 
 	if (info->port.tty)
-		set_bit(TTY_IO_ERROR, &info->port.tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &info->port.iflags);
 
 	tty_port_set_initialized(&info->port, 0);
 	local_irq_restore(flags);

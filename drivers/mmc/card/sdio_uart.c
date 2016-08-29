@@ -607,7 +607,7 @@ static int sdio_uart_activate(struct tty_port *tport, struct tty_struct *tty)
 	 * Set the TTY IO error marker - we will only clear this
 	 * once we have successfully opened the port.
 	 */
-	set_bit(TTY_IO_ERROR, &tty->flags);
+	set_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 
 	kfifo_reset(&port->xmit_fifo);
 
@@ -655,7 +655,7 @@ static int sdio_uart_activate(struct tty_port *tport, struct tty_struct *tty)
 		if (!(sdio_uart_get_mctrl(port) & TIOCM_CTS))
 			tty->port->hw_stopped = 1;
 
-	clear_bit(TTY_IO_ERROR, &tty->flags);
+	clear_bit(TTY_PORT_IO_ERROR, &tty->port->iflags);
 
 	/* Kick the IRQ handler once while we're still holding the host lock */
 	sdio_uart_irq(port->func);

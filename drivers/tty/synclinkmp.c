@@ -2660,7 +2660,7 @@ static int startup(SLMP_INFO * info)
 	mod_timer(&info->status_timer, jiffies + msecs_to_jiffies(10));
 
 	if (info->port.tty)
-		clear_bit(TTY_IO_ERROR, &info->port.tty->flags);
+		clear_bit(TTY_PORT_IO_ERROR, &info->port.iflags);
 
 	tty_port_set_initialized(&info->port, 1);
 
@@ -2703,7 +2703,7 @@ static void shutdown(SLMP_INFO * info)
 	spin_unlock_irqrestore(&info->lock,flags);
 
 	if (info->port.tty)
-		set_bit(TTY_IO_ERROR, &info->port.tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &info->port.iflags);
 
 	tty_port_set_initialized(&info->port, 0);
 }

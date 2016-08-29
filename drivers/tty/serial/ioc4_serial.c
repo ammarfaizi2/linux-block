@@ -2442,7 +2442,7 @@ static void ic4_shutdown(struct uart_port *the_port)
 	wake_up_interruptible(&state->port.delta_msr_wait);
 
 	if (state->port.tty)
-		set_bit(TTY_IO_ERROR, &state->port.tty->flags);
+		set_bit(TTY_PORT_IO_ERROR, &state->port.iflags);
 
 	spin_lock_irqsave(&the_port->lock, port_flags);
 	set_notification(port, N_ALL, 0);

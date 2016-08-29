@@ -237,8 +237,8 @@ static int uart_startup(struct tty_port *port, int init_hw)
 		return 0;
 
 	retval = uart_port_startup(port, init_hw);
-	if (retval && port->tty)
-		set_bit(TTY_IO_ERROR, &port->tty->flags);
+	if (retval)
+		set_bit(TTY_PORT_IO_ERROR, &port->iflags);
 
 	return retval;
 }
@@ -259,8 +259,7 @@ static void uart_shutdown(struct tty_port *port)
 	/*
 	 * Set the TTY IO error marker
 	 */
-	if (tty)
-		set_bit(TTY_IO_ERROR, &tty->flags);
+	set_bit(TTY_PORT_IO_ERROR, &port->iflags);
 
 	if (tty_port_initialized(port)) {
 		tty_port_set_initialized(port, 0);
