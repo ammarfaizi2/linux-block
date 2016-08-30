@@ -442,12 +442,10 @@ device_initcall(octeon_ohci_device_init);
 
 
 static struct of_device_id __initdata octeon_ids[] = {
-	{ .compatible = "simple-bus", },
 	{ .compatible = "cavium,octeon-6335-uctl", },
 	{ .compatible = "cavium,octeon-5750-usbn", },
 	{ .compatible = "cavium,octeon-3860-bootbus", },
 	{ .compatible = "cavium,mdio-mux", },
-	{ .compatible = "gpio-leds", },
 	{},
 };
 
@@ -1057,9 +1055,10 @@ end_led:
 
 static int __init octeon_publish_devices(void)
 {
-	return of_platform_bus_probe(NULL, octeon_ids, NULL);
+	of_platform_set_arch_match_table(octeon_ids);
+	return 0;
 }
-device_initcall(octeon_publish_devices);
+arch_initcall(octeon_publish_devices);
 
 MODULE_AUTHOR("David Daney <ddaney@caviumnetworks.com>");
 MODULE_LICENSE("GPL");
