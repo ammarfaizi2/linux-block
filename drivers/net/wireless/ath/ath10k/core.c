@@ -745,7 +745,7 @@ static int ath10k_download_fw(struct ath10k *ar)
 	data = ar->running_fw->fw_file.firmware_data;
 	data_len = ar->running_fw->fw_file.firmware_len;
 
-	ret = ath10k_swap_code_seg_configure(ar);
+	ret = ath10k_swap_code_seg_configure(ar, &ar->running_fw->fw_file);
 	if (ret) {
 		ath10k_err(ar, "failed to configure fw code swap: %d\n",
 			   ret);
@@ -787,7 +787,7 @@ static void ath10k_core_free_firmware_files(struct ath10k *ar)
 	if (!IS_ERR(ar->pre_cal_file))
 		release_firmware(ar->pre_cal_file);
 
-	ath10k_swap_code_seg_release(ar);
+	ath10k_swap_code_seg_release(ar, &ar->normal_mode_fw.fw_file);
 
 	ar->normal_mode_fw.fw_file.otp_data = NULL;
 	ar->normal_mode_fw.fw_file.otp_len = 0;
@@ -1705,6 +1705,55 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
 	return 0;
 }
 
+static int ath10k_core_reset_rx_filter(struct ath10k *ar)
+{
+	int ret;
+	int vdev_id;
+	int vdev_type;
+	int vdev_subtype;
+	const u8 *vdev_addr;
+
+	vdev_id = 0;
+	vdev_type = WMI_VDEV_TYPE_STA;
+	vdev_subtype = ath10k_wmi_get_vdev_subtype(ar, WMI_VDEV_SUBTYPE_NONE);
+	vdev_addr = ar->mac_addr;
+
+	ret = ath10k_wmi_vdev_create(ar, vdev_id, vdev_type, vdev_subtype,
+				     vdev_addr);
+	if (ret) {
+		ath10k_err(ar, "failed to create dummy vdev: %d\n", ret);
+		return ret;
+	}
+
+	ret = ath10k_wmi_vdev_delete(ar, vdev_id);
+	if (ret) {
+		ath10k_err(ar, "failed to delete dummy vdev: %d\n", ret);
+		return ret;
+	}
+
+	/* WMI and HTT may use separate HIF pipes and are not guaranteed to be
+	 * serialized properly implicitly.
+	 *
+	 * Moreover (most) WMI commands have no explicit acknowledges. It is
+	 * possible to infer it implicitly by poking firmware with echo
+	 * command - getting a reply means all preceding comments have been
+	 * (mostly) processed.
+	 *
+	 * In case of vdev create/delete this is sufficient.
+	 *
+	 * Without this it's possible to end up with a race when HTT Rx ring is
+	 * started before vdev create/delete hack is complete allowing a short
+	 * window of opportunity to receive (and Tx ACK) a bunch of frames.
+	 */
+	ret = ath10k_wmi_barrier(ar);
+	if (ret) {
+		ath10k_err(ar, "failed to ping firmware: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 int ath10k_core_start(struct ath10k *ar, enum ath10k_firmware_mode mode,
 		      const struct ath10k_fw_components *fw)
 {
@@ -1872,6 +1921,25 @@ int ath10k_core_start(struct ath10k *ar, enum ath10k_firmware_mode mode,
 		goto err_hif_stop;
 	}
 
+	/* Some firmware revisions do not properly set up hardware rx filter
+	 * registers.
+	 *
+	 * A known example from QCA9880 and 10.2.4 is that MAC_PCU_ADDR1_MASK
+	 * is filled with 0s instead of 1s allowing HW to respond with ACKs to
+	 * any frames that matches MAC_PCU_RX_FILTER which is also
+	 * misconfigured to accept anything.
+	 *
+	 * The ADDR1 is programmed using internal firmware structure field and
+	 * can't be (easily/sanely) reached from the driver explicitly. It is
+	 * possible to implicitly make it correct by creating a dummy vdev and
+	 * then deleting it.
+	 */
+	status = ath10k_core_reset_rx_filter(ar);
+	if (status) {
+		ath10k_err(ar, "failed to reset rx filter: %d\n", status);
+		goto err_hif_stop;
+	}
+
 	/* If firmware indicates Full Rx Reorder support it must be used in a
 	 * slightly different manner. Let HTT code know.
 	 */
@@ -2031,7 +2099,7 @@ static int ath10k_core_probe_fw(struct ath10k *ar)
 		goto err_free_firmware_files;
 	}
 
-	ret = ath10k_swap_code_seg_init(ar);
+	ret = ath10k_swap_code_seg_init(ar, &ar->normal_mode_fw.fw_file);
 	if (ret) {
 		ath10k_err(ar, "failed to initialize code swap segment: %d\n",
 			   ret);

@@ -142,6 +142,7 @@ struct ath10k_wmi {
 	enum ath10k_htc_ep_id eid;
 	struct completion service_ready;
 	struct completion unified_ready;
+	struct completion barrier;
 	wait_queue_head_t tx_credits_wq;
 	DECLARE_BITMAP(svc_map, WMI_SERVICE_MAX);
 	struct wmi_cmd_map *cmd;
@@ -663,6 +664,15 @@ struct ath10k_fw_file {
 
 	const void *codeswap_data;
 	size_t codeswap_len;
+
+	/* The original idea of struct ath10k_fw_file was that it only
+	 * contains struct firmware and pointers to various parts (actual
+	 * firmware binary, otp, metadata etc) of the file. This seg_info
+	 * is actually created separate but as this is used similarly as
+	 * the other firmware components it's more convenient to have it
+	 * here.
+	 */
+	struct ath10k_swap_code_seg_info *firmware_swap_code_seg_info;
 };
 
 struct ath10k_fw_components {
@@ -773,10 +783,6 @@ struct ath10k {
 
 	const struct firmware *pre_cal_file;
 	const struct firmware *cal_file;
-
-	struct {
-		struct ath10k_swap_code_seg_info *firmware_swap_code_seg_info;
-	} swap;
 
 	struct {
 		u32 vendor;
