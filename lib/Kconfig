@@ -550,4 +550,8 @@ config STACKDEPOT
 	bool
 	select STACKTRACE
 
+config WBT
+	bool
+	select SCALE_BITMAP
+
 endmenu
