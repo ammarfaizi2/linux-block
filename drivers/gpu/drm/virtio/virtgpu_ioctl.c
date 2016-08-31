@@ -28,6 +28,7 @@
 #include <drm/drmP.h>
 #include <drm/virtgpu_drm.h>
 #include <drm/ttm/ttm_execbuf_util.h>
+#include <linux/sync_file.h>
 
 #include "virtgpu_drv.h"
 
@@ -112,12 +113,26 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 	struct ttm_validate_buffer *buflist = NULL;
 	int i;
 	struct ww_acquire_ctx ticket;
+	struct dma_fence *in_fence = NULL;
+	int in_fence_fd = exbuf->fence_fd;
 	void *buf;
 
 	exbuf->fence_fd = -1;
 
 	if (vgdev->has_virgl_3d == false)
 		return -ENOSYS;
+
+	if (exbuf->flags & VIRTGPU_EXECBUF_FENCE_FD_IN) {
+		in_fence = sync_file_get_fence(in_fence_fd);
+		if (!in_fence)
+			return -EINVAL;
+
+		if (dma_fence_match_context(in_fence,
+					    vgdev->fence_drv.context)) {
+			dma_fence_put(in_fence);
+			return -EINVAL;
+		}
+	}
 
 	INIT_LIST_HEAD(&validate_list);
 	if (exbuf->num_bo_handles) {
@@ -128,26 +143,22 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 					   sizeof(struct ttm_validate_buffer),
 					   GFP_KERNEL | __GFP_ZERO);
 		if (!bo_handles || !buflist) {
-			kvfree(bo_handles);
-			kvfree(buflist);
-			return -ENOMEM;
+			ret = -ENOMEM;
+			goto out_in_fence;
 		}
 
 		user_bo_handles = (void __user *)(uintptr_t)exbuf->bo_handles;
 		if (copy_from_user(bo_handles, user_bo_handles,
 				   exbuf->num_bo_handles * sizeof(uint32_t))) {
 			ret = -EFAULT;
-			kvfree(bo_handles);
-			kvfree(buflist);
-			return ret;
+			goto out_in_fence;
 		}
 
 		for (i = 0; i < exbuf->num_bo_handles; i++) {
 			gobj = drm_gem_object_lookup(drm_file, bo_handles[i]);
 			if (!gobj) {
-				kvfree(bo_handles);
-				kvfree(buflist);
-				return -ENOENT;
+				ret = -ENOENT;
+				goto out_in_fence;
 			}
 
 			qobj = gem_to_virtio_gpu_obj(gobj);
@@ -156,6 +167,7 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 			list_add(&buflist[i].head, &validate_list);
 		}
 		kvfree(bo_handles);
+		bo_handles = NULL;
 	}
 
 	ret = virtio_gpu_object_list_validate(&ticket, &validate_list);
@@ -175,6 +187,13 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 		ret = -ENOMEM;
 		goto out_unresv;
 	}
+
+	if (in_fence) {
+		dma_fence_wait(in_fence, true);
+		dma_fence_put(in_fence);
+		in_fence = NULL;
+	}
+
 	virtio_gpu_cmd_submit(vgdev, buf, exbuf->size,
 			      vfpriv->ctx_id, fence);
 
@@ -190,7 +209,10 @@ out_unresv:
 	ttm_eu_backoff_reservation(&ticket, &validate_list);
 out_free:
 	virtio_gpu_unref_list(&validate_list);
+out_in_fence:
+	kvfree(bo_handles);
 	kvfree(buflist);
+	dma_fence_put(in_fence);
 	return ret;
 }
 
