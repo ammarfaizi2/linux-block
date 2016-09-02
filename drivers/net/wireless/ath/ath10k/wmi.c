@@ -1877,7 +1877,7 @@ ath10k_wmi_op_gen_mgmt_tx(struct ath10k *ar, struct sk_buff *msdu)
 	ether_addr_copy(cmd->hdr.peer_macaddr.addr, ieee80211_get_DA(hdr));
 	memcpy(cmd->buf, msdu->data, msdu->len);
 
-	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi mgmt tx skb %p len %d ftype %02x stype %02x\n",
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi mgmt tx skb %pK len %d ftype %02x stype %02x\n",
 		   msdu, skb->len, fc & IEEE80211_FCTL_FTYPE,
 		   fc & IEEE80211_FCTL_STYPE);
 	trace_ath10k_tx_hdr(ar, skb->data, skb->len);
@@ -2243,6 +2243,29 @@ static int ath10k_wmi_10_4_op_pull_mgmt_rx_ev(struct ath10k *ar,
 	return 0;
 }
 
+static bool ath10k_wmi_rx_is_decrypted(struct ath10k *ar,
+				       struct ieee80211_hdr *hdr)
+{
+	if (!ieee80211_has_protected(hdr->frame_control))
+		return false;
+
+	/* FW delivers WEP Shared Auth frame with Protected Bit set and
+	 * encrypted payload. However in case of PMF it delivers decrypted
+	 * frames with Protected Bit set.
+	 */
+	if (ieee80211_is_auth(hdr->frame_control))
+		return false;
+
+	/* qca99x0 based FW delivers broadcast or multicast management frames
+	 * (ex: group privacy action frames in mesh) as encrypted payload.
+	 */
+	if (is_multicast_ether_addr(ieee80211_get_DA(hdr)) &&
+	    ar->hw_params.sw_decrypt_mcast_mgmt)
+		return false;
+
+	return true;
+}
+
 int ath10k_wmi_event_mgmt_rx(struct ath10k *ar, struct sk_buff *skb)
 {
 	struct wmi_mgmt_rx_ev_arg arg = {};
@@ -2329,11 +2352,7 @@ int ath10k_wmi_event_mgmt_rx(struct ath10k *ar, struct sk_buff *skb)
 
 	ath10k_wmi_handle_wep_reauth(ar, skb, status);
 
-	/* FW delivers WEP Shared Auth frame with Protected Bit set and
-	 * encrypted payload. However in case of PMF it delivers decrypted
-	 * frames with Protected Bit set. */
-	if (ieee80211_has_protected(hdr->frame_control) &&
-	    !ieee80211_is_auth(hdr->frame_control)) {
+	if (ath10k_wmi_rx_is_decrypted(ar, hdr)) {
 		status->flag |= RX_FLAG_DECRYPTED;
 
 		if (!ieee80211_is_action(hdr->frame_control) &&
@@ -2350,7 +2369,7 @@ int ath10k_wmi_event_mgmt_rx(struct ath10k *ar, struct sk_buff *skb)
 		ath10k_mac_handle_beacon(ar, skb);
 
 	ath10k_dbg(ar, ATH10K_DBG_MGMT,
-		   "event mgmt rx skb %p len %d ftype %02x stype %02x\n",
+		   "event mgmt rx skb %pK len %d ftype %02x stype %02x\n",
 		   skb, skb->len,
 		   fc & IEEE80211_FCTL_FTYPE, fc & IEEE80211_FCTL_STYPE);
 
@@ -5360,6 +5379,7 @@ static void ath10k_wmi_10_4_op_rx(struct ath10k *ar, struct sk_buff *skb)
 		break;
 	case WMI_10_4_WOW_WAKEUP_HOST_EVENTID:
 	case WMI_10_4_PEER_RATECODE_LIST_EVENTID:
+	case WMI_10_4_WDS_PEER_EVENTID:
 		ath10k_dbg(ar, ATH10K_DBG_WMI,
 			   "received event id %d not implemented\n", id);
 		break;
@@ -6917,7 +6937,7 @@ ath10k_wmi_op_gen_force_fw_hang(struct ath10k *ar,
 }
 
 static struct sk_buff *
-ath10k_wmi_op_gen_dbglog_cfg(struct ath10k *ar, u32 module_enable,
+ath10k_wmi_op_gen_dbglog_cfg(struct ath10k *ar, u64 module_enable,
 			     u32 log_level)
 {
 	struct wmi_dbglog_cfg_cmd *cmd;
@@ -6949,6 +6969,44 @@ ath10k_wmi_op_gen_dbglog_cfg(struct ath10k *ar, u32 module_enable,
 		   "wmi dbglog cfg modules %08x %08x config %08x %08x\n",
 		   __le32_to_cpu(cmd->module_enable),
 		   __le32_to_cpu(cmd->module_valid),
+		   __le32_to_cpu(cmd->config_enable),
+		   __le32_to_cpu(cmd->config_valid));
+	return skb;
+}
+
+static struct sk_buff *
+ath10k_wmi_10_4_op_gen_dbglog_cfg(struct ath10k *ar, u64 module_enable,
+				  u32 log_level)
+{
+	struct wmi_10_4_dbglog_cfg_cmd *cmd;
+	struct sk_buff *skb;
+	u32 cfg;
+
+	skb = ath10k_wmi_alloc_skb(ar, sizeof(*cmd));
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
+
+	cmd = (struct wmi_10_4_dbglog_cfg_cmd *)skb->data;
+
+	if (module_enable) {
+		cfg = SM(log_level,
+			 ATH10K_DBGLOG_CFG_LOG_LVL);
+	} else {
+		/* set back defaults, all modules with WARN level */
+		cfg = SM(ATH10K_DBGLOG_LEVEL_WARN,
+			 ATH10K_DBGLOG_CFG_LOG_LVL);
+		module_enable = ~0;
+	}
+
+	cmd->module_enable = __cpu_to_le64(module_enable);
+	cmd->module_valid = __cpu_to_le64(~0);
+	cmd->config_enable = __cpu_to_le32(cfg);
+	cmd->config_valid = __cpu_to_le32(ATH10K_DBGLOG_CFG_LOG_LVL_MASK);
+
+	ath10k_dbg(ar, ATH10K_DBG_WMI,
+		   "wmi dbglog cfg modules 0x%016llx 0x%016llx config %08x %08x\n",
+		   __le64_to_cpu(cmd->module_enable),
+		   __le64_to_cpu(cmd->module_valid),
 		   __le32_to_cpu(cmd->config_enable),
 		   __le32_to_cpu(cmd->config_valid));
 	return skb;
@@ -8072,7 +8130,7 @@ static const struct wmi_ops wmi_10_4_ops = {
 	.gen_pdev_set_wmm = ath10k_wmi_op_gen_pdev_set_wmm,
 	.gen_force_fw_hang = ath10k_wmi_op_gen_force_fw_hang,
 	.gen_mgmt_tx = ath10k_wmi_op_gen_mgmt_tx,
-	.gen_dbglog_cfg = ath10k_wmi_op_gen_dbglog_cfg,
+	.gen_dbglog_cfg = ath10k_wmi_10_4_op_gen_dbglog_cfg,
 	.gen_pktlog_enable = ath10k_wmi_op_gen_pktlog_enable,
 	.gen_pktlog_disable = ath10k_wmi_op_gen_pktlog_disable,
 	.gen_pdev_set_quiet_mode = ath10k_wmi_op_gen_pdev_set_quiet_mode,
