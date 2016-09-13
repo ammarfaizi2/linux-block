@@ -1691,14 +1691,12 @@ static void ath10k_pci_rx_pipe_cleanup(struct ath10k_pci_pipe *pci_pipe)
 static void ath10k_pci_tx_pipe_cleanup(struct ath10k_pci_pipe *pci_pipe)
 {
 	struct ath10k *ar;
-	struct ath10k_pci *ar_pci;
 	struct ath10k_ce_pipe *ce_pipe;
 	struct ath10k_ce_ring *ce_ring;
 	struct sk_buff *skb;
 	int i;
 
 	ar = pci_pipe->hif_ce_state;
-	ar_pci = ath10k_pci_priv(ar);
 	ce_pipe = pci_pipe->ce_hdl;
 	ce_ring = ce_pipe->src_ring;
 
@@ -2726,7 +2724,7 @@ static int ath10k_pci_hif_fetch_cal_eeprom(struct ath10k *ar, void **data,
 	return 0;
 
 err_free:
-	kfree(data);
+	kfree(caldata);
 
 	return -EINVAL;
 }

@@ -60,7 +60,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.otp_exe_param = 0,
 		.channel_counters_freq_hz = 88000,
 		.max_probe_resp_desc_thres = 0,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_AFTER,
 		.cal_data_len = 2116,
 		.fw = {
 			.dir = QCA988X_HW_2_0_FW_DIR,
@@ -68,6 +67,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA988X_BOARD_DATA_SZ,
 			.board_ext_size = QCA988X_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA9887_HW_1_0_VERSION,
@@ -79,7 +79,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.otp_exe_param = 0,
 		.channel_counters_freq_hz = 88000,
 		.max_probe_resp_desc_thres = 0,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_AFTER,
 		.cal_data_len = 2116,
 		.fw = {
 			.dir = QCA9887_HW_1_0_FW_DIR,
@@ -87,6 +86,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA9887_BOARD_DATA_SZ,
 			.board_ext_size = QCA9887_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA6174_HW_2_1_VERSION,
@@ -104,6 +104,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA6174_BOARD_DATA_SZ,
 			.board_ext_size = QCA6174_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA6174_HW_2_1_VERSION,
@@ -114,7 +115,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.otp_exe_param = 0,
 		.channel_counters_freq_hz = 88000,
 		.max_probe_resp_desc_thres = 0,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_AFTER,
 		.cal_data_len = 8124,
 		.fw = {
 			.dir = QCA6174_HW_2_1_FW_DIR,
@@ -122,6 +122,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA6174_BOARD_DATA_SZ,
 			.board_ext_size = QCA6174_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA6174_HW_3_0_VERSION,
@@ -132,7 +133,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.otp_exe_param = 0,
 		.channel_counters_freq_hz = 88000,
 		.max_probe_resp_desc_thres = 0,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_AFTER,
 		.cal_data_len = 8124,
 		.fw = {
 			.dir = QCA6174_HW_3_0_FW_DIR,
@@ -140,6 +140,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA6174_BOARD_DATA_SZ,
 			.board_ext_size = QCA6174_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA6174_HW_3_2_VERSION,
@@ -150,7 +151,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.otp_exe_param = 0,
 		.channel_counters_freq_hz = 88000,
 		.max_probe_resp_desc_thres = 0,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_AFTER,
 		.cal_data_len = 8124,
 		.fw = {
 			/* uses same binaries as hw3.0 */
@@ -159,6 +159,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA6174_BOARD_DATA_SZ,
 			.board_ext_size = QCA6174_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA99X0_HW_2_0_DEV_VERSION,
@@ -171,7 +172,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.cck_rate_map_rev2 = true,
 		.channel_counters_freq_hz = 150000,
 		.max_probe_resp_desc_thres = 24,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_BEFORE,
 		.tx_chain_mask = 0xf,
 		.rx_chain_mask = 0xf,
 		.max_spatial_stream = 4,
@@ -183,6 +183,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_ext_size = QCA99X0_BOARD_EXT_DATA_SZ,
 		},
 		.sw_decrypt_mcast_mgmt = true,
+		.hw_ops = &qca99x0_ops,
 	},
 	{
 		.id = QCA9984_HW_1_0_DEV_VERSION,
@@ -195,7 +196,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.cck_rate_map_rev2 = true,
 		.channel_counters_freq_hz = 150000,
 		.max_probe_resp_desc_thres = 24,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_BEFORE,
 		.tx_chain_mask = 0xf,
 		.rx_chain_mask = 0xf,
 		.max_spatial_stream = 4,
@@ -207,6 +207,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_ext_size = QCA99X0_BOARD_EXT_DATA_SZ,
 		},
 		.sw_decrypt_mcast_mgmt = true,
+		.hw_ops = &qca99x0_ops,
 	},
 	{
 		.id = QCA9888_HW_2_0_DEV_VERSION,
@@ -218,7 +219,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.continuous_frag_desc = true,
 		.channel_counters_freq_hz = 150000,
 		.max_probe_resp_desc_thres = 24,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_BEFORE,
 		.tx_chain_mask = 3,
 		.rx_chain_mask = 3,
 		.max_spatial_stream = 2,
@@ -230,6 +230,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_ext_size = QCA99X0_BOARD_EXT_DATA_SZ,
 		},
 		.sw_decrypt_mcast_mgmt = true,
+		.hw_ops = &qca99x0_ops,
 	},
 	{
 		.id = QCA9377_HW_1_0_DEV_VERSION,
@@ -247,6 +248,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA9377_BOARD_DATA_SZ,
 			.board_ext_size = QCA9377_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA9377_HW_1_1_DEV_VERSION,
@@ -264,6 +266,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_size = QCA9377_BOARD_DATA_SZ,
 			.board_ext_size = QCA9377_BOARD_EXT_DATA_SZ,
 		},
+		.hw_ops = &qca988x_ops,
 	},
 	{
 		.id = QCA4019_HW_1_0_DEV_VERSION,
@@ -277,7 +280,6 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.cck_rate_map_rev2 = true,
 		.channel_counters_freq_hz = 125000,
 		.max_probe_resp_desc_thres = 24,
-		.hw_4addr_pad = ATH10K_HW_4ADDR_PAD_BEFORE,
 		.tx_chain_mask = 0x3,
 		.rx_chain_mask = 0x3,
 		.max_spatial_stream = 2,
@@ -289,6 +291,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 			.board_ext_size = QCA4019_BOARD_EXT_DATA_SZ,
 		},
 		.sw_decrypt_mcast_mgmt = true,
+		.hw_ops = &qca99x0_ops,
 	},
 };
 
@@ -2144,6 +2147,9 @@ static void ath10k_core_register_work(struct work_struct *work)
 {
 	struct ath10k *ar = container_of(work, struct ath10k, register_work);
 	int status;
+
+	/* peer stats are enabled by default */
+	set_bit(ATH10K_FLAG_PEER_STATS, &ar->dev_flags);
 
 	status = ath10k_core_probe_fw(ar);
 	if (status) {
