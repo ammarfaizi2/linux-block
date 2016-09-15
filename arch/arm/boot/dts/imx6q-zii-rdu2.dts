@@ -238,7 +238,7 @@
 		fsl,data-mapping = "spwg";
 		fsl,data-width = <24>;
 		crtc = "ipu2-di0";
-		status = "okay";
+		status = "disabled";
 		primary;
 
 		port@4 {
