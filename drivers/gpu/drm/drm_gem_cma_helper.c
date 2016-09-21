@@ -443,8 +443,10 @@ drm_gem_cma_prime_import_sg_table(struct drm_device *dev,
 {
 	struct drm_gem_cma_object *cma_obj;
 
-	if (sgt->nents != 1)
+	if (sgt->nents != 1) {
+		printk("can't support sg list\n");
 		return ERR_PTR(-EINVAL);
+	}
 
 	/* Create a CMA GEM buffer. */
 	cma_obj = __drm_gem_cma_create(dev, attach->dmabuf->size);
