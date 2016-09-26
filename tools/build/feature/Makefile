@@ -54,6 +54,7 @@ FILES := $(addprefix $(OUTPUT),$(FILES))
 CC := $(CROSS_COMPILE)gcc -MD
 CXX := $(CROSS_COMPILE)g++ -MD
 PKG_CONFIG := $(CROSS_COMPILE)pkg-config
+LLVM_CONFIG ?= llvm-config
 
 all: $(FILES)
 
@@ -224,6 +225,13 @@ $(OUTPUT)test-sdt.bin:
 
 $(OUTPUT)test-cxx.bin:
 	$(BUILDXX) -std=gnu++11
+
+$(OUTPUT)test-llvm.bin:
+	$(BUILDXX) -std=gnu++11 					\
+		-I$(shell $(LLVM_CONFIG) --includedir) 		\
+		-L$(shell $(LLVM_CONFIG) --libdir)		\
+		$(shell $(LLVM_CONFIG) --libs Core BPF)		\
+		$(shell $(LLVM_CONFIG) --system-libs)
 
 -include $(OUTPUT)*.d
 
