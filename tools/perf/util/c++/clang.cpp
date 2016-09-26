@@ -27,6 +27,8 @@
 
 #include "clang.h"
 #include "clang-c.h"
+#include "llvm-utils-cxx.h"
+#include "util-cxx.h"
 
 namespace perf {
 
@@ -152,6 +154,101 @@ getBPFObjectFromModule(llvm::Module *Module)
 	return std::move(Buffer);
 }
 
+class ClangOptions {
+	llvm::SmallString<PATH_MAX> FileName;
+	llvm::SmallString<64> KVerDef;
+	llvm::SmallString<64> NRCpusDef;
+	char *kbuild_dir;
+	char *kbuild_include_opts;
+	char *clang_opt;
+public:
+	ClangOptions(const char *filename) : FileName(filename),
+					     KVerDef(""),
+					     NRCpusDef(""),
+					     kbuild_dir(NULL),
+					     kbuild_include_opts(NULL),
+					     clang_opt(NULL)
+	{
+		llvm::sys::fs::make_absolute(FileName);
+
+		unsigned int kver;
+		if (!fetch_kernel_version(&kver, NULL, 0))
+			KVerDef = "-DLINUX_VERSION_CODE=" + std::to_string(kver);
+
+		int nr_cpus = llvm__get_nr_cpus();
+		if (nr_cpus > 0)
+			NRCpusDef = "-D__NR_CPUS__=" + std::to_string(nr_cpus);
+
+		if (llvm_param.clang_opt)
+			clang_opt = strdup(llvm_param.clang_opt);
+
+		llvm__get_kbuild_opts(&kbuild_dir, &kbuild_include_opts);
+		if (!kbuild_dir || !kbuild_include_opts) {
+			free(kbuild_dir);
+			free(kbuild_include_opts);
+			kbuild_dir = kbuild_include_opts = NULL;
+		}
+	}
+
+	~ClangOptions()
+	{
+		free(kbuild_dir);
+		free(kbuild_include_opts);
+		free(clang_opt);
+	}
+
+	static void fillCFlagsFromString(opt::ArgStringList &CFlags, char *s, bool check = false)
+	{
+		if (!s)
+			return;
+
+		SmallVector<StringRef, 0> Terms;
+		StringRef Opts(s);
+		Opts.split(Terms, ' ');
+
+		for (auto i = Terms.begin(); i != Terms.end(); i++)
+			s[i->end() - Opts.begin()] = '\0';
+
+		for (auto i = Terms.begin(); i != Terms.end(); i++) {
+			if (!check) {
+				CFlags.push_back(i->begin());
+				continue;
+			}
+
+			if (i->startswith("-I"))
+				CFlags.push_back(i->begin());
+			else if (i->startswith("-D"))
+				CFlags.push_back(i->begin());
+			else if (*i == "-include") {
+				CFlags.push_back((i++)->begin());
+				/* Let clang report this error */
+				if (i == Terms.end())
+					break;
+				CFlags.push_back(i->begin());
+			}
+		}
+	}
+
+	void getCFlags(opt::ArgStringList &CFlags)
+	{
+		CFlags.push_back(KVerDef.c_str());
+		CFlags.push_back(NRCpusDef.c_str());
+
+		fillCFlagsFromString(CFlags, clang_opt);
+		fillCFlagsFromString(CFlags, kbuild_include_opts, true);
+
+		if (kbuild_dir) {
+			CFlags.push_back("-working-directory");
+			CFlags.push_back(kbuild_dir);
+		}
+	}
+
+	const char *getFileName(void)
+	{
+		return FileName.c_str();
+	}
+};
+
 }
 
 extern "C" {
@@ -175,11 +272,11 @@ int perf_clang__compile_bpf(const char *_filename,
 	if (!p_obj_buf || !p_obj_buf_sz)
 		return -EINVAL;
 
-	llvm::SmallString<PATH_MAX> FileName(_filename);
-	llvm::sys::fs::make_absolute(FileName);
-
+	ClangOptions Opts(_filename);
 	llvm::opt::ArgStringList CFlags;
-	auto M = getModuleFromSource(std::move(CFlags), FileName.data());
+
+	Opts.getCFlags(CFlags);
+	auto M = getModuleFromSource(std::move(CFlags), Opts.getFileName());
 	if (!M)
 		return  -EINVAL;
 	auto O = getBPFObjectFromModule(&*M);
