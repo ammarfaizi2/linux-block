@@ -646,7 +646,6 @@ static int efx_ef10_probe(struct efx_nic *efx)
 	rc = efx_ef10_get_timer_config(efx);
 	if (rc < 0)
 		goto fail5;
-	efx->timer_quantum_ns = 1536000 / rc; /* 1536 cycles */
 
 	rc = efx_mcdi_mon_probe(efx);
 	if (rc && rc != -EPERM)
@@ -1534,9 +1533,10 @@ static const struct efx_hw_stat_desc efx_ef10_stat_desc[EF10_STAT_COUNT] = {
 			       (1ULL << GENERIC_STAT_rx_nodesc_trunc) |	\
 			       (1ULL << GENERIC_STAT_rx_noskb_drops))
 
-/* These statistics are only provided by the 10G MAC.  For a 10G/40G
- * switchable port we do not expose these because they might not
- * include all the packets they should.
+/* On 7000 series NICs, these statistics are only provided by the 10G MAC.
+ * For a 10G/40G switchable port we do not expose these because they might
+ * not include all the packets they should.
+ * On 8000 series NICs these statistics are always provided.
  */
 #define HUNT_10G_ONLY_STAT_MASK ((1ULL << EF10_STAT_port_tx_control) |	\
 				 (1ULL << EF10_STAT_port_tx_lt64) |	\
@@ -1582,10 +1582,15 @@ static u64 efx_ef10_raw_stat_mask(struct efx_nic *efx)
 	      1 << MC_CMD_DRV_ATTACH_EXT_OUT_FLAG_LINKCTRL))
 		return 0;
 
-	if (port_caps & (1 << MC_CMD_PHY_CAP_40000FDX_LBN))
+	if (port_caps & (1 << MC_CMD_PHY_CAP_40000FDX_LBN)) {
 		raw_mask |= HUNT_40G_EXTRA_STAT_MASK;
-	else
+		/* 8000 series have everything even at 40G */
+		if (nic_data->datapath_caps2 &
+		    (1 << MC_CMD_GET_CAPABILITIES_V2_OUT_MAC_STATS_40G_TX_SIZE_BINS_LBN))
+			raw_mask |= HUNT_10G_ONLY_STAT_MASK;
+	} else {
 		raw_mask |= HUNT_10G_ONLY_STAT_MASK;
+	}
 
 	if (nic_data->datapath_caps &
 	    (1 << MC_CMD_GET_CAPABILITIES_OUT_PM_AND_RXDP_COUNTERS_LBN))
@@ -1611,13 +1616,14 @@ static void efx_ef10_get_stat_mask(struct efx_nic *efx, unsigned long *mask)
 	}
 
 #if BITS_PER_LONG == 64
+	BUILD_BUG_ON(BITS_TO_LONGS(EF10_STAT_COUNT) != 2);
 	mask[0] = raw_mask[0];
 	mask[1] = raw_mask[1];
 #else
+	BUILD_BUG_ON(BITS_TO_LONGS(EF10_STAT_COUNT) != 3);
 	mask[0] = raw_mask[0] & 0xffffffff;
 	mask[1] = raw_mask[0] >> 32;
 	mask[2] = raw_mask[1] & 0xffffffff;
-	mask[3] = raw_mask[1] >> 32;
 #endif
 }
 
@@ -1710,7 +1716,6 @@ static int efx_ef10_try_update_nic_stats_pf(struct efx_nic *efx)
 	efx_ef10_get_stat_mask(efx, mask);
 
 	dma_stats = efx->stats_buffer.addr;
-	nic_data = efx->nic_data;
 
 	generation_end = dma_stats[MC_CMD_MAC_GENERATION_END];
 	if (generation_end == EFX_MC_STATS_GENERATION_INVALID)
@@ -2044,14 +2049,18 @@ static irqreturn_t efx_ef10_legacy_interrupt(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static void efx_ef10_irq_test_generate(struct efx_nic *efx)
+static int efx_ef10_irq_test_generate(struct efx_nic *efx)
 {
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_TRIGGER_INTERRUPT_IN_LEN);
+
+	if (efx_mcdi_set_workaround(efx, MC_CMD_WORKAROUND_BUG41750, true,
+				    NULL) == 0)
+		return -ENOTSUPP;
 
 	BUILD_BUG_ON(MC_CMD_TRIGGER_INTERRUPT_OUT_LEN != 0);
 
 	MCDI_SET_DWORD(inbuf, TRIGGER_INTERRUPT_IN_INTR_LEVEL, efx->irq_level);
-	(void) efx_mcdi_rpc(efx, MC_CMD_TRIGGER_INTERRUPT,
+	return efx_mcdi_rpc(efx, MC_CMD_TRIGGER_INTERRUPT,
 			    inbuf, sizeof(inbuf), NULL, 0, NULL);
 }
 

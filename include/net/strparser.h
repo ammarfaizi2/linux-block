@@ -88,10 +88,7 @@ static inline void strp_pause(struct strparser *strp)
 }
 
 /* May be called without holding lock for attached socket */
-static inline void strp_unpause(struct strparser *strp)
-{
-	strp->rx_paused = 0;
-}
+void strp_unpause(struct strparser *strp);
 
 static inline void save_strp_stats(struct strparser *strp,
 				   struct strp_aggr_stats *agg_stats)
@@ -140,6 +137,6 @@ void strp_stop(struct strparser *strp);
 void strp_check_rcv(struct strparser *strp);
 int strp_init(struct strparser *strp, struct sock *csk,
 	      struct strp_callbacks *cb);
-void strp_tcp_data_ready(struct strparser *strp);
+void strp_data_ready(struct strparser *strp);
 
 #endif /* __NET_STRPARSER_H_ */

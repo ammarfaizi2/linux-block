@@ -341,7 +341,8 @@ struct mlxsw_sp_port {
 	} vport;
 	struct {
 		u8 tx_pause:1,
-		   rx_pause:1;
+		   rx_pause:1,
+		   autoneg:1;
 	} link;
 	struct {
 		struct ieee_ets *ets;
@@ -558,6 +559,9 @@ int __mlxsw_sp_port_headroom_set(struct mlxsw_sp_port *mlxsw_sp_port, int mtu,
 int mlxsw_sp_port_ets_maxrate_set(struct mlxsw_sp_port *mlxsw_sp_port,
 				  enum mlxsw_reg_qeec_hr hr, u8 index,
 				  u8 next_index, u32 maxrate);
+int __mlxsw_sp_port_vid_learning_set(struct mlxsw_sp_port *mlxsw_sp_port,
+				     u16 vid_begin, u16 vid_end,
+				     bool learn_enable);
 
 #ifdef CONFIG_MLXSW_SPECTRUM_DCB
 
@@ -587,6 +591,8 @@ int mlxsw_sp_router_neigh_construct(struct net_device *dev,
 				    struct neighbour *n);
 void mlxsw_sp_router_neigh_destroy(struct net_device *dev,
 				   struct neighbour *n);
+int mlxsw_sp_router_netevent_event(struct notifier_block *unused,
+				   unsigned long event, void *ptr);
 
 int mlxsw_sp_kvdl_alloc(struct mlxsw_sp *mlxsw_sp, unsigned int entry_count);
 void mlxsw_sp_kvdl_free(struct mlxsw_sp *mlxsw_sp, int entry_index);

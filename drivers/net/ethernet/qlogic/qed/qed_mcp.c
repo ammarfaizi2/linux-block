@@ -171,7 +171,6 @@ int qed_mcp_cmd_init(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 	return 0;
 
 err:
-	DP_NOTICE(p_hwfn, "Failed to allocate mcp memory\n");
 	qed_mcp_free(p_hwfn);
 	return -ENOMEM;
 }
@@ -386,6 +385,34 @@ int qed_mcp_cmd(struct qed_hwfn *p_hwfn,
 
 	*o_mcp_resp = mb_params.mcp_resp;
 	*o_mcp_param = mb_params.mcp_param;
+
+	return 0;
+}
+
+int qed_mcp_nvm_rd_cmd(struct qed_hwfn *p_hwfn,
+		       struct qed_ptt *p_ptt,
+		       u32 cmd,
+		       u32 param,
+		       u32 *o_mcp_resp,
+		       u32 *o_mcp_param, u32 *o_txn_size, u32 *o_buf)
+{
+	struct qed_mcp_mb_params mb_params;
+	union drv_union_data union_data;
+	int rc;
+
+	memset(&mb_params, 0, sizeof(mb_params));
+	mb_params.cmd = cmd;
+	mb_params.param = param;
+	mb_params.p_data_dst = &union_data;
+	rc = qed_mcp_cmd_and_union(p_hwfn, p_ptt, &mb_params);
+	if (rc)
+		return rc;
+
+	*o_mcp_resp = mb_params.mcp_resp;
+	*o_mcp_param = mb_params.mcp_param;
+
+	*o_txn_size = *o_mcp_param;
+	memcpy(o_buf, &union_data.raw_data, *o_txn_size);
 
 	return 0;
 }
@@ -713,6 +740,48 @@ int qed_mcp_set_link(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt, bool b_up)
 	return 0;
 }
 
+static void qed_mcp_send_protocol_stats(struct qed_hwfn *p_hwfn,
+					struct qed_ptt *p_ptt,
+					enum MFW_DRV_MSG_TYPE type)
+{
+	enum qed_mcp_protocol_type stats_type;
+	union qed_mcp_protocol_stats stats;
+	struct qed_mcp_mb_params mb_params;
+	union drv_union_data union_data;
+	u32 hsi_param;
+
+	switch (type) {
+	case MFW_DRV_MSG_GET_LAN_STATS:
+		stats_type = QED_MCP_LAN_STATS;
+		hsi_param = DRV_MSG_CODE_STATS_TYPE_LAN;
+		break;
+	case MFW_DRV_MSG_GET_FCOE_STATS:
+		stats_type = QED_MCP_FCOE_STATS;
+		hsi_param = DRV_MSG_CODE_STATS_TYPE_FCOE;
+		break;
+	case MFW_DRV_MSG_GET_ISCSI_STATS:
+		stats_type = QED_MCP_ISCSI_STATS;
+		hsi_param = DRV_MSG_CODE_STATS_TYPE_ISCSI;
+		break;
+	case MFW_DRV_MSG_GET_RDMA_STATS:
+		stats_type = QED_MCP_RDMA_STATS;
+		hsi_param = DRV_MSG_CODE_STATS_TYPE_RDMA;
+		break;
+	default:
+		DP_NOTICE(p_hwfn, "Invalid protocol type %d\n", type);
+		return;
+	}
+
+	qed_get_protocol_stats(p_hwfn->cdev, stats_type, &stats);
+
+	memset(&mb_params, 0, sizeof(mb_params));
+	mb_params.cmd = DRV_MSG_CODE_GET_STATS;
+	mb_params.param = hsi_param;
+	memcpy(&union_data, &stats, sizeof(stats));
+	mb_params.p_data_src = &union_data;
+	qed_mcp_cmd_and_union(p_hwfn, p_ptt, &mb_params);
+}
+
 static void qed_read_pf_bandwidth(struct qed_hwfn *p_hwfn,
 				  struct public_func *p_shmem_info)
 {
@@ -758,34 +827,6 @@ static u32 qed_mcp_get_shmem_func(struct qed_hwfn *p_hwfn,
 		((u32 *)p_data)[i] = qed_rd(p_hwfn, p_ptt,
 					    func_addr + (i << 2));
 	return size;
-}
-
-int qed_hw_init_first_eth(struct qed_hwfn *p_hwfn,
-			  struct qed_ptt *p_ptt, u8 *p_pf)
-{
-	struct public_func shmem_info;
-	int i;
-
-	/* Find first Ethernet interface in port */
-	for (i = 0; i < NUM_OF_ENG_PFS(p_hwfn->cdev);
-	     i += p_hwfn->cdev->num_ports_in_engines) {
-		qed_mcp_get_shmem_func(p_hwfn, p_ptt, &shmem_info,
-				       MCP_PF_ID_BY_REL(p_hwfn, i));
-
-		if (shmem_info.config & FUNC_MF_CFG_FUNC_HIDE)
-			continue;
-
-		if ((shmem_info.config & FUNC_MF_CFG_PROTOCOL_MASK) ==
-		    FUNC_MF_CFG_PROTOCOL_ETHERNET) {
-			*p_pf = (u8)i;
-			return 0;
-		}
-	}
-
-	DP_NOTICE(p_hwfn,
-		  "Failed to find on port an ethernet interface in MF_SI mode\n");
-
-	return -EINVAL;
 }
 
 static void qed_mcp_update_bw(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
@@ -853,6 +894,12 @@ int qed_mcp_handle_events(struct qed_hwfn *p_hwfn,
 			break;
 		case MFW_DRV_MSG_TRANSCEIVER_STATE_CHANGE:
 			qed_mcp_handle_transceiver_change(p_hwfn, p_ptt);
+			break;
+		case MFW_DRV_MSG_GET_LAN_STATS:
+		case MFW_DRV_MSG_GET_FCOE_STATS:
+		case MFW_DRV_MSG_GET_ISCSI_STATS:
+		case MFW_DRV_MSG_GET_RDMA_STATS:
+			qed_mcp_send_protocol_stats(p_hwfn, p_ptt, i);
 			break;
 		case MFW_DRV_MSG_BW_UPDATE:
 			qed_mcp_update_bw(p_hwfn, p_ptt);
@@ -1149,6 +1196,33 @@ qed_mcp_send_drv_version(struct qed_hwfn *p_hwfn,
 	return rc;
 }
 
+int qed_mcp_halt(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
+{
+	u32 resp = 0, param = 0;
+	int rc;
+
+	rc = qed_mcp_cmd(p_hwfn, p_ptt, DRV_MSG_CODE_MCP_HALT, 0, &resp,
+			 &param);
+	if (rc)
+		DP_ERR(p_hwfn, "MCP response failure, aborting\n");
+
+	return rc;
+}
+
+int qed_mcp_resume(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
+{
+	u32 value, cpu_mode;
+
+	qed_wr(p_hwfn, p_ptt, MCP_REG_CPU_STATE, 0xffffffff);
+
+	value = qed_rd(p_hwfn, p_ptt, MCP_REG_CPU_MODE);
+	value &= ~MCP_REG_CPU_MODE_SOFT_HALT;
+	qed_wr(p_hwfn, p_ptt, MCP_REG_CPU_MODE, value);
+	cpu_mode = qed_rd(p_hwfn, p_ptt, MCP_REG_CPU_MODE);
+
+	return (cpu_mode & MCP_REG_CPU_MODE_SOFT_HALT) ? -EAGAIN : 0;
+}
+
 int qed_mcp_set_led(struct qed_hwfn *p_hwfn,
 		    struct qed_ptt *p_ptt, enum qed_led_mode mode)
 {
@@ -1172,6 +1246,27 @@ int qed_mcp_set_led(struct qed_hwfn *p_hwfn,
 
 	rc = qed_mcp_cmd(p_hwfn, p_ptt, DRV_MSG_CODE_SET_LED_MODE,
 			 drv_mb_param, &resp, &param);
+
+	return rc;
+}
+
+int qed_mcp_mask_parities(struct qed_hwfn *p_hwfn,
+			  struct qed_ptt *p_ptt, u32 mask_parities)
+{
+	u32 resp = 0, param = 0;
+	int rc;
+
+	rc = qed_mcp_cmd(p_hwfn, p_ptt, DRV_MSG_CODE_MASK_PARITIES,
+			 mask_parities, &resp, &param);
+
+	if (rc) {
+		DP_ERR(p_hwfn,
+		       "MCP response failure for mask parities, aborting\n");
+	} else if (resp != FW_MSG_CODE_OK) {
+		DP_ERR(p_hwfn,
+		       "MCP did not acknowledge mask parity request. Old MFW?\n");
+		rc = -EINVAL;
+	}
 
 	return rc;
 }

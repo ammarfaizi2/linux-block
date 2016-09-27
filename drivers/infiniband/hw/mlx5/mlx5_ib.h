@@ -402,6 +402,7 @@ enum mlx5_ib_qp_flags {
 	/* QP uses 1 as its source QP number */
 	MLX5_IB_QP_SQPN_QP1			= 1 << 6,
 	MLX5_IB_QP_CAP_SCATTER_FCS		= 1 << 7,
+	MLX5_IB_QP_RSS				= 1 << 8,
 };
 
 struct mlx5_umr_wr {
@@ -504,7 +505,7 @@ struct mlx5_ib_mr {
 	int			umred;
 	int			npages;
 	struct mlx5_ib_dev     *dev;
-	struct mlx5_create_mkey_mbox_out out;
+	u32 out[MLX5_ST_SZ_DW(create_mkey_out)];
 	struct mlx5_core_sig_ctx    *sig;
 	int			live;
 	void			*descs_alloc;

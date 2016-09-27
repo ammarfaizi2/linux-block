@@ -2,6 +2,9 @@
 #define _UAPI_IF_TUNNEL_H_
 
 #include <linux/types.h>
+#include <linux/if.h>
+#include <linux/ip.h>
+#include <linux/in6.h>
 #include <asm/byteorder.h>
 
 
@@ -70,6 +73,7 @@ enum {
 	IFLA_IPTUN_ENCAP_FLAGS,
 	IFLA_IPTUN_ENCAP_SPORT,
 	IFLA_IPTUN_ENCAP_DPORT,
+	IFLA_IPTUN_COLLECT_METADATA,
 	__IFLA_IPTUN_MAX,
 };
 #define IFLA_IPTUN_MAX	(__IFLA_IPTUN_MAX - 1)

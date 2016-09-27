@@ -68,6 +68,32 @@
 /* Unicast Filter MAC Address Register - High */
 #define MTK_GDMA_MAC_ADRH(x)	(0x50C + (x * 0x1000))
 
+/* PDMA RX Base Pointer Register */
+#define MTK_PRX_BASE_PTR0	0x900
+
+/* PDMA RX Maximum Count Register */
+#define MTK_PRX_MAX_CNT0	0x904
+
+/* PDMA RX CPU Pointer Register */
+#define MTK_PRX_CRX_IDX0	0x908
+
+/* PDMA Global Configuration Register */
+#define MTK_PDMA_GLO_CFG	0xa04
+#define MTK_MULTI_EN		BIT(10)
+
+/* PDMA Reset Index Register */
+#define MTK_PDMA_RST_IDX	0xa08
+#define MTK_PST_DRX_IDX0	BIT(16)
+
+/* PDMA Delay Interrupt Register */
+#define MTK_PDMA_DELAY_INT	0xa0c
+
+/* PDMA Interrupt Status Register */
+#define MTK_PDMA_INT_STATUS	0xa20
+
+/* PDMA Interrupt Mask Register */
+#define MTK_PDMA_INT_MASK	0xa28
+
 /* PDMA Interrupt grouping registers */
 #define MTK_PDMA_INT_GRP1	0xa50
 #define MTK_PDMA_INT_GRP2	0xa54
@@ -119,13 +145,16 @@
 
 /* QDMA Interrupt Status Register */
 #define MTK_QMTK_INT_STATUS	0x1A18
+#define MTK_RX_DONE_INT3	BIT(19)
+#define MTK_RX_DONE_INT2	BIT(18)
 #define MTK_RX_DONE_INT1	BIT(17)
 #define MTK_RX_DONE_INT0	BIT(16)
 #define MTK_TX_DONE_INT3	BIT(3)
 #define MTK_TX_DONE_INT2	BIT(2)
 #define MTK_TX_DONE_INT1	BIT(1)
 #define MTK_TX_DONE_INT0	BIT(0)
-#define MTK_RX_DONE_INT		(MTK_RX_DONE_INT0 | MTK_RX_DONE_INT1)
+#define MTK_RX_DONE_INT		(MTK_RX_DONE_INT0 | MTK_RX_DONE_INT1 | \
+				 MTK_RX_DONE_INT2 | MTK_RX_DONE_INT3)
 #define MTK_TX_DONE_INT		(MTK_TX_DONE_INT0 | MTK_TX_DONE_INT1 | \
 				 MTK_TX_DONE_INT2 | MTK_TX_DONE_INT3)
 
@@ -237,6 +266,11 @@
 #define SYSCFG0_GE_MASK		0x3
 #define SYSCFG0_GE_MODE(x, y)	(x << (12 + (y * 2)))
 
+/*ethernet reset control register*/
+#define ETHSYS_RSTCTRL		0x34
+#define RSTCTRL_FE		BIT(6)
+#define RSTCTRL_PPE		BIT(31)
+
 struct mtk_rx_dma {
 	unsigned int rxd1;
 	unsigned int rxd2;
@@ -288,6 +322,22 @@ struct mtk_hw_stats {
 enum mtk_tx_flags {
 	MTK_TX_FLAGS_SINGLE0	= 0x01,
 	MTK_TX_FLAGS_PAGE0	= 0x02,
+};
+
+/* This enum allows us to identify how the clock is defined on the array of the
+ * clock in the order
+ */
+enum mtk_clks_map {
+	MTK_CLK_ETHIF,
+	MTK_CLK_ESW,
+	MTK_CLK_GP1,
+	MTK_CLK_GP2,
+	MTK_CLK_MAX
+};
+
+enum mtk_dev_state {
+	MTK_HW_INIT,
+	MTK_RESETTING
 };
 
 /* struct mtk_tx_buf -	This struct holds the pointers to the memory pointed at
@@ -370,18 +420,15 @@ struct mtk_rx_ring {
  * @scratch_ring:	Newer SoCs need memory for a second HW managed TX ring
  * @phy_scratch_ring:	physical address of scratch_ring
  * @scratch_head:	The scratch memory that scratch_ring points to.
- * @clk_ethif:		The ethif clock
- * @clk_esw:		The switch clock
- * @clk_gp1:		The gmac1 clock
- * @clk_gp2:		The gmac2 clock
+ * @clks:		clock array for all clocks required
  * @mii_bus:		If there is a bus we need to create an instance for it
  * @pending_work:	The workqueue used to reset the dma ring
+ * @state               Initialization and runtime state of the device.
  */
 
 struct mtk_eth {
 	struct device			*dev;
 	void __iomem			*base;
-	struct reset_control		*rstc;
 	spinlock_t			page_lock;
 	spinlock_t			irq_lock;
 	struct net_device		dummy_dev;
@@ -400,17 +447,17 @@ struct mtk_eth {
 	struct mtk_tx_dma		*scratch_ring;
 	dma_addr_t			phy_scratch_ring;
 	void				*scratch_head;
-	struct clk			*clk_ethif;
-	struct clk			*clk_esw;
-	struct clk			*clk_gp1;
-	struct clk			*clk_gp2;
+	struct clk			*clks[MTK_CLK_MAX];
+
 	struct mii_bus			*mii_bus;
 	struct work_struct		pending_work;
+	unsigned long			state;
 };
 
 /* struct mtk_mac -	the structure that holds the info about the MACs of the
  *			SoC
  * @id:			The number of the MAC
+ * @ge_mode:            Interface mode kept for setup restoring
  * @of_node:		Our devicetree node
  * @hw:			Backpointer to our main datastruture
  * @hw_stats:		Packet statistics counter
@@ -418,6 +465,7 @@ struct mtk_eth {
  */
 struct mtk_mac {
 	int				id;
+	int				ge_mode;
 	struct device_node		*of_node;
 	struct mtk_eth			*hw;
 	struct mtk_hw_stats		*hw_stats;

@@ -772,6 +772,11 @@ void bnx2x_fw_dump_lvl(struct bnx2x *bp, const char *lvl)
 		(bp->common.bc_ver & 0xff00) >> 8,
 		(bp->common.bc_ver & 0xff));
 
+	if (pci_channel_offline(bp->pdev)) {
+		BNX2X_ERR("Cannot dump MCP info while in PCI error\n");
+		return;
+	}
+
 	val = REG_RD(bp, MCP_REG_MCPR_CPU_PROGRAM_COUNTER);
 	if (val == REG_RD(bp, MCP_REG_MCPR_CPU_PROGRAM_COUNTER))
 		BNX2X_ERR("%s" "MCP PC at 0x%x\n", lvl, val);
@@ -9415,10 +9420,16 @@ unload_error:
 	/* Release IRQs */
 	bnx2x_free_irq(bp);
 
-	/* Reset the chip */
-	rc = bnx2x_reset_hw(bp, reset_code);
-	if (rc)
-		BNX2X_ERR("HW_RESET failed\n");
+	/* Reset the chip, unless PCI function is offline. If we reach this
+	 * point following a PCI error handling, it means device is really
+	 * in a bad state and we're about to remove it, so reset the chip
+	 * is not a good idea.
+	 */
+	if (!pci_channel_offline(bp->pdev)) {
+		rc = bnx2x_reset_hw(bp, reset_code);
+		if (rc)
+			BNX2X_ERR("HW_RESET failed\n");
+	}
 
 	/* Report UNLOAD_DONE to MCP */
 	bnx2x_send_unload_done(bp, keep_link);
@@ -12560,8 +12571,10 @@ static int bnx2x_init_mcast_macs_list(struct bnx2x *bp,
 		kcalloc(mc_count, sizeof(*mc_mac), GFP_ATOMIC);
 	struct netdev_hw_addr *ha;
 
-	if (!mc_mac)
+	if (!mc_mac) {
+		BNX2X_ERR("Failed to allocate mc MAC list\n");
 		return -ENOMEM;
+	}
 
 	INIT_LIST_HEAD(&p->mcast_list);
 
@@ -12632,7 +12645,7 @@ static int bnx2x_set_uc_list(struct bnx2x *bp)
 				 BNX2X_UC_LIST_MAC, &ramrod_flags);
 }
 
-static int bnx2x_set_mc_list(struct bnx2x *bp)
+static int bnx2x_set_mc_list_e1x(struct bnx2x *bp)
 {
 	struct net_device *dev = bp->dev;
 	struct bnx2x_mcast_ramrod_params rparam = {NULL};
@@ -12650,11 +12663,8 @@ static int bnx2x_set_mc_list(struct bnx2x *bp)
 	/* then, configure a new MACs list */
 	if (netdev_mc_count(dev)) {
 		rc = bnx2x_init_mcast_macs_list(bp, &rparam);
-		if (rc) {
-			BNX2X_ERR("Failed to create multicast MACs list: %d\n",
-				  rc);
+		if (rc)
 			return rc;
-		}
 
 		/* Now add the new MACs */
 		rc = bnx2x_config_mcast(bp, &rparam,
@@ -12664,6 +12674,42 @@ static int bnx2x_set_mc_list(struct bnx2x *bp)
 				  rc);
 
 		bnx2x_free_mcast_macs_list(&rparam);
+	}
+
+	return rc;
+}
+
+static int bnx2x_set_mc_list(struct bnx2x *bp)
+{
+	struct bnx2x_mcast_ramrod_params rparam = {NULL};
+	struct net_device *dev = bp->dev;
+	int rc = 0;
+
+	/* On older adapters, we need to flush and re-add filters */
+	if (CHIP_IS_E1x(bp))
+		return bnx2x_set_mc_list_e1x(bp);
+
+	rparam.mcast_obj = &bp->mcast_obj;
+
+	if (netdev_mc_count(dev)) {
+		rc = bnx2x_init_mcast_macs_list(bp, &rparam);
+		if (rc)
+			return rc;
+
+		/* Override the curently configured set of mc filters */
+		rc = bnx2x_config_mcast(bp, &rparam,
+					BNX2X_MCAST_CMD_SET);
+		if (rc < 0)
+			BNX2X_ERR("Failed to set a new multicast configuration: %d\n",
+				  rc);
+
+		bnx2x_free_mcast_macs_list(&rparam);
+	} else {
+		/* If no mc addresses are required, flush the configuration */
+		rc = bnx2x_config_mcast(bp, &rparam, BNX2X_MCAST_CMD_DEL);
+		if (rc)
+			BNX2X_ERR("Failed to clear multicast configuration %d\n",
+				  rc);
 	}
 
 	return rc;
@@ -13203,13 +13249,22 @@ static int bnx2x_init_dev(struct bnx2x *bp, struct pci_dev *pdev,
 		NETIF_F_RXCSUM | NETIF_F_LRO | NETIF_F_GRO |
 		NETIF_F_RXHASH | NETIF_F_HW_VLAN_CTAG_TX;
 	if (!chip_is_e1x) {
-		dev->hw_features |= NETIF_F_GSO_GRE | NETIF_F_GSO_UDP_TUNNEL |
-				    NETIF_F_GSO_IPXIP4;
+		dev->hw_features |= NETIF_F_GSO_GRE | NETIF_F_GSO_GRE_CSUM |
+				    NETIF_F_GSO_IPXIP4 |
+				    NETIF_F_GSO_UDP_TUNNEL |
+				    NETIF_F_GSO_UDP_TUNNEL_CSUM |
+				    NETIF_F_GSO_PARTIAL;
+
 		dev->hw_enc_features =
 			NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM | NETIF_F_SG |
 			NETIF_F_TSO | NETIF_F_TSO_ECN | NETIF_F_TSO6 |
 			NETIF_F_GSO_IPXIP4 |
-			NETIF_F_GSO_GRE | NETIF_F_GSO_UDP_TUNNEL;
+			NETIF_F_GSO_GRE | NETIF_F_GSO_GRE_CSUM |
+			NETIF_F_GSO_UDP_TUNNEL | NETIF_F_GSO_UDP_TUNNEL_CSUM |
+			NETIF_F_GSO_PARTIAL;
+
+		dev->gso_partial_features = NETIF_F_GSO_GRE_CSUM |
+					    NETIF_F_GSO_UDP_TUNNEL_CSUM;
 	}
 
 	dev->vlan_features = NETIF_F_SG | NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |

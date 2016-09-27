@@ -588,6 +588,8 @@ static int qed_nic_stop(struct qed_dev *cdev)
 		}
 	}
 
+	qed_dbg_pf_exit(cdev);
+
 	return rc;
 }
 
@@ -841,13 +843,13 @@ static int qed_slowpath_start(struct qed_dev *cdev,
 	if (IS_PF(cdev)) {
 		/* Allocate stream for unzipping */
 		rc = qed_alloc_stream_mem(cdev);
-		if (rc) {
-			DP_NOTICE(cdev, "Failed to allocate stream memory\n");
+		if (rc)
 			goto err2;
-		}
 
 		/* First Dword used to diffrentiate between various sources */
 		data = cdev->firmware->data + sizeof(u32);
+
+		qed_dbg_pf_init(cdev);
 	}
 
 	memset(&tunn_info, 0, sizeof(tunn_info));
@@ -1396,9 +1398,32 @@ const struct qed_common_ops qed_common_ops_pass = {
 	.get_link = &qed_get_current_link,
 	.drain = &qed_drain,
 	.update_msglvl = &qed_init_dp,
+	.dbg_all_data = &qed_dbg_all_data,
+	.dbg_all_data_size = &qed_dbg_all_data_size,
 	.chain_alloc = &qed_chain_alloc,
 	.chain_free = &qed_chain_free,
 	.get_coalesce = &qed_get_coalesce,
 	.set_coalesce = &qed_set_coalesce,
 	.set_led = &qed_set_led,
 };
+
+void qed_get_protocol_stats(struct qed_dev *cdev,
+			    enum qed_mcp_protocol_type type,
+			    union qed_mcp_protocol_stats *stats)
+{
+	struct qed_eth_stats eth_stats;
+
+	memset(stats, 0, sizeof(*stats));
+
+	switch (type) {
+	case QED_MCP_LAN_STATS:
+		qed_get_vport_stats(cdev, &eth_stats);
+		stats->lan_stats.ucast_rx_pkts = eth_stats.rx_ucast_pkts;
+		stats->lan_stats.ucast_tx_pkts = eth_stats.tx_ucast_pkts;
+		stats->lan_stats.fcs_err = -1;
+		break;
+	default:
+		DP_ERR(cdev, "Invalid protocol type = %d\n", type);
+		return;
+	}
+}

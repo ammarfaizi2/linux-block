@@ -71,10 +71,11 @@ int mlx4_en_setup_tc(struct net_device *dev, u8 up)
 #ifdef CONFIG_MLX4_EN_DCB
 	if (!mlx4_is_slave(priv->mdev->dev)) {
 		if (up) {
-			priv->flags |= MLX4_EN_FLAG_DCB_ENABLED;
+			if (priv->dcbx_cap)
+				priv->flags |= MLX4_EN_FLAG_DCB_ENABLED;
 		} else {
 			priv->flags &= ~MLX4_EN_FLAG_DCB_ENABLED;
-			priv->cee_params.dcb_cfg.pfc_state = false;
+			priv->cee_config.pfc_state = false;
 		}
 	}
 #endif /* CONFIG_MLX4_EN_DCB */
@@ -2642,12 +2643,16 @@ static int mlx4_xdp_set(struct net_device *dev, struct bpf_prog *prog)
 			if (IS_ERR(prog))
 				return PTR_ERR(prog);
 		}
+		mutex_lock(&mdev->state_lock);
 		for (i = 0; i < priv->rx_ring_num; i++) {
-			/* This xchg is paired with READ_ONCE in the fastpath */
-			old_prog = xchg(&priv->rx_ring[i]->xdp_prog, prog);
+			old_prog = rcu_dereference_protected(
+					priv->rx_ring[i]->xdp_prog,
+					lockdep_is_held(&mdev->state_lock));
+			rcu_assign_pointer(priv->rx_ring[i]->xdp_prog, prog);
 			if (old_prog)
 				bpf_prog_put(old_prog);
 		}
+		mutex_unlock(&mdev->state_lock);
 		return 0;
 	}
 
@@ -2680,7 +2685,10 @@ static int mlx4_xdp_set(struct net_device *dev, struct bpf_prog *prog)
 							priv->xdp_ring_num);
 
 	for (i = 0; i < priv->rx_ring_num; i++) {
-		old_prog = xchg(&priv->rx_ring[i]->xdp_prog, prog);
+		old_prog = rcu_dereference_protected(
+					priv->rx_ring[i]->xdp_prog,
+					lockdep_is_held(&mdev->state_lock));
+		rcu_assign_pointer(priv->rx_ring[i]->xdp_prog, prog);
 		if (old_prog)
 			bpf_prog_put(old_prog);
 	}
@@ -3048,9 +3056,6 @@ int mlx4_en_init_netdev(struct mlx4_en_dev *mdev, int port,
 	struct mlx4_en_priv *priv;
 	int i;
 	int err;
-#ifdef CONFIG_MLX4_EN_DCB
-	struct tc_configuration *tc;
-#endif
 
 	dev = alloc_etherdev_mqs(sizeof(struct mlx4_en_priv),
 				 MAX_TX_RINGS, MAX_RX_RINGS);
@@ -3117,16 +3122,13 @@ int mlx4_en_init_netdev(struct mlx4_en_dev *mdev, int port,
 	priv->msg_enable = MLX4_EN_MSG_LEVEL;
 #ifdef CONFIG_MLX4_EN_DCB
 	if (!mlx4_is_slave(priv->mdev->dev)) {
-		priv->cee_params.dcbx_cap = DCB_CAP_DCBX_VER_CEE |
-					    DCB_CAP_DCBX_HOST |
-					    DCB_CAP_DCBX_VER_IEEE;
+		priv->dcbx_cap = DCB_CAP_DCBX_VER_CEE | DCB_CAP_DCBX_HOST |
+			DCB_CAP_DCBX_VER_IEEE;
 		priv->flags |= MLX4_EN_DCB_ENABLED;
-		priv->cee_params.dcb_cfg.pfc_state = false;
+		priv->cee_config.pfc_state = false;
 
-		for (i = 0; i < MLX4_EN_NUM_UP; i++) {
-			tc = &priv->cee_params.dcb_cfg.tc_config[i];
-			tc->dcb_pfc = pfc_disabled;
-		}
+		for (i = 0; i < MLX4_EN_NUM_UP; i++)
+			priv->cee_config.dcb_pfc[i] = pfc_disabled;
 
 		if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETS_CFG) {
 			dev->dcbnl_ops = &mlx4_en_dcbnl_ops;

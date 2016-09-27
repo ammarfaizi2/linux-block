@@ -318,9 +318,11 @@ struct qed_link_params {
 struct qed_link_output {
 	bool	link_up;
 
-	u32	supported_caps;         /* In SUPPORTED defs */
-	u32	advertised_caps;        /* In ADVERTISED defs */
-	u32	lp_caps;                /* In ADVERTISED defs */
+	/* In QED_LM_* defs */
+	u32	supported_caps;
+	u32	advertised_caps;
+	u32	lp_caps;
+
 	u32	speed;                  /* In Mb/s */
 	u8	duplex;                 /* In DUPLEX defs */
 	u8	port;                   /* In PORT defs */
@@ -452,6 +454,10 @@ struct qed_common_ops {
 
 	void		(*simd_handler_clean)(struct qed_dev *cdev,
 					      int index);
+
+	int (*dbg_all_data) (struct qed_dev *cdev, void *buffer);
+
+	int (*dbg_all_data_size) (struct qed_dev *cdev);
 
 /**
  * @brief can_link_change - can the instance change the link or not

@@ -1,7 +1,9 @@
 /* Xilinx GMII2RGMII Converter driver
  *
  * Copyright (C) 2016 Xilinx, Inc.
+ * Copyright (C) 2016 Andrew Lunn <andrew@lunn.ch>
  *
+ * Author: Andrew Lunn <andrew@lunn.ch>
  * Author: Kedareswara rao Appana <appanad@xilinx.com>
  *
  * Description:
@@ -56,7 +58,7 @@ static int xgmiitorgmii_read_status(struct phy_device *phydev)
 	return 0;
 }
 
-int xgmiitorgmii_probe(struct mdio_device *mdiodev)
+static int xgmiitorgmii_probe(struct mdio_device *mdiodev)
 {
 	struct device *dev = &mdiodev->dev;
 	struct device_node *np = dev->of_node, *phy_node;
@@ -73,6 +75,7 @@ int xgmiitorgmii_probe(struct mdio_device *mdiodev)
 	}
 
 	priv->phy_dev = of_phy_find_device(phy_node);
+	of_node_put(phy_node);
 	if (!priv->phy_dev) {
 		dev_info(dev, "Couldn't find phydev\n");
 		return -EPROBE_DEFER;

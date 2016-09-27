@@ -460,10 +460,8 @@ int qed_init_run(struct qed_hwfn *p_hwfn,
 	init_ops = cdev->fw_data->init_ops;
 
 	p_hwfn->unzip_buf = kzalloc(MAX_ZIPPED_SIZE * 4, GFP_ATOMIC);
-	if (!p_hwfn->unzip_buf) {
-		DP_NOTICE(p_hwfn, "Failed to allocate unzip buffer\n");
+	if (!p_hwfn->unzip_buf)
 		return -ENOMEM;
-	}
 
 	for (cmd_num = 0; cmd_num < num_init_ops; cmd_num++) {
 		union init_op *cmd = &init_ops[cmd_num];
@@ -534,7 +532,7 @@ int qed_init_fw_data(struct qed_dev *cdev, const u8 *data)
 	/* First Dword contains metadata and should be skipped */
 	buf_hdr = (struct bin_buffer_hdr *)(data + sizeof(u32));
 
-	offset = buf_hdr[BIN_BUF_FW_VER_INFO].offset;
+	offset = buf_hdr[BIN_BUF_INIT_FW_VER_INFO].offset;
 	fw->fw_ver_info = (struct fw_ver_info *)(data + offset);
 
 	offset = buf_hdr[BIN_BUF_INIT_CMD].offset;

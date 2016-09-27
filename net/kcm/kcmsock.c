@@ -23,10 +23,10 @@
 #include <linux/socket.h>
 #include <linux/uaccess.h>
 #include <linux/workqueue.h>
+#include <linux/syscalls.h>
 #include <net/kcm.h>
 #include <net/netns/generic.h>
 #include <net/sock.h>
-#include <net/tcp.h>
 #include <uapi/linux/kcm.h>
 
 unsigned int kcm_net_id;
@@ -340,7 +340,7 @@ static void unreserve_rx_kcm(struct kcm_psock *psock,
 }
 
 /* Lower sock lock held */
-static void psock_tcp_data_ready(struct sock *sk)
+static void psock_data_ready(struct sock *sk)
 {
 	struct kcm_psock *psock;
 
@@ -348,7 +348,7 @@ static void psock_tcp_data_ready(struct sock *sk)
 
 	psock = (struct kcm_psock *)sk->sk_user_data;
 	if (likely(psock))
-		strp_tcp_data_ready(&psock->strp);
+		strp_data_ready(&psock->strp);
 
 	read_unlock_bh(&sk->sk_callback_lock);
 }
@@ -392,7 +392,7 @@ static int kcm_read_sock_done(struct strparser *strp, int err)
 	return err;
 }
 
-static void psock_tcp_state_change(struct sock *sk)
+static void psock_state_change(struct sock *sk)
 {
 	/* TCP only does a POLLIN for a half close. Do a POLLHUP here
 	 * since application will normally not poll with POLLIN
@@ -402,7 +402,7 @@ static void psock_tcp_state_change(struct sock *sk)
 	report_csk_error(sk, EPIPE);
 }
 
-static void psock_tcp_write_space(struct sock *sk)
+static void psock_write_space(struct sock *sk)
 {
 	struct kcm_psock *psock;
 	struct kcm_mux *mux;
@@ -1383,17 +1383,10 @@ static int kcm_attach(struct socket *sock, struct socket *csock,
 	struct list_head *head;
 	int index = 0;
 	struct strp_callbacks cb;
-
-	if (csock->ops->family != PF_INET &&
-	    csock->ops->family != PF_INET6)
-		return -EINVAL;
+	int err;
 
 	csk = csock->sk;
 	if (!csk)
-		return -EINVAL;
-
-	/* Only support TCP for now */
-	if (csk->sk_protocol != IPPROTO_TCP)
 		return -EINVAL;
 
 	psock = kmem_cache_zalloc(kcm_psockp, GFP_KERNEL);
@@ -1409,7 +1402,11 @@ static int kcm_attach(struct socket *sock, struct socket *csock,
 	cb.parse_msg = kcm_parse_func_strparser;
 	cb.read_sock_done = kcm_read_sock_done;
 
-	strp_init(&psock->strp, csk, &cb);
+	err = strp_init(&psock->strp, csk, &cb);
+	if (err) {
+		kmem_cache_free(kcm_psockp, psock);
+		return err;
+	}
 
 	sock_hold(csk);
 
@@ -1418,9 +1415,9 @@ static int kcm_attach(struct socket *sock, struct socket *csock,
 	psock->save_write_space = csk->sk_write_space;
 	psock->save_state_change = csk->sk_state_change;
 	csk->sk_user_data = psock;
-	csk->sk_data_ready = psock_tcp_data_ready;
-	csk->sk_write_space = psock_tcp_write_space;
-	csk->sk_state_change = psock_tcp_state_change;
+	csk->sk_data_ready = psock_data_ready;
+	csk->sk_write_space = psock_write_space;
+	csk->sk_state_change = psock_state_change;
 	write_unlock_bh(&csk->sk_callback_lock);
 
 	/* Finished initialization, now add the psock to the MUX. */
@@ -1477,11 +1474,12 @@ out:
 	return err;
 }
 
-/* Lower socket lock held */
 static void kcm_unattach(struct kcm_psock *psock)
 {
 	struct sock *csk = psock->sk;
 	struct kcm_mux *mux = psock->mux;
+
+	lock_sock(csk);
 
 	/* Stop getting callbacks from TCP socket. After this there should
 	 * be no way to reserve a kcm for this psock.
@@ -1514,7 +1512,10 @@ static void kcm_unattach(struct kcm_psock *psock)
 
 	write_unlock_bh(&csk->sk_callback_lock);
 
+	/* Call strp_done without sock lock */
+	release_sock(csk);
 	strp_done(&psock->strp);
+	lock_sock(csk);
 
 	bpf_prog_put(psock->bpf_prog);
 
@@ -1564,6 +1565,8 @@ no_reserved:
 		fput(csk->sk_socket->file);
 		kmem_cache_free(kcm_psockp, psock);
 	}
+
+	release_sock(csk);
 }
 
 static int kcm_unattach_ioctl(struct socket *sock, struct kcm_unattach *info)
@@ -1719,7 +1722,7 @@ static int kcm_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 			if (copy_to_user((void __user *)arg, &info,
 					 sizeof(info))) {
 				err = -EFAULT;
-				sock_release(newsock);
+				sys_close(info.fd);
 			}
 		}
 
@@ -1749,11 +1752,8 @@ static void release_mux(struct kcm_mux *mux)
 	/* Release psocks */
 	list_for_each_entry_safe(psock, tmp_psock,
 				 &mux->psocks, psock_list) {
-		if (!WARN_ON(psock->unattaching)) {
-			lock_sock(psock->strp.sk);
+		if (!WARN_ON(psock->unattaching))
 			kcm_unattach(psock);
-			release_sock(psock->strp.sk);
-		}
 	}
 
 	if (WARN_ON(mux->psocks_cnt))
