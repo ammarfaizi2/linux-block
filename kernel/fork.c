@@ -166,6 +166,7 @@ void __weak arch_release_thread_stack(unsigned long *stack)
  * flush.  Try to minimize the number of calls by caching stacks.
  */
 #define NR_CACHED_STACKS 2
+#define FREE_STACK_COOKIE 0xBF007F79
 static DEFINE_PER_CPU(struct vm_struct *, cached_stacks[NR_CACHED_STACKS]);
 #endif
 
@@ -185,6 +186,8 @@ static unsigned long *alloc_thread_stack_node(struct task_struct *tsk, int node)
 
 		tsk->stack_vm_area = s;
 		local_irq_enable();
+
+		BUG_ON(atomic_xchg((atomic_t *)s->addr, 0) != FREE_STACK_COOKIE);
 		return s->addr;
 	}
 	local_irq_enable();
@@ -217,6 +220,9 @@ static inline void free_thread_stack(struct task_struct *tsk)
 	if (task_stack_vm_area(tsk)) {
 		unsigned long flags;
 		int i;
+
+		BUG_ON(task_stack_page(tsk) != tsk->stack_vm_area->addr);
+		atomic_set((atomic_t*)task_stack_page(tsk), FREE_STACK_COOKIE);
 
 		local_irq_save(flags);
 		for (i = 0; i < NR_CACHED_STACKS; i++) {
