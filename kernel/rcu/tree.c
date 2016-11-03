@@ -322,7 +322,7 @@ static void rcu_dynticks_eqs_exit(void)
  * Snapshot the ->dynticks counter with full ordering so as to allow
  * stable comparison of this counter with past and future snapshots.
  */
-static int rcu_dynticks_snap(struct rcu_dynticks *rdtp)
+int rcu_dynticks_snap(struct rcu_dynticks *rdtp)
 {
 	int snap = atomic_add_return(0, &rdtp->dynticks);
 
@@ -336,6 +336,16 @@ static int rcu_dynticks_snap(struct rcu_dynticks *rdtp)
 static bool rcu_dynticks_in_eqs(int snap)
 {
 	return !(snap & 0x1);
+}
+
+/*
+ * Return true if the CPU corresponding to the specified rcu_dynticks
+ * structure has spent some time in an extended quiescent state since
+ * rcu_dynticks_snap() returned the specified snapshot.
+ */
+static bool rcu_dynticks_in_eqs_since(struct rcu_dynticks *rdtp, int snap)
+{
+	return snap != rcu_dynticks_snap(rdtp);
 }
 
 /*
@@ -1173,7 +1183,7 @@ static int dyntick_save_progress_counter(struct rcu_data *rdp,
 {
 	rdp->dynticks_snap = rcu_dynticks_snap(rdp->dynticks);
 	rcu_sysidle_check_cpu(rdp, isidle, maxj);
-	if ((rdp->dynticks_snap & 0x1) == 0) {
+	if (rcu_dynticks_in_eqs(rdp->dynticks_snap)) {
 		trace_rcu_fqs(rdp->rsp->name, rdp->gpnum, rdp->cpu, TPS("dti"));
 		if (ULONG_CMP_LT(READ_ONCE(rdp->gpnum) + ULONG_MAX / 4,
 				 rdp->mynode->gpnum))
@@ -1192,12 +1202,7 @@ static int dyntick_save_progress_counter(struct rcu_data *rdp,
 static int rcu_implicit_dynticks_qs(struct rcu_data *rdp,
 				    bool *isidle, unsigned long *maxj)
 {
-	unsigned int curr;
 	int *rcrmp;
-	unsigned int snap;
-
-	curr = (unsigned int)rcu_dynticks_snap(rdp->dynticks);
-	snap = (unsigned int)rdp->dynticks_snap;
 
 	/*
 	 * If the CPU passed through or entered a dynticks idle phase with
@@ -1207,7 +1212,7 @@ static int rcu_implicit_dynticks_qs(struct rcu_data *rdp,
 	 * read-side critical section that started before the beginning
 	 * of the current RCU grace period.
 	 */
-	if ((curr & 0x1) == 0 || UINT_CMP_GE(curr, snap + 2)) {
+	if (rcu_dynticks_in_eqs_since(rdp->dynticks, rdp->dynticks_snap)) {
 		trace_rcu_fqs(rdp->rsp->name, rdp->gpnum, rdp->cpu, TPS("dti"));
 		rdp->dynticks_fqs++;
 		return 1;
