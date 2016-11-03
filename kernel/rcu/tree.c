@@ -330,6 +330,15 @@ static int rcu_dynticks_snap(struct rcu_dynticks *rdtp)
 }
 
 /*
+ * Return true if the snapshot returned from rcu_dynticks_snap()
+ * indicates that RCU is in an extended quiescent state.
+ */
+static bool rcu_dynticks_in_eqs(int snap)
+{
+	return !(snap & 0x1);
+}
+
+/*
  * Do a double-increment of the ->dynticks counter to emulate a
  * momentary idle-CPU quiescent state.
  */
