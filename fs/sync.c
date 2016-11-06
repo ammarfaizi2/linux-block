@@ -18,7 +18,7 @@
 #include "internal.h"
 
 #define VALID_FLAGS (SYNC_FILE_RANGE_WAIT_BEFORE|SYNC_FILE_RANGE_WRITE| \
-			SYNC_FILE_RANGE_WAIT_AFTER)
+			SYNC_FILE_RANGE_WAIT_AFTER|SYNC_FILE_RANGE_BACKGROUND)
 
 /*
  * Do the filesystem syncing work. For simple filesystems
@@ -348,8 +348,10 @@ SYSCALL_DEFINE4(sync_file_range, int, fd, loff_t, offset, loff_t, nbytes,
 	}
 
 	if (flags & SYNC_FILE_RANGE_WRITE) {
+		bool background = flags & SYNC_FILE_RANGE_BACKGROUND;
+
 		ret = __filemap_fdatawrite_range(mapping, offset, endbyte,
-						 WB_SYNC_NONE);
+						 WB_SYNC_NONE, background);
 		if (ret < 0)
 			goto out_put;
 	}

@@ -363,6 +363,7 @@ EXPORT_SYMBOL(filemap_check_errors);
  * @start:	offset in bytes where the range starts
  * @end:	offset in bytes where the range ends (inclusive)
  * @sync_mode:	enable synchronous operation
+ * @background:	This is a background write operation
  *
  * Start writeback against all of a mapping's dirty pages that lie
  * within the byte offsets <start, end> inclusive.
@@ -373,11 +374,12 @@ EXPORT_SYMBOL(filemap_check_errors);
  * be waited upon, and not just skipped over.
  */
 int __filemap_fdatawrite_range(struct address_space *mapping, loff_t start,
-				loff_t end, int sync_mode)
+				loff_t end, int sync_mode, bool background)
 {
 	int ret;
 	struct writeback_control wbc = {
 		.sync_mode = sync_mode,
+		.for_background = background,
 		.nr_to_write = LONG_MAX,
 		.range_start = start,
 		.range_end = end,
@@ -395,7 +397,8 @@ int __filemap_fdatawrite_range(struct address_space *mapping, loff_t start,
 static inline int __filemap_fdatawrite(struct address_space *mapping,
 	int sync_mode)
 {
-	return __filemap_fdatawrite_range(mapping, 0, LLONG_MAX, sync_mode);
+	return __filemap_fdatawrite_range(mapping, 0, LLONG_MAX, sync_mode,
+						false);
 }
 
 int filemap_fdatawrite(struct address_space *mapping)
@@ -407,7 +410,8 @@ EXPORT_SYMBOL(filemap_fdatawrite);
 int filemap_fdatawrite_range(struct address_space *mapping, loff_t start,
 				loff_t end)
 {
-	return __filemap_fdatawrite_range(mapping, start, end, WB_SYNC_ALL);
+	return __filemap_fdatawrite_range(mapping, start, end, WB_SYNC_ALL,
+						false);
 }
 EXPORT_SYMBOL(filemap_fdatawrite_range);
 
@@ -578,7 +582,7 @@ int filemap_write_and_wait_range(struct address_space *mapping,
 	if ((!dax_mapping(mapping) && mapping->nrpages) ||
 	    (dax_mapping(mapping) && mapping->nrexceptional)) {
 		err = __filemap_fdatawrite_range(mapping, lstart, lend,
-						 WB_SYNC_ALL);
+						 WB_SYNC_ALL, false);
 		/* See comment of filemap_write_and_wait() */
 		if (err != -EIO) {
 			int err2 = filemap_fdatawait_range(mapping,

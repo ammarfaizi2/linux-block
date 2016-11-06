@@ -117,7 +117,7 @@ SYSCALL_DEFINE4(fadvise64_64, int, fd, loff_t, offset, loff_t, len, int, advice)
 	case POSIX_FADV_DONTNEED:
 		if (!inode_write_congested(mapping->host))
 			__filemap_fdatawrite_range(mapping, offset, endbyte,
-						   WB_SYNC_NONE);
+						   WB_SYNC_NONE, true);
 
 		/*
 		 * First and last FULL page! Partial pages are deliberately
