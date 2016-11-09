@@ -1,4 +1,5 @@
-TARGETS = breakpoints
+TARGETS =  bpf
+TARGETS += breakpoints
 TARGETS += capabilities
 TARGETS += cpu-hotplug
 TARGETS += efivarfs
@@ -15,6 +16,7 @@ TARGETS += memory-hotplug
 TARGETS += mount
 TARGETS += mqueue
 TARGETS += net
+TARGETS += nsfs
 TARGETS += powerpc
 TARGETS += pstore
 TARGETS += ptrace

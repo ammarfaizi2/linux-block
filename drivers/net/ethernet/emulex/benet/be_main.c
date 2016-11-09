@@ -724,14 +724,24 @@ void be_link_status_update(struct be_adapter *adapter, u8 link_status)
 	netdev_info(netdev, "Link is %s\n", link_status ? "Up" : "Down");
 }
 
+static int be_gso_hdr_len(struct sk_buff *skb)
+{
+	if (skb->encapsulation)
+		return skb_inner_transport_offset(skb) +
+		       inner_tcp_hdrlen(skb);
+	return skb_transport_offset(skb) + tcp_hdrlen(skb);
+}
+
 static void be_tx_stats_update(struct be_tx_obj *txo, struct sk_buff *skb)
 {
 	struct be_tx_stats *stats = tx_stats(txo);
-	u64 tx_pkts = skb_shinfo(skb)->gso_segs ? : 1;
+	u32 tx_pkts = skb_shinfo(skb)->gso_segs ? : 1;
+	/* Account for headers which get duplicated in TSO pkt */
+	u32 dup_hdr_len = tx_pkts > 1 ? be_gso_hdr_len(skb) * (tx_pkts - 1) : 0;
 
 	u64_stats_update_begin(&stats->sync);
 	stats->tx_reqs++;
-	stats->tx_bytes += skb->len;
+	stats->tx_bytes += skb->len + dup_hdr_len;
 	stats->tx_pkts += tx_pkts;
 	if (skb->encapsulation && skb->ip_summed == CHECKSUM_PARTIAL)
 		stats->tx_vxlan_offload_pkts += tx_pkts;
@@ -1394,23 +1404,6 @@ drop:
 		be_xmit_flush(adapter, txo);
 
 	return NETDEV_TX_OK;
-}
-
-static int be_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	struct be_adapter *adapter = netdev_priv(netdev);
-	struct device *dev = &adapter->pdev->dev;
-
-	if (new_mtu < BE_MIN_MTU || new_mtu > BE_MAX_MTU) {
-		dev_info(dev, "MTU must be between %d and %d bytes\n",
-			 BE_MIN_MTU, BE_MAX_MTU);
-		return -EINVAL;
-	}
-
-	dev_info(dev, "MTU changed from %d to %d bytes\n",
-		 netdev->mtu, new_mtu);
-	netdev->mtu = new_mtu;
-	return 0;
 }
 
 static inline bool be_in_all_promisc(struct be_adapter *adapter)
@@ -5206,7 +5199,6 @@ static const struct net_device_ops be_netdev_ops = {
 	.ndo_start_xmit		= be_xmit,
 	.ndo_set_rx_mode	= be_set_rx_mode,
 	.ndo_set_mac_address	= be_mac_addr_set,
-	.ndo_change_mtu		= be_change_mtu,
 	.ndo_get_stats64	= be_get_stats64,
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_vlan_rx_add_vid	= be_vlan_add_vid,
@@ -5256,6 +5248,10 @@ static void be_netdev_init(struct net_device *netdev)
 	netdev->netdev_ops = &be_netdev_ops;
 
 	netdev->ethtool_ops = &be_ethtool_ops;
+
+	/* MTU range: 256 - 9000 */
+	netdev->min_mtu = BE_MIN_MTU;
+	netdev->max_mtu = BE_MAX_MTU;
 }
 
 static void be_cleanup(struct be_adapter *adapter)

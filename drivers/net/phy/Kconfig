@@ -15,6 +15,19 @@ if PHYLIB
 config SWPHY
 	bool
 
+config LED_TRIGGER_PHY
+	bool "Support LED triggers for tracking link state"
+	depends on LEDS_TRIGGERS
+	---help---
+	  Adds support for a set of LED trigger events per-PHY.  Link
+	  state change will trigger the events, for consumption by an
+	  LED class driver.  There are triggers for each link speed currently
+	  supported by the phy, and are of the form:
+	       <mii bus id>:<phy>:<speed>
+
+	  Where speed is in the form:
+		<Speed in megabits>Mbps or <Speed in gigabits>Gbps
+
 comment "MDIO bus device drivers"
 
 config MDIO_BCM_IPROC
@@ -142,6 +155,7 @@ config MDIO_THUNDER
 
 config MDIO_XGENE
 	tristate "APM X-Gene SoC MDIO bus controller"
+	depends on ARCH_XGENE || COMPILE_TEST
 	help
 	  This module provides a driver for the MDIO busses found in the
 	  APM X-Gene SoC's.
@@ -319,13 +333,6 @@ config XILINX_GMII2RGMII
          This driver support xilinx GMII to RGMII IP core it provides
          the Reduced Gigabit Media Independent Interface(RGMII) between
          Ethernet physical media devices and the Gigabit Ethernet controller.
-
-config MDIO_XGENE
-	tristate "APM X-Gene SoC MDIO bus controller"
-	depends on ARCH_XGENE || COMPILE_TEST
-	help
-	  This module provides a driver for the MDIO busses found in the
-	  APM X-Gene SoC's.
 
 endif # PHYLIB
 

@@ -613,6 +613,7 @@ static int xgbe_probe(struct platform_device *pdev)
 	attr = device_get_dma_attr(dev);
 	if (attr == DEV_DMA_NOT_SUPPORTED) {
 		dev_err(dev, "DMA is not supported");
+		ret = -ENODEV;
 		goto err_io;
 	}
 	pdata->coherent = (attr == DEV_DMA_COHERENT);
@@ -738,6 +739,8 @@ static int xgbe_probe(struct platform_device *pdev)
 	pdata->netdev_features = netdev->features;
 
 	netdev->priv_flags |= IFF_UNICAST_FLT;
+	netdev->min_mtu = 0;
+	netdev->max_mtu = XGMAC_JUMBO_PACKET_MTU;
 
 	/* Use default watchdog timeout */
 	netdev->watchdog_timeo = 0;

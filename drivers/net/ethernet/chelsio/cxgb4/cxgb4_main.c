@@ -2502,8 +2502,6 @@ static int cxgb_change_mtu(struct net_device *dev, int new_mtu)
 	int ret;
 	struct port_info *pi = netdev_priv(dev);
 
-	if (new_mtu < 81 || new_mtu > MAX_MTU)         /* accommodate SACK */
-		return -EINVAL;
 	ret = t4_set_rxmode(pi->adapter, pi->adapter->pf, pi->viid, new_mtu, -1,
 			    -1, -1, -1, true);
 	if (!ret)
@@ -3668,6 +3666,12 @@ static int adap_init0(struct adapter *adap)
 		adap->params.ulptx_memwrite_dsgl = (ret == 0 && val[0] != 0);
 	}
 
+	/* See if FW supports FW_RI_FR_NSMR_TPTE_WR work request */
+	params[0] = FW_PARAM_DEV(RI_FR_NSMR_TPTE_WR);
+	ret = t4_query_params(adap, adap->mbox, adap->pf, 0,
+			      1, params, val);
+	adap->params.fr_nsmr_tpte_wr_support = (ret == 0 && val[0] != 0);
+
 	/*
 	 * Get device capabilities so we can determine what resources we need
 	 * to manage.
@@ -4796,6 +4800,10 @@ static int init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		netdev->vlan_features = netdev->features & VLAN_FEAT;
 
 		netdev->priv_flags |= IFF_UNICAST_FLT;
+
+		/* MTU range: 81 - 9600 */
+		netdev->min_mtu = 81;
+		netdev->max_mtu = MAX_MTU;
 
 		netdev->netdev_ops = &cxgb4_netdev_ops;
 #ifdef CONFIG_CHELSIO_T4_DCB

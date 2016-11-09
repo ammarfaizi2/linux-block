@@ -1871,9 +1871,6 @@ void tcp_v4_destroy_sock(struct sock *sk)
 	local_bh_disable();
 	sk_sockets_allocated_dec(sk);
 	local_bh_enable();
-
-	if (mem_cgroup_sockets_enabled && sk->sk_memcg)
-		sock_release_memcg(sk);
 }
 EXPORT_SYMBOL(tcp_v4_destroy_sock);
 
@@ -1896,7 +1893,7 @@ static void *listening_get_next(struct seq_file *seq, void *cur)
 	if (!sk) {
 get_head:
 		ilb = &tcp_hashinfo.listening_hash[st->bucket];
-		spin_lock_bh(&ilb->lock);
+		spin_lock(&ilb->lock);
 		sk = sk_head(&ilb->head);
 		st->offset = 0;
 		goto get_sk;
@@ -1914,7 +1911,7 @@ get_sk:
 			return sk;
 		icsk = inet_csk(sk);
 	}
-	spin_unlock_bh(&ilb->lock);
+	spin_unlock(&ilb->lock);
 	st->offset = 0;
 	if (++st->bucket < INET_LHTABLE_SIZE)
 		goto get_head;
@@ -2122,7 +2119,7 @@ static void tcp_seq_stop(struct seq_file *seq, void *v)
 	switch (st->state) {
 	case TCP_SEQ_STATE_LISTENING:
 		if (v != SEQ_START_TOKEN)
-			spin_unlock_bh(&tcp_hashinfo.listening_hash[st->bucket].lock);
+			spin_unlock(&tcp_hashinfo.listening_hash[st->bucket].lock);
 		break;
 	case TCP_SEQ_STATE_ESTABLISHED:
 		if (v)

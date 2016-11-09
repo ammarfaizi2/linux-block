@@ -431,8 +431,7 @@ static void axienet_setoptions(struct net_device *ndev, u32 options)
 	lp->options |= options;
 }
 
-static void __axienet_device_reset(struct axienet_local *lp,
-				   struct device *dev, off_t offset)
+static void __axienet_device_reset(struct axienet_local *lp, off_t offset)
 {
 	u32 timeout;
 	/* Reset Axi DMA. This would reset Axi Ethernet core as well. The reset
@@ -468,8 +467,8 @@ static void axienet_device_reset(struct net_device *ndev)
 	u32 axienet_status;
 	struct axienet_local *lp = netdev_priv(ndev);
 
-	__axienet_device_reset(lp, &ndev->dev, XAXIDMA_TX_CR_OFFSET);
-	__axienet_device_reset(lp, &ndev->dev, XAXIDMA_RX_CR_OFFSET);
+	__axienet_device_reset(lp, XAXIDMA_TX_CR_OFFSET);
+	__axienet_device_reset(lp, XAXIDMA_RX_CR_OFFSET);
 
 	lp->max_frm_size = XAE_MAX_VLAN_FRAME_SIZE;
 	lp->options |= XAE_OPTION_VLAN;
@@ -818,7 +817,7 @@ static irqreturn_t axienet_tx_irq(int irq, void *_ndev)
 		goto out;
 	}
 	if (!(status & XAXIDMA_IRQ_ALL_MASK))
-		dev_err(&ndev->dev, "No interrupts asserted in Tx path");
+		dev_err(&ndev->dev, "No interrupts asserted in Tx path\n");
 	if (status & XAXIDMA_IRQ_ERROR_MASK) {
 		dev_err(&ndev->dev, "DMA Tx error 0x%x\n", status);
 		dev_err(&ndev->dev, "Current BD is at: 0x%x\n",
@@ -867,7 +866,7 @@ static irqreturn_t axienet_rx_irq(int irq, void *_ndev)
 		goto out;
 	}
 	if (!(status & XAXIDMA_IRQ_ALL_MASK))
-		dev_err(&ndev->dev, "No interrupts asserted in Rx path");
+		dev_err(&ndev->dev, "No interrupts asserted in Rx path\n");
 	if (status & XAXIDMA_IRQ_ERROR_MASK) {
 		dev_err(&ndev->dev, "DMA Rx error 0x%x\n", status);
 		dev_err(&ndev->dev, "Current BD is at: 0x%x\n",
@@ -1033,9 +1032,6 @@ static int axienet_change_mtu(struct net_device *ndev, int new_mtu)
 
 	if ((new_mtu + VLAN_ETH_HLEN +
 		XAE_TRL_SIZE) > lp->rxmem)
-		return -EINVAL;
-
-	if ((new_mtu > XAE_JUMBO_MTU) || (new_mtu < 64))
 		return -EINVAL;
 
 	ndev->mtu = new_mtu;
@@ -1338,8 +1334,8 @@ static void axienet_dma_err_handler(unsigned long data)
 	axienet_iow(lp, XAE_MDIO_MC_OFFSET, (mdio_mcreg &
 		    ~XAE_MDIO_MC_MDIOEN_MASK));
 
-	__axienet_device_reset(lp, &ndev->dev, XAXIDMA_TX_CR_OFFSET);
-	__axienet_device_reset(lp, &ndev->dev, XAXIDMA_RX_CR_OFFSET);
+	__axienet_device_reset(lp, XAXIDMA_TX_CR_OFFSET);
+	__axienet_device_reset(lp, XAXIDMA_RX_CR_OFFSET);
 
 	axienet_iow(lp, XAE_MDIO_MC_OFFSET, mdio_mcreg);
 	axienet_mdio_wait_until_ready(lp);
@@ -1475,6 +1471,10 @@ static int axienet_probe(struct platform_device *pdev)
 	ndev->features = NETIF_F_SG;
 	ndev->netdev_ops = &axienet_netdev_ops;
 	ndev->ethtool_ops = &axienet_ethtool_ops;
+
+	/* MTU range: 64 - 9000 */
+	ndev->min_mtu = 64;
+	ndev->max_mtu = XAE_JUMBO_MTU;
 
 	lp = netdev_priv(ndev);
 	lp->ndev = ndev;

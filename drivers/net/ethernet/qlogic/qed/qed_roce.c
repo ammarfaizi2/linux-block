@@ -2747,7 +2747,6 @@ static int qed_roce_ll2_start(struct qed_dev *cdev,
 		DP_ERR(cdev, "qed roce ll2 start: failed memory allocation\n");
 		return -ENOMEM;
 	}
-	memset(roce_ll2, 0, sizeof(*roce_ll2));
 	roce_ll2->handle = QED_LL2_UNUSED_HANDLE;
 	roce_ll2->cbs = params->cbs;
 	roce_ll2->cb_cookie = params->cb_cookie;
@@ -2947,7 +2946,7 @@ static const struct qed_rdma_ops qed_rdma_ops_pass = {
 	.roce_ll2_stats = &qed_roce_ll2_stats,
 };
 
-const struct qed_rdma_ops *qed_get_rdma_ops()
+const struct qed_rdma_ops *qed_get_rdma_ops(void)
 {
 	return &qed_rdma_ops_pass;
 }
