@@ -299,7 +299,9 @@ static int get_name(const struct path *path, char *name, struct dentry *child)
 	 * filesystem supports 64-bit inode numbers.  So we need to
 	 * actually call ->getattr, not just read i_ino:
 	 */
-	error = vfs_getattr_nosec(&child_path, &stat);
+	stat.query_flags = 0;
+	stat.request_mask = STATX_BASIC_STATS;
+	error = vfs_xgetattr_nosec(&child_path, &stat);
 	if (error)
 		return error;
 	buffer.ino = stat.ino;
