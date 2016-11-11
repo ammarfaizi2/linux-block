@@ -1139,7 +1139,9 @@ void rcu_nmi_exit(void)
  */
 bool notrace __rcu_is_watching(void)
 {
-	return atomic_read(this_cpu_ptr(&rcu_dynticks.dynticks)) & 0x1;
+	struct rcu_dynticks *rdtp = this_cpu_ptr(&rcu_dynticks);
+
+	return rcu_dynticks_in_eqs(rcu_dynticks_snap(rdtp));
 }
 
 /**
