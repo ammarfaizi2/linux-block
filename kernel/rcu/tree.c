@@ -1141,7 +1141,7 @@ bool notrace __rcu_is_watching(void)
 {
 	struct rcu_dynticks *rdtp = this_cpu_ptr(&rcu_dynticks);
 
-	return rcu_dynticks_in_eqs(rcu_dynticks_snap(rdtp));
+	return !rcu_dynticks_in_eqs(rcu_dynticks_snap(rdtp));
 }
 
 /**
