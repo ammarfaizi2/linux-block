@@ -265,6 +265,7 @@ struct blkdev_dio {
 	struct task_struct	*waiter;
 	size_t			size;
 	atomic_t		ref;
+	bool			multi_bio : 1;
 	bool			should_dirty : 1;
 	struct bio		bio;
 };
@@ -276,7 +277,7 @@ static void blkdev_bio_end_io(struct bio *bio)
 	struct blkdev_dio *dio = bio->bi_private;
 	struct kiocb *iocb = dio->iocb;
 
-	if (!atomic_dec_and_test(&dio->ref)) {
+	if (dio->multi_bio && !atomic_dec_and_test(&dio->ref)) {
 		if (bio->bi_error && !dio->bio.bi_error)
 			dio->bio.bi_error = bio->bi_error;
 	} else {
@@ -335,7 +336,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 	dio->iocb = is_sync ? NULL : iocb;
 	dio->waiter = current;
 	dio->size = 0;
-	atomic_set(&dio->ref, 1);
+	dio->multi_bio = false;
 	dio->should_dirty = is_read && (iter->type == ITER_IOVEC);
 
 	for (;;) {
@@ -375,7 +376,13 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 			break;
 		}
 
-		atomic_inc(&dio->ref);
+		if (!dio->multi_bio) {
+			dio->multi_bio = true;
+			atomic_set(&dio->ref, 2);
+		} else {
+			atomic_inc(&dio->ref);
+		}
+
 		submit_bio(bio);
 		bio = bio_alloc(GFP_KERNEL, nr_pages);
 	}
