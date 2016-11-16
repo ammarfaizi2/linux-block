@@ -69,6 +69,7 @@
 #include <linux/crash_dump.h>
 #include <linux/tboot.h>
 #include <linux/jiffies.h>
+#include <linux/security.h>
 
 #include <video/edid.h>
 
@@ -1159,6 +1160,12 @@ void __init setup_arch(char **cmdline_p)
 	vsmp_init();
 
 	io_delay_init();
+
+	if (boot_params.secure_boot &&
+	    IS_ENABLED(CONFIG_EFI_SECURE_BOOT_LOCK_DOWN)) {
+		lock_kernel_down();
+		pr_info("Secure boot enabled\n");
+	}
 
 	/*
 	 * Parse the ACPI tables for possible boot-time SMP configuration.
