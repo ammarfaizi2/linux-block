@@ -1164,6 +1164,7 @@ void __init setup_arch(char **cmdline_p)
 	if (boot_params.secure_boot &&
 	    IS_ENABLED(CONFIG_EFI_SECURE_BOOT_LOCK_DOWN)) {
 		lock_kernel_down();
+		set_bit(EFI_SECURE_BOOT, &efi.flags);
 		pr_info("Secure boot enabled\n");
 	}
 
