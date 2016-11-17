@@ -176,6 +176,17 @@ static struct inode *bdev_file_inode(struct file *file)
 	return file->f_mapping->host;
 }
 
+static void dio_bio_set_write_op(struct bio *bio, struct kiocb *iocb)
+{
+	unsigned int op = REQ_OP_WRITE | REQ_SYNC | REQ_IDLE;
+
+	/* avoid the need for a I/O completion work item */
+	if (iocb->ki_flags & IOCB_DSYNC)
+		op |= REQ_FUA;
+
+	bio->bi_opf = op;
+}
+
 #define DIO_INLINE_BIO_VECS 4
 
 static void blkdev_bio_end_io_simple(struct bio *bio)
@@ -230,7 +241,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
 		if (iter_is_iovec(iter))
 			should_dirty = true;
 	} else {
-		bio_set_op_attrs(&bio, REQ_OP_WRITE, REQ_SYNC | REQ_IDLE);
+		dio_bio_set_write_op(&bio, iocb);
 		task_io_account_write(ret);
 	}
 
@@ -357,13 +368,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 			if (dio->should_dirty)
 				bio_set_pages_dirty(bio);
 		} else {
-			unsigned int op = REQ_OP_WRITE | REQ_SYNC | REQ_IDLE;
-
-			/* avoid the need for a I/O completion work item */
-			if (!is_sync && (iocb->ki_flags & IOCB_DSYNC))
-				op |= REQ_FUA;
-
-			bio->bi_opf = op;
+			dio_bio_set_write_op(bio, iocb);
 			task_io_account_write(bio->bi_iter.bi_size);
 		}
 
