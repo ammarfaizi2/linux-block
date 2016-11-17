@@ -272,12 +272,15 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
 }
 
 struct blkdev_dio {
-	struct kiocb		*iocb;
-	struct task_struct	*waiter;
+	union {
+		struct kiocb		*iocb;
+		struct task_struct	*waiter;
+	};
 	size_t			size;
 	atomic_t		ref;
 	bool			multi_bio : 1;
 	bool			should_dirty : 1;
+	bool			is_sync : 1;
 	struct bio		bio;
 };
 
@@ -286,13 +289,13 @@ static struct bio_set *blkdev_dio_pool __read_mostly;
 static void blkdev_bio_end_io(struct bio *bio)
 {
 	struct blkdev_dio *dio = bio->bi_private;
-	struct kiocb *iocb = dio->iocb;
 
 	if (dio->multi_bio && !atomic_dec_and_test(&dio->ref)) {
 		if (bio->bi_error && !dio->bio.bi_error)
 			dio->bio.bi_error = bio->bi_error;
 	} else {
-		if (iocb) {
+		if (!dio->is_sync) {
+			struct kiocb *iocb = dio->iocb;
 			ssize_t ret = dio->bio.bi_error;
 
 			if (likely(!ret)) {
@@ -332,7 +335,6 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 	struct blkdev_dio *dio;
 	struct bio *bio;
 	bool is_read = (iov_iter_rw(iter) == READ);
-	bool is_sync = is_sync_kiocb(iocb);
 	loff_t pos = iocb->ki_pos;
 	blk_qc_t qc = BLK_QC_T_NONE;
 	int ret;
@@ -344,8 +346,12 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 	bio_get(bio); /* extra ref for the completion handler */
 
 	dio = container_of(bio, struct blkdev_dio, bio);
-	dio->iocb = is_sync ? NULL : iocb;
-	dio->waiter = current;
+	dio->is_sync = is_sync_kiocb(iocb);
+	if (dio->is_sync)
+		dio->waiter = current;
+	else
+		dio->iocb = iocb;
+
 	dio->size = 0;
 	dio->multi_bio = false;
 	dio->should_dirty = is_read && (iter->type == ITER_IOVEC);
@@ -392,7 +398,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 		bio = bio_alloc(GFP_KERNEL, nr_pages);
 	}
 
-	if (!is_sync)
+	if (!dio->is_sync)
 		return -EIOCBQUEUED;
 
 	for (;;) {
