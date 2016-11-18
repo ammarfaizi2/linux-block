@@ -84,7 +84,7 @@ grow_from_non_allocated_table:
 	goto out_update_instructions;
 }
 
-static __maybe_unused struct ins *arch__associate_ins_ops(struct arch* arch, const char *name, struct ins_ops *ops)
+static struct ins *arch__associate_ins_ops(struct arch* arch, const char *name, struct ins_ops *ops)
 {
 	struct ins *ins;
 
@@ -107,12 +107,7 @@ static __maybe_unused struct ins *arch__associate_ins_ops(struct arch* arch, con
 static struct arch architectures[] = {
 	{
 		.name = "arm",
-		.instructions = arm__instructions,
-		.nr_instructions = ARRAY_SIZE(arm__instructions),
-		.objdump =  {
-			.comment_char = ';',
-			.skip_functions_char = '+',
-		},
+		.init = arm__annotate_init,
 	},
 	{
 		.name = "x86",
