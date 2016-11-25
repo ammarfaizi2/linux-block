@@ -340,10 +340,6 @@ static int really_probe(struct device *dev, struct device_driver *drv)
 		return ret;
 	}
 
-	ret = device_links_check_suppliers(dev);
-	if (ret)
-		return ret;
-
 	atomic_inc(&probe_count);
 	pr_debug("bus: '%s': %s: probing driver %s with device %s\n",
 		 drv->bus->name, __func__, drv->name, dev_name(dev));
@@ -360,6 +356,10 @@ re_probe:
 	ret = dma_configure(dev);
 	if (ret)
 		goto dma_failed;
+
+	ret = device_links_check_suppliers(dev);
+	if (ret)
+		return ret;
 
 	if (driver_sysfs_add(dev)) {
 		printk(KERN_ERR "%s: driver_sysfs_add(%s) failed\n",
