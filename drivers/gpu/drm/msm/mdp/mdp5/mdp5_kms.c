@@ -30,10 +30,8 @@ static const char *iommu_ports[] = {
 static int mdp5_hw_init(struct msm_kms *kms)
 {
 	struct mdp5_kms *mdp5_kms = to_mdp5_kms(to_mdp_kms(kms));
-	struct platform_device *pdev = mdp5_kms->pdev;
 	unsigned long flags;
 
-	pm_runtime_get_sync(&pdev->dev);
 	mdp5_enable(mdp5_kms);
 
 	/* Magic unknown register writes:
@@ -67,7 +65,6 @@ static int mdp5_hw_init(struct msm_kms *kms)
 	mdp5_ctlm_hw_reset(mdp5_kms->ctlm);
 
 	mdp5_disable(mdp5_kms);
-	pm_runtime_put_sync(&pdev->dev);
 
 	return 0;
 }
@@ -177,6 +174,12 @@ static void mdp5_kms_destroy(struct msm_kms *kms)
 				iommu_ports, ARRAY_SIZE(iommu_ports));
 		msm_gem_address_space_put(aspace);
 	}
+
+	/*
+	 * TODO: Leave this here for now since IOMMU needs it. Remove
+	 * after adding runtime PM support for MDP.
+	 */
+	pm_runtime_put_sync(&mdp5_kms->pdev->dev);
 }
 
 #ifdef CONFIG_DEBUG_FS
@@ -674,6 +677,8 @@ struct msm_kms *mdp5_kms_init(struct drm_device *dev)
 	kms->irq = irq;
 
 	config = mdp5_cfg_get_config(mdp5_kms->cfg);
+
+	pm_runtime_get_sync(&pdev->dev);
 
 	/* make sure things are off before attaching iommu (bootloader could
 	 * have left things on, in which case we'll start getting faults if
