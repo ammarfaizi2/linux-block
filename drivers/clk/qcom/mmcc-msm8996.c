@@ -2909,6 +2909,7 @@ static struct gdsc mmagic_video_gdsc = {
 		&mmagic_video_axi_clk.clkr.hw,
 		&mmagic_video_noc_cfg_ahb_clk.clkr.hw,
 	},
+	.parent = &mmagic_bimc_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = VOTABLE,
 };
@@ -2926,6 +2927,7 @@ static struct gdsc mmagic_mdss_gdsc = {
 		&mmagic_mdss_axi_clk.clkr.hw,
 		&mmagic_mdss_noc_cfg_ahb_clk.clkr.hw,
 	},
+	.parent = &mmagic_bimc_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = VOTABLE,
 };
@@ -2940,6 +2942,7 @@ static struct gdsc mmagic_camss_gdsc = {
 		&mmagic_camss_axi_clk.clkr.hw,
 		&mmagic_camss_noc_cfg_ahb_clk.clkr.hw,
 	},
+	.parent = &mmagic_bimc_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = VOTABLE,
 };
