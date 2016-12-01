@@ -381,6 +381,7 @@ re_probe:
 	 */
 	devices_kset_move_last(dev);
 
+	pm_runtime_get_suppliers(dev);
 	if (dev->bus->probe) {
 		ret = dev->bus->probe(dev);
 		if (ret)
@@ -390,6 +391,7 @@ re_probe:
 		if (ret)
 			goto probe_failed;
 	}
+	pm_runtime_put_suppliers(dev);
 
 	if (test_remove) {
 		test_remove = false;
@@ -422,6 +424,7 @@ re_probe:
 	goto done;
 
 probe_failed:
+	pm_runtime_put_suppliers(dev);
 	dma_deconfigure(dev);
 dma_failed:
 	if (dev->bus)
@@ -521,7 +524,6 @@ int driver_probe_device(struct device_driver *drv, struct device *dev)
 	pr_debug("bus: '%s': %s: matched device %s with driver %s\n",
 		 drv->bus->name, __func__, dev_name(dev), drv->name);
 
-	pm_runtime_get_suppliers(dev);
 	if (dev->parent)
 		pm_runtime_get_sync(dev->parent);
 
@@ -532,7 +534,6 @@ int driver_probe_device(struct device_driver *drv, struct device *dev)
 	if (dev->parent)
 		pm_runtime_put(dev->parent);
 
-	pm_runtime_put_suppliers(dev);
 	return ret;
 }
 
