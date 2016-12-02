@@ -1310,6 +1310,18 @@ void nvme_configure_apst(struct nvme_ctrl *ctrl)
 		apste = 1;
 	}
 
+	{
+		unsigned char buf[sizeof(*table) * 2 + 1];
+		int i;
+		const char *t = (const char *)table;
+
+		for (i = 0; i < sizeof(*table); i++) {
+			sprintf(buf + 2*i, "%02x", (unsigned int)t[i]);
+		}
+
+		dev_info(ctrl->device, "Setting APST: enable = %u, value = %s\n", apste, buf);
+	}
+
 	ret = nvme_set_features(ctrl, NVME_FEAT_AUTO_PST, apste,
 				table, sizeof(*table), NULL);
 	if (ret)
