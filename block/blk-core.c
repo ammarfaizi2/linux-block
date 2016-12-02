@@ -3204,18 +3204,21 @@ static int plug_rq_cmp(void *priv, struct list_head *a, struct list_head *b)
  * plugger did not intend it.
  */
 static void queue_unplugged(struct request_queue *q, unsigned int depth,
-			    bool from_schedule)
+			    bool from_schedule, unsigned long flags)
 	__releases(q->queue_lock)
 {
 	trace_block_unplug(q, depth, !from_schedule);
 
-	if (q->mq_ops)
-		blk_mq_run_hw_queues(q, true);
-	else if (from_schedule)
-		blk_run_queue_async(q);
-	else
-		__blk_run_queue(q);
-	spin_unlock(q->queue_lock);
+	if (q->mq_ops) {
+		spin_unlock_irqrestore(q->queue_lock, flags);
+		blk_mq_run_hw_queues(q, from_schedule);
+	} else {
+		if (from_schedule)
+			blk_run_queue_async(q);
+		else
+			__blk_run_queue(q);
+		spin_unlock_irqrestore(q->queue_lock, flags);
+	}
 }
 
 static void flush_plug_callbacks(struct blk_plug *plug, bool from_schedule)
@@ -3283,11 +3286,6 @@ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
 	q = NULL;
 	depth = 0;
 
-	/*
-	 * Save and disable interrupts here, to avoid doing it for every
-	 * queue lock we have to take.
-	 */
-	local_irq_save(flags);
 	while (!list_empty(&list)) {
 		rq = list_entry_rq(list.next);
 		list_del_init(&rq->queuelist);
@@ -3297,10 +3295,10 @@ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
 			 * This drops the queue lock
 			 */
 			if (q)
-				queue_unplugged(q, depth, from_schedule);
+				queue_unplugged(q, depth, from_schedule, flags);
 			q = rq->q;
 			depth = 0;
-			spin_lock(q->queue_lock);
+			spin_lock_irqsave(q->queue_lock, flags);
 		}
 
 		/*
@@ -3329,9 +3327,7 @@ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
 	 * This drops the queue lock
 	 */
 	if (q)
-		queue_unplugged(q, depth, from_schedule);
-
-	local_irq_restore(flags);
+		queue_unplugged(q, depth, from_schedule, flags);
 }
 
 void blk_finish_plug(struct blk_plug *plug)
