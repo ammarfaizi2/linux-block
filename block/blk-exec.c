@@ -64,7 +64,7 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
 	 * don't check dying flag for MQ because the request won't
 	 * be reused after dying flag is set
 	 */
-	if (q->mq_ops) {
+	if (!blk_use_sched_path(q)) {
 		blk_mq_insert_request(rq, at_head, true, false);
 		return;
 	}
