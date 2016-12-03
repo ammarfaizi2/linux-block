@@ -133,14 +133,16 @@ static void blk_flush_restore_request(struct request *rq)
 
 static bool blk_flush_queue_rq(struct request *rq, bool add_front)
 {
-	if (rq->q->mq_ops) {
+	struct request_queue *q = rq->q;
+
+	if (blk_use_mq_path(q)) {
 		blk_mq_add_to_requeue_list(rq, add_front, true);
 		return false;
 	} else {
 		if (add_front)
-			list_add(&rq->queuelist, &rq->q->queue_head);
+			list_add(&rq->queuelist, &q->queue_head);
 		else
-			list_add_tail(&rq->queuelist, &rq->q->queue_head);
+			list_add_tail(&rq->queuelist, &q->queue_head);
 		return true;
 	}
 }
@@ -201,7 +203,7 @@ static bool blk_flush_complete_seq(struct request *rq,
 		BUG_ON(!list_empty(&rq->queuelist));
 		list_del_init(&rq->flush.list);
 		blk_flush_restore_request(rq);
-		if (q->mq_ops)
+		if (blk_use_mq_path(q))
 			blk_mq_end_request(rq, error);
 		else
 			__blk_end_request_all(rq, error);
@@ -224,7 +226,7 @@ static void flush_end_io(struct request *flush_rq, int error)
 	unsigned long flags = 0;
 	struct blk_flush_queue *fq = blk_get_flush_queue(q, flush_rq->mq_ctx);
 
-	if (q->mq_ops) {
+	if (blk_use_mq_path(q)) {
 		struct blk_mq_hw_ctx *hctx;
 
 		/* release the tag's ownership to the req cloned from */
@@ -240,7 +242,7 @@ static void flush_end_io(struct request *flush_rq, int error)
 	/* account completion of the flush request */
 	fq->flush_running_idx ^= 1;
 
-	if (!q->mq_ops)
+	if (!blk_use_mq_path(q))
 		elv_completed_request(q, flush_rq);
 
 	/* and push the waiting requests to the next stage */
@@ -267,7 +269,7 @@ static void flush_end_io(struct request *flush_rq, int error)
 		blk_run_queue_async(q);
 	}
 	fq->flush_queue_delayed = 0;
-	if (q->mq_ops)
+	if (blk_use_mq_path(q))
 		spin_unlock_irqrestore(&fq->mq_flush_lock, flags);
 }
 
@@ -315,7 +317,7 @@ static bool blk_kick_flush(struct request_queue *q, struct blk_flush_queue *fq)
 	 * be in flight at the same time. And acquire the tag's
 	 * ownership for flush req.
 	 */
-	if (q->mq_ops) {
+	if (blk_use_mq_path(q)) {
 		struct blk_mq_hw_ctx *hctx;
 
 		flush_rq->mq_ctx = first_rq->mq_ctx;
@@ -409,7 +411,7 @@ void blk_insert_flush(struct request *rq)
 	 * complete the request.
 	 */
 	if (!policy) {
-		if (q->mq_ops)
+		if (blk_use_mq_path(q))
 			blk_mq_end_request(rq, 0);
 		else
 			__blk_end_bidi_request(rq, 0, 0, 0);
@@ -425,9 +427,9 @@ void blk_insert_flush(struct request *rq)
 	 */
 	if ((policy & REQ_FSEQ_DATA) &&
 	    !(policy & (REQ_FSEQ_PREFLUSH | REQ_FSEQ_POSTFLUSH))) {
-		if (q->mq_ops) {
+		if (blk_use_mq_path(q))
 			blk_mq_insert_request(rq, false, false, true);
-		} else
+		else
 			list_add_tail(&rq->queuelist, &q->queue_head);
 		return;
 	}
@@ -440,7 +442,7 @@ void blk_insert_flush(struct request *rq)
 	INIT_LIST_HEAD(&rq->flush.list);
 	rq->rq_flags |= RQF_FLUSH_SEQ;
 	rq->flush.saved_end_io = rq->end_io; /* Usually NULL */
-	if (q->mq_ops) {
+	if (blk_use_mq_path(q)) {
 		rq->end_io = mq_flush_data_end_io;
 
 		spin_lock_irq(&fq->mq_flush_lock);

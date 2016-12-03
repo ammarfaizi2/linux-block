@@ -36,10 +36,20 @@ extern struct kmem_cache *request_cachep;
 extern struct kobj_type blk_queue_ktype;
 extern struct ida blk_queue_ida;
 
+/*
+ * Use the MQ path if we have mq_ops, but not if we are using an IO
+ * scheduler. For the scheduler, we should use the legacy path. Only
+ * for internal use in the block layer.
+ */
+static inline bool blk_use_mq_path(struct request_queue *q)
+{
+	return q->mq_ops && !q->elevator;
+}
+
 static inline struct blk_flush_queue *blk_get_flush_queue(
 		struct request_queue *q, struct blk_mq_ctx *ctx)
 {
-	if (q->mq_ops)
+	if (blk_use_mq_path(q))
 		return blk_mq_map_queue(q, ctx->cpu)->fq;
 	return q->fq;
 }
