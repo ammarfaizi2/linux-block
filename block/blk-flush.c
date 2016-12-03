@@ -265,8 +265,10 @@ static void flush_end_io(struct request *flush_rq, int error)
 	 * kblockd.
 	 */
 	if (queued || fq->flush_queue_delayed) {
-		WARN_ON(q->mq_ops);
-		blk_run_queue_async(q);
+		if (q->mq_ops)
+			blk_mq_run_hw_queues(q, true);
+		else
+			blk_run_queue_async(q);
 	}
 	fq->flush_queue_delayed = 0;
 	if (blk_use_mq_path(q))
@@ -346,8 +348,12 @@ static void flush_data_end_io(struct request *rq, int error)
 	 * After populating an empty queue, kick it to avoid stall.  Read
 	 * the comment in flush_end_io().
 	 */
-	if (blk_flush_complete_seq(rq, fq, REQ_FSEQ_DATA, error))
-		blk_run_queue_async(q);
+	if (blk_flush_complete_seq(rq, fq, REQ_FSEQ_DATA, error)) {
+		if (q->mq_ops)
+			blk_mq_run_hw_queues(q, true);
+		else
+			blk_run_queue_async(q);
+	}
 }
 
 static void mq_flush_data_end_io(struct request *rq, int error)

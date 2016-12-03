@@ -627,7 +627,10 @@ void __elv_add_request(struct request_queue *q, struct request *rq, int where)
 		 *   with anything.  There's no point in delaying queue
 		 *   processing.
 		 */
-		__blk_run_queue(q);
+		if (q->mq_ops)
+			blk_mq_run_hw_queues(q, true);
+		else
+			__blk_run_queue(q);
 		break;
 
 	case ELEVATOR_INSERT_SORT_MERGE:

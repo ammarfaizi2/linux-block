@@ -340,7 +340,10 @@ void __blk_run_queue(struct request_queue *q)
 	if (unlikely(blk_queue_stopped(q)))
 		return;
 
-	__blk_run_queue_uncond(q);
+	if (WARN_ON_ONCE(q->mq_ops))
+		blk_mq_run_hw_queues(q, true);
+	else
+		__blk_run_queue_uncond(q);
 }
 EXPORT_SYMBOL(__blk_run_queue);
 
