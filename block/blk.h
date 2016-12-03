@@ -77,6 +77,9 @@ bool __blk_end_bidi_request(struct request *rq, int error,
 			    unsigned int nr_bytes, unsigned int bidi_bytes);
 void blk_freeze_queue(struct request_queue *q);
 
+struct request *get_request(struct request_queue *, unsigned int, struct bio *,
+				gfp_t);
+
 static inline void blk_queue_enter_live(struct request_queue *q)
 {
 	/*
@@ -110,6 +113,7 @@ bool blk_attempt_plug_merge(struct request_queue *q, struct bio *bio,
 			    unsigned int *request_count,
 			    struct request **same_queue_rq);
 unsigned int blk_plug_queued_count(struct request_queue *q);
+struct list_head *blk_get_plug_list(struct request_queue *, struct blk_plug *);
 
 void blk_account_io_start(struct request *req, bool new_io);
 void blk_account_io_completion(struct request *req, unsigned int bytes);
