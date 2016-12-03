@@ -1310,7 +1310,7 @@ static struct request *blk_old_get_request(struct request_queue *q, int rw,
 
 struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
 {
-	if (q->mq_ops)
+	if (!blk_use_sched_path(q))
 		return blk_mq_alloc_request(q, rw,
 			(gfp_mask & __GFP_DIRECT_RECLAIM) ?
 				0 : BLK_MQ_REQ_NOWAIT);
