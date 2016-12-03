@@ -117,6 +117,14 @@ static bool use_lightnvm;
 module_param(use_lightnvm, bool, S_IRUGO);
 MODULE_PARM_DESC(use_lightnvm, "Register as a LightNVM device");
 
+static bool use_sched;
+module_param(use_sched, bool, S_IRUGO);
+MODULE_PARM_DESC(use_sched, "Ask for blk-mq scheduling");
+
+static bool wc;
+module_param(wc, bool, S_IRUGO);
+MODULE_PARM_DESC(use_sched, "Claim volatile write cache");
+
 static int irqmode = NULL_IRQ_SOFTIRQ;
 
 static int null_set_irqmode(const char *str, const struct kernel_param *kp)
@@ -724,6 +732,9 @@ static int null_add_dev(void)
 		nullb->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
 		nullb->tag_set.driver_data = nullb;
 
+		if (use_sched)
+			nullb->tag_set.flags |= BLK_MQ_F_SQ_SCHED;
+
 		rv = blk_mq_alloc_tag_set(&nullb->tag_set);
 		if (rv)
 			goto out_cleanup_queues;
@@ -759,6 +770,9 @@ static int null_add_dev(void)
 	nullb->q->queuedata = nullb;
 	queue_flag_set_unlocked(QUEUE_FLAG_NONROT, nullb->q);
 	queue_flag_clear_unlocked(QUEUE_FLAG_ADD_RANDOM, nullb->q);
+
+	if (wc)
+		blk_queue_write_cache(nullb->q, true, false);
 
 	mutex_lock(&lock);
 	nullb->index = nullb_indexes++;
