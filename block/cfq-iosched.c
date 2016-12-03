@@ -919,8 +919,14 @@ static inline struct cfq_data *cic_to_cfqd(struct cfq_io_cq *cic)
 static inline void cfq_schedule_dispatch(struct cfq_data *cfqd)
 {
 	if (cfqd->busy_queues) {
+		struct request_queue *q = cfqd->queue;
+
 		cfq_log(cfqd, "schedule dispatch");
-		kblockd_schedule_work(&cfqd->unplug_work);
+
+		if (q->mq_ops)
+			blk_mq_run_hw_queues(q, true);
+		else
+			kblockd_schedule_work(&cfqd->unplug_work);
 	}
 }
 
@@ -4086,6 +4092,16 @@ static void cfq_preempt_queue(struct cfq_data *cfqd, struct cfq_queue *cfqq)
 	cfq_mark_cfqq_slice_new(cfqq);
 }
 
+static void cfq_run_queue(struct cfq_data *cfqd)
+{
+	struct request_queue *q = cfqd->queue;
+
+	if (q->mq_ops)
+		blk_mq_run_hw_queues(q, true);
+	else
+		__blk_run_queue(q);
+}
+
 /*
  * Called when a new fs request (rq) is added (to cfqq). Check if there's
  * something we should do about it
@@ -4122,7 +4138,7 @@ cfq_rq_enqueued(struct cfq_data *cfqd, struct cfq_queue *cfqq,
 			    cfqd->busy_queues > 1) {
 				cfq_del_timer(cfqd, cfqq);
 				cfq_clear_cfqq_wait_request(cfqq);
-				__blk_run_queue(cfqd->queue);
+				cfq_run_queue(cfqd);
 			} else {
 				cfqg_stats_update_idle_time(cfqq->cfqg);
 				cfq_mark_cfqq_must_dispatch(cfqq);
@@ -4136,7 +4152,7 @@ cfq_rq_enqueued(struct cfq_data *cfqd, struct cfq_queue *cfqq,
 		 * this new queue is RT and the current one is BE
 		 */
 		cfq_preempt_queue(cfqd, cfqq);
-		__blk_run_queue(cfqd->queue);
+		cfq_run_queue(cfqd);
 	}
 }
 
