@@ -80,8 +80,14 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
 	}
 
 	__elv_add_request(q, rq, where);
-	__blk_run_queue(q);
-	spin_unlock_irq(q->queue_lock);
+
+	if (q->mq_ops) {
+		spin_unlock_irq(q->queue_lock);
+		blk_mq_run_hw_queues(q, false);
+	} else {
+		__blk_run_queue(q);
+		spin_unlock_irq(q->queue_lock);
+	}
 }
 EXPORT_SYMBOL_GPL(blk_execute_rq_nowait);
 
