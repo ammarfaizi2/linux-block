@@ -754,6 +754,11 @@ static int attempt_merge(struct request_queue *q, struct request *req,
 	/* owner-ship of bio passed from next to req */
 	next->bio = NULL;
 	__blk_put_request(q, next);
+
+	/* FIXME: MQ+sched holds a reference */
+	if (q->mq_ops && q->elevator)
+		blk_queue_exit(q);
+
 	return 1;
 }
 

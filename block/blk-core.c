@@ -1160,6 +1160,14 @@ static struct request *__get_request(struct request_list *rl, unsigned int op,
 	rq->cmd_flags = op;
 	rq->rq_flags = rq_flags;
 
+	/*
+	 * If we're allocating a legacy request off the MQ path, mark
+	 * the request as such. This is so that the free path does the
+	 * right thing.
+	 */
+	if (q->mq_ops)
+		rq->rq_flags |= RQF_MQ_RL;
+
 	/* init elvpriv */
 	if (rq_flags & RQF_ELVPRIV) {
 		if (unlikely(et->icq_cache && !icq)) {
@@ -1246,8 +1254,8 @@ rq_starved:
  * Returns ERR_PTR on failure, with @q->queue_lock held.
  * Returns request pointer on success, with @q->queue_lock *not held*.
  */
-static struct request *get_request(struct request_queue *q, unsigned int op,
-		struct bio *bio, gfp_t gfp_mask)
+struct request *get_request(struct request_queue *q, unsigned int op,
+			    struct bio *bio, gfp_t gfp_mask)
 {
 	const bool is_sync = op_is_sync(op);
 	DEFINE_WAIT(wait);
@@ -1430,7 +1438,7 @@ void __blk_put_request(struct request_queue *q, struct request *req)
 	if (unlikely(!q))
 		return;
 
-	if (q->mq_ops) {
+	if (q->mq_ops && !(req->rq_flags & RQF_MQ_RL)) {
 		blk_mq_free_request(req);
 		return;
 	}
@@ -1466,7 +1474,7 @@ void blk_put_request(struct request *req)
 {
 	struct request_queue *q = req->q;
 
-	if (q->mq_ops)
+	if (q->mq_ops && !(req->rq_flags & RQF_MQ_RL))
 		blk_mq_free_request(req);
 	else {
 		unsigned long flags;
@@ -1556,6 +1564,15 @@ bool bio_attempt_front_merge(struct request_queue *q, struct request *req,
 	return true;
 }
 
+struct list_head *blk_get_plug_list(struct request_queue *q,
+				    struct blk_plug *plug)
+{
+	if (!blk_use_sched_path(q))
+		return &plug->mq_list;
+
+	return &plug->list;
+}
+
 /**
  * blk_attempt_plug_merge - try to merge with %current's plugged list
  * @q: request_queue new bio is being queued at
@@ -1592,10 +1609,7 @@ bool blk_attempt_plug_merge(struct request_queue *q, struct bio *bio,
 		goto out;
 	*request_count = 0;
 
-	if (q->mq_ops)
-		plug_list = &plug->mq_list;
-	else
-		plug_list = &plug->list;
+	plug_list = blk_get_plug_list(q, plug);
 
 	list_for_each_entry_reverse(rq, plug_list, queuelist) {
 		int el_ret;
@@ -1640,10 +1654,7 @@ unsigned int blk_plug_queued_count(struct request_queue *q)
 	if (!plug)
 		goto out;
 
-	if (q->mq_ops)
-		plug_list = &plug->mq_list;
-	else
-		plug_list = &plug->list;
+	plug_list = blk_get_plug_list(q, plug);
 
 	list_for_each_entry(rq, plug_list, queuelist) {
 		if (rq->q == q)
@@ -3198,7 +3209,9 @@ static void queue_unplugged(struct request_queue *q, unsigned int depth,
 {
 	trace_block_unplug(q, depth, !from_schedule);
 
-	if (from_schedule)
+	if (q->mq_ops)
+		blk_mq_run_hw_queues(q, true);
+	else if (from_schedule)
 		blk_run_queue_async(q);
 	else
 		__blk_run_queue(q);
@@ -3294,7 +3307,10 @@ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
 		 * Short-circuit if @q is dead
 		 */
 		if (unlikely(blk_queue_dying(q))) {
-			__blk_end_request_all(rq, -ENODEV);
+			if (q->mq_ops)
+				blk_mq_end_request(rq, -ENODEV);
+			else
+				__blk_end_request_all(rq, -ENODEV);
 			continue;
 		}
 
