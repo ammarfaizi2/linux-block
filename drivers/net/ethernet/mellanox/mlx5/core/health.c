@@ -74,29 +74,6 @@ static u8 get_nic_state(struct mlx5_core_dev *dev)
 	return (ioread32be(&dev->iseg->cmdq_addr_l_sz) >> 8) & 3;
 }
 
-static void trigger_cmd_completions(struct mlx5_core_dev *dev)
-{
-	unsigned long flags;
-	u64 vector;
-
-	/* wait for pending handlers to complete */
-	synchronize_irq(dev->priv.msix_arr[MLX5_EQ_VEC_CMD].vector);
-	spin_lock_irqsave(&dev->cmd.alloc_lock, flags);
-	vector = ~dev->cmd.bitmask & ((1ul << (1 << dev->cmd.log_sz)) - 1);
-	if (!vector)
-		goto no_trig;
-
-	vector |= MLX5_TRIGGERED_CMD_COMP;
-	spin_unlock_irqrestore(&dev->cmd.alloc_lock, flags);
-
-	mlx5_core_dbg(dev, "vector 0x%llx\n", vector);
-	mlx5_cmd_comp_handler(dev, vector);
-	return;
-
-no_trig:
-	spin_unlock_irqrestore(&dev->cmd.alloc_lock, flags);
-}
-
 static int in_fatal(struct mlx5_core_dev *dev)
 {
 	struct mlx5_core_health *health = &dev->priv.health;
@@ -120,7 +97,7 @@ void mlx5_enter_error_state(struct mlx5_core_dev *dev)
 	mlx5_core_err(dev, "start\n");
 	if (pci_channel_offline(dev->pdev) || in_fatal(dev)) {
 		dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
-		trigger_cmd_completions(dev);
+		mlx5_flush_cmdif(dev);
 	}
 
 	mlx5_core_event(dev, MLX5_DEV_EVENT_SYS_ERROR, 0);
