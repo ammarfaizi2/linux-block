@@ -877,6 +877,8 @@ static void sched_rq_end_io(struct request *rq, int error)
 	/* transfer queue ref to 'rq', blk_mq_free_request() drops it */
 	sched_rq->rq_flags &= ~RQF_HAS_Q_REF;
 
+	blk_account_io_completion(sched_rq, blk_rq_bytes(sched_rq));
+
 	spin_lock_irqsave(q->queue_lock, flags);
 	blk_finish_request(sched_rq, error);
 	spin_unlock_irqrestore(q->queue_lock, flags);
