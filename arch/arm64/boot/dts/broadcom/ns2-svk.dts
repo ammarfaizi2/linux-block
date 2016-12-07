@@ -56,6 +56,10 @@
 	};
 };
 
+&enet {
+	status = "ok";
+};
+
 &pci_phy0 {
 	status = "ok";
 };
@@ -164,6 +168,8 @@
 		nand-ecc-mode = "hw";
 		nand-ecc-strength = <8>;
 		nand-ecc-step-size = <512>;
+		nand-bus-width = <16>;
+		brcm,nand-oob-sector-size = <16>;
 		#address-cells = <1>;
 		#size-cells = <1>;
 	};
@@ -172,6 +178,7 @@
 &mdio_mux_iproc {
 	mdio@10 {
 		gphy0: eth-phy@10 {
+			enet-phy-lane-swap;
 			reg = <0x10>;
 		};
 	};

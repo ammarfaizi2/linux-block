@@ -1430,13 +1430,13 @@ fec_enet_rx_queue(struct net_device *ndev, int budget, u16 queue_id)
 		skb_put(skb, pkt_len - 4);
 		data = skb->data;
 
+		if (!is_copybreak && need_swap)
+			swap_buffer(data, pkt_len);
+
 #if !defined(CONFIG_M5272)
 		if (fep->quirks & FEC_QUIRK_HAS_RACC)
 			data = skb_pull_inline(skb, 2);
 #endif
-
-		if (!is_copybreak && need_swap)
-			swap_buffer(data, pkt_len);
 
 		/* Extract the enhanced buffer descriptor */
 		ebdp = NULL;
@@ -2310,14 +2310,24 @@ static const struct fec_stat {
 	{ "IEEE_rx_octets_ok", IEEE_R_OCTETS_OK },
 };
 
-static void fec_enet_get_ethtool_stats(struct net_device *dev,
-	struct ethtool_stats *stats, u64 *data)
+static void fec_enet_update_ethtool_stats(struct net_device *dev)
 {
 	struct fec_enet_private *fep = netdev_priv(dev);
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(fec_stats); i++)
-		data[i] = readl(fep->hwp + fec_stats[i].offset);
+		fep->ethtool_stats[i] = readl(fep->hwp + fec_stats[i].offset);
+}
+
+static void fec_enet_get_ethtool_stats(struct net_device *dev,
+				       struct ethtool_stats *stats, u64 *data)
+{
+	struct fec_enet_private *fep = netdev_priv(dev);
+
+	if (netif_running(dev))
+		fec_enet_update_ethtool_stats(dev);
+
+	memcpy(data, fep->ethtool_stats, ARRAY_SIZE(fec_stats) * sizeof(u64));
 }
 
 static void fec_enet_get_strings(struct net_device *netdev,
@@ -2343,16 +2353,6 @@ static int fec_enet_get_sset_count(struct net_device *dev, int sset)
 	}
 }
 #endif /* !defined(CONFIG_M5272) */
-
-static int fec_enet_nway_reset(struct net_device *dev)
-{
-	struct phy_device *phydev = dev->phydev;
-
-	if (!phydev)
-		return -ENODEV;
-
-	return genphy_restart_aneg(phydev);
-}
 
 /* ITR clock source is enet system clock (clk_ahb).
  * TCTT unit is cycle_ns * 64 cycle
@@ -2553,7 +2553,7 @@ static const struct ethtool_ops fec_enet_ethtool_ops = {
 	.get_drvinfo		= fec_enet_get_drvinfo,
 	.get_regs_len		= fec_enet_get_regs_len,
 	.get_regs		= fec_enet_get_regs,
-	.nway_reset		= fec_enet_nway_reset,
+	.nway_reset		= phy_ethtool_nway_reset,
 	.get_link		= ethtool_op_get_link,
 	.get_coalesce		= fec_enet_get_coalesce,
 	.set_coalesce		= fec_enet_set_coalesce,
@@ -2871,6 +2871,8 @@ fec_enet_close(struct net_device *ndev)
 	if (fep->quirks & FEC_QUIRK_ERR006687)
 		imx6q_cpuidle_fec_irqs_unused();
 
+	fec_enet_update_ethtool_stats(ndev);
+
 	fec_enet_clk_enable(ndev, false);
 	pinctrl_pm_select_sleep_state(&fep->pdev->dev);
 	pm_runtime_mark_last_busy(&fep->pdev->dev);
@@ -3176,6 +3178,8 @@ static int fec_enet_init(struct net_device *ndev)
 
 	fec_restart(ndev);
 
+	fec_enet_update_ethtool_stats(ndev);
+
 	return 0;
 }
 
@@ -3274,7 +3278,8 @@ fec_probe(struct platform_device *pdev)
 	fec_enet_get_queue_num(pdev, &num_tx_qs, &num_rx_qs);
 
 	/* Init network device */
-	ndev = alloc_etherdev_mqs(sizeof(struct fec_enet_private),
+	ndev = alloc_etherdev_mqs(sizeof(struct fec_enet_private) +
+				  ARRAY_SIZE(fec_stats) * sizeof(u64),
 				  num_tx_qs, num_rx_qs);
 	if (!ndev)
 		return -ENOMEM;
@@ -3471,6 +3476,8 @@ failed_regulator:
 failed_clk_ipg:
 	fec_enet_clk_enable(ndev, false);
 failed_clk:
+	if (of_phy_is_fixed_link(np))
+		of_phy_deregister_fixed_link(np);
 failed_phy:
 	of_node_put(phy_node);
 failed_ioremap:
@@ -3484,6 +3491,7 @@ fec_drv_remove(struct platform_device *pdev)
 {
 	struct net_device *ndev = platform_get_drvdata(pdev);
 	struct fec_enet_private *fep = netdev_priv(ndev);
+	struct device_node *np = pdev->dev.of_node;
 
 	cancel_work_sync(&fep->tx_timeout_work);
 	fec_ptp_stop(pdev);
@@ -3491,6 +3499,8 @@ fec_drv_remove(struct platform_device *pdev)
 	fec_enet_mii_remove(fep);
 	if (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
+	if (of_phy_is_fixed_link(np))
+		of_phy_deregister_fixed_link(np);
 	of_node_put(fep->phy_node);
 	free_netdev(ndev);
 

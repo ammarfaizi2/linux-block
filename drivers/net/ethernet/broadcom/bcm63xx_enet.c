@@ -1126,7 +1126,8 @@ out_freeirq:
 	free_irq(dev->irq, dev);
 
 out_phy_disconnect:
-	phy_disconnect(phydev);
+	if (priv->has_phy)
+		phy_disconnect(phydev);
 
 	return ret;
 }
@@ -1433,11 +1434,8 @@ static int bcm_enet_nway_reset(struct net_device *dev)
 	struct bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
-	if (priv->has_phy) {
-		if (!dev->phydev)
-			return -ENODEV;
-		return genphy_restart_aneg(dev->phydev);
-	}
+	if (priv->has_phy)
+		return phy_ethtool_nway_reset(dev);
 
 	return -EOPNOTSUPP;
 }

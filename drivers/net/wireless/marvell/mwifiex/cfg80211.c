@@ -2143,6 +2143,16 @@ mwifiex_cfg80211_assoc(struct mwifiex_private *priv, size_t ssid_len,
 	ret = mwifiex_set_encode(priv, NULL, NULL, 0, 0, NULL, 1);
 
 	if (mode == NL80211_IFTYPE_ADHOC) {
+		u16 enable = true;
+
+		/* set ibss coalescing_status */
+		ret = mwifiex_send_cmd(
+				priv,
+				HostCmd_CMD_802_11_IBSS_COALESCING_STATUS,
+				HostCmd_ACT_GEN_SET, 0, &enable, true);
+		if (ret)
+			return ret;
+
 		/* "privacy" is set only for ad-hoc mode */
 		if (privacy) {
 			/*
@@ -2228,8 +2238,9 @@ done:
 			is_scanning_required = 1;
 		} else {
 			mwifiex_dbg(priv->adapter, MSG,
-				    "info: trying to associate to '%s' bssid %pM\n",
-				    (char *)req_ssid.ssid, bss->bssid);
+				    "info: trying to associate to '%.*s' bssid %pM\n",
+				    req_ssid.ssid_len, (char *)req_ssid.ssid,
+				    bss->bssid);
 			memcpy(&priv->cfg_bssid, bss->bssid, ETH_ALEN);
 			break;
 		}
@@ -2289,8 +2300,8 @@ mwifiex_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	mwifiex_dbg(adapter, INFO,
-		    "info: Trying to associate to %s and bssid %pM\n",
-		    (char *)sme->ssid, sme->bssid);
+		    "info: Trying to associate to %.*s and bssid %pM\n",
+		    (int)sme->ssid_len, (char *)sme->ssid, sme->bssid);
 
 	if (!mwifiex_stop_bg_scan(priv))
 		cfg80211_sched_scan_stopped_rtnl(priv->wdev.wiphy);
@@ -2423,8 +2434,8 @@ mwifiex_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	mwifiex_dbg(priv->adapter, MSG,
-		    "info: trying to join to %s and bssid %pM\n",
-		    (char *)params->ssid, params->bssid);
+		    "info: trying to join to %.*s and bssid %pM\n",
+		    params->ssid_len, (char *)params->ssid, params->bssid);
 
 	mwifiex_set_ibss_params(priv, params);
 
@@ -3980,13 +3991,11 @@ static int mwifiex_tm_cmd(struct wiphy *wiphy, struct wireless_dev *wdev,
 	struct mwifiex_private *priv = mwifiex_netdev_get_priv(wdev->netdev);
 	struct mwifiex_ds_misc_cmd *hostcmd;
 	struct nlattr *tb[MWIFIEX_TM_ATTR_MAX + 1];
-	struct mwifiex_adapter *adapter;
 	struct sk_buff *skb;
 	int err;
 
 	if (!priv)
 		return -EINVAL;
-	adapter = priv->adapter;
 
 	err = nla_parse(tb, MWIFIEX_TM_ATTR_MAX, data, len,
 			mwifiex_tm_policy);

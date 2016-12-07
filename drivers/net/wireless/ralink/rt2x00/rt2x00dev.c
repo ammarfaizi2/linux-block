@@ -1379,11 +1379,13 @@ int rt2x00lib_probe_dev(struct rt2x00_dev *rt2x00dev)
 	if (rt2x00dev->bcn->limit > 0)
 		rt2x00dev->hw->wiphy->interface_modes |=
 		    BIT(NL80211_IFTYPE_ADHOC) |
-		    BIT(NL80211_IFTYPE_AP) |
 #ifdef CONFIG_MAC80211_MESH
 		    BIT(NL80211_IFTYPE_MESH_POINT) |
 #endif
-		    BIT(NL80211_IFTYPE_WDS);
+#ifdef CONFIG_WIRELESS_WDS
+		    BIT(NL80211_IFTYPE_WDS) |
+#endif
+		    BIT(NL80211_IFTYPE_AP);
 
 	rt2x00dev->hw->wiphy->flags |= WIPHY_FLAG_IBSS_RSN;
 
@@ -1439,7 +1441,7 @@ void rt2x00lib_remove_dev(struct rt2x00_dev *rt2x00dev)
 	cancel_work_sync(&rt2x00dev->intf_work);
 	cancel_delayed_work_sync(&rt2x00dev->autowakeup_work);
 	cancel_work_sync(&rt2x00dev->sleep_work);
-#ifdef CONFIG_RT2X00_LIB_USB
+#if IS_ENABLED(CONFIG_RT2X00_LIB_USB)
 	if (rt2x00_is_usb(rt2x00dev)) {
 		usb_kill_anchored_urbs(rt2x00dev->anchor);
 		hrtimer_cancel(&rt2x00dev->txstatus_timer);

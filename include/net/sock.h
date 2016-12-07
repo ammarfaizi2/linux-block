@@ -252,6 +252,7 @@ struct sock_common {
   *	@sk_pacing_rate: Pacing rate (if supported by transport/packet scheduler)
   *	@sk_max_pacing_rate: Maximum pacing rate (%SO_MAX_PACING_RATE)
   *	@sk_sndbuf: size of send buffer in bytes
+  *	@sk_padding: unused element for alignment
   *	@sk_no_check_tx: %SO_NO_CHECK setting, set checksum in TX packets
   *	@sk_no_check_rx: allow zero checksum in RX packets
   *	@sk_route_caps: route capabilities (e.g. %NETIF_F_TSO)
@@ -302,7 +303,8 @@ struct sock_common {
   *	@sk_backlog_rcv: callback to process the backlog
   *	@sk_destruct: called at sock freeing time, i.e. when all refcnt == 0
   *	@sk_reuseport_cb: reuseport group container
- */
+  *	@sk_rcu: used during RCU grace period
+  */
 struct sock {
 	/*
 	 * Now struct inet_timewait_sock also uses sock_common, so please just
@@ -387,6 +389,21 @@ struct sock {
 	 * Because of non atomicity rules, all
 	 * changes are protected by socket lock.
 	 */
+	unsigned int		__sk_flags_offset[0];
+#ifdef __BIG_ENDIAN_BITFIELD
+#define SK_FL_PROTO_SHIFT  16
+#define SK_FL_PROTO_MASK   0x00ff0000
+
+#define SK_FL_TYPE_SHIFT   0
+#define SK_FL_TYPE_MASK    0x0000ffff
+#else
+#define SK_FL_PROTO_SHIFT  8
+#define SK_FL_PROTO_MASK   0x0000ff00
+
+#define SK_FL_TYPE_SHIFT   16
+#define SK_FL_TYPE_MASK    0xffff0000
+#endif
+
 	kmemcheck_bitfield_begin(flags);
 	unsigned int		sk_padding : 2,
 				sk_no_check_tx : 1,
@@ -417,6 +434,7 @@ struct sock {
 	u32			sk_max_ack_backlog;
 	__u32			sk_priority;
 	__u32			sk_mark;
+	kuid_t			sk_uid;
 	struct pid		*sk_peer_pid;
 	const struct cred	*sk_peer_cred;
 	long			sk_rcvtimeo;
@@ -912,14 +930,16 @@ static inline void sock_rps_reset_rxhash(struct sock *sk)
 #endif
 }
 
-#define sk_wait_event(__sk, __timeo, __condition)			\
+#define sk_wait_event(__sk, __timeo, __condition, __wait)		\
 	({	int __rc;						\
 		release_sock(__sk);					\
 		__rc = __condition;					\
 		if (!__rc) {						\
-			*(__timeo) = schedule_timeout(*(__timeo));	\
+			*(__timeo) = wait_woken(__wait,			\
+						TASK_INTERRUPTIBLE,	\
+						*(__timeo));		\
 		}							\
-		sched_annotate_sleep();						\
+		sched_annotate_sleep();					\
 		lock_sock(__sk);					\
 		__rc = __condition;					\
 		__rc;							\
@@ -1160,11 +1180,6 @@ static inline void sk_enter_memory_pressure(struct sock *sk)
 	sk->sk_prot->enter_memory_pressure(sk);
 }
 
-static inline long sk_prot_mem_limits(const struct sock *sk, int index)
-{
-	return sk->sk_prot->sysctl_mem[index];
-}
-
 static inline long
 sk_memory_allocated(const struct sock *sk)
 {
@@ -1279,10 +1294,26 @@ int __sk_mem_schedule(struct sock *sk, int size, int kind);
 void __sk_mem_reduce_allocated(struct sock *sk, int amount);
 void __sk_mem_reclaim(struct sock *sk, int amount);
 
-#define SK_MEM_QUANTUM ((int)PAGE_SIZE)
+/* We used to have PAGE_SIZE here, but systems with 64KB pages
+ * do not necessarily have 16x time more memory than 4KB ones.
+ */
+#define SK_MEM_QUANTUM 4096
 #define SK_MEM_QUANTUM_SHIFT ilog2(SK_MEM_QUANTUM)
 #define SK_MEM_SEND	0
 #define SK_MEM_RECV	1
+
+/* sysctl_mem values are in pages, we convert them in SK_MEM_QUANTUM units */
+static inline long sk_prot_mem_limits(const struct sock *sk, int index)
+{
+	long val = sk->sk_prot->sysctl_mem[index];
+
+#if PAGE_SIZE > SK_MEM_QUANTUM
+	val <<= PAGE_SHIFT - SK_MEM_QUANTUM_SHIFT;
+#elif PAGE_SIZE < SK_MEM_QUANTUM
+	val >>= SK_MEM_QUANTUM_SHIFT - PAGE_SHIFT;
+#endif
+	return val;
+}
 
 static inline int sk_mem_pages(int amt)
 {
@@ -1596,11 +1627,11 @@ static inline void sock_put(struct sock *sk)
 void sock_gen_put(struct sock *sk);
 
 int __sk_receive_skb(struct sock *sk, struct sk_buff *skb, const int nested,
-		     unsigned int trim_cap);
+		     unsigned int trim_cap, bool refcounted);
 static inline int sk_receive_skb(struct sock *sk, struct sk_buff *skb,
 				 const int nested)
 {
-	return __sk_receive_skb(sk, skb, nested, 1);
+	return __sk_receive_skb(sk, skb, nested, 1, true);
 }
 
 static inline void sk_tx_queue_set(struct sock *sk, int tx_queue)
@@ -1651,12 +1682,18 @@ static inline void sock_graft(struct sock *sk, struct socket *parent)
 	sk->sk_wq = parent->wq;
 	parent->sk = sk;
 	sk_set_socket(sk, parent);
+	sk->sk_uid = SOCK_INODE(parent)->i_uid;
 	security_sock_graft(sk, parent);
 	write_unlock_bh(&sk->sk_callback_lock);
 }
 
 kuid_t sock_i_uid(struct sock *sk);
 unsigned long sock_i_ino(struct sock *sk);
+
+static inline kuid_t sock_net_uid(const struct net *net, const struct sock *sk)
+{
+	return sk ? sk->sk_uid : make_kuid(net->user_ns, 0);
+}
 
 static inline u32 net_tx_rndhash(void)
 {

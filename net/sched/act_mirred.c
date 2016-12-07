@@ -21,6 +21,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/gfp.h>
+#include <linux/if_arp.h>
 #include <net/net_namespace.h>
 #include <net/netlink.h>
 #include <net/pkt_sched.h>
@@ -70,22 +71,8 @@ static const struct nla_policy mirred_policy[TCA_MIRRED_MAX + 1] = {
 	[TCA_MIRRED_PARMS]	= { .len = sizeof(struct tc_mirred) },
 };
 
-static int mirred_net_id;
+static unsigned int mirred_net_id;
 static struct tc_action_ops act_mirred_ops;
-
-static bool dev_is_mac_header_xmit(const struct net_device *dev)
-{
-	switch (dev->type) {
-	case ARPHRD_TUNNEL:
-	case ARPHRD_TUNNEL6:
-	case ARPHRD_SIT:
-	case ARPHRD_IPGRE:
-	case ARPHRD_VOID:
-	case ARPHRD_NONE:
-		return false;
-	}
-	return true;
-}
 
 static int tcf_mirred_init(struct net *net, struct nlattr *nla,
 			   struct nlattr *est, struct tc_action **a, int ovr,
@@ -249,8 +236,11 @@ out:
 static void tcf_stats_update(struct tc_action *a, u64 bytes, u32 packets,
 			     u64 lastuse)
 {
-	tcf_lastuse_update(&a->tcfa_tm);
+	struct tcf_mirred *m = to_mirred(a);
+	struct tcf_t *tm = &m->tcf_tm;
+
 	_bstats_cpu_update(this_cpu_ptr(a->cpu_bstats), bytes, packets);
+	tm->lastuse = lastuse;
 }
 
 static int tcf_mirred_dump(struct sk_buff *skb, struct tc_action *a, int bind,
@@ -325,6 +315,17 @@ static struct notifier_block mirred_device_notifier = {
 	.notifier_call = mirred_device_event,
 };
 
+static int tcf_mirred_device(const struct tc_action *a, struct net *net,
+			     struct net_device **mirred_dev)
+{
+	int ifindex = tcf_mirred_ifindex(a);
+
+	*mirred_dev = __dev_get_by_index(net, ifindex);
+	if (!*mirred_dev)
+		return -EINVAL;
+	return 0;
+}
+
 static struct tc_action_ops act_mirred_ops = {
 	.kind		=	"mirred",
 	.type		=	TCA_ACT_MIRRED,
@@ -337,6 +338,7 @@ static struct tc_action_ops act_mirred_ops = {
 	.walk		=	tcf_mirred_walker,
 	.lookup		=	tcf_mirred_search,
 	.size		=	sizeof(struct tcf_mirred),
+	.get_dev	=	tcf_mirred_device,
 };
 
 static __net_init int mirred_init_net(struct net *net)

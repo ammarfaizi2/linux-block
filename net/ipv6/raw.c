@@ -776,6 +776,7 @@ static int rawv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	memset(&fl6, 0, sizeof(fl6));
 
 	fl6.flowi6_mark = sk->sk_mark;
+	fl6.flowi6_uid = sk->sk_uid;
 
 	ipc6.hlimit = -1;
 	ipc6.tclass = -1;
@@ -1243,7 +1244,7 @@ struct proto rawv6_prot = {
 	.close		   = rawv6_close,
 	.destroy	   = raw6_destroy,
 	.connect	   = ip6_datagram_connect_v6_only,
-	.disconnect	   = udp_disconnect,
+	.disconnect	   = __udp_disconnect,
 	.ioctl		   = rawv6_ioctl,
 	.init		   = rawv6_init_sk,
 	.setsockopt	   = rawv6_setsockopt,

@@ -878,13 +878,6 @@ static netdev_tx_t tun_net_xmit(struct sk_buff *skb, struct net_device *dev)
 	    sk_filter(tfile->socket.sk, skb))
 		goto drop;
 
-	/* Limit the number of packets queued by dividing txq length with the
-	 * number of queues.
-	 */
-	if (skb_queue_len(&tfile->socket.sk->sk_receive_queue) * numqueues
-			  >= dev->tx_queue_len)
-		goto drop;
-
 	if (unlikely(skb_orphan_frags(skb, GFP_ATOMIC)))
 		goto drop;
 
@@ -1238,13 +1231,8 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 
 	if (zerocopy)
 		err = zerocopy_sg_from_iter(skb, from);
-	else {
+	else
 		err = skb_copy_datagram_from_iter(skb, 0, from, len);
-		if (!err && msg_control) {
-			struct ubuf_info *uarg = msg_control;
-			uarg->callback(uarg, false);
-		}
-	}
 
 	if (err) {
 		this_cpu_inc(tun->pcpu_stats->rx_dropped);
@@ -1252,8 +1240,7 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 		return -EFAULT;
 	}
 
-	err = virtio_net_hdr_to_skb(skb, &gso, tun_is_little_endian(tun));
-	if (err) {
+	if (virtio_net_hdr_to_skb(skb, &gso, tun_is_little_endian(tun))) {
 		this_cpu_inc(tun->pcpu_stats->rx_frame_errors);
 		kfree_skb(skb);
 		return -EINVAL;
@@ -1290,6 +1277,9 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 		skb_shinfo(skb)->destructor_arg = msg_control;
 		skb_shinfo(skb)->tx_flags |= SKBTX_DEV_ZEROCOPY;
 		skb_shinfo(skb)->tx_flags |= SKBTX_SHARED_FRAG;
+	} else if (msg_control) {
+		struct ubuf_info *uarg = msg_control;
+		uarg->callback(uarg, false);
 	}
 
 	skb_reset_network_header(skb);
@@ -1361,15 +1351,13 @@ static ssize_t tun_put_user(struct tun_struct *tun,
 	}
 
 	if (vnet_hdr_sz) {
-		struct virtio_net_hdr gso = { 0 }; /* no info leak */
-		int ret;
+		struct virtio_net_hdr gso;
 
 		if (iov_iter_count(iter) < vnet_hdr_sz)
 			return -EINVAL;
 
-		ret = virtio_net_hdr_from_skb(skb, &gso,
-					      tun_is_little_endian(tun));
-		if (ret) {
+		if (virtio_net_hdr_from_skb(skb, &gso,
+					    tun_is_little_endian(tun))) {
 			struct skb_shared_info *sinfo = skb_shinfo(skb);
 			pr_err("unexpected GSO type: "
 			       "0x%x, gso_size %d, hdr_len %d\n",
@@ -1985,7 +1973,7 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
 	int le;
 	int ret;
 
-	if (cmd == TUNSETIFF || cmd == TUNSETQUEUE || _IOC_TYPE(cmd) == 0x89) {
+	if (cmd == TUNSETIFF || cmd == TUNSETQUEUE || _IOC_TYPE(cmd) == SOCK_IOC_TYPE) {
 		if (copy_from_user(&ifr, argp, ifreq_len))
 			return -EFAULT;
 	} else {
@@ -2005,7 +1993,11 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
 	rtnl_lock();
 
 	tun = __tun_get(tfile);
-	if (cmd == TUNSETIFF && !tun) {
+	if (cmd == TUNSETIFF) {
+		ret = -EEXIST;
+		if (tun)
+			goto unlock;
+
 		ifr.ifr_name[IFNAMSIZ-1] = '\0';
 
 		ret = tun_set_iff(sock_net(&tfile->sk), file, &ifr);

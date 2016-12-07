@@ -321,6 +321,7 @@ struct writeback_control;
 #define IOCB_HIPRI		(1 << 3)
 #define IOCB_DSYNC		(1 << 4)
 #define IOCB_SYNC		(1 << 5)
+#define IOCB_WRITE		(1 << 6)
 
 struct kiocb {
 	struct file		*ki_filp;
@@ -1709,7 +1710,6 @@ struct file_operations {
 	int (*flush) (struct file *, fl_owner_t id);
 	int (*release) (struct inode *, struct file *);
 	int (*fsync) (struct file *, loff_t, loff_t, int datasync);
-	int (*aio_fsync) (struct kiocb *, int datasync);
 	int (*fasync) (int, struct file *, int);
 	int (*lock) (struct file *, int, struct file_lock *);
 	ssize_t (*sendpage) (struct file *, struct page *, int, size_t, loff_t *, int);
@@ -2934,6 +2934,7 @@ extern int vfs_stat(const char __user *, struct kstat *);
 extern int vfs_lstat(const char __user *, struct kstat *);
 extern int vfs_fstat(unsigned int, struct kstat *);
 extern int vfs_fstatat(int , const char __user *, struct kstat *, int);
+extern const char *vfs_get_link(struct dentry *, struct delayed_call *);
 
 extern int __generic_block_fiemap(struct inode *inode,
 				  struct fiemap_extent_info *fieinfo,

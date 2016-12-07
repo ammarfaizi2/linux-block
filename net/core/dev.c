@@ -1765,19 +1765,14 @@ EXPORT_SYMBOL_GPL(is_skb_forwardable);
 
 int __dev_forward_skb(struct net_device *dev, struct sk_buff *skb)
 {
-	if (skb_orphan_frags(skb, GFP_ATOMIC) ||
-	    unlikely(!is_skb_forwardable(dev, skb))) {
-		atomic_long_inc(&dev->rx_dropped);
-		kfree_skb(skb);
-		return NET_RX_DROP;
+	int ret = ____dev_forward_skb(dev, skb);
+
+	if (likely(!ret)) {
+		skb->protocol = eth_type_trans(skb, dev);
+		skb_postpull_rcsum(skb, eth_hdr(skb), ETH_HLEN);
 	}
 
-	skb_scrub_packet(skb, true);
-	skb->priority = 0;
-	skb->protocol = eth_type_trans(skb, dev);
-	skb_postpull_rcsum(skb, eth_hdr(skb), ETH_HLEN);
-
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL_GPL(__dev_forward_skb);
 
@@ -1948,37 +1943,80 @@ static void netif_setup_tc(struct net_device *dev, unsigned int txq)
 	}
 }
 
+int netdev_txq_to_tc(struct net_device *dev, unsigned int txq)
+{
+	if (dev->num_tc) {
+		struct netdev_tc_txq *tc = &dev->tc_to_txq[0];
+		int i;
+
+		for (i = 0; i < TC_MAX_QUEUE; i++, tc++) {
+			if ((txq - tc->offset) < tc->count)
+				return i;
+		}
+
+		return -1;
+	}
+
+	return 0;
+}
+
 #ifdef CONFIG_XPS
 static DEFINE_MUTEX(xps_map_mutex);
 #define xmap_dereference(P)		\
 	rcu_dereference_protected((P), lockdep_is_held(&xps_map_mutex))
 
-static struct xps_map *remove_xps_queue(struct xps_dev_maps *dev_maps,
-					int cpu, u16 index)
+static bool remove_xps_queue(struct xps_dev_maps *dev_maps,
+			     int tci, u16 index)
 {
 	struct xps_map *map = NULL;
 	int pos;
 
 	if (dev_maps)
-		map = xmap_dereference(dev_maps->cpu_map[cpu]);
+		map = xmap_dereference(dev_maps->cpu_map[tci]);
+	if (!map)
+		return false;
 
-	for (pos = 0; map && pos < map->len; pos++) {
-		if (map->queues[pos] == index) {
-			if (map->len > 1) {
-				map->queues[pos] = map->queues[--map->len];
-			} else {
-				RCU_INIT_POINTER(dev_maps->cpu_map[cpu], NULL);
-				kfree_rcu(map, rcu);
-				map = NULL;
-			}
+	for (pos = map->len; pos--;) {
+		if (map->queues[pos] != index)
+			continue;
+
+		if (map->len > 1) {
+			map->queues[pos] = map->queues[--map->len];
 			break;
 		}
+
+		RCU_INIT_POINTER(dev_maps->cpu_map[tci], NULL);
+		kfree_rcu(map, rcu);
+		return false;
 	}
 
-	return map;
+	return true;
 }
 
-static void netif_reset_xps_queues_gt(struct net_device *dev, u16 index)
+static bool remove_xps_queue_cpu(struct net_device *dev,
+				 struct xps_dev_maps *dev_maps,
+				 int cpu, u16 offset, u16 count)
+{
+	int num_tc = dev->num_tc ? : 1;
+	bool active = false;
+	int tci;
+
+	for (tci = cpu * num_tc; num_tc--; tci++) {
+		int i, j;
+
+		for (i = count, j = offset; i--; j++) {
+			if (!remove_xps_queue(dev_maps, cpu, j))
+				break;
+		}
+
+		active |= i < 0;
+	}
+
+	return active;
+}
+
+static void netif_reset_xps_queues(struct net_device *dev, u16 offset,
+				   u16 count)
 {
 	struct xps_dev_maps *dev_maps;
 	int cpu, i;
@@ -1990,26 +2028,26 @@ static void netif_reset_xps_queues_gt(struct net_device *dev, u16 index)
 	if (!dev_maps)
 		goto out_no_maps;
 
-	for_each_possible_cpu(cpu) {
-		for (i = index; i < dev->num_tx_queues; i++) {
-			if (!remove_xps_queue(dev_maps, cpu, i))
-				break;
-		}
-		if (i == dev->num_tx_queues)
-			active = true;
-	}
+	for_each_possible_cpu(cpu)
+		active |= remove_xps_queue_cpu(dev, dev_maps, cpu,
+					       offset, count);
 
 	if (!active) {
 		RCU_INIT_POINTER(dev->xps_maps, NULL);
 		kfree_rcu(dev_maps, rcu);
 	}
 
-	for (i = index; i < dev->num_tx_queues; i++)
+	for (i = offset + (count - 1); count--; i--)
 		netdev_queue_numa_node_write(netdev_get_tx_queue(dev, i),
 					     NUMA_NO_NODE);
 
 out_no_maps:
 	mutex_unlock(&xps_map_mutex);
+}
+
+static void netif_reset_xps_queues_gt(struct net_device *dev, u16 index)
+{
+	netif_reset_xps_queues(dev, index, dev->num_tx_queues - index);
 }
 
 static struct xps_map *expand_xps_map(struct xps_map *map,
@@ -2051,20 +2089,28 @@ int netif_set_xps_queue(struct net_device *dev, const struct cpumask *mask,
 			u16 index)
 {
 	struct xps_dev_maps *dev_maps, *new_dev_maps = NULL;
+	int i, cpu, tci, numa_node_id = -2;
+	int maps_sz, num_tc = 1, tc = 0;
 	struct xps_map *map, *new_map;
-	int maps_sz = max_t(unsigned int, XPS_DEV_MAPS_SIZE, L1_CACHE_BYTES);
-	int cpu, numa_node_id = -2;
 	bool active = false;
+
+	if (dev->num_tc) {
+		num_tc = dev->num_tc;
+		tc = netdev_txq_to_tc(dev, index);
+		if (tc < 0)
+			return -EINVAL;
+	}
+
+	maps_sz = XPS_DEV_MAPS_SIZE(num_tc);
+	if (maps_sz < L1_CACHE_BYTES)
+		maps_sz = L1_CACHE_BYTES;
 
 	mutex_lock(&xps_map_mutex);
 
 	dev_maps = xmap_dereference(dev->xps_maps);
 
 	/* allocate memory for queue storage */
-	for_each_online_cpu(cpu) {
-		if (!cpumask_test_cpu(cpu, mask))
-			continue;
-
+	for_each_cpu_and(cpu, cpu_online_mask, mask) {
 		if (!new_dev_maps)
 			new_dev_maps = kzalloc(maps_sz, GFP_KERNEL);
 		if (!new_dev_maps) {
@@ -2072,25 +2118,38 @@ int netif_set_xps_queue(struct net_device *dev, const struct cpumask *mask,
 			return -ENOMEM;
 		}
 
-		map = dev_maps ? xmap_dereference(dev_maps->cpu_map[cpu]) :
+		tci = cpu * num_tc + tc;
+		map = dev_maps ? xmap_dereference(dev_maps->cpu_map[tci]) :
 				 NULL;
 
 		map = expand_xps_map(map, cpu, index);
 		if (!map)
 			goto error;
 
-		RCU_INIT_POINTER(new_dev_maps->cpu_map[cpu], map);
+		RCU_INIT_POINTER(new_dev_maps->cpu_map[tci], map);
 	}
 
 	if (!new_dev_maps)
 		goto out_no_new_maps;
 
 	for_each_possible_cpu(cpu) {
+		/* copy maps belonging to foreign traffic classes */
+		for (i = tc, tci = cpu * num_tc; dev_maps && i--; tci++) {
+			/* fill in the new device map from the old device map */
+			map = xmap_dereference(dev_maps->cpu_map[tci]);
+			RCU_INIT_POINTER(new_dev_maps->cpu_map[tci], map);
+		}
+
+		/* We need to explicitly update tci as prevous loop
+		 * could break out early if dev_maps is NULL.
+		 */
+		tci = cpu * num_tc + tc;
+
 		if (cpumask_test_cpu(cpu, mask) && cpu_online(cpu)) {
 			/* add queue to CPU maps */
 			int pos = 0;
 
-			map = xmap_dereference(new_dev_maps->cpu_map[cpu]);
+			map = xmap_dereference(new_dev_maps->cpu_map[tci]);
 			while ((pos < map->len) && (map->queues[pos] != index))
 				pos++;
 
@@ -2104,26 +2163,36 @@ int netif_set_xps_queue(struct net_device *dev, const struct cpumask *mask,
 #endif
 		} else if (dev_maps) {
 			/* fill in the new device map from the old device map */
-			map = xmap_dereference(dev_maps->cpu_map[cpu]);
-			RCU_INIT_POINTER(new_dev_maps->cpu_map[cpu], map);
+			map = xmap_dereference(dev_maps->cpu_map[tci]);
+			RCU_INIT_POINTER(new_dev_maps->cpu_map[tci], map);
 		}
 
+		/* copy maps belonging to foreign traffic classes */
+		for (i = num_tc - tc, tci++; dev_maps && --i; tci++) {
+			/* fill in the new device map from the old device map */
+			map = xmap_dereference(dev_maps->cpu_map[tci]);
+			RCU_INIT_POINTER(new_dev_maps->cpu_map[tci], map);
+		}
 	}
 
 	rcu_assign_pointer(dev->xps_maps, new_dev_maps);
 
 	/* Cleanup old maps */
-	if (dev_maps) {
-		for_each_possible_cpu(cpu) {
-			new_map = xmap_dereference(new_dev_maps->cpu_map[cpu]);
-			map = xmap_dereference(dev_maps->cpu_map[cpu]);
+	if (!dev_maps)
+		goto out_no_old_maps;
+
+	for_each_possible_cpu(cpu) {
+		for (i = num_tc, tci = cpu * num_tc; i--; tci++) {
+			new_map = xmap_dereference(new_dev_maps->cpu_map[tci]);
+			map = xmap_dereference(dev_maps->cpu_map[tci]);
 			if (map && map != new_map)
 				kfree_rcu(map, rcu);
 		}
-
-		kfree_rcu(dev_maps, rcu);
 	}
 
+	kfree_rcu(dev_maps, rcu);
+
+out_no_old_maps:
 	dev_maps = new_dev_maps;
 	active = true;
 
@@ -2138,11 +2207,12 @@ out_no_new_maps:
 
 	/* removes queue from unused CPUs */
 	for_each_possible_cpu(cpu) {
-		if (cpumask_test_cpu(cpu, mask) && cpu_online(cpu))
-			continue;
-
-		if (remove_xps_queue(dev_maps, cpu, index))
-			active = true;
+		for (i = tc, tci = cpu * num_tc; i--; tci++)
+			active |= remove_xps_queue(dev_maps, tci, index);
+		if (!cpumask_test_cpu(cpu, mask) || !cpu_online(cpu))
+			active |= remove_xps_queue(dev_maps, tci, index);
+		for (i = num_tc - tc, tci++; --i; tci++)
+			active |= remove_xps_queue(dev_maps, tci, index);
 	}
 
 	/* free map if not active */
@@ -2158,11 +2228,14 @@ out_no_maps:
 error:
 	/* remove any maps that we added */
 	for_each_possible_cpu(cpu) {
-		new_map = xmap_dereference(new_dev_maps->cpu_map[cpu]);
-		map = dev_maps ? xmap_dereference(dev_maps->cpu_map[cpu]) :
-				 NULL;
-		if (new_map && new_map != map)
-			kfree(new_map);
+		for (i = num_tc, tci = cpu * num_tc; i--; tci++) {
+			new_map = xmap_dereference(new_dev_maps->cpu_map[tci]);
+			map = dev_maps ?
+			      xmap_dereference(dev_maps->cpu_map[tci]) :
+			      NULL;
+			if (new_map && new_map != map)
+				kfree(new_map);
+		}
 	}
 
 	mutex_unlock(&xps_map_mutex);
@@ -2173,6 +2246,44 @@ error:
 EXPORT_SYMBOL(netif_set_xps_queue);
 
 #endif
+void netdev_reset_tc(struct net_device *dev)
+{
+#ifdef CONFIG_XPS
+	netif_reset_xps_queues_gt(dev, 0);
+#endif
+	dev->num_tc = 0;
+	memset(dev->tc_to_txq, 0, sizeof(dev->tc_to_txq));
+	memset(dev->prio_tc_map, 0, sizeof(dev->prio_tc_map));
+}
+EXPORT_SYMBOL(netdev_reset_tc);
+
+int netdev_set_tc_queue(struct net_device *dev, u8 tc, u16 count, u16 offset)
+{
+	if (tc >= dev->num_tc)
+		return -EINVAL;
+
+#ifdef CONFIG_XPS
+	netif_reset_xps_queues(dev, offset, count);
+#endif
+	dev->tc_to_txq[tc].count = count;
+	dev->tc_to_txq[tc].offset = offset;
+	return 0;
+}
+EXPORT_SYMBOL(netdev_set_tc_queue);
+
+int netdev_set_num_tc(struct net_device *dev, u8 num_tc)
+{
+	if (num_tc > TC_MAX_QUEUE)
+		return -EINVAL;
+
+#ifdef CONFIG_XPS
+	netif_reset_xps_queues_gt(dev, 0);
+#endif
+	dev->num_tc = num_tc;
+	return 0;
+}
+EXPORT_SYMBOL(netdev_set_num_tc);
+
 /*
  * Routine to help set real_num_tx_queues. To avoid skbs mapped to queues
  * greater then real_num_tx_queues stale skbs on the qdisc must be flushed.
@@ -2483,7 +2594,7 @@ int skb_checksum_help(struct sk_buff *skb)
 			goto out;
 	}
 
-	*(__sum16 *)(skb->data + offset) = csum_fold(csum);
+	*(__sum16 *)(skb->data + offset) = csum_fold(csum) ?: CSUM_MANGLED_0;
 out_set_summed:
 	skb->ip_summed = CHECKSUM_NONE;
 out:
@@ -2899,6 +3010,7 @@ struct sk_buff *validate_xmit_skb_list(struct sk_buff *skb, struct net_device *d
 	}
 	return head;
 }
+EXPORT_SYMBOL_GPL(validate_xmit_skb_list);
 
 static void qdisc_pkt_len_init(struct sk_buff *skb)
 {
@@ -3084,8 +3196,14 @@ static inline int get_xps_queue(struct net_device *dev, struct sk_buff *skb)
 	rcu_read_lock();
 	dev_maps = rcu_dereference(dev->xps_maps);
 	if (dev_maps) {
-		map = rcu_dereference(
-		    dev_maps->cpu_map[skb->sender_cpu - 1]);
+		unsigned int tci = skb->sender_cpu - 1;
+
+		if (dev->num_tc) {
+			tci *= dev->num_tc;
+			tci += netdev_get_prio_tc_map(dev, skb->priority);
+		}
+
+		map = rcu_dereference(dev_maps->cpu_map[tci]);
 		if (map) {
 			if (map->len == 1)
 				queue_index = map->queues[0];
@@ -3709,7 +3827,7 @@ int netif_rx_ni(struct sk_buff *skb)
 }
 EXPORT_SYMBOL(netif_rx_ni);
 
-static void net_tx_action(struct softirq_action *h)
+static __latent_entropy void net_tx_action(struct softirq_action *h)
 {
 	struct softnet_data *sd = this_cpu_ptr(&softnet_data);
 
@@ -4359,7 +4477,7 @@ static enum gro_result dev_gro_receive(struct napi_struct *napi, struct sk_buff 
 	if (!(skb->dev->features & NETIF_F_GRO))
 		goto normal;
 
-	if (skb_is_gso(skb) || skb_has_frag_list(skb) || skb->csum_bad)
+	if (skb->csum_bad)
 		goto normal;
 
 	gro_list_prepare(napi, skb);
@@ -4372,9 +4490,10 @@ static enum gro_result dev_gro_receive(struct napi_struct *napi, struct sk_buff 
 		skb_set_network_header(skb, skb_gro_offset(skb));
 		skb_reset_mac_len(skb);
 		NAPI_GRO_CB(skb)->same_flow = 0;
-		NAPI_GRO_CB(skb)->flush = 0;
+		NAPI_GRO_CB(skb)->flush = skb_is_gso(skb) || skb_has_frag_list(skb);
 		NAPI_GRO_CB(skb)->free = 0;
 		NAPI_GRO_CB(skb)->encap_mark = 0;
+		NAPI_GRO_CB(skb)->recursion_counter = 0;
 		NAPI_GRO_CB(skb)->is_fou = 0;
 		NAPI_GRO_CB(skb)->is_atomic = 1;
 		NAPI_GRO_CB(skb)->gro_remcsum_start = 0;
@@ -4779,26 +4898,36 @@ void __napi_schedule_irqoff(struct napi_struct *n)
 }
 EXPORT_SYMBOL(__napi_schedule_irqoff);
 
-void __napi_complete(struct napi_struct *n)
+bool __napi_complete(struct napi_struct *n)
 {
 	BUG_ON(!test_bit(NAPI_STATE_SCHED, &n->state));
+
+	/* Some drivers call us directly, instead of calling
+	 * napi_complete_done().
+	 */
+	if (unlikely(test_bit(NAPI_STATE_IN_BUSY_POLL, &n->state)))
+		return false;
 
 	list_del_init(&n->poll_list);
 	smp_mb__before_atomic();
 	clear_bit(NAPI_STATE_SCHED, &n->state);
+	return true;
 }
 EXPORT_SYMBOL(__napi_complete);
 
-void napi_complete_done(struct napi_struct *n, int work_done)
+bool napi_complete_done(struct napi_struct *n, int work_done)
 {
 	unsigned long flags;
 
 	/*
-	 * don't let napi dequeue from the cpu poll list
-	 * just in case its running on a different cpu
+	 * 1) Don't let napi dequeue from the cpu poll list
+	 *    just in case its running on a different cpu.
+	 * 2) If we are busy polling, do nothing here, we have
+	 *    the guarantee we will be called later.
 	 */
-	if (unlikely(test_bit(NAPI_STATE_NPSVC, &n->state)))
-		return;
+	if (unlikely(n->state & (NAPIF_STATE_NPSVC |
+				 NAPIF_STATE_IN_BUSY_POLL)))
+		return false;
 
 	if (n->gro_list) {
 		unsigned long timeout = 0;
@@ -4820,6 +4949,7 @@ void napi_complete_done(struct napi_struct *n, int work_done)
 		__napi_complete(n);
 		local_irq_restore(flags);
 	}
+	return true;
 }
 EXPORT_SYMBOL(napi_complete_done);
 
@@ -4837,13 +4967,41 @@ static struct napi_struct *napi_by_id(unsigned int napi_id)
 }
 
 #if defined(CONFIG_NET_RX_BUSY_POLL)
+
 #define BUSY_POLL_BUDGET 8
+
+static void busy_poll_stop(struct napi_struct *napi, void *have_poll_lock)
+{
+	int rc;
+
+	clear_bit(NAPI_STATE_IN_BUSY_POLL, &napi->state);
+
+	local_bh_disable();
+
+	/* All we really want here is to re-enable device interrupts.
+	 * Ideally, a new ndo_busy_poll_stop() could avoid another round.
+	 */
+	rc = napi->poll(napi, BUSY_POLL_BUDGET);
+	netpoll_poll_unlock(have_poll_lock);
+	if (rc == BUSY_POLL_BUDGET)
+		__napi_schedule(napi);
+	local_bh_enable();
+	if (local_softirq_pending())
+		do_softirq();
+}
+
 bool sk_busy_loop(struct sock *sk, int nonblock)
 {
 	unsigned long end_time = !nonblock ? sk_busy_loop_end_time(sk) : 0;
+	int (*napi_poll)(struct napi_struct *napi, int budget);
 	int (*busy_poll)(struct napi_struct *dev);
+	void *have_poll_lock = NULL;
 	struct napi_struct *napi;
-	int rc = false;
+	int rc;
+
+restart:
+	rc = false;
+	napi_poll = NULL;
 
 	rcu_read_lock();
 
@@ -4854,24 +5012,33 @@ bool sk_busy_loop(struct sock *sk, int nonblock)
 	/* Note: ndo_busy_poll method is optional in linux-4.5 */
 	busy_poll = napi->dev->netdev_ops->ndo_busy_poll;
 
-	do {
+	preempt_disable();
+	for (;;) {
 		rc = 0;
 		local_bh_disable();
 		if (busy_poll) {
 			rc = busy_poll(napi);
-		} else if (napi_schedule_prep(napi)) {
-			void *have = netpoll_poll_lock(napi);
-
-			if (test_bit(NAPI_STATE_SCHED, &napi->state)) {
-				rc = napi->poll(napi, BUSY_POLL_BUDGET);
-				trace_napi_poll(napi, rc, BUSY_POLL_BUDGET);
-				if (rc == BUSY_POLL_BUDGET) {
-					napi_complete_done(napi, rc);
-					napi_schedule(napi);
-				}
-			}
-			netpoll_poll_unlock(have);
+			goto count;
 		}
+		if (!napi_poll) {
+			unsigned long val = READ_ONCE(napi->state);
+
+			/* If multiple threads are competing for this napi,
+			 * we avoid dirtying napi->state as much as we can.
+			 */
+			if (val & (NAPIF_STATE_DISABLE | NAPIF_STATE_SCHED |
+				   NAPIF_STATE_IN_BUSY_POLL))
+				goto count;
+			if (cmpxchg(&napi->state, val,
+				    val | NAPIF_STATE_IN_BUSY_POLL |
+					  NAPIF_STATE_SCHED) != val)
+				goto count;
+			have_poll_lock = netpoll_poll_lock(napi);
+			napi_poll = napi->poll;
+		}
+		rc = napi_poll(napi, BUSY_POLL_BUDGET);
+		trace_napi_poll(napi, rc, BUSY_POLL_BUDGET);
+count:
 		if (rc > 0)
 			__NET_ADD_STATS(sock_net(sk),
 					LINUX_MIB_BUSYPOLLRXPACKETS, rc);
@@ -4880,10 +5047,26 @@ bool sk_busy_loop(struct sock *sk, int nonblock)
 		if (rc == LL_FLUSH_FAILED)
 			break; /* permanent failure */
 
-		cpu_relax();
-	} while (!nonblock && skb_queue_empty(&sk->sk_receive_queue) &&
-		 !need_resched() && !busy_loop_timeout(end_time));
+		if (nonblock || !skb_queue_empty(&sk->sk_receive_queue) ||
+		    busy_loop_timeout(end_time))
+			break;
 
+		if (unlikely(need_resched())) {
+			if (napi_poll)
+				busy_poll_stop(napi, have_poll_lock);
+			preempt_enable();
+			rcu_read_unlock();
+			cond_resched();
+			rc = !skb_queue_empty(&sk->sk_receive_queue);
+			if (rc || busy_loop_timeout(end_time))
+				return rc;
+			goto restart;
+		}
+		cpu_relax_lowlatency();
+	}
+	if (napi_poll)
+		busy_poll_stop(napi, have_poll_lock);
+	preempt_enable();
 	rc = !skb_queue_empty(&sk->sk_receive_queue);
 out:
 	rcu_read_unlock();
@@ -4893,7 +5076,7 @@ EXPORT_SYMBOL(sk_busy_loop);
 
 #endif /* CONFIG_NET_RX_BUSY_POLL */
 
-void napi_hash_add(struct napi_struct *napi)
+static void napi_hash_add(struct napi_struct *napi)
 {
 	if (test_bit(NAPI_STATE_NO_BUSY_POLL, &napi->state) ||
 	    test_and_set_bit(NAPI_STATE_HASHED, &napi->state))
@@ -4913,7 +5096,6 @@ void napi_hash_add(struct napi_struct *napi)
 
 	spin_unlock(&napi_hash_lock);
 }
-EXPORT_SYMBOL_GPL(napi_hash_add);
 
 /* Warning : caller is responsible to make sure rcu grace period
  * is respected before freeing memory containing @napi
@@ -4961,7 +5143,6 @@ void netif_napi_add(struct net_device *dev, struct napi_struct *napi,
 	list_add(&napi->dev_list, &dev->napi_list);
 	napi->dev = dev;
 #ifdef CONFIG_NETPOLL
-	spin_lock_init(&napi->poll_lock);
 	napi->poll_owner = -1;
 #endif
 	set_bit(NAPI_STATE_SCHED, &napi->state);
@@ -5062,7 +5243,7 @@ out_unlock:
 	return work;
 }
 
-static void net_rx_action(struct softirq_action *h)
+static __latent_entropy void net_rx_action(struct softirq_action *h)
 {
 	struct softnet_data *sd = this_cpu_ptr(&softnet_data);
 	unsigned long time_limit = jiffies + 2;
@@ -5079,7 +5260,7 @@ static void net_rx_action(struct softirq_action *h)
 
 		if (list_empty(&list)) {
 			if (!sd_has_rps_ipi_waiting(sd) && list_empty(&repoll))
-				return;
+				goto out;
 			break;
 		}
 
@@ -5097,7 +5278,6 @@ static void net_rx_action(struct softirq_action *h)
 		}
 	}
 
-	__kfree_skb_flush();
 	local_irq_disable();
 
 	list_splice_tail_init(&sd->poll_list, &list);
@@ -5107,6 +5287,8 @@ static void net_rx_action(struct softirq_action *h)
 		__raise_softirq_irqoff(NET_RX_SOFTIRQ);
 
 	net_rps_action_and_irq_enable(sd);
+out:
+	__kfree_skb_flush();
 }
 
 struct netdev_adjacent {
@@ -5400,12 +5582,12 @@ static struct net_device *netdev_next_lower_dev(struct net_device *dev,
 {
 	struct netdev_adjacent *lower;
 
-	lower = list_entry(*iter, struct netdev_adjacent, list);
+	lower = list_entry((*iter)->next, struct netdev_adjacent, list);
 
 	if (&lower->list == &dev->adj_list.lower)
 		return NULL;
 
-	*iter = lower->list.next;
+	*iter = &lower->list;
 
 	return lower->dev;
 }
@@ -6510,26 +6692,42 @@ EXPORT_SYMBOL(dev_change_proto_down);
  *	dev_change_xdp_fd - set or clear a bpf program for a device rx path
  *	@dev: device
  *	@fd: new program fd or negative value to clear
+ *	@flags: xdp-related flags
  *
  *	Set or clear a bpf program for a device
  */
-int dev_change_xdp_fd(struct net_device *dev, int fd)
+int dev_change_xdp_fd(struct net_device *dev, int fd, u32 flags)
 {
 	const struct net_device_ops *ops = dev->netdev_ops;
 	struct bpf_prog *prog = NULL;
-	struct netdev_xdp xdp = {};
+	struct netdev_xdp xdp;
 	int err;
+
+	ASSERT_RTNL();
 
 	if (!ops->ndo_xdp)
 		return -EOPNOTSUPP;
 	if (fd >= 0) {
+		if (flags & XDP_FLAGS_UPDATE_IF_NOEXIST) {
+			memset(&xdp, 0, sizeof(xdp));
+			xdp.command = XDP_QUERY_PROG;
+
+			err = ops->ndo_xdp(dev, &xdp);
+			if (err < 0)
+				return err;
+			if (xdp.prog_attached)
+				return -EBUSY;
+		}
+
 		prog = bpf_prog_get_type(fd, BPF_PROG_TYPE_XDP);
 		if (IS_ERR(prog))
 			return PTR_ERR(prog);
 	}
 
+	memset(&xdp, 0, sizeof(xdp));
 	xdp.command = XDP_SETUP_PROG;
 	xdp.prog = prog;
+
 	err = ops->ndo_xdp(dev, &xdp);
 	if (err < 0 && prog)
 		bpf_prog_put(prog);
@@ -7527,7 +7725,7 @@ struct net_device *alloc_netdev_mqs(int sizeof_priv, const char *name,
 
 	if (!dev->tx_queue_len) {
 		dev->priv_flags |= IFF_NO_QUEUE;
-		dev->tx_queue_len = 1;
+		dev->tx_queue_len = DEFAULT_TX_QUEUE_LEN;
 	}
 
 	dev->num_tx_queues = txqs;

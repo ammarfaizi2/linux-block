@@ -1080,7 +1080,7 @@ static void xs_udp_data_receive(struct sock_xprt *transport)
 	if (sk == NULL)
 		goto out;
 	for (;;) {
-		skb = skb_recv_datagram(sk, 0, 1, &err);
+		skb = skb_recv_udp(sk, 0, 1, &err);
 		if (skb != NULL) {
 			xs_udp_data_read_skb(&transport->xprt, sk, skb);
 			consume_skb(skb);
@@ -2563,6 +2563,7 @@ static int bc_malloc(struct rpc_task *task)
 	buf->len = PAGE_SIZE;
 
 	rqst->rq_buffer = buf->data;
+	rqst->rq_rbuffer = (char *)rqst->rq_buffer + rqst->rq_callsize;
 	return 0;
 }
 

@@ -38,6 +38,31 @@ static int mv88e6xxx_g2_wait(struct mv88e6xxx_chip *chip, int reg, u16 mask)
 	return mv88e6xxx_wait(chip, ADDR_GLOBAL2, reg, mask);
 }
 
+/* Offset 0x02: Management Enable 2x */
+/* Offset 0x03: Management Enable 0x */
+
+int mv88e6095_g2_mgmt_rsvd2cpu(struct mv88e6xxx_chip *chip)
+{
+	int err;
+
+	/* Consider the frames with reserved multicast destination
+	 * addresses matching 01:80:c2:00:00:2x as MGMT.
+	 */
+	if (mv88e6xxx_has(chip, MV88E6XXX_FLAG_G2_MGMT_EN_2X)) {
+		err = mv88e6xxx_g2_write(chip, GLOBAL2_MGMT_EN_2X, 0xffff);
+		if (err)
+			return err;
+	}
+
+	/* Consider the frames with reserved multicast destination
+	 * addresses matching 01:80:c2:00:00:0x as MGMT.
+	 */
+	if (mv88e6xxx_has(chip, MV88E6XXX_FLAG_G2_MGMT_EN_0X))
+		return mv88e6xxx_g2_write(chip, GLOBAL2_MGMT_EN_0X, 0xffff);
+
+	return 0;
+}
+
 /* Offset 0x06: Device Mapping Table register */
 
 static int mv88e6xxx_g2_device_mapping_write(struct mv88e6xxx_chip *chip,
@@ -507,6 +532,9 @@ void mv88e6xxx_g2_irq_free(struct mv88e6xxx_chip *chip)
 {
 	int irq, virq;
 
+	free_irq(chip->device_irq, chip);
+	irq_dispose_mapping(chip->device_irq);
+
 	for (irq = 0; irq < 16; irq++) {
 		virq = irq_find_mapping(chip->g2_irq.domain, irq);
 		irq_dispose_mapping(virq);
@@ -517,8 +545,7 @@ void mv88e6xxx_g2_irq_free(struct mv88e6xxx_chip *chip)
 
 int mv88e6xxx_g2_irq_setup(struct mv88e6xxx_chip *chip)
 {
-	int device_irq;
-	int err, irq;
+	int err, irq, virq;
 
 	if (!chip->dev->of_node)
 		return -EINVAL;
@@ -534,22 +561,28 @@ int mv88e6xxx_g2_irq_setup(struct mv88e6xxx_chip *chip)
 	chip->g2_irq.chip = mv88e6xxx_g2_irq_chip;
 	chip->g2_irq.masked = ~0;
 
-	device_irq = irq_find_mapping(chip->g1_irq.domain,
-				      GLOBAL_STATUS_IRQ_DEVICE);
-	if (device_irq < 0) {
-		err = device_irq;
+	chip->device_irq = irq_find_mapping(chip->g1_irq.domain,
+					    GLOBAL_STATUS_IRQ_DEVICE);
+	if (chip->device_irq < 0) {
+		err = chip->device_irq;
 		goto out;
 	}
 
-	err = devm_request_threaded_irq(chip->dev, device_irq, NULL,
-					mv88e6xxx_g2_irq_thread_fn,
-					IRQF_ONESHOT, "mv88e6xxx-g1", chip);
+	err = request_threaded_irq(chip->device_irq, NULL,
+				   mv88e6xxx_g2_irq_thread_fn,
+				   IRQF_ONESHOT, "mv88e6xxx-g1", chip);
 	if (err)
 		goto out;
 
 	return 0;
+
 out:
-	mv88e6xxx_g2_irq_free(chip);
+	for (irq = 0; irq < 16; irq++) {
+		virq = irq_find_mapping(chip->g2_irq.domain, irq);
+		irq_dispose_mapping(virq);
+	}
+
+	irq_domain_remove(chip->g2_irq.domain);
 
 	return err;
 }
@@ -558,24 +591,6 @@ int mv88e6xxx_g2_setup(struct mv88e6xxx_chip *chip)
 {
 	u16 reg;
 	int err;
-
-	if (mv88e6xxx_has(chip, MV88E6XXX_FLAG_G2_MGMT_EN_2X)) {
-		/* Consider the frames with reserved multicast destination
-		 * addresses matching 01:80:c2:00:00:2x as MGMT.
-		 */
-		err = mv88e6xxx_g2_write(chip, GLOBAL2_MGMT_EN_2X, 0xffff);
-		if (err)
-			return err;
-	}
-
-	if (mv88e6xxx_has(chip, MV88E6XXX_FLAG_G2_MGMT_EN_0X)) {
-		/* Consider the frames with reserved multicast destination
-		 * addresses matching 01:80:c2:00:00:0x as MGMT.
-		 */
-		err = mv88e6xxx_g2_write(chip, GLOBAL2_MGMT_EN_0X, 0xffff);
-		if (err)
-			return err;
-	}
 
 	/* Ignore removed tag data on doubly tagged packets, disable
 	 * flow control messages, force flow control priority to the

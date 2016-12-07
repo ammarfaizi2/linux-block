@@ -3293,7 +3293,7 @@ static void mvpp2_cls_init(struct mvpp2 *priv)
 	mvpp2_write(priv, MVPP2_CLS_MODE_REG, MVPP2_CLS_MODE_ACTIVE_MASK);
 
 	/* Clear classifier flow table */
-	memset(&fe.data, 0, MVPP2_CLS_FLOWS_TBL_DATA_WORDS);
+	memset(&fe.data, 0, sizeof(fe.data));
 	for (index = 0; index < MVPP2_CLS_FLOWS_TBL_SIZE; index++) {
 		fe.index = index;
 		mvpp2_cls_flow_write(priv, &fe);
@@ -5923,6 +5923,7 @@ static const struct net_device_ops mvpp2_netdev_ops = {
 };
 
 static const struct ethtool_ops mvpp2_eth_tool_ops = {
+	.nway_reset	= phy_ethtool_nway_reset,
 	.get_link	= ethtool_op_get_link,
 	.set_coalesce	= mvpp2_ethtool_set_coalesce,
 	.get_coalesce	= mvpp2_ethtool_get_coalesce,

@@ -453,7 +453,7 @@ int sock_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
 EXPORT_SYMBOL(sock_queue_rcv_skb);
 
 int __sk_receive_skb(struct sock *sk, struct sk_buff *skb,
-		     const int nested, unsigned int trim_cap)
+		     const int nested, unsigned int trim_cap, bool refcounted)
 {
 	int rc = NET_RX_SUCCESS;
 
@@ -487,7 +487,8 @@ int __sk_receive_skb(struct sock *sk, struct sk_buff *skb,
 
 	bh_unlock_sock(sk);
 out:
-	sock_put(sk);
+	if (refcounted)
+		sock_put(sk);
 	return rc;
 discard_and_relse:
 	kfree_skb(skb);
@@ -714,7 +715,7 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
 		val = min_t(u32, val, sysctl_wmem_max);
 set_sndbuf:
 		sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
-		sk->sk_sndbuf = max_t(u32, val * 2, SOCK_MIN_SNDBUF);
+		sk->sk_sndbuf = max_t(int, val * 2, SOCK_MIN_SNDBUF);
 		/* Wake up sending tasks if we upped the value. */
 		sk->sk_write_space(sk);
 		break;
@@ -750,7 +751,7 @@ set_rcvbuf:
 		 * returning the value we actually used in getsockopt
 		 * is the most desirable behavior.
 		 */
-		sk->sk_rcvbuf = max_t(u32, val * 2, SOCK_MIN_RCVBUF);
+		sk->sk_rcvbuf = max_t(int, val * 2, SOCK_MIN_RCVBUF);
 		break;
 
 	case SO_RCVBUFFORCE:
@@ -853,6 +854,13 @@ set_rcvbuf:
 				sk->sk_tskey = 0;
 			}
 		}
+
+		if (val & SOF_TIMESTAMPING_OPT_STATS &&
+		    !(val & SOF_TIMESTAMPING_OPT_TSONLY)) {
+			ret = -EINVAL;
+			break;
+		}
+
 		sk->sk_tsflags = val;
 		if (val & SOF_TIMESTAMPING_RX_SOFTWARE)
 			sock_enable_timestamp(sk,
@@ -1543,6 +1551,7 @@ struct sock *sk_clone_lock(const struct sock *sk, const gfp_t priority)
 		RCU_INIT_POINTER(newsk->sk_reuseport_cb, NULL);
 
 		newsk->sk_err	   = 0;
+		newsk->sk_err_soft = 0;
 		newsk->sk_priority = 0;
 		newsk->sk_incoming_cpu = raw_smp_processor_id();
 		atomic64_set(&newsk->sk_cookie, 0);
@@ -2078,14 +2087,14 @@ void __sk_flush_backlog(struct sock *sk)
  */
 int sk_wait_data(struct sock *sk, long *timeo, const struct sk_buff *skb)
 {
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 	int rc;
-	DEFINE_WAIT(wait);
 
-	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	add_wait_queue(sk_sleep(sk), &wait);
 	sk_set_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	rc = sk_wait_event(sk, timeo, skb_peek_tail(&sk->sk_receive_queue) != skb);
+	rc = sk_wait_event(sk, timeo, skb_peek_tail(&sk->sk_receive_queue) != skb, &wait);
 	sk_clear_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	finish_wait(sk_sleep(sk), &wait);
+	remove_wait_queue(sk_sleep(sk), &wait);
 	return rc;
 }
 EXPORT_SYMBOL(sk_wait_data);
@@ -2460,8 +2469,11 @@ void sock_init_data(struct socket *sock, struct sock *sk)
 		sk->sk_type	=	sock->type;
 		sk->sk_wq	=	sock->wq;
 		sock->sk	=	sk;
-	} else
+		sk->sk_uid	=	SOCK_INODE(sock)->i_uid;
+	} else {
 		sk->sk_wq	=	NULL;
+		sk->sk_uid	=	make_kuid(sock_net(sk)->user_ns, 0);
+	}
 
 	rwlock_init(&sk->sk_callback_lock);
 	lockdep_set_class_and_name(&sk->sk_callback_lock,

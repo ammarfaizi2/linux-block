@@ -2438,6 +2438,8 @@ static int ehea_open(struct net_device *dev)
 
 	netif_info(port, ifup, dev, "enabling port\n");
 
+	netif_carrier_off(dev);
+
 	ret = ehea_up(dev);
 	if (!ret) {
 		port_napi_enable(port);
@@ -3042,7 +3044,6 @@ static struct ehea_port *ehea_setup_single_port(struct ehea_adapter *adapter,
 	init_waitqueue_head(&port->swqe_avail_wq);
 	init_waitqueue_head(&port->restart_wq);
 
-	memset(&port->stats, 0, sizeof(struct net_device_stats));
 	ret = register_netdev(dev);
 	if (ret) {
 		pr_err("register_netdev failed. ret=%d\n", ret);

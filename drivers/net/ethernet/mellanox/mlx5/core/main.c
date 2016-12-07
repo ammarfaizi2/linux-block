@@ -46,7 +46,6 @@
 #include <linux/mlx5/srq.h>
 #include <linux/debugfs.h>
 #include <linux/kmod.h>
-#include <linux/delay.h>
 #include <linux/mlx5/mlx5_ifc.h>
 #ifdef CONFIG_RFS_ACCEL
 #include <linux/cpu_rmap.h>
@@ -173,6 +172,41 @@ static int wait_fw_init(struct mlx5_core_dev *dev, u32 max_wait_mili)
 	}
 
 	return err;
+}
+
+static void mlx5_set_driver_version(struct mlx5_core_dev *dev)
+{
+	int driver_ver_sz = MLX5_FLD_SZ_BYTES(set_driver_version_in,
+					      driver_version);
+	u8 in[MLX5_ST_SZ_BYTES(set_driver_version_in)] = {0};
+	u8 out[MLX5_ST_SZ_BYTES(set_driver_version_out)] = {0};
+	int remaining_size = driver_ver_sz;
+	char *string;
+
+	if (!MLX5_CAP_GEN(dev, driver_version))
+		return;
+
+	string = MLX5_ADDR_OF(set_driver_version_in, in, driver_version);
+
+	strncpy(string, "Linux", remaining_size);
+
+	remaining_size = max_t(int, 0, driver_ver_sz - strlen(string));
+	strncat(string, ",", remaining_size);
+
+	remaining_size = max_t(int, 0, driver_ver_sz - strlen(string));
+	strncat(string, DRIVER_NAME, remaining_size);
+
+	remaining_size = max_t(int, 0, driver_ver_sz - strlen(string));
+	strncat(string, ",", remaining_size);
+
+	remaining_size = max_t(int, 0, driver_ver_sz - strlen(string));
+	strncat(string, DRIVER_VERSION, remaining_size);
+
+	/*Send the command*/
+	MLX5_SET(set_driver_version_in, in, opcode,
+		 MLX5_CMD_OP_SET_DRIVER_VERSION);
+
+	mlx5_cmd_exec(dev, in, sizeof(in), out, sizeof(out));
 }
 
 static int set_dma_caps(struct pci_dev *pdev)
@@ -844,12 +878,6 @@ static int mlx5_init_once(struct mlx5_core_dev *dev, struct mlx5_priv *priv)
 	struct pci_dev *pdev = dev->pdev;
 	int err;
 
-	err = mlx5_query_hca_caps(dev);
-	if (err) {
-		dev_err(&pdev->dev, "query hca failed\n");
-		goto out;
-	}
-
 	err = mlx5_query_board_id(dev);
 	if (err) {
 		dev_err(&pdev->dev, "query board id failed\n");
@@ -1021,7 +1049,15 @@ static int mlx5_load_one(struct mlx5_core_dev *dev, struct mlx5_priv *priv,
 		goto err_pagealloc_stop;
 	}
 
+	mlx5_set_driver_version(dev);
+
 	mlx5_start_health_poll(dev);
+
+	err = mlx5_query_hca_caps(dev);
+	if (err) {
+		dev_err(&pdev->dev, "query hca failed\n");
+		goto err_stop_poll;
+	}
 
 	if (boot && mlx5_init_once(dev, priv)) {
 		dev_err(&pdev->dev, "sw objs init failed\n");
@@ -1202,6 +1238,8 @@ static const struct devlink_ops mlx5_devlink_ops = {
 #ifdef CONFIG_MLX5_CORE_EN
 	.eswitch_mode_set = mlx5_devlink_eswitch_mode_set,
 	.eswitch_mode_get = mlx5_devlink_eswitch_mode_get,
+	.eswitch_inline_mode_set = mlx5_devlink_eswitch_inline_mode_set,
+	.eswitch_inline_mode_get = mlx5_devlink_eswitch_inline_mode_get,
 #endif
 };
 
@@ -1226,6 +1264,9 @@ static int init_one(struct pci_dev *pdev,
 
 	pci_set_drvdata(pdev, dev);
 
+	dev->pdev = pdev;
+	dev->event = mlx5_core_event;
+
 	if (prof_sel < 0 || prof_sel >= ARRAY_SIZE(profile)) {
 		mlx5_core_warn(dev,
 			       "selected profile out of range, selecting default (%d)\n",
@@ -1233,8 +1274,6 @@ static int init_one(struct pci_dev *pdev,
 		prof_sel = MLX5_DEFAULT_PROF;
 	}
 	dev->profile = &profile[prof_sel];
-	dev->pdev = pdev;
-	dev->event = mlx5_core_event;
 
 	INIT_LIST_HEAD(&priv->ctx_list);
 	spin_lock_init(&priv->ctx_lock);
@@ -1313,10 +1352,16 @@ static pci_ers_result_t mlx5_pci_err_detected(struct pci_dev *pdev,
 	struct mlx5_priv *priv = &dev->priv;
 
 	dev_info(&pdev->dev, "%s was called\n", __func__);
+
 	mlx5_enter_error_state(dev);
 	mlx5_unload_one(dev, priv, false);
-	pci_save_state(pdev);
-	mlx5_pci_disable_device(dev);
+	/* In case of kernel call save the pci state and drain health wq */
+	if (state) {
+		pci_save_state(pdev);
+		mlx5_drain_health_wq(dev);
+		mlx5_pci_disable_device(dev);
+	}
+
 	return state == pci_channel_io_perm_failure ?
 		PCI_ERS_RESULT_DISCONNECT : PCI_ERS_RESULT_NEED_RESET;
 }
@@ -1373,11 +1418,6 @@ static pci_ers_result_t mlx5_pci_slot_reset(struct pci_dev *pdev)
 	return PCI_ERS_RESULT_RECOVERED;
 }
 
-void mlx5_disable_device(struct mlx5_core_dev *dev)
-{
-	mlx5_pci_err_detected(dev->pdev, 0);
-}
-
 static void mlx5_pci_resume(struct pci_dev *pdev)
 {
 	struct mlx5_core_dev *dev = pci_get_drvdata(pdev);
@@ -1422,10 +1462,23 @@ static const struct pci_device_id mlx5_core_pci_table[] = {
 	{ PCI_VDEVICE(MELLANOX, 0x1017) },			/* ConnectX-5, PCIe 3.0 */
 	{ PCI_VDEVICE(MELLANOX, 0x1018), MLX5_PCI_DEV_IS_VF},	/* ConnectX-5 VF */
 	{ PCI_VDEVICE(MELLANOX, 0x1019) },			/* ConnectX-5, PCIe 4.0 */
+	{ PCI_VDEVICE(MELLANOX, 0x101a), MLX5_PCI_DEV_IS_VF},	/* ConnectX-5, PCIe 4.0 VF */
 	{ 0, }
 };
 
 MODULE_DEVICE_TABLE(pci, mlx5_core_pci_table);
+
+void mlx5_disable_device(struct mlx5_core_dev *dev)
+{
+	mlx5_pci_err_detected(dev->pdev, 0);
+}
+
+void mlx5_recover_device(struct mlx5_core_dev *dev)
+{
+	mlx5_pci_disable_device(dev);
+	if (mlx5_pci_slot_reset(dev->pdev) == PCI_ERS_RESULT_RECOVERED)
+		mlx5_pci_resume(dev->pdev);
+}
 
 static struct pci_driver mlx5_core_driver = {
 	.name           = DRIVER_NAME,

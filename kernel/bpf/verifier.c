@@ -19,6 +19,7 @@
 #include <net/netlink.h>
 #include <linux/file.h>
 #include <linux/vmalloc.h>
+#include <linux/stringify.h>
 
 /* bpf_check() is a static code analyzer that walks eBPF program
  * instruction by instruction and updates register/stack state.
@@ -190,6 +191,22 @@ static const char * const reg_type_str[] = {
 	[PTR_TO_PACKET_END]	= "pkt_end",
 };
 
+#define __BPF_FUNC_STR_FN(x) [BPF_FUNC_ ## x] = __stringify(bpf_ ## x)
+static const char * const func_id_str[] = {
+	__BPF_FUNC_MAPPER(__BPF_FUNC_STR_FN)
+};
+#undef __BPF_FUNC_STR_FN
+
+static const char *func_id_name(int id)
+{
+	BUILD_BUG_ON(ARRAY_SIZE(func_id_str) != __BPF_FUNC_MAX_ID);
+
+	if (id >= 0 && id < __BPF_FUNC_MAX_ID && func_id_str[id])
+		return func_id_str[id];
+	else
+		return "unknown";
+}
+
 static void print_verifier_state(struct bpf_verifier_state *state)
 {
 	struct bpf_reg_state *reg;
@@ -217,8 +234,8 @@ static void print_verifier_state(struct bpf_verifier_state *state)
 				reg->map_ptr->value_size,
 				reg->id);
 		if (reg->min_value != BPF_REGISTER_MIN_RANGE)
-			verbose(",min_value=%llu",
-				(unsigned long long)reg->min_value);
+			verbose(",min_value=%lld",
+				(long long)reg->min_value);
 		if (reg->max_value != BPF_REGISTER_MAX_RANGE)
 			verbose(",max_value=%llu",
 				(unsigned long long)reg->max_value);
@@ -354,7 +371,8 @@ static void print_bpf_insn(struct bpf_insn *insn)
 		u8 opcode = BPF_OP(insn->code);
 
 		if (opcode == BPF_CALL) {
-			verbose("(%02x) call %d\n", insn->code, insn->imm);
+			verbose("(%02x) call %s#%d\n", insn->code,
+				func_id_name(insn->imm), insn->imm);
 		} else if (insn->code == (BPF_JMP | BPF_JA)) {
 			verbose("(%02x) goto pc%+d\n",
 				insn->code, insn->off);
@@ -615,12 +633,19 @@ static int check_map_access(struct bpf_verifier_env *env, u32 regno, int off,
 #define MAX_PACKET_OFF 0xffff
 
 static bool may_access_direct_pkt_data(struct bpf_verifier_env *env,
-				       const struct bpf_call_arg_meta *meta)
+				       const struct bpf_call_arg_meta *meta,
+				       enum bpf_access_type t)
 {
 	switch (env->prog->type) {
+	case BPF_PROG_TYPE_LWT_IN:
+	case BPF_PROG_TYPE_LWT_OUT:
+		/* dst_input() and dst_output() can't write for now */
+		if (t == BPF_WRITE)
+			return false;
 	case BPF_PROG_TYPE_SCHED_CLS:
 	case BPF_PROG_TYPE_SCHED_ACT:
 	case BPF_PROG_TYPE_XDP:
+	case BPF_PROG_TYPE_LWT_XMIT:
 		if (meta)
 			return meta->pkt_access;
 
@@ -760,7 +785,7 @@ static int check_mem_access(struct bpf_verifier_env *env, u32 regno, int off,
 			 * index'es we need to make sure that whatever we use
 			 * will have a set floor within our range.
 			 */
-			if ((s64)reg->min_value < 0) {
+			if (reg->min_value < 0) {
 				verbose("R%d min value is negative, either use unsigned index or do a if (index >=0) check.\n",
 					regno);
 				return -EACCES;
@@ -819,7 +844,7 @@ static int check_mem_access(struct bpf_verifier_env *env, u32 regno, int off,
 			err = check_stack_read(state, off, size, value_regno);
 		}
 	} else if (state->regs[regno].type == PTR_TO_PACKET) {
-		if (t == BPF_WRITE && !may_access_direct_pkt_data(env, NULL)) {
+		if (t == BPF_WRITE && !may_access_direct_pkt_data(env, NULL, t)) {
 			verbose("cannot write into packet\n");
 			return -EACCES;
 		}
@@ -952,7 +977,8 @@ static int check_func_arg(struct bpf_verifier_env *env, u32 regno,
 		return 0;
 	}
 
-	if (type == PTR_TO_PACKET && !may_access_direct_pkt_data(env, meta)) {
+	if (type == PTR_TO_PACKET &&
+	    !may_access_direct_pkt_data(env, meta, BPF_READ)) {
 		verbose("helper access to the packet is not allowed\n");
 		return -EACCES;
 	}
@@ -1114,8 +1140,8 @@ static int check_map_func_compatibility(struct bpf_map *map, int func_id)
 
 	return 0;
 error:
-	verbose("cannot pass map_type %d into func %d\n",
-		map->map_type, func_id);
+	verbose("cannot pass map_type %d into func %s#%d\n",
+		map->map_type, func_id_name(func_id), func_id);
 	return -EINVAL;
 }
 
@@ -1172,7 +1198,7 @@ static int check_call(struct bpf_verifier_env *env, int func_id)
 
 	/* find function prototype */
 	if (func_id < 0 || func_id >= __BPF_FUNC_MAX_ID) {
-		verbose("invalid func %d\n", func_id);
+		verbose("invalid func %s#%d\n", func_id_name(func_id), func_id);
 		return -EINVAL;
 	}
 
@@ -1180,7 +1206,7 @@ static int check_call(struct bpf_verifier_env *env, int func_id)
 		fn = env->prog->aux->ops->get_func_proto(func_id);
 
 	if (!fn) {
-		verbose("unknown func %d\n", func_id);
+		verbose("unknown func %s#%d\n", func_id_name(func_id), func_id);
 		return -EINVAL;
 	}
 
@@ -1200,7 +1226,8 @@ static int check_call(struct bpf_verifier_env *env, int func_id)
 	 */
 	err = check_raw_mode(fn);
 	if (err) {
-		verbose("kernel subsystem misconfigured func %d\n", func_id);
+		verbose("kernel subsystem misconfigured func %s#%d\n",
+			func_id_name(func_id), func_id);
 		return err;
 	}
 
@@ -1256,8 +1283,8 @@ static int check_call(struct bpf_verifier_env *env, int func_id)
 		regs[BPF_REG_0].map_ptr = meta.map_ptr;
 		regs[BPF_REG_0].id = ++env->id_gen;
 	} else {
-		verbose("unknown return type %d of func %d\n",
-			fn->ret_type, func_id);
+		verbose("unknown return type %d of func %s#%d\n",
+			fn->ret_type, func_id_name(func_id), func_id);
 		return -EINVAL;
 	}
 
@@ -1471,7 +1498,8 @@ static void check_reg_overflow(struct bpf_reg_state *reg)
 {
 	if (reg->max_value > BPF_REGISTER_MAX_RANGE)
 		reg->max_value = BPF_REGISTER_MAX_RANGE;
-	if ((s64)reg->min_value < BPF_REGISTER_MIN_RANGE)
+	if (reg->min_value < BPF_REGISTER_MIN_RANGE ||
+	    reg->min_value > BPF_REGISTER_MAX_RANGE)
 		reg->min_value = BPF_REGISTER_MIN_RANGE;
 }
 
@@ -1479,8 +1507,8 @@ static void adjust_reg_min_max_vals(struct bpf_verifier_env *env,
 				    struct bpf_insn *insn)
 {
 	struct bpf_reg_state *regs = env->cur_state.regs, *dst_reg;
-	u64 min_val = BPF_REGISTER_MIN_RANGE, max_val = BPF_REGISTER_MAX_RANGE;
-	bool min_set = false, max_set = false;
+	s64 min_val = BPF_REGISTER_MIN_RANGE;
+	u64 max_val = BPF_REGISTER_MAX_RANGE;
 	u8 opcode = BPF_OP(insn->code);
 
 	dst_reg = &regs[insn->dst_reg];
@@ -1503,7 +1531,6 @@ static void adjust_reg_min_max_vals(struct bpf_verifier_env *env,
 	} else if (insn->imm < BPF_REGISTER_MAX_RANGE &&
 		   (s64)insn->imm > BPF_REGISTER_MIN_RANGE) {
 		min_val = max_val = insn->imm;
-		min_set = max_set = true;
 	}
 
 	/* We don't know anything about what was done to this register, mark it
@@ -1515,22 +1542,43 @@ static void adjust_reg_min_max_vals(struct bpf_verifier_env *env,
 		return;
 	}
 
+	/* If one of our values was at the end of our ranges then we can't just
+	 * do our normal operations to the register, we need to set the values
+	 * to the min/max since they are undefined.
+	 */
+	if (min_val == BPF_REGISTER_MIN_RANGE)
+		dst_reg->min_value = BPF_REGISTER_MIN_RANGE;
+	if (max_val == BPF_REGISTER_MAX_RANGE)
+		dst_reg->max_value = BPF_REGISTER_MAX_RANGE;
+
 	switch (opcode) {
 	case BPF_ADD:
-		dst_reg->min_value += min_val;
-		dst_reg->max_value += max_val;
+		if (dst_reg->min_value != BPF_REGISTER_MIN_RANGE)
+			dst_reg->min_value += min_val;
+		if (dst_reg->max_value != BPF_REGISTER_MAX_RANGE)
+			dst_reg->max_value += max_val;
 		break;
 	case BPF_SUB:
-		dst_reg->min_value -= min_val;
-		dst_reg->max_value -= max_val;
+		if (dst_reg->min_value != BPF_REGISTER_MIN_RANGE)
+			dst_reg->min_value -= min_val;
+		if (dst_reg->max_value != BPF_REGISTER_MAX_RANGE)
+			dst_reg->max_value -= max_val;
 		break;
 	case BPF_MUL:
-		dst_reg->min_value *= min_val;
-		dst_reg->max_value *= max_val;
+		if (dst_reg->min_value != BPF_REGISTER_MIN_RANGE)
+			dst_reg->min_value *= min_val;
+		if (dst_reg->max_value != BPF_REGISTER_MAX_RANGE)
+			dst_reg->max_value *= max_val;
 		break;
 	case BPF_AND:
-		/* & is special since it could end up with 0 bits set. */
-		dst_reg->min_value &= min_val;
+		/* Disallow AND'ing of negative numbers, ain't nobody got time
+		 * for that.  Otherwise the minimum is 0 and the max is the max
+		 * value we could AND against.
+		 */
+		if (min_val < 0)
+			dst_reg->min_value = BPF_REGISTER_MIN_RANGE;
+		else
+			dst_reg->min_value = 0;
 		dst_reg->max_value = max_val;
 		break;
 	case BPF_LSH:
@@ -1540,24 +1588,25 @@ static void adjust_reg_min_max_vals(struct bpf_verifier_env *env,
 		 */
 		if (min_val > ilog2(BPF_REGISTER_MAX_RANGE))
 			dst_reg->min_value = BPF_REGISTER_MIN_RANGE;
-		else
+		else if (dst_reg->min_value != BPF_REGISTER_MIN_RANGE)
 			dst_reg->min_value <<= min_val;
 
 		if (max_val > ilog2(BPF_REGISTER_MAX_RANGE))
 			dst_reg->max_value = BPF_REGISTER_MAX_RANGE;
-		else
+		else if (dst_reg->max_value != BPF_REGISTER_MAX_RANGE)
 			dst_reg->max_value <<= max_val;
 		break;
 	case BPF_RSH:
-		dst_reg->min_value >>= min_val;
-		dst_reg->max_value >>= max_val;
-		break;
-	case BPF_MOD:
-		/* % is special since it is an unsigned modulus, so the floor
-		 * will always be 0.
+		/* RSH by a negative number is undefined, and the BPF_RSH is an
+		 * unsigned shift, so make the appropriate casts.
 		 */
-		dst_reg->min_value = 0;
-		dst_reg->max_value = max_val - 1;
+		if (min_val < 0 || dst_reg->min_value < 0)
+			dst_reg->min_value = BPF_REGISTER_MIN_RANGE;
+		else
+			dst_reg->min_value =
+				(u64)(dst_reg->min_value) >> min_val;
+		if (dst_reg->max_value != BPF_REGISTER_MAX_RANGE)
+			dst_reg->max_value >>= max_val;
 		break;
 	default:
 		reset_reg_range_values(regs, insn->dst_reg);
@@ -2459,6 +2508,7 @@ static bool states_equal(struct bpf_verifier_env *env,
 			 struct bpf_verifier_state *old,
 			 struct bpf_verifier_state *cur)
 {
+	bool varlen_map_access = env->varlen_map_value_access;
 	struct bpf_reg_state *rold, *rcur;
 	int i;
 
@@ -2472,12 +2522,17 @@ static bool states_equal(struct bpf_verifier_env *env,
 		/* If the ranges were not the same, but everything else was and
 		 * we didn't do a variable access into a map then we are a-ok.
 		 */
-		if (!env->varlen_map_value_access &&
+		if (!varlen_map_access &&
 		    rold->type == rcur->type && rold->imm == rcur->imm)
 			continue;
 
+		/* If we didn't map access then again we don't care about the
+		 * mismatched range values and it's ok if our old type was
+		 * UNKNOWN and we didn't go to a NOT_INIT'ed reg.
+		 */
 		if (rold->type == NOT_INIT ||
-		    (rold->type == UNKNOWN_VALUE && rcur->type != NOT_INIT))
+		    (!varlen_map_access && rold->type == UNKNOWN_VALUE &&
+		     rcur->type != NOT_INIT))
 			continue;
 
 		if (rold->type == PTR_TO_PACKET && rcur->type == PTR_TO_PACKET &&

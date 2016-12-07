@@ -355,6 +355,7 @@
 #define     LPCR_PECE0		ASM_CONST(0x0000000000004000)	/* ext. exceptions can cause exit */
 #define     LPCR_PECE1		ASM_CONST(0x0000000000002000)	/* decrementer can cause exit */
 #define     LPCR_PECE2		ASM_CONST(0x0000000000001000)	/* machine check etc can cause exit */
+#define     LPCR_PECE_HVEE	ASM_CONST(0x0000400000000000)	/* P9 Wakeup on HV interrupts */
 #define   LPCR_MER		ASM_CONST(0x0000000000000800)	/* Mediated External Exception */
 #define   LPCR_MER_SH		11
 #define   LPCR_TC		ASM_CONST(0x0000000000000200)	/* Translation control */
@@ -1250,6 +1251,8 @@ static inline void mtmsr_isync(unsigned long val)
 				     : "r" ((unsigned long)(v)) \
 				     : "memory")
 #endif
+#define wrtspr(rn)	asm volatile("mtspr " __stringify(rn) ",0" : \
+				     : : "memory")
 
 extern unsigned long msr_check_and_set(unsigned long bits);
 extern bool strict_msr_control;

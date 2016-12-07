@@ -80,6 +80,8 @@ struct bpf_map_def {
 	unsigned int map_flags;
 };
 
+static int (*bpf_skb_load_bytes)(void *ctx, int off, void *to, int len) =
+	(void *) BPF_FUNC_skb_load_bytes;
 static int (*bpf_skb_store_bytes)(void *ctx, int off, void *from, int len, int flags) =
 	(void *) BPF_FUNC_skb_store_bytes;
 static int (*bpf_l3_csum_replace)(void *ctx, int off, int from, int to, int flags) =
@@ -88,6 +90,8 @@ static int (*bpf_l4_csum_replace)(void *ctx, int off, int from, int to, int flag
 	(void *) BPF_FUNC_l4_csum_replace;
 static int (*bpf_skb_under_cgroup)(void *ctx, void *map, int index) =
 	(void *) BPF_FUNC_skb_under_cgroup;
+static int (*bpf_skb_change_head)(void *, int len, int flags) =
+	(void *) BPF_FUNC_skb_change_head;
 
 #if defined(__x86_64__)
 
@@ -113,7 +117,7 @@ static int (*bpf_skb_under_cgroup)(void *ctx, void *map, int index) =
 #define PT_REGS_FP(x) ((x)->gprs[11]) /* Works only with CONFIG_FRAME_POINTER */
 #define PT_REGS_RC(x) ((x)->gprs[2])
 #define PT_REGS_SP(x) ((x)->gprs[15])
-#define PT_REGS_IP(x) ((x)->ip)
+#define PT_REGS_IP(x) ((x)->psw.addr)
 
 #elif defined(__aarch64__)
 

@@ -14,27 +14,43 @@
 
 struct nft_pktinfo {
 	struct sk_buff			*skb;
-	struct net			*net;
-	const struct net_device		*in;
-	const struct net_device		*out;
-	u8				pf;
-	u8				hook;
 	bool				tprot_set;
 	u8				tprot;
 	/* for x_tables compatibility */
 	struct xt_action_param		xt;
 };
 
+static inline struct net *nft_net(const struct nft_pktinfo *pkt)
+{
+	return pkt->xt.state->net;
+}
+
+static inline unsigned int nft_hook(const struct nft_pktinfo *pkt)
+{
+	return pkt->xt.state->hook;
+}
+
+static inline u8 nft_pf(const struct nft_pktinfo *pkt)
+{
+	return pkt->xt.state->pf;
+}
+
+static inline const struct net_device *nft_in(const struct nft_pktinfo *pkt)
+{
+	return pkt->xt.state->in;
+}
+
+static inline const struct net_device *nft_out(const struct nft_pktinfo *pkt)
+{
+	return pkt->xt.state->out;
+}
+
 static inline void nft_set_pktinfo(struct nft_pktinfo *pkt,
 				   struct sk_buff *skb,
 				   const struct nf_hook_state *state)
 {
 	pkt->skb = skb;
-	pkt->net = pkt->xt.net = state->net;
-	pkt->in = pkt->xt.in = state->in;
-	pkt->out = pkt->xt.out = state->out;
-	pkt->hook = pkt->xt.hooknum = state->hook;
-	pkt->pf = pkt->xt.family = state->pf;
+	pkt->xt.state = state;
 }
 
 static inline void nft_set_pktinfo_proto_unspec(struct nft_pktinfo *pkt,
@@ -145,7 +161,7 @@ static inline enum nft_registers nft_type_to_reg(enum nft_data_types type)
 	return type == NFT_DATA_VERDICT ? NFT_REG_VERDICT : NFT_REG_1 * NFT_REG_SIZE / NFT_REG32_SIZE;
 }
 
-unsigned int nft_parse_u32_check(const struct nlattr *attr, int max, u32 *dest);
+int nft_parse_u32_check(const struct nlattr *attr, int max, u32 *dest);
 unsigned int nft_parse_register(const struct nlattr *attr);
 int nft_dump_register(struct sk_buff *skb, unsigned int attr, unsigned int reg);
 
@@ -313,7 +329,7 @@ void nft_unregister_set(struct nft_set_ops *ops);
  * 	@size: maximum set size
  * 	@nelems: number of elements
  * 	@ndeact: number of deactivated elements queued for removal
- * 	@timeout: default timeout value in msecs
+ *	@timeout: default timeout value in jiffies
  * 	@gc_int: garbage collection interval in msecs
  *	@policy: set parameterization (see enum nft_set_policies)
  *	@udlen: user data length
@@ -542,7 +558,8 @@ void *nft_set_elem_init(const struct nft_set *set,
 			const struct nft_set_ext_tmpl *tmpl,
 			const u32 *key, const u32 *data,
 			u64 timeout, gfp_t gfp);
-void nft_set_elem_destroy(const struct nft_set *set, void *elem);
+void nft_set_elem_destroy(const struct nft_set *set, void *elem,
+			  bool destroy_expr);
 
 /**
  *	struct nft_set_gc_batch_head - nf_tables set garbage collection batch
@@ -693,7 +710,6 @@ static inline int nft_expr_clone(struct nft_expr *dst, struct nft_expr *src)
 {
 	int err;
 
-	__module_get(src->ops->type->owner);
 	if (src->ops->clone) {
 		dst->ops = src->ops;
 		err = src->ops->clone(dst, src);
@@ -702,6 +718,8 @@ static inline int nft_expr_clone(struct nft_expr *dst, struct nft_expr *src)
 	} else {
 		memcpy(dst, src, src->ops->size);
 	}
+
+	__module_get(src->ops->type->owner);
 	return 0;
 }
 

@@ -365,6 +365,11 @@ static inline void slave_write(struct cpsw_slave *slave, u32 val, u32 offset)
 	__raw_writel(val, slave->regs + offset);
 }
 
+struct cpsw_vector {
+	struct cpdma_chan *ch;
+	int budget;
+};
+
 struct cpsw_common {
 	struct device			*dev;
 	struct cpsw_platform_data	data;
@@ -380,8 +385,8 @@ struct cpsw_common {
 	int				rx_packet_max;
 	struct cpsw_slave		*slaves;
 	struct cpdma_ctlr		*dma;
-	struct cpdma_chan		*txch[CPSW_MAX_QUEUES];
-	struct cpdma_chan		*rxch[CPSW_MAX_QUEUES];
+	struct cpsw_vector		txv[CPSW_MAX_QUEUES];
+	struct cpsw_vector		rxv[CPSW_MAX_QUEUES];
 	struct cpsw_ale			*ale;
 	bool				quirk_irq;
 	bool				rx_irq_disabled;
@@ -741,7 +746,7 @@ requeue:
 		return;
 	}
 
-	ch = cpsw->rxch[skb_get_queue_mapping(new_skb)];
+	ch = cpsw->rxv[skb_get_queue_mapping(new_skb)].ch;
 	ret = cpdma_chan_submit(ch, new_skb, new_skb->data,
 				skb_tailroom(new_skb), 0);
 	if (WARN_ON(ret < 0))
@@ -783,24 +788,25 @@ static irqreturn_t cpsw_rx_interrupt(int irq, void *dev_id)
 static int cpsw_tx_poll(struct napi_struct *napi_tx, int budget)
 {
 	u32			ch_map;
-	int			num_tx, ch;
+	int			num_tx, cur_budget, ch;
 	struct cpsw_common	*cpsw = napi_to_cpsw(napi_tx);
+	struct cpsw_vector	*txv;
 
 	/* process every unprocessed channel */
 	ch_map = cpdma_ctrl_txchs_state(cpsw->dma);
-	for (ch = 0, num_tx = 0; num_tx < budget; ch_map >>= 1, ch++) {
-		if (!ch_map) {
-			ch_map = cpdma_ctrl_txchs_state(cpsw->dma);
-			if (!ch_map)
-				break;
-
-			ch = 0;
-		}
-
+	for (ch = 0, num_tx = 0; ch_map; ch_map >>= 1, ch++) {
 		if (!(ch_map & 0x01))
 			continue;
 
-		num_tx += cpdma_chan_process(cpsw->txch[ch], budget - num_tx);
+		txv = &cpsw->txv[ch];
+		if (unlikely(txv->budget > budget - num_tx))
+			cur_budget = budget - num_tx;
+		else
+			cur_budget = txv->budget;
+
+		num_tx += cpdma_chan_process(txv->ch, cur_budget);
+		if (num_tx >= budget)
+			break;
 	}
 
 	if (num_tx < budget) {
@@ -818,24 +824,25 @@ static int cpsw_tx_poll(struct napi_struct *napi_tx, int budget)
 static int cpsw_rx_poll(struct napi_struct *napi_rx, int budget)
 {
 	u32			ch_map;
-	int			num_rx, ch;
+	int			num_rx, cur_budget, ch;
 	struct cpsw_common	*cpsw = napi_to_cpsw(napi_rx);
+	struct cpsw_vector	*rxv;
 
 	/* process every unprocessed channel */
 	ch_map = cpdma_ctrl_rxchs_state(cpsw->dma);
-	for (ch = 0, num_rx = 0; num_rx < budget; ch_map >>= 1, ch++) {
-		if (!ch_map) {
-			ch_map = cpdma_ctrl_rxchs_state(cpsw->dma);
-			if (!ch_map)
-				break;
-
-			ch = 0;
-		}
-
+	for (ch = 0, num_rx = 0; ch_map; ch_map >>= 1, ch++) {
 		if (!(ch_map & 0x01))
 			continue;
 
-		num_rx += cpdma_chan_process(cpsw->rxch[ch], budget - num_rx);
+		rxv = &cpsw->rxv[ch];
+		if (unlikely(rxv->budget > budget - num_rx))
+			cur_budget = budget - num_rx;
+		else
+			cur_budget = rxv->budget;
+
+		num_rx += cpdma_chan_process(rxv->ch, cur_budget);
+		if (num_rx >= budget)
+			break;
 	}
 
 	if (num_rx < budget) {
@@ -1075,7 +1082,7 @@ static void cpsw_get_ethtool_stats(struct net_device *ndev,
 				cpsw_gstrings_stats[l].stat_offset);
 
 	for (ch = 0; ch < cpsw->rx_ch_num; ch++) {
-		cpdma_chan_get_stats(cpsw->rxch[ch], &ch_stats);
+		cpdma_chan_get_stats(cpsw->rxv[ch].ch, &ch_stats);
 		for (i = 0; i < CPSW_STATS_CH_LEN; i++, l++) {
 			p = (u8 *)&ch_stats +
 				cpsw_gstrings_ch_stats[i].stat_offset;
@@ -1084,7 +1091,7 @@ static void cpsw_get_ethtool_stats(struct net_device *ndev,
 	}
 
 	for (ch = 0; ch < cpsw->tx_ch_num; ch++) {
-		cpdma_chan_get_stats(cpsw->txch[ch], &ch_stats);
+		cpdma_chan_get_stats(cpsw->txv[ch].ch, &ch_stats);
 		for (i = 0; i < CPSW_STATS_CH_LEN; i++, l++) {
 			p = (u8 *)&ch_stats +
 				cpsw_gstrings_ch_stats[i].stat_offset;
@@ -1273,6 +1280,82 @@ static void cpsw_init_host_port(struct cpsw_priv *priv)
 	}
 }
 
+/* split budget depending on channel rates */
+static void cpsw_split_budget(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	struct cpsw_vector *txv = cpsw->txv;
+	u32 consumed_rate, bigest_rate = 0;
+	int budget, bigest_rate_ch = 0;
+	struct cpsw_slave *slave;
+	int i, rlim_ch_num = 0;
+	u32 ch_rate, max_rate;
+	int ch_budget = 0;
+
+	if (cpsw->data.dual_emac)
+		slave = &cpsw->slaves[priv->emac_port];
+	else
+		slave = &cpsw->slaves[cpsw->data.active_slave];
+
+	max_rate = slave->phy->speed * 1000;
+
+	consumed_rate = 0;
+	for (i = 0; i < cpsw->tx_ch_num; i++) {
+		ch_rate = cpdma_chan_get_rate(txv[i].ch);
+		if (!ch_rate)
+			continue;
+
+		rlim_ch_num++;
+		consumed_rate += ch_rate;
+	}
+
+	if (cpsw->tx_ch_num == rlim_ch_num) {
+		max_rate = consumed_rate;
+	} else {
+		ch_budget = (consumed_rate * CPSW_POLL_WEIGHT) / max_rate;
+		ch_budget = (CPSW_POLL_WEIGHT - ch_budget) /
+			    (cpsw->tx_ch_num - rlim_ch_num);
+		bigest_rate = (max_rate - consumed_rate) /
+			      (cpsw->tx_ch_num - rlim_ch_num);
+	}
+
+	/* split tx budget */
+	budget = CPSW_POLL_WEIGHT;
+	for (i = 0; i < cpsw->tx_ch_num; i++) {
+		ch_rate = cpdma_chan_get_rate(txv[i].ch);
+		if (ch_rate) {
+			txv[i].budget = (ch_rate * CPSW_POLL_WEIGHT) / max_rate;
+			if (!txv[i].budget)
+				txv[i].budget = 1;
+			if (ch_rate > bigest_rate) {
+				bigest_rate_ch = i;
+				bigest_rate = ch_rate;
+			}
+		} else {
+			txv[i].budget = ch_budget;
+			if (!bigest_rate_ch)
+				bigest_rate_ch = i;
+		}
+
+		budget -= txv[i].budget;
+	}
+
+	if (budget)
+		txv[bigest_rate_ch].budget += budget;
+
+	/* split rx budget */
+	budget = CPSW_POLL_WEIGHT;
+	ch_budget = budget / cpsw->rx_ch_num;
+	for (i = 0; i < cpsw->rx_ch_num; i++) {
+		cpsw->rxv[i].budget = ch_budget;
+		budget -= ch_budget;
+	}
+
+	if (budget)
+		cpsw->rxv[0].budget += budget;
+}
+
 static int cpsw_fill_rx_channels(struct cpsw_priv *priv)
 {
 	struct cpsw_common *cpsw = priv->cpsw;
@@ -1281,7 +1364,7 @@ static int cpsw_fill_rx_channels(struct cpsw_priv *priv)
 	int ch, i, ret;
 
 	for (ch = 0; ch < cpsw->rx_ch_num; ch++) {
-		ch_buf_num = cpdma_chan_get_rx_buf_num(cpsw->rxch[ch]);
+		ch_buf_num = cpdma_chan_get_rx_buf_num(cpsw->rxv[ch].ch);
 		for (i = 0; i < ch_buf_num; i++) {
 			skb = __netdev_alloc_skb_ip_align(priv->ndev,
 							  cpsw->rx_packet_max,
@@ -1292,8 +1375,9 @@ static int cpsw_fill_rx_channels(struct cpsw_priv *priv)
 			}
 
 			skb_set_queue_mapping(skb, ch);
-			ret = cpdma_chan_submit(cpsw->rxch[ch], skb, skb->data,
-						skb_tailroom(skb), 0);
+			ret = cpdma_chan_submit(cpsw->rxv[ch].ch, skb,
+						skb->data, skb_tailroom(skb),
+						0);
 			if (ret < 0) {
 				cpsw_err(priv, ifup,
 					 "cannot submit skb to channel %d rx, error %d\n",
@@ -1376,10 +1460,6 @@ static int cpsw_ndo_open(struct net_device *ndev)
 				  ALE_ALL_PORTS, ALE_ALL_PORTS, 0, 0);
 
 	if (!cpsw_common_res_usage_state(cpsw)) {
-		/* setup tx dma to fixed prio and zero offset */
-		cpdma_control_set(cpsw->dma, CPDMA_TX_PRIO_FIXED, 1);
-		cpdma_control_set(cpsw->dma, CPDMA_RX_BUFFER_OFFSET, 0);
-
 		/* disable priority elevation */
 		__raw_writel(0, &cpsw->regs->ptype);
 
@@ -1421,6 +1501,7 @@ static int cpsw_ndo_open(struct net_device *ndev)
 		cpsw_set_coalesce(ndev, &coal);
 	}
 
+	cpsw_split_budget(ndev);
 	cpdma_ctlr_start(cpsw->dma);
 	cpsw_intr_enable(cpsw);
 
@@ -1490,7 +1571,7 @@ static netdev_tx_t cpsw_ndo_start_xmit(struct sk_buff *skb,
 	if (q_idx >= cpsw->tx_ch_num)
 		q_idx = q_idx % cpsw->tx_ch_num;
 
-	txch = cpsw->txch[q_idx];
+	txch = cpsw->txv[q_idx].ch;
 	ret = cpsw_tx_packet_submit(priv, skb, txch);
 	if (unlikely(ret != 0)) {
 		cpsw_err(priv, tx_err, "desc submit failed\n");
@@ -1697,8 +1778,8 @@ static void cpsw_ndo_tx_timeout(struct net_device *ndev)
 	ndev->stats.tx_errors++;
 	cpsw_intr_disable(cpsw);
 	for (ch = 0; ch < cpsw->tx_ch_num; ch++) {
-		cpdma_chan_stop(cpsw->txch[ch]);
-		cpdma_chan_start(cpsw->txch[ch]);
+		cpdma_chan_stop(cpsw->txv[ch].ch);
+		cpdma_chan_start(cpsw->txv[ch].ch);
 	}
 
 	cpsw_intr_enable(cpsw);
@@ -1876,6 +1957,90 @@ static int cpsw_ndo_vlan_rx_kill_vid(struct net_device *ndev,
 	return ret;
 }
 
+static int cpsw_ndo_set_tx_maxrate(struct net_device *ndev, int queue, u32 rate)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	int tx_ch_num = ndev->real_num_tx_queues;
+	u32 consumed_rate, min_rate, max_rate;
+	struct cpsw_common *cpsw = priv->cpsw;
+	struct cpsw_slave *slave;
+	int ret, i, weight;
+	int rlim_num = 0;
+	u32 ch_rate;
+
+	ch_rate = netdev_get_tx_queue(ndev, queue)->tx_maxrate;
+	if (ch_rate == rate)
+		return 0;
+
+	if (cpsw->data.dual_emac)
+		slave = &cpsw->slaves[priv->emac_port];
+	else
+		slave = &cpsw->slaves[cpsw->data.active_slave];
+	max_rate = slave->phy->speed;
+
+	consumed_rate = 0;
+	for (i = 0; i < tx_ch_num; i++) {
+		if (i == queue)
+			ch_rate = rate;
+		else
+			ch_rate = netdev_get_tx_queue(ndev, i)->tx_maxrate;
+		if (!ch_rate)
+			continue;
+
+		rlim_num++;
+		consumed_rate += ch_rate;
+	}
+
+	if (consumed_rate > max_rate)
+		dev_info(priv->dev, "The common rate shouldn't be more than %dMbps",
+			 max_rate);
+
+	if (consumed_rate > max_rate) {
+		if (max_rate == 10 && consumed_rate <= 100) {
+			max_rate = 100;
+		} else if (max_rate <= 100 && consumed_rate <= 1000) {
+			max_rate = 1000;
+		} else {
+			dev_err(priv->dev, "The common rate cannot be more than %dMbps",
+				max_rate);
+			return -EINVAL;
+		}
+	}
+
+	if (consumed_rate > max_rate) {
+		dev_err(priv->dev, "The common rate cannot be more than %dMbps",
+			max_rate);
+		return -EINVAL;
+	}
+
+	rate *= 1000;
+	min_rate = cpdma_chan_get_min_rate(cpsw->dma);
+	if ((rate < min_rate && rate)) {
+		dev_err(priv->dev, "The common rate cannot be less than %dMbps",
+			min_rate);
+		return -EINVAL;
+	}
+
+	ret = pm_runtime_get_sync(cpsw->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(cpsw->dev);
+		return ret;
+	}
+
+	if (rlim_num == tx_ch_num)
+		max_rate = consumed_rate;
+
+	weight = (rate * 100) / (max_rate * 1000);
+	cpdma_chan_set_weight(cpsw->txv[queue].ch, weight);
+	ret = cpdma_chan_set_rate(cpsw->txv[queue].ch, rate);
+
+	/* re-split budget between channels */
+	if (!rate)
+		cpsw_split_budget(ndev);
+	pm_runtime_put(cpsw->dev);
+	return ret;
+}
+
 static const struct net_device_ops cpsw_netdev_ops = {
 	.ndo_open		= cpsw_ndo_open,
 	.ndo_stop		= cpsw_ndo_stop,
@@ -1885,6 +2050,7 @@ static const struct net_device_ops cpsw_netdev_ops = {
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_tx_timeout		= cpsw_ndo_tx_timeout,
 	.ndo_set_rx_mode	= cpsw_ndo_set_rx_mode,
+	.ndo_set_tx_maxrate	= cpsw_ndo_set_tx_maxrate,
 #ifdef CONFIG_NET_POLL_CONTROLLER
 	.ndo_poll_controller	= cpsw_ndo_poll_controller,
 #endif
@@ -2104,28 +2270,31 @@ static int cpsw_update_channels_res(struct cpsw_priv *priv, int ch_num, int rx)
 	int (*poll)(struct napi_struct *, int);
 	struct cpsw_common *cpsw = priv->cpsw;
 	void (*handler)(void *, int, int);
-	struct cpdma_chan **chan;
+	struct netdev_queue *queue;
+	struct cpsw_vector *vec;
 	int ret, *ch;
 
 	if (rx) {
 		ch = &cpsw->rx_ch_num;
-		chan = cpsw->rxch;
+		vec = cpsw->rxv;
 		handler = cpsw_rx_handler;
 		poll = cpsw_rx_poll;
 	} else {
 		ch = &cpsw->tx_ch_num;
-		chan = cpsw->txch;
+		vec = cpsw->txv;
 		handler = cpsw_tx_handler;
 		poll = cpsw_tx_poll;
 	}
 
 	while (*ch < ch_num) {
-		chan[*ch] = cpdma_chan_create(cpsw->dma, *ch, handler, rx);
+		vec[*ch].ch = cpdma_chan_create(cpsw->dma, *ch, handler, rx);
+		queue = netdev_get_tx_queue(priv->ndev, *ch);
+		queue->tx_maxrate = 0;
 
-		if (IS_ERR(chan[*ch]))
-			return PTR_ERR(chan[*ch]);
+		if (IS_ERR(vec[*ch].ch))
+			return PTR_ERR(vec[*ch].ch);
 
-		if (!chan[*ch])
+		if (!vec[*ch].ch)
 			return -EINVAL;
 
 		cpsw_info(priv, ifup, "created new %d %s channel\n", *ch,
@@ -2136,7 +2305,7 @@ static int cpsw_update_channels_res(struct cpsw_priv *priv, int ch_num, int rx)
 	while (*ch > ch_num) {
 		(*ch)--;
 
-		ret = cpdma_chan_destroy(chan[*ch]);
+		ret = cpdma_chan_destroy(vec[*ch].ch);
 		if (ret)
 			return ret;
 
@@ -2223,6 +2392,8 @@ static int cpsw_set_channels(struct net_device *ndev,
 		if (ret)
 			goto err;
 
+		cpsw_split_budget(ndev);
+
 		/* After this receive is started */
 		cpdma_ctlr_start(cpsw->dma);
 		cpsw_intr_enable(cpsw);
@@ -2239,6 +2410,42 @@ err:
 	dev_err(priv->dev, "cannot update channels number, closing device\n");
 	dev_close(ndev);
 	return ret;
+}
+
+static int cpsw_get_eee(struct net_device *ndev, struct ethtool_eee *edata)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
+
+	if (cpsw->slaves[slave_no].phy)
+		return phy_ethtool_get_eee(cpsw->slaves[slave_no].phy, edata);
+	else
+		return -EOPNOTSUPP;
+}
+
+static int cpsw_set_eee(struct net_device *ndev, struct ethtool_eee *edata)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
+
+	if (cpsw->slaves[slave_no].phy)
+		return phy_ethtool_set_eee(cpsw->slaves[slave_no].phy, edata);
+	else
+		return -EOPNOTSUPP;
+}
+
+static int cpsw_nway_reset(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
+
+	if (cpsw->slaves[slave_no].phy)
+		return genphy_restart_aneg(cpsw->slaves[slave_no].phy);
+	else
+		return -EOPNOTSUPP;
 }
 
 static const struct ethtool_ops cpsw_ethtool_ops = {
@@ -2264,6 +2471,9 @@ static const struct ethtool_ops cpsw_ethtool_ops = {
 	.set_channels	= cpsw_set_channels,
 	.get_link_ksettings	= cpsw_get_link_ksettings,
 	.set_link_ksettings	= cpsw_set_link_ksettings,
+	.get_eee	= cpsw_get_eee,
+	.set_eee	= cpsw_set_eee,
+	.nway_reset	= cpsw_nway_reset,
 };
 
 static void cpsw_slave_init(struct cpsw_slave *slave, struct cpsw_common *cpsw,
@@ -2377,8 +2587,11 @@ static int cpsw_probe_dt(struct cpsw_platform_data *data,
 			 * to the PHY is the Ethernet MAC DT node.
 			 */
 			ret = of_phy_register_fixed_link(slave_node);
-			if (ret)
+			if (ret) {
+				if (ret != -EPROBE_DEFER)
+					dev_err(&pdev->dev, "failed to register fixed-link phy: %d\n", ret);
 				return ret;
+			}
 			slave_data->phy_node = of_node_get(slave_node);
 		} else if (parp) {
 			u32 phyid;
@@ -2399,6 +2612,7 @@ static int cpsw_probe_dt(struct cpsw_platform_data *data,
 			}
 			snprintf(slave_data->phy_id, sizeof(slave_data->phy_id),
 				 PHY_ID_FMT, mdio->name, phyid);
+			put_device(&mdio->dev);
 		} else {
 			dev_err(&pdev->dev,
 				"No slave[%d] phy_id, phy-handle, or fixed-link property\n",
@@ -2440,6 +2654,34 @@ no_phy_slave:
 	}
 
 	return 0;
+}
+
+static void cpsw_remove_dt(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
+	struct cpsw_platform_data *data = &cpsw->data;
+	struct device_node *node = pdev->dev.of_node;
+	struct device_node *slave_node;
+	int i = 0;
+
+	for_each_available_child_of_node(node, slave_node) {
+		struct cpsw_slave_data *slave_data = &data->slave_data[i];
+
+		if (strcmp(slave_node->name, "slave"))
+			continue;
+
+		if (of_phy_is_fixed_link(slave_node))
+			of_phy_deregister_fixed_link(slave_node);
+
+		of_node_put(slave_data->phy_node);
+
+		i++;
+		if (i == data->slaves)
+			break;
+	}
+
+	of_platform_depopulate(&pdev->dev);
 }
 
 static int cpsw_probe_dual_emac(struct cpsw_priv *priv)
@@ -2549,6 +2791,9 @@ static int cpsw_probe(struct platform_device *pdev)
 	int irq;
 
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
+	if (!cpsw)
+		return -ENOMEM;
+
 	cpsw->dev = &pdev->dev;
 
 	ndev = alloc_etherdev_mq(sizeof(struct cpsw_priv), CPSW_MAX_QUEUES);
@@ -2586,11 +2831,19 @@ static int cpsw_probe(struct platform_device *pdev)
 	/* Select default pin state */
 	pinctrl_pm_select_default_state(&pdev->dev);
 
-	if (cpsw_probe_dt(&cpsw->data, pdev)) {
-		dev_err(&pdev->dev, "cpsw: platform data missing\n");
-		ret = -ENODEV;
+	/* Need to enable clocks with runtime PM api to access module
+	 * registers
+	 */
+	ret = pm_runtime_get_sync(&pdev->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(&pdev->dev);
 		goto clean_runtime_disable_ret;
 	}
+
+	ret = cpsw_probe_dt(&cpsw->data, pdev);
+	if (ret)
+		goto clean_dt_ret;
+
 	data = &cpsw->data;
 	cpsw->rx_ch_num = 1;
 	cpsw->tx_ch_num = 1;
@@ -2610,7 +2863,7 @@ static int cpsw_probe(struct platform_device *pdev)
 				    GFP_KERNEL);
 	if (!cpsw->slaves) {
 		ret = -ENOMEM;
-		goto clean_runtime_disable_ret;
+		goto clean_dt_ret;
 	}
 	for (i = 0; i < data->slaves; i++)
 		cpsw->slaves[i].slave_num = i;
@@ -2622,7 +2875,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	if (IS_ERR(clk)) {
 		dev_err(priv->dev, "fck is not found\n");
 		ret = -ENODEV;
-		goto clean_runtime_disable_ret;
+		goto clean_dt_ret;
 	}
 	cpsw->bus_freq_mhz = clk_get_rate(clk) / 1000000;
 
@@ -2630,26 +2883,17 @@ static int cpsw_probe(struct platform_device *pdev)
 	ss_regs = devm_ioremap_resource(&pdev->dev, ss_res);
 	if (IS_ERR(ss_regs)) {
 		ret = PTR_ERR(ss_regs);
-		goto clean_runtime_disable_ret;
+		goto clean_dt_ret;
 	}
 	cpsw->regs = ss_regs;
 
-	/* Need to enable clocks with runtime PM api to access module
-	 * registers
-	 */
-	ret = pm_runtime_get_sync(&pdev->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(&pdev->dev);
-		goto clean_runtime_disable_ret;
-	}
 	cpsw->version = readl(&cpsw->regs->id_ver);
-	pm_runtime_put_sync(&pdev->dev);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 	cpsw->wr_regs = devm_ioremap_resource(&pdev->dev, res);
 	if (IS_ERR(cpsw->wr_regs)) {
 		ret = PTR_ERR(cpsw->wr_regs);
-		goto clean_runtime_disable_ret;
+		goto clean_dt_ret;
 	}
 
 	memset(&dma_params, 0, sizeof(dma_params));
@@ -2686,7 +2930,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	default:
 		dev_err(priv->dev, "unknown version 0x%08x\n", cpsw->version);
 		ret = -ENODEV;
-		goto clean_runtime_disable_ret;
+		goto clean_dt_ret;
 	}
 	for (i = 0; i < cpsw->data.slaves; i++) {
 		struct cpsw_slave *slave = &cpsw->slaves[i];
@@ -2710,17 +2954,18 @@ static int cpsw_probe(struct platform_device *pdev)
 	dma_params.desc_align		= 16;
 	dma_params.has_ext_regs		= true;
 	dma_params.desc_hw_addr         = dma_params.desc_mem_phys;
+	dma_params.bus_freq_mhz		= cpsw->bus_freq_mhz;
 
 	cpsw->dma = cpdma_ctlr_create(&dma_params);
 	if (!cpsw->dma) {
 		dev_err(priv->dev, "error initializing dma\n");
 		ret = -ENOMEM;
-		goto clean_runtime_disable_ret;
+		goto clean_dt_ret;
 	}
 
-	cpsw->txch[0] = cpdma_chan_create(cpsw->dma, 0, cpsw_tx_handler, 0);
-	cpsw->rxch[0] = cpdma_chan_create(cpsw->dma, 0, cpsw_rx_handler, 1);
-	if (WARN_ON(!cpsw->rxch[0] || !cpsw->txch[0])) {
+	cpsw->txv[0].ch = cpdma_chan_create(cpsw->dma, 0, cpsw_tx_handler, 0);
+	cpsw->rxv[0].ch = cpdma_chan_create(cpsw->dma, 0, cpsw_rx_handler, 1);
+	if (WARN_ON(!cpsw->rxv[0].ch || !cpsw->txv[0].ch)) {
 		dev_err(priv->dev, "error initializing dma channels\n");
 		ret = -ENOMEM;
 		goto clean_dma_ret;
@@ -2813,16 +3058,23 @@ static int cpsw_probe(struct platform_device *pdev)
 		ret = cpsw_probe_dual_emac(priv);
 		if (ret) {
 			cpsw_err(priv, probe, "error probe slave 2 emac interface\n");
-			goto clean_ale_ret;
+			goto clean_unregister_netdev_ret;
 		}
 	}
 
+	pm_runtime_put(&pdev->dev);
+
 	return 0;
 
+clean_unregister_netdev_ret:
+	unregister_netdev(ndev);
 clean_ale_ret:
 	cpsw_ale_destroy(cpsw->ale);
 clean_dma_ret:
 	cpdma_ctlr_destroy(cpsw->dma);
+clean_dt_ret:
+	cpsw_remove_dt(pdev);
+	pm_runtime_put_sync(&pdev->dev);
 clean_runtime_disable_ret:
 	pm_runtime_disable(&pdev->dev);
 clean_ndev_ret:
@@ -2848,7 +3100,7 @@ static int cpsw_remove(struct platform_device *pdev)
 
 	cpsw_ale_destroy(cpsw->ale);
 	cpdma_ctlr_destroy(cpsw->dma);
-	of_platform_depopulate(&pdev->dev);
+	cpsw_remove_dt(pdev);
 	pm_runtime_put_sync(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
 	if (cpsw->data.dual_emac)
@@ -2891,6 +3143,8 @@ static int cpsw_resume(struct device *dev)
 	/* Select default pin state */
 	pinctrl_pm_select_default_state(dev);
 
+	/* shut up ASSERT_RTNL() warning in netif_set_real_num_tx/rx_queues */
+	rtnl_lock();
 	if (cpsw->data.dual_emac) {
 		int i;
 
@@ -2902,6 +3156,8 @@ static int cpsw_resume(struct device *dev)
 		if (netif_running(ndev))
 			cpsw_ndo_open(ndev);
 	}
+	rtnl_unlock();
+
 	return 0;
 }
 #endif

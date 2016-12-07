@@ -143,13 +143,14 @@ static int phy_config_interrupt(struct phy_device *phydev, u32 interrupts)
  * Returns > 0 on success or < 0 on error. 0 means that auto-negotiation
  * is still pending.
  */
-static inline int phy_aneg_done(struct phy_device *phydev)
+int phy_aneg_done(struct phy_device *phydev)
 {
 	if (phydev->drv->aneg_done)
 		return phydev->drv->aneg_done(phydev);
 
 	return genphy_aneg_done(phydev);
 }
+EXPORT_SYMBOL(phy_aneg_done);
 
 /* A structure for mapping a particular speed and duplex
  * combination to a particular SUPPORTED and ADVERTISED value
@@ -388,7 +389,7 @@ int phy_ethtool_sset(struct phy_device *phydev, struct ethtool_cmd *cmd)
 
 	phydev->duplex = cmd->duplex;
 
-	phydev->mdix = cmd->eth_tp_mdix_ctrl;
+	phydev->mdix_ctrl = cmd->eth_tp_mdix_ctrl;
 
 	/* Restart the PHY */
 	phy_start_aneg(phydev);
@@ -442,7 +443,7 @@ int phy_ethtool_ksettings_set(struct phy_device *phydev,
 
 	phydev->duplex = duplex;
 
-	phydev->mdix = cmd->base.eth_tp_mdix_ctrl;
+	phydev->mdix_ctrl = cmd->base.eth_tp_mdix_ctrl;
 
 	/* Restart the PHY */
 	phy_start_aneg(phydev);
@@ -468,7 +469,8 @@ int phy_ethtool_gset(struct phy_device *phydev, struct ethtool_cmd *cmd)
 	cmd->transceiver = phy_is_internal(phydev) ?
 		XCVR_INTERNAL : XCVR_EXTERNAL;
 	cmd->autoneg = phydev->autoneg;
-	cmd->eth_tp_mdix_ctrl = phydev->mdix;
+	cmd->eth_tp_mdix_ctrl = phydev->mdix_ctrl;
+	cmd->eth_tp_mdix = phydev->mdix;
 
 	return 0;
 }
@@ -495,7 +497,8 @@ int phy_ethtool_ksettings_get(struct phy_device *phydev,
 
 	cmd->base.phy_address = phydev->mdio.addr;
 	cmd->base.autoneg = phydev->autoneg;
-	cmd->base.eth_tp_mdix_ctrl = phydev->mdix;
+	cmd->base.eth_tp_mdix_ctrl = phydev->mdix_ctrl;
+	cmd->base.eth_tp_mdix = phydev->mdix;
 
 	return 0;
 }
@@ -1395,6 +1398,9 @@ int phy_ethtool_set_eee(struct phy_device *phydev, struct ethtool_eee *data)
 {
 	int val = ethtool_adv_to_mmd_eee_adv_t(data->advertised);
 
+	/* Mask prohibited EEE modes */
+	val &= ~phydev->eee_broken_modes;
+
 	phy_write_mmd_indirect(phydev, MDIO_AN_EEE_ADV, MDIO_MMD_AN, val);
 
 	return 0;
@@ -1440,3 +1446,14 @@ int phy_ethtool_set_link_ksettings(struct net_device *ndev,
 	return phy_ethtool_ksettings_set(phydev, cmd);
 }
 EXPORT_SYMBOL(phy_ethtool_set_link_ksettings);
+
+int phy_ethtool_nway_reset(struct net_device *ndev)
+{
+	struct phy_device *phydev = ndev->phydev;
+
+	if (!phydev)
+		return -ENODEV;
+
+	return genphy_restart_aneg(phydev);
+}
+EXPORT_SYMBOL(phy_ethtool_nway_reset);

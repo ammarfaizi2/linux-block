@@ -44,7 +44,7 @@
 
 /* Global VLAN variables */
 
-int vlan_net_id __read_mostly;
+unsigned int vlan_net_id __read_mostly;
 
 const char vlan_fullname[] = "802.1Q VLAN Support";
 const char vlan_version[] = DRV_VERSION;
@@ -663,7 +663,7 @@ static struct sk_buff **vlan_gro_receive(struct sk_buff **head,
 
 	skb_gro_pull(skb, sizeof(*vhdr));
 	skb_gro_postpull_rcsum(skb, vhdr, sizeof(*vhdr));
-	pp = ptype->callbacks.gro_receive(head, skb);
+	pp = call_gro_receive(ptype->callbacks.gro_receive, head, skb);
 
 out_unlock:
 	rcu_read_unlock();

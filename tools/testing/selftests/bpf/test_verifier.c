@@ -285,7 +285,7 @@ static struct bpf_test tests[] = {
 			BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, 1234567),
 			BPF_EXIT_INSN(),
 		},
-		.errstr = "invalid func 1234567",
+		.errstr = "invalid func unknown#1234567",
 		.result = REJECT,
 	},
 	{
@@ -2659,6 +2659,29 @@ static struct bpf_test tests[] = {
 		.fixup_map1 = { 4 },
 		.result = ACCEPT,
 		.prog_type = BPF_PROG_TYPE_SCHED_CLS
+	},
+	{
+		"invalid map access from else condition",
+		.insns = {
+			BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
+			BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
+			BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
+			BPF_LD_MAP_FD(BPF_REG_1, 0),
+			BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
+			BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
+			BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_0, 0),
+			BPF_JMP_IMM(BPF_JGE, BPF_REG_1, MAX_ENTRIES-1, 1),
+			BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 1),
+			BPF_ALU64_IMM(BPF_LSH, BPF_REG_1, 2),
+			BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
+			BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, offsetof(struct test_val, foo)),
+			BPF_EXIT_INSN(),
+		},
+		.fixup_map2 = { 3 },
+		.errstr = "R0 unbounded memory access, make sure to bounds check any array access into a map",
+		.result = REJECT,
+		.errstr_unpriv = "R0 pointer arithmetic prohibited",
+		.result_unpriv = REJECT,
 	},
 };
 

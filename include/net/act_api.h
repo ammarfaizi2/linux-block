@@ -42,7 +42,6 @@ struct tc_action {
 	struct gnet_stats_basic_cpu __percpu *cpu_bstats;
 	struct gnet_stats_queue __percpu *cpu_qstats;
 };
-#define tcf_act		common.tcfa_act
 #define tcf_head	common.tcfa_head
 #define tcf_index	common.tcfa_index
 #define tcf_refcnt	common.tcfa_refcnt
@@ -120,6 +119,8 @@ struct tc_action_ops {
 	int     (*walk)(struct net *, struct sk_buff *,
 			struct netlink_callback *, int, const struct tc_action_ops *);
 	void	(*stats_update)(struct tc_action *, u64, u32, u64);
+	int	(*get_dev)(const struct tc_action *a, struct net *net,
+			   struct net_device **mirred_dev);
 };
 
 struct tc_action_net {

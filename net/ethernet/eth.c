@@ -62,6 +62,7 @@
 #include <net/dsa.h>
 #include <net/flow_dissector.h>
 #include <linux/uaccess.h>
+#include <net/pkt_sched.h>
 
 __setup("ether=", netdev_boot_setup);
 
@@ -359,7 +360,7 @@ void ether_setup(struct net_device *dev)
 	dev->min_mtu		= ETH_MIN_MTU;
 	dev->max_mtu		= ETH_DATA_LEN;
 	dev->addr_len		= ETH_ALEN;
-	dev->tx_queue_len	= 1000;	/* Ethernet wants good queues */
+	dev->tx_queue_len	= DEFAULT_TX_QUEUE_LEN;
 	dev->flags		= IFF_BROADCAST|IFF_MULTICAST;
 	dev->priv_flags		|= IFF_TX_SKB_SHARING;
 
@@ -440,7 +441,7 @@ struct sk_buff **eth_gro_receive(struct sk_buff **head,
 
 	skb_gro_pull(skb, sizeof(*eh));
 	skb_gro_postpull_rcsum(skb, eh, sizeof(*eh));
-	pp = ptype->callbacks.gro_receive(head, skb);
+	pp = call_gro_receive(ptype->callbacks.gro_receive, head, skb);
 
 out_unlock:
 	rcu_read_unlock();

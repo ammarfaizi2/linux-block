@@ -54,6 +54,7 @@
 #include <net/pkt_cls.h>
 #include <net/tc_act/tc_gact.h>
 #include <net/tc_act/tc_mirred.h>
+#include <net/vxlan.h>
 
 #include "ixgbe.h"
 #include "ixgbe_common.h"
@@ -3070,6 +3071,9 @@ static void ixgbe_free_irq(struct ixgbe_adapter *adapter)
 		return;
 	}
 
+	if (!adapter->msix_entries)
+		return;
+
 	for (vector = 0; vector < adapter->num_q_vectors; vector++) {
 		struct ixgbe_q_vector *q_vector = adapter->q_vector[vector];
 		struct msix_entry *entry = &adapter->msix_entries[vector];
@@ -5621,7 +5625,8 @@ static void ixgbe_init_dcb(struct ixgbe_adapter *adapter)
  * Fields are initialized based on PCI device information and
  * OS network device settings (MTU size).
  **/
-static int ixgbe_sw_init(struct ixgbe_adapter *adapter)
+static int ixgbe_sw_init(struct ixgbe_adapter *adapter,
+			 const struct ixgbe_info *ii)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct pci_dev *pdev = adapter->pdev;
@@ -5636,6 +5641,9 @@ static int ixgbe_sw_init(struct ixgbe_adapter *adapter)
 	hw->revision_id = pdev->revision;
 	hw->subsystem_vendor_id = pdev->subsystem_vendor;
 	hw->subsystem_device_id = pdev->subsystem_device;
+
+	/* get_invariants needs the device IDs */
+	ii->get_invariants(hw);
 
 	/* Set common capability flags and settings */
 	rss = min_t(int, ixgbe_max_rss_indices(adapter), num_online_cpus());
@@ -7279,11 +7287,15 @@ static int ixgbe_tso(struct ixgbe_ring *tx_ring,
 
 	/* initialize outer IP header fields */
 	if (ip.v4->version == 4) {
+		unsigned char *csum_start = skb_checksum_start(skb);
+		unsigned char *trans_start = ip.hdr + (ip.v4->ihl * 4);
+
 		/* IP header will have to cancel out any data that
 		 * is not a part of the outer IP header
 		 */
-		ip.v4->check = csum_fold(csum_add(lco_csum(skb),
-						  csum_unfold(l4.tcp->check)));
+		ip.v4->check = csum_fold(csum_partial(trans_start,
+						      csum_start - trans_start,
+						      0));
 		type_tucmd |= IXGBE_ADVTXD_TUCMD_IPV4;
 
 		ip.v4->tot_len = 0;
@@ -7653,10 +7665,16 @@ static void ixgbe_atr(struct ixgbe_ring *ring,
 	/* snag network header to get L4 type and address */
 	skb = first->skb;
 	hdr.network = skb_network_header(skb);
+	if (unlikely(hdr.network <= skb->data))
+		return;
 	if (skb->encapsulation &&
 	    first->protocol == htons(ETH_P_IP) &&
-	    hdr.ipv4->protocol != IPPROTO_UDP) {
+	    hdr.ipv4->protocol == IPPROTO_UDP) {
 		struct ixgbe_adapter *adapter = q_vector->adapter;
+
+		if (unlikely(skb_tail_pointer(skb) < hdr.network +
+			     VXLAN_HEADROOM))
+			return;
 
 		/* verify the port is recognized as VXLAN */
 		if (adapter->vxlan_port &&
@@ -7667,6 +7685,12 @@ static void ixgbe_atr(struct ixgbe_ring *ring,
 		    udp_hdr(skb)->dest == adapter->geneve_port)
 			hdr.network = skb_inner_network_header(skb);
 	}
+
+	/* Make sure we have at least [minimum IPv4 header + TCP]
+	 * or [IPv6 header] bytes
+	 */
+	if (unlikely(skb_tail_pointer(skb) < hdr.network + 40))
+		return;
 
 	/* Currently only IPv4/IPv6 with TCP is supported */
 	switch (hdr.ipv4->version) {
@@ -7685,6 +7709,10 @@ static void ixgbe_atr(struct ixgbe_ring *ring,
 	}
 
 	if (l4_proto != IPPROTO_TCP)
+		return;
+
+	if (unlikely(skb_tail_pointer(skb) < hdr.network +
+		     hlen + sizeof(struct tcphdr)))
 		return;
 
 	th = (struct tcphdr *)(hdr.network + hlen);
@@ -9162,10 +9190,14 @@ static void *ixgbe_fwd_add(struct net_device *pdev, struct net_device *vdev)
 		goto fwd_add_err;
 	fwd_adapter->pool = pool;
 	fwd_adapter->real_adapter = adapter;
-	err = ixgbe_fwd_ring_up(vdev, fwd_adapter);
-	if (err)
-		goto fwd_add_err;
-	netif_tx_start_all_queues(vdev);
+
+	if (netif_running(pdev)) {
+		err = ixgbe_fwd_ring_up(vdev, fwd_adapter);
+		if (err)
+			goto fwd_add_err;
+		netif_tx_start_all_queues(vdev);
+	}
+
 	return fwd_adapter;
 fwd_add_err:
 	/* unwind counter and free adapter struct */
@@ -9500,6 +9532,8 @@ static int ixgbe_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	hw->mac.ops   = *ii->mac_ops;
 	hw->mac.type  = ii->mac;
 	hw->mvals     = ii->mvals;
+	if (ii->link_ops)
+		hw->link.ops  = *ii->link_ops;
 
 	/* EEPROM */
 	hw->eeprom.ops = *ii->eeprom_ops;
@@ -9523,10 +9557,8 @@ static int ixgbe_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	hw->phy.mdio.mdio_read = ixgbe_mdio_read;
 	hw->phy.mdio.mdio_write = ixgbe_mdio_write;
 
-	ii->get_invariants(hw);
-
 	/* setup the private structure */
-	err = ixgbe_sw_init(adapter);
+	err = ixgbe_sw_init(adapter, ii);
 	if (err)
 		goto err_sw_init;
 

@@ -417,6 +417,9 @@ struct phy_device {
 	u32 advertising;
 	u32 lp_advertising;
 
+	/* Energy efficient ethernet modes which should be prohibited */
+	u32 eee_broken_modes;
+
 	int autoneg;
 
 	int link_timeout;
@@ -447,6 +450,7 @@ struct phy_device {
 	struct net_device *attached_dev;
 
 	u8 mdix;
+	u8 mdix_ctrl;
 
 	void (*adjust_link)(struct net_device *dev);
 };
@@ -611,6 +615,13 @@ struct phy_driver {
 	void (*get_strings)(struct phy_device *dev, u8 *data);
 	void (*get_stats)(struct phy_device *dev,
 			  struct ethtool_stats *stats, u64 *data);
+
+	/* Get and Set PHY tunables */
+	int (*get_tunable)(struct phy_device *dev,
+			   struct ethtool_tunable *tuna, void *data);
+	int (*set_tunable)(struct phy_device *dev,
+			    struct ethtool_tunable *tuna,
+			    const void *data);
 };
 #define to_phy_driver(d) container_of(to_mdio_common_driver(d),		\
 				      struct phy_driver, mdiodrv)
@@ -786,6 +797,7 @@ void phy_detach(struct phy_device *phydev);
 void phy_start(struct phy_device *phydev);
 void phy_stop(struct phy_device *phydev);
 int phy_start_aneg(struct phy_device *phydev);
+int phy_aneg_done(struct phy_device *phydev);
 
 int phy_stop_interrupts(struct phy_device *phydev);
 
@@ -859,6 +871,7 @@ int phy_ethtool_get_link_ksettings(struct net_device *ndev,
 				   struct ethtool_link_ksettings *cmd);
 int phy_ethtool_set_link_ksettings(struct net_device *ndev,
 				   const struct ethtool_link_ksettings *cmd);
+int phy_ethtool_nway_reset(struct net_device *ndev);
 
 int __init mdio_bus_init(void);
 void mdio_bus_exit(void);

@@ -115,7 +115,7 @@ struct mlxsw_sp_rif {
 struct mlxsw_sp_mid {
 	struct list_head list;
 	unsigned char addr[ETH_ALEN];
-	u16 vid;
+	u16 fid;
 	u16 mid;
 	unsigned int ref_count;
 };
@@ -316,7 +316,6 @@ struct mlxsw_sp_port_pcpu_stats {
 };
 
 struct mlxsw_sp_port {
-	struct mlxsw_core_port core_port; /* must be first */
 	struct net_device *dev;
 	struct mlxsw_sp_port_pcpu_stats __percpu *pcpu_stats;
 	struct mlxsw_sp *mlxsw_sp;

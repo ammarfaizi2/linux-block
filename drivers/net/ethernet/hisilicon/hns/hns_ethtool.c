@@ -352,6 +352,13 @@ static int __lb_setup(struct net_device *ndev,
 		break;
 	}
 
+	if (!ret) {
+		if (loop == MAC_LOOP_NONE)
+			h->dev->ops->set_promisc_mode(
+				h, ndev->flags & IFF_PROMISC);
+		else
+			h->dev->ops->set_promisc_mode(h, 1);
+	}
 	return ret;
 }
 
@@ -1171,7 +1178,8 @@ static int hns_nic_nway_reset(struct net_device *netdev)
 	struct phy_device *phy = netdev->phydev;
 
 	if (netif_running(netdev)) {
-		if (phy)
+		/* if autoneg is disabled, don't restart auto-negotiation */
+		if (phy && phy->autoneg == AUTONEG_ENABLE)
 			ret = genphy_restart_aneg(phy);
 	}
 
