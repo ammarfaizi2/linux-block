@@ -12,6 +12,7 @@
 #include "blk.h"
 #include "blk-mq.h"
 #include "blk-mq-tag.h"
+#include "blk-mq-sched.h"
 
 bool blk_mq_has_free_tags(struct blk_mq_tags *tags)
 {

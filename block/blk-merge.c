@@ -766,6 +766,7 @@ int attempt_back_merge(struct request_queue *q, struct request *rq)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(attempt_back_merge);
 
 int attempt_front_merge(struct request_queue *q, struct request *rq)
 {
@@ -776,6 +777,7 @@ int attempt_front_merge(struct request_queue *q, struct request *rq)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(attempt_front_merge);
 
 int blk_attempt_req_merge(struct request_queue *q, struct request *rq,
 			  struct request *next)
@@ -825,3 +827,4 @@ int blk_try_merge(struct request *rq, struct bio *bio)
 		return ELEVATOR_FRONT_MERGE;
 	return ELEVATOR_NO_MERGE;
 }
+EXPORT_SYMBOL_GPL(blk_try_merge);
