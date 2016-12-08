@@ -25,6 +25,7 @@ struct request *
 blk_mq_sched_request_from_shadow(struct blk_mq_hw_ctx *hctx,
 				 struct request *(*get_sched_rq)(struct blk_mq_hw_ctx *));
 
+int blk_mq_sched_init(struct request_queue *q);
 
 struct blk_mq_alloc_data {
 	/* input parameter */

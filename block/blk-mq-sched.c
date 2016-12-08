@@ -244,3 +244,22 @@ void __blk_mq_sched_dispatch_requests(struct blk_mq_hw_ctx *hctx)
 
 	blk_mq_dispatch_rq_list(hctx, &rq_list);
 }
+
+int blk_mq_sched_init(struct request_queue *q)
+{
+	int ret;
+
+#if defined(CONFIG_DEFAULT_MQ_NONE)
+	return 0;
+#endif
+#if defined(CONFIG_MQ_IOSCHED_ONLY_SQ)
+	if (q->nr_hw_queues > 1)
+		return 0;
+#endif
+
+	mutex_lock(&q->sysfs_lock);
+	ret = elevator_init(q, NULL);
+	mutex_unlock(&q->sysfs_lock);
+
+	return ret;
+}
