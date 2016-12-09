@@ -61,6 +61,9 @@ static void blk_mq_stat_get(struct request_queue *q, struct blk_rq_stat *dst)
 
 		queue_for_each_hw_ctx(q, hctx, i) {
 			hctx_for_each_ctx(hctx, ctx, j) {
+				blk_stat_flush_batch(&ctx->stat[0]);
+				blk_stat_flush_batch(&ctx->stat[1]);
+
 				if (!ctx->stat[0].nr_samples &&
 				    !ctx->stat[1].nr_samples)
 					continue;
@@ -106,6 +109,8 @@ void blk_queue_stat_get(struct request_queue *q, struct blk_rq_stat *dst)
 	if (q->mq_ops)
 		blk_mq_stat_get(q, dst);
 	else {
+		blk_stat_flush_batch(&q->rq_stats[0]);
+		blk_stat_flush_batch(&q->rq_stats[1]);
 		memcpy(&dst[0], &q->rq_stats[0], sizeof(struct blk_rq_stat));
 		memcpy(&dst[1], &q->rq_stats[1], sizeof(struct blk_rq_stat));
 	}
@@ -121,6 +126,9 @@ void blk_hctx_stat_get(struct blk_mq_hw_ctx *hctx, struct blk_rq_stat *dst)
 		uint64_t newest = 0;
 
 		hctx_for_each_ctx(hctx, ctx, i) {
+			blk_stat_flush_batch(&ctx->stat[0]);
+			blk_stat_flush_batch(&ctx->stat[1]);
+
 			if (!ctx->stat[0].nr_samples &&
 			    !ctx->stat[1].nr_samples)
 				continue;
