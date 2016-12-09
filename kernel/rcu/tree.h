@@ -260,6 +260,9 @@ struct rcu_node {
  */
 #define leaf_node_cpu_bit(rnp, cpu) (1UL << ((cpu) - (rnp)->grplo))
 
+/* This returns the corresponding cpu_id for a bit in a RCU lead node */
+#define leaf_node_cpu_id(rnp, bit) ((bit) + (rnp)->grplo)
+
 /*
  * Do a full breadth-first scan of the rcu_node structures for the
  * specified rcu_state structure.
@@ -294,6 +297,33 @@ struct rcu_node {
 	for ((cpu) = cpumask_next(rnp->grplo - 1, cpu_possible_mask); \
 	     cpu <= rnp->grphi; \
 	     cpu = cpumask_next((cpu), cpu_possible_mask))
+
+
+#define QSMASK_BITS(mask)	(BITS_PER_BYTE * sizeof(mask))
+/*
+ * Iterate over all set bits in @mask of a leaf RCU node.
+ *
+ * The iterator is the bit offset in @mask of a leaf node, to get the cpu
+ * id, use leaf_node_cpu_id()
+ *
+ * Note @rnp has to be a leaf node and @mask has to belong to @rnp.
+ */
+#define leaf_node_for_each_mask_bit(rnp, mask, bit) \
+	for ((bit) = find_first_bit(&(mask), QSMASK_BITS(mask)); \
+	     (bit) < QSMASK_BITS(mask); \
+	     (bit) = find_next_bit(&(mask), QSMASK_BITS(mask), (bit) + 1))
+
+/*
+ * Iterate over all possible CPUs a leaf RCU node which are still masked in
+ * @mask.
+ *
+ * Note @rnp has to be a leaf node and @mask has to belong to @rnp.
+ */
+#define leaf_node_for_each_mask_possible_cpu(rnp, mask, bit, cpu) \
+	leaf_node_for_each_mask_bit(rnp, mask, bit) \
+		if (!cpu_possible((cpu) = leaf_node_cpu_id(rnp, bit))) \
+			continue; \
+		else
 
 /*
  * Union to allow "aggregate OR" operation on the need for a quiescent
