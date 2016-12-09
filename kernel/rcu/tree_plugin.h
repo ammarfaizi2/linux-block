@@ -1170,15 +1170,17 @@ static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
 	unsigned long mask = rcu_rnp_online_cpus(rnp);
 	cpumask_var_t cm;
 	int cpu;
+	unsigned long bit;
 
 	if (!t)
 		return;
 	if (!zalloc_cpumask_var(&cm, GFP_KERNEL))
 		return;
-	for_each_leaf_node_possible_cpu(rnp, cpu)
-		if ((mask & leaf_node_cpu_bit(rnp, cpu)) &&
-		    cpu != outgoingcpu)
+
+	leaf_node_for_each_mask_possible_cpu(rnp, mask, bit, cpu)
+		if (cpu != outgoingcpu)
 			cpumask_set_cpu(cpu, cm);
+
 	if (cpumask_weight(cm) == 0)
 		cpumask_setall(cm);
 	set_cpus_allowed_ptr(t, cm);
