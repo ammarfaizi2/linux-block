@@ -3014,6 +3014,7 @@ static void force_qs_rnp(struct rcu_state *rsp,
 			 bool *isidle, unsigned long *maxj)
 {
 	int cpu;
+	unsigned long bit;
 	unsigned long flags;
 	unsigned long mask;
 	struct rcu_node *rnp;
@@ -3047,13 +3048,11 @@ static void force_qs_rnp(struct rcu_state *rsp,
 				continue;
 			}
 		}
-		for_each_leaf_node_possible_cpu(rnp, cpu) {
-			unsigned long bit = leaf_node_cpu_bit(rnp, cpu);
-			if ((rnp->qsmask & bit) != 0) {
-				if (f(per_cpu_ptr(rsp->rda, cpu), isidle, maxj))
-					mask |= bit;
-			}
-		}
+
+		leaf_node_for_each_mask_possible_cpu(rnp, rnp->qsmask, bit, cpu)
+			if (f(per_cpu_ptr(rsp->rda, cpu), isidle, maxj))
+				mask |= 1 << bit;
+
 		if (mask != 0) {
 			/* Idle/offline CPUs, report (releases rnp->lock. */
 			rcu_report_qs_rnp(mask, rsp, rnp, rnp->gpnum, flags);
