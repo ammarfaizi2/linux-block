@@ -536,6 +536,13 @@ static struct sst_acpi_mach sst_acpi_bytcr[] = {
 		.board = "cht-bsw",
 		.pdata = &byt_rvp_platform_data
 	},
+	{
+		.id = "14F10720",
+		.drv_name = "cht-cx2072x",
+		.fw_filename = "intel/fw_sst_0f28.bin",
+		.board = "cht-bsw",
+		.pdata = &byt_rvp_platform_data
+	},
 #if IS_ENABLED(CONFIG_SND_SOC_INTEL_BYT_CHT_NOCODEC_MACH)
 	/*
 	 * This is always last in the table so that it is selected only when
@@ -616,6 +623,13 @@ static struct sst_acpi_mach sst_acpi_chv[] = {
 		.drv_name = "bytcht_es8316",
 		.fw_filename = "intel/fw_sst_22a8.bin",
 		.board = "bytcht_es8316",
+		.pdata = &chv_platform_data
+	},
+	{
+		.id = "14F10720",
+		.drv_name = "cht-cx2072x",
+		.fw_filename = "intel/fw_sst_22a8.bin",
+		.board = "cht-bsw",
 		.pdata = &chv_platform_data
 	},
 	/* some CHT-T platforms rely on RT5640, use Baytrail machine driver */
