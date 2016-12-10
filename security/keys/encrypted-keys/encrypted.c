@@ -481,7 +481,6 @@ static int derived_key_encrypt(struct encrypted_key_payload *epayload,
 	unsigned int encrypted_datalen;
 	u8 iv[AES_BLOCK_SIZE];
 	unsigned int padlen;
-	char pad[16];
 	int ret;
 
 	encrypted_datalen = roundup(epayload->decrypted_datalen, blksize);
@@ -493,11 +492,10 @@ static int derived_key_encrypt(struct encrypted_key_payload *epayload,
 		goto out;
 	dump_decrypted_data(epayload);
 
-	memset(pad, 0, sizeof pad);
 	sg_init_table(sg_in, 2);
 	sg_set_buf(&sg_in[0], epayload->decrypted_data,
 		   epayload->decrypted_datalen);
-	sg_set_buf(&sg_in[1], pad, padlen);
+	sg_set_page(&sg_in[1], ZERO_PAGE(0), padlen, 0);
 
 	sg_init_table(sg_out, 1);
 	sg_set_buf(sg_out, epayload->encrypted_data, encrypted_datalen);
@@ -584,7 +582,6 @@ static int derived_key_decrypt(struct encrypted_key_payload *epayload,
 	struct skcipher_request *req;
 	unsigned int encrypted_datalen;
 	u8 iv[AES_BLOCK_SIZE];
-	char pad[16];
 	int ret;
 
 	encrypted_datalen = roundup(epayload->decrypted_datalen, blksize);
@@ -594,13 +591,12 @@ static int derived_key_decrypt(struct encrypted_key_payload *epayload,
 		goto out;
 	dump_encrypted_data(epayload, encrypted_datalen);
 
-	memset(pad, 0, sizeof pad);
 	sg_init_table(sg_in, 1);
 	sg_init_table(sg_out, 2);
 	sg_set_buf(sg_in, epayload->encrypted_data, encrypted_datalen);
 	sg_set_buf(&sg_out[0], epayload->decrypted_data,
 		   epayload->decrypted_datalen);
-	sg_set_buf(&sg_out[1], pad, sizeof pad);
+	sg_set_page(&sg_out[1], ZERO_PAGE(0), 16, 0);
 
 	memcpy(iv, epayload->iv, sizeof(iv));
 	skcipher_request_set_crypt(req, sg_in, sg_out, encrypted_datalen, iv);
