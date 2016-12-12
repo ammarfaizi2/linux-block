@@ -166,8 +166,15 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 		ret = PTR_ERR(buf);
 		goto out_unresv;
 	}
+
+	fence = virtio_gpu_fence_alloc();
+	if (!fence) {
+		kfree(buf);
+		ret = -ENOMEM;
+		goto out_unresv;
+	}
 	virtio_gpu_cmd_submit(vgdev, buf, exbuf->size,
-			      vfpriv->ctx_id, &fence);
+			      vfpriv->ctx_id, fence);
 
 	ttm_eu_fence_buffer_objects(&ticket, &validate_list, &fence->f);
 
@@ -283,11 +290,17 @@ static int virtio_gpu_resource_create_ioctl(struct drm_device *dev, void *data,
 		rc_3d.nr_samples = cpu_to_le32(rc->nr_samples);
 		rc_3d.flags = cpu_to_le32(rc->flags);
 
+		fence = virtio_gpu_fence_alloc();
+		if (!fence) {
+			ret = -ENOMEM;
+			goto fail_fence;
+		}
+
 		virtio_gpu_cmd_resource_create_3d(vgdev, &rc_3d, NULL);
-		ret = virtio_gpu_object_attach(vgdev, qobj, res_id, &fence);
+		ret = virtio_gpu_object_attach(vgdev, qobj, res_id, fence);
 		if (ret) {
-			ttm_eu_backoff_reservation(&ticket, &validate_list);
-			goto fail_unref;
+			virtio_gpu_fence_cleanup(fence);
+			goto fail_fence;
 		}
 		ttm_eu_fence_buffer_objects(&ticket, &validate_list, &fence->f);
 	}
@@ -314,6 +327,8 @@ static int virtio_gpu_resource_create_ioctl(struct drm_device *dev, void *data,
 		dma_fence_put(&fence->f);
 	}
 	return 0;
+fail_fence:
+ttm_eu_backoff_reservation(&ticket, &validate_list);
 fail_unref:
 	if (vgdev->has_virgl_3d) {
 		virtio_gpu_unref_list(&validate_list);
@@ -378,10 +393,16 @@ static int virtio_gpu_transfer_from_host_ioctl(struct drm_device *dev,
 		goto out_unres;
 
 	convert_to_hw_box(&box, &args->box);
+
+	fence = virtio_gpu_fence_alloc();
+	if (!fence) {
+		ret = -ENOMEM;
+		goto out_unres;
+	}
 	virtio_gpu_cmd_transfer_from_host_3d
 		(vgdev, qobj->hw_res_handle,
 		 vfpriv->ctx_id, offset, args->level,
-		 &box, &fence);
+		 &box, fence);
 	reservation_object_add_excl_fence(qobj->tbo.resv,
 					  &fence->f);
 
@@ -427,10 +448,15 @@ static int virtio_gpu_transfer_to_host_ioctl(struct drm_device *dev, void *data,
 			(vgdev, qobj->hw_res_handle, offset,
 			 box.w, box.h, box.x, box.y, NULL);
 	} else {
+		fence = virtio_gpu_fence_alloc();
+		if (!fence) {
+			ret = -ENOMEM;
+			goto out_unres;
+		}
 		virtio_gpu_cmd_transfer_to_host_3d
 			(vgdev, qobj->hw_res_handle,
 			 vfpriv ? vfpriv->ctx_id : 0, offset,
-			 args->level, &box, &fence);
+			 args->level, &box, fence);
 		reservation_object_add_excl_fence(qobj->tbo.resv,
 						  &fence->f);
 		dma_fence_put(&fence->f);
