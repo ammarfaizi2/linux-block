@@ -114,6 +114,8 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 	struct ww_acquire_ctx ticket;
 	void *buf;
 
+	exbuf->fence_fd = -1;
+
 	if (vgdev->has_virgl_3d == false)
 		return -ENOSYS;
 
