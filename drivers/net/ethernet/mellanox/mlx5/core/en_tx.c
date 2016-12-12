@@ -129,14 +129,23 @@ u16 mlx5e_select_queue(struct net_device *dev, struct sk_buff *skb,
 	return priv->channeltc_to_txq_map[channel_ix][up];
 }
 
-static inline int mlx5e_skb_l2_header_offset(struct sk_buff *skb)
+static inline int
+mlx5e_skb_l2_header_offset(struct mlx5e_sq *sq, struct sk_buff *skb)
 {
 #define MLX5E_MIN_INLINE (ETH_HLEN + VLAN_HLEN)
+#define LLC_HDR_INLINE_LEN 3
+#define MLX5E_LLC_MIN_INLINE (MLX5E_MIN_INLINE + LLC_HDR_INLINE_LEN)
+
+	if (unlikely(!skb_network_header_len(skb))) {
+		sq->stats.no_l3_header++;
+		return MLX5E_LLC_MIN_INLINE;
+	}
 
 	return max(skb_network_offset(skb), MLX5E_MIN_INLINE);
 }
 
-static inline int mlx5e_skb_l3_header_offset(struct sk_buff *skb)
+static inline int
+mlx5e_skb_l3_header_offset(struct mlx5e_sq *sq, struct sk_buff *skb)
 {
 	struct flow_keys keys;
 
@@ -145,13 +154,13 @@ static inline int mlx5e_skb_l3_header_offset(struct sk_buff *skb)
 	else if (skb_flow_dissect_flow_keys(skb, &keys, 0))
 		return keys.control.thoff;
 	else
-		return mlx5e_skb_l2_header_offset(skb);
+		return mlx5e_skb_l2_header_offset(sq, skb);
 }
 
 static inline unsigned int
-mlx5e_calc_min_inline(enum mlx5_inline_modes mode, struct sk_buff *skb,
-		      bool vlan_present)
+mlx5e_calc_min_inline(struct mlx5e_sq *sq, struct sk_buff *skb, bool vlan_present)
 {
+	enum mlx5_inline_modes mode = sq->min_inline_mode;
 	int hlen;
 
 	switch (mode) {
@@ -168,11 +177,11 @@ mlx5e_calc_min_inline(enum mlx5_inline_modes mode, struct sk_buff *skb,
 		 * transport header wasn't set.
 		 */
 		if (skb_transport_offset(skb))
-			return mlx5e_skb_l3_header_offset(skb);
+			return mlx5e_skb_l3_header_offset(sq, skb);
 		/* fall through */
 	case MLX5_INLINE_MODE_L2:
 	default:
-		return mlx5e_skb_l2_header_offset(skb);
+		return mlx5e_skb_l2_header_offset(sq, skb);
 	}
 }
 
@@ -193,7 +202,7 @@ static inline u16 mlx5e_get_inline_hdr_size(struct mlx5e_sq *sq,
 		if (ihs <= sq->max_inline)
 			return skb_headlen(skb);
 	}
-	return mlx5e_calc_min_inline(sq->min_inline_mode, skb, vlan_present);
+	return mlx5e_calc_min_inline(sq, skb, vlan_present);
 }
 
 static inline void mlx5e_tx_skb_pull_inline(unsigned char **skb_data,
