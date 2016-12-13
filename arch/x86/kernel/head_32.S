@@ -558,12 +558,16 @@ initial_page_table:
 #endif
 initial_pg_fixmap:
 	.fill 1024,4,0
-.globl empty_zero_page
-empty_zero_page:
-	.fill 4096,1,0
 .globl swapper_pg_dir
 swapper_pg_dir:
 	.fill 1024,4,0
+
+__PAGE_ALIGNED_ROBSS
+.globl empty_zero_page
+.align PAGE_SIZE
+empty_zero_page:
+	.fill 4096,1,0
+ENDOBJECT(empty_zero_page)
 EXPORT_SYMBOL(empty_zero_page)
 
 /*

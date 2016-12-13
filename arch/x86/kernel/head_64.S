@@ -496,8 +496,9 @@ EXPORT_SYMBOL(phys_base)
 
 #include "../../x86/xen/xen-head.S"
 	
-	__PAGE_ALIGNED_BSS
+	__PAGE_ALIGNED_ROBSS
 NEXT_PAGE(empty_zero_page)
 	.skip PAGE_SIZE
+ENDOBJECT(empty_zero_page)
 EXPORT_SYMBOL(empty_zero_page)
 
