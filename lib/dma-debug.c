@@ -1215,10 +1215,12 @@ static inline bool overlap(void *addr, unsigned long len, void *start, void *end
 	return !(b1 <= a2 || a1 >= b2);
 }
 
-static void check_for_illegal_area(struct device *dev, void *addr, unsigned long len)
+static void check_for_illegal_area(struct device *dev, void *addr,
+				   unsigned long len, int direction)
 {
 	if (overlap(addr, len, _stext, _etext) ||
-	    overlap(addr, len, __start_rodata, __end_rodata))
+	    (direction != DMA_TO_DEVICE &&
+	     overlap(addr, len, __start_rodata, __end_rodata)))
 		err_printk(dev, NULL, "DMA-API: device driver maps memory from kernel text or rodata [addr=%p] [len=%lu]\n", addr, len);
 }
 
@@ -1330,7 +1332,7 @@ void debug_dma_map_page(struct device *dev, struct page *page, size_t offset,
 	if (!PageHighMem(page)) {
 		void *addr = page_address(page) + offset;
 
-		check_for_illegal_area(dev, addr, size);
+		check_for_illegal_area(dev, addr, size, direction);
 	}
 
 	add_dma_entry(entry);
@@ -1424,7 +1426,8 @@ void debug_dma_map_sg(struct device *dev, struct scatterlist *sg,
 		check_for_stack(dev, sg_page(s), s->offset);
 
 		if (!PageHighMem(sg_page(s))) {
-			check_for_illegal_area(dev, sg_virt(s), sg_dma_len(s));
+			check_for_illegal_area(dev, sg_virt(s), sg_dma_len(s),
+					       direction);
 		}
 
 		add_dma_entry(entry);
