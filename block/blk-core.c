@@ -39,6 +39,7 @@
 
 #include "blk.h"
 #include "blk-mq.h"
+#include "blk-mq-sched.h"
 #include "blk-wbt.h"
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
@@ -1413,7 +1414,7 @@ void __blk_put_request(struct request_queue *q, struct request *req)
 		return;
 
 	if (q->mq_ops) {
-		blk_mq_free_request(req);
+		blk_mq_sched_put_request(req);
 		return;
 	}
 
@@ -1449,7 +1450,7 @@ void blk_put_request(struct request *req)
 	struct request_queue *q = req->q;
 
 	if (q->mq_ops)
-		blk_mq_free_request(req);
+		blk_mq_sched_put_request(req);
 	else {
 		unsigned long flags;
 
@@ -2127,7 +2128,7 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 	if (q->mq_ops) {
 		if (blk_queue_io_stat(q))
 			blk_account_io_start(rq, true);
-		blk_mq_insert_request(rq, false, true, false);
+		blk_mq_sched_insert_request(rq, false, true, false);
 		return 0;
 	}
 
