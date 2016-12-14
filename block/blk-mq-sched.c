@@ -373,3 +373,22 @@ void blk_mq_sched_request_inserted(struct request *rq)
 	trace_block_rq_insert(rq->q, rq);
 }
 EXPORT_SYMBOL_GPL(blk_mq_sched_request_inserted);
+
+int blk_mq_sched_init(struct request_queue *q)
+{
+	int ret;
+
+#if defined(CONFIG_DEFAULT_MQ_NONE)
+	return 0;
+#endif
+#if defined(CONFIG_MQ_IOSCHED_ONLY_SQ)
+	if (q->nr_hw_queues > 1)
+		return 0;
+#endif
+
+	mutex_lock(&q->sysfs_lock);
+	ret = elevator_init(q, NULL);
+	mutex_unlock(&q->sysfs_lock);
+
+	return ret;
+}

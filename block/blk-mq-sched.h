@@ -28,6 +28,8 @@ void blk_mq_sched_request_inserted(struct request *rq);
 bool blk_mq_sched_try_merge(struct request_queue *q, struct bio *bio);
 bool __blk_mq_sched_bio_merge(struct request_queue *q, struct bio *bio);
 
+int blk_mq_sched_init(struct request_queue *q);
+
 void blk_mq_sched_dispatch_requests(struct blk_mq_hw_ctx *hctx);
 
 static inline bool
