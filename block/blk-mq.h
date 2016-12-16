@@ -47,7 +47,8 @@ struct blk_mq_tags *blk_mq_init_rq_map(struct blk_mq_tag_set *set,
  */
 void __blk_mq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
 				bool at_head);
-
+void blk_mq_insert_requests(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
+				struct list_head *list);
 /*
  * CPU hotplug helpers
  */
@@ -123,8 +124,9 @@ static inline void blk_mq_set_alloc_data(struct blk_mq_alloc_data *data,
  */
 void blk_mq_rq_ctx_init(struct request_queue *q, struct blk_mq_ctx *ctx,
 			struct request *rq, unsigned int op);
-void __blk_mq_free_request(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
+void __blk_mq_finish_request(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
 				struct request *rq);
+void blk_mq_finish_request(struct request *rq);
 struct request *__blk_mq_alloc_request(struct blk_mq_alloc_data *data,
 					unsigned int op);
 
