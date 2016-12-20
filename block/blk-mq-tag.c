@@ -156,47 +156,46 @@ static int bt_get(struct blk_mq_alloc_data *data, struct sbitmap_queue *bt,
 	return tag;
 }
 
-static unsigned int __blk_mq_get_tag(struct blk_mq_alloc_data *data)
+static unsigned int __blk_mq_get_tag(struct blk_mq_alloc_data *data,
+				     struct blk_mq_tags *tags)
 {
 	int tag;
 
-	tag = bt_get(data, &data->hctx->tags->bitmap_tags, data->hctx,
-		     data->hctx->tags);
+	tag = bt_get(data, &tags->bitmap_tags, data->hctx, tags);
 	if (tag >= 0)
-		return tag + data->hctx->tags->nr_reserved_tags;
+		return tag + tags->nr_reserved_tags;
 
 	return BLK_MQ_TAG_FAIL;
 }
 
-static unsigned int __blk_mq_get_reserved_tag(struct blk_mq_alloc_data *data)
+static unsigned int __blk_mq_get_reserved_tag(struct blk_mq_alloc_data *data,
+					      struct blk_mq_tags *tags)
 {
 	int tag;
 
-	if (unlikely(!data->hctx->tags->nr_reserved_tags)) {
+	if (unlikely(!tags->nr_reserved_tags)) {
 		WARN_ON_ONCE(1);
 		return BLK_MQ_TAG_FAIL;
 	}
 
-	tag = bt_get(data, &data->hctx->tags->breserved_tags, NULL,
-		     data->hctx->tags);
+	tag = bt_get(data, &tags->breserved_tags, NULL, tags);
 	if (tag < 0)
 		return BLK_MQ_TAG_FAIL;
 
 	return tag;
 }
 
-unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
+unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data,
+			    struct blk_mq_tags *tags)
 {
 	if (data->flags & BLK_MQ_REQ_RESERVED)
-		return __blk_mq_get_reserved_tag(data);
-	return __blk_mq_get_tag(data);
+		return __blk_mq_get_reserved_tag(data, tags);
+	return __blk_mq_get_tag(data, tags);
 }
 
-void blk_mq_put_tag(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
-		    unsigned int tag)
+void blk_mq_put_tag(struct blk_mq_hw_ctx *hctx, struct blk_mq_tags *tags,
+		    struct blk_mq_ctx *ctx, unsigned int tag)
 {
-	struct blk_mq_tags *tags = hctx->tags;
-
 	if (tag >= tags->nr_reserved_tags) {
 		const int real_tag = tag - tags->nr_reserved_tags;
 
