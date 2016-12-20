@@ -579,6 +579,8 @@ static void fixup_bpf_calls(struct bpf_prog *prog)
 				prog->dst_needed = 1;
 			if (insn->imm == BPF_FUNC_get_prandom_u32)
 				bpf_user_rnd_init_once();
+			if (insn->imm == BPF_FUNC_xdp_adjust_head)
+				prog->xdp_adjust_head = 1;
 			if (insn->imm == BPF_FUNC_tail_call) {
 				/* mark bpf_tail_call as different opcode
 				 * to avoid conditional branch in
@@ -613,19 +615,39 @@ static void free_used_maps(struct bpf_prog_aux *aux)
 	kfree(aux->used_maps);
 }
 
+int __bpf_prog_charge(struct user_struct *user, u32 pages)
+{
+	unsigned long memlock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
+	unsigned long user_bufs;
+
+	if (user) {
+		user_bufs = atomic_long_add_return(pages, &user->locked_vm);
+		if (user_bufs > memlock_limit) {
+			atomic_long_sub(pages, &user->locked_vm);
+			return -EPERM;
+		}
+	}
+
+	return 0;
+}
+
+void __bpf_prog_uncharge(struct user_struct *user, u32 pages)
+{
+	if (user)
+		atomic_long_sub(pages, &user->locked_vm);
+}
+
 static int bpf_prog_charge_memlock(struct bpf_prog *prog)
 {
 	struct user_struct *user = get_current_user();
-	unsigned long memlock_limit;
+	int ret;
 
-	memlock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
-
-	atomic_long_add(prog->pages, &user->locked_vm);
-	if (atomic_long_read(&user->locked_vm) > memlock_limit) {
-		atomic_long_sub(prog->pages, &user->locked_vm);
+	ret = __bpf_prog_charge(user, prog->pages);
+	if (ret) {
 		free_uid(user);
-		return -EPERM;
+		return ret;
 	}
+
 	prog->aux->user = user;
 	return 0;
 }
@@ -634,7 +656,7 @@ static void bpf_prog_uncharge_memlock(struct bpf_prog *prog)
 {
 	struct user_struct *user = prog->aux->user;
 
-	atomic_long_sub(prog->pages, &user->locked_vm);
+	__bpf_prog_uncharge(user, prog->pages);
 	free_uid(user);
 }
 
@@ -662,8 +684,30 @@ static int bpf_prog_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
+#ifdef CONFIG_PROC_FS
+static void bpf_prog_show_fdinfo(struct seq_file *m, struct file *filp)
+{
+	const struct bpf_prog *prog = filp->private_data;
+	char prog_digest[sizeof(prog->digest) * 2 + 1] = { };
+
+	bin2hex(prog_digest, prog->digest, sizeof(prog->digest));
+	seq_printf(m,
+		   "prog_type:\t%u\n"
+		   "prog_jited:\t%u\n"
+		   "prog_digest:\t%s\n"
+		   "memlock:\t%llu\n",
+		   prog->type,
+		   prog->jited,
+		   prog_digest,
+		   prog->pages * 1ULL << PAGE_SHIFT);
+}
+#endif
+
 static const struct file_operations bpf_prog_fops = {
-        .release = bpf_prog_release,
+#ifdef CONFIG_PROC_FS
+	.show_fdinfo	= bpf_prog_show_fdinfo,
+#endif
+	.release	= bpf_prog_release,
 };
 
 int bpf_prog_new_fd(struct bpf_prog *prog)
@@ -764,8 +808,8 @@ static int bpf_prog_load(union bpf_attr *attr)
 	/* eBPF programs must be GPL compatible to use GPL-ed functions */
 	is_gpl = license_is_gpl_compatible(license);
 
-	if (attr->insn_cnt >= BPF_MAXINSNS)
-		return -EINVAL;
+	if (attr->insn_cnt == 0 || attr->insn_cnt > BPF_MAXINSNS)
+		return -E2BIG;
 
 	if (type == BPF_PROG_TYPE_KPROBE &&
 	    attr->kern_version != LINUX_VERSION_CODE)
@@ -787,7 +831,7 @@ static int bpf_prog_load(union bpf_attr *attr)
 
 	err = -EFAULT;
 	if (copy_from_user(prog->insns, u64_to_user_ptr(attr->insns),
-			   prog->len * sizeof(struct bpf_insn)) != 0)
+			   bpf_prog_insn_size(prog)) != 0)
 		goto free_prog;
 
 	prog->orig_prog = NULL;

@@ -319,11 +319,11 @@ static int xgene_enet_setup_mss(struct net_device *ndev, u32 mss)
 		}
 	}
 
-	spin_unlock(&pdata->mss_lock);
-
 	/* No slots with ref_count = 0 available, return busy */
 	if (!mss_index_found)
-		return -EBUSY;
+		mss_index = -EBUSY;
+
+	spin_unlock(&pdata->mss_lock);
 
 	return mss_index;
 }
@@ -635,6 +635,7 @@ static void xgene_enet_free_pagepool(struct xgene_enet_desc_ring *buf_pool,
 		return;
 
 	dev = ndev_to_dev(buf_pool->ndev);
+	slots = buf_pool->slots - 1;
 	head = buf_pool->head;
 
 	for (i = 0; i < 4; i++) {

@@ -462,12 +462,17 @@ static void init_reg_state(struct bpf_reg_state *regs)
 	regs[BPF_REG_1].type = PTR_TO_CTX;
 }
 
-static void mark_reg_unknown_value(struct bpf_reg_state *regs, u32 regno)
+static void __mark_reg_unknown_value(struct bpf_reg_state *regs, u32 regno)
 {
-	BUG_ON(regno >= MAX_BPF_REG);
 	regs[regno].type = UNKNOWN_VALUE;
 	regs[regno].id = 0;
 	regs[regno].imm = 0;
+}
+
+static void mark_reg_unknown_value(struct bpf_reg_state *regs, u32 regno)
+{
+	BUG_ON(regno >= MAX_BPF_REG);
+	__mark_reg_unknown_value(regs, regno);
 }
 
 static void reset_reg_range_values(struct bpf_reg_state *regs, u32 regno)
@@ -1216,7 +1221,7 @@ static int check_call(struct bpf_verifier_env *env, int func_id)
 		return -EINVAL;
 	}
 
-	changes_data = bpf_helper_changes_skb_data(fn->func);
+	changes_data = bpf_helper_changes_pkt_data(fn->func);
 
 	memset(&meta, 0, sizeof(meta));
 	meta.pkt_access = fn->pkt_access;
@@ -1481,14 +1486,19 @@ static int evaluate_reg_imm_alu(struct bpf_verifier_env *env,
 	struct bpf_reg_state *src_reg = &regs[insn->src_reg];
 	u8 opcode = BPF_OP(insn->code);
 
-	/* dst_reg->type == CONST_IMM here, simulate execution of 'add' insn.
-	 * Don't care about overflow or negative values, just add them
+	/* dst_reg->type == CONST_IMM here, simulate execution of 'add'/'or'
+	 * insn. Don't care about overflow or negative values, just add them
 	 */
 	if (opcode == BPF_ADD && BPF_SRC(insn->code) == BPF_K)
 		dst_reg->imm += insn->imm;
 	else if (opcode == BPF_ADD && BPF_SRC(insn->code) == BPF_X &&
 		 src_reg->type == CONST_IMM)
 		dst_reg->imm += src_reg->imm;
+	else if (opcode == BPF_OR && BPF_SRC(insn->code) == BPF_K)
+		dst_reg->imm |= insn->imm;
+	else if (opcode == BPF_OR && BPF_SRC(insn->code) == BPF_X &&
+		 src_reg->type == CONST_IMM)
+		dst_reg->imm |= src_reg->imm;
 	else
 		mark_reg_unknown_value(regs, insn->dst_reg);
 	return 0;
@@ -1965,8 +1975,13 @@ static void mark_map_reg(struct bpf_reg_state *regs, u32 regno, u32 id,
 
 	if (reg->type == PTR_TO_MAP_VALUE_OR_NULL && reg->id == id) {
 		reg->type = type;
+		/* We don't need id from this point onwards anymore, thus we
+		 * should better reset it, so that state pruning has chances
+		 * to take effect.
+		 */
+		reg->id = 0;
 		if (type == UNKNOWN_VALUE)
-			mark_reg_unknown_value(regs, regno);
+			__mark_reg_unknown_value(regs, regno);
 	}
 }
 
@@ -1977,16 +1992,16 @@ static void mark_map_regs(struct bpf_verifier_state *state, u32 regno,
 			  enum bpf_reg_type type)
 {
 	struct bpf_reg_state *regs = state->regs;
+	u32 id = regs[regno].id;
 	int i;
 
 	for (i = 0; i < MAX_BPF_REG; i++)
-		mark_map_reg(regs, i, regs[regno].id, type);
+		mark_map_reg(regs, i, id, type);
 
 	for (i = 0; i < MAX_BPF_STACK; i += BPF_REG_SIZE) {
 		if (state->stack_slot_type[i] != STACK_SPILL)
 			continue;
-		mark_map_reg(state->spilled_regs, i / BPF_REG_SIZE,
-			     regs[regno].id, type);
+		mark_map_reg(state->spilled_regs, i / BPF_REG_SIZE, id, type);
 	}
 }
 
@@ -2523,7 +2538,7 @@ static bool states_equal(struct bpf_verifier_env *env,
 		 * we didn't do a variable access into a map then we are a-ok.
 		 */
 		if (!varlen_map_access &&
-		    rold->type == rcur->type && rold->imm == rcur->imm)
+		    memcmp(rold, rcur, offsetofend(struct bpf_reg_state, id)) == 0)
 			continue;
 
 		/* If we didn't map access then again we don't care about the
@@ -2921,6 +2936,10 @@ static int replace_map_fd_with_map_ptr(struct bpf_verifier_env *env)
 	int insn_cnt = env->prog->len;
 	int i, j, err;
 
+	err = bpf_prog_calc_digest(env->prog);
+	if (err)
+		return err;
+
 	for (i = 0; i < insn_cnt; i++, insn++) {
 		if (BPF_CLASS(insn->code) == BPF_LDX &&
 		    (BPF_MODE(insn->code) != BPF_MEM || insn->imm != 0)) {
@@ -3127,9 +3146,6 @@ int bpf_check(struct bpf_prog **prog, union bpf_attr *attr)
 	char __user *log_ubuf = NULL;
 	struct bpf_verifier_env *env;
 	int ret = -EINVAL;
-
-	if ((*prog)->len <= 0 || (*prog)->len > BPF_MAXINSNS)
-		return -E2BIG;
 
 	/* 'struct bpf_verifier_env' can be global, but since it's not small,
 	 * allocate/free it every time bpf_check() is called

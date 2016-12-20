@@ -128,7 +128,7 @@ static int ipvlan_port_create(struct net_device *dev)
 	return 0;
 
 err:
-	kfree_rcu(port, rcu);
+	kfree(port);
 	return err;
 }
 
@@ -145,7 +145,7 @@ static void ipvlan_port_destroy(struct net_device *dev)
 	netdev_rx_handler_unregister(dev);
 	cancel_work_sync(&port->wq);
 	__skb_queue_purge(&port->backlog);
-	kfree_rcu(port, rcu);
+	kfree(port);
 }
 
 #define IPVLAN_FEATURES \
@@ -546,13 +546,15 @@ static int ipvlan_link_new(struct net *src_net, struct net_device *dev,
 	}
 	err = ipvlan_set_port_mode(port, mode);
 	if (err) {
-		goto unregister_netdev;
+		goto unlink_netdev;
 	}
 
 	list_add_tail_rcu(&ipvlan->pnode, &port->ipvlans);
 	netif_stacked_transfer_operstate(phy_dev, dev);
 	return 0;
 
+unlink_netdev:
+	netdev_upper_dev_unlink(phy_dev, dev);
 unregister_netdev:
 	unregister_netdevice(dev);
 destroy_ipvlan_port:

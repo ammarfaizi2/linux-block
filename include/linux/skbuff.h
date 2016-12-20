@@ -645,8 +645,15 @@ struct sk_buff {
 		struct rb_node	rbnode; /* used in netem & tcp stack */
 	};
 	struct sock		*sk;
-	struct net_device	*dev;
 
+	union {
+		struct net_device	*dev;
+		/* Some protocols might use this space to store information,
+		 * while device pointer would be NULL.
+		 * UDP receive path is one user.
+		 */
+		unsigned long		dev_scratch;
+	};
 	/*
 	 * This is the control buffer. It is free to use for every
 	 * layer. Please put your private variables there. If you
@@ -1966,6 +1973,8 @@ static inline int pskb_may_pull(struct sk_buff *skb, unsigned int len)
 	return __pskb_pull_tail(skb, len - skb_headlen(skb)) != NULL;
 }
 
+void skb_condense(struct sk_buff *skb);
+
 /**
  *	skb_headroom - bytes at buffer head
  *	@skb: buffer to check
@@ -2809,12 +2818,12 @@ static inline int skb_add_data(struct sk_buff *skb,
 
 	if (skb->ip_summed == CHECKSUM_NONE) {
 		__wsum csum = 0;
-		if (csum_and_copy_from_iter(skb_put(skb, copy), copy,
-					    &csum, from) == copy) {
+		if (csum_and_copy_from_iter_full(skb_put(skb, copy), copy,
+					         &csum, from)) {
 			skb->csum = csum_block_add(skb->csum, csum, off);
 			return 0;
 		}
-	} else if (copy_from_iter(skb_put(skb, copy), copy, from) == copy)
+	} else if (copy_from_iter_full(skb_put(skb, copy), copy, from))
 		return 0;
 
 	__skb_trim(skb, off);

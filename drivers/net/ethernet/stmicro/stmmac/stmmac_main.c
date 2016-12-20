@@ -1308,7 +1308,7 @@ static void stmmac_tx_clean(struct stmmac_priv *priv)
 	unsigned int bytes_compl = 0, pkts_compl = 0;
 	unsigned int entry = priv->dirty_tx;
 
-	spin_lock(&priv->tx_lock);
+	netif_tx_lock(priv->dev);
 
 	priv->xstats.tx_clean++;
 
@@ -1379,22 +1379,17 @@ static void stmmac_tx_clean(struct stmmac_priv *priv)
 	netdev_completed_queue(priv->dev, pkts_compl, bytes_compl);
 
 	if (unlikely(netif_queue_stopped(priv->dev) &&
-		     stmmac_tx_avail(priv) > STMMAC_TX_THRESH)) {
-		netif_tx_lock(priv->dev);
-		if (netif_queue_stopped(priv->dev) &&
-		    stmmac_tx_avail(priv) > STMMAC_TX_THRESH) {
-			netif_dbg(priv, tx_done, priv->dev,
-				  "%s: restart transmit\n", __func__);
-			netif_wake_queue(priv->dev);
-		}
-		netif_tx_unlock(priv->dev);
+	    stmmac_tx_avail(priv) > STMMAC_TX_THRESH)) {
+		netif_dbg(priv, tx_done, priv->dev,
+			  "%s: restart transmit\n", __func__);
+		netif_wake_queue(priv->dev);
 	}
 
 	if ((priv->eee_enabled) && (!priv->tx_path_in_lpi_mode)) {
 		stmmac_enable_eee_mode(priv);
 		mod_timer(&priv->eee_ctrl_timer, STMMAC_LPI_T(eee_timer));
 	}
-	spin_unlock(&priv->tx_lock);
+	netif_tx_unlock(priv->dev);
 }
 
 static inline void stmmac_enable_dma_irq(struct stmmac_priv *priv)
@@ -1578,16 +1573,12 @@ static void stmmac_check_ether_addr(struct stmmac_priv *priv)
  */
 static int stmmac_init_dma_engine(struct stmmac_priv *priv)
 {
-	int pbl = DEFAULT_DMA_PBL, fixed_burst = 0, aal = 0;
-	int mixed_burst = 0;
 	int atds = 0;
 	int ret = 0;
 
-	if (priv->plat->dma_cfg) {
-		pbl = priv->plat->dma_cfg->pbl;
-		fixed_burst = priv->plat->dma_cfg->fixed_burst;
-		mixed_burst = priv->plat->dma_cfg->mixed_burst;
-		aal = priv->plat->dma_cfg->aal;
+	if (!priv->plat->dma_cfg || !priv->plat->dma_cfg->pbl) {
+		dev_err(priv->device, "Invalid DMA configuration\n");
+		return -EINVAL;
 	}
 
 	if (priv->extend_desc && (priv->mode == STMMAC_RING_MODE))
@@ -1599,8 +1590,8 @@ static int stmmac_init_dma_engine(struct stmmac_priv *priv)
 		return ret;
 	}
 
-	priv->hw->dma->init(priv->ioaddr, pbl, fixed_burst, mixed_burst,
-			    aal, priv->dma_tx_phy, priv->dma_rx_phy, atds);
+	priv->hw->dma->init(priv->ioaddr, priv->plat->dma_cfg,
+			    priv->dma_tx_phy, priv->dma_rx_phy, atds);
 
 	if (priv->synopsys_id >= DWMAC_CORE_4_00) {
 		priv->rx_tail_addr = priv->dma_rx_phy +
@@ -2006,8 +1997,6 @@ static netdev_tx_t stmmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
 	u8 proto_hdr_len;
 	int i;
 
-	spin_lock(&priv->tx_lock);
-
 	/* Compute header lengths */
 	proto_hdr_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
 
@@ -2021,7 +2010,6 @@ static netdev_tx_t stmmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
 				   "%s: Tx Ring full when queue awake\n",
 				   __func__);
 		}
-		spin_unlock(&priv->tx_lock);
 		return NETDEV_TX_BUSY;
 	}
 
@@ -2137,7 +2125,7 @@ static netdev_tx_t stmmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * descriptor and then barrier is needed to make sure that
 	 * all is coherent before granting the DMA engine.
 	 */
-	smp_wmb();
+	dma_wmb();
 
 	if (netif_msg_pktdata(priv)) {
 		pr_info("%s: curr=%d dirty=%d f=%d, e=%d, f_p=%p, nfrags %d\n",
@@ -2156,11 +2144,9 @@ static netdev_tx_t stmmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
 	priv->hw->dma->set_tx_tail_ptr(priv->ioaddr, priv->tx_tail_addr,
 				       STMMAC_CHAN0);
 
-	spin_unlock(&priv->tx_lock);
 	return NETDEV_TX_OK;
 
 dma_map_err:
-	spin_unlock(&priv->tx_lock);
 	dev_err(priv->device, "Tx dma map failed\n");
 	dev_kfree_skb(skb);
 	priv->dev->stats.tx_dropped++;
@@ -2192,10 +2178,7 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 			return stmmac_tso_xmit(skb, dev);
 	}
 
-	spin_lock(&priv->tx_lock);
-
 	if (unlikely(stmmac_tx_avail(priv) < nfrags + 1)) {
-		spin_unlock(&priv->tx_lock);
 		if (!netif_queue_stopped(dev)) {
 			netif_stop_queue(dev);
 			/* This is a hard error, log it. */
@@ -2355,7 +2338,7 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		 * descriptor and then barrier is needed to make sure that
 		 * all is coherent before granting the DMA engine.
 		 */
-		smp_wmb();
+		dma_wmb();
 	}
 
 	netdev_sent_queue(dev, skb->len);
@@ -2366,11 +2349,9 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		priv->hw->dma->set_tx_tail_ptr(priv->ioaddr, priv->tx_tail_addr,
 					       STMMAC_CHAN0);
 
-	spin_unlock(&priv->tx_lock);
 	return NETDEV_TX_OK;
 
 dma_map_err:
-	spin_unlock(&priv->tx_lock);
 	netdev_err(priv->dev, "Tx DMA map failed\n");
 	dev_kfree_skb(skb);
 	priv->dev->stats.tx_dropped++;
@@ -2462,14 +2443,14 @@ static inline void stmmac_rx_refill(struct stmmac_priv *priv)
 			netif_dbg(priv, rx_status, priv->dev,
 				  "refill entry #%d\n", entry);
 		}
-		wmb();
+		dma_wmb();
 
 		if (unlikely(priv->synopsys_id >= DWMAC_CORE_4_00))
 			priv->hw->desc->init_rx_desc(p, priv->use_riwt, 0, 0);
 		else
 			priv->hw->desc->set_rx_owner(p);
 
-		wmb();
+		dma_wmb();
 
 		entry = STMMAC_GET_ENTRY(entry, DMA_RX_SIZE);
 	}
@@ -3357,7 +3338,6 @@ int stmmac_dvr_probe(struct device *device,
 	netif_napi_add(ndev, &priv->napi, stmmac_poll, 64);
 
 	spin_lock_init(&priv->lock);
-	spin_lock_init(&priv->tx_lock);
 
 	ret = register_netdev(ndev);
 	if (ret) {

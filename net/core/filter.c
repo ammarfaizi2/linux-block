@@ -2234,7 +2234,28 @@ static const struct bpf_func_proto bpf_skb_change_head_proto = {
 	.arg3_type	= ARG_ANYTHING,
 };
 
-bool bpf_helper_changes_skb_data(void *func)
+BPF_CALL_2(bpf_xdp_adjust_head, struct xdp_buff *, xdp, int, offset)
+{
+	void *data = xdp->data + offset;
+
+	if (unlikely(data < xdp->data_hard_start ||
+		     data > xdp->data_end - ETH_HLEN))
+		return -EINVAL;
+
+	xdp->data = data;
+
+	return 0;
+}
+
+static const struct bpf_func_proto bpf_xdp_adjust_head_proto = {
+	.func		= bpf_xdp_adjust_head,
+	.gpl_only	= false,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_PTR_TO_CTX,
+	.arg2_type	= ARG_ANYTHING,
+};
+
+bool bpf_helper_changes_pkt_data(void *func)
 {
 	if (func == bpf_skb_vlan_push ||
 	    func == bpf_skb_vlan_pop ||
@@ -2244,7 +2265,8 @@ bool bpf_helper_changes_skb_data(void *func)
 	    func == bpf_skb_change_tail ||
 	    func == bpf_skb_pull_data ||
 	    func == bpf_l3_csum_replace ||
-	    func == bpf_l4_csum_replace)
+	    func == bpf_l4_csum_replace ||
+	    func == bpf_xdp_adjust_head)
 		return true;
 
 	return false;
@@ -2670,6 +2692,8 @@ xdp_func_proto(enum bpf_func_id func_id)
 		return &bpf_xdp_event_output_proto;
 	case BPF_FUNC_get_smp_processor_id:
 		return &bpf_get_smp_processor_id_proto;
+	case BPF_FUNC_xdp_adjust_head:
+		return &bpf_xdp_adjust_head_proto;
 	default:
 		return sk_filter_func_proto(func_id);
 	}
@@ -2748,7 +2772,7 @@ lwt_xmit_func_proto(enum bpf_func_id func_id)
 	}
 }
 
-static bool __is_valid_access(int off, int size, enum bpf_access_type type)
+static bool __is_valid_access(int off, int size)
 {
 	if (off < 0 || off >= sizeof(struct __sk_buff))
 		return false;
@@ -2782,7 +2806,7 @@ static bool sk_filter_is_valid_access(int off, int size,
 		}
 	}
 
-	return __is_valid_access(off, size, type);
+	return __is_valid_access(off, size);
 }
 
 static bool lwt_is_valid_access(int off, int size,
@@ -2815,7 +2839,7 @@ static bool lwt_is_valid_access(int off, int size,
 		break;
 	}
 
-	return __is_valid_access(off, size, type);
+	return __is_valid_access(off, size);
 }
 
 static bool sock_filter_is_valid_access(int off, int size,
@@ -2833,11 +2857,9 @@ static bool sock_filter_is_valid_access(int off, int size,
 
 	if (off < 0 || off + size > sizeof(struct bpf_sock))
 		return false;
-
 	/* The verifier guarantees that size > 0. */
 	if (off % size != 0)
 		return false;
-
 	if (size != sizeof(__u32))
 		return false;
 
@@ -2910,11 +2932,10 @@ static bool tc_cls_act_is_valid_access(int off, int size,
 		break;
 	}
 
-	return __is_valid_access(off, size, type);
+	return __is_valid_access(off, size);
 }
 
-static bool __is_valid_xdp_access(int off, int size,
-				  enum bpf_access_type type)
+static bool __is_valid_xdp_access(int off, int size)
 {
 	if (off < 0 || off >= sizeof(struct xdp_md))
 		return false;
@@ -2942,7 +2963,7 @@ static bool xdp_is_valid_access(int off, int size,
 		break;
 	}
 
-	return __is_valid_xdp_access(off, size, type);
+	return __is_valid_xdp_access(off, size);
 }
 
 void bpf_warn_invalid_xdp_action(u32 act)
@@ -2950,6 +2971,12 @@ void bpf_warn_invalid_xdp_action(u32 act)
 	WARN_ONCE(1, "Illegal XDP return value %u, expect packet loss\n", act);
 }
 EXPORT_SYMBOL_GPL(bpf_warn_invalid_xdp_action);
+
+void bpf_warn_invalid_xdp_buffer(void)
+{
+	WARN_ONCE(1, "Illegal XDP buffer encountered, expect throughput degradation\n");
+}
+EXPORT_SYMBOL_GPL(bpf_warn_invalid_xdp_buffer);
 
 static u32 sk_filter_convert_ctx_access(enum bpf_access_type type, int dst_reg,
 					int src_reg, int ctx_off,

@@ -39,6 +39,7 @@ struct fl_flow_key {
 		struct flow_dissector_key_ipv6_addrs ipv6;
 	};
 	struct flow_dissector_key_ports tp;
+	struct flow_dissector_key_icmp icmp;
 	struct flow_dissector_key_keyid enc_key_id;
 	union {
 		struct flow_dissector_key_ipv4_addrs enc_ipv4;
@@ -236,8 +237,11 @@ static int fl_hw_replace_filter(struct tcf_proto *tp,
 	int err;
 
 	if (!tc_can_offload(dev, tp)) {
-		if (tcf_exts_get_dev(dev, &f->exts, &f->hw_dev))
+		if (tcf_exts_get_dev(dev, &f->exts, &f->hw_dev) ||
+		    (f->hw_dev && !tc_can_offload(f->hw_dev, tp))) {
+			f->hw_dev = dev;
 			return tc_skip_sw(f->flags) ? -EINVAL : 0;
+		}
 		dev = f->hw_dev;
 		tc->egress_dev = true;
 	} else {
@@ -248,7 +252,7 @@ static int fl_hw_replace_filter(struct tcf_proto *tp,
 	offload.cookie = (unsigned long)f;
 	offload.dissector = dissector;
 	offload.mask = mask;
-	offload.key = &f->key;
+	offload.key = &f->mkey;
 	offload.exts = &f->exts;
 
 	tc->type = TC_SETUP_CLSFLOWER;
@@ -383,6 +387,16 @@ static const struct nla_policy fl_policy[TCA_FLOWER_MAX + 1] = {
 	[TCA_FLOWER_KEY_ENC_UDP_SRC_PORT_MASK]	= { .type = NLA_U16 },
 	[TCA_FLOWER_KEY_ENC_UDP_DST_PORT]	= { .type = NLA_U16 },
 	[TCA_FLOWER_KEY_ENC_UDP_DST_PORT_MASK]	= { .type = NLA_U16 },
+	[TCA_FLOWER_KEY_FLAGS]		= { .type = NLA_U32 },
+	[TCA_FLOWER_KEY_FLAGS_MASK]	= { .type = NLA_U32 },
+	[TCA_FLOWER_KEY_ICMPV4_TYPE]	= { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV4_TYPE_MASK] = { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV4_CODE]	= { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV4_CODE_MASK] = { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV6_TYPE]	= { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV6_TYPE_MASK] = { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV6_CODE]	= { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV6_CODE_MASK] = { .type = NLA_U8 },
 };
 
 static void fl_set_key_val(struct nlattr **tb,
@@ -415,6 +429,39 @@ static void fl_set_key_vlan(struct nlattr **tb,
 			VLAN_PRIORITY_MASK;
 		key_mask->vlan_priority = VLAN_PRIORITY_MASK;
 	}
+}
+
+static void fl_set_key_flag(u32 flower_key, u32 flower_mask,
+			    u32 *dissector_key, u32 *dissector_mask,
+			    u32 flower_flag_bit, u32 dissector_flag_bit)
+{
+	if (flower_mask & flower_flag_bit) {
+		*dissector_mask |= dissector_flag_bit;
+		if (flower_key & flower_flag_bit)
+			*dissector_key |= dissector_flag_bit;
+	}
+}
+
+static void fl_set_key_flags(struct nlattr **tb,
+			     u32 *flags_key, u32 *flags_mask)
+{
+	u32 key, mask;
+
+	if (!tb[TCA_FLOWER_KEY_FLAGS])
+		return;
+
+	key = be32_to_cpu(nla_get_u32(tb[TCA_FLOWER_KEY_FLAGS]));
+
+	if (!tb[TCA_FLOWER_KEY_FLAGS_MASK])
+		mask = ~0;
+	else
+		mask = be32_to_cpu(nla_get_u32(tb[TCA_FLOWER_KEY_FLAGS_MASK]));
+
+	*flags_key  = 0;
+	*flags_mask = 0;
+
+	fl_set_key_flag(key, mask, flags_key, flags_mask,
+			TCA_FLOWER_KEY_FLAGS_IS_FRAGMENT, FLOW_DIS_IS_FRAGMENT);
 }
 
 static int fl_set_key(struct net *net, struct nlattr **tb,
@@ -462,6 +509,7 @@ static int fl_set_key(struct net *net, struct nlattr **tb,
 
 	if (tb[TCA_FLOWER_KEY_IPV4_SRC] || tb[TCA_FLOWER_KEY_IPV4_DST]) {
 		key->control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
+		mask->control.addr_type = ~0;
 		fl_set_key_val(tb, &key->ipv4.src, TCA_FLOWER_KEY_IPV4_SRC,
 			       &mask->ipv4.src, TCA_FLOWER_KEY_IPV4_SRC_MASK,
 			       sizeof(key->ipv4.src));
@@ -470,6 +518,7 @@ static int fl_set_key(struct net *net, struct nlattr **tb,
 			       sizeof(key->ipv4.dst));
 	} else if (tb[TCA_FLOWER_KEY_IPV6_SRC] || tb[TCA_FLOWER_KEY_IPV6_DST]) {
 		key->control.addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
+		mask->control.addr_type = ~0;
 		fl_set_key_val(tb, &key->ipv6.src, TCA_FLOWER_KEY_IPV6_SRC,
 			       &mask->ipv6.src, TCA_FLOWER_KEY_IPV6_SRC_MASK,
 			       sizeof(key->ipv6.src));
@@ -499,11 +548,32 @@ static int fl_set_key(struct net *net, struct nlattr **tb,
 		fl_set_key_val(tb, &key->tp.dst, TCA_FLOWER_KEY_SCTP_DST,
 			       &mask->tp.dst, TCA_FLOWER_KEY_SCTP_DST_MASK,
 			       sizeof(key->tp.dst));
+	} else if (key->basic.n_proto == htons(ETH_P_IP) &&
+		   key->basic.ip_proto == IPPROTO_ICMP) {
+		fl_set_key_val(tb, &key->icmp.type, TCA_FLOWER_KEY_ICMPV4_TYPE,
+			       &mask->icmp.type,
+			       TCA_FLOWER_KEY_ICMPV4_TYPE_MASK,
+			       sizeof(key->icmp.type));
+		fl_set_key_val(tb, &key->icmp.code, TCA_FLOWER_KEY_ICMPV4_CODE,
+			       &mask->icmp.code,
+			       TCA_FLOWER_KEY_ICMPV4_CODE_MASK,
+			       sizeof(key->icmp.code));
+	} else if (key->basic.n_proto == htons(ETH_P_IPV6) &&
+		   key->basic.ip_proto == IPPROTO_ICMPV6) {
+		fl_set_key_val(tb, &key->icmp.type, TCA_FLOWER_KEY_ICMPV6_TYPE,
+			       &mask->icmp.type,
+			       TCA_FLOWER_KEY_ICMPV6_TYPE_MASK,
+			       sizeof(key->icmp.type));
+		fl_set_key_val(tb, &key->icmp.code, TCA_FLOWER_KEY_ICMPV4_CODE,
+			       &mask->icmp.code,
+			       TCA_FLOWER_KEY_ICMPV4_CODE_MASK,
+			       sizeof(key->icmp.code));
 	}
 
 	if (tb[TCA_FLOWER_KEY_ENC_IPV4_SRC] ||
 	    tb[TCA_FLOWER_KEY_ENC_IPV4_DST]) {
 		key->enc_control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
+		mask->enc_control.addr_type = ~0;
 		fl_set_key_val(tb, &key->enc_ipv4.src,
 			       TCA_FLOWER_KEY_ENC_IPV4_SRC,
 			       &mask->enc_ipv4.src,
@@ -519,6 +589,7 @@ static int fl_set_key(struct net *net, struct nlattr **tb,
 	if (tb[TCA_FLOWER_KEY_ENC_IPV6_SRC] ||
 	    tb[TCA_FLOWER_KEY_ENC_IPV6_DST]) {
 		key->enc_control.addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
+		mask->enc_control.addr_type = ~0;
 		fl_set_key_val(tb, &key->enc_ipv6.src,
 			       TCA_FLOWER_KEY_ENC_IPV6_SRC,
 			       &mask->enc_ipv6.src,
@@ -542,6 +613,8 @@ static int fl_set_key(struct net *net, struct nlattr **tb,
 	fl_set_key_val(tb, &key->enc_tp.dst, TCA_FLOWER_KEY_ENC_UDP_DST_PORT,
 		       &mask->enc_tp.dst, TCA_FLOWER_KEY_ENC_UDP_DST_PORT_MASK,
 		       sizeof(key->enc_tp.dst));
+
+	fl_set_key_flags(tb, &key->control.flags, &mask->control.flags);
 
 	return 0;
 }
@@ -608,6 +681,8 @@ static void fl_init_dissector(struct cls_fl_head *head,
 			     FLOW_DISSECTOR_KEY_IPV6_ADDRS, ipv6);
 	FL_KEY_SET_IF_MASKED(&mask->key, keys, cnt,
 			     FLOW_DISSECTOR_KEY_PORTS, tp);
+	FL_KEY_SET_IF_MASKED(&mask->key, keys, cnt,
+			     FLOW_DISSECTOR_KEY_ICMP, icmp);
 	FL_KEY_SET_IF_MASKED(&mask->key, keys, cnt,
 			     FLOW_DISSECTOR_KEY_VLAN, vlan);
 	FL_KEY_SET_IF_MASKED(&mask->key, keys, cnt,
@@ -877,6 +952,42 @@ static int fl_dump_key_vlan(struct sk_buff *skb,
 	return 0;
 }
 
+static void fl_get_key_flag(u32 dissector_key, u32 dissector_mask,
+			    u32 *flower_key, u32 *flower_mask,
+			    u32 flower_flag_bit, u32 dissector_flag_bit)
+{
+	if (dissector_mask & dissector_flag_bit) {
+		*flower_mask |= flower_flag_bit;
+		if (dissector_key & dissector_flag_bit)
+			*flower_key |= flower_flag_bit;
+	}
+}
+
+static int fl_dump_key_flags(struct sk_buff *skb, u32 flags_key, u32 flags_mask)
+{
+	u32 key, mask;
+	__be32 _key, _mask;
+	int err;
+
+	if (!memchr_inv(&flags_mask, 0, sizeof(flags_mask)))
+		return 0;
+
+	key = 0;
+	mask = 0;
+
+	fl_get_key_flag(flags_key, flags_mask, &key, &mask,
+			TCA_FLOWER_KEY_FLAGS_IS_FRAGMENT, FLOW_DIS_IS_FRAGMENT);
+
+	_key = cpu_to_be32(key);
+	_mask = cpu_to_be32(mask);
+
+	err = nla_put(skb, TCA_FLOWER_KEY_FLAGS, 4, &_key);
+	if (err)
+		return err;
+
+	return nla_put(skb, TCA_FLOWER_KEY_FLAGS_MASK, 4, &_mask);
+}
+
 static int fl_dump(struct net *net, struct tcf_proto *tp, unsigned long fh,
 		   struct sk_buff *skb, struct tcmsg *t)
 {
@@ -974,6 +1085,28 @@ static int fl_dump(struct net *net, struct tcf_proto *tp, unsigned long fh,
 				  &mask->tp.dst, TCA_FLOWER_KEY_SCTP_DST_MASK,
 				  sizeof(key->tp.dst))))
 		goto nla_put_failure;
+	else if (key->basic.n_proto == htons(ETH_P_IP) &&
+		 key->basic.ip_proto == IPPROTO_ICMP &&
+		 (fl_dump_key_val(skb, &key->icmp.type,
+				  TCA_FLOWER_KEY_ICMPV4_TYPE, &mask->icmp.type,
+				  TCA_FLOWER_KEY_ICMPV4_TYPE_MASK,
+				  sizeof(key->icmp.type)) ||
+		  fl_dump_key_val(skb, &key->icmp.code,
+				  TCA_FLOWER_KEY_ICMPV4_CODE, &mask->icmp.code,
+				  TCA_FLOWER_KEY_ICMPV4_CODE_MASK,
+				  sizeof(key->icmp.code))))
+		goto nla_put_failure;
+	else if (key->basic.n_proto == htons(ETH_P_IPV6) &&
+		 key->basic.ip_proto == IPPROTO_ICMPV6 &&
+		 (fl_dump_key_val(skb, &key->icmp.type,
+				  TCA_FLOWER_KEY_ICMPV6_TYPE, &mask->icmp.type,
+				  TCA_FLOWER_KEY_ICMPV6_TYPE_MASK,
+				  sizeof(key->icmp.type)) ||
+		  fl_dump_key_val(skb, &key->icmp.code,
+				  TCA_FLOWER_KEY_ICMPV6_CODE, &mask->icmp.code,
+				  TCA_FLOWER_KEY_ICMPV6_CODE_MASK,
+				  sizeof(key->icmp.code))))
+		goto nla_put_failure;
 
 	if (key->enc_control.addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS &&
 	    (fl_dump_key_val(skb, &key->enc_ipv4.src,
@@ -1010,6 +1143,9 @@ static int fl_dump(struct net *net, struct tcf_proto *tp, unsigned long fh,
 			    &mask->enc_tp.dst,
 			    TCA_FLOWER_KEY_ENC_UDP_DST_PORT_MASK,
 			    sizeof(key->enc_tp.dst)))
+		goto nla_put_failure;
+
+	if (fl_dump_key_flags(skb, key->control.flags, mask->control.flags))
 		goto nla_put_failure;
 
 	nla_put_u32(skb, TCA_FLOWER_FLAGS, f->flags);
