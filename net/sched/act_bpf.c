@@ -123,7 +123,7 @@ static int tcf_bpf_dump_ebpf_info(const struct tcf_bpf *prog,
 	    nla_put_string(skb, TCA_ACT_BPF_NAME, prog->bpf_name))
 		return -EMSGSIZE;
 
-	nla = nla_reserve(skb, TCA_ACT_BPF_DIGEST,
+	nla = nla_reserve(skb, TCA_ACT_BPF_SHA256,
 			  sizeof(prog->filter->digest));
 	if (nla == NULL)
 		return -EMSGSIZE;
