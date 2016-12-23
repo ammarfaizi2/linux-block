@@ -14,3 +14,6 @@ libperf-$(CONFIG_LIBDW_DWARF_UNWIND) += unwind-libdw.o
 libperf-$(CONFIG_AUXTRACE) += auxtrace.o
 libperf-$(CONFIG_AUXTRACE) += intel-pt.o
 libperf-$(CONFIG_AUXTRACE) += intel-bts.o
+libperf-$(CONFIG_XED) += dis.o
+
+CFLAGS_dis.o += -Wno-old-style-declaration -Wno-switch-enum
