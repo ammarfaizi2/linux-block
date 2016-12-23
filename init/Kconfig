@@ -1389,6 +1389,7 @@ config HAVE_PCSPKR_PLATFORM
 # interpreter that classic socket filters depend on
 config BPF
 	bool
+	select CRYPTO_SHA256_DIRECT
 
 menuconfig EXPERT
 	bool "Configure standard kernel features (expert users)"

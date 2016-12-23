@@ -14,7 +14,8 @@
 #include <linux/workqueue.h>
 #include <linux/sched.h>
 #include <linux/capability.h>
-#include <linux/cryptohash.h>
+
+#include <crypto/sha.h>
 
 #include <net/sch_generic.h>
 
@@ -408,11 +409,11 @@ struct bpf_prog {
 	kmemcheck_bitfield_end(meta);
 	enum bpf_prog_type	type;		/* Type of BPF program */
 	u32			len;		/* Number of filter blocks */
-	u32			digest[SHA_DIGEST_WORDS]; /* Program digest */
 	struct bpf_prog_aux	*aux;		/* Auxiliary fields */
 	struct sock_fprog_kern	*orig_prog;	/* Original BPF program */
 	unsigned int		(*bpf_func)(const void *ctx,
 					    const struct bpf_insn *insn);
+	u8			digest[SHA256_DIGEST_SIZE]; /* Program digest */
 	/* Instructions for interpreter */
 	union {
 		struct sock_filter	insns[0];
@@ -517,12 +518,6 @@ static __always_inline u32 bpf_prog_run_xdp(const struct bpf_prog *prog,
 static inline u32 bpf_prog_insn_size(const struct bpf_prog *prog)
 {
 	return prog->len * sizeof(struct bpf_insn);
-}
-
-static inline u32 bpf_prog_digest_scratch_size(const struct bpf_prog *prog)
-{
-	return round_up(bpf_prog_insn_size(prog) +
-			sizeof(__be64) + 1, SHA_MESSAGE_BYTES);
 }
 
 static inline unsigned int bpf_prog_size(unsigned int proglen)

@@ -148,22 +148,18 @@ void __bpf_prog_free(struct bpf_prog *fp)
 
 int bpf_prog_calc_digest(struct bpf_prog *fp)
 {
-	const u32 bits_offset = SHA_MESSAGE_BYTES - sizeof(__be64);
-	u32 raw_size = bpf_prog_digest_scratch_size(fp);
-	u32 ws[SHA_WORKSPACE_WORDS];
-	u32 i, bsize, psize, blocks;
+	struct sha256_state sha;
+	u32 i, psize;
 	struct bpf_insn *dst;
 	bool was_ld_map;
-	u8 *raw, *todo;
-	__be32 *result;
-	__be64 *bits;
+	u8 *raw;
 
-	raw = vmalloc(raw_size);
+	psize = bpf_prog_insn_size(fp);
+	raw = vmalloc(psize);
 	if (!raw)
 		return -ENOMEM;
 
-	sha_init(fp->digest);
-	memset(ws, 0, sizeof(ws));
+	sha256_init_direct(&sha);
 
 	/* We need to take out the map fd for the digest calculation
 	 * since they are unstable from user space side.
@@ -188,30 +184,8 @@ int bpf_prog_calc_digest(struct bpf_prog *fp)
 		}
 	}
 
-	psize = bpf_prog_insn_size(fp);
-	memset(&raw[psize], 0, raw_size - psize);
-	raw[psize++] = 0x80;
-
-	bsize  = round_up(psize, SHA_MESSAGE_BYTES);
-	blocks = bsize / SHA_MESSAGE_BYTES;
-	todo   = raw;
-	if (bsize - psize >= sizeof(__be64)) {
-		bits = (__be64 *)(todo + bsize - sizeof(__be64));
-	} else {
-		bits = (__be64 *)(todo + bsize + bits_offset);
-		blocks++;
-	}
-	*bits = cpu_to_be64((psize - 1) << 3);
-
-	while (blocks--) {
-		sha_transform(fp->digest, todo, ws);
-		todo += SHA_MESSAGE_BYTES;
-	}
-
-	result = (__force __be32 *)fp->digest;
-	for (i = 0; i < SHA_DIGEST_WORDS; i++)
-		result[i] = cpu_to_be32(fp->digest[i]);
-
+	sha256_update_direct(&sha, raw, psize);
+	sha256_final_direct(&sha, fp->digest);
 	vfree(raw);
 	return 0;
 }
