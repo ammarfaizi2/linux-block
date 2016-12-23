@@ -694,7 +694,7 @@ static void bpf_prog_show_fdinfo(struct seq_file *m, struct file *filp)
 	seq_printf(m,
 		   "prog_type:\t%u\n"
 		   "prog_jited:\t%u\n"
-		   "prog_digest:\t%s\n"
+		   "prog_sha256:\t%s\n"
 		   "memlock:\t%llu\n",
 		   prog->type,
 		   prog->jited,
