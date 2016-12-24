@@ -149,44 +149,37 @@ void __bpf_prog_free(struct bpf_prog *fp)
 int bpf_prog_calc_digest(struct bpf_prog *fp)
 {
 	struct sha256_state sha;
-	u32 i, psize;
-	struct bpf_insn *dst;
+	u32 i;
 	bool was_ld_map;
-	u8 *raw;
-
-	psize = bpf_prog_insn_size(fp);
-	raw = vmalloc(psize);
-	if (!raw)
-		return -ENOMEM;
 
 	sha256_init_direct(&sha);
 
 	/* We need to take out the map fd for the digest calculation
 	 * since they are unstable from user space side.
 	 */
-	dst = (void *)raw;
 	for (i = 0, was_ld_map = false; i < fp->len; i++) {
-		dst[i] = fp->insnsi[i];
+		struct bpf_insn insn = fp->insnsi[i];
+
 		if (!was_ld_map &&
-		    dst[i].code == (BPF_LD | BPF_IMM | BPF_DW) &&
-		    dst[i].src_reg == BPF_PSEUDO_MAP_FD) {
+		    insn.code == (BPF_LD | BPF_IMM | BPF_DW) &&
+		    insn.src_reg == BPF_PSEUDO_MAP_FD) {
 			was_ld_map = true;
-			dst[i].imm = 0;
+			insn.imm = 0;
 		} else if (was_ld_map &&
-			   dst[i].code == 0 &&
-			   dst[i].dst_reg == 0 &&
-			   dst[i].src_reg == 0 &&
-			   dst[i].off == 0) {
+			   insn.code == 0 &&
+			   insn.dst_reg == 0 &&
+			   insn.src_reg == 0 &&
+			   insn.off == 0) {
 			was_ld_map = false;
-			dst[i].imm = 0;
+			insn.imm = 0;
 		} else {
 			was_ld_map = false;
 		}
+
+		sha256_update_direct(&sha, (const u8 *)&insn, sizeof(insn));
 	}
 
-	sha256_update_direct(&sha, raw, psize);
 	sha256_final_direct(&sha, fp->digest);
-	vfree(raw);
 	return 0;
 }
 
