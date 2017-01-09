@@ -32,12 +32,6 @@ config IOSCHED_CFQ
 
 	  This is the default I/O scheduler.
 
-config MQ_IOSCHED_DEADLINE
-	tristate "MQ deadline I/O scheduler"
-	default y
-	---help---
-	  MQ version of the deadline IO scheduler.
-
 config CFQ_GROUP_IOSCHED
 	bool "CFQ Group Scheduling support"
 	depends on IOSCHED_CFQ && BLK_CGROUP
@@ -68,6 +62,43 @@ config DEFAULT_IOSCHED
 	default "deadline" if DEFAULT_DEADLINE
 	default "cfq" if DEFAULT_CFQ
 	default "noop" if DEFAULT_NOOP
+
+config MQ_IOSCHED_DEADLINE
+	tristate "MQ deadline I/O scheduler"
+	default y
+	---help---
+	  MQ version of the deadline IO scheduler.
+
+config MQ_IOSCHED_NONE
+	bool
+	default y
+
+choice
+	prompt "Default MQ I/O scheduler"
+	default MQ_IOSCHED_NONE
+	help
+	  Select the I/O scheduler which will be used by default for all
+	  blk-mq managed block devices.
+
+	config DEFAULT_MQ_DEADLINE
+		bool "MQ Deadline" if MQ_IOSCHED_DEADLINE=y
+
+	config DEFAULT_MQ_NONE
+		bool "None"
+
+endchoice
+
+config DEFAULT_MQ_IOSCHED
+	string
+	default "mq-deadline" if DEFAULT_MQ_DEADLINE
+	default "none" if DEFAULT_MQ_NONE
+
+config MQ_IOSCHED_ONLY_SQ
+	bool "Enable blk-mq IO scheduler only for single queue devices"
+	default y
+	help
+	  Say Y here, if you only want to enable IO scheduling on block
+	  devices that have a single queue registered.
 
 endmenu
 
