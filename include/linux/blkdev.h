@@ -223,6 +223,7 @@ struct request {
 	void *special;		/* opaque pointer available for LLD use */
 
 	int tag;
+	int sched_tag;
 	int errors;
 
 	/*
