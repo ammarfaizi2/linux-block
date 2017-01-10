@@ -385,7 +385,6 @@ static noinline void __ref rest_init(void)
 {
 	int pid;
 
-	rcu_scheduler_starting();
 	/*
 	 * We need to spawn init first so that it obtains pid 1, however
 	 * the init task will end up wanting to create kthreads, which, if
@@ -393,6 +392,7 @@ static noinline void __ref rest_init(void)
 	 */
 	kernel_thread(kernel_init, NULL, CLONE_FS);
 	numa_default_policy();
+	rcu_scheduler_starting();
 	pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES);
 	rcu_read_lock();
 	kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
@@ -1010,6 +1010,10 @@ static noinline void __init kernel_init_freeable(void)
 	 * init can allocate pages on any node
 	 */
 	set_mems_allowed(node_states[N_MEMORY]);
+	/*
+	 * Get RCU synchronous grace periods back in action.
+	 */
+	rcu_create_expedited_kthreads();
 	/*
 	 * init can run on any cpu.
 	 */

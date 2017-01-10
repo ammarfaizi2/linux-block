@@ -116,6 +116,7 @@ EXPORT_SYMBOL(rcu_read_lock_sched_held);
 #endif
 
 #ifndef CONFIG_TINY_RCU
+bool rcu_expedited_till_core;
 
 /*
  * Should expedited grace-period primitives always fall back to their
@@ -125,7 +126,9 @@ EXPORT_SYMBOL(rcu_read_lock_sched_held);
  */
 bool rcu_gp_is_normal(void)
 {
-	return READ_ONCE(rcu_normal);
+	/* Make sure later actions ordered with state change. */
+	return READ_ONCE(rcu_normal) &&
+	       !smp_load_acquire(&rcu_expedited_till_core); /* ^^^ */
 }
 EXPORT_SYMBOL_GPL(rcu_gp_is_normal);
 
@@ -140,7 +143,9 @@ static atomic_t rcu_expedited_nesting = ATOMIC_INIT(1);
  */
 bool rcu_gp_is_expedited(void)
 {
-	return rcu_expedited || atomic_read(&rcu_expedited_nesting);
+	/* Make sure later actions ordered with state change. */
+	return rcu_expedited || atomic_read(&rcu_expedited_nesting) ||
+	       smp_load_acquire(&rcu_expedited_till_core); /* ^^^ */
 }
 EXPORT_SYMBOL_GPL(rcu_gp_is_expedited);
 
@@ -811,6 +816,23 @@ static void rcu_spawn_tasks_kthread(void)
 
 #endif /* #ifdef CONFIG_TASKS_RCU */
 
+/*
+ * Test each non-SRCU synchronous grace-period wait API.  This is
+ * useful just after a change in mode for these primitives, and
+ * during early boot.
+ */
+void rcu_test_sync_prims(void)
+{
+	if (IS_ENABLED(CONFIG_PROVE_RCU))
+		return;
+	synchronize_rcu();
+	synchronize_rcu_bh();
+	synchronize_sched();
+	synchronize_rcu_expedited();
+	synchronize_rcu_bh_expedited();
+	synchronize_sched_expedited();
+}
+
 #ifdef CONFIG_PROVE_RCU
 
 /*
@@ -863,13 +885,7 @@ void rcu_early_boot_tests(void)
 		early_boot_test_call_rcu_bh();
 	if (rcu_self_test_sched)
 		early_boot_test_call_rcu_sched();
-
-	synchronize_rcu();
-	synchronize_rcu_bh();
-	synchronize_sched();
-	synchronize_rcu_expedited();
-	synchronize_rcu_bh_expedited();
-	synchronize_sched_expedited();
+	rcu_test_sync_prims();
 }
 
 static int rcu_verify_early_boot_tests(void)

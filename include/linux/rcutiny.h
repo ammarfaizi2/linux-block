@@ -230,6 +230,10 @@ static inline void rcu_irq_exit(void)
 {
 }
 
+static inline void rcu_create_expedited_kthreads(void)
+{
+}
+
 static inline void exit_rcu(void)
 {
 }

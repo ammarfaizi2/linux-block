@@ -104,6 +104,7 @@ void rcu_irq_exit(void);
 void rcu_irq_enter_irqson(void);
 void rcu_irq_exit_irqson(void);
 
+void rcu_create_expedited_kthreads(void);
 void exit_rcu(void);
 
 void rcu_scheduler_starting(void);

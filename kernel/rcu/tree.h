@@ -524,6 +524,11 @@ struct rcu_state {
 	atomic_t expedited_need_qs;		/* # CPUs left to check in. */
 	struct swait_queue_head expedited_wq;	/* Wait for check-ins. */
 	int ncpus_snap;				/* # CPUs seen last time. */
+	smp_call_func_t exp_ipi_handler;	/* IPI handler. */
+	struct swait_queue_head exp_boot_wq;	/* Boot-time GP wakeup. */
+	struct task_struct *exp_boot_kthread;	/* Boot-time GP kthread. */
+	unsigned long exp_boot_s;		/* Boot-time sequence number. */
+	bool exp_boot_go;			/* Boot-time "go" flag. */
 
 	unsigned long jiffies_force_qs;		/* Time at which to invoke */
 						/*  force_quiescent_state(). */
@@ -593,6 +598,8 @@ extern struct rcu_state rcu_bh_state;
 #ifdef CONFIG_PREEMPT_RCU
 extern struct rcu_state rcu_preempt_state;
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
+
+extern bool rcu_expedited_till_core;
 
 int rcu_dynticks_snap(struct rcu_dynticks *rdtp);
 bool rcu_eqs_special_set(int cpu);

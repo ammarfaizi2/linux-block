@@ -546,18 +546,28 @@ struct rcu_exp_work {
 };
 
 /*
+ * Common code to drive an expedited grace period forward, used by
+ * workqueues and boot-time kthreads.
+ */
+static void rcu_exp_sel_wait_wake(struct rcu_state *rsp,
+				  smp_call_func_t func, unsigned long s)
+{
+	/* Initialize the rcu_node tree in preparation for the wait. */
+	sync_rcu_exp_select_cpus(rsp, func);
+
+	/* Wait and clean up, including waking everyone. */
+	rcu_exp_wait_wake(rsp, s);
+}
+
+/*
  * Work-queue handler to drive an expedited grace period forward.
  */
 static void wait_rcu_exp_gp(struct work_struct *wp)
 {
 	struct rcu_exp_work *rewp;
 
-	/* Initialize the rcu_node tree in preparation for the wait. */
 	rewp = container_of(wp, struct rcu_exp_work, rew_work);
-	sync_rcu_exp_select_cpus(rewp->rew_rsp, rewp->rew_func);
-
-	/* Wait and clean up, including waking everyone. */
-	rcu_exp_wait_wake(rewp->rew_rsp, rewp->rew_s);
+	rcu_exp_sel_wait_wake(rewp->rew_rsp, rewp->rew_func, rewp->rew_s);
 }
 
 /*
@@ -583,12 +593,20 @@ static void _synchronize_rcu_expedited(struct rcu_state *rsp,
 	if (exp_funnel_lock(rsp, s))
 		return;  /* Someone else did our work for us. */
 
-	/* Marshall arguments and schedule the expedited grace period. */
-	rew.rew_func = func;
-	rew.rew_rsp = rsp;
-	rew.rew_s = s;
-	INIT_WORK_ONSTACK(&rew.rew_work, wait_rcu_exp_gp);
-	schedule_work(&rew.rew_work);
+	/* Ensure that load happens before action based on it. */
+	if (unlikely(smp_load_acquire(&rcu_expedited_till_core))) { /* ^^^ */
+		rsp->exp_boot_s = s;
+		rsp->exp_boot_go = true;
+		smp_mb(); /* Above assignments visible to awakened task. */
+		swake_up(&rsp->exp_boot_wq);
+	} else {
+		/* Marshall arguments & schedule the expedited grace period. */
+		rew.rew_func = func;
+		rew.rew_rsp = rsp;
+		rew.rew_s = s;
+		INIT_WORK_ONSTACK(&rew.rew_work, wait_rcu_exp_gp);
+		schedule_work(&rew.rew_work);
+	}
 
 	/* Wait for expedited grace period to complete. */
 	rdp = per_cpu_ptr(rsp->rda, raw_smp_processor_id());
@@ -705,6 +723,14 @@ void synchronize_rcu_expedited(void)
 }
 EXPORT_SYMBOL_GPL(synchronize_rcu_expedited);
 
+/*
+ * Set up the IPI handler for synchronize_rcu_expedited().
+ */
+static void rcu_preempt_create_expedited_kthreads(void)
+{
+	rcu_preempt_state.exp_ipi_handler = sync_rcu_exp_handler;
+}
+
 #else /* #ifdef CONFIG_PREEMPT_RCU */
 
 /*
@@ -717,4 +743,82 @@ void synchronize_rcu_expedited(void)
 }
 EXPORT_SYMBOL_GPL(synchronize_rcu_expedited);
 
+static void rcu_preempt_create_expedited_kthreads(void)
+{
+}
+
 #endif /* #else #ifdef CONFIG_PREEMPT_RCU */
+
+/*
+ * This kthread handles early boot expedited grace-period requests that
+ * happen after it is possible to spawn kthreads, but before the workqueues
+ * and kthreads required by the run-time RCU grace-period mechanism have
+ * been spawned and fully initialized.  There is one of these kthreads
+ * per flavor of RCU, and they are cleaned up before boot completes.
+ */
+static int rcu_exp_boot_kthread(void *arg)
+{
+	struct rcu_state *rsp = arg;
+
+	pr_info("RCU: Starting %s boot-time expedited kthread.\n", rsp->name);
+	for (;;) {
+		swait_event(rsp->exp_boot_wq, READ_ONCE(rsp->exp_boot_go));
+		smp_mb(); /* Pre-wakeup accesses must be visible below. */
+		if (kthread_should_stop())
+			break;
+		rsp->exp_boot_go = false;
+		rcu_exp_sel_wait_wake(rsp,
+				      rsp->exp_ipi_handler, rsp->exp_boot_s);
+	}
+	pr_info("RCU: Stopping %s boot-time expedited kthread.\n", rsp->name);
+	return 0;
+}
+
+/*
+ * Create boot-time kthreads for expedited grace periods.  During the
+ * time that these kthreads are active, normal grace periods are mapped
+ * to expedited grace periods.
+ */
+void rcu_create_expedited_kthreads(void)
+{
+	struct rcu_state *rsp;
+	struct task_struct *t;
+
+	rcu_sched_state.exp_ipi_handler = sync_sched_exp_handler;
+	rcu_preempt_create_expedited_kthreads();
+	for_each_rcu_flavor(rsp) {
+		init_swait_queue_head(&rsp->exp_boot_wq);
+		t = kthread_run(rcu_exp_boot_kthread, rsp, "rcue%c", rsp->abbr);
+		BUG_ON(IS_ERR(t));
+		rsp->exp_boot_kthread = t;
+	}
+	/* Make sure state is in place before announcing new mode. */
+	smp_store_release(&rcu_expedited_till_core, true); /* ^^^ */
+	barrier(); /* Store-release before tests. */
+	rcu_test_sync_prims();
+}
+
+/*
+ * Terminate the boot-time expedited kthreads once Tree RCU has
+ * fully initialized.
+ */
+static int __init rcu_done_expedited_kthreads(void)
+{
+	struct rcu_state *rsp;
+
+	rcu_test_sync_prims();
+	/* Ensure runtime RCU mechanism in place before announcing. */
+	smp_store_release(&rcu_expedited_till_core, false); /* ^^^ */
+	for_each_rcu_flavor(rsp) {
+		/* Exclude concurrent kthread/workqueue decisions. */
+		mutex_lock(&rsp->exp_mutex);
+		rsp->exp_boot_go = true;
+		smp_mb(); /* Set "go" before woken code executes. */
+		kthread_stop(rsp->exp_boot_kthread);
+		rsp->exp_boot_kthread = NULL;
+		mutex_unlock(&rsp->exp_mutex);
+	}
+	rcu_test_sync_prims();
+	return 0;
+}
+core_initcall(rcu_done_expedited_kthreads);
