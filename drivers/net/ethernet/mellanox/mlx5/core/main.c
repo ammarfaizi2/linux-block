@@ -152,6 +152,26 @@ static struct mlx5_profile profile[] = {
 			.size	= 8,
 			.limit	= 4
 		},
+		.mr_cache[16]	= {
+			.size	= 8,
+			.limit	= 4
+		},
+		.mr_cache[17]	= {
+			.size	= 8,
+			.limit	= 4
+		},
+		.mr_cache[18]	= {
+			.size	= 8,
+			.limit	= 4
+		},
+		.mr_cache[19]	= {
+			.size	= 4,
+			.limit	= 2
+		},
+		.mr_cache[20]	= {
+			.size	= 4,
+			.limit	= 2
+		},
 	},
 };
 
@@ -557,7 +577,7 @@ int mlx5_core_disable_hca(struct mlx5_core_dev *dev, u16 func_id)
 	return mlx5_cmd_exec(dev, in, sizeof(in), out, sizeof(out));
 }
 
-cycle_t mlx5_read_internal_timer(struct mlx5_core_dev *dev)
+u64 mlx5_read_internal_timer(struct mlx5_core_dev *dev)
 {
 	u32 timer_h, timer_h1, timer_l;
 
@@ -567,7 +587,7 @@ cycle_t mlx5_read_internal_timer(struct mlx5_core_dev *dev)
 	if (timer_h != timer_h1) /* wrap around */
 		timer_l = ioread32be(&dev->iseg->internal_timer_l);
 
-	return (cycle_t)timer_l | (cycle_t)timer_h1 << 32;
+	return (u64)timer_l | (u64)timer_h1 << 32;
 }
 
 static int mlx5_irq_set_affinity_hint(struct mlx5_core_dev *mdev, int i)
@@ -733,7 +753,8 @@ static int alloc_comp_eqs(struct mlx5_core_dev *dev)
 		snprintf(name, MLX5_MAX_IRQ_NAME, "mlx5_comp%d", i);
 		err = mlx5_create_map_eq(dev, eq,
 					 i + MLX5_EQ_VEC_COMP_BASE, nent, 0,
-					 name, &dev->priv.uuari.uars[0]);
+					 name, &dev->priv.uuari.uars[0],
+					 MLX5_EQ_TYPE_COMP);
 		if (err) {
 			kfree(eq);
 			goto clean;
@@ -1275,10 +1296,19 @@ static int init_one(struct pci_dev *pdev,
 	spin_lock_init(&priv->ctx_lock);
 	mutex_init(&dev->pci_status_mutex);
 	mutex_init(&dev->intf_state_mutex);
+
+#ifdef CONFIG_INFINIBAND_ON_DEMAND_PAGING
+	err = init_srcu_struct(&priv->pfault_srcu);
+	if (err) {
+		dev_err(&pdev->dev, "init_srcu_struct failed with error code %d\n",
+			err);
+		goto clean_dev;
+	}
+#endif
 	err = mlx5_pci_init(dev, priv);
 	if (err) {
 		dev_err(&pdev->dev, "mlx5_pci_init failed with error code %d\n", err);
-		goto clean_dev;
+		goto clean_srcu;
 	}
 
 	err = mlx5_health_init(dev);
@@ -1312,7 +1342,11 @@ clean_health:
 	mlx5_health_cleanup(dev);
 close_pci:
 	mlx5_pci_close(dev, priv);
+clean_srcu:
+#ifdef CONFIG_INFINIBAND_ON_DEMAND_PAGING
+	cleanup_srcu_struct(&priv->pfault_srcu);
 clean_dev:
+#endif
 	pci_set_drvdata(pdev, NULL);
 	devlink_free(devlink);
 
@@ -1337,6 +1371,9 @@ static void remove_one(struct pci_dev *pdev)
 	mlx5_pagealloc_cleanup(dev);
 	mlx5_health_cleanup(dev);
 	mlx5_pci_close(dev, priv);
+#ifdef CONFIG_INFINIBAND_ON_DEMAND_PAGING
+	cleanup_srcu_struct(&priv->pfault_srcu);
+#endif
 	pci_set_drvdata(pdev, NULL);
 	devlink_free(devlink);
 }
