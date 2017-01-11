@@ -74,6 +74,7 @@
 #include "blk.h"
 #include "blk-mq.h"
 #include "blk-mq-tag.h"
+#include "blk-mq-sched.h"
 
 /* FLUSH/FUA sequences */
 enum {
@@ -168,6 +169,8 @@ static bool blk_flush_complete_seq(struct request *rq,
 	struct request_queue *q = rq->q;
 	struct list_head *pending = &fq->flush_queue[fq->flush_pending_idx];
 	bool queued = false, kicked;
+
+	BUG_ON(q->mq_ops && rq->tag < 0);
 
 	BUG_ON(rq->flush.seq & seq);
 	rq->flush.seq |= seq;
@@ -318,6 +321,8 @@ static bool blk_kick_flush(struct request_queue *q, struct blk_flush_queue *fq)
 	if (q->mq_ops) {
 		struct blk_mq_hw_ctx *hctx;
 
+		BUG_ON(first_rq->tag < 0);
+
 		flush_rq->mq_ctx = first_rq->mq_ctx;
 		flush_rq->tag = first_rq->tag;
 		fq->orig_rq = first_rq;
@@ -451,11 +456,11 @@ void blk_insert_flush(struct request *rq)
 	 * processed directly without going through flush machinery.  Queue
 	 * for normal execution.
 	 */
-	if ((policy & REQ_FSEQ_DATA) &&
-	    !(policy & (REQ_FSEQ_PREFLUSH | REQ_FSEQ_POSTFLUSH))) {
-		if (q->mq_ops) {
-			blk_mq_insert_request(rq, false, true, false);
-		} else
+	if (((policy & REQ_FSEQ_DATA) &&
+	     !(policy & (REQ_FSEQ_PREFLUSH | REQ_FSEQ_POSTFLUSH)))) {
+		if (q->mq_ops)
+			blk_mq_sched_insert_request(rq, false, true, false);
+		else
 			list_add_tail(&rq->queuelist, &q->queue_head);
 		return;
 	}
