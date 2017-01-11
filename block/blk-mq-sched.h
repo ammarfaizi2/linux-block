@@ -25,6 +25,8 @@ void blk_mq_sched_dispatch_requests(struct blk_mq_hw_ctx *hctx);
 int blk_mq_sched_setup(struct request_queue *q);
 int blk_mq_sched_teardown(struct request_queue *q);
 
+int blk_mq_sched_init(struct request_queue *q);
+
 static inline bool
 blk_mq_sched_bio_merge(struct request_queue *q, struct bio *bio)
 {
