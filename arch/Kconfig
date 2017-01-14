@@ -316,6 +316,9 @@ config HAVE_CMPXCHG_LOCAL
 config HAVE_CMPXCHG_DOUBLE
 	bool
 
+config ARCH_WEAK_RELACQ
+	bool
+
 config ARCH_WANT_IPC_PARSE_VERSION
 	bool
 
