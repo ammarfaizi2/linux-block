@@ -27,6 +27,12 @@
 
 #include <linux/cache.h>
 
+struct rcu_dynticks;
+static inline int rcu_dynticks_snap(struct rcu_dynticks *rdtp)
+{
+	return 0;
+}
+
 static inline unsigned long get_state_synchronize_rcu(void)
 {
 	return 0;
@@ -80,6 +86,16 @@ static inline void synchronize_rcu_bh_expedited(void)
 static inline void synchronize_sched_expedited(void)
 {
 	synchronize_sched();
+}
+
+static inline bool rcu_sched_trivial_gp(void)
+{
+	return true;
+}
+
+static inline bool rcu_bh_trivial_gp(void)
+{
+	return true;
 }
 
 static inline void kfree_call_rcu(struct rcu_head *head,
