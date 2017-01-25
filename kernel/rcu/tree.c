@@ -520,6 +520,7 @@ EXPORT_SYMBOL_GPL(rcu_note_context_switch);
 void rcu_all_qs(void)
 {
 	unsigned long flags;
+	struct rcu_state *rsp;
 
 	barrier(); /* Avoid RCU read-side critical sections leaking down. */
 	if (unlikely(raw_cpu_read(rcu_sched_qs_mask))) {
@@ -542,6 +543,8 @@ void rcu_all_qs(void)
 		rcu_sched_qs();
 		preempt_enable();
 	}
+	for_each_rcu_flavor(rsp)
+		do_nocb_deferred_wakeup(this_cpu_ptr(rsp->rda));
 	this_cpu_inc(rcu_qs_ctr);
 	barrier(); /* Avoid RCU read-side critical sections leaking up. */
 }
