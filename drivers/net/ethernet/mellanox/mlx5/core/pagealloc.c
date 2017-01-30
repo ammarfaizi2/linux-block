@@ -153,15 +153,25 @@ static int mlx5_cmd_query_pages(struct mlx5_core_dev *dev, u16 *func_id,
 	return err;
 }
 
-static int alloc_4k(struct mlx5_core_dev *dev, u64 *addr)
+static int alloc_4k(struct mlx5_core_dev *dev, u64 *addr, u16 func_id)
 {
 	struct fw_page *fp;
 	unsigned n;
+	bool found;
 
 	if (list_empty(&dev->priv.free_list))
 		return -ENOMEM;
 
-	fp = list_entry(dev->priv.free_list.next, struct fw_page, list);
+	found = false;
+	list_for_each_entry(fp, &dev->priv.free_list, list)
+		if (fp->func_id == func_id) {
+			found = true;
+			break;
+		}
+
+	if (!found)
+		return -ENOMEM;
+
 	n = find_first_bit(&fp->bitmask, 8 * sizeof(fp->bitmask));
 	if (n >= MLX5_NUM_4K_IN_PAGE) {
 		mlx5_core_warn(dev, "alloc 4k bug\n");
@@ -288,7 +298,7 @@ static int give_pages(struct mlx5_core_dev *dev, u16 func_id, int npages,
 
 	for (i = 0; i < npages; i++) {
 retry:
-		err = alloc_4k(dev, &addr);
+		err = alloc_4k(dev, &addr, func_id);
 		if (err) {
 			if (err == -ENOMEM)
 				err = alloc_system_page(dev, func_id);
@@ -339,6 +349,7 @@ static int reclaim_pages_cmd(struct mlx5_core_dev *dev,
 	u32 func_id;
 	u32 npages;
 	u32 i = 0;
+	u32 j;
 
 	if (dev->state != MLX5_DEVICE_STATE_INTERNAL_ERROR)
 		return mlx5_cmd_exec(dev, in, in_size, out, out_size);
@@ -354,8 +365,19 @@ static int reclaim_pages_cmd(struct mlx5_core_dev *dev,
 		if (fwp->func_id != func_id)
 			continue;
 
-		MLX5_ARRAY_SET64(manage_pages_out, out, pas, i, fwp->addr);
-		i++;
+		/* Find all the used 4KB page in fwp */
+		j = 0;
+		do {
+			j = find_next_zero_bit(&fwp->bitmask, MLX5_NUM_4K_IN_PAGE, j);
+			if (j >= MLX5_NUM_4K_IN_PAGE)
+				break;
+
+			MLX5_ARRAY_SET64(manage_pages_out, out, pas, i,
+					 fwp->addr + (j << MLX5_ADAPTER_PAGE_SHIFT));
+
+			j++;
+			i++;
+		} while (i < npages);
 	}
 
 	MLX5_SET(manage_pages_out, out, output_num_entries, i);
