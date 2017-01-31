@@ -22,6 +22,9 @@ static const efi_char16_t const efi_SecureBoot_name[] = {
 static const efi_char16_t const efi_SetupMode_name[] = {
 	'S', 'e', 't', 'u', 'p', 'M', 'o', 'd', 'e', 0
 };
+static const efi_char16_t const efi_DeployedMode_name[] = {
+	'D', 'e', 'p', 'l', 'o', 'y', 'e', 'd', 'M', 'o', 'd', 'e', 0
+};
 
 /* SHIM variables */
 static const efi_guid_t shim_guid = EFI_SHIM_LOCK_GUID;
@@ -40,7 +43,7 @@ static efi_char16_t const shim_MokSBState_name[] = {
 enum efi_secureboot_mode efi_get_secureboot(efi_system_table_t *sys_table_arg)
 {
 	u32 attr;
-	u8 secboot, setupmode, moksbstate;
+	u8 secboot, setupmode, deployedmode, moksbstate;
 	unsigned long size;
 	efi_status_t status;
 
@@ -58,6 +61,17 @@ enum efi_secureboot_mode efi_get_secureboot(efi_system_table_t *sys_table_arg)
 
 	if (secboot == 0 || setupmode == 1)
 		return efi_secureboot_mode_disabled;
+
+	/* UEFI-2.6 requires DeployedMode to be 1. */
+	if (sys_table_arg->hdr.revision >= EFI_2_60_SYSTEM_TABLE_REVISION) {
+		size = sizeof(deployedmode);
+		status = get_efi_var(efi_DeployedMode_name, &efi_variable_guid,
+				     NULL, &size, &deployedmode);
+		if (status != EFI_SUCCESS)
+			goto out_efi_err;
+		if (deployedmode == 0)
+			return efi_secureboot_mode_disabled;
+	}
 
 	/* See if a user has put shim into insecure mode.  If so, and if the
 	 * variable doesn't have the runtime attribute set, we might as well
