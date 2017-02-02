@@ -3590,27 +3590,36 @@ bool css_has_online_children(struct cgroup_subsys_state *css)
 	return ret;
 }
 
-/**
- * css_task_iter_advance_css_set - advance a task itererator to the next css_set
- * @it: the iterator to advance
- *
- * Advance @it to the next css_set to walk.
- */
-static void css_task_iter_advance_css_set(struct css_task_iter *it)
+static struct css_set *css_task_iter_next_css_set(struct css_task_iter *it)
 {
-	struct list_head *l = it->cset_pos;
+	bool threaded = it->flags & CSS_TASK_ITER_THREADED;
+	struct list_head *l;
 	struct cgrp_cset_link *link;
 	struct css_set *cset;
 
 	lockdep_assert_held(&css_set_lock);
 
-	/* Advance to the next non-empty css_set */
+	/* find the next threaded cset */
+	if (it->tcset_pos) {
+		l = it->tcset_pos->next;
+
+		if (l != it->tcset_head) {
+			it->tcset_pos = l;
+			return container_of(l, struct css_set,
+					    threaded_csets_node);
+		}
+
+		it->tcset_pos = NULL;
+	}
+
+	/* find the next cset */
+	l = it->cset_pos;
+
 	do {
 		l = l->next;
 		if (l == it->cset_head) {
 			it->cset_pos = NULL;
-			it->task_pos = NULL;
-			return;
+			return NULL;
 		}
 
 		if (it->ss) {
@@ -3620,9 +3629,49 @@ static void css_task_iter_advance_css_set(struct css_task_iter *it)
 			link = list_entry(l, struct cgrp_cset_link, cset_link);
 			cset = link->cset;
 		}
-	} while (!css_set_populated(cset));
+
+		/*
+		 * For threaded iterations, threaded csets are walked
+		 * together with their proc_csets.  Skip here.
+		 */
+	} while (threaded && css_set_threaded(cset));
 
 	it->cset_pos = l;
+
+	/* initialize threaded cset walking */
+	if (threaded) {
+		if (it->cur_pcset)
+			put_css_set_locked(it->cur_pcset);
+		it->cur_pcset = cset;
+		get_css_set(cset);
+
+		it->tcset_head = &cset->threaded_csets;
+		it->tcset_pos = &cset->threaded_csets;
+	}
+
+	return cset;
+}
+
+/**
+ * css_task_iter_advance_css_set - advance a task itererator to the next css_set
+ * @it: the iterator to advance
+ *
+ * Advance @it to the next css_set to walk.
+ */
+static void css_task_iter_advance_css_set(struct css_task_iter *it)
+{
+	struct css_set *cset;
+
+	lockdep_assert_held(&css_set_lock);
+
+	/* Advance to the next non-empty css_set */
+	do {
+		cset = css_task_iter_next_css_set(it);
+		if (!cset) {
+			it->task_pos = NULL;
+			return;
+		}
+	} while (!css_set_populated(cset));
 
 	if (!list_empty(&cset->tasks))
 		it->task_pos = cset->tasks.next;
@@ -3766,6 +3815,9 @@ void css_task_iter_end(struct css_task_iter *it)
 		spin_unlock_irq(&css_set_lock);
 	}
 
+	if (it->cur_pcset)
+		put_css_set(it->cur_pcset);
+
 	if (it->cur_task)
 		put_task_struct(it->cur_task);
 }
@@ -3791,6 +3843,7 @@ static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
 	struct kernfs_open_file *of = s->private;
 	struct cgroup *cgrp = seq_css(s)->cgroup;
 	struct css_task_iter *it = of->priv;
+	unsigned iter_flags = CSS_TASK_ITER_PROCS | CSS_TASK_ITER_THREADED;
 
 	/*
 	 * When a seq_file is seeked, it's always traversed sequentially
@@ -3804,10 +3857,10 @@ static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
 		if (!it)
 			return ERR_PTR(-ENOMEM);
 		of->priv = it;
-		css_task_iter_start(&cgrp->self, CSS_TASK_ITER_PROCS, it);
+		css_task_iter_start(&cgrp->self, iter_flags, it);
 	} else if (!(*pos)++) {
 		css_task_iter_end(it);
-		css_task_iter_start(&cgrp->self, CSS_TASK_ITER_PROCS, it);
+		css_task_iter_start(&cgrp->self, iter_flags, it);
 	}
 
 	return cgroup_procs_next(s, NULL, NULL);
