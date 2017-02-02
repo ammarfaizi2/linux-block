@@ -16,7 +16,9 @@ CONTENTS
   1-2. What is cgroup?
 2. Basic Operations
   2-1. Mounting
-  2-2. Organizing Processes
+  2-2. Organizing Processes and Threads
+    2-2-1. Processes
+    2-2-2. Threads
   2-3. [Un]populated Notification
   2-4. Controlling Controllers
     2-4-1. Enabling and Disabling
@@ -150,7 +152,9 @@ and experimenting easier, the kernel parameter cgroup_no_v1= allows
 disabling controllers in v1 and make them always available in v2.
 
 
-2-2. Organizing Processes
+2-2. Organizing Processes and Threads
+
+2-2-1. Processes
 
 Initially, only the root cgroup exists to which all processes belong.
 A child cgroup can be created by creating a sub-directory.
@@ -199,6 +203,73 @@ is removed subsequently, " (deleted)" is appended to the path.
   # cat /proc/842/cgroup
   ...
   0::/test-cgroup/test-cgroup-nested (deleted)
+
+
+2-2-2. Threads
+
+cgroup v2 supports thread granularity for a subset of controllers to
+support use cases requiring hierarchical resource distribution across
+the threads of a group of processes.  By default, all threads of a
+process belong to the same cgroup, which also serves as the resource
+domain to host resource consumptions which are not specific to a
+process or thread.  The thread mode allows threads to be spread across
+a subtree while still maintaining the common resource domain for them.
+
+Enabling thread mode on a subtree makes it threaded.  The root of a
+threaded subtree is called thread root and serves as the resource
+domain for the entire subtree.  In a threaded subtree, threads of a
+process can be put in different cgroups and are not subject to the no
+internal process constraint - threaded controllers can be enabled on
+non-leaf cgroups whether they have threads in them or not.
+
+To enable the thread mode, the following conditions must be met.
+
+- The thread root doesn't have any child cgroups.
+
+- The thread root doesn't have any controllers enabled.
+
+Thread mode can be enabled by writing "enable" to "cgroup.threads"
+file.
+
+  # echo enable > cgroup.threads
+
+Inside a threaded subtree, "cgroup.threads" can be read and contains
+the list of the thread IDs of all threads in the cgroup.  Except that
+the operations are per-thread instead of per-process, "cgroup.threads"
+has the same format and behaves the same way as "cgroup.procs".
+
+The thread root serves as the resource domain for the whole subtree,
+and, while the threads can be scattered across the subtree, all the
+processes are considered to be in the thread root.  "cgroup.procs" in
+a thread root contains the PIDs of all processes in the subtree and is
+not readable in the subtree proper.  However, "cgroup.procs" can be
+written to from anywhere in the subtree to migrate all threads of the
+matching process to the cgroup.
+
+Only threaded controllers can be enabled in a threaded subtree.  When
+a threaded controller is enabled inside a threaded subtree, it only
+accounts for and controls resource consumptions associated with the
+threads in the cgroup and its descendants.  All consumptions which
+aren't tied to a specific thread belong to the thread root.
+
+Because a threaded subtree is exempt from no internal process
+constraint, a threaded controller must be able to handle competition
+between threads in a non-leaf cgroup and its child cgroups.  Each
+threaded controller defines how such competitions are handled.
+
+To disable the thread mode, the following conditions must be met.
+
+- The cgroup is a thread root.  Thread mode can't be disabled
+  partially in the subtree.
+
+- The thread root doesn't have any child cgroups.
+
+- The thread root doesn't have any controllers enabled.
+
+Thread mode can be disabled by writing "disable" to "cgroup.threads"
+file.
+
+  # echo disable > cgroup.threads
 
 
 2-3. [Un]populated Notification

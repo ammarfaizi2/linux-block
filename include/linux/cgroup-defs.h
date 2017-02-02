@@ -226,6 +226,10 @@ struct css_set {
 	struct cgroup *mg_dst_cgrp;
 	struct css_set *mg_dst_cset;
 
+	/* used while updating ->proc_cset to enable/disable threaded mode */
+	struct list_head pcset_preload_node;
+	struct css_set *pcset_preload;
+
 	/* dead and being drained, ignore for migration */
 	bool dead;
 
@@ -495,6 +499,18 @@ struct cgroup_subsys {
 	 * hierarchies coexisting with csses for the current one.
 	 */
 	bool implicit_on_dfl:1;
+
+	/*
+	 * If %true, the controller, supports threaded mode on the default
+	 * hierarchy.  In a threaded subtree, both process granularity and
+	 * no-internal-process constraint are ignored and a threaded
+	 * controllers should be able to handle that.
+	 *
+	 * Note that as an implicit controller is automatically enabled on
+	 * all cgroups on the default hierarchy, it should also be
+	 * threaded.  implicit && !threaded is not supported.
+	 */
+	bool threaded:1;
 
 	/*
 	 * If %false, this subsystem is properly hierarchical -

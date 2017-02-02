@@ -161,6 +161,9 @@ static u16 cgrp_dfl_inhibit_ss_mask;
 /* some controllers are implicitly enabled on the default hierarchy */
 static u16 cgrp_dfl_implicit_ss_mask;
 
+/* some controllers can be threaded on the default hierarchy */
+static u16 cgrp_dfl_threaded_ss_mask;
+
 /* The list of hierarchy roots */
 LIST_HEAD(cgroup_roots);
 static int cgroup_root_count;
@@ -2909,11 +2912,18 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 		goto out_unlock;
 	}
 
+	/* can't enable !threaded controllers on a threaded cgroup */
+	if (cgrp->proc_cgrp && (enable & ~cgrp_dfl_threaded_ss_mask)) {
+		ret = -EBUSY;
+		goto out_unlock;
+	}
+
 	/*
-	 * Except for the root, subtree_control must be zero for a cgroup
-	 * with tasks so that child cgroups don't compete against tasks.
+	 * Except for root and threaded cgroups, subtree_control must be
+	 * zero for a cgroup with tasks so that child cgroups don't compete
+	 * against tasks.
 	 */
-	if (enable && cgroup_parent(cgrp)) {
+	if (enable && cgroup_parent(cgrp) && !cgrp->proc_cgrp) {
 		struct cgrp_cset_link *link;
 
 		/*
@@ -2952,6 +2962,124 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 out_unlock:
 	cgroup_kn_unlock(of->kn);
 	return ret ?: nbytes;
+}
+
+static int cgroup_enable_threaded(struct cgroup *cgrp)
+{
+	LIST_HEAD(csets);
+	struct cgrp_cset_link *link;
+	struct css_set *cset, *cset_next;
+	int ret;
+
+	lockdep_assert_held(&cgroup_mutex);
+
+	/* noop if already threaded */
+	if (cgrp->proc_cgrp)
+		return 0;
+
+	/* allow only if there are neither children or enabled controllers */
+	if (css_has_online_children(&cgrp->self) || cgrp->subtree_control)
+		return -EBUSY;
+
+	/* find all csets which need ->proc_cset updated */
+	spin_lock_irq(&css_set_lock);
+	list_for_each_entry(link, &cgrp->cset_links, cset_link) {
+		cset = link->cset;
+		if (css_set_populated(cset)) {
+			WARN_ON_ONCE(css_set_threaded(cset));
+			WARN_ON_ONCE(cset->pcset_preload);
+
+			list_add_tail(&cset->pcset_preload_node, &csets);
+			get_css_set(cset);
+		}
+	}
+	spin_unlock_irq(&css_set_lock);
+
+	/* find the proc_csets to associate */
+	list_for_each_entry(cset, &csets, pcset_preload_node) {
+		struct css_set *pcset = find_css_set(cset, cgrp, true);
+
+		WARN_ON_ONCE(cset == pcset);
+		if (!pcset) {
+			ret = -ENOMEM;
+			goto err_put_csets;
+		}
+		cset->pcset_preload = pcset;
+	}
+
+	/* install ->proc_cset */
+	spin_lock_irq(&css_set_lock);
+	list_for_each_entry_safe(cset, cset_next, &csets, pcset_preload_node) {
+		rcu_assign_pointer(cset->proc_cset, cset->pcset_preload);
+		list_add_tail(&cset->threaded_csets_node,
+			      &cset->pcset_preload->threaded_csets);
+
+		cset->pcset_preload = NULL;
+		list_del(&cset->pcset_preload_node);
+		put_css_set_locked(cset);
+	}
+	spin_unlock_irq(&css_set_lock);
+
+	/* mark it threaded */
+	cgrp->proc_cgrp = cgrp;
+
+	return 0;
+
+err_put_csets:
+	spin_lock_irq(&css_set_lock);
+	list_for_each_entry_safe(cset, cset_next, &csets, pcset_preload_node) {
+		if (cset->pcset_preload) {
+			put_css_set_locked(cset->pcset_preload);
+			cset->pcset_preload = NULL;
+		}
+		list_del(&cset->pcset_preload_node);
+		put_css_set_locked(cset);
+	}
+	spin_unlock_irq(&css_set_lock);
+	return ret;
+}
+
+static int cgroup_disable_threaded(struct cgroup *cgrp)
+{
+	struct cgrp_cset_link *link;
+
+	lockdep_assert_held(&cgroup_mutex);
+
+	/* noop if already !threaded */
+	if (!cgrp->proc_cgrp)
+		return 0;
+
+	/* partial disable isn't supported */
+	if (cgrp->proc_cgrp != cgrp)
+		return -EBUSY;
+
+	/* allow only if there are neither children or enabled controllers */
+	if (css_has_online_children(&cgrp->self) || cgrp->subtree_control)
+		return -EBUSY;
+
+	/* walk all csets and reset ->proc_cset */
+	spin_lock_irq(&css_set_lock);
+	list_for_each_entry(link, &cgrp->cset_links, cset_link) {
+		struct css_set *cset = link->cset;
+
+		if (css_set_threaded(cset)) {
+			struct css_set *pcset = proc_css_set(cset);
+
+			WARN_ON_ONCE(pcset->dfl_cgrp != cgrp);
+			rcu_assign_pointer(cset->proc_cset, cset);
+			list_del(&cset->threaded_csets_node);
+
+			/*
+			 * @pcset is never @cset and safe to put during
+			 * iteration.
+			 */
+			put_css_set_locked(pcset);
+		}
+	}
+	cgrp->proc_cgrp = NULL;
+	spin_unlock_irq(&css_set_lock);
+
+	return 0;
 }
 
 static int cgroup_events_show(struct seq_file *seq, void *v)
@@ -3838,12 +3966,12 @@ static void *cgroup_procs_next(struct seq_file *s, void *v, loff_t *pos)
 	return css_task_iter_next(it);
 }
 
-static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
+static void *__cgroup_procs_start(struct seq_file *s, loff_t *pos,
+				  unsigned int iter_flags)
 {
 	struct kernfs_open_file *of = s->private;
 	struct cgroup *cgrp = seq_css(s)->cgroup;
 	struct css_task_iter *it = of->priv;
-	unsigned iter_flags = CSS_TASK_ITER_PROCS | CSS_TASK_ITER_THREADED;
 
 	/*
 	 * When a seq_file is seeked, it's always traversed sequentially
@@ -3864,6 +3992,23 @@ static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
 	}
 
 	return cgroup_procs_next(s, NULL, NULL);
+}
+
+static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
+{
+	struct cgroup *cgrp = seq_css(s)->cgroup;
+
+	/*
+	 * All processes of a threaded subtree are in the top threaded
+	 * cgroup.  Only threads can be distributed across the subtree.
+	 * Reject reads on cgroup.procs in the subtree proper.  They're
+	 * always empty anyway.
+	 */
+	if (cgrp->proc_cgrp && cgrp->proc_cgrp != cgrp)
+		return ERR_PTR(-EINVAL);
+
+	return __cgroup_procs_start(s, pos, CSS_TASK_ITER_PROCS |
+					    CSS_TASK_ITER_THREADED);
 }
 
 static int cgroup_procs_show(struct seq_file *s, void *v)
@@ -3920,6 +4065,76 @@ out_unlock:
 	return ret ?: nbytes;
 }
 
+static void *cgroup_threads_start(struct seq_file *s, loff_t *pos)
+{
+	struct cgroup *cgrp = seq_css(s)->cgroup;
+
+	if (!cgrp->proc_cgrp)
+		return ERR_PTR(-EINVAL);
+
+	return __cgroup_procs_start(s, pos, 0);
+}
+
+static ssize_t cgroup_threads_write(struct kernfs_open_file *of,
+				    char *buf, size_t nbytes, loff_t off)
+{
+	struct super_block *sb = of->file->f_path.dentry->d_sb;
+	struct cgroup *cgrp, *common_ancestor;
+	struct task_struct *task;
+	ssize_t ret;
+
+	buf = strstrip(buf);
+
+	cgrp = cgroup_kn_lock_live(of->kn, false);
+	if (!cgrp)
+		return -ENODEV;
+
+	/* cgroup.procs determines delegation, require permission on it too */
+	ret = cgroup_procs_write_permission(cgrp, sb);
+	if (ret)
+		goto out_unlock;
+
+	/* enable or disable? */
+	if (!strcmp(buf, "enable")) {
+		ret = cgroup_enable_threaded(cgrp);
+		goto out_unlock;
+	} else if (!strcmp(buf, "disable")) {
+		ret = cgroup_disable_threaded(cgrp);
+		goto out_unlock;
+	}
+
+	/* thread migration */
+	ret = -EINVAL;
+	if (!cgrp->proc_cgrp)
+		goto out_unlock;
+
+	task = cgroup_procs_write_start(buf, false);
+	ret = PTR_ERR_OR_ZERO(task);
+	if (ret)
+		goto out_unlock;
+
+	common_ancestor = cgroup_migrate_common_ancestor(task, cgrp);
+
+	/* can't migrate across disjoint threaded subtrees */
+	ret = -EACCES;
+	if (common_ancestor->proc_cgrp != cgrp->proc_cgrp)
+		goto out_finish;
+
+	/* and follow the cgroup.procs delegation rule */
+	ret = cgroup_procs_write_permission(common_ancestor, sb);
+	if (ret)
+		goto out_finish;
+
+	ret = cgroup_attach_task(cgrp, task, false);
+
+out_finish:
+	cgroup_procs_write_finish();
+out_unlock:
+	cgroup_kn_unlock(of->kn);
+
+	return ret ?: nbytes;
+}
+
 /* cgroup core interface files for the default hierarchy */
 static struct cftype cgroup_base_files[] = {
 	{
@@ -3930,6 +4145,14 @@ static struct cftype cgroup_base_files[] = {
 		.seq_next = cgroup_procs_next,
 		.seq_show = cgroup_procs_show,
 		.write = cgroup_procs_write,
+	},
+	{
+		.name = "cgroup.threads",
+		.release = cgroup_procs_release,
+		.seq_start = cgroup_threads_start,
+		.seq_next = cgroup_procs_next,
+		.seq_show = cgroup_procs_show,
+		.write = cgroup_threads_write,
 	},
 	{
 		.name = "cgroup.controllers",
@@ -4245,6 +4468,7 @@ static struct cgroup *cgroup_create(struct cgroup *parent)
 	cgrp->self.parent = &parent->self;
 	cgrp->root = root;
 	cgrp->level = level;
+	cgrp->proc_cgrp = parent->proc_cgrp;
 
 	for (tcgrp = cgrp; tcgrp; tcgrp = cgroup_parent(tcgrp))
 		cgrp->ancestor_ids[tcgrp->level] = tcgrp->id;
@@ -4687,10 +4911,16 @@ int __init cgroup_init(void)
 
 		cgrp_dfl_root.subsys_mask |= 1 << ss->id;
 
+		/* implicit controllers must be threaded too */
+		WARN_ON(ss->implicit_on_dfl && !ss->threaded);
+
 		if (ss->implicit_on_dfl)
 			cgrp_dfl_implicit_ss_mask |= 1 << ss->id;
 		else if (!ss->dfl_cftypes)
 			cgrp_dfl_inhibit_ss_mask |= 1 << ss->id;
+
+		if (ss->threaded)
+			cgrp_dfl_threaded_ss_mask |= 1 << ss->id;
 
 		if (ss->dfl_cftypes == ss->legacy_cftypes) {
 			WARN_ON(cgroup_add_cftypes(ss, ss->dfl_cftypes));
