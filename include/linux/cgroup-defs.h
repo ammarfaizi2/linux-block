@@ -158,6 +158,15 @@ struct css_set {
 	/* reference count */
 	atomic_t refcount;
 
+	/*
+	 * If not threaded, the following points to self.  If threaded, to
+	 * a cset which belongs to the top cgroup of the threaded subtree.
+	 * The proc_cset provides access to the process cgroup and its
+	 * csses to which domain level resource consumptions should be
+	 * charged.
+	 */
+	struct css_set __rcu *proc_cset;
+
 	/* the default cgroup associated with this css_set */
 	struct cgroup *dfl_cgrp;
 
@@ -182,6 +191,10 @@ struct css_set {
 	 * iterate through all css's attached to a given cgroup.
 	 */
 	struct list_head e_cset_node[CGROUP_SUBSYS_COUNT];
+
+	/* all csets whose ->proc_cset points to this cset */
+	struct list_head threaded_csets;
+	struct list_head threaded_csets_node;
 
 	/*
 	 * List running through all cgroup groups in the same hash
@@ -287,6 +300,15 @@ struct cgroup {
 	 * for the given subsystem.
 	 */
 	struct list_head e_csets[CGROUP_SUBSYS_COUNT];
+
+	/*
+	 * If !threaded, NULL.  If threaded, it points to the top cgroup of
+	 * the threaded subtree, on which it points to self.  Threaded
+	 * subtree is exempt from process granularity and no-internal-task
+	 * constraint.  Domain level resource consumptions which aren't
+	 * tied to a specific task should be charged to the proc_cgrp.
+	 */
+	struct cgroup *proc_cgrp;
 
 	/*
 	 * list of pidlists, up to two for each namespace (one for procs, one
