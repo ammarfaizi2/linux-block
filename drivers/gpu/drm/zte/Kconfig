@@ -1,6 +1,7 @@
 config DRM_ZTE
 	tristate "DRM Support for ZTE SoCs"
-	depends on DRM && ARCH_ZX
+	depends on DRM
+	depends on ARCH_ZX || COMPILE_TEST
 	select DRM_KMS_CMA_HELPER
 	select DRM_KMS_FB_HELPER
 	select DRM_KMS_HELPER

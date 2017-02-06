@@ -437,7 +437,7 @@ struct drm_framebuffer *omap_framebuffer_init(struct drm_device *dev,
 		size = pitch * mode_cmd->height / format->planes[i].sub_y;
 
 		if (size > (omap_gem_mmap_size(bos[i]) - mode_cmd->offsets[i])) {
-			dev_err(dev->dev, "provided buffer object is too small! %d < %d\n",
+			dev_err(dev->dev, "provided buffer object is too small! %zu < %d\n",
 					bos[i]->size - mode_cmd->offsets[i], size);
 			ret = -EINVAL;
 			goto fail;

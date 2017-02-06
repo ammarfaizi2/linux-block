@@ -8,6 +8,7 @@
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>
+#include <linux/of_device.h>
 #include <linux/platform_device.h>
 
 #include <drm/drmP.h>
@@ -154,8 +155,6 @@ MODULE_DEVICE_TABLE(of, vtac_of_match);
 static int sti_vtac_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	const struct of_device_id *id;
 	struct sti_vtac *vtac;
 	struct resource *res;
 
@@ -164,12 +163,7 @@ static int sti_vtac_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	vtac->dev = dev;
-
-	id = of_match_node(vtac_of_match, np);
-	if (!id)
-		return -ENOMEM;
-
-	vtac->mode = id->data;
+	vtac->mode = of_device_get_match_data(dev);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {

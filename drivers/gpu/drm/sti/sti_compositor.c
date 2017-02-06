@@ -8,6 +8,7 @@
 
 #include <linux/component.h>
 #include <linux/module.h>
+#include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/reset.h>
 
@@ -174,10 +175,10 @@ MODULE_DEVICE_TABLE(of, compositor_of_match);
 static int sti_compositor_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
 	struct device_node *vtg_np;
 	struct sti_compositor *compo;
 	struct resource *res;
+	const void *data = of_device_get_match_data(dev);
 	unsigned int i;
 
 	compo = devm_kzalloc(dev, sizeof(*compo), GFP_KERNEL);
@@ -189,11 +190,7 @@ static int sti_compositor_probe(struct platform_device *pdev)
 	for (i = 0; i < STI_MAX_MIXER; i++)
 		compo->vtg_vblank_nb[i].notifier_call = sti_crtc_vblank_cb;
 
-	/* populate data structure depending on compatibility */
-	BUG_ON(!of_match_node(compositor_of_match, np)->data);
-
-	memcpy(&compo->data, of_match_node(compositor_of_match, np)->data,
-	       sizeof(struct sti_compositor_data));
+	memcpy(&compo->data, data, sizeof(struct sti_compositor_data));
 
 	/* Get Memory ressources */
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);

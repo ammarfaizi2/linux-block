@@ -1,6 +1,7 @@
 config DRM_FSL_DCU
 	tristate "DRM Support for Freescale DCU"
-	depends on DRM && OF && ARM && COMMON_CLK
+	depends on DRM && OF && COMMON_CLK
+	depends on ARM || COMPILE_TEST
 	select BACKLIGHT_CLASS_DEVICE
 	select BACKLIGHT_LCD_SUPPORT
 	select DRM_KMS_HELPER

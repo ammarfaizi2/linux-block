@@ -5,7 +5,8 @@ config DRM_ARM
 
 config DRM_HDLCD
 	tristate "ARM HDLCD"
-	depends on DRM && OF && (ARM || ARM64)
+	depends on DRM && OF
+	depends on ARM || ARM64 || COMPILE_TEST
 	depends on COMMON_CLK
 	select DRM_ARM
 	select DRM_KMS_HELPER

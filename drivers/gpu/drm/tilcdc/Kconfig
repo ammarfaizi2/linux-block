@@ -1,6 +1,7 @@
 config DRM_TILCDC
 	tristate "DRM Support for TI LCDC Display Controller"
-	depends on DRM && OF && ARM
+	depends on DRM && OF
+	depends on ARM || COMPILE_TEST
 	select DRM_KMS_HELPER
 	select DRM_KMS_CMA_HELPER
 	select DRM_GEM_CMA_HELPER
@@ -18,6 +19,7 @@ config DRM_TILCDC_SLAVE_COMPAT
 	default y
 	select OF_RESOLVE
 	select OF_OVERLAY
+	select OF_FLATTREE
 	help
 	  Choose this option if you need a kernel that is compatible
 	  with device tree blobs using the obsolete "ti,tilcdc,slave"

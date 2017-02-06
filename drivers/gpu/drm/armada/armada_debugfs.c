@@ -63,7 +63,7 @@ static const struct file_operations fops_reg_r = {
 	.release = single_release,
 };
 
-static int armada_debugfs_write(struct file *file, const char __user *ptr,
+static ssize_t armada_debugfs_write(struct file *file, const char __user *ptr,
 	size_t len, loff_t *off)
 {
 	struct drm_device *dev = file->private_data;

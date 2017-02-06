@@ -1,10 +1,9 @@
 config DRM_OMAP
 	tristate "OMAP DRM"
-	depends on DRM
-	depends on ARCH_OMAP2PLUS || ARCH_MULTIPLATFORM
+	depends on DRM && OF
+	depends on ARCH_OMAP2PLUS || COMPILE_TEST
 	select OMAP2_DSS
 	select DRM_KMS_HELPER
-	default n
 	help
 	  DRM display driver for OMAP2/3/4 based boards.
 

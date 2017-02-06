@@ -90,7 +90,7 @@ struct sti_hdmi {
 	struct clk *clk_audio;
 	int irq;
 	u32 irq_status;
-	struct hdmi_phy_ops *phy_ops;
+	const struct hdmi_phy_ops *phy_ops;
 	bool enabled;
 	bool hpd;
 	wait_queue_head_t wait_event;

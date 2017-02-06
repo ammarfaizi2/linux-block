@@ -10,6 +10,7 @@
 #include <linux/hdmi.h>
 #include <linux/module.h>
 #include <linux/of_gpio.h>
+#include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/reset.h>
 
@@ -1385,7 +1386,6 @@ static int sti_hdmi_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct sti_hdmi *hdmi;
-	struct device_node *np = dev->of_node;
 	struct resource *res;
 	struct device_node *ddc;
 	int ret;
@@ -1419,8 +1419,7 @@ static int sti_hdmi_probe(struct platform_device *pdev)
 		goto release_adapter;
 	}
 
-	hdmi->phy_ops = (struct hdmi_phy_ops *)
-		of_match_node(hdmi_of_match, np)->data;
+	hdmi->phy_ops = of_device_get_match_data(dev);
 
 	/* Get clock resources */
 	hdmi->clk_pix = devm_clk_get(dev, "pix");

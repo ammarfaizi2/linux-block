@@ -136,7 +136,7 @@ static inline void tilcdc_write64(struct drm_device *dev, u32 reg, u64 data)
 #ifdef iowrite64
 	iowrite64(data, addr);
 #else
-	__iowmb();
+	wmb();
 	/* This compiles to strd (=64-bit write) on ARM7 */
 	*(volatile u64 __force *)addr = __cpu_to_le64(data);
 #endif
