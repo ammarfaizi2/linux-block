@@ -263,6 +263,11 @@ static void tipc_node_write_lock(struct tipc_node *n)
 	write_lock_bh(&n->lock);
 }
 
+static void tipc_node_write_unlock_fast(struct tipc_node *n)
+{
+	write_unlock_bh(&n->lock);
+}
+
 static void tipc_node_write_unlock(struct tipc_node *n)
 {
 	struct net *net = n->net;
@@ -417,7 +422,7 @@ void tipc_node_subscribe(struct net *net, struct list_head *subscr, u32 addr)
 	}
 	tipc_node_write_lock(n);
 	list_add_tail(subscr, &n->publ_list);
-	tipc_node_write_unlock(n);
+	tipc_node_write_unlock_fast(n);
 	tipc_node_put(n);
 }
 
@@ -435,7 +440,7 @@ void tipc_node_unsubscribe(struct net *net, struct list_head *subscr, u32 addr)
 	}
 	tipc_node_write_lock(n);
 	list_del_init(subscr);
-	tipc_node_write_unlock(n);
+	tipc_node_write_unlock_fast(n);
 	tipc_node_put(n);
 }
 
@@ -1257,6 +1262,19 @@ void tipc_node_broadcast(struct net *net, struct sk_buff *skb)
 	kfree_skb(skb);
 }
 
+static void tipc_node_mcast_rcv(struct tipc_node *n)
+{
+	struct tipc_bclink_entry *be = &n->bc_entry;
+
+	/* 'arrvq' is under inputq2's lock protection */
+	spin_lock_bh(&be->inputq2.lock);
+	spin_lock_bh(&be->inputq1.lock);
+	skb_queue_splice_tail_init(&be->inputq1, &be->arrvq);
+	spin_unlock_bh(&be->inputq1.lock);
+	spin_unlock_bh(&be->inputq2.lock);
+	tipc_sk_mcast_rcv(n->net, &be->arrvq, &be->inputq2);
+}
+
 static void tipc_node_bc_sync_rcv(struct tipc_node *n, struct tipc_msg *hdr,
 				  int bearer_id, struct sk_buff_head *xmitq)
 {
@@ -1330,15 +1348,8 @@ static void tipc_node_bc_rcv(struct net *net, struct sk_buff *skb, int bearer_id
 	if (!skb_queue_empty(&xmitq))
 		tipc_bearer_xmit(net, bearer_id, &xmitq, &le->maddr);
 
-	/* Deliver. 'arrvq' is under inputq2's lock protection */
-	if (!skb_queue_empty(&be->inputq1)) {
-		spin_lock_bh(&be->inputq2.lock);
-		spin_lock_bh(&be->inputq1.lock);
-		skb_queue_splice_tail_init(&be->inputq1, &be->arrvq);
-		spin_unlock_bh(&be->inputq1.lock);
-		spin_unlock_bh(&be->inputq2.lock);
-		tipc_sk_mcast_rcv(net, &be->arrvq, &be->inputq2);
-	}
+	if (!skb_queue_empty(&be->inputq1))
+		tipc_node_mcast_rcv(n);
 
 	if (rc & TIPC_LINK_DOWN_EVT) {
 		/* Reception reassembly failure => reset all links to peer */
@@ -1564,6 +1575,9 @@ void tipc_rcv(struct net *net, struct sk_buff *skb, struct tipc_bearer *b)
 
 	if (unlikely(!skb_queue_empty(&n->bc_entry.namedq)))
 		tipc_named_rcv(net, &n->bc_entry.namedq);
+
+	if (unlikely(!skb_queue_empty(&n->bc_entry.inputq1)))
+		tipc_node_mcast_rcv(n);
 
 	if (!skb_queue_empty(&le->inputq))
 		tipc_sk_rcv(net, &le->inputq);

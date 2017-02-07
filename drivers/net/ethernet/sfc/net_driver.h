@@ -208,6 +208,12 @@ struct efx_tx_buffer {
  * @write_count: Current write pointer
  *	This is the number of buffers that have been added to the
  *	hardware ring.
+ * @packet_write_count: Completable write pointer
+ *	This is the write pointer of the last packet written.
+ *	Normally this will equal @write_count, but as option descriptors
+ *	don't produce completion events, they won't update this.
+ *	Filled in iff @efx->type->option_descriptors; only used for PIO.
+ *	Thus, this is written and used on EF10, and neither on farch.
  * @old_read_count: The value of read_count when last checked.
  *	This is here for performance reasons.  The xmit path will
  *	only get the up-to-date value of read_count if this
@@ -255,6 +261,7 @@ struct efx_tx_queue {
 	/* Members used only on the xmit path */
 	unsigned int insert_count ____cacheline_aligned_in_smp;
 	unsigned int write_count;
+	unsigned int packet_write_count;
 	unsigned int old_read_count;
 	unsigned int tso_bursts;
 	unsigned int tso_long_headers;
@@ -1174,6 +1181,7 @@ struct efx_mtd_partition {
  * @tx_remove: Free resources for TX queue
  * @tx_write: Write TX descriptors and doorbell
  * @rx_push_rss_config: Write RSS hash key and indirection table to the NIC
+ * @rx_pull_rss_config: Read RSS hash key and indirection table back from the NIC
  * @rx_probe: Allocate resources for RX queue
  * @rx_init: Initialise RX queue on the NIC
  * @rx_remove: Free resources for RX queue
@@ -1237,6 +1245,7 @@ struct efx_mtd_partition {
  * @rx_buffer_padding: Size of padding at end of RX packet
  * @can_rx_scatter: NIC is able to scatter packets to multiple buffers
  * @always_rx_scatter: NIC will always scatter packets to multiple buffers
+ * @option_descriptors: NIC supports TX option descriptors
  * @max_interrupt_mode: Highest capability interrupt mode supported
  *	from &enum efx_init_mode.
  * @timer_period_max: Maximum period of interrupt timer (in ticks)
@@ -1303,7 +1312,8 @@ struct efx_nic_type {
 	unsigned int (*tx_limit_len)(struct efx_tx_queue *tx_queue,
 				     dma_addr_t dma_addr, unsigned int len);
 	int (*rx_push_rss_config)(struct efx_nic *efx, bool user,
-				  const u32 *rx_indir_table);
+				  const u32 *rx_indir_table, const u8 *key);
+	int (*rx_pull_rss_config)(struct efx_nic *efx);
 	int (*rx_probe)(struct efx_rx_queue *rx_queue);
 	void (*rx_init)(struct efx_rx_queue *rx_queue);
 	void (*rx_remove)(struct efx_rx_queue *rx_queue);
@@ -1395,12 +1405,14 @@ struct efx_nic_type {
 	unsigned int rx_buffer_padding;
 	bool can_rx_scatter;
 	bool always_rx_scatter;
+	bool option_descriptors;
 	unsigned int max_interrupt_mode;
 	unsigned int timer_period_max;
 	netdev_features_t offload_features;
 	int mcdi_max_ver;
 	unsigned int max_rx_ip_filters;
 	u32 hwtstamp_filters;
+	unsigned int rx_hash_key_size;
 };
 
 /**************************************************************************

@@ -969,7 +969,7 @@ static int netcp_rx_poll(struct napi_struct *napi, int budget)
 
 	netcp_rxpool_refill(netcp);
 	if (packets < budget) {
-		napi_complete(&netcp->rx_napi);
+		napi_complete_done(&netcp->rx_napi, packets);
 		knav_queue_enable_notify(netcp->rx_queue);
 	}
 
@@ -1909,7 +1909,7 @@ static int netcp_setup_tc(struct net_device *dev, u32 handle, __be16 proto,
 	return 0;
 }
 
-static struct rtnl_link_stats64 *
+static void
 netcp_get_stats(struct net_device *ndev, struct rtnl_link_stats64 *stats)
 {
 	struct netcp_intf *netcp = netdev_priv(ndev);
@@ -1938,8 +1938,6 @@ netcp_get_stats(struct net_device *ndev, struct rtnl_link_stats64 *stats)
 	stats->rx_errors = p->rx_errors;
 	stats->rx_dropped = p->rx_dropped;
 	stats->tx_dropped = p->tx_dropped;
-
-	return stats;
 }
 
 static const struct net_device_ops netcp_netdev_ops = {

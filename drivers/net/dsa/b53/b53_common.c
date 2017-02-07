@@ -1308,7 +1308,7 @@ int b53_fdb_dump(struct dsa_switch *ds, int port,
 }
 EXPORT_SYMBOL(b53_fdb_dump);
 
-int b53_br_join(struct dsa_switch *ds, int port, struct net_device *bridge)
+int b53_br_join(struct dsa_switch *ds, int port, struct net_device *br)
 {
 	struct b53_device *dev = ds->priv;
 	s8 cpu_port = ds->dst->cpu_port;
@@ -1326,11 +1326,10 @@ int b53_br_join(struct dsa_switch *ds, int port, struct net_device *bridge)
 		b53_write16(dev, B53_VLAN_PAGE, B53_JOIN_ALL_VLAN_EN, reg);
 	}
 
-	dev->ports[port].bridge_dev = bridge;
 	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), &pvlan);
 
 	b53_for_each_port(dev, i) {
-		if (dev->ports[i].bridge_dev != bridge)
+		if (ds->ports[i].bridge_dev != br)
 			continue;
 
 		/* Add this local port to the remote port VLAN control
@@ -1354,10 +1353,9 @@ int b53_br_join(struct dsa_switch *ds, int port, struct net_device *bridge)
 }
 EXPORT_SYMBOL(b53_br_join);
 
-void b53_br_leave(struct dsa_switch *ds, int port)
+void b53_br_leave(struct dsa_switch *ds, int port, struct net_device *br)
 {
 	struct b53_device *dev = ds->priv;
-	struct net_device *bridge = dev->ports[port].bridge_dev;
 	struct b53_vlan *vl = &dev->vlans[0];
 	s8 cpu_port = ds->dst->cpu_port;
 	unsigned int i;
@@ -1367,7 +1365,7 @@ void b53_br_leave(struct dsa_switch *ds, int port)
 
 	b53_for_each_port(dev, i) {
 		/* Don't touch the remaining ports */
-		if (dev->ports[i].bridge_dev != bridge)
+		if (ds->ports[i].bridge_dev != br)
 			continue;
 
 		b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), &reg);
@@ -1382,7 +1380,6 @@ void b53_br_leave(struct dsa_switch *ds, int port)
 
 	b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), pvlan);
 	dev->ports[port].vlan_ctl_mask = pvlan;
-	dev->ports[port].bridge_dev = NULL;
 
 	if (is5325(dev) || is5365(dev))
 		pvid = 1;
@@ -1453,6 +1450,71 @@ static enum dsa_tag_protocol b53_get_tag_protocol(struct dsa_switch *ds)
 	return DSA_TAG_PROTO_NONE;
 }
 
+int b53_mirror_add(struct dsa_switch *ds, int port,
+		   struct dsa_mall_mirror_tc_entry *mirror, bool ingress)
+{
+	struct b53_device *dev = ds->priv;
+	u16 reg, loc;
+
+	if (ingress)
+		loc = B53_IG_MIR_CTL;
+	else
+		loc = B53_EG_MIR_CTL;
+
+	b53_read16(dev, B53_MGMT_PAGE, loc, &reg);
+	reg &= ~MIRROR_MASK;
+	reg |= BIT(port);
+	b53_write16(dev, B53_MGMT_PAGE, loc, reg);
+
+	b53_read16(dev, B53_MGMT_PAGE, B53_MIR_CAP_CTL, &reg);
+	reg &= ~CAP_PORT_MASK;
+	reg |= mirror->to_local_port;
+	reg |= MIRROR_EN;
+	b53_write16(dev, B53_MGMT_PAGE, B53_MIR_CAP_CTL, reg);
+
+	return 0;
+}
+EXPORT_SYMBOL(b53_mirror_add);
+
+void b53_mirror_del(struct dsa_switch *ds, int port,
+		    struct dsa_mall_mirror_tc_entry *mirror)
+{
+	struct b53_device *dev = ds->priv;
+	bool loc_disable = false, other_loc_disable = false;
+	u16 reg, loc;
+
+	if (mirror->ingress)
+		loc = B53_IG_MIR_CTL;
+	else
+		loc = B53_EG_MIR_CTL;
+
+	/* Update the desired ingress/egress register */
+	b53_read16(dev, B53_MGMT_PAGE, loc, &reg);
+	reg &= ~BIT(port);
+	if (!(reg & MIRROR_MASK))
+		loc_disable = true;
+	b53_write16(dev, B53_MGMT_PAGE, loc, reg);
+
+	/* Now look at the other one to know if we can disable mirroring
+	 * entirely
+	 */
+	if (mirror->ingress)
+		b53_read16(dev, B53_MGMT_PAGE, B53_EG_MIR_CTL, &reg);
+	else
+		b53_read16(dev, B53_MGMT_PAGE, B53_IG_MIR_CTL, &reg);
+	if (!(reg & MIRROR_MASK))
+		other_loc_disable = true;
+
+	b53_read16(dev, B53_MGMT_PAGE, B53_MIR_CAP_CTL, &reg);
+	/* Both no longer have ports, let's disable mirroring */
+	if (loc_disable && other_loc_disable) {
+		reg &= ~MIRROR_EN;
+		reg &= ~mirror->to_local_port;
+	}
+	b53_write16(dev, B53_MGMT_PAGE, B53_MIR_CAP_CTL, reg);
+}
+EXPORT_SYMBOL(b53_mirror_del);
+
 static const struct dsa_switch_ops b53_switch_ops = {
 	.get_tag_protocol	= b53_get_tag_protocol,
 	.setup			= b53_setup,
@@ -1477,6 +1539,8 @@ static const struct dsa_switch_ops b53_switch_ops = {
 	.port_fdb_dump		= b53_fdb_dump,
 	.port_fdb_add		= b53_fdb_add,
 	.port_fdb_del		= b53_fdb_del,
+	.port_mirror_add	= b53_mirror_add,
+	.port_mirror_del	= b53_mirror_del,
 };
 
 struct b53_chip_data {
@@ -1685,6 +1749,18 @@ static const struct b53_chip_data b53_switch_chips[] = {
 		.jumbo_pm_reg = B53_JUMBO_PORT_MASK,
 		.jumbo_size_reg = B53_JUMBO_MAX_SIZE,
 	},
+	{
+		.chip_id = BCM7278_DEVICE_ID,
+		.dev_name = "BCM7278",
+		.vlans = 4096,
+		.enabled_ports = 0x1ff,
+		.arl_entries= 4,
+		.cpu_port = B53_CPU_PORT,
+		.vta_regs = B53_VTA_REGS,
+		.duplex_reg = B53_DUPLEX_STAT_GE,
+		.jumbo_pm_reg = B53_JUMBO_PORT_MASK,
+		.jumbo_size_reg = B53_JUMBO_MAX_SIZE,
+	},
 };
 
 static int b53_switch_init(struct b53_device *dev)
@@ -1778,14 +1854,15 @@ struct b53_device *b53_switch_alloc(struct device *base,
 	struct dsa_switch *ds;
 	struct b53_device *dev;
 
-	ds = devm_kzalloc(base, sizeof(*ds) + sizeof(*dev), GFP_KERNEL);
+	ds = dsa_switch_alloc(base, DSA_MAX_PORTS);
 	if (!ds)
 		return NULL;
 
-	dev = (struct b53_device *)(ds + 1);
+	dev = devm_kzalloc(base, sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 
 	ds->priv = dev;
-	ds->dev = base;
 	dev->dev = base;
 
 	dev->ds = ds;
@@ -1882,7 +1959,7 @@ int b53_switch_register(struct b53_device *dev)
 
 	pr_info("found switch: %s, rev %i\n", dev->name, dev->core_rev);
 
-	return dsa_register_switch(dev->ds, dev->ds->dev->of_node);
+	return dsa_register_switch(dev->ds, dev->ds->dev);
 }
 EXPORT_SYMBOL(b53_switch_register);
 

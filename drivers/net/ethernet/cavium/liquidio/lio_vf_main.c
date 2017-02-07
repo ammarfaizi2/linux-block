@@ -1455,26 +1455,6 @@ static void if_cfg_callback(struct octeon_device *oct,
 	wake_up_interruptible(&ctx->wc);
 }
 
-/**
- * \brief Select queue based on hash
- * @param dev Net device
- * @param skb sk_buff structure
- * @returns selected queue number
- */
-static u16 select_q(struct net_device *dev, struct sk_buff *skb,
-		    void *accel_priv __attribute__((unused)),
-		    select_queue_fallback_t fallback __attribute__((unused)))
-{
-	struct lio *lio;
-	u32 qindex;
-
-	lio = GET_LIO(dev);
-
-	qindex = skb_tx_hash(dev, skb);
-
-	return (u16)(qindex % (lio->linfo.num_txpciq));
-}
-
 /** Routine to push packets arriving on Octeon interface upto network layer.
  * @param oct_id   - octeon device id.
  * @param skbuff   - skbuff struct to be passed to network layer.
@@ -1591,7 +1571,6 @@ liquidio_push_packet(u32 octeon_id __attribute__((unused)),
 		if (packet_was_received) {
 			droq->stats.rx_bytes_received += len;
 			droq->stats.rx_pkts_received++;
-			netdev->last_rx = jiffies;
 		} else {
 			droq->stats.rx_dropped++;
 			netif_info(lio, rx_err, lio->netdev,
@@ -1651,8 +1630,12 @@ static int liquidio_napi_poll(struct napi_struct *napi, int budget)
 			__func__, iq_no);
 	}
 
-	if ((work_done < budget) && (tx_done)) {
-		napi_complete(napi);
+	/* force enable interrupt if reg cnts are high to avoid wraparound */
+	if ((work_done < budget && tx_done) ||
+	    (iq->pkt_in_done >= MAX_REG_CNT) ||
+	    (droq->pkt_count >= MAX_REG_CNT)) {
+		tx_done = 1;
+		napi_complete_done(napi, work_done);
 		octeon_process_droq_poll_cmd(droq->oct_dev, droq->q_no,
 					     POLL_EVENT_ENABLE_INTR, 0);
 		return 0;
@@ -2454,11 +2437,11 @@ static int liquidio_xmit(struct sk_buff *skb, struct net_device *netdev)
 
 	netif_trans_update(netdev);
 
-	if (skb_shinfo(skb)->gso_size)
-		stats->tx_done += skb_shinfo(skb)->gso_segs;
+	if (tx_info->s.gso_segs)
+		stats->tx_done += tx_info->s.gso_segs;
 	else
 		stats->tx_done++;
-	stats->tx_tot_bytes += skb->len;
+	stats->tx_tot_bytes += ndata.datasize;
 
 	return NETDEV_TX_OK;
 
@@ -2717,7 +2700,6 @@ static const struct net_device_ops lionetdevops = {
 	.ndo_set_features	= liquidio_set_features,
 	.ndo_udp_tunnel_add     = liquidio_add_vxlan_port,
 	.ndo_udp_tunnel_del     = liquidio_del_vxlan_port,
-	.ndo_select_queue	= select_q,
 };
 
 static int lio_nic_info(struct octeon_recv_info *recv_info, void *buf)

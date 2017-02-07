@@ -522,7 +522,6 @@ void tcp_init_metrics(struct sock *sk)
 	val = tcp_metric_get(tm, TCP_METRIC_REORDERING);
 	if (val && tp->reordering != val) {
 		tcp_disable_fack(tp);
-		tcp_disable_early_retrans(tp);
 		tp->reordering = val;
 	}
 
@@ -606,7 +605,6 @@ bool tcp_peer_is_proven(struct request_sock *req, struct dst_entry *dst,
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(tcp_peer_is_proven);
 
 void tcp_fetch_timewait_stamp(struct sock *sk, struct dst_entry *dst)
 {

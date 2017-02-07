@@ -544,8 +544,7 @@ static inline struct sock *sk_nulls_head(const struct hlist_nulls_head *head)
 
 static inline struct sock *sk_next(const struct sock *sk)
 {
-	return sk->sk_node.next ?
-		hlist_entry(sk->sk_node.next, struct sock, sk_node) : NULL;
+	return hlist_entry_safe(sk->sk_node.next, struct sock, sk_node);
 }
 
 static inline struct sock *sk_nulls_next(const struct sock *sk)
@@ -1535,7 +1534,7 @@ void sock_efree(struct sk_buff *skb);
 #ifdef CONFIG_INET
 void sock_edemux(struct sk_buff *skb);
 #else
-#define sock_edemux(skb) sock_efree(skb)
+#define sock_edemux sock_efree
 #endif
 
 int sock_setsockopt(struct socket *sock, int level, int op,

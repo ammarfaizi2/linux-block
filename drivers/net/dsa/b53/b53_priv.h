@@ -62,6 +62,7 @@ enum {
 	BCM53019_DEVICE_ID = 0x53019,
 	BCM58XX_DEVICE_ID = 0x5800,
 	BCM7445_DEVICE_ID = 0x7445,
+	BCM7278_DEVICE_ID = 0x7278,
 };
 
 #define B53_N_PORTS	9
@@ -69,7 +70,6 @@ enum {
 
 struct b53_port {
 	u16		vlan_ctl_mask;
-	struct net_device *bridge_dev;
 };
 
 struct b53_vlan {
@@ -179,7 +179,8 @@ static inline int is5301x(struct b53_device *dev)
 static inline int is58xx(struct b53_device *dev)
 {
 	return dev->chip_id == BCM58XX_DEVICE_ID ||
-		dev->chip_id == BCM7445_DEVICE_ID;
+		dev->chip_id == BCM7445_DEVICE_ID ||
+		dev->chip_id == BCM7278_DEVICE_ID;
 }
 
 #define B53_CPU_PORT_25	5
@@ -380,7 +381,7 @@ void b53_get_strings(struct dsa_switch *ds, int port, uint8_t *data);
 void b53_get_ethtool_stats(struct dsa_switch *ds, int port, uint64_t *data);
 int b53_get_sset_count(struct dsa_switch *ds);
 int b53_br_join(struct dsa_switch *ds, int port, struct net_device *bridge);
-void b53_br_leave(struct dsa_switch *ds, int port);
+void b53_br_leave(struct dsa_switch *ds, int port, struct net_device *bridge);
 void b53_br_set_stp_state(struct dsa_switch *ds, int port, u8 state);
 void b53_br_fast_age(struct dsa_switch *ds, int port);
 int b53_vlan_filtering(struct dsa_switch *ds, int port, bool vlan_filtering);
@@ -406,5 +407,9 @@ int b53_fdb_del(struct dsa_switch *ds, int port,
 int b53_fdb_dump(struct dsa_switch *ds, int port,
 		 struct switchdev_obj_port_fdb *fdb,
 		 int (*cb)(struct switchdev_obj *obj));
+int b53_mirror_add(struct dsa_switch *ds, int port,
+		   struct dsa_mall_mirror_tc_entry *mirror, bool ingress);
+void b53_mirror_del(struct dsa_switch *ds, int port,
+		    struct dsa_mall_mirror_tc_entry *mirror);
 
 #endif

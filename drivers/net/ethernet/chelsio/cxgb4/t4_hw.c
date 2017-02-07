@@ -330,11 +330,12 @@ int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
 		 * mailbox access list but this is a start.  We very rearely
 		 * contend on access to the mailbox ...
 		 */
-		if (i > FW_CMD_MAX_TIMEOUT) {
+		pcie_fw = t4_read_reg(adap, PCIE_FW_A);
+		if (i > FW_CMD_MAX_TIMEOUT || (pcie_fw & PCIE_FW_ERR_F)) {
 			spin_lock(&adap->mbox_lock);
 			list_del(&entry.list);
 			spin_unlock(&adap->mbox_lock);
-			ret = -EBUSY;
+			ret = (pcie_fw & PCIE_FW_ERR_F) ? -ENXIO : -EBUSY;
 			t4_record_mbox(adap, cmd, size, access, ret);
 			return ret;
 		}
@@ -432,6 +433,7 @@ int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
 	spin_lock(&adap->mbox_lock);
 	list_del(&entry.list);
 	spin_unlock(&adap->mbox_lock);
+	t4_fatal_err(adap);
 	return ret;
 }
 
@@ -5501,6 +5503,7 @@ void t4_get_port_stats_offset(struct adapter *adap, int idx,
 void t4_get_port_stats(struct adapter *adap, int idx, struct port_stats *p)
 {
 	u32 bgmap = t4_get_mps_bg_map(adap, idx);
+	u32 stat_ctl = t4_read_reg(adap, MPS_STAT_CTL_A);
 
 #define GET_STAT(name) \
 	t4_read_reg64(adap, \
@@ -5532,6 +5535,14 @@ void t4_get_port_stats(struct adapter *adap, int idx, struct port_stats *p)
 	p->tx_ppp6             = GET_STAT(TX_PORT_PPP6);
 	p->tx_ppp7             = GET_STAT(TX_PORT_PPP7);
 
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) >= CHELSIO_T5) {
+		if (stat_ctl & COUNTPAUSESTATTX_F) {
+			p->tx_frames -= p->tx_pause;
+			p->tx_octets -= p->tx_pause * 64;
+		}
+		if (stat_ctl & COUNTPAUSEMCTX_F)
+			p->tx_mcast_frames -= p->tx_pause;
+	}
 	p->rx_octets           = GET_STAT(RX_PORT_BYTES);
 	p->rx_frames           = GET_STAT(RX_PORT_FRAMES);
 	p->rx_bcast_frames     = GET_STAT(RX_PORT_BCAST);
@@ -5559,6 +5570,15 @@ void t4_get_port_stats(struct adapter *adap, int idx, struct port_stats *p)
 	p->rx_ppp5             = GET_STAT(RX_PORT_PPP5);
 	p->rx_ppp6             = GET_STAT(RX_PORT_PPP6);
 	p->rx_ppp7             = GET_STAT(RX_PORT_PPP7);
+
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) >= CHELSIO_T5) {
+		if (stat_ctl & COUNTPAUSESTATRX_F) {
+			p->rx_frames -= p->rx_pause;
+			p->rx_octets -= p->rx_pause * 64;
+		}
+		if (stat_ctl & COUNTPAUSEMCRX_F)
+			p->rx_mcast_frames -= p->rx_pause;
+	}
 
 	p->rx_ovflow0 = (bgmap & 1) ? GET_STAT_COM(RX_BG_0_MAC_DROP_FRAME) : 0;
 	p->rx_ovflow1 = (bgmap & 2) ? GET_STAT_COM(RX_BG_1_MAC_DROP_FRAME) : 0;
@@ -7536,6 +7556,39 @@ int t4_prep_adapter(struct adapter *adapter)
 
 	/* Set pci completion timeout value to 4 seconds. */
 	set_pcie_completion_timeout(adapter, 0xd);
+	return 0;
+}
+
+/**
+ *	t4_shutdown_adapter - shut down adapter, host & wire
+ *	@adapter: the adapter
+ *
+ *	Perform an emergency shutdown of the adapter and stop it from
+ *	continuing any further communication on the ports or DMA to the
+ *	host.  This is typically used when the adapter and/or firmware
+ *	have crashed and we want to prevent any further accidental
+ *	communication with the rest of the world.  This will also force
+ *	the port Link Status to go down -- if register writes work --
+ *	which should help our peers figure out that we're down.
+ */
+int t4_shutdown_adapter(struct adapter *adapter)
+{
+	int port;
+
+	t4_intr_disable(adapter);
+	t4_write_reg(adapter, DBG_GPIO_EN_A, 0);
+	for_each_port(adapter, port) {
+		u32 a_port_cfg = PORT_REG(port,
+					  is_t4(adapter->params.chip)
+					  ? XGMAC_PORT_CFG_A
+					  : MAC_PORT_CFG_A);
+
+		t4_write_reg(adapter, a_port_cfg,
+			     t4_read_reg(adapter, a_port_cfg)
+			     & ~SIGNAL_DET_V(1));
+	}
+	t4_set_reg_field(adapter, SGE_CONTROL_A, GLOBALENABLE_F, 0);
+
 	return 0;
 }
 

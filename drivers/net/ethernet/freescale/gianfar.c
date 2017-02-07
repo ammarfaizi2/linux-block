@@ -2948,7 +2948,7 @@ static bool gfar_add_rx_frag(struct gfar_rx_buff *rxb, u32 lstatus,
 	}
 
 	/* try reuse page */
-	if (unlikely(page_count(page) != 1))
+	if (unlikely(page_count(page) != 1 || page_is_pfmemalloc(page)))
 		return false;
 
 	/* change offset to the other half */
@@ -3183,7 +3183,7 @@ static int gfar_poll_rx_sq(struct napi_struct *napi, int budget)
 
 	if (work_done < budget) {
 		u32 imask;
-		napi_complete(napi);
+		napi_complete_done(napi, work_done);
 		/* Clear the halt bit in RSTAT */
 		gfar_write(&regs->rstat, gfargrp->rstat);
 
@@ -3272,7 +3272,7 @@ static int gfar_poll_rx(struct napi_struct *napi, int budget)
 
 	if (!num_act_queues) {
 		u32 imask;
-		napi_complete(napi);
+		napi_complete_done(napi, work_done);
 
 		/* Clear the halt bit in RSTAT */
 		gfar_write(&regs->rstat, gfargrp->rstat);

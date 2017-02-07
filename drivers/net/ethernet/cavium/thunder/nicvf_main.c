@@ -749,7 +749,7 @@ static int nicvf_poll(struct napi_struct *napi, int budget)
 
 	if (work_done < budget) {
 		/* Slow packet rate, exit polling */
-		napi_complete(napi);
+		napi_complete_done(napi, work_done);
 		/* Re-enable interrupts */
 		cq_head = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_HEAD,
 					       cq->cq_idx);
@@ -1274,7 +1274,8 @@ int nicvf_open(struct net_device *netdev)
 	/* Configure receive side scaling and MTU */
 	if (!nic->sqs_mode) {
 		nicvf_rss_init(nic);
-		if (nicvf_update_hw_max_frs(nic, netdev->mtu))
+		err = nicvf_update_hw_max_frs(nic, netdev->mtu);
+		if (err)
 			goto cleanup;
 
 		/* Clear percpu stats */

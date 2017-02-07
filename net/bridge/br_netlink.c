@@ -123,6 +123,7 @@ static inline size_t br_port_info_size(void)
 		+ nla_total_size(1)	/* IFLA_BRPORT_GUARD */
 		+ nla_total_size(1)	/* IFLA_BRPORT_PROTECT */
 		+ nla_total_size(1)	/* IFLA_BRPORT_FAST_LEAVE */
+		+ nla_total_size(1)	/* IFLA_BRPORT_MCAST_TO_UCAST */
 		+ nla_total_size(1)	/* IFLA_BRPORT_LEARNING */
 		+ nla_total_size(1)	/* IFLA_BRPORT_UNICAST_FLOOD */
 		+ nla_total_size(1)	/* IFLA_BRPORT_PROXYARP */
@@ -173,6 +174,8 @@ static int br_port_fill_attrs(struct sk_buff *skb,
 		       !!(p->flags & BR_ROOT_BLOCK)) ||
 	    nla_put_u8(skb, IFLA_BRPORT_FAST_LEAVE,
 		       !!(p->flags & BR_MULTICAST_FAST_LEAVE)) ||
+	    nla_put_u8(skb, IFLA_BRPORT_MCAST_TO_UCAST,
+		       !!(p->flags & BR_MULTICAST_TO_UNICAST)) ||
 	    nla_put_u8(skb, IFLA_BRPORT_LEARNING, !!(p->flags & BR_LEARNING)) ||
 	    nla_put_u8(skb, IFLA_BRPORT_UNICAST_FLOOD,
 		       !!(p->flags & BR_FLOOD)) ||
@@ -586,6 +589,7 @@ static const struct nla_policy br_port_policy[IFLA_BRPORT_MAX + 1] = {
 	[IFLA_BRPORT_PROXYARP]	= { .type = NLA_U8 },
 	[IFLA_BRPORT_PROXYARP_WIFI] = { .type = NLA_U8 },
 	[IFLA_BRPORT_MULTICAST_ROUTER] = { .type = NLA_U8 },
+	[IFLA_BRPORT_MCAST_TO_UCAST] = { .type = NLA_U8 },
 };
 
 /* Change the state of the port and notify spanning tree */
@@ -636,6 +640,7 @@ static int br_setport(struct net_bridge_port *p, struct nlattr *tb[])
 	br_set_port_flag(p, tb, IFLA_BRPORT_LEARNING, BR_LEARNING);
 	br_set_port_flag(p, tb, IFLA_BRPORT_UNICAST_FLOOD, BR_FLOOD);
 	br_set_port_flag(p, tb, IFLA_BRPORT_MCAST_FLOOD, BR_MCAST_FLOOD);
+	br_set_port_flag(p, tb, IFLA_BRPORT_MCAST_TO_UCAST, BR_MULTICAST_TO_UNICAST);
 	br_set_port_flag(p, tb, IFLA_BRPORT_PROXYARP, BR_PROXYARP);
 	br_set_port_flag(p, tb, IFLA_BRPORT_PROXYARP_WIFI, BR_PROXYARP_WIFI);
 
@@ -779,20 +784,6 @@ static int br_validate(struct nlattr *tb[], struct nlattr *data[])
 #endif
 
 	return 0;
-}
-
-static int br_dev_newlink(struct net *src_net, struct net_device *dev,
-			  struct nlattr *tb[], struct nlattr *data[])
-{
-	struct net_bridge *br = netdev_priv(dev);
-
-	if (tb[IFLA_ADDRESS]) {
-		spin_lock_bh(&br->lock);
-		br_stp_change_bridge_id(br, nla_data(tb[IFLA_ADDRESS]));
-		spin_unlock_bh(&br->lock);
-	}
-
-	return register_netdevice(dev);
 }
 
 static int br_port_slave_changelink(struct net_device *brdev,
@@ -1113,6 +1104,25 @@ static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
 #endif
 
 	return 0;
+}
+
+static int br_dev_newlink(struct net *src_net, struct net_device *dev,
+			  struct nlattr *tb[], struct nlattr *data[])
+{
+	struct net_bridge *br = netdev_priv(dev);
+	int err;
+
+	if (tb[IFLA_ADDRESS]) {
+		spin_lock_bh(&br->lock);
+		br_stp_change_bridge_id(br, nla_data(tb[IFLA_ADDRESS]));
+		spin_unlock_bh(&br->lock);
+	}
+
+	err = br_changelink(dev, tb, data);
+	if (err)
+		return err;
+
+	return register_netdevice(dev);
 }
 
 static size_t br_get_size(const struct net_device *brdev)

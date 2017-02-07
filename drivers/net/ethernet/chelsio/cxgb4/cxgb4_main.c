@@ -2583,6 +2583,19 @@ static int cxgb_get_vf_config(struct net_device *dev,
 	ether_addr_copy(ivi->mac, adap->vfinfo[vf].vf_mac_addr);
 	return 0;
 }
+
+static int cxgb_get_phys_port_id(struct net_device *dev,
+				 struct netdev_phys_item_id *ppid)
+{
+	struct port_info *pi = netdev_priv(dev);
+	unsigned int phy_port_id;
+
+	phy_port_id = pi->adapter->adap_idx * 10 + pi->port_id;
+	ppid->id_len = sizeof(phy_port_id);
+	memcpy(ppid->id, &phy_port_id, ppid->id_len);
+	return 0;
+}
+
 #endif
 
 static int cxgb_set_mac_addr(struct net_device *dev, void *p)
@@ -2762,6 +2775,7 @@ static const struct net_device_ops cxgb4_mgmt_netdev_ops = {
 	.ndo_open             = dummy_open,
 	.ndo_set_vf_mac       = cxgb_set_vf_mac,
 	.ndo_get_vf_config    = cxgb_get_vf_config,
+	.ndo_get_phys_port_id = cxgb_get_phys_port_id,
 };
 #endif
 
@@ -2782,8 +2796,24 @@ static const struct ethtool_ops cxgb4_mgmt_ethtool_ops = {
 
 void t4_fatal_err(struct adapter *adap)
 {
-	t4_set_reg_field(adap, SGE_CONTROL_A, GLOBALENABLE_F, 0);
-	t4_intr_disable(adap);
+	int port;
+
+	/* Disable the SGE since ULDs are going to free resources that
+	 * could be exposed to the adapter.  RDMA MWs for example...
+	 */
+	t4_shutdown_adapter(adap);
+	for_each_port(adap, port) {
+		struct net_device *dev = adap->port[port];
+
+		/* If we get here in very early initialization the network
+		 * devices may not have been set up yet.
+		 */
+		if (!dev)
+			continue;
+
+		netif_tx_stop_all_queues(dev);
+		netif_carrier_off(dev);
+	}
 	dev_alert(adap->pdev_dev, "encountered fatal error, adapter stopped\n");
 }
 
@@ -4516,12 +4546,14 @@ static int config_mgmt_dev(struct pci_dev *pdev)
 	int err;
 
 	snprintf(name, IFNAMSIZ, "mgmtpf%d%d", adap->adap_idx, adap->pf);
-	netdev = alloc_netdev(0, name, NET_NAME_UNKNOWN, dummy_setup);
+	netdev = alloc_netdev(sizeof(struct port_info), name, NET_NAME_UNKNOWN,
+			      dummy_setup);
 	if (!netdev)
 		return -ENOMEM;
 
 	pi = netdev_priv(netdev);
 	pi->adapter = adap;
+	pi->port_id = adap->pf % adap->params.nports;
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
 	adap->port[0] = netdev;
@@ -4611,6 +4643,9 @@ static int init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	u32 whoami, pl_rev;
 	enum chip_type chip;
 	static int adap_idx = 1;
+#ifdef CONFIG_PCI_IOV
+	u32 v, port_vec;
+#endif
 
 	printk_once(KERN_INFO "%s - version %s\n", DRV_DESC, DRV_VERSION);
 
@@ -4990,6 +5025,19 @@ sriov:
 		err = -ENOMEM;
 		goto free_adapter;
 	}
+	spin_lock_init(&adapter->mbox_lock);
+	INIT_LIST_HEAD(&adapter->mlist.list);
+
+	v = FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
+	    FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_PORTVEC);
+	err = t4_query_params(adapter, adapter->mbox, adapter->pf, 0, 1,
+			      &v, &port_vec);
+	if (err < 0) {
+		dev_err(adapter->pdev_dev, "Could not fetch port params\n");
+		goto free_adapter;
+	}
+
+	adapter->params.nports = hweight32(port_vec);
 	pci_set_drvdata(pdev, adapter);
 	return 0;
 

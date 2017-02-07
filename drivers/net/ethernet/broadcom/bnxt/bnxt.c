@@ -1096,7 +1096,7 @@ static struct sk_buff *bnxt_gro_func_5730x(struct bnxt_tpa_info *tpa_info,
 {
 #ifdef CONFIG_INET
 	struct tcphdr *th;
-	int len, nw_off, tcp_opt_len;
+	int len, nw_off, tcp_opt_len = 0;
 
 	if (tcp_ts)
 		tcp_opt_len = 12;
@@ -1759,7 +1759,7 @@ static int bnxt_poll_nitroa0(struct napi_struct *napi, int budget)
 	}
 
 	if (!bnxt_has_work(bp, cpr) && rx_pkts < budget) {
-		napi_complete(napi);
+		napi_complete_done(napi, rx_pkts);
 		BNXT_CP_DB_REARM(cpr->cp_doorbell, cpr->cp_raw_cons);
 	}
 	return rx_pkts;
@@ -2467,6 +2467,8 @@ static int bnxt_calc_nr_ring_pages(u32 ring_size, int desc_per_pg)
 static void bnxt_set_tpa_flags(struct bnxt *bp)
 {
 	bp->flags &= ~BNXT_FLAG_TPA;
+	if (bp->flags & BNXT_FLAG_NO_AGG_RINGS)
+		return;
 	if (bp->dev->features & NETIF_F_LRO)
 		bp->flags |= BNXT_FLAG_LRO;
 	if (bp->dev->features & NETIF_F_GRO)
@@ -4944,6 +4946,7 @@ static int bnxt_setup_int_mode(struct bnxt *bp)
 	return rc;
 }
 
+#ifdef CONFIG_RFS_ACCEL
 static unsigned int bnxt_get_max_func_rss_ctxs(struct bnxt *bp)
 {
 #if defined(CONFIG_BNXT_SRIOV)
@@ -4961,6 +4964,7 @@ static unsigned int bnxt_get_max_func_vnics(struct bnxt *bp)
 #endif
 	return bp->pf.max_vnics;
 }
+#endif
 
 unsigned int bnxt_get_max_func_stat_ctxs(struct bnxt *bp)
 {
@@ -5437,17 +5441,12 @@ static int bnxt_update_link(struct bnxt *bp, bool chng_link_state)
 	if ((link_info->support_auto_speeds | diff) !=
 	    link_info->support_auto_speeds) {
 		/* An advertised speed is no longer supported, so we need to
-		 * update the advertisement settings.  See bnxt_reset() for
-		 * comments about the rtnl_lock() sequence below.
+		 * update the advertisement settings.  Caller holds RTNL
+		 * so we can modify link settings.
 		 */
-		clear_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
-		rtnl_lock();
 		link_info->advertising = link_info->support_auto_speeds;
-		if (test_bit(BNXT_STATE_OPEN, &bp->state) &&
-		    (link_info->autoneg & BNXT_AUTONEG_SPEED))
+		if (link_info->autoneg & BNXT_AUTONEG_SPEED)
 			bnxt_hwrm_set_link_setting(bp, true, false);
-		set_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
-		rtnl_unlock();
 	}
 	return 0;
 }
@@ -5615,6 +5614,45 @@ static int bnxt_hwrm_shutdown_link(struct bnxt *bp)
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_CFG, -1, -1);
 	req.flags = cpu_to_le32(PORT_PHY_CFG_REQ_FLAGS_FORCE_LINK_DWN);
 	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+}
+
+static int bnxt_hwrm_port_led_qcaps(struct bnxt *bp)
+{
+	struct hwrm_port_led_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
+	struct hwrm_port_led_qcaps_input req = {0};
+	struct bnxt_pf_info *pf = &bp->pf;
+	int rc;
+
+	if (BNXT_VF(bp) || bp->hwrm_spec_code < 0x10601)
+		return 0;
+
+	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_LED_QCAPS, -1, -1);
+	req.port_id = cpu_to_le16(pf->port_id);
+	mutex_lock(&bp->hwrm_cmd_lock);
+	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+	if (rc) {
+		mutex_unlock(&bp->hwrm_cmd_lock);
+		return rc;
+	}
+	if (resp->num_leds > 0 && resp->num_leds < BNXT_MAX_LED) {
+		int i;
+
+		bp->num_leds = resp->num_leds;
+		memcpy(bp->leds, &resp->led0_id, sizeof(bp->leds[0]) *
+						 bp->num_leds);
+		for (i = 0; i < bp->num_leds; i++) {
+			struct bnxt_led_info *led = &bp->leds[i];
+			__le16 caps = led->led_state_caps;
+
+			if (!led->led_group_id ||
+			    !BNXT_LED_ALT_BLINK_CAP(caps)) {
+				bp->num_leds = 0;
+				break;
+			}
+		}
+	}
+	mutex_unlock(&bp->hwrm_cmd_lock);
+	return 0;
 }
 
 static bool bnxt_eee_config_ok(struct bnxt *bp)
@@ -6324,21 +6362,30 @@ bnxt_restart_timer:
 	mod_timer(&bp->timer, jiffies + bp->current_interval);
 }
 
-/* Only called from bnxt_sp_task() */
-static void bnxt_reset(struct bnxt *bp, bool silent)
+static void bnxt_rtnl_lock_sp(struct bnxt *bp)
 {
-	/* bnxt_reset_task() calls bnxt_close_nic() which waits
-	 * for BNXT_STATE_IN_SP_TASK to clear.
-	 * If there is a parallel dev_close(), bnxt_close() may be holding
+	/* We are called from bnxt_sp_task which has BNXT_STATE_IN_SP_TASK
+	 * set.  If the device is being closed, bnxt_close() may be holding
 	 * rtnl() and waiting for BNXT_STATE_IN_SP_TASK to clear.  So we
 	 * must clear BNXT_STATE_IN_SP_TASK before holding rtnl().
 	 */
 	clear_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
 	rtnl_lock();
-	if (test_bit(BNXT_STATE_OPEN, &bp->state))
-		bnxt_reset_task(bp, silent);
+}
+
+static void bnxt_rtnl_unlock_sp(struct bnxt *bp)
+{
 	set_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
 	rtnl_unlock();
+}
+
+/* Only called from bnxt_sp_task() */
+static void bnxt_reset(struct bnxt *bp, bool silent)
+{
+	bnxt_rtnl_lock_sp(bp);
+	if (test_bit(BNXT_STATE_OPEN, &bp->state))
+		bnxt_reset_task(bp, silent);
+	bnxt_rtnl_unlock_sp(bp);
 }
 
 static void bnxt_cfg_ntp_filters(struct bnxt *);
@@ -6346,7 +6393,6 @@ static void bnxt_cfg_ntp_filters(struct bnxt *);
 static void bnxt_sp_task(struct work_struct *work)
 {
 	struct bnxt *bp = container_of(work, struct bnxt, sp_task);
-	int rc;
 
 	set_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
 	smp_mb__after_atomic();
@@ -6360,16 +6406,6 @@ static void bnxt_sp_task(struct work_struct *work)
 
 	if (test_and_clear_bit(BNXT_RX_NTP_FLTR_SP_EVENT, &bp->sp_event))
 		bnxt_cfg_ntp_filters(bp);
-	if (test_and_clear_bit(BNXT_LINK_CHNG_SP_EVENT, &bp->sp_event)) {
-		if (test_and_clear_bit(BNXT_LINK_SPEED_CHNG_SP_EVENT,
-				       &bp->sp_event))
-			bnxt_hwrm_phy_qcaps(bp);
-
-		rc = bnxt_update_link(bp, true);
-		if (rc)
-			netdev_err(bp->dev, "SP task can't update link (rc: %x)\n",
-				   rc);
-	}
 	if (test_and_clear_bit(BNXT_HWRM_EXEC_FWD_REQ_SP_EVENT, &bp->sp_event))
 		bnxt_hwrm_exec_fwd_req(bp);
 	if (test_and_clear_bit(BNXT_VXLAN_ADD_PORT_SP_EVENT, &bp->sp_event)) {
@@ -6390,17 +6426,38 @@ static void bnxt_sp_task(struct work_struct *work)
 		bnxt_hwrm_tunnel_dst_port_free(
 			bp, TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_GENEVE);
 	}
+	if (test_and_clear_bit(BNXT_PERIODIC_STATS_SP_EVENT, &bp->sp_event))
+		bnxt_hwrm_port_qstats(bp);
+
+	/* These functions below will clear BNXT_STATE_IN_SP_TASK.  They
+	 * must be the last functions to be called before exiting.
+	 */
+	if (test_and_clear_bit(BNXT_LINK_CHNG_SP_EVENT, &bp->sp_event)) {
+		int rc = 0;
+
+		if (test_and_clear_bit(BNXT_LINK_SPEED_CHNG_SP_EVENT,
+				       &bp->sp_event))
+			bnxt_hwrm_phy_qcaps(bp);
+
+		bnxt_rtnl_lock_sp(bp);
+		if (test_bit(BNXT_STATE_OPEN, &bp->state))
+			rc = bnxt_update_link(bp, true);
+		bnxt_rtnl_unlock_sp(bp);
+		if (rc)
+			netdev_err(bp->dev, "SP task can't update link (rc: %x)\n",
+				   rc);
+	}
+	if (test_and_clear_bit(BNXT_HWRM_PORT_MODULE_SP_EVENT, &bp->sp_event)) {
+		bnxt_rtnl_lock_sp(bp);
+		if (test_bit(BNXT_STATE_OPEN, &bp->state))
+			bnxt_get_port_module_status(bp);
+		bnxt_rtnl_unlock_sp(bp);
+	}
 	if (test_and_clear_bit(BNXT_RESET_TASK_SP_EVENT, &bp->sp_event))
 		bnxt_reset(bp, false);
 
 	if (test_and_clear_bit(BNXT_RESET_TASK_SILENT_SP_EVENT, &bp->sp_event))
 		bnxt_reset(bp, true);
-
-	if (test_and_clear_bit(BNXT_HWRM_PORT_MODULE_SP_EVENT, &bp->sp_event))
-		bnxt_get_port_module_status(bp);
-
-	if (test_and_clear_bit(BNXT_PERIODIC_STATS_SP_EVENT, &bp->sp_event))
-		bnxt_hwrm_port_qstats(bp);
 
 	smp_mb__before_atomic();
 	clear_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
@@ -7240,6 +7297,7 @@ static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	}
 
 	bnxt_hwrm_func_qcfg(bp);
+	bnxt_hwrm_port_led_qcaps(bp);
 
 	bnxt_set_tpa_flags(bp);
 	bnxt_set_ring_params(bp);

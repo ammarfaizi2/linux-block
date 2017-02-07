@@ -395,6 +395,36 @@ static const struct bpf_func_proto bpf_current_task_under_cgroup_proto = {
 	.arg2_type      = ARG_ANYTHING,
 };
 
+BPF_CALL_3(bpf_probe_read_str, void *, dst, u32, size,
+	   const void *, unsafe_ptr)
+{
+	int ret;
+
+	/*
+	 * The strncpy_from_unsafe() call will likely not fill the entire
+	 * buffer, but that's okay in this circumstance as we're probing
+	 * arbitrary memory anyway similar to bpf_probe_read() and might
+	 * as well probe the stack. Thus, memory is explicitly cleared
+	 * only in error case, so that improper users ignoring return
+	 * code altogether don't copy garbage; otherwise length of string
+	 * is returned that can be used for bpf_perf_event_output() et al.
+	 */
+	ret = strncpy_from_unsafe(dst, unsafe_ptr, size);
+	if (unlikely(ret < 0))
+		memset(dst, 0, size);
+
+	return ret;
+}
+
+static const struct bpf_func_proto bpf_probe_read_str_proto = {
+	.func		= bpf_probe_read_str,
+	.gpl_only	= true,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_PTR_TO_UNINIT_MEM,
+	.arg2_type	= ARG_CONST_SIZE,
+	.arg3_type	= ARG_ANYTHING,
+};
+
 static const struct bpf_func_proto *tracing_func_proto(enum bpf_func_id func_id)
 {
 	switch (func_id) {
@@ -432,6 +462,8 @@ static const struct bpf_func_proto *tracing_func_proto(enum bpf_func_id func_id)
 		return &bpf_current_task_under_cgroup_proto;
 	case BPF_FUNC_get_prandom_u32:
 		return &bpf_get_prandom_u32_proto;
+	case BPF_FUNC_probe_read_str:
+		return &bpf_probe_read_str_proto;
 	default:
 		return NULL;
 	}
@@ -459,6 +491,13 @@ static bool kprobe_prog_is_valid_access(int off, int size, enum bpf_access_type 
 		return false;
 	if (off % size != 0)
 		return false;
+	/*
+	 * Assertion for 32 bit to make sure last 8 byte access
+	 * (BPF_DW) to the last 4 byte member is disallowed.
+	 */
+	if (off + size > sizeof(struct pt_regs))
+		return false;
+
 	return true;
 }
 
@@ -540,6 +579,8 @@ static bool tp_prog_is_valid_access(int off, int size, enum bpf_access_type type
 		return false;
 	if (off % size != 0)
 		return false;
+
+	BUILD_BUG_ON(PERF_MAX_TRACE_SIZE % sizeof(__u64));
 	return true;
 }
 
@@ -572,28 +613,29 @@ static bool pe_prog_is_valid_access(int off, int size, enum bpf_access_type type
 	return true;
 }
 
-static u32 pe_prog_convert_ctx_access(enum bpf_access_type type, int dst_reg,
-				      int src_reg, int ctx_off,
+static u32 pe_prog_convert_ctx_access(enum bpf_access_type type,
+				      const struct bpf_insn *si,
 				      struct bpf_insn *insn_buf,
 				      struct bpf_prog *prog)
 {
 	struct bpf_insn *insn = insn_buf;
 
-	switch (ctx_off) {
+	switch (si->off) {
 	case offsetof(struct bpf_perf_event_data, sample_period):
 		BUILD_BUG_ON(FIELD_SIZEOF(struct perf_sample_data, period) != sizeof(u64));
 
 		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct bpf_perf_event_data_kern,
-						       data), dst_reg, src_reg,
+						       data), si->dst_reg, si->src_reg,
 				      offsetof(struct bpf_perf_event_data_kern, data));
-		*insn++ = BPF_LDX_MEM(BPF_DW, dst_reg, dst_reg,
+		*insn++ = BPF_LDX_MEM(BPF_DW, si->dst_reg, si->dst_reg,
 				      offsetof(struct perf_sample_data, period));
 		break;
 	default:
 		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct bpf_perf_event_data_kern,
-						       regs), dst_reg, src_reg,
+						       regs), si->dst_reg, si->src_reg,
 				      offsetof(struct bpf_perf_event_data_kern, regs));
-		*insn++ = BPF_LDX_MEM(BPF_SIZEOF(long), dst_reg, dst_reg, ctx_off);
+		*insn++ = BPF_LDX_MEM(BPF_SIZEOF(long), si->dst_reg, si->dst_reg,
+				      si->off);
 		break;
 	}
 

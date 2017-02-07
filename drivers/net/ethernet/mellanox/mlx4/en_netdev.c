@@ -1695,6 +1695,14 @@ int mlx4_en_start_port(struct net_device *dev)
 		       priv->port, err);
 		goto tx_err;
 	}
+
+	err = mlx4_SET_PORT_user_mtu(mdev->dev, priv->port, dev->mtu);
+	if (err) {
+		en_err(priv, "Failed to pass user MTU(%d) to Firmware for port %d, with error %d\n",
+		       dev->mtu, priv->port, err);
+		goto tx_err;
+	}
+
 	/* Set default qp number */
 	err = mlx4_SET_PORT_qpn_calc(mdev->dev, priv->port, priv->base_qpn, 0);
 	if (err) {
@@ -1746,8 +1754,11 @@ int mlx4_en_start_port(struct net_device *dev)
 	/* Process all completions if exist to prevent
 	 * the queues freezing if they are full
 	 */
-	for (i = 0; i < priv->rx_ring_num; i++)
+	for (i = 0; i < priv->rx_ring_num; i++) {
+		local_bh_disable();
 		napi_schedule(&priv->rx_cq[i]->napi);
+		local_bh_enable();
+	}
 
 	netif_tx_start_all_queues(dev);
 	netif_device_attach(dev);
@@ -2275,7 +2286,7 @@ static int mlx4_en_change_mtu(struct net_device *dev, int new_mtu)
 
 	if (priv->tx_ring_num[TX_XDP] &&
 	    !mlx4_en_check_xdp_mtu(dev, new_mtu))
-		return -ENOTSUPP;
+		return -EOPNOTSUPP;
 
 	dev->mtu = new_mtu;
 

@@ -161,9 +161,10 @@ struct bpf_verifier_ops {
 				enum bpf_reg_type *reg_type);
 	int (*gen_prologue)(struct bpf_insn *insn, bool direct_write,
 			    const struct bpf_prog *prog);
-	u32 (*convert_ctx_access)(enum bpf_access_type type, int dst_reg,
-				  int src_reg, int ctx_off,
-				  struct bpf_insn *insn, struct bpf_prog *prog);
+	u32 (*convert_ctx_access)(enum bpf_access_type type,
+				  const struct bpf_insn *src,
+				  struct bpf_insn *dst,
+				  struct bpf_prog *prog);
 };
 
 struct bpf_prog_type_list {
@@ -216,7 +217,7 @@ u64 bpf_tail_call(u64 ctx, u64 r2, u64 index, u64 r4, u64 r5);
 u64 bpf_get_stackid(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5);
 
 bool bpf_prog_array_compatible(struct bpf_array *array, const struct bpf_prog *fp);
-int bpf_prog_calc_digest(struct bpf_prog *fp);
+int bpf_prog_calc_tag(struct bpf_prog *fp);
 
 const struct bpf_func_proto *bpf_get_trace_printk_proto(void);
 
@@ -247,6 +248,8 @@ struct bpf_map * __must_check bpf_map_inc(struct bpf_map *map, bool uref);
 void bpf_map_put_with_uref(struct bpf_map *map);
 void bpf_map_put(struct bpf_map *map);
 int bpf_map_precharge_memlock(u32 pages);
+void *bpf_map_area_alloc(size_t size);
+void bpf_map_area_free(void *base);
 
 extern int sysctl_unprivileged_bpf_disabled;
 

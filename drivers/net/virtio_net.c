@@ -23,6 +23,7 @@
 #include <linux/virtio.h>
 #include <linux/virtio_net.h>
 #include <linux/bpf.h>
+#include <linux/bpf_trace.h>
 #include <linux/scatterlist.h>
 #include <linux/if_vlan.h>
 #include <linux/slab.h>
@@ -48,8 +49,16 @@ module_param(gso, bool, 0444);
  */
 DECLARE_EWMA(pkt_len, 1, 64)
 
+/* With mergeable buffers we align buffer address and use the low bits to
+ * encode its true size. Buffer size is up to 1 page so we need to align to
+ * square root of page size to ensure we reserve enough bits to encode the true
+ * size.
+ */
+#define MERGEABLE_BUFFER_MIN_ALIGN_SHIFT ((PAGE_SHIFT + 1) / 2)
+
 /* Minimum alignment for mergeable packet buffers. */
-#define MERGEABLE_BUFFER_ALIGN max(L1_CACHE_BYTES, 256)
+#define MERGEABLE_BUFFER_ALIGN max(L1_CACHE_BYTES, \
+				   1 << MERGEABLE_BUFFER_MIN_ALIGN_SHIFT)
 
 #define VIRTNET_DRIVER_VERSION "1.0.0"
 
@@ -330,7 +339,7 @@ static struct sk_buff *page_to_skb(struct virtnet_info *vi,
 	return skb;
 }
 
-static void virtnet_xdp_xmit(struct virtnet_info *vi,
+static bool virtnet_xdp_xmit(struct virtnet_info *vi,
 			     struct receive_queue *rq,
 			     struct send_queue *sq,
 			     struct xdp_buff *xdp,
@@ -382,10 +391,12 @@ static void virtnet_xdp_xmit(struct virtnet_info *vi,
 			put_page(page);
 		} else /* small buffer */
 			kfree_skb(data);
-		return; // On error abort to avoid unnecessary kick
+		/* On error abort to avoid unnecessary kick */
+		return false;
 	}
 
 	virtqueue_kick(sq->vq);
+	return true;
 }
 
 static u32 do_xdp_prog(struct virtnet_info *vi,
@@ -421,11 +432,14 @@ static u32 do_xdp_prog(struct virtnet_info *vi,
 			vi->xdp_queue_pairs +
 			smp_processor_id();
 		xdp.data = buf;
-		virtnet_xdp_xmit(vi, rq, &vi->sq[qp], &xdp, data);
+		if (unlikely(!virtnet_xdp_xmit(vi, rq, &vi->sq[qp], &xdp,
+					       data)))
+			trace_xdp_exception(vi->dev, xdp_prog, act);
 		return XDP_TX;
 	default:
 		bpf_warn_invalid_xdp_action(act);
 	case XDP_ABORTED:
+		trace_xdp_exception(vi->dev, xdp_prog, act);
 	case XDP_DROP:
 		return XDP_DROP;
 	}
@@ -1104,7 +1118,7 @@ static int xmit_skb(struct send_queue *sq, struct sk_buff *skb)
 		hdr = skb_vnet_hdr(skb);
 
 	if (virtio_net_hdr_from_skb(skb, &hdr->hdr,
-				    virtio_is_little_endian(vi->vdev)))
+				    virtio_is_little_endian(vi->vdev), false))
 		BUG();
 
 	if (vi->mergeable_rx_bufs)
@@ -1704,6 +1718,11 @@ static int virtnet_xdp_set(struct net_device *dev, struct bpf_prog *prog)
 	u16 xdp_qp = 0, curr_qp;
 	int i, err;
 
+	if (prog && prog->xdp_adjust_head) {
+		netdev_warn(dev, "Does not support bpf_xdp_adjust_head()\n");
+		return -EOPNOTSUPP;
+	}
+
 	if (virtio_has_feature(vi->vdev, VIRTIO_NET_F_GUEST_TSO4) ||
 	    virtio_has_feature(vi->vdev, VIRTIO_NET_F_GUEST_TSO6) ||
 	    virtio_has_feature(vi->vdev, VIRTIO_NET_F_GUEST_ECN) ||
@@ -1887,8 +1906,12 @@ static void free_receive_page_frags(struct virtnet_info *vi)
 			put_page(vi->rq[i].alloc_frag.page);
 }
 
-static bool is_xdp_queue(struct virtnet_info *vi, int q)
+static bool is_xdp_raw_buffer_queue(struct virtnet_info *vi, int q)
 {
+	/* For small receive mode always use kfree_skb variants */
+	if (!vi->mergeable_rx_bufs)
+		return false;
+
 	if (q < (vi->curr_queue_pairs - vi->xdp_queue_pairs))
 		return false;
 	else if (q < vi->curr_queue_pairs)
@@ -1905,7 +1928,7 @@ static void free_unused_bufs(struct virtnet_info *vi)
 	for (i = 0; i < vi->max_queue_pairs; i++) {
 		struct virtqueue *vq = vi->sq[i].vq;
 		while ((buf = virtqueue_detach_unused_buf(vq)) != NULL) {
-			if (!is_xdp_queue(vi, i))
+			if (!is_xdp_raw_buffer_queue(vi, i))
 				dev_kfree_skb(buf);
 			else
 				put_page(virt_to_head_page(buf));

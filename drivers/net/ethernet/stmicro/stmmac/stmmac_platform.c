@@ -191,7 +191,7 @@ static int stmmac_dt_phy(struct plat_stmmacenet_data *plat,
 		for_each_child_of_node(np, plat->mdio_node) {
 			if (of_device_is_compatible(plat->mdio_node,
 						    "snps,dwmac-mdio"))
-			break;
+				break;
 		}
 	}
 
@@ -409,6 +409,7 @@ void stmmac_remove_config_dt(struct platform_device *pdev,
 	if (of_phy_is_fixed_link(np))
 		of_phy_deregister_fixed_link(np);
 	of_node_put(plat->phy_node);
+	of_node_put(plat->mdio_node);
 }
 #else
 struct plat_stmmacenet_data *

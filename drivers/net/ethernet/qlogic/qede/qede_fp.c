@@ -32,6 +32,7 @@
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
+#include <linux/bpf_trace.h>
 #include <net/udp_tunnel.h>
 #include <linux/ip.h>
 #include <net/ipv6.h>
@@ -1016,6 +1017,7 @@ static bool qede_rx_xdp(struct qede_dev *edev,
 		/* We need the replacement buffer before transmit. */
 		if (qede_alloc_rx_buffer(rxq, true)) {
 			qede_recycle_rx_bd_ring(rxq, 1);
+			trace_xdp_exception(edev->ndev, prog, act);
 			return false;
 		}
 
@@ -1026,6 +1028,7 @@ static bool qede_rx_xdp(struct qede_dev *edev,
 			dma_unmap_page(rxq->dev, bd->mapping,
 				       PAGE_SIZE, DMA_BIDIRECTIONAL);
 			__free_page(bd->data);
+			trace_xdp_exception(edev->ndev, prog, act);
 		}
 
 		/* Regardless, we've consumed an Rx BD */
@@ -1035,6 +1038,7 @@ static bool qede_rx_xdp(struct qede_dev *edev,
 	default:
 		bpf_warn_invalid_xdp_action(act);
 	case XDP_ABORTED:
+		trace_xdp_exception(edev->ndev, prog, act);
 	case XDP_DROP:
 		qede_recycle_rx_bd_ring(rxq, cqe->bd_num);
 	}
@@ -1368,7 +1372,7 @@ int qede_poll(struct napi_struct *napi, int budget)
 			qede_rx_int(fp, budget) : 0;
 	if (rx_work_done < budget) {
 		if (!qede_poll_is_more_work(fp)) {
-			napi_complete(napi);
+			napi_complete_done(napi, rx_work_done);
 
 			/* Update and reenable interrupts */
 			qed_sb_ack(fp->sb_info, IGU_INT_ENABLE, 1);

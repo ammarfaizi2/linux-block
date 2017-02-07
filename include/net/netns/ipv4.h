@@ -124,6 +124,10 @@ struct netns_ipv4 {
 	struct inet_timewait_death_row tcp_death_row;
 	int sysctl_max_syn_backlog;
 
+#ifdef CONFIG_NET_L3_MASTER_DEV
+	int sysctl_udp_l3mdev_accept;
+#endif
+
 	int sysctl_igmp_max_memberships;
 	int sysctl_igmp_max_msf;
 	int sysctl_igmp_llm_reports;
@@ -135,6 +139,7 @@ struct netns_ipv4 {
 
 #ifdef CONFIG_SYSCTL
 	unsigned long *sysctl_local_reserved_ports;
+	int sysctl_ip_prot_sock;
 #endif
 
 #ifdef CONFIG_IP_MROUTE

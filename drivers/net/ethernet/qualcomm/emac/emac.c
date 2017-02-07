@@ -129,7 +129,7 @@ static int emac_napi_rtx(struct napi_struct *napi, int budget)
 	emac_mac_rx_process(adpt, rx_q, &work_done, budget);
 
 	if (work_done < budget) {
-		napi_complete(napi);
+		napi_complete_done(napi, work_done);
 
 		irq->mask |= rx_q->intr;
 		writel(irq->mask, adpt->base + EMAC_INT_MASK);
@@ -256,22 +256,37 @@ static int emac_change_mtu(struct net_device *netdev, int new_mtu)
 static int emac_open(struct net_device *netdev)
 {
 	struct emac_adapter *adpt = netdev_priv(netdev);
+	struct emac_irq	*irq = &adpt->irq;
 	int ret;
+
+	ret = request_irq(irq->irq, emac_isr, 0, "emac-core0", irq);
+	if (ret) {
+		netdev_err(adpt->netdev, "could not request emac-core0 irq\n");
+		return ret;
+	}
 
 	/* allocate rx/tx dma buffer & descriptors */
 	ret = emac_mac_rx_tx_rings_alloc_all(adpt);
 	if (ret) {
 		netdev_err(adpt->netdev, "error allocating rx/tx rings\n");
+		free_irq(irq->irq, irq);
 		return ret;
 	}
 
 	ret = emac_mac_up(adpt);
 	if (ret) {
 		emac_mac_rx_tx_rings_free_all(adpt);
+		free_irq(irq->irq, irq);
 		return ret;
 	}
 
-	emac_mac_start(adpt);
+	ret = adpt->phy.open(adpt);
+	if (ret) {
+		emac_mac_down(adpt);
+		emac_mac_rx_tx_rings_free_all(adpt);
+		free_irq(irq->irq, irq);
+		return ret;
+	}
 
 	return 0;
 }
@@ -283,8 +298,11 @@ static int emac_close(struct net_device *netdev)
 
 	mutex_lock(&adpt->reset_lock);
 
+	adpt->phy.close(adpt);
 	emac_mac_down(adpt);
 	emac_mac_rx_tx_rings_free_all(adpt);
+
+	free_irq(adpt->irq.irq, &adpt->irq);
 
 	mutex_unlock(&adpt->reset_lock);
 
@@ -602,7 +620,7 @@ static int emac_probe(struct platform_device *pdev)
 {
 	struct net_device *netdev;
 	struct emac_adapter *adpt;
-	struct emac_phy *phy;
+	struct emac_sgmii *phy;
 	u16 devid, revid;
 	u32 reg;
 	int ret;
@@ -636,6 +654,7 @@ static int emac_probe(struct platform_device *pdev)
 	adpt->msg_enable = EMAC_MSG_DEFAULT;
 
 	phy = &adpt->phy;
+	atomic_set(&phy->decode_error_count, 0);
 
 	mutex_init(&adpt->reset_lock);
 	spin_lock_init(&adpt->stats.lock);
@@ -729,8 +748,7 @@ static int emac_probe(struct platform_device *pdev)
 err_undo_napi:
 	netif_napi_del(&adpt->rx_q.napi);
 err_undo_mdiobus:
-	if (!has_acpi_companion(&pdev->dev))
-		put_device(&adpt->phydev->mdio.dev);
+	put_device(&adpt->phydev->mdio.dev);
 	mdiobus_unregister(adpt->mii_bus);
 err_undo_clocks:
 	emac_clks_teardown(adpt);
@@ -750,8 +768,7 @@ static int emac_remove(struct platform_device *pdev)
 
 	emac_clks_teardown(adpt);
 
-	if (!has_acpi_companion(&pdev->dev))
-		put_device(&adpt->phydev->mdio.dev);
+	put_device(&adpt->phydev->mdio.dev);
 	mdiobus_unregister(adpt->mii_bus);
 	free_netdev(netdev);
 

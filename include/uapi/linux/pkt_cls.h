@@ -4,6 +4,8 @@
 #include <linux/types.h>
 #include <linux/pkt_sched.h>
 
+#define TC_COOKIE_MAX_SIZE 16
+
 /* Action attributes */
 enum {
 	TCA_ACT_UNSPEC,
@@ -12,6 +14,7 @@ enum {
 	TCA_ACT_INDEX,
 	TCA_ACT_STATS,
 	TCA_ACT_PAD,
+	TCA_ACT_COOKIE,
 	__TCA_ACT_MAX
 };
 
@@ -342,7 +345,7 @@ enum {
 	TCA_BPF_NAME,
 	TCA_BPF_FLAGS,
 	TCA_BPF_FLAGS_GEN,
-	TCA_BPF_DIGEST,
+	TCA_BPF_TAG,
 	__TCA_BPF_MAX,
 };
 
@@ -415,6 +418,17 @@ enum {
 	TCA_FLOWER_KEY_ICMPV6_CODE_MASK,/* u8 */
 	TCA_FLOWER_KEY_ICMPV6_TYPE,	/* u8 */
 	TCA_FLOWER_KEY_ICMPV6_TYPE_MASK,/* u8 */
+
+	TCA_FLOWER_KEY_ARP_SIP,		/* be32 */
+	TCA_FLOWER_KEY_ARP_SIP_MASK,	/* be32 */
+	TCA_FLOWER_KEY_ARP_TIP,		/* be32 */
+	TCA_FLOWER_KEY_ARP_TIP_MASK,	/* be32 */
+	TCA_FLOWER_KEY_ARP_OP,		/* u8 */
+	TCA_FLOWER_KEY_ARP_OP_MASK,	/* u8 */
+	TCA_FLOWER_KEY_ARP_SHA,		/* ETH_ALEN */
+	TCA_FLOWER_KEY_ARP_SHA_MASK,	/* ETH_ALEN */
+	TCA_FLOWER_KEY_ARP_THA,		/* ETH_ALEN */
+	TCA_FLOWER_KEY_ARP_THA_MASK,	/* ETH_ALEN */
 
 	__TCA_FLOWER_MAX,
 };
