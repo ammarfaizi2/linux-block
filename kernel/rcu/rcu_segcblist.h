@@ -215,6 +215,8 @@ static inline bool rcu_segcblist_is_enabled(struct rcu_segcblist *rsclp)
 static inline void rcu_segcblist_disable(struct rcu_segcblist *rsclp)
 {
 	WARN_ON_ONCE(!rcu_segcblist_empty(rsclp));
+	WARN_ON_ONCE(rcu_segcblist_n_cbs(rsclp));
+	WARN_ON_ONCE(rcu_segcblist_n_lazy_cbs(rsclp));
 	rsclp->tails[RCU_NEXT_TAIL] = NULL;
 }
 
