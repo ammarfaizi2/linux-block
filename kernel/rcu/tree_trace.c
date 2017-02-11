@@ -41,6 +41,7 @@
 #include <linux/mutex.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
+#include <linux/prefetch.h>
 
 #define RCU_TREE_NONCORE
 #include "tree.h"
