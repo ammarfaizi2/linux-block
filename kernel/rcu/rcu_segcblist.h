@@ -604,7 +604,6 @@ static inline void rcu_segcblist_dump(struct rcu_segcblist *rsclp)
 		pr_info("\t->tails[%d] = %p, ->gp_seq[%d] = %ld\n",
 		       i, rsclp->tails[i], i, rsclp->gp_seq[i]);
 	pr_info("->len = %ld, ->len_lazy = %ld\n", rsclp->len, rsclp->len_lazy);
-	fflush(stdout);
 }
 
 /*
