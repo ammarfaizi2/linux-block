@@ -618,24 +618,24 @@ do { \
 	long cnt = 0; \
 	int i = 0; \
 	struct rcu_head **rhp = &___rsclp->head; \
+	static bool notdone1 = true; \
+	static bool notdone2 = true; \
 	\
 	for (;;) { \
 		while (i < RCU_CBLIST_NSEGS && ___rsclp->tails[i] == rhp) \
 			++i; \
 		if (*rhp == NULL) \
 			break; \
-		if (rhp != &___rsclp->head) { \
-			if (++cnt > ___lim) \
-				break; \
-		} \
+		if (rhp != &___rsclp->head && ++cnt > ___lim) \
+			break; \
 		rhp = &(*rhp)->next; \
 	} \
-	if (cnt < ___lim && cnt != ___rsclp->len) { \
+	if (cnt < ___lim && cnt != ___rsclp->len && xchg(&notdone1, false)) { \
 		pr_info("cnt = %ld\n", cnt); \
 		rcu_segcblist_dump(___rsclp); \
 	} \
 	WARN_ON_ONCE(cnt < ___lim && cnt != ___rsclp->len); \
-	if (cnt < ___lim && i != RCU_CBLIST_NSEGS) { \
+	if (cnt < ___lim && i != RCU_CBLIST_NSEGS && xchg(&notdone2, false)) { \
 		pr_info("i = %d\n", i); \
 		rcu_segcblist_dump(___rsclp); \
 	} \
