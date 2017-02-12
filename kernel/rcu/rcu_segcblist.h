@@ -595,4 +595,55 @@ static inline struct rcu_head **rcu_segcblist_tail(struct rcu_segcblist *rsclp)
 	return rsclp->tails[RCU_NEXT_TAIL];
 }
 
+static inline void rcu_segcblist_dump(struct rcu_segcblist *rsclp)
+{
+	int i;
+
+	pr_info("%p->head = %p\n", rsclp, rsclp->head);
+	for (i = RCU_DONE_TAIL; i < RCU_CBLIST_NSEGS; i++)
+		pr_info("\t->tails[%d] = %p, ->gp_seq[%d] = %ld\n",
+		       i, rsclp->tails[i], i, rsclp->gp_seq[i]);
+	pr_info("->len = %ld, ->len_lazy = %ld\n", rsclp->len, rsclp->len_lazy);
+	fflush(stdout);
+}
+
+/*
+ * Do consistency check on the specified rcu_segcblist structure, but
+ * limiting rcu_head traversals to that specified.  Complains bitterly
+ * on any inconsistencies that it spots.
+ */
+#define rcu_segcblist_fsck(rsclp, limit) \
+do { \
+	long ___lim = (limit); \
+	struct rcu_segcblist *___rsclp = (rsclp); \
+	long cnt = 0; \
+	int i = 0; \
+	struct rcu_head **rhp = &___rsclp->head; \
+	\
+	for (;;) { \
+		while (i < RCU_CBLIST_NSEGS && ___rsclp->tails[i] == rhp) \
+			++i; \
+		if (*rhp == NULL) \
+			break; \
+		if (rhp != &___rsclp->head) { \
+			if (++cnt > ___lim) \
+				break; \
+		} \
+		rhp = &(*rhp)->next; \
+	} \
+	if (cnt < ___lim && cnt != ___rsclp->len) { \
+		pr_info("cnt = %ld\n", cnt); \
+		rcu_segcblist_dump(___rsclp); \
+	} \
+	WARN_ON_ONCE(cnt < ___lim && cnt != ___rsclp->len); \
+	if (cnt < ___lim && i != RCU_CBLIST_NSEGS) { \
+		pr_info("i = %d\n", i); \
+		rcu_segcblist_dump(___rsclp); \
+	} \
+	WARN_ON_ONCE(cnt < ___lim && i != RCU_CBLIST_NSEGS); \
+	WARN_ON_ONCE(___rsclp->len < 0); \
+	WARN_ON_ONCE(___rsclp->len_lazy < 0); \
+	WARN_ON_ONCE(___rsclp->len < ___rsclp->len_lazy); \
+} while (0)
+
 #endif /* __KERNEL_RCU_SEGCBLIST_H */
