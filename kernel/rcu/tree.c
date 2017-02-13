@@ -330,7 +330,7 @@ static void rcu_dynticks_eqs_exit(void)
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) &&
 		     !(seq & RCU_DYNTICK_CTRL_CTR));
 	if (seq & RCU_DYNTICK_CTRL_MASK) {
-		atomic_and(~RCU_DYNTICK_CTRL_MASK, &rdtp->dynticks);
+		atomic_andnot(RCU_DYNTICK_CTRL_MASK, &rdtp->dynticks);
 		smp_mb__after_atomic(); /* _exit after clearing mask. */
 		/* Prefer duplicate flushes to losing a flush. */
 		rcu_eqs_special_exit();
