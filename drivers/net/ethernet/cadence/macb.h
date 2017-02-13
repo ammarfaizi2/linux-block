@@ -10,6 +10,8 @@
 #ifndef _MACB_H
 #define _MACB_H
 
+#include <linux/phy.h>
+
 #define MACB_GREGS_NBR 16
 #define MACB_GREGS_VERSION 2
 #define MACB_MAX_QUEUES 8
@@ -426,6 +428,8 @@
 /* Bitfields in DCFG6. */
 #define GEM_PBUF_LSO_OFFSET			27
 #define GEM_PBUF_LSO_SIZE			1
+#define GEM_DAW64_OFFSET			23
+#define GEM_DAW64_SIZE				1
 
 /* Bitfields in TISUBN */
 #define GEM_SUBNSINCR_OFFSET			0
@@ -540,11 +544,19 @@
 struct macb_dma_desc {
 	u32	addr;
 	u32	ctrl;
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-	u32     addrh;
-	u32     resvd;
-#endif
 };
+
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+enum macb_hw_dma_cap {
+	HW_DMA_CAP_32B,
+	HW_DMA_CAP_64B,
+};
+
+struct macb_dma_desc_64 {
+	u32 addrh;
+	u32 resvd;
+};
+#endif
 
 /* DMA descriptor bitfields */
 #define MACB_RX_USED_OFFSET			0
@@ -943,6 +955,9 @@ struct macb {
 	u32			wol;
 
 	struct macb_ptp_info	*ptp_info;	/* macb-ptp interface */
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+	enum macb_hw_dma_cap hw_dma_cap;
+#endif
 };
 
 static inline bool macb_is_gem(struct macb *bp)

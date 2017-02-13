@@ -198,6 +198,9 @@ int sctp_offload_init(void);
  */
 int sctp_send_reset_streams(struct sctp_association *asoc,
 			    struct sctp_reset_streams *params);
+int sctp_send_reset_assoc(struct sctp_association *asoc);
+int sctp_send_add_streams(struct sctp_association *asoc,
+			  struct sctp_add_streams *params);
 
 /*
  * Module global variables
@@ -593,10 +596,8 @@ static inline void sctp_v4_map_v6(union sctp_addr *addr)
  */
 static inline struct dst_entry *sctp_transport_dst_check(struct sctp_transport *t)
 {
-	if (t->dst && !dst_check(t->dst, t->dst_cookie)) {
-		dst_release(t->dst);
-		t->dst = NULL;
-	}
+	if (t->dst && !dst_check(t->dst, t->dst_cookie))
+		sctp_transport_dst_release(t);
 
 	return t->dst;
 }

@@ -12,10 +12,6 @@
   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
   more details.
 
-  You should have received a copy of the GNU General Public License along with
-  this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
-
   The full GNU General Public License is included in this distribution in
   the file called "COPYING".
 
@@ -371,7 +367,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, const char **mac)
 	} else {
 		clk_prepare_enable(plat->clk_ptp_ref);
 		plat->clk_ptp_rate = clk_get_rate(plat->clk_ptp_ref);
-		dev_info(&pdev->dev, "No reset control found\n");
+		dev_dbg(&pdev->dev, "PTP rate %d\n", plat->clk_ptp_rate);
 	}
 
 	plat->stmmac_rst = devm_reset_control_get(&pdev->dev,
@@ -415,7 +411,7 @@ void stmmac_remove_config_dt(struct platform_device *pdev,
 struct plat_stmmacenet_data *
 stmmac_probe_config_dt(struct platform_device *pdev, const char **mac)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-EINVAL);
 }
 
 void stmmac_remove_config_dt(struct platform_device *pdev,

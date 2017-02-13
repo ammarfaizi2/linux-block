@@ -229,6 +229,7 @@ static void fl_hw_destroy_filter(struct tcf_proto *tp, struct cls_fl_filter *f)
 		return;
 
 	offload.command = TC_CLSFLOWER_DESTROY;
+	offload.prio = tp->prio;
 	offload.cookie = (unsigned long)f;
 
 	tc->type = TC_SETUP_CLSFLOWER;
@@ -260,6 +261,7 @@ static int fl_hw_replace_filter(struct tcf_proto *tp,
 	}
 
 	offload.command = TC_CLSFLOWER_REPLACE;
+	offload.prio = tp->prio;
 	offload.cookie = (unsigned long)f;
 	offload.dissector = dissector;
 	offload.mask = mask;
@@ -287,6 +289,7 @@ static void fl_hw_update_stats(struct tcf_proto *tp, struct cls_fl_filter *f)
 		return;
 
 	offload.command = TC_CLSFLOWER_STATS;
+	offload.prio = tp->prio;
 	offload.cookie = (unsigned long)f;
 	offload.exts = &f->exts;
 
@@ -585,9 +588,9 @@ static int fl_set_key(struct net *net, struct nlattr **tb,
 			       &mask->icmp.type,
 			       TCA_FLOWER_KEY_ICMPV6_TYPE_MASK,
 			       sizeof(key->icmp.type));
-		fl_set_key_val(tb, &key->icmp.code, TCA_FLOWER_KEY_ICMPV4_CODE,
+		fl_set_key_val(tb, &key->icmp.code, TCA_FLOWER_KEY_ICMPV6_CODE,
 			       &mask->icmp.code,
-			       TCA_FLOWER_KEY_ICMPV4_CODE_MASK,
+			       TCA_FLOWER_KEY_ICMPV6_CODE_MASK,
 			       sizeof(key->icmp.code));
 	} else if (key->basic.n_proto == htons(ETH_P_ARP) ||
 		   key->basic.n_proto == htons(ETH_P_RARP)) {

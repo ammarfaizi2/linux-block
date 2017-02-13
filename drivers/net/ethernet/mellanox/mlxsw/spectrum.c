@@ -1,7 +1,7 @@
 /*
  * drivers/net/ethernet/mellanox/mlxsw/spectrum.c
- * Copyright (c) 2015 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2015 Jiri Pirko <jiri@mellanox.com>
+ * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2015-2017 Jiri Pirko <jiri@mellanox.com>
  * Copyright (c) 2015 Ido Schimmel <idosch@mellanox.com>
  * Copyright (c) 2015 Elad Raz <eladr@mellanox.com>
  *
@@ -137,8 +137,6 @@ MLXSW_ITEM32(tx, hdr, fid, 0x08, 0, 16);
  * 6 - Control packets
  */
 MLXSW_ITEM32(tx, hdr, type, 0x0C, 0, 4);
-
-static bool mlxsw_sp_port_dev_check(const struct net_device *dev);
 
 static void mlxsw_sp_txhdr_construct(struct sk_buff *skb,
 				     const struct mlxsw_tx_info *tx_info)
@@ -1357,7 +1355,8 @@ static int mlxsw_sp_setup_tc(struct net_device *dev, u32 handle,
 	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
 	bool ingress = TC_H_MAJ(handle) == TC_H_MAJ(TC_H_INGRESS);
 
-	if (tc->type == TC_SETUP_MATCHALL) {
+	switch (tc->type) {
+	case TC_SETUP_MATCHALL:
 		switch (tc->cls_mall->command) {
 		case TC_CLSMATCHALL_REPLACE:
 			return mlxsw_sp_port_add_cls_matchall(mlxsw_sp_port,
@@ -1370,6 +1369,18 @@ static int mlxsw_sp_setup_tc(struct net_device *dev, u32 handle,
 			return 0;
 		default:
 			return -EINVAL;
+		}
+	case TC_SETUP_CLSFLOWER:
+		switch (tc->cls_flower->command) {
+		case TC_CLSFLOWER_REPLACE:
+			return mlxsw_sp_flower_replace(mlxsw_sp_port, ingress,
+						       proto, tc->cls_flower);
+		case TC_CLSFLOWER_DESTROY:
+			mlxsw_sp_flower_destroy(mlxsw_sp_port, ingress,
+						tc->cls_flower);
+			return 0;
+		default:
+			return -EOPNOTSUPP;
 		}
 	}
 
@@ -1389,8 +1400,6 @@ static const struct net_device_ops mlxsw_sp_port_netdev_ops = {
 	.ndo_get_offload_stats	= mlxsw_sp_port_get_offload_stats,
 	.ndo_vlan_rx_add_vid	= mlxsw_sp_port_add_vid,
 	.ndo_vlan_rx_kill_vid	= mlxsw_sp_port_kill_vid,
-	.ndo_neigh_construct	= mlxsw_sp_router_neigh_construct,
-	.ndo_neigh_destroy	= mlxsw_sp_router_neigh_destroy,
 	.ndo_fdb_add		= switchdev_port_fdb_add,
 	.ndo_fdb_del		= switchdev_port_fdb_del,
 	.ndo_fdb_dump		= switchdev_port_fdb_dump,
@@ -3064,10 +3073,17 @@ static int __mlxsw_sp_flood_init(struct mlxsw_core *mlxsw_core,
 	else
 		table_type = MLXSW_REG_SFGC_TABLE_TYPE_FID_OFFEST;
 
-	if (type == MLXSW_REG_SFGC_TYPE_UNKNOWN_UNICAST)
+	switch (type) {
+	case MLXSW_REG_SFGC_TYPE_UNKNOWN_UNICAST:
 		flood_table = MLXSW_SP_FLOOD_TABLE_UC;
-	else
-		flood_table = MLXSW_SP_FLOOD_TABLE_BM;
+		break;
+	case MLXSW_REG_SFGC_TYPE_UNREGISTERED_MULTICAST_IPV4:
+	case MLXSW_REG_SFGC_TYPE_UNREGISTERED_MULTICAST_IPV6:
+		flood_table = MLXSW_SP_FLOOD_TABLE_MC;
+		break;
+	default:
+		flood_table = MLXSW_SP_FLOOD_TABLE_BC;
+	}
 
 	mlxsw_reg_sfgc_pack(sfgc_pl, type, bridge_type, table_type,
 			    flood_table);
@@ -3203,6 +3219,12 @@ static int mlxsw_sp_init(struct mlxsw_core *mlxsw_core,
 		goto err_span_init;
 	}
 
+	err = mlxsw_sp_acl_init(mlxsw_sp);
+	if (err) {
+		dev_err(mlxsw_sp->bus_info->dev, "Failed to initialize ACL\n");
+		goto err_acl_init;
+	}
+
 	err = mlxsw_sp_ports_create(mlxsw_sp);
 	if (err) {
 		dev_err(mlxsw_sp->bus_info->dev, "Failed to create ports\n");
@@ -3212,6 +3234,8 @@ static int mlxsw_sp_init(struct mlxsw_core *mlxsw_core,
 	return 0;
 
 err_ports_create:
+	mlxsw_sp_acl_fini(mlxsw_sp);
+err_acl_init:
 	mlxsw_sp_span_fini(mlxsw_sp);
 err_span_init:
 	mlxsw_sp_router_fini(mlxsw_sp);
@@ -3232,6 +3256,7 @@ static void mlxsw_sp_fini(struct mlxsw_core *mlxsw_core)
 	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
 
 	mlxsw_sp_ports_remove(mlxsw_sp);
+	mlxsw_sp_acl_fini(mlxsw_sp);
 	mlxsw_sp_span_fini(mlxsw_sp);
 	mlxsw_sp_router_fini(mlxsw_sp);
 	mlxsw_sp_switchdev_fini(mlxsw_sp);
@@ -3252,9 +3277,9 @@ static struct mlxsw_config_profile mlxsw_sp_config_profile = {
 	.used_flood_tables		= 1,
 	.used_flood_mode		= 1,
 	.flood_mode			= 3,
-	.max_fid_offset_flood_tables	= 2,
+	.max_fid_offset_flood_tables	= 3,
 	.fid_offset_flood_table_size	= VLAN_N_VID - 1,
-	.max_fid_flood_tables		= 2,
+	.max_fid_flood_tables		= 3,
 	.fid_flood_table_size		= MLXSW_SP_VFID_MAX,
 	.used_max_ib_mc			= 1,
 	.max_ib_mc			= 0,
@@ -3297,7 +3322,7 @@ static struct mlxsw_driver mlxsw_sp_driver = {
 	.profile			= &mlxsw_sp_config_profile,
 };
 
-static bool mlxsw_sp_port_dev_check(const struct net_device *dev)
+bool mlxsw_sp_port_dev_check(const struct net_device *dev)
 {
 	return dev->netdev_ops == &mlxsw_sp_port_netdev_ops;
 }
@@ -3455,6 +3480,8 @@ mlxsw_sp_rif_alloc(u16 rif, struct net_device *l3_dev, struct mlxsw_sp_fid *f)
 	if (!r)
 		return NULL;
 
+	INIT_LIST_HEAD(&r->nexthop_list);
+	INIT_LIST_HEAD(&r->neigh_list);
 	ether_addr_copy(r->addr, l3_dev->dev_addr);
 	r->mtu = l3_dev->mtu;
 	r->ref_count = 1;
@@ -3522,6 +3549,8 @@ static void mlxsw_sp_vport_rif_sp_destroy(struct mlxsw_sp_port *mlxsw_sp_vport,
 	struct mlxsw_sp_fid *f = r->f;
 	u16 fid = f->fid;
 	u16 rif = r->rif;
+
+	mlxsw_sp_router_rif_gone_sync(mlxsw_sp, r);
 
 	mlxsw_sp->rifs[rif] = NULL;
 	f->r = NULL;
@@ -3667,7 +3696,7 @@ static int mlxsw_sp_router_port_flood_set(struct mlxsw_sp *mlxsw_sp, u16 fid,
 
 	table_type = mlxsw_sp_flood_table_type_get(fid);
 	index = mlxsw_sp_flood_table_index_get(fid);
-	mlxsw_reg_sftr_pack(sftr_pl, MLXSW_SP_FLOOD_TABLE_BM, index, table_type,
+	mlxsw_reg_sftr_pack(sftr_pl, MLXSW_SP_FLOOD_TABLE_BC, index, table_type,
 			    1, MLXSW_PORT_ROUTER_PORT, set);
 	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sftr), sftr_pl);
 
@@ -3751,6 +3780,8 @@ void mlxsw_sp_rif_bridge_destroy(struct mlxsw_sp *mlxsw_sp,
 	struct net_device *l3_dev = r->dev;
 	struct mlxsw_sp_fid *f = r->f;
 	u16 rif = r->rif;
+
+	mlxsw_sp_router_rif_gone_sync(mlxsw_sp, r);
 
 	mlxsw_sp->rifs[rif] = NULL;
 	f->r = NULL;
@@ -4041,6 +4072,9 @@ static int mlxsw_sp_port_bridge_join(struct mlxsw_sp_port *mlxsw_sp_port,
 	mlxsw_sp_port->learning = 1;
 	mlxsw_sp_port->learning_sync = 1;
 	mlxsw_sp_port->uc_flood = 1;
+	mlxsw_sp_port->mc_flood = 1;
+	mlxsw_sp_port->mc_router = 0;
+	mlxsw_sp_port->mc_disabled = 1;
 	mlxsw_sp_port->bridged = 1;
 
 	return 0;
@@ -4057,6 +4091,8 @@ static void mlxsw_sp_port_bridge_leave(struct mlxsw_sp_port *mlxsw_sp_port)
 	mlxsw_sp_port->learning = 0;
 	mlxsw_sp_port->learning_sync = 0;
 	mlxsw_sp_port->uc_flood = 0;
+	mlxsw_sp_port->mc_flood = 0;
+	mlxsw_sp_port->mc_router = 0;
 	mlxsw_sp_port->bridged = 0;
 
 	/* Add implicit VLAN interface in the device, so that untagged
@@ -4719,6 +4755,9 @@ static int mlxsw_sp_vport_bridge_join(struct mlxsw_sp_port *mlxsw_sp_vport,
 	mlxsw_sp_vport->learning = 1;
 	mlxsw_sp_vport->learning_sync = 1;
 	mlxsw_sp_vport->uc_flood = 1;
+	mlxsw_sp_vport->mc_flood = 1;
+	mlxsw_sp_vport->mc_router = 0;
+	mlxsw_sp_vport->mc_disabled = 1;
 	mlxsw_sp_vport->bridged = 1;
 
 	return 0;
@@ -4739,6 +4778,8 @@ static void mlxsw_sp_vport_bridge_leave(struct mlxsw_sp_port *mlxsw_sp_vport)
 	mlxsw_sp_vport->learning = 0;
 	mlxsw_sp_vport->learning_sync = 0;
 	mlxsw_sp_vport->uc_flood = 0;
+	mlxsw_sp_vport->mc_flood = 0;
+	mlxsw_sp_vport->mc_router = 0;
 	mlxsw_sp_vport->bridged = 0;
 }
 

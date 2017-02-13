@@ -374,7 +374,7 @@ typedef struct sctp_sender_hb_info {
 	union sctp_addr daddr;
 	unsigned long sent_at;
 	__u64 hb_nonce;
-} __packed sctp_sender_hb_info_t;
+} sctp_sender_hb_info_t;
 
 struct sctp_stream *sctp_stream_new(__u16 incnt, __u16 outcnt, gfp_t gfp);
 void sctp_stream_free(struct sctp_stream *stream);
@@ -804,6 +804,8 @@ struct sctp_transport {
 
 	__u32 burst_limited;	/* Holds old cwnd when max.burst is applied */
 
+	__u32 dst_pending_confirm;	/* need to confirm neighbour */
+
 	/* Destination */
 	struct dst_entry *dst;
 	/* Source address. */
@@ -950,6 +952,8 @@ unsigned long sctp_transport_timeout(struct sctp_transport *);
 void sctp_transport_reset(struct sctp_transport *);
 void sctp_transport_update_pmtu(struct sock *, struct sctp_transport *, u32);
 void sctp_transport_immediate_rtx(struct sctp_transport *);
+void sctp_transport_dst_release(struct sctp_transport *t);
+void sctp_transport_dst_confirm(struct sctp_transport *t);
 
 
 /* This is the structure we use to queue packets as they come into

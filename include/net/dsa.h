@@ -11,16 +11,18 @@
 #ifndef __LINUX_NET_DSA_H
 #define __LINUX_NET_DSA_H
 
+#include <linux/if.h>
 #include <linux/if_ether.h>
 #include <linux/list.h>
+#include <linux/notifier.h>
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 #include <linux/of.h>
-#include <linux/phy.h>
-#include <linux/phy_fixed.h>
 #include <linux/ethtool.h>
 
 struct tc_action;
+struct phy_device;
+struct fixed_phy_status;
 
 enum dsa_tag_protocol {
 	DSA_TAG_PROTO_NONE = 0,
@@ -43,6 +45,11 @@ struct dsa_chip_data {
 	 */
 	struct device	*host_dev;
 	int		sw_addr;
+
+	/*
+	 * Reference to network devices
+	 */
+	struct device	*netdev[DSA_MAX_PORTS];
 
 	/* set to size of eeprom if supported by the switch */
 	int		eeprom_len;
@@ -91,6 +98,9 @@ struct packet_type;
 
 struct dsa_switch_tree {
 	struct list_head	list;
+
+	/* Notifier chain for switch-wide events */
+	struct raw_notifier_head	nh;
 
 	/* Tree identifier */
 	u32 tree;
@@ -166,6 +176,7 @@ struct dsa_mall_tc_entry {
 struct dsa_port {
 	struct dsa_switch	*ds;
 	unsigned int		index;
+	const char		*name;
 	struct net_device	*netdev;
 	struct device_node	*dn;
 	unsigned int		ageing_time;
@@ -181,6 +192,9 @@ struct dsa_switch {
 	 */
 	struct dsa_switch_tree	*dst;
 	int			index;
+
+	/* Listener for switch fabric events */
+	struct notifier_block	nb;
 
 	/*
 	 * Give the switch driver somewhere to hang its private data
@@ -260,6 +274,16 @@ struct switchdev_obj;
 struct switchdev_obj_port_fdb;
 struct switchdev_obj_port_mdb;
 struct switchdev_obj_port_vlan;
+
+#define DSA_NOTIFIER_BRIDGE_JOIN		1
+#define DSA_NOTIFIER_BRIDGE_LEAVE		2
+
+/* DSA_NOTIFIER_BRIDGE_* */
+struct dsa_notifier_bridge_info {
+	struct net_device *br;
+	int sw_index;
+	int port;
+};
 
 struct dsa_switch_ops {
 	/*
@@ -428,6 +452,7 @@ struct dsa_switch_driver {
 void register_switch_driver(struct dsa_switch_driver *type);
 void unregister_switch_driver(struct dsa_switch_driver *type);
 struct mii_bus *dsa_host_dev_to_mii_bus(struct device *dev);
+struct net_device *dsa_dev_to_net_device(struct device *dev);
 
 static inline bool dsa_uses_tagged_protocol(struct dsa_switch_tree *dst)
 {

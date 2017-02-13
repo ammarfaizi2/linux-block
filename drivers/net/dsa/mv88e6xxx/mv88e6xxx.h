@@ -15,6 +15,7 @@
 #include <linux/if_vlan.h>
 #include <linux/irq.h>
 #include <linux/gpio/consumer.h>
+#include <linux/phy.h>
 
 #ifndef UINT64_MAX
 #define UINT64_MAX		(u64)(~((u64)0))
@@ -58,6 +59,9 @@
 #define PORT_STATUS_CMODE_100BASE_X	0x8
 #define PORT_STATUS_CMODE_1000BASE_X	0x9
 #define PORT_STATUS_CMODE_SGMII		0xa
+#define PORT_STATUS_CMODE_2500BASEX	0xb
+#define PORT_STATUS_CMODE_XAUI		0xc
+#define PORT_STATUS_CMODE_RXAUI		0xd
 #define PORT_PCS_CTRL		0x01
 #define PORT_PCS_CTRL_RGMII_DELAY_RXCLK	BIT(15)
 #define PORT_PCS_CTRL_RGMII_DELAY_TXCLK	BIT(14)
@@ -165,6 +169,7 @@
 #define PORT_CONTROL_2_FORWARD_UNKNOWN	BIT(6)
 #define PORT_CONTROL_2_EGRESS_MONITOR	BIT(5)
 #define PORT_CONTROL_2_INGRESS_MONITOR	BIT(4)
+#define PORT_CONTROL_2_UPSTREAM_MASK	0x0f
 #define PORT_RATE_CONTROL	0x09
 #define PORT_RATE_CONTROL_2	0x0a
 #define PORT_ASSOC_VECTOR	0x0b
@@ -397,6 +402,13 @@
 #define GLOBAL2_SMI_PHY_CMD_OP_22_READ_DATA	((0x2 << 10) | \
 						 GLOBAL2_SMI_PHY_CMD_MODE_22 | \
 						 GLOBAL2_SMI_PHY_CMD_BUSY)
+#define GLOBAL2_SMI_PHY_CMD_OP_45_WRITE_ADDR	((0x0 << 10) | \
+						 GLOBAL2_SMI_PHY_CMD_BUSY)
+#define GLOBAL2_SMI_PHY_CMD_OP_45_WRITE_DATA	((0x1 << 10) | \
+						 GLOBAL2_SMI_PHY_CMD_BUSY)
+#define GLOBAL2_SMI_PHY_CMD_OP_45_READ_DATA	((0x3 << 10) | \
+						 GLOBAL2_SMI_PHY_CMD_BUSY)
+
 #define GLOBAL2_SMI_PHY_DATA			0x19
 #define GLOBAL2_SCRATCH_MISC	0x1a
 #define GLOBAL2_SCRATCH_BUSY		BIT(15)
@@ -651,8 +663,6 @@ enum mv88e6xxx_cap {
 	 MV88E6XXX_FLAGS_PVT |		\
 	 MV88E6XXX_FLAGS_SERDES)
 
-struct mv88e6xxx_ops;
-
 #define MV88E6XXX_FLAGS_FAMILY_6390	\
 	(MV88E6XXX_FLAG_EEE |		\
 	 MV88E6XXX_FLAG_GLOBAL2 |	\
@@ -661,6 +671,8 @@ struct mv88e6xxx_ops;
 	 MV88E6XXX_FLAGS_IRL |		\
 	 MV88E6XXX_FLAGS_MULTI_CHIP |	\
 	 MV88E6XXX_FLAGS_PVT)
+
+struct mv88e6xxx_ops;
 
 struct mv88e6xxx_info {
 	enum mv88e6xxx_family family;
@@ -837,6 +849,18 @@ struct mv88e6xxx_ops {
 
 	int (*port_egress_rate_limiting)(struct mv88e6xxx_chip *chip, int port);
 	int (*port_pause_config)(struct mv88e6xxx_chip *chip, int port);
+
+	/* CMODE control what PHY mode the MAC will use, eg. SGMII, RGMII, etc.
+	 * Some chips allow this to be configured on specific ports.
+	 */
+	int (*port_set_cmode)(struct mv88e6xxx_chip *chip, int port,
+			      phy_interface_t mode);
+
+	/* Some devices have a per port register indicating what is
+	 * the upstream port this port should forward to.
+	 */
+	int (*port_set_upstream_port)(struct mv88e6xxx_chip *chip, int port,
+				      int upstream_port);
 
 	/* Snapshot the statistics for a port. The statistics can then
 	 * be read back a leisure but still with a consistent view.
