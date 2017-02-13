@@ -626,7 +626,7 @@ do { \
 			++i; \
 		if (*rhp == NULL) \
 			break; \
-		if (rhp != &___rsclp->head && ++cnt > ___lim) \
+		if (++cnt > ___lim) \
 			break; \
 		rhp = &(*rhp)->next; \
 	} \
