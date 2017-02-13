@@ -53,6 +53,10 @@ module_param_named(id, hdmi_card_id, charp, 0444);
 MODULE_PARM_DESC(id,
 		"ID string for INTEL Intel HDMI Audio controller.");
 
+static bool keep_link = true;
+module_param(keep_link, bool, 0644);
+MODULE_PARM_DESC(keep_link, "Keep link on after the stream is closed.");
+
 /*
  * ELD SA bits in the CEA Speaker Allocation data block
  */
@@ -232,8 +236,12 @@ static void had_write_register(struct snd_intelhad *ctx, u32 reg, u32 val)
 static void had_enable_audio(struct snd_intelhad *intelhaddata,
 			     bool enable)
 {
+	if (intelhaddata->aud_config.regx.aud_en == enable)
+		return;
+
 	/* update the cached value */
 	intelhaddata->aud_config.regx.aud_en = enable;
+	intelhaddata->aud_config.regx.underrun = keep_link;
 	had_write_register(intelhaddata, AUD_CONFIG,
 			   intelhaddata->aud_config.regval);
 }
@@ -911,6 +919,21 @@ static void had_init_ringbuf(struct snd_pcm_substream *substream,
 	intelhaddata->bd_head = 0; /* reset at head again before starting */
 }
 
+/* Set up the silent output after PCM close */
+static void had_keep_silent(struct snd_intelhad *intelhaddata)
+{
+	int i;
+
+	if (!(keep_link && intelhaddata->connected &&
+	      intelhaddata->aud_config.regval))
+		return;
+
+	for (i = 0; i < HAD_NUM_OF_RING_BUFS; i++)
+		had_invalidate_bd(intelhaddata, i);
+	intelhaddata->need_reset = true; /* reset at next */
+	had_enable_audio(intelhaddata, true);
+}
+
 /* process a bd, advance to the next */
 static void had_advance_ringbuf(struct snd_pcm_substream *substream,
 				struct snd_intelhad *intelhaddata)
@@ -1020,6 +1043,9 @@ static void had_do_reset(struct snd_intelhad *intelhaddata)
 	if (!intelhaddata->need_reset || !intelhaddata->connected)
 		return;
 
+	/* disable the silent output */
+	had_enable_audio(intelhaddata, false);
+
 	/* Reset buffer pointers */
 	had_reset_audio(intelhaddata);
 	wait_clear_underrun_bit(intelhaddata);
@@ -1106,6 +1132,8 @@ static int had_pcm_close(struct snd_pcm_substream *substream)
 		spin_lock_irq(&intelhaddata->had_spinlock);
 	}
 	spin_unlock_irq(&intelhaddata->had_spinlock);
+
+	had_keep_silent(intelhaddata);
 
 	pm_runtime_mark_last_busy(intelhaddata->dev);
 	pm_runtime_put_autosuspend(intelhaddata->dev);
@@ -1632,6 +1660,9 @@ static int hdmi_lpe_audio_runtime_suspend(struct device *dev)
 		had_substream_put(ctx);
 	}
 
+	/* disable the silent output */
+	had_enable_audio(ctx, false);
+
 	return 0;
 }
 
@@ -1648,6 +1679,9 @@ static int __maybe_unused hdmi_lpe_audio_suspend(struct device *dev)
 
 static int hdmi_lpe_audio_runtime_resume(struct device *dev)
 {
+	struct snd_intelhad *ctx = dev_get_drvdata(dev);
+
+	had_keep_silent(ctx);
 	pm_runtime_mark_last_busy(dev);
 	return 0;
 }
