@@ -635,11 +635,13 @@ do { \
 		rcu_segcblist_dump(___rsclp); \
 	} \
 	WARN_ON_ONCE(cnt < ___lim && cnt != ___rsclp->len); \
-	if (cnt < ___lim && i != RCU_CBLIST_NSEGS && xchg(&notdone2, false)) { \
+	if (___rsclp->tails[RCU_NEXT_TAIL] && cnt < ___lim && \
+	    i != RCU_CBLIST_NSEGS && xchg(&notdone2, false)) { \
 		pr_info("i = %d\n", i); \
 		rcu_segcblist_dump(___rsclp); \
 	} \
-	WARN_ON_ONCE(cnt < ___lim && i != RCU_CBLIST_NSEGS); \
+	WARN_ON_ONCE(___rsclp->tails[RCU_NEXT_TAIL] && cnt < ___lim && \
+		     i != RCU_CBLIST_NSEGS); \
 	WARN_ON_ONCE(___rsclp->len < 0); \
 	WARN_ON_ONCE(___rsclp->len_lazy < 0); \
 	WARN_ON_ONCE(___rsclp->len < ___rsclp->len_lazy); \
