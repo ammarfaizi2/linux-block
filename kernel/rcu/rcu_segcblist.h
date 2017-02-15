@@ -332,8 +332,8 @@ static inline void rcu_segcblist_enqueue(struct rcu_segcblist *rsclp,
 static inline void rcu_segcblist_extract_count(struct rcu_segcblist *rsclp,
 					       struct rcu_cblist *rclp)
 {
-	rclp->len_lazy = rsclp->len_lazy;
-	rclp->len = rsclp->len;
+	rclp->len_lazy += rsclp->len_lazy;
+	rclp->len += rsclp->len;
 	rsclp->len_lazy = 0;
 	WRITE_ONCE(rsclp->len, 0); /* ->len sampled locklessly. */
 }
