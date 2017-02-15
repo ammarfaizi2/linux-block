@@ -1741,8 +1741,11 @@ rcu_start_future_gp(struct rcu_node *rnp, struct rcu_data *rdp,
 	 * earlier.  Adjust callbacks as needed.
 	 */
 	c = rcu_cbs_completed(rdp->rsp, rnp_root);
-	if (!rcu_is_nocb_cpu(rdp->cpu))
+	if (!rcu_is_nocb_cpu(rdp->cpu)) {
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 		(void)rcu_segcblist_accelerate(&rdp->cblist, c);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
+	}
 
 	/*
 	 * If the needed for the required grace period is already
@@ -1891,12 +1894,16 @@ static bool __note_gp_changes(struct rcu_state *rsp, struct rcu_node *rnp,
 	    !unlikely(READ_ONCE(rdp->gpwrap))) {
 
 		/* No grace period end, so just accelerate recent callbacks. */
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 		ret = rcu_accelerate_cbs(rsp, rnp, rdp);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 
 	} else {
 
 		/* Advance callbacks. */
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 		ret = rcu_advance_cbs(rsp, rnp, rdp);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 
 		/* Remember that we saw this grace-period completion. */
 		rdp->completed = rnp->completed;
@@ -2185,7 +2192,9 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
 	rsp->gp_state = RCU_GP_IDLE;
 	rdp = this_cpu_ptr(rsp->rda);
 	/* Advance CBs to reduce false positives below. */
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	needgp = rcu_advance_cbs(rsp, rnp, rdp) || needgp;
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	if (needgp || cpu_needs_another_gp(rsp, rdp)) {
 		WRITE_ONCE(rsp->gp_flags, RCU_GP_FLAG_INIT);
 		trace_rcu_grace_period(rsp->name,
@@ -2362,7 +2371,9 @@ static bool rcu_start_gp(struct rcu_state *rsp)
 	 * resulting in pointless grace periods.  So, advance callbacks
 	 * then start the grace period!
 	 */
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	ret = rcu_advance_cbs(rsp, rnp, rdp) || ret;
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	ret = rcu_start_gp_advanced(rsp, rnp, rdp) || ret;
 	return ret;
 }
@@ -2525,7 +2536,9 @@ rcu_report_qs_rdp(int cpu, struct rcu_state *rsp, struct rcu_data *rdp)
 		 * This GP can't end until cpu checks in, so all of our
 		 * callbacks can be processed during the next GP.
 		 */
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 		needwake = rcu_accelerate_cbs(rsp, rnp, rdp);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 
 		rcu_report_qs_rnp(mask, rsp, rnp, rnp->gpnum, flags);
 		/* ^^^ Released rnp->lock */
@@ -2585,6 +2598,7 @@ rcu_send_cbs_to_orphanage(int cpu, struct rcu_state *rsp,
 	 * because _rcu_barrier() excludes CPU-hotplug operations, so it
 	 * cannot be running now.  Thus no memory barrier is required.
 	 */
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	rdp->n_cbs_orphaned += rcu_segcblist_n_cbs(&rdp->cblist);
 	rcu_segcblist_extract_count(&rdp->cblist, &rsp->orphan_done);
 
@@ -2603,6 +2617,7 @@ rcu_send_cbs_to_orphanage(int cpu, struct rcu_state *rsp,
 	 * required to pass though another grace period: They are done.
 	 */
 	rcu_segcblist_extract_done_cbs(&rdp->cblist, &rsp->orphan_done);
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 
 	/* Finally, disallow further callbacks on this CPU.  */
 	rcu_segcblist_disable(&rdp->cblist);
@@ -2626,6 +2641,7 @@ static void rcu_adopt_orphan_cbs(struct rcu_state *rsp, unsigned long flags)
 	if (rcu_cblist_n_lazy_cbs(&rsp->orphan_done) !=
 	    rcu_cblist_n_cbs(&rsp->orphan_done))
 		rcu_idle_count_callbacks_posted();
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	rcu_segcblist_insert_count(&rdp->cblist, &rsp->orphan_done);
 
 	/*
@@ -2638,6 +2654,7 @@ static void rcu_adopt_orphan_cbs(struct rcu_state *rsp, unsigned long flags)
 	rcu_segcblist_insert_done_cbs(&rdp->cblist, &rsp->orphan_done);
 	WARN_ON_ONCE(!rcu_cblist_empty(&rsp->orphan_done));
 	rcu_segcblist_insert_pend_cbs(&rdp->cblist, &rsp->orphan_pend);
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	WARN_ON_ONCE(!rcu_cblist_empty(&rsp->orphan_pend));
 	WARN_ON_ONCE(rcu_segcblist_empty(&rdp->cblist) !=
 		     !rcu_segcblist_n_cbs(&rdp->cblist));
@@ -2765,6 +2782,7 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 	 */
 	local_irq_save(flags);
 	WARN_ON_ONCE(cpu_is_offline(smp_processor_id()));
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 	bl = rdp->blimit;
 	trace_rcu_batch_start(rsp->name, rcu_segcblist_n_lazy_cbs(&rdp->cblist),
 			      rcu_segcblist_n_cbs(&rdp->cblist), bl);
@@ -2798,6 +2816,7 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 	smp_mb(); /* List handling before counting for rcu_barrier(). */
 	rdp->n_cbs_invoked += count;
 	rcu_segcblist_insert_count(&rdp->cblist, &rcl);
+	rcu_segcblist_fsck(&rdp->cblist, 100);
 
 	/* Reinstate batch limit if we have worked down the excess. */
 	count = rcu_segcblist_n_cbs(&rdp->cblist);
@@ -3131,6 +3150,8 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func,
 	head->next = NULL;
 	local_irq_save(flags);
 	rdp = this_cpu_ptr(rsp->rda);
+	if (!in_serving_softirq() && !irqs_disabled_flags(flags))
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 
 	/* Add the callback to our list. */
 	if (unlikely(!rcu_segcblist_is_enabled(&rdp->cblist)) || cpu != -1) {
@@ -3158,6 +3179,8 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func,
 	rcu_segcblist_enqueue(&rdp->cblist, head, lazy);
 	if (!lazy)
 		rcu_idle_count_callbacks_posted();
+	if (!in_serving_softirq() && !irqs_disabled_flags(flags))
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 
 	if (__is_kfree_rcu_offset((unsigned long)func))
 		trace_rcu_kfree_callback(rsp->name, head, (unsigned long)func,
@@ -3766,6 +3789,8 @@ rcu_init_percpu_data(int cpu, struct rcu_state *rsp)
 	if (rcu_segcblist_empty(&rdp->cblist) && /* No early-boot CBs? */
 	    !init_nocb_callback_list(rdp))
 		rcu_segcblist_init(&rdp->cblist);  /* Re-enable callbacks. */
+	if (!rcu_is_nocb_cpu(cpu))
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 	rdp->dynticks->dynticks_nesting = DYNTICK_TASK_EXIT_IDLE;
 	rcu_sysidle_init_percpu_data(rdp->dynticks);
 	rcu_dynticks_eqs_online();

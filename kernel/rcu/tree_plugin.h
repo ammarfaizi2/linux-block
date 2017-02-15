@@ -2405,6 +2405,7 @@ static bool init_nocb_callback_list(struct rcu_data *rdp)
 		atomic_long_set(&rdp->nocb_q_count_lazy,
 				rcu_segcblist_n_lazy_cbs(&rdp->cblist));
 		rcu_segcblist_init(&rdp->cblist);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 	}
 	rcu_segcblist_disable(&rdp->cblist);
 	return true;
