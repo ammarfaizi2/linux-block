@@ -61,6 +61,24 @@ static inline long rcu_cblist_n_lazy_cbs(struct rcu_cblist *rclp)
 }
 
 /*
+ * Debug function to actually count the number of callbacks.
+ * If the number exceeds the limit specified, return -1.
+ */
+static inline long rcu_cblist_count_cbs(struct rcu_cblist *rclp, long lim)
+{
+	int cnt = 0;
+	struct rcu_head **rhpp = &rclp->head;
+
+	for (;;) {
+		if (!*rhpp)
+			return cnt;
+		if (++cnt > lim)
+			return -1;
+		rhpp = &(*rhpp)->next;
+	}
+}
+
+/*
  * Dequeue the oldest rcu_head structure from the specified callback
  * list.  This function assumes that the callback is non-lazy, but
  * the caller can later invoke rcu_cblist_dequeued_lazy() if it
@@ -662,19 +680,19 @@ static inline void rcu_segcblist_dump(struct rcu_segcblist *rsclp)
 	struct rcu_segcblist *___rsclp = (rsclp); \
 	long cnt = 0; \
 	int i = 0; \
-	struct rcu_head **rhp = &___rsclp->head; \
+	struct rcu_head **rhpp = &___rsclp->head; \
 	static int notdone1 = 1; \
 	static int notdone2 = 1; \
 	static int notdone3 = 1; \
 	\
 	for (;;) { \
-		while (i < RCU_CBLIST_NSEGS && ___rsclp->tails[i] == rhp) \
+		while (i < RCU_CBLIST_NSEGS && ___rsclp->tails[i] == rhpp) \
 			++i; \
-		if (*rhp == NULL) \
+		if (*rhpp == NULL) \
 			break; \
 		if (++cnt > ___lim) \
 			break; \
-		rhp = &(*rhp)->next; \
+		rhpp = &(*rhpp)->next; \
 	} \
 	if (cnt < ___lim && cnt != ___rsclp->len && xchg(&notdone1, 0)) { \
 		pr_info("cnt = %ld\n", cnt); \
