@@ -2778,7 +2778,6 @@ rcu_do_batch_dequeue(struct rcu_data *rdp, struct rcu_cblist *rclp)
 
 	if (1 /* IS_ENABLED(CONFIG_PROVE_RCU) */) {
 		rhp = rcu_segcblist_dequeue(&rdp->cblist);
-		rcu_segcblist_fsck(&rdp->cblist, 100);
 		return rhp;
 	}
 	return rcu_cblist_dequeue(rclp);
@@ -2854,6 +2853,7 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 		debug_rcu_head_unqueue(rhp);
 		if (__rcu_reclaim(rsp->name, rhp))
 			rcu_do_batch_was_lazy(rdp, &rcl);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
 		count++;
 		/*
 		 * Stop only if limit reached and CPU has something to do.
