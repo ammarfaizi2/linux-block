@@ -2581,6 +2581,29 @@ rcu_check_quiescent_state(struct rcu_state *rsp, struct rcu_data *rdp)
 }
 
 /*
+ * Check the consistency of the lists of orphaned callbacks.
+ * The ->orphan_pend count must be zero, and the sum of the counts
+ * of the actual callbacks in the ->orphan_pend and ->orphan_done
+ * lists must equal the ->orphan_done count.  If the count of the
+ * actual callbacks in either list exceeds the specified limit,
+ * the comparison is skipped.
+ */
+static void rcu_check_orphan_cbs(struct rcu_state *rsp, long limit)
+{
+	long cnt_done = rcu_cblist_count_cbs(&rsp->orphan_done, limit);
+	long cnt_pend = rcu_cblist_count_cbs(&rsp->orphan_pend, limit);
+	long n_done = rcu_cblist_n_cbs(&rsp->orphan_done);
+	long n_pend = rcu_cblist_n_cbs(&rsp->orphan_pend);
+
+	if (0 /* !IS_ENABLED(CONFIG_PROVE_RCU) */)
+		return;
+	WARN_ON_ONCE(n_pend != 0);
+	if (cnt_done < 0 || cnt_pend < 0)
+		return;
+	WARN_ON_ONCE(n_done != cnt_done + cnt_pend);
+}
+
+/*
  * Send the specified CPU's RCU callbacks to the orphanage.  The
  * specified CPU must be offline, and the caller must hold the
  * ->orphan_lock.
@@ -2618,6 +2641,7 @@ rcu_send_cbs_to_orphanage(int cpu, struct rcu_state *rsp,
 	 */
 	rcu_segcblist_extract_done_cbs(&rdp->cblist, &rsp->orphan_done);
 	rcu_segcblist_fsck(&rdp->cblist, 100);
+	rcu_check_orphan_cbs(rsp, 100);
 
 	/* Finally, disallow further callbacks on this CPU.  */
 	rcu_segcblist_disable(&rdp->cblist);
@@ -2642,6 +2666,7 @@ static void rcu_adopt_orphan_cbs(struct rcu_state *rsp, unsigned long flags)
 	    rcu_cblist_n_cbs(&rsp->orphan_done))
 		rcu_idle_count_callbacks_posted();
 	rcu_segcblist_fsck(&rdp->cblist, 100);
+	rcu_check_orphan_cbs(rsp, 100);
 	rcu_segcblist_insert_count(&rdp->cblist, &rsp->orphan_done);
 
 	/*
