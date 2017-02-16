@@ -2753,6 +2753,65 @@ static void rcu_cleanup_dead_cpu(int cpu, struct rcu_state *rsp)
 }
 
 /*
+ * Get the ready-to-be-invoked callbacks from the specified rcu_segcblist
+ * structure.  This does nothing under heavier debugging, in which case
+ * the callbacks are just pulled one at at time as they are being invoked.
+ * This simpler approach does simplify debug checks, but it also increases
+ * overhead on architectures with expensive interrupt enable/disable
+ * instructions.
+ */
+static void rcu_do_batch_getbatch(struct rcu_data *rdp, struct rcu_cblist *rclp)
+{
+	if (0 /* !IS_ENABLED(CONFIG_PROVE_RCU) */)
+		rcu_segcblist_extract_done_cbs(&rdp->cblist, rclp);
+}
+
+/*
+ * Dequeue a single element, either from the rcu_segcblist structure
+ * (if not debugging) or from the rcu_cblist structure (otherwise).
+ * Returns NULL if the structure has no ready-to-invoke callbacks.
+ */
+static struct rcu_head *
+rcu_do_batch_dequeue(struct rcu_data *rdp, struct rcu_cblist *rclp)
+{
+	struct rcu_head *rhp;
+
+	if (1 /* IS_ENABLED(CONFIG_PROVE_RCU) */) {
+		rhp = rcu_segcblist_dequeue(&rdp->cblist);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
+		return rhp;
+	}
+	return rcu_cblist_dequeue(rclp);
+}
+
+/*
+ * Adjust counts to allow for the fact that the previously dequeued
+ * callback was lazy.
+ */
+static void rcu_do_batch_was_lazy(struct rcu_data *rdp, struct rcu_cblist *rclp)
+{
+	if (1 /* IS_ENABLED(CONFIG_PROVE_RCU) */)
+		rcu_segcblist_dequeued_lazy(&rdp->cblist);
+	else
+		rcu_cblist_dequeued_lazy(rclp);
+}
+
+/*
+ * Put uninvoked callbacks back onto the rcu_segcblist structure.
+ * This happens in non-debug mode if there were too many callbacks
+ * to invoke all in one shot.
+ */
+static void rcu_do_batch_putbatch(struct rcu_data *rdp, struct rcu_cblist *rclp)
+{
+	if (0 /* IS_ENABLED(CONFIG_PROVE_RCU) */) {
+		rcu_segcblist_insert_done_cbs(&rdp->cblist, rclp);
+		smp_mb(); /* Adjust list before counts for rcu_barrier(). */
+		rcu_segcblist_insert_count(&rdp->cblist, rclp);
+		rcu_segcblist_fsck(&rdp->cblist, 100);
+	}
+}
+
+/*
  * Invoke any RCU callbacks that have made it to the end of their grace
  * period.  Thottle as specified by rdp->blimit.
  */
@@ -2761,7 +2820,7 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 	unsigned long flags;
 	struct rcu_head *rhp;
 	struct rcu_cblist rcl = RCU_CBLIST_INITIALIZER(rcl);
-	long bl, count;
+	long bl, count = 0;
 
 	/* If no callbacks are ready, just return. */
 	if (!rcu_segcblist_ready_cbs(&rdp->cblist)) {
@@ -2786,15 +2845,16 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 	bl = rdp->blimit;
 	trace_rcu_batch_start(rsp->name, rcu_segcblist_n_lazy_cbs(&rdp->cblist),
 			      rcu_segcblist_n_cbs(&rdp->cblist), bl);
-	rcu_segcblist_extract_done_cbs(&rdp->cblist, &rcl);
+	rcu_do_batch_getbatch(rdp, &rcl);
 	local_irq_restore(flags);
 
 	/* Invoke callbacks. */
-	rhp = rcu_cblist_dequeue(&rcl);
-	for (; rhp; rhp = rcu_cblist_dequeue(&rcl)) {
+	rhp = rcu_do_batch_dequeue(rdp, &rcl);
+	for (; rhp; rhp = rcu_do_batch_dequeue(rdp, &rcl)) {
 		debug_rcu_head_unqueue(rhp);
 		if (__rcu_reclaim(rsp->name, rhp))
-			rcu_cblist_dequeued_lazy(&rcl);
+			rcu_do_batch_was_lazy(rdp, &rcl);
+		count++;
 		/*
 		 * Stop only if limit reached and CPU has something to do.
 		 * Note: The rcl structure counts down from zero.
@@ -2806,17 +2866,13 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 	}
 
 	local_irq_save(flags);
-	count = -rcu_cblist_n_cbs(&rcl);
 	trace_rcu_batch_end(rsp->name, count, !rcu_cblist_empty(&rcl),
 			    need_resched(), is_idle_task(current),
 			    rcu_is_callbacks_kthread());
 
 	/* Update counts and requeue any remaining callbacks. */
-	rcu_segcblist_insert_done_cbs(&rdp->cblist, &rcl);
-	smp_mb(); /* List handling before counting for rcu_barrier(). */
+	rcu_do_batch_putbatch(rdp, &rcl);
 	rdp->n_cbs_invoked += count;
-	rcu_segcblist_insert_count(&rdp->cblist, &rcl);
-	rcu_segcblist_fsck(&rdp->cblist, 100);
 
 	/* Reinstate batch limit if we have worked down the excess. */
 	count = rcu_segcblist_n_cbs(&rdp->cblist);
