@@ -2597,10 +2597,14 @@ static void rcu_check_orphan_cbs(struct rcu_state *rsp, long limit)
 
 	if (0 /* !IS_ENABLED(CONFIG_PROVE_RCU) */)
 		return;
-	WARN_ON_ONCE(n_pend != 0);
+	WARN_ONCE(n_pend != 0,
+		  "n_done: %ld n_pend: %ld cnt_done: %ld cnt_pend: %ld\n",
+		  n_done, n_pend, cnt_done, cnt_pend);
 	if (cnt_done < 0 || cnt_pend < 0)
 		return;
-	WARN_ON_ONCE(n_done != cnt_done + cnt_pend);
+	WARN_ONCE(n_done != cnt_done + cnt_pend,
+		  "n_done: %ld n_pend: %ld cnt_done: %ld cnt_pend: %ld\n",
+		  n_done, n_pend, cnt_done, cnt_pend);
 }
 
 /*
