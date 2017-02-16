@@ -657,7 +657,7 @@ static inline void rcu_segcblist_dump(struct rcu_segcblist *rsclp)
  * on any inconsistencies that it spots.
  */
 #define rcu_segcblist_fsck(rsclp, limit) \
-do { \
+({ \
 	long ___lim = (limit); \
 	struct rcu_segcblist *___rsclp = (rsclp); \
 	long cnt = 0; \
@@ -665,6 +665,7 @@ do { \
 	struct rcu_head **rhp = &___rsclp->head; \
 	static int notdone1 = 1; \
 	static int notdone2 = 1; \
+	static int notdone3 = 1; \
 	\
 	for (;;) { \
 		while (i < RCU_CBLIST_NSEGS && ___rsclp->tails[i] == rhp) \
@@ -687,9 +688,15 @@ do { \
 	} \
 	WARN_ON_ONCE(___rsclp->tails[RCU_NEXT_TAIL] && cnt < ___lim && \
 		     i != RCU_CBLIST_NSEGS); \
+	if ((___rsclp->len < 0 || ___rsclp->len_lazy < 0 || \
+	     ___rsclp->len < ___rsclp->len_lazy) && xchg(&notdone3, 0)) { \
+		pr_info("Counter problems\n"); \
+		rcu_segcblist_dump(___rsclp); \
+	} \
 	WARN_ON_ONCE(___rsclp->len < 0); \
 	WARN_ON_ONCE(___rsclp->len_lazy < 0); \
 	WARN_ON_ONCE(___rsclp->len < ___rsclp->len_lazy); \
-} while (0)
+	!notdone1 || !notdone2 || !notdone3; \
+})
 
 #endif /* __KERNEL_RCU_SEGCBLIST_H */
