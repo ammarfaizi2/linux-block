@@ -2588,7 +2588,7 @@ rcu_check_quiescent_state(struct rcu_state *rsp, struct rcu_data *rdp)
  * actual callbacks in either list exceeds the specified limit,
  * the comparison is skipped.
  */
-static void rcu_check_orphan_cbs(struct rcu_state *rsp, long limit)
+static bool rcu_check_orphan_cbs(struct rcu_state *rsp, long limit)
 {
 	long cnt_done = rcu_cblist_count_cbs(&rsp->orphan_done, limit);
 	long cnt_pend = rcu_cblist_count_cbs(&rsp->orphan_pend, limit);
@@ -2596,15 +2596,18 @@ static void rcu_check_orphan_cbs(struct rcu_state *rsp, long limit)
 	long n_pend = rcu_cblist_n_cbs(&rsp->orphan_pend);
 
 	if (0 /* !IS_ENABLED(CONFIG_PROVE_RCU) */)
-		return;
-	WARN_ONCE(n_pend != 0,
-		  "n_done: %ld n_pend: %ld cnt_done: %ld cnt_pend: %ld\n",
-		  n_done, n_pend, cnt_done, cnt_pend);
+		return false;
+	if (WARN_ONCE(n_pend != 0,
+		      "n_done: %ld n_pend: %ld cnt_done: %ld cnt_pend: %ld\n",
+		      n_done, n_pend, cnt_done, cnt_pend))
+		return true;
 	if (cnt_done < 0 || cnt_pend < 0)
-		return;
-	WARN_ONCE(n_done != cnt_done + cnt_pend,
-		  "n_done: %ld n_pend: %ld cnt_done: %ld cnt_pend: %ld\n",
-		  n_done, n_pend, cnt_done, cnt_pend);
+		return false;
+	if (WARN_ONCE(n_done != cnt_done + cnt_pend,
+		      "n_done: %ld n_pend: %ld cnt_done: %ld cnt_pend: %ld\n",
+		      n_done, n_pend, cnt_done, cnt_pend))
+		return true;
+	return false;
 }
 
 /*
@@ -2626,6 +2629,7 @@ rcu_send_cbs_to_orphanage(int cpu, struct rcu_state *rsp,
 	 * cannot be running now.  Thus no memory barrier is required.
 	 */
 	rcu_segcblist_fsck(&rdp->cblist, 100);
+	WARN_ON_ONCE(rcu_check_orphan_cbs(rsp, 100));
 	rdp->n_cbs_orphaned += rcu_segcblist_n_cbs(&rdp->cblist);
 	rcu_segcblist_extract_count(&rdp->cblist, &rsp->orphan_done);
 
@@ -2645,7 +2649,7 @@ rcu_send_cbs_to_orphanage(int cpu, struct rcu_state *rsp,
 	 */
 	rcu_segcblist_extract_done_cbs(&rdp->cblist, &rsp->orphan_done);
 	rcu_segcblist_fsck(&rdp->cblist, 100);
-	rcu_check_orphan_cbs(rsp, 100);
+	WARN_ON_ONCE(rcu_check_orphan_cbs(rsp, 100));
 
 	/* Finally, disallow further callbacks on this CPU.  */
 	rcu_segcblist_disable(&rdp->cblist);
@@ -2670,7 +2674,7 @@ static void rcu_adopt_orphan_cbs(struct rcu_state *rsp, unsigned long flags)
 	    rcu_cblist_n_cbs(&rsp->orphan_done))
 		rcu_idle_count_callbacks_posted();
 	rcu_segcblist_fsck(&rdp->cblist, 100);
-	rcu_check_orphan_cbs(rsp, 100);
+	WARN_ON_ONCE(rcu_check_orphan_cbs(rsp, 100));
 	rcu_segcblist_insert_count(&rdp->cblist, &rsp->orphan_done);
 
 	/*
@@ -2687,6 +2691,7 @@ static void rcu_adopt_orphan_cbs(struct rcu_state *rsp, unsigned long flags)
 	WARN_ON_ONCE(!rcu_cblist_empty(&rsp->orphan_pend));
 	WARN_ON_ONCE(rcu_segcblist_empty(&rdp->cblist) !=
 		     !rcu_segcblist_n_cbs(&rdp->cblist));
+	WARN_ON_ONCE(rcu_check_orphan_cbs(rsp, 100));
 }
 
 /*
