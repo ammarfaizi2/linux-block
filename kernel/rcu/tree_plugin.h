@@ -1947,14 +1947,14 @@ static bool __maybe_unused rcu_nocb_adopt_orphan_cbs(struct rcu_state *rsp,
 		__call_rcu_nocb_enqueue(rdp, rcu_cblist_head(&rsp->orphan_done),
 					rcu_cblist_tail(&rsp->orphan_done),
 					ql, qll, flags);
-		rcu_cblist_init(&rsp->orphan_done);
 	}
 	if (!rcu_cblist_empty(&rsp->orphan_pend)) {
 		__call_rcu_nocb_enqueue(rdp, rcu_cblist_head(&rsp->orphan_pend),
 					rcu_cblist_tail(&rsp->orphan_pend),
 					ql, qll, flags);
-		rcu_cblist_init(&rsp->orphan_pend);
 	}
+	rcu_cblist_init(&rsp->orphan_done);
+	rcu_cblist_init(&rsp->orphan_pend);
 	return true;
 }
 
