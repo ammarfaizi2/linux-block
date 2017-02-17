@@ -2629,6 +2629,8 @@ rcu_send_cbs_to_orphanage(int cpu, struct rcu_state *rsp,
 	 * cannot be running now.  Thus no memory barrier is required.
 	 */
 	rcu_segcblist_fsck(&rdp->cblist, 100);
+	rcu_cblist_init(&rsp->orphan_done);
+	rcu_cblist_init(&rsp->orphan_pend);
 	WARN_ON_ONCE(rcu_check_orphan_cbs(rsp, 100));
 	rdp->n_cbs_orphaned += rcu_segcblist_n_cbs(&rdp->cblist);
 	rcu_segcblist_extract_count(&rdp->cblist, &rsp->orphan_done);
