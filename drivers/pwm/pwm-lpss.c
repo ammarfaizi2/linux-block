@@ -137,12 +137,12 @@ static int pwm_lpss_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 				return ret;
 			}
 			pwm_lpss_prepare(lpwm, pwm, state->duty_cycle, state->period);
+			pwm_lpss_write(pwm, pwm_lpss_read(pwm) | PWM_ENABLE);
 			ret = pwm_lpss_update(pwm);
 			if (ret) {
 				pm_runtime_put(chip->dev);
 				return ret;
 			}
-			pwm_lpss_write(pwm, pwm_lpss_read(pwm) | PWM_ENABLE);
 		} else {
 			ret = pwm_lpss_is_updating(pwm);
 			if (ret)
