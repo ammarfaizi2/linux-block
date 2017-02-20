@@ -128,34 +128,30 @@ static int pwm_lpss_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 	struct pwm_lpss_chip *lpwm = to_lpwm(chip);
 	int ret;
 
+	pm_runtime_get_sync(chip->dev);
+	ret = pwm_lpss_is_updating(pwm);
+	if (ret)
+		goto out;
+
 	if (state->enabled) {
 		if (!pwm_is_enabled(pwm)) {
-			pm_runtime_get_sync(chip->dev);
-			ret = pwm_lpss_is_updating(pwm);
-			if (ret) {
-				pm_runtime_put(chip->dev);
-				return ret;
-			}
 			pwm_lpss_prepare(lpwm, pwm, state->duty_cycle, state->period);
 			pwm_lpss_write(pwm, pwm_lpss_read(pwm) | PWM_ENABLE);
 			ret = pwm_lpss_update(pwm);
-			if (ret) {
-				pm_runtime_put(chip->dev);
-				return ret;
-			}
+			if (ret == 0)
+				pm_runtime_get(chip->dev);
 		} else {
-			ret = pwm_lpss_is_updating(pwm);
-			if (ret)
-				return ret;
 			pwm_lpss_prepare(lpwm, pwm, state->duty_cycle, state->period);
-			return pwm_lpss_update(pwm);
+			ret = pwm_lpss_update(pwm);
 		}
 	} else if (pwm_is_enabled(pwm)) {
 		pwm_lpss_write(pwm, pwm_lpss_read(pwm) & ~PWM_ENABLE);
 		pm_runtime_put(chip->dev);
 	}
 
-	return 0;
+out:
+	pm_runtime_put(chip->dev);
+	return ret;
 }
 
 static const struct pwm_ops pwm_lpss_ops = {
