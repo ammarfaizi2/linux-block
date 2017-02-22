@@ -54,6 +54,10 @@
 # define unlikely(x)		__builtin_expect(!!(x), 0)
 #endif
 
+#ifndef __compiletime_error
+# define __compiletime_error(message)
+#endif
+
 #define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
 
 #include <linux/types.h>
