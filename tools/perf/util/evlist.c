@@ -974,8 +974,19 @@ static struct perf_mmap *perf_evlist__alloc_mmap(struct perf_evlist *evlist)
 	if (!map)
 		return NULL;
 
-	for (i = 0; i < evlist->nr_mmaps; i++)
+	for (i = 0; i < evlist->nr_mmaps; i++) {
 		map[i].fd = -1;
+		/*
+		 * When the perf_mmap() call is made we grab one refcount, plus
+		 * one extra to let perf_evlist__mmap_consume() get the last
+		 * events after all real references (perf_mmap__get()) are
+		 * dropped.
+		 *
+		 * Each PERF_EVENT_IOC_SET_OUTPUT points to this mmap and
+		 * thus does perf_mmap__get() on it.
+		 */
+		refcount_set(&map[i].refcnt, 0);
+	}
 	return map;
 }
 
@@ -988,6 +999,7 @@ struct mmap_params {
 static int perf_mmap__mmap(struct perf_mmap *map,
 			   struct mmap_params *mp, int fd)
 {
+	perf_mmap__get(map);
 	/*
 	 * The last one will be done at perf_evlist__mmap_consume(), so that we
 	 * make sure we don't prevent tools from consuming every last event in
@@ -1001,7 +1013,7 @@ static int perf_mmap__mmap(struct perf_mmap *map,
 	 * evlist layer can't just drop it when filtering events in
 	 * perf_evlist__filter_pollfd().
 	 */
-	refcount_set(&map->refcnt, 2);
+	perf_mmap__get(map); /* This is not a dup, see the comment above! */
 	map->prev = 0;
 	map->mask = mp->mask;
 	map->base = mmap(NULL, perf_mmap__mmap_len(map), mp->prot,
