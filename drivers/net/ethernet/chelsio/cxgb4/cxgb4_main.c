@@ -2400,7 +2400,7 @@ static void cxgb_get_stats(struct net_device *dev,
 	ns->rx_over_errors   = 0;
 	ns->rx_crc_errors    = stats.rx_fcs_err;
 	ns->rx_frame_errors  = stats.rx_symbol_err;
-	ns->rx_fifo_errors   = stats.rx_ovflow0 + stats.rx_ovflow1 +
+	ns->rx_dropped	     = stats.rx_ovflow0 + stats.rx_ovflow1 +
 			       stats.rx_ovflow2 + stats.rx_ovflow3 +
 			       stats.rx_trunc0 + stats.rx_trunc1 +
 			       stats.rx_trunc2 + stats.rx_trunc3;
@@ -4907,8 +4907,7 @@ static int init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 			 "continuing\n");
 		adapter->params.offload = 0;
 	} else {
-		adapter->tc_u32 = cxgb4_init_tc_u32(adapter,
-						    CXGB4_MAX_LINK_HANDLE);
+		adapter->tc_u32 = cxgb4_init_tc_u32(adapter);
 		if (!adapter->tc_u32)
 			dev_warn(&pdev->dev,
 				 "could not offload tc u32, continuing\n");

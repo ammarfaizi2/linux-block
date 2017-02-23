@@ -352,6 +352,7 @@ enum gro_result {
 	GRO_HELD,
 	GRO_NORMAL,
 	GRO_DROP,
+	GRO_CONSUMED,
 };
 typedef enum gro_result gro_result_t;
 
@@ -1865,8 +1866,12 @@ struct net_device {
 		struct pcpu_vstats __percpu		*vstats;
 	};
 
+#if IS_ENABLED(CONFIG_GARP)
 	struct garp_port __rcu	*garp_port;
+#endif
+#if IS_ENABLED(CONFIG_MRP)
 	struct mrp_port __rcu	*mrp_port;
+#endif
 
 	struct device		dev;
 	const struct attribute_group *sysfs_groups[4];
@@ -2662,6 +2667,19 @@ static inline void skb_gro_remcsum_cleanup(struct sk_buff *skb,
 
 	remcsum_unadjust((__sum16 *)ptr, grc->delta);
 }
+
+#ifdef CONFIG_XFRM_OFFLOAD
+static inline void skb_gro_flush_final(struct sk_buff *skb, struct sk_buff **pp, int flush)
+{
+	if (PTR_ERR(pp) != -EINPROGRESS)
+		NAPI_GRO_CB(skb)->flush |= flush;
+}
+#else
+static inline void skb_gro_flush_final(struct sk_buff *skb, struct sk_buff **pp, int flush)
+{
+	NAPI_GRO_CB(skb)->flush |= flush;
+}
+#endif
 
 static inline int dev_hard_header(struct sk_buff *skb, struct net_device *dev,
 				  unsigned short type,

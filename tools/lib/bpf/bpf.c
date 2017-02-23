@@ -42,21 +42,15 @@
 # endif
 #endif
 
-static __u64 ptr_to_u64(const void *ptr)
+static inline __u64 ptr_to_u64(const void *ptr)
 {
 	return (__u64) (unsigned long) ptr;
 }
 
-static int sys_bpf(enum bpf_cmd cmd, union bpf_attr *attr,
-		   unsigned int size)
+static inline int sys_bpf(enum bpf_cmd cmd, union bpf_attr *attr,
+			  unsigned int size)
 {
-#ifdef __NR_bpf
 	return syscall(__NR_bpf, cmd, attr, size);
-#else
-	fprintf(stderr, "No bpf syscall, kernel headers too old?\n");
-	errno = ENOSYS;
-	return -1;
-#endif
 }
 
 int bpf_create_map(enum bpf_map_type map_type, int key_size,
@@ -174,7 +168,8 @@ int bpf_obj_get(const char *pathname)
 	return sys_bpf(BPF_OBJ_GET, &attr, sizeof(attr));
 }
 
-int bpf_prog_attach(int prog_fd, int target_fd, enum bpf_attach_type type)
+int bpf_prog_attach(int prog_fd, int target_fd, enum bpf_attach_type type,
+		    unsigned int flags)
 {
 	union bpf_attr attr;
 
@@ -182,6 +177,7 @@ int bpf_prog_attach(int prog_fd, int target_fd, enum bpf_attach_type type)
 	attr.target_fd	   = target_fd;
 	attr.attach_bpf_fd = prog_fd;
 	attr.attach_type   = type;
+	attr.attach_flags  = flags;
 
 	return sys_bpf(BPF_PROG_ATTACH, &attr, sizeof(attr));
 }
