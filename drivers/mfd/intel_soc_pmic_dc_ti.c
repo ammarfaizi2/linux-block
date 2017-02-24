@@ -71,6 +71,9 @@ static struct mfd_cell dc_ti_dev[] = {
 		.num_resources = ARRAY_SIZE(battery_resources),
 		.resources = battery_resources,
 	},
+	{
+		.name = "dollar_cove_ti_pmic",
+	},
 };
 
 static const struct regmap_config dc_ti_regmap_config = {
