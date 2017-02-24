@@ -1139,6 +1139,14 @@ config SILEAD_DMI
 	  with the OS-image for the device. This option supplies the missing
 	  information. Enable this for x86 tablets with Silead touchscreens.
 
+config INTEL_DC_TI_PWRBTN
+	tristate "Dollar Cove TI power button driver"
+	depends on INTEL_SOC_PMIC_DC_TI
+	depends on INPUT
+	help
+	  Say Y here fi you want to have a power button driver for
+	  Dollar Cove TI PMIC.
+
 endif # X86_PLATFORM_DEVICES
 
 config PMC_ATOM
