@@ -424,9 +424,9 @@ config LPC_SCH
 	  System Management Bus and General Purpose I/O.
 
 config INTEL_SOC_PMIC
-	bool "Support for Intel Atom SoC PMIC"
+	tristate "Support for Intel Atom SoC PMIC"
 	depends on GPIOLIB
-	depends on I2C=y
+	depends on I2C
 	select MFD_CORE
 	select REGMAP_I2C
 	select REGMAP_IRQ
@@ -446,6 +446,17 @@ config INTEL_SOC_PMIC_DC_TI
 	help
 	  Select this option for supporting Dollar Cove TI PMIC device that is
 	  found on Intel Cherrytrail SoC.
+
+config INTEL_SOC_PMIC_BXTWC
+	tristate "Support for Intel Broxton Whiskey Cove PMIC"
+	depends on GPIOLIB
+	depends on I2C
+	depends on INTEL_PMC_IPC
+	select MFD_CORE
+	select REGMAP_I2C
+	select REGMAP_IRQ
+	help
+	  Say Y for supporting Intel Broxton Whiskey Cove PMIC device.
 
 config MFD_INTEL_LPSS
 	tristate
