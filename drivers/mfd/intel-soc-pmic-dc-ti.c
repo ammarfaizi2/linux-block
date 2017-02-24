@@ -108,6 +108,9 @@ static struct mfd_cell dollar_cove_ti_dev[] = {
 	{
 		.name = "intel_fg_iface",
 	},
+	{
+		.name = "dollar_cove_ti_pmic",
+	},
 };
 
 static const struct regmap_config dollar_cove_ti_regmap_config = {
