@@ -470,6 +470,18 @@ config INTEL_SOC_PMIC_BXTWC
 	  thermal, charger and related power management functions
 	  on these systems.
 
+config INTEL_SOC_PMIC_DC_TI
+	tristate "Support for Dollar Cove TI PMIC"
+	depends on GPIOLIB
+	depends on I2C
+	depends on X86 && ACPI
+	select MFD_CORE
+	select REGMAP_I2C
+	select REGMAP_IRQ
+	help
+	  Select this option for supporting Dollar Cove TI PMIC device that is
+	  found on Intel Cherrytrail SoC.
+
 config MFD_INTEL_LPSS
 	tristate
 	select COMMON_CLK
