@@ -745,4 +745,11 @@ config KEYBOARD_BCM
 	  To compile this driver as a module, choose M here: the
 	  module will be called bcm-keypad.
 
+config KEYBOARD_DC_TI_POWER
+	tristate "Dollar Cove TI power button driver"
+	depends on INTEL_SOC_PMIC_DC_TI
+	help
+	  Say Y here fi you want to have a power button driver for
+	  Dollar Cove TI PMIC.
+
 endif
