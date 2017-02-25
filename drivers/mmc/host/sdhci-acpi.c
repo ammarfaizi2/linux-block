@@ -36,6 +36,7 @@
 #include <linux/pm.h>
 #include <linux/pm_runtime.h>
 #include <linux/delay.h>
+#include <linux/dmi.h>
 
 #include <linux/mmc/host.h>
 #include <linux/mmc/pm.h>
@@ -395,6 +396,18 @@ static int sdhci_acpi_probe(struct platform_device *pdev)
 	if (acpi_bus_get_status(device) || !device->status.present)
 		return -ENODEV;
 
+	hid = acpi_device_hid(device);
+	uid = device->pnp.unique_id;
+
+	/*
+	 * The GPD WIN (I55) has a bug in its ACPI tables where putting the
+	 * unused 80860F14 UID 2 (SDIO) device in PS0 toggles a gpio
+	 * disabling the pcie wifi.
+	 */
+	if (strcmp(hid, "80860F14") == 0 && strcmp(uid, "2") == 0 &&
+			dmi_match(DMI_PRODUCT_NAME, "GPD-WINI55"))
+		return -ENODEV;
+
 	/* Power on the SDHCI controller and its children */
 	acpi_device_fix_up_power(device);
 	list_for_each_entry(child, &device->children, node)
@@ -403,9 +416,6 @@ static int sdhci_acpi_probe(struct platform_device *pdev)
 
 	if (sdhci_acpi_byt_defer(dev))
 		return -EPROBE_DEFER;
-
-	hid = acpi_device_hid(device);
-	uid = device->pnp.unique_id;
 
 	iomem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!iomem)
