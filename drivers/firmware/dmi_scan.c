@@ -1047,3 +1047,17 @@ void dmi_memdev_name(u16 handle, const char **bank, const char **device)
 	}
 }
 EXPORT_SYMBOL_GPL(dmi_memdev_name);
+
+static int __init dmi_parse_dmi_product_name(char *str)
+{
+	static char prod_name[32];
+
+	if (!str)
+		return -EINVAL;
+
+	strlcpy(prod_name, str, sizeof(prod_name));
+	dmi_ident[DMI_PRODUCT_NAME] = prod_name;
+
+	return 0;
+}
+early_param("dmi_product_name", dmi_parse_dmi_product_name);
