@@ -392,14 +392,14 @@ static int sdhci_acpi_probe(struct platform_device *pdev)
 	if (acpi_bus_get_device(handle, &device))
 		return -ENODEV;
 
+	if (acpi_bus_get_status(device) || !device->status.present)
+		return -ENODEV;
+
 	/* Power on the SDHCI controller and its children */
 	acpi_device_fix_up_power(device);
 	list_for_each_entry(child, &device->children, node)
 		if (child->status.present && child->status.enabled)
 			acpi_device_fix_up_power(child);
-
-	if (acpi_bus_get_status(device) || !device->status.present)
-		return -ENODEV;
 
 	if (sdhci_acpi_byt_defer(dev))
 		return -EPROBE_DEFER;
