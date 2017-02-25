@@ -109,10 +109,35 @@ acpi_status acpi_bus_get_status_handle(acpi_handle handle,
 	return status;
 }
 
+/*
+ * Some ACPI devices are hidden (status == 0x0) in recent BIOS-es because
+ * some recent windows drivers bind to one device but poke at multiple
+ * devices at the same time, so the others get hidden.
+ * We work around this by always reporting ACPI_STA_DEFAULT for these
+ * devices. Note this MUST only be done for devices where this is safe.
+ */
+static const struct acpi_device_id always_present_device_ids[] = {
+	/*
+	 * Cherrytrail pwm directly poked by GPU driver in win10,
+	 * but Linux uses a separate pwm driver, harmless if not used.
+	 */
+	{ "80862288", },
+	{ }
+};
+
 int acpi_bus_get_status(struct acpi_device *device)
 {
 	acpi_status status;
 	unsigned long long sta;
+
+	/* acpi_match_device_ids checks status, so start with default */
+	acpi_set_device_status(device, ACPI_STA_DEFAULT);
+	if (acpi_match_device_ids(device, always_present_device_ids) == 0) {
+		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "Device [%s] is in always present list setting status [%08x]\n",
+				  device->pnp.bus_id, ACPI_STA_DEFAULT));
+		return 0;
+	}
+	acpi_set_device_status(device, 0);
 
 	status = acpi_bus_get_status_handle(device->handle, &sta);
 	if (ACPI_FAILURE(status))
