@@ -125,6 +125,44 @@ ACPI_EXPORT_SYMBOL_INIT(acpi_load_tables)
 
 /*******************************************************************************
  *
+ * FUNCTION:    acpi_tb_find_duplicate_ssdt
+ *
+ * PARAMETERS:  table         - validated acpi_table_desc of table to check
+ *              index         - index of table to find a duplicate of
+ *
+ * RETURN:      TRUE if a duplicate is found, FALSE if not
+ *
+ * DESCRIPTION: Private helper function for acpi_tb_load_namespace to
+ *              avoid trying to load duplicate ssdt tables
+ *
+ ******************************************************************************/
+static u8 acpi_tb_find_duplicate_ssdt(struct acpi_table_desc *table, u32 index)
+{
+	struct acpi_table_desc *dup;
+	u32 i;
+
+	for (i = 0; i < index; ++i) {
+		dup = &acpi_gbl_root_table_list.tables[i];
+
+		if (!acpi_gbl_root_table_list.tables[i].address ||
+		    (!ACPI_COMPARE_NAME(dup->signature.ascii, ACPI_SIG_SSDT)
+		     && !ACPI_COMPARE_NAME(dup->signature.ascii,
+					   ACPI_SIG_PSDT)
+		     && !ACPI_COMPARE_NAME(dup->signature.ascii,
+					   ACPI_SIG_OSDT))
+		    || ACPI_FAILURE(acpi_tb_validate_table(dup))
+		    || dup->length != table->length) {
+			continue;
+		}
+
+		if (memcmp(dup->pointer, table->pointer, table->length) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/*******************************************************************************
+ *
  * FUNCTION:    acpi_tb_load_namespace
  *
  * PARAMETERS:  None
@@ -212,7 +250,8 @@ acpi_status acpi_tb_load_namespace(void)
 					   ACPI_SIG_PSDT)
 		     && !ACPI_COMPARE_NAME(table->signature.ascii,
 					   ACPI_SIG_OSDT))
-		    || ACPI_FAILURE(acpi_tb_validate_table(table))) {
+		    || ACPI_FAILURE(acpi_tb_validate_table(table))
+		    || acpi_tb_find_duplicate_ssdt(table, i)) {
 			continue;
 		}
 
