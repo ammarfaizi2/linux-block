@@ -516,6 +516,12 @@ config BXT_WC_PMIC_OPREGION
 	help
 	  This config adds ACPI operation region support for BXT WhiskeyCove PMIC.
 
+config CHT_WC_PMIC_OPREGION
+	tristate "ACPI operation region support for CHT Whiskey Cove PMIC"
+	depends on MFD_INTEL_CHT_WC
+	help
+	  This config adds ACPI operation region support for CHT Whiskey Cove PMIC.
+
 endif
 
 config ACPI_CONFIGFS
