@@ -436,6 +436,17 @@ config INTEL_SOC_PMIC
 	  thermal, charger and related power management functions
 	  on these systems.
 
+config MFD_INTEL_CHT_WC
+	tristate "Support for Intel Cherry Trail Whiskey Cove PMIC"
+	depends on ACPI
+	depends on I2C
+	select MFD_CORE
+	select REGMAP_I2C
+	select REGMAP_IRQ
+	help
+	  Select this option to enable support for the Intel Cherry Trail
+	  Whiskey Cove PMIC found on some Intel Cherry Trail systems.
+
 config MFD_INTEL_LPSS
 	tristate
 	select COMMON_CLK
