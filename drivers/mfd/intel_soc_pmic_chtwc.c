@@ -149,6 +149,32 @@ static int cht_wc_remove(struct i2c_client *client)
 	return 0;
 }
 
+static void cht_wc_shutdown(struct i2c_client *client)
+{
+	struct intel_soc_pmic *pmic = i2c_get_clientdata(client);
+
+	disable_irq(pmic->irq);
+}
+
+#ifdef CONFIG_PM_SLEEP
+static int cht_wc_suspend(struct device *dev)
+{
+	struct intel_soc_pmic *pmic = dev_get_drvdata(dev);
+
+	disable_irq(pmic->irq);
+	return 0;
+}
+
+static int cht_wc_resume(struct device *dev)
+{
+	struct intel_soc_pmic *pmic = dev_get_drvdata(dev);
+
+//	enable_irq(pmic->irq);
+	return 0;
+}
+#endif
+static SIMPLE_DEV_PM_OPS(cht_wc_pm_ops, cht_wc_suspend, cht_wc_resume);
+
 static const struct i2c_device_id cht_wc_i2c_id[] = {
 	{ }
 };
@@ -163,10 +189,12 @@ MODULE_DEVICE_TABLE(acpi, cht_wc_acpi_ids);
 static struct i2c_driver cht_wc_driver = {
 	.driver	= {
 		.name	= "CHT Whiskey Cove PMIC",
+		.pm     = &cht_wc_pm_ops,
 		.acpi_match_table = ACPI_PTR(cht_wc_acpi_ids),
 	},
 	.probe = cht_wc_probe,
 	.remove	= cht_wc_remove,
+	.shutdown = cht_wc_shutdown,
 	.id_table = cht_wc_i2c_id,
 };
 
