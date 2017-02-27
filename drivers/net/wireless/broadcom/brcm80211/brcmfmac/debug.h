@@ -59,11 +59,14 @@
 			pr_err("%s: " fmt, __func__, ##__VA_ARGS__);	\
 	} while (0)
 #endif
+#define brcmf_info(fmt, ...)	pr_info("%s: " fmt, __func__, ##__VA_ARGS__)
 #else
 __printf(2, 3)
 void __brcmf_err(const char *func, const char *fmt, ...);
 #define brcmf_err(fmt, ...) \
 	__brcmf_err(__func__, fmt, ##__VA_ARGS__)
+/* For tracing purposes treat info messages as errors */
+#define brcmf_info brcmf_err
 #endif
 
 #if defined(DEBUG) || defined(CONFIG_BRCM_TRACING)
