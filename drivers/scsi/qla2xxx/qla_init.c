@@ -1191,7 +1191,7 @@ qla24xx_reset_risc(scsi_qla_host_t *vha)
 
 	/* Wait for soft-reset to complete. */
 	RD_REG_DWORD(&reg->ctrl_status);
-	for (cnt = 0; cnt < 6000000; cnt++) {
+	for (cnt = 0; cnt < 60; cnt++) {
 		barrier();
 		if ((RD_REG_DWORD(&reg->ctrl_status) &
 		    CSRX_ISP_SOFT_RESET) == 0)
@@ -1234,7 +1234,7 @@ qla24xx_reset_risc(scsi_qla_host_t *vha)
 	RD_REG_DWORD(&reg->hccr);
 
 	RD_REG_WORD(&reg->mailbox0);
-	for (cnt = 6000000; RD_REG_WORD(&reg->mailbox0) != 0 &&
+	for (cnt = 60; RD_REG_WORD(&reg->mailbox0) != 0 &&
 	    rval == QLA_SUCCESS; cnt--) {
 		barrier();
 		if (cnt)
@@ -5669,7 +5669,7 @@ qla2x00_load_risc(scsi_qla_host_t *vha, uint32_t *srisc_addr)
 	/* Validate firmware image by checking version. */
 	if (blob->fw->size < 8 * sizeof(uint16_t)) {
 		ql_log(ql_log_fatal, vha, 0x0085,
-		    "Unable to verify integrity of firmware image (%Zd).\n",
+		    "Unable to verify integrity of firmware image (%zd).\n",
 		    blob->fw->size);
 		goto fail_fw_integrity;
 	}
@@ -5697,7 +5697,7 @@ qla2x00_load_risc(scsi_qla_host_t *vha, uint32_t *srisc_addr)
 		if (blob->fw->size < fwclen) {
 			ql_log(ql_log_fatal, vha, 0x0088,
 			    "Unable to verify integrity of firmware image "
-			    "(%Zd).\n", blob->fw->size);
+			    "(%zd).\n", blob->fw->size);
 			goto fail_fw_integrity;
 		}
 
@@ -5778,7 +5778,7 @@ qla24xx_load_risc_blob(scsi_qla_host_t *vha, uint32_t *srisc_addr)
 	/* Validate firmware image by checking version. */
 	if (blob->fw->size < 8 * sizeof(uint32_t)) {
 		ql_log(ql_log_fatal, vha, 0x0093,
-		    "Unable to verify integrity of firmware image (%Zd).\n",
+		    "Unable to verify integrity of firmware image (%zd).\n",
 		    blob->fw->size);
 		return QLA_FUNCTION_FAILED;
 	}
@@ -5789,7 +5789,7 @@ qla24xx_load_risc_blob(scsi_qla_host_t *vha, uint32_t *srisc_addr)
 	    (dcode[0] == 0 && dcode[1] == 0 && dcode[2] == 0 &&
 		dcode[3] == 0)) {
 		ql_log(ql_log_fatal, vha, 0x0094,
-		    "Unable to verify integrity of firmware image (%Zd).\n",
+		    "Unable to verify integrity of firmware image (%zd).\n",
 		    blob->fw->size);
 		ql_log(ql_log_fatal, vha, 0x0095,
 		    "Firmware data: %08x %08x %08x %08x.\n",
@@ -5807,7 +5807,7 @@ qla24xx_load_risc_blob(scsi_qla_host_t *vha, uint32_t *srisc_addr)
 		if (blob->fw->size < fwclen) {
 			ql_log(ql_log_fatal, vha, 0x0096,
 			    "Unable to verify integrity of firmware image "
-			    "(%Zd).\n", blob->fw->size);
+			    "(%zd).\n", blob->fw->size);
 			return QLA_FUNCTION_FAILED;
 		}
 

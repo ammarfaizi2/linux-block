@@ -512,7 +512,7 @@ static int aio_setup_ring(struct kioctx *ctx)
 
 	ctx->mmap_base = do_mmap_pgoff(ctx->aio_ring_file, 0, ctx->mmap_size,
 				       PROT_READ | PROT_WRITE,
-				       MAP_SHARED, 0, &unused);
+				       MAP_SHARED, 0, &unused, NULL);
 	up_write(&mm->mmap_sem);
 	if (IS_ERR((void *)ctx->mmap_base)) {
 		ctx->mmap_size = 0;
@@ -1085,7 +1085,8 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
 		 * Tell lockdep we inherited freeze protection from submission
 		 * thread.
 		 */
-		__sb_writers_acquired(file_inode(file)->i_sb, SB_FREEZE_WRITE);
+		if (S_ISREG(file_inode(file)->i_mode))
+			__sb_writers_acquired(file_inode(file)->i_sb, SB_FREEZE_WRITE);
 		file_end_write(file);
 	}
 
@@ -1525,7 +1526,8 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
 		 * by telling it the lock got released so that it doesn't
 		 * complain about held lock when we return to userspace.
 		 */
-		__sb_writers_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
+		if (S_ISREG(file_inode(file)->i_mode))
+			__sb_writers_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
 	}
 	kfree(iovec);
 	return ret;
