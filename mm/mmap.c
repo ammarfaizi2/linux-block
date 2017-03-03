@@ -679,10 +679,6 @@ int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
 	long adjust_next = 0;
 	int remove_next = 0;
 
-	write_seqcount_begin(&vma->vm_sequence);
-	if (next)
-		write_seqcount_begin_nested(&next->vm_sequence, SINGLE_DEPTH_NESTING);
-
 	if (next && !insert) {
 		struct vm_area_struct *exporter = NULL, *importer = NULL;
 
@@ -789,6 +785,11 @@ again:
 			__vma_link_file(insert);
 		}
 	}
+
+	write_seqcount_begin(&vma->vm_sequence);
+	if (next)
+		write_seqcount_begin_nested(&next->vm_sequence,
+					    SINGLE_DEPTH_NESTING);
 
 	anon_vma = vma->anon_vma;
 	if (!anon_vma && adjust_next)
@@ -908,8 +909,6 @@ again:
 			 * "vma->vm_next" gap must be updated.
 			 */
 			next = vma->vm_next;
-			if (next)
-				write_seqcount_begin_nested(&next->vm_sequence, SINGLE_DEPTH_NESTING);
 		} else {
 			/*
 			 * For the scope of the comment "next" and
@@ -926,11 +925,14 @@ again:
 		if (remove_next == 2) {
 			remove_next = 1;
 			end = next->vm_end;
+			write_seqcount_end(&vma->vm_sequence);
 			goto again;
-		}
-		else if (next)
+		} else if (next) {
+			if (next != vma)
+				write_seqcount_begin_nested(&next->vm_sequence,
+							    SINGLE_DEPTH_NESTING);
 			vma_gap_update(next);
-		else {
+		} else {
 			/*
 			 * If remove_next == 2 we obviously can't
 			 * reach this path.
@@ -956,7 +958,7 @@ again:
 	if (insert && file)
 		uprobe_mmap(insert);
 
-	if (next)
+	if (next && next != vma)
 		write_seqcount_end(&next->vm_sequence);
 	write_seqcount_end(&vma->vm_sequence);
 
