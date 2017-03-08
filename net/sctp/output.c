@@ -177,7 +177,7 @@ sctp_xmit_t sctp_packet_transmit_chunk(struct sctp_packet *packet,
 {
 	sctp_xmit_t retval;
 
-	pr_debug("%s: packet:%p size:%Zu chunk:%p size:%d\n", __func__,
+	pr_debug("%s: packet:%p size:%zu chunk:%p size:%d\n", __func__,
 		 packet, packet->size, chunk, chunk->skb ? chunk->skb->len : -1);
 
 	switch ((retval = (sctp_packet_append_chunk(packet, chunk)))) {
@@ -704,16 +704,13 @@ static sctp_xmit_t sctp_packet_can_append_data(struct sctp_packet *packet,
 	 * unacknowledged.
 	 */
 
-	if (sctp_sk(asoc->base.sk)->nodelay)
-		/* Nagle disabled */
+	if ((sctp_sk(asoc->base.sk)->nodelay || inflight == 0) &&
+	    !chunk->msg->force_delay)
+		/* Nothing unacked */
 		return SCTP_XMIT_OK;
 
 	if (!sctp_packet_empty(packet))
 		/* Append to packet */
-		return SCTP_XMIT_OK;
-
-	if (inflight == 0)
-		/* Nothing unacked */
 		return SCTP_XMIT_OK;
 
 	if (!sctp_state(asoc, ESTABLISHED))

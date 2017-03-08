@@ -53,9 +53,11 @@
 #include "qed_sp.h"
 #include "qed_dev_api.h"
 #include "qed_ll2.h"
+#include "qed_fcoe.h"
 #include "qed_mcp.h"
 #include "qed_hw.h"
 #include "qed_selftest.h"
+#include "qed_debug.h"
 
 #define QED_ROCE_QPS			(8192)
 #define QED_ROCE_DPIS			(8)
@@ -1070,6 +1072,7 @@ static u32 qed_sb_init(struct qed_dev *cdev,
 		       enum qed_sb_type type)
 {
 	struct qed_hwfn *p_hwfn;
+	struct qed_ptt *p_ptt;
 	int hwfn_index;
 	u16 rel_sb_id;
 	u8 n_hwfns;
@@ -1091,8 +1094,18 @@ static u32 qed_sb_init(struct qed_dev *cdev,
 		   "hwfn [%d] <--[init]-- SB %04x [0x%04x upper]\n",
 		   hwfn_index, rel_sb_id, sb_id);
 
-	rc = qed_int_sb_init(p_hwfn, p_hwfn->p_main_ptt, sb_info,
-			     sb_virt_addr, sb_phy_addr, rel_sb_id);
+	if (IS_PF(p_hwfn->cdev)) {
+		p_ptt = qed_ptt_acquire(p_hwfn);
+		if (!p_ptt)
+			return -EBUSY;
+
+		rc = qed_int_sb_init(p_hwfn, p_ptt, sb_info, sb_virt_addr,
+				     sb_phy_addr, rel_sb_id);
+		qed_ptt_release(p_hwfn, p_ptt);
+	} else {
+		rc = qed_int_sb_init(p_hwfn, NULL, sb_info, sb_virt_addr,
+				     sb_phy_addr, rel_sb_id);
+	}
 
 	return rc;
 }
@@ -1133,11 +1146,17 @@ static int qed_set_link(struct qed_dev *cdev, struct qed_link_params *params)
 	if (!cdev)
 		return -ENODEV;
 
-	if (IS_VF(cdev))
-		return 0;
-
 	/* The link should be set only once per PF */
 	hwfn = &cdev->hwfns[0];
+
+	/* When VF wants to set link, force it to read the bulletin instead.
+	 * This mimics the PF behavior, where a noitification [both immediate
+	 * and possible later] would be generated when changing properties.
+	 */
+	if (IS_VF(cdev)) {
+		qed_schedule_iov(hwfn, QED_IOV_WQ_VF_FORCE_LINK_QUERY_FLAG);
+		return 0;
+	}
 
 	ptt = qed_ptt_acquire(hwfn);
 	if (!ptt)
@@ -1603,6 +1622,8 @@ const struct qed_common_ops qed_common_ops_pass = {
 	.sb_release = &qed_sb_release,
 	.simd_handler_config = &qed_simd_handler_config,
 	.simd_handler_clean = &qed_simd_handler_clean,
+	.dbg_grc = &qed_dbg_grc,
+	.dbg_grc_size = &qed_dbg_grc_size,
 	.can_link_change = &qed_can_link_change,
 	.set_link = &qed_set_link,
 	.get_link = &qed_get_current_link,
@@ -1635,6 +1656,9 @@ void qed_get_protocol_stats(struct qed_dev *cdev,
 		stats->lan_stats.ucast_rx_pkts = eth_stats.rx_ucast_pkts;
 		stats->lan_stats.ucast_tx_pkts = eth_stats.tx_ucast_pkts;
 		stats->lan_stats.fcs_err = -1;
+		break;
+	case QED_MCP_FCOE_STATS:
+		qed_get_protocol_stats_fcoe(cdev, &stats->fcoe_stats);
 		break;
 	default:
 		DP_ERR(cdev, "Invalid protocol type = %d\n", type);

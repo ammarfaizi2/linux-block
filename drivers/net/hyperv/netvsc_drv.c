@@ -589,13 +589,14 @@ void netvsc_linkstatus_callback(struct hv_device *device_obj,
 }
 
 static struct sk_buff *netvsc_alloc_recv_skb(struct net_device *net,
+					     struct napi_struct *napi,
 					     const struct ndis_tcp_ip_checksum_info *csum_info,
 					     const struct ndis_pkt_8021q_info *vlan,
 					     void *data, u32 buflen)
 {
 	struct sk_buff *skb;
 
-	skb = netdev_alloc_skb_ip_align(net, buflen);
+	skb = napi_alloc_skb(napi, buflen);
 	if (!skb)
 		return skb;
 
@@ -642,11 +643,11 @@ int netvsc_recv_callback(struct net_device *net,
 {
 	struct net_device_context *net_device_ctx = netdev_priv(net);
 	struct netvsc_device *net_device = net_device_ctx->nvdev;
+	u16 q_idx = channel->offermsg.offer.sub_channel_index;
+	struct netvsc_channel *nvchan = &net_device->chan_table[q_idx];
 	struct net_device *vf_netdev;
 	struct sk_buff *skb;
 	struct netvsc_stats *rx_stats;
-	u16 q_idx = channel->offermsg.offer.sub_channel_index;
-
 
 	if (net->reg_state != NETREG_REGISTERED)
 		return NVSP_STAT_FAIL;
@@ -664,7 +665,8 @@ int netvsc_recv_callback(struct net_device *net,
 		net = vf_netdev;
 
 	/* Allocate a skb - TODO direct I/O to pages? */
-	skb = netvsc_alloc_recv_skb(net, csum_info, vlan, data, len);
+	skb = netvsc_alloc_recv_skb(net, &nvchan->napi,
+				    csum_info, vlan, data, len);
 	if (unlikely(!skb)) {
 		++net->stats.rx_dropped;
 		rcu_read_unlock();
@@ -679,7 +681,7 @@ int netvsc_recv_callback(struct net_device *net,
 	 * on the synthetic device because modifying the VF device
 	 * statistics will not work correctly.
 	 */
-	rx_stats = &net_device->chan_table[q_idx].rx_stats;
+	rx_stats = &nvchan->rx_stats;
 	u64_stats_update_begin(&rx_stats->syncp);
 	rx_stats->packets++;
 	rx_stats->bytes += len;
@@ -690,12 +692,7 @@ int netvsc_recv_callback(struct net_device *net,
 		++rx_stats->multicast;
 	u64_stats_update_end(&rx_stats->syncp);
 
-	/*
-	 * Pass the skb back up. Network stack will deallocate the skb when it
-	 * is done.
-	 * TODO - use NAPI?
-	 */
-	netif_receive_skb(skb);
+	napi_gro_receive(&nvchan->napi, skb);
 	rcu_read_unlock();
 
 	return 0;
@@ -859,15 +856,22 @@ static int netvsc_change_mtu(struct net_device *ndev, int mtu)
 	if (ret)
 		goto out;
 
-	ndevctx->start_remove = true;
-	rndis_filter_device_remove(hdev, nvdev);
-
-	ndev->mtu = mtu;
-
 	memset(&device_info, 0, sizeof(device_info));
 	device_info.ring_size = ring_size;
 	device_info.num_chn = nvdev->num_chn;
 	device_info.max_num_vrss_chns = nvdev->num_chn;
+
+	ndevctx->start_remove = true;
+	rndis_filter_device_remove(hdev, nvdev);
+
+	/* 'nvdev' has been freed in rndis_filter_device_remove() ->
+	 * netvsc_device_remove () -> free_netvsc_device().
+	 * We mustn't access it before it's re-created in
+	 * rndis_filter_device_add() -> netvsc_device_add().
+	 */
+
+	ndev->mtu = mtu;
+
 	rndis_filter_device_add(hdev, &device_info);
 
 out:
