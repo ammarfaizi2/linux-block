@@ -125,6 +125,7 @@ static int afs_deliver_vl_get_entry_by_xxx(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXVLGetEntryByName = {
 	.name		= "VL.GetEntryByName",
+	.op		= afs_VL_GetEntryByName,
 	.deliver	= afs_deliver_vl_get_entry_by_xxx,
 	.abort_to_error	= afs_vl_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -135,6 +136,7 @@ static const struct afs_call_type afs_RXVLGetEntryByName = {
  */
 static const struct afs_call_type afs_RXVLGetEntryById = {
 	.name		= "VL.GetEntryById",
+	.op		= afs_VL_GetEntryByID,
 	.deliver	= afs_deliver_vl_get_entry_by_xxx,
 	.abort_to_error	= afs_vl_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -177,6 +179,7 @@ int afs_vl_get_entry_by_name(struct in_addr *addr,
 		memset((void *) bp + volnamesz, 0, padsz);
 
 	/* initiate the call */
+	trace_afs_make_vl_call(call);
 	return afs_make_call(addr, call, GFP_KERNEL, async);
 }
 
@@ -211,5 +214,6 @@ int afs_vl_get_entry_by_id(struct in_addr *addr,
 	*bp   = htonl(voltype);
 
 	/* initiate the call */
+	trace_afs_make_vl_call(call);
 	return afs_make_call(addr, call, GFP_KERNEL, async);
 }

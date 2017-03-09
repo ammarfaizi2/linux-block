@@ -16,6 +16,8 @@
 #include "internal.h"
 #include "afs_fs.h"
 
+static const struct afs_fid afs_zero_fid;
+
 /*
  * We need somewhere to discard into in case the server helpfully returns more
  * than we asked for in FS.FetchData{,64}.
@@ -269,6 +271,7 @@ static int afs_deliver_fs_fetch_status(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSFetchStatus = {
 	.name		= "FS.FetchStatus",
+	.op		= afs_FS_FetchStatus,
 	.deliver	= afs_deliver_fs_fetch_status,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -306,6 +309,7 @@ int afs_fs_fetch_file_status(struct afs_server *server,
 	bp[2] = htonl(vnode->fid.vnode);
 	bp[3] = htonl(vnode->fid.unique);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -468,6 +472,7 @@ static void afs_fetch_data_destructor(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSFetchData = {
 	.name		= "FS.FetchData",
+	.op		= afs_FS_FetchData,
 	.deliver	= afs_deliver_fs_fetch_data,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_fetch_data_destructor,
@@ -475,6 +480,7 @@ static const struct afs_call_type afs_RXFSFetchData = {
 
 static const struct afs_call_type afs_RXFSFetchData64 = {
 	.name		= "FS.FetchData64",
+	.op		= afs_FS_FetchData64,
 	.deliver	= afs_deliver_fs_fetch_data,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_fetch_data_destructor,
@@ -504,7 +510,6 @@ static int afs_fs_fetch_data64(struct afs_server *server,
 	call->reply3 = req;
 	call->service_id = FS_SERVICE;
 	call->port = htons(AFS_FS_PORT);
-	call->operation_ID = FSFETCHDATA64;
 
 	/* marshall the parameters */
 	bp = call->request;
@@ -518,6 +523,7 @@ static int afs_fs_fetch_data64(struct afs_server *server,
 	bp[7] = htonl(lower_32_bits(req->len));
 
 	atomic_inc(&req->usage);
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -550,7 +556,6 @@ int afs_fs_fetch_data(struct afs_server *server,
 	call->reply3 = req;
 	call->service_id = FS_SERVICE;
 	call->port = htons(AFS_FS_PORT);
-	call->operation_ID = FSFETCHDATA;
 
 	/* marshall the parameters */
 	bp = call->request;
@@ -562,6 +567,7 @@ int afs_fs_fetch_data(struct afs_server *server,
 	bp[5] = htonl(lower_32_bits(req->len));
 
 	atomic_inc(&req->usage);
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -581,6 +587,7 @@ static int afs_deliver_fs_give_up_callbacks(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSGiveUpCallBacks = {
 	.name		= "FS.GiveUpCallBacks",
+	.op		= afs_FS_GiveUpCallbacks,
 	.deliver	= afs_deliver_fs_give_up_callbacks,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -645,6 +652,7 @@ int afs_fs_give_up_callbacks(struct afs_server *server,
 	ASSERT(ncallbacks > 0);
 	wake_up_nr(&server->cb_break_waitq, ncallbacks);
 
+	trace_afs_make_fs_call(call, &afs_zero_fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -678,8 +686,17 @@ static int afs_deliver_fs_create_vnode(struct afs_call *call)
 /*
  * FS.CreateFile and FS.MakeDir operation type
  */
-static const struct afs_call_type afs_RXFSCreateXXXX = {
-	.name		= "FS.CreateXXXX",
+static const struct afs_call_type afs_RXFSCreateFile = {
+	.name		= "FS.CreateFile",
+	.op		= afs_FS_CreateFile,
+	.deliver	= afs_deliver_fs_create_vnode,
+	.abort_to_error	= afs_abort_to_error,
+	.destructor	= afs_flat_call_destructor,
+};
+
+static const struct afs_call_type afs_RXFSMakeDir = {
+	.name		= "FS.MakeDir",
+	.op		= afs_FS_MakeDir,
 	.deliver	= afs_deliver_fs_create_vnode,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -708,8 +725,9 @@ int afs_fs_create(struct afs_server *server,
 	padsz = (4 - (namesz & 3)) & 3;
 	reqsz = (5 * 4) + namesz + padsz + (6 * 4);
 
-	call = afs_alloc_flat_call(&afs_RXFSCreateXXXX, reqsz,
-				   (3 + 21 + 21 + 3 + 6) * 4);
+	call = afs_alloc_flat_call(
+		S_ISDIR(mode) ? &afs_RXFSMakeDir : &afs_RXFSCreateFile,
+		reqsz, (3 + 21 + 21 + 3 + 6) * 4);
 	if (!call)
 		return -ENOMEM;
 
@@ -741,6 +759,7 @@ int afs_fs_create(struct afs_server *server,
 	*bp++ = htonl(mode & S_IALLUGO); /* unix mode */
 	*bp++ = 0; /* segment size */
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -771,8 +790,17 @@ static int afs_deliver_fs_remove(struct afs_call *call)
 /*
  * FS.RemoveDir/FS.RemoveFile operation type
  */
-static const struct afs_call_type afs_RXFSRemoveXXXX = {
-	.name		= "FS.RemoveXXXX",
+static const struct afs_call_type afs_RXFSRemoveFile = {
+	.name		= "FS.RemoveFile",
+	.op		= afs_FS_RemoveFile,
+	.deliver	= afs_deliver_fs_remove,
+	.abort_to_error	= afs_abort_to_error,
+	.destructor	= afs_flat_call_destructor,
+};
+
+static const struct afs_call_type afs_RXFSRemoveDir = {
+	.name		= "FS.RemoveDir",
+	.op		= afs_FS_RemoveDir,
 	.deliver	= afs_deliver_fs_remove,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -798,7 +826,9 @@ int afs_fs_remove(struct afs_server *server,
 	padsz = (4 - (namesz & 3)) & 3;
 	reqsz = (5 * 4) + namesz + padsz;
 
-	call = afs_alloc_flat_call(&afs_RXFSRemoveXXXX, reqsz, (21 + 6) * 4);
+	call = afs_alloc_flat_call(
+		isdir ? &afs_RXFSRemoveDir : &afs_RXFSRemoveFile,
+		reqsz, (21 + 6) * 4);
 	if (!call)
 		return -ENOMEM;
 
@@ -821,6 +851,7 @@ int afs_fs_remove(struct afs_server *server,
 		bp = (void *) bp + padsz;
 	}
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -854,6 +885,7 @@ static int afs_deliver_fs_link(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSLink = {
 	.name		= "FS.Link",
+	.op		= afs_FS_Link,
 	.deliver	= afs_deliver_fs_link,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -906,6 +938,7 @@ int afs_fs_link(struct afs_server *server,
 	*bp++ = htonl(vnode->fid.vnode);
 	*bp++ = htonl(vnode->fid.unique);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -940,6 +973,7 @@ static int afs_deliver_fs_symlink(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSSymlink = {
 	.name		= "FS.Symlink",
+	.op		= afs_FS_Symlink,
 	.deliver	= afs_deliver_fs_symlink,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1010,6 +1044,7 @@ int afs_fs_symlink(struct afs_server *server,
 	*bp++ = htonl(S_IRWXUGO); /* unix mode */
 	*bp++ = 0; /* segment size */
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1045,6 +1080,7 @@ static int afs_deliver_fs_rename(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSRename = {
 	.name		= "FS.Rename",
+	.op		= afs_FS_Rename,
 	.deliver	= afs_deliver_fs_rename,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1113,6 +1149,7 @@ int afs_fs_rename(struct afs_server *server,
 		bp = (void *) bp + n_padsz;
 	}
 
+	trace_afs_make_fs_call(call, &orig_dvnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1148,6 +1185,7 @@ static int afs_deliver_fs_store_data(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSStoreData = {
 	.name		= "FS.StoreData",
+	.op		= afs_FS_StoreData,
 	.deliver	= afs_deliver_fs_store_data,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1155,6 +1193,7 @@ static const struct afs_call_type afs_RXFSStoreData = {
 
 static const struct afs_call_type afs_RXFSStoreData64 = {
 	.name		= "FS.StoreData64",
+	.op		= afs_FS_StoreData64,
 	.deliver	= afs_deliver_fs_store_data,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1217,6 +1256,7 @@ static int afs_fs_store_data64(struct afs_server *server,
 	*bp++ = htonl(i_size >> 32);
 	*bp++ = htonl((u32) i_size);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1293,6 +1333,7 @@ int afs_fs_store_data(struct afs_server *server,
 	*bp++ = htonl(size);
 	*bp++ = htonl(i_size);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1330,6 +1371,7 @@ static int afs_deliver_fs_store_status(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSStoreStatus = {
 	.name		= "FS.StoreStatus",
+	.op		= afs_FS_StoreStatus,
 	.deliver	= afs_deliver_fs_store_status,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1337,6 +1379,7 @@ static const struct afs_call_type afs_RXFSStoreStatus = {
 
 static const struct afs_call_type afs_RXFSStoreData_as_Status = {
 	.name		= "FS.StoreData",
+	.op		= afs_FS_StoreData,
 	.deliver	= afs_deliver_fs_store_status,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1344,6 +1387,7 @@ static const struct afs_call_type afs_RXFSStoreData_as_Status = {
 
 static const struct afs_call_type afs_RXFSStoreData64_as_Status = {
 	.name		= "FS.StoreData64",
+	.op		= afs_FS_StoreData64,
 	.deliver	= afs_deliver_fs_store_status,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1376,7 +1420,6 @@ static int afs_fs_setattr_size64(struct afs_server *server, struct key *key,
 	call->service_id = FS_SERVICE;
 	call->port = htons(AFS_FS_PORT);
 	call->store_version = vnode->status.data_version + 1;
-	call->operation_ID = FSSTOREDATA;
 
 	/* marshall the parameters */
 	bp = call->request;
@@ -1394,6 +1437,7 @@ static int afs_fs_setattr_size64(struct afs_server *server, struct key *key,
 	*bp++ = htonl(attr->ia_size >> 32);	/* new file length */
 	*bp++ = htonl((u32) attr->ia_size);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1427,7 +1471,6 @@ static int afs_fs_setattr_size(struct afs_server *server, struct key *key,
 	call->service_id = FS_SERVICE;
 	call->port = htons(AFS_FS_PORT);
 	call->store_version = vnode->status.data_version + 1;
-	call->operation_ID = FSSTOREDATA;
 
 	/* marshall the parameters */
 	bp = call->request;
@@ -1442,6 +1485,7 @@ static int afs_fs_setattr_size(struct afs_server *server, struct key *key,
 	*bp++ = 0;				/* size of write */
 	*bp++ = htonl(attr->ia_size);		/* new file length */
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1473,7 +1517,6 @@ int afs_fs_setattr(struct afs_server *server, struct key *key,
 	call->reply = vnode;
 	call->service_id = FS_SERVICE;
 	call->port = htons(AFS_FS_PORT);
-	call->operation_ID = FSSTORESTATUS;
 
 	/* marshall the parameters */
 	bp = call->request;
@@ -1484,6 +1527,7 @@ int afs_fs_setattr(struct afs_server *server, struct key *key,
 
 	xdr_encode_AFS_StoreStatus(&bp, attr);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1674,6 +1718,7 @@ static void afs_get_volume_status_call_destructor(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSGetVolumeStatus = {
 	.name		= "FS.GetVolumeStatus",
+	.op		= afs_FS_GetVolumeStatus,
 	.deliver	= afs_deliver_fs_get_volume_status,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_get_volume_status_call_destructor,
@@ -1716,6 +1761,7 @@ int afs_fs_get_volume_status(struct afs_server *server,
 	bp[0] = htonl(FSGETVOLUMESTATUS);
 	bp[1] = htonl(vnode->fid.vid);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1746,6 +1792,7 @@ static int afs_deliver_fs_xxxx_lock(struct afs_call *call)
  */
 static const struct afs_call_type afs_RXFSSetLock = {
 	.name		= "FS.SetLock",
+	.op		= afs_FS_SetLock,
 	.deliver	= afs_deliver_fs_xxxx_lock,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1756,6 +1803,7 @@ static const struct afs_call_type afs_RXFSSetLock = {
  */
 static const struct afs_call_type afs_RXFSExtendLock = {
 	.name		= "FS.ExtendLock",
+	.op		= afs_FS_ExtendLock,
 	.deliver	= afs_deliver_fs_xxxx_lock,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1766,6 +1814,7 @@ static const struct afs_call_type afs_RXFSExtendLock = {
  */
 static const struct afs_call_type afs_RXFSReleaseLock = {
 	.name		= "FS.ReleaseLock",
+	.op		= afs_FS_ReleaseLock,
 	.deliver	= afs_deliver_fs_xxxx_lock,
 	.abort_to_error	= afs_abort_to_error,
 	.destructor	= afs_flat_call_destructor,
@@ -1802,6 +1851,7 @@ int afs_fs_set_lock(struct afs_server *server,
 	*bp++ = htonl(vnode->fid.unique);
 	*bp++ = htonl(type);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1834,6 +1884,7 @@ int afs_fs_extend_lock(struct afs_server *server,
 	*bp++ = htonl(vnode->fid.vnode);
 	*bp++ = htonl(vnode->fid.unique);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
 
@@ -1866,5 +1917,6 @@ int afs_fs_release_lock(struct afs_server *server,
 	*bp++ = htonl(vnode->fid.vnode);
 	*bp++ = htonl(vnode->fid.unique);
 
+	trace_afs_make_fs_call(call, &vnode->fid);
 	return afs_make_call(&server->addr, call, GFP_NOFS, async);
 }
