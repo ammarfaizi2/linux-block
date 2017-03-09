@@ -60,6 +60,28 @@ conditions.
                   aliases of secure registers have to be used during
                   SMMU configuration.
 
+- clock-names:    Should be "tbu_clk" and "tcu_clk" and "cfg_clk" for
+                  "arm,mmu-400", "arm,mmu-401" and "arm,mmu-500"
+
+                  "tcu_clk" is required for smmu's register access using the
+                  programming interface and ptw for downstream bus access.
+
+                  "tbu_clk" is required for access to the TBU connected to the
+                  master locally. This clock is optional and not required when
+                  TBU is in the same clock domain as the TCU or when the TBU is
+                  clocked along with the master.
+
+                  "cfg_clk" is optional if required to access the TCU's programming
+                  interface, apart from the "tcu_clk".
+
+- clocks:         Phandles for respective clocks described by clock-names.
+
+- power-domains:  Phandles to SMMU's power domain specifier. This is
+                  required even if SMMU belongs to the master's power
+                  domain, as the SMMU will have to be enabled and
+                  accessed before master gets enabled and linked to its
+                  SMMU.
+
 ** Deprecated properties:
 
 - mmu-masters (deprecated in favour of the generic "iommus" binding) :
@@ -84,6 +106,11 @@ conditions.
                              <0 36 4>,
                              <0 37 4>;
                 #iommu-cells = <1>;
+                clocks = <&gcc GCC_SMMU_CFG_CLK>,
+                         <&gcc GCC_APSS_TCU_CLK>,
+			 <&gcc GCC_MDP_TBU_CLK>;
+
+		clock-names = "cfg_clk", "tcu_clk", "tbu_clk";
         };
 
         /* device with two stream IDs, 0 and 7 */
