@@ -1473,6 +1473,7 @@ static int arm_smmu_add_device(struct device *dev)
 	struct arm_smmu_device *smmu;
 	struct arm_smmu_master_cfg *cfg;
 	struct iommu_fwspec *fwspec = dev->iommu_fwspec;
+	struct device_link *link = NULL;
 	int i, ret;
 	unsigned long err;
 
@@ -1528,6 +1529,16 @@ static int arm_smmu_add_device(struct device *dev)
 	err = pm_runtime_put_sync(smmu->dev);
 	if (IS_ERR_VALUE(err))
 		goto out_free;
+
+	/*
+	 * Establish the link between smmu and master, so that the
+	 * smmu gets runtime enabled/disabled as per the master's
+	 * needs.
+	 */
+	link = device_link_add(dev, smmu->dev, DL_FLAG_PM_RUNTIME);
+	if (!link)
+		dev_warn(smmu->dev, "Unable to create device link between %s and %s\n",
+			 dev_name(smmu->dev), dev_name(dev));
 
 	return 0;
 
