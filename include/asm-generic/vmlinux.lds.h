@@ -265,6 +265,21 @@
 	__end_data_ro_after_init = .;
 #endif
 
+#ifdef CONFIG_ARCH_WANT_GENERIC_ROBSS
+#define GENERIC_ROBSS							\
+	/* End previous section */					\
+	}								\
+									\
+	/* Read-only BSS. */						\
+	.robss : AT(ADDR(.robss) - LOAD_OFFSET) {			\
+		VMLINUX_SYMBOL(__start_robss) = .;			\
+		*(.robss..page_aligned)					\
+		*(.robss) *(.robss.*)					\
+		VMLINUX_SYMBOL(__end_robss) = .;
+#else
+#define GENERIC_ROBSS
+#endif
+
 /*
  * Read only Data
  */
@@ -419,6 +434,10 @@
 		VMLINUX_SYMBOL(__start___modver) = .;			\
 		KEEP(*(__modver))					\
 		VMLINUX_SYMBOL(__stop___modver) = .;			\
+									\
+		/* May end this section and start a new section. */	\
+		GENERIC_ROBSS						\
+									\
 		. = ALIGN((align));					\
 		VMLINUX_SYMBOL(__end_rodata) = .;			\
 	}								\

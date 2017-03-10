@@ -847,4 +847,14 @@ config STRICT_MODULE_RWX
 config ARCH_WANT_RELAX_ORDER
 	bool
 
+config ARCH_WANT_GENERIC_ROBSS
+	bool
+	help
+	  If set, the kernel will provide generic support for a .robss section
+	  for read-only BSS.
+
+	  This is only useful if an arch puts RO_DATA_SECTION at the end of an
+	  ELF segment and if the arch can sensibly handle multiple ELF
+	  segments with p_filesz < p_memsz, hence the arch opt-in.
+
 source "kernel/gcov/Kconfig"

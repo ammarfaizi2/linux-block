@@ -47,6 +47,13 @@
 #define __PAGE_ALIGNED_DATA	.section ".data..page_aligned", "aw"
 #define __PAGE_ALIGNED_BSS	.section ".bss..page_aligned", "aw"
 
+#ifdef CONFIG_ARCH_WANT_GENERIC_ROBSS
+/* Take that, compilers! */
+#define __robss			__section(".robss,\"a\",@nobits#")
+#define __ROBSS			.section ".robss", "a", @nobits
+#define __PAGE_ALIGNED_ROBSS	.section ".robss..page_aligned", "a", @nobits
+#endif
+
 /*
  * This is used by architectures to keep arguments on the stack
  * untouched by the compiler by keeping them live until the end.
