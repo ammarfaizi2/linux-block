@@ -104,6 +104,12 @@
 	.size name, .-name
 #endif
 
+#ifndef ENDOBJECT
+#define ENDOBJECT(name) \
+	.type name, @object ASM_NL \
+	END(name)
+#endif
+
 /* If symbol 'name' is treated as a subroutine (gets called, and returns)
  * then please use ENDPROC to mark 'name' as STT_FUNC for the benefit of
  * static analysis tools such as stack depth analyzer.
