@@ -99,14 +99,6 @@ again:
 	return 0;
 }
 
-/* Don't add a printk in there. printk relies on the PDA which is not initialized 
-   yet. */
-static void __init clear_bss(void)
-{
-	memset(__bss_start, 0,
-	       (unsigned long) __bss_stop - (unsigned long) __bss_start);
-}
-
 static unsigned long get_cmd_line_ptr(void)
 {
 	unsigned long cmd_line_ptr = boot_params.hdr.cmd_line_ptr;
@@ -152,8 +144,6 @@ asmlinkage __visible void __init x86_64_start_kernel(char * real_mode_data)
 
 	/* Kill off the identity-map trampoline */
 	reset_early_page_tables();
-
-	clear_bss();
 
 	clear_page(init_level4_pgt);
 

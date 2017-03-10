@@ -85,16 +85,6 @@ ENTRY(startup_32)
 	leal -__PAGE_OFFSET(%ecx),%esp
 
 /*
- * Clear BSS first so that there are no surprises...
- */
-	cld
-	xorl %eax,%eax
-	movl $pa(__bss_start),%edi
-	movl $pa(__bss_stop),%ecx
-	subl %edi,%ecx
-	shrl $2,%ecx
-	rep ; stosl
-/*
  * Copy bootup parameters out of the way.
  * Note: %esi still has the pointer to the real-mode data.
  * With the kexec as boot loader, parameter segment might be loaded beyond
