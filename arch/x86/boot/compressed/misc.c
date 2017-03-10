@@ -306,6 +306,8 @@ static void parse_elf(void *output)
 			dest = (void *)(phdr->p_paddr);
 #endif
 			memmove(dest, output + phdr->p_offset, phdr->p_filesz);
+			memzero((char *)dest + phdr->p_filesz,
+				phdr->p_memsz - phdr->p_filesz);
 			break;
 		default: /* Ignore other PT_* */ break;
 		}
