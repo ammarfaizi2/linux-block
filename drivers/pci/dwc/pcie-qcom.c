@@ -109,6 +109,7 @@ struct qcom_pcie {
 	union qcom_pcie_resources res;
 	struct phy *phy;
 	struct gpio_desc *reset;
+	struct gpio_desc *clkoe;
 	struct qcom_pcie_ops *ops;
 };
 
@@ -750,6 +751,10 @@ static int qcom_pcie_probe(struct platform_device *pdev)
 	pcie->pci = pci;
 
 	pcie->ops = (struct qcom_pcie_ops *)of_device_get_match_data(dev);
+
+	pcie->clkoe = devm_gpiod_get_optional(dev, "clkoe", GPIOD_OUT_HIGH);
+	if (IS_ERR(pcie->clkoe))
+		return PTR_ERR(pcie->clkoe);
 
 	pcie->reset = devm_gpiod_get_optional(dev, "perst", GPIOD_OUT_LOW);
 	if (IS_ERR(pcie->reset))
