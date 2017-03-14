@@ -359,4 +359,14 @@ config MTK_IOMMU_V1
 
 	  if unsure, say N here.
 
+config QCOM_IOMMU
+	bool "Qualcomm IOMMU Support"
+	depends on ARM || ARM64
+	depends on ARCH_QCOM || COMPILE_TEST
+	select IOMMU_API
+	select IOMMU_IO_PGTABLE_LPAE
+	select ARM_DMA_USE_IOMMU
+	help
+	  Support for IOMMU on certain Qualcomm SoCs.
+
 endif # IOMMU_SUPPORT
