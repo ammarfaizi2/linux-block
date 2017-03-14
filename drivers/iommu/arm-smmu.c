@@ -1172,9 +1172,13 @@ static size_t arm_smmu_unmap(struct iommu_domain *domain, unsigned long iova,
 	if (!ops)
 		return 0;
 
+	pm_runtime_get_sync(smmu_domain->smmu->dev);
+
 	spin_lock_irqsave(&smmu_domain->pgtbl_lock, flags);
 	ret = ops->unmap(ops, iova, size);
 	spin_unlock_irqrestore(&smmu_domain->pgtbl_lock, flags);
+	pm_runtime_put_sync(smmu_domain->smmu->dev);
+
 	return ret;
 }
 
