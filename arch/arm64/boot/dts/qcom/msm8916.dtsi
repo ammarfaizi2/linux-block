@@ -698,6 +698,29 @@
 			#thermal-sensor-cells = <1>;
 		};
 
+		gpu@01c00000 {
+			compatible = "qcom,adreno-306.0", "qcom,adreno";
+			reg = <0x01c00000 0x20000>;
+			reg-names = "kgsl_3d0_reg_memory";
+			interrupts = <0 33 0>;
+			interrupt-names = "kgsl_3d0_irq";
+			clock-names =
+			    "core",
+			    "iface",
+			    "mem",
+			    "mem_iface",
+			    "alt_mem_iface",
+			    "gfx3d_clk";
+			clocks =
+			    <&gcc GCC_OXILI_GFX3D_CLK>,
+			    <&gcc GCC_OXILI_AHB_CLK>,
+			    <&gcc GCC_OXILI_GMEM_CLK>,
+			    <&gcc GCC_BIMC_GFX_CLK>,
+			    <&gcc GCC_BIMC_GPU_CLK>,
+			    <&gcc GFX3D_CLK_SRC>;
+			power-domains = <&gcc OXILI_GDSC>;
+		};
+
 		mdss: mdss@1a00000 {
 			compatible = "qcom,mdss";
 			reg = <0x1a00000 0x1000>,
