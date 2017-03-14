@@ -33,17 +33,47 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	regulators {
+		compatible = "simple-bus";
+		vph: regulator-fixed@1 {
+			compatible = "regulator-fixed";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-name = "VPH";
+			regulator-type = "voltage";
+			regulator-boot-on;
+		};
+	};
+
 	rpm-glink {
 		rpm_requests {
 			pm8994-regulators {
-				vdd_l1-supply = <&pm8994_s3>;
+
+				vdd_s1-supply = <&vph>;
+				vdd_s2-supply = <&vph>;
+				vdd_s3-supply = <&vph>;
+				vdd_s4-supply = <&vph>;
+				vdd_s5-supply = <&vph>;
+				vdd_s6-supply = <&vph>;
+				vdd_s7-supply = <&vph>;
+				vdd_s8-supply = <&vph>;
+				vdd_s9-supply = <&vph>;
+				vdd_s10-supply = <&vph>;
+				vdd_s11-supply = <&vph>;
+				vdd_s12-supply = <&vph>;
+				vdd_l1-supply = <&pm8994_s1>;
 				vdd_l2_l26_l28-supply = <&pm8994_s3>;
-				vdd_l3_l11-supply = <&pm8994_s3>;
+				vdd_l3_l11-supply = <&pm8994_s8>;
 				vdd_l4_l27_l31-supply = <&pm8994_s3>;
 				vdd_l5_l7-supply = <&pm8994_s5>;
-				vdd_l14_l15-supply = <&pm8994_s5>;
-				vdd_l20_l21-supply = <&pm8994_s5>;
+				vdd_l6_l12_l32-supply = <&pm8994_s5>;
+				vdd_l8_l16_l30-supply = <&vph>;
+				vdd_l9_l10_l18_l22-supply = <&vph>;
+				vdd_l13_l19_l23_l24-supply = <&vph>;
+				vdd_l14_l15-supply = <&vph>;
+				vdd_l20_l21-supply = <&vph>;
 				vdd_l25-supply = <&pm8994_s3>;
+				vdd_lvs_1_2-supply = <&pm8994_s4>;
 
 				s3 {
 					regulator-min-microvolt = <1300000>;
@@ -234,6 +264,8 @@
 			pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
 			pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
 			cd-gpios = <&msmgpio 38 0x1>;
+			vmmc-supply = <&pm8994_l21>;
+			vqmmc-supply = <&pm8994_l13>;
 			status = "okay";
 		};
 
