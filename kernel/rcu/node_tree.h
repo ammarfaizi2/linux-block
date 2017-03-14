@@ -98,5 +98,32 @@
 
 extern int rcu_num_lvls;
 extern int rcu_num_nodes;
+static bool rcu_fanout_exact;
+static int rcu_fanout_leaf;
+
+/*
+ * Compute the per-level fanout, either using the exact fanout specified
+ * or balancing the tree, depending on the rcu_fanout_exact boot parameter.
+ */
+static inline void rcu_init_levelspread(int *levelspread, const int *levelcnt)
+{
+	int i;
+
+	if (rcu_fanout_exact) {
+		levelspread[rcu_num_lvls - 1] = rcu_fanout_leaf;
+		for (i = rcu_num_lvls - 2; i >= 0; i--)
+			levelspread[i] = RCU_FANOUT;
+	} else {
+		int ccur;
+		int cprv;
+
+		cprv = nr_cpu_ids;
+		for (i = rcu_num_lvls - 1; i >= 0; i--) {
+			ccur = levelcnt[i];
+			levelspread[i] = (cprv + ccur - 1) / ccur;
+			cprv = ccur;
+		}
+	}
+}
 
 #endif /* __KERNEL_RCU_NODE_TREE_H */
