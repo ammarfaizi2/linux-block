@@ -1033,21 +1033,57 @@ int afs_flush(struct file *file, fl_owner_t id)
  * notification that a previously read-only page is about to become writable
  * - if it returns an error, the caller will deliver a bus error signal
  */
-int afs_page_mkwrite(struct vm_area_struct *vma, struct page *page)
+int afs_page_mkwrite(struct vm_fault *vmf)
 {
-	struct afs_vnode *vnode = AFS_FS_I(vma->vm_file->f_mapping->host);
+	struct file *file = vmf->vma->vm_file;
+	struct inode *inode = file_inode(file);
+	struct afs_vnode *vnode = AFS_FS_I(inode);
+	struct afs_writeback *candidate;
+	struct key *key = file->private_data;
+	int ret, vret;
 
 	_enter("{{%x:%u}},{%lx}",
-	       vnode->fid.vid, vnode->fid.vnode, page->index);
+	       vnode->fid.vid, vnode->fid.vnode, vmf->page->index);
 
+	candidate = afs_alloc_writeback(vnode, key, vmf->page->index, 0, PAGE_SIZE);
+	if (!candidate)
+		return VM_FAULT_OOM;
+
+	sb_start_pagefault(inode->i_sb);
+
+retry:
 	/* wait for the page to be written to the cache before we allow it to
 	 * be modified */
 #ifdef CONFIG_AFS_FSCACHE
-	fscache_wait_on_page_write(vnode->cache, page);
+	fscache_wait_on_page_write(vnode->cache, vmf->page);
 #endif
 
-	_leave(" = 0");
-	return 0;
+	/* TODO: Get the key from vma->vm_file, flush any overlapping
+	 * contradictory writeback record, set up new a writeback record if
+	 * needed and remove the R/O check from afs_file_mmap().
+	 *
+	 * The code can probably be common with much of afs_write_begin().
+	 */
+	lock_page(vmf->page);
+	vret = VM_FAULT_LOCKED;
+
+	ret = afs_add_writeback(vnode, candidate, vmf->page);
+	switch (ret) {
+	case 0:
+		break;
+	case -EAGAIN:
+		goto retry;
+	case -ENOMEM:
+		vret |= VM_FAULT_OOM;
+		break;
+	default:
+		vret |= VM_FAULT_SIGBUS;
+		break;
+	}
+
+	sb_end_pagefault(inode->i_sb);
+	_leave(" = %d", vret);
+	return vret;
 }
 
 /*

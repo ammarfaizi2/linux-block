@@ -734,6 +734,8 @@ extern int afs_writeback_all(struct afs_vnode *);
 extern int afs_flush(struct file *, fl_owner_t);
 extern int afs_fsync(struct file *, loff_t, loff_t, int);
 extern int afs_launder_page(struct page *);
+extern int afs_page_mkwrite(struct vm_fault *);
+
 
 /*****************************************************************************/
 /*
