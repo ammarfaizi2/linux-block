@@ -481,6 +481,7 @@ static void afs_invalidatepage(struct page *page, unsigned int offset,
 			       unsigned int length)
 {
 	struct afs_writeback *wb = (struct afs_writeback *) page_private(page);
+	struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
 
 	_enter("{%lu},%u,%u", page->index, offset, length);
 
@@ -490,7 +491,6 @@ static void afs_invalidatepage(struct page *page, unsigned int offset,
 	if (offset == 0 && length == PAGE_SIZE) {
 #ifdef CONFIG_AFS_FSCACHE
 		if (PageFsCache(page)) {
-			struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
 			fscache_wait_on_page_write(vnode->cache, page);
 			fscache_uncache_page(vnode->cache, page);
 		}
@@ -499,7 +499,7 @@ static void afs_invalidatepage(struct page *page, unsigned int offset,
 		if (PagePrivate(page)) {
 			if (wb && !PageWriteback(page)) {
 				set_page_private(page, 0);
-				afs_put_writeback(wb);
+				afs_put_writeback(vnode, wb);
 			}
 
 			if (!page_private(page))
@@ -535,7 +535,7 @@ static int afs_releasepage(struct page *page, gfp_t gfp_flags)
 	if (PagePrivate(page)) {
 		if (wb) {
 			set_page_private(page, 0);
-			afs_put_writeback(wb);
+			afs_put_writeback(vnode, wb);
 		}
 		ClearPagePrivate(page);
 	}

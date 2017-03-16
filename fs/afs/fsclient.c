@@ -1164,13 +1164,13 @@ static const struct afs_call_type afs_RXFSStoreData64 = {
  * store a set of pages to a very large file
  */
 static int afs_fs_store_data64(struct afs_server *server,
+			       struct afs_vnode *vnode,
 			       struct afs_writeback *wb,
 			       pgoff_t first, pgoff_t last,
 			       unsigned offset, unsigned to,
 			       loff_t size, loff_t pos, loff_t i_size,
 			       bool async)
 {
-	struct afs_vnode *vnode = wb->vnode;
 	struct afs_call *call;
 	__be32 *bp;
 
@@ -1223,12 +1223,13 @@ static int afs_fs_store_data64(struct afs_server *server,
 /*
  * store a set of pages
  */
-int afs_fs_store_data(struct afs_server *server, struct afs_writeback *wb,
+int afs_fs_store_data(struct afs_server *server,
+		      struct afs_vnode *vnode,
+		      struct afs_writeback *wb,
 		      pgoff_t first, pgoff_t last,
 		      unsigned offset, unsigned to,
 		      bool async)
 {
-	struct afs_vnode *vnode = wb->vnode;
 	struct afs_call *call;
 	loff_t size, pos, i_size;
 	__be32 *bp;
@@ -1251,7 +1252,8 @@ int afs_fs_store_data(struct afs_server *server, struct afs_writeback *wb,
 	       (unsigned long long) i_size);
 
 	if (pos >> 32 || i_size >> 32 || size >> 32 || (pos + size) >> 32)
-		return afs_fs_store_data64(server, wb, first, last, offset, to,
+		return afs_fs_store_data64(server, vnode, wb,
+					   first, last, offset, to,
 					   size, pos, i_size, async);
 
 	call = afs_alloc_flat_call(&afs_RXFSStoreData,

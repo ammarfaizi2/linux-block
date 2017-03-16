@@ -766,11 +766,11 @@ no_server:
 /*
  * write to a file
  */
-int afs_vnode_store_data(struct afs_writeback *wb, pgoff_t first, pgoff_t last,
+int afs_vnode_store_data(struct afs_vnode *vnode, struct afs_writeback *wb,
+			 pgoff_t first, pgoff_t last,
 			 unsigned offset, unsigned to)
 {
 	struct afs_server *server;
-	struct afs_vnode *vnode = wb->vnode;
 	int ret;
 
 	_enter("%s{%x:%u.%u},%x,%lx,%lx,%x,%x",
@@ -794,8 +794,8 @@ int afs_vnode_store_data(struct afs_writeback *wb, pgoff_t first, pgoff_t last,
 
 		_debug("USING SERVER: %08x\n", ntohl(server->addr.s_addr));
 
-		ret = afs_fs_store_data(server, wb, first, last, offset, to,
-					false);
+		ret = afs_fs_store_data(server, vnode, wb,
+					first, last, offset, to, false);
 
 	} while (!afs_volume_release_fileserver(vnode, server, ret));
 

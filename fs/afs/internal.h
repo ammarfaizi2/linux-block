@@ -147,7 +147,6 @@ struct afs_read {
 struct afs_writeback {
 	struct list_head	link;		/* link in vnode->writebacks */
 	struct work_struct	writer;		/* work item to perform the writeback */
-	struct afs_vnode	*vnode;		/* vnode to which this write applies */
 	struct key		*key;		/* owner of this write */
 	wait_queue_head_t	waitq;		/* completion and ready wait queue */
 	pgoff_t			first;		/* first page in batch */
@@ -512,7 +511,8 @@ extern int afs_fs_symlink(struct afs_server *, struct key *,
 extern int afs_fs_rename(struct afs_server *, struct key *,
 			 struct afs_vnode *, const char *,
 			 struct afs_vnode *, const char *, bool);
-extern int afs_fs_store_data(struct afs_server *, struct afs_writeback *,
+extern int afs_fs_store_data(struct afs_server *, struct afs_vnode *,
+			     struct afs_writeback *,
 			     pgoff_t, pgoff_t, unsigned, unsigned, bool);
 extern int afs_fs_setattr(struct afs_server *, struct key *,
 			  struct afs_vnode *, struct iattr *, bool);
@@ -683,8 +683,8 @@ extern int afs_vnode_symlink(struct afs_vnode *, struct key *, const char *,
 			     struct afs_file_status *, struct afs_server **);
 extern int afs_vnode_rename(struct afs_vnode *, struct afs_vnode *,
 			    struct key *, const char *, const char *);
-extern int afs_vnode_store_data(struct afs_writeback *, pgoff_t, pgoff_t,
-				unsigned, unsigned);
+extern int afs_vnode_store_data(struct afs_vnode *, struct afs_writeback *,
+				pgoff_t, pgoff_t, unsigned, unsigned);
 extern int afs_vnode_setattr(struct afs_vnode *, struct key *, struct iattr *);
 extern int afs_vnode_get_volume_status(struct afs_vnode *, struct key *,
 				       struct afs_volume_status *);
@@ -708,7 +708,7 @@ extern int afs_volume_release_fileserver(struct afs_vnode *,
  * write.c
  */
 extern int afs_set_page_dirty(struct page *);
-extern void afs_put_writeback(struct afs_writeback *);
+extern void afs_put_writeback(struct afs_vnode *, struct afs_writeback *);
 extern int afs_write_begin(struct file *file, struct address_space *mapping,
 			loff_t pos, unsigned len, unsigned flags,
 			struct page **pagep, void **fsdata);
