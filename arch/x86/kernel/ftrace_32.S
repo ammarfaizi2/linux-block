@@ -9,7 +9,6 @@
 #include <asm/export.h>
 #include <asm/ftrace.h>
 
-#ifdef CONFIG_FUNCTION_TRACER
 #ifdef CONFIG_DYNAMIC_FTRACE
 
 #ifdef CC_USING_FENTRY
@@ -206,7 +205,6 @@ ftrace_stub:
 	jmp	ftrace_stub
 END(function_hook)
 #endif /* CONFIG_DYNAMIC_FTRACE */
-#endif /* CONFIG_FUNCTION_TRACER */
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
 ENTRY(ftrace_graph_caller)
