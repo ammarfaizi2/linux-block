@@ -704,21 +704,17 @@ int afs_writeback_all(struct afs_vnode *vnode)
  * - the return status from this call provides a reliable indication of
  *   whether any write errors occurred for this process.
  */
-int afs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+static int afs_sync_file(struct file *file, loff_t start, loff_t end, bool sync)
 {
 	struct inode *inode = file_inode(file);
 	struct afs_writeback *wb, *xwb;
 	struct afs_vnode *vnode = AFS_FS_I(inode);
+	bool do_sync = false;
 	int ret;
 
 	_enter("{%x:%u},{n=%pD},%d",
 	       vnode->fid.vid, vnode->fid.vnode, file,
-	       datasync);
-
-	ret = filemap_write_and_wait_range(inode->i_mapping, start, end);
-	if (ret)
-		return ret;
-	inode_lock(inode);
+	       sync);
 
 	/* use a writeback record as a marker in the queue - when this reaches
 	 * the front of the queue, all the outstanding writes are either
@@ -735,32 +731,53 @@ int afs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 	wb->usage = 1;
 	wb->state = AFS_WBACK_SYNCING;
 	init_waitqueue_head(&wb->waitq);
+	INIT_LIST_HEAD(&wb->link);
 
 	spin_lock(&vnode->writeback_lock);
 	list_for_each_entry(xwb, &vnode->writebacks, link) {
-		if (xwb->state == AFS_WBACK_PENDING)
+		switch (xwb->state) {
+		case AFS_WBACK_PENDING:
 			xwb->state = AFS_WBACK_CONFLICTING;
+			do_sync = true;
+			break;
+		default:
+			do_sync |= sync;
+			break;
+		case AFS_WBACK_SYNCING:
+			break;
+		case AFS_WBACK_COMPLETE:
+			kdebug("Shouldn't see completed records");
+			break;
+		}
 	}
-	list_add_tail(&wb->link, &vnode->writebacks);
+	if (do_sync)
+		list_add_tail(&wb->link, &vnode->writebacks);
 	spin_unlock(&vnode->writeback_lock);
 
-	/* push all the outstanding writebacks to the server */
-	ret = afs_writeback_all(vnode);
-	if (ret < 0) {
-		afs_put_writeback(vnode, wb);
-		_leave(" = %d [wb]", ret);
-		goto out;
+	ret = 0;
+	if (do_sync) {
+		/* push all the outstanding writebacks to the server */
+		inode_lock(inode);
+		ret = afs_writeback_all(vnode);
+		inode_unlock(inode);
+		if (ret < 0)
+			goto out;
+
+		/* wait for the preceding writes to actually complete */
+		ret = wait_event_interruptible(wb->waitq,
+					       wb->state == AFS_WBACK_COMPLETE ||
+					       vnode->writebacks.next == &wb->link);
 	}
 
-	/* wait for the preceding writes to actually complete */
-	ret = wait_event_interruptible(wb->waitq,
-				       wb->state == AFS_WBACK_COMPLETE ||
-				       vnode->writebacks.next == &wb->link);
+out:
 	afs_put_writeback(vnode, wb);
 	_leave(" = %d", ret);
-out:
-	inode_unlock(inode);
 	return ret;
+}
+
+int afs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+{
+	return afs_sync_file(file, start, end, true);
 }
 
 /*
@@ -774,7 +791,7 @@ int afs_flush(struct file *file, fl_owner_t id)
 	if ((file->f_mode & FMODE_WRITE) == 0)
 		return 0;
 
-	return vfs_fsync(file, 0);
+	return afs_sync_file(file, 0, LLONG_MAX, false);
 }
 
 /*
