@@ -736,6 +736,11 @@ extern int afs_fsync(struct file *, loff_t, loff_t, int);
 extern int afs_launder_page(struct page *);
 extern int afs_page_mkwrite(struct vm_fault *);
 
+/*
+ * xattr.c
+ */
+extern const struct xattr_handler *afs_xattr_handlers[];
+extern ssize_t afs_listxattr(struct dentry *, char *, size_t);
 
 /*****************************************************************************/
 /*

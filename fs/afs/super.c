@@ -320,6 +320,7 @@ static int afs_fill_super(struct super_block *sb,
 	sb->s_magic		= AFS_FS_MAGIC;
 	sb->s_op		= &afs_super_ops;
 	sb->s_bdi		= &as->volume->bdi;
+	sb->s_xattr		= afs_xattr_handlers;
 	strlcpy(sb->s_id, as->volume->vlocation->vldb.name, sizeof(sb->s_id));
 
 	/* allocate the root inode and dentry */
