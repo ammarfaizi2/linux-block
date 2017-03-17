@@ -365,6 +365,9 @@
 		};
 
 		intc: interrupt-controller@9bc0000 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
 			compatible = "arm,gic-v3";
 			#interrupt-cells = <3>;
 			interrupt-controller;
@@ -373,6 +376,12 @@
 			reg = <0x09bc0000 0x10000>,
 			      <0x09c00000 0x100000>;
 			interrupts = <GIC_PPI 9 IRQ_TYPE_LEVEL_HIGH>;
+
+			v2m0: v2m@9bd0000 {
+				compatible = "arm,gic-v2m-frame";
+				reg = <0x9bd0000 0x1000>;
+				msi-controller;
+			};
 		};
 
 		apcs: syscon@9820000 {
@@ -872,6 +881,7 @@
 
 				phys = <&pciephy_0>;
 				phy-names = "pciephy";
+				msi-parent = <&v2m0>;
 
 				#address-cells = <3>;
 				#size-cells = <2>;
@@ -928,6 +938,7 @@
 
 				phys = <&pciephy_1>;
 				phy-names = "pciephy";
+				msi-parent = <&v2m0>;
 
 				#address-cells = <3>;
 				#size-cells = <2>;
@@ -979,6 +990,7 @@
 
 				phys = <&pciephy_2>;
 				phy-names = "pciephy";
+				msi-parent = <&v2m0>;
 
 				#address-cells = <3>;
 				#size-cells = <2>;
