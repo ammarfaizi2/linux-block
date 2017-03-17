@@ -1170,6 +1170,10 @@ static int __init gic_of_init(struct device_node *node, struct device_node *pare
 
 	gic_populate_ppi_partitions(node);
 	gic_of_setup_kvm_info(node);
+
+	if (IS_ENABLED(CONFIG_ARM_GIC_V2M))
+		gicv2m_init(&node->fwnode, gic_data.domain);
+
 	return 0;
 
 out_unmap_rdist:
