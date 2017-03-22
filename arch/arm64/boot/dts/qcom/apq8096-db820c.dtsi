@@ -21,7 +21,7 @@
 / {
 	aliases {
 		serial0 = &blsp2_uart1;
-		serial1 = &blsp2_uart2;
+		serial1 = &blsp1_uart1;
 		i2c0	= &blsp1_i2c2;
 		i2c1	= &blsp2_i2c1;
 		i2c2	= &blsp2_i2c0;
@@ -220,13 +220,21 @@
 			pinctrl-1 = <&blsp2_uart1_2pins_sleep>;
 		};
 
-//		serial@75b1000 {
-//			label = "LS-UART0";
-//			status = "okay";
-//			pinctrl-names = "default", "sleep";
-//			pinctrl-0 = <&blsp2_uart2_4pins_default>;
-//			pinctrl-1 = <&blsp2_uart2_4pins_sleep>;
-//		};
+		serial@7570000 {
+			label = "BT-UART";
+			status = "okay";
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&blsp1_uart1_default>;
+			pinctrl-1 = <&blsp1_uart1_sleep>;
+		};
+
+		//serial@75b1000 {
+		//	label = "LS-UART0";
+		//	status = "okay";
+		//	pinctrl-names = "default", "sleep";
+		//	pinctrl-0 = <&blsp2_uart2_4pins_default>;
+		//	pinctrl-1 = <&blsp2_uart2_4pins_sleep>;
+		//};
 
 		i2c@07577000 {
 		/* On Low speed expansion */
