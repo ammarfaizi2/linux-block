@@ -117,7 +117,7 @@ struct qcom_pcie {
 static void wlan_get_resources(struct device *dev)
 {
 	int ret = 0;
-	int en_gpio, bootstrap_gpio;
+	int en_gpio, bootstrap_gpio, bt_en_gpio;
 	struct regulator *reg;
 
 #define WLAN_VREG_IO_NAME	"vdd-wlan-io"
@@ -131,6 +131,8 @@ static void wlan_get_resources(struct device *dev)
 #define WLAN_BOOTSTRAP_DELAY   10
 #define WLAN_ENABLE_DELAY   10
 
+#define BT_EN_GPIO_NAME		"bt-en-gpio"
+
 	reg = regulator_get(dev, WLAN_VREG_IO_NAME);
 	if (IS_ERR(reg))
 		return;
@@ -143,6 +145,12 @@ static void wlan_get_resources(struct device *dev)
 	ret = gpio_request(en_gpio, WLAN_EN_GPIO_NAME);
 	ret = gpio_direction_output(en_gpio, WLAN_EN_LOW);
 
+	bt_en_gpio = of_get_named_gpio(dev->of_node,
+				       BT_EN_GPIO_NAME, 0);
+	if (bt_en_gpio < 0)
+		return;
+	ret = gpio_request(bt_en_gpio, BT_EN_GPIO_NAME);
+	ret = gpio_direction_output(bt_en_gpio, WLAN_EN_LOW);
 
 	bootstrap_gpio = of_get_named_gpio(dev->of_node,
 					WLAN_BOOTSTRAP_GPIO_NAME, 0);
@@ -152,6 +160,8 @@ static void wlan_get_resources(struct device *dev)
 	ret = gpio_direction_output(bootstrap_gpio, WLAN_BOOTSTRAP_HIGH);
 	msleep(WLAN_BOOTSTRAP_DELAY);
 	gpio_set_value(en_gpio, WLAN_EN_HIGH);
+	msleep(WLAN_ENABLE_DELAY);
+	gpio_set_value(bt_en_gpio, WLAN_EN_HIGH);
 	msleep(WLAN_ENABLE_DELAY);
 
 	return;
