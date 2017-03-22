@@ -24,9 +24,6 @@
 #define GPLL3							7
 #define GPLL4_EARLY						8
 #define GPLL4							9
-#define SYSTEM_NOC_CLK_SRC					10
-#define CONFIG_NOC_CLK_SRC					11
-#define PERIPH_NOC_CLK_SRC					12
 #define MMSS_BIMC_GFX_CLK_SRC					13
 #define USB30_MASTER_CLK_SRC					14
 #define USB30_MOCK_UTMI_CLK_SRC					15
@@ -77,7 +74,6 @@
 #define PDM2_CLK_SRC						60
 #define TSIF_REF_CLK_SRC					61
 #define CE1_CLK_SRC						62
-#define GCC_SLEEP_CLK_SRC					63
 #define BIMC_CLK_SRC						64
 #define HMSS_AHB_CLK_SRC					65
 #define BIMC_HMSS_AXI_CLK_SRC					66
