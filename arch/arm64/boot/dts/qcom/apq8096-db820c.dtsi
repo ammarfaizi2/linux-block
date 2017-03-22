@@ -294,6 +294,7 @@
 				perst-gpio = <&msmgpio 35 GPIO_ACTIVE_LOW>;
 				wlan-bootstrap-gpio = <&msmgpio 46 0>;
 				wlan-en-gpio = <&pm8994_gpios 8 0>;
+				bt-en-gpio = <&pm8994_gpios 19 0>;
 				vdd-wlan-io-supply = <&pm8994_s4>;
 				ath10k@0,0 {
 					reg = <0 0 0 0 0>;
