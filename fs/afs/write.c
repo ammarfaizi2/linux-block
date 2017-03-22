@@ -22,6 +22,9 @@ static int afs_write_back_from_locked_page(struct afs_vnode *vnode,
 					   struct page *page);
 static int afs_sync_data(struct afs_vnode *vnode, loff_t start, loff_t end,
 			 enum afs_writeback_trace why);
+static int afs_flush_writeback(struct afs_vnode *vnode,
+			       struct afs_writeback *wb,
+			       pgoff_t conflicting);
 
 /*
  * mark a page as having been made dirty and thus needing writeback
@@ -311,16 +314,11 @@ flush_conflicting_wb:
 	_debug("flush conflict");
 	afs_get_writeback(vnode, wb, afs_writeback_trace_conflict);
 	if (wb->state == AFS_WBACK_PENDING)
-		wb->state = AFS_WBACK_CONFLICTING;
+		wb->state = AFS_WBACK_WRITING;
 	spin_unlock(&vnode->writeback_lock);
 	unlock_page(page);
 	put_page(page);
-
-	afs_sync_data(vnode,
-		      ((loff_t)wb->first << PAGE_SHIFT) + wb->offset_first,
-		      ((loff_t)wb->last << PAGE_SHIFT) + wb->to_last,
-		      afs_writeback_trace_fsync);
-	return -EAGAIN;
+	return afs_flush_writeback(vnode, wb, index);
 }
 
 /*
@@ -615,6 +613,81 @@ int afs_writepage(struct page *page, struct writeback_control *wbc)
 
 	_leave(" = 0");
 	return 0;
+}
+
+/*
+ * Flush a single conflicting writeback where the inode lock is held by the
+ * caller.
+ */
+static int afs_flush_writeback(struct afs_vnode *vnode,
+			       struct afs_writeback *wb,
+			       pgoff_t conflict)
+{
+	struct address_space *mapping = vnode->vfs_inode.i_mapping;
+	struct page *page;
+	pgoff_t index;
+	int ret, n;
+
+	kenter("%p,%lu", wb, conflict);
+
+	/* We could, at this point, trim non-dirty pages off of the front and
+	 * back of the writeback, but this will only happen if ->writepage()
+	 * interferes.  Since ->writepage() is called with the target page
+	 * locked, we can't lock any earlier page without risking deadlock.
+	 */
+
+	index = wb->first;
+	do {
+		n = find_get_pages_tag(mapping, &index, PAGECACHE_TAG_DIRTY,
+				       1, &page);
+		if (!n)
+			break;
+
+		_debug("wback %lx", page->index);
+
+		if (page->index > wb->last)
+			break;
+
+		/* at this point we hold neither mapping->tree_lock nor lock on
+		 * the page itself: the page may be truncated or invalidated
+		 * (changing page->mapping to NULL), or even swizzled back from
+		 * swapper_space to tmpfs file mapping
+		 */
+		lock_page(page);
+
+		if (page->mapping != mapping || !PageDirty(page)) {
+			index = page->index + 1;
+			unlock_page(page);
+			put_page(page);
+			continue;
+		}
+
+		if (PageWriteback(page)) {
+			unlock_page(page);
+			wait_on_page_writeback(page);
+			put_page(page);
+			continue;
+		}
+
+		ASSERTCMP((struct afs_writeback *)page_private(page), ==, wb);
+
+		if (!clear_page_dirty_for_io(page))
+			BUG();
+		ret = afs_write_back_from_locked_page(vnode, wb, page);
+		unlock_page(page);
+		put_page(page);
+		if (ret < 0) {
+			afs_put_writeback(vnode, wb, 1);
+			_leave(" = %d", ret);
+			return ret;
+		}
+
+		cond_resched();
+	} while (index < wb->last);
+
+	index = wb->last + 1;
+	afs_put_writeback(vnode, wb, 1);
+	return -EAGAIN;
 }
 
 /*
