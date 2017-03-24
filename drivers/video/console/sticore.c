@@ -26,7 +26,6 @@
 #include <asm/parisc-device.h>
 #include <asm/pdc.h>
 #include <asm/cacheflush.h>
-#include <asm/grfioctl.h>
 
 #include "../fbdev/sticore.h"
 
@@ -731,7 +730,6 @@ static int sti_read_rom(int wordmode, struct sti_struct *sti,
 {
 	struct sti_cooked_rom *cooked;
 	struct sti_rom *raw = NULL;
-	unsigned long revno;
 
 	cooked = kmalloc(sizeof *cooked, GFP_KERNEL);
 	if (!cooked)
@@ -778,35 +776,9 @@ static int sti_read_rom(int wordmode, struct sti_struct *sti,
 	sti->graphics_id[1] = raw->graphics_id[1];
 	
 	sti_dump_rom(raw);
-
-	/* check if the ROM routines in this card are compatible */
-	if (wordmode || sti->graphics_id[1] != 0x09A02587)
-		goto ok;
-
-	revno = (raw->revno[0] << 8) | raw->revno[1];
-
-	switch (sti->graphics_id[0]) {
-	case S9000_ID_HCRX:
-		/* HyperA or HyperB ? */
-		if (revno == 0x8408 || revno == 0x840b)
-			goto msg_not_supported;
-		break;
-	case CRT_ID_THUNDER:
-		if (revno == 0x8509)
-			goto msg_not_supported;
-		break;
-	case CRT_ID_THUNDER2:
-		if (revno == 0x850c)
-			goto msg_not_supported;
-	}
-ok:
+	
 	return 1;
 
-msg_not_supported:
-	printk(KERN_ERR "Sorry, this GSC/STI card is not yet supported.\n");
-	printk(KERN_ERR "Please see http://parisc-linux.org/faq/"
-			"graphics-howto.html for more info.\n");
-	/* fall through */
 out_err:
 	kfree(raw);
 	kfree(cooked);
