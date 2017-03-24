@@ -196,6 +196,7 @@ void cleanup_srcu_struct(struct srcu_struct *sp)
 		return; /* Leakage unless caller handles error. */
 	if (WARN_ON(!rcu_segcblist_empty(&sp->srcu_cblist)))
 		return; /* Leakage unless caller handles error. */
+	flush_delayed_work(&sp->work);
 	if (WARN_ON(rcu_seq_state(READ_ONCE(sp->srcu_gp_seq)) != SRCU_STATE_IDLE)) {
 		pr_info("cleanup_srcu_struct: Active srcu_struct %lu CBs %c state: %d\n", rcu_segcblist_n_cbs(&sp->srcu_cblist), ".E"[rcu_segcblist_empty(&sp->srcu_cblist)], rcu_seq_state(READ_ONCE(sp->srcu_gp_seq)));
 		return; /* Caller forgot to stop doing call_srcu()? */
