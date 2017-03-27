@@ -23,7 +23,6 @@ static int afs_readpage(struct file *file, struct page *page);
 static void afs_invalidatepage(struct page *page, unsigned int offset,
 			       unsigned int length);
 static int afs_releasepage(struct page *page, gfp_t gfp_flags);
-static int afs_launder_page(struct page *page);
 
 static int afs_readpages(struct file *filp, struct address_space *mapping,
 			 struct list_head *pages, unsigned nr_pages);
@@ -463,13 +462,23 @@ static int afs_readpages(struct file *file, struct address_space *mapping,
 }
 
 /*
- * write back a dirty page
+ * Try to remove a page from any writeback it may be entertaining.
  */
-static int afs_launder_page(struct page *page)
+static bool afs_remove_wb_from_page(struct afs_vnode *vnode, struct page *page,
+				    enum afs_writeback_trace why)
 {
-	_enter("{%lu}", page->index);
+	struct afs_writeback *wb;
+	bool cleared = true;
 
-	return 0;
+	spin_lock(&vnode->writeback_lock);
+	wb = afs_get_writeback(vnode, (struct afs_writeback *)page_private(page), why);
+	spin_unlock(&vnode->writeback_lock);
+	if (wb) {
+		cleared = afs_writeback_remove_page(vnode, wb, page);
+		afs_put_writeback(vnode, wb, 1);
+	}
+
+	return cleared;
 }
 
 /*
@@ -480,7 +489,6 @@ static int afs_launder_page(struct page *page)
 static void afs_invalidatepage(struct page *page, unsigned int offset,
 			       unsigned int length)
 {
-	struct afs_writeback *wb = (struct afs_writeback *) page_private(page);
 	struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
 
 	_enter("{%lu},%u,%u", page->index, offset, length);
@@ -496,15 +504,8 @@ static void afs_invalidatepage(struct page *page, unsigned int offset,
 		}
 #endif
 
-		if (PagePrivate(page)) {
-			if (wb && !PageWriteback(page)) {
-				set_page_private(page, 0);
-				afs_put_writeback(vnode, wb);
-			}
-
-			if (!page_private(page))
-				ClearPagePrivate(page);
-		}
+		afs_remove_wb_from_page(vnode, page,
+					afs_writeback_trace_invalidate_page);
 	}
 
 	_leave("");
@@ -516,8 +517,8 @@ static void afs_invalidatepage(struct page *page, unsigned int offset,
  */
 static int afs_releasepage(struct page *page, gfp_t gfp_flags)
 {
-	struct afs_writeback *wb = (struct afs_writeback *) page_private(page);
 	struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
+	bool cleared = true;
 
 	_enter("{{%x:%u}[%lu],%lx},%x",
 	       vnode->fid.vid, vnode->fid.vnode, page->index, page->flags,
@@ -532,15 +533,8 @@ static int afs_releasepage(struct page *page, gfp_t gfp_flags)
 	}
 #endif
 
-	if (PagePrivate(page)) {
-		if (wb) {
-			set_page_private(page, 0);
-			afs_put_writeback(vnode, wb);
-		}
-		ClearPagePrivate(page);
-	}
-
-	/* indicate that the page can be released */
-	_leave(" = T");
-	return 1;
+	cleared = afs_remove_wb_from_page(vnode, page,
+					  afs_writeback_trace_release_page);
+	_leave(" = %d", cleared);
+	return cleared;
 }

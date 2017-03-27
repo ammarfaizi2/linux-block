@@ -60,6 +60,26 @@ enum afs_vl_operation {
 	afs_VL_Probe		= 514,	/* AFS Probe Volume Location Service operation ID */
 };
 
+enum afs_writeback_trace {
+	afs_writeback_trace_alloc,
+	afs_writeback_trace_append,
+	afs_writeback_trace_conflict,
+	afs_writeback_trace_discard,
+	afs_writeback_trace_flush,
+	afs_writeback_trace_fsync,
+	afs_writeback_trace_invalidate_page,
+	afs_writeback_trace_new,
+	afs_writeback_trace_no_wake,
+	afs_writeback_trace_put,
+	afs_writeback_trace_release_page,
+	afs_writeback_trace_subsume,
+	afs_writeback_trace_unlink,
+	afs_writeback_trace_wake,
+	afs_writeback_trace_write,
+	afs_writeback_trace_writepages,
+	afs_writeback_trace_written,
+};
+
 #endif /* end __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY */
 
 /*
@@ -100,6 +120,25 @@ enum afs_vl_operation {
 	EM(afs_VL_GetEntryByName,		"VL.GetEntryByName") \
 	E_(afs_VL_Probe,			"VL.Probe")
 
+#define afs_writeback_traces \
+	EM(afs_writeback_trace_alloc,		"Alloc ") \
+	EM(afs_writeback_trace_append,		"Append") \
+	EM(afs_writeback_trace_conflict,	"Conflc") \
+	EM(afs_writeback_trace_discard,		"Discrd") \
+	EM(afs_writeback_trace_flush,		"Flush ") \
+	EM(afs_writeback_trace_fsync,		"Fsync ") \
+	EM(afs_writeback_trace_invalidate_page,	"InvlPg") \
+	EM(afs_writeback_trace_new,		"New   ") \
+	EM(afs_writeback_trace_no_wake,		"NoWake") \
+	EM(afs_writeback_trace_put,		"Put   ") \
+	EM(afs_writeback_trace_release_page,	"RelsPg") \
+	EM(afs_writeback_trace_subsume,		"Subsum") \
+	EM(afs_writeback_trace_unlink,		"Unlink") \
+	EM(afs_writeback_trace_wake,		"Wake  ") \
+	EM(afs_writeback_trace_write,		"Write ") \
+	EM(afs_writeback_trace_writepages,	"Wpages") \
+	E_(afs_writeback_trace_written,		"Writtn")
+
 
 /*
  * Export enum symbols via userspace.
@@ -112,6 +151,7 @@ enum afs_vl_operation {
 afs_call_traces;
 afs_fs_operations;
 afs_vl_operations;
+afs_writeback_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -344,14 +384,16 @@ TRACE_EVENT(afs_send_pages,
 	    );
 
 TRACE_EVENT(afs_sent_pages,
-	    TP_PROTO(struct afs_call *call, pgoff_t first, pgoff_t last, int ret),
+	    TP_PROTO(struct afs_call *call, pgoff_t first, pgoff_t last,
+		     pgoff_t cursor, int ret),
 
-	    TP_ARGS(call, first, last, ret),
+	    TP_ARGS(call, first, last, cursor, ret),
 
 	    TP_STRUCT__entry(
 		    __field(struct afs_call *,		call		)
 		    __field(pgoff_t,			first		)
 		    __field(pgoff_t,			last		)
+		    __field(pgoff_t,			cursor		)
 		    __field(int,			ret		)
 			     ),
 
@@ -359,13 +401,69 @@ TRACE_EVENT(afs_sent_pages,
 		    __entry->call = call;
 		    __entry->first = first;
 		    __entry->last = last;
+		    __entry->cursor = cursor;
 		    __entry->ret = ret;
 			   ),
 
-	    TP_printk(" c=%p %lx-%lx r=%d",
+	    TP_printk(" c=%p %lx-%lx c=%lx r=%d",
 		      __entry->call,
 		      __entry->first, __entry->last,
-		      __entry->ret)
+		      __entry->cursor, __entry->ret)
+	    );
+
+TRACE_EVENT(afs_write_begin,
+	    TP_PROTO(struct afs_vnode *vnode, pgoff_t index,
+		     unsigned from, unsigned to, unsigned flags),
+
+	    TP_ARGS(vnode, index, from, to, flags),
+
+	    TP_STRUCT__entry(
+		    __field(struct afs_vnode *,		vnode		)
+		    __field(pgoff_t,			index		)
+		    __field(unsigned,			from		)
+		    __field(unsigned,			to		)
+		    __field(unsigned,			flags		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->vnode = vnode;
+		    __entry->index = index;
+		    __entry->from = from;
+		    __entry->to = to;
+		    __entry->flags = flags;
+			   ),
+
+	    TP_printk("vn=%p pg=%lu %u-%u fl=%u",
+		      __entry->vnode, __entry->index,
+		      __entry->from, __entry->to, __entry->flags)
+	    );
+
+TRACE_EVENT(afs_writeback,
+	    TP_PROTO(struct afs_vnode *vnode, struct afs_writeback *wb,
+		     enum afs_writeback_trace op, int usage, int delta),
+
+	    TP_ARGS(vnode, wb, op, usage, delta),
+
+	    TP_STRUCT__entry(
+		    __field(struct afs_vnode *,		vnode		)
+		    __field(struct afs_writeback *,	wb		)
+		    __field(int,			op		)
+		    __field(int,			usage		)
+		    __field(int,			delta		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->vnode = vnode;
+		    __entry->wb = wb;
+		    __entry->op = op;
+		    __entry->usage = usage;
+		    __entry->delta = delta;
+			   ),
+
+	    TP_printk("vn=%p wb=%p %s u=%d d=%d",
+		      __entry->vnode, __entry->wb,
+		      __print_symbolic(__entry->op, afs_writeback_traces),
+		      __entry->usage, __entry->delta)
 	    );
 
 #endif /* _TRACE_AFS_H */

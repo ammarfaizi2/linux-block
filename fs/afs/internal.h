@@ -156,7 +156,8 @@ struct afs_writeback {
 	unsigned		offset_first;	/* offset into first page of start of write */
 	unsigned		to_last;	/* offset into last page of end of write */
 	int			num_conflicts;	/* count of conflicting writes in list */
-	int			usage;
+	atomic_t		usage;
+	int			nr_pages;	/* Number of pages contributing */
 	bool			conflicts;	/* T if has dependent conflicts */
 	enum {
 		AFS_WBACK_SYNCING,		/* synchronisation being performed */
@@ -410,6 +411,8 @@ struct afs_interface {
 	struct in_addr	netmask;	/* netmask applied to address */
 	unsigned	mtu;		/* MTU of interface */
 };
+
+#include <trace/events/afs.h>
 
 /*****************************************************************************/
 /*
@@ -709,7 +712,13 @@ extern int afs_volume_release_fileserver(struct afs_vnode *,
  * write.c
  */
 extern int afs_set_page_dirty(struct page *);
-extern void afs_put_writeback(struct afs_vnode *, struct afs_writeback *);
+extern struct afs_writeback *afs_get_writeback(struct afs_vnode *,
+					       struct afs_writeback *,
+					       enum afs_writeback_trace);
+extern void afs_put_writeback(struct afs_vnode *, struct afs_writeback *,
+			      unsigned);
+extern bool afs_writeback_remove_page(struct afs_vnode *,
+				      struct afs_writeback *, struct page *);
 extern int afs_write_begin(struct file *file, struct address_space *mapping,
 			loff_t pos, unsigned len, unsigned flags,
 			struct page **pagep, void **fsdata);
@@ -723,14 +732,12 @@ extern ssize_t afs_file_write(struct kiocb *, struct iov_iter *);
 extern int afs_writeback_all(struct afs_vnode *);
 extern int afs_flush(struct file *, fl_owner_t);
 extern int afs_fsync(struct file *, loff_t, loff_t, int);
-
+extern int afs_launder_page(struct page *);
 
 /*****************************************************************************/
 /*
  * debug tracing
  */
-#include <trace/events/afs.h>
-
 extern unsigned afs_debug;
 
 #define dbgprintk(FMT,...) \

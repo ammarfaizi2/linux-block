@@ -330,7 +330,7 @@ static int afs_send_pages(struct afs_call *call, struct msghdr *msg)
 		first += nr;
 	} while (first <= last);
 
-	trace_afs_sent_pages(call, first, last, ret);
+	trace_afs_sent_pages(call, call->first, last, first, ret);
 	return ret;
 }
 

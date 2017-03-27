@@ -474,10 +474,8 @@ int afs_setattr(struct dentry *dentry, struct iattr *attr)
 	}
 
 	/* flush any dirty data outstanding on a regular file */
-	if (S_ISREG(vnode->vfs_inode.i_mode)) {
-		filemap_write_and_wait(vnode->vfs_inode.i_mapping);
+	if (S_ISREG(vnode->vfs_inode.i_mode))
 		afs_writeback_all(vnode);
-	}
 
 	if (attr->ia_valid & ATTR_FILE) {
 		key = attr->ia_file->private_data;
