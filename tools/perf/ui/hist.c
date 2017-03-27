@@ -609,20 +609,25 @@ static void fmt_free(struct perf_hpp_fmt *fmt)
 
 void perf_hpp__reset_output_field(struct perf_hpp_list *list)
 {
-	struct perf_hpp_fmt *fmt, *tmp;
+	struct perf_hpp_fmt *field_fmt, *sort_fmt, *tmp1, *tmp2;
 
 	/* reset output fields */
-	perf_hpp_list__for_each_format_safe(list, fmt, tmp) {
-		list_del_init(&fmt->list);
-		list_del_init(&fmt->sort_list);
-		fmt_free(fmt);
+	perf_hpp_list__for_each_format_safe(list, field_fmt, tmp1) {
+		list_del_init(&field_fmt->list);
+		/* reset sort keys */
+		perf_hpp_list__for_each_sort_list_safe(list, sort_fmt, tmp2) {
+			if (field_fmt == sort_fmt) {
+				list_del_init(&field_fmt->sort_list);
+				break;
+			}
+		}
+		fmt_free(field_fmt);
 	}
 
-	/* reset sort keys */
-	perf_hpp_list__for_each_sort_list_safe(list, fmt, tmp) {
-		list_del_init(&fmt->list);
-		list_del_init(&fmt->sort_list);
-		fmt_free(fmt);
+	/* reset remaining sort keys */
+	perf_hpp_list__for_each_sort_list_safe(list, sort_fmt, tmp1) {
+		list_del_init(&sort_fmt->sort_list);
+		fmt_free(sort_fmt);
 	}
 }
 
