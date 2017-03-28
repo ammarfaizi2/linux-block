@@ -18,4 +18,6 @@
 / {
 	model = "Qualcomm Technologies, Inc. APQ 8016 SBC";
 	compatible = "qcom,apq8016-sbc", "qcom,apq8016", "qcom,sbc";
+	qcom,msm-id = <247 0>;
+	qcom,board-id = <0x10018 0>;
 };
