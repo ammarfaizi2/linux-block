@@ -56,7 +56,7 @@ static inline struct device_node *of_cpu_device_node_get(int cpu)
 }
 
 int of_dma_configure(struct device *dev,
-		     struct device_node *np,
+		     struct device_node *parent,
 		     bool force_dma);
 #else /* CONFIG_OF */
 
@@ -107,7 +107,7 @@ static inline struct device_node *of_cpu_device_node_get(int cpu)
 }
 
 static inline int of_dma_configure(struct device *dev,
-				   struct device_node *np,
+				   struct device_node *parent,
 				   bool force_dma)
 {
 	return 0;
