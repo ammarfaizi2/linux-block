@@ -4,10 +4,6 @@
 /*
  * User space memory access functions
  */
-#include <linux/sched.h>
-
-#define VERIFY_READ	0
-#define VERIFY_WRITE	1
 
 /*
  * The fs value determines whether argument validity checking should be
@@ -28,7 +24,7 @@
 
 #define segment_eq(a, b)	((a).seg == (b).seg)
 
-#define __kernel_ok (segment_eq(get_fs(), KERNEL_DS))
+#define __kernel_ok (uaccess_kernel())
 /*
  * Explicitly allow NULL pointers here. Parts of the kernel such
  * as readv/writev use access_ok to validate pointers, but want
@@ -51,28 +47,7 @@ static inline int __access_ok(unsigned long addr, unsigned long size)
 #define access_ok(type, addr, size) __access_ok((unsigned long)(addr),	\
 						(unsigned long)(size))
 
-static inline int verify_area(int type, const void *addr, unsigned long size)
-{
-	return access_ok(type, addr, size) ? 0 : -EFAULT;
-}
-
-/*
- * The exception table consists of pairs of addresses: the first is the
- * address of an instruction that is allowed to fault, and the second is
- * the address at which the program should continue.  No registers are
- * modified, so it is entirely up to the continuation code to figure out
- * what to do.
- *
- * All the routines below use bits of fixup code that are out of line
- * with the main instruction path.  This means when everything is well,
- * we don't even have to jump over them.  Further, they do not intrude
- * on our cache or tlb entries.
- */
-struct exception_table_entry {
-	unsigned long insn, fixup;
-};
-
-extern int fixup_exception(struct pt_regs *regs);
+#include <asm/extable.h>
 
 /*
  * These are the main single-value transfer routines.  They automatically

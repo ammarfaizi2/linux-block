@@ -19,7 +19,7 @@
 	.text;			\
 	.align 4;
 
-#define FUNC_NAME		___copy_from_user
+#define FUNC_NAME		raw_copy_from_user
 #define LOAD(type,addr,dest)	type##a [addr] %asi, dest
 #define LOAD_BLK(addr,dest)	ldda [addr] ASI_BLK_AIUS, dest
 #define EX_RETVAL(x)		0

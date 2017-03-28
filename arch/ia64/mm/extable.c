@@ -5,7 +5,9 @@
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
 
-#include <linux/uaccess.h>
+#include <asm/ptrace.h>
+#include <asm/extable.h>
+#include <asm/errno.h>
 
 void
 ia64_handle_exception (struct pt_regs *regs, const struct exception_table_entry *e)

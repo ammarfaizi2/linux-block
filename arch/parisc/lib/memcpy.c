@@ -76,7 +76,7 @@ DECLARE_PER_CPU(struct exception_data, exception_data);
 		goto label;						\
 } while (0)
 
-#define get_user_space() (segment_eq(get_fs(), KERNEL_DS) ? 0 : mfsp(3))
+#define get_user_space() (uaccess_kernel() ? 0 : mfsp(3))
 #define get_kernel_space() (0)
 
 #define MERGE(w0, sh_1, w1, sh_2)  ({					\
@@ -113,31 +113,10 @@ DECLARE_PER_CPU(struct exception_data, exception_data);
 	: _tt(_t)					\
 	: "r8")
 
-#define ldbma(_s, _a, _t, _e) def_load_ai_insn(ldbs,1,"=r",_s,_a,_t,_e)
-#define stbma(_s, _t, _a, _e) def_store_ai_insn(stbs,1,"r",_s,_a,_t,_e)
-#define ldwma(_s, _a, _t, _e) def_load_ai_insn(ldw,4,"=r",_s,_a,_t,_e)
-#define stwma(_s, _t, _a, _e) def_store_ai_insn(stw,4,"r",_s,_a,_t,_e)
-#define flddma(_s, _a, _t, _e) def_load_ai_insn(fldd,8,"=f",_s,_a,_t,_e)
-#define fstdma(_s, _t, _a, _e) def_store_ai_insn(fstd,8,"f",_s,_a,_t,_e)
-
-#define def_load_insn(_insn,_tt,_s,_o,_a,_t,_e) 	\
-	__asm__ __volatile__ (				\
-	"1:\t" #_insn " " #_o "(" _s ",%1), %0\n\t"	\
-	ASM_EXCEPTIONTABLE_ENTRY(1b,_e)			\
-	: _tt(_t) 					\
-	: "r"(_a)					\
-	: "r8")
-
-#define def_store_insn(_insn,_tt,_s,_t,_o,_a,_e) 	\
-	__asm__ __volatile__ (				\
-	"1:\t" #_insn " %0, " #_o "(" _s ",%1)\n\t" 	\
-	ASM_EXCEPTIONTABLE_ENTRY(1b,_e)			\
-	: 						\
-	: _tt(_t), "r"(_a)				\
-	: "r8")
-
-#define ldw(_s,_o,_a,_t,_e)	def_load_insn(ldw,"=r",_s,_o,_a,_t,_e)
-#define stw(_s,_t,_o,_a,_e) 	def_store_insn(stw,"r",_s,_t,_o,_a,_e)
+#define load1(_t, _e) def_load_ai_insn(ldbs,1,"=r",s_space,src,_t,_e)
+#define store1(_t, _e) def_store_ai_insn(stbs,1,"r",d_space,dst,_t,_e)
+#define load4(_t, _e) def_load_ai_insn(ldw,4,"=r",s_space,src,_t,_e)
+#define store4(_t, _e) def_store_ai_insn(stw,4,"r",d_space,dst,_t,_e)
 
 #ifdef  CONFIG_PREFETCH
 static inline void prefetch_src(const void *addr)
@@ -154,12 +133,13 @@ static inline void prefetch_dst(const void *addr)
 #define prefetch_dst(addr) do { } while(0)
 #endif
 
-#define PA_MEMCPY_OK		0
-#define PA_MEMCPY_LOAD_ERROR	1
-#define PA_MEMCPY_STORE_ERROR	2
-
 /* Copy from a not-aligned src to an aligned dst, using shifts. Handles 4 words
  * per loop.  This code is derived from glibc. 
+ *
+ * Return 0 on success,
+ *	  last address stored on load fault
+ *	  last address stored + 1 on store fault
+ *
  */
 static noinline unsigned long copy_dstaligned(unsigned long dst,
 					unsigned long src, unsigned long len)
@@ -183,41 +163,25 @@ static noinline unsigned long copy_dstaligned(unsigned long dst,
 	switch (len % 4)
 	{
 		case 2:
-			/* a1 = ((unsigned int *) src)[0];
-			   a2 = ((unsigned int *) src)[1]; */
-			ldw(s_space, 0, src, a1, cda_ldw_exc);
-			ldw(s_space, 4, src, a2, cda_ldw_exc);
-			src -= 1 * sizeof(unsigned int);
-			dst -= 3 * sizeof(unsigned int);
+			load4(a1, cda_ldw_exc);
+			load4(a2, cda_ldw_exc);
 			len += 2;
 			goto do1;
 		case 3:
-			/* a0 = ((unsigned int *) src)[0];
-			   a1 = ((unsigned int *) src)[1]; */
-			ldw(s_space, 0, src, a0, cda_ldw_exc);
-			ldw(s_space, 4, src, a1, cda_ldw_exc);
-			src -= 0 * sizeof(unsigned int);
-			dst -= 2 * sizeof(unsigned int);
+			load4(a0, cda_ldw_exc);
+			load4(a1, cda_ldw_exc);
 			len += 1;
 			goto do2;
 		case 0:
 			if (len == 0)
-				return PA_MEMCPY_OK;
-			/* a3 = ((unsigned int *) src)[0];
-			   a0 = ((unsigned int *) src)[1]; */
-			ldw(s_space, 0, src, a3, cda_ldw_exc);
-			ldw(s_space, 4, src, a0, cda_ldw_exc);
-			src -=-1 * sizeof(unsigned int);
-			dst -= 1 * sizeof(unsigned int);
+				return 0;
+			load4(a3, cda_ldw_exc);
+			load4(a0, cda_ldw_exc);
 			len += 0;
 			goto do3;
 		case 1:
-			/* a2 = ((unsigned int *) src)[0];
-			   a3 = ((unsigned int *) src)[1]; */
-			ldw(s_space, 0, src, a2, cda_ldw_exc);
-			ldw(s_space, 4, src, a3, cda_ldw_exc);
-			src -=-2 * sizeof(unsigned int);
-			dst -= 0 * sizeof(unsigned int);
+			load4(a2, cda_ldw_exc);
+			load4(a3, cda_ldw_exc);
 			len -= 1;
 			if (len == 0)
 				goto do0;
@@ -228,67 +192,52 @@ static noinline unsigned long copy_dstaligned(unsigned long dst,
 	{
 		/* prefetch_src((const void *)(src + 4 * sizeof(unsigned int))); */
 do4:
-		/* a0 = ((unsigned int *) src)[0]; */
-		ldw(s_space, 0, src, a0, cda_ldw_exc);
-		/* ((unsigned int *) dst)[0] = MERGE (a2, sh_1, a3, sh_2); */
-		stw(d_space, MERGE (a2, sh_1, a3, sh_2), 0, dst, cda_stw_exc);
+		load4(a0, cda_ldw_exc);
+		store4(MERGE (a2, sh_1, a3, sh_2), cda_stw_exc);
 do3:
-		/* a1 = ((unsigned int *) src)[1]; */
-		ldw(s_space, 4, src, a1, cda_ldw_exc);
-		/* ((unsigned int *) dst)[1] = MERGE (a3, sh_1, a0, sh_2); */
-		stw(d_space, MERGE (a3, sh_1, a0, sh_2), 4, dst, cda_stw_exc);
+		load4(a1, cda_ldw_exc);
+		store4(MERGE (a3, sh_1, a0, sh_2), cda_stw_exc);
 do2:
-		/* a2 = ((unsigned int *) src)[2]; */
-		ldw(s_space, 8, src, a2, cda_ldw_exc);
-		/* ((unsigned int *) dst)[2] = MERGE (a0, sh_1, a1, sh_2); */
-		stw(d_space, MERGE (a0, sh_1, a1, sh_2), 8, dst, cda_stw_exc);
+		load4(a2, cda_ldw_exc);
+		store4(MERGE (a0, sh_1, a1, sh_2), cda_stw_exc);
 do1:
-		/* a3 = ((unsigned int *) src)[3]; */
-		ldw(s_space, 12, src, a3, cda_ldw_exc);
-		/* ((unsigned int *) dst)[3] = MERGE (a1, sh_1, a2, sh_2); */
-		stw(d_space, MERGE (a1, sh_1, a2, sh_2), 12, dst, cda_stw_exc);
+		load4(a3, cda_ldw_exc);
+		store4(MERGE (a1, sh_1, a2, sh_2), cda_stw_exc);
 
-		src += 4 * sizeof(unsigned int);
-		dst += 4 * sizeof(unsigned int);
 		len -= 4;
 	}
 	while (len != 0);
 
 do0:
 	/* ((unsigned int *) dst)[0] = MERGE (a2, sh_1, a3, sh_2); */
-	stw(d_space, MERGE (a2, sh_1, a3, sh_2), 0, dst, cda_stw_exc);
+	store4(MERGE (a2, sh_1, a3, sh_2), cda_stw_exc);
 
 	preserve_branch(handle_load_error);
 	preserve_branch(handle_store_error);
 
-	return PA_MEMCPY_OK;
+	return 0;
 
 handle_load_error:
 	__asm__ __volatile__ ("cda_ldw_exc:\n");
-	return PA_MEMCPY_LOAD_ERROR;
+	return dst;
 
 handle_store_error:
 	__asm__ __volatile__ ("cda_stw_exc:\n");
-	return PA_MEMCPY_STORE_ERROR;
+	return dst + 1;
 }
 
 
-/* Returns PA_MEMCPY_OK, PA_MEMCPY_LOAD_ERROR or PA_MEMCPY_STORE_ERROR.
- * In case of an access fault the faulty address can be read from the per_cpu
- * exception data struct. */
-static noinline unsigned long pa_memcpy_internal(void *dstp, const void *srcp,
+/* Returns 0 for success, otherwise, returns number of bytes not transferred. */
+static noinline unsigned long pa_memcpy(void *dstp, const void *srcp,
 					unsigned long len)
 {
 	register unsigned long src, dst, t1, t2, t3;
-	register unsigned char *pcs, *pcd;
-	register unsigned int *pws, *pwd;
-	register double *pds, *pdd;
-	unsigned long ret;
+	unsigned long ret, end;
 
 	src = (unsigned long)srcp;
 	dst = (unsigned long)dstp;
-	pcs = (unsigned char *)srcp;
-	pcd = (unsigned char *)dstp;
+	end = dst + len;
+	asm volatile("": : "r"(end));
 
 	/* prefetch_src((const void *)srcp); */
 
@@ -297,217 +246,136 @@ static noinline unsigned long pa_memcpy_internal(void *dstp, const void *srcp,
 
 	/* Check alignment */
 	t1 = (src ^ dst);
-	if (unlikely(t1 & (sizeof(double)-1)))
+	if (unlikely(t1 & (sizeof(unsigned int)-1)))
 		goto unaligned_copy;
 
 	/* src and dst have same alignment. */
 
 	/* Copy bytes till we are double-aligned. */
-	t2 = src & (sizeof(double) - 1);
+	t2 = src & (sizeof(unsigned int) - 1);
 	if (unlikely(t2 != 0)) {
-		t2 = sizeof(double) - t2;
+		t2 = sizeof(unsigned int) - t2;
 		while (t2 && len) {
-			/* *pcd++ = *pcs++; */
-			ldbma(s_space, pcs, t3, pmc_load_exc);
+			load1(t3, pmc_done);
 			len--;
-			stbma(d_space, t3, pcd, pmc_store_exc);
+			store1(t3, pmc_done);
 			t2--;
 		}
 	}
 
-	pds = (double *)pcs;
-	pdd = (double *)pcd;
-
-#if 0
-	/* Copy 8 doubles at a time */
-	while (len >= 8*sizeof(double)) {
-		register double r1, r2, r3, r4, r5, r6, r7, r8;
-		/* prefetch_src((char *)pds + L1_CACHE_BYTES); */
-		flddma(s_space, pds, r1, pmc_load_exc);
-		flddma(s_space, pds, r2, pmc_load_exc);
-		flddma(s_space, pds, r3, pmc_load_exc);
-		flddma(s_space, pds, r4, pmc_load_exc);
-		fstdma(d_space, r1, pdd, pmc_store_exc);
-		fstdma(d_space, r2, pdd, pmc_store_exc);
-		fstdma(d_space, r3, pdd, pmc_store_exc);
-		fstdma(d_space, r4, pdd, pmc_store_exc);
-
-#if 0
-		if (L1_CACHE_BYTES <= 32)
-			prefetch_src((char *)pds + L1_CACHE_BYTES);
-#endif
-		flddma(s_space, pds, r5, pmc_load_exc);
-		flddma(s_space, pds, r6, pmc_load_exc);
-		flddma(s_space, pds, r7, pmc_load_exc);
-		flddma(s_space, pds, r8, pmc_load_exc);
-		fstdma(d_space, r5, pdd, pmc_store_exc);
-		fstdma(d_space, r6, pdd, pmc_store_exc);
-		fstdma(d_space, r7, pdd, pmc_store_exc);
-		fstdma(d_space, r8, pdd, pmc_store_exc);
-		len -= 8*sizeof(double);
-	}
-#endif
-
-	pws = (unsigned int *)pds;
-	pwd = (unsigned int *)pdd;
-
-word_copy:
 	while (len >= 8*sizeof(unsigned int)) {
 		register unsigned int r1,r2,r3,r4,r5,r6,r7,r8;
-		/* prefetch_src((char *)pws + L1_CACHE_BYTES); */
-		ldwma(s_space, pws, r1, pmc_load_exc);
-		ldwma(s_space, pws, r2, pmc_load_exc);
-		ldwma(s_space, pws, r3, pmc_load_exc);
-		ldwma(s_space, pws, r4, pmc_load_exc);
-		stwma(d_space, r1, pwd, pmc_store_exc);
-		stwma(d_space, r2, pwd, pmc_store_exc);
-		stwma(d_space, r3, pwd, pmc_store_exc);
-		stwma(d_space, r4, pwd, pmc_store_exc);
+		/* prefetch_src((char *)src + L1_CACHE_BYTES); */
+		load4(r1, pmc_done);
+		load4(r2, pmc_byte4);		// bytecopy src-4
+		load4(r3, pmc_byte8);		// bytecopy src-8
+		load4(r4, pmc_byte12);		// bytecopy src-12
+		store4(r1, pmc_done);
+		store4(r2, pmc_done);
+		store4(r3, pmc_done);
+		store4(r4, pmc_done);
 
-		ldwma(s_space, pws, r5, pmc_load_exc);
-		ldwma(s_space, pws, r6, pmc_load_exc);
-		ldwma(s_space, pws, r7, pmc_load_exc);
-		ldwma(s_space, pws, r8, pmc_load_exc);
-		stwma(d_space, r5, pwd, pmc_store_exc);
-		stwma(d_space, r6, pwd, pmc_store_exc);
-		stwma(d_space, r7, pwd, pmc_store_exc);
-		stwma(d_space, r8, pwd, pmc_store_exc);
+		load4(r5, pmc_done);
+		load4(r6, pmc_byte4);		// bytecopy src-4
+		load4(r7, pmc_byte8);		// bytecopy src-8
+		load4(r8, pmc_byte12);		// bytecopy src-12
+		store4(r5, pmc_done);
+		store4(r6, pmc_done);
+		store4(r7, pmc_done);
+		store4(r8, pmc_done);
 		len -= 8*sizeof(unsigned int);
 	}
 
 	while (len >= 4*sizeof(unsigned int)) {
 		register unsigned int r1,r2,r3,r4;
-		ldwma(s_space, pws, r1, pmc_load_exc);
-		ldwma(s_space, pws, r2, pmc_load_exc);
-		ldwma(s_space, pws, r3, pmc_load_exc);
-		ldwma(s_space, pws, r4, pmc_load_exc);
-		stwma(d_space, r1, pwd, pmc_store_exc);
-		stwma(d_space, r2, pwd, pmc_store_exc);
-		stwma(d_space, r3, pwd, pmc_store_exc);
-		stwma(d_space, r4, pwd, pmc_store_exc);
+		load4(r1, pmc_done);
+		load4(r2, pmc_byte4);		// bytecopy src-4
+		load4(r3, pmc_byte8);		// bytecopy src-8
+		load4(r4, pmc_byte12);		// bytecopy src-12
+		store4(r1, pmc_done);
+		store4(r2, pmc_done);
+		store4(r3, pmc_done);
+		store4(r4, pmc_done);
 		len -= 4*sizeof(unsigned int);
 	}
 
-	pcs = (unsigned char *)pws;
-	pcd = (unsigned char *)pwd;
-
 byte_copy:
 	while (len) {
-		/* *pcd++ = *pcs++; */
-		ldbma(s_space, pcs, t3, pmc_load_exc);
-		stbma(d_space, t3, pcd, pmc_store_exc);
+		load1(t3, pmc_done);
+		store1(t3, pmc_done);
 		len--;
 	}
 
-	return PA_MEMCPY_OK;
+	return 0;
 
 unaligned_copy:
-	/* possibly we are aligned on a word, but not on a double... */
-	if (likely((t1 & (sizeof(unsigned int)-1)) == 0)) {
-		t2 = src & (sizeof(unsigned int) - 1);
-
-		if (unlikely(t2 != 0)) {
-			t2 = sizeof(unsigned int) - t2;
-			while (t2) {
-				/* *pcd++ = *pcs++; */
-				ldbma(s_space, pcs, t3, pmc_load_exc);
-				stbma(d_space, t3, pcd, pmc_store_exc);
-				len--;
-				t2--;
-			}
-		}
-
-		pws = (unsigned int *)pcs;
-		pwd = (unsigned int *)pcd;
-		goto word_copy;
-	}
-
-	/* Align the destination.  */
 	if (unlikely((dst & (sizeof(unsigned int) - 1)) != 0)) {
 		t2 = sizeof(unsigned int) - (dst & (sizeof(unsigned int) - 1));
 		while (t2) {
-			/* *pcd++ = *pcs++; */
-			ldbma(s_space, pcs, t3, pmc_load_exc);
-			stbma(d_space, t3, pcd, pmc_store_exc);
+			load1(t3, pmc_done);
+			store1(t3, pmc_done);
 			len--;
 			t2--;
 		}
-		dst = (unsigned long)pcd;
-		src = (unsigned long)pcs;
 	}
 
 	ret = copy_dstaligned(dst, src, len / sizeof(unsigned int));
-	if (ret)
-		return ret;
+	if (unlikely(ret)) {
+		if (ret & 1)
+			return len - (ret - 1 - dst);
+		src += ret - dst;
+		len -= ret - dst;
+		dst = ret;
+		goto byte_copy;
+	}
 
-	pcs += (len & -sizeof(unsigned int));
-	pcd += (len & -sizeof(unsigned int));
+	src += (len & -sizeof(unsigned int));
+	dst += (len & -sizeof(unsigned int));
 	len %= sizeof(unsigned int);
 
-	preserve_branch(handle_load_error);
-	preserve_branch(handle_store_error);
-
+	preserve_branch(handle_error1);
+	preserve_branch(handle_error2);
+	preserve_branch(handle_error3);
+	preserve_branch(handle_error4);
 	goto byte_copy;
 
-handle_load_error:
-	__asm__ __volatile__ ("pmc_load_exc:\n");
-	return PA_MEMCPY_LOAD_ERROR;
-
-handle_store_error:
-	__asm__ __volatile__ ("pmc_store_exc:\n");
-	return PA_MEMCPY_STORE_ERROR;
-}
-
-
-/* Returns 0 for success, otherwise, returns number of bytes not transferred. */
-static unsigned long pa_memcpy(void *dstp, const void *srcp, unsigned long len)
-{
-	unsigned long ret, fault_addr, reference;
-	struct exception_data *d;
-
-	ret = pa_memcpy_internal(dstp, srcp, len);
-	if (likely(ret == PA_MEMCPY_OK))
-		return 0;
-
-	/* if a load or store fault occured we can get the faulty addr */
-	d = this_cpu_ptr(&exception_data);
-	fault_addr = d->fault_addr;
-
-	/* error in load or store? */
-	if (ret == PA_MEMCPY_LOAD_ERROR)
-		reference = (unsigned long) srcp;
-	else
-		reference = (unsigned long) dstp;
-
-	DPRINTF("pa_memcpy: fault type = %lu, len=%lu fault_addr=%lu ref=%lu\n",
-		ret, len, fault_addr, reference);
-
-	if (fault_addr >= reference)
-		return len - (fault_addr - reference);
-	else
-		return len;
+handle_error1:
+	__asm__ __volatile__ ("pmc_done:\n");
+	return end - dst;
+handle_error2:
+	__asm__ __volatile__ ("pmc_byte4:\n");
+	src -= 4;
+	goto byte_copy;
+handle_error3:
+	__asm__ __volatile__ ("pmc_byte8:\n");
+	src -= 8;
+	goto byte_copy;
+handle_error4:
+	__asm__ __volatile__ ("pmc_byte12:\n");
+	src -= 12;
+	goto byte_copy;
 }
 
 #ifdef __KERNEL__
-unsigned long __copy_to_user(void __user *dst, const void *src,
-			     unsigned long len)
+unsigned long raw_copy_to_user(void __user *dst, const void *src,
+			       unsigned long len)
 {
 	mtsp(get_kernel_space(), 1);
 	mtsp(get_user_space(), 2);
 	return pa_memcpy((void __force *)dst, src, len);
 }
-EXPORT_SYMBOL(__copy_to_user);
+EXPORT_SYMBOL(raw_copy_to_user);
 
-unsigned long __copy_from_user(void *dst, const void __user *src,
+unsigned long raw_copy_from_user(void *dst, const void __user *src,
 			       unsigned long len)
 {
 	mtsp(get_user_space(), 1);
 	mtsp(get_kernel_space(), 2);
 	return pa_memcpy(dst, (void __force *)src, len);
 }
-EXPORT_SYMBOL(__copy_from_user);
+EXPORT_SYMBOL(raw_copy_from_user);
 
-unsigned long copy_in_user(void __user *dst, const void __user *src, unsigned long len)
+unsigned long raw_copy_in_user(void __user *dst, const void __user *src, unsigned long len)
 {
 	mtsp(get_user_space(), 1);
 	mtsp(get_user_space(), 2);
@@ -523,7 +391,7 @@ void * memcpy(void * dst,const void *src, size_t count)
 	return dst;
 }
 
-EXPORT_SYMBOL(copy_in_user);
+EXPORT_SYMBOL(raw_copy_in_user);
 EXPORT_SYMBOL(memcpy);
 
 long probe_kernel_read(void *dst, const void *src, size_t size)
