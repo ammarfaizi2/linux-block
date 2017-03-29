@@ -528,6 +528,7 @@ call_complete:
  */
 static int afs_wait_for_call_to_complete(struct afs_call *call)
 {
+	bool aborted;
 	int ret;
 
 	DECLARE_WAITQUEUE(myself, current);
@@ -558,8 +559,13 @@ static int afs_wait_for_call_to_complete(struct afs_call *call)
 	/* Kill off the call if it's still live. */
 	if (call->state < AFS_CALL_COMPLETE) {
 		_debug("call interrupted");
-		rxrpc_kernel_abort_call(afs_socket, call->rxcall,
-					RX_USER_ABORT, -EINTR, "KWI");
+		aborted = rxrpc_kernel_abort_call(afs_socket, call->rxcall,
+						  RX_USER_ABORT, -EINTR, "KWI");
+		call->error = rxrpc_kernel_recv_data(afs_socket, call->rxcall,
+						     NULL, 0, &call->offset,
+						     false, &call->abort_code);
+		if (aborted)
+			trace_afs_call_done(call);
 	}
 
 	ret = call->error;
