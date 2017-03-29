@@ -308,7 +308,6 @@ static int afs_send_pages(struct afs_call *call, struct msghdr *msg)
 
 	do {
 		afs_load_bvec(call, msg, bv, first, last, offset);
-		offset = 0;
 		bytes = msg->msg_iter.count;
 		nr = msg->msg_iter.nr_segs;
 
@@ -318,6 +317,9 @@ static int afs_send_pages(struct afs_call *call, struct msghdr *msg)
 		 */
 		if (first + nr - 1 >= last)
 			call->state = AFS_CALL_AWAIT_REPLY;
+		trace_afs_send_pages(call, msg, first, last, offset);
+		offset = 0;
+
 		ret = rxrpc_kernel_send_data(afs_socket, call->rxcall,
 					     msg, bytes);
 		for (loop = 0; loop < nr; loop++)
@@ -328,6 +330,7 @@ static int afs_send_pages(struct afs_call *call, struct msghdr *msg)
 		first += nr;
 	} while (first <= last);
 
+	trace_afs_sent_pages(call, first, last, ret);
 	return ret;
 }
 
