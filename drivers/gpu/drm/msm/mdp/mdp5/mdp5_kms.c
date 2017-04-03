@@ -1012,7 +1012,7 @@ static int mdp5_init(struct platform_device *pdev, struct drm_device *dev)
 
 	/* HACK : set the axi clock to some valid rate */
 	if (mdp5_kms->mmagic_mdss_axi_clk)
-		clk_set_rate(mdp5_kms->mmagic_mdss_axi_clk, 75000000);
+		clk_set_rate(mdp5_kms->mmagic_mdss_axi_clk, 320000000);
 
 	/*
 	 * Some chipsets have a Shared Memory Pool (SMP), while others
