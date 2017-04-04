@@ -539,6 +539,8 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	tsk->stack_canary = get_random_long();
 #endif
 
+	if (orig->cpus_ptr == &orig->cpus_mask)
+		tsk->cpus_ptr = &tsk->cpus_mask;
 	/*
 	 * One for us, one for whoever does the "release_task()" (usually
 	 * parent)
