@@ -476,7 +476,7 @@ u64 map__objdump_2mem(struct map *map, u64 ip)
 static void maps__init(struct maps *maps)
 {
 	maps->entries = RB_ROOT;
-	pthread_rwlock_init(&maps->lock, NULL);
+	init_rwsem(&maps->lock);
 }
 
 void map_groups__init(struct map_groups *mg, struct machine *machine)
@@ -505,9 +505,9 @@ static void __maps__purge(struct maps *maps)
 
 static void maps__exit(struct maps *maps)
 {
-	pthread_rwlock_wrlock(&maps->lock);
+	down_write(&maps->lock);
 	__maps__purge(maps);
-	pthread_rwlock_unlock(&maps->lock);
+	up_write(&maps->lock);
 }
 
 void map_groups__exit(struct map_groups *mg)
@@ -574,7 +574,7 @@ struct symbol *maps__find_symbol_by_name(struct maps *maps, const char *name,
 	struct symbol *sym;
 	struct rb_node *nd;
 
-	pthread_rwlock_rdlock(&maps->lock);
+	down_read(&maps->lock);
 
 	for (nd = rb_first(&maps->entries); nd; nd = rb_next(nd)) {
 		struct map *pos = rb_entry(nd, struct map, rb_node);
@@ -590,7 +590,7 @@ struct symbol *maps__find_symbol_by_name(struct maps *maps, const char *name,
 
 	sym = NULL;
 out:
-	pthread_rwlock_unlock(&maps->lock);
+	up_read(&maps->lock);
 	return sym;
 }
 
@@ -626,7 +626,7 @@ static size_t maps__fprintf(struct maps *maps, FILE *fp)
 	size_t printed = 0;
 	struct rb_node *nd;
 
-	pthread_rwlock_rdlock(&maps->lock);
+	down_read(&maps->lock);
 
 	for (nd = rb_first(&maps->entries); nd; nd = rb_next(nd)) {
 		struct map *pos = rb_entry(nd, struct map, rb_node);
@@ -638,7 +638,7 @@ static size_t maps__fprintf(struct maps *maps, FILE *fp)
 		}
 	}
 
-	pthread_rwlock_unlock(&maps->lock);
+	up_read(&maps->lock);
 
 	return printed;
 }
@@ -670,7 +670,7 @@ static int maps__fixup_overlappings(struct maps *maps, struct map *map, FILE *fp
 	struct rb_node *next;
 	int err = 0;
 
-	pthread_rwlock_wrlock(&maps->lock);
+	down_write(&maps->lock);
 
 	root = &maps->entries;
 	next = rb_first(root);
@@ -738,7 +738,7 @@ put_map:
 
 	err = 0;
 out:
-	pthread_rwlock_unlock(&maps->lock);
+	up_write(&maps->lock);
 	return err;
 }
 
@@ -759,7 +759,7 @@ int map_groups__clone(struct thread *thread,
 	struct map *map;
 	struct maps *maps = &parent->maps[type];
 
-	pthread_rwlock_rdlock(&maps->lock);
+	down_read(&maps->lock);
 
 	for (map = maps__first(maps); map; map = map__next(map)) {
 		struct map *new = map__clone(map);
@@ -776,7 +776,7 @@ int map_groups__clone(struct thread *thread,
 
 	err = 0;
 out_unlock:
-	pthread_rwlock_unlock(&maps->lock);
+	up_read(&maps->lock);
 	return err;
 }
 
@@ -803,9 +803,9 @@ static void __maps__insert(struct maps *maps, struct map *map)
 
 void maps__insert(struct maps *maps, struct map *map)
 {
-	pthread_rwlock_wrlock(&maps->lock);
+	down_write(&maps->lock);
 	__maps__insert(maps, map);
-	pthread_rwlock_unlock(&maps->lock);
+	up_write(&maps->lock);
 }
 
 static void __maps__remove(struct maps *maps, struct map *map)
@@ -816,9 +816,9 @@ static void __maps__remove(struct maps *maps, struct map *map)
 
 void maps__remove(struct maps *maps, struct map *map)
 {
-	pthread_rwlock_wrlock(&maps->lock);
+	down_write(&maps->lock);
 	__maps__remove(maps, map);
-	pthread_rwlock_unlock(&maps->lock);
+	up_write(&maps->lock);
 }
 
 struct map *maps__find(struct maps *maps, u64 ip)
@@ -826,7 +826,7 @@ struct map *maps__find(struct maps *maps, u64 ip)
 	struct rb_node **p, *parent = NULL;
 	struct map *m;
 
-	pthread_rwlock_rdlock(&maps->lock);
+	down_read(&maps->lock);
 
 	p = &maps->entries.rb_node;
 	while (*p != NULL) {
@@ -842,7 +842,7 @@ struct map *maps__find(struct maps *maps, u64 ip)
 
 	m = NULL;
 out:
-	pthread_rwlock_unlock(&maps->lock);
+	up_read(&maps->lock);
 	return m;
 }
 

@@ -380,4 +380,7 @@ struct inline_node {
 struct inline_node *dso__parse_addr_inlines(struct dso *dso, u64 addr);
 void inline_node__delete(struct inline_node *node);
 
+extern bool perf_singlethreaded;
+void perf_set_singlethreaded(void);
+
 #endif /* GIT_COMPAT_UTIL_H */

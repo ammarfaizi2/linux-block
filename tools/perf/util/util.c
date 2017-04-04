@@ -20,6 +20,13 @@
 #include "callchain.h"
 #include "strlist.h"
 
+bool perf_singlethreaded;
+
+void perf_set_singlethreaded(void)
+{
+	perf_singlethreaded = true;
+}
+
 #define CALLCHAIN_PARAM_DEFAULT			\
 	.mode		= CHAIN_GRAPH_ABS,	\
 	.min_percent	= 0.5,			\
