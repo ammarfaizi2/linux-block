@@ -836,6 +836,8 @@ static int hdmi_codec_probe(struct platform_device *pdev)
 		hcp->daidrv[i].playback.channels_max =
 			hcd->max_i2s_channels;
 		hcp->daidrv[i].name = hdmi_dai_name[hd->cnt++];
+		if (hcd->formats)
+			hcp->daidrv[i].playback.formats = hcd->formats;
 		i++;
 	}
 
