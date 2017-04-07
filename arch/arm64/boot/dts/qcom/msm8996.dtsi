@@ -77,6 +77,12 @@
 			reg = <0x0 0x86200000 0x0 0x2600000>;
 			no-map;
 		};
+
+		zap_shader_region: gpu@8f200000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0x8f200000 0 0x2300000>;
+			no-map;
+		};
 	};
 
 	cpus {
@@ -1038,6 +1044,86 @@
 						"cfg",
 						"bus_master",
 						"bus_slave";
+			};
+		};
+
+		adreno_smmu: arm,smmu@b40000 {
+			compatible = "arm,smmu-v2";
+			reg = <0xb40000 0x10000>;
+
+			#global-interrupts = <1>;
+			interrupts = <0 334 0>,
+				     <0 329 0>,
+				     <0 330 0>;
+			#iommu-cells = <1>;
+
+			clocks = <&mmcc MMSS_MMAGIC_AHB_CLK>,
+				<&mmcc MMSS_MMAGIC_CFG_AHB_CLK>,
+				<&mmcc GPU_AHB_CLK>,
+				<&gcc GCC_MMSS_BIMC_GFX_CLK>,
+				<&gcc GCC_BIMC_GFX_CLK>,
+				<&mmcc MMSS_MISC_AHB_CLK>;
+			clock-names = "mmagic_ahb_clk",
+				"mmagic_cfg_ahb_clk",
+				"gpu_ahb_clk",
+				"gcc_mmss_bimc_gfx_clk",
+				"gcc_bimc_gfx_clk",
+				"mmss_misc_bus_clk";
+
+			power-domains = <&mmcc GPU_GDSC>;
+
+			qcom,skip-init;
+			qcom,register-save;
+			arm,smmu-enable-stall;
+
+			status = "okay";
+		};
+
+		gpu@b00000 {
+			compatible = "qcom,adreno-530.2", "qcom,adreno";
+			#stream-id-cells = <16>;
+
+			reg = <0xb00000 0x3f000>;
+			reg-names = "kgsl_3d0_reg_memory";
+
+			interrupts = <0 300 0>;
+			interrupt-names = "kgsl_3d0_irq";
+
+			clocks = <&mmcc GPU_GX_GFX3D_CLK>,
+				<&mmcc GPU_AHB_CLK>,
+				<&mmcc GPU_GX_RBBMTIMER_CLK>,
+				<&gcc GCC_BIMC_GFX_CLK>,
+				<&gcc GCC_MMSS_BIMC_GFX_CLK>,
+				<&mmcc MMSS_MMAGIC_AHB_CLK>;
+
+			clock-names = "core",
+				"iface",
+				"rbbmtimer",
+				"mem",
+				"mem_iface",
+				"alt_mem_iface";
+
+			power-domains = <&mmcc GPU_GDSC>;
+			iommus = <&adreno_smmu 0>;
+
+			qcom,gpu-quirk-two-pass-use-wfi;
+			qcom,gpu-quirk-fault-detect-mask;
+
+			/* This is a safe speed for bring up in all bin levels.
+			 * This isn't the fastest the chip can go, but we can
+			 * get there eventually */
+			qcom,gpu-pwrlevels {
+				compatible = "qcom,gpu-pwrlevels";
+				qcom,gpu-pwrlevel@0 {
+					qcom,gpu-freq = <510000000>;
+				};
+				qcom,gpu-pwrlevel@1 {
+					qcom,gpu-freq = <27000000>;
+				};
+			};
+
+			zap-shader {
+				memory-region = <&zap_shader_region>;
 			};
 		};
 
