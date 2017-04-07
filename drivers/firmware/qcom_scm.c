@@ -321,6 +321,12 @@ int qcom_scm_restore_sec_cfg(u32 device_id, u32 spare)
 }
 EXPORT_SYMBOL(qcom_scm_restore_sec_cfg);
 
+int qcom_scm_gpu_zap_resume(void)
+{
+	return __qcom_scm_gpu_zap_resume(__scm->dev);
+}
+EXPORT_SYMBOL(qcom_scm_gpu_zap_resume);
+
 int qcom_scm_iommu_secure_ptbl_size(u32 spare, size_t *size)
 {
 	return __qcom_scm_iommu_secure_ptbl_size(__scm->dev, spare, size);

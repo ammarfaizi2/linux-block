@@ -596,3 +596,8 @@ int __qcom_scm_iommu_secure_ptbl_init(struct device *dev, u64 addr, u32 size,
 {
 	return -ENODEV;
 }
+
+int __qcom_scm_gpu_zap_resume(struct device *dev)
+{
+	return -ENOTSUPP;
+}

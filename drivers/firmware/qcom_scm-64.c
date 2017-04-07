@@ -439,3 +439,18 @@ int __qcom_scm_iommu_secure_ptbl_init(struct device *dev, u64 addr, u32 size,
 
 	return ret;
 }
+
+int __qcom_scm_gpu_zap_resume(struct device *dev)
+{
+	struct qcom_scm_desc desc = {0};
+	struct arm_smccc_res res;
+	int ret;
+
+	desc.args[0] = 0;
+	desc.args[1] = 13;
+	desc.arginfo = QCOM_SCM_ARGS(2);
+
+	ret = qcom_scm_call(dev, QCOM_SCM_SVC_BOOT, 0x0A, &desc, &res);
+
+	return ret ? : res.a1;
+}
