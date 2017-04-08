@@ -34,6 +34,8 @@
 #include <linux/reboot.h>
 #include <linux/delay.h>
 #ifdef CONFIG_X86
+#include <asm/cpu_device_id.h>
+#include <asm/intel-family.h>
 #include <asm/mpspec.h>
 #endif
 #include <linux/acpi_iort.h>
@@ -131,6 +133,59 @@ int acpi_bus_get_status(struct acpi_device *device)
 	return 0;
 }
 EXPORT_SYMBOL(acpi_bus_get_status);
+
+#ifdef CONFIG_X86
+/*
+ * Some ACPI devices are hidden (status == 0x0) in recent BIOS-es because
+ * some recent windows drivers bind to one device but poke at multiple
+ * devices at the same time, so the others get hidden.
+ * We work around this by always reporting ACPI_STA_DEFAULT for these
+ * devices. Note this MUST only be done for devices where this is safe.
+ *
+ * This forcing of devices to be present is limited to specific CPU (SoC)
+ * models both to avoid potentially causing trouble on other models and
+ * because some HIDs are re-used on different SoCs for completely
+ * different devices.
+ */
+struct always_present_device_id {
+	struct acpi_device_id hid[2];
+	struct x86_cpu_id cpu_id[2];
+};
+
+#define ENTRY(hid, cpu_model) {						\
+	{ { hid, }, {} },						\
+	{ { X86_VENDOR_INTEL, 6, cpu_model, X86_FEATURE_ANY, }, {} },	\
+}
+
+static const struct always_present_device_id always_present_device_ids[] = {
+	/*
+	 * Cherrytrail pwm directly poked by GPU driver in win10,
+	 * but Linux uses a separate pwm driver, harmless if not used.
+	 */
+	ENTRY("80862288", INTEL_FAM6_ATOM_AIRMONT),
+};
+#endif
+
+void acpi_set_device_status(struct acpi_device *adev, u32 sta)
+{
+	u32 *status = (u32 *)&adev->status;
+#ifdef CONFIG_X86
+	int i;
+
+	/* acpi_match_device_ids checks status, so start with default */
+	*status = ACPI_STA_DEFAULT;
+	for (i = 0; i < ARRAY_SIZE(always_present_device_ids); i++) {
+		if (acpi_match_device_ids(adev,
+			always_present_device_ids[i].hid) == 0 &&
+		    x86_match_cpu(always_present_device_ids[i].cpu_id)) {
+			dev_info(&adev->dev, "Device [%s] is in always present list setting status [%08x]\n",
+				 adev->pnp.bus_id, ACPI_STA_DEFAULT);
+			return;
+		}
+	}
+#endif
+	*status = sta;
+}
 
 void acpi_bus_private_data_handler(acpi_handle handle,
 				   void *context)
