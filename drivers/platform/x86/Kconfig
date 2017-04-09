@@ -898,6 +898,16 @@ config INTEL_PMC_CORE
 	  Supported features:
 		- SLP_S0_RESIDENCY counter.
 
+config INTEL_INT0002
+	tristate "Intel INT0002 Virtual GPIO ACPI device driver"
+	depends on X86 && ACPI
+	---help---
+	  Some peripherals on Baytrail and Cherrytrail platforms signal
+	  PME to the PMC to wakeup the system. When this happens software
+	  needs to explictly clear the interrupt source to avoid an IRQ
+	  storm on IRQ 9. This is modelled in ACPI through the INT0002
+	  ACPI device. This driver implements the clearing of the IRQ.
+
 config IBM_RTL
 	tristate "Device driver to enable PRTL support"
 	depends on PCI
