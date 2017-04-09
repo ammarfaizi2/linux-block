@@ -163,6 +163,11 @@ static const struct always_present_device_id always_present_device_ids[] = {
 	 * but Linux uses a separate pwm driver, harmless if not used.
 	 */
 	ENTRY("80862288", INTEL_FAM6_ATOM_AIRMONT),
+	/*
+	 * The INT0002 device is necessary to clear wakeup interrupt sources
+	 * on Cherry Trail devices, without it we get nobody cared IRQ msgs.
+	 */
+	ENTRY("INT0002", INTEL_FAM6_ATOM_AIRMONT),
 };
 #endif
 
