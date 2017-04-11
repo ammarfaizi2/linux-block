@@ -70,10 +70,32 @@ static int cht_aif1_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+static struct snd_soc_jack cht_cx_headset;
+static struct snd_soc_jack_gpio cht_cx_gpio;
+
+/* Headset jack detection DAPM pins */
+static struct snd_soc_jack_pin cht_cx_headset_pins[] = {
+	{
+		.pin = "Headset Mic",
+		.mask = SND_JACK_MICROPHONE,
+	},
+	{
+		.pin = "Headphone",
+		.mask = SND_JACK_HEADPHONE,
+	},
+};
+
+static int cht_cx_jack_status_check(void *data)
+{
+	return cx2072x_get_jack_state(data);
+}
+
 static int cht_codec_init(struct snd_soc_pcm_runtime *runtime)
 {
 	int ret;
 	struct snd_soc_card *card = runtime->card;
+	struct snd_soc_dai *codec_dai = runtime->codec_dai;
+	struct snd_soc_codec *codec = codec_dai->codec;
 
 	card->dapm.idle_bias_off = true;
 
@@ -84,6 +106,32 @@ static int cht_codec_init(struct snd_soc_pcm_runtime *runtime)
 		dev_err(codec->dev, "Could not set sysclk\n");
 		return ret;
 	}
+
+	ret = snd_soc_card_jack_new(runtime->card, "Headset",
+				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
+				    SND_JACK_BTN_1 | SND_JACK_BTN_2,
+				    &cht_cx_headset,
+				    cht_cx_headset_pins,
+				    ARRAY_SIZE(cht_cx_headset_pins));
+	if (ret)
+		return ret;
+
+	cht_cx_gpio.gpiod_dev = codec->dev;
+	cht_cx_gpio.name = "headphone detect";
+	cht_cx_gpio.report = SND_JACK_HEADSET |
+		SND_JACK_BTN_0 | SND_JACK_BTN_1 | SND_JACK_BTN_2;
+	cht_cx_gpio.debounce_time = 150;
+	cht_cx_gpio.wake = true;
+	cht_cx_gpio.data = codec;
+	cht_cx_gpio.jack_status_check = cht_cx_jack_status_check;
+
+	ret = snd_soc_jack_add_gpios(&cht_cx_headset, 1, &cht_cx_gpio);
+	if (ret) {
+		dev_err(codec->dev, "Adding jack GPIO failed\n");
+		return ret;
+	}
+
+	cx2072x_enable_detect(codec);
 
 	return ret;
 }
