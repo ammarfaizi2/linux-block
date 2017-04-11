@@ -1629,10 +1629,10 @@ static const struct snd_soc_dapm_widget cx2072x_dapm_widgets[] = {
 	/*Capture*/
 	SND_SOC_DAPM_AIF_OUT("Out AIF", "Capture", 0, SND_SOC_NOPM, 0, 0),
 
-	SND_SOC_DAPM_SWITCH("I2S ADC1", SND_SOC_NOPM, 0, 0, &i2sadc1l_ctl),
-	SND_SOC_DAPM_SWITCH("I2S ADC1", SND_SOC_NOPM, 0, 0, &i2sadc1r_ctl),
-	SND_SOC_DAPM_SWITCH("I2S ADC2", SND_SOC_NOPM, 0, 0, &i2sadc2l_ctl),
-	SND_SOC_DAPM_SWITCH("I2S ADC2", SND_SOC_NOPM, 0, 0, &i2sadc2r_ctl),
+	SND_SOC_DAPM_SWITCH("I2S ADC1L", SND_SOC_NOPM, 0, 0, &i2sadc1l_ctl),
+	SND_SOC_DAPM_SWITCH("I2S ADC1R", SND_SOC_NOPM, 0, 0, &i2sadc1r_ctl),
+	SND_SOC_DAPM_SWITCH("I2S ADC2L", SND_SOC_NOPM, 0, 0, &i2sadc2l_ctl),
+	SND_SOC_DAPM_SWITCH("I2S ADC2R", SND_SOC_NOPM, 0, 0, &i2sadc2r_ctl),
 
 	SND_SOC_DAPM_REG(snd_soc_dapm_adc, "ADC1", CX2072X_ADC1_POWER_STATE,
 			 0, 0xFF, 0x00, 0x03),
@@ -1640,6 +1640,7 @@ static const struct snd_soc_dapm_widget cx2072x_dapm_widgets[] = {
 			 0, 0xFF, 0x00, 0x03),
 
 	SND_SOC_DAPM_MUX("ADC1 Mux", SND_SOC_NOPM, 0, 0, &adc1_mux),
+	SND_SOC_DAPM_MUX("ADC2 Mux", SND_SOC_NOPM, 0, 0, &adc2_mux),
 
 	SND_SOC_DAPM_REG(snd_soc_dapm_supply, "PortB Power",
 			 CX2072X_PORTB_POWER_STATE, 0, 0xFFF, 0x00, 0x03),
