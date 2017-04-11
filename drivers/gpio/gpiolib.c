@@ -3015,6 +3015,7 @@ void gpiod_add_lookup_table(struct gpiod_lookup_table *table)
 
 	mutex_unlock(&gpio_lookup_lock);
 }
+EXPORT_SYMBOL_GPL(gpiod_add_lookup_table);
 
 /**
  * gpiod_remove_lookup_table() - unregister GPIO device consumers
@@ -3028,6 +3029,7 @@ void gpiod_remove_lookup_table(struct gpiod_lookup_table *table)
 
 	mutex_unlock(&gpio_lookup_lock);
 }
+EXPORT_SYMBOL_GPL(gpiod_remove_lookup_table);
 
 static struct gpiod_lookup_table *gpiod_find_lookup_table(struct device *dev)
 {
