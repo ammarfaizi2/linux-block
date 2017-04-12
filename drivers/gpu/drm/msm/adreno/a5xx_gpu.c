@@ -11,12 +11,178 @@
  *
  */
 
+#include <linux/elf.h>
+#include <linux/types.h>
+#include <linux/cpumask.h>
+#include <linux/qcom_scm.h>
+#include <linux/dma-mapping.h>
+#include <linux/of_reserved_mem.h>
 #include "msm_gem.h"
 #include "msm_mmu.h"
 #include "a5xx_gpu.h"
 
 extern bool hang_debug;
 static void a5xx_dump(struct msm_gpu *gpu);
+
+static inline bool _check_segment(const struct elf32_phdr *phdr)
+{
+	return ((phdr->p_type == PT_LOAD) &&
+		((phdr->p_flags & (7 << 24)) != (2 << 24)) &&
+		phdr->p_memsz);
+}
+
+static int __pil_tz_load_image(struct platform_device *pdev,
+		const struct firmware *mdt, const char *fwname,
+		void *fwptr, size_t fw_size, unsigned long fw_min_addr)
+{
+	char str[64] = { 0 };
+	const struct elf32_hdr *ehdr = (struct elf32_hdr *) mdt->data;
+	const struct elf32_phdr *phdrs = (struct elf32_phdr *) (ehdr + 1);
+	const struct firmware *fw;
+	int i, ret = 0;
+
+	for (i = 0; i < ehdr->e_phnum; i++) {
+		const struct elf32_phdr *phdr = &phdrs[i];
+		size_t offset;
+
+		/* Make sure the segment is loadable */
+		if (!_check_segment(phdr))
+			continue;
+
+		/* Get the offset of the segment within the region */
+		offset = (phdr->p_paddr - fw_min_addr);
+
+		/* Request the file containing the segment */
+		snprintf(str, sizeof(str) - 1, "%s.b%02d", fwname, i);
+
+		ret = request_firmware(&fw, str, &pdev->dev);
+		if (ret) {
+			dev_err(&pdev->dev, "Failed to load segment %s\n", str);
+			break;
+		}
+
+		if (offset + fw->size > fw_size) {
+			dev_err(&pdev->dev, "Segment %s is too big\n", str);
+			ret = -EINVAL;
+			release_firmware(fw);
+			break;
+		}
+
+		/* Copy the segment into place */
+		memcpy(fwptr + offset, fw->data, fw->size);
+		release_firmware(fw);
+	}
+
+	return ret;
+}
+
+static int _pil_tz_load_image(struct platform_device *pdev)
+{
+	char str[64] = { 0 };
+	const char *fwname;
+	const struct elf32_hdr *ehdr;
+	const struct elf32_phdr *phdrs;
+	const struct firmware *mdt;
+	phys_addr_t fw_min_addr, fw_max_addr;
+	dma_addr_t fw_phys;
+	size_t fw_size;
+	u32 pas_id;
+	void *ptr;
+	int i, ret;
+
+	if (pdev == NULL)
+		return -ENODEV;
+
+	if (!qcom_scm_is_available()) {
+		dev_err(&pdev->dev, "SCM is not available\n");
+		return -EINVAL;
+	}
+
+	ret = of_reserved_mem_device_init(&pdev->dev);
+
+	if (ret) {
+		dev_err(&pdev->dev, "Unable to set up the reserved memory\n");
+		return ret;
+	}
+
+	/* Get the firmware and PAS id from the device node */
+	if (of_property_read_string(pdev->dev.of_node, "qcom,firmware",
+		&fwname)) {
+		dev_err(&pdev->dev, "Could not read a firmware name\n");
+		return -EINVAL;
+	}
+
+	if (of_property_read_u32(pdev->dev.of_node, "qcom,pas-id", &pas_id)) {
+		dev_err(&pdev->dev, "Could not read the pas ID\n");
+		return -EINVAL;
+	}
+
+	snprintf(str, sizeof(str) - 1, "%s.mdt", fwname);
+
+	/* Request the MDT file for the firmware */
+	ret = request_firmware(&mdt, str, &pdev->dev);
+	if (ret) {
+		dev_err(&pdev->dev, "Unable to load %s\n", str);
+		return ret;
+	}
+
+	ehdr = (struct elf32_hdr *) mdt->data;
+	phdrs = (struct elf32_phdr *) (ehdr + 1);
+
+	/* Get the extents of the firmware image */
+
+	fw_min_addr = (phys_addr_t) ULLONG_MAX;
+	fw_max_addr = 0;
+
+	for (i = 0; i < ehdr->e_phnum; i++) {
+		const struct elf32_phdr *phdr = &phdrs[i];
+
+		if (!_check_segment(phdr))
+			continue;
+
+		fw_min_addr = min_t(phys_addr_t, fw_min_addr, phdr->p_paddr);
+		fw_max_addr = max_t(phys_addr_t, fw_max_addr,
+			PAGE_ALIGN(phdr->p_paddr + phdr->p_memsz));
+	}
+
+	if (fw_min_addr == (phys_addr_t) ULLONG_MAX && fw_max_addr == 0)
+		goto out;
+
+	fw_size = (size_t) (fw_max_addr - fw_min_addr);
+
+	/* Verify the MDT header */
+	ret = qcom_scm_pas_init_image(pas_id, mdt->data, mdt->size);
+	if (ret) {
+		dev_err(&pdev->dev, "Invalid firmware metadata\n");
+		goto out;
+	}
+
+	/* allocate some memory */
+	ptr = dma_alloc_coherent(&pdev->dev, fw_size, &fw_phys, GFP_KERNEL);
+	if (ptr == NULL)
+		goto out;
+
+	/* Set up the newly allocated memory region */
+	ret = qcom_scm_pas_mem_setup(pas_id, fw_phys, fw_size);
+	if (ret) {
+		dev_err(&pdev->dev, "Unable to set up firmware memory\n");
+		goto out;
+	}
+
+	ret = __pil_tz_load_image(pdev, mdt, fwname, ptr, fw_size, fw_min_addr);
+	if (!ret) {
+		ret = qcom_scm_pas_auth_and_reset(pas_id);
+		if (ret)
+			dev_err(&pdev->dev, "Unable to authorize the image\n");
+	}
+
+out:
+	if (ret && ptr)
+		dma_free_coherent(&pdev->dev, fw_size, ptr, fw_phys);
+
+	release_firmware(mdt);
+	return ret;
+}
 
 static void a5xx_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
 	struct msm_file_private *ctx)
