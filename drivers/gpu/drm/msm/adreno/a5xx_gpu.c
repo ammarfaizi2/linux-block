@@ -470,6 +470,55 @@ static int a5xx_ucode_init(struct msm_gpu *gpu)
 	return 0;
 }
 
+static int a5xx_zap_shader_resume(struct msm_gpu *gpu)
+{
+	int ret;
+
+	ret = qcom_scm_set_remote_state(0, 13);
+	if (ret)
+		DRM_ERROR("%s: zap-shader resume failed: %d\n",
+			gpu->name, ret);
+
+	return ret;
+}
+
+static int a5xx_zap_shader_init(struct msm_gpu *gpu)
+{
+	static bool loaded;
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	struct a5xx_gpu *a5xx_gpu = to_a5xx_gpu(adreno_gpu);
+	struct platform_device *pdev = a5xx_gpu->pdev;
+	struct device_node *node;
+	int ret;
+
+	/*
+	 * If the zap shader is already loaded into memory we just need to kick
+	 * the remote processor to reinitialize it
+	 */
+	if (loaded)
+		return a5xx_zap_shader_resume(gpu);
+
+	/* Populate the sub-nodes if they haven't already been done */
+	of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
+
+	/* Find the sub-node for the zap shader */
+	node = of_find_node_by_name(pdev->dev.of_node, "qcom,zap-shader");
+	if (!node) {
+		DRM_ERROR("%s: qcom,zap-shader not found in device tree\n",
+			gpu->name);
+		return -ENODEV;
+	}
+
+	ret = _pil_tz_load_image(of_find_device_by_node(node));
+	if (ret)
+		DRM_ERROR("%s: Unable to load the zap shader\n",
+			gpu->name);
+
+	loaded = !ret;
+
+	return ret;
+}
+
 #define A5XX_INT_MASK (A5XX_RBBM_INT_0_MASK_RBBM_AHB_ERROR | \
 	  A5XX_RBBM_INT_0_MASK_RBBM_TRANSFER_TIMEOUT | \
 	  A5XX_RBBM_INT_0_MASK_RBBM_ME_MS_TIMEOUT | \
@@ -654,8 +703,27 @@ static int a5xx_hw_init(struct msm_gpu *gpu)
 			return -EINVAL;
 	}
 
-	/* Put the GPU into unsecure mode */
-	gpu_write(gpu, REG_A5XX_RBBM_SECVID_TRUST_CNTL, 0x0);
+	/*
+	 * Try to load a zap shader into the secure world. If successful
+	 * we can use the CP to switch out of secure mode. If not then we
+	 * have no resource but to try to switch ourselves out manually. If we
+	 * guessed wrong then access to the RBBM_SECVID_TRUST_CNTL register will
+	 * be blocked and a permissions violation will soon follow.
+	 */
+	ret = a5xx_zap_shader_init(gpu);
+	if (!ret) {
+		OUT_PKT7(gpu->rb, CP_SET_SECURE_MODE, 1);
+		OUT_RING(gpu->rb, 0x00000000);
+
+		gpu->funcs->flush(gpu);
+		if (!gpu->funcs->idle(gpu))
+			return -EINVAL;
+	} else {
+		/* Print a warning so if we die, we know why */
+		dev_warn_once(gpu->dev->dev,
+			"Zap shader not enabled - using SECVID_TRUST_CNTL instead\n");
+		gpu_write(gpu, REG_A5XX_RBBM_SECVID_TRUST_CNTL, 0x0);
+	}
 
 	return 0;
 }
