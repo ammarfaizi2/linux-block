@@ -1246,13 +1246,17 @@ int cx2072x_get_jack_state(struct snd_soc_codec *codec)
 	unsigned int type = 0;
 	int  state = 0;
 	struct cx2072x_priv *cx2072x = snd_soc_codec_get_drvdata(codec);
+	bool need_cache_bypass =
+		snd_soc_codec_get_bias_level(codec) == SND_SOC_BIAS_OFF;
 
-	regcache_cache_bypass(cx2072x->regmap, true);
+	if (need_cache_bypass)
+		regcache_cache_only(cx2072x->regmap, false);
 	cx2072x->jack_state = CX_JACK_NONE;
 	regmap_read(cx2072x->regmap, CX2072X_PORTA_PIN_SENSE, &jack);
 	jack = jack >> 24;
 	regmap_read(cx2072x->regmap, CX2072X_DIGITAL_TEST11, &type);
-	regcache_cache_bypass(cx2072x->regmap, false);
+	if (need_cache_bypass)
+		regcache_cache_only(cx2072x->regmap, true);
 	if (jack == 0x80) {
 		type = type >> 8;
 
