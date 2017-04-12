@@ -31,7 +31,7 @@ static inline bool _check_segment(const struct elf32_phdr *phdr)
 		phdr->p_memsz);
 }
 
-static int zap_load_segments(struct platform_device *pdev,
+static int zap_load_segments(struct device *dev,
 		const struct firmware *mdt, const char *fwname,
 		void *fwptr, size_t fw_size, unsigned long fw_min_addr)
 {
@@ -55,15 +55,15 @@ static int zap_load_segments(struct platform_device *pdev,
 		/* Request the file containing the segment */
 		snprintf(filename, sizeof(filename), "%s.b%02d", fwname, i);
 
-		ret = request_firmware(&fw, filename, &pdev->dev);
+		ret = request_firmware(&fw, filename, dev);
 		if (ret) {
-			DRM_DEV_ERROR(&pdev->dev, "Failed to load segment %s\n",
+			DRM_DEV_ERROR(dev, "Failed to load segment %s\n",
 				filename);
 			break;
 		}
 
 		if (offset + fw->size > fw_size) {
-			DRM_DEV_ERROR(&pdev->dev, "Segment %s is too big\n",
+			DRM_DEV_ERROR(dev, "Segment %s is too big\n",
 				filename);
 			ret = -EINVAL;
 			release_firmware(fw);
@@ -82,7 +82,7 @@ static int zap_load_segments(struct platform_device *pdev,
 	return ret;
 }
 
-static int zap_load_mdt(struct platform_device *pdev)
+static int zap_load_mdt(struct device *dev)
 {
 	char filename[64];
 	const char *fwname;
@@ -92,37 +92,29 @@ static int zap_load_mdt(struct platform_device *pdev)
 	phys_addr_t fw_min_addr, fw_max_addr;
 	dma_addr_t fw_phys;
 	size_t fw_size;
-	void *ptr;
+	void *ptr = NULL;
 	int i, ret;
 
-	if (pdev == NULL)
-		return -ENODEV;
-
-	if (!qcom_scm_is_available()) {
-		DRM_DEV_ERROR(&pdev->dev, "SCM is not available\n");
-		return -EPROBE_DEFER;
-	}
-
-	ret = of_reserved_mem_device_init(&pdev->dev);
+	ret = of_reserved_mem_device_init(dev);
 	if (ret) {
-		DRM_DEV_ERROR(&pdev->dev, "Unable to set up the reserved memory\n");
+		DRM_DEV_ERROR(dev, "Unable to set up the reserved memory\n");
 		return ret;
 	}
 
 	/* Get the firmware and PAS id from the device node */
-	if (of_property_read_string(pdev->dev.of_node, "qcom,firmware",
+	if (of_property_read_string(dev->of_node, "qcom,firmware",
 		&fwname)) {
-		DRM_DEV_ERROR(&pdev->dev, "Could not read a firmware name\n");
+		DRM_DEV_ERROR(dev, "Could not read a firmware name\n");
 		return -EINVAL;
 	}
 
 	snprintf(filename, sizeof(filename), "%s.mdt", fwname);
 
 	/* Request the MDT file for the firmware */
-	ret = request_firmware(&mdt, filename, &pdev->dev);
+	ret = request_firmware(&mdt, filename, dev);
 	if (ret) {
-		DRM_DEV_ERROR(&pdev->dev, "Unable to load %s\n", filename);
-		return ret;
+		DRM_DEV_ERROR(dev, "Unable to load %s\n", filename);
+		goto out;
 	}
 
 	ehdr = (struct elf32_hdr *) mdt->data;
@@ -152,35 +144,36 @@ static int zap_load_mdt(struct platform_device *pdev)
 	/* Verify the MDT header */
 	ret = qcom_scm_pas_init_image(13, mdt->data, mdt->size);
 	if (ret) {
-		DRM_DEV_ERROR(&pdev->dev, "Invalid firmware metadata\n");
+		DRM_DEV_ERROR(dev, "Invalid firmware metadata\n");
 		goto out;
 	}
 
 	/* allocate some memory */
-	ptr = dma_alloc_coherent(&pdev->dev, fw_size, &fw_phys, GFP_KERNEL);
+	ptr = dma_alloc_coherent(dev, fw_size, &fw_phys, GFP_KERNEL);
 	if (ptr == NULL)
 		goto out;
 
 	/* Set up the newly allocated memory region */
 	ret = qcom_scm_pas_mem_setup(13, fw_phys, fw_size);
 	if (ret) {
-		DRM_DEV_ERROR(&pdev->dev, "Unable to set up firmware memory\n");
+		DRM_DEV_ERROR(dev, "Unable to set up firmware memory\n");
 		goto out;
 	}
 
-	ret = zap_load_segments(pdev, mdt, fwname, ptr, fw_size, fw_min_addr);
+	ret = zap_load_segments(dev, mdt, fwname, ptr, fw_size, fw_min_addr);
 	if (ret)
 		goto out;
 
 	ret = qcom_scm_pas_auth_and_reset(13);
 	if (ret)
-		DRM_DEV_ERROR(&pdev->dev, "Unable to authorize the image\n");
+		DRM_DEV_ERROR(dev, "Unable to authorize the image\n");
 
 out:
 	if (ret && ptr)
-		dma_free_coherent(&pdev->dev, fw_size, ptr, fw_phys);
+		dma_free_coherent(dev, fw_size, ptr, fw_phys);
 
 	release_firmware(mdt);
+
 	return ret;
 }
 
@@ -498,8 +491,10 @@ static int a5xx_zap_shader_init(struct msm_gpu *gpu)
 	if (loaded)
 		return a5xx_zap_shader_resume(gpu);
 
-	/* Populate the sub-nodes if they haven't already been done */
-	of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
+	if (!qcom_scm_is_available()) {
+		DRM_DEV_ERROR(&pdev->dev, "SCM is not available\n");
+		return -EPROBE_DEFER;
+	}
 
 	/* Find the sub-node for the zap shader */
 	node = of_get_child_by_name(pdev->dev.of_node, "zap-shader");
@@ -509,10 +504,23 @@ static int a5xx_zap_shader_init(struct msm_gpu *gpu)
 		return -ENODEV;
 	}
 
-	ret = zap_load_mdt(of_find_device_by_node(node));
-	if (ret)
-		DRM_ERROR("%s: Unable to load the zap shader\n",
-			gpu->name);
+	/* Set up the child device to "own" the zap shader */
+	if (!a5xx_gpu->zap_dev.parent) {
+		a5xx_gpu->zap_dev.parent = &pdev->dev;
+		a5xx_gpu->zap_dev.of_node = node;
+		dev_set_name(&a5xx_gpu->zap_dev, "adreno_zap_shader");
+
+		ret = device_register(&a5xx_gpu->zap_dev);
+		if (ret) {
+			DRM_DEV_ERROR(&pdev->dev,
+				"Couldn't register the zap shader device\n");
+
+			a5xx_gpu->zap_dev.parent = NULL;
+			return ret;
+		}
+	}
+
+	ret = zap_load_mdt(&a5xx_gpu->zap_dev);
 
 	loaded = !ret;
 
@@ -754,6 +762,9 @@ static void a5xx_destroy(struct msm_gpu *gpu)
 	struct a5xx_gpu *a5xx_gpu = to_a5xx_gpu(adreno_gpu);
 
 	DBG("%s", gpu->name);
+
+	if (a5xx_gpu->zap_dev.parent)
+		device_unregister(&a5xx_gpu->zap_dev);
 
 	if (a5xx_gpu->pm4_bo) {
 		if (a5xx_gpu->pm4_iova)
