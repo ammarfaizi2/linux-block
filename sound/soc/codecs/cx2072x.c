@@ -1737,6 +1737,10 @@ static const struct snd_soc_dapm_route cx2072x_intercon[] = {
 	{"Out AIF", NULL, "I2S ADC2R"},
 	{"Out AIF", NULL, "AFG Power"},
 	{"AEC REF", NULL, "Out AIF"},
+	{"PortB In En", NULL, "PortB Power"},
+	{"PortC In En", NULL, "PortC Power"},
+	{"PortD In En", NULL, "PortD Power"},
+	{"PortE In En", NULL, "PortE Power"},
 };
 
 static void cx2072x_sw_reset(struct cx2072x_priv *cx2072x)
