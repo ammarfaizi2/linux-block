@@ -82,10 +82,9 @@ static int zap_load_segments(struct device *dev,
 	return ret;
 }
 
-static int zap_load_mdt(struct device *dev)
+static int zap_load_mdt(struct device *dev, const char *fwname)
 {
 	char filename[64];
-	const char *fwname;
 	const struct elf32_hdr *ehdr;
 	const struct elf32_phdr *phdrs;
 	const struct firmware *mdt;
@@ -99,13 +98,6 @@ static int zap_load_mdt(struct device *dev)
 	if (ret) {
 		DRM_DEV_ERROR(dev, "Unable to set up the reserved memory\n");
 		return ret;
-	}
-
-	/* Get the firmware and PAS id from the device node */
-	if (of_property_read_string(dev->of_node, "qcom,firmware",
-		&fwname)) {
-		DRM_DEV_ERROR(dev, "Could not read a firmware name\n");
-		return -EINVAL;
 	}
 
 	snprintf(filename, sizeof(filename), "%s.mdt", fwname);
@@ -491,16 +483,24 @@ static int a5xx_zap_shader_init(struct msm_gpu *gpu)
 	if (loaded)
 		return a5xx_zap_shader_resume(gpu);
 
+	/* We need SCM to be able to load the firmware */
 	if (!qcom_scm_is_available()) {
 		DRM_DEV_ERROR(&pdev->dev, "SCM is not available\n");
 		return -EPROBE_DEFER;
 	}
 
+	/* Each GPU has a target specific zap shader firmware name to use */
+	if (!adreno_gpu->info->zapfw) {
+		DRM_DEV_ERROR(&pdev->dev,
+			"Zap shader firmware file not specified for this target\n");
+		return -ENODEV;
+	}
+
 	/* Find the sub-node for the zap shader */
 	node = of_get_child_by_name(pdev->dev.of_node, "zap-shader");
 	if (!node) {
-		DRM_ERROR("%s: zap-shader not found in device tree\n",
-			gpu->name);
+		DRM_DEV_ERROR(&pdev->dev,
+			"zap-shader not found in device tree\n");
 		return -ENODEV;
 	}
 
@@ -520,7 +520,7 @@ static int a5xx_zap_shader_init(struct msm_gpu *gpu)
 		}
 	}
 
-	ret = zap_load_mdt(&a5xx_gpu->zap_dev);
+	ret = zap_load_mdt(&a5xx_gpu->zap_dev, adreno_gpu->info->zapfw);
 
 	loaded = !ret;
 
