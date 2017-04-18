@@ -850,6 +850,16 @@
 			    <&gcc GFX3D_CLK_SRC>;
 			power-domains = <&gcc OXILI_GDSC>;
 			iommus = <&gpu_iommu 1>, <&gpu_iommu 2>;
+
+			qcom,gpu-pwrlevels {
+				compatible = "qcom,gpu-pwrlevels";
+				qcom,gpu-pwrlevel@0 {
+					qcom,gpu-freq = <400000000>;
+				};
+				qcom,gpu-pwrlevel@1 {
+					qcom,gpu-freq = <19200000>;
+				};
+			};
 		};
 
 		mdss: mdss@1a00000 {
