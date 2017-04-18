@@ -1042,7 +1042,7 @@
 		};
 
 		mdp_smmu: arm,smmu@d00000 {
-			compatible = "qcom,smmu-v2";
+			compatible = "arm,smmu-v2";
 			reg = <0xd00000 0x10000>;
 
 			#global-interrupts = <1>;
@@ -1058,17 +1058,17 @@
 				 <&mmcc SMMU_MDP_AHB_CLK>,
 				 <&mmcc SMMU_MDP_AXI_CLK>,
 				 <&mmcc MMAGIC_MDSS_AXI_CLK>;
-			clock-names = "mmagic_ahb_clk",
-				"mmagic_cfg_ahb_clk",
-				"smmu_core_ahb_clk",
-				"smmu_core_axi_clk",
-				"mmagic_core_axi_clk";
+			clock-names = "mmagic_iface_clk",
+				      "mmagic_cfg_iface_clk",
+				      "smmu_iface_clk",
+				      "smmu_bus_clk",
+				      "mmagic_mdss_bus_clk";
 
 			status = "okay";
 		};
 
 	        lpass_q6_smmu: arm,smmu-lpass_q6@1600000 {
-			compatible = "qcom,smmu-v2";
+			compatible = "arm,smmu-v2";
         	        qcom,tz-device-id = "LPASS";
 	                reg = <0x1600000 0x20000>;
 	                #iommu-cells = <1>;
@@ -1093,20 +1093,12 @@
 		                <GIC_SPI 403 IRQ_TYPE_LEVEL_HIGH>;
 
 
-			//FIXME some of these mmagic clks are specific to display but for now make the smmu code happy with these extra clocks in
-			clocks = <&mmcc MMSS_MMAGIC_AHB_CLK>,
-				 <&mmcc MMSS_MMAGIC_CFG_AHB_CLK>,
-				<&gcc GCC_HLOS1_VOTE_LPASS_CORE_SMMU_CLK>,
-		        	<&gcc GCC_HLOS1_VOTE_LPASS_ADSP_SMMU_CLK>,
-				 <&mmcc MMAGIC_MDSS_AXI_CLK>;
-			clock-names = "mmagic_ahb_clk",
-				"mmagic_cfg_ahb_clk",
-				"smmu_core_ahb_clk",
-				"smmu_core_axi_clk",
-				"mmagic_core_axi_clk";
+			clocks = <&gcc GCC_HLOS1_VOTE_LPASS_CORE_SMMU_CLK>,
+				 <&gcc GCC_HLOS1_VOTE_LPASS_ADSP_SMMU_CLK>;
+			clock-names = "lpass_core_smmu_clk",
+				      "lpass_adsp_smmu_clk";
 
 		        #clock-cells = <1>;
-		
         	};
 
 		mdss: mdss@900000 {
