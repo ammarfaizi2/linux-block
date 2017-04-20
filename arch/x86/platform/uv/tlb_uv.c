@@ -1109,11 +1109,9 @@ static int set_distrib_bits(struct cpumask *flush_mask, struct bau_control *bcp,
  * done.  The returned pointer is valid till preemption is re-enabled.
  */
 const struct cpumask *uv_flush_tlb_others(const struct cpumask *cpumask,
-						struct mm_struct *mm,
-						unsigned long start,
-						unsigned long end,
-						unsigned int cpu)
+					  const struct flush_tlb_info *info)
 {
+	unsigned int cpu = smp_processor_id();
 	int locals = 0;
 	int remotes = 0;
 	int hubs = 0;
@@ -1170,8 +1168,8 @@ const struct cpumask *uv_flush_tlb_others(const struct cpumask *cpumask,
 
 	record_send_statistics(stat, locals, hubs, remotes, bau_desc);
 
-	if (!end || (end - start) <= PAGE_SIZE)
-		bau_desc->payload.address = start;
+	if (!info->end || (info->end - info->start) <= PAGE_SIZE)
+		bau_desc->payload.address = info->start;
 	else
 		bau_desc->payload.address = TLB_FLUSH_ALL;
 	bau_desc->payload.sending_cpu = cpu;
