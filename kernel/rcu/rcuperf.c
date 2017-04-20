@@ -308,7 +308,7 @@ static struct rcu_perf_ops sched_ops = {
 	.exp_completed	= rcu_exp_batches_completed_sched,
 	.async		= call_rcu_sched,
 	.gp_barrier	= rcu_barrier_sched,
-	.async		= srcu_call_rcu,
+	.sync		= synchronize_sched,
 	.exp_sync	= synchronize_sched_expedited,
 	.name		= "sched"
 };
