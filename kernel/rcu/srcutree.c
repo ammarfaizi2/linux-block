@@ -731,6 +731,7 @@ void synchronize_srcu_expedited(struct srcu_struct *sp)
 {
 	bool do_norm = rcu_gp_is_normal();
 
+	check_init_srcu_struct(sp);
 	if (!do_norm) {
 		atomic_inc(&sp->srcu_exp_cnt);
 		smp_mb__after_atomic(); /* increment before GP. */
@@ -738,7 +739,7 @@ void synchronize_srcu_expedited(struct srcu_struct *sp)
 	__synchronize_srcu(sp);
 	if (!do_norm) {
 		smp_mb__before_atomic(); /* GP before decrement. */
-		atomic_dec(&sp->srcu_exp_cnt);
+		WARN_ON_ONCE(atomic_dec_return(&sp->srcu_exp_cnt) < 0);
 	}
 }
 EXPORT_SYMBOL_GPL(synchronize_srcu_expedited);
