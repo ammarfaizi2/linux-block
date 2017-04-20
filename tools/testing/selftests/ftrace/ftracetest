@@ -40,7 +40,11 @@ abspath() {
 }
 
 find_testcases() { #directory
-  echo `find $1 -name \*.tc | sort`
+  echo `find $1 -name \*.tc -o -name \*.itc | sort`
+}
+
+find_instance_testcases() { #directory
+  echo `find $1 -name \*.itc | sort`
 }
 
 parse_opts() { # opts
@@ -69,7 +73,7 @@ parse_opts() { # opts
       LOG_DIR=$2
       shift 2
     ;;
-    *.tc)
+    *.tc|*.itc)
       if [ -f "$1" ]; then
         OPT_TEST_CASES="$OPT_TEST_CASES `abspath $1`"
         shift 1
@@ -233,18 +237,28 @@ exit_xfail () {
 }
 trap 'SIG_RESULT=$XFAIL' $SIG_XFAIL
 
+INSTANCE_DIR="."
 __run_test() { # testfile
   # setup PID and PPID, $$ is not updated.
-  (cd $TRACING_DIR; read PID _ < /proc/self/stat; set -e; set -x; initialize_ftrace; . $1)
+  (cd $TRACING_DIR; read PID _ < /proc/self/stat; set -e; set -x; initialize_ftrace; cd $INSTANCE_DIR; . $1)
   [ $? -ne 0 ] && kill -s $SIG_FAIL $SIG_PID
 }
 
 # Run one test case
-run_test() { # testfile
+run_test() { # [-i] testfile
+  local makeinstance=0
+  if [ $1 == "-i" ]; then
+    makeinstance=1
+    shift
+  fi
   local testname=`basename $1`
   local testlog=`mktemp $LOG_DIR/${testname}-log.XXXXXX`
   export TMPDIR=`mktemp -d /tmp/ftracetest-dir.XXXXXX`
   testcase $1
+  if [ $makeinstance -eq 1 ]; then
+    INSTANCE_DIR=$TRACING_DIR/instances/${testname}_test
+    mkdir $INSTANCE_DIR
+  fi
   echo "execute: "$1 > $testlog
   SIG_RESULT=0
   if [ $VERBOSE -ge 2 ]; then
@@ -260,16 +274,35 @@ run_test() { # testfile
     [ $VERBOSE -ge 1 ] && catlog $testlog
     TOTAL_RESULT=1
   fi
+  if [ $makeinstance -eq 1 ]; then
+    rmdir $INSTANCE_DIR
+    INSTANCE_DIR="."
+  fi
   rm -rf $TMPDIR
 }
 
 # load in the helper functions
 . $TEST_DIR/functions
 
+RUN_INSTANCES=0
+
 # Main loop
 for t in $TEST_CASES; do
+  if [ "${t/*./}" == "itc" ]; then
+    RUN_INSTANCES=1
+  fi
   run_test $t
 done
+
+if [ $RUN_INSTANCES -eq 1 ]; then
+    echo "Running tests in a tracing instance:"
+    for t in $TEST_CASES; do
+	if [ "${t/*./}" != "itc" ]; then
+	    continue
+	fi
+	run_test -i $t
+    done
+fi
 
 prlog ""
 prlog "# of passed: " `echo $PASSED_CASES | wc -w`
