@@ -90,24 +90,23 @@ static int cht_cx_jack_status_check(void *data)
 	return cx2072x_get_jack_state(data);
 }
 
-static int cht_codec_init(struct snd_soc_pcm_runtime *runtime)
+static int cht_codec_init(struct snd_soc_pcm_runtime *rtd)
 {
 	int ret;
-	struct snd_soc_card *card = runtime->card;
-	struct snd_soc_dai *codec_dai = runtime->codec_dai;
-	struct snd_soc_codec *codec = codec_dai->codec;
+	struct snd_soc_card *card = rtd->card;
+	struct snd_soc_codec *codec = rtd->codec;
 
 	card->dapm.idle_bias_off = true;
 
 	/* set the default PLL rate, the clock is handled by the codec driver */
-	ret = snd_soc_dai_set_sysclk(codec_dai, CX2072X_MCLK_EXTERNAL_PLL,
+	ret = snd_soc_dai_set_sysclk(rtd->codec_dai, CX2072X_MCLK_EXTERNAL_PLL,
 				     19200000, SND_SOC_CLOCK_IN);
 	if (ret) {
-		dev_err(codec->dev, "Could not set sysclk\n");
+		dev_err(rtd->dev, "Could not set sysclk\n");
 		return ret;
 	}
 
-	ret = snd_soc_card_jack_new(runtime->card, "Headset",
+	ret = snd_soc_card_jack_new(card, "Headset",
 				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
 				    SND_JACK_BTN_1 | SND_JACK_BTN_2,
 				    &cht_cx_headset,
@@ -127,7 +126,7 @@ static int cht_codec_init(struct snd_soc_pcm_runtime *runtime)
 
 	ret = snd_soc_jack_add_gpios(&cht_cx_headset, 1, &cht_cx_gpio);
 	if (ret) {
-		dev_err(codec->dev, "Adding jack GPIO failed\n");
+		dev_err(rtd->dev, "Adding jack GPIO failed\n");
 		return ret;
 	}
 
