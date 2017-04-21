@@ -107,8 +107,7 @@ static int cht_codec_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	ret = snd_soc_card_jack_new(card, "Headset",
-				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
-				    SND_JACK_BTN_1 | SND_JACK_BTN_2,
+				    SND_JACK_HEADSET | SND_JACK_BTN_0,
 				    &cht_cx_headset,
 				    cht_cx_headset_pins,
 				    ARRAY_SIZE(cht_cx_headset_pins));
@@ -117,8 +116,7 @@ static int cht_codec_init(struct snd_soc_pcm_runtime *rtd)
 
 	cht_cx_gpio.gpiod_dev = codec->dev;
 	cht_cx_gpio.name = "headphone detect";
-	cht_cx_gpio.report = SND_JACK_HEADSET |
-		SND_JACK_BTN_0 | SND_JACK_BTN_1 | SND_JACK_BTN_2;
+	cht_cx_gpio.report = SND_JACK_HEADSET | SND_JACK_BTN_0;
 	cht_cx_gpio.debounce_time = 150;
 	cht_cx_gpio.wake = true;
 	cht_cx_gpio.data = codec;
