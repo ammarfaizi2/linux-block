@@ -2182,7 +2182,7 @@ static int cx2072x_i2c_probe(struct i2c_client *i2c,
 	cx2072x->regmap = devm_regmap_init(&i2c->dev, NULL, i2c,
 		&cx2072x_regmap);
 
-	if (IS_ERR(&cx2072x->regmap)) {
+	if (IS_ERR(cx2072x->regmap)) {
 		ret = PTR_ERR(cx2072x->regmap);
 		dev_err(&i2c->dev, "Failed to init regmap: %d\n", ret);
 		return ret;
