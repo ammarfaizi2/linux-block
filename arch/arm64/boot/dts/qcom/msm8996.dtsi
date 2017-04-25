@@ -664,7 +664,7 @@
 			vddp-ref-clk-max-microamp = <100>;
 			vddp-ref-clk-always-on;
 			clock-names = "ref_clk_src", "ref_clk";
-			clocks = <&rpmcc MSM8996_RPM_SMD_LN_BB_CLK>,
+			clocks = <&rpmcc RPM_SMD_LN_BB_CLK>,
 				 <&gcc GCC_UFS_CLKREF_CLK>;
 			status = "disabled";
 			power-domains = <&gcc UFS_GDSC>;
@@ -708,7 +708,7 @@
 				<&gcc UFS_ICE_CORE_CLK_SRC>,
 				<&gcc GCC_UFS_UNIPRO_CORE_CLK>,
 				<&gcc GCC_UFS_ICE_CORE_CLK>,
-				<&rpmcc MSM8996_RPM_SMD_LN_BB_CLK>,
+				<&rpmcc RPM_SMD_LN_BB_CLK>,
 				<&gcc GCC_UFS_TX_SYMBOL_0_CLK>,
 				<&gcc GCC_UFS_RX_SYMBOL_0_CLK>;
 			freq-table-hz =
@@ -1148,7 +1148,7 @@
 					 <&mmcc SMMU_MDP_AXI_CLK>,
 					 <&mmcc MDSS_VSYNC_CLK>,
 					 <&mmcc MMAGIC_MDSS_AXI_CLK>,
-					 <&rpmcc MSM8996_RPM_SMD_MMAXI_CLK>;
+					 <&rpmcc RPM_SMD_MMAXI_CLK>;
 				clock-names = "iface_clk",
 					      "mmagic_iface_clk",
 					      "bus_clk",
