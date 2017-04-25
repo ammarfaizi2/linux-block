@@ -14,6 +14,8 @@
 #include <dt-bindings/clock/qcom,gcc-msm8996.h>
 #include <dt-bindings/clock/qcom,mmcc-msm8996.h>
 #include <dt-bindings/clock/qcom,rpmcc.h>
+#include <dt-bindings/sound/qcom,afe.h>
+#include <dt-bindings/sound/qcom,asm.h>
 
 / {
 	model = "Qualcomm Technologies, Inc. MSM8996";
@@ -1239,6 +1241,112 @@
 		};
 	};
 
+	adsp-pil {
+		compatible = "qcom,msm8996-adsp-pil";
+
+		interrupts-extended = <&intc 0 162 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 0 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 1 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 2 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 3 IRQ_TYPE_EDGE_RISING>;
+		interrupt-names = "wdog", "fatal", "ready",
+				  "handover", "stop-ack";
+
+		clocks = <&xo_board>;
+		clock-names = "xo";
+
+		cx-supply = <&pm8994_s1>;
+
+		memory-region = <&adsp_region>;
+
+		qcom,smem-states = <&adsp_smp2p_out 0>;
+		qcom,smem-state-names = "stop";
+
+		glink-edge {
+			compatible = "qcom,glink-smem";
+			interrupts = <0 157 IRQ_TYPE_EDGE_RISING>;
+
+			label = "lpass";
+			qcom,ipc = <&apcs 16 9>;
+			qcom,remote-pid = <2>;
+
+		};
+
+		smd-edge {
+			interrupts = <0 156 IRQ_TYPE_EDGE_RISING>;
+
+			label = "lpass";
+			qcom,ipc = <&apcs 16 8>;
+			qcom,smd-edge = <1>;
+			qcom,remote-pid = <2>;
+			apr {
+				compatible = "qcom,smd-apr-msm8996";
+				qcom,smd-channels = "apr_audio_svc";
+
+				adm {
+					compatible = "qcom,q6adm";
+				};
+
+				asm {
+					compatible = "qcom,q6asm";
+				};
+
+				afe: afe {
+					compatible = "qcom,q6afe-v2";
+				};
+
+		        	pcm: pcm0 {
+                			compatible = "qcom,msm-pcm-dsp";
+		        	        qcom,msm-pcm-dsp-id = <0>;
+					iommus = <&lpass_q6_smmu 1>;
+					#sound-dai-cells = <1>;
+		        	};
+
+			        routing:routing {
+        	        		compatible = "qcom,msm-pcm-routing";
+					#sound-dai-cells = <0>;
+	        		};
+
+				hdmi_dai: dai_hdmi {
+					compatible = "qcom,msm-dai-q6-hdmi";
+					qcom,afe-port = <&afe AFE_PORT_HDMI_RX>;
+					#sound-dai-cells = <0>;
+				};
+
+				snd {
+					compatible	= "qcom,snd-apq8096";
+                        		qcom,model = "DB820c";
+
+					cpu@1 {
+						is-fe;
+						link-name = "MultiMedia1 PCM";
+						id = <MSM_FRONTEND_DAI_MULTIMEDIA1>;
+						cpu {
+                                        		sound-dai = <&pcm  MSM_FRONTEND_DAI_MULTIMEDIA1>;
+						};
+						platform {
+                                        		sound-dai = <&pcm  MSM_FRONTEND_DAI_MULTIMEDIA1>;
+						};
+					};
+
+					qdsp@1 {
+						link-name = "HDMI";
+						id = <AFE_PORT_HDMI_RX>;
+						cpu {
+                                        		sound-dai = <&hdmi_dai>;
+
+						};
+						platform {
+                                        		sound-dai = <&routing>;
+						};
+						codec {
+                                        		sound-dai = <&hdmi>;
+						};
+					};
+				};
+			};
+		};
+	};
 
 	adsp-smp2p {
 		compatible = "qcom,smp2p";
