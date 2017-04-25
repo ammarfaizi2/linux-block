@@ -1202,6 +1202,7 @@
 
 				phys = <&hdmi_phy>;
 				phy-names = "hdmi_phy";
+				#sound-dai-cells = <0>;
 
 				ports {
 					#address-cells = <1>;
