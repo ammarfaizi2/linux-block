@@ -60,7 +60,6 @@ static int blk_flags_show(struct seq_file *m, const unsigned long flags,
 		else
 			seq_printf(m, "%d", i);
 	}
-	seq_puts(m, "\n");
 	return 0;
 }
 
@@ -102,6 +101,7 @@ static int blk_queue_flags_show(struct seq_file *m, void *v)
 
 	blk_flags_show(m, q->queue_flags, blk_queue_flag_name,
 		       ARRAY_SIZE(blk_queue_flag_name));
+	seq_puts(m, "\n");
 	return 0;
 }
 
@@ -139,11 +139,6 @@ static const struct file_operations blk_queue_flags_fops = {
 	.llseek		= seq_lseek,
 	.release	= single_release,
 	.write		= blk_queue_flags_store,
-};
-
-static const struct blk_mq_debugfs_attr blk_queue_attrs[] = {
-	{"state", 0600, &blk_queue_flags_fops},
-	{},
 };
 
 static void print_stat(struct seq_file *m, struct blk_rq_stat *stat)
@@ -198,6 +193,7 @@ static int hctx_state_show(struct seq_file *m, void *v)
 
 	blk_flags_show(m, hctx->state, hctx_state_name,
 		       ARRAY_SIZE(hctx_state_name));
+	seq_puts(m, "\n");
 	return 0;
 }
 
@@ -241,6 +237,7 @@ static int hctx_flags_show(struct seq_file *m, void *v)
 	blk_flags_show(m,
 		       hctx->flags ^ BLK_ALLOC_POLICY_TO_MQ_FLAG(alloc_policy),
 		       hctx_flag_name, ARRAY_SIZE(hctx_flag_name));
+	seq_puts(m, "\n");
 	return 0;
 }
 
@@ -256,13 +253,83 @@ static const struct file_operations hctx_flags_fops = {
 	.release	= single_release,
 };
 
+static const char *const op_name[] = {
+	[REQ_OP_READ]		= "READ",
+	[REQ_OP_WRITE]		= "WRITE",
+	[REQ_OP_FLUSH]		= "FLUSH",
+	[REQ_OP_DISCARD]	= "DISCARD",
+	[REQ_OP_ZONE_REPORT]	= "ZONE_REPORT",
+	[REQ_OP_SECURE_ERASE]	= "SECURE_ERASE",
+	[REQ_OP_ZONE_RESET]	= "ZONE_RESET",
+	[REQ_OP_WRITE_SAME]	= "WRITE_SAME",
+	[REQ_OP_WRITE_ZEROES]	= "WRITE_ZEROES",
+	[REQ_OP_SCSI_IN]	= "SCSI_IN",
+	[REQ_OP_SCSI_OUT]	= "SCSI_OUT",
+	[REQ_OP_DRV_IN]		= "DRV_IN",
+	[REQ_OP_DRV_OUT]	= "DRV_OUT",
+};
+
+static const char *const cmd_flag_name[] = {
+	[__REQ_FAILFAST_DEV]		= "FAILFAST_DEV",
+	[__REQ_FAILFAST_TRANSPORT]	= "FAILFAST_TRANSPORT",
+	[__REQ_FAILFAST_DRIVER]		= "FAILFAST_DRIVER",
+	[__REQ_SYNC]			= "SYNC",
+	[__REQ_META]			= "META",
+	[__REQ_PRIO]			= "PRIO",
+	[__REQ_NOMERGE]			= "NOMERGE",
+	[__REQ_IDLE]			= "IDLE",
+	[__REQ_INTEGRITY]		= "INTEGRITY",
+	[__REQ_FUA]			= "FUA",
+	[__REQ_PREFLUSH]		= "PREFLUSH",
+	[__REQ_RAHEAD]			= "RAHEAD",
+	[__REQ_BACKGROUND]		= "BACKGROUND",
+	[__REQ_NR_BITS]			= "NR_BITS",
+};
+
+static const char *const rqf_name[] = {
+	[ilog2((__force u32)RQF_SORTED)]		= "SORTED",
+	[ilog2((__force u32)RQF_STARTED)]		= "STARTED",
+	[ilog2((__force u32)RQF_QUEUED)]		= "QUEUED",
+	[ilog2((__force u32)RQF_SOFTBARRIER)]		= "SOFTBARRIER",
+	[ilog2((__force u32)RQF_FLUSH_SEQ)]		= "FLUSH_SEQ",
+	[ilog2((__force u32)RQF_MIXED_MERGE)]		= "MIXED_MERGE",
+	[ilog2((__force u32)RQF_MQ_INFLIGHT)]		= "MQ_INFLIGHT",
+	[ilog2((__force u32)RQF_DONTPREP)]		= "DONTPREP",
+	[ilog2((__force u32)RQF_PREEMPT)]		= "PREEMPT",
+	[ilog2((__force u32)RQF_COPY_USER)]		= "COPY_USER",
+	[ilog2((__force u32)RQF_FAILED)]		= "FAILED",
+	[ilog2((__force u32)RQF_QUIET)]			= "QUIET",
+	[ilog2((__force u32)RQF_ELVPRIV)]		= "ELVPRIV",
+	[ilog2((__force u32)RQF_IO_STAT)]		= "IO_STAT",
+	[ilog2((__force u32)RQF_ALLOCED)]		= "ALLOCED",
+	[ilog2((__force u32)RQF_PM)]			= "PM",
+	[ilog2((__force u32)RQF_HASHED)]		= "HASHED",
+	[ilog2((__force u32)RQF_STATS)]			= "STATS",
+	[ilog2((__force u32)RQF_SPECIAL_PAYLOAD)]	= "SPECIAL_PAYLOAD",
+};
+
 static int blk_mq_debugfs_rq_show(struct seq_file *m, void *v)
 {
 	struct request *rq = list_entry_rq(v);
+	const struct blk_mq_ops *const mq_ops = rq->q->mq_ops;
+	const unsigned int op = rq->cmd_flags & REQ_OP_MASK;
 
-	seq_printf(m, "%p {.cmd_flags=0x%x, .rq_flags=0x%x, .tag=%d, .internal_tag=%d}\n",
-		   rq, rq->cmd_flags, (__force unsigned int)rq->rq_flags,
-		   rq->tag, rq->internal_tag);
+	seq_printf(m, "%p {.op=", rq);
+	if (op < ARRAY_SIZE(op_name) && op_name[op])
+		seq_printf(m, "%s", op_name[op]);
+	else
+		seq_printf(m, "%d", op);
+	seq_puts(m, ", .cmd_flags=");
+	blk_flags_show(m, rq->cmd_flags & ~REQ_OP_MASK, cmd_flag_name,
+		       ARRAY_SIZE(cmd_flag_name));
+	seq_puts(m, ", .rq_flags=");
+	blk_flags_show(m, (__force unsigned int)rq->rq_flags, rqf_name,
+		       ARRAY_SIZE(rqf_name));
+	seq_printf(m, ", .tag=%d, .internal_tag=%d", rq->tag,
+		   rq->internal_tag);
+	if (mq_ops->show_rq)
+		mq_ops->show_rq(m, rq);
+	seq_puts(m, "}\n");
 	return 0;
 }
 
@@ -757,6 +824,7 @@ static const struct file_operations ctx_completed_fops = {
 
 static const struct blk_mq_debugfs_attr blk_mq_debugfs_queue_attrs[] = {
 	{"poll_stat", 0400, &queue_poll_stat_fops},
+	{"state", 0600, &blk_queue_flags_fops},
 	{},
 };
 
@@ -785,16 +853,17 @@ static const struct blk_mq_debugfs_attr blk_mq_debugfs_ctx_attrs[] = {
 	{},
 };
 
-int blk_mq_debugfs_register(struct request_queue *q, const char *name)
+int blk_mq_debugfs_register(struct request_queue *q)
 {
 	if (!blk_debugfs_root)
 		return -ENOENT;
 
-	q->debugfs_dir = debugfs_create_dir(name, blk_debugfs_root);
+	q->debugfs_dir = debugfs_create_dir(kobject_name(q->kobj.parent),
+					    blk_debugfs_root);
 	if (!q->debugfs_dir)
 		goto err;
 
-	if (blk_mq_debugfs_register_hctxs(q))
+	if (blk_mq_debugfs_register_mq(q))
 		goto err;
 
 	return 0;
@@ -864,16 +933,13 @@ static int blk_mq_debugfs_register_hctx(struct request_queue *q,
 	return 0;
 }
 
-int blk_mq_debugfs_register_hctxs(struct request_queue *q)
+int blk_mq_debugfs_register_mq(struct request_queue *q)
 {
 	struct blk_mq_hw_ctx *hctx;
 	int i;
 
 	if (!q->debugfs_dir)
 		return -ENOENT;
-
-	if (!debugfs_create_files(q->debugfs_dir, q, blk_queue_attrs))
-		goto err;
 
 	q->mq_debugfs_dir = debugfs_create_dir("mq", q->debugfs_dir);
 	if (!q->mq_debugfs_dir)
@@ -890,11 +956,11 @@ int blk_mq_debugfs_register_hctxs(struct request_queue *q)
 	return 0;
 
 err:
-	blk_mq_debugfs_unregister_hctxs(q);
+	blk_mq_debugfs_unregister_mq(q);
 	return -ENOMEM;
 }
 
-void blk_mq_debugfs_unregister_hctxs(struct request_queue *q)
+void blk_mq_debugfs_unregister_mq(struct request_queue *q)
 {
 	debugfs_remove_recursive(q->mq_debugfs_dir);
 	q->mq_debugfs_dir = NULL;
