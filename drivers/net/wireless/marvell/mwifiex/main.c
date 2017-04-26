@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/suspend.h>
+
 #include "main.h"
 #include "wmm.h"
 #include "cfg80211.h"
@@ -147,7 +149,6 @@ static int mwifiex_unregister(struct mwifiex_adapter *adapter)
 
 	kfree(adapter->regd);
 
-	vfree(adapter->chan_stats);
 	kfree(adapter);
 	return 0;
 }
@@ -511,7 +512,7 @@ static void mwifiex_terminate_workqueue(struct mwifiex_adapter *adapter)
  *      - Download the correct firmware to card
  *      - Issue the init commands to firmware
  */
-static void mwifiex_fw_dpc(const struct firmware *firmware, void *context)
+static int _mwifiex_fw_dpc(const struct firmware *firmware, void *context)
 {
 	int ret;
 	char fmt[64];
@@ -631,6 +632,7 @@ static void mwifiex_fw_dpc(const struct firmware *firmware, void *context)
 	goto done;
 
 err_add_intf:
+	vfree(adapter->chan_stats);
 	wiphy_unregister(adapter->wiphy);
 	wiphy_free(adapter->wiphy);
 err_init_fw:
@@ -664,11 +666,18 @@ done:
 		mwifiex_free_adapter(adapter);
 	/* Tell all current and future waiters we're finished */
 	complete_all(fw_done);
-	return;
+
+	return init_failed ? -EIO : 0;
+}
+
+static void mwifiex_fw_dpc(const struct firmware *firmware, void *context)
+{
+	_mwifiex_fw_dpc(firmware, context);
 }
 
 /*
- * This function initializes the hardware and gets firmware.
+ * This function gets the firmware and (if called asynchronously) kicks off the
+ * HW init when done.
  */
 static int mwifiex_init_hw_fw(struct mwifiex_adapter *adapter,
 			      bool req_fw_nowait)
@@ -691,20 +700,15 @@ static int mwifiex_init_hw_fw(struct mwifiex_adapter *adapter,
 		ret = request_firmware_nowait(THIS_MODULE, 1, adapter->fw_name,
 					      adapter->dev, GFP_KERNEL, adapter,
 					      mwifiex_fw_dpc);
-		if (ret < 0)
-			mwifiex_dbg(adapter, ERROR,
-				    "request_firmware_nowait error %d\n", ret);
 	} else {
 		ret = request_firmware(&adapter->firmware,
 				       adapter->fw_name,
 				       adapter->dev);
-		if (ret < 0)
-			mwifiex_dbg(adapter, ERROR,
-				    "request_firmware error %d\n", ret);
-		else
-			mwifiex_fw_dpc(adapter->firmware, (void *)adapter);
 	}
 
+	if (ret < 0)
+		mwifiex_dbg(adapter, ERROR, "request_firmware%s error %d\n",
+			    req_fw_nowait ? "_nowait" : "", ret);
 	return ret;
 }
 
@@ -1413,6 +1417,7 @@ mwifiex_shutdown_sw(struct mwifiex_adapter *adapter)
 			mwifiex_del_virtual_intf(adapter->wiphy, &priv->wdev);
 		rtnl_unlock();
 	}
+	vfree(adapter->chan_stats);
 
 	mwifiex_dbg(adapter, INFO, "%s, successful\n", __func__);
 exit_return:
@@ -1426,6 +1431,8 @@ EXPORT_SYMBOL_GPL(mwifiex_shutdown_sw);
 int
 mwifiex_reinit_sw(struct mwifiex_adapter *adapter)
 {
+	int ret;
+
 	mwifiex_init_lock_list(adapter);
 	if (adapter->if_ops.up_dev)
 		adapter->if_ops.up_dev(adapter);
@@ -1435,6 +1442,7 @@ mwifiex_reinit_sw(struct mwifiex_adapter *adapter)
 	init_waitqueue_head(&adapter->init_wait_q);
 	adapter->is_suspended = false;
 	adapter->hs_activated = false;
+	adapter->is_cmd_timedout = 0;
 	init_waitqueue_head(&adapter->hs_activate_wait_q);
 	init_waitqueue_head(&adapter->cmd_wait_q.wait);
 	adapter->cmd_wait_q.status = 0;
@@ -1472,9 +1480,15 @@ mwifiex_reinit_sw(struct mwifiex_adapter *adapter)
 			    "%s: firmware init failed\n", __func__);
 		goto err_init_fw;
 	}
+
+	/* _mwifiex_fw_dpc() does its own cleanup */
+	ret = _mwifiex_fw_dpc(adapter->firmware, adapter);
+	if (ret) {
+		pr_err("Failed to bring up adapter: %d\n", ret);
+		return ret;
+	}
 	mwifiex_dbg(adapter, INFO, "%s, successful\n", __func__);
 
-	complete_all(adapter->fw_done);
 	return 0;
 
 err_init_fw:
@@ -1502,14 +1516,13 @@ static irqreturn_t mwifiex_irq_wakeup_handler(int irq, void *priv)
 {
 	struct mwifiex_adapter *adapter = priv;
 
-	if (adapter->irq_wakeup >= 0) {
-		dev_dbg(adapter->dev, "%s: wake by wifi", __func__);
-		adapter->wake_by_wifi = true;
-		disable_irq_nosync(irq);
-	}
+	dev_dbg(adapter->dev, "%s: wake by wifi", __func__);
+	adapter->wake_by_wifi = true;
+	disable_irq_nosync(irq);
 
 	/* Notify PM core we are wakeup source */
 	pm_wakeup_event(adapter->dev, 0);
+	pm_system_wakeup();
 
 	return IRQ_HANDLED;
 }
@@ -1714,6 +1727,7 @@ int mwifiex_remove_card(struct mwifiex_adapter *adapter)
 			mwifiex_del_virtual_intf(adapter->wiphy, &priv->wdev);
 		rtnl_unlock();
 	}
+	vfree(adapter->chan_stats);
 
 	wiphy_unregister(adapter->wiphy);
 	wiphy_free(adapter->wiphy);
@@ -1742,7 +1756,7 @@ void _mwifiex_dbg(const struct mwifiex_adapter *adapter, int mask,
 	struct va_format vaf;
 	va_list args;
 
-	if (!adapter->dev || !(adapter->debug_mask & mask))
+	if (!(adapter->debug_mask & mask))
 		return;
 
 	va_start(args, fmt);
@@ -1750,7 +1764,10 @@ void _mwifiex_dbg(const struct mwifiex_adapter *adapter, int mask,
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	dev_info(adapter->dev, "%pV", &vaf);
+	if (adapter->dev)
+		dev_info(adapter->dev, "%pV", &vaf);
+	else
+		pr_info("%pV", &vaf);
 
 	va_end(args);
 }

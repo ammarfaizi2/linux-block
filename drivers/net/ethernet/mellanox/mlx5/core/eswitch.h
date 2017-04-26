@@ -209,6 +209,7 @@ struct mlx5_esw_offload {
 	struct mlx5_eswitch_rep *vport_reps;
 	DECLARE_HASHTABLE(encap_tbl, 8);
 	u8 inline_mode;
+	u64 num_flows;
 };
 
 struct mlx5_eswitch {
@@ -271,6 +272,11 @@ struct mlx5_flow_handle *
 mlx5_eswitch_add_offloaded_rule(struct mlx5_eswitch *esw,
 				struct mlx5_flow_spec *spec,
 				struct mlx5_esw_flow_attr *attr);
+void
+mlx5_eswitch_del_offloaded_rule(struct mlx5_eswitch *esw,
+				struct mlx5_flow_handle *rule,
+				struct mlx5_esw_flow_attr *attr);
+
 struct mlx5_flow_handle *
 mlx5_eswitch_create_vport_rx_rule(struct mlx5_eswitch *esw, int vport, u32 tirn);
 
@@ -279,8 +285,8 @@ enum {
 	SET_VLAN_INSERT	= BIT(1)
 };
 
-#define MLX5_FLOW_CONTEXT_ACTION_VLAN_POP  0x40
-#define MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH 0x80
+#define MLX5_FLOW_CONTEXT_ACTION_VLAN_POP  0x4000
+#define MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH 0x8000
 
 struct mlx5_encap_entry {
 	struct hlist_node encap_hlist;
@@ -302,6 +308,7 @@ struct mlx5_esw_flow_attr {
 	u16	vlan;
 	bool	vlan_handled;
 	struct mlx5_encap_entry *encap;
+	u32	mod_hdr_id;
 };
 
 int mlx5_eswitch_sqs2vport_start(struct mlx5_eswitch *esw,

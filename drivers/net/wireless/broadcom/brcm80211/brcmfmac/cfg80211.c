@@ -3097,6 +3097,9 @@ brcmf_cfg80211_escan_handler(struct brcmf_if *ifp,
 
 	status = e->status;
 
+	if (status == BRCMF_E_STATUS_ABORT)
+		goto exit;
+
 	if (!test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status)) {
 		brcmf_err("scan not ready, bsscfgidx=%d\n", ifp->bsscfgidx);
 		return -EPERM;
@@ -3213,7 +3216,7 @@ static int brcmf_internal_escan_add_info(struct cfg80211_scan_request *req,
 {
 	struct ieee80211_channel *chan;
 	enum nl80211_band band;
-	int freq;
+	int freq, i;
 
 	if (channel <= CH_MAX_2G_CHANNEL)
 		band = NL80211_BAND_2GHZ;
@@ -3228,10 +3231,22 @@ static int brcmf_internal_escan_add_info(struct cfg80211_scan_request *req,
 	if (!chan)
 		return -EINVAL;
 
-	req->channels[req->n_channels++] = chan;
-	memcpy(req->ssids[req->n_ssids].ssid, ssid, ssid_len);
-	req->ssids[req->n_ssids++].ssid_len = ssid_len;
+	for (i = 0; i < req->n_channels; i++) {
+		if (req->channels[i] == chan)
+			break;
+	}
+	if (i == req->n_channels)
+		req->channels[req->n_channels++] = chan;
 
+	for (i = 0; i < req->n_ssids; i++) {
+		if (req->ssids[i].ssid_len == ssid_len &&
+		    !memcmp(req->ssids[i].ssid, ssid, ssid_len))
+			break;
+	}
+	if (i == req->n_ssids) {
+		memcpy(req->ssids[req->n_ssids].ssid, ssid, ssid_len);
+		req->ssids[req->n_ssids++].ssid_len = ssid_len;
+	}
 	return 0;
 }
 
@@ -3297,6 +3312,7 @@ brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
 	struct brcmf_pno_scanresults_le *pfn_result;
 	u32 result_count;
 	u32 status;
+	u32 datalen;
 
 	brcmf_dbg(SCAN, "Enter\n");
 
@@ -3323,6 +3339,14 @@ brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
 		brcmf_err("FALSE PNO Event. (pfn_count == 0)\n");
 		goto out_err;
 	}
+
+	netinfo_start = brcmf_get_netinfo_array(pfn_result);
+	datalen = e->datalen - ((void *)netinfo_start - (void *)pfn_result);
+	if (datalen < result_count * sizeof(*netinfo)) {
+		brcmf_err("insufficient event data\n");
+		goto out_err;
+	}
+
 	request = brcmf_alloc_internal_escan_request(wiphy,
 						     result_count);
 	if (!request) {
@@ -3330,17 +3354,11 @@ brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
 		goto out_err;
 	}
 
-	netinfo_start = brcmf_get_netinfo_array(pfn_result);
-
 	for (i = 0; i < result_count; i++) {
 		netinfo = &netinfo_start[i];
-		if (!netinfo) {
-			brcmf_err("Invalid netinfo ptr. index: %d\n",
-				  i);
-			err = -EINVAL;
-			goto out_err;
-		}
 
+		if (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
+			netinfo->SSID_len = IEEE80211_MAX_SSID_LEN;
 		brcmf_dbg(SCAN, "SSID:%.32s Channel:%d\n",
 			  netinfo->SSID, netinfo->channel);
 		err = brcmf_internal_escan_add_info(request,
@@ -6450,7 +6468,8 @@ static int brcmf_setup_wiphy(struct wiphy *wiphy, struct brcmf_if *ifp)
 				    BIT(NL80211_BSS_SELECT_ATTR_BAND_PREF) |
 				    BIT(NL80211_BSS_SELECT_ATTR_RSSI_ADJUST);
 
-	wiphy->flags |= WIPHY_FLAG_PS_ON_BY_DEFAULT |
+	wiphy->flags |= WIPHY_FLAG_NETNS_OK |
+			WIPHY_FLAG_PS_ON_BY_DEFAULT |
 			WIPHY_FLAG_OFFCHAN_TX |
 			WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL;
 	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_TDLS))
@@ -6735,6 +6754,10 @@ static void brcmf_cfg80211_reg_notifier(struct wiphy *wiphy,
 	struct brcmf_fil_country_le ccreq;
 	s32 err;
 	int i;
+
+	/* The country code gets set to "00" by default at boot, ignore */
+	if (req->alpha2[0] == '0' && req->alpha2[1] == '0')
+		return;
 
 	/* ignore non-ISO3166 country codes */
 	for (i = 0; i < sizeof(req->alpha2); i++)
