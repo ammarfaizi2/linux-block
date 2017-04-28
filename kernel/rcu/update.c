@@ -852,6 +852,8 @@ static void rcu_spawn_tasks_kthread(void)
 
 #endif /* #ifdef CONFIG_TASKS_RCU */
 
+#ifndef CONFIG_TINY_RCU
+
 /*
  * Print any non-default Tasks RCU settings.
  */
@@ -864,6 +866,8 @@ static void __init rcu_tasks_bootup_oddness(void)
 		pr_info("\tTasks RCU enabled.\n");
 #endif /* #ifdef CONFIG_TASKS_RCU */
 }
+
+#endif /* #ifndef CONFIG_TINY_RCU */
 
 #ifdef CONFIG_PROVE_RCU
 
