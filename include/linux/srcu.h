@@ -64,6 +64,11 @@ int init_srcu_struct(struct srcu_struct *sp);
 #include <linux/srcuclassic.h>
 #elif defined(CONFIG_SRCU)
 #error "Unknown SRCU implementation specified to kernel configuration"
+#else
+
+/* Dummy definition for things like notifiers.  Actual use gets link error. */
+struct srcu_struct { };
+
 #endif
 
 /**
