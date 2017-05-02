@@ -108,6 +108,8 @@ then
 	then
 		cp $builddir/$BOOT_IMAGE $resdir
 		KERNEL=$resdir/${BOOT_IMAGE##*/}
+		# Arch-independent indicator
+		touch $resdir/builtkernel
 	else
 		echo No identifiable boot image, not running KVM, see $resdir.
 		echo Do the torture scripts know about your architecture?
