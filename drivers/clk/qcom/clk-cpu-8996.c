@@ -15,7 +15,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
-
+#include <linux/clk-provider.h>
 #include "clk-alpha-pll.h"
 
 #define VCO(a, b, c) { \
@@ -330,6 +330,7 @@ qcom_cpu_clk_msm8996_register_clks(struct device *dev, struct clk_hw_clks *hws,
 				   struct regmap *regmap)
 {
 	int i, ret;
+	struct clk *perf_clk, *pwr_clk;
 
 	hws->hws[0] = clk_hw_register_fixed_factor(dev, "perfcl_pll_main",
 						   "perfcl_pll",
@@ -361,6 +362,13 @@ qcom_cpu_clk_msm8996_register_clks(struct device *dev, struct clk_hw_clks *hws,
 	ret = clk_notifier_register(perfcl_pmux.clkr.hw.clk, &perfcl_pmux.nb);
 	if (ret)
 		return ret;
+
+	pwr_clk = clk_hw_get_clk(&pwrcl_pmux.clkr.hw, NULL, NULL);
+	perf_clk = clk_hw_get_clk(&perfcl_pmux.clkr.hw, NULL, NULL);
+
+	/* Set initial boot frequencies for power/perf clusters */
+	clk_set_rate(pwr_clk, 1248000000);
+	clk_set_rate(perf_clk, 1536000000);
 
 	return ret;
 }
