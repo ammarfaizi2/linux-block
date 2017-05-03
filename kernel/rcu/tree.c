@@ -3149,9 +3149,13 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func,
 	WARN_ON_ONCE((unsigned long)head & (sizeof(void *) - 1));
 
 	if (debug_rcu_head_queue(head)) {
-		/* Probable double call_rcu(), so leak the callback. */
+		/*
+		 * Probable double call_rcu(), so leak the callback.
+		 * Use rcu:rcu_callback trace event to find the previous
+		 * time callback was passed to __call_rcu().
+		 */
 		WRITE_ONCE(head->func, rcu_leak_callback);
-		WARN_ONCE(1, "__call_rcu(): Leaked duplicate callback\n");
+		WARN_ONCE(1, "__call_rcu(): Double-freed CB %p!!!\n", head);
 		return;
 	}
 	head->func = func;
