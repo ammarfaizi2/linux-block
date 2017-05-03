@@ -33,10 +33,8 @@ static inline int rcu_dynticks_snap(struct rcu_dynticks *rdtp)
 	return 0;
 }
 
-static inline bool rcu_eqs_special_set(int cpu)
-{
-	return false;  /* Never flag non-existent other CPUs! */
-}
+/* Never flag non-existent other CPUs! */
+static inline bool rcu_eqs_special_set(int cpu) { return false; }
 
 static inline unsigned long get_state_synchronize_rcu(void)
 {
@@ -120,15 +118,10 @@ void rcu_scheduler_starting(void);
 static inline void rcu_scheduler_starting(void) { }
 #endif /* #else #if defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_SRCU) */
 
-static inline bool rcu_is_watching(void)
-{
-	return true;
-}
+static inline bool rcu_is_watching(void) { return true; }
 
-static inline void rcu_all_qs(void)
-{
-	barrier(); /* Avoid RCU read-side critical sections leaking across. */
-}
+/* Avoid RCU read-side critical sections leaking across. */
+static inline void rcu_all_qs(void) { barrier(); }
 
 /* RCUtree hotplug events */
 #define rcutree_prepare_cpu      NULL
