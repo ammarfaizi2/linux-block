@@ -102,54 +102,22 @@ static inline void kfree_call_rcu(struct rcu_head *head,
  * Take advantage of the fact that there is only one CPU, which
  * allows us to ignore virtualization-based context switches.
  */
-static inline void rcu_virt_note_context_switch(int cpu)
-{
-}
-
-static inline void rcu_cpu_stall_reset(void)
-{
-}
-
-static inline void rcu_idle_enter(void)
-{
-}
-
-static inline void rcu_idle_exit(void)
-{
-}
-
-static inline void rcu_irq_enter(void)
-{
-}
-
-static inline bool rcu_irq_enter_disabled(void)
-{
-	return false;
-}
-
-static inline void rcu_irq_exit_irqson(void)
-{
-}
-
-static inline void rcu_irq_enter_irqson(void)
-{
-}
-
-static inline void rcu_irq_exit(void)
-{
-}
-
-static inline void exit_rcu(void)
-{
-}
+static inline void rcu_virt_note_context_switch(int cpu) { }
+static inline void rcu_cpu_stall_reset(void) { }
+static inline void rcu_idle_enter(void) { }
+static inline void rcu_idle_exit(void) { }
+static inline void rcu_irq_enter(void) { }
+static inline bool rcu_irq_enter_disabled(void) { return false; }
+static inline void rcu_irq_exit_irqson(void) { }
+static inline void rcu_irq_enter_irqson(void) { }
+static inline void rcu_irq_exit(void) { }
+static inline void exit_rcu(void) { }
 
 #if defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_SRCU)
 extern int rcu_scheduler_active __read_mostly;
 void rcu_scheduler_starting(void);
 #else /* #if defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_SRCU) */
-static inline void rcu_scheduler_starting(void)
-{
-}
+static inline void rcu_scheduler_starting(void) { }
 #endif /* #else #if defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_SRCU) */
 
 static inline bool rcu_is_watching(void)
