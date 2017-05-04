@@ -159,7 +159,7 @@ static int clk_cpu_8996_mux_set_parent(struct clk_hw *hw, u8 index)
 				    cpuclk->shift);
 
 	val = index;
-	val = cpuclk->shift;
+	val <<= cpuclk->shift;
 
 	return regmap_update_bits(clkr->regmap, cpuclk->reg, mask, val);
 }
