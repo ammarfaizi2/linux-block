@@ -3390,6 +3390,15 @@ static int mmcc_apq8084_probe(struct platform_device *pdev)
 {
 	int ret;
 	struct regmap *regmap;
+	struct device_node *node;
+
+	node = of_find_compatible_node(NULL, NULL, "qcom,rpmcc-apq8084");
+
+	if (IS_ENABLED(CONFIG_QCOM_CLK_SMD_RPM) &&
+	    of_device_is_available(node)) {
+		/* skip registration for gfx3d, as it is controlled by RPMCC */
+		mmcc_apq8084_desc.clks[GFX3D_CLK_SRC] = NULL;
+	}
 
 	ret = qcom_cc_probe(pdev, &mmcc_apq8084_desc);
 	if (ret)

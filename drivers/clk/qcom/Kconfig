@@ -195,3 +195,48 @@ config MSM_APCC_8996
 	  Support for the CPU clock controller on msm8996 devices.
 	  Say Y if you want to support CPU clock scaling using CPUfreq
 	  drivers for dyanmic power management.
+
+config QCOM_HFPLL
+	tristate "High-Frequency PLL (HFPLL) Clock Controller"
+	depends on COMMON_CLK_QCOM
+	help
+	  Support for the high-frequency PLLs present on Qualcomm devices.
+	  Say Y if you want to support CPU frequency scaling on devices
+	  such as MSM8974, APQ8084, etc.
+
+config KPSS_XCC
+	tristate "KPSS Clock Controller"
+	depends on COMMON_CLK_QCOM
+	help
+	  Support for the Krait ACC and GCC clock controllers. Say Y
+	  if you want to support CPU frequency scaling on devices such
+	  as MSM8960, APQ8064, etc.
+
+config KRAITCC
+	tristate "Krait Clock Controller"
+	depends on COMMON_CLK_QCOM && ARM
+	select KRAIT_CLOCKS
+	help
+	  Support for the Krait CPU clocks on Qualcomm devices.
+	  Say Y if you want to support CPU frequency scaling.
+
+config KRAIT_CLOCKS
+	bool
+	select KRAIT_L2_ACCESSORS
+
+config QCOM_A53PLL
+	bool "A53 PLL"
+	depends on COMMON_CLK_QCOM
+	help
+	  Support for the A53 PLL on some Qualcomm devices. It provides
+	  support for CPU frequencies above 1GHz.
+	  Say Y if you want to support CPU frequency scaling on devices
+	  such as MSM8916.
+
+config QCOM_A53CC
+	bool "A53 Clock Controller"
+	depends on COMMON_CLK_QCOM && QCOM_A53PLL
+	help
+	  Support for the A53 clock controller on some Qualcomm devices.
+	  Say Y if you want to support CPU frequency scaling on devices
+	  such as MSM8916.
