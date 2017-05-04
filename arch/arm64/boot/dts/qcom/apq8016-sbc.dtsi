@@ -371,6 +371,11 @@
         clock-names = "mclk";
 };
 
+&spmi_pon {
+	// Overwrite RESETIN_N keyboard scan code
+	linux,code = <KEY_VOLUMEDOWN>;
+};
+
 &smd_rpm_regulators {
 	vdd_l1_l2_l3-supply = <&pm8916_s3>;
 	vdd_l5-supply = <&pm8916_s3>;
