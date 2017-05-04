@@ -1,0 +1,70 @@
+
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+#include <dt-bindings/pinctrl/qcom,pmic-mpp.h>
+&tlmm_pinmux {
+	card_detect: card-detect {
+		mux {
+			pins = "gpio26";
+			function = "gpio";
+			bias-disable;
+		};
+	};
+
+	user_leds: user-leds {
+		mux {
+			pins = "gpio6", "gpio7", "gpio35", "gpio86";
+			function = "gpio";
+		};
+
+		conf {
+			pins = "gpio6", "gpio7", "gpio35", "gpio86";
+			function = "gpio";
+			output-low;
+		};
+	};
+
+	magneto_pins: magneto-pins {
+		mux {
+			pins = "gpio31", "gpio48";
+			function = "gpio";
+			bias-disable;
+		};
+	};
+};
+
+&pm8921_gpio {
+
+	pcie_pins: pcie_pins {
+		pios {
+			pins = "gpio22";
+			function = "normal";
+			power-source = <PM8921_GPIO_VPH>;
+		};
+	};
+};
+&pm8921_mpps {
+
+	sataclk_pins: sataclk-pins {
+		pinconf {
+			pins = "mpp4";
+			function = "digital";
+			power-source = <PM8921_MPP_VPH>;
+		};
+	};
+	pcie_perst: pcie-perst {
+		pinconf {
+			pins = "mpp1";
+			function = "digital";
+			power-source = <PM8921_MPP_S4>;
+			output-low;
+		};
+	};
+
+	mpp_leds: mpp-leds {
+		pinconf {
+			pins = "mpp7", "mpp8";
+			function = "digital";
+			output-low;
+		};
+	};
+};
