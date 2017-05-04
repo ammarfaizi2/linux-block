@@ -35,7 +35,6 @@
 
 #include <linux/types.h>
 #include <linux/ktime.h>
-#include <linux/irqflags.h>
 
 #define ULONG_CMP_GE(a, b)	(ULONG_MAX / 2 >= (a) - (b))
 #define ULONG_CMP_LT(a, b)	(ULONG_MAX / 2 < (a) - (b))
