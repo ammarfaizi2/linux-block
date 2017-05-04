@@ -578,7 +578,7 @@ static struct task_struct *rcu_tasks_kthread_ptr;
 
 /**
  * call_rcu_tasks() - Queue an RCU for invocation task-based grace period
- * @head: structure to be used for queueing the RCU updates.
+ * @rhp: structure to be used for queueing the RCU updates.
  * @func: actual callback function to be invoked after the grace period
  *
  * The callback function will be invoked some time after a full grace
