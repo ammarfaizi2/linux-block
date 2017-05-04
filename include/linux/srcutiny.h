@@ -87,9 +87,4 @@ static inline void srcu_barrier(struct srcu_struct *sp)
 	synchronize_srcu(sp);
 }
 
-static inline unsigned long srcu_batches_completed(struct srcu_struct *sp)
-{
-	return 0;
-}
-
 #endif
