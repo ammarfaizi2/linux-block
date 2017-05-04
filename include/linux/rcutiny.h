@@ -25,8 +25,6 @@
 #ifndef __LINUX_TINY_H
 #define __LINUX_TINY_H
 
-#include <linux/cache.h>
-
 struct rcu_dynticks;
 static inline int rcu_dynticks_snap(struct rcu_dynticks *rdtp)
 {
