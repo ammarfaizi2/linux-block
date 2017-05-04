@@ -107,6 +107,12 @@ void snd_pcm_stream_lock(struct snd_pcm_substream *substream)
 }
 EXPORT_SYMBOL_GPL(snd_pcm_stream_lock);
 
+void snd_pcm_stream_lock_force_irq(struct snd_pcm_substream *substream)
+{
+	read_lock(&snd_pcm_link_rwlock);
+	spin_lock(&substream->self_group.lock);
+}
+EXPORT_SYMBOL_GPL(snd_pcm_stream_lock_force_irq);
 /**
  * snd_pcm_stream_lock - Unlock the PCM stream
  * @substream: PCM substream
@@ -124,6 +130,13 @@ void snd_pcm_stream_unlock(struct snd_pcm_substream *substream)
 	}
 }
 EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock);
+
+void snd_pcm_stream_unlock_force_irq(struct snd_pcm_substream *substream)
+{
+		spin_unlock(&substream->self_group.lock);
+		read_unlock(&snd_pcm_link_rwlock);
+}
+EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock_force_irq);
 
 /**
  * snd_pcm_stream_lock_irq - Lock the PCM stream

@@ -2465,10 +2465,13 @@ int snd_soc_tplg_component_load(struct snd_soc_component *comp,
 	tplg.comp = comp;
 	tplg.ops = ops;
 	tplg.req_index = id;
-	tplg.io_ops = ops->io_ops;
-	tplg.io_ops_count = ops->io_ops_count;
-	tplg.bytes_ext_ops = ops->bytes_ext_ops;
-	tplg.bytes_ext_ops_count = ops->bytes_ext_ops_count;
+
+	if  (ops) {
+		tplg.io_ops = ops->io_ops;
+		tplg.io_ops_count = ops->io_ops_count;
+		tplg.bytes_ext_ops = ops->bytes_ext_ops;
+		tplg.bytes_ext_ops_count = ops->bytes_ext_ops_count;
+	}
 
 	return soc_tplg_load(&tplg);
 }

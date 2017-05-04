@@ -1893,6 +1893,32 @@ void snd_pcm_period_elapsed(struct snd_pcm_substream *substream)
 
 EXPORT_SYMBOL(snd_pcm_period_elapsed);
 
+void snd_pcm_period_elapsed_irq(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime;
+	unsigned long flags = 0;
+
+	if (PCM_RUNTIME_CHECK(substream))
+		return;
+	runtime = substream->runtime;
+
+	local_irq_save(flags);
+
+	snd_pcm_stream_lock_force_irq(substream);
+	if (!snd_pcm_running(substream) ||
+	    snd_pcm_update_hw_ptr0(substream, 1) < 0)
+		goto _end;
+
+#ifdef CONFIG_SND_PCM_TIMER
+	if (substream->timer_running)
+		snd_timer_interrupt(substream->timer, 1);
+#endif
+ _end:
+	kill_fasync(&runtime->fasync, SIGIO, POLL_IN);
+	snd_pcm_stream_unlock_force_irq(substream);
+	local_irq_restore(flags);
+}
+EXPORT_SYMBOL(snd_pcm_period_elapsed_irq);
 /*
  * Wait until avail_min data becomes available
  * Returns a negative error code if any error occurs during operation.

@@ -80,3 +80,12 @@ config QCOM_WCNSS_CTRL
 	help
 	  Client driver for the WCNSS_CTRL SMD channel, used to download nv
 	  firmware to a newly booted WCNSS chip.
+
+config QCOM_SMD_APR
+	tristate "Qualcomm APR (Asynchronous Packet Router) over SMD"
+	depends on RPMSG_QCOM_SMD
+	help
+          Enable APR IPC protocol support between
+          application processor and QDSP6. APR is
+          used by audio driver to configure QDSP6
+          ASM, ADM and AFE.
