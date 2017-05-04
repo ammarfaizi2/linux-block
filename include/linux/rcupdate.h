@@ -34,7 +34,6 @@
 #define __LINUX_RCUPDATE_H
 
 #include <linux/types.h>
-#include <linux/bug.h>
 #include <linux/compiler.h>
 #include <linux/ktime.h>
 #include <linux/irqflags.h>
