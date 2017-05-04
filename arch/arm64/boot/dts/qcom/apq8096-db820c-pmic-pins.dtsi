@@ -24,4 +24,15 @@
 			power-source = <PM8994_GPIO_S4>; // 1.8V
 		};
 	};
+
+	wlan_gpios: wlan_gpios {
+		pinconf {
+			pins = "gpio8", "gpio19";
+			function = PMIC_GPIO_FUNC_NORMAL;
+			output-low;
+			power-source = <PM8994_GPIO_S4>; // 1.8V
+			qcom,drive-strength = <3>;
+			bias-pull-down;
+		};
+	};
 };
