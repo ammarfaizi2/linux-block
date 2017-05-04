@@ -36,6 +36,7 @@
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/bottom_half.h>
+#include <linux/atomic.h>
 #include <linux/lockdep.h>
 
 #define ULONG_CMP_GE(a, b)	(ULONG_MAX / 2 >= (a) - (b))
