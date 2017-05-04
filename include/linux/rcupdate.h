@@ -33,7 +33,10 @@
 #ifndef __LINUX_RCUPDATE_H
 #define __LINUX_RCUPDATE_H
 
-#include <linux/ktime.h>
+#include <linux/irqflags.h>
+#include <linux/preempt.h>
+#include <linux/bottom_half.h>
+#include <linux/lockdep.h>
 
 #define ULONG_CMP_GE(a, b)	(ULONG_MAX / 2 >= (a) - (b))
 #define ULONG_CMP_LT(a, b)	(ULONG_MAX / 2 < (a) - (b))
@@ -845,14 +848,6 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  */
 #define kfree_rcu(ptr, rcu_head)					\
 	__kfree_rcu(&((ptr)->rcu_head), offsetof(typeof(*(ptr)), rcu_head))
-
-#ifdef CONFIG_TINY_RCU
-static inline int rcu_needs_cpu(u64 basemono, u64 *nextevt)
-{
-	*nextevt = KTIME_MAX;
-	return 0;
-}
-#endif /* #ifdef CONFIG_TINY_RCU */
 
 /* Only for use by adaptive-ticks code. */
 #ifdef CONFIG_NO_HZ_FULL_SYSIDLE
