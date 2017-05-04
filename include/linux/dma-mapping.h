@@ -728,6 +728,9 @@ dma_mark_declared_memory_occupied(struct device *dev,
 }
 #endif /* CONFIG_HAVE_GENERIC_DMA_COHERENT */
 
+int dma_configure(struct device *dev);
+void dma_deconfigure(struct device *dev);
+
 /*
  * Managed DMA API
  */

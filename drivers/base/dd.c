@@ -19,6 +19,7 @@
 
 #include <linux/device.h>
 #include <linux/delay.h>
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -339,10 +340,6 @@ static int really_probe(struct device *dev, struct device_driver *drv)
 		return ret;
 	}
 
-	ret = device_links_check_suppliers(dev);
-	if (ret)
-		return ret;
-
 	atomic_inc(&probe_count);
 	pr_debug("bus: '%s': %s: probing driver %s with device %s\n",
 		 drv->bus->name, __func__, drv->name, dev_name(dev));
@@ -355,6 +352,14 @@ re_probe:
 	ret = pinctrl_bind_pins(dev);
 	if (ret)
 		goto pinctrl_bind_failed;
+
+	ret = dma_configure(dev);
+	if (ret)
+		goto dma_failed;
+
+	ret = device_links_check_suppliers(dev);
+	if (ret)
+		return ret;
 
 	if (driver_sysfs_add(dev)) {
 		printk(KERN_ERR "%s: driver_sysfs_add(%s) failed\n",
@@ -376,6 +381,7 @@ re_probe:
 	 */
 	devices_kset_move_last(dev);
 
+	pm_runtime_get_suppliers(dev);
 	if (dev->bus->probe) {
 		ret = dev->bus->probe(dev);
 		if (ret)
@@ -385,6 +391,7 @@ re_probe:
 		if (ret)
 			goto probe_failed;
 	}
+	pm_runtime_put_suppliers(dev);
 
 	if (test_remove) {
 		test_remove = false;
@@ -417,6 +424,9 @@ re_probe:
 	goto done;
 
 probe_failed:
+	pm_runtime_put_suppliers(dev);
+	dma_deconfigure(dev);
+dma_failed:
 	if (dev->bus)
 		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
 					     BUS_NOTIFY_DRIVER_NOT_BOUND, dev);
@@ -514,7 +524,6 @@ int driver_probe_device(struct device_driver *drv, struct device *dev)
 	pr_debug("bus: '%s': %s: matched device %s with driver %s\n",
 		 drv->bus->name, __func__, dev_name(dev), drv->name);
 
-	pm_runtime_get_suppliers(dev);
 	if (dev->parent)
 		pm_runtime_get_sync(dev->parent);
 
@@ -525,7 +534,6 @@ int driver_probe_device(struct device_driver *drv, struct device *dev)
 	if (dev->parent)
 		pm_runtime_put(dev->parent);
 
-	pm_runtime_put_suppliers(dev);
 	return ret;
 }
 
@@ -826,6 +834,8 @@ static void __device_release_driver(struct device *dev, struct device *parent)
 			drv->remove(dev);
 
 		device_links_driver_cleanup(dev);
+		dma_deconfigure(dev);
+
 		devres_release_all(dev);
 		dev->driver = NULL;
 		dev_set_drvdata(dev, NULL);

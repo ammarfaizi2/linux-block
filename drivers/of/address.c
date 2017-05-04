@@ -819,8 +819,8 @@ EXPORT_SYMBOL(of_io_request_and_map);
  *	CPU addr (phys_addr_t)	: pna cells
  *	size			: nsize cells
  *
- * It returns -ENODEV if "dma-ranges" property was not found
- * for this device in DT.
+ * Return 0 on success, -ENODEV if the "dma-ranges" property was not found for
+ * this device in DT, or -EINVAL if the CPU address or size is invalid.
  */
 int of_dma_get_range(struct device_node *np, u64 *dma_addr, u64 *paddr, u64 *size)
 {
@@ -880,6 +880,22 @@ int of_dma_get_range(struct device_node *np, u64 *dma_addr, u64 *paddr, u64 *siz
 	*dma_addr = dmaaddr;
 
 	*size = of_read_number(ranges + naddr + pna, nsize);
+	/*
+	 * DT nodes sometimes incorrectly set the size as a mask. Work around
+	 * those incorrect DT by computing the size as mask + 1.
+	 */
+	if (*size & 1) {
+		pr_warn("%s: size 0x%llx for dma-range in node(%s) set as mask\n",
+			__func__, *size, np->full_name);
+		*size = *size + 1;
+	}
+
+	if (!*size) {
+		pr_err("%s: invalid size zero for dma-range in node(%s)\n",
+		       __func__, np->full_name);
+		ret = -EINVAL;
+		goto out;
+	}
 
 	pr_debug("dma_addr(%llx) cpu_addr(%llx) size(%llx)\n",
 		 *dma_addr, *paddr, *size);

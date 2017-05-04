@@ -48,12 +48,14 @@
 #include <linux/of_iommu.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 
 #include <linux/amba/bus.h>
 
 #include "io-pgtable.h"
+#include "arm-smmu-regs.h"
 
 /* Maximum number of context banks per SMMU */
 #define ARM_SMMU_MAX_CBS		128
@@ -83,208 +85,9 @@
 #define smmu_write_atomic_lq		writel_relaxed
 #endif
 
-/* Configuration registers */
-#define ARM_SMMU_GR0_sCR0		0x0
-#define sCR0_CLIENTPD			(1 << 0)
-#define sCR0_GFRE			(1 << 1)
-#define sCR0_GFIE			(1 << 2)
-#define sCR0_EXIDENABLE			(1 << 3)
-#define sCR0_GCFGFRE			(1 << 4)
-#define sCR0_GCFGFIE			(1 << 5)
-#define sCR0_USFCFG			(1 << 10)
-#define sCR0_VMIDPNE			(1 << 11)
-#define sCR0_PTM			(1 << 12)
-#define sCR0_FB				(1 << 13)
-#define sCR0_VMID16EN			(1 << 31)
-#define sCR0_BSU_SHIFT			14
-#define sCR0_BSU_MASK			0x3
-
-/* Auxiliary Configuration register */
-#define ARM_SMMU_GR0_sACR		0x10
-
-/* Identification registers */
-#define ARM_SMMU_GR0_ID0		0x20
-#define ARM_SMMU_GR0_ID1		0x24
-#define ARM_SMMU_GR0_ID2		0x28
-#define ARM_SMMU_GR0_ID3		0x2c
-#define ARM_SMMU_GR0_ID4		0x30
-#define ARM_SMMU_GR0_ID5		0x34
-#define ARM_SMMU_GR0_ID6		0x38
-#define ARM_SMMU_GR0_ID7		0x3c
-#define ARM_SMMU_GR0_sGFSR		0x48
-#define ARM_SMMU_GR0_sGFSYNR0		0x50
-#define ARM_SMMU_GR0_sGFSYNR1		0x54
-#define ARM_SMMU_GR0_sGFSYNR2		0x58
-
-#define ID0_S1TS			(1 << 30)
-#define ID0_S2TS			(1 << 29)
-#define ID0_NTS				(1 << 28)
-#define ID0_SMS				(1 << 27)
-#define ID0_ATOSNS			(1 << 26)
-#define ID0_PTFS_NO_AARCH32		(1 << 25)
-#define ID0_PTFS_NO_AARCH32S		(1 << 24)
-#define ID0_CTTW			(1 << 14)
-#define ID0_NUMIRPT_SHIFT		16
-#define ID0_NUMIRPT_MASK		0xff
-#define ID0_NUMSIDB_SHIFT		9
-#define ID0_NUMSIDB_MASK		0xf
-#define ID0_EXIDS			(1 << 8)
-#define ID0_NUMSMRG_SHIFT		0
-#define ID0_NUMSMRG_MASK		0xff
-
-#define ID1_PAGESIZE			(1 << 31)
-#define ID1_NUMPAGENDXB_SHIFT		28
-#define ID1_NUMPAGENDXB_MASK		7
-#define ID1_NUMS2CB_SHIFT		16
-#define ID1_NUMS2CB_MASK		0xff
-#define ID1_NUMCB_SHIFT			0
-#define ID1_NUMCB_MASK			0xff
-
-#define ID2_OAS_SHIFT			4
-#define ID2_OAS_MASK			0xf
-#define ID2_IAS_SHIFT			0
-#define ID2_IAS_MASK			0xf
-#define ID2_UBS_SHIFT			8
-#define ID2_UBS_MASK			0xf
-#define ID2_PTFS_4K			(1 << 12)
-#define ID2_PTFS_16K			(1 << 13)
-#define ID2_PTFS_64K			(1 << 14)
-#define ID2_VMID16			(1 << 15)
-
-#define ID7_MAJOR_SHIFT			4
-#define ID7_MAJOR_MASK			0xf
-
-/* Global TLB invalidation */
-#define ARM_SMMU_GR0_TLBIVMID		0x64
-#define ARM_SMMU_GR0_TLBIALLNSNH	0x68
-#define ARM_SMMU_GR0_TLBIALLH		0x6c
-#define ARM_SMMU_GR0_sTLBGSYNC		0x70
-#define ARM_SMMU_GR0_sTLBGSTATUS	0x74
-#define sTLBGSTATUS_GSACTIVE		(1 << 0)
-#define TLB_LOOP_TIMEOUT		1000000	/* 1s! */
-
-/* Stream mapping registers */
-#define ARM_SMMU_GR0_SMR(n)		(0x800 + ((n) << 2))
-#define SMR_VALID			(1 << 31)
-#define SMR_MASK_SHIFT			16
-#define SMR_ID_SHIFT			0
-
-#define ARM_SMMU_GR0_S2CR(n)		(0xc00 + ((n) << 2))
-#define S2CR_CBNDX_SHIFT		0
-#define S2CR_CBNDX_MASK			0xff
-#define S2CR_EXIDVALID			(1 << 10)
-#define S2CR_TYPE_SHIFT			16
-#define S2CR_TYPE_MASK			0x3
-enum arm_smmu_s2cr_type {
-	S2CR_TYPE_TRANS,
-	S2CR_TYPE_BYPASS,
-	S2CR_TYPE_FAULT,
-};
-
-#define S2CR_PRIVCFG_SHIFT		24
-#define S2CR_PRIVCFG_MASK		0x3
-enum arm_smmu_s2cr_privcfg {
-	S2CR_PRIVCFG_DEFAULT,
-	S2CR_PRIVCFG_DIPAN,
-	S2CR_PRIVCFG_UNPRIV,
-	S2CR_PRIVCFG_PRIV,
-};
-
-/* Context bank attribute registers */
-#define ARM_SMMU_GR1_CBAR(n)		(0x0 + ((n) << 2))
-#define CBAR_VMID_SHIFT			0
-#define CBAR_VMID_MASK			0xff
-#define CBAR_S1_BPSHCFG_SHIFT		8
-#define CBAR_S1_BPSHCFG_MASK		3
-#define CBAR_S1_BPSHCFG_NSH		3
-#define CBAR_S1_MEMATTR_SHIFT		12
-#define CBAR_S1_MEMATTR_MASK		0xf
-#define CBAR_S1_MEMATTR_WB		0xf
-#define CBAR_TYPE_SHIFT			16
-#define CBAR_TYPE_MASK			0x3
-#define CBAR_TYPE_S2_TRANS		(0 << CBAR_TYPE_SHIFT)
-#define CBAR_TYPE_S1_TRANS_S2_BYPASS	(1 << CBAR_TYPE_SHIFT)
-#define CBAR_TYPE_S1_TRANS_S2_FAULT	(2 << CBAR_TYPE_SHIFT)
-#define CBAR_TYPE_S1_TRANS_S2_TRANS	(3 << CBAR_TYPE_SHIFT)
-#define CBAR_IRPTNDX_SHIFT		24
-#define CBAR_IRPTNDX_MASK		0xff
-
-#define ARM_SMMU_GR1_CBA2R(n)		(0x800 + ((n) << 2))
-#define CBA2R_RW64_32BIT		(0 << 0)
-#define CBA2R_RW64_64BIT		(1 << 0)
-#define CBA2R_VMID_SHIFT		16
-#define CBA2R_VMID_MASK			0xffff
-
 /* Translation context bank */
 #define ARM_SMMU_CB_BASE(smmu)		((smmu)->base + ((smmu)->size >> 1))
 #define ARM_SMMU_CB(smmu, n)		((n) * (1 << (smmu)->pgshift))
-
-#define ARM_SMMU_CB_SCTLR		0x0
-#define ARM_SMMU_CB_ACTLR		0x4
-#define ARM_SMMU_CB_RESUME		0x8
-#define ARM_SMMU_CB_TTBCR2		0x10
-#define ARM_SMMU_CB_TTBR0		0x20
-#define ARM_SMMU_CB_TTBR1		0x28
-#define ARM_SMMU_CB_TTBCR		0x30
-#define ARM_SMMU_CB_CONTEXTIDR		0x34
-#define ARM_SMMU_CB_S1_MAIR0		0x38
-#define ARM_SMMU_CB_S1_MAIR1		0x3c
-#define ARM_SMMU_CB_PAR			0x50
-#define ARM_SMMU_CB_FSR			0x58
-#define ARM_SMMU_CB_FAR			0x60
-#define ARM_SMMU_CB_FSYNR0		0x68
-#define ARM_SMMU_CB_S1_TLBIVA		0x600
-#define ARM_SMMU_CB_S1_TLBIASID		0x610
-#define ARM_SMMU_CB_S1_TLBIVAL		0x620
-#define ARM_SMMU_CB_S2_TLBIIPAS2	0x630
-#define ARM_SMMU_CB_S2_TLBIIPAS2L	0x638
-#define ARM_SMMU_CB_ATS1PR		0x800
-#define ARM_SMMU_CB_ATSR		0x8f0
-
-#define SCTLR_S1_ASIDPNE		(1 << 12)
-#define SCTLR_CFCFG			(1 << 7)
-#define SCTLR_CFIE			(1 << 6)
-#define SCTLR_CFRE			(1 << 5)
-#define SCTLR_E				(1 << 4)
-#define SCTLR_AFE			(1 << 2)
-#define SCTLR_TRE			(1 << 1)
-#define SCTLR_M				(1 << 0)
-
-#define ARM_MMU500_ACTLR_CPRE		(1 << 1)
-
-#define ARM_MMU500_ACR_CACHE_LOCK	(1 << 26)
-#define ARM_MMU500_ACR_SMTNMB_TLBEN	(1 << 8)
-
-#define CB_PAR_F			(1 << 0)
-
-#define ATSR_ACTIVE			(1 << 0)
-
-#define RESUME_RETRY			(0 << 0)
-#define RESUME_TERMINATE		(1 << 0)
-
-#define TTBCR2_SEP_SHIFT		15
-#define TTBCR2_SEP_UPSTREAM		(0x7 << TTBCR2_SEP_SHIFT)
-#define TTBCR2_AS			(1 << 4)
-
-#define TTBRn_ASID_SHIFT		48
-
-#define FSR_MULTI			(1 << 31)
-#define FSR_SS				(1 << 30)
-#define FSR_UUT				(1 << 8)
-#define FSR_ASF				(1 << 7)
-#define FSR_TLBLKF			(1 << 6)
-#define FSR_TLBMCF			(1 << 5)
-#define FSR_EF				(1 << 4)
-#define FSR_PF				(1 << 3)
-#define FSR_AFF				(1 << 2)
-#define FSR_TF				(1 << 1)
-
-#define FSR_IGN				(FSR_AFF | FSR_ASF | \
-					 FSR_TLBMCF | FSR_TLBLKF)
-#define FSR_FAULT			(FSR_MULTI | FSR_SS | FSR_UUT | \
-					 FSR_EF | FSR_PF | FSR_TF | FSR_IGN)
-
-#define FSYNR0_WNR			(1 << 4)
 
 #define MSI_IOVA_BASE			0x8000000
 #define MSI_IOVA_LENGTH			0x100000
@@ -308,6 +111,7 @@ enum arm_smmu_implementation {
 	GENERIC_SMMU,
 	ARM_MMU500,
 	CAVIUM_SMMUV2,
+	QCOM_SMMUV2,
 };
 
 struct arm_smmu_s2cr {
@@ -339,6 +143,27 @@ struct arm_smmu_master_cfg {
 	(i >= fw->num_ids ? INVALID_SMENDX : __fwspec_cfg(fw)->smendx[i])
 #define for_each_cfg_sme(fw, i, idx) \
 	for (i = 0; idx = fwspec_smendx(fw, i), i < fw->num_ids; ++i)
+
+struct qcom_smmu_clk {
+	struct clk *mmagic_ahb_clk;
+	struct clk *mmagic_cfg_ahb_clk;
+	struct clk *smmu_core_ahb_clk;
+	struct clk *smmu_core_axi_clk;
+	struct clk *mmagic_core_axi_clk;
+};
+
+struct mmu500_clk {
+	struct clk *cfg_clk;
+	struct clk *tcu_clk;
+	struct clk *tbu_clk;
+};
+
+struct arm_smmu_clks {
+	void *clks;
+	int (*init_clocks)(struct arm_smmu_device *smmu);
+	int (*enable_clocks)(struct arm_smmu_device *smmu);
+	void (*disable_clocks)(struct arm_smmu_device *smmu);
+};
 
 struct arm_smmu_device {
 	struct device			*dev;
@@ -387,7 +212,7 @@ struct arm_smmu_device {
 	u32				num_global_irqs;
 	u32				num_context_irqs;
 	unsigned int			*irqs;
-
+	struct arm_smmu_clks		smmu_clks;
 	u32				cavium_id_base; /* Specific to Cavium */
 
 	/* IOMMU core code handle */
@@ -445,6 +270,203 @@ static struct arm_smmu_option_prop arm_smmu_options[] = {
 static struct arm_smmu_domain *to_smmu_domain(struct iommu_domain *dom)
 {
 	return container_of(dom, struct arm_smmu_domain, domain);
+}
+
+static int mmu500_enable_clocks(struct arm_smmu_device *smmu)
+{
+	int ret = 0;
+	struct mmu500_clk *sclks = smmu->smmu_clks.clks;
+
+	if (!sclks)
+		return 0;
+
+	ret = clk_prepare_enable(sclks->cfg_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couldn't enable cfg_clk");
+		return ret;
+	}
+
+	ret = clk_prepare_enable(sclks->tcu_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couldn't enable tcu_clk");
+		clk_disable_unprepare(sclks->cfg_clk);
+		return ret;
+	}
+
+	ret = clk_prepare_enable(sclks->tbu_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couln't enable tbu_clk");
+		clk_disable_unprepare(sclks->tcu_clk);
+		clk_disable_unprepare(sclks->cfg_clk);
+		return ret;
+	}
+
+	return 0;
+}
+
+static void mmu500_disable_clocks(struct arm_smmu_device *smmu)
+{
+	struct mmu500_clk *sclks = smmu->smmu_clks.clks;
+
+	if (!sclks) {
+		clk_disable_unprepare(sclks->tbu_clk);
+		clk_disable_unprepare(sclks->tcu_clk);
+		clk_disable_unprepare(sclks->cfg_clk);
+	}
+}
+
+static int mmu500_init_clocks(struct arm_smmu_device *smmu)
+{
+	struct device *dev = smmu->dev;
+	struct mmu500_clk *sclks;
+	int err;
+
+	if (!of_find_property(dev->of_node, "clocks", NULL))
+		return 0;
+
+	sclks = devm_kzalloc(dev, sizeof(*sclks), GFP_KERNEL);
+	if (!sclks)
+		return -ENOMEM;
+
+	sclks->cfg_clk = devm_clk_get(dev, "cfg_clk");
+	if (IS_ERR(sclks->cfg_clk)) {
+		err = PTR_ERR(sclks->cfg_clk);
+		/* Ignore all, except -EPROBE_DEFER for optional clocks */
+		if (err == -EPROBE_DEFER)
+			return err;
+		else
+			sclks->cfg_clk = NULL;
+	}
+
+	sclks->tcu_clk = devm_clk_get(dev, "tcu_clk");
+	if (IS_ERR(sclks->tcu_clk)) {
+		dev_err(dev, "Couldn't get tcu_clk");
+		return PTR_ERR(sclks->tcu_clk);
+	}
+
+	sclks->tbu_clk = devm_clk_get(dev, "tbu_clk");
+	if (IS_ERR(sclks->tbu_clk)) {
+		err = PTR_ERR(sclks->tbu_clk);
+		/* Ignore all, ecept -EPROBE_DEFER for optional clocks */
+		if (err == -EPROBE_DEFER)
+			return err;
+		else
+			sclks->tbu_clk = NULL;
+	}
+
+	smmu->smmu_clks.clks = sclks;
+	return 0;
+}
+
+static int qcom_smmu_init_clocks(struct arm_smmu_device *smmu)
+{
+	struct device *dev = smmu->dev;
+	struct qcom_smmu_clk *sclks;
+
+	if (!of_find_property(dev->of_node, "clocks", NULL))
+		return 0;
+
+	sclks = devm_kzalloc(dev, sizeof(*sclks), GFP_KERNEL);
+	if (!sclks)
+		return -ENOMEM;
+
+	sclks->mmagic_ahb_clk = devm_clk_get(dev, "mmagic_ahb_clk");
+	if (IS_ERR(sclks->mmagic_ahb_clk)) {
+		dev_err(dev, "Couldn't get mmagic_ahb_clk");
+		return PTR_ERR(sclks->mmagic_ahb_clk);
+	}
+
+	sclks->mmagic_cfg_ahb_clk = devm_clk_get(dev, "mmagic_cfg_ahb_clk");
+	if (IS_ERR(sclks->mmagic_cfg_ahb_clk)) {
+		dev_err(dev, "Couldn't get mmagic_cfg_ahb_clk");
+		return PTR_ERR(sclks->mmagic_cfg_ahb_clk);
+	}
+
+	sclks->smmu_core_ahb_clk = devm_clk_get(dev, "smmu_core_ahb_clk");
+	if (IS_ERR(sclks->smmu_core_ahb_clk)) {
+		dev_err(dev, "Couldn't get smmu_core_ahb_clk");
+		return PTR_ERR(sclks->smmu_core_ahb_clk);
+	}
+
+	sclks->smmu_core_axi_clk = devm_clk_get(dev, "smmu_core_axi_clk");
+	if (IS_ERR(sclks->smmu_core_axi_clk)) {
+		dev_err(dev, "Couldn't get smmu_core_axi_clk");
+		return PTR_ERR(sclks->smmu_core_axi_clk);
+	}
+
+	sclks->mmagic_core_axi_clk = devm_clk_get(dev, "mmagic_core_axi_clk");
+	if (IS_ERR(sclks->mmagic_core_axi_clk)) {
+		dev_err(dev, "Couldn't get mmagic_core_axi_clk");
+		return PTR_ERR(sclks->mmagic_core_axi_clk);
+	}
+
+	smmu->smmu_clks.clks = sclks;
+	return 0;
+}
+
+static int qcom_smmu_enable_clocks(struct arm_smmu_device *smmu)
+{
+	int ret = 0;
+	struct qcom_smmu_clk *sclks = smmu->smmu_clks.clks;
+
+	if (!sclks)
+		return 0;
+
+	ret = clk_prepare_enable(sclks->mmagic_ahb_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couldn't enable mmagic_ahb_clk");
+		goto ahb_clk_fail;
+	}
+
+	ret = clk_prepare_enable(sclks->mmagic_cfg_ahb_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couln't enable mmagic_cfg_ahb_clk");
+		goto cfg_ahb_clk_fail;
+	}
+
+	ret = clk_prepare_enable(sclks->smmu_core_ahb_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couln't enable smmu_core_ahb_clk");
+		goto core_ahb_clk_fail;
+	}
+
+	ret = clk_prepare_enable(sclks->smmu_core_axi_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couln't enable smmu_core_axi_clk");
+		goto smmu_core_axi_clk_fail;
+	}
+
+	ret = clk_prepare_enable(sclks->mmagic_core_axi_clk);
+	if (ret) {
+		dev_err(smmu->dev, "Couln't enable mmagic_core_axi_clk");
+		goto core_axi_clk_fail;
+	}
+
+	return 0;
+
+core_axi_clk_fail:
+	clk_disable_unprepare(sclks->smmu_core_axi_clk);
+smmu_core_axi_clk_fail:
+	clk_disable_unprepare(sclks->smmu_core_ahb_clk);
+core_ahb_clk_fail:
+	clk_disable_unprepare(sclks->mmagic_cfg_ahb_clk);
+cfg_ahb_clk_fail:
+	clk_disable_unprepare(sclks->mmagic_ahb_clk);
+ahb_clk_fail:
+	return ret;
+}
+
+static void qcom_smmu_disable_clocks(struct arm_smmu_device *smmu)
+{
+	struct qcom_smmu_clk *sclks = smmu->smmu_clks.clks;
+
+	if (!sclks) {
+		clk_disable_unprepare(sclks->mmagic_core_axi_clk);
+		clk_disable_unprepare(sclks->smmu_core_axi_clk);
+		clk_disable_unprepare(sclks->smmu_core_ahb_clk);
+		clk_disable_unprepare(sclks->mmagic_cfg_ahb_clk);
+		clk_disable_unprepare(sclks->mmagic_ahb_clk);
+	}
 }
 
 static void parse_driver_options(struct arm_smmu_device *smmu)
@@ -996,10 +1018,15 @@ static void arm_smmu_destroy_domain_context(struct iommu_domain *domain)
 	struct arm_smmu_device *smmu = smmu_domain->smmu;
 	struct arm_smmu_cfg *cfg = &smmu_domain->cfg;
 	void __iomem *cb_base;
+	unsigned long ret;
 	int irq;
 
 	if (!smmu)
 		return;
+
+	ret = pm_runtime_get_sync(smmu->dev);
+	if (IS_ERR_VALUE(ret))
+		dev_warn(smmu->dev, "runtime resume failed");
 
 	/*
 	 * Disable the context bank and free the page tables before freeing
@@ -1015,6 +1042,10 @@ static void arm_smmu_destroy_domain_context(struct iommu_domain *domain)
 
 	free_io_pgtable_ops(smmu_domain->pgtbl_ops);
 	__arm_smmu_free_bitmap(smmu->context_map, cfg->cbndx);
+
+	ret = pm_runtime_put_sync(smmu->dev);
+	if (IS_ERR_VALUE(ret))
+		dev_warn(smmu->dev, "runtime suspend failed");
 }
 
 static struct iommu_domain *arm_smmu_domain_alloc(unsigned type)
@@ -1442,7 +1473,9 @@ static int arm_smmu_add_device(struct device *dev)
 	struct arm_smmu_device *smmu;
 	struct arm_smmu_master_cfg *cfg;
 	struct iommu_fwspec *fwspec = dev->iommu_fwspec;
+	struct device_link *link = NULL;
 	int i, ret;
+	unsigned long err;
 
 	if (using_legacy_binding) {
 		ret = arm_smmu_register_legacy_master(dev, &smmu);
@@ -1483,11 +1516,29 @@ static int arm_smmu_add_device(struct device *dev)
 	while (i--)
 		cfg->smendx[i] = INVALID_SMENDX;
 
+	err = pm_runtime_get_sync(smmu->dev);
+	if (IS_ERR_VALUE(err))
+		goto out_free;
+
 	ret = arm_smmu_master_alloc_smes(dev);
 	if (ret)
 		goto out_free;
 
 	iommu_device_link(&smmu->iommu, dev);
+
+	err = pm_runtime_put_sync(smmu->dev);
+	if (IS_ERR_VALUE(err))
+		goto out_free;
+
+	/*
+	 * Establish the link between smmu and master, so that the
+	 * smmu gets runtime enabled/disabled as per the master's
+	 * needs.
+	 */
+	link = device_link_add(dev, smmu->dev, DL_FLAG_PM_RUNTIME);
+	if (!link)
+		dev_warn(smmu->dev, "Unable to create device link between %s and %s\n",
+			 dev_name(smmu->dev), dev_name(dev));
 
 	return 0;
 
@@ -1503,7 +1554,7 @@ static void arm_smmu_remove_device(struct device *dev)
 	struct iommu_fwspec *fwspec = dev->iommu_fwspec;
 	struct arm_smmu_master_cfg *cfg;
 	struct arm_smmu_device *smmu;
-
+	unsigned long ret;
 
 	if (!fwspec || fwspec->ops != &arm_smmu_ops)
 		return;
@@ -1511,8 +1562,23 @@ static void arm_smmu_remove_device(struct device *dev)
 	cfg  = fwspec->iommu_priv;
 	smmu = cfg->smmu;
 
+	/*
+	 * The device link between the master device and
+	 * smmu is already purged at this point.
+	 * So enable the power to smmu explicitly.
+	 */
+
+	ret = pm_runtime_get_sync(smmu->dev);
+	if (IS_ERR_VALUE(ret))
+		dev_warn(smmu->dev, "runtime resume failed");
+
 	iommu_device_unlink(&smmu->iommu, dev);
 	arm_smmu_master_free_smes(fwspec);
+
+	ret = pm_runtime_put_sync(smmu->dev);
+	if (IS_ERR_VALUE(ret))
+		dev_warn(smmu->dev, "runtime suspend failed");
+
 	iommu_group_remove_device(dev);
 	kfree(fwspec->iommu_priv);
 	iommu_fwspec_free(dev);
@@ -1958,16 +2024,28 @@ static int arm_smmu_device_cfg_probe(struct arm_smmu_device *smmu)
 struct arm_smmu_match_data {
 	enum arm_smmu_arch_version version;
 	enum arm_smmu_implementation model;
+	struct arm_smmu_clks smmu_clks;
 };
 
-#define ARM_SMMU_MATCH_DATA(name, ver, imp)	\
-static struct arm_smmu_match_data name = { .version = ver, .model = imp }
+#define ARM_SMMU_MATCH_DATA(name, ver, imp, init, enable, disable)	\
+static struct arm_smmu_match_data name = { .version = ver, .model = imp, \
+					   .smmu_clks.init_clocks = init, \
+					   .smmu_clks.enable_clocks = enable, \
+					   .smmu_clks.disable_clocks = disable }
 
-ARM_SMMU_MATCH_DATA(smmu_generic_v1, ARM_SMMU_V1, GENERIC_SMMU);
-ARM_SMMU_MATCH_DATA(smmu_generic_v2, ARM_SMMU_V2, GENERIC_SMMU);
-ARM_SMMU_MATCH_DATA(arm_mmu401, ARM_SMMU_V1_64K, GENERIC_SMMU);
-ARM_SMMU_MATCH_DATA(arm_mmu500, ARM_SMMU_V2, ARM_MMU500);
-ARM_SMMU_MATCH_DATA(cavium_smmuv2, ARM_SMMU_V2, CAVIUM_SMMUV2);
+ARM_SMMU_MATCH_DATA(smmu_generic_v1, ARM_SMMU_V1, GENERIC_SMMU,
+		    NULL, NULL, NULL);
+ARM_SMMU_MATCH_DATA(smmu_generic_v2, ARM_SMMU_V2, GENERIC_SMMU,
+		    NULL, NULL, NULL);
+ARM_SMMU_MATCH_DATA(arm_mmu401, ARM_SMMU_V1_64K, GENERIC_SMMU,
+		    NULL, NULL, NULL);
+ARM_SMMU_MATCH_DATA(arm_mmu500, ARM_SMMU_V2, ARM_MMU500, mmu500_init_clocks,
+		    mmu500_enable_clocks, mmu500_disable_clocks);
+ARM_SMMU_MATCH_DATA(cavium_smmuv2, ARM_SMMU_V2, CAVIUM_SMMUV2,
+		    NULL, NULL, NULL);
+ARM_SMMU_MATCH_DATA(qcom_smmuv2, ARM_SMMU_V2, QCOM_SMMUV2,
+		    qcom_smmu_init_clocks, qcom_smmu_enable_clocks,
+		    qcom_smmu_disable_clocks);
 
 static const struct of_device_id arm_smmu_of_match[] = {
 	{ .compatible = "arm,smmu-v1", .data = &smmu_generic_v1 },
@@ -1976,6 +2054,7 @@ static const struct of_device_id arm_smmu_of_match[] = {
 	{ .compatible = "arm,mmu-401", .data = &arm_mmu401 },
 	{ .compatible = "arm,mmu-500", .data = &arm_mmu500 },
 	{ .compatible = "cavium,smmu-v2", .data = &cavium_smmuv2 },
+	{ .compatible = "qcom,smmu-v2", .data = &qcom_smmuv2 },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, arm_smmu_of_match);
@@ -2054,6 +2133,7 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev,
 	data = of_device_get_match_data(dev);
 	smmu->version = data->version;
 	smmu->model = data->model;
+	smmu->smmu_clks = data->smmu_clks;
 
 	parse_driver_options(smmu);
 
@@ -2075,6 +2155,23 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev,
 	return 0;
 }
 
+static void arm_smmu_bus_init(void)
+{
+	/* Oh, for a proper bus abstraction */
+	if (!iommu_present(&platform_bus_type))
+		bus_set_iommu(&platform_bus_type, &arm_smmu_ops);
+#ifdef CONFIG_ARM_AMBA
+	if (!iommu_present(&amba_bustype))
+		bus_set_iommu(&amba_bustype, &arm_smmu_ops);
+#endif
+#ifdef CONFIG_PCI
+	if (!iommu_present(&pci_bus_type)) {
+		pci_request_acs();
+		bus_set_iommu(&pci_bus_type, &arm_smmu_ops);
+	}
+#endif
+}
+
 static int arm_smmu_device_probe(struct platform_device *pdev)
 {
 	struct resource *res;
@@ -2082,6 +2179,7 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	struct arm_smmu_device *smmu;
 	struct device *dev = &pdev->dev;
 	int num_irqs, i, err;
+	unsigned long ret;
 
 	smmu = devm_kzalloc(dev, sizeof(*smmu), GFP_KERNEL);
 	if (!smmu) {
@@ -2135,6 +2233,18 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 		smmu->irqs[i] = irq;
 	}
 
+	if (smmu->smmu_clks.init_clocks) {
+		err = smmu->smmu_clks.init_clocks(smmu);
+		if (err)
+			return err;
+	}
+
+	platform_set_drvdata(pdev, smmu);
+	pm_runtime_enable(dev);
+	ret = pm_runtime_get_sync(dev);
+	if (IS_ERR_VALUE(ret))
+		return ret;
+
 	err = arm_smmu_device_cfg_probe(smmu);
 	if (err)
 		return err;
@@ -2176,25 +2286,36 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 		return err;
 	}
 
-	platform_set_drvdata(pdev, smmu);
 	arm_smmu_device_reset(smmu);
 	arm_smmu_test_smr_masks(smmu);
+	ret = pm_runtime_put_sync(dev);
+	if (IS_ERR_VALUE(ret))
+		return err;
 
-	/* Oh, for a proper bus abstraction */
-	if (!iommu_present(&platform_bus_type))
-		bus_set_iommu(&platform_bus_type, &arm_smmu_ops);
-#ifdef CONFIG_ARM_AMBA
-	if (!iommu_present(&amba_bustype))
-		bus_set_iommu(&amba_bustype, &arm_smmu_ops);
-#endif
-#ifdef CONFIG_PCI
-	if (!iommu_present(&pci_bus_type)) {
-		pci_request_acs();
-		bus_set_iommu(&pci_bus_type, &arm_smmu_ops);
-	}
-#endif
+	/*
+	 * For ACPI and generic DT bindings, an SMMU will be probed before
+	 * any device which might need it, so we want the bus ops in place
+	 * ready to handle default domain setup as soon as any SMMU exists.
+	 */
+	if (!using_legacy_binding)
+		arm_smmu_bus_init();
+
 	return 0;
 }
+
+/*
+ * With the legacy DT binding in play, though, we have no guarantees about
+ * probe order, but then we're also not doing default domains, so we can
+ * delay setting bus ops until we're sure every possible SMMU is ready,
+ * and that way ensure that no add_device() calls get missed.
+ */
+static int arm_smmu_legacy_bus_init(void)
+{
+	if (using_legacy_binding)
+		arm_smmu_bus_init();
+	return 0;
+}
+device_initcall_sync(arm_smmu_legacy_bus_init);
 
 static int arm_smmu_device_remove(struct platform_device *pdev)
 {
@@ -2208,67 +2329,59 @@ static int arm_smmu_device_remove(struct platform_device *pdev)
 
 	/* Turn the thing off */
 	writel(sCR0_CLIENTPD, ARM_SMMU_GR0_NS(smmu) + ARM_SMMU_GR0_sCR0);
+	pm_runtime_force_suspend(smmu->dev);
+
 	return 0;
 }
+
+#ifdef CONFIG_PM
+static int arm_smmu_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct arm_smmu_device *smmu = platform_get_drvdata(pdev);
+	int ret = 0;
+
+	if (smmu->smmu_clks.enable_clocks)
+		ret = smmu->smmu_clks.enable_clocks(smmu);
+
+	return ret;
+}
+
+static int arm_smmu_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct arm_smmu_device *smmu = platform_get_drvdata(pdev);
+
+	if (smmu->smmu_clks.disable_clocks)
+		smmu->smmu_clks.disable_clocks(smmu);
+
+	return 0;
+}
+#endif
+
+static const struct dev_pm_ops arm_smmu_pm_ops = {
+	SET_RUNTIME_PM_OPS(arm_smmu_suspend, arm_smmu_resume, NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+};
 
 static struct platform_driver arm_smmu_driver = {
 	.driver	= {
 		.name		= "arm-smmu",
 		.of_match_table	= of_match_ptr(arm_smmu_of_match),
+		.pm = &arm_smmu_pm_ops,
 	},
 	.probe	= arm_smmu_device_probe,
 	.remove	= arm_smmu_device_remove,
 };
+module_platform_driver(arm_smmu_driver);
 
-static int __init arm_smmu_init(void)
-{
-	static bool registered;
-	int ret = 0;
-
-	if (!registered) {
-		ret = platform_driver_register(&arm_smmu_driver);
-		registered = !ret;
-	}
-	return ret;
-}
-
-static void __exit arm_smmu_exit(void)
-{
-	return platform_driver_unregister(&arm_smmu_driver);
-}
-
-subsys_initcall(arm_smmu_init);
-module_exit(arm_smmu_exit);
-
-static int __init arm_smmu_of_init(struct device_node *np)
-{
-	int ret = arm_smmu_init();
-
-	if (ret)
-		return ret;
-
-	if (!of_platform_device_create(np, NULL, platform_bus_type.dev_root))
-		return -ENODEV;
-
-	return 0;
-}
-IOMMU_OF_DECLARE(arm_smmuv1, "arm,smmu-v1", arm_smmu_of_init);
-IOMMU_OF_DECLARE(arm_smmuv2, "arm,smmu-v2", arm_smmu_of_init);
-IOMMU_OF_DECLARE(arm_mmu400, "arm,mmu-400", arm_smmu_of_init);
-IOMMU_OF_DECLARE(arm_mmu401, "arm,mmu-401", arm_smmu_of_init);
-IOMMU_OF_DECLARE(arm_mmu500, "arm,mmu-500", arm_smmu_of_init);
-IOMMU_OF_DECLARE(cavium_smmuv2, "cavium,smmu-v2", arm_smmu_of_init);
-
-#ifdef CONFIG_ACPI
-static int __init arm_smmu_acpi_init(struct acpi_table_header *table)
-{
-	if (iort_node_match(ACPI_IORT_NODE_SMMU))
-		return arm_smmu_init();
-
-	return 0;
-}
-IORT_ACPI_DECLARE(arm_smmu, ACPI_SIG_IORT, arm_smmu_acpi_init);
-#endif
+IOMMU_OF_DECLARE(arm_smmuv1, "arm,smmu-v1", NULL);
+IOMMU_OF_DECLARE(arm_smmuv2, "arm,smmu-v2", NULL);
+IOMMU_OF_DECLARE(arm_mmu400, "arm,mmu-400", NULL);
+IOMMU_OF_DECLARE(arm_mmu401, "arm,mmu-401", NULL);
+IOMMU_OF_DECLARE(arm_mmu500, "arm,mmu-500", NULL);
+IOMMU_OF_DECLARE(cavium_smmuv2, "cavium,smmu-v2", NULL);
 
 MODULE_DESCRIPTION("IOMMU API for ARM architected SMMU implementations");
 MODULE_AUTHOR("Will Deacon <will.deacon@arm.com>");
