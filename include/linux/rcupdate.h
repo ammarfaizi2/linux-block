@@ -34,7 +34,6 @@
 #define __LINUX_RCUPDATE_H
 
 #include <linux/types.h>
-#include <linux/threads.h>
 #include <linux/cpumask.h>
 #include <linux/seqlock.h>
 #include <linux/lockdep.h>
