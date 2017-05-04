@@ -12,15 +12,18 @@
  */
 
 #include <linux/bitops.h>
+#include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/ktime.h>
+#include <linux/pm_clock.h>
 #include <linux/pm_domain.h>
 #include <linux/regmap.h>
 #include <linux/reset-controller.h>
 #include <linux/slab.h>
+#include "common.h"
 #include "gdsc.h"
 
 #define PWR_ON_MASK		BIT(31)
@@ -254,6 +257,45 @@ static int gdsc_disable(struct generic_pm_domain *domain)
 	return 0;
 }
 
+static int gdsc_attach(struct generic_pm_domain *domain, struct device *dev)
+{
+	int ret, i;
+	struct gdsc *sc = domain_to_gdsc(domain);
+
+	if (!sc->clk_count)
+		return 0;
+
+	ret = pm_clk_create(dev);
+	if (ret) {
+		dev_dbg(dev, "pm_clk_create failed %d\n", ret);
+		return ret;
+	}
+
+	sc->clks = devm_kcalloc(dev, sc->clk_count, sizeof(sc->clks),
+				GFP_KERNEL);
+	if (!sc->clks)
+		return -ENOMEM;
+
+	for (i = 0; i < sc->clk_count; i++) {
+		sc->clks[i] = qcom_clk_hw_get_clk(sc->clk_hws[i], domain->name,
+						  NULL);
+		ret = pm_clk_add_clk(dev, sc->clks[i]);
+		if (ret)
+			dev_dbg(dev, "pm_clk_add_clk failed %d\n", ret);
+	}
+	return 0;
+};
+
+static void gdsc_detach(struct generic_pm_domain *domain, struct device *dev)
+{
+	struct gdsc *sc = domain_to_gdsc(domain);
+
+	if (!sc->clk_count)
+		return;
+
+	pm_clk_destroy(dev);
+};
+
 static int gdsc_init(struct gdsc *sc)
 {
 	u32 mask, val;
@@ -298,6 +340,9 @@ static int gdsc_init(struct gdsc *sc)
 
 	sc->pd.power_off = gdsc_disable;
 	sc->pd.power_on = gdsc_enable;
+	sc->pd.attach_dev = gdsc_attach;
+	sc->pd.detach_dev = gdsc_detach;
+	sc->pd.flags = GENPD_FLAG_PM_CLK;
 	pm_genpd_init(&sc->pd, NULL, !on);
 
 	return 0;

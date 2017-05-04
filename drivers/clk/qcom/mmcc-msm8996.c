@@ -2893,6 +2893,9 @@ static struct gdsc mmagic_bimc_gdsc = {
 	.pd = {
 		.name = "mmagic_bimc",
 	},
+	.clk_hws = {
+		&mmagic_bimc_noc_cfg_ahb_clk.clkr.hw,
+	},
 	.pwrsts = PWRSTS_OFF_ON,
 };
 
@@ -2902,6 +2905,11 @@ static struct gdsc mmagic_video_gdsc = {
 	.pd = {
 		.name = "mmagic_video",
 	},
+	.clk_hws = {
+		&mmagic_video_axi_clk.clkr.hw,
+		&mmagic_video_noc_cfg_ahb_clk.clkr.hw,
+	},
+	.parent = &mmagic_bimc_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = VOTABLE,
 };
@@ -2912,6 +2920,14 @@ static struct gdsc mmagic_mdss_gdsc = {
 	.pd = {
 		.name = "mmagic_mdss",
 	},
+	.clk_hws = {
+		&mmss_mmagic_ahb_clk.clkr.hw,
+		&mmss_mmagic_cfg_ahb_clk.clkr.hw,
+		&mmss_mmagic_maxi_clk.clkr.hw,
+		&mmagic_mdss_axi_clk.clkr.hw,
+		&mmagic_mdss_noc_cfg_ahb_clk.clkr.hw,
+	},
+	.parent = &mmagic_bimc_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = VOTABLE,
 };
@@ -2922,6 +2938,11 @@ static struct gdsc mmagic_camss_gdsc = {
 	.pd = {
 		.name = "mmagic_camss",
 	},
+	.clk_hws = {
+		&mmagic_camss_axi_clk.clkr.hw,
+		&mmagic_camss_noc_cfg_ahb_clk.clkr.hw,
+	},
+	.parent = &mmagic_bimc_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = VOTABLE,
 };

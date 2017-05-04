@@ -3098,6 +3098,13 @@ static struct gdsc aggre0_noc_gdsc = {
 	.pd = {
 		.name = "aggre0_noc",
 	},
+	.clk_hws = {
+		&gcc_aggre0_snoc_axi_clk.clkr.hw,
+		&gcc_aggre0_cnoc_ahb_clk.clkr.hw,
+		&gcc_smmu_aggre0_axi_clk.clkr.hw,
+		&gcc_smmu_aggre0_ahb_clk.clkr.hw,
+	},
+	.clk_count = 4,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = VOTABLE,
 };
