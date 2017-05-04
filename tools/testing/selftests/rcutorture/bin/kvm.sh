@@ -132,7 +132,7 @@ do
 		shift
 		;;
 	--kconfig)
-		checkarg --kconfig "(Kconfig options)" $# "$2" '^[A-Z0-9_]\+=\([ynm]\|[0-9]\+\)\( [A-Z0-9_]\+=\([ynm]\|[0-9]\+\)\)*$' '^error$'
+		checkarg --kconfig "(Kconfig options)" $# "$2" '^CONFIG_[A-Z0-9_]\+=\([ynm]\|[0-9]\+\)\( CONFIG_[A-Z0-9_]\+=\([ynm]\|[0-9]\+\)\)*$' '^error$'
 		TORTURE_KCONFIG_ARG="$2"
 		shift
 		;;
