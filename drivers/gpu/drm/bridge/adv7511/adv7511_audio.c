@@ -192,6 +192,7 @@ static struct hdmi_codec_pdata codec_data = {
 	.ops = &adv7511_codec_ops,
 	.max_i2s_channels = 2,
 	.i2s = 1,
+	.formats = (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE ),
 };
 
 int adv7511_audio_init(struct device *dev, struct adv7511 *adv7511)

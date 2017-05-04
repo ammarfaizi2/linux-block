@@ -16,6 +16,7 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/time.h>
+#include <linux/of_gpio.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/slab.h>
@@ -218,6 +219,15 @@ static int qcom_apq8064_sata_phy_probe(struct platform_device *pdev)
 	struct phy_provider *phy_provider;
 	struct phy *generic_phy;
 	int ret;
+	int sataclk_gpio;
+
+	sataclk_gpio = of_get_named_gpio(dev->of_node, "clkoe-gpio", 0);
+	if (sataclk_gpio >= 0) {
+		devm_gpio_request_one(dev, sataclk_gpio,
+				GPIOF_OUT_INIT_HIGH, "RESET");
+		gpio_direction_output(sataclk_gpio, 1);
+		gpio_set_value(sataclk_gpio, 1);
+	}
 
 	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
 	if (!phy)

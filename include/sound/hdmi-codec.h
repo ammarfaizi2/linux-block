@@ -95,6 +95,7 @@ struct hdmi_codec_pdata {
 	uint i2s:1;
 	uint spdif:1;
 	int max_i2s_channels;
+	u64 formats;
 	void *data;
 };
 

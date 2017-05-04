@@ -32,6 +32,17 @@ PROPERTIES
 	Definition: presence of this property indicates that the KPDPWR_N pin
 		    should be configured for pull up.
 
+- resin-pull-up:
+	Usage: optional
+	Value type: <empty>
+	Definition: presence of this property indicates that the RESIN_N pin
+		    should be configured for pull up.
+
+- linux,code:
+	Usage: optional
+	Value type: <empty>
+	Definition: Keycode to emit when RESIN_N input change its state.
+
 EXAMPLE
 
 	pwrkey@800 {

@@ -413,6 +413,7 @@ static int rpm_clk_probe(struct platform_device *pdev)
 	struct qcom_rpm *rpm;
 	struct clk_rpm **rpm_clks;
 	const struct rpm_clk_desc *desc;
+	u32 value;
 
 	rpm = dev_get_drvdata(pdev->dev.parent);
 	if (!rpm) {
@@ -458,6 +459,9 @@ static int rpm_clk_probe(struct platform_device *pdev)
 				     rcc);
 	if (ret)
 		goto err;
+
+	value = (0x2 << 8) |(0x2 << 8) | (0x2 << 16) | (2 << 24) | (2 << 28) | BIT(20);
+	ret = qcom_rpm_write(rpm, QCOM_RPM_ACTIVE_STATE, QCOM_RPM_CXO_BUFFERS, &value, 1);
 
 	return 0;
 err:
