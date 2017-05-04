@@ -398,12 +398,15 @@ static struct hdmi_platform_config hdmi_tx_8994_config = {
 		.hpd_freq      = hpd_clk_freq_8x74,
 };
 
+static const char *hpd_clk_names_8x96[] = {"mmagic_iface_clk", "iface_clk", "core_clk", "mdp_core_clk"};
+static unsigned long hpd_clk_freq_8x96[] = {0, 0, 19200000, 0};
+
 static struct hdmi_platform_config hdmi_tx_8996_config = {
 		HDMI_CFG(pwr_reg, none),
 		HDMI_CFG(hpd_reg, none),
 		HDMI_CFG(pwr_clk, 8x74),
-		HDMI_CFG(hpd_clk, 8x74),
-		.hpd_freq      = hpd_clk_freq_8x74,
+		HDMI_CFG(hpd_clk, 8x96),
+		.hpd_freq      = hpd_clk_freq_8x96,
 };
 
 static const struct {

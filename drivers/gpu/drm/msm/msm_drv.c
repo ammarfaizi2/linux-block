@@ -55,14 +55,13 @@ int msm_register_address_space(struct drm_device *dev,
 		struct msm_gem_address_space *aspace)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	int idx = priv->num_aspaces++;
 
-	if (WARN_ON(idx >= ARRAY_SIZE(priv->aspace)))
+	if (WARN_ON(priv->num_aspaces >= ARRAY_SIZE(priv->aspace)))
 		return -EINVAL;
 
-	priv->aspace[idx] = aspace;
+	priv->aspace[priv->num_aspaces] = aspace;
 
-	return idx;
+	return priv->num_aspaces++;
 }
 
 #ifdef CONFIG_DRM_MSM_REGISTER_LOGGING
@@ -262,6 +261,8 @@ static int msm_drm_uninit(struct device *dev)
 
 	if (gpu) {
 		mutex_lock(&ddev->struct_mutex);
+		// XXX what do we do here?
+		//pm_runtime_enable(&pdev->dev);
 		gpu->funcs->pm_suspend(gpu);
 		mutex_unlock(&ddev->struct_mutex);
 		gpu->funcs->destroy(gpu);

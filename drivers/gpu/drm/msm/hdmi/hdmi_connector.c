@@ -207,6 +207,13 @@ static int hpd_enable(struct hdmi_connector *hdmi_connector)
 			HDMI_HPD_CTRL_ENABLE | hpd_ctrl);
 	spin_unlock_irqrestore(&hdmi->reg_lock, flags);
 
+	/*
+	 * wait for a bit so that HPD is sensed if there is a cable already
+	 * connected. Returning early will result in someone calling the
+	 * connnector func's detect() callback too early
+	 */
+	msleep(15);
+
 	return 0;
 
 fail:
@@ -401,6 +408,18 @@ static int msm_hdmi_connector_mode_valid(struct drm_connector *connector,
 	DBG("requested=%ld, actual=%ld", requested, actual);
 
 	if (actual != requested)
+		return MODE_CLOCK_RANGE;
+
+	/*
+	 * there seems to be some issue with 3840x2160 modes that are
+	 * clocked at 297 Mhz. The HDMI PLL seems to lock etc, but
+	 * the monitor can't seem to catch it. Drop the 297Mhz mode
+	 * for now, use the 267 Mhz one with the lower blanking.
+	 */
+	if (requested >= 297000000)
+		return MODE_CLOCK_RANGE;
+
+	if (mode->clock == 138500)
 		return MODE_CLOCK_RANGE;
 
 	return 0;

@@ -2,7 +2,7 @@
  * Copyright (C) 2013-2014 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014,2017 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published by
@@ -155,21 +155,14 @@ struct msm_gpu *adreno_load_gpu(struct drm_device *dev)
 
 	if (gpu) {
 		int ret;
-		mutex_lock(&dev->struct_mutex);
-		gpu->funcs->pm_resume(gpu);
-		mutex_unlock(&dev->struct_mutex);
 
-		disable_irq(gpu->irq);
-
-		ret = gpu->funcs->hw_init(gpu);
+		pm_runtime_get_sync(&pdev->dev);
+		ret = msm_gpu_hw_init(gpu);
+		pm_runtime_put_sync(&pdev->dev);
 		if (ret) {
 			dev_err(dev->dev, "gpu hw init failed: %d\n", ret);
 			gpu->funcs->destroy(gpu);
 			gpu = NULL;
-		} else {
-			enable_irq(gpu->irq);
-			/* give inactive pm a chance to kick in: */
-			msm_gpu_retire(gpu);
 		}
 	}
 
@@ -238,7 +231,6 @@ static int adreno_bind(struct device *dev, struct device *master, void *data)
 
 	/* find clock rates: */
 	config.fast_rate = 0;
-	config.slow_rate = ~0;
 	for_each_child_of_node(node, child) {
 		if (of_device_is_compatible(child, "qcom,gpu-pwrlevels")) {
 			struct device_node *pwrlvl;
@@ -249,7 +241,6 @@ static int adreno_bind(struct device *dev, struct device *master, void *data)
 					return ret;
 				}
 				config.fast_rate = max(config.fast_rate, val);
-				config.slow_rate = min(config.slow_rate, val);
 			}
 		}
 	}
@@ -258,7 +249,6 @@ static int adreno_bind(struct device *dev, struct device *master, void *data)
 		dev_warn(dev, "could not find clk rates\n");
 		/* This is a safe low speed for all devices: */
 		config.fast_rate = 200000000;
-		config.slow_rate = 27000000;
 	}
 
 	dev->platform_data = &config;
@@ -296,12 +286,35 @@ static const struct of_device_id dt_match[] = {
 	{}
 };
 
+#ifdef CONFIG_PM
+static int adreno_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct msm_gpu *gpu = platform_get_drvdata(pdev);
+
+	return gpu->funcs->pm_resume(gpu);
+}
+
+static int adreno_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct msm_gpu *gpu = platform_get_drvdata(pdev);
+
+	return gpu->funcs->pm_suspend(gpu);
+}
+#endif
+
+static const struct dev_pm_ops adreno_pm_ops = {
+	SET_RUNTIME_PM_OPS(adreno_suspend, adreno_resume, NULL)
+};
+
 static struct platform_driver adreno_driver = {
 	.probe = adreno_probe,
 	.remove = adreno_remove,
 	.driver = {
 		.name = "adreno",
 		.of_match_table = dt_match,
+		.pm = &adreno_pm_ops,
 	},
 };
 
