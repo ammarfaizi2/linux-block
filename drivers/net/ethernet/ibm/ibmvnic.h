@@ -518,8 +518,8 @@ struct ibmvnic_change_mac_addr {
 	u8 first;
 	u8 cmd;
 	u8 mac_addr[6];
-	struct ibmvnic_rc rc;
 	u8 reserved[4];
+	struct ibmvnic_rc rc;
 } __packed __aligned(8);
 
 struct ibmvnic_multicast_ctrl {
@@ -733,6 +733,7 @@ enum ibmvnic_capabilities {
 	REQ_MTU = 21,
 	MAX_MULTICAST_FILTERS = 22,
 	VLAN_HEADER_INSERTION = 23,
+	RX_VLAN_HEADER_INSERTION = 24,
 	MAX_TX_SG_ENTRIES = 25,
 	RX_SG_SUPPORTED = 26,
 	RX_SG_REQUESTED = 27,
@@ -868,7 +869,6 @@ struct ibmvnic_tx_buff {
 	int index;
 	int pool_index;
 	bool last_frag;
-	bool used_bounce;
 	union sub_crq indir_arr[6];
 	u8 hdr_data[140];
 	dma_addr_t indir_dma;
@@ -913,11 +913,6 @@ struct ibmvnic_error_buff {
 	__be32 error_id;
 };
 
-struct ibmvnic_inflight_cmd {
-	union ibmvnic_crq crq;
-	struct list_head list;
-};
-
 struct ibmvnic_adapter {
 	struct vio_dev *vdev;
 	struct net_device *netdev;
@@ -929,9 +924,6 @@ struct ibmvnic_adapter {
 	dma_addr_t ip_offload_ctrl_tok;
 	bool migrated;
 	u32 msg_enable;
-	void *bounce_buffer;
-	int bounce_buffer_size;
-	dma_addr_t bounce_buffer_dma;
 
 	/* Statistics */
 	struct ibmvnic_statistics stats;
@@ -972,15 +964,12 @@ struct ibmvnic_adapter {
 	struct ibmvnic_tx_pool *tx_pool;
 	bool closing;
 	struct completion init_done;
+	int init_done_rc;
 
 	struct list_head errors;
 	spinlock_t error_list_lock;
 
 	struct completion fw_done;
-
-	/* in-flight commands that allocate and/or map memory*/
-	struct list_head inflight;
-	spinlock_t inflight_lock;
 
 	/* partner capabilities */
 	u64 min_tx_queues;
@@ -1006,6 +995,7 @@ struct ibmvnic_adapter {
 	u64 req_mtu;
 	u64 max_multicast_filters;
 	u64 vlan_header_insertion;
+	u64 rx_vlan_header_insertion;
 	u64 max_tx_sg_entries;
 	u64 rx_sg_supported;
 	u64 rx_sg_requested;

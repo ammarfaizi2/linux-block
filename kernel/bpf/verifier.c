@@ -3346,9 +3346,14 @@ static int fixup_bpf_calls(struct bpf_verifier_env *env)
 			prog->dst_needed = 1;
 		if (insn->imm == BPF_FUNC_get_prandom_u32)
 			bpf_user_rnd_init_once();
-		if (insn->imm == BPF_FUNC_xdp_adjust_head)
-			prog->xdp_adjust_head = 1;
 		if (insn->imm == BPF_FUNC_tail_call) {
+			/* If we tail call into other programs, we
+			 * cannot make any assumptions since they can
+			 * be replaced dynamically during runtime in
+			 * the program array.
+			 */
+			prog->cb_access = 1;
+
 			/* mark bpf_tail_call as different opcode to avoid
 			 * conditional branch in the interpeter for every normal
 			 * call and to prevent accidental JITing by JIT compiler

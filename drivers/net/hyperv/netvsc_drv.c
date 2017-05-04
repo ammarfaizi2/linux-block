@@ -191,6 +191,54 @@ static void *init_ppi_data(struct rndis_message *msg, u32 ppi_size,
 	return ppi;
 }
 
+/* Azure hosts don't support non-TCP port numbers in hashing yet. We compute
+ * hash for non-TCP traffic with only IP numbers.
+ */
+static inline u32 netvsc_get_hash(struct sk_buff *skb, struct sock *sk)
+{
+	struct flow_keys flow;
+	u32 hash;
+	static u32 hashrnd __read_mostly;
+
+	net_get_random_once(&hashrnd, sizeof(hashrnd));
+
+	if (!skb_flow_dissect_flow_keys(skb, &flow, 0))
+		return 0;
+
+	if (flow.basic.ip_proto == IPPROTO_TCP) {
+		return skb_get_hash(skb);
+	} else {
+		if (flow.basic.n_proto == htons(ETH_P_IP))
+			hash = jhash2((u32 *)&flow.addrs.v4addrs, 2, hashrnd);
+		else if (flow.basic.n_proto == htons(ETH_P_IPV6))
+			hash = jhash2((u32 *)&flow.addrs.v6addrs, 8, hashrnd);
+		else
+			hash = 0;
+
+		skb_set_hash(skb, hash, PKT_HASH_TYPE_L3);
+	}
+
+	return hash;
+}
+
+static inline int netvsc_get_tx_queue(struct net_device *ndev,
+				      struct sk_buff *skb, int old_idx)
+{
+	const struct net_device_context *ndc = netdev_priv(ndev);
+	struct sock *sk = skb->sk;
+	int q_idx;
+
+	q_idx = ndc->tx_send_table[netvsc_get_hash(skb, sk) &
+				   (VRSS_SEND_TAB_SIZE - 1)];
+
+	/* If queue index changed record the new value */
+	if (q_idx != old_idx &&
+	    sk && sk_fullsock(sk) && rcu_access_pointer(sk->sk_dst_cache))
+		sk_tx_queue_set(sk, q_idx);
+
+	return q_idx;
+}
+
 /*
  * Select queue for transmit.
  *
@@ -205,23 +253,21 @@ static void *init_ppi_data(struct rndis_message *msg, u32 ppi_size,
 static u16 netvsc_select_queue(struct net_device *ndev, struct sk_buff *skb,
 			void *accel_priv, select_queue_fallback_t fallback)
 {
-	struct net_device_context *net_device_ctx = netdev_priv(ndev);
 	unsigned int num_tx_queues = ndev->real_num_tx_queues;
-	struct sock *sk = skb->sk;
-	int q_idx = sk_tx_queue_get(sk);
+	int q_idx = sk_tx_queue_get(skb->sk);
 
-	if (q_idx < 0 || skb->ooo_okay || q_idx >= num_tx_queues) {
-		u16 hash = __skb_tx_hash(ndev, skb, VRSS_SEND_TAB_SIZE);
-		int new_idx;
-
-		new_idx = net_device_ctx->tx_send_table[hash] % num_tx_queues;
-
-		if (q_idx != new_idx && sk &&
-		    sk_fullsock(sk) && rcu_access_pointer(sk->sk_dst_cache))
-			sk_tx_queue_set(sk, new_idx);
-
-		q_idx = new_idx;
+	if (q_idx < 0 || skb->ooo_okay) {
+		/* If forwarding a packet, we use the recorded queue when
+		 * available for better cache locality.
+		 */
+		if (skb_rx_queue_recorded(skb))
+			q_idx = skb_get_rx_queue(skb);
+		else
+			q_idx = netvsc_get_tx_queue(ndev, skb, q_idx);
 	}
+
+	while (unlikely(q_idx >= num_tx_queues))
+		q_idx -= num_tx_queues;
 
 	return q_idx;
 }
@@ -815,7 +861,7 @@ static void netvsc_init_settings(struct net_device *dev)
 	struct net_device_context *ndc = netdev_priv(dev);
 
 	ndc->speed = SPEED_UNKNOWN;
-	ndc->duplex = DUPLEX_UNKNOWN;
+	ndc->duplex = DUPLEX_FULL;
 }
 
 static int netvsc_get_link_ksettings(struct net_device *dev,
@@ -897,7 +943,7 @@ static void netvsc_get_stats64(struct net_device *net,
 			       struct rtnl_link_stats64 *t)
 {
 	struct net_device_context *ndev_ctx = netdev_priv(net);
-	struct netvsc_device *nvdev = rcu_dereference(ndev_ctx->nvdev);
+	struct netvsc_device *nvdev = rcu_dereference_rtnl(ndev_ctx->nvdev);
 	int i;
 
 	if (!nvdev)

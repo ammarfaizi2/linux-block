@@ -3407,6 +3407,8 @@ static void rt2800_config_alc(struct rt2x00_dev *rt2x00dev,
 			rt2800_rfcsr_write(rt2x00dev, 42, 0x5b);
 	}
 	rt2800_register_write(rt2x00dev, MAC_SYS_CTRL, mac_sys_ctrl);
+
+	rt2800_vco_calibration(rt2x00dev);
 }
 
 static void rt2800_bbp_write_with_rx_chain(struct rt2x00_dev *rt2x00dev,
@@ -3806,11 +3808,25 @@ static void rt2800_config_channel(struct rt2x00_dev *rt2x00dev,
 	}
 
 	if (rt2x00_rt(rt2x00dev, RT5592) || rt2x00_rt(rt2x00dev, RT6352)) {
+		reg = 0x10;
+		if (!conf_is_ht40(conf)) {
+			if (rt2x00_rt(rt2x00dev, RT6352) &&
+			    rt2x00_has_cap_external_lna_bg(rt2x00dev)) {
+				reg |= 0x5;
+			} else {
+				reg |= 0xa;
+			}
+		}
 		rt2800_bbp_write(rt2x00dev, 195, 141);
-		rt2800_bbp_write(rt2x00dev, 196, conf_is_ht40(conf) ? 0x10 : 0x1a);
+		rt2800_bbp_write(rt2x00dev, 196, reg);
 
 		/* AGC init */
-		reg = (rf->channel <= 14 ? 0x1c : 0x24) + 2 * rt2x00dev->lna_gain;
+		if (rt2x00_rt(rt2x00dev, RT6352))
+			reg = 0x04;
+		else
+			reg = rf->channel <= 14 ? 0x1c : 0x24;
+
+		reg += 2 * rt2x00dev->lna_gain;
 		rt2800_bbp_write_with_rx_chain(rt2x00dev, 66, reg);
 
 		rt2800_iq_calibrate(rt2x00dev, rf->channel);
@@ -4916,7 +4932,7 @@ void rt2800_vco_calibration(struct rt2x00_dev *rt2x00dev)
 	rt2800_register_write(rt2x00dev, TX_PIN_CFG, tx_pin);
 
 	if (rt2x00_rt(rt2x00dev, RT6352)) {
-		if (rt2x00dev->default_ant.tx_chain_num == 1) {
+		if (rt2x00dev->default_ant.rx_chain_num == 1) {
 			rt2800_bbp_write(rt2x00dev, 91, 0x07);
 			rt2800_bbp_write(rt2x00dev, 95, 0x1A);
 			rt2800_bbp_write(rt2x00dev, 195, 128);
@@ -4937,8 +4953,8 @@ void rt2800_vco_calibration(struct rt2x00_dev *rt2x00dev)
 		}
 
 		if (rt2x00_has_cap_external_lna_bg(rt2x00dev)) {
-			rt2800_bbp_write(rt2x00dev, 75, 0x60);
-			rt2800_bbp_write(rt2x00dev, 76, 0x44);
+			rt2800_bbp_write(rt2x00dev, 75, 0x68);
+			rt2800_bbp_write(rt2x00dev, 76, 0x4C);
 			rt2800_bbp_write(rt2x00dev, 79, 0x1C);
 			rt2800_bbp_write(rt2x00dev, 80, 0x0C);
 			rt2800_bbp_write(rt2x00dev, 82, 0xB6);
@@ -8129,9 +8145,11 @@ static void rt2800_init_rfcsr_6352(struct rt2x00_dev *rt2x00dev)
 	rt2800_rfcsr_write_chanreg(rt2x00dev, 44, 0xB3);
 	rt2800_rfcsr_write_chanreg(rt2x00dev, 45, 0xD5);
 	rt2800_rfcsr_write_chanreg(rt2x00dev, 46, 0x27);
-	rt2800_rfcsr_write_chanreg(rt2x00dev, 47, 0x69);
+	rt2800_rfcsr_write_bank(rt2x00dev, 4, 47, 0x67);
+	rt2800_rfcsr_write_bank(rt2x00dev, 6, 47, 0x69);
 	rt2800_rfcsr_write_chanreg(rt2x00dev, 48, 0xFF);
-	rt2800_rfcsr_write_chanreg(rt2x00dev, 54, 0x20);
+	rt2800_rfcsr_write_bank(rt2x00dev, 4, 54, 0x27);
+	rt2800_rfcsr_write_bank(rt2x00dev, 6, 54, 0x20);
 	rt2800_rfcsr_write_chanreg(rt2x00dev, 55, 0x66);
 	rt2800_rfcsr_write_chanreg(rt2x00dev, 56, 0xFF);
 	rt2800_rfcsr_write_chanreg(rt2x00dev, 57, 0x1C);

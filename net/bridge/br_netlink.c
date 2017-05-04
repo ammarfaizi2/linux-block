@@ -748,8 +748,8 @@ int br_setlink(struct net_device *dev, struct nlmsghdr *nlh, u16 flags)
 
 	if (p && protinfo) {
 		if (protinfo->nla_type & NLA_F_NESTED) {
-			err = nla_parse_nested(tb, IFLA_BRPORT_MAX,
-					       protinfo, br_port_policy);
+			err = nla_parse_nested(tb, IFLA_BRPORT_MAX, protinfo,
+					       br_port_policy, NULL);
 			if (err)
 				return err;
 
@@ -1165,11 +1165,14 @@ static int br_dev_newlink(struct net *src_net, struct net_device *dev,
 		spin_unlock_bh(&br->lock);
 	}
 
-	err = br_changelink(dev, tb, data);
+	err = register_netdevice(dev);
 	if (err)
 		return err;
 
-	return register_netdevice(dev);
+	err = br_changelink(dev, tb, data);
+	if (err)
+		unregister_netdevice(dev);
+	return err;
 }
 
 static size_t br_get_size(const struct net_device *brdev)

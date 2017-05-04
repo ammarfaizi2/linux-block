@@ -53,6 +53,7 @@
 #include <net/dst_metadata.h>
 #include <net/dst.h>
 #include <net/sock_reuseport.h>
+#include <net/busy_poll.h>
 
 /**
  *	sk_filter_trim_cap - run a packet through a socket filter
@@ -354,7 +355,8 @@ static bool convert_bpf_extensions(struct sock_filter *fp,
  *	@new_prog: buffer where converted program will be stored
  *	@new_len: pointer to store length of converted program
  *
- * Remap 'sock_filter' style BPF instruction set to 'sock_filter_ext' style.
+ * Remap 'sock_filter' style classic BPF (cBPF) instruction set to 'bpf_insn'
+ * style extended BPF (eBPF).
  * Conversion workflow:
  *
  * 1) First pass for calculating the new program length:
@@ -2766,12 +2768,7 @@ xdp_func_proto(enum bpf_func_id func_id)
 static const struct bpf_func_proto *
 cg_skb_func_proto(enum bpf_func_id func_id)
 {
-	switch (func_id) {
-	case BPF_FUNC_skb_load_bytes:
-		return &bpf_skb_load_bytes_proto;
-	default:
-		return bpf_base_func_proto(func_id);
-	}
+	return sk_filter_func_proto(func_id);
 }
 
 static const struct bpf_func_proto *
@@ -3205,6 +3202,19 @@ static u32 bpf_convert_ctx_access(enum bpf_access_type type,
 			*insn++ = BPF_MOV64_REG(si->dst_reg, si->dst_reg);
 		else
 			*insn++ = BPF_MOV64_IMM(si->dst_reg, 0);
+#endif
+		break;
+
+	case offsetof(struct __sk_buff, napi_id):
+#if defined(CONFIG_NET_RX_BUSY_POLL)
+		BUILD_BUG_ON(FIELD_SIZEOF(struct sk_buff, napi_id) != 4);
+
+		*insn++ = BPF_LDX_MEM(BPF_W, si->dst_reg, si->src_reg,
+				      offsetof(struct sk_buff, napi_id));
+		*insn++ = BPF_JMP_IMM(BPF_JGE, si->dst_reg, MIN_NAPI_ID, 1);
+		*insn++ = BPF_MOV64_IMM(si->dst_reg, 0);
+#else
+		*insn++ = BPF_MOV64_IMM(si->dst_reg, 0);
 #endif
 		break;
 	}

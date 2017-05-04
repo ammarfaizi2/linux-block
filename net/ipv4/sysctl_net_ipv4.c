@@ -302,6 +302,8 @@ static void proc_configure_early_demux(int enabled, int protocol)
 	struct inet6_protocol *ip6prot;
 #endif
 
+	rcu_read_lock();
+
 	ipprot = rcu_dereference(inet_protos[protocol]);
 	if (ipprot)
 		ipprot->early_demux = enabled ? ipprot->early_demux_handler :
@@ -313,6 +315,7 @@ static void proc_configure_early_demux(int enabled, int protocol)
 		ip6prot->early_demux = enabled ? ip6prot->early_demux_handler :
 						 NULL;
 #endif
+	rcu_read_unlock();
 }
 
 static int proc_tcp_early_demux(struct ctl_table *table, int write,
@@ -344,6 +347,19 @@ static int proc_udp_early_demux(struct ctl_table *table, int write,
 		proc_configure_early_demux(enabled, IPPROTO_UDP);
 	}
 
+	return ret;
+}
+
+static int proc_tfo_blackhole_detect_timeout(struct ctl_table *table,
+					     int write,
+					     void __user *buffer,
+					     size_t *lenp, loff_t *ppos)
+{
+	int ret;
+
+	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+	if (write && ret == 0)
+		tcp_fastopen_active_timeout_reset();
 	return ret;
 }
 
@@ -395,6 +411,14 @@ static struct ctl_table ipv4_table[] = {
 		.mode		= 0600,
 		.maxlen		= ((TCP_FASTOPEN_KEY_LENGTH * 2) + 10),
 		.proc_handler	= proc_tcp_fastopen_key,
+	},
+	{
+		.procname	= "tcp_fastopen_blackhole_timeout_sec",
+		.data		= &sysctl_tcp_fastopen_blackhole_timeout,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_tfo_blackhole_detect_timeout,
+		.extra1		= &zero,
 	},
 	{
 		.procname	= "tcp_abort_on_overflow",

@@ -95,24 +95,13 @@ static u8 *ieee80211_get_bssid(struct ieee80211_hdr *hdr, size_t len,
  * This function cleans up the SKB, i.e. it removes all the stuff
  * only useful for monitoring.
  */
-static struct sk_buff *remove_monitor_info(struct ieee80211_local *local,
-					   struct sk_buff *skb,
-					   unsigned int rtap_vendor_space)
+static void remove_monitor_info(struct sk_buff *skb,
+				unsigned int present_fcs_len,
+				unsigned int rtap_vendor_space)
 {
-	if (ieee80211_hw_check(&local->hw, RX_INCLUDES_FCS)) {
-		if (likely(skb->len > FCS_LEN))
-			__pskb_trim(skb, skb->len - FCS_LEN);
-		else {
-			/* driver bug */
-			WARN_ON(1);
-			dev_kfree_skb(skb);
-			return NULL;
-		}
-	}
-
+	if (present_fcs_len)
+		__pskb_trim(skb, skb->len - present_fcs_len);
 	__pskb_pull(skb, rtap_vendor_space);
-
-	return skb;
 }
 
 static inline bool should_drop_frame(struct sk_buff *skb, int present_fcs_len,
@@ -206,6 +195,51 @@ ieee80211_rx_radiotap_hdrlen(struct ieee80211_local *local,
 	}
 
 	return len;
+}
+
+static void ieee80211_handle_mu_mimo_mon(struct ieee80211_sub_if_data *sdata,
+					 struct sk_buff *skb,
+					 int rtap_vendor_space)
+{
+	struct {
+		struct ieee80211_hdr_3addr hdr;
+		u8 category;
+		u8 action_code;
+	} __packed action;
+
+	if (!sdata)
+		return;
+
+	BUILD_BUG_ON(sizeof(action) != IEEE80211_MIN_ACTION_SIZE + 1);
+
+	if (skb->len < rtap_vendor_space + sizeof(action) +
+		       VHT_MUMIMO_GROUPS_DATA_LEN)
+		return;
+
+	if (!is_valid_ether_addr(sdata->u.mntr.mu_follow_addr))
+		return;
+
+	skb_copy_bits(skb, rtap_vendor_space, &action, sizeof(action));
+
+	if (!ieee80211_is_action(action.hdr.frame_control))
+		return;
+
+	if (action.category != WLAN_CATEGORY_VHT)
+		return;
+
+	if (action.action_code != WLAN_VHT_ACTION_GROUPID_MGMT)
+		return;
+
+	if (!ether_addr_equal(action.hdr.addr1, sdata->u.mntr.mu_follow_addr))
+		return;
+
+	skb = skb_copy(skb, GFP_ATOMIC);
+	if (!skb)
+		return;
+
+	skb->pkt_type = IEEE80211_SDATA_QUEUE_TYPE_FRAME;
+	skb_queue_tail(&sdata->skb_queue, skb);
+	ieee80211_queue_work(&sdata->local->hw, &sdata->work);
 }
 
 /*
@@ -515,7 +549,6 @@ ieee80211_rx_monitor(struct ieee80211_local *local, struct sk_buff *origskb,
 	struct net_device *prev_dev = NULL;
 	int present_fcs_len = 0;
 	unsigned int rtap_vendor_space = 0;
-	struct ieee80211_mgmt *mgmt;
 	struct ieee80211_sub_if_data *monitor_sdata =
 		rcu_dereference(local->monitor_sdata);
 
@@ -534,8 +567,15 @@ ieee80211_rx_monitor(struct ieee80211_local *local, struct sk_buff *origskb,
 	 * the SKB because it has a bad FCS/PLCP checksum.
 	 */
 
-	if (ieee80211_hw_check(&local->hw, RX_INCLUDES_FCS))
+	if (ieee80211_hw_check(&local->hw, RX_INCLUDES_FCS)) {
+		if (unlikely(origskb->len <= FCS_LEN)) {
+			/* driver bug */
+			WARN_ON(1);
+			dev_kfree_skb(origskb);
+			return NULL;
+		}
 		present_fcs_len = FCS_LEN;
+	}
 
 	/* ensure hdr->frame_control and vendor radiotap data are in skb head */
 	if (!pskb_may_pull(origskb, 2 + rtap_vendor_space)) {
@@ -550,8 +590,12 @@ ieee80211_rx_monitor(struct ieee80211_local *local, struct sk_buff *origskb,
 			return NULL;
 		}
 
-		return remove_monitor_info(local, origskb, rtap_vendor_space);
+		remove_monitor_info(origskb, present_fcs_len,
+				    rtap_vendor_space);
+		return origskb;
 	}
+
+	ieee80211_handle_mu_mimo_mon(monitor_sdata, origskb, rtap_vendor_space);
 
 	/* room for the radiotap header based on driver features */
 	rt_hdrlen = ieee80211_rx_radiotap_hdrlen(local, status, origskb);
@@ -580,9 +624,8 @@ ieee80211_rx_monitor(struct ieee80211_local *local, struct sk_buff *origskb,
 		 * and FCS from the original.
 		 */
 		skb = skb_copy_expand(origskb, needed_headroom, 0, GFP_ATOMIC);
-
-		origskb = remove_monitor_info(local, origskb,
-					      rtap_vendor_space);
+		remove_monitor_info(origskb, present_fcs_len,
+				    rtap_vendor_space);
 
 		if (!skb)
 			return origskb;
@@ -596,16 +639,7 @@ ieee80211_rx_monitor(struct ieee80211_local *local, struct sk_buff *origskb,
 	skb->pkt_type = PACKET_OTHERHOST;
 	skb->protocol = htons(ETH_P_802_2);
 
-	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
-		if (sdata->vif.type != NL80211_IFTYPE_MONITOR)
-			continue;
-
-		if (sdata->u.mntr.flags & MONITOR_FLAG_COOK_FRAMES)
-			continue;
-
-		if (!ieee80211_sdata_running(sdata))
-			continue;
-
+	list_for_each_entry_rcu(sdata, &local->mon_list, u.mntr.list) {
 		if (prev_dev) {
 			skb2 = skb_clone(skb, GFP_ATOMIC);
 			if (skb2) {
@@ -616,23 +650,6 @@ ieee80211_rx_monitor(struct ieee80211_local *local, struct sk_buff *origskb,
 
 		prev_dev = sdata->dev;
 		ieee80211_rx_stats(sdata->dev, skb->len);
-	}
-
-	mgmt = (void *)skb->data;
-	if (monitor_sdata &&
-	    skb->len >= IEEE80211_MIN_ACTION_SIZE + 1 + VHT_MUMIMO_GROUPS_DATA_LEN &&
-	    ieee80211_is_action(mgmt->frame_control) &&
-	    mgmt->u.action.category == WLAN_CATEGORY_VHT &&
-	    mgmt->u.action.u.vht_group_notif.action_code == WLAN_VHT_ACTION_GROUPID_MGMT &&
-	    is_valid_ether_addr(monitor_sdata->u.mntr.mu_follow_addr) &&
-	    ether_addr_equal(mgmt->da, monitor_sdata->u.mntr.mu_follow_addr)) {
-		struct sk_buff *mu_skb = skb_copy(skb, GFP_ATOMIC);
-
-		if (mu_skb) {
-			mu_skb->pkt_type = IEEE80211_SDATA_QUEUE_TYPE_FRAME;
-			skb_queue_tail(&monitor_sdata->skb_queue, mu_skb);
-			ieee80211_queue_work(&local->hw, &monitor_sdata->work);
-		}
 	}
 
 	if (prev_dev) {
@@ -3610,6 +3627,27 @@ static bool ieee80211_accept_frame(struct ieee80211_rx_data *rx)
 			    !ether_addr_equal(bssid, hdr->addr1))
 				return false;
 		}
+
+		/*
+		 * 802.11-2016 Table 9-26 says that for data frames, A1 must be
+		 * the BSSID - we've checked that already but may have accepted
+		 * the wildcard (ff:ff:ff:ff:ff:ff).
+		 *
+		 * It also says:
+		 *	The BSSID of the Data frame is determined as follows:
+		 *	a) If the STA is contained within an AP or is associated
+		 *	   with an AP, the BSSID is the address currently in use
+		 *	   by the STA contained in the AP.
+		 *
+		 * So we should not accept data frames with an address that's
+		 * multicast.
+		 *
+		 * Accepting it also opens a security problem because stations
+		 * could encrypt it with the GTK and inject traffic that way.
+		 */
+		if (ieee80211_is_data(hdr->frame_control) && multicast)
+			return false;
+
 		return true;
 	case NL80211_IFTYPE_WDS:
 		if (bssid || !ieee80211_is_data(hdr->frame_control))

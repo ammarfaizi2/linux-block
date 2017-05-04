@@ -134,6 +134,7 @@ int hci_uart_tx_wakeup(struct hci_uart *hu)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(hci_uart_tx_wakeup);
 
 static void hci_uart_write_work(struct work_struct *work)
 {
@@ -176,6 +177,7 @@ static void hci_uart_init_work(struct work_struct *work)
 {
 	struct hci_uart *hu = container_of(work, struct hci_uart, init_ready);
 	int err;
+	struct hci_dev *hdev;
 
 	if (!test_and_clear_bit(HCI_UART_INIT_PENDING, &hu->hdev_flags))
 		return;
@@ -183,9 +185,12 @@ static void hci_uart_init_work(struct work_struct *work)
 	err = hci_register_dev(hu->hdev);
 	if (err < 0) {
 		BT_ERR("Can't register HCI device");
-		hci_free_dev(hu->hdev);
+		hdev = hu->hdev;
 		hu->hdev = NULL;
+		hci_free_dev(hdev);
+		clear_bit(HCI_UART_PROTO_READY, &hu->flags);
 		hu->proto->close(hu);
+		return;
 	}
 
 	set_bit(HCI_UART_REGISTERED, &hu->flags);
@@ -318,25 +323,6 @@ void hci_uart_set_speeds(struct hci_uart *hu, unsigned int init_speed,
 	hu->oper_speed = oper_speed;
 }
 
-void hci_uart_init_tty(struct hci_uart *hu)
-{
-	struct tty_struct *tty = hu->tty;
-	struct ktermios ktermios;
-
-	/* Bring the UART into a known 8 bits no parity hw fc state */
-	ktermios = tty->termios;
-	ktermios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP |
-			      INLCR | IGNCR | ICRNL | IXON);
-	ktermios.c_oflag &= ~OPOST;
-	ktermios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-	ktermios.c_cflag &= ~(CSIZE | PARENB);
-	ktermios.c_cflag |= CS8;
-	ktermios.c_cflag |= CRTSCTS;
-
-	/* tty_set_termios() return not checked as it is always 0 */
-	tty_set_termios(tty, &ktermios);
-}
-
 void hci_uart_set_baudrate(struct hci_uart *hu, unsigned int speed)
 {
 	struct tty_struct *tty = hu->tty;
@@ -458,6 +444,10 @@ static int hci_uart_tty_open(struct tty_struct *tty)
 	tty->disc_data = hu;
 	hu->tty = tty;
 	tty->receive_room = 65536;
+
+	/* disable alignment support by default */
+	hu->alignment = 1;
+	hu->padding = 0;
 
 	INIT_WORK(&hu->init_ready, hci_uart_init_work);
 	INIT_WORK(&hu->write_work, hci_uart_write_work);
@@ -616,6 +606,7 @@ static int hci_uart_register_dev(struct hci_uart *hu)
 
 	if (hci_register_dev(hdev) < 0) {
 		BT_ERR("Can't register HCI device");
+		hu->hdev = NULL;
 		hci_free_dev(hdev);
 		return -ENODEV;
 	}
