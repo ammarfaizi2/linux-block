@@ -3216,9 +3216,9 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func,
  * that the read-side critical sections end on enabling of preemption
  * or on voluntary preemption.
  * RCU read-side critical sections are delimited by :
- *  - rcu_read_lock_sched() and  rcu_read_unlock_sched(),
- *  OR
- *  anything that disables preemption.
+ *  - rcu_read_lock_sched() and rcu_read_unlock_sched(), OR
+ *  - anything that disables preemption.
+ *
  *  These may be nested.
  *
  * See the description of call_rcu() for more detailed information on
