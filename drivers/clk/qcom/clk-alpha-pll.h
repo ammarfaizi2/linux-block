@@ -27,6 +27,8 @@ struct pll_vco {
  * struct clk_alpha_pll - phase locked loop (PLL)
  * @offset: base address of registers
  * @vco_table: array of VCO settings
+ * @min_rate: Minimim rate for PLLs with single VCO range
+ * @max_rate: Maximun rate for PLLs with single VCO range
  * @clkr: regmap clock handle
  */
 struct clk_alpha_pll {
@@ -37,8 +39,11 @@ struct clk_alpha_pll {
 #define SUPPORTS_OFFLINE_REQ	BIT(0)
 #define SUPPORTS_16BIT_ALPHA	BIT(1)
 #define SUPPORTS_FSM_MODE	BIT(2)
+#define SUPPORTS_DYNAMIC_UPDATE	BIT(3)
 	u8 flags;
 
+	unsigned long min_rate;
+	unsigned long max_rate;
 	struct clk_regmap clkr;
 };
 
