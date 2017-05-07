@@ -38,7 +38,6 @@
 #include <linux/spinlock.h>
 #include <linux/threads.h>
 #include <linux/cpumask.h>
-#include <linux/seqlock.h>
 #include <linux/lockdep.h>
 #include <linux/debugobjects.h>
 #include <linux/bug.h>
