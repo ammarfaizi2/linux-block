@@ -35,10 +35,10 @@
 
 #include <linux/types.h>
 #include <linux/compiler.h>
+#include <linux/atomic.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/bottom_half.h>
-#include <linux/atomic.h>
 #include <linux/lockdep.h>
 #include <asm/processor.h>
 #include <linux/cpumask.h>
