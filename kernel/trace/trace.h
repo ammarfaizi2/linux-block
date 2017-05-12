@@ -1430,7 +1430,6 @@ static inline void *event_file_data(struct file *filp)
 	return ACCESS_ONCE(file_inode(filp)->i_private);
 }
 
-extern struct mutex event_mutex;
 extern struct list_head ftrace_events;
 
 extern const struct file_operations event_trigger_fops;

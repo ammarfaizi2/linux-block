@@ -50,6 +50,8 @@ struct trace_event;
 int trace_raw_output_prep(struct trace_iterator *iter,
 			  struct trace_event *event);
 
+extern struct mutex event_mutex;
+
 /*
  * The trace entry - the most basic unit of tracing. This is what
  * is printed in the end as a single line in the trace output, such as:

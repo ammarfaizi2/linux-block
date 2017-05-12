@@ -213,7 +213,8 @@ int perf_trace_init(struct perf_event *p_event)
 	u64 event_id = p_event->attr.config;
 	int ret = -EINVAL;
 
-	mutex_lock(&event_mutex);
+	lockdep_assert_held(&event_mutex);
+
 	list_for_each_entry(tp_event, &ftrace_events, list) {
 		if (tp_event->event.type == event_id &&
 		    tp_event->class && tp_event->class->reg &&
@@ -224,17 +225,16 @@ int perf_trace_init(struct perf_event *p_event)
 			break;
 		}
 	}
-	mutex_unlock(&event_mutex);
 
 	return ret;
 }
 
 void perf_trace_destroy(struct perf_event *p_event)
 {
-	mutex_lock(&event_mutex);
+	lockdep_assert_held(&event_mutex);
+
 	perf_trace_event_close(p_event);
 	perf_trace_event_unreg(p_event);
-	mutex_unlock(&event_mutex);
 }
 
 int perf_trace_add(struct perf_event *p_event, int flags)

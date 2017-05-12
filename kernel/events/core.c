@@ -4021,12 +4021,14 @@ static void unaccount_event(struct perf_event *event)
 
 static void perf_sched_delayed(struct work_struct *work)
 {
+	mutex_lock(&event_mutex);
 	get_online_cpus();
 	mutex_lock(&perf_sched_mutex);
 	if (atomic_dec_and_test(&perf_sched_count))
 		static_branch_disable_cpuslocked(&perf_sched_events);
 	mutex_unlock(&perf_sched_mutex);
 	put_online_cpus();
+	mutex_unlock(&event_mutex);
 }
 
 /*
@@ -4231,7 +4233,9 @@ static void put_event(struct perf_event *event)
 	if (!atomic_long_dec_and_test(&event->refcount))
 		return;
 
+	mutex_lock(&event_mutex);
 	_free_event(event);
+	mutex_unlock(&event_mutex);
 }
 
 /*
@@ -8917,6 +8921,7 @@ perf_event_mux_interval_ms_store(struct device *dev,
 	pmu->hrtimer_interval_ms = timer;
 
 	/* update all cpuctx for this PMU */
+	mutex_lock(&event_mutex);
 	get_online_cpus();
 	for_each_online_cpu(cpu) {
 		struct perf_cpu_context *cpuctx;
@@ -8927,6 +8932,7 @@ perf_event_mux_interval_ms_store(struct device *dev,
 			(remote_function_f)perf_mux_hrtimer_restart, cpuctx);
 	}
 	put_online_cpus();
+	mutex_unlock(&event_mutex);
 	mutex_unlock(&mux_interval_mutex);
 
 	return count;
@@ -9879,6 +9885,7 @@ SYSCALL_DEFINE5(perf_event_open,
 		goto err_task;
 	}
 
+	mutex_lock(&event_mutex);
 	get_online_cpus();
 
 	if (task) {
@@ -10160,6 +10167,7 @@ SYSCALL_DEFINE5(perf_event_open,
 	}
 
 	put_online_cpus();
+	mutex_unlock(&event_mutex);
 
 	mutex_lock(&current->perf_event_mutex);
 	list_add_tail(&event->owner_entry, &current->perf_event_list);
@@ -10196,6 +10204,7 @@ err_cred:
 		mutex_unlock(&task->signal->cred_guard_mutex);
 err_cpus:
 	put_online_cpus();
+	mutex_lock(&event_mutex);
 err_task:
 	if (task)
 		put_task_struct(task);
