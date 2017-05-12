@@ -813,6 +813,7 @@ struct task_struct {
 	unsigned int			lockdep_recursion;
 	struct held_lock		held_locks[MAX_LOCK_DEPTH];
 	gfp_t				lockdep_reclaim_gfp;
+	int				goc_depth;
 #endif
 
 #ifdef CONFIG_UBSAN

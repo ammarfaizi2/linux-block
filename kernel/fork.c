@@ -1658,6 +1658,7 @@ static __latent_entropy struct task_struct *copy_process(
 	p->lockdep_depth = 0; /* no locks held yet */
 	p->curr_chain_key = 0;
 	p->lockdep_recursion = 0;
+	p->goc_depth = 0;
 #endif
 
 #ifdef CONFIG_DEBUG_MUTEXES

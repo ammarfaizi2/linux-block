@@ -209,12 +209,21 @@ DEFINE_STATIC_PERCPU_RWSEM(cpu_hotplug_lock);
 
 void get_online_cpus(void)
 {
+#ifdef CONFIG_LOCKDEP
+	if (current->goc_depth++)
+		return;
+#endif
 	percpu_down_read(&cpu_hotplug_lock);
 }
 EXPORT_SYMBOL_GPL(get_online_cpus);
 
 void put_online_cpus(void)
 {
+#ifdef CONFIG_LOCKDEP
+	WARN_ON_ONCE(current->goc_depth < 1);
+	if (--current->goc_depth)
+		return;
+#endif
 	percpu_up_read(&cpu_hotplug_lock);
 }
 EXPORT_SYMBOL_GPL(put_online_cpus);
