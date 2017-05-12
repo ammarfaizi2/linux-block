@@ -23,6 +23,7 @@
 #include <linux/rcupdate.h>
 #include <linux/tracepoint.h>
 #include <linux/err.h>
+#include <linux/cpu.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/task.h>
@@ -276,12 +277,14 @@ int tracepoint_probe_register_prio(struct tracepoint *tp, void *probe,
 	struct tracepoint_func tp_func;
 	int ret;
 
+	get_online_cpus();
 	mutex_lock(&tracepoints_mutex);
 	tp_func.func = probe;
 	tp_func.data = data;
 	tp_func.prio = prio;
 	ret = tracepoint_add_func(tp, &tp_func, prio);
 	mutex_unlock(&tracepoints_mutex);
+	put_online_cpus();
 	return ret;
 }
 EXPORT_SYMBOL_GPL(tracepoint_probe_register_prio);
@@ -318,11 +321,13 @@ int tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data)
 	struct tracepoint_func tp_func;
 	int ret;
 
+	get_online_cpus();
 	mutex_lock(&tracepoints_mutex);
 	tp_func.func = probe;
 	tp_func.data = data;
 	ret = tracepoint_remove_func(tp, &tp_func);
 	mutex_unlock(&tracepoints_mutex);
+	put_online_cpus();
 	return ret;
 }
 EXPORT_SYMBOL_GPL(tracepoint_probe_unregister);
