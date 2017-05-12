@@ -1294,13 +1294,13 @@ static int register_aggr_kprobe(struct kprobe *orig_p, struct kprobe *p)
 	int ret = 0;
 	struct kprobe *ap = orig_p;
 
-	/* For preparing optimization, jump_label_text_reserved() is called */
-	jump_label_lock();
 	/*
 	 * Get online CPUs to avoid text_mutex deadlock.with stop machine,
 	 * which is invoked by unoptimize_kprobe() in add_new_kprobe()
 	 */
 	get_online_cpus();
+	/* For preparing optimization, jump_label_text_reserved() is called */
+	jump_label_lock();
 	mutex_lock(&text_mutex);
 
 	if (!kprobe_aggrprobe(orig_p)) {
@@ -1348,8 +1348,8 @@ static int register_aggr_kprobe(struct kprobe *orig_p, struct kprobe *p)
 
 out:
 	mutex_unlock(&text_mutex);
-	put_online_cpus();
 	jump_label_unlock();
+	put_online_cpus();
 
 	if (ret == 0 && kprobe_disabled(ap) && !kprobe_disabled(p)) {
 		ap->flags &= ~KPROBE_FLAG_DISABLED;
