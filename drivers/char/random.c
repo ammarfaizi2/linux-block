@@ -262,6 +262,7 @@
 #include <linux/syscalls.h>
 #include <linux/completion.h>
 #include <linux/uuid.h>
+#include <linux/locallock.h>
 #include <crypto/chacha20.h>
 
 #include <asm/processor.h>
@@ -2022,6 +2023,7 @@ struct batched_entropy {
  * goal of being quite fast and not depleting entropy.
  */
 static DEFINE_PER_CPU(struct batched_entropy, batched_entropy_u64);
+static DEFINE_LOCAL_IRQ_LOCK(batched_entropy_u64_lock);
 u64 get_random_u64(void)
 {
 	u64 ret;
@@ -2036,18 +2038,19 @@ u64 get_random_u64(void)
 	    return ret;
 #endif
 
-	batch = &get_cpu_var(batched_entropy_u64);
+	batch = &get_locked_var(batched_entropy_u64_lock, batched_entropy_u64);
 	if (batch->position % ARRAY_SIZE(batch->entropy_u64) == 0) {
 		extract_crng((u8 *)batch->entropy_u64);
 		batch->position = 0;
 	}
 	ret = batch->entropy_u64[batch->position++];
-	put_cpu_var(batched_entropy_u64);
+	put_locked_var(batched_entropy_u64_lock, batched_entropy_u64);
 	return ret;
 }
 EXPORT_SYMBOL(get_random_u64);
 
 static DEFINE_PER_CPU(struct batched_entropy, batched_entropy_u32);
+static DEFINE_LOCAL_IRQ_LOCK(batched_entropy_u32_lock);
 u32 get_random_u32(void)
 {
 	u32 ret;
@@ -2056,13 +2059,13 @@ u32 get_random_u32(void)
 	if (arch_get_random_int(&ret))
 		return ret;
 
-	batch = &get_cpu_var(batched_entropy_u32);
+	batch = &get_locked_var(batched_entropy_u32_lock, batched_entropy_u32);
 	if (batch->position % ARRAY_SIZE(batch->entropy_u32) == 0) {
 		extract_crng((u8 *)batch->entropy_u32);
 		batch->position = 0;
 	}
 	ret = batch->entropy_u32[batch->position++];
-	put_cpu_var(batched_entropy_u32);
+	put_locked_var(batched_entropy_u32_lock, batched_entropy_u32);
 	return ret;
 }
 EXPORT_SYMBOL(get_random_u32);
