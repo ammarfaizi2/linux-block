@@ -162,6 +162,9 @@ static u16 cgrp_dfl_inhibit_ss_mask;
 /* some controllers are implicitly enabled on the default hierarchy */
 static u16 cgrp_dfl_implicit_ss_mask;
 
+/* some controllers can be threaded on the default hierarchy */
+static u16 cgrp_dfl_threaded_ss_mask;
+
 /* The list of hierarchy roots */
 LIST_HEAD(cgroup_roots);
 static int cgroup_root_count;
@@ -331,14 +334,60 @@ static bool cgroup_is_threaded(struct cgroup *cgrp)
 	return cgrp->proc_cgrp;
 }
 
+/* is @cgrp root of a threaded subtree? */
+static bool cgroup_is_thread_root(struct cgroup *cgrp)
+{
+	return cgrp->proc_cgrp == cgrp;
+}
+
+/* if threaded, would @cgrp become root of a mixed threaded subtree? */
+static bool cgroup_is_mixable(struct cgroup *cgrp)
+{
+	/*
+	 * Root isn't under domain level resource control exempting it from
+	 * the no-internal-process constraint, so it can serve as a thread
+	 * root and a parent of resource domains at the same time.
+	 */
+	return !cgroup_parent(cgrp);
+}
+
+/* is @cgrp root of a mixed threaded subtree */
+static bool cgroup_is_mixed_root(struct cgroup *cgrp)
+{
+	return cgroup_is_thread_root(cgrp) && cgroup_is_mixable(cgrp);
+}
+
+/* is @cgrp's parent a mixed thread root? */
+static bool cgroup_has_mixed_parent(struct cgroup *cgrp)
+{
+	struct cgroup *parent = cgroup_parent(cgrp);
+
+	return parent && cgroup_is_mixed_root(parent);
+}
+
+/* is @cgrp the first level child of a mixed threaded subtree */
+static bool cgroup_is_mixed_child(struct cgroup *cgrp)
+{
+	struct cgroup *parent = cgroup_parent(cgrp);
+
+	return parent && cgrp->proc_cgrp == parent &&
+		cgroup_is_mixed_root(parent);
+}
+
 /* subsystems visibly enabled on a cgroup */
 static u16 cgroup_control(struct cgroup *cgrp)
 {
 	struct cgroup *parent = cgroup_parent(cgrp);
 	u16 root_ss_mask = cgrp->root->subsys_mask;
 
-	if (parent)
-		return parent->subtree_control;
+	if (parent) {
+		u16 ss_mask = parent->subtree_control;
+
+		/* mixed child can only have threaded subset of controllers */
+		if (cgroup_is_mixed_child(cgrp))
+			ss_mask &= cgrp_dfl_threaded_ss_mask;
+		return ss_mask;
+	}
 
 	if (cgroup_on_dfl(cgrp))
 		root_ss_mask &= ~(cgrp_dfl_inhibit_ss_mask |
@@ -351,8 +400,14 @@ static u16 cgroup_ss_mask(struct cgroup *cgrp)
 {
 	struct cgroup *parent = cgroup_parent(cgrp);
 
-	if (parent)
-		return parent->subtree_ss_mask;
+	if (parent) {
+		u16 ss_mask = parent->subtree_ss_mask;
+
+		/* mixed child can only have threaded subset of controllers */
+		if (cgroup_is_mixed_child(cgrp))
+			ss_mask &= cgrp_dfl_threaded_ss_mask;
+		return ss_mask;
+	}
 
 	return cgrp->root->subsys_mask;
 }
@@ -2233,14 +2288,14 @@ out_release_tset:
  * cgroup_may_migrate_to - verify whether a cgroup can be migration destination
  * @dst_cgrp: destination cgroup to test
  *
- * On the default hierarchy, except for the root, subtree_control must be
- * zero for migration destination cgroups with tasks so that child cgroups
- * don't compete against tasks.
+ * On the default hierarchy, except for the mixable and threaded cgroups,
+ * subtree_control must be zero for migration destination cgroups with
+ * tasks so that child cgroups don't compete against tasks.
  */
 bool cgroup_may_migrate_to(struct cgroup *dst_cgrp)
 {
-	return !cgroup_on_dfl(dst_cgrp) || !cgroup_parent(dst_cgrp) ||
-		!dst_cgrp->subtree_control;
+	return !cgroup_on_dfl(dst_cgrp) || cgroup_is_mixable(dst_cgrp) ||
+		cgroup_is_threaded(dst_cgrp) || !dst_cgrp->subtree_control;
 }
 
 /**
@@ -2949,11 +3004,20 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 		goto out_unlock;
 	}
 
+	/* can't enable !threaded controllers on a threaded cgroup */
+	if (cgroup_is_threaded(cgrp) && !cgroup_is_mixed_root(cgrp) &&
+	    (enable & ~cgrp_dfl_threaded_ss_mask)) {
+		ret = -EBUSY;
+		goto out_unlock;
+	}
+
 	/*
-	 * Except for the root, subtree_control must be zero for a cgroup
-	 * with tasks so that child cgroups don't compete against tasks.
+	 * Except for mixable and threaded cgroups, subtree_control must be
+	 * zero for a cgroup with tasks so that child cgroups don't compete
+	 * against tasks.
 	 */
-	if (enable && cgroup_parent(cgrp) && cgroup_has_tasks(cgrp)) {
+	if (enable && !cgroup_is_mixable(cgrp) && !cgroup_is_threaded(cgrp) &&
+	    cgroup_has_tasks(cgrp)) {
 		ret = -EBUSY;
 		goto out_unlock;
 	}
@@ -2973,6 +3037,130 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 out_unlock:
 	cgroup_kn_unlock(of->kn);
 	return ret ?: nbytes;
+}
+
+enum thread_mode_op {
+	THREAD_MODE_ENABLE,
+	THREAD_MODE_JOIN,
+	THREAD_MODE_DISABLE,
+};
+
+static int cgroup_vet_thread_mode_op(struct cgroup *cgrp, enum thread_mode_op op)
+{
+	/* verify join conditions first and convert it to ENABLE */
+	if (op == THREAD_MODE_JOIN) {
+		/* can't join if it isn't there */
+		if (!cgroup_has_mixed_parent(cgrp))
+			return -EINVAL;
+		/* avoid needing implicit domain controller migrations */
+		if (cgroup_has_tasks(cgrp))
+			return -EBUSY;
+		/* and follow the same restrictions as enable */
+		op = THREAD_MODE_ENABLE;
+	}
+
+	/*
+	 * The only restriction a mixable root is subject to is that it
+	 * can't end the mixed threaded subtree while there are member
+	 * descendant cgroups in it.
+	 */
+	if (cgroup_is_mixable(cgrp)) {
+		if (op == THREAD_MODE_DISABLE) {
+			struct cgroup *child;
+
+			cgroup_for_each_live_child(child, cgrp)
+				if (cgroup_is_mixed_child(child))
+					return -EBUSY;
+		}
+
+		return 0;
+	}
+
+	/*
+	 * @cgrp is starting or ending a normal threaded subtree.  Make
+	 * sure the subtree is empty and avoid needing implicit domain
+	 * controller migrations.
+	 */
+	if (css_has_online_children(&cgrp->self) || cgrp->subtree_control)
+		return -EBUSY;
+
+	/* no partial disable */
+	if (op == THREAD_MODE_DISABLE && !cgroup_is_thread_root(cgrp))
+		return -EBUSY;
+
+	return 0;
+}
+
+static int cgroup_enable_threaded(struct cgroup *cgrp, bool is_join)
+{
+	struct cgroup *proc_cgrp;
+	int ret;
+
+	lockdep_assert_held(&cgroup_mutex);
+
+	/* noop if already threaded */
+	if (cgroup_is_threaded(cgrp))
+		return 0;
+
+	ret = cgroup_vet_thread_mode_op(cgrp, is_join ? THREAD_MODE_JOIN :
+							THREAD_MODE_ENABLE);
+	if (ret)
+		return ret;
+
+	if (is_join)
+		proc_cgrp = cgroup_parent(cgrp);
+	else
+		proc_cgrp = cgrp;
+
+	cgroup_save_control(cgrp);
+
+	/*
+	 * Mark it threaded.  This makes cgroup_control() and
+	 * cgroup_ss_mask() skip domain controllers.  In turn, the
+	 * following control operations migrate tasks to the matching
+	 * threaded csets.
+	 */
+	cgrp->proc_cgrp = proc_cgrp;
+
+	ret = cgroup_apply_control(cgrp);
+	if (ret)
+		cgrp->proc_cgrp = NULL;
+
+	cgroup_finalize_control(cgrp, ret);
+
+	return ret;
+}
+
+static int cgroup_disable_threaded(struct cgroup *cgrp)
+{
+	struct cgroup *proc_cgrp = cgrp->proc_cgrp;
+	int ret;
+
+	lockdep_assert_held(&cgroup_mutex);
+
+	/* noop if already !threaded */
+	if (!cgroup_is_threaded(cgrp))
+		return 0;
+
+	ret = cgroup_vet_thread_mode_op(cgrp, THREAD_MODE_DISABLE);
+	if (ret)
+		return ret;
+
+	cgroup_save_control(cgrp);
+
+	/*
+	 * Mark it !threaded.  This restores cgroup_control() and
+	 * cgroup_ss_mask() behavior.  See cgroup_enabled_threaded().
+	 */
+	cgrp->proc_cgrp = NULL;
+
+	ret = cgroup_apply_control(cgrp);
+	if (ret)
+		cgrp->proc_cgrp = proc_cgrp;
+
+	cgroup_finalize_control(cgrp, ret);
+
+	return ret;
 }
 
 static int cgroup_events_show(struct seq_file *seq, void *v)
@@ -3858,12 +4046,12 @@ static void *cgroup_procs_next(struct seq_file *s, void *v, loff_t *pos)
 	return css_task_iter_next(it);
 }
 
-static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
+static void *__cgroup_procs_start(struct seq_file *s, loff_t *pos,
+				  unsigned int iter_flags)
 {
 	struct kernfs_open_file *of = s->private;
 	struct cgroup *cgrp = seq_css(s)->cgroup;
 	struct css_task_iter *it = of->priv;
-	unsigned iter_flags = CSS_TASK_ITER_PROCS | CSS_TASK_ITER_THREADED;
 
 	/*
 	 * When a seq_file is seeked, it's always traversed sequentially
@@ -3884,6 +4072,23 @@ static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
 	}
 
 	return cgroup_procs_next(s, NULL, NULL);
+}
+
+static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
+{
+	struct cgroup *cgrp = seq_css(s)->cgroup;
+
+	/*
+	 * All processes of a threaded subtree are in the top threaded
+	 * cgroup.  Only threads can be distributed across the subtree.
+	 * Reject reads on cgroup.procs in the subtree proper.  They're
+	 * always empty anyway.
+	 */
+	if (cgroup_is_threaded(cgrp) && !cgroup_is_thread_root(cgrp))
+		return ERR_PTR(-EINVAL);
+
+	return __cgroup_procs_start(s, pos, CSS_TASK_ITER_PROCS |
+					    CSS_TASK_ITER_THREADED);
 }
 
 static int cgroup_procs_show(struct seq_file *s, void *v)
@@ -3940,6 +4145,79 @@ out_unlock:
 	return ret ?: nbytes;
 }
 
+static void *cgroup_threads_start(struct seq_file *s, loff_t *pos)
+{
+	struct cgroup *cgrp = seq_css(s)->cgroup;
+
+	if (!cgroup_is_threaded(cgrp))
+		return ERR_PTR(-EINVAL);
+
+	return __cgroup_procs_start(s, pos, 0);
+}
+
+static ssize_t cgroup_threads_write(struct kernfs_open_file *of,
+				    char *buf, size_t nbytes, loff_t off)
+{
+	struct super_block *sb = of->file->f_path.dentry->d_sb;
+	struct cgroup *cgrp, *common_ancestor;
+	struct task_struct *task;
+	ssize_t ret;
+
+	buf = strstrip(buf);
+
+	cgrp = cgroup_kn_lock_live(of->kn, false);
+	if (!cgrp)
+		return -ENODEV;
+
+	/* cgroup.procs determines delegation, require permission on it too */
+	ret = cgroup_procs_write_permission(cgrp, sb);
+	if (ret)
+		goto out_unlock;
+
+	/* enable or disable? */
+	if (!strcmp(buf, "enable")) {
+		ret = cgroup_enable_threaded(cgrp, false);
+		goto out_unlock;
+	} else if (!strcmp(buf, "join")) {
+		ret = cgroup_enable_threaded(cgrp, true);
+		goto out_unlock;
+	} else if (!strcmp(buf, "disable")) {
+		ret = cgroup_disable_threaded(cgrp);
+		goto out_unlock;
+	}
+
+	/* thread migration */
+	ret = -EINVAL;
+	if (!cgroup_is_threaded(cgrp))
+		goto out_unlock;
+
+	task = cgroup_procs_write_start(buf, false);
+	ret = PTR_ERR_OR_ZERO(task);
+	if (ret)
+		goto out_unlock;
+
+	common_ancestor = cgroup_migrate_common_ancestor(task, cgrp);
+
+	/* can't migrate across disjoint threaded subtrees */
+	ret = -EACCES;
+	if (common_ancestor->proc_cgrp != cgrp->proc_cgrp)
+		goto out_finish;
+
+	/* and follow the cgroup.procs delegation rule */
+	ret = cgroup_procs_write_permission(common_ancestor, sb);
+	if (ret)
+		goto out_finish;
+
+	ret = cgroup_attach_task(cgrp, task, false);
+
+out_finish:
+	cgroup_procs_write_finish(task);
+out_unlock:
+	cgroup_kn_unlock(of->kn);
+
+	return ret ?: nbytes;
+}
+
 /* cgroup core interface files for the default hierarchy */
 static struct cftype cgroup_base_files[] = {
 	{
@@ -3950,6 +4228,14 @@ static struct cftype cgroup_base_files[] = {
 		.seq_next = cgroup_procs_next,
 		.seq_show = cgroup_procs_show,
 		.write = cgroup_procs_write,
+	},
+	{
+		.name = "cgroup.threads",
+		.release = cgroup_procs_release,
+		.seq_start = cgroup_threads_start,
+		.seq_next = cgroup_procs_next,
+		.seq_show = cgroup_procs_show,
+		.write = cgroup_threads_write,
 	},
 	{
 		.name = "cgroup.controllers",
@@ -4265,6 +4551,9 @@ static struct cgroup *cgroup_create(struct cgroup *parent)
 	cgrp->self.parent = &parent->self;
 	cgrp->root = root;
 	cgrp->level = level;
+
+	if (!cgroup_has_mixed_parent(cgrp))
+		cgrp->proc_cgrp = parent->proc_cgrp;
 
 	for (tcgrp = cgrp; tcgrp; tcgrp = cgroup_parent(tcgrp))
 		cgrp->ancestor_ids[tcgrp->level] = tcgrp->id;
@@ -4712,10 +5001,16 @@ int __init cgroup_init(void)
 
 		cgrp_dfl_root.subsys_mask |= 1 << ss->id;
 
+		/* implicit controllers must be threaded too */
+		WARN_ON(ss->implicit_on_dfl && !ss->threaded);
+
 		if (ss->implicit_on_dfl)
 			cgrp_dfl_implicit_ss_mask |= 1 << ss->id;
 		else if (!ss->dfl_cftypes)
 			cgrp_dfl_inhibit_ss_mask |= 1 << ss->id;
+
+		if (ss->threaded)
+			cgrp_dfl_threaded_ss_mask |= 1 << ss->id;
 
 		if (ss->dfl_cftypes == ss->legacy_cftypes) {
 			WARN_ON(cgroup_add_cftypes(ss, ss->dfl_cftypes));
