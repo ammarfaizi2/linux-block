@@ -39,6 +39,7 @@
 #include <linux/mlx5/cmd.h>
 #include "mlx5_core.h"
 
+/* Health Test patch */
 enum {
 	MLX5_HEALTH_POLL_INTERVAL	= 2 * HZ,
 	MAX_MISSES			= 3,
