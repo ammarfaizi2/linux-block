@@ -1031,7 +1031,6 @@ static void rcu_initiate_boost(struct rcu_node *rnp, unsigned long flags)
 
 	lockdep_assert_held(&rnp->lock);
 	if (!rcu_preempt_blocked_readers_cgp(rnp) && rnp->exp_tasks == NULL) {
-		rnp->n_balk_exp_gp_tasks++;
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 		return;
 	}
