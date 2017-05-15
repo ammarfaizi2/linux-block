@@ -7469,6 +7469,7 @@ struct cgroup_subsys cpu_cgrp_subsys = {
 	.legacy_cftypes	= cpu_legacy_files,
 	.dfl_cftypes	= cpu_files,
 	.early_init	= true,
+	.threaded	= true,
 #ifdef CONFIG_CGROUP_CPUACCT
 	/*
 	 * cpuacct is enabled together with cpu on the unified hierarchy
