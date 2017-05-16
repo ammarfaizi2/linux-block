@@ -1797,7 +1797,6 @@ static void __wake_nocb_leader(struct rcu_data *rdp, bool force)
 	lockdep_assert_held(&rdp->nocb_lock);
 	if (!READ_ONCE(rdp_leader->nocb_kthread))
 		return;
-	del_timer(&rdp->nocb_timer);
 	if (rdp_leader->nocb_leader_sleep || force) {
 		/* Prior smp_mb__after_atomic() orders against prior enqueue. */
 		WRITE_ONCE(rdp_leader->nocb_leader_sleep, false);
@@ -1814,9 +1813,10 @@ static void wake_nocb_leader(struct rcu_data *rdp, bool force)
 {
 	unsigned long flags;
 
-	spin_lock_irqsave(&rdp->nocb_lock, flags);
+	del_timer(&rdp->nocb_timer);
+	raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
 	__wake_nocb_leader(rdp, force);
-	spin_unlock_irqrestore(&rdp->nocb_lock, flags);
+	raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 }
 
 /*
@@ -1829,11 +1829,11 @@ static void wake_nocb_leader_defer(struct rcu_data *rdp, int waketype,
 	unsigned long flags;
 	bool needtimer;
 
-	spin_lock_irqsave(&rdp->nocb_lock, flags);
+	raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
 	needtimer = rdp->nocb_defer_wakeup == RCU_NOCB_WAKE_NOT;
 	WRITE_ONCE(rdp->nocb_defer_wakeup, waketype);
 	trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu, reason);
-	spin_unlock_irqrestore(&rdp->nocb_lock, flags);
+	raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 	if (needtimer)
 		mod_timer(&rdp->nocb_timer, 1);
 }
@@ -2259,16 +2259,16 @@ static void do_nocb_deferred_wakeup_common(struct rcu_data *rdp)
 	unsigned long flags;
 	int ndw;
 
-	spin_lock_irqsave(&rdp->nocb_lock, flags);
+	raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
 	if (!rcu_nocb_need_deferred_wakeup(rdp)) {
-		spin_unlock_irqrestore(&rdp->nocb_lock, flags);
+		raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 		return;
 	}
 	ndw = READ_ONCE(rdp->nocb_defer_wakeup);
 	WRITE_ONCE(rdp->nocb_defer_wakeup, RCU_NOCB_WAKE_NOT);
 	__wake_nocb_leader(rdp, ndw == RCU_NOCB_WAKE_FORCE);
 	trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu, TPS("DeferredWake"));
-	spin_unlock_irqrestore(&rdp->nocb_lock, flags);
+	raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 }
 
 /* Do a deferred wakeup of rcu_nocb_kthread() from a timer handler. */
@@ -2284,10 +2284,9 @@ static void do_nocb_deferred_wakeup_timer(unsigned long x)
  */
 static void do_nocb_deferred_wakeup(struct rcu_data *rdp)
 {
-	if (rcu_nocb_need_deferred_wakeup(rdp)) {
-		del_timer(&rdp->nocb_timer);
+	del_timer(&rdp->nocb_timer);
+	if (rcu_nocb_need_deferred_wakeup(rdp))
 		do_nocb_deferred_wakeup_common(rdp);
-	}
 }
 
 void __init rcu_init_nohz(void)
@@ -2339,7 +2338,7 @@ static void __init rcu_boot_init_nocb_percpu_data(struct rcu_data *rdp)
 	rdp->nocb_tail = &rdp->nocb_head;
 	init_swait_queue_head(&rdp->nocb_wq);
 	rdp->nocb_follower_tail = &rdp->nocb_follower_head;
-	spin_lock_init(&rdp->nocb_lock);
+	raw_spin_lock_init(&rdp->nocb_lock);
 	setup_timer(&rdp->nocb_timer, do_nocb_deferred_wakeup_timer,
 		    (unsigned long)rdp);
 }

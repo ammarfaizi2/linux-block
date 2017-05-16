@@ -268,7 +268,7 @@ struct rcu_data {
 	struct rcu_head **nocb_follower_tail;
 	struct swait_queue_head nocb_wq; /* For nocb kthreads to sleep on. */
 	struct task_struct *nocb_kthread;
-	spinlock_t nocb_lock;		/* Guard following pair of fields. */
+	raw_spinlock_t nocb_lock;	/* Guard following pair of fields. */
 	int nocb_defer_wakeup;		/* Defer wakeup of nocb_kthread. */
 	struct timer_list nocb_timer;	/* Enforce finite deferral. */
 
