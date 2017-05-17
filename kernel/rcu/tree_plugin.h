@@ -1835,7 +1835,7 @@ static void wake_nocb_leader_defer(struct rcu_data *rdp, int waketype,
 	trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu, reason);
 	raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 	if (needtimer)
-		mod_timer(&rdp->nocb_timer, 1);
+		mod_timer(&rdp->nocb_timer, jiffies + 1);
 }
 
 /*
