@@ -270,10 +270,6 @@ void rcu_bh_qs(void)
 static DEFINE_PER_CPU(struct rcu_dynticks, rcu_dynticks) = {
 	.dynticks_nesting = DYNTICK_TASK_EXIT_IDLE,
 	.dynticks = ATOMIC_INIT(RCU_DYNTICK_CTRL_CTR),
-#ifdef CONFIG_NO_HZ_FULL_SYSIDLE
-	.dynticks_idle_nesting = DYNTICK_TASK_NEST_VALUE,
-	.dynticks_idle = ATOMIC_INIT(1),
-#endif /* #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
 };
 
 /*

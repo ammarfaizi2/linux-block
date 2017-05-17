@@ -2595,13 +2595,7 @@ static void rcu_bind_gp_kthread(void)
 
 	if (!tick_nohz_full_enabled())
 		return;
-#ifdef CONFIG_NO_HZ_FULL_SYSIDLE
-	cpu = tick_do_timer_cpu;
-	if (cpu >= 0 && cpu < nr_cpu_ids)
-		set_cpus_allowed_ptr(current, cpumask_of(cpu));
-#else /* #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
 	housekeeping_affine(current);
-#endif /* #else #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
 }
 
 /* Record the current task on dyntick-idle entry. */
