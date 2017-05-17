@@ -268,7 +268,7 @@ static struct clk_cpu_8996_mux pwrcl_pmux = {
 		},
 		.num_parents = 4,
 		.ops = &clk_cpu_8996_mux_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_IS_CRITICAL,
 	},
 };
 
@@ -289,7 +289,7 @@ static struct clk_cpu_8996_mux perfcl_pmux = {
 		},
 		.num_parents = 4,
 		.ops = &clk_cpu_8996_mux_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_IS_CRITICAL,
 	},
 };
 
