@@ -1018,15 +1018,10 @@ static void arm_smmu_destroy_domain_context(struct iommu_domain *domain)
 	struct arm_smmu_device *smmu = smmu_domain->smmu;
 	struct arm_smmu_cfg *cfg = &smmu_domain->cfg;
 	void __iomem *cb_base;
-	unsigned long ret;
 	int irq;
 
 	if (!smmu)
 		return;
-
-	ret = pm_runtime_get_sync(smmu->dev);
-	if (IS_ERR_VALUE(ret))
-		dev_warn(smmu->dev, "runtime resume failed");
 
 	/*
 	 * Disable the context bank and free the page tables before freeing
@@ -1042,10 +1037,6 @@ static void arm_smmu_destroy_domain_context(struct iommu_domain *domain)
 
 	free_io_pgtable_ops(smmu_domain->pgtbl_ops);
 	__arm_smmu_free_bitmap(smmu->context_map, cfg->cbndx);
-
-	ret = pm_runtime_put_sync(smmu->dev);
-	if (IS_ERR_VALUE(ret))
-		dev_warn(smmu->dev, "runtime suspend failed");
 }
 
 static struct iommu_domain *arm_smmu_domain_alloc(unsigned type)
@@ -1474,7 +1465,6 @@ static int arm_smmu_add_device(struct device *dev)
 	struct arm_smmu_master_cfg *cfg;
 	struct iommu_fwspec *fwspec = dev->iommu_fwspec;
 	int i, ret;
-	unsigned long err;
 
 	if (using_legacy_binding) {
 		ret = arm_smmu_register_legacy_master(dev, &smmu);
@@ -1515,19 +1505,11 @@ static int arm_smmu_add_device(struct device *dev)
 	while (i--)
 		cfg->smendx[i] = INVALID_SMENDX;
 
-	err = pm_runtime_get_sync(smmu->dev);
-	if (IS_ERR_VALUE(err))
-		goto out_free;
-
 	ret = arm_smmu_master_alloc_smes(dev);
 	if (ret)
 		goto out_free;
 
 	iommu_device_link(&smmu->iommu, dev);
-
-	err = pm_runtime_put_sync(smmu->dev);
-	if (IS_ERR_VALUE(err))
-		goto out_free;
 
 	return 0;
 
@@ -1543,7 +1525,7 @@ static void arm_smmu_remove_device(struct device *dev)
 	struct iommu_fwspec *fwspec = dev->iommu_fwspec;
 	struct arm_smmu_master_cfg *cfg;
 	struct arm_smmu_device *smmu;
-	unsigned long ret;
+
 
 	if (!fwspec || fwspec->ops != &arm_smmu_ops)
 		return;
@@ -1551,23 +1533,8 @@ static void arm_smmu_remove_device(struct device *dev)
 	cfg  = fwspec->iommu_priv;
 	smmu = cfg->smmu;
 
-	/*
-	 * The device link between the master device and
-	 * smmu is already purged at this point.
-	 * So enable the power to smmu explicitly.
-	 */
-
-	ret = pm_runtime_get_sync(smmu->dev);
-	if (IS_ERR_VALUE(ret))
-		dev_warn(smmu->dev, "runtime resume failed");
-
 	iommu_device_unlink(&smmu->iommu, dev);
 	arm_smmu_master_free_smes(fwspec);
-
-	ret = pm_runtime_put_sync(smmu->dev);
-	if (IS_ERR_VALUE(ret))
-		dev_warn(smmu->dev, "runtime suspend failed");
-
 	iommu_group_remove_device(dev);
 	kfree(fwspec->iommu_priv);
 	iommu_fwspec_free(dev);
@@ -2168,7 +2135,6 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	struct arm_smmu_device *smmu;
 	struct device *dev = &pdev->dev;
 	int num_irqs, i, err;
-	unsigned long ret;
 
 	smmu = devm_kzalloc(dev, sizeof(*smmu), GFP_KERNEL);
 	if (!smmu) {
@@ -2228,12 +2194,7 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 			return err;
 	}
 
-	platform_set_drvdata(pdev, smmu);
 	pm_runtime_enable(dev);
-	ret = pm_runtime_get_sync(dev);
-	if (IS_ERR_VALUE(ret))
-		return ret;
-
 	err = arm_smmu_device_cfg_probe(smmu);
 	if (err)
 		return err;
@@ -2275,11 +2236,9 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 		return err;
 	}
 
+	platform_set_drvdata(pdev, smmu);
 	arm_smmu_device_reset(smmu);
 	arm_smmu_test_smr_masks(smmu);
-	ret = pm_runtime_put_sync(dev);
-	if (IS_ERR_VALUE(ret))
-		return err;
 
 	/*
 	 * For ACPI and generic DT bindings, an SMMU will be probed before
@@ -2318,8 +2277,6 @@ static int arm_smmu_device_remove(struct platform_device *pdev)
 
 	/* Turn the thing off */
 	writel(sCR0_CLIENTPD, ARM_SMMU_GR0_NS(smmu) + ARM_SMMU_GR0_sCR0);
-	pm_runtime_force_suspend(smmu->dev);
-
 	return 0;
 }
 
