@@ -111,7 +111,6 @@ enum arm_smmu_implementation {
 	GENERIC_SMMU,
 	ARM_MMU500,
 	CAVIUM_SMMUV2,
-	QCOM_SMMUV2,
 };
 
 struct arm_smmu_s2cr {
@@ -143,14 +142,6 @@ struct arm_smmu_master_cfg {
 	(i >= fw->num_ids ? INVALID_SMENDX : __fwspec_cfg(fw)->smendx[i])
 #define for_each_cfg_sme(fw, i, idx) \
 	for (i = 0; idx = fwspec_smendx(fw, i), i < fw->num_ids; ++i)
-
-struct qcom_smmu_clk {
-	struct clk *mmagic_ahb_clk;
-	struct clk *mmagic_cfg_ahb_clk;
-	struct clk *smmu_core_ahb_clk;
-	struct clk *smmu_core_axi_clk;
-	struct clk *mmagic_core_axi_clk;
-};
 
 struct mmu500_clk {
 	struct clk *cfg_clk;
@@ -356,117 +347,6 @@ static int mmu500_init_clocks(struct arm_smmu_device *smmu)
 
 	smmu->smmu_clks.clks = sclks;
 	return 0;
-}
-
-static int qcom_smmu_init_clocks(struct arm_smmu_device *smmu)
-{
-	struct device *dev = smmu->dev;
-	struct qcom_smmu_clk *sclks;
-
-	if (!of_find_property(dev->of_node, "clocks", NULL))
-		return 0;
-
-	sclks = devm_kzalloc(dev, sizeof(*sclks), GFP_KERNEL);
-	if (!sclks)
-		return -ENOMEM;
-
-	sclks->mmagic_ahb_clk = devm_clk_get(dev, "mmagic_ahb_clk");
-	if (IS_ERR(sclks->mmagic_ahb_clk)) {
-		dev_err(dev, "Couldn't get mmagic_ahb_clk");
-		return PTR_ERR(sclks->mmagic_ahb_clk);
-	}
-
-	sclks->mmagic_cfg_ahb_clk = devm_clk_get(dev, "mmagic_cfg_ahb_clk");
-	if (IS_ERR(sclks->mmagic_cfg_ahb_clk)) {
-		dev_err(dev, "Couldn't get mmagic_cfg_ahb_clk");
-		return PTR_ERR(sclks->mmagic_cfg_ahb_clk);
-	}
-
-	sclks->smmu_core_ahb_clk = devm_clk_get(dev, "smmu_core_ahb_clk");
-	if (IS_ERR(sclks->smmu_core_ahb_clk)) {
-		dev_err(dev, "Couldn't get smmu_core_ahb_clk");
-		return PTR_ERR(sclks->smmu_core_ahb_clk);
-	}
-
-	sclks->smmu_core_axi_clk = devm_clk_get(dev, "smmu_core_axi_clk");
-	if (IS_ERR(sclks->smmu_core_axi_clk)) {
-		dev_err(dev, "Couldn't get smmu_core_axi_clk");
-		return PTR_ERR(sclks->smmu_core_axi_clk);
-	}
-
-	sclks->mmagic_core_axi_clk = devm_clk_get(dev, "mmagic_core_axi_clk");
-	if (IS_ERR(sclks->mmagic_core_axi_clk)) {
-		dev_err(dev, "Couldn't get mmagic_core_axi_clk");
-		return PTR_ERR(sclks->mmagic_core_axi_clk);
-	}
-
-	smmu->smmu_clks.clks = sclks;
-	return 0;
-}
-
-static int qcom_smmu_enable_clocks(struct arm_smmu_device *smmu)
-{
-	int ret = 0;
-	struct qcom_smmu_clk *sclks = smmu->smmu_clks.clks;
-
-	if (!sclks)
-		return 0;
-
-	ret = clk_prepare_enable(sclks->mmagic_ahb_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couldn't enable mmagic_ahb_clk");
-		goto ahb_clk_fail;
-	}
-
-	ret = clk_prepare_enable(sclks->mmagic_cfg_ahb_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couln't enable mmagic_cfg_ahb_clk");
-		goto cfg_ahb_clk_fail;
-	}
-
-	ret = clk_prepare_enable(sclks->smmu_core_ahb_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couln't enable smmu_core_ahb_clk");
-		goto core_ahb_clk_fail;
-	}
-
-	ret = clk_prepare_enable(sclks->smmu_core_axi_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couln't enable smmu_core_axi_clk");
-		goto smmu_core_axi_clk_fail;
-	}
-
-	ret = clk_prepare_enable(sclks->mmagic_core_axi_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couln't enable mmagic_core_axi_clk");
-		goto core_axi_clk_fail;
-	}
-
-	return 0;
-
-core_axi_clk_fail:
-	clk_disable_unprepare(sclks->smmu_core_axi_clk);
-smmu_core_axi_clk_fail:
-	clk_disable_unprepare(sclks->smmu_core_ahb_clk);
-core_ahb_clk_fail:
-	clk_disable_unprepare(sclks->mmagic_cfg_ahb_clk);
-cfg_ahb_clk_fail:
-	clk_disable_unprepare(sclks->mmagic_ahb_clk);
-ahb_clk_fail:
-	return ret;
-}
-
-static void qcom_smmu_disable_clocks(struct arm_smmu_device *smmu)
-{
-	struct qcom_smmu_clk *sclks = smmu->smmu_clks.clks;
-
-	if (!sclks) {
-		clk_disable_unprepare(sclks->mmagic_core_axi_clk);
-		clk_disable_unprepare(sclks->smmu_core_axi_clk);
-		clk_disable_unprepare(sclks->smmu_core_ahb_clk);
-		clk_disable_unprepare(sclks->mmagic_cfg_ahb_clk);
-		clk_disable_unprepare(sclks->mmagic_ahb_clk);
-	}
 }
 
 static void parse_driver_options(struct arm_smmu_device *smmu)
@@ -1999,9 +1879,6 @@ ARM_SMMU_MATCH_DATA(arm_mmu500, ARM_SMMU_V2, ARM_MMU500, mmu500_init_clocks,
 		    mmu500_enable_clocks, mmu500_disable_clocks);
 ARM_SMMU_MATCH_DATA(cavium_smmuv2, ARM_SMMU_V2, CAVIUM_SMMUV2,
 		    NULL, NULL, NULL);
-ARM_SMMU_MATCH_DATA(qcom_smmuv2, ARM_SMMU_V2, QCOM_SMMUV2,
-		    qcom_smmu_init_clocks, qcom_smmu_enable_clocks,
-		    qcom_smmu_disable_clocks);
 
 static const struct of_device_id arm_smmu_of_match[] = {
 	{ .compatible = "arm,smmu-v1", .data = &smmu_generic_v1 },
@@ -2010,7 +1887,6 @@ static const struct of_device_id arm_smmu_of_match[] = {
 	{ .compatible = "arm,mmu-401", .data = &arm_mmu401 },
 	{ .compatible = "arm,mmu-500", .data = &arm_mmu500 },
 	{ .compatible = "cavium,smmu-v2", .data = &cavium_smmuv2 },
-	{ .compatible = "qcom,smmu-v2", .data = &qcom_smmuv2 },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, arm_smmu_of_match);
