@@ -259,9 +259,9 @@ static int handle_iske(struct kvm_vcpu *vcpu)
 	if (kvm_is_error_hva(addr))
 		return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	rc = get_guest_storage_key(current->mm, addr, &key);
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 	if (rc)
 		return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
 	vcpu->run->s.regs.gprs[reg1] &= ~0xff;
@@ -288,9 +288,9 @@ static int handle_rrbe(struct kvm_vcpu *vcpu)
 	if (kvm_is_error_hva(addr))
 		return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	rc = reset_guest_reference_bit(current->mm, addr);
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 	if (rc < 0)
 		return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
 
@@ -340,11 +340,11 @@ static int handle_sske(struct kvm_vcpu *vcpu)
 		if (kvm_is_error_hva(addr))
 			return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
 
-		down_read(&current->mm->mmap_sem);
+		down_read_mmap_sem(current->mm);
 		rc = cond_set_guest_storage_key(current->mm, addr, key, &oldkey,
 						m3 & SSKE_NQ, m3 & SSKE_MR,
 						m3 & SSKE_MC);
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 		if (rc < 0)
 			return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
 		start += PAGE_SIZE;
@@ -927,10 +927,10 @@ static int handle_pfmf(struct kvm_vcpu *vcpu)
 
 			if (rc)
 				return rc;
-			down_read(&current->mm->mmap_sem);
+			down_read_mmap_sem(current->mm);
 			rc = cond_set_guest_storage_key(current->mm, useraddr,
 							key, NULL, nq, mr, mc);
-			up_read(&current->mm->mmap_sem);
+			up_read_mmap_sem(current->mm);
 			if (rc < 0)
 				return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
 		}
@@ -973,10 +973,10 @@ static int handle_essa(struct kvm_vcpu *vcpu)
 	kvm_s390_retry_instr(vcpu);
 	vcpu->arch.sie_block->cbrlo &= PAGE_MASK;	/* reset nceo */
 	cbrlo = phys_to_virt(vcpu->arch.sie_block->cbrlo);
-	down_read(&gmap->mm->mmap_sem);
+	down_read_mmap_sem(gmap->mm);
 	for (i = 0; i < entries; ++i)
 		__gmap_zap(gmap, cbrlo[i]);
-	up_read(&gmap->mm->mmap_sem);
+	up_read_mmap_sem(gmap->mm);
 	return 0;
 }
 

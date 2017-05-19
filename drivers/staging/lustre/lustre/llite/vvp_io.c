@@ -396,7 +396,7 @@ static int vvp_mmap_locks(const struct lu_env *env,
 		count += addr & (~PAGE_MASK);
 		addr &= PAGE_MASK;
 
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		while ((vma = our_vma(mm, addr, count)) != NULL) {
 			struct inode *inode = file_inode(vma->vm_file);
 			int flags = CEF_MUST;
@@ -437,7 +437,7 @@ static int vvp_mmap_locks(const struct lu_env *env,
 			count -= vma->vm_end - addr;
 			addr = vma->vm_end;
 		}
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		if (result < 0)
 			break;
 	}

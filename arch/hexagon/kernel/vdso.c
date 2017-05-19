@@ -65,7 +65,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 	unsigned long vdso_base;
 	struct mm_struct *mm = current->mm;
 
-	if (down_write_killable(&mm->mmap_sem))
+	if (down_write_killable_mmap_sem(mm))
 		return -EINTR;
 
 	/* Try to get it loaded right near ld.so/glibc. */
@@ -89,7 +89,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 	mm->context.vdso = (void *)vdso_base;
 
 up_fail:
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	return ret;
 }
 

@@ -725,10 +725,10 @@ static int fault_in_user_writeable(u32 __user *uaddr)
 	struct mm_struct *mm = current->mm;
 	int ret;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	ret = fixup_user_fault(current, mm, (unsigned long)uaddr,
 			       FAULT_FLAG_WRITE, NULL);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	return ret < 0 ? ret : 0;
 }

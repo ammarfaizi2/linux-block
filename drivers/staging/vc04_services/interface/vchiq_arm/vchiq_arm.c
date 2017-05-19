@@ -2089,14 +2089,14 @@ dump_phys_mem(void *virt_addr, u32 num_bytes)
 		return;
 	}
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	rc = get_user_pages(
 		(unsigned long)virt_addr, /* start */
 		num_pages,                /* len */
 		0,                        /* gup_flags */
 		pages,                    /* pages (array of page pointers) */
 		NULL);                    /* vmas */
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 
 	prev_idx = -1;
 	page = NULL;

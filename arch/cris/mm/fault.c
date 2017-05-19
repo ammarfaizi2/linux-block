@@ -120,7 +120,7 @@ do_page_fault(unsigned long address, struct pt_regs *regs,
 	if (user_mode(regs))
 		flags |= FAULT_FLAG_USER;
 retry:
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	vma = find_vma(mm, address);
 	if (!vma)
 		goto bad_area;
@@ -194,7 +194,7 @@ retry:
 			flags |= FAULT_FLAG_TRIED;
 
 			/*
-			 * No need to up_read(&mm->mmap_sem) as we would
+			 * No need to up_read_mmap_sem(mm) as we would
 			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
@@ -203,7 +203,7 @@ retry:
 		}
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return;
 
 	/*
@@ -212,7 +212,7 @@ retry:
 	 */
 
  bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
  bad_area_nosemaphore:
 	DPG(show_registers(regs));
@@ -284,14 +284,14 @@ retry:
 	 */
 
  out_of_memory:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	if (!user_mode(regs))
 		goto no_context;
 	pagefault_out_of_memory();
 	return;
 
  do_sigbus:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/*
 	 * Send a sigbus, regardless of whether we were in kernel

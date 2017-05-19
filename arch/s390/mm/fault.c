@@ -434,7 +434,7 @@ static inline int do_exception(struct pt_regs *regs, int access)
 		flags |= FAULT_FLAG_USER;
 	if (access == VM_WRITE || (trans_exc_code & store_indication) == 0x400)
 		flags |= FAULT_FLAG_WRITE;
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 #ifdef CONFIG_PGSTE
 	gmap = (current->flags & PF_VCPU) ?
@@ -520,7 +520,7 @@ retry:
 			flags &= ~(FAULT_FLAG_ALLOW_RETRY |
 				   FAULT_FLAG_RETRY_NOWAIT);
 			flags |= FAULT_FLAG_TRIED;
-			down_read(&mm->mmap_sem);
+			down_read_mmap_sem(mm);
 			goto retry;
 		}
 	}
@@ -540,7 +540,7 @@ retry:
 #endif
 	fault = 0;
 out_up:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 out:
 	return fault;
 }

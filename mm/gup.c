@@ -733,7 +733,7 @@ retry:
 	}
 
 	if (ret & VM_FAULT_RETRY) {
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		if (!(fault_flags & FAULT_FLAG_TRIED)) {
 			*unlocked = true;
 			fault_flags &= ~FAULT_FLAG_ALLOW_RETRY;
@@ -816,7 +816,7 @@ static __always_inline long __get_user_pages_locked(struct task_struct *tsk,
 		 */
 		*locked = 1;
 		lock_dropped = true;
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		ret = __get_user_pages(tsk, mm, start, 1, flags | FOLL_TRIED,
 				       pages, NULL, NULL);
 		if (ret != 1) {
@@ -837,7 +837,7 @@ static __always_inline long __get_user_pages_locked(struct task_struct *tsk,
 		 * We must let the caller know we temporarily dropped the lock
 		 * and so the critical section protected by it was lost.
 		 */
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		*locked = 0;
 	}
 	return pages_done;
@@ -850,19 +850,19 @@ static __always_inline long __get_user_pages_locked(struct task_struct *tsk,
  *
  * get_user_pages_locked() is suitable to replace the form:
  *
- *      down_read(&mm->mmap_sem);
+ *      down_read_mmap_sem(mm);
  *      do_something()
  *      get_user_pages(tsk, mm, ..., pages, NULL);
- *      up_read(&mm->mmap_sem);
+ *      up_read_mmap_sem(mm);
  *
  *  to:
  *
  *      int locked = 1;
- *      down_read(&mm->mmap_sem);
+ *      down_read_mmap_sem(mm);
  *      do_something()
  *      get_user_pages_locked(tsk, mm, ..., pages, &locked);
  *      if (locked)
- *          up_read(&mm->mmap_sem);
+ *          up_read_mmap_sem(mm);
  */
 long get_user_pages_locked(unsigned long start, unsigned long nr_pages,
 			   unsigned int gup_flags, struct page **pages,
@@ -890,20 +890,20 @@ static __always_inline long __get_user_pages_unlocked(struct task_struct *tsk,
 	long ret;
 	int locked = 1;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	ret = __get_user_pages_locked(tsk, mm, start, nr_pages, pages, NULL,
 				      &locked, false, gup_flags);
 	if (locked)
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 	return ret;
 }
 
 /*
  * get_user_pages_unlocked() is suitable to replace the form:
  *
- *      down_read(&mm->mmap_sem);
+ *      down_read_mmap_sem(mm);
  *      get_user_pages(tsk, mm, ..., pages, NULL);
- *      up_read(&mm->mmap_sem);
+ *      up_read_mmap_sem(mm);
  *
  *  with:
  *
@@ -1035,7 +1035,7 @@ long populate_vma_page_range(struct vm_area_struct *vma,
 	VM_BUG_ON(end   & ~PAGE_MASK);
 	VM_BUG_ON_VMA(start < vma->vm_start, vma);
 	VM_BUG_ON_VMA(end   > vma->vm_end, vma);
-	VM_BUG_ON_MM(!rwsem_is_locked(&mm->mmap_sem), mm);
+	VM_BUG_ON_MM(!rwsem_is_locked_mmap_sem(mm), mm);
 
 	gup_flags = FOLL_TOUCH | FOLL_POPULATE | FOLL_MLOCK;
 	if (vma->vm_flags & VM_LOCKONFAULT)
@@ -1089,7 +1089,7 @@ int __mm_populate(unsigned long start, unsigned long len, int ignore_errors)
 		 */
 		if (!locked) {
 			locked = 1;
-			down_read(&mm->mmap_sem);
+			down_read_mmap_sem(mm);
 			vma = find_vma(mm, nstart);
 		} else if (nstart >= vma->vm_end)
 			vma = vma->vm_next;
@@ -1121,7 +1121,7 @@ int __mm_populate(unsigned long start, unsigned long len, int ignore_errors)
 		ret = 0;
 	}
 	if (locked)
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 	return ret;	/* 0 or negative error code */
 }
 

@@ -308,12 +308,12 @@ int do_page_fault(struct pt_regs *regs, unsigned long address,
 	 * source.  If this is invalid we can skip the address space check,
 	 * thus avoiding the deadlock.
 	 */
-	if (!down_read_trylock(&mm->mmap_sem)) {
+	if (!down_read_trylock_mmap_sem(mm)) {
 		if (!user_mode(regs) && !search_exception_tables(regs->nip))
 			goto bad_area_nosemaphore;
 
 retry:
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 	} else {
 		/*
 		 * The above down_read_trylock() might have succeeded in
@@ -466,7 +466,7 @@ good_area:
 		}
 		/* We will enter mm_fault_error() below */
 	} else
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 
 	if (unlikely(fault & (VM_FAULT_RETRY|VM_FAULT_ERROR))) {
 		if (fault & VM_FAULT_SIGSEGV)
@@ -505,7 +505,7 @@ good_area:
 	goto bail;
 
 bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 bad_area_nosemaphore:
 	/* User mode accesses cause a SIGSEGV */

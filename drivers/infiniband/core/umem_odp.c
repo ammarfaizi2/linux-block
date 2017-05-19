@@ -655,7 +655,7 @@ int ib_umem_odp_map_dma_pages(struct ib_umem *umem, u64 user_virt, u64 bcnt,
 				(bcnt + BIT(page_shift) - 1) >> page_shift,
 				PAGE_SIZE / sizeof(struct page *));
 
-		down_read(&owning_mm->mmap_sem);
+		down_read_mmap_sem(owning_mm);
 		/*
 		 * Note: this might result in redundent page getting. We can
 		 * avoid this by checking dma_list to be 0 before calling
@@ -666,7 +666,7 @@ int ib_umem_odp_map_dma_pages(struct ib_umem *umem, u64 user_virt, u64 bcnt,
 		npages = get_user_pages_remote(owning_process, owning_mm,
 				user_virt, gup_num_pages,
 				flags, local_page_list, NULL, NULL);
-		up_read(&owning_mm->mmap_sem);
+		up_read_mmap_sem(owning_mm);
 
 		if (npages < 0)
 			break;

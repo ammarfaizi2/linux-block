@@ -124,7 +124,7 @@ void decode_address(char *buf, unsigned long address)
 			continue;
 
 		mm = t->mm;
-		if (!down_read_trylock(&mm->mmap_sem))
+		if (!down_read_trylock_mmap_sem(mm))
 			goto __continue;
 
 		for (n = rb_first(&mm->mm_rb); n; n = rb_next(n)) {
@@ -166,7 +166,7 @@ void decode_address(char *buf, unsigned long address)
 					sprintf(buf, "[ %s vma:0x%lx-0x%lx]",
 						name, vma->vm_start, vma->vm_end);
 
-				up_read(&mm->mmap_sem);
+				up_read_mmap_sem(mm);
 				task_unlock(t);
 
 				if (buf[0] == '\0')
@@ -176,7 +176,7 @@ void decode_address(char *buf, unsigned long address)
 			}
 		}
 
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 __continue:
 		task_unlock(t);
 	}

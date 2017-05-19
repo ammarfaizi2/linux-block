@@ -133,7 +133,7 @@ static void vma_stop(struct proc_maps_private *priv)
 	struct mm_struct *mm = priv->mm;
 
 	release_task_mempolicy(priv);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	mmput(mm);
 }
 
@@ -171,7 +171,7 @@ static void *m_start(struct seq_file *m, loff_t *ppos)
 	if (!mm || !mmget_not_zero(mm))
 		return NULL;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	hold_task_mempolicy(priv);
 	priv->tail_vma = get_gate_vma(mm);
 
@@ -1044,7 +1044,7 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 		};
 
 		if (type == CLEAR_REFS_MM_HIWATER_RSS) {
-			if (down_write_killable(&mm->mmap_sem)) {
+			if (down_write_killable_mmap_sem(mm)) {
 				count = -EINTR;
 				goto out_mm;
 			}
@@ -1054,17 +1054,17 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 			 * resident set size to this mm's current rss value.
 			 */
 			reset_mm_hiwater_rss(mm);
-			up_write(&mm->mmap_sem);
+			up_write_mmap_sem(mm);
 			goto out_mm;
 		}
 
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		if (type == CLEAR_REFS_SOFT_DIRTY) {
 			for (vma = mm->mmap; vma; vma = vma->vm_next) {
 				if (!(vma->vm_flags & VM_SOFTDIRTY))
 					continue;
-				up_read(&mm->mmap_sem);
-				if (down_write_killable(&mm->mmap_sem)) {
+				up_read_mmap_sem(mm);
+				if (down_write_killable_mmap_sem(mm)) {
 					count = -EINTR;
 					goto out_mm;
 				}
@@ -1072,7 +1072,7 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 					vma->vm_flags &= ~VM_SOFTDIRTY;
 					vma_set_page_prot(vma);
 				}
-				downgrade_write(&mm->mmap_sem);
+				downgrade_write_mmap_sem(mm);
 				break;
 			}
 			mmu_notifier_invalidate_range_start(mm, 0, -1);
@@ -1081,7 +1081,7 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 		if (type == CLEAR_REFS_SOFT_DIRTY)
 			mmu_notifier_invalidate_range_end(mm, 0, -1);
 		flush_tlb_mm(mm);
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 out_mm:
 		mmput(mm);
 	}
@@ -1420,9 +1420,9 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
 		/* overflow ? */
 		if (end < start_vaddr || end > end_vaddr)
 			end = end_vaddr;
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		ret = walk_page_range(start_vaddr, end, &pagemap_walk);
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		start_vaddr = end;
 
 		len = min(count, PM_ENTRY_BYTES * pm.pos);

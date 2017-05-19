@@ -759,13 +759,13 @@ int process_fpemu_return(int sig, void __user *fault_addr, unsigned long fcr31)
 	case SIGSEGV:
 		si.si_addr = fault_addr;
 		si.si_signo = sig;
-		down_read(&current->mm->mmap_sem);
+		down_read_mmap_sem(current->mm);
 		vma = find_vma(current->mm, (unsigned long)fault_addr);
 		if (vma && (vma->vm_start <= (unsigned long)fault_addr))
 			si.si_code = SEGV_ACCERR;
 		else
 			si.si_code = SEGV_MAPERR;
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 		force_sig_info(sig, &si, current);
 		return 1;
 

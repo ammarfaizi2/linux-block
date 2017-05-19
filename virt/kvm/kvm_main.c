@@ -1249,7 +1249,7 @@ unsigned long kvm_host_page_size(struct kvm *kvm, gfn_t gfn)
 	if (kvm_is_error_hva(addr))
 		return PAGE_SIZE;
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	vma = find_vma(current->mm, addr);
 	if (!vma)
 		goto out;
@@ -1257,7 +1257,7 @@ unsigned long kvm_host_page_size(struct kvm *kvm, gfn_t gfn)
 	size = vma_kernel_pagesize(vma);
 
 out:
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 
 	return size;
 }
@@ -1404,9 +1404,9 @@ static int hva_to_pfn_slow(unsigned long addr, bool *async, bool write_fault,
 		*writable = write_fault;
 
 	if (async) {
-		down_read(&current->mm->mmap_sem);
+		down_read_mmap_sem(current->mm);
 		npages = get_user_page_nowait(addr, write_fault, page);
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 	} else {
 		unsigned int flags = FOLL_HWPOISON;
 
@@ -1526,7 +1526,7 @@ static kvm_pfn_t hva_to_pfn(unsigned long addr, bool atomic, bool *async,
 	if (npages == 1)
 		return pfn;
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	if (npages == -EHWPOISON ||
 	      (!async && check_user_page_hwpoison(addr))) {
 		pfn = KVM_PFN_ERR_HWPOISON;
@@ -1550,7 +1550,7 @@ retry:
 		pfn = KVM_PFN_ERR_FAULT;
 	}
 exit:
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 	return pfn;
 }
 

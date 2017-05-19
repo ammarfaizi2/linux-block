@@ -983,12 +983,12 @@ give_sigsegv:
 		info.si_code = SEGV_ACCERR;
 	else {
 		struct mm_struct *mm = current->mm;
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		if (find_vma(mm, (unsigned long)va))
 			info.si_code = SEGV_ACCERR;
 		else
 			info.si_code = SEGV_MAPERR;
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 	}
 	info.si_addr = va;
 	send_sig_info(SIGSEGV, &info, current);

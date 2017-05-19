@@ -1005,9 +1005,9 @@ static int alloc_user_pages(struct hmm_buffer_object *bo,
 	}
 
 	mutex_unlock(&bo->mutex);
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	vma = find_vma(current->mm, (unsigned long)userptr);
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 	if (vma == NULL) {
 		dev_err(atomisp_dev, "find_vma failed\n");
 		kfree(bo->page_obj);
@@ -1029,10 +1029,10 @@ static int alloc_user_pages(struct hmm_buffer_object *bo,
 	} else {
 		/*Handle frame buffer allocated in user space*/
 		mutex_unlock(&bo->mutex);
-		down_read(&current->mm->mmap_sem);
+		down_read_mmap_sem(current->mm);
 		page_nr = get_user_pages((unsigned long)userptr,
 					 (int)(bo->pgnr), 1, pages, NULL);
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 		mutex_lock(&bo->mutex);
 		bo->mem_type = HMM_BO_MEM_TYPE_USER;
 	}

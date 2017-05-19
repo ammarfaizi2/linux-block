@@ -453,11 +453,11 @@ static void break_cow(struct rmap_item *rmap_item)
 	 */
 	put_anon_vma(rmap_item->anon_vma);
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	vma = find_mergeable_vma(mm, addr);
 	if (vma)
 		break_ksm(vma, addr);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 }
 
 static struct page *get_mergeable_page(struct rmap_item *rmap_item)
@@ -467,7 +467,7 @@ static struct page *get_mergeable_page(struct rmap_item *rmap_item)
 	struct vm_area_struct *vma;
 	struct page *page;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	vma = find_mergeable_vma(mm, addr);
 	if (!vma)
 		goto out;
@@ -483,7 +483,7 @@ static struct page *get_mergeable_page(struct rmap_item *rmap_item)
 out:
 		page = NULL;
 	}
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return page;
 }
 
@@ -783,7 +783,7 @@ static int unmerge_and_remove_all_rmap_items(void)
 	for (mm_slot = ksm_scan.mm_slot;
 			mm_slot != &ksm_mm_head; mm_slot = ksm_scan.mm_slot) {
 		mm = mm_slot->mm;
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		for (vma = mm->mmap; vma; vma = vma->vm_next) {
 			if (ksm_test_exit(mm))
 				break;
@@ -796,7 +796,7 @@ static int unmerge_and_remove_all_rmap_items(void)
 		}
 
 		remove_trailing_rmap_items(mm_slot, &mm_slot->rmap_list);
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 
 		spin_lock(&ksm_mmlist_lock);
 		ksm_scan.mm_slot = list_entry(mm_slot->mm_list.next,
@@ -819,7 +819,7 @@ static int unmerge_and_remove_all_rmap_items(void)
 	return 0;
 
 error:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	spin_lock(&ksm_mmlist_lock);
 	ksm_scan.mm_slot = &ksm_mm_head;
 	spin_unlock(&ksm_mmlist_lock);
@@ -1088,7 +1088,7 @@ static int try_to_merge_with_ksm_page(struct rmap_item *rmap_item,
 	struct vm_area_struct *vma;
 	int err = -EFAULT;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	vma = find_mergeable_vma(mm, rmap_item->address);
 	if (!vma)
 		goto out;
@@ -1104,7 +1104,7 @@ static int try_to_merge_with_ksm_page(struct rmap_item *rmap_item,
 	rmap_item->anon_vma = vma->anon_vma;
 	get_anon_vma(vma->anon_vma);
 out:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return err;
 }
 
@@ -1634,7 +1634,7 @@ next_mm:
 	}
 
 	mm = slot->mm;
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	if (ksm_test_exit(mm))
 		vma = NULL;
 	else
@@ -1668,7 +1668,7 @@ next_mm:
 					ksm_scan.address += PAGE_SIZE;
 				} else
 					put_page(*page);
-				up_read(&mm->mmap_sem);
+				up_read_mmap_sem(mm);
 				return rmap_item;
 			}
 			put_page(*page);
@@ -1706,12 +1706,12 @@ next_mm:
 
 		free_mm_slot(slot);
 		clear_bit(MMF_VM_MERGEABLE, &mm->flags);
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		mmdrop(mm);
 	} else {
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		/*
-		 * up_read(&mm->mmap_sem) first because after
+		 * up_read_mmap_sem(mm) first because after
 		 * spin_unlock(&ksm_mmlist_lock) run, the "mm" may
 		 * already have been freed under us by __ksm_exit()
 		 * because the "mm_slot" is still hashed and
@@ -1897,8 +1897,8 @@ void __ksm_exit(struct mm_struct *mm)
 		clear_bit(MMF_VM_MERGEABLE, &mm->flags);
 		mmdrop(mm);
 	} else if (mm_slot) {
-		down_write(&mm->mmap_sem);
-		up_write(&mm->mmap_sem);
+		down_write_mmap_sem(mm);
+		up_write_mmap_sem(mm);
 	}
 }
 

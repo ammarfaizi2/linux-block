@@ -135,11 +135,11 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code,
 	 * source.  If this is invalid we can skip the address space check,
 	 * thus avoiding the deadlock.
 	 */
-	if (!down_read_trylock(&mm->mmap_sem)) {
+	if (!down_read_trylock_mmap_sem(mm)) {
 		if ((error_code & ACE_USERMODE) == 0 &&
 		    !search_exception_tables(regs->psw))
 			goto bad_area_nosemaphore;
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 	}
 
 	vma = find_vma(mm, address);
@@ -211,7 +211,7 @@ good_area:
 	else
 		tsk->min_flt++;
 	set_thread_fault_code(0);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return;
 
 /*
@@ -219,7 +219,7 @@ good_area:
  * Fix it, but check if it's kernel or user first..
  */
 bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 bad_area_nosemaphore:
 	/* User mode accesses just cause a SIGSEGV */
@@ -272,14 +272,14 @@ no_context:
  * us unable to handle the page fault gracefully.
  */
 out_of_memory:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	if (!(error_code & ACE_USERMODE))
 		goto no_context;
 	pagefault_out_of_memory();
 	return;
 
 do_sigbus:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/* Kernel mode? Handle exception or die */
 	if (!(error_code & ACE_USERMODE))

@@ -430,7 +430,7 @@ void start_mm_caching(struct mm_struct *mm)
  */
 static unsigned long update_priority_cached(struct mm_struct *mm)
 {
-	if (mm->context.priority_cached && down_write_trylock(&mm->mmap_sem)) {
+	if (mm->context.priority_cached && down_write_trylock_mmap_sem(mm)) {
 		struct vm_area_struct *vm;
 		for (vm = mm->mmap; vm; vm = vm->vm_next) {
 			if (hv_pte_get_cached_priority(vm->vm_page_prot))
@@ -438,7 +438,7 @@ static unsigned long update_priority_cached(struct mm_struct *mm)
 		}
 		if (vm == NULL)
 			mm->context.priority_cached = 0;
-		up_write(&mm->mmap_sem);
+		up_write_mmap_sem(mm);
 	}
 	return mm->context.priority_cached;
 }

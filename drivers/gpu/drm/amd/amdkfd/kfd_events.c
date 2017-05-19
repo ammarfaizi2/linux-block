@@ -910,7 +910,7 @@ void kfd_signal_iommu_event(struct kfd_dev *dev, unsigned int pasid,
 
 	memset(&memory_exception_data, 0, sizeof(memory_exception_data));
 
-	down_read(&p->mm->mmap_sem);
+	down_read_mmap_sem(p->mm);
 	vma = find_vma(p->mm, address);
 
 	memory_exception_data.gpu_id = dev->id;
@@ -937,7 +937,7 @@ void kfd_signal_iommu_event(struct kfd_dev *dev, unsigned int pasid,
 		}
 	}
 
-	up_read(&p->mm->mmap_sem);
+	up_read_mmap_sem(p->mm);
 
 	mutex_lock(&p->event_mutex);
 

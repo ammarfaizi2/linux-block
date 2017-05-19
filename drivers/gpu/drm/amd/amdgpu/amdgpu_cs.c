@@ -538,7 +538,7 @@ static int amdgpu_cs_parser_bos(struct amdgpu_cs_parser *p,
 		list_add(&p->uf_entry.tv.head, &p->validated);
 
 	if (need_mmap_lock)
-		down_read(&current->mm->mmap_sem);
+		down_read_mmap_sem(current->mm);
 
 	while (1) {
 		struct list_head need_pages;
@@ -695,7 +695,7 @@ error_validate:
 error_free_pages:
 
 	if (need_mmap_lock)
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 
 	if (p->bo_list) {
 		for (i = p->bo_list->first_userptr;

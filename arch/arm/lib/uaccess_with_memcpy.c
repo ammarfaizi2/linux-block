@@ -99,7 +99,7 @@ __copy_to_user_memcpy(void __user *to, const void *from, unsigned long n)
 	atomic = faulthandler_disabled();
 
 	if (!atomic)
-		down_read(&current->mm->mmap_sem);
+		down_read_mmap_sem(current->mm);
 	while (n) {
 		pte_t *pte;
 		spinlock_t *ptl;
@@ -107,11 +107,11 @@ __copy_to_user_memcpy(void __user *to, const void *from, unsigned long n)
 
 		while (!pin_page_for_write(to, &pte, &ptl)) {
 			if (!atomic)
-				up_read(&current->mm->mmap_sem);
+				up_read_mmap_sem(current->mm);
 			if (__put_user(0, (char __user *)to))
 				goto out;
 			if (!atomic)
-				down_read(&current->mm->mmap_sem);
+				down_read_mmap_sem(current->mm);
 		}
 
 		tocopy = (~(unsigned long)to & ~PAGE_MASK) + 1;
@@ -131,7 +131,7 @@ __copy_to_user_memcpy(void __user *to, const void *from, unsigned long n)
 			spin_unlock(ptl);
 	}
 	if (!atomic)
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 
 out:
 	return n;
@@ -167,17 +167,17 @@ __clear_user_memset(void __user *addr, unsigned long n)
 		return 0;
 	}
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	while (n) {
 		pte_t *pte;
 		spinlock_t *ptl;
 		int tocopy;
 
 		while (!pin_page_for_write(addr, &pte, &ptl)) {
-			up_read(&current->mm->mmap_sem);
+			up_read_mmap_sem(current->mm);
 			if (__put_user(0, (char __user *)addr))
 				goto out;
-			down_read(&current->mm->mmap_sem);
+			down_read_mmap_sem(current->mm);
 		}
 
 		tocopy = (~(unsigned long)addr & ~PAGE_MASK) + 1;
@@ -195,7 +195,7 @@ __clear_user_memset(void __user *addr, unsigned long n)
 		else
 			spin_unlock(ptl);
 	}
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 
 out:
 	return n;

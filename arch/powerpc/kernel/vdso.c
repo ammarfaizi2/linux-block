@@ -196,7 +196,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 	 * and end up putting it elsewhere.
 	 * Add enough to the size so that the result can be aligned.
 	 */
-	if (down_write_killable(&mm->mmap_sem))
+	if (down_write_killable_mmap_sem(mm))
 		return -EINTR;
 	vdso_base = get_unmapped_area(NULL, vdso_base,
 				      (vdso_pages << PAGE_SHIFT) +
@@ -236,11 +236,11 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 		goto fail_mmapsem;
 	}
 
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	return 0;
 
  fail_mmapsem:
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	return rc;
 }
 

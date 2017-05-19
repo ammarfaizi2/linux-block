@@ -279,7 +279,7 @@ static long privcmd_ioctl_mmap(struct file *file, void __user *udata)
 	if (rc || list_empty(&pagelist))
 		goto out;
 
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 
 	{
 		struct page *page = list_first_entry(&pagelist,
@@ -304,7 +304,7 @@ static long privcmd_ioctl_mmap(struct file *file, void __user *udata)
 
 
 out_up:
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 
 out:
 	free_page_list(&pagelist);
@@ -500,7 +500,7 @@ static long privcmd_ioctl_mmap_batch(
 		}
 	}
 
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 
 	vma = find_vma(mm, m.addr);
 	if (!vma ||
@@ -556,7 +556,7 @@ static long privcmd_ioctl_mmap_batch(
 	BUG_ON(traverse_pages_block(m.num, sizeof(xen_pfn_t),
 				    &pagelist, mmap_batch_fn, &state));
 
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 
 	if (state.global_error) {
 		/* Write back errors in second pass. */
@@ -577,7 +577,7 @@ out:
 	return ret;
 
 out_unlock:
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	goto out;
 }
 

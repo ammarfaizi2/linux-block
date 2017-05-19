@@ -84,7 +84,7 @@ asmlinkage void do_page_fault(int datammu, unsigned long esr0, unsigned long ear
 	if (user_mode(__frame))
 		flags |= FAULT_FLAG_USER;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	vma = find_vma(mm, ear0);
 	if (!vma)
@@ -179,7 +179,7 @@ asmlinkage void do_page_fault(int datammu, unsigned long esr0, unsigned long ear
 	else
 		current->min_flt++;
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return;
 
 /*
@@ -187,7 +187,7 @@ asmlinkage void do_page_fault(int datammu, unsigned long esr0, unsigned long ear
  * Fix it, but check if it's kernel or user first..
  */
  bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/* User mode accesses just cause a SIGSEGV */
 	if (user_mode(__frame)) {
@@ -257,14 +257,14 @@ asmlinkage void do_page_fault(int datammu, unsigned long esr0, unsigned long ear
  * us unable to handle the page fault gracefully.
  */
  out_of_memory:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	if (!user_mode(__frame))
 		goto no_context;
 	pagefault_out_of_memory();
 	return;
 
  do_sigbus:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/*
 	 * Send a sigbus, regardless of whether we were in kernel

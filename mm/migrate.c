@@ -1406,7 +1406,7 @@ static int do_move_page_to_node_array(struct mm_struct *mm,
 	struct page_to_node *pp;
 	LIST_HEAD(pagelist);
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	/*
 	 * Build a list of pages to migrate
@@ -1477,7 +1477,7 @@ set_status:
 			putback_movable_pages(&pagelist);
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return err;
 }
 
@@ -1576,7 +1576,7 @@ static void do_pages_stat_array(struct mm_struct *mm, unsigned long nr_pages,
 {
 	unsigned long i;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	for (i = 0; i < nr_pages; i++) {
 		unsigned long addr = (unsigned long)(*pages);
@@ -1603,7 +1603,7 @@ set_status:
 		status++;
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 }
 
 /*

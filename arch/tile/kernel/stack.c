@@ -398,7 +398,7 @@ void tile_show_stack(struct KBacktraceIterator *kbt)
 		if (kbt->task == current && address < PAGE_OFFSET &&
 		    !have_mmap_sem && kbt->task->mm && !in_interrupt()) {
 			have_mmap_sem =
-				down_read_trylock(&kbt->task->mm->mmap_sem);
+				down_read_trylock_mmap_sem(kbt->task->mm);
 		}
 
 		describe_addr(kbt, address, have_mmap_sem,
@@ -415,7 +415,7 @@ void tile_show_stack(struct KBacktraceIterator *kbt)
 	if (kbt->end == KBT_LOOP)
 		pr_err("Stack dump stopped; next frame identical to this one\n");
 	if (have_mmap_sem)
-		up_read(&kbt->task->mm->mmap_sem);
+		up_read_mmap_sem(kbt->task->mm);
 	end_backtrace();
 }
 EXPORT_SYMBOL(tile_show_stack);

@@ -80,7 +80,7 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long write,
 	if (user_mode(regs))
 		flags |= FAULT_FLAG_USER;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	vma = find_vma(mm, address);
 	if (!vma)
 		goto bad_area;
@@ -126,7 +126,7 @@ good_area:
 	else
 		tsk->min_flt++;
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return;
 
 	/*
@@ -134,7 +134,7 @@ good_area:
 	* Fix it, but check if it's kernel or user first..
 	 */
 bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 bad_area_nosemaphore:
 	/* User mode accesses just cause a SIGSEGV */
@@ -173,14 +173,14 @@ no_context:
 	* us unable to handle the page fault gracefully.
 	*/
 out_of_memory:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	if (!user_mode(regs))
 		goto no_context;
 	pagefault_out_of_memory();
 	return;
 
 do_sigbus:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	/* Kernel mode? Handle exceptions or die */
 	if (!user_mode(regs))
 		goto no_context;

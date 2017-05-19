@@ -347,11 +347,11 @@ static int spufs_ps_fault(struct vm_fault *vmf,
 		goto refault;
 
 	if (ctx->state == SPU_STATE_SAVED) {
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 		spu_context_nospu_trace(spufs_ps_fault__sleep, ctx);
 		ret = spufs_wait(ctx->run_wq, ctx->state == SPU_STATE_RUNNABLE);
 		spu_context_trace(spufs_ps_fault__wake, ctx, ctx->spu);
-		down_read(&current->mm->mmap_sem);
+		down_read_mmap_sem(current->mm);
 	} else {
 		area = ctx->spu->problem_phys + ps_offs;
 		vm_insert_pfn(vmf->vma, vmf->address, (area + offset) >> PAGE_SHIFT);

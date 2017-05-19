@@ -60,10 +60,10 @@ static int notify_exec(struct mm_struct *mm)
 	if (IS_ERR(path))
 		goto done_put;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	for (vma = current->mm->mmap; ; vma = vma->vm_next) {
 		if (vma == NULL) {
-			up_read(&mm->mmap_sem);
+			up_read_mmap_sem(mm);
 			goto done_put;
 		}
 		if (vma->vm_file == exe_file)
@@ -91,7 +91,7 @@ static int notify_exec(struct mm_struct *mm)
 			}
 		}
 	}
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	sim_notify_exec(path);
 done_put:
@@ -128,7 +128,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
 	if (!notify_exec(mm))
 		sim_notify_exec(bprm->filename);
 
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 
 	retval = setup_vdso_pages();
 
@@ -149,7 +149,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
 	}
 #endif
 
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 
 	return retval;
 }

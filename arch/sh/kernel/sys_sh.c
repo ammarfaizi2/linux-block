@@ -68,10 +68,10 @@ asmlinkage int sys_cacheflush(unsigned long addr, unsigned long len, int op)
 	if (addr + len < addr)
 		return -EFAULT;
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	vma = find_vma (current->mm, addr);
 	if (vma == NULL || addr < vma->vm_start || addr + len > vma->vm_end) {
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 		return -EFAULT;
 	}
 
@@ -90,6 +90,6 @@ asmlinkage int sys_cacheflush(unsigned long addr, unsigned long len, int op)
 	if (op & CACHEFLUSH_I)
 		flush_icache_range(addr, addr+len);
 
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 	return 0;
 }

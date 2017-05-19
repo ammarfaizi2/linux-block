@@ -488,7 +488,7 @@ static bool __oom_reap_task_mm(struct task_struct *tsk, struct mm_struct *mm)
 	 */
 	mutex_lock(&oom_lock);
 
-	if (!down_read_trylock(&mm->mmap_sem)) {
+	if (!down_read_trylock_mmap_sem(mm)) {
 		ret = false;
 		goto unlock_oom;
 	}
@@ -499,7 +499,7 @@ static bool __oom_reap_task_mm(struct task_struct *tsk, struct mm_struct *mm)
 	 * and delayed __mmput doesn't matter that much
 	 */
 	if (!mmget_not_zero(mm)) {
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		goto unlock_oom;
 	}
 
@@ -536,7 +536,7 @@ static bool __oom_reap_task_mm(struct task_struct *tsk, struct mm_struct *mm)
 			K(get_mm_counter(mm, MM_ANONPAGES)),
 			K(get_mm_counter(mm, MM_FILEPAGES)),
 			K(get_mm_counter(mm, MM_SHMEMPAGES)));
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/*
 	 * Drop our reference but make sure the mmput slow path is called from a

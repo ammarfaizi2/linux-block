@@ -93,7 +93,7 @@ ia64_do_page_fault (unsigned long address, unsigned long isr, struct pt_regs *re
 		| (((isr >> IA64_ISR_W_BIT) & 1UL) << VM_WRITE_BIT));
 
 	/* mmap_sem is performance critical.... */
-	prefetchw(&mm->mmap_sem);
+	prefetchw_mmap_sem(mm);
 
 	/*
 	 * If we're in an interrupt or have no user context, we must not take the fault..
@@ -124,7 +124,7 @@ ia64_do_page_fault (unsigned long address, unsigned long isr, struct pt_regs *re
 	if (mask & VM_WRITE)
 		flags |= FAULT_FLAG_WRITE;
 retry:
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	vma = find_vma_prev(mm, address, &prev_vma);
 	if (!vma && !prev_vma )
@@ -192,7 +192,7 @@ retry:
 			flags &= ~FAULT_FLAG_ALLOW_RETRY;
 			flags |= FAULT_FLAG_TRIED;
 
-			 /* No need to up_read(&mm->mmap_sem) as we would
+			 /* No need to up_read_mmap_sem(mm) as we would
 			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
@@ -201,7 +201,7 @@ retry:
 		}
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return;
 
   check_expansion:
@@ -232,7 +232,7 @@ retry:
 	goto good_area;
 
   bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 #ifdef CONFIG_VIRTUAL_MEM_MAP
   bad_area_no_up:
 #endif
@@ -303,7 +303,7 @@ retry:
 	return;
 
   out_of_memory:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	if (!user_mode(regs))
 		goto no_context;
 	pagefault_out_of_memory();

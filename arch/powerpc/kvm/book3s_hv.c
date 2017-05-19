@@ -3237,7 +3237,7 @@ static int kvmppc_hv_setup_htab_rma(struct kvm_vcpu *vcpu)
 
 	/* Look up the VMA for the start of this memory slot */
 	hva = memslot->userspace_addr;
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	vma = find_vma(current->mm, hva);
 	if (!vma || vma->vm_start > hva || (vma->vm_flags & VM_IO))
 		goto up_out;
@@ -3245,7 +3245,7 @@ static int kvmppc_hv_setup_htab_rma(struct kvm_vcpu *vcpu)
 	psize = vma_kernel_pagesize(vma);
 	porder = __ilog2(psize);
 
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 
 	/* We can handle 4k, 64k or 16M pages in the VRMA */
 	err = -EINVAL;
@@ -3279,7 +3279,7 @@ static int kvmppc_hv_setup_htab_rma(struct kvm_vcpu *vcpu)
 	return err;
 
  up_out:
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 	goto out_srcu;
 }
 

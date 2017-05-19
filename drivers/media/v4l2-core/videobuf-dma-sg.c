@@ -201,9 +201,9 @@ static int videobuf_dma_init_user(struct videobuf_dmabuf *dma, int direction,
 {
 	int ret;
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	ret = videobuf_dma_init_user_locked(dma, direction, data, size);
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 
 	return ret;
 }

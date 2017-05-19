@@ -2469,7 +2469,7 @@ void task_numa_work(struct callback_head *work)
 		return;
 
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	vma = find_vma(mm, start);
 	if (!vma) {
 		reset_ptenuma_scan(p);
@@ -2536,7 +2536,7 @@ out:
 		mm->numa_scan_offset = start;
 	else
 		reset_ptenuma_scan(p);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/*
 	 * Make sure tasks use at least 32x as much time to run other code

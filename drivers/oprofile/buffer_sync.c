@@ -91,11 +91,11 @@ munmap_notify(struct notifier_block *self, unsigned long val, void *data)
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *mpnt;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	mpnt = find_vma(mm, addr);
 	if (mpnt && mpnt->vm_file && (mpnt->vm_flags & VM_EXEC)) {
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		/* To avoid latency problems, we only process the current CPU,
 		 * hoping that most samples for the task are on this CPU
 		 */
@@ -103,7 +103,7 @@ munmap_notify(struct notifier_block *self, unsigned long val, void *data)
 		return 0;
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return 0;
 }
 
@@ -256,7 +256,7 @@ lookup_dcookie(struct mm_struct *mm, unsigned long addr, off_t *offset)
 	unsigned long cookie = NO_COOKIE;
 	struct vm_area_struct *vma;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	for (vma = find_vma(mm, addr); vma; vma = vma->vm_next) {
 
 		if (addr < vma->vm_start || addr >= vma->vm_end)
@@ -276,7 +276,7 @@ lookup_dcookie(struct mm_struct *mm, unsigned long addr, off_t *offset)
 
 	if (!vma)
 		cookie = INVALID_COOKIE;
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	return cookie;
 }

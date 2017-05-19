@@ -597,7 +597,7 @@ static int binder_update_page_range(struct binder_proc *proc, int allocate,
 		mm = get_task_mm(proc->tsk);
 
 	if (mm) {
-		down_write(&mm->mmap_sem);
+		down_write_mmap_sem(mm);
 		vma = proc->vma;
 		if (vma && mm != proc->vma_vm_mm) {
 			pr_err("%d: vma mm and task mm mismatch\n",
@@ -647,7 +647,7 @@ static int binder_update_page_range(struct binder_proc *proc, int allocate,
 		/* vm_insert_page does not seem to increment the refcount */
 	}
 	if (mm) {
-		up_write(&mm->mmap_sem);
+		up_write_mmap_sem(mm);
 		mmput(mm);
 	}
 	return 0;
@@ -669,7 +669,7 @@ err_alloc_page_failed:
 	}
 err_no_vma:
 	if (mm) {
-		up_write(&mm->mmap_sem);
+		up_write_mmap_sem(mm);
 		mmput(mm);
 	}
 	return -ENOMEM;

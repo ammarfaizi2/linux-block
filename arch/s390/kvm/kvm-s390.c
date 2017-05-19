@@ -1208,7 +1208,7 @@ static long kvm_s390_get_skeys(struct kvm *kvm, struct kvm_s390_skeys *args)
 	if (!keys)
 		return -ENOMEM;
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	for (i = 0; i < args->count; i++) {
 		hva = gfn_to_hva(kvm, args->start_gfn + i);
 		if (kvm_is_error_hva(hva)) {
@@ -1220,7 +1220,7 @@ static long kvm_s390_get_skeys(struct kvm *kvm, struct kvm_s390_skeys *args)
 		if (r)
 			break;
 	}
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 
 	if (!r) {
 		r = copy_to_user((uint8_t __user *)args->skeydata_addr, keys,
@@ -1262,7 +1262,7 @@ static long kvm_s390_set_skeys(struct kvm *kvm, struct kvm_s390_skeys *args)
 	if (r)
 		goto out;
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	for (i = 0; i < args->count; i++) {
 		hva = gfn_to_hva(kvm, args->start_gfn + i);
 		if (kvm_is_error_hva(hva)) {
@@ -1280,7 +1280,7 @@ static long kvm_s390_set_skeys(struct kvm *kvm, struct kvm_s390_skeys *args)
 		if (r)
 			break;
 	}
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 out:
 	kvfree(keys);
 	return r;

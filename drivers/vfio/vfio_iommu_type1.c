@@ -261,7 +261,7 @@ static int vfio_lock_acct(struct task_struct *task, long npage, bool *lock_cap)
 	if (!mm)
 		return -ESRCH; /* process exited */
 
-	ret = down_write_killable(&mm->mmap_sem);
+	ret = down_write_killable_mmap_sem(mm);
 	if (!ret) {
 		if (npage > 0) {
 			if (lock_cap ? !*lock_cap :
@@ -279,7 +279,7 @@ static int vfio_lock_acct(struct task_struct *task, long npage, bool *lock_cap)
 		if (!ret)
 			mm->locked_vm += npage;
 
-		up_write(&mm->mmap_sem);
+		up_write_mmap_sem(mm);
 	}
 
 	if (!is_current)
@@ -349,10 +349,10 @@ static int vaddr_get_pfn(struct mm_struct *mm, unsigned long vaddr,
 		if (prot & IOMMU_WRITE)
 			flags |= FOLL_WRITE;
 
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 		ret = get_user_pages_remote(NULL, mm, vaddr, 1, flags, page,
 					    NULL, NULL);
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 	}
 
 	if (ret == 1) {
@@ -360,7 +360,7 @@ static int vaddr_get_pfn(struct mm_struct *mm, unsigned long vaddr,
 		return 0;
 	}
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	vma = find_vma_intersection(mm, vaddr, vaddr + 1);
 
@@ -370,7 +370,7 @@ static int vaddr_get_pfn(struct mm_struct *mm, unsigned long vaddr,
 			ret = 0;
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return ret;
 }
 

@@ -285,7 +285,7 @@ __bad_area(struct pt_regs *regs, unsigned long error_code,
 	 * Something tried to access memory that isn't in our memory map..
 	 * Fix it, but check if it's kernel or user first..
 	 */
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	__bad_area_nosemaphore(regs, error_code, address, si_code);
 }
@@ -309,7 +309,7 @@ do_sigbus(struct pt_regs *regs, unsigned long error_code, unsigned long address)
 	struct task_struct *tsk = current;
 	struct mm_struct *mm = tsk->mm;
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/* Kernel mode? Handle exceptions or die: */
 	if (!user_mode(regs))
@@ -328,7 +328,7 @@ mm_fault_error(struct pt_regs *regs, unsigned long error_code,
 	 */
 	if (fatal_signal_pending(current)) {
 		if (!(fault & VM_FAULT_RETRY))
-			up_read(&current->mm->mmap_sem);
+			up_read_mmap_sem(current->mm);
 		if (!user_mode(regs))
 			no_context(regs, error_code, address);
 		return 1;
@@ -340,11 +340,11 @@ mm_fault_error(struct pt_regs *regs, unsigned long error_code,
 	if (fault & VM_FAULT_OOM) {
 		/* Kernel mode? Handle exceptions or die: */
 		if (!user_mode(regs)) {
-			up_read(&current->mm->mmap_sem);
+			up_read_mmap_sem(current->mm);
 			no_context(regs, error_code, address);
 			return 1;
 		}
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 
 		/*
 		 * We ran out of memory, call the OOM killer, and return the
@@ -448,7 +448,7 @@ asmlinkage void __kprobes do_page_fault(struct pt_regs *regs,
 	}
 
 retry:
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	vma = find_vma(mm, address);
 	if (unlikely(!vma)) {
@@ -509,7 +509,7 @@ good_area:
 			flags |= FAULT_FLAG_TRIED;
 
 			/*
-			 * No need to up_read(&mm->mmap_sem) as we would
+			 * No need to up_read_mmap_sem(mm) as we would
 			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
@@ -517,5 +517,5 @@ good_area:
 		}
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 }

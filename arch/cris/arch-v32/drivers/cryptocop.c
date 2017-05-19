@@ -2717,7 +2717,7 @@ static int cryptocop_ioctl_process(struct inode *inode, struct file *filp, unsig
 	}
 
 	/* Acquire the mm page semaphore. */
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 
 	err = get_user_pages((unsigned long int)(oper.indata + prev_ix),
 			     noinpages,
@@ -2726,7 +2726,7 @@ static int cryptocop_ioctl_process(struct inode *inode, struct file *filp, unsig
 			     NULL);
 
 	if (err < 0) {
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 		nooutpages = noinpages = 0;
 		DEBUG_API(printk("cryptocop_ioctl_process: get_user_pages indata\n"));
 		goto error_cleanup;
@@ -2738,7 +2738,7 @@ static int cryptocop_ioctl_process(struct inode *inode, struct file *filp, unsig
 				     FOLL_WRITE, /* write access for out data */
 				     outpages,
 				     NULL);
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 		if (err < 0) {
 			nooutpages = 0;
 			DEBUG_API(printk("cryptocop_ioctl_process: get_user_pages outdata\n"));
@@ -2746,7 +2746,7 @@ static int cryptocop_ioctl_process(struct inode *inode, struct file *filp, unsig
 		}
 		nooutpages = err;
 	} else {
-		up_read(&current->mm->mmap_sem);
+		up_read_mmap_sem(current->mm);
 	}
 
 	/* Add 6 to nooutpages to make room for possibly inserted buffers for storing digest and

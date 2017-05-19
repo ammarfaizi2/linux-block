@@ -126,10 +126,10 @@ is_user_addr_valid(struct task_struct *child, unsigned long start, unsigned long
 	if (start + len < start)
 		return -EIO;
 
-	down_read(&child->mm->mmap_sem);
+	down_read_mmap_sem(child->mm);
 	vma = find_vma(child->mm, start);
 	valid = vma && start >= vma->vm_start && start + len <= vma->vm_end;
-	up_read(&child->mm->mmap_sem);
+	up_read_mmap_sem(child->mm);
 	if (valid)
 		return 0;
 

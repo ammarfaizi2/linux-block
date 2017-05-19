@@ -68,7 +68,7 @@ void do_page_fault(unsigned long address, long cause, struct pt_regs *regs)
 	if (user_mode(regs))
 		flags |= FAULT_FLAG_USER;
 retry:
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	vma = find_vma(mm, address);
 	if (!vma)
 		goto bad_area;
@@ -121,11 +121,11 @@ good_area:
 			}
 		}
 
-		up_read(&mm->mmap_sem);
+		up_read_mmap_sem(mm);
 		return;
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/* Handle copyin/out exception cases */
 	if (!user_mode(regs))
@@ -154,7 +154,7 @@ good_area:
 	return;
 
 bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	if (user_mode(regs)) {
 		info.si_signo = SIGSEGV;

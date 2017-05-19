@@ -174,7 +174,7 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long fault_code,
 	if ((fault_code & MMUFCR_xFC_ACCESS) == MMUFCR_xFC_ACCESS_USR)
 		flags |= FAULT_FLAG_USER;
 retry:
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	vma = find_vma(mm, address);
 	if (!vma)
@@ -276,7 +276,7 @@ good_area:
 		if (fault & VM_FAULT_RETRY) {
 			flags &= ~FAULT_FLAG_ALLOW_RETRY;
 
-			 /* No need to up_read(&mm->mmap_sem) as we would
+			 /* No need to up_read_mmap_sem(mm) as we would
 			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
@@ -285,7 +285,7 @@ good_area:
 		}
 	}
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return;
 
 /*
@@ -293,7 +293,7 @@ good_area:
  * Fix it, but check if it's kernel or user first..
  */
 bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/* User mode accesses just cause a SIGSEGV */
 	if ((fault_code & MMUFCR_xFC_ACCESS) == MMUFCR_xFC_ACCESS_USR) {
@@ -348,7 +348,7 @@ no_context:
  * us unable to handle the page fault gracefully.
  */
 out_of_memory:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	if ((fault_code & MMUFCR_xFC_ACCESS) == MMUFCR_xFC_ACCESS_USR) {
 		pagefault_out_of_memory();
 		return;
@@ -356,7 +356,7 @@ out_of_memory:
 	goto no_context;
 
 do_sigbus:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/*
 	 * Send a sigbus, regardless of whether we were in kernel

@@ -8238,7 +8238,7 @@ static void perf_event_addr_filters_apply(struct perf_event *event)
 	if (!mm)
 		goto restart;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 
 	raw_spin_lock_irqsave(&ifh->lock, flags);
 	list_for_each_entry(filter, &ifh->list, entry) {
@@ -8258,7 +8258,7 @@ static void perf_event_addr_filters_apply(struct perf_event *event)
 	event->addr_filters_gen++;
 	raw_spin_unlock_irqrestore(&ifh->lock, flags);
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	mmput(mm);
 

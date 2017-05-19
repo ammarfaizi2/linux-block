@@ -4686,10 +4686,10 @@ static unsigned long mem_cgroup_count_precharge(struct mm_struct *mm)
 		.pmd_entry = mem_cgroup_count_precharge_pte_range,
 		.mm = mm,
 	};
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	walk_page_range(0, mm->highest_vm_end,
 			&mem_cgroup_count_precharge_walk);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	precharge = mc.precharge;
 	mc.precharge = 0;
@@ -4960,7 +4960,7 @@ static void mem_cgroup_move_charge(void)
 	atomic_inc(&mc.from->moving_account);
 	synchronize_rcu();
 retry:
-	if (unlikely(!down_read_trylock(&mc.mm->mmap_sem))) {
+	if (unlikely(!down_read_trylock_mmap_sem(mc.mm))) {
 		/*
 		 * Someone who are holding the mmap_sem might be waiting in
 		 * waitq. So we cancel all extra charges, wake up all waiters,
@@ -4978,7 +4978,7 @@ retry:
 	 */
 	walk_page_range(0, mc.mm->highest_vm_end, &mem_cgroup_move_charge_walk);
 
-	up_read(&mc.mm->mmap_sem);
+	up_read_mmap_sem(mc.mm);
 	atomic_dec(&mc.from->moving_account);
 }
 

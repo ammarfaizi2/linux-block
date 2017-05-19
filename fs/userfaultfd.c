@@ -222,7 +222,7 @@ static inline bool userfaultfd_huge_must_wait(struct userfaultfd_ctx *ctx,
 	pte_t *pte;
 	bool ret = true;
 
-	VM_BUG_ON(!rwsem_is_locked(&mm->mmap_sem));
+	VM_BUG_ON(!rwsem_is_locked_mmap_sem(mm));
 
 	pte = huge_pte_offset(mm, address);
 	if (!pte)
@@ -271,7 +271,7 @@ static inline bool userfaultfd_must_wait(struct userfaultfd_ctx *ctx,
 	pte_t *pte;
 	bool ret = true;
 
-	VM_BUG_ON(!rwsem_is_locked(&mm->mmap_sem));
+	VM_BUG_ON(!rwsem_is_locked_mmap_sem(mm));
 
 	pgd = pgd_offset(mm, address);
 	if (!pgd_present(*pgd))
@@ -340,7 +340,7 @@ int handle_userfault(struct vm_fault *vmf, unsigned long reason)
 	bool must_wait, return_to_userland;
 	long blocking_state;
 
-	BUG_ON(!rwsem_is_locked(&mm->mmap_sem));
+	BUG_ON(!rwsem_is_locked_mmap_sem(mm));
 
 	ret = VM_FAULT_SIGBUS;
 	ctx = vmf->vma->vm_userfaultfd_ctx.ctx;
@@ -437,7 +437,7 @@ int handle_userfault(struct vm_fault *vmf, unsigned long reason)
 	else
 		must_wait = userfaultfd_huge_must_wait(ctx, vmf->address,
 						       vmf->flags, reason);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	if (likely(must_wait && !ACCESS_ONCE(ctx->released) &&
 		   (return_to_userland ? !signal_pending(current) :
@@ -491,7 +491,7 @@ int handle_userfault(struct vm_fault *vmf, unsigned long reason)
 			 * and there's no need to retake the mmap_sem
 			 * in such case.
 			 */
-			down_read(&mm->mmap_sem);
+			down_read_mmap_sem(mm);
 			ret = VM_FAULT_NOPAGE;
 		}
 	}
@@ -709,7 +709,7 @@ bool userfaultfd_remove(struct vm_area_struct *vma,
 		return true;
 
 	userfaultfd_ctx_get(ctx);
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	msg_init(&ewq.msg);
 
@@ -802,7 +802,7 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
 	 * it's critical that released is set to true (above), before
 	 * taking the mmap_sem for writing.
 	 */
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 	prev = NULL;
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
 		cond_resched();
@@ -825,7 +825,7 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
 		vma->vm_flags = new_flags;
 		vma->vm_userfaultfd_ctx = NULL_VM_UFFD_CTX;
 	}
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	mmput(mm);
 wakeup:
 	/*
@@ -1224,7 +1224,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 	if (!mmget_not_zero(mm))
 		goto out;
 
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 	vma = find_vma_prev(mm, start, &prev);
 	if (!vma)
 		goto out_unlock;
@@ -1352,7 +1352,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 		vma = vma->vm_next;
 	} while (vma && vma->vm_start < end);
 out_unlock:
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	mmput(mm);
 	if (!ret) {
 		/*
@@ -1397,7 +1397,7 @@ static int userfaultfd_unregister(struct userfaultfd_ctx *ctx,
 	if (!mmget_not_zero(mm))
 		goto out;
 
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 	vma = find_vma_prev(mm, start, &prev);
 	if (!vma)
 		goto out_unlock;
@@ -1510,7 +1510,7 @@ static int userfaultfd_unregister(struct userfaultfd_ctx *ctx,
 		vma = vma->vm_next;
 	} while (vma && vma->vm_start < end);
 out_unlock:
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	mmput(mm);
 out:
 	return ret;

@@ -758,7 +758,7 @@ static struct page **etnaviv_gem_userptr_do_get_pages(
 	pinned = 0;
 	ptr = etnaviv_obj->userptr.ptr;
 
-	down_read(&mm->mmap_sem);
+	down_read_mmap_sem(mm);
 	while (pinned < npages) {
 		ret = get_user_pages_remote(task, mm, ptr, npages - pinned,
 					    flags, pvec + pinned, NULL, NULL);
@@ -768,7 +768,7 @@ static struct page **etnaviv_gem_userptr_do_get_pages(
 		ptr += ret * PAGE_SIZE;
 		pinned += ret;
 	}
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	if (ret < 0) {
 		release_pages(pvec, pinned, 0);

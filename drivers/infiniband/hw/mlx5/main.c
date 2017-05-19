@@ -1542,7 +1542,7 @@ static void mlx5_ib_disassociate_ucontext(struct ib_ucontext *ibcontext)
 	/* need to protect from a race on closing the vma as part of
 	 * mlx5_ib_vma_close.
 	 */
-	down_write(&owning_mm->mmap_sem);
+	down_write_mmap_sem(owning_mm);
 	list_for_each_entry_safe(vma_private, n, &context->vma_private_list,
 				 list) {
 		vma = vma_private->vma;
@@ -1557,7 +1557,7 @@ static void mlx5_ib_disassociate_ucontext(struct ib_ucontext *ibcontext)
 		list_del(&vma_private->list);
 		kfree(vma_private);
 	}
-	up_write(&owning_mm->mmap_sem);
+	up_write_mmap_sem(owning_mm);
 	mmput(owning_mm);
 	put_task_struct(owning_process);
 }

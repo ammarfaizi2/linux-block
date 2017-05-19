@@ -89,7 +89,7 @@ struct kfd_process *kfd_create_process(const struct task_struct *thread)
 		return ERR_PTR(-EINVAL);
 
 	/* Take mmap_sem because we call __mmu_notifier_register inside */
-	down_write(&thread->mm->mmap_sem);
+	down_write_mmap_sem(thread->mm);
 
 	/*
 	 * take kfd processes mutex before starting of process creation
@@ -108,7 +108,7 @@ struct kfd_process *kfd_create_process(const struct task_struct *thread)
 
 	mutex_unlock(&kfd_processes_mutex);
 
-	up_write(&thread->mm->mmap_sem);
+	up_write_mmap_sem(thread->mm);
 
 	return process;
 }

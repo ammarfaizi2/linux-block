@@ -414,12 +414,12 @@ void arm64_notify_segfault(struct pt_regs *regs, unsigned long addr)
 {
 	int code;
 
-	down_read(&current->mm->mmap_sem);
+	down_read_mmap_sem(current->mm);
 	if (find_vma(current->mm, addr) == NULL)
 		code = SEGV_MAPERR;
 	else
 		code = SEGV_ACCERR;
-	up_read(&current->mm->mmap_sem);
+	up_read_mmap_sem(current->mm);
 
 	force_signal_inject(SIGSEGV, code, regs, addr);
 }

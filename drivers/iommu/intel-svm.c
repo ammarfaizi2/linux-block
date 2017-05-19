@@ -582,7 +582,7 @@ static irqreturn_t prq_event_thread(int irq, void *d)
 		/* If the mm is already defunct, don't handle faults. */
 		if (!mmget_not_zero(svm->mm))
 			goto bad_req;
-		down_read(&svm->mm->mmap_sem);
+		down_read_mmap_sem(svm->mm);
 		vma = find_extend_vma(svm->mm, address);
 		if (!vma || address < vma->vm_start)
 			goto invalid;
@@ -597,7 +597,7 @@ static irqreturn_t prq_event_thread(int irq, void *d)
 
 		result = QI_RESP_SUCCESS;
 	invalid:
-		up_read(&svm->mm->mmap_sem);
+		up_read_mmap_sem(svm->mm);
 		mmput(svm->mm);
 	bad_req:
 		/* Accounting for major/minor faults? */

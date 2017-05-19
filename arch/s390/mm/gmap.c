@@ -402,10 +402,10 @@ int gmap_unmap_segment(struct gmap *gmap, unsigned long to, unsigned long len)
 		return -EINVAL;
 
 	flush = 0;
-	down_write(&gmap->mm->mmap_sem);
+	down_write_mmap_sem(gmap->mm);
 	for (off = 0; off < len; off += PMD_SIZE)
 		flush |= __gmap_unmap_by_gaddr(gmap, to + off);
-	up_write(&gmap->mm->mmap_sem);
+	up_write_mmap_sem(gmap->mm);
 	if (flush)
 		gmap_flush_tlb(gmap);
 	return 0;
@@ -435,7 +435,7 @@ int gmap_map_segment(struct gmap *gmap, unsigned long from,
 		return -EINVAL;
 
 	flush = 0;
-	down_write(&gmap->mm->mmap_sem);
+	down_write_mmap_sem(gmap->mm);
 	for (off = 0; off < len; off += PMD_SIZE) {
 		/* Remove old translation */
 		flush |= __gmap_unmap_by_gaddr(gmap, to + off);
@@ -445,7 +445,7 @@ int gmap_map_segment(struct gmap *gmap, unsigned long from,
 				      (void *) from + off))
 			break;
 	}
-	up_write(&gmap->mm->mmap_sem);
+	up_write_mmap_sem(gmap->mm);
 	if (flush)
 		gmap_flush_tlb(gmap);
 	if (off >= len)
@@ -492,9 +492,9 @@ unsigned long gmap_translate(struct gmap *gmap, unsigned long gaddr)
 {
 	unsigned long rc;
 
-	down_read(&gmap->mm->mmap_sem);
+	down_read_mmap_sem(gmap->mm);
 	rc = __gmap_translate(gmap, gaddr);
-	up_read(&gmap->mm->mmap_sem);
+	up_read_mmap_sem(gmap->mm);
 	return rc;
 }
 EXPORT_SYMBOL_GPL(gmap_translate);
@@ -618,7 +618,7 @@ int gmap_fault(struct gmap *gmap, unsigned long gaddr,
 	int rc;
 	bool unlocked;
 
-	down_read(&gmap->mm->mmap_sem);
+	down_read_mmap_sem(gmap->mm);
 
 retry:
 	unlocked = false;
@@ -641,7 +641,7 @@ retry:
 
 	rc = __gmap_link(gmap, gaddr, vmaddr);
 out_up:
-	up_read(&gmap->mm->mmap_sem);
+	up_read_mmap_sem(gmap->mm);
 	return rc;
 }
 EXPORT_SYMBOL_GPL(gmap_fault);
@@ -674,7 +674,7 @@ void gmap_discard(struct gmap *gmap, unsigned long from, unsigned long to)
 	unsigned long gaddr, vmaddr, size;
 	struct vm_area_struct *vma;
 
-	down_read(&gmap->mm->mmap_sem);
+	down_read_mmap_sem(gmap->mm);
 	for (gaddr = from; gaddr < to;
 	     gaddr = (gaddr + PMD_SIZE) & PMD_MASK) {
 		/* Find the vm address for the guest address */
@@ -689,7 +689,7 @@ void gmap_discard(struct gmap *gmap, unsigned long from, unsigned long to)
 		size = min(to - gaddr, PMD_SIZE - (gaddr & ~PMD_MASK));
 		zap_page_range(vma, vmaddr, size);
 	}
-	up_read(&gmap->mm->mmap_sem);
+	up_read_mmap_sem(gmap->mm);
 }
 EXPORT_SYMBOL_GPL(gmap_discard);
 
@@ -941,9 +941,9 @@ int gmap_mprotect_notify(struct gmap *gmap, unsigned long gaddr,
 		return -EINVAL;
 	if (!MACHINE_HAS_ESOP && prot == PROT_READ)
 		return -EINVAL;
-	down_read(&gmap->mm->mmap_sem);
+	down_read_mmap_sem(gmap->mm);
 	rc = gmap_protect_range(gmap, gaddr, len, prot, PGSTE_IN_BIT);
-	up_read(&gmap->mm->mmap_sem);
+	up_read_mmap_sem(gmap->mm);
 	return rc;
 }
 EXPORT_SYMBOL_GPL(gmap_mprotect_notify);
@@ -1530,11 +1530,11 @@ struct gmap *gmap_shadow(struct gmap *parent, unsigned long asce,
 	}
 	spin_unlock(&parent->shadow_lock);
 	/* protect after insertion, so it will get properly invalidated */
-	down_read(&parent->mm->mmap_sem);
+	down_read_mmap_sem(parent->mm);
 	rc = gmap_protect_range(parent, asce & _ASCE_ORIGIN,
 				((asce & _ASCE_TABLE_LENGTH) + 1) * 4096,
 				PROT_READ, PGSTE_VSIE_BIT);
-	up_read(&parent->mm->mmap_sem);
+	up_read_mmap_sem(parent->mm);
 	spin_lock(&parent->shadow_lock);
 	new->initialized = true;
 	if (rc) {
@@ -2130,11 +2130,11 @@ int s390_enable_sie(void)
 	/* Fail if the page tables are 2K */
 	if (!mm_alloc_pgste(mm))
 		return -EINVAL;
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 	mm->context.has_pgste = 1;
 	/* split thp mappings and disable thp for future mappings */
 	thp_split_mm(mm);
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(s390_enable_sie);
@@ -2165,7 +2165,7 @@ int s390_enable_skey(void)
 	struct vm_area_struct *vma;
 	int rc = 0;
 
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 	if (mm_use_skey(mm))
 		goto out_up;
 
@@ -2184,7 +2184,7 @@ int s390_enable_skey(void)
 	walk_page_range(0, TASK_SIZE, &walk);
 
 out_up:
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 	return rc;
 }
 EXPORT_SYMBOL_GPL(s390_enable_skey);
@@ -2203,9 +2203,9 @@ void s390_reset_cmma(struct mm_struct *mm)
 {
 	struct mm_walk walk = { .pte_entry = __s390_reset_cmma };
 
-	down_write(&mm->mmap_sem);
+	down_write_mmap_sem(mm);
 	walk.mm = mm;
 	walk_page_range(0, TASK_SIZE, &walk);
-	up_write(&mm->mmap_sem);
+	up_write_mmap_sem(mm);
 }
 EXPORT_SYMBOL_GPL(s390_reset_cmma);

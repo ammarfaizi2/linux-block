@@ -382,7 +382,7 @@ static int handle_page_fault(struct pt_regs *regs,
 	 * source.  If this is invalid we can skip the address space check,
 	 * thus avoiding the deadlock.
 	 */
-	if (!down_read_trylock(&mm->mmap_sem)) {
+	if (!down_read_trylock_mmap_sem(mm)) {
 		if (is_kernel_mode &&
 		    !search_exception_tables(regs->pc)) {
 			vma = NULL;  /* happy compiler */
@@ -390,7 +390,7 @@ static int handle_page_fault(struct pt_regs *regs,
 		}
 
 retry:
-		down_read(&mm->mmap_sem);
+		down_read_mmap_sem(mm);
 	}
 
 	vma = find_vma(mm, address);
@@ -461,7 +461,7 @@ good_area:
 			flags |= FAULT_FLAG_TRIED;
 
 			 /*
-			  * No need to up_read(&mm->mmap_sem) as we would
+			  * No need to up_read_mmap_sem(mm) as we would
 			  * have already released it in __lock_page_or_retry
 			  * in mm/filemap.c.
 			  */
@@ -481,7 +481,7 @@ good_area:
 	}
 #endif
 
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	return 1;
 
 /*
@@ -489,7 +489,7 @@ good_area:
  * Fix it, but check if it's kernel or user first..
  */
 bad_area:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 bad_area_nosemaphore:
 	/* User mode accesses just cause a SIGSEGV */
@@ -556,14 +556,14 @@ no_context:
  * us unable to handle the page fault gracefully.
  */
 out_of_memory:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 	if (is_kernel_mode)
 		goto no_context;
 	pagefault_out_of_memory();
 	return 0;
 
 do_sigbus:
-	up_read(&mm->mmap_sem);
+	up_read_mmap_sem(mm);
 
 	/* Kernel mode? Handle exceptions or die */
 	if (is_kernel_mode)
