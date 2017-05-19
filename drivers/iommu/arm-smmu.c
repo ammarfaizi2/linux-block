@@ -143,12 +143,6 @@ struct arm_smmu_master_cfg {
 #define for_each_cfg_sme(fw, i, idx) \
 	for (i = 0; idx = fwspec_smendx(fw, i), i < fw->num_ids; ++i)
 
-struct mmu500_clk {
-	struct clk *cfg_clk;
-	struct clk *tcu_clk;
-	struct clk *tbu_clk;
-};
-
 struct arm_smmu_clks {
 	void *clks;
 	int (*init_clocks)(struct arm_smmu_device *smmu);
@@ -261,92 +255,6 @@ static struct arm_smmu_option_prop arm_smmu_options[] = {
 static struct arm_smmu_domain *to_smmu_domain(struct iommu_domain *dom)
 {
 	return container_of(dom, struct arm_smmu_domain, domain);
-}
-
-static int mmu500_enable_clocks(struct arm_smmu_device *smmu)
-{
-	int ret = 0;
-	struct mmu500_clk *sclks = smmu->smmu_clks.clks;
-
-	if (!sclks)
-		return 0;
-
-	ret = clk_prepare_enable(sclks->cfg_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couldn't enable cfg_clk");
-		return ret;
-	}
-
-	ret = clk_prepare_enable(sclks->tcu_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couldn't enable tcu_clk");
-		clk_disable_unprepare(sclks->cfg_clk);
-		return ret;
-	}
-
-	ret = clk_prepare_enable(sclks->tbu_clk);
-	if (ret) {
-		dev_err(smmu->dev, "Couln't enable tbu_clk");
-		clk_disable_unprepare(sclks->tcu_clk);
-		clk_disable_unprepare(sclks->cfg_clk);
-		return ret;
-	}
-
-	return 0;
-}
-
-static void mmu500_disable_clocks(struct arm_smmu_device *smmu)
-{
-	struct mmu500_clk *sclks = smmu->smmu_clks.clks;
-
-	if (!sclks) {
-		clk_disable_unprepare(sclks->tbu_clk);
-		clk_disable_unprepare(sclks->tcu_clk);
-		clk_disable_unprepare(sclks->cfg_clk);
-	}
-}
-
-static int mmu500_init_clocks(struct arm_smmu_device *smmu)
-{
-	struct device *dev = smmu->dev;
-	struct mmu500_clk *sclks;
-	int err;
-
-	if (!of_find_property(dev->of_node, "clocks", NULL))
-		return 0;
-
-	sclks = devm_kzalloc(dev, sizeof(*sclks), GFP_KERNEL);
-	if (!sclks)
-		return -ENOMEM;
-
-	sclks->cfg_clk = devm_clk_get(dev, "cfg_clk");
-	if (IS_ERR(sclks->cfg_clk)) {
-		err = PTR_ERR(sclks->cfg_clk);
-		/* Ignore all, except -EPROBE_DEFER for optional clocks */
-		if (err == -EPROBE_DEFER)
-			return err;
-		else
-			sclks->cfg_clk = NULL;
-	}
-
-	sclks->tcu_clk = devm_clk_get(dev, "tcu_clk");
-	if (IS_ERR(sclks->tcu_clk)) {
-		dev_err(dev, "Couldn't get tcu_clk");
-		return PTR_ERR(sclks->tcu_clk);
-	}
-
-	sclks->tbu_clk = devm_clk_get(dev, "tbu_clk");
-	if (IS_ERR(sclks->tbu_clk)) {
-		err = PTR_ERR(sclks->tbu_clk);
-		/* Ignore all, ecept -EPROBE_DEFER for optional clocks */
-		if (err == -EPROBE_DEFER)
-			return err;
-		else
-			sclks->tbu_clk = NULL;
-	}
-
-	smmu->smmu_clks.clks = sclks;
-	return 0;
 }
 
 static void parse_driver_options(struct arm_smmu_device *smmu)
@@ -1875,8 +1783,7 @@ ARM_SMMU_MATCH_DATA(smmu_generic_v2, ARM_SMMU_V2, GENERIC_SMMU,
 		    NULL, NULL, NULL);
 ARM_SMMU_MATCH_DATA(arm_mmu401, ARM_SMMU_V1_64K, GENERIC_SMMU,
 		    NULL, NULL, NULL);
-ARM_SMMU_MATCH_DATA(arm_mmu500, ARM_SMMU_V2, ARM_MMU500, mmu500_init_clocks,
-		    mmu500_enable_clocks, mmu500_disable_clocks);
+ARM_SMMU_MATCH_DATA(arm_mmu500, ARM_SMMU_V2, ARM_MMU500, NULL, NULL, NULL);
 ARM_SMMU_MATCH_DATA(cavium_smmuv2, ARM_SMMU_V2, CAVIUM_SMMUV2,
 		    NULL, NULL, NULL);
 
