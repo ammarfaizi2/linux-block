@@ -468,6 +468,7 @@ struct btc_statistics {
 
 struct btc_bt_link_info {
 	bool bt_link_exist;
+	bool bt_hi_pri_link_exist;
 	bool sco_exist;
 	bool sco_only;
 	bool a2dp_exist;
@@ -496,6 +497,11 @@ struct btc_coexist {
 	enum btc_chip_interface	chip_interface;
 	struct btc_bt_link_info bt_link_info;
 
+	/* boolean variables to replace BT_AUTO_REPORT_ONLY_XXXXY_ZANT
+	 * configuration parameters
+	 */
+	bool auto_report_1ant;
+	bool auto_report_2ant;
 	bool initilized;
 	bool stop_coex_dm;
 	bool manual_control;

@@ -55,7 +55,7 @@ static int verify_one_alg(struct nlattr **attrs, enum xfrm_attr_type_t type)
 		return -EINVAL;
 	}
 
-	algp->alg_name[CRYPTO_MAX_ALG_NAME - 1] = '\0';
+	algp->alg_name[sizeof(algp->alg_name) - 1] = '\0';
 	return 0;
 }
 
@@ -71,7 +71,7 @@ static int verify_auth_trunc(struct nlattr **attrs)
 	if (nla_len(rt) < xfrm_alg_auth_len(algp))
 		return -EINVAL;
 
-	algp->alg_name[CRYPTO_MAX_ALG_NAME - 1] = '\0';
+	algp->alg_name[sizeof(algp->alg_name) - 1] = '\0';
 	return 0;
 }
 
@@ -87,7 +87,7 @@ static int verify_aead(struct nlattr **attrs)
 	if (nla_len(rt) < aead_len(algp))
 		return -EINVAL;
 
-	algp->alg_name[CRYPTO_MAX_ALG_NAME - 1] = '\0';
+	algp->alg_name[sizeof(algp->alg_name) - 1] = '\0';
 	return 0;
 }
 
@@ -595,9 +595,12 @@ static struct xfrm_state *xfrm_state_construct(struct net *net,
 			goto error;
 	}
 
-	if (attrs[XFRMA_OFFLOAD_DEV] &&
-	    xfrm_dev_state_add(net, x, nla_data(attrs[XFRMA_OFFLOAD_DEV])))
-		goto error;
+	if (attrs[XFRMA_OFFLOAD_DEV]) {
+		err = xfrm_dev_state_add(net, x,
+					 nla_data(attrs[XFRMA_OFFLOAD_DEV]));
+		if (err)
+			goto error;
+	}
 
 	if ((err = xfrm_alloc_replay_state_esn(&x->replay_esn, &x->preplay_esn,
 					       attrs[XFRMA_REPLAY_ESN_VAL])))

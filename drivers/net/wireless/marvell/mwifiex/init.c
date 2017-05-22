@@ -409,11 +409,6 @@ static void mwifiex_free_lock_list(struct mwifiex_adapter *adapter)
 static void
 mwifiex_adapter_cleanup(struct mwifiex_adapter *adapter)
 {
-	if (!adapter) {
-		pr_err("%s: adapter is NULL\n", __func__);
-		return;
-	}
-
 	del_timer(&adapter->wakeup_timer);
 	mwifiex_cancel_all_pending_cmd(adapter);
 	wake_up_interruptible(&adapter->cmd_wait_q.wait);
@@ -439,7 +434,6 @@ int mwifiex_init_lock_list(struct mwifiex_adapter *adapter)
 	struct mwifiex_private *priv;
 	s32 i, j;
 
-	spin_lock_init(&adapter->mwifiex_lock);
 	spin_lock_init(&adapter->int_lock);
 	spin_lock_init(&adapter->main_proc_lock);
 	spin_lock_init(&adapter->mwifiex_cmd_lock);
@@ -670,8 +664,7 @@ mwifiex_shutdown_drv(struct mwifiex_adapter *adapter)
 
 			mwifiex_clean_auto_tdls(priv);
 			mwifiex_abort_cac(priv);
-			mwifiex_clean_txrx(priv);
-			mwifiex_delete_bss_prio_tbl(priv);
+			mwifiex_free_priv(priv);
 		}
 	}
 
@@ -694,11 +687,8 @@ mwifiex_shutdown_drv(struct mwifiex_adapter *adapter)
 
 	spin_unlock_irqrestore(&adapter->rx_proc_lock, flags);
 
-	spin_lock(&adapter->mwifiex_lock);
-
 	mwifiex_adapter_cleanup(adapter);
 
-	spin_unlock(&adapter->mwifiex_lock);
 	adapter->hw_status = MWIFIEX_HW_STATUS_NOT_READY;
 }
 

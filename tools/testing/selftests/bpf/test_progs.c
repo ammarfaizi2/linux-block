@@ -29,8 +29,7 @@ typedef __u16 __sum16;
 #include <bpf/libbpf.h>
 #include "test_iptunnel_common.h"
 #include "bpf_util.h"
-
-#define _htons __builtin_bswap16
+#include "bpf_endian.h"
 
 static int error_cnt, pass_cnt;
 
@@ -42,10 +41,10 @@ static struct {
 	struct iphdr iph;
 	struct tcphdr tcp;
 } __packed pkt_v4 = {
-	.eth.h_proto = _htons(ETH_P_IP),
+	.eth.h_proto = bpf_htons(ETH_P_IP),
 	.iph.ihl = 5,
 	.iph.protocol = 6,
-	.iph.tot_len = _htons(MAGIC_BYTES),
+	.iph.tot_len = bpf_htons(MAGIC_BYTES),
 	.tcp.urg_ptr = 123,
 };
 
@@ -55,9 +54,9 @@ static struct {
 	struct ipv6hdr iph;
 	struct tcphdr tcp;
 } __packed pkt_v6 = {
-	.eth.h_proto = _htons(ETH_P_IPV6),
+	.eth.h_proto = bpf_htons(ETH_P_IPV6),
 	.iph.nexthdr = 6,
-	.iph.payload_len = _htons(MAGIC_BYTES),
+	.iph.payload_len = bpf_htons(MAGIC_BYTES),
 	.tcp.urg_ptr = 123,
 };
 
@@ -269,6 +268,21 @@ out:
 	bpf_object__close(obj);
 }
 
+static void test_tcp_estats(void)
+{
+	const char *file = "./test_tcp_estats.o";
+	int err, prog_fd;
+	struct bpf_object *obj;
+	__u32 duration = 0;
+
+	err = bpf_prog_load(file, BPF_PROG_TYPE_TRACEPOINT, &obj, &prog_fd);
+	CHECK(err, "", "err %d errno %d\n", err, errno);
+	if (err)
+		return;
+
+	bpf_object__close(obj);
+}
+
 int main(void)
 {
 	struct rlimit rinf = { RLIM_INFINITY, RLIM_INFINITY };
@@ -278,6 +292,7 @@ int main(void)
 	test_pkt_access();
 	test_xdp();
 	test_l4lb();
+	test_tcp_estats();
 
 	printf("Summary: %d PASSED, %d FAILED\n", pass_cnt, error_cnt);
 	return 0;

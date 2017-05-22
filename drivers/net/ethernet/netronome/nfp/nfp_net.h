@@ -201,6 +201,7 @@ struct nfp_net_tx_buf {
  * @txds:       Virtual address of TX ring in host memory
  * @dma:        DMA address of the TX ring
  * @size:       Size, in bytes, of the TX ring (needed to free)
+ * @is_xdp:	Is this a XDP TX ring?
  */
 struct nfp_net_tx_ring {
 	struct nfp_net_r_vector *r_vec;
@@ -221,6 +222,7 @@ struct nfp_net_tx_ring {
 
 	dma_addr_t dma;
 	unsigned int size;
+	bool is_xdp;
 } ____cacheline_aligned;
 
 /* RX and freelist descriptor format */
@@ -468,9 +470,9 @@ struct nfp_net_dp {
 	u8 chained_metadata_format:1;
 
 	u8 rx_dma_dir;
-	u8 rx_dma_off;
-
 	u8 rx_offset;
+
+	u32 rx_dma_off;
 
 	u32 ctrl;
 	u32 fl_bufsz;
@@ -816,7 +818,8 @@ nfp_net_irqs_assign(struct nfp_net *nn, struct msix_entry *irq_entries,
 		    unsigned int n);
 
 struct nfp_net_dp *nfp_net_clone_dp(struct nfp_net *nn);
-int nfp_net_ring_reconfig(struct nfp_net *nn, struct nfp_net_dp *new);
+int nfp_net_ring_reconfig(struct nfp_net *nn, struct nfp_net_dp *new,
+			  struct netlink_ext_ack *extack);
 
 bool nfp_net_link_changed_read_clear(struct nfp_net *nn);
 int nfp_net_refresh_eth_port(struct nfp_net *nn);

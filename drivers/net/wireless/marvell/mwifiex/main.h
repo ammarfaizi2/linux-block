@@ -870,8 +870,6 @@ struct mwifiex_adapter {
 	bool rx_locked;
 	bool main_locked;
 	struct mwifiex_bss_prio_tbl bss_prio_tbl[MWIFIEX_MAX_BSS_NUM];
-	/* spin lock for init/shutdown */
-	spinlock_t mwifiex_lock;
 	/* spin lock for main process */
 	spinlock_t main_proc_lock;
 	u32 mwifiex_processing;
@@ -1235,7 +1233,8 @@ mwifiex_queuing_ra_based(struct mwifiex_private *priv)
 	 * Currently we assume if we are in Infra, then DA=RA. This might not be
 	 * true in the future
 	 */
-	if ((priv->bss_mode == NL80211_IFTYPE_STATION) &&
+	if ((priv->bss_mode == NL80211_IFTYPE_STATION ||
+	     priv->bss_mode == NL80211_IFTYPE_P2P_CLIENT) &&
 	    (GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_STA))
 		return false;
 

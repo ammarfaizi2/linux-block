@@ -309,7 +309,7 @@ static int nfp_net_set_ring_size(struct nfp_net *nn, u32 rxd_cnt, u32 txd_cnt)
 	dp->rxd_cnt = rxd_cnt;
 	dp->txd_cnt = txd_cnt;
 
-	return nfp_net_ring_reconfig(nn, dp);
+	return nfp_net_ring_reconfig(nn, dp, NULL);
 }
 
 static int nfp_net_set_ringparam(struct net_device *netdev,
@@ -791,7 +791,7 @@ static int nfp_net_set_coalesce(struct net_device *netdev,
 	    ec->tx_coalesce_usecs_high ||
 	    ec->tx_max_coalesced_frames_high ||
 	    ec->rate_sample_interval)
-		return -ENOTSUPP;
+		return -EOPNOTSUPP;
 
 	/* Compute factor used to convert coalesce '_usecs' parameters to
 	 * ME timestamp ticks.  There are 16 ME clock cycles for each timestamp
@@ -880,7 +880,7 @@ static int nfp_net_set_num_rings(struct nfp_net *nn, unsigned int total_rx,
 	if (dp->xdp_prog)
 		dp->num_tx_rings += total_rx;
 
-	return nfp_net_ring_reconfig(nn, dp);
+	return nfp_net_ring_reconfig(nn, dp, NULL);
 }
 
 static int nfp_net_set_channels(struct net_device *netdev,

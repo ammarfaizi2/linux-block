@@ -422,7 +422,7 @@ void hns_ppe_update_stats(struct hns_ppe_cb *ppe_cb)
 
 int hns_ppe_get_sset_count(int stringset)
 {
-	if (stringset == ETH_SS_STATS)
+	if (stringset == ETH_SS_STATS || stringset == ETH_SS_PRIV_FLAGS)
 		return ETH_PPE_STATIC_NUM;
 	return 0;
 }
@@ -510,7 +510,9 @@ int hns_ppe_init(struct dsaf_device *dsaf_dev)
 
 		hns_ppe_get_cfg(dsaf_dev->ppe_common[i]);
 
-		hns_rcb_get_cfg(dsaf_dev->rcb_common[i]);
+		ret = hns_rcb_get_cfg(dsaf_dev->rcb_common[i]);
+		if (ret)
+			goto get_cfg_fail;
 	}
 
 	for (i = 0; i < HNS_PPE_COM_NUM; i++)

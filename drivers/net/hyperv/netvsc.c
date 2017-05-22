@@ -249,6 +249,7 @@ static int netvsc_init_buf(struct hv_device *device)
 	struct netvsc_device *net_device;
 	struct nvsp_message *init_packet;
 	struct net_device *ndev;
+	size_t map_words;
 	int node;
 
 	net_device = get_outbound_net_device(device);
@@ -414,11 +415,9 @@ static int netvsc_init_buf(struct hv_device *device)
 		   net_device->send_section_size, net_device->send_section_cnt);
 
 	/* Setup state for managing the send buffer. */
-	net_device->map_words = DIV_ROUND_UP(net_device->send_section_cnt,
-					     BITS_PER_LONG);
+	map_words = DIV_ROUND_UP(net_device->send_section_cnt, BITS_PER_LONG);
 
-	net_device->send_section_map = kcalloc(net_device->map_words,
-					       sizeof(ulong), GFP_KERNEL);
+	net_device->send_section_map = kcalloc(map_words, sizeof(ulong), GFP_KERNEL);
 	if (net_device->send_section_map == NULL) {
 		ret = -ENOMEM;
 		goto cleanup;
@@ -698,7 +697,7 @@ static u32 netvsc_get_next_send_section(struct netvsc_device *net_device)
 	unsigned long *map_addr = net_device->send_section_map;
 	unsigned int i;
 
-	for_each_clear_bit(i, map_addr, net_device->map_words) {
+	for_each_clear_bit(i, map_addr, net_device->send_section_cnt) {
 		if (sync_test_and_set_bit(i, map_addr) == 0)
 			return i;
 	}
@@ -1323,6 +1322,10 @@ int netvsc_device_add(struct hv_device *device,
 		nvchan->channel = device->channel;
 	}
 
+	/* Enable NAPI handler before init callbacks */
+	netif_napi_add(ndev, &net_device->chan_table[0].napi,
+		       netvsc_poll, NAPI_POLL_WEIGHT);
+
 	/* Open the channel */
 	ret = vmbus_open(device->channel, ring_size * PAGE_SIZE,
 			 ring_size * PAGE_SIZE, NULL, 0,
@@ -1330,6 +1333,7 @@ int netvsc_device_add(struct hv_device *device,
 			 net_device->chan_table);
 
 	if (ret != 0) {
+		netif_napi_del(&net_device->chan_table[0].napi);
 		netdev_err(ndev, "unable to open channel: %d\n", ret);
 		goto cleanup;
 	}
@@ -1337,9 +1341,6 @@ int netvsc_device_add(struct hv_device *device,
 	/* Channel is opened */
 	netdev_dbg(ndev, "hv_netvsc channel opened successfully\n");
 
-	/* Enable NAPI handler for init callbacks */
-	netif_napi_add(ndev, &net_device->chan_table[0].napi,
-		       netvsc_poll, NAPI_POLL_WEIGHT);
 	napi_enable(&net_device->chan_table[0].napi);
 
 	/* Writing nvdev pointer unlocks netvsc_send(), make sure chn_table is

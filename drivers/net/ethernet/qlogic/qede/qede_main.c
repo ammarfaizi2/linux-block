@@ -563,6 +563,23 @@ static const struct net_device_ops qede_netdev_ops = {
 #endif
 };
 
+static const struct net_device_ops qede_netdev_vf_ops = {
+	.ndo_open = qede_open,
+	.ndo_stop = qede_close,
+	.ndo_start_xmit = qede_start_xmit,
+	.ndo_set_rx_mode = qede_set_rx_mode,
+	.ndo_set_mac_address = qede_set_mac_addr,
+	.ndo_validate_addr = eth_validate_addr,
+	.ndo_change_mtu = qede_change_mtu,
+	.ndo_vlan_rx_add_vid = qede_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid = qede_vlan_rx_kill_vid,
+	.ndo_set_features = qede_set_features,
+	.ndo_get_stats64 = qede_get_stats64,
+	.ndo_udp_tunnel_add = qede_udp_tunnel_add,
+	.ndo_udp_tunnel_del = qede_udp_tunnel_del,
+	.ndo_features_check = qede_features_check,
+};
+
 /* -------------------------------------------------------------------------
  * START OF PROBE / REMOVE
  * -------------------------------------------------------------------------
@@ -622,7 +639,10 @@ static void qede_init_ndev(struct qede_dev *edev)
 
 	ndev->watchdog_timeo = TX_TIMEOUT;
 
-	ndev->netdev_ops = &qede_netdev_ops;
+	if (IS_VF(edev))
+		ndev->netdev_ops = &qede_netdev_vf_ops;
+	else
+		ndev->netdev_ops = &qede_netdev_ops;
 
 	qede_set_ethtool_ops(ndev);
 
@@ -907,13 +927,8 @@ static int __qede_probe(struct pci_dev *pdev, u32 dp_module, u8 dp_level,
 	edev->ops->common->set_id(cdev, edev->ndev->name, DRV_MODULE_VERSION);
 
 	/* PTP not supported on VFs */
-	if (!is_vf) {
-		rc = qede_ptp_register_phc(edev);
-		if (rc) {
-			DP_NOTICE(edev, "Cannot register PHC\n");
-			goto err5;
-		}
-	}
+	if (!is_vf)
+		qede_ptp_enable(edev, true);
 
 	edev->ops->register_ops(cdev, &qede_ll_ops, edev);
 
@@ -928,8 +943,6 @@ static int __qede_probe(struct pci_dev *pdev, u32 dp_module, u8 dp_level,
 
 	return 0;
 
-err5:
-	unregister_netdev(edev->ndev);
 err4:
 	qede_roce_dev_remove(edev);
 err3:
@@ -980,7 +993,7 @@ static void __qede_remove(struct pci_dev *pdev, enum qede_remove_mode mode)
 	unregister_netdev(ndev);
 	cancel_delayed_work_sync(&edev->sp_task);
 
-	qede_ptp_remove(edev);
+	qede_ptp_disable(edev);
 
 	qede_roce_dev_remove(edev);
 
@@ -1319,6 +1332,9 @@ static void qede_free_mem_fp(struct qede_dev *edev, struct qede_fastpath *fp)
 
 	if (fp->type & QEDE_FASTPATH_RX)
 		qede_free_mem_rxq(edev, fp->rxq);
+
+	if (fp->type & QEDE_FASTPATH_XDP)
+		qede_free_mem_txq(edev, fp->xdp_tx);
 
 	if (fp->type & QEDE_FASTPATH_TX)
 		qede_free_mem_txq(edev, fp->txq);
@@ -1877,8 +1893,6 @@ static void qede_unload(struct qede_dev *edev, enum qede_unload_mode mode,
 	qede_roce_dev_event_close(edev);
 	edev->state = QEDE_STATE_CLOSED;
 
-	qede_ptp_stop(edev);
-
 	/* Close OS Tx */
 	netif_tx_disable(edev->ndev);
 	netif_carrier_off(edev->ndev);
@@ -1987,12 +2001,9 @@ static int qede_load(struct qede_dev *edev, enum qede_load_mode mode,
 
 	qede_roce_dev_event_open(edev);
 
-	qede_ptp_start(edev, (mode == QEDE_LOAD_NORMAL));
-
 	edev->state = QEDE_STATE_OPEN;
 
 	DP_INFO(edev, "Ending successfully qede load\n");
-
 
 	goto out;
 err4:

@@ -877,6 +877,12 @@ static int do_vrf_add_slave(struct net_device *dev, struct net_device *port_dev)
 {
 	int ret;
 
+	/* do not allow loopback device to be enslaved to a VRF.
+	 * The vrf device acts as the loopback for the vrf.
+	 */
+	if (port_dev == dev_net(dev)->loopback_dev)
+		return -EOPNOTSUPP;
+
 	port_dev->priv_flags |= IFF_L3MDEV_SLAVE;
 	ret = netdev_master_upper_dev_link(port_dev, dev, NULL, NULL);
 	if (ret < 0)
@@ -983,6 +989,7 @@ static u32 vrf_fib_table(const struct net_device *dev)
 
 static int vrf_rcv_finish(struct net *net, struct sock *sk, struct sk_buff *skb)
 {
+	kfree_skb(skb);
 	return 0;
 }
 
@@ -992,7 +999,7 @@ static struct sk_buff *vrf_rcv_nfhook(u8 pf, unsigned int hook,
 {
 	struct net *net = dev_net(dev);
 
-	if (NF_HOOK(pf, hook, net, NULL, skb, dev, NULL, vrf_rcv_finish) < 0)
+	if (nf_hook(pf, hook, net, NULL, skb, dev, NULL, vrf_rcv_finish) != 1)
 		skb = NULL;    /* kfree_skb(skb) handled by nf code */
 
 	return skb;

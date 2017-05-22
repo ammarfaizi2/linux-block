@@ -928,7 +928,9 @@ static int qed_slowpath_start(struct qed_dev *cdev,
 	struct qed_tunnel_info tunn_info;
 	const u8 *data = NULL;
 	struct qed_hwfn *hwfn;
+#ifdef CONFIG_RFS_ACCEL
 	struct qed_ptt *p_ptt;
+#endif
 	int rc = -EINVAL;
 
 	if (qed_iov_wq_start(cdev))
@@ -956,13 +958,6 @@ static int qed_slowpath_start(struct qed_dev *cdev,
 			}
 		}
 #endif
-		p_ptt = qed_ptt_acquire(QED_LEADING_HWFN(cdev));
-		if (p_ptt) {
-			QED_LEADING_HWFN(cdev)->p_ptp_ptt = p_ptt;
-		} else {
-			DP_NOTICE(cdev, "Failed to acquire PTT for PTP\n");
-			goto err;
-		}
 	}
 
 	cdev->rx_coalesce_usecs = QED_DEFAULT_RX_USECS;
@@ -983,7 +978,7 @@ static int qed_slowpath_start(struct qed_dev *cdev,
 		if (rc)
 			goto err2;
 
-		/* First Dword used to diffrentiate between various sources */
+		/* First Dword used to differentiate between various sources */
 		data = cdev->firmware->data + sizeof(u32);
 
 		qed_dbg_pf_init(cdev);
@@ -1076,9 +1071,6 @@ err:
 		qed_ptt_release(QED_LEADING_HWFN(cdev),
 				QED_LEADING_HWFN(cdev)->p_arfs_ptt);
 #endif
-	if (IS_PF(cdev) && QED_LEADING_HWFN(cdev)->p_ptp_ptt)
-		qed_ptt_release(QED_LEADING_HWFN(cdev),
-				QED_LEADING_HWFN(cdev)->p_ptp_ptt);
 
 	qed_iov_wq_stop(cdev, false);
 
@@ -1098,15 +1090,15 @@ static int qed_slowpath_stop(struct qed_dev *cdev)
 			qed_ptt_release(QED_LEADING_HWFN(cdev),
 					QED_LEADING_HWFN(cdev)->p_arfs_ptt);
 #endif
-		qed_ptt_release(QED_LEADING_HWFN(cdev),
-				QED_LEADING_HWFN(cdev)->p_ptp_ptt);
 		qed_free_stream_mem(cdev);
 		if (IS_QED_ETH_IF(cdev))
 			qed_sriov_disable(cdev, true);
-
-		qed_nic_stop(cdev);
-		qed_slowpath_irq_free(cdev);
 	}
+
+	qed_nic_stop(cdev);
+
+	if (IS_PF(cdev))
+		qed_slowpath_irq_free(cdev);
 
 	qed_disable_msix(cdev);
 
@@ -1382,7 +1374,7 @@ static void qed_fill_link(struct qed_hwfn *hwfn,
 
 	/* TODO - at the moment assume supported and advertised speed equal */
 	if_link->supported_caps = QED_LM_FIBRE_BIT;
-	if (params.speed.autoneg)
+	if (link_caps.default_speed_autoneg)
 		if_link->supported_caps |= QED_LM_Autoneg_BIT;
 	if (params.pause.autoneg ||
 	    (params.pause.forced_rx && params.pause.forced_tx))
@@ -1392,6 +1384,10 @@ static void qed_fill_link(struct qed_hwfn *hwfn,
 		if_link->supported_caps |= QED_LM_Pause_BIT;
 
 	if_link->advertised_caps = if_link->supported_caps;
+	if (params.speed.autoneg)
+		if_link->advertised_caps |= QED_LM_Autoneg_BIT;
+	else
+		if_link->advertised_caps &= ~QED_LM_Autoneg_BIT;
 	if (params.speed.advertised_speeds &
 	    NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
 		if_link->advertised_caps |= QED_LM_1000baseT_Half_BIT |
@@ -1531,7 +1527,7 @@ static void qed_get_coalesce(struct qed_dev *cdev, u16 *rx_coal, u16 *tx_coal)
 }
 
 static int qed_set_coalesce(struct qed_dev *cdev, u16 rx_coal, u16 tx_coal,
-			    u8 qid, u16 sb_id)
+			    u16 qid, u16 sb_id)
 {
 	struct qed_hwfn *hwfn;
 	struct qed_ptt *ptt;

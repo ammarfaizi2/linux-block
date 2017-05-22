@@ -317,6 +317,7 @@ cow:
 	if (nfrags < 0)
 		goto out;
 	tail = skb_tail_pointer(trailer);
+	esp->esph = ip_esp_hdr(skb);
 
 skip_cow:
 	esp_output_fill_trailer(tail, esp->tfclen, esp->plen, esp->proto);
@@ -356,11 +357,8 @@ int esp_output_tail(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *
 	ivlen = crypto_aead_ivsize(aead);
 
 	tmp = esp_alloc_tmp(aead, esp->nfrags + 2, extralen);
-	if (!tmp) {
-		spin_unlock_bh(&x->lock);
-		err = -ENOMEM;
+	if (!tmp)
 		goto error;
-	}
 
 	extra = esp_tmp_extra(tmp);
 	iv = esp_tmp_iv(aead, tmp, extralen);
@@ -389,7 +387,6 @@ int esp_output_tail(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *
 		spin_lock_bh(&x->lock);
 		if (unlikely(!skb_page_frag_refill(allocsize, pfrag, GFP_ATOMIC))) {
 			spin_unlock_bh(&x->lock);
-			err = -ENOMEM;
 			goto error;
 		}
 

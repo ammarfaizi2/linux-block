@@ -25,8 +25,6 @@
 /**********************************************************************
  * The following is for 8723B 1ANT BT Co-exist definition
  **********************************************************************/
-#define	BT_AUTO_REPORT_ONLY_8723B_1ANT			1
-
 #define	BT_INFO_8723B_1ANT_B_FTP			BIT7
 #define	BT_INFO_8723B_1ANT_B_A2DP			BIT6
 #define	BT_INFO_8723B_1ANT_B_HID			BIT5
@@ -90,7 +88,7 @@ struct coex_dm_8723b_1ant {
 	u8 pre_ps_tdma;
 	u8 cur_ps_tdma;
 	u8 ps_tdma_para[5];
-	u8 tdma_adj_type;
+	u8 ps_tdma_du_adj_type;
 	bool auto_tdma_adjust;
 	bool pre_ps_tdma_on;
 	bool cur_ps_tdma_on;
@@ -138,11 +136,13 @@ struct coex_dm_8723b_1ant {
 };
 
 struct coex_sta_8723b_1ant {
+	bool bt_disabled;
 	bool bt_link_exist;
 	bool sco_exist;
 	bool a2dp_exist;
 	bool hid_exist;
 	bool pan_exist;
+	bool bt_hi_pri_link_exist;
 
 	bool under_lps;
 	bool under_ips;
@@ -160,6 +160,22 @@ struct coex_sta_8723b_1ant {
 	bool c2h_bt_inquiry_page;
 	u8 bt_retry_cnt;
 	u8 bt_info_ext;
+	bool cck_ever_lock;
+	bool force_lps_on;
+	u32 pop_event_cnt;
+
+	u32 crc_ok_cck;
+	u32 crc_ok_11g;
+	u32 crc_ok_11n;
+	u32 crc_ok_11n_agg;
+
+	u32 crc_err_cck;
+	u32 crc_err_11g;
+	u32 crc_err_11n;
+	u32 crc_err_11n_agg;
+
+	bool cck_lock;
+	bool pre_ccklock;
 };
 
 /*************************************************************************

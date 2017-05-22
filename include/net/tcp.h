@@ -470,7 +470,7 @@ void inet_sk_rx_dst_set(struct sock *sk, const struct sk_buff *skb);
 /* From syncookies.c */
 struct sock *tcp_get_cookie_sock(struct sock *sk, struct sk_buff *skb,
 				 struct request_sock *req,
-				 struct dst_entry *dst);
+				 struct dst_entry *dst, u32 tsoff);
 int __cookie_v4_check(const struct iphdr *iph, const struct tcphdr *th,
 		      u32 cookie);
 struct sock *cookie_v4_check(struct sock *sk, struct sk_buff *skb);
@@ -1004,7 +1004,7 @@ void tcp_rate_skb_sent(struct sock *sk, struct sk_buff *skb);
 void tcp_rate_skb_delivered(struct sock *sk, struct sk_buff *skb,
 			    struct rate_sample *rs);
 void tcp_rate_gen(struct sock *sk, u32 delivered, u32 lost,
-		  struct skb_mstamp *now, struct rate_sample *rs);
+		  struct rate_sample *rs);
 void tcp_rate_check_app_limited(struct sock *sk);
 
 /* These functions determine how the current flow behaves in respect of SACK
@@ -1234,10 +1234,12 @@ void tcp_cwnd_restart(struct sock *sk, s32 delta);
 
 static inline void tcp_slow_start_after_idle_check(struct sock *sk)
 {
+	const struct tcp_congestion_ops *ca_ops = inet_csk(sk)->icsk_ca_ops;
 	struct tcp_sock *tp = tcp_sk(sk);
 	s32 delta;
 
-	if (!sysctl_tcp_slow_start_after_idle || tp->packets_out)
+	if (!sysctl_tcp_slow_start_after_idle || tp->packets_out ||
+	    ca_ops->cong_control)
 		return;
 	delta = tcp_time_stamp - tp->lsndtime;
 	if (delta > inet_csk(sk)->icsk_rto)
@@ -1822,7 +1824,8 @@ struct tcp_request_sock_ops {
 #endif
 	struct dst_entry *(*route_req)(const struct sock *sk, struct flowi *fl,
 				       const struct request_sock *req);
-	__u32 (*init_seq_tsoff)(const struct sk_buff *skb, u32 *tsoff);
+	u32 (*init_seq)(const struct sk_buff *skb);
+	u32 (*init_ts_off)(const struct sk_buff *skb);
 	int (*send_synack)(const struct sock *sk, struct dst_entry *dst,
 			   struct flowi *fl, struct request_sock *req,
 			   struct tcp_fastopen_cookie *foc,
@@ -1853,10 +1856,9 @@ void tcp_v4_init(void);
 void tcp_init(void);
 
 /* tcp_recovery.c */
-extern void tcp_rack_mark_lost(struct sock *sk, const struct skb_mstamp *now);
+extern void tcp_rack_mark_lost(struct sock *sk);
 extern void tcp_rack_advance(struct tcp_sock *tp, u8 sacked, u32 end_seq,
-			     const struct skb_mstamp *xmit_time,
-			     const struct skb_mstamp *ack_time);
+			     const struct skb_mstamp *xmit_time);
 extern void tcp_rack_reo_timeout(struct sock *sk);
 
 /*

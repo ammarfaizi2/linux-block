@@ -1318,17 +1318,15 @@ static int
 qed_hw_init_dpi_size(struct qed_hwfn *p_hwfn,
 		     struct qed_ptt *p_ptt, u32 pwm_region_size, u32 n_cpus)
 {
-	u32 dpi_page_size_1, dpi_page_size_2, dpi_page_size;
-	u32 dpi_bit_shift, dpi_count;
+	u32 dpi_bit_shift, dpi_count, dpi_page_size;
 	u32 min_dpis;
+	u32 n_wids;
 
 	/* Calculate DPI size */
-	dpi_page_size_1 = QED_WID_SIZE * n_cpus;
-	dpi_page_size_2 = max_t(u32, QED_WID_SIZE, PAGE_SIZE);
-	dpi_page_size = max_t(u32, dpi_page_size_1, dpi_page_size_2);
-	dpi_page_size = roundup_pow_of_two(dpi_page_size);
+	n_wids = max_t(u32, QED_MIN_WIDS, n_cpus);
+	dpi_page_size = QED_WID_SIZE * roundup_pow_of_two(n_wids);
+	dpi_page_size = (dpi_page_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 	dpi_bit_shift = ilog2(dpi_page_size / 4096);
-
 	dpi_count = pwm_region_size / dpi_page_size;
 
 	min_dpis = p_hwfn->pf_params.rdma_pf_params.min_dpis;
@@ -1356,7 +1354,7 @@ qed_hw_init_pf_doorbell_bar(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 {
 	u32 pwm_regsize, norm_regsize;
 	u32 non_pwm_conn, min_addr_reg1;
-	u32 db_bar_size, n_cpus;
+	u32 db_bar_size, n_cpus = 1;
 	u32 roce_edpm_mode;
 	u32 pf_dems_shift;
 	int rc = 0;
@@ -1372,7 +1370,7 @@ qed_hw_init_pf_doorbell_bar(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 						   NULL) +
 		       qed_cxt_get_proto_cid_count(p_hwfn, PROTOCOLID_ETH,
 						   NULL);
-	norm_regsize = roundup(QED_PF_DEMS_SIZE * non_pwm_conn, 4096);
+	norm_regsize = roundup(QED_PF_DEMS_SIZE * non_pwm_conn, PAGE_SIZE);
 	min_addr_reg1 = norm_regsize / 4096;
 	pwm_regsize = db_bar_size - norm_regsize;
 
@@ -1416,6 +1414,8 @@ qed_hw_init_pf_doorbell_bar(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 		if (cond)
 			qed_rdma_dpm_bar(p_hwfn, p_ptt);
 	}
+
+	p_hwfn->wid_count = (u16) n_cpus;
 
 	DP_INFO(p_hwfn,
 		"doorbell bar: normal_region_size=%d, pwm_region_size=%d, dpi_size=%d, dpi_count=%d, roce_edpm=%s\n",
@@ -2347,9 +2347,6 @@ static int qed_hw_set_resc_info(struct qed_hwfn *p_hwfn)
 	return 0;
 }
 
-#define QED_RESC_ALLOC_LOCK_RETRY_CNT           10
-#define QED_RESC_ALLOC_LOCK_RETRY_INTVL_US      10000	/* 10 msec */
-
 static int qed_hw_get_resc(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 {
 	struct qed_resc_unlock_params resc_unlock_params;
@@ -2366,13 +2363,8 @@ static int qed_hw_get_resc(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 	 * needed, and proceed to the queries. Other failures, including a
 	 * failure to acquire the lock, will cause this function to fail.
 	 */
-	memset(&resc_lock_params, 0, sizeof(resc_lock_params));
-	resc_lock_params.resource = QED_RESC_LOCK_RESC_ALLOC;
-	resc_lock_params.retry_num = QED_RESC_ALLOC_LOCK_RETRY_CNT;
-	resc_lock_params.retry_interval = QED_RESC_ALLOC_LOCK_RETRY_INTVL_US;
-	resc_lock_params.sleep_b4_retry = true;
-	memset(&resc_unlock_params, 0, sizeof(resc_unlock_params));
-	resc_unlock_params.resource = QED_RESC_LOCK_RESC_ALLOC;
+	qed_mcp_resc_lock_default_init(&resc_lock_params, &resc_unlock_params,
+				       QED_RESC_LOCK_RESC_ALLOC, false);
 
 	rc = qed_mcp_resc_lock(p_hwfn, p_ptt, &resc_lock_params);
 	if (rc && rc != -EINVAL) {
@@ -2543,6 +2535,9 @@ static int qed_hw_get_nvm_info(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 	default:
 		DP_NOTICE(p_hwfn, "Unknown Speed in 0x%08x\n", link_temp);
 	}
+
+	p_hwfn->mcp_info->link_capabilities.default_speed_autoneg =
+		link->speed.autoneg;
 
 	link_temp &= NVM_CFG1_PORT_DRV_FLOW_CONTROL_MASK;
 	link_temp >>= NVM_CFG1_PORT_DRV_FLOW_CONTROL_OFFSET;
@@ -3594,7 +3589,7 @@ static int qed_set_coalesce(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 }
 
 int qed_set_rxq_coalesce(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
-			 u16 coalesce, u8 qid, u16 sb_id)
+			 u16 coalesce, u16 qid, u16 sb_id)
 {
 	struct ustorm_eth_queue_zone eth_qzone;
 	u8 timeset, timer_res;
@@ -3615,7 +3610,7 @@ int qed_set_rxq_coalesce(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 	}
 	timeset = (u8)(coalesce >> timer_res);
 
-	rc = qed_fw_l2_queue(p_hwfn, (u16)qid, &fw_qid);
+	rc = qed_fw_l2_queue(p_hwfn, qid, &fw_qid);
 	if (rc)
 		return rc;
 
@@ -3636,7 +3631,7 @@ out:
 }
 
 int qed_set_txq_coalesce(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
-			 u16 coalesce, u8 qid, u16 sb_id)
+			 u16 coalesce, u16 qid, u16 sb_id)
 {
 	struct xstorm_eth_queue_zone eth_qzone;
 	u8 timeset, timer_res;
@@ -3657,7 +3652,7 @@ int qed_set_txq_coalesce(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 	}
 	timeset = (u8)(coalesce >> timer_res);
 
-	rc = qed_fw_l2_queue(p_hwfn, (u16)qid, &fw_qid);
+	rc = qed_fw_l2_queue(p_hwfn, qid, &fw_qid);
 	if (rc)
 		return rc;
 
@@ -4071,4 +4066,18 @@ void qed_clean_wfq_db(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 int qed_device_num_engines(struct qed_dev *cdev)
 {
 	return QED_IS_BB(cdev) ? 2 : 1;
+}
+
+static int qed_device_num_ports(struct qed_dev *cdev)
+{
+	/* in CMT always only one port */
+	if (cdev->num_hwfns > 1)
+		return 1;
+
+	return cdev->num_ports_in_engines * qed_device_num_engines(cdev);
+}
+
+int qed_device_get_port_id(struct qed_dev *cdev)
+{
+	return (QED_LEADING_HWFN(cdev)->abs_pf_id) % qed_device_num_ports(cdev);
 }

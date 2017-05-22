@@ -1576,6 +1576,8 @@ done:
 		skb_set_tail_pointer(skb, len);
 	}
 
+	if (!skb->sk || skb->destructor == sock_edemux)
+		skb_condense(skb);
 	return 0;
 }
 EXPORT_SYMBOL(___pskb_trim);
@@ -1980,7 +1982,6 @@ int skb_splice_bits(struct sk_buff *skb, struct sock *sk, unsigned int offset,
 		.pages = pages,
 		.partial = partial,
 		.nr_pages_max = MAX_SKB_FRAGS,
-		.flags = flags,
 		.ops = &nosteal_pipe_buf_ops,
 		.spd_release = sock_spd_release,
 	};

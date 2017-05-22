@@ -86,16 +86,9 @@ static int alloc_bucket_locks(struct rhashtable *ht, struct bucket_table *tbl,
 		size = min(size, 1U << tbl->nest);
 
 	if (sizeof(spinlock_t) != 0) {
-		tbl->locks = NULL;
-#ifdef CONFIG_NUMA
-		if (size * sizeof(spinlock_t) > PAGE_SIZE &&
-		    gfp == GFP_KERNEL)
-			tbl->locks = vmalloc(size * sizeof(spinlock_t));
-#endif
-		if (gfp != GFP_KERNEL)
-			gfp |= __GFP_NOWARN | __GFP_NORETRY;
-
-		if (!tbl->locks)
+		if (gfpflags_allow_blocking(gfp))
+			tbl->locks = kvmalloc(size * sizeof(spinlock_t), gfp);
+		else
 			tbl->locks = kmalloc_array(size, sizeof(spinlock_t),
 						   gfp);
 		if (!tbl->locks)
@@ -958,16 +951,16 @@ int rhashtable_init(struct rhashtable *ht,
 	if (params->min_size)
 		ht->p.min_size = roundup_pow_of_two(params->min_size);
 
-	if (params->max_size)
+	/* Cap total entries at 2^31 to avoid nelems overflow. */
+	ht->max_elems = 1u << 31;
+
+	if (params->max_size) {
 		ht->p.max_size = rounddown_pow_of_two(params->max_size);
+		if (ht->p.max_size < ht->max_elems / 2)
+			ht->max_elems = ht->p.max_size * 2;
+	}
 
-	if (params->insecure_max_entries)
-		ht->p.insecure_max_entries =
-			rounddown_pow_of_two(params->insecure_max_entries);
-	else
-		ht->p.insecure_max_entries = ht->p.max_size * 2;
-
-	ht->p.min_size = max(ht->p.min_size, HASH_MIN_SIZE);
+	ht->p.min_size = max_t(u16, ht->p.min_size, HASH_MIN_SIZE);
 
 	if (params->nelem_hint)
 		size = rounded_hashtable_size(&ht->p);
