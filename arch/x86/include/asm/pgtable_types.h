@@ -498,6 +498,21 @@ enum pg_level {
 	PG_LEVEL_NUM
 };
 
+static inline unsigned long pg_level_size(enum pg_level level) {
+	switch (level) {
+	case PG_LEVEL_4K:
+		return 4096;
+	case PG_LEVEL_2M:
+		return 2 * 1024 * 1024;
+	case PG_LEVEL_1G:
+		return 1024 * 1024 * 1024;
+	case PG_LEVEL_512G:
+		return 512UL * 1024 * 1024 * 1024;
+	default:
+		return 0;
+	}
+}
+
 #ifdef CONFIG_PROC_FS
 extern void update_page_count(int level, unsigned long pages);
 #else

@@ -1293,7 +1293,7 @@ repeat:
 		 * page attribute in parallel, that also falls into the
 		 * just split large page entry.
 	 	 */
-		flush_tlb_all();
+		flush_tlb_kernel_range(address, address + pg_level_size(level));
 		goto repeat;
 	}
 
