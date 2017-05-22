@@ -5059,8 +5059,6 @@ static void busy_poll_stop(struct napi_struct *napi, void *have_poll_lock)
 	if (rc == BUSY_POLL_BUDGET)
 		__napi_schedule(napi);
 	local_bh_enable();
-	if (local_softirq_pending())
-		do_softirq();
 }
 
 bool sk_busy_loop(struct sock *sk, int nonblock)
