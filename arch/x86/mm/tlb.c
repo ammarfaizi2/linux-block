@@ -329,12 +329,6 @@ static void do_flush_tlb_all(void *info)
 		leave_mm(smp_processor_id());
 }
 
-void flush_tlb_all(void)
-{
-	count_vm_tlb_event(NR_TLB_REMOTE_FLUSH);
-	on_each_cpu(do_flush_tlb_all, NULL, 1);
-}
-
 static void do_kernel_range_flush(void *info)
 {
 	struct flush_tlb_info *f = info;

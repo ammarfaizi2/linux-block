@@ -220,7 +220,6 @@ static inline void __flush_tlb_one(unsigned long addr)
 /*
  * TLB flushing:
  *
- *  - flush_tlb_all() flushes all processes TLBs
  *  - flush_tlb_mm(mm) flushes the specified mm context TLB's
  *  - flush_tlb_page(vma, vmaddr) flushes one page
  *  - flush_tlb_range(vma, start, end) flushes a range of pages
@@ -243,7 +242,6 @@ struct flush_tlb_info {
 #define flush_tlb_range(vma, start, end)	\
 		flush_tlb_mm_range(vma->vm_mm, start, end, vma->vm_flags)
 
-extern void flush_tlb_all(void);
 extern void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
 				unsigned long end, unsigned long vmflag);
 extern void flush_tlb_kernel_range(unsigned long start, unsigned long end);
