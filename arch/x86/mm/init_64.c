@@ -855,7 +855,7 @@ remove_pte_table(pte_t *pte_start, unsigned long addr, unsigned long end,
 	}
 
 	/* Call free_pte_table() in remove_pmd_table(). */
-	flush_tlb_all();
+	flush_tlb_kernel_range(addr, end);
 	if (direct)
 		update_page_count(PG_LEVEL_4K, -pages);
 }
@@ -1017,7 +1017,7 @@ remove_pagetable(unsigned long start, unsigned long end, bool direct)
 		remove_p4d_table(p4d, addr, next, direct);
 	}
 
-	flush_tlb_all();
+	flush_tlb_kernel_range(addr, end);
 }
 
 void __ref vmemmap_free(unsigned long start, unsigned long end)
