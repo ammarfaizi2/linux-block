@@ -61,6 +61,7 @@
 #include <asm/pgalloc.h>
 #include <asm/pgtable.h>
 #include <asm/tlb.h>
+#include <asm/tlbflush.h>
 
 #include <asm/xen/hypervisor.h>
 #include <asm/xen/hypercall.h>
@@ -554,7 +555,7 @@ static enum bp_state decrease_reservation(unsigned long nr_pages, gfp_t gfp)
 		balloon_append(page);
 	}
 
-	flush_tlb_all();
+	flush_tlb_kernel_range(0, TLB_FLUSH_ALL);
 
 	set_xen_guest_handle(reservation.extent_start, frame_list);
 	reservation.nr_extents   = nr_pages;
