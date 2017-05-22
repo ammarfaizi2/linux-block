@@ -347,6 +347,7 @@ static void do_kernel_range_flush(void *info)
 
 void flush_tlb_kernel_range(unsigned long start, unsigned long end)
 {
+	count_vm_tlb_event(NR_TLB_REMOTE_FLUSH);
 
 	/* Balance as user space task's flush, a bit conservative */
 	if (end == TLB_FLUSH_ALL ||
