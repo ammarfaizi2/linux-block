@@ -186,6 +186,21 @@ int percpu_down_write_killable(struct percpu_rw_semaphore *sem)
 }
 EXPORT_SYMBOL_GPL(percpu_down_write_killable);
 
+int percpu_down_write_trylock(struct percpu_rw_semaphore *sem)
+{
+	/* Notify readers to take the slow path. */
+	rcu_sync_enter(&sem->rss);
+
+	if (!down_write_killable(&sem->rw_sem)) {
+		rcu_sync_exit(&sem->rss);
+		return 0;
+	}
+	__percpu_down_write(sem);
+
+	return 1;
+}
+EXPORT_SYMBOL_GPL(percpu_down_write_trylock);
+
 void percpu_down_write_nested(struct percpu_rw_semaphore *sem, int sc)
 {
 	/* Notify readers to take the slow path. */
