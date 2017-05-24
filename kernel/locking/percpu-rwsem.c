@@ -137,12 +137,8 @@ static bool readers_active_check(struct percpu_rw_semaphore *sem)
 	return true;
 }
 
-void percpu_down_write(struct percpu_rw_semaphore *sem)
+void __percpu_down_write(struct percpu_rw_semaphore *sem)
 {
-	/* Notify readers to take the slow path. */
-	rcu_sync_enter(&sem->rss);
-
-	down_write(&sem->rw_sem);
 
 	/*
 	 * Notify new readers to block; up until now, and thus throughout the
@@ -161,7 +157,44 @@ void percpu_down_write(struct percpu_rw_semaphore *sem)
 	/* Wait for all now active readers to complete. */
 	rcuwait_wait_event(&sem->writer, readers_active_check(sem));
 }
+
+void percpu_down_write(struct percpu_rw_semaphore *sem)
+{
+	/* Notify readers to take the slow path. */
+	rcu_sync_enter(&sem->rss);
+
+	down_write(&sem->rw_sem);
+	__percpu_down_write(sem);
+}
 EXPORT_SYMBOL_GPL(percpu_down_write);
+
+int percpu_down_write_killable(struct percpu_rw_semaphore *sem)
+{
+	int retval;
+
+	/* Notify readers to take the slow path. */
+	rcu_sync_enter(&sem->rss);
+
+	retval = down_write_killable(&sem->rw_sem);
+	if (retval) {
+		rcu_sync_exit(&sem->rss);
+		return retval;
+	}
+	__percpu_down_write(sem);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(percpu_down_write_killable);
+
+void percpu_down_write_nested(struct percpu_rw_semaphore *sem, int sc)
+{
+	/* Notify readers to take the slow path. */
+	rcu_sync_enter(&sem->rss);
+
+	down_write_nested(&sem->rw_sem, sc);
+	__percpu_down_write(sem);
+}
+EXPORT_SYMBOL_GPL(percpu_down_write_nested);
 
 void percpu_up_write(struct percpu_rw_semaphore *sem)
 {

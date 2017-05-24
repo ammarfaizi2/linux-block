@@ -110,6 +110,8 @@ static inline void percpu_up_read(struct percpu_rw_semaphore *sem)
 }
 
 extern void percpu_down_write(struct percpu_rw_semaphore *);
+extern int percpu_down_write_killable(struct percpu_rw_semaphore *);
+extern void percpu_down_write_nested(struct percpu_rw_semaphore *, int sc);
 extern void percpu_up_write(struct percpu_rw_semaphore *);
 
 extern int __percpu_init_rwsem(struct percpu_rw_semaphore *,
