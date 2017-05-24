@@ -16,14 +16,16 @@ struct percpu_rw_semaphore {
 	int			readers_block;
 };
 
-#define DEFINE_STATIC_PERCPU_RWSEM(name)				\
-static DEFINE_PER_CPU(unsigned int, __percpu_rwsem_rc_##name);		\
-static struct percpu_rw_semaphore name = {				\
+#define PERCPU_RWSEM_INITIALIZER(name, percpu) {			\
 	.rss = __RCU_SYNC_INITIALIZER(name.rss, RCU_SCHED_SYNC),	\
-	.read_count = &__percpu_rwsem_rc_##name,			\
+	.read_count = percpu,						\
 	.rw_sem = __RWSEM_INITIALIZER(name.rw_sem),			\
 	.writer = __RCUWAIT_INITIALIZER(name.writer),			\
 }
+#define DEFINE_STATIC_PERCPU_RWSEM(name)				\
+static DEFINE_PER_CPU(unsigned int, __percpu_rwsem_rc_##name);		\
+static struct percpu_rw_semaphore name =				\
+	PERCPU_RWSEM_INITIALIZER(name, &__percpu_rwsem_rc_##name)
 
 extern int __percpu_down_read(struct percpu_rw_semaphore *, int);
 extern void __percpu_up_read(struct percpu_rw_semaphore *);
