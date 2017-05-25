@@ -36,6 +36,18 @@
 #define KEY_REQKEY_DEFL_GROUP_KEYRING		6
 #define KEY_REQKEY_DEFL_REQUESTOR_KEYRING	7
 
+/* Request_key service daemon namespace selection specifiers. */
+#define KEY_SERVICE_NS_UTS		0x0001
+#define KEY_SERVICE_NS_IPC		0x0002
+#define KEY_SERVICE_NS_MNT		0x0004
+#define KEY_SERVICE_NS_PID		0x0008
+#define KEY_SERVICE_NS_NET		0x0010
+#define KEY_SERVICE_NS_CGROUP		0x0020
+#define KEY_SERVICE___ALL_NS		0x003f
+
+#define KEY_SERVICE_FD_CLOEXEC		0x0001
+#define KEY_SERVICE_FD_NONBLOCK		0x0002
+
 /* keyctl commands */
 #define KEYCTL_GET_KEYRING_ID		0	/* ask for a keyring's ID */
 #define KEYCTL_JOIN_SESSION_KEYRING	1	/* join or start named session keyring */
@@ -70,6 +82,7 @@
 #define KEYCTL_MOVE			30	/* Move keys between keyrings */
 #define KEYCTL_CAPABILITIES		31	/* Find capabilities of keyrings subsystem */
 #define KEYCTL_WATCH_KEY		32	/* Watch a key or ring of keys for changes */
+#define KEYCTL_SERVICE_INTERCEPT	33	/* Intercept request_key services on a user_ns */
 
 /* keyctl structures */
 struct keyctl_dh_params {

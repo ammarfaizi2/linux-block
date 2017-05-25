@@ -14,6 +14,7 @@
 #include <linux/keyctl.h>
 #include <linux/slab.h>
 #include <net/net_namespace.h>
+#include <linux/init_task.h>
 #include "internal.h"
 #include <keys/request_key_auth-type.h>
 
@@ -112,7 +113,7 @@ static int call_usermodehelper_keys(const char *path, char **argv, char **envp,
  * Request userspace finish the construction of a key
  * - execute "/sbin/request-key <op> <key> <uid> <gid> <keyring> <keyring> <keyring>"
  */
-static int call_sbin_request_key(struct key *authkey, void *aux)
+static int call_sbin_request_key(struct key *authkey)
 {
 	static char const request_key[] = "/sbin/request-key";
 	struct request_key_auth *rka = get_request_key_auth(authkey);
@@ -224,7 +225,6 @@ static int construct_key(struct key *key, const void *callout_info,
 			 size_t callout_len, void *aux,
 			 struct key *dest_keyring)
 {
-	request_key_actor_t actor;
 	struct key *authkey;
 	int ret;
 
@@ -237,11 +237,13 @@ static int construct_key(struct key *key, const void *callout_info,
 		return PTR_ERR(authkey);
 
 	/* Make the call */
-	actor = call_sbin_request_key;
-	if (key->type->request_key)
-		actor = key->type->request_key;
-
-	ret = actor(authkey, aux);
+	if (key->type->request_key) {
+		ret = key->type->request_key(authkey, aux);
+	} else {
+		ret = queue_request_key(key, authkey);
+		if (ret == -ENOPARAM)
+			ret = call_sbin_request_key(authkey);
+	}
 
 	/* check that the actor called complete_request_key() prior to
 	 * returning an error */

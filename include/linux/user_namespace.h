@@ -73,6 +73,8 @@ struct user_namespace {
 	struct list_head	keyring_name_list;
 	struct key		*user_keyring_register;
 	struct rw_semaphore	keyring_sem;
+	struct hlist_head	request_key_services;
+	spinlock_t		request_key_services_lock;
 #endif
 
 	/* Register of per-UID persistent keyrings for this namespace */

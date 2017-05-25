@@ -150,6 +150,7 @@ extern struct key *find_keyring_by_name(const char *name, bool uid_keyring);
 
 extern int look_up_user_keyrings(struct key **, struct key **);
 extern struct key *get_user_session_keyring_rcu(const struct cred *);
+extern int install_thread_keyring(void);
 extern int install_thread_keyring_to_cred(struct cred *);
 extern int install_process_keyring_to_cred(struct cred *);
 extern int install_session_keyring_to_cred(struct cred *, struct key *);
@@ -183,6 +184,8 @@ extern void key_gc_keytype(struct key_type *ktype);
 extern int key_task_permission(const key_ref_t key_ref,
 			       const struct cred *cred,
 			       enum key_need_perm need_perm);
+extern int queue_request_key(struct key *key, struct key *auth_key);
+extern void clear_request_key_services(struct user_namespace *ns);
 
 static inline void notify_key(struct key *key,
 			      enum key_notification_subtype subtype, u32 aux)
@@ -265,6 +268,8 @@ extern long keyctl_invalidate_key(key_serial_t);
 extern long keyctl_restrict_keyring(key_serial_t id,
 				    const char __user *_type,
 				    const char __user *_restriction);
+extern long keyctl_service_intercept(int, int, const char __user *, unsigned int);
+
 #ifdef CONFIG_PERSISTENT_KEYRINGS
 extern long keyctl_get_persistent(uid_t, key_serial_t);
 extern unsigned persistent_keyring_expiry;

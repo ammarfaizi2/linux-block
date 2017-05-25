@@ -152,6 +152,9 @@ static void request_key_auth_destroy(struct key *key)
 		rcu_assign_keypointer(key, NULL);
 		call_rcu(&rka->rcu, request_key_auth_rcu_disposal);
 	}
+
+	if (key_read_state(rka->target_key) == KEY_IS_UNINSTANTIATED)
+		key_reject_and_link(rka->target_key, 0, -ENOKEY, NULL, NULL);
 }
 
 /*

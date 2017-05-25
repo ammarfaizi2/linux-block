@@ -15,7 +15,9 @@ obj-y := \
 	process_keys.o \
 	request_key.o \
 	request_key_auth.o \
+	service.o \
 	user_defined.o
+
 compat-obj-$(CONFIG_KEY_DH_OPERATIONS) += compat_dh.o
 obj-$(CONFIG_COMPAT) += compat.o $(compat-obj-y)
 obj-$(CONFIG_PROC_FS) += proc.o

@@ -71,6 +71,9 @@ struct user_namespace init_user_ns = {
 #ifdef CONFIG_KEYS
 	.keyring_name_list = LIST_HEAD_INIT(init_user_ns.keyring_name_list),
 	.keyring_sem = __RWSEM_INITIALIZER(init_user_ns.keyring_sem),
+	.request_key_services = HLIST_HEAD_INIT,
+	.request_key_services_lock =
+	__SPIN_LOCK_UNLOCKED(init_user_ns.request_key_services_lock),
 #endif
 };
 EXPORT_SYMBOL_GPL(init_user_ns);

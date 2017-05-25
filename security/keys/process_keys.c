@@ -241,7 +241,7 @@ int install_thread_keyring_to_cred(struct cred *new)
  *
  * Return: 0 if a thread keyring is now present; -errno on failure.
  */
-static int install_thread_keyring(void)
+int install_thread_keyring(void)
 {
 	struct cred *new;
 	int ret;

@@ -2015,6 +2015,12 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 	case KEYCTL_WATCH_KEY:
 		return keyctl_watch_key((key_serial_t)arg2, (int)arg3, (int)arg4);
 
+	case KEYCTL_SERVICE_INTERCEPT:
+		return keyctl_service_intercept((key_serial_t)arg2,
+						(int)arg3,
+						(const char __user *)arg4,
+						(unsigned int)arg5);
+
 	default:
 		return -EOPNOTSUPP;
 	}
