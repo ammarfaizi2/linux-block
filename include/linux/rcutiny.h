@@ -116,13 +116,9 @@ static inline void rcu_irq_exit_irqson(void) { }
 static inline void rcu_irq_enter_irqson(void) { }
 static inline void rcu_irq_exit(void) { }
 static inline void exit_rcu(void) { }
-
-#if defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_SRCU)
-extern int rcu_scheduler_active __read_mostly;
-void rcu_scheduler_starting(void);
-#else /* #if defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_SRCU) */
+#ifndef CONFIG_SRCU
 static inline void rcu_scheduler_starting(void) { }
-#endif /* #else #if defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_SRCU) */
+#endif /* #ifndef CONFIG_SRCU */
 static inline void rcu_end_inkernel_boot(void) { }
 static inline bool rcu_is_watching(void) { return true; }
 
