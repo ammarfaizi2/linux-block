@@ -29,10 +29,13 @@ struct restart_block {
 		/* For nanosleep */
 		struct {
 			clockid_t clockid;
-			struct timespec __user *rmtp;
+			int kind;
+			union {
+				struct timespec __user *rmtp;
 #ifdef CONFIG_COMPAT
-			struct compat_timespec __user *compat_rmtp;
+				struct compat_timespec __user *compat_rmtp;
 #endif
+			};
 			u64 expires;
 		} nanosleep;
 		/* For poll */

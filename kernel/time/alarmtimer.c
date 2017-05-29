@@ -27,6 +27,7 @@
 #include <linux/posix-timers.h>
 #include <linux/workqueue.h>
 #include <linux/freezer.h>
+#include <linux/compat.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/alarmtimer.h>
@@ -700,7 +701,7 @@ static enum alarmtimer_restart alarmtimer_nsleep_wakeup(struct alarm *alarm,
 static int alarmtimer_do_nsleep(struct alarm *alarm, ktime_t absexp,
 				enum alarmtimer_type type)
 {
-	struct timespec __user *rmtp;
+	struct restart_block *restart;
 	alarm->data = (void *)current;
 	do {
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -718,8 +719,8 @@ static int alarmtimer_do_nsleep(struct alarm *alarm, ktime_t absexp,
 
 	if (freezing(current))
 		alarmtimer_freezerset(absexp, type);
-	rmtp = current->restart_block.nanosleep.rmtp;
-	if (rmtp) {
+	restart = &current->restart_block;
+	if (restart->nanosleep.kind) {
 		struct timespec rmt;
 		ktime_t rem;
 
@@ -729,7 +730,14 @@ static int alarmtimer_do_nsleep(struct alarm *alarm, ktime_t absexp,
 			return 0;
 		rmt = ktime_to_timespec(rem);
 
-		if (copy_to_user(rmtp, &rmt, sizeof(*rmtp)))
+#ifdef CONFIG_COMPAT
+		if (restart->nanosleep.kind == 2) {
+			if (compat_put_timespec(&rmt,
+						restart->nanosleep.compat_rmtp))
+				return -EFAULT;
+		} else
+#endif
+		if (copy_to_user(restart->nanosleep.rmtp, &rmt, sizeof(rmt)))
 			return -EFAULT;
 	}
 	return -ERESTART_RESTARTBLOCK;
