@@ -130,8 +130,7 @@ static struct k_clock posix_clocks[MAX_CLOCKS];
 /*
  * These ones are defined below.
  */
-static int common_nsleep(const clockid_t, int flags, struct timespec64 *t,
-			 struct timespec __user *rmtp);
+static int common_nsleep(const clockid_t, int flags, struct timespec64 *t);
 static int common_timer_create(struct k_itimer *new_timer);
 static void common_timer_get(struct k_itimer *, struct itimerspec64 *);
 static int common_timer_set(struct k_itimer *, int,
@@ -1099,11 +1098,8 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
  * nanosleep for monotonic and realtime clocks
  */
 static int common_nsleep(const clockid_t which_clock, int flags,
-			 struct timespec64 *tsave, struct timespec __user *rmtp)
+			 struct timespec64 *tsave)
 {
-	if (flags & TIMER_ABSTIME)
-		rmtp = NULL;
-	current->restart_block.nanosleep.rmtp = rmtp;
 	return hrtimer_nanosleep(tsave, flags & TIMER_ABSTIME ?
 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
 				 which_clock);
@@ -1128,8 +1124,11 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
 	t64 = timespec_to_timespec64(t);
 	if (!timespec64_valid(&t64))
 		return -EINVAL;
+	if (flags & TIMER_ABSTIME)
+		rmtp = NULL;
+	current->restart_block.nanosleep.rmtp = rmtp;
 
-	return kc->nsleep(which_clock, flags, &t64, rmtp);
+	return kc->nsleep(which_clock, flags, &t64);
 }
 
 /*
