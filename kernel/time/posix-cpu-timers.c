@@ -1305,21 +1305,12 @@ static int do_cpu_nanosleep(const clockid_t which_clock, int flags,
 		 * Report back to the user the time still remaining.
 		 */
 		restart = &current->restart_block;
+		restart->nanosleep.expires = timespec64_to_ns(rqtp);
 		if (restart->nanosleep.kind) {
 			struct timespec ts;
 			ts = timespec64_to_timespec(it.it_value);
-#ifdef CONFIG_COMPAT
-			if (restart->nanosleep.kind == 2) {
-				if (compat_put_timespec(&ts,
-						restart->nanosleep.compat_rmtp))
-					return -EFAULT;
-			} else
-#endif
-			if (copy_to_user(restart->nanosleep.rmtp, &ts,
-					sizeof(ts)))
-				return -EFAULT;
+			error = nanosleep_copyout(restart, &ts);
 		}
-		restart->nanosleep.expires = timespec64_to_ns(rqtp);
 	}
 
 	return error;
