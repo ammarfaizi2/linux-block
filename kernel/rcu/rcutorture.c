@@ -611,8 +611,8 @@ static void srcu_torture_stats(void)
 	idx = READ_ONCE(srcu_ctlp->srcu_idx) & 0x1;
 	pr_alert("%s%s Tiny SRCU per-CPU(idx=%d): (%d,%d)\n",
 		 torture_type, TORTURE_FLAG, idx,
-		 READ_ONCE(srcu_ctlp->srcu_lock_nesting[!idx]),
-		 READ_ONCE(srcu_ctlp->srcu_lock_nesting[idx]));
+		 atomic_read(&srcu_ctlp->srcu_lock_nesting[!idx]),
+		 atomic_read(&srcu_ctlp->srcu_lock_nesting[idx]));
 #endif
 }
 

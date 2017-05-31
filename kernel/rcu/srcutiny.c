@@ -35,8 +35,8 @@
 
 static int init_srcu_struct_fields(struct srcu_struct *sp)
 {
-	sp->srcu_lock_nesting[0] = 0;
-	sp->srcu_lock_nesting[1] = 0;
+	atomic_set(&sp->srcu_lock_nesting[0], 0);
+	atomic_set(&sp->srcu_lock_nesting[1], 0);
 	init_swait_queue_head(&sp->srcu_wq);
 	sp->srcu_gp_seq = 0;
 	rcu_segcblist_init(&sp->srcu_cblist);
@@ -86,7 +86,8 @@ EXPORT_SYMBOL_GPL(init_srcu_struct);
  */
 void cleanup_srcu_struct(struct srcu_struct *sp)
 {
-	WARN_ON(sp->srcu_lock_nesting[0] || sp->srcu_lock_nesting[1]);
+	WARN_ON(atomic_read(&sp->srcu_lock_nesting[0]) ||
+		atomic_read(&sp->srcu_lock_nesting[1]));
 	flush_work(&sp->srcu_work);
 	WARN_ON(rcu_seq_state(sp->srcu_gp_seq));
 	WARN_ON(sp->srcu_gp_running);
@@ -97,7 +98,7 @@ EXPORT_SYMBOL_GPL(cleanup_srcu_struct);
 
 /*
  * Counts the new reader in the appropriate per-CPU element of the
- * srcu_struct.  Must be called from process context.
+ * srcu_struct.
  * Returns an index that must be passed to the matching srcu_read_unlock().
  */
 int __srcu_read_lock(struct srcu_struct *sp)
@@ -105,21 +106,19 @@ int __srcu_read_lock(struct srcu_struct *sp)
 	int idx;
 
 	idx = READ_ONCE(sp->srcu_idx);
-	WRITE_ONCE(sp->srcu_lock_nesting[idx], sp->srcu_lock_nesting[idx] + 1);
+	atomic_inc(&sp->srcu_lock_nesting[idx]);
 	return idx;
 }
 EXPORT_SYMBOL_GPL(__srcu_read_lock);
 
 /*
  * Removes the count for the old reader from the appropriate element of
- * the srcu_struct.  Must be called from process context.
+ * the srcu_struct.
  */
 void __srcu_read_unlock(struct srcu_struct *sp, int idx)
 {
-	int newval = sp->srcu_lock_nesting[idx] - 1;
-
-	WRITE_ONCE(sp->srcu_lock_nesting[idx], newval);
-	if (!newval && READ_ONCE(sp->srcu_gp_waiting))
+	if (atomic_dec_return_relaxed(&sp->srcu_lock_nesting[idx]) == 0 &&
+	    READ_ONCE(sp->srcu_gp_waiting))
 		swake_up(&sp->srcu_wq);
 }
 EXPORT_SYMBOL_GPL(__srcu_read_unlock);
@@ -148,7 +147,7 @@ void srcu_drive_gp(struct work_struct *wp)
 	idx = sp->srcu_idx;
 	WRITE_ONCE(sp->srcu_idx, !sp->srcu_idx);
 	WRITE_ONCE(sp->srcu_gp_waiting, true);  /* srcu_read_unlock() wakes! */
-	swait_event(sp->srcu_wq, !READ_ONCE(sp->srcu_lock_nesting[idx]));
+	swait_event(sp->srcu_wq, !atomic_read(&sp->srcu_lock_nesting[idx]));
 	WRITE_ONCE(sp->srcu_gp_waiting, false); /* srcu_read_unlock() cheap. */
 	rcu_seq_end(&sp->srcu_gp_seq);
 

@@ -27,7 +27,7 @@
 #include <linux/swait.h>
 
 struct srcu_struct {
-	int srcu_lock_nesting[2];	/* srcu_read_lock() nesting depth. */
+	atomic_t srcu_lock_nesting[2];	/* srcu_read_lock() nesting depth. */
 	struct swait_queue_head srcu_wq;
 					/* Last srcu_read_unlock() wakes GP. */
 	unsigned long srcu_gp_seq;	/* GP seq # for callback tagging. */
