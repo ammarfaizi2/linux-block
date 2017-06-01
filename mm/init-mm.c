@@ -14,12 +14,13 @@
 #define INIT_MM_CONTEXT(name)
 #endif
 
+static DEFINE_PER_CPU(int, init_mm_percpu);
 struct mm_struct init_mm = {
 	.mm_rb		= RB_ROOT,
 	.pgd		= swapper_pg_dir,
 	.mm_users	= ATOMIC_INIT(2),
 	.mm_count	= ATOMIC_INIT(1),
-	MMAP_SEM_INITIALIZER(init_mm)
+	MMAP_SEM_INITIALIZER(init_mm, &init_mm_percpu)
 	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
 	.mmlist		= LIST_HEAD_INIT(init_mm.mmlist),
 	.user_ns	= &init_user_ns,

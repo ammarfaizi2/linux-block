@@ -7,7 +7,7 @@
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/rbtree.h>
-#include <linux/rwsem.h>
+#include <linux/percpu-rwsem.h>
 #include <linux/completion.h>
 #include <linux/cpumask.h>
 #include <linux/uprobes.h>
@@ -403,7 +403,7 @@ struct mm_struct {
 	int map_count;				/* number of VMAs */
 
 	spinlock_t page_table_lock;		/* Protects page tables and some counters */
-	struct rw_semaphore mmap_sem;
+	struct percpu_rw_semaphore mmap_sem;
 
 	struct list_head mmlist;		/* List of maybe swapped mm's.	These are globally strung
 						 * together off init_mm.mmlist, and are protected
@@ -504,77 +504,76 @@ struct mm_struct {
 
 extern struct mm_struct init_mm;
 
-#define MMAP_SEM_INITIALIZER(name) \
-	.mmap_sem = __RWSEM_INITIALIZER(name.mmap_sem),
+#define MMAP_SEM_INITIALIZER(name, percpu) \
+	.mmap_sem = PERCPU_RWSEM_INITIALIZER(name.mmap_sem, percpu),
 
 static inline void init_rwsem_mmap_sem(struct mm_struct *mm)
 {
-	init_rwsem(&mm->mmap_sem);
+	init_rwsem(&mm->mmap_sem.rw_sem);
 }
 
-#define prefetchw_mmap_sem(mm) prefetchw(&mm->mmap_sem);
+#define prefetchw_mmap_sem(mm) do { } while (0)
 
 static inline int rwsem_is_locked_mmap_sem(struct mm_struct *mm)
 {
-	return rwsem_is_locked(&mm->mmap_sem);
+	return rwsem_is_locked(&mm->mmap_sem.rw_sem);
 }
 
 static inline void down_read_mmap_sem(struct mm_struct *mm)
 {
-	down_read(&mm->mmap_sem);
+	down_read(&mm->mmap_sem.rw_sem);
 }
 
 static inline int down_read_trylock_mmap_sem(struct mm_struct *mm)
 {
-	return down_read_trylock(&mm->mmap_sem);
+	return down_read_trylock(&mm->mmap_sem.rw_sem);
 }
 
 static inline void up_read_mmap_sem(struct mm_struct *mm)
 {
-	up_read(&mm->mmap_sem);
+	up_read(&mm->mmap_sem.rw_sem);
 }
 
 static inline void might_lock_read_mmap_sem(struct mm_struct *mm)
 {
-	might_lock_read(&mm->mmap_sem);
 }
 
 static inline void down_write_mmap_sem(struct mm_struct *mm)
 {
-	down_write(&mm->mmap_sem);
+	down_write(&mm->mmap_sem.rw_sem);
 }
 
 static inline int down_write_killable_mmap_sem(struct mm_struct *mm)
 {
-	return down_write_killable(&mm->mmap_sem);
+	return down_write_killable(&mm->mmap_sem.rw_sem);
 }
 
 static inline void down_write_nested_mmap_sem(struct mm_struct *mm, int subclass)
 {
-	down_write_nested(&mm->mmap_sem, subclass);
+	down_write_nested(&mm->mmap_sem.rw_sem, subclass);
 }
 
 #define down_write_nest_lock_mmap_sem(sem, nest_mm) \
-	down_write_nest_lock(sem, &(nest_mm)->mmap_sem);
+	down_write_nest_lock(sem, &(nest_mm)->mmap_sem.rw_sem);
 
 static inline int down_write_trylock_mmap_sem(struct mm_struct *mm)
 {
-	return down_write_trylock(&mm->mmap_sem);
+	return down_write_trylock(&mm->mmap_sem.rw_sem);
 }
 
 static inline void up_write_mmap_sem(struct mm_struct *mm)
 {
-	up_write(&mm->mmap_sem);
+	up_write(&mm->mmap_sem.rw_sem);
 }
 
 static inline void lockdep_assert_held_exclusive_mmap_sem(struct mm_struct *mm)
 {
-	lockdep_assert_held_exclusive(&mm->mmap_sem);
+	lockdep_assert_held_exclusive(&mm->mmap_sem.rw_sem);
 }
 
 static inline void downgrade_write_mmap_sem(struct mm_struct *mm)
 {
-	downgrade_write(&mm->mmap_sem);
+	downgrade_write(&mm->mmap_sem.rw_sem);
 }
 
 static inline void mm_init_cpumask(struct mm_struct *mm)

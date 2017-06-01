@@ -99,12 +99,13 @@ void __init tboot_probe(void)
 }
 
 static pgd_t *tboot_pg_dir;
+static DEFINE_PER_CPU(int, tboot_mm_percpu);
 static struct mm_struct tboot_mm = {
 	.mm_rb          = RB_ROOT,
 	.pgd            = swapper_pg_dir,
 	.mm_users       = ATOMIC_INIT(2),
 	.mm_count       = ATOMIC_INIT(1),
-	MMAP_SEM_INITIALIZER(init_mm)
+	MMAP_SEM_INITIALIZER(init_mm, &tboot_mm_percpu)
 	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
 	.mmlist         = LIST_HEAD_INIT(init_mm.mmlist),
 };
