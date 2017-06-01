@@ -509,7 +509,7 @@ extern struct mm_struct init_mm;
 
 static inline void init_rwsem_mmap_sem(struct mm_struct *mm)
 {
-	init_rwsem(&mm->mmap_sem.rw_sem);
+	percpu_init_rwsem(&mm->mmap_sem);
 }
 
 #define prefetchw_mmap_sem(mm) do { } while (0)
