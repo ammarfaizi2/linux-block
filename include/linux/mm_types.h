@@ -512,7 +512,7 @@ static inline void init_rwsem_mmap_sem(struct mm_struct *mm)
 	percpu_init_rwsem(&mm->mmap_sem);
 }
 
-#define prefetchw_mmap_sem(mm) do { } while (0)
+#define prefetchw_mmap_sem(mm) prefetchw(&mm->mmap_sem);
 
 static inline int rwsem_is_locked_mmap_sem(struct mm_struct *mm)
 {
