@@ -1788,9 +1788,12 @@ bool rcu_is_nocb_cpu(int cpu)
 }
 
 /*
- * Kick the leader kthread for this NOCB group.  Caller holds lock.
+ * Kick the leader kthread for this NOCB group.  Caller holds ->nocb_lock
+ * and this function releases it.
  */
-static void __wake_nocb_leader(struct rcu_data *rdp, bool force)
+static void __wake_nocb_leader(struct rcu_data *rdp, bool force,
+			       unsigned long flags)
+	__releases(rdp->nocb_lock)
 {
 	struct rcu_data *rdp_leader = rdp->nocb_leader;
 
@@ -1800,6 +1803,7 @@ static void __wake_nocb_leader(struct rcu_data *rdp, bool force)
 	if (rdp_leader->nocb_leader_sleep || force) {
 		/* Prior smp_mb__after_atomic() orders against prior enqueue. */
 		WRITE_ONCE(rdp_leader->nocb_leader_sleep, false);
+		raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 		smp_mb(); /* ->nocb_leader_sleep before swake_up(). */
 		swake_up(&rdp_leader->nocb_wq);
 	}
@@ -1815,8 +1819,7 @@ static void wake_nocb_leader(struct rcu_data *rdp, bool force)
 
 	del_timer(&rdp->nocb_timer);
 	raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
-	__wake_nocb_leader(rdp, force);
-	raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
+	__wake_nocb_leader(rdp, force, flags);
 }
 
 /*
@@ -2248,9 +2251,8 @@ static void do_nocb_deferred_wakeup_common(struct rcu_data *rdp)
 	}
 	ndw = READ_ONCE(rdp->nocb_defer_wakeup);
 	WRITE_ONCE(rdp->nocb_defer_wakeup, RCU_NOCB_WAKE_NOT);
-	__wake_nocb_leader(rdp, ndw == RCU_NOCB_WAKE_FORCE);
+	__wake_nocb_leader(rdp, ndw == RCU_NOCB_WAKE_FORCE, flags);
 	trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu, TPS("DeferredWake"));
-	raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 }
 
 /* Do a deferred wakeup of rcu_nocb_kthread() from a timer handler. */
