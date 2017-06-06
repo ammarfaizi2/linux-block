@@ -2134,7 +2134,7 @@ wait_again:
 			continue; /* No CBs, so no need to wake follower. */
 
 		/* Append callbacks to follower's "done" list. */
-		raw_spin_lock_irqsave(&my_rdp->nocb_lock, flags);
+		raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
 		tail = rdp->nocb_follower_tail;
 		rdp->nocb_follower_tail = rdp->nocb_gp_tail;
 		*tail = rdp->nocb_gp_head;
