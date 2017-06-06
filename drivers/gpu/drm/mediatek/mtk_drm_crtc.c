@@ -577,8 +577,7 @@ int mtk_drm_crtc_create(struct drm_device *drm_dev,
 		node = priv->comp_node[comp_id];
 		comp = priv->ddp_comp[comp_id];
 		if (!comp) {
-			dev_err(dev, "Component %s not initialized\n",
-				node->full_name);
+			dev_err(dev, "Component %pOF not initialized\n", node);
 			ret = -ENODEV;
 			goto unprepare;
 		}
@@ -586,8 +585,8 @@ int mtk_drm_crtc_create(struct drm_device *drm_dev,
 		ret = clk_prepare(comp->clk);
 		if (ret) {
 			dev_err(dev,
-				"Failed to prepare clock for component %s: %d\n",
-				node->full_name, ret);
+				"Failed to prepare clock for component %pOF: %d\n",
+				node, ret);
 			goto unprepare;
 		}
 

@@ -995,8 +995,7 @@ static struct drm_panel *ltdc_get_panel(struct drm_device *ddev)
 			panel = of_drm_find_panel(port);
 			of_node_put(port);
 			if (panel) {
-				DRM_DEBUG_DRIVER("remote panel %s\n",
-						 port->full_name);
+				DRM_DEBUG_DRIVER("remote panel %pOF\n", port);
 			} else {
 				DRM_DEBUG_DRIVER("panel missing\n");
 				of_node_put(entity);
