@@ -1798,8 +1798,10 @@ static void __wake_nocb_leader(struct rcu_data *rdp, bool force,
 	struct rcu_data *rdp_leader = rdp->nocb_leader;
 
 	lockdep_assert_held(&rdp->nocb_lock);
-	if (!READ_ONCE(rdp_leader->nocb_kthread))
+	if (!READ_ONCE(rdp_leader->nocb_kthread)) {
+		raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 		return;
+	}
 	if (rdp_leader->nocb_leader_sleep || force) {
 		/* Prior smp_mb__after_atomic() orders against prior enqueue. */
 		WRITE_ONCE(rdp_leader->nocb_leader_sleep, false);
