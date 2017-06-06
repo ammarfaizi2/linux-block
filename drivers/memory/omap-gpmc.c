@@ -960,7 +960,7 @@ static int gpmc_cs_remap(int cs, u32 base)
 	 * Make sure we ignore any device offsets from the GPMC partition
 	 * allocated for the chip select and that the new base confirms
 	 * to the GPMC 16MB minimum granularity.
-	 */ 
+	 */
 	base &= ~(SZ_16M - 1);
 
 	gpmc_cs_get_memconf(cs, &old_base, &size);
@@ -1930,8 +1930,8 @@ static int gpmc_probe_onenand_child(struct platform_device *pdev,
 	struct omap_onenand_platform_data *gpmc_onenand_data;
 
 	if (of_property_read_u32(child, "reg", &val) < 0) {
-		dev_err(&pdev->dev, "%s has no 'reg' property\n",
-			child->full_name);
+		dev_err(&pdev->dev, "%pOF has no 'reg' property\n",
+			child);
 		return -ENODEV;
 	}
 
@@ -1979,14 +1979,14 @@ static int gpmc_probe_generic_child(struct platform_device *pdev,
 	struct gpmc_device *gpmc = platform_get_drvdata(pdev);
 
 	if (of_property_read_u32(child, "reg", &cs) < 0) {
-		dev_err(&pdev->dev, "%s has no 'reg' property\n",
-			child->full_name);
+		dev_err(&pdev->dev, "%pOF has no 'reg' property\n",
+			child);
 		return -ENODEV;
 	}
 
 	if (of_address_to_resource(child, 0, &res) < 0) {
-		dev_err(&pdev->dev, "%s has malformed 'reg' property\n",
-			child->full_name);
+		dev_err(&pdev->dev, "%pOF has malformed 'reg' property\n",
+			child);
 		return -ENODEV;
 	}
 
@@ -2084,8 +2084,8 @@ static int gpmc_probe_generic_child(struct platform_device *pdev,
 		ret = of_property_read_u32(child, "bank-width",
 					   &gpmc_s.device_width);
 		if (ret < 0) {
-			dev_err(&pdev->dev, "%s has no 'bank-width' property\n",
-				child->full_name);
+			dev_err(&pdev->dev, "%pOF has no 'bank-width' property\n",
+				child);
 			goto err;
 		}
 	}
