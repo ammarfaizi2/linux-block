@@ -1808,6 +1808,8 @@ static void __wake_nocb_leader(struct rcu_data *rdp, bool force,
 		raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 		smp_mb(); /* ->nocb_leader_sleep before swake_up(). */
 		swake_up(&rdp_leader->nocb_wq);
+	} else {
+		raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 	}
 }
 
