@@ -11,6 +11,7 @@ include/linux/srcu.h: srcu.c
 
 srcu.c: modify_srcu.awk Makefile $(modified_srcu_input)
 	awk -f modify_srcu.awk $(modified_srcu_input) $(modified_srcu_output)
+	cp $(LINUX_SOURCE)/include/linux/srcuclassic.h include/linux/
 
 store_buffering:
 	@cd tests/store_buffering; make

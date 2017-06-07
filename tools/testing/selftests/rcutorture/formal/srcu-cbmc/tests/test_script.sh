@@ -74,7 +74,7 @@ if test $cpus -lt ${min_cpus_fail:-0}; then
 	should_pass="yes"
 fi
 
-cbmc_opts="-DNR_CPUS=${cpus} ${sync_srcu_mode_flags} ${test_cbmc_options} ${CBMC_FLAGS}"
+cbmc_opts="-DNR_CPUS=${cpus} ${sync_srcu_mode_flags} ${test_cbmc_options} ${CBMC_FLAGS} -DCONFIG_CLASSIC_SRCU"
 
 echo "Running CBMC: ${CBMC} ${cbmc_opts} ${c_file}"
 if ${CBMC} ${cbmc_opts} "${c_file}"; then

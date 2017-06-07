@@ -15,6 +15,18 @@ static inline void local_bh_enable(void) {}
 #define module_param(...)
 #define EXPORT_SYMBOL_GPL(x)
 
+#define __init
+#define early_initcall(x)
+
+enum rcutorture_type {
+	CU_FLAVOR,
+	RCU_BH_FLAVOR,
+	RCU_SCHED_FLAVOR,
+	RCU_TASKS_FLAVOR,
+	SRCU_FLAVOR,
+	INVALID_RCU_FLAVOR
+};
+
 #define container_of(ptr, type, member) ({			\
 	const typeof(((type *)0)->member) *__mptr = (ptr);	\
 	(type *)((char *)__mptr - offsetof(type, member));	\
