@@ -9,3 +9,6 @@ all:
 		echo $$i ; \
 		CBMC_FLAGS="$(CBMC_FLAGS)" sh ../test_script.sh --should-fail $$i > $$i.out 2>&1 ; \
 	done
+
+clean:
+	rm *.out
