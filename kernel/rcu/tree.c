@@ -3885,6 +3885,7 @@ void rcu_cpu_starting(unsigned int cpu)
 		smp_store_release(&rsp->ncpus, rsp->ncpus + nbits); /* ^^^ */
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	}
+	smp_mb(); /* Ensure RCU read-side usage follows above initialization. */
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
