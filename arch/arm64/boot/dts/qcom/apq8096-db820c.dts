@@ -18,4 +18,6 @@
 / {
 	model = "Qualcomm Technologies, Inc. DB820c";
 	compatible = "arrow,apq8096-db820c", "qcom,apq8096-sbc";
+	qcom,msm-id = <291 0>;
+	qcom,board-id = <0x18 0>;
 };
