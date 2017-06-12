@@ -1805,6 +1805,7 @@ static void __wake_nocb_leader(struct rcu_data *rdp, bool force,
 	if (rdp_leader->nocb_leader_sleep || force) {
 		/* Prior smp_mb__after_atomic() orders against prior enqueue. */
 		WRITE_ONCE(rdp_leader->nocb_leader_sleep, false);
+		del_timer(&rdp->nocb_timer);
 		raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
 		smp_mb(); /* ->nocb_leader_sleep before swake_up(). */
 		swake_up(&rdp_leader->nocb_wq);
@@ -1821,7 +1822,6 @@ static void wake_nocb_leader(struct rcu_data *rdp, bool force)
 {
 	unsigned long flags;
 
-	del_timer(&rdp->nocb_timer);
 	raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
 	__wake_nocb_leader(rdp, force, flags);
 }
@@ -1834,15 +1834,13 @@ static void wake_nocb_leader_defer(struct rcu_data *rdp, int waketype,
 				   const char *reason)
 {
 	unsigned long flags;
-	bool needtimer;
 
 	raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
-	needtimer = rdp->nocb_defer_wakeup == RCU_NOCB_WAKE_NOT;
+	if (rdp->nocb_defer_wakeup == RCU_NOCB_WAKE_NOT)
+		mod_timer(&rdp->nocb_timer, jiffies + 1);
 	WRITE_ONCE(rdp->nocb_defer_wakeup, waketype);
 	trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu, reason);
 	raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
-	if (needtimer)
-		mod_timer(&rdp->nocb_timer, jiffies + 1);
 }
 
 /*
@@ -2081,6 +2079,7 @@ wait_again:
 		raw_spin_lock_irqsave(&my_rdp->nocb_lock, flags);
 		my_rdp->nocb_leader_sleep = true;
 		WRITE_ONCE(my_rdp->nocb_defer_wakeup, RCU_NOCB_WAKE_NOT);
+		del_timer(&my_rdp->nocb_timer);
 		raw_spin_unlock_irqrestore(&my_rdp->nocb_lock, flags);
 	} else if (firsttime) {
 		firsttime = false; /* Don't drown trace log with "Poll"! */
@@ -2271,10 +2270,8 @@ static void do_nocb_deferred_wakeup_timer(unsigned long x)
  */
 static void do_nocb_deferred_wakeup(struct rcu_data *rdp)
 {
-	if (rcu_nocb_need_deferred_wakeup(rdp)) {
-		del_timer(&rdp->nocb_timer);
+	if (rcu_nocb_need_deferred_wakeup(rdp))
 		do_nocb_deferred_wakeup_common(rdp);
-	}
 }
 
 void __init rcu_init_nohz(void)
