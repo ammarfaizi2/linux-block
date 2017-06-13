@@ -678,7 +678,7 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
 	struct kiocb kiocb;
 	ssize_t ret;
 
-	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))
+	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_WRITE_LIFE_MASK))
 		return -EOPNOTSUPP;
 
 	init_sync_kiocb(&kiocb, filp);
@@ -688,6 +688,13 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
 		kiocb.ki_flags |= IOCB_DSYNC;
 	if (flags & RWF_SYNC)
 		kiocb.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
+	if (flags & RWF_WRITE_LIFE_MASK) {
+		struct inode *inode = file_inode(filp);
+
+		inode->i_stream = (flags & RWF_WRITE_LIFE_MASK) >>
+					RWF_WRITE_LIFE_SHIFT;
+		kiocb.ki_flags |= inode->i_stream << IOCB_WRITE_LIFE_SHIFT;
+	}
 	kiocb.ki_pos = *ppos;
 
 	if (type == READ)
