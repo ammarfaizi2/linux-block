@@ -614,6 +614,7 @@ alloc_new:
 			goto confused;
 
 		wbc_init_bio(wbc, bio);
+		bio_set_streamid(bio, inode_streamid(inode));
 	}
 
 	/*
