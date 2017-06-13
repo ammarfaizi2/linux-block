@@ -586,6 +586,9 @@ struct request_queue {
 
 	size_t			cmd_size;
 	void			*rq_alloc_data;
+
+#define BLK_MAX_STREAM	5
+	u64			stream_writes[BLK_MAX_STREAM];
 };
 
 #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
