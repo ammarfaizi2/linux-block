@@ -591,6 +591,7 @@ struct inode {
 	struct timespec		i_ctime;
 	spinlock_t		i_lock;	/* i_blocks, i_bytes, maybe i_size */
 	unsigned short          i_bytes;
+	unsigned short		i_stream;
 	unsigned int		i_blkbits;
 	blkcnt_t		i_blocks;
 
@@ -654,6 +655,14 @@ struct inode {
 
 	void			*i_private; /* fs or device private pointer */
 };
+
+static inline unsigned int inode_streamid(struct inode *inode)
+{
+	if (inode)
+		return inode->i_stream;
+
+	return 0;
+}
 
 static inline unsigned int i_blocksize(const struct inode *node)
 {
