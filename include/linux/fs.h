@@ -269,6 +269,10 @@ struct writeback_control;
 #define IOCB_DSYNC		(1 << 4)
 #define IOCB_SYNC		(1 << 5)
 #define IOCB_WRITE		(1 << 6)
+#define IOCB_WRITE_LIFE_SHORT	(1 << 7)
+#define IOCB_WRITE_LIFE_MEDIUM	(1 << 8)
+#define IOCB_WRITE_LIFE_LONG	(1 << 9)
+#define IOCB_WRITE_LIFE_EXTREME	(1 << 10)
 
 struct kiocb {
 	struct file		*ki_filp;
@@ -291,6 +295,20 @@ static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
 		.ki_filp = filp,
 		.ki_flags = iocb_flags(filp),
 	};
+}
+
+static inline int iocb_streamid(const struct kiocb *iocb)
+{
+	if (iocb->ki_flags & IOCB_WRITE_LIFE_SHORT)
+		return WRITE_LIFE_SHORT;
+	else if (iocb->ki_flags & IOCB_WRITE_LIFE_MEDIUM)
+		return WRITE_LIFE_MEDIUM;
+	else if (iocb->ki_flags & IOCB_WRITE_LIFE_LONG)
+		return WRITE_LIFE_LONG;
+	else if (iocb->ki_flags & IOCB_WRITE_LIFE_EXTREME)
+		return WRITE_LIFE_EXTREME;
+
+	return WRITE_LIFE_UNKNOWN;
 }
 
 /*

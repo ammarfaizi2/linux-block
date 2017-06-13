@@ -360,5 +360,9 @@ struct fscrypt_key {
 #define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
 #define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
 #define RWF_SYNC			0x00000004 /* per-IO O_SYNC */
+#define RWF_WRITE_LIFE_SHORT		0x00000008 /* short life time write */
+#define RWF_WRITE_LIFE_MEDIUM		0x00000010 /* medium life time write */
+#define RWF_WRITE_LIFE_LONG		0x00000020 /* long life time write */
+#define RWF_WRITE_LIFE_EXTREME		0x00000040 /* extremely long life time write */
 
 #endif /* _UAPI_LINUX_FS_H */
