@@ -505,6 +505,7 @@ xfs_submit_ioend(
 		return status;
 	}
 
+	bio_set_streamid(ioend->io_bio, inode_streamid(ioend->io_inode));
 	submit_bio(ioend->io_bio);
 	return 0;
 }
@@ -564,6 +565,7 @@ xfs_chain_bio(
 	bio_chain(ioend->io_bio, new);
 	bio_get(ioend->io_bio);		/* for xfs_destroy_ioend */
 	ioend->io_bio->bi_opf = REQ_OP_WRITE | wbc_to_write_flags(wbc);
+	bio_set_streamid(ioend->io_bio, inode_streamid(ioend->io_inode));
 	submit_bio(ioend->io_bio);
 	ioend->io_bio = new;
 }
