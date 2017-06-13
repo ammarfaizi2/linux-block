@@ -30,6 +30,7 @@
 #include <linux/percpu-rwsem.h>
 #include <linux/workqueue.h>
 #include <linux/delayed_call.h>
+#include <linux/blk_types.h>
 
 #include <asm/byteorder.h>
 #include <uapi/linux/fs.h>
@@ -629,6 +630,7 @@ struct inode {
 #ifdef CONFIG_IMA
 	atomic_t		i_readcount; /* struct files open RO */
 #endif
+	unsigned int		i_stream;
 	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
 	struct file_lock_context	*i_flctx;
 	struct address_space	i_data;
@@ -654,6 +656,14 @@ struct inode {
 
 	void			*i_private; /* fs or device private pointer */
 };
+
+static inline unsigned int inode_streamid(struct inode *inode)
+{
+	if (inode)
+		return inode->i_stream;
+
+	return 0;
+}
 
 static inline unsigned int i_blocksize(const struct inode *node)
 {
