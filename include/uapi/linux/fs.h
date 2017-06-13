@@ -361,4 +361,14 @@ struct fscrypt_key {
 #define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
 #define RWF_SYNC			0x00000004 /* per-IO O_SYNC */
 
+/*
+ * Data life time write flags, steal 4 bits for that
+ */
+#define RWF_WRITE_LIFE_SHIFT		3
+#define RWF_WRITE_LIFE_MASK		0x000000f0 /* 4 bits of stream ID */
+#define RWF_WRITE_LIFE_SHORT		(1 << RWF_WRITE_LIFE_SHIFT)
+#define RWF_WRITE_LIFE_MEDIUM		(2 << RWF_WRITE_LIFE_SHIFT)
+#define RWF_WRITE_LIFE_LONG		(3 << RWF_WRITE_LIFE_SHIFT)
+#define RWF_WRITE_LIFE_EXTREME		(4 << RWF_WRITE_LIFE_SHIFT)
+
 #endif /* _UAPI_LINUX_FS_H */
