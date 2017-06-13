@@ -2057,6 +2057,8 @@ blk_qc_t generic_make_request(struct bio *bio)
 	do {
 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
+		q->stream_writes[bio_stream(bio)] += bio->bi_iter.bi_size >> 9;
+
 		if (likely(blk_queue_enter(q, false) == 0)) {
 			struct bio_list lower, same;
 

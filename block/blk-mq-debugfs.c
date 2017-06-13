@@ -133,6 +133,29 @@ static void print_stat(struct seq_file *m, struct blk_rq_stat *stat)
 	}
 }
 
+static int queue_streams_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
+	int i;
+
+	for (i = 0; i < WRITE_LIFE_NR; i++)
+		seq_printf(m, "stream%d: %llu\n", i, q->stream_writes[i]);
+
+	return 0;
+}
+
+static ssize_t queue_streams_store(void *data, const char __user *buf,
+				   size_t count, loff_t *ppos)
+{
+	struct request_queue *q = data;
+	int i;
+
+	for (i = 0; i < WRITE_LIFE_NR; i++)
+		q->stream_writes[i] = 0;
+
+	return count;
+}
+
 static int queue_poll_stat_show(void *data, struct seq_file *m)
 {
 	struct request_queue *q = data;
@@ -656,6 +679,7 @@ const struct file_operations blk_mq_debugfs_fops = {
 static const struct blk_mq_debugfs_attr blk_mq_debugfs_queue_attrs[] = {
 	{"poll_stat", 0400, queue_poll_stat_show},
 	{"state", 0600, queue_state_show, queue_state_write},
+	{"streams", 0600, queue_streams_show, queue_streams_store},
 	{},
 };
 

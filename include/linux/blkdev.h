@@ -586,6 +586,8 @@ struct request_queue {
 
 	size_t			cmd_size;
 	void			*rq_alloc_data;
+
+	u64			stream_writes[WRITE_LIFE_NR];
 };
 
 #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
