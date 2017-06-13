@@ -195,6 +195,7 @@ struct nvme_ns {
 	int lba_shift;
 	u16 ms;
 	bool ext;
+	bool streams;
 	u8 pi_type;
 	unsigned long flags;
 
