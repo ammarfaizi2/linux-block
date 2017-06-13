@@ -36,6 +36,8 @@ struct bio {
 	unsigned short		bi_flags;	/* status, etc and bvec pool number */
 	unsigned short		bi_ioprio;
 
+	unsigned int		bi_stream;	/* write life time hint */
+
 	struct bvec_iter	bi_iter;
 
 	/* Number of segments in this BIO after
@@ -311,5 +313,20 @@ struct blk_rq_stat {
 	s32 nr_batch;
 	u64 batch;
 };
+
+static inline void bio_set_streamid(struct bio *bio, unsigned int stream)
+{
+	bio->bi_stream = stream;
+}
+
+static inline bool bio_stream_valid(struct bio *bio)
+{
+	return bio->bi_stream != 0;
+}
+
+static inline unsigned int bio_stream(struct bio *bio)
+{
+	return bio->bi_stream;
+}
 
 #endif /* __LINUX_BLK_TYPES_H */
