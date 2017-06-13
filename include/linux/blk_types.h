@@ -314,6 +314,19 @@ struct blk_rq_stat {
 	u64 batch;
 };
 
+/*
+ * Data life time definitions for writes. These are relative within a
+ * given device, no absolute meaning is attached to them.
+ */
+enum {
+	WRITE_LIFE_UNKNOWN	= 0,
+	WRITE_LIFE_SHORT,
+	WRITE_LIFE_MEDIUM,
+	WRITE_LIFE_LONG,
+	WRITE_LIFE_EXTREME,
+	WRITE_LIFE_NR,
+};
+
 static inline void bio_set_streamid(struct bio *bio, unsigned int stream)
 {
 	bio->bi_stream = stream;
