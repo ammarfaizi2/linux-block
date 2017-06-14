@@ -239,6 +239,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
 			should_dirty = true;
 	} else {
 		bio.bi_opf = dio_bio_write_op(iocb);
+		bio_set_streamid(&bio, iocb_streamid(iocb));
 		task_io_account_write(ret);
 	}
 
@@ -374,6 +375,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 				bio_set_pages_dirty(bio);
 		} else {
 			bio->bi_opf = dio_bio_write_op(iocb);
+			bio_set_streamid(bio, iocb_streamid(iocb));
 			task_io_account_write(bio->bi_iter.bi_size);
 		}
 
