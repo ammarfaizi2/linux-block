@@ -201,6 +201,10 @@ enum req_flag_bits {
 	__REQ_PREFLUSH,		/* request for cache flush */
 	__REQ_RAHEAD,		/* read ahead, can fail anytime */
 	__REQ_BACKGROUND,	/* background IO */
+	__REQ_WRITE_SHORT,	/* short life time write */
+	__REQ_WRITE_MEDIUM,	/* medium life time write */
+	__REQ_WRITE_LONG,	/* long life time write */
+	__REQ_WRITE_EXTREME,	/* extremely long life time write */
 
 	/* command specific flags for REQ_OP_WRITE_ZEROES: */
 	__REQ_NOUNMAP,		/* do not free blocks when zeroing */
@@ -221,6 +225,13 @@ enum req_flag_bits {
 #define REQ_PREFLUSH		(1ULL << __REQ_PREFLUSH)
 #define REQ_RAHEAD		(1ULL << __REQ_RAHEAD)
 #define REQ_BACKGROUND		(1ULL << __REQ_BACKGROUND)
+#define REQ_WRITE_SHORT		(1ULL << __REQ_WRITE_SHORT)
+#define REQ_WRITE_MEDIUM	(1ULL << __REQ_WRITE_MEDIUM)
+#define REQ_WRITE_LONG		(1ULL << __REQ_WRITE_LONG)
+#define REQ_WRITE_EXTREME	(1ULL << __REQ_WRITE_EXTREME)
+
+#define REQ_WRITE_LIFE_MASK	(REQ_WRITE_SHORT | REQ_WRITE_MEDIUM | \
+					REQ_WRITE_LONG | REQ_WRITE_EXTREME)
 
 #define REQ_NOUNMAP		(1ULL << __REQ_NOUNMAP)
 
