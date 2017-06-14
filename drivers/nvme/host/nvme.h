@@ -192,6 +192,7 @@ struct nvme_ns {
 	u8 uuid[16];
 
 	unsigned ns_id;
+	unsigned nr_streams;
 	int lba_shift;
 	u16 ms;
 	bool ext;

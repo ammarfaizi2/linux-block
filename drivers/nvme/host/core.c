@@ -65,6 +65,10 @@ static bool force_apst;
 module_param(force_apst, bool, 0644);
 MODULE_PARM_DESC(force_apst, "allow APST for newly enumerated devices even if quirked off");
 
+static char streams_per_ns = 4;
+module_param(streams_per_ns, byte, 0644);
+MODULE_PARM_DESC(streams_per_ns, "if available, allocate this many streams per NS");
+
 static LIST_HEAD(nvme_ctrl_list);
 static DEFINE_SPINLOCK(dev_list_lock);
 
@@ -331,9 +335,34 @@ static inline int nvme_setup_discard(struct nvme_ns *ns, struct request *req,
 	return BLK_MQ_RQ_QUEUE_OK;
 }
 
+static unsigned int nvme_get_write_stream(struct nvme_ns *ns,
+					  struct request *req)
+{
+	unsigned int streamid = 0;
+
+	if (req_op(req) != REQ_OP_WRITE || !blk_stream_valid(req->cmd_flags) ||
+	    !ns->nr_streams)
+		return 0;
+
+	if (req->cmd_flags & REQ_WRITE_SHORT)
+		streamid = 1;
+	else if (req->cmd_flags & REQ_WRITE_MEDIUM)
+		streamid = 2;
+	else if (req->cmd_flags & REQ_WRITE_LONG)
+		streamid = 3;
+	else if (req->cmd_flags & REQ_WRITE_EXTREME)
+		streamid = 4;
+
+	if (streamid < BLK_MAX_STREAM)
+		req->q->stream_writes[streamid] += blk_rq_bytes(req) >> 9;
+
+	return (streamid % (ns->nr_streams + 1));
+}
+
 static inline void nvme_setup_rw(struct nvme_ns *ns, struct request *req,
 		struct nvme_command *cmnd)
 {
+	unsigned int stream;
 	u16 control = 0;
 	u32 dsmgmt = 0;
 
@@ -350,6 +379,12 @@ static inline void nvme_setup_rw(struct nvme_ns *ns, struct request *req,
 	cmnd->rw.nsid = cpu_to_le32(ns->ns_id);
 	cmnd->rw.slba = cpu_to_le64(nvme_block_nr(ns, blk_rq_pos(req)));
 	cmnd->rw.length = cpu_to_le16((blk_rq_bytes(req) >> ns->lba_shift) - 1);
+
+	stream = nvme_get_write_stream(ns, req);
+	if (stream) {
+		control |= NVME_RW_DTYPE_STREAMS;
+		dsmgmt |= (stream << 16);
+	}
 
 	if (ns->ms) {
 		switch (ns->pi_type) {
@@ -1073,6 +1108,109 @@ static int nvme_revalidate_disk(struct gendisk *disk)
 	return 0;
 }
 
+static int nvme_enable_streams(struct nvme_ns *ns)
+{
+	struct nvme_command c;
+
+	memset(&c, 0, sizeof(c));
+
+	c.directive.opcode = nvme_admin_directive_send;
+	c.directive.nsid = cpu_to_le32(ns->ns_id);
+	c.directive.doper = NVME_DIR_SND_ID_OP_ENABLE;
+	c.directive.dtype = NVME_DIR_IDENTIFY;
+	c.directive.tdtype = NVME_DIR_STREAMS;
+	c.directive.endir = NVME_DIR_ENDIR;
+
+	return nvme_submit_sync_cmd(ns->ctrl->admin_q, &c, NULL, 0);
+}
+
+static int nvme_streams_params(struct nvme_ns *ns)
+{
+	struct nvme_ctrl *ctrl = ns->ctrl;
+	struct streams_directive_params s;
+	struct nvme_command c;
+	int ret;
+
+	memset(&c, 0, sizeof(c));
+	memset(&s, 0, sizeof(s));
+
+	c.directive.opcode = nvme_admin_directive_recv;
+	c.directive.nsid = cpu_to_le32(ns->ns_id);
+	c.directive.numd = sizeof(s);
+	c.directive.doper = NVME_DIR_RCV_ST_OP_PARAM;
+	c.directive.dtype = NVME_DIR_STREAMS;
+
+	ret = nvme_submit_sync_cmd(ctrl->admin_q, &c, &s, sizeof(s));
+	if (ret)
+		return ret;
+
+	s.msl = le16_to_cpu(s.msl);
+	s.nssa = le16_to_cpu(s.nssa);
+	s.nsso = le16_to_cpu(s.nsso);
+	s.sws = le32_to_cpu(s.sws);
+	s.sgs = le16_to_cpu(s.sgs);
+	s.nsa = le16_to_cpu(s.nsa);
+	s.nso = le16_to_cpu(s.nso);
+
+	dev_info(ctrl->device, "streams: msl=%u, nssa=%u, nsso=%u, sws=%u "
+				"sgs=%u, nsa=%u, nso=%u\n", s.msl, s.nssa,
+				s.nsso, s.sws, s.sgs, s.nsa, s.nso);
+	return 0;
+}
+
+static int nvme_streams_allocate(struct nvme_ns *ns, unsigned int streams)
+{
+	struct nvme_command c;
+
+	memset(&c, 0, sizeof(c));
+
+	c.directive.opcode = nvme_admin_directive_recv;
+	c.directive.nsid = cpu_to_le32(ns->ns_id);
+	c.directive.doper = NVME_DIR_RCV_ST_OP_RESOURCE;
+	c.directive.dtype = NVME_DIR_STREAMS;
+	c.directive.endir = streams;
+
+	return nvme_submit_sync_cmd(ns->ctrl->admin_q, &c, NULL, 0);
+}
+
+static int nvme_streams_deallocate(struct nvme_ns *ns)
+{
+	struct nvme_command c;
+
+	memset(&c, 0, sizeof(c));
+
+	c.directive.opcode = nvme_admin_directive_send;
+	c.directive.nsid = cpu_to_le32(ns->ns_id);
+	c.directive.doper = NVME_DIR_SND_ST_OP_REL_RSC;
+	c.directive.dtype = NVME_DIR_STREAMS;
+
+	return nvme_submit_sync_cmd(ns->ctrl->admin_q, &c, NULL, 0);
+}
+
+static void nvme_config_streams(struct nvme_ns *ns)
+{
+	int ret;
+
+	ret = nvme_enable_streams(ns);
+	if (ret)
+		return;
+
+	ret = nvme_streams_params(ns);
+	if (ret)
+		return;
+
+	ret = nvme_streams_allocate(ns, streams_per_ns);
+	if (ret)
+		return;
+
+	ret = nvme_streams_params(ns);
+	if (ret)
+		return;
+
+	ns->nr_streams = streams_per_ns;
+	dev_info(ns->ctrl->device, "successfully enabled streams\n");
+}
+
 static char nvme_pr_type(enum pr_type type)
 {
 	switch (type) {
@@ -1606,6 +1744,9 @@ int nvme_init_identify(struct nvme_ctrl *ctrl)
 	ctrl->sgls = le32_to_cpu(id->sgls);
 	ctrl->kas = le16_to_cpu(id->kas);
 
+	if (ctrl->oacs & NVME_CTRL_OACS_DIRECTIVES)
+		dev_info(ctrl->dev, "supports directives\n");
+
 	ctrl->npss = id->npss;
 	prev_apsta = ctrl->apsta;
 	if (ctrl->quirks & NVME_QUIRK_NO_APST) {
@@ -2060,6 +2201,9 @@ static void nvme_alloc_ns(struct nvme_ctrl *ctrl, unsigned nsid)
 		goto out_free_id;
 	}
 
+	if (ctrl->oacs & NVME_CTRL_OACS_DIRECTIVES)
+		nvme_config_streams(ns);
+
 	disk = alloc_disk_node(0, node);
 	if (!disk)
 		goto out_free_id;
@@ -2112,6 +2256,8 @@ static void nvme_ns_remove(struct nvme_ns *ns)
 					&nvme_ns_attr_group);
 		if (ns->ndev)
 			nvme_nvm_unregister_sysfs(ns);
+		if (ns->nr_streams)
+			nvme_streams_deallocate(ns);
 		del_gendisk(ns->disk);
 		blk_cleanup_queue(ns->queue);
 	}
