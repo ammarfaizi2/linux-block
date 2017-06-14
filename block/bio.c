@@ -2082,6 +2082,22 @@ void bio_clone_blkcg_association(struct bio *dst, struct bio *src)
 
 #endif /* CONFIG_BLK_CGROUP */
 
+static const unsigned int rwf_write_to_opf_flag[] = {
+	0, REQ_WRITE_SHORT, REQ_WRITE_MEDIUM, REQ_WRITE_LONG, REQ_WRITE_EXTREME
+};
+
+/*
+ * 'stream_flags' is one of RWF_WRITE_LIFE_* values
+ */
+void bio_set_streamid(struct bio *bio, unsigned int rwf_flags)
+{
+	if (WARN_ON_ONCE(rwf_flags >= ARRAY_SIZE(rwf_write_to_opf_flag)))
+		return;
+
+	bio->bi_opf |= rwf_write_to_opf_flag[rwf_flags];
+}
+EXPORT_SYMBOL_GPL(bio_set_streamid);
+
 static void __init biovec_init_slabs(void)
 {
 	int i;
