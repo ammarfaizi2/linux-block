@@ -323,4 +323,9 @@ struct blk_rq_stat {
 	u64 batch;
 };
 
+static inline bool op_write_hint_valid(unsigned int opf)
+{
+	return (opf & REQ_WRITE_LIFE_MASK) != 0;
+}
+
 #endif /* __LINUX_BLK_TYPES_H */
