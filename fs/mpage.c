@@ -614,6 +614,7 @@ alloc_new:
 			goto confused;
 
 		wbc_init_bio(wbc, bio);
+		bio->bi_opf |= bio_op_write_hint(inode_write_hint(inode));
 	}
 
 	/*
