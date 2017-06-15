@@ -2052,7 +2052,7 @@ static bool rcu_gp_init(struct rcu_state *rsp)
 }
 
 /*
- * Helper function for wait_event_interruptible_timeout() wakeup
+ * Helper function for swait_event_interruptible_timeout() wakeup
  * at force-quiescent-state time.
  */
 static bool rcu_gp_fqs_check_wake(struct rcu_state *rsp, int *gfp)
@@ -2191,6 +2191,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
 					       READ_ONCE(rsp->gpnum),
 					       TPS("reqwait"));
 			rsp->gp_state = RCU_GP_WAIT_GPS;
+			/* _interruptible() to avoid messing up load average. */
 			swait_event_interruptible(rsp->gp_wq,
 						 READ_ONCE(rsp->gp_flags) &
 						 RCU_GP_FLAG_INIT);
@@ -2224,6 +2225,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
 					       READ_ONCE(rsp->gpnum),
 					       TPS("fqswait"));
 			rsp->gp_state = RCU_GP_WAIT_FQS;
+			/* _interruptible() to avoid messing up load average. */
 			ret = swait_event_interruptible_timeout(rsp->gp_wq,
 					rcu_gp_fqs_check_wake(rsp, &gf), j);
 			rsp->gp_state = RCU_GP_DOING_FQS;
