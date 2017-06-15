@@ -269,6 +269,12 @@ struct writeback_control;
 #define IOCB_SYNC		(1 << 5)
 #define IOCB_WRITE		(1 << 6)
 
+/*
+ * Steal 3 bits for stream information, this allows 8 valid streams
+ */
+#define IOCB_WRITE_LIFE_SHIFT	7
+#define IOCB_WRITE_LIFE_MASK	(BIT(7) | BIT(8) | BIT(9))
+
 struct kiocb {
 	struct file		*ki_filp;
 	loff_t			ki_pos;
@@ -290,6 +296,12 @@ static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
 		.ki_filp = filp,
 		.ki_flags = iocb_flags(filp),
 	};
+}
+
+static inline int iocb_write_hint(const struct kiocb *iocb)
+{
+	return (iocb->ki_flags & IOCB_WRITE_LIFE_MASK) >>
+			IOCB_WRITE_LIFE_SHIFT;
 }
 
 /*

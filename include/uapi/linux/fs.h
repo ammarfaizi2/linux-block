@@ -374,4 +374,14 @@ enum write_hint {
 #define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
 #define RWF_SYNC			0x00000004 /* per-IO O_SYNC */
 
+/*
+ * Data life time write flags, steal 3 bits for that
+ */
+#define RWF_WRITE_LIFE_SHIFT		4
+#define RWF_WRITE_LIFE_MASK		0x00000070 /* 3 bits of write hints */
+#define RWF_WRITE_LIFE_SHORT		(WRITE_HINT_SHORT << RWF_WRITE_LIFE_SHIFT)
+#define RWF_WRITE_LIFE_MEDIUM		(WRITE_HINT_MEDIUM << RWF_WRITE_LIFE_SHIFT)
+#define RWF_WRITE_LIFE_LONG		(WRITE_HINT_LONG << RWF_WRITE_LIFE_SHIFT)
+#define RWF_WRITE_LIFE_EXTREME		(WRITE_HINT_EXTREME << RWF_WRITE_LIFE_SHIFT)
+
 #endif /* _UAPI_LINUX_FS_H */
