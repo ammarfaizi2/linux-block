@@ -2082,6 +2082,22 @@ void bio_clone_blkcg_association(struct bio *dst, struct bio *src)
 
 #endif /* CONFIG_BLK_CGROUP */
 
+static const unsigned int rwf_write_to_opf_flag[] = {
+	0, REQ_WRITE_SHORT, REQ_WRITE_MEDIUM, REQ_WRITE_LONG, REQ_WRITE_EXTREME
+};
+
+/*
+ * Convert WRITE_LIFE_* hints into req/bio flags
+ */
+unsigned int bio_op_write_hint(enum write_hint hint)
+{
+	if (WARN_ON_ONCE(hint >= ARRAY_SIZE(rwf_write_to_opf_flag)))
+		return 0;
+
+	return rwf_write_to_opf_flag[hint];
+}
+EXPORT_SYMBOL_GPL(bio_op_write_hint);
+
 static void __init biovec_init_slabs(void)
 {
 	int i;

@@ -443,6 +443,7 @@ extern struct bio *bio_copy_kern(struct request_queue *, void *, unsigned int,
 				 gfp_t, int);
 extern void bio_set_pages_dirty(struct bio *bio);
 extern void bio_check_pages_dirty(struct bio *bio);
+extern unsigned int bio_op_write_hint(enum write_hint hint);
 
 void generic_start_io_acct(int rw, unsigned long sectors,
 			   struct hd_struct *part);
