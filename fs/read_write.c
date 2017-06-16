@@ -675,10 +675,11 @@ EXPORT_SYMBOL(iov_shorten);
 static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
 		loff_t *ppos, int type, int flags)
 {
+	struct inode *inode = file_inode(filp);
 	struct kiocb kiocb;
 	ssize_t ret;
 
-	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))
+	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_WRITE_LIFE_MASK))
 		return -EOPNOTSUPP;
 
 	init_sync_kiocb(&kiocb, filp);
@@ -688,6 +689,15 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
 		kiocb.ki_flags |= IOCB_DSYNC;
 	if (flags & RWF_SYNC)
 		kiocb.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
+	if ((flags & RWF_WRITE_LIFE_MASK) ||
+	    mask_to_write_hint(inode->i_flags, S_WRITE_LIFE_SHIFT)) {
+		enum rw_hint hint;
+
+		hint = mask_to_write_hint(flags, RWF_WRITE_LIFE_SHIFT);
+
+		inode_set_write_hint(inode, hint);
+		kiocb.ki_flags |= write_hint_to_mask(hint, IOCB_WRITE_LIFE_SHIFT);
+	}
 	kiocb.ki_pos = *ppos;
 
 	if (type == READ)
