@@ -243,6 +243,40 @@ static int f_getowner_uids(struct file *filp, unsigned long arg)
 }
 #endif
 
+long fcntl_rw_hint(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct inode *inode = file_inode(file);
+	long ret;
+
+	switch (cmd) {
+	case F_GET_RW_HINT:
+		ret = mask_to_write_hint(inode->i_flags, S_WRITE_LIFE_SHIFT);
+		break;
+	case F_SET_RW_HINT: {
+		enum rw_hint hint = arg;
+
+		switch (hint) {
+		case WRITE_LIFE_NONE:
+		case WRITE_LIFE_SHORT:
+		case WRITE_LIFE_MEDIUM:
+		case WRITE_LIFE_LONG:
+		case WRITE_LIFE_EXTREME:
+			inode_set_write_hint(inode, hint);
+			ret = 0;
+			break;
+		default:
+			ret = -EINVAL;
+		}
+		break;
+		}
+	default:
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
 static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
 		struct file *filp)
 {
@@ -336,6 +370,10 @@ static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
 	case F_ADD_SEALS:
 	case F_GET_SEALS:
 		err = shmem_fcntl(filp, cmd, arg);
+		break;
+	case F_GET_RW_HINT:
+	case F_SET_RW_HINT:
+		err = fcntl_rw_hint(filp, cmd, arg);
 		break;
 	default:
 		break;
