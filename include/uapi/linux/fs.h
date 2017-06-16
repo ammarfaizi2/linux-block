@@ -356,6 +356,19 @@ struct fscrypt_key {
 #define SYNC_FILE_RANGE_WRITE		2
 #define SYNC_FILE_RANGE_WAIT_AFTER	4
 
+/*
+ * Write life time hint values.
+ */
+enum rw_hint {
+	WRITE_LIFE_NONE = 0,
+	WRITE_LIFE_SHORT,
+	WRITE_LIFE_MEDIUM,
+	WRITE_LIFE_LONG,
+	WRITE_LIFE_EXTREME,
+};
+
+#define RW_HINT_MASK		0x7	/* 3 bits */
+
 /* flags for preadv2/pwritev2: */
 #define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
 #define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
