@@ -118,6 +118,7 @@ enum nvme_ctrl_state {
 struct nvme_ctrl {
 	enum nvme_ctrl_state state;
 	bool identified;
+	bool failed_streams;
 	spinlock_t lock;
 	const struct nvme_ctrl_ops *ops;
 	struct request_queue *admin_q;
@@ -147,6 +148,7 @@ struct nvme_ctrl {
 	u16 oncs;
 	u16 vid;
 	u16 oacs;
+	u16 nssa;
 	atomic_t abort_limit;
 	u8 event_limit;
 	u8 vwc;
@@ -192,6 +194,7 @@ struct nvme_ns {
 	u8 uuid[16];
 
 	unsigned ns_id;
+	unsigned nr_streams;
 	int lba_shift;
 	u16 ms;
 	bool ext;
@@ -203,6 +206,8 @@ struct nvme_ns {
 
 	u64 mode_select_num_blocks;
 	u32 mode_select_block_len;
+
+	struct work_struct write_hint_work;
 };
 
 struct nvme_ctrl_ops {
