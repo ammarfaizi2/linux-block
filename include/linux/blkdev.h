@@ -586,6 +586,9 @@ struct request_queue {
 
 	size_t			cmd_size;
 	void			*rq_alloc_data;
+
+#define BLK_MAX_WRITE_HINTS	5
+	u64			write_hints[BLK_MAX_WRITE_HINTS];
 };
 
 #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
