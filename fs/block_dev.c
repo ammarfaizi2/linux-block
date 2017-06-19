@@ -183,6 +183,8 @@ static unsigned int dio_bio_write_op(struct kiocb *iocb)
 	/* avoid the need for a I/O completion work item */
 	if (iocb->ki_flags & IOCB_DSYNC)
 		op |= REQ_FUA;
+
+	op |= write_hint_to_opf(iocb_write_hint(iocb));
 	return op;
 }
 
