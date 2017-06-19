@@ -43,6 +43,21 @@
 /* (1U << 31) is reserved for signed error codes */
 
 /*
+ * Set/Get write life time hints.
+ */
+#define F_GET_RW_HINT		(F_LINUX_SPECIFIC_BASE + 11)
+#define F_SET_RW_HINT		(F_LINUX_SPECIFIC_BASE + 12)
+
+/*
+ * Valid hint values for F_{GET,SET}_RW_HINT
+ */
+#define RWH_WRITE_LIFE_NONE	0
+#define RWH_WRITE_LIFE_SHORT	1
+#define RWH_WRITE_LIFE_MEDIUM	2
+#define RWH_WRITE_LIFE_LONG	3
+#define RWH_WRITE_LIFE_EXTREME	4
+
+/*
  * Types of directory notifications that may be requested.
  */
 #define DN_ACCESS	0x00000001	/* File accessed */

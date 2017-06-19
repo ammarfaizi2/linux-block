@@ -270,6 +270,12 @@ struct writeback_control;
 #define IOCB_SYNC		(1 << 5)
 #define IOCB_WRITE		(1 << 6)
 
+/*
+ * Steal 3 bits for stream information, this allows 8 valid streams
+ */
+#define IOCB_WRITE_LIFE_SHIFT	7
+#define IOCB_WRITE_LIFE_MASK	(BIT(7) | BIT(8) | BIT(9))
+
 struct kiocb {
 	struct file		*ki_filp;
 	loff_t			ki_pos;
@@ -291,6 +297,12 @@ static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
 		.ki_filp = filp,
 		.ki_flags = iocb_flags(filp),
 	};
+}
+
+static inline int iocb_write_hint(const struct kiocb *iocb)
+{
+	return (iocb->ki_flags & IOCB_WRITE_LIFE_MASK) >>
+			IOCB_WRITE_LIFE_SHIFT;
 }
 
 /*
@@ -1829,6 +1841,14 @@ struct super_operations {
 #endif
 
 /*
+ * Expected life time hint of a write for this inode. This uses the
+ * WRITE_LIFE_* encoding, we just need to define the shift. We need
+ * 3 bits for this. Next S_* value is 131072, bit 17.
+ */
+#define S_WRITE_LIFE_MASK	0x1c000	/* bits 14..16 */
+#define S_WRITE_LIFE_SHIFT	14	/* 16384, next bit */
+
+/*
  * Note that nosuid etc flags are inode-specific: setting some file-system
  * flags just means all the inodes inherit those flags by default. It might be
  * possible to override it selectively if you really wanted to with some
@@ -1872,6 +1892,37 @@ struct super_operations {
 static inline bool HAS_UNMAPPED_ID(struct inode *inode)
 {
 	return !uid_valid(inode->i_uid) || !gid_valid(inode->i_gid);
+}
+
+/*
+ * Write life time hint values.
+ */
+enum rw_hint {
+	WRITE_LIFE_NONE = RWH_WRITE_LIFE_NONE,
+	WRITE_LIFE_SHORT = RWH_WRITE_LIFE_SHORT,
+	WRITE_LIFE_MEDIUM = RWH_WRITE_LIFE_MEDIUM,
+	WRITE_LIFE_LONG = RWH_WRITE_LIFE_LONG,
+	WRITE_LIFE_EXTREME = RWH_WRITE_LIFE_EXTREME
+};
+
+static inline unsigned int write_hint_to_mask(enum rw_hint hint,
+					      unsigned int shift)
+{
+	return hint << shift;
+}
+
+static inline enum rw_hint mask_to_write_hint(unsigned int mask,
+					      unsigned int shift)
+{
+	return (mask >> shift) & 0x7;
+}
+
+static inline unsigned int inode_write_hint(struct inode *inode)
+{
+	if (inode)
+		return mask_to_write_hint(inode->i_flags, S_WRITE_LIFE_SHIFT);
+
+	return 0;
 }
 
 /*
@@ -2758,6 +2809,7 @@ extern struct inode *new_inode(struct super_block *sb);
 extern void free_inode_nonrcu(struct inode *inode);
 extern int should_remove_suid(struct dentry *);
 extern int file_remove_privs(struct file *);
+extern void inode_set_write_hint(struct inode *inode, enum rw_hint hint);
 
 extern void __insert_inode_hash(struct inode *, unsigned long hashval);
 static inline void insert_inode_hash(struct inode *inode)
@@ -3045,7 +3097,9 @@ static inline bool io_is_direct(struct file *filp)
 
 static inline int iocb_flags(struct file *file)
 {
+	struct inode *inode = file_inode(file);
 	int res = 0;
+
 	if (file->f_flags & O_APPEND)
 		res |= IOCB_APPEND;
 	if (io_is_direct(file))
@@ -3054,6 +3108,13 @@ static inline int iocb_flags(struct file *file)
 		res |= IOCB_DSYNC;
 	if (file->f_flags & __O_SYNC)
 		res |= IOCB_SYNC;
+	if (mask_to_write_hint(inode->i_flags, S_WRITE_LIFE_SHIFT)) {
+		enum rw_hint hint;
+
+		hint = mask_to_write_hint(inode->i_flags, S_WRITE_LIFE_SHIFT);
+		res |= write_hint_to_mask(hint, IOCB_WRITE_LIFE_SHIFT);
+	}
+
 	return res;
 }
 
