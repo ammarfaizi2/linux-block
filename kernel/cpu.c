@@ -59,6 +59,7 @@ struct cpuhp_cpu_state {
 	struct hlist_node	*node;
 	enum cpuhp_state	cb_state;
 	int			result;
+	int			cpu;
 	struct completion	done;
 #endif
 };
@@ -736,6 +737,7 @@ static void cpuhp_complete_idle_dead(void *arg)
 {
 	struct cpuhp_cpu_state *st = arg;
 
+	rcutree_migrate_callbacks(st->cpu);
 	complete(&st->done);
 }
 
@@ -1828,5 +1830,11 @@ void __init boot_cpu_init(void)
  */
 void __init boot_cpu_state_init(void)
 {
+	int __maybe_unused cpu;
+
 	per_cpu_ptr(&cpuhp_state, smp_processor_id())->state = CPUHP_ONLINE;
+#ifdef CONFIG_SMP
+	for_each_possible_cpu(cpu)
+		per_cpu_ptr(&cpuhp_state, cpu)->cpu = cpu;
+#endif
 }
