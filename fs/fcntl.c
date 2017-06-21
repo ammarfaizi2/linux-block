@@ -243,6 +243,62 @@ static int f_getowner_uids(struct file *filp, unsigned long arg)
 }
 #endif
 
+static long fcntl_rw_hint(struct file *file, unsigned int cmd,
+			  unsigned long arg)
+{
+	struct inode *inode = file_inode(file);
+	enum rw_hint hint, old_hint;
+	long ret = 0;
+
+	switch (cmd) {
+	case F_GET_RW_HINT:
+		if (file->f_write_hint != WRITE_LIFE_NOT_SET)
+			hint = file->f_write_hint;
+		else
+			hint = mask_to_write_hint(inode->i_flags,
+							S_WRITE_LIFE_SHIFT);
+		if (put_user(hint, (u64 __user *) arg))
+			ret = -EFAULT;
+		break;
+	case F_SET_RW_HINT:
+		if (get_user(hint, (u64 __user *) arg)) {
+			ret = -EFAULT;
+			break;
+		}
+		switch (hint) {
+		case WRITE_LIFE_NOT_SET:
+		case WRITE_LIFE_NONE:
+		case WRITE_LIFE_SHORT:
+		case WRITE_LIFE_MEDIUM:
+		case WRITE_LIFE_LONG:
+		case WRITE_LIFE_EXTREME:
+			spin_lock(&file->f_lock);
+			file->f_write_hint = hint;
+			spin_unlock(&file->f_lock);
+
+			/*
+			 * Only propagate hint to inode, if no hint is set,
+			 * or if the hint is being cleared
+			 */
+			old_hint = mask_to_write_hint(inode->i_flags,
+							S_WRITE_LIFE_SHIFT);
+			if (old_hint == WRITE_LIFE_NOT_SET ||
+			    hint == WRITE_LIFE_NOT_SET)
+				inode_set_write_hint(inode, hint);
+			ret = 0;
+			break;
+		default:
+			ret = -EINVAL;
+		}
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
 static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
 		struct file *filp)
 {
@@ -336,6 +392,10 @@ static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
 	case F_ADD_SEALS:
 	case F_GET_SEALS:
 		err = shmem_fcntl(filp, cmd, arg);
+		break;
+	case F_GET_RW_HINT:
+	case F_SET_RW_HINT:
+		err = fcntl_rw_hint(filp, cmd, arg);
 		break;
 	default:
 		break;
