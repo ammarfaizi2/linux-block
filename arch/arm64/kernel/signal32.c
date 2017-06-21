@@ -29,7 +29,7 @@
 #include <linux/uaccess.h>
 #include <asm/unistd.h>
 
-struct compat_sigcontext {
+struct a32_sigcontext {
 	/* We always set these two fields to 0 */
 	compat_ulong_t			trap_no;
 	compat_ulong_t			error_code;
@@ -55,17 +55,17 @@ struct compat_sigcontext {
 	compat_ulong_t			fault_address;
 };
 
-struct compat_ucontext {
+struct a32_ucontext {
 	compat_ulong_t			uc_flags;
 	compat_uptr_t			uc_link;
 	compat_stack_t			uc_stack;
-	struct compat_sigcontext	uc_mcontext;
+	struct a32_sigcontext		uc_mcontext;
 	compat_sigset_t			uc_sigmask;
 	int		__unused[32 - (sizeof (compat_sigset_t) / sizeof (int))];
 	compat_ulong_t	uc_regspace[128] __attribute__((__aligned__(8)));
 };
 
-struct compat_vfp_sigframe {
+struct a32_vfp_sigframe {
 	compat_ulong_t	magic;
 	compat_ulong_t	size;
 	struct compat_user_vfp {
@@ -80,25 +80,25 @@ struct compat_vfp_sigframe {
 } __attribute__((__aligned__(8)));
 
 #define VFP_MAGIC		0x56465001
-#define VFP_STORAGE_SIZE	sizeof(struct compat_vfp_sigframe)
+#define VFP_STORAGE_SIZE	sizeof(struct a32_vfp_sigframe)
 
 #define FSR_WRITE_SHIFT		(11)
 
-struct compat_aux_sigframe {
-	struct compat_vfp_sigframe	vfp;
+struct a32_aux_sigframe {
+	struct a32_vfp_sigframe	vfp;
 
 	/* Something that isn't a valid magic number for any coprocessor.  */
 	unsigned long			end_magic;
 } __attribute__((__aligned__(8)));
 
-struct compat_sigframe {
-	struct compat_ucontext	uc;
+struct a32_sigframe {
+	struct a32_ucontext	uc;
 	compat_ulong_t		retcode[2];
 };
 
-struct compat_rt_sigframe {
+struct a32_rt_sigframe {
 	struct compat_siginfo info;
-	struct compat_sigframe sig;
+	struct a32_sigframe sig;
 };
 
 #define _BLOCKABLE (~(sigmask(SIGKILL) | sigmask(SIGSTOP)))
@@ -214,7 +214,7 @@ int copy_siginfo_from_user32(siginfo_t *to, compat_siginfo_t __user *from)
  * VFP save/restore code.
  *
  * We have to be careful with endianness, since the fpsimd context-switch
- * code operates on 128-bit (Q) register values whereas the compat ABI
+ * code operates on 128-bit (Q) register values whereas the a32 ABI
  * uses an array of 64-bit (D) registers. Consequently, we need to swap
  * the two halves of each Q register when running on a big-endian CPU.
  */
@@ -231,7 +231,7 @@ union __fpsimd_vreg {
 	};
 };
 
-static int compat_preserve_vfp_context(struct compat_vfp_sigframe __user *frame)
+static int a32_preserve_vfp_context(struct a32_vfp_sigframe __user *frame)
 {
 	struct fpsimd_state *fpsimd = &current->thread.fpsimd_state;
 	compat_ulong_t magic = VFP_MAGIC;
@@ -280,7 +280,7 @@ static int compat_preserve_vfp_context(struct compat_vfp_sigframe __user *frame)
 	return err ? -EFAULT : 0;
 }
 
-static int compat_restore_vfp_context(struct compat_vfp_sigframe __user *frame)
+static int a32_restore_vfp_context(struct a32_vfp_sigframe __user *frame)
 {
 	struct fpsimd_state fpsimd;
 	compat_ulong_t magic = VFP_MAGIC;
@@ -320,12 +320,12 @@ static int compat_restore_vfp_context(struct compat_vfp_sigframe __user *frame)
 	return err ? -EFAULT : 0;
 }
 
-static int compat_restore_sigframe(struct pt_regs *regs,
-				   struct compat_sigframe __user *sf)
+static int a32_restore_sigframe(struct pt_regs *regs,
+				   struct a32_sigframe __user *sf)
 {
 	int err;
 	sigset_t set;
-	struct compat_aux_sigframe __user *aux;
+	struct a32_aux_sigframe __user *aux;
 
 	err = get_sigset_t(&set, &sf->uc.uc_sigmask);
 	if (err == 0) {
@@ -358,16 +358,16 @@ static int compat_restore_sigframe(struct pt_regs *regs,
 
 	err |= !valid_user_regs(&regs->user_regs, current);
 
-	aux = (struct compat_aux_sigframe __user *) sf->uc.uc_regspace;
+	aux = (struct a32_aux_sigframe __user *) sf->uc.uc_regspace;
 	if (err == 0)
-		err |= compat_restore_vfp_context(&aux->vfp);
+		err |= a32_restore_vfp_context(&aux->vfp);
 
 	return err;
 }
 
 asmlinkage int compat_sys_sigreturn(struct pt_regs *regs)
 {
-	struct compat_sigframe __user *frame;
+	struct a32_sigframe __user *frame;
 
 	/* Always make any pending restarted system calls return -EINTR */
 	current->restart_block.fn = do_no_restart_syscall;
@@ -380,12 +380,12 @@ asmlinkage int compat_sys_sigreturn(struct pt_regs *regs)
 	if (regs->compat_sp & 7)
 		goto badframe;
 
-	frame = (struct compat_sigframe __user *)regs->compat_sp;
+	frame = (struct a32_sigframe __user *)regs->compat_sp;
 
 	if (!access_ok(VERIFY_READ, frame, sizeof (*frame)))
 		goto badframe;
 
-	if (compat_restore_sigframe(regs, frame))
+	if (a32_restore_sigframe(regs, frame))
 		goto badframe;
 
 	return regs->regs[0];
@@ -401,7 +401,7 @@ badframe:
 
 asmlinkage int compat_sys_rt_sigreturn(struct pt_regs *regs)
 {
-	struct compat_rt_sigframe __user *frame;
+	struct a32_rt_sigframe __user *frame;
 
 	/* Always make any pending restarted system calls return -EINTR */
 	current->restart_block.fn = do_no_restart_syscall;
@@ -414,12 +414,12 @@ asmlinkage int compat_sys_rt_sigreturn(struct pt_regs *regs)
 	if (regs->compat_sp & 7)
 		goto badframe;
 
-	frame = (struct compat_rt_sigframe __user *)regs->compat_sp;
+	frame = (struct a32_rt_sigframe __user *)regs->compat_sp;
 
 	if (!access_ok(VERIFY_READ, frame, sizeof (*frame)))
 		goto badframe;
 
-	if (compat_restore_sigframe(regs, &frame->sig))
+	if (a32_restore_sigframe(regs, &frame->sig))
 		goto badframe;
 
 	if (compat_restore_altstack(&frame->sig.uc.uc_stack))
@@ -436,7 +436,7 @@ badframe:
 	return 0;
 }
 
-static void __user *compat_get_sigframe(struct ksignal *ksig,
+static void __user *a32_get_sigframe(struct ksignal *ksig,
 					struct pt_regs *regs,
 					int framesize)
 {
@@ -457,7 +457,7 @@ static void __user *compat_get_sigframe(struct ksignal *ksig,
 	return frame;
 }
 
-static void compat_setup_return(struct pt_regs *regs, struct k_sigaction *ka,
+static void a32_setup_return(struct pt_regs *regs, struct k_sigaction *ka,
 				compat_ulong_t __user *rc, void __user *frame,
 				int usig)
 {
@@ -501,10 +501,10 @@ static void compat_setup_return(struct pt_regs *regs, struct k_sigaction *ka,
 	regs->pstate	= spsr;
 }
 
-static int compat_setup_sigframe(struct compat_sigframe __user *sf,
+static int a32_setup_sigframe(struct a32_sigframe __user *sf,
 				 struct pt_regs *regs, sigset_t *set)
 {
-	struct compat_aux_sigframe __user *aux;
+	struct a32_aux_sigframe __user *aux;
 	int err = 0;
 
 	__put_user_error(regs->regs[0], &sf->uc.uc_mcontext.arm_r0, err);
@@ -526,7 +526,7 @@ static int compat_setup_sigframe(struct compat_sigframe __user *sf,
 	__put_user_error(regs->pstate, &sf->uc.uc_mcontext.arm_cpsr, err);
 
 	__put_user_error((compat_ulong_t)0, &sf->uc.uc_mcontext.trap_no, err);
-	/* set the compat FSR WnR */
+	/* set the aarch32 FSR WnR */
 	__put_user_error(!!(current->thread.fault_code & ESR_ELx_WNR) <<
 			 FSR_WRITE_SHIFT, &sf->uc.uc_mcontext.error_code, err);
 	__put_user_error(current->thread.fault_address, &sf->uc.uc_mcontext.fault_address, err);
@@ -534,25 +534,25 @@ static int compat_setup_sigframe(struct compat_sigframe __user *sf,
 
 	err |= put_sigset_t(&sf->uc.uc_sigmask, set);
 
-	aux = (struct compat_aux_sigframe __user *) sf->uc.uc_regspace;
+	aux = (struct a32_aux_sigframe __user *) sf->uc.uc_regspace;
 
 	if (err == 0)
-		err |= compat_preserve_vfp_context(&aux->vfp);
+		err |= a32_preserve_vfp_context(&aux->vfp);
 	__put_user_error(0, &aux->end_magic, err);
 
 	return err;
 }
 
 /*
- * 32-bit signal handling routines called from signal.c
+ * aarch32-bit signal handling routines called from signal.c
  */
-int compat_setup_rt_frame(int usig, struct ksignal *ksig,
+int a32_setup_rt_frame(int usig, struct ksignal *ksig,
 			  sigset_t *set, struct pt_regs *regs)
 {
-	struct compat_rt_sigframe __user *frame;
+	struct a32_rt_sigframe __user *frame;
 	int err = 0;
 
-	frame = compat_get_sigframe(ksig, regs, sizeof(*frame));
+	frame = a32_get_sigframe(ksig, regs, sizeof(*frame));
 
 	if (!frame)
 		return 1;
@@ -564,10 +564,10 @@ int compat_setup_rt_frame(int usig, struct ksignal *ksig,
 
 	err |= __compat_save_altstack(&frame->sig.uc.uc_stack, regs->compat_sp);
 
-	err |= compat_setup_sigframe(&frame->sig, regs, set);
+	err |= a32_setup_sigframe(&frame->sig, regs, set);
 
 	if (err == 0) {
-		compat_setup_return(regs, &ksig->ka, frame->sig.retcode, frame, usig);
+		a32_setup_return(regs, &ksig->ka, frame->sig.retcode, frame, usig);
 		regs->regs[1] = (compat_ulong_t)(unsigned long)&frame->info;
 		regs->regs[2] = (compat_ulong_t)(unsigned long)&frame->sig.uc;
 	}
@@ -575,27 +575,27 @@ int compat_setup_rt_frame(int usig, struct ksignal *ksig,
 	return err;
 }
 
-int compat_setup_frame(int usig, struct ksignal *ksig, sigset_t *set,
+int a32_setup_frame(int usig, struct ksignal *ksig, sigset_t *set,
 		       struct pt_regs *regs)
 {
-	struct compat_sigframe __user *frame;
+	struct a32_sigframe __user *frame;
 	int err = 0;
 
-	frame = compat_get_sigframe(ksig, regs, sizeof(*frame));
+	frame = a32_get_sigframe(ksig, regs, sizeof(*frame));
 
 	if (!frame)
 		return 1;
 
 	__put_user_error(0x5ac3c35a, &frame->uc.uc_flags, err);
 
-	err |= compat_setup_sigframe(frame, regs, set);
+	err |= a32_setup_sigframe(frame, regs, set);
 	if (err == 0)
-		compat_setup_return(regs, &ksig->ka, frame->retcode, frame, usig);
+		a32_setup_return(regs, &ksig->ka, frame->retcode, frame, usig);
 
 	return err;
 }
 
-void compat_setup_restart_syscall(struct pt_regs *regs)
+void a32_setup_restart_syscall(struct pt_regs *regs)
 {
        regs->regs[7] = __NR_compat_restart_syscall;
 }
