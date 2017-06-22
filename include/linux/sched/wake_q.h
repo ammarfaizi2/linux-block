@@ -46,8 +46,20 @@ static inline void wake_q_init(struct wake_q_head *head)
 	head->lastp = &head->first;
 }
 
-extern void wake_q_add(struct wake_q_head *head,
-		       struct task_struct *task);
+extern void __wake_q_add(struct wake_q_head *head,
+			 struct task_struct *task, bool sleeper);
+static inline void wake_q_add(struct wake_q_head *head,
+			      struct task_struct *task)
+{
+	__wake_q_add(head, task, false);
+}
+
+static inline void wake_q_add_sleeper(struct wake_q_head *head,
+				      struct task_struct *task)
+{
+	__wake_q_add(head, task, true);
+}
+
 extern void __wake_up_q(struct wake_q_head *head, bool sleeper);
 static inline void wake_up_q(struct wake_q_head *head)
 {
