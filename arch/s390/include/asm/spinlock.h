@@ -100,6 +100,7 @@ static inline void arch_spin_unlock(arch_spinlock_t *lp)
 
 static inline void arch_spin_unlock_wait(arch_spinlock_t *lock)
 {
+	smp_mb();
 	while (arch_spin_is_locked(lock))
 		arch_spin_relax(lock);
 	smp_acquire__after_ctrl_dep();

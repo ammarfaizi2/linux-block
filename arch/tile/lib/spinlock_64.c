@@ -69,6 +69,7 @@ void arch_spin_unlock_wait(arch_spinlock_t *lock)
 	u32 curr = arch_spin_current(val);
 
 	/* Return immediately if unlocked. */
+	smp_mb();
 	if (arch_spin_next(val) == curr)
 		return;
 
