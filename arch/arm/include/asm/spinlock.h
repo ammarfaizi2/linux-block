@@ -56,6 +56,7 @@ static inline void arch_spin_unlock_wait(arch_spinlock_t *lock)
 {
 	u16 owner = READ_ONCE(lock->tickets.owner);
 
+	smp_mb();
 	for (;;) {
 		arch_spinlock_t tmp = READ_ONCE(*lock);
 

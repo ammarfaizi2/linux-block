@@ -53,7 +53,7 @@ static inline int arch_spin_value_unlocked(arch_spinlock_t lock)
 static inline void arch_spin_unlock_wait(arch_spinlock_t *lock)
 {
 	u16 owner = READ_ONCE(lock->h.serving_now);
-	smp_rmb();
+	smp_mb();
 	for (;;) {
 		arch_spinlock_t tmp = READ_ONCE(*lock);
 
