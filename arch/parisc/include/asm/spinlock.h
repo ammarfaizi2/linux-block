@@ -18,6 +18,7 @@ static inline void arch_spin_unlock_wait(arch_spinlock_t *x)
 {
 	volatile unsigned int *a = __ldcw_align(x);
 
+	smp_mb();
 	smp_cond_load_acquire(a, VAL);
 }
 

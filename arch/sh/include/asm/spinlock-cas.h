@@ -31,6 +31,7 @@ static inline unsigned __sl_cas(volatile unsigned *p, unsigned old, unsigned new
 
 static inline void arch_spin_unlock_wait(arch_spinlock_t *lock)
 {
+	smp_mb();
 	smp_cond_load_acquire(&lock->lock, VAL > 0);
 }
 
