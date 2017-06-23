@@ -145,6 +145,7 @@ static __always_inline void arch_spin_lock_flags(arch_spinlock_t *lock,
 
 static inline void arch_spin_unlock_wait(arch_spinlock_t *lock)
 {
+	smp_mb();
 	__ticket_spin_unlock_wait(lock);
 }
 

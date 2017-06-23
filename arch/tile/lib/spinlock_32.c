@@ -69,6 +69,7 @@ void arch_spin_unlock_wait(arch_spinlock_t *lock)
 	int next = READ_ONCE(lock->next_ticket);
 
 	/* Return immediately if unlocked. */
+	smp_mb();
 	if (next == curr)
 		return;
 

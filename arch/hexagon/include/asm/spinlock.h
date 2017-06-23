@@ -181,6 +181,7 @@ static inline unsigned int arch_spin_trylock(arch_spinlock_t *lock)
 
 static inline void arch_spin_unlock_wait(arch_spinlock_t *lock)
 {
+	smp_mb();
 	smp_cond_load_acquire(&lock->lock, !VAL);
 }
 
