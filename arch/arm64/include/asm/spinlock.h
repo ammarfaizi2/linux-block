@@ -77,7 +77,6 @@ static inline void arch_spin_unlock_wait(arch_spinlock_t *lock)
 	: "=&r" (lockval), "=&r" (tmp), "+Q" (*lock)
 	: "r" (owner)
 	: "memory");
-	smp_acquire__after_ctrl_dep();
 }
 
 #define arch_spin_lock_flags(lock, flags) arch_spin_lock(lock)
