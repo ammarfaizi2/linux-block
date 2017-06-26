@@ -4011,7 +4011,8 @@ hist_trigger_entry_print(struct seq_file *m,
 }
 
 static int print_entries(struct seq_file *m,
-			 struct hist_trigger_data *hist_data)
+			 struct hist_trigger_data *hist_data,
+			 unsigned int *n_dups)
 {
 	struct tracing_map_sort_entry **sort_entries = NULL;
 	struct tracing_map *map = hist_data->map;
@@ -4019,7 +4020,7 @@ static int print_entries(struct seq_file *m,
 
 	n_entries = tracing_map_sort_entries(map, hist_data->sort_keys,
 					     hist_data->n_sort_keys,
-					     &sort_entries);
+					     &sort_entries, n_dups);
 	if (n_entries < 0)
 		return n_entries;
 
@@ -4038,6 +4039,7 @@ static void hist_trigger_show(struct seq_file *m,
 {
 	struct hist_trigger_data *hist_data;
 	int n_entries, ret = 0;
+	unsigned int n_dups;
 
 	if (n > 0)
 		seq_puts(m, "\n\n");
@@ -4047,15 +4049,15 @@ static void hist_trigger_show(struct seq_file *m,
 	seq_puts(m, "#\n\n");
 
 	hist_data = data->private_data;
-	n_entries = print_entries(m, hist_data);
+	n_entries = print_entries(m, hist_data, &n_dups);
 	if (n_entries < 0) {
 		ret = n_entries;
 		n_entries = 0;
 	}
 
-	seq_printf(m, "\nTotals:\n    Hits: %llu\n    Entries: %u\n    Dropped: %llu\n",
-		   (u64)atomic64_read(&hist_data->map->hits),
-		   n_entries, (u64)atomic64_read(&hist_data->map->drops));
+	seq_printf(m, "\nTotals:\n    Hits: %llu\n    Entries: %u\n    Dropped: %llu\n    Duplicates: %u\n",
+		   (u64)atomic64_read(&hist_data->map->hits), n_entries,
+		   (u64)atomic64_read(&hist_data->map->drops), n_dups);
 }
 
 static int hist_show(struct seq_file *m, void *v)

@@ -1084,6 +1084,7 @@ static void sort_secondary(struct tracing_map *map,
  * @map: The tracing_map
  * @sort_key: The sort key to use for sorting
  * @sort_entries: outval: pointer to allocated and sorted array of entries
+ * @n_dups: outval: pointer to variable receiving a count of duplicates found
  *
  * tracing_map_sort_entries() sorts the current set of entries in the
  * map and returns the list of tracing_map_sort_entries containing
@@ -1100,13 +1101,16 @@ static void sort_secondary(struct tracing_map *map,
  * The client should not hold on to the returned array but should use
  * it and call tracing_map_destroy_sort_entries() when done.
  *
- * Return: the number of sort_entries in the struct tracing_map_sort_entry
- * array, negative on error
+ * Return: the number of sort_entries in the struct
+ * tracing_map_sort_entry array, negative on error.  If n_dups is
+ * non-NULL, it will receive the number of duplicate entries found
+ * (and merged) during the sort.
  */
 int tracing_map_sort_entries(struct tracing_map *map,
 			     struct tracing_map_sort_key *sort_keys,
 			     unsigned int n_sort_keys,
-			     struct tracing_map_sort_entry ***sort_entries)
+			     struct tracing_map_sort_entry ***sort_entries,
+			     unsigned int *n_dups)
 {
 	int (*cmp_entries_fn)(const struct tracing_map_sort_entry **,
 			      const struct tracing_map_sort_entry **);
@@ -1147,6 +1151,8 @@ int tracing_map_sort_entries(struct tracing_map *map,
 	if (ret < 0)
 		goto free;
 	n_entries -= ret;
+	if (n_dups)
+		*n_dups = ret;
 
 	if (is_key(map, sort_keys[0].field_idx))
 		cmp_entries_fn = cmp_entries_key;

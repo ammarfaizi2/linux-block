@@ -286,7 +286,8 @@ extern int
 tracing_map_sort_entries(struct tracing_map *map,
 			 struct tracing_map_sort_key *sort_keys,
 			 unsigned int n_sort_keys,
-			 struct tracing_map_sort_entry ***sort_entries);
+			 struct tracing_map_sort_entry ***sort_entries,
+			 unsigned int *n_dups);
 
 extern void
 tracing_map_destroy_sort_entries(struct tracing_map_sort_entry **entries,
