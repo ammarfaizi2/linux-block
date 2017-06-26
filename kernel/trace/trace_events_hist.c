@@ -1676,7 +1676,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
 static struct event_command trigger_hist_cmd = {
 	.name			= "hist",
 	.trigger_type		= ETT_EVENT_HIST,
-	.flags			= EVENT_CMD_FL_NEEDS_REC,
+	.flags			= EVENT_CMD_FL_NEEDS_REC | EVENT_CMD_FL_POST_TRIGGER,
 	.func			= event_hist_trigger_func,
 	.reg			= hist_register_trigger,
 	.unreg			= hist_unregister_trigger,
