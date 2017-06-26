@@ -3909,10 +3909,15 @@ static void rcu_migrate_callbacks(int cpu, struct rcu_state *rsp)
 	unsigned long flags;
 	struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
 	struct rcu_node *rnp = rdp->mynode;  /* Outgoing CPU's rdp & rnp. */
+	struct rcu_node *rnp_root = rcu_get_root(rdp->rsp);
 
 	if (rcu_is_nocb_cpu(cpu) || rcu_segcblist_empty(&rdp->cblist) ||
 	    rcu_nocb_adopt_orphan_cbs(rdp))
 		return;  /* No callbacks to migrate. */
+
+	raw_spin_lock_irqsave_rcu_node(rnp_root, flags);
+	rcu_advance_cbs(rsp, rnp_root, rdp); /* Leverage recent GPs. */
+	raw_spin_unlock_irqrestore_rcu_node(rnp_root, flags);
 
 	raw_spin_lock_irqsave(&rsp->orphan_lock, flags);
 	rcu_send_cbs_to_orphanage(cpu, rsp, rnp, rdp);
