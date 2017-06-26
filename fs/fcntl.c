@@ -243,6 +243,66 @@ static int f_getowner_uids(struct file *filp, unsigned long arg)
 }
 #endif
 
+static long fcntl_rw_hint(struct file *file, unsigned int cmd,
+			  unsigned long arg)
+{
+	struct inode *inode = file_inode(file);
+	bool on_file = false;
+	enum rw_hint hint;
+	long ret = 0;
+
+	switch (cmd) {
+	case F_GET_FILE_RW_HINT:
+		on_file = true;
+	case F_GET_RW_HINT:
+		/*
+		 * If we ask for the file descriptor hint and it isn't set,
+		 * return the underlying inode write hint. This is what
+		 * writeback does as well.
+		 */
+		hint = RWF_WRITE_LIFE_NOT_SET;
+		if (on_file)
+			hint = file->f_write_hint;
+
+		if (!on_file || hint == RWF_WRITE_LIFE_NOT_SET)
+			hint = mask_to_write_hint(inode->i_flags,
+							S_WRITE_LIFE_SHIFT);
+		if (put_user(hint, (u64 __user *) arg))
+			ret = -EFAULT;
+		break;
+	case F_SET_FILE_RW_HINT:
+		on_file = true;
+	case F_SET_RW_HINT:
+		if (get_user(hint, (u64 __user *) arg)) {
+			ret = -EFAULT;
+			break;
+		}
+		switch (hint) {
+		case RWF_WRITE_LIFE_NOT_SET:
+		case RWH_WRITE_LIFE_NONE:
+		case RWH_WRITE_LIFE_SHORT:
+		case RWH_WRITE_LIFE_MEDIUM:
+		case RWH_WRITE_LIFE_LONG:
+		case RWH_WRITE_LIFE_EXTREME:
+			if (on_file) {
+				spin_lock(&file->f_lock);
+				file->f_write_hint = hint;
+				spin_unlock(&file->f_lock);
+			} else
+				inode_set_write_hint(inode, hint);
+			break;
+		default:
+			ret = -EINVAL;
+		}
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
 static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
 		struct file *filp)
 {
@@ -336,6 +396,12 @@ static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
 	case F_ADD_SEALS:
 	case F_GET_SEALS:
 		err = shmem_fcntl(filp, cmd, arg);
+		break;
+	case F_GET_RW_HINT:
+	case F_SET_RW_HINT:
+	case F_GET_FILE_RW_HINT:
+	case F_SET_FILE_RW_HINT:
+		err = fcntl_rw_hint(filp, cmd, arg);
 		break;
 	default:
 		break;
