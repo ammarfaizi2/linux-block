@@ -224,6 +224,7 @@ enum hist_field_flags {
 	HIST_FIELD_FL_VAR_ONLY		= 8192,
 	HIST_FIELD_FL_EXPR		= 16384,
 	HIST_FIELD_FL_VAR_REF		= 32768,
+	HIST_FIELD_FL_CPU		= 65536,
 };
 
 struct hist_trigger_attrs {
@@ -1081,6 +1082,16 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
 	return ts;
 }
 
+static u64 hist_field_cpu(struct hist_field *hist_field,
+			  struct tracing_map_elt *elt,
+			  struct ring_buffer_event *rbe,
+			  void *event)
+{
+	int cpu = raw_smp_processor_id();
+
+	return cpu;
+}
+
 static struct hist_field *check_var_ref(struct hist_field *hist_field,
 					struct hist_trigger_data *var_data,
 					unsigned int var_idx)
@@ -1407,6 +1418,8 @@ static const char *hist_field_name(struct hist_field *field,
 		field_name = hist_field_name(field->operands[0], ++level);
 	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
 		field_name = "$common_timestamp";
+	else if (field->flags & HIST_FIELD_FL_CPU)
+		field_name = "cpu";
 	else if (field->flags & HIST_FIELD_FL_EXPR ||
 		 field->flags & HIST_FIELD_FL_VAR_REF)
 		field_name = field->name;
@@ -1848,6 +1861,15 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
 		goto out;
 	}
 
+	if (flags & HIST_FIELD_FL_CPU) {
+		hist_field->fn = hist_field_cpu;
+		hist_field->size = sizeof(int);
+		hist_field->type = kstrdup("int", GFP_KERNEL);
+		if (!hist_field->type)
+			goto free;
+		goto out;
+	}
+
 	if (WARN_ON_ONCE(!field))
 		goto out;
 
@@ -1980,7 +2002,9 @@ parse_field(struct hist_trigger_data *hist_data, struct trace_event_file *file,
 		hist_data->enable_timestamps = true;
 		if (*flags & HIST_FIELD_FL_TIMESTAMP_USECS)
 			hist_data->attrs->ts_in_usecs = true;
-	} else {
+	} else if (strcmp(field_name, "cpu") == 0)
+		*flags |= HIST_FIELD_FL_CPU;
+	else {
 		field = trace_find_event_field(file->event_call, field_name);
 		if (!field)
 			return ERR_PTR(-EINVAL);
@@ -3019,7 +3043,6 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
 				goto out;
 			}
 		}
-
 		if (param[0] == '$')
 			hist_field = onmatch_find_var(hist_data, data, system,
 						      event_name, param);
@@ -3034,7 +3057,6 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
 			ret = -EINVAL;
 			goto out;
 		}
-
 		if (check_synth_field(event, hist_field, field_pos) == 0) {
 			var_ref = create_var_ref(hist_field);
 			if (!var_ref) {
@@ -4128,6 +4150,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
 
 	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
 		seq_puts(m, "$common_timestamp");
+	else if (hist_field->flags & HIST_FIELD_FL_CPU)
+		seq_puts(m, "cpu");
 	else if (field_name)
 		seq_printf(m, "%s", field_name);
 
