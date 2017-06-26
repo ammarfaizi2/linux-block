@@ -37,9 +37,12 @@ extern int
 tracepoint_probe_register(struct tracepoint *tp, void *probe, void *data);
 extern int
 tracepoint_probe_register_prio(struct tracepoint *tp, void *probe, void *data,
-			       int prio);
+			       int prio, bool dynamic);
+extern int dynamic_tracepoint_probe_register(struct tracepoint *tp,
+					     void *probe, void *data);
 extern int
-tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data);
+tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data,
+			    bool dynamic);
 extern void
 for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
 		void *priv);
@@ -206,13 +209,13 @@ extern void syscall_unregfunc(void);
 				   int prio)				\
 	{								\
 		return tracepoint_probe_register_prio(&__tracepoint_##name, \
-					      (void *)probe, data, prio); \
+				      (void *)probe, data, prio, false); \
 	}								\
 	static inline int						\
 	unregister_trace_##name(void (*probe)(data_proto), void *data)	\
 	{								\
 		return tracepoint_probe_unregister(&__tracepoint_##name,\
-						(void *)probe, data);	\
+					   (void *)probe, data, false); \
 	}								\
 	static inline void						\
 	check_trace_callback_type_##name(void (*cb)(data_proto))	\

@@ -299,7 +299,7 @@ int trace_event_reg(struct trace_event_call *call,
 	case TRACE_REG_UNREGISTER:
 		tracepoint_probe_unregister(call->tp,
 					    call->class->probe,
-					    file);
+					    file, false);
 		return 0;
 
 #ifdef CONFIG_PERF_EVENTS
@@ -310,7 +310,7 @@ int trace_event_reg(struct trace_event_call *call,
 	case TRACE_REG_PERF_UNREGISTER:
 		tracepoint_probe_unregister(call->tp,
 					    call->class->perf_probe,
-					    call);
+					    call, false);
 		return 0;
 	case TRACE_REG_PERF_OPEN:
 	case TRACE_REG_PERF_CLOSE:

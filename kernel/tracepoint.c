@@ -192,12 +192,15 @@ static void *func_remove(struct tracepoint_func **funcs,
  * Add the probe function to a tracepoint.
  */
 static int tracepoint_add_func(struct tracepoint *tp,
-			       struct tracepoint_func *func, int prio)
+			       struct tracepoint_func *func, int prio,
+			       bool dynamic)
 {
 	struct tracepoint_func *old, *tp_funcs;
 	int ret;
 
-	if (tp->regfunc && !static_key_enabled(&tp->key)) {
+	if (tp->regfunc &&
+	    ((dynamic && !(atomic_read(&tp->key.enabled) > 0)) ||
+	     !static_key_enabled(&tp->key))) {
 		ret = tp->regfunc();
 		if (ret < 0)
 			return ret;
@@ -219,7 +222,9 @@ static int tracepoint_add_func(struct tracepoint *tp,
 	 * is used.
 	 */
 	rcu_assign_pointer(tp->funcs, tp_funcs);
-	if (!static_key_enabled(&tp->key))
+	if (dynamic && !(atomic_read(&tp->key.enabled) > 0))
+		atomic_inc(&tp->key.enabled);
+	else if (!dynamic && !static_key_enabled(&tp->key))
 		static_key_slow_inc(&tp->key);
 	release_probes(old);
 	return 0;
@@ -232,7 +237,7 @@ static int tracepoint_add_func(struct tracepoint *tp,
  * by preempt_disable around the call site.
  */
 static int tracepoint_remove_func(struct tracepoint *tp,
-		struct tracepoint_func *func)
+				  struct tracepoint_func *func, bool dynamic)
 {
 	struct tracepoint_func *old, *tp_funcs;
 
@@ -246,10 +251,14 @@ static int tracepoint_remove_func(struct tracepoint *tp,
 
 	if (!tp_funcs) {
 		/* Removed last function */
-		if (tp->unregfunc && static_key_enabled(&tp->key))
+		if (tp->unregfunc &&
+		    ((dynamic && (atomic_read(&tp->key.enabled) > 0)) ||
+		     static_key_enabled(&tp->key)))
 			tp->unregfunc();
 
-		if (static_key_enabled(&tp->key))
+		if (dynamic && (atomic_read(&tp->key.enabled) > 0))
+			atomic_dec(&tp->key.enabled);
+		else if (!dynamic && static_key_enabled(&tp->key))
 			static_key_slow_dec(&tp->key);
 	}
 	rcu_assign_pointer(tp->funcs, tp_funcs);
@@ -258,7 +267,7 @@ static int tracepoint_remove_func(struct tracepoint *tp,
 }
 
 /**
- * tracepoint_probe_register -  Connect a probe to a tracepoint
+ * tracepoint_probe_register_prio -  Connect a probe to a tracepoint
  * @tp: tracepoint
  * @probe: probe handler
  * @data: tracepoint data
@@ -271,7 +280,7 @@ static int tracepoint_remove_func(struct tracepoint *tp,
  * within module exit functions.
  */
 int tracepoint_probe_register_prio(struct tracepoint *tp, void *probe,
-				   void *data, int prio)
+				   void *data, int prio, bool dynamic)
 {
 	struct tracepoint_func tp_func;
 	int ret;
@@ -280,7 +289,7 @@ int tracepoint_probe_register_prio(struct tracepoint *tp, void *probe,
 	tp_func.func = probe;
 	tp_func.data = data;
 	tp_func.prio = prio;
-	ret = tracepoint_add_func(tp, &tp_func, prio);
+	ret = tracepoint_add_func(tp, &tp_func, prio, dynamic);
 	mutex_unlock(&tracepoints_mutex);
 	return ret;
 }
@@ -301,9 +310,17 @@ EXPORT_SYMBOL_GPL(tracepoint_probe_register_prio);
  */
 int tracepoint_probe_register(struct tracepoint *tp, void *probe, void *data)
 {
-	return tracepoint_probe_register_prio(tp, probe, data, TRACEPOINT_DEFAULT_PRIO);
+	return tracepoint_probe_register_prio(tp, probe, data, TRACEPOINT_DEFAULT_PRIO, false);
 }
 EXPORT_SYMBOL_GPL(tracepoint_probe_register);
+
+int dynamic_tracepoint_probe_register(struct tracepoint *tp, void *probe,
+				      void *data)
+{
+	return tracepoint_probe_register_prio(tp, probe, data,
+					      TRACEPOINT_DEFAULT_PRIO, true);
+}
+EXPORT_SYMBOL_GPL(dynamic_tracepoint_probe_register);
 
 /**
  * tracepoint_probe_unregister -  Disconnect a probe from a tracepoint
@@ -313,7 +330,8 @@ EXPORT_SYMBOL_GPL(tracepoint_probe_register);
  *
  * Returns 0 if ok, error value on error.
  */
-int tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data)
+int tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data,
+				bool dynamic)
 {
 	struct tracepoint_func tp_func;
 	int ret;
@@ -321,7 +339,7 @@ int tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data)
 	mutex_lock(&tracepoints_mutex);
 	tp_func.func = probe;
 	tp_func.data = data;
-	ret = tracepoint_remove_func(tp, &tp_func);
+	ret = tracepoint_remove_func(tp, &tp_func, dynamic);
 	mutex_unlock(&tracepoints_mutex);
 	return ret;
 }
