@@ -1193,9 +1193,16 @@ __event_trigger_test_discard(struct trace_event_file *file,
 	if (eflags & EVENT_FILE_FL_TRIGGER_COND)
 		*tt = event_triggers_call(file, entry, event);
 
-	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags) ||
-	    (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
-	     !filter_match_preds(file->filter, entry))) {
+	if (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
+	    !filter_match_preds(file->filter, entry)) {
+		__trace_event_discard_commit(buffer, event);
+		return true;
+	}
+
+	if (test_bit(EVENT_FILE_FL_NO_DISCARD_BIT, &file->flags))
+		return false;
+
+	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags)) {
 		__trace_event_discard_commit(buffer, event);
 		return true;
 	}

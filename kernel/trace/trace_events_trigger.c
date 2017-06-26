@@ -505,20 +505,30 @@ clear_event_triggers(struct trace_array *tr)
 void update_cond_flag(struct trace_event_file *file)
 {
 	struct event_trigger_data *data;
-	bool set_cond = false;
+	bool set_cond = false, set_no_discard = false;
 
 	list_for_each_entry_rcu(data, &file->triggers, list) {
 		if (data->filter || event_command_post_trigger(data->cmd_ops) ||
-		    event_command_needs_rec(data->cmd_ops)) {
+		    event_command_needs_rec(data->cmd_ops))
 			set_cond = true;
+
+		if (event_command_post_trigger(data->cmd_ops) &&
+		    event_command_needs_rec(data->cmd_ops))
+			set_no_discard = true;
+
+		if (set_cond && set_no_discard)
 			break;
-		}
 	}
 
 	if (set_cond)
 		set_bit(EVENT_FILE_FL_TRIGGER_COND_BIT, &file->flags);
 	else
 		clear_bit(EVENT_FILE_FL_TRIGGER_COND_BIT, &file->flags);
+
+	if (set_no_discard)
+		set_bit(EVENT_FILE_FL_NO_DISCARD_BIT, &file->flags);
+	else
+		clear_bit(EVENT_FILE_FL_NO_DISCARD_BIT, &file->flags);
 }
 
 /**
