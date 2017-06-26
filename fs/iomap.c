@@ -803,7 +803,10 @@ iomap_dio_actor(struct inode *inode, loff_t pos, loff_t length,
 		}
 
 		if (dio->flags & IOMAP_DIO_WRITE) {
-			bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_SYNC | REQ_IDLE);
+			bio_set_op_attrs(bio, REQ_OP_WRITE,
+						REQ_SYNC | REQ_IDLE);
+			bio->bi_opf |=
+				write_hint_to_opf(iocb_write_hint(dio->iocb));
 			task_io_account_write(bio->bi_iter.bi_size);
 		} else {
 			bio_set_op_attrs(bio, REQ_OP_READ, 0);
