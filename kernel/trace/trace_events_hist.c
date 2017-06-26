@@ -233,6 +233,7 @@ struct hist_trigger_attrs {
 	char		*vals_str;
 	char		*sort_key_str;
 	char		*name;
+	char		*clock;
 	bool		pause;
 	bool		cont;
 	bool		clear;
@@ -1586,6 +1587,7 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
 	kfree(attrs->sort_key_str);
 	kfree(attrs->keys_str);
 	kfree(attrs->vals_str);
+	kfree(attrs->clock);
 	kfree(attrs);
 }
 
@@ -1625,7 +1627,16 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
 		attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
 	else if (strncmp(str, "name=", strlen("name=")) == 0)
 		attrs->name = kstrdup(str, GFP_KERNEL);
-	else if (strncmp(str, "size=", strlen("size=")) == 0) {
+	else if (strncmp(str, "clock=", strlen("clock=")) == 0) {
+		strsep(&str, "=");
+		if (!str) {
+			ret = -EINVAL;
+			goto out;
+		}
+
+		str = strstrip(str);
+		attrs->clock = kstrdup(str, GFP_KERNEL);
+	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
 		int map_bits = parse_map_size(str);
 
 		if (map_bits < 0) {
@@ -1686,6 +1697,12 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
 	if (!attrs->keys_str) {
 		ret = -EINVAL;
 		goto free;
+	}
+
+	if (!attrs->clock) {
+		attrs->clock = kstrdup("global", GFP_KERNEL);
+		if (!attrs->clock)
+			goto free;
 	}
 
 	return attrs;
@@ -4437,6 +4454,8 @@ static int event_hist_trigger_print(struct seq_file *m,
 			seq_puts(m, ".descending");
 	}
 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
+	if (hist_data->enable_timestamps)
+		seq_printf(m, ":clock=%s", hist_data->attrs->clock);
 
 	print_actions_spec(m, hist_data);
 
@@ -4702,10 +4721,19 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
 			goto out;
 	}
 
-	ret++;
+	if (hist_data->enable_timestamps) {
+		char *clock = hist_data->attrs->clock;
 
-	if (hist_data->enable_timestamps)
+		ret = tracing_set_clock(file->tr, hist_data->attrs->clock);
+		if (ret) {
+			hist_err("Couldn't set trace_clock: ", clock);
+			goto out;
+		}
+
 		tracing_set_time_stamp_abs(file->tr, true);
+	}
+
+	ret++;
  out:
 	return ret;
 }
