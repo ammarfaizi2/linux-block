@@ -40,6 +40,7 @@
 #include <asm/ptrace.h>
 #include <asm/signal32.h>
 #include <asm/vdso.h>
+#include <asm/signal_common.h>
 
 /*
  * Do a signal return; undo the signal stack. These are aligned to 128-bit.
@@ -47,11 +48,6 @@
 struct rt_sigframe {
 	struct siginfo info;
 	struct ucontext uc;
-};
-
-struct frame_record {
-	u64 fp;
-	u64 lr;
 };
 
 struct rt_sigframe_user_layout {
@@ -68,8 +64,6 @@ struct rt_sigframe_user_layout {
 };
 
 #define BASE_SIGFRAME_SIZE round_up(sizeof(struct rt_sigframe), 16)
-#define TERMINATOR_SIZE round_up(sizeof(struct _aarch64_ctx), 16)
-#define EXTRA_CONTEXT_SIZE round_up(sizeof(struct extra_context), 16)
 
 static void init_user_layout(struct rt_sigframe_user_layout *user)
 {
@@ -90,14 +84,6 @@ static size_t sigframe_size(struct rt_sigframe_user_layout const *user)
 {
 	return round_up(max(user->size, sizeof(struct rt_sigframe)), 16);
 }
-
-/*
- * Sanity limit on the approximate maximum size of signal frame we'll
- * try to generate.  Stack alignment padding and the frame record are
- * not taken into account.  This limit is not a guarantee and is
- * NOT ABI.
- */
-#define SIGFRAME_MAXSZ SZ_64K
 
 static int __sigframe_alloc(struct rt_sigframe_user_layout *user,
 			    unsigned long *offset, size_t size, bool extend)
@@ -174,7 +160,7 @@ static void __user *apply_user_offset(
 	return base + offset;
 }
 
-static int preserve_fpsimd_context(struct fpsimd_context __user *ctx)
+int preserve_fpsimd_context(struct fpsimd_context __user *ctx)
 {
 	struct fpsimd_state *fpsimd = &current->thread.fpsimd_state;
 	int err;
@@ -194,7 +180,7 @@ static int preserve_fpsimd_context(struct fpsimd_context __user *ctx)
 	return err ? -EFAULT : 0;
 }
 
-static int restore_fpsimd_context(struct fpsimd_context __user *ctx)
+int restore_fpsimd_context(struct fpsimd_context __user *ctx)
 {
 	struct fpsimd_state fpsimd;
 	__u32 magic, size;
@@ -221,11 +207,7 @@ static int restore_fpsimd_context(struct fpsimd_context __user *ctx)
 	return err ? -EFAULT : 0;
 }
 
-struct user_ctxs {
-	struct fpsimd_context __user *fpsimd;
-};
-
-static int __parse_user_sigcontext(struct user_ctxs *user,
+int __parse_user_sigcontext(struct user_ctxs *user,
 				   struct sigcontext __user const *sc,
 				   void __user const *sigframe_base)
 {
@@ -368,9 +350,6 @@ invalid:
 	return -EINVAL;
 }
 
-#define parse_user_sigcontext(user, sf)					\
-	__parse_user_sigcontext(user, &(sf)->uc.uc_mcontext, sf)
-
 static int restore_sigframe(struct pt_regs *regs,
 			    struct rt_sigframe __user *sf)
 {
@@ -461,6 +440,39 @@ static int setup_sigframe_layout(struct rt_sigframe_user_layout *user)
 	return sigframe_alloc_end(user);
 }
 
+int setup_extra_context(char __user *sfp, unsigned long users, char __user *userp)
+{
+	int err =0;
+	struct extra_context __user *extra;
+	struct _aarch64_ctx __user *end;
+	u64 extra_datap;
+	u32 extra_size;
+
+	extra = (struct extra_context __user *)userp;
+	userp += EXTRA_CONTEXT_SIZE;
+
+	end = (struct _aarch64_ctx __user *)userp;
+	userp += TERMINATOR_SIZE;
+
+	/*
+	 * extra_datap is just written to the signal frame.
+	 * The value gets cast back to a void __user *
+	 * during sigreturn.
+	 */
+	extra_datap = (__force u64)userp;
+	extra_size = sfp + round_up(users, 16) - userp;
+
+	__put_user_error(EXTRA_MAGIC, &extra->head.magic, err);
+	__put_user_error(EXTRA_CONTEXT_SIZE, &extra->head.size, err);
+	__put_user_error(extra_datap, &extra->datap, err);
+	__put_user_error(extra_size, &extra->size, err);
+
+	/* Add the terminator */
+	__put_user_error(0, &end->magic, err);
+	__put_user_error(0, &end->size, err);
+
+	return err;
+}
 
 static int setup_sigframe(struct rt_sigframe_user_layout *user,
 			  struct pt_regs *regs, sigset_t *set)
@@ -499,39 +511,9 @@ static int setup_sigframe(struct rt_sigframe_user_layout *user,
 		__put_user_error(current->thread.fault_code, &esr_ctx->esr, err);
 	}
 
-	if (err == 0 && user->extra_offset) {
-		char __user *sfp = (char __user *)user->sigframe;
-		char __user *userp =
-			apply_user_offset(user, user->extra_offset);
-
-		struct extra_context __user *extra;
-		struct _aarch64_ctx __user *end;
-		u64 extra_datap;
-		u32 extra_size;
-
-		extra = (struct extra_context __user *)userp;
-		userp += EXTRA_CONTEXT_SIZE;
-
-		end = (struct _aarch64_ctx __user *)userp;
-		userp += TERMINATOR_SIZE;
-
-		/*
-		 * extra_datap is just written to the signal frame.
-		 * The value gets cast back to a void __user *
-		 * during sigreturn.
-		 */
-		extra_datap = (__force u64)userp;
-		extra_size = sfp + round_up(user->size, 16) - userp;
-
-		__put_user_error(EXTRA_MAGIC, &extra->head.magic, err);
-		__put_user_error(EXTRA_CONTEXT_SIZE, &extra->head.size, err);
-		__put_user_error(extra_datap, &extra->datap, err);
-		__put_user_error(extra_size, &extra->size, err);
-
-		/* Add the terminator */
-		__put_user_error(0, &end->magic, err);
-		__put_user_error(0, &end->size, err);
-	}
+	if (err == 0 && user->extra_offset)
+		setup_extra_context((char *) user->sigframe, user->size,
+			(char *) apply_user_offset(user, user->extra_offset));
 
 	/* set the "end" magic */
 	if (err == 0) {
