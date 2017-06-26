@@ -1912,6 +1912,8 @@ static inline bool HAS_UNMAPPED_ID(struct inode *inode)
 	return !uid_valid(inode->i_uid) || !gid_valid(inode->i_gid);
 }
 
+extern unsigned int inode_hint_to_opf(struct inode *inode);
+
 static inline unsigned int write_hint_to_mask(enum rw_hint hint,
 					      unsigned int shift)
 {

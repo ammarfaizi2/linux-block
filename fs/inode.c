@@ -2131,3 +2131,12 @@ void inode_set_write_hint(struct inode *inode, enum rw_hint hint)
 		inode_unlock(inode);
 	}
 }
+
+/*
+ * Returns block write hint mask for the inode
+ */
+unsigned int inode_hint_to_opf(struct inode *inode)
+{
+	return write_hint_to_opf(inode_write_hint(inode));
+}
+EXPORT_SYMBOL(inode_hint_to_opf);
