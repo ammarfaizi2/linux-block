@@ -167,7 +167,7 @@ extern struct cred init_cred;
 # define INIT_PERF_EVENTS(tsk)
 #endif
 
-#ifdef CONFIG_PREEMPT_RT_BASE
+#if defined(CONFIG_POSIX_TIMERS) && defined(CONFIG_PREEMPT_RT_BASE)
 # define INIT_TIMER_LIST		.posix_timer_list = NULL,
 #else
 # define INIT_TIMER_LIST
