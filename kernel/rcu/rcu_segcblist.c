@@ -36,24 +36,6 @@ void rcu_cblist_init(struct rcu_cblist *rclp)
 }
 
 /*
- * Debug function to actually count the number of callbacks.
- * If the number exceeds the limit specified, return -1.
- */
-long rcu_cblist_count_cbs(struct rcu_cblist *rclp, long lim)
-{
-	int cnt = 0;
-	struct rcu_head **rhpp = &rclp->head;
-
-	for (;;) {
-		if (!*rhpp)
-			return cnt;
-		if (++cnt > lim)
-			return -1;
-		rhpp = &(*rhpp)->next;
-	}
-}
-
-/*
  * Dequeue the oldest rcu_head structure from the specified callback
  * list.  This function assumes that the callback is non-lazy, but
  * the caller can later invoke rcu_cblist_dequeued_lazy() if it
@@ -100,17 +82,6 @@ void rcu_segcblist_disable(struct rcu_segcblist *rsclp)
 	WARN_ON_ONCE(rcu_segcblist_n_cbs(rsclp));
 	WARN_ON_ONCE(rcu_segcblist_n_lazy_cbs(rsclp));
 	rsclp->tails[RCU_NEXT_TAIL] = NULL;
-}
-
-/*
- * Is the specified segment of the specified rcu_segcblist structure
- * empty of callbacks?
- */
-bool rcu_segcblist_segempty(struct rcu_segcblist *rsclp, int seg)
-{
-	if (seg == RCU_DONE_TAIL)
-		return &rsclp->head == rsclp->tails[RCU_DONE_TAIL];
-	return rsclp->tails[seg - 1] == rsclp->tails[seg];
 }
 
 /*
@@ -165,19 +136,6 @@ struct rcu_head *rcu_segcblist_dequeue(struct rcu_segcblist *rsclp)
 }
 
 /*
- * Account for the fact that a previously dequeued callback turned out
- * to be marked as lazy.
- */
-void rcu_segcblist_dequeued_lazy(struct rcu_segcblist *rsclp)
-{
-	unsigned long flags;
-
-	local_irq_save(flags);
-	rsclp->len_lazy--;
-	local_irq_restore(flags);
-}
-
-/*
  * Return a pointer to the first callback in the specified rcu_segcblist
  * structure.  This is useful for diagnostics.
  */
@@ -200,17 +158,6 @@ struct rcu_head *rcu_segcblist_first_pend_cb(struct rcu_segcblist *rsclp)
 	if (rcu_segcblist_is_enabled(rsclp))
 		return *rsclp->tails[RCU_DONE_TAIL];
 	return NULL;
-}
-
-/*
- * Does the specified rcu_segcblist structure contain callbacks that
- * have not yet been processed beyond having been posted, that is,
- * does it contain callbacks in its last segment?
- */
-bool rcu_segcblist_new_cbs(struct rcu_segcblist *rsclp)
-{
-	return rcu_segcblist_is_enabled(rsclp) &&
-	       !rcu_segcblist_restempty(rsclp, RCU_NEXT_READY_TAIL);
 }
 
 /*
