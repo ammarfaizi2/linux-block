@@ -307,8 +307,8 @@ static void complexmode_enter(struct sem_array *sma)
 
 	for (i = 0; i < sma->sem_nsems; i++) {
 		sem = sma->sem_base + i;
-		spin_lock(&sem->lock);
-		spin_unlock(&sem->lock);
+		smp_mb(); /* Add release semantics for spin_unlock_wait(). */
+		spin_unlock_wait(&sem->lock);
 	}
 }
 
