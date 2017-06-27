@@ -704,8 +704,10 @@ void ata_scsi_cmd_error_handler(struct Scsi_Host *host, struct ata_port *ap,
 
 		/* initialize eh_tries */
 		ap->eh_tries = ATA_EH_MAX_TRIES;
-	} else
+	} else {
+		smp_mb(); /* Add release semantics for spin_unlock_wait(). */
 		spin_unlock_wait(ap->lock);
+	}
 
 }
 EXPORT_SYMBOL(ata_scsi_cmd_error_handler);
