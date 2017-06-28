@@ -150,7 +150,7 @@ static int hns_nic_get_link_ksettings(struct net_device *net_dev,
 	cmd->base.duplex = duplex;
 
 	if (net_dev->phydev)
-		(void)phy_ethtool_ksettings_get(net_dev->phydev, cmd);
+		phy_ethtool_ksettings_get(net_dev->phydev, cmd);
 
 	link_stat = hns_nic_get_link(net_dev);
 	if (!link_stat) {
@@ -288,9 +288,15 @@ static int hns_nic_config_phy_loopback(struct phy_device *phy_dev, u8 en)
 
 		/* Force 1000M Link, Default is 0x0200 */
 		phy_write(phy_dev, 7, 0x20C);
-		phy_write(phy_dev, HNS_PHY_PAGE_REG, 0);
 
-		/* Enable PHY loop-back */
+		/* Powerup Fiber */
+		phy_write(phy_dev, HNS_PHY_PAGE_REG, 1);
+		val = phy_read(phy_dev, COPPER_CONTROL_REG);
+		val &= ~PHY_POWER_DOWN;
+		phy_write(phy_dev, COPPER_CONTROL_REG, val);
+
+		/* Enable Phy Loopback */
+		phy_write(phy_dev, HNS_PHY_PAGE_REG, 0);
 		val = phy_read(phy_dev, COPPER_CONTROL_REG);
 		val |= PHY_LOOP_BACK;
 		val &= ~PHY_POWER_DOWN;
@@ -299,6 +305,12 @@ static int hns_nic_config_phy_loopback(struct phy_device *phy_dev, u8 en)
 		phy_write(phy_dev, HNS_PHY_PAGE_REG, 0xFA);
 		phy_write(phy_dev, 1, 0x400);
 		phy_write(phy_dev, 7, 0x200);
+
+		phy_write(phy_dev, HNS_PHY_PAGE_REG, 1);
+		val = phy_read(phy_dev, COPPER_CONTROL_REG);
+		val |= PHY_POWER_DOWN;
+		phy_write(phy_dev, COPPER_CONTROL_REG, val);
+
 		phy_write(phy_dev, HNS_PHY_PAGE_REG, 0);
 		phy_write(phy_dev, 9, 0xF00);
 

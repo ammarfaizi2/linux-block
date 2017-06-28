@@ -30,6 +30,7 @@
 #include "debug.h"
 #include "fwil_types.h"
 #include "p2p.h"
+#include "pno.h"
 #include "cfg80211.h"
 #include "fwil.h"
 #include "feature.h"
@@ -484,13 +485,13 @@ int brcmf_net_attach(struct brcmf_if *ifp, bool rtnl_locked)
 		goto fail;
 	}
 
+	ndev->priv_destructor = brcmf_cfg80211_free_netdev;
 	brcmf_dbg(INFO, "%s: Broadcom Dongle Host Driver\n", ndev->name);
 	return 0;
 
 fail:
 	drvr->iflist[ifp->bsscfgidx] = NULL;
 	ndev->netdev_ops = NULL;
-	free_netdev(ndev);
 	return -EBADE;
 }
 
@@ -503,6 +504,7 @@ static void brcmf_net_detach(struct net_device *ndev, bool rtnl_locked)
 			unregister_netdev(ndev);
 	} else {
 		brcmf_cfg80211_free_netdev(ndev);
+		free_netdev(ndev);
 	}
 }
 
@@ -579,7 +581,6 @@ static int brcmf_net_p2p_attach(struct brcmf_if *ifp)
 fail:
 	ifp->drvr->iflist[ifp->bsscfgidx] = NULL;
 	ndev->netdev_ops = NULL;
-	free_netdev(ndev);
 	return -EBADE;
 }
 
@@ -624,7 +625,7 @@ struct brcmf_if *brcmf_add_if(struct brcmf_pub *drvr, s32 bsscfgidx, s32 ifidx,
 		if (!ndev)
 			return ERR_PTR(-ENOMEM);
 
-		ndev->destructor = brcmf_cfg80211_free_netdev;
+		ndev->needs_free_netdev = true;
 		ifp = netdev_priv(ndev);
 		ifp->ndev = ndev;
 		/* store mapping ifidx to bsscfgidx */

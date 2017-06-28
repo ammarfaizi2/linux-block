@@ -754,6 +754,10 @@ static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
 
 	lock_sock(sk);
 
+	err = -EINVAL;
+	if (addr_len < offsetofend(struct sockaddr, sa_family))
+		goto out;
+
 	err = -EAFNOSUPPORT;
 	if (uaddr->sa_family != AF_CAIF)
 		goto out;
@@ -1099,7 +1103,7 @@ static int caif_create(struct net *net, struct socket *sock, int protocol,
 }
 
 
-static struct net_proto_family caif_family_ops = {
+static const struct net_proto_family caif_family_ops = {
 	.family = PF_CAIF,
 	.create = caif_create,
 	.owner = THIS_MODULE,

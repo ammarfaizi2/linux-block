@@ -1590,6 +1590,29 @@ static void iwl_mvm_disable_sta_queues(struct iwl_mvm *mvm,
 	}
 }
 
+int iwl_mvm_wait_sta_queues_empty(struct iwl_mvm *mvm,
+				  struct iwl_mvm_sta *mvm_sta)
+{
+	int i, ret;
+
+	for (i = 0; i < ARRAY_SIZE(mvm_sta->tid_data); i++) {
+		u16 txq_id;
+
+		spin_lock_bh(&mvm_sta->lock);
+		txq_id = mvm_sta->tid_data[i].txq_id;
+		spin_unlock_bh(&mvm_sta->lock);
+
+		if (txq_id == IWL_MVM_INVALID_QUEUE)
+			continue;
+
+		ret = iwl_trans_wait_txq_empty(mvm->trans, txq_id);
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
 int iwl_mvm_rm_sta(struct iwl_mvm *mvm,
 		   struct ieee80211_vif *vif,
 		   struct ieee80211_sta *sta)
@@ -1611,11 +1634,17 @@ int iwl_mvm_rm_sta(struct iwl_mvm *mvm,
 		if (ret)
 			return ret;
 		/* flush its queues here since we are freeing mvm_sta */
-		ret = iwl_mvm_flush_tx_path(mvm, mvm_sta->tfd_queue_msk, 0);
+		ret = iwl_mvm_flush_sta(mvm, mvm_sta, false, 0);
 		if (ret)
 			return ret;
-		ret = iwl_trans_wait_tx_queues_empty(mvm->trans,
-						     mvm_sta->tfd_queue_msk);
+		if (iwl_mvm_has_new_tx_api(mvm)) {
+			ret = iwl_mvm_wait_sta_queues_empty(mvm, mvm_sta);
+		} else {
+			u32 q_mask = mvm_sta->tfd_queue_msk;
+
+			ret = iwl_trans_wait_tx_queues_empty(mvm->trans,
+							     q_mask);
+		}
 		if (ret)
 			return ret;
 		ret = iwl_mvm_drain_sta(mvm, mvm_sta, false);
@@ -1978,6 +2007,8 @@ static void iwl_mvm_free_bcast_sta_queues(struct iwl_mvm *mvm,
 
 	lockdep_assert_held(&mvm->mutex);
 
+	iwl_mvm_flush_sta(mvm, &mvmvif->bcast_sta, true, 0);
+
 	if (vif->type == NL80211_IFTYPE_AP ||
 	    vif->type == NL80211_IFTYPE_ADHOC)
 		iwl_mvm_disable_txq(mvm, vif->cab_queue, vif->cab_queue,
@@ -2120,7 +2151,8 @@ int iwl_mvm_add_mcast_sta(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
 	if (!iwl_mvm_is_dqa_supported(mvm))
 		return 0;
 
-	if (WARN_ON(vif->type != NL80211_IFTYPE_AP))
+	if (WARN_ON(vif->type != NL80211_IFTYPE_AP &&
+		    vif->type != NL80211_IFTYPE_ADHOC))
 		return -ENOTSUPP;
 
 	/*
@@ -2155,6 +2187,16 @@ int iwl_mvm_add_mcast_sta(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
 		mvmvif->cab_queue = queue;
 	} else if (!fw_has_api(&mvm->fw->ucode_capa,
 			       IWL_UCODE_TLV_API_STA_TYPE)) {
+		/*
+		 * In IBSS, ieee80211_check_queues() sets the cab_queue to be
+		 * invalid, so make sure we use the queue we want.
+		 * Note that this is done here as we want to avoid making DQA
+		 * changes in mac80211 layer.
+		 */
+		if (vif->type == NL80211_IFTYPE_ADHOC) {
+			vif->cab_queue = IWL_MVM_DQA_GCAST_QUEUE;
+			mvmvif->cab_queue = vif->cab_queue;
+		}
 		iwl_mvm_enable_txq(mvm, vif->cab_queue, vif->cab_queue, 0,
 				   &cfg, timeout);
 	}
@@ -2175,6 +2217,8 @@ int iwl_mvm_rm_mcast_sta(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
 
 	if (!iwl_mvm_is_dqa_supported(mvm))
 		return 0;
+
+	iwl_mvm_flush_sta(mvm, &mvmvif->mcast_sta, true, 0);
 
 	iwl_mvm_disable_txq(mvm, mvmvif->cab_queue, vif->cab_queue,
 			    IWL_MAX_TID_COUNT, 0);
@@ -2846,8 +2890,13 @@ int iwl_mvm_sta_tx_agg_flush(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 		iwl_mvm_drain_sta(mvm, mvmsta, true);
 		if (iwl_mvm_flush_tx_path(mvm, BIT(txq_id), 0))
 			IWL_ERR(mvm, "Couldn't flush the AGG queue\n");
-		iwl_trans_wait_tx_queues_empty(mvm->trans,
-					       mvmsta->tfd_queue_msk);
+
+		if (iwl_mvm_has_new_tx_api(mvm))
+			iwl_trans_wait_txq_empty(mvm->trans, txq_id);
+
+		else
+			iwl_trans_wait_tx_queues_empty(mvm->trans, BIT(txq_id));
+
 		iwl_mvm_drain_sta(mvm, mvmsta, false);
 
 		iwl_mvm_sta_tx_agg(mvm, sta, tid, txq_id, false);
@@ -3321,18 +3370,15 @@ int iwl_mvm_remove_sta_key(struct iwl_mvm *mvm,
 
 	/* Get the station from the mvm local station table */
 	mvm_sta = iwl_mvm_get_key_sta(mvm, vif, sta);
-	if (!mvm_sta) {
-		IWL_ERR(mvm, "Failed to find station\n");
-		return -EINVAL;
-	}
-	sta_id = mvm_sta->sta_id;
+	if (mvm_sta)
+		sta_id = mvm_sta->sta_id;
 
 	IWL_DEBUG_WEP(mvm, "mvm remove dynamic key: idx=%d sta=%d\n",
 		      keyconf->keyidx, sta_id);
 
-	if (keyconf->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
-	    keyconf->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
-	    keyconf->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256)
+	if (mvm_sta && (keyconf->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
+			keyconf->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
+			keyconf->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256))
 		return iwl_mvm_send_sta_igtk(mvm, keyconf, sta_id, true);
 
 	if (!__test_and_clear_bit(keyconf->hw_key_idx, mvm->fw_key_table)) {

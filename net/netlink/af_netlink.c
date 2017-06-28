@@ -62,6 +62,7 @@
 #include <asm/cacheflush.h>
 #include <linux/hash.h>
 #include <linux/genetlink.h>
+#include <linux/net_namespace.h>
 
 #include <net/net_namespace.h>
 #include <net/sock.h>
@@ -169,7 +170,7 @@ static struct sk_buff *netlink_to_full_skb(const struct sk_buff *skb,
 	NETLINK_CB(new).dst_group = NETLINK_CB(skb).dst_group;
 	NETLINK_CB(new).creds = NETLINK_CB(skb).creds;
 
-	memcpy(skb_put(new, len), skb->data, len);
+	skb_put_data(new, skb->data, len);
 	return new;
 }
 
@@ -1415,7 +1416,8 @@ static void do_one_broadcast(struct sock *sk,
 		goto out;
 	}
 	NETLINK_CB(p->skb2).nsid = peernet2id(sock_net(sk), p->net);
-	NETLINK_CB(p->skb2).nsid_is_set = true;
+	if (NETLINK_CB(p->skb2).nsid != NETNSA_NSID_NOT_ASSIGNED)
+		NETLINK_CB(p->skb2).nsid_is_set = true;
 	val = netlink_broadcast_deliver(sk, p->skb2);
 	if (val < 0) {
 		netlink_overrun(sk);
@@ -2102,7 +2104,7 @@ __nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int fla
 	struct nlmsghdr *nlh;
 	int size = nlmsg_msg_size(len);
 
-	nlh = (struct nlmsghdr *)skb_put(skb, NLMSG_ALIGN(size));
+	nlh = skb_put(skb, NLMSG_ALIGN(size));
 	nlh->nlmsg_type = type;
 	nlh->nlmsg_len = size;
 	nlh->nlmsg_flags = flags;

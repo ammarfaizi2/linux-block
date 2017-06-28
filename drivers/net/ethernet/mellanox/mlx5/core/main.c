@@ -56,6 +56,7 @@
 #ifdef CONFIG_MLX5_CORE_EN
 #include "eswitch.h"
 #endif
+#include "fpga/core.h"
 
 MODULE_AUTHOR("Eli Cohen <eli@mellanox.com>");
 MODULE_DESCRIPTION("Mellanox Connect-IB, ConnectX-4 core driver");
@@ -175,8 +176,9 @@ static struct mlx5_profile profile[] = {
 	},
 };
 
-#define FW_INIT_TIMEOUT_MILI	2000
-#define FW_INIT_WAIT_MS		2
+#define FW_INIT_TIMEOUT_MILI		2000
+#define FW_INIT_WAIT_MS			2
+#define FW_PRE_INIT_TIMEOUT_MILI	10000
 
 static int wait_fw_init(struct mlx5_core_dev *dev, u32 max_wait_mili)
 {
@@ -355,11 +357,10 @@ static void mlx5_disable_msix(struct mlx5_core_dev *dev)
 	kfree(priv->msix_arr);
 }
 
-struct mlx5_reg_host_endianess {
+struct mlx5_reg_host_endianness {
 	u8	he;
 	u8      rsvd[15];
 };
-
 
 #define CAP_MASK(pos, size) ((u64)((1 << (size)) - 1) << (pos))
 
@@ -474,7 +475,7 @@ static int handle_hca_cap_atomic(struct mlx5_core_dev *dev)
 
 	req_endianness =
 		MLX5_CAP_ATOMIC(dev,
-				supported_atomic_req_8B_endianess_mode_1);
+				supported_atomic_req_8B_endianness_mode_1);
 
 	if (req_endianness != MLX5_ATOMIC_REQ_MODE_HOST_ENDIANNESS)
 		return 0;
@@ -486,7 +487,7 @@ static int handle_hca_cap_atomic(struct mlx5_core_dev *dev)
 	set_hca_cap = MLX5_ADDR_OF(set_hca_cap_in, set_ctx, capability);
 
 	/* Set requestor to host endianness */
-	MLX5_SET(atomic_caps, set_hca_cap, atomic_req_8B_endianess_mode,
+	MLX5_SET(atomic_caps, set_hca_cap, atomic_req_8B_endianness_mode,
 		 MLX5_ATOMIC_REQ_MODE_HOST_ENDIANNESS);
 
 	err = set_caps(dev, set_ctx, set_sz, MLX5_SET_HCA_CAP_OP_MOD_ATOMIC);
@@ -537,8 +538,10 @@ static int handle_hca_cap(struct mlx5_core_dev *dev)
 	/* disable cmdif checksum */
 	MLX5_SET(cmd_hca_cap, set_hca_cap, cmdif_checksum, 0);
 
-	/* If the HCA supports 4K UARs use it */
-	if (MLX5_CAP_GEN_MAX(dev, uar_4k))
+	/* Enable 4K UAR only when HCA supports it and page size is bigger
+	 * than 4K.
+	 */
+	if (MLX5_CAP_GEN_MAX(dev, uar_4k) && PAGE_SIZE > 4096)
 		MLX5_SET(cmd_hca_cap, set_hca_cap, uar_4k, 1);
 
 	MLX5_SET(cmd_hca_cap, set_hca_cap, log_uar_page_sz, PAGE_SHIFT - 12);
@@ -559,8 +562,8 @@ query_ex:
 
 static int set_hca_ctrl(struct mlx5_core_dev *dev)
 {
-	struct mlx5_reg_host_endianess he_in;
-	struct mlx5_reg_host_endianess he_out;
+	struct mlx5_reg_host_endianness he_in;
+	struct mlx5_reg_host_endianness he_out;
 	int err;
 
 	if (!mlx5_core_is_pf(dev))
@@ -612,7 +615,6 @@ static int mlx5_irq_set_affinity_hint(struct mlx5_core_dev *mdev, int i)
 	struct mlx5_priv *priv  = &mdev->priv;
 	struct msix_entry *msix = priv->msix_arr;
 	int irq                 = msix[i + MLX5_EQ_VEC_COMP_BASE].vector;
-	int err;
 
 	if (!zalloc_cpumask_var(&priv->irq_info[i].mask, GFP_KERNEL)) {
 		mlx5_core_warn(mdev, "zalloc_cpumask_var failed");
@@ -622,18 +624,11 @@ static int mlx5_irq_set_affinity_hint(struct mlx5_core_dev *mdev, int i)
 	cpumask_set_cpu(cpumask_local_spread(i, priv->numa_node),
 			priv->irq_info[i].mask);
 
-	err = irq_set_affinity_hint(irq, priv->irq_info[i].mask);
-	if (err) {
-		mlx5_core_warn(mdev, "irq_set_affinity_hint failed,irq 0x%.4x",
-			       irq);
-		goto err_clear_mask;
-	}
+	if (IS_ENABLED(CONFIG_SMP) &&
+	    irq_set_affinity_hint(irq, priv->irq_info[i].mask))
+		mlx5_core_warn(mdev, "irq_set_affinity_hint failed, irq 0x%.4x", irq);
 
 	return 0;
-
-err_clear_mask:
-	free_cpumask_var(priv->irq_info[i].mask);
-	return err;
 }
 
 static void mlx5_irq_clear_affinity_hint(struct mlx5_core_dev *mdev, int i)
@@ -1019,6 +1014,15 @@ static int mlx5_load_one(struct mlx5_core_dev *dev, struct mlx5_priv *priv,
 	 */
 	dev->state = MLX5_DEVICE_STATE_UP;
 
+	/* wait for firmware to accept initialization segments configurations
+	 */
+	err = wait_fw_init(dev, FW_PRE_INIT_TIMEOUT_MILI);
+	if (err) {
+		dev_err(&dev->pdev->dev, "Firmware over %d MS in pre-initializing state, aborting\n",
+			FW_PRE_INIT_TIMEOUT_MILI);
+		goto out;
+	}
+
 	err = mlx5_cmd_init(dev);
 	if (err) {
 		dev_err(&pdev->dev, "Failed initializing command interface, aborting\n");
@@ -1113,10 +1117,16 @@ static int mlx5_load_one(struct mlx5_core_dev *dev, struct mlx5_priv *priv,
 		goto err_disable_msix;
 	}
 
+	err = mlx5_fpga_device_init(dev);
+	if (err) {
+		dev_err(&pdev->dev, "fpga device init failed %d\n", err);
+		goto err_put_uars;
+	}
+
 	err = mlx5_start_eqs(dev);
 	if (err) {
 		dev_err(&pdev->dev, "Failed to start pages and async EQs\n");
-		goto err_put_uars;
+		goto err_fpga_init;
 	}
 
 	err = alloc_comp_eqs(dev);
@@ -1145,6 +1155,12 @@ static int mlx5_load_one(struct mlx5_core_dev *dev, struct mlx5_priv *priv,
 	if (err) {
 		dev_err(&pdev->dev, "sriov init failed %d\n", err);
 		goto err_sriov;
+	}
+
+	err = mlx5_fpga_device_start(dev);
+	if (err) {
+		dev_err(&pdev->dev, "fpga device start failed %d\n", err);
+		goto err_reg_dev;
 	}
 
 	if (mlx5_device_registered(dev)) {
@@ -1181,6 +1197,9 @@ err_affinity_hints:
 
 err_stop_eqs:
 	mlx5_stop_eqs(dev);
+
+err_fpga_init:
+	mlx5_fpga_device_cleanup(dev);
 
 err_put_uars:
 	mlx5_put_uars_page(dev, priv->uar);
@@ -1246,6 +1265,7 @@ static int mlx5_unload_one(struct mlx5_core_dev *dev, struct mlx5_priv *priv,
 	mlx5_irq_clear_affinity_hints(dev);
 	free_comp_eqs(dev);
 	mlx5_stop_eqs(dev);
+	mlx5_fpga_device_cleanup(dev);
 	mlx5_put_uars_page(dev, priv->uar);
 	mlx5_disable_msix(dev);
 	if (cleanup)
@@ -1408,7 +1428,7 @@ static pci_ers_result_t mlx5_pci_err_detected(struct pci_dev *pdev,
 
 	dev_info(&pdev->dev, "%s was called\n", __func__);
 
-	mlx5_enter_error_state(dev);
+	mlx5_enter_error_state(dev, false);
 	mlx5_unload_one(dev, priv, false);
 	/* In case of kernel call drain the health wq */
 	if (state) {
@@ -1495,24 +1515,52 @@ static const struct pci_error_handlers mlx5_err_handler = {
 	.resume		= mlx5_pci_resume
 };
 
+static int mlx5_try_fast_unload(struct mlx5_core_dev *dev)
+{
+	int ret;
+
+	if (!MLX5_CAP_GEN(dev, force_teardown)) {
+		mlx5_core_dbg(dev, "force teardown is not supported in the firmware\n");
+		return -EOPNOTSUPP;
+	}
+
+	if (dev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR) {
+		mlx5_core_dbg(dev, "Device in internal error state, giving up\n");
+		return -EAGAIN;
+	}
+
+	ret = mlx5_cmd_force_teardown_hca(dev);
+	if (ret) {
+		mlx5_core_dbg(dev, "Firmware couldn't do fast unload error: %d\n", ret);
+		return ret;
+	}
+
+	mlx5_enter_error_state(dev, true);
+
+	return 0;
+}
+
 static void shutdown(struct pci_dev *pdev)
 {
 	struct mlx5_core_dev *dev  = pci_get_drvdata(pdev);
 	struct mlx5_priv *priv = &dev->priv;
+	int err;
 
 	dev_info(&pdev->dev, "Shutdown was called\n");
 	/* Notify mlx5 clients that the kernel is being shut down */
 	set_bit(MLX5_INTERFACE_STATE_SHUTDOWN, &dev->intf_state);
-	mlx5_unload_one(dev, priv, false);
+	err = mlx5_try_fast_unload(dev);
+	if (err)
+		mlx5_unload_one(dev, priv, false);
 	mlx5_pci_disable_device(dev);
 }
 
 static const struct pci_device_id mlx5_core_pci_table[] = {
-	{ PCI_VDEVICE(MELLANOX, 0x1011) },			/* Connect-IB */
+	{ PCI_VDEVICE(MELLANOX, PCI_DEVICE_ID_MELLANOX_CONNECTIB) },
 	{ PCI_VDEVICE(MELLANOX, 0x1012), MLX5_PCI_DEV_IS_VF},	/* Connect-IB VF */
-	{ PCI_VDEVICE(MELLANOX, 0x1013) },			/* ConnectX-4 */
+	{ PCI_VDEVICE(MELLANOX, PCI_DEVICE_ID_MELLANOX_CONNECTX4) },
 	{ PCI_VDEVICE(MELLANOX, 0x1014), MLX5_PCI_DEV_IS_VF},	/* ConnectX-4 VF */
-	{ PCI_VDEVICE(MELLANOX, 0x1015) },			/* ConnectX-4LX */
+	{ PCI_VDEVICE(MELLANOX, PCI_DEVICE_ID_MELLANOX_CONNECTX4_LX) },
 	{ PCI_VDEVICE(MELLANOX, 0x1016), MLX5_PCI_DEV_IS_VF},	/* ConnectX-4LX VF */
 	{ PCI_VDEVICE(MELLANOX, 0x1017) },			/* ConnectX-5, PCIe 3.0 */
 	{ PCI_VDEVICE(MELLANOX, 0x1018), MLX5_PCI_DEV_IS_VF},	/* ConnectX-5 VF */
@@ -1520,6 +1568,8 @@ static const struct pci_device_id mlx5_core_pci_table[] = {
 	{ PCI_VDEVICE(MELLANOX, 0x101a), MLX5_PCI_DEV_IS_VF},	/* ConnectX-5 Ex VF */
 	{ PCI_VDEVICE(MELLANOX, 0x101b) },			/* ConnectX-6 */
 	{ PCI_VDEVICE(MELLANOX, 0x101c), MLX5_PCI_DEV_IS_VF},	/* ConnectX-6 VF */
+	{ PCI_VDEVICE(MELLANOX, 0xa2d2) },			/* BlueField integrated ConnectX-5 network controller */
+	{ PCI_VDEVICE(MELLANOX, 0xa2d3), MLX5_PCI_DEV_IS_VF},	/* BlueField integrated ConnectX-5 network controller VF */
 	{ 0, }
 };
 

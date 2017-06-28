@@ -258,10 +258,10 @@ static int mwifiex_dnld_cmd_to_fw(struct mwifiex_private *priv,
 		if (ret == -EBUSY)
 			cmd_node->cmd_skb = NULL;
 	} else {
-		skb_push(cmd_node->cmd_skb, INTF_HEADER_LEN);
+		skb_push(cmd_node->cmd_skb, adapter->intf_hdr_len);
 		ret = adapter->if_ops.host_to_card(adapter, MWIFIEX_TYPE_CMD,
 						   cmd_node->cmd_skb, NULL);
-		skb_pull(cmd_node->cmd_skb, INTF_HEADER_LEN);
+		skb_pull(cmd_node->cmd_skb, adapter->intf_hdr_len);
 	}
 
 	if (ret == -1) {
@@ -351,10 +351,10 @@ static int mwifiex_dnld_sleep_confirm_cmd(struct mwifiex_adapter *adapter)
 		if (ret != -EBUSY)
 			dev_kfree_skb_any(sleep_cfm_tmp);
 	} else {
-		skb_push(adapter->sleep_cfm, INTF_HEADER_LEN);
+		skb_push(adapter->sleep_cfm, adapter->intf_hdr_len);
 		ret = adapter->if_ops.host_to_card(adapter, MWIFIEX_TYPE_CMD,
 						   adapter->sleep_cfm, NULL);
-		skb_pull(adapter->sleep_cfm, INTF_HEADER_LEN);
+		skb_pull(adapter->sleep_cfm, adapter->intf_hdr_len);
 	}
 
 	if (ret == -1) {
@@ -622,8 +622,7 @@ int mwifiex_send_cmd(struct mwifiex_private *priv, u16 cmd_no,
 		return -1;
 	}
 
-	memset(skb_put(cmd_node->cmd_skb, sizeof(struct host_cmd_ds_command)),
-	       0, sizeof(struct host_cmd_ds_command));
+	skb_put_zero(cmd_node->cmd_skb, sizeof(struct host_cmd_ds_command));
 
 	cmd_ptr = (struct host_cmd_ds_command *) (cmd_node->cmd_skb->data);
 	cmd_ptr->command = cpu_to_le16(cmd_no);

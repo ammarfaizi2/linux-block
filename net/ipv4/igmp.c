@@ -414,7 +414,7 @@ static struct sk_buff *add_grhead(struct sk_buff *skb, struct ip_mc_list *pmc,
 		skb = igmpv3_newpack(dev, dev->mtu);
 	if (!skb)
 		return NULL;
-	pgr = (struct igmpv3_grec *)skb_put(skb, sizeof(struct igmpv3_grec));
+	pgr = skb_put(skb, sizeof(struct igmpv3_grec));
 	pgr->grec_type = type;
 	pgr->grec_auxwords = 0;
 	pgr->grec_nsrcs = 0;
@@ -508,7 +508,7 @@ static struct sk_buff *add_grec(struct sk_buff *skb, struct ip_mc_list *pmc,
 		}
 		if (!skb)
 			return NULL;
-		psrc = (__be32 *)skb_put(skb, sizeof(__be32));
+		psrc = skb_put(skb, sizeof(__be32));
 		*psrc = psf->sf_inaddr;
 		scount++; stotal++;
 		if ((type == IGMPV3_ALLOW_NEW_SOURCES ||
@@ -742,7 +742,7 @@ static int igmp_send_report(struct in_device *in_dev, struct ip_mc_list *pmc,
 	((u8 *)&iph[1])[2] = 0;
 	((u8 *)&iph[1])[3] = 0;
 
-	ih = (struct igmphdr *)skb_put(skb, sizeof(struct igmphdr));
+	ih = skb_put(skb, sizeof(struct igmphdr));
 	ih->type = type;
 	ih->code = 0;
 	ih->csum = 0;
@@ -1112,6 +1112,7 @@ static void igmpv3_add_delrec(struct in_device *in_dev, struct ip_mc_list *im)
 	pmc = kzalloc(sizeof(*pmc), GFP_KERNEL);
 	if (!pmc)
 		return;
+	spin_lock_init(&pmc->lock);
 	spin_lock_bh(&im->lock);
 	pmc->interface = im->interface;
 	in_dev_hold(in_dev);
@@ -2071,21 +2072,26 @@ static int ip_mc_add_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
 
 static void ip_mc_clear_src(struct ip_mc_list *pmc)
 {
-	struct ip_sf_list *psf, *nextpsf;
+	struct ip_sf_list *psf, *nextpsf, *tomb, *sources;
 
-	for (psf = pmc->tomb; psf; psf = nextpsf) {
-		nextpsf = psf->sf_next;
-		kfree(psf);
-	}
+	spin_lock_bh(&pmc->lock);
+	tomb = pmc->tomb;
 	pmc->tomb = NULL;
-	for (psf = pmc->sources; psf; psf = nextpsf) {
-		nextpsf = psf->sf_next;
-		kfree(psf);
-	}
+	sources = pmc->sources;
 	pmc->sources = NULL;
 	pmc->sfmode = MCAST_EXCLUDE;
 	pmc->sfcount[MCAST_INCLUDE] = 0;
 	pmc->sfcount[MCAST_EXCLUDE] = 1;
+	spin_unlock_bh(&pmc->lock);
+
+	for (psf = tomb; psf; psf = nextpsf) {
+		nextpsf = psf->sf_next;
+		kfree(psf);
+	}
+	for (psf = sources; psf; psf = nextpsf) {
+		nextpsf = psf->sf_next;
+		kfree(psf);
+	}
 }
 
 /* Join a multicast group

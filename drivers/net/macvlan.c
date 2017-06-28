@@ -703,10 +703,8 @@ static int macvlan_set_mac_address(struct net_device *dev, void *p)
 	if (!is_valid_ether_addr(addr->sa_data))
 		return -EADDRNOTAVAIL;
 
-	if (vlan->mode == MACVLAN_MODE_PASSTHRU) {
-		dev_set_mac_address(vlan->lowerdev, addr);
-		return 0;
-	}
+	if (vlan->mode == MACVLAN_MODE_PASSTHRU)
+		return dev_set_mac_address(vlan->lowerdev, addr);
 
 	return macvlan_sync_address(dev, addr->sa_data);
 }
@@ -1092,7 +1090,7 @@ void macvlan_common_setup(struct net_device *dev)
 	netif_keep_dst(dev);
 	dev->priv_flags	       |= IFF_UNICAST_FLT;
 	dev->netdev_ops		= &macvlan_netdev_ops;
-	dev->destructor		= free_netdev;
+	dev->needs_free_netdev	= true;
 	dev->header_ops		= &macvlan_hard_header_ops;
 	dev->ethtool_ops	= &macvlan_ethtool_ops;
 }
@@ -1164,7 +1162,8 @@ static void macvlan_port_destroy(struct net_device *dev)
 	kfree(port);
 }
 
-static int macvlan_validate(struct nlattr *tb[], struct nlattr *data[])
+static int macvlan_validate(struct nlattr *tb[], struct nlattr *data[],
+			    struct netlink_ext_ack *extack)
 {
 	if (tb[IFLA_ADDRESS]) {
 		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
@@ -1392,7 +1391,8 @@ destroy_macvlan_port:
 EXPORT_SYMBOL_GPL(macvlan_common_newlink);
 
 static int macvlan_newlink(struct net *src_net, struct net_device *dev,
-			   struct nlattr *tb[], struct nlattr *data[])
+			   struct nlattr *tb[], struct nlattr *data[],
+			   struct netlink_ext_ack *extack)
 {
 	return macvlan_common_newlink(src_net, dev, tb, data);
 }
@@ -1410,7 +1410,8 @@ void macvlan_dellink(struct net_device *dev, struct list_head *head)
 EXPORT_SYMBOL_GPL(macvlan_dellink);
 
 static int macvlan_changelink(struct net_device *dev,
-		struct nlattr *tb[], struct nlattr *data[])
+			      struct nlattr *tb[], struct nlattr *data[],
+			      struct netlink_ext_ack *extack)
 {
 	struct macvlan_dev *vlan = netdev_priv(dev);
 	enum macvlan_mode mode;

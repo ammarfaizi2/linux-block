@@ -60,8 +60,7 @@
 #include "cmd.h"
 
 #define DRIVER_NAME "mlx5_ib"
-#define DRIVER_VERSION "2.2-1"
-#define DRIVER_RELDATE	"Feb 2014"
+#define DRIVER_VERSION "5.0-0"
 
 MODULE_AUTHOR("Eli Cohen <eli@mellanox.com>");
 MODULE_DESCRIPTION("Mellanox Connect-IB HCA IB driver");
@@ -70,7 +69,7 @@ MODULE_VERSION(DRIVER_VERSION);
 
 static char mlx5_version[] =
 	DRIVER_NAME ": Mellanox Connect-IB Infiniband driver v"
-	DRIVER_VERSION " (" DRIVER_RELDATE ")\n";
+	DRIVER_VERSION "\n";
 
 enum {
 	MLX5_ATOMIC_SIZE_QP_8BYTES = 1 << 3,
@@ -440,7 +439,7 @@ static void get_atomic_caps(struct mlx5_ib_dev *dev,
 	u8 atomic_operations = MLX5_CAP_ATOMIC(dev->mdev, atomic_operations);
 	u8 atomic_size_qp = MLX5_CAP_ATOMIC(dev->mdev, atomic_size_qp);
 	u8 atomic_req_8B_endianness_mode =
-		MLX5_CAP_ATOMIC(dev->mdev, atomic_req_8B_endianess_mode);
+		MLX5_CAP_ATOMIC(dev->mdev, atomic_req_8B_endianness_mode);
 
 	/* Check if HW supports 8 bytes standard atomic operations and capable
 	 * of host endianness respond
@@ -2263,7 +2262,7 @@ static struct mlx5_ib_flow_handler *create_flow_rule(struct mlx5_ib_dev *dev,
 	if (!is_valid_attr(dev->mdev, flow_attr))
 		return ERR_PTR(-EINVAL);
 
-	spec = mlx5_vzalloc(sizeof(*spec));
+	spec = kvzalloc(sizeof(*spec), GFP_KERNEL);
 	handler = kzalloc(sizeof(*handler), GFP_KERNEL);
 	if (!handler || !spec) {
 		err = -ENOMEM;
@@ -2979,6 +2978,18 @@ error_0:
 	return ret;
 }
 
+static u8 mlx5_get_umr_fence(u8 umr_fence_cap)
+{
+	switch (umr_fence_cap) {
+	case MLX5_CAP_UMR_FENCE_NONE:
+		return MLX5_FENCE_MODE_NONE;
+	case MLX5_CAP_UMR_FENCE_SMALL:
+		return MLX5_FENCE_MODE_INITIATOR_SMALL;
+	default:
+		return MLX5_FENCE_MODE_STRONG_ORDERING;
+	}
+}
+
 static int create_dev_resources(struct mlx5_ib_resources *devr)
 {
 	struct ib_srq_init_attr attr;
@@ -3456,7 +3467,7 @@ static int mlx5_ib_query_q_counters(struct mlx5_ib_dev *dev,
 	__be32 val;
 	int ret, i;
 
-	out = mlx5_vzalloc(outlen);
+	out = kvzalloc(outlen, GFP_KERNEL);
 	if (!out)
 		return -ENOMEM;
 
@@ -3485,7 +3496,7 @@ static int mlx5_ib_query_cong_counters(struct mlx5_ib_dev *dev,
 	int ret, i;
 	int offset = port->cnts.num_q_counters;
 
-	out = mlx5_vzalloc(outlen);
+	out = kvzalloc(outlen, GFP_KERNEL);
 	if (!out)
 		return -ENOMEM;
 
@@ -3680,8 +3691,10 @@ static void *mlx5_ib_add(struct mlx5_core_dev *mdev)
 	dev->ib_dev.check_mr_status	= mlx5_ib_check_mr_status;
 	dev->ib_dev.get_port_immutable  = mlx5_port_immutable;
 	dev->ib_dev.get_dev_fw_str      = get_dev_fw_str;
-	dev->ib_dev.alloc_rdma_netdev	= mlx5_ib_alloc_rdma_netdev;
-	dev->ib_dev.free_rdma_netdev	= mlx5_ib_free_rdma_netdev;
+	if (MLX5_CAP_GEN(mdev, ipoib_enhanced_offloads)) {
+		dev->ib_dev.alloc_rdma_netdev	= mlx5_ib_alloc_rdma_netdev;
+		dev->ib_dev.free_rdma_netdev	= mlx5_ib_free_rdma_netdev;
+	}
 	if (mlx5_core_is_pf(mdev)) {
 		dev->ib_dev.get_vf_config	= mlx5_ib_get_vf_config;
 		dev->ib_dev.set_vf_link_state	= mlx5_ib_set_vf_link_state;
@@ -3692,6 +3705,8 @@ static void *mlx5_ib_add(struct mlx5_core_dev *mdev)
 	dev->ib_dev.disassociate_ucontext = mlx5_ib_disassociate_ucontext;
 
 	mlx5_ib_internal_fill_odp_caps(dev);
+
+	dev->umr_fence = mlx5_get_umr_fence(MLX5_CAP_GEN(mdev, umr_fence));
 
 	if (MLX5_CAP_GEN(mdev, imaicl)) {
 		dev->ib_dev.alloc_mw		= mlx5_ib_alloc_mw;
