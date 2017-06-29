@@ -3461,7 +3461,8 @@ void __noreturn do_task_dead(void)
 	 * is held by try_to_wake_up()
 	 */
 	smp_mb();
-	raw_spin_unlock_wait(&current->pi_lock);
+	raw_spin_lock_irq(&current->pi_lock);
+	raw_spin_unlock_irq(&current->pi_lock);
 
 	/* Causes final put_task_struct in finish_task_switch(): */
 	__set_current_state(TASK_DEAD);
