@@ -109,7 +109,8 @@ void task_work_run(void)
 		 * the first entry == work, cmpxchg(task_works) should
 		 * fail, but it can play with *work and other entries.
 		 */
-		raw_spin_unlock_wait(&task->pi_lock);
+		raw_spin_lock_irq(&task->pi_lock);
+		raw_spin_unlock_irq(&task->pi_lock);
 
 		do {
 			next = work->next;
