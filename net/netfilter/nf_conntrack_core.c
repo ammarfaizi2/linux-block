@@ -99,15 +99,11 @@ void nf_conntrack_lock(spinlock_t *lock) __acquires(lock)
 	spin_lock(lock);
 	while (unlikely(nf_conntrack_locks_all)) {
 		spin_unlock(lock);
-
-		/*
-		 * Order the 'nf_conntrack_locks_all' load vs. the
-		 * spin_unlock_wait() loads below, to ensure
-		 * that 'nf_conntrack_locks_all_lock' is indeed held:
-		 */
-		smp_rmb(); /* spin_lock(&nf_conntrack_locks_all_lock) */
-		spin_unlock_wait(&nf_conntrack_locks_all_lock);
+		/* Wait for nf_conntrack_locks_all_lock holder to release ... */
+		spin_lock(&nf_conntrack_locks_all_lock);
+		spin_unlock(&nf_conntrack_locks_all_lock);
 		spin_lock(lock);
+		/* ... and retry. */
 	}
 }
 EXPORT_SYMBOL_GPL(nf_conntrack_lock);
@@ -150,17 +146,11 @@ static void nf_conntrack_all_lock(void)
 
 	spin_lock(&nf_conntrack_locks_all_lock);
 	nf_conntrack_locks_all = true;
-
-	/*
-	 * Order the above store of 'nf_conntrack_locks_all' against
-	 * the spin_unlock_wait() loads below, such that if
-	 * nf_conntrack_lock() observes 'nf_conntrack_locks_all'
-	 * we must observe nf_conntrack_locks[] held:
-	 */
-	smp_mb(); /* spin_lock(&nf_conntrack_locks_all_lock) */
-
 	for (i = 0; i < CONNTRACK_LOCKS; i++) {
-		spin_unlock_wait(&nf_conntrack_locks[i]);
+		/* Wait for any current holder to release lock. */
+		spin_lock(&nf_conntrack_locks[i]);
+		spin_unlock(&nf_conntrack_locks[i]);
+		/* Next acquisition will see nf_conntrack_locks_all == true. */
 	}
 }
 
