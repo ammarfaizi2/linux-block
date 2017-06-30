@@ -1,0 +1,102 @@
+#! /bin/sh
+
+F=$(echo $* | cut -d' ' -f3-)
+#F=$*
+
+BASE=$1
+BRANCH=$2
+
+FILTER='arch/x86'
+FILTER=$FILTER'|include/asm-x86'
+FILTER=$FILTER'|Documentation/x86'
+FILTER=$FILTER'|Documentation/'
+FILTER=$FILTER'|Documentation/i386/'
+FILTER=$FILTER'|include/linux/stackprotector.h'
+FILTER=$FILTER'|Documentation/DocBook/Makefile'
+FILTER=$FILTER'|Documentation/feature-removal-schedule.txt'
+FILTER=$FILTER'|Documentation/kernel-parameters.txt'
+FILTER=$FILTER'|Documentation/x86/pat.txt'
+FILTER=$FILTER'|include/linux/efi.h'
+FILTER=$FILTER'|arch/x86/pci/numa.c'
+
+# temporary
+
+# stackprotector:
+FILTER=$FILTER'|include/linux/sched.h'
+FILTER=$FILTER'|lib/Kconfig.debug'
+FILTER=$FILTER'|kernel/panic.c'
+FILTER=$FILTER'|init/main.c'
+# devmem restrictions:
+FILTER=$FILTER'|drivers/char/mem.c'
+# dyn fpu state:
+FILTER=$FILTER'|kernel/fork.c'
+## # PC speaker:
+## FILTER=$FILTER'|drivers/input/misc/pcspkr.c'
+# inlining:
+FILTER=$FILTER'|include/linux/compiler-gcc.h'
+# PAT, ioremap_wc:
+FILTER=$FILTER'|include/asm-generic/iomap.h'
+FILTER=$FILTER'|Documentation/filesystems/sysfs-pci.txt'
+# percpu:
+#FILTER=$FILTER'|include/asm-generic/vmlinux.lds.h'
+#FILTER=$FILTER'|include/linux/percpu.h'
+# DMA ops fix:
+FILTER=$FILTER'|drivers/pci/intel-iommu.c'
+# Xen changes:
+FILTER=$FILTER'|xen'
+
+
+HEADER=0
+
+print_header()
+{
+  [ $HEADER == "0" ] && {
+    echo
+    msg="out-of-topic modifications in $BRANCH:"
+    echo $msg
+    for ((i=0;i<${#msg};i++)); do printf "-"; done
+    echo
+  }
+  HEADER=1
+}
+
+print_tail()
+{
+  [ $HEADER == "1" ] && {
+    echo
+  }
+}
+
+
+EXIT=0
+
+for N in $F; do
+  { echo $N | grep -qvE $FILTER; } && {
+    print_header
+
+    printf "%-35s" $N
+
+    echo -n "# "
+    CONTINUED=0
+    for C in $(git rev-list --no-merges $BASE..$BRANCH -- $N); do
+      [ $CONTINUED = 1 ] && echo -n "                                   # "
+      git log -1 --pretty=format:"%h: %s" $C | cut -c1-42
+      CONTINUED=1
+    done
+
+    EXIT=-1
+  }
+done
+
+[ $EXIT != "0" ] && { print_tail; exit $EXIT; }
+
+for N in $F; do
+  { echo $N | grep -qvE "arch/x86/pci/numa.c" | grep -qE 'pci|acpi|cpufreq|kvm'; } && { echo $N; EXIT=-1; }
+done
+
+print_tail
+
+exit $EXIT
+
+#q files | grep -vE 'arch/x86|include/asm-x86/'
+

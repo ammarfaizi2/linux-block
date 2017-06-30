@@ -1,0 +1,6 @@
+#!/bin/bash
+
+. $(dirname "$0")/tip-lib
+
+echo "tip/"$(get_current_branch)" "$(git log -1 --pretty=format:"%h: %s")
+

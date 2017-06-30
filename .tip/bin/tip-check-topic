@@ -1,0 +1,17 @@
+#! /bin/sh
+
+if [ $# -gt "2" ]; then
+        echo 'usage: tip-check-topic <topic-refspec> [<base-refspec>]'
+	exit -1
+fi
+
+HEAD=$(tip-curr | cut -d/ -f2- | cut -d' ' -f1)
+BRANCH=${1:-$HEAD}
+
+BASE=$2
+[ "$BASE" = "" ] && BASE=$(git merge-base linus $BRANCH)
+
+echo $BRANCH | grep -q x86 && {
+  tip-check-files-x86 $BASE $BRANCH $(git diff --name-only $BASE..$BRANCH)
+}
+

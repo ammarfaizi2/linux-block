@@ -1,0 +1,29 @@
+#!/bin/bash
+
+. $(dirname "$0")/tip-lib
+
+if [ $# != "1" ]; then
+  echo 'usage: tip-wget-series <uri>'
+  exit -1
+fi
+
+#check_master
+
+DIR=$1
+
+echo "picking up this series from $DIR:"
+wget -q -O .series.tmp $DIR/series >/dev/null || { echo "wget error ..."; exit -1; }
+
+echo "picking up this series from $DIR:"
+FILES=$(cat .series.tmp | grep -v '^\#')
+
+for F in $FILES; do
+  echo " $F ..."
+  tip-wget $DIR/$F || { echo "tip-wget error of $F"; exit -1; }
+done
+
+rm -f .series.tmp
+
+echo "... done."
+
+

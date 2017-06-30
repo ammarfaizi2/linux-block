@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Automatically merge the branches for a given integration branch
+#
+
+. $(dirname "$0")/tip-lib
+
+check_master
+
+BRANCH=$1
+
+git checkout tip
+if [ ! -f  .tip/auto-branches/$BRANCH ]
+then
+    echo "usage: tip-integrate integration-branch"
+    echo "available integration branches:"
+    BS=`get_auto_branches`
+    for B in $BS; do echo "    $B"; done
+    git checkout master
+    exit 1;
+fi
+
+# Read the branch list
+git checkout tip
+MB=`cat .tip/auto-branches/$BRANCH | grep -v "^[# \n]"`
+# switch back to linus
+git checkout linus
+# Blow away the existing integration branches and create a new one
+git branch -f $BRANCH-base
+git branch -f $BRANCH
+# Build the new integration branch
+git checkout $BRANCH
+
+for B in $MB
+do
+    echo "Merging $B"
+    tip-merge $B || { echo "tip-merge error"; exit -1; }
+done
+
+# switch back to master again
+git checkout master
+
+echo "integration of $1 done."

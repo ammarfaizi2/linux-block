@@ -1,0 +1,72 @@
+# -*-Shell-script-*-
+#
+# Tip script library
+#
+
+get_current_branch() {
+    git symbolic-ref HEAD | sed 's@refs/heads/@@'
+}
+
+get_auto_branches() {
+    git ls-tree --name-only --full-name tip:.tip/auto-branches/
+}
+
+get_auto_branches_no_latest() {
+
+    get_auto_branches | grep -vE "auto-latest|auto-generic-ipi-next"
+}
+
+get_all_auto_branches() {
+
+    for B in $(get_auto_branches)
+    do
+	echo $B
+	echo $B"-base"
+    done
+}
+
+get_topic_branches() {
+    git branch | grep -vE 'master|linus|linux-next|tmp|auto-|no branch|\<tip\>' | cut -c3-
+}
+
+get_all_branches() {
+    (git branch | grep -vE 'master|linus|linux-next|tmp|auto-' | cut -c3-
+    git branch | grep -E 'auto.*base' | cut -c3- ) | sort | uniq
+}
+
+check_master() {
+    local CB=`get_current_branch`
+    if [ "$CB" != "master" ]
+    then
+	echo "Check out master branch first"
+	exit 1;
+    fi
+    quilt top 2>/dev/null && { echo "quilt patches still applied!"; exit -1; }
+}
+
+abort_merge() {
+    echo "merge aborted manually!";
+    git reset --hard;
+    git checkout master;
+    exit -1;
+}
+
+get_date_for_tag() {
+    date -u +"%Y-%m-%d_%H.%M_%a"
+}
+
+get_topic_reference() {
+    git merge-base $1 linus
+}
+
+get_linux_next_branches() {
+    local NT=`git ls-tree linux-next -- Next/Trees | sed -e "s/.*blob //" -e "s/\ *Next.*//"`
+    git show $NT | grep "linux-2.6-tip.git" | sed "s/.*#//"
+}
+
+get_auto_merged_topics() {
+    for B in $@
+    do
+	git show tip:.tip/auto-branches/$B | sed -e "s/#.*//" -e "/^ *$/d"
+    done
+}

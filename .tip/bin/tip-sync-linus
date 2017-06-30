@@ -1,0 +1,120 @@
+#!/bin/sh
+#
+# Sync all branches to the remote repository
+#
+
+. $(dirname "$0")/tip-lib
+
+check_master
+
+# Check whether linus has updates
+LREM=`git config --get branch.linus.remote`
+SHAR=`git ls-remote -h $LREM | grep master | sed "s/\t.*//"`
+SHAL=`git rev-parse $LREM/master`
+LINUS=0
+
+if [ "$SHAR" != "$SHAL" ]
+then
+    echo "Linus repository has updates."
+    read -p "Pull from linus first Y/n?" A
+    if [ "$A" != "N" -a "$A" != "n" ]
+    then
+	echo "pulling the updates"
+	git checkout linus
+	git pull || exit 1;
+	git checkout master
+	LINUS=1
+    fi
+else
+    echo "No updates for branch linus"
+fi
+
+tip-check-remote
+if [ $? -ne 0 ]
+then
+    echo "Remote repository has updates."
+    echo "Run tip-sync-remote first"
+    exit 1;
+fi
+
+BS=`get_topic_branches`
+
+for B in $BS
+do
+    git checkout $B
+
+    # Get the local head
+    LH=`git rev-parse $B`
+
+    # Get the reference of the last linus merge/rebase
+    TREF=`get_topic_reference $B`
+
+    if [ -z "$TREF" ]
+    then
+	echo "No topic reference found. Using git merge-base"
+	MBASE=`git merge-base linus HEAD`
+	TD=`get_date_for_tag`
+	TB=`echo $B | sed "s@/@-@"`
+	git tag "tip-"$TB"-"$TD $MBASE
+	TREF="tip-"$TB"-"$TD
+    fi
+
+    # Check whether upstream touched the same files as the current branch
+    # since the last merge/rebase
+    MERGE=`(git diff --name-only $TREF; git diff --name-only $TREF..linus) | sort | uniq -d`
+
+    if [ -z "$MERGE" ];
+    then
+	echo "Skipped branch $B. linus latest does not conflict"
+	continue;
+    fi
+
+    # Run a test merge
+    git merge -n linus
+    RES=$?
+    
+    if [ $RES -eq 0 ]
+    then
+	echo "Merge of linus latest into branch "$B" succeeded"
+	read -p "Discard merge and rewind ? Y/n" A
+	if [ "$A" != "n" -a "$A" != "N" ]
+	then
+	    git reset --hard $LH
+	else
+	    # Tag the merge
+	    TD=`get_date_for_tag`
+	    TB=`echo $B | sed "s@/@-@"`
+	    git tag -f "tip-"$TB"-"$TD
+	fi
+    else
+	while true
+	do
+	    echo "merge of linus latest into branch "$B" failed"
+	    echo
+	    echo running subshell - type "exit" when resolved
+	    $SHELL
+
+	    MOD=`git ls-files -d -m -u`
+	    if [ ! -z "$MOD" ]
+	    then
+		echo "You did not resolve the conflict"
+		echo "If you cancel you need to clean up yourself :)"
+		read -p "Cancel with ^C. Hit return to drop back in a subshell" A
+	    else
+		# Get the local head
+		NH=`git rev-parse $B`
+		if [ "$LH" != "$NH" ]
+		then
+		    # Tag the merge
+		    TD=`get_date_for_tag`
+		    TB=`echo $B | sed "s@/@-@"`
+		    git tag -f "tip-"$TB"-"$TD
+		fi
+		break;
+	    fi
+	done
+    fi
+done
+
+# switch back to master again
+git checkout master

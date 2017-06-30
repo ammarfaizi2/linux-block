@@ -1,0 +1,42 @@
+#! /bin/sh
+
+. $(dirname "$0")/tip-lib
+
+check_master
+
+EXIT=0
+
+for N in $(tip-topic-branches | grep urgent | grep -v undo | sed 's/\/urgent$//g'); do
+
+  BRANCH=$N-fixes-for-linus
+
+  git branch $BRANCH $N/urgent || {
+    DELTA=$(git log linus..$N-fixes-for-linus | wc -l)
+    [ $DELTA != 0 ] && {
+      echo "branch $BRANCH already exists and not yet upstream!"
+      EXIT=-1
+      continue
+    }
+    echo "branch $BRANCH already upstream, recreating it":
+    git branch -f $BRANCH $N/urgent
+  }
+
+  tip-checkout $BRANCH
+  tip-push-current -f
+
+  BASE=$(git merge-base $BRANCH linus)
+
+  tip-pull-request $BRANCH > /dev/null
+
+  mv ~/s/1 ~/s/$BRANCH.pull
+  ls -l ~/s/$BRANCH.pull
+
+  scp ~/s/$BRANCH.pull tglx.de:
+
+  echo tglx.de:~mingo/$BRANCH.pull
+done
+
+tip-checkout master
+
+exit $EXIT
+

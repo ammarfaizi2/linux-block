@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Sync all branches to the remote repository
+#
+
+if [ ! -d .git ]
+then
+    echo "not a .git repository"
+    exit 1;
+fi
+
+. $(dirname "$0")/tip-lib
+
+B=`get_current_branch`
+
+git fetch origin $B":"$B
+git merge origin/$B

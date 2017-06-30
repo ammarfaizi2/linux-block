@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#
+# Push all branches to the kernel.org repository
+#
+
+. $(dirname "$0")/tip-lib
+
+AUTO_BRANCHES=$(get_all_auto_branches)
+TOPIC_BRANCHES=$(get_topic_branches)
+
+echo "pushing: "$TOPIC_BRANCHES
+git push origin $TOPIC_BRANCHES tip || { echo error; exit 1; }
+
+echo "force-pushing: "$AUTO_BRANCHES
+git push --tags -f origin master $AUTO_BRANCHES || { echo error; exit 1; }
+

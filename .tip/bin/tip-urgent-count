@@ -1,0 +1,17 @@
+#! /bin/sh
+
+echo
+
+URGENT=$(tip-topic-branches | grep urgent | grep -v undo)
+
+for N in $URGENT; do
+ NR=$(git log --pretty=oneline --no-merges linus..$N | wc -l)
+ [ "$NR" != 0 ] && printf "%20s: %3d\n" $N $NR
+
+done
+
+echo "-------------------------"
+printf "%20s: %3d\n" "TOTAL" $(git log --pretty=oneline --no-merges $URGENT ^linus | wc -l)
+
+echo
+

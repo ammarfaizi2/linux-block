@@ -1,0 +1,9 @@
+#! /bin/sh
+
+echo core/softlockup-for-linus cpus4096-for-linus stackprotector-for-linus safe-poison-pointers-for-linus sched/for-linus > .2
+
+for N in $(cat .2); do git log --no-merges --pretty=fuller linus..$N | grep CommitDate; done | sort > .3
+( grep May .3 | sort -k 4 -n ; grep Jun .3 | sort -k 4 -n ; grep Jul .3 | sort -k 4 -n ) > .4
+
+cut -d' ' -f1-4 .4 | uniq -c
+

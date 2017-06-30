@@ -1,0 +1,36 @@
+#! /bin/sh
+
+. $(dirname "$0")/tip-lib
+
+usage ()
+{
+  echo 'usage: tip-ls-topics <topic-filter>'
+  exit -1
+}
+
+if [ $# != 1 ]; then
+ usage
+fi
+
+EXCLUDE='tip'
+
+# permanently excluded branches:
+
+EXCLUDE+='|broken'
+EXCLUDE+='|warnings/ugly$'
+EXCLUDE+='|kill-the-BKL'
+
+INCLUDE=$(echo $(tip-topic-branches | sed 's/^/\^/' | sed 's/$/\$/' | grep "$1"; ) | sed 's/ /|/g')
+
+
+ALL_BRANCHES=$(git branch --no-merged | cut -c3- | grep -E "$INCLUDE")
+EXCLUDED_BRANCHES=$(echo $(for N in $ALL_BRANCHES; do echo $N; done | grep -E "$EXCLUDE"))
+BRANCHES=$(for N in $ALL_BRANCHES; do echo $N; done | grep -vE "$EXCLUDE")
+
+[ "$EXCLUDED_BRANCHES" != "" ] &&
+  echo "(excluded branches: $EXCLUDED_BRANCHES)" 1>&2
+
+[ "$BRANCHES" != "" ] &&
+  echo $BRANCHES
+
+#echo "... merge done."

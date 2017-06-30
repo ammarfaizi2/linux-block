@@ -1,0 +1,21 @@
+#! /bin/sh
+
+usage() {
+  echo 'usage: tip-rerere-find <pathspec>'
+  exit -1
+}
+
+[ $# = 0 ] && usage
+[ ! -d .git/rr-cache/ ] && usage
+
+FILE=$1
+
+[ ! -s $FILE ] && usage
+
+
+MD5=$(md5sum $FILE | cut -d' ' -f1)
+
+[ -z "$MD5" ] && usage
+
+find .git/rr-cache -type f | xargs md5sum | grep $MD5 | cut -d' ' -f2-
+

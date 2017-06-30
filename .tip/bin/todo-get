@@ -1,0 +1,14 @@
+#! /bin/sh
+
+[ -s ~/mail/todo ] || { echo 'no ~/mail/todo mbox'; exit -1; }
+
+# split-mbox-sanitize-pick-del-todo todo
+
+mbox2quilt.py ~/mail/todo || { echo 'patch split failure'; exit -1; }
+
+todo-duplicates || exit -1
+
+mv ~/mail/todo ~/mail/todo.orig
+echo -n > ~/mail/todo
+
+qu

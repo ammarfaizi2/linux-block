@@ -1,0 +1,9 @@
+#
+# Integration rules for the locking tree:
+#
+locking/atomics
+locking/core
+locking/header
+locking/kcsan
+locking/urgent
+locking/nmi

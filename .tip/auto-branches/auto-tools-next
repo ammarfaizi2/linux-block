@@ -1,0 +1,6 @@
+#
+# Integration rules for the auto-tools-next branch
+#
+#
+objtool/core
+objtool/urgent

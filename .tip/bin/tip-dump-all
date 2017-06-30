@@ -1,0 +1,13 @@
+#! /bin/sh
+
+for N in $(git branch | grep -vE ' master$| base$|for-linus' | cut -c3-); do
+
+  ITEMS=$(git rev-list --reverse linus..$N -- $@)
+
+  for M in $ITEMS; do
+    echo "$N: $M"
+    git show --pretty=email --no-merges $M | cat
+  done
+
+done
+

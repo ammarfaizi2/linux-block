@@ -1,0 +1,4 @@
+# Integration rule for smp/hotplug work
+smp/core
+smp/hotplug
+smp/urgent

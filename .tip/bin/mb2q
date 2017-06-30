@@ -1,0 +1,444 @@
+#!/usr/bin/env python
+# SPDX-License-Identifier: GPL2.0
+# Copyright Thomas Gleixner <tglx@linutronix.de>
+#
+
+from argparse import ArgumentParser
+from email.utils import make_msgid
+import argparse
+import commands
+import mailbox
+import email
+import yaml
+import sys
+import os
+import re
+
+def committer_from_git():
+    cmd = "echo $(git config --get user.name)' <'$(git config --get user.email)'>'"
+    committer = commands.getoutput(cmd)
+
+    if committer == " <>":
+        committer = os.environ.get("GIT_COMMITTER_NAME") + " <" + \
+            os.environ.get("GIT_COMMITTER_EMAIL") + ">"
+    return committer
+
+
+def get_raw_mailaddr(addr):
+    try:
+        return addr.split('<')[1].split('>')[0].strip()
+    except:
+        return addr
+
+
+def decode_addrs(msg, hdr):
+    addrs = mailaddrs()
+    # Get all elements with decoding
+    try:
+        parts = email.header.decode_header(msg[hdr])
+    except:
+        return addrs
+    addr = ''
+    for txt, enc in parts:
+        if txt == 'None':
+            continue
+        # There might be multiple non encoded addresses in a single line
+        for el in txt.split(','):
+            # Get rid of embedded newline and tabs
+            el = el.strip().replace('\n', '').replace('\t', ' ')
+            # The mail part is always unencoded
+            if el.find('@') < 0:
+                # Assemble the name further
+                addr += ' ' + el
+            else:
+                # Store the full mail address
+                addr += el
+                addrs.add(addr)
+                addr = ''
+    return addrs
+
+
+def decode_from(msg):
+    addrs = decode_addrs(msg, 'From')
+    return addrs.pop()
+
+
+class mailaddrs(list):
+    def __init__(self, *args):
+        list.__init__(self, *args)
+
+    def add(self, addr):
+        if not addr in self:
+            self.append(addr)
+
+    def extend(self, addrs):
+        for addr in addrs:
+            self.add(addr)
+
+
+class patchmsg(object):
+    tagorder = [
+        "Fixes",
+        "Reported-and-tested-by",
+        "Reported-by",
+        "Suggested-by",
+        "Originally-from",
+        "Originally-by",
+        "Signed-off-by",
+        "Tested-by",
+        "Reviewed-by",
+        "Acked-by",
+        "Cc",
+        'Link',
+    ]
+
+    tagsreply = [
+        "Tested-by",
+        "Reviewed-by",
+        "Acked-by",
+    ]
+
+    rmpatch = re.compile("\[[^\]]*[Pp][Aa][Tt][Cc][Hh][^\]]*\]")
+
+    def __init__(self, msg, dupsubj):
+        self.tags = {}
+        self.subject = msg.get('Subject', '').replace('\n','')
+        self.author = decode_from(msg)
+        self.mid = msg['Message-ID']
+        self.date = msg['Date']
+        refs = msg.get('References', '')
+        self.mailrefs = refs.split()
+        self.inreplyto = msg.get('In-Reply-To', None)
+        self.changelog = ''
+        self.has_patch = False
+        self.tags_seen = False
+        self.patch = '\n'
+        self.dup_from_and_subject = dupsubj
+
+        ccs = decode_addrs(msg, 'To')
+        ccs.extend(decode_addrs(msg, 'Cc'))
+        self.tags['Cc'] = ccs
+
+    def tag_add_addr(self, tag, addr):
+        addrs = self.tags.get(tag, mailaddrs())
+        addrs.add(addr.strip())
+        self.tags[tag] = addrs
+        self.tags_seen = True
+
+    def parse_tags(self, l):
+        # Try to extract tags
+        try:
+            t, addr = l.strip().split(':', 1)
+        except:
+            return False
+
+        if t == 'From':
+            self.author = addr.strip()
+            return True
+
+        if t == 'Subject':
+            self.subject = addr.strip()
+            return True
+
+        for tag in patchmsg.tagorder:
+            if tag.lower() == t.lower():
+                # Split Reported-and-tested-by
+                if tag == 'Reported-and-tested-by':
+                    self.tag_add_addr('Reported-by', addr)
+                    tag = 'Tested-by'
+                
+                self.tag_add_addr(tag, addr)
+                return True
+
+        return False
+
+    def append_tags(self, key, addrs):
+        if len(addrs):
+            tmp = self.tags.get(key, mailaddrs())
+            tmp.extend(addrs)
+            self.tags[key] = tmp
+
+    def merge_tags(self, pmsg):
+        for key, addrs in pmsg.tags.iteritems():
+            for tag in patchmsg.tagsreply:
+                if key.lower() == tag.lower():
+                    self.append_tags(key, addrs)
+                    break
+
+    def is_duplicate_addr(self, addr, addrs):
+        raw = get_raw_mailaddr(addr)
+        for a in addrs:
+            if a.find(raw) >= 0:
+                return True
+        return False
+
+    def is_duplicate_cc(self, cc, rcc):
+        if self.is_duplicate_addr(cc, rcc):
+            return True
+        for key, addrs in self.tags.iteritems():
+            if key == 'Cc':
+                continue
+            if self.is_duplicate_addr(cc, addrs):
+                return True
+        return False
+
+    def update_msg(self, nocc, listaddrs, linkref):
+        # Remove the PATCH prefix
+        subj = str(patchmsg.rmpatch.sub("", self.subject)).strip().rstrip(".")
+
+        # Uppercase the first character after the last colon
+        spos = subj.rfind(':') + 1
+        if spos > 0 and spos < len(subj):
+            prefix = subj[:spos]
+            tail = subj[spos:].strip()
+            subj = prefix + ' ' + tail[0].capitalize() + tail[1:]
+        
+        self.subject = subj
+        # Create a filename
+        self.fname = re.sub('[^0-9a-zA-Z]+', '-', subj)
+        # Create the link mid
+        try:
+            self.link = linkref + self.mid.split('>')[0].lstrip('<')
+        except:
+            pass
+
+        # Remove the list address and the noccs from CC
+        # Also remove duplicate entries along with
+        # those which are in other tags
+        ccs = mailaddrs()
+        rcc = nocc + listaddrs
+        author = get_raw_mailaddr(self.author)
+        for cc in self.tags['Cc']:
+            if cc.find(author) >= 0:
+                continue
+            if self.is_duplicate_cc(cc, rcc):
+                continue
+            ccs.add(cc)
+
+        self.tags['Cc'] = ccs
+
+    def write_patch(self, pdir, droplinks, nolinks, committer):
+        with open(os.path.join(pdir, self.fname), 'w') as fd:
+            fd.write('From: %s\n' % self.author)
+            fd.write('Subject: %s\n' % self.subject)
+            fd.write('Date: %s\n\n' % self.date)
+
+            if self.dup_from_and_subject:
+                fd.write('From: %s\n' % self.author)
+                fd.write('Subject: %s\n\n' % self.subject)
+
+            fd.write(self.changelog)
+
+            for tag in patchmsg.tagorder:
+                if not self.tags.has_key(tag):
+                    continue
+                if tag == 'Link' and droplinks:
+                    continue
+                addrs = self.tags[tag]
+                for a in addrs:
+                    fd.write('%s: %s\n' % (tag, a))
+
+                # Add committer SOB
+                if tag == 'Signed-off-by':
+                    if not self.is_duplicate_addr(committer, addrs):
+                        fd.write('%s: %s\n' % (tag, committer))
+
+            if not nolinks and self.link:
+                fd.write('Link: %s\n' % self.link)
+
+            fd.write(self.patch)
+
+
+class quilter(object):
+
+    def __init__(self, args):
+        try:
+            cfg = yaml.load(open(os.path.expanduser(args.config)))
+        except:
+            cfg = {}
+        self.committer = cfg.get('committer', committer_from_git())
+        self.nocc_addrs = cfg.get('nocc_addrs', [])
+        self.list_addrs = cfg.get('list_addrs', ['lkml.kernel.org'])
+        self.drop_from = cfg.get('drop_from', ['<MAILER-DAEMON@'])
+        self.link_ref = cfg.get('link_ref', 'https://lkml.kernel.org/r/')
+        self.noid = args.noid
+        self.dup_from_and_subject = args.dupsubj
+
+        self.msgs = {}
+        self.mailrefs = {}
+        self.inreplyto = {}
+        self.ackedby = args.ackedby
+        self.testedby = args.testedby
+        self.reviewedby = args.reviewedby
+        self.patches = []
+        self.fnames = []
+
+    def ignore_msg(self, msg):
+        mfrom = msg["From"]
+
+        if not mfrom:
+            print("MSG %s has no From: tag. Ignoring" %
+                  msg.get('Message-ID', '???'))
+            return True
+
+        for m in self.drop_from:
+            if mfrom.find(m) >= 0:
+                return True
+        return False
+
+    def parse_body(self, body, pmsg):
+        has_patch = False
+        lnr = 0
+        patchlines = ''
+
+        for l in body.replace('\r','').split('\n'):
+            lnr += 1
+
+            # Patch has been detected?
+            if has_patch:
+                pmsg.patch += l + '\n'
+                continue
+
+            # Patch start detection
+            if l.startswith('---'):
+                pmsg.patch += patchlines
+                pmsg.patch += l + '\n'
+                has_patch = True
+                continue
+
+            # Check for a tag
+            if not pmsg.parse_tags(l):
+                if pmsg.tags_seen:
+                    patchlines += l + '\n'
+                else:
+                    if len(pmsg.changelog) > 0 or len(l):
+                        pmsg.changelog += l + '\n'
+
+        if has_patch:
+            pmsg.has_patch = True
+
+    def parse_mbox(self, mbox):
+
+        for k, msg in mbox.iteritems():
+            if self.ignore_msg(msg):
+                continue
+
+            # Get the message id
+            mid = msg["Message-ID"]
+            if not mid:
+                if not self.noid:
+                    print('Ignoring Message without Message-ID: header')
+                    continue
+                mid = make_msgid("noid")
+
+            pmsg = patchmsg(msg, self.dup_from_and_subject)
+
+            for part in msg.walk():
+                if part.is_multipart():
+                    continue
+                body = part.get_payload(decode=True)
+                if not body:
+                    continue
+                self.parse_body(body, pmsg)
+
+            if pmsg.has_patch:
+                self.patches.append(pmsg)
+            else:
+                self.msgs[mid] = pmsg
+
+    def update_tags(self):
+
+        for pmsg in self.patches:
+
+            pmsg.append_tags('Acked-by', self.ackedby)
+            pmsg.append_tags('Tested-by', self.testedby)
+            pmsg.append_tags('Reviewed-by', self.reviewedby)
+
+            done = []
+            for id, msg in self.msgs.iteritems():
+                # Check direct replies
+                if msg.inreplyto == pmsg.mid:
+                    pmsg.merge_tags(msg)
+                    done.append(msg)
+
+            for d in done:
+                del self.msgs[d.mid]
+
+        # Have another iteration to handle replies to 0/N
+        for pmsg in self.patches:
+            for id, msg in self.msgs.iteritems():
+                for ref in msg.mailrefs:
+                    if ref in pmsg.mailrefs:
+                        pmsg.merge_tags(msg)
+                        break
+            # All tags are collected, do the last updates
+            pmsg.update_msg(self.nocc_addrs, self.list_addrs, self.link_ref)
+
+            # Make sure the file name is unique
+            fname = pmsg.fname
+            i = 0
+            while pmsg.fname in self.fnames:
+                i += 1
+                pmsg.fname = '%s-%d' % (fname, i)
+            self.fnames.append(fname)
+
+    def write_series(self, pdir):
+        # Write the series file
+        with open(os.path.join(pdir, 'series'), 'a') as fd:
+            for pmsg in self.patches:
+                fname = pmsg.fname + '.patch'
+                i = 0
+                # If the patch file exists, create a new one
+                while os.path.isfile(os.path.join(pdir, fname)):
+                    i += 1
+                    fname = pmsg.fname + '-%d.patch' % i
+                pmsg.fname = fname
+                fd.write(fname + '\n')
+
+    def write_patches(self, pdir, droplinks, nolinks):
+        for pmsg in self.patches:
+            pmsg.write_patch(pdir, droplinks, nolinks, self.committer)
+
+if __name__ == '__main__':
+   
+    parser = ArgumentParser(description='Mailbox 2 quilt converter')
+    parser.add_argument('inbox', metavar='inbox', help='Input mbox file')
+    parser.add_argument('-c', '--config', dest='config', default='~/.mb2q.yaml',
+                        help='Config file. Default: ~/.mb2q.yaml')
+    parser.add_argument('-d', '--droplinks', dest='droplinks',
+                        action='store_true', help='Drop existing Link:// tags in patches')
+    parser.add_argument('-D', '--dupsubj', dest='dupsubj',
+                        action='store_true', help='Duplicate subject and from')
+    parser.add_argument('-n', '--nolinks', dest='nolinks',
+                        action='store_true', help='Do not add Link:// tags to patches')
+    parser.add_argument('-N', '--noid', dest='noid',
+                        action='store_true', help='Do not require Message IDs')
+    parser.add_argument('-p', '--patchesdir', dest='patchesdir',
+                        default=None, help='Use given directory and do not automatically create patches-$inbox/')
+    parser.add_argument('-a', '--ackedby', dest='ackedby', type=str, default=[],
+                        nargs='+', help='Add Acked-by to all patches')
+    parser.add_argument('-r', '--reviewedby', dest='reviewedby', type=str, default=[],
+                        nargs='+', help='Add Reviewed-by to all patches')
+    parser.add_argument('-t', '--testedby', dest='testedby', type=str, default=[],
+                        nargs='+', help='Add Tested-by to all patches')
+    args = parser.parse_args()
+
+    q = quilter(args)
+    q.parse_mbox(mailbox.mbox(args.inbox, create=False))
+    q.update_tags()
+
+    if not len(q.patches):
+        print("No patches found in mbox\n")
+        sys.exit(1)
+
+    # Create the patch directory
+    if args.patchesdir:
+        pdir = os.path.expanduser(args.patchesdir)
+    else:
+        pdir = 'patches-%s' % os.path.basename(args.inbox)
+    if not os.path.isdir(pdir):
+        os.makedirs(pdir)
+
+    q.write_series(pdir)
+
+    q.write_patches(pdir, args.droplinks, args.nolinks or args.noid)

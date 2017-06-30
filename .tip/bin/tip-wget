@@ -1,0 +1,36 @@
+#!/bin/bash
+
+#. $(dirname "$0")/tip-lib
+
+if [ $# != "1" ]; then
+  echo 'usage: tip-wget <uri>'
+  exit -1
+fi
+
+#check_master
+
+URI=$1
+PATCH=$(basename $URI)
+
+quilt applied 2>/dev/null | grep -q "/$PATCH$" &&
+                        { echo "$PATCH is already applied!"; exit -1; }
+cd patches || { mkdir patches; cd patches; }
+
+[ -f $PATCH ] && {
+  echo "patch $PATCH already exists!"
+  echo "Waiting 3 seconds - Ctrl-C to abort."
+  sleep 3
+  rm -f $PATCH
+}
+
+echo "tip-wget: picking up $PATCH from $URI ..."
+
+wget -q $1 || { echo "wget error ..."; exit -1; }
+
+echo $PATCH >> series
+
+ls -l $PATCH
+
+echo "done."
+
+

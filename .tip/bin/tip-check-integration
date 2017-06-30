@@ -1,0 +1,87 @@
+#!/bin/bash
+
+#
+# Analyse which topic branches are merged into which auto-branch
+# Check which auto-branches are in linux-next
+#
+
+. $(dirname "$0")/tip-lib
+
+check_master
+
+# Check for linux-next
+LNEXT_REM=$(git config --get branch.linux-next.remote);
+
+[ -z "$LNEXT_REM" ] && {
+    echo "linux-next branch missing"
+    echo "Setting it up for you"
+    git remote add -t master -f linux-next-git git://git.kernel.org/pub/scm/linux/kernel/git/sfr/linux-next.git
+    git branch linux-next linux-next-git/master || {
+	echo "creating linux-next branch failed"
+	echo "please fix manually"
+	exit 1;
+    }
+    LNEXT_REM="linux-next-git"
+}
+
+AB=$(get_auto_branches_no_latest)
+MERGED_TOPICS=$(get_auto_merged_topics $AB)
+TOPIC_BRANCHES=$(get_topic_branches)
+
+echo "Branches not in auto-*-next:"
+echo $MERGED_TOPICS" "$TOPIC_BRANCHES | sed "s/ /\n/g" | sort | uniq -u
+
+ALLB=$(get_auto_branches)
+MERGED_TOPICS=$(get_auto_merged_topics $ALLB)
+
+echo ""
+echo "Branches not in auto-latest:"
+echo $MERGED_TOPICS" "$TOPIC_BRANCHES" "$AB | sed "s/ /\n/g" | sort | uniq -u
+
+echo ""
+echo "Checking linux-next"
+
+# Check which auto-branches are in linux-next
+NEXT=$(git ls-remote -h $LNEXT_REM | grep master | sed -e "s/\t/:/" -e "s/\:.*//")
+LNXT=$(git show linux-next-git/master 2>/dev/null | head -n1 | sed "s/commit //")
+[ "$NEXT" != "$LNXT" ] && {
+    echo "Updating to linux-next latest"
+    git checkout linux-next            || exit -1
+    git fetch --no-tags                || exit -1
+    git reset --hard linux-next/master || exit -1
+    git checkout master                || exit -1
+}
+
+NEXT_BRANCHES=$(get_linux_next_branches)
+
+echo ""
+echo "Auto-next branches not in linux-next:"
+echo $NEXT_BRANCHES" "$AB | sed "s/ /\n/g" | sort | uniq -u | grep "auto-"
+
+echo ""
+echo "linux-next branches not in auto-next:"
+echo $NEXT_BRANCHES" "$AB | sed "s/ /\n/g" | sort | uniq -u | grep -v "auto-"
+
+TCNT=0
+TNXT=0
+for B in $AB
+do
+    BASE=$(git merge-base $B linux-next)
+    NC=$(git log $BASE"..linux-next" --no-merges --pretty=format:"%H")
+    BC=$(git log $B"-base.."$B --no-merges --pretty=format:"%H")
+
+    BCNT=$(echo $BC | wc -w)
+    let TCNT=TCNT+BCNT
+    
+    NCNT=$(echo $NC" "$BC | sed "s/ /\n/g" | sort | uniq -d | wc -l)
+    let TNXT=TNXT+NCNT
+done
+
+echo ""
+echo "total commits in auto-next-branches: "$TCNT
+echo "auto-branches commits in linux-next: "$TNXT
+
+TLAT=$(git log linus..auto-latest --no-merges --pretty=format:"%H" | wc -l)
+echo "total commits in tip/auto-latest:    "$TLAT
+TMST=$(git log linus..master --no-merges --pretty=format:"%H" | wc -l)
+echo "total commits in tip/master:         "$TMST

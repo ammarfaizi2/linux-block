@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Automatically merge the branches for a given integration branch
+#
+
+. $(dirname "$0")/tip-lib
+
+[ $# = "0" ] && { echo 'usage: tip-merge <refspec>'; exit -1; }
+
+B=$1
+
+tip-fastmerge $B 2>.merge.log >.merge.log0 && {
+  cat .merge.log0 | grep -v "Already up-to-date."
+  exit 0
+}
+
+echo "Conflict merging $B:"
+
+cat .merge.log
+cat .merge.log0
+
+# stupid special for lack of git rm support in git rerere:
+grep -q 'arch/x86/kernel/nmi_32.c deleted in x86/nmi and modified in HEAD' .merge.log0 && git rm arch/x86/kernel/nmi_32.c
+grep -q 'include/asm-x86/hw_irq_32.h deleted in HEAD and modified in generic-ipi' .merge.log0 && git rm arch/x86/kernel/i8259_64.c arch/x86/kernel/nmi_64.c include/asm-x86/hw_irq_32.h include/asm-x86/hw_irq_64.h include/asm-x86/mach-default/irq_vectors.h include/asm-x86/mach-voyager/irq_vectors.h
+
+NR_AUTO=$(grep -E '^Resolved .* using previous resolution.$' .merge.log | wc -l)
+NR_PENDING=$(git ls-files -u | cut -f2 | uniq | wc -l)
+
+[ "$NR_AUTO" = "$NR_PENDING" ] && {
+    echo "Found $NR_AUTO auto-merged files - committing them."
+    git add $(git ls-files -u | cut -f2 | sort | uniq)
+    git commit -n -s -m "manual merge of $B" || abort_merge;
+    exit 0
+}
+
+git add $(cat .merge.log | grep "previous resolution" | cut -d' ' -f2 | cut -d\' -f2)
+
+echo
+echo Merging $B into $BRANCH failed
+echo merge conflict - run tip-mergetool
+echo
+echo running subshell - type "exit" when resolved
+echo conflicting files:
+git ls-files -u | cut -f2 | uniq
+
+$SHELL || abort_merge
+
+NCOM=`git ls-files -u`
+if [ ! -z "$NCOM" ]
+then
+echo "Merge was not committed! Fixing it up"
+    git add $(git ls-files -u | cut -f2 | sort | uniq)
+    git commit -n -s || abort_merge;
+fi
+

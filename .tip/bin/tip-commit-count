@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo $1 | grep -q '\.\.' && RANGE=$1 || RANGE=linus..$1
+
+D=$(git rev-list --no-merges $RANGE | wc -l)
+printf "commit count %20s: %2d\n" "$1" $D
+

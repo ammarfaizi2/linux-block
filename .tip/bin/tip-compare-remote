@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. $(dirname "$0")/tip-lib
+
+HEADS=$(git ls-remote -h origin | sed 's/\t/:/')
+
+for H in $HEADS
+do
+    SHAR=$(echo $H | sed 's/:.*//')
+    REF=$(echo $H | sed 's/.*://')
+    BRANCH=$(echo $REF | sed 's@refs/heads/@@')
+    git show $BRANCH 2>/dev/null >/dev/null || {
+	    printf "%-30s: not in local\n" $BRANCH
+	    continue
+    }
+    SHAL=$(git show $BRANCH | head -n1 | sed 's/commit //')
+
+    if [ "$SHAR" != "$SHAL" ]
+    then
+        COMMITS=$(git rev-list $BRANCH..origin/$BRANCH | wc -l)
+	[ "$COMMITS" = "0" ] &&
+		COMMITS=-$(git rev-list origin/$BRANCH..$BRANCH | wc -l)
+        printf "%-30s: differs from remote (%d commits)\n" $BRANCH $COMMITS
+    fi
+done

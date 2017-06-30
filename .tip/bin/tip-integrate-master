@@ -1,0 +1,38 @@
+#!/bin/sh
+
+. $(dirname "$0")/tip-lib
+
+tip-backup || { echo "backup failed"; exit -1; }
+
+tip-integrate-all || { echo "Integration of all failed"; exit -1; }
+
+git checkout auto-latest
+git branch -f master
+
+#
+# Ok, we have a new auto-integration result, now carry over
+# our local fixups which are in out-of-tree
+#
+git checkout master
+
+#
+# Special, not-for-linux-next-yet branches:
+#
+tip-merge auto-warnings-next
+tip-merge out-of-tree || { echo 'merge of out-of-tree failed'; exit -1; }
+
+D=`get_date_for_tag`
+
+# save the new master head:
+git tag -m "tip/master reintegration: $D" tip-history-$D master ||
+					   { echo error6; exit -1; }
+
+#
+# Do some backups ...
+#
+date				>> ~/tip-master.log
+cat .git/refs/heads/master	>> ~/tip-master.log
+echo				>> ~/tip-master.log
+
+echo "integration done - new tag: tip-history-$D"
+

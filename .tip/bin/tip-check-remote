@@ -1,0 +1,32 @@
+#!/bin/sh
+
+HEADS=`git ls-remote -h origin | sed "s/\t/:/"`
+
+UPDATE=0
+for H in $HEADS
+do
+    SHAR=`echo $H | sed "s/\:.*//"`
+    REF=`echo $H | sed "s/.*\://"`
+    BRANCH=`echo $REF | sed "s@refs/heads/@@"`
+
+    SHAL=`git show origin/$BRANCH 2>/dev/null | head -n1 | sed "s/commit //"`
+
+    if [ "$SHAR" != "$SHAL" ]
+    then
+	if [ -z "$SHAL" ]
+	then
+	    echo "New remote branch:             "$BRANCH
+	else
+	    echo "Remote head updated of branch: "$BRANCH
+	fi
+	UPDATE=1
+    fi
+done
+
+if [ $UPDATE -eq 0 ]
+then
+    echo "No changes in the remote repository since last pull"
+    exit 0;
+fi
+
+exit 1;

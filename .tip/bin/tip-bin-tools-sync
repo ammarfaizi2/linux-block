@@ -1,0 +1,15 @@
+#! /bin/sh
+
+git checkout tip || { echo error1; exit -1; }
+git fetch origin
+git merge origin/tip
+
+cp -a ~/bin/tip/* .tip/bin/
+
+git add .tip/bin/*
+
+git commit -m "tip tools: update" .tip/bin/* || { echo error1; exit -1; }
+
+git checkout master || { echo error2; exit -1; }
+
+echo "-tip bin sync done!"

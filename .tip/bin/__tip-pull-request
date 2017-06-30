@@ -1,0 +1,55 @@
+
+
+if [ $# != "2" ]; then
+        echo 'usage: __tip-pull-request <head-branch> <base-branch>'
+	exit -1
+fi
+
+HEAD=$1
+BRANCH=$1
+BASE=$2
+
+git branch | grep -qw $BRANCH || { echo "$BRANCH does not exist!"; exit -1; }
+
+echo "generating pull request mail for $HEAD:"
+
+echo $HEAD $BRANCH $BASE
+
+cd ~/tip/
+
+#KORG=git.kernel.org/pub/scm/linux/kernel/git/tip
+#KORG=tesla.tglx.de/git
+KORG=git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git
+
+git fetch
+git push origin HEAD || { echo 'PUSH FAILED!'; exit -1; }
+
+HEAD_LOC=$(git log -1 --format=oneline $BRANCH | cut -d' ' -f1)
+HEAD_REM=$(git log -1 --format=oneline origin/$BRANCH | cut -d' ' -f1)
+
+[ "$HEAD_LOC" != "$HEAD_REM" ] && { echo 'heads out of sync!'; exit -1; }
+
+(
+ printf "Linus,\n\nPlease pull the latest $BRANCH git tree from:\n\n"
+ printf "   git://$KORG $BRANCH\n\n"
+ echo -n "   HEAD: "; git log -1 --format=oneline origin/$BRANCH
+ echo
+
+ tip-check-topic $BRANCH $BASE
+
+ printf " Thanks,\n\n"
+ printf "	Ingo\n\n"
+ echo '------------------>'
+
+ git shortlog --no-merges $BASE..$BRANCH
+ echo
+ git diff -M --stat --summary $BASE..$BRANCH
+ echo
+ git diff -M $BASE..$BRANCH
+
+) > ~/s/1
+
+ls -l ~/s/1
+
+echo "done!"
+

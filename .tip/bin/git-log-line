@@ -1,0 +1,6 @@
+#! /bin/sh
+# the same can be accomplish by executing once:
+# 	$ git config --global alias.log-line 'log --pretty=format:"%h: %s"'
+
+git log --pretty=tformat:"%h: %s" $@
+

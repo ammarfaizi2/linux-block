@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. $(dirname "$0")/tip-lib
+
+BRANCH=$(get_current_branch)
+
+#
+# Create next version:
+#
+echo $BRANCH | grep -qe "-v[0-9]$" &&
+  NEXT_BRANCH=$(echo $BRANCH |
+       sed 's/-v8$/-v9/' |
+       sed 's/-v7$/-v8/' |
+       sed 's/-v6$/-v7/' |
+       sed 's/-v5$/-v6/' |
+       sed 's/-v4$/-v5/' |
+       sed 's/-v3$/-v4/' |
+       sed 's/-v2$/-v3/')     ||
+  NEXT_BRANCH=$BRANCH"-v2"
+
+git log -1 --pretty=format:"" $NEXT_BRANCH >/dev/null 2>/dev/null && {
+  echo "on $BRANCH, but $NEXT_BRANCH exists too!"
+  exit -1
+}
+
+exit 0

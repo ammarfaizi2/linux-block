@@ -1,0 +1,134 @@
+#!/bin/sh
+#
+# Sync all branches to the remote repository
+#
+
+if [ ! -d .git ]
+then
+    echo "not a .git repository"
+    exit 1;
+fi
+
+. $(dirname "$0")/tip-lib
+
+check_master
+
+# Get the heads of the remote topic branches before pullling
+
+if [ -f .git/tip-sync-remote-cache ]
+then
+    echo "Interrupted sync-remote detected"
+    read -p "Use the previous cache information Y/n ?" A
+    if [ "$A" = "n" -o "$A" = "N" ]
+    then
+	rm .git/tip-sync-remote-cache
+    fi
+fi
+
+if [ ! -f .git/tip-sync-remote-cache ]
+then
+    BS=`git branch | grep -vE " linus|tmp" | cut -c3-`
+    for B in $BS
+    do
+	SHA=`git rev-parse origin/$B`
+	echo $SHA":"$B >>.git/tip-sync-remote-cache
+    done
+fi
+
+echo "Fetching updates from origin"
+git fetch || exit 1;
+
+BS=`get_topic_branches`
+# Add tip as well
+BS=$BS" tip"
+
+for B in $BS
+do
+    RH=`grep "$B" .git/tip-sync-remote-cache`
+    RB=`echo $RH | sed "s/.*\://"`
+    RH=`echo $RH | sed "s/\:.*//"`
+
+    # Get and check the new remote head"
+    NRH=`git rev-parse origin/$B`
+    if [ "$RH" = "$NRH" ]
+    then
+	echo "Branch up to date: "$B
+	continue;
+    fi
+
+    echo "Updating $B"
+    git checkout $B || exit 1;
+
+    # Now check whether we have local modifications
+    LH=`git rev-parse $B`
+    if [ "$RH" != "$LH" ]
+    then
+	echo "Branch "$B" has local modifications"
+	echo "Rebasing local modifications to remote"
+	CMD='git rebase'
+    else
+	CMD='git merge'
+    fi
+
+    $CMD origin/$B || {
+	while true
+	do
+	    echo $CMD" of branch "$B" failed"
+	    echo
+	    echo running subshell - type "exit" when resolved
+	    
+	    $SHELL
+
+	    MOD=`git ls-files -d -m`
+	    if [ ! -z "$MOD" ]
+	    then
+		echo "You did not resolve the conflict"
+		echo "If you cancel the update then you can restart with the cached update information"
+		read -p "Cancel with ^C. Hit return to drop back in a subshell" A
+		continue
+	    fi
+
+	    NCOM=`git ls-files -u`
+	    if [ ! -z "$NCOM" ]
+	    then
+		echo "Merge was not committed! Fixing it up"
+		git add $(git ls-files -u | cut -f2 | sort | uniq)
+		git commit -s || continue;
+	    fi
+	    break;
+	done
+    }
+
+done
+
+# force update the auto-branches
+
+BS=`get_all_auto_branches`
+BS=$BS" master"
+
+for B in $BS
+do
+    RH=`git rev-parse $B`
+    # Get and check the new remote head"
+    NRH=`git rev-parse origin/$B`
+    if [ "$RH" = "$NRH" ]
+    then
+	echo "Branch up to date: "$B
+    else
+	echo "Updating $B"
+	git checkout $B || exit 1;
+	BASE=`git merge-base $B origin/$B`
+	git reset --hard $BASE
+	git merge origin/$B
+    fi
+done 
+
+rm .git/tip-sync-remote-cache
+
+# switch back to master again
+git checkout master
+
+# create missing local branches
+tip-create-local-branches.sh
+
+

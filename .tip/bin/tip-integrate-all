@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. $(dirname "$0")/tip-lib
+
+AB=$(get_auto_branches_no_latest)
+
+for B in $AB
+do
+    tip-integrate $B || { echo "Integration of "$B" failed"; exit -1; }
+done
+
+tip-integrate auto-generic-ipi-next || { echo "Integration of auto-generic-ipi-next failed"; exit -1; }
+
+#
+# Special, not in the auto targets:
+#
+tip-integrate auto-warnings-next
+
+tip-integrate auto-latest
+

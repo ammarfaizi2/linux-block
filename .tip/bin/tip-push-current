@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Push the current branch to the kernel.org repository
+#
+
+. $(dirname "$0")/tip-lib
+
+B=`get_current_branch`
+echo "$B"
+
+R=`git config --get "branch.$B.remote"`
+
+exec git push "$@" "$R" "$B"

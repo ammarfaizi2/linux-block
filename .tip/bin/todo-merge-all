@@ -1,0 +1,47 @@
+#! /bin/sh
+
+. $(dirname "$0")/tip-lib
+
+echo -n "merging the following updated branches: "
+
+check_master
+
+EXCLUDE='tip'
+EXCLUDE='broken'
+
+EXCLUDE+='|core/signal'
+EXCLUDE+='|x86/pat'
+EXCLUDE+='|x86/tlbflush'
+EXCLUDE+='|core/werror'
+EXCLUDE+='|kill-the-BKL'
+EXCLUDE+='|futex-64bit'
+EXCLUDE+='|x86/percpu-zerobased'
+EXCLUDE+='|core/percpu-zerobased'
+EXCLUDE+='|x86/multi-pagetables'
+EXCLUDE+='|x86/audit-speedup'
+
+#EXCLUDE+='|tracing/markers'
+EXCLUDE+='|tracing/immediates'
+EXCLUDE+='|tracing/textedit'
+EXCLUDE+='|tracing/stopmachine-allcpus'
+
+EXCLUDE+='|acpi-for-len'
+EXCLUDE+='|x86/acpi-rename-acpi_nmi'
+EXCLUDE+='|x86/for-acpi'
+EXCLUDE+='|x86/unify-mce'
+
+INCLUDE=$(echo $(tip-topic-branches | sed 's/^/\^/' | sed 's/$/\$/'; ) | sed 's/ /|/g')
+
+
+BRANCHES=$(git branch --no-merged | cut -c3- | grep -E "$INCLUDE" | grep -vE "$EXCLUDE")
+
+echo $BRANCHES
+
+for N in $BRANCHES linus; do
+#  echo $N
+  printf '\r                                                              '
+  printf '\rmerging '$N' ... '
+  tip-merge $N || { echo error; break; }
+done
+
+echo "... merge done."

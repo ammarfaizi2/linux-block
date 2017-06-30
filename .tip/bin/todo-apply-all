@@ -1,0 +1,5 @@
+#! /bin/sh
+
+todo-duplicates || exit -1
+
+tip-quilt-apply-edit --all

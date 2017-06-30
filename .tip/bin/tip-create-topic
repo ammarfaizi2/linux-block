@@ -1,0 +1,37 @@
+#!/bin/sh
+
+. $(dirname "$0")/tip-lib
+
+check_master
+
+if [ -z "$2" ]
+then
+    echo "tip-create-topic branchname auto-branch-name"
+    exit -1
+fi
+
+if [ -z "$(tip-auto-branches | grep -w $2)" ]
+then
+    echo "$2 auto-branch does not exist?"
+    exit -1
+fi
+
+git checkout tip || { echo 'hm?'; exit -1; }
+echo $1 >> .tip/auto-branches/$2 || { echo 'hm?'; exit -1; }
+git commit -m "$2: add $1" .tip/auto-branches/$2
+
+# create a new branch from linus
+git branch $1 linus || exit -1;
+
+# push it out
+git checkout $1 || { echo 'hm?'; exit -1; }
+tip-push-current || { echo 'hm?'; exit -1; }
+
+git checkout master || { echo 'hm?'; exit -1; }
+
+# remove it
+git branch -D $1
+
+# pull it from remote and create the local branch again
+git fetch
+tip-create-local-branches.sh

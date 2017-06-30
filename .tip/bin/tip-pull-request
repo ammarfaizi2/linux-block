@@ -1,0 +1,55 @@
+
+
+if [ $# -gt "1" ]; then
+        echo 'usage: tip-pull-request <head-branch>'
+	exit -1
+fi
+
+[ "$(gll master..)" != "" ] && {
+        echo 'branch not in master!'
+	exit -1
+}
+
+[ "$(gll linus..)" = "" ] && {
+        echo 'branch already upstream!'
+	exit -1
+}
+
+HEAD=$(tip-curr | cut -d/ -f2- | cut -d' ' -f1)
+BRANCH=${1:-$HEAD}
+BASE=$(git merge-base $BRANCH linus)
+
+__tip-pull-request $BRANCH $BASE
+
+exit
+
+git branch | grep -qw $BRANCH || { echo "$BRANCH does not exist!"; exit -1; }
+
+echo "generating pull request mail for $HEAD:"
+
+echo $HEAD $BRANCH $BASE
+
+cd ~/tip/
+
+(
+ printf "Linus,\n\nPlease pull the latest $BRANCH git tree from:\n\n"
+ printf "   git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git $BRANCH\n\n"
+
+ tip-check-topic $BRANCH
+
+ printf " Thanks,\n\n"
+ printf "	Ingo\n\n"
+ echo '------------------>'
+
+ git shortlog --no-merges $BASE..$BRANCH
+ echo
+ git diff -M --stat --summary $BASE..$BRANCH
+ echo
+ git diff -M $BASE..$BRANCH
+
+) > ~/s/1
+
+ls -l ~/s/1
+
+echo "done!"
+

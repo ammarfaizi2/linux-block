@@ -1,0 +1,35 @@
+#!/bin/sh
+
+. $(dirname "$0")/tip-lib
+
+check_master
+
+tip-check-remote
+if [ $? -ne 0 ]
+then
+    echo "Remote repository has updates"
+    while true
+    do
+	read -p "Pull first y/n" A
+	[ "$A" = "n" ] && break;
+	[ "$A" = "y" ] && exit 0;
+    done
+fi
+
+BRANCHES=`get_topic_branches`
+
+UPDATE=0
+for B in $BRANCHES
+do
+    D=`git diff origin/$B $B`
+    if [ ! -z "$D" ]
+    then
+	echo "local updates in branch $B"
+	UPDATE=1
+    fi
+done
+
+if [ $UPDATE -eq 0 ]
+then
+    echo "No changes in the local repository since last pull"
+fi
