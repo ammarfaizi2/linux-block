@@ -1383,6 +1383,8 @@ static struct xfrm_state *xfrm_state_clone(struct xfrm_state *orig)
 	x->curlft.add_time = orig->curlft.add_time;
 	x->km.state = orig->km.state;
 	x->km.seq = orig->km.seq;
+	x->replay = orig->replay;
+	x->preplay = orig->preplay;
 
 	return x;
 
@@ -2023,13 +2025,9 @@ int xfrm_user_policy(struct sock *sk, int optname, u8 __user *optval, int optlen
 	if (optlen <= 0 || optlen > PAGE_SIZE)
 		return -EMSGSIZE;
 
-	data = kmalloc(optlen, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
-
-	err = -EFAULT;
-	if (copy_from_user(data, optval, optlen))
-		goto out;
+	data = memdup_user(optval, optlen);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	err = -EINVAL;
 	rcu_read_lock();
@@ -2047,7 +2045,6 @@ int xfrm_user_policy(struct sock *sk, int optname, u8 __user *optval, int optlen
 		err = 0;
 	}
 
-out:
 	kfree(data);
 	return err;
 }

@@ -795,9 +795,6 @@ isdn_ppp_read(int min, struct file *file, char __user *buf, int count)
 	if (!(is->state & IPPP_OPEN))
 		return 0;
 
-	if (!access_ok(VERIFY_WRITE, buf, count))
-		return -EFAULT;
-
 	spin_lock_irqsave(&is->buflock, flags);
 	b = is->first->next;
 	save_buf = b->buf;
@@ -2014,9 +2011,6 @@ isdn_ppp_dev_ioctl_stats(int slot, struct ifreq *ifr, struct net_device *dev)
 	struct ppp_stats t;
 	isdn_net_local *lp = netdev_priv(dev);
 
-	if (!access_ok(VERIFY_WRITE, res, sizeof(struct ppp_stats)))
-		return -EFAULT;
-
 	/* build a temporary stat struct and copy it to user space */
 
 	memset(&t, 0, sizeof(struct ppp_stats));
@@ -2364,7 +2358,7 @@ static struct ippp_ccp_reset_state *isdn_ppp_ccp_reset_alloc_state(struct ippp_s
 		       id);
 		return NULL;
 	} else {
-		rs = kzalloc(sizeof(struct ippp_ccp_reset_state), GFP_KERNEL);
+		rs = kzalloc(sizeof(struct ippp_ccp_reset_state), GFP_ATOMIC);
 		if (!rs)
 			return NULL;
 		rs->state = CCPResetIdle;
