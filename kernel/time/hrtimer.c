@@ -50,7 +50,6 @@
 #include <linux/sched/nohz.h>
 #include <linux/sched/debug.h>
 #include <linux/timer.h>
-#include <trace/events/hist.h>
 #include <linux/freezer.h>
 
 #include <linux/uaccess.h>
@@ -1013,16 +1012,7 @@ void hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
 
 	/* Switch the timer base, if necessary: */
 	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
-#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
-	{
-		ktime_t now = new_base->get_time();
 
-		if (ktime_to_ns(tim) < ktime_to_ns(now))
-			timer->praecox = now;
-		else
-			timer->praecox = ktime_set(0, 0);
-	}
-#endif
 	leftmost = enqueue_hrtimer(timer, new_base);
 	if (!leftmost)
 		goto unlock;
@@ -1401,8 +1391,6 @@ static inline int hrtimer_rt_defer(struct hrtimer *timer) { return 0; }
 
 #endif
 
-static enum hrtimer_restart hrtimer_wakeup(struct hrtimer *timer);
-
 static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now)
 {
 	struct hrtimer_clock_base *base = cpu_base->clock_base;
@@ -1422,15 +1410,6 @@ static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now)
 			struct hrtimer *timer;
 
 			timer = container_of(node, struct hrtimer, node);
-
-			trace_hrtimer_interrupt(raw_smp_processor_id(),
-			    ktime_to_ns(ktime_sub(ktime_to_ns(timer->praecox) ?
-				timer->praecox : hrtimer_get_expires(timer),
-				basenow)),
-			    current,
-			    timer->function == hrtimer_wakeup ?
-			    container_of(timer, struct hrtimer_sleeper,
-				timer)->task : NULL);
 
 			/*
 			 * The immediate goal for using the softexpires is

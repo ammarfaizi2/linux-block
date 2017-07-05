@@ -86,10 +86,9 @@ enum hrtimer_restart {
  *		was armed.
  * @function:	timer expiry callback function
  * @base:	pointer to the timer base (per cpu and per clock)
- * @state:	state information (See bit values above)
  * @cb_entry:	list entry to defer timers from hardirq context
  * @irqsafe:	timer can run in hardirq context
- * @praecox:	timer expiry time if expired at the time of programming
+ * @state:	state information (See bit values above)
  * @is_rel:	Set if the timer was armed relative
  *
  * The hrtimer structure must be initialized by hrtimer_init()
@@ -99,12 +98,9 @@ struct hrtimer {
 	ktime_t				_softexpires;
 	enum hrtimer_restart		(*function)(struct hrtimer *);
 	struct hrtimer_clock_base	*base;
-	u8				state;
 	struct list_head		cb_entry;
 	int				irqsafe;
-#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
-	ktime_t				praecox;
-#endif
+	u8				state;
 	u8				is_rel;
 };
 
