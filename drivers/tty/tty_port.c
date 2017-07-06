@@ -159,7 +159,7 @@ struct device *tty_port_register_device_attr_serdev(struct tty_port *port,
 	dev = serdev_tty_port_register(port, device, driver, index);
 	if (PTR_ERR(dev) != -ENODEV) {
 		/* Skip creating cdev if we registered a serdev device */
-		return dev;
+		//return dev;
 	}
 
 	return tty_register_device_attr(driver, index, device, drvdata,
