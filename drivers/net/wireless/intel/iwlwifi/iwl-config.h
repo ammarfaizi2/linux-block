@@ -131,6 +131,7 @@ enum iwl_led_mode {
 
 /* Antenna presence definitions */
 #define	ANT_NONE	0x0
+#define	ANT_INVALID	0xff
 #define	ANT_A		BIT(0)
 #define	ANT_B		BIT(1)
 #define ANT_C		BIT(2)
@@ -461,6 +462,7 @@ extern const struct iwl_cfg iwl9560_2ac_cfg;
 extern const struct iwl_cfg iwla000_2ac_cfg_hr;
 extern const struct iwl_cfg iwla000_2ac_cfg_hr_cdb;
 extern const struct iwl_cfg iwla000_2ac_cfg_jf;
+extern const struct iwl_cfg iwla000_2ax_cfg_hr;
 #endif /* CONFIG_IWLMVM */
 
 #endif /* __IWL_CONFIG_H__ */
