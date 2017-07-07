@@ -46,6 +46,7 @@ struct serdev_device_ops {
  */
 struct serdev_device {
 	struct device dev;
+	const char *driver_override;
 	int nr;
 	struct serdev_controller *ctrl;
 	const struct serdev_device_ops *ops;

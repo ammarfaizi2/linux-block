@@ -49,6 +49,15 @@ static const struct device_type serdev_ctrl_type = {
 
 static int serdev_device_match(struct device *dev, struct device_driver *drv)
 {
+	struct serdev_device *serdev = to_serdev_device(dev);
+
+	if (dev->type != &serdev_device_type)
+		return 0;
+
+        /* When driver_override is set, only bind to the matching driver */
+        if (serdev->driver_override)
+                return !strcmp(serdev->driver_override, drv->name);
+
 	/* TODO: ACPI and platform matching */
 	return of_driver_match_device(dev, drv);
 }
@@ -264,8 +273,48 @@ static ssize_t modalias_show(struct device *dev,
 }
 DEVICE_ATTR_RO(modalias);
 
+static ssize_t driver_override_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct serdev_device *serdev = to_serdev_device(dev);
+	char *driver_override, *old = serdev->driver_override, *cp;
+
+	if (count > PATH_MAX)
+		return -EINVAL;
+
+	driver_override = kstrndup(buf, count, GFP_KERNEL);
+	if (!driver_override)
+		return -ENOMEM;
+
+	cp = strchr(driver_override, '\n');
+	if (cp)
+		*cp = '\0';
+
+	if (strlen(driver_override)) {
+		serdev->driver_override = driver_override;
+	} else {
+		kfree(driver_override);
+		serdev->driver_override = NULL;
+	}
+
+	kfree(old);
+
+	return count;
+}
+
+static ssize_t driver_override_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct serdev_device *serdev = to_serdev_device(dev);
+
+	return sprintf(buf, "%s\n", serdev->driver_override);
+}
+DEVICE_ATTR_RW(driver_override);
+
 static struct attribute *serdev_device_attrs[] = {
 	&dev_attr_modalias.attr,
+	&dev_attr_driver_override.attr,
 	NULL,
 };
 ATTRIBUTE_GROUPS(serdev_device);
