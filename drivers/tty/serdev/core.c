@@ -453,17 +453,11 @@ int serdev_controller_add(struct serdev_controller *ctrl)
 	if (ret)
 		return ret;
 
-	ret = of_serdev_register_devices(ctrl);
-	if (ret)
-		goto out_dev_del;
+	of_serdev_register_devices(ctrl);
 
 	dev_dbg(&ctrl->dev, "serdev%d registered: dev:%p\n",
 		ctrl->nr, &ctrl->dev);
 	return 0;
-
-out_dev_del:
-	device_del(&ctrl->dev);
-	return ret;
 };
 EXPORT_SYMBOL_GPL(serdev_controller_add);
 
