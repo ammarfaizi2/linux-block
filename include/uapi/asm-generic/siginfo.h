@@ -43,12 +43,15 @@ typedef union sigval {
 #define __ARCH_SI_ATTRIBUTES
 #endif
 
-#ifndef HAVE_ARCH_SIGINFO_T
-
 typedef struct siginfo {
 	int si_signo;
+#ifndef __ARCH_HAS_SWAPPED_SIGINFO
 	int si_errno;
 	int si_code;
+#else
+	int si_code;
+	int si_errno;
+#endif
 
 	union {
 		int _pad[SI_PAD_SIZE];
@@ -124,7 +127,6 @@ typedef struct siginfo {
 
 /* If the arch shares siginfo, then it has SIGSYS. */
 #define __ARCH_SIGSYS
-#endif
 
 /*
  * How these fields are to be accessed.
