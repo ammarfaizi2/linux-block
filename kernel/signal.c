@@ -2678,8 +2678,6 @@ COMPAT_SYSCALL_DEFINE2(rt_sigpending, compat_sigset_t __user *, uset,
 }
 #endif
 
-#ifndef HAVE_ARCH_COPY_SIGINFO_TO_USER
-
 int copy_siginfo_to_user(siginfo_t __user *to, const siginfo_t *from)
 {
 	struct siginfo v;
@@ -2731,6 +2729,11 @@ int copy_siginfo_to_user(siginfo_t __user *to, const siginfo_t *from)
 #ifdef __ARCH_SI_TRAPNO
 		COPY(si_trapno);
 #endif
+#ifdef CONFIG_IA64
+		COPY(si_imm);
+		COPY(si_flags);
+		COPY(si_isr);
+#endif
 #ifdef BUS_MCEERR_AO
 		/*
 		 * Other callers might not initialize the si_lsb field,
@@ -2781,8 +2784,6 @@ int copy_siginfo_to_user(siginfo_t __user *to, const siginfo_t *from)
 #undef COPY
 #undef OFF
 }
-
-#endif
 
 /**
  *  do_sigtimedwait - wait for queued signals specified in @which
