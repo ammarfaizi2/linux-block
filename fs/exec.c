@@ -764,23 +764,47 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	/* mprotect_fixup is overkill to remove the temporary stack flags */
 	vma->vm_flags &= ~VM_STACK_INCOMPLETE_SETUP;
 
-	stack_expand = 131072UL; /* randomly 32*4k (or 2*64k) pages */
-	stack_size = vma->vm_end - vma->vm_start;
 	/*
 	 * Align this down to a page boundary as expand_stack
 	 * will align it up.
 	 */
 	rlim_stack = rlimit(RLIMIT_STACK) & PAGE_MASK;
+	stack_size = vma->vm_end - vma->vm_start;
+
+	if (stack_size > rlim_stack) {
+		/*
+		 * If we've already used too much space (due to accounting
+		 * bugs, alignment, races, or any other cause), bail.
+		 */
+		ret = -ENOMEM;
+		goto out_unlock;
+	}
+
+	/*
+	 * stack_expand is the amount of space beyond the space already used
+	 * that we're going to pre-allocate in our stack.  For historical
+	 * reasons, it's 128kB, unless we have less space than that available
+	 * in our rlimit.
+	 *
+	 * This particular historical wart is wrong-headed, though, since
+	 * we haven't finished binfmt-specific setup, and the binfmt code
+	 * is going to eat up some or all of this space.
+	 */
+	stack_expand = min(rlim_stack - stack_size, 131072UL);
+
 #ifdef CONFIG_STACK_GROWSUP
-	if (stack_size + stack_expand > rlim_stack)
-		stack_base = vma->vm_start + rlim_stack;
-	else
-		stack_base = vma->vm_end + stack_expand;
+	if (TASK_SIZE_MAX - vma->vm_end < stack_expand) {
+		ret = -ENOMEM;
+		goto out_unlock;
+	}
+	stack_base = vma->vm_end + stack_expand;
 #else
-	if (stack_size + stack_expand > rlim_stack)
-		stack_base = vma->vm_end - rlim_stack;
-	else
-		stack_base = vma->vm_start - stack_expand;
+	if (vma->vm_start < mmap_min_addr ||
+	    vma->vm_start - mmap_min_addr < stack_expand) {
+		ret = -ENOMEM;
+		goto out_unlock;
+	}
+	stack_base = vma->vm_start - stack_expand;
 #endif
 	current->mm->start_stack = bprm->p;
 	ret = expand_stack(vma, stack_base);
