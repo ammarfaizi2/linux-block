@@ -245,23 +245,27 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
 	unsigned long buf_fx = 0;
 	int onsigstack = on_sig_stack(sp);
 	struct fpu *fpu = &current->thread.fpu;
-
-	/* redzone */
-	if (IS_ENABLED(CONFIG_X86_64))
-		sp -= 128;
+	bool use_sigstack = false;
 
 	/* This is the X/Open sanctioned signal stack switching.  */
 	if (ka->sa.sa_flags & SA_ONSTACK) {
-		if (sas_ss_flags(sp) == 0)
+		if (sas_ss_flags(sp) == 0) {
+			use_sigstack = true;
 			sp = current->sas_ss_sp + current->sas_ss_size;
+		}
 	} else if (IS_ENABLED(CONFIG_X86_32) &&
 		   !onsigstack &&
 		   regs->ss != __USER_DS &&
 		   !(ka->sa.sa_flags & SA_RESTORER) &&
 		   ka->sa.sa_restorer) {
 		/* This is the legacy signal stack switching. */
+		use_sigstack = true;
 		sp = (unsigned long) ka->sa.sa_restorer;
 	}
+
+	/* redzone */
+	if (!use_sigstack && IS_ENABLED(CONFIG_X86_64))
+		sp -= 128;
 
 	if (fpu->fpstate_active) {
 		sp = fpu__alloc_mathframe(sp, IS_ENABLED(CONFIG_X86_32),
@@ -270,6 +274,8 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
 	}
 
 	sp = align_sigframe(sp - frame_size);
+	if (!use_sigstack && probe_stack_range(sp, regs->sp) != 0)
+		return (void __user *)-1L;
 
 	/*
 	 * If we are on the alternate signal stack and would overflow it, don't.

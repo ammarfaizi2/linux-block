@@ -216,35 +216,46 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
 				 size_t frame_size,
 				 void __user **fpstate)
 {
-	struct fpu *fpu = &current->thread.fpu;
-	unsigned long sp;
-
 	/* Default to using normal stack */
-	sp = regs->sp;
+	unsigned long math_size = 0;
+	unsigned long sp = regs->sp;
+	unsigned long buf_fx = 0;
+	struct fpu *fpu = &current->thread.fpu;
+	bool use_sigstack = false;
 
 	/* This is the X/Open sanctioned signal stack switching.  */
-	if (ksig->ka.sa.sa_flags & SA_ONSTACK)
-		sp = sigsp(sp, ksig);
-	/* This is the legacy signal stack switching. */
-	else if (regs->ss != __USER32_DS &&
+	if (ksig->ka.sa.sa_flags & SA_ONSTACK) {
+		if (sas_ss_flags(sp) == 0) {
+			use_sigstack = true;
+			sp = current->sas_ss_sp + current->sas_ss_size;
+		}
+	} else if ((regs->ss & 0xffff) != __USER32_DS &&
 		!(ksig->ka.sa.sa_flags & SA_RESTORER) &&
-		 ksig->ka.sa.sa_restorer)
+		   ksig->ka.sa.sa_restorer) {
+		/* This is the legacy signal stack switching. */
+		use_sigstack = true;
 		sp = (unsigned long) ksig->ka.sa.sa_restorer;
+	}
 
 	if (fpu->fpstate_active) {
-		unsigned long fx_aligned, math_size;
-
-		sp = fpu__alloc_mathframe(sp, 1, &fx_aligned, &math_size);
+		sp = fpu__alloc_mathframe(sp, 1, &buf_fx, &math_size);
 		*fpstate = (struct _fpstate_32 __user *) sp;
-		if (copy_fpstate_to_sigframe(*fpstate, (void __user *)fx_aligned,
-				    math_size) < 0)
-			return (void __user *) -1L;
 	}
 
 	sp -= frame_size;
 	/* Align the stack pointer according to the i386 ABI,
 	 * i.e. so that on function entry ((sp + 4) & 15) == 0. */
 	sp = ((sp + 4) & -16ul) - 4;
+
+	if (!use_sigstack && probe_stack_range(sp, regs->sp) != 0)
+		return (void __user *)-1L;
+
+	if (fpu->fpstate_active) {
+		if (copy_fpstate_to_sigframe(*fpstate, (void __user *)buf_fx,
+				    math_size) < 0)
+			return (void __user *) -1L;
+	}
+
 	return (void __user *) sp;
 }
 
