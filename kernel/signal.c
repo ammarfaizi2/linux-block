@@ -3705,3 +3705,44 @@ kdb_send_sig_info(struct task_struct *t, struct siginfo *info)
 		kdb_printf("Signal %d is sent to process %d.\n", sig, t->pid);
 }
 #endif	/* CONFIG_KGDB_KDB */
+
+/**
+ * probe_stack_range() - Probe a range of user stack addresses
+ * @bottom: The lowest address in the range
+ * @top: One past the highest address in the range
+ *
+ * This function will ensure that every page in the range is mapped and
+ * available for use as user stack.  Arch signal code should call it before
+ * using the range as stack space to avoid skipping past a guard page.
+ *
+ * Return: 0 or -EFAULT
+ */
+int probe_stack_range(unsigned long bottom, unsigned long top)
+{
+	unsigned long addr;
+
+	if (unlikely(top < bottom) ||
+	    !access_ok(VERIFY_WRITE, (void __user *)bottom, top - bottom))
+		return -EFAULT;
+
+	user_access_begin();
+
+#ifdef CONFIG_STACK_GROWSUP
+	for (addr = bottom & ~PAGE_MASK; addr < top; addr += PAGE_SIZE) {
+		unsigned long dummy;
+		unsafe_get_user(dummy, (unsigned long __user *)addr, bad);
+	}
+#else
+	for (addr = (top - 1) & ~PAGE_MASK; addr >= bottom; addr -= PAGE_SIZE) {
+		unsigned long dummy;
+		unsafe_get_user(dummy, (unsigned long __user *)addr, bad);
+	}
+#endif
+
+	user_access_end();
+	return 0;
+
+bad:
+	user_access_end();
+	return -EFAULT;
+}

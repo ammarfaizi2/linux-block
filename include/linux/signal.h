@@ -409,4 +409,6 @@ struct seq_file;
 extern void render_sigset_t(struct seq_file *, const char *, sigset_t *);
 #endif
 
+extern int probe_stack_range(unsigned long bottom, unsigned long top);
+
 #endif /* _LINUX_SIGNAL_H */
