@@ -642,6 +642,7 @@ void tty_port_close(struct tty_port *port, struct tty_struct *tty,
 	set_bit(TTY_IO_ERROR, &tty->flags);
 	tty_port_close_end(port, tty);
 	tty_port_tty_set(port, NULL);
+	port->client_ops = &default_client_ops;
 }
 EXPORT_SYMBOL(tty_port_close);
 
