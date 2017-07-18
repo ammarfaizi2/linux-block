@@ -22,7 +22,8 @@
  * Bitmask made from a "or" of all commands within enum membarrier_cmd,
  * except MEMBARRIER_CMD_QUERY.
  */
-#define MEMBARRIER_CMD_BITMASK	(MEMBARRIER_CMD_SHARED)
+#define MEMBARRIER_CMD_BITMASK	(MEMBARRIER_CMD_SHARED |		\
+				 MEMBARRIER_CMD_SHARED_EXPEDITED)
 
 /**
  * sys_membarrier - issue memory barriers on a set of threads
@@ -63,6 +64,10 @@ SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
 	case MEMBARRIER_CMD_SHARED:
 		if (num_online_cpus() > 1)
 			synchronize_sched();
+		return 0;
+	case MEMBARRIER_CMD_SHARED_EXPEDITED:
+		if (num_online_cpus() > 1)
+			synchronize_sched_expedited();
 		return 0;
 	default:
 		return -EINVAL;
