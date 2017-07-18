@@ -107,15 +107,16 @@ static int ttyport_open(struct serdev_controller *ctrl)
 	else
 		tty_port_open(serport->port, tty, NULL);
 
-	/* Bring the UART into a known 8 bits no parity hw fc state */
-	ktermios = tty->termios;
+	/* Bring the UART into a known 9600 baud, 8 bits no parity hw fc state */
+	ktermios = tty_std_termios;
 	ktermios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP |
 			      INLCR | IGNCR | ICRNL | IXON);
 	ktermios.c_oflag &= ~OPOST;
 	ktermios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 	ktermios.c_cflag &= ~(CSIZE | PARENB);
 	ktermios.c_cflag |= CS8;
-	ktermios.c_cflag |= CRTSCTS;
+	ktermios.c_cflag |= CRTSCTS | CLOCAL;
+	tty_termios_encode_baud_rate(&ktermios, 9600, 9600);
 	tty_set_termios(tty, &ktermios);
 
 	set_bit(SERPORT_ACTIVE, &serport->flags);
