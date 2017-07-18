@@ -357,11 +357,9 @@ void hci_uart_unregister_device(struct hci_dev *hdev)
 	struct hci_uart *hu = hci_get_drvdata(hdev);
 	unsigned long flags;
 
-	cancel_work_sync(&hu->write_work);
-
-	write_lock_irqsave(&hu->proto_lock, flags);
 	clear_bit(HCI_UART_PROTO_READY, &hu->flags);
-	write_unlock_irqrestore(&hu->proto_lock, flags);
+
+	cancel_work_sync(&hu->write_work);
 
 	hci_unregister_dev(hdev);
 	hci_free_dev(hdev);
