@@ -325,6 +325,34 @@ static inline void __loadsegment_fs(unsigned short value)
 # endif	/* X86_32_LAZY_GS */
 #endif	/* X86_32 */
 
+/*
+ * Sane API for writing current's segment regs on any kernel
+ * configuration.
+ */
+#define get_current_cs(regs) ((u16)((regs)->cs))
+#define get_current_ss(regs) ((u16)((regs)->ss))
+#define set_current_cs(regs, v) do { (regs)->cs = (v); } while (0);
+#define set_current_ss(regs, v) do { (regs)->ss = (v); } while (0);
+#ifdef CONFIG_X86_64
+# define get_current_ds(regs) ({u16 v; savesegment(ds, v); v;})
+# define get_current_es(regs) ({u16 v; savesegment(es, v); v;})
+# define get_current_fs(regs) ({u16 v; savesegment(fs, v); v;})
+# define get_current_gs(regs) ({u16 v; savesegment(gs, v); v;})
+# define set_current_ds(regs, v) loadsegment(ds, (v))
+# define set_current_es(regs, v) loadsegment(es, (v))
+# define set_current_fs(regs, v) loadsegment(fs, (v))
+# define set_current_gs(regs, v) load_gs_index((v))
+#else
+#define get_current_ds(regs) ((u16)((regs)->ds))
+#define get_current_es(regs) ((u16)((regs)->es))
+#define get_current_fs(regs) ((u16)((regs)->es))
+#define get_current_gs  get_user_gs
+# define set_current_ds(regs, v) do { (regs)->ds = (v); } while (0);
+# define set_current_es(regs, v) do { (regs)->es = (v); } while (0);
+# define set_current_fs(regs, v) loadsegment(fs, (v))
+# define set_current_gs set_user_gs
+#endif
+
 #endif /* !__ASSEMBLY__ */
 #endif /* __KERNEL__ */
 
