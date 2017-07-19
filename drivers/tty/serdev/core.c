@@ -453,7 +453,7 @@ int serdev_controller_add(struct serdev_controller *ctrl)
 	if (ret)
 		return ret;
 
-	of_serdev_register_devices(ctrl);
+	//of_serdev_register_devices(ctrl);
 
 	dev_dbg(&ctrl->dev, "serdev%d registered: dev:%p\n",
 		ctrl->nr, &ctrl->dev);
