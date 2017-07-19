@@ -533,7 +533,6 @@ static struct sk_buff *ll_dequeue(struct hci_uart *hu)
 	return skb_dequeue(&ll->txq);
 }
 
-#if IS_ENABLED(CONFIG_SERIAL_DEV_BUS)
 static int read_local_version(struct hci_dev *hdev)
 {
 	int err = 0;
@@ -772,9 +771,6 @@ static struct serdev_device_driver hci_ti_drv = {
 	.probe	= hci_ti_probe,
 	.remove	= hci_ti_remove,
 };
-#else
-#define ll_setup NULL
-#endif
 
 static const struct hci_uart_proto llp = {
 	.id		= HCI_UART_LL,
@@ -788,16 +784,4 @@ static const struct hci_uart_proto llp = {
 	.flush		= ll_flush,
 };
 
-int __init ll_init(void)
-{
-	serdev_device_driver_register(&hci_ti_drv);
-
-	return hci_uart_register_proto(&llp);
-}
-
-int __exit ll_deinit(void)
-{
-	serdev_device_driver_unregister(&hci_ti_drv);
-
-	return hci_uart_unregister_proto(&llp);
-}
+module_serdev_device_driver(hci_ti_drv);
