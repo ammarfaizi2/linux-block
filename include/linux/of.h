@@ -63,7 +63,9 @@ struct device_node {
 	struct	kobject kobj;
 #endif
 	unsigned long _flags;
+#if defined(CONFIG_PPC)
 	void	*data;
+#endif
 #if defined(CONFIG_SPARC)
 	unsigned int unique_id;
 	struct of_irq_controller *irq_trans;

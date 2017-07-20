@@ -362,7 +362,9 @@ void of_node_release(struct kobject *kobj)
 	fwnode_links_purge(of_fwnode_handle(node));
 
 	kfree(node->full_name);
+#ifdef CONFIG_PPC
 	kfree(node->data);
+#endif
 	kfree(node);
 }
 

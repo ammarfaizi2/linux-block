@@ -443,7 +443,6 @@ static int mvneta_bm_probe(struct platform_device *pdev)
 		goto err_sram;
 	}
 
-	dn->data = priv;
 	platform_set_drvdata(pdev, priv);
 
 	dev_info(&pdev->dev, "Buffer Manager for network controller enabled\n");
