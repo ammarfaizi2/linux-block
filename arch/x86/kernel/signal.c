@@ -56,7 +56,7 @@
 })
 
 #define COPY_SEG(seg)		do {			\
-	regs->seg = GET_SEG(seg);			\
+	set_current_##seg(regs, GET_SEG(seg));		\
 } while (0)
 
 #define COPY_SEG_CPL3(seg)	do {			\
@@ -88,7 +88,7 @@ static void force_valid_ss(struct pt_regs *regs)
 	ar &= AR_DPL_MASK | AR_S | AR_P | AR_TYPE_MASK;
 	if (ar != (AR_DPL3 | AR_S | AR_P | AR_TYPE_RWDATA) &&
 	    ar != (AR_DPL3 | AR_S | AR_P | AR_TYPE_RWDATA_EXPDOWN))
-		regs->ss = __USER_DS;
+		set_current_ss(regs, __USER_DS);
 }
 #endif
 
@@ -107,7 +107,7 @@ static int restore_sigcontext(struct pt_regs *regs,
 	get_user_try {
 
 #ifdef CONFIG_X86_32
-		set_user_gs(regs, GET_SEG(gs));
+		set_current_gs(regs, GET_SEG(gs));
 		COPY_SEG(fs);
 		COPY_SEG(es);
 		COPY_SEG(ds);
@@ -163,10 +163,10 @@ int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 	put_user_try {
 
 #ifdef CONFIG_X86_32
-		put_user_ex(get_user_gs(regs), (unsigned int __user *)&sc->gs);
-		put_user_ex(regs->fs, (unsigned int __user *)&sc->fs);
-		put_user_ex(regs->es, (unsigned int __user *)&sc->es);
-		put_user_ex(regs->ds, (unsigned int __user *)&sc->ds);
+		put_user_ex(get_current_gs(regs), (unsigned int __user *)&sc->gs);
+		put_user_ex(get_current_fs(regs), (unsigned int __user *)&sc->fs);
+		put_user_ex(get_current_es(regs), (unsigned int __user *)&sc->es);
+		put_user_ex(get_current_ds(regs), (unsigned int __user *)&sc->ds);
 #endif /* CONFIG_X86_32 */
 
 		put_user_ex(regs->di, &sc->di);
@@ -191,14 +191,14 @@ int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 		put_user_ex(current->thread.trap_nr, &sc->trapno);
 		put_user_ex(current->thread.error_code, &sc->err);
 		put_user_ex(regs->ip, &sc->ip);
+		put_user_ex(get_current_cs(regs), &sc->cs);
+
 #ifdef CONFIG_X86_32
-		put_user_ex(regs->cs, (unsigned int __user *)&sc->cs);
 		put_user_ex(regs->flags, &sc->flags);
 		put_user_ex(regs->sp, &sc->sp_at_signal);
-		put_user_ex(regs->ss, (unsigned int __user *)&sc->ss);
+		put_user_ex(get_current_ss(regs), (unsigned int __user *)&sc->ss);
 #else /* !CONFIG_X86_32 */
 		put_user_ex(regs->flags, &sc->flags);
-		put_user_ex(regs->cs, &sc->cs);
 		put_user_ex(0, &sc->gs);
 		put_user_ex(0, &sc->fs);
 		put_user_ex(regs->ss, &sc->ss);
@@ -371,10 +371,10 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 	regs->dx = 0;
 	regs->cx = 0;
 
-	regs->ds = __USER_DS;
-	regs->es = __USER_DS;
-	regs->ss = __USER_DS;
-	regs->cs = __USER_CS;
+	set_current_ds(regs, __USER_DS);
+	set_current_es(regs, __USER_DS);
+	set_current_ss(regs, __USER_DS);
+	set_current_cs(regs, __USER_CS);
 
 	return 0;
 }
@@ -437,10 +437,10 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	regs->dx = (unsigned long)&frame->info;
 	regs->cx = (unsigned long)&frame->uc;
 
-	regs->ds = __USER_DS;
-	regs->es = __USER_DS;
-	regs->ss = __USER_DS;
-	regs->cs = __USER_CS;
+	set_current_ds(regs, __USER_DS);
+	set_current_es(regs, __USER_DS);
+	set_current_ss(regs, __USER_DS);
+	set_current_cs(regs, __USER_CS);
 
 	return 0;
 }
@@ -530,9 +530,9 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	 * a trampoline.)  So we do our best: if the old SS was valid,
 	 * we keep it.  Otherwise we replace it.
 	 */
-	regs->cs = __USER_CS;
+	set_current_cs(regs, __USER_CS);
 
-	if (unlikely(regs->ss != __USER_DS))
+	if (unlikely(get_current_ss(regs) != __USER_DS))
 		force_valid_ss(regs);
 
 	return 0;
@@ -592,11 +592,10 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 	regs->si = (unsigned long) &frame->info;
 	regs->dx = (unsigned long) &frame->uc;
 
-	loadsegment(ds, __USER_DS);
-	loadsegment(es, __USER_DS);
-
-	regs->cs = __USER_CS;
-	regs->ss = __USER_DS;
+	set_current_cs(regs, __USER_CS);
+	set_current_ss(regs, __USER_DS);
+	set_current_ds(regs, __USER_DS);
+	set_current_es(regs, __USER_DS);
 #endif	/* CONFIG_X86_X32_ABI */
 
 	return 0;
