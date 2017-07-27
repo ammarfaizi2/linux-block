@@ -38,6 +38,11 @@ static inline void mmgrab(struct mm_struct *mm)
 extern void __mmdrop(struct mm_struct *);
 static inline void mmdrop(struct mm_struct *mm)
 {
+	/*
+	 * Implicit full memory barrier provided by
+	 * atomic_dec_and_test() is required by membarrier. See comments
+	 * around membarrier_expedited_mb_after_set_current().
+	 */
 	if (unlikely(atomic_dec_and_test(&mm->mm_count)))
 		__mmdrop(mm);
 }
