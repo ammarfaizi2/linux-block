@@ -40,6 +40,16 @@
  *                          (non-running threads are de facto in such a
  *                          state). This covers threads from all processes
  *                          running on the system. This command returns 0.
+ * @MEMBARRIER_CMD_SHARED_EXPEDITED:  Execute a memory barrier on all
+ *			    running threads, but in an expedited fashion.
+ *                          Upon return from system call, the caller thread
+ *                          is ensured that all running threads have passed
+ *                          through a state where all memory accesses to
+ *                          user-space addresses match program order between
+ *                          entry to and return from the system call
+ *                          (non-running threads are de facto in such a
+ *                          state). This covers threads from all processes
+ *                          running on the system. This command returns 0.
  *
  * Command to be passed to the membarrier system call. The commands need to
  * be a single bit each, except for MEMBARRIER_CMD_QUERY which is assigned to
@@ -48,6 +58,7 @@
 enum membarrier_cmd {
 	MEMBARRIER_CMD_QUERY = 0,
 	MEMBARRIER_CMD_SHARED = (1 << 0),
+	MEMBARRIER_CMD_SHARED_EXPEDITED = (1 << 1),
 };
 
 #endif /* _UAPI_LINUX_MEMBARRIER_H */
