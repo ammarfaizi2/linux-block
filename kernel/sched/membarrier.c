@@ -17,12 +17,79 @@
 #include <linux/syscalls.h>
 #include <linux/membarrier.h>
 #include <linux/tick.h>
+#include <linux/cpumask.h>
+
+#include "sched.h"	/* for cpu_rq(). */
 
 /*
  * Bitmask made from a "or" of all commands within enum membarrier_cmd,
  * except MEMBARRIER_CMD_QUERY.
  */
-#define MEMBARRIER_CMD_BITMASK	(MEMBARRIER_CMD_SHARED)
+#define MEMBARRIER_CMD_BITMASK	\
+	(MEMBARRIER_CMD_SHARED | MEMBARRIER_CMD_PRIVATE_EXPEDITED)
+
+static void ipi_mb(void *info)
+{
+	smp_mb();	/* IPIs should be serializing but paranoid. */
+}
+
+static void membarrier_private_expedited(void)
+{
+	int cpu, this_cpu;
+	bool fallback = false;
+	cpumask_var_t tmpmask;
+
+	if (num_online_cpus() == 1)
+		return;
+
+	/*
+	 * Matches memory barriers around rq->curr modification in
+	 * scheduler.
+	 */
+	smp_mb();	/* system call entry is not a mb. */
+
+	if (!alloc_cpumask_var(&tmpmask, GFP_NOWAIT)) {
+		/* Fallback for OOM. */
+		fallback = true;
+	}
+
+	/*
+	 * Skipping the current CPU is OK even through we can be
+	 * migrated at any point. The current CPU, at the point where we
+	 * read raw_smp_processor_id(), is ensured to be in program
+	 * order with respect to the caller thread. Therefore, we can
+	 * skip this CPU from the iteration.
+	 */
+	this_cpu = raw_smp_processor_id();
+	cpus_read_lock();
+	for_each_online_cpu(cpu) {
+		struct task_struct *p;
+
+		if (cpu == this_cpu)
+			continue;
+		rcu_read_lock();
+		p = task_rcu_dereference(&cpu_rq(cpu)->curr);
+		if (p && p->mm == current->mm) {
+			if (!fallback)
+				__cpumask_set_cpu(cpu, tmpmask);
+			else
+				smp_call_function_single(cpu, ipi_mb, NULL, 1);
+		}
+		rcu_read_unlock();
+	}
+	cpus_read_unlock();
+	if (!fallback) {
+		smp_call_function_many(tmpmask, ipi_mb, NULL, 1);
+		free_cpumask_var(tmpmask);
+	}
+
+	/*
+	 * Memory barrier on the caller thread _after_ we finished
+	 * waiting for the last IPI. Matches memory barriers around
+	 * rq->curr modification in scheduler.
+	 */
+	smp_mb();	/* exit from system call is not a mb */
+}
 
 /**
  * sys_membarrier - issue memory barriers on a set of threads
@@ -63,6 +130,9 @@ SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
 	case MEMBARRIER_CMD_SHARED:
 		if (num_online_cpus() > 1)
 			synchronize_sched();
+		return 0;
+	case MEMBARRIER_CMD_PRIVATE_EXPEDITED:
+		membarrier_private_expedited();
 		return 0;
 	default:
 		return -EINVAL;

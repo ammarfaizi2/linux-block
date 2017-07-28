@@ -951,8 +951,13 @@ struct migration_arg {
 static struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf,
 				 struct task_struct *p, int dest_cpu)
 {
-	if (unlikely(!cpu_active(dest_cpu)))
-		return rq;
+	if (p->flags & PF_KTHREAD) {
+		if (unlikely(!cpu_online(dest_cpu)))
+			return rq;
+	} else {
+		if (unlikely(!cpu_active(dest_cpu)))
+			return rq;
+	}
 
 	/* Affinity changed (again). */
 	if (!cpumask_test_cpu(dest_cpu, &p->cpus_allowed))
@@ -2724,6 +2729,32 @@ asmlinkage __visible void schedule_tail(struct task_struct *prev)
 		put_user(task_pid_vnr(current), current->set_child_tid);
 }
 
+static void membarrier_expedited_mb_after_set_current(struct mm_struct *mm,
+		struct mm_struct *oldmm)
+{
+	if (!IS_ENABLED(CONFIG_MEMBARRIER))
+		return;
+	/*
+	 * __schedule()->
+	 *   finish_task_switch()->
+	 *    if (mm)
+	 *      mmdrop(mm) ->
+	 *        atomic_dec_and_test()
+	 * takes care of issuing a memory barrier when oldmm is
+	 * non-NULL. We also don't need the barrier when switching to a
+	 * kernel thread, nor when we switch between threads belonging
+	 * to the same process.
+	 */
+	if (likely(oldmm || !mm || mm == oldmm))
+		return;
+	/*
+	 * When switching between processes, membarrier expedited
+	 * private requires a memory barrier after we set the current
+	 * task.
+	 */
+	smp_mb();
+}
+
 /*
  * context_switch - switch to the new MM and the new thread's register state.
  */
@@ -2737,6 +2768,7 @@ context_switch(struct rq *rq, struct task_struct *prev,
 
 	mm = next->mm;
 	oldmm = prev->active_mm;
+	membarrier_expedited_mb_after_set_current(mm, oldmm);
 	/*
 	 * For paravirt, this is coupled with an exit in switch_to to
 	 * combine the page table reload and the switch backend into
@@ -3352,8 +3384,9 @@ void __noreturn do_task_dead(void)
 	 * To avoid it, we have to wait for releasing tsk->pi_lock which
 	 * is held by try_to_wake_up()
 	 */
-	smp_mb();
-	raw_spin_unlock_wait(&current->pi_lock);
+	smp_mb__before_spinlock();
+	raw_spin_lock_irq(&current->pi_lock);
+	raw_spin_unlock_irq(&current->pi_lock);
 
 	/* Causes final put_task_struct in finish_task_switch(): */
 	__set_current_state(TASK_DEAD);
@@ -4808,6 +4841,7 @@ int __sched _cond_resched(void)
 		preempt_schedule_common();
 		return 1;
 	}
+	rcu_all_qs();
 	return 0;
 }
 EXPORT_SYMBOL(_cond_resched);
