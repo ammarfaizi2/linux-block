@@ -2641,6 +2641,11 @@ static struct rq *finish_task_switch(struct task_struct *prev)
 	vtime_task_switch(prev);
 	perf_event_task_sched_in(prev, current);
 	finish_lock_switch(rq, prev);
+	/*
+	 * The membarrier system call requires a full memory barrier
+	 * after storing to rq->curr, before going back to user-space.
+	 */
+	smp_mb__after_unlock_lock();
 	finish_arch_post_lock_switch();
 
 	fire_sched_in_preempt_notifiers(current);
