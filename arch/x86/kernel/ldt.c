@@ -37,7 +37,42 @@ static void refresh_ldt_segments(void)
 	savesegment(es, sel);
 	if ((sel & SEGMENT_TI_MASK) == SEGMENT_LDT)
 		loadsegment(es, sel);
-#endif
+
+	/* Ditto for FS and GS, except that we leave the bases alone. */
+	savesegment(fs, sel);
+	if ((sel & SEGMENT_TI_MASK) == SEGMENT_LDT) {
+		unsigned long base;
+		rdmsrl(MSR_FS_BASE, base);
+		loadsegment(fs, sel);
+		wrmsrl(MSR_FS_BASE, base);
+
+		/*
+		 * Corner case alert: if loadsegment() failed, then FS == 0
+		 * but FSBASE may not equal thread.fsbase.  This will cause
+		 * the base to change on the next context switch.
+		 */
+	}
+
+	savesegment(gs, sel);
+	if ((sel & SEGMENT_TI_MASK) == SEGMENT_LDT) {
+		unsigned long base;
+		rdmsrl(MSR_KERNEL_GS_BASE, base);
+		load_gs_index(sel);
+		wrmsrl(MSR_KERNEL_GS_BASE, base);
+
+		/*
+		 * Corner case alert: if load_gs_index() failed, then FS == 0
+		 * but GSBASE may not equal thread.gsbase.  This will cause
+		 * the base to change on the next context switch.
+		 */
+	}
+#elif defined(CONFIG_X86_32_LAZY_GS)
+	unsigned short sel;
+
+	savesegment(gs, sel);
+	if ((sel & SEGMENT_TI_MASK) == SEGMENT_LDT)
+		loadsegment(gs, sel);
+#endif	
 }
 
 /* context.lock is held for us, so we don't need any locking. */
