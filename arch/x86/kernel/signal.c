@@ -221,23 +221,22 @@ int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 /*
  * Determine which stack to use..
  */
-static unsigned long align_sigframe(unsigned long sp)
+static unsigned long align_sigframe(unsigned long sp, bool is_ia32)
 {
-#ifdef CONFIG_X86_32
-	/*
-	 * Align the stack pointer according to the i386 ABI,
-	 * i.e. so that on function entry ((sp + 4) & 15) == 0.
-	 */
-	sp = ((sp + 4) & -16ul) - 4;
-#else /* !CONFIG_X86_32 */
-	sp = round_down(sp, 16) - 8;
-#endif
-	return sp;
+	if (is_ia32) {
+		/*
+		 * Align the stack pointer according to the i386 ABI,
+		 * i.e. so that on function entry ((sp + 4) & 15) == 0.
+		 */
+		return ((sp + 4) & -16ul) - 4;
+	} else {
+		return round_down(sp, 16) - 8;
+	}
 }
 
 static void __user *
 get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
-	     void __user **fpstate)
+	     void __user **fpstate, bool is_ia32)
 {
 	/* Default to using normal stack */
 	unsigned long math_size = 0;
@@ -264,16 +263,16 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
 	}
 
 	/* redzone */
-	if (!use_sigstack && IS_ENABLED(CONFIG_X86_64))
+	if (!use_sigstack && !is_ia32)
 		sp -= 128;
 
 	if (fpu->fpstate_active) {
-		sp = fpu__alloc_mathframe(sp, IS_ENABLED(CONFIG_X86_32),
+		sp = fpu__alloc_mathframe(sp, is_ia32,
 					  &buf_fx, &math_size);
 		*fpstate = (void __user *)sp;
 	}
 
-	sp = align_sigframe(sp - frame_size);
+	sp = align_sigframe(sp - frame_size, is_ia32);
 	if (!use_sigstack && probe_stack_range(sp, regs->sp) != 0)
 		return (void __user *)-1L;
 
@@ -324,7 +323,8 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 	int err = 0;
 	void __user *fpstate = NULL;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate);
+	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate,
+			     true);
 
 	if (!access_ok(VERIFY_WRITE, frame, sizeof(*frame)))
 		return -EFAULT;
@@ -387,7 +387,8 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	int err = 0;
 	void __user *fpstate = NULL;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate);
+	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate,
+			     true);
 
 	if (!access_ok(VERIFY_WRITE, frame, sizeof(*frame)))
 		return -EFAULT;
@@ -467,7 +468,8 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	void __user *fp = NULL;
 	int err = 0;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(struct rt_sigframe), &fp);
+	frame = get_sigframe(&ksig->ka, regs, sizeof(struct rt_sigframe),
+			     &fp, false);
 
 	if (!access_ok(VERIFY_WRITE, frame, sizeof(*frame)))
 		return -EFAULT;
@@ -549,7 +551,8 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 	int err = 0;
 	void __user *fpstate = NULL;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate);
+	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate,
+			     false);
 
 	if (!access_ok(VERIFY_WRITE, frame, sizeof(*frame)))
 		return -EFAULT;
