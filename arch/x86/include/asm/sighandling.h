@@ -13,7 +13,13 @@
 			 X86_EFLAGS_CF | X86_EFLAGS_RF)
 
 void signal_fault(struct pt_regs *regs, void __user *frame, char *where);
+int restore_sigcontext(struct pt_regs *regs,
+		       struct sigcontext __user *sc,
+		       unsigned long uc_flags);
 int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 		     struct pt_regs *regs, unsigned long mask);
+#ifdef CONFIG_X86_64
+void force_valid_ss(struct pt_regs *regs);
+#endif
 
 #endif /* _ASM_X86_SIGHANDLING_H */
