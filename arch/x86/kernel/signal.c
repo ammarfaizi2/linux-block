@@ -255,7 +255,7 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
 		}
 	} else if (IS_ENABLED(CONFIG_X86_32) &&
 		   !onsigstack &&
-		   regs->ss != __USER_DS &&
+		   regs->ss != __USER32_DS &&
 		   !(ka->sa.sa_flags & SA_RESTORER) &&
 		   ka->sa.sa_restorer) {
 		/* This is the legacy signal stack switching. */
@@ -371,10 +371,10 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 	regs->dx = 0;
 	regs->cx = 0;
 
-	set_current_ds(regs, __USER_DS);
-	set_current_es(regs, __USER_DS);
-	set_current_ss(regs, __USER_DS);
-	set_current_cs(regs, __USER_CS);
+	set_current_ds(regs, __USER32_DS);
+	set_current_es(regs, __USER32_DS);
+	set_current_ss(regs, __USER32_DS);
+	set_current_cs(regs, __USER32_CS);
 
 	return 0;
 }
@@ -437,10 +437,10 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	regs->dx = (unsigned long)&frame->info;
 	regs->cx = (unsigned long)&frame->uc;
 
-	set_current_ds(regs, __USER_DS);
-	set_current_es(regs, __USER_DS);
-	set_current_ss(regs, __USER_DS);
-	set_current_cs(regs, __USER_CS);
+	set_current_ds(regs, __USER32_DS);
+	set_current_es(regs, __USER32_DS);
+	set_current_ss(regs, __USER32_DS);
+	set_current_cs(regs, __USER32_CS);
 
 	return 0;
 }
