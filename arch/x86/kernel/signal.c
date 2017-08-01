@@ -252,7 +252,7 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
 			use_sigstack = true;
 			sp = current->sas_ss_sp + current->sas_ss_size;
 		}
-	} else if (IS_ENABLED(CONFIG_X86_32) &&
+	} else if (is_ia32 &&
 		   !onsigstack &&
 		   regs->ss != __USER32_DS &&
 		   !(ka->sa.sa_flags & SA_RESTORER) &&
@@ -315,8 +315,8 @@ static const struct {
 };
 
 static int
-__setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
-	      struct pt_regs *regs)
+__setup_frame_32(int sig, struct ksignal *ksig, sigset_t *set,
+		 struct pt_regs *regs)
 {
 	struct sigframe __user *frame;
 	void __user *restorer;
@@ -379,8 +379,8 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 	return 0;
 }
 
-static int __setup_rt_frame(int sig, struct ksignal *ksig,
-			    sigset_t *set, struct pt_regs *regs)
+static int __setup_rt_frame_32(int sig, struct ksignal *ksig,
+			       sigset_t *set, struct pt_regs *regs)
 {
 	struct rt_sigframe __user *frame;
 	void __user *restorer;
@@ -446,7 +446,7 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	return 0;
 }
 #else /* !CONFIG_X86_32 */
-static unsigned long frame_uc_flags(struct pt_regs *regs)
+static unsigned long frame_uc_flags_64(struct pt_regs *regs)
 {
 	unsigned long flags;
 
@@ -461,8 +461,8 @@ static unsigned long frame_uc_flags(struct pt_regs *regs)
 	return flags;
 }
 
-static int __setup_rt_frame(int sig, struct ksignal *ksig,
-			    sigset_t *set, struct pt_regs *regs)
+static int __setup_rt_frame_64(int sig, struct ksignal *ksig,
+			       sigset_t *set, struct pt_regs *regs)
 {
 	struct rt_sigframe __user *frame;
 	void __user *fp = NULL;
@@ -481,7 +481,7 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 
 	put_user_try {
 		/* Create the ucontext.  */
-		put_user_ex(frame_uc_flags(regs), &frame->uc.uc_flags);
+		put_user_ex(frame_uc_flags_64(regs), &frame->uc.uc_flags);
 		put_user_ex(0, &frame->uc.uc_link);
 		save_altstack_ex(&frame->uc.uc_stack, regs->sp);
 
@@ -564,7 +564,7 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 
 	put_user_try {
 		/* Create the ucontext.  */
-		put_user_ex(frame_uc_flags(regs), &frame->uc.uc_flags);
+		put_user_ex(frame_uc_flags_64(regs), &frame->uc.uc_flags);
 		put_user_ex(0, &frame->uc.uc_link);
 		compat_save_altstack_ex(&frame->uc.uc_stack, regs->sp);
 		put_user_ex(0, &frame->uc.uc__pad0);
@@ -702,8 +702,10 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
 			return ia32_setup_frame(usig, ksig, cset, regs);
 	} else if (is_x32_frame(ksig)) {
 		return x32_setup_rt_frame(ksig, cset, regs);
+#ifdef CONFIG_X86_64
 	} else {
-		return __setup_rt_frame(ksig->sig, ksig, set, regs);
+		return __setup_rt_frame_64(ksig->sig, ksig, set, regs);
+#endif
 	}
 }
 

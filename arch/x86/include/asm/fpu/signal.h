@@ -15,8 +15,8 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
 #else
 # define user_i387_ia32_struct	user_i387_struct
 # define user32_fxsr_struct	user_fxsr_struct
-# define ia32_setup_frame	__setup_frame
-# define ia32_setup_rt_frame	__setup_rt_frame
+# define ia32_setup_frame	__setup_frame_32
+# define ia32_setup_rt_frame	__setup_rt_frame_32
 #endif
 
 #ifdef CONFIG_COMPAT
