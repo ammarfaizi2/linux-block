@@ -18,6 +18,7 @@
 #include <sys/utsname.h>
 #include <linux/time64.h>
 #include <dirent.h>
+#include <ftw.h>
 
 #include "evlist.h"
 #include "evsel.h"
@@ -2592,6 +2593,101 @@ static int process_clockid(struct feat_fd *ff,
 	return 0;
 }
 
+static int dso__store_ssinfo(struct dso *dso, struct feat_fd *ff)
+{
+	size_t size = ff->size;
+	char *data;
+
+	data = malloc(size);
+	if (!data)
+		return -ENOMEM;
+
+	if (readn(ff->fd, data, size) != (ssize_t) size)
+		return -1;
+
+	dso->ssinfo.data = data;
+	dso->ssinfo.size = size;
+	return 0;
+}
+
+static int process_python_stack(struct feat_fd *ff, void *data __maybe_unused)
+{
+	struct perf_session *session = container_of(ff->ph, struct perf_session, header);
+	struct machine *machine;
+	struct dso *dso;
+
+	machine = perf_session__findnew_machine(session, HOST_KERNEL_ID);
+	if (!machine) {
+		pr_err("failed to get machine\n");
+		return -1;
+	}
+
+	dso = machine__findnew_dso(machine, "[python_stack]");
+	if (!dso) {
+		pr_err("failed to add python_stack dso\n");
+		return -1;
+	}
+
+	return dso__store_ssinfo(dso, ff);
+}
+
+static char *python_events_file;
+
+static int
+process_one_file(const char *fpath, const struct stat *sb __maybe_unused,
+		 int typeflag, struct FTW *ftwbuf)
+{
+	char *bname = (char *) fpath + ftwbuf->base;
+	int is_file = typeflag == FTW_F;
+	int level   = ftwbuf->level;
+
+	if (level != 1 || !is_file)
+		return 0;
+
+	if (strncmp(bname, "events-", sizeof("events-") - 1))
+		return 0;
+
+	python_events_file = strdup(bname);
+	return 1;
+}
+
+static int write_python_stack(struct feat_fd *ff __maybe_unused,
+		       struct perf_evlist *evlist __maybe_unused)
+{
+	char path[PATH_MAX];
+	size_t size;
+	char *buf;
+	int rc;
+
+	if (WARN_ONCE(!symbol_conf.record_script,
+		      "failed: no directory specified\n"))
+		return -1;
+
+	rc = nftw(symbol_conf.record_script, process_one_file, 5, 0);
+	if (rc <= 0) {
+		pr_err("nftw failed\n");
+		return rc;
+	}
+
+	scnprintf(path, PATH_MAX, "%s/%s",
+		  symbol_conf.record_script, python_events_file);
+
+	if (filename__read_str(path, &buf, &size)) {
+		pr_err("read failed\n");
+		return -1;
+	}
+
+	if ((ssize_t) size != write(ff->fd, buf, size))
+		return -1;
+
+	return 0;
+}
+
+static void print_python_stack(struct feat_fd *ff __maybe_unused, FILE *fp)
+{
+	fprintf(fp, "# contains Python script stack data.\n");
+}
+
 struct feature_ops {
 	int (*write)(struct feat_fd *ff, struct perf_evlist *evlist);
 	void (*print)(struct feat_fd *ff, FILE *fp);
@@ -2651,7 +2747,8 @@ static const struct feature_ops feat_ops[HEADER_LAST_FEATURE] = {
 	FEAT_OPN(CACHE,		cache,		true),
 	FEAT_OPR(SAMPLE_TIME,	sample_time,	false),
 	FEAT_OPR(MEM_TOPOLOGY,	mem_topology,	true),
-	FEAT_OPR(CLOCKID,       clockid,        false)
+	FEAT_OPR(CLOCKID,       clockid,        false),
+	FEAT_OPN(PYTHON_STACK,	python_stack,	false),
 };
 
 struct header_print_data {
