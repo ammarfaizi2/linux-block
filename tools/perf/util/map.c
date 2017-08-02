@@ -45,6 +45,22 @@ static inline int is_android_lib(const char *filename)
 	       !strncmp(filename, "/system/lib", 11);
 }
 
+static inline int is_python_stack(const char *filename)
+{
+	int ret;
+
+	ret = strncmp(filename, "/tmp/perf-record-", 17);
+	if (!ret) {
+		size_t len = strlen(filename);
+		size_t off = 17 + 6 /* XXXXXX */ + 1 /* / */;
+
+		if (off < len)
+			return !strncmp(filename + off, "datauser-", 9);
+	}
+
+	return 0;
+}
+
 static inline bool replace_android_lib(const char *filename, char *newfilename)
 {
 	const char *libname;
@@ -153,12 +169,13 @@ struct map *map__new(struct machine *machine, u64 start, u64 len,
 	if (map != NULL) {
 		char newfilename[PATH_MAX];
 		struct dso *dso;
-		int anon, no_dso, vdso, android;
+		int anon, no_dso, vdso, android, python;
 
 		android = is_android_lib(filename);
 		anon = is_anon_memory(filename, flags);
 		vdso = is_vdso_map(filename);
 		no_dso = is_no_dso_memory(filename);
+		python = is_python_stack(filename);
 
 		map->maj = d_maj;
 		map->min = d_min;
@@ -177,6 +194,13 @@ struct map *map__new(struct machine *machine, u64 start, u64 len,
 		if (android) {
 			if (replace_android_lib(filename, newfilename))
 				filename = newfilename;
+		}
+
+		if (python) {
+			scnprintf(newfilename, PATH_MAX, "[python_stack]");
+			filename = newfilename;
+			thread->user_map = map;
+			map->map_ip = map->unmap_ip = identity__map_ip;
 		}
 
 		if (vdso) {
@@ -199,6 +223,9 @@ struct map *map__new(struct machine *machine, u64 start, u64 len,
 			goto out_delete;
 
 		map__init(map, start, start + len, pgoff, dso);
+
+		if (python)
+			map->map_ip = map->unmap_ip = identity__map_ip;
 
 		if (anon || no_dso) {
 			map->map_ip = map->unmap_ip = identity__map_ip;

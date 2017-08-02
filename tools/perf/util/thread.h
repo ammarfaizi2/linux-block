@@ -46,6 +46,7 @@ struct thread {
 #endif
 	bool			filter;
 	int			filter_entry_depth;
+	struct map		*user_map;
 };
 
 struct machine;
