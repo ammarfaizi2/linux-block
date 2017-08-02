@@ -192,7 +192,7 @@ __setup_frame_32(int sig, struct ksignal *ksig, sigset_t *set,
 	if (__put_user(sig, &frame->sig))
 		return -EFAULT;
 
-	if (setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
+	if (setup_sigcontext_32(&frame->sc, fpstate, regs, set->sig[0]))
 		return -EFAULT;
 
 	if (_NSIG_WORDS > 1) {
@@ -284,7 +284,7 @@ static int __setup_rt_frame_32(int sig, struct ksignal *ksig,
 	} put_user_catch(err);
 	
 	err |= copy_siginfo_to_user(&frame->info, &ksig->info);
-	err |= setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
+	err |= setup_sigcontext_32(&frame->uc.uc_mcontext, fpstate,
 				regs, set->sig[0]);
 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
 
@@ -356,7 +356,7 @@ static int __setup_rt_frame_64(int sig, struct ksignal *ksig,
 		}
 	} put_user_catch(err);
 
-	err |= setup_sigcontext(&frame->uc.uc_mcontext, fp, regs, set->sig[0]);
+	err |= setup_sigcontext_64(&frame->uc.uc_mcontext, fp, regs, set->sig[0]);
 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
 
 	if (err)
@@ -439,8 +439,8 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 		put_user_ex(restorer, &frame->pretcode);
 	} put_user_catch(err);
 
-	err |= setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
-				regs, set->sig[0]);
+	err |= setup_sigcontext_64(&frame->uc.uc_mcontext, fpstate,
+				   regs, set->sig[0]);
 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
 
 	if (err)
@@ -471,10 +471,10 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 asmlinkage unsigned long sys_sigreturn(void)
 {
 	struct pt_regs *regs = current_pt_regs();
-	struct sigframe __user *frame;
+	sigframe_t_32 __user *frame;
 	sigset_t set;
 
-	frame = (struct sigframe __user *)(regs->sp - 8);
+	frame = (sigframe_t_32 __user *)(regs->sp - 8);
 
 	if (!access_ok(VERIFY_READ, frame, sizeof(*frame)))
 		goto badframe;
@@ -489,7 +489,7 @@ asmlinkage unsigned long sys_sigreturn(void)
 	 * x86_32 has no uc_flags bits relevant to restore_sigcontext.
 	 * Save a few cycles by skipping the __get_user.
 	 */
-	if (restore_sigcontext(regs, &frame->sc, 0))
+	if (restore_sigcontext_32(regs, &frame->sc, 0))
 		goto badframe;
 	return regs->ax;
 
@@ -517,8 +517,13 @@ asmlinkage long sys_rt_sigreturn(void)
 
 	set_current_blocked(&set);
 
-	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
+#ifdef CONFIG_X86_64
+	if (restore_sigcontext_64(regs, &frame->uc.uc_mcontext, uc_flags))
 		goto badframe;
+#else
+	if (restore_sigcontext_32(regs, &frame->uc.uc_mcontext, uc_flags))
+		goto badframe;
+#endif
 
 	if (restore_altstack(&frame->uc.uc_stack))
 		goto badframe;
@@ -742,7 +747,7 @@ asmlinkage long sys32_x32_rt_sigreturn(void)
 
 	set_current_blocked(&set);
 
-	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
+	if (restore_sigcontext_64(regs, &frame->uc.uc_mcontext, uc_flags))
 		goto badframe;
 
 	if (compat_restore_altstack(&frame->uc.uc_stack))

@@ -1,6 +1,24 @@
 /*
  * Signal code that has compile-time dependencies on signal ABI.
+ *
+ * This file is compiled twice on 64-bit systems with IA32 support.
  */
+
+#ifdef SIGABI_64
+
+typedef unsigned long word_t;
+#define ABI(x) x##_64
+
+#elif defined(SIGABI_32)
+
+typedef unsigned int word_t;
+#define ABI(x) x##_32
+
+#else
+
+#error signal_sigcontext.c must not be compiled directly
+
+#endif
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -58,9 +76,9 @@
 	regs->seg = GET_SEG(seg) | 3;			\
 } while (0)
 
-int restore_sigcontext(struct pt_regs *regs,
-		       struct sigcontext __user *sc,
-		       unsigned long uc_flags)
+int ABI(restore_sigcontext)(struct pt_regs *regs,
+			    ABI(sigcontext_t) __user *sc,
+			    unsigned long uc_flags)
 {
 	unsigned long buf_val;
 	void __user *buf;
@@ -72,17 +90,17 @@ int restore_sigcontext(struct pt_regs *regs,
 
 	get_user_try {
 
-#ifdef CONFIG_X86_32
+#ifdef SIGABI_32
 		set_current_gs(regs, GET_SEG(gs));
 		COPY_SEG(fs);
 		COPY_SEG(es);
 		COPY_SEG(ds);
-#endif /* CONFIG_X86_32 */
+#endif /* SIGABI_32 */
 
 		COPY(di); COPY(si); COPY(bp); COPY(sp); COPY(bx);
 		COPY(dx); COPY(cx); COPY(ip); COPY(ax);
 
-#ifdef CONFIG_X86_64
+#ifdef SIGABI_64
 		COPY(r8);
 		COPY(r9);
 		COPY(r10);
@@ -91,12 +109,12 @@ int restore_sigcontext(struct pt_regs *regs,
 		COPY(r13);
 		COPY(r14);
 		COPY(r15);
-#endif /* CONFIG_X86_64 */
+#endif /* SIGABI_64 */
 
 		COPY_SEG_CPL3(cs);
 		COPY_SEG_CPL3(ss);
 
-#ifdef CONFIG_X86_64
+#ifdef SIGABI_64
 		/*
 		 * Fix up SS if needed for the benefit of old DOSEMU and
 		 * CRIU.
@@ -121,19 +139,20 @@ int restore_sigcontext(struct pt_regs *regs,
 	return err;
 }
 
-int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
-		     struct pt_regs *regs, unsigned long mask)
+int ABI(setup_sigcontext)(ABI(sigcontext_t) __user *sc,
+			  void __user *fpstate,
+			  struct pt_regs *regs, unsigned long mask)
 {
 	int err = 0;
 
 	put_user_try {
 
-#ifdef CONFIG_X86_32
+#ifdef SIGABI_32
 		put_user_ex(get_current_gs(regs), (unsigned int __user *)&sc->gs);
 		put_user_ex(get_current_fs(regs), (unsigned int __user *)&sc->fs);
 		put_user_ex(get_current_es(regs), (unsigned int __user *)&sc->es);
 		put_user_ex(get_current_ds(regs), (unsigned int __user *)&sc->ds);
-#endif /* CONFIG_X86_32 */
+#endif /* SIGABI_32 */
 
 		put_user_ex(regs->di, &sc->di);
 		put_user_ex(regs->si, &sc->si);
@@ -143,7 +162,7 @@ int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 		put_user_ex(regs->dx, &sc->dx);
 		put_user_ex(regs->cx, &sc->cx);
 		put_user_ex(regs->ax, &sc->ax);
-#ifdef CONFIG_X86_64
+#ifdef SIGABI_64
 		put_user_ex(regs->r8, &sc->r8);
 		put_user_ex(regs->r9, &sc->r9);
 		put_user_ex(regs->r10, &sc->r10);
@@ -152,25 +171,25 @@ int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 		put_user_ex(regs->r13, &sc->r13);
 		put_user_ex(regs->r14, &sc->r14);
 		put_user_ex(regs->r15, &sc->r15);
-#endif /* CONFIG_X86_64 */
+#endif /* SIGABI_64 */
 
 		put_user_ex(current->thread.trap_nr, &sc->trapno);
 		put_user_ex(current->thread.error_code, &sc->err);
 		put_user_ex(regs->ip, &sc->ip);
 		put_user_ex(get_current_cs(regs), &sc->cs);
 
-#ifdef CONFIG_X86_32
+#ifdef SIGABI_32
 		put_user_ex(regs->flags, &sc->flags);
 		put_user_ex(regs->sp, &sc->sp_at_signal);
 		put_user_ex(get_current_ss(regs), (unsigned int __user *)&sc->ss);
-#else /* !CONFIG_X86_32 */
+#else /* !SIGABI_32 */
 		put_user_ex(regs->flags, &sc->flags);
 		put_user_ex(0, &sc->gs);
 		put_user_ex(0, &sc->fs);
 		put_user_ex(regs->ss, &sc->ss);
 #endif /* CONFIG_X86_32 */
 
-		put_user_ex(fpstate, &sc->fpstate);
+		put_user_ex((word_t)(unsigned long)fpstate, &sc->fpstate);
 
 		/* non-iBCS2 extensions.. */
 		put_user_ex(mask, &sc->oldmask);

@@ -40,7 +40,9 @@ KCOV_INSTRUMENT		:= n
 
 CFLAGS_irq.o := -I$(src)/../include/asm/trace
 
-obj-y			:= process_$(BITS).o signal.o signal_sigcontext.o
+obj-y			:= process_$(BITS).o signal.o
+obj-$(CONFIG_IA32_SUPPORT)	+= signal_sigcontext_32.o
+obj-$(CONFIG_X86_64)		+= signal_sigcontext_64.o
 obj-$(CONFIG_COMPAT)	+= signal_compat.o
 obj-y			+= traps.o irq.o irq_$(BITS).o dumpstack_$(BITS).o
 obj-y			+= time.o ioport.o dumpstack.o nmi.o
