@@ -16,13 +16,23 @@
 #ifdef CONFIG_X86_64
 typedef struct sigcontext sigcontext_t_64;
 typedef struct sigframe sigframe_t_64;
+typedef struct rt_sigframe rt_sigframe_t_64;
+typedef sigset_t sigset_t_64;
 #ifdef CONFIG_IA32_EMULATION
 typedef struct sigcontext_32 sigcontext_t_32;
 typedef struct sigframe_ia32 sigframe_t_32;
+typedef struct rt_sigframe_ia32 rt_sigframe_t_32;
+typedef compat_sigset_t sigset_t_32;
+#define __NR32_sigreturn __NR_ia32_sigreturn
+#define __NR32_rt_sigreturn __NR_ia32_rt_sigreturn
 #endif
 #else
 typedef struct sigcontext sigcontext_t_32;
 typedef struct sigframe sigframe_t_32;
+typedef struct rt_sigframe rt_sigframe_t_32;
+typedef sigset_t sigset_t_32;
+#define __NR32_sigreturn __NR_sigreturn
+#define __NR32_rt_sigreturn __NR_sigreturn_rt
 #endif
 
 void signal_fault(struct pt_regs *regs, void __user *frame, char *where);

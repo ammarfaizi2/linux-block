@@ -151,14 +151,13 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
 	return (void __user *)sp;
 }
 
-#ifdef CONFIG_X86_32
 static const struct {
 	u16 poplmovl;
 	u32 val;
 	u16 int80;
-} __attribute__((packed)) retcode = {
+} __attribute__((packed)) retcode_32 = {
 	0xb858,		/* popl %eax; movl $..., %eax */
-	__NR_sigreturn,
+	__NR32_sigreturn,
 	0x80cd,		/* int $0x80 */
 };
 
@@ -167,18 +166,18 @@ static const struct {
 	u32 val;
 	u16 int80;
 	u8  pad;
-} __attribute__((packed)) rt_retcode = {
+} __attribute__((packed)) rt_retcode_32 = {
 	0xb8,		/* movl $..., %eax */
-	__NR_rt_sigreturn,
+	__NR32_rt_sigreturn,
 	0x80cd,		/* int $0x80 */
 	0
 };
 
 static int
-__setup_frame_32(int sig, struct ksignal *ksig, sigset_t *set,
+__setup_frame_32(int sig, struct ksignal *ksig, sigset_t_32 *set,
 		 struct pt_regs *regs)
 {
-	struct sigframe __user *frame;
+	sigframe_t_32 __user *frame;
 	void __user *restorer;
 	int err = 0;
 	void __user *fpstate = NULL;
@@ -210,7 +209,7 @@ __setup_frame_32(int sig, struct ksignal *ksig, sigset_t *set,
 		restorer = ksig->ka.sa.sa_restorer;
 
 	/* Set up to return from userspace.  */
-	err |= __put_user(restorer, &frame->pretcode);
+	err |= __put_user((u32)(unsigned long)restorer, &frame->pretcode);
 
 	/*
 	 * This is popl %eax ; movl $__NR_sigreturn, %eax ; int $0x80
@@ -219,7 +218,7 @@ __setup_frame_32(int sig, struct ksignal *ksig, sigset_t *set,
 	 * reasons and because gdb uses it as a signature to notice
 	 * signal handler stack frames.
 	 */
-	err |= __put_user(*((u64 *)&retcode), (u64 *)frame->retcode);
+	err |= __put_user(*((u64 *)&retcode_32), (u64 *)frame->retcode);
 
 	if (err)
 		return -EFAULT;
@@ -227,6 +226,8 @@ __setup_frame_32(int sig, struct ksignal *ksig, sigset_t *set,
 	/* Set up registers for signal handler */
 	regs->sp = (unsigned long)frame;
 	regs->ip = (unsigned long)ksig->ka.sa.sa_handler;
+
+	/* Make -mregparm=3 word */
 	regs->ax = (unsigned long)sig;
 	regs->dx = 0;
 	regs->cx = 0;
@@ -240,9 +241,9 @@ __setup_frame_32(int sig, struct ksignal *ksig, sigset_t *set,
 }
 
 static int __setup_rt_frame_32(int sig, struct ksignal *ksig,
-			       sigset_t *set, struct pt_regs *regs)
+			       sigset_t_32 *set, struct pt_regs *regs)
 {
-	struct rt_sigframe __user *frame;
+	rt_sigframe_t_32 __user *frame;
 	void __user *restorer;
 	int err = 0;
 	void __user *fpstate = NULL;
@@ -255,8 +256,8 @@ static int __setup_rt_frame_32(int sig, struct ksignal *ksig,
 
 	put_user_try {
 		put_user_ex(sig, &frame->sig);
-		put_user_ex(&frame->info, &frame->pinfo);
-		put_user_ex(&frame->uc, &frame->puc);
+		put_user_ex((u32)(unsigned long)&frame->info, &frame->pinfo);
+		put_user_ex((u32)(unsigned long)&frame->uc, &frame->puc);
 
 		/* Create the ucontext.  */
 		if (boot_cpu_has(X86_FEATURE_XSAVE))
@@ -264,14 +265,18 @@ static int __setup_rt_frame_32(int sig, struct ksignal *ksig,
 		else
 			put_user_ex(0, &frame->uc.uc_flags);
 		put_user_ex(0, &frame->uc.uc_link);
+#ifdef CONFIG_X86_32
 		save_altstack_ex(&frame->uc.uc_stack, regs->sp);
+#else
+		compat_save_altstack_ex(&frame->uc.uc_stack, regs->sp);
+#endif
 
 		/* Set up to return from userspace.  */
 		restorer = current->mm->context.vdso +
 			vdso_image_32.sym___kernel_rt_sigreturn;
 		if (ksig->ka.sa.sa_flags & SA_RESTORER)
 			restorer = ksig->ka.sa.sa_restorer;
-		put_user_ex(restorer, &frame->pretcode);
+		put_user_ex((u32)(unsigned long)restorer, &frame->pretcode);
 
 		/*
 		 * This is movl $__NR_rt_sigreturn, %ax ; int $0x80
@@ -280,10 +285,14 @@ static int __setup_rt_frame_32(int sig, struct ksignal *ksig,
 		 * reasons and because gdb uses it as a signature to notice
 		 * signal handler stack frames.
 		 */
-		put_user_ex(*((u64 *)&rt_retcode), (u64 *)frame->retcode);
+		put_user_ex(*((u64 *)&rt_retcode_32), (u64 *)frame->retcode);
 	} put_user_catch(err);
-	
+
+#ifdef CONFIG_X86_32
 	err |= copy_siginfo_to_user(&frame->info, &ksig->info);
+#else
+	err |= __copy_siginfo_to_user32(&frame->info, &ksig->info, false);
+#endif
 	err |= setup_sigcontext_32(&frame->uc.uc_mcontext, fpstate,
 				regs, set->sig[0]);
 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
@@ -305,7 +314,8 @@ static int __setup_rt_frame_32(int sig, struct ksignal *ksig,
 
 	return 0;
 }
-#else /* !CONFIG_X86_32 */
+
+#ifdef CONFIG_X86_64
 static unsigned long frame_uc_flags_64(struct pt_regs *regs)
 {
 	unsigned long flags;
@@ -399,10 +409,10 @@ static int __setup_rt_frame_64(int sig, struct ksignal *ksig,
 
 	return 0;
 }
-#endif /* CONFIG_X86_32 */
+#endif /* CONFIG_X86_64 */
 
 static int x32_setup_rt_frame(struct ksignal *ksig,
-			      compat_sigset_t *set,
+			      sigset_t_32 *set,
 			      struct pt_regs *regs)
 {
 #ifdef CONFIG_X86_X32_ABI
@@ -557,16 +567,16 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
 {
 	int usig = ksig->sig;
 	sigset_t *set = sigmask_to_save();
-	compat_sigset_t *cset = (compat_sigset_t *) set;
+	sigset_t_32 *set32 = (sigset_t_32 *) set;
 
 	/* Set up the stack frame */
 	if (is_ia32_frame(ksig)) {
 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-			return ia32_setup_rt_frame(usig, ksig, cset, regs);
+			return __setup_rt_frame_32(usig, ksig, set32, regs);
 		else
-			return ia32_setup_frame(usig, ksig, cset, regs);
+			return __setup_frame_32(usig, ksig, set32, regs);
 	} else if (is_x32_frame(ksig)) {
-		return x32_setup_rt_frame(ksig, cset, regs);
+		return x32_setup_rt_frame(ksig, set32, regs);
 #ifdef CONFIG_X86_64
 	} else {
 		return __setup_rt_frame_64(ksig->sig, ksig, set, regs);
