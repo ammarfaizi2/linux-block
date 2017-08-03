@@ -79,6 +79,7 @@
 #include "l2t.h"
 #include "sched.h"
 #include "cxgb4_tc_u32.h"
+#include "cxgb4_ptp.h"
 
 char cxgb4_driver_name[] = KBUILD_MODNAME;
 
@@ -868,6 +869,14 @@ static int setup_sge_queues(struct adapter *adap)
 
 		err = t4_sge_alloc_ctrl_txq(adap, &s->ctrlq[i], adap->port[i],
 					    s->fw_evtq.cntxt_id, cmplqid);
+		if (err)
+			goto freeout;
+	}
+
+	if (!is_t4(adap->params.chip)) {
+		err = t4_sge_alloc_eth_txq(adap, &s->ptptxq, adap->port[0],
+					   netdev_get_tx_queue(adap->port[0], 0)
+					   , s->fw_evtq.cntxt_id);
 		if (err)
 			goto freeout;
 	}
@@ -2074,12 +2083,12 @@ static void detach_ulds(struct adapter *adap)
 
 	mutex_lock(&uld_mutex);
 	list_del(&adap->list_node);
+
 	for (i = 0; i < CXGB4_ULD_MAX; i++)
-		if (adap->uld && adap->uld[i].handle) {
+		if (adap->uld && adap->uld[i].handle)
 			adap->uld[i].state_change(adap->uld[i].handle,
 					     CXGB4_STATE_DETACH);
-			adap->uld[i].handle = NULL;
-		}
+
 	if (netevent_registered && list_empty(&adapter_list)) {
 		unregister_netevent_notifier(&cxgb4_netevent_nb);
 		netevent_registered = false;
@@ -2438,6 +2447,7 @@ static int cxgb_ioctl(struct net_device *dev, struct ifreq *req, int cmd)
 	unsigned int mbox;
 	int ret = 0, prtad, devad;
 	struct port_info *pi = netdev_priv(dev);
+	struct adapter *adapter = pi->adapter;
 	struct mii_ioctl_data *data = (struct mii_ioctl_data *)&req->ifr_data;
 
 	switch (cmd) {
@@ -2475,18 +2485,69 @@ static int cxgb_ioctl(struct net_device *dev, struct ifreq *req, int cmd)
 				   sizeof(pi->tstamp_config)))
 			return -EFAULT;
 
-		switch (pi->tstamp_config.rx_filter) {
-		case HWTSTAMP_FILTER_NONE:
+		if (!is_t4(adapter->params.chip)) {
+			switch (pi->tstamp_config.tx_type) {
+			case HWTSTAMP_TX_OFF:
+			case HWTSTAMP_TX_ON:
+				break;
+			default:
+				return -ERANGE;
+			}
+
+			switch (pi->tstamp_config.rx_filter) {
+			case HWTSTAMP_FILTER_NONE:
+				pi->rxtstamp = false;
+				break;
+			case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+			case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+				cxgb4_ptprx_timestamping(pi, pi->port_id,
+							 PTP_TS_L4);
+				break;
+			case HWTSTAMP_FILTER_PTP_V2_EVENT:
+				cxgb4_ptprx_timestamping(pi, pi->port_id,
+							 PTP_TS_L2_L4);
+				break;
+			case HWTSTAMP_FILTER_ALL:
+			case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+			case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+			case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+			case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+				pi->rxtstamp = true;
+				break;
+			default:
+				pi->tstamp_config.rx_filter =
+					HWTSTAMP_FILTER_NONE;
+				return -ERANGE;
+			}
+
+			if ((pi->tstamp_config.tx_type == HWTSTAMP_TX_OFF) &&
+			    (pi->tstamp_config.rx_filter ==
+				HWTSTAMP_FILTER_NONE)) {
+				if (cxgb4_ptp_txtype(adapter, pi->port_id) >= 0)
+					pi->ptp_enable = false;
+			}
+
+			if (pi->tstamp_config.rx_filter !=
+				HWTSTAMP_FILTER_NONE) {
+				if (cxgb4_ptp_redirect_rx_packet(adapter,
+								 pi) >= 0)
+					pi->ptp_enable = true;
+			}
+		} else {
+			/* For T4 Adapters */
+			switch (pi->tstamp_config.rx_filter) {
+			case HWTSTAMP_FILTER_NONE:
 			pi->rxtstamp = false;
 			break;
-		case HWTSTAMP_FILTER_ALL:
+			case HWTSTAMP_FILTER_ALL:
 			pi->rxtstamp = true;
 			break;
-		default:
-			pi->tstamp_config.rx_filter = HWTSTAMP_FILTER_NONE;
+			default:
+			pi->tstamp_config.rx_filter =
+			HWTSTAMP_FILTER_NONE;
 			return -ERANGE;
+			}
 		}
-
 		return copy_to_user(req->ifr_data, &pi->tstamp_config,
 				    sizeof(pi->tstamp_config)) ?
 			-EFAULT : 0;
@@ -3549,11 +3610,8 @@ static int adap_init0(struct adapter *adap)
 	 * later reporting and B. to warn if the currently loaded firmware
 	 * is excessively mismatched relative to the driver.)
 	 */
-	t4_get_fw_version(adap, &adap->params.fw_vers);
-	t4_get_bs_version(adap, &adap->params.bs_vers);
-	t4_get_tp_version(adap, &adap->params.tp_vers);
-	t4_get_exprom_version(adap, &adap->params.er_vers);
 
+	t4_get_version_info(adap);
 	ret = t4_check_fw_version(adap);
 	/* If firmware is too old (not supported by driver) force an update. */
 	if (ret)
@@ -4240,6 +4298,9 @@ static void cfg_queues(struct adapter *adap)
 	for (i = 0; i < ARRAY_SIZE(s->ctrlq); i++)
 		s->ctrlq[i].q.size = 512;
 
+	if (!is_t4(adap->params.chip))
+		s->ptptxq.q.size = 8;
+
 	init_rspq(adap, &s->fw_evtq, 0, 1, 1024, 64);
 	init_rspq(adap, &s->intrq, 0, 1, 512, 64);
 }
@@ -4496,56 +4557,8 @@ static void cxgb4_check_pcie_caps(struct adapter *adap)
 /* Dump basic information about the adapter */
 static void print_adapter_info(struct adapter *adapter)
 {
-	/* Device information */
-	dev_info(adapter->pdev_dev, "Chelsio %s rev %d\n",
-		 adapter->params.vpd.id,
-		 CHELSIO_CHIP_RELEASE(adapter->params.chip));
-	dev_info(adapter->pdev_dev, "S/N: %s, P/N: %s\n",
-		 adapter->params.vpd.sn, adapter->params.vpd.pn);
-
-	/* Firmware Version */
-	if (!adapter->params.fw_vers)
-		dev_warn(adapter->pdev_dev, "No firmware loaded\n");
-	else
-		dev_info(adapter->pdev_dev, "Firmware version: %u.%u.%u.%u\n",
-			 FW_HDR_FW_VER_MAJOR_G(adapter->params.fw_vers),
-			 FW_HDR_FW_VER_MINOR_G(adapter->params.fw_vers),
-			 FW_HDR_FW_VER_MICRO_G(adapter->params.fw_vers),
-			 FW_HDR_FW_VER_BUILD_G(adapter->params.fw_vers));
-
-	/* Bootstrap Firmware Version. (Some adapters don't have Bootstrap
-	 * Firmware, so dev_info() is more appropriate here.)
-	 */
-	if (!adapter->params.bs_vers)
-		dev_info(adapter->pdev_dev, "No bootstrap loaded\n");
-	else
-		dev_info(adapter->pdev_dev, "Bootstrap version: %u.%u.%u.%u\n",
-			 FW_HDR_FW_VER_MAJOR_G(adapter->params.bs_vers),
-			 FW_HDR_FW_VER_MINOR_G(adapter->params.bs_vers),
-			 FW_HDR_FW_VER_MICRO_G(adapter->params.bs_vers),
-			 FW_HDR_FW_VER_BUILD_G(adapter->params.bs_vers));
-
-	/* TP Microcode Version */
-	if (!adapter->params.tp_vers)
-		dev_warn(adapter->pdev_dev, "No TP Microcode loaded\n");
-	else
-		dev_info(adapter->pdev_dev,
-			 "TP Microcode version: %u.%u.%u.%u\n",
-			 FW_HDR_FW_VER_MAJOR_G(adapter->params.tp_vers),
-			 FW_HDR_FW_VER_MINOR_G(adapter->params.tp_vers),
-			 FW_HDR_FW_VER_MICRO_G(adapter->params.tp_vers),
-			 FW_HDR_FW_VER_BUILD_G(adapter->params.tp_vers));
-
-	/* Expansion ROM version */
-	if (!adapter->params.er_vers)
-		dev_info(adapter->pdev_dev, "No Expansion ROM loaded\n");
-	else
-		dev_info(adapter->pdev_dev,
-			 "Expansion ROM version: %u.%u.%u.%u\n",
-			 FW_HDR_FW_VER_MAJOR_G(adapter->params.er_vers),
-			 FW_HDR_FW_VER_MINOR_G(adapter->params.er_vers),
-			 FW_HDR_FW_VER_MICRO_G(adapter->params.er_vers),
-			 FW_HDR_FW_VER_BUILD_G(adapter->params.er_vers));
+	/* Hardware/Firmware/etc. Version/Revision IDs */
+	t4_dump_version_info(adapter);
 
 	/* Software/Hardware configuration */
 	dev_info(adapter->pdev_dev, "Configuration: %sNIC %s, %s capable\n",
@@ -5138,6 +5151,9 @@ static int init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		mutex_unlock(&uld_mutex);
 	}
 
+	if (!is_t4(adapter->params.chip))
+		cxgb4_ptp_init(adapter);
+
 	print_adapter_info(adapter);
 	setup_fw_sge_queues(adapter);
 	return 0;
@@ -5236,8 +5252,10 @@ static void remove_one(struct pci_dev *pdev)
 		 */
 		destroy_workqueue(adapter->workq);
 
-		if (is_uld(adapter))
+		if (is_uld(adapter)) {
 			detach_ulds(adapter);
+			t4_uld_clean_up(adapter);
+		}
 
 		disable_interrupts(adapter);
 
@@ -5246,6 +5264,9 @@ static void remove_one(struct pci_dev *pdev)
 				unregister_netdev(adapter->port[i]);
 
 		debugfs_remove_recursive(adapter->debugfs_root);
+
+		if (!is_t4(adapter->params.chip))
+			cxgb4_ptp_stop(adapter);
 
 		/* If we allocated filters, free up state associated with any
 		 * valid filters ...
@@ -5315,7 +5336,11 @@ static void shutdown_one(struct pci_dev *pdev)
 			if (adapter->port[i]->reg_state == NETREG_REGISTERED)
 				cxgb_close(adapter->port[i]);
 
-		t4_uld_clean_up(adapter);
+		if (is_uld(adapter)) {
+			detach_ulds(adapter);
+			t4_uld_clean_up(adapter);
+		}
+
 		disable_interrupts(adapter);
 		disable_msi(adapter);
 

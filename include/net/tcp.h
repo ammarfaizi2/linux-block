@@ -46,6 +46,10 @@
 #include <linux/seq_file.h>
 #include <linux/memcontrol.h>
 
+#include <linux/bpf.h>
+#include <linux/filter.h>
+#include <linux/bpf-cgroup.h>
+
 extern struct inet_hashinfo tcp_hashinfo;
 
 extern struct percpu_counter tcp_orphan_count;
@@ -135,6 +139,7 @@ void tcp_time_wait(struct sock *sk, int state, int timeo);
 #endif
 #define TCP_RTO_MAX	((unsigned)(120*HZ))
 #define TCP_RTO_MIN	((unsigned)(HZ/5))
+#define TCP_TIMEOUT_MIN	(2U) /* Min timeout for TCP timers in jiffies */
 #define TCP_TIMEOUT_INIT ((unsigned)(1*HZ))	/* RFC6298 2.1 initial RTO value	*/
 #define TCP_TIMEOUT_FALLBACK ((unsigned)(3*HZ))	/* RFC 1122 initial RTO value, now
 						 * used as a fallback RTO for the
@@ -146,8 +151,6 @@ void tcp_time_wait(struct sock *sk, int state, int timeo);
 #define TCP_RESOURCE_PROBE_INTERVAL ((unsigned)(HZ/2U)) /* Maximal interval between probes
 					                 * for local resources.
 					                 */
-#define TCP_REO_TIMEOUT_MIN	(2000) /* Min RACK reordering timeout in usec */
-
 #define TCP_KEEPALIVE_TIME	(120*60*HZ)	/* two hours */
 #define TCP_KEEPALIVE_PROBES	9		/* Max of 9 keepalive probes	*/
 #define TCP_KEEPALIVE_INTVL	(75*HZ)
@@ -359,7 +362,7 @@ void tcp_delack_timer_handler(struct sock *sk);
 int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg);
 int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb);
 void tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
-			 const struct tcphdr *th, unsigned int len);
+			 const struct tcphdr *th);
 void tcp_rcv_space_adjust(struct sock *sk);
 int tcp_twsk_unique(struct sock *sk, struct sock *sktw, void *twp);
 void tcp_twsk_destructor(struct sock *sk);
@@ -1000,7 +1003,9 @@ void tcp_get_default_congestion_control(char *name);
 void tcp_get_available_congestion_control(char *buf, size_t len);
 void tcp_get_allowed_congestion_control(char *buf, size_t len);
 int tcp_set_allowed_congestion_control(char *allowed);
-int tcp_set_congestion_control(struct sock *sk, const char *name);
+int tcp_set_congestion_control(struct sock *sk, const char *name, bool load);
+void tcp_reinit_congestion_control(struct sock *sk,
+				   const struct tcp_congestion_ops *ca);
 u32 tcp_slow_start(struct tcp_sock *tp, u32 acked);
 void tcp_cong_avoid_ai(struct tcp_sock *tp, u32 w, u32 acked);
 
@@ -2021,4 +2026,62 @@ int tcp_set_ulp(struct sock *sk, const char *name);
 void tcp_get_available_ulp(char *buf, size_t len);
 void tcp_cleanup_ulp(struct sock *sk);
 
+/* Call BPF_SOCK_OPS program that returns an int. If the return value
+ * is < 0, then the BPF op failed (for example if the loaded BPF
+ * program does not support the chosen operation or there is no BPF
+ * program loaded).
+ */
+#ifdef CONFIG_BPF
+static inline int tcp_call_bpf(struct sock *sk, int op)
+{
+	struct bpf_sock_ops_kern sock_ops;
+	int ret;
+
+	if (sk_fullsock(sk))
+		sock_owned_by_me(sk);
+
+	memset(&sock_ops, 0, sizeof(sock_ops));
+	sock_ops.sk = sk;
+	sock_ops.op = op;
+
+	ret = BPF_CGROUP_RUN_PROG_SOCK_OPS(&sock_ops);
+	if (ret == 0)
+		ret = sock_ops.reply;
+	else
+		ret = -1;
+	return ret;
+}
+#else
+static inline int tcp_call_bpf(struct sock *sk, int op)
+{
+	return -EPERM;
+}
+#endif
+
+static inline u32 tcp_timeout_init(struct sock *sk)
+{
+	int timeout;
+
+	timeout = tcp_call_bpf(sk, BPF_SOCK_OPS_TIMEOUT_INIT);
+
+	if (timeout <= 0)
+		timeout = TCP_TIMEOUT_INIT;
+	return timeout;
+}
+
+static inline u32 tcp_rwnd_init_bpf(struct sock *sk)
+{
+	int rwnd;
+
+	rwnd = tcp_call_bpf(sk, BPF_SOCK_OPS_RWND_INIT);
+
+	if (rwnd < 0)
+		rwnd = 0;
+	return rwnd;
+}
+
+static inline bool tcp_bpf_ca_needs_ecn(struct sock *sk)
+{
+	return (tcp_call_bpf(sk, BPF_SOCK_OPS_NEEDS_ECN) == 1);
+}
 #endif	/* _TCP_H */

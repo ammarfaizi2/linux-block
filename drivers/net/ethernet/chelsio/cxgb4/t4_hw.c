@@ -913,7 +913,8 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0xd010, 0xd03c,
 		0xdfc0, 0xdfe0,
 		0xe000, 0xea7c,
-		0xf000, 0x11190,
+		0xf000, 0x11110,
+		0x11118, 0x11190,
 		0x19040, 0x1906c,
 		0x19078, 0x19080,
 		0x1908c, 0x190e4,
@@ -1439,8 +1440,6 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x1ff00, 0x1ff84,
 		0x1ffc0, 0x1ffc8,
 		0x30000, 0x30030,
-		0x30038, 0x30038,
-		0x30040, 0x30040,
 		0x30100, 0x30144,
 		0x30190, 0x301a0,
 		0x301a8, 0x301b8,
@@ -1551,8 +1550,6 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x33c3c, 0x33c50,
 		0x33cf0, 0x33cfc,
 		0x34000, 0x34030,
-		0x34038, 0x34038,
-		0x34040, 0x34040,
 		0x34100, 0x34144,
 		0x34190, 0x341a0,
 		0x341a8, 0x341b8,
@@ -1663,8 +1660,6 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x37c3c, 0x37c50,
 		0x37cf0, 0x37cfc,
 		0x38000, 0x38030,
-		0x38038, 0x38038,
-		0x38040, 0x38040,
 		0x38100, 0x38144,
 		0x38190, 0x381a0,
 		0x381a8, 0x381b8,
@@ -1775,8 +1770,6 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x3bc3c, 0x3bc50,
 		0x3bcf0, 0x3bcfc,
 		0x3c000, 0x3c030,
-		0x3c038, 0x3c038,
-		0x3c040, 0x3c040,
 		0x3c100, 0x3c144,
 		0x3c190, 0x3c1a0,
 		0x3c1a8, 0x3c1b8,
@@ -2040,12 +2033,8 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x1190, 0x1194,
 		0x11a0, 0x11a4,
 		0x11b0, 0x11b4,
-		0x11fc, 0x1258,
-		0x1280, 0x12d4,
-		0x12d9, 0x12d9,
-		0x12de, 0x12de,
-		0x12e3, 0x12e3,
-		0x12e8, 0x133c,
+		0x11fc, 0x1274,
+		0x1280, 0x133c,
 		0x1800, 0x18fc,
 		0x3000, 0x302c,
 		0x3060, 0x30b0,
@@ -2076,6 +2065,9 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x5ea0, 0x5eb0,
 		0x5ec0, 0x5ec0,
 		0x5ec8, 0x5ed0,
+		0x5ee0, 0x5ee0,
+		0x5ef0, 0x5ef0,
+		0x5f00, 0x5f00,
 		0x6000, 0x6020,
 		0x6028, 0x6040,
 		0x6058, 0x609c,
@@ -2133,6 +2125,8 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0xd300, 0xd31c,
 		0xdfc0, 0xdfe0,
 		0xe000, 0xf008,
+		0xf010, 0xf018,
+		0xf020, 0xf028,
 		0x11000, 0x11014,
 		0x11048, 0x1106c,
 		0x11074, 0x11088,
@@ -2256,13 +2250,6 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x1ff00, 0x1ff84,
 		0x1ffc0, 0x1ffc8,
 		0x30000, 0x30030,
-		0x30038, 0x30038,
-		0x30040, 0x30040,
-		0x30048, 0x30048,
-		0x30050, 0x30050,
-		0x3005c, 0x30060,
-		0x30068, 0x30068,
-		0x30070, 0x30070,
 		0x30100, 0x30168,
 		0x30190, 0x301a0,
 		0x301a8, 0x301b8,
@@ -2325,13 +2312,12 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x326a8, 0x326a8,
 		0x326ec, 0x326ec,
 		0x32a00, 0x32abc,
-		0x32b00, 0x32b38,
+		0x32b00, 0x32b18,
+		0x32b20, 0x32b38,
 		0x32b40, 0x32b58,
 		0x32b60, 0x32b78,
 		0x32c00, 0x32c00,
 		0x32c08, 0x32c3c,
-		0x32e00, 0x32e2c,
-		0x32f00, 0x32f2c,
 		0x33000, 0x3302c,
 		0x33034, 0x33050,
 		0x33058, 0x33058,
@@ -2396,13 +2382,6 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x33c38, 0x33c50,
 		0x33cf0, 0x33cfc,
 		0x34000, 0x34030,
-		0x34038, 0x34038,
-		0x34040, 0x34040,
-		0x34048, 0x34048,
-		0x34050, 0x34050,
-		0x3405c, 0x34060,
-		0x34068, 0x34068,
-		0x34070, 0x34070,
 		0x34100, 0x34168,
 		0x34190, 0x341a0,
 		0x341a8, 0x341b8,
@@ -2465,13 +2444,12 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x366a8, 0x366a8,
 		0x366ec, 0x366ec,
 		0x36a00, 0x36abc,
-		0x36b00, 0x36b38,
+		0x36b00, 0x36b18,
+		0x36b20, 0x36b38,
 		0x36b40, 0x36b58,
 		0x36b60, 0x36b78,
 		0x36c00, 0x36c00,
 		0x36c08, 0x36c3c,
-		0x36e00, 0x36e2c,
-		0x36f00, 0x36f2c,
 		0x37000, 0x3702c,
 		0x37034, 0x37050,
 		0x37058, 0x37058,
@@ -2545,8 +2523,7 @@ void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
 		0x40280, 0x40280,
 		0x40304, 0x40304,
 		0x40330, 0x4033c,
-		0x41304, 0x413b8,
-		0x413c0, 0x413c8,
+		0x41304, 0x413c8,
 		0x413d0, 0x413dc,
 		0x413f0, 0x413f0,
 		0x41400, 0x4140c,
@@ -3097,6 +3074,179 @@ int t4_get_exprom_version(struct adapter *adap, u32 *vers)
 		 FW_HDR_FW_VER_MICRO_V(hdr->hdr_ver[2]) |
 		 FW_HDR_FW_VER_BUILD_V(hdr->hdr_ver[3]));
 	return 0;
+}
+
+/**
+ *      t4_get_vpd_version - return the VPD version
+ *      @adapter: the adapter
+ *      @vers: where to place the version
+ *
+ *      Reads the VPD via the Firmware interface (thus this can only be called
+ *      once we're ready to issue Firmware commands).  The format of the
+ *      VPD version is adapter specific.  Returns 0 on success, an error on
+ *      failure.
+ *
+ *      Note that early versions of the Firmware didn't include the ability
+ *      to retrieve the VPD version, so we zero-out the return-value parameter
+ *      in that case to avoid leaving it with garbage in it.
+ *
+ *      Also note that the Firmware will return its cached copy of the VPD
+ *      Revision ID, not the actual Revision ID as written in the Serial
+ *      EEPROM.  This is only an issue if a new VPD has been written and the
+ *      Firmware/Chip haven't yet gone through a RESET sequence.  So it's best
+ *      to defer calling this routine till after a FW_RESET_CMD has been issued
+ *      if the Host Driver will be performing a full adapter initialization.
+ */
+int t4_get_vpd_version(struct adapter *adapter, u32 *vers)
+{
+	u32 vpdrev_param;
+	int ret;
+
+	vpdrev_param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
+			FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_VPDREV));
+	ret = t4_query_params(adapter, adapter->mbox, adapter->pf, 0,
+			      1, &vpdrev_param, vers);
+	if (ret)
+		*vers = 0;
+	return ret;
+}
+
+/**
+ *      t4_get_scfg_version - return the Serial Configuration version
+ *      @adapter: the adapter
+ *      @vers: where to place the version
+ *
+ *      Reads the Serial Configuration Version via the Firmware interface
+ *      (thus this can only be called once we're ready to issue Firmware
+ *      commands).  The format of the Serial Configuration version is
+ *      adapter specific.  Returns 0 on success, an error on failure.
+ *
+ *      Note that early versions of the Firmware didn't include the ability
+ *      to retrieve the Serial Configuration version, so we zero-out the
+ *      return-value parameter in that case to avoid leaving it with
+ *      garbage in it.
+ *
+ *      Also note that the Firmware will return its cached copy of the Serial
+ *      Initialization Revision ID, not the actual Revision ID as written in
+ *      the Serial EEPROM.  This is only an issue if a new VPD has been written
+ *      and the Firmware/Chip haven't yet gone through a RESET sequence.  So
+ *      it's best to defer calling this routine till after a FW_RESET_CMD has
+ *      been issued if the Host Driver will be performing a full adapter
+ *      initialization.
+ */
+int t4_get_scfg_version(struct adapter *adapter, u32 *vers)
+{
+	u32 scfgrev_param;
+	int ret;
+
+	scfgrev_param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
+			 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_SCFGREV));
+	ret = t4_query_params(adapter, adapter->mbox, adapter->pf, 0,
+			      1, &scfgrev_param, vers);
+	if (ret)
+		*vers = 0;
+	return ret;
+}
+
+/**
+ *      t4_get_version_info - extract various chip/firmware version information
+ *      @adapter: the adapter
+ *
+ *      Reads various chip/firmware version numbers and stores them into the
+ *      adapter Adapter Parameters structure.  If any of the efforts fails
+ *      the first failure will be returned, but all of the version numbers
+ *      will be read.
+ */
+int t4_get_version_info(struct adapter *adapter)
+{
+	int ret = 0;
+
+	#define FIRST_RET(__getvinfo) \
+	do { \
+		int __ret = __getvinfo; \
+		if (__ret && !ret) \
+			ret = __ret; \
+	} while (0)
+
+	FIRST_RET(t4_get_fw_version(adapter, &adapter->params.fw_vers));
+	FIRST_RET(t4_get_bs_version(adapter, &adapter->params.bs_vers));
+	FIRST_RET(t4_get_tp_version(adapter, &adapter->params.tp_vers));
+	FIRST_RET(t4_get_exprom_version(adapter, &adapter->params.er_vers));
+	FIRST_RET(t4_get_scfg_version(adapter, &adapter->params.scfg_vers));
+	FIRST_RET(t4_get_vpd_version(adapter, &adapter->params.vpd_vers));
+
+	#undef FIRST_RET
+	return ret;
+}
+
+/**
+ *      t4_dump_version_info - dump all of the adapter configuration IDs
+ *      @adapter: the adapter
+ *
+ *      Dumps all of the various bits of adapter configuration version/revision
+ *      IDs information.  This is typically called at some point after
+ *      t4_get_version_info() has been called.
+ */
+void t4_dump_version_info(struct adapter *adapter)
+{
+	/* Device information */
+	dev_info(adapter->pdev_dev, "Chelsio %s rev %d\n",
+		 adapter->params.vpd.id,
+		 CHELSIO_CHIP_RELEASE(adapter->params.chip));
+	dev_info(adapter->pdev_dev, "S/N: %s, P/N: %s\n",
+		 adapter->params.vpd.sn, adapter->params.vpd.pn);
+
+	/* Firmware Version */
+	if (!adapter->params.fw_vers)
+		dev_warn(adapter->pdev_dev, "No firmware loaded\n");
+	else
+		dev_info(adapter->pdev_dev, "Firmware version: %u.%u.%u.%u\n",
+			 FW_HDR_FW_VER_MAJOR_G(adapter->params.fw_vers),
+			 FW_HDR_FW_VER_MINOR_G(adapter->params.fw_vers),
+			 FW_HDR_FW_VER_MICRO_G(adapter->params.fw_vers),
+			 FW_HDR_FW_VER_BUILD_G(adapter->params.fw_vers));
+
+	/* Bootstrap Firmware Version. (Some adapters don't have Bootstrap
+	 * Firmware, so dev_info() is more appropriate here.)
+	 */
+	if (!adapter->params.bs_vers)
+		dev_info(adapter->pdev_dev, "No bootstrap loaded\n");
+	else
+		dev_info(adapter->pdev_dev, "Bootstrap version: %u.%u.%u.%u\n",
+			 FW_HDR_FW_VER_MAJOR_G(adapter->params.bs_vers),
+			 FW_HDR_FW_VER_MINOR_G(adapter->params.bs_vers),
+			 FW_HDR_FW_VER_MICRO_G(adapter->params.bs_vers),
+			 FW_HDR_FW_VER_BUILD_G(adapter->params.bs_vers));
+
+	/* TP Microcode Version */
+	if (!adapter->params.tp_vers)
+		dev_warn(adapter->pdev_dev, "No TP Microcode loaded\n");
+	else
+		dev_info(adapter->pdev_dev,
+			 "TP Microcode version: %u.%u.%u.%u\n",
+			 FW_HDR_FW_VER_MAJOR_G(adapter->params.tp_vers),
+			 FW_HDR_FW_VER_MINOR_G(adapter->params.tp_vers),
+			 FW_HDR_FW_VER_MICRO_G(adapter->params.tp_vers),
+			 FW_HDR_FW_VER_BUILD_G(adapter->params.tp_vers));
+
+	/* Expansion ROM version */
+	if (!adapter->params.er_vers)
+		dev_info(adapter->pdev_dev, "No Expansion ROM loaded\n");
+	else
+		dev_info(adapter->pdev_dev,
+			 "Expansion ROM version: %u.%u.%u.%u\n",
+			 FW_HDR_FW_VER_MAJOR_G(adapter->params.er_vers),
+			 FW_HDR_FW_VER_MINOR_G(adapter->params.er_vers),
+			 FW_HDR_FW_VER_MICRO_G(adapter->params.er_vers),
+			 FW_HDR_FW_VER_BUILD_G(adapter->params.er_vers));
+
+	/* Serial Configuration version */
+	dev_info(adapter->pdev_dev, "Serial Configuration version: %#x\n",
+		 adapter->params.scfg_vers);
+
+	/* VPD Version */
+	dev_info(adapter->pdev_dev, "VPD version: %#x\n",
+		 adapter->params.vpd_vers);
 }
 
 /**

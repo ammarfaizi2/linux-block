@@ -284,7 +284,7 @@ static __net_init int setup_net(struct net *net, struct user_namespace *user_ns)
 	LIST_HEAD(net_exit_list);
 
 	atomic_set(&net->count, 1);
-	atomic_set(&net->passive, 1);
+	refcount_set(&net->passive, 1);
 	net->dev_base_seq = 1;
 	net->user_ns = user_ns;
 	idr_init(&net->netns_ids);
@@ -380,7 +380,7 @@ static void net_free(struct net *net)
 void net_drop_ns(void *p)
 {
 	struct net *ns = p;
-	if (ns && atomic_dec_and_test(&ns->passive))
+	if (ns && refcount_dec_and_test(&ns->passive))
 		net_free(ns);
 }
 
@@ -501,6 +501,23 @@ static void cleanup_net(struct work_struct *work)
 		net_drop_ns(net);
 	}
 }
+
+/**
+ * net_ns_barrier - wait until concurrent net_cleanup_work is done
+ *
+ * cleanup_net runs from work queue and will first remove namespaces
+ * from the global list, then run net exit functions.
+ *
+ * Call this in module exit path to make sure that all netns
+ * ->exit ops have been invoked before the function is removed.
+ */
+void net_ns_barrier(void)
+{
+	mutex_lock(&net_mutex);
+	mutex_unlock(&net_mutex);
+}
+EXPORT_SYMBOL(net_ns_barrier);
+
 static DECLARE_WORK(net_cleanup_work, cleanup_net);
 
 void __put_net(struct net *net)

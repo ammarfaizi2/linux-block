@@ -577,7 +577,7 @@ struct sock *udp4_lib_lookup(struct net *net, __be32 saddr, __be16 sport,
 
 	sk = __udp4_lib_lookup(net, saddr, sport, daddr, dport,
 			       dif, &udp_table, NULL);
-	if (sk && !atomic_inc_not_zero(&sk->sk_refcnt))
+	if (sk && !refcount_inc_not_zero(&sk->sk_refcnt))
 		sk = NULL;
 	return sk;
 }
@@ -1163,24 +1163,7 @@ out:
 	return ret;
 }
 
-/* Copy as much information as possible into skb->dev_scratch to avoid
- * possibly multiple cache miss on dequeue();
- */
 #if BITS_PER_LONG == 64
-
-/* we can store multiple info here: truesize, len and the bit needed to
- * compute skb_csum_unnecessary will be on cold cache lines at recvmsg
- * time.
- * skb->len can be stored on 16 bits since the udp header has been already
- * validated and pulled.
- */
-struct udp_dev_scratch {
-	u32 truesize;
-	u16 len;
-	bool is_linear;
-	bool csum_unnecessary;
-};
-
 static void udp_set_dev_scratch(struct sk_buff *skb)
 {
 	struct udp_dev_scratch *scratch;
@@ -1197,22 +1180,6 @@ static int udp_skb_truesize(struct sk_buff *skb)
 {
 	return ((struct udp_dev_scratch *)&skb->dev_scratch)->truesize;
 }
-
-static unsigned int udp_skb_len(struct sk_buff *skb)
-{
-	return ((struct udp_dev_scratch *)&skb->dev_scratch)->len;
-}
-
-static bool udp_skb_csum_unnecessary(struct sk_buff *skb)
-{
-	return ((struct udp_dev_scratch *)&skb->dev_scratch)->csum_unnecessary;
-}
-
-static bool udp_skb_is_linear(struct sk_buff *skb)
-{
-	return ((struct udp_dev_scratch *)&skb->dev_scratch)->is_linear;
-}
-
 #else
 static void udp_set_dev_scratch(struct sk_buff *skb)
 {
@@ -1222,21 +1189,6 @@ static void udp_set_dev_scratch(struct sk_buff *skb)
 static int udp_skb_truesize(struct sk_buff *skb)
 {
 	return skb->dev_scratch;
-}
-
-static unsigned int udp_skb_len(struct sk_buff *skb)
-{
-	return skb->len;
-}
-
-static bool udp_skb_csum_unnecessary(struct sk_buff *skb)
-{
-	return skb_csum_unnecessary(skb);
-}
-
-static bool udp_skb_is_linear(struct sk_buff *skb)
-{
-	return !skb_is_nonlinear(skb);
 }
 #endif
 
@@ -1436,6 +1388,11 @@ void skb_consume_udp(struct sock *sk, struct sk_buff *skb, int len)
 		unlock_sock_fast(sk, slow);
 	}
 
+	/* we cleared the head states previously only if the skb lacks any IP
+	 * options, see __udp_queue_rcv_skb().
+	 */
+	if (unlikely(IPCB(skb)->opt.optlen > 0))
+		skb_release_head_state(skb);
 	consume_stateless_skb(skb);
 }
 EXPORT_SYMBOL_GPL(skb_consume_udp);
@@ -1597,18 +1554,6 @@ busy_check:
 	return NULL;
 }
 EXPORT_SYMBOL_GPL(__skb_recv_udp);
-
-static int copy_linear_skb(struct sk_buff *skb, int len, int off,
-			   struct iov_iter *to)
-{
-	int n, copy = len - off;
-
-	n = copy_to_iter(skb->data + off, copy, to);
-	if (n == copy)
-		return 0;
-
-	return -EFAULT;
-}
 
 /*
  * 	This should be easy, if there is something there we
@@ -1839,8 +1784,12 @@ static int __udp_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
 		sk_mark_napi_id_once(sk, skb);
 	}
 
-	/* clear all pending head states while they are hot in the cache */
-	skb_release_head_state(skb);
+	/* At recvmsg() time we need skb->dst to process IP options-related
+	 * cmsg, elsewhere can we clear all pending head states while they are
+	 * hot in the cache
+	 */
+	if (likely(IPCB(skb)->opt.optlen == 0))
+		skb_release_head_state(skb);
 
 	rc = __udp_enqueue_schedule_skb(sk, skb);
 	if (rc < 0) {
@@ -2302,7 +2251,7 @@ void udp_v4_early_demux(struct sk_buff *skb)
 					     uh->source, iph->saddr, dif);
 	}
 
-	if (!sk || !atomic_inc_not_zero_hint(&sk->sk_refcnt, 2))
+	if (!sk || !refcount_inc_not_zero(&sk->sk_refcnt))
 		return;
 
 	skb->sk = sk;
@@ -2751,7 +2700,7 @@ static void udp4_format_sock(struct sock *sp, struct seq_file *f,
 		0, 0L, 0,
 		from_kuid_munged(seq_user_ns(f), sock_i_uid(sp)),
 		0, sock_i_ino(sp),
-		atomic_read(&sp->sk_refcnt), sp,
+		refcount_read(&sp->sk_refcnt), sp,
 		atomic_read(&sp->sk_drops));
 }
 

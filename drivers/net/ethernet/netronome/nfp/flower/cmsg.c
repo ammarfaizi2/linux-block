@@ -36,6 +36,7 @@
 #include <linux/skbuff.h>
 #include <net/dst_metadata.h>
 
+#include "main.h"
 #include "../nfpcore/nfp_cpp.h"
 #include "../nfp_net_repr.h"
 #include "./cmsg.h"
@@ -52,12 +53,7 @@ nfp_flower_cmsg_get_hdr(struct sk_buff *skb)
 	return (struct nfp_flower_cmsg_hdr *)skb->data;
 }
 
-static void *nfp_flower_cmsg_get_data(struct sk_buff *skb)
-{
-	return (unsigned char *)skb->data + NFP_FLOWER_CMSG_HLEN;
-}
-
-static struct sk_buff *
+struct sk_buff *
 nfp_flower_cmsg_alloc(struct nfp_app *app, unsigned int size,
 		      enum nfp_flower_cmsg_type_port type)
 {
@@ -79,9 +75,8 @@ nfp_flower_cmsg_alloc(struct nfp_app *app, unsigned int size,
 	return skb;
 }
 
-int nfp_flower_cmsg_portmod(struct net_device *netdev, bool carrier_ok)
+int nfp_flower_cmsg_portmod(struct nfp_repr *repr, bool carrier_ok)
 {
-	struct nfp_repr *repr = netdev_priv(netdev);
 	struct nfp_flower_cmsg_portmod *msg;
 	struct sk_buff *skb;
 
@@ -94,7 +89,7 @@ int nfp_flower_cmsg_portmod(struct net_device *netdev, bool carrier_ok)
 	msg->portnum = cpu_to_be32(repr->dst->u.port_info.port_id);
 	msg->reserved = 0;
 	msg->info = carrier_ok;
-	msg->mtu = cpu_to_be16(netdev->mtu);
+	msg->mtu = cpu_to_be16(repr->netdev->mtu);
 
 	nfp_ctrl_tx(repr->app->ctrl, skb);
 
@@ -148,6 +143,9 @@ void nfp_flower_cmsg_rx(struct nfp_app *app, struct sk_buff *skb)
 	switch (type) {
 	case NFP_FLOWER_CMSG_TYPE_PORT_MOD:
 		nfp_flower_cmsg_portmod_rx(app, skb);
+		break;
+	case NFP_FLOWER_CMSG_TYPE_FLOW_STATS:
+		nfp_flower_rx_flow_stats(app, skb);
 		break;
 	default:
 		nfp_flower_cmsg_warn(app, "Cannot handle invalid repr control type %u\n",

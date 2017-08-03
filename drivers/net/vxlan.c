@@ -229,25 +229,25 @@ static struct vxlan_sock *vxlan_find_sock(struct net *net, sa_family_t family,
 static struct vxlan_dev *vxlan_vs_find_vni(struct vxlan_sock *vs, int ifindex,
 					   __be32 vni)
 {
-	struct vxlan_dev *vxlan;
+	struct vxlan_dev_node *node;
 
 	/* For flow based devices, map all packets to VNI 0 */
 	if (vs->flags & VXLAN_F_COLLECT_METADATA)
 		vni = 0;
 
-	hlist_for_each_entry_rcu(vxlan, vni_head(vs, vni), hlist) {
-		if (vxlan->default_dst.remote_vni != vni)
+	hlist_for_each_entry_rcu(node, vni_head(vs, vni), hlist) {
+		if (node->vxlan->default_dst.remote_vni != vni)
 			continue;
 
 		if (IS_ENABLED(CONFIG_IPV6)) {
-			const struct vxlan_config *cfg = &vxlan->cfg;
+			const struct vxlan_config *cfg = &node->vxlan->cfg;
 
 			if ((cfg->flags & VXLAN_F_IPV6_LINKLOCAL) &&
 			    cfg->remote_ifindex != ifindex)
 				continue;
 		}
 
-		return vxlan;
+		return node->vxlan;
 	}
 
 	return NULL;
@@ -1034,11 +1034,11 @@ static bool vxlan_group_used(struct vxlan_net *vn, struct vxlan_dev *dev)
 	/* The vxlan_sock is only used by dev, leaving group has
 	 * no effect on other vxlan devices.
 	 */
-	if (family == AF_INET && sock4 && atomic_read(&sock4->refcnt) == 1)
+	if (family == AF_INET && sock4 && refcount_read(&sock4->refcnt) == 1)
 		return false;
 #if IS_ENABLED(CONFIG_IPV6)
 	sock6 = rtnl_dereference(dev->vn6_sock);
-	if (family == AF_INET6 && sock6 && atomic_read(&sock6->refcnt) == 1)
+	if (family == AF_INET6 && sock6 && refcount_read(&sock6->refcnt) == 1)
 		return false;
 #endif
 
@@ -1075,7 +1075,7 @@ static bool __vxlan_sock_release_prep(struct vxlan_sock *vs)
 
 	if (!vs)
 		return false;
-	if (!atomic_dec_and_test(&vs->refcnt))
+	if (!refcount_dec_and_test(&vs->refcnt))
 		return false;
 
 	vn = net_generic(sock_net(vs->sock->sk), vxlan_net_id);
@@ -2387,17 +2387,22 @@ static void vxlan_vs_del_dev(struct vxlan_dev *vxlan)
 	struct vxlan_net *vn = net_generic(vxlan->net, vxlan_net_id);
 
 	spin_lock(&vn->sock_lock);
-	hlist_del_init_rcu(&vxlan->hlist);
+	hlist_del_init_rcu(&vxlan->hlist4.hlist);
+#if IS_ENABLED(CONFIG_IPV6)
+	hlist_del_init_rcu(&vxlan->hlist6.hlist);
+#endif
 	spin_unlock(&vn->sock_lock);
 }
 
-static void vxlan_vs_add_dev(struct vxlan_sock *vs, struct vxlan_dev *vxlan)
+static void vxlan_vs_add_dev(struct vxlan_sock *vs, struct vxlan_dev *vxlan,
+			     struct vxlan_dev_node *node)
 {
 	struct vxlan_net *vn = net_generic(vxlan->net, vxlan_net_id);
 	__be32 vni = vxlan->default_dst.remote_vni;
 
+	node->vxlan = vxlan;
 	spin_lock(&vn->sock_lock);
-	hlist_add_head_rcu(&vxlan->hlist, vni_head(vs, vni));
+	hlist_add_head_rcu(&node->hlist, vni_head(vs, vni));
 	spin_unlock(&vn->sock_lock);
 }
 
@@ -2603,7 +2608,7 @@ static struct device_type vxlan_type = {
  * supply the listening VXLAN udp ports. Callers are expected
  * to implement the ndo_udp_tunnel_add.
  */
-static void vxlan_push_rx_ports(struct net_device *dev)
+static void vxlan_offload_rx_ports(struct net_device *dev, bool push)
 {
 	struct vxlan_sock *vs;
 	struct net *net = dev_net(dev);
@@ -2612,11 +2617,19 @@ static void vxlan_push_rx_ports(struct net_device *dev)
 
 	spin_lock(&vn->sock_lock);
 	for (i = 0; i < PORT_HASH_SIZE; ++i) {
-		hlist_for_each_entry_rcu(vs, &vn->sock_list[i], hlist)
-			udp_tunnel_push_rx_port(dev, vs->sock,
-						(vs->flags & VXLAN_F_GPE) ?
-						UDP_TUNNEL_TYPE_VXLAN_GPE :
-						UDP_TUNNEL_TYPE_VXLAN);
+		hlist_for_each_entry_rcu(vs, &vn->sock_list[i], hlist) {
+			unsigned short type;
+
+			if (vs->flags & VXLAN_F_GPE)
+				type = UDP_TUNNEL_TYPE_VXLAN_GPE;
+			else
+				type = UDP_TUNNEL_TYPE_VXLAN;
+
+			if (push)
+				udp_tunnel_push_rx_port(dev, vs->sock, type);
+			else
+				udp_tunnel_drop_rx_port(dev, vs->sock, type);
+		}
 	}
 	spin_unlock(&vn->sock_lock);
 }
@@ -2656,7 +2669,6 @@ static void vxlan_setup(struct net_device *dev)
 	vxlan->age_timer.data = (unsigned long) vxlan;
 
 	vxlan->dev = dev;
-	vxlan->net = dev_net(dev);
 
 	gro_cells_init(&vxlan->gro_cells, dev);
 
@@ -2727,7 +2739,7 @@ static int vxlan_validate(struct nlattr *tb[], struct nlattr *data[],
 	}
 
 	if (tb[IFLA_MTU]) {
-		u32 mtu = nla_get_u32(data[IFLA_MTU]);
+		u32 mtu = nla_get_u32(tb[IFLA_MTU]);
 
 		if (mtu < ETH_MIN_MTU || mtu > ETH_MAX_MTU)
 			return -EINVAL;
@@ -2821,7 +2833,7 @@ static struct vxlan_sock *vxlan_socket_create(struct net *net, bool ipv6,
 	}
 
 	vs->sock = sock;
-	atomic_set(&vs->refcnt, 1);
+	refcount_set(&vs->refcnt, 1);
 	vs->flags = (flags & VXLAN_F_RCV_FLAGS);
 
 	spin_lock(&vn->sock_lock);
@@ -2850,12 +2862,13 @@ static int __vxlan_sock_add(struct vxlan_dev *vxlan, bool ipv6)
 {
 	struct vxlan_net *vn = net_generic(vxlan->net, vxlan_net_id);
 	struct vxlan_sock *vs = NULL;
+	struct vxlan_dev_node *node;
 
 	if (!vxlan->cfg.no_share) {
 		spin_lock(&vn->sock_lock);
 		vs = vxlan_find_sock(vxlan->net, ipv6 ? AF_INET6 : AF_INET,
 				     vxlan->cfg.dst_port, vxlan->cfg.flags);
-		if (vs && !atomic_add_unless(&vs->refcnt, 1, 0)) {
+		if (vs && !refcount_inc_not_zero(&vs->refcnt)) {
 			spin_unlock(&vn->sock_lock);
 			return -EBUSY;
 		}
@@ -2867,12 +2880,16 @@ static int __vxlan_sock_add(struct vxlan_dev *vxlan, bool ipv6)
 	if (IS_ERR(vs))
 		return PTR_ERR(vs);
 #if IS_ENABLED(CONFIG_IPV6)
-	if (ipv6)
+	if (ipv6) {
 		rcu_assign_pointer(vxlan->vn6_sock, vs);
-	else
+		node = &vxlan->hlist6;
+	} else
 #endif
+	{
 		rcu_assign_pointer(vxlan->vn4_sock, vs);
-	vxlan_vs_add_dev(vs, vxlan);
+		node = &vxlan->hlist4;
+	}
+	vxlan_vs_add_dev(vs, vxlan, node);
 	return 0;
 }
 
@@ -3028,7 +3045,9 @@ static int vxlan_config_validate(struct net *src_net, struct vxlan_config *conf,
 
 static void vxlan_config_apply(struct net_device *dev,
 			       struct vxlan_config *conf,
-			       struct net_device *lowerdev, bool changelink)
+			       struct net_device *lowerdev,
+			       struct net *src_net,
+			       bool changelink)
 {
 	struct vxlan_dev *vxlan = netdev_priv(dev);
 	struct vxlan_rdst *dst = &vxlan->default_dst;
@@ -3044,6 +3063,8 @@ static void vxlan_config_apply(struct net_device *dev,
 
 		if (conf->mtu)
 			dev->mtu = conf->mtu;
+
+		vxlan->net = src_net;
 	}
 
 	dst->remote_vni = conf->vni;
@@ -3086,7 +3107,7 @@ static int vxlan_dev_configure(struct net *src_net, struct net_device *dev,
 	if (ret)
 		return ret;
 
-	vxlan_config_apply(dev, conf, lowerdev, changelink);
+	vxlan_config_apply(dev, conf, lowerdev, src_net, changelink);
 
 	return 0;
 }
@@ -3617,10 +3638,15 @@ static int vxlan_netdevice_event(struct notifier_block *unused,
 	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 	struct vxlan_net *vn = net_generic(dev_net(dev), vxlan_net_id);
 
-	if (event == NETDEV_UNREGISTER)
+	if (event == NETDEV_UNREGISTER) {
+		vxlan_offload_rx_ports(dev, false);
 		vxlan_handle_lowerdev_unregister(vn, dev);
-	else if (event == NETDEV_UDP_TUNNEL_PUSH_INFO)
-		vxlan_push_rx_ports(dev);
+	} else if (event == NETDEV_REGISTER) {
+		vxlan_offload_rx_ports(dev, true);
+	} else if (event == NETDEV_UDP_TUNNEL_PUSH_INFO ||
+		   event == NETDEV_UDP_TUNNEL_DROP_INFO) {
+		vxlan_offload_rx_ports(dev, event == NETDEV_UDP_TUNNEL_PUSH_INFO);
+	}
 
 	return NOTIFY_DONE;
 }

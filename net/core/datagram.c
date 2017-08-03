@@ -68,7 +68,7 @@ static inline int connection_based(struct sock *sk)
 	return sk->sk_type == SOCK_SEQPACKET || sk->sk_type == SOCK_STREAM;
 }
 
-static int receiver_wake_function(wait_queue_t *wait, unsigned int mode, int sync,
+static int receiver_wake_function(wait_queue_entry_t *wait, unsigned int mode, int sync,
 				  void *key)
 {
 	unsigned long bits = (unsigned long)key;
@@ -188,7 +188,7 @@ struct sk_buff *__skb_try_recv_from_queue(struct sock *sk,
 				}
 			}
 			*peeked = 1;
-			atomic_inc(&skb->users);
+			refcount_inc(&skb->users);
 		} else {
 			__skb_unlink(skb, queue);
 			if (destructor)
@@ -203,7 +203,7 @@ struct sk_buff *__skb_try_recv_from_queue(struct sock *sk,
 /**
  *	__skb_try_recv_datagram - Receive a datagram skbuff
  *	@sk: socket
- *	@flags: MSG_ flags
+ *	@flags: MSG\_ flags
  *	@destructor: invoked under the receive lock on successful dequeue
  *	@peeked: returns non-zero if this packet has been seen before
  *	@off: an offset in bytes to peek skb from. Returns an offset
@@ -220,7 +220,7 @@ struct sk_buff *__skb_try_recv_from_queue(struct sock *sk,
  *
  *	This function will lock the socket if a skb is returned, so
  *	the caller needs to unlock the socket in that case (usually by
- *	calling skb_free_datagram). Returns NULL with *err set to
+ *	calling skb_free_datagram). Returns NULL with @err set to
  *	-EAGAIN if no data was available or to some other value if an
  *	error was detected.
  *
@@ -358,7 +358,7 @@ int __sk_queue_drop_skb(struct sock *sk, struct sk_buff_head *sk_queue,
 		spin_lock_bh(&sk_queue->lock);
 		if (skb == skb_peek(sk_queue)) {
 			__skb_unlink(skb, sk_queue);
-			atomic_dec(&skb->users);
+			refcount_dec(&skb->users);
 			if (destructor)
 				destructor(sk, skb);
 			err = 0;
@@ -375,7 +375,7 @@ EXPORT_SYMBOL(__sk_queue_drop_skb);
  *	skb_kill_datagram - Free a datagram skbuff forcibly
  *	@sk: socket
  *	@skb: datagram skbuff
- *	@flags: MSG_ flags
+ *	@flags: MSG\_ flags
  *
  *	This function frees a datagram skbuff that was received by
  *	skb_recv_datagram.  The flags argument must match the one
@@ -614,7 +614,7 @@ int zerocopy_sg_from_iter(struct sk_buff *skb, struct iov_iter *from)
 		skb->data_len += copied;
 		skb->len += copied;
 		skb->truesize += truesize;
-		atomic_add(truesize, &skb->sk->sk_wmem_alloc);
+		refcount_add(truesize, &skb->sk->sk_wmem_alloc);
 		while (copied) {
 			int size = min_t(int, copied, PAGE_SIZE - start);
 			skb_fill_page_desc(skb, frag++, pages[n], start, size);
@@ -809,7 +809,7 @@ EXPORT_SYMBOL(skb_copy_and_csum_datagram_msg);
  *	sequenced packet sockets providing the socket receive queue
  *	is only ever holding data ready to receive.
  *
- *	Note: when you _don't_ use this routine for this protocol,
+ *	Note: when you *don't* use this routine for this protocol,
  *	and you use a different write policy from sock_writeable()
  *	then please supply your own write_space callback.
  */

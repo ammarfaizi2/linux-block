@@ -48,6 +48,8 @@
 #include <linux/vmalloc.h>
 #include <linux/etherdevice.h>
 #include <linux/net_tstamp.h>
+#include <linux/ptp_clock_kernel.h>
+#include <linux/ptp_classify.h>
 #include <asm/io.h>
 #include "t4_chip_type.h"
 #include "cxgb4_uld.h"
@@ -336,10 +338,12 @@ struct adapter_params {
 	unsigned int sf_nsec;             /* # of flash sectors */
 	unsigned int sf_fw_start;         /* start of FW image in flash */
 
-	unsigned int fw_vers;
-	unsigned int bs_vers;		/* bootstrap version */
-	unsigned int tp_vers;
-	unsigned int er_vers;		/* expansion ROM version */
+	unsigned int fw_vers;		  /* firmware version */
+	unsigned int bs_vers;		  /* bootstrap version */
+	unsigned int tp_vers;		  /* TP microcode version */
+	unsigned int er_vers;		  /* expansion ROM version */
+	unsigned int scfg_vers;		  /* Serial Configuration version */
+	unsigned int vpd_vers;		  /* VPD Version */
 	u8 api_vers[7];
 
 	unsigned short mtus[NMTUS];
@@ -510,6 +514,7 @@ struct port_info {
 #endif /* CONFIG_CHELSIO_T4_FCOE */
 	bool rxtstamp;  /* Enable TS */
 	struct hwtstamp_config tstamp_config;
+	bool ptp_enable;
 	struct sched_table *sched_tbl;
 };
 
@@ -705,6 +710,7 @@ struct sge_uld_txq_info {
 
 struct sge {
 	struct sge_eth_txq ethtxq[MAX_ETH_QSETS];
+	struct sge_eth_txq ptptxq;
 	struct sge_ctrl_txq ctrlq[MAX_CTRL_QUEUES];
 
 	struct sge_eth_rxq ethrxq[MAX_ETH_QSETS];
@@ -869,11 +875,17 @@ struct adapter {
 			 * used for all 4 filters.
 			 */
 
+	struct ptp_clock *ptp_clock;
+	struct ptp_clock_info ptp_clock_info;
+	struct sk_buff *ptp_tx_skb;
+	/* ptp lock */
+	spinlock_t ptp_lock;
 	spinlock_t stats_lock;
 	spinlock_t win0_lock ____cacheline_aligned_in_smp;
 
 	/* TC u32 offload */
 	struct cxgb4_tc_u32_table *tc_u32;
+	struct chcr_stats_debug chcr_stats;
 };
 
 /* Support for "sched-class" command to allow a TX Scheduling Class to be
@@ -1397,6 +1409,10 @@ int t4_get_fw_version(struct adapter *adapter, u32 *vers);
 int t4_get_bs_version(struct adapter *adapter, u32 *vers);
 int t4_get_tp_version(struct adapter *adapter, u32 *vers);
 int t4_get_exprom_version(struct adapter *adapter, u32 *vers);
+int t4_get_scfg_version(struct adapter *adapter, u32 *vers);
+int t4_get_vpd_version(struct adapter *adapter, u32 *vers);
+int t4_get_version_info(struct adapter *adapter);
+void t4_dump_version_info(struct adapter *adapter);
 int t4_prep_fw(struct adapter *adap, struct fw_info *fw_info,
 	       const u8 *fw_data, unsigned int fw_size,
 	       struct fw_hdr *card_fw, enum dev_state state, int *reset);

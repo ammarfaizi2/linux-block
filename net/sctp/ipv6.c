@@ -252,6 +252,8 @@ static void sctp_v6_get_dst(struct sctp_transport *t, union sctp_addr *saddr,
 	fl6->flowi6_proto = IPPROTO_SCTP;
 	if (ipv6_addr_type(&daddr->v6.sin6_addr) & IPV6_ADDR_LINKLOCAL)
 		fl6->flowi6_oif = daddr->v6.sin6_scope_id;
+	else if (asoc)
+		fl6->flowi6_oif = asoc->base.sk->sk_bound_dev_if;
 
 	pr_debug("%s: dst=%pI6 ", __func__, &fl6->daddr);
 
@@ -495,7 +497,7 @@ static void sctp_v6_from_addr_param(union sctp_addr *addr,
 static int sctp_v6_to_addr_param(const union sctp_addr *addr,
 				 union sctp_addr_param *param)
 {
-	int length = sizeof(sctp_ipv6addr_param_t);
+	int length = sizeof(struct sctp_ipv6addr_param);
 
 	param->v6.param_hdr.type = SCTP_PARAM_IPV6_ADDRESS;
 	param->v6.param_hdr.length = htons(length);

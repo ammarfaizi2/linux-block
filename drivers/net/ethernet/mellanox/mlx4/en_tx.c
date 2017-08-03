@@ -111,7 +111,7 @@ int mlx4_en_create_tx_ring(struct mlx4_en_priv *priv,
 		goto err_hwq_res;
 	}
 
-	err = mlx4_qp_alloc(mdev->dev, ring->qpn, &ring->sp_qp, GFP_KERNEL);
+	err = mlx4_qp_alloc(mdev->dev, ring->qpn, &ring->sp_qp);
 	if (err) {
 		en_err(priv, "Failed allocating qp %d\n", ring->qpn);
 		goto err_reserve;
@@ -691,15 +691,11 @@ u16 mlx4_en_select_queue(struct net_device *dev, struct sk_buff *skb,
 {
 	struct mlx4_en_priv *priv = netdev_priv(dev);
 	u16 rings_p_up = priv->num_tx_rings_p_up;
-	u8 up = 0;
 
 	if (netdev_get_num_tc(dev))
 		return skb_tx_hash(dev, skb);
 
-	if (skb_vlan_tag_present(skb))
-		up = skb_vlan_tag_get(skb) >> VLAN_PRIO_SHIFT;
-
-	return fallback(dev, skb) % rings_p_up + up * rings_p_up;
+	return fallback(dev, skb) % rings_p_up;
 }
 
 static void mlx4_bf_copy(void __iomem *dst, const void *src,

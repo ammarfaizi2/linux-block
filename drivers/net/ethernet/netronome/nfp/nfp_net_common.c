@@ -64,6 +64,7 @@
 #include <linux/vmalloc.h>
 #include <linux/ktime.h>
 
+#include <net/switchdev.h>
 #include <net/vxlan.h>
 
 #include "nfpcore/nfp_nsp.h"
@@ -2657,6 +2658,7 @@ static int nfp_net_netdev_close(struct net_device *netdev)
 	/* Step 2: Tell NFP
 	 */
 	nfp_net_clear_config_and_disable(nn);
+	nfp_port_configure(netdev, false);
 
 	/* Step 3: Free resources
 	 */
@@ -2774,15 +2776,20 @@ static int nfp_net_netdev_open(struct net_device *netdev)
 		goto err_free_all;
 
 	/* Step 2: Configure the NFP
+	 * - Ifup the physical interface if it exists
 	 * - Enable rings from 0 to tx_rings/rx_rings - 1.
 	 * - Write MAC address (in case it changed)
 	 * - Set the MTU
 	 * - Set the Freelist buffer size
 	 * - Enable the FW
 	 */
-	err = nfp_net_set_config_and_enable(nn);
+	err = nfp_port_configure(netdev, true);
 	if (err)
 		goto err_free_all;
+
+	err = nfp_net_set_config_and_enable(nn);
+	if (err)
+		goto err_port_disable;
 
 	/* Step 3: Enable for kernel
 	 * - put some freelist descriptors on each RX ring
@@ -2794,6 +2801,8 @@ static int nfp_net_netdev_open(struct net_device *netdev)
 
 	return 0;
 
+err_port_disable:
+	nfp_port_configure(netdev, false);
 err_free_all:
 	nfp_net_close_free_all(nn);
 	return err;
@@ -3094,18 +3103,6 @@ static void nfp_net_stat64(struct net_device *netdev,
 		stats->tx_bytes += data[1];
 		stats->tx_errors += data[2];
 	}
-}
-
-static int
-nfp_net_setup_tc(struct net_device *netdev, u32 handle, u32 chain_index,
-		 __be16 proto, struct tc_to_netdev *tc)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-
-	if (chain_index)
-		return -EOPNOTSUPP;
-
-	return nfp_app_setup_tc(nn->app, netdev, handle, proto, tc);
 }
 
 static int nfp_net_set_features(struct net_device *netdev,
@@ -3423,7 +3420,7 @@ const struct net_device_ops nfp_net_netdev_ops = {
 	.ndo_get_stats64	= nfp_net_stat64,
 	.ndo_vlan_rx_add_vid	= nfp_net_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid	= nfp_net_vlan_rx_kill_vid,
-	.ndo_setup_tc		= nfp_net_setup_tc,
+	.ndo_setup_tc		= nfp_port_setup_tc,
 	.ndo_tx_timeout		= nfp_net_tx_timeout,
 	.ndo_set_rx_mode	= nfp_net_set_rx_mode,
 	.ndo_change_mtu		= nfp_net_change_mtu,
@@ -3703,6 +3700,8 @@ static void nfp_net_netdev_init(struct nfp_net *nn)
 	netdev->netdev_ops = &nfp_net_netdev_ops;
 	netdev->watchdog_timeo = msecs_to_jiffies(5 * 1000);
 
+	SWITCHDEV_SET_OPS(netdev, &nfp_port_switchdev_ops);
+
 	/* MTU range: 68 - hw-specific max */
 	netdev->min_mtu = ETH_MIN_MTU;
 	netdev->max_mtu = nn->max_mtu;
@@ -3728,10 +3727,17 @@ int nfp_net_init(struct nfp_net *nn)
 	nn->cap = nn_readl(nn, NFP_NET_CFG_CAP);
 	nn->max_mtu = nn_readl(nn, NFP_NET_CFG_MAX_MTU);
 
-	/* Chained metadata is signalled by capabilities except in version 4 */
+	/* ABI 4.x and ctrl vNIC always use chained metadata, in other cases
+	 * we allow use of non-chained metadata if RSS(v1) is the only
+	 * advertised capability requiring metadata.
+	 */
 	nn->dp.chained_metadata_format = nn->fw_ver.major == 4 ||
 					 !nn->dp.netdev ||
+					 !(nn->cap & NFP_NET_CFG_CTRL_RSS) ||
 					 nn->cap & NFP_NET_CFG_CTRL_CHAIN_META;
+	/* RSS(v1) uses non-chained metadata format, except in ABI 4.x where
+	 * it has the same meaning as RSSv2.
+	 */
 	if (nn->dp.chained_metadata_format && nn->fw_ver.major != 4)
 		nn->cap &= ~NFP_NET_CFG_CTRL_RSS;
 

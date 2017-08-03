@@ -649,7 +649,7 @@ int rtnetlink_send(struct sk_buff *skb, struct net *net, u32 pid, unsigned int g
 
 	NETLINK_CB(skb).dst_group = group;
 	if (echo)
-		atomic_inc(&skb->users);
+		refcount_inc(&skb->users);
 	netlink_broadcast(rtnl, skb, pid, group, GFP_KERNEL);
 	if (echo)
 		err = netlink_unicast(rtnl, skb, pid, MSG_DONTWAIT);
@@ -2031,7 +2031,8 @@ static int do_setlink(const struct sk_buff *skb,
 		struct sockaddr *sa;
 		int len;
 
-		len = sizeof(sa_family_t) + dev->addr_len;
+		len = sizeof(sa_family_t) + max_t(size_t, dev->addr_len,
+						  sizeof(*sa));
 		sa = kmalloc(len, GFP_KERNEL);
 		if (!sa) {
 			err = -ENOMEM;
@@ -4241,6 +4242,7 @@ static int rtnetlink_event(struct notifier_block *this, unsigned long event, voi
 
 	switch (event) {
 	case NETDEV_REBOOT:
+	case NETDEV_CHANGEADDR:
 	case NETDEV_CHANGENAME:
 	case NETDEV_FEAT_CHANGE:
 	case NETDEV_BONDING_FAILOVER:

@@ -943,9 +943,9 @@ struct tcp_md5sig_key *tcp_md5_do_lookup(const struct sock *sk,
 }
 EXPORT_SYMBOL(tcp_md5_do_lookup);
 
-struct tcp_md5sig_key *tcp_md5_do_lookup_exact(const struct sock *sk,
-					       const union tcp_md5_addr *addr,
-					       int family, u8 prefixlen)
+static struct tcp_md5sig_key *tcp_md5_do_lookup_exact(const struct sock *sk,
+						      const union tcp_md5_addr *addr,
+						      int family, u8 prefixlen)
 {
 	const struct tcp_sock *tp = tcp_sk(sk);
 	struct tcp_md5sig_key *key;
@@ -1458,7 +1458,7 @@ int tcp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 				sk->sk_rx_dst = NULL;
 			}
 		}
-		tcp_rcv_established(sk, skb, tcp_hdr(skb), skb->len);
+		tcp_rcv_established(sk, skb, tcp_hdr(skb));
 		return 0;
 	}
 
@@ -2323,7 +2323,7 @@ static void get_tcp4_sock(struct sock *sk, struct seq_file *f, int i)
 		from_kuid_munged(seq_user_ns(f), sock_i_uid(sk)),
 		icsk->icsk_probes_out,
 		sock_i_ino(sk),
-		atomic_read(&sk->sk_refcnt), sk,
+		refcount_read(&sk->sk_refcnt), sk,
 		jiffies_to_clock_t(icsk->icsk_rto),
 		jiffies_to_clock_t(icsk->icsk_ack.ato),
 		(icsk->icsk_ack.quick << 1) | icsk->icsk_ack.pingpong,
@@ -2349,7 +2349,7 @@ static void get_timewait4_sock(const struct inet_timewait_sock *tw,
 		" %02X %08X:%08X %02X:%08lX %08X %5d %8d %d %d %pK",
 		i, src, srcp, dest, destp, tw->tw_substate, 0, 0,
 		3, jiffies_delta_to_clock_t(delta), 0, 0, 0, 0,
-		atomic_read(&tw->tw_refcnt), tw);
+		refcount_read(&tw->tw_refcnt), tw);
 }
 
 #define TMPSZ 150

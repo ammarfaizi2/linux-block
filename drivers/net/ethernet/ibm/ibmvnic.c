@@ -763,12 +763,6 @@ static int init_resources(struct ibmvnic_adapter *adapter)
 	if (rc)
 		return rc;
 
-	rc = init_sub_crq_irqs(adapter);
-	if (rc) {
-		netdev_err(netdev, "failed to initialize sub crq irqs\n");
-		return -1;
-	}
-
 	rc = init_stats_token(adapter);
 	if (rc)
 		return rc;
@@ -1803,7 +1797,6 @@ static int reset_sub_crq_queues(struct ibmvnic_adapter *adapter)
 			return rc;
 	}
 
-	rc = init_sub_crq_irqs(adapter);
 	return rc;
 }
 
@@ -3669,6 +3662,13 @@ static int ibmvnic_init(struct ibmvnic_adapter *adapter)
 	if (rc) {
 		dev_err(dev, "Initialization of sub crqs failed\n");
 		release_crq_queue(adapter);
+		return rc;
+	}
+
+	rc = init_sub_crq_irqs(adapter);
+	if (rc) {
+		dev_err(dev, "Failed to initialize sub crq irqs\n");
+		release_crq_queue(adapter);
 	}
 
 	return rc;
@@ -3851,10 +3851,7 @@ static int ibmvnic_resume(struct device *dev)
 	if (adapter->state != VNIC_OPEN)
 		return 0;
 
-	/* kick the interrupt handlers just in case we lost an interrupt */
-	for (i = 0; i < adapter->req_rx_queues; i++)
-		ibmvnic_interrupt_rx(adapter->rx_scrq[i]->irq,
-				     adapter->rx_scrq[i]);
+	tasklet_schedule(&adapter->tasklet);
 
 	return 0;
 }

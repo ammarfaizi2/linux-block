@@ -743,7 +743,7 @@ static void conn_action_txdone(fsm_instance *fi, int event, void *arg)
 	conn->prof.tx_pending--;
 	if (single_flag) {
 		if ((skb = skb_dequeue(&conn->commit_queue))) {
-			atomic_dec(&skb->users);
+			refcount_dec(&skb->users);
 			if (privptr) {
 				privptr->stats.tx_packets++;
 				privptr->stats.tx_bytes +=
@@ -766,7 +766,7 @@ static void conn_action_txdone(fsm_instance *fi, int event, void *arg)
 		txbytes += skb->len;
 		txpackets++;
 		stat_maxcq++;
-		atomic_dec(&skb->users);
+		refcount_dec(&skb->users);
 		dev_kfree_skb_any(skb);
 	}
 	if (conn->collect_len > conn->prof.maxmulti)
@@ -958,7 +958,7 @@ static void netiucv_purge_skb_queue(struct sk_buff_head *q)
 	struct sk_buff *skb;
 
 	while ((skb = skb_dequeue(q))) {
-		atomic_dec(&skb->users);
+		refcount_dec(&skb->users);
 		dev_kfree_skb_any(skb);
 	}
 }
@@ -1176,7 +1176,7 @@ static int netiucv_transmit_skb(struct iucv_connection *conn,
 			IUCV_DBF_TEXT(data, 2,
 				      "EBUSY from netiucv_transmit_skb\n");
 		} else {
-			atomic_inc(&skb->users);
+			refcount_inc(&skb->users);
 			skb_queue_tail(&conn->collect_queue, skb);
 			conn->collect_len += l;
 			rc = 0;
@@ -1245,7 +1245,7 @@ static int netiucv_transmit_skb(struct iucv_connection *conn,
 		} else {
 			if (copied)
 				dev_kfree_skb(skb);
-			atomic_inc(&nskb->users);
+			refcount_inc(&nskb->users);
 			skb_queue_tail(&conn->commit_queue, nskb);
 		}
 	}
@@ -2018,8 +2018,8 @@ out_netdev:
 	return NULL;
 }
 
-static ssize_t conn_write(struct device_driver *drv,
-			  const char *buf, size_t count)
+static ssize_t connection_store(struct device_driver *drv, const char *buf,
+				size_t count)
 {
 	char username[9];
 	char userdata[17];
@@ -2080,11 +2080,10 @@ out_free_ndev:
 	netiucv_free_netdevice(dev);
 	return rc;
 }
+static DRIVER_ATTR_WO(connection);
 
-static DRIVER_ATTR(connection, 0200, NULL, conn_write);
-
-static ssize_t remove_write (struct device_driver *drv,
-			     const char *buf, size_t count)
+static ssize_t remove_store(struct device_driver *drv, const char *buf,
+			    size_t count)
 {
 	struct iucv_connection *cp;
         struct net_device *ndev;
@@ -2130,8 +2129,7 @@ static ssize_t remove_write (struct device_driver *drv,
 	IUCV_DBF_TEXT(data, 2, "remove_write: unknown device\n");
         return -EINVAL;
 }
-
-static DRIVER_ATTR(remove, 0200, NULL, remove_write);
+static DRIVER_ATTR_WO(remove);
 
 static struct attribute * netiucv_drv_attrs[] = {
 	&driver_attr_connection.attr,

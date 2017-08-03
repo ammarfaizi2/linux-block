@@ -1508,6 +1508,10 @@ static int create_qp(struct ib_uverbs_file *file,
 	}
 
 	if (cmd->qp_type != IB_QPT_XRC_TGT) {
+		ret = ib_create_qp_security(qp, device);
+		if (ret)
+			goto err_cb;
+
 		qp->real_qp	  = qp;
 		qp->device	  = device;
 		qp->pd		  = pd;
@@ -1931,6 +1935,11 @@ static int modify_qp(struct ib_uverbs_file *file,
 		goto out;
 	}
 
+	if (!rdma_is_port_valid(qp->device, cmd->base.port_num)) {
+		ret = -EINVAL;
+		goto release_qp;
+	}
+
 	attr->qp_state		  = cmd->base.qp_state;
 	attr->cur_qp_state	  = cmd->base.cur_qp_state;
 	attr->path_mtu		  = cmd->base.path_mtu;
@@ -1996,25 +2005,13 @@ static int modify_qp(struct ib_uverbs_file *file,
 	rdma_ah_set_port_num(&attr->alt_ah_attr,
 			     cmd->base.alt_dest.port_num);
 
-	if (qp->real_qp == qp) {
-		if (cmd->base.attr_mask & IB_QP_AV) {
-			ret = ib_resolve_eth_dmac(qp->device, &attr->ah_attr);
-			if (ret)
-				goto release_qp;
-		}
-		ret = qp->device->modify_qp(qp, attr,
-					    modify_qp_mask(qp->qp_type,
-							   cmd->base.attr_mask),
-					    udata);
-	} else {
-		ret = ib_modify_qp(qp, attr,
-				   modify_qp_mask(qp->qp_type,
-						  cmd->base.attr_mask));
-	}
+	ret = ib_modify_qp_with_udata(qp, attr,
+				      modify_qp_mask(qp->qp_type,
+						     cmd->base.attr_mask),
+				      udata);
 
 release_qp:
 	uobj_put_obj_read(qp);
-
 out:
 	kfree(attr);
 
@@ -2540,6 +2537,9 @@ ssize_t ib_uverbs_create_ah(struct ib_uverbs_file *file,
 
 	if (copy_from_user(&cmd, buf, sizeof cmd))
 		return -EFAULT;
+
+	if (!rdma_is_port_valid(ib_dev, cmd.attr.port_num))
+		return -EINVAL;
 
 	INIT_UDATA(&udata, buf + sizeof(cmd),
 		   (unsigned long)cmd.response + sizeof(resp),

@@ -493,9 +493,9 @@ static void mtk_get_stats64(struct net_device *dev,
 	unsigned int start;
 
 	if (netif_running(dev) && netif_device_present(dev)) {
-		if (spin_trylock(&hw_stats->stats_lock)) {
+		if (spin_trylock_bh(&hw_stats->stats_lock)) {
 			mtk_stats_update_mac(mac);
-			spin_unlock(&hw_stats->stats_lock);
+			spin_unlock_bh(&hw_stats->stats_lock);
 		}
 	}
 
@@ -1027,7 +1027,6 @@ static int mtk_poll_tx(struct mtk_eth *eth, int budget)
 	unsigned int done[MTK_MAX_DEVS];
 	unsigned int bytes[MTK_MAX_DEVS];
 	u32 cpu, dma;
-	static int condition;
 	int total = 0, i;
 
 	memset(done, 0, sizeof(done));
@@ -1051,10 +1050,8 @@ static int mtk_poll_tx(struct mtk_eth *eth, int budget)
 			mac = 1;
 
 		skb = tx_buf->skb;
-		if (!skb) {
-			condition = 1;
+		if (!skb)
 			break;
-		}
 
 		if (skb != (struct sk_buff *)MTK_DMA_DUMMY_DESC) {
 			bytes[mac] += skb->len;
@@ -2184,9 +2181,9 @@ static void mtk_get_ethtool_stats(struct net_device *dev,
 		return;
 
 	if (netif_running(dev) && netif_device_present(dev)) {
-		if (spin_trylock(&hwstats->stats_lock)) {
+		if (spin_trylock_bh(&hwstats->stats_lock)) {
 			mtk_stats_update_mac(mac);
-			spin_unlock(&hwstats->stats_lock);
+			spin_unlock_bh(&hwstats->stats_lock);
 		}
 	}
 
@@ -2401,14 +2398,9 @@ static int mtk_probe(struct platform_device *pdev)
 {
 	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	struct device_node *mac_np;
-	const struct of_device_id *match;
-	struct mtk_soc_data *soc;
 	struct mtk_eth *eth;
 	int err;
 	int i;
-
-	match = of_match_device(of_mtk_match, &pdev->dev);
-	soc = (struct mtk_soc_data *)match->data;
 
 	eth = devm_kzalloc(&pdev->dev, sizeof(*eth), GFP_KERNEL);
 	if (!eth)

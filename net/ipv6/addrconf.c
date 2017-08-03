@@ -426,7 +426,7 @@ static struct inet6_dev *ipv6_add_dev(struct net_device *dev)
 	}
 
 	/* One reference from device. */
-	in6_dev_hold(ndev);
+	refcount_set(&ndev->refcnt, 1);
 
 	if (dev->flags & (IFF_NOARP | IFF_LOOPBACK))
 		ndev->cnf.accept_dad = -1;
@@ -1050,7 +1050,7 @@ ipv6_add_addr(struct inet6_dev *idev, const struct in6_addr *addr,
 
 	ifa->idev = idev;
 	/* For caller */
-	in6_ifa_hold(ifa);
+	refcount_set(&ifa->refcnt, 1);
 
 	/* Add to big hash table */
 	hash = inet6_addr_hash(addr);
@@ -1927,15 +1927,7 @@ static void addrconf_dad_stop(struct inet6_ifaddr *ifp, int dad_failed)
 	if (dad_failed)
 		ifp->flags |= IFA_F_DADFAILED;
 
-	if (ifp->flags&IFA_F_PERMANENT) {
-		spin_lock_bh(&ifp->lock);
-		addrconf_del_dad_work(ifp);
-		ifp->flags |= IFA_F_TENTATIVE;
-		spin_unlock_bh(&ifp->lock);
-		if (dad_failed)
-			ipv6_ifa_notify(0, ifp);
-		in6_ifa_put(ifp);
-	} else if (ifp->flags&IFA_F_TEMPORARY) {
+	if (ifp->flags&IFA_F_TEMPORARY) {
 		struct inet6_ifaddr *ifpub;
 		spin_lock_bh(&ifp->lock);
 		ifpub = ifp->ifpub;
@@ -1948,6 +1940,14 @@ static void addrconf_dad_stop(struct inet6_ifaddr *ifp, int dad_failed)
 			spin_unlock_bh(&ifp->lock);
 		}
 		ipv6_del_addr(ifp);
+	} else if (ifp->flags&IFA_F_PERMANENT || !dad_failed) {
+		spin_lock_bh(&ifp->lock);
+		addrconf_del_dad_work(ifp);
+		ifp->flags |= IFA_F_TENTATIVE;
+		spin_unlock_bh(&ifp->lock);
+		if (dad_failed)
+			ipv6_ifa_notify(0, ifp);
+		in6_ifa_put(ifp);
 	} else {
 		ipv6_del_addr(ifp);
 	}
@@ -3384,6 +3384,7 @@ static int addrconf_notify(struct notifier_block *this, unsigned long event,
 	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 	struct netdev_notifier_changeupper_info *info;
 	struct inet6_dev *idev = __in6_dev_get(dev);
+	struct net *net = dev_net(dev);
 	int run_pending = 0;
 	int err;
 
@@ -3399,7 +3400,7 @@ static int addrconf_notify(struct notifier_block *this, unsigned long event,
 	case NETDEV_CHANGEMTU:
 		/* if MTU under IPV6_MIN_MTU stop IPv6 on this interface. */
 		if (dev->mtu < IPV6_MIN_MTU) {
-			addrconf_ifdown(dev, 1);
+			addrconf_ifdown(dev, dev != net->loopback_dev);
 			break;
 		}
 
@@ -3515,7 +3516,7 @@ static int addrconf_notify(struct notifier_block *this, unsigned long event,
 			 * IPV6_MIN_MTU stop IPv6 on this interface.
 			 */
 			if (dev->mtu < IPV6_MIN_MTU)
-				addrconf_ifdown(dev, 1);
+				addrconf_ifdown(dev, dev != net->loopback_dev);
 		}
 		break;
 

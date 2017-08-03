@@ -35,8 +35,10 @@
 #include <linux/io-64-nonatomic-hi-lo.h>
 #include <linux/lockdep.h>
 #include <net/dst_metadata.h>
+#include <net/switchdev.h>
 
 #include "nfpcore/nfp_cpp.h"
+#include "nfpcore/nfp_nsp.h"
 #include "nfp_app.h"
 #include "nfp_main.h"
 #include "nfp_net_ctrl.h"
@@ -135,25 +137,34 @@ nfp_repr_pf_get_stats64(const struct nfp_app *app, u8 pf,
 	stats->rx_dropped = readq(mem + NFP_NET_CFG_STATS_TX_DISCARDS);
 }
 
-void
-nfp_repr_get_stats64(const struct nfp_app *app, enum nfp_repr_type type,
-		     u8 port, struct rtnl_link_stats64 *stats)
+static void
+nfp_repr_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
 {
-	switch (type) {
-	case NFP_REPR_TYPE_PHYS_PORT:
-		nfp_repr_phy_port_get_stats64(app, port, stats);
+	struct nfp_repr *repr = netdev_priv(netdev);
+	struct nfp_eth_table_port *eth_port;
+	struct nfp_app *app = repr->app;
+
+	if (WARN_ON(!repr->port))
+		return;
+
+	switch (repr->port->type) {
+	case NFP_PORT_PHYS_PORT:
+		eth_port = __nfp_port_get_eth_port(repr->port);
+		if (!eth_port)
+			break;
+		nfp_repr_phy_port_get_stats64(app, eth_port->index, stats);
 		break;
-	case NFP_REPR_TYPE_PF:
-		nfp_repr_pf_get_stats64(app, port, stats);
+	case NFP_PORT_PF_PORT:
+		nfp_repr_pf_get_stats64(app, repr->port->pf_id, stats);
 		break;
-	case NFP_REPR_TYPE_VF:
-		nfp_repr_vf_get_stats64(app, port, stats);
+	case NFP_PORT_VF_PORT:
+		nfp_repr_vf_get_stats64(app, repr->port->vf_id, stats);
 	default:
 		break;
 	}
 }
 
-bool
+static bool
 nfp_repr_has_offload_stats(const struct net_device *dev, int attr_id)
 {
 	switch (attr_id) {
@@ -196,8 +207,9 @@ nfp_repr_get_host_stats64(const struct net_device *netdev,
 	return 0;
 }
 
-int nfp_repr_get_offload_stats(int attr_id, const struct net_device *dev,
-			       void *stats)
+static int
+nfp_repr_get_offload_stats(int attr_id, const struct net_device *dev,
+			   void *stats)
 {
 	switch (attr_id) {
 	case IFLA_OFFLOAD_XSTATS_CPU_HIT:
@@ -207,7 +219,7 @@ int nfp_repr_get_offload_stats(int attr_id, const struct net_device *dev,
 	return -EINVAL;
 }
 
-netdev_tx_t nfp_repr_xmit(struct sk_buff *skb, struct net_device *netdev)
+static netdev_tx_t nfp_repr_xmit(struct sk_buff *skb, struct net_device *netdev)
 {
 	struct nfp_repr *repr = netdev_priv(netdev);
 	unsigned int len = skb->len;
@@ -223,6 +235,50 @@ netdev_tx_t nfp_repr_xmit(struct sk_buff *skb, struct net_device *netdev)
 
 	return ret;
 }
+
+static int nfp_repr_stop(struct net_device *netdev)
+{
+	struct nfp_repr *repr = netdev_priv(netdev);
+	int err;
+
+	err = nfp_app_repr_stop(repr->app, repr);
+	if (err)
+		return err;
+
+	nfp_port_configure(netdev, false);
+	return 0;
+}
+
+static int nfp_repr_open(struct net_device *netdev)
+{
+	struct nfp_repr *repr = netdev_priv(netdev);
+	int err;
+
+	err = nfp_port_configure(netdev, true);
+	if (err)
+		return err;
+
+	err = nfp_app_repr_open(repr->app, repr);
+	if (err)
+		goto err_port_disable;
+
+	return 0;
+
+err_port_disable:
+	nfp_port_configure(netdev, false);
+	return err;
+}
+
+const struct net_device_ops nfp_repr_netdev_ops = {
+	.ndo_open		= nfp_repr_open,
+	.ndo_stop		= nfp_repr_stop,
+	.ndo_start_xmit		= nfp_repr_xmit,
+	.ndo_get_stats64	= nfp_repr_get_stats64,
+	.ndo_has_offload_stats	= nfp_repr_has_offload_stats,
+	.ndo_get_offload_stats	= nfp_repr_get_offload_stats,
+	.ndo_get_phys_port_name	= nfp_port_get_phys_port_name,
+	.ndo_setup_tc		= nfp_port_setup_tc,
+};
 
 static void nfp_repr_clean(struct nfp_repr *repr)
 {
@@ -248,8 +304,8 @@ static void nfp_repr_set_lockdep_class(struct net_device *dev)
 }
 
 int nfp_repr_init(struct nfp_app *app, struct net_device *netdev,
-		  const struct net_device_ops *netdev_ops, u32 cmsg_port_id,
-		  struct nfp_port *port, struct net_device *pf_netdev)
+		  u32 cmsg_port_id, struct nfp_port *port,
+		  struct net_device *pf_netdev)
 {
 	struct nfp_repr *repr = netdev_priv(netdev);
 	int err;
@@ -263,7 +319,13 @@ int nfp_repr_init(struct nfp_app *app, struct net_device *netdev,
 	repr->dst->u.port_info.port_id = cmsg_port_id;
 	repr->dst->u.port_info.lower_dev = pf_netdev;
 
-	netdev->netdev_ops = netdev_ops;
+	netdev->netdev_ops = &nfp_repr_netdev_ops;
+	SWITCHDEV_SET_OPS(netdev, &nfp_port_switchdev_ops);
+
+	if (nfp_app_has_tc(app)) {
+		netdev->features |= NETIF_F_HW_TC;
+		netdev->hw_features |= NETIF_F_HW_TC;
+	}
 
 	err = register_netdev(netdev);
 	if (err)

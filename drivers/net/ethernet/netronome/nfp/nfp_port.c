@@ -32,6 +32,7 @@
  */
 
 #include <linux/lockdep.h>
+#include <net/switchdev.h>
 
 #include "nfpcore/nfp_cpp.h"
 #include "nfpcore/nfp_nsp.h"
@@ -42,13 +43,64 @@
 
 struct nfp_port *nfp_port_from_netdev(struct net_device *netdev)
 {
-	struct nfp_net *nn;
+	if (nfp_netdev_is_nfp_net(netdev)) {
+		struct nfp_net *nn = netdev_priv(netdev);
 
-	if (WARN_ON(!nfp_netdev_is_nfp_net(netdev)))
-		return NULL;
-	nn = netdev_priv(netdev);
+		return nn->port;
+	}
 
-	return nn->port;
+	if (nfp_netdev_is_nfp_repr(netdev)) {
+		struct nfp_repr *repr = netdev_priv(netdev);
+
+		return repr->port;
+	}
+
+	WARN(1, "Unknown netdev type for nfp_port\n");
+
+	return NULL;
+}
+
+static int
+nfp_port_attr_get(struct net_device *netdev, struct switchdev_attr *attr)
+{
+	struct nfp_port *port;
+
+	port = nfp_port_from_netdev(netdev);
+	if (!port)
+		return -EOPNOTSUPP;
+
+	switch (attr->id) {
+	case SWITCHDEV_ATTR_ID_PORT_PARENT_ID: {
+		const u8 *serial;
+		/* N.B: attr->u.ppid.id is binary data */
+		attr->u.ppid.id_len = nfp_cpp_serial(port->app->cpp, &serial);
+		memcpy(&attr->u.ppid.id, serial, attr->u.ppid.id_len);
+		break;
+	}
+	default:
+		return -EOPNOTSUPP;
+	}
+
+	return 0;
+}
+
+const struct switchdev_ops nfp_port_switchdev_ops = {
+	.switchdev_port_attr_get	= nfp_port_attr_get,
+};
+
+int nfp_port_setup_tc(struct net_device *netdev, u32 handle, u32 chain_index,
+		      __be16 proto, struct tc_to_netdev *tc)
+{
+	struct nfp_port *port;
+
+	if (chain_index)
+		return -EOPNOTSUPP;
+
+	port = nfp_port_from_netdev(netdev);
+	if (!port)
+		return -EOPNOTSUPP;
+
+	return nfp_app_setup_tc(port->app, netdev, handle, proto, tc);
 }
 
 struct nfp_port *
@@ -98,41 +150,84 @@ nfp_port_get_phys_port_name(struct net_device *netdev, char *name, size_t len)
 	int n;
 
 	port = nfp_port_from_netdev(netdev);
-	eth_port = __nfp_port_get_eth_port(port);
-	if (!eth_port)
+	if (!port)
 		return -EOPNOTSUPP;
 
-	if (!eth_port->is_split)
-		n = snprintf(name, len, "p%d", eth_port->label_port);
-	else
-		n = snprintf(name, len, "p%ds%d", eth_port->label_port,
-			     eth_port->label_subport);
+	switch (port->type) {
+	case NFP_PORT_PHYS_PORT:
+		eth_port = __nfp_port_get_eth_port(port);
+		if (!eth_port)
+			return -EOPNOTSUPP;
+
+		if (!eth_port->is_split)
+			n = snprintf(name, len, "p%d", eth_port->label_port);
+		else
+			n = snprintf(name, len, "p%ds%d", eth_port->label_port,
+				     eth_port->label_subport);
+		break;
+	case NFP_PORT_PF_PORT:
+		n = snprintf(name, len, "pf%d", port->pf_id);
+		break;
+	case NFP_PORT_VF_PORT:
+		n = snprintf(name, len, "pf%dvf%d", port->pf_id, port->vf_id);
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+
 	if (n >= len)
 		return -EINVAL;
 
 	return 0;
 }
 
+/**
+ * nfp_port_configure() - helper to set the interface configured bit
+ * @netdev:	net_device instance
+ * @configed:	Desired state
+ *
+ * Helper to set the ifup/ifdown state on the PHY only if there is a physical
+ * interface associated with the netdev.
+ *
+ * Return:
+ * 0 - configuration successful (or no change);
+ * -ERRNO - configuration failed.
+ */
+int nfp_port_configure(struct net_device *netdev, bool configed)
+{
+	struct nfp_eth_table_port *eth_port;
+	struct nfp_port *port;
+	int err;
+
+	port = nfp_port_from_netdev(netdev);
+	eth_port = __nfp_port_get_eth_port(port);
+	if (!eth_port)
+		return 0;
+
+	err = nfp_eth_set_configured(port->app->cpp, eth_port->index, configed);
+	return err < 0 && err != -EOPNOTSUPP ? err : 0;
+}
+
 int nfp_port_init_phy_port(struct nfp_pf *pf, struct nfp_app *app,
 			   struct nfp_port *port, unsigned int id)
 {
-	port->eth_id = id;
-	port->eth_port = nfp_net_find_port(pf->eth_tbl, id);
-
 	/* Check if vNIC has external port associated and cfg is OK */
-	if (!port->eth_port) {
+	if (!pf->eth_tbl || id >= pf->eth_tbl->count) {
 		nfp_err(app->cpp,
-			"NSP port entries don't match vNICs (no entry for port #%d)\n",
+			"NSP port entries don't match vNICs (no entry %d)\n",
 			id);
 		return -EINVAL;
 	}
-	if (port->eth_port->override_changed) {
+	if (pf->eth_tbl->ports[id].override_changed) {
 		nfp_warn(app->cpp,
 			 "Config changed for port #%d, reboot required before port will be operational\n",
-			 id);
+			 pf->eth_tbl->ports[id].index);
 		port->type = NFP_PORT_INVALID;
 		return 0;
 	}
+
+	port->eth_port = &pf->eth_tbl->ports[id];
+	port->eth_id = pf->eth_tbl->ports[id].index;
 
 	return 0;
 }

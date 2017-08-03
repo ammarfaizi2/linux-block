@@ -16,12 +16,9 @@
 #include <linux/sched.h>
 #include <linux/capability.h>
 #include <linux/cryptohash.h>
+#include <linux/set_memory.h>
 
 #include <net/sch_generic.h>
-
-#ifdef CONFIG_ARCH_HAS_SET_MEMORY
-#include <asm/set_memory.h>
-#endif
 
 #include <uapi/linux/filter.h>
 #include <uapi/linux/bpf.h>
@@ -337,6 +334,22 @@ struct bpf_prog_aux;
 	bpf_size;						\
 })
 
+#define bpf_size_to_bytes(bpf_size)				\
+({								\
+	int bytes = -EINVAL;					\
+								\
+	if (bpf_size == BPF_B)					\
+		bytes = sizeof(u8);				\
+	else if (bpf_size == BPF_H)				\
+		bytes = sizeof(u16);				\
+	else if (bpf_size == BPF_W)				\
+		bytes = sizeof(u32);				\
+	else if (bpf_size == BPF_DW)				\
+		bytes = sizeof(u64);				\
+								\
+	bytes;							\
+})
+
 #define BPF_SIZEOF(type)					\
 	({							\
 		const int __size = bytes_to_bpf_size(sizeof(type)); \
@@ -348,6 +361,13 @@ struct bpf_prog_aux;
 	({							\
 		const int __size = bytes_to_bpf_size(FIELD_SIZEOF(type, field)); \
 		BUILD_BUG_ON(__size < 0);			\
+		__size;						\
+	})
+
+#define BPF_LDST_BYTES(insn)					\
+	({							\
+		const int __size = bpf_size_to_bytes(BPF_SIZE(insn->code)); \
+		WARN_ON(__size < 0);				\
 		__size;						\
 	})
 
@@ -400,6 +420,18 @@ struct bpf_prog_aux;
 #define BPF_CALL_3(name, ...)	BPF_CALL_x(3, name, __VA_ARGS__)
 #define BPF_CALL_4(name, ...)	BPF_CALL_x(4, name, __VA_ARGS__)
 #define BPF_CALL_5(name, ...)	BPF_CALL_x(5, name, __VA_ARGS__)
+
+#define bpf_ctx_range(TYPE, MEMBER)						\
+	offsetof(TYPE, MEMBER) ... offsetofend(TYPE, MEMBER) - 1
+#define bpf_ctx_range_till(TYPE, MEMBER1, MEMBER2)				\
+	offsetof(TYPE, MEMBER1) ... offsetofend(TYPE, MEMBER2) - 1
+
+#define bpf_target_off(TYPE, MEMBER, SIZE, PTR_SIZE)				\
+	({									\
+		BUILD_BUG_ON(FIELD_SIZEOF(TYPE, MEMBER) != (SIZE));		\
+		*(PTR_SIZE) = (SIZE);						\
+		offsetof(TYPE, MEMBER);						\
+	})
 
 #ifdef CONFIG_COMPAT
 /* A struct sock_filter is architecture independent. */
@@ -564,6 +596,18 @@ static inline bool bpf_prog_was_classic(const struct bpf_prog *prog)
 	return prog->type == BPF_PROG_TYPE_UNSPEC;
 }
 
+static inline bool
+bpf_ctx_narrow_access_ok(u32 off, u32 size, const u32 size_default)
+{
+	bool off_ok;
+#ifdef __LITTLE_ENDIAN
+	off_ok = (off & (size_default - 1)) == 0;
+#else
+	off_ok = (off & (size_default - 1)) + size == size_default;
+#endif
+	return off_ok && size <= size_default && (size & (size - 1)) == 0;
+}
+
 #define bpf_classic_proglen(fprog) (fprog->len * sizeof(fprog->filter[0]))
 
 #ifdef CONFIG_ARCH_HAS_SET_MEMORY
@@ -667,7 +711,21 @@ bool bpf_helper_changes_pkt_data(void *func);
 
 struct bpf_prog *bpf_patch_insn_single(struct bpf_prog *prog, u32 off,
 				       const struct bpf_insn *patch, u32 len);
+
+/* The pair of xdp_do_redirect and xdp_do_flush_map MUST be called in the
+ * same cpu context. Further for best results no more than a single map
+ * for the do_redirect/do_flush pair should be used. This limitation is
+ * because we only track one map and force a flush when the map changes.
+ * This does not appear to be a real limitation for existing software.
+ */
+int xdp_do_generic_redirect(struct net_device *dev, struct sk_buff *skb);
+int xdp_do_redirect(struct net_device *dev,
+		    struct xdp_buff *xdp,
+		    struct bpf_prog *prog);
+void xdp_do_flush_map(void);
+
 void bpf_warn_invalid_xdp_action(u32 act);
+void bpf_warn_invalid_xdp_redirect(u32 ifindex);
 
 #ifdef CONFIG_BPF_JIT
 extern int bpf_jit_enable;
@@ -897,5 +955,14 @@ static inline int bpf_tell_extensions(void)
 {
 	return SKF_AD_MAX;
 }
+
+struct bpf_sock_ops_kern {
+	struct	sock *sk;
+	u32	op;
+	union {
+		u32 reply;
+		u32 replylong[4];
+	};
+};
 
 #endif /* __LINUX_FILTER_H__ */

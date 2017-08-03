@@ -1102,7 +1102,7 @@ static void sctp_outq_flush(struct sctp_outq *q, int rtx_timeout, gfp_t gfp)
 				 sctp_cname(SCTP_ST_CHUNK(chunk->chunk_hdr->type)) :
 				 "illegal chunk", ntohl(chunk->subh.data_hdr->tsn),
 				 chunk->skb ? chunk->skb->head : NULL, chunk->skb ?
-				 atomic_read(&chunk->skb->users) : -1);
+				 refcount_read(&chunk->skb->users) : -1);
 
 			/* Add the chunk to the packet.  */
 			status = sctp_packet_transmit_chunk(packet, chunk, 0, gfp);
@@ -1197,7 +1197,7 @@ sctp_flush_out:
 static void sctp_sack_update_unack_data(struct sctp_association *assoc,
 					struct sctp_sackhdr *sack)
 {
-	sctp_sack_variable_t *frags;
+	union sctp_sack_variable *frags;
 	__u16 unack_data;
 	int i;
 
@@ -1224,7 +1224,7 @@ int sctp_outq_sack(struct sctp_outq *q, struct sctp_chunk *chunk)
 	struct sctp_transport *transport;
 	struct sctp_chunk *tchunk = NULL;
 	struct list_head *lchunk, *transport_list, *temp;
-	sctp_sack_variable_t *frags = sack->variable;
+	union sctp_sack_variable *frags = sack->variable;
 	__u32 sack_ctsn, ctsn, tsn;
 	__u32 highest_tsn, highest_new_tsn;
 	__u32 sack_a_rwnd;
@@ -1736,10 +1736,10 @@ static void sctp_mark_missing(struct sctp_outq *q,
 /* Is the given TSN acked by this packet?  */
 static int sctp_acked(struct sctp_sackhdr *sack, __u32 tsn)
 {
-	int i;
-	sctp_sack_variable_t *frags;
-	__u16 tsn_offset, blocks;
 	__u32 ctsn = ntohl(sack->cum_tsn_ack);
+	union sctp_sack_variable *frags;
+	__u16 tsn_offset, blocks;
+	int i;
 
 	if (TSN_lte(tsn, ctsn))
 		goto pass;

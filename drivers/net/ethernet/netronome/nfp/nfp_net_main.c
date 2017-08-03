@@ -81,110 +81,34 @@ static int nfp_is_ready(struct nfp_pf *pf)
 }
 
 /**
- * nfp_net_map_area() - Help function to map an area
- * @cpp:    NFP CPP handler
- * @name:   Name for the area
- * @target: CPP target
- * @addr:   CPP address
- * @size:   Size of the area
- * @area:   Area handle (returned).
- *
- * This function is primarily to simplify the code in the main probe
- * function. To undo the effect of this functions call
- * @nfp_cpp_area_release_free(*area);
- *
- * Return: Pointer to memory mapped area or ERR_PTR
- */
-static u8 __iomem *nfp_net_map_area(struct nfp_cpp *cpp,
-				    const char *name, int isl, int target,
-				    unsigned long long addr, unsigned long size,
-				    struct nfp_cpp_area **area)
-{
-	u8 __iomem *res;
-	u32 dest;
-	int err;
-
-	dest = NFP_CPP_ISLAND_ID(target, NFP_CPP_ACTION_RW, 0, isl);
-
-	*area = nfp_cpp_area_alloc_with_name(cpp, dest, name, addr, size);
-	if (!*area) {
-		err = -EIO;
-		goto err_area;
-	}
-
-	err = nfp_cpp_area_acquire(*area);
-	if (err < 0)
-		goto err_acquire;
-
-	res = nfp_cpp_area_iomem(*area);
-	if (!res) {
-		err = -EIO;
-		goto err_map;
-	}
-
-	return res;
-
-err_map:
-	nfp_cpp_area_release(*area);
-err_acquire:
-	nfp_cpp_area_free(*area);
-err_area:
-	return (u8 __iomem *)ERR_PTR(err);
-}
-
-/**
  * nfp_net_get_mac_addr() - Get the MAC address.
  * @pf:       NFP PF handle
  * @port:     NFP port structure
- * @id:	      NFP port id
  *
  * First try to get the MAC address from NSP ETH table. If that
- * fails try HWInfo.  As a last resort generate a random address.
+ * fails generate a random address.
  */
-void
-nfp_net_get_mac_addr(struct nfp_pf *pf, struct nfp_port *port, unsigned int id)
+void nfp_net_get_mac_addr(struct nfp_pf *pf, struct nfp_port *port)
 {
 	struct nfp_eth_table_port *eth_port;
-	u8 mac_addr[ETH_ALEN];
-	const char *mac_str;
-	char name[32];
 
 	eth_port = __nfp_port_get_eth_port(port);
-	if (eth_port) {
-		ether_addr_copy(port->netdev->dev_addr, eth_port->mac_addr);
-		ether_addr_copy(port->netdev->perm_addr, eth_port->mac_addr);
-		return;
-	}
-
-	snprintf(name, sizeof(name), "eth%d.mac", id);
-
-	mac_str = nfp_hwinfo_lookup(pf->hwinfo, name);
-	if (!mac_str) {
-		nfp_warn(pf->cpp, "Can't lookup MAC address. Generate\n");
+	if (!eth_port) {
 		eth_hw_addr_random(port->netdev);
 		return;
 	}
 
-	if (sscanf(mac_str, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-		   &mac_addr[0], &mac_addr[1], &mac_addr[2],
-		   &mac_addr[3], &mac_addr[4], &mac_addr[5]) != 6) {
-		nfp_warn(pf->cpp, "Can't parse MAC address (%s). Generate.\n",
-			 mac_str);
-		eth_hw_addr_random(port->netdev);
-		return;
-	}
-
-	ether_addr_copy(port->netdev->dev_addr, mac_addr);
-	ether_addr_copy(port->netdev->perm_addr, mac_addr);
+	ether_addr_copy(port->netdev->dev_addr, eth_port->mac_addr);
+	ether_addr_copy(port->netdev->perm_addr, eth_port->mac_addr);
 }
 
-struct nfp_eth_table_port *
-nfp_net_find_port(struct nfp_eth_table *eth_tbl, unsigned int id)
+static struct nfp_eth_table_port *
+nfp_net_find_port(struct nfp_eth_table *eth_tbl, unsigned int index)
 {
 	int i;
 
 	for (i = 0; eth_tbl && i < eth_tbl->count; i++)
-		if (eth_tbl->ports[i].eth_index == id)
+		if (eth_tbl->ports[i].index == index)
 			return &eth_tbl->ports[i];
 
 	return NULL;
@@ -226,31 +150,12 @@ static u8 __iomem *
 nfp_net_pf_map_rtsym(struct nfp_pf *pf, const char *name, const char *sym_fmt,
 		     unsigned int min_size, struct nfp_cpp_area **area)
 {
-	const struct nfp_rtsym *sym;
 	char pf_symbol[256];
-	u8 __iomem *mem;
 
 	snprintf(pf_symbol, sizeof(pf_symbol), sym_fmt,
 		 nfp_cppcore_pcie_unit(pf->cpp));
 
-	sym = nfp_rtsym_lookup(pf->rtbl, pf_symbol);
-	if (!sym)
-		return (u8 __iomem *)ERR_PTR(-ENOENT);
-
-	if (sym->size < min_size) {
-		nfp_err(pf->cpp, "PF symbol %s too small\n", pf_symbol);
-		return (u8 __iomem *)ERR_PTR(-EINVAL);
-	}
-
-	mem = nfp_net_map_area(pf->cpp, name, sym->domain, sym->target,
-			       sym->addr, sym->size, area);
-	if (IS_ERR(mem)) {
-		nfp_err(pf->cpp, "Failed to map PF symbol %s: %ld\n",
-			pf_symbol, PTR_ERR(mem));
-		return mem;
-	}
-
-	return mem;
+	return nfp_rtsym_map(pf->rtbl, pf_symbol, name, min_size, area);
 }
 
 static void nfp_net_pf_free_vnic(struct nfp_pf *pf, struct nfp_net *nn)
@@ -273,7 +178,7 @@ static void nfp_net_pf_free_vnics(struct nfp_pf *pf)
 static struct nfp_net *
 nfp_net_pf_alloc_vnic(struct nfp_pf *pf, bool needs_netdev,
 		      void __iomem *ctrl_bar, void __iomem *qc_bar,
-		      int stride, unsigned int eth_id)
+		      int stride, unsigned int id)
 {
 	u32 tx_base, rx_base, n_tx_rings, n_rx_rings;
 	struct nfp_net *nn;
@@ -299,7 +204,7 @@ nfp_net_pf_alloc_vnic(struct nfp_pf *pf, bool needs_netdev,
 	nn->stride_tx = stride;
 
 	if (needs_netdev) {
-		err = nfp_app_vnic_init(pf->app, nn, eth_id);
+		err = nfp_app_vnic_init(pf->app, nn, id);
 		if (err) {
 			nfp_net_free(nn);
 			return ERR_PTR(err);
@@ -485,7 +390,7 @@ nfp_net_pf_app_init(struct nfp_pf *pf, u8 __iomem *qc_bar, unsigned int stride)
 	if (IS_ERR(ctrl_bar)) {
 		nfp_err(pf->cpp, "Failed to find data vNIC memory symbol\n");
 		err = PTR_ERR(ctrl_bar);
-		goto err_free;
+		goto err_app_clean;
 	}
 
 	pf->ctrl_vnic =	nfp_net_pf_alloc_vnic(pf, false, ctrl_bar, qc_bar,
@@ -499,8 +404,11 @@ nfp_net_pf_app_init(struct nfp_pf *pf, u8 __iomem *qc_bar, unsigned int stride)
 
 err_unmap:
 	nfp_cpp_area_release_free(pf->ctrl_vnic_bar);
+err_app_clean:
+	nfp_app_clean(pf->app);
 err_free:
 	nfp_app_free(pf->app);
+	pf->app = NULL;
 	return err;
 }
 
@@ -510,6 +418,7 @@ static void nfp_net_pf_app_clean(struct nfp_pf *pf)
 		nfp_net_pf_free_vnic(pf, pf->ctrl_vnic);
 		nfp_cpp_area_release_free(pf->ctrl_vnic_bar);
 	}
+	nfp_app_clean(pf->app);
 	nfp_app_free(pf->app);
 	pf->app = NULL;
 }
@@ -555,8 +464,16 @@ static int nfp_net_pf_app_start(struct nfp_pf *pf)
 	if (err)
 		goto err_ctrl_stop;
 
+	if (pf->num_vfs) {
+		err = nfp_app_sriov_enable(pf->app, pf->num_vfs);
+		if (err)
+			goto err_app_stop;
+	}
+
 	return 0;
 
+err_app_stop:
+	nfp_app_stop(pf->app);
 err_ctrl_stop:
 	nfp_net_pf_app_stop_ctrl(pf);
 	return err;
@@ -564,6 +481,8 @@ err_ctrl_stop:
 
 static void nfp_net_pf_app_stop(struct nfp_pf *pf)
 {
+	if (pf->num_vfs)
+		nfp_app_sriov_disable(pf->app);
 	nfp_app_stop(pf->app);
 	nfp_net_pf_app_stop_ctrl(pf);
 }
@@ -580,26 +499,22 @@ static void nfp_net_pci_unmap_mem(struct nfp_pf *pf)
 
 static int nfp_net_pci_map_mem(struct nfp_pf *pf)
 {
-	u32 ctrl_bar_sz;
 	u8 __iomem *mem;
+	u32 min_size;
 	int err;
 
-	ctrl_bar_sz = pf->max_data_vnics * NFP_PF_CSR_SLICE_SIZE;
+	min_size = pf->max_data_vnics * NFP_PF_CSR_SLICE_SIZE;
 	mem = nfp_net_pf_map_rtsym(pf, "net.ctrl", "_pf%d_net_bar0",
-				   ctrl_bar_sz, &pf->data_vnic_bar);
+				   min_size, &pf->data_vnic_bar);
 	if (IS_ERR(mem)) {
 		nfp_err(pf->cpp, "Failed to find data vNIC memory symbol\n");
-		err = PTR_ERR(mem);
-		if (!pf->fw_loaded && err == -ENOENT)
-			err = -EPROBE_DEFER;
-		return err;
+		return PTR_ERR(mem);
 	}
 
-	pf->mac_stats_mem = nfp_net_pf_map_rtsym(pf, "net.macstats",
-						 "_mac_stats",
-						 NFP_MAC_STATS_SIZE *
-						 (pf->eth_tbl->max_index + 1),
-						 &pf->mac_stats_bar);
+	min_size =  NFP_MAC_STATS_SIZE * (pf->eth_tbl->max_index + 1);
+	pf->mac_stats_mem = nfp_rtsym_map(pf->rtbl, "_mac_stats",
+					  "net.macstats", min_size,
+					  &pf->mac_stats_bar);
 	if (IS_ERR(pf->mac_stats_mem)) {
 		if (PTR_ERR(pf->mac_stats_mem) != -ENOENT) {
 			err = PTR_ERR(pf->mac_stats_mem);
@@ -620,7 +535,7 @@ static int nfp_net_pci_map_mem(struct nfp_pf *pf)
 		pf->vf_cfg_mem = NULL;
 	}
 
-	mem = nfp_net_map_area(pf->cpp, "net.qc", 0, 0,
+	mem = nfp_cpp_map_area(pf->cpp, "net.qc", 0, 0,
 			       NFP_PCIE_QUEUE(0), NFP_QCP_QUEUE_AREA_SZ,
 			       &pf->qc_area);
 	if (IS_ERR(mem)) {
@@ -743,7 +658,7 @@ void nfp_net_refresh_port_table(struct nfp_port *port)
 
 	set_bit(NFP_PORT_CHANGED, &port->flags);
 
-	schedule_work(&pf->port_refresh_work);
+	queue_work(pf->wq, &pf->port_refresh_work);
 }
 
 int nfp_net_refresh_eth_port(struct nfp_port *port)
@@ -784,6 +699,12 @@ int nfp_net_pci_probe(struct nfp_pf *pf)
 	if (!nfp_is_ready(pf)) {
 		nfp_err(pf->cpp, "NFP is not ready for NIC operation.\n");
 		return -EINVAL;
+	}
+
+	if (!pf->rtbl) {
+		nfp_err(pf->cpp, "No %s, giving up.\n",
+			pf->fw_loaded ? "symbol table" : "firmware found");
+		return -EPROBE_DEFER;
 	}
 
 	mutex_lock(&pf->lock);

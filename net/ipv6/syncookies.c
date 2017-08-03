@@ -194,7 +194,7 @@ struct sock *cookie_v6_check(struct sock *sk, struct sk_buff *skb)
 	if (ipv6_opt_accepted(sk, skb, &TCP_SKB_CB(skb)->header.h6) ||
 	    np->rxopt.bits.rxinfo || np->rxopt.bits.rxoinfo ||
 	    np->rxopt.bits.rxhlim || np->rxopt.bits.rxohlim) {
-		atomic_inc(&skb->users);
+		refcount_inc(&skb->users);
 		ireq->pktopts = skb;
 	}
 
@@ -216,6 +216,7 @@ struct sock *cookie_v6_check(struct sock *sk, struct sk_buff *skb)
 	treq->rcv_isn = ntohl(th->seq) - 1;
 	treq->snt_isn = cookie;
 	treq->ts_off = 0;
+	treq->txhash = net_tx_rndhash();
 
 	/*
 	 * We need to lookup the dst_entry to get the correct window size.

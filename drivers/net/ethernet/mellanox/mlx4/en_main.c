@@ -147,7 +147,7 @@ void mlx4_en_update_loopback_state(struct net_device *dev,
 	mutex_unlock(&priv->mdev->state_lock);
 }
 
-static int mlx4_en_get_profile(struct mlx4_en_dev *mdev)
+static void mlx4_en_get_profile(struct mlx4_en_dev *mdev)
 {
 	struct mlx4_en_profile *params = &mdev->profile;
 	int i;
@@ -169,13 +169,13 @@ static int mlx4_en_get_profile(struct mlx4_en_dev *mdev)
 		params->prof[i].tx_ppp = pfctx;
 		params->prof[i].tx_ring_size = MLX4_EN_DEF_TX_RING_SIZE;
 		params->prof[i].rx_ring_size = MLX4_EN_DEF_RX_RING_SIZE;
+		params->prof[i].num_up = MLX4_EN_NUM_UP_LOW;
+		params->prof[i].num_tx_rings_p_up = params->num_tx_rings_p_up;
 		params->prof[i].tx_ring_num[TX] = params->num_tx_rings_p_up *
-			MLX4_EN_NUM_UP;
+			params->prof[i].num_up;
 		params->prof[i].rss_rings = 0;
 		params->prof[i].inline_thold = inline_thold;
 	}
-
-	return 0;
 }
 
 static void *mlx4_en_get_netdev(struct mlx4_dev *dev, void *ctx, u8 port)
@@ -307,10 +307,7 @@ static void *mlx4_en_add(struct mlx4_dev *dev)
 	}
 
 	/* Build device profile according to supplied module parameters */
-	if (mlx4_en_get_profile(mdev)) {
-		mlx4_err(mdev, "Bad module parameters, aborting\n");
-		goto err_mr;
-	}
+	mlx4_en_get_profile(mdev);
 
 	/* Configure which ports to start according to module parameters */
 	mdev->port_cnt = 0;

@@ -38,6 +38,8 @@ struct metadata_dst;
 struct nfp_net;
 struct nfp_port;
 
+#include <net/dst_metadata.h>
+
 /**
  * struct nfp_reprs - container for representor netdevs
  * @num_reprs:	Number of elements in reprs array
@@ -97,16 +99,22 @@ enum nfp_repr_type {
 };
 #define NFP_REPR_TYPE_MAX (__NFP_REPR_TYPE_MAX - 1)
 
+extern const struct net_device_ops nfp_repr_netdev_ops;
+
+static inline bool nfp_netdev_is_nfp_repr(struct net_device *netdev)
+{
+	return netdev->netdev_ops == &nfp_repr_netdev_ops;
+}
+
+static inline int nfp_repr_get_port_id(struct net_device *netdev)
+{
+	struct nfp_repr *priv = netdev_priv(netdev);
+
+	return priv->dst->u.port_info.port_id;
+}
+
 void nfp_repr_inc_rx_stats(struct net_device *netdev, unsigned int len);
-void
-nfp_repr_get_stats64(const struct nfp_app *app, enum nfp_repr_type type,
-		     u8 port, struct rtnl_link_stats64 *stats);
-bool nfp_repr_has_offload_stats(const struct net_device *dev, int attr_id);
-int nfp_repr_get_offload_stats(int attr_id, const struct net_device *dev,
-			       void *stats);
-netdev_tx_t nfp_repr_xmit(struct sk_buff *skb, struct net_device *netdev);
 int nfp_repr_init(struct nfp_app *app, struct net_device *netdev,
-		  const struct net_device_ops *netdev_ops,
 		  u32 cmsg_port_id, struct nfp_port *port,
 		  struct net_device *pf_netdev);
 struct net_device *nfp_repr_alloc(struct nfp_app *app);

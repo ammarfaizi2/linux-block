@@ -158,31 +158,6 @@ out:
  *
  */
 
-struct sk_buff *__alloc_skb_head(gfp_t gfp_mask, int node)
-{
-	struct sk_buff *skb;
-
-	/* Get the HEAD */
-	skb = kmem_cache_alloc_node(skbuff_head_cache,
-				    gfp_mask & ~__GFP_DMA, node);
-	if (!skb)
-		goto out;
-
-	/*
-	 * Only clear those fields we need to clear, not those that we will
-	 * actually initialise below. Hence, don't put any more fields after
-	 * the tail pointer in struct sk_buff!
-	 */
-	memset(skb, 0, offsetof(struct sk_buff, tail));
-	skb->head = NULL;
-	skb->truesize = sizeof(struct sk_buff);
-	atomic_set(&skb->users, 1);
-
-	skb->mac_header = (typeof(skb->mac_header))~0U;
-out:
-	return skb;
-}
-
 /**
  *	__alloc_skb	-	allocate a network buffer
  *	@size: size to allocate
@@ -247,7 +222,7 @@ struct sk_buff *__alloc_skb(unsigned int size, gfp_t gfp_mask,
 	/* Account for allocated memory : skb + skb->head */
 	skb->truesize = SKB_TRUESIZE(size);
 	skb->pfmemalloc = pfmemalloc;
-	atomic_set(&skb->users, 1);
+	refcount_set(&skb->users, 1);
 	skb->head = data;
 	skb->data = data;
 	skb_reset_tail_pointer(skb);
@@ -268,7 +243,7 @@ struct sk_buff *__alloc_skb(unsigned int size, gfp_t gfp_mask,
 
 		kmemcheck_annotate_bitfield(&fclones->skb2, flags1);
 		skb->fclone = SKB_FCLONE_ORIG;
-		atomic_set(&fclones->fclone_ref, 1);
+		refcount_set(&fclones->fclone_ref, 1);
 
 		fclones->skb2.fclone = SKB_FCLONE_CLONE;
 	}
@@ -314,7 +289,7 @@ struct sk_buff *__build_skb(void *data, unsigned int frag_size)
 
 	memset(skb, 0, offsetof(struct sk_buff, tail));
 	skb->truesize = SKB_TRUESIZE(size);
-	atomic_set(&skb->users, 1);
+	refcount_set(&skb->users, 1);
 	skb->head = data;
 	skb->data = data;
 	skb_reset_tail_pointer(skb);
@@ -629,7 +604,7 @@ static void kfree_skbmem(struct sk_buff *skb)
 		 * This test would have no chance to be true for the clone,
 		 * while here, branch prediction will be good.
 		 */
-		if (atomic_read(&fclones->fclone_ref) == 1)
+		if (refcount_read(&fclones->fclone_ref) == 1)
 			goto fastpath;
 		break;
 
@@ -637,7 +612,7 @@ static void kfree_skbmem(struct sk_buff *skb)
 		fclones = container_of(skb, struct sk_buff_fclones, skb2);
 		break;
 	}
-	if (!atomic_dec_and_test(&fclones->fclone_ref))
+	if (!refcount_dec_and_test(&fclones->fclone_ref))
 		return;
 fastpath:
 	kmem_cache_free(skbuff_fclone_cache, fclones);
@@ -762,8 +737,7 @@ void consume_stateless_skb(struct sk_buff *skb)
 		return;
 
 	trace_consume_skb(skb);
-	if (likely(skb->head))
-		skb_release_data(skb);
+	skb_release_data(skb);
 	kfree_skbmem(skb);
 }
 
@@ -915,7 +889,7 @@ static struct sk_buff *__skb_clone(struct sk_buff *n, struct sk_buff *skb)
 	C(head_frag);
 	C(data);
 	C(truesize);
-	atomic_set(&n->users, 1);
+	refcount_set(&n->users, 1);
 
 	atomic_inc(&(skb_shinfo(skb)->dataref));
 	skb->cloned = 1;
@@ -1027,9 +1001,9 @@ struct sk_buff *skb_clone(struct sk_buff *skb, gfp_t gfp_mask)
 		return NULL;
 
 	if (skb->fclone == SKB_FCLONE_ORIG &&
-	    atomic_read(&fclones->fclone_ref) == 1) {
+	    refcount_read(&fclones->fclone_ref) == 1) {
 		n = &fclones->skb2;
-		atomic_set(&fclones->fclone_ref, 2);
+		refcount_set(&fclones->fclone_ref, 2);
 	} else {
 		if (skb_pfmemalloc(skb))
 			gfp_mask |= __GFP_MEMALLOC;
@@ -1719,6 +1693,8 @@ pull_pages:
 			if (eat) {
 				skb_shinfo(skb)->frags[k].page_offset += eat;
 				skb_frag_size_sub(&skb_shinfo(skb)->frags[k], eat);
+				if (!i)
+					goto end;
 				eat = 0;
 			}
 			k++;
@@ -1726,6 +1702,7 @@ pull_pages:
 	}
 	skb_shinfo(skb)->nr_frags = k;
 
+end:
 	skb->tail     += delta;
 	skb->data_len -= delta;
 
@@ -3024,7 +3001,7 @@ int skb_append_datato_frags(struct sock *sk, struct sk_buff *skb,
 		get_page(pfrag->page);
 
 		skb->truesize += copy;
-		atomic_add(copy, &sk->sk_wmem_alloc);
+		refcount_add(copy, &sk->sk_wmem_alloc);
 		skb->len += copy;
 		skb->data_len += copy;
 		offset += copy;
@@ -3844,7 +3821,7 @@ struct sk_buff *skb_clone_sk(struct sk_buff *skb)
 	struct sock *sk = skb->sk;
 	struct sk_buff *clone;
 
-	if (!sk || !atomic_inc_not_zero(&sk->sk_refcnt))
+	if (!sk || !refcount_inc_not_zero(&sk->sk_refcnt))
 		return NULL;
 
 	clone = skb_clone(skb, GFP_ATOMIC);
@@ -3915,7 +3892,7 @@ void skb_complete_tx_timestamp(struct sk_buff *skb,
 	/* Take a reference to prevent skb_orphan() from freeing the socket,
 	 * but only if the socket refcount is not zero.
 	 */
-	if (likely(atomic_inc_not_zero(&sk->sk_refcnt))) {
+	if (likely(refcount_inc_not_zero(&sk->sk_refcnt))) {
 		*skb_hwtstamps(skb) = *hwtstamps;
 		__skb_complete_tx_timestamp(skb, sk, SCM_TSTAMP_SND, false);
 		sock_put(sk);
@@ -3997,7 +3974,7 @@ void skb_complete_wifi_ack(struct sk_buff *skb, bool acked)
 	/* Take a reference to prevent skb_orphan() from freeing the socket,
 	 * but only if the socket refcount is not zero.
 	 */
-	if (likely(atomic_inc_not_zero(&sk->sk_refcnt))) {
+	if (likely(refcount_inc_not_zero(&sk->sk_refcnt))) {
 		err = sock_queue_err_skb(sk, skb);
 		sock_put(sk);
 	}
@@ -4747,7 +4724,7 @@ struct sk_buff *alloc_skb_with_frags(unsigned long header_len,
 
 	gfp_head = gfp_mask;
 	if (gfp_head & __GFP_DIRECT_RECLAIM)
-		gfp_head |= __GFP_REPEAT;
+		gfp_head |= __GFP_RETRY_MAYFAIL;
 
 	*errcode = -ENOBUFS;
 	skb = alloc_skb(header_len, gfp_head);

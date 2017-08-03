@@ -1242,7 +1242,7 @@ static void qeth_release_skbs(struct qeth_qdio_out_buffer *buf)
 				iucv->sk_txnotify(skb, TX_NOTIFY_GENERALERROR);
 			}
 		}
-		atomic_dec(&skb->users);
+		refcount_dec(&skb->users);
 		dev_kfree_skb_any(skb);
 		skb = skb_dequeue(&buf->skb_list);
 	}
@@ -3975,7 +3975,7 @@ static inline int qeth_fill_buffer(struct qeth_qdio_out_q *queue,
 	int flush_cnt = 0, hdr_len, large_send = 0;
 
 	buffer = buf->buffer;
-	atomic_inc(&skb->users);
+	refcount_inc(&skb->users);
 	skb_queue_tail(&buf->skb_list, skb);
 
 	/*check first on TSO ....*/
@@ -5870,8 +5870,8 @@ static struct ccwgroup_driver qeth_core_ccwgroup_driver = {
 	.restore = qeth_core_restore,
 };
 
-static ssize_t qeth_core_driver_group_store(struct device_driver *ddrv,
-					    const char *buf, size_t count)
+static ssize_t group_store(struct device_driver *ddrv, const char *buf,
+			   size_t count)
 {
 	int err;
 
@@ -5880,7 +5880,7 @@ static ssize_t qeth_core_driver_group_store(struct device_driver *ddrv,
 
 	return err ? err : count;
 }
-static DRIVER_ATTR(group, 0200, NULL, qeth_core_driver_group_store);
+static DRIVER_ATTR_WO(group);
 
 static struct attribute *qeth_drv_attrs[] = {
 	&driver_attr_group.attr,

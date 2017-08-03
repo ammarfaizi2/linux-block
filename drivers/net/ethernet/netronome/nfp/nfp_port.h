@@ -36,6 +36,7 @@
 
 #include <net/devlink.h>
 
+struct tc_to_netdev;
 struct net_device;
 struct nfp_app;
 struct nfp_pf;
@@ -47,10 +48,14 @@ struct nfp_port;
  *			state when port disappears because of FW fault or config
  *			change
  * @NFP_PORT_PHYS_PORT:	external NIC port
+ * @NFP_PORT_PF_PORT:	logical port of PCI PF
+ * @NFP_PORT_VF_PORT:	logical port of PCI VF
  */
 enum nfp_port_type {
 	NFP_PORT_INVALID,
 	NFP_PORT_PHYS_PORT,
+	NFP_PORT_PF_PORT,
+	NFP_PORT_VF_PORT,
 };
 
 /**
@@ -72,6 +77,8 @@ enum nfp_port_flags {
  * @dl_port:	devlink port structure
  * @eth_id:	for %NFP_PORT_PHYS_PORT port ID in NFP enumeration scheme
  * @eth_port:	for %NFP_PORT_PHYS_PORT translated ETH Table port entry
+ * @pf_id:	for %NFP_PORT_PF_PORT, %NFP_PORT_VF_PORT ID of the PCI PF (0-3)
+ * @vf_id:	for %NFP_PORT_VF_PORT ID of the PCI VF within @pf_id
  * @port_list:	entry on pf's list of ports
  */
 struct nfp_port {
@@ -84,11 +91,26 @@ struct nfp_port {
 
 	struct devlink_port dl_port;
 
-	unsigned int eth_id;
-	struct nfp_eth_table_port *eth_port;
+	union {
+		/* NFP_PORT_PHYS_PORT */
+		struct {
+			unsigned int eth_id;
+			struct nfp_eth_table_port *eth_port;
+		};
+		/* NFP_PORT_PF_PORT, NFP_PORT_VF_PORT */
+		struct {
+			unsigned int pf_id;
+			unsigned int vf_id;
+		};
+	};
 
 	struct list_head port_list;
 };
+
+extern const struct switchdev_ops nfp_port_switchdev_ops;
+
+int nfp_port_setup_tc(struct net_device *netdev, u32 handle, u32 chain_index,
+		      __be16 proto, struct tc_to_netdev *tc);
 
 struct nfp_port *nfp_port_from_netdev(struct net_device *netdev);
 struct nfp_port *
@@ -98,6 +120,7 @@ struct nfp_eth_table_port *nfp_port_get_eth_port(struct nfp_port *port);
 
 int
 nfp_port_get_phys_port_name(struct net_device *netdev, char *name, size_t len);
+int nfp_port_configure(struct net_device *netdev, bool configed);
 
 struct nfp_port *
 nfp_port_alloc(struct nfp_app *app, enum nfp_port_type type,

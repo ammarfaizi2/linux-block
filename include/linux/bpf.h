@@ -36,6 +36,7 @@ struct bpf_map_ops {
 				int fd);
 	void (*map_fd_put_ptr)(void *ptr);
 	u32 (*map_gen_lookup)(struct bpf_map *map, struct bpf_insn *insn_buf);
+	u32 (*map_fd_sys_lookup_elem)(void *ptr);
 };
 
 struct bpf_map {
@@ -155,8 +156,13 @@ struct bpf_prog;
 struct bpf_insn_access_aux {
 	enum bpf_reg_type reg_type;
 	int ctx_field_size;
-	int converted_op_size;
 };
+
+static inline void
+bpf_ctx_record_field_size(struct bpf_insn_access_aux *aux, u32 size)
+{
+	aux->ctx_field_size = size;
+}
 
 struct bpf_verifier_ops {
 	/* return eBPF function prototype for verification */
@@ -172,7 +178,7 @@ struct bpf_verifier_ops {
 	u32 (*convert_ctx_access)(enum bpf_access_type type,
 				  const struct bpf_insn *src,
 				  struct bpf_insn *dst,
-				  struct bpf_prog *prog);
+				  struct bpf_prog *prog, u32 *target_size);
 	int (*test_run)(struct bpf_prog *prog, const union bpf_attr *kattr,
 			union bpf_attr __user *uattr);
 };
@@ -288,9 +294,11 @@ int bpf_stackmap_copy(struct bpf_map *map, void *key, void *value);
 
 int bpf_fd_array_map_update_elem(struct bpf_map *map, struct file *map_file,
 				 void *key, void *value, u64 map_flags);
+int bpf_fd_array_map_lookup_elem(struct bpf_map *map, void *key, u32 *value);
 void bpf_fd_array_map_clear(struct bpf_map *map);
 int bpf_fd_htab_map_update_elem(struct bpf_map *map, struct file *map_file,
 				void *key, void *value, u64 map_flags);
+int bpf_fd_htab_map_lookup_elem(struct bpf_map *map, void *key, u32 *value);
 
 /* memcpy that is used with 8-byte aligned pointers, power-of-8 size and
  * forced to use 'long' read/writes to try to atomically copy long counters.
@@ -310,6 +318,12 @@ static inline void bpf_long_memcpy(void *dst, const void *src, u32 size)
 
 /* verify correctness of eBPF program */
 int bpf_check(struct bpf_prog **fp, union bpf_attr *attr);
+
+/* Map specifics */
+struct net_device  *__dev_map_lookup_elem(struct bpf_map *map, u32 key);
+void __dev_map_insert_ctx(struct bpf_map *map, u32 index);
+void __dev_map_flush(struct bpf_map *map);
+
 #else
 static inline struct bpf_prog *bpf_prog_get(u32 ufd)
 {
@@ -346,6 +360,20 @@ static inline int __bpf_prog_charge(struct user_struct *user, u32 pages)
 }
 
 static inline void __bpf_prog_uncharge(struct user_struct *user, u32 pages)
+{
+}
+
+static inline struct net_device  *__dev_map_lookup_elem(struct bpf_map *map,
+						       u32 key)
+{
+	return NULL;
+}
+
+static inline void __dev_map_insert_ctx(struct bpf_map *map, u32 index)
+{
+}
+
+static inline void __dev_map_flush(struct bpf_map *map)
 {
 }
 #endif /* CONFIG_BPF_SYSCALL */
