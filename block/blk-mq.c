@@ -846,7 +846,7 @@ struct flush_busy_ctx_data {
 	struct list_head *list;
 };
 
-static bool flush_busy_ctx(struct sbitmap *sb, unsigned int bitnr, void *data)
+static void flush_busy_ctx(struct sbitmap *sb, unsigned int bitnr, void *data)
 {
 	struct flush_busy_ctx_data *flush_data = data;
 	struct blk_mq_hw_ctx *hctx = flush_data->hctx;
@@ -856,7 +856,6 @@ static bool flush_busy_ctx(struct sbitmap *sb, unsigned int bitnr, void *data)
 	spin_lock(&ctx->lock);
 	list_splice_tail_init(&ctx->rq_list, flush_data->list);
 	spin_unlock(&ctx->lock);
-	return true;
 }
 
 /*

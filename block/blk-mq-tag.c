@@ -202,7 +202,7 @@ struct bt_iter_data {
 	bool reserved;
 };
 
-static bool bt_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
+static void bt_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
 {
 	struct bt_iter_data *iter_data = data;
 	struct blk_mq_hw_ctx *hctx = iter_data->hctx;
@@ -216,7 +216,6 @@ static bool bt_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
 
 	if (rq && rq->q == hctx->queue)
 		iter_data->fn(hctx, rq, iter_data->data, reserved);
-	return true;
 }
 
 static void bt_for_each(struct blk_mq_hw_ctx *hctx, struct sbitmap_queue *bt,
@@ -239,7 +238,7 @@ struct bt_tags_iter_data {
 	bool reserved;
 };
 
-static bool bt_tags_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
+static void bt_tags_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
 {
 	struct bt_tags_iter_data *iter_data = data;
 	struct blk_mq_tags *tags = iter_data->tags;
@@ -251,7 +250,6 @@ static bool bt_tags_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
 	rq = tags->rqs[bitnr];
 	if (rq)
 		iter_data->fn(rq, iter_data->data, reserved);
-	return true;
 }
 
 static void bt_tags_for_each(struct blk_mq_tags *tags, struct sbitmap_queue *bt,

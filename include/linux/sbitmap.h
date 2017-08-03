@@ -211,7 +211,7 @@ bool sbitmap_any_bit_set(const struct sbitmap *sb);
  */
 bool sbitmap_any_bit_clear(const struct sbitmap *sb);
 
-typedef bool (*sb_for_each_fn)(struct sbitmap *, unsigned int, void *);
+typedef void (*sb_for_each_fn)(struct sbitmap *, unsigned int, void *);
 
 /**
  * sbitmap_for_each_set() - Iterate over each set bit in a &struct sbitmap.
@@ -241,9 +241,7 @@ static inline void sbitmap_for_each_set(struct sbitmap *sb, sb_for_each_fn fn,
 			if (nr >= word->depth)
 				break;
 
-			if (!fn(sb, off + nr, data))
-				return;
-
+			fn(sb, off + nr, data);
 			nr++;
 		}
 	}
