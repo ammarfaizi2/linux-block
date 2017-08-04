@@ -18,10 +18,6 @@ do {							\
 	__rt_spin_lock_init(slock, #slock, &__key);	\
 } while (0)
 
-void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock);
-void __lockfunc rt_spin_unlock__no_mg(spinlock_t *lock);
-int __lockfunc rt_spin_trylock__no_mg(spinlock_t *lock);
-
 extern void __lockfunc rt_spin_lock(spinlock_t *lock);
 extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
 extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
@@ -35,9 +31,10 @@ extern int atomic_dec_and_spin_lock(atomic_t *atomic, spinlock_t *lock);
 /*
  * lockdep-less calls, for derived types like rwlock:
  * (for trylock they can use rt_mutex_trylock() directly.
+ * Migrate disable handling must be done at the call site.
  */
-extern void __lockfunc __rt_spin_lock__no_mg(struct rt_mutex *lock);
 extern void __lockfunc __rt_spin_lock(struct rt_mutex *lock);
+extern void __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
 extern void __lockfunc __rt_spin_unlock(struct rt_mutex *lock);
 
 #define spin_lock(lock)			rt_spin_lock(lock)

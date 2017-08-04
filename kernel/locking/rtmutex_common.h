@@ -139,6 +139,10 @@ int __sched rt_mutex_slowlock_locked(struct rt_mutex *lock, int state,
 				     enum rtmutex_chainwalk chwalk,
 				     struct ww_acquire_ctx *ww_ctx,
 				     struct rt_mutex_waiter *waiter);
+void __sched rt_spin_lock_slowlock_locked(struct rt_mutex *lock,
+					  struct rt_mutex_waiter *waiter,
+					  unsigned long flags);
+void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock);
 
 #ifdef CONFIG_DEBUG_RT_MUTEXES
 # include "rtmutex-debug.h"

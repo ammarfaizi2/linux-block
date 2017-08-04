@@ -32,7 +32,7 @@ ifneq ($(CONFIG_PREEMPT_RT_FULL),y)
 obj-$(CONFIG_RWSEM_GENERIC_SPINLOCK) += rwsem-spinlock.o
 obj-$(CONFIG_RWSEM_XCHGADD_ALGORITHM) += rwsem-xadd.o
 endif
-obj-$(CONFIG_PREEMPT_RT_FULL) += rt.o rwsem-rt.o
+obj-$(CONFIG_PREEMPT_RT_FULL) += rt.o rwsem-rt.o rwlock-rt.o
 obj-$(CONFIG_QUEUED_RWLOCKS) += qrwlock.o
 obj-$(CONFIG_LOCK_TORTURE_TEST) += locktorture.o
 obj-$(CONFIG_WW_MUTEX_SELFTEST) += test-ww_mutex.o

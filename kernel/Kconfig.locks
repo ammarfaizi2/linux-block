@@ -248,3 +248,20 @@ config ARCH_USE_QUEUED_RWLOCKS
 config QUEUED_RWLOCKS
 	def_bool y if ARCH_USE_QUEUED_RWLOCKS
 	depends on SMP
+
+if PREEMPT_RT_FULL
+
+menu "RT Locking"
+
+config RWLOCK_RT_READER_BIASED
+	bool "Reader biased RWLOCK implementation for Preempt-RT"
+	def_bool n
+	help
+	  This is option provides an alternative RWLOCK implementation for
+	  PREEMPT-RT.  This new implementation is not writer friendly as
+	  the regular RT implementation or mainline. However nothing RT
+	  related should be affected. Nevertheless here is a switch in case
+	  something stalls to double check.
+endmenu
+
+endif

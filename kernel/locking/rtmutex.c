@@ -980,19 +980,14 @@ takeit:
  * preemptible spin_lock functions:
  */
 static inline void rt_spin_lock_fastlock(struct rt_mutex *lock,
-					 void  (*slowfn)(struct rt_mutex *lock,
-							 bool mg_off),
-					 bool do_mig_dis)
+					 void  (*slowfn)(struct rt_mutex *lock))
 {
 	might_sleep_no_state_check();
-
-	if (do_mig_dis)
-		migrate_disable();
 
 	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
 		return;
 	else
-		slowfn(lock, do_mig_dis);
+		slowfn(lock);
 }
 
 static inline void rt_spin_lock_fastunlock(struct rt_mutex *lock,
@@ -1050,22 +1045,16 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
  * We store the current state under p->pi_lock in p->saved_state and
  * the try_to_wake_up() code handles this accordingly.
  */
-static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock,
-						    bool mg_off)
+void __sched rt_spin_lock_slowlock_locked(struct rt_mutex *lock,
+					  struct rt_mutex_waiter *waiter,
+					  unsigned long flags)
 {
 	struct task_struct *lock_owner, *self = current;
-	struct rt_mutex_waiter waiter, *top_waiter;
-	unsigned long flags;
+	struct rt_mutex_waiter *top_waiter;
 	int ret;
 
-	rt_mutex_init_waiter(&waiter, true);
-
-	raw_spin_lock_irqsave(&lock->wait_lock, flags);
-
-	if (__try_to_take_rt_mutex(lock, self, NULL, STEAL_LATERAL)) {
-		raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
+	if (__try_to_take_rt_mutex(lock, self, NULL, STEAL_LATERAL))
 		return;
-	}
 
 	BUG_ON(rt_mutex_owner(lock) == self);
 
@@ -1080,12 +1069,12 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock,
 	__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
 	raw_spin_unlock(&self->pi_lock);
 
-	ret = task_blocks_on_rt_mutex(lock, &waiter, self, RT_MUTEX_MIN_CHAINWALK);
+	ret = task_blocks_on_rt_mutex(lock, waiter, self, RT_MUTEX_MIN_CHAINWALK);
 	BUG_ON(ret);
 
 	for (;;) {
 		/* Try to acquire the lock again. */
-		if (__try_to_take_rt_mutex(lock, self, &waiter, STEAL_LATERAL))
+		if (__try_to_take_rt_mutex(lock, self, waiter, STEAL_LATERAL))
 			break;
 
 		top_waiter = rt_mutex_top_waiter(lock);
@@ -1093,15 +1082,10 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock,
 
 		raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
 
-		debug_rt_mutex_print_deadlock(&waiter);
+		debug_rt_mutex_print_deadlock(waiter);
 
-		if (top_waiter != &waiter || adaptive_wait(lock, lock_owner)) {
-			if (mg_off)
-				migrate_enable();
+		if (top_waiter != waiter || adaptive_wait(lock, lock_owner))
 			schedule();
-			if (mg_off)
-				migrate_disable();
-		}
 
 		raw_spin_lock_irqsave(&lock->wait_lock, flags);
 
@@ -1128,11 +1112,20 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock,
 	 */
 	fixup_rt_mutex_waiters(lock);
 
-	BUG_ON(rt_mutex_has_waiters(lock) && &waiter == rt_mutex_top_waiter(lock));
-	BUG_ON(!RB_EMPTY_NODE(&waiter.tree_entry));
+	BUG_ON(rt_mutex_has_waiters(lock) && waiter == rt_mutex_top_waiter(lock));
+	BUG_ON(!RB_EMPTY_NODE(&waiter->tree_entry));
+}
 
+static void noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+{
+	struct rt_mutex_waiter waiter;
+	unsigned long flags;
+
+	rt_mutex_init_waiter(&waiter, true);
+
+	raw_spin_lock_irqsave(&lock->wait_lock, flags);
+	rt_spin_lock_slowlock_locked(lock, &waiter, flags);
 	raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
-
 	debug_rt_mutex_free_waiter(&waiter);
 }
 
@@ -1142,7 +1135,7 @@ static bool __sched __rt_mutex_unlock_common(struct rt_mutex *lock,
 /*
  * Slow path to release a rt_mutex spin_lock style
  */
-static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
 {
 	unsigned long flags;
 	DEFINE_WAKE_Q(wake_q);
@@ -1157,48 +1150,28 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
 		rt_mutex_postunlock(&wake_q, &wake_sleeper_q);
 }
 
-void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock)
-{
-	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock, false);
-	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
-}
-EXPORT_SYMBOL(rt_spin_lock__no_mg);
-
 void __lockfunc rt_spin_lock(spinlock_t *lock)
 {
-	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock, true);
+	migrate_disable();
+	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
 }
 EXPORT_SYMBOL(rt_spin_lock);
 
 void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
 {
-	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock, true);
+	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock);
 }
-EXPORT_SYMBOL(__rt_spin_lock);
-
-void __lockfunc __rt_spin_lock__no_mg(struct rt_mutex *lock)
-{
-	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock, false);
-}
-EXPORT_SYMBOL(__rt_spin_lock__no_mg);
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
 {
+	migrate_disable();
 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
-	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock, true);
+	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
 }
 EXPORT_SYMBOL(rt_spin_lock_nested);
 #endif
-
-void __lockfunc rt_spin_unlock__no_mg(spinlock_t *lock)
-{
-	/* NOTE: we always pass in '1' for nested, for simplicity */
-	spin_release(&lock->dep_map, 1, _RET_IP_);
-	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
-}
-EXPORT_SYMBOL(rt_spin_unlock__no_mg);
 
 void __lockfunc rt_spin_unlock(spinlock_t *lock)
 {
@@ -1226,17 +1199,6 @@ void __lockfunc rt_spin_unlock_wait(spinlock_t *lock)
 	spin_unlock(lock);
 }
 EXPORT_SYMBOL(rt_spin_unlock_wait);
-
-int __lockfunc rt_spin_trylock__no_mg(spinlock_t *lock)
-{
-	int ret;
-
-	ret = rt_mutex_trylock(&lock->lock);
-	if (ret)
-		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
-	return ret;
-}
-EXPORT_SYMBOL(rt_spin_trylock__no_mg);
 
 int __lockfunc rt_spin_trylock(spinlock_t *lock)
 {
