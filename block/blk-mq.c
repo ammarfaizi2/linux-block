@@ -98,11 +98,13 @@ static void blk_mq_check_inflight(struct blk_mq_hw_ctx *hctx,
 		return;
 
 	/*
-	 * Count as inflight if it either matches the partition we asked
-	 * for, or if it's the root
+	 * Count as inflight if it matches the partition, count separately
+	 * (but all) if we got asked for the root
 	 */
-	if (rq->part == mi->part || mi->part->partno)
+	if (rq->part == mi->part)
 		mi->inflight[0]++;
+	if (mi->part->partno)
+		mi->inflight[1]++;
 }
 
 void blk_mq_in_flight(struct request_queue *q, struct hd_struct *part,
@@ -110,7 +112,7 @@ void blk_mq_in_flight(struct request_queue *q, struct hd_struct *part,
 {
 	struct mq_inflight mi = { .part = part, .inflight = inflight, };
 
-	inflight[0] = 0;
+	inflight[0] = inflight[1] = 0;
 	blk_mq_queue_tag_busy_iter(q, blk_mq_check_inflight, &mi);
 }
 
