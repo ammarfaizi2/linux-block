@@ -135,6 +135,14 @@ struct event_symbol event_symbols_sw[PERF_COUNT_SW_MAX] = {
 		.symbol = "bpf-output",
 		.alias  = "",
 	},
+	[PERF_COUNT_SW_SPF_DONE] = {
+		.symbol = "speculative-faults",
+		.alias	= "spf",
+	},
+	[PERF_COUNT_SW_SPF_FAILED] = {
+		.symbol = "speculative-faults-failed",
+		.alias	= "spf-failed",
+	},
 };
 
 #define __PERF_EVENT_FIELD(config, name) \
