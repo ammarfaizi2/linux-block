@@ -1374,8 +1374,12 @@ __do_page_fault(struct pt_regs *regs, unsigned long error_code,
 		 * requires the vma pointer to be set. So in that case,
 		 * we fall through the normal path.
 		 */
-		if (!(fault & VM_FAULT_RETRY || fault & VM_FAULT_ERROR))
+		if (!(fault & VM_FAULT_RETRY || fault & VM_FAULT_ERROR)) {
+			perf_sw_event(PERF_COUNT_SW_SPF_DONE, 1,
+				      regs, address);
 			goto done;
+		}
+		perf_sw_event(PERF_COUNT_SW_SPF_FAILED, 1, regs, address);
 	}
 
 	/*
