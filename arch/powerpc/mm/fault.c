@@ -306,8 +306,13 @@ int do_page_fault(struct pt_regs *regs, unsigned long address,
 			flags |= FAULT_FLAG_WRITE;
 
 		fault = handle_speculative_fault(mm, address, flags);
-		if (!(fault & VM_FAULT_RETRY || fault & VM_FAULT_ERROR))
+		if (!(fault & VM_FAULT_RETRY || fault & VM_FAULT_ERROR)) {
+			perf_sw_event(PERF_COUNT_SW_SPF_DONE, 1,
+				      regs, address);
 			goto done;
+		}
+
+		perf_sw_event(PERF_COUNT_SW_SPF_FAILED, 1, regs, address);
 
 		/*
 		 * Resetting flags since the following code assumes
