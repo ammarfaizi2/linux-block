@@ -17,6 +17,7 @@
 
 #include <linux/debugfs.h>
 #include <linux/device.h>
+#include <linux/dmi.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/platform_data/x86/clk-pmc-atom.h>
@@ -56,6 +57,9 @@ struct pmc_dev {
 
 static struct pmc_dev pmc_device;
 static u32 acpi_base_addr;
+
+static u32 quirks;
+#define QUIRK_DISABLE_SATA BIT(0)
 
 static const struct pmc_clk byt_clks[] = {
 	{
@@ -271,6 +275,15 @@ static void pmc_hw_reg_setup(struct pmc_dev *pmc)
 	 * - GPIO_SCORE shared IRQ
 	 */
 	pmc_reg_write(pmc, PMC_S0IX_WAKE_EN, (u32)PMC_WAKE_EN_SETTING);
+
+	if (quirks & QUIRK_DISABLE_SATA) {
+		u32 func_dis;
+
+		pr_info("pmc: disable SATA IP\n");
+		func_dis = pmc_reg_read(pmc, PMC_FUNC_DIS);
+		func_dis |= BIT_SATA;
+		pmc_reg_write(pmc, PMC_FUNC_DIS, func_dis);
+	}
 }
 
 #ifdef CONFIG_DEBUG_FS
@@ -500,6 +513,24 @@ static struct pmc_notifier_block pmc_freeze_nb = {
 };
 #endif
 
+static int cht_asus_e200ha_cb(const struct dmi_system_id *id)
+{
+	pr_info("pmc: Asus E200HA detected\n");
+	quirks |= QUIRK_DISABLE_SATA;
+	return 1;
+}
+
+static const struct dmi_system_id cht_table[] = {
+	{
+		.callback = cht_asus_e200ha_cb,
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "E200HA"),
+		},
+	},
+	{ }
+};
+
 static int pmc_setup_dev(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	struct pmc_dev *pmc = &pmc_device;
@@ -525,6 +556,8 @@ static int pmc_setup_dev(struct pci_dev *pdev, const struct pci_device_id *ent)
 	}
 
 	pmc->map = map;
+
+	dmi_check_system(cht_table);
 
 	/* PMC hardware registers setup */
 	pmc_hw_reg_setup(pmc);
