@@ -123,7 +123,6 @@ turn_on_mmu:
 	lis	r0,start_here@h
 	ori	r0,r0,start_here@l
 	mtspr	SPRN_SRR0,r0
-	SYNC
 	rfi				/* enables MMU */
 
 /*
@@ -170,7 +169,7 @@ turn_on_mmu:
 	stw	r1,0(r11);	\
 	tovirt(r1,r11);			/* set new kernel sp */	\
 	li	r10,MSR_KERNEL & ~(MSR_IR|MSR_DR); /* can take exceptions */ \
-	MTMSRD(r10);			/* (except for mach check in rtas) */ \
+	mtmsr	r10;		\
 	stw	r0,GPR0(r11);	\
 	SAVE_4GPRS(3, r11);	\
 	SAVE_2GPRS(7, r11)
@@ -300,7 +299,7 @@ SystemCall:
 /* On the MPC8xx, this is a software emulation interrupt.  It occurs
  * for all unimplemented and illegal instructions.
  */
-	EXCEPTION(0x1000, SoftEmu, SoftwareEmulation, EXC_XFER_STD)
+	EXCEPTION(0x1000, SoftEmu, program_check_exception, EXC_XFER_STD)
 
 	. = 0x1100
 /*
@@ -595,7 +594,7 @@ DARFixed:/* Return from dcbx instruction bug workaround */
 	mfspr	r5,SPRN_DSISR
 	stw	r5,_DSISR(r11)
 	mfspr	r4,SPRN_DAR
-	andis.	r10,r5,0x4000
+	andis.	r10,r5,DSISR_NOHPTE@h
 	beq+	1f
 	tlbie	r4
 dtlbie:
@@ -915,10 +914,8 @@ start_here:
 	rfi
 /* Load up the kernel context */
 2:
-	SYNC			/* Force all PTE updates to finish */
 	tlbia			/* Clear all TLB entries */
 	sync			/* wait for tlbia/tlbie to finish */
-	TLBSYNC			/* ... on all CPUs */
 
 	/* set up the PTE pointers for the Abatron bdiGDB.
 	*/
