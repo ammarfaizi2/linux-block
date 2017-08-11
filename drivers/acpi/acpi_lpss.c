@@ -776,9 +776,12 @@ static void lpss_iosf_enter_d3_state(void)
 	/*
 	 * PMC provides an information about actual status of the LPSS devices.
 	 * Here we read the values related to LPSS power island, i.e. LPSS
-	 * devices, excluding both LPSS DMA controllers, along with SCC domain.
+	 * devices, excluding both LPSS DMA controllers and I2C7, along with
+	 * SCC domain.  I2C7 needs to be always on because a hardware unit
+	 * may use it to access the PMIC, but DMA needs to be disabled
+	 * anyway to enter S0ix.
 	 */
-	u32 func_dis, d3_sts_0, pmc_status, pmc_mask = 0xfe000ffe;
+	u32 func_dis, d3_sts_0, pmc_status, pmc_mask = 0x7e000ffe;
 	int ret;
 
 	ret = pmc_atom_read(PMC_FUNC_DIS, &func_dis);
