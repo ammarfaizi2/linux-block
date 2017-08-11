@@ -16,6 +16,7 @@
 #include <linux/refcount.h>
 #include <linux/percpu-refcount.h>
 #include <linux/percpu-rwsem.h>
+#include <linux/u64_stats_sync.h>
 #include <linux/workqueue.h>
 #include <linux/bpf-cgroup.h>
 
@@ -249,6 +250,47 @@ struct css_set {
 	struct rcu_head rcu_head;
 };
 
+/*
+ * cgroup basic resource usage statistics.  Accounting is done per-cpu in
+ * cgroup_cpu_stat which is then lazily propagated up the hierarchy on
+ * reads.  The propagation is selective - only the cgroup_cpu_stats which
+ * have been updated since the last propagation are propagated.
+ */
+struct cgroup_cpu_stat {
+	/*
+	 * ->sync protects all the current counters.  These are the only
+	 * fields which get updated in the hot path.
+	 */
+	struct u64_stats_sync sync;
+	struct task_cputime cputime;
+
+	/*
+	 * Snapshots at the last reading.  These are used to calculate the
+	 * deltas to propagate to the global counters.
+	 */
+	struct task_cputime last_cputime;
+
+	/*
+	 * Child cgroups with stat updates on this cpu since the last read
+	 * are linked on the parent's ->updated_children through
+	 * ->updated_next.
+	 *
+	 * In addition to being more compact, singly-linked list pointing
+	 * to the cgroup makes it unnecessary for each per-cpu struct to
+	 * point back to the associated cgroup.
+	 *
+	 * Protected by per-cpu cgroup_cpu_stat_lock.
+	 */
+	struct cgroup *updated_children;	/* terminated by self cgroup */
+	struct cgroup *updated_next;		/* NULL iff not on the list */
+};
+
+struct cgroup_stat {
+	/* per-cpu statistics are collected into the folowing global counters */
+	struct task_cputime cputime;
+	struct prev_cputime prev_cputime;
+};
+
 struct cgroup {
 	/* self css with NULL ->ss, points back to this cgroup */
 	struct cgroup_subsys_state self;
@@ -347,6 +389,11 @@ struct cgroup {
 	 * specific task are charged to the dom_cgrp.
 	 */
 	struct cgroup *dom_cgrp;
+
+	/* cgroup basic resource statistics */
+	struct cgroup_cpu_stat __percpu *cpu_stat;
+	struct cgroup_stat pending_stat;	/* pending from children */
+	struct cgroup_stat stat;
 
 	/*
 	 * list of pidlists, up to two for each namespace (one for procs, one
