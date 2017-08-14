@@ -817,6 +817,7 @@ out:
 	 * (not only the tick).
 	 */
 	ts->sleep_length = ktime_sub(dev->next_event, now);
+	trace_printk("tick_nohz_stop_sched_tick: %lld\n", (tick - ktime_get()) / 1000);
 	return tick;
 }
 
