@@ -147,6 +147,7 @@ static void bio_put_slab(struct bio_set *bs)
 	if (--bslab->slab_ref)
 		goto out;
 
+	pcpu_cache_exit(&bs->cache);
 	kmem_cache_destroy(bslab->slab);
 	bslab->slab = NULL;
 
@@ -230,10 +231,8 @@ fallback:
 		 * is set, retry with the 1-entry mempool
 		 */
 		bvl = kmem_cache_alloc(bvs->slab, __gfp_mask);
-		if (unlikely(!bvl && (gfp_mask & __GFP_DIRECT_RECLAIM))) {
-			*idx = BVEC_POOL_MAX;
+		if (unlikely(!bvl && (gfp_mask & __GFP_DIRECT_RECLAIM)))
 			goto fallback;
-		}
 	}
 
 	(*idx)++;
@@ -262,7 +261,7 @@ static void bio_free(struct bio *bio)
 		p = bio;
 		p -= bs->front_pad;
 
-		mempool_free(p, bs->bio_pool);
+		pcpu_cache_free(&bs->cache, p);
 	} else {
 		/* Bio was allocated by bio_kmalloc() */
 		kfree(bio);
@@ -483,7 +482,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, unsigned int nr_iovecs,
 		    bs->rescue_workqueue)
 			gfp_mask &= ~__GFP_DIRECT_RECLAIM;
 
-		p = mempool_alloc(bs->bio_pool, gfp_mask);
+		p = pcpu_cache_alloc(&bs->cache, gfp_mask);
 		if (!p && gfp_mask != saved_gfp) {
 			punt_bios_to_rescuer(bs);
 			gfp_mask = saved_gfp;
@@ -1930,6 +1929,11 @@ void bioset_free(struct bio_set *bs)
 	if (bs->bvec_pool)
 		mempool_destroy(bs->bvec_pool);
 
+	pcpu_cache_exit(&bs->cache);
+
+	if (bs->alloc_cache)
+		free_percpu(bs->alloc_cache);
+
 	bioset_integrity_free(bs);
 	bio_put_slab(bs);
 
@@ -1979,6 +1983,12 @@ struct bio_set *bioset_create(unsigned int pool_size,
 		kfree(bs);
 		return NULL;
 	}
+
+	bs->alloc_cache = alloc_percpu(struct pcpu_cache);
+	if (!bs->alloc_cache)
+		goto bad;
+
+	pcpu_cache_init(&bs->cache, bs->alloc_cache, bs->bio_slab);
 
 	bs->bio_pool = mempool_create_slab_pool(pool_size, bs->bio_slab);
 	if (!bs->bio_pool)

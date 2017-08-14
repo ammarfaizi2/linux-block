@@ -22,6 +22,7 @@
 #include <linux/mempool.h>
 #include <linux/ioprio.h>
 #include <linux/bug.h>
+#include <linux/pcpu_cache.h>
 
 #ifdef CONFIG_BLOCK
 
@@ -696,6 +697,8 @@ static inline void bio_inc_remaining(struct bio *bio)
 
 struct bio_set {
 	struct kmem_cache *bio_slab;
+	struct pcpu_alloc_cache cache;
+	struct pcpu_cache __percpu *alloc_cache;
 	unsigned int front_pad;
 
 	mempool_t *bio_pool;
