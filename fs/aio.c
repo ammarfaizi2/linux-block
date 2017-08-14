@@ -18,6 +18,7 @@
 #include <linux/export.h>
 #include <linux/syscalls.h>
 #include <linux/backing-dev.h>
+#include <linux/pcpu_cache.h>
 #include <linux/uio.h>
 
 #include <linux/sched/signal.h>
@@ -202,6 +203,9 @@ static struct vfsmount *aio_mnt;
 static const struct file_operations aio_ring_fops;
 static const struct address_space_operations aio_ctx_aops;
 
+static struct pcpu_alloc_cache alloc_cache;
+static DEFINE_PER_CPU(struct pcpu_cache, req_alloc_cache);
+
 static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
 {
 	struct qstr this = QSTR_INIT("[aio]", 5);
@@ -264,6 +268,8 @@ static int __init aio_setup(void)
 
 	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
 	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+
+	pcpu_cache_init(&alloc_cache, &req_alloc_cache, kiocb_cachep);
 
 	pr_debug("sizeof(struct page) = %zu\n", sizeof(struct page));
 
@@ -1017,7 +1023,7 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
 			return NULL;
 	}
 
-	req = kmem_cache_alloc(kiocb_cachep, GFP_KERNEL|__GFP_ZERO);
+	req = pcpu_cache_alloc(&alloc_cache, GFP_KERNEL|__GFP_ZERO);
 	if (unlikely(!req))
 		goto out_put;
 
@@ -1036,7 +1042,7 @@ static void kiocb_free(struct aio_kiocb *req)
 		fput(req->common.ki_filp);
 	if (req->ki_eventfd != NULL)
 		eventfd_ctx_put(req->ki_eventfd);
-	kmem_cache_free(kiocb_cachep, req);
+	pcpu_cache_free(&alloc_cache, req);
 }
 
 static struct kioctx *lookup_ioctx(unsigned long ctx_id)
