@@ -56,11 +56,20 @@ checkarg () {
 #
 # Adds boot parameters from the .boot file, if any.
 configfrag_boot_params () {
-	if test -r "$2.boot"
+	local T=/tmp/T-configfrag_boot_params.$$
+	if ! test -r "$2.boot"
 	then
-		echo $1 `grep -v '^#' "$2.boot" | tr '\012' ' '`
+		echo "$1"
 	else
-		echo $1
+		mkdir $T
+		grep -v '^#' < $2.boot | tr -s " " "\012" |
+			sed -e 's/$/ /' > $T/boot.configparams
+		echo "$1" | tr -s ' ' '\012' | sed -e 's/=.*$//' |
+			sed -e 's/^/grep -v "/' -e 's/$/[ =]" |/' \
+				> $T/boot.script
+		echo "cat" >> $T/boot.script
+		echo `sh $T/boot.script < $T/boot.configparams` $1
+		rm -rf $T
 	fi
 }
 
