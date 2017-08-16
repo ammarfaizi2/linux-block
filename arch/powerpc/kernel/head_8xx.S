@@ -50,18 +50,20 @@
 	mtspr	spr, reg
 #endif
 
-/* Macro to test if an address is a kernel address */
 #if CONFIG_TASK_SIZE <= 0x80000000 && CONFIG_PAGE_OFFSET >= 0x80000000
-#define IS_KERNEL(tmp, addr)		\
-	andis.	tmp, addr, 0x8000	/* Address >= 0x80000000 */
-#define BRANCH_UNLESS_KERNEL(label)	beq	label
-#else
-#define IS_KERNEL(tmp, addr)		\
-	rlwinm	tmp, addr, 16, 16, 31;	\
-	cmpli	cr0, tmp, PAGE_OFFSET >> 16
-#define BRANCH_UNLESS_KERNEL(label)	blt	label
+/* By simply checking Address >= 0x80000000, we know if its a kernel address */
+#define SIMPLE_KERNEL_ADDRESS		1
 #endif
 
+/*
+ * We need an ITLB miss handler for kernel addresses if:
+ * - Either we have modules
+ * - Or we have not pinned the first 8M
+ */
+#if defined(CONFIG_MODULES) || !defined(CONFIG_PIN_TLB_TEXT) || \
+    defined(CONFIG_DEBUG_PAGEALLOC)
+#define ITLB_MISS_KERNEL	1
+#endif
 
 /*
  * Value for the bits that have fixed value in RPN entries.
@@ -324,7 +326,7 @@ SystemCall:
 #endif
 
 InstructionTLBMiss:
-#if defined(CONFIG_8xx_CPU6) || defined(CONFIG_MODULES) || defined (CONFIG_DEBUG_PAGEALLOC) || defined (CONFIG_HUGETLB_PAGE)
+#if defined(CONFIG_8xx_CPU6) || defined(ITLB_MISS_KERNEL) || defined(CONFIG_HUGETLB_PAGE)
 	mtspr	SPRN_SPRG_SCRATCH2, r3
 #endif
 	EXCEPTION_PROLOG_0
@@ -342,15 +344,32 @@ InstructionTLBMiss:
 	INVALIDATE_ADJACENT_PAGES_CPU15(r11, r10)
 	/* Only modules will cause ITLB Misses as we always
 	 * pin the first 8MB of kernel memory */
-#if defined(CONFIG_MODULES) || defined (CONFIG_DEBUG_PAGEALLOC) || defined (CONFIG_HUGETLB_PAGE)
+#if defined(ITLB_MISS_KERNEL) || defined(CONFIG_HUGETLB_PAGE)
 	mfcr	r3
 #endif
-#if defined(CONFIG_MODULES) || defined (CONFIG_DEBUG_PAGEALLOC)
-	IS_KERNEL(r11, r10)
+#ifdef ITLB_MISS_KERNEL
+#if defined(SIMPLE_KERNEL_ADDRESS) && defined(CONFIG_PIN_TLB_TEXT)
+	andis.	r11, r10, 0x8000	/* Address >= 0x80000000 */
+#else
+	rlwinm	r11, r10, 16, 0xfff8
+	cmpli	cr0, r11, PAGE_OFFSET@h
+#ifndef CONFIG_PIN_TLB_TEXT
+	/* It is assumed that kernel code fits into the first 8M page */
+_ENTRY(ITLBMiss_cmp)
+	cmpli	cr7, r11, (PAGE_OFFSET + 0x0800000)@h
+#endif
+#endif
 #endif
 	mfspr	r11, SPRN_M_TW	/* Get level 1 table */
-#if defined(CONFIG_MODULES) || defined (CONFIG_DEBUG_PAGEALLOC)
-	BRANCH_UNLESS_KERNEL(3f)
+#ifdef ITLB_MISS_KERNEL
+#if defined(SIMPLE_KERNEL_ADDRESS) && defined(CONFIG_PIN_TLB_TEXT)
+	beq+	3f
+#else
+	blt+	3f
+#endif
+#ifndef CONFIG_PIN_TLB_TEXT
+	blt	cr7, ITLBMissLinear
+#endif
 	lis	r11, (swapper_pg_dir-PAGE_OFFSET)@ha
 3:
 #endif
@@ -368,7 +387,7 @@ InstructionTLBMiss:
 	rlwimi	r10, r11, 0, 0, 32 - PAGE_SHIFT - 1	/* Add level 2 base */
 	lwz	r10, 0(r10)	/* Get the pte */
 4:
-#if defined(CONFIG_MODULES) || defined (CONFIG_DEBUG_PAGEALLOC) || defined (CONFIG_HUGETLB_PAGE)
+#if defined(ITLB_MISS_KERNEL) || defined(CONFIG_HUGETLB_PAGE)
 	mtcr	r3
 #endif
 	/* Insert the APG into the TWC from the Linux PTE. */
@@ -399,7 +418,7 @@ InstructionTLBMiss:
 	MTSPR_CPU6(SPRN_MI_RPN, r10, r3)	/* Update TLB entry */
 
 	/* Restore registers */
-#if defined(CONFIG_8xx_CPU6) || defined(CONFIG_MODULES) || defined (CONFIG_DEBUG_PAGEALLOC) || defined (CONFIG_HUGETLB_PAGE)
+#if defined(CONFIG_8xx_CPU6) || defined(ITLB_MISS_KERNEL) || defined(CONFIG_HUGETLB_PAGE)
 	mfspr	r3, SPRN_SPRG_SCRATCH2
 #endif
 	EXCEPTION_EPILOG_0
@@ -446,23 +465,23 @@ DataStoreTLBMiss:
 	 * kernel page tables.
 	 */
 	mfspr	r10, SPRN_MD_EPN
-	rlwinm	r10, r10, 16, 0xfff8
-	cmpli	cr0, r10, PAGE_OFFSET@h
+	rlwinm	r11, r10, 16, 0xfff8
+	cmpli	cr0, r11, PAGE_OFFSET@h
 	mfspr	r11, SPRN_M_TW	/* Get level 1 table */
 	blt+	3f
+	rlwinm	r11, r10, 16, 0xfff8
 #ifndef CONFIG_PIN_TLB_IMMR
-	cmpli	cr0, r10, VIRT_IMMR_BASE@h
+	cmpli	cr0, r11, VIRT_IMMR_BASE@h
 #endif
 _ENTRY(DTLBMiss_cmp)
-	cmpli	cr7, r10, (PAGE_OFFSET + 0x1800000)@h
-	lis	r11, (swapper_pg_dir-PAGE_OFFSET)@ha
+	cmpli	cr7, r11, (PAGE_OFFSET + 0x1800000)@h
 #ifndef CONFIG_PIN_TLB_IMMR
 _ENTRY(DTLBMiss_jmp)
 	beq-	DTLBMissIMMR
 #endif
 	blt	cr7, DTLBMissLinear
+	lis	r11, (swapper_pg_dir-PAGE_OFFSET)@ha
 3:
-	mfspr	r10, SPRN_MD_EPN
 
 	/* Insert level 1 index */
 	rlwimi	r11, r10, 32 - ((PAGE_SHIFT - 2) << 1), (PAGE_SHIFT - 2) << 1, 29
@@ -683,7 +702,7 @@ DTLBMissLinear:
 	/* Set 8M byte page and mark it valid */
 	li	r11, MD_PS8MEG | MD_SVALID
 	MTSPR_CPU6(SPRN_MD_TWC, r11, r3)
-	rlwinm	r10, r10, 16, 0x0f800000	/* 8xx supports max 256Mb RAM */
+	rlwinm	r10, r10, 0, 0x0f800000	/* 8xx supports max 256Mb RAM */
 	ori	r10, r10, 0xf0 | MD_SPS16K | _PAGE_SHARED | _PAGE_DIRTY	| \
 			  _PAGE_PRESENT
 	MTSPR_CPU6(SPRN_MD_RPN, r10, r11)	/* Update TLB entry */
@@ -693,6 +712,22 @@ DTLBMissLinear:
 	mfspr	r3, SPRN_SPRG_SCRATCH2
 	EXCEPTION_EPILOG_0
 	rfi
+
+#ifndef CONFIG_PIN_TLB_TEXT
+ITLBMissLinear:
+	mtcr	r3
+	/* Set 8M byte page and mark it valid */
+	li	r11, MI_PS8MEG | MI_SVALID | _PAGE_EXEC
+	MTSPR_CPU6(SPRN_MI_TWC, r11, r3)
+	rlwinm	r10, r10, 0, 0x0f800000	/* 8xx supports max 256Mb RAM */
+	ori	r10, r10, 0xf0 | MI_SPS16K | _PAGE_SHARED | _PAGE_DIRTY	| \
+			  _PAGE_PRESENT
+	MTSPR_CPU6(SPRN_MI_RPN, r10, r11)	/* Update TLB entry */
+
+	mfspr	r3, SPRN_SPRG_SCRATCH2
+	EXCEPTION_EPILOG_0
+	rfi
+#endif
 
 /* This is the procedure to calculate the data EA for buggy dcbx,dcbi instructions
  * by decoding the registers used by the dcbx instruction and adding them.
@@ -704,9 +739,10 @@ FixupDAR:/* Entry point for dcbx workaround. */
 	mtspr	SPRN_SPRG_SCRATCH2, r10
 	/* fetch instruction from memory. */
 	mfspr	r10, SPRN_SRR0
-	IS_KERNEL(r11, r10)
+	rlwinm	r11, r10, 16, 0xfff8
+	cmpli	cr0, r11, PAGE_OFFSET@h
 	mfspr	r11, SPRN_M_TW	/* Get level 1 table */
-	BRANCH_UNLESS_KERNEL(3f)
+	blt+	3f
 	rlwinm	r11, r10, 16, 0xfff8
 _ENTRY(FixupDAR_cmp)
 	cmpli	cr7, r11, (PAGE_OFFSET + 0x1800000)@h
@@ -952,15 +988,14 @@ initial_mmu:
 	mtspr	SPRN_MD_CTR, r10	/* remove PINNED DTLB entries */
 
 	tlbia			/* Invalidate all TLB entries */
-/* Always pin the first 8 MB ITLB to prevent ITLB
-   misses while mucking around with SRR0/SRR1 in asm
-*/
+#ifdef CONFIG_PIN_TLB_TEXT
 	lis	r8, MI_RSV4I@h
 	ori	r8, r8, 0x1c00
 
 	mtspr	SPRN_MI_CTR, r8	/* Set instruction MMU control */
+#endif
 
-#ifdef CONFIG_PIN_TLB
+#ifdef CONFIG_PIN_TLB_DATA
 	oris	r10, r10, MD_RSV4I@h
 	mtspr	SPRN_MD_CTR, r10	/* Set data TLB control */
 #endif
@@ -986,6 +1021,7 @@ initial_mmu:
 	 * internal registers (among other things).
 	 */
 #ifdef CONFIG_PIN_TLB_IMMR
+	oris	r10, r10, MD_RSV4I@h
 	ori	r10, r10, 0x1c00
 	mtspr	SPRN_MD_CTR, r10
 
