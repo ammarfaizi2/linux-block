@@ -190,14 +190,14 @@ void __sched __write_rt_lock(struct rt_rw_lock *lock)
 	/* Force readers into slow path */
 	atomic_sub(READER_BIAS, &lock->readers);
 
+	raw_spin_lock_irqsave(&m->wait_lock, flags);
+
+	raw_spin_lock(&self->pi_lock);
+	self->saved_state = self->state;
+	__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
+	raw_spin_unlock(&self->pi_lock);
+
 	for (;;) {
-		raw_spin_lock_irqsave(&m->wait_lock, flags);
-
-		raw_spin_lock(&self->pi_lock);
-		self->saved_state = self->state;
-		__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
-		raw_spin_unlock(&self->pi_lock);
-
 		/* Have all readers left the critical region? */
 		if (!atomic_read(&lock->readers)) {
 			atomic_set(&lock->readers, WRITER_BIAS);
@@ -213,6 +213,12 @@ void __sched __write_rt_lock(struct rt_rw_lock *lock)
 
 		if (atomic_read(&lock->readers) != 0)
 			schedule();
+
+		raw_spin_lock_irqsave(&m->wait_lock, flags);
+
+		raw_spin_lock(&self->pi_lock);
+		__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
+		raw_spin_unlock(&self->pi_lock);
 	}
 }
 
