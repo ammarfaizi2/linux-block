@@ -16,6 +16,8 @@
 #ifndef __ASM_MMU_H
 #define __ASM_MMU_H
 
+#define MMCF_AARCH32	0x1	/* MM hosts AArch32 executables */
+
 typedef struct {
 	atomic64_t	id;
 	void		*vdso;
