@@ -592,7 +592,7 @@ static int ui_browser__color_config(const char *var, const char *value,
 	return -1;
 }
 
-void ui_browser__argv_seek(struct ui_browser *browser, off_t offset, int whence)
+void ui_browser__ptr_array_seek(struct ui_browser *browser, off_t offset, int whence)
 {
 	switch (whence) {
 	case SEEK_SET:
@@ -609,15 +609,15 @@ void ui_browser__argv_seek(struct ui_browser *browser, off_t offset, int whence)
 	}
 }
 
-unsigned int ui_browser__argv_refresh(struct ui_browser *browser)
+unsigned int ui_browser__ptr_array_refresh(struct ui_browser *browser)
 {
 	unsigned int row = 0, idx = browser->top_idx;
-	char **pos;
+	void **pos;
 
 	if (browser->top == NULL)
 		browser->top = browser->entries;
 
-	pos = (char **)browser->top;
+	pos = browser->top;
 	while (idx < browser->nr_entries) {
 		if (!browser->filter || !browser->filter(browser, *pos)) {
 			ui_browser__gotorc(browser, row, 0);
