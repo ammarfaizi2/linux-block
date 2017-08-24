@@ -370,6 +370,30 @@ void ui_browser__update_nr_entries(struct ui_browser *browser, u32 nr_entries)
 	browser->seek(browser, browser->top_idx, SEEK_SET);
 }
 
+void ui_browser__down(struct ui_browser *browser)
+{
+	if (browser->index == browser->nr_entries - 1)
+		return;
+
+	++browser->index;
+	if (browser->index == browser->top_idx + browser->rows) {
+		++browser->top_idx;
+		browser->seek(browser, +1, SEEK_CUR);
+	}
+}
+
+void ui_browser__up(struct ui_browser *browser)
+{
+	if (browser->index == 0)
+		return;
+
+	--browser->index;
+	if (browser->index < browser->top_idx) {
+		--browser->top_idx;
+		browser->seek(browser, -1, SEEK_CUR);
+	}
+}
+
 int ui_browser__run(struct ui_browser *browser, int delay_secs)
 {
 	int err, key;
@@ -408,22 +432,10 @@ int ui_browser__run(struct ui_browser *browser, int delay_secs)
 
 		switch (key) {
 		case K_DOWN:
-			if (browser->index == browser->nr_entries - 1)
-				break;
-			++browser->index;
-			if (browser->index == browser->top_idx + browser->rows) {
-				++browser->top_idx;
-				browser->seek(browser, +1, SEEK_CUR);
-			}
+			ui_browser__down(browser);
 			break;
 		case K_UP:
-			if (browser->index == 0)
-				break;
-			--browser->index;
-			if (browser->index < browser->top_idx) {
-				--browser->top_idx;
-				browser->seek(browser, -1, SEEK_CUR);
-			}
+			ui_browser__up(browser);
 			break;
 		case K_RIGHT:
 			if (!browser->columns)
@@ -599,10 +611,10 @@ void ui_browser__ptr_array_seek(struct ui_browser *browser, off_t offset, int wh
 		browser->top = browser->entries;
 		break;
 	case SEEK_CUR:
-		browser->top = browser->top + browser->top_idx + offset;
+		browser->top = ((void **)browser->top) + browser->top_idx + offset;
 		break;
 	case SEEK_END:
-		browser->top = browser->top + browser->nr_entries - 1 + offset;
+		browser->top = ((void **)browser->top) + browser->nr_entries - 1 + offset;
 		break;
 	default:
 		return;

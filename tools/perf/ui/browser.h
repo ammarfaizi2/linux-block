@@ -51,6 +51,8 @@ int ui_browser__show(struct ui_browser *browser, const char *title,
 		     const char *helpline, ...);
 void ui_browser__hide(struct ui_browser *browser);
 int ui_browser__refresh(struct ui_browser *browser);
+void ui_browser__down(struct ui_browser *browser);
+void ui_browser__up(struct ui_browser *browser);
 int ui_browser__run(struct ui_browser *browser, int delay_secs);
 void ui_browser__update_nr_entries(struct ui_browser *browser, u32 nr_entries);
 void ui_browser__handle_resize(struct ui_browser *browser);

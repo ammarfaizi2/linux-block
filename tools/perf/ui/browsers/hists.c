@@ -3296,7 +3296,7 @@ static void perf_evsel_menu__write(struct ui_browser *browser,
 {
 	struct perf_evsel_menu *menu = container_of(browser,
 						    struct perf_evsel_menu, b);
-	struct perf_evsel *evsel = list_entry(entry, struct perf_evsel, node);
+	struct perf_evsel *evsel = *(struct perf_evsel **)entry;
 	struct hists *hists = evsel__hists(evsel);
 	bool current_entry = ui_browser__is_current_entry(browser, row);
 	unsigned long nr_events = hists->stats.nr_events[PERF_RECORD_SAMPLE];
@@ -3349,6 +3349,7 @@ static int perf_evsel_menu__run(struct perf_evsel_menu *menu,
 	struct perf_evsel *pos;
 	const char *title = "Available samples";
 	int delay_secs = hbt ? hbt->refresh : 0;
+	struct perf_evsel **entries = menu->b.entries;
 	int key;
 
 	if (ui_browser__show(&menu->b, title,
@@ -3387,16 +3388,12 @@ browse_hists:
 			ui_browser__show_title(&menu->b, title);
 			switch (key) {
 			case K_TAB:
-				if (pos->node.next == &evlist->entries)
-					pos = perf_evlist__first(evlist);
-				else
-					pos = perf_evsel__next(pos);
+				ui_browser__down(&menu->b);
+				pos = entries[menu->b.index];
 				goto browse_hists;
 			case K_UNTAB:
-				if (pos->node.prev == &evlist->entries)
-					pos = perf_evlist__last(evlist);
-				else
-					pos = perf_evsel__prev(pos);
+				ui_browser__up(&menu->b);
+				pos = entries[menu->b.index];
 				goto browse_hists;
 			case K_SWITCH_INPUT_DATA:
 			case 'q':
@@ -3429,12 +3426,27 @@ out:
 static bool filter_group_entries(struct ui_browser *browser __maybe_unused,
 				 void *entry)
 {
-	struct perf_evsel *evsel = list_entry(entry, struct perf_evsel, node);
+	struct perf_evsel *evsel = entry;
 
 	if (symbol_conf.event_group && !perf_evsel__is_group_leader(evsel))
 		return true;
 
 	return false;
+}
+
+static int perf_evsel__cmp_by_nr_samples(const void *va, const void *vb)
+{
+        struct perf_evsel *a = *(struct perf_evsel **)vb;
+        struct perf_evsel *b = *(struct perf_evsel **)va;
+	struct hists *ha = evsel__hists(a);
+	struct hists *hb = evsel__hists(b);
+
+	if (ha->nr_entries < hb->nr_entries)
+		return -1;
+	if (ha->nr_entries > hb->nr_entries)
+		return 1;
+
+	return strcmp(a->name, b->name);
 }
 
 static int __perf_evlist__tui_browse_hists(struct perf_evlist *evlist,
@@ -3443,12 +3455,12 @@ static int __perf_evlist__tui_browse_hists(struct perf_evlist *evlist,
 					   float min_pcnt,
 					   struct perf_env *env)
 {
-	struct perf_evsel *pos;
+	struct perf_evsel *pos, **entries = calloc(evlist->nr_entries, sizeof(struct perf_evsel *));
 	struct perf_evsel_menu menu = {
 		.b = {
-			.entries    = &evlist->entries,
-			.refresh    = ui_browser__list_head_refresh,
-			.seek	    = ui_browser__list_head_seek,
+			.entries    = entries,
+			.refresh    = ui_browser__ptr_array_refresh,
+			.seek	    = ui_browser__ptr_array_seek,
 			.write	    = perf_evsel_menu__write,
 			.filter	    = filter_group_entries,
 			.nr_entries = nr_entries,
@@ -3457,6 +3469,12 @@ static int __perf_evlist__tui_browse_hists(struct perf_evlist *evlist,
 		.min_pcnt = min_pcnt,
 		.env = env,
 	};
+	int err, idx = 0;
+
+	if (entries == NULL) {
+		ui__error("Not enough memory for sorting events for menu");
+		return -1;
+	}
 
 	ui_helpline__push("Press ESC to exit");
 
@@ -3466,9 +3484,17 @@ static int __perf_evlist__tui_browse_hists(struct perf_evlist *evlist,
 
 		if (menu.b.width < line_len)
 			menu.b.width = line_len;
+
+		entries[idx++] = pos;
 	}
 
-	return perf_evsel_menu__run(&menu, nr_entries, help, hbt);
+
+	qsort(entries, evlist->nr_entries, sizeof(struct perf_evsel *),
+	      perf_evsel__cmp_by_nr_samples);
+
+	err = perf_evsel_menu__run(&menu, nr_entries, help, hbt);
+	free(entries);
+	return err;
 }
 
 int perf_evlist__tui_browse_hists(struct perf_evlist *evlist, const char *help,
