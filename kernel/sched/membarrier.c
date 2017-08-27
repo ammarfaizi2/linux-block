@@ -39,7 +39,7 @@ static void membarrier_private_expedited(void)
 	bool fallback = false;
 	cpumask_var_t tmpmask;
 
-	if (num_online_cpus() == 1)
+	if (num_online_cpus() == 1 || get_nr_threads(current) == 1)
 		return;
 
 	/*
