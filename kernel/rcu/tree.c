@@ -1594,6 +1594,8 @@ static void check_cpu_stall(struct rcu_state *rsp, struct rcu_data *rdp)
 	unsigned long js;
 	struct rcu_node *rnp;
 
+	if (rsp->gp_kthread)
+		wake_up_process(rsp->gp_kthread);
 	if ((rcu_cpu_stall_suppress && !rcu_kick_kthreads) ||
 	    !rcu_gp_in_progress(rsp))
 		return;
@@ -3777,6 +3779,8 @@ int rcutree_online_cpu(unsigned int cpu)
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 		rnp->ffmask |= rdp->grpmask;
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
+		if (rsp->gp_kthread)
+			set_cpus_allowed_ptr(rsp->gp_kthread, cpu_online_mask);
 	}
 	if (IS_ENABLED(CONFIG_TREE_SRCU))
 		srcu_online_cpu(cpu);
@@ -3793,12 +3797,19 @@ int rcutree_online_cpu(unsigned int cpu)
  */
 int rcutree_offline_cpu(unsigned int cpu)
 {
+	static struct cpumask cm;
 	unsigned long flags;
 	struct rcu_data *rdp;
 	struct rcu_node *rnp;
 	struct rcu_state *rsp;
 
 	for_each_rcu_flavor(rsp) {
+		if (rsp->gp_kthread) {
+			cpumask_copy(&cm, cpu_online_mask);
+			cpumask_clear_cpu(cpu, &cm);
+			set_cpus_allowed_ptr(rsp->gp_kthread, &cm);
+			wake_up_process(rsp->gp_kthread);
+		}
 		rdp = per_cpu_ptr(rsp->rda, cpu);
 		rnp = rdp->mynode;
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);

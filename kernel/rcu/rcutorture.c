@@ -1333,6 +1333,8 @@ rcu_torture_stats_print(void)
 		}
 		show_rcu_gp_kthreads();
 		rcu_ftrace_dump(DUMP_ALL);
+		if (wtp)
+			wake_up_process(wtp);
 	}
 	rtcv_snap = rcu_torture_current_version;
 }
