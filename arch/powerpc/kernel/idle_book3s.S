@@ -195,7 +195,16 @@ pnv_powersave_common:
 	std	r5,_CCR(r1)
 	std	r1,PACAR1(r13)
 
+BEGIN_FTR_SECTION
 	/*
+	 * POWER9 does not require real mode to stop, and presently does not
+	 * set hwthread_state for KVM (threads don't share MMU context), so
+	 * we can remain in virtual mode for this.
+	 */
+	bctr
+END_FTR_SECTION_IFSET(CPU_FTR_ARCH_300)
+	/*
+	 * POWER8
 	 * Go to real mode to do the nap, as required by the architecture.
 	 * Also, we need to be in real mode before setting hwthread_state,
 	 * because as soon as we do that, another thread can switch
@@ -204,6 +213,20 @@ pnv_powersave_common:
 	LOAD_REG_IMMEDIATE(r7, MSR_IDLE)
 	mtmsrd	r7,0
 	bctr
+
+/*
+ * This is the sequence required to execute idle instructions, as
+ * specified in ISA v2.07 (and earlier). MSR[IR] and MSR[DR] must be 0.
+ */
+#define IDLE_STATE_ENTER_SEQ_NORET(IDLE_INST)			\
+	/* Magic NAP/SLEEP/WINKLE mode enter sequence */	\
+	std	r0,0(r1);					\
+	ptesync;						\
+	ld	r0,0(r1);					\
+236:	cmpd	cr0,r0,r0;					\
+	bne	236b;						\
+	IDLE_INST;
+
 
 	.globl pnv_enter_arch207_idle_mode
 pnv_enter_arch207_idle_mode:
@@ -296,20 +319,27 @@ enter_winkle:
 /*
  * r3 - PSSCR value corresponding to the requested stop state.
  */
-power_enter_stop:
 #ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	/* Tell KVM we're entering idle */
+power_enter_stop_kvm_rm:
+	/*
+	 * This is currently unused because POWER9 KVM does not have to
+	 * gather secondary threads into sibling mode, but the code is
+	 * here in case that function is required.
+	 *
+	 * Tell KVM we're entering idle.
+	 */
 	li	r4,KVM_HWTHREAD_IN_IDLE
 	/* DO THIS IN REAL MODE!  See comment above. */
 	stb	r4,HSTATE_HWTHREAD_STATE(r13)
 #endif
+power_enter_stop:
 /*
  * Check if we are executing the lite variant with ESL=EC=0
  */
 	andis.   r4,r3,PSSCR_EC_ESL_MASK_SHIFTED
 	clrldi   r3,r3,60 /* r3 = Bits[60:63] = Requested Level (RL) */
 	bne	 .Lhandle_esl_ec_set
-	IDLE_STATE_ENTER_SEQ(PPC_STOP)
+	PPC_STOP
 	li	r3,0  /* Since we didn't lose state, return 0 */
 
 	/*
@@ -342,7 +372,8 @@ power_enter_stop:
 	ld	r4,ADDROFF(pnv_first_deep_stop_state)(r5)
 	cmpd	r3,r4
 	bge	.Lhandle_deep_stop
-	IDLE_STATE_ENTER_SEQ_NORET(PPC_STOP)
+	PPC_STOP	/* Does not return (system reset interrupt) */
+
 .Lhandle_deep_stop:
 /*
  * Entering deep idle state.
@@ -364,7 +395,7 @@ lwarx_loop_stop:
 
 	bl	save_sprs_to_stack
 
-	IDLE_STATE_ENTER_SEQ_NORET(PPC_STOP)
+	PPC_STOP	/* Does not return (system reset interrupt) */
 
 /*
  * Entered with MSR[EE]=0 and no soft-masked interrupts pending.
@@ -465,6 +496,18 @@ pnv_powersave_wakeup_mce:
 
 	b	pnv_powersave_wakeup
 
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+kvm_start_guest_check:
+	li	r0,KVM_HWTHREAD_IN_KERNEL
+	stb	r0,HSTATE_HWTHREAD_STATE(r13)
+	/* Order setting hwthread_state vs. testing hwthread_req */
+	sync
+	lbz	r0,HSTATE_HWTHREAD_REQ(r13)
+	cmpwi	r0,0
+	beqlr
+	b	kvm_start_guest
+#endif
+
 /*
  * Called from reset vector for powersave wakeups.
  * cr3 - set to gt if waking up with partial/complete hypervisor state loss
@@ -489,15 +532,9 @@ ALT_FTR_SECTION_END_IFSET(CPU_FTR_ARCH_300)
 	mr	r3,r12
 
 #ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	li	r0,KVM_HWTHREAD_IN_KERNEL
-	stb	r0,HSTATE_HWTHREAD_STATE(r13)
-	/* Order setting hwthread_state vs. testing hwthread_req */
-	sync
-	lbz	r0,HSTATE_HWTHREAD_REQ(r13)
-	cmpwi	r0,0
-	beq	1f
-	b	kvm_start_guest
-1:
+BEGIN_FTR_SECTION
+	bl	kvm_start_guest_check
+END_FTR_SECTION_IFCLR(CPU_FTR_ARCH_300)
 #endif
 
 	/* Return SRR1 from power7_nap() */

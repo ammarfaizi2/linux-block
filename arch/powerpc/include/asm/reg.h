@@ -356,6 +356,7 @@
 #define SPRN_PMSR	0x355   /* Power Management Status Reg */
 #define SPRN_PMMAR	0x356	/* Power Management Memory Activity Register */
 #define SPRN_PSSCR	0x357	/* Processor Stop Status and Control Register (ISA 3.0) */
+#define SPRN_PSSCR_PR	0x337	/* PSSCR ISA 3.0, privileged mode access */
 #define SPRN_PMCR	0x374	/* Power Management Control Register */
 
 /* HFSCR and FSCR bit numbers are the same */
@@ -1343,12 +1344,12 @@ static inline void msr_check_and_clear(unsigned long bits)
 				".section __ftr_fixup,\"a\"\n"		\
 				".align 3\n"				\
 				"98:\n"					\
-				"	.llong %1\n"			\
-				"	.llong %1\n"			\
-				"	.llong 97b-98b\n"		\
-				"	.llong 99b-98b\n"		\
-				"	.llong 0\n"			\
-				"	.llong 0\n"			\
+				"	.8byte %1\n"			\
+				"	.8byte %1\n"			\
+				"	.8byte 97b-98b\n"		\
+				"	.8byte 99b-98b\n"		\
+				"	.8byte 0\n"			\
+				"	.8byte 0\n"			\
 				".previous"				\
 			: "=r" (rval) \
 			: "i" (CPU_FTR_CELL_TB_BUG), "i" (SPRN_TBRL) : "cr0"); \
