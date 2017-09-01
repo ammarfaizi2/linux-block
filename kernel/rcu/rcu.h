@@ -222,7 +222,11 @@ do { \
 	if (!atomic_read(&___rfd_beenhere) && \
 	    !atomic_xchg(&___rfd_beenhere, 1)) { \
 		tracing_off(); \
+		if (!rcu_cpu_stall_suppress) \
+			rcu_cpu_stall_suppress = 3; \
 		ftrace_dump(oops_dump_mode); \
+		if (rcu_cpu_stall_suppress == 3) \
+			rcu_cpu_stall_suppress = 0; \
 	} \
 } while (0)
 
