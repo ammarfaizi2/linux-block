@@ -205,6 +205,8 @@
 #define PPC_INST_ISEL_MASK		0xfc00003e
 #define PPC_INST_LDARX			0x7c0000a8
 #define PPC_INST_STDCX			0x7c0001ad
+#define PPC_INST_LQARX			0x7c000228
+#define PPC_INST_STQCX			0x7c00016d
 #define PPC_INST_LSWI			0x7c0004aa
 #define PPC_INST_LSWX			0x7c00042a
 #define PPC_INST_LWARX			0x7c000028
@@ -262,7 +264,7 @@
 #define PPC_INST_TLBSRX_DOT		0x7c0006a5
 #define PPC_INST_VPMSUMW		0x10000488
 #define PPC_INST_VPMSUMD		0x100004c8
-#define PPC_INST_XXLOR			0xf0000510
+#define PPC_INST_XXLOR			0xf0000490
 #define PPC_INST_XXSWAPD		0xf0000250
 #define PPC_INST_XVCPSGNDP		0xf0000780
 #define PPC_INST_TRECHKPT		0x7c0007dd
@@ -403,12 +405,18 @@
 					__PPC_RA(a) | __PPC_RB(b))
 #define	PPC_DCBZL(a, b)		stringify_in_c(.long PPC_INST_DCBZL | \
 					__PPC_RA(a) | __PPC_RB(b))
+#define PPC_LQARX(t, a, b, eh)	stringify_in_c(.long PPC_INST_LQARX | \
+					___PPC_RT(t) | ___PPC_RA(a) | \
+					___PPC_RB(b) | __PPC_EH(eh))
 #define PPC_LDARX(t, a, b, eh)	stringify_in_c(.long PPC_INST_LDARX | \
 					___PPC_RT(t) | ___PPC_RA(a) | \
 					___PPC_RB(b) | __PPC_EH(eh))
 #define PPC_LWARX(t, a, b, eh)	stringify_in_c(.long PPC_INST_LWARX | \
 					___PPC_RT(t) | ___PPC_RA(a) | \
 					___PPC_RB(b) | __PPC_EH(eh))
+#define PPC_STQCX(t, a, b)	stringify_in_c(.long PPC_INST_STQCX | \
+					___PPC_RT(t) | ___PPC_RA(a) | \
+					___PPC_RB(b))
 #define PPC_MSGSND(b)		stringify_in_c(.long PPC_INST_MSGSND | \
 					___PPC_RB(b))
 #define PPC_MSGSYNC		stringify_in_c(.long PPC_INST_MSGSYNC)
