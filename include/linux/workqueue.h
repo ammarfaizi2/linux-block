@@ -451,6 +451,7 @@ extern bool mod_delayed_work_on(int cpu, struct workqueue_struct *wq,
 
 extern void flush_workqueue(struct workqueue_struct *wq);
 extern void drain_workqueue(struct workqueue_struct *wq);
+extern void dec_after_work(atomic_t *counter);
 
 extern int schedule_on_each_cpu(work_func_t func);
 
