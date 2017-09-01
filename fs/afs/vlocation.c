@@ -22,137 +22,6 @@ static unsigned afs_vlocation_timeout = 10;	/* volume location timeout in second
 static unsigned afs_vlocation_update_timeout = 10 * 60;
 
 /*
- * iterate through the VL servers in a cell until one of them admits knowing
- * about the volume in question
- */
-static int afs_vlocation_access_vl_by_name(struct afs_vlocation *vl,
-					   struct key *key,
-					   struct afs_cache_vlocation *vldb)
-{
-	struct afs_cell *cell = vl->cell;
-	int count, ret;
-
-	_enter("%s,%s", cell->name, vl->vldb.name);
-
-	down_write(&vl->cell->vl_sem);
-	ret = -ENOMEDIUM;
-	for (count = cell->vl_naddrs; count > 0; count--) {
-		struct sockaddr_rxrpc *addr = &cell->vl_addrs[cell->vl_curr_svix];
-
-		_debug("CellServ[%hu]: %pIS", cell->vl_curr_svix, &addr->transport);
-
-		/* attempt to access the VL server */
-		ret = afs_vl_get_entry_by_name(cell->net, addr, key,
-					       vl->vldb.name, vldb, false);
-		switch (ret) {
-		case 0:
-			goto out;
-		case -ENOMEM:
-		case -ENONET:
-		case -ENETUNREACH:
-		case -EHOSTUNREACH:
-		case -ECONNREFUSED:
-			if (ret == -ENOMEM || ret == -ENONET)
-				goto out;
-			goto rotate;
-		case -ENOMEDIUM:
-		case -EKEYREJECTED:
-		case -EKEYEXPIRED:
-			goto out;
-		default:
-			ret = -EIO;
-			goto rotate;
-		}
-
-		/* rotate the server records upon lookup failure */
-	rotate:
-		cell->vl_curr_svix++;
-		cell->vl_curr_svix %= cell->vl_naddrs;
-	}
-
-out:
-	up_write(&vl->cell->vl_sem);
-	_leave(" = %d", ret);
-	return ret;
-}
-
-/*
- * iterate through the VL servers in a cell until one of them admits knowing
- * about the volume in question
- */
-static int afs_vlocation_access_vl_by_id(struct afs_vlocation *vl,
-					 struct key *key,
-					 afs_volid_t volid,
-					 afs_voltype_t voltype,
-					 struct afs_cache_vlocation *vldb)
-{
-	struct afs_cell *cell = vl->cell;
-	int count, ret;
-
-	_enter("%s,%x,%d,", cell->name, volid, voltype);
-
-	down_write(&vl->cell->vl_sem);
-	ret = -ENOMEDIUM;
-	for (count = cell->vl_naddrs; count > 0; count--) {
-		struct sockaddr_rxrpc *addr = &cell->vl_addrs[cell->vl_curr_svix];
-
-		_debug("CellServ[%hu]: %pIS", cell->vl_curr_svix, &addr->transport);
-
-		/* attempt to access the VL server */
-		ret = afs_vl_get_entry_by_id(cell->net, addr, key, volid,
-					     voltype, vldb, false);
-		switch (ret) {
-		case 0:
-			goto out;
-		case -ENOMEM:
-		case -ENONET:
-		case -ENETUNREACH:
-		case -EHOSTUNREACH:
-		case -ECONNREFUSED:
-			if (ret == -ENOMEM || ret == -ENONET)
-				goto out;
-			goto rotate;
-		case -EBUSY:
-			vl->upd_busy_cnt++;
-			if (vl->upd_busy_cnt <= 3) {
-				if (vl->upd_busy_cnt > 1) {
-					/* second+ BUSY - sleep a little bit */
-					set_current_state(TASK_UNINTERRUPTIBLE);
-					schedule_timeout(1);
-				}
-				continue;
-			}
-			break;
-		case -ENOMEDIUM:
-			vl->upd_rej_cnt++;
-			goto rotate;
-		default:
-			ret = -EIO;
-			goto rotate;
-		}
-
-		/* rotate the server records upon lookup failure */
-	rotate:
-		cell->vl_curr_svix++;
-		cell->vl_curr_svix %= cell->vl_naddrs;
-		vl->upd_busy_cnt = 0;
-	}
-
-out:
-	if (ret < 0 && vl->upd_rej_cnt > 0) {
-		printk(KERN_NOTICE "kAFS:"
-		       " Active volume no longer valid '%s'\n",
-		       vl->vldb.name);
-		vl->valid = 0;
-		ret = -ENOMEDIUM;
-	}
-
-	up_write(&vl->cell->vl_sem);
-	_leave(" = %d", ret);
-	return ret;
-}
-
-/*
  * allocate a volume location record
  */
 static struct afs_vlocation *afs_vlocation_alloc(struct afs_cell *cell,
@@ -197,6 +66,7 @@ static int afs_vlocation_update_record(struct afs_vlocation *vl,
 	       vl->vldb.vid[1],
 	       vl->vldb.vid[2]);
 
+retry:
 	if (vl->vldb.vidmask & AFS_VOL_VTM_RW) {
 		vid = vl->vldb.vid[0];
 		voltype = AFSVL_RWVOL;
@@ -215,7 +85,8 @@ static int afs_vlocation_update_record(struct afs_vlocation *vl,
 	/* contact the server to make sure the volume is still available
 	 * - TODO: need to handle disconnected operation here
 	 */
-	ret = afs_vlocation_access_vl_by_id(vl, key, vid, voltype, vldb);
+	ret = afs_vl_get_entry_by_id(vl->cell, key, vid, voltype,
+				     vldb, false);
 	switch (ret) {
 		/* net error */
 	default:
@@ -239,6 +110,18 @@ static int afs_vlocation_update_record(struct afs_vlocation *vl,
 		/* TODO: make existing record unavailable */
 		_leave(" = %d", ret);
 		return ret;
+
+	case -EBUSY:
+		vl->upd_busy_cnt++;
+		if (vl->upd_busy_cnt <= 3) {
+			if (vl->upd_busy_cnt > 1) {
+				/* second+ BUSY - sleep a little bit */
+				set_current_state(TASK_UNINTERRUPTIBLE);
+				schedule_timeout(1);
+			}
+			goto retry;
+		}
+		return -EBUSY;
 	}
 }
 
@@ -278,7 +161,8 @@ static int afs_vlocation_fill_in_record(struct afs_vlocation *vl,
 	memset(&vldb, 0, sizeof(vldb));
 
 	/* Try to look up an unknown volume in the cell VL databases by name */
-	ret = afs_vlocation_access_vl_by_name(vl, key, &vldb);
+	ret = afs_vl_get_entry_by_name(vl->cell, key, vl->vldb.name,
+				       &vldb, false);
 	if (ret < 0) {
 		printk("kAFS: failed to locate '%s' in cell '%s'\n",
 		       vl->vldb.name, vl->cell->name);

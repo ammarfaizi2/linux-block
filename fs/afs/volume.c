@@ -249,7 +249,7 @@ struct afs_server *afs_volume_pick_fileserver(struct afs_vnode *vnode)
 			afs_get_server(server);
 			up_read(&volume->server_sem);
 			_leave(" = %p (picked %pIS)",
-			       server, &server->addr.transport);
+			       server, &server->addrs->addrs[0].transport);
 			return server;
 
 		case -ENETUNREACH:
@@ -304,7 +304,8 @@ int afs_volume_release_fileserver(struct afs_vnode *vnode,
 	unsigned loop;
 
 	_enter("%s,%pIS,%d",
-	       volume->vlocation->vldb.name, &server->addr.transport, result);
+	       volume->vlocation->vldb.name, &server->addrs->addrs[0].transport,
+	       result);
 
 	switch (result) {
 		/* success */

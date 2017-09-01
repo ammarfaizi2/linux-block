@@ -162,6 +162,7 @@ void afs_put_call(struct afs_call *call)
 		if (call->type->destructor)
 			call->type->destructor(call);
 
+		afs_end_cursor(&call->cursor);
 		kfree(call->request);
 		kfree(call);
 
@@ -287,6 +288,84 @@ static void afs_notify_end_request_tx(struct sock *sock,
 }
 
 /*
+ * Send data through rxrpc and rotate the destination address if a network
+ * error of some sort occurs.
+ */
+static int afs_send_data(struct afs_call *call, struct msghdr *msg,
+			 unsigned int bytes)
+{
+	enum rxrpc_call_completion compl;
+	struct sockaddr_rxrpc *srx;
+	int ret;
+
+resume:
+	ret = rxrpc_kernel_send_data(call->net->socket, call->rxcall,
+				     msg, bytes, afs_notify_end_request_tx);
+
+	/* Success and obvious local errors are returned immediately.  Note
+	 * that for an async operation, the call struct may already have
+	 * evaporated.
+	 */
+	if (ret >= 0 ||
+	    ret == -ENOMEM ||
+	    ret == -ENONET ||
+	    ret == -EINTR ||
+	    ret == -EFAULT ||
+	    ret == -ERESTARTSYS ||
+	    ret == -EKEYEXPIRED ||
+	    ret == -EKEYREVOKED ||
+	    ret == -EKEYREJECTED ||
+	    ret == -EPERM)
+		return ret;
+
+	/* Check to see if it's an error that meant the call data packets never
+	 * reached the peer.
+	 */
+	call->error = rxrpc_kernel_check_call(call->net->socket, call->rxcall,
+					      &compl, &call->abort_code);
+	if (call->error != -EINPROGRESS)
+		return ret;
+
+	switch (compl) {
+	case RXRPC_CALL_SUCCEEDED:
+	default:
+		WARN_ONCE(true, "AFS: Call succeeded despite send-data failing\n");
+		return 0;
+
+	case RXRPC_CALL_REMOTELY_ABORTED:
+	case RXRPC_CALL_LOCALLY_ABORTED:
+		/* All of these indicate that we had some interaction with the
+		 * server, so there's no point trying another server.
+		 */
+		return call->error;
+
+	case RXRPC_CALL_LOCAL_ERROR:
+	case RXRPC_CALL_NETWORK_ERROR:
+		/* Local errors from an attempt to connect a call and network
+		 * errors reported back by ICMP suggest skipping the current
+		 * address and trying the next.
+		 */
+		break;
+	}
+
+	/* Rotate servers if possible. */
+	srx = afs_get_address(&call->cursor);
+	if (IS_ERR(srx)) {
+		_leave(" = %ld [cursor]", PTR_ERR(srx));
+		return PTR_ERR(srx);
+	}
+
+	ret = rxrpc_kernel_retry_call(call->net->socket, call->rxcall,
+				      srx, call->key);
+	if (ret < 0)
+		return ret;
+
+	if (msg_data_left(msg) > 0)
+		goto resume;
+	return 0;
+}
+
+/*
  * attach the data from a bunch of pages on an inode to a call
  */
 static int afs_send_pages(struct afs_call *call, struct msghdr *msg)
@@ -305,8 +384,7 @@ static int afs_send_pages(struct afs_call *call, struct msghdr *msg)
 		bytes = msg->msg_iter.count;
 		nr = msg->msg_iter.nr_segs;
 
-		ret = rxrpc_kernel_send_data(call->net->socket, call->rxcall, msg,
-					     bytes, afs_notify_end_request_tx);
+		ret = afs_send_data(call, msg, bytes);
 		for (loop = 0; loop < nr; loop++)
 			put_page(bv[loop].bv_page);
 		if (ret < 0)
@@ -321,9 +399,9 @@ static int afs_send_pages(struct afs_call *call, struct msghdr *msg)
 /*
  * initiate a call
  */
-int afs_make_call(struct sockaddr_rxrpc *srx, struct afs_call *call,
-		  gfp_t gfp, bool async)
+int afs_make_call(struct afs_call *call, gfp_t gfp, bool async)
 {
+	struct sockaddr_rxrpc *srx;
 	struct rxrpc_call *rxcall;
 	struct msghdr msg;
 	struct kvec iov[1];
@@ -332,7 +410,7 @@ int afs_make_call(struct sockaddr_rxrpc *srx, struct afs_call *call,
 	u32 abort_code;
 	int ret;
 
-	_enter(",{%pISp},", &srx->transport);
+	_enter("");
 
 	ASSERT(call->type != NULL);
 	ASSERT(call->type->name != NULL);
@@ -354,6 +432,11 @@ int afs_make_call(struct sockaddr_rxrpc *srx, struct afs_call *call,
 	}
 
 	/* create a call */
+	srx = afs_get_address(&call->cursor);
+	if (IS_ERR(srx))
+		return PTR_ERR(srx);
+
+	_debug("call %pISp", &srx->transport);
 	rxcall = rxrpc_kernel_begin_call(call->net->socket, srx, call->key,
 					 (unsigned long)call,
 					 tx_total_len, gfp,
@@ -380,16 +463,7 @@ int afs_make_call(struct sockaddr_rxrpc *srx, struct afs_call *call,
 	msg.msg_controllen	= 0;
 	msg.msg_flags		= (call->send_pages ? MSG_MORE : 0);
 
-	/* We have to change the state *before* sending the last packet as
-	 * rxrpc might give us the reply before it returns from sending the
-	 * request.  Further, if the send fails, we may already have been given
-	 * a notification and may have collected it.
-	 */
-	if (!call->send_pages)
-		call->state = AFS_CALL_AWAIT_REPLY;
-	ret = rxrpc_kernel_send_data(call->net->socket, rxcall,
-				     &msg, call->request_size,
-				     afs_notify_end_request_tx);
+	ret = afs_send_data(call, &msg, call->request_size);
 	if (ret < 0)
 		goto error_do_abort;
 
@@ -758,7 +832,6 @@ void afs_send_empty_reply(struct afs_call *call)
 	msg.msg_controllen	= 0;
 	msg.msg_flags		= 0;
 
-	call->state = AFS_CALL_AWAIT_ACK;
 	switch (rxrpc_kernel_send_data(net->socket, call->rxcall, &msg, 0,
 				       afs_notify_end_reply_tx)) {
 	case 0:
@@ -798,7 +871,6 @@ void afs_send_simple_reply(struct afs_call *call, const void *buf, size_t len)
 	msg.msg_controllen	= 0;
 	msg.msg_flags		= 0;
 
-	call->state = AFS_CALL_AWAIT_ACK;
 	n = rxrpc_kernel_send_data(net->socket, call->rxcall, &msg, len,
 				   afs_notify_end_reply_tx);
 	if (n >= 0) {
@@ -813,6 +885,69 @@ void afs_send_simple_reply(struct afs_call *call, const void *buf, size_t len)
 					RX_USER_ABORT, -ENOMEM, "KOO");
 	}
 	_leave(" [error]");
+}
+
+/*
+ * Totate the destination address if a network error of some sort occurs and
+ * retry the call.
+ */
+static int afs_retry_call(struct afs_call *call, int ret)
+{
+	enum rxrpc_call_completion compl;
+	struct sockaddr_rxrpc *srx;
+
+	if (ret == -ENOMEM ||
+	    ret == -ENONET ||
+	    ret == -EINTR ||
+	    ret == -EFAULT ||
+	    ret == -ERESTARTSYS ||
+	    ret == -EKEYEXPIRED ||
+	    ret == -EKEYREVOKED ||
+	    ret == -EKEYREJECTED ||
+	    ret == -EPERM)
+		return ret;
+
+	/* Check to see if it's an error that meant the call data packets never
+	 * reached the peer.
+	 */
+	call->error = rxrpc_kernel_check_call(call->net->socket, call->rxcall,
+					      &compl, &call->abort_code);
+	if (call->error == -EINPROGRESS)
+		return ret;
+
+	switch (compl) {
+	case RXRPC_CALL_SUCCEEDED:
+	default:
+		WARN_ONCE(true, "AFS: Call succeeded despite send-data failing\n");
+		return 0;
+
+	case RXRPC_CALL_REMOTELY_ABORTED:
+	case RXRPC_CALL_LOCALLY_ABORTED:
+		/* All of these indicate that we had some interaction with the
+		 * server, so there's no point trying another server.
+		 */
+		return call->error;
+
+	case RXRPC_CALL_LOCAL_ERROR:
+	case RXRPC_CALL_NETWORK_ERROR:
+		/* Local errors from an attempt to connect a call and network
+		 * errors reported back by ICMP suggest skipping the current
+		 * address and trying the next.
+		 */
+		break;
+	}
+
+	/* Rotate servers if possible. */
+	srx = afs_get_address(&call->cursor);
+	if (IS_ERR(srx))
+		return PTR_ERR(srx);
+
+	_debug("retry %pISp", &srx->transport);
+	call->error = 0;
+	ret = rxrpc_kernel_retry_call(call->net->socket, call->rxcall,
+				      srx, call->key);
+	_leave(" = %d [retry]", ret);
+	return ret;
 }
 
 /*
@@ -850,10 +985,15 @@ int afs_extract_data(struct afs_call *call, void *buf, size_t count,
 		return 0;
 	}
 
-	if (ret == -ECONNABORTED)
+	if (ret == -ECONNABORTED) {
 		call->error = call->type->abort_to_error(call->abort_code);
-	else
-		call->error = ret;
+		goto out;
+	}
+
+	ret = afs_retry_call(call, ret);
+	if (ret == 0)
+		return -EAGAIN;
+out:
 	call->state = AFS_CALL_COMPLETE;
 	return ret;
 }

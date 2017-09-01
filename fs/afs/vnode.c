@@ -354,8 +354,7 @@ get_anyway:
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %p{%pIS}",
-		       server, &server->addr.transport);
+		_debug("USING SERVER: %pISp", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_fetch_file_status(server, key, vnode, NULL,
 					       false);
@@ -418,7 +417,7 @@ int afs_vnode_fetch_data(struct afs_vnode *vnode, struct key *key,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pISp", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_fetch_data(server, key, vnode, desc,
 					false);
@@ -474,7 +473,7 @@ int afs_vnode_create(struct afs_vnode *vnode, struct key *key,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pISp", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_create(server, key, vnode, name, mode, newfid,
 				    newstatus, newcb, false);
@@ -530,7 +529,7 @@ int afs_vnode_remove(struct afs_vnode *vnode, struct key *key, const char *name,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_remove(server, key, vnode, name, isdir,
 				    false);
@@ -592,7 +591,7 @@ int afs_vnode_link(struct afs_vnode *dvnode, struct afs_vnode *vnode,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_link(server, key, dvnode, vnode, name,
 				  false);
@@ -656,7 +655,7 @@ int afs_vnode_symlink(struct afs_vnode *vnode, struct key *key,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_symlink(server, key, vnode, name, content,
 				     newfid, newstatus, false);
@@ -726,7 +725,7 @@ int afs_vnode_rename(struct afs_vnode *orig_dvnode,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_rename(server, key, orig_dvnode, orig_name,
 				    new_dvnode, new_name, false);
@@ -792,7 +791,7 @@ int afs_vnode_store_data(struct afs_writeback *wb, pgoff_t first, pgoff_t last,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_store_data(server, wb, first, last, offset, to,
 					false);
@@ -845,7 +844,7 @@ int afs_vnode_setattr(struct afs_vnode *vnode, struct key *key,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_setattr(server, key, vnode, attr, false);
 
@@ -892,7 +891,7 @@ int afs_vnode_get_volume_status(struct afs_vnode *vnode, struct key *key,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_get_volume_status(server, key, vnode, vs, false);
 
@@ -931,7 +930,7 @@ int afs_vnode_set_lock(struct afs_vnode *vnode, struct key *key,
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_set_lock(server, key, vnode, type, false);
 
@@ -969,7 +968,7 @@ int afs_vnode_extend_lock(struct afs_vnode *vnode, struct key *key)
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_extend_lock(server, key, vnode, false);
 
@@ -1007,7 +1006,7 @@ int afs_vnode_release_lock(struct afs_vnode *vnode, struct key *key)
 		if (IS_ERR(server))
 			goto no_server;
 
-		_debug("USING SERVER: %pIS\n", &server->addr.transport);
+		_debug("USING SERVER: %pIS\n", &server->addrs->addrs[0].transport);
 
 		ret = afs_fs_release_lock(server, key, vnode, false);
 

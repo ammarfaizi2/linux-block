@@ -37,7 +37,9 @@ static int afs_install_server(struct afs_server *server)
 		p = *pp;
 		_debug("- consider %p", p);
 		xserver = rb_entry(p, struct afs_server, master_rb);
-		diff = memcmp(&server->addr, &xserver->addr, sizeof(server->addr));
+		diff = memcmp(&server->addrs->addrs[0],
+			      &xserver->addrs->addrs[0],
+			      sizeof(sizeof(server->addrs->addrs[0])));
 		if (diff < 0)
 			pp = &(*pp)->rb_left;
 		else if (diff > 0)
@@ -66,28 +68,41 @@ static struct afs_server *afs_alloc_server(struct afs_cell *cell,
 	_enter("");
 
 	server = kzalloc(sizeof(struct afs_server), GFP_KERNEL);
-	if (server) {
-		atomic_set(&server->usage, 1);
-		server->net = cell->net;
-		server->cell = cell;
+	if (!server)
+		goto enomem;
+	server->addrs = kzalloc(sizeof(struct afs_addr_list) +
+				sizeof(struct sockaddr_rxrpc),
+				GFP_KERNEL);
+	if (!server->addrs)
+		goto enomem_server;
 
-		INIT_LIST_HEAD(&server->link);
-		INIT_LIST_HEAD(&server->grave);
-		init_rwsem(&server->sem);
-		spin_lock_init(&server->fs_lock);
-		server->fs_vnodes = RB_ROOT;
-		server->cb_promises = RB_ROOT;
-		spin_lock_init(&server->cb_lock);
-		init_waitqueue_head(&server->cb_break_waitq);
-		INIT_DELAYED_WORK(&server->cb_break_work,
-				  afs_dispatch_give_up_callbacks);
+	atomic_set(&server->usage, 1);
+	server->net = cell->net;
+	server->cell = cell;
 
-		server->addr = *addr;
-		_leave(" = %p{%d}", server, atomic_read(&server->usage));
-	} else {
-		_leave(" = NULL [nomem]");
-	}
+	INIT_LIST_HEAD(&server->link);
+	INIT_LIST_HEAD(&server->grave);
+	init_rwsem(&server->sem);
+	spin_lock_init(&server->fs_lock);
+	server->fs_vnodes = RB_ROOT;
+	server->cb_promises = RB_ROOT;
+	spin_lock_init(&server->cb_lock);
+	init_waitqueue_head(&server->cb_break_waitq);
+	INIT_DELAYED_WORK(&server->cb_break_work,
+			  afs_dispatch_give_up_callbacks);
+
+	refcount_set(&server->addrs->usage, 1);
+	server->addrs->nr_addrs = 1;
+	server->addrs->addrs[0] = *addr;
+
+	_leave(" = %p{%d}", server, atomic_read(&server->usage));
 	return server;
+
+enomem_server:
+	kfree(server);
+enomem:
+	_leave(" = NULL [nomem]");
+	return NULL;
 }
 
 /*
@@ -104,7 +119,7 @@ struct afs_server *afs_lookup_server(struct afs_cell *cell,
 	read_lock(&cell->servers_lock);
 
 	list_for_each_entry(server, &cell->servers, link) {
-		if (memcmp(&server->addr, addr, sizeof(*addr)) == 0)
+		if (memcmp(&server->addrs->addrs[0], addr, sizeof(*addr)) == 0)
 			goto found_server_quickly;
 	}
 	read_unlock(&cell->servers_lock);
@@ -119,7 +134,7 @@ struct afs_server *afs_lookup_server(struct afs_cell *cell,
 
 	/* check the cell's server list again */
 	list_for_each_entry(server, &cell->servers, link) {
-		if (memcmp(&server->addr, addr, sizeof(*addr)) == 0)
+		if (memcmp(&server->addrs->addrs[0], addr, sizeof(*addr)) == 0)
 			goto found_server;
 	}
 
@@ -187,7 +202,7 @@ struct afs_server *afs_find_server(struct afs_net *net,
 
 		_debug("- consider %p", p);
 
-		diff = memcmp(srx, &server->addr, sizeof(*srx));
+		diff = memcmp(srx, &server->addrs->addrs[0], sizeof(*srx));
 		if (diff < 0) {
 			p = p->rb_left;
 		} else if (diff > 0) {
@@ -256,6 +271,7 @@ static void afs_destroy_server(struct afs_server *server)
 	ASSERTCMP(atomic_read(&server->cb_break_n), ==, 0);
 
 	afs_put_cell(server->net, server->cell);
+	afs_put_addrlist(server->addrs);
 	kfree(server);
 }
 

@@ -31,6 +31,7 @@
 
 struct pagevec;
 struct afs_call;
+struct afs_addr_cursor;
 
 typedef enum {
 	AFS_VL_NEW,			/* new, uninitialised record */
@@ -66,6 +67,24 @@ enum afs_call_state {
 };
 
 /*
+ * List of server addresses.
+ */
+struct afs_addr_list {
+	struct rcu_head		rcu;		/* Must be first */
+	refcount_t		usage;
+	unsigned short		nr_addrs;
+	unsigned short		index;		/* Address currently in use */
+	struct sockaddr_rxrpc	addrs[];
+};
+
+struct afs_addr_cursor {
+	struct afs_addr_list	*alist;
+	unsigned short		start;		/* Starting point in alist->addrs[] */
+	unsigned short		index;		/* Wrapping offset from start to current addr */
+	short			error;
+};
+
+/*
  * a record of an in-progress RxRPC call
  */
 struct afs_call {
@@ -77,6 +96,7 @@ struct afs_call {
 	struct key		*key;		/* security for this call */
 	struct afs_net		*net;		/* The network namespace */
 	struct afs_server	*server;	/* server affected by incoming CM call */
+	struct afs_addr_cursor	cursor;		/* Address/server rotation cursor */
 	void			*request;	/* request data (first part) */
 	struct address_space	*mapping;	/* page set */
 	struct afs_writeback	*wb;		/* writeback being performed */
@@ -276,16 +296,15 @@ struct afs_cell {
 #define AFS_CELL_FL_NO_GC	1		/* The cell was added manually, don't auto-gc */
 #define AFS_CELL_FL_NOT_FOUND	2		/* Permanent DNS error */
 #define AFS_CELL_FL_DNS_FAIL	3		/* Failed to access DNS */
+#define AFS_CELL_FL_NO_LOOKUP_YET 4		/* Not completed first DNS lookup yet */
 	enum afs_cell_state	state;
 	short			error;
 
 	spinlock_t		vl_lock;	/* vl_list lock */
 
 	/* VLDB server list. */
-	seqlock_t		vl_addrs_lock;
-	unsigned short		vl_naddrs;	/* number of VL servers in addr list */
-	unsigned short		vl_curr_svix;	/* current server index */
-	struct sockaddr_rxrpc	vl_addrs[AFS_CELL_MAX_ADDRS];	/* cell VL server addresses */
+	rwlock_t		vl_addrs_lock;	/* Lock on vl_addrs */
+	struct afs_addr_list	__rcu *vl_addrs; /* List of VL servers */
 	u8			name_len;	/* Length of name */
 	char			name[64 + 1];	/* Cell name, case-flattened and NUL-padded */
 };
@@ -336,7 +355,7 @@ struct afs_vlocation {
 struct afs_server {
 	atomic_t		usage;
 	time64_t		time_of_death;	/* time at which put reduced usage to 0 */
-	struct sockaddr_rxrpc	addr;		/* server address */
+	struct afs_addr_list	__rcu *addrs;	/* List of addresses for this server */
 	struct afs_net		*net;		/* The network namespace */
 	struct afs_cell		*cell;		/* cell in which server resides */
 	struct list_head	link;		/* link in cell's server list */
@@ -474,6 +493,23 @@ struct afs_interface {
 
 /*****************************************************************************/
 /*
+ * addr_list.c
+ */
+static inline struct afs_addr_list *afs_get_addrlist(struct afs_addr_list *alist)
+{
+	refcount_inc(&alist->usage);
+	return alist;
+}
+extern void afs_put_addrlist(struct afs_addr_list *);
+extern struct afs_addr_list *afs_parse_text_addrs(const char *, size_t, char,
+						  unsigned short, unsigned short);
+extern struct afs_addr_list *afs_dns_query(struct afs_cell *, time64_t *);
+extern void afs_set_vl_cursor(struct afs_call *, struct afs_cell *);
+extern void afs_set_fs_cursor(struct afs_call *, struct afs_server *);
+extern struct sockaddr_rxrpc *afs_get_address(struct afs_addr_cursor *);
+extern 	void afs_end_cursor(struct afs_addr_cursor *);
+
+/*
  * cache.c
  */
 #ifdef CONFIG_AFS_FSCACHE
@@ -504,11 +540,11 @@ extern void afs_flush_callback_breaks(struct afs_server *);
 /*
  * cell.c
  */
-#define afs_get_cell(C) do { atomic_inc(&(C)->usage); } while(0)
 extern int afs_cell_init(struct afs_net *, const char *);
 extern struct afs_cell *afs_lookup_cell_rcu(struct afs_net *, const char *, unsigned);
 extern struct afs_cell *afs_lookup_cell(struct afs_net *, const char *, unsigned,
 					const char *, bool);
+extern struct afs_cell *afs_get_cell(struct afs_cell *);
 extern void afs_put_cell(struct afs_net *, struct afs_cell *);
 extern void afs_manage_cells(struct work_struct *);
 extern void afs_cells_timer(unsigned long);
@@ -662,7 +698,7 @@ extern void __net_exit afs_close_socket(struct afs_net *);
 extern void afs_charge_preallocation(struct work_struct *);
 extern void afs_put_call(struct afs_call *);
 extern int afs_queue_call_work(struct afs_call *);
-extern int afs_make_call(struct sockaddr_rxrpc *, struct afs_call *, gfp_t, bool);
+extern int afs_make_call(struct afs_call *, gfp_t, bool);
 extern struct afs_call *afs_alloc_flat_call(struct afs_net *,
 					    const struct afs_call_type *,
 					    size_t, size_t);
@@ -713,12 +749,10 @@ extern void __exit afs_fs_exit(void);
 /*
  * vlclient.c
  */
-extern int afs_vl_get_entry_by_name(struct afs_net *,
-				    struct sockaddr_rxrpc *, struct key *,
-				    const char *, struct afs_cache_vlocation *,
-				    bool);
-extern int afs_vl_get_entry_by_id(struct afs_net *,
-				  struct sockaddr_rxrpc *, struct key *,
+extern int afs_vl_get_entry_by_name(struct afs_cell *, struct key *,
+				    const char *,
+				    struct afs_cache_vlocation *, bool);
+extern int afs_vl_get_entry_by_id(struct afs_cell *,struct key *,
 				  afs_volid_t, afs_voltype_t,
 				  struct afs_cache_vlocation *, bool);
 
