@@ -11,6 +11,7 @@
 
 #include <linux/sched.h>
 #include <linux/slab.h>
+#include "afs_fs.h"
 #include "internal.h"
 
 static unsigned afs_server_timeout = 10;	/* server timeout in seconds */
@@ -23,7 +24,7 @@ static int afs_install_server(struct afs_server *server)
 	struct afs_server *xserver;
 	struct afs_net *net = server->cell->net;
 	struct rb_node **pp, *p;
-	int ret;
+	int ret, diff;
 
 	_enter("%p", server);
 
@@ -36,9 +37,10 @@ static int afs_install_server(struct afs_server *server)
 		p = *pp;
 		_debug("- consider %p", p);
 		xserver = rb_entry(p, struct afs_server, master_rb);
-		if (server->addr.s_addr < xserver->addr.s_addr)
+		diff = memcmp(&server->addr, &xserver->addr, sizeof(server->addr));
+		if (diff < 0)
 			pp = &(*pp)->rb_left;
-		else if (server->addr.s_addr > xserver->addr.s_addr)
+		else if (diff > 0)
 			pp = &(*pp)->rb_right;
 		else
 			goto error;
@@ -57,7 +59,7 @@ error:
  * allocate a new server record
  */
 static struct afs_server *afs_alloc_server(struct afs_cell *cell,
-					   const struct in_addr *addr)
+					   const struct sockaddr_rxrpc *addr)
 {
 	struct afs_server *server;
 
@@ -79,8 +81,7 @@ static struct afs_server *afs_alloc_server(struct afs_cell *cell,
 		INIT_DELAYED_WORK(&server->cb_break_work,
 				  afs_dispatch_give_up_callbacks);
 
-		memcpy(&server->addr, addr, sizeof(struct in_addr));
-		server->addr.s_addr = addr->s_addr;
+		server->addr = *addr;
 		_leave(" = %p{%d}", server, atomic_read(&server->usage));
 	} else {
 		_leave(" = NULL [nomem]");
@@ -92,17 +93,17 @@ static struct afs_server *afs_alloc_server(struct afs_cell *cell,
  * get an FS-server record for a cell
  */
 struct afs_server *afs_lookup_server(struct afs_cell *cell,
-				     const struct in_addr *addr)
+				     struct sockaddr_rxrpc *addr)
 {
 	struct afs_server *server, *candidate;
 
-	_enter("%p,%pI4", cell, &addr->s_addr);
+	_enter("%p,%pIS", cell, &addr->transport);
 
 	/* quick scan of the list to see if we already have the server */
 	read_lock(&cell->servers_lock);
 
 	list_for_each_entry(server, &cell->servers, link) {
-		if (server->addr.s_addr == addr->s_addr)
+		if (memcmp(&server->addr, addr, sizeof(*addr)) == 0)
 			goto found_server_quickly;
 	}
 	read_unlock(&cell->servers_lock);
@@ -117,7 +118,7 @@ struct afs_server *afs_lookup_server(struct afs_cell *cell,
 
 	/* check the cell's server list again */
 	list_for_each_entry(server, &cell->servers, link) {
-		if (server->addr.s_addr == addr->s_addr)
+		if (memcmp(&server->addr, addr, sizeof(*addr)) == 0)
 			goto found_server;
 	}
 
@@ -173,9 +174,9 @@ struct afs_server *afs_find_server(struct afs_net *net,
 {
 	struct afs_server *server = NULL;
 	struct rb_node *p;
-	struct in_addr addr = srx->transport.sin.sin_addr;
+	int diff;
 
-	_enter("{%d,%pI4}", srx->transport.family, &addr.s_addr);
+	_enter("{%d,%pIS}", srx->transport.family, &srx->transport);
 
 	if (srx->transport.family != AF_INET) {
 		WARN(true, "AFS does not yes support non-IPv4 addresses\n");
@@ -190,9 +191,10 @@ struct afs_server *afs_find_server(struct afs_net *net,
 
 		_debug("- consider %p", p);
 
-		if (addr.s_addr < server->addr.s_addr) {
+		diff = memcmp(srx, &server->addr, sizeof(*srx));
+		if (diff < 0) {
 			p = p->rb_left;
-		} else if (addr.s_addr > server->addr.s_addr) {
+		} else if (diff > 0) {
 			p = p->rb_right;
 		} else {
 			afs_get_server(server);
@@ -203,7 +205,6 @@ struct afs_server *afs_find_server(struct afs_net *net,
 	server = NULL;
 found:
 	read_unlock(&net->servers_lock);
-	ASSERTIFCMP(server, server->addr.s_addr, ==, addr.s_addr);
 	_leave(" = %p", server);
 	return server;
 }
