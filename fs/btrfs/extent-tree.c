@@ -3934,16 +3934,9 @@ void btrfs_dec_nocow_writers(struct btrfs_fs_info *fs_info, u64 bytenr)
 	btrfs_put_block_group(bg);
 }
 
-static int btrfs_wait_nocow_writers_atomic_t(atomic_t *a)
-{
-	schedule();
-	return 0;
-}
-
 void btrfs_wait_nocow_writers(struct btrfs_block_group_cache *bg)
 {
-	wait_on_atomic_t(&bg->nocow_writers,
-			 btrfs_wait_nocow_writers_atomic_t,
+	wait_on_atomic_t(&bg->nocow_writers, atomic_t_wait,
 			 TASK_UNINTERRUPTIBLE);
 }
 
@@ -6523,12 +6516,6 @@ void btrfs_dec_block_group_reservations(struct btrfs_fs_info *fs_info,
 	btrfs_put_block_group(bg);
 }
 
-static int btrfs_wait_bg_reservations_atomic_t(atomic_t *a)
-{
-	schedule();
-	return 0;
-}
-
 void btrfs_wait_block_group_reservations(struct btrfs_block_group_cache *bg)
 {
 	struct btrfs_space_info *space_info = bg->space_info;
@@ -6551,8 +6538,7 @@ void btrfs_wait_block_group_reservations(struct btrfs_block_group_cache *bg)
 	down_write(&space_info->groups_sem);
 	up_write(&space_info->groups_sem);
 
-	wait_on_atomic_t(&bg->reservations,
-			 btrfs_wait_bg_reservations_atomic_t,
+	wait_on_atomic_t(&bg->reservations, atomic_t_wait,
 			 TASK_UNINTERRUPTIBLE);
 }
 
@@ -11036,12 +11022,6 @@ int btrfs_start_write_no_snapshoting(struct btrfs_root *root)
 	return 1;
 }
 
-static int wait_snapshoting_atomic_t(atomic_t *a)
-{
-	schedule();
-	return 0;
-}
-
 void btrfs_wait_for_snapshot_creation(struct btrfs_root *root)
 {
 	while (true) {
@@ -11050,8 +11030,7 @@ void btrfs_wait_for_snapshot_creation(struct btrfs_root *root)
 		ret = btrfs_start_write_no_snapshoting(root);
 		if (ret)
 			break;
-		wait_on_atomic_t(&root->will_be_snapshoted,
-				 wait_snapshoting_atomic_t,
+		wait_on_atomic_t(&root->will_be_snapshoted, atomic_t_wait,
 				 TASK_UNINTERRUPTIBLE);
 	}
 }
