@@ -200,13 +200,14 @@ static int afs_parse_options(struct afs_mount_params *params,
 		token = match_token(p, afs_options_list, args);
 		switch (token) {
 		case afs_opt_cell:
-			cell = afs_cell_lookup(params->net,
-					       args[0].from,
-					       args[0].to - args[0].from,
-					       false);
+			rcu_read_lock();
+			cell = afs_lookup_cell_rcu(params->net,
+						   args[0].from,
+						   args[0].to - args[0].from);
+			rcu_read_unlock();
 			if (IS_ERR(cell))
 				return PTR_ERR(cell);
-			afs_put_cell(params->cell);
+			afs_put_cell(params->net, params->cell);
 			params->cell = cell;
 			break;
 
@@ -308,13 +309,14 @@ static int afs_parse_device_name(struct afs_mount_params *params,
 
 	/* lookup the cell record */
 	if (cellname || !params->cell) {
-		cell = afs_cell_lookup(params->net, cellname, cellnamesz, true);
+		cell = afs_lookup_cell(params->net, cellname, cellnamesz,
+				       NULL, false);
 		if (IS_ERR(cell)) {
 			printk(KERN_ERR "kAFS: unable to lookup cell '%*.*s'\n",
 			       cellnamesz, cellnamesz, cellname ?: "");
 			return PTR_ERR(cell);
 		}
-		afs_put_cell(params->cell);
+		afs_put_cell(params->net, params->cell);
 		params->cell = cell;
 	}
 
@@ -474,7 +476,7 @@ static struct dentry *afs_mount(struct file_system_type *fs_type,
 		kfree(as);
 	}
 
-	afs_put_cell(params.cell);
+	afs_put_cell(params.net, params.cell);
 	kfree(new_opts);
 	_leave(" = 0 [%p]", sb);
 	return dget(sb->s_root);
@@ -488,7 +490,7 @@ error_as:
 error_vol:
 	afs_put_volume(params.net, vol);
 error:
-	afs_put_cell(params.cell);
+	afs_put_cell(params.net, params.cell);
 	key_put(params.key);
 	kfree(new_opts);
 	_leave(" = %d", ret);

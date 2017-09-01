@@ -68,6 +68,7 @@ static struct afs_server *afs_alloc_server(struct afs_cell *cell,
 	server = kzalloc(sizeof(struct afs_server), GFP_KERNEL);
 	if (server) {
 		atomic_set(&server->usage, 1);
+		server->net = cell->net;
 		server->cell = cell;
 
 		INIT_LIST_HEAD(&server->link);
@@ -254,7 +255,7 @@ static void afs_destroy_server(struct afs_server *server)
 	ASSERTCMP(server->cb_break_head, ==, server->cb_break_tail);
 	ASSERTCMP(atomic_read(&server->cb_break_n), ==, 0);
 
-	afs_put_cell(server->cell);
+	afs_put_cell(server->net, server->cell);
 	kfree(server);
 }
 
