@@ -63,6 +63,7 @@ enum hist_column {
 	HISTC_SYM_SIZE,
 	HISTC_DSO_SIZE,
 	HISTC_SYMBOL_IPC,
+	HISTC_SCRIPT_FILE,
 	HISTC_NR_COLS, /* Last entry */
 };
 

@@ -17,6 +17,7 @@
 #include <math.h>
 #include <inttypes.h>
 #include <sys/param.h>
+#include "script-sample.h"
 
 static bool hists__filter_entry_by_dso(struct hists *hists,
 				       struct hist_entry *he);
@@ -205,6 +206,13 @@ void hists__calc_col_len(struct hists *hists, struct hist_entry *h)
 
 	if (h->trace_output)
 		hists__new_col_len(hists, HISTC_TRACE, strlen(h->trace_output));
+
+	if (sort__mode == SORT_MODE__SCRIPT && h->ms.sym) {
+		struct script_symbol *ssym = symbol__script_symbol(h->ms.sym);
+
+		len = strlen(ssym->file);
+		hists__new_col_len(hists, HISTC_SCRIPT_FILE, len);
+	}
 }
 
 void hists__output_recalc_col_len(struct hists *hists, int max_rows)

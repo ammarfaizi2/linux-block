@@ -209,6 +209,7 @@ enum sort_mode {
 	SORT_MODE__TOP,
 	SORT_MODE__DIFF,
 	SORT_MODE__TRACEPOINT,
+	SORT_MODE__SCRIPT,
 };
 
 enum sort_type {
@@ -230,6 +231,7 @@ enum sort_type {
 	SORT_DSO_SIZE,
 	SORT_CGROUP_ID,
 	SORT_SYM_IPC_NULL,
+	SORT_SCRIPT_FILE,
 
 	/* branch stack specific sort keys */
 	__SORT_BRANCH_STACK,

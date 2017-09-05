@@ -15,11 +15,13 @@
 #include "mem-events.h"
 #include "annotate.h"
 #include <linux/kernel.h>
+#include "script-sample.h"
 
 regex_t		parent_regex;
 const char	default_parent_pattern[] = "^sys_|^do_page_fault";
 const char	*parent_pattern = default_parent_pattern;
 const char	*default_sort_order = "comm,dso,symbol";
+const char	default_script_sort_order[] = "comm,script_file,sym";
 const char	default_branch_sort_order[] = "comm,dso_from,symbol_from,symbol_to,cycles";
 const char	default_mem_sort_order[] = "local_weight,mem,sym,dso,symbol_daddr,dso_daddr,snoop,tlb,locked";
 const char	default_top_sort_order[] = "dso,symbol";
@@ -620,6 +622,40 @@ struct sort_entry sort_cgroup_id = {
 	.se_cmp	        = sort__cgroup_id_cmp,
 	.se_snprintf    = hist_entry__cgroup_id_snprintf,
 	.se_width_idx	= HISTC_CGROUP_ID,
+};
+
+/* --sort script_file */
+
+static int64_t
+sort__script_file_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	struct script_symbol *l_ssym = symbol__script_symbol(left->ms.sym);
+	struct script_symbol *r_ssym = symbol__script_symbol(right->ms.sym);
+
+	if (!left->ms.sym || !right->ms.sym)
+		return cmp_null(left->ms.sym, right->ms.sym);
+
+	return strcmp(l_ssym->file, r_ssym->file);
+}
+
+static int
+hist_entry__script_file_snprintf(struct hist_entry *he,
+				 char *bf, size_t size,
+				 unsigned int width __maybe_unused)
+{
+	struct script_symbol *ssym = symbol__script_symbol(he->ms.sym);
+
+	if (!he->ms.sym)
+		return scnprintf(bf, size, "%-.*s", width, "N/A");
+
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, ssym->file);
+}
+
+struct sort_entry sort_script_file = {
+	.se_header      = "Script File",
+	.se_cmp	        = sort__script_file_cmp,
+	.se_snprintf    = hist_entry__script_file_snprintf,
+	.se_width_idx	= HISTC_SCRIPT_FILE,
 };
 
 /* --sort socket */
@@ -1634,6 +1670,7 @@ static struct sort_dimension common_sort_dimensions[] = {
 	DIM(SORT_DSO_SIZE, "dso_size", sort_dso_size),
 	DIM(SORT_CGROUP_ID, "cgroup_id", sort_cgroup_id),
 	DIM(SORT_SYM_IPC_NULL, "ipc_null", sort_sym_ipc_null),
+	DIM(SORT_SCRIPT_FILE, "script_file", sort_script_file),
 };
 
 #undef DIM
@@ -2678,6 +2715,7 @@ static const char *get_default_sort_order(struct perf_evlist *evlist)
 		default_top_sort_order,
 		default_diff_sort_order,
 		default_tracepoint_sort_order,
+		default_script_sort_order,
 	};
 	bool use_trace = true;
 	struct perf_evsel *evsel;
