@@ -67,9 +67,12 @@ struct cpuhp_cpu_state {
 static DEFINE_PER_CPU(struct cpuhp_cpu_state, cpuhp_state);
 
 #if defined(CONFIG_LOCKDEP) && defined(CONFIG_SMP)
-static struct lock_class_key cpuhp_state_key;
+static struct lock_class_key cpuhp_state_up_key;
+#ifdef CONFIG_HOTPLUG_CPU
+static struct lock_class_key cpuhp_state_down_key;
+#endif
 static struct lockdep_map cpuhp_state_lock_map =
-	STATIC_LOCKDEP_MAP_INIT("cpuhp_state", &cpuhp_state_key);
+	STATIC_LOCKDEP_MAP_INIT("cpuhp_state-up", &cpuhp_state_up_key);
 #endif
 
 /**
@@ -714,6 +717,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen,
 	cpus_write_lock();
 
 	lockdep_reinit_st_done();
+	lockdep_init_map(&cpuhp_state_lock_map, "cpuhp_state-down",
+			 &cpuhp_state_down_key, 0);
 
 	cpuhp_tasks_frozen = tasks_frozen;
 
@@ -828,6 +833,8 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
 	cpus_write_lock();
 
 	lockdep_reinit_st_done();
+	lockdep_init_map(&cpuhp_state_lock_map, "cpuhp_state-up",
+			 &cpuhp_state_up_key, 0);
 
 	if (!cpu_present(cpu)) {
 		ret = -EINVAL;
