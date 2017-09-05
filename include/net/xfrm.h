@@ -205,7 +205,7 @@ struct xfrm_state {
 	struct xfrm_stats	stats;
 
 	struct xfrm_lifetime_cur curlft;
-	struct tasklet_hrtimer	mtimer;
+	struct hrtimer		mtimer;
 
 	/* used to fix curlft->add_time when changing date */
 	long		saved_tmo;

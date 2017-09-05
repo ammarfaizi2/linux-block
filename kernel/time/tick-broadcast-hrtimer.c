@@ -105,8 +105,7 @@ static enum hrtimer_restart bc_handler(struct hrtimer *t)
 
 void tick_setup_hrtimer_broadcast(void)
 {
-	hrtimer_init(&bctimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+	hrtimer_init(&bctimer, CLOCK_MONOTONIC_HARD, HRTIMER_MODE_ABS);
 	bctimer.function = bc_handler;
-	bctimer.irqsafe = true;
 	clockevents_register_device(&ce_broadcast_hrtimer);
 }
