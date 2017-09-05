@@ -533,6 +533,28 @@ void __init cpuhp_threads_init(void)
 	kthread_unpark(this_cpu_read(cpuhp_state.thread));
 }
 
+/*
+ * _cpu_down() and _cpu_up() have different lock ordering wrt st->done, but
+ * because these two functions are globally serialized and st->done is private
+ * to them, we can simply re-init st->done for each of them to separate the
+ * lock chains.
+ *
+ * Must be macro to ensure we have two different call sites.
+ */
+#ifdef CONFIG_LOCKDEP
+#define lockdep_reinit_st_done()				\
+do {								\
+	int __cpu;						\
+	for_each_possible_cpu(__cpu) {				\
+		struct cpuhp_cpu_state *st =			\
+			per_cpu_ptr(&cpuhp_state, __cpu);	\
+		init_completion(&st->done);			\
+	}							\
+} while(0)
+#else
+#define lockdep_reinit_st_done()
+#endif
+
 #ifdef CONFIG_HOTPLUG_CPU
 /**
  * clear_tasks_mm_cpumask - Safely clear tasks' mm_cpumask for a CPU
@@ -676,12 +698,6 @@ void cpuhp_report_idle_dead(void)
 				 cpuhp_complete_idle_dead, st, 0);
 }
 
-#else
-#define takedown_cpu		NULL
-#endif
-
-#ifdef CONFIG_HOTPLUG_CPU
-
 /* Requires cpu_add_remove_lock to be held */
 static int __ref _cpu_down(unsigned int cpu, int tasks_frozen,
 			   enum cpuhp_state target)
@@ -696,6 +712,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen,
 		return -EINVAL;
 
 	cpus_write_lock();
+
+	lockdep_reinit_st_done();
 
 	cpuhp_tasks_frozen = tasks_frozen;
 
@@ -759,6 +777,9 @@ int cpu_down(unsigned int cpu)
 	return do_cpu_down(cpu, CPUHP_OFFLINE);
 }
 EXPORT_SYMBOL(cpu_down);
+
+#else
+#define takedown_cpu		NULL
 #endif /*CONFIG_HOTPLUG_CPU*/
 
 /**
@@ -805,6 +826,8 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
 	int ret = 0;
 
 	cpus_write_lock();
+
+	lockdep_reinit_st_done();
 
 	if (!cpu_present(cpu)) {
 		ret = -EINVAL;
