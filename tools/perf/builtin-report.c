@@ -417,7 +417,7 @@ static int report__setup_sample_type(struct report *rep)
 			return -EINVAL;
 		}
 		if (symbol_conf.use_callchain &&
-			!symbol_conf.show_branchflag_count) {
+			!symbol_conf.show_branchflag_count && !symbol_conf.report_script) {
 			ui__error("Selected -g or --branch-history.\n"
 				  "But no callchain or branch data.\n"
 				  "Did you call 'perf record' without -g or -b?\n");
@@ -1257,6 +1257,7 @@ int cmd_report(int argc, const char **argv)
 	}
 
 	if (report.script) {
+		symbol_conf.report_script = true;
 		sort__mode = SORT_MODE__SCRIPT;
 		symbol__script_init();
 	}

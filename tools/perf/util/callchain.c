@@ -25,6 +25,7 @@
 #include "machine.h"
 #include "callchain.h"
 #include "branch.h"
+#include "thread.h"
 
 #define CALLCHAIN_PARAM_DEFAULT			\
 	.mode		= CHAIN_GRAPH_ABS,	\
@@ -1073,11 +1074,45 @@ int callchain_cursor_append(struct callchain_cursor *cursor,
 	return 0;
 }
 
+static int
+script__resolve_callchain(struct thread *thread, struct perf_sample *sample,
+			  struct callchain_cursor *cursor, int max_stack)
+{
+	struct script_stack *ss = &sample->script_stack;
+	struct map *map = thread->user_map;
+	unsigned int i;
+	int err = 0, nr_entries = 0;
+
+	callchain_cursor_reset(cursor);
+
+	for (i = 0; !err && i < ss->nr && nr_entries < max_stack;
+	     i++, nr_entries++) {
+		struct symbol *sym;
+		u64 ip;
+
+		if (callchain_param.order == ORDER_CALLEE)
+			ip  = ss->data[i];
+		else
+			ip  = ss->data[ss->nr - i - 1];
+
+		sym = map__find_symbol(map, ip);
+
+		err = callchain_cursor_append(cursor, ip, map, sym,
+					      false, NULL, i, 0, 0, NULL);
+
+	}
+
+	return err;
+}
+
 int sample__resolve_callchain(struct perf_sample *sample,
 			      struct callchain_cursor *cursor, struct symbol **parent,
 			      struct perf_evsel *evsel, struct addr_location *al,
 			      int max_stack)
 {
+	if (symbol_conf.report_script)
+		return script__resolve_callchain(al->thread, sample, cursor, max_stack);
+
 	if (sample->callchain == NULL && !symbol_conf.show_branchflag_count)
 		return 0;
 
@@ -1091,6 +1126,9 @@ int sample__resolve_callchain(struct perf_sample *sample,
 
 int hist_entry__append_callchain(struct hist_entry *he, struct perf_sample *sample)
 {
+	if (symbol_conf.report_script && symbol_conf.use_callchain)
+		return callchain_append(he->callchain, &callchain_cursor, sample->period);
+
 	if ((!symbol_conf.use_callchain || sample->callchain == NULL) &&
 		!symbol_conf.show_branchflag_count)
 		return 0;
