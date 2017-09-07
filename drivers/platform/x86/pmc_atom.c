@@ -17,6 +17,7 @@
 
 #include <linux/debugfs.h>
 #include <linux/device.h>
+#include <linux/dmi.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/platform_data/x86/clk-pmc-atom.h>
@@ -24,6 +25,7 @@
 #include <linux/platform_device.h>
 #include <linux/pci.h>
 #include <linux/seq_file.h>
+#include <asm/intel_idle.h>
 
 struct pmc_bit_map {
 	const char *name;
@@ -55,6 +57,9 @@ struct pmc_dev {
 
 static struct pmc_dev pmc_device;
 static u32 acpi_base_addr;
+
+static u32 quirks;
+#define QUIRK_DISABLE_SATA BIT(0)
 
 static const struct pmc_clk byt_clks[] = {
 	{
@@ -270,6 +275,15 @@ static void pmc_hw_reg_setup(struct pmc_dev *pmc)
 	 * - GPIO_SCORE shared IRQ
 	 */
 	pmc_reg_write(pmc, PMC_S0IX_WAKE_EN, (u32)PMC_WAKE_EN_SETTING);
+
+	if (quirks & QUIRK_DISABLE_SATA) {
+		u32 func_dis;
+
+		pr_info("pmc: disable SATA IP\n");
+		func_dis = pmc_reg_read(pmc, PMC_FUNC_DIS);
+		func_dis |= BIT_SATA;
+		pmc_reg_write(pmc, PMC_FUNC_DIS, func_dis);
+	}
 }
 
 #ifdef CONFIG_DEBUG_FS
@@ -447,6 +461,76 @@ static int pmc_setup_clks(struct pci_dev *pdev, void __iomem *pmc_regmap,
 	return 0;
 }
 
+#if defined(CONFIG_PM_DEBUG) && defined(CONFIG_INTEL_IDLE)
+struct pmc_notifier_block {
+	struct notifier_block nb;
+	struct pmc_dev *pmc;
+};
+
+static void pmc_dev_state_check(int cpu, u32 sts, const struct pmc_bit_map *sts_map,
+				u32 fd, const struct pmc_bit_map *fd_map)
+{
+	int index;
+
+	for (index = 0; sts_map[index].name; index++) {
+		if (!(fd_map[index].bit_mask & fd) &&
+		    !(sts_map[index].bit_mask & sts)) {
+			pr_err("pmc debug: cpu %d: %s is in D0 prior to freeze\n",
+			       cpu, sts_map[index].name);
+		}
+	}
+}
+
+static int pmc_freeze_cb(struct notifier_block *nb,
+			 unsigned long action, void *data)
+{
+	struct pmc_notifier_block *pmc_nb =
+		container_of(nb, struct pmc_notifier_block, nb);
+	struct pmc_dev *pmc = pmc_nb->pmc;
+	const struct pmc_reg_map *m = pmc->map;
+	u32 func_dis, func_dis_2;
+	u32 d3_sts_0, d3_sts_1;
+	int cpu = action;
+
+	func_dis = pmc_reg_read(pmc, PMC_FUNC_DIS);
+	func_dis_2 = pmc_reg_read(pmc, PMC_FUNC_DIS_2);
+	d3_sts_0 = pmc_reg_read(pmc, PMC_D3_STS_0);
+	d3_sts_1 = pmc_reg_read(pmc, PMC_D3_STS_1);
+
+	/* Low part */
+	pmc_dev_state_check(cpu, d3_sts_0, m->d3_sts_0, func_dis, m->func_dis);
+
+	/* High part */
+	pmc_dev_state_check(cpu, d3_sts_1, m->d3_sts_1, func_dis_2, m->func_dis_2);
+
+	return 0;
+}
+
+static struct pmc_notifier_block pmc_freeze_nb = {
+	.nb = {
+		.notifier_call = pmc_freeze_cb,
+	},
+};
+#endif
+
+static int cht_asus_e200ha_cb(const struct dmi_system_id *id)
+{
+	pr_info("pmc: Asus E200HA detected\n");
+	quirks |= QUIRK_DISABLE_SATA;
+	return 1;
+}
+
+static const struct dmi_system_id cht_table[] = {
+	{
+		.callback = cht_asus_e200ha_cb,
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "E200HA"),
+		},
+	},
+	{ }
+};
+
 static int pmc_setup_dev(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	struct pmc_dev *pmc = &pmc_device;
@@ -473,6 +557,8 @@ static int pmc_setup_dev(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	pmc->map = map;
 
+	dmi_check_system(cht_table);
+
 	/* PMC hardware registers setup */
 	pmc_hw_reg_setup(pmc);
 
@@ -485,6 +571,11 @@ static int pmc_setup_dev(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (ret)
 		dev_warn(&pdev->dev, "platform clocks register failed: %d\n",
 			 ret);
+
+#if defined(CONFIG_PM_DEBUG) && defined(CONFIG_INTEL_IDLE)
+	pmc_freeze_nb.pmc = pmc;
+	intel_idle_freeze_notifier_register(&pmc_freeze_nb.nb);
+#endif
 
 	pmc->init = true;
 	return ret;

@@ -767,7 +767,7 @@ static int acpi_lpss_resume_early(struct device *dev)
 
 static DEFINE_MUTEX(lpss_iosf_mutex);
 
-static void lpss_iosf_enter_d3_state(void)
+static void lpss_iosf_enter_d3_state(int verbose)
 {
 	u32 value1 = 0;
 	u32 mask1 = LPSS_GPIODEF0_DMA_D3_MASK | LPSS_GPIODEF0_DMA_LLP;
@@ -776,9 +776,12 @@ static void lpss_iosf_enter_d3_state(void)
 	/*
 	 * PMC provides an information about actual status of the LPSS devices.
 	 * Here we read the values related to LPSS power island, i.e. LPSS
-	 * devices, excluding both LPSS DMA controllers, along with SCC domain.
+	 * devices, excluding both LPSS DMA controllers and I2C7, along with
+	 * SCC domain.  I2C7 needs to be always on because a hardware unit
+	 * may use it to access the PMIC, but DMA needs to be disabled
+	 * anyway to enter S0ix.
 	 */
-	u32 func_dis, d3_sts_0, pmc_status, pmc_mask = 0xfe000ffe;
+	u32 func_dis, d3_sts_0, pmc_status, pmc_mask = 0x7e000ffe;
 	int ret;
 
 	ret = pmc_atom_read(PMC_FUNC_DIS, &func_dis);
@@ -797,8 +800,12 @@ static void lpss_iosf_enter_d3_state(void)
 	 * are already in D3hot.
 	 */
 	pmc_status = (~(d3_sts_0 | func_dis)) & pmc_mask;
-	if (pmc_status)
+	if (pmc_status) {
+		if (verbose)
+			pr_err("acpi-lpss: busy devices %08x\n", pmc_status);
 		goto exit;
+	}
+	pr_err("acpi-lpss: suspend DMA\n");
 
 	iosf_mbi_modify(LPSS_IOSF_UNIT_LPIO1, MBI_CFG_WRITE,
 			LPSS_IOSF_PMCSR, value2, mask2);
@@ -854,7 +861,7 @@ static int acpi_lpss_runtime_suspend(struct device *dev)
 	 * lpss_iosf_enter_d3_state() for further information.
 	 */
 	if (lpss_quirks & LPSS_QUIRK_ALWAYS_POWER_ON && iosf_mbi_available())
-		lpss_iosf_enter_d3_state();
+		lpss_iosf_enter_d3_state(0);
 
 	return ret;
 }
@@ -882,6 +889,23 @@ static int acpi_lpss_runtime_resume(struct device *dev)
 
 	return pm_generic_runtime_resume(dev);
 }
+
+#ifdef CONFIG_PM_SLEEP
+static int acpi_lpss_suspend_noirq(struct device *dev)
+{
+	pr_info("acpi_lpss_suspend_noirq\n");
+	if (lpss_quirks & LPSS_QUIRK_ALWAYS_POWER_ON && iosf_mbi_available())
+		lpss_iosf_enter_d3_state(1);
+	return 0;
+}
+static int acpi_lpss_resume_noirq(struct device *dev)
+{
+	pr_info("acpi_lpss_resume_noirq\n");
+	if (lpss_quirks & LPSS_QUIRK_ALWAYS_POWER_ON && iosf_mbi_available())
+		lpss_iosf_exit_d3_state();
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 #endif /* CONFIG_PM */
 
 static struct dev_pm_domain acpi_lpss_pm_domain = {
@@ -896,6 +920,8 @@ static struct dev_pm_domain acpi_lpss_pm_domain = {
 		.complete = pm_complete_with_resume_check,
 		.suspend = acpi_subsys_suspend,
 		.suspend_late = acpi_lpss_suspend_late,
+		.suspend_noirq = acpi_lpss_suspend_noirq,
+		.resume_noirq = acpi_lpss_resume_noirq,
 		.resume_early = acpi_lpss_resume_early,
 		.freeze = acpi_subsys_freeze,
 		.poweroff = acpi_subsys_suspend,
