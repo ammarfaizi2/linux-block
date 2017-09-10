@@ -2101,4 +2101,9 @@ static inline bool tcp_bpf_ca_needs_ecn(struct sock *sk)
 #if IS_ENABLED(CONFIG_SMC)
 extern struct static_key_false tcp_have_smc;
 #endif
+
+#if IS_ENABLED(CONFIG_TLS_DEVICE)
+extern struct static_key_false clean_acked_data_enabled;
+#endif
+
 #endif	/* _TCP_H */

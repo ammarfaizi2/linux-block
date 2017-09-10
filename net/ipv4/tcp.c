@@ -297,6 +297,11 @@ DEFINE_STATIC_KEY_FALSE(tcp_have_smc);
 EXPORT_SYMBOL(tcp_have_smc);
 #endif
 
+#if IS_ENABLED(CONFIG_TLS_DEVICE)
+DEFINE_STATIC_KEY_FALSE(clean_acked_data_enabled);
+EXPORT_SYMBOL_GPL(clean_acked_data_enabled);
+#endif
+
 /*
  * Current number of TCP sockets.
  */
