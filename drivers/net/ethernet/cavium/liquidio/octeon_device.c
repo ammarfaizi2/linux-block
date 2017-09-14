@@ -418,7 +418,7 @@ static struct octeon_config default_cn23xx_conf = {
 	/** IQ attributes */
 	.iq = {
 		.max_iqs		= CN23XX_CFG_IO_QUEUES,
-		.pending_list_size	= (CN23XX_MAX_IQ_DESCRIPTORS *
+		.pending_list_size	= (CN23XX_DEFAULT_IQ_DESCRIPTORS *
 					   CN23XX_CFG_IO_QUEUES),
 		.instr_type		= OCTEON_64BYTE_INSTR,
 		.db_min			= CN23XX_DB_MIN,
@@ -436,8 +436,8 @@ static struct octeon_config default_cn23xx_conf = {
 	},
 
 	.num_nic_ports				= DEFAULT_NUM_NIC_PORTS_23XX,
-	.num_def_rx_descs			= CN23XX_MAX_OQ_DESCRIPTORS,
-	.num_def_tx_descs			= CN23XX_MAX_IQ_DESCRIPTORS,
+	.num_def_rx_descs			= CN23XX_DEFAULT_OQ_DESCRIPTORS,
+	.num_def_tx_descs			= CN23XX_DEFAULT_IQ_DESCRIPTORS,
 	.def_rx_buf_size			= CN23XX_OQ_BUF_SIZE,
 
 	/* For ethernet interface 0:  Port cfg Attributes */
@@ -455,10 +455,10 @@ static struct octeon_config default_cn23xx_conf = {
 		.num_rxqs			= DEF_RXQS_PER_INTF,
 
 		/* Num of desc for rx rings */
-		.num_rx_descs			= CN23XX_MAX_OQ_DESCRIPTORS,
+		.num_rx_descs			= CN23XX_DEFAULT_OQ_DESCRIPTORS,
 
 		/* Num of desc for tx rings */
-		.num_tx_descs			= CN23XX_MAX_IQ_DESCRIPTORS,
+		.num_tx_descs			= CN23XX_DEFAULT_IQ_DESCRIPTORS,
 
 		/* SKB size, We need not change buf size even for Jumbo frames.
 		 * Octeon can send jumbo frames in 4 consecutive descriptors,
@@ -484,10 +484,10 @@ static struct octeon_config default_cn23xx_conf = {
 		.num_rxqs			= DEF_RXQS_PER_INTF,
 
 		/* Num of desc for rx rings */
-		.num_rx_descs			= CN23XX_MAX_OQ_DESCRIPTORS,
+		.num_rx_descs			= CN23XX_DEFAULT_OQ_DESCRIPTORS,
 
 		/* Num of desc for tx rings */
-		.num_tx_descs			= CN23XX_MAX_IQ_DESCRIPTORS,
+		.num_tx_descs			= CN23XX_DEFAULT_IQ_DESCRIPTORS,
 
 		/* SKB size, We need not change buf size even for Jumbo frames.
 		 * Octeon can send jumbo frames in 4 consecutive descriptors,
@@ -528,9 +528,10 @@ static struct octeon_config_ptr {
 };
 
 static char oct_dev_state_str[OCT_DEV_STATES + 1][32] = {
-	"BEGIN", "PCI-MAP-DONE", "DISPATCH-INIT-DONE",
+	"BEGIN", "PCI-ENABLE-DONE", "PCI-MAP-DONE", "DISPATCH-INIT-DONE",
 	"IQ-INIT-DONE", "SCBUFF-POOL-INIT-DONE", "RESPLIST-INIT-DONE",
-	"DROQ-INIT-DONE", "IO-QUEUES-INIT-DONE", "CONSOLE-INIT-DONE",
+	"DROQ-INIT-DONE", "MBOX-SETUP-DONE", "MSIX-ALLOC-VECTOR-DONE",
+	"INTR-SET-DONE", "IO-QUEUES-INIT-DONE", "CONSOLE-INIT-DONE",
 	"HOST-READY", "CORE-READY", "RUNNING", "IN-RESET",
 	"INVALID"
 };

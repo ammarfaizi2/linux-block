@@ -40,36 +40,37 @@
  * contain a reference to the net device and remove them. This is a two step
  * process (a) dereference the bpf_dtab_netdev object in netdev_map and (b)
  * check to see if the ifindex is the same as the net_device being removed.
- * Unfortunately, the xchg() operations do not protect against this. To avoid
- * potentially removing incorrect objects the dev_map_list_mutex protects
- * conflicting netdev unregister and BPF syscall operations. Updates and
- * deletes from a BPF program (done in rcu critical section) are blocked
- * because of this mutex.
+ * When removing the dev a cmpxchg() is used to ensure the correct dev is
+ * removed, in the case of a concurrent update or delete operation it is
+ * possible that the initially referenced dev is no longer in the map. As the
+ * notifier hook walks the map we know that new dev references can not be
+ * added by the user because core infrastructure ensures dev_get_by_index()
+ * calls will fail at this point.
  */
 #include <linux/bpf.h>
-#include <linux/jhash.h>
 #include <linux/filter.h>
-#include <linux/rculist_nulls.h>
-#include "percpu_freelist.h"
-#include "bpf_lru_list.h"
-#include "map_in_map.h"
 
 struct bpf_dtab_netdev {
 	struct net_device *dev;
-	int key;
-	struct rcu_head rcu;
 	struct bpf_dtab *dtab;
+	unsigned int bit;
+	struct rcu_head rcu;
 };
 
 struct bpf_dtab {
 	struct bpf_map map;
 	struct bpf_dtab_netdev **netdev_map;
-	unsigned long int __percpu *flush_needed;
+	unsigned long __percpu *flush_needed;
 	struct list_head list;
 };
 
-static DEFINE_MUTEX(dev_map_list_mutex);
+static DEFINE_SPINLOCK(dev_map_lock);
 static LIST_HEAD(dev_map_list);
+
+static u64 dev_map_bitmap_size(const union bpf_attr *attr)
+{
+	return BITS_TO_LONGS(attr->max_entries) * sizeof(unsigned long);
+}
 
 static struct bpf_map *dev_map_alloc(union bpf_attr *attr)
 {
@@ -79,14 +80,8 @@ static struct bpf_map *dev_map_alloc(union bpf_attr *attr)
 
 	/* check sanity of attributes */
 	if (attr->max_entries == 0 || attr->key_size != 4 ||
-	    attr->value_size != 4 || attr->map_flags)
+	    attr->value_size != 4 || attr->map_flags & ~BPF_F_NUMA_NODE)
 		return ERR_PTR(-EINVAL);
-
-	/* if value_size is bigger, the user space won't be able to
-	 * access the elements.
-	 */
-	if (attr->value_size > KMALLOC_MAX_SIZE)
-		return ERR_PTR(-E2BIG);
 
 	dtab = kzalloc(sizeof(*dtab), GFP_USER);
 	if (!dtab)
@@ -98,12 +93,11 @@ static struct bpf_map *dev_map_alloc(union bpf_attr *attr)
 	dtab->map.value_size = attr->value_size;
 	dtab->map.max_entries = attr->max_entries;
 	dtab->map.map_flags = attr->map_flags;
-
-	err = -ENOMEM;
+	dtab->map.numa_node = bpf_map_attr_numa_node(attr);
 
 	/* make sure page count doesn't overflow */
 	cost = (u64) dtab->map.max_entries * sizeof(struct bpf_dtab_netdev *);
-	cost += BITS_TO_LONGS(attr->max_entries) * sizeof(unsigned long);
+	cost += dev_map_bitmap_size(attr) * num_possible_cpus();
 	if (cost >= U32_MAX - PAGE_SIZE)
 		goto free_dtab;
 
@@ -114,29 +108,27 @@ static struct bpf_map *dev_map_alloc(union bpf_attr *attr)
 	if (err)
 		goto free_dtab;
 
-	err = -ENOMEM;
 	/* A per cpu bitfield with a bit per possible net device */
-	dtab->flush_needed = __alloc_percpu(
-				BITS_TO_LONGS(attr->max_entries) *
-				sizeof(unsigned long),
-				__alignof__(unsigned long));
+	dtab->flush_needed = __alloc_percpu(dev_map_bitmap_size(attr),
+					    __alignof__(unsigned long));
 	if (!dtab->flush_needed)
 		goto free_dtab;
 
 	dtab->netdev_map = bpf_map_area_alloc(dtab->map.max_entries *
-					      sizeof(struct bpf_dtab_netdev *));
+					      sizeof(struct bpf_dtab_netdev *),
+					      dtab->map.numa_node);
 	if (!dtab->netdev_map)
 		goto free_dtab;
 
-	mutex_lock(&dev_map_list_mutex);
-	list_add_tail(&dtab->list, &dev_map_list);
-	mutex_unlock(&dev_map_list_mutex);
-	return &dtab->map;
+	spin_lock(&dev_map_lock);
+	list_add_tail_rcu(&dtab->list, &dev_map_list);
+	spin_unlock(&dev_map_lock);
 
+	return &dtab->map;
 free_dtab:
 	free_percpu(dtab->flush_needed);
 	kfree(dtab);
-	return ERR_PTR(err);
+	return ERR_PTR(-ENOMEM);
 }
 
 static void dev_map_free(struct bpf_map *map)
@@ -151,6 +143,11 @@ static void dev_map_free(struct bpf_map *map)
 	 * no further reads against netdev_map. It does __not__ ensure pending
 	 * flush operations (if any) are complete.
 	 */
+
+	spin_lock(&dev_map_lock);
+	list_del_rcu(&dtab->list);
+	spin_unlock(&dev_map_lock);
+
 	synchronize_rcu();
 
 	/* To ensure all pending flush operations have completed wait for flush
@@ -165,11 +162,6 @@ static void dev_map_free(struct bpf_map *map)
 			cpu_relax();
 	}
 
-	/* Although we should no longer have datapath or bpf syscall operations
-	 * at this point we we can still race with netdev notifier, hence the
-	 * lock.
-	 */
-	mutex_lock(&dev_map_list_mutex);
 	for (i = 0; i < dtab->map.max_entries; i++) {
 		struct bpf_dtab_netdev *dev;
 
@@ -181,11 +173,6 @@ static void dev_map_free(struct bpf_map *map)
 		kfree(dev);
 	}
 
-	/* At this point bpf program is detached and all pending operations
-	 * _must_ be complete
-	 */
-	list_del(&dtab->list);
-	mutex_unlock(&dev_map_list_mutex);
 	free_percpu(dtab->flush_needed);
 	bpf_map_area_free(dtab->netdev_map);
 	kfree(dtab);
@@ -195,7 +182,7 @@ static int dev_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 {
 	struct bpf_dtab *dtab = container_of(map, struct bpf_dtab, map);
 	u32 index = key ? *(u32 *)key : U32_MAX;
-	u32 *next = (u32 *)next_key;
+	u32 *next = next_key;
 
 	if (index >= dtab->map.max_entries) {
 		*next = 0;
@@ -204,29 +191,16 @@ static int dev_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 
 	if (index == dtab->map.max_entries - 1)
 		return -ENOENT;
-
 	*next = index + 1;
 	return 0;
 }
 
-void __dev_map_insert_ctx(struct bpf_map *map, u32 key)
+void __dev_map_insert_ctx(struct bpf_map *map, u32 bit)
 {
 	struct bpf_dtab *dtab = container_of(map, struct bpf_dtab, map);
 	unsigned long *bitmap = this_cpu_ptr(dtab->flush_needed);
 
-	__set_bit(key, bitmap);
-}
-
-struct net_device  *__dev_map_lookup_elem(struct bpf_map *map, u32 key)
-{
-	struct bpf_dtab *dtab = container_of(map, struct bpf_dtab, map);
-	struct bpf_dtab_netdev *dev;
-
-	if (key >= map->max_entries)
-		return NULL;
-
-	dev = READ_ONCE(dtab->netdev_map[key]);
-	return dev ? dev->dev : NULL;
+	__set_bit(bit, bitmap);
 }
 
 /* __dev_map_flush is called from xdp_do_flush_map() which _must_ be signaled
@@ -252,13 +226,10 @@ void __dev_map_flush(struct bpf_map *map)
 		if (unlikely(!dev))
 			continue;
 
-		netdev = dev->dev;
-
 		__clear_bit(bit, bitmap);
-		if (unlikely(!netdev || !netdev->netdev_ops->ndo_xdp_flush))
-			continue;
-
-		netdev->netdev_ops->ndo_xdp_flush(netdev);
+		netdev = dev->dev;
+		if (likely(netdev->netdev_ops->ndo_xdp_flush))
+			netdev->netdev_ops->ndo_xdp_flush(netdev);
 	}
 }
 
@@ -266,43 +237,49 @@ void __dev_map_flush(struct bpf_map *map)
  * update happens in parallel here a dev_put wont happen until after reading the
  * ifindex.
  */
-static void *dev_map_lookup_elem(struct bpf_map *map, void *key)
+struct net_device  *__dev_map_lookup_elem(struct bpf_map *map, u32 key)
 {
 	struct bpf_dtab *dtab = container_of(map, struct bpf_dtab, map);
 	struct bpf_dtab_netdev *dev;
-	u32 i = *(u32 *)key;
 
-	if (i >= map->max_entries)
+	if (key >= map->max_entries)
 		return NULL;
 
-	dev = READ_ONCE(dtab->netdev_map[i]);
-	return dev ? &dev->dev->ifindex : NULL;
+	dev = READ_ONCE(dtab->netdev_map[key]);
+	return dev ? dev->dev : NULL;
 }
 
-static void dev_map_flush_old(struct bpf_dtab_netdev *old_dev)
+static void *dev_map_lookup_elem(struct bpf_map *map, void *key)
 {
-	if (old_dev->dev->netdev_ops->ndo_xdp_flush) {
-		struct net_device *fl = old_dev->dev;
+	struct net_device *dev = __dev_map_lookup_elem(map, *(u32 *)key);
+
+	return dev ? &dev->ifindex : NULL;
+}
+
+static void dev_map_flush_old(struct bpf_dtab_netdev *dev)
+{
+	if (dev->dev->netdev_ops->ndo_xdp_flush) {
+		struct net_device *fl = dev->dev;
 		unsigned long *bitmap;
 		int cpu;
 
 		for_each_online_cpu(cpu) {
-			bitmap = per_cpu_ptr(old_dev->dtab->flush_needed, cpu);
-			__clear_bit(old_dev->key, bitmap);
+			bitmap = per_cpu_ptr(dev->dtab->flush_needed, cpu);
+			__clear_bit(dev->bit, bitmap);
 
-			fl->netdev_ops->ndo_xdp_flush(old_dev->dev);
+			fl->netdev_ops->ndo_xdp_flush(dev->dev);
 		}
 	}
 }
 
 static void __dev_map_entry_free(struct rcu_head *rcu)
 {
-	struct bpf_dtab_netdev *old_dev;
+	struct bpf_dtab_netdev *dev;
 
-	old_dev = container_of(rcu, struct bpf_dtab_netdev, rcu);
-	dev_map_flush_old(old_dev);
-	dev_put(old_dev->dev);
-	kfree(old_dev);
+	dev = container_of(rcu, struct bpf_dtab_netdev, rcu);
+	dev_map_flush_old(dev);
+	dev_put(dev->dev);
+	kfree(dev);
 }
 
 static int dev_map_delete_elem(struct bpf_map *map, void *key)
@@ -314,19 +291,17 @@ static int dev_map_delete_elem(struct bpf_map *map, void *key)
 	if (k >= map->max_entries)
 		return -EINVAL;
 
-	/* Use synchronize_rcu() here to ensure any rcu critical sections
-	 * have completed, but this does not guarantee a flush has happened
+	/* Use call_rcu() here to ensure any rcu critical sections have
+	 * completed, but this does not guarantee a flush has happened
 	 * yet. Because driver side rcu_read_lock/unlock only protects the
 	 * running XDP program. However, for pending flush operations the
 	 * dev and ctx are stored in another per cpu map. And additionally,
 	 * the driver tear down ensures all soft irqs are complete before
 	 * removing the net device in the case of dev_put equals zero.
 	 */
-	mutex_lock(&dev_map_list_mutex);
 	old_dev = xchg(&dtab->netdev_map[k], NULL);
 	if (old_dev)
 		call_rcu(&old_dev->rcu, __dev_map_entry_free);
-	mutex_unlock(&dev_map_list_mutex);
 	return 0;
 }
 
@@ -341,17 +316,16 @@ static int dev_map_update_elem(struct bpf_map *map, void *key, void *value,
 
 	if (unlikely(map_flags > BPF_EXIST))
 		return -EINVAL;
-
 	if (unlikely(i >= dtab->map.max_entries))
 		return -E2BIG;
-
 	if (unlikely(map_flags == BPF_NOEXIST))
 		return -EEXIST;
 
 	if (!ifindex) {
 		dev = NULL;
 	} else {
-		dev = kmalloc(sizeof(*dev), GFP_ATOMIC | __GFP_NOWARN);
+		dev = kmalloc_node(sizeof(*dev), GFP_ATOMIC | __GFP_NOWARN,
+				   map->numa_node);
 		if (!dev)
 			return -ENOMEM;
 
@@ -361,7 +335,7 @@ static int dev_map_update_elem(struct bpf_map *map, void *key, void *value,
 			return -EINVAL;
 		}
 
-		dev->key = i;
+		dev->bit = i;
 		dev->dtab = dtab;
 	}
 
@@ -369,11 +343,9 @@ static int dev_map_update_elem(struct bpf_map *map, void *key, void *value,
 	 * Remembering the driver side flush operation will happen before the
 	 * net device is removed.
 	 */
-	mutex_lock(&dev_map_list_mutex);
 	old_dev = xchg(&dtab->netdev_map[i], dev);
 	if (old_dev)
 		call_rcu(&old_dev->rcu, __dev_map_entry_free);
-	mutex_unlock(&dev_map_list_mutex);
 
 	return 0;
 }
@@ -396,22 +368,27 @@ static int dev_map_notification(struct notifier_block *notifier,
 
 	switch (event) {
 	case NETDEV_UNREGISTER:
-		mutex_lock(&dev_map_list_mutex);
-		list_for_each_entry(dtab, &dev_map_list, list) {
+		/* This rcu_read_lock/unlock pair is needed because
+		 * dev_map_list is an RCU list AND to ensure a delete
+		 * operation does not free a netdev_map entry while we
+		 * are comparing it against the netdev being unregistered.
+		 */
+		rcu_read_lock();
+		list_for_each_entry_rcu(dtab, &dev_map_list, list) {
 			for (i = 0; i < dtab->map.max_entries; i++) {
-				struct bpf_dtab_netdev *dev;
+				struct bpf_dtab_netdev *dev, *odev;
 
-				dev = dtab->netdev_map[i];
+				dev = READ_ONCE(dtab->netdev_map[i]);
 				if (!dev ||
 				    dev->dev->ifindex != netdev->ifindex)
 					continue;
-				dev = xchg(&dtab->netdev_map[i], NULL);
-				if (dev)
+				odev = cmpxchg(&dtab->netdev_map[i], dev, NULL);
+				if (dev == odev)
 					call_rcu(&dev->rcu,
 						 __dev_map_entry_free);
 			}
 		}
-		mutex_unlock(&dev_map_list_mutex);
+		rcu_read_unlock();
 		break;
 	default:
 		break;

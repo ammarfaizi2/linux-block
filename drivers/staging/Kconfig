@@ -24,6 +24,8 @@ menuconfig STAGING
 
 if STAGING
 
+source "drivers/staging/irda/net/Kconfig"
+
 source "drivers/staging/wlan-ng/Kconfig"
 
 source "drivers/staging/comedi/Kconfig"
@@ -109,5 +111,7 @@ source "drivers/staging/vc04_services/Kconfig"
 source "drivers/staging/ccree/Kconfig"
 
 source "drivers/staging/typec/Kconfig"
+
+source "drivers/staging/vboxvideo/Kconfig"
 
 endif # STAGING

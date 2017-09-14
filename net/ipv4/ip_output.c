@@ -1223,15 +1223,11 @@ ssize_t	ip_append_page(struct sock *sk, struct flowi4 *fl4, struct page *page,
 	cork->length += size;
 
 	while (size > 0) {
-		if (skb_is_gso(skb)) {
-			len = size;
-		} else {
+		/* Check if the remaining data fits into current packet. */
+		len = mtu - skb->len;
+		if (len < size)
+			len = maxfraglen - skb->len;
 
-			/* Check if the remaining data fits into current packet. */
-			len = mtu - skb->len;
-			if (len < size)
-				len = maxfraglen - skb->len;
-		}
 		if (len <= 0) {
 			struct sk_buff *skb_prev;
 			int alloclen;
@@ -1525,7 +1521,7 @@ void ip_send_unicast_reply(struct sock *sk, struct sk_buff *skb,
 	int err;
 	int oif;
 
-	if (__ip_options_echo(&replyopts.opt.opt, skb, sopt))
+	if (__ip_options_echo(net, &replyopts.opt.opt, skb, sopt))
 		return;
 
 	ipc.addr = daddr;

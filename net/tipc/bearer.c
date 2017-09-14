@@ -365,30 +365,6 @@ static int tipc_reset_bearer(struct net *net, struct tipc_bearer *b)
 	return 0;
 }
 
-/* tipc_bearer_reset_all - reset all links on all bearers
- */
-void tipc_bearer_reset_all(struct net *net)
-{
-	struct tipc_bearer *b;
-	int i;
-
-	for (i = 0; i < MAX_BEARERS; i++) {
-		b = bearer_get(net, i);
-		if (b)
-			clear_bit_unlock(0, &b->up);
-	}
-	for (i = 0; i < MAX_BEARERS; i++) {
-		b = bearer_get(net, i);
-		if (b)
-			tipc_reset_bearer(net, b);
-	}
-	for (i = 0; i < MAX_BEARERS; i++) {
-		b = bearer_get(net, i);
-		if (b)
-			test_and_set_bit_lock(0, &b->up);
-	}
-}
-
 /**
  * bearer_disable
  *
@@ -596,7 +572,7 @@ static int tipc_l2_rcv_msg(struct sk_buff *skb, struct net_device *dev,
 	rcu_read_lock();
 	b = rcu_dereference_rtnl(dev->tipc_ptr);
 	if (likely(b && test_bit(0, &b->up) &&
-		   (skb->pkt_type <= PACKET_BROADCAST))) {
+		   (skb->pkt_type <= PACKET_MULTICAST))) {
 		skb->next = NULL;
 		tipc_rcv(dev_net(dev), skb, b);
 		rcu_read_unlock();
