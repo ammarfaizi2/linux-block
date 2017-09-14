@@ -1757,7 +1757,7 @@ int should_remove_suid(struct file *file)
 	if (unlikely((mode & S_ISGID) && (mode & S_IXGRP)))
 		kill |= ATTR_KILL_SGID;
 
-	if (unlikely(kill && !capable(CAP_FSETID) && S_ISREG(mode)))
+	if (unlikely(kill && S_ISREG(mode)))
 		return kill;
 
 	return 0;
