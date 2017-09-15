@@ -192,13 +192,11 @@ static int decompress_exec(
 
 	memset(&strm, 0, sizeof(strm));
 	strm.workspace = kmalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
-	if (strm.workspace == NULL) {
-		pr_debug("no memory for decompress workspace\n");
+	if (!strm.workspace)
 		return -ENOMEM;
-	}
+
 	buf = kmalloc(LBUFSIZE, GFP_KERNEL);
-	if (buf == NULL) {
-		pr_debug("no memory for read buffer\n");
+	if (!buf) {
 		retval = -ENOMEM;
 		goto out_free;
 	}
@@ -890,7 +888,7 @@ static int load_flat_shared_library(int id, struct lib_info *libs)
 	 * as we're past the point of no return and are dealing with shared
 	 * libraries.
 	 */
-	bprm.cred_prepared = 1;
+	bprm.called_set_creds = 1;
 
 	res = prepare_binprm(&bprm);
 
