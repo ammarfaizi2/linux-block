@@ -2134,6 +2134,12 @@ __acquires(&pool->lock)
 		dump_stack();
 	}
 
+	if (worker->dec_after) {
+		if (atomic_dec_and_test(worker->dec_after))
+			wake_up_atomic_t(worker->dec_after);
+		worker->dec_after = NULL;
+	}
+
 	/*
 	 * The following prevents a kworker from hogging CPU on !PREEMPT
 	 * kernels, where a requeueing work item waiting for something to
@@ -3118,6 +3124,25 @@ int schedule_on_each_cpu(work_func_t func)
 	free_percpu(works);
 	return 0;
 }
+
+/**
+ * dec_after_work - Register counter to dec and wake after work func returns
+ * @counter: The counter to decrement and wake
+ *
+ * Register an atomic counter to be decremented after a work function returns
+ * to the core.  The counter is 'woken' if it is decremented to 0.  This allows
+ * synchronisation to be effected by one or more work functions in a module
+ * without leaving a window in which the work function code can be unloaded.
+ */
+void dec_after_work(atomic_t *counter)
+{
+	struct worker *worker = current_wq_worker();
+
+	BUG_ON(!worker);
+	BUG_ON(worker->dec_after);
+	worker->dec_after = counter;
+}
+EXPORT_SYMBOL(dec_after_work);
 
 /**
  * execute_in_process_context - reliably execute the routine with user context
