@@ -108,7 +108,7 @@ do {								\
 #endif
 
 #define TUN_HEADROOM 256
-#define TUN_RX_PAD (NET_IP_ALIGN + NET_SKB_PAD + TUN_HEADROOM)
+#define TUN_RX_PAD (NET_IP_ALIGN + NET_SKB_PAD)
 
 /* TUN device flags */
 
@@ -1267,43 +1267,53 @@ static struct sk_buff *tun_build_skb(struct tun_struct *tun,
 				     struct tun_file *tfile,
 				     struct iov_iter *from,
 				     struct virtio_net_hdr *hdr,
-				     int len, int *generic_xdp)
+				     int len, int *skb_xdp)
 {
 	struct page_frag *alloc_frag = &current->task_frag;
 	struct sk_buff *skb;
 	struct bpf_prog *xdp_prog;
-	int buflen = SKB_DATA_ALIGN(len + TUN_RX_PAD) +
-		     SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+	int buflen = SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
 	unsigned int delta = 0;
 	char *buf;
 	size_t copied;
 	bool xdp_xmit = false;
-	int err;
+	int err, pad = TUN_RX_PAD;
+
+	rcu_read_lock();
+	xdp_prog = rcu_dereference(tun->xdp_prog);
+	if (xdp_prog)
+		pad += TUN_HEADROOM;
+	buflen += SKB_DATA_ALIGN(len + pad);
+	rcu_read_unlock();
 
 	if (unlikely(!skb_page_frag_refill(buflen, alloc_frag, GFP_KERNEL)))
 		return ERR_PTR(-ENOMEM);
 
 	buf = (char *)page_address(alloc_frag->page) + alloc_frag->offset;
 	copied = copy_page_from_iter(alloc_frag->page,
-				     alloc_frag->offset + TUN_RX_PAD,
+				     alloc_frag->offset + pad,
 				     len, from);
 	if (copied != len)
 		return ERR_PTR(-EFAULT);
 
-	if (hdr->gso_type)
-		*generic_xdp = 1;
+	/* There's a small window that XDP may be set after the check
+	 * of xdp_prog above, this should be rare and for simplicity
+	 * we do XDP on skb in case the headroom is not enough.
+	 */
+	if (hdr->gso_type || !xdp_prog)
+		*skb_xdp = 1;
 	else
-		*generic_xdp = 0;
+		*skb_xdp = 0;
 
 	rcu_read_lock();
 	xdp_prog = rcu_dereference(tun->xdp_prog);
-	if (xdp_prog && !*generic_xdp) {
+	if (xdp_prog && !*skb_xdp) {
 		struct xdp_buff xdp;
 		void *orig_data;
 		u32 act;
 
 		xdp.data_hard_start = buf;
-		xdp.data = buf + TUN_RX_PAD;
+		xdp.data = buf + pad;
 		xdp.data_end = xdp.data + len;
 		orig_data = xdp.data;
 		act = bpf_prog_run_xdp(xdp_prog, &xdp);
@@ -1339,7 +1349,7 @@ static struct sk_buff *tun_build_skb(struct tun_struct *tun,
 		return ERR_PTR(-ENOMEM);
 	}
 
-	skb_reserve(skb, TUN_RX_PAD - delta);
+	skb_reserve(skb, pad - delta);
 	skb_put(skb, len + delta);
 	get_page(alloc_frag->page);
 	alloc_frag->offset += buflen;
@@ -1379,7 +1389,7 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	bool zerocopy = false;
 	int err;
 	u32 rxhash;
-	int generic_xdp = 1;
+	int skb_xdp = 1;
 
 	if (!(tun->dev->flags & IFF_UP))
 		return -EIO;
@@ -1438,7 +1448,11 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	}
 
 	if (tun_can_build_skb(tun, tfile, len, noblock, zerocopy)) {
-		skb = tun_build_skb(tun, tfile, from, &gso, len, &generic_xdp);
+		/* For the packet that is not easy to be processed
+		 * (e.g gso or jumbo packet), we will do it at after
+		 * skb was created with generic XDP routine.
+		 */
+		skb = tun_build_skb(tun, tfile, from, &gso, len, &skb_xdp);
 		if (IS_ERR(skb)) {
 			this_cpu_inc(tun->pcpu_stats->rx_dropped);
 			return PTR_ERR(skb);
@@ -1518,7 +1532,7 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	skb_reset_network_header(skb);
 	skb_probe_transport_header(skb, 0);
 
-	if (generic_xdp) {
+	if (skb_xdp) {
 		struct bpf_prog *xdp_prog;
 		int ret;
 

@@ -1794,6 +1794,7 @@ struct redirect_info {
 	u32 flags;
 	struct bpf_map *map;
 	struct bpf_map *map_to_flush;
+	const struct bpf_prog *map_owner;
 };
 
 static DEFINE_PER_CPU(struct redirect_info, redirect_info);
@@ -1807,7 +1808,6 @@ BPF_CALL_2(bpf_redirect, u32, ifindex, u64, flags)
 
 	ri->ifindex = ifindex;
 	ri->flags = flags;
-	ri->map = NULL;
 
 	return TC_ACT_REDIRECT;
 }
@@ -2504,13 +2504,21 @@ static int xdp_do_redirect_map(struct net_device *dev, struct xdp_buff *xdp,
 			       struct bpf_prog *xdp_prog)
 {
 	struct redirect_info *ri = this_cpu_ptr(&redirect_info);
+	const struct bpf_prog *map_owner = ri->map_owner;
 	struct bpf_map *map = ri->map;
+	struct net_device *fwd = NULL;
 	u32 index = ri->ifindex;
-	struct net_device *fwd;
 	int err;
 
 	ri->ifindex = 0;
 	ri->map = NULL;
+	ri->map_owner = NULL;
+
+	if (unlikely(map_owner != xdp_prog)) {
+		err = -EFAULT;
+		map = NULL;
+		goto err;
+	}
 
 	fwd = __dev_map_lookup_elem(map, index);
 	if (!fwd) {
@@ -2566,13 +2574,27 @@ int xdp_do_generic_redirect(struct net_device *dev, struct sk_buff *skb,
 			    struct bpf_prog *xdp_prog)
 {
 	struct redirect_info *ri = this_cpu_ptr(&redirect_info);
+	const struct bpf_prog *map_owner = ri->map_owner;
+	struct bpf_map *map = ri->map;
+	struct net_device *fwd = NULL;
 	u32 index = ri->ifindex;
-	struct net_device *fwd;
 	unsigned int len;
 	int err = 0;
 
-	fwd = dev_get_by_index_rcu(dev_net(dev), index);
 	ri->ifindex = 0;
+	ri->map = NULL;
+	ri->map_owner = NULL;
+
+	if (map) {
+		if (unlikely(map_owner != xdp_prog)) {
+			err = -EFAULT;
+			map = NULL;
+			goto err;
+		}
+		fwd = __dev_map_lookup_elem(map, index);
+	} else {
+		fwd = dev_get_by_index_rcu(dev_net(dev), index);
+	}
 	if (unlikely(!fwd)) {
 		err = -EINVAL;
 		goto err;
@@ -2590,10 +2612,12 @@ int xdp_do_generic_redirect(struct net_device *dev, struct sk_buff *skb,
 	}
 
 	skb->dev = fwd;
-	_trace_xdp_redirect(dev, xdp_prog, index);
+	map ? _trace_xdp_redirect_map(dev, xdp_prog, fwd, map, index)
+		: _trace_xdp_redirect(dev, xdp_prog, index);
 	return 0;
 err:
-	_trace_xdp_redirect_err(dev, xdp_prog, index, err);
+	map ? _trace_xdp_redirect_map_err(dev, xdp_prog, fwd, map, index, err)
+		: _trace_xdp_redirect_err(dev, xdp_prog, index, err);
 	return err;
 }
 EXPORT_SYMBOL_GPL(xdp_do_generic_redirect);
@@ -2607,6 +2631,8 @@ BPF_CALL_2(bpf_xdp_redirect, u32, ifindex, u64, flags)
 
 	ri->ifindex = ifindex;
 	ri->flags = flags;
+	ri->map = NULL;
+	ri->map_owner = NULL;
 
 	return XDP_REDIRECT;
 }
@@ -2619,7 +2645,8 @@ static const struct bpf_func_proto bpf_xdp_redirect_proto = {
 	.arg2_type      = ARG_ANYTHING,
 };
 
-BPF_CALL_3(bpf_xdp_redirect_map, struct bpf_map *, map, u32, ifindex, u64, flags)
+BPF_CALL_4(bpf_xdp_redirect_map, struct bpf_map *, map, u32, ifindex, u64, flags,
+	   const struct bpf_prog *, map_owner)
 {
 	struct redirect_info *ri = this_cpu_ptr(&redirect_info);
 
@@ -2629,10 +2656,14 @@ BPF_CALL_3(bpf_xdp_redirect_map, struct bpf_map *, map, u32, ifindex, u64, flags
 	ri->ifindex = ifindex;
 	ri->flags = flags;
 	ri->map = map;
+	ri->map_owner = map_owner;
 
 	return XDP_REDIRECT;
 }
 
+/* Note, arg4 is hidden from users and populated by the verifier
+ * with the right pointer.
+ */
 static const struct bpf_func_proto bpf_xdp_redirect_map_proto = {
 	.func           = bpf_xdp_redirect_map,
 	.gpl_only       = false,
@@ -3066,15 +3097,12 @@ BPF_CALL_5(bpf_setsockopt, struct bpf_sock_ops_kern *, bpf_sock,
 		   sk->sk_prot->setsockopt == tcp_setsockopt) {
 		if (optname == TCP_CONGESTION) {
 			char name[TCP_CA_NAME_MAX];
+			bool reinit = bpf_sock->op > BPF_SOCK_OPS_NEEDS_ECN;
 
 			strncpy(name, optval, min_t(long, optlen,
 						    TCP_CA_NAME_MAX-1));
 			name[TCP_CA_NAME_MAX-1] = 0;
-			ret = tcp_set_congestion_control(sk, name, false);
-			if (!ret && bpf_sock->op > BPF_SOCK_OPS_NEEDS_ECN)
-				/* replacing an existing ca */
-				tcp_reinit_congestion_control(sk,
-					inet_csk(sk)->icsk_ca_ops);
+			ret = tcp_set_congestion_control(sk, name, false, reinit);
 		} else {
 			struct tcp_sock *tp = tcp_sk(sk);
 
@@ -3102,7 +3130,6 @@ BPF_CALL_5(bpf_setsockopt, struct bpf_sock_ops_kern *, bpf_sock,
 				ret = -EINVAL;
 			}
 		}
-		ret = -EINVAL;
 #endif
 	} else {
 		ret = -EINVAL;
@@ -3146,6 +3173,20 @@ bpf_base_func_proto(enum bpf_func_id func_id)
 			return bpf_get_trace_printk_proto();
 	default:
 		return NULL;
+	}
+}
+
+static const struct bpf_func_proto *
+sock_filter_func_proto(enum bpf_func_id func_id)
+{
+	switch (func_id) {
+	/* inet and inet6 sockets are created in a process
+	 * context so there is always a valid uid/gid
+	 */
+	case BPF_FUNC_get_current_uid_gid:
+		return &bpf_get_current_uid_gid_proto;
+	default:
+		return bpf_base_func_proto(func_id);
 	}
 }
 
@@ -3454,6 +3495,8 @@ static bool sock_filter_is_valid_access(int off, int size,
 	if (type == BPF_WRITE) {
 		switch (off) {
 		case offsetof(struct bpf_sock, bound_dev_if):
+		case offsetof(struct bpf_sock, mark):
+		case offsetof(struct bpf_sock, priority):
 			break;
 		default:
 			return false;
@@ -3580,7 +3623,11 @@ static bool xdp_is_valid_access(int off, int size,
 
 void bpf_warn_invalid_xdp_action(u32 act)
 {
-	WARN_ONCE(1, "Illegal XDP return value %u, expect packet loss\n", act);
+	const u32 act_max = XDP_REDIRECT;
+
+	WARN_ONCE(1, "%s XDP return value %u, expect packet loss!\n",
+		  act > act_max ? "Illegal" : "Driver unsupported",
+		  act);
 }
 EXPORT_SYMBOL_GPL(bpf_warn_invalid_xdp_action);
 
@@ -3958,6 +4005,28 @@ static u32 sock_filter_convert_ctx_access(enum bpf_access_type type,
 				      offsetof(struct sock, sk_bound_dev_if));
 		break;
 
+	case offsetof(struct bpf_sock, mark):
+		BUILD_BUG_ON(FIELD_SIZEOF(struct sock, sk_mark) != 4);
+
+		if (type == BPF_WRITE)
+			*insn++ = BPF_STX_MEM(BPF_W, si->dst_reg, si->src_reg,
+					offsetof(struct sock, sk_mark));
+		else
+			*insn++ = BPF_LDX_MEM(BPF_W, si->dst_reg, si->src_reg,
+				      offsetof(struct sock, sk_mark));
+		break;
+
+	case offsetof(struct bpf_sock, priority):
+		BUILD_BUG_ON(FIELD_SIZEOF(struct sock, sk_priority) != 4);
+
+		if (type == BPF_WRITE)
+			*insn++ = BPF_STX_MEM(BPF_W, si->dst_reg, si->src_reg,
+					offsetof(struct sock, sk_priority));
+		else
+			*insn++ = BPF_LDX_MEM(BPF_W, si->dst_reg, si->src_reg,
+				      offsetof(struct sock, sk_priority));
+		break;
+
 	case offsetof(struct bpf_sock, family):
 		BUILD_BUG_ON(FIELD_SIZEOF(struct sock, sk_family) != 2);
 
@@ -4207,7 +4276,7 @@ const struct bpf_verifier_ops lwt_xmit_prog_ops = {
 };
 
 const struct bpf_verifier_ops cg_sock_prog_ops = {
-	.get_func_proto		= bpf_base_func_proto,
+	.get_func_proto		= sock_filter_func_proto,
 	.is_valid_access	= sock_filter_is_valid_access,
 	.convert_ctx_access	= sock_filter_convert_ctx_access,
 };

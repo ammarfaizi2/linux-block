@@ -610,7 +610,7 @@ static int bcm_sysport_set_coalesce(struct net_device *dev,
 
 static void bcm_sysport_free_cb(struct bcm_sysport_cb *cb)
 {
-	dev_kfree_skb_any(cb->skb);
+	dev_consume_skb_any(cb->skb);
 	cb->skb = NULL;
 	dma_unmap_addr_set(cb, dma_addr, 0);
 }
@@ -1367,6 +1367,8 @@ static int bcm_sysport_init_tx_ring(struct bcm_sysport_priv *priv,
 
 	ring->cbs = kcalloc(size, sizeof(struct bcm_sysport_cb), GFP_KERNEL);
 	if (!ring->cbs) {
+		dma_free_coherent(kdev, sizeof(struct dma_desc),
+				  ring->desc_cpu, ring->desc_dma);
 		netif_err(priv, hw, priv->netdev, "CB allocation failed\n");
 		return -ENOMEM;
 	}
@@ -1389,6 +1391,19 @@ static int bcm_sysport_init_tx_ring(struct bcm_sysport_priv *priv,
 	tdma_writel(priv, 0, TDMA_DESC_RING_PROD_CONS_INDEX(index));
 	tdma_writel(priv, RING_IGNORE_STATUS, TDMA_DESC_RING_MAPPING(index));
 	tdma_writel(priv, 0, TDMA_DESC_RING_PCP_DEI_VID(index));
+
+	/* Do not use tdma_control_bit() here because TSB_SWAP1 collides
+	 * with the original definition of ACB_ALGO
+	 */
+	reg = tdma_readl(priv, TDMA_CONTROL);
+	if (priv->is_lite)
+		reg &= ~BIT(TSB_SWAP1);
+	/* Set a correct TSB format based on host endian */
+	if (!IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+		reg |= tdma_control_bit(priv, TSB_SWAP0);
+	else
+		reg &= ~tdma_control_bit(priv, TSB_SWAP0);
+	tdma_writel(priv, reg, TDMA_CONTROL);
 
 	/* Program the number of descriptors as MAX_THRESHOLD and half of
 	 * its size for the hysteresis trigger
@@ -1720,11 +1735,8 @@ static void bcm_sysport_get_stats64(struct net_device *dev,
 		stats->tx_packets += tx_packets;
 	}
 
-	/* lockless update tx_bytes and tx_packets */
-	u64_stats_update_begin(&priv->syncp);
 	stats64->tx_bytes = stats->tx_bytes;
 	stats64->tx_packets = stats->tx_packets;
-	u64_stats_update_end(&priv->syncp);
 
 	do {
 		start = u64_stats_fetch_begin_irq(&priv->syncp);

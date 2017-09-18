@@ -1190,8 +1190,6 @@ int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size)
 			goto out_err;
 		}
 
-		/* skb may be freed in main loop, keep extra ref on uarg */
-		sock_zerocopy_get(uarg);
 		if (!(sk_check_csum_caps(sk) && sk->sk_route_caps & NETIF_F_SG))
 			uarg->zerocopy = 0;
 	}
@@ -1963,8 +1961,10 @@ int tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 		tcp_rcv_space_adjust(sk);
 
 skip_copy:
-		if (tp->urg_data && after(tp->copied_seq, tp->urg_seq))
+		if (tp->urg_data && after(tp->copied_seq, tp->urg_seq)) {
 			tp->urg_data = 0;
+			tcp_fast_path_check(sk);
+		}
 		if (used + offset < skb->len)
 			continue;
 
@@ -2496,7 +2496,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		name[val] = 0;
 
 		lock_sock(sk);
-		err = tcp_set_congestion_control(sk, name, true);
+		err = tcp_set_congestion_control(sk, name, true, true);
 		release_sock(sk);
 		return err;
 	}

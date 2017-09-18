@@ -74,6 +74,45 @@ static const struct pci_device_id nfp_pci_device_ids[] = {
 };
 MODULE_DEVICE_TABLE(pci, nfp_pci_device_ids);
 
+static bool nfp_board_ready(struct nfp_pf *pf)
+{
+	const char *cp;
+	long state;
+	int err;
+
+	cp = nfp_hwinfo_lookup(pf->hwinfo, "board.state");
+	if (!cp)
+		return false;
+
+	err = kstrtol(cp, 0, &state);
+	if (err < 0)
+		return false;
+
+	return state == 15;
+}
+
+static int nfp_pf_board_state_wait(struct nfp_pf *pf)
+{
+	const unsigned long wait_until = jiffies + 10 * HZ;
+
+	while (!nfp_board_ready(pf)) {
+		if (time_is_before_eq_jiffies(wait_until)) {
+			nfp_err(pf->cpp, "NFP board initialization timeout\n");
+			return -EINVAL;
+		}
+
+		nfp_info(pf->cpp, "waiting for board initialization\n");
+		if (msleep_interruptible(500))
+			return -ERESTARTSYS;
+
+		/* Refresh cached information */
+		kfree(pf->hwinfo);
+		pf->hwinfo = nfp_hwinfo_read(pf->cpp);
+	}
+
+	return 0;
+}
+
 static int nfp_pcie_sriov_read_nfd_limit(struct nfp_pf *pf)
 {
 	int err;
@@ -98,20 +137,19 @@ static int nfp_pcie_sriov_enable(struct pci_dev *pdev, int num_vfs)
 	struct nfp_pf *pf = pci_get_drvdata(pdev);
 	int err;
 
-	mutex_lock(&pf->lock);
-
 	if (num_vfs > pf->limit_vfs) {
 		nfp_info(pf->cpp, "Firmware limits number of VFs to %u\n",
 			 pf->limit_vfs);
-		err = -EINVAL;
-		goto err_unlock;
+		return -EINVAL;
 	}
 
 	err = pci_enable_sriov(pdev, num_vfs);
 	if (err) {
 		dev_warn(&pdev->dev, "Failed to enable PCI SR-IOV: %d\n", err);
-		goto err_unlock;
+		return err;
 	}
+
+	mutex_lock(&pf->lock);
 
 	err = nfp_app_sriov_enable(pf->app, num_vfs);
 	if (err) {
@@ -129,9 +167,8 @@ static int nfp_pcie_sriov_enable(struct pci_dev *pdev, int num_vfs)
 	return num_vfs;
 
 err_sriov_disable:
-	pci_disable_sriov(pdev);
-err_unlock:
 	mutex_unlock(&pf->lock);
+	pci_disable_sriov(pdev);
 	return err;
 #endif
 	return 0;
@@ -158,10 +195,10 @@ static int nfp_pcie_sriov_disable(struct pci_dev *pdev)
 
 	pf->num_vfs = 0;
 
+	mutex_unlock(&pf->lock);
+
 	pci_disable_sriov(pdev);
 	dev_dbg(&pdev->dev, "Removed VFs.\n");
-
-	mutex_unlock(&pf->lock);
 #endif
 	return 0;
 }
@@ -314,6 +351,10 @@ static int nfp_nsp_init(struct pci_dev *pdev, struct nfp_pf *pf)
 	struct nfp_nsp *nsp;
 	int err;
 
+	err = nfp_resource_wait(pf->cpp, NFP_RESOURCE_NSP, 30);
+	if (err)
+		return err;
+
 	nsp = nfp_nsp_open(pf->cpp);
 	if (IS_ERR(nsp)) {
 		err = PTR_ERR(nsp);
@@ -426,6 +467,10 @@ static int nfp_pci_probe(struct pci_dev *pdev,
 		 nfp_hwinfo_lookup(pf->hwinfo, "assembly.serial"),
 		 nfp_hwinfo_lookup(pf->hwinfo, "assembly.revision"),
 		 nfp_hwinfo_lookup(pf->hwinfo, "cpld.version"));
+
+	err = nfp_pf_board_state_wait(pf);
+	if (err)
+		goto err_hwinfo_free;
 
 	err = devlink_register(devlink, &pdev->dev);
 	if (err)

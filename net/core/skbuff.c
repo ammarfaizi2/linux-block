@@ -710,14 +710,11 @@ EXPORT_SYMBOL(consume_skb);
  *	consume_stateless_skb - free an skbuff, assuming it is stateless
  *	@skb: buffer to free
  *
- *	Works like consume_skb(), but this variant assumes that all the head
- *	states have been already dropped.
+ *	Alike consume_skb(), but this variant assumes that this is the last
+ *	skb reference and all the head states have been already dropped
  */
-void consume_stateless_skb(struct sk_buff *skb)
+void __consume_stateless_skb(struct sk_buff *skb)
 {
-	if (!skb_unref(skb))
-		return;
-
 	trace_consume_skb(skb);
 	skb_release_data(skb);
 	kfree_skbmem(skb);
@@ -963,7 +960,7 @@ struct ubuf_info *sock_zerocopy_alloc(struct sock *sk, size_t size)
 	uarg->len = 1;
 	uarg->bytelen = size;
 	uarg->zerocopy = 1;
-	atomic_set(&uarg->refcnt, 0);
+	refcount_set(&uarg->refcnt, 1);
 	sock_hold(sk);
 
 	return uarg;
@@ -1005,6 +1002,7 @@ struct ubuf_info *sock_zerocopy_realloc(struct sock *sk, size_t size,
 			uarg->len++;
 			uarg->bytelen = bytelen;
 			atomic_set(&sk->sk_zckey, ++next);
+			sock_zerocopy_get(uarg);
 			return uarg;
 		}
 	}
@@ -1085,7 +1083,7 @@ EXPORT_SYMBOL_GPL(sock_zerocopy_callback);
 
 void sock_zerocopy_put(struct ubuf_info *uarg)
 {
-	if (uarg && atomic_dec_and_test(&uarg->refcnt)) {
+	if (uarg && refcount_dec_and_test(&uarg->refcnt)) {
 		if (uarg->callback)
 			uarg->callback(uarg, uarg->zerocopy);
 		else
@@ -1101,13 +1099,6 @@ void sock_zerocopy_put_abort(struct ubuf_info *uarg)
 
 		atomic_dec(&sk->sk_zckey);
 		uarg->len--;
-
-		/* sock_zerocopy_put expects a ref. Most sockets take one per
-		 * skb, which is zero on abort. tcp_sendmsg holds one extra, to
-		 * avoid an skb send inside the main loop triggering uarg free.
-		 */
-		if (sk->sk_type != SOCK_STREAM)
-			atomic_inc(&uarg->refcnt);
 
 		sock_zerocopy_put(uarg);
 	}
@@ -1489,7 +1480,7 @@ int pskb_expand_head(struct sk_buff *skb, int nhead, int ntail,
 		if (skb_orphan_frags(skb, gfp_mask))
 			goto nofrags;
 		if (skb_zcopy(skb))
-			atomic_inc(&skb_uarg(skb)->refcnt);
+			refcount_inc(&skb_uarg(skb)->refcnt);
 		for (i = 0; i < skb_shinfo(skb)->nr_frags; i++)
 			skb_frag_ref(skb, i);
 
@@ -1615,18 +1606,20 @@ struct sk_buff *skb_copy_expand(const struct sk_buff *skb,
 EXPORT_SYMBOL(skb_copy_expand);
 
 /**
- *	skb_pad			-	zero pad the tail of an skb
+ *	__skb_pad		-	zero pad the tail of an skb
  *	@skb: buffer to pad
  *	@pad: space to pad
+ *	@free_on_error: free buffer on error
  *
  *	Ensure that a buffer is followed by a padding area that is zero
  *	filled. Used by network drivers which may DMA or transfer data
  *	beyond the buffer end onto the wire.
  *
- *	May return error in out of memory cases. The skb is freed on error.
+ *	May return error in out of memory cases. The skb is freed on error
+ *	if @free_on_error is true.
  */
 
-int skb_pad(struct sk_buff *skb, int pad)
+int __skb_pad(struct sk_buff *skb, int pad, bool free_on_error)
 {
 	int err;
 	int ntail;
@@ -1655,10 +1648,11 @@ int skb_pad(struct sk_buff *skb, int pad)
 	return 0;
 
 free_skb:
-	kfree_skb(skb);
+	if (free_on_error)
+		kfree_skb(skb);
 	return err;
 }
-EXPORT_SYMBOL(skb_pad);
+EXPORT_SYMBOL(__skb_pad);
 
 /**
  *	pskb_put - add data to the tail of a potentially fragmented buffer

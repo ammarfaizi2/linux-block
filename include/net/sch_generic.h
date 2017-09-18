@@ -100,6 +100,13 @@ struct Qdisc {
 	spinlock_t		busylock ____cacheline_aligned_in_smp;
 };
 
+static inline void qdisc_refcount_inc(struct Qdisc *qdisc)
+{
+	if (qdisc->flags & TCQ_F_BUILTIN)
+		return;
+	refcount_inc(&qdisc->refcnt);
+}
+
 static inline bool qdisc_is_running(const struct Qdisc *qdisc)
 {
 	return (raw_read_seqcount(&qdisc->running) & 1) ? true : false;
@@ -217,6 +224,7 @@ struct tcf_proto_ops {
 					void **, bool);
 	int			(*delete)(struct tcf_proto*, void *, bool*);
 	void			(*walk)(struct tcf_proto*, struct tcf_walker *arg);
+	void			(*bind_class)(void *, u32, unsigned long);
 
 	/* rtnetlink specific */
 	int			(*dump)(struct net*, struct tcf_proto*, void *,
