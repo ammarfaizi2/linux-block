@@ -1790,7 +1790,7 @@ signed long __sched schedule_timeout_idle(signed long timeout)
 EXPORT_SYMBOL(schedule_timeout_idle);
 
 #ifdef CONFIG_HOTPLUG_CPU
-static void migrate_timer_list(struct timer_base *new_base, struct hlist_head *head)
+static void migrate_timer_list(struct timer_base *new_base, struct timer_base *old_base, struct hlist_head *head)
 {
 	struct timer_list *timer;
 	int cpu = new_base->cpu;
@@ -1799,6 +1799,9 @@ static void migrate_timer_list(struct timer_base *new_base, struct hlist_head *h
 		timer = hlist_entry(head->first, struct timer_list, entry);
 		detach_timer(timer, false);
 		timer->flags = (timer->flags & ~TIMER_BASEMASK) | cpu;
+		if (time_after(new_base->clk, old_base->clk) &&
+		    time_in_range_open(timer->expires, old_base->clk, new_base->clk))
+			timer->expires = new_base->clk;
 		internal_add_timer(new_base, timer);
 	}
 }
@@ -1824,7 +1827,7 @@ int timers_dead_cpu(unsigned int cpu)
 		BUG_ON(old_base->running_timer);
 
 		for (i = 0; i < WHEEL_SIZE; i++)
-			migrate_timer_list(new_base, old_base->vectors + i);
+			migrate_timer_list(new_base, old_base, old_base->vectors + i);
 
 		raw_spin_unlock(&old_base->lock);
 		raw_spin_unlock_irq(&new_base->lock);
