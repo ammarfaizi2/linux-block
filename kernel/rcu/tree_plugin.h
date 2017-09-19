@@ -529,8 +529,11 @@ void rcu_read_unlock_special(struct task_struct *t)
 		}
 
 		/* Unboost if we were boosted. */
-		if (IS_ENABLED(CONFIG_RCU_BOOST) && drop_boost_mutex)
+		if (IS_ENABLED(CONFIG_RCU_BOOST) && drop_boost_mutex) {
+			/* For lockdep, pretend we acquired lock honestly. */
+			mutex_acquire(&rnp->boost_mtx.dep_map, 0, 0, _RET_IP_);
 			rt_mutex_unlock(&rnp->boost_mtx);
+		}
 
 		/*
 		 * If this was the last task on the expedited lists,
