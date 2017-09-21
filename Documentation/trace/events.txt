@@ -2177,7 +2177,7 @@ A note on inter-event timestamps: If $common_timestamp is used in a
 histogram, the trace buffer is automatically switched over to using
 absolute timestamps and the "global" trace clock, in order to avoid
 bogus timestamp differences with other clocks that aren't coherent
-across CPUs.  This can be overriden by specifying one of the other
+across CPUs.  This can be overridden by specifying one of the other
 trace clocks instead, using the "clock=XXX" hist trigger attribute,
 where XXX is any of the clocks listed in the tracing/trace_clock
 pseudo-file.
@@ -2210,14 +2210,15 @@ Either keys or values can be saved and retrieved in this way.  This
 creates a variable named 'ts0' for a histogram entry with the key
 'next_pid':
 
-  # echo 'hist:keys=next_pid:vals=ts0=$common_timestamp ... >> event/trigger
+  # echo 'hist:keys=next_pid:vals=$ts0:ts0=$common_timestamp ... >> \
+	event/trigger
 
 The ts0 variable can be accessed by any subsequent event having the
 same pid as 'next_pid'.
 
 Variable references are formed by prepending the variable name with
 the '$' sign.  Thus for example, the ts0 variable above would be
-referenced as '$ts0' in subsequent expressions.
+referenced as '$ts0' in expressions.
 
 Because 'vals=' is used, the $common_timestamp variable value above
 will also be summed as a normal histogram value would (though for a
@@ -2225,7 +2226,7 @@ timestamp it makes little sense).
 
 The below shows that a key value can also be saved in the same way:
 
-  # echo 'hist:key=timer_pid=common_pid ...' >> event/trigger
+  # echo 'hist:timer_pid=common_pid:key=timer_pid ...' >> event/trigger
 
 If a variable isn't a key variable or prefixed with 'vals=', the
 associated event field will be saved in a variable but won't be summed
@@ -2237,7 +2238,15 @@ Multiple variables can be assigned at the same time.  The below would
 result in both ts0 and b being created as variables, with both
 common_timestamp and field1 additionally being summed as values:
 
-  # echo 'hist:keys=pid:vals=ts0=$common_timestamp,b=field1 ... >> event/trigger
+  # echo 'hist:keys=pid:vals=$ts0,$b:ts0=$common_timestamp,b=field1 ... >> \
+	event/trigger
+
+Note that variable assignments can appear either preceding or
+following their use.  The command below behaves identically to the
+command above:
+
+  # echo 'hist:keys=pid:ts0=$common_timestamp,b=field1:vals=$ts0,$b ... >> \
+	event/trigger
 
 Any number of variables not bound to a 'vals=' prefix can also be
 assigned by simply separating them with colons.  Below is the same
@@ -2379,7 +2388,7 @@ hist trigger specification.
     occurs, which because of the 'if comm == "cyclictest"' filter only
     happens when the executable is cyclictest:
 
-    # echo 'hist:keys=testpid=pid:onmatch(sched.sched_wakeup_new).\
+    # echo 'hist:keys=$testpid:testpid=pid:onmatch(sched.sched_wakeup_new).\
             wakeup_new_test($testpid) if comm=="cyclictest"' >> \
             /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
 
@@ -2405,12 +2414,12 @@ hist trigger specification.
     # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
             /sys/kernel/debug/tracing/synthetic_events
 
-    Next, we specify that whenever we see a sched_wakeup event for a
+    Next, we specify that whenever we see a sched_waking event for a
     cyclictest thread, save the timestamp in a 'ts0' variable:
 
-    # echo 'hist:keys=saved_pid=pid:ts0=$common_timestamp.usecs \
+    # echo 'hist:keys=$saved_pid:saved_pid=pid:ts0=$common_timestamp.usecs \
             if comm=="cyclictest"' >> \
-	    /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+	    /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
 
     Then, when the corresponding thread is actually scheduled onto the
     CPU by a sched_switch event, calculate the latency and use that
@@ -2418,7 +2427,7 @@ hist trigger specification.
     wakeup_latency synthetic event:
 
     # echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0:\
-            onmatch(sched.sched_wakeup).wakeup_latency($wakeup_lat,\
+            onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,\
 	            $saved_pid,next_prio) if next_comm=="cyclictest"' >> \
 	    /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
 
@@ -2434,7 +2443,7 @@ hist trigger specification.
 
     # cat /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/hist
 
-  - onmax(var).save(field,...)
+  - onmax(var).save(field,..	.)
 
     The 'onmax(var).save(field,...)' hist trigger action is invoked
     whenever the value of 'var' associated with a histogram entry
@@ -2448,8 +2457,8 @@ hist trigger specification.
     displaying the saved values will be printed.
 
     As an example the below defines a couple of hist triggers, one for
-    sched_wakeup and another for sched_switch, keyed on pid.  Whenever
-    a sched_wakeup occurs, the timestamp is saved in the entry
+    sched_waking and another for sched_switch, keyed on pid.  Whenever
+    a sched_waking occurs, the timestamp is saved in the entry
     corresponding to the current pid, and when the scheduler switches
     back to that pid, the timestamp difference is calculated.  If the
     resulting latency, stored in wakeup_lat, exceeds the current
@@ -2458,7 +2467,7 @@ hist trigger specification.
 
     # echo 'hist:keys=pid:ts0=$common_timestamp.usecs \
             if comm=="cyclictest"' >> \
-            /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+            /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
 
     # echo 'hist:keys=next_pid:\
             wakeup_lat=$common_timestamp.usecs-$ts0:\
