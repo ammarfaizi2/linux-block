@@ -585,6 +585,8 @@ struct task_struct {
 	struct list_head		rcu_node_entry;
 	struct rcu_node			*rcu_blocked_node;
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
+	u8				rcu_trace_timers;
+	struct timer_list		*rcu_timer;
 
 #ifdef CONFIG_TASKS_RCU
 	unsigned long			rcu_tasks_nvcsw;
