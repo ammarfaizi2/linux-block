@@ -19,6 +19,7 @@ struct timer_list {
 	void			(*function)(unsigned long);
 	unsigned long		data;
 	u32			flags;
+	struct task_struct	*rcu_timer_task;
 
 #ifdef CONFIG_LOCKDEP
 	struct lockdep_map	lockdep_map;
