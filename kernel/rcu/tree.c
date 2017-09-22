@@ -4058,6 +4058,7 @@ static int __init rcu_spawn_gp_kthread(void)
 		rnp = rcu_get_root(rsp);
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 		rsp->gp_kthread = t;
+		t->rcu_trace_timers = 1;
 		if (kthread_prio) {
 			sp.sched_priority = kthread_prio;
 			sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);

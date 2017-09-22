@@ -1739,11 +1739,16 @@ signed long __sched schedule_timeout(signed long timeout)
 	expire = timeout + jiffies;
 
 	setup_timer_on_stack(&timer, process_timeout, (unsigned long)current);
+	if (current->rcu_trace_timers) {
+		current->rcu_timer = &timer;
+		timer.rcu_timer_task = current;
+	}
 	__mod_timer(&timer, expire, false);
 	schedule();
 	del_singleshot_timer_sync(&timer);
 
 	/* Remove the timer from the object tracker */
+	current->rcu_timer = NULL;
 	destroy_timer_on_stack(&timer);
 
 	timeout = expire - jiffies;
@@ -1799,6 +1804,8 @@ static void migrate_timer_list(struct timer_base *new_base, struct hlist_head *h
 		timer = hlist_entry(head->first, struct timer_list, entry);
 		detach_timer(timer, false);
 		timer->flags = (timer->flags & ~TIMER_BASEMASK) | cpu;
+		if (timer->rcu_timer_task)
+			pr_info("Migrated GP kthread timer\n");
 		internal_add_timer(new_base, timer);
 	}
 }
