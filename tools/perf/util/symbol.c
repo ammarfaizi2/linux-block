@@ -24,7 +24,9 @@
 #include "header.h"
 #include "path.h"
 #include "sane_ctype.h"
+#include "script-sample.h"
 
+#include <asm/bug.h>
 #include <elf.h>
 #include <limits.h>
 #include <symbol/kallsyms.h>
@@ -2094,6 +2096,15 @@ static bool symbol__read_kptr_restrict(void)
 	return value;
 }
 
+/*
+ * The overloaded 'symbol' allocation space:
+ *
+ *   struct annotation     | annotation enabled
+ *   struct script_symbol  | script symbols enabled
+ *   u32                   | verbose TUI browser (see symbol__browser_index)
+ *   struct rb_node        | symbol_conf.sort_by_name
+ *   struct symbol         | symbol data
+ */
 int symbol__annotation_init(void)
 {
 	if (symbol_conf.init_annotation)
@@ -2106,6 +2117,21 @@ int symbol__annotation_init(void)
 
 	symbol_conf.priv_size += sizeof(struct annotation);
 	symbol_conf.init_annotation = true;
+	return 0;
+}
+
+int symbol__script_init(void)
+{
+	if (WARN_ONCE(symbol_conf.initialized,
+		      "Script priv needs to be init before symbol__init()\n"))
+		return -1;
+
+	if (WARN_ONCE(symbol_conf.has_script,
+		      "Script priv being initialized multiple times\n"))
+		return 0;
+
+	symbol_conf.priv_size += sizeof(struct script_symbol);
+	symbol_conf.has_script = true;
 	return 0;
 }
 
@@ -2123,6 +2149,12 @@ int symbol__init(struct perf_env *env)
 	if (symbol_conf.sort_by_name)
 		symbol_conf.priv_size += (sizeof(struct symbol_name_rb_node) -
 					  sizeof(struct symbol));
+
+	if (symbol_conf.has_script) {
+		symbol_conf.script_off = symbol_conf.priv_size;
+		if (symbol_conf.init_annotation)
+			symbol_conf.script_off -= sizeof(struct annotation);
+	}
 
 	if (symbol_conf.try_vmlinux_path && vmlinux_path__init(env) < 0)
 		return -1;
