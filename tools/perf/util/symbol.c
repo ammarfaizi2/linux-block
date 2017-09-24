@@ -1545,6 +1545,11 @@ int dso__load(struct dso *dso, struct map *map)
 		goto out;
 	}
 
+	if (dso->has_ss) {
+		ret = dso__load_ssinfo(dso);
+		goto out;
+	}
+
 	if (machine)
 		root_dir = machine->root_dir;
 

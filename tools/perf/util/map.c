@@ -224,8 +224,10 @@ struct map *map__new(struct machine *machine, u64 start, u64 len,
 
 		map__init(map, start, start + len, pgoff, dso);
 
-		if (python)
+		if (python) {
 			map->map_ip = map->unmap_ip = identity__map_ip;
+			dso->has_ss = 1;
+		}
 
 		if (anon || no_dso) {
 			map->map_ip = map->unmap_ip = identity__map_ip;
