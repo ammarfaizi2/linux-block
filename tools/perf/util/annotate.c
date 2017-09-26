@@ -1448,6 +1448,7 @@ annotation_line__print(struct annotation_line *al, struct symbol *sym, u64 start
 		return 1;
 	else {
 		int width = symbol_conf.show_total_period ? 12 : 8;
+		const char *color = PERF_COLOR_NORMAL;
 
 		if (queue)
 			return -1;
@@ -1455,10 +1456,15 @@ annotation_line__print(struct annotation_line *al, struct symbol *sym, u64 start
 		if (perf_evsel__is_group_event(evsel))
 			width *= evsel->nr_members;
 
-		if (!*al->line)
+		if (symbol_conf.has_script)
+			color = PERF_COLOR_BLUE;
+
+		if (!*al->line) {
 			printf(" %*s:\n", width, " ");
-		else
-			printf(" %*s:     %*s %s\n", width, " ", addr_fmt_width, " ", al->line);
+		} else {
+			color_fprintf(stdout, PERF_COLOR_NORMAL, " %*s:", width, " ");
+			color_fprintf(stdout, color, " %*s:     %*s %s\n", width, " ", addr_fmt_width, " ", al->line);
+		}
 	}
 
 	return 0;
