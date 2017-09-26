@@ -1335,6 +1335,17 @@ static void annotate__branch_printf(struct block_range *br, u64 addr)
 	}
 }
 
+#define ADDR_LEN 10
+static int script_symbol__print(struct annotation_line *al, u64 start)
+{
+	s64 offset = al->offset;
+	const u64 addr = start + offset;
+
+	color_fprintf(stdout, PERF_COLOR_MAGENTA, "  %*" PRIx64 ":", ADDR_LEN, addr);
+	color_fprintf(stdout, PERF_COLOR_BLUE, "%s", al->line);
+	return 0;
+}
+
 static int disasm_line__print(struct disasm_line *dl, u64 start, int addr_fmt_width)
 {
 	s64 offset = dl->al.offset;
@@ -1428,7 +1439,10 @@ annotation_line__print(struct annotation_line *al, struct symbol *sym, u64 start
 
 		printf(" : ");
 
-		disasm_line__print(dl, start, addr_fmt_width);
+		if (symbol_conf.has_script)
+			script_symbol__print(al, start);
+		else
+			disasm_line__print(dl, start, addr_fmt_width);
 		printf("\n");
 	} else if (max_lines && printed >= max_lines)
 		return 1;
