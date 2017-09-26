@@ -2202,6 +2202,12 @@ int symbol__annotate_printf(struct symbol *sym, struct map *map,
 				  d_filename, evsel_name, h->nr_samples,
 				  percent_type_str(opts->percent_type));
 
+	if (symbol_conf.has_script) {
+		struct script_symbol *ssym = symbol__script_symbol(sym);
+
+		printf(" [%s %s] \n", sym->name, ssym->file);
+	}
+
 	printf("%-*.*s----\n",
 	       graph_dotted_len, graph_dotted_len, graph_dotted_line);
 
