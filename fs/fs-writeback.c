@@ -2428,7 +2428,7 @@ void sync_inodes_sb(struct super_block *sb)
 		.sb		= sb,
 		.sync_mode	= WB_SYNC_ALL,
 		.nr_pages	= LONG_MAX,
-		.range_cyclic	= 0,
+		.range_cyclic	= 1,
 		.done		= &done,
 		.reason		= WB_REASON_SYNC,
 		.for_sync	= 1,
