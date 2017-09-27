@@ -2792,16 +2792,11 @@ static int ext4_writepages(struct address_space *mapping,
 	if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
 		range_whole = 1;
 
-	if (wbc->range_cyclic) {
-		writeback_index = mapping->writeback_index;
-		if (writeback_index)
-			cycled = 0;
-		mpd.first_page = writeback_index;
-		mpd.last_page = -1;
-	} else {
-		mpd.first_page = wbc->range_start >> PAGE_SHIFT;
-		mpd.last_page = wbc->range_end >> PAGE_SHIFT;
-	}
+	writeback_index = mapping->writeback_index;
+	if (writeback_index)
+		cycled = 0;
+	mpd.first_page = writeback_index;
+	mpd.last_page = -1;
 
 	mpd.inode = inode;
 	mpd.wbc = wbc;
@@ -2940,12 +2935,11 @@ unplug:
 	}
 
 	/* Update index */
-	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
-		/*
-		 * Set the writeback_index so that range_cyclic
-		 * mode will write it back later
-		 */
-		mapping->writeback_index = mpd.first_page;
+	/*
+	 * Set the writeback_index so that range_cyclic
+	 * mode will write it back later
+	 */
+	mapping->writeback_index = mpd.first_page;
 
 out_writepages:
 	trace_ext4_writepages_result(inode, wbc, ret,

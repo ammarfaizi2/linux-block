@@ -49,7 +49,6 @@ struct wb_writeback_work {
 	enum writeback_sync_modes sync_mode;
 	unsigned int tagged_writepages:1;
 	unsigned int for_kupdate:1;
-	unsigned int range_cyclic:1;
 	unsigned int for_background:1;
 	unsigned int for_sync:1;	/* sync(2) WB_SYNC_ALL writeback */
 	unsigned int auto_free:1;	/* free on completion */
@@ -945,8 +944,7 @@ static unsigned long get_nr_dirty_pages(void)
 		get_nr_dirty_inodes();
 }
 
-static void wb_start_writeback(struct bdi_writeback *wb, bool range_cyclic,
-			       enum wb_reason reason)
+static void wb_start_writeback(struct bdi_writeback *wb, enum wb_reason reason)
 {
 	struct wb_writeback_work *work;
 
@@ -982,7 +980,6 @@ static void wb_start_writeback(struct bdi_writeback *wb, bool range_cyclic,
 
 	work->sync_mode	= WB_SYNC_NONE;
 	work->nr_pages	= wb_split_bdi_pages(wb, get_nr_dirty_pages());
-	work->range_cyclic = range_cyclic;
 	work->reason	= reason;
 	work->auto_free	= 1;
 	work->start_all = 1;
@@ -1526,7 +1523,6 @@ static long writeback_sb_inodes(struct super_block *sb,
 		.for_kupdate		= work->for_kupdate,
 		.for_background		= work->for_background,
 		.for_sync		= work->for_sync,
-		.range_cyclic		= work->range_cyclic,
 		.range_start		= 0,
 		.range_end		= LLONG_MAX,
 	};
@@ -1698,7 +1694,6 @@ static long writeback_inodes_wb(struct bdi_writeback *wb, long nr_pages,
 	struct wb_writeback_work work = {
 		.nr_pages	= nr_pages,
 		.sync_mode	= WB_SYNC_NONE,
-		.range_cyclic	= 1,
 		.reason		= reason,
 	};
 	struct blk_plug plug;
@@ -1858,7 +1853,6 @@ static long wb_check_background_flush(struct bdi_writeback *wb)
 			.nr_pages	= LONG_MAX,
 			.sync_mode	= WB_SYNC_NONE,
 			.for_background	= 1,
-			.range_cyclic	= 1,
 			.reason		= WB_REASON_BACKGROUND,
 		};
 
@@ -1892,7 +1886,6 @@ static long wb_check_old_data_flush(struct bdi_writeback *wb)
 			.nr_pages	= nr_pages,
 			.sync_mode	= WB_SYNC_NONE,
 			.for_kupdate	= 1,
-			.range_cyclic	= 1,
 			.reason		= WB_REASON_PERIODIC,
 		};
 
@@ -1984,7 +1977,7 @@ static void __wakeup_flusher_threads_bdi(struct backing_dev_info *bdi,
 		return;
 
 	list_for_each_entry_rcu(wb, &bdi->wb_list, bdi_node)
-		wb_start_writeback(wb, true, reason);
+		wb_start_writeback(wb, reason);
 }
 
 void wakeup_flusher_threads_bdi(struct backing_dev_info *bdi,
@@ -2428,7 +2421,6 @@ void sync_inodes_sb(struct super_block *sb)
 		.sb		= sb,
 		.sync_mode	= WB_SYNC_ALL,
 		.nr_pages	= LONG_MAX,
-		.range_cyclic	= 1,
 		.done		= &done,
 		.reason		= WB_REASON_SYNC,
 		.for_sync	= 1,

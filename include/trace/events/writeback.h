@@ -225,7 +225,7 @@ DECLARE_EVENT_CLASS(writeback_work_class,
 		__entry->sb_dev = work->sb ? work->sb->s_dev : 0;
 		__entry->sync_mode = work->sync_mode;
 		__entry->for_kupdate = work->for_kupdate;
-		__entry->range_cyclic = work->range_cyclic;
+		__entry->range_cyclic = 1;
 		__entry->for_background	= work->for_background;
 		__entry->reason = work->reason;
 		__entry->cgroup_ino = __trace_wb_assign_cgroup(wb);
@@ -328,7 +328,7 @@ DECLARE_EVENT_CLASS(wbc_class,
 		__entry->for_kupdate	= wbc->for_kupdate;
 		__entry->for_background	= wbc->for_background;
 		__entry->for_reclaim	= wbc->for_reclaim;
-		__entry->range_cyclic	= wbc->range_cyclic;
+		__entry->range_cyclic	= 1;
 		__entry->range_start	= (long)wbc->range_start;
 		__entry->range_end	= (long)wbc->range_end;
 		__entry->cgroup_ino	= __trace_wbc_assign_cgroup(wbc);

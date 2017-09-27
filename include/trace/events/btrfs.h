@@ -502,7 +502,7 @@ DECLARE_EVENT_CLASS(btrfs__writepage,
 		__entry->range_end	= wbc->range_end;
 		__entry->for_kupdate	= wbc->for_kupdate;
 		__entry->for_reclaim	= wbc->for_reclaim;
-		__entry->range_cyclic	= wbc->range_cyclic;
+		__entry->range_cyclic	= 1;
 		__entry->writeback_index = inode->i_mapping->writeback_index;
 		__entry->root_objectid	=
 				 BTRFS_I(inode)->root->root_key.objectid;

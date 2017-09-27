@@ -1174,7 +1174,7 @@ TRACE_EVENT(f2fs_writepages,
 		__entry->for_background	= wbc->for_background;
 		__entry->tagged_writepages	= wbc->tagged_writepages;
 		__entry->for_reclaim	= wbc->for_reclaim;
-		__entry->range_cyclic	= wbc->range_cyclic;
+		__entry->range_cyclic	= 1;
 		__entry->for_sync	= wbc->for_sync;
 	),
 

@@ -394,7 +394,7 @@ TRACE_EVENT(ext4_writepages,
 		__entry->writeback_index = inode->i_mapping->writeback_index;
 		__entry->sync_mode	= wbc->sync_mode;
 		__entry->for_kupdate	= wbc->for_kupdate;
-		__entry->range_cyclic	= wbc->range_cyclic;
+		__entry->range_cyclic	= 1;
 	),
 
 	TP_printk("dev %d,%d ino %lu nr_to_write %ld pages_skipped %ld "

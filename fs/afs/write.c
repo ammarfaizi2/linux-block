@@ -570,24 +570,12 @@ int afs_writepages(struct address_space *mapping,
 
 	_enter("");
 
-	if (wbc->range_cyclic) {
-		start = mapping->writeback_index;
-		end = -1;
-		ret = afs_writepages_region(mapping, wbc, start, end, &next);
-		if (start > 0 && wbc->nr_to_write > 0 && ret == 0)
-			ret = afs_writepages_region(mapping, wbc, 0, start,
-						    &next);
-		mapping->writeback_index = next;
-	} else if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX) {
-		end = (pgoff_t)(LLONG_MAX >> PAGE_SHIFT);
-		ret = afs_writepages_region(mapping, wbc, 0, end, &next);
-		if (wbc->nr_to_write > 0)
-			mapping->writeback_index = next;
-	} else {
-		start = wbc->range_start >> PAGE_SHIFT;
-		end = wbc->range_end >> PAGE_SHIFT;
-		ret = afs_writepages_region(mapping, wbc, start, end, &next);
-	}
+	start = mapping->writeback_index;
+	end = -1;
+	ret = afs_writepages_region(mapping, wbc, start, end, &next);
+	if (start > 0 && wbc->nr_to_write > 0 && ret == 0)
+		ret = afs_writepages_region(mapping, wbc, 0, start, &next);
+	mapping->writeback_index = next;
 
 	_leave(" = %d", ret);
 	return ret;
@@ -685,7 +673,6 @@ int afs_writeback_all(struct afs_vnode *vnode)
 	struct writeback_control wbc = {
 		.sync_mode	= WB_SYNC_ALL,
 		.nr_to_write	= LONG_MAX,
-		.range_cyclic	= 1,
 	};
 	int ret;
 

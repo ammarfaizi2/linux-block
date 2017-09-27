@@ -791,7 +791,7 @@ static int ceph_writepages_start(struct address_space *mapping,
 	unsigned int wsize = i_blocksize(inode);
 	struct ceph_osd_request *req = NULL;
 	struct ceph_writeback_ctl ceph_wbc;
-	bool should_loop, range_whole = false;
+	bool should_loop;
 	bool stop, done = false;
 
 	dout("writepages_start %p (mode=%s)\n", inode,
@@ -812,7 +812,7 @@ static int ceph_writepages_start(struct address_space *mapping,
 
 	pagevec_init(&pvec, 0);
 
-	start_index = wbc->range_cyclic ? mapping->writeback_index : 0;
+	start_index = mapping->writeback_index;
 	index = start_index;
 
 retry:
@@ -830,19 +830,11 @@ retry:
 	should_loop = false;
 	if (ceph_wbc.head_snapc && snapc != last_snapc) {
 		/* where to start/end? */
-		if (wbc->range_cyclic) {
-			index = start_index;
-			end = -1;
-			if (index > 0)
-				should_loop = true;
-			dout(" cyclic, start at %lu\n", index);
-		} else {
-			index = wbc->range_start >> PAGE_SHIFT;
-			end = wbc->range_end >> PAGE_SHIFT;
-			if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
-				range_whole = true;
-			dout(" not cyclic, %lu to %lu\n", index, end);
-		}
+		index = start_index;
+		end = -1;
+		if (index > 0)
+			should_loop = true;
+		dout(" cyclic, start at %lu\n", index);
 	} else if (!ceph_wbc.head_snapc) {
 		/* Do not respect wbc->range_{start,end}. Dirty pages
 		 * in that range can be associated with newer snapc.
@@ -1194,9 +1186,7 @@ release_pvec_pages:
 		goto retry;
 	}
 
-	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
-		mapping->writeback_index = index;
-
+	mapping->writeback_index = index;
 out:
 	ceph_osdc_put_request(req);
 	ceph_put_snap_context(last_snapc);

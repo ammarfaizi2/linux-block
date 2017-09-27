@@ -2021,7 +2021,7 @@ wdata_prepare_pages(struct cifs_writedata *wdata, unsigned int found_pages,
 			break;
 		}
 
-		if (!wbc->range_cyclic && page->index > end) {
+		if (page->index > end) {
 			*done = true;
 			unlock_page(page);
 			break;
@@ -2112,7 +2112,7 @@ static int cifs_writepages(struct address_space *mapping,
 {
 	struct cifs_sb_info *cifs_sb = CIFS_SB(mapping->host->i_sb);
 	struct TCP_Server_Info *server;
-	bool done = false, scanned = false, range_whole = false;
+	bool done = false, scanned = false;
 	pgoff_t end, index;
 	struct cifs_writedata *wdata;
 	int rc = 0;
@@ -2124,16 +2124,8 @@ static int cifs_writepages(struct address_space *mapping,
 	if (cifs_sb->wsize < PAGE_SIZE)
 		return generic_writepages(mapping, wbc);
 
-	if (wbc->range_cyclic) {
-		index = mapping->writeback_index; /* Start from prev offset */
-		end = -1;
-	} else {
-		index = wbc->range_start >> PAGE_SHIFT;
-		end = wbc->range_end >> PAGE_SHIFT;
-		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
-			range_whole = true;
-		scanned = true;
-	}
+	index = mapping->writeback_index; /* Start from prev offset */
+	end = -1;
 	server = cifs_sb_master_tcon(cifs_sb)->ses->server;
 retry:
 	while (!done && index <= end) {
@@ -2214,9 +2206,7 @@ retry:
 		goto retry;
 	}
 
-	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
-		mapping->writeback_index = index;
-
+	mapping->writeback_index = index;
 	return rc;
 }
 

@@ -1002,18 +1002,8 @@ int ll_writepages(struct address_space *mapping, struct writeback_control *wbc)
 	int result;
 	int ignore_layout = 0;
 
-	if (wbc->range_cyclic) {
-		start = mapping->writeback_index << PAGE_SHIFT;
-		end = OBD_OBJECT_EOF;
-	} else {
-		start = wbc->range_start;
-		end = wbc->range_end;
-		if (end == LLONG_MAX) {
-			end = OBD_OBJECT_EOF;
-			range_whole = start == 0;
-		}
-	}
-
+	start = mapping->writeback_index << PAGE_SHIFT;
+	end = OBD_OBJECT_EOF;
 	mode = CL_FSYNC_NONE;
 	if (wbc->sync_mode == WB_SYNC_ALL)
 		mode = CL_FSYNC_LOCAL;
@@ -1034,12 +1024,11 @@ int ll_writepages(struct address_space *mapping, struct writeback_control *wbc)
 		result = 0;
 	}
 
-	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0)) {
-		if (end == OBD_OBJECT_EOF)
-			mapping->writeback_index = 0;
-		else
-			mapping->writeback_index = (end >> PAGE_SHIFT) + 1;
-	}
+	if (end == OBD_OBJECT_EOF)
+		mapping->writeback_index = 0;
+	else
+		mapping->writeback_index = (end >> PAGE_SHIFT) + 1;
+
 	return result;
 }
 

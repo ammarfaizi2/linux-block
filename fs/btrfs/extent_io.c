@@ -3803,14 +3803,8 @@ int btree_write_cache_pages(struct address_space *mapping,
 	int tag;
 
 	pagevec_init(&pvec, 0);
-	if (wbc->range_cyclic) {
-		index = mapping->writeback_index; /* Start from prev offset */
-		end = -1;
-	} else {
-		index = wbc->range_start >> PAGE_SHIFT;
-		end = wbc->range_end >> PAGE_SHIFT;
-		scanned = 1;
-	}
+	index = mapping->writeback_index; /* Start from prev offset */
+	end = -1;
 	if (wbc->sync_mode == WB_SYNC_ALL)
 		tag = PAGECACHE_TAG_TOWRITE;
 	else
@@ -3830,7 +3824,7 @@ retry:
 			if (!PagePrivate(page))
 				continue;
 
-			if (!wbc->range_cyclic && page->index > end) {
+			if (page->index > end) {
 				done = 1;
 				break;
 			}
@@ -3930,7 +3924,6 @@ static int extent_write_cache_pages(struct address_space *mapping,
 	pgoff_t index;
 	pgoff_t end;		/* Inclusive */
 	pgoff_t done_index;
-	int range_whole = 0;
 	int scanned = 0;
 	int tag;
 
@@ -3947,16 +3940,8 @@ static int extent_write_cache_pages(struct address_space *mapping,
 		return 0;
 
 	pagevec_init(&pvec, 0);
-	if (wbc->range_cyclic) {
-		index = mapping->writeback_index; /* Start from prev offset */
-		end = -1;
-	} else {
-		index = wbc->range_start >> PAGE_SHIFT;
-		end = wbc->range_end >> PAGE_SHIFT;
-		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
-			range_whole = 1;
-		scanned = 1;
-	}
+	index = mapping->writeback_index; /* Start from prev offset */
+	end = -1;
 	if (wbc->sync_mode == WB_SYNC_ALL)
 		tag = PAGECACHE_TAG_TOWRITE;
 	else
@@ -3992,7 +3977,7 @@ retry:
 				continue;
 			}
 
-			if (!wbc->range_cyclic && page->index > end) {
+			if (page->index > end) {
 				done = 1;
 				unlock_page(page);
 				continue;
@@ -4051,9 +4036,7 @@ retry:
 		goto retry;
 	}
 
-	if (wbc->range_cyclic || (wbc->nr_to_write > 0 && range_whole))
-		mapping->writeback_index = done_index;
-
+	mapping->writeback_index = done_index;
 	btrfs_add_delayed_iput(inode);
 	return ret;
 }
