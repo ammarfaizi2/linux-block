@@ -1421,7 +1421,7 @@ retry:
 
 	/* there is enough room */
 
-	preempt_disable();
+	preempt_disable_nort();
 	this_cpu_inc(*sc->buffers_allocated);
 
 	/* read this once */

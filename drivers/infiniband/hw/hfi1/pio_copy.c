@@ -162,7 +162,7 @@ void pio_copy(struct hfi1_devdata *dd, struct pio_buf *pbuf, u64 pbc,
 
 	/* finished with this buffer */
 	this_cpu_dec(*pbuf->sc->buffers_allocated);
-	preempt_enable();
+	preempt_enable_nort();
 }
 
 /*
@@ -753,5 +753,5 @@ void seg_pio_copy_end(struct pio_buf *pbuf)
 
 	/* finished with this buffer */
 	this_cpu_dec(*pbuf->sc->buffers_allocated);
-	preempt_enable();
+	preempt_enable_nort();
 }
