@@ -8226,15 +8226,17 @@ static irqreturn_t receive_context_interrupt(int irq, void *data)
 {
 	struct hfi1_ctxtdata *rcd = data;
 	struct hfi1_devdata *dd = rcd->dd;
-	int disposition;
-	int present;
 
 	trace_hfi1_receive_interrupt(dd, rcd->ctxt);
 	this_cpu_inc(*dd->int_counter);
 	aspm_ctx_disable(rcd);
 
+#ifdef CONFIG_PREEMPT_RT_FULL
+	return IRQ_WAKE_THREAD;
+#else
+{
 	/* receive interrupt remains blocked while processing packets */
-	disposition = rcd->do_interrupt(rcd, 0);
+	int disposition = rcd->do_interrupt(rcd, 0), present;
 
 	/*
 	 * Too many packets were seen while processing packets in this
@@ -8256,6 +8258,8 @@ static irqreturn_t receive_context_interrupt(int irq, void *data)
 		force_recv_intr(rcd);
 
 	return IRQ_HANDLED;
+}
+#endif
 }
 
 /*
