@@ -824,6 +824,7 @@ static void rcu_eqs_enter(bool user)
 		rcu_eqs_enter_common(user);
 	else
 		rdtp->dynticks_nesting -= DYNTICK_TASK_NEST_VALUE;
+	rdtp->dynticks_nmi_nesting = 0;
 }
 
 /**
@@ -999,6 +1000,7 @@ static void rcu_eqs_exit(bool user)
 
 	RCU_LOCKDEP_WARN(!irqs_disabled(), "rcu_eqs_exit() invoked with irqs enabled!!!");
 	rdtp = this_cpu_ptr(&rcu_dynticks);
+	rdtp->dynticks_nmi_nesting = DYNTICK_IRQ_NONIDLE;
 	oldval = rdtp->dynticks_nesting;
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) && oldval < 0);
 	if (oldval & DYNTICK_TASK_NEST_MASK) {
