@@ -235,7 +235,7 @@ static void populate_properties(const void *blob,
 		if (!strcmp(pname, "ibm,phandle"))
 			np->phandle = be32_to_cpup(val);
 
-		pp->attr.attr.name   = pname;
+		pp->name   = (char *)pname;
 		pp->length = sz;
 		pp->value  = (__be32 *)val;
 		*pprev     = pp;
@@ -263,7 +263,7 @@ static void populate_properties(const void *blob,
 		pp = unflatten_dt_alloc(mem, sizeof(struct property) + len,
 					__alignof__(struct property));
 		if (!dryrun) {
-			pp->attr.attr.name = "name";
+			pp->name   = "name";
 			pp->length = len;
 			pp->value  = pp + 1;
 			*pprev     = pp;

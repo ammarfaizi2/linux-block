@@ -125,7 +125,7 @@ static struct property *__of_find_property(const struct device_node *np,
 		return NULL;
 
 	for (pp = np->properties; pp; pp = pp->next) {
-		if (of_prop_cmp(of_prop_name(pp), name) == 0) {
+		if (of_prop_cmp(pp->name, name) == 0) {
 			if (lenp)
 				*lenp = pp->length;
 			break;
@@ -739,7 +739,7 @@ struct device_node *of_find_node_opts_by_path(const char *path, const char **opt
 			return NULL;
 
 		for_each_property_of_node(of_aliases, pp) {
-			if (strlen(of_prop_name(pp)) == len && !strncmp(of_prop_name(pp)), path, len)) {
+			if (strlen(pp->name) == len && !strncmp(pp->name, path, len)) {
 				np = of_find_node_by_path(pp->value);
 				break;
 			}
@@ -869,7 +869,7 @@ struct device_node *of_find_node_with_property(struct device_node *from,
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 	for_each_of_allnodes_from(from, np) {
 		for (pp = np->properties; pp; pp = pp->next) {
-			if (of_prop_cmp(of_prop_name(pp), prop_name) == 0) {
+			if (of_prop_cmp(pp->name, prop_name) == 0) {
 				of_node_get(np);
 				goto out;
 			}
@@ -1347,7 +1347,7 @@ int __of_add_property(struct device_node *np, struct property *prop)
 	prop->next = NULL;
 	next = &np->properties;
 	while (*next) {
-		if (strcmp(of_prop_name(prop), of_prop_name(*next)) == 0)
+		if (strcmp(prop->name, (*next)->name) == 0)
 			/* duplicate ! don't insert it */
 			return -EEXIST;
 
@@ -1441,7 +1441,7 @@ int __of_update_property(struct device_node *np, struct property *newprop,
 	struct property **next, *oldprop;
 
 	for (next = &np->properties; *next; next = &(*next)->next) {
-		if (of_prop_cmp(of_prop_name(*next), of_prop_name(newprop)) == 0)
+		if (of_prop_cmp((*next)->name, newprop->name) == 0)
 			break;
 	}
 	*oldpropp = oldprop = *next;
@@ -1476,7 +1476,7 @@ int of_update_property(struct device_node *np, struct property *newprop)
 	unsigned long flags;
 	int rc;
 
-	if (!of_prop_name(newprop))
+	if (!newprop->name)
 		return -EINVAL;
 
 	mutex_lock(&of_mutex);
@@ -1544,7 +1544,7 @@ void of_alias_scan(void * (*dt_alloc)(u64 size, u64 align))
 		return;
 
 	for_each_property_of_node(of_aliases, pp) {
-		const char *start = of_prop_name(pp);
+		const char *start = pp->name;
 		const char *end = start + strlen(start);
 		struct device_node *np;
 		struct alias_prop *ap;

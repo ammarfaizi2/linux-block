@@ -33,6 +33,7 @@ typedef u32 phandle;
 typedef u32 ihandle;
 
 struct property {
+	char	*name;
 	int	length;
 	void	*value;
 	struct property *next;
@@ -46,11 +47,6 @@ struct property {
 	struct bin_attribute attr;
 #endif
 };
-
-static inline const char *of_prop_name(struct property *pp)
-{
-	return pp->attr.attr.name;
-}
 
 #if defined(CONFIG_SPARC)
 struct of_irq_controller;
