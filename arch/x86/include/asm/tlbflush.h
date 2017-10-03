@@ -104,6 +104,11 @@ static inline bool tlb_defer_switch_to_init_mm(void)
  */
 #define TLB_NR_DYN_ASIDS 6
 
+/*
+ * init_mm has its own ASID.
+ */
+#define TLB_ASID_INIT_MM TLB_NR_DYN_ASIDS
+
 struct tlb_context {
 	u64 ctx_id;
 	u64 tlb_gen;

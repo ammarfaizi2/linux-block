@@ -86,6 +86,40 @@ void leave_mm(int cpu)
 	switch_mm(NULL, &init_mm, NULL);
 }
 
+static void switch_to_init_mm_irqs_off(void)
+{
+	struct mm_struct *real_prev = this_cpu_read(cpu_tlbstate.loaded_mm);
+	int cpu = smp_processor_id();
+
+	if (IS_ENABLED(CONFIG_PROVE_LOCKING))
+		WARN_ON_ONCE(!irqs_disabled());
+
+	if (real_prev == &init_mm)
+		return;
+
+	/* Stop remote flushes for the previous mm */
+	VM_WARN_ON_ONCE(!cpumask_test_cpu(cpu, mm_cpumask(real_prev)));
+	cpumask_clear_cpu(cpu, mm_cpumask(real_prev));
+
+	/* The new ASID is already up to date. */
+	if (static_cpu_has(X86_FEATURE_PCID)) {
+		write_cr3(build_cr3_noflush(&init_mm, TLB_ASID_INIT_MM));
+		trace_tlb_flush(TLB_FLUSH_ON_TASK_SWITCH, 0);
+		this_cpu_write(cpu_tlbstate.loaded_mm_asid, TLB_ASID_INIT_MM);
+	} else {
+		write_cr3(build_cr3(&init_mm, 0));
+		trace_tlb_flush(TLB_FLUSH_ON_TASK_SWITCH, TLB_FLUSH_ALL);
+		this_cpu_write(cpu_tlbstate.loaded_mm_asid, 0);
+	}
+
+	this_cpu_write(cpu_tlbstate.loaded_mm, &init_mm);
+	this_cpu_write(cpu_tlbstate.is_lazy, false);
+
+	/* Skip CR4 load -- per-mm CR4 bits only matter for user code. */
+
+	switch_ldt(real_prev, &init_mm);
+}
+
 void switch_mm(struct mm_struct *prev, struct mm_struct *next,
 	       struct task_struct *tsk)
 {
@@ -143,6 +177,12 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 		__flush_tlb_all();
 	}
 #endif
+
+	if (next == &init_mm) {
+		switch_to_init_mm_irqs_off();
+		return;
+	}
+
 	this_cpu_write(cpu_tlbstate.is_lazy, false);
 
 	if (real_prev == next) {
@@ -276,17 +316,28 @@ void initialize_tlbstate_and_flush(void)
 	WARN_ON(boot_cpu_has(X86_FEATURE_PCID) &&
 		!(cr4_read_shadow() & X86_CR4_PCIDE));
 
-	/* Force ASID 0 and force a TLB flush. */
-	write_cr3(build_cr3(mm, 0));
+	/*
+	 * Flush everything.  This gets rid of possible stale global entries
+	 * and ensures that TLB_ASID_INIT_MM is clean.
+	 */
+	__flush_tlb_all();
 
-	/* Reinitialize tlbstate. */
-	this_cpu_write(cpu_tlbstate.loaded_mm_asid, 0);
-	this_cpu_write(cpu_tlbstate.next_asid, 1);
-	this_cpu_write(cpu_tlbstate.ctxs[0].ctx_id, mm->context.ctx_id);
-	this_cpu_write(cpu_tlbstate.ctxs[0].tlb_gen, tlb_gen);
-
-	for (i = 1; i < TLB_NR_DYN_ASIDS; i++)
+	/*
+	 * Clear all dynamically tracked contexts.
+	 */
+	for (i = 0; i < TLB_NR_DYN_ASIDS; i++)
 		this_cpu_write(cpu_tlbstate.ctxs[i].ctx_id, 0);
+
+	if (mm == &init_mm && static_cpu_has(X86_FEATURE_PCID)) {
+		write_cr3(build_cr3_noflush(mm, TLB_ASID_INIT_MM));
+		this_cpu_write(cpu_tlbstate.loaded_mm_asid, TLB_ASID_INIT_MM);
+	} else {
+		write_cr3(build_cr3(mm, 0));
+		this_cpu_write(cpu_tlbstate.ctxs[0].ctx_id, mm->context.ctx_id);
+		this_cpu_write(cpu_tlbstate.ctxs[0].tlb_gen, tlb_gen);
+	}
+
+	this_cpu_write(cpu_tlbstate.next_asid, 1);
 }
 
 /*
@@ -329,7 +380,7 @@ static void flush_tlb_func_common(const struct flush_tlb_info *f,
 		 * garbage into our TLB.  Since switching to init_mm is barely
 		 * slower than a minimal flush, just switch to init_mm.
 		 */
-		switch_mm_irqs_off(NULL, &init_mm, NULL);
+		switch_to_init_mm_irqs_off();
 		return;
 	}
 
