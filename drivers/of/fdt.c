@@ -8,7 +8,7 @@
  * modify it under the terms of the GNU General Public License
  * version 2 as published by the Free Software Foundation.
  */
-
+#define DEBUG
 #define pr_fmt(fmt)	"OF: fdt: " fmt
 
 #include <linux/crc32.h>
