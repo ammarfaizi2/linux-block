@@ -103,6 +103,8 @@ void __cpuidle default_idle_call(void)
 static int call_cpuidle(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 		      int next_state)
 {
+	int ret;
+
 	/*
 	 * The idle task must be scheduled, it is pointless to go to idle, just
 	 * update no idle residency and return.
@@ -114,11 +116,21 @@ static int call_cpuidle(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	}
 
 	/*
+	 * Tell the RCU framework we are entering an idle section,
+	 * so no more rcu read side critical sections and one more
+	 * step to the grace period
+	 */
+	rcu_idle_enter();
+
+	/*
 	 * Enter the idle state previously returned by the governor decision.
 	 * This function will block until an interrupt occurs and will take
 	 * care of re-enabling the local interrupts
 	 */
-	return cpuidle_enter(drv, dev, next_state);
+	ret = cpuidle_enter(drv, dev, next_state);
+
+	rcu_idle_exit();
+	return ret;
 }
 
 /**
@@ -145,15 +157,15 @@ static void cpuidle_idle_call(void)
 		return;
 	}
 
-	/*
-	 * Tell the RCU framework we are entering an idle section,
-	 * so no more rcu read side critical sections and one more
-	 * step to the grace period
-	 */
-	rcu_idle_enter();
-
 	if (cpuidle_not_available(drv, dev)) {
+		/*
+		 * Tell the RCU framework we are entering an idle section,
+		 * so no more rcu read side critical sections and one more
+		 * step to the grace period
+		 */
+		rcu_idle_enter();
 		default_idle_call();
+		rcu_idle_exit();
 		goto exit_idle;
 	}
 
@@ -198,8 +210,6 @@ exit_idle:
 	 */
 	if (WARN_ON_ONCE(irqs_disabled()))
 		local_irq_enable();
-
-	rcu_idle_exit();
 }
 
 /*
