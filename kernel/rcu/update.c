@@ -422,7 +422,8 @@ void __wait_rcu_gp(bool checktiny, int n, call_rcu_func_t *crcu_array,
 	 * against the completion of the grace period, so the full memory
 	 * barrier below enforces that ordering via the completion's state.
 	 */
-	smp_mb(); /* ^^^ */
+	if (IS_ENABLED(CONFIG_ARCH_WEAK_RELEASE_ACQUIRE))
+		smp_mb(); /* ^^^ */
 }
 EXPORT_SYMBOL_GPL(__wait_rcu_gp);
 
