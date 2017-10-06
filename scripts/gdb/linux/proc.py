@@ -114,9 +114,9 @@ def info_opts(lst, opt):
     return opts
 
 
-FS_INFO = {constants.LX_MS_SYNCHRONOUS: ",sync",
-           constants.LX_MS_MANDLOCK: ",mand",
-           constants.LX_MS_DIRSYNC: ",dirsync",
+FS_INFO = {constants.LX_SB_SYNCHRONOUS: ",sync",
+           constants.LX_SB_MANDLOCK: ",mand",
+           constants.LX_SB_DIRSYNC: ",dirsync",
            constants.LX_MS_NOATIME: ",noatime",
            constants.LX_MS_NODIRATIME: ",nodiratime"}
 
@@ -184,7 +184,7 @@ values of that process namespace"""
             fstype = superblock['s_type']['name'].string()
             s_flags = int(superblock['s_flags'])
             m_flags = int(vfs['mnt']['mnt_flags'])
-            rd = "ro" if (s_flags & constants.LX_MS_RDONLY) else "rw"
+            rd = "ro" if (s_flags & constants.LX_SB_RDONLY) else "rw"
 
             gdb.write(
                 "{} {} {} {}{}{} 0 0\n"

@@ -212,9 +212,9 @@ xfs_parseargs(
 	 */
 	if (sb_rdonly(sb))
 		mp->m_flags |= XFS_MOUNT_RDONLY;
-	if (sb->s_flags & MS_DIRSYNC)
+	if (sb->s_flags & SB_DIRSYNC)
 		mp->m_flags |= XFS_MOUNT_DIRSYNC;
-	if (sb->s_flags & MS_SYNCHRONOUS)
+	if (sb->s_flags & SB_SYNCHRONOUS)
 		mp->m_flags |= XFS_MOUNT_WSYNC;
 
 	/*
@@ -1312,7 +1312,7 @@ xfs_fs_remount(
 	}
 
 	/* ro -> rw */
-	if ((mp->m_flags & XFS_MOUNT_RDONLY) && !(*flags & MS_RDONLY)) {
+	if ((mp->m_flags & XFS_MOUNT_RDONLY) && !(*flags & SB_RDONLY)) {
 		if (mp->m_flags & XFS_MOUNT_NORECOVERY) {
 			xfs_warn(mp,
 		"ro->rw transition prohibited on norecovery mount");
@@ -1368,7 +1368,7 @@ xfs_fs_remount(
 	}
 
 	/* rw -> ro */
-	if (!(mp->m_flags & XFS_MOUNT_RDONLY) && (*flags & MS_RDONLY)) {
+	if (!(mp->m_flags & XFS_MOUNT_RDONLY) && (*flags & SB_RDONLY)) {
 		/* Free the per-AG metadata reservation pool. */
 		error = xfs_fs_unreserve_ag_blocks(mp);
 		if (error) {
@@ -1637,7 +1637,7 @@ xfs_fs_fill_super(
 
 	/* version 5 superblocks support inode version counters. */
 	if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_5)
-		sb->s_flags |= MS_I_VERSION;
+		sb->s_flags |= SB_I_VERSION;
 
 	if (mp->m_flags & XFS_MOUNT_DAX) {
 		xfs_warn(mp,

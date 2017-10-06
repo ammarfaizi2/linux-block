@@ -29,7 +29,7 @@ struct kmem_cache *inode_entry_slab;
 void f2fs_stop_checkpoint(struct f2fs_sb_info *sbi, bool end_io)
 {
 	set_ckpt_flags(sbi, CP_ERROR_FLAG);
-	sbi->sb->s_flags |= MS_RDONLY;
+	sbi->sb->s_flags |= SB_RDONLY;
 	if (!end_io)
 		f2fs_flush_merged_writes(sbi);
 }
@@ -594,14 +594,14 @@ int recover_orphan_inodes(struct f2fs_sb_info *sbi)
 	if (!is_set_ckpt_flags(sbi, CP_ORPHAN_PRESENT_FLAG))
 		return 0;
 
-	if (s_flags & MS_RDONLY) {
+	if (s_flags & SB_RDONLY) {
 		f2fs_msg(sbi->sb, KERN_INFO, "orphan cleanup on readonly fs");
-		sbi->sb->s_flags &= ~MS_RDONLY;
+		sbi->sb->s_flags &= ~SB_RDONLY;
 	}
 
 #ifdef CONFIG_QUOTA
 	/* Needed for iput() to work correctly and not trash data */
-	sbi->sb->s_flags |= MS_ACTIVE;
+	sbi->sb->s_flags |= SB_ACTIVE;
 	/* Turn on quotas so that they are updated correctly */
 	f2fs_enable_quota_files(sbi);
 #endif
@@ -633,7 +633,7 @@ out:
 	/* Turn quotas off */
 	f2fs_quota_off_umount(sbi->sb);
 #endif
-	sbi->sb->s_flags = s_flags; /* Restore MS_RDONLY status */
+	sbi->sb->s_flags = s_flags; /* Restore SB_RDONLY status */
 
 	return err;
 }

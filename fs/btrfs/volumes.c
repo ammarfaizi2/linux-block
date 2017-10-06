@@ -2397,7 +2397,7 @@ int btrfs_init_new_device(struct btrfs_fs_info *fs_info, const char *device_path
 	set_blocksize(device->bdev, BTRFS_BDEV_BLOCKSIZE);
 
 	if (seeding_dev) {
-		sb->s_flags &= ~MS_RDONLY;
+		sb->s_flags &= ~SB_RDONLY;
 		ret = btrfs_prepare_sprout(fs_info);
 		BUG_ON(ret); /* -ENOMEM */
 	}

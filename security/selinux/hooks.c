@@ -2820,7 +2820,7 @@ static int selinux_sb_kern_mount(struct super_block *sb, int flags, void *data)
 		return rc;
 
 	/* Allow all mounts performed by the kernel */
-	if (flags & MS_KERNMOUNT)
+	if (flags & SB_KERNMOUNT)
 		return 0;
 
 	ad.type = LSM_AUDIT_DATA_DENTRY;
