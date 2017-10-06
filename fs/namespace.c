@@ -26,6 +26,7 @@
 #include <linux/bootmem.h>
 #include <linux/task_work.h>
 #include <linux/sched/task.h>
+#include <uapi/linux/mount.h>
 
 #include "pnode.h"
 #include "internal.h"

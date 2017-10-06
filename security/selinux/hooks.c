@@ -85,6 +85,7 @@
 #include <linux/export.h>
 #include <linux/msg.h>
 #include <linux/shm.h>
+#include <uapi/linux/mount.h>
 
 #include "avc.h"
 #include "objsec.h"
