@@ -4591,8 +4591,11 @@ void ext4_set_inode_flags(struct inode *inode)
 	    !ext4_should_journal_data(inode) && !ext4_has_inline_data(inode) &&
 	    !ext4_encrypted_inode(inode))
 		new_fl |= S_DAX;
+	if (test_opt(inode->i_sb, DATA_FLAGS) != EXT4_MOUNT_JOURNAL_DATA)
+		new_fl |= S_CGROUPWB;
 	inode_set_flags(inode, new_fl,
-			S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC|S_DAX);
+			S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC|S_DAX|
+			S_CGROUPWB);
 }
 
 static blkcnt_t ext4_inode_blocks(struct ext4_inode *raw_inode,
