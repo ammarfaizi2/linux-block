@@ -38,12 +38,10 @@ begin_node:
 	if (assoc_array_ptr_is_shortcut(cursor)) {
 		/* Descend through a shortcut */
 		shortcut = assoc_array_ptr_to_shortcut(cursor);
-		smp_read_barrier_depends();
 		cursor = READ_ONCE(shortcut->next_node);
 	}
 
 	node = assoc_array_ptr_to_node(cursor);
-	smp_read_barrier_depends();
 	slot = 0;
 
 	/* We perform two passes of each node.
@@ -55,15 +53,9 @@ begin_node:
 	 */
 	has_meta = 0;
 	for (; slot < ASSOC_ARRAY_FAN_OUT; slot++) {
-		ptr = READ_ONCE(node->slots[slot]);
+		ptr = READ_ONCE(node->slots[slot]); /* Address dependency. */
 		has_meta |= (unsigned long)ptr;
 		if (ptr && assoc_array_ptr_is_leaf(ptr)) {
-			/* We need a barrier between the read of the pointer
-			 * and dereferencing the pointer - but only if we are
-			 * actually going to dereference it.
-			 */
-			smp_read_barrier_depends();
-
 			/* Invoke the callback */
 			ret = iterator(assoc_array_ptr_to_leaf(ptr),
 				       iterator_data);
@@ -86,8 +78,6 @@ begin_node:
 
 continue_node:
 	node = assoc_array_ptr_to_node(cursor);
-	smp_read_barrier_depends();
-
 	for (; slot < ASSOC_ARRAY_FAN_OUT; slot++) {
 		ptr = READ_ONCE(node->slots[slot]);
 		if (assoc_array_ptr_is_meta(ptr)) {
@@ -105,7 +95,6 @@ finished_node:
 
 	if (assoc_array_ptr_is_shortcut(parent)) {
 		shortcut = assoc_array_ptr_to_shortcut(parent);
-		smp_read_barrier_depends();
 		cursor = parent;
 		parent = READ_ONCE(shortcut->back_pointer);
 		slot = shortcut->parent_slot;
@@ -216,8 +205,6 @@ jumped:
 
 consider_node:
 	node = assoc_array_ptr_to_node(cursor);
-	smp_read_barrier_depends();
-
 	slot = segments >> (level & ASSOC_ARRAY_KEY_CHUNK_MASK);
 	slot &= ASSOC_ARRAY_FAN_MASK;
 	ptr = READ_ONCE(node->slots[slot]);
@@ -254,7 +241,6 @@ consider_node:
 	cursor = ptr;
 follow_shortcut:
 	shortcut = assoc_array_ptr_to_shortcut(cursor);
-	smp_read_barrier_depends();
 	pr_devel("shortcut to %d\n", shortcut->skip_to_level);
 	sc_level = level + ASSOC_ARRAY_LEVEL_STEP;
 	BUG_ON(sc_level > shortcut->skip_to_level);
@@ -330,8 +316,7 @@ void *assoc_array_find(const struct assoc_array *array,
 	    assoc_array_walk_found_terminal_node)
 		return NULL;
 
-	node = result.terminal_node.node;
-	smp_read_barrier_depends();
+	node = READ_ONCE(result.terminal_node.node);  /* Address dependency. */
 
 	/* If the target key is available to us, it's has to be pointed to by
 	 * the terminal node.
@@ -344,7 +329,6 @@ void *assoc_array_find(const struct assoc_array *array,
 			 * actually going to dereference it.
 			 */
 			leaf = assoc_array_ptr_to_leaf(ptr);
-			smp_read_barrier_depends();
 			if (ops->compare_object(leaf, index_key))
 				return (void *)leaf;
 		}

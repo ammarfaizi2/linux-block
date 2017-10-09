@@ -135,13 +135,14 @@ static inline bool assoc_array_ptr_is_node(const struct assoc_array_ptr *x)
 
 static inline void *assoc_array_ptr_to_leaf(const struct assoc_array_ptr *x)
 {
-	return (void *)((unsigned long)x & ~ASSOC_ARRAY_PTR_TYPE_MASK);
+	return (void *)((unsigned long)READ_ONCE(x) & /* Address dependency. */
+		~ASSOC_ARRAY_PTR_TYPE_MASK);
 }
 
 static inline
 unsigned long __assoc_array_ptr_to_meta(const struct assoc_array_ptr *x)
 {
-	return (unsigned long)x &
+	return (unsigned long)READ_ONCE(x) & /* Address dependency. */
 		~(ASSOC_ARRAY_PTR_SUBTYPE_MASK | ASSOC_ARRAY_PTR_TYPE_MASK);
 }
 static inline
