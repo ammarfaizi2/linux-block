@@ -150,7 +150,9 @@ void btrfs_update_iflags(struct inode *inode)
 		new_fl |= S_NOATIME;
 	if (ip->flags & BTRFS_INODE_DIRSYNC)
 		new_fl |= S_DIRSYNC;
-	new_fl |= S_CGROUPWB;
+	/* btree_inodes are always in the root cgroup */
+	if (btrfs_ino(ip) != BTRFS_BTREE_INODE_OBJECTID)
+		new_fl |= S_CGROUPWB;
 
 	set_mask_bits(&inode->i_flags,
 		      S_SYNC | S_APPEND | S_IMMUTABLE | S_NOATIME | S_DIRSYNC |
