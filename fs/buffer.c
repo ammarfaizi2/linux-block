@@ -3143,6 +3143,18 @@ int submit_bh(int op, int op_flags, struct buffer_head *bh)
 }
 EXPORT_SYMBOL(submit_bh);
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+int submit_bh_blkcg_css(int op, int op_flags,  struct buffer_head *bh,
+			struct cgroup_subsys_state *blkcg_css)
+{
+	struct writeback_control wbc = { .blkcg_css = blkcg_css };
+
+	/* @wbc is used just to override the bio's blkcg_css */
+	return submit_bh_wbc(op, op_flags, bh, 0, &wbc);
+}
+EXPORT_SYMBOL(submit_bh_blkcg_css);
+#endif
+
 /**
  * ll_rw_block: low-level access to block devices (DEPRECATED)
  * @op: whether to %READ or %WRITE

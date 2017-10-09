@@ -538,6 +538,7 @@ void wbc_attach_and_unlock_inode(struct writeback_control *wbc,
 	}
 
 	wbc->wb = inode_to_wb(inode);
+	wbc->blkcg_css = wbc->wb->blkcg_css;
 	wbc->inode = inode;
 
 	wbc->wb_id = wbc->wb->memcg_css->id;

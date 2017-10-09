@@ -13,6 +13,7 @@
 #include <linux/pagemap.h>
 #include <linux/wait.h>
 #include <linux/atomic.h>
+#include <linux/cgroup.h>
 
 #ifdef CONFIG_BLOCK
 
@@ -205,6 +206,16 @@ int bh_submit_read(struct buffer_head *bh);
 loff_t page_cache_seek_hole_data(struct inode *inode, loff_t offset,
 				 loff_t length, int whence);
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+int submit_bh_blkcg(int op, int op_flags, struct buffer_head *bh,
+		    struct cgroup_subsys_state *blkcg_css);
+#else
+static inline int submit_bh_blkcg(int op, int op_flags, struct buffer_head *bh,
+				  struct cgroup_subsys_state *blkcg_css)
+{
+	return submit_bh(op, op_flags, bh);
+}
+#endif
 extern int buffer_heads_over_limit;
 
 /*

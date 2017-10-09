@@ -91,6 +91,8 @@ struct writeback_control {
 	unsigned for_sync:1;		/* sync(2) WB_SYNC_ALL writeback */
 #ifdef CONFIG_CGROUP_WRITEBACK
 	struct bdi_writeback *wb;	/* wb this writeback is issued under */
+	struct cgroup_subsys_state *blkcg_css; /* usually wb->blkcg_css but
+						  may be overridden */
 	struct inode *inode;		/* inode being written out */
 
 	/* foreign inode detection, see wbc_detach_inode() */
@@ -277,8 +279,8 @@ static inline void wbc_init_bio(struct writeback_control *wbc, struct bio *bio)
 	 * behind a slow cgroup.  Ultimately, we want pageout() to kick off
 	 * regular writeback instead of writing things out itself.
 	 */
-	if (wbc->wb)
-		bio_associate_blkcg(bio, wbc->wb->blkcg_css);
+	if (wbc->blkcg_css)
+		bio_associate_blkcg(bio, wbc->blkcg_css);
 }
 
 #else	/* CONFIG_CGROUP_WRITEBACK */
