@@ -191,14 +191,14 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 		goto out_unresv;
 	}
 
-	out_fence = virtio_gpu_fence_alloc();
+	out_fence = virtio_gpu_fence_alloc(vgdev);
 	if(!out_fence) {
 		ret = -ENOMEM;
 		goto out_memdup;
 	}
 
 	if (out_fence_fd >= 0) {
-		sync_file = sync_file_create(dma_fence_get(&out_fence->f));
+		sync_file = sync_file_create(&out_fence->f);
 		if (!sync_file) {
 			dma_fence_put(&out_fence->f);
 			ret = -ENOMEM;
@@ -223,7 +223,6 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 	/* fence the command bo */
 	virtio_gpu_unref_list(&validate_list);
 	kvfree(buflist);
-	dma_fence_put(&out_fence->f);
 	return 0;
 
 out_memdup:
@@ -341,7 +340,7 @@ static int virtio_gpu_resource_create_ioctl(struct drm_device *dev, void *data,
 		rc_3d.nr_samples = cpu_to_le32(rc->nr_samples);
 		rc_3d.flags = cpu_to_le32(rc->flags);
 
-		fence = virtio_gpu_fence_alloc();
+		fence = virtio_gpu_fence_alloc(vgdev);
 		if (!fence) {
 			ret = -ENOMEM;
 			goto fail_fence;
@@ -445,7 +444,7 @@ static int virtio_gpu_transfer_from_host_ioctl(struct drm_device *dev,
 
 	convert_to_hw_box(&box, &args->box);
 
-	fence = virtio_gpu_fence_alloc();
+	fence = virtio_gpu_fence_alloc(vgdev);
 	if (!fence) {
 		ret = -ENOMEM;
 		goto out_unres;
@@ -499,7 +498,7 @@ static int virtio_gpu_transfer_to_host_ioctl(struct drm_device *dev, void *data,
 			(vgdev, qobj->hw_res_handle, offset,
 			 box.w, box.h, box.x, box.y, NULL);
 	} else {
-		fence = virtio_gpu_fence_alloc();
+		fence = virtio_gpu_fence_alloc(vgdev);
 		if (!fence) {
 			ret = -ENOMEM;
 			goto out_unres;

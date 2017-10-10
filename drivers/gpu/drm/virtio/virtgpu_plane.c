@@ -190,6 +190,8 @@ static void virtio_gpu_primary_plane_update(struct drm_plane *plane,
 static int virtio_gpu_cursor_prepare_fb(struct drm_plane *plane,
 					struct drm_plane_state *new_state)
 {
+	struct drm_device *dev = plane->dev;
+	struct virtio_gpu_device *vgdev = dev->dev_private;
 	struct virtio_gpu_framebuffer *vgfb;
 	struct virtio_gpu_object *bo;
 
@@ -199,7 +201,7 @@ static int virtio_gpu_cursor_prepare_fb(struct drm_plane *plane,
 	vgfb = to_virtio_gpu_framebuffer(new_state->fb);
 	bo = gem_to_virtio_gpu_obj(vgfb->obj);
 	if (bo && bo->dumb && (plane->state->fb != new_state->fb)) {
-		vgfb->fence = virtio_gpu_fence_alloc();
+		vgfb->fence = virtio_gpu_fence_alloc(vgdev);
 		if (!vgfb->fence)
 			return -ENOMEM;
 	}
