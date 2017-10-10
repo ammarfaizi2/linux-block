@@ -129,10 +129,14 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 		if (!in_fence)
 			return -EINVAL;
 
-		if (dma_fence_match_context(in_fence,
-					    vgdev->fence_drv.context)) {
-			dma_fence_put(in_fence);
-			return -EINVAL;
+		/*
+		 * Wait if the fence is from a foreign context, or if the fence
+		 * array contains any fence from a foreign context.
+		 */
+		if (!dma_fence_match_context(in_fence, vgdev->fence_drv.context)) {
+			ret = dma_fence_wait(in_fence, true);
+			if (ret)
+				return ret;
 		}
 	}
 
@@ -210,7 +214,6 @@ static int virtio_gpu_execbuffer_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (in_fence) {
-		dma_fence_wait(in_fence, true);
 		dma_fence_put(in_fence);
 		in_fence = NULL;
 	}
