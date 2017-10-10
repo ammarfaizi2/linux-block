@@ -704,10 +704,14 @@ static void __torture_print_stats(char *page,
 	bool fail = 0;
 	int i, n_stress;
 	long max = 0;
-	long min = statp[0].n_lock_acquired;
+	long min = 0;
 	long long sum = 0;
 
 	n_stress = write ? cxt.nrealwriters_stress : cxt.nrealreaders_stress;
+
+	if (n_stress)
+		min = statp[0].n_lock_acquired;
+
 	for (i = 0; i < n_stress; i++) {
 		if (statp[i].n_lock_fail)
 			fail = true;
