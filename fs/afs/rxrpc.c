@@ -360,7 +360,8 @@ long afs_make_call(struct afs_addr_cursor *ac, struct afs_call *call,
 					 tx_total_len, gfp,
 					 (async ?
 					  afs_wake_up_async_call :
-					  afs_wake_up_call_waiter));
+					  afs_wake_up_call_waiter),
+					 call->upgrade);
 	if (IS_ERR(rxcall)) {
 		ret = PTR_ERR(rxcall);
 		goto error_kill_call;
@@ -414,7 +415,8 @@ error_do_abort:
 	} else {
 		offset = 0;
 		rxrpc_kernel_recv_data(call->net->socket, rxcall, NULL,
-				       0, &offset, false, &call->abort_code);
+				       0, &offset, false, &call->abort_code,
+				       &call->service_id);
 		ac->abort_code = call->abort_code;
 		ac->responded = true;
 	}
@@ -445,7 +447,8 @@ static void afs_deliver_to_call(struct afs_call *call)
 			ret = rxrpc_kernel_recv_data(call->net->socket,
 						     call->rxcall,
 						     NULL, 0, &offset, false,
-						     &call->abort_code);
+						     &call->abort_code,
+						     &call->service_id);
 			trace_afs_recv_data(call, 0, offset, false, ret);
 
 			if (ret == -EINPROGRESS || ret == -EAGAIN)
@@ -848,7 +851,8 @@ int afs_extract_data(struct afs_call *call, void *buf, size_t count,
 
 	ret = rxrpc_kernel_recv_data(net->socket, call->rxcall,
 				     buf, count, &call->offset,
-				     want_more, &call->abort_code);
+				     want_more, &call->abort_code,
+				     &call->service_id);
 	trace_afs_recv_data(call, count, call->offset, want_more, ret);
 	if (ret == 0 || ret == -EAGAIN)
 		return ret;
