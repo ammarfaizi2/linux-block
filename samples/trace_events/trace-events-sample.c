@@ -42,6 +42,20 @@ static void simple_thread_func(int cnt)
 	trace_foo_with_template_cond("prints other times", cnt);
 
 	trace_foo_with_template_print("I have to be different", cnt);
+
+	/*
+	 * Note: All RAW events should use the _rcuidle variant.
+	 *  But because _rcuidle calls functions not exported to
+	 *  modules, we can't use it in the sample code.
+	 *
+	 * Just pretend that the two functions below are:
+	 *
+	 * trace_foo_bar_with_raw_rcuidle() and
+	 * trace_foo_with_template_raw_rcuidle()
+	 */
+	trace_foo_bar_with_raw/*_rcuidle*/("I must activate RCU", cnt);
+
+	trace_foo_with_template_raw/*_rcuidle*/("I must activate RCU too", cnt);
 }
 
 static int simple_thread(void *arg)

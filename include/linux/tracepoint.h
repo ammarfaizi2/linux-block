@@ -354,9 +354,37 @@ extern void syscall_unregfunc(void);
 			PARAMS(void *__data, proto),			\
 			PARAMS(__data, args))
 
+/*
+ * DECLARE_TRACE_CONDITION() adds a "cond" argument. This condition
+ * will be checked before calling the callbacks. If the condition
+ * fails, then no callback is made to the tracepoint.
+ * The "cond" check is made within the jump label text, so no
+ * compare is made if the tracepoint is disabled.
+ *
+ * Note, DECLARE_TRACE_CONDITION() and DECLARE_TRACE are only called
+ * if the CPU is online. If the CPU is not online, then none of the
+ * callbacks for the tracepoint will be called. If you need to have
+ * a tracepoint when the CPU is offline, then use DECLARE_TRACE_RAW()
+ */
 #define DECLARE_TRACE_CONDITION(name, proto, args, cond)		\
 	__DECLARE_TRACE(name, PARAMS(proto), PARAMS(args),		\
 			cpu_online(raw_smp_processor_id()) && (PARAMS(cond)), \
+			PARAMS(void *__data, proto),			\
+			PARAMS(__data, args))
+
+/*
+ * DECLARE_TRACE_RAW() is the same as DECLARE_TRACE_CONDITION() but
+ * does not check if the CPU is online before calling the callbacks.
+ * If no condition is needed, just pass in "1" for "cond".
+ *
+ * Only use the trace_*_rcuidle() instance when using DECLARE_TRACE_RAW()
+ * as there is no guarantee that RCU is active when the CPU is going
+ * offline. The _rcuidle() will activate RCU while the tracepoint is
+ * executing. Tracepoints require RCU active.
+ */
+#define DECLARE_TRACE_RAW(name, proto, args, cond)			\
+	__DECLARE_TRACE(name, PARAMS(proto), PARAMS(args),		\
+			(PARAMS(cond)),					\
 			PARAMS(void *__data, proto),			\
 			PARAMS(__data, args))
 
@@ -483,6 +511,10 @@ extern void syscall_unregfunc(void);
 			       args, cond)			\
 	DECLARE_TRACE_CONDITION(name, PARAMS(proto),		\
 				PARAMS(args), PARAMS(cond))
+#define DEFINE_EVENT_RAW(template, name, proto,			\
+			 args, cond)				\
+	DECLARE_TRACE_RAW(name, PARAMS(proto),			\
+			  PARAMS(args), PARAMS(cond))
 
 #define TRACE_EVENT(name, proto, args, struct, assign, print)	\
 	DECLARE_TRACE(name, PARAMS(proto), PARAMS(args))
@@ -497,6 +529,10 @@ extern void syscall_unregfunc(void);
 			      struct, assign, print)		\
 	DECLARE_TRACE_CONDITION(name, PARAMS(proto),		\
 				PARAMS(args), PARAMS(cond))
+#define TRACE_EVENT_RAW(name, proto, args, cond,		\
+			struct, assign, print)			\
+	DECLARE_TRACE_RAW(name, PARAMS(proto),			\
+			  PARAMS(args), PARAMS(cond))
 
 #define TRACE_EVENT_FLAGS(event, flag)
 

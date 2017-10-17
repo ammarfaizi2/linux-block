@@ -343,7 +343,40 @@ TRACE_EVENT_CONDITION(foo_bar_with_cond,
 
 	TP_STRUCT__entry(
 		__string(	foo,    foo		)
-		__field(	int,	bar			)
+		__field(	int,	bar		)
+	),
+
+	TP_fast_assign(
+		__assign_str(foo, foo);
+		__entry->bar	= bar;
+	),
+
+	TP_printk("foo %s %d", __get_str(foo), __entry->bar)
+);
+
+/*
+ * All trace events require RCU to be active. When a CPU goes offline
+ * RCU is deactivated for that CPU. All the TRACE_EVENT*()s to here
+ * will not call a tracepoint if the CPU is offline, because RCU may
+ * not be active. In order to have trace events within the CPU offlining
+ * code, use TRACE_EVENT_RAW(). TRACE_EVENT_RAW() is the same as
+ * TRACE_EVENT_CONDITION() except that it does not check if the CPU
+ * is online or not.
+ *
+ * One caveat, the trace event hook must use the "_rcuidle()" version
+ * in order to enable RCU if it is not already enabled.
+ */
+TRACE_EVENT_RAW(foo_bar_with_raw,
+
+	TP_PROTO(const char *foo, int bar),
+
+	TP_ARGS(foo, bar),
+
+	TP_CONDITION(1),
+
+	TP_STRUCT__entry(
+		__string(	foo,    foo		)
+		__field(	int,	bar		)
 	),
 
 	TP_fast_assign(
@@ -422,6 +455,12 @@ TRACE_EVENT_FN(foo_bar_with_fn,
  *
  * DEFINE_EVENT_CONDITION(template, name, proto, args, cond);
  * DEFINE_EVENT_FN(template, name, proto, args, reg, unreg);
+ *
+ * As well as with a RAW function:
+ *
+ * DEFINE_EVENT_RAW(template, name, proto, args, cond);
+ *
+ * But remember, raw events must use _rcuidle() (See trace-events-sample.c)
  */
 DECLARE_EVENT_CLASS(foo_template,
 
@@ -460,6 +499,11 @@ DEFINE_EVENT_FN(foo_template, foo_with_template_fn,
 	TP_PROTO(const char *foo, int bar),
 	TP_ARGS(foo, bar),
 	foo_bar_reg, foo_bar_unreg);
+
+DEFINE_EVENT_RAW(foo_template, foo_with_template_raw,
+	TP_PROTO(const char *foo, int bar),
+	TP_ARGS(foo, bar),
+	TP_CONDITION(1));
 
 /*
  * Anytime two events share basically the same values and have

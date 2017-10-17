@@ -35,6 +35,9 @@
 		PARAMS(assign),						\
 		PARAMS(print))
 
+#undef TRACE_EVENT_RAW
+#define TRACE_EVENT_RAW TRACE_EVENT_CONDITION
+
 #undef TRACE_EVENT_FN
 #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
 		assign, print, reg, unreg)			\
@@ -60,6 +63,9 @@
 #undef DEFINE_EVENT_CONDITION
 #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
 	DEFINE_EVENT(template, name, PARAMS(proto), PARAMS(args))
+
+#undef DEFINE_EVENT_RAW
+#define DEFINE_EVENT_RAW DEFINE_EVENT_CONDITION
 
 #undef DECLARE_TRACE
 #define DECLARE_TRACE(name, proto, args)	\
@@ -100,11 +106,13 @@
 #undef TRACE_EVENT_FN
 #undef TRACE_EVENT_FN_COND
 #undef TRACE_EVENT_CONDITION
+#undef TRACE_EVENT_RAW
 #undef DECLARE_EVENT_CLASS
 #undef DEFINE_EVENT
 #undef DEFINE_EVENT_FN
 #undef DEFINE_EVENT_PRINT
 #undef DEFINE_EVENT_CONDITION
+#undef DEFINE_EVENT_RAW
 #undef TRACE_HEADER_MULTI_READ
 #undef DECLARE_TRACE
 
