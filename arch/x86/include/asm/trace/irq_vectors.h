@@ -137,12 +137,14 @@ DEFINE_IRQ_VECTOR_EVENT(deferred_error_apic);
 DEFINE_IRQ_VECTOR_EVENT(thermal_apic);
 #endif
 
-TRACE_EVENT(vector_config,
+TRACE_EVENT_RAW(vector_config,
 
 	TP_PROTO(unsigned int irq, unsigned int vector,
 		 unsigned int cpu, unsigned int apicdest),
 
 	TP_ARGS(irq, vector, cpu, apicdest),
+
+	TP_CONDITION(1),
 
 	TP_STRUCT__entry(
 		__field(	unsigned int,	irq		)
@@ -194,11 +196,11 @@ DECLARE_EVENT_CLASS(vector_mod,
 );
 
 #define DEFINE_IRQ_VECTOR_MOD_EVENT(name)				\
-DEFINE_EVENT_FN(vector_mod, name,					\
+DEFINE_EVENT_RAW(vector_mod, name,					\
 	TP_PROTO(unsigned int irq, unsigned int vector,			\
 		 unsigned int cpu, unsigned int prev_vector,		\
 		 unsigned int prev_cpu),				\
-	TP_ARGS(irq, vector, cpu, prev_vector, prev_cpu), NULL, NULL);	\
+	TP_ARGS(irq, vector, cpu, prev_vector, prev_cpu), 1);	\
 
 DEFINE_IRQ_VECTOR_MOD_EVENT(vector_update);
 DEFINE_IRQ_VECTOR_MOD_EVENT(vector_clear);
@@ -223,19 +225,21 @@ DECLARE_EVENT_CLASS(vector_reserve,
 );
 
 #define DEFINE_IRQ_VECTOR_RESERVE_EVENT(name)	\
-DEFINE_EVENT_FN(vector_reserve, name,	\
+DEFINE_EVENT_RAW(vector_reserve, name,	\
 	TP_PROTO(unsigned int irq, int ret),	\
-	TP_ARGS(irq, ret), NULL, NULL);		\
+	TP_ARGS(irq, ret), 1);		\
 
 DEFINE_IRQ_VECTOR_RESERVE_EVENT(vector_reserve_managed);
 DEFINE_IRQ_VECTOR_RESERVE_EVENT(vector_reserve);
 
-TRACE_EVENT(vector_alloc,
+TRACE_EVENT_RAW(vector_alloc,
 
 	TP_PROTO(unsigned int irq, unsigned int vector, bool reserved,
 		 int ret),
 
 	TP_ARGS(irq, vector, ret, reserved),
+
+	TP_CONDITION(1),
 
 	TP_STRUCT__entry(
 		__field(	unsigned int,	irq		)
@@ -256,12 +260,14 @@ TRACE_EVENT(vector_alloc,
 		  __entry->reserved, __entry->ret)
 );
 
-TRACE_EVENT(vector_alloc_managed,
+TRACE_EVENT_RAW(vector_alloc_managed,
 
 	TP_PROTO(unsigned int irq, unsigned int vector,
 		 int ret),
 
 	TP_ARGS(irq, vector, ret),
+
+	TP_CONDITION(1),
 
 	TP_STRUCT__entry(
 		__field(	unsigned int,	irq		)
@@ -306,10 +312,10 @@ DECLARE_EVENT_CLASS(vector_activate,
 );
 
 #define DEFINE_IRQ_VECTOR_ACTIVATE_EVENT(name)				\
-DEFINE_EVENT_FN(vector_activate, name,					\
+DEFINE_EVENT_RAW(vector_activate, name,					\
 	TP_PROTO(unsigned int irq, bool is_managed,			\
 		 bool can_reserve, bool early),				\
-	TP_ARGS(irq, is_managed, can_reserve, early), NULL, NULL);	\
+	TP_ARGS(irq, is_managed, can_reserve, early), 1);	\
 
 DEFINE_IRQ_VECTOR_ACTIVATE_EVENT(vector_activate);
 DEFINE_IRQ_VECTOR_ACTIVATE_EVENT(vector_deactivate);
