@@ -104,7 +104,7 @@ static const cxl_p1_reg_t CXL_XSL9_INV      = {0x0110};
 static const cxl_p1_reg_t CXL_XSL9_DEF      = {0x0140};
 static const cxl_p1_reg_t CXL_XSL9_DSNCTL   = {0x0168};
 static const cxl_p1_reg_t CXL_PSL9_FIR1     = {0x0300};
-static const cxl_p1_reg_t CXL_PSL9_FIR2     = {0x0308};
+static const cxl_p1_reg_t CXL_PSL9_FIR_MASK = {0x0308};
 static const cxl_p1_reg_t CXL_PSL9_Timebase = {0x0310};
 static const cxl_p1_reg_t CXL_PSL9_DEBUG    = {0x0320};
 static const cxl_p1_reg_t CXL_PSL9_FIR_CNTL = {0x0348};
@@ -1072,7 +1072,8 @@ u64 cxl_calculate_sr(bool master, bool kernel, bool real_mode, bool p9);
 
 void cxl_native_irq_dump_regs_psl9(struct cxl_context *ctx);
 void cxl_native_irq_dump_regs_psl8(struct cxl_context *ctx);
-void cxl_native_err_irq_dump_regs(struct cxl *adapter);
+void cxl_native_err_irq_dump_regs_psl8(struct cxl *adapter);
+void cxl_native_err_irq_dump_regs_psl9(struct cxl *adapter);
 int cxl_pci_vphb_add(struct cxl_afu *afu);
 void cxl_pci_vphb_remove(struct cxl_afu *afu);
 void cxl_release_mapping(struct cxl_context *ctx);
