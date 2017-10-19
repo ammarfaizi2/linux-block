@@ -260,6 +260,8 @@ enum req_flag_bits {
 #define req_op(req) \
 	((req)->cmd_flags & REQ_OP_MASK)
 
+#define REQ_OP_FLAGS_ODIRECT	(REQ_SYNC | REQ_IDLE)
+
 /* obsolete, don't use in new code */
 static inline void bio_set_op_attrs(struct bio *bio, unsigned op,
 		unsigned op_flags)

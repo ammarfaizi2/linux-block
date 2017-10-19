@@ -837,7 +837,7 @@ iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
 	get_page(page);
 	if (bio_add_page(bio, page, len, 0) != len)
 		BUG();
-	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_SYNC | REQ_IDLE);
+	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_OP_FLAGS_ODIRECT);
 
 	atomic_inc(&dio->ref);
 	return submit_bio(bio);
@@ -921,7 +921,8 @@ iomap_dio_actor(struct inode *inode, loff_t pos, loff_t length,
 		}
 
 		if (dio->flags & IOMAP_DIO_WRITE) {
-			bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_SYNC | REQ_IDLE);
+			bio_set_op_attrs(bio, REQ_OP_WRITE,
+						REQ_OP_FLAGS_ODIRECT);
 			task_io_account_write(bio->bi_iter.bi_size);
 		} else {
 			bio_set_op_attrs(bio, REQ_OP_READ, 0);

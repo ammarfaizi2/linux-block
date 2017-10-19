@@ -178,7 +178,7 @@ static struct inode *bdev_file_inode(struct file *file)
 
 static unsigned int dio_bio_write_op(struct kiocb *iocb)
 {
-	unsigned int op = REQ_OP_WRITE | REQ_SYNC | REQ_IDLE;
+	unsigned int op = REQ_OP_WRITE | REQ_OP_FLAGS_ODIRECT;
 
 	/* avoid the need for a I/O completion work item */
 	if (iocb->ki_flags & IOCB_DSYNC)

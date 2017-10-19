@@ -1239,7 +1239,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	dio->inode = inode;
 	if (iov_iter_rw(iter) == WRITE) {
 		dio->op = REQ_OP_WRITE;
-		dio->op_flags = REQ_SYNC | REQ_IDLE;
+		dio->op_flags = REQ_OP_FLAGS_ODIRECT;
 		if (iocb->ki_flags & IOCB_NOWAIT)
 			dio->op_flags |= REQ_NOWAIT;
 	} else {

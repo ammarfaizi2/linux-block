@@ -571,7 +571,7 @@ static inline bool wbt_should_throttle(struct rq_wb *rwb, struct bio *bio)
 	/*
 	 * Don't throttle WRITE_ODIRECT
 	 */
-	if ((bio->bi_opf & (REQ_SYNC | REQ_IDLE)) == (REQ_SYNC | REQ_IDLE))
+	if ((bio->bi_opf & REQ_OP_FLAGS_ODIRECT) == REQ_OP_FLAGS_ODIRECT)
 		return false;
 
 	return true;
