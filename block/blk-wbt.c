@@ -277,6 +277,27 @@ enum {
 	LAT_EXCEEDED,
 };
 
+static bool wbt_any_inflight(struct rq_wb *rwb)
+{
+	unsigned int i;
+
+	for (i = 0; i < WBT_NUM_RWQ; i++)
+		if (atomic_read(&rwb->rq_wait[i].inflight))
+			return true;
+
+	return false;
+}
+
+static unsigned int wbt_inflight(struct rq_wb *rwb)
+{
+	unsigned int i, ret = 0;
+
+	for (i = 0; i < WBT_NUM_RWQ; i++)
+		ret += atomic_read(&rwb->rq_wait[i].inflight);
+
+	return ret;
+}
+
 static int latency_exceeded(struct rq_wb *rwb, struct blk_rq_stat *stat)
 {
 	struct backing_dev_info *bdi = rwb->queue->backing_dev_info;
@@ -309,7 +330,7 @@ static int latency_exceeded(struct rq_wb *rwb, struct blk_rq_stat *stat)
 		 * just writes as well.
 		 */
 		if (stat[WRITE].nr_samples || wb_recent_wait(rwb) ||
-		    wbt_inflight(rwb))
+		    wbt_any_inflight(rwb))
 			return LAT_UNKNOWN_WRITES;
 		return LAT_UNKNOWN;
 	}

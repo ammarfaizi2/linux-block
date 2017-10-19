@@ -96,16 +96,6 @@ struct rq_wb {
 	struct rq_wait rq_wait[WBT_NUM_RWQ];
 };
 
-static inline unsigned int wbt_inflight(struct rq_wb *rwb)
-{
-	unsigned int i, ret = 0;
-
-	for (i = 0; i < WBT_NUM_RWQ; i++)
-		ret += atomic_read(&rwb->rq_wait[i].inflight);
-
-	return ret;
-}
-
 #ifdef CONFIG_BLK_WBT
 
 void __wbt_done(struct rq_wb *, enum wbt_flags);
