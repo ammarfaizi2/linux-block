@@ -573,7 +573,7 @@ static int stutter;
  */
 void stutter_wait(const char *title)
 {
-	cond_resched_rcu_qs();
+	cond_resched();
 	while (READ_ONCE(stutter_pause_test) ||
 	       (torture_runnable && !READ_ONCE(*torture_runnable))) {
 		if (stutter_pause_test)
