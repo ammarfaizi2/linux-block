@@ -887,12 +887,6 @@ EXC_COMMON(trap_0b_common, 0xb00, unknown_exception)
 #define LOAD_SYSCALL_HANDLER(reg)					\
 	__LOAD_HANDLER(reg, system_call_common)
 
-#define SYSCALL_FASTENDIAN_TEST					\
-BEGIN_FTR_SECTION						\
-	cmpdi	r0,0x1ebe ; 					\
-	beq-	1f ;						\
-END_FTR_SECTION_IFSET(CPU_FTR_REAL_LE)				\
-
 /*
  * After SYSCALL_KVMTEST, we reach here with PACA in r13, r13 in r9,
  * and HMT_MEDIUM.
@@ -907,6 +901,13 @@ END_FTR_SECTION_IFSET(CPU_FTR_REAL_LE)				\
 	rfid ; 							\
 	b	. ;	/* prevent speculative execution */
 
+#ifdef CONFIG_PPC_FAST_ENDIAN_SWITCH
+#define SYSCALL_FASTENDIAN_TEST					\
+BEGIN_FTR_SECTION						\
+	cmpdi	r0,0x1ebe ; 					\
+	beq-	1f ;						\
+END_FTR_SECTION_IFSET(CPU_FTR_REAL_LE)				\
+
 #define SYSCALL_FASTENDIAN					\
 	/* Fast LE/BE switch system call */			\
 1:	mfspr	r12,SPRN_SRR1 ;					\
@@ -915,6 +916,10 @@ END_FTR_SECTION_IFSET(CPU_FTR_REAL_LE)				\
 	mr	r13,r9 ;					\
 	rfid ;		/* return to userspace */		\
 	b	. ;	/* prevent speculative execution */
+#else
+#define SYSCALL_FASTENDIAN_TEST
+#define SYSCALL_FASTENDIAN
+#endif /* CONFIG_PPC_FAST_ENDIAN_SWITCH */
 
 #if defined(CONFIG_RELOCATABLE)
 	/*
