@@ -618,11 +618,11 @@ EXPORT_SYMBOL_GPL(call_rcu_tasks);
  * synchronize_rcu_tasks - wait until an rcu-tasks grace period has elapsed.
  *
  * Control will return to the caller some time after a full rcu-tasks
- * grace period has elapsed, in other words after all currently
- * executing rcu-tasks read-side critical sections have elapsed.  These
- * read-side critical sections are delimited by calls to schedule(),
- * cond_resched_rcu_qs(), idle execution, userspace execution, calls
- * to synchronize_rcu_tasks(), and (in theory, anyway) cond_resched().
+ * grace period has elapsed, in other words after all currently executing
+ * rcu-tasks read-side critical sections have elapsed.  These read-side
+ * critical sections are delimited by calls to schedule(), cond_resched(),
+ * idle execution, userspace execution, calls to synchronize_rcu_tasks(),
+ * and (in theory, anyway) cond_resched().
  *
  * This is a very specialized primitive, intended only for a few uses in
  * tracing and other situations requiring manipulation of function
