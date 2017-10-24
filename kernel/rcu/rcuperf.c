@@ -354,7 +354,7 @@ static bool __maybe_unused torturing_tasks(void)
  */
 static void rcu_perf_wait_shutdown(void)
 {
-	cond_resched_rcu_qs();
+	cond_resched();
 	if (atomic_read(&n_rcu_perf_writer_finished) < nrealwriters)
 		return;
 	while (!torture_must_stop())
