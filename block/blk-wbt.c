@@ -15,7 +15,7 @@
  *   positive scaling steps where we shrink the monitoring window, a negative
  *   scaling step retains the default step==0 window size.
  *
- * Copyright (C) 2016 Jens Axboe
+ * Copyright (C) 2016-2017 Jens Axboe
  *
  */
 #include <linux/kernel.h>
@@ -101,9 +101,20 @@ static bool wb_recent_wait(struct rq_wb *rwb)
 	return time_before(jiffies, wb->dirty_sleep + HZ);
 }
 
-static inline struct rq_wait *get_rq_wait(struct rq_wb *rwb, bool is_kswapd)
+static bool rw_is_odirect_write(unsigned int rw)
 {
-	return &rwb->rq_wait[is_kswapd];
+	return (rw & REQ_OP_FLAGS_ODIRECT) == REQ_OP_FLAGS_ODIRECT;
+}
+
+static inline struct rq_wait *get_rq_wait(struct rq_wb *rwb, bool is_kswapd,
+					  bool is_odirect)
+{
+	if (is_kswapd)
+		return &rwb->rq_wait[WBT_RWQ_KSWAPD];
+	else if (is_odirect)
+		return &rwb->rq_wait[WBT_RWQ_ODIRECT];
+
+	return &rwb->rq_wait[WBT_RWQ_BUFFERED];
 }
 
 static void rwb_wake_all(struct rq_wb *rwb)
@@ -126,7 +137,7 @@ void __wbt_done(struct rq_wb *rwb, enum wbt_flags wb_acct)
 	if (!(wb_acct & WBT_TRACKED))
 		return;
 
-	rqw = get_rq_wait(rwb, wb_acct & WBT_KSWAPD);
+	rqw = get_rq_wait(rwb, wb_acct & WBT_KSWAPD, wb_acct & WBT_ODIRECT);
 	inflight = atomic_dec_return(&rqw->inflight);
 
 	/*
@@ -140,7 +151,9 @@ void __wbt_done(struct rq_wb *rwb, enum wbt_flags wb_acct)
 
 	/*
 	 * If the device does write back caching, drop further down
-	 * before we wake people up.
+	 * before we wake people up. The exception is if we recently
+	 * waited in balance_dirty_pages() - if that's the case, use
+	 * the normal wake limit to boost throughput a bit.
 	 */
 	if (rwb->wc && !wb_recent_wait(rwb))
 		limit = 0;
@@ -502,9 +515,9 @@ static inline unsigned int get_limit(struct rq_wb *rwb, unsigned long rw)
 	unsigned int limit;
 
 	/*
-	 * At this point we know it's a buffered write. If this is
-	 * kswapd trying to free memory, or REQ_SYNC is set, set, then
-	 * it's WB_SYNC_ALL writeback, and we'll use the max limit for
+	 * At this point we know it's a write that we should throttle.
+	 * If this is kswapd trying to free memory, or REQ_SYNC is set,
+	 * then it's WB_SYNC_ALL writeback, and we'll use the max limit for
 	 * that. If the write is marked as a background write, then use
 	 * the idle limit, or go to normal if we haven't had competing
 	 * IO for a bit.
@@ -555,9 +568,10 @@ static void __wbt_wait(struct rq_wb *rwb, unsigned long rw, spinlock_t *lock)
 	__releases(lock)
 	__acquires(lock)
 {
-	struct rq_wait *rqw = get_rq_wait(rwb, current_is_kswapd());
+	struct rq_wait *rqw;
 	DEFINE_WAIT(wait);
 
+	rqw = get_rq_wait(rwb, current_is_kswapd(), rw_is_odirect_write(rw));
 	if (may_queue(rwb, rqw, &wait, rw))
 		return;
 
@@ -579,23 +593,12 @@ static void __wbt_wait(struct rq_wb *rwb, unsigned long rw, spinlock_t *lock)
 	finish_wait(&rqw->wait, &wait);
 }
 
-static inline bool wbt_should_throttle(struct rq_wb *rwb, struct bio *bio)
+static inline bool wbt_should_throttle(struct bio *bio)
 {
-	const int op = bio_op(bio);
-
 	/*
-	 * If not a WRITE, do nothing
+	 * Throttle all writes, we'll bucketize them appropriately later
 	 */
-	if (op != REQ_OP_WRITE)
-		return false;
-
-	/*
-	 * Don't throttle WRITE_ODIRECT
-	 */
-	if ((bio->bi_opf & REQ_OP_FLAGS_ODIRECT) == REQ_OP_FLAGS_ODIRECT)
-		return false;
-
-	return true;
+	return bio_op(bio) == REQ_OP_WRITE;
 }
 
 /*
@@ -606,18 +609,15 @@ static inline bool wbt_should_throttle(struct rq_wb *rwb, struct bio *bio)
  */
 enum wbt_flags wbt_wait(struct rq_wb *rwb, struct bio *bio, spinlock_t *lock)
 {
-	unsigned int ret = 0;
+	enum wbt_flags ret = 0;
 
 	if (!rwb_enabled(rwb))
 		return 0;
 
-	if (bio_op(bio) == REQ_OP_READ)
-		ret = WBT_READ;
-
-	if (!wbt_should_throttle(rwb, bio)) {
-		if (ret & WBT_READ)
+	if (!wbt_should_throttle(bio)) {
+		if (bio_op(bio) == REQ_OP_READ)
 			wb_timestamp(rwb, &rwb->last_issue);
-		return ret;
+		return 0;
 	}
 
 	__wbt_wait(rwb, bio->bi_opf, lock);
@@ -627,6 +627,8 @@ enum wbt_flags wbt_wait(struct rq_wb *rwb, struct bio *bio, spinlock_t *lock)
 
 	if (current_is_kswapd())
 		ret |= WBT_KSWAPD;
+	else if (rw_is_odirect_write(bio->bi_opf))
+		ret |= WBT_ODIRECT;
 
 	return ret | WBT_TRACKED;
 }

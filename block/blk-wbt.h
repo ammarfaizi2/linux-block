@@ -9,16 +9,28 @@
 
 #include "blk-stat.h"
 
+/*
+ * First bit is tracked or not, next two bits is a value shifted up
+ */
 enum wbt_flags {
 	WBT_TRACKED		= 1,	/* write, tracked for throttling */
-	WBT_READ		= 2,	/* read */
-	WBT_KSWAPD		= 4,	/* write, from kswapd */
+	WBT_KSWAPD		= 2,
+	WBT_ODIRECT		= 4,
 
 	WBT_NR_BITS		= 3,	/* number of bits */
 };
 
+/*
+ * We have three buckets for accounting and waiting - one for buffered
+ * IO, one for kswapd, and one for O_DIRECT writes. This helps us ensure
+ * fairness between different types of writes, without starving one of
+ * them unnecessarily.
+ */
 enum {
-	WBT_NUM_RWQ		= 2,
+	WBT_RWQ_BUFFERED	= 0,
+	WBT_RWQ_KSWAPD,
+	WBT_RWQ_ODIRECT,
+	WBT_NUM_RWQ,
 };
 
 /*
@@ -52,7 +64,7 @@ static inline bool wbt_is_tracked(struct blk_issue_stat *stat)
 
 static inline bool wbt_is_read(struct blk_issue_stat *stat)
 {
-	return (stat->stat >> BLK_STAT_RES_SHIFT) & WBT_READ;
+	return (stat->stat >> BLK_STAT_RES_SHIFT) == 0;
 }
 
 struct rq_wait {
