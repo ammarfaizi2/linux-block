@@ -799,6 +799,13 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 			int rtst;
 			struct task_struct *t1;
 
+			/*
+			 * Enable cond_ressched() action on other CPUs
+			 * if needed.  Yes, we invoke synchronize_sched()
+			 * solely for its cond_resched() side-effect...
+			 */
+			synchronize_sched();
+
 			schedule_timeout_interruptible(HZ);
 			rtst = READ_ONCE(rcu_task_stall_timeout);
 			needreport = rtst > 0 &&
