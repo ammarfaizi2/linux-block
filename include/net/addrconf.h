@@ -55,6 +55,7 @@ struct prefix_info {
 struct in6_validator_info {
 	struct in6_addr		i6vi_addr;
 	struct inet6_dev	*i6vi_dev;
+	struct netlink_ext_ack	*extack;
 };
 
 #define IN6_ADDR_HSIZE_SHIFT	4
@@ -94,8 +95,8 @@ int __ipv6_get_lladdr(struct inet6_dev *idev, struct in6_addr *addr,
 		      u32 banned_flags);
 int ipv6_get_lladdr(struct net_device *dev, struct in6_addr *addr,
 		    u32 banned_flags);
-int inet_rcv_saddr_equal(const struct sock *sk, const struct sock *sk2,
-			 bool match_wildcard);
+bool inet_rcv_saddr_equal(const struct sock *sk, const struct sock *sk2,
+			  bool match_wildcard);
 void addrconf_join_solict(struct net_device *dev, const struct in6_addr *addr);
 void addrconf_leave_solict(struct inet6_dev *idev, const struct in6_addr *addr);
 

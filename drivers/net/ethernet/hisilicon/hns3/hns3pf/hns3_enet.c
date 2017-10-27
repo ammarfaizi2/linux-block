@@ -19,12 +19,13 @@
 #include <linux/sctp.h>
 #include <linux/vermagic.h>
 #include <net/gre.h>
+#include <net/pkt_cls.h>
 #include <net/vxlan.h>
 
 #include "hnae3.h"
 #include "hns3_enet.h"
 
-const char hns3_driver_name[] = "hns3";
+static const char hns3_driver_name[] = "hns3";
 const char hns3_driver_version[] = VERMAGIC_STRING;
 static const char hns3_driver_string[] =
 			"Hisilicon Ethernet Network Driver for Hip08 Family";
@@ -41,11 +42,16 @@ static struct hnae3_client client;
 static const struct pci_device_id hns3_pci_tbl[] = {
 	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_GE), 0},
 	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_25GE), 0},
-	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_25GE_RDMA), 0},
-	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_25GE_RDMA_MACSEC), 0},
-	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_50GE_RDMA), 0},
-	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_50GE_RDMA_MACSEC), 0},
-	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_100G_RDMA_MACSEC), 0},
+	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_25GE_RDMA),
+	 HNAE3_DEV_SUPPORT_ROCE_DCB_BITS},
+	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_25GE_RDMA_MACSEC),
+	 HNAE3_DEV_SUPPORT_ROCE_DCB_BITS},
+	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_50GE_RDMA),
+	 HNAE3_DEV_SUPPORT_ROCE_DCB_BITS},
+	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_50GE_RDMA_MACSEC),
+	 HNAE3_DEV_SUPPORT_ROCE_DCB_BITS},
+	{PCI_VDEVICE(HUAWEI, HNAE3_DEV_ID_100G_RDMA_MACSEC),
+	 HNAE3_DEV_SUPPORT_ROCE_DCB_BITS},
 	/* required last entry */
 	{0, }
 };
@@ -191,6 +197,31 @@ static void hns3_vector_gl_rl_init(struct hns3_enet_tqp_vector *tqp_vector)
 	tqp_vector->tx_group.flow_level = HNS3_FLOW_LOW;
 }
 
+static int hns3_nic_set_real_num_queue(struct net_device *netdev)
+{
+	struct hnae3_handle *h = hns3_get_handle(netdev);
+	struct hnae3_knic_private_info *kinfo = &h->kinfo;
+	unsigned int queue_size = kinfo->rss_size * kinfo->num_tc;
+	int ret;
+
+	ret = netif_set_real_num_tx_queues(netdev, queue_size);
+	if (ret) {
+		netdev_err(netdev,
+			   "netif_set_real_num_tx_queues fail, ret=%d!\n",
+			   ret);
+		return ret;
+	}
+
+	ret = netif_set_real_num_rx_queues(netdev, queue_size);
+	if (ret) {
+		netdev_err(netdev,
+			   "netif_set_real_num_rx_queues fail, ret=%d!\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 static int hns3_nic_net_up(struct net_device *netdev)
 {
 	struct hns3_nic_priv *priv = netdev_priv(netdev);
@@ -227,26 +258,13 @@ out_start_err:
 
 static int hns3_nic_net_open(struct net_device *netdev)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
 	int ret;
 
 	netif_carrier_off(netdev);
 
-	ret = netif_set_real_num_tx_queues(netdev, h->kinfo.num_tqps);
-	if (ret) {
-		netdev_err(netdev,
-			   "netif_set_real_num_tx_queues fail, ret=%d!\n",
-			   ret);
+	ret = hns3_nic_set_real_num_queue(netdev);
+	if (ret)
 		return ret;
-	}
-
-	ret = netif_set_real_num_rx_queues(netdev, h->kinfo.num_tqps);
-	if (ret) {
-		netdev_err(netdev,
-			   "netif_set_real_num_rx_queues fail, ret=%d!\n", ret);
-		return ret;
-	}
 
 	ret = hns3_nic_net_up(netdev);
 	if (ret) {
@@ -287,24 +305,10 @@ static int hns3_nic_net_stop(struct net_device *netdev)
 	return 0;
 }
 
-void hns3_set_multicast_list(struct net_device *netdev)
-{
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
-	struct netdev_hw_addr *ha = NULL;
-
-	if (h->ae_algo->ops->set_mc_addr) {
-		netdev_for_each_mc_addr(ha, netdev)
-			if (h->ae_algo->ops->set_mc_addr(h, ha->addr))
-				netdev_err(netdev, "set multicast fail\n");
-	}
-}
-
 static int hns3_nic_uc_sync(struct net_device *netdev,
 			    const unsigned char *addr)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 
 	if (h->ae_algo->ops->add_uc_addr)
 		return h->ae_algo->ops->add_uc_addr(h, addr);
@@ -315,8 +319,7 @@ static int hns3_nic_uc_sync(struct net_device *netdev,
 static int hns3_nic_uc_unsync(struct net_device *netdev,
 			      const unsigned char *addr)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 
 	if (h->ae_algo->ops->rm_uc_addr)
 		return h->ae_algo->ops->rm_uc_addr(h, addr);
@@ -327,8 +330,7 @@ static int hns3_nic_uc_unsync(struct net_device *netdev,
 static int hns3_nic_mc_sync(struct net_device *netdev,
 			    const unsigned char *addr)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 
 	if (h->ae_algo->ops->add_mc_addr)
 		return h->ae_algo->ops->add_mc_addr(h, addr);
@@ -339,8 +341,7 @@ static int hns3_nic_mc_sync(struct net_device *netdev,
 static int hns3_nic_mc_unsync(struct net_device *netdev,
 			      const unsigned char *addr)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 
 	if (h->ae_algo->ops->rm_mc_addr)
 		return h->ae_algo->ops->rm_mc_addr(h, addr);
@@ -348,10 +349,9 @@ static int hns3_nic_mc_unsync(struct net_device *netdev,
 	return 0;
 }
 
-void hns3_nic_set_rx_mode(struct net_device *netdev)
+static void hns3_nic_set_rx_mode(struct net_device *netdev)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 
 	if (h->ae_algo->ops->set_promisc_mode) {
 		if (netdev->flags & IFF_PROMISC)
@@ -750,7 +750,7 @@ static int hns3_fill_desc(struct hns3_enet_ring *ring, void *priv,
 
 	if (type == DESC_TYPE_SKB) {
 		skb = (struct sk_buff *)priv;
-		paylen = cpu_to_le16(skb->len);
+		paylen = skb->len;
 
 		if (skb->ip_summed == CHECKSUM_PARTIAL) {
 			skb_reset_mac_len(skb);
@@ -784,7 +784,7 @@ static int hns3_fill_desc(struct hns3_enet_ring *ring, void *priv,
 			cpu_to_le32(ol_type_vlan_len_msec);
 		desc->tx.type_cs_vlan_tso_len =
 			cpu_to_le32(type_cs_vlan_tso);
-		desc->tx.paylen = cpu_to_le16(paylen);
+		desc->tx.paylen = cpu_to_le32(paylen);
 		desc->tx.mss = cpu_to_le16(mss);
 	}
 
@@ -1007,8 +1007,7 @@ out_net_tx_busy:
 
 static int hns3_nic_net_set_mac_address(struct net_device *netdev, void *p)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 	struct sockaddr *mac_addr = p;
 	int ret;
 
@@ -1188,61 +1187,80 @@ static void hns3_nic_udp_tunnel_del(struct net_device *netdev,
 	}
 }
 
-static int hns3_setup_tc(struct net_device *netdev, u8 tc)
+static int hns3_setup_tc(struct net_device *netdev, void *type_data)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct tc_mqprio_qopt_offload *mqprio_qopt = type_data;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 	struct hnae3_knic_private_info *kinfo = &h->kinfo;
+	u8 *prio_tc = mqprio_qopt->qopt.prio_tc_map;
+	u8 tc = mqprio_qopt->qopt.num_tc;
+	u16 mode = mqprio_qopt->mode;
+	u8 hw = mqprio_qopt->qopt.hw;
+	bool if_running;
 	unsigned int i;
 	int ret;
+
+	if (!((hw == TC_MQPRIO_HW_OFFLOAD_TCS &&
+	       mode == TC_MQPRIO_MODE_CHANNEL) || (!hw && tc == 0)))
+		return -EOPNOTSUPP;
 
 	if (tc > HNAE3_MAX_TC)
 		return -EINVAL;
 
-	if (kinfo->num_tc == tc)
-		return 0;
-
 	if (!netdev)
 		return -EINVAL;
 
-	if (!tc) {
-		netdev_reset_tc(netdev);
-		return 0;
+	if_running = netif_running(netdev);
+	if (if_running) {
+		hns3_nic_net_stop(netdev);
+		msleep(100);
 	}
 
-	/* Set num_tc for netdev */
-	ret = netdev_set_num_tc(netdev, tc);
+	ret = (kinfo->dcb_ops && kinfo->dcb_ops->setup_tc) ?
+		kinfo->dcb_ops->setup_tc(h, tc, prio_tc) : -EOPNOTSUPP;
 	if (ret)
-		return ret;
+		goto out;
 
-	/* Set per TC queues for the VSI */
-	for (i = 0; i < HNAE3_MAX_TC; i++) {
-		if (kinfo->tc_info[i].enable)
+	if (tc <= 1) {
+		netdev_reset_tc(netdev);
+	} else {
+		ret = netdev_set_num_tc(netdev, tc);
+		if (ret)
+			goto out;
+
+		for (i = 0; i < HNAE3_MAX_TC; i++) {
+			if (!kinfo->tc_info[i].enable)
+				continue;
+
 			netdev_set_tc_queue(netdev,
 					    kinfo->tc_info[i].tc,
 					    kinfo->tc_info[i].tqp_count,
 					    kinfo->tc_info[i].tqp_offset);
+		}
 	}
 
-	return 0;
+	ret = hns3_nic_set_real_num_queue(netdev);
+
+out:
+	if (if_running)
+		hns3_nic_net_open(netdev);
+
+	return ret;
 }
 
 static int hns3_nic_setup_tc(struct net_device *dev, enum tc_setup_type type,
 			     void *type_data)
 {
-	struct tc_mqprio_qopt *mqprio = type_data;
-
 	if (type != TC_SETUP_MQPRIO)
 		return -EOPNOTSUPP;
 
-	return hns3_setup_tc(dev, mqprio->num_tc);
+	return hns3_setup_tc(dev, type_data);
 }
 
 static int hns3_vlan_rx_add_vid(struct net_device *netdev,
 				__be16 proto, u16 vid)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 	int ret = -EIO;
 
 	if (h->ae_algo->ops->set_vlan_filter)
@@ -1254,8 +1272,7 @@ static int hns3_vlan_rx_add_vid(struct net_device *netdev,
 static int hns3_vlan_rx_kill_vid(struct net_device *netdev,
 				 __be16 proto, u16 vid)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 	int ret = -EIO;
 
 	if (h->ae_algo->ops->set_vlan_filter)
@@ -1267,8 +1284,7 @@ static int hns3_vlan_rx_kill_vid(struct net_device *netdev,
 static int hns3_ndo_set_vf_vlan(struct net_device *netdev, int vf, u16 vlan,
 				u8 qos, __be16 vlan_proto)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 	int ret = -EIO;
 
 	if (h->ae_algo->ops->set_vf_vlan_filter)
@@ -1280,8 +1296,7 @@ static int hns3_ndo_set_vf_vlan(struct net_device *netdev, int vf, u16 vlan,
 
 static int hns3_nic_change_mtu(struct net_device *netdev, int new_mtu)
 {
-	struct hns3_nic_priv *priv = netdev_priv(netdev);
-	struct hnae3_handle *h = priv->ae_handle;
+	struct hnae3_handle *h = hns3_get_handle(netdev);
 	bool if_running = netif_running(netdev);
 	int ret;
 
@@ -1348,6 +1363,7 @@ static int hns3_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	}
 
 	ae_dev->pdev = pdev;
+	ae_dev->flag = ent->driver_data;
 	ae_dev->dev_type = HNAE3_DEV_KNIC;
 	pci_set_drvdata(pdev, ae_dev);
 
@@ -2590,7 +2606,7 @@ static void hns3_fini_ring(struct hns3_enet_ring *ring)
 	ring->next_to_use = 0;
 }
 
-int hns3_buf_size2type(u32 buf_size)
+static int hns3_buf_size2type(u32 buf_size)
 {
 	int bd_size_type;
 
@@ -2643,7 +2659,7 @@ static void hns3_init_ring_hw(struct hns3_enet_ring *ring)
 	}
 }
 
-static int hns3_init_all_ring(struct hns3_nic_priv *priv)
+int hns3_init_all_ring(struct hns3_nic_priv *priv)
 {
 	struct hnae3_handle *h = priv->ae_handle;
 	int ring_num = h->kinfo.num_tqps * 2;
@@ -2667,12 +2683,12 @@ static int hns3_init_all_ring(struct hns3_nic_priv *priv)
 
 out_when_alloc_ring_memory:
 	for (j = i - 1; j >= 0; j--)
-		hns3_fini_ring(priv->ring_data[i].ring);
+		hns3_fini_ring(priv->ring_data[j].ring);
 
 	return -ENOMEM;
 }
 
-static int hns3_uninit_all_ring(struct hns3_nic_priv *priv)
+int hns3_uninit_all_ring(struct hns3_nic_priv *priv)
 {
 	struct hnae3_handle *h = priv->ae_handle;
 	int i;
@@ -2705,10 +2721,11 @@ static void hns3_init_mac_addr(struct net_device *netdev)
 		eth_hw_addr_random(netdev);
 		dev_warn(priv->dev, "using random MAC address %pM\n",
 			 netdev->dev_addr);
-		/* Also copy this new MAC address into hdev */
-		if (h->ae_algo->ops->set_mac_addr)
-			h->ae_algo->ops->set_mac_addr(h, netdev->dev_addr);
 	}
+
+	if (h->ae_algo->ops->set_mac_addr)
+		h->ae_algo->ops->set_mac_addr(h, netdev->dev_addr);
+
 }
 
 static void hns3_nic_set_priv_ops(struct net_device *netdev)
@@ -2783,6 +2800,8 @@ static int hns3_client_init(struct hnae3_handle *handle)
 		goto out_reg_netdev_fail;
 	}
 
+	hns3_dcbnl_setup(handle);
+
 	/* MTU range: (ETH_MIN_MTU(kernel default) - 9706) */
 	netdev->max_mtu = HNS3_MAX_MTU - (ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN);
 
@@ -2839,10 +2858,71 @@ static void hns3_link_status_change(struct hnae3_handle *handle, bool linkup)
 	}
 }
 
-const struct hnae3_client_ops client_ops = {
+static int hns3_client_setup_tc(struct hnae3_handle *handle, u8 tc)
+{
+	struct hnae3_knic_private_info *kinfo = &handle->kinfo;
+	struct net_device *ndev = kinfo->netdev;
+	bool if_running;
+	int ret;
+	u8 i;
+
+	if (tc > HNAE3_MAX_TC)
+		return -EINVAL;
+
+	if (!ndev)
+		return -ENODEV;
+
+	if_running = netif_running(ndev);
+
+	ret = netdev_set_num_tc(ndev, tc);
+	if (ret)
+		return ret;
+
+	if (if_running) {
+		(void)hns3_nic_net_stop(ndev);
+		msleep(100);
+	}
+
+	ret = (kinfo->dcb_ops && kinfo->dcb_ops->map_update) ?
+		kinfo->dcb_ops->map_update(handle) : -EOPNOTSUPP;
+	if (ret)
+		goto err_out;
+
+	if (tc <= 1) {
+		netdev_reset_tc(ndev);
+		goto out;
+	}
+
+	for (i = 0; i < HNAE3_MAX_TC; i++) {
+		struct hnae3_tc_info *tc_info = &kinfo->tc_info[i];
+
+		if (tc_info->enable)
+			netdev_set_tc_queue(ndev,
+					    tc_info->tc,
+					    tc_info->tqp_count,
+					    tc_info->tqp_offset);
+	}
+
+	for (i = 0; i < HNAE3_MAX_USER_PRIO; i++) {
+		netdev_set_prio_tc_map(ndev, i,
+				       kinfo->prio_tc[i]);
+	}
+
+out:
+	ret = hns3_nic_set_real_num_queue(ndev);
+
+err_out:
+	if (if_running)
+		(void)hns3_nic_net_open(ndev);
+
+	return ret;
+}
+
+static const struct hnae3_client_ops client_ops = {
 	.init_instance = hns3_client_init,
 	.uninit_instance = hns3_client_uninit,
 	.link_status_change = hns3_link_status_change,
+	.setup_tc = hns3_client_setup_tc,
 };
 
 /* hns3_init_module - Driver registration routine

@@ -1813,12 +1813,12 @@ static int nv_alloc_rx(struct net_device *dev)
 		struct sk_buff *skb = netdev_alloc_skb(dev, np->rx_buf_sz + NV_RX_ALLOC_PAD);
 		if (skb) {
 			np->put_rx_ctx->skb = skb;
-			np->put_rx_ctx->dma = pci_map_single(np->pci_dev,
+			np->put_rx_ctx->dma = dma_map_single(&np->pci_dev->dev,
 							     skb->data,
 							     skb_tailroom(skb),
-							     PCI_DMA_FROMDEVICE);
-			if (pci_dma_mapping_error(np->pci_dev,
-						  np->put_rx_ctx->dma)) {
+							     DMA_FROM_DEVICE);
+			if (unlikely(dma_mapping_error(&np->pci_dev->dev,
+						       np->put_rx_ctx->dma))) {
 				kfree_skb(skb);
 				goto packet_dropped;
 			}
@@ -1854,12 +1854,12 @@ static int nv_alloc_rx_optimized(struct net_device *dev)
 		struct sk_buff *skb = netdev_alloc_skb(dev, np->rx_buf_sz + NV_RX_ALLOC_PAD);
 		if (skb) {
 			np->put_rx_ctx->skb = skb;
-			np->put_rx_ctx->dma = pci_map_single(np->pci_dev,
+			np->put_rx_ctx->dma = dma_map_single(&np->pci_dev->dev,
 							     skb->data,
 							     skb_tailroom(skb),
-							     PCI_DMA_FROMDEVICE);
-			if (pci_dma_mapping_error(np->pci_dev,
-						  np->put_rx_ctx->dma)) {
+							     DMA_FROM_DEVICE);
+			if (unlikely(dma_mapping_error(&np->pci_dev->dev,
+						       np->put_rx_ctx->dma))) {
 				kfree_skb(skb);
 				goto packet_dropped;
 			}
@@ -1884,10 +1884,9 @@ packet_dropped:
 }
 
 /* If rx bufs are exhausted called after 50ms to attempt to refresh */
-static void nv_do_rx_refill(unsigned long data)
+static void nv_do_rx_refill(struct timer_list *t)
 {
-	struct net_device *dev = (struct net_device *) data;
-	struct fe_priv *np = netdev_priv(dev);
+	struct fe_priv *np = from_timer(np, t, oom_kick);
 
 	/* Just reschedule NAPI rx processing */
 	napi_schedule(&np->napi);
@@ -1977,9 +1976,9 @@ static void nv_unmap_txskb(struct fe_priv *np, struct nv_skb_map *tx_skb)
 {
 	if (tx_skb->dma) {
 		if (tx_skb->dma_single)
-			pci_unmap_single(np->pci_dev, tx_skb->dma,
+			dma_unmap_single(&np->pci_dev->dev, tx_skb->dma,
 					 tx_skb->dma_len,
-					 PCI_DMA_TODEVICE);
+					 DMA_TO_DEVICE);
 		else
 			pci_unmap_page(np->pci_dev, tx_skb->dma,
 				       tx_skb->dma_len,
@@ -2047,10 +2046,10 @@ static void nv_drain_rx(struct net_device *dev)
 		}
 		wmb();
 		if (np->rx_skb[i].skb) {
-			pci_unmap_single(np->pci_dev, np->rx_skb[i].dma,
+			dma_unmap_single(&np->pci_dev->dev, np->rx_skb[i].dma,
 					 (skb_end_pointer(np->rx_skb[i].skb) -
-					  np->rx_skb[i].skb->data),
-					 PCI_DMA_FROMDEVICE);
+					 np->rx_skb[i].skb->data),
+					 DMA_FROM_DEVICE);
 			dev_kfree_skb(np->rx_skb[i].skb);
 			np->rx_skb[i].skb = NULL;
 		}
@@ -2224,10 +2223,11 @@ static netdev_tx_t nv_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		prev_tx = put_tx;
 		prev_tx_ctx = np->put_tx_ctx;
 		bcnt = (size > NV_TX2_TSO_MAX_SIZE) ? NV_TX2_TSO_MAX_SIZE : size;
-		np->put_tx_ctx->dma = pci_map_single(np->pci_dev, skb->data + offset, bcnt,
-						PCI_DMA_TODEVICE);
-		if (pci_dma_mapping_error(np->pci_dev,
-					  np->put_tx_ctx->dma)) {
+		np->put_tx_ctx->dma = dma_map_single(&np->pci_dev->dev,
+						     skb->data + offset, bcnt,
+						     DMA_TO_DEVICE);
+		if (unlikely(dma_mapping_error(&np->pci_dev->dev,
+					       np->put_tx_ctx->dma))) {
 			/* on DMA mapping error - drop the packet */
 			dev_kfree_skb_any(skb);
 			u64_stats_update_begin(&np->swstats_tx_syncp);
@@ -2267,7 +2267,8 @@ static netdev_tx_t nv_start_xmit(struct sk_buff *skb, struct net_device *dev)
 							frag, offset,
 							bcnt,
 							DMA_TO_DEVICE);
-			if (dma_mapping_error(&np->pci_dev->dev, np->put_tx_ctx->dma)) {
+			if (unlikely(dma_mapping_error(&np->pci_dev->dev,
+						       np->put_tx_ctx->dma))) {
 
 				/* Unwind the mapped fragments */
 				do {
@@ -2373,10 +2374,11 @@ static netdev_tx_t nv_start_xmit_optimized(struct sk_buff *skb,
 		prev_tx = put_tx;
 		prev_tx_ctx = np->put_tx_ctx;
 		bcnt = (size > NV_TX2_TSO_MAX_SIZE) ? NV_TX2_TSO_MAX_SIZE : size;
-		np->put_tx_ctx->dma = pci_map_single(np->pci_dev, skb->data + offset, bcnt,
-						PCI_DMA_TODEVICE);
-		if (pci_dma_mapping_error(np->pci_dev,
-					  np->put_tx_ctx->dma)) {
+		np->put_tx_ctx->dma = dma_map_single(&np->pci_dev->dev,
+						     skb->data + offset, bcnt,
+						     DMA_TO_DEVICE);
+		if (unlikely(dma_mapping_error(&np->pci_dev->dev,
+					       np->put_tx_ctx->dma))) {
 			/* on DMA mapping error - drop the packet */
 			dev_kfree_skb_any(skb);
 			u64_stats_update_begin(&np->swstats_tx_syncp);
@@ -2417,7 +2419,8 @@ static netdev_tx_t nv_start_xmit_optimized(struct sk_buff *skb,
 							bcnt,
 							DMA_TO_DEVICE);
 
-			if (dma_mapping_error(&np->pci_dev->dev, np->put_tx_ctx->dma)) {
+			if (unlikely(dma_mapping_error(&np->pci_dev->dev,
+						       np->put_tx_ctx->dma))) {
 
 				/* Unwind the mapped fragments */
 				do {
@@ -2810,9 +2813,9 @@ static int nv_rx_process(struct net_device *dev, int limit)
 		 * TODO: check if a prefetch of the first cacheline improves
 		 * the performance.
 		 */
-		pci_unmap_single(np->pci_dev, np->get_rx_ctx->dma,
-				np->get_rx_ctx->dma_len,
-				PCI_DMA_FROMDEVICE);
+		dma_unmap_single(&np->pci_dev->dev, np->get_rx_ctx->dma,
+				 np->get_rx_ctx->dma_len,
+				 DMA_FROM_DEVICE);
 		skb = np->get_rx_ctx->skb;
 		np->get_rx_ctx->skb = NULL;
 
@@ -2916,9 +2919,9 @@ static int nv_rx_process_optimized(struct net_device *dev, int limit)
 		 * TODO: check if a prefetch of the first cacheline improves
 		 * the performance.
 		 */
-		pci_unmap_single(np->pci_dev, np->get_rx_ctx->dma,
-				np->get_rx_ctx->dma_len,
-				PCI_DMA_FROMDEVICE);
+		dma_unmap_single(&np->pci_dev->dev, np->get_rx_ctx->dma,
+				 np->get_rx_ctx->dma_len,
+				 DMA_FROM_DEVICE);
 		skb = np->get_rx_ctx->skb;
 		np->get_rx_ctx->skb = NULL;
 
@@ -4061,10 +4064,10 @@ static void nv_free_irq(struct net_device *dev)
 	}
 }
 
-static void nv_do_nic_poll(unsigned long data)
+static void nv_do_nic_poll(struct timer_list *t)
 {
-	struct net_device *dev = (struct net_device *) data;
-	struct fe_priv *np = netdev_priv(dev);
+	struct fe_priv *np = from_timer(np, t, nic_poll);
+	struct net_device *dev = np->dev;
 	u8 __iomem *base = get_hwbase(dev);
 	u32 mask = 0;
 	unsigned long flags;
@@ -4172,16 +4175,18 @@ static void nv_do_nic_poll(unsigned long data)
 #ifdef CONFIG_NET_POLL_CONTROLLER
 static void nv_poll_controller(struct net_device *dev)
 {
-	nv_do_nic_poll((unsigned long) dev);
+	struct fe_priv *np = netdev_priv(dev);
+
+	nv_do_nic_poll(&np->nic_poll);
 }
 #endif
 
-static void nv_do_stats_poll(unsigned long data)
+static void nv_do_stats_poll(struct timer_list *t)
 	__acquires(&netdev_priv(dev)->hwstats_lock)
 	__releases(&netdev_priv(dev)->hwstats_lock)
 {
-	struct net_device *dev = (struct net_device *) data;
-	struct fe_priv *np = netdev_priv(dev);
+	struct fe_priv *np = from_timer(np, t, stats_poll);
+	struct net_device *dev = np->dev;
 
 	/* If lock is currently taken, the stats are being refreshed
 	 * and hence fresh enough */
@@ -5070,11 +5075,11 @@ static int nv_loopback_test(struct net_device *dev)
 		ret = 0;
 		goto out;
 	}
-	test_dma_addr = pci_map_single(np->pci_dev, tx_skb->data,
+	test_dma_addr = dma_map_single(&np->pci_dev->dev, tx_skb->data,
 				       skb_tailroom(tx_skb),
-				       PCI_DMA_FROMDEVICE);
-	if (pci_dma_mapping_error(np->pci_dev,
-				  test_dma_addr)) {
+				       DMA_FROM_DEVICE);
+	if (unlikely(dma_mapping_error(&np->pci_dev->dev,
+				       test_dma_addr))) {
 		dev_kfree_skb_any(tx_skb);
 		goto out;
 	}
@@ -5129,9 +5134,9 @@ static int nv_loopback_test(struct net_device *dev)
 		}
 	}
 
-	pci_unmap_single(np->pci_dev, test_dma_addr,
-		       (skb_end_pointer(tx_skb) - tx_skb->data),
-		       PCI_DMA_TODEVICE);
+	dma_unmap_single(&np->pci_dev->dev, test_dma_addr,
+			 (skb_end_pointer(tx_skb) - tx_skb->data),
+			 DMA_TO_DEVICE);
 	dev_kfree_skb_any(tx_skb);
  out:
 	/* stop engines */
@@ -5627,10 +5632,9 @@ static int nv_probe(struct pci_dev *pci_dev, const struct pci_device_id *id)
 	u64_stats_init(&np->swstats_rx_syncp);
 	u64_stats_init(&np->swstats_tx_syncp);
 
-	setup_timer(&np->oom_kick, nv_do_rx_refill, (unsigned long)dev);
-	setup_timer(&np->nic_poll, nv_do_nic_poll, (unsigned long)dev);
-	setup_deferrable_timer(&np->stats_poll, nv_do_stats_poll,
-			       (unsigned long)dev);
+	timer_setup(&np->oom_kick, nv_do_rx_refill, 0);
+	timer_setup(&np->nic_poll, nv_do_nic_poll, 0);
+	timer_setup(&np->stats_poll, nv_do_stats_poll, TIMER_DEFERRABLE);
 
 	err = pci_enable_device(pci_dev);
 	if (err)

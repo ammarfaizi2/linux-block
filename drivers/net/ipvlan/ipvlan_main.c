@@ -407,7 +407,7 @@ static int ipvlan_hard_header(struct sk_buff *skb, struct net_device *dev,
 	 * while the packets use the mac-addr on the physical device.
 	 */
 	return dev_hard_header(skb, phy_dev, type, daddr,
-			       saddr ? : dev->dev_addr, len);
+			       saddr ? : phy_dev->dev_addr, len);
 }
 
 static const struct header_ops ipvlan_header_ops = {
@@ -584,7 +584,7 @@ int ipvlan_link_new(struct net *src_net, struct net_device *dev,
 	if (err < 0)
 		goto remove_ida;
 
-	err = netdev_upper_dev_link(phy_dev, dev);
+	err = netdev_upper_dev_link(phy_dev, dev, extack);
 	if (err) {
 		goto unregister_netdev;
 	}
@@ -730,6 +730,11 @@ static int ipvlan_device_event(struct notifier_block *unused,
 			ipvlan_adjust_mtu(ipvlan, dev);
 		break;
 
+	case NETDEV_CHANGEADDR:
+		list_for_each_entry(ipvlan, &port->ipvlans, pnode)
+			ether_addr_copy(ipvlan->dev->dev_addr, dev->dev_addr);
+		break;
+
 	case NETDEV_PRE_TYPE_CHANGE:
 		/* Forbid underlying device to change its type. */
 		return NOTIFY_BAD;
@@ -803,10 +808,6 @@ static int ipvlan_addr6_event(struct notifier_block *unused,
 	struct net_device *dev = (struct net_device *)if6->idev->dev;
 	struct ipvl_dev *ipvlan = netdev_priv(dev);
 
-	/* FIXME IPv6 autoconf calls us from bh without RTNL */
-	if (in_softirq())
-		return NOTIFY_DONE;
-
 	if (!netif_is_ipvlan(dev))
 		return NOTIFY_DONE;
 
@@ -846,8 +847,11 @@ static int ipvlan_addr6_validator_event(struct notifier_block *unused,
 
 	switch (event) {
 	case NETDEV_UP:
-		if (ipvlan_addr_busy(ipvlan->port, &i6vi->i6vi_addr, true))
+		if (ipvlan_addr_busy(ipvlan->port, &i6vi->i6vi_addr, true)) {
+			NL_SET_ERR_MSG(i6vi->extack,
+				       "Address already assigned to an ipvlan device");
 			return notifier_from_errno(-EADDRINUSE);
+		}
 		break;
 	}
 
@@ -916,8 +920,11 @@ static int ipvlan_addr4_validator_event(struct notifier_block *unused,
 
 	switch (event) {
 	case NETDEV_UP:
-		if (ipvlan_addr_busy(ipvlan->port, &ivi->ivi_addr, false))
+		if (ipvlan_addr_busy(ipvlan->port, &ivi->ivi_addr, false)) {
+			NL_SET_ERR_MSG(ivi->extack,
+				       "Address already assigned to an ipvlan device");
 			return notifier_from_errno(-EADDRINUSE);
+		}
 		break;
 	}
 

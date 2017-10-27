@@ -506,7 +506,7 @@ qca8k_setup(struct dsa_switch *ds)
 		pr_warn("regmap initialization failed");
 
 	/* Initialize CPU port pad mode (xMII type, delays...) */
-	phy_mode = of_get_phy_mode(ds->dst->cpu_dp->dn);
+	phy_mode = of_get_phy_mode(ds->ports[QCA8K_CPU_PORT].dn);
 	if (phy_mode < 0) {
 		pr_err("Can't find phy-mode for master device\n");
 		return phy_mode;
@@ -700,7 +700,7 @@ qca8k_port_bridge_join(struct dsa_switch *ds, int port, struct net_device *br)
 	int i;
 
 	for (i = 1; i < QCA8K_NUM_PORTS; i++) {
-		if (ds->ports[i].bridge_dev != br)
+		if (dsa_to_port(ds, i)->bridge_dev != br)
 			continue;
 		/* Add this port to the portvlan mask of the other ports
 		 * in the bridge
@@ -725,7 +725,7 @@ qca8k_port_bridge_leave(struct dsa_switch *ds, int port, struct net_device *br)
 	int i;
 
 	for (i = 1; i < QCA8K_NUM_PORTS; i++) {
-		if (ds->ports[i].bridge_dev != br)
+		if (dsa_to_port(ds, i)->bridge_dev != br)
 			continue;
 		/* Remove this port to the portvlan mask of the other ports
 		 * in the bridge

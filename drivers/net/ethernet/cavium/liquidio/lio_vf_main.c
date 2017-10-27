@@ -435,8 +435,7 @@ static void delete_glists(struct lio *lio)
 		do {
 			g = (struct octnic_gather *)
 			    list_delete_head(&lio->glist[i]);
-			if (g)
-				kfree(g);
+			kfree(g);
 		} while (g);
 
 		if (lio->glists_virt_base && lio->glists_virt_base[i] &&
@@ -748,7 +747,7 @@ static void octeon_destroy_resources(struct octeon_device *oct)
 
 		if (lio_wait_for_oq_pkts(oct))
 			dev_err(&oct->pci_dev->dev, "OQ had pending packets\n");
-
+		/* fall through */
 	case OCT_DEV_INTR_SET_DONE:
 		/* Disable interrupts  */
 		oct->fn_list.disable_interrupt(oct, OCTEON_ALL_INTR);
