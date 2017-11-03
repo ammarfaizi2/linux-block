@@ -800,7 +800,7 @@ static int __noreturn rcu_tasks_kthread(void *arg)
 			struct task_struct *t1;
 
 			/*
-			 * Enable cond_ressched() action on other CPUs
+			 * Enable cond_resched() action on other CPUs
 			 * if needed.  Yes, we invoke synchronize_sched()
 			 * solely for its cond_resched() side-effect...
 			 */
