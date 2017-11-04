@@ -1568,7 +1568,11 @@ static inline int test_tsk_need_resched(struct task_struct *tsk)
 #ifndef CONFIG_PREEMPT
 extern int _cond_resched(void);
 #else
-static inline int _cond_resched(void) { return 0; }
+static inline int _cond_resched(void)
+{
+	rcu_note_voluntary_context_switch_lite(current);
+	return 0;
+}
 #endif
 
 #define cond_resched() ({			\
