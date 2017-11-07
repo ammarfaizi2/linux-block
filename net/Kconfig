@@ -407,6 +407,10 @@ config GRO_CELLS
 	bool
 	default n
 
+config SOCK_VALIDATE_XMIT
+	bool
+	default n
+
 config NET_DEVLINK
 	tristate "Network physical/parent device Netlink interface"
 	help
