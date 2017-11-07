@@ -186,16 +186,15 @@ void radix__flush_tlb_mm(struct mm_struct *mm)
 {
 	unsigned long pid;
 
-	preempt_disable();
 	pid = mm->context.id;
 	if (unlikely(pid == MMU_NO_CONTEXT))
-		goto no_context;
+		return;
 
+	preempt_disable();
 	if (!mm_is_thread_local(mm))
 		_tlbie_pid(pid, RIC_FLUSH_TLB);
 	else
 		_tlbiel_pid(pid, RIC_FLUSH_TLB);
-no_context:
 	preempt_enable();
 }
 EXPORT_SYMBOL(radix__flush_tlb_mm);
@@ -204,16 +203,15 @@ void radix__flush_all_mm(struct mm_struct *mm)
 {
 	unsigned long pid;
 
-	preempt_disable();
 	pid = mm->context.id;
 	if (unlikely(pid == MMU_NO_CONTEXT))
-		goto no_context;
+		return;
 
+	preempt_disable();
 	if (!mm_is_thread_local(mm))
 		_tlbie_pid(pid, RIC_FLUSH_ALL);
 	else
 		_tlbiel_pid(pid, RIC_FLUSH_ALL);
-no_context:
 	preempt_enable();
 }
 EXPORT_SYMBOL(radix__flush_all_mm);
@@ -230,15 +228,15 @@ void radix__flush_tlb_page_psize(struct mm_struct *mm, unsigned long vmaddr,
 	unsigned long pid;
 	unsigned long ap = mmu_get_ap(psize);
 
-	preempt_disable();
 	pid = mm->context.id;
 	if (unlikely(pid == MMU_NO_CONTEXT))
-		goto bail;
+		return;
+
+	preempt_disable();
 	if (!mm_is_thread_local(mm))
 		_tlbie_va(vmaddr, pid, ap, RIC_FLUSH_TLB);
 	else
 		_tlbiel_va(vmaddr, pid, ap, RIC_FLUSH_TLB);
-bail:
 	preempt_enable();
 }
 
@@ -300,10 +298,14 @@ void radix__tlb_flush(struct mmu_gather *tlb)
 	psize = radix_get_mmu_psize(page_size);
 	/*
 	 * if page size is not something we understand, do a full mm flush
+	 *
+	 * A "fullmm" flush must always do a flush_all_mm (RIC=2) flush
+	 * that flushes the process table entry cache upon process teardown.
+	 * See the comment for radix in arch_exit_mmap().
 	 */
 	if (psize != -1 && !tlb->fullmm && !tlb->need_flush_all)
 		radix__flush_tlb_range_psize(mm, tlb->start, tlb->end, psize);
-	else if (tlb->need_flush_all) {
+	else if (tlb->fullmm || tlb->need_flush_all) {
 		tlb->need_flush_all = 0;
 		radix__flush_all_mm(mm);
 	} else
@@ -322,47 +324,45 @@ void radix__flush_tlb_range_psize(struct mm_struct *mm, unsigned long start,
 {
 	unsigned long pid;
 	unsigned long addr;
-	int local = mm_is_thread_local(mm);
+	bool local;
 	unsigned long ap = mmu_get_ap(psize);
 	unsigned long page_size = 1UL << mmu_psize_defs[psize].shift;
 
-
-	preempt_disable();
 	pid = mm->context.id;
 	if (unlikely(pid == MMU_NO_CONTEXT))
-		goto err_out;
+		return;
 
+	preempt_disable();
+	local = mm_is_thread_local(mm);
 	if (end == TLB_FLUSH_ALL ||
 	    (end - start) > tlb_single_page_flush_ceiling * page_size) {
 		if (local)
 			_tlbiel_pid(pid, RIC_FLUSH_TLB);
 		else
 			_tlbie_pid(pid, RIC_FLUSH_TLB);
-		goto err_out;
-	}
-	for (addr = start; addr < end; addr += page_size) {
+	} else {
+		for (addr = start; addr < end; addr += page_size) {
 
-		if (local)
-			_tlbiel_va(addr, pid, ap, RIC_FLUSH_TLB);
-		else
-			_tlbie_va(addr, pid, ap, RIC_FLUSH_TLB);
+			if (local)
+				_tlbiel_va(addr, pid, ap, RIC_FLUSH_TLB);
+			else
+				_tlbie_va(addr, pid, ap, RIC_FLUSH_TLB);
+		}
 	}
-err_out:
 	preempt_enable();
 }
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 void radix__flush_tlb_collapsed_pmd(struct mm_struct *mm, unsigned long addr)
 {
-	int local = mm_is_thread_local(mm);
 	unsigned long ap = mmu_get_ap(mmu_virtual_psize);
 	unsigned long pid, end;
-
+	bool local;
 
 	pid = mm->context.id;
 	preempt_disable();
 	if (unlikely(pid == MMU_NO_CONTEXT))
-		goto no_context;
+		return;
 
 	/* 4k page size, just blow the world */
 	if (PAGE_SIZE == 0x1000) {
@@ -371,6 +371,8 @@ void radix__flush_tlb_collapsed_pmd(struct mm_struct *mm, unsigned long addr)
 		return;
 	}
 
+	preempt_disable();
+	local = mm_is_thread_local(mm);
 	/* Otherwise first do the PWC */
 	if (local)
 		_tlbiel_pid(pid, RIC_FLUSH_PWC);
@@ -385,7 +387,7 @@ void radix__flush_tlb_collapsed_pmd(struct mm_struct *mm, unsigned long addr)
 		else
 			_tlbie_va(addr, pid, ap, RIC_FLUSH_TLB);
 	}
-no_context:
+
 	preempt_enable();
 }
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE */

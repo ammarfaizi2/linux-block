@@ -104,9 +104,23 @@ static inline bool msr_tm_active(unsigned long msr)
 {
 	return MSR_TM_ACTIVE(msr);
 }
+
+static bool tm_active_with_fp(struct task_struct *tsk)
+{
+	return msr_tm_active(tsk->thread.regs->msr) &&
+		(tsk->thread.ckpt_regs.msr & MSR_FP);
+}
+
+static bool tm_active_with_altivec(struct task_struct *tsk)
+{
+	return msr_tm_active(tsk->thread.regs->msr) &&
+		(tsk->thread.ckpt_regs.msr & MSR_VEC);
+}
 #else
 static inline bool msr_tm_active(unsigned long msr) { return false; }
 static inline void check_if_tm_restore_required(struct task_struct *tsk) { }
+static inline bool tm_active_with_fp(struct task_struct *tsk) { return false; }
+static inline bool tm_active_with_altivec(struct task_struct *tsk) { return false; }
 #endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
 
 bool strict_msr_control;
@@ -239,7 +253,7 @@ EXPORT_SYMBOL(enable_kernel_fp);
 
 static int restore_fp(struct task_struct *tsk)
 {
-	if (tsk->thread.load_fp || msr_tm_active(tsk->thread.regs->msr)) {
+	if (tsk->thread.load_fp || tm_active_with_fp(tsk)) {
 		load_fp_state(&current->thread.fp_state);
 		current->thread.load_fp++;
 		return 1;
@@ -321,7 +335,7 @@ EXPORT_SYMBOL_GPL(flush_altivec_to_thread);
 static int restore_altivec(struct task_struct *tsk)
 {
 	if (cpu_has_feature(CPU_FTR_ALTIVEC) &&
-		(tsk->thread.load_vec || msr_tm_active(tsk->thread.regs->msr))) {
+		(tsk->thread.load_vec || tm_active_with_altivec(tsk))) {
 		load_vr_state(&tsk->thread.vr_state);
 		tsk->thread.used_vr = 1;
 		tsk->thread.load_vec++;
@@ -860,6 +874,10 @@ static void tm_reclaim_thread(struct thread_struct *thr,
 	if (!MSR_TM_SUSPENDED(mfmsr()))
 		return;
 
+	giveup_all(container_of(thr, struct task_struct, thread));
+
+	tm_reclaim(thr, cause);
+
 	/*
 	 * If we are in a transaction and FP is off then we can't have
 	 * used FP inside that transaction. Hence the checkpointed
@@ -878,10 +896,6 @@ static void tm_reclaim_thread(struct thread_struct *thr,
 	if ((thr->ckpt_regs.msr & MSR_VEC) == 0)
 		memcpy(&thr->ckvr_state, &thr->vr_state,
 		       sizeof(struct thread_vr_state));
-
-	giveup_all(container_of(thr, struct task_struct, thread));
-
-	tm_reclaim(thr, thr->ckpt_regs.msr, cause);
 }
 
 void tm_reclaim_current(uint8_t cause)
@@ -932,11 +946,9 @@ out_and_saveregs:
 	tm_save_sprs(thr);
 }
 
-extern void __tm_recheckpoint(struct thread_struct *thread,
-			      unsigned long orig_msr);
+extern void __tm_recheckpoint(struct thread_struct *thread);
 
-void tm_recheckpoint(struct thread_struct *thread,
-		     unsigned long orig_msr)
+void tm_recheckpoint(struct thread_struct *thread)
 {
 	unsigned long flags;
 
@@ -955,15 +967,13 @@ void tm_recheckpoint(struct thread_struct *thread,
 	 */
 	tm_restore_sprs(thread);
 
-	__tm_recheckpoint(thread, orig_msr);
+	__tm_recheckpoint(thread);
 
 	local_irq_restore(flags);
 }
 
 static inline void tm_recheckpoint_new_task(struct task_struct *new)
 {
-	unsigned long msr;
-
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return;
 
@@ -982,13 +992,11 @@ static inline void tm_recheckpoint_new_task(struct task_struct *new)
 		tm_restore_sprs(&new->thread);
 		return;
 	}
-	msr = new->thread.ckpt_regs.msr;
 	/* Recheckpoint to restore original checkpointed register state. */
-	TM_DEBUG("*** tm_recheckpoint of pid %d "
-		 "(new->msr 0x%lx, new->origmsr 0x%lx)\n",
-		 new->pid, new->thread.regs->msr, msr);
+	TM_DEBUG("*** tm_recheckpoint of pid %d (new->msr 0x%lx)\n",
+		 new->pid, new->thread.regs->msr);
 
-	tm_recheckpoint(&new->thread, msr);
+	tm_recheckpoint(&new->thread);
 
 	/*
 	 * The checkpointed state has been restored but the live state has
@@ -1164,7 +1172,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	}
 #endif /* CONFIG_PPC64 */
 
-#ifdef CONFIG_PPC_STD_MMU_64
+#ifdef CONFIG_PPC_BOOK3S_64
 	batch = this_cpu_ptr(&ppc64_tlb_batch);
 	if (batch->active) {
 		current_thread_info()->local_flags |= _TLF_LAZY_MMU;
@@ -1172,7 +1180,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
 			__flush_tlb_pending(batch);
 		batch->active = 0;
 	}
-#endif /* CONFIG_PPC_STD_MMU_64 */
+#endif /* CONFIG_PPC_BOOK3S_64 */
 
 #ifdef CONFIG_PPC_ADV_DEBUG_REGS
 	switch_booke_debug_regs(&new->thread.debug);
@@ -1218,7 +1226,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
 
 	last = _switch(old_thread, new_thread);
 
-#ifdef CONFIG_PPC_STD_MMU_64
+#ifdef CONFIG_PPC_BOOK3S_64
 	if (current_thread_info()->local_flags & _TLF_LAZY_MMU) {
 		current_thread_info()->local_flags &= ~_TLF_LAZY_MMU;
 		batch = this_cpu_ptr(&ppc64_tlb_batch);
@@ -1247,7 +1255,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
 					: : "r"(dummy_copy_buffer), "r"(0));
 		}
 	}
-#endif /* CONFIG_PPC_STD_MMU_64 */
+#endif /* CONFIG_PPC_BOOK3S_64 */
 
 	return last;
 }
@@ -1476,7 +1484,7 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 
 static void setup_ksp_vsid(struct task_struct *p, unsigned long sp)
 {
-#ifdef CONFIG_PPC_STD_MMU_64
+#ifdef CONFIG_PPC_BOOK3S_64
 	unsigned long sp_vsid;
 	unsigned long llp = mmu_psize_defs[mmu_linear_psize].sllp;
 
@@ -2056,7 +2064,7 @@ unsigned long arch_randomize_brk(struct mm_struct *mm)
 	unsigned long base = mm->brk;
 	unsigned long ret;
 
-#ifdef CONFIG_PPC_STD_MMU_64
+#ifdef CONFIG_PPC_BOOK3S_64
 	/*
 	 * If we are using 1TB segments and we are allowed to randomise
 	 * the heap, we can put it above 1TB so it is backed by a 1TB

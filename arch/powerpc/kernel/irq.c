@@ -143,6 +143,13 @@ notrace unsigned int __check_irq_replay(void)
 	 */
 	unsigned char happened = local_paca->irq_happened;
 
+	/*
+	 * We are responding to the next interrupt, so interrupt-off
+	 * latencies should be reset here.
+	 */
+	trace_hardirqs_on();
+	trace_hardirqs_off();
+
 	if (happened & PACA_IRQ_HARD_DIS) {
 		/* Clear bit 0 which we wouldn't clear otherwise */
 		local_paca->irq_happened &= ~PACA_IRQ_HARD_DIS;
@@ -270,6 +277,7 @@ notrace void arch_local_irq_restore(unsigned long en)
 #endif /* CONFIG_TRACE_IRQFLAGS */
 
 	set_soft_enabled(0);
+	trace_hardirqs_off();
 
 	/*
 	 * Check if anything needs to be re-emitted. We haven't
@@ -279,6 +287,7 @@ notrace void arch_local_irq_restore(unsigned long en)
 	replay = __check_irq_replay();
 
 	/* We can soft-enable now */
+	trace_hardirqs_on();
 	set_soft_enabled(1);
 
 	/*
@@ -415,7 +424,7 @@ static const u8 srr1_to_lazyirq[0x10] = {
 	PACA_IRQ_HMI,
 	0, 0, 0, 0, 0 };
 
-static noinline void replay_system_reset(void)
+void replay_system_reset(void)
 {
 	struct pt_regs regs;
 
@@ -425,6 +434,7 @@ static noinline void replay_system_reset(void)
 	system_reset_exception(&regs);
 	get_paca()->in_nmi = 0;
 }
+EXPORT_SYMBOL_GPL(replay_system_reset);
 
 void irq_set_pending_from_srr1(unsigned long srr1)
 {

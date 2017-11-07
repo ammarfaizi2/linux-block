@@ -1337,13 +1337,8 @@ void program_check_exception(struct pt_regs *regs)
 		 * -  A treclaim is attempted when non transactional.
 		 * -  A tend is illegally attempted.
 		 * -  writing a TM SPR when transactional.
-		 */
-		if (!user_mode(regs) &&
-		    report_bug(regs->nip, regs) == BUG_TRAP_TYPE_WARN) {
-			regs->nip += 4;
-			goto bail;
-		}
-		/* If usermode caused this, it's done something illegal and
+		 *
+		 * If usermode caused this, it's done something illegal and
 		 * gets a SIGILL slap on the wrist.  We call it an illegal
 		 * operand to distinguish from the instruction just being bad
 		 * (e.g. executing a 'tend' on a CPU without TM!); it's an
@@ -1684,7 +1679,7 @@ void fp_unavailable_tm(struct pt_regs *regs)
 	/* Reclaim didn't save out any FPRs to transact_fprs. */
 
 	/* Enable FP for the task: */
-	regs->msr |= (MSR_FP | current->thread.fpexc_mode);
+	current->thread.load_fp = 1;
 
 	/* This loads and recheckpoints the FP registers from
 	 * thread.fpr[].  They will remain in registers after the
@@ -1692,15 +1687,7 @@ void fp_unavailable_tm(struct pt_regs *regs)
 	 * If VMX is in use, the VRs now hold checkpointed values,
 	 * so we don't want to load the VRs from the thread_struct.
 	 */
-	tm_recheckpoint(&current->thread, MSR_FP);
-
-	/* If VMX is in use, get the transactional values back */
-	if (regs->msr & MSR_VEC) {
-		msr_check_and_set(MSR_VEC);
-		load_vr_state(&current->thread.vr_state);
-		/* At this point all the VSX state is loaded, so enable it */
-		regs->msr |= MSR_VSX;
-	}
+	tm_recheckpoint(&current->thread);
 }
 
 void altivec_unavailable_tm(struct pt_regs *regs)
@@ -1713,21 +1700,13 @@ void altivec_unavailable_tm(struct pt_regs *regs)
 		 "MSR=%lx\n",
 		 regs->nip, regs->msr);
 	tm_reclaim_current(TM_CAUSE_FAC_UNAV);
-	regs->msr |= MSR_VEC;
-	tm_recheckpoint(&current->thread, MSR_VEC);
+	current->thread.load_vec = 1;
+	tm_recheckpoint(&current->thread);
 	current->thread.used_vr = 1;
-
-	if (regs->msr & MSR_FP) {
-		msr_check_and_set(MSR_FP);
-		load_fp_state(&current->thread.fp_state);
-		regs->msr |= MSR_VSX;
-	}
 }
 
 void vsx_unavailable_tm(struct pt_regs *regs)
 {
-	unsigned long orig_msr = regs->msr;
-
 	/* See the comments in fp_unavailable_tm().  This works similarly,
 	 * though we're loading both FP and VEC registers in here.
 	 *
@@ -1741,29 +1720,13 @@ void vsx_unavailable_tm(struct pt_regs *regs)
 
 	current->thread.used_vsr = 1;
 
-	/* If FP and VMX are already loaded, we have all the state we need */
-	if ((orig_msr & (MSR_FP | MSR_VEC)) == (MSR_FP | MSR_VEC)) {
-		regs->msr |= MSR_VSX;
-		return;
-	}
-
 	/* This reclaims FP and/or VR regs if they're already enabled */
 	tm_reclaim_current(TM_CAUSE_FAC_UNAV);
 
-	regs->msr |= MSR_VEC | MSR_FP | current->thread.fpexc_mode |
-		MSR_VSX;
+	current->thread.load_vec = 1;
+	current->thread.load_fp = 1;
 
-	/* This loads & recheckpoints FP and VRs; but we have
-	 * to be sure not to overwrite previously-valid state.
-	 */
-	tm_recheckpoint(&current->thread, regs->msr & ~orig_msr);
-
-	msr_check_and_set(orig_msr & (MSR_FP | MSR_VEC));
-
-	if (orig_msr & MSR_FP)
-		load_fp_state(&current->thread.fp_state);
-	if (orig_msr & MSR_VEC)
-		load_vr_state(&current->thread.vr_state);
+	tm_recheckpoint(&current->thread);
 }
 #endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
 
