@@ -1136,6 +1136,10 @@ static inline void restore_sprs(struct thread_struct *old_thread,
 		if (old_thread->tar != new_thread->tar)
 			mtspr(SPRN_TAR, new_thread->tar);
 	}
+
+	if (cpu_has_feature(CPU_FTR_ARCH_300) &&
+	    old_thread->tidr != new_thread->tidr)
+		mtspr(SPRN_TIDR, new_thread->tidr);
 #endif
 }
 
@@ -1240,17 +1244,17 @@ struct task_struct *__switch_to(struct task_struct *prev,
 		 * The copy-paste buffer can only store into foreign real
 		 * addresses, so unprivileged processes can not see the
 		 * data or use it in any way unless they have foreign real
-		 * mappings. We don't have a VAS driver that allocates those
-		 * yet, so no cpabort is required.
+		 * mappings. If the new process has the foreign real address
+		 * mappings, we must issue a cp_abort to clear any state and
+		 * prevent snooping, corruption or a covert channel.
+		 *
+		 * DD1 allows paste into normal system memory so we do an
+		 * unpaired copy, rather than cp_abort, to clear the buffer,
+		 * since cp_abort is quite expensive.
 		 */
-		if (cpu_has_feature(CPU_FTR_POWER9_DD1)) {
-			/*
-			 * DD1 allows paste into normal system memory, so we
-			 * do an unpaired copy here to clear the buffer and
-			 * prevent a covert channel being set up.
-			 *
-			 * cpabort is not used because it is quite expensive.
-			 */
+		if (current_thread_info()->task->thread.used_vas) {
+			asm volatile(PPC_CP_ABORT);
+		} else if (cpu_has_feature(CPU_FTR_POWER9_DD1)) {
 			asm volatile(PPC_COPY(%0, %1)
 					: : "r"(dummy_copy_buffer), "r"(0));
 		}
@@ -1451,6 +1455,137 @@ void flush_thread(void)
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
 }
 
+int set_thread_uses_vas(void)
+{
+#ifdef CONFIG_PPC_BOOK3S_64
+	if (!cpu_has_feature(CPU_FTR_ARCH_300))
+		return -EINVAL;
+
+	current->thread.used_vas = 1;
+
+	/*
+	 * Even a process that has no foreign real address mapping can use
+	 * an unpaired COPY instruction (to no real effect). Issue CP_ABORT
+	 * to clear any pending COPY and prevent a covert channel.
+	 *
+	 * __switch_to() will issue CP_ABORT on future context switches.
+	 */
+	asm volatile(PPC_CP_ABORT);
+
+#endif /* CONFIG_PPC_BOOK3S_64 */
+	return 0;
+}
+
+#ifdef CONFIG_PPC64
+static DEFINE_SPINLOCK(vas_thread_id_lock);
+static DEFINE_IDA(vas_thread_ida);
+
+/*
+ * We need to assign a unique thread id to each thread in a process.
+ *
+ * This thread id, referred to as TIDR, and separate from the Linux's tgid,
+ * is intended to be used to direct an ASB_Notify from the hardware to the
+ * thread, when a suitable event occurs in the system.
+ *
+ * One such event is a "paste" instruction in the context of Fast Thread
+ * Wakeup (aka Core-to-core wake up in the Virtual Accelerator Switchboard
+ * (VAS) in POWER9.
+ *
+ * To get a unique TIDR per process we could simply reuse task_pid_nr() but
+ * the problem is that task_pid_nr() is not yet available copy_thread() is
+ * called. Fixing that would require changing more intrusive arch-neutral
+ * code in code path in copy_process()?.
+ *
+ * Further, to assign unique TIDRs within each process, we need an atomic
+ * field (or an IDR) in task_struct, which again intrudes into the arch-
+ * neutral code. So try to assign globally unique TIDRs for now.
+ *
+ * NOTE: TIDR 0 indicates that the thread does not need a TIDR value.
+ *	 For now, only threads that expect to be notified by the VAS
+ *	 hardware need a TIDR value and we assign values > 0 for those.
+ */
+#define MAX_THREAD_CONTEXT	((1 << 16) - 1)
+static int assign_thread_tidr(void)
+{
+	int index;
+	int err;
+
+again:
+	if (!ida_pre_get(&vas_thread_ida, GFP_KERNEL))
+		return -ENOMEM;
+
+	spin_lock(&vas_thread_id_lock);
+	err = ida_get_new_above(&vas_thread_ida, 1, &index);
+	spin_unlock(&vas_thread_id_lock);
+
+	if (err == -EAGAIN)
+		goto again;
+	else if (err)
+		return err;
+
+	if (index > MAX_THREAD_CONTEXT) {
+		spin_lock(&vas_thread_id_lock);
+		ida_remove(&vas_thread_ida, index);
+		spin_unlock(&vas_thread_id_lock);
+		return -ENOMEM;
+	}
+
+	return index;
+}
+
+static void free_thread_tidr(int id)
+{
+	spin_lock(&vas_thread_id_lock);
+	ida_remove(&vas_thread_ida, id);
+	spin_unlock(&vas_thread_id_lock);
+}
+
+/*
+ * Clear any TIDR value assigned to this thread.
+ */
+void clear_thread_tidr(struct task_struct *t)
+{
+	if (!t->thread.tidr)
+		return;
+
+	if (!cpu_has_feature(CPU_FTR_ARCH_300)) {
+		WARN_ON_ONCE(1);
+		return;
+	}
+
+	mtspr(SPRN_TIDR, 0);
+	free_thread_tidr(t->thread.tidr);
+	t->thread.tidr = 0;
+}
+
+void arch_release_task_struct(struct task_struct *t)
+{
+	clear_thread_tidr(t);
+}
+
+/*
+ * Assign a unique TIDR (thread id) for task @t and set it in the thread
+ * structure. For now, we only support setting TIDR for 'current' task.
+ */
+int set_thread_tidr(struct task_struct *t)
+{
+	if (!cpu_has_feature(CPU_FTR_ARCH_300))
+		return -EINVAL;
+
+	if (t != current)
+		return -EINVAL;
+
+	t->thread.tidr = assign_thread_tidr();
+	if (t->thread.tidr < 0)
+		return t->thread.tidr;
+
+	mtspr(SPRN_TIDR, t->thread.tidr);
+
+	return 0;
+}
+
+#endif /* CONFIG_PPC64 */
+
 void
 release_thread(struct task_struct *t)
 {
@@ -1597,6 +1732,8 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	}
 	if (cpu_has_feature(CPU_FTR_HAS_PPR))
 		p->thread.ppr = INIT_PPR;
+
+	p->thread.tidr = 0;
 #endif
 	kregs->nip = ppc_function_entry(f);
 	return 0;
