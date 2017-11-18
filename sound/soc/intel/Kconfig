@@ -28,8 +28,6 @@ config SND_SST_IPC_PCI
 config SND_SST_IPC_ACPI
 	tristate
 	select SND_SST_IPC
-	select SND_SOC_INTEL_SST
-	select IOSF_MBI
 	help
 	 This option controls the ACPI-based IPC for HiFi2 platforms
 	 (Baytrail, Cherrytrail)
@@ -42,7 +40,6 @@ config SND_SOC_INTEL_SST_ACPI
 
 config SND_SOC_INTEL_SST
 	tristate
-	select SND_SOC_INTEL_SST_ACPI if ACPI
 
 config SND_SOC_INTEL_SST_FIRMWARE
 	tristate
@@ -56,6 +53,7 @@ config SND_SOC_INTEL_HASWELL
 	depends on SND_DMA_SGBUF && ACPI
 	depends on DMADEVICES
 	select SND_SOC_INTEL_SST
+	select SND_SOC_INTEL_SST_ACPI
 	select SND_SOC_INTEL_SST_FIRMWARE
 	select SND_SOC_INTEL_COMMON
 
@@ -63,6 +61,7 @@ config SND_SOC_INTEL_BAYTRAIL
 	tristate "Intel ASoC SST driver for Baytrail (legacy)"
 	depends on DMADEVICES && ACPI
 	select SND_SOC_INTEL_SST
+	select SND_SOC_INTEL_SST_ACPI
 	select SND_SOC_INTEL_SST_FIRMWARE
 	select SND_SOC_INTEL_COMMON
 
@@ -77,6 +76,7 @@ config SND_SST_ATOM_HIFI2_PLATFORM
 	tristate "Intel ASoC SST driver for ACPI HiFi2 platforms (Baytrail, Cherrytrail)"
 	depends on X86 && ACPI
 	select SND_SST_IPC_ACPI
+	select IOSF_MBI
 	select SND_SOC_COMPRESS
 	select SND_SOC_INTEL_COMMON
 
