@@ -39,7 +39,7 @@ config SND_SOC_INTEL_SST_ACPI
 
 config SND_SOC_INTEL_HASWELL
 	tristate "Intel ASoC SST driver for Haswell/Broadwell"
-	depends on SND_DMA_SGBUF
+	depends on SND_DMA_SGBUF && ACPI
 	depends on DMADEVICES
 	select SND_SOC_INTEL_SST
 	select SND_SOC_INTEL_SST_FIRMWARE
@@ -47,14 +47,22 @@ config SND_SOC_INTEL_HASWELL
 
 config SND_SOC_INTEL_BAYTRAIL
 	tristate "Intel ASoC SST driver for Baytrail (legacy)"
-	depends on DMADEVICES
+	depends on DMADEVICES && ACPI
 	select SND_SOC_INTEL_SST
 	select SND_SOC_INTEL_SST_FIRMWARE
 	select SND_SOC_INTEL_COMMON
 
+config SND_SST_ATOM_HIFI2_PLATFORM_PCI
+	tristate "Intel ASoC SST driver for PCI HiFi2 platforms (Medfield, Merrifield)"
+	depends on X86 && PCI
+	select SND_SST_IPC_PCI
+	select SND_SOC_COMPRESS
+	select SND_SOC_INTEL_COMMON
+
 config SND_SST_ATOM_HIFI2_PLATFORM
-	tristate "Intel ASoC SST driver for HiFi2 platforms (*field, *trail)"
-	depends on X86
+	tristate "Intel ASoC SST driver for ACPI HiFi2 platforms (Baytrail, Cherrytrail)"
+	depends on X86 && ACPI
+	select SND_SST_IPC_ACPI
 	select SND_SOC_COMPRESS
 	select SND_SOC_INTEL_COMMON
 
