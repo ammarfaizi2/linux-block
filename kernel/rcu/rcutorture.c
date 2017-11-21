@@ -188,7 +188,7 @@ static const char *rcu_torture_writer_state_getname(void)
 }
 
 static int torture_runnable = IS_ENABLED(MODULE);
-module_param(torture_runnable, int, 0444);
+module_param(torture_runnable, int, 0644);
 MODULE_PARM_DESC(torture_runnable, "Start rcutorture at boot");
 
 #if defined(CONFIG_RCU_BOOST) && !defined(CONFIG_HOTPLUG_CPU)
@@ -1309,7 +1309,7 @@ rcu_torture_stats_print(void)
 	if (cur_ops->stats)
 		cur_ops->stats();
 	if (rtcv_snap == rcu_torture_current_version &&
-	    rcu_torture_current != NULL) {
+	    rcu_torture_current != NULL && torture_runnable) {
 		int __maybe_unused flags = 0;
 		unsigned long __maybe_unused gpnum = 0;
 		unsigned long __maybe_unused completed = 0;
