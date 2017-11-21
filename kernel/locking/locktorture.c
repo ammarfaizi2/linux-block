@@ -78,7 +78,7 @@ struct lock_stress_stats {
 };
 
 int torture_runnable = IS_ENABLED(MODULE);
-module_param(torture_runnable, int, 0444);
+module_param(torture_runnable, int, 0644);
 MODULE_PARM_DESC(torture_runnable, "Start locktorture at module init");
 
 /* Forward reference. */
