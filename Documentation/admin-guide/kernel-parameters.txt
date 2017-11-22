@@ -2029,9 +2029,6 @@
 			This tests the locking primitive's ability to
 			transition abruptly to and from idle.
 
-	locktorture.torture_runnable= [BOOT]
-			Start locktorture running at boot time.
-
 	locktorture.torture_type= [KNL]
 			Specify the locking implementation to test.
 
@@ -3565,9 +3562,6 @@
 	rcutorture.test_no_idle_hz= [KNL]
 			Test RCU's dyntick-idle handling.  See also the
 			rcutorture.shuffle_interval parameter.
-
-	rcutorture.torture_runnable= [BOOT]
-			Start rcutorture running at boot time.
 
 	rcutorture.torture_type= [KNL]
 			Specify the RCU implementation to test.
