@@ -2139,7 +2139,8 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
 	 */
 	rcu_for_each_node_breadth_first(rsp, rnp) {
 		raw_spin_lock_irq_rcu_node(rnp);
-		WARN_ON_ONCE(rcu_preempt_blocked_readers_cgp(rnp));
+		if (WARN_ON_ONCE(rcu_preempt_blocked_readers_cgp(rnp)))
+			pr_info("%s: grp: %d-%d level: %d\n", __func__, rnp->grplo, rnp->grphi, rnp->level);
 		WARN_ON_ONCE(rnp->qsmask);
 		WRITE_ONCE(rnp->completed, rsp->gpnum);
 		rdp = this_cpu_ptr(rsp->rda);
