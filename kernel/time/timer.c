@@ -1803,7 +1803,7 @@ signed long __sched schedule_timeout(signed long timeout)
 		idx = timer_get_idx(&timer.timer);
 		idx_now = calc_wheel_index(j, base->clk);
 		raw_spin_unlock_irqrestore(&base->lock, flags);
-		pr_info("%s: Waylayed timer idx: %u idx_now: %u\n", __func__, idx, idx_now);
+		pr_info("%s: Waylayed timer base->clk: %#lx jiffies: %#lx base->next_expiry: %#lx timer->flags: %#x timer->expires %#lx idx: %x idx_now: %x\n", __func__, base->clk, j, base->next_expiry, timer.timer.flags, timer.timer.expires, idx, idx_now);
 	}
 	del_singleshot_timer_sync(&timer.timer);
 
