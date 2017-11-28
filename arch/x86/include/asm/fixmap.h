@@ -242,5 +242,7 @@ static inline struct SYSENTER_stack *cpu_SYSENTER_stack(int cpu)
 	return &get_cpu_entry_area((cpu))->tss.SYSENTER_stack;
 }
 
+extern void setup_cpu_entry_areas(void);
+
 #endif /* !__ASSEMBLY__ */
 #endif /* _ASM_X86_FIXMAP_H */

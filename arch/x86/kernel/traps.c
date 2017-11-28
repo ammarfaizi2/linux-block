@@ -946,6 +946,12 @@ dotraplinkage void do_iret_error(struct pt_regs *regs, long error_code)
 
 void __init trap_init(void)
 {
+	/*
+	 * We need cpu_entry_area working before any IST-using entries could
+	 * happen.
+	 */
+	setup_cpu_entry_areas();
+
 	idt_setup_traps();
 
 	/*

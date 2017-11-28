@@ -490,7 +490,8 @@ void load_percpu_segment(int cpu)
 	load_stack_canary_segment();
 }
 
-static void set_percpu_fixmap_pages(int fixmap_index, void *ptr, int pages, pgprot_t prot)
+static void __init
+set_percpu_fixmap_pages(int fixmap_index, void *ptr, int pages, pgprot_t prot)
 {
 	int i;
 
@@ -520,7 +521,7 @@ static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
 #endif
 
 /* Setup the fixmap mappings only once per-processor */
-static inline void setup_cpu_entry_area(int cpu)
+static void __init setup_cpu_entry_area(int cpu)
 {
 #ifdef CONFIG_X86_64
 	extern char _entry_trampoline[];
@@ -569,7 +570,7 @@ static inline void setup_cpu_entry_area(int cpu)
 				PAGE_KERNEL);
 
 #ifdef CONFIG_X86_32
-	this_cpu_write(cpu_entry_area, get_cpu_entry_area(cpu));
+	per_cpu(cpu_entry_area, cpu) = get_cpu_entry_area(cpu);
 #endif
 
 #ifdef CONFIG_X86_64
@@ -584,6 +585,21 @@ static inline void setup_cpu_entry_area(int cpu)
 	__set_fixmap(get_cpu_entry_area_index(cpu, entry_trampoline),
 		     __pa_symbol(_entry_trampoline), PAGE_KERNEL_RX);
 #endif
+}
+
+void __init setup_cpu_entry_areas(void)
+{
+	int cpu;
+
+	/*
+	 * For better or for worse, the kernel allocates percpu space
+	 * for all possible CPUs early in BP startup.  Map every CPU's
+	 * cpu_entry_area right off the bat so that they're available
+	 * before anything in AP boot could need them.
+	 */
+	for_each_possible_cpu(cpu) {
+		setup_cpu_entry_area(cpu);
+	}
 }
 
 /* Load the original GDT from the per-cpu structure */
@@ -1658,8 +1674,6 @@ void cpu_init(void)
 	initialize_tlbstate_and_flush();
 	enter_lazy_tlb(&init_mm, me);
 
-	setup_cpu_entry_area(cpu);
-
 	/*
 	 * Initialize the TSS.  sp0 points to the entry trampoline stack
 	 * regardless of what task is running.
@@ -1717,8 +1731,6 @@ void cpu_init(void)
 	BUG_ON(curr->mm);
 	initialize_tlbstate_and_flush();
 	enter_lazy_tlb(&init_mm, curr);
-
-	setup_cpu_entry_area(cpu);
 
 	/*
 	 * Initialize the TSS.  Don't bother initializing sp0, as the initial
