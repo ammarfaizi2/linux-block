@@ -1755,8 +1755,12 @@ static void process_timeout(struct timer_list *t)
  */
 signed long __sched schedule_timeout(signed long timeout)
 {
+	struct timer_base *base;
 	struct process_timer timer;
 	unsigned long expire;
+	unsigned long flags;
+	unsigned int idx, idx_now;
+	unsigned long j;
 
 	switch (timeout)
 	{
@@ -1793,6 +1797,14 @@ signed long __sched schedule_timeout(signed long timeout)
 	timer_setup_on_stack(&timer.timer, process_timeout, 0);
 	__mod_timer(&timer.timer, expire, 0);
 	schedule();
+	j = jiffies;
+	if (timeout < 5 && time_after(j, expire + 8 * HZ) && timer_pending(&timer.timer)) {
+		base = lock_timer_base(&timer.timer, &flags);
+		idx = timer_get_idx(&timer.timer);
+		idx_now = calc_wheel_index(j, base->clk);
+		raw_spin_unlock_irqrestore(&base->lock, flags);
+		pr_info("%s: Waylayed timer idx: %u idx_now: %u\n", __func__, idx, idx_now);
+	}
 	del_singleshot_timer_sync(&timer.timer);
 
 	/* Remove the timer from the object tracker */
