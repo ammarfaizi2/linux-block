@@ -1078,11 +1078,11 @@ ENTRY(native_load_gs_index)
 	pushfq
 	DISABLE_INTERRUPTS(CLBR_ANY & ~CLBR_RDI)
 	TRACE_IRQS_OFF
-	SWAPGS
+	SWAPGS				/* switch from kernel to user GSBASE */
 .Lgs_change:
 	movl	%edi, %gs
 2:	ALTERNATIVE "", "mfence", X86_BUG_SWAPGS_FENCE
-	SWAPGS
+	SWAPGS				/* switch back to kernel GSBASE */
 	TRACE_IRQS_FLAGS (%rsp)
 	popfq
 	FRAME_END
@@ -1092,11 +1092,18 @@ EXPORT_SYMBOL(native_load_gs_index)
 
 	_ASM_EXTABLE(.Lgs_change, bad_gs)
 	.section .fixup, "ax"
-	/* running with kernelgs */
 bad_gs:
-	SWAPGS					/* switch back to user gs */
+	/*
+	 * The idtentry handlers will cause us to land here with kernel
+	 * GSBASE in the event of a fault even though we would have faulted
+	 * with user GSBASE.
+	 */
+	SWAPGS				/* switch back to user GSBASE */
 .macro ZAP_GS
-	/* This can't be a string because the preprocessor needs to see it. */
+	/*
+	 * ZAP_GS forces GSBASE to zero.  The contents can't be a string
+	 * literal in ALTERNATIVE because the preprocessor needs to see it.
+	 */
 	movl $__USER_DS, %eax
 	movl %eax, %gs
 .endm
