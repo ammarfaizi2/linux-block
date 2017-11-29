@@ -28,6 +28,20 @@
 	pushq %r10
 	pushq %r11
 
+#ifdef CONFIG_DEBUG_ENTRY
+	/*
+	 * The THUNK helpers must only be called with kernel GS.  Getting
+	 * this wrong is an easy mistake to make, and we might not easily
+	 * notice if we make it all the way through without taking an
+	 * interrupt or accessing a percpu variable.
+	 *
+	 * (It doesn't matter which percpu variable we access here.  SMAP
+	 *  will cause a fault even if the effective address ends up being
+	 *  a valid user address.)
+	 */
+	movq	%gs:0, %r11
+#endif
+
 	.if \put_ret_addr_in_rdi
 	/* 8(%rbp) is return addr on stack */
 	movq 8(%rbp), %rdi
