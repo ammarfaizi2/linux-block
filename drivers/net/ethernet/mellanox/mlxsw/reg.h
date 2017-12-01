@@ -1758,6 +1758,191 @@ static inline void mlxsw_reg_spvmlr_pack(char *payload, u8 local_port,
 	}
 }
 
+/* CWTP - Congetion WRED ECN TClass Profile
+ * ----------------------------------------
+ * Configures the profiles for queues of egress port and traffic class
+ */
+#define MLXSW_REG_CWTP_ID 0x2802
+#define MLXSW_REG_CWTP_BASE_LEN 0x28
+#define MLXSW_REG_CWTP_PROFILE_DATA_REC_LEN 0x08
+#define MLXSW_REG_CWTP_LEN 0x40
+
+MLXSW_REG_DEFINE(cwtp, MLXSW_REG_CWTP_ID, MLXSW_REG_CWTP_LEN);
+
+/* reg_cwtp_local_port
+ * Local port number
+ * Not supported for CPU port
+ * Access: Index
+ */
+MLXSW_ITEM32(reg, cwtp, local_port, 0, 16, 8);
+
+/* reg_cwtp_traffic_class
+ * Traffic Class to configure
+ * Access: Index
+ */
+MLXSW_ITEM32(reg, cwtp, traffic_class, 32, 0, 8);
+
+/* reg_cwtp_profile_min
+ * Minimum Average Queue Size of the profile in cells.
+ * Access: RW
+ */
+MLXSW_ITEM32_INDEXED(reg, cwtp, profile_min, MLXSW_REG_CWTP_BASE_LEN,
+		     0, 20, MLXSW_REG_CWTP_PROFILE_DATA_REC_LEN, 0, false);
+
+/* reg_cwtp_profile_percent
+ * Percentage of WRED and ECN marking for maximum Average Queue size
+ * Range is 0 to 100, units of integer percentage
+ * Access: RW
+ */
+MLXSW_ITEM32_INDEXED(reg, cwtp, profile_percent, MLXSW_REG_CWTP_BASE_LEN,
+		     24, 7, MLXSW_REG_CWTP_PROFILE_DATA_REC_LEN, 4, false);
+
+/* reg_cwtp_profile_max
+ * Maximum Average Queue size of the profile in cells
+ * Access: RW
+ */
+MLXSW_ITEM32_INDEXED(reg, cwtp, profile_max, MLXSW_REG_CWTP_BASE_LEN,
+		     0, 20, MLXSW_REG_CWTP_PROFILE_DATA_REC_LEN, 4, false);
+
+#define MLXSW_REG_CWTP_MIN_VALUE 64
+#define MLXSW_REG_CWTP_MAX_PROFILE 2
+#define MLXSW_REG_CWTP_DEFAULT_PROFILE 1
+
+static inline void mlxsw_reg_cwtp_pack(char *payload, u8 local_port,
+				       u8 traffic_class)
+{
+	int i;
+
+	MLXSW_REG_ZERO(cwtp, payload);
+	mlxsw_reg_cwtp_local_port_set(payload, local_port);
+	mlxsw_reg_cwtp_traffic_class_set(payload, traffic_class);
+
+	for (i = 0; i <= MLXSW_REG_CWTP_MAX_PROFILE; i++) {
+		mlxsw_reg_cwtp_profile_min_set(payload, i,
+					       MLXSW_REG_CWTP_MIN_VALUE);
+		mlxsw_reg_cwtp_profile_max_set(payload, i,
+					       MLXSW_REG_CWTP_MIN_VALUE);
+	}
+}
+
+#define MLXSW_REG_CWTP_PROFILE_TO_INDEX(profile) (profile - 1)
+
+static inline void
+mlxsw_reg_cwtp_profile_pack(char *payload, u8 profile, u32 min, u32 max,
+			    u32 probability)
+{
+	u8 index = MLXSW_REG_CWTP_PROFILE_TO_INDEX(profile);
+
+	mlxsw_reg_cwtp_profile_min_set(payload, index, min);
+	mlxsw_reg_cwtp_profile_max_set(payload, index, max);
+	mlxsw_reg_cwtp_profile_percent_set(payload, index, probability);
+}
+
+/* CWTPM - Congestion WRED ECN TClass and Pool Mapping
+ * ---------------------------------------------------
+ * The CWTPM register maps each egress port and traffic class to profile num.
+ */
+#define MLXSW_REG_CWTPM_ID 0x2803
+#define MLXSW_REG_CWTPM_LEN 0x44
+
+MLXSW_REG_DEFINE(cwtpm, MLXSW_REG_CWTPM_ID, MLXSW_REG_CWTPM_LEN);
+
+/* reg_cwtpm_local_port
+ * Local port number
+ * Not supported for CPU port
+ * Access: Index
+ */
+MLXSW_ITEM32(reg, cwtpm, local_port, 0, 16, 8);
+
+/* reg_cwtpm_traffic_class
+ * Traffic Class to configure
+ * Access: Index
+ */
+MLXSW_ITEM32(reg, cwtpm, traffic_class, 32, 0, 8);
+
+/* reg_cwtpm_ew
+ * Control enablement of WRED for traffic class:
+ * 0 - Disable
+ * 1 - Enable
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, ew, 36, 1, 1);
+
+/* reg_cwtpm_ee
+ * Control enablement of ECN for traffic class:
+ * 0 - Disable
+ * 1 - Enable
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, ee, 36, 0, 1);
+
+/* reg_cwtpm_tcp_g
+ * TCP Green Profile.
+ * Index of the profile within {port, traffic class} to use.
+ * 0 for disabling both WRED and ECN for this type of traffic.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, tcp_g, 52, 0, 2);
+
+/* reg_cwtpm_tcp_y
+ * TCP Yellow Profile.
+ * Index of the profile within {port, traffic class} to use.
+ * 0 for disabling both WRED and ECN for this type of traffic.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, tcp_y, 56, 16, 2);
+
+/* reg_cwtpm_tcp_r
+ * TCP Red Profile.
+ * Index of the profile within {port, traffic class} to use.
+ * 0 for disabling both WRED and ECN for this type of traffic.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, tcp_r, 56, 0, 2);
+
+/* reg_cwtpm_ntcp_g
+ * Non-TCP Green Profile.
+ * Index of the profile within {port, traffic class} to use.
+ * 0 for disabling both WRED and ECN for this type of traffic.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, ntcp_g, 60, 0, 2);
+
+/* reg_cwtpm_ntcp_y
+ * Non-TCP Yellow Profile.
+ * Index of the profile within {port, traffic class} to use.
+ * 0 for disabling both WRED and ECN for this type of traffic.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, ntcp_y, 64, 16, 2);
+
+/* reg_cwtpm_ntcp_r
+ * Non-TCP Red Profile.
+ * Index of the profile within {port, traffic class} to use.
+ * 0 for disabling both WRED and ECN for this type of traffic.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, cwtpm, ntcp_r, 64, 0, 2);
+
+#define MLXSW_REG_CWTPM_RESET_PROFILE 0
+
+static inline void mlxsw_reg_cwtpm_pack(char *payload, u8 local_port,
+					u8 traffic_class, u8 profile,
+					bool wred, bool ecn)
+{
+	MLXSW_REG_ZERO(cwtpm, payload);
+	mlxsw_reg_cwtpm_local_port_set(payload, local_port);
+	mlxsw_reg_cwtpm_traffic_class_set(payload, traffic_class);
+	mlxsw_reg_cwtpm_ew_set(payload, wred);
+	mlxsw_reg_cwtpm_ee_set(payload, ecn);
+	mlxsw_reg_cwtpm_tcp_g_set(payload, profile);
+	mlxsw_reg_cwtpm_tcp_y_set(payload, profile);
+	mlxsw_reg_cwtpm_tcp_r_set(payload, profile);
+	mlxsw_reg_cwtpm_ntcp_g_set(payload, profile);
+	mlxsw_reg_cwtpm_ntcp_y_set(payload, profile);
+	mlxsw_reg_cwtpm_ntcp_r_set(payload, profile);
+}
+
 /* PPBT - Policy-Engine Port Binding Table
  * ---------------------------------------
  * This register is used for configuration of the Port Binding Table.
@@ -3123,6 +3308,7 @@ static inline void mlxsw_reg_pfcc_pack(char *payload, u8 local_port)
  */
 #define MLXSW_REG_PPCNT_ID 0x5008
 #define MLXSW_REG_PPCNT_LEN 0x100
+#define MLXSW_REG_PPCNT_COUNTERS_OFFSET 0x08
 
 MLXSW_REG_DEFINE(ppcnt, MLXSW_REG_PPCNT_ID, MLXSW_REG_PPCNT_LEN);
 
@@ -3155,8 +3341,10 @@ MLXSW_ITEM32(reg, ppcnt, pnat, 0x00, 14, 2);
 
 enum mlxsw_reg_ppcnt_grp {
 	MLXSW_REG_PPCNT_IEEE_8023_CNT = 0x0,
+	MLXSW_REG_PPCNT_EXT_CNT = 0x5,
 	MLXSW_REG_PPCNT_PRIO_CNT = 0x10,
 	MLXSW_REG_PPCNT_TC_CNT = 0x11,
+	MLXSW_REG_PPCNT_TC_CONG_TC = 0x13,
 };
 
 /* reg_ppcnt_grp
@@ -3172,6 +3360,7 @@ enum mlxsw_reg_ppcnt_grp {
  * 0x10: Per Priority Counters
  * 0x11: Per Traffic Class Counters
  * 0x12: Physical Layer Counters
+ * 0x13: Per Traffic Class Congestion Counters
  * Access: Index
  */
 MLXSW_ITEM32(reg, ppcnt, grp, 0x00, 0, 6);
@@ -3200,162 +3389,179 @@ MLXSW_ITEM32(reg, ppcnt, prio_tc, 0x04, 0, 5);
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_frames_transmitted_ok,
-	     0x08 + 0x00, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x00, 0, 64);
 
 /* reg_ppcnt_a_frames_received_ok
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_frames_received_ok,
-	     0x08 + 0x08, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x08, 0, 64);
 
 /* reg_ppcnt_a_frame_check_sequence_errors
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_frame_check_sequence_errors,
-	     0x08 + 0x10, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x10, 0, 64);
 
 /* reg_ppcnt_a_alignment_errors
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_alignment_errors,
-	     0x08 + 0x18, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x18, 0, 64);
 
 /* reg_ppcnt_a_octets_transmitted_ok
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_octets_transmitted_ok,
-	     0x08 + 0x20, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x20, 0, 64);
 
 /* reg_ppcnt_a_octets_received_ok
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_octets_received_ok,
-	     0x08 + 0x28, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x28, 0, 64);
 
 /* reg_ppcnt_a_multicast_frames_xmitted_ok
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_multicast_frames_xmitted_ok,
-	     0x08 + 0x30, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x30, 0, 64);
 
 /* reg_ppcnt_a_broadcast_frames_xmitted_ok
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_broadcast_frames_xmitted_ok,
-	     0x08 + 0x38, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x38, 0, 64);
 
 /* reg_ppcnt_a_multicast_frames_received_ok
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_multicast_frames_received_ok,
-	     0x08 + 0x40, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x40, 0, 64);
 
 /* reg_ppcnt_a_broadcast_frames_received_ok
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_broadcast_frames_received_ok,
-	     0x08 + 0x48, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x48, 0, 64);
 
 /* reg_ppcnt_a_in_range_length_errors
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_in_range_length_errors,
-	     0x08 + 0x50, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x50, 0, 64);
 
 /* reg_ppcnt_a_out_of_range_length_field
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_out_of_range_length_field,
-	     0x08 + 0x58, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x58, 0, 64);
 
 /* reg_ppcnt_a_frame_too_long_errors
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_frame_too_long_errors,
-	     0x08 + 0x60, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x60, 0, 64);
 
 /* reg_ppcnt_a_symbol_error_during_carrier
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_symbol_error_during_carrier,
-	     0x08 + 0x68, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x68, 0, 64);
 
 /* reg_ppcnt_a_mac_control_frames_transmitted
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_mac_control_frames_transmitted,
-	     0x08 + 0x70, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x70, 0, 64);
 
 /* reg_ppcnt_a_mac_control_frames_received
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_mac_control_frames_received,
-	     0x08 + 0x78, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x78, 0, 64);
 
 /* reg_ppcnt_a_unsupported_opcodes_received
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_unsupported_opcodes_received,
-	     0x08 + 0x80, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x80, 0, 64);
 
 /* reg_ppcnt_a_pause_mac_ctrl_frames_received
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_pause_mac_ctrl_frames_received,
-	     0x08 + 0x88, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x88, 0, 64);
 
 /* reg_ppcnt_a_pause_mac_ctrl_frames_transmitted
  * Access: RO
  */
 MLXSW_ITEM64(reg, ppcnt, a_pause_mac_ctrl_frames_transmitted,
-	     0x08 + 0x90, 0, 64);
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x90, 0, 64);
+
+/* Ethernet Extended Counter Group Counters */
+
+/* reg_ppcnt_ecn_marked
+ * Access: RO
+ */
+MLXSW_ITEM64(reg, ppcnt, ecn_marked,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x08, 0, 64);
 
 /* Ethernet Per Priority Group Counters */
 
 /* reg_ppcnt_rx_octets
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, rx_octets, 0x08 + 0x00, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, rx_octets,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x00, 0, 64);
 
 /* reg_ppcnt_rx_frames
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, rx_frames, 0x08 + 0x20, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, rx_frames,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x20, 0, 64);
 
 /* reg_ppcnt_tx_octets
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, tx_octets, 0x08 + 0x28, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, tx_octets,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x28, 0, 64);
 
 /* reg_ppcnt_tx_frames
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, tx_frames, 0x08 + 0x48, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, tx_frames,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x48, 0, 64);
 
 /* reg_ppcnt_rx_pause
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, rx_pause, 0x08 + 0x50, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, rx_pause,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x50, 0, 64);
 
 /* reg_ppcnt_rx_pause_duration
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, rx_pause_duration, 0x08 + 0x58, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, rx_pause_duration,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x58, 0, 64);
 
 /* reg_ppcnt_tx_pause
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, tx_pause, 0x08 + 0x60, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, tx_pause,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x60, 0, 64);
 
 /* reg_ppcnt_tx_pause_duration
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, tx_pause_duration, 0x08 + 0x68, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, tx_pause_duration,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x68, 0, 64);
 
 /* reg_ppcnt_rx_pause_transition
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, tx_pause_transition, 0x08 + 0x70, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, tx_pause_transition,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x70, 0, 64);
 
 /* Ethernet Per Traffic Group Counters */
 
@@ -3365,14 +3571,24 @@ MLXSW_ITEM64(reg, ppcnt, tx_pause_transition, 0x08 + 0x70, 0, 64);
  * The field cannot be cleared.
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, tc_transmit_queue, 0x08 + 0x00, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, tc_transmit_queue,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x00, 0, 64);
 
 /* reg_ppcnt_tc_no_buffer_discard_uc
  * The number of unicast packets dropped due to lack of shared
  * buffer resources.
  * Access: RO
  */
-MLXSW_ITEM64(reg, ppcnt, tc_no_buffer_discard_uc, 0x08 + 0x08, 0, 64);
+MLXSW_ITEM64(reg, ppcnt, tc_no_buffer_discard_uc,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x08, 0, 64);
+
+/* Ethernet Per Traffic Class Congestion Group Counters */
+
+/* reg_ppcnt_wred_discard
+ * Access: RO
+ */
+MLXSW_ITEM64(reg, ppcnt, wred_discard,
+	     MLXSW_REG_PPCNT_COUNTERS_OFFSET + 0x00, 0, 64);
 
 static inline void mlxsw_reg_ppcnt_pack(char *payload, u8 local_port,
 					enum mlxsw_reg_ppcnt_grp grp,
@@ -5832,6 +6048,137 @@ static inline void mlxsw_reg_rigr2_erif_entry_pack(char *payload, int index,
 	mlxsw_reg_rigr2_erif_entry_erif_set(payload, index, erif);
 }
 
+/* RECR-V2 - Router ECMP Configuration Version 2 Register
+ * ------------------------------------------------------
+ */
+#define MLXSW_REG_RECR2_ID 0x8025
+#define MLXSW_REG_RECR2_LEN 0x38
+
+MLXSW_REG_DEFINE(recr2, MLXSW_REG_RECR2_ID, MLXSW_REG_RECR2_LEN);
+
+/* reg_recr2_pp
+ * Per-port configuration
+ * Access: Index
+ */
+MLXSW_ITEM32(reg, recr2, pp, 0x00, 24, 1);
+
+/* reg_recr2_sh
+ * Symmetric hash
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, recr2, sh, 0x00, 8, 1);
+
+/* reg_recr2_seed
+ * Seed
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, recr2, seed, 0x08, 0, 32);
+
+enum {
+	/* Enable IPv4 fields if packet is not TCP and not UDP */
+	MLXSW_REG_RECR2_IPV4_EN_NOT_TCP_NOT_UDP	= 3,
+	/* Enable IPv4 fields if packet is TCP or UDP */
+	MLXSW_REG_RECR2_IPV4_EN_TCP_UDP		= 4,
+	/* Enable IPv6 fields if packet is not TCP and not UDP */
+	MLXSW_REG_RECR2_IPV6_EN_NOT_TCP_NOT_UDP	= 5,
+	/* Enable IPv6 fields if packet is TCP or UDP */
+	MLXSW_REG_RECR2_IPV6_EN_TCP_UDP		= 6,
+	/* Enable TCP/UDP header fields if packet is IPv4 */
+	MLXSW_REG_RECR2_TCP_UDP_EN_IPV4		= 7,
+	/* Enable TCP/UDP header fields if packet is IPv6 */
+	MLXSW_REG_RECR2_TCP_UDP_EN_IPV6		= 8,
+};
+
+/* reg_recr2_outer_header_enables
+ * Bit mask where each bit enables a specific layer to be included in
+ * the hash calculation.
+ * Access: RW
+ */
+MLXSW_ITEM_BIT_ARRAY(reg, recr2, outer_header_enables, 0x10, 0x04, 1);
+
+enum {
+	/* IPv4 Source IP */
+	MLXSW_REG_RECR2_IPV4_SIP0			= 9,
+	MLXSW_REG_RECR2_IPV4_SIP3			= 12,
+	/* IPv4 Destination IP */
+	MLXSW_REG_RECR2_IPV4_DIP0			= 13,
+	MLXSW_REG_RECR2_IPV4_DIP3			= 16,
+	/* IP Protocol */
+	MLXSW_REG_RECR2_IPV4_PROTOCOL			= 17,
+	/* IPv6 Source IP */
+	MLXSW_REG_RECR2_IPV6_SIP0_7			= 21,
+	MLXSW_REG_RECR2_IPV6_SIP8			= 29,
+	MLXSW_REG_RECR2_IPV6_SIP15			= 36,
+	/* IPv6 Destination IP */
+	MLXSW_REG_RECR2_IPV6_DIP0_7			= 37,
+	MLXSW_REG_RECR2_IPV6_DIP8			= 45,
+	MLXSW_REG_RECR2_IPV6_DIP15			= 52,
+	/* IPv6 Next Header */
+	MLXSW_REG_RECR2_IPV6_NEXT_HEADER		= 53,
+	/* IPv6 Flow Label */
+	MLXSW_REG_RECR2_IPV6_FLOW_LABEL			= 57,
+	/* TCP/UDP Source Port */
+	MLXSW_REG_RECR2_TCP_UDP_SPORT			= 74,
+	/* TCP/UDP Destination Port */
+	MLXSW_REG_RECR2_TCP_UDP_DPORT			= 75,
+};
+
+/* reg_recr2_outer_header_fields_enable
+ * Packet fields to enable for ECMP hash subject to outer_header_enable.
+ * Access: RW
+ */
+MLXSW_ITEM_BIT_ARRAY(reg, recr2, outer_header_fields_enable, 0x14, 0x14, 1);
+
+static inline void mlxsw_reg_recr2_ipv4_sip_enable(char *payload)
+{
+	int i;
+
+	for (i = MLXSW_REG_RECR2_IPV4_SIP0; i <= MLXSW_REG_RECR2_IPV4_SIP3; i++)
+		mlxsw_reg_recr2_outer_header_fields_enable_set(payload, i,
+							       true);
+}
+
+static inline void mlxsw_reg_recr2_ipv4_dip_enable(char *payload)
+{
+	int i;
+
+	for (i = MLXSW_REG_RECR2_IPV4_DIP0; i <= MLXSW_REG_RECR2_IPV4_DIP3; i++)
+		mlxsw_reg_recr2_outer_header_fields_enable_set(payload, i,
+							       true);
+}
+
+static inline void mlxsw_reg_recr2_ipv6_sip_enable(char *payload)
+{
+	int i = MLXSW_REG_RECR2_IPV6_SIP0_7;
+
+	mlxsw_reg_recr2_outer_header_fields_enable_set(payload, i, true);
+
+	i = MLXSW_REG_RECR2_IPV6_SIP8;
+	for (; i <= MLXSW_REG_RECR2_IPV6_SIP15; i++)
+		mlxsw_reg_recr2_outer_header_fields_enable_set(payload, i,
+							       true);
+}
+
+static inline void mlxsw_reg_recr2_ipv6_dip_enable(char *payload)
+{
+	int i = MLXSW_REG_RECR2_IPV6_DIP0_7;
+
+	mlxsw_reg_recr2_outer_header_fields_enable_set(payload, i, true);
+
+	i = MLXSW_REG_RECR2_IPV6_DIP8;
+	for (; i <= MLXSW_REG_RECR2_IPV6_DIP15; i++)
+		mlxsw_reg_recr2_outer_header_fields_enable_set(payload, i,
+							       true);
+}
+
+static inline void mlxsw_reg_recr2_pack(char *payload, u32 seed)
+{
+	MLXSW_REG_ZERO(recr2, payload);
+	mlxsw_reg_recr2_pp_set(payload, false);
+	mlxsw_reg_recr2_sh_set(payload, true);
+	mlxsw_reg_recr2_seed_set(payload, seed);
+}
+
 /* RMFT-V2 - Router Multicast Forwarding Table Version 2 Register
  * --------------------------------------------------------------
  * The RMFT_V2 register is used to configure and query the multicast table.
@@ -6204,6 +6551,29 @@ MLXSW_ITEM32(reg, mtmp, mtr, 0x08, 30, 1);
  */
 MLXSW_ITEM32(reg, mtmp, max_temperature, 0x08, 0, 16);
 
+/* reg_mtmp_tee
+ * Temperature Event Enable.
+ * 0 - Do not generate event
+ * 1 - Generate event
+ * 2 - Generate single event
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, mtmp, tee, 0x0C, 30, 2);
+
+#define MLXSW_REG_MTMP_THRESH_HI 0x348	/* 105 Celsius */
+
+/* reg_mtmp_temperature_threshold_hi
+ * High threshold for Temperature Warning Event. In 0.125 Celsius.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, mtmp, temperature_threshold_hi, 0x0C, 0, 16);
+
+/* reg_mtmp_temperature_threshold_lo
+ * Low threshold for Temperature Warning Event. In 0.125 Celsius.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, mtmp, temperature_threshold_lo, 0x10, 0, 16);
+
 #define MLXSW_REG_MTMP_SENSOR_NAME_SIZE 8
 
 /* reg_mtmp_sensor_name
@@ -6220,6 +6590,8 @@ static inline void mlxsw_reg_mtmp_pack(char *payload, u8 sensor_index,
 	mlxsw_reg_mtmp_sensor_index_set(payload, sensor_index);
 	mlxsw_reg_mtmp_mte_set(payload, max_temp_enable);
 	mlxsw_reg_mtmp_mtr_set(payload, max_temp_reset);
+	mlxsw_reg_mtmp_temperature_threshold_hi_set(payload,
+						    MLXSW_REG_MTMP_THRESH_HI);
 }
 
 static inline void mlxsw_reg_mtmp_unpack(char *payload, unsigned int *p_temp,
@@ -6778,6 +7150,36 @@ static inline void mlxsw_reg_mgpc_pack(char *payload, u32 counter_index,
 	mlxsw_reg_mgpc_opcode_set(payload, opcode);
 }
 
+/* TIGCR - Tunneling IPinIP General Configuration Register
+ * -------------------------------------------------------
+ * The TIGCR register is used for setting up the IPinIP Tunnel configuration.
+ */
+#define MLXSW_REG_TIGCR_ID 0xA801
+#define MLXSW_REG_TIGCR_LEN 0x10
+
+MLXSW_REG_DEFINE(tigcr, MLXSW_REG_TIGCR_ID, MLXSW_REG_TIGCR_LEN);
+
+/* reg_tigcr_ipip_ttlc
+ * For IPinIP Tunnel encapsulation: whether to copy the ttl from the packet
+ * header.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, tigcr, ttlc, 0x04, 8, 1);
+
+/* reg_tigcr_ipip_ttl_uc
+ * The TTL for IPinIP Tunnel encapsulation of unicast packets if
+ * reg_tigcr_ipip_ttlc is unset.
+ * Access: RW
+ */
+MLXSW_ITEM32(reg, tigcr, ttl_uc, 0x04, 0, 8);
+
+static inline void mlxsw_reg_tigcr_pack(char *payload, bool ttlc, u8 ttl_uc)
+{
+	MLXSW_REG_ZERO(tigcr, payload);
+	mlxsw_reg_tigcr_ttlc_set(payload, ttlc);
+	mlxsw_reg_tigcr_ttl_uc_set(payload, ttl_uc);
+}
+
 /* SBPR - Shared Buffer Pools Register
  * -----------------------------------
  * The SBPR configures and retrieves the shared buffer pools and configuration.
@@ -7207,6 +7609,8 @@ static const struct mlxsw_reg_info *mlxsw_reg_infos[] = {
 	MLXSW_REG(svpe),
 	MLXSW_REG(sfmr),
 	MLXSW_REG(spvmlr),
+	MLXSW_REG(cwtp),
+	MLXSW_REG(cwtpm),
 	MLXSW_REG(ppbt),
 	MLXSW_REG(pacl),
 	MLXSW_REG(pagt),
@@ -7246,6 +7650,7 @@ static const struct mlxsw_reg_info *mlxsw_reg_infos[] = {
 	MLXSW_REG(raleu),
 	MLXSW_REG(rauhtd),
 	MLXSW_REG(rigr2),
+	MLXSW_REG(recr2),
 	MLXSW_REG(rmft2),
 	MLXSW_REG(mfcr),
 	MLXSW_REG(mfsc),
@@ -7262,6 +7667,7 @@ static const struct mlxsw_reg_info *mlxsw_reg_infos[] = {
 	MLXSW_REG(mcc),
 	MLXSW_REG(mcda),
 	MLXSW_REG(mgpc),
+	MLXSW_REG(tigcr),
 	MLXSW_REG(sbpr),
 	MLXSW_REG(sbcm),
 	MLXSW_REG(sbpm),

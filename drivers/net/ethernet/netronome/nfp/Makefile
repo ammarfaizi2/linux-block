@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 obj-$(CONFIG_NFP)	+= nfp.o
 
 nfp-objs := \
@@ -27,8 +28,6 @@ nfp-objs := \
 	    nfp_net_sriov.o \
 	    nfp_netvf_main.o \
 	    nfp_port.o \
-	    bpf/main.o \
-	    bpf/offload.o \
 	    nic/main.o
 
 ifeq ($(CONFIG_NFP_APP_FLOWER),y)
@@ -44,6 +43,8 @@ endif
 
 ifeq ($(CONFIG_BPF_SYSCALL),y)
 nfp-objs += \
+	    bpf/main.o \
+	    bpf/offload.o \
 	    bpf/verifier.o \
 	    bpf/jit.o
 endif

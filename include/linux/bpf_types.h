@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /* internal file - do not include directly */
 
 #ifdef CONFIG_NET
@@ -17,6 +18,9 @@ BPF_PROG_TYPE(BPF_PROG_TYPE_SK_SKB, sk_skb)
 BPF_PROG_TYPE(BPF_PROG_TYPE_KPROBE, kprobe)
 BPF_PROG_TYPE(BPF_PROG_TYPE_TRACEPOINT, tracepoint)
 BPF_PROG_TYPE(BPF_PROG_TYPE_PERF_EVENT, perf_event)
+#endif
+#ifdef CONFIG_CGROUP_BPF
+BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_DEVICE, cg_dev)
 #endif
 
 BPF_MAP_TYPE(BPF_MAP_TYPE_ARRAY, array_map_ops)

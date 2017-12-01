@@ -351,7 +351,7 @@ static int dpaa_setup_tc(struct net_device *net_dev, enum tc_setup_type type,
 	u8 num_tc;
 	int i;
 
-	if (type != TC_SETUP_MQPRIO)
+	if (type != TC_SETUP_QDISC_MQPRIO)
 		return -EOPNOTSUPP;
 
 	mqprio->hw = TC_MQPRIO_HW_OFFLOAD_TCS;
@@ -1721,6 +1721,7 @@ static struct sk_buff *sg_fd_to_skb(const struct dpaa_priv *priv,
 
 	/* Iterate through the SGT entries and add data buffers to the skb */
 	sgt = vaddr + fd_off;
+	skb = NULL;
 	for (i = 0; i < DPAA_SGT_MAX_ENTRIES; i++) {
 		/* Extension bit is not supported */
 		WARN_ON(qm_sg_entry_is_ext(&sgt[i]));
@@ -1738,7 +1739,7 @@ static struct sk_buff *sg_fd_to_skb(const struct dpaa_priv *priv,
 		count_ptr = this_cpu_ptr(dpaa_bp->percpu_count);
 		dma_unmap_single(dpaa_bp->dev, sg_addr, dpaa_bp->size,
 				 DMA_FROM_DEVICE);
-		if (i == 0) {
+		if (!skb) {
 			sz = dpaa_bp->size +
 				SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
 			skb = build_skb(sg_vaddr, sz);
@@ -2468,7 +2469,8 @@ static int dpaa_open(struct net_device *net_dev)
 	mac_dev = priv->mac_dev;
 	dpaa_eth_napi_enable(priv);
 
-	if (dpaa_phy_init(net_dev))
+	err = dpaa_phy_init(net_dev);
+	if (err)
 		goto phy_init_failed;
 
 	for (i = 0; i < ARRAY_SIZE(mac_dev->port); i++) {
@@ -2668,7 +2670,6 @@ static inline u16 dpaa_get_headroom(struct dpaa_buffer_layout *bl)
 static int dpaa_eth_probe(struct platform_device *pdev)
 {
 	struct dpaa_bp *dpaa_bps[DPAA_BPS_NUM] = {NULL};
-	struct dpaa_percpu_priv *percpu_priv;
 	struct net_device *net_dev = NULL;
 	struct dpaa_fq *dpaa_fq, *tmp;
 	struct dpaa_priv *priv = NULL;
@@ -2727,11 +2728,11 @@ static int dpaa_eth_probe(struct platform_device *pdev)
 
 	/* bp init */
 	for (i = 0; i < DPAA_BPS_NUM; i++) {
-		int err;
-
 		dpaa_bps[i] = dpaa_bp_alloc(dev);
-		if (IS_ERR(dpaa_bps[i]))
+		if (IS_ERR(dpaa_bps[i])) {
+			err = PTR_ERR(dpaa_bps[i]);
 			goto free_dpaa_bps;
+		}
 		/* the raw size of the buffers used for reception */
 		dpaa_bps[i]->raw_size = bpool_buffer_raw_size(i, DPAA_BPS_NUM);
 		/* avoid runtime computations by keeping the usable size here */
@@ -2813,10 +2814,6 @@ static int dpaa_eth_probe(struct platform_device *pdev)
 		dev_err(dev, "devm_alloc_percpu() failed\n");
 		err = -ENOMEM;
 		goto free_dpaa_fqs;
-	}
-	for_each_possible_cpu(i) {
-		percpu_priv = per_cpu_ptr(priv->percpu_priv, i);
-		memset(percpu_priv, 0, sizeof(*percpu_priv));
 	}
 
 	priv->num_tc = 1;

@@ -258,6 +258,7 @@ out_start_err:
 
 static int hns3_nic_net_open(struct net_device *netdev)
 {
+	struct hns3_nic_priv *priv = netdev_priv(netdev);
 	int ret;
 
 	netif_carrier_off(netdev);
@@ -273,6 +274,7 @@ static int hns3_nic_net_open(struct net_device *netdev)
 		return ret;
 	}
 
+	priv->last_reset_time = jiffies;
 	return 0;
 }
 
@@ -716,7 +718,7 @@ static void hns3_set_txbd_baseinfo(u16 *bdtp_fe_sc_vld_ra_ri, int frag_end)
 		       HNS3_TXD_BDTYPE_M, 0);
 	hnae_set_bit(*bdtp_fe_sc_vld_ra_ri, HNS3_TXD_FE_B, !!frag_end);
 	hnae_set_bit(*bdtp_fe_sc_vld_ra_ri, HNS3_TXD_VLD_B, 1);
-	hnae_set_field(*bdtp_fe_sc_vld_ra_ri, HNS3_TXD_SC_M, HNS3_TXD_SC_S, 1);
+	hnae_set_field(*bdtp_fe_sc_vld_ra_ri, HNS3_TXD_SC_M, HNS3_TXD_SC_S, 0);
 }
 
 static int hns3_fill_desc(struct hns3_enet_ring *ring, void *priv,
@@ -900,8 +902,7 @@ static void hns_nic_dma_unmap(struct hns3_enet_ring *ring, int next_to_use_orig)
 	}
 }
 
-static netdev_tx_t hns3_nic_net_xmit(struct sk_buff *skb,
-				     struct net_device *netdev)
+netdev_tx_t hns3_nic_net_xmit(struct sk_buff *skb, struct net_device *netdev)
 {
 	struct hns3_nic_priv *priv = netdev_priv(netdev);
 	struct hns3_nic_ring_data *ring_data =
@@ -1251,7 +1252,7 @@ out:
 static int hns3_nic_setup_tc(struct net_device *dev, enum tc_setup_type type,
 			     void *type_data)
 {
-	if (type != TC_SETUP_MQPRIO)
+	if (type != TC_SETUP_QDISC_MQPRIO)
 		return -EOPNOTSUPP;
 
 	return hns3_setup_tc(dev, type_data);
@@ -1323,10 +1324,91 @@ static int hns3_nic_change_mtu(struct net_device *netdev, int new_mtu)
 	return ret;
 }
 
+static bool hns3_get_tx_timeo_queue_info(struct net_device *ndev)
+{
+	struct hns3_nic_priv *priv = netdev_priv(ndev);
+	struct hns3_enet_ring *tx_ring = NULL;
+	int timeout_queue = 0;
+	int hw_head, hw_tail;
+	int i;
+
+	/* Find the stopped queue the same way the stack does */
+	for (i = 0; i < ndev->real_num_tx_queues; i++) {
+		struct netdev_queue *q;
+		unsigned long trans_start;
+
+		q = netdev_get_tx_queue(ndev, i);
+		trans_start = q->trans_start;
+		if (netif_xmit_stopped(q) &&
+		    time_after(jiffies,
+			       (trans_start + ndev->watchdog_timeo))) {
+			timeout_queue = i;
+			break;
+		}
+	}
+
+	if (i == ndev->num_tx_queues) {
+		netdev_info(ndev,
+			    "no netdev TX timeout queue found, timeout count: %llu\n",
+			    priv->tx_timeout_count);
+		return false;
+	}
+
+	tx_ring = priv->ring_data[timeout_queue].ring;
+
+	hw_head = readl_relaxed(tx_ring->tqp->io_base +
+				HNS3_RING_TX_RING_HEAD_REG);
+	hw_tail = readl_relaxed(tx_ring->tqp->io_base +
+				HNS3_RING_TX_RING_TAIL_REG);
+	netdev_info(ndev,
+		    "tx_timeout count: %llu, queue id: %d, SW_NTU: 0x%x, SW_NTC: 0x%x, HW_HEAD: 0x%x, HW_TAIL: 0x%x, INT: 0x%x\n",
+		    priv->tx_timeout_count,
+		    timeout_queue,
+		    tx_ring->next_to_use,
+		    tx_ring->next_to_clean,
+		    hw_head,
+		    hw_tail,
+		    readl(tx_ring->tqp_vector->mask_addr));
+
+	return true;
+}
+
+static void hns3_nic_net_timeout(struct net_device *ndev)
+{
+	struct hns3_nic_priv *priv = netdev_priv(ndev);
+	unsigned long last_reset_time = priv->last_reset_time;
+	struct hnae3_handle *h = priv->ae_handle;
+
+	if (!hns3_get_tx_timeo_queue_info(ndev))
+		return;
+
+	priv->tx_timeout_count++;
+
+	/* This timeout is far away enough from last timeout,
+	 * if timeout again,set the reset type to PF reset
+	 */
+	if (time_after(jiffies, (last_reset_time + 20 * HZ)))
+		priv->reset_level = HNAE3_FUNC_RESET;
+
+	/* Don't do any new action before the next timeout */
+	else if (time_before(jiffies, (last_reset_time + ndev->watchdog_timeo)))
+		return;
+
+	priv->last_reset_time = jiffies;
+
+	if (h->ae_algo->ops->reset_event)
+		h->ae_algo->ops->reset_event(h, priv->reset_level);
+
+	priv->reset_level++;
+	if (priv->reset_level > HNAE3_GLOBAL_RESET)
+		priv->reset_level = HNAE3_GLOBAL_RESET;
+}
+
 static const struct net_device_ops hns3_nic_netdev_ops = {
 	.ndo_open		= hns3_nic_net_open,
 	.ndo_stop		= hns3_nic_net_stop,
 	.ndo_start_xmit		= hns3_nic_net_xmit,
+	.ndo_tx_timeout		= hns3_nic_net_timeout,
 	.ndo_set_mac_address	= hns3_nic_net_set_mac_address,
 	.ndo_change_mtu		= hns3_nic_change_mtu,
 	.ndo_set_features	= hns3_nic_set_features,
@@ -1445,8 +1527,6 @@ static int hns3_alloc_buffer(struct hns3_enet_ring *ring,
 	cb->length = hnae_page_size(ring);
 	cb->type = DESC_TYPE_PAGE;
 
-	memset(cb->buf, 0, cb->length);
-
 	return 0;
 }
 
@@ -1556,7 +1636,7 @@ static int hns3_reserve_buffer_map(struct hns3_enet_ring *ring,
 	return 0;
 
 out_with_buf:
-	hns3_free_buffers(ring);
+	hns3_free_buffer(ring, cb);
 out:
 	return ret;
 }
@@ -1596,7 +1676,7 @@ out_buffer_fail:
 static void hns3_replace_buffer(struct hns3_enet_ring *ring, int i,
 				struct hns3_desc_cb *res_cb)
 {
-	hns3_map_buffer(ring, &ring->desc_cb[i]);
+	hns3_unmap_buffer(ring, &ring->desc_cb[i]);
 	ring->desc_cb[i] = *res_cb;
 	ring->desc[i].addr = cpu_to_le64(ring->desc_cb[i].dma);
 }
@@ -1632,7 +1712,7 @@ static int is_valid_clean_head(struct hns3_enet_ring *ring, int h)
 	return u > c ? (h > c && h <= u) : (h > c || h <= u);
 }
 
-int hns3_clean_tx_ring(struct hns3_enet_ring *ring, int budget)
+bool hns3_clean_tx_ring(struct hns3_enet_ring *ring, int budget)
 {
 	struct net_device *netdev = ring->tqp->handle->kinfo.netdev;
 	struct netdev_queue *dev_queue;
@@ -1643,7 +1723,7 @@ int hns3_clean_tx_ring(struct hns3_enet_ring *ring, int budget)
 	rmb(); /* Make sure head is ready before touch any data */
 
 	if (is_ring_empty(ring) || head == ring->next_to_clean)
-		return 0; /* no data to poll */
+		return true; /* no data to poll */
 
 	if (!is_valid_clean_head(ring, head)) {
 		netdev_err(netdev, "wrong head (%d, %d-%d)\n", head,
@@ -1652,7 +1732,7 @@ int hns3_clean_tx_ring(struct hns3_enet_ring *ring, int budget)
 		u64_stats_update_begin(&ring->syncp);
 		ring->stats.io_err_cnt++;
 		u64_stats_update_end(&ring->syncp);
-		return -EIO;
+		return true;
 	}
 
 	bytes = 0;
@@ -1943,6 +2023,11 @@ static void hns3_rx_checksum(struct hns3_enet_ring *ring, struct sk_buff *skb,
 	}
 }
 
+static void hns3_rx_skb(struct hns3_enet_ring *ring, struct sk_buff *skb)
+{
+	napi_gro_receive(&ring->tqp_vector->napi, skb);
+}
+
 static int hns3_handle_rx_bd(struct hns3_enet_ring *ring,
 			     struct sk_buff **out_skb, int *out_bnum)
 {
@@ -2077,7 +2162,9 @@ static int hns3_handle_rx_bd(struct hns3_enet_ring *ring,
 	return 0;
 }
 
-static int hns3_clean_rx_ring(struct hns3_enet_ring *ring, int budget)
+int hns3_clean_rx_ring(
+		struct hns3_enet_ring *ring, int budget,
+		void (*rx_fn)(struct hns3_enet_ring *, struct sk_buff *))
 {
 #define RCB_NOF_ALLOC_RX_BUFF_ONCE 16
 	struct net_device *netdev = ring->tqp->handle->kinfo.netdev;
@@ -2115,7 +2202,7 @@ static int hns3_clean_rx_ring(struct hns3_enet_ring *ring, int budget)
 
 		/* Do update ip stack process */
 		skb->protocol = eth_type_trans(skb, netdev);
-		(void)napi_gro_receive(&ring->tqp_vector->napi, skb);
+		rx_fn(ring, skb);
 
 		recv_pkts++;
 	}
@@ -2258,7 +2345,8 @@ static int hns3_nic_common_poll(struct napi_struct *napi, int budget)
 	rx_budget = max(budget / tqp_vector->num_tqps, 1);
 
 	hns3_for_each_ring(ring, tqp_vector->rx_group) {
-		int rx_cleaned = hns3_clean_rx_ring(ring, rx_budget);
+		int rx_cleaned = hns3_clean_rx_ring(ring, rx_budget,
+						    hns3_rx_skb);
 
 		if (rx_cleaned >= rx_budget)
 			clean_complete = false;
@@ -2470,9 +2558,8 @@ static int hns3_nic_uninit_vector_data(struct hns3_nic_priv *priv)
 			(void)irq_set_affinity_hint(
 				priv->tqp_vector[i].vector_irq,
 						    NULL);
-			devm_free_irq(&pdev->dev,
-				      priv->tqp_vector[i].vector_irq,
-				      &priv->tqp_vector[i]);
+			free_irq(priv->tqp_vector[i].vector_irq,
+				 &priv->tqp_vector[i]);
 		}
 
 		priv->ring_data[i].ring->irq_init_flag = HNS3_VECTOR_NOT_INITED;
@@ -2499,15 +2586,15 @@ static int hns3_ring_get_cfg(struct hnae3_queue *q, struct hns3_nic_priv *priv,
 
 	if (ring_type == HNAE3_RING_TYPE_TX) {
 		ring_data[q->tqp_index].ring = ring;
+		ring_data[q->tqp_index].queue_index = q->tqp_index;
 		ring->io_base = (u8 __iomem *)q->io_base + HNS3_TX_REG_OFFSET;
 	} else {
 		ring_data[q->tqp_index + queue_num].ring = ring;
+		ring_data[q->tqp_index + queue_num].queue_index = q->tqp_index;
 		ring->io_base = q->io_base;
 	}
 
 	hnae_set_bit(ring->flag, HNAE3_RING_TYPE_B, ring_type);
-
-	ring_data[q->tqp_index].queue_index = q->tqp_index;
 
 	ring->tqp = q;
 	ring->desc = NULL;
@@ -2758,6 +2845,9 @@ static int hns3_client_init(struct hnae3_handle *handle)
 	priv->dev = &pdev->dev;
 	priv->netdev = netdev;
 	priv->ae_handle = handle;
+	priv->last_reset_time = jiffies;
+	priv->reset_level = HNAE3_FUNC_RESET;
+	priv->tx_timeout_count = 0;
 
 	handle->kinfo.netdev = netdev;
 	handle->priv = (void *)priv;
@@ -2918,11 +3008,164 @@ err_out:
 	return ret;
 }
 
+static void hns3_recover_hw_addr(struct net_device *ndev)
+{
+	struct netdev_hw_addr_list *list;
+	struct netdev_hw_addr *ha, *tmp;
+
+	/* go through and sync uc_addr entries to the device */
+	list = &ndev->uc;
+	list_for_each_entry_safe(ha, tmp, &list->list, list)
+		hns3_nic_uc_sync(ndev, ha->addr);
+
+	/* go through and sync mc_addr entries to the device */
+	list = &ndev->mc;
+	list_for_each_entry_safe(ha, tmp, &list->list, list)
+		hns3_nic_mc_sync(ndev, ha->addr);
+}
+
+static void hns3_drop_skb_data(struct hns3_enet_ring *ring, struct sk_buff *skb)
+{
+	dev_kfree_skb_any(skb);
+}
+
+static void hns3_clear_all_ring(struct hnae3_handle *h)
+{
+	struct net_device *ndev = h->kinfo.netdev;
+	struct hns3_nic_priv *priv = netdev_priv(ndev);
+	u32 i;
+
+	for (i = 0; i < h->kinfo.num_tqps; i++) {
+		struct netdev_queue *dev_queue;
+		struct hns3_enet_ring *ring;
+
+		ring = priv->ring_data[i].ring;
+		hns3_clean_tx_ring(ring, ring->desc_num);
+		dev_queue = netdev_get_tx_queue(ndev,
+						priv->ring_data[i].queue_index);
+		netdev_tx_reset_queue(dev_queue);
+
+		ring = priv->ring_data[i + h->kinfo.num_tqps].ring;
+		hns3_clean_rx_ring(ring, ring->desc_num, hns3_drop_skb_data);
+	}
+}
+
+static int hns3_reset_notify_down_enet(struct hnae3_handle *handle)
+{
+	struct hnae3_knic_private_info *kinfo = &handle->kinfo;
+	struct net_device *ndev = kinfo->netdev;
+
+	if (!netif_running(ndev))
+		return -EIO;
+
+	return hns3_nic_net_stop(ndev);
+}
+
+static int hns3_reset_notify_up_enet(struct hnae3_handle *handle)
+{
+	struct hnae3_knic_private_info *kinfo = &handle->kinfo;
+	struct hns3_nic_priv *priv = netdev_priv(kinfo->netdev);
+	int ret = 0;
+
+	if (netif_running(kinfo->netdev)) {
+		ret = hns3_nic_net_up(kinfo->netdev);
+		if (ret) {
+			netdev_err(kinfo->netdev,
+				   "hns net up fail, ret=%d!\n", ret);
+			return ret;
+		}
+
+		priv->last_reset_time = jiffies;
+	}
+
+	return ret;
+}
+
+static int hns3_reset_notify_init_enet(struct hnae3_handle *handle)
+{
+	struct net_device *netdev = handle->kinfo.netdev;
+	struct hns3_nic_priv *priv = netdev_priv(netdev);
+	int ret;
+
+	priv->reset_level = 1;
+	hns3_init_mac_addr(netdev);
+	hns3_nic_set_rx_mode(netdev);
+	hns3_recover_hw_addr(netdev);
+
+	/* Carrier off reporting is important to ethtool even BEFORE open */
+	netif_carrier_off(netdev);
+
+	ret = hns3_get_ring_config(priv);
+	if (ret)
+		return ret;
+
+	ret = hns3_nic_init_vector_data(priv);
+	if (ret)
+		return ret;
+
+	ret = hns3_init_all_ring(priv);
+	if (ret) {
+		hns3_nic_uninit_vector_data(priv);
+		priv->ring_data = NULL;
+	}
+
+	return ret;
+}
+
+static int hns3_reset_notify_uninit_enet(struct hnae3_handle *handle)
+{
+	struct net_device *netdev = handle->kinfo.netdev;
+	struct hns3_nic_priv *priv = netdev_priv(netdev);
+	int ret;
+
+	hns3_clear_all_ring(handle);
+
+	ret = hns3_nic_uninit_vector_data(priv);
+	if (ret) {
+		netdev_err(netdev, "uninit vector error\n");
+		return ret;
+	}
+
+	ret = hns3_uninit_all_ring(priv);
+	if (ret)
+		netdev_err(netdev, "uninit ring error\n");
+
+	priv->ring_data = NULL;
+
+	return ret;
+}
+
+static int hns3_reset_notify(struct hnae3_handle *handle,
+			     enum hnae3_reset_notify_type type)
+{
+	int ret = 0;
+
+	switch (type) {
+	case HNAE3_UP_CLIENT:
+                ret = hns3_reset_notify_up_enet(handle);
+                break;
+	case HNAE3_DOWN_CLIENT:
+		ret = hns3_reset_notify_down_enet(handle);
+		break;
+	case HNAE3_INIT_CLIENT:
+		ret = hns3_reset_notify_init_enet(handle);
+		break;
+	case HNAE3_UNINIT_CLIENT:
+		ret = hns3_reset_notify_uninit_enet(handle);
+		break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
 static const struct hnae3_client_ops client_ops = {
 	.init_instance = hns3_client_init,
 	.uninit_instance = hns3_client_uninit,
 	.link_status_change = hns3_link_status_change,
 	.setup_tc = hns3_client_setup_tc,
+	.reset_notify = hns3_reset_notify,
 };
 
 /* hns3_init_module - Driver registration routine

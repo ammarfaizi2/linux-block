@@ -325,7 +325,6 @@ static void b53_get_vlan_entry(struct b53_device *dev, u16 vid,
 
 static void b53_set_forwarding(struct b53_device *dev, int enable)
 {
-	struct dsa_switch *ds = dev->ds;
 	u8 mgmt;
 
 	b53_read8(dev, B53_CTRL_PAGE, B53_SWITCH_MODE, &mgmt);
@@ -337,14 +336,11 @@ static void b53_set_forwarding(struct b53_device *dev, int enable)
 
 	b53_write8(dev, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
 
-	/* Include IMP port in dumb forwarding mode when no tagging protocol is
-	 * set
+	/* Include IMP port in dumb forwarding mode
 	 */
-	if (ds->ops->get_tag_protocol(ds) == DSA_TAG_PROTO_NONE) {
-		b53_read8(dev, B53_CTRL_PAGE, B53_SWITCH_CTRL, &mgmt);
-		mgmt |= B53_MII_DUMB_FWDG_EN;
-		b53_write8(dev, B53_CTRL_PAGE, B53_SWITCH_CTRL, mgmt);
-	}
+	b53_read8(dev, B53_CTRL_PAGE, B53_SWITCH_CTRL, &mgmt);
+	mgmt |= B53_MII_DUMB_FWDG_EN;
+	b53_write8(dev, B53_CTRL_PAGE, B53_SWITCH_CTRL, mgmt);
 }
 
 static void b53_enable_vlan(struct b53_device *dev, bool enable)
@@ -505,7 +501,7 @@ EXPORT_SYMBOL(b53_imp_vlan_setup);
 int b53_enable_port(struct dsa_switch *ds, int port, struct phy_device *phy)
 {
 	struct b53_device *dev = ds->priv;
-	unsigned int cpu_port = dev->cpu_port;
+	unsigned int cpu_port = ds->ports[port].cpu_dp->index;
 	u16 pvlan;
 
 	/* Clear the Rx and Tx disable bits and set to no spanning tree */
@@ -545,6 +541,8 @@ EXPORT_SYMBOL(b53_disable_port);
 
 void b53_brcm_hdr_setup(struct dsa_switch *ds, int port)
 {
+	bool tag_en = !(ds->ops->get_tag_protocol(ds, port) ==
+			 DSA_TAG_PROTO_NONE);
 	struct b53_device *dev = ds->priv;
 	u8 hdr_ctl, val;
 	u16 reg;
@@ -567,7 +565,10 @@ void b53_brcm_hdr_setup(struct dsa_switch *ds, int port)
 
 	/* Enable Broadcom tags for IMP port */
 	b53_read8(dev, B53_MGMT_PAGE, B53_BRCM_HDR, &hdr_ctl);
-	hdr_ctl |= val;
+	if (tag_en)
+		hdr_ctl |= val;
+	else
+		hdr_ctl &= ~val;
 	b53_write8(dev, B53_MGMT_PAGE, B53_BRCM_HDR, hdr_ctl);
 
 	/* Registers below are only accessible on newer devices */
@@ -578,14 +579,20 @@ void b53_brcm_hdr_setup(struct dsa_switch *ds, int port)
 	 * allow us to tag outgoing frames
 	 */
 	b53_read16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_RX_DIS, &reg);
-	reg &= ~BIT(port);
+	if (tag_en)
+		reg &= ~BIT(port);
+	else
+		reg |= BIT(port);
 	b53_write16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_RX_DIS, reg);
 
 	/* Enable transmission of Broadcom tags from the switch (CPU RX) to
 	 * allow delivering frames to the per-port net_devices
 	 */
 	b53_read16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, &reg);
-	reg &= ~BIT(port);
+	if (tag_en)
+		reg &= ~BIT(port);
+	else
+		reg |= BIT(port);
 	b53_write16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, reg);
 }
 EXPORT_SYMBOL(b53_brcm_hdr_setup);
@@ -602,6 +609,8 @@ static void b53_enable_cpu_port(struct b53_device *dev, int port)
 		    PORT_CTRL_RX_MCST_EN |
 		    PORT_CTRL_RX_UCST_EN;
 	b53_write8(dev, B53_CTRL_PAGE, B53_PORT_CTRL(port), port_ctrl);
+
+	b53_brcm_hdr_setup(dev->ds, port);
 }
 
 static void b53_enable_mib(struct b53_device *dev)
@@ -613,8 +622,9 @@ static void b53_enable_mib(struct b53_device *dev)
 	b53_write8(dev, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, gc);
 }
 
-static int b53_configure_vlan(struct b53_device *dev)
+int b53_configure_vlan(struct dsa_switch *ds)
 {
+	struct b53_device *dev = ds->priv;
 	struct b53_vlan vl = { 0 };
 	int i;
 
@@ -637,6 +647,7 @@ static int b53_configure_vlan(struct b53_device *dev)
 
 	return 0;
 }
+EXPORT_SYMBOL(b53_configure_vlan);
 
 static void b53_switch_reset_gpio(struct b53_device *dev)
 {
@@ -751,7 +762,7 @@ static int b53_apply_config(struct b53_device *priv)
 	/* disable switching */
 	b53_set_forwarding(priv, 0);
 
-	b53_configure_vlan(priv);
+	b53_configure_vlan(priv->ds);
 
 	/* enable switching */
 	b53_set_forwarding(priv, 1);
@@ -873,7 +884,7 @@ static int b53_setup(struct dsa_switch *ds)
 	for (port = 0; port < dev->num_ports; port++) {
 		if (dsa_is_cpu_port(ds, port))
 			b53_enable_cpu_port(dev, port);
-		else if (!(BIT(port) & ds->enabled_port_mask))
+		else if (dsa_is_unused_port(ds, port))
 			b53_disable_port(ds, port, NULL);
 	}
 
@@ -1042,7 +1053,6 @@ void b53_vlan_add(struct dsa_switch *ds, int port,
 	struct b53_device *dev = ds->priv;
 	bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
 	bool pvid = vlan->flags & BRIDGE_VLAN_INFO_PVID;
-	unsigned int cpu_port = dev->cpu_port;
 	struct b53_vlan *vl;
 	u16 vid;
 
@@ -1051,12 +1061,11 @@ void b53_vlan_add(struct dsa_switch *ds, int port,
 
 		b53_get_vlan_entry(dev, vid, vl);
 
-		vl->members |= BIT(port) | BIT(cpu_port);
+		vl->members |= BIT(port);
 		if (untagged)
 			vl->untag |= BIT(port);
 		else
 			vl->untag &= ~BIT(port);
-		vl->untag &= ~BIT(cpu_port);
 
 		b53_set_vlan_entry(dev, vid, vl);
 		b53_fast_age_vlan(dev, vid);
@@ -1420,8 +1429,8 @@ void b53_br_leave(struct dsa_switch *ds, int port, struct net_device *br)
 		b53_write16(dev, B53_VLAN_PAGE, B53_JOIN_ALL_VLAN_EN, reg);
 	} else {
 		b53_get_vlan_entry(dev, pvid, vl);
-		vl->members |= BIT(port) | BIT(dev->cpu_port);
-		vl->untag |= BIT(port) | BIT(dev->cpu_port);
+		vl->members |= BIT(port) | BIT(cpu_port);
+		vl->untag |= BIT(port) | BIT(cpu_port);
 		b53_set_vlan_entry(dev, pvid, vl);
 	}
 }
@@ -1470,9 +1479,40 @@ void b53_br_fast_age(struct dsa_switch *ds, int port)
 }
 EXPORT_SYMBOL(b53_br_fast_age);
 
-static enum dsa_tag_protocol b53_get_tag_protocol(struct dsa_switch *ds)
+static bool b53_can_enable_brcm_tags(struct dsa_switch *ds, int port)
 {
-	return DSA_TAG_PROTO_NONE;
+	/* Broadcom switches will accept enabling Broadcom tags on the
+	 * following ports: 5, 7 and 8, any other port is not supported
+	 */
+	switch (port) {
+	case B53_CPU_PORT_25:
+	case 7:
+	case B53_CPU_PORT:
+		return true;
+	}
+
+	dev_warn(ds->dev, "Port %d is not Broadcom tag capable\n", port);
+	return false;
+}
+
+static enum dsa_tag_protocol b53_get_tag_protocol(struct dsa_switch *ds,
+						  int port)
+{
+	struct b53_device *dev = ds->priv;
+
+	/* Older models support a different tag format that we do not
+	 * support in net/dsa/tag_brcm.c yet.
+	 */
+	if (is5325(dev) || is5365(dev) || !b53_can_enable_brcm_tags(ds, port))
+		return DSA_TAG_PROTO_NONE;
+
+	/* Broadcom BCM58xx chips have a flow accelerator on Port 8
+	 * which requires us to use the prepended Broadcom tag type
+	 */
+	if (dev->chip_id == BCM58XX_DEVICE_ID && port == B53_CPU_PORT)
+		return DSA_TAG_PROTO_BRCM_PREPEND;
+
+	return DSA_TAG_PROTO_BRCM;
 }
 
 int b53_mirror_add(struct dsa_switch *ds, int port,

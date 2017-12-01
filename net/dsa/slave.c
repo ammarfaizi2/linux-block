@@ -55,7 +55,7 @@ void dsa_slave_mii_bus_init(struct dsa_switch *ds)
 	ds->slave_mii_bus->read = dsa_slave_phy_read;
 	ds->slave_mii_bus->write = dsa_slave_phy_write;
 	snprintf(ds->slave_mii_bus->id, MII_BUS_ID_SIZE, "dsa-%d.%d",
-		 ds->dst->tree, ds->index);
+		 ds->dst->index, ds->index);
 	ds->slave_mii_bus->parent = ds->dev;
 	ds->slave_mii_bus->phy_mask = ~ds->phys_mii_mask;
 }
@@ -304,6 +304,13 @@ static int dsa_slave_port_obj_add(struct net_device *dev,
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
 		err = dsa_port_mdb_add(dp, SWITCHDEV_OBJ_PORT_MDB(obj), trans);
 		break;
+	case SWITCHDEV_OBJ_ID_HOST_MDB:
+		/* DSA can directly translate this to a normal MDB add,
+		 * but on the CPU port.
+		 */
+		err = dsa_port_mdb_add(dp->cpu_dp, SWITCHDEV_OBJ_PORT_MDB(obj),
+				       trans);
+		break;
 	case SWITCHDEV_OBJ_ID_PORT_VLAN:
 		err = dsa_port_vlan_add(dp, SWITCHDEV_OBJ_PORT_VLAN(obj),
 					trans);
@@ -326,6 +333,12 @@ static int dsa_slave_port_obj_del(struct net_device *dev,
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
 		err = dsa_port_mdb_del(dp, SWITCHDEV_OBJ_PORT_MDB(obj));
 		break;
+	case SWITCHDEV_OBJ_ID_HOST_MDB:
+		/* DSA can directly translate this to a normal MDB add,
+		 * but on the CPU port.
+		 */
+		err = dsa_port_mdb_del(dp->cpu_dp, SWITCHDEV_OBJ_PORT_MDB(obj));
+		break;
 	case SWITCHDEV_OBJ_ID_PORT_VLAN:
 		err = dsa_port_vlan_del(dp, SWITCHDEV_OBJ_PORT_VLAN(obj));
 		break;
@@ -342,11 +355,12 @@ static int dsa_slave_port_attr_get(struct net_device *dev,
 {
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 	struct dsa_switch *ds = dp->ds;
+	struct dsa_switch_tree *dst = ds->dst;
 
 	switch (attr->id) {
 	case SWITCHDEV_ATTR_ID_PORT_PARENT_ID:
-		attr->u.ppid.id_len = sizeof(ds->index);
-		memcpy(&attr->u.ppid.id, &ds->index, attr->u.ppid.id_len);
+		attr->u.ppid.id_len = sizeof(dst->index);
+		memcpy(&attr->u.ppid.id, &dst->index, attr->u.ppid.id_len);
 		break;
 	case SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS_SUPPORT:
 		attr->u.brport_flags_support = 0;
@@ -777,17 +791,9 @@ static void dsa_slave_del_cls_matchall(struct net_device *dev,
 }
 
 static int dsa_slave_setup_tc_cls_matchall(struct net_device *dev,
-					   struct tc_cls_matchall_offload *cls)
+					   struct tc_cls_matchall_offload *cls,
+					   bool ingress)
 {
-	bool ingress;
-
-	if (is_classid_clsact_ingress(cls->common.classid))
-		ingress = true;
-	else if (is_classid_clsact_egress(cls->common.classid))
-		ingress = false;
-	else
-		return -EOPNOTSUPP;
-
 	if (cls->common.chain_index)
 		return -EOPNOTSUPP;
 
@@ -802,12 +808,63 @@ static int dsa_slave_setup_tc_cls_matchall(struct net_device *dev,
 	}
 }
 
+static int dsa_slave_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
+				       void *cb_priv, bool ingress)
+{
+	struct net_device *dev = cb_priv;
+
+	if (!tc_can_offload(dev))
+		return -EOPNOTSUPP;
+
+	switch (type) {
+	case TC_SETUP_CLSMATCHALL:
+		return dsa_slave_setup_tc_cls_matchall(dev, type_data, ingress);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+
+static int dsa_slave_setup_tc_block_cb_ig(enum tc_setup_type type,
+					  void *type_data, void *cb_priv)
+{
+	return dsa_slave_setup_tc_block_cb(type, type_data, cb_priv, true);
+}
+
+static int dsa_slave_setup_tc_block_cb_eg(enum tc_setup_type type,
+					  void *type_data, void *cb_priv)
+{
+	return dsa_slave_setup_tc_block_cb(type, type_data, cb_priv, false);
+}
+
+static int dsa_slave_setup_tc_block(struct net_device *dev,
+				    struct tc_block_offload *f)
+{
+	tc_setup_cb_t *cb;
+
+	if (f->binder_type == TCF_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
+		cb = dsa_slave_setup_tc_block_cb_ig;
+	else if (f->binder_type == TCF_BLOCK_BINDER_TYPE_CLSACT_EGRESS)
+		cb = dsa_slave_setup_tc_block_cb_eg;
+	else
+		return -EOPNOTSUPP;
+
+	switch (f->command) {
+	case TC_BLOCK_BIND:
+		return tcf_block_cb_register(f->block, cb, dev, dev);
+	case TC_BLOCK_UNBIND:
+		tcf_block_cb_unregister(f->block, cb, dev);
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+
 static int dsa_slave_setup_tc(struct net_device *dev, enum tc_setup_type type,
 			      void *type_data)
 {
 	switch (type) {
-	case TC_SETUP_CLSMATCHALL:
-		return dsa_slave_setup_tc_cls_matchall(dev, type_data);
+	case TC_SETUP_BLOCK:
+		return dsa_slave_setup_tc_block(dev, type_data);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -1020,28 +1077,10 @@ static int dsa_slave_phy_setup(struct net_device *slave_dev)
 		phy_flags = ds->ops->get_phy_flags(ds, dp->index);
 
 	if (phy_dn) {
-		int phy_id = of_mdio_parse_addr(&slave_dev->dev, phy_dn);
-
-		/* If this PHY address is part of phys_mii_mask, which means
-		 * that we need to divert reads and writes to/from it, then we
-		 * want to bind this device using the slave MII bus created by
-		 * DSA to make that happen.
-		 */
-		if (!phy_is_fixed && phy_id >= 0 &&
-		    (ds->phys_mii_mask & (1 << phy_id))) {
-			ret = dsa_slave_phy_connect(slave_dev, phy_id);
-			if (ret) {
-				netdev_err(slave_dev, "failed to connect to phy%d: %d\n", phy_id, ret);
-				of_node_put(phy_dn);
-				return ret;
-			}
-		} else {
-			slave_dev->phydev = of_phy_connect(slave_dev, phy_dn,
-							   dsa_slave_adjust_link,
-							   phy_flags,
-							   p->phy_interface);
-		}
-
+		slave_dev->phydev = of_phy_connect(slave_dev, phy_dn,
+						   dsa_slave_adjust_link,
+						   phy_flags,
+						   p->phy_interface);
 		of_node_put(phy_dn);
 	}
 
@@ -1120,11 +1159,12 @@ static void dsa_slave_notify(struct net_device *dev, unsigned long val)
 	call_dsa_notifiers(val, dev, &rinfo.info);
 }
 
-int dsa_slave_create(struct dsa_port *port, const char *name)
+int dsa_slave_create(struct dsa_port *port)
 {
-	struct dsa_port *cpu_dp = port->cpu_dp;
+	const struct dsa_port *cpu_dp = port->cpu_dp;
 	struct net_device *master = cpu_dp->master;
 	struct dsa_switch *ds = port->ds;
+	const char *name = port->name;
 	struct net_device *slave_dev;
 	struct dsa_slave_priv *p;
 	int ret;

@@ -29,6 +29,7 @@ struct fixed_phy_status;
 enum dsa_tag_protocol {
 	DSA_TAG_PROTO_NONE = 0,
 	DSA_TAG_PROTO_BRCM,
+	DSA_TAG_PROTO_BRCM_PREPEND,
 	DSA_TAG_PROTO_DSA,
 	DSA_TAG_PROTO_EDSA,
 	DSA_TAG_PROTO_KSZ,
@@ -116,13 +117,13 @@ struct dsa_switch_tree {
 	struct raw_notifier_head	nh;
 
 	/* Tree identifier */
-	u32 tree;
+	unsigned int index;
 
 	/* Number of switches attached to this tree */
 	struct kref refcount;
 
 	/* Has this tree been applied to the hardware? */
-	bool applied;
+	bool setup;
 
 	/*
 	 * Configuration data for the platform device that owns
@@ -180,10 +181,17 @@ struct dsa_port {
 	struct sk_buff *(*rcv)(struct sk_buff *skb, struct net_device *dev,
 			       struct packet_type *pt);
 
+	enum {
+		DSA_PORT_TYPE_UNUSED = 0,
+		DSA_PORT_TYPE_CPU,
+		DSA_PORT_TYPE_DSA,
+		DSA_PORT_TYPE_USER,
+	} type;
+
 	struct dsa_switch	*ds;
 	unsigned int		index;
 	const char		*name;
-	struct dsa_port		*cpu_dp;
+	const struct dsa_port	*cpu_dp;
 	struct device_node	*dn;
 	unsigned int		ageing_time;
 	u8			stp_state;
@@ -202,7 +210,7 @@ struct dsa_switch {
 	 * Parent switch tree, and switch index.
 	 */
 	struct dsa_switch_tree	*dst;
-	int			index;
+	unsigned int		index;
 
 	/* Listener for switch fabric events */
 	struct notifier_block	nb;
@@ -233,9 +241,6 @@ struct dsa_switch {
 	/*
 	 * Slave mii_bus and devices for the individual ports.
 	 */
-	u32			dsa_port_mask;
-	u32			cpu_port_mask;
-	u32			enabled_port_mask;
 	u32			phys_mii_mask;
 	struct mii_bus		*slave_mii_bus;
 
@@ -254,24 +259,41 @@ struct dsa_switch {
 	struct dsa_port ports[];
 };
 
+static inline const struct dsa_port *dsa_to_port(struct dsa_switch *ds, int p)
+{
+	return &ds->ports[p];
+}
+
+static inline bool dsa_is_unused_port(struct dsa_switch *ds, int p)
+{
+	return dsa_to_port(ds, p)->type == DSA_PORT_TYPE_UNUSED;
+}
+
 static inline bool dsa_is_cpu_port(struct dsa_switch *ds, int p)
 {
-	return !!(ds->cpu_port_mask & (1 << p));
+	return dsa_to_port(ds, p)->type == DSA_PORT_TYPE_CPU;
 }
 
 static inline bool dsa_is_dsa_port(struct dsa_switch *ds, int p)
 {
-	return !!((ds->dsa_port_mask) & (1 << p));
+	return dsa_to_port(ds, p)->type == DSA_PORT_TYPE_DSA;
 }
 
-static inline bool dsa_is_normal_port(struct dsa_switch *ds, int p)
+static inline bool dsa_is_user_port(struct dsa_switch *ds, int p)
 {
-	return !dsa_is_cpu_port(ds, p) && !dsa_is_dsa_port(ds, p);
+	return dsa_to_port(ds, p)->type == DSA_PORT_TYPE_USER;
 }
 
-static inline const struct dsa_port *dsa_to_port(struct dsa_switch *ds, int p)
+static inline u32 dsa_user_ports(struct dsa_switch *ds)
 {
-	return &ds->ports[p];
+	u32 mask = 0;
+	int p;
+
+	for (p = 0; p < ds->num_ports; p++)
+		if (dsa_is_user_port(ds, p))
+			mask |= BIT(p);
+
+	return mask;
 }
 
 static inline u8 dsa_upstream_port(struct dsa_switch *ds)
@@ -300,7 +322,8 @@ struct dsa_switch_ops {
 				  struct device *host_dev, int sw_addr,
 				  void **priv);
 
-	enum dsa_tag_protocol (*get_tag_protocol)(struct dsa_switch *ds);
+	enum dsa_tag_protocol (*get_tag_protocol)(struct dsa_switch *ds,
+						  int port);
 
 	int	(*setup)(struct dsa_switch *ds);
 	u32	(*get_phy_flags)(struct dsa_switch *ds, int port);

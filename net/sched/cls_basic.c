@@ -35,7 +35,10 @@ struct basic_filter {
 	struct tcf_result	res;
 	struct tcf_proto	*tp;
 	struct list_head	link;
-	struct rcu_head		rcu;
+	union {
+		struct work_struct	work;
+		struct rcu_head		rcu;
+	};
 };
 
 static int basic_classify(struct sk_buff *skb, const struct tcf_proto *tp,
@@ -84,13 +87,29 @@ static int basic_init(struct tcf_proto *tp)
 	return 0;
 }
 
+static void __basic_delete_filter(struct basic_filter *f)
+{
+	tcf_exts_destroy(&f->exts);
+	tcf_em_tree_destroy(&f->ematches);
+	tcf_exts_put_net(&f->exts);
+	kfree(f);
+}
+
+static void basic_delete_filter_work(struct work_struct *work)
+{
+	struct basic_filter *f = container_of(work, struct basic_filter, work);
+
+	rtnl_lock();
+	__basic_delete_filter(f);
+	rtnl_unlock();
+}
+
 static void basic_delete_filter(struct rcu_head *head)
 {
 	struct basic_filter *f = container_of(head, struct basic_filter, rcu);
 
-	tcf_exts_destroy(&f->exts);
-	tcf_em_tree_destroy(&f->ematches);
-	kfree(f);
+	INIT_WORK(&f->work, basic_delete_filter_work);
+	tcf_queue_work(&f->work);
 }
 
 static void basic_destroy(struct tcf_proto *tp)
@@ -102,7 +121,10 @@ static void basic_destroy(struct tcf_proto *tp)
 		list_del_rcu(&f->link);
 		tcf_unbind_filter(tp, &f->res);
 		idr_remove_ext(&head->handle_idr, f->handle);
-		call_rcu(&f->rcu, basic_delete_filter);
+		if (tcf_exts_get_net(&f->exts))
+			call_rcu(&f->rcu, basic_delete_filter);
+		else
+			__basic_delete_filter(f);
 	}
 	idr_destroy(&head->handle_idr);
 	kfree_rcu(head, rcu);
@@ -116,6 +138,7 @@ static int basic_delete(struct tcf_proto *tp, void *arg, bool *last)
 	list_del_rcu(&f->link);
 	tcf_unbind_filter(tp, &f->res);
 	idr_remove_ext(&head->handle_idr, f->handle);
+	tcf_exts_get_net(&f->exts);
 	call_rcu(&f->rcu, basic_delete_filter);
 	*last = list_empty(&head->flist);
 	return 0;
@@ -211,6 +234,7 @@ static int basic_change(struct net *net, struct sk_buff *in_skb,
 		idr_replace_ext(&head->handle_idr, fnew, fnew->handle);
 		list_replace_rcu(&fold->link, &fnew->link);
 		tcf_unbind_filter(tp, &fold->res);
+		tcf_exts_get_net(&fold->exts);
 		call_rcu(&fold->rcu, basic_delete_filter);
 	} else {
 		list_add_rcu(&fnew->link, &head->flist);

@@ -1420,8 +1420,12 @@ static int bcm_sysport_init_tx_ring(struct bcm_sysport_priv *priv,
 	/* Configure QID and port mapping */
 	reg = tdma_readl(priv, TDMA_DESC_RING_MAPPING(index));
 	reg &= ~(RING_QID_MASK | RING_PORT_ID_MASK << RING_PORT_ID_SHIFT);
-	reg |= ring->switch_queue & RING_QID_MASK;
-	reg |= ring->switch_port << RING_PORT_ID_SHIFT;
+	if (ring->inspect) {
+		reg |= ring->switch_queue & RING_QID_MASK;
+		reg |= ring->switch_port << RING_PORT_ID_SHIFT;
+	} else {
+		reg |= RING_IGNORE_STATUS;
+	}
 	tdma_writel(priv, reg, TDMA_DESC_RING_MAPPING(index));
 	tdma_writel(priv, 0, TDMA_DESC_RING_PCP_DEI_VID(index));
 
@@ -1821,15 +1825,17 @@ static inline void bcm_sysport_mask_all_intrs(struct bcm_sysport_priv *priv)
 
 static inline void gib_set_pad_extension(struct bcm_sysport_priv *priv)
 {
-	u32 __maybe_unused reg;
+	u32 reg;
 
-	/* Include Broadcom tag in pad extension */
+	reg = gib_readl(priv, GIB_CONTROL);
+	/* Include Broadcom tag in pad extension and fix up IPG_LENGTH */
 	if (netdev_uses_dsa(priv->netdev)) {
-		reg = gib_readl(priv, GIB_CONTROL);
 		reg &= ~(GIB_PAD_EXTENSION_MASK << GIB_PAD_EXTENSION_SHIFT);
 		reg |= ENET_BRCM_TAG_LEN << GIB_PAD_EXTENSION_SHIFT;
-		gib_writel(priv, reg, GIB_CONTROL);
 	}
+	reg &= ~(GIB_IPG_LEN_MASK << GIB_IPG_LEN_SHIFT);
+	reg |= 12 << GIB_IPG_LEN_SHIFT;
+	gib_writel(priv, reg, GIB_CONTROL);
 }
 
 static int bcm_sysport_open(struct net_device *dev)
@@ -2040,8 +2046,26 @@ static u16 bcm_sysport_select_queue(struct net_device *dev, struct sk_buff *skb,
 	port = BRCM_TAG_GET_PORT(queue);
 	tx_ring = priv->ring_map[q + port * priv->per_port_num_tx_queues];
 
+	if (unlikely(!tx_ring))
+		return fallback(dev, skb);
+
 	return tx_ring->index;
 }
+
+static const struct net_device_ops bcm_sysport_netdev_ops = {
+	.ndo_start_xmit		= bcm_sysport_xmit,
+	.ndo_tx_timeout		= bcm_sysport_tx_timeout,
+	.ndo_open		= bcm_sysport_open,
+	.ndo_stop		= bcm_sysport_stop,
+	.ndo_set_features	= bcm_sysport_set_features,
+	.ndo_set_rx_mode	= bcm_sysport_set_rx_mode,
+	.ndo_set_mac_address	= bcm_sysport_change_mac,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= bcm_sysport_poll_controller,
+#endif
+	.ndo_get_stats64	= bcm_sysport_get_stats64,
+	.ndo_select_queue	= bcm_sysport_select_queue,
+};
 
 static int bcm_sysport_map_queues(struct net_device *dev,
 				  struct dsa_notifier_register_info *info)
@@ -2056,6 +2080,9 @@ static int bcm_sysport_map_queues(struct net_device *dev,
 	 * switches
 	 */
 	if (info->switch_number)
+		return 0;
+
+	if (dev->netdev_ops != &bcm_sysport_netdev_ops)
 		return 0;
 
 	port = info->port_number;
@@ -2087,6 +2114,7 @@ static int bcm_sysport_map_queues(struct net_device *dev,
 		 */
 		ring->switch_queue = q;
 		ring->switch_port = port;
+		ring->inspect = true;
 		priv->ring_map[q + port * num_tx_queues] = ring;
 
 		/* Set all queues as being used now */
@@ -2108,21 +2136,6 @@ static int bcm_sysport_dsa_notifier(struct notifier_block *unused,
 
 	return notifier_from_errno(bcm_sysport_map_queues(info->master, info));
 }
-
-static const struct net_device_ops bcm_sysport_netdev_ops = {
-	.ndo_start_xmit		= bcm_sysport_xmit,
-	.ndo_tx_timeout		= bcm_sysport_tx_timeout,
-	.ndo_open		= bcm_sysport_open,
-	.ndo_stop		= bcm_sysport_stop,
-	.ndo_set_features	= bcm_sysport_set_features,
-	.ndo_set_rx_mode	= bcm_sysport_set_rx_mode,
-	.ndo_set_mac_address	= bcm_sysport_change_mac,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= bcm_sysport_poll_controller,
-#endif
-	.ndo_get_stats64	= bcm_sysport_get_stats64,
-	.ndo_select_queue	= bcm_sysport_select_queue,
-};
 
 #define REV_FMT	"v%2x.%02x"
 

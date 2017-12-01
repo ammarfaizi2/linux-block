@@ -572,6 +572,14 @@ static int fwevtq_handler(struct sge_rspq *q, const __be64 *rsp,
 		const struct cpl_set_tcb_rpl *p = (void *)rsp;
 
 		filter_rpl(q->adap, p);
+	} else if (opcode == CPL_ACT_OPEN_RPL) {
+		const struct cpl_act_open_rpl *p = (void *)rsp;
+
+		hash_filter_rpl(q->adap, p);
+	} else if (opcode == CPL_ABORT_RPL_RSS) {
+		const struct cpl_abort_rpl_rss *p = (void *)rsp;
+
+		hash_del_filter_rpl(q->adap, p);
 	} else
 		dev_err(q->adap->pdev_dev,
 			"unexpected CPL %#x on FW event queue\n", opcode);
@@ -2889,8 +2897,7 @@ static int cxgb_set_tx_maxrate(struct net_device *dev, int index, u32 rate)
 static int cxgb_setup_tc_flower(struct net_device *dev,
 				struct tc_cls_flower_offload *cls_flower)
 {
-	if (!is_classid_clsact_ingress(cls_flower->common.classid) ||
-	    cls_flower->common.chain_index)
+	if (cls_flower->common.chain_index)
 		return -EOPNOTSUPP;
 
 	switch (cls_flower->command) {
@@ -2908,8 +2915,7 @@ static int cxgb_setup_tc_flower(struct net_device *dev,
 static int cxgb_setup_tc_cls_u32(struct net_device *dev,
 				 struct tc_cls_u32_offload *cls_u32)
 {
-	if (!is_classid_clsact_ingress(cls_u32->common.classid) ||
-	    cls_u32->common.chain_index)
+	if (cls_u32->common.chain_index)
 		return -EOPNOTSUPP;
 
 	switch (cls_u32->command) {
@@ -2923,9 +2929,10 @@ static int cxgb_setup_tc_cls_u32(struct net_device *dev,
 	}
 }
 
-static int cxgb_setup_tc(struct net_device *dev, enum tc_setup_type type,
-			 void *type_data)
+static int cxgb_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
+				  void *cb_priv)
 {
+	struct net_device *dev = cb_priv;
 	struct port_info *pi = netdev2pinfo(dev);
 	struct adapter *adap = netdev2adap(dev);
 
@@ -2936,11 +2943,45 @@ static int cxgb_setup_tc(struct net_device *dev, enum tc_setup_type type,
 		return -EINVAL;
 	}
 
+	if (!tc_can_offload(dev))
+		return -EOPNOTSUPP;
+
 	switch (type) {
 	case TC_SETUP_CLSU32:
 		return cxgb_setup_tc_cls_u32(dev, type_data);
 	case TC_SETUP_CLSFLOWER:
 		return cxgb_setup_tc_flower(dev, type_data);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+
+static int cxgb_setup_tc_block(struct net_device *dev,
+			       struct tc_block_offload *f)
+{
+	struct port_info *pi = netdev2pinfo(dev);
+
+	if (f->binder_type != TCF_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
+		return -EOPNOTSUPP;
+
+	switch (f->command) {
+	case TC_BLOCK_BIND:
+		return tcf_block_cb_register(f->block, cxgb_setup_tc_block_cb,
+					     pi, dev);
+	case TC_BLOCK_UNBIND:
+		tcf_block_cb_unregister(f->block, cxgb_setup_tc_block_cb, pi);
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+
+static int cxgb_setup_tc(struct net_device *dev, enum tc_setup_type type,
+			 void *type_data)
+{
+	switch (type) {
+	case TC_SETUP_BLOCK:
+		return cxgb_setup_tc_block(dev, type_data);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -3933,7 +3974,8 @@ static int adap_init0(struct adapter *adap)
 	if (ret < 0)
 		goto bye;
 
-	if (caps_cmd.ofldcaps) {
+	if (caps_cmd.ofldcaps ||
+	    (caps_cmd.niccaps & htons(FW_CAPS_CONFIG_NIC_HASHFILTER))) {
 		/* query offload-related parameters */
 		params[0] = FW_PARAM_DEV(NTID);
 		params[1] = FW_PARAM_PFVF(SERVER_START);
@@ -3970,8 +4012,13 @@ static int adap_init0(struct adapter *adap)
 		adap->vres.ddp.size = val[4] - val[3] + 1;
 		adap->params.ofldq_wr_cred = val[5];
 
-		adap->params.offload = 1;
-		adap->num_ofld_uld += 1;
+		if (caps_cmd.niccaps & htons(FW_CAPS_CONFIG_NIC_HASHFILTER)) {
+			if (init_hash_filter(adap) < 0)
+				goto bye;
+		} else {
+			adap->params.offload = 1;
+			adap->num_ofld_uld += 1;
+		}
 	}
 	if (caps_cmd.rdmacaps) {
 		params[0] = FW_PARAM_PFVF(STAG_START);
@@ -5138,10 +5185,12 @@ static int init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 			dev_warn(&pdev->dev,
 				 "could not offload tc u32, continuing\n");
 
-		cxgb4_init_tc_flower(adapter);
+		if (cxgb4_init_tc_flower(adapter))
+			dev_warn(&pdev->dev,
+				 "could not offload tc flower, continuing\n");
 	}
 
-	if (is_offload(adapter)) {
+	if (is_offload(adapter) || is_hashfilter(adapter)) {
 		if (t4_read_reg(adapter, LE_DB_CONFIG_A) & HASHEN_F) {
 			u32 hash_base, hash_reg;
 

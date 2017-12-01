@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 #ifndef __LINUX_PKT_SCHED_H
 #define __LINUX_PKT_SCHED_H
 
@@ -255,6 +256,7 @@ struct tc_red_qopt {
 #define TC_RED_ECN		1
 #define TC_RED_HARDDROP		2
 #define TC_RED_ADAPTATIVE	4
+#define TC_RED_OFFLOADED	8
 };
 
 struct tc_red_xstats {
@@ -535,6 +537,9 @@ enum {
 	TCA_NETEM_ECN,
 	TCA_NETEM_RATE64,
 	TCA_NETEM_PAD,
+	TCA_NETEM_LATENCY64,
+	TCA_NETEM_JITTER64,
+	TCA_NETEM_SLOT,
 	__TCA_NETEM_MAX,
 };
 
@@ -570,6 +575,13 @@ struct tc_netem_rate {
 	__s32	packet_overhead;
 	__u32	cell_size;
 	__s32	cell_overhead;
+};
+
+struct tc_netem_slot {
+	__s64   min_delay; /* nsec */
+	__s64   max_delay;
+	__s32   max_packets;
+	__s32   max_bytes;
 };
 
 enum {
@@ -904,4 +916,23 @@ struct tc_pie_xstats {
 	__u32 maxq;             /* maximum queue size */
 	__u32 ecn_mark;         /* packets marked with ecn*/
 };
+
+/* CBS */
+struct tc_cbs_qopt {
+	__u8 offload;
+	__u8 _pad[3];
+	__s32 hicredit;
+	__s32 locredit;
+	__s32 idleslope;
+	__s32 sendslope;
+};
+
+enum {
+	TCA_CBS_UNSPEC,
+	TCA_CBS_PARMS,
+	__TCA_CBS_MAX,
+};
+
+#define TCA_CBS_MAX (__TCA_CBS_MAX - 1)
+
 #endif

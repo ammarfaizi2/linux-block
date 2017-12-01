@@ -86,7 +86,7 @@ static int dsa_cpu_dsa_setups(struct dsa_switch *ds)
 		if (!(dsa_is_cpu_port(ds, port) || dsa_is_dsa_port(ds, port)))
 			continue;
 
-		ret = dsa_cpu_dsa_setup(&ds->ports[port]);
+		ret = dsa_port_fixed_link_register_of(&ds->ports[port]);
 		if (ret)
 			return ret;
 	}
@@ -101,6 +101,7 @@ static int dsa_switch_setup_one(struct dsa_switch *ds,
 	struct dsa_chip_data *cd = ds->cd;
 	bool valid_name_found = false;
 	int index = ds->index;
+	struct dsa_port *dp;
 	int i, ret;
 
 	/*
@@ -109,9 +110,12 @@ static int dsa_switch_setup_one(struct dsa_switch *ds,
 	for (i = 0; i < ds->num_ports; i++) {
 		char *name;
 
+		dp = &ds->ports[i];
+
 		name = cd->port_names[i];
 		if (name == NULL)
 			continue;
+		dp->name = name;
 
 		if (!strcmp(name, "cpu")) {
 			if (dst->cpu_dp) {
@@ -121,11 +125,11 @@ static int dsa_switch_setup_one(struct dsa_switch *ds,
 			}
 			dst->cpu_dp = &ds->ports[i];
 			dst->cpu_dp->master = master;
-			ds->cpu_port_mask |= 1 << i;
+			dp->type = DSA_PORT_TYPE_CPU;
 		} else if (!strcmp(name, "dsa")) {
-			ds->dsa_port_mask |= 1 << i;
+			dp->type = DSA_PORT_TYPE_DSA;
 		} else {
-			ds->enabled_port_mask |= 1 << i;
+			dp->type = DSA_PORT_TYPE_USER;
 		}
 		valid_name_found = true;
 	}
@@ -136,7 +140,7 @@ static int dsa_switch_setup_one(struct dsa_switch *ds,
 	/* Make the built-in MII bus mask match the number of ports,
 	 * switch drivers can override this later
 	 */
-	ds->phys_mii_mask = ds->enabled_port_mask;
+	ds->phys_mii_mask |= dsa_user_ports(ds);
 
 	/*
 	 * If the CPU connects to this switch, set the switch tree
@@ -147,7 +151,7 @@ static int dsa_switch_setup_one(struct dsa_switch *ds,
 		const struct dsa_device_ops *tag_ops;
 		enum dsa_tag_protocol tag_protocol;
 
-		tag_protocol = ops->get_tag_protocol(ds);
+		tag_protocol = ops->get_tag_protocol(ds, dst->cpu_dp->index);
 		tag_ops = dsa_resolve_tag_protocol(tag_protocol);
 		if (IS_ERR(tag_ops))
 			return PTR_ERR(tag_ops);
@@ -190,10 +194,10 @@ static int dsa_switch_setup_one(struct dsa_switch *ds,
 		ds->ports[i].dn = cd->port_dn[i];
 		ds->ports[i].cpu_dp = dst->cpu_dp;
 
-		if (!(ds->enabled_port_mask & (1 << i)))
+		if (dsa_is_user_port(ds, i))
 			continue;
 
-		ret = dsa_slave_create(&ds->ports[i], cd->port_names[i]);
+		ret = dsa_slave_create(&ds->ports[i]);
 		if (ret < 0)
 			netdev_err(master, "[%d]: can't create dsa slave device for port %d(%s): %d\n",
 				   index, i, cd->port_names[i], ret);
@@ -258,7 +262,7 @@ static void dsa_switch_destroy(struct dsa_switch *ds)
 
 	/* Destroy network devices for physical switch ports. */
 	for (port = 0; port < ds->num_ports; port++) {
-		if (!(ds->enabled_port_mask & (1 << port)))
+		if (!dsa_is_user_port(ds, port))
 			continue;
 
 		if (!ds->ports[port].slave)
@@ -271,11 +275,7 @@ static void dsa_switch_destroy(struct dsa_switch *ds)
 	for (port = 0; port < ds->num_ports; port++) {
 		if (!(dsa_is_cpu_port(ds, port) || dsa_is_dsa_port(ds, port)))
 			continue;
-		dsa_cpu_dsa_destroy(&ds->ports[port]);
-
-		/* Clearing a bit which is not set does no harm */
-		ds->cpu_port_mask |= ~(1 << port);
-		ds->dsa_port_mask |= ~(1 << port);
+		dsa_port_fixed_link_unregister_of(&ds->ports[port]);
 	}
 
 	if (ds->slave_mii_bus && ds->ops->phy_read)
@@ -593,15 +593,7 @@ static int dsa_setup_dst(struct dsa_switch_tree *dst, struct net_device *dev,
 	if (!configured)
 		return -EPROBE_DEFER;
 
-	/*
-	 * If we use a tagging format that doesn't have an ethertype
-	 * field, make sure that all packets from this point on get
-	 * sent to the tag format's receive function.
-	 */
-	wmb();
-	dev->dsa_ptr = dst->cpu_dp;
-
-	return dsa_master_ethtool_setup(dst->cpu_dp->master);
+	return dsa_master_setup(dst->cpu_dp->master, dst->cpu_dp);
 }
 
 static int dsa_probe(struct platform_device *pdev)
@@ -666,15 +658,7 @@ static void dsa_remove_dst(struct dsa_switch_tree *dst)
 {
 	int i;
 
-	dsa_master_ethtool_restore(dst->cpu_dp->master);
-
-	dst->cpu_dp->master->dsa_ptr = NULL;
-
-	/* If we used a tagging format that doesn't have an ethertype
-	 * field, make sure that all packets from this point get sent
-	 * without the tag and go through the regular receive path.
-	 */
-	wmb();
+	dsa_master_teardown(dst->cpu_dp->master);
 
 	for (i = 0; i < dst->pd->nr_chips; i++) {
 		struct dsa_switch *ds = dst->ds[i];

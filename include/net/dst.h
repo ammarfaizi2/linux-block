@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * net/dst.h	Protocol independent destination cache definitions.
  *
@@ -257,7 +258,7 @@ static inline void dst_hold(struct dst_entry *dst)
 
 static inline void dst_use_noref(struct dst_entry *dst, unsigned long time)
 {
-	if (time != dst->lastuse) {
+	if (unlikely(time != dst->lastuse)) {
 		dst->__use++;
 		dst->lastuse = time;
 	}

@@ -102,9 +102,6 @@ static int add_del_if(struct net_bridge *br, int ifindex, int isadd)
 	else
 		ret = br_del_if(br, dev);
 
-	if (!ret)
-		rtmsg_ifinfo(RTM_NEWLINK, dev, IFF_MASTER, GFP_KERNEL);
-
 	return ret;
 }
 
@@ -296,7 +293,7 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 	if (!ret) {
 		if (p)
-			br_ifinfo_notify(RTM_NEWLINK, p);
+			br_ifinfo_notify(RTM_NEWLINK, NULL, p);
 		else
 			netdev_state_change(br->dev);
 	}

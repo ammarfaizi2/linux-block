@@ -35,7 +35,8 @@
 #include "b53/b53_priv.h"
 #include "b53/b53_regs.h"
 
-static enum dsa_tag_protocol bcm_sf2_sw_get_tag_protocol(struct dsa_switch *ds)
+static enum dsa_tag_protocol bcm_sf2_sw_get_tag_protocol(struct dsa_switch *ds,
+							 int port)
 {
 	return DSA_TAG_PROTO_BRCM;
 }
@@ -652,8 +653,7 @@ static int bcm_sf2_sw_suspend(struct dsa_switch *ds)
 	 * bcm_sf2_sw_setup
 	 */
 	for (port = 0; port < DSA_MAX_PORTS; port++) {
-		if ((1 << port) & ds->enabled_port_mask ||
-		    dsa_is_cpu_port(ds, port))
+		if (dsa_is_user_port(ds, port) || dsa_is_cpu_port(ds, port))
 			bcm_sf2_port_disable(ds, port, NULL);
 	}
 
@@ -676,7 +676,7 @@ static int bcm_sf2_sw_resume(struct dsa_switch *ds)
 		bcm_sf2_gphy_enable_set(ds, true);
 
 	for (port = 0; port < DSA_MAX_PORTS; port++) {
-		if ((1 << port) & ds->enabled_port_mask)
+		if (dsa_is_user_port(ds, port))
 			bcm_sf2_port_setup(ds, port, NULL);
 		else if (dsa_is_cpu_port(ds, port))
 			bcm_sf2_imp_setup(ds, port);
@@ -739,45 +739,6 @@ static int bcm_sf2_sw_set_wol(struct dsa_switch *ds, int port,
 	return p->ethtool_ops->set_wol(p, wol);
 }
 
-static int bcm_sf2_vlan_op_wait(struct bcm_sf2_priv *priv)
-{
-	unsigned int timeout = 10;
-	u32 reg;
-
-	do {
-		reg = core_readl(priv, CORE_ARLA_VTBL_RWCTRL);
-		if (!(reg & ARLA_VTBL_STDN))
-			return 0;
-
-		usleep_range(1000, 2000);
-	} while (timeout--);
-
-	return -ETIMEDOUT;
-}
-
-static int bcm_sf2_vlan_op(struct bcm_sf2_priv *priv, u8 op)
-{
-	core_writel(priv, ARLA_VTBL_STDN | op, CORE_ARLA_VTBL_RWCTRL);
-
-	return bcm_sf2_vlan_op_wait(priv);
-}
-
-static void bcm_sf2_sw_configure_vlan(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	unsigned int port;
-
-	/* Clear all VLANs */
-	bcm_sf2_vlan_op(priv, ARLA_VTBL_CMD_CLEAR);
-
-	for (port = 0; port < priv->hw_params.num_ports; port++) {
-		if (!((1 << port) & ds->enabled_port_mask))
-			continue;
-
-		core_writel(priv, 1, CORE_DEFAULT_1Q_TAG_P(port));
-	}
-}
-
 static int bcm_sf2_sw_setup(struct dsa_switch *ds)
 {
 	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
@@ -786,7 +747,7 @@ static int bcm_sf2_sw_setup(struct dsa_switch *ds)
 	/* Enable all valid ports and disable those unused */
 	for (port = 0; port < priv->hw_params.num_ports; port++) {
 		/* IMP port receives special treatment */
-		if ((1 << port) & ds->enabled_port_mask)
+		if (dsa_is_user_port(ds, port))
 			bcm_sf2_port_setup(ds, port, NULL);
 		else if (dsa_is_cpu_port(ds, port))
 			bcm_sf2_imp_setup(ds, port);
@@ -794,7 +755,7 @@ static int bcm_sf2_sw_setup(struct dsa_switch *ds)
 			bcm_sf2_port_disable(ds, port, NULL);
 	}
 
-	bcm_sf2_sw_configure_vlan(ds);
+	b53_configure_vlan(ds);
 	bcm_sf2_enable_acb(ds);
 
 	return 0;
@@ -1067,6 +1028,7 @@ static int bcm_sf2_sw_probe(struct platform_device *pdev)
 	 * permanently used
 	 */
 	set_bit(0, priv->cfp.used);
+	set_bit(0, priv->cfp.unique);
 
 	bcm_sf2_identify_ports(priv, dn->child);
 

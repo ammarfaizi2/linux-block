@@ -752,7 +752,7 @@ static struct rt6_info *rt6_select(struct net *net, struct fib6_node *fn,
 	bool do_rr = false;
 	int key_plen;
 
-	if (!leaf)
+	if (!leaf || leaf == net->ipv6.ip6_null_entry)
 		return net->ipv6.ip6_null_entry;
 
 	rt0 = rcu_dereference(fn->rr_ptr);
@@ -945,7 +945,7 @@ restart:
 
 	rcu_read_unlock();
 
-	trace_fib6_table_lookup(net, rt, table->tb6_id, fl6);
+	trace_fib6_table_lookup(net, rt, table, fl6);
 
 	return rt;
 
@@ -1340,8 +1340,10 @@ out:
 	spin_unlock_bh(&rt6_exception_lock);
 
 	/* Update fn->fn_sernum to invalidate all cached dst */
-	if (!err)
+	if (!err) {
 		fib6_update_sernum(ort);
+		fib6_force_start_gc(net);
+	}
 
 	return err;
 }
@@ -1573,7 +1575,13 @@ static void rt6_age_examine_exception(struct rt6_exception_bucket *bucket,
 {
 	struct rt6_info *rt = rt6_ex->rt6i;
 
-	if (atomic_read(&rt->dst.__refcnt) == 1 &&
+	/* we are pruning and obsoleting aged-out and non gateway exceptions
+	 * even if others have still references to them, so that on next
+	 * dst_check() such references can be dropped.
+	 * EXPIRES exceptions - e.g. pmtu-generated ones are pruned when
+	 * expired, independently from their aging, as per RFC 8201 section 4
+	 */
+	if (!(rt->rt6i_flags & RTF_EXPIRES) &&
 	    time_after_eq(now, rt->dst.lastuse + gc_args->timeout)) {
 		RT6_TRACE("aging clone %p\n", rt);
 		rt6_remove_exception(bucket, rt6_ex);
@@ -1593,6 +1601,10 @@ static void rt6_age_examine_exception(struct rt6_exception_bucket *bucket,
 			rt6_remove_exception(bucket, rt6_ex);
 			return;
 		}
+	} else if (__rt6_check_expired(rt)) {
+		RT6_TRACE("purging expired route %p\n", rt);
+		rt6_remove_exception(bucket, rt6_ex);
+		return;
 	}
 	gc_args->more++;
 }
@@ -1670,7 +1682,7 @@ redo_rt6_select:
 	if (rt == net->ipv6.ip6_null_entry) {
 		rcu_read_unlock();
 		dst_hold(&rt->dst);
-		trace_fib6_table_lookup(net, rt, table->tb6_id, fl6);
+		trace_fib6_table_lookup(net, rt, table, fl6);
 		return rt;
 	} else if (rt->rt6i_flags & RTF_CACHE) {
 		if (ip6_hold_safe(net, &rt, true)) {
@@ -1678,7 +1690,7 @@ redo_rt6_select:
 			rt6_dst_from_metrics_check(rt);
 		}
 		rcu_read_unlock();
-		trace_fib6_table_lookup(net, rt, table->tb6_id, fl6);
+		trace_fib6_table_lookup(net, rt, table, fl6);
 		return rt;
 	} else if (unlikely((fl6->flowi6_flags & FLOWI_FLAG_KNOWN_NH) &&
 			    !(rt->rt6i_flags & RTF_GATEWAY))) {
@@ -1714,7 +1726,7 @@ redo_rt6_select:
 		}
 
 uncached_rt_out:
-		trace_fib6_table_lookup(net, uncached_rt, table->tb6_id, fl6);
+		trace_fib6_table_lookup(net, uncached_rt, table, fl6);
 		return uncached_rt;
 
 	} else {
@@ -1742,7 +1754,7 @@ uncached_rt_out:
 		}
 		local_bh_enable();
 		rcu_read_unlock();
-		trace_fib6_table_lookup(net, pcpu_rt, table->tb6_id, fl6);
+		trace_fib6_table_lookup(net, pcpu_rt, table, fl6);
 		return pcpu_rt;
 	}
 }
@@ -2183,7 +2195,7 @@ out:
 
 	rcu_read_unlock();
 
-	trace_fib6_table_lookup(net, rt, table->tb6_id, fl6);
+	trace_fib6_table_lookup(net, rt, table, fl6);
 	return rt;
 };
 
@@ -2366,6 +2378,7 @@ out:
 static int ip6_convert_metrics(struct mx6_config *mxc,
 			       const struct fib6_config *cfg)
 {
+	struct net *net = cfg->fc_nlinfo.nl_net;
 	bool ecn_ca = false;
 	struct nlattr *nla;
 	int remaining;
@@ -2391,7 +2404,7 @@ static int ip6_convert_metrics(struct mx6_config *mxc,
 			char tmp[TCP_CA_NAME_MAX];
 
 			nla_strlcpy(tmp, nla, sizeof(tmp));
-			val = tcp_ca_get_key_by_name(tmp, &ecn_ca);
+			val = tcp_ca_get_key_by_name(net, tmp, &ecn_ca);
 			if (val == TCP_CA_UNSPEC)
 				goto err;
 		} else {
@@ -2463,6 +2476,12 @@ static struct rt6_info *ip6_route_info_create(struct fib6_config *cfg,
 	/* RTF_PCPU is an internal flag; can not be set by userspace */
 	if (cfg->fc_flags & RTF_PCPU) {
 		NL_SET_ERR_MSG(extack, "Userspace can not set RTF_PCPU");
+		goto out;
+	}
+
+	/* RTF_CACHE is an internal flag; can not be set by userspace */
+	if (cfg->fc_flags & RTF_CACHE) {
+		NL_SET_ERR_MSG(extack, "Userspace can not set RTF_CACHE");
 		goto out;
 	}
 

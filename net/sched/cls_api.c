@@ -77,6 +77,8 @@ out:
 }
 EXPORT_SYMBOL(register_tcf_proto_ops);
 
+static struct workqueue_struct *tc_filter_wq;
+
 int unregister_tcf_proto_ops(struct tcf_proto_ops *ops)
 {
 	struct tcf_proto_ops *t;
@@ -86,6 +88,7 @@ int unregister_tcf_proto_ops(struct tcf_proto_ops *ops)
 	 * tcf_proto_ops's destroy() handler.
 	 */
 	rcu_barrier();
+	flush_workqueue(tc_filter_wq);
 
 	write_lock(&cls_mod_lock);
 	list_for_each_entry(t, &tcf_proto_base, head) {
@@ -99,6 +102,12 @@ int unregister_tcf_proto_ops(struct tcf_proto_ops *ops)
 	return rc;
 }
 EXPORT_SYMBOL(unregister_tcf_proto_ops);
+
+bool tcf_queue_work(struct work_struct *work)
+{
+	return queue_work(tc_filter_wq, work);
+}
+EXPORT_SYMBOL(tcf_queue_work);
 
 /* Select new prio value from the range, managed by kernel. */
 
@@ -186,12 +195,19 @@ static struct tcf_chain *tcf_chain_create(struct tcf_block *block,
 	return chain;
 }
 
+static void tcf_chain_head_change(struct tcf_chain *chain,
+				  struct tcf_proto *tp_head)
+{
+	if (chain->chain_head_change)
+		chain->chain_head_change(tp_head,
+					 chain->chain_head_change_priv);
+}
+
 static void tcf_chain_flush(struct tcf_chain *chain)
 {
 	struct tcf_proto *tp;
 
-	if (chain->p_filter_chain)
-		RCU_INIT_POINTER(*chain->p_filter_chain, NULL);
+	tcf_chain_head_change(chain, NULL);
 	while ((tp = rtnl_dereference(chain->filter_chain)) != NULL) {
 		RCU_INIT_POINTER(chain->filter_chain, tp->next);
 		tcf_chain_put(chain);
@@ -233,15 +249,35 @@ void tcf_chain_put(struct tcf_chain *chain)
 }
 EXPORT_SYMBOL(tcf_chain_put);
 
-static void
-tcf_chain_filter_chain_ptr_set(struct tcf_chain *chain,
-			       struct tcf_proto __rcu **p_filter_chain)
+static void tcf_block_offload_cmd(struct tcf_block *block, struct Qdisc *q,
+				  struct tcf_block_ext_info *ei,
+				  enum tc_block_command command)
 {
-	chain->p_filter_chain = p_filter_chain;
+	struct net_device *dev = q->dev_queue->dev;
+	struct tc_block_offload bo = {};
+
+	if (!dev->netdev_ops->ndo_setup_tc)
+		return;
+	bo.command = command;
+	bo.binder_type = ei->binder_type;
+	bo.block = block;
+	dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_BLOCK, &bo);
 }
 
-int tcf_block_get(struct tcf_block **p_block,
-		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q)
+static void tcf_block_offload_bind(struct tcf_block *block, struct Qdisc *q,
+				   struct tcf_block_ext_info *ei)
+{
+	tcf_block_offload_cmd(block, q, ei, TC_BLOCK_BIND);
+}
+
+static void tcf_block_offload_unbind(struct tcf_block *block, struct Qdisc *q,
+				     struct tcf_block_ext_info *ei)
+{
+	tcf_block_offload_cmd(block, q, ei, TC_BLOCK_UNBIND);
+}
+
+int tcf_block_get_ext(struct tcf_block **p_block, struct Qdisc *q,
+		      struct tcf_block_ext_info *ei)
 {
 	struct tcf_block *block = kzalloc(sizeof(*block), GFP_KERNEL);
 	struct tcf_chain *chain;
@@ -250,15 +286,20 @@ int tcf_block_get(struct tcf_block **p_block,
 	if (!block)
 		return -ENOMEM;
 	INIT_LIST_HEAD(&block->chain_list);
+	INIT_LIST_HEAD(&block->cb_list);
+
 	/* Create chain 0 by default, it has to be always present. */
 	chain = tcf_chain_create(block, 0);
 	if (!chain) {
 		err = -ENOMEM;
 		goto err_chain_create;
 	}
-	tcf_chain_filter_chain_ptr_set(chain, p_filter_chain);
+	WARN_ON(!ei->chain_head_change);
+	chain->chain_head_change = ei->chain_head_change;
+	chain->chain_head_change_priv = ei->chain_head_change_priv;
 	block->net = qdisc_net(q);
 	block->q = q;
+	tcf_block_offload_bind(block, q, ei);
 	*p_block = block;
 	return 0;
 
@@ -266,43 +307,178 @@ err_chain_create:
 	kfree(block);
 	return err;
 }
+EXPORT_SYMBOL(tcf_block_get_ext);
+
+static void tcf_chain_head_change_dflt(struct tcf_proto *tp_head, void *priv)
+{
+	struct tcf_proto __rcu **p_filter_chain = priv;
+
+	rcu_assign_pointer(*p_filter_chain, tp_head);
+}
+
+int tcf_block_get(struct tcf_block **p_block,
+		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q)
+{
+	struct tcf_block_ext_info ei = {
+		.chain_head_change = tcf_chain_head_change_dflt,
+		.chain_head_change_priv = p_filter_chain,
+	};
+
+	WARN_ON(!p_filter_chain);
+	return tcf_block_get_ext(p_block, q, &ei);
+}
 EXPORT_SYMBOL(tcf_block_get);
 
-void tcf_block_put(struct tcf_block *block)
+static void tcf_block_put_final(struct work_struct *work)
+{
+	struct tcf_block *block = container_of(work, struct tcf_block, work);
+	struct tcf_chain *chain, *tmp;
+
+	rtnl_lock();
+	/* Only chain 0 should be still here. */
+	list_for_each_entry_safe(chain, tmp, &block->chain_list, list)
+		tcf_chain_put(chain);
+	rtnl_unlock();
+	kfree(block);
+}
+
+/* XXX: Standalone actions are not allowed to jump to any chain, and bound
+ * actions should be all removed after flushing. However, filters are now
+ * destroyed in tc filter workqueue with RTNL lock, they can not race here.
+ */
+void tcf_block_put_ext(struct tcf_block *block, struct Qdisc *q,
+		       struct tcf_block_ext_info *ei)
 {
 	struct tcf_chain *chain, *tmp;
 
-	if (!block)
-		return;
-
-	/* XXX: Standalone actions are not allowed to jump to any chain, and
-	 * bound actions should be all removed after flushing. However,
-	 * filters are destroyed in RCU callbacks, we have to hold the chains
-	 * first, otherwise we would always race with RCU callbacks on this list
-	 * without proper locking.
-	 */
-
-	/* Wait for existing RCU callbacks to cool down. */
-	rcu_barrier();
-
-	/* Hold a refcnt for all chains, except 0, in case they are gone. */
-	list_for_each_entry(chain, &block->chain_list, list)
-		if (chain->index)
-			tcf_chain_hold(chain);
-
-	/* No race on the list, because no chain could be destroyed. */
-	list_for_each_entry(chain, &block->chain_list, list)
+	list_for_each_entry_safe(chain, tmp, &block->chain_list, list)
 		tcf_chain_flush(chain);
 
-	/* Wait for RCU callbacks to release the reference count. */
-	rcu_barrier();
+	tcf_block_offload_unbind(block, q, ei);
 
-	/* At this point, all the chains should have refcnt == 1. */
-	list_for_each_entry_safe(chain, tmp, &block->chain_list, list)
-		tcf_chain_put(chain);
-	kfree(block);
+	INIT_WORK(&block->work, tcf_block_put_final);
+	/* Wait for existing RCU callbacks to cool down, make sure their works
+	 * have been queued before this. We can not flush pending works here
+	 * because we are holding the RTNL lock.
+	 */
+	rcu_barrier();
+	tcf_queue_work(&block->work);
 }
+EXPORT_SYMBOL(tcf_block_put_ext);
+
+void tcf_block_put(struct tcf_block *block)
+{
+	struct tcf_block_ext_info ei = {0, };
+
+	if (!block)
+		return;
+	tcf_block_put_ext(block, block->q, &ei);
+}
+
 EXPORT_SYMBOL(tcf_block_put);
+
+struct tcf_block_cb {
+	struct list_head list;
+	tc_setup_cb_t *cb;
+	void *cb_ident;
+	void *cb_priv;
+	unsigned int refcnt;
+};
+
+void *tcf_block_cb_priv(struct tcf_block_cb *block_cb)
+{
+	return block_cb->cb_priv;
+}
+EXPORT_SYMBOL(tcf_block_cb_priv);
+
+struct tcf_block_cb *tcf_block_cb_lookup(struct tcf_block *block,
+					 tc_setup_cb_t *cb, void *cb_ident)
+{	struct tcf_block_cb *block_cb;
+
+	list_for_each_entry(block_cb, &block->cb_list, list)
+		if (block_cb->cb == cb && block_cb->cb_ident == cb_ident)
+			return block_cb;
+	return NULL;
+}
+EXPORT_SYMBOL(tcf_block_cb_lookup);
+
+void tcf_block_cb_incref(struct tcf_block_cb *block_cb)
+{
+	block_cb->refcnt++;
+}
+EXPORT_SYMBOL(tcf_block_cb_incref);
+
+unsigned int tcf_block_cb_decref(struct tcf_block_cb *block_cb)
+{
+	return --block_cb->refcnt;
+}
+EXPORT_SYMBOL(tcf_block_cb_decref);
+
+struct tcf_block_cb *__tcf_block_cb_register(struct tcf_block *block,
+					     tc_setup_cb_t *cb, void *cb_ident,
+					     void *cb_priv)
+{
+	struct tcf_block_cb *block_cb;
+
+	block_cb = kzalloc(sizeof(*block_cb), GFP_KERNEL);
+	if (!block_cb)
+		return NULL;
+	block_cb->cb = cb;
+	block_cb->cb_ident = cb_ident;
+	block_cb->cb_priv = cb_priv;
+	list_add(&block_cb->list, &block->cb_list);
+	return block_cb;
+}
+EXPORT_SYMBOL(__tcf_block_cb_register);
+
+int tcf_block_cb_register(struct tcf_block *block,
+			  tc_setup_cb_t *cb, void *cb_ident,
+			  void *cb_priv)
+{
+	struct tcf_block_cb *block_cb;
+
+	block_cb = __tcf_block_cb_register(block, cb, cb_ident, cb_priv);
+	return block_cb ? 0 : -ENOMEM;
+}
+EXPORT_SYMBOL(tcf_block_cb_register);
+
+void __tcf_block_cb_unregister(struct tcf_block_cb *block_cb)
+{
+	list_del(&block_cb->list);
+	kfree(block_cb);
+}
+EXPORT_SYMBOL(__tcf_block_cb_unregister);
+
+void tcf_block_cb_unregister(struct tcf_block *block,
+			     tc_setup_cb_t *cb, void *cb_ident)
+{
+	struct tcf_block_cb *block_cb;
+
+	block_cb = tcf_block_cb_lookup(block, cb, cb_ident);
+	if (!block_cb)
+		return;
+	__tcf_block_cb_unregister(block_cb);
+}
+EXPORT_SYMBOL(tcf_block_cb_unregister);
+
+static int tcf_block_cb_call(struct tcf_block *block, enum tc_setup_type type,
+			     void *type_data, bool err_stop)
+{
+	struct tcf_block_cb *block_cb;
+	int ok_count = 0;
+	int err;
+
+	list_for_each_entry(block_cb, &block->cb_list, list) {
+		err = block_cb->cb(type, type_data, block_cb->cb_priv);
+		if (err) {
+			if (err_stop)
+				return err;
+		} else {
+			ok_count++;
+		}
+	}
+	return ok_count;
+}
 
 /* Main classifier routine: scans classifier chain attached
  * to this qdisc, (optionally) tests for protocol and asks
@@ -372,9 +548,8 @@ static void tcf_chain_tp_insert(struct tcf_chain *chain,
 				struct tcf_chain_info *chain_info,
 				struct tcf_proto *tp)
 {
-	if (chain->p_filter_chain &&
-	    *chain_info->pprev == chain->filter_chain)
-		rcu_assign_pointer(*chain->p_filter_chain, tp);
+	if (*chain_info->pprev == chain->filter_chain)
+		tcf_chain_head_change(chain, tp);
 	RCU_INIT_POINTER(tp->next, tcf_chain_tp_prev(chain_info));
 	rcu_assign_pointer(*chain_info->pprev, tp);
 	tcf_chain_hold(chain);
@@ -386,8 +561,8 @@ static void tcf_chain_tp_remove(struct tcf_chain *chain,
 {
 	struct tcf_proto *next = rtnl_dereference(chain_info->next);
 
-	if (chain->p_filter_chain && tp == chain->filter_chain)
-		RCU_INIT_POINTER(*chain->p_filter_chain, next);
+	if (tp == chain->filter_chain)
+		tcf_chain_head_change(chain, next);
 	RCU_INIT_POINTER(*chain_info->pprev, next);
 	tcf_chain_put(chain);
 }
@@ -896,6 +1071,7 @@ void tcf_exts_destroy(struct tcf_exts *exts)
 #ifdef CONFIG_NET_CLS_ACT
 	LIST_HEAD(actions);
 
+	ASSERT_RTNL();
 	tcf_exts_to_list(exts, &actions);
 	tcf_action_destroy(&actions, TCA_ACT_UNBIND);
 	kfree(exts->actions);
@@ -934,6 +1110,7 @@ int tcf_exts_validate(struct net *net, struct tcf_proto *tp, struct nlattr **tb,
 				exts->actions[i++] = act;
 			exts->nr_actions = i;
 		}
+		exts->net = net;
 	}
 #else
 	if ((exts->action && tb[exts->action]) ||
@@ -1029,18 +1206,17 @@ static int tc_exts_setup_cb_egdev_call(struct tcf_exts *exts,
 #ifdef CONFIG_NET_CLS_ACT
 	const struct tc_action *a;
 	struct net_device *dev;
-	LIST_HEAD(actions);
-	int ret;
+	int i, ret;
 
 	if (!tcf_exts_has_actions(exts))
 		return 0;
 
-	tcf_exts_to_list(exts, &actions);
-	list_for_each_entry(a, &actions, list) {
+	for (i = 0; i < exts->nr_actions; i++) {
+		a = exts->actions[i];
 		if (!a->ops->get_dev)
 			continue;
 		dev = a->ops->get_dev(a);
-		if (!dev || !tc_can_offload(dev))
+		if (!dev)
 			continue;
 		ret = tc_setup_cb_egdev_call(dev, type, type_data, err_stop);
 		if (ret < 0)
@@ -1051,15 +1227,34 @@ static int tc_exts_setup_cb_egdev_call(struct tcf_exts *exts,
 	return ok_count;
 }
 
-int tc_setup_cb_call(struct tcf_exts *exts, enum tc_setup_type type,
-		     void *type_data, bool err_stop)
+int tc_setup_cb_call(struct tcf_block *block, struct tcf_exts *exts,
+		     enum tc_setup_type type, void *type_data, bool err_stop)
 {
-	return tc_exts_setup_cb_egdev_call(exts, type, type_data, err_stop);
+	int ok_count;
+	int ret;
+
+	ret = tcf_block_cb_call(block, type, type_data, err_stop);
+	if (ret < 0)
+		return ret;
+	ok_count = ret;
+
+	if (!exts)
+		return ok_count;
+	ret = tc_exts_setup_cb_egdev_call(exts, type, type_data, err_stop);
+	if (ret < 0)
+		return ret;
+	ok_count += ret;
+
+	return ok_count;
 }
 EXPORT_SYMBOL(tc_setup_cb_call);
 
 static int __init tc_filter_init(void)
 {
+	tc_filter_wq = alloc_ordered_workqueue("tc_filter_workqueue", 0);
+	if (!tc_filter_wq)
+		return -ENOMEM;
+
 	rtnl_register(PF_UNSPEC, RTM_NEWTFILTER, tc_ctl_tfilter, NULL, 0);
 	rtnl_register(PF_UNSPEC, RTM_DELTFILTER, tc_ctl_tfilter, NULL, 0);
 	rtnl_register(PF_UNSPEC, RTM_GETTFILTER, tc_ctl_tfilter,

@@ -366,6 +366,7 @@ struct iwl_cfg {
 	u32 dccm2_len;
 	u32 smem_offset;
 	u32 smem_len;
+	u32 soc_latency;
 	u16 nvm_ver;
 	u16 nvm_calib_ver;
 	u16 rx_with_siso_diversity:1,
@@ -467,14 +468,15 @@ extern const struct iwl_cfg iwl8260_2ac_cfg;
 extern const struct iwl_cfg iwl8265_2ac_cfg;
 extern const struct iwl_cfg iwl8275_2ac_cfg;
 extern const struct iwl_cfg iwl4165_2ac_cfg;
-extern const struct iwl_cfg iwl8260_2ac_sdio_cfg;
-extern const struct iwl_cfg iwl8265_2ac_sdio_cfg;
-extern const struct iwl_cfg iwl4165_2ac_sdio_cfg;
 extern const struct iwl_cfg iwl9160_2ac_cfg;
 extern const struct iwl_cfg iwl9260_2ac_cfg;
 extern const struct iwl_cfg iwl9270_2ac_cfg;
 extern const struct iwl_cfg iwl9460_2ac_cfg;
 extern const struct iwl_cfg iwl9560_2ac_cfg;
+extern const struct iwl_cfg iwl9460_2ac_cfg_soc;
+extern const struct iwl_cfg iwl9461_2ac_cfg_soc;
+extern const struct iwl_cfg iwl9462_2ac_cfg_soc;
+extern const struct iwl_cfg iwl9560_2ac_cfg_soc;
 extern const struct iwl_cfg iwla000_2ac_cfg_hr;
 extern const struct iwl_cfg iwla000_2ac_cfg_hr_cdb;
 extern const struct iwl_cfg iwla000_2ac_cfg_jf;

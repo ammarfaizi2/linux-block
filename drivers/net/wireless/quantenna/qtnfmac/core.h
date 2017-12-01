@@ -92,7 +92,6 @@ struct qtnf_vif {
 
 struct qtnf_mac_info {
 	u8 bands_cap;
-	u8 phymode_cap;
 	u8 dev_mac[ETH_ALEN];
 	u8 num_tx_chain;
 	u8 num_rx_chain;
@@ -103,8 +102,8 @@ struct qtnf_mac_info {
 	u8 sretry_limit;
 	u8 coverage_class;
 	u8 radar_detect_widths;
-	struct ieee80211_ht_cap ht_cap;
-	struct ieee80211_vht_cap vht_cap;
+	struct ieee80211_ht_cap ht_cap_mod_mask;
+	struct ieee80211_vht_cap vht_cap_mod_mask;
 	struct ieee80211_iface_limit *limits;
 	size_t n_limits;
 };
@@ -153,9 +152,7 @@ int qtnf_cmd_send_get_phy_params(struct qtnf_wmac *mac);
 
 struct qtnf_wmac *qtnf_core_get_mac(const struct qtnf_bus *bus, u8 macid);
 struct net_device *qtnf_classify_skb(struct qtnf_bus *bus, struct sk_buff *skb);
-struct net_device *qtnf_classify_skb_no_mbss(struct qtnf_bus *bus,
-					     struct sk_buff *skb);
-
+void qtnf_wake_all_queues(struct net_device *ndev);
 void qtnf_virtual_intf_cleanup(struct net_device *ndev);
 
 void qtnf_netdev_updown(struct net_device *ndev, bool up);

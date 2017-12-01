@@ -517,7 +517,7 @@ static int ena_refill_rx_bufs(struct ena_ring *rx_ring, u32 num)
 
 
 		rc = ena_alloc_rx_page(rx_ring, rx_info,
-				       __GFP_COLD | GFP_ATOMIC | __GFP_COMP);
+				       GFP_ATOMIC | __GFP_COMP);
 		if (unlikely(rc < 0)) {
 			netif_warn(rx_ring->adapter, rx_err, rx_ring->netdev,
 				   "failed to alloc buffer for rx queue %d\n",
@@ -966,7 +966,7 @@ static inline void ena_rx_checksum(struct ena_ring *rx_ring,
 		u64_stats_update_begin(&rx_ring->syncp);
 		rx_ring->rx_stats.bad_csum++;
 		u64_stats_update_end(&rx_ring->syncp);
-		netif_err(rx_ring->adapter, rx_err, rx_ring->netdev,
+		netif_dbg(rx_ring->adapter, rx_err, rx_ring->netdev,
 			  "RX IPv4 header checksum error\n");
 		return;
 	}
@@ -979,7 +979,7 @@ static inline void ena_rx_checksum(struct ena_ring *rx_ring,
 			u64_stats_update_begin(&rx_ring->syncp);
 			rx_ring->rx_stats.bad_csum++;
 			u64_stats_update_end(&rx_ring->syncp);
-			netif_err(rx_ring->adapter, rx_err, rx_ring->netdev,
+			netif_dbg(rx_ring->adapter, rx_err, rx_ring->netdev,
 				  "RX L4 checksum error\n");
 			skb->ip_summed = CHECKSUM_NONE;
 			return;
@@ -2579,6 +2579,7 @@ static int ena_restore_device(struct ena_adapter *adapter)
 	bool wd_state;
 	int rc;
 
+	set_bit(ENA_FLAG_ONGOING_RESET, &adapter->flags);
 	rc = ena_device_init(ena_dev, adapter->pdev, &get_feat_ctx, &wd_state);
 	if (rc) {
 		dev_err(&pdev->dev, "Can not initialize device\n");
@@ -2591,6 +2592,11 @@ static int ena_restore_device(struct ena_adapter *adapter)
 		dev_err(&pdev->dev, "Validation of device parameters failed\n");
 		goto err_device_destroy;
 	}
+
+	clear_bit(ENA_FLAG_ONGOING_RESET, &adapter->flags);
+	/* Make sure we don't have a race with AENQ Links state handler */
+	if (test_bit(ENA_FLAG_LINK_UP, &adapter->flags))
+		netif_carrier_on(adapter->netdev);
 
 	rc = ena_enable_msix_and_set_admin_interrupts(adapter,
 						      adapter->num_queues);
@@ -2618,7 +2624,7 @@ err_device_destroy:
 	ena_com_admin_destroy(ena_dev);
 err:
 	clear_bit(ENA_FLAG_DEVICE_RUNNING, &adapter->flags);
-
+	clear_bit(ENA_FLAG_ONGOING_RESET, &adapter->flags);
 	dev_err(&pdev->dev,
 		"Reset attempt failed. Can not reset the device\n");
 
@@ -3051,7 +3057,8 @@ static void ena_release_bars(struct ena_com_dev *ena_dev, struct pci_dev *pdev)
 	if (ena_dev->mem_bar)
 		devm_iounmap(&pdev->dev, ena_dev->mem_bar);
 
-	devm_iounmap(&pdev->dev, ena_dev->reg_bar);
+	if (ena_dev->reg_bar)
+		devm_iounmap(&pdev->dev, ena_dev->reg_bar);
 
 	release_bars = pci_select_bars(pdev, IORESOURCE_MEM) & ENA_BAR_MASK;
 	pci_release_selected_regions(pdev, release_bars);
@@ -3494,7 +3501,8 @@ static void ena_update_on_link_change(void *adapter_data,
 	if (status) {
 		netdev_dbg(adapter->netdev, "%s\n", __func__);
 		set_bit(ENA_FLAG_LINK_UP, &adapter->flags);
-		netif_carrier_on(adapter->netdev);
+		if (!test_bit(ENA_FLAG_ONGOING_RESET, &adapter->flags))
+			netif_carrier_on(adapter->netdev);
 	} else {
 		clear_bit(ENA_FLAG_LINK_UP, &adapter->flags);
 		netif_carrier_off(adapter->netdev);

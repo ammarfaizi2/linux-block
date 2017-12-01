@@ -69,7 +69,10 @@ struct tc_u_knode {
 	u32 __percpu		*pcpu_success;
 #endif
 	struct tcf_proto	*tp;
-	struct rcu_head		rcu;
+	union {
+		struct work_struct	work;
+		struct rcu_head		rcu;
+	};
 	/* The 'sel' field MUST be the last field in structure to allow for
 	 * tc_u32_keys allocated at end of structure.
 	 */
@@ -396,6 +399,7 @@ static int u32_destroy_key(struct tcf_proto *tp, struct tc_u_knode *n,
 			   bool free_pf)
 {
 	tcf_exts_destroy(&n->exts);
+	tcf_exts_put_net(&n->exts);
 	if (n->ht_down)
 		n->ht_down->refcnt--;
 #ifdef CONFIG_CLS_U32_PERF
@@ -418,11 +422,21 @@ static int u32_destroy_key(struct tcf_proto *tp, struct tc_u_knode *n,
  * this the u32_delete_key_rcu variant does not free the percpu
  * statistics.
  */
+static void u32_delete_key_work(struct work_struct *work)
+{
+	struct tc_u_knode *key = container_of(work, struct tc_u_knode, work);
+
+	rtnl_lock();
+	u32_destroy_key(key->tp, key, false);
+	rtnl_unlock();
+}
+
 static void u32_delete_key_rcu(struct rcu_head *rcu)
 {
 	struct tc_u_knode *key = container_of(rcu, struct tc_u_knode, rcu);
 
-	u32_destroy_key(key->tp, key, false);
+	INIT_WORK(&key->work, u32_delete_key_work);
+	tcf_queue_work(&key->work);
 }
 
 /* u32_delete_key_freepf_rcu is the rcu callback variant
@@ -432,11 +446,21 @@ static void u32_delete_key_rcu(struct rcu_head *rcu)
  * for the variant that should be used with keys return from
  * u32_init_knode()
  */
+static void u32_delete_key_freepf_work(struct work_struct *work)
+{
+	struct tc_u_knode *key = container_of(work, struct tc_u_knode, work);
+
+	rtnl_lock();
+	u32_destroy_key(key->tp, key, true);
+	rtnl_unlock();
+}
+
 static void u32_delete_key_freepf_rcu(struct rcu_head *rcu)
 {
 	struct tc_u_knode *key = container_of(rcu, struct tc_u_knode, rcu);
 
-	u32_destroy_key(key->tp, key, true);
+	INIT_WORK(&key->work, u32_delete_key_freepf_work);
+	tcf_queue_work(&key->work);
 }
 
 static int u32_delete_key(struct tcf_proto *tp, struct tc_u_knode *key)
@@ -453,6 +477,7 @@ static int u32_delete_key(struct tcf_proto *tp, struct tc_u_knode *key)
 				RCU_INIT_POINTER(*kp, key->next);
 
 				tcf_unbind_filter(tp, &key->res);
+				tcf_exts_get_net(&key->exts);
 				call_rcu(&key->rcu, u32_delete_key_freepf_rcu);
 				return 0;
 			}
@@ -462,51 +487,10 @@ static int u32_delete_key(struct tcf_proto *tp, struct tc_u_knode *key)
 	return 0;
 }
 
-static void u32_remove_hw_knode(struct tcf_proto *tp, u32 handle)
-{
-	struct net_device *dev = tp->q->dev_queue->dev;
-	struct tc_cls_u32_offload cls_u32 = {};
-
-	if (!tc_should_offload(dev, 0))
-		return;
-
-	tc_cls_common_offload_init(&cls_u32.common, tp);
-	cls_u32.command = TC_CLSU32_DELETE_KNODE;
-	cls_u32.knode.handle = handle;
-
-	dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_CLSU32, &cls_u32);
-}
-
-static int u32_replace_hw_hnode(struct tcf_proto *tp, struct tc_u_hnode *h,
-				u32 flags)
-{
-	struct net_device *dev = tp->q->dev_queue->dev;
-	struct tc_cls_u32_offload cls_u32 = {};
-	int err;
-
-	if (!tc_should_offload(dev, flags))
-		return tc_skip_sw(flags) ? -EINVAL : 0;
-
-	tc_cls_common_offload_init(&cls_u32.common, tp);
-	cls_u32.command = TC_CLSU32_NEW_HNODE;
-	cls_u32.hnode.divisor = h->divisor;
-	cls_u32.hnode.handle = h->handle;
-	cls_u32.hnode.prio = h->prio;
-
-	err = dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_CLSU32, &cls_u32);
-	if (tc_skip_sw(flags))
-		return err;
-
-	return 0;
-}
-
 static void u32_clear_hw_hnode(struct tcf_proto *tp, struct tc_u_hnode *h)
 {
-	struct net_device *dev = tp->q->dev_queue->dev;
+	struct tcf_block *block = tp->chain->block;
 	struct tc_cls_u32_offload cls_u32 = {};
-
-	if (!tc_should_offload(dev, 0))
-		return;
 
 	tc_cls_common_offload_init(&cls_u32.common, tp);
 	cls_u32.command = TC_CLSU32_DELETE_HNODE;
@@ -514,18 +498,57 @@ static void u32_clear_hw_hnode(struct tcf_proto *tp, struct tc_u_hnode *h)
 	cls_u32.hnode.handle = h->handle;
 	cls_u32.hnode.prio = h->prio;
 
-	dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_CLSU32, &cls_u32);
+	tc_setup_cb_call(block, NULL, TC_SETUP_CLSU32, &cls_u32, false);
+}
+
+static int u32_replace_hw_hnode(struct tcf_proto *tp, struct tc_u_hnode *h,
+				u32 flags)
+{
+	struct tcf_block *block = tp->chain->block;
+	struct tc_cls_u32_offload cls_u32 = {};
+	bool skip_sw = tc_skip_sw(flags);
+	bool offloaded = false;
+	int err;
+
+	tc_cls_common_offload_init(&cls_u32.common, tp);
+	cls_u32.command = TC_CLSU32_NEW_HNODE;
+	cls_u32.hnode.divisor = h->divisor;
+	cls_u32.hnode.handle = h->handle;
+	cls_u32.hnode.prio = h->prio;
+
+	err = tc_setup_cb_call(block, NULL, TC_SETUP_CLSU32, &cls_u32, skip_sw);
+	if (err < 0) {
+		u32_clear_hw_hnode(tp, h);
+		return err;
+	} else if (err > 0) {
+		offloaded = true;
+	}
+
+	if (skip_sw && !offloaded)
+		return -EINVAL;
+
+	return 0;
+}
+
+static void u32_remove_hw_knode(struct tcf_proto *tp, u32 handle)
+{
+	struct tcf_block *block = tp->chain->block;
+	struct tc_cls_u32_offload cls_u32 = {};
+
+	tc_cls_common_offload_init(&cls_u32.common, tp);
+	cls_u32.command = TC_CLSU32_DELETE_KNODE;
+	cls_u32.knode.handle = handle;
+
+	tc_setup_cb_call(block, NULL, TC_SETUP_CLSU32, &cls_u32, false);
 }
 
 static int u32_replace_hw_knode(struct tcf_proto *tp, struct tc_u_knode *n,
 				u32 flags)
 {
-	struct net_device *dev = tp->q->dev_queue->dev;
+	struct tcf_block *block = tp->chain->block;
 	struct tc_cls_u32_offload cls_u32 = {};
+	bool skip_sw = tc_skip_sw(flags);
 	int err;
-
-	if (!tc_should_offload(dev, flags))
-		return tc_skip_sw(flags) ? -EINVAL : 0;
 
 	tc_cls_common_offload_init(&cls_u32.common, tp);
 	cls_u32.command = TC_CLSU32_REPLACE_KNODE;
@@ -543,13 +566,16 @@ static int u32_replace_hw_knode(struct tcf_proto *tp, struct tc_u_knode *n,
 	if (n->ht_down)
 		cls_u32.knode.link_handle = n->ht_down->handle;
 
-	err = dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_CLSU32, &cls_u32);
-
-	if (!err)
-		n->flags |= TCA_CLS_FLAGS_IN_HW;
-
-	if (tc_skip_sw(flags))
+	err = tc_setup_cb_call(block, NULL, TC_SETUP_CLSU32, &cls_u32, skip_sw);
+	if (err < 0) {
+		u32_remove_hw_knode(tp, n->handle);
 		return err;
+	} else if (err > 0) {
+		n->flags |= TCA_CLS_FLAGS_IN_HW;
+	}
+
+	if (skip_sw && !(n->flags & TCA_CLS_FLAGS_IN_HW))
+		return -EINVAL;
 
 	return 0;
 }
@@ -566,7 +592,10 @@ static void u32_clear_hnode(struct tcf_proto *tp, struct tc_u_hnode *ht)
 			tcf_unbind_filter(tp, &n->res);
 			u32_remove_hw_knode(tp, n->handle);
 			idr_remove_ext(&ht->handle_idr, n->handle);
-			call_rcu(&n->rcu, u32_delete_key_freepf_rcu);
+			if (tcf_exts_get_net(&n->exts))
+				call_rcu(&n->rcu, u32_delete_key_freepf_rcu);
+			else
+				u32_destroy_key(n->tp, n, true);
 		}
 	}
 }
@@ -925,6 +954,7 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 
 		u32_replace_knode(tp, tp_c, new);
 		tcf_unbind_filter(tp, &n->res);
+		tcf_exts_get_net(&n->exts);
 		call_rcu(&n->rcu, u32_delete_key_rcu);
 		return 0;
 	}

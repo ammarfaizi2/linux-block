@@ -41,7 +41,6 @@
 #include <linux/types.h>
 
 #include "../nfp_asm.h"
-#include "../nfp_net.h"
 
 /* For branch fixup logic use up-most byte of branch instruction as scratch
  * area.  Remember to clear this before sending instructions to HW!
@@ -56,6 +55,7 @@ enum br_special {
 
 enum static_regs {
 	STATIC_REG_IMM		= 21, /* Bank AB */
+	STATIC_REG_STACK	= 22, /* Bank A */
 	STATIC_REG_PKT_LEN	= 22, /* Bank B */
 };
 
@@ -64,16 +64,11 @@ enum pkt_vec {
 	PKT_VEC_PKT_PTR		= 2,
 };
 
-enum nfp_bpf_action_type {
-	NN_ACT_TC_DROP,
-	NN_ACT_TC_REDIR,
-	NN_ACT_DIRECT,
-	NN_ACT_XDP,
-};
-
 #define pv_len(np)	reg_lm(1, PKT_VEC_PKT_LEN)
 #define pv_ctm_ptr(np)	reg_lm(1, PKT_VEC_PKT_PTR)
 
+#define stack_reg(np)	reg_a(STATIC_REG_STACK)
+#define stack_imm(np)	imm_b(np)
 #define plen_reg(np)	reg_b(STATIC_REG_PKT_LEN)
 #define pptr_reg(np)	pv_ctm_ptr(np)
 #define imm_a(np)	reg_a(STATIC_REG_IMM)
@@ -98,6 +93,7 @@ typedef int (*instr_cb_t)(struct nfp_prog *, struct nfp_insn_meta *);
  * struct nfp_insn_meta - BPF instruction wrapper
  * @insn: BPF instruction
  * @ptr: pointer type for memory operations
+ * @ptr_not_const: pointer is not always constant
  * @off: index of first generated machine instruction (in nfp_prog.prog)
  * @n: eBPF instruction number
  * @skip: skip this instruction (optimized out)
@@ -107,6 +103,7 @@ typedef int (*instr_cb_t)(struct nfp_prog *, struct nfp_insn_meta *);
 struct nfp_insn_meta {
 	struct bpf_insn insn;
 	struct bpf_reg_state ptr;
+	bool ptr_not_const;
 	unsigned int off;
 	unsigned short n;
 	bool skip;
@@ -142,15 +139,15 @@ static inline u8 mbpf_mode(const struct nfp_insn_meta *meta)
  * @prog: machine code
  * @prog_len: number of valid instructions in @prog array
  * @__prog_alloc_len: alloc size of @prog array
- * @act: BPF program/action type (TC DA, TC with action, XDP etc.)
- * @num_regs: number of registers used by this program
- * @regs_per_thread: number of basic registers allocated per thread
+ * @verifier_meta: temporary storage for verifier's insn meta
+ * @type: BPF program type
  * @start_off: address of the first instruction in the memory
  * @tgt_out: jump target for normal exit
  * @tgt_abort: jump target for abort (e.g. access outside of packet buffer)
  * @tgt_done: jump target to get the next packet
  * @n_translated: number of successfully translated instructions (for errors)
  * @error: error code if something went wrong
+ * @stack_depth: max stack depth from the verifier
  * @insns: list of BPF instruction wrappers (struct nfp_insn_meta)
  */
 struct nfp_prog {
@@ -158,10 +155,9 @@ struct nfp_prog {
 	unsigned int prog_len;
 	unsigned int __prog_alloc_len;
 
-	enum nfp_bpf_action_type act;
+	struct nfp_insn_meta *verifier_meta;
 
-	unsigned int num_regs;
-	unsigned int regs_per_thread;
+	enum bpf_prog_type type;
 
 	unsigned int start_off;
 	unsigned int tgt_out;
@@ -171,40 +167,26 @@ struct nfp_prog {
 	unsigned int n_translated;
 	int error;
 
+	unsigned int stack_depth;
+
 	struct list_head insns;
 };
 
-struct nfp_bpf_result {
-	unsigned int n_instr;
-	bool dense_mode;
-};
+int nfp_bpf_jit(struct nfp_prog *prog);
 
-int
-nfp_bpf_jit(struct bpf_prog *filter, void *prog, enum nfp_bpf_action_type act,
-	    unsigned int prog_start, unsigned int prog_done,
-	    unsigned int prog_sz, struct nfp_bpf_result *res);
+extern const struct bpf_ext_analyzer_ops nfp_bpf_analyzer_ops;
 
-int nfp_prog_verify(struct nfp_prog *nfp_prog, struct bpf_prog *prog);
-
+struct netdev_bpf;
+struct nfp_app;
 struct nfp_net;
-struct tc_cls_bpf_offload;
 
-/**
- * struct nfp_net_bpf_priv - per-vNIC BPF private data
- * @rx_filter:		Filter offload statistics - dropped packets/bytes
- * @rx_filter_prev:	Filter offload statistics - values from previous update
- * @rx_filter_change:	Jiffies when statistics last changed
- * @rx_filter_stats_timer:  Timer for polling filter offload statistics
- * @rx_filter_lock:	Lock protecting timer state changes (teardown)
- */
-struct nfp_net_bpf_priv {
-	struct nfp_stat_pair rx_filter, rx_filter_prev;
-	unsigned long rx_filter_change;
-	struct timer_list rx_filter_stats_timer;
-	spinlock_t rx_filter_lock;
-};
+int nfp_net_bpf_offload(struct nfp_net *nn, struct bpf_prog *prog,
+			bool old_prog);
 
-int nfp_net_bpf_offload(struct nfp_net *nn, struct tc_cls_bpf_offload *cls_bpf);
-void nfp_net_filter_stats_timer(unsigned long data);
-
+int nfp_bpf_verifier_prep(struct nfp_app *app, struct nfp_net *nn,
+			  struct netdev_bpf *bpf);
+int nfp_bpf_translate(struct nfp_app *app, struct nfp_net *nn,
+		      struct bpf_prog *prog);
+int nfp_bpf_destroy(struct nfp_app *app, struct nfp_net *nn,
+		    struct bpf_prog *prog);
 #endif

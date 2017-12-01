@@ -87,7 +87,11 @@ struct cls_fl_filter {
 	struct list_head list;
 	u32 handle;
 	u32 flags;
-	struct rcu_head	rcu;
+	union {
+		struct work_struct work;
+		struct rcu_head	rcu;
+	};
+	struct net_device *hw_dev;
 };
 
 static unsigned short int fl_mask_range(const struct fl_flow_mask *mask)
@@ -189,27 +193,40 @@ static int fl_init(struct tcf_proto *tp)
 	return 0;
 }
 
+static void __fl_destroy_filter(struct cls_fl_filter *f)
+{
+	tcf_exts_destroy(&f->exts);
+	tcf_exts_put_net(&f->exts);
+	kfree(f);
+}
+
+static void fl_destroy_filter_work(struct work_struct *work)
+{
+	struct cls_fl_filter *f = container_of(work, struct cls_fl_filter, work);
+
+	rtnl_lock();
+	__fl_destroy_filter(f);
+	rtnl_unlock();
+}
+
 static void fl_destroy_filter(struct rcu_head *head)
 {
 	struct cls_fl_filter *f = container_of(head, struct cls_fl_filter, rcu);
 
-	tcf_exts_destroy(&f->exts);
-	kfree(f);
+	INIT_WORK(&f->work, fl_destroy_filter_work);
+	tcf_queue_work(&f->work);
 }
 
 static void fl_hw_destroy_filter(struct tcf_proto *tp, struct cls_fl_filter *f)
 {
 	struct tc_cls_flower_offload cls_flower = {};
-	struct net_device *dev = tp->q->dev_queue->dev;
+	struct tcf_block *block = tp->chain->block;
 
 	tc_cls_common_offload_init(&cls_flower.common, tp);
 	cls_flower.command = TC_CLSFLOWER_DESTROY;
 	cls_flower.cookie = (unsigned long) f;
 
-	if (tc_can_offload(dev))
-		dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_CLSFLOWER,
-					      &cls_flower);
-	tc_setup_cb_call(&f->exts, TC_SETUP_CLSFLOWER,
+	tc_setup_cb_call(block, &f->exts, TC_SETUP_CLSFLOWER,
 			 &cls_flower, false);
 }
 
@@ -218,8 +235,8 @@ static int fl_hw_replace_filter(struct tcf_proto *tp,
 				struct fl_flow_key *mask,
 				struct cls_fl_filter *f)
 {
-	struct net_device *dev = tp->q->dev_queue->dev;
 	struct tc_cls_flower_offload cls_flower = {};
+	struct tcf_block *block = tp->chain->block;
 	bool skip_sw = tc_skip_sw(f->flags);
 	int err;
 
@@ -230,19 +247,9 @@ static int fl_hw_replace_filter(struct tcf_proto *tp,
 	cls_flower.mask = mask;
 	cls_flower.key = &f->mkey;
 	cls_flower.exts = &f->exts;
+	cls_flower.classid = f->res.classid;
 
-	if (tc_can_offload(dev)) {
-		err = dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_CLSFLOWER,
-						    &cls_flower);
-		if (err) {
-			if (skip_sw)
-				return err;
-		} else {
-			f->flags |= TCA_CLS_FLAGS_IN_HW;
-		}
-	}
-
-	err = tc_setup_cb_call(&f->exts, TC_SETUP_CLSFLOWER,
+	err = tc_setup_cb_call(block, &f->exts, TC_SETUP_CLSFLOWER,
 			       &cls_flower, skip_sw);
 	if (err < 0) {
 		fl_hw_destroy_filter(tp, f);
@@ -260,17 +267,15 @@ static int fl_hw_replace_filter(struct tcf_proto *tp,
 static void fl_hw_update_stats(struct tcf_proto *tp, struct cls_fl_filter *f)
 {
 	struct tc_cls_flower_offload cls_flower = {};
-	struct net_device *dev = tp->q->dev_queue->dev;
+	struct tcf_block *block = tp->chain->block;
 
 	tc_cls_common_offload_init(&cls_flower.common, tp);
 	cls_flower.command = TC_CLSFLOWER_STATS;
 	cls_flower.cookie = (unsigned long) f;
 	cls_flower.exts = &f->exts;
+	cls_flower.classid = f->res.classid;
 
-	if (tc_can_offload(dev))
-		dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_CLSFLOWER,
-					      &cls_flower);
-	tc_setup_cb_call(&f->exts, TC_SETUP_CLSFLOWER,
+	tc_setup_cb_call(block, &f->exts, TC_SETUP_CLSFLOWER,
 			 &cls_flower, false);
 }
 
@@ -283,7 +288,10 @@ static void __fl_delete(struct tcf_proto *tp, struct cls_fl_filter *f)
 	if (!tc_skip_hw(f->flags))
 		fl_hw_destroy_filter(tp, f);
 	tcf_unbind_filter(tp, &f->res);
-	call_rcu(&f->rcu, fl_destroy_filter);
+	if (tcf_exts_get_net(&f->exts))
+		call_rcu(&f->rcu, fl_destroy_filter);
+	else
+		__fl_destroy_filter(f);
 }
 
 static void fl_destroy_sleepable(struct work_struct *work)
@@ -953,6 +961,7 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 		idr_replace_ext(&head->handle_idr, fnew, fnew->handle);
 		list_replace_rcu(&fold->list, &fnew->list);
 		tcf_unbind_filter(tp, &fold->res);
+		tcf_exts_get_net(&fold->exts);
 		call_rcu(&fold->rcu, fl_destroy_filter);
 	} else {
 		list_add_tail_rcu(&fnew->list, &head->filters);

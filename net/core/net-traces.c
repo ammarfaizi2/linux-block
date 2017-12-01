@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * consolidates trace point definitions
  *
@@ -49,3 +50,5 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(br_fdb_update);
 EXPORT_TRACEPOINT_SYMBOL_GPL(kfree_skb);
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(napi_poll);
+
+EXPORT_TRACEPOINT_SYMBOL_GPL(tcp_send_reset);

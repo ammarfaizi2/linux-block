@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * ipv4 in net namespaces
  */
@@ -128,9 +129,38 @@ struct netns_ipv4 {
 	int sysctl_tcp_sack;
 	int sysctl_tcp_window_scaling;
 	int sysctl_tcp_timestamps;
+	int sysctl_tcp_early_retrans;
+	int sysctl_tcp_recovery;
+	int sysctl_tcp_thin_linear_timeouts;
+	int sysctl_tcp_slow_start_after_idle;
+	int sysctl_tcp_retrans_collapse;
+	int sysctl_tcp_stdurg;
+	int sysctl_tcp_rfc1337;
+	int sysctl_tcp_abort_on_overflow;
+	int sysctl_tcp_fack;
+	int sysctl_tcp_max_reordering;
+	int sysctl_tcp_dsack;
+	int sysctl_tcp_app_win;
+	int sysctl_tcp_adv_win_scale;
+	int sysctl_tcp_frto;
+	int sysctl_tcp_nometrics_save;
+	int sysctl_tcp_moderate_rcvbuf;
+	int sysctl_tcp_tso_win_divisor;
+	int sysctl_tcp_workaround_signed_windows;
+	int sysctl_tcp_limit_output_bytes;
+	int sysctl_tcp_challenge_ack_limit;
+	int sysctl_tcp_min_tso_segs;
+	int sysctl_tcp_min_rtt_wlen;
+	int sysctl_tcp_autocorking;
+	int sysctl_tcp_invalid_ratelimit;
+	int sysctl_tcp_pacing_ss_ratio;
+	int sysctl_tcp_pacing_ca_ratio;
+	int sysctl_tcp_wmem[3];
+	int sysctl_tcp_rmem[3];
 	struct inet_timewait_death_row tcp_death_row;
 	int sysctl_max_syn_backlog;
 	int sysctl_tcp_fastopen;
+	const struct tcp_congestion_ops __rcu  *tcp_congestion_control;
 	struct tcp_fastopen_context __rcu *tcp_fastopen_ctx;
 	spinlock_t tcp_fastopen_ctx_lock;
 	unsigned int sysctl_tcp_fastopen_blackhole_timeout;

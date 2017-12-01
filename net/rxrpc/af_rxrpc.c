@@ -246,6 +246,7 @@ static int rxrpc_listen(struct socket *sock, int backlog)
 			ret = 0;
 			break;
 		}
+		/* Fall through */
 	default:
 		ret = -EBUSY;
 		break;
@@ -311,14 +312,23 @@ struct rxrpc_call *rxrpc_kernel_begin_call(struct socket *sock,
 	call = rxrpc_new_client_call(rx, &cp, srx, user_call_ID, tx_total_len,
 				     gfp);
 	/* The socket has been unlocked. */
-	if (!IS_ERR(call))
+	if (!IS_ERR(call)) {
 		call->notify_rx = notify_rx;
+		mutex_unlock(&call->user_mutex);
+	}
 
-	mutex_unlock(&call->user_mutex);
 	_leave(" = %p", call);
 	return call;
 }
 EXPORT_SYMBOL(rxrpc_kernel_begin_call);
+
+/*
+ * Dummy function used to stop the notifier talking to recvmsg().
+ */
+static void rxrpc_dummy_notify_rx(struct sock *sk, struct rxrpc_call *rxcall,
+				  unsigned long call_user_ID)
+{
+}
 
 /**
  * rxrpc_kernel_end_call - Allow a kernel service to end a call it was using
@@ -334,6 +344,14 @@ void rxrpc_kernel_end_call(struct socket *sock, struct rxrpc_call *call)
 
 	mutex_lock(&call->user_mutex);
 	rxrpc_release_call(rxrpc_sk(sock->sk), call);
+
+	/* Make sure we're not going to call back into a kernel service */
+	if (call->notify_rx) {
+		spin_lock_bh(&call->notify_lock);
+		call->notify_rx = rxrpc_dummy_notify_rx;
+		spin_unlock_bh(&call->notify_lock);
+	}
+
 	mutex_unlock(&call->user_mutex);
 	rxrpc_put_call(call, rxrpc_call_put_kernel);
 }
@@ -559,6 +577,7 @@ static int rxrpc_sendmsg(struct socket *sock, struct msghdr *m, size_t len)
 			m->msg_name = &rx->connect_srx;
 			m->msg_namelen = sizeof(rx->connect_srx);
 		}
+		/* Fall through */
 	case RXRPC_SERVER_BOUND:
 	case RXRPC_SERVER_LISTENING:
 		ret = rxrpc_do_sendmsg(rx, m, len);

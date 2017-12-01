@@ -174,7 +174,7 @@ enum shf_sc {
 enum alu_op {
 	ALU_OP_NONE	= 0x00,
 	ALU_OP_ADD	= 0x01,
-	ALU_OP_NEG	= 0x04,
+	ALU_OP_NOT	= 0x04,
 	ALU_OP_AND	= 0x08,
 	ALU_OP_SUB_C	= 0x0d,
 	ALU_OP_ADD_C	= 0x11,
@@ -256,6 +256,11 @@ enum lcsr_wr_src {
 
 #define OP_CARB_BASE		0x0e000000000ULL
 #define OP_CARB_OR		0x00000010000ULL
+
+#define NFP_CSR_ACT_LM_ADDR0	0x64
+#define NFP_CSR_ACT_LM_ADDR1	0x6c
+#define NFP_CSR_ACT_LM_ADDR2	0x94
+#define NFP_CSR_ACT_LM_ADDR3	0x9c
 
 /* Software register representation, independent of operand type */
 #define NN_REG_TYPE	GENMASK(31, 24)

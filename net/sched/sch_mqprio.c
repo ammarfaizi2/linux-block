@@ -50,7 +50,8 @@ static void mqprio_destroy(struct Qdisc *sch)
 		switch (priv->mode) {
 		case TC_MQPRIO_MODE_DCB:
 		case TC_MQPRIO_MODE_CHANNEL:
-			dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_MQPRIO,
+			dev->netdev_ops->ndo_setup_tc(dev,
+						      TC_SETUP_QDISC_MQPRIO,
 						      &mqprio);
 			break;
 		default:
@@ -265,7 +266,7 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt)
 			return -EINVAL;
 		}
 		err = dev->netdev_ops->ndo_setup_tc(dev,
-						    TC_SETUP_MQPRIO,
+						    TC_SETUP_QDISC_MQPRIO,
 						    &mqprio);
 		if (err)
 			return err;
@@ -575,6 +576,12 @@ static void mqprio_walk(struct Qdisc *sch, struct qdisc_walker *arg)
 	}
 }
 
+static struct netdev_queue *mqprio_select_queue(struct Qdisc *sch,
+						struct tcmsg *tcm)
+{
+	return mqprio_queue_get(sch, TC_H_MIN(tcm->tcm_parent));
+}
+
 static const struct Qdisc_class_ops mqprio_class_ops = {
 	.graft		= mqprio_graft,
 	.leaf		= mqprio_leaf,
@@ -582,6 +589,7 @@ static const struct Qdisc_class_ops mqprio_class_ops = {
 	.walk		= mqprio_walk,
 	.dump		= mqprio_dump_class,
 	.dump_stats	= mqprio_dump_class_stats,
+	.select_queue	= mqprio_select_queue,
 };
 
 static struct Qdisc_ops mqprio_qdisc_ops __read_mostly = {

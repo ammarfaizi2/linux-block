@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * (C) 2001 Clemson University and The University of Chicago
  *
@@ -273,12 +274,6 @@ struct orangefs_kiocb_s {
 
 	/* orangefs kernel operation type */
 	struct orangefs_kernel_op_s *op;
-
-	/* The user space buffers from/to which I/O is being staged */
-	struct iovec *iov;
-
-	/* number of elements in the iovector */
-	unsigned long nr_segs;
 
 	/* set to indicate the type of the operation */
 	int rw;

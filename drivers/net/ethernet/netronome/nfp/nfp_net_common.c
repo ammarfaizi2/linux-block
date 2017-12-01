@@ -177,9 +177,9 @@ static int nfp_net_reconfig_wait(struct nfp_net *nn, unsigned long deadline)
 	return timed_out ? -EIO : 0;
 }
 
-static void nfp_net_reconfig_timer(unsigned long data)
+static void nfp_net_reconfig_timer(struct timer_list *t)
 {
-	struct nfp_net *nn = (void *)data;
+	struct nfp_net *nn = from_timer(nn, t, reconfig_timer);
 
 	spin_lock_bh(&nn->reconfig_lock);
 
@@ -1180,10 +1180,14 @@ static void *nfp_net_rx_alloc_one(struct nfp_net_dp *dp, dma_addr_t *dma_addr)
 {
 	void *frag;
 
-	if (!dp->xdp_prog)
+	if (!dp->xdp_prog) {
 		frag = netdev_alloc_frag(dp->fl_bufsz);
-	else
-		frag = page_address(alloc_page(GFP_KERNEL | __GFP_COLD));
+	} else {
+		struct page *page;
+
+		page = alloc_page(GFP_KERNEL);
+		frag = page ? page_address(page) : NULL;
+	}
 	if (!frag) {
 		nn_dp_warn(dp, "Failed to alloc receive page frag\n");
 		return NULL;
@@ -1203,13 +1207,17 @@ static void *nfp_net_napi_alloc_one(struct nfp_net_dp *dp, dma_addr_t *dma_addr)
 {
 	void *frag;
 
-	if (!dp->xdp_prog)
+	if (!dp->xdp_prog) {
 		frag = napi_alloc_frag(dp->fl_bufsz);
-	else
-		frag = page_address(alloc_page(GFP_ATOMIC | __GFP_COLD));
-	if (!frag) {
-		nn_dp_warn(dp, "Failed to alloc receive page frag\n");
-		return NULL;
+		if (unlikely(!frag))
+			return NULL;
+	} else {
+		struct page *page;
+
+		page = dev_alloc_page();
+		if (unlikely(!page))
+			return NULL;
+		frag = page_address(page);
 	}
 
 	*dma_addr = nfp_net_dma_map_rx(dp, frag);
@@ -1506,6 +1514,11 @@ nfp_net_rx_drop(const struct nfp_net_dp *dp, struct nfp_net_r_vector *r_vec,
 {
 	u64_stats_update_begin(&r_vec->rx_sync);
 	r_vec->rx_drops++;
+	/* If we have both skb and rxbuf the replacement buffer allocation
+	 * must have failed, count this as an alloc failure.
+	 */
+	if (skb && rxbuf)
+		r_vec->rx_replace_buf_alloc_fail++;
 	u64_stats_update_end(&r_vec->rx_sync);
 
 	/* skb is build based on the frag, free_skb() would free the frag
@@ -3365,7 +3378,7 @@ nfp_net_xdp_setup(struct nfp_net *nn, struct bpf_prog *prog, u32 flags,
 	return 0;
 }
 
-static int nfp_net_xdp(struct net_device *netdev, struct netdev_xdp *xdp)
+static int nfp_net_xdp(struct net_device *netdev, struct netdev_bpf *xdp)
 {
 	struct nfp_net *nn = netdev_priv(netdev);
 
@@ -3380,6 +3393,14 @@ static int nfp_net_xdp(struct net_device *netdev, struct netdev_xdp *xdp)
 			xdp->prog_attached = XDP_ATTACHED_HW;
 		xdp->prog_id = nn->xdp_prog ? nn->xdp_prog->aux->id : 0;
 		return 0;
+	case BPF_OFFLOAD_VERIFIER_PREP:
+		return nfp_app_bpf_verifier_prep(nn->app, nn, xdp);
+	case BPF_OFFLOAD_TRANSLATE:
+		return nfp_app_bpf_translate(nn->app, nn,
+					     xdp->offload.prog);
+	case BPF_OFFLOAD_DESTROY:
+		return nfp_app_bpf_destroy(nn->app, nn,
+					   xdp->offload.prog);
 	default:
 		return -EINVAL;
 	}
@@ -3428,7 +3449,7 @@ const struct net_device_ops nfp_net_netdev_ops = {
 	.ndo_get_phys_port_name	= nfp_port_get_phys_port_name,
 	.ndo_udp_tunnel_add	= nfp_net_add_vxlan_port,
 	.ndo_udp_tunnel_del	= nfp_net_del_vxlan_port,
-	.ndo_xdp		= nfp_net_xdp,
+	.ndo_bpf		= nfp_net_xdp,
 };
 
 /**
@@ -3529,8 +3550,7 @@ struct nfp_net *nfp_net_alloc(struct pci_dev *pdev, bool needs_netdev,
 	spin_lock_init(&nn->reconfig_lock);
 	spin_lock_init(&nn->link_status_lock);
 
-	setup_timer(&nn->reconfig_timer,
-		    nfp_net_reconfig_timer, (unsigned long)nn);
+	timer_setup(&nn->reconfig_timer, nfp_net_reconfig_timer, 0);
 
 	return nn;
 }

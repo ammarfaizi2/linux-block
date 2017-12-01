@@ -32,6 +32,7 @@
 
 #include <linux/tcp.h>
 #include <linux/if_vlan.h>
+#include <net/dsfield.h>
 #include "en.h"
 #include "ipoib/ipoib.h"
 #include "en_accel/ipsec_rxtx.h"
@@ -86,6 +87,20 @@ static void mlx5e_dma_unmap_wqe_err(struct mlx5e_txqsq *sq, u8 num_dma)
 	}
 }
 
+#ifdef CONFIG_MLX5_CORE_EN_DCB
+static inline int mlx5e_get_dscp_up(struct mlx5e_priv *priv, struct sk_buff *skb)
+{
+	int dscp_cp = 0;
+
+	if (skb->protocol == htons(ETH_P_IP))
+		dscp_cp = ipv4_get_dsfield(ip_hdr(skb)) >> 2;
+	else if (skb->protocol == htons(ETH_P_IPV6))
+		dscp_cp = ipv6_get_dsfield(ipv6_hdr(skb)) >> 2;
+
+	return priv->dcbx_dp.dscp2prio[dscp_cp];
+}
+#endif
+
 u16 mlx5e_select_queue(struct net_device *dev, struct sk_buff *skb,
 		       void *accel_priv, select_queue_fallback_t fallback)
 {
@@ -97,8 +112,13 @@ u16 mlx5e_select_queue(struct net_device *dev, struct sk_buff *skb,
 	if (!netdev_get_num_tc(dev))
 		return channel_ix;
 
-	if (skb_vlan_tag_present(skb))
-		up = skb->vlan_tci >> VLAN_PRIO_SHIFT;
+#ifdef CONFIG_MLX5_CORE_EN_DCB
+	if (priv->dcbx_dp.trust_state == MLX5_QPTS_TRUST_DSCP)
+		up = mlx5e_get_dscp_up(priv, skb);
+	else
+#endif
+		if (skb_vlan_tag_present(skb))
+			up = skb->vlan_tci >> VLAN_PRIO_SHIFT;
 
 	/* channel_ix can be larger than num_channels since
 	 * dev->num_real_tx_queues = num_channels * num_tc
@@ -341,6 +361,7 @@ static netdev_tx_t mlx5e_sq_xmit(struct mlx5e_txqsq *sq, struct sk_buff *skb,
 		if (skb_vlan_tag_present(skb)) {
 			mlx5e_insert_vlan(eseg->inline_hdr.start, skb, ihs, &skb_data, &skb_len);
 			ihs += VLAN_HLEN;
+			sq->stats.added_vlan_packets++;
 		} else {
 			memcpy(eseg->inline_hdr.start, skb_data, ihs);
 			mlx5e_tx_skb_pull_inline(&skb_data, &skb_len, ihs);
@@ -349,7 +370,10 @@ static netdev_tx_t mlx5e_sq_xmit(struct mlx5e_txqsq *sq, struct sk_buff *skb,
 		ds_cnt += DIV_ROUND_UP(ihs - sizeof(eseg->inline_hdr.start), MLX5_SEND_WQE_DS);
 	} else if (skb_vlan_tag_present(skb)) {
 		eseg->insert.type = cpu_to_be16(MLX5_ETH_WQE_INSERT_VLAN);
+		if (skb->vlan_proto == cpu_to_be16(ETH_P_8021AD))
+			eseg->insert.type |= cpu_to_be16(MLX5_ETH_WQE_SVLAN);
 		eseg->insert.vlan_tci = cpu_to_be16(skb_vlan_tag_get(skb));
+		sq->stats.added_vlan_packets++;
 	}
 
 	headlen = skb_len - skb->data_len;

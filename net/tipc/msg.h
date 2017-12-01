@@ -226,6 +226,16 @@ static inline void msg_set_dest_droppable(struct tipc_msg *m, u32 d)
 	msg_set_bits(m, 0, 19, 1, d);
 }
 
+static inline int msg_is_keepalive(struct tipc_msg *m)
+{
+	return msg_bits(m, 0, 19, 1);
+}
+
+static inline void msg_set_is_keepalive(struct tipc_msg *m, u32 d)
+{
+	msg_set_bits(m, 0, 19, 1, d);
+}
+
 static inline int msg_src_droppable(struct tipc_msg *m)
 {
 	return msg_bits(m, 0, 18, 1);
@@ -916,7 +926,7 @@ static inline bool msg_is_reset(struct tipc_msg *hdr)
 }
 
 struct sk_buff *tipc_buf_acquire(u32 size, gfp_t gfp);
-bool tipc_msg_validate(struct sk_buff *skb);
+bool tipc_msg_validate(struct sk_buff **_skb);
 bool tipc_msg_reverse(u32 own_addr, struct sk_buff **skb, int err);
 void tipc_skb_reject(struct net *net, int err, struct sk_buff *skb,
 		     struct sk_buff_head *xmitq);
@@ -942,6 +952,11 @@ void __tipc_skb_queue_sorted(struct sk_buff_head *list, u16 seqno,
 static inline u16 buf_seqno(struct sk_buff *skb)
 {
 	return msg_seqno(buf_msg(skb));
+}
+
+static inline int buf_roundup_len(struct sk_buff *skb)
+{
+	return (skb->len / 1024 + 1) * 1024;
 }
 
 /* tipc_skb_peek(): peek and reserve first buffer in list

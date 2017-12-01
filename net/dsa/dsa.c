@@ -44,6 +44,9 @@ const struct dsa_device_ops *dsa_device_ops[DSA_TAG_LAST] = {
 #ifdef CONFIG_NET_DSA_TAG_BRCM
 	[DSA_TAG_PROTO_BRCM] = &brcm_netdev_ops,
 #endif
+#ifdef CONFIG_NET_DSA_TAG_BRCM_PREPEND
+	[DSA_TAG_PROTO_BRCM_PREPEND] = &brcm_prepend_netdev_ops,
+#endif
 #ifdef CONFIG_NET_DSA_TAG_DSA
 	[DSA_TAG_PROTO_DSA] = &dsa_netdev_ops,
 #endif
@@ -68,37 +71,6 @@ const struct dsa_device_ops *dsa_device_ops[DSA_TAG_LAST] = {
 	[DSA_TAG_PROTO_NONE] = &none_ops,
 };
 
-int dsa_cpu_dsa_setup(struct dsa_port *port)
-{
-	struct device_node *port_dn = port->dn;
-	struct dsa_switch *ds = port->ds;
-	struct phy_device *phydev;
-	int ret, mode;
-
-	if (of_phy_is_fixed_link(port_dn)) {
-		ret = of_phy_register_fixed_link(port_dn);
-		if (ret) {
-			dev_err(ds->dev, "failed to register fixed PHY\n");
-			return ret;
-		}
-		phydev = of_phy_find_device(port_dn);
-
-		mode = of_get_phy_mode(port_dn);
-		if (mode < 0)
-			mode = PHY_INTERFACE_MODE_NA;
-		phydev->interface = mode;
-
-		genphy_config_init(phydev);
-		genphy_read_status(phydev);
-		if (ds->ops->adjust_link)
-			ds->ops->adjust_link(ds, port->index, phydev);
-
-		put_device(&phydev->mdio.dev);
-	}
-
-	return 0;
-}
-
 const struct dsa_device_ops *dsa_resolve_tag_protocol(int tag_protocol)
 {
 	const struct dsa_device_ops *ops;
@@ -111,14 +83,6 @@ const struct dsa_device_ops *dsa_resolve_tag_protocol(int tag_protocol)
 		return ERR_PTR(-ENOPROTOOPT);
 
 	return ops;
-}
-
-void dsa_cpu_dsa_destroy(struct dsa_port *port)
-{
-	struct device_node *port_dn = port->dn;
-
-	if (of_phy_is_fixed_link(port_dn))
-		of_phy_deregister_fixed_link(port_dn);
 }
 
 static int dev_is_class(struct device *dev, void *class)
@@ -201,7 +165,7 @@ static int dsa_switch_rcv(struct sk_buff *skb, struct net_device *dev,
 #ifdef CONFIG_PM_SLEEP
 static bool dsa_is_port_initialized(struct dsa_switch *ds, int p)
 {
-	return ds->enabled_port_mask & (1 << p) && ds->ports[p].slave;
+	return dsa_is_user_port(ds, p) && ds->ports[p].slave;
 }
 
 int dsa_switch_suspend(struct dsa_switch *ds)

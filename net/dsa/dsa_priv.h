@@ -93,8 +93,6 @@ struct dsa_slave_priv {
 };
 
 /* dsa.c */
-int dsa_cpu_dsa_setup(struct dsa_port *port);
-void dsa_cpu_dsa_destroy(struct dsa_port *dport);
 const struct dsa_device_ops *dsa_resolve_tag_protocol(int tag_protocol);
 bool dsa_schedule_work(struct work_struct *work);
 
@@ -110,8 +108,8 @@ int dsa_legacy_fdb_del(struct ndmsg *ndm, struct nlattr *tb[],
 		       const unsigned char *addr, u16 vid);
 
 /* master.c */
-int dsa_master_ethtool_setup(struct net_device *dev);
-void dsa_master_ethtool_restore(struct net_device *dev);
+int dsa_master_setup(struct net_device *dev, struct dsa_port *cpu_dp);
+void dsa_master_teardown(struct net_device *dev);
 
 static inline struct net_device *dsa_master_find_slave(struct net_device *dev,
 						       int device, int port)
@@ -149,20 +147,23 @@ int dsa_port_fdb_add(struct dsa_port *dp, const unsigned char *addr,
 int dsa_port_fdb_del(struct dsa_port *dp, const unsigned char *addr,
 		     u16 vid);
 int dsa_port_fdb_dump(struct dsa_port *dp, dsa_fdb_dump_cb_t *cb, void *data);
-int dsa_port_mdb_add(struct dsa_port *dp,
+int dsa_port_mdb_add(const struct dsa_port *dp,
 		     const struct switchdev_obj_port_mdb *mdb,
 		     struct switchdev_trans *trans);
-int dsa_port_mdb_del(struct dsa_port *dp,
+int dsa_port_mdb_del(const struct dsa_port *dp,
 		     const struct switchdev_obj_port_mdb *mdb);
 int dsa_port_vlan_add(struct dsa_port *dp,
 		      const struct switchdev_obj_port_vlan *vlan,
 		      struct switchdev_trans *trans);
 int dsa_port_vlan_del(struct dsa_port *dp,
 		      const struct switchdev_obj_port_vlan *vlan);
+int dsa_port_fixed_link_register_of(struct dsa_port *dp);
+void dsa_port_fixed_link_unregister_of(struct dsa_port *dp);
+
 /* slave.c */
 extern const struct dsa_device_ops notag_netdev_ops;
 void dsa_slave_mii_bus_init(struct dsa_switch *ds);
-int dsa_slave_create(struct dsa_port *port, const char *name);
+int dsa_slave_create(struct dsa_port *dp);
 void dsa_slave_destroy(struct net_device *slave_dev);
 int dsa_slave_suspend(struct net_device *slave_dev);
 int dsa_slave_resume(struct net_device *slave_dev);
@@ -190,6 +191,7 @@ void dsa_switch_unregister_notifier(struct dsa_switch *ds);
 
 /* tag_brcm.c */
 extern const struct dsa_device_ops brcm_netdev_ops;
+extern const struct dsa_device_ops brcm_prepend_netdev_ops;
 
 /* tag_dsa.c */
 extern const struct dsa_device_ops dsa_netdev_ops;

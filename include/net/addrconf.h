@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _ADDRCONF_H
 #define _ADDRCONF_H
 
@@ -57,9 +58,6 @@ struct in6_validator_info {
 	struct inet6_dev	*i6vi_dev;
 	struct netlink_ext_ack	*extack;
 };
-
-#define IN6_ADDR_HSIZE_SHIFT	4
-#define IN6_ADDR_HSIZE		(1 << IN6_ADDR_HSIZE_SHIFT)
 
 int addrconf_init(void);
 void addrconf_cleanup(void);
@@ -208,7 +206,7 @@ void ipv6_mc_remap(struct inet6_dev *idev);
 void ipv6_mc_init_dev(struct inet6_dev *idev);
 void ipv6_mc_destroy_dev(struct inet6_dev *idev);
 int ipv6_mc_check_mld(struct sk_buff *skb, struct sk_buff **skb_trimmed);
-void addrconf_dad_failure(struct inet6_ifaddr *ifp);
+void addrconf_dad_failure(struct sk_buff *skb, struct inet6_ifaddr *ifp);
 
 bool ipv6_chk_mcast_addr(struct net_device *dev, const struct in6_addr *group,
 			 const struct in6_addr *src_addr);
