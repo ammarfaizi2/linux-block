@@ -180,13 +180,23 @@ ENTRY(entry_SYSCALL_64_trampoline)
 
 	/*
 	 * x86 lacks a near absolute jump, and we can't jump to the real
-	 * entry text with a relative jump, so we fake it using retq.
+	 * entry text with a relative jump.  We could push the target
+	 * address and then use retq, but this destroys the pipeline on
+	 * many CPUs (wasting over 20 cycles on Sandy Bridge).  Instead,
+	 * spill RDI and restore it in a second-stage trampoline.
 	 */
-	pushq	$entry_SYSCALL_64_after_hwframe
-	retq
+	pushq	%rdi
+	movq	$entry_SYSCALL_64_stage2, %rdi
+	jmp	*%rdi
 END(entry_SYSCALL_64_trampoline)
 
 	.popsection
+
+ENTRY(entry_SYSCALL_64_stage2)
+	UNWIND_HINT_EMPTY
+	popq	%rdi
+	jmp	entry_SYSCALL_64_after_hwframe
+END(entry_SYSCALL_64_stage2)
 
 ENTRY(entry_SYSCALL_64)
 	UNWIND_HINT_EMPTY
