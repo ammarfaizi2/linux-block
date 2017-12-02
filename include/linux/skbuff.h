@@ -568,6 +568,8 @@ enum {
 	SKB_GSO_SCTP = 1 << 14,
 
 	SKB_GSO_ESP = 1 << 15,
+
+	SKB_GSO_UDP = 1 << 16,
 };
 
 #if BITS_PER_LONG > 32
@@ -1404,8 +1406,7 @@ static inline struct sk_buff *skb_get(struct sk_buff *skb)
 }
 
 /*
- * If users == 1, we are the only owner and are can avoid redundant
- * atomic change.
+ * If users == 1, we are the only owner and can avoid redundant atomic changes.
  */
 
 /**
