@@ -2144,7 +2144,7 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
 			int i;
 			struct task_struct *t;
 
-			pr_info("%s: grp: %d-%d level: %d ->gp_tasks %p ->exp_tasks %p\n", __func__, rnp->grplo, rnp->grphi, rnp->level, rnp->gp_tasks, rnp->exp_tasks);
+			pr_info("%s: grp: %d-%d level: %d ->gp_tasks %p ->exp_tasks %p &->blkd_tasks: %p offset: %u\n", __func__, rnp->grplo, rnp->grphi, rnp->level, rnp->gp_tasks, rnp->exp_tasks, &rnp->blkd_tasks, (unsigned int)offsetof(typeof(*rnp), blkd_tasks));
 			pr_cont("\t->blkd_tasks");
 			i = 0;
 			list_for_each_entry(t, &rnp->blkd_tasks, rcu_node_entry) {
