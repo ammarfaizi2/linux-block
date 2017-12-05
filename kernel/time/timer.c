@@ -1724,6 +1724,16 @@ static void process_timeout(struct timer_list *t)
 	wake_up_process(timeout->task);
 }
 
+static struct task_struct *schedule_timeout_task2dump;
+static DEFINE_MUTEX(schedule_timeout_task2dump_mutex);
+void schedule_timeout_set_task2dump(struct task_struct *t)
+{
+	mutex_lock(&schedule_timeout_task2dump_mutex);
+	WRITE_ONCE(schedule_timeout_task2dump, t);
+	mutex_unlock(&schedule_timeout_task2dump_mutex);
+}
+EXPORT_SYMBOL_GPL(schedule_timeout_set_task2dump);
+
 /**
  * schedule_timeout - sleep until timeout
  * @timeout: timeout value in jiffies
@@ -1808,6 +1818,14 @@ signed long __sched schedule_timeout(signed long timeout)
 		for (i = 0; i < WHEEL_SIZE / sizeof(base->pending_map[0]) / 8; i++)
 			pr_cont("%016lx", base->pending_map[i]);
 		pr_cont("\n");
+		if (READ_ONCE(schedule_timeout_task2dump)) {
+			mutex_lock(&schedule_timeout_task2dump_mutex);
+			if (schedule_timeout_task2dump) {
+				pr_info("Torture onoff task state:\n");
+				sched_show_task(schedule_timeout_task2dump);
+			}
+			mutex_unlock(&schedule_timeout_task2dump_mutex);
+		}
 	}
 	del_singleshot_timer_sync(&timer.timer);
 
