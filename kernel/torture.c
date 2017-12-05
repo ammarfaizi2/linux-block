@@ -238,6 +238,7 @@ int torture_onoff_init(long ooholdoff, long oointerval)
 	if (onoff_interval <= 0)
 		return 0;
 	ret = torture_create_kthread(torture_onoff, NULL, onoff_task);
+	schedule_timeout_set_task2dump(onoff_task);
 #endif /* #ifdef CONFIG_HOTPLUG_CPU */
 	return ret;
 }
@@ -251,6 +252,7 @@ static void torture_onoff_cleanup(void)
 #ifdef CONFIG_HOTPLUG_CPU
 	if (onoff_task == NULL)
 		return;
+	schedule_timeout_set_task2dump(NULL);
 	VERBOSE_TOROUT_STRING("Stopping torture_onoff task");
 	kthread_stop(onoff_task);
 	onoff_task = NULL;
