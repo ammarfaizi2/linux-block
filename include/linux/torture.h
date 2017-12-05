@@ -102,4 +102,6 @@ void _torture_stop_kthread(char *m, struct task_struct **tp);
 #define torture_preempt_schedule()
 #endif
 
+void schedule_timeout_set_task2dump(struct task_struct *t);
+
 #endif /* __LINUX_TORTURE_H */
