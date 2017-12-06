@@ -381,6 +381,8 @@ cpuhp_reset_state(struct cpuhp_cpu_state *st, enum cpuhp_state prev_state)
 	st->bringup = !st->bringup;
 }
 
+void schedule_timeout_set_task3dump(struct task_struct *t);
+
 /* Regular hotplug invocation of the AP hotplug thread */
 static void __cpuhp_kick_ap(struct cpuhp_cpu_state *st)
 {
@@ -395,7 +397,9 @@ static void __cpuhp_kick_ap(struct cpuhp_cpu_state *st)
 	smp_mb();
 	st->should_run = true;
 	wake_up_process(st->thread);
+	schedule_timeout_set_task3dump(st->thread);
 	wait_for_ap_thread(st, st->bringup);
+	schedule_timeout_set_task3dump(NULL);
 }
 
 static int cpuhp_kick_ap(struct cpuhp_cpu_state *st, enum cpuhp_state target)
