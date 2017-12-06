@@ -1725,6 +1725,7 @@ static void process_timeout(struct timer_list *t)
 }
 
 static struct task_struct *schedule_timeout_task2dump;
+static struct task_struct *schedule_timeout_task3dump;
 static DEFINE_MUTEX(schedule_timeout_task2dump_mutex);
 void schedule_timeout_set_task2dump(struct task_struct *t)
 {
@@ -1732,7 +1733,12 @@ void schedule_timeout_set_task2dump(struct task_struct *t)
 	WRITE_ONCE(schedule_timeout_task2dump, t);
 	mutex_unlock(&schedule_timeout_task2dump_mutex);
 }
-EXPORT_SYMBOL_GPL(schedule_timeout_set_task2dump);
+void schedule_timeout_set_task3dump(struct task_struct *t)
+{
+	mutex_lock(&schedule_timeout_task2dump_mutex);
+	WRITE_ONCE(schedule_timeout_task3dump, t);
+	mutex_unlock(&schedule_timeout_task2dump_mutex);
+}
 
 /**
  * schedule_timeout - sleep until timeout
@@ -1823,6 +1829,10 @@ signed long __sched schedule_timeout(signed long timeout)
 			if (schedule_timeout_task2dump) {
 				pr_info("Torture onoff task state:\n");
 				sched_show_task(schedule_timeout_task2dump);
+			}
+			if (schedule_timeout_task3dump) {
+				pr_info("__cpuhp_kick_ap task state:\n");
+				sched_show_task(schedule_timeout_task3dump);
 			}
 			mutex_unlock(&schedule_timeout_task2dump_mutex);
 		}
