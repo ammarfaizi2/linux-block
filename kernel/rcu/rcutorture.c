@@ -937,6 +937,16 @@ rcu_torture_writer(void *arg)
 		synctype[nsynctypes++] = RTWS_SYNC;
 	else if (gp_sync && !cur_ops->sync)
 		pr_alert("%s: gp_sync without primitives.\n", __func__);
+	if (gp_normal == gp_exp) {
+		if (!cur_ops->sync)
+			pr_alert("%s: gp_sync with NULL cur_ops->sync.\n", __func__);
+		if (!cur_ops->exp_sync)
+			pr_alert("%s: gp_exp with NULL cur_ops->exp_sync.\n", __func__);
+	} else if (gp_normal && !cur_ops->sync) {
+		pr_alert("%s: gp_sync with NULL cur_ops->sync.\n", __func__);
+	} else if (gp_exp && !cur_ops->exp_sync) {
+		pr_alert("%s: gp_exp with NULL cur_ops->exp_sync.\n", __func__);
+	}
 	if (WARN_ONCE(nsynctypes == 0,
 		      "rcu_torture_writer: No update-side primitives.\n")) {
 		/*
