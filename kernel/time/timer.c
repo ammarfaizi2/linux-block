@@ -1733,12 +1733,14 @@ void schedule_timeout_set_task2dump(struct task_struct *t)
 	WRITE_ONCE(schedule_timeout_task2dump, t);
 	mutex_unlock(&schedule_timeout_task2dump_mutex);
 }
+EXPORT_SYMBOL_GPL(schedule_timeout_set_task2dump);
 void schedule_timeout_set_task3dump(struct task_struct *t)
 {
 	mutex_lock(&schedule_timeout_task2dump_mutex);
 	WRITE_ONCE(schedule_timeout_task3dump, t);
 	mutex_unlock(&schedule_timeout_task2dump_mutex);
 }
+EXPORT_SYMBOL_GPL(schedule_timeout_set_task3dump);
 
 /**
  * schedule_timeout - sleep until timeout
