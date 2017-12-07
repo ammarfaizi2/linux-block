@@ -1875,6 +1875,7 @@ int timers_dead_cpu(unsigned int cpu)
 
 		BUG_ON(old_base->running_timer);
 
+		old_base->must_forward_clk = true;
 		for (i = 0; i < WHEEL_SIZE; i++)
 			migrate_timer_list(new_base, old_base->vectors + i);
 
