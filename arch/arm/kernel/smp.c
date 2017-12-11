@@ -267,6 +267,14 @@ void __cpu_die(unsigned int cpu)
 }
 
 /*
+ * Invoke complete() on behalf of the outgoing CPU.
+ */
+static void arch_cpu_idle_dead_complete(void *arg)
+{
+	complete(&cpu_died);
+}
+
+/*
  * Called from the idle thread for the CPU which has been shutdown.
  *
  * Note that we disable IRQs here, but do not re-enable them
@@ -293,9 +301,11 @@ void arch_cpu_idle_dead(void)
 	/*
 	 * Tell __cpu_die() that this CPU is now safe to dispose of.  Once
 	 * this returns, power and/or clocks can be removed at any point
-	 * from this CPU and its cache by platform_cpu_kill().
+	 * from this CPU and its cache by platform_cpu_kill().  We cannot
+	 * call complete() this late, so we delegate it to an online CPU.
 	 */
-	complete(&cpu_died);
+	smp_call_function_single(cpumask_first(cpu_online_mask),
+				 arch_cpu_idle_dead_complete, NULL, 0);
 
 	/*
 	 * Ensure that the cache lines associated with that completion are
