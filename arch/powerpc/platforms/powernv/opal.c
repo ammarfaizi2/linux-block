@@ -127,7 +127,7 @@ int __init early_init_dt_scan_opal(unsigned long node,
 
 	if (of_flat_dt_is_compatible(node, "ibm,opal-v3")) {
 		powerpc_firmware_features |= FW_FEATURE_OPAL;
-		pr_info("OPAL detected !\n");
+		pr_debug("OPAL detected !\n");
 	} else {
 		panic("OPAL != V3 detected, no longer supported.\n");
 	}
@@ -239,8 +239,8 @@ int opal_message_notifier_register(enum opal_msg_type msg_type,
 					struct notifier_block *nb)
 {
 	if (!nb || msg_type >= OPAL_MSG_TYPE_MAX) {
-		pr_warning("%s: Invalid arguments, msg_type:%d\n",
-			   __func__, msg_type);
+		pr_warn("%s: Invalid arguments, msg_type:%d\n",
+			__func__, msg_type);
 		return -EINVAL;
 	}
 
@@ -281,8 +281,8 @@ static void opal_handle_message(void)
 
 	/* check for errors. */
 	if (ret) {
-		pr_warning("%s: Failed to retrieve opal message, err=%lld\n",
-				__func__, ret);
+		pr_warn("%s: Failed to retrieve opal message, err=%lld\n",
+			__func__, ret);
 		return;
 	}
 
