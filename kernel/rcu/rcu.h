@@ -317,34 +317,49 @@ static inline void rcu_init_levelspread(int *levelspread, const int *levelcnt)
 do {									\
 	raw_spin_lock(&ACCESS_PRIVATE(p, lock));			\
 	smp_mb__after_unlock_lock();					\
+	WARN_ON_ONCE(p->lockheld);					\
+	p->lockheld = true;						\
 } while (0)
 
-#define raw_spin_unlock_rcu_node(p) raw_spin_unlock(&ACCESS_PRIVATE(p, lock))
+#define raw_spin_unlock_rcu_node(p) do { p->lockheld = false; raw_spin_unlock(&ACCESS_PRIVATE(p, lock)); } while (0)
 
 #define raw_spin_lock_irq_rcu_node(p)					\
 do {									\
 	raw_spin_lock_irq(&ACCESS_PRIVATE(p, lock));			\
 	smp_mb__after_unlock_lock();					\
+	WARN_ON_ONCE(p->lockheld);					\
+	p->lockheld = true;						\
 } while (0)
 
 #define raw_spin_unlock_irq_rcu_node(p)					\
-	raw_spin_unlock_irq(&ACCESS_PRIVATE(p, lock))
+do {									\
+	p->lockheld = false;						\
+	raw_spin_unlock_irq(&ACCESS_PRIVATE(p, lock));			\
+} while (0)
 
 #define raw_spin_lock_irqsave_rcu_node(p, flags)			\
 do {									\
 	raw_spin_lock_irqsave(&ACCESS_PRIVATE(p, lock), flags);	\
 	smp_mb__after_unlock_lock();					\
+	WARN_ON_ONCE(p->lockheld);					\
+	p->lockheld = true;						\
 } while (0)
 
 #define raw_spin_unlock_irqrestore_rcu_node(p, flags)			\
-	raw_spin_unlock_irqrestore(&ACCESS_PRIVATE(p, lock), flags)	\
+do {									\
+	p->lockheld = false;						\
+	raw_spin_unlock_irqrestore(&ACCESS_PRIVATE(p, lock), flags);	\
+} while (0)
 
 #define raw_spin_trylock_rcu_node(p)					\
 ({									\
 	bool ___locked = raw_spin_trylock(&ACCESS_PRIVATE(p, lock));	\
 									\
-	if (___locked)							\
+	if (___locked) {						\
 		smp_mb__after_unlock_lock();				\
+		WARN_ON_ONCE(p->lockheld);				\
+		p->lockheld = true;					\
+	}								\
 	___locked;							\
 })
 
