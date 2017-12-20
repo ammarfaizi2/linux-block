@@ -62,7 +62,9 @@
 struct rtnl_link {
 	rtnl_doit_func		doit;
 	rtnl_dumpit_func	dumpit;
+	struct module		*owner;
 	unsigned int		flags;
+	struct rcu_head		rcu;
 };
 
 static DEFINE_MUTEX(rtnl_mutex);
@@ -127,8 +129,7 @@ bool lockdep_rtnl_is_held(void)
 EXPORT_SYMBOL(lockdep_rtnl_is_held);
 #endif /* #ifdef CONFIG_PROVE_LOCKING */
 
-static struct rtnl_link __rcu *rtnl_msg_handlers[RTNL_FAMILY_MAX + 1];
-static refcount_t rtnl_msg_handlers_ref[RTNL_FAMILY_MAX + 1];
+static struct rtnl_link *__rcu *rtnl_msg_handlers[RTNL_FAMILY_MAX + 1];
 
 static inline int rtm_msgindex(int msgtype)
 {
@@ -144,8 +145,101 @@ static inline int rtm_msgindex(int msgtype)
 	return msgindex;
 }
 
+static struct rtnl_link *rtnl_get_link(int protocol, int msgtype)
+{
+	struct rtnl_link **tab;
+
+	if (protocol >= ARRAY_SIZE(rtnl_msg_handlers))
+		protocol = PF_UNSPEC;
+
+	tab = rcu_dereference_rtnl(rtnl_msg_handlers[protocol]);
+	if (!tab)
+		tab = rcu_dereference_rtnl(rtnl_msg_handlers[PF_UNSPEC]);
+
+	return tab[msgtype];
+}
+
+static int rtnl_register_internal(struct module *owner,
+				  int protocol, int msgtype,
+				  rtnl_doit_func doit, rtnl_dumpit_func dumpit,
+				  unsigned int flags)
+{
+	struct rtnl_link *link, *old;
+	struct rtnl_link __rcu **tab;
+	int msgindex;
+	int ret = -ENOBUFS;
+
+	BUG_ON(protocol < 0 || protocol > RTNL_FAMILY_MAX);
+	msgindex = rtm_msgindex(msgtype);
+
+	rtnl_lock();
+	tab = rtnl_msg_handlers[protocol];
+	if (tab == NULL) {
+		tab = kcalloc(RTM_NR_MSGTYPES, sizeof(void *), GFP_KERNEL);
+		if (!tab)
+			goto unlock;
+
+		/* ensures we see the 0 stores */
+		rcu_assign_pointer(rtnl_msg_handlers[protocol], tab);
+	}
+
+	old = rtnl_dereference(tab[msgindex]);
+	if (old) {
+		link = kmemdup(old, sizeof(*old), GFP_KERNEL);
+		if (!link)
+			goto unlock;
+	} else {
+		link = kzalloc(sizeof(*link), GFP_KERNEL);
+		if (!link)
+			goto unlock;
+	}
+
+	WARN_ON(link->owner && link->owner != owner);
+	link->owner = owner;
+
+	WARN_ON(doit && link->doit && link->doit != doit);
+	if (doit)
+		link->doit = doit;
+	WARN_ON(dumpit && link->dumpit && link->dumpit != dumpit);
+	if (dumpit)
+		link->dumpit = dumpit;
+
+	link->flags |= flags;
+
+	/* publish protocol:msgtype */
+	rcu_assign_pointer(tab[msgindex], link);
+	ret = 0;
+	if (old)
+		kfree_rcu(old, rcu);
+unlock:
+	rtnl_unlock();
+	return ret;
+}
+
 /**
- * __rtnl_register - Register a rtnetlink message type
+ * rtnl_register_module - Register a rtnetlink message type
+ *
+ * @owner: module registering the hook (THIS_MODULE)
+ * @protocol: Protocol family or PF_UNSPEC
+ * @msgtype: rtnetlink message type
+ * @doit: Function pointer called for each request message
+ * @dumpit: Function pointer called for each dump request (NLM_F_DUMP) message
+ * @flags: rtnl_link_flags to modifiy behaviour of doit/dumpit functions
+ *
+ * Like rtnl_register, but for use by removable modules.
+ */
+int rtnl_register_module(struct module *owner,
+			 int protocol, int msgtype,
+			 rtnl_doit_func doit, rtnl_dumpit_func dumpit,
+			 unsigned int flags)
+{
+	return rtnl_register_internal(owner, protocol, msgtype,
+				      doit, dumpit, flags);
+}
+EXPORT_SYMBOL_GPL(rtnl_register_module);
+
+/**
+ * rtnl_register - Register a rtnetlink message type
  * @protocol: Protocol family or PF_UNSPEC
  * @msgtype: rtnetlink message type
  * @doit: Function pointer called for each request message
@@ -159,57 +253,19 @@ static inline int rtm_msgindex(int msgtype)
  * The special protocol family PF_UNSPEC may be used to define fallback
  * function pointers for the case when no entry for the specific protocol
  * family exists.
- *
- * Returns 0 on success or a negative error code.
- */
-int __rtnl_register(int protocol, int msgtype,
-		    rtnl_doit_func doit, rtnl_dumpit_func dumpit,
-		    unsigned int flags)
-{
-	struct rtnl_link *tab;
-	int msgindex;
-
-	BUG_ON(protocol < 0 || protocol > RTNL_FAMILY_MAX);
-	msgindex = rtm_msgindex(msgtype);
-
-	tab = rcu_dereference_raw(rtnl_msg_handlers[protocol]);
-	if (tab == NULL) {
-		tab = kcalloc(RTM_NR_MSGTYPES, sizeof(*tab), GFP_KERNEL);
-		if (tab == NULL)
-			return -ENOBUFS;
-
-		rcu_assign_pointer(rtnl_msg_handlers[protocol], tab);
-	}
-
-	if (doit)
-		tab[msgindex].doit = doit;
-	if (dumpit)
-		tab[msgindex].dumpit = dumpit;
-	tab[msgindex].flags |= flags;
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(__rtnl_register);
-
-/**
- * rtnl_register - Register a rtnetlink message type
- *
- * Identical to __rtnl_register() but panics on failure. This is useful
- * as failure of this function is very unlikely, it can only happen due
- * to lack of memory when allocating the chain to store all message
- * handlers for a protocol. Meant for use in init functions where lack
- * of memory implies no sense in continuing.
  */
 void rtnl_register(int protocol, int msgtype,
 		   rtnl_doit_func doit, rtnl_dumpit_func dumpit,
 		   unsigned int flags)
 {
-	if (__rtnl_register(protocol, msgtype, doit, dumpit, flags) < 0)
-		panic("Unable to register rtnetlink message handler, "
-		      "protocol = %d, message type = %d\n",
-		      protocol, msgtype);
+	int err;
+
+	err = rtnl_register_internal(NULL, protocol, msgtype, doit, dumpit,
+				     flags);
+	if (err)
+		pr_err("Unable to register rtnetlink message handler, "
+		       "protocol = %d, message type = %d\n", protocol, msgtype);
 }
-EXPORT_SYMBOL_GPL(rtnl_register);
 
 /**
  * rtnl_unregister - Unregister a rtnetlink message type
@@ -220,23 +276,24 @@ EXPORT_SYMBOL_GPL(rtnl_register);
  */
 int rtnl_unregister(int protocol, int msgtype)
 {
-	struct rtnl_link *handlers;
+	struct rtnl_link **tab, *link;
 	int msgindex;
 
 	BUG_ON(protocol < 0 || protocol > RTNL_FAMILY_MAX);
 	msgindex = rtm_msgindex(msgtype);
 
 	rtnl_lock();
-	handlers = rtnl_dereference(rtnl_msg_handlers[protocol]);
-	if (!handlers) {
+	tab = rtnl_dereference(rtnl_msg_handlers[protocol]);
+	if (!tab) {
 		rtnl_unlock();
 		return -ENOENT;
 	}
 
-	handlers[msgindex].doit = NULL;
-	handlers[msgindex].dumpit = NULL;
-	handlers[msgindex].flags = 0;
+	link = tab[msgindex];
+	rcu_assign_pointer(tab[msgindex], NULL);
 	rtnl_unlock();
+
+	kfree_rcu(link, rcu);
 
 	return 0;
 }
@@ -251,20 +308,27 @@ EXPORT_SYMBOL_GPL(rtnl_unregister);
  */
 void rtnl_unregister_all(int protocol)
 {
-	struct rtnl_link *handlers;
+	struct rtnl_link **tab, *link;
+	int msgindex;
 
 	BUG_ON(protocol < 0 || protocol > RTNL_FAMILY_MAX);
 
 	rtnl_lock();
-	handlers = rtnl_dereference(rtnl_msg_handlers[protocol]);
+	tab = rtnl_msg_handlers[protocol];
 	RCU_INIT_POINTER(rtnl_msg_handlers[protocol], NULL);
+	for (msgindex = 0; msgindex < RTM_NR_MSGTYPES; msgindex++) {
+		link = tab[msgindex];
+		if (!link)
+			continue;
+
+		rcu_assign_pointer(tab[msgindex], NULL);
+		kfree_rcu(link, rcu);
+	}
 	rtnl_unlock();
 
 	synchronize_net();
 
-	while (refcount_read(&rtnl_msg_handlers_ref[protocol]) > 1)
-		schedule();
-	kfree(handlers);
+	kfree(tab);
 }
 EXPORT_SYMBOL_GPL(rtnl_unregister_all);
 
@@ -1261,6 +1325,7 @@ static u8 rtnl_xdp_attached_mode(struct net_device *dev, u32 *prog_id)
 {
 	const struct net_device_ops *ops = dev->netdev_ops;
 	const struct bpf_prog *generic_xdp_prog;
+	struct netdev_bpf xdp;
 
 	ASSERT_RTNL();
 
@@ -1273,7 +1338,10 @@ static u8 rtnl_xdp_attached_mode(struct net_device *dev, u32 *prog_id)
 	if (!ops->ndo_bpf)
 		return XDP_ATTACHED_NONE;
 
-	return __dev_xdp_attached(dev, ops->ndo_bpf, prog_id);
+	__dev_xdp_query(dev, ops->ndo_bpf, &xdp);
+	*prog_id = xdp.prog_id;
+
+	return xdp.prog_attached;
 }
 
 static int rtnl_xdp_fill(struct sk_buff *skb, struct net_device *dev)
@@ -1569,6 +1637,8 @@ static const struct nla_policy ifla_policy[IFLA_MAX+1] = {
 	[IFLA_PROMISCUITY]	= { .type = NLA_U32 },
 	[IFLA_NUM_TX_QUEUES]	= { .type = NLA_U32 },
 	[IFLA_NUM_RX_QUEUES]	= { .type = NLA_U32 },
+	[IFLA_GSO_MAX_SEGS]	= { .type = NLA_U32 },
+	[IFLA_GSO_MAX_SIZE]	= { .type = NLA_U32 },
 	[IFLA_PHYS_PORT_ID]	= { .type = NLA_BINARY, .len = MAX_PHYS_ITEM_ID_LEN },
 	[IFLA_CARRIER_CHANGES]	= { .type = NLA_U32 },  /* ignored */
 	[IFLA_PHYS_SWITCH_ID]	= { .type = NLA_BINARY, .len = MAX_PHYS_ITEM_ID_LEN },
@@ -2219,6 +2289,34 @@ static int do_setlink(const struct sk_buff *skb,
 		}
 	}
 
+	if (tb[IFLA_GSO_MAX_SIZE]) {
+		u32 max_size = nla_get_u32(tb[IFLA_GSO_MAX_SIZE]);
+
+		if (max_size > GSO_MAX_SIZE) {
+			err = -EINVAL;
+			goto errout;
+		}
+
+		if (dev->gso_max_size ^ max_size) {
+			netif_set_gso_max_size(dev, max_size);
+			status |= DO_SETLINK_MODIFIED;
+		}
+	}
+
+	if (tb[IFLA_GSO_MAX_SEGS]) {
+		u32 max_segs = nla_get_u32(tb[IFLA_GSO_MAX_SEGS]);
+
+		if (max_segs > GSO_MAX_SEGS) {
+			err = -EINVAL;
+			goto errout;
+		}
+
+		if (dev->gso_max_segs ^ max_segs) {
+			dev->gso_max_segs = max_segs;
+			status |= DO_SETLINK_MODIFIED;
+		}
+	}
+
 	if (tb[IFLA_OPERSTATE])
 		set_operstate(dev, nla_get_u8(tb[IFLA_OPERSTATE]));
 
@@ -2583,6 +2681,10 @@ struct net_device *rtnl_create_link(struct net *net,
 		dev->link_mode = nla_get_u8(tb[IFLA_LINKMODE]);
 	if (tb[IFLA_GROUP])
 		dev_set_group(dev, nla_get_u32(tb[IFLA_GROUP]));
+	if (tb[IFLA_GSO_MAX_SIZE])
+		netif_set_gso_max_size(dev, nla_get_u32(tb[IFLA_GSO_MAX_SIZE]));
+	if (tb[IFLA_GSO_MAX_SEGS])
+		dev->gso_max_segs = nla_get_u32(tb[IFLA_GSO_MAX_SEGS]);
 
 	return dev;
 }
@@ -2973,18 +3075,26 @@ static int rtnl_dump_all(struct sk_buff *skb, struct netlink_callback *cb)
 		s_idx = 1;
 
 	for (idx = 1; idx <= RTNL_FAMILY_MAX; idx++) {
+		struct rtnl_link **tab;
 		int type = cb->nlh->nlmsg_type-RTM_BASE;
-		struct rtnl_link *handlers;
+		struct rtnl_link *link;
 		rtnl_dumpit_func dumpit;
 
 		if (idx < s_idx || idx == PF_PACKET)
 			continue;
 
-		handlers = rtnl_dereference(rtnl_msg_handlers[idx]);
-		if (!handlers)
+		if (type < 0 || type >= RTM_NR_MSGTYPES)
 			continue;
 
-		dumpit = READ_ONCE(handlers[type].dumpit);
+		tab = rcu_dereference_rtnl(rtnl_msg_handlers[idx]);
+		if (!tab)
+			continue;
+
+		link = tab[type];
+		if (!link)
+			continue;
+
+		dumpit = link->dumpit;
 		if (!dumpit)
 			continue;
 
@@ -4314,7 +4424,8 @@ static int rtnetlink_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
 			     struct netlink_ext_ack *extack)
 {
 	struct net *net = sock_net(skb->sk);
-	struct rtnl_link *handlers;
+	struct rtnl_link *link;
+	struct module *owner;
 	int err = -EOPNOTSUPP;
 	rtnl_doit_func doit;
 	unsigned int flags;
@@ -4338,79 +4449,85 @@ static int rtnetlink_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (kind != 2 && !netlink_net_capable(skb, CAP_NET_ADMIN))
 		return -EPERM;
 
-	if (family >= ARRAY_SIZE(rtnl_msg_handlers))
-		family = PF_UNSPEC;
-
 	rcu_read_lock();
-	handlers = rcu_dereference(rtnl_msg_handlers[family]);
-	if (!handlers) {
-		family = PF_UNSPEC;
-		handlers = rcu_dereference(rtnl_msg_handlers[family]);
-	}
-
 	if (kind == 2 && nlh->nlmsg_flags&NLM_F_DUMP) {
 		struct sock *rtnl;
 		rtnl_dumpit_func dumpit;
 		u16 min_dump_alloc = 0;
 
-		dumpit = READ_ONCE(handlers[type].dumpit);
-		if (!dumpit) {
+		link = rtnl_get_link(family, type);
+		if (!link || !link->dumpit) {
 			family = PF_UNSPEC;
-			handlers = rcu_dereference(rtnl_msg_handlers[PF_UNSPEC]);
-			if (!handlers)
-				goto err_unlock;
-
-			dumpit = READ_ONCE(handlers[type].dumpit);
-			if (!dumpit)
+			link = rtnl_get_link(family, type);
+			if (!link || !link->dumpit)
 				goto err_unlock;
 		}
-
-		refcount_inc(&rtnl_msg_handlers_ref[family]);
+		owner = link->owner;
+		dumpit = link->dumpit;
 
 		if (type == RTM_GETLINK - RTM_BASE)
 			min_dump_alloc = rtnl_calcit(skb, nlh);
 
+		err = 0;
+		/* need to do this before rcu_read_unlock() */
+		if (!try_module_get(owner))
+			err = -EPROTONOSUPPORT;
+
 		rcu_read_unlock();
 
 		rtnl = net->rtnl;
-		{
+		if (err == 0) {
 			struct netlink_dump_control c = {
 				.dump		= dumpit,
 				.min_dump_alloc	= min_dump_alloc,
+				.module		= owner,
 			};
 			err = netlink_dump_start(rtnl, skb, nlh, &c);
+			/* netlink_dump_start() will keep a reference on
+			 * module if dump is still in progress.
+			 */
+			module_put(owner);
 		}
-		refcount_dec(&rtnl_msg_handlers_ref[family]);
 		return err;
 	}
 
-	doit = READ_ONCE(handlers[type].doit);
-	if (!doit) {
+	link = rtnl_get_link(family, type);
+	if (!link || !link->doit) {
 		family = PF_UNSPEC;
-		handlers = rcu_dereference(rtnl_msg_handlers[family]);
+		link = rtnl_get_link(PF_UNSPEC, type);
+		if (!link || !link->doit)
+			goto out_unlock;
 	}
 
-	flags = READ_ONCE(handlers[type].flags);
+	owner = link->owner;
+	if (!try_module_get(owner)) {
+		err = -EPROTONOSUPPORT;
+		goto out_unlock;
+	}
+
+	flags = link->flags;
 	if (flags & RTNL_FLAG_DOIT_UNLOCKED) {
-		refcount_inc(&rtnl_msg_handlers_ref[family]);
-		doit = READ_ONCE(handlers[type].doit);
+		doit = link->doit;
 		rcu_read_unlock();
 		if (doit)
 			err = doit(skb, nlh, extack);
-		refcount_dec(&rtnl_msg_handlers_ref[family]);
+		module_put(owner);
 		return err;
 	}
-
 	rcu_read_unlock();
 
 	rtnl_lock();
-	handlers = rtnl_dereference(rtnl_msg_handlers[family]);
-	if (handlers) {
-		doit = READ_ONCE(handlers[type].doit);
-		if (doit)
-			err = doit(skb, nlh, extack);
-	}
+	link = rtnl_get_link(family, type);
+	if (link && link->doit)
+		err = link->doit(skb, nlh, extack);
 	rtnl_unlock();
+
+	module_put(owner);
+
+	return err;
+
+out_unlock:
+	rcu_read_unlock();
 	return err;
 
 err_unlock:
@@ -4498,11 +4615,6 @@ static struct pernet_operations rtnetlink_net_ops = {
 
 void __init rtnetlink_init(void)
 {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(rtnl_msg_handlers_ref); i++)
-		refcount_set(&rtnl_msg_handlers_ref[i], 1);
-
 	if (register_pernet_subsys(&rtnetlink_net_ops))
 		panic("rtnetlink_init: cannot initialize rtnetlink\n");
 

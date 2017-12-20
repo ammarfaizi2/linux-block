@@ -135,7 +135,9 @@ static int mdio_bus_phy_resume(struct device *dev)
 	if (!mdio_bus_phy_may_suspend(phydev))
 		goto no_resume;
 
+	mutex_lock(&phydev->lock);
 	ret = phy_resume(phydev);
+	mutex_unlock(&phydev->lock);
 	if (ret < 0)
 		return ret;
 
@@ -632,6 +634,9 @@ int phy_device_register(struct phy_device *phydev)
 	if (err)
 		return err;
 
+	/* Deassert the reset signal */
+	phy_device_reset(phydev, 0);
+
 	/* Run all of the fixups for this PHY */
 	err = phy_scan_fixups(phydev);
 	if (err) {
@@ -650,6 +655,9 @@ int phy_device_register(struct phy_device *phydev)
 	return 0;
 
  out:
+	/* Assert the reset signal */
+	phy_device_reset(phydev, 1);
+
 	mdiobus_unregister_device(&phydev->mdio);
 	return err;
 }
@@ -666,6 +674,10 @@ EXPORT_SYMBOL(phy_device_register);
 void phy_device_remove(struct phy_device *phydev)
 {
 	device_del(&phydev->mdio.dev);
+
+	/* Assert the reset signal */
+	phy_device_reset(phydev, 1);
+
 	mdiobus_unregister_device(&phydev->mdio);
 }
 EXPORT_SYMBOL(phy_device_remove);
@@ -849,6 +861,9 @@ int phy_init_hw(struct phy_device *phydev)
 {
 	int ret = 0;
 
+	/* Deassert the reset signal */
+	phy_device_reset(phydev, 0);
+
 	if (!phydev->drv || !phydev->drv->config_init)
 		return 0;
 
@@ -1026,7 +1041,9 @@ int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
 	if (err)
 		goto error;
 
+	mutex_lock(&phydev->lock);
 	phy_resume(phydev);
+	mutex_unlock(&phydev->lock);
 	phy_led_triggers_register(phydev);
 
 	return err;
@@ -1126,6 +1143,9 @@ void phy_detach(struct phy_device *phydev)
 	put_device(&phydev->mdio.dev);
 	if (ndev_owner != bus->owner)
 		module_put(bus->owner);
+
+	/* Assert the reset signal */
+	phy_device_reset(phydev, 1);
 }
 EXPORT_SYMBOL(phy_detach);
 
@@ -1156,6 +1176,8 @@ int phy_resume(struct phy_device *phydev)
 {
 	struct phy_driver *phydrv = to_phy_driver(phydev->mdio.dev.driver);
 	int ret = 0;
+
+	WARN_ON(!mutex_is_locked(&phydev->lock));
 
 	if (phydev->drv && phydrv->resume)
 		ret = phydrv->resume(phydev);
@@ -1201,6 +1223,30 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL(phy_loopback);
+
+/**
+ * phy_reset_after_clk_enable - perform a PHY reset if needed
+ * @phydev: target phy_device struct
+ *
+ * Description: Some PHYs are known to need a reset after their refclk was
+ *   enabled. This function evaluates the flags and perform the reset if it's
+ *   needed. Returns < 0 on error, 0 if the phy wasn't reset and 1 if the phy
+ *   was reset.
+ */
+int phy_reset_after_clk_enable(struct phy_device *phydev)
+{
+	if (!phydev || !phydev->drv)
+		return -ENODEV;
+
+	if (phydev->drv->flags & PHY_RST_AFTER_CLK_EN) {
+		phy_device_reset(phydev, 1);
+		phy_device_reset(phydev, 0);
+		return 1;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(phy_reset_after_clk_enable);
 
 /* Generic PHY support and helper functions */
 
@@ -1639,12 +1685,8 @@ int genphy_resume(struct phy_device *phydev)
 {
 	int value;
 
-	mutex_lock(&phydev->lock);
-
 	value = phy_read(phydev, MII_BMCR);
 	phy_write(phydev, MII_BMCR, value & ~BMCR_PDOWN);
-
-	mutex_unlock(&phydev->lock);
 
 	return 0;
 }
@@ -1811,8 +1853,16 @@ static int phy_probe(struct device *dev)
 	/* Set the state to READY by default */
 	phydev->state = PHY_READY;
 
-	if (phydev->drv->probe)
+	if (phydev->drv->probe) {
+		/* Deassert the reset signal */
+		phy_device_reset(phydev, 0);
+
 		err = phydev->drv->probe(phydev);
+		if (err) {
+			/* Assert the reset signal */
+			phy_device_reset(phydev, 1);
+		}
+	}
 
 	mutex_unlock(&phydev->lock);
 
@@ -1829,8 +1879,12 @@ static int phy_remove(struct device *dev)
 	phydev->state = PHY_DOWN;
 	mutex_unlock(&phydev->lock);
 
-	if (phydev->drv && phydev->drv->remove)
+	if (phydev->drv && phydev->drv->remove) {
 		phydev->drv->remove(phydev);
+
+		/* Assert the reset signal */
+		phy_device_reset(phydev, 1);
+	}
 	phydev->drv = NULL;
 
 	return 0;
@@ -1907,9 +1961,7 @@ static struct phy_driver genphy_driver = {
 	.features	= PHY_GBIT_FEATURES | SUPPORTED_MII |
 			  SUPPORTED_AUI | SUPPORTED_FIBRE |
 			  SUPPORTED_BNC,
-	.config_aneg	= genphy_config_aneg,
 	.aneg_done	= genphy_aneg_done,
-	.read_status	= genphy_read_status,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
 	.set_loopback   = genphy_loopback,

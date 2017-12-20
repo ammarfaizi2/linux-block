@@ -418,6 +418,27 @@ struct perf_event_attr {
 	__u16	__reserved_2;	/* align to __u64 */
 };
 
+/*
+ * Structure used by below PERF_EVENT_IOC_QUERY_BPF command
+ * to query bpf programs attached to the same perf tracepoint
+ * as the given perf event.
+ */
+struct perf_event_query_bpf {
+	/*
+	 * The below ids array length
+	 */
+	__u32	ids_len;
+	/*
+	 * Set by the kernel to indicate the number of
+	 * available programs
+	 */
+	__u32	prog_cnt;
+	/*
+	 * User provided buffer to store program ids
+	 */
+	__u32	ids[0];
+};
+
 #define perf_flags(attr)	(*(&(attr)->read_format + 1))
 
 /*
@@ -433,6 +454,7 @@ struct perf_event_attr {
 #define PERF_EVENT_IOC_ID		_IOR('$', 7, __u64 *)
 #define PERF_EVENT_IOC_SET_BPF		_IOW('$', 8, __u32)
 #define PERF_EVENT_IOC_PAUSE_OUTPUT	_IOW('$', 9, __u32)
+#define PERF_EVENT_IOC_QUERY_BPF	_IOWR('$', 10, struct perf_event_query_bpf *)
 
 enum perf_event_ioc_flags {
 	PERF_IOC_FLAG_GROUP		= 1U << 0,
@@ -942,6 +964,7 @@ enum perf_callchain_context {
 #define PERF_AUX_FLAG_TRUNCATED		0x01	/* record was truncated to fit */
 #define PERF_AUX_FLAG_OVERWRITE		0x02	/* snapshot from overwrite mode */
 #define PERF_AUX_FLAG_PARTIAL		0x04	/* record contains gaps */
+#define PERF_AUX_FLAG_COLLISION		0x08	/* sample collided with another */
 
 #define PERF_FLAG_FD_NO_GROUP		(1UL << 0)
 #define PERF_FLAG_FD_OUTPUT		(1UL << 1)

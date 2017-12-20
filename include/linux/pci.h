@@ -1072,6 +1072,7 @@ int pci_set_pcie_reset_state(struct pci_dev *dev, enum pcie_reset_state state);
 int pci_set_cacheline_size(struct pci_dev *dev);
 #define HAVE_PCI_SET_MWI
 int __must_check pci_set_mwi(struct pci_dev *dev);
+int __must_check pcim_set_mwi(struct pci_dev *dev);
 int pci_try_set_mwi(struct pci_dev *dev);
 void pci_clear_mwi(struct pci_dev *dev);
 void pci_intx(struct pci_dev *dev, int enable);
@@ -1673,6 +1674,9 @@ static inline struct pci_dev *pci_get_slot(struct pci_bus *bus,
 { return NULL; }
 static inline struct pci_dev *pci_get_bus_and_slot(unsigned int bus,
 						unsigned int devfn)
+{ return NULL; }
+static inline struct pci_dev *pci_get_domain_bus_and_slot(int domain,
+					unsigned int bus, unsigned int devfn)
 { return NULL; }
 
 static inline int pci_domain_nr(struct pci_bus *bus) { return 0; }

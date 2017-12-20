@@ -1571,14 +1571,11 @@ mlxsw_sp_port_add_cls_matchall_mirror(struct mlxsw_sp_port *mlxsw_sp_port,
 				      const struct tc_action *a,
 				      bool ingress)
 {
-	struct net *net = dev_net(mlxsw_sp_port->dev);
 	enum mlxsw_sp_span_type span_type;
 	struct mlxsw_sp_port *to_port;
 	struct net_device *to_dev;
-	int ifindex;
 
-	ifindex = tcf_mirred_ifindex(a);
-	to_dev = __dev_get_by_index(net, ifindex);
+	to_dev = tcf_mirred_dev(a);
 	if (!to_dev) {
 		netdev_err(mlxsw_sp_port->dev, "Could not find requested device\n");
 		return -EINVAL;
@@ -1838,6 +1835,54 @@ static int mlxsw_sp_setup_tc(struct net_device *dev, enum tc_setup_type type,
 	}
 }
 
+
+static int mlxsw_sp_feature_hw_tc(struct net_device *dev, bool enable)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+
+	if (!enable && (mlxsw_sp_port->acl_rule_count ||
+			!list_empty(&mlxsw_sp_port->mall_tc_list))) {
+		netdev_err(dev, "Active offloaded tc filters, can't turn hw_tc_offload off\n");
+		return -EINVAL;
+	}
+	return 0;
+}
+
+typedef int (*mlxsw_sp_feature_handler)(struct net_device *dev, bool enable);
+
+static int mlxsw_sp_handle_feature(struct net_device *dev,
+				   netdev_features_t wanted_features,
+				   netdev_features_t feature,
+				   mlxsw_sp_feature_handler feature_handler)
+{
+	netdev_features_t changes = wanted_features ^ dev->features;
+	bool enable = !!(wanted_features & feature);
+	int err;
+
+	if (!(changes & feature))
+		return 0;
+
+	err = feature_handler(dev, enable);
+	if (err) {
+		netdev_err(dev, "%s feature %pNF failed, err %d\n",
+			   enable ? "Enable" : "Disable", &feature, err);
+		return err;
+	}
+
+	if (enable)
+		dev->features |= feature;
+	else
+		dev->features &= ~feature;
+
+	return 0;
+}
+static int mlxsw_sp_set_features(struct net_device *dev,
+				 netdev_features_t features)
+{
+	return mlxsw_sp_handle_feature(dev, features, NETIF_F_HW_TC,
+				       mlxsw_sp_feature_hw_tc);
+}
+
 static const struct net_device_ops mlxsw_sp_port_netdev_ops = {
 	.ndo_open		= mlxsw_sp_port_open,
 	.ndo_stop		= mlxsw_sp_port_stop,
@@ -1852,6 +1897,7 @@ static const struct net_device_ops mlxsw_sp_port_netdev_ops = {
 	.ndo_vlan_rx_add_vid	= mlxsw_sp_port_add_vid,
 	.ndo_vlan_rx_kill_vid	= mlxsw_sp_port_kill_vid,
 	.ndo_get_phys_port_name	= mlxsw_sp_port_get_phys_port_name,
+	.ndo_set_features	= mlxsw_sp_set_features,
 };
 
 static void mlxsw_sp_port_get_drvinfo(struct net_device *dev,
@@ -4300,6 +4346,7 @@ static int mlxsw_sp_port_stp_set(struct mlxsw_sp_port *mlxsw_sp_port,
 
 static int mlxsw_sp_port_ovs_join(struct mlxsw_sp_port *mlxsw_sp_port)
 {
+	u16 vid = 1;
 	int err;
 
 	err = mlxsw_sp_port_vp_mode_set(mlxsw_sp_port, true);
@@ -4312,8 +4359,19 @@ static int mlxsw_sp_port_ovs_join(struct mlxsw_sp_port *mlxsw_sp_port)
 				     true, false);
 	if (err)
 		goto err_port_vlan_set;
+
+	for (; vid <= VLAN_N_VID - 1; vid++) {
+		err = mlxsw_sp_port_vid_learning_set(mlxsw_sp_port,
+						     vid, false);
+		if (err)
+			goto err_vid_learning_set;
+	}
+
 	return 0;
 
+err_vid_learning_set:
+	for (vid--; vid >= 1; vid--)
+		mlxsw_sp_port_vid_learning_set(mlxsw_sp_port, vid, true);
 err_port_vlan_set:
 	mlxsw_sp_port_stp_set(mlxsw_sp_port, false);
 err_port_stp_set:
@@ -4323,6 +4381,12 @@ err_port_stp_set:
 
 static void mlxsw_sp_port_ovs_leave(struct mlxsw_sp_port *mlxsw_sp_port)
 {
+	u16 vid;
+
+	for (vid = VLAN_N_VID - 1; vid >= 1; vid--)
+		mlxsw_sp_port_vid_learning_set(mlxsw_sp_port,
+					       vid, true);
+
 	mlxsw_sp_port_vlan_set(mlxsw_sp_port, 2, VLAN_N_VID - 1,
 			       false, false);
 	mlxsw_sp_port_stp_set(mlxsw_sp_port, false);

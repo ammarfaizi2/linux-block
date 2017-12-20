@@ -30,6 +30,7 @@
 #include <linux/ratelimit.h>
 #include <linux/uuid.h>
 #include <linux/semaphore.h>
+#include <linux/bpf.h>
 #include <asm/unaligned.h>
 #include "ctree.h"
 #include "disk-io.h"
@@ -3123,6 +3124,7 @@ recovery_tree_root:
 		goto fail_block_groups;
 	goto retry_root_backup;
 }
+BPF_ALLOW_ERROR_INJECTION(open_ctree);
 
 static void btrfs_end_buffer_write_sync(struct buffer_head *bh, int uptodate)
 {
@@ -3231,6 +3233,7 @@ static int write_dev_supers(struct btrfs_device *device,
 	int errors = 0;
 	u32 crc;
 	u64 bytenr;
+	int op_flags;
 
 	if (max_mirrors == 0)
 		max_mirrors = BTRFS_SUPER_MIRROR_MAX;
@@ -3273,13 +3276,10 @@ static int write_dev_supers(struct btrfs_device *device,
 		 * we fua the first super.  The others we allow
 		 * to go down lazy.
 		 */
-		if (i == 0) {
-			ret = btrfsic_submit_bh(REQ_OP_WRITE,
-				REQ_SYNC | REQ_FUA | REQ_META | REQ_PRIO, bh);
-		} else {
-			ret = btrfsic_submit_bh(REQ_OP_WRITE,
-				REQ_SYNC | REQ_META | REQ_PRIO, bh);
-		}
+		op_flags = REQ_SYNC | REQ_META | REQ_PRIO;
+		if (i == 0 && !btrfs_test_opt(device->fs_info, NOBARRIER))
+			op_flags |= REQ_FUA;
+		ret = btrfsic_submit_bh(REQ_OP_WRITE, op_flags, bh);
 		if (ret)
 			errors++;
 	}

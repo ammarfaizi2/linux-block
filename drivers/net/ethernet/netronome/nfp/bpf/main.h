@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Netronome Systems, Inc.
+ * Copyright (C) 2016-2017 Netronome Systems, Inc.
  *
  * This software is dual licensed under the GNU General License Version 2,
  * June 1991 as shown in the file COPYING in the top-level directory of this
@@ -78,6 +78,29 @@ enum pkt_vec {
 #define NFP_BPF_ABI_FLAGS	reg_imm(0)
 #define   NFP_BPF_ABI_FLAG_MARK	1
 
+/**
+ * struct nfp_app_bpf - bpf app priv structure
+ * @app:		backpointer to the app
+ *
+ * @adjust_head:	adjust head capability
+ * @flags:		extra flags for adjust head
+ * @off_min:		minimal packet offset within buffer required
+ * @off_max:		maximum packet offset within buffer required
+ * @guaranteed_sub:	amount of negative adjustment guaranteed possible
+ * @guaranteed_add:	amount of positive adjustment guaranteed possible
+ */
+struct nfp_app_bpf {
+	struct nfp_app *app;
+
+	struct nfp_bpf_cap_adjust_head {
+		u32 flags;
+		int off_min;
+		int off_max;
+		int guaranteed_sub;
+		int guaranteed_add;
+	} adjust_head;
+};
+
 struct nfp_prog;
 struct nfp_insn_meta;
 typedef int (*instr_cb_t)(struct nfp_prog *, struct nfp_insn_meta *);
@@ -89,23 +112,39 @@ typedef int (*instr_cb_t)(struct nfp_prog *, struct nfp_insn_meta *);
 #define nfp_meta_next(meta)	list_next_entry(meta, l)
 #define nfp_meta_prev(meta)	list_prev_entry(meta, l)
 
+#define FLAG_INSN_IS_JUMP_DST	BIT(0)
+
 /**
  * struct nfp_insn_meta - BPF instruction wrapper
  * @insn: BPF instruction
  * @ptr: pointer type for memory operations
+ * @ldst_gather_len: memcpy length gathered from load/store sequence
+ * @paired_st: the paired store insn at the head of the sequence
+ * @arg2: arg2 for call instructions
  * @ptr_not_const: pointer is not always constant
+ * @jmp_dst: destination info for jump instructions
  * @off: index of first generated machine instruction (in nfp_prog.prog)
  * @n: eBPF instruction number
+ * @flags: eBPF instruction extra optimization flags
  * @skip: skip this instruction (optimized out)
  * @double_cb: callback for second part of the instruction
  * @l: link on nfp_prog->insns list
  */
 struct nfp_insn_meta {
 	struct bpf_insn insn;
-	struct bpf_reg_state ptr;
-	bool ptr_not_const;
+	union {
+		struct {
+			struct bpf_reg_state ptr;
+			struct bpf_insn *paired_st;
+			s16 ldst_gather_len;
+			bool ptr_not_const;
+		};
+		struct nfp_insn_meta *jmp_dst;
+		struct bpf_reg_state arg2;
+	};
 	unsigned int off;
 	unsigned short n;
+	unsigned short flags;
 	bool skip;
 	instr_cb_t double_cb;
 
@@ -134,23 +173,38 @@ static inline u8 mbpf_mode(const struct nfp_insn_meta *meta)
 	return BPF_MODE(meta->insn.code);
 }
 
+static inline bool is_mbpf_load(const struct nfp_insn_meta *meta)
+{
+	return (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_LDX | BPF_MEM);
+}
+
+static inline bool is_mbpf_store(const struct nfp_insn_meta *meta)
+{
+	return (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_STX | BPF_MEM);
+}
+
 /**
  * struct nfp_prog - nfp BPF program
+ * @bpf: backpointer to the bpf app priv structure
  * @prog: machine code
  * @prog_len: number of valid instructions in @prog array
  * @__prog_alloc_len: alloc size of @prog array
  * @verifier_meta: temporary storage for verifier's insn meta
  * @type: BPF program type
  * @start_off: address of the first instruction in the memory
+ * @last_bpf_off: address of the last instruction translated from BPF
  * @tgt_out: jump target for normal exit
  * @tgt_abort: jump target for abort (e.g. access outside of packet buffer)
  * @tgt_done: jump target to get the next packet
  * @n_translated: number of successfully translated instructions (for errors)
  * @error: error code if something went wrong
  * @stack_depth: max stack depth from the verifier
+ * @adjust_head_location: if program has single adjust head call - the insn no.
  * @insns: list of BPF instruction wrappers (struct nfp_insn_meta)
  */
 struct nfp_prog {
+	struct nfp_app_bpf *bpf;
+
 	u64 *prog;
 	unsigned int prog_len;
 	unsigned int __prog_alloc_len;
@@ -160,6 +214,7 @@ struct nfp_prog {
 	enum bpf_prog_type type;
 
 	unsigned int start_off;
+	unsigned int last_bpf_off;
 	unsigned int tgt_out;
 	unsigned int tgt_abort;
 	unsigned int tgt_done;
@@ -168,6 +223,7 @@ struct nfp_prog {
 	int error;
 
 	unsigned int stack_depth;
+	unsigned int adjust_head_location;
 
 	struct list_head insns;
 };
@@ -189,4 +245,7 @@ int nfp_bpf_translate(struct nfp_app *app, struct nfp_net *nn,
 		      struct bpf_prog *prog);
 int nfp_bpf_destroy(struct nfp_app *app, struct nfp_net *nn,
 		    struct bpf_prog *prog);
+struct nfp_insn_meta *
+nfp_bpf_goto_meta(struct nfp_prog *nfp_prog, struct nfp_insn_meta *meta,
+		  unsigned int insn_idx, unsigned int n_insns);
 #endif

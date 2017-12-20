@@ -1140,7 +1140,7 @@ void tipc_sk_mcast_rcv(struct net *net, struct sk_buff_head *arrvq,
 				__skb_dequeue(arrvq);
 				__skb_queue_tail(inputq, skb);
 			}
-			refcount_dec(&skb->users);
+			kfree_skb(skb);
 			spin_unlock_bh(&inputq->lock);
 			continue;
 		}
@@ -2640,9 +2640,7 @@ void tipc_sk_reinit(struct net *net)
 	rhashtable_walk_enter(&tn->sk_rht, &iter);
 
 	do {
-		tsk = ERR_PTR(rhashtable_walk_start(&iter));
-		if (IS_ERR(tsk))
-			goto walk_stop;
+		rhashtable_walk_start(&iter);
 
 		while ((tsk = rhashtable_walk_next(&iter)) && !IS_ERR(tsk)) {
 			spin_lock_bh(&tsk->sk.sk_lock.slock);
@@ -2651,7 +2649,7 @@ void tipc_sk_reinit(struct net *net)
 			msg_set_orignode(msg, tn->own_addr);
 			spin_unlock_bh(&tsk->sk.sk_lock.slock);
 		}
-walk_stop:
+
 		rhashtable_walk_stop(&iter);
 	} while (tsk == ERR_PTR(-EAGAIN));
 }

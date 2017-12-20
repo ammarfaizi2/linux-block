@@ -92,6 +92,11 @@
 #define HCLGE_VECTOR0_CORERESET_INT_B	6
 #define HCLGE_VECTOR0_IMPRESET_INT_B	7
 
+/* Vector0 interrupt CMDQ event source register(RW) */
+#define HCLGE_VECTOR0_CMDQ_SRC_REG	0x27100
+/* CMDQ register bits for RX event(=MBX event) */
+#define HCLGE_VECTOR0_RX_CMDQ_INT_B	1
+
 enum HCLGE_DEV_STATE {
 	HCLGE_STATE_REINITING,
 	HCLGE_STATE_DOWN,
@@ -99,10 +104,17 @@ enum HCLGE_DEV_STATE {
 	HCLGE_STATE_REMOVING,
 	HCLGE_STATE_SERVICE_INITED,
 	HCLGE_STATE_SERVICE_SCHED,
+	HCLGE_STATE_RST_SERVICE_SCHED,
+	HCLGE_STATE_RST_HANDLING,
+	HCLGE_STATE_MBX_SERVICE_SCHED,
 	HCLGE_STATE_MBX_HANDLING,
-	HCLGE_STATE_MBX_IRQ,
-	HCLGE_STATE_RESET_INT,
 	HCLGE_STATE_MAX
+};
+
+enum hclge_evt_cause {
+	HCLGE_VECTOR0_EVENT_RST,
+	HCLGE_VECTOR0_EVENT_MBX,
+	HCLGE_VECTOR0_EVENT_OTHER,
 };
 
 #define HCLGE_MPF_ENBALE 1
@@ -420,6 +432,8 @@ struct hclge_dev {
 	unsigned long state;
 
 	enum hnae3_reset_type reset_type;
+	unsigned long reset_request;	/* reset has been requested */
+	unsigned long reset_pending;	/* client rst is pending to be served */
 	u32 fw_version;
 	u16 num_vmdq_vport;		/* Num vmdq vport this PF has set up */
 	u16 num_tqps;			/* Num task queue pairs of this PF */
@@ -469,6 +483,8 @@ struct hclge_dev {
 	unsigned long service_timer_previous;
 	struct timer_list service_timer;
 	struct work_struct service_task;
+	struct work_struct rst_service_task;
+	struct work_struct mbx_service_task;
 
 	bool cur_promisc;
 	int num_alloc_vfs;	/* Actual number of VFs allocated */
@@ -529,8 +545,10 @@ int hclge_cfg_func_mta_filter(struct hclge_dev *hdev,
 			      u8 func_id,
 			      bool enable);
 struct hclge_vport *hclge_get_vport(struct hnae3_handle *handle);
-int hclge_map_vport_ring_to_vector(struct hclge_vport *vport, int vector,
-				   struct hnae3_ring_chain_node *ring_chain);
+int hclge_bind_ring_with_vector(struct hclge_vport *vport,
+				int vector_id, bool en,
+				struct hnae3_ring_chain_node *ring_chain);
+
 static inline int hclge_get_queue_id(struct hnae3_queue *queue)
 {
 	struct hclge_tqp *tqp = container_of(queue, struct hclge_tqp, q);
@@ -544,4 +562,7 @@ int hclge_set_vf_vlan_common(struct hclge_dev *vport, int vfid,
 
 int hclge_buffer_alloc(struct hclge_dev *hdev);
 int hclge_rss_init_hw(struct hclge_dev *hdev);
+
+void hclge_mbx_handler(struct hclge_dev *hdev);
+void hclge_reset_tqp(struct hnae3_handle *handle, u16 queue_id);
 #endif

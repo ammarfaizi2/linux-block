@@ -54,25 +54,14 @@ static int bnxt_tc_parse_redir(struct bnxt *bp,
 			       struct bnxt_tc_actions *actions,
 			       const struct tc_action *tc_act)
 {
-	int ifindex = tcf_mirred_ifindex(tc_act);
-	struct net_device *dev;
-	u16 dst_fid;
+	struct net_device *dev = tcf_mirred_dev(tc_act);
 
-	dev = __dev_get_by_index(dev_net(bp->dev), ifindex);
 	if (!dev) {
-		netdev_info(bp->dev, "no dev for ifindex=%d", ifindex);
-		return -EINVAL;
-	}
-
-	/* find the FID from dev */
-	dst_fid = bnxt_flow_get_dst_fid(bp, dev);
-	if (dst_fid == BNXT_FID_INVALID) {
-		netdev_info(bp->dev, "can't get fid for ifindex=%d", ifindex);
+		netdev_info(bp->dev, "no dev in mirred action");
 		return -EINVAL;
 	}
 
 	actions->flags |= BNXT_TC_ACTION_FLAG_FWD;
-	actions->dst_fid = dst_fid;
 	actions->dst_dev = dev;
 	return 0;
 }
@@ -157,19 +146,20 @@ static int bnxt_tc_parse_actions(struct bnxt *bp,
 		}
 	}
 
-	if (rc)
-		return rc;
-
-	/* Tunnel encap/decap action must be accompanied by a redirect action */
-	if ((actions->flags & BNXT_TC_ACTION_FLAG_TUNNEL_ENCAP ||
-	     actions->flags & BNXT_TC_ACTION_FLAG_TUNNEL_DECAP) &&
-	    !(actions->flags & BNXT_TC_ACTION_FLAG_FWD)) {
-		netdev_info(bp->dev,
-			    "error: no redir action along with encap/decap");
-		return -EINVAL;
+	if (actions->flags & BNXT_TC_ACTION_FLAG_FWD) {
+		if (actions->flags & BNXT_TC_ACTION_FLAG_TUNNEL_ENCAP) {
+			/* dst_fid is PF's fid */
+			actions->dst_fid = bp->pf.fw_fid;
+		} else {
+			/* find the FID from dst_dev */
+			actions->dst_fid =
+				bnxt_flow_get_dst_fid(bp, actions->dst_dev);
+			if (actions->dst_fid == BNXT_FID_INVALID)
+				return -EINVAL;
+		}
 	}
 
-	return rc;
+	return 0;
 }
 
 #define GET_KEY(flow_cmd, key_type)					\
@@ -532,10 +522,8 @@ static int hwrm_cfa_decap_filter_alloc(struct bnxt *bp,
 	}
 
 	if (flow->flags & BNXT_TC_FLOW_FLAGS_TUNL_ETH_ADDRS) {
-		enables |= CFA_DECAP_FILTER_ALLOC_REQ_ENABLES_DST_MACADDR |
-			   CFA_DECAP_FILTER_ALLOC_REQ_ENABLES_SRC_MACADDR;
+		enables |= CFA_DECAP_FILTER_ALLOC_REQ_ENABLES_DST_MACADDR;
 		ether_addr_copy(req.dst_macaddr, l2_info->dmac);
-		ether_addr_copy(req.src_macaddr, l2_info->smac);
 	}
 	if (l2_info->num_vlans) {
 		enables |= CFA_DECAP_FILTER_ALLOC_REQ_ENABLES_T_IVLAN_VID;
@@ -901,10 +889,10 @@ static void bnxt_tc_put_decap_handle(struct bnxt *bp,
 
 static int bnxt_tc_resolve_tunnel_hdrs(struct bnxt *bp,
 				       struct ip_tunnel_key *tun_key,
-				       struct bnxt_tc_l2_key *l2_info,
-				       struct net_device *real_dst_dev)
+				       struct bnxt_tc_l2_key *l2_info)
 {
 #ifdef CONFIG_INET
+	struct net_device *real_dst_dev = bp->dev;
 	struct flowi4 flow = { {0} };
 	struct net_device *dst_dev;
 	struct neighbour *nbr;
@@ -1008,14 +996,13 @@ static int bnxt_tc_get_decap_handle(struct bnxt *bp, struct bnxt_tc_flow *flow,
 	 */
 	tun_key.u.ipv4.dst = flow->tun_key.u.ipv4.src;
 	tun_key.tp_dst = flow->tun_key.tp_dst;
-	rc = bnxt_tc_resolve_tunnel_hdrs(bp, &tun_key, &l2_info, bp->dev);
+	rc = bnxt_tc_resolve_tunnel_hdrs(bp, &tun_key, &l2_info);
 	if (rc)
 		goto put_decap;
 
-	decap_key->ttl = tun_key.ttl;
 	decap_l2_info = &decap_node->l2_info;
+	/* decap smac is wildcarded */
 	ether_addr_copy(decap_l2_info->dmac, l2_info.smac);
-	ether_addr_copy(decap_l2_info->smac, l2_info.dmac);
 	if (l2_info.num_vlans) {
 		decap_l2_info->num_vlans = l2_info.num_vlans;
 		decap_l2_info->inner_vlan_tpid = l2_info.inner_vlan_tpid;
@@ -1095,8 +1082,7 @@ static int bnxt_tc_get_encap_handle(struct bnxt *bp, struct bnxt_tc_flow *flow,
 	if (encap_node->tunnel_handle != INVALID_TUNNEL_HANDLE)
 		goto done;
 
-	rc = bnxt_tc_resolve_tunnel_hdrs(bp, encap_key, &encap_node->l2_info,
-					 flow->actions.dst_dev);
+	rc = bnxt_tc_resolve_tunnel_hdrs(bp, encap_key, &encap_node->l2_info);
 	if (rc)
 		goto put_encap;
 
@@ -1169,6 +1155,15 @@ static int __bnxt_tc_del_flow(struct bnxt *bp,
 	return 0;
 }
 
+static void bnxt_tc_set_src_fid(struct bnxt *bp, struct bnxt_tc_flow *flow,
+				u16 src_fid)
+{
+	if (flow->actions.flags & BNXT_TC_ACTION_FLAG_TUNNEL_DECAP)
+		flow->src_fid = bp->pf.fw_fid;
+	else
+		flow->src_fid = src_fid;
+}
+
 /* Add a new flow or replace an existing flow.
  * Notes on locking:
  * There are essentially two critical sections here.
@@ -1204,7 +1199,8 @@ static int bnxt_tc_add_flow(struct bnxt *bp, u16 src_fid,
 	rc = bnxt_tc_parse_flow(bp, tc_flow_cmd, flow);
 	if (rc)
 		goto free_node;
-	flow->src_fid = src_fid;
+
+	bnxt_tc_set_src_fid(bp, flow, src_fid);
 
 	if (!bnxt_tc_can_offload(bp, flow)) {
 		rc = -ENOSPC;
@@ -1416,11 +1412,7 @@ bnxt_tc_flow_stats_batch_prep(struct bnxt *bp,
 	void *flow_node;
 	int rc, i;
 
-	rc = rhashtable_walk_start(iter);
-	if (rc && rc != -EAGAIN) {
-		i = 0;
-		goto done;
-	}
+	rhashtable_walk_start(iter);
 
 	rc = 0;
 	for (i = 0; i < BNXT_FLOW_STATS_BATCH_MAX; i++) {

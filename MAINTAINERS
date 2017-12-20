@@ -554,13 +554,13 @@ S:	Orphan
 F:	Documentation/filesystems/affs.txt
 F:	fs/affs/
 
-AFS FILESYSTEM & AF_RXRPC SOCKET DOMAIN
+AFS FILESYSTEM
 M:	David Howells <dhowells@redhat.com>
 L:	linux-afs@lists.infradead.org
 S:	Supported
 F:	fs/afs/
-F:	include/net/af_rxrpc.h
-F:	net/rxrpc/af_rxrpc.c
+F:	include/trace/events/afs.h
+F:	Documentation/filesystems/afs.txt
 W:	https://www.infradead.org/~dhowells/kafs/
 
 AGPGART DRIVER
@@ -859,7 +859,8 @@ F:	kernel/configs/android*
 ANDROID DRIVERS
 M:	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 M:	Arve Hjønnevåg <arve@android.com>
-M:	Riley Andrews <riandrews@android.com>
+M:	Todd Kjos <tkjos@android.com>
+M:	Martijn Coenen <maco@android.com>
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging.git
 L:	devel@driverdev.osuosl.org
 S:	Supported
@@ -2046,7 +2047,7 @@ F:	arch/arm/boot/dts/uniphier*
 F:	arch/arm/include/asm/hardware/cache-uniphier.h
 F:	arch/arm/mach-uniphier/
 F:	arch/arm/mm/cache-uniphier.c
-F:	arch/arm64/boot/dts/socionext/
+F:	arch/arm64/boot/dts/socionext/uniphier*
 F:	drivers/bus/uniphier-system-bus.c
 F:	drivers/clk/uniphier/
 F:	drivers/gpio/gpio-uniphier.c
@@ -2688,7 +2689,6 @@ F:	drivers/mtd/devices/block2mtd.c
 
 BLUETOOTH DRIVERS
 M:	Marcel Holtmann <marcel@holtmann.org>
-M:	Gustavo Padovan <gustavo@padovan.org>
 M:	Johan Hedberg <johan.hedberg@gmail.com>
 L:	linux-bluetooth@vger.kernel.org
 W:	http://www.bluez.org/
@@ -2699,7 +2699,6 @@ F:	drivers/bluetooth/
 
 BLUETOOTH SUBSYSTEM
 M:	Marcel Holtmann <marcel@holtmann.org>
-M:	Gustavo Padovan <gustavo@padovan.org>
 M:	Johan Hedberg <johan.hedberg@gmail.com>
 L:	linux-bluetooth@vger.kernel.org
 W:	http://www.bluez.org/
@@ -2724,12 +2723,16 @@ M:	Alexei Starovoitov <ast@kernel.org>
 M:	Daniel Borkmann <daniel@iogearbox.net>
 L:	netdev@vger.kernel.org
 L:	linux-kernel@vger.kernel.org
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git
 S:	Supported
 F:	arch/x86/net/bpf_jit*
 F:	Documentation/networking/filter.txt
 F:	Documentation/bpf/
 F:	include/linux/bpf*
 F:	include/linux/filter.h
+F:	include/trace/events/bpf.h
+F:	include/trace/events/xdp.h
 F:	include/uapi/linux/bpf*
 F:	include/uapi/linux/filter.h
 F:	kernel/bpf/
@@ -5430,7 +5433,7 @@ F:	drivers/media/tuners/fc2580*
 
 FCOE SUBSYSTEM (libfc, libfcoe, fcoe)
 M:	Johannes Thumshirn <jth@kernel.org>
-L:	fcoe-devel@open-fcoe.org
+L:	linux-scsi@vger.kernel.org
 W:	www.Open-FCoE.org
 S:	Supported
 F:	drivers/scsi/libfc/
@@ -6174,7 +6177,6 @@ M:	Jean Delvare <jdelvare@suse.com>
 M:	Guenter Roeck <linux@roeck-us.net>
 L:	linux-hwmon@vger.kernel.org
 W:	http://hwmon.wiki.kernel.org/
-T:	quilt http://jdelvare.nerim.net/devel/linux/jdelvare-hwmon/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/groeck/linux-staging.git
 S:	Maintained
 F:	Documentation/hwmon/
@@ -7767,6 +7769,7 @@ F:	security/keys/
 
 KGDB / KDB /debug_core
 M:	Jason Wessel <jason.wessel@windriver.com>
+M:	Daniel Thompson <daniel.thompson@linaro.org>
 W:	http://kgdb.wiki.kernel.org/
 L:	kgdb-bugreport@lists.sourceforge.net
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jwessel/kgdb.git
@@ -8723,6 +8726,13 @@ L:	netdev@vger.kernel.org
 S:	Maintained
 F:	drivers/net/ethernet/mediatek/
 
+MEDIATEK SWITCH DRIVER
+M:	Sean Wang <sean.wang@mediatek.com>
+L:	netdev@vger.kernel.org
+S:	Maintained
+F:	drivers/net/dsa/mt7530.*
+F:	net/dsa/tag_mtk.c
+
 MEDIATEK JPEG DRIVER
 M:	Rick Chang <rick.chang@mediatek.com>
 M:	Bin Liu <bin.liu@mediatek.com>
@@ -9598,6 +9608,11 @@ F:	include/net/tls.h
 NETWORKING [WIRELESS]
 L:	linux-wireless@vger.kernel.org
 Q:	http://patchwork.kernel.org/project/linux-wireless/list/
+
+NETDEVSIM
+M:	Jakub Kicinski <jakub.kicinski@netronome.com>
+S:	Maintained
+F:	drivers/net/netdevsim/*
 
 NETXEN (1/10) GbE SUPPORT
 M:	Manish Chopra <manish.chopra@cavium.com>
@@ -11777,6 +11792,18 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jes/linux.git rtl8xxxu-deve
 S:	Maintained
 F:	drivers/net/wireless/realtek/rtl8xxxu/
 
+RXRPC SOCKETS (AF_RXRPC)
+M:	David Howells <dhowells@redhat.com>
+L:	linux-afs@lists.infradead.org
+S:	Supported
+F:	net/rxrpc/
+F:	include/keys/rxrpc-type.h
+F:	include/net/af_rxrpc.h
+F:	include/trace/events/rxrpc.h
+F:	include/uapi/linux/rxrpc.h
+F:	Documentation/networking/rxrpc.txt
+W:	https://www.infradead.org/~dhowells/kafs/
+
 S3 SAVAGE FRAMEBUFFER DRIVER
 M:	Antonino Daplas <adaplas@gmail.com>
 L:	linux-fbdev@vger.kernel.org
@@ -12630,6 +12657,14 @@ S:	Maintained
 F:	drivers/ssb/
 F:	include/linux/ssb/
 
+SONY IMX274 SENSOR DRIVER
+M:	Leon Luo <leonl@leopardimaging.com>
+L:	linux-media@vger.kernel.org
+T:	git git://linuxtv.org/media_tree.git
+S:	Maintained
+F:	drivers/media/i2c/imx274.c
+F:	Documentation/devicetree/bindings/media/i2c/imx274.txt
+
 SONY MEMORYSTICK CARD SUPPORT
 M:	Alex Dubov <oakad@yahoo.com>
 W:	http://tifmxx.berlios.de/
@@ -13096,6 +13131,7 @@ F:	drivers/dma/dw/
 
 SYNOPSYS DESIGNWARE ENTERPRISE ETHERNET DRIVER
 M:	Jie Deng <jiedeng@synopsys.com>
+M:	Jose Abreu <Jose.Abreu@synopsys.com>
 L:	netdev@vger.kernel.org
 S:	Supported
 F:	drivers/net/ethernet/synopsys/
@@ -13648,10 +13684,8 @@ F:	drivers/net/wireless/ti/
 F:	include/linux/wl12xx.h
 
 TILE ARCHITECTURE
-M:	Chris Metcalf <cmetcalf@mellanox.com>
 W:	http://www.mellanox.com/repository/solutions/tile-scm/
-T:	git git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git
-S:	Supported
+S:	Orphan
 F:	arch/tile/
 F:	drivers/char/tile-srom.c
 F:	drivers/edac/tile_edac.c

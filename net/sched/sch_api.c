@@ -795,9 +795,12 @@ static int tc_fill_qdisc(struct sk_buff *skb, struct Qdisc *q, u32 clid,
 	tcm->tcm_info = refcount_read(&q->refcnt);
 	if (nla_put_string(skb, TCA_KIND, q->ops->id))
 		goto nla_put_failure;
+	if (nla_put_u8(skb, TCA_HW_OFFLOAD, !!(q->flags & TCQ_F_OFFLOADED)))
+		goto nla_put_failure;
 	if (q->ops->dump && q->ops->dump(q, skb) < 0)
 		goto nla_put_failure;
-	qlen = q->q.qlen;
+
+	qlen = qdisc_qlen_sum(q);
 
 	stab = rtnl_dereference(q->stab);
 	if (stab && qdisc_dump_stab(skb, stab) < 0)
@@ -954,6 +957,11 @@ skip:
 	} else {
 		const struct Qdisc_class_ops *cops = parent->ops->cl_ops;
 
+		/* Only support running class lockless if parent is lockless */
+		if (new && (new->flags & TCQ_F_NOLOCK) &&
+		    parent && !(parent->flags & TCQ_F_NOLOCK))
+			new->flags &= ~TCQ_F_NOLOCK;
+
 		err = -EOPNOTSUPP;
 		if (cops && cops->graft) {
 			unsigned long cl = cops->find(parent, classid);
@@ -1020,7 +1028,7 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 #endif
 
 	err = -ENOENT;
-	if (ops == NULL)
+	if (!ops)
 		goto err_out;
 
 	sch = qdisc_alloc(dev_queue, ops);
@@ -1060,54 +1068,60 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 		netdev_info(dev, "Caught tx_queue_len zero misconfig\n");
 	}
 
-	if (!ops->init || (err = ops->init(sch, tca[TCA_OPTIONS])) == 0) {
-		if (qdisc_is_percpu_stats(sch)) {
-			sch->cpu_bstats =
-				netdev_alloc_pcpu_stats(struct gnet_stats_basic_cpu);
-			if (!sch->cpu_bstats)
-				goto err_out4;
-
-			sch->cpu_qstats = alloc_percpu(struct gnet_stats_queue);
-			if (!sch->cpu_qstats)
-				goto err_out4;
-		}
-
-		if (tca[TCA_STAB]) {
-			stab = qdisc_get_stab(tca[TCA_STAB]);
-			if (IS_ERR(stab)) {
-				err = PTR_ERR(stab);
-				goto err_out4;
-			}
-			rcu_assign_pointer(sch->stab, stab);
-		}
-		if (tca[TCA_RATE]) {
-			seqcount_t *running;
-
-			err = -EOPNOTSUPP;
-			if (sch->flags & TCQ_F_MQROOT)
-				goto err_out4;
-
-			if ((sch->parent != TC_H_ROOT) &&
-			    !(sch->flags & TCQ_F_INGRESS) &&
-			    (!p || !(p->flags & TCQ_F_MQROOT)))
-				running = qdisc_root_sleeping_running(sch);
-			else
-				running = &sch->running;
-
-			err = gen_new_estimator(&sch->bstats,
-						sch->cpu_bstats,
-						&sch->rate_est,
-						NULL,
-						running,
-						tca[TCA_RATE]);
-			if (err)
-				goto err_out4;
-		}
-
-		qdisc_hash_add(sch, false);
-
-		return sch;
+	if (ops->init) {
+		err = ops->init(sch, tca[TCA_OPTIONS]);
+		if (err != 0)
+			goto err_out5;
 	}
+
+	if (qdisc_is_percpu_stats(sch)) {
+		sch->cpu_bstats =
+			netdev_alloc_pcpu_stats(struct gnet_stats_basic_cpu);
+		if (!sch->cpu_bstats)
+			goto err_out4;
+
+		sch->cpu_qstats = alloc_percpu(struct gnet_stats_queue);
+		if (!sch->cpu_qstats)
+			goto err_out4;
+	}
+
+	if (tca[TCA_STAB]) {
+		stab = qdisc_get_stab(tca[TCA_STAB]);
+		if (IS_ERR(stab)) {
+			err = PTR_ERR(stab);
+			goto err_out4;
+		}
+		rcu_assign_pointer(sch->stab, stab);
+	}
+	if (tca[TCA_RATE]) {
+		seqcount_t *running;
+
+		err = -EOPNOTSUPP;
+		if (sch->flags & TCQ_F_MQROOT)
+			goto err_out4;
+
+		if (sch->parent != TC_H_ROOT &&
+		    !(sch->flags & TCQ_F_INGRESS) &&
+		    (!p || !(p->flags & TCQ_F_MQROOT)))
+			running = qdisc_root_sleeping_running(sch);
+		else
+			running = &sch->running;
+
+		err = gen_new_estimator(&sch->bstats,
+					sch->cpu_bstats,
+					&sch->rate_est,
+					NULL,
+					running,
+					tca[TCA_RATE]);
+		if (err)
+			goto err_out4;
+	}
+
+	qdisc_hash_add(sch, false);
+
+	return sch;
+
+err_out5:
 	/* ops->init() failed, we call ->destroy() like qdisc_create_dflt() */
 	if (ops->destroy)
 		ops->destroy(sch);
@@ -1139,7 +1153,7 @@ static int qdisc_change(struct Qdisc *sch, struct nlattr **tca)
 	int err = 0;
 
 	if (tca[TCA_OPTIONS]) {
-		if (sch->ops->change == NULL)
+		if (!sch->ops->change)
 			return -EINVAL;
 		err = sch->ops->change(sch, tca[TCA_OPTIONS]);
 		if (err)
@@ -1344,7 +1358,8 @@ replay:
 					goto create_n_graft;
 				if (n->nlmsg_flags & NLM_F_EXCL)
 					return -EEXIST;
-				if (tca[TCA_KIND] && nla_strcmp(tca[TCA_KIND], q->ops->id))
+				if (tca[TCA_KIND] &&
+				    nla_strcmp(tca[TCA_KIND], q->ops->id))
 					return -EINVAL;
 				if (q == p ||
 				    (p && check_loop(q, p, 0)))
@@ -1389,7 +1404,7 @@ replay:
 	}
 
 	/* Change qdisc parameters */
-	if (q == NULL)
+	if (!q)
 		return -ENOENT;
 	if (n->nlmsg_flags & NLM_F_EXCL)
 		return -EEXIST;

@@ -433,15 +433,6 @@
 				clock-names = "ipg", "per";
 			};
 
-			srtc: srtc@53fa4000 {
-				compatible = "fsl,imx53-rtc", "fsl,imx25-rtc";
-				reg = <0x53fa4000 0x4000>;
-				interrupts = <24>;
-				interrupt-parent = <&tzic>;
-				clocks = <&clks IMX5_CLK_SRTC_GATE>;
-				clock-names = "ipg";
-			};
-
 			iomuxc: iomuxc@53fa8000 {
 				compatible = "fsl,imx53-iomuxc";
 				reg = <0x53fa8000 0x4000>;
@@ -545,7 +536,7 @@
 			};
 
 			can1: can@53fc8000 {
-				compatible = "fsl,imx53-flexcan", "fsl,p1010-flexcan";
+				compatible = "fsl,imx53-flexcan";
 				reg = <0x53fc8000 0x4000>;
 				interrupts = <82>;
 				clocks = <&clks IMX5_CLK_CAN1_IPG_GATE>,
@@ -555,7 +546,7 @@
 			};
 
 			can2: can@53fcc000 {
-				compatible = "fsl,imx53-flexcan", "fsl,p1010-flexcan";
+				compatible = "fsl,imx53-flexcan";
 				reg = <0x53fcc000 0x4000>;
 				interrupts = <83>;
 				clocks = <&clks IMX5_CLK_CAN2_IPG_GATE>,

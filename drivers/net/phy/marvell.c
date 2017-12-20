@@ -637,6 +637,10 @@ static int m88e1510_config_aneg(struct phy_device *phydev)
 	if (err < 0)
 		goto error;
 
+	/* Do not touch the fiber page if we're in copper->sgmii mode */
+	if (phydev->interface == PHY_INTERFACE_MODE_SGMII)
+		return 0;
+
 	/* Then the fiber link */
 	err = marvell_set_page(phydev, MII_MARVELL_FIBER_PAGE);
 	if (err < 0)
@@ -1958,7 +1962,6 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = &marvell_config_init,
 		.config_aneg = &m88e1101_config_aneg,
-		.read_status = &genphy_read_status,
 		.ack_interrupt = &marvell_ack_interrupt,
 		.config_intr = &marvell_config_intr,
 		.resume = &genphy_resume,
@@ -1976,7 +1979,6 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = &m88e1111_config_init,
 		.config_aneg = &marvell_config_aneg,
-		.read_status = &genphy_read_status,
 		.ack_interrupt = &marvell_ack_interrupt,
 		.config_intr = &marvell_config_intr,
 		.resume = &genphy_resume,
@@ -2012,7 +2014,6 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = &m88e1118_config_init,
 		.config_aneg = &m88e1118_config_aneg,
-		.read_status = &genphy_read_status,
 		.ack_interrupt = &marvell_ack_interrupt,
 		.config_intr = &marvell_config_intr,
 		.resume = &genphy_resume,
@@ -2070,7 +2071,6 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = &m88e1145_config_init,
 		.config_aneg = &marvell_config_aneg,
-		.read_status = &genphy_read_status,
 		.ack_interrupt = &marvell_ack_interrupt,
 		.config_intr = &marvell_config_intr,
 		.resume = &genphy_resume,
@@ -2088,7 +2088,6 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = &m88e1149_config_init,
 		.config_aneg = &m88e1118_config_aneg,
-		.read_status = &genphy_read_status,
 		.ack_interrupt = &marvell_ack_interrupt,
 		.config_intr = &marvell_config_intr,
 		.resume = &genphy_resume,
@@ -2106,7 +2105,6 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = &m88e1111_config_init,
 		.config_aneg = &marvell_config_aneg,
-		.read_status = &genphy_read_status,
 		.ack_interrupt = &marvell_ack_interrupt,
 		.config_intr = &marvell_config_intr,
 		.resume = &genphy_resume,
@@ -2123,8 +2121,6 @@ static struct phy_driver marvell_drivers[] = {
 		.flags = PHY_HAS_INTERRUPT,
 		.probe = marvell_probe,
 		.config_init = &m88e1116r_config_init,
-		.config_aneg = &genphy_config_aneg,
-		.read_status = &genphy_read_status,
 		.ack_interrupt = &marvell_ack_interrupt,
 		.config_intr = &marvell_config_intr,
 		.resume = &genphy_resume,
@@ -2200,7 +2196,6 @@ static struct phy_driver marvell_drivers[] = {
 		.features = PHY_BASIC_FEATURES,
 		.flags = PHY_HAS_INTERRUPT,
 		.probe = marvell_probe,
-		.config_aneg = &genphy_config_aneg,
 		.config_init = &m88e3016_config_init,
 		.aneg_done = &marvell_aneg_done,
 		.read_status = &marvell_read_status,

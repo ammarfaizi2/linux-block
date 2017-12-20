@@ -249,6 +249,29 @@ static int lan9303_read(struct regmap *regmap, unsigned int offset, u32 *reg)
 	return -EIO;
 }
 
+/* Wait a while until mask & reg == value. Otherwise return timeout. */
+static int lan9303_read_wait(struct lan9303 *chip, int offset, u32 mask)
+{
+	int i;
+
+	for (i = 0; i < 25; i++) {
+		u32 reg;
+		int ret;
+
+		ret = lan9303_read(chip->regmap, offset, &reg);
+		if (ret) {
+			dev_err(chip->dev, "%s failed to read offset %d: %d\n",
+				__func__, offset, ret);
+			return ret;
+		}
+		if (!(reg & mask))
+			return 0;
+		usleep_range(1000, 2000);
+	}
+
+	return -ETIMEDOUT;
+}
+
 static int lan9303_virt_phy_reg_read(struct lan9303 *chip, int regnum)
 {
 	int ret;
@@ -274,22 +297,8 @@ static int lan9303_virt_phy_reg_write(struct lan9303 *chip, int regnum, u16 val)
 
 static int lan9303_indirect_phy_wait_for_completion(struct lan9303 *chip)
 {
-	int ret, i;
-	u32 reg;
-
-	for (i = 0; i < 25; i++) {
-		ret = lan9303_read(chip->regmap, LAN9303_PMI_ACCESS, &reg);
-		if (ret) {
-			dev_err(chip->dev,
-				"Failed to read pmi access status: %d\n", ret);
-			return ret;
-		}
-		if (!(reg & LAN9303_PMI_ACCESS_MII_BUSY))
-			return 0;
-		usleep_range(1000, 2000);
-	}
-
-	return -EIO;
+	return lan9303_read_wait(chip, LAN9303_PMI_ACCESS,
+				 LAN9303_PMI_ACCESS_MII_BUSY);
 }
 
 static int lan9303_indirect_phy_read(struct lan9303 *chip, int addr, int regnum)
@@ -366,22 +375,8 @@ EXPORT_SYMBOL_GPL(lan9303_indirect_phy_ops);
 
 static int lan9303_switch_wait_for_completion(struct lan9303 *chip)
 {
-	int ret, i;
-	u32 reg;
-
-	for (i = 0; i < 25; i++) {
-		ret = lan9303_read(chip->regmap, LAN9303_SWITCH_CSR_CMD, &reg);
-		if (ret) {
-			dev_err(chip->dev,
-				"Failed to read csr command status: %d\n", ret);
-			return ret;
-		}
-		if (!(reg & LAN9303_SWITCH_CSR_CMD_BUSY))
-			return 0;
-		usleep_range(1000, 2000);
-	}
-
-	return -EIO;
+	return lan9303_read_wait(chip, LAN9303_SWITCH_CSR_CMD,
+				 LAN9303_SWITCH_CSR_CMD_BUSY);
 }
 
 static int lan9303_write_switch_reg(struct lan9303 *chip, u16 regnum, u32 val)
@@ -583,6 +578,7 @@ static void lan9303_alr_loop(struct lan9303 *chip, alr_loop_cb_t *cb, void *ctx)
 {
 	int i;
 
+	mutex_lock(&chip->alr_mutex);
 	lan9303_write_switch_reg(chip, LAN9303_SWE_ALR_CMD,
 				 LAN9303_ALR_CMD_GET_FIRST);
 	lan9303_write_switch_reg(chip, LAN9303_SWE_ALR_CMD, 0);
@@ -606,6 +602,7 @@ static void lan9303_alr_loop(struct lan9303 *chip, alr_loop_cb_t *cb, void *ctx)
 					 LAN9303_ALR_CMD_GET_NEXT);
 		lan9303_write_switch_reg(chip, LAN9303_SWE_ALR_CMD, 0);
 	}
+	mutex_unlock(&chip->alr_mutex);
 }
 
 static void alr_reg_to_mac(u32 dat0, u32 dat1, u8 mac[6])
@@ -694,16 +691,20 @@ static int lan9303_alr_add_port(struct lan9303 *chip, const u8 *mac, int port,
 {
 	struct lan9303_alr_cache_entry *entr;
 
+	mutex_lock(&chip->alr_mutex);
 	entr = lan9303_alr_cache_find_mac(chip, mac);
 	if (!entr) { /*New entry */
 		entr = lan9303_alr_cache_find_free(chip);
-		if (!entr)
+		if (!entr) {
+			mutex_unlock(&chip->alr_mutex);
 			return -ENOSPC;
+		}
 		ether_addr_copy(entr->mac_addr, mac);
 	}
 	entr->port_map |= BIT(port);
 	entr->stp_override = stp_override;
 	lan9303_alr_set_entry(chip, mac, entr->port_map, stp_override);
+	mutex_unlock(&chip->alr_mutex);
 
 	return 0;
 }
@@ -713,15 +714,18 @@ static int lan9303_alr_del_port(struct lan9303 *chip, const u8 *mac, int port)
 {
 	struct lan9303_alr_cache_entry *entr;
 
+	mutex_lock(&chip->alr_mutex);
 	entr = lan9303_alr_cache_find_mac(chip, mac);
 	if (!entr)
-		return 0;  /* no static entry found */
+		goto out;  /* no static entry found */
 
 	entr->port_map &= ~BIT(port);
 	if (entr->port_map == 0) /* zero means its free again */
 		eth_zero_addr(entr->mac_addr);
 	lan9303_alr_set_entry(chip, mac, entr->port_map, entr->stp_override);
 
+out:
+	mutex_unlock(&chip->alr_mutex);
 	return 0;
 }
 
@@ -1217,8 +1221,7 @@ static int lan9303_port_fdb_dump(struct dsa_switch *ds, int port,
 }
 
 static int lan9303_port_mdb_prepare(struct dsa_switch *ds, int port,
-				    const struct switchdev_obj_port_mdb *mdb,
-				    struct switchdev_trans *trans)
+				    const struct switchdev_obj_port_mdb *mdb)
 {
 	struct lan9303 *chip = ds->priv;
 
@@ -1235,8 +1238,7 @@ static int lan9303_port_mdb_prepare(struct dsa_switch *ds, int port,
 }
 
 static void lan9303_port_mdb_add(struct dsa_switch *ds, int port,
-				 const struct switchdev_obj_port_mdb *mdb,
-				 struct switchdev_trans *trans)
+				 const struct switchdev_obj_port_mdb *mdb)
 {
 	struct lan9303 *chip = ds->priv;
 
@@ -1325,6 +1327,7 @@ int lan9303_probe(struct lan9303 *chip, struct device_node *np)
 	int ret;
 
 	mutex_init(&chip->indirect_mutex);
+	mutex_init(&chip->alr_mutex);
 
 	lan9303_probe_reset_gpio(chip, np);
 

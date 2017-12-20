@@ -372,8 +372,7 @@ nfp_cpp_area_alloc(struct nfp_cpp *cpp, u32 dest,
  * that it can be accessed directly.
  *
  * NOTE: @address and @size must be 32-bit aligned values.
- *
- * NOTE: The area must also be 'released' when the structure is freed.
+ * The area must also be 'released' when the structure is freed.
  *
  * Return: NFP CPP Area handle, or NULL
  */
@@ -536,8 +535,7 @@ void nfp_cpp_area_release_free(struct nfp_cpp_area *area)
  * Read data from indicated CPP region.
  *
  * NOTE: @offset and @length must be 32-bit aligned values.
- *
- * NOTE: Area must have been locked down with an 'acquire'.
+ * Area must have been locked down with an 'acquire'.
  *
  * Return: length of io, or -ERRNO
  */
@@ -558,8 +556,7 @@ int nfp_cpp_area_read(struct nfp_cpp_area *area,
  * Write data to indicated CPP region.
  *
  * NOTE: @offset and @length must be 32-bit aligned values.
- *
- * NOTE: Area must have been locked down with an 'acquire'.
+ * Area must have been locked down with an 'acquire'.
  *
  * Return: length of io, or -ERRNO
  */
@@ -568,6 +565,17 @@ int nfp_cpp_area_write(struct nfp_cpp_area *area,
 		       size_t length)
 {
 	return area->cpp->op->area_write(area, kernel_vaddr, offset, length);
+}
+
+/**
+ * nfp_cpp_area_size() - return size of a CPP area
+ * @cpp_area:	CPP area handle
+ *
+ * Return: Size of the area
+ */
+size_t nfp_cpp_area_size(struct nfp_cpp_area *cpp_area)
+{
+	return cpp_area->size;
 }
 
 /**

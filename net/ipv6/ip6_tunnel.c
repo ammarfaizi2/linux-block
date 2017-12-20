@@ -861,7 +861,7 @@ int ip6_tnl_rcv(struct ip6_tnl *t, struct sk_buff *skb,
 		struct metadata_dst *tun_dst,
 		bool log_ecn_err)
 {
-	return __ip6_tnl_rcv(t, skb, tpi, NULL, ip6ip6_dscp_ecn_decapsulate,
+	return __ip6_tnl_rcv(t, skb, tpi, tun_dst, ip6ip6_dscp_ecn_decapsulate,
 			     log_ecn_err);
 }
 EXPORT_SYMBOL(ip6_tnl_rcv);
@@ -904,7 +904,7 @@ static int ipxip6_rcv(struct sk_buff *skb, u8 ipproto,
 		if (t->parms.collect_md) {
 			tun_dst = ipv6_tun_rx_dst(skb, 0, 0, 0);
 			if (!tun_dst)
-				return 0;
+				goto drop;
 		}
 		ret = __ip6_tnl_rcv(t, skb, tpi, tun_dst, dscp_ecn_decapsulate,
 				    log_ecn_error);
@@ -978,6 +978,9 @@ int ip6_tnl_xmit_ctl(struct ip6_tnl *t,
 	struct __ip6_tnl_parm *p = &t->parms;
 	int ret = 0;
 	struct net *net = t->net;
+
+	if (t->parms.collect_md)
+		return 1;
 
 	if ((p->flags & IP6_TNL_F_CAP_XMIT) ||
 	    ((p->flags & IP6_TNL_F_CAP_PER_PACKET) &&

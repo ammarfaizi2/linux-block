@@ -822,9 +822,9 @@ struct fe_priv {
 	/*
 	 * tx specific fields.
 	 */
-	union ring_type get_tx, put_tx, first_tx, last_tx;
+	union ring_type get_tx, put_tx, last_tx;
 	struct nv_skb_map *get_tx_ctx, *put_tx_ctx;
-	struct nv_skb_map *first_tx_ctx, *last_tx_ctx;
+	struct nv_skb_map *last_tx_ctx;
 	struct nv_skb_map *tx_skb;
 
 	union ring_type tx_ring;
@@ -1932,13 +1932,15 @@ static void nv_init_tx(struct net_device *dev)
 	struct fe_priv *np = netdev_priv(dev);
 	int i;
 
-	np->get_tx = np->put_tx = np->first_tx = np->tx_ring;
+	np->get_tx = np->tx_ring;
+	np->put_tx = np->tx_ring;
 
 	if (!nv_optimized(np))
 		np->last_tx.orig = &np->tx_ring.orig[np->tx_ring_size-1];
 	else
 		np->last_tx.ex = &np->tx_ring.ex[np->tx_ring_size-1];
-	np->get_tx_ctx = np->put_tx_ctx = np->first_tx_ctx = np->tx_skb;
+	np->get_tx_ctx = np->tx_skb;
+	np->put_tx_ctx = np->tx_skb;
 	np->last_tx_ctx = &np->tx_skb[np->tx_ring_size-1];
 	netdev_reset_queue(np->dev);
 	np->tx_pkts_in_progress = 0;
@@ -2248,9 +2250,9 @@ static netdev_tx_t nv_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		offset += bcnt;
 		size -= bcnt;
 		if (unlikely(put_tx++ == np->last_tx.orig))
-			put_tx = np->first_tx.orig;
+			put_tx = np->tx_ring.orig;
 		if (unlikely(np->put_tx_ctx++ == np->last_tx_ctx))
-			np->put_tx_ctx = np->first_tx_ctx;
+			np->put_tx_ctx = np->tx_skb;
 	} while (size);
 
 	/* setup the fragments */
@@ -2276,7 +2278,7 @@ static netdev_tx_t nv_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				do {
 					nv_unmap_txskb(np, start_tx_ctx);
 					if (unlikely(tmp_tx_ctx++ == np->last_tx_ctx))
-						tmp_tx_ctx = np->first_tx_ctx;
+						tmp_tx_ctx = np->tx_skb;
 				} while (tmp_tx_ctx != np->put_tx_ctx);
 				dev_kfree_skb_any(skb);
 				np->put_tx_ctx = start_tx_ctx;
@@ -2294,18 +2296,18 @@ static netdev_tx_t nv_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			offset += bcnt;
 			frag_size -= bcnt;
 			if (unlikely(put_tx++ == np->last_tx.orig))
-				put_tx = np->first_tx.orig;
+				put_tx = np->tx_ring.orig;
 			if (unlikely(np->put_tx_ctx++ == np->last_tx_ctx))
-				np->put_tx_ctx = np->first_tx_ctx;
+				np->put_tx_ctx = np->tx_skb;
 		} while (frag_size);
 	}
 
-	if (unlikely(put_tx == np->first_tx.orig))
+	if (unlikely(put_tx == np->tx_ring.orig))
 		prev_tx = np->last_tx.orig;
 	else
 		prev_tx = put_tx - 1;
 
-	if (unlikely(np->put_tx_ctx == np->first_tx_ctx))
+	if (unlikely(np->put_tx_ctx == np->tx_skb))
 		prev_tx_ctx = np->last_tx_ctx;
 	else
 		prev_tx_ctx = np->put_tx_ctx - 1;
@@ -2406,9 +2408,9 @@ static netdev_tx_t nv_start_xmit_optimized(struct sk_buff *skb,
 		offset += bcnt;
 		size -= bcnt;
 		if (unlikely(put_tx++ == np->last_tx.ex))
-			put_tx = np->first_tx.ex;
+			put_tx = np->tx_ring.ex;
 		if (unlikely(np->put_tx_ctx++ == np->last_tx_ctx))
-			np->put_tx_ctx = np->first_tx_ctx;
+			np->put_tx_ctx = np->tx_skb;
 	} while (size);
 
 	/* setup the fragments */
@@ -2434,7 +2436,7 @@ static netdev_tx_t nv_start_xmit_optimized(struct sk_buff *skb,
 				do {
 					nv_unmap_txskb(np, start_tx_ctx);
 					if (unlikely(tmp_tx_ctx++ == np->last_tx_ctx))
-						tmp_tx_ctx = np->first_tx_ctx;
+						tmp_tx_ctx = np->tx_skb;
 				} while (tmp_tx_ctx != np->put_tx_ctx);
 				dev_kfree_skb_any(skb);
 				np->put_tx_ctx = start_tx_ctx;
@@ -2452,18 +2454,18 @@ static netdev_tx_t nv_start_xmit_optimized(struct sk_buff *skb,
 			offset += bcnt;
 			frag_size -= bcnt;
 			if (unlikely(put_tx++ == np->last_tx.ex))
-				put_tx = np->first_tx.ex;
+				put_tx = np->tx_ring.ex;
 			if (unlikely(np->put_tx_ctx++ == np->last_tx_ctx))
-				np->put_tx_ctx = np->first_tx_ctx;
+				np->put_tx_ctx = np->tx_skb;
 		} while (frag_size);
 	}
 
-	if (unlikely(put_tx == np->first_tx.ex))
+	if (unlikely(put_tx == np->tx_ring.ex))
 		prev_tx = np->last_tx.ex;
 	else
 		prev_tx = put_tx - 1;
 
-	if (unlikely(np->put_tx_ctx == np->first_tx_ctx))
+	if (unlikely(np->put_tx_ctx == np->tx_skb))
 		prev_tx_ctx = np->last_tx_ctx;
 	else
 		prev_tx_ctx = np->put_tx_ctx - 1;
@@ -2597,9 +2599,9 @@ static int nv_tx_done(struct net_device *dev, int limit)
 			}
 		}
 		if (unlikely(np->get_tx.orig++ == np->last_tx.orig))
-			np->get_tx.orig = np->first_tx.orig;
+			np->get_tx.orig = np->tx_ring.orig;
 		if (unlikely(np->get_tx_ctx++ == np->last_tx_ctx))
-			np->get_tx_ctx = np->first_tx_ctx;
+			np->get_tx_ctx = np->tx_skb;
 	}
 
 	netdev_completed_queue(np->dev, tx_work, bytes_compl);
@@ -2651,9 +2653,9 @@ static int nv_tx_done_optimized(struct net_device *dev, int limit)
 		}
 
 		if (unlikely(np->get_tx.ex++ == np->last_tx.ex))
-			np->get_tx.ex = np->first_tx.ex;
+			np->get_tx.ex = np->tx_ring.ex;
 		if (unlikely(np->get_tx_ctx++ == np->last_tx_ctx))
-			np->get_tx_ctx = np->first_tx_ctx;
+			np->get_tx_ctx = np->tx_skb;
 	}
 
 	netdev_completed_queue(np->dev, tx_work, bytes_cleaned);

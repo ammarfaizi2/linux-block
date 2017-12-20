@@ -213,6 +213,7 @@ static void iwl_mvm_get_signal_strength(struct iwl_mvm *mvm,
 					struct ieee80211_rx_status *rx_status)
 {
 	int energy_a, energy_b, max_energy;
+	u32 rate_flags = le32_to_cpu(desc->rate_n_flags);
 
 	energy_a = desc->energy_a;
 	energy_a = energy_a ? -energy_a : S8_MIN;
@@ -224,7 +225,8 @@ static void iwl_mvm_get_signal_strength(struct iwl_mvm *mvm,
 			energy_a, energy_b, max_energy);
 
 	rx_status->signal = max_energy;
-	rx_status->chains = 0; /* TODO: phy info */
+	rx_status->chains =
+		(rate_flags & RATE_MCS_ANT_AB_MSK) >> RATE_MCS_ANT_POS;
 	rx_status->chain_signal[0] = energy_a;
 	rx_status->chain_signal[1] = energy_b;
 	rx_status->chain_signal[2] = S8_MIN;
@@ -232,8 +234,8 @@ static void iwl_mvm_get_signal_strength(struct iwl_mvm *mvm,
 
 static int iwl_mvm_rx_crypto(struct iwl_mvm *mvm, struct ieee80211_hdr *hdr,
 			     struct ieee80211_rx_status *stats,
-			     struct iwl_rx_mpdu_desc *desc, int queue,
-			     u8 *crypt_len)
+			     struct iwl_rx_mpdu_desc *desc, u32 pkt_flags,
+			     int queue, u8 *crypt_len)
 {
 	u16 status = le16_to_cpu(desc->status);
 
@@ -253,6 +255,8 @@ static int iwl_mvm_rx_crypto(struct iwl_mvm *mvm, struct ieee80211_hdr *hdr,
 			return -1;
 
 		stats->flag |= RX_FLAG_DECRYPTED;
+		if (pkt_flags & FH_RSCSR_RADA_EN)
+			stats->flag |= RX_FLAG_MIC_STRIPPED;
 		*crypt_len = IEEE80211_CCMP_HDR_LEN;
 		return 0;
 	case IWL_RX_MPDU_STATUS_SEC_TKIP:
@@ -270,6 +274,10 @@ static int iwl_mvm_rx_crypto(struct iwl_mvm *mvm, struct ieee80211_hdr *hdr,
 		if ((status & IWL_RX_MPDU_STATUS_SEC_MASK) ==
 				IWL_RX_MPDU_STATUS_SEC_WEP)
 			*crypt_len = IEEE80211_WEP_IV_LEN;
+
+		if (pkt_flags & FH_RSCSR_RADA_EN)
+			stats->flag |= RX_FLAG_ICV_STRIPPED;
+
 		return 0;
 	case IWL_RX_MPDU_STATUS_SEC_EXT_ENC:
 		if (!(status & IWL_RX_MPDU_STATUS_MIC_OK))
@@ -848,7 +856,9 @@ void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 
 	rx_status = IEEE80211_SKB_RXCB(skb);
 
-	if (iwl_mvm_rx_crypto(mvm, hdr, rx_status, desc, queue, &crypt_len)) {
+	if (iwl_mvm_rx_crypto(mvm, hdr, rx_status, desc,
+			      le32_to_cpu(pkt->len_n_flags), queue,
+			      &crypt_len)) {
 		kfree_skb(skb);
 		return;
 	}
@@ -933,7 +943,7 @@ void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 								 false);
 		}
 
-		rs_update_last_rssi(mvm, &mvmsta->lq_sta, rx_status);
+		rs_update_last_rssi(mvm, mvmsta, rx_status);
 
 		if (iwl_fw_dbg_trigger_enabled(mvm->fw, FW_DBG_TRIGGER_RSSI) &&
 		    ieee80211_is_beacon(hdr->frame_control)) {
@@ -1010,7 +1020,9 @@ void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 		rx_status->bw = RATE_INFO_BW_160;
 		break;
 	}
-	if (rate_n_flags & RATE_MCS_SGI_MSK)
+
+	if (!(rate_n_flags & RATE_MCS_CCK_MSK) &&
+	    rate_n_flags & RATE_MCS_SGI_MSK)
 		rx_status->enc_flags |= RX_ENC_FLAG_SHORT_GI;
 	if (rate_n_flags & RATE_HT_MCS_GF_MSK)
 		rx_status->enc_flags |= RX_ENC_FLAG_HT_GF;

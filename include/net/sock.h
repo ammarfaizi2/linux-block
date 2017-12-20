@@ -685,11 +685,7 @@ static inline void sk_add_node_rcu(struct sock *sk, struct hlist_head *list)
 
 static inline void __sk_nulls_add_node_rcu(struct sock *sk, struct hlist_nulls_head *list)
 {
-	if (IS_ENABLED(CONFIG_IPV6) && sk->sk_reuseport &&
-	    sk->sk_family == AF_INET6)
-		hlist_nulls_add_tail_rcu(&sk->sk_nulls_node, list);
-	else
-		hlist_nulls_add_head_rcu(&sk->sk_nulls_node, list);
+	hlist_nulls_add_head_rcu(&sk->sk_nulls_node, list);
 }
 
 static inline void sk_nulls_add_node_rcu(struct sock *sk, struct hlist_nulls_head *list)
@@ -1266,6 +1262,7 @@ proto_memory_pressure(struct proto *prot)
 /* Called with local bh disabled */
 void sock_prot_inuse_add(struct net *net, struct proto *prot, int inc);
 int sock_prot_inuse_get(struct net *net, struct proto *proto);
+int sock_inuse_get(struct net *net);
 #else
 static inline void sock_prot_inuse_add(struct net *net, struct proto *prot,
 		int inc)
@@ -2409,6 +2406,17 @@ static inline int sk_get_rmem0(const struct sock *sk, const struct proto *proto)
 		return *(int *)((void *)sock_net(sk) + proto->sysctl_rmem_offset);
 
 	return *proto->sysctl_rmem;
+}
+
+/* Default TCP Small queue budget is ~1 ms of data (1sec >> 10)
+ * Some wifi drivers need to tweak it to get more chunks.
+ * They can use this helper from their ndo_start_xmit()
+ */
+static inline void sk_pacing_shift_update(struct sock *sk, int val)
+{
+	if (!sk || !sk_fullsock(sk) || sk->sk_pacing_shift == val)
+		return;
+	sk->sk_pacing_shift = val;
 }
 
 #endif	/* _SOCK_H */

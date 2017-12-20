@@ -92,7 +92,6 @@ static int mlxsw_sp_flower_parse_actions(struct mlxsw_sp *mlxsw_sp,
 			if (err)
 				return err;
 		} else if (is_tcf_mirred_egress_redirect(a)) {
-			int ifindex = tcf_mirred_ifindex(a);
 			struct net_device *out_dev;
 			struct mlxsw_sp_fid *fid;
 			u16 fid_index;
@@ -104,7 +103,7 @@ static int mlxsw_sp_flower_parse_actions(struct mlxsw_sp *mlxsw_sp,
 			if (err)
 				return err;
 
-			out_dev = __dev_get_by_index(dev_net(dev), ifindex);
+			out_dev = tcf_mirred_dev(a);
 			if (out_dev == dev)
 				out_dev = NULL;
 
@@ -424,6 +423,7 @@ int mlxsw_sp_flower_replace(struct mlxsw_sp_port *mlxsw_sp_port, bool ingress,
 		goto err_rule_add;
 
 	mlxsw_sp_acl_ruleset_put(mlxsw_sp, ruleset);
+	mlxsw_sp_port->acl_rule_count++;
 	return 0;
 
 err_rule_add:
@@ -455,6 +455,7 @@ void mlxsw_sp_flower_destroy(struct mlxsw_sp_port *mlxsw_sp_port, bool ingress,
 	}
 
 	mlxsw_sp_acl_ruleset_put(mlxsw_sp, ruleset);
+	mlxsw_sp_port->acl_rule_count--;
 }
 
 int mlxsw_sp_flower_stats(struct mlxsw_sp_port *mlxsw_sp_port, bool ingress,
