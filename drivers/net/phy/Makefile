@@ -3,6 +3,7 @@
 
 libphy-y			:= phy.o phy-c45.o phy-core.o phy_device.o
 mdio-bus-y			+= mdio_bus.o mdio_device.o
+mdio-bus-$(CONFIG_OF)		+= mdio_of.o
 
 ifdef CONFIG_MDIO_DEVICE
 obj-y				+= mdio-boardinfo.o
@@ -16,6 +17,7 @@ libphy-y			+= $(mdio-bus-y)
 else
 obj-$(CONFIG_MDIO_DEVICE)	+= mdio-bus.o
 endif
+libphy-$(CONFIG_OF)		+= phy-of.o
 libphy-$(CONFIG_SWPHY)		+= swphy.o
 libphy-$(CONFIG_LED_TRIGGER_PHY)	+= phy_led_triggers.o
 

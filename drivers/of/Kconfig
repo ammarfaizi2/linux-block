@@ -72,13 +72,6 @@ config OF_NET
 	depends on NETDEVICES
 	def_bool y
 
-config OF_MDIO
-	def_tristate PHYLIB
-	depends on PHYLIB
-	select FIXED_PHY
-	help
-	  OpenFirmware MDIO bus (Ethernet PHY) accessors
-
 config OF_RESERVED_MEM
 	depends on OF_EARLY_FLATTREE
 	bool
