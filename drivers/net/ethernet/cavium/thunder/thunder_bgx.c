@@ -1259,7 +1259,7 @@ static int bgx_init_acpi_phy(struct bgx *bgx)
 
 #endif /* CONFIG_ACPI */
 
-#if IS_ENABLED(CONFIG_OF_MDIO)
+#if IS_ENABLED(CONFIG_OF)
 
 static int bgx_init_of_phy(struct bgx *bgx)
 {
@@ -1330,7 +1330,7 @@ static int bgx_init_of_phy(struct bgx *bgx)
 	return -ENODEV;
 }
 
-#endif /* CONFIG_OF_MDIO */
+#endif /* CONFIG_OF */
 
 static int bgx_init_phy(struct bgx *bgx)
 {

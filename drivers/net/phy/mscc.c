@@ -109,7 +109,6 @@ struct vsc8531_private {
 	u8 led_1_mode;
 };
 
-#ifdef CONFIG_OF_MDIO
 struct vsc8531_edge_rate_table {
 	u16 vddmac;
 	u8 slowdown[8];
@@ -121,7 +120,6 @@ static const struct vsc8531_edge_rate_table edge_table[] = {
 	{MSCC_VDDMAC_1800, { 0, 5,  9, 16, 23, 35, 52, 76} },
 	{MSCC_VDDMAC_1500, { 0, 6, 14, 21, 29, 42, 58, 77} },
 };
-#endif /* CONFIG_OF_MDIO */
 
 static int vsc85xx_phy_page_set(struct phy_device *phydev, u8 page)
 {
@@ -372,7 +370,6 @@ out_unlock:
 	mutex_unlock(&phydev->lock);
 }
 
-#ifdef CONFIG_OF_MDIO
 static int vsc85xx_edge_rate_magic_get(struct phy_device *phydev)
 {
 	u8 sd;
@@ -381,6 +378,9 @@ static int vsc85xx_edge_rate_magic_get(struct phy_device *phydev)
 	struct device *dev = &phydev->mdio.dev;
 	struct device_node *of_node = dev->of_node;
 	u8 sd_array_size = ARRAY_SIZE(edge_table[0].slowdown);
+
+	if (!IS_ENABLED(CONFIG_OF))
+		return 0;
 
 	if (!of_node)
 		return -ENODEV;
@@ -411,6 +411,9 @@ static int vsc85xx_dt_led_mode_get(struct phy_device *phydev,
 	u8 led_mode;
 	int err;
 
+	if (!IS_ENABLED(CONFIG_OF))
+		return default_mode;
+
 	if (!of_node)
 		return -ENODEV;
 
@@ -423,20 +426,6 @@ static int vsc85xx_dt_led_mode_get(struct phy_device *phydev,
 
 	return led_mode;
 }
-
-#else
-static int vsc85xx_edge_rate_magic_get(struct phy_device *phydev)
-{
-	return 0;
-}
-
-static int vsc85xx_dt_led_mode_get(struct phy_device *phydev,
-				   char *led,
-				   u8 default_mode)
-{
-	return default_mode;
-}
-#endif /* CONFIG_OF_MDIO */
 
 static int vsc85xx_edge_rate_cntl_set(struct phy_device *phydev, u8 edge_rate)
 {
