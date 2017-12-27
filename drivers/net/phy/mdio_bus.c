@@ -213,7 +213,7 @@ static struct class mdio_bus_class = {
 	.dev_release	= mdiobus_release,
 };
 
-#if IS_ENABLED(CONFIG_OF_MDIO)
+#if IS_ENABLED(CONFIG_OF)
 /* Helper function for of_mdio_find_bus */
 static int of_mdio_bus_match(struct device *dev, const void *mdio_bus_np)
 {
@@ -274,7 +274,7 @@ static void of_mdiobus_link_mdiodev(struct mii_bus *bus,
 		}
 	}
 }
-#else /* !IS_ENABLED(CONFIG_OF_MDIO) */
+#else /* !IS_ENABLED(CONFIG_OF) */
 static inline void of_mdiobus_link_mdiodev(struct mii_bus *mdio,
 					   struct mdio_device *mdiodev)
 {

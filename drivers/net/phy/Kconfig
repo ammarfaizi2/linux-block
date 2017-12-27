@@ -21,14 +21,14 @@ if MDIO_BUS
 config MDIO_BCM_IPROC
 	tristate "Broadcom iProc MDIO bus controller"
 	depends on ARCH_BCM_IPROC || COMPILE_TEST
-	depends on HAS_IOMEM && OF_MDIO
+	depends on HAS_IOMEM
 	help
 	  This module provides a driver for the MDIO busses found in the
 	  Broadcom iProc SoC's.
 
 config MDIO_BCM_UNIMAC
 	tristate "Broadcom UniMAC MDIO bus controller"
-	depends on HAS_IOMEM && OF_MDIO
+	depends on HAS_IOMEM
 	help
 	  This module provides a driver for the Broadcom UniMAC MDIO busses.
 	  This hardware can be found in the Broadcom GENET Ethernet MAC
@@ -46,7 +46,7 @@ config MDIO_BITBANG
 
 config MDIO_BUS_MUX
 	tristate
-	depends on OF_MDIO
+	depends on OF
 	help
 	  This module provides a driver framework for MDIO bus
 	  multiplexers which connect one of several child MDIO busses
@@ -55,7 +55,7 @@ config MDIO_BUS_MUX
 
 config MDIO_BUS_MUX_BCM_IPROC
 	tristate "Broadcom iProc based MDIO bus multiplexers"
-	depends on OF && OF_MDIO && (ARCH_BCM_IPROC || COMPILE_TEST)
+	depends on OF && (ARCH_BCM_IPROC || COMPILE_TEST)
 	select MDIO_BUS_MUX
 	default ARCH_BCM_IPROC
 	help
@@ -66,7 +66,7 @@ config MDIO_BUS_MUX_BCM_IPROC
 
 config MDIO_BUS_MUX_GPIO
 	tristate "GPIO controlled MDIO bus multiplexers"
-	depends on OF_GPIO && OF_MDIO
+	depends on OF_GPIO
 	select MDIO_BUS_MUX
 	help
 	  This module provides a driver for MDIO bus multiplexers that
@@ -76,7 +76,7 @@ config MDIO_BUS_MUX_GPIO
 
 config MDIO_BUS_MUX_MMIOREG
 	tristate "MMIO device-controlled MDIO bus multiplexers"
-	depends on OF_MDIO && HAS_IOMEM
+	depends on HAS_IOMEM && OF
 	select MDIO_BUS_MUX
 	help
 	  This module provides a driver for MDIO bus multiplexers that
@@ -101,7 +101,7 @@ config MDIO_GPIO
 
 config MDIO_HISI_FEMAC
 	tristate "Hisilicon FEMAC MDIO bus controller"
-	depends on HAS_IOMEM && OF_MDIO
+	depends on HAS_IOMEM && OF
 	help
 	  This module provides a driver for the MDIO busses found in the
 	  Hisilicon SoC that have an Fast Ethernet MAC.
@@ -126,7 +126,7 @@ config MDIO_MOXART
 config MDIO_OCTEON
 	tristate "Octeon and some ThunderX SOCs MDIO buses"
 	depends on 64BIT
-	depends on HAS_IOMEM && OF_MDIO
+	depends on HAS_IOMEM && OF
 	select MDIO_CAVIUM
 	help
 	  This module provides a driver for the Octeon and ThunderX MDIO
@@ -297,6 +297,7 @@ config DP83867_PHY
 
 config FIXED_PHY
 	tristate "MDIO Bus/PHY emulation with fixed speed/link PHYs"
+	default OF
 	depends on PHYLIB
 	select SWPHY
 	---help---

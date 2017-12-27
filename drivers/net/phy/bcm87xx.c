@@ -20,7 +20,6 @@
 #define BCM87XX_LASI_CONTROL (MII_ADDR_C45 | 0x39002)
 #define BCM87XX_LASI_STATUS (MII_ADDR_C45 | 0x39005)
 
-#if IS_ENABLED(CONFIG_OF_MDIO)
 /* Set and/or override some configuration registers based on the
  * broadcom,c45-reg-init property stored in the of_node for the phydev.
  *
@@ -39,6 +38,9 @@ static int bcm87xx_of_reg_init(struct phy_device *phydev)
 	const __be32 *paddr;
 	const __be32 *paddr_end;
 	int len, ret;
+
+	if (!IS_ENABLED(CONFIG_OF))
+		return 0;
 
 	if (!phydev->mdio.dev.of_node)
 		return 0;
@@ -77,12 +79,6 @@ static int bcm87xx_of_reg_init(struct phy_device *phydev)
 err:
 	return ret;
 }
-#else
-static int bcm87xx_of_reg_init(struct phy_device *phydev)
-{
-	return 0;
-}
-#endif /* CONFIG_OF_MDIO */
 
 static int bcm87xx_config_init(struct phy_device *phydev)
 {

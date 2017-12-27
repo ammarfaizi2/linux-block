@@ -382,7 +382,6 @@ static int m88e1111_config_aneg(struct phy_device *phydev)
 	return 0;
 }
 
-#ifdef CONFIG_OF_MDIO
 /* Set and/or override some configuration registers based on the
  * marvell,reg-init property stored in the of_node for the phydev.
  *
@@ -400,6 +399,9 @@ static int marvell_of_reg_init(struct phy_device *phydev)
 {
 	const __be32 *paddr;
 	int len, i, saved_page, current_page, ret;
+
+	if (!IS_ENABLED(CONFIG_OF))
+		return 0;
 
 	if (!phydev->mdio.dev.of_node)
 		return 0;
@@ -453,12 +455,6 @@ err:
 	}
 	return ret;
 }
-#else
-static int marvell_of_reg_init(struct phy_device *phydev)
-{
-	return 0;
-}
-#endif /* CONFIG_OF_MDIO */
 
 static int m88e1121_config_aneg_rgmii_delays(struct phy_device *phydev)
 {

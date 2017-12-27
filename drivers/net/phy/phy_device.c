@@ -1710,7 +1710,7 @@ static void of_set_phy_supported(struct phy_device *phydev)
 	struct device_node *node = phydev->mdio.dev.of_node;
 	u32 max_speed;
 
-	if (!IS_ENABLED(CONFIG_OF_MDIO))
+	if (!IS_ENABLED(CONFIG_OF))
 		return;
 
 	if (!node)
@@ -1725,7 +1725,7 @@ static void of_set_phy_eee_broken(struct phy_device *phydev)
 	struct device_node *node = phydev->mdio.dev.of_node;
 	u32 broken = 0;
 
-	if (!IS_ENABLED(CONFIG_OF_MDIO))
+	if (!IS_ENABLED(CONFIG_OF))
 		return;
 
 	if (!node)
