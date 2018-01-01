@@ -18,6 +18,7 @@
 #include <linux/nmi.h>
 #include <linux/sysfs.h>
 
+#include <asm/cpu_entry_area.h>
 #include <asm/stacktrace.h>
 #include <asm/unwind.h>
 
@@ -43,9 +44,9 @@ bool in_task_stack(unsigned long *stack, struct task_struct *task,
 	return true;
 }
 
-bool in_sysenter_stack(unsigned long *stack, struct stack_info *info)
+bool in_entry_stack(unsigned long *stack, struct stack_info *info)
 {
-	struct SYSENTER_stack *ss = cpu_SYSENTER_stack(smp_processor_id());
+	struct entry_stack *ss = cpu_entry_stack(smp_processor_id());
 
 	void *begin = ss;
 	void *end = ss + 1;
@@ -53,7 +54,7 @@ bool in_sysenter_stack(unsigned long *stack, struct stack_info *info)
 	if ((void *)stack < begin || (void *)stack >= end)
 		return false;
 
-	info->type	= STACK_TYPE_SYSENTER;
+	info->type	= STACK_TYPE_ENTRY;
 	info->begin	= begin;
 	info->end	= end;
 	info->next_sp	= NULL;
@@ -111,13 +112,13 @@ void show_trace_log_lvl(struct task_struct *task, struct pt_regs *regs,
 	 * - task stack
 	 * - interrupt stack
 	 * - HW exception stacks (double fault, nmi, debug, mce)
-	 * - SYSENTER stack
+	 * - entry stack
 	 *
 	 * x86-32 can have up to four stacks:
 	 * - task stack
 	 * - softirq stack
 	 * - hardirq stack
-	 * - SYSENTER stack
+	 * - entry stack
 	 */
 	for (regs = NULL; stack; stack = PTR_ALIGN(stack_info.next_sp, sizeof(long))) {
 		const char *stack_name;
@@ -296,11 +297,13 @@ int __die(const char *str, struct pt_regs *regs, long err)
 	unsigned long sp;
 #endif
 	printk(KERN_DEFAULT
-	       "%s: %04lx [#%d]%s%s%s%s\n", str, err & 0xffff, ++die_counter,
+	       "%s: %04lx [#%d]%s%s%s%s%s\n", str, err & 0xffff, ++die_counter,
 	       IS_ENABLED(CONFIG_PREEMPT) ? " PREEMPT"         : "",
 	       IS_ENABLED(CONFIG_SMP)     ? " SMP"             : "",
 	       debug_pagealloc_enabled()  ? " DEBUG_PAGEALLOC" : "",
-	       IS_ENABLED(CONFIG_KASAN)   ? " KASAN"           : "");
+	       IS_ENABLED(CONFIG_KASAN)   ? " KASAN"           : "",
+	       IS_ENABLED(CONFIG_PAGE_TABLE_ISOLATION) ?
+	       (boot_cpu_has(X86_FEATURE_PTI) ? " PTI" : " NOPTI") : "");
 
 	if (notify_die(DIE_OOPS, str, regs, err,
 			current->thread.trap_nr, SIGSEGV) == NOTIFY_STOP)
