@@ -16,7 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <asm/prom.h>
+#include <linux/interrupt.h>
+#include <linux/of_irq.h>
 
 #include "pseries.h"
 
@@ -29,11 +30,8 @@ void request_event_sources_irqs(struct device_node *np,
 	unsigned int virqs[16];
 
 	/* First try to do a proper OF tree parsing */
-	for (index = 0; of_irq_parse_one(np, index, &oirq) == 0;
-	     index++) {
-		if (count > 15)
-			break;
-		virqs[count] = irq_create_of_mapping(&oirq);
+	for (index = 0; count < 16; index++) {
+		virqs[count] = irq_of_parse_and_map(np, index);
 		if (!virqs[count]) {
 			pr_err("event-sources: Unable to allocate "
 			       "interrupt number for %pOF\n",
