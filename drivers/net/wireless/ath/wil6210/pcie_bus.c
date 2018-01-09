@@ -41,9 +41,11 @@ void wil_set_capabilities(struct wil6210_priv *wil)
 	u32 jtag_id = wil_r(wil, RGF_USER_JTAG_DEV_ID);
 	u8 chip_revision = (wil_r(wil, RGF_USER_REVISION_ID) &
 			    RGF_USER_REVISION_ID_MASK);
+	int platform_capa;
 
 	bitmap_zero(wil->hw_capabilities, hw_capability_last);
 	bitmap_zero(wil->fw_capabilities, WMI_FW_CAPABILITY_MAX);
+	bitmap_zero(wil->platform_capa, WIL_PLATFORM_CAPA_MAX);
 	wil->wil_fw_name = ftm_mode ? WIL_FW_NAME_FTM_DEFAULT :
 			   WIL_FW_NAME_DEFAULT;
 	wil->chip_revision = chip_revision;
@@ -78,6 +80,14 @@ void wil_set_capabilities(struct wil6210_priv *wil)
 	}
 
 	wil_info(wil, "Board hardware is %s\n", wil->hw_name);
+
+	/* Get platform capabilities */
+	if (wil->platform_ops.get_capa) {
+		platform_capa =
+			wil->platform_ops.get_capa(wil->platform_handle);
+		memcpy(wil->platform_capa, &platform_capa,
+		       min(sizeof(wil->platform_capa), sizeof(platform_capa)));
+	}
 
 	/* extract FW capabilities from file without loading the FW */
 	wil_request_firmware(wil, wil->wil_fw_name, false);
@@ -204,6 +214,8 @@ static int wil_pcie_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 		.fw_recovery = wil_platform_rop_fw_recovery,
 	};
 	u32 bar_size = pci_resource_len(pdev, 0);
+	int dma_addr_size[] = {48, 40, 32}; /* keep descending order */
+	int i;
 
 	/* check HW */
 	dev_info(&pdev->dev, WIL_NAME
@@ -239,20 +251,22 @@ static int wil_pcie_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	}
 	/* rollback to err_plat */
 
-	/* device supports 48bit addresses */
-	rc = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(48));
-	if (rc) {
-		dev_err(dev, "dma_set_mask_and_coherent(48) failed: %d\n", rc);
-		rc = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
+	/* device supports >32bit addresses */
+	for (i = 0; i < ARRAY_SIZE(dma_addr_size); i++) {
+		rc = dma_set_mask_and_coherent(dev,
+					       DMA_BIT_MASK(dma_addr_size[i]));
 		if (rc) {
-			dev_err(dev,
-				"dma_set_mask_and_coherent(32) failed: %d\n",
-				rc);
-			goto err_plat;
+			dev_err(dev, "dma_set_mask_and_coherent(%d) failed: %d\n",
+				dma_addr_size[i], rc);
+			continue;
 		}
-	} else {
-		wil->use_extended_dma_addr = 1;
+		dev_info(dev, "using dma mask %d", dma_addr_size[i]);
+		wil->dma_addr_size = dma_addr_size[i];
+		break;
 	}
+
+	if (wil->dma_addr_size == 0)
+		goto err_plat;
 
 	rc = pci_enable_device(pdev);
 	if (rc && pdev->msi_enabled == 0) {
