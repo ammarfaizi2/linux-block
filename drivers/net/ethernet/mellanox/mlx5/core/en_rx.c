@@ -677,7 +677,7 @@ static inline void mlx5e_handle_csum(struct net_device *netdev,
 	if (short_frame(skb->len))
 		goto csum_unnecessary;
 
-	if (is_last_ethertype_ip(skb, &network_depth)) {
+	if (likely(is_last_ethertype_ip(skb, &network_depth))) {
 		skb->ip_summed = CHECKSUM_COMPLETE;
 		skb->csum = csum_unfold((__force __sum16)cqe->check_sum);
 
