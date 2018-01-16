@@ -66,7 +66,7 @@ nsim_bpf_verify_insn(struct bpf_verifier_env *env, int insn_idx, int prev_insn)
 	return 0;
 }
 
-static const struct bpf_ext_analyzer_ops nsim_bpf_analyzer_ops = {
+static const struct bpf_prog_offload_ops nsim_bpf_analyzer_ops = {
 	.insn_hook = nsim_bpf_verify_insn,
 };
 
@@ -107,7 +107,7 @@ int nsim_bpf_setup_tc_block_cb(enum tc_setup_type type,
 	struct tc_cls_bpf_offload *cls_bpf = type_data;
 	struct bpf_prog *prog = cls_bpf->prog;
 	struct netdevsim *ns = cb_priv;
-	bool skip_sw;
+	struct bpf_prog *oldprog;
 
 	if (type != TC_SETUP_CLSBPF ||
 	    !tc_can_offload(ns->netdev) ||
@@ -115,27 +115,27 @@ int nsim_bpf_setup_tc_block_cb(enum tc_setup_type type,
 	    cls_bpf->common.chain_index)
 		return -EOPNOTSUPP;
 
-	skip_sw = cls_bpf->gen_flags & TCA_CLS_FLAGS_SKIP_SW;
-
-	if (nsim_xdp_offload_active(ns))
-		return -EBUSY;
-
 	if (!ns->bpf_tc_accept)
 		return -EOPNOTSUPP;
 	/* Note: progs without skip_sw will probably not be dev bound */
 	if (prog && !prog->aux->offload && !ns->bpf_tc_non_bound_accept)
 		return -EOPNOTSUPP;
 
-	switch (cls_bpf->command) {
-	case TC_CLSBPF_REPLACE:
-		return nsim_bpf_offload(ns, prog, true);
-	case TC_CLSBPF_ADD:
-		return nsim_bpf_offload(ns, prog, false);
-	case TC_CLSBPF_DESTROY:
-		return nsim_bpf_offload(ns, NULL, true);
-	default:
+	if (cls_bpf->command != TC_CLSBPF_OFFLOAD)
 		return -EOPNOTSUPP;
+
+	oldprog = cls_bpf->oldprog;
+
+	/* Don't remove if oldprog doesn't match driver's state */
+	if (ns->bpf_offloaded != oldprog) {
+		oldprog = NULL;
+		if (!cls_bpf->prog)
+			return 0;
+		if (ns->bpf_offloaded)
+			return -EBUSY;
 	}
+
+	return nsim_bpf_offload(ns, cls_bpf->prog, oldprog);
 }
 
 int nsim_bpf_disable_tc(struct netdevsim *ns)
@@ -201,7 +201,6 @@ static int nsim_bpf_create_prog(struct netdevsim *ns, struct bpf_prog *prog)
 {
 	struct nsim_bpf_bound_prog *state;
 	char name[16];
-	int err;
 
 	state = kzalloc(sizeof(*state), GFP_KERNEL);
 	if (!state)
@@ -214,10 +213,9 @@ static int nsim_bpf_create_prog(struct netdevsim *ns, struct bpf_prog *prog)
 	/* Program id is not populated yet when we create the state. */
 	sprintf(name, "%u", ns->prog_id_gen++);
 	state->ddir = debugfs_create_dir(name, ns->ddir_bpf_bound_progs);
-	if (IS_ERR(state->ddir)) {
-		err = PTR_ERR(state->ddir);
+	if (IS_ERR_OR_NULL(state->ddir)) {
 		kfree(state);
-		return err;
+		return -ENOMEM;
 	}
 
 	debugfs_create_u32("id", 0400, state->ddir, &prog->aux->id);
@@ -349,6 +347,8 @@ int nsim_bpf_init(struct netdevsim *ns)
 			   &ns->bpf_bind_verifier_delay);
 	ns->ddir_bpf_bound_progs =
 		debugfs_create_dir("bpf_bound_progs", ns->ddir);
+	if (IS_ERR_OR_NULL(ns->ddir_bpf_bound_progs))
+		return -ENOMEM;
 
 	ns->bpf_tc_accept = true;
 	debugfs_create_bool("bpf_tc_accept", 0600, ns->ddir,

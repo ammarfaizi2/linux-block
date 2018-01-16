@@ -40,6 +40,7 @@
 #include <linux/kernel.h>
 #include <linux/mutex.h>
 #include <linux/bpf.h>
+#include <net/xdp.h>
 #include <linux/qed/qede_rdma.h>
 #include <linux/io.h>
 #ifdef CONFIG_RFS_ACCEL
@@ -52,9 +53,9 @@
 #include <linux/qed/qed_eth_if.h>
 
 #define QEDE_MAJOR_VERSION		8
-#define QEDE_MINOR_VERSION		10
-#define QEDE_REVISION_VERSION		10
-#define QEDE_ENGINEERING_VERSION	21
+#define QEDE_MINOR_VERSION		33
+#define QEDE_REVISION_VERSION		0
+#define QEDE_ENGINEERING_VERSION	20
 #define DRV_MODULE_VERSION __stringify(QEDE_MAJOR_VERSION) "."	\
 		__stringify(QEDE_MINOR_VERSION) "."		\
 		__stringify(QEDE_REVISION_VERSION) "."		\
@@ -345,6 +346,7 @@ struct qede_rx_queue {
 	u64 xdp_no_pass;
 
 	void *handle;
+	struct xdp_rxq_info xdp_rxq;
 };
 
 union db_prod {

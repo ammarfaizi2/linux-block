@@ -899,6 +899,9 @@ struct xdp_md {
 	__u32 data;
 	__u32 data_end;
 	__u32 data_meta;
+	/* Below access go though struct xdp_rxq_info */
+	__u32 ingress_ifindex; /* rxq->dev->ifindex */
+	__u32 rx_queue_index;  /* rxq->queue_index  */
 };
 
 enum sk_action {
@@ -921,6 +924,9 @@ struct bpf_prog_info {
 	__u32 nr_map_ids;
 	__aligned_u64 map_ids;
 	char name[BPF_OBJ_NAME_LEN];
+	__u32 ifindex;
+	__u64 netns_dev;
+	__u64 netns_ino;
 } __attribute__((aligned(8)));
 
 struct bpf_map_info {
@@ -1012,7 +1018,8 @@ struct bpf_perf_event_value {
 #define BPF_DEVCG_DEV_CHAR	(1ULL << 1)
 
 struct bpf_cgroup_dev_ctx {
-	__u32 access_type; /* (access << 16) | type */
+	/* access_type encoded as (BPF_DEVCG_ACC_* << 16) | BPF_DEVCG_DEV_* */
+	__u32 access_type;
 	__u32 major;
 	__u32 minor;
 };

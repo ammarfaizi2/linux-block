@@ -11,7 +11,7 @@ ifneq ($(wildcard $(GENHDR)),)
 endif
 
 CFLAGS += -Wall -O2 -I$(APIDIR) -I$(LIBDIR) -I$(GENDIR) $(GENFLAGS) -I../../../include
-LDLIBS += -lcap -lelf
+LDLIBS += -lcap -lelf -lrt
 
 TEST_GEN_PROGS = test_verifier test_tag test_maps test_lru_map test_lpm_map test_progs \
 	test_align test_verifier_log test_dev_cgroup
@@ -19,7 +19,7 @@ TEST_GEN_PROGS = test_verifier test_tag test_maps test_lru_map test_lpm_map test
 TEST_GEN_FILES = test_pkt_access.o test_xdp.o test_l4lb.o test_tcp_estats.o test_obj_id.o \
 	test_pkt_md_access.o test_xdp_redirect.o test_xdp_meta.o sockmap_parse_prog.o     \
 	sockmap_verdict_prog.o dev_cgroup.o sample_ret0.o test_tracepoint.o \
-	test_l4lb_noinline.o test_xdp_noinline.o
+	test_l4lb_noinline.o test_xdp_noinline.o test_stacktrace_map.o
 
 TEST_PROGS := test_kmod.sh test_xdp_redirect.sh test_xdp_meta.sh \
 	test_offload.py
@@ -41,7 +41,7 @@ $(BPFOBJ): force
 CLANG ?= clang
 LLC   ?= llc
 
-PROBE := $(shell llc -march=bpf -mcpu=probe -filetype=null /dev/null 2>&1)
+PROBE := $(shell $(LLC) -march=bpf -mcpu=probe -filetype=null /dev/null 2>&1)
 
 # Let newer LLVM versions transparently probe the kernel for availability
 # of full BPF instruction set.

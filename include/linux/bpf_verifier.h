@@ -15,11 +15,11 @@
  * In practice this is far bigger than any realistic pointer offset; this limit
  * ensures that umax_value + (int)off + (int)size cannot overflow a u64.
  */
-#define BPF_MAX_VAR_OFF	(1ULL << 31)
+#define BPF_MAX_VAR_OFF	(1 << 29)
 /* Maximum variable size permitted for ARG_CONST_SIZE[_OR_ZERO].  This ensures
  * that converting umax_value to int cannot overflow.
  */
-#define BPF_MAX_VAR_SIZ	INT_MAX
+#define BPF_MAX_VAR_SIZ	(1 << 29)
 
 /* Liveness marks, used for registers and spilled-regs (in stack slots).
  * Read marks propagate upwards until they find a write mark; they record that
@@ -166,12 +166,6 @@ static inline bool bpf_verifier_log_full(const struct bpf_verifer_log *log)
 	return log->len_used >= log->len_total - 1;
 }
 
-struct bpf_verifier_env;
-struct bpf_ext_analyzer_ops {
-	int (*insn_hook)(struct bpf_verifier_env *env,
-			 int insn_idx, int prev_insn_idx);
-};
-
 #define BPF_MAX_SUBPROGS 256
 
 /* single container for all structs
@@ -185,7 +179,6 @@ struct bpf_verifier_env {
 	bool strict_alignment;		/* perform strict pointer alignment checks */
 	struct bpf_verifier_state *cur_state; /* current verifier state */
 	struct bpf_verifier_state_list **explored_states; /* search pruning optimization */
-	const struct bpf_ext_analyzer_ops *dev_ops; /* device analyzer ops */
 	struct bpf_map *used_maps[MAX_USED_MAPS]; /* array of map's used by eBPF program */
 	u32 used_map_cnt;		/* number of used maps */
 	u32 id_gen;			/* used to generate unique reg IDs */
@@ -194,6 +187,7 @@ struct bpf_verifier_env {
 	struct bpf_insn_aux_data *insn_aux_data; /* array of per-insn state */
 	struct bpf_verifer_log log;
 	u32 subprog_starts[BPF_MAX_SUBPROGS];
+	/* computes the stack depth of each bpf function */
 	u16 subprog_stack_depth[BPF_MAX_SUBPROGS + 1];
 	u32 subprog_cnt;
 };
@@ -205,13 +199,8 @@ static inline struct bpf_reg_state *cur_regs(struct bpf_verifier_env *env)
 	return cur->frame[cur->curframe]->regs;
 }
 
-#if defined(CONFIG_NET) && defined(CONFIG_BPF_SYSCALL)
 int bpf_prog_offload_verifier_prep(struct bpf_verifier_env *env);
-#else
-static inline int bpf_prog_offload_verifier_prep(struct bpf_verifier_env *env)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+int bpf_prog_offload_verify_insn(struct bpf_verifier_env *env,
+				 int insn_idx, int prev_insn_idx);
 
 #endif /* _LINUX_BPF_VERIFIER_H */

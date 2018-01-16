@@ -1544,7 +1544,7 @@ static void sctp_close(struct sock *sk, long timeout)
 
 	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 	sk->sk_shutdown = SHUTDOWN_MASK;
-	sk->sk_state = SCTP_SS_CLOSING;
+	inet_sk_set_state(sk, SCTP_SS_CLOSING);
 
 	ep = sctp_sk(sk)->ep;
 
@@ -4569,7 +4569,7 @@ static int sctp_init_sock(struct sock *sk)
 	SCTP_DBG_OBJCNT_INC(sock);
 
 	local_bh_disable();
-	percpu_counter_inc(&sctp_sockets_allocated);
+	sk_sockets_allocated_inc(sk);
 	sock_prot_inuse_add(net, sk->sk_prot, 1);
 
 	/* Nothing can fail after this block, otherwise
@@ -4613,7 +4613,7 @@ static void sctp_destroy_sock(struct sock *sk)
 	}
 	sctp_endpoint_free(sp->ep);
 	local_bh_disable();
-	percpu_counter_dec(&sctp_sockets_allocated);
+	sk_sockets_allocated_dec(sk);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
 	local_bh_enable();
 }
@@ -4657,7 +4657,7 @@ static void sctp_shutdown(struct sock *sk, int how)
 	if (how & SEND_SHUTDOWN && !list_empty(&ep->asocs)) {
 		struct sctp_association *asoc;
 
-		sk->sk_state = SCTP_SS_CLOSING;
+		inet_sk_set_state(sk, SCTP_SS_CLOSING);
 		asoc = list_entry(ep->asocs.next,
 				  struct sctp_association, asocs);
 		sctp_primitive_SHUTDOWN(net, asoc, NULL);
@@ -7513,13 +7513,13 @@ static int sctp_listen_start(struct sock *sk, int backlog)
 	 * sockets.
 	 *
 	 */
-	sk->sk_state = SCTP_SS_LISTENING;
+	inet_sk_set_state(sk, SCTP_SS_LISTENING);
 	if (!ep->base.bind_addr.port) {
 		if (sctp_autobind(sk))
 			return -EAGAIN;
 	} else {
 		if (sctp_get_port(sk, inet_sk(sk)->inet_num)) {
-			sk->sk_state = SCTP_SS_CLOSED;
+			inet_sk_set_state(sk, SCTP_SS_CLOSED);
 			return -EADDRINUSE;
 		}
 	}
@@ -8542,10 +8542,10 @@ static void sctp_sock_migrate(struct sock *oldsk, struct sock *newsk,
 	 * is called, set RCV_SHUTDOWN flag.
 	 */
 	if (sctp_state(assoc, CLOSED) && sctp_style(newsk, TCP)) {
-		newsk->sk_state = SCTP_SS_CLOSED;
+		inet_sk_set_state(newsk, SCTP_SS_CLOSED);
 		newsk->sk_shutdown |= RCV_SHUTDOWN;
 	} else {
-		newsk->sk_state = SCTP_SS_ESTABLISHED;
+		inet_sk_set_state(newsk, SCTP_SS_ESTABLISHED);
 	}
 
 	release_sock(newsk);

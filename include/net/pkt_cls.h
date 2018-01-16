@@ -39,9 +39,11 @@ struct tcf_chain *tcf_chain_get(struct tcf_block *block, u32 chain_index,
 				bool create);
 void tcf_chain_put(struct tcf_chain *chain);
 int tcf_block_get(struct tcf_block **p_block,
-		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q);
+		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q,
+		  struct netlink_ext_ack *extack);
 int tcf_block_get_ext(struct tcf_block **p_block, struct Qdisc *q,
-		      struct tcf_block_ext_info *ei);
+		      struct tcf_block_ext_info *ei,
+		      struct netlink_ext_ack *extack);
 void tcf_block_put(struct tcf_block *block);
 void tcf_block_put_ext(struct tcf_block *block, struct Qdisc *q,
 		       struct tcf_block_ext_info *ei);
@@ -77,14 +79,16 @@ int tcf_classify(struct sk_buff *skb, const struct tcf_proto *tp,
 #else
 static inline
 int tcf_block_get(struct tcf_block **p_block,
-		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q)
+		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q,
+		  struct netlink_ext_ack *extack)
 {
 	return 0;
 }
 
 static inline
 int tcf_block_get_ext(struct tcf_block **p_block, struct Qdisc *q,
-		      struct tcf_block_ext_info *ei)
+		      struct tcf_block_ext_info *ei,
+		      struct netlink_ext_ack *extack)
 {
 	return 0;
 }
@@ -694,9 +698,7 @@ struct tc_cls_matchall_offload {
 };
 
 enum tc_clsbpf_command {
-	TC_CLSBPF_ADD,
-	TC_CLSBPF_REPLACE,
-	TC_CLSBPF_DESTROY,
+	TC_CLSBPF_OFFLOAD,
 	TC_CLSBPF_STATS,
 };
 
@@ -705,6 +707,7 @@ struct tc_cls_bpf_offload {
 	enum tc_clsbpf_command command;
 	struct tcf_exts *exts;
 	struct bpf_prog *prog;
+	struct bpf_prog *oldprog;
 	const char *name;
 	bool exts_integrated;
 	u32 gen_flags;

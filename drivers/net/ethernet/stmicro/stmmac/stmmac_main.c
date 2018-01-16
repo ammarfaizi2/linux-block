@@ -482,7 +482,7 @@ static void stmmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc *p,
 		desc = np;
 
 	/* Check if timestamp is available */
-	if (priv->hw->desc->get_rx_timestamp_status(desc, priv->adv_ts)) {
+	if (priv->hw->desc->get_rx_timestamp_status(p, np, priv->adv_ts)) {
 		ns = priv->hw->desc->get_timestamp(desc, priv->adv_ts);
 		netdev_dbg(priv->dev, "get valid RX hw timestamp %llu\n", ns);
 		shhwtstamp = skb_hwtstamps(skb);
@@ -3436,9 +3436,8 @@ static int stmmac_rx(struct stmmac_priv *priv, int limit, u32 queue)
 			if (netif_msg_rx_status(priv)) {
 				netdev_dbg(priv->dev, "\tdesc: %p [entry %d] buff=0x%x\n",
 					   p, entry, des);
-				if (frame_len > ETH_FRAME_LEN)
-					netdev_dbg(priv->dev, "frame size %d, COE: %d\n",
-						   frame_len, status);
+				netdev_dbg(priv->dev, "frame size %d, COE: %d\n",
+					   frame_len, status);
 			}
 
 			/* The zero-copy is always used for all the sizes

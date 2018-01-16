@@ -41,8 +41,8 @@ struct mdio_device {
 	int addr;
 	int flags;
 	struct gpio_desc *reset;
-	unsigned int reset_delay;
-	unsigned int reset_post_delay;
+	unsigned int reset_assert_delay;
+	unsigned int reset_deassert_delay;
 };
 #define to_mdio_device(d) container_of(d, struct mdio_device, dev)
 
@@ -261,6 +261,9 @@ static inline u16 ethtool_adv_to_mmd_eee_adv_t(u32 adv)
 
 	return reg;
 }
+
+int __mdiobus_read(struct mii_bus *bus, int addr, u32 regnum);
+int __mdiobus_write(struct mii_bus *bus, int addr, u32 regnum, u16 val);
 
 int mdiobus_read(struct mii_bus *bus, int addr, u32 regnum);
 int mdiobus_read_nested(struct mii_bus *bus, int addr, u32 regnum);

@@ -32,6 +32,7 @@
 #include <net/pkt_sched.h>
 #include <net/dst.h>
 #include <trace/events/qdisc.h>
+#include <net/xfrm.h>
 
 /* Qdisc to use by default */
 const struct Qdisc_ops *default_qdisc_ops = &pfifo_fast_ops;
@@ -111,10 +112,16 @@ static inline void qdisc_enqueue_skb_bad_txq(struct Qdisc *q,
 
 static inline int __dev_requeue_skb(struct sk_buff *skb, struct Qdisc *q)
 {
-	__skb_queue_head(&q->gso_skb, skb);
-	q->qstats.requeues++;
-	qdisc_qstats_backlog_inc(q, skb);
-	q->q.qlen++;	/* it's still part of the queue */
+	while (skb) {
+		struct sk_buff *next = skb->next;
+
+		__skb_queue_tail(&q->gso_skb, skb);
+		q->qstats.requeues++;
+		qdisc_qstats_backlog_inc(q, skb);
+		q->q.qlen++;	/* it's still part of the queue */
+
+		skb = next;
+	}
 	__netif_schedule(q);
 
 	return 0;
@@ -125,12 +132,19 @@ static inline int dev_requeue_skb_locked(struct sk_buff *skb, struct Qdisc *q)
 	spinlock_t *lock = qdisc_lock(q);
 
 	spin_lock(lock);
-	__skb_queue_tail(&q->gso_skb, skb);
+	while (skb) {
+		struct sk_buff *next = skb->next;
+
+		__skb_queue_tail(&q->gso_skb, skb);
+
+		qdisc_qstats_cpu_requeues_inc(q);
+		qdisc_qstats_cpu_backlog_inc(q, skb);
+		qdisc_qstats_cpu_qlen_inc(q);
+
+		skb = next;
+	}
 	spin_unlock(lock);
 
-	qdisc_qstats_cpu_requeues_inc(q);
-	qdisc_qstats_cpu_backlog_inc(q, skb);
-	qdisc_qstats_cpu_qlen_inc(q);
 	__netif_schedule(q);
 
 	return 0;
@@ -230,6 +244,8 @@ static struct sk_buff *dequeue_skb(struct Qdisc *q, bool *validate,
 
 		/* skb in gso_skb were already validated */
 		*validate = false;
+		if (xfrm_offload(skb))
+			*validate = true;
 		/* check the reason of requeuing without tx lock first */
 		txq = skb_get_tx_queue(txq->dev, skb);
 		if (!netif_xmit_frozen_or_stopped(txq)) {
@@ -285,6 +301,7 @@ bool sch_direct_xmit(struct sk_buff *skb, struct Qdisc *q,
 		     spinlock_t *root_lock, bool validate)
 {
 	int ret = NETDEV_TX_BUSY;
+	bool again = false;
 
 	/* And release qdisc */
 	if (root_lock)
@@ -292,7 +309,17 @@ bool sch_direct_xmit(struct sk_buff *skb, struct Qdisc *q,
 
 	/* Note that we validate skb (GSO, checksum, ...) outside of locks */
 	if (validate)
-		skb = validate_xmit_skb_list(skb, dev);
+		skb = validate_xmit_skb_list(skb, dev, &again);
+
+#ifdef CONFIG_XFRM_OFFLOAD
+	if (unlikely(again)) {
+		if (root_lock)
+			spin_lock(root_lock);
+
+		dev_requeue_skb(skb, q);
+		return false;
+	}
+#endif
 
 	if (likely(skb)) {
 		HARD_TX_LOCK(dev, txq, smp_processor_id());
@@ -551,7 +578,8 @@ struct Qdisc noop_qdisc = {
 };
 EXPORT_SYMBOL(noop_qdisc);
 
-static int noqueue_init(struct Qdisc *qdisc, struct nlattr *opt)
+static int noqueue_init(struct Qdisc *qdisc, struct nlattr *opt,
+			struct netlink_ext_ack *extack)
 {
 	/* register_qdisc() assigns a default of noop_enqueue if unset,
 	 * but __dev_queue_xmit() treats noqueue only as such
@@ -690,7 +718,8 @@ nla_put_failure:
 	return -1;
 }
 
-static int pfifo_fast_init(struct Qdisc *qdisc, struct nlattr *opt)
+static int pfifo_fast_init(struct Qdisc *qdisc, struct nlattr *opt,
+			   struct netlink_ext_ack *extack)
 {
 	unsigned int qlen = qdisc_dev(qdisc)->tx_queue_len;
 	struct pfifo_fast_priv *priv = qdisc_priv(qdisc);
@@ -753,7 +782,8 @@ static struct lock_class_key qdisc_tx_busylock;
 static struct lock_class_key qdisc_running_key;
 
 struct Qdisc *qdisc_alloc(struct netdev_queue *dev_queue,
-			  const struct Qdisc_ops *ops)
+			  const struct Qdisc_ops *ops,
+			  struct netlink_ext_ack *extack)
 {
 	void *p;
 	struct Qdisc *sch;
@@ -762,6 +792,7 @@ struct Qdisc *qdisc_alloc(struct netdev_queue *dev_queue,
 	struct net_device *dev;
 
 	if (!dev_queue) {
+		NL_SET_ERR_MSG(extack, "No device queue given");
 		err = -EINVAL;
 		goto errout;
 	}
@@ -826,21 +857,24 @@ errout:
 
 struct Qdisc *qdisc_create_dflt(struct netdev_queue *dev_queue,
 				const struct Qdisc_ops *ops,
-				unsigned int parentid)
+				unsigned int parentid,
+				struct netlink_ext_ack *extack)
 {
 	struct Qdisc *sch;
 
-	if (!try_module_get(ops->owner))
+	if (!try_module_get(ops->owner)) {
+		NL_SET_ERR_MSG(extack, "Failed to increase module reference counter");
 		return NULL;
+	}
 
-	sch = qdisc_alloc(dev_queue, ops);
+	sch = qdisc_alloc(dev_queue, ops, extack);
 	if (IS_ERR(sch)) {
 		module_put(ops->owner);
 		return NULL;
 	}
 	sch->parent = parentid;
 
-	if (!ops->init || ops->init(sch, NULL) == 0)
+	if (!ops->init || ops->init(sch, NULL, extack) == 0)
 		return sch;
 
 	qdisc_destroy(sch);
@@ -952,7 +986,7 @@ static void attach_one_default_qdisc(struct net_device *dev,
 	if (dev->priv_flags & IFF_NO_QUEUE)
 		ops = &noqueue_qdisc_ops;
 
-	qdisc = qdisc_create_dflt(dev_queue, ops, TC_H_ROOT);
+	qdisc = qdisc_create_dflt(dev_queue, ops, TC_H_ROOT, NULL);
 	if (!qdisc) {
 		netdev_info(dev, "activation failed\n");
 		return;
@@ -975,7 +1009,7 @@ static void attach_default_qdiscs(struct net_device *dev)
 		dev->qdisc = txq->qdisc_sleeping;
 		qdisc_refcount_inc(dev->qdisc);
 	} else {
-		qdisc = qdisc_create_dflt(txq, &mq_qdisc_ops, TC_H_ROOT);
+		qdisc = qdisc_create_dflt(txq, &mq_qdisc_ops, TC_H_ROOT, NULL);
 		if (qdisc) {
 			dev->qdisc = qdisc;
 			qdisc->ops->attach(qdisc);
@@ -1240,6 +1274,8 @@ void mini_qdisc_pair_swap(struct mini_Qdisc_pair *miniqp,
 
 	if (!tp_head) {
 		RCU_INIT_POINTER(*miniqp->p_miniq, NULL);
+		/* Wait for flying RCU callback before it is freed. */
+		rcu_barrier_bh();
 		return;
 	}
 
@@ -1255,7 +1291,7 @@ void mini_qdisc_pair_swap(struct mini_Qdisc_pair *miniqp,
 	rcu_assign_pointer(*miniqp->p_miniq, miniq);
 
 	if (miniq_old)
-		/* This is counterpart of the rcu barrier above. We need to
+		/* This is counterpart of the rcu barriers above. We need to
 		 * block potential new user of miniq_old until all readers
 		 * are not seeing it.
 		 */

@@ -46,6 +46,7 @@
 #include <linux/mlx5/transobj.h>
 #include <linux/rhashtable.h>
 #include <net/switchdev.h>
+#include <net/xdp.h>
 #include "wq.h"
 #include "mlx5_core.h"
 #include "en_stats.h"
@@ -82,6 +83,9 @@
 	max_t(u32, MLX5_MPWRQ_MIN_LOG_STRIDE_SZ(mdev), req)
 #define MLX5_MPWRQ_DEF_LOG_STRIDE_SZ(mdev)       MLX5_MPWRQ_LOG_STRIDE_SZ(mdev, 6)
 #define MLX5_MPWRQ_CQE_CMPRS_LOG_STRIDE_SZ(mdev) MLX5_MPWRQ_LOG_STRIDE_SZ(mdev, 8)
+#define MLX5E_MPWQE_STRIDE_SZ(mdev, cqe_cmprs) \
+	(cqe_cmprs ? MLX5_MPWRQ_CQE_CMPRS_LOG_STRIDE_SZ(mdev) : \
+	MLX5_MPWRQ_DEF_LOG_STRIDE_SZ(mdev))
 
 #define MLX5_MPWRQ_LOG_WQE_SZ			18
 #define MLX5_MPWRQ_WQE_PAGE_ORDER  (MLX5_MPWRQ_LOG_WQE_SZ - PAGE_SHIFT > 0 ? \
@@ -568,6 +572,9 @@ struct mlx5e_rq {
 	u32                    rqn;
 	struct mlx5_core_dev  *mdev;
 	struct mlx5_core_mkey  umr_mkey;
+
+	/* XDP read-mostly */
+	struct xdp_rxq_info    xdp_rxq;
 } ____cacheline_aligned_in_smp;
 
 struct mlx5e_channel {
@@ -590,6 +597,7 @@ struct mlx5e_channel {
 	struct mlx5_core_dev      *mdev;
 	struct hwtstamp_config    *tstamp;
 	int                        ix;
+	int                        cpu;
 };
 
 struct mlx5e_channels {
@@ -935,8 +943,9 @@ void mlx5e_set_tx_cq_mode_params(struct mlx5e_params *params,
 				 u8 cq_period_mode);
 void mlx5e_set_rx_cq_mode_params(struct mlx5e_params *params,
 				 u8 cq_period_mode);
-void mlx5e_set_rq_type_params(struct mlx5_core_dev *mdev,
-			      struct mlx5e_params *params, u8 rq_type);
+void mlx5e_init_rq_type_params(struct mlx5_core_dev *mdev,
+			       struct mlx5e_params *params,
+			       u8 rq_type);
 
 static inline bool mlx5e_tunnel_inner_ft_supported(struct mlx5_core_dev *mdev)
 {

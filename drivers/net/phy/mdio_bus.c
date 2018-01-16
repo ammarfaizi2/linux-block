@@ -47,12 +47,9 @@
 
 #include "mdio-boardinfo.h"
 
-int mdiobus_register_device(struct mdio_device *mdiodev)
+static int mdiobus_register_gpiod(struct mdio_device *mdiodev)
 {
 	struct gpio_desc *gpiod = NULL;
-
-	if (mdiodev->bus->mdio_map[mdiodev->addr])
-		return -EBUSY;
 
 	/* Deassert the optional reset signal */
 	if (mdiodev->dev.of_node)
@@ -68,6 +65,22 @@ int mdiobus_register_device(struct mdio_device *mdiodev)
 
 	/* Assert the reset signal again */
 	mdio_device_reset(mdiodev, 1);
+
+	return 0;
+}
+
+int mdiobus_register_device(struct mdio_device *mdiodev)
+{
+	int err;
+
+	if (mdiodev->bus->mdio_map[mdiodev->addr])
+		return -EBUSY;
+
+	if (mdiodev->flags & MDIO_DEVICE_FLAG_PHY) {
+		err = mdiobus_register_gpiod(mdiodev);
+		if (err)
+			return err;
+	}
 
 	mdiodev->bus->mdio_map[mdiodev->addr] = mdiodev;
 
@@ -515,6 +528,55 @@ struct phy_device *mdiobus_scan(struct mii_bus *bus, int addr)
 EXPORT_SYMBOL(mdiobus_scan);
 
 /**
+ * __mdiobus_read - Unlocked version of the mdiobus_read function
+ * @bus: the mii_bus struct
+ * @addr: the phy address
+ * @regnum: register number to read
+ *
+ * Read a MDIO bus register. Caller must hold the mdio bus lock.
+ *
+ * NOTE: MUST NOT be called from interrupt context.
+ */
+int __mdiobus_read(struct mii_bus *bus, int addr, u32 regnum)
+{
+	int retval;
+
+	WARN_ON_ONCE(!mutex_is_locked(&bus->mdio_lock));
+
+	retval = bus->read(bus, addr, regnum);
+
+	trace_mdio_access(bus, 1, addr, regnum, retval, retval);
+
+	return retval;
+}
+EXPORT_SYMBOL(__mdiobus_read);
+
+/**
+ * __mdiobus_write - Unlocked version of the mdiobus_write function
+ * @bus: the mii_bus struct
+ * @addr: the phy address
+ * @regnum: register number to write
+ * @val: value to write to @regnum
+ *
+ * Write a MDIO bus register. Caller must hold the mdio bus lock.
+ *
+ * NOTE: MUST NOT be called from interrupt context.
+ */
+int __mdiobus_write(struct mii_bus *bus, int addr, u32 regnum, u16 val)
+{
+	int err;
+
+	WARN_ON_ONCE(!mutex_is_locked(&bus->mdio_lock));
+
+	err = bus->write(bus, addr, regnum, val);
+
+	trace_mdio_access(bus, 0, addr, regnum, val, err);
+
+	return err;
+}
+EXPORT_SYMBOL(__mdiobus_write);
+
+/**
  * mdiobus_read_nested - Nested version of the mdiobus_read function
  * @bus: the mii_bus struct
  * @addr: the phy address
@@ -534,10 +596,8 @@ int mdiobus_read_nested(struct mii_bus *bus, int addr, u32 regnum)
 	BUG_ON(in_interrupt());
 
 	mutex_lock_nested(&bus->mdio_lock, MDIO_MUTEX_NESTED);
-	retval = bus->read(bus, addr, regnum);
+	retval = __mdiobus_read(bus, addr, regnum);
 	mutex_unlock(&bus->mdio_lock);
-
-	trace_mdio_access(bus, 1, addr, regnum, retval, retval);
 
 	return retval;
 }
@@ -560,10 +620,8 @@ int mdiobus_read(struct mii_bus *bus, int addr, u32 regnum)
 	BUG_ON(in_interrupt());
 
 	mutex_lock(&bus->mdio_lock);
-	retval = bus->read(bus, addr, regnum);
+	retval = __mdiobus_read(bus, addr, regnum);
 	mutex_unlock(&bus->mdio_lock);
-
-	trace_mdio_access(bus, 1, addr, regnum, retval, retval);
 
 	return retval;
 }
@@ -590,10 +648,8 @@ int mdiobus_write_nested(struct mii_bus *bus, int addr, u32 regnum, u16 val)
 	BUG_ON(in_interrupt());
 
 	mutex_lock_nested(&bus->mdio_lock, MDIO_MUTEX_NESTED);
-	err = bus->write(bus, addr, regnum, val);
+	err = __mdiobus_write(bus, addr, regnum, val);
 	mutex_unlock(&bus->mdio_lock);
-
-	trace_mdio_access(bus, 0, addr, regnum, val, err);
 
 	return err;
 }
@@ -617,10 +673,8 @@ int mdiobus_write(struct mii_bus *bus, int addr, u32 regnum, u16 val)
 	BUG_ON(in_interrupt());
 
 	mutex_lock(&bus->mdio_lock);
-	err = bus->write(bus, addr, regnum, val);
+	err = __mdiobus_write(bus, addr, regnum, val);
 	mutex_unlock(&bus->mdio_lock);
-
-	trace_mdio_access(bus, 0, addr, regnum, val, err);
 
 	return err;
 }

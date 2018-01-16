@@ -121,6 +121,7 @@
 #endif
 #include <net/l3mdev.h>
 
+#include <trace/events/sock.h>
 
 /* The inetsw table contains everything that inet_create needs to
  * build a new socket.
@@ -789,7 +790,8 @@ int inet_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
 	int addr_len = 0;
 	int err;
 
-	sock_rps_record_flow(sk);
+	if (likely(!(flags & MSG_ERRQUEUE)))
+		sock_rps_record_flow(sk);
 
 	err = sk->sk_prot->recvmsg(sk, msg, size, flags & MSG_DONTWAIT,
 				   flags & ~MSG_DONTWAIT, &addr_len);
@@ -1219,6 +1221,19 @@ int inet_sk_rebuild_header(struct sock *sk)
 	return err;
 }
 EXPORT_SYMBOL(inet_sk_rebuild_header);
+
+void inet_sk_set_state(struct sock *sk, int state)
+{
+	trace_inet_sock_set_state(sk, sk->sk_state, state);
+	sk->sk_state = state;
+}
+EXPORT_SYMBOL(inet_sk_set_state);
+
+void inet_sk_state_store(struct sock *sk, int newstate)
+{
+	trace_inet_sock_set_state(sk, sk->sk_state, newstate);
+	smp_store_release(&sk->sk_state, newstate);
+}
 
 struct sk_buff *inet_gso_segment(struct sk_buff *skb,
 				 netdev_features_t features)

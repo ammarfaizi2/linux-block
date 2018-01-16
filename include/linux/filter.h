@@ -18,7 +18,9 @@
 #include <linux/capability.h>
 #include <linux/cryptohash.h>
 #include <linux/set_memory.h>
+#include <linux/kallsyms.h>
 
+#include <net/xdp.h>
 #include <net/sch_generic.h>
 
 #include <uapi/linux/filter.h>
@@ -502,6 +504,7 @@ struct xdp_buff {
 	void *data_end;
 	void *data_meta;
 	void *data_hard_start;
+	struct xdp_rxq_info *rxq;
 };
 
 /* Compute the linear packet data range [data, data_end) which
@@ -723,6 +726,14 @@ u64 __bpf_call_base(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5);
 struct bpf_prog *bpf_int_jit_compile(struct bpf_prog *prog);
 void bpf_jit_compile(struct bpf_prog *prog);
 bool bpf_helper_changes_pkt_data(void *func);
+
+static inline bool bpf_dump_raw_ok(void)
+{
+	/* Reconstruction of call-sites is dependent on kallsyms,
+	 * thus make dump the same restriction.
+	 */
+	return kallsyms_show_value() == 1;
+}
 
 struct bpf_prog *bpf_patch_insn_single(struct bpf_prog *prog, u32 off,
 				       const struct bpf_insn *patch, u32 len);
