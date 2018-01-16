@@ -49,7 +49,7 @@ static int hclgevf_tqps_update_stats(struct hnae3_handle *handle)
 			return status;
 		}
 		tqp->tqp_stats.rcb_rx_ring_pktnum_rcd +=
-			le32_to_cpu(desc.data[4]);
+			le32_to_cpu(desc.data[1]);
 
 		hclgevf_cmd_setup_basic_desc(&desc, HCLGEVF_OPC_QUERY_TX_STATUS,
 					     true);
@@ -63,7 +63,7 @@ static int hclgevf_tqps_update_stats(struct hnae3_handle *handle)
 			return status;
 		}
 		tqp->tqp_stats.rcb_tx_ring_pktnum_rcd +=
-			le32_to_cpu(desc.data[4]);
+			le32_to_cpu(desc.data[1]);
 	}
 
 	return 0;
@@ -105,7 +105,7 @@ static u8 *hclgevf_tqps_get_strings(struct hnae3_handle *handle, u8 *data)
 	for (i = 0; i < hdev->num_tqps; i++) {
 		struct hclgevf_tqp *tqp = container_of(handle->kinfo.tqp[i],
 			struct hclgevf_tqp, q);
-		snprintf(buff, ETH_GSTRING_LEN, "rcb_q%d_tx_pktnum_rcd",
+		snprintf(buff, ETH_GSTRING_LEN, "txq#%d_pktnum_rcd",
 			 tqp->index);
 		buff += ETH_GSTRING_LEN;
 	}
@@ -113,7 +113,7 @@ static u8 *hclgevf_tqps_get_strings(struct hnae3_handle *handle, u8 *data)
 	for (i = 0; i < hdev->num_tqps; i++) {
 		struct hclgevf_tqp *tqp = container_of(handle->kinfo.tqp[i],
 			struct hclgevf_tqp, q);
-		snprintf(buff, ETH_GSTRING_LEN, "rcb_q%d_rx_pktnum_rcd",
+		snprintf(buff, ETH_GSTRING_LEN, "rxq#%d_pktnum_rcd",
 			 tqp->index);
 		buff += ETH_GSTRING_LEN;
 	}
@@ -199,20 +199,6 @@ static int hclge_get_queue_info(struct hclgevf_dev *hdev)
 	memcpy(&hdev->rx_buf_len, &resp_msg[6], sizeof(u16));
 
 	return 0;
-}
-
-static int hclgevf_enable_tso(struct hclgevf_dev *hdev, int enable)
-{
-	struct hclgevf_cfg_tso_status_cmd *req;
-	struct hclgevf_desc desc;
-
-	req = (struct hclgevf_cfg_tso_status_cmd *)desc.data;
-
-	hclgevf_cmd_setup_basic_desc(&desc, HCLGEVF_OPC_TSO_GENERIC_CONFIG,
-				     false);
-	hnae_set_bit(req->tso_enable, HCLGEVF_TSO_ENABLE_B, enable);
-
-	return hclgevf_cmd_send(&hdev->hw, &desc, 1);
 }
 
 static int hclgevf_alloc_tqps(struct hclgevf_dev *hdev)
@@ -1288,7 +1274,7 @@ static int hclgevf_pci_init(struct hclgevf_dev *hdev)
 	pci_set_master(pdev);
 	hw = &hdev->hw;
 	hw->hdev = hdev;
-	hw->io_base = pci_iomap(pdev, 2, 0);;
+	hw->io_base = pci_iomap(pdev, 2, 0);
 	if (!hw->io_base) {
 		dev_err(&pdev->dev, "can't map configuration register space\n");
 		ret = -ENOMEM;
@@ -1375,12 +1361,6 @@ static int hclgevf_init_ae_dev(struct hnae3_ae_dev *ae_dev)
 		goto err_config;
 	}
 
-	ret = hclgevf_enable_tso(hdev, true);
-	if (ret) {
-		dev_err(&pdev->dev, "failed(%d) to enable tso\n", ret);
-		goto err_config;
-	}
-
 	/* Initialize VF's MTA */
 	hdev->accept_mta_mc = true;
 	ret = hclgevf_cfg_func_mta_filter(&hdev->nic, hdev->accept_mta_mc);
@@ -1433,6 +1413,35 @@ static void hclgevf_uninit_ae_dev(struct hnae3_ae_dev *ae_dev)
 	ae_dev->priv = NULL;
 }
 
+static u32 hclgevf_get_max_channels(struct hclgevf_dev *hdev)
+{
+	struct hnae3_handle *nic = &hdev->nic;
+	struct hnae3_knic_private_info *kinfo = &nic->kinfo;
+
+	return min_t(u32, hdev->rss_size_max * kinfo->num_tc, hdev->num_tqps);
+}
+
+/**
+ * hclgevf_get_channels - Get the current channels enabled and max supported.
+ * @handle: hardware information for network interface
+ * @ch: ethtool channels structure
+ *
+ * We don't support separate tx and rx queues as channels. The other count
+ * represents how many queues are being used for control. max_combined counts
+ * how many queue pairs we can support. They may not be mapped 1 to 1 with
+ * q_vectors since we support a lot more queue pairs than q_vectors.
+ **/
+static void hclgevf_get_channels(struct hnae3_handle *handle,
+				 struct ethtool_channels *ch)
+{
+	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
+
+	ch->max_combined = hclgevf_get_max_channels(hdev);
+	ch->other_count = 0;
+	ch->max_other = 0;
+	ch->combined_count = hdev->num_tqps;
+}
+
 static const struct hnae3_ae_ops hclgevf_ops = {
 	.init_ae_dev = hclgevf_init_ae_dev,
 	.uninit_ae_dev = hclgevf_uninit_ae_dev,
@@ -1462,6 +1471,7 @@ static const struct hnae3_ae_ops hclgevf_ops = {
 	.get_tc_size = hclgevf_get_tc_size,
 	.get_fw_version = hclgevf_get_fw_version,
 	.set_vlan_filter = hclgevf_set_vlan_filter,
+	.get_channels = hclgevf_get_channels,
 };
 
 static struct hnae3_ae_algo ae_algovf = {

@@ -96,6 +96,17 @@
 #define MII_88E1510_TEMP_SENSOR		0x1b
 #define MII_88E1510_TEMP_SENSOR_MASK	0xff
 
+#define MII_88E6390_MISC_TEST		0x1b
+#define MII_88E6390_MISC_TEST_SAMPLE_1S		0
+#define MII_88E6390_MISC_TEST_SAMPLE_10MS	BIT(14)
+#define MII_88E6390_MISC_TEST_SAMPLE_DISABLE	BIT(15)
+#define MII_88E6390_MISC_TEST_SAMPLE_ENABLE	0
+#define MII_88E6390_MISC_TEST_SAMPLE_MASK	(0x3 << 14)
+
+#define MII_88E6390_TEMP_SENSOR		0x1c
+#define MII_88E6390_TEMP_SENSOR_MASK	0xff
+#define MII_88E6390_TEMP_SENSOR_SAMPLES 10
+
 #define MII_88E1318S_PHY_MSCR1_REG	16
 #define MII_88E1318S_PHY_MSCR1_PAD_ODD	BIT(6)
 
@@ -668,7 +679,7 @@ static int m88e3016_config_init(struct phy_device *phydev)
 
 	/* Enable Scrambler and Auto-Crossover */
 	ret = phy_modify(phydev, MII_88E3016_PHY_SPEC_CTRL,
-			 ~MII_88E3016_DISABLE_SCRAMBLER,
+			 MII_88E3016_DISABLE_SCRAMBLER,
 			 MII_88E3016_AUTO_MDIX_CROSSOVER);
 	if (ret < 0)
 		return ret;
@@ -684,9 +695,9 @@ static int m88e1111_config_init_hwcfg_mode(struct phy_device *phydev,
 		mode |= MII_M1111_HWCFG_FIBER_COPPER_AUTO;
 
 	return phy_modify(phydev, MII_M1111_PHY_EXT_SR,
-			  (u16)~(MII_M1111_HWCFG_MODE_MASK |
-				 MII_M1111_HWCFG_FIBER_COPPER_AUTO |
-				 MII_M1111_HWCFG_FIBER_COPPER_RES),
+			  MII_M1111_HWCFG_MODE_MASK |
+			  MII_M1111_HWCFG_FIBER_COPPER_AUTO |
+			  MII_M1111_HWCFG_FIBER_COPPER_RES,
 			  mode);
 }
 
@@ -705,8 +716,7 @@ static int m88e1111_config_init_rgmii_delays(struct phy_device *phydev)
 	}
 
 	return phy_modify(phydev, MII_M1111_PHY_EXT_CR,
-			  (u16)~(MII_M1111_RGMII_RX_DELAY |
-				 MII_M1111_RGMII_TX_DELAY),
+			  MII_M1111_RGMII_RX_DELAY | MII_M1111_RGMII_TX_DELAY,
 			  delay);
 }
 
@@ -833,7 +843,7 @@ static int m88e1510_config_init(struct phy_device *phydev)
 
 		/* In reg 20, write MODE[2:0] = 0x1 (SGMII to Copper) */
 		err = phy_modify(phydev, MII_88E1510_GEN_CTRL_REG_1,
-				 ~MII_88E1510_GEN_CTRL_REG_1_MODE_MASK,
+				 MII_88E1510_GEN_CTRL_REG_1_MODE_MASK,
 				 MII_88E1510_GEN_CTRL_REG_1_MODE_SGMII);
 		if (err < 0)
 			return err;
@@ -957,7 +967,7 @@ static int m88e1145_config_init_rgmii(struct phy_device *phydev)
 		if (err < 0)
 			return err;
 
-		err = phy_modify(phydev, 0x1e, 0xf03f,
+		err = phy_modify(phydev, 0x1e, 0x0fc0,
 				 2 << 9 | /* 36 ohm */
 				 2 << 6); /* 39 ohm */
 		if (err < 0)
@@ -1379,7 +1389,7 @@ static int m88e1318_set_wol(struct phy_device *phydev,
 
 		/* Setup LED[2] as interrupt pin (active low) */
 		err = __phy_modify(phydev, MII_88E1318S_PHY_LED_TCR,
-				   (u16)~MII_88E1318S_PHY_LED_TCR_FORCE_INT,
+				   MII_88E1318S_PHY_LED_TCR_FORCE_INT,
 				   MII_88E1318S_PHY_LED_TCR_INTn_ENABLE |
 				   MII_88E1318S_PHY_LED_TCR_INT_ACTIVE_LOW);
 		if (err < 0)
@@ -1419,7 +1429,7 @@ static int m88e1318_set_wol(struct phy_device *phydev,
 
 		/* Clear WOL status and disable magic packet matching */
 		err = __phy_modify(phydev, MII_88E1318S_PHY_WOL_CTRL,
-				   (u16)~MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE,
+				   MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE,
 				   MII_88E1318S_PHY_WOL_CTRL_CLEAR_WOL_STATUS);
 		if (err < 0)
 			goto error;
@@ -1739,6 +1749,123 @@ static const struct hwmon_chip_info m88e1510_hwmon_chip_info = {
 	.info = m88e1510_hwmon_info,
 };
 
+static int m88e6390_get_temp(struct phy_device *phydev, long *temp)
+{
+	int sum = 0;
+	int oldpage;
+	int ret = 0;
+	int i;
+
+	*temp = 0;
+
+	oldpage = phy_select_page(phydev, MII_MARVELL_MISC_TEST_PAGE);
+	if (oldpage < 0)
+		goto error;
+
+	/* Enable temperature sensor */
+	ret = __phy_read(phydev, MII_88E6390_MISC_TEST);
+	if (ret < 0)
+		goto error;
+
+	ret = ret & ~MII_88E6390_MISC_TEST_SAMPLE_MASK;
+	ret |= MII_88E6390_MISC_TEST_SAMPLE_ENABLE |
+		MII_88E6390_MISC_TEST_SAMPLE_1S;
+
+	ret = __phy_write(phydev, MII_88E6390_MISC_TEST, ret);
+	if (ret < 0)
+		goto error;
+
+	/* Wait for temperature to stabilize */
+	usleep_range(10000, 12000);
+
+	/* Reading the temperature sense has an errata. You need to read
+	 * a number of times and take an average.
+	 */
+	for (i = 0; i < MII_88E6390_TEMP_SENSOR_SAMPLES; i++) {
+		ret = __phy_read(phydev, MII_88E6390_TEMP_SENSOR);
+		if (ret < 0)
+			goto error;
+		sum += ret & MII_88E6390_TEMP_SENSOR_MASK;
+	}
+
+	sum /= MII_88E6390_TEMP_SENSOR_SAMPLES;
+	*temp = (sum  - 75) * 1000;
+
+	/* Disable temperature sensor */
+	ret = __phy_read(phydev, MII_88E6390_MISC_TEST);
+	if (ret < 0)
+		goto error;
+
+	ret = ret & ~MII_88E6390_MISC_TEST_SAMPLE_MASK;
+	ret |= MII_88E6390_MISC_TEST_SAMPLE_DISABLE;
+
+	ret = __phy_write(phydev, MII_88E6390_MISC_TEST, ret);
+
+error:
+	phy_restore_page(phydev, oldpage, ret);
+
+	return ret;
+}
+
+static int m88e6390_hwmon_read(struct device *dev,
+			       enum hwmon_sensor_types type,
+			       u32 attr, int channel, long *temp)
+{
+	struct phy_device *phydev = dev_get_drvdata(dev);
+	int err;
+
+	switch (attr) {
+	case hwmon_temp_input:
+		err = m88e6390_get_temp(phydev, temp);
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+
+	return err;
+}
+
+static umode_t m88e6390_hwmon_is_visible(const void *data,
+					 enum hwmon_sensor_types type,
+					 u32 attr, int channel)
+{
+	if (type != hwmon_temp)
+		return 0;
+
+	switch (attr) {
+	case hwmon_temp_input:
+		return 0444;
+	default:
+		return 0;
+	}
+}
+
+static u32 m88e6390_hwmon_temp_config[] = {
+	HWMON_T_INPUT,
+	0
+};
+
+static const struct hwmon_channel_info m88e6390_hwmon_temp = {
+	.type = hwmon_temp,
+	.config = m88e6390_hwmon_temp_config,
+};
+
+static const struct hwmon_channel_info *m88e6390_hwmon_info[] = {
+	&m88e1121_hwmon_chip,
+	&m88e6390_hwmon_temp,
+	NULL
+};
+
+static const struct hwmon_ops m88e6390_hwmon_hwmon_ops = {
+	.is_visible = m88e6390_hwmon_is_visible,
+	.read = m88e6390_hwmon_read,
+};
+
+static const struct hwmon_chip_info m88e6390_hwmon_chip_info = {
+	.ops = &m88e6390_hwmon_hwmon_ops,
+	.info = m88e6390_hwmon_info,
+};
+
 static int marvell_hwmon_name(struct phy_device *phydev)
 {
 	struct marvell_priv *priv = phydev->priv;
@@ -1785,6 +1912,11 @@ static int m88e1510_hwmon_probe(struct phy_device *phydev)
 {
 	return marvell_hwmon_probe(phydev, &m88e1510_hwmon_chip_info);
 }
+
+static int m88e6390_hwmon_probe(struct phy_device *phydev)
+{
+	return marvell_hwmon_probe(phydev, &m88e6390_hwmon_chip_info);
+}
 #else
 static int m88e1121_hwmon_probe(struct phy_device *phydev)
 {
@@ -1792,6 +1924,11 @@ static int m88e1121_hwmon_probe(struct phy_device *phydev)
 }
 
 static int m88e1510_hwmon_probe(struct phy_device *phydev)
+{
+	return 0;
+}
+
+static int m88e6390_hwmon_probe(struct phy_device *phydev)
 {
 	return 0;
 }
@@ -1830,6 +1967,17 @@ static int m88e1510_probe(struct phy_device *phydev)
 		return err;
 
 	return m88e1510_hwmon_probe(phydev);
+}
+
+static int m88e6390_probe(struct phy_device *phydev)
+{
+	int err;
+
+	err = marvell_probe(phydev);
+	if (err)
+		return err;
+
+	return m88e6390_hwmon_probe(phydev);
 }
 
 static struct phy_driver marvell_drivers[] = {
@@ -2123,7 +2271,7 @@ static struct phy_driver marvell_drivers[] = {
 		.name = "Marvell 88E6390",
 		.features = PHY_GBIT_FEATURES,
 		.flags = PHY_HAS_INTERRUPT,
-		.probe = m88e1510_probe,
+		.probe = m88e6390_probe,
 		.config_init = &marvell_config_init,
 		.config_aneg = &m88e1510_config_aneg,
 		.read_status = &marvell_read_status,

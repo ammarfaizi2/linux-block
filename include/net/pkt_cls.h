@@ -731,6 +731,11 @@ struct tc_cookie {
 	u32 len;
 };
 
+struct tc_qopt_offload_stats {
+	struct gnet_stats_basic_packed *bstats;
+	struct gnet_stats_queue *qstats;
+};
+
 enum tc_red_command {
 	TC_RED_REPLACE,
 	TC_RED_DESTROY,
@@ -744,10 +749,6 @@ struct tc_red_qopt_offload_params {
 	u32 probability;
 	bool is_ecn;
 };
-struct tc_red_qopt_offload_stats {
-	struct gnet_stats_basic_packed *bstats;
-	struct gnet_stats_queue *qstats;
-};
 
 struct tc_red_qopt_offload {
 	enum tc_red_command command;
@@ -755,9 +756,34 @@ struct tc_red_qopt_offload {
 	u32 parent;
 	union {
 		struct tc_red_qopt_offload_params set;
-		struct tc_red_qopt_offload_stats stats;
+		struct tc_qopt_offload_stats stats;
 		struct red_stats *xstats;
 	};
 };
 
+enum tc_prio_command {
+	TC_PRIO_REPLACE,
+	TC_PRIO_DESTROY,
+	TC_PRIO_STATS,
+};
+
+struct tc_prio_qopt_offload_params {
+	int bands;
+	u8 priomap[TC_PRIO_MAX + 1];
+	/* In case that a prio qdisc is offloaded and now is changed to a
+	 * non-offloadedable config, it needs to update the backlog & qlen
+	 * values to negate the HW backlog & qlen values (and only them).
+	 */
+	struct gnet_stats_queue *qstats;
+};
+
+struct tc_prio_qopt_offload {
+	enum tc_prio_command command;
+	u32 handle;
+	u32 parent;
+	union {
+		struct tc_prio_qopt_offload_params replace_params;
+		struct tc_qopt_offload_stats stats;
+	};
+};
 #endif

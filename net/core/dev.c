@@ -1146,7 +1146,19 @@ EXPORT_SYMBOL(dev_alloc_name);
 int dev_get_valid_name(struct net *net, struct net_device *dev,
 		       const char *name)
 {
-	return dev_alloc_name_ns(net, dev, name);
+	BUG_ON(!net);
+
+	if (!dev_valid_name(name))
+		return -EINVAL;
+
+	if (strchr(name, '%'))
+		return dev_alloc_name_ns(net, dev, name);
+	else if (__dev_get_by_name(net, name))
+		return -EEXIST;
+	else if (dev->name != name)
+		strlcpy(dev->name, name, IFNAMSIZ);
+
+	return 0;
 }
 EXPORT_SYMBOL(dev_get_valid_name);
 
@@ -3408,8 +3420,7 @@ struct netdev_queue *netdev_pick_tx(struct net_device *dev,
 		else
 			queue_index = __netdev_pick_tx(dev, skb);
 
-		if (!accel_priv)
-			queue_index = netdev_cap_txqueue(dev, queue_index);
+		queue_index = netdev_cap_txqueue(dev, queue_index);
 	}
 
 	skb_set_queue_mapping(skb, queue_index);
@@ -7645,7 +7656,7 @@ err_rxq_info:
 	/* Rollback successful reg's and free other resources */
 	while (i--)
 		xdp_rxq_info_unreg(&rx[i].xdp_rxq);
-	kfree(dev->_rx);
+	kvfree(dev->_rx);
 	dev->_rx = NULL;
 	return err;
 }
@@ -7653,16 +7664,15 @@ err_rxq_info:
 static void netif_free_rx_queues(struct net_device *dev)
 {
 	unsigned int i, count = dev->num_rx_queues;
-	struct netdev_rx_queue *rx;
 
 	/* netif_alloc_rx_queues alloc failed, resources have been unreg'ed */
 	if (!dev->_rx)
 		return;
 
-	rx = dev->_rx;
-
 	for (i = 0; i < count; i++)
-		xdp_rxq_info_unreg(&rx[i].xdp_rxq);
+		xdp_rxq_info_unreg(&dev->_rx[i].xdp_rxq);
+
+	kvfree(dev->_rx);
 }
 
 static void netdev_init_one_queue(struct net_device *dev,

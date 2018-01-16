@@ -158,43 +158,68 @@ static void hns3_vector_disable(struct hns3_enet_tqp_vector *tqp_vector)
 	napi_disable(&tqp_vector->napi);
 }
 
-static void hns3_set_vector_coalesc_gl(struct hns3_enet_tqp_vector *tqp_vector,
-				       u32 gl_value)
+void hns3_set_vector_coalesce_rl(struct hns3_enet_tqp_vector *tqp_vector,
+				 u32 rl_value)
 {
-	/* this defines the configuration for GL (Interrupt Gap Limiter)
-	 * GL defines inter interrupt gap.
-	 * GL and RL(Rate Limiter) are 2 ways to acheive interrupt coalescing
-	 */
-	writel(gl_value, tqp_vector->mask_addr + HNS3_VECTOR_GL0_OFFSET);
-	writel(gl_value, tqp_vector->mask_addr + HNS3_VECTOR_GL1_OFFSET);
-	writel(gl_value, tqp_vector->mask_addr + HNS3_VECTOR_GL2_OFFSET);
-}
+	u32 rl_reg = hns3_rl_usec_to_reg(rl_value);
 
-static void hns3_set_vector_coalesc_rl(struct hns3_enet_tqp_vector *tqp_vector,
-				       u32 rl_value)
-{
 	/* this defines the configuration for RL (Interrupt Rate Limiter).
 	 * Rl defines rate of interrupts i.e. number of interrupts-per-second
 	 * GL and RL(Rate Limiter) are 2 ways to acheive interrupt coalescing
 	 */
-	writel(rl_value, tqp_vector->mask_addr + HNS3_VECTOR_RL_OFFSET);
+
+	if (rl_reg > 0 && !tqp_vector->tx_group.gl_adapt_enable &&
+	    !tqp_vector->rx_group.gl_adapt_enable)
+		/* According to the hardware, the range of rl_reg is
+		 * 0-59 and the unit is 4.
+		 */
+		rl_reg |=  HNS3_INT_RL_ENABLE_MASK;
+
+	writel(rl_reg, tqp_vector->mask_addr + HNS3_VECTOR_RL_OFFSET);
 }
 
-static void hns3_vector_gl_rl_init(struct hns3_enet_tqp_vector *tqp_vector)
+void hns3_set_vector_coalesce_rx_gl(struct hns3_enet_tqp_vector *tqp_vector,
+				    u32 gl_value)
 {
+	u32 rx_gl_reg = hns3_gl_usec_to_reg(gl_value);
+
+	writel(rx_gl_reg, tqp_vector->mask_addr + HNS3_VECTOR_GL0_OFFSET);
+}
+
+void hns3_set_vector_coalesce_tx_gl(struct hns3_enet_tqp_vector *tqp_vector,
+				    u32 gl_value)
+{
+	u32 tx_gl_reg = hns3_gl_usec_to_reg(gl_value);
+
+	writel(tx_gl_reg, tqp_vector->mask_addr + HNS3_VECTOR_GL1_OFFSET);
+}
+
+static void hns3_vector_gl_rl_init(struct hns3_enet_tqp_vector *tqp_vector,
+				   struct hns3_nic_priv *priv)
+{
+	struct hnae3_handle *h = priv->ae_handle;
+
 	/* initialize the configuration for interrupt coalescing.
 	 * 1. GL (Interrupt Gap Limiter)
 	 * 2. RL (Interrupt Rate Limiter)
 	 */
 
-	/* Default :enable interrupt coalesce */
-	tqp_vector->rx_group.int_gl = HNS3_INT_GL_50K;
+	/* Default: enable interrupt coalescing self-adaptive and GL */
+	tqp_vector->tx_group.gl_adapt_enable = 1;
+	tqp_vector->rx_group.gl_adapt_enable = 1;
+
 	tqp_vector->tx_group.int_gl = HNS3_INT_GL_50K;
-	hns3_set_vector_coalesc_gl(tqp_vector, HNS3_INT_GL_50K);
-	/* for now we are disabling Interrupt RL - we
-	 * will re-enable later
-	 */
-	hns3_set_vector_coalesc_rl(tqp_vector, 0);
+	tqp_vector->rx_group.int_gl = HNS3_INT_GL_50K;
+
+	hns3_set_vector_coalesce_tx_gl(tqp_vector,
+				       tqp_vector->tx_group.int_gl);
+	hns3_set_vector_coalesce_rx_gl(tqp_vector,
+				       tqp_vector->rx_group.int_gl);
+
+	/* Default: disable RL */
+	h->kinfo.int_rl_setting = 0;
+	hns3_set_vector_coalesce_rl(tqp_vector, h->kinfo.int_rl_setting);
+
 	tqp_vector->rx_group.flow_level = HNS3_FLOW_LOW;
 	tqp_vector->tx_group.flow_level = HNS3_FLOW_LOW;
 }
@@ -247,6 +272,8 @@ static int hns3_nic_net_up(struct net_device *netdev)
 	if (ret)
 		goto out_start_err;
 
+	clear_bit(HNS3_NIC_STATE_DOWN, &priv->state);
+
 	return 0;
 
 out_start_err:
@@ -285,6 +312,9 @@ static void hns3_nic_net_down(struct net_device *netdev)
 	struct hns3_nic_priv *priv = netdev_priv(netdev);
 	const struct hnae3_ae_ops *ops;
 	int i;
+
+	if (test_and_set_bit(HNS3_NIC_STATE_DOWN, &priv->state))
+		return;
 
 	/* stop ae_dev */
 	ops = priv->ae_handle->ae_algo->ops;
@@ -1088,21 +1118,31 @@ static int hns3_nic_net_set_mac_address(struct net_device *netdev, void *p)
 static int hns3_nic_set_features(struct net_device *netdev,
 				 netdev_features_t features)
 {
+	netdev_features_t changed = netdev->features ^ features;
 	struct hns3_nic_priv *priv = netdev_priv(netdev);
 	struct hnae3_handle *h = priv->ae_handle;
-	netdev_features_t changed;
 	int ret;
 
-	if (features & (NETIF_F_TSO | NETIF_F_TSO6)) {
-		priv->ops.fill_desc = hns3_fill_desc_tso;
-		priv->ops.maybe_stop_tx = hns3_nic_maybe_stop_tso;
-	} else {
-		priv->ops.fill_desc = hns3_fill_desc;
-		priv->ops.maybe_stop_tx = hns3_nic_maybe_stop_tx;
+	if (changed & (NETIF_F_TSO | NETIF_F_TSO6)) {
+		if (features & (NETIF_F_TSO | NETIF_F_TSO6)) {
+			priv->ops.fill_desc = hns3_fill_desc_tso;
+			priv->ops.maybe_stop_tx = hns3_nic_maybe_stop_tso;
+		} else {
+			priv->ops.fill_desc = hns3_fill_desc;
+			priv->ops.maybe_stop_tx = hns3_nic_maybe_stop_tx;
+		}
 	}
 
-	changed = netdev->features ^ features;
-	if (changed & NETIF_F_HW_VLAN_CTAG_RX) {
+	if ((changed & NETIF_F_HW_VLAN_CTAG_FILTER) &&
+	    h->ae_algo->ops->enable_vlan_filter) {
+		if (features & NETIF_F_HW_VLAN_CTAG_FILTER)
+			h->ae_algo->ops->enable_vlan_filter(h, true);
+		else
+			h->ae_algo->ops->enable_vlan_filter(h, false);
+	}
+
+	if ((changed & NETIF_F_HW_VLAN_CTAG_RX) &&
+	    h->ae_algo->ops->enable_hw_strip_rxvtag) {
 		if (features & NETIF_F_HW_VLAN_CTAG_RX)
 			ret = h->ae_algo->ops->enable_hw_strip_rxvtag(h, true);
 		else
@@ -1116,11 +1156,12 @@ static int hns3_nic_set_features(struct net_device *netdev,
 	return 0;
 }
 
-static void
-hns3_nic_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
+static void hns3_nic_get_stats64(struct net_device *netdev,
+				 struct rtnl_link_stats64 *stats)
 {
 	struct hns3_nic_priv *priv = netdev_priv(netdev);
 	int queue_num = priv->ae_handle->kinfo.num_tqps;
+	struct hnae3_handle *handle = priv->ae_handle;
 	struct hns3_enet_ring *ring;
 	unsigned int start;
 	unsigned int idx;
@@ -1128,6 +1169,13 @@ hns3_nic_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
 	u64 rx_bytes = 0;
 	u64 tx_pkts = 0;
 	u64 rx_pkts = 0;
+	u64 tx_drop = 0;
+	u64 rx_drop = 0;
+
+	if (test_bit(HNS3_NIC_STATE_DOWN, &priv->state))
+		return;
+
+	handle->ae_algo->ops->update_stats(handle, &netdev->stats);
 
 	for (idx = 0; idx < queue_num; idx++) {
 		/* fetch the tx stats */
@@ -1136,6 +1184,8 @@ hns3_nic_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			tx_bytes += ring->stats.tx_bytes;
 			tx_pkts += ring->stats.tx_pkts;
+			tx_drop += ring->stats.tx_busy;
+			tx_drop += ring->stats.sw_err_cnt;
 		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
 
 		/* fetch the rx stats */
@@ -1144,6 +1194,9 @@ hns3_nic_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			rx_bytes += ring->stats.rx_bytes;
 			rx_pkts += ring->stats.rx_pkts;
+			rx_drop += ring->stats.non_vld_descs;
+			rx_drop += ring->stats.err_pkt_len;
+			rx_drop += ring->stats.l2_err;
 		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
 	}
 
@@ -1159,8 +1212,8 @@ hns3_nic_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
 	stats->rx_missed_errors = netdev->stats.rx_missed_errors;
 
 	stats->tx_errors = netdev->stats.tx_errors;
-	stats->rx_dropped = netdev->stats.rx_dropped;
-	stats->tx_dropped = netdev->stats.tx_dropped;
+	stats->rx_dropped = rx_drop + netdev->stats.rx_dropped;
+	stats->tx_dropped = tx_drop + netdev->stats.tx_dropped;
 	stats->collisions = netdev->stats.collisions;
 	stats->rx_over_errors = netdev->stats.rx_over_errors;
 	stats->rx_frame_errors = netdev->stats.rx_frame_errors;
@@ -1390,6 +1443,8 @@ static int hns3_nic_change_mtu(struct net_device *netdev, int new_mtu)
 		return ret;
 	}
 
+	netdev->mtu = new_mtu;
+
 	/* if the netdev was running earlier, bring it up again */
 	if (if_running && hns3_nic_net_open(netdev))
 		ret = -EINVAL;
@@ -1549,6 +1604,8 @@ static struct pci_driver hns3_driver = {
 /* set default feature to hns3 */
 static void hns3_set_default_feature(struct net_device *netdev)
 {
+	struct hnae3_handle *h = hns3_get_handle(netdev);
+
 	netdev->priv_flags |= IFF_UNICAST_FLT;
 
 	netdev->hw_enc_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
@@ -1577,12 +1634,15 @@ static void hns3_set_default_feature(struct net_device *netdev)
 		NETIF_F_GSO_UDP_TUNNEL_CSUM;
 
 	netdev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
-		NETIF_F_HW_VLAN_CTAG_FILTER |
-		NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX |
+		NETIF_F_HW_VLAN_CTAG_TX |
 		NETIF_F_RXCSUM | NETIF_F_SG | NETIF_F_GSO |
 		NETIF_F_GRO | NETIF_F_TSO | NETIF_F_TSO6 | NETIF_F_GSO_GRE |
 		NETIF_F_GSO_GRE_CSUM | NETIF_F_GSO_UDP_TUNNEL |
 		NETIF_F_GSO_UDP_TUNNEL_CSUM;
+
+	if (!(h->flags & HNAE3_SUPPORT_VF))
+		netdev->hw_features |=
+			NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_HW_VLAN_CTAG_RX;
 }
 
 static int hns3_alloc_buffer(struct hns3_enet_ring *ring,
@@ -2392,25 +2452,22 @@ static bool hns3_get_new_int_gl(struct hns3_enet_ring_group *ring_group)
 
 static void hns3_update_new_int_gl(struct hns3_enet_tqp_vector *tqp_vector)
 {
-	u16 rx_int_gl, tx_int_gl;
-	bool rx, tx;
+	struct hns3_enet_ring_group *rx_group = &tqp_vector->rx_group;
+	struct hns3_enet_ring_group *tx_group = &tqp_vector->tx_group;
+	bool rx_update, tx_update;
 
-	rx = hns3_get_new_int_gl(&tqp_vector->rx_group);
-	tx = hns3_get_new_int_gl(&tqp_vector->tx_group);
-	rx_int_gl = tqp_vector->rx_group.int_gl;
-	tx_int_gl = tqp_vector->tx_group.int_gl;
-	if (rx && tx) {
-		if (rx_int_gl > tx_int_gl) {
-			tqp_vector->tx_group.int_gl = rx_int_gl;
-			tqp_vector->tx_group.flow_level =
-				tqp_vector->rx_group.flow_level;
-			hns3_set_vector_coalesc_gl(tqp_vector, rx_int_gl);
-		} else {
-			tqp_vector->rx_group.int_gl = tx_int_gl;
-			tqp_vector->rx_group.flow_level =
-				tqp_vector->tx_group.flow_level;
-			hns3_set_vector_coalesc_gl(tqp_vector, tx_int_gl);
-		}
+	if (rx_group->gl_adapt_enable) {
+		rx_update = hns3_get_new_int_gl(rx_group);
+		if (rx_update)
+			hns3_set_vector_coalesce_rx_gl(tqp_vector,
+						       rx_group->int_gl);
+	}
+
+	if (tx_group->gl_adapt_enable) {
+		tx_update = hns3_get_new_int_gl(&tqp_vector->tx_group);
+		if (tx_update)
+			hns3_set_vector_coalesce_tx_gl(tqp_vector,
+						       tx_group->int_gl);
 	}
 }
 
@@ -2471,6 +2528,8 @@ static int hns3_get_vector_ring_chain(struct hns3_enet_tqp_vector *tqp_vector,
 		cur_chain->tqp_index = tx_ring->tqp->tqp_index;
 		hnae_set_bit(cur_chain->flag, HNAE3_RING_TYPE_B,
 			     HNAE3_RING_TYPE_TX);
+		hnae_set_field(cur_chain->int_gl_idx, HNAE3_RING_GL_IDX_M,
+			       HNAE3_RING_GL_IDX_S, HNAE3_RING_GL_TX);
 
 		cur_chain->next = NULL;
 
@@ -2486,6 +2545,10 @@ static int hns3_get_vector_ring_chain(struct hns3_enet_tqp_vector *tqp_vector,
 			chain->tqp_index = tx_ring->tqp->tqp_index;
 			hnae_set_bit(chain->flag, HNAE3_RING_TYPE_B,
 				     HNAE3_RING_TYPE_TX);
+			hnae_set_field(chain->int_gl_idx,
+				       HNAE3_RING_GL_IDX_M,
+				       HNAE3_RING_GL_IDX_S,
+				       HNAE3_RING_GL_TX);
 
 			cur_chain = chain;
 		}
@@ -2497,6 +2560,8 @@ static int hns3_get_vector_ring_chain(struct hns3_enet_tqp_vector *tqp_vector,
 		cur_chain->tqp_index = rx_ring->tqp->tqp_index;
 		hnae_set_bit(cur_chain->flag, HNAE3_RING_TYPE_B,
 			     HNAE3_RING_TYPE_RX);
+		hnae_set_field(cur_chain->int_gl_idx, HNAE3_RING_GL_IDX_M,
+			       HNAE3_RING_GL_IDX_S, HNAE3_RING_GL_RX);
 
 		rx_ring = rx_ring->next;
 	}
@@ -2510,6 +2575,9 @@ static int hns3_get_vector_ring_chain(struct hns3_enet_tqp_vector *tqp_vector,
 		chain->tqp_index = rx_ring->tqp->tqp_index;
 		hnae_set_bit(chain->flag, HNAE3_RING_TYPE_B,
 			     HNAE3_RING_TYPE_RX);
+		hnae_set_field(chain->int_gl_idx, HNAE3_RING_GL_IDX_M,
+			       HNAE3_RING_GL_IDX_S, HNAE3_RING_GL_RX);
+
 		cur_chain = chain;
 
 		rx_ring = rx_ring->next;
@@ -2598,7 +2666,7 @@ static int hns3_nic_init_vector_data(struct hns3_nic_priv *priv)
 		tqp_vector->rx_group.total_packets = 0;
 		tqp_vector->tx_group.total_bytes = 0;
 		tqp_vector->tx_group.total_packets = 0;
-		hns3_vector_gl_rl_init(tqp_vector);
+		hns3_vector_gl_rl_init(tqp_vector, priv);
 		tqp_vector->handle = h;
 
 		ret = hns3_get_vector_ring_chain(tqp_vector,
