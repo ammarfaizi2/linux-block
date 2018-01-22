@@ -20,6 +20,7 @@
 #include <linux/sched/debug.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
+#include <linux/pkeys.h>
 #include <linux/stddef.h>
 #include <linux/unistd.h>
 #include <linux/ptrace.h>
@@ -266,7 +267,9 @@ void user_single_step_siginfo(struct task_struct *tsk,
 	info->si_addr = (void __user *)regs->nip;
 }
 
-void _exception(int signr, struct pt_regs *regs, int code, unsigned long addr)
+
+void _exception_pkey(int signr, struct pt_regs *regs, int code,
+		unsigned long addr, int key)
 {
 	siginfo_t info;
 	const char fmt32[] = KERN_INFO "%s[%d]: unhandled signal %d " \
@@ -289,11 +292,25 @@ void _exception(int signr, struct pt_regs *regs, int code, unsigned long addr)
 		local_irq_enable();
 
 	current->thread.trap_nr = code;
+
+	/*
+	 * Save all the pkey registers AMR/IAMR/UAMOR. Eg: Core dumps need
+	 * to capture the content, if the task gets killed.
+	 */
+	thread_pkey_regs_save(&current->thread);
+
 	memset(&info, 0, sizeof(info));
 	info.si_signo = signr;
 	info.si_code = code;
 	info.si_addr = (void __user *) addr;
+	info.si_pkey = key;
+
 	force_sig_info(signr, &info, current);
+}
+
+void _exception(int signr, struct pt_regs *regs, int code, unsigned long addr)
+{
+	_exception_pkey(signr, regs, code, addr, 0);
 }
 
 void system_reset_exception(struct pt_regs *regs)
@@ -337,7 +354,7 @@ void system_reset_exception(struct pt_regs *regs)
 	 * No debugger or crash dump registered, print logs then
 	 * panic.
 	 */
-	__die("System Reset", regs, SIGABRT);
+	die("System Reset", regs, SIGABRT);
 
 	mdelay(2*MSEC_PER_SEC); /* Wait a little while for others to print */
 	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
@@ -1564,7 +1581,7 @@ void facility_unavailable_exception(struct pt_regs *regs)
 	u8 status;
 	bool hv;
 
-	hv = (regs->trap == 0xf80);
+	hv = (TRAP(regs) == 0xf80);
 	if (hv)
 		value = mfspr(SPRN_HFSCR);
 	else
@@ -2113,13 +2130,13 @@ static int __init ppc_warn_emulated_init(void)
 	if (!dir)
 		return -ENOMEM;
 
-	d = debugfs_create_u32("do_warn", S_IRUGO | S_IWUSR, dir,
+	d = debugfs_create_u32("do_warn", 0644, dir,
 			       &ppc_warn_emulated);
 	if (!d)
 		goto fail;
 
 	for (i = 0; i < sizeof(ppc_emulated)/sizeof(*entries); i++) {
-		d = debugfs_create_u32(entries[i].name, S_IRUGO | S_IWUSR, dir,
+		d = debugfs_create_u32(entries[i].name, 0644, dir,
 				       (u32 *)&entries[i].val.counter);
 		if (!d)
 			goto fail;

@@ -67,6 +67,7 @@
 #include <asm/livepatch.h>
 #include <asm/opal.h>
 #include <asm/cputhreads.h>
+#include <asm/hw_irq.h>
 
 #include "setup.h"
 
@@ -188,6 +189,8 @@ static void __init fixup_boot_paca(void)
 	get_paca()->cpu_start = 1;
 	/* Allow percpu accesses to work until we setup percpu data */
 	get_paca()->data_offset = 0;
+	/* Mark interrupts disabled in PACA */
+	irq_soft_mask_set(IRQS_DISABLED);
 }
 
 static void __init configure_exceptions(void)
@@ -350,7 +353,7 @@ void __init early_setup(unsigned long dt_ptr)
 void early_setup_secondary(void)
 {
 	/* Mark interrupts disabled in PACA */
-	get_paca()->soft_enabled = 0;
+	irq_soft_mask_set(IRQS_DISABLED);
 
 	/* Initialize the hash table or TLB handling */
 	early_init_mmu_secondary();
@@ -566,25 +569,31 @@ void __init initialize_cache_info(void)
 	DBG(" <- initialize_cache_info()\n");
 }
 
-/* This returns the limit below which memory accesses to the linear
- * mapping are guarnateed not to cause a TLB or SLB miss. This is
- * used to allocate interrupt or emergency stacks for which our
- * exception entry path doesn't deal with being interrupted.
+/*
+ * This returns the limit below which memory accesses to the linear
+ * mapping are guarnateed not to cause an architectural exception (e.g.,
+ * TLB or SLB miss fault).
+ *
+ * This is used to allocate PACAs and various interrupt stacks that
+ * that are accessed early in interrupt handlers that must not cause
+ * re-entrant interrupts.
  */
-static __init u64 safe_stack_limit(void)
+__init u64 ppc64_bolted_size(void)
 {
 #ifdef CONFIG_PPC_BOOK3E
 	/* Freescale BookE bolts the entire linear mapping */
-	if (mmu_has_feature(MMU_FTR_TYPE_FSL_E))
+	/* XXX: BookE ppc64_rma_limit setup seems to disagree? */
+	if (early_mmu_has_feature(MMU_FTR_TYPE_FSL_E))
 		return linear_map_top;
 	/* Other BookE, we assume the first GB is bolted */
 	return 1ul << 30;
 #else
+	/* BookS radix, does not take faults on linear mapping */
 	if (early_radix_enabled())
 		return ULONG_MAX;
 
-	/* BookS, the first segment is bolted */
-	if (mmu_has_feature(MMU_FTR_1T_SEGMENT))
+	/* BookS hash, the first segment is bolted */
+	if (early_mmu_has_feature(MMU_FTR_1T_SEGMENT))
 		return 1UL << SID_SHIFT_1T;
 	return 1UL << SID_SHIFT;
 #endif
@@ -592,7 +601,7 @@ static __init u64 safe_stack_limit(void)
 
 void __init irqstack_early_init(void)
 {
-	u64 limit = safe_stack_limit();
+	u64 limit = ppc64_bolted_size();
 	unsigned int i;
 
 	/*
@@ -677,7 +686,7 @@ void __init emergency_stack_init(void)
 	 * initialized in kernel/irq.c. These are initialized here in order
 	 * to have emergency stacks available as early as possible.
 	 */
-	limit = min(safe_stack_limit(), ppc64_rma_size);
+	limit = min(ppc64_bolted_size(), ppc64_rma_size);
 
 	for_each_possible_cpu(i) {
 		struct thread_info *ti;
@@ -855,7 +864,7 @@ static void init_fallback_flush(void)
 	int cpu;
 
 	l1d_size = ppc64_caches.l1d.size;
-	limit = min(safe_stack_limit(), ppc64_rma_size);
+	limit = min(ppc64_bolted_size(), ppc64_rma_size);
 
 	/*
 	 * Align to L1d size, and size it at 2x L1d size, to catch possible
