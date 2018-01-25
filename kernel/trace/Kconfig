@@ -355,7 +355,7 @@ config PROFILE_ANNOTATED_BRANCHES
 	  on if you need to profile the system's use of these macros.
 
 config PROFILE_ALL_BRANCHES
-	bool "Profile all if conditionals"
+	bool "Profile all if conditionals" if !FORTIFY_SOURCE
 	select TRACE_BRANCH_PROFILING
 	help
 	  This tracer profiles all branch conditions. Every if ()
@@ -533,9 +533,7 @@ config FUNCTION_PROFILER
 config BPF_KPROBE_OVERRIDE
 	bool "Enable BPF programs to override a kprobed function"
 	depends on BPF_EVENTS
-	depends on KPROBES_ON_FTRACE
-	depends on HAVE_KPROBE_OVERRIDE
-	depends on DYNAMIC_FTRACE_WITH_REGS
+	depends on FUNCTION_ERROR_INJECTION
 	default n
 	help
 	 Allows BPF to override the execution of a probed function and

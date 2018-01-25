@@ -550,13 +550,16 @@ static int l2tp_nl_cmd_session_create(struct sk_buff *skb, struct genl_info *inf
 		if (info->attrs[L2TP_ATTR_DATA_SEQ])
 			cfg.data_seq = nla_get_u8(info->attrs[L2TP_ATTR_DATA_SEQ]);
 
-		cfg.l2specific_type = L2TP_L2SPECTYPE_DEFAULT;
-		if (info->attrs[L2TP_ATTR_L2SPEC_TYPE])
+		if (info->attrs[L2TP_ATTR_L2SPEC_TYPE]) {
 			cfg.l2specific_type = nla_get_u8(info->attrs[L2TP_ATTR_L2SPEC_TYPE]);
-
-		cfg.l2specific_len = 4;
-		if (info->attrs[L2TP_ATTR_L2SPEC_LEN])
-			cfg.l2specific_len = nla_get_u8(info->attrs[L2TP_ATTR_L2SPEC_LEN]);
+			if (cfg.l2specific_type != L2TP_L2SPECTYPE_DEFAULT &&
+			    cfg.l2specific_type != L2TP_L2SPECTYPE_NONE) {
+				ret = -EINVAL;
+				goto out_tunnel;
+			}
+		} else {
+			cfg.l2specific_type = L2TP_L2SPECTYPE_DEFAULT;
+		}
 
 		if (info->attrs[L2TP_ATTR_COOKIE]) {
 			u16 len = nla_len(info->attrs[L2TP_ATTR_COOKIE]);
@@ -615,27 +618,6 @@ static int l2tp_nl_cmd_session_create(struct sk_buff *skb, struct genl_info *inf
 	    (l2tp_nl_cmd_ops[cfg.pw_type]->session_create == NULL)) {
 		ret = -EPROTONOSUPPORT;
 		goto out_tunnel;
-	}
-
-	/* Check that pseudowire-specific params are present */
-	switch (cfg.pw_type) {
-	case L2TP_PWTYPE_NONE:
-		break;
-	case L2TP_PWTYPE_ETH_VLAN:
-		if (!info->attrs[L2TP_ATTR_VLAN_ID]) {
-			ret = -EINVAL;
-			goto out_tunnel;
-		}
-		break;
-	case L2TP_PWTYPE_ETH:
-		break;
-	case L2TP_PWTYPE_PPP:
-	case L2TP_PWTYPE_PPP_AC:
-		break;
-	case L2TP_PWTYPE_IP:
-	default:
-		ret = -EPROTONOSUPPORT;
-		break;
 	}
 
 	ret = l2tp_nl_cmd_ops[cfg.pw_type]->session_create(net, tunnel,

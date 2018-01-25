@@ -14,7 +14,7 @@
 #include <linux/uaccess.h>
 #include <linux/ctype.h>
 #include <linux/kprobes.h>
-#include <asm/kprobes.h>
+#include <linux/error-injection.h>
 
 #include "trace_probe.h"
 #include "trace.h"
@@ -83,9 +83,8 @@ EXPORT_SYMBOL_GPL(trace_call_bpf);
 #ifdef CONFIG_BPF_KPROBE_OVERRIDE
 BPF_CALL_2(bpf_override_return, struct pt_regs *, regs, unsigned long, rc)
 {
-	__this_cpu_write(bpf_kprobe_override, 1);
 	regs_set_return_value(regs, rc);
-	arch_ftrace_kprobe_override_function(regs);
+	override_function_with_return(regs);
 	return 0;
 }
 
@@ -246,7 +245,7 @@ BPF_CALL_5(bpf_trace_printk, char *, fmt, u32, fmt_size, u64, arg1,
  */
 #define __BPF_TP_EMIT()	__BPF_ARG3_TP()
 #define __BPF_TP(...)							\
-	__trace_printk(1 /* Fake ip will not be printed. */,		\
+	__trace_printk(0 /* Fake ip */,					\
 		       fmt, ##__VA_ARGS__)
 
 #define __BPF_ARG1_TP(...)						\
@@ -800,11 +799,11 @@ int perf_event_attach_bpf_prog(struct perf_event *event,
 	int ret = -EEXIST;
 
 	/*
-	 * Kprobe override only works for ftrace based kprobes, and only if they
-	 * are on the opt-in list.
+	 * Kprobe override only works if they are on the function entry,
+	 * and only if they are on the opt-in list.
 	 */
 	if (prog->kprobe_override &&
-	    (!trace_kprobe_ftrace(event->tp_event) ||
+	    (!trace_kprobe_on_func_entry(event->tp_event) ||
 	     !trace_kprobe_error_injectable(event->tp_event)))
 		return -EINVAL;
 

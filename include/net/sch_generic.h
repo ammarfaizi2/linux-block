@@ -204,6 +204,13 @@ struct Qdisc_ops {
 	int			(*dump)(struct Qdisc *, struct sk_buff *);
 	int			(*dump_stats)(struct Qdisc *, struct gnet_dump *);
 
+	void			(*ingress_block_set)(struct Qdisc *sch,
+						     u32 block_index);
+	void			(*egress_block_set)(struct Qdisc *sch,
+						    u32 block_index);
+	u32			(*ingress_block_get)(struct Qdisc *sch);
+	u32			(*egress_block_get)(struct Qdisc *sch);
+
 	struct module		*owner;
 };
 
@@ -232,8 +239,11 @@ struct tcf_proto_ops {
 	int			(*change)(struct net *net, struct sk_buff *,
 					struct tcf_proto*, unsigned long,
 					u32 handle, struct nlattr **,
-					void **, bool);
-	int			(*delete)(struct tcf_proto*, void *, bool*);
+					void **, bool,
+					struct netlink_ext_ack *);
+	int			(*delete)(struct tcf_proto *tp, void *arg,
+					  bool *last,
+					  struct netlink_ext_ack *);
 	void			(*walk)(struct tcf_proto*, struct tcf_walker *arg);
 	void			(*bind_class)(void *, u32, unsigned long);
 
@@ -255,8 +265,6 @@ struct tcf_proto {
 
 	/* All the rest */
 	u32			prio;
-	u32			classid;
-	struct Qdisc		*q;
 	void			*data;
 	const struct tcf_proto_ops	*ops;
 	struct tcf_chain	*chain;
@@ -275,8 +283,7 @@ typedef void tcf_chain_head_change_t(struct tcf_proto *tp_head, void *priv);
 
 struct tcf_chain {
 	struct tcf_proto __rcu *filter_chain;
-	tcf_chain_head_change_t *chain_head_change;
-	void *chain_head_change_priv;
+	struct list_head filter_chain_list;
 	struct list_head list;
 	struct tcf_block *block;
 	u32 index; /* chain index */
@@ -285,10 +292,32 @@ struct tcf_chain {
 
 struct tcf_block {
 	struct list_head chain_list;
+	u32 index; /* block index for shared blocks */
+	unsigned int refcnt;
 	struct net *net;
 	struct Qdisc *q;
 	struct list_head cb_list;
+	struct list_head owner_list;
+	bool keep_dst;
+	unsigned int offloadcnt; /* Number of oddloaded filters */
+	unsigned int nooffloaddevcnt; /* Number of devs unable to do offload */
 };
+
+static inline void tcf_block_offload_inc(struct tcf_block *block, u32 *flags)
+{
+	if (*flags & TCA_CLS_FLAGS_IN_HW)
+		return;
+	*flags |= TCA_CLS_FLAGS_IN_HW;
+	block->offloadcnt++;
+}
+
+static inline void tcf_block_offload_dec(struct tcf_block *block, u32 *flags)
+{
+	if (!(*flags & TCA_CLS_FLAGS_IN_HW))
+		return;
+	*flags &= ~TCA_CLS_FLAGS_IN_HW;
+	block->offloadcnt--;
+}
 
 static inline void qdisc_cb_private_validate(const struct sk_buff *skb, int sz)
 {
@@ -473,6 +502,7 @@ void qdisc_tree_reduce_backlog(struct Qdisc *qdisc, unsigned int n,
 struct Qdisc *qdisc_alloc(struct netdev_queue *dev_queue,
 			  const struct Qdisc_ops *ops,
 			  struct netlink_ext_ack *extack);
+void qdisc_free(struct Qdisc *qdisc);
 struct Qdisc *qdisc_create_dflt(struct netdev_queue *dev_queue,
 				const struct Qdisc_ops *ops, u32 parentid,
 				struct netlink_ext_ack *extack);

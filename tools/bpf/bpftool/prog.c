@@ -66,6 +66,7 @@ static const char * const prog_type_name[] = {
 	[BPF_PROG_TYPE_LWT_XMIT]	= "lwt_xmit",
 	[BPF_PROG_TYPE_SOCK_OPS]	= "sock_ops",
 	[BPF_PROG_TYPE_SK_SKB]		= "sk_skb",
+	[BPF_PROG_TYPE_CGROUP_DEVICE]	= "cgroup_device",
 };
 
 static void print_boot_time(__u64 nsecs, char *buf, unsigned int size)
@@ -775,7 +776,17 @@ static int do_dump(int argc, char **argv)
 		}
 	} else {
 		if (member_len == &info.jited_prog_len) {
-			disasm_print_insn(buf, *member_len, opcodes);
+			const char *name = NULL;
+
+			if (info.ifindex) {
+				name = ifindex_to_bfd_name_ns(info.ifindex,
+							      info.netns_dev,
+							      info.netns_ino);
+				if (!name)
+					goto err_free;
+			}
+
+			disasm_print_insn(buf, *member_len, opcodes, name);
 		} else {
 			kernel_syms_load(&dd);
 			if (json_output)

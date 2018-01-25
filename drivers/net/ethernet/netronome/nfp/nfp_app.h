@@ -66,6 +66,9 @@ extern const struct nfp_app_type app_flower;
  * struct nfp_app_type - application definition
  * @id:		application ID
  * @name:	application name
+ * @ctrl_cap_mask:  ctrl vNIC capability mask, allows disabling features like
+ *		    IRQMOD which are on by default but counter-productive for
+ *		    control messages which are often latency-sensitive
  * @ctrl_has_meta:  control messages have prepend of type:5/port:CTRL
  *
  * Callbacks
@@ -100,6 +103,7 @@ struct nfp_app_type {
 	enum nfp_app_id id;
 	const char *name;
 
+	u32 ctrl_cap_mask;
 	bool ctrl_has_meta;
 
 	int (*init)(struct nfp_app *app);
@@ -165,6 +169,7 @@ struct nfp_app {
 	void *priv;
 };
 
+bool __nfp_ctrl_tx(struct nfp_net *nn, struct sk_buff *skb);
 bool nfp_ctrl_tx(struct nfp_net *nn, struct sk_buff *skb);
 
 static inline int nfp_app_init(struct nfp_app *app)
@@ -326,6 +331,14 @@ static inline int nfp_app_xdp_offload(struct nfp_app *app, struct nfp_net *nn,
 	return app->type->xdp_offload(app, nn, prog);
 }
 
+static inline bool __nfp_app_ctrl_tx(struct nfp_app *app, struct sk_buff *skb)
+{
+	trace_devlink_hwmsg(priv_to_devlink(app->pf), false, 0,
+			    skb->data, skb->len);
+
+	return __nfp_ctrl_tx(app->ctrl, skb);
+}
+
 static inline bool nfp_app_ctrl_tx(struct nfp_app *app, struct sk_buff *skb)
 {
 	trace_devlink_hwmsg(priv_to_devlink(app->pf), false, 0,
@@ -375,6 +388,8 @@ static inline struct net_device *nfp_app_repr_get(struct nfp_app *app, u32 id)
 
 struct nfp_app *nfp_app_from_netdev(struct net_device *netdev);
 
+struct nfp_reprs *
+nfp_reprs_get_locked(struct nfp_app *app, enum nfp_repr_type type);
 struct nfp_reprs *
 nfp_app_reprs_set(struct nfp_app *app, enum nfp_repr_type type,
 		  struct nfp_reprs *reprs);

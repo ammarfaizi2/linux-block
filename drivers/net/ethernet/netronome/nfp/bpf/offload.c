@@ -36,6 +36,9 @@
  * Netronome network device driver: TC offload functions for PF and VF
  */
 
+#define pr_fmt(fmt)	"NFP net bpf: " fmt
+
+#include <linux/bpf.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <linux/pci.h>
@@ -124,6 +127,7 @@ static int nfp_bpf_translate(struct nfp_net *nn, struct bpf_prog *prog)
 	struct nfp_prog *nfp_prog = prog->aux->offload->dev_priv;
 	unsigned int stack_size;
 	unsigned int max_instr;
+	int err;
 
 	stack_size = nn_readb(nn, NFP_NET_CFG_BPF_STACK_SZ) * 64;
 	if (prog->aux->stack_depth > stack_size) {
@@ -140,7 +144,14 @@ static int nfp_bpf_translate(struct nfp_net *nn, struct bpf_prog *prog)
 	if (!nfp_prog->prog)
 		return -ENOMEM;
 
-	return nfp_bpf_jit(nfp_prog);
+	err = nfp_bpf_jit(nfp_prog);
+	if (err)
+		return err;
+
+	prog->aux->offload->jited_len = nfp_prog->prog_len * sizeof(u64);
+	prog->aux->offload->jited_image = nfp_prog->prog;
+
+	return 0;
 }
 
 static int nfp_bpf_destroy(struct nfp_net *nn, struct bpf_prog *prog)
@@ -149,6 +160,105 @@ static int nfp_bpf_destroy(struct nfp_net *nn, struct bpf_prog *prog)
 
 	kvfree(nfp_prog->prog);
 	nfp_prog_free(nfp_prog);
+
+	return 0;
+}
+
+static int
+nfp_bpf_map_get_next_key(struct bpf_offloaded_map *offmap,
+			 void *key, void *next_key)
+{
+	if (!key)
+		return nfp_bpf_ctrl_getfirst_entry(offmap, next_key);
+	return nfp_bpf_ctrl_getnext_entry(offmap, key, next_key);
+}
+
+static int
+nfp_bpf_map_delete_elem(struct bpf_offloaded_map *offmap, void *key)
+{
+	if (offmap->map.map_type == BPF_MAP_TYPE_ARRAY)
+		return -EINVAL;
+	return nfp_bpf_ctrl_del_entry(offmap, key);
+}
+
+static const struct bpf_map_dev_ops nfp_bpf_map_ops = {
+	.map_get_next_key	= nfp_bpf_map_get_next_key,
+	.map_lookup_elem	= nfp_bpf_ctrl_lookup_entry,
+	.map_update_elem	= nfp_bpf_ctrl_update_entry,
+	.map_delete_elem	= nfp_bpf_map_delete_elem,
+};
+
+static int
+nfp_bpf_map_alloc(struct nfp_app_bpf *bpf, struct bpf_offloaded_map *offmap)
+{
+	struct nfp_bpf_map *nfp_map;
+	long long int res;
+
+	if (!bpf->maps.types)
+		return -EOPNOTSUPP;
+
+	if (offmap->map.map_flags ||
+	    offmap->map.numa_node != NUMA_NO_NODE) {
+		pr_info("map flags are not supported\n");
+		return -EINVAL;
+	}
+
+	if (!(bpf->maps.types & 1 << offmap->map.map_type)) {
+		pr_info("map type not supported\n");
+		return -EOPNOTSUPP;
+	}
+	if (bpf->maps.max_maps == bpf->maps_in_use) {
+		pr_info("too many maps for a device\n");
+		return -ENOMEM;
+	}
+	if (bpf->maps.max_elems - bpf->map_elems_in_use <
+	    offmap->map.max_entries) {
+		pr_info("map with too many elements: %u, left: %u\n",
+			offmap->map.max_entries,
+			bpf->maps.max_elems - bpf->map_elems_in_use);
+		return -ENOMEM;
+	}
+	if (offmap->map.key_size > bpf->maps.max_key_sz ||
+	    offmap->map.value_size > bpf->maps.max_val_sz ||
+	    round_up(offmap->map.key_size, 8) +
+	    round_up(offmap->map.value_size, 8) > bpf->maps.max_elem_sz) {
+		pr_info("elements don't fit in device constraints\n");
+		return -ENOMEM;
+	}
+
+	nfp_map = kzalloc(sizeof(*nfp_map), GFP_USER);
+	if (!nfp_map)
+		return -ENOMEM;
+
+	offmap->dev_priv = nfp_map;
+	nfp_map->offmap = offmap;
+	nfp_map->bpf = bpf;
+
+	res = nfp_bpf_ctrl_alloc_map(bpf, &offmap->map);
+	if (res < 0) {
+		kfree(nfp_map);
+		return res;
+	}
+
+	nfp_map->tid = res;
+	offmap->dev_ops = &nfp_bpf_map_ops;
+	bpf->maps_in_use++;
+	bpf->map_elems_in_use += offmap->map.max_entries;
+	list_add_tail(&nfp_map->l, &bpf->map_list);
+
+	return 0;
+}
+
+static int
+nfp_bpf_map_free(struct nfp_app_bpf *bpf, struct bpf_offloaded_map *offmap)
+{
+	struct nfp_bpf_map *nfp_map = offmap->dev_priv;
+
+	nfp_bpf_ctrl_free_map(bpf, nfp_map);
+	list_del_init(&nfp_map->l);
+	bpf->map_elems_in_use -= offmap->map.max_entries;
+	bpf->maps_in_use--;
+	kfree(nfp_map);
 
 	return 0;
 }
@@ -162,6 +272,10 @@ int nfp_ndo_bpf(struct nfp_app *app, struct nfp_net *nn, struct netdev_bpf *bpf)
 		return nfp_bpf_translate(nn, bpf->offload.prog);
 	case BPF_OFFLOAD_DESTROY:
 		return nfp_bpf_destroy(nn, bpf->offload.prog);
+	case BPF_OFFLOAD_MAP_ALLOC:
+		return nfp_bpf_map_alloc(app->priv, bpf->offmap);
+	case BPF_OFFLOAD_MAP_FREE:
+		return nfp_bpf_map_free(app->priv, bpf->offmap);
 	default:
 		return -EINVAL;
 	}
@@ -237,7 +351,7 @@ int nfp_net_bpf_offload(struct nfp_net *nn, struct bpf_prog *prog,
 	int err;
 
 	if (prog) {
-		struct bpf_dev_offload *offload = prog->aux->offload;
+		struct bpf_prog_offload *offload = prog->aux->offload;
 
 		if (!offload)
 			return -EINVAL;

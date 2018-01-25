@@ -1349,6 +1349,13 @@ static bool is_pointer_value(struct bpf_verifier_env *env, int regno)
 	return __is_pointer_value(env->allow_ptr_leaks, cur_regs(env) + regno);
 }
 
+static bool is_ctx_reg(struct bpf_verifier_env *env, int regno)
+{
+	const struct bpf_reg_state *reg = cur_regs(env) + regno;
+
+	return reg->type == PTR_TO_CTX;
+}
+
 static int check_pkt_ptr_alignment(struct bpf_verifier_env *env,
 				   const struct bpf_reg_state *reg,
 				   int off, int size, bool strict)
@@ -1728,6 +1735,12 @@ static int check_xadd(struct bpf_verifier_env *env, int insn_idx, struct bpf_ins
 		return -EACCES;
 	}
 
+	if (is_ctx_reg(env, insn->dst_reg)) {
+		verbose(env, "BPF_XADD stores into R%d context is not allowed\n",
+			insn->dst_reg);
+		return -EACCES;
+	}
+
 	/* check whether atomic_add can read the memory */
 	err = check_mem_access(env, insn_idx, insn->dst_reg, insn->off,
 			       BPF_SIZE(insn->code), BPF_READ, -1);
@@ -1837,6 +1850,19 @@ static int check_helper_mem_access(struct bpf_verifier_env *env, int regno,
 	}
 }
 
+static bool arg_type_is_mem_ptr(enum bpf_arg_type type)
+{
+	return type == ARG_PTR_TO_MEM ||
+	       type == ARG_PTR_TO_MEM_OR_NULL ||
+	       type == ARG_PTR_TO_UNINIT_MEM;
+}
+
+static bool arg_type_is_mem_size(enum bpf_arg_type type)
+{
+	return type == ARG_CONST_SIZE ||
+	       type == ARG_CONST_SIZE_OR_ZERO;
+}
+
 static int check_func_arg(struct bpf_verifier_env *env, u32 regno,
 			  enum bpf_arg_type arg_type,
 			  struct bpf_call_arg_meta *meta)
@@ -1886,9 +1912,7 @@ static int check_func_arg(struct bpf_verifier_env *env, u32 regno,
 		expected_type = PTR_TO_CTX;
 		if (type != expected_type)
 			goto err_type;
-	} else if (arg_type == ARG_PTR_TO_MEM ||
-		   arg_type == ARG_PTR_TO_MEM_OR_NULL ||
-		   arg_type == ARG_PTR_TO_UNINIT_MEM) {
+	} else if (arg_type_is_mem_ptr(arg_type)) {
 		expected_type = PTR_TO_STACK;
 		/* One exception here. In case function allows for NULL to be
 		 * passed in as argument, it's a SCALAR_VALUE type. Final test
@@ -1949,25 +1973,12 @@ static int check_func_arg(struct bpf_verifier_env *env, u32 regno,
 			err = check_stack_boundary(env, regno,
 						   meta->map_ptr->value_size,
 						   false, NULL);
-	} else if (arg_type == ARG_CONST_SIZE ||
-		   arg_type == ARG_CONST_SIZE_OR_ZERO) {
+	} else if (arg_type_is_mem_size(arg_type)) {
 		bool zero_size_allowed = (arg_type == ARG_CONST_SIZE_OR_ZERO);
-
-		/* bpf_xxx(..., buf, len) call will access 'len' bytes
-		 * from stack pointer 'buf'. Check it
-		 * note: regno == len, regno - 1 == buf
-		 */
-		if (regno == 0) {
-			/* kernel subsystem misconfigured verifier */
-			verbose(env,
-				"ARG_CONST_SIZE cannot be first argument\n");
-			return -EACCES;
-		}
 
 		/* The register is SCALAR_VALUE; the access check
 		 * happens using its boundaries.
 		 */
-
 		if (!tnum_is_const(reg->var_off))
 			/* For unprivileged variable accesses, disable raw
 			 * mode so that the program is required to
@@ -2111,7 +2122,7 @@ error:
 	return -EINVAL;
 }
 
-static int check_raw_mode(const struct bpf_func_proto *fn)
+static bool check_raw_mode_ok(const struct bpf_func_proto *fn)
 {
 	int count = 0;
 
@@ -2126,7 +2137,44 @@ static int check_raw_mode(const struct bpf_func_proto *fn)
 	if (fn->arg5_type == ARG_PTR_TO_UNINIT_MEM)
 		count++;
 
-	return count > 1 ? -EINVAL : 0;
+	/* We only support one arg being in raw mode at the moment,
+	 * which is sufficient for the helper functions we have
+	 * right now.
+	 */
+	return count <= 1;
+}
+
+static bool check_args_pair_invalid(enum bpf_arg_type arg_curr,
+				    enum bpf_arg_type arg_next)
+{
+	return (arg_type_is_mem_ptr(arg_curr) &&
+	        !arg_type_is_mem_size(arg_next)) ||
+	       (!arg_type_is_mem_ptr(arg_curr) &&
+		arg_type_is_mem_size(arg_next));
+}
+
+static bool check_arg_pair_ok(const struct bpf_func_proto *fn)
+{
+	/* bpf_xxx(..., buf, len) call will access 'len'
+	 * bytes from memory 'buf'. Both arg types need
+	 * to be paired, so make sure there's no buggy
+	 * helper function specification.
+	 */
+	if (arg_type_is_mem_size(fn->arg1_type) ||
+	    arg_type_is_mem_ptr(fn->arg5_type)  ||
+	    check_args_pair_invalid(fn->arg1_type, fn->arg2_type) ||
+	    check_args_pair_invalid(fn->arg2_type, fn->arg3_type) ||
+	    check_args_pair_invalid(fn->arg3_type, fn->arg4_type) ||
+	    check_args_pair_invalid(fn->arg4_type, fn->arg5_type))
+		return false;
+
+	return true;
+}
+
+static int check_func_proto(const struct bpf_func_proto *fn)
+{
+	return check_raw_mode_ok(fn) &&
+	       check_arg_pair_ok(fn) ? 0 : -EINVAL;
 }
 
 /* Packet data might have moved, any old PTR_TO_PACKET[_META,_END]
@@ -2282,7 +2330,6 @@ static int check_helper_call(struct bpf_verifier_env *env, int func_id, int insn
 
 	if (env->ops->get_func_proto)
 		fn = env->ops->get_func_proto(func_id);
-
 	if (!fn) {
 		verbose(env, "unknown func %s#%d\n", func_id_name(func_id),
 			func_id);
@@ -2306,10 +2353,7 @@ static int check_helper_call(struct bpf_verifier_env *env, int func_id, int insn
 	memset(&meta, 0, sizeof(meta));
 	meta.pkt_access = fn->pkt_access;
 
-	/* We only support one arg being in raw mode at the moment, which
-	 * is sufficient for the helper functions we have right now.
-	 */
-	err = check_raw_mode(fn);
+	err = check_func_proto(fn);
 	if (err) {
 		verbose(env, "kernel subsystem misconfigured func %s#%d\n",
 			func_id_name(func_id), func_id);
@@ -2478,17 +2522,13 @@ static int adjust_ptr_min_max_vals(struct bpf_verifier_env *env,
 
 	dst_reg = &regs[dst];
 
-	if (WARN_ON_ONCE(known && (smin_val != smax_val))) {
-		print_verifier_state(env, state);
-		verbose(env,
-			"verifier internal error: known but bad sbounds\n");
-		return -EINVAL;
-	}
-	if (WARN_ON_ONCE(known && (umin_val != umax_val))) {
-		print_verifier_state(env, state);
-		verbose(env,
-			"verifier internal error: known but bad ubounds\n");
-		return -EINVAL;
+	if ((known && (smin_val != smax_val || umin_val != umax_val)) ||
+	    smin_val > smax_val || umin_val > umax_val) {
+		/* Taint dst register if offset had invalid bounds derived from
+		 * e.g. dead branches.
+		 */
+		__mark_reg_unknown(dst_reg);
+		return 0;
 	}
 
 	if (BPF_CLASS(insn->code) != BPF_ALU64) {
@@ -2679,6 +2719,15 @@ static int adjust_scalar_min_max_vals(struct bpf_verifier_env *env,
 	umax_val = src_reg.umax_value;
 	src_known = tnum_is_const(src_reg.var_off);
 	dst_known = tnum_is_const(dst_reg->var_off);
+
+	if ((src_known && (smin_val != smax_val || umin_val != umax_val)) ||
+	    smin_val > smax_val || umin_val > umax_val) {
+		/* Taint dst register if offset had invalid bounds derived from
+		 * e.g. dead branches.
+		 */
+		__mark_reg_unknown(dst_reg);
+		return 0;
+	}
 
 	if (!src_known &&
 	    opcode != BPF_ADD && opcode != BPF_SUB && opcode != BPF_AND) {
@@ -3088,6 +3137,11 @@ static int check_alu_op(struct bpf_verifier_env *env, struct bpf_insn *insn)
 		if ((opcode == BPF_MOD || opcode == BPF_DIV) &&
 		    BPF_SRC(insn->code) == BPF_K && insn->imm == 0) {
 			verbose(env, "div by zero\n");
+			return -EINVAL;
+		}
+
+		if (opcode == BPF_ARSH && BPF_CLASS(insn->code) != BPF_ALU64) {
+			verbose(env, "BPF_ARSH not supported for 32 bit ALU\n");
 			return -EINVAL;
 		}
 
@@ -4656,6 +4710,12 @@ static int do_check(struct bpf_verifier_env *env)
 			if (err)
 				return err;
 
+			if (is_ctx_reg(env, insn->dst_reg)) {
+				verbose(env, "BPF_ST stores into R%d context is not allowed\n",
+					insn->dst_reg);
+				return -EACCES;
+			}
+
 			/* check that memory (dst_reg + off) is writeable */
 			err = check_mem_access(env, insn_idx, insn->dst_reg, insn->off,
 					       BPF_SIZE(insn->code), BPF_WRITE,
@@ -4774,7 +4834,8 @@ process_bpf_exit:
 		insn_idx++;
 	}
 
-	verbose(env, "processed %d insns, stack depth ", insn_processed);
+	verbose(env, "processed %d insns (limit %d), stack depth ",
+		insn_processed, BPF_COMPLEXITY_LIMIT_INSNS);
 	for (i = 0; i < env->subprog_cnt + 1; i++) {
 		u32 depth = env->subprog_stack_depth[i];
 
@@ -4816,6 +4877,13 @@ static int check_map_prog_compatibility(struct bpf_verifier_env *env,
 			return -EINVAL;
 		}
 	}
+
+	if ((bpf_prog_is_dev_bound(prog->aux) || bpf_map_is_dev_bound(map)) &&
+	    !bpf_offload_dev_match(prog, map)) {
+		verbose(env, "offload device mismatch between prog and map\n");
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
@@ -5318,6 +5386,24 @@ static int fixup_bpf_calls(struct bpf_verifier_env *env)
 	int i, cnt, delta = 0;
 
 	for (i = 0; i < insn_cnt; i++, insn++) {
+		if (insn->code == (BPF_ALU | BPF_MOD | BPF_X) ||
+		    insn->code == (BPF_ALU | BPF_DIV | BPF_X)) {
+			/* due to JIT bugs clear upper 32-bits of src register
+			 * before div/mod operation
+			 */
+			insn_buf[0] = BPF_MOV32_REG(insn->src_reg, insn->src_reg);
+			insn_buf[1] = *insn;
+			cnt = 2;
+			new_prog = bpf_patch_insn_data(env, i + delta, insn_buf, cnt);
+			if (!new_prog)
+				return -ENOMEM;
+
+			delta    += cnt - 1;
+			env->prog = prog = new_prog;
+			insn      = new_prog->insnsi + i + delta;
+			continue;
+		}
+
 		if (insn->code != (BPF_JMP | BPF_CALL))
 			continue;
 		if (insn->src_reg == BPF_PSEUDO_CALL)
@@ -5354,7 +5440,7 @@ static int fixup_bpf_calls(struct bpf_verifier_env *env)
 			 */
 			map_ptr = env->insn_aux_data[i + delta].map_ptr;
 			if (map_ptr == BPF_MAP_PTR_POISON) {
-				verbose(env, "tail_call obusing map_ptr\n");
+				verbose(env, "tail_call abusing map_ptr\n");
 				return -EINVAL;
 			}
 			if (!map_ptr->unpriv_array)

@@ -791,6 +791,7 @@ static int tc_fill_qdisc(struct sk_buff *skb, struct Qdisc *q, u32 clid,
 	unsigned char *b = skb_tail_pointer(skb);
 	struct gnet_dump d;
 	struct qdisc_size_table *stab;
+	u32 block_index;
 	__u32 qlen;
 
 	cond_resched();
@@ -807,6 +808,18 @@ static int tc_fill_qdisc(struct sk_buff *skb, struct Qdisc *q, u32 clid,
 	tcm->tcm_info = refcount_read(&q->refcnt);
 	if (nla_put_string(skb, TCA_KIND, q->ops->id))
 		goto nla_put_failure;
+	if (q->ops->ingress_block_get) {
+		block_index = q->ops->ingress_block_get(q);
+		if (block_index &&
+		    nla_put_u32(skb, TCA_INGRESS_BLOCK, block_index))
+			goto nla_put_failure;
+	}
+	if (q->ops->egress_block_get) {
+		block_index = q->ops->egress_block_get(q);
+		if (block_index &&
+		    nla_put_u32(skb, TCA_EGRESS_BLOCK, block_index))
+			goto nla_put_failure;
+	}
 	if (q->ops->dump && q->ops->dump(q, skb) < 0)
 		goto nla_put_failure;
 	if (nla_put_u8(skb, TCA_HW_OFFLOAD, !!(q->flags & TCQ_F_OFFLOADED)))
@@ -994,6 +1007,40 @@ skip:
 	return err;
 }
 
+static int qdisc_block_indexes_set(struct Qdisc *sch, struct nlattr **tca,
+				   struct netlink_ext_ack *extack)
+{
+	u32 block_index;
+
+	if (tca[TCA_INGRESS_BLOCK]) {
+		block_index = nla_get_u32(tca[TCA_INGRESS_BLOCK]);
+
+		if (!block_index) {
+			NL_SET_ERR_MSG(extack, "Ingress block index cannot be 0");
+			return -EINVAL;
+		}
+		if (!sch->ops->ingress_block_set) {
+			NL_SET_ERR_MSG(extack, "Ingress block sharing is not supported");
+			return -EOPNOTSUPP;
+		}
+		sch->ops->ingress_block_set(sch, block_index);
+	}
+	if (tca[TCA_EGRESS_BLOCK]) {
+		block_index = nla_get_u32(tca[TCA_EGRESS_BLOCK]);
+
+		if (!block_index) {
+			NL_SET_ERR_MSG(extack, "Egress block index cannot be 0");
+			return -EINVAL;
+		}
+		if (!sch->ops->egress_block_set) {
+			NL_SET_ERR_MSG(extack, "Egress block sharing is not supported");
+			return -EOPNOTSUPP;
+		}
+		sch->ops->egress_block_set(sch, block_index);
+	}
+	return 0;
+}
+
 /* lockdep annotation is needed for ingress; egress gets it only for name */
 static struct lock_class_key qdisc_tx_lock;
 static struct lock_class_key qdisc_rx_lock;
@@ -1088,21 +1135,14 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 		netdev_info(dev, "Caught tx_queue_len zero misconfig\n");
 	}
 
+	err = qdisc_block_indexes_set(sch, tca, extack);
+	if (err)
+		goto err_out3;
+
 	if (ops->init) {
 		err = ops->init(sch, tca[TCA_OPTIONS], extack);
 		if (err != 0)
 			goto err_out5;
-	}
-
-	if (qdisc_is_percpu_stats(sch)) {
-		sch->cpu_bstats =
-			netdev_alloc_pcpu_stats(struct gnet_stats_basic_cpu);
-		if (!sch->cpu_bstats)
-			goto err_out4;
-
-		sch->cpu_qstats = alloc_percpu(struct gnet_stats_queue);
-		if (!sch->cpu_qstats)
-			goto err_out4;
 	}
 
 	if (tca[TCA_STAB]) {
@@ -1151,7 +1191,7 @@ err_out5:
 		ops->destroy(sch);
 err_out3:
 	dev_put(dev);
-	kfree((char *) sch - sch->padded);
+	qdisc_free(sch);
 err_out2:
 	module_put(ops->owner);
 err_out:
@@ -1159,8 +1199,6 @@ err_out:
 	return NULL;
 
 err_out4:
-	free_percpu(sch->cpu_bstats);
-	free_percpu(sch->cpu_qstats);
 	/*
 	 * Any broken qdiscs that would require a ops->reset() here?
 	 * The qdisc was never in action so it shouldn't be necessary.
@@ -1181,6 +1219,10 @@ static int qdisc_change(struct Qdisc *sch, struct nlattr **tca,
 		if (!sch->ops->change) {
 			NL_SET_ERR_MSG(extack, "Change operation not supported by specified qdisc");
 			return -EINVAL;
+		}
+		if (tca[TCA_INGRESS_BLOCK] || tca[TCA_EGRESS_BLOCK]) {
+			NL_SET_ERR_MSG(extack, "Change of blocks is not supported");
+			return -EOPNOTSUPP;
 		}
 		err = sch->ops->change(sch, tca[TCA_OPTIONS], extack);
 		if (err)
@@ -1907,6 +1949,11 @@ static int tc_ctl_tclass(struct sk_buff *skb, struct nlmsghdr *n,
 		}
 	}
 
+	if (tca[TCA_INGRESS_BLOCK] || tca[TCA_EGRESS_BLOCK]) {
+		NL_SET_ERR_MSG(extack, "Shared blocks are not supported for classes");
+		return -EOPNOTSUPP;
+	}
+
 	new_cl = cl;
 	err = -EOPNOTSUPP;
 	if (cops->change)
@@ -2046,7 +2093,6 @@ static int psched_open(struct inode *inode, struct file *file)
 }
 
 static const struct file_operations psched_fops = {
-	.owner = THIS_MODULE,
 	.open = psched_open,
 	.read  = seq_read,
 	.llseek = seq_lseek,
