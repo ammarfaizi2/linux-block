@@ -442,6 +442,18 @@ config BLK_DEV_IO_TRACE
 
 	  If unsure, say N.
 
+config FUNCTION_EVENTS
+	depends on DYNAMIC_FTRACE_WITH_REGS
+	bool "Enable function based events"
+	select TRACING
+	help
+	 This creates a file function_events in the tracefs file system.
+	 Writing function names into this file will create an event
+	 that can be enabled like any other event, but will be at the
+	 location of the specified function.
+
+	 See Documentation/trace/function_events.txt for more details.
+
 config KPROBE_EVENTS
 	depends on KPROBES
 	depends on HAVE_REGS_AND_STACK_ACCESS_API

@@ -49,17 +49,6 @@
 #define FIELD_STRING_RETIP	"__probe_ret_ip"
 #define FIELD_STRING_FUNC	"__probe_func"
 
-#undef DEFINE_FIELD
-#define DEFINE_FIELD(type, item, name, is_signed)			\
-	do {								\
-		ret = trace_define_field(event_call, #type, name,	\
-					 offsetof(typeof(field), item),	\
-					 sizeof(field.item), is_signed, \
-					 FILTER_OTHER);			\
-		if (ret)						\
-			return ret;					\
-	} while (0)
-
 
 /* Flags for trace_probe */
 #define TP_FLAG_TRACE		1
