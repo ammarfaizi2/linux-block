@@ -34,6 +34,11 @@
 #include <net/inet_common.h>
 #include <linux/highmem.h>
 #include <linux/netdevice.h>
+#include <net/addrconf.h>
+#include <net/flow.h>
+#include <linux/ipv6.h>
+#include <net/dst.h>
+#include <linux/security.h>
 
 #include <net/tls.h>
 #include <crypto/aead.h>
@@ -98,13 +103,57 @@ static void tls_device_queue_ctx_destruction(struct tls_context *ctx)
 	spin_unlock_irqrestore(&tls_device_lock, flags);
 }
 
+#if IS_ENABLED(CONFIG_IPV6)
+static inline struct net_device *ipv6_get_netdev(struct sock *sk)
+{
+	struct net_device *dev = NULL;
+	struct inet_sock *inet = inet_sk(sk);
+	struct ipv6_pinfo *np = inet6_sk(sk);
+	struct flowi6 _fl6, *fl6 = &_fl6;
+	struct dst_entry *dst;
+
+	memset(fl6, 0, sizeof(*fl6));
+	fl6->flowi6_proto = sk->sk_protocol;
+	fl6->daddr = sk->sk_v6_daddr;
+	fl6->saddr = np->saddr;
+	fl6->flowlabel = np->flow_label;
+	IP6_ECN_flow_xmit(sk, fl6->flowlabel);
+	fl6->flowi6_oif = sk->sk_bound_dev_if;
+	fl6->flowi6_mark = sk->sk_mark;
+	fl6->fl6_sport = inet->inet_sport;
+	fl6->fl6_dport = inet->inet_dport;
+	fl6->flowi6_uid = sk->sk_uid;
+	security_sk_classify_flow(sk, flowi6_to_flowi(fl6));
+
+	if (ipv6_stub->ipv6_dst_lookup(sock_net(sk), sk, &dst, fl6) < 0)
+		return NULL;
+
+	dev = dst->dev;
+	dev_hold(dev);
+	dst_release(dst);
+
+	return dev;
+}
+#endif
+
 /* We assume that the socket is already connected */
 static struct net_device *get_netdev_for_sock(struct sock *sk)
 {
 	struct inet_sock *inet = inet_sk(sk);
 	struct net_device *netdev = NULL;
 
-	netdev = dev_get_by_index(sock_net(sk), inet->cork.fl.flowi_oif);
+	if (sk->sk_family == AF_INET)
+		netdev = dev_get_by_index(sock_net(sk),
+					  inet->cork.fl.flowi_oif);
+#if IS_ENABLED(CONFIG_IPV6)
+	else if (sk->sk_family == AF_INET6) {
+		netdev = ipv6_get_netdev(sk);
+		if (!netdev && !sk->sk_ipv6only &&
+		    ipv6_addr_type(&sk->sk_v6_daddr) == IPV6_ADDR_MAPPED)
+			netdev = dev_get_by_index(sock_net(sk),
+						  inet->cork.fl.flowi_oif);
+	}
+#endif
 
 	return netdev;
 }
