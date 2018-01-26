@@ -67,3 +67,60 @@ print fmt: "%pS->%pS()", REC->__ip, REC->__parent_ip
 The above shows that the format is very close to the function trace
 except that it displays the parent function followed by the called
 function.
+
+
+Number of arguments
+===================
+
+The number of arguments that can be specified is dependent on the
+architecture. An architecture may not allow any arguments, or it
+may limit to just three or six. If more arguments are used than
+supported, it will fail with -EINVAL.
+
+Parameters
+==========
+
+Adding parameters creates fields within the events. The format is
+as follows:
+
+ # echo EVENT > function_events
+
+ EVENT := <function> '(' ARGS ')'
+
+ Where <function> is any function that the function tracer can trace.
+
+ ARGS := ARG | ARG ',' ARGS | ''
+
+ ARG := TYPE FIELD
+
+ TYPE := ATOM
+
+ ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
+         's8' | 's16' | 's32' | 's64' |
+         'char' | 'short' | 'int' | 'long' | 'size_t'
+
+ FIELD := <name>
+
+ Where <name> is a unique string starting with an alphabetic character
+ and consists only of letters and numbers and underscores.
+
+
+Simple arguments
+================
+
+Looking at kernel code, we can see something like:
+
+ v4.15: net/ipv4/ip_input.c:
+
+int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *orig_dev)
+
+If we are only interested in the first argument (skb):
+
+ # echo 'ip_rcv(u64 skb, u64 dev)' > function_events
+
+ # echo 1 > events/functions/ip_rcv/enable
+ # cat trace
+     <idle>-0     [003] ..s3  2119.041935: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
+     <idle>-0     [003] ..s3  2119.041944: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
+     <idle>-0     [003] ..s3  2119.288337: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
+     <idle>-0     [003] ..s3  2119.288960: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
