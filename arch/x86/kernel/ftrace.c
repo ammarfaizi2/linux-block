@@ -46,6 +46,34 @@ int ftrace_arch_code_modify_post_process(void)
 	return 0;
 }
 
+int arch_get_func_args(struct pt_regs *regs,
+		       int start, int end, long *args)
+{
+#ifdef CONFIG_X86_64
+# define MAX_ARGS 6
+# define INIT_REGS				\
+	{	regs->di, regs->si, regs->dx,	\
+		regs->cx, regs->r8, regs->r9	\
+	}
+#else
+# define MAX_ARGS 3
+# define INIT_REGS				\
+	{	regs->ax, regs->dx, regs->cx	}
+#endif
+	if (!regs)
+		return MAX_ARGS;
+
+	{
+		long pt_args[] = INIT_REGS;
+		int i;
+
+		for (i = start; i < end && i < MAX_ARGS; i++)
+			args[i - start] = pt_args[i];
+
+		return i - start;
+	}
+}
+
 union ftrace_code_union {
 	char code[MCOUNT_INSN_SIZE];
 	struct {
