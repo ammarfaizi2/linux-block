@@ -91,7 +91,7 @@ as follows:
 
  ARGS := ARG | ARG ',' ARGS | ''
 
- ARG := TYPE FIELD
+ ARG := TYPE FIELD | ARG '|' ARG
 
  TYPE := ATOM
 
@@ -158,3 +158,21 @@ As 128 / 4 (length of int) is 32, we can see the length of the skb with:
     <idle>-0     [003] ..s3   280.807023: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
 
 Now we see the length of the sk_buff per event.
+
+
+Multiple fields per argument
+============================
+
+
+If we still want to see the skb pointer value along with the length of the
+skb, then using the '|' option allows us to add more than one option to
+an argument:
+
+ # echo 'ip_rcv(x64 skb | int skb[32], x64 dev)' > function_events
+
+ # echo 1 > events/functions/ip_rcv/enable
+ # cat trace
+    <idle>-0     [003] ..s3   904.075838: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
+    <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
+    <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
+    <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)

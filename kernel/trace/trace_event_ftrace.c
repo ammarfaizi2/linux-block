@@ -20,8 +20,8 @@ struct func_arg {
 	long				indirect;
 	short				offset;
 	short				size;
-	char				arg;
-	char				sign;
+	s8				arg;
+	u8				sign;
 };
 
 struct func_event {
@@ -33,6 +33,7 @@ struct func_event {
 	struct list_head		files;
 	struct func_arg			*args;
 	int				nr_args;
+	int				arg_cnt;
 	int				arg_offset;
 };
 
@@ -58,6 +59,7 @@ enum func_states {
 	FUNC_STATE_BRACKET,
 	FUNC_STATE_BRACKET_END,
 	FUNC_STATE_INDIRECT,
+	FUNC_STATE_PIPE,
 	FUNC_STATE_TYPE,
 	FUNC_STATE_VAR,
 	FUNC_STATE_COMMA,
@@ -209,7 +211,7 @@ static int add_arg(struct func_event *fevent, struct list_head *args,
 	struct func_arg_list *arg;
 
 	/* Make sure the arch can support this many args */
-	if (fevent->nr_args >= max_args)
+	if (fevent->arg_cnt >= max_args)
 		return -EINVAL;
 
 	arg = kzalloc(sizeof(*arg), GFP_KERNEL);
@@ -224,12 +226,13 @@ static int add_arg(struct func_event *fevent, struct list_head *args,
 	arg->arg.size = func_type->size;
 	arg->arg.sign = func_type->sign;
 	arg->arg.offset = ALIGN(fevent->arg_offset, arg->arg.size);
-	arg->arg.arg = fevent->nr_args;
+	arg->arg.arg = fevent->arg_cnt;
 	fevent->arg_offset = arg->arg.offset + arg->arg.size;
 
 	list_add_tail(&arg->list, args);
 	*last_arg = &arg->arg;
 	fevent->nr_args++;
+	fevent->arg_cnt++;
 
 	return 0;
 }
@@ -262,11 +265,15 @@ process_event(struct func_event *fevent, struct list_head *args,
 			break;
 		return FUNC_STATE_PARAM;
 
+	case FUNC_STATE_PIPE:
+		fevent->arg_cnt--;
+		goto comma;
 	case FUNC_STATE_PARAM:
 		if (token[0] == ')')
 			return FUNC_STATE_END;
 		/* Fall through */
 	case FUNC_STATE_COMMA:
+ comma:
 		for (i = 0; func_types[i].size; i++) {
 			if (strcmp(token, func_types[i].name) == 0)
 				break;
@@ -294,6 +301,8 @@ process_event(struct func_event *fevent, struct list_head *args,
 			return FUNC_STATE_END;
 		case ',':
 			return FUNC_STATE_COMMA;
+		case '|':
+			return FUNC_STATE_PIPE;
 		case '[':
 			return FUNC_STATE_BRACKET;
 		}
@@ -320,6 +329,8 @@ process_event(struct func_event *fevent, struct list_head *args,
 			return FUNC_STATE_END;
 		case ',':
 			return FUNC_STATE_COMMA;
+		case '|':
+			return FUNC_STATE_PIPE;
 		}
 		break;
 
@@ -373,7 +384,7 @@ static void func_event_trace(struct trace_event_file *trace_file,
 	int nr_args;
 	int size;
 	int pc;
-	int i = 0;
+	int i;
 
 	if (trace_trigger_soft_disabled(trace_file))
 		return;
@@ -392,16 +403,15 @@ static void func_event_trace(struct trace_event_file *trace_file,
 	entry = ring_buffer_event_data(event);
 	entry->ip = ip;
 	entry->parent_ip = parent_ip;
-	nr_args = arch_get_func_args(pt_regs, 0, func_event->nr_args, args);
+	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
 
 	for (i = 0; i < func_event->nr_args; i++) {
 		arg = &func_event->args[i];
 		if (arg->arg < nr_args)
-			val = get_arg(arg, args[i]);
+			val = get_arg(arg, args[arg->arg]);
 		else
 			val = 0;
 		memcpy(&entry->data[arg->offset], &val, arg->size);
-		i++;
 	}
 
 	event_trigger_unlock_commit_regs(trace_file, buffer, event,
@@ -785,14 +795,20 @@ static int func_event_seq_show(struct seq_file *m, void *v)
 	struct func_event *func_event = v;
 	struct func_arg *arg;
 	bool comma = false;
+	int last_arg = 0;
 	int i;
 
 	seq_printf(m, "%s(", func_event->func);
 
 	for (i = 0; i < func_event->nr_args; i++) {
 		arg = &func_event->args[i];
-		if (comma)
-			seq_puts(m, ", ");
+		if (comma) {
+			if (last_arg == arg->arg)
+				seq_puts(m, " | ");
+			else
+				seq_puts(m, ", ");
+		}
+		last_arg = arg->arg;
 		comma = true;
 		seq_printf(m, "%s %s", arg->type, arg->name);
 		if (arg->indirect && arg->size)
