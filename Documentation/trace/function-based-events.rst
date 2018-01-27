@@ -97,6 +97,7 @@ as follows:
 
  ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
          's8' | 's16' | 's32' | 's64' |
+         'x8' | 'x16' | 'x32' | 'x64' |
          'char' | 'short' | 'int' | 'long' | 'size_t'
 
  FIELD := <name>
@@ -116,11 +117,14 @@ int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, 
 
 If we are only interested in the first argument (skb):
 
- # echo 'ip_rcv(u64 skb, u64 dev)' > function_events
+ # echo 'ip_rcv(x64 skb, x86 dev)' > function_events
 
  # echo 1 > events/functions/ip_rcv/enable
  # cat trace
-     <idle>-0     [003] ..s3  2119.041935: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
-     <idle>-0     [003] ..s3  2119.041944: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
-     <idle>-0     [003] ..s3  2119.288337: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
-     <idle>-0     [003] ..s3  2119.288960: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
+     <idle>-0     [003] ..s3  5543.133460: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
+     <idle>-0     [003] ..s3  5543.133475: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
+     <idle>-0     [003] ..s3  5543.312592: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
+     <idle>-0     [003] ..s3  5543.313150: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
+
+We use "x64" in order to make sure that the data is displayed in hex.
+This is on a x86_64 machine, and we know the pointer sizes are 8 bytes.

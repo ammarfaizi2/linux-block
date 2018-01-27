@@ -60,6 +60,11 @@ enum func_states {
 	FUNC_STATE_ERROR,
 };
 
+typedef u64 x64;
+typedef u32 x32;
+typedef u16 x16;
+typedef u8 x8;
+
 #define TYPE_TUPLE(type)			\
 	{ #type, sizeof(type), is_signed_type(type) }
 
@@ -75,12 +80,16 @@ static struct func_type {
 	TYPE_TUPLE(size_t),
 	TYPE_TUPLE(u64),
 	TYPE_TUPLE(s64),
+	TYPE_TUPLE(x64),
 	TYPE_TUPLE(u32),
 	TYPE_TUPLE(s32),
+	TYPE_TUPLE(x32),
 	TYPE_TUPLE(u16),
 	TYPE_TUPLE(s16),
+	TYPE_TUPLE(x16),
 	TYPE_TUPLE(u8),
 	TYPE_TUPLE(s8),
+	TYPE_TUPLE(x8),
 	{ NULL,		0,	0 }
 };
 
@@ -370,7 +379,9 @@ static void make_fmt(struct func_arg *arg, char *fmt)
 		fmt[c++] = 'l';
 	}
 
-	if (arg->sign)
+	if (arg->type[0] == 'x')
+		fmt[c++] = 'x';
+	else if (arg->sign)
 		fmt[c++] = 'd';
 	else
 		fmt[c++] = 'u';
