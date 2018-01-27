@@ -75,6 +75,7 @@ typedef u64 x64;
 typedef u32 x32;
 typedef u16 x16;
 typedef u8 x8;
+typedef void * symbol;
 
 #define TYPE_TUPLE(type)			\
 	{ #type, sizeof(type), is_signed_type(type) }
@@ -96,7 +97,8 @@ typedef u8 x8;
 	TYPE_TUPLE(x16),			\
 	TYPE_TUPLE(u8),				\
 	TYPE_TUPLE(s8),				\
-	TYPE_TUPLE(x8)
+	TYPE_TUPLE(x8),				\
+	TYPE_TUPLE(symbol)
 
 static struct func_type {
 	char		*name;
@@ -484,6 +486,11 @@ func_event_call(unsigned long ip, unsigned long parent_ip,
 static void make_fmt(struct func_arg *arg, char *fmt)
 {
 	int c = 0;
+
+	if (arg->func_type == FUNC_TYPE_symbol) {
+		strcpy(fmt, "%pS");
+		return;
+	}
 
 	fmt[c++] = '%';
 

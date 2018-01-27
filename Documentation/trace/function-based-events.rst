@@ -98,7 +98,8 @@ as follows:
  ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
          's8' | 's16' | 's32' | 's64' |
          'x8' | 'x16' | 'x32' | 'x64' |
-         'char' | 'short' | 'int' | 'long' | 'size_t'
+         'char' | 'short' | 'int' | 'long' | 'size_t' |
+	 'symbol'
 
  FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
 
@@ -243,3 +244,26 @@ The above will take the parameter value, add it by 4, then index it by two
 8 byte words. It's the same in C as: (u64 *)((void *)param + 4)[2]
 
  Note: "int skb[32]" is the same as "int skb+4[31]".
+
+
+Symbols (function names)
+========================
+
+To display kallsyms "%pS" type of output, use the special type "symbol".
+
+Again, using gdb to find the offset of the "func" field of struct work_struct
+
+(gdb) printf "%d\n", &((struct work_struct *)0)->func
+24
+
+ Both "symbol func[3]" and "symbol func+24[0]" will work.
+
+ # echo '__queue_work(int cpu, x64 wq, symbol func[3])' > function_events
+
+ # echo 1 > events/functions/__queue_work/enable
+ # cat trace
+       bash-1641  [007] d..2  6241.171332: queue_work_on->__queue_work(cpu=128, wq=ffff88011a010e00, func=flush_to_ldisc+0x0/0xa0)
+       bash-1641  [007] d..2  6241.171460: queue_work_on->__queue_work(cpu=128, wq=ffff88011a010e00, func=flush_to_ldisc+0x0/0xa0)
+     <idle>-0     [000] dNs3  6241.172004: delayed_work_timer_fn->__queue_work(cpu=128, wq=ffff88011a010800, func=vmstat_shepherd+0x0/0xb0)
+ worker/0:2-1689  [000] d..2  6241.172026: __queue_delayed_work->__queue_work(cpu=7, wq=ffff88011a11da00, func=vmstat_update+0x0/0x70)
+     <idle>-0     [005] d.s3  6241.347996: queue_work_on->__queue_work(cpu=128, wq=ffff88011a011200, func=fb_flashcursor+0x0/0x110 [fb])
