@@ -100,9 +100,11 @@ as follows:
          'x8' | 'x16' | 'x32' | 'x64' |
          'char' | 'short' | 'int' | 'long' | 'size_t'
 
- FIELD := <name> | <name> INDEX
+ FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
 
  INDEX := '[' <number> ']'
+
+ OFFSET := '+' <number>
 
  Where <name> is a unique string starting with an alphabetic character
  and consists only of letters and numbers and underscores.
@@ -221,3 +223,23 @@ format:
 print fmt: "%pS->%pS(skb=%u)", REC->__ip, REC->__parent_ip, REC->skb
 
 It is now printed with a "%u".
+
+
+Offsets
+=======
+
+After the name of the variable, brackets '[' number ']' will index the value of
+the argument by the number given times the size of the field.
+
+ int field[5] will dereference the value of the argument 20 bytes away (4 * 5)
+  as sizeof(int) is 4.
+
+If there's a case where the type is of 8 bytes in size but is not 8 bytes
+alligned in the structure, an offset may be required.
+
+  For example: x64 param+4[2]
+
+The above will take the parameter value, add it by 4, then index it by two
+8 byte words. It's the same in C as: (u64 *)((void *)param + 4)[2]
+
+ Note: "int skb[32]" is the same as "int skb+4[31]".

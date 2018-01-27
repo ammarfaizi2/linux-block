@@ -18,6 +18,7 @@ struct func_arg {
 	char				*type;
 	char				*name;
 	long				indirect;
+	long				index;
 	short				offset;
 	short				size;
 	s8				arg;
@@ -61,6 +62,7 @@ enum func_states {
 	FUNC_STATE_INDIRECT,
 	FUNC_STATE_UNSIGNED,
 	FUNC_STATE_PIPE,
+	FUNC_STATE_PLUS,
 	FUNC_STATE_TYPE,
 	FUNC_STATE_VAR,
 	FUNC_STATE_COMMA,
@@ -318,6 +320,8 @@ process_event(struct func_event *fevent, struct list_head *args,
 			return FUNC_STATE_COMMA;
 		case '|':
 			return FUNC_STATE_PIPE;
+		case '+':
+			return FUNC_STATE_PLUS;
 		case '[':
 			return FUNC_STATE_BRACKET;
 		}
@@ -349,6 +353,15 @@ process_event(struct func_event *fevent, struct list_head *args,
 		}
 		break;
 
+	case FUNC_STATE_PLUS:
+		if (WARN_ON(!*last_arg))
+			break;
+		ret = kstrtol(token, 0, &val);
+		if (ret)
+			break;
+		(*last_arg)->index += val;
+		return FUNC_STATE_VAR;
+
 	default:
 		break;
 	}
@@ -359,6 +372,8 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
 {
 	char buf[8];
 	int ret;
+
+	val += arg->index;
 
 	if (!arg->indirect)
 		return val;
@@ -826,6 +841,8 @@ static int func_event_seq_show(struct seq_file *m, void *v)
 		last_arg = arg->arg;
 		comma = true;
 		seq_printf(m, "%s %s", arg->type, arg->name);
+		if (arg->index)
+			seq_printf(m, "+%ld", arg->index);
 		if (arg->indirect && arg->size)
 			seq_printf(m, "[%ld]",
 				   (arg->indirect ^ INDIRECT_FLAG) / arg->size);
