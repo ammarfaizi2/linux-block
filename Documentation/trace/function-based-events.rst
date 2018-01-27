@@ -100,10 +100,14 @@ as follows:
          'x8' | 'x16' | 'x32' | 'x64' |
          'char' | 'short' | 'int' | 'long' | 'size_t'
 
- FIELD := <name>
+ FIELD := <name> | <name> INDEX
+
+ INDEX := '[' <number> ']'
 
  Where <name> is a unique string starting with an alphabetic character
  and consists only of letters and numbers and underscores.
+
+ Where <number> is a number that can be read by kstrtol() (hex, decimal, etc).
 
 
 Simple arguments
@@ -128,3 +132,29 @@ If we are only interested in the first argument (skb):
 
 We use "x64" in order to make sure that the data is displayed in hex.
 This is on a x86_64 machine, and we know the pointer sizes are 8 bytes.
+
+
+Indexing
+========
+
+The pointers of the skb and the dev isn't that interesting. But if we want the
+length "len" field of skb, we could index it with an index operator '[' and ']'.
+
+Using gdb, we can find the offset of 'len' from the sk_buff type:
+
+ $ gdb vmlinux
+ (gdb) printf "%d\n", &((struct sk_buff *)0)->len
+128
+
+As 128 / 4 (length of int) is 32, we can see the length of the skb with:
+
+ # echo 'ip_rcv(int skb[32], x64 dev)' > function_events
+
+ # echo 1 > events/functions/ip_rcv/enable
+ # cat trace
+    <idle>-0     [003] ..s3   280.167137: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
+    <idle>-0     [003] ..s3   280.167152: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
+    <idle>-0     [003] ..s3   280.806629: __netif_receive_skb_core->ip_rcv(skb=88, dev=ffff8801092f9400)
+    <idle>-0     [003] ..s3   280.807023: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
+
+Now we see the length of the sk_buff per event.

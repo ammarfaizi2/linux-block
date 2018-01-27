@@ -10,12 +10,14 @@
 
 #include "trace.h"
 
-#define FUNC_EVENT_SYSTEM "functions"
-#define WRITE_BUFSIZE  4096
+#define FUNC_EVENT_SYSTEM	"functions"
+#define WRITE_BUFSIZE		4096
+#define INDIRECT_FLAG		0x10000000
 
 struct func_arg {
 	char				*type;
 	char				*name;
+	long				indirect;
 	short				offset;
 	short				size;
 	char				arg;
@@ -53,6 +55,9 @@ enum func_states {
 	FUNC_STATE_INIT,
 	FUNC_STATE_FUNC,
 	FUNC_STATE_PARAM,
+	FUNC_STATE_BRACKET,
+	FUNC_STATE_BRACKET_END,
+	FUNC_STATE_INDIRECT,
 	FUNC_STATE_TYPE,
 	FUNC_STATE_VAR,
 	FUNC_STATE_COMMA,
@@ -239,6 +244,7 @@ process_event(struct func_event *fevent, struct list_head *args,
 	      struct func_arg **last_arg, const char *token,
 	      enum func_states state)
 {
+	long val;
 	int ret;
 	int i;
 
@@ -288,6 +294,32 @@ process_event(struct func_event *fevent, struct list_head *args,
 			return FUNC_STATE_END;
 		case ',':
 			return FUNC_STATE_COMMA;
+		case '[':
+			return FUNC_STATE_BRACKET;
+		}
+		break;
+
+	case FUNC_STATE_BRACKET:
+		if (WARN_ON(!*last_arg))
+			break;
+		ret = kstrtol(token, 0, &val);
+		if (ret)
+			break;
+		val *= (*last_arg)->size;
+		(*last_arg)->indirect = val ^ INDIRECT_FLAG;
+		return FUNC_STATE_INDIRECT;
+
+	case FUNC_STATE_INDIRECT:
+		if (token[0] != ']')
+			break;
+		return FUNC_STATE_BRACKET_END;
+
+	case FUNC_STATE_BRACKET_END:
+		switch (token[0]) {
+		case ')':
+			return FUNC_STATE_END;
+		case ',':
+			return FUNC_STATE_COMMA;
 		}
 		break;
 
@@ -295,6 +327,34 @@ process_event(struct func_event *fevent, struct list_head *args,
 		break;
 	}
 	return FUNC_STATE_ERROR;
+}
+
+static long long get_arg(struct func_arg *arg, unsigned long val)
+{
+	char buf[8];
+	int ret;
+
+	if (!arg->indirect)
+		return val;
+
+	val = val + (arg->indirect ^ INDIRECT_FLAG);
+
+	ret = probe_kernel_read(buf, (void *)val, arg->size);
+	if (ret)
+		return 0;
+
+	switch (arg->size) {
+		case 8:
+			return *(unsigned long long *)buf;
+		case 4:
+			return *(unsigned int *)buf;
+		case 2:
+			return *(unsigned short *)buf;
+		case 1:
+			return *(unsigned char *)buf;
+	}
+	/* Unreached */
+	return 0;
 }
 
 static void func_event_trace(struct trace_event_file *trace_file,
@@ -337,7 +397,7 @@ static void func_event_trace(struct trace_event_file *trace_file,
 	for (i = 0; i < func_event->nr_args; i++) {
 		arg = &func_event->args[i];
 		if (arg->arg < nr_args)
-			val = args[(int)arg->arg];
+			val = get_arg(arg, args[i]);
 		else
 			val = 0;
 		memcpy(&entry->data[arg->offset], &val, arg->size);
@@ -735,6 +795,9 @@ static int func_event_seq_show(struct seq_file *m, void *v)
 			seq_puts(m, ", ");
 		comma = true;
 		seq_printf(m, "%s %s", arg->type, arg->name);
+		if (arg->indirect && arg->size)
+			seq_printf(m, "[%ld]",
+				   (arg->indirect ^ INDIRECT_FLAG) / arg->size);
 	}
 	seq_puts(m, ")\n");
 
