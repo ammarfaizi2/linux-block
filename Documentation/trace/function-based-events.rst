@@ -93,7 +93,7 @@ as follows:
 
  ARG := TYPE FIELD | ARG '|' ARG
 
- TYPE := ATOM
+ TYPE := ATOM | 'unsigned' ATOM
 
  ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
          's8' | 's16' | 's32' | 's64' |
@@ -176,3 +176,48 @@ an argument:
     <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
     <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
     <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)
+
+
+Unsigned usage
+==============
+
+One can also use "unsigned" to make some types unsigned. It works against
+"long", "int", "short" and "char". It doesn't error against other types but
+may not make any sense.
+
+ # echo 'ip_rcv(int skb[32])' > function_events
+ # cat events/functions/ip_rcv/format
+name: ip_rcv
+ID: 1397
+format:
+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
+	field:int common_pid;	offset:4;	size:4;	signed:1;
+
+	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
+	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
+	field:int skb;	offset:24;	size:4;	signed:1;
+
+print fmt: "%pS->%pS(skb=%d)", REC->__ip, REC->__parent_ip, REC->skb
+
+
+Notice that REC->skb is printed with "%d". By adding "unsigned"
+
+ # echo 'ip_rcv(unsigned int skb[32])' > function_events
+ # cat events/functions/ip_rcv/format
+name: ip_rcv
+ID: 1398
+format:
+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
+	field:int common_pid;	offset:4;	size:4;	signed:1;
+
+	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
+	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
+	field:unsigned int skb;	offset:24;	size:4;	signed:0;
+
+print fmt: "%pS->%pS(skb=%u)", REC->__ip, REC->__parent_ip, REC->skb
+
+It is now printed with a "%u".

@@ -59,6 +59,7 @@ enum func_states {
 	FUNC_STATE_BRACKET,
 	FUNC_STATE_BRACKET_END,
 	FUNC_STATE_INDIRECT,
+	FUNC_STATE_UNSIGNED,
 	FUNC_STATE_PIPE,
 	FUNC_STATE_TYPE,
 	FUNC_STATE_VAR,
@@ -205,7 +206,7 @@ struct func_arg_list {
 };
 
 static int add_arg(struct func_event *fevent, struct list_head *args,
-		   struct func_arg **last_arg, int ftype)
+		   struct func_arg **last_arg, int ftype, int unsign)
 {
 	struct func_type *func_type = &func_types[ftype];
 	struct func_arg_list *arg;
@@ -218,13 +219,18 @@ static int add_arg(struct func_event *fevent, struct list_head *args,
 	if (!arg)
 		return -ENOMEM;
 
-	arg->arg.type = kstrdup(func_type->name, GFP_KERNEL);
+	if (unsign)
+		arg->arg.type = kasprintf(GFP_KERNEL, "unsigned %s",
+					  func_type->name);
+	else
+		arg->arg.type = kstrdup(func_type->name, GFP_KERNEL);
 	if (!arg->arg.type) {
 		kfree(arg);
 		return -ENOMEM;
 	}
 	arg->arg.size = func_type->size;
-	arg->arg.sign = func_type->sign;
+	if (!unsign)
+		arg->arg.sign = func_type->sign;
 	arg->arg.offset = ALIGN(fevent->arg_offset, arg->arg.size);
 	arg->arg.arg = fevent->arg_cnt;
 	fevent->arg_offset = arg->arg.offset + arg->arg.size;
@@ -247,12 +253,14 @@ process_event(struct func_event *fevent, struct list_head *args,
 	      struct func_arg **last_arg, const char *token,
 	      enum func_states state)
 {
+	static int unsign;
 	long val;
 	int ret;
 	int i;
 
 	switch (state) {
 	case FUNC_STATE_INIT:
+		unsign = 0;
 		if (!valid_name(token))
 			break;
 		fevent->func = kstrdup(token, GFP_KERNEL);
@@ -274,13 +282,20 @@ process_event(struct func_event *fevent, struct list_head *args,
 		/* Fall through */
 	case FUNC_STATE_COMMA:
  comma:
+		if (strcmp(token, "unsigned") == 0) {
+			unsign = 2;
+			return FUNC_STATE_UNSIGNED;
+		}
+		/* Fall through */
+	case FUNC_STATE_UNSIGNED:
 		for (i = 0; func_types[i].size; i++) {
 			if (strcmp(token, func_types[i].name) == 0)
 				break;
 		}
 		if (!func_types[i].size)
 			break;
-		ret = add_arg(fevent, args, last_arg, i);
+		ret = add_arg(fevent, args, last_arg, i, unsign);
+		unsign = 0;
 		if (ret < 0)
 			break;
 		return FUNC_STATE_TYPE;
