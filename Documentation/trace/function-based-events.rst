@@ -91,7 +91,7 @@ as follows:
 
  ARGS := ARG | ARG ',' ARGS | ''
 
- ARG := TYPE FIELD | ARG '|' ARG
+ ARG := TYPE FIELD | TYPE <name> '=' ADDR | TYPE ADDR | ARG '|' ARG
 
  TYPE := ATOM | 'unsigned' ATOM
 
@@ -106,6 +106,8 @@ as follows:
  INDEX := '[' <number> ']'
 
  OFFSET := '+' <number>
+
+ ADDR := A hexidecimal address starting with '0x'
 
  Where <name> is a unique string starting with an alphabetic character
  and consists only of letters and numbers and underscores.
@@ -267,3 +269,39 @@ Again, using gdb to find the offset of the "func" field of struct work_struct
      <idle>-0     [000] dNs3  6241.172004: delayed_work_timer_fn->__queue_work(cpu=128, wq=ffff88011a010800, func=vmstat_shepherd+0x0/0xb0)
  worker/0:2-1689  [000] d..2  6241.172026: __queue_delayed_work->__queue_work(cpu=7, wq=ffff88011a11da00, func=vmstat_update+0x0/0x70)
      <idle>-0     [005] d.s3  6241.347996: queue_work_on->__queue_work(cpu=128, wq=ffff88011a011200, func=fb_flashcursor+0x0/0x110 [fb])
+
+
+Direct memory access
+====================
+
+Function arguments are not the only thing that can be recorded from a function
+based event. Memory addresses can also be examined. If there's a global variable
+that you want to monitor via an interrupt, you can put in the address directly.
+
+  # grep total_forks /proc/kallsyms
+ffffffff82354c18 B total_forks
+
+  # echo 'do_IRQ(int total_forks=0xffffffff82354c18)' > function_events
+
+  # echo 1 events/functions/do_IRQ/enable
+  # cat trace
+    <idle>-0     [003] d..3   337.076709: ret_from_intr->do_IRQ(total_forks=1419)
+    <idle>-0     [003] d..3   337.077046: ret_from_intr->do_IRQ(total_forks=1419)
+    <idle>-0     [003] d..3   337.077076: ret_from_intr->do_IRQ(total_forks=1420)
+
+Note, address notations do not affect the argument count. For instance, with
+
+__visible unsigned int __irq_entry do_IRQ(struct pt_regs *regs)
+
+  # echo 'do_IRQ(int total_forks=0xffffffff82354c18, symbol regs[16])' > function_events
+
+Is the same as
+
+  # echo 'do_IRQ(int total_forks=0xffffffff82354c18 | symbol regs[16])' > function_events
+
+  # cat trace
+    <idle>-0     [003] d..3   653.839546: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
+    <idle>-0     [003] d..3   653.906011: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
+    <idle>-0     [003] d..3   655.823498: ret_from_intr->do_IRQ(total_forks=1504, regs=tick_nohz_idle_enter+0x4c/0x50)
+    <idle>-0     [003] d..3   655.954096: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
+
