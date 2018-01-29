@@ -93,7 +93,7 @@ as follows:
 
  ARG := TYPE FIELD | TYPE <name> '=' ADDR | TYPE ADDR | ARG '|' ARG
 
- TYPE := ATOM | 'unsigned' ATOM
+ TYPE := ATOM | ATOM '[' <number> ']' | 'unsigned' TYPE
 
  ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
          's8' | 's16' | 's32' | 's64' |
@@ -305,3 +305,23 @@ Is the same as
     <idle>-0     [003] d..3   655.823498: ret_from_intr->do_IRQ(total_forks=1504, regs=tick_nohz_idle_enter+0x4c/0x50)
     <idle>-0     [003] d..3   655.954096: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
 
+
+Array types
+===========
+
+If there's a case where you want to see an array of a type, then you can
+declare a type as an array by adding '[' number ']' after the type.
+
+To get the net_device perm_addr, from the dev parameter.
+
+ (gdb) printf "%d\n", &((struct net_device *)0)->perm_addr
+558
+
+ # echo 'ip_rcv(x64 skb, x8[6] perm_addr+558)' > function_events
+
+ # echo 1 > events/functions/ip_rcv/enable
+ # cat trace
+    <idle>-0     [003] ..s3   219.813582: __netif_receive_skb_core->ip_rcv(skb=ffff880118195e00, perm_addr=b4,b5,2f,ce,18,65)
+    <idle>-0     [003] ..s3   219.813595: __netif_receive_skb_core->ip_rcv(skb=ffff880118195e00, perm_addr=b4,b5,2f,ce,18,65)
+    <idle>-0     [003] ..s3   220.115053: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)
+    <idle>-0     [003] ..s3   220.115293: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)
