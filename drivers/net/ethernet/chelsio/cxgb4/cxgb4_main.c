@@ -2783,7 +2783,30 @@ static int cxgb4_mgmt_set_vf_rate(struct net_device *dev, int vf,
 	return 0;
 }
 
-#endif
+static int cxgb4_mgmt_set_vf_vlan(struct net_device *dev, int vf,
+				  u16 vlan, u8 qos, __be16 vlan_proto)
+{
+	struct port_info *pi = netdev_priv(dev);
+	struct adapter *adap = pi->adapter;
+	int ret;
+
+	if (vf >= adap->num_vfs || vlan > 4095 || qos > 7)
+		return -EINVAL;
+
+	if (vlan_proto != htons(ETH_P_8021Q) || qos != 0)
+		return -EPROTONOSUPPORT;
+
+	ret = t4_set_vlan_acl(adap, adap->mbox, vf + 1, vlan);
+	if (!ret) {
+		adap->vfinfo[vf].vlan = vlan;
+		return 0;
+	}
+
+	dev_err(adap->pdev_dev, "Err %d %s VLAN ACL for PF/VF %d/%d\n",
+		ret, (vlan ? "setting" : "clearing"), adap->pf, vf);
+	return ret;
+}
+#endif /* CONFIG_PCI_IOV */
 
 static int cxgb_set_mac_addr(struct net_device *dev, void *p)
 {
@@ -2905,9 +2928,6 @@ static int cxgb_set_tx_maxrate(struct net_device *dev, int index, u32 rate)
 static int cxgb_setup_tc_flower(struct net_device *dev,
 				struct tc_cls_flower_offload *cls_flower)
 {
-	if (cls_flower->common.chain_index)
-		return -EOPNOTSUPP;
-
 	switch (cls_flower->command) {
 	case TC_CLSFLOWER_REPLACE:
 		return cxgb4_tc_flower_replace(dev, cls_flower);
@@ -2923,9 +2943,6 @@ static int cxgb_setup_tc_flower(struct net_device *dev,
 static int cxgb_setup_tc_cls_u32(struct net_device *dev,
 				 struct tc_cls_u32_offload *cls_u32)
 {
-	if (cls_u32->common.chain_index)
-		return -EOPNOTSUPP;
-
 	switch (cls_u32->command) {
 	case TC_CLSU32_NEW_KNODE:
 	case TC_CLSU32_REPLACE_KNODE:
@@ -2951,7 +2968,7 @@ static int cxgb_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
 		return -EINVAL;
 	}
 
-	if (!tc_can_offload(dev))
+	if (!tc_cls_can_offload_and_chain0(dev, type_data))
 		return -EOPNOTSUPP;
 
 	switch (type) {
@@ -3020,6 +3037,17 @@ static void cxgb_del_udp_tunnel(struct net_device *netdev,
 		adapter->vxlan_port = 0;
 		t4_write_reg(adapter, MPS_RX_VXLAN_TYPE_A, 0);
 		break;
+	case UDP_TUNNEL_TYPE_GENEVE:
+		if (!adapter->geneve_port_cnt ||
+		    adapter->geneve_port != ti->port)
+			return; /* Invalid GENEVE destination port */
+
+		adapter->geneve_port_cnt--;
+		if (adapter->geneve_port_cnt)
+			return;
+
+		adapter->geneve_port = 0;
+		t4_write_reg(adapter, MPS_RX_GENEVE_TYPE_A, 0);
 	default:
 		return;
 	}
@@ -3055,17 +3083,11 @@ static void cxgb_add_udp_tunnel(struct net_device *netdev,
 	u8 match_all_mac[] = { 0, 0, 0, 0, 0, 0 };
 	int i, ret;
 
-	if (chip_ver < CHELSIO_T6)
+	if (chip_ver < CHELSIO_T6 || !adapter->rawf_cnt)
 		return;
 
 	switch (ti->type) {
 	case UDP_TUNNEL_TYPE_VXLAN:
-		/* For T6 fw reserves last 2 entries for
-		 * storing match all mac filter (config file entry).
-		 */
-		if (!adapter->rawf_cnt)
-			return;
-
 		/* Callback for adding vxlan port can be called with the same
 		 * port for both IPv4 and IPv6. We should not disable the
 		 * offloading when the same port for both protocols is added
@@ -3091,6 +3113,26 @@ static void cxgb_add_udp_tunnel(struct net_device *netdev,
 		t4_write_reg(adapter, MPS_RX_VXLAN_TYPE_A,
 			     VXLAN_V(be16_to_cpu(ti->port)) | VXLAN_EN_F);
 		break;
+	case UDP_TUNNEL_TYPE_GENEVE:
+		if (adapter->geneve_port_cnt &&
+		    adapter->geneve_port == ti->port) {
+			adapter->geneve_port_cnt++;
+			return;
+		}
+
+		/* We will support only one GENEVE port */
+		if (adapter->geneve_port_cnt) {
+			netdev_info(netdev, "UDP port %d already offloaded, not adding port %d\n",
+				    be16_to_cpu(adapter->geneve_port),
+				    be16_to_cpu(ti->port));
+			return;
+		}
+
+		adapter->geneve_port = ti->port;
+		adapter->geneve_port_cnt = 1;
+
+		t4_write_reg(adapter, MPS_RX_GENEVE_TYPE_A,
+			     GENEVE_V(be16_to_cpu(ti->port)) | GENEVE_EN_F);
 	default:
 		return;
 	}
@@ -3101,24 +3143,22 @@ static void cxgb_add_udp_tunnel(struct net_device *netdev,
 	 * we will remove this 'match all' entry and fallback to adding
 	 * exact match filters.
 	 */
-	if (adapter->rawf_cnt) {
-		for_each_port(adapter, i) {
-			pi = adap2pinfo(adapter, i);
+	for_each_port(adapter, i) {
+		pi = adap2pinfo(adapter, i);
 
-			ret = t4_alloc_raw_mac_filt(adapter, pi->viid,
-						    match_all_mac,
-						    match_all_mac,
-						    adapter->rawf_start +
-						    pi->port_id,
-						    1, pi->port_id, true);
-			if (ret < 0) {
-				netdev_info(netdev, "Failed to allocate a mac filter entry, not adding port %d\n",
-					    be16_to_cpu(ti->port));
-				cxgb_del_udp_tunnel(netdev, ti);
-				return;
-			}
-			atomic_inc(&adapter->mps_encap[ret].refcnt);
+		ret = t4_alloc_raw_mac_filt(adapter, pi->viid,
+					    match_all_mac,
+					    match_all_mac,
+					    adapter->rawf_start +
+					    pi->port_id,
+					    1, pi->port_id, true);
+		if (ret < 0) {
+			netdev_info(netdev, "Failed to allocate a mac filter entry, not adding port %d\n",
+				    be16_to_cpu(ti->port));
+			cxgb_del_udp_tunnel(netdev, ti);
+			return;
 		}
+		atomic_inc(&adapter->mps_encap[ret].refcnt);
 	}
 }
 
@@ -3184,6 +3224,7 @@ static const struct net_device_ops cxgb4_mgmt_netdev_ops = {
 	.ndo_get_vf_config    = cxgb4_mgmt_get_vf_config,
 	.ndo_set_vf_rate      = cxgb4_mgmt_set_vf_rate,
 	.ndo_get_phys_port_id = cxgb4_mgmt_get_phys_port_id,
+	.ndo_set_vf_vlan      = cxgb4_mgmt_set_vf_vlan,
 };
 #endif
 

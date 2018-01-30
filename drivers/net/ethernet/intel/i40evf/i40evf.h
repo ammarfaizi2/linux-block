@@ -114,14 +114,14 @@ struct i40e_q_vector {
 	struct i40evf_adapter *adapter;
 	struct i40e_vsi *vsi;
 	struct napi_struct napi;
-	unsigned long reg_idx;
 	struct i40e_ring_container rx;
 	struct i40e_ring_container tx;
 	u32 ring_mask;
 	u8 num_ringpairs;	/* total number of ring pairs in vector */
 #define ITR_COUNTDOWN_START 100
 	u8 itr_countdown;	/* when 0 or 1 update ITR */
-	int v_idx;	/* vector index in list */
+	u16 v_idx;		/* index in the vsi->q_vector array. */
+	u16 reg_idx;		/* register index of the interrupt */
 	char name[IFNAMSIZ + 15];
 	bool arm_wb_state;
 	cpumask_t affinity_mask;
@@ -187,6 +187,7 @@ enum i40evf_state_t {
 enum i40evf_critical_section_t {
 	__I40EVF_IN_CRITICAL_TASK,	/* cannot be interrupted */
 	__I40EVF_IN_CLIENT_TASK,
+	__I40EVF_IN_REMOVE_TASK,	/* device being removed */
 };
 
 /* board specific private data structure */

@@ -43,7 +43,7 @@
 
 #define STATS_CHECK_PERIOD (HZ / 2)
 
-struct ch_tc_pedit_fields pedits[] = {
+static struct ch_tc_pedit_fields pedits[] = {
 	PEDIT_FIELDS(ETH_, DMAC_31_0, 4, dmac, 0),
 	PEDIT_FIELDS(ETH_, DMAC_47_32, 2, dmac, 4),
 	PEDIT_FIELDS(ETH_, SMAC_15_0, 2, smac, 0),
@@ -110,6 +110,9 @@ static void cxgb4_process_flow_match(struct net_device *dev,
 			ethtype_key = 0;
 			ethtype_mask = 0;
 		}
+
+		if (ethtype_key == ETH_P_IPV6)
+			fs->type = 1;
 
 		fs->val.ethtype = ethtype_key;
 		fs->mask.ethtype = ethtype_mask;
@@ -205,8 +208,8 @@ static void cxgb4_process_flow_match(struct net_device *dev,
 					   VLAN_PRIO_SHIFT);
 		vlan_tci_mask = mask->vlan_id | (mask->vlan_priority <<
 						 VLAN_PRIO_SHIFT);
-		fs->val.ivlan = cpu_to_be16(vlan_tci);
-		fs->mask.ivlan = cpu_to_be16(vlan_tci_mask);
+		fs->val.ivlan = vlan_tci;
+		fs->mask.ivlan = vlan_tci_mask;
 
 		/* Chelsio adapters use ivlan_vld bit to match vlan packets
 		 * as 802.1Q. Also, when vlan tag is present in packets,

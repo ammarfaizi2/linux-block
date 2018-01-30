@@ -1387,6 +1387,7 @@ static int i40evf_alloc_q_vectors(struct i40evf_adapter *adapter)
 		q_vector->adapter = adapter;
 		q_vector->vsi = &adapter->vsi;
 		q_vector->v_idx = q_idx;
+		q_vector->reg_idx = q_idx;
 		cpumask_copy(&q_vector->affinity_mask, cpu_possible_mask);
 		netif_napi_add(adapter->netdev, &q_vector->napi,
 			       i40evf_napi_poll, NAPI_POLL_WEIGHT);
@@ -1716,6 +1717,8 @@ static void i40evf_watchdog_task(struct work_struct *work)
 	if (adapter->state == __I40EVF_RUNNING)
 		i40evf_request_stats(adapter);
 watchdog_done:
+	if (adapter->state == __I40EVF_RUNNING)
+		i40evf_detect_recover_hung(&adapter->vsi);
 	clear_bit(__I40EVF_IN_CRITICAL_TASK, &adapter->crit_section);
 restart_watchdog:
 	if (adapter->state == __I40EVF_REMOVE)
@@ -1802,6 +1805,12 @@ static void i40evf_reset_task(struct work_struct *work)
 	u32 reg_val;
 	int i = 0, err;
 	bool running;
+
+	/* When device is being removed it doesn't make sense to run the reset
+	 * task, just return in such a case.
+	 */
+	if (test_bit(__I40EVF_IN_REMOVE_TASK, &adapter->crit_section))
+		return;
 
 	while (test_and_set_bit(__I40EVF_IN_CLIENT_TASK,
 				&adapter->crit_section))
@@ -2336,13 +2345,19 @@ static int i40evf_set_features(struct net_device *netdev,
 {
 	struct i40evf_adapter *adapter = netdev_priv(netdev);
 
-	if (!VLAN_ALLOWED(adapter))
+	/* Don't allow changing VLAN_RX flag when VLAN is set for VF
+	 * and return an error in this case
+	 */
+	if (VLAN_ALLOWED(adapter)) {
+		if (features & NETIF_F_HW_VLAN_CTAG_RX)
+			adapter->aq_required |=
+				I40EVF_FLAG_AQ_ENABLE_VLAN_STRIPPING;
+		else
+			adapter->aq_required |=
+				I40EVF_FLAG_AQ_DISABLE_VLAN_STRIPPING;
+	} else if ((netdev->features ^ features) & NETIF_F_HW_VLAN_CTAG_RX) {
 		return -EINVAL;
-
-	if (features & NETIF_F_HW_VLAN_CTAG_RX)
-		adapter->aq_required |= I40EVF_FLAG_AQ_ENABLE_VLAN_STRIPPING;
-	else
-		adapter->aq_required |= I40EVF_FLAG_AQ_DISABLE_VLAN_STRIPPING;
+	}
 
 	return 0;
 }
@@ -3053,7 +3068,8 @@ static void i40evf_remove(struct pci_dev *pdev)
 	struct i40evf_mac_filter *f, *ftmp;
 	struct i40e_hw *hw = &adapter->hw;
 	int err;
-
+	/* Indicate we are in remove and not to run reset_task */
+	set_bit(__I40EVF_IN_REMOVE_TASK, &adapter->crit_section);
 	cancel_delayed_work_sync(&adapter->init_task);
 	cancel_work_sync(&adapter->reset_task);
 	cancel_delayed_work_sync(&adapter->client_task);
@@ -3087,8 +3103,6 @@ static void i40evf_remove(struct pci_dev *pdev)
 
 	if (adapter->watchdog_timer.function)
 		del_timer_sync(&adapter->watchdog_timer);
-
-	flush_scheduled_work();
 
 	i40evf_free_rss(adapter);
 

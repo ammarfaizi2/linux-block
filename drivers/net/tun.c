@@ -774,14 +774,12 @@ static void tun_detach_all(struct net_device *dev)
 		tun_napi_del(tun, tfile);
 		/* Drop read queue */
 		tun_queue_purge(tfile);
-		xdp_rxq_info_unreg(&tfile->xdp_rxq);
 		sock_put(&tfile->sk);
 		tun_cleanup_tx_ring(tfile);
 	}
 	list_for_each_entry_safe(tfile, tmp, &tun->disabled, next) {
 		tun_enable_queue(tfile);
 		tun_queue_purge(tfile);
-		xdp_rxq_info_unreg(&tfile->xdp_rxq);
 		sock_put(&tfile->sk);
 		tun_cleanup_tx_ring(tfile);
 	}
@@ -2225,7 +2223,8 @@ static void tun_prog_free(struct rcu_head *rcu)
 	kfree(prog);
 }
 
-static int __tun_set_ebpf(struct tun_struct *tun, struct tun_prog **prog_p,
+static int __tun_set_ebpf(struct tun_struct *tun,
+			  struct tun_prog __rcu **prog_p,
 			  struct bpf_prog *prog)
 {
 	struct tun_prog *old, *new = NULL;

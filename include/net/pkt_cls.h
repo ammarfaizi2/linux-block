@@ -535,7 +535,7 @@ static inline unsigned char * tcf_get_base_ptr(struct sk_buff *skb, int layer)
 {
 	switch (layer) {
 		case TCF_LAYER_LINK:
-			return skb->data;
+			return skb_mac_header(skb);
 		case TCF_LAYER_NETWORK:
 			return skb_network_header(skb);
 		case TCF_LAYER_TRANSPORT:
@@ -602,16 +602,8 @@ struct tc_cls_common_offload {
 	u32 chain_index;
 	__be16 protocol;
 	u32 prio;
+	struct netlink_ext_ack *extack;
 };
-
-static inline void
-tc_cls_common_offload_init(struct tc_cls_common_offload *cls_common,
-			   const struct tcf_proto *tp)
-{
-	cls_common->chain_index = tp->chain->index;
-	cls_common->protocol = tp->protocol;
-	cls_common->prio = tp->prio;
-}
 
 struct tc_cls_u32_knode {
 	struct tcf_exts *exts;
@@ -653,6 +645,31 @@ static inline bool tc_can_offload(const struct net_device *dev)
 	return dev->features & NETIF_F_HW_TC;
 }
 
+static inline bool tc_can_offload_extack(const struct net_device *dev,
+					 struct netlink_ext_ack *extack)
+{
+	bool can = tc_can_offload(dev);
+
+	if (!can)
+		NL_SET_ERR_MSG(extack, "TC offload is disabled on net device");
+
+	return can;
+}
+
+static inline bool
+tc_cls_can_offload_and_chain0(const struct net_device *dev,
+			      struct tc_cls_common_offload *common)
+{
+	if (!tc_can_offload_extack(dev, common->extack))
+		return false;
+	if (common->chain_index) {
+		NL_SET_ERR_MSG(common->extack,
+			       "Driver supports only offload of chain 0");
+		return false;
+	}
+	return true;
+}
+
 static inline bool tc_skip_hw(u32 flags)
 {
 	return (flags & TCA_CLS_FLAGS_SKIP_HW) ? true : false;
@@ -678,6 +695,18 @@ static inline bool tc_flags_valid(u32 flags)
 static inline bool tc_in_hw(u32 flags)
 {
 	return (flags & TCA_CLS_FLAGS_IN_HW) ? true : false;
+}
+
+static inline void
+tc_cls_common_offload_init(struct tc_cls_common_offload *cls_common,
+			   const struct tcf_proto *tp, u32 flags,
+			   struct netlink_ext_ack *extack)
+{
+	cls_common->chain_index = tp->chain->index;
+	cls_common->protocol = tp->protocol;
+	cls_common->prio = tp->prio;
+	if (tc_skip_sw(flags))
+		cls_common->extack = extack;
 }
 
 enum tc_fl_command {
@@ -722,7 +751,6 @@ struct tc_cls_bpf_offload {
 	struct bpf_prog *oldprog;
 	const char *name;
 	bool exts_integrated;
-	u32 gen_flags;
 };
 
 struct tc_mqprio_qopt_offload {

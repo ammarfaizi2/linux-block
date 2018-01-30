@@ -195,9 +195,11 @@ static void t4_report_fw_error(struct adapter *adap)
 	u32 pcie_fw;
 
 	pcie_fw = t4_read_reg(adap, PCIE_FW_A);
-	if (pcie_fw & PCIE_FW_ERR_F)
+	if (pcie_fw & PCIE_FW_ERR_F) {
 		dev_err(adap->pdev_dev, "Firmware reports adapter error: %s\n",
 			reason[PCIE_FW_EVAL_G(pcie_fw)]);
+		adap->flags &= ~FW_OK;
+	}
 }
 
 /*
@@ -317,9 +319,9 @@ int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
 	 * wait [for a while] till we're at the front [or bail out with an
 	 * EBUSY] ...
 	 */
-	spin_lock(&adap->mbox_lock);
+	spin_lock_bh(&adap->mbox_lock);
 	list_add_tail(&entry.list, &adap->mlist.list);
-	spin_unlock(&adap->mbox_lock);
+	spin_unlock_bh(&adap->mbox_lock);
 
 	delay_idx = 0;
 	ms = delay[0];
@@ -332,9 +334,9 @@ int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
 		 */
 		pcie_fw = t4_read_reg(adap, PCIE_FW_A);
 		if (i > FW_CMD_MAX_TIMEOUT || (pcie_fw & PCIE_FW_ERR_F)) {
-			spin_lock(&adap->mbox_lock);
+			spin_lock_bh(&adap->mbox_lock);
 			list_del(&entry.list);
-			spin_unlock(&adap->mbox_lock);
+			spin_unlock_bh(&adap->mbox_lock);
 			ret = (pcie_fw & PCIE_FW_ERR_F) ? -ENXIO : -EBUSY;
 			t4_record_mbox(adap, cmd, size, access, ret);
 			return ret;
@@ -365,9 +367,9 @@ int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
 	for (i = 0; v == MBOX_OWNER_NONE && i < 3; i++)
 		v = MBOWNER_G(t4_read_reg(adap, ctl_reg));
 	if (v != MBOX_OWNER_DRV) {
-		spin_lock(&adap->mbox_lock);
+		spin_lock_bh(&adap->mbox_lock);
 		list_del(&entry.list);
-		spin_unlock(&adap->mbox_lock);
+		spin_unlock_bh(&adap->mbox_lock);
 		ret = (v == MBOX_OWNER_FW) ? -EBUSY : -ETIMEDOUT;
 		t4_record_mbox(adap, cmd, size, access, ret);
 		return ret;
@@ -418,9 +420,9 @@ int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
 			execute = i + ms;
 			t4_record_mbox(adap, cmd_rpl,
 				       MBOX_LEN, access, execute);
-			spin_lock(&adap->mbox_lock);
+			spin_lock_bh(&adap->mbox_lock);
 			list_del(&entry.list);
-			spin_unlock(&adap->mbox_lock);
+			spin_unlock_bh(&adap->mbox_lock);
 			return -FW_CMD_RETVAL_G((int)res);
 		}
 	}
@@ -430,9 +432,9 @@ int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
 	dev_err(adap->pdev_dev, "command %#x in mailbox %d timed out\n",
 		*(const u8 *)cmd, mbox);
 	t4_report_fw_error(adap);
-	spin_lock(&adap->mbox_lock);
+	spin_lock_bh(&adap->mbox_lock);
 	list_del(&entry.list);
-	spin_unlock(&adap->mbox_lock);
+	spin_unlock_bh(&adap->mbox_lock);
 	t4_fatal_err(adap);
 	return ret;
 }
@@ -5088,7 +5090,7 @@ int t4_read_rss(struct adapter *adapter, u16 *map)
 
 static unsigned int t4_use_ldst(struct adapter *adap)
 {
-	return (adap->flags & FW_OK) || !adap->use_bd;
+	return (adap->flags & FW_OK) && !adap->use_bd;
 }
 
 /**
@@ -9898,4 +9900,36 @@ int t4_i2c_rd(struct adapter *adap, unsigned int mbox, int port,
 	}
 
 	return ret;
+}
+
+/**
+ *      t4_set_vlan_acl - Set a VLAN id for the specified VF
+ *      @adapter: the adapter
+ *      @mbox: mailbox to use for the FW command
+ *      @vf: one of the VFs instantiated by the specified PF
+ *      @vlan: The vlanid to be set
+ */
+int t4_set_vlan_acl(struct adapter *adap, unsigned int mbox, unsigned int vf,
+		    u16 vlan)
+{
+	struct fw_acl_vlan_cmd vlan_cmd;
+	unsigned int enable;
+
+	enable = (vlan ? FW_ACL_VLAN_CMD_EN_F : 0);
+	memset(&vlan_cmd, 0, sizeof(vlan_cmd));
+	vlan_cmd.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_ACL_VLAN_CMD) |
+					 FW_CMD_REQUEST_F |
+					 FW_CMD_WRITE_F |
+					 FW_CMD_EXEC_F |
+					 FW_ACL_VLAN_CMD_PFN_V(adap->pf) |
+					 FW_ACL_VLAN_CMD_VFN_V(vf));
+	vlan_cmd.en_to_len16 = cpu_to_be32(enable | FW_LEN16(vlan_cmd));
+	/* Drop all packets that donot match vlan id */
+	vlan_cmd.dropnovlan_fm = FW_ACL_VLAN_CMD_FM_F;
+	if (enable != 0) {
+		vlan_cmd.nvlan = 1;
+		vlan_cmd.vlanid[0] = cpu_to_be16(vlan);
+	}
+
+	return t4_wr_mbox(adap, adap->mbox, &vlan_cmd, sizeof(vlan_cmd), NULL);
 }

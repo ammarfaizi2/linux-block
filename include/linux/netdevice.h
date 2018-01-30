@@ -851,6 +851,7 @@ struct xfrmdev_ops {
 	void	(*xdo_dev_state_free) (struct xfrm_state *x);
 	bool	(*xdo_dev_offload_ok) (struct sk_buff *skb,
 				       struct xfrm_state *x);
+	void	(*xdo_dev_state_advance_esn) (struct xfrm_state *x);
 };
 #endif
 
@@ -1469,8 +1470,6 @@ enum netdev_priv_flags {
  *	@base_addr:	Device I/O address
  *	@irq:		Device IRQ number
  *
- *	@carrier_changes:	Stats to monitor carrier on<->off transitions
- *
  *	@state:		Generic network queuing layer state, see netdev_state_t
  *	@dev_list:	The global list of network devices
  *	@napi_list:	List entry used for polling NAPI devices
@@ -1506,6 +1505,8 @@ enum netdev_priv_flags {
  *			do not use this in drivers
  *	@rx_nohandler:	nohandler dropped packets by core network on
  *			inactive devices, do not use this in drivers
+ *	@carrier_up_count:	Number of times the carrier has been up
+ *	@carrier_down_count:	Number of times the carrier has been down
  *
  *	@wireless_handlers:	List of functions to handle Wireless Extensions,
  *				instead of ioctl,
@@ -1680,8 +1681,6 @@ struct net_device {
 	unsigned long		base_addr;
 	int			irq;
 
-	atomic_t		carrier_changes;
-
 	/*
 	 *	Some hardware also needs these fields (state,dev_list,
 	 *	napi_list,unreg_list,close_list) but they are not
@@ -1718,6 +1717,10 @@ struct net_device {
 	atomic_long_t		rx_dropped;
 	atomic_long_t		tx_dropped;
 	atomic_long_t		rx_nohandler;
+
+	/* Stats to monitor link on/off, flapping */
+	atomic_t		carrier_up_count;
+	atomic_t		carrier_down_count;
 
 #ifdef CONFIG_WIRELESS_EXT
 	const struct iw_handler_def *wireless_handlers;
@@ -2759,7 +2762,8 @@ static inline bool dev_validate_header(const struct net_device *dev,
 	return false;
 }
 
-typedef int gifconf_func_t(struct net_device * dev, char __user * bufptr, int len);
+typedef int gifconf_func_t(struct net_device * dev, char __user * bufptr,
+			   int len, int size);
 int register_gifconf(unsigned int family, gifconf_func_t *gifconf);
 static inline int unregister_gifconf(unsigned int family)
 {
@@ -3312,7 +3316,9 @@ int netdev_rx_handler_register(struct net_device *dev,
 void netdev_rx_handler_unregister(struct net_device *dev);
 
 bool dev_valid_name(const char *name);
-int dev_ioctl(struct net *net, unsigned int cmd, void __user *);
+int dev_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr,
+		bool *need_copyout);
+int dev_ifconf(struct net *net, struct ifconf *, int);
 int dev_ethtool(struct net *net, struct ifreq *);
 unsigned int dev_get_flags(const struct net_device *);
 int __dev_change_flags(struct net_device *, unsigned int flags);
