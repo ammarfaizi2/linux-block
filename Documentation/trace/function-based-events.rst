@@ -325,3 +325,20 @@ To get the net_device perm_addr, from the dev parameter.
     <idle>-0     [003] ..s3   219.813595: __netif_receive_skb_core->ip_rcv(skb=ffff880118195e00, perm_addr=b4,b5,2f,ce,18,65)
     <idle>-0     [003] ..s3   220.115053: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)
     <idle>-0     [003] ..s3   220.115293: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)
+
+
+Static strings
+==============
+
+An array of type 'char' or 'unsigned char' will be processed as a string using
+the format "%s". If a nul is found, the output will stop. Use another type
+(x8, u8, s8) if this is not desired.
+
+  # echo 'link_path_walk(char[64] name)' > function_events
+
+  # echo 1 > events/functions/link_path_walk/enable
+  # cat trace
+      bash-1470  [003] ...2   980.678664: path_openat->link_path_walk(name=/usr/bin/cat)
+      bash-1470  [003] ...2   980.678715: path_openat->link_path_walk(name=/lib64/ld-linux-x86-64.so.2)
+      bash-1470  [003] ...2   980.678721: path_openat->link_path_walk(name=ld-2.24.so)
+      bash-1470  [003] ...2   980.678978: path_lookupat->link_path_walk(name=/etc/ld.so.preload)

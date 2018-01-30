@@ -614,6 +614,14 @@ static void make_fmt(struct func_arg *arg, char *fmt)
 
 	fmt[c++] = '%';
 
+	if (arg->func_type == FUNC_TYPE_char) {
+		if (arg->array)
+			fmt[c++] = 's';
+		else
+			fmt[c++] = 'c';
+		goto out;
+	}
+
 	if (arg->size == 8) {
 		fmt[c++] = 'l';
 		fmt[c++] = 'l';
@@ -626,6 +634,7 @@ static void make_fmt(struct func_arg *arg, char *fmt)
 	else
 		fmt[c++] = 'u';
 
+ out:
 	fmt[c++] = '\0';
 }
 
@@ -643,7 +652,10 @@ static void write_data(struct trace_seq *s, const struct func_arg *arg, const ch
 		trace_seq_printf(s, fmt, *(unsigned short *)data);
 		break;
 	case 1:
-		trace_seq_printf(s, fmt, *(unsigned char *)data);
+		if (arg->array && arg->func_type == FUNC_TYPE_char)
+			trace_seq_printf(s, fmt, (char *)data);
+		else
+			trace_seq_printf(s, fmt, *(unsigned char *)data);
 		break;
 	}
 }
@@ -678,7 +690,7 @@ func_event_print(struct trace_iterator *iter, int flags,
 
 		make_fmt(arg, fmt);
 
-		if (arg->array) {
+		if (arg->array && arg->func_type != FUNC_TYPE_char) {
 			comma = false;
 			trace_seq_putc(s, '{');
 			for (a = 0; a < arg->array; a++, data += arg->size) {
@@ -845,7 +857,7 @@ static int __set_print_fmt(struct func_event *func_event,
 
 		make_fmt(arg, fmt);
 
-		if (arg->array) {
+		if (arg->array && arg->func_type != FUNC_TYPE_char) {
 			bool colon = false;
 
 			total += print_buf(&ptr, &len, "{");
@@ -864,7 +876,8 @@ static int __set_print_fmt(struct func_event *func_event,
 
 	for (i = 0; i < func_event->nr_args; i++) {
 		arg = &func_event->args[i];
-		if (arg->array) {
+		/* Don't iterate for strings */
+		if (arg->array && arg->func_type != FUNC_TYPE_char) {
 			for (a = 0; a < arg->array; a++)
 				total += print_buf(&ptr, &len, ", REC->%s[%d]",
 						   arg->name, a);
