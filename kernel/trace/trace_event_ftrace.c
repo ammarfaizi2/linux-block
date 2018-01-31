@@ -23,6 +23,7 @@ struct func_arg {
 	short				size;
 	s8				arg;
 	u8				sign;
+	u8				func_type;
 };
 
 struct func_event {
@@ -78,29 +79,40 @@ typedef u8 x8;
 #define TYPE_TUPLE(type)			\
 	{ #type, sizeof(type), is_signed_type(type) }
 
+#define FUNC_TYPES				\
+	TYPE_TUPLE(long),			\
+	TYPE_TUPLE(int),			\
+	TYPE_TUPLE(short),			\
+	TYPE_TUPLE(char),			\
+	TYPE_TUPLE(size_t),			\
+	TYPE_TUPLE(u64),			\
+	TYPE_TUPLE(s64),			\
+	TYPE_TUPLE(x64),			\
+	TYPE_TUPLE(u32),			\
+	TYPE_TUPLE(s32),			\
+	TYPE_TUPLE(x32),			\
+	TYPE_TUPLE(u16),			\
+	TYPE_TUPLE(s16),			\
+	TYPE_TUPLE(x16),			\
+	TYPE_TUPLE(u8),				\
+	TYPE_TUPLE(s8),				\
+	TYPE_TUPLE(x8)
+
 static struct func_type {
 	char		*name;
 	int		size;
 	int		sign;
 } func_types[] = {
-	TYPE_TUPLE(long),
-	TYPE_TUPLE(int),
-	TYPE_TUPLE(short),
-	TYPE_TUPLE(char),
-	TYPE_TUPLE(size_t),
-	TYPE_TUPLE(u64),
-	TYPE_TUPLE(s64),
-	TYPE_TUPLE(x64),
-	TYPE_TUPLE(u32),
-	TYPE_TUPLE(s32),
-	TYPE_TUPLE(x32),
-	TYPE_TUPLE(u16),
-	TYPE_TUPLE(s16),
-	TYPE_TUPLE(x16),
-	TYPE_TUPLE(u8),
-	TYPE_TUPLE(s8),
-	TYPE_TUPLE(x8),
+	FUNC_TYPES,
 	{ NULL,		0,	0 }
+};
+
+#undef TYPE_TUPLE
+#define TYPE_TUPLE(type)	FUNC_TYPE_##type
+
+enum {
+	FUNC_TYPES,
+	FUNC_TYPE_MAX
 };
 
 static int max_args __read_mostly = -1;
@@ -234,6 +246,7 @@ static int add_arg(struct func_event *fevent, struct list_head *args,
 	if (!unsign)
 		arg->arg.sign = func_type->sign;
 	arg->arg.offset = ALIGN(fevent->arg_offset, arg->arg.size);
+	arg->arg.func_type = ftype;
 	arg->arg.arg = fevent->arg_cnt;
 	fevent->arg_offset = arg->arg.offset + arg->arg.size;
 
