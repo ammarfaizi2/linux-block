@@ -99,7 +99,7 @@ as follows:
          's8' | 's16' | 's32' | 's64' |
          'x8' | 'x16' | 'x32' | 'x64' |
          'char' | 'short' | 'int' | 'long' | 'size_t' |
-	 'symbol'
+	 'symbol' | 'string'
 
  FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
 
@@ -342,3 +342,20 @@ the format "%s". If a nul is found, the output will stop. Use another type
       bash-1470  [003] ...2   980.678715: path_openat->link_path_walk(name=/lib64/ld-linux-x86-64.so.2)
       bash-1470  [003] ...2   980.678721: path_openat->link_path_walk(name=ld-2.24.so)
       bash-1470  [003] ...2   980.678978: path_lookupat->link_path_walk(name=/etc/ld.so.preload)
+
+
+Dynamic strings
+===============
+
+Static strings are fine, but they can waste a lot of memory in the ring buffer.
+The above allocated 64 bytes for a character array, but most of the output was
+less than 20 characters. Not wanting to truncate strings or waste space on
+the ring buffer, the dynamic string can help.
+
+Use the "string" type for strings that have a large range in size. The max
+size that will be recorded is 512 bytes. If a string is larger than that, then
+it will be truncated.
+
+ # echo 'link_path_walk(string name)' > function_events
+
+Gives the same result as above, but does not waste buffer space.

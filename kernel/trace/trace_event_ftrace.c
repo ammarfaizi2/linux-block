@@ -38,6 +38,7 @@ struct func_event {
 	int				nr_args;
 	int				arg_cnt;
 	int				arg_offset;
+	int				has_strings;
 };
 
 struct func_file {
@@ -82,6 +83,8 @@ typedef u32 x32;
 typedef u16 x16;
 typedef u8 x8;
 typedef void * symbol;
+/* 2 byte offset, 2 byte length */
+typedef u32 string;
 
 #define TYPE_TUPLE(type)			\
 	{ #type, sizeof(type), is_signed_type(type) }
@@ -104,7 +107,8 @@ typedef void * symbol;
 	TYPE_TUPLE(u8),				\
 	TYPE_TUPLE(s8),				\
 	TYPE_TUPLE(x8),				\
-	TYPE_TUPLE(symbol)
+	TYPE_TUPLE(symbol),			\
+	TYPE_TUPLE(string)
 
 static struct func_type {
 	char		*name;
@@ -122,6 +126,16 @@ enum {
 	FUNC_TYPES,
 	FUNC_TYPE_MAX
 };
+
+#define MAX_STR		512
+
+/* Two contexts, normal and NMI, hence the " * 2" */
+struct func_string {
+	char		buf[MAX_STR * 2];
+};
+
+static struct func_string __percpu *str_buffer;
+static int nr_strings;
 
 static int max_args __read_mostly = -1;
 
@@ -166,6 +180,15 @@ int __weak arch_get_func_args(struct pt_regs *regs,
 
 static void free_arg_content(struct func_arg *arg)
 {
+	if (arg->func_type == FUNC_TYPE_string) {
+		nr_strings--;
+		if (WARN_ON(nr_strings < 0))
+			nr_strings = 0;
+		if (!nr_strings) {
+			free_percpu(str_buffer);
+			str_buffer = NULL;
+		}
+	}
 	kfree(arg->name);
 	kfree(arg->type);
 }
@@ -256,6 +279,19 @@ static int add_arg(struct func_event *fevent, struct list_head *args,
 	arg->arg.offset = ALIGN(fevent->arg_offset, arg->arg.size);
 	arg->arg.func_type = ftype;
 	fevent->arg_offset = arg->arg.offset + arg->arg.size;
+
+	if (ftype == FUNC_TYPE_string) {
+		if (!nr_strings) {
+			str_buffer = alloc_percpu(struct func_string);
+			if (!str_buffer) {
+				kfree(arg->arg.type);
+				kfree(arg);
+				return -ENOMEM;
+			}
+		}
+		fevent->has_strings++;
+		nr_strings++;
+	}
 
 	list_add_tail(&arg->list, args);
 	*last_arg = &arg->arg;
@@ -351,8 +387,19 @@ process_event(struct func_event *fevent, struct list_head *args,
 		return FUNC_STATE_TYPE;
 
 	case FUNC_STATE_TYPE:
-		if (token[0] == '[')
+		if (token[0] == '[') {
+			/* Array of strings is not supported */
+			if ((*last_arg)->func_type == FUNC_TYPE_string)
+				break;
 			return FUNC_STATE_ARRAY;
+		}
+		if ((*last_arg)->func_type == FUNC_TYPE_string) {
+			type = kstrdup("__data_loc char[]", GFP_KERNEL);
+			if (!type)
+				break;
+			kfree((*last_arg)->type);
+			(*last_arg)->type = type;
+		}
 		/* Fall through */
 	case FUNC_STATE_ARRAY_END:
 		if (WARN_ON(!*last_arg))
@@ -480,7 +527,7 @@ process_event(struct func_event *fevent, struct list_head *args,
 	return FUNC_STATE_END;
 }
 
-static long long get_arg(struct func_arg *arg, unsigned long val)
+static long long __get_arg(struct func_arg *arg, unsigned long val)
 {
 	char buf[8];
 	int ret;
@@ -510,6 +557,15 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
 	return 0;
 }
 
+static long long get_arg(struct func_arg *arg, long *args)
+{
+	/* Is arg an address and not a parameter? */
+	if (arg->arg < 0)
+		return __get_arg(arg, 0);
+	else
+		return __get_arg(arg, args[arg->arg]);
+}
+
 static void get_array(void *dst, struct func_arg *arg, unsigned long val)
 {
 	void *ptr = (void *)val;
@@ -525,6 +581,69 @@ static void get_array(void *dst, struct func_arg *arg, unsigned long val)
 	}
 }
 
+static int read_string(char *str, unsigned long addr, int len)
+{
+	unsigned long flags;
+	struct func_string *strbuf;
+	char *ptr = (void *)addr;
+	char *buf;
+	int ret;
+
+	if (!str_buffer)
+		return 0;
+
+	local_irq_save(flags);
+	strbuf = this_cpu_ptr(str_buffer);
+	buf = &strbuf->buf[0];
+
+	if (in_nmi())
+		buf += MAX_STR;
+
+	ret = strncpy_from_unsafe(buf, ptr, MAX_STR);
+	if (ret < 0)
+		ret = 0;
+	if (ret > 0 && str)
+		memcpy(str, buf, ret);
+	local_irq_restore(flags);
+
+	return ret;
+}
+
+static int calculate_strings(struct func_event *func_event, int nr_args, long *args)
+{
+	struct func_arg *arg;
+	unsigned long val;
+	int str_count = 0;
+	int size = 0;
+	int i;
+
+	for (i = 0; i < func_event->nr_args; i++) {
+		arg = &func_event->args[i];
+		if (arg->func_type != FUNC_TYPE_string)
+			continue;
+		if (arg->arg < nr_args)
+			val = get_arg(arg, args);
+		else
+			goto skip;
+		size += read_string(NULL, val, 0);
+ skip:
+		if (++str_count >= func_event->has_strings)
+			return size;
+	}
+	return size;
+}
+
+static int get_string(unsigned long addr, unsigned int idx,
+		      unsigned int *info, char *data, int remaining)
+{
+	int len;
+
+	len = read_string(data, addr, remaining);
+	*info = len << 16 | idx;
+
+	return len;
+}
+
 static void func_event_trace(struct trace_event_file *trace_file,
 			     struct func_event *func_event,
 			     unsigned long ip, unsigned long parent_ip,
@@ -538,6 +657,9 @@ static void func_event_trace(struct trace_event_file *trace_file,
 	long args[func_event->nr_args];
 	long long val = 1;
 	unsigned long irq_flags;
+	int str_offset;
+	int str_size = 0;
+	int str_idx = 0;
 	int nr_args = 0;
 	int size;
 	int pc;
@@ -551,6 +673,14 @@ static void func_event_trace(struct trace_event_file *trace_file,
 
 	size = func_event->arg_offset + sizeof(*entry);
 
+	if (func_event->arg_cnt)
+		nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
+
+	if (func_event->has_strings)
+		str_size = calculate_strings(func_event, nr_args, args);
+
+	size += str_size;
+
 	event = trace_event_buffer_lock_reserve(&buffer, trace_file,
 						call->event.type,
 						size, irq_flags, pc);
@@ -560,22 +690,27 @@ static void func_event_trace(struct trace_event_file *trace_file,
 	entry = ring_buffer_event_data(event);
 	entry->ip = ip;
 	entry->parent_ip = parent_ip;
-	if (func_event->arg_cnt)
-		nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
 
 	for (i = 0; i < func_event->nr_args; i++) {
 		arg = &func_event->args[i];
-		if (arg->arg < nr_args) {
-			/* Is arg an address and not a parameter? */
-			if (arg->arg < 0)
-				val = get_arg(arg, 0);
-			else
-				val = get_arg(arg, args[arg->arg]);
-		} else
+		if (arg->arg < nr_args)
+			val = get_arg(arg, args);
+		else
 			val = 0;
 		if (arg->array)
 			get_array(&entry->data[arg->offset], arg, val);
-		else
+		else if (arg->func_type == FUNC_TYPE_string) {
+			str_offset = sizeof(struct func_event_hdr) +
+				func_event->arg_offset;
+
+			size = get_string(val, str_offset + str_idx,
+					  (unsigned int *)&entry->data[arg->offset],
+					  &entry->data[func_event->arg_offset + str_idx],
+				str_size);
+			str_idx += size;
+			/* String sizes can change from when they were calculated */
+			str_size -= size;
+		} else
 			memcpy(&entry->data[arg->offset], &val, arg->size);
 	}
 
@@ -613,6 +748,11 @@ static void make_fmt(struct func_arg *arg, char *fmt)
 	}
 
 	fmt[c++] = '%';
+
+	if (arg->func_type == FUNC_TYPE_string) {
+		fmt[c++] = 's';
+		goto out;
+	}
 
 	if (arg->func_type == FUNC_TYPE_char) {
 		if (arg->array)
@@ -671,6 +811,7 @@ func_event_print(struct trace_iterator *iter, int flags,
 	char fmt[FMT_SIZE];
 	void *data;
 	bool comma = false;
+	int info;
 	int i;
 	int a;
 
@@ -700,6 +841,11 @@ func_event_print(struct trace_iterator *iter, int flags,
 				write_data(s, arg, fmt, data);
 			}
 			trace_seq_putc(s, '}');
+		} else if (arg->func_type == FUNC_TYPE_string) {
+			info = *(unsigned int *)data;
+			info = (info & 0xffff) - sizeof(struct func_event_hdr);
+			data = &entry->data[info];
+			trace_seq_printf(s, fmt, data);
 		} else
 			write_data(s, arg, fmt, data);
 	}
@@ -882,7 +1028,11 @@ static int __set_print_fmt(struct func_event *func_event,
 				total += print_buf(&ptr, &len, ", REC->%s[%d]",
 						   arg->name, a);
 		} else {
-			total += print_buf(&ptr, &len, ", REC->%s", arg->name);
+			if (arg->func_type == FUNC_TYPE_string)
+				total += print_buf(&ptr, &len, ", __get_str(%s)",
+						   arg->name);
+			else
+				total += print_buf(&ptr, &len, ", REC->%s", arg->name);
 		}
 	}
 
@@ -1039,7 +1189,11 @@ static int func_event_seq_show(struct seq_file *m, void *v)
 		}
 		last_arg = arg->arg;
 		comma = true;
-		seq_printf(m, "%s %s", arg->type, arg->name);
+		/* __data_loc is for strings in the format file, not this one */
+		if (strncmp("__data_loc", arg->type, 10) == 0)
+			seq_printf(m, "string %s", arg->name);
+		else
+			seq_printf(m, "%s %s", arg->type, arg->name);
 		if (arg->arg < 0) {
 			seq_printf(m, "=0x%lx", arg->index);
 		} else {
