@@ -48,7 +48,8 @@ enable  filter  format  hist  id  trigger
 
 Even though the above function based event does not record much more
 than the function tracer does, it does become a full fledge event.
-This can be used by the histogram infrastructure, and triggers.
+This can be used by the histogram infrastructure, triggers, and perf
+where one can attach eBPF programs to.
 
  # cat events/functions/do_IRQ/format
 name: do_IRQ
