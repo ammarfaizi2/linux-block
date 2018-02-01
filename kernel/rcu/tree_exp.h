@@ -383,15 +383,22 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
 
 		/* Each pass checks a CPU for identity, offline, and idle. */
 		mask_ofl_test = 0;
-		for_each_leaf_node_possible_cpu(rnp, cpu) {
+		for_each_leaf_node_cpu_mask(rnp, cpu, rnp->expmask) {
+			unsigned long mask = leaf_node_cpu_bit(rnp, cpu);
 			struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
+			struct rcu_dynticks *rdtp = per_cpu_ptr(&rcu_dynticks, cpu);
+			int snap;
 
-			rdp->exp_dynticks_snap =
-				rcu_dynticks_snap(rdp->dynticks);
 			if (raw_smp_processor_id() == cpu ||
-			    rcu_dynticks_in_eqs(rdp->exp_dynticks_snap) ||
-			    !(rnp->qsmaskinitnext & rdp->grpmask))
-				mask_ofl_test |= rdp->grpmask;
+			    !(rnp->qsmaskinitnext & mask)) {
+				mask_ofl_test |= mask;
+			} else {
+				snap = rcu_dynticks_snap(rdtp);
+				if (rcu_dynticks_in_eqs(snap))
+					mask_ofl_test |= mask;
+				else
+					rdp->exp_dynticks_snap = snap;
+			}
 			trace_printk("%s rnp %d:%d first pass CPU %d\n", __func__, rnp->grplo, rnp->grphi, cpu);
 		}
 		mask_ofl_ipi = rnp->expmask & ~mask_ofl_test;
@@ -404,10 +411,10 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
 		if (rcu_preempt_has_tasks(rnp))
 			rnp->exp_tasks = rnp->blkd_tasks.next;
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-		trace_printk("%s rnp %d:%d first pass mask %#lx tasks %ld\n", __func__, rnp->grplo, rnp->grphi, mask_ofl_ipi, !!rnp->exp_tasks);
+		trace_printk("%s rnp %d:%d first pass mask %#lx tasks %d\n", __func__, rnp->grplo, rnp->grphi, mask_ofl_ipi, !!rnp->exp_tasks);
 
 		/* IPI the remaining CPUs for expedited quiescent state. */
-		for_each_leaf_node_possible_cpu(rnp, cpu) {
+		for_each_leaf_node_cpu_mask(rnp, cpu, rnp->expmask) {
 			unsigned long mask = leaf_node_cpu_bit(rnp, cpu);
 			struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
 
@@ -443,7 +450,7 @@ retry_ipi:
 		mask_ofl_test |= mask_ofl_ipi;
 		if (mask_ofl_test)
 			rcu_report_exp_cpu_mult(rsp, rnp, mask_ofl_test, false);
-		trace_printk("%s rnp %d:%d second pass mask %#lx tasks %ld\n", __func__, rnp->grplo, rnp->grphi, mask_ofl_ipi, !!READ_ONCE(rnp->exp_tasks));
+		trace_printk("%s rnp %d:%d second pass mask %#lx tasks %d\n", __func__, rnp->grplo, rnp->grphi, mask_ofl_ipi, !!READ_ONCE(rnp->exp_tasks));
 	}
 }
 
