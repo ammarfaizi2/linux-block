@@ -132,6 +132,33 @@ void serdev_device_close(struct serdev_device *serdev)
 }
 EXPORT_SYMBOL_GPL(serdev_device_close);
 
+static void devm_serdev_device_release(struct device *dev, void *dr)
+{
+	serdev_device_close(*(struct serdev_device **)dr);
+}
+
+int devm_serdev_device_open(struct device *dev, struct serdev_device *serdev)
+{
+	struct serdev_device **dr;
+	int ret;
+
+	dr = devres_alloc(devm_serdev_device_release, sizeof(*dr), GFP_KERNEL);
+	if (!dr)
+		return -ENOMEM;
+
+	ret = serdev_device_open(serdev);
+	if (ret) {
+		devres_free(dr);
+		return ret;
+	}
+
+	*dr = serdev;
+	devres_add(dev, dr);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_serdev_device_open);
+
 void serdev_device_write_wakeup(struct serdev_device *serdev)
 {
 	complete(&serdev->write_comp);
@@ -225,6 +252,18 @@ void serdev_device_set_flow_control(struct serdev_device *serdev, bool enable)
 }
 EXPORT_SYMBOL_GPL(serdev_device_set_flow_control);
 
+int serdev_device_set_parity(struct serdev_device *serdev,
+			     enum serdev_parity parity)
+{
+	struct serdev_controller *ctrl = serdev->ctrl;
+
+	if (!ctrl || !ctrl->ops->set_parity)
+		return -ENOTSUPP;
+
+	return ctrl->ops->set_parity(ctrl, parity);
+}
+EXPORT_SYMBOL_GPL(serdev_device_set_parity);
+
 void serdev_device_wait_until_sent(struct serdev_device *serdev, long timeout)
 {
 	struct serdev_controller *ctrl = serdev->ctrl;
@@ -268,8 +307,8 @@ static int serdev_drv_probe(struct device *dev)
 static int serdev_drv_remove(struct device *dev)
 {
 	const struct serdev_device_driver *sdrv = to_serdev_device_driver(dev->driver);
-
-	sdrv->remove(to_serdev_device(dev));
+	if (sdrv->remove)
+		sdrv->remove(to_serdev_device(dev));
 	return 0;
 }
 

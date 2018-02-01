@@ -76,6 +76,12 @@ static inline struct serdev_device_driver *to_serdev_device_driver(struct device
 	return container_of(d, struct serdev_device_driver, driver);
 }
 
+enum serdev_parity {
+	SERDEV_PARITY_NONE,
+	SERDEV_PARITY_EVEN,
+	SERDEV_PARITY_ODD,
+};
+
 /*
  * serdev controller structures
  */
@@ -86,6 +92,7 @@ struct serdev_controller_ops {
 	int (*open)(struct serdev_controller *);
 	void (*close)(struct serdev_controller *);
 	void (*set_flow_control)(struct serdev_controller *, bool);
+	int (*set_parity)(struct serdev_controller *, enum serdev_parity);
 	unsigned int (*set_baudrate)(struct serdev_controller *, unsigned int);
 	void (*wait_until_sent)(struct serdev_controller *, long);
 	int (*get_tiocm)(struct serdev_controller *);
@@ -193,6 +200,7 @@ static inline int serdev_controller_receive_buf(struct serdev_controller *ctrl,
 
 int serdev_device_open(struct serdev_device *);
 void serdev_device_close(struct serdev_device *);
+int devm_serdev_device_open(struct device *, struct serdev_device *);
 unsigned int serdev_device_set_baudrate(struct serdev_device *, unsigned int);
 void serdev_device_set_flow_control(struct serdev_device *, bool);
 int serdev_device_write_buf(struct serdev_device *, const unsigned char *, size_t);
@@ -297,6 +305,9 @@ static inline int serdev_device_set_rts(struct serdev_device *serdev, bool enabl
 	else
 		return serdev_device_set_tiocm(serdev, 0, TIOCM_RTS);
 }
+
+int serdev_device_set_parity(struct serdev_device *serdev,
+			     enum serdev_parity parity);
 
 /*
  * serdev hooks into TTY core
