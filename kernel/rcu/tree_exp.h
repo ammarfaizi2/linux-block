@@ -392,6 +392,7 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
 			    rcu_dynticks_in_eqs(rdp->exp_dynticks_snap) ||
 			    !(rnp->qsmaskinitnext & rdp->grpmask))
 				mask_ofl_test |= rdp->grpmask;
+			trace_printk("%s rnp %d:%d first pass CPU %d\n", __func__, rnp->grplo, rnp->grphi, cpu);
 		}
 		mask_ofl_ipi = rnp->expmask & ~mask_ofl_test;
 
@@ -403,6 +404,7 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
 		if (rcu_preempt_has_tasks(rnp))
 			rnp->exp_tasks = rnp->blkd_tasks.next;
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
+		trace_printk("%s rnp %d:%d first pass mask %#lx tasks %ld\n", __func__, rnp->grplo, rnp->grphi, mask_ofl_ipi, !!rnp->exp_tasks);
 
 		/* IPI the remaining CPUs for expedited quiescent state. */
 		for_each_leaf_node_possible_cpu(rnp, cpu) {
@@ -441,6 +443,7 @@ retry_ipi:
 		mask_ofl_test |= mask_ofl_ipi;
 		if (mask_ofl_test)
 			rcu_report_exp_cpu_mult(rsp, rnp, mask_ofl_test, false);
+		trace_printk("%s rnp %d:%d second pass mask %#lx tasks %ld\n", __func__, rnp->grplo, rnp->grphi, mask_ofl_ipi, !!READ_ONCE(rnp->exp_tasks));
 	}
 }
 
