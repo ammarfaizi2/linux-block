@@ -1793,7 +1793,7 @@ static __poll_t dvb_ca_en50221_io_poll(struct file *file, poll_table *wait)
 	dprintk("%s\n", __func__);
 
 	if (dvb_ca_en50221_io_read_condition(ca, &result, &slot) == 1)
-		mask |= POLLIN;
+		mask |= EPOLLIN;
 
 	/* if there is something, return now */
 	if (mask)
@@ -1803,7 +1803,7 @@ static __poll_t dvb_ca_en50221_io_poll(struct file *file, poll_table *wait)
 	poll_wait(file, &ca->wait_queue, wait);
 
 	if (dvb_ca_en50221_io_read_condition(ca, &result, &slot) == 1)
-		mask |= POLLIN;
+		mask |= EPOLLIN;
 
 	return mask;
 }

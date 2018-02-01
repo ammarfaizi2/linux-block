@@ -296,10 +296,10 @@ static __poll_t aim_poll(struct file *filp, poll_table *wait)
 
 	if (c->cfg->direction == MOST_CH_RX) {
 		if (!kfifo_is_empty(&c->fifo))
-			mask |= POLLIN | POLLRDNORM;
+			mask |= EPOLLIN | EPOLLRDNORM;
 	} else {
 		if (!kfifo_is_empty(&c->fifo) || ch_has_mbo(c))
-			mask |= POLLOUT | POLLWRNORM;
+			mask |= EPOLLOUT | EPOLLWRNORM;
 	}
 	return mask;
 }

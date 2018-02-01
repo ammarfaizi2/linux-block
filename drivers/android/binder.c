@@ -4329,7 +4329,7 @@ static __poll_t binder_poll(struct file *filp,
 	poll_wait(filp, &thread->wait, wait);
 
 	if (binder_has_work(thread, wait_for_proc_work))
-		return POLLIN;
+		return EPOLLIN;
 
 	return 0;
 }

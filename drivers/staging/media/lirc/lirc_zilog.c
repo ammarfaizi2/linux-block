@@ -1213,7 +1213,7 @@ static __poll_t poll(struct file *filep, poll_table *wait)
 		 * status for Tx
 		 */
 		dev_dbg(ir->dev, "%s result = POLLERR\n", __func__);
-		return POLLERR;
+		return EPOLLERR;
 	}
 
 	/*
@@ -1223,7 +1223,7 @@ static __poll_t poll(struct file *filep, poll_table *wait)
 	poll_wait(filep, &rbuf->wait_poll, wait);
 
 	/* Indicate what ops could happen immediately without blocking */
-	ret = lirc_buffer_empty(rbuf) ? 0 : (POLLIN | POLLRDNORM);
+	ret = lirc_buffer_empty(rbuf) ? 0 : (EPOLLIN | EPOLLRDNORM);
 
 	dev_dbg(ir->dev, "%s result = %s\n", __func__,
 		ret ? "POLLIN|POLLRDNORM" : "none");

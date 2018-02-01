@@ -1870,14 +1870,14 @@ static __poll_t dev_poll(struct file *file, poll_table *wait)
 
 	PDEBUG(D_FRAM, "poll");
 
-	if (req_events & POLLPRI)
+	if (req_events & EPOLLPRI)
 		ret |= v4l2_ctrl_poll(file, wait);
 
-	if (req_events & (POLLIN | POLLRDNORM)) {
+	if (req_events & (EPOLLIN | EPOLLRDNORM)) {
 		/* if reqbufs is not done, the user would use read() */
 		if (gspca_dev->memory == GSPCA_MEMORY_NO) {
 			if (read_alloc(gspca_dev, file) != 0) {
-				ret |= POLLERR;
+				ret |= EPOLLERR;
 				goto out;
 			}
 		}
@@ -1886,17 +1886,17 @@ static __poll_t dev_poll(struct file *file, poll_table *wait)
 
 		/* check if an image has been received */
 		if (mutex_lock_interruptible(&gspca_dev->queue_lock) != 0) {
-			ret |= POLLERR;
+			ret |= EPOLLERR;
 			goto out;
 		}
 		if (gspca_dev->fr_o != atomic_read(&gspca_dev->fr_i))
-			ret |= POLLIN | POLLRDNORM;
+			ret |= EPOLLIN | EPOLLRDNORM;
 		mutex_unlock(&gspca_dev->queue_lock);
 	}
 
 out:
 	if (!gspca_dev->present)
-		ret |= POLLHUP;
+		ret |= EPOLLHUP;
 
 	return ret;
 }

@@ -212,7 +212,7 @@ int vhost_poll_start(struct vhost_poll *poll, struct file *file)
 	mask = file->f_op->poll(file, &poll->table);
 	if (mask)
 		vhost_poll_wakeup(&poll->wait, 0, 0, poll_to_key(mask));
-	if (mask & POLLERR) {
+	if (mask & EPOLLERR) {
 		if (poll->wqh)
 			remove_wait_queue(poll->wqh, &poll->wait);
 		ret = -EINVAL;
@@ -444,7 +444,7 @@ void vhost_dev_init(struct vhost_dev *dev,
 		vhost_vq_reset(dev, vq);
 		if (vq->handle_kick)
 			vhost_poll_init(&vq->poll, vq->handle_kick,
-					POLLIN, dev);
+					EPOLLIN, dev);
 	}
 }
 EXPORT_SYMBOL_GPL(vhost_dev_init);
@@ -642,7 +642,7 @@ void vhost_dev_cleanup(struct vhost_dev *dev, bool locked)
 	vhost_umem_clean(dev->iotlb);
 	dev->iotlb = NULL;
 	vhost_clear_msg(dev);
-	wake_up_interruptible_poll(&dev->wait, POLLIN | POLLRDNORM);
+	wake_up_interruptible_poll(&dev->wait, EPOLLIN | EPOLLRDNORM);
 	WARN_ON(!llist_empty(&dev->work_list));
 	if (dev->worker) {
 		kthread_stop(dev->worker);
@@ -1069,7 +1069,7 @@ __poll_t vhost_chr_poll(struct file *file, struct vhost_dev *dev,
 	poll_wait(file, &dev->wait, wait);
 
 	if (!list_empty(&dev->read_list))
-		mask |= POLLIN | POLLRDNORM;
+		mask |= EPOLLIN | EPOLLRDNORM;
 
 	return mask;
 }
@@ -2392,7 +2392,7 @@ void vhost_enqueue_msg(struct vhost_dev *dev, struct list_head *head,
 	list_add_tail(&node->node, head);
 	spin_unlock(&dev->iotlb_lock);
 
-	wake_up_interruptible_poll(&dev->wait, POLLIN | POLLRDNORM);
+	wake_up_interruptible_poll(&dev->wait, EPOLLIN | EPOLLRDNORM);
 }
 EXPORT_SYMBOL_GPL(vhost_enqueue_msg);
 

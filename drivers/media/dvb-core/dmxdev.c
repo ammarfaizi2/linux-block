@@ -1072,7 +1072,7 @@ static __poll_t dvb_demux_poll(struct file *file, poll_table *wait)
 	__poll_t mask = 0;
 
 	if ((!dmxdevfilter) || dmxdevfilter->dev->exit)
-		return POLLERR;
+		return EPOLLERR;
 
 	poll_wait(file, &dmxdevfilter->buffer.queue, wait);
 
@@ -1082,10 +1082,10 @@ static __poll_t dvb_demux_poll(struct file *file, poll_table *wait)
 		return 0;
 
 	if (dmxdevfilter->buffer.error)
-		mask |= (POLLIN | POLLRDNORM | POLLPRI | POLLERR);
+		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI | EPOLLERR);
 
 	if (!dvb_ringbuffer_empty(&dmxdevfilter->buffer))
-		mask |= (POLLIN | POLLRDNORM | POLLPRI);
+		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI);
 
 	return mask;
 }
@@ -1169,18 +1169,18 @@ static __poll_t dvb_dvr_poll(struct file *file, poll_table *wait)
 	dprintk("%s\n", __func__);
 
 	if (dmxdev->exit)
-		return POLLERR;
+		return EPOLLERR;
 
 	poll_wait(file, &dmxdev->dvr_buffer.queue, wait);
 
 	if ((file->f_flags & O_ACCMODE) == O_RDONLY) {
 		if (dmxdev->dvr_buffer.error)
-			mask |= (POLLIN | POLLRDNORM | POLLPRI | POLLERR);
+			mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI | EPOLLERR);
 
 		if (!dvb_ringbuffer_empty(&dmxdev->dvr_buffer))
-			mask |= (POLLIN | POLLRDNORM | POLLPRI);
+			mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI);
 	} else
-		mask |= (POLLOUT | POLLWRNORM | POLLPRI);
+		mask |= (EPOLLOUT | EPOLLWRNORM | EPOLLPRI);
 
 	return mask;
 }

@@ -278,7 +278,7 @@ __poll_t lirc_dev_fop_poll(struct file *file, poll_table *wait)
 	__poll_t ret;
 
 	if (!d->attached)
-		return POLLHUP | POLLERR;
+		return EPOLLHUP | EPOLLERR;
 
 	if (d->buf) {
 		poll_wait(file, &d->buf->wait_poll, wait);
@@ -286,9 +286,9 @@ __poll_t lirc_dev_fop_poll(struct file *file, poll_table *wait)
 		if (lirc_buffer_empty(d->buf))
 			ret = 0;
 		else
-			ret = POLLIN | POLLRDNORM;
+			ret = EPOLLIN | EPOLLRDNORM;
 	} else {
-		ret = POLLERR;
+		ret = EPOLLERR;
 	}
 
 	dev_dbg(&d->dev, LOGHEAD "poll result = %d\n", d->name, d->minor, ret);
