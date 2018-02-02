@@ -91,7 +91,7 @@ as follows:
 
  ARGS := ARG | ARG ',' ARGS | ''
 
- ARG := TYPE FIELD | TYPE <name> '=' ADDR | TYPE ADDR | ARG '|' ARG
+ ARG := TYPE FIELD | TYPE <name> '=' ADDR | TYPE ADDR | ARG '|' ARG | 'NULL'
 
  TYPE := ATOM | ATOM '[' <number> ']' | 'unsigned' TYPE
 
@@ -359,3 +359,29 @@ it will be truncated.
  # echo 'link_path_walk(string name)' > function_events
 
 Gives the same result as above, but does not waste buffer space.
+
+
+NULL arguments
+==============
+
+If you are only interested in the second, or later parameter of a function,
+you do not have to record the previous parameters. Just set them as NULL and
+they will not be recorded.
+
+If we only wanted the perm_addr of the net_device of ip_rcv() and not the
+sk_buff, we put a NULL into the first parameter when created the function
+based event.
+
+  # echo 'ip_rcv(NULL, x8[6] perm_addr+558)' > function_events
+
+  # echo 1 > events/functions/ip_rcv/enable
+  # cat trace
+    <idle>-0     [003] ..s3   165.617114: __netif_receive_skb_core->ip_rcv(perm_addr=b4,b5,2f,ce,18,65)
+    <idle>-0     [003] ..s3   165.617133: __netif_receive_skb_core->ip_rcv(perm_addr=b4,b5,2f,ce,18,65)
+    <idle>-0     [003] ..s3   166.412277: __netif_receive_skb_core->ip_rcv(perm_addr=b4,b5,2f,ce,18,65)
+    <idle>-0     [003] ..s3   166.412797: __netif_receive_skb_core->ip_rcv(perm_addr=b4,b5,2f,ce,18,65)
+
+
+NULL can appear in any argument, to have them ignored. Note, skipping arguments
+does not give you access to later arguments if they are not supported by the
+architecture. The architecture only supplies the first set of arguments.

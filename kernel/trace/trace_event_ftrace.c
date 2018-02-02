@@ -74,6 +74,7 @@ enum func_states {
 	FUNC_STATE_ARRAY_END,
 	FUNC_STATE_VAR,
 	FUNC_STATE_COMMA,
+	FUNC_STATE_NULL,
 	FUNC_STATE_END,
 	FUNC_STATE_ERROR,
 };
@@ -116,6 +117,7 @@ static struct func_type {
 	int		sign;
 } func_types[] = {
 	FUNC_TYPES,
+	{ "NULL",	0,	0 },
 	{ NULL,		0,	0 }
 };
 
@@ -124,6 +126,7 @@ static struct func_type {
 
 enum {
 	FUNC_TYPES,
+	FUNC_TYPE_NULL,
 	FUNC_TYPE_MAX
 };
 
@@ -368,6 +371,8 @@ process_event(struct func_event *fevent, struct list_head *args,
 		update_arg = false;
 		/* Fall through */
 	case FUNC_STATE_PIPE:
+		if (strcmp(token, "NULL") == 0)
+			return FUNC_STATE_NULL;
 		if (strcmp(token, "unsigned") == 0) {
 			unsign = 2;
 			return FUNC_STATE_UNSIGNED;
@@ -516,6 +521,16 @@ process_event(struct func_event *fevent, struct list_head *args,
 		(*last_arg)->arg = -1;
 		(*last_arg)->indirect = INDIRECT_FLAG;
 		return FUNC_STATE_ADDR;
+
+	case FUNC_STATE_NULL:
+		switch (token[0]) {
+		case ')':
+			goto end;
+		case ',':
+			update_arg = true;
+			return FUNC_STATE_COMMA;
+		}
+		break;
 
 	default:
 		break;
@@ -1184,8 +1199,18 @@ static int func_event_seq_show(struct seq_file *m, void *v)
 		if (comma) {
 			if (last_arg == arg->arg)
 				seq_puts(m, " | ");
-			else
+			else {
+				if (last_arg < (arg->arg - 1)) {
+					while (last_arg++ < (arg->arg - 1))
+						seq_puts(m, ", NULL");
+				}
 				seq_puts(m, ", ");
+			}
+		} else {
+			if (last_arg < arg->arg) {
+				while (last_arg++ < arg->arg)
+					seq_puts(m, "NULL, ");
+			}
 		}
 		last_arg = arg->arg;
 		comma = true;
