@@ -101,11 +101,14 @@ as follows:
          'char' | 'short' | 'int' | 'long' | 'size_t' |
 	 'symbol' | 'string'
 
- FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
+ FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX |
+	 FIELD INDIRECT
 
  INDEX := '[' <number> ']'
 
  OFFSET := '+' <number>
+
+ INDIRECT := INDEX | OFFSET | INDIRECT INDIRECT | ''
 
  ADDR := A hexidecimal address starting with '0x'
 
@@ -385,3 +388,74 @@ based event.
 NULL can appear in any argument, to have them ignored. Note, skipping arguments
 does not give you access to later arguments if they are not supported by the
 architecture. The architecture only supplies the first set of arguments.
+
+
+The chain of indirects
+======================
+
+When a parameter is a structure, and that structure points to another structure,
+the data of that structure can still be found.
+
+ssize_t __vfs_read(struct file *file, char __user *buf, size_t count,
+		   loff_t *pos)
+
+has the following code.
+
+	if (file->f_op->read)
+		return file->f_op->read(file, buf, count, pos);
+
+To trace all the functions that are called by f_op->read(), that information
+can be obtained from the file pointer.
+
+Using gdb again:
+
+   (gdb) printf "%d\n", &((struct file *)0)->f_op
+40
+   (gdb) printf "%d\n", &((struct file_operations *)0)->read
+16
+
+    # echo '__vfs_read(symbol read+40[0]+16)' > function_events
+
+  # echo 1 > events/functions/__vfs_read/enable
+  # cat trace
+         sshd-1343  [005] ...2   199.734752: vfs_read->__vfs_read(read=tty_read+0x0/0xf0)
+         bash-1344  [003] ...2   199.734822: vfs_read->__vfs_read(read=tty_read+0x0/0xf0)
+         sshd-1343  [005] ...2   199.734835: vfs_read->__vfs_read(read=tty_read+0x0/0xf0)
+ avahi-daemon-910   [003] ...2   200.136740: vfs_read->__vfs_read(read=          (null))
+ avahi-daemon-910   [003] ...2   200.136750: vfs_read->__vfs_read(read=          (null))
+
+
+Or to go a bit more extreme: To get the contents of a system type name
+from a file: struct file->f_inode->s_sb->s_type->name
+
+   (gdb) printf "%dn", &((struct file *)0)->f_inode
+32
+   (gdb) printf "%d\n", &((struct inode *)0)->i_sb
+40
+   (gdb) printf "%d\n", &((struct super_block *)0)->s_type
+40
+
+Since a string does not have a common size, use of offsets must be used,
+and only use a zero indirect ([0]).
+
+   # echo '__vfs_read(string name+32[0]+40[0]+40[0][0])' > function_events
+
+To break the above down. The first argument passed to __vfs_read() is
+a pointer to a "struct file".
+
+  '__vfs_read(x64 file)' Would return the address of the file.
+  '__vfs_read(x64 inode+32[0])' returns the address of the inode indexed in file
+  '__vfs_read(x64 sb+32[0]+40[0])' returns the address of the super block indexed
+			from the inode.
+  '__vfs_read(x64 stype+32[0]+40[0]+40[0])' returns the address of the
+			file system type, indexed from the super block.
+  '__vfs_read(x64 name+32[0]+40[0]+40[0][0]' returns the address of name, indexed
+			from the file system type.
+
+The 'string' type requires the address of the string, where the above produces:
+
+            sshd-806   [000] ...2 939615.584601: vfs_read->__vfs_read(name=devtmpfs)
+            sshd-806   [000] ...2 939615.585328: vfs_read->__vfs_read(name=devtmpfs)
+            bash-807   [000] ...2 939615.585832: vfs_read->__vfs_read(name=devpts)
+            sshd-806   [000] ...2 939617.206237: vfs_read->__vfs_read(name=sockfs)
+            sshd-806   [000] ...2 939617.207103: vfs_read->__vfs_read(name=devtmpfs)
