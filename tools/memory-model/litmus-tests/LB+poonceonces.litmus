@@ -1,5 +1,11 @@
 C LB+poonceonces
 
+(*
+ * Can the counter-intuitive outcome for the load-buffering pattern
+ * be prevented even with no explicit ordering?  The answer should be
+ * "no", that is, this test should be allowed.
+ *)
+
 {}
 
 P0(int *x, int *y)

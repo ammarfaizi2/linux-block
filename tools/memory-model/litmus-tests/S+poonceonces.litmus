@@ -1,5 +1,13 @@
 C S+poonceonces
 
+(*
+ * Starting with a two-process release-acquire chain ordering P0()'s
+ * first store against P1()'s final load, if the smp_store_release()
+ * is replaced by WRITE_ONCE() and the smp_load_acquire() replaced by
+ * READ_ONCE(), is ordering preserved.  The answer is "of course not!",
+ * so this test should be allowed.
+ *)
+
 {}
 
 P0(int *x, int *y)

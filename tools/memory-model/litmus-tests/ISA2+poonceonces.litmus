@@ -1,5 +1,13 @@
 C ISA2+poonceonces
 
+(*
+ * Given a release-acquire chain ordering the first process's store
+ * against the last process's load, is ordering preserved if all of the
+ * smp_store_release() invocations be replaced by WRITE_ONCE() and all
+ * of the smp_load_acquire() invocations be replaced by READ_ONCE()?
+ * The answer is "no", that is, this test should be allowed.
+ *)
+
 {}
 
 P0(int *x, int *y)

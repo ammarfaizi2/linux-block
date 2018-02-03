@@ -1,5 +1,11 @@
 C S+wmbonceonce+poacquireonce
 
+(*
+ * Can a smp_wmb(), instead of a release, and an acquire order a prior
+ * store against a subsequent store?  The answer should be "yes", so
+ * this test should be forbidden.
+ *)
+
 {}
 
 P0(int *x, int *y)

@@ -1,5 +1,11 @@
 C MP+poonceonces
 
+(*
+ * Can the counter-intuitive message-passing outcome be prevented with
+ * no ordering at all?  The answer should be "no", that is, this test
+ * should be prohibited.
+ *)
+
 {}
 
 P0(int *x, int *y)

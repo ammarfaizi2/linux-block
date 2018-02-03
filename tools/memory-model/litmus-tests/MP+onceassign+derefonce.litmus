@@ -1,5 +1,12 @@
 C MP+onceassign+derefonce.litmus
 
+(*
+ * This litmus test demonstrates that rcu_assign_pointer() and
+ * rcu_dereference() suffice to ensure that an RCU reader will not see
+ * pre-initialization garbage when it traverses an RCU-protected data
+ * structure containing a newly inserted element.
+ *)
+
 {
 y=z;
 z=0;

@@ -1,5 +1,11 @@
 C CoWR+poonceonce+Once
 
+(*
+ * Test of write-read coherence, that is, whether or not a write to a
+ * given variable followed by a read from that same variable are ordered.
+ * They should be ordered, that is, this test should be forbidden.
+ *)
+
 {}
 
 P0(int *x)

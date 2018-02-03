@@ -1,5 +1,14 @@
 C IRIW+poonceonces+OnceOnce
 
+(*
+ * Test of independent reads from independent writes with nothing
+ * between each pairs of reads.  In other words, is anything at all
+ * needed to cause two different reading processes to agree on the order
+ * of a pair of writes, where each write is to a different variable by a
+ * different process?  Something is needed, in other words, this test
+ * should be allowed.
+ *)
+
 {}
 
 P0(int *x)

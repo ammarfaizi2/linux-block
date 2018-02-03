@@ -1,5 +1,11 @@
 C WRC+poonceonces+Once
 
+(*
+ * This litmus test is an extension of the message-passing pattern, where
+ * the first write is moved to a separate process.  But because this test
+ * has no ordering at all, it should be allowed.
+ *)
+
 {}
 
 P0(int *x)

@@ -1,5 +1,12 @@
 C LB+poacquireonce+pooncerelease
 
+(*
+ * Does a release-acquire pair suffice for the load-buffering litmus
+ * test, where each process reads from one of two variables then writes
+ * to the other?  The answer is "yes", that is, this test should be
+ * forbidden.
+ *)
+
 {}
 
 P0(int *x, int *y)

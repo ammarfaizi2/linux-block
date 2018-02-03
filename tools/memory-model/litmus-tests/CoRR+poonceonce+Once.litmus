@@ -1,5 +1,11 @@
 C CoRR+poonceonce+Once
 
+(*
+ * Test of read-read coherence, that is, whether or not two successive
+ * reads from the same variable are ordered.  They should be ordered,
+ * that is, this test should be forbidden.
+ *)
+
 {}
 
 P0(int *x)

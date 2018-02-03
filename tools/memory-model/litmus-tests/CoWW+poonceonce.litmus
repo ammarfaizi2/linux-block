@@ -1,5 +1,11 @@
 C CoWW+poonceonce
 
+(*
+ * Test of write-write coherence, that is, whether or not two successive
+ * writes to the same variable are ordered.  They should be ordered, that
+ * is, this test should be forbidden.
+ *)
+
 {}
 
 P0(int *x)
