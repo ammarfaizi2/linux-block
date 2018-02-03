@@ -2663,8 +2663,13 @@ static int i915_edp_psr_status(struct seq_file *m, void *data)
 	seq_printf(m, "Active: %s\n", yesno(dev_priv->psr.active));
 	seq_printf(m, "Busy frontbuffer bits: 0x%03x\n",
 		   dev_priv->psr.busy_frontbuffer_bits);
-	seq_printf(m, "Re-enable work scheduled: %s\n",
-		   yesno(work_busy(&dev_priv->psr.work.work)));
+
+	if (timer_pending(&dev_priv->psr.activate_timer))
+		seq_printf(m, "Activate scheduled: yes, in %ldms\n",
+			   (long)(dev_priv->psr.earliest_activate - jiffies) *
+			   1000 / HZ);
+	else
+		seq_printf(m, "Re-enable scheduled: no\n");
 
 	if (HAS_DDI(dev_priv)) {
 		if (dev_priv->psr.psr2_support)
