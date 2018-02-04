@@ -1,5 +1,14 @@
 C MP+porevlocks
 
+(*
+ * This litmus test demonstrates how lock acquisitions and releases can
+ * stand in for smp_load_acquire() and smp_store_release(), respectively.
+ * In other words, when holding a given lock (or indeed after relaasing a
+ * given lock), a CPU is not only guaranteed to see the accesses that other
+ * CPOs made while previously holding that lock, it are also guaranteed
+ * to see all prior accesses by those other CPUs.
+ *)
+
 {}
 
 P0(int *x, int *y, spinlock_t *mylock)
