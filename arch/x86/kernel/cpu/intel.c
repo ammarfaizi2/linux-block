@@ -938,28 +938,23 @@ static void intel_tlb_lookup(const unsigned char desc)
 
 static void intel_detect_tlb(struct cpuinfo_x86 *c)
 {
-	int i, j, n;
+	int j;
 	unsigned int regs[4];
 	unsigned char *desc = (unsigned char *)regs;
 
 	if (cpuid_info.std.max_lvl < 2)
 		return;
 
-	/* Number of times to iterate */
-	n = cpuid_eax(2) & 0xFF;
+	cpuid(2, &regs[0], &regs[1], &regs[2], &regs[3]);
 
-	for (i = 0 ; i < n ; i++) {
-		cpuid(2, &regs[0], &regs[1], &regs[2], &regs[3]);
+	/* If bit 31 is set, this is an unknown format */
+	for (j = 0 ; j < 3 ; j++)
+		if (regs[j] & (1 << 31))
+			regs[j] = 0;
 
-		/* If bit 31 is set, this is an unknown format */
-		for (j = 0 ; j < 3 ; j++)
-			if (regs[j] & (1 << 31))
-				regs[j] = 0;
-
-		/* Byte 0 is level count, not a descriptor */
-		for (j = 1 ; j < 16 ; j++)
-			intel_tlb_lookup(desc[j]);
-	}
+	/* Byte 0 is level count, not a descriptor */
+	for (j = 1 ; j < 16 ; j++)
+		intel_tlb_lookup(desc[j]);
 }
 
 static const struct cpu_dev intel_cpu_dev = {

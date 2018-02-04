@@ -712,7 +712,7 @@ unsigned int init_intel_cacheinfo(struct cpuinfo_x86 *c)
 	 */
 	if ((num_cache_leaves == 0 || c->x86 == 15) && cpuid_info.std.max_lvl > 1) {
 		/* supports eax=2  call */
-		int j, n;
+		int j;
 		unsigned int regs[4];
 		unsigned char *dp = (unsigned char *)regs;
 		int only_trace = 0;
@@ -720,50 +720,45 @@ unsigned int init_intel_cacheinfo(struct cpuinfo_x86 *c)
 		if (num_cache_leaves != 0 && c->x86 == 15)
 			only_trace = 1;
 
-		/* Number of times to iterate */
-		n = cpuid_eax(2) & 0xFF;
+		cpuid(2, &regs[0], &regs[1], &regs[2], &regs[3]);
 
-		for (i = 0 ; i < n ; i++) {
-			cpuid(2, &regs[0], &regs[1], &regs[2], &regs[3]);
+		/* If bit 31 is set, this is an unknown format */
+		for (j = 0 ; j < 3 ; j++)
+			if (regs[j] & (1 << 31))
+				regs[j] = 0;
 
-			/* If bit 31 is set, this is an unknown format */
-			for (j = 0 ; j < 3 ; j++)
-				if (regs[j] & (1 << 31))
-					regs[j] = 0;
+		/* Byte 0 is level count, not a descriptor */
+		for (j = 1 ; j < 16 ; j++) {
+			unsigned char des = dp[j];
+			unsigned char k = 0;
 
-			/* Byte 0 is level count, not a descriptor */
-			for (j = 1 ; j < 16 ; j++) {
-				unsigned char des = dp[j];
-				unsigned char k = 0;
-
-				/* look up this descriptor in the table */
-				while (cache_table[k].descriptor != 0) {
-					if (cache_table[k].descriptor == des) {
-						if (only_trace && cache_table[k].cache_type != LVL_TRACE)
-							break;
-						switch (cache_table[k].cache_type) {
-						case LVL_1_INST:
-							l1i += cache_table[k].size;
-							break;
-						case LVL_1_DATA:
-							l1d += cache_table[k].size;
-							break;
-						case LVL_2:
-							l2 += cache_table[k].size;
-							break;
-						case LVL_3:
-							l3 += cache_table[k].size;
-							break;
-						case LVL_TRACE:
-							trace += cache_table[k].size;
-							break;
-						}
-
+			/* look up this descriptor in the table */
+			while (cache_table[k].descriptor != 0) {
+				if (cache_table[k].descriptor == des) {
+					if (only_trace && cache_table[k].cache_type != LVL_TRACE)
+						break;
+					switch (cache_table[k].cache_type) {
+					case LVL_1_INST:
+						l1i += cache_table[k].size;
+						break;
+					case LVL_1_DATA:
+						l1d += cache_table[k].size;
+						break;
+					case LVL_2:
+						l2 += cache_table[k].size;
+						break;
+					case LVL_3:
+						l3 += cache_table[k].size;
+						break;
+					case LVL_TRACE:
+						trace += cache_table[k].size;
 						break;
 					}
 
-					k++;
+					break;
 				}
+
+				k++;
 			}
 		}
 	}
