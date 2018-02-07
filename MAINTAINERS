@@ -2086,6 +2086,7 @@ L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/masahiroy/linux-uniphier.git
 S:	Maintained
 F:	Documentation/devicetree/bindings/gpio/gpio-uniphier.txt
+F:	Documentation/devicetree/bindings/pinctrl/socionext,uniphier-pinctrl.txt
 F:	arch/arm/boot/dts/uniphier*
 F:	arch/arm/include/asm/hardware/cache-uniphier.h
 F:	arch/arm/mach-uniphier/
@@ -2227,14 +2228,6 @@ L:	linux-leds@vger.kernel.org
 S:	Maintained
 F:	drivers/leds/leds-as3645a.c
 
-AS3645A LED FLASH CONTROLLER DRIVER
-M:	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
-L:	linux-media@vger.kernel.org
-T:	git git://linuxtv.org/media_tree.git
-S:	Maintained
-F:	drivers/media/i2c/as3645a.c
-F:	include/media/i2c/as3645a.h
-
 ASAHI KASEI AK8974 DRIVER
 M:	Linus Walleij <linus.walleij@linaro.org>
 L:	linux-iio@vger.kernel.org
@@ -2287,7 +2280,9 @@ F:	include/linux/async_tx.h
 AT24 EEPROM DRIVER
 M:	Bartosz Golaszewski <brgl@bgdev.pl>
 L:	linux-i2c@vger.kernel.org
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/brgl/linux.git
 S:	Maintained
+F:	Documentation/devicetree/bindings/eeprom/at24.txt
 F:	drivers/misc/eeprom/at24.c
 F:	include/linux/platform_data/at24.h
 
@@ -6006,6 +6001,12 @@ L:	linux-input@vger.kernel.org
 S:	Maintained
 F:	drivers/input/touchscreen/goodix.c
 
+GPD POCKET FAN DRIVER
+M:	Hans de Goede <hdegoede@redhat.com>
+L:	platform-driver-x86@vger.kernel.org
+S:	Maintained
+F:	drivers/platform/x86/gpd-pocket-fan.c
+
 GPIO ACPI SUPPORT
 M:	Mika Westerberg <mika.westerberg@linux.intel.com>
 M:	Andy Shevchenko <andriy.shevchenko@linux.intel.com>
@@ -6579,6 +6580,12 @@ F:	drivers/i2c/i2c-mux.c
 F:	drivers/i2c/muxes/
 F:	include/linux/i2c-mux.h
 
+I2C MV64XXX MARVELL AND ALLWINNER DRIVER
+M:	Gregory CLEMENT <gregory.clement@free-electrons.com>
+L:	linux-i2c@vger.kernel.org
+S:	Maintained
+F:	drivers/i2c/busses/i2c-mv64xxx.c
+
 I2C OVER PARALLEL PORT
 M:	Jean Delvare <jdelvare@suse.com>
 L:	linux-i2c@vger.kernel.org
@@ -6937,7 +6944,7 @@ INFINIBAND SUBSYSTEM
 M:	Doug Ledford <dledford@redhat.com>
 M:	Jason Gunthorpe <jgg@mellanox.com>
 L:	linux-rdma@vger.kernel.org
-W:	http://www.openfabrics.org/
+W:	https://github.com/linux-rdma/rdma-core
 Q:	http://patchwork.kernel.org/project/linux-rdma/list/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/rdma/rdma.git
 S:	Supported
@@ -7126,6 +7133,14 @@ INTEL IOP-ADMA DMA DRIVER
 R:	Dan Williams <dan.j.williams@intel.com>
 S:	Odd fixes
 F:	drivers/dma/iop-adma.c
+
+INTEL IPU3 CSI-2 CIO2 DRIVER
+M:	Yong Zhi <yong.zhi@intel.com>
+M:	Sakari Ailus <sakari.ailus@linux.intel.com>
+L:	linux-media@vger.kernel.org
+S:	Maintained
+F:	drivers/media/pci/intel/ipu3/
+F:	Documentation/media/uapi/v4l/pixfmt-srggb10-ipu3.rst
 
 INTEL IXP4XX QMGR, NPE, ETHERNET and HSS SUPPORT
 M:	Krzysztof Halasa <khalasa@piap.pl>
@@ -7794,6 +7809,7 @@ F:	include/keys/encrypted-type.h
 F:	security/keys/encrypted-keys/
 
 KEYS-TRUSTED
+M:	James Bottomley <jejb@linux.vnet.ibm.com>
 M:	Mimi Zohar <zohar@linux.vnet.ibm.com>
 L:	linux-integrity@vger.kernel.org
 L:	keyrings@vger.kernel.org
@@ -8739,6 +8755,15 @@ T:	git git://linuxtv.org/media_tree.git
 S:	Maintained
 F:	drivers/media/dvb-frontends/stv6111*
 
+MEDIA DRIVERS FOR NVIDIA TEGRA - VDE
+M:	Dmitry Osipenko <digetx@gmail.com>
+L:	linux-media@vger.kernel.org
+L:	linux-tegra@vger.kernel.org
+T:	git git://linuxtv.org/media_tree.git
+S:	Maintained
+F:	Documentation/devicetree/bindings/media/nvidia,tegra-vde.txt
+F:	drivers/staging/media/tegra-vde/
+
 MEDIA INPUT INFRASTRUCTURE (V4L/DVB)
 M:	Mauro Carvalho Chehab <mchehab@s-opensource.com>
 M:	Mauro Carvalho Chehab <mchehab@kernel.org>
@@ -8920,12 +8945,13 @@ W:	http://www.mellanox.com
 Q:	http://patchwork.ozlabs.org/project/netdev/list/
 F:	drivers/net/ethernet/mellanox/mlxfw/
 
-MELLANOX MLX CPLD HOTPLUG DRIVER
+MELLANOX HARDWARE PLATFORM SUPPORT
+M:	Andy Shevchenko <andy@infradead.org>
+M:	Darren Hart <dvhart@infradead.org>
 M:	Vadim Pasternak <vadimp@mellanox.com>
 L:	platform-driver-x86@vger.kernel.org
 S:	Supported
-F:	drivers/platform/x86/mlxcpld-hotplug.c
-F:	include/linux/platform_data/mlxcpld-hotplug.h
+F:	drivers/platform/mellanox/
 
 MELLANOX MLX4 core VPI driver
 M:	Tariq Toukan <tariqt@mellanox.com>
@@ -9791,7 +9817,7 @@ F:	drivers/ntb/hw/amd/
 NTB DRIVER CORE
 M:	Jon Mason <jdmason@kudzu.us>
 M:	Dave Jiang <dave.jiang@intel.com>
-M:	Allen Hubbe <Allen.Hubbe@emc.com>
+M:	Allen Hubbe <allenbh@gmail.com>
 L:	linux-ntb@googlegroups.com
 S:	Supported
 W:	https://github.com/jonmason/ntb/wiki
@@ -10155,6 +10181,14 @@ S:	Maintained
 F:	drivers/media/i2c/ov7670.c
 F:	Documentation/devicetree/bindings/media/i2c/ov7670.txt
 
+OMNIVISION OV7740 SENSOR DRIVER
+M:	Wenyou Yang <wenyou.yang@microchip.com>
+L:	linux-media@vger.kernel.org
+T:	git git://linuxtv.org/media_tree.git
+S:	Maintained
+F:	drivers/media/i2c/ov7740.c
+F:	Documentation/devicetree/bindings/media/i2c/ov7740.txt
+
 ONENAND FLASH DRIVER
 M:	Kyungmin Park <kyungmin.park@samsung.com>
 L:	linux-mtd@lists.infradead.org
@@ -10503,6 +10537,13 @@ S:	Maintained
 F:	Documentation/devicetree/bindings/pci/pci-armada8k.txt
 F:	drivers/pci/dwc/pcie-armada8k.c
 
+PCI DRIVER FOR CADENCE PCIE IP
+M:	Alan Douglas <adouglas@cadence.com>
+L:	linux-pci@vger.kernel.org
+S:	Maintained
+F:	Documentation/devicetree/bindings/pci/cdns,*.txt
+F:	drivers/pci/cadence/pcie-cadence*
+
 PCI DRIVER FOR FREESCALE LAYERSCAPE
 M:	Minghuan Lian <minghuan.Lian@freescale.com>
 M:	Mingkai Hu <mingkai.hu@freescale.com>
@@ -10653,8 +10694,12 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/helgaas/pci.git
 S:	Supported
 F:	Documentation/devicetree/bindings/pci/
 F:	Documentation/PCI/
+F:	drivers/acpi/pci*
 F:	drivers/pci/
+F:	include/asm-generic/pci*
 F:	include/linux/pci*
+F:	include/uapi/linux/pci*
+F:	lib/pci*
 F:	arch/x86/pci/
 F:	arch/x86/kernel/quirks.c
 
@@ -10874,6 +10919,16 @@ M:	Mika Westerberg <mika.westerberg@linux.intel.com>
 M:	Heikki Krogerus <heikki.krogerus@linux.intel.com>
 S:	Maintained
 F:	drivers/pinctrl/intel/
+
+PIN CONTROLLER - MEDIATEK
+M:	Sean Wang <sean.wang@mediatek.com>
+L:	linux-mediatek@lists.infradead.org (moderated for non-subscribers)
+S:	Maintained
+F:	Documentation/devicetree/bindings/pinctrl/pinctrl-mt65xx.txt
+F:	Documentation/devicetree/bindings/pinctrl/pinctrl-mt7622.txt
+F:	drivers/pinctrl/mediatek/pinctrl-mtk-common.*
+F:	drivers/pinctrl/mediatek/pinctrl-mt2701.c
+F:	drivers/pinctrl/mediatek/pinctrl-mt7622.c
 
 PIN CONTROLLER - QUALCOMM
 M:	Bjorn Andersson <bjorn.andersson@linaro.org>
@@ -12440,6 +12495,14 @@ T:	git git://linuxtv.org/anttip/media_tree.git
 S:	Maintained
 F:	drivers/media/tuners/si2157*
 
+SI2165 MEDIA DRIVER
+M:	Matthias Schwarzott <zzam@gentoo.org>
+L:	linux-media@vger.kernel.org
+W:	https://linuxtv.org
+Q:	http://patchwork.linuxtv.org/project/linux-media/list/
+S:	Maintained
+F:	drivers/media/dvb-frontends/si2165*
+
 SI2168 MEDIA DRIVER
 M:	Antti Palosaari <crope@iki.fi>
 L:	linux-media@vger.kernel.org
@@ -13017,12 +13080,6 @@ S:	Odd Fixes
 F:	Documentation/devicetree/bindings/staging/iio/
 F:	drivers/staging/iio/
 
-STAGING - LIRC (LINUX INFRARED REMOTE CONTROL) DRIVERS
-M:	Jarod Wilson <jarod@wilsonet.com>
-W:	http://www.lirc.org/
-S:	Odd Fixes
-F:	drivers/staging/media/lirc/
-
 STAGING - LUSTRE PARALLEL FILESYSTEM
 M:	Oleg Drokin <oleg.drokin@intel.com>
 M:	Andreas Dilger <andreas.dilger@intel.com>
@@ -13408,6 +13465,15 @@ Q:	http://patchwork.linuxtv.org/project/linux-media/list/
 T:	git git://linuxtv.org/anttip/media_tree.git
 S:	Maintained
 F:	drivers/media/tuners/tda18218*
+
+TDA18250 MEDIA DRIVER
+M:	Olli Salonen <olli.salonen@iki.fi>
+L:	linux-media@vger.kernel.org
+W:	https://linuxtv.org
+Q:	http://patchwork.linuxtv.org/project/linux-media/list/
+T:	git git://linuxtv.org/media_tree.git
+S:	Maintained
+F:	drivers/media/tuners/tda18250*
 
 TDA18271 MEDIA DRIVER
 M:	Michael Krufky <mkrufky@linuxtv.org>
@@ -15075,7 +15141,7 @@ X86 PLATFORM DRIVERS
 M:	Darren Hart <dvhart@infradead.org>
 M:	Andy Shevchenko <andy@infradead.org>
 L:	platform-driver-x86@vger.kernel.org
-T:	git git://git.infradead.org/users/dvhart/linux-platform-drivers-x86.git
+T:	git git://git.infradead.org/linux-platform-drivers-x86.git
 S:	Maintained
 F:	drivers/platform/x86/
 F:	drivers/platform/olpc/
