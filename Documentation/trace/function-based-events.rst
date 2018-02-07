@@ -26,6 +26,7 @@ or simply read an address. This makes it possible to create a
 trace point at any function that the function tracer can trace, and
 read the parameters of the function.
 
+[ Quick start guide, see tips and tricks at the bottom ]
 
 Usage
 =====
@@ -460,3 +461,94 @@ The 'string' type requires the address of the string, where the above produces:
             bash-807   [000] ...2 939615.585832: vfs_read->__vfs_read(name=devpts)
             sshd-806   [000] ...2 939617.206237: vfs_read->__vfs_read(name=sockfs)
             sshd-806   [000] ...2 939617.207103: vfs_read->__vfs_read(name=devtmpfs)
+
+
+Tips and Tricks
+===============
+
+Simple args are:
+
+ "int val", "unsigned int val", "char x", "unsigned long addr",
+
+You can also use "s#" and "u#" types:
+
+ "s32 val", "u32 val", "s8 x", "u64 addr"
+
+The above are all printed in decimal "%d" or "%u", if you want hex...
+
+ "x32 val", "x8 x", "x64 addr"
+
+If you want to have it use "%pS" to print (symbols)
+
+ "symbol addr" is like: "%pS", (void *)addr
+
+Arrays can be expressed after the type:
+
+ "x8[6] mac" is like: "{%x:%x:%x:%x:%x:%x}", mac[0], mac[1], mac[2],
+                                             mac[3], mac[4], mac[5]
+
+Where mac would be: unsigned char mac[6] type.
+
+Note, arrays of type "char" and "unsigned char" turn into a static
+string.
+
+ "char[10] str" is like: "%s", str
+
+Where str is defined as char str[10];
+
+If the argument is a pointer to a structure, you can index into the
+structure:
+
+ "x64 ip[16]" is like: "%llx", ((u64 *)ip)[16]
+
+Finally, if an argument is a pointer to a structure, and you want to
+get to another structure that it points to, for example
+
+ struct sk_buff *skb;
+
+and you want to get to:
+
+  skb->dev->perm_addr
+
+when the parameter is a pointer to skb.
+
+  (gdb) printf "%d\n", &((struct sk_buff *)0)->dev
+16
+  (gdb) printf "%d\n", &((struct net_device *)0)->perm_addr
+558
+
+The net_device *dev is 16 bytes into sk_buff, and the char array
+perm_addr, is 558 bytes into the net_device structure.
+
+Where perm_addr is an array of the mac address.
+
+ "x8[6] perm_addr+16[0]+558"
+
+The "x8[6]" is to define the printed type to be an array of 6 u8 types
+and will be printed as hex.
+
+"perm_addr" defines the field name to assing the value for.
+
+"+16" will take the parameter value and add 16 to it, similar
+to "((void *)perm_addr)+16".
+
+The "[0]" will read what is in the current location (perm_addr + 16).
+
+The "+558" will take the value read from the location above, and
+then add 558 to it.
+
+Since the final value is an array, no indirection is needed.
+
+ "x8[1] perm_addr+16[0]+558" would yield the same as
+ "x8 perm_addr+16[0]+558[0]", except the former would add brackets.
+
+
+Basically, "x8[6] perm_addr+16[0]+558" is equivalent to:
+
+ char *dev = (char **)(((void *)skb)+16)[0];
+ char *perm_addr = (char *)(dev+558);
+
+ "{%x:%x:%x:%x:%x:%x}", perm_addr[0], perm_addr[1], perm_addr[2],
+                        perm_addr[3], perm_addr[4], perm_addr[5]
+
+OK, the above is a bit complex ;-) But works nicely.
