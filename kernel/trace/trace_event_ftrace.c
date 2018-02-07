@@ -1379,8 +1379,14 @@ static void add_failure(struct func_event *func_event, char *token,
 
 	trace_seq_printf(s, "\n%*s\n", len, "^");
 
-	trace_seq_printf(s, "Unexpected token '%s' for %s state",
-			 save_token, func_state_names[state]);
+	/* for COMMA or PARAM state, the error could be too many args */
+	if ((state == FUNC_STATE_COMMA || state == FUNC_STATE_PARAM) &&
+	    func_event->arg_cnt >= max_args)
+		trace_seq_printf(s, "Error: Too many arguments (max of %d)",
+				 max_args);
+	else
+		trace_seq_printf(s, "Unexpected token '%s' for %s state",
+				 save_token, func_state_names[state]);
 
  finish:
 	len = min(ERR_SIZE-1, s->seq.len);
