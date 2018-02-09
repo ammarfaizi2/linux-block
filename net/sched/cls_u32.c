@@ -316,19 +316,13 @@ static void *u32_get(struct tcf_proto *tp, u32 handle)
 	return u32_lookup_key(ht, handle);
 }
 
+/* Protected by rtnl lock */
 static u32 gen_new_htid(struct tc_u_common *tp_c, struct tc_u_hnode *ptr)
 {
-	unsigned long idr_index;
-	int err;
-
-	/* This is only used inside rtnl lock it is safe to increment
-	 * without read _copy_ update semantics
-	 */
-	err = idr_alloc_ext(&tp_c->handle_idr, ptr, &idr_index,
-			    1, 0x7FF, GFP_KERNEL);
-	if (err)
+	int id = idr_alloc_cyclic(&tp_c->handle_idr, ptr, 1, 0x7FF, GFP_KERNEL);
+	if (id < 0)
 		return 0;
-	return (u32)(idr_index | 0x800) << 20;
+	return (id | 0x800U) << 20;
 }
 
 static struct hlist_head *tc_u_common_hash;
@@ -398,10 +392,12 @@ static int u32_init(struct tcf_proto *tp)
 static int u32_destroy_key(struct tcf_proto *tp, struct tc_u_knode *n,
 			   bool free_pf)
 {
+	struct tc_u_hnode *ht = rtnl_dereference(n->ht_down);
+
 	tcf_exts_destroy(&n->exts);
 	tcf_exts_put_net(&n->exts);
-	if (n->ht_down)
-		n->ht_down->refcnt--;
+	if (ht && --ht->refcnt == 0)
+		kfree(ht);
 #ifdef CONFIG_CLS_U32_PERF
 	if (free_pf)
 		free_percpu(n->pf);
@@ -596,7 +592,7 @@ static void u32_clear_hnode(struct tcf_proto *tp, struct tc_u_hnode *ht,
 					 rtnl_dereference(n->next));
 			tcf_unbind_filter(tp, &n->res);
 			u32_remove_hw_knode(tp, n, extack);
-			idr_remove_ext(&ht->handle_idr, n->handle);
+			idr_remove(&ht->handle_idr, n->handle);
 			if (tcf_exts_get_net(&n->exts))
 				call_rcu(&n->rcu, u32_delete_key_freepf_rcu);
 			else
@@ -623,7 +619,7 @@ static int u32_destroy_hnode(struct tcf_proto *tp, struct tc_u_hnode *ht,
 		if (phn == ht) {
 			u32_clear_hw_hnode(tp, ht, extack);
 			idr_destroy(&ht->handle_idr);
-			idr_remove_ext(&tp_c->handle_idr, ht->handle);
+			idr_remove(&tp_c->handle_idr, ht->handle);
 			RCU_INIT_POINTER(*hn, ht->next);
 			kfree_rcu(ht, rcu);
 			return 0;
@@ -659,16 +655,15 @@ static void u32_destroy(struct tcf_proto *tp, struct netlink_ext_ack *extack)
 
 		hlist_del(&tp_c->hnode);
 
-		for (ht = rtnl_dereference(tp_c->hlist);
-		     ht;
-		     ht = rtnl_dereference(ht->next)) {
-			ht->refcnt--;
-			u32_clear_hnode(tp, ht, extack);
-		}
-
 		while ((ht = rtnl_dereference(tp_c->hlist)) != NULL) {
+			u32_clear_hnode(tp, ht, extack);
 			RCU_INIT_POINTER(tp_c->hlist, ht->next);
-			kfree_rcu(ht, rcu);
+
+			/* u32_destroy_key() will later free ht for us, if it's
+			 * still referenced by some knode
+			 */
+			if (--ht->refcnt == 0)
+				kfree_rcu(ht, rcu);
 		}
 
 		idr_destroy(&tp_c->handle_idr);
@@ -746,19 +741,17 @@ ret:
 
 static u32 gen_new_kid(struct tc_u_hnode *ht, u32 htid)
 {
-	unsigned long idr_index;
-	u32 start = htid | 0x800;
+	u32 index = htid | 0x800;
 	u32 max = htid | 0xFFF;
-	u32 min = htid;
 
-	if (idr_alloc_ext(&ht->handle_idr, NULL, &idr_index,
-			  start, max + 1, GFP_KERNEL)) {
-		if (idr_alloc_ext(&ht->handle_idr, NULL, &idr_index,
-				  min + 1, max + 1, GFP_KERNEL))
-			return max;
+	if (idr_alloc_u32(&ht->handle_idr, NULL, &index, max, GFP_KERNEL)) {
+		index = htid + 1;
+		if (idr_alloc_u32(&ht->handle_idr, NULL, &index, max,
+				 GFP_KERNEL))
+			index = max;
 	}
 
-	return (u32)idr_index;
+	return index;
 }
 
 static const struct nla_policy u32_policy[TCA_U32_MAX + 1] = {
@@ -848,7 +841,7 @@ static void u32_replace_knode(struct tcf_proto *tp, struct tc_u_common *tp_c,
 		if (pins->handle == n->handle)
 			break;
 
-	idr_replace_ext(&ht->handle_idr, n, n->handle);
+	idr_replace(&ht->handle_idr, n, n->handle);
 	RCU_INIT_POINTER(n->next, pins->next);
 	rcu_assign_pointer(*ins, n);
 }
@@ -1009,8 +1002,8 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 				return -ENOMEM;
 			}
 		} else {
-			err = idr_alloc_ext(&tp_c->handle_idr, ht, NULL,
-					    handle, handle + 1, GFP_KERNEL);
+			err = idr_alloc_u32(&tp_c->handle_idr, ht, &handle,
+					    handle, GFP_KERNEL);
 			if (err) {
 				kfree(ht);
 				return err;
@@ -1026,7 +1019,7 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 
 		err = u32_replace_hw_hnode(tp, ht, flags, extack);
 		if (err) {
-			idr_remove_ext(&tp_c->handle_idr, handle);
+			idr_remove(&tp_c->handle_idr, handle);
 			kfree(ht);
 			return err;
 		}
@@ -1066,8 +1059,7 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 			return -EINVAL;
 		}
 		handle = htid | TC_U32_NODE(handle);
-		err = idr_alloc_ext(&ht->handle_idr, NULL, NULL,
-				    handle, handle + 1,
+		err = idr_alloc_u32(&ht->handle_idr, NULL, &handle, handle,
 				    GFP_KERNEL);
 		if (err)
 			return err;
@@ -1162,7 +1154,7 @@ errfree:
 #endif
 	kfree(n);
 erridr:
-	idr_remove_ext(&ht->handle_idr, handle);
+	idr_remove(&ht->handle_idr, handle);
 	return err;
 }
 

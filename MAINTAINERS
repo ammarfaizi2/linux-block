@@ -903,7 +903,6 @@ L:	devel@driverdev.osuosl.org
 S:	Supported
 F:	drivers/staging/android/ion
 F:	drivers/staging/android/uapi/ion.h
-F:	drivers/staging/android/uapi/ion_test.h
 
 AOA (Apple Onboard Audio) ALSA DRIVER
 M:	Johannes Berg <johannes@sipsolutions.net>
@@ -1308,7 +1307,6 @@ M:	Russell King <linux@armlinux.org.uk>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 S:	Maintained
 T:	git git://git.armlinux.org.uk/~rmk/linux-arm.git clkdev
-F:	arch/arm/include/asm/clkdev.h
 F:	drivers/clk/clkdev.c
 
 ARM/COMPULAB CM-X270/EM-X270 and CM-X300 MACHINE SUPPORT
@@ -1360,7 +1358,7 @@ F:	Documentation/devicetree/bindings/pinctrl/cortina,gemini-pinctrl.txt
 F:	Documentation/devicetree/bindings/net/cortina,gemini-ethernet.txt
 F:	Documentation/devicetree/bindings/rtc/faraday,ftrtc010.txt
 F:	arch/arm/mach-gemini/
-F:	drivers/net/ethernet/cortina/gemini/*
+F:	drivers/net/ethernet/cortina/
 F:	drivers/pinctrl/pinctrl-gemini.c
 F:	drivers/rtc/rtc-ftrtc010.c
 
@@ -1737,9 +1735,7 @@ L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 L:	linux-oxnas@lists.tuxfamily.org (moderated for non-subscribers)
 S:	Maintained
 F:	arch/arm/mach-oxnas/
-F:	arch/arm/boot/dts/ox8*.dtsi
-F:	arch/arm/boot/dts/wd-mbwe.dts
-F:	arch/arm/boot/dts/cloudengines-pogoplug-series-3.dts
+F:	arch/arm/boot/dts/ox8*.dts*
 N:	oxnas
 
 ARM/PALM TREO SUPPORT
@@ -1747,8 +1743,7 @@ M:	Tomas Cech <sleep_walker@suse.com>
 L:	linux-arm-kernel@lists.infradead.org
 W:	http://hackndev.com
 S:	Maintained
-F:	arch/arm/mach-pxa/include/mach/palmtreo.h
-F:	arch/arm/mach-pxa/palmtreo.c
+F:	arch/arm/mach-pxa/palmtreo.*
 
 ARM/PALMTX,PALMT5,PALMLD,PALMTE2,PALMTC SUPPORT
 M:	Marek Vasut <marek.vasut@gmail.com>
@@ -1757,12 +1752,10 @@ W:	http://hackndev.com
 S:	Maintained
 F:	arch/arm/mach-pxa/include/mach/palmtx.h
 F:	arch/arm/mach-pxa/palmtx.c
-F:	arch/arm/mach-pxa/include/mach/palmt5.h
-F:	arch/arm/mach-pxa/palmt5.c
+F:	arch/arm/mach-pxa/palmt5.*
 F:	arch/arm/mach-pxa/include/mach/palmld.h
 F:	arch/arm/mach-pxa/palmld.c
-F:	arch/arm/mach-pxa/include/mach/palmte2.h
-F:	arch/arm/mach-pxa/palmte2.c
+F:	arch/arm/mach-pxa/palmte2.*
 F:	arch/arm/mach-pxa/include/mach/palmtc.h
 F:	arch/arm/mach-pxa/palmtc.c
 
@@ -1771,8 +1764,7 @@ M:	Sergey Lapin <slapin@ossfans.org>
 L:	linux-arm-kernel@lists.infradead.org
 W:	http://hackndev.com
 S:	Maintained
-F:	arch/arm/mach-pxa/include/mach/palmz72.h
-F:	arch/arm/mach-pxa/palmz72.c
+F:	arch/arm/mach-pxa/palmz72.*
 
 ARM/PLEB SUPPORT
 M:	Peter Chubb <pleb@gelato.unsw.edu.au>
@@ -1801,7 +1793,6 @@ F:	drivers/clk/qcom/
 F:	drivers/dma/qcom/
 F:	drivers/soc/qcom/
 F:	drivers/spi/spi-qup.c
-F:	drivers/tty/serial/msm_serial.h
 F:	drivers/tty/serial/msm_serial.c
 F:	drivers/*/pm8???-*
 F:	drivers/mfd/ssbi.c
@@ -3567,7 +3558,7 @@ F:	drivers/media/platform/coda/
 
 COMMON CLK FRAMEWORK
 M:	Michael Turquette <mturquette@baylibre.com>
-M:	Stephen Boyd <sboyd@codeaurora.org>
+M:	Stephen Boyd <sboyd@kernel.org>
 L:	linux-clk@vger.kernel.org
 Q:	http://patchwork.kernel.org/project/linux-clk/list/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/clk/linux.git
@@ -9025,6 +9016,7 @@ L:	linux-kernel@vger.kernel.org
 S:	Supported
 F:	kernel/sched/membarrier.c
 F:	include/uapi/linux/membarrier.h
+F:	arch/powerpc/include/asm/membarrier.h
 
 MEMORY MANAGEMENT
 L:	linux-mm@kvack.org
@@ -9196,6 +9188,7 @@ S:	Supported
 F:	Documentation/devicetree/bindings/mips/
 F:	Documentation/mips/
 F:	arch/mips/
+F:	drivers/platform/mips/
 
 MIPS BOSTON DEVELOPMENT BOARD
 M:	Paul Burton <paul.burton@mips.com>
@@ -9222,6 +9215,25 @@ F:	arch/mips/loongson32/
 F:	arch/mips/include/asm/mach-loongson32/
 F:	drivers/*/*loongson1*
 F:	drivers/*/*/*loongson1*
+
+MIPS/LOONGSON2 ARCHITECTURE
+M:	Jiaxun Yang <jiaxun.yang@flygoat.com>
+L:	linux-mips@linux-mips.org
+S:	Maintained
+F:	arch/mips/loongson64/*{2e/2f}*
+F:	arch/mips/include/asm/mach-loongson64/
+F:	drivers/*/*loongson2*
+F:	drivers/*/*/*loongson2*
+
+MIPS/LOONGSON3 ARCHITECTURE
+M:	Huacai Chen <chenhc@lemote.com>
+L:	linux-mips@linux-mips.org
+S:	Maintained
+F:	arch/mips/loongson64/
+F:	arch/mips/include/asm/mach-loongson64/
+F:	drivers/platform/mips/cpu_hwmon.c
+F:	drivers/*/*loongson3*
+F:	drivers/*/*/*loongson3*
 
 MIPS RINT INSTRUCTION EMULATION
 M:	Aleksandar Markovic <aleksandar.markovic@mips.com>
@@ -9268,7 +9280,6 @@ F:	drivers/media/dvb-frontends/mn88473*
 
 MODULE SUPPORT
 M:	Jessica Yu <jeyu@kernel.org>
-M:	Rusty Russell <rusty@rustcorp.com.au>
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jeyu/linux.git modules-next
 S:	Maintained
 F:	include/linux/module.h
@@ -10283,7 +10294,7 @@ F:	include/uapi/linux/openvswitch.h
 OPERATING PERFORMANCE POINTS (OPP)
 M:	Viresh Kumar <vireshk@kernel.org>
 M:	Nishanth Menon <nm@ti.com>
-M:	Stephen Boyd <sboyd@codeaurora.org>
+M:	Stephen Boyd <sboyd@kernel.org>
 L:	linux-pm@vger.kernel.org
 S:	Maintained
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/vireshk/pm.git
@@ -10320,7 +10331,8 @@ F:	fs/ocfs2/
 
 ORANGEFS FILESYSTEM
 M:	Mike Marshall <hubcap@omnibond.com>
-L:	pvfs2-developers@beowulf-underground.org (subscribers-only)
+R:	Martin Brandenburg <martin@omnibond.com>
+L:	devel@lists.orangefs.org
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/hubcap/linux.git
 S:	Supported
 F:	fs/orangefs/
@@ -10418,7 +10430,6 @@ F:	Documentation/parport*.txt
 PARAVIRT_OPS INTERFACE
 M:	Juergen Gross <jgross@suse.com>
 M:	Alok Kataria <akataria@vmware.com>
-M:	Rusty Russell <rusty@rustcorp.com.au>
 L:	virtualization@lists.linux-foundation.org
 S:	Supported
 F:	Documentation/virtual/paravirt_ops.txt
@@ -10789,11 +10800,9 @@ S:	Maintained
 F:	drivers/pci/dwc/*spear*
 
 PCMCIA SUBSYSTEM
-P:	Linux PCMCIA Team
-L:	linux-pcmcia@lists.infradead.org
-W:	http://lists.infradead.org/mailman/listinfo/linux-pcmcia
+M:	Dominik Brodowski <linux@dominikbrodowski.net>
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/brodo/pcmcia.git
-S:	Maintained
+S:	Odd Fixes
 F:	Documentation/pcmcia/
 F:	tools/pcmcia/
 F:	drivers/pcmcia/
@@ -11593,6 +11602,13 @@ M:	Jens Axboe <axboe@kernel.dk>
 S:	Maintained
 F:	Documentation/blockdev/ramdisk.txt
 F:	drivers/block/brd.c
+
+RANCHU VIRTUAL BOARD FOR MIPS
+M:	Miodrag Dinic <miodrag.dinic@mips.com>
+L:	linux-mips@linux-mips.org
+S:	Supported
+F:	arch/mips/generic/board-ranchu.c
+F:	arch/mips/configs/generic/board-ranchu.config
 
 RANDOM NUMBER DRIVER
 M:	"Theodore Ts'o" <tytso@mit.edu>
@@ -13019,7 +13035,7 @@ F:	Documentation/networking/spider_net.txt
 F:	drivers/net/ethernet/toshiba/spider_net*
 
 SPMI SUBSYSTEM
-R:	Stephen Boyd <sboyd@codeaurora.org>
+R:	Stephen Boyd <sboyd@kernel.org>
 L:	linux-arm-msm@vger.kernel.org
 F:	Documentation/devicetree/bindings/spmi/
 F:	drivers/spmi/
@@ -13326,7 +13342,6 @@ F:	include/linux/platform_data/dma-dw.h
 F:	drivers/dma/dw/
 
 SYNOPSYS DESIGNWARE ENTERPRISE ETHERNET DRIVER
-M:	Jie Deng <jiedeng@synopsys.com>
 M:	Jose Abreu <Jose.Abreu@synopsys.com>
 L:	netdev@vger.kernel.org
 S:	Supported
@@ -13905,7 +13920,7 @@ F:	include/linux/usb/tilegx.h
 TIMEKEEPING, CLOCKSOURCE CORE, NTP, ALARMTIMER
 M:	John Stultz <john.stultz@linaro.org>
 M:	Thomas Gleixner <tglx@linutronix.de>
-R:	Stephen Boyd <sboyd@codeaurora.org>
+R:	Stephen Boyd <sboyd@kernel.org>
 L:	linux-kernel@vger.kernel.org
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git timers/core
 S:	Supported
@@ -14973,8 +14988,8 @@ S:	Maintained
 F:	drivers/input/tablet/wacom_serial4.c
 
 WATCHDOG DEVICE DRIVERS
-M:	Wim Van Sebroeck <wim@iguana.be>
-R:	Guenter Roeck <linux@roeck-us.net>
+M:	Wim Van Sebroeck <wim@linux-watchdog.org>
+M:	Guenter Roeck <linux@roeck-us.net>
 L:	linux-watchdog@vger.kernel.org
 W:	http://www.linux-watchdog.org/
 T:	git git://www.linux-watchdog.org/linux-watchdog.git
