@@ -169,6 +169,13 @@ As 128 / 4 (length of int) is 32, we can see the length of the skb with:
 
 Now we see the length of the sk_buff per event.
 
+Note: You can also use the tool "pahole" from the "dwarves" package:
+
+ $ pahole ./vmlinux -C sk_buf | grep len
+      unsigned int               len;                  /*   128     4 */
+
+Which gives you the "128" index from above. It also gives you the size
+of the field which could be useful for determining the type.
 
 Multiple fields per argument
 ============================
