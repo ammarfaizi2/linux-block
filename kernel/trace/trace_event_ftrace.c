@@ -88,6 +88,7 @@ static LIST_HEAD(func_events);
 	C(ARRAY),				\
 	C(ARRAY_SIZE),				\
 	C(ARRAY_END),				\
+	C(SYMBOL),				\
 	C(VAR),					\
 	C(COMMA),				\
 	C(NULL),				\
@@ -401,6 +402,14 @@ static int add_redirect(struct func_arg *arg, long index, long indirect)
 	return 0;
 }
 
+static int get_symbol(const char *symbol, unsigned long *val)
+{
+	*val = kallsyms_lookup_name(symbol);
+	if (!*val)
+		return -1;
+	return 0;
+}
+
 static enum func_states
 process_event(struct func_event *fevent, struct list_head *args,
 	      struct func_arg **last_arg, const char *token,
@@ -477,6 +486,8 @@ process_event(struct func_event *fevent, struct list_head *args,
 	case FUNC_STATE_ARRAY_END:
 		if (WARN_ON(!*last_arg))
 			break;
+		if (token[0] == '$')
+			return FUNC_STATE_SYMBOL;
 		if (update_arg_name(*last_arg, token) < 0)
 			break;
 		if (strncmp(token, "0x", 2) == 0)
@@ -575,6 +586,11 @@ process_event(struct func_event *fevent, struct list_head *args,
 			break;
 		return FUNC_STATE_VAR;
 
+	case FUNC_STATE_SYMBOL:
+		if (!valid_name(token))
+			break;
+		goto equal;
+
 	case FUNC_STATE_ADDR:
 		switch (token[0]) {
 		case ')':
@@ -587,14 +603,26 @@ process_event(struct func_event *fevent, struct list_head *args,
 		break;
 
 	case FUNC_STATE_EQUAL:
+		if (token[0] == '$')
+			return FUNC_STATE_SYMBOL;
 		if (strncmp(token, "0x", 2) != 0)
 			break;
  equal:
 		if (WARN_ON(!*last_arg))
 			break;
-		ret = kstrtoul(token, 0, &val);
-		if (ret < 0)
-			break;
+		if (valid_name(token)) {
+			ret = get_symbol(token, &val);
+			if (ret < 0)
+				break;
+			if (!(*last_arg)->name) {
+				if (update_arg_name(*last_arg, token) < 0)
+					break;
+			}
+		} else {
+			ret = kstrtoul(token, 0, &val);
+			if (ret < 0)
+				break;
+		}
 		update_arg = false;
 		(*last_arg)->index = val;
 		(*last_arg)->arg = -1;

@@ -112,12 +112,18 @@ as follows:
 
  INDIRECT := INDEX | OFFSET | INDIRECT INDIRECT | ''
 
- ADDR := A hexidecimal address starting with '0x'
+ ADDR := <symbol> | <hexnumber>
 
  Where <name> is a unique string starting with an alphabetic character
  and consists only of letters and numbers and underscores.
 
  Where <number> is a number that can be read by kstrtol() (hex, decimal, etc).
+
+ Where <hexnumber> is an address starting with '0x'
+
+ Where <symbol> is a valid symbol name from kallsyms starting with "$".
+ For example: $total_forks
+
 
 
 Simple arguments
@@ -316,6 +322,23 @@ Is the same as
     <idle>-0     [003] d..3   653.906011: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
     <idle>-0     [003] d..3   655.823498: ret_from_intr->do_IRQ(total_forks=1504, regs=tick_nohz_idle_enter+0x4c/0x50)
     <idle>-0     [003] d..3   655.954096: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
+
+You can also accomplish the same thing above using the kallsym name following
+a "$" symbol. That is:
+
+  # echo 'do_IRQ(int $total_forks)' > function_events
+
+is the same as the above command using the "0xffffffff82354c18" address.
+
+You can rename the variable by using "=":
+
+  # echo 'do_IRQ(int forks=$total_forks)' > function_events
+
+  # cat trace
+    <idle>-0     [003] d..3   698.226763: ret_from_intr->do_IRQ(forks=1475)
+    <idle>-0     [003] d..3   698.226810: ret_from_intr->do_IRQ(forks=1475)
+    <idle>-0     [003] d..3   698.227046: ret_from_intr->do_IRQ(forks=1475)
+    <idle>-0     [003] d..3   698.502222: ret_from_intr->do_IRQ(forks=1475)
 
 
 Array types
