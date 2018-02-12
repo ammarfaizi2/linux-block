@@ -362,7 +362,7 @@ struct pci_controller* pci_find_hose_for_OF_device(struct device_node* node)
  */
 static int pci_read_irq_line(struct pci_dev *pci_dev)
 {
-	unsigned int virq = 0;
+	int virq;
 
 	pr_debug("PCI: Try to map irq for %s...\n", pci_name(pci_dev));
 
