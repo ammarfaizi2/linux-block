@@ -697,7 +697,7 @@ static int irda_discover_daddr_and_lsap_sel(struct irda_sock *self, char *name)
  *
  */
 static int irda_getname(struct socket *sock, struct sockaddr *uaddr,
-			int *uaddr_len, int peer)
+			int peer)
 {
 	struct sockaddr_irda saddr;
 	struct sock *sk = sock->sk;
@@ -720,11 +720,9 @@ static int irda_getname(struct socket *sock, struct sockaddr *uaddr,
 	pr_debug("%s(), tsap_sel = %#x\n", __func__, saddr.sir_lsap_sel);
 	pr_debug("%s(), addr = %08x\n", __func__, saddr.sir_addr);
 
-	/* uaddr_len come to us uninitialised */
-	*uaddr_len = sizeof (struct sockaddr_irda);
-	memcpy(uaddr, &saddr, *uaddr_len);
+	memcpy(uaddr, &saddr, sizeof (struct sockaddr_irda));
 
-	return 0;
+	return sizeof (struct sockaddr_irda);
 }
 
 /*
@@ -1737,28 +1735,28 @@ static int irda_shutdown(struct socket *sock, int how)
 /*
  * Function irda_poll (file, sock, wait)
  */
-static unsigned int irda_poll(struct file * file, struct socket *sock,
+static __poll_t irda_poll(struct file * file, struct socket *sock,
 			      poll_table *wait)
 {
 	struct sock *sk = sock->sk;
 	struct irda_sock *self = irda_sk(sk);
-	unsigned int mask;
+	__poll_t mask;
 
 	poll_wait(file, sk_sleep(sk), wait);
 	mask = 0;
 
 	/* Exceptional events? */
 	if (sk->sk_err)
-		mask |= POLLERR;
+		mask |= EPOLLERR;
 	if (sk->sk_shutdown & RCV_SHUTDOWN) {
 		pr_debug("%s(), POLLHUP\n", __func__);
-		mask |= POLLHUP;
+		mask |= EPOLLHUP;
 	}
 
 	/* Readable? */
 	if (!skb_queue_empty(&sk->sk_receive_queue)) {
 		pr_debug("Socket is readable\n");
-		mask |= POLLIN | POLLRDNORM;
+		mask |= EPOLLIN | EPOLLRDNORM;
 	}
 
 	/* Connection-based need to check for termination and startup */
@@ -1766,14 +1764,14 @@ static unsigned int irda_poll(struct file * file, struct socket *sock,
 	case SOCK_STREAM:
 		if (sk->sk_state == TCP_CLOSE) {
 			pr_debug("%s(), POLLHUP\n", __func__);
-			mask |= POLLHUP;
+			mask |= EPOLLHUP;
 		}
 
 		if (sk->sk_state == TCP_ESTABLISHED) {
 			if ((self->tx_flow == FLOW_START) &&
 			    sock_writeable(sk))
 			{
-				mask |= POLLOUT | POLLWRNORM | POLLWRBAND;
+				mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 			}
 		}
 		break;
@@ -1781,12 +1779,12 @@ static unsigned int irda_poll(struct file * file, struct socket *sock,
 		if ((self->tx_flow == FLOW_START) &&
 		    sock_writeable(sk))
 		{
-			mask |= POLLOUT | POLLWRNORM | POLLWRBAND;
+			mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 		}
 		break;
 	case SOCK_DGRAM:
 		if (sock_writeable(sk))
-			mask |= POLLOUT | POLLWRNORM | POLLWRBAND;
+			mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 		break;
 	default:
 		break;

@@ -1049,18 +1049,21 @@ set_rcvbuf:
 		break;
 
 	case SO_ZEROCOPY:
-		if (sk->sk_family != PF_INET && sk->sk_family != PF_INET6)
+		if (sk->sk_family == PF_INET || sk->sk_family == PF_INET6) {
+			if (sk->sk_protocol != IPPROTO_TCP)
+				ret = -ENOTSUPP;
+			else if (sk->sk_state != TCP_CLOSE)
+				ret = -EBUSY;
+		} else if (sk->sk_family != PF_RDS) {
 			ret = -ENOTSUPP;
-		else if (sk->sk_protocol != IPPROTO_TCP)
-			ret = -ENOTSUPP;
-		else if (sk->sk_state != TCP_CLOSE)
-			ret = -EBUSY;
-		else if (val < 0 || val > 1)
-			ret = -EINVAL;
-		else
-			sock_valbool_flag(sk, SOCK_ZEROCOPY, valbool);
-		break;
-
+		}
+		if (!ret) {
+			if (val < 0 || val > 1)
+				ret = -EINVAL;
+			else
+				sock_valbool_flag(sk, SOCK_ZEROCOPY, valbool);
+			break;
+		}
 	default:
 		ret = -ENOPROTOOPT;
 		break;
@@ -1274,7 +1277,8 @@ int sock_getsockopt(struct socket *sock, int level, int optname,
 	{
 		char address[128];
 
-		if (sock->ops->getname(sock, (struct sockaddr *)address, &lv, 2))
+		lv = sock->ops->getname(sock, (struct sockaddr *)address, 2);
+		if (lv < 0)
 			return -ENOTCONN;
 		if (lv < len)
 			return -EINVAL;
@@ -1683,16 +1687,13 @@ struct sock *sk_clone_lock(const struct sock *sk, const gfp_t priority)
 		newsk->sk_dst_pending_confirm = 0;
 		newsk->sk_wmem_queued	= 0;
 		newsk->sk_forward_alloc = 0;
-
-		/* sk->sk_memcg will be populated at accept() time */
-		newsk->sk_memcg = NULL;
-
 		atomic_set(&newsk->sk_drops, 0);
 		newsk->sk_send_head	= NULL;
 		newsk->sk_userlocks	= sk->sk_userlocks & ~SOCK_BINDPORT_LOCK;
 		atomic_set(&newsk->sk_zckey, 0);
 
 		sock_reset_flag(newsk, SOCK_DONE);
+		mem_cgroup_sk_alloc(newsk);
 		cgroup_sk_alloc(&newsk->sk_cgrp_data);
 
 		rcu_read_lock();
@@ -1776,7 +1777,7 @@ void sk_setup_caps(struct sock *sk, struct dst_entry *dst)
 	u32 max_segs = 1;
 
 	sk_dst_set(sk, dst);
-	sk->sk_route_caps = dst->dev->features;
+	sk->sk_route_caps = dst->dev->features | sk->sk_route_forced_caps;
 	if (sk->sk_route_caps & NETIF_F_GSO)
 		sk->sk_route_caps |= NETIF_F_GSO_SOFTWARE;
 	sk->sk_route_caps &= ~sk->sk_route_nocaps;
@@ -2500,13 +2501,13 @@ int sock_no_accept(struct socket *sock, struct socket *newsock, int flags,
 EXPORT_SYMBOL(sock_no_accept);
 
 int sock_no_getname(struct socket *sock, struct sockaddr *saddr,
-		    int *len, int peer)
+		    int peer)
 {
 	return -EOPNOTSUPP;
 }
 EXPORT_SYMBOL(sock_no_getname);
 
-unsigned int sock_no_poll(struct file *file, struct socket *sock, poll_table *pt)
+__poll_t sock_no_poll(struct file *file, struct socket *sock, poll_table *pt)
 {
 	return 0;
 }
@@ -2622,7 +2623,7 @@ static void sock_def_error_report(struct sock *sk)
 	rcu_read_lock();
 	wq = rcu_dereference(sk->sk_wq);
 	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_poll(&wq->wait, POLLERR);
+		wake_up_interruptible_poll(&wq->wait, EPOLLERR);
 	sk_wake_async(sk, SOCK_WAKE_IO, POLL_ERR);
 	rcu_read_unlock();
 }
@@ -2634,8 +2635,8 @@ static void sock_def_readable(struct sock *sk)
 	rcu_read_lock();
 	wq = rcu_dereference(sk->sk_wq);
 	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, POLLIN | POLLPRI |
-						POLLRDNORM | POLLRDBAND);
+		wake_up_interruptible_sync_poll(&wq->wait, EPOLLIN | EPOLLPRI |
+						EPOLLRDNORM | EPOLLRDBAND);
 	sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_IN);
 	rcu_read_unlock();
 }
@@ -2652,8 +2653,8 @@ static void sock_def_write_space(struct sock *sk)
 	if ((refcount_read(&sk->sk_wmem_alloc) << 1) <= sk->sk_sndbuf) {
 		wq = rcu_dereference(sk->sk_wq);
 		if (skwq_has_sleeper(wq))
-			wake_up_interruptible_sync_poll(&wq->wait, POLLOUT |
-						POLLWRNORM | POLLWRBAND);
+			wake_up_interruptible_sync_poll(&wq->wait, EPOLLOUT |
+						EPOLLWRNORM | EPOLLWRBAND);
 
 		/* Should agree with poll, otherwise some programs break */
 		if (sock_writeable(sk))
@@ -3114,6 +3115,7 @@ static void __net_exit sock_inuse_exit_net(struct net *net)
 static struct pernet_operations net_inuse_ops = {
 	.init = sock_inuse_init_net,
 	.exit = sock_inuse_exit_net,
+	.async = true,
 };
 
 static __init int net_inuse_init(void)
@@ -3194,8 +3196,10 @@ static int req_prot_init(const struct proto *prot)
 int proto_register(struct proto *prot, int alloc_slab)
 {
 	if (alloc_slab) {
-		prot->slab = kmem_cache_create(prot->name, prot->obj_size, 0,
+		prot->slab = kmem_cache_create_usercopy(prot->name,
+					prot->obj_size, 0,
 					SLAB_HWCACHE_ALIGN | prot->slab_flags,
+					prot->useroffset, prot->usersize,
 					NULL);
 
 		if (prot->slab == NULL) {
@@ -3385,6 +3389,7 @@ static __net_exit void proto_exit_net(struct net *net)
 static __net_initdata struct pernet_operations proto_net_ops = {
 	.init = proto_init_net,
 	.exit = proto_exit_net,
+	.async = true,
 };
 
 static int __init proto_init(void)

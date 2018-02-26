@@ -326,8 +326,10 @@ static void sctp_v6_get_dst(struct sctp_transport *t, union sctp_addr *saddr,
 		final_p = fl6_update_dst(fl6, rcu_dereference(np->opt), &final);
 		bdst = ip6_dst_lookup_flow(sk, fl6, final_p);
 
-		if (!IS_ERR(bdst) &&
-		    ipv6_chk_addr(dev_net(bdst->dev),
+		if (IS_ERR(bdst))
+			continue;
+
+		if (ipv6_chk_addr(dev_net(bdst->dev),
 				  &laddr->a.v6.sin6_addr, bdst->dev, 1)) {
 			if (!IS_ERR_OR_NULL(dst))
 				dst_release(dst);
@@ -336,8 +338,10 @@ static void sctp_v6_get_dst(struct sctp_transport *t, union sctp_addr *saddr,
 		}
 
 		bmatchlen = sctp_v6_addr_match_len(daddr, &laddr->a);
-		if (matchlen > bmatchlen)
+		if (matchlen > bmatchlen) {
+			dst_release(bdst);
 			continue;
+		}
 
 		if (!IS_ERR_OR_NULL(dst))
 			dst_release(dst);
@@ -948,16 +952,16 @@ static int sctp_inet6_supported_addrs(const struct sctp_sock *opt,
 
 /* Handle SCTP_I_WANT_MAPPED_V4_ADDR for getpeername() and getsockname() */
 static int sctp_getname(struct socket *sock, struct sockaddr *uaddr,
-			int *uaddr_len, int peer)
+			int peer)
 {
 	int rc;
 
-	rc = inet6_getname(sock, uaddr, uaddr_len, peer);
+	rc = inet6_getname(sock, uaddr, peer);
 
-	if (rc != 0)
+	if (rc < 0)
 		return rc;
 
-	*uaddr_len = sctp_v6_addr_to_user(sctp_sk(sock->sk),
+	rc = sctp_v6_addr_to_user(sctp_sk(sock->sk),
 					  (union sctp_addr *)uaddr);
 
 	return rc;

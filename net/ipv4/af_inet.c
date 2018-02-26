@@ -723,7 +723,7 @@ EXPORT_SYMBOL(inet_accept);
  *	This does both peername and sockname.
  */
 int inet_getname(struct socket *sock, struct sockaddr *uaddr,
-			int *uaddr_len, int peer)
+			int peer)
 {
 	struct sock *sk		= sock->sk;
 	struct inet_sock *inet	= inet_sk(sk);
@@ -745,8 +745,7 @@ int inet_getname(struct socket *sock, struct sockaddr *uaddr,
 		sin->sin_addr.s_addr = addr;
 	}
 	memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
-	*uaddr_len = sizeof(*sin);
-	return 0;
+	return sizeof(*sin);
 }
 EXPORT_SYMBOL(inet_getname);
 
@@ -828,7 +827,7 @@ int inet_shutdown(struct socket *sock, int how)
 	case TCP_CLOSE:
 		err = -ENOTCONN;
 		/* Hack to wake up other listeners, who can poll for
-		   POLLHUP, even on eg. unconnected UDP sockets -- RR */
+		   EPOLLHUP, even on eg. unconnected UDP sockets -- RR */
 		/* fall through */
 	default:
 		sk->sk_shutdown |= how;
@@ -1736,6 +1735,7 @@ static __net_exit void ipv4_mib_exit_net(struct net *net)
 static __net_initdata struct pernet_operations ipv4_mib_ops = {
 	.init = ipv4_mib_init_net,
 	.exit = ipv4_mib_exit_net,
+	.async = true,
 };
 
 static int __init init_ipv4_mibs(void)
@@ -1789,6 +1789,7 @@ static __net_exit void inet_exit_net(struct net *net)
 static __net_initdata struct pernet_operations af_inet_ops = {
 	.init = inet_init_net,
 	.exit = inet_exit_net,
+	.async = true,
 };
 
 static int __init init_inet_pernet_ops(void)

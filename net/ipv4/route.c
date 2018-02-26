@@ -417,6 +417,7 @@ static void __net_exit ip_rt_do_proc_exit(struct net *net)
 static struct pernet_operations ip_rt_proc_ops __net_initdata =  {
 	.init = ip_rt_do_proc_init,
 	.exit = ip_rt_do_proc_exit,
+	.async = true,
 };
 
 static int __init ip_rt_proc_init(void)
@@ -1508,7 +1509,6 @@ struct rtable *rt_dst_alloc(struct net_device *dev,
 		rt->rt_pmtu = 0;
 		rt->rt_gateway = 0;
 		rt->rt_uses_gateway = 0;
-		rt->rt_table_id = 0;
 		INIT_LIST_HEAD(&rt->rt_uncached);
 
 		rt->dst.output = ip_output;
@@ -1644,19 +1644,6 @@ static void ip_del_fnhe(struct fib_nh *nh, __be32 daddr)
 	spin_unlock_bh(&fnhe_lock);
 }
 
-static void set_lwt_redirect(struct rtable *rth)
-{
-	if (lwtunnel_output_redirect(rth->dst.lwtstate)) {
-		rth->dst.lwtstate->orig_output = rth->dst.output;
-		rth->dst.output = lwtunnel_output;
-	}
-
-	if (lwtunnel_input_redirect(rth->dst.lwtstate)) {
-		rth->dst.lwtstate->orig_input = rth->dst.input;
-		rth->dst.input = lwtunnel_input;
-	}
-}
-
 /* called in rcu_read_lock() section */
 static int __mkroute_input(struct sk_buff *skb,
 			   const struct fib_result *res,
@@ -1739,15 +1726,13 @@ rt_cache:
 	}
 
 	rth->rt_is_input = 1;
-	if (res->table)
-		rth->rt_table_id = res->table->tb_id;
 	RT_CACHE_STAT_INC(in_slow_tot);
 
 	rth->dst.input = ip_forward;
 
 	rt_set_nexthop(rth, daddr, res, fnhe, res->fi, res->type, itag,
 		       do_cache);
-	set_lwt_redirect(rth);
+	lwtunnel_set_redirect(&rth->dst);
 	skb_dst_set(skb, &rth->dst);
 out:
 	err = 0;
@@ -1826,6 +1811,8 @@ int fib_multipath_hash(const struct fib_info *fi, const struct flowi4 *fl4,
 				return skb_get_hash_raw(skb) >> 1;
 			memset(&hash_keys, 0, sizeof(hash_keys));
 			skb_flow_dissect_flow_keys(skb, &keys, flag);
+
+			hash_keys.control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
 			hash_keys.addrs.v4addrs.src = keys.addrs.v4addrs.src;
 			hash_keys.addrs.v4addrs.dst = keys.addrs.v4addrs.dst;
 			hash_keys.ports.src = keys.ports.src;
@@ -1846,7 +1833,6 @@ int fib_multipath_hash(const struct fib_info *fi, const struct flowi4 *fl4,
 
 	return mhash >> 1;
 }
-EXPORT_SYMBOL_GPL(fib_multipath_hash);
 #endif /* CONFIG_IP_ROUTE_MULTIPATH */
 
 static int ip_mkroute_input(struct sk_buff *skb,
@@ -2014,8 +2000,6 @@ local_input:
 	rth->dst.tclassid = itag;
 #endif
 	rth->rt_is_input = 1;
-	if (res->table)
-		rth->rt_table_id = res->table->tb_id;
 
 	RT_CACHE_STAT_INC(in_slow_tot);
 	if (res->type == RTN_UNREACHABLE) {
@@ -2244,8 +2228,6 @@ add:
 		return ERR_PTR(-ENOBUFS);
 
 	rth->rt_iif = orig_oif;
-	if (res->table)
-		rth->rt_table_id = res->table->tb_id;
 
 	RT_CACHE_STAT_INC(out_slow_tot);
 
@@ -2267,7 +2249,7 @@ add:
 	}
 
 	rt_set_nexthop(rth, fl4->daddr, res, fnhe, fi, type, 0, do_cache);
-	set_lwt_redirect(rth);
+	lwtunnel_set_redirect(&rth->dst);
 
 	return rth;
 }
@@ -2775,7 +2757,7 @@ static int inet_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 		rt->rt_flags |= RTCF_NOTIFY;
 
 	if (rtm->rtm_flags & RTM_F_LOOKUP_TABLE)
-		table_id = rt->rt_table_id;
+		table_id = res.table ? res.table->tb_id : 0;
 
 	if (rtm->rtm_flags & RTM_F_FIB_MATCH) {
 		if (!res.fi) {
@@ -2994,6 +2976,7 @@ static __net_exit void sysctl_route_net_exit(struct net *net)
 static __net_initdata struct pernet_operations sysctl_route_ops = {
 	.init = sysctl_route_net_init,
 	.exit = sysctl_route_net_exit,
+	.async = true,
 };
 #endif
 
@@ -3007,6 +2990,7 @@ static __net_init int rt_genid_init(struct net *net)
 
 static __net_initdata struct pernet_operations rt_genid_ops = {
 	.init = rt_genid_init,
+	.async = true,
 };
 
 static int __net_init ipv4_inetpeer_init(struct net *net)
@@ -3032,6 +3016,7 @@ static void __net_exit ipv4_inetpeer_exit(struct net *net)
 static __net_initdata struct pernet_operations ipv4_inetpeer_ops = {
 	.init	=	ipv4_inetpeer_init,
 	.exit	=	ipv4_inetpeer_exit,
+	.async	=	true,
 };
 
 #ifdef CONFIG_IP_ROUTE_CLASSID

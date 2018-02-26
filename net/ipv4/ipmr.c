@@ -3022,7 +3022,7 @@ static int ipmr_vif_seq_show(struct seq_file *seq, void *v)
 		const char *name =  vif->dev ? vif->dev->name : "none";
 
 		seq_printf(seq,
-			   "%2zd %-10s %8ld %7ld  %8ld %7ld %05X %08X %08X\n",
+			   "%2td %-10s %8ld %7ld  %8ld %7ld %05X %08X %08X\n",
 			   vif - mrt->vif_table,
 			   name, vif->bytes_in, vif->pkt_in,
 			   vif->bytes_out, vif->pkt_out,
@@ -3327,6 +3327,7 @@ static void __net_exit ipmr_net_exit(struct net *net)
 static struct pernet_operations ipmr_net_ops = {
 	.init = ipmr_net_init,
 	.exit = ipmr_net_exit,
+	.async = true,
 };
 
 int __init ip_mr_init(void)

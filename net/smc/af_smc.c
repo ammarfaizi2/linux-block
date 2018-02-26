@@ -281,7 +281,6 @@ int smc_netinfo_by_tcpsk(struct socket *clcsock,
 	struct in_device *in_dev;
 	struct sockaddr_in addr;
 	int rc = -ENOENT;
-	int len;
 
 	if (!dst) {
 		rc = -ENOTCONN;
@@ -293,7 +292,7 @@ int smc_netinfo_by_tcpsk(struct socket *clcsock,
 	}
 
 	/* get address to which the internal TCP socket is bound */
-	kernel_getsockname(clcsock, (struct sockaddr *)&addr, &len);
+	kernel_getsockname(clcsock, (struct sockaddr *)&addr);
 	/* analyze IPv4 specific data of net_device belonging to TCP socket */
 	rcu_read_lock();
 	in_dev = __in_dev_get_rcu(dst->dev);
@@ -771,7 +770,7 @@ static void smc_listen_work(struct work_struct *work)
 	u8 buf[SMC_CLC_MAX_LEN];
 	struct smc_link *link;
 	int reason_code = 0;
-	int rc = 0, len;
+	int rc = 0;
 	__be32 subnet;
 	u8 prefix_len;
 	u8 ibport;
@@ -824,7 +823,7 @@ static void smc_listen_work(struct work_struct *work)
 	}
 
 	/* get address of the peer connected to the internal TCP socket */
-	kernel_getpeername(newclcsock, (struct sockaddr *)&peeraddr, &len);
+	kernel_getpeername(newclcsock, (struct sockaddr *)&peeraddr);
 
 	/* allocate connection / link group */
 	mutex_lock(&smc_create_lgr_pending);
@@ -1075,7 +1074,7 @@ out:
 }
 
 static int smc_getname(struct socket *sock, struct sockaddr *addr,
-		       int *len, int peer)
+		       int peer)
 {
 	struct smc_sock *smc;
 
@@ -1085,7 +1084,7 @@ static int smc_getname(struct socket *sock, struct sockaddr *addr,
 
 	smc = smc_sk(sock->sk);
 
-	return smc->clcsock->ops->getname(smc->clcsock, addr, len, peer);
+	return smc->clcsock->ops->getname(smc->clcsock, addr, peer);
 }
 
 static int smc_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
@@ -1138,29 +1137,29 @@ out:
 	return rc;
 }
 
-static unsigned int smc_accept_poll(struct sock *parent)
+static __poll_t smc_accept_poll(struct sock *parent)
 {
 	struct smc_sock *isk = smc_sk(parent);
-	int mask = 0;
+	__poll_t mask = 0;
 
 	spin_lock(&isk->accept_q_lock);
 	if (!list_empty(&isk->accept_q))
-		mask = POLLIN | POLLRDNORM;
+		mask = EPOLLIN | EPOLLRDNORM;
 	spin_unlock(&isk->accept_q_lock);
 
 	return mask;
 }
 
-static unsigned int smc_poll(struct file *file, struct socket *sock,
+static __poll_t smc_poll(struct file *file, struct socket *sock,
 			     poll_table *wait)
 {
 	struct sock *sk = sock->sk;
-	unsigned int mask = 0;
+	__poll_t mask = 0;
 	struct smc_sock *smc;
 	int rc;
 
 	if (!sk)
-		return POLLNVAL;
+		return EPOLLNVAL;
 
 	smc = smc_sk(sock->sk);
 	sock_hold(sk);
@@ -1171,16 +1170,16 @@ static unsigned int smc_poll(struct file *file, struct socket *sock,
 		mask = smc->clcsock->ops->poll(file, smc->clcsock, wait);
 		/* if non-blocking connect finished ... */
 		lock_sock(sk);
-		if ((sk->sk_state == SMC_INIT) && (mask & POLLOUT)) {
+		if ((sk->sk_state == SMC_INIT) && (mask & EPOLLOUT)) {
 			sk->sk_err = smc->clcsock->sk->sk_err;
 			if (sk->sk_err) {
-				mask |= POLLERR;
+				mask |= EPOLLERR;
 			} else {
 				rc = smc_connect_rdma(smc);
 				if (rc < 0)
-					mask |= POLLERR;
+					mask |= EPOLLERR;
 				/* success cases including fallback */
-				mask |= POLLOUT | POLLWRNORM;
+				mask |= EPOLLOUT | EPOLLWRNORM;
 			}
 		}
 	} else {
@@ -1190,27 +1189,27 @@ static unsigned int smc_poll(struct file *file, struct socket *sock,
 			lock_sock(sk);
 		}
 		if (sk->sk_err)
-			mask |= POLLERR;
+			mask |= EPOLLERR;
 		if ((sk->sk_shutdown == SHUTDOWN_MASK) ||
 		    (sk->sk_state == SMC_CLOSED))
-			mask |= POLLHUP;
+			mask |= EPOLLHUP;
 		if (sk->sk_state == SMC_LISTEN) {
 			/* woken up by sk_data_ready in smc_listen_work() */
 			mask = smc_accept_poll(sk);
 		} else {
 			if (atomic_read(&smc->conn.sndbuf_space) ||
 			    sk->sk_shutdown & SEND_SHUTDOWN) {
-				mask |= POLLOUT | POLLWRNORM;
+				mask |= EPOLLOUT | EPOLLWRNORM;
 			} else {
 				sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 				set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
 			}
 			if (atomic_read(&smc->conn.bytes_to_rcv))
-				mask |= POLLIN | POLLRDNORM;
+				mask |= EPOLLIN | EPOLLRDNORM;
 			if (sk->sk_shutdown & RCV_SHUTDOWN)
-				mask |= POLLIN | POLLRDNORM | POLLRDHUP;
+				mask |= EPOLLIN | EPOLLRDNORM | EPOLLRDHUP;
 			if (sk->sk_state == SMC_APPCLOSEWAIT1)
-				mask |= POLLIN;
+				mask |= EPOLLIN;
 		}
 
 	}

@@ -51,6 +51,7 @@ int fib_default_rule_add(struct fib_rules_ops *ops,
 	r->pref = pref;
 	r->table = table;
 	r->flags = flags;
+	r->proto = RTPROT_KERNEL;
 	r->fr_net = ops->fro_net;
 	r->uid_range = fib_kuid_range_unset;
 
@@ -469,6 +470,9 @@ int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 	rule->pref = tb[FRA_PRIORITY] ? nla_get_u32(tb[FRA_PRIORITY])
 	                              : fib_default_rule_pref(ops);
 
+	rule->proto = tb[FRA_PROTOCOL] ?
+		nla_get_u8(tb[FRA_PROTOCOL]) : RTPROT_UNSPEC;
+
 	if (tb[FRA_IIFNAME]) {
 		struct net_device *dev;
 
@@ -664,6 +668,10 @@ int fib_nl_delrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 	}
 
 	list_for_each_entry(rule, &ops->rules_list, list) {
+		if (tb[FRA_PROTOCOL] &&
+		    (rule->proto != nla_get_u8(tb[FRA_PROTOCOL])))
+			continue;
+
 		if (frh->action && (frh->action != rule->action))
 			continue;
 
@@ -781,7 +789,8 @@ static inline size_t fib_rule_nlmsg_size(struct fib_rules_ops *ops,
 			 + nla_total_size(4) /* FRA_FWMARK */
 			 + nla_total_size(4) /* FRA_FWMASK */
 			 + nla_total_size_64bit(8) /* FRA_TUN_ID */
-			 + nla_total_size(sizeof(struct fib_kuid_range));
+			 + nla_total_size(sizeof(struct fib_kuid_range))
+			 + nla_total_size(1); /* FRA_PROTOCOL */
 
 	if (ops->nlmsg_payload)
 		payload += ops->nlmsg_payload(rule);
@@ -811,6 +820,9 @@ static int fib_nl_fill_rule(struct sk_buff *skb, struct fib_rule *rule,
 	frh->res2 = 0;
 	frh->action = rule->action;
 	frh->flags = rule->flags;
+
+	if (nla_put_u8(skb, FRA_PROTOCOL, rule->proto))
+		goto nla_put_failure;
 
 	if (rule->action == FR_ACT_GOTO &&
 	    rcu_access_pointer(rule->ctarget) == NULL)
@@ -1030,6 +1042,7 @@ static void __net_exit fib_rules_net_exit(struct net *net)
 static struct pernet_operations fib_rules_net_ops = {
 	.init = fib_rules_net_init,
 	.exit = fib_rules_net_exit,
+	.async = true,
 };
 
 static int __init fib_rules_init(void)

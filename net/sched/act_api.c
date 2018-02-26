@@ -78,7 +78,7 @@ static void free_tcf(struct tc_action *p)
 static void tcf_idr_remove(struct tcf_idrinfo *idrinfo, struct tc_action *p)
 {
 	spin_lock_bh(&idrinfo->lock);
-	idr_remove_ext(&idrinfo->action_idr, p->tcfa_index);
+	idr_remove(&idrinfo->action_idr, p->tcfa_index);
 	spin_unlock_bh(&idrinfo->lock);
 	gen_kill_estimator(&p->tcfa_rate_est);
 	free_tcf(p);
@@ -124,7 +124,7 @@ static int tcf_dump_walker(struct tcf_idrinfo *idrinfo, struct sk_buff *skb,
 
 	s_i = cb->args[0];
 
-	idr_for_each_entry_ext(idr, p, id) {
+	idr_for_each_entry_ul(idr, p, id) {
 		index++;
 		if (index < s_i)
 			continue;
@@ -181,7 +181,7 @@ static int tcf_del_walker(struct tcf_idrinfo *idrinfo, struct sk_buff *skb,
 	if (nla_put_string(skb, TCA_KIND, ops->kind))
 		goto nla_put_failure;
 
-	idr_for_each_entry_ext(idr, p, id) {
+	idr_for_each_entry_ul(idr, p, id) {
 		ret = __tcf_idr_release(p, false, true);
 		if (ret == ACT_P_DELETED) {
 			module_put(ops->owner);
@@ -202,7 +202,8 @@ nla_put_failure:
 
 int tcf_generic_walker(struct tc_action_net *tn, struct sk_buff *skb,
 		       struct netlink_callback *cb, int type,
-		       const struct tc_action_ops *ops)
+		       const struct tc_action_ops *ops,
+		       struct netlink_ext_ack *extack)
 {
 	struct tcf_idrinfo *idrinfo = tn->idrinfo;
 
@@ -211,7 +212,8 @@ int tcf_generic_walker(struct tc_action_net *tn, struct sk_buff *skb,
 	} else if (type == RTM_GETACTION) {
 		return tcf_dump_walker(idrinfo, skb, cb);
 	} else {
-		WARN(1, "tcf_generic_walker: unknown action %d\n", type);
+		WARN(1, "tcf_generic_walker: unknown command %d\n", type);
+		NL_SET_ERR_MSG(extack, "tcf_generic_walker: unknown command");
 		return -EINVAL;
 	}
 }
@@ -222,7 +224,7 @@ static struct tc_action *tcf_idr_lookup(u32 index, struct tcf_idrinfo *idrinfo)
 	struct tc_action *p = NULL;
 
 	spin_lock_bh(&idrinfo->lock);
-	p = idr_find_ext(&idrinfo->action_idr, index);
+	p = idr_find(&idrinfo->action_idr, index);
 	spin_unlock_bh(&idrinfo->lock);
 
 	return p;
@@ -274,7 +276,6 @@ int tcf_idr_create(struct tc_action_net *tn, u32 index, struct nlattr *est,
 	struct tcf_idrinfo *idrinfo = tn->idrinfo;
 	struct idr *idr = &idrinfo->action_idr;
 	int err = -ENOMEM;
-	unsigned long idr_index;
 
 	if (unlikely(!p))
 		return -ENOMEM;
@@ -284,45 +285,28 @@ int tcf_idr_create(struct tc_action_net *tn, u32 index, struct nlattr *est,
 
 	if (cpustats) {
 		p->cpu_bstats = netdev_alloc_pcpu_stats(struct gnet_stats_basic_cpu);
-		if (!p->cpu_bstats) {
-err1:
-			kfree(p);
-			return err;
-		}
-		p->cpu_qstats = alloc_percpu(struct gnet_stats_queue);
-		if (!p->cpu_qstats) {
-err2:
-			free_percpu(p->cpu_bstats);
+		if (!p->cpu_bstats)
 			goto err1;
-		}
+		p->cpu_qstats = alloc_percpu(struct gnet_stats_queue);
+		if (!p->cpu_qstats)
+			goto err2;
 	}
 	spin_lock_init(&p->tcfa_lock);
+	idr_preload(GFP_KERNEL);
+	spin_lock_bh(&idrinfo->lock);
 	/* user doesn't specify an index */
 	if (!index) {
-		idr_preload(GFP_KERNEL);
-		spin_lock_bh(&idrinfo->lock);
-		err = idr_alloc_ext(idr, NULL, &idr_index, 1, 0,
-				    GFP_ATOMIC);
-		spin_unlock_bh(&idrinfo->lock);
-		idr_preload_end();
-		if (err) {
-err3:
-			free_percpu(p->cpu_qstats);
-			goto err2;
-		}
-		p->tcfa_index = idr_index;
+		index = 1;
+		err = idr_alloc_u32(idr, NULL, &index, UINT_MAX, GFP_ATOMIC);
 	} else {
-		idr_preload(GFP_KERNEL);
-		spin_lock_bh(&idrinfo->lock);
-		err = idr_alloc_ext(idr, NULL, NULL, index, index + 1,
-				    GFP_ATOMIC);
-		spin_unlock_bh(&idrinfo->lock);
-		idr_preload_end();
-		if (err)
-			goto err3;
-		p->tcfa_index = index;
+		err = idr_alloc_u32(idr, NULL, &index, index, GFP_ATOMIC);
 	}
+	spin_unlock_bh(&idrinfo->lock);
+	idr_preload_end();
+	if (err)
+		goto err3;
 
+	p->tcfa_index = index;
 	p->tcfa_tm.install = jiffies;
 	p->tcfa_tm.lastuse = jiffies;
 	p->tcfa_tm.firstuse = 0;
@@ -330,9 +314,8 @@ err3:
 		err = gen_new_estimator(&p->tcfa_bstats, p->cpu_bstats,
 					&p->tcfa_rate_est,
 					&p->tcfa_lock, NULL, est);
-		if (err) {
-			goto err3;
-		}
+		if (err)
+			goto err4;
 	}
 
 	p->idrinfo = idrinfo;
@@ -340,6 +323,15 @@ err3:
 	INIT_LIST_HEAD(&p->list);
 	*a = p;
 	return 0;
+err4:
+	idr_remove(idr, index);
+err3:
+	free_percpu(p->cpu_qstats);
+err2:
+	free_percpu(p->cpu_bstats);
+err1:
+	kfree(p);
+	return err;
 }
 EXPORT_SYMBOL(tcf_idr_create);
 
@@ -348,7 +340,7 @@ void tcf_idr_insert(struct tc_action_net *tn, struct tc_action *a)
 	struct tcf_idrinfo *idrinfo = tn->idrinfo;
 
 	spin_lock_bh(&idrinfo->lock);
-	idr_replace_ext(&idrinfo->action_idr, a, a->tcfa_index);
+	idr_replace(&idrinfo->action_idr, a, a->tcfa_index);
 	spin_unlock_bh(&idrinfo->lock);
 }
 EXPORT_SYMBOL(tcf_idr_insert);
@@ -361,7 +353,7 @@ void tcf_idrinfo_destroy(const struct tc_action_ops *ops,
 	int ret;
 	unsigned long id = 1;
 
-	idr_for_each_entry_ext(idr, p, id) {
+	idr_for_each_entry_ul(idr, p, id) {
 		ret = __tcf_idr_release(p, false, true);
 		if (ret == ACT_P_DELETED)
 			module_put(ops->owner);
@@ -615,7 +607,8 @@ static struct tc_cookie *nla_memdup_cookie(struct nlattr **tb)
 
 struct tc_action *tcf_action_init_1(struct net *net, struct tcf_proto *tp,
 				    struct nlattr *nla, struct nlattr *est,
-				    char *name, int ovr, int bind)
+				    char *name, int ovr, int bind,
+				    struct netlink_ext_ack *extack)
 {
 	struct tc_action *a;
 	struct tc_action_ops *a_o;
@@ -626,31 +619,40 @@ struct tc_action *tcf_action_init_1(struct net *net, struct tcf_proto *tp,
 	int err;
 
 	if (name == NULL) {
-		err = nla_parse_nested(tb, TCA_ACT_MAX, nla, NULL, NULL);
+		err = nla_parse_nested(tb, TCA_ACT_MAX, nla, NULL, extack);
 		if (err < 0)
 			goto err_out;
 		err = -EINVAL;
 		kind = tb[TCA_ACT_KIND];
-		if (kind == NULL)
+		if (!kind) {
+			NL_SET_ERR_MSG(extack, "TC action kind must be specified");
 			goto err_out;
-		if (nla_strlcpy(act_name, kind, IFNAMSIZ) >= IFNAMSIZ)
+		}
+		if (nla_strlcpy(act_name, kind, IFNAMSIZ) >= IFNAMSIZ) {
+			NL_SET_ERR_MSG(extack, "TC action name too long");
 			goto err_out;
+		}
 		if (tb[TCA_ACT_COOKIE]) {
 			int cklen = nla_len(tb[TCA_ACT_COOKIE]);
 
-			if (cklen > TC_COOKIE_MAX_SIZE)
+			if (cklen > TC_COOKIE_MAX_SIZE) {
+				NL_SET_ERR_MSG(extack, "TC cookie size above the maximum");
 				goto err_out;
+			}
 
 			cookie = nla_memdup_cookie(tb);
 			if (!cookie) {
+				NL_SET_ERR_MSG(extack, "No memory to generate TC cookie");
 				err = -ENOMEM;
 				goto err_out;
 			}
 		}
 	} else {
-		err = -EINVAL;
-		if (strlcpy(act_name, name, IFNAMSIZ) >= IFNAMSIZ)
+		if (strlcpy(act_name, name, IFNAMSIZ) >= IFNAMSIZ) {
+			NL_SET_ERR_MSG(extack, "TC action name too long");
+			err = -EINVAL;
 			goto err_out;
+		}
 	}
 
 	a_o = tc_lookup_action_n(act_name);
@@ -673,15 +675,17 @@ struct tc_action *tcf_action_init_1(struct net *net, struct tcf_proto *tp,
 			goto err_mod;
 		}
 #endif
+		NL_SET_ERR_MSG(extack, "Failed to load TC action module");
 		err = -ENOENT;
 		goto err_out;
 	}
 
 	/* backward compatibility for policer */
 	if (name == NULL)
-		err = a_o->init(net, tb[TCA_ACT_OPTIONS], est, &a, ovr, bind);
+		err = a_o->init(net, tb[TCA_ACT_OPTIONS], est, &a, ovr, bind,
+				extack);
 	else
-		err = a_o->init(net, nla, est, &a, ovr, bind);
+		err = a_o->init(net, nla, est, &a, ovr, bind, extack);
 	if (err < 0)
 		goto err_mod;
 
@@ -707,6 +711,7 @@ struct tc_action *tcf_action_init_1(struct net *net, struct tcf_proto *tp,
 
 			list_add_tail(&a->list, &actions);
 			tcf_action_destroy(&actions, bind);
+			NL_SET_ERR_MSG(extack, "Failed to init TC action chain");
 			return ERR_PTR(err);
 		}
 	}
@@ -736,19 +741,20 @@ static void cleanup_a(struct list_head *actions, int ovr)
 
 int tcf_action_init(struct net *net, struct tcf_proto *tp, struct nlattr *nla,
 		    struct nlattr *est, char *name, int ovr, int bind,
-		    struct list_head *actions)
+		    struct list_head *actions, struct netlink_ext_ack *extack)
 {
 	struct nlattr *tb[TCA_ACT_MAX_PRIO + 1];
 	struct tc_action *act;
 	int err;
 	int i;
 
-	err = nla_parse_nested(tb, TCA_ACT_MAX_PRIO, nla, NULL, NULL);
+	err = nla_parse_nested(tb, TCA_ACT_MAX_PRIO, nla, NULL, extack);
 	if (err < 0)
 		return err;
 
 	for (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) {
-		act = tcf_action_init_1(net, tp, tb[i], est, name, ovr, bind);
+		act = tcf_action_init_1(net, tp, tb[i], est, name, ovr, bind,
+					extack);
 		if (IS_ERR(act)) {
 			err = PTR_ERR(act);
 			goto err;
@@ -832,7 +838,7 @@ static int tca_get_fill(struct sk_buff *skb, struct list_head *actions,
 	t->tca__pad2 = 0;
 
 	nest = nla_nest_start(skb, TCA_ACT_TAB);
-	if (nest == NULL)
+	if (!nest)
 		goto out_nlmsg_trim;
 
 	if (tcf_action_dump(skb, actions, bind, ref) < 0)
@@ -850,7 +856,8 @@ out_nlmsg_trim:
 
 static int
 tcf_get_notify(struct net *net, u32 portid, struct nlmsghdr *n,
-	       struct list_head *actions, int event)
+	       struct list_head *actions, int event,
+	       struct netlink_ext_ack *extack)
 {
 	struct sk_buff *skb;
 
@@ -859,6 +866,7 @@ tcf_get_notify(struct net *net, u32 portid, struct nlmsghdr *n,
 		return -ENOBUFS;
 	if (tca_get_fill(skb, actions, portid, n->nlmsg_seq, 0, event,
 			 0, 0) <= 0) {
+		NL_SET_ERR_MSG(extack, "Failed to fill netlink attributes while adding TC action");
 		kfree_skb(skb);
 		return -EINVAL;
 	}
@@ -867,7 +875,8 @@ tcf_get_notify(struct net *net, u32 portid, struct nlmsghdr *n,
 }
 
 static struct tc_action *tcf_action_get_1(struct net *net, struct nlattr *nla,
-					  struct nlmsghdr *n, u32 portid)
+					  struct nlmsghdr *n, u32 portid,
+					  struct netlink_ext_ack *extack)
 {
 	struct nlattr *tb[TCA_ACT_MAX + 1];
 	const struct tc_action_ops *ops;
@@ -875,22 +884,26 @@ static struct tc_action *tcf_action_get_1(struct net *net, struct nlattr *nla,
 	int index;
 	int err;
 
-	err = nla_parse_nested(tb, TCA_ACT_MAX, nla, NULL, NULL);
+	err = nla_parse_nested(tb, TCA_ACT_MAX, nla, NULL, extack);
 	if (err < 0)
 		goto err_out;
 
 	err = -EINVAL;
 	if (tb[TCA_ACT_INDEX] == NULL ||
-	    nla_len(tb[TCA_ACT_INDEX]) < sizeof(index))
+	    nla_len(tb[TCA_ACT_INDEX]) < sizeof(index)) {
+		NL_SET_ERR_MSG(extack, "Invalid TC action index value");
 		goto err_out;
+	}
 	index = nla_get_u32(tb[TCA_ACT_INDEX]);
 
 	err = -EINVAL;
 	ops = tc_lookup_action(tb[TCA_ACT_KIND]);
-	if (!ops) /* could happen in batch of actions */
+	if (!ops) { /* could happen in batch of actions */
+		NL_SET_ERR_MSG(extack, "Specified TC action not found");
 		goto err_out;
+	}
 	err = -ENOENT;
-	if (ops->lookup(net, &a, index) == 0)
+	if (ops->lookup(net, &a, index, extack) == 0)
 		goto err_mod;
 
 	module_put(ops->owner);
@@ -903,7 +916,8 @@ err_out:
 }
 
 static int tca_action_flush(struct net *net, struct nlattr *nla,
-			    struct nlmsghdr *n, u32 portid)
+			    struct nlmsghdr *n, u32 portid,
+			    struct netlink_ext_ack *extack)
 {
 	struct sk_buff *skb;
 	unsigned char *b;
@@ -917,39 +931,45 @@ static int tca_action_flush(struct net *net, struct nlattr *nla,
 	int err = -ENOMEM;
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
-	if (!skb) {
-		pr_debug("tca_action_flush: failed skb alloc\n");
+	if (!skb)
 		return err;
-	}
 
 	b = skb_tail_pointer(skb);
 
-	err = nla_parse_nested(tb, TCA_ACT_MAX, nla, NULL, NULL);
+	err = nla_parse_nested(tb, TCA_ACT_MAX, nla, NULL, extack);
 	if (err < 0)
 		goto err_out;
 
 	err = -EINVAL;
 	kind = tb[TCA_ACT_KIND];
 	ops = tc_lookup_action(kind);
-	if (!ops) /*some idjot trying to flush unknown action */
+	if (!ops) { /*some idjot trying to flush unknown action */
+		NL_SET_ERR_MSG(extack, "Cannot flush unknown TC action");
 		goto err_out;
+	}
 
 	nlh = nlmsg_put(skb, portid, n->nlmsg_seq, RTM_DELACTION,
 			sizeof(*t), 0);
-	if (!nlh)
+	if (!nlh) {
+		NL_SET_ERR_MSG(extack, "Failed to create TC action flush notification");
 		goto out_module_put;
+	}
 	t = nlmsg_data(nlh);
 	t->tca_family = AF_UNSPEC;
 	t->tca__pad1 = 0;
 	t->tca__pad2 = 0;
 
 	nest = nla_nest_start(skb, TCA_ACT_TAB);
-	if (nest == NULL)
+	if (!nest) {
+		NL_SET_ERR_MSG(extack, "Failed to add new netlink message");
 		goto out_module_put;
+	}
 
-	err = ops->walk(net, skb, &dcb, RTM_DELACTION, ops);
-	if (err <= 0)
+	err = ops->walk(net, skb, &dcb, RTM_DELACTION, ops, extack);
+	if (err <= 0) {
+		nla_nest_cancel(skb, nest);
 		goto out_module_put;
+	}
 
 	nla_nest_end(skb, nest);
 
@@ -960,6 +980,8 @@ static int tca_action_flush(struct net *net, struct nlattr *nla,
 			     n->nlmsg_flags & NLM_F_ECHO);
 	if (err > 0)
 		return 0;
+	if (err < 0)
+		NL_SET_ERR_MSG(extack, "Failed to send TC action flush notification");
 
 	return err;
 
@@ -972,7 +994,7 @@ err_out:
 
 static int
 tcf_del_notify(struct net *net, struct nlmsghdr *n, struct list_head *actions,
-	       u32 portid)
+	       u32 portid, struct netlink_ext_ack *extack)
 {
 	int ret;
 	struct sk_buff *skb;
@@ -983,6 +1005,7 @@ tcf_del_notify(struct net *net, struct nlmsghdr *n, struct list_head *actions,
 
 	if (tca_get_fill(skb, actions, portid, n->nlmsg_seq, 0, RTM_DELACTION,
 			 0, 1) <= 0) {
+		NL_SET_ERR_MSG(extack, "Failed to fill netlink TC action attributes");
 		kfree_skb(skb);
 		return -EINVAL;
 	}
@@ -990,6 +1013,7 @@ tcf_del_notify(struct net *net, struct nlmsghdr *n, struct list_head *actions,
 	/* now do the delete */
 	ret = tcf_action_destroy(actions, 0);
 	if (ret < 0) {
+		NL_SET_ERR_MSG(extack, "Failed to delete TC action");
 		kfree_skb(skb);
 		return ret;
 	}
@@ -1003,26 +1027,27 @@ tcf_del_notify(struct net *net, struct nlmsghdr *n, struct list_head *actions,
 
 static int
 tca_action_gd(struct net *net, struct nlattr *nla, struct nlmsghdr *n,
-	      u32 portid, int event)
+	      u32 portid, int event, struct netlink_ext_ack *extack)
 {
 	int i, ret;
 	struct nlattr *tb[TCA_ACT_MAX_PRIO + 1];
 	struct tc_action *act;
 	LIST_HEAD(actions);
 
-	ret = nla_parse_nested(tb, TCA_ACT_MAX_PRIO, nla, NULL, NULL);
+	ret = nla_parse_nested(tb, TCA_ACT_MAX_PRIO, nla, NULL, extack);
 	if (ret < 0)
 		return ret;
 
 	if (event == RTM_DELACTION && n->nlmsg_flags & NLM_F_ROOT) {
-		if (tb[1] != NULL)
-			return tca_action_flush(net, tb[1], n, portid);
-		else
-			return -EINVAL;
+		if (tb[1])
+			return tca_action_flush(net, tb[1], n, portid, extack);
+
+		NL_SET_ERR_MSG(extack, "Invalid netlink attributes while flushing TC action");
+		return -EINVAL;
 	}
 
 	for (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) {
-		act = tcf_action_get_1(net, tb[i], n, portid);
+		act = tcf_action_get_1(net, tb[i], n, portid, extack);
 		if (IS_ERR(act)) {
 			ret = PTR_ERR(act);
 			goto err;
@@ -1032,9 +1057,9 @@ tca_action_gd(struct net *net, struct nlattr *nla, struct nlmsghdr *n,
 	}
 
 	if (event == RTM_GETACTION)
-		ret = tcf_get_notify(net, portid, n, &actions, event);
+		ret = tcf_get_notify(net, portid, n, &actions, event, extack);
 	else { /* delete */
-		ret = tcf_del_notify(net, n, &actions, portid);
+		ret = tcf_del_notify(net, n, &actions, portid, extack);
 		if (ret)
 			goto err;
 		return ret;
@@ -1047,7 +1072,7 @@ err:
 
 static int
 tcf_add_notify(struct net *net, struct nlmsghdr *n, struct list_head *actions,
-	       u32 portid)
+	       u32 portid, struct netlink_ext_ack *extack)
 {
 	struct sk_buff *skb;
 	int err = 0;
@@ -1058,6 +1083,7 @@ tcf_add_notify(struct net *net, struct nlmsghdr *n, struct list_head *actions,
 
 	if (tca_get_fill(skb, actions, portid, n->nlmsg_seq, n->nlmsg_flags,
 			 RTM_NEWACTION, 0, 0) <= 0) {
+		NL_SET_ERR_MSG(extack, "Failed to fill netlink attributes while deleting TC action");
 		kfree_skb(skb);
 		return -EINVAL;
 	}
@@ -1070,16 +1096,18 @@ tcf_add_notify(struct net *net, struct nlmsghdr *n, struct list_head *actions,
 }
 
 static int tcf_action_add(struct net *net, struct nlattr *nla,
-			  struct nlmsghdr *n, u32 portid, int ovr)
+			  struct nlmsghdr *n, u32 portid, int ovr,
+			  struct netlink_ext_ack *extack)
 {
 	int ret = 0;
 	LIST_HEAD(actions);
 
-	ret = tcf_action_init(net, NULL, nla, NULL, NULL, ovr, 0, &actions);
+	ret = tcf_action_init(net, NULL, nla, NULL, NULL, ovr, 0, &actions,
+			      extack);
 	if (ret)
 		return ret;
 
-	return tcf_add_notify(net, n, &actions, portid);
+	return tcf_add_notify(net, n, &actions, portid, extack);
 }
 
 static u32 tcaa_root_flags_allowed = TCA_FLAG_LARGE_DUMP_ON;
@@ -1107,7 +1135,7 @@ static int tc_ctl_action(struct sk_buff *skb, struct nlmsghdr *n,
 		return ret;
 
 	if (tca[TCA_ACT_TAB] == NULL) {
-		pr_notice("tc_ctl_action: received NO action attribs\n");
+		NL_SET_ERR_MSG(extack, "Netlink action attributes missing");
 		return -EINVAL;
 	}
 
@@ -1123,17 +1151,18 @@ static int tc_ctl_action(struct sk_buff *skb, struct nlmsghdr *n,
 		if (n->nlmsg_flags & NLM_F_REPLACE)
 			ovr = 1;
 replay:
-		ret = tcf_action_add(net, tca[TCA_ACT_TAB], n, portid, ovr);
+		ret = tcf_action_add(net, tca[TCA_ACT_TAB], n, portid, ovr,
+				     extack);
 		if (ret == -EAGAIN)
 			goto replay;
 		break;
 	case RTM_DELACTION:
 		ret = tca_action_gd(net, tca[TCA_ACT_TAB], n,
-				    portid, RTM_DELACTION);
+				    portid, RTM_DELACTION, extack);
 		break;
 	case RTM_GETACTION:
 		ret = tca_action_gd(net, tca[TCA_ACT_TAB], n,
-				    portid, RTM_GETACTION);
+				    portid, RTM_GETACTION, extack);
 		break;
 	default:
 		BUG();
@@ -1228,7 +1257,7 @@ static int tc_dump_action(struct sk_buff *skb, struct netlink_callback *cb)
 	if (nest == NULL)
 		goto out_module_put;
 
-	ret = a_o->walk(net, skb, cb, RTM_GETACTION, a_o);
+	ret = a_o->walk(net, skb, cb, RTM_GETACTION, a_o, NULL);
 	if (ret < 0)
 		goto out_module_put;
 
@@ -1464,6 +1493,7 @@ static struct pernet_operations tcf_action_net_ops = {
 	.exit = tcf_action_net_exit,
 	.id = &tcf_action_net_id,
 	.size = sizeof(struct tcf_action_net),
+	.async = true,
 };
 
 static int __init tc_action_init(void)

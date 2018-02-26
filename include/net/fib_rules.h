@@ -26,7 +26,8 @@ struct fib_rule {
 	u32			table;
 	u8			action;
 	u8			l3mdev;
-	/* 2 bytes hole, try to use */
+	u8                      proto;
+	/* 1 byte hole, try to use */
 	u32			target;
 	__be64			tun_id;
 	struct fib_rule __rcu	*ctarget;
@@ -108,7 +109,8 @@ struct fib_rule_notifier_info {
 	[FRA_SUPPRESS_IFGROUP] = { .type = NLA_U32 }, \
 	[FRA_GOTO]	= { .type = NLA_U32 }, \
 	[FRA_L3MDEV]	= { .type = NLA_U8 }, \
-	[FRA_UID_RANGE]	= { .len = sizeof(struct fib_rule_uid_range) }
+	[FRA_UID_RANGE]	= { .len = sizeof(struct fib_rule_uid_range) }, \
+	[FRA_PROTOCOL]  = { .type = NLA_U8 }
 
 static inline void fib_rule_get(struct fib_rule *rule)
 {

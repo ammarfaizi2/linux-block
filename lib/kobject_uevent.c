@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * kernel userspace event delivery
  *
  * Copyright (C) 2004 Red Hat, Inc.  All rights reserved.
  * Copyright (C) 2004 Novell, Inc.  All rights reserved.
  * Copyright (C) 2004 IBM, Inc. All rights reserved.
- *
- * Licensed under the GNU GPL v2.
  *
  * Authors:
  *	Robert Love		<rml@novell.com>
@@ -651,6 +650,7 @@ found:
 static struct pernet_operations uevent_net_ops = {
 	.init	= uevent_net_init,
 	.exit	= uevent_net_exit,
+	.async  = true,
 };
 
 static int __init kobject_uevent_init(void)

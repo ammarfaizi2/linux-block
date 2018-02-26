@@ -646,6 +646,11 @@ int fib_nh_match(struct fib_config *cfg, struct fib_info *fi,
 					    fi->fib_nh, cfg, extack))
 				return 1;
 		}
+#ifdef CONFIG_IP_ROUTE_CLASSID
+		if (cfg->fc_flow &&
+		    cfg->fc_flow != fi->fib_nh->nh_tclassid)
+			return 1;
+#endif
 		if ((!cfg->fc_oif || cfg->fc_oif == fi->fib_nh->nh_oif) &&
 		    (!cfg->fc_gw  || cfg->fc_gw == fi->fib_nh->nh_gw))
 			return 0;
@@ -1760,13 +1765,11 @@ void fib_select_multipath(struct fib_result *res, int hash)
 void fib_select_path(struct net *net, struct fib_result *res,
 		     struct flowi4 *fl4, const struct sk_buff *skb)
 {
-	bool oif_check;
-
-	oif_check = (fl4->flowi4_oif == 0 ||
-		     fl4->flowi4_flags & FLOWI_FLAG_SKIP_NH_OIF);
+	if (fl4->flowi4_oif && !(fl4->flowi4_flags & FLOWI_FLAG_SKIP_NH_OIF))
+		goto check_saddr;
 
 #ifdef CONFIG_IP_ROUTE_MULTIPATH
-	if (res->fi->fib_nhs > 1 && oif_check) {
+	if (res->fi->fib_nhs > 1) {
 		int h = fib_multipath_hash(res->fi, fl4, skb);
 
 		fib_select_multipath(res, h);
@@ -1775,10 +1778,10 @@ void fib_select_path(struct net *net, struct fib_result *res,
 #endif
 	if (!res->prefixlen &&
 	    res->table->tb_num_default > 1 &&
-	    res->type == RTN_UNICAST && oif_check)
+	    res->type == RTN_UNICAST)
 		fib_select_default(fl4, res);
 
+check_saddr:
 	if (!fl4->saddr)
 		fl4->saddr = FIB_RES_PREFSRC(net, *res);
 }
-EXPORT_SYMBOL_GPL(fib_select_path);

@@ -58,6 +58,13 @@
 extern struct list_head adapter_list;
 extern struct mutex uld_mutex;
 
+/* Suspend an Ethernet Tx queue with fewer available descriptors than this.
+ * This is the same as calc_tx_descs() for a TSO packet with
+ * nr_frags == MAX_SKB_FRAGS.
+ */
+#define ETHTXQ_STOP_THRES \
+	(1 + DIV_ROUND_UP((3 * MAX_SKB_FRAGS) / 2 + (MAX_SKB_FRAGS & 1), 8))
+
 enum {
 	MAX_NPORTS	= 4,     /* max # of ports */
 	SERNUM_LEN	= 24,    /* Serial # length */
@@ -565,6 +572,7 @@ enum {                                 /* adapter flags */
 
 enum {
 	ULP_CRYPTO_LOOKASIDE = 1 << 0,
+	ULP_CRYPTO_IPSEC_INLINE = 1 << 1,
 };
 
 struct rx_sw_desc;
@@ -979,6 +987,11 @@ enum {
 
 enum {
 	SCHED_CLASS_RATEMODE_ABS = 1,   /* Kb/s */
+};
+
+struct tx_sw_desc {                /* SW state per Tx descriptor */
+	struct sk_buff *skb;
+	struct ulptx_sgl *sgl;
 };
 
 /* Support for "sched_queue" command to allow one or more NIC TX Queues
@@ -1475,6 +1488,11 @@ u32 t4_read_pcie_cfg4(struct adapter *adap, int reg);
 u32 t4_get_util_window(struct adapter *adap);
 void t4_setup_memwin(struct adapter *adap, u32 memwin_base, u32 window);
 
+int t4_memory_rw_init(struct adapter *adap, int win, int mtype, u32 *mem_off,
+		      u32 *mem_base, u32 *mem_aperture);
+void t4_memory_update_win(struct adapter *adap, int win, u32 addr);
+void t4_memory_rw_residual(struct adapter *adap, u32 off, u32 addr, u8 *buf,
+			   int dir);
 #define T4_MEMORY_WRITE	0
 #define T4_MEMORY_READ	1
 int t4_memory_rw(struct adapter *adap, int win, int mtype, u32 addr, u32 len,
@@ -1739,6 +1757,16 @@ void free_rspq_fl(struct adapter *adap, struct sge_rspq *rq, struct sge_fl *fl);
 void free_tx_desc(struct adapter *adap, struct sge_txq *q,
 		  unsigned int n, bool unmap);
 void free_txq(struct adapter *adap, struct sge_txq *q);
+void cxgb4_reclaim_completed_tx(struct adapter *adap,
+				struct sge_txq *q, bool unmap);
+int cxgb4_map_skb(struct device *dev, const struct sk_buff *skb,
+		  dma_addr_t *addr);
+void cxgb4_inline_tx_skb(const struct sk_buff *skb, const struct sge_txq *q,
+			 void *pos);
+void cxgb4_write_sgl(const struct sk_buff *skb, struct sge_txq *q,
+		     struct ulptx_sgl *sgl, u64 *end, unsigned int start,
+		     const dma_addr_t *addr);
+void cxgb4_ring_tx_db(struct adapter *adap, struct sge_txq *q, int n);
 int t4_set_vlan_acl(struct adapter *adap, unsigned int mbox, unsigned int vf,
 		    u16 vlan);
 #endif /* __CXGB4_H__ */

@@ -2479,7 +2479,7 @@ static int ip6_route_check_nh_onlink(struct net *net,
 				     struct net_device *dev,
 				     struct netlink_ext_ack *extack)
 {
-	u32 tbid = l3mdev_fib_table(dev) ? : RT_TABLE_LOCAL;
+	u32 tbid = l3mdev_fib_table(dev) ? : RT_TABLE_MAIN;
 	const struct in6_addr *gw_addr = &cfg->fc_gateway;
 	u32 flags = RTF_LOCAL | RTF_ANYCAST | RTF_REJECT;
 	struct rt6_info *grt;
@@ -2488,8 +2488,10 @@ static int ip6_route_check_nh_onlink(struct net *net,
 	err = 0;
 	grt = ip6_nh_lookup_table(net, cfg, gw_addr, tbid, 0);
 	if (grt) {
-		if (grt->rt6i_flags & flags || dev != grt->dst.dev) {
-			NL_SET_ERR_MSG(extack, "Nexthop has invalid gateway");
+		if (!grt->dst.error &&
+		    (grt->rt6i_flags & flags || dev != grt->dst.dev)) {
+			NL_SET_ERR_MSG(extack,
+				       "Nexthop has invalid gateway or device mismatch");
 			err = -EINVAL;
 		}
 
@@ -2669,14 +2671,7 @@ static struct rt6_info *ip6_route_info_create(struct fib6_config *cfg,
 		if (err)
 			goto out;
 		rt->dst.lwtstate = lwtstate_get(lwtstate);
-		if (lwtunnel_output_redirect(rt->dst.lwtstate)) {
-			rt->dst.lwtstate->orig_output = rt->dst.output;
-			rt->dst.output = lwtunnel_output;
-		}
-		if (lwtunnel_input_redirect(rt->dst.lwtstate)) {
-			rt->dst.lwtstate->orig_input = rt->dst.input;
-			rt->dst.input = lwtunnel_input;
-		}
+		lwtunnel_set_redirect(&rt->dst);
 	}
 
 	ipv6_addr_prefix(&rt->rt6i_dst.addr, &cfg->fc_dst, cfg->fc_dst_len);
@@ -4977,6 +4972,7 @@ static void __net_exit ip6_route_net_exit_late(struct net *net)
 static struct pernet_operations ip6_route_net_ops = {
 	.init = ip6_route_net_init,
 	.exit = ip6_route_net_exit,
+	.async = true,
 };
 
 static int __net_init ipv6_inetpeer_init(struct net *net)
@@ -5002,11 +4998,13 @@ static void __net_exit ipv6_inetpeer_exit(struct net *net)
 static struct pernet_operations ipv6_inetpeer_ops = {
 	.init	=	ipv6_inetpeer_init,
 	.exit	=	ipv6_inetpeer_exit,
+	.async	=	true,
 };
 
 static struct pernet_operations ip6_route_net_late_ops = {
 	.init = ip6_route_net_init_late,
 	.exit = ip6_route_net_exit_late,
+	.async = true,
 };
 
 static struct notifier_block ip6_route_dev_notifier = {

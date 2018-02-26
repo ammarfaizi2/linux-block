@@ -984,13 +984,6 @@ int sctp_asconf_mgmt(struct sctp_sock *sp, struct sctp_sockaddr_entry *addrw)
  * This is used for tunneling the sctp_bindx() request through sctp_setsockopt()
  * from userspace.
  *
- * We don't use copy_from_user() for optimization: we first do the
- * sanity checks (buffer size -fast- and access check-healthy
- * pointer); if all of those succeed, then we can alloc the memory
- * (expensive operation) needed to copy the data to kernel. Then we do
- * the copying without checking the user space area
- * (__copy_from_user()).
- *
  * On exit there is no need to do sockfd_put(), sys_setsockopt() does
  * it.
  *
@@ -1020,25 +1013,15 @@ static int sctp_setsockopt_bindx(struct sock *sk,
 	if (unlikely(addrs_size <= 0))
 		return -EINVAL;
 
-	/* Check the user passed a healthy pointer.  */
-	if (unlikely(!access_ok(VERIFY_READ, addrs, addrs_size)))
-		return -EFAULT;
-
-	/* Alloc space for the address array in kernel memory.  */
-	kaddrs = kmalloc(addrs_size, GFP_USER | __GFP_NOWARN);
-	if (unlikely(!kaddrs))
-		return -ENOMEM;
-
-	if (__copy_from_user(kaddrs, addrs, addrs_size)) {
-		kfree(kaddrs);
-		return -EFAULT;
-	}
+	kaddrs = vmemdup_user(addrs, addrs_size);
+	if (unlikely(IS_ERR(kaddrs)))
+		return PTR_ERR(kaddrs);
 
 	/* Walk through the addrs buffer and count the number of addresses. */
 	addr_buf = kaddrs;
 	while (walk_size < addrs_size) {
 		if (walk_size + sizeof(sa_family_t) > addrs_size) {
-			kfree(kaddrs);
+			kvfree(kaddrs);
 			return -EINVAL;
 		}
 
@@ -1049,7 +1032,7 @@ static int sctp_setsockopt_bindx(struct sock *sk,
 		 * causes the address buffer to overflow return EINVAL.
 		 */
 		if (!af || (walk_size + af->sockaddr_len) > addrs_size) {
-			kfree(kaddrs);
+			kvfree(kaddrs);
 			return -EINVAL;
 		}
 		addrcnt++;
@@ -1079,7 +1062,7 @@ static int sctp_setsockopt_bindx(struct sock *sk,
 	}
 
 out:
-	kfree(kaddrs);
+	kvfree(kaddrs);
 
 	return err;
 }
@@ -1337,13 +1320,6 @@ out_free:
  * land and invoking either sctp_connectx(). This is used for tunneling
  * the sctp_connectx() request through sctp_setsockopt() from userspace.
  *
- * We don't use copy_from_user() for optimization: we first do the
- * sanity checks (buffer size -fast- and access check-healthy
- * pointer); if all of those succeed, then we can alloc the memory
- * (expensive operation) needed to copy the data to kernel. Then we do
- * the copying without checking the user space area
- * (__copy_from_user()).
- *
  * On exit there is no need to do sockfd_put(), sys_setsockopt() does
  * it.
  *
@@ -1359,7 +1335,6 @@ static int __sctp_setsockopt_connectx(struct sock *sk,
 				      sctp_assoc_t *assoc_id)
 {
 	struct sockaddr *kaddrs;
-	gfp_t gfp = GFP_KERNEL;
 	int err = 0;
 
 	pr_debug("%s: sk:%p addrs:%p addrs_size:%d\n",
@@ -1368,24 +1343,12 @@ static int __sctp_setsockopt_connectx(struct sock *sk,
 	if (unlikely(addrs_size <= 0))
 		return -EINVAL;
 
-	/* Check the user passed a healthy pointer.  */
-	if (unlikely(!access_ok(VERIFY_READ, addrs, addrs_size)))
-		return -EFAULT;
+	kaddrs = vmemdup_user(addrs, addrs_size);
+	if (unlikely(IS_ERR(kaddrs)))
+		return PTR_ERR(kaddrs);
 
-	/* Alloc space for the address array in kernel memory.  */
-	if (sk->sk_socket->file)
-		gfp = GFP_USER | __GFP_NOWARN;
-	kaddrs = kmalloc(addrs_size, gfp);
-	if (unlikely(!kaddrs))
-		return -ENOMEM;
-
-	if (__copy_from_user(kaddrs, addrs, addrs_size)) {
-		err = -EFAULT;
-	} else {
-		err = __sctp_connect(sk, kaddrs, addrs_size, assoc_id);
-	}
-
-	kfree(kaddrs);
+	err = __sctp_connect(sk, kaddrs, addrs_size, assoc_id);
+	kvfree(kaddrs);
 
 	return err;
 }
@@ -5090,7 +5053,7 @@ static int sctp_getsockopt_autoclose(struct sock *sk, int len, char __user *optv
 	len = sizeof(int);
 	if (put_user(len, optlen))
 		return -EFAULT;
-	if (copy_to_user(optval, &sctp_sk(sk)->autoclose, len))
+	if (put_user(sctp_sk(sk)->autoclose, (int __user *)optval))
 		return -EFAULT;
 	return 0;
 }
@@ -7624,11 +7587,11 @@ out:
  * here, again, by modeling the current TCP/UDP code.  We don't have
  * a good way to test with it yet.
  */
-unsigned int sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
+__poll_t sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
 {
 	struct sock *sk = sock->sk;
 	struct sctp_sock *sp = sctp_sk(sk);
-	unsigned int mask;
+	__poll_t mask;
 
 	poll_wait(file, sk_sleep(sk), wait);
 
@@ -7639,22 +7602,22 @@ unsigned int sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
 	 */
 	if (sctp_style(sk, TCP) && sctp_sstate(sk, LISTENING))
 		return (!list_empty(&sp->ep->asocs)) ?
-			(POLLIN | POLLRDNORM) : 0;
+			(EPOLLIN | EPOLLRDNORM) : 0;
 
 	mask = 0;
 
 	/* Is there any exceptional events?  */
 	if (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
-		mask |= POLLERR |
-			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? POLLPRI : 0);
+		mask |= EPOLLERR |
+			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? EPOLLPRI : 0);
 	if (sk->sk_shutdown & RCV_SHUTDOWN)
-		mask |= POLLRDHUP | POLLIN | POLLRDNORM;
+		mask |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
 	if (sk->sk_shutdown == SHUTDOWN_MASK)
-		mask |= POLLHUP;
+		mask |= EPOLLHUP;
 
 	/* Is it readable?  Reconsider this code with TCP-style support.  */
 	if (!skb_queue_empty(&sk->sk_receive_queue))
-		mask |= POLLIN | POLLRDNORM;
+		mask |= EPOLLIN | EPOLLRDNORM;
 
 	/* The association is either gone or not ready.  */
 	if (!sctp_style(sk, UDP) && sctp_sstate(sk, CLOSED))
@@ -7662,7 +7625,7 @@ unsigned int sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
 
 	/* Is it writable?  */
 	if (sctp_writeable(sk)) {
-		mask |= POLLOUT | POLLWRNORM;
+		mask |= EPOLLOUT | EPOLLWRNORM;
 	} else {
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 		/*
@@ -7674,7 +7637,7 @@ unsigned int sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
 		 * in the following code to cover it as well.
 		 */
 		if (sctp_writeable(sk))
-			mask |= POLLOUT | POLLWRNORM;
+			mask |= EPOLLOUT | EPOLLWRNORM;
 	}
 	return mask;
 }
@@ -8198,8 +8161,8 @@ void sctp_data_ready(struct sock *sk)
 	rcu_read_lock();
 	wq = rcu_dereference(sk->sk_wq);
 	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, POLLIN |
-						POLLRDNORM | POLLRDBAND);
+		wake_up_interruptible_sync_poll(&wq->wait, EPOLLIN |
+						EPOLLRDNORM | EPOLLRDBAND);
 	sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_IN);
 	rcu_read_unlock();
 }
@@ -8589,6 +8552,10 @@ struct proto sctp_prot = {
 	.unhash      =	sctp_unhash,
 	.get_port    =	sctp_get_port,
 	.obj_size    =  sizeof(struct sctp_sock),
+	.useroffset  =  offsetof(struct sctp_sock, subscribe),
+	.usersize    =  offsetof(struct sctp_sock, initmsg) -
+				offsetof(struct sctp_sock, subscribe) +
+				sizeof_field(struct sctp_sock, initmsg),
 	.sysctl_mem  =  sysctl_sctp_mem,
 	.sysctl_rmem =  sysctl_sctp_rmem,
 	.sysctl_wmem =  sysctl_sctp_wmem,
@@ -8628,6 +8595,10 @@ struct proto sctpv6_prot = {
 	.unhash		= sctp_unhash,
 	.get_port	= sctp_get_port,
 	.obj_size	= sizeof(struct sctp6_sock),
+	.useroffset	= offsetof(struct sctp6_sock, sctp.subscribe),
+	.usersize	= offsetof(struct sctp6_sock, sctp.initmsg) -
+				offsetof(struct sctp6_sock, sctp.subscribe) +
+				sizeof_field(struct sctp6_sock, sctp.initmsg),
 	.sysctl_mem	= sysctl_sctp_mem,
 	.sysctl_rmem	= sysctl_sctp_rmem,
 	.sysctl_wmem	= sysctl_sctp_wmem,

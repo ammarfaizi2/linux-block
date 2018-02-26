@@ -71,6 +71,7 @@
 #include "spectrum_cnt.h"
 #include "spectrum_dpipe.h"
 #include "spectrum_acl_flex_actions.h"
+#include "spectrum_span.h"
 #include "../mlxfw/mlxfw.h"
 
 #define MLXSW_FWREV_MAJOR 13
@@ -485,327 +486,6 @@ static int mlxsw_sp_base_mac_get(struct mlxsw_sp *mlxsw_sp)
 		return err;
 	mlxsw_reg_spad_base_mac_memcpy_from(spad_pl, mlxsw_sp->base_mac);
 	return 0;
-}
-
-static int mlxsw_sp_span_init(struct mlxsw_sp *mlxsw_sp)
-{
-	int i;
-
-	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, MAX_SPAN))
-		return -EIO;
-
-	mlxsw_sp->span.entries_count = MLXSW_CORE_RES_GET(mlxsw_sp->core,
-							  MAX_SPAN);
-	mlxsw_sp->span.entries = kcalloc(mlxsw_sp->span.entries_count,
-					 sizeof(struct mlxsw_sp_span_entry),
-					 GFP_KERNEL);
-	if (!mlxsw_sp->span.entries)
-		return -ENOMEM;
-
-	for (i = 0; i < mlxsw_sp->span.entries_count; i++)
-		INIT_LIST_HEAD(&mlxsw_sp->span.entries[i].bound_ports_list);
-
-	return 0;
-}
-
-static void mlxsw_sp_span_fini(struct mlxsw_sp *mlxsw_sp)
-{
-	int i;
-
-	for (i = 0; i < mlxsw_sp->span.entries_count; i++) {
-		struct mlxsw_sp_span_entry *curr = &mlxsw_sp->span.entries[i];
-
-		WARN_ON_ONCE(!list_empty(&curr->bound_ports_list));
-	}
-	kfree(mlxsw_sp->span.entries);
-}
-
-static struct mlxsw_sp_span_entry *
-mlxsw_sp_span_entry_create(struct mlxsw_sp_port *port)
-{
-	struct mlxsw_sp *mlxsw_sp = port->mlxsw_sp;
-	struct mlxsw_sp_span_entry *span_entry;
-	char mpat_pl[MLXSW_REG_MPAT_LEN];
-	u8 local_port = port->local_port;
-	int index;
-	int i;
-	int err;
-
-	/* find a free entry to use */
-	index = -1;
-	for (i = 0; i < mlxsw_sp->span.entries_count; i++) {
-		if (!mlxsw_sp->span.entries[i].used) {
-			index = i;
-			span_entry = &mlxsw_sp->span.entries[i];
-			break;
-		}
-	}
-	if (index < 0)
-		return NULL;
-
-	/* create a new port analayzer entry for local_port */
-	mlxsw_reg_mpat_pack(mpat_pl, index, local_port, true);
-	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
-	if (err)
-		return NULL;
-
-	span_entry->used = true;
-	span_entry->id = index;
-	span_entry->ref_count = 1;
-	span_entry->local_port = local_port;
-	return span_entry;
-}
-
-static void mlxsw_sp_span_entry_destroy(struct mlxsw_sp *mlxsw_sp,
-					struct mlxsw_sp_span_entry *span_entry)
-{
-	u8 local_port = span_entry->local_port;
-	char mpat_pl[MLXSW_REG_MPAT_LEN];
-	int pa_id = span_entry->id;
-
-	mlxsw_reg_mpat_pack(mpat_pl, pa_id, local_port, false);
-	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
-	span_entry->used = false;
-}
-
-struct mlxsw_sp_span_entry *
-mlxsw_sp_span_entry_find(struct mlxsw_sp *mlxsw_sp, u8 local_port)
-{
-	int i;
-
-	for (i = 0; i < mlxsw_sp->span.entries_count; i++) {
-		struct mlxsw_sp_span_entry *curr = &mlxsw_sp->span.entries[i];
-
-		if (curr->used && curr->local_port == local_port)
-			return curr;
-	}
-	return NULL;
-}
-
-static struct mlxsw_sp_span_entry
-*mlxsw_sp_span_entry_get(struct mlxsw_sp_port *port)
-{
-	struct mlxsw_sp_span_entry *span_entry;
-
-	span_entry = mlxsw_sp_span_entry_find(port->mlxsw_sp,
-					      port->local_port);
-	if (span_entry) {
-		/* Already exists, just take a reference */
-		span_entry->ref_count++;
-		return span_entry;
-	}
-
-	return mlxsw_sp_span_entry_create(port);
-}
-
-static int mlxsw_sp_span_entry_put(struct mlxsw_sp *mlxsw_sp,
-				   struct mlxsw_sp_span_entry *span_entry)
-{
-	WARN_ON(!span_entry->ref_count);
-	if (--span_entry->ref_count == 0)
-		mlxsw_sp_span_entry_destroy(mlxsw_sp, span_entry);
-	return 0;
-}
-
-static bool mlxsw_sp_span_is_egress_mirror(struct mlxsw_sp_port *port)
-{
-	struct mlxsw_sp *mlxsw_sp = port->mlxsw_sp;
-	struct mlxsw_sp_span_inspected_port *p;
-	int i;
-
-	for (i = 0; i < mlxsw_sp->span.entries_count; i++) {
-		struct mlxsw_sp_span_entry *curr = &mlxsw_sp->span.entries[i];
-
-		list_for_each_entry(p, &curr->bound_ports_list, list)
-			if (p->local_port == port->local_port &&
-			    p->type == MLXSW_SP_SPAN_EGRESS)
-				return true;
-	}
-
-	return false;
-}
-
-static int mlxsw_sp_span_mtu_to_buffsize(const struct mlxsw_sp *mlxsw_sp,
-					 int mtu)
-{
-	return mlxsw_sp_bytes_cells(mlxsw_sp, mtu * 5 / 2) + 1;
-}
-
-static int mlxsw_sp_span_port_mtu_update(struct mlxsw_sp_port *port, u16 mtu)
-{
-	struct mlxsw_sp *mlxsw_sp = port->mlxsw_sp;
-	char sbib_pl[MLXSW_REG_SBIB_LEN];
-	int err;
-
-	/* If port is egress mirrored, the shared buffer size should be
-	 * updated according to the mtu value
-	 */
-	if (mlxsw_sp_span_is_egress_mirror(port)) {
-		u32 buffsize = mlxsw_sp_span_mtu_to_buffsize(mlxsw_sp, mtu);
-
-		mlxsw_reg_sbib_pack(sbib_pl, port->local_port, buffsize);
-		err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbib), sbib_pl);
-		if (err) {
-			netdev_err(port->dev, "Could not update shared buffer for mirroring\n");
-			return err;
-		}
-	}
-
-	return 0;
-}
-
-static struct mlxsw_sp_span_inspected_port *
-mlxsw_sp_span_entry_bound_port_find(struct mlxsw_sp_port *port,
-				    struct mlxsw_sp_span_entry *span_entry)
-{
-	struct mlxsw_sp_span_inspected_port *p;
-
-	list_for_each_entry(p, &span_entry->bound_ports_list, list)
-		if (port->local_port == p->local_port)
-			return p;
-	return NULL;
-}
-
-static int
-mlxsw_sp_span_inspected_port_bind(struct mlxsw_sp_port *port,
-				  struct mlxsw_sp_span_entry *span_entry,
-				  enum mlxsw_sp_span_type type,
-				  bool bind)
-{
-	struct mlxsw_sp *mlxsw_sp = port->mlxsw_sp;
-	char mpar_pl[MLXSW_REG_MPAR_LEN];
-	int pa_id = span_entry->id;
-
-	/* bind the port to the SPAN entry */
-	mlxsw_reg_mpar_pack(mpar_pl, port->local_port,
-			    (enum mlxsw_reg_mpar_i_e) type, bind, pa_id);
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpar), mpar_pl);
-}
-
-static int
-mlxsw_sp_span_inspected_port_add(struct mlxsw_sp_port *port,
-				 struct mlxsw_sp_span_entry *span_entry,
-				 enum mlxsw_sp_span_type type,
-				 bool bind)
-{
-	struct mlxsw_sp_span_inspected_port *inspected_port;
-	struct mlxsw_sp *mlxsw_sp = port->mlxsw_sp;
-	char sbib_pl[MLXSW_REG_SBIB_LEN];
-	int err;
-
-	/* if it is an egress SPAN, bind a shared buffer to it */
-	if (type == MLXSW_SP_SPAN_EGRESS) {
-		u32 buffsize = mlxsw_sp_span_mtu_to_buffsize(mlxsw_sp,
-							     port->dev->mtu);
-
-		mlxsw_reg_sbib_pack(sbib_pl, port->local_port, buffsize);
-		err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbib), sbib_pl);
-		if (err) {
-			netdev_err(port->dev, "Could not create shared buffer for mirroring\n");
-			return err;
-		}
-	}
-
-	if (bind) {
-		err = mlxsw_sp_span_inspected_port_bind(port, span_entry, type,
-							true);
-		if (err)
-			goto err_port_bind;
-	}
-
-	inspected_port = kzalloc(sizeof(*inspected_port), GFP_KERNEL);
-	if (!inspected_port) {
-		err = -ENOMEM;
-		goto err_inspected_port_alloc;
-	}
-	inspected_port->local_port = port->local_port;
-	inspected_port->type = type;
-	list_add_tail(&inspected_port->list, &span_entry->bound_ports_list);
-
-	return 0;
-
-err_inspected_port_alloc:
-	if (bind)
-		mlxsw_sp_span_inspected_port_bind(port, span_entry, type,
-						  false);
-err_port_bind:
-	if (type == MLXSW_SP_SPAN_EGRESS) {
-		mlxsw_reg_sbib_pack(sbib_pl, port->local_port, 0);
-		mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbib), sbib_pl);
-	}
-	return err;
-}
-
-static void
-mlxsw_sp_span_inspected_port_del(struct mlxsw_sp_port *port,
-				 struct mlxsw_sp_span_entry *span_entry,
-				 enum mlxsw_sp_span_type type,
-				 bool bind)
-{
-	struct mlxsw_sp_span_inspected_port *inspected_port;
-	struct mlxsw_sp *mlxsw_sp = port->mlxsw_sp;
-	char sbib_pl[MLXSW_REG_SBIB_LEN];
-
-	inspected_port = mlxsw_sp_span_entry_bound_port_find(port, span_entry);
-	if (!inspected_port)
-		return;
-
-	if (bind)
-		mlxsw_sp_span_inspected_port_bind(port, span_entry, type,
-						  false);
-	/* remove the SBIB buffer if it was egress SPAN */
-	if (type == MLXSW_SP_SPAN_EGRESS) {
-		mlxsw_reg_sbib_pack(sbib_pl, port->local_port, 0);
-		mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbib), sbib_pl);
-	}
-
-	mlxsw_sp_span_entry_put(mlxsw_sp, span_entry);
-
-	list_del(&inspected_port->list);
-	kfree(inspected_port);
-}
-
-int mlxsw_sp_span_mirror_add(struct mlxsw_sp_port *from,
-			     struct mlxsw_sp_port *to,
-			     enum mlxsw_sp_span_type type, bool bind)
-{
-	struct mlxsw_sp *mlxsw_sp = from->mlxsw_sp;
-	struct mlxsw_sp_span_entry *span_entry;
-	int err;
-
-	span_entry = mlxsw_sp_span_entry_get(to);
-	if (!span_entry)
-		return -ENOENT;
-
-	netdev_dbg(from->dev, "Adding inspected port to SPAN entry %d\n",
-		   span_entry->id);
-
-	err = mlxsw_sp_span_inspected_port_add(from, span_entry, type, bind);
-	if (err)
-		goto err_port_bind;
-
-	return 0;
-
-err_port_bind:
-	mlxsw_sp_span_entry_put(mlxsw_sp, span_entry);
-	return err;
-}
-
-void mlxsw_sp_span_mirror_del(struct mlxsw_sp_port *from, u8 destination_port,
-			      enum mlxsw_sp_span_type type, bool bind)
-{
-	struct mlxsw_sp_span_entry *span_entry;
-
-	span_entry = mlxsw_sp_span_entry_find(from->mlxsw_sp,
-					      destination_port);
-	if (!span_entry) {
-		netdev_err(from->dev, "no span entry found\n");
-		return;
-	}
-
-	netdev_dbg(from->dev, "removing inspected port from SPAN entry %d\n",
-		   span_entry->id);
-	mlxsw_sp_span_inspected_port_del(from, span_entry, type, bind);
 }
 
 static int mlxsw_sp_port_sample_set(struct mlxsw_sp_port *mlxsw_sp_port,
@@ -4118,70 +3798,6 @@ static const struct mlxsw_config_profile mlxsw_sp_config_profile = {
 	.resource_query_enable		= 1,
 };
 
-static bool
-mlxsw_sp_resource_kvd_granularity_validate(struct netlink_ext_ack *extack,
-					   u64 size)
-{
-	const struct mlxsw_config_profile *profile;
-
-	profile = &mlxsw_sp_config_profile;
-	if (size % profile->kvd_hash_granularity) {
-		NL_SET_ERR_MSG_MOD(extack, "resource set with wrong granularity");
-		return false;
-	}
-	return true;
-}
-
-static int
-mlxsw_sp_resource_kvd_size_validate(struct devlink *devlink, u64 size,
-				    struct netlink_ext_ack *extack)
-{
-	NL_SET_ERR_MSG_MOD(extack, "kvd size cannot be changed");
-	return -EINVAL;
-}
-
-static int
-mlxsw_sp_resource_kvd_linear_size_validate(struct devlink *devlink, u64 size,
-					   struct netlink_ext_ack *extack)
-{
-	if (!mlxsw_sp_resource_kvd_granularity_validate(extack, size))
-		return -EINVAL;
-
-	return 0;
-}
-
-static int
-mlxsw_sp_resource_kvd_hash_single_size_validate(struct devlink *devlink, u64 size,
-						struct netlink_ext_ack *extack)
-{
-	struct mlxsw_core *mlxsw_core = devlink_priv(devlink);
-
-	if (!mlxsw_sp_resource_kvd_granularity_validate(extack, size))
-		return -EINVAL;
-
-	if (size < MLXSW_CORE_RES_GET(mlxsw_core, KVD_SINGLE_MIN_SIZE)) {
-		NL_SET_ERR_MSG_MOD(extack, "hash single size is smaller than minimum");
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int
-mlxsw_sp_resource_kvd_hash_double_size_validate(struct devlink *devlink, u64 size,
-						struct netlink_ext_ack *extack)
-{
-	struct mlxsw_core *mlxsw_core = devlink_priv(devlink);
-
-	if (!mlxsw_sp_resource_kvd_granularity_validate(extack, size))
-		return -EINVAL;
-
-	if (size < MLXSW_CORE_RES_GET(mlxsw_core, KVD_DOUBLE_MIN_SIZE)) {
-		NL_SET_ERR_MSG_MOD(extack, "hash double size is smaller than minimum");
-		return -EINVAL;
-	}
-	return 0;
-}
-
 static u64 mlxsw_sp_resource_kvd_linear_occ_get(struct devlink *devlink)
 {
 	struct mlxsw_core *mlxsw_core = devlink_priv(devlink);
@@ -4190,21 +3806,8 @@ static u64 mlxsw_sp_resource_kvd_linear_occ_get(struct devlink *devlink)
 	return mlxsw_sp_kvdl_occ_get(mlxsw_sp);
 }
 
-static struct devlink_resource_ops mlxsw_sp_resource_kvd_ops = {
-	.size_validate = mlxsw_sp_resource_kvd_size_validate,
-};
-
 static struct devlink_resource_ops mlxsw_sp_resource_kvd_linear_ops = {
-	.size_validate = mlxsw_sp_resource_kvd_linear_size_validate,
 	.occ_get = mlxsw_sp_resource_kvd_linear_occ_get,
-};
-
-static struct devlink_resource_ops mlxsw_sp_resource_kvd_hash_single_ops = {
-	.size_validate = mlxsw_sp_resource_kvd_hash_single_size_validate,
-};
-
-static struct devlink_resource_ops mlxsw_sp_resource_kvd_hash_double_ops = {
-	.size_validate = mlxsw_sp_resource_kvd_hash_double_size_validate,
 };
 
 static struct devlink_resource_size_params mlxsw_sp_kvd_size_params;
@@ -4268,7 +3871,7 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 					MLXSW_SP_RESOURCE_KVD,
 					DEVLINK_RESOURCE_ID_PARENT_TOP,
 					&mlxsw_sp_kvd_size_params,
-					&mlxsw_sp_resource_kvd_ops);
+					NULL);
 	if (err)
 		return err;
 
@@ -4282,6 +3885,10 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 	if (err)
 		return err;
 
+	err = mlxsw_sp_kvdl_resources_register(devlink);
+	if  (err)
+		return err;
+
 	double_size = kvd_size - linear_size;
 	double_size *= profile->kvd_hash_double_parts;
 	double_size /= profile->kvd_hash_double_parts +
@@ -4292,7 +3899,7 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 					MLXSW_SP_RESOURCE_KVD_HASH_DOUBLE,
 					MLXSW_SP_RESOURCE_KVD,
 					&mlxsw_sp_hash_double_size_params,
-					&mlxsw_sp_resource_kvd_hash_double_ops);
+					NULL);
 	if (err)
 		return err;
 
@@ -4302,7 +3909,7 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 					MLXSW_SP_RESOURCE_KVD_HASH_SINGLE,
 					MLXSW_SP_RESOURCE_KVD,
 					&mlxsw_sp_hash_single_size_params,
-					&mlxsw_sp_resource_kvd_hash_single_ops);
+					NULL);
 	if (err)
 		return err;
 
@@ -4556,13 +4163,11 @@ mlxsw_sp_master_lag_check(struct mlxsw_sp *mlxsw_sp,
 	u16 lag_id;
 
 	if (mlxsw_sp_lag_index_get(mlxsw_sp, lag_dev, &lag_id) != 0) {
-		NL_SET_ERR_MSG(extack,
-			       "spectrum: Exceeded number of supported LAG devices");
+		NL_SET_ERR_MSG_MOD(extack, "Exceeded number of supported LAG devices");
 		return false;
 	}
 	if (lag_upper_info->tx_type != NETDEV_LAG_TX_TYPE_HASH) {
-		NL_SET_ERR_MSG(extack,
-			       "spectrum: LAG device using unsupported Tx type");
+		NL_SET_ERR_MSG_MOD(extack, "LAG device using unsupported Tx type");
 		return false;
 	}
 	return true;
@@ -4804,8 +4409,7 @@ static int mlxsw_sp_netdevice_port_upper_event(struct net_device *lower_dev,
 		    !netif_is_lag_master(upper_dev) &&
 		    !netif_is_bridge_master(upper_dev) &&
 		    !netif_is_ovs_master(upper_dev)) {
-			NL_SET_ERR_MSG(extack,
-				       "spectrum: Unknown upper device type");
+			NL_SET_ERR_MSG_MOD(extack, "Unknown upper device type");
 			return -EINVAL;
 		}
 		if (!info->linking)
@@ -4814,8 +4418,7 @@ static int mlxsw_sp_netdevice_port_upper_event(struct net_device *lower_dev,
 		    (!netif_is_bridge_master(upper_dev) ||
 		     !mlxsw_sp_bridge_device_is_offloaded(mlxsw_sp,
 							  upper_dev))) {
-			NL_SET_ERR_MSG(extack,
-				       "spectrum: Enslaving a port to a device that already has an upper device is not supported");
+			NL_SET_ERR_MSG_MOD(extack, "Enslaving a port to a device that already has an upper device is not supported");
 			return -EINVAL;
 		}
 		if (netif_is_lag_master(upper_dev) &&
@@ -4823,24 +4426,20 @@ static int mlxsw_sp_netdevice_port_upper_event(struct net_device *lower_dev,
 					       info->upper_info, extack))
 			return -EINVAL;
 		if (netif_is_lag_master(upper_dev) && vlan_uses_dev(dev)) {
-			NL_SET_ERR_MSG(extack,
-				       "spectrum: Master device is a LAG master and this device has a VLAN");
+			NL_SET_ERR_MSG_MOD(extack, "Master device is a LAG master and this device has a VLAN");
 			return -EINVAL;
 		}
 		if (netif_is_lag_port(dev) && is_vlan_dev(upper_dev) &&
 		    !netif_is_lag_master(vlan_dev_real_dev(upper_dev))) {
-			NL_SET_ERR_MSG(extack,
-				       "spectrum: Can not put a VLAN on a LAG port");
+			NL_SET_ERR_MSG_MOD(extack, "Can not put a VLAN on a LAG port");
 			return -EINVAL;
 		}
 		if (netif_is_ovs_master(upper_dev) && vlan_uses_dev(dev)) {
-			NL_SET_ERR_MSG(extack,
-				       "spectrum: Master device is an OVS master and this device has a VLAN");
+			NL_SET_ERR_MSG_MOD(extack, "Master device is an OVS master and this device has a VLAN");
 			return -EINVAL;
 		}
 		if (netif_is_ovs_port(dev) && is_vlan_dev(upper_dev)) {
-			NL_SET_ERR_MSG(extack,
-				       "spectrum: Can not put a VLAN on an OVS port");
+			NL_SET_ERR_MSG_MOD(extack, "Can not put a VLAN on an OVS port");
 			return -EINVAL;
 		}
 		break;
@@ -4953,7 +4552,7 @@ static int mlxsw_sp_netdevice_port_vlan_event(struct net_device *vlan_dev,
 	case NETDEV_PRECHANGEUPPER:
 		upper_dev = info->upper_dev;
 		if (!netif_is_bridge_master(upper_dev)) {
-			NL_SET_ERR_MSG(extack, "spectrum: VLAN devices only support bridge and VRF uppers");
+			NL_SET_ERR_MSG_MOD(extack, "VLAN devices only support bridge and VRF uppers");
 			return -EINVAL;
 		}
 		if (!info->linking)
@@ -4962,7 +4561,7 @@ static int mlxsw_sp_netdevice_port_vlan_event(struct net_device *vlan_dev,
 		    (!netif_is_bridge_master(upper_dev) ||
 		     !mlxsw_sp_bridge_device_is_offloaded(mlxsw_sp,
 							  upper_dev))) {
-			NL_SET_ERR_MSG(extack, "spectrum: Enslaving a port to a device that already has an upper device is not supported");
+			NL_SET_ERR_MSG_MOD(extack, "Enslaving a port to a device that already has an upper device is not supported");
 			return -EINVAL;
 		}
 		break;

@@ -27,8 +27,10 @@ struct serdev_device;
 
 /**
  * struct serdev_device_ops - Callback operations for a serdev device
- * @receive_buf:	Function called with data received from device.
- * @write_wakeup:	Function called when ready to transmit more data.
+ * @receive_buf:	Function called with data received from device;
+ *			returns number of bytes accepted; may sleep.
+ * @write_wakeup:	Function called when ready to transmit more data; must
+ *			not sleep.
  */
 struct serdev_device_ops {
 	int (*receive_buf)(struct serdev_device *, const unsigned char *, size_t);
@@ -200,6 +202,7 @@ static inline int serdev_controller_receive_buf(struct serdev_controller *ctrl,
 
 int serdev_device_open(struct serdev_device *);
 void serdev_device_close(struct serdev_device *);
+int devm_serdev_device_open(struct device *, struct serdev_device *);
 unsigned int serdev_device_set_baudrate(struct serdev_device *, unsigned int);
 void serdev_device_set_flow_control(struct serdev_device *, bool);
 int serdev_device_write_buf(struct serdev_device *, const unsigned char *, size_t);
