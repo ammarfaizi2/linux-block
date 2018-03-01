@@ -1589,7 +1589,7 @@ static inline int test_tsk_need_resched(struct task_struct *tsk)
  */
 #ifndef CONFIG_PREEMPT
 extern int _cond_resched(void);
-#elif defined(CONFIG_TASKS_RCU)
+#elif defined(CONFIG_TRACEPOINT_BENCHMARK)
 static inline int _cond_resched(void)
 {
 	rcu_note_voluntary_context_switch(current);
