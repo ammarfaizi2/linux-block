@@ -260,8 +260,10 @@ static void rcu_preempt_ctxt_queue(struct rcu_node *rnp, struct rcu_data *rdp)
 	 * ->exp_tasks pointers, respectively, to reference the newly
 	 * blocked tasks.
 	 */
-	if (!rnp->gp_tasks && (blkd_state & RCU_GP_BLKD))
+	if (!rnp->gp_tasks && (blkd_state & RCU_GP_BLKD)) {
 		rnp->gp_tasks = &t->rcu_node_entry;
+		WARN_ON_ONCE(rnp->completedqs == rnp->gpnum);
+	}
 	if (!rnp->exp_tasks && (blkd_state & RCU_EXP_BLKD))
 		rnp->exp_tasks = &t->rcu_node_entry;
 	WARN_ON_ONCE(!(blkd_state & RCU_GP_BLKD) !=
@@ -491,6 +493,8 @@ void rcu_read_unlock_special(struct task_struct *t)
 		WARN_ON_ONCE(rnp != t->rcu_blocked_node);
 		WARN_ON_ONCE(rnp->level != rcu_num_lvls - 1);
 		empty_norm = !rcu_preempt_blocked_readers_cgp(rnp);
+		WARN_ON_ONCE(rnp->completedqs == rnp->gpnum &&
+			     (!empty_norm || rnp->qsmask));
 		empty_exp = sync_rcu_preempt_exp_done(rnp);
 		smp_mb(); /* ensure expedited fastpath sees end of RCU c-s. */
 		np = rcu_next_node_entry(t, rnp);
