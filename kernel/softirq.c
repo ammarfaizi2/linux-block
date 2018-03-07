@@ -131,14 +131,22 @@ void __local_bh_disable_ip(unsigned long ip, unsigned int cnt)
 #endif
 		trace_preempt_off(CALLER_ADDR0, get_lock_parent_ip());
 	}
+	rcu_read_lock();
 }
+#else /* CONFIG_TRACE_IRQFLAGS */
+void __local_bh_disable_ip(unsigned long ip, unsigned int cnt)
+{
+	preempt_count_add(cnt);
+	barrier();
+}
+#endif /* !CONFIG_TRACE_IRQFLAGS */
 EXPORT_SYMBOL(__local_bh_disable_ip);
-#endif /* CONFIG_TRACE_IRQFLAGS */
 
 static void __local_bh_enable(unsigned int cnt)
 {
 	lockdep_assert_irqs_disabled();
 
+	rcu_read_unlock();
 	if (softirq_count() == (cnt & SOFTIRQ_MASK))
 		trace_softirqs_on(_RET_IP_);
 	preempt_count_sub(cnt);
@@ -159,6 +167,7 @@ void __local_bh_enable_ip(unsigned long ip, unsigned int cnt)
 {
 	WARN_ON_ONCE(in_irq());
 	lockdep_assert_irqs_enabled();
+	rcu_read_unlock();
 #ifdef CONFIG_TRACE_IRQFLAGS
 	local_irq_disable();
 #endif
