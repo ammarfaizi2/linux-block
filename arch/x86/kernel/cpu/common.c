@@ -962,6 +962,7 @@ static void __init early_identify_cpu(struct cpuinfo_x86 *c)
 
 	/* cyrix could have cpuid enabled via c_identify()*/
 	if (have_cpuid_p()) {
+		cpuid_read_all_leafs();
 		cpu_detect(c);
 		get_cpu_vendor(c);
 		get_cpu_cap(c);
