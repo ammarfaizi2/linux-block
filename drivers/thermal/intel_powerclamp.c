@@ -199,7 +199,7 @@ static void find_target_mwait(void)
 	unsigned int highest_subcstate = 0;
 	int i;
 
-	if (boot_cpu_data.cpuid_level < CPUID_MWAIT_LEAF)
+	if (cpuid_info.std.max_lvl < CPUID_MWAIT_LEAF)
 		return;
 
 	cpuid(CPUID_MWAIT_LEAF, &eax, &ebx, &ecx, &edx);

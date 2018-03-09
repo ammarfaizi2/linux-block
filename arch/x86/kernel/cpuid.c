@@ -107,14 +107,12 @@ static ssize_t cpuid_read(struct file *file, char __user *buf,
 static int cpuid_open(struct inode *inode, struct file *file)
 {
 	unsigned int cpu;
-	struct cpuinfo_x86 *c;
 
 	cpu = iminor(file_inode(file));
 	if (cpu >= nr_cpu_ids || !cpu_online(cpu))
 		return -ENXIO;	/* No such CPU */
 
-	c = &cpu_data(cpu);
-	if (c->cpuid_level < 0)
+	if (!boot_cpu_has(X86_FEATURE_CPUID))
 		return -EIO;	/* CPUID not supported */
 
 	return 0;

@@ -661,7 +661,7 @@ unsigned int init_intel_cacheinfo(struct cpuinfo_x86 *c)
 	unsigned int cpu = c->cpu_index;
 #endif
 
-	if (c->cpuid_level > 3) {
+	if (cpuid_info.std.max_lvl > 3) {
 		static int is_initialized;
 
 		if (is_initialized == 0) {
@@ -710,7 +710,7 @@ unsigned int init_intel_cacheinfo(struct cpuinfo_x86 *c)
 	 * Don't use cpuid2 if cpuid4 is supported. For P4, we use cpuid2 for
 	 * trace cache
 	 */
-	if ((num_cache_leaves == 0 || c->x86 == 15) && c->cpuid_level > 1) {
+	if ((num_cache_leaves == 0 || c->x86 == 15) && cpuid_info.std.max_lvl > 1) {
 		/* supports eax=2  call */
 		int j, n;
 		unsigned int regs[4];
@@ -790,8 +790,8 @@ unsigned int init_intel_cacheinfo(struct cpuinfo_x86 *c)
 
 #ifdef CONFIG_SMP
 	/*
-	 * If cpu_llc_id is not yet set, this means cpuid_level < 4 which in
-	 * turns means that the only possibility is SMT (as indicated in
+	 * If cpu_llc_id is not yet set, this means cpuid_info.std.max_lvl < 4
+	 * which in turns means that the only possibility is SMT (as indicated in
 	 * cpuid1). Since cpuid2 doesn't specify shared caches, and we know
 	 * that SMT shares all caches, we can unconditionally set cpu_llc_id to
 	 * c->phys_proc_id.

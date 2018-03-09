@@ -134,5 +134,6 @@ struct cpuid_leafs_info {
 
 extern struct cpuid_leafs_info cpuid_info;
 
+void cpuid_read_leaf(unsigned int l);
 void cpuid_read_all_leafs(void);
 #endif /* _ASM_X86_CPUID_H */

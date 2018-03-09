@@ -294,7 +294,7 @@ static void init_cyrix(struct cpuinfo_x86 *c)
 		c->x86_cache_size = 16;	/* Yep 16K integrated cache thats it */
 
 		/* GXm supports extended cpuid levels 'ala' AMD */
-		if (c->cpuid_level == 2) {
+		if (cpuid_info.std.max_lvl == 2) {
 			/* Enable cxMMX extensions (GX1 Datasheet 54) */
 			setCx86_old(CX86_CCR7, getCx86_old(CX86_CCR7) | 1);
 

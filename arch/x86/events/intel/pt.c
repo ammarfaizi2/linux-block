@@ -193,7 +193,7 @@ static int __init pt_pmu_hw_init(void)
 	 * otherwise, zero for numerator stands for "not enumerated"
 	 * as per SDM
 	 */
-	if (boot_cpu_data.cpuid_level >= CPUID_TSC_LEAF) {
+	if (cpuid_info.std.max_lvl >= CPUID_TSC_LEAF) {
 		u32 eax, ebx, ecx, edx;
 
 		cpuid(CPUID_TSC_LEAF, &eax, &ebx, &ecx, &edx);

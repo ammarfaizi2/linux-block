@@ -25,7 +25,7 @@ static unsigned int precalibrated_tsc_khz;
 
 static uint32_t jailhouse_cpuid_base(void)
 {
-	if (boot_cpu_data.cpuid_level < 0 ||
+	if (cpuid_info.std.max_lvl < 0 ||
 	    !boot_cpu_has(X86_FEATURE_HYPERVISOR))
 		return 0;
 

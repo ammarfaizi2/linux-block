@@ -39,7 +39,6 @@
 #define X86_MODEL	new_cpu_data+CPUINFO_x86_model
 #define X86_STEPPING	new_cpu_data+CPUINFO_x86_stepping
 #define X86_HARD_MATH	new_cpu_data+CPUINFO_hard_math
-#define X86_CPUID	new_cpu_data+CPUINFO_cpuid_level
 #define X86_CAPABILITY	new_cpu_data+CPUINFO_x86_capability
 #define X86_VENDOR_ID	new_cpu_data+CPUINFO_x86_vendor_id
 
@@ -231,7 +230,7 @@ ENTRY(startup_32_smp)
  * NOTE! If we are on a 486 we may have no cr4 at all! Specifically, cr4 exists
  * if and only if CPUID exists and has flags other than the FPU flag set.
  */
-	movl $-1,pa(X86_CPUID)		# preset CPUID level
+	movl $-1,pa(cpuid_level)	# preset CPUID level
 	movl $X86_EFLAGS_ID,%ecx
 	pushl %ecx
 	popfl				# set EFLAGS=ID
@@ -243,7 +242,7 @@ ENTRY(startup_32_smp)
 
 	xorl %eax,%eax
 	cpuid
-	movl %eax,pa(X86_CPUID)		# save largest std CPUID function
+	movl %eax,pa(cpuid_level)		# save largest std CPUID function
 
 	movl $1,%eax
 	cpuid
@@ -309,13 +308,13 @@ ENTRY(startup_32_smp)
  * Check if it is 486
  */
 	movb $4,X86			# at least 486
-	cmpl $-1,X86_CPUID
+	cmpl $-1,cpuid_level
 	je .Lis486
 
 	/* get vendor info */
 	xorl %eax,%eax			# call CPUID with 0 -> return vendor ID
 	cpuid
-	movl %eax,X86_CPUID		# save CPUID level
+	movl %eax,cpuid_level		# save CPUID level
 	movl %ebx,X86_VENDOR_ID		# lo 4 chars
 	movl %edx,X86_VENDOR_ID+4	# next 4 chars
 	movl %ecx,X86_VENDOR_ID+8	# last 4 chars
@@ -611,3 +610,6 @@ ENTRY(boot_gdt)
 	.fill GDT_ENTRY_BOOT_CS,8,0
 	.quad 0x00cf9a000000ffff	/* kernel 4GB code at 0x00000000 */
 	.quad 0x00cf92000000ffff	/* kernel 4GB data at 0x00000000 */
+
+cpuid_level:
+	.int -1

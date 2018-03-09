@@ -121,7 +121,7 @@ int acpi_processor_ffh_cstate_probe(unsigned int cpu,
 	struct cpuinfo_x86 *c = &cpu_data(cpu);
 	long retval;
 
-	if (!cpu_cstate_entry || c->cpuid_level < CPUID_MWAIT_LEAF)
+	if (!cpu_cstate_entry || cpuid_info.std.max_lvl < CPUID_MWAIT_LEAF)
 		return -1;
 
 	if (reg->bit_offset != NATIVE_CSTATE_BEYOND_HALT)

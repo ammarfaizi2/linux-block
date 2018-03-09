@@ -40,7 +40,7 @@ static void show_cpuinfo_misc(struct seq_file *m, struct cpuinfo_x86 *c)
 		   static_cpu_has_bug(X86_BUG_COMA) ? "yes" : "no",
 		   static_cpu_has(X86_FEATURE_FPU) ? "yes" : "no",
 		   static_cpu_has(X86_FEATURE_FPU) ? "yes" : "no",
-		   c->cpuid_level);
+		   cpuid_info.std.max_lvl);
 }
 #else
 static void show_cpuinfo_misc(struct seq_file *m, struct cpuinfo_x86 *c)
@@ -50,7 +50,7 @@ static void show_cpuinfo_misc(struct seq_file *m, struct cpuinfo_x86 *c)
 		   "fpu_exception\t: yes\n"
 		   "cpuid level\t: %d\n"
 		   "wp\t\t: yes\n",
-		   c->cpuid_level);
+		   cpuid_info.std.max_lvl);
 }
 #endif
 
@@ -72,7 +72,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		   c->x86_model,
 		   c->x86_model_id[0] ? c->x86_model_id : "unknown");
 
-	if (c->x86_stepping || c->cpuid_level >= 0)
+	if (c->x86_stepping || cpuid_info.std.max_lvl >= 0)
 		seq_printf(m, "stepping\t: %d\n", c->x86_stepping);
 	else
 		seq_puts(m, "stepping\t: unknown\n");

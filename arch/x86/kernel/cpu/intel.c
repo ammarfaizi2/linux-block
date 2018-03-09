@@ -168,7 +168,6 @@ static void early_init_intel(struct cpuinfo_x86 *c)
 		if (msr_clear_bit(MSR_IA32_MISC_ENABLE,
 				  MSR_IA32_MISC_ENABLE_LIMIT_CPUID_BIT) > 0) {
 			cpuid_read_all_leafs();
-			c->cpuid_level = cpuid_info.std.max_lvl;
 			get_cpu_cap(c);
 		}
 	}
@@ -286,7 +285,7 @@ static void early_init_intel(struct cpuinfo_x86 *c)
 		setup_clear_cpu_cap(X86_FEATURE_PGE);
 	}
 
-	if (c->cpuid_level >= 0x00000001) {
+	if (cpuid_info.std.max_lvl >= 1) {
 		u32 eax, ebx, ecx, edx;
 
 		cpuid(0x00000001, &eax, &ebx, &ecx, &edx);
@@ -462,7 +461,7 @@ static int intel_num_cpu_cores(struct cpuinfo_x86 *c)
 {
 	unsigned int eax, ebx, ecx, edx;
 
-	if (!IS_ENABLED(CONFIG_SMP) || c->cpuid_level < 4)
+	if (!IS_ENABLED(CONFIG_SMP) || cpuid_info.std.max_lvl < 4)
 		return 1;
 
 	/* Intel has a non-standard dependency on %ecx for this CPUID level. */
@@ -687,7 +686,7 @@ static void init_intel(struct cpuinfo_x86 *c)
 		l2 = c->x86_cache_size;
 	}
 
-	if (c->cpuid_level > 9) {
+	if (cpuid_info.std.max_lvl > 9) {
 		unsigned eax = cpuid_eax(10);
 		/* Check for version and the number of counters */
 		if ((eax & 0xff) && (((eax>>8) & 0xff) > 1))
@@ -946,7 +945,7 @@ static void intel_detect_tlb(struct cpuinfo_x86 *c)
 	unsigned int regs[4];
 	unsigned char *desc = (unsigned char *)regs;
 
-	if (c->cpuid_level < 2)
+	if (cpuid_info.std.max_lvl < 2)
 		return;
 
 	/* Number of times to iterate */

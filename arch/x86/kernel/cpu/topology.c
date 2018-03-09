@@ -35,7 +35,7 @@ void detect_extended_topology(struct cpuinfo_x86 *c)
 	unsigned int core_select_mask, core_level_siblings;
 	static bool printed;
 
-	if (c->cpuid_level < 0xb)
+	if (cpuid_info.std.max_lvl < 0xb)
 		return;
 
 	cpuid_count(0xb, SMT_LEVEL, &eax, &ebx, &ecx, &edx);

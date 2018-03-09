@@ -82,7 +82,7 @@ static void default_init(struct cpuinfo_x86 *c)
 #else
 	/* Not much we can do here... */
 	/* Check if at least it has cpuid */
-	if (c->cpuid_level == -1) {
+	if (!cpu_has(c, X86_FEATURE_CPUID)) {
 		/* No cpuid. It must be an ancient CPU */
 		if (c->x86 == 4)
 			strcpy(c->x86_model_id, "486");
@@ -275,7 +275,6 @@ static void squash_the_stupid_serial_number(struct cpuinfo_x86 *c)
 
 	/* Disabling the serial number may affect the cpuid level */
 	cpuid_read_leaf(0);
-	c->cpuid_level = cpuid_info.std.max_lvl;
 }
 
 static int __init x86_serial_nr_setup(char *s)
@@ -437,7 +436,7 @@ static void filter_cpuid_features(struct cpuinfo_x86 *c, bool warn)
 		 */
 		if (!((s32)df->level < 0 ?
 		     (u32)df->level > (u32)c->extended_cpuid_level :
-		     (s32)df->level > (s32)c->cpuid_level))
+		     (s32)df->level > (s32)cpuid_info.std.max_lvl))
 			continue;
 
 		clear_cpu_cap(c, df->feature);
@@ -718,15 +717,17 @@ static void get_cpu_vendor(struct cpuinfo_x86 *c)
 
 void cpu_detect(struct cpuinfo_x86 *c)
 {
+	u32 dummy;
+
 	/* Get vendor name */
-	cpuid(0x00000000, (unsigned int *)&c->cpuid_level,
+	cpuid(0x00000000, &dummy,
 	      (unsigned int *)&c->x86_vendor_id[0],
 	      (unsigned int *)&c->x86_vendor_id[8],
 	      (unsigned int *)&c->x86_vendor_id[4]);
 
 	c->x86 = 4;
-	/* Intel-defined flags: level 0x00000001 */
-	if (c->cpuid_level >= 0x00000001) {
+	/* Intel-defined flags: level 1 */
+	if (cpuid_info.std.max_lvl >= 1) {
 		u32 junk, tfms, cap0, misc;
 
 		cpuid(0x00000001, &tfms, &misc, &junk, &cap0);
@@ -776,7 +777,7 @@ void get_cpu_cap(struct cpuinfo_x86 *c)
 	u32 eax, ebx, ecx, edx;
 
 	/* Intel-defined flags: level 0x00000001 */
-	if (c->cpuid_level >= 0x00000001) {
+	if (cpuid_info.std.max_lvl >= 1) {
 		cpuid(0x00000001, &eax, &ebx, &ecx, &edx);
 
 		c->x86_capability[CPUID_1_ECX] = ecx;
@@ -784,11 +785,11 @@ void get_cpu_cap(struct cpuinfo_x86 *c)
 	}
 
 	/* Thermal and Power Management Leaf: level 0x00000006 (eax) */
-	if (c->cpuid_level >= 0x00000006)
+	if (cpuid_info.std.max_lvl >= 0x00000006)
 		c->x86_capability[CPUID_6_EAX] = cpuid_eax(0x00000006);
 
 	/* Additional Intel-defined flags: level 0x00000007 */
-	if (c->cpuid_level >= 0x00000007) {
+	if (cpuid_info.std.max_lvl >= 0x00000007) {
 		cpuid_count(0x00000007, 0, &eax, &ebx, &ecx, &edx);
 		c->x86_capability[CPUID_7_0_EBX] = ebx;
 		c->x86_capability[CPUID_7_ECX] = ecx;
@@ -796,14 +797,14 @@ void get_cpu_cap(struct cpuinfo_x86 *c)
 	}
 
 	/* Extended state features: level 0x0000000d */
-	if (c->cpuid_level >= 0x0000000d) {
+	if (cpuid_info.std.max_lvl >= 0x0000000d) {
 		cpuid_count(0x0000000d, 1, &eax, &ebx, &ecx, &edx);
 
 		c->x86_capability[CPUID_D_1_EAX] = eax;
 	}
 
 	/* Additional Intel-defined flags: level 0x0000000F */
-	if (c->cpuid_level >= 0x0000000F) {
+	if (cpuid_info.std.max_lvl >= 0x0000000F) {
 
 		/* QoS sub-leaf, EAX=0Fh, ECX=0 */
 		cpuid_count(0x0000000F, 0, &eax, &ebx, &ecx, &edx);
@@ -938,8 +939,7 @@ static bool __init cpu_vulnerable_to_meltdown(struct cpuinfo_x86 *c)
 
 /*
  * Do minimum CPU detection early.
- * Fields really needed: vendor, cpuid_level, family, model, mask,
- * cache alignment.
+ * Fields really needed: vendor, family, model, mask, cache alignment.
  * The others are not touched to avoid unwanted side effects.
  *
  * WARNING: this function is only called on the boot CPU.  Don't add code
@@ -1099,7 +1099,7 @@ static void generic_identify(struct cpuinfo_x86 *c)
 
 	get_cpu_cap(c);
 
-	if (c->cpuid_level >= 0x00000001) {
+	if (cpuid_info.std.max_lvl >= 1) {
 		c->initial_apicid = (cpuid_ebx(1) >> 24) & 0xFF;
 #ifdef CONFIG_X86_32
 # ifdef CONFIG_SMP
@@ -1199,7 +1199,6 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 	c->x86_phys_bits = 36;
 	c->x86_virt_bits = 48;
 #else
-	c->cpuid_level = -1;	/* CPUID not detected */
 	c->x86_clflush_size = 32;
 	c->x86_phys_bits = 32;
 	c->x86_virt_bits = 32;
@@ -1229,6 +1228,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 	 * At the end of this section, c->x86_capability better
 	 * indicate the features this CPU genuinely supports!
 	 */
+
 	if (this_cpu->c_init)
 		this_cpu->c_init(c);
 
@@ -1366,7 +1366,7 @@ void print_cpu_info(struct cpuinfo_x86 *c)
 	if (c->x86_vendor < X86_VENDOR_NUM) {
 		vendor = this_cpu->c_vendor;
 	} else {
-		if (c->cpuid_level >= 0)
+		if (cpuid_info.std.max_lvl >= 0)
 			vendor = c->x86_vendor_id;
 	}
 
@@ -1380,7 +1380,7 @@ void print_cpu_info(struct cpuinfo_x86 *c)
 
 	pr_cont(" (family: 0x%x, model: 0x%x", c->x86, c->x86_model);
 
-	if (c->x86_stepping || c->cpuid_level >= 0)
+	if (c->x86_stepping || cpuid_info.std.max_lvl >= 0)
 		pr_cont(", stepping: 0x%x)\n", c->x86_stepping);
 	else
 		pr_cont(")\n");
@@ -1764,7 +1764,7 @@ void microcode_check(void)
 	perf_check_microcode();
 
 	/* Reload CPUID max function as it might've changed. */
-	info.cpuid_level = cpuid_info.std.max_lvl;
+	cpuid_read_leaf(0);
 
 	/*
 	 * Copy all capability leafs to pick up the synthetic ones so that

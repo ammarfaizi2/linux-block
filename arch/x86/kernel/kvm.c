@@ -575,7 +575,7 @@ static void __init kvm_guest_init(void)
 
 static noinline uint32_t __kvm_cpuid_base(void)
 {
-	if (boot_cpu_data.cpuid_level < 0)
+	if (cpuid_info.std.max_lvl < 0)
 		return 0;	/* So we don't blow up on old processors */
 
 	if (boot_cpu_has(X86_FEATURE_HYPERVISOR))

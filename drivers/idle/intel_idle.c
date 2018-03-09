@@ -1136,7 +1136,7 @@ static int __init intel_idle_probe(void)
 		return -ENODEV;
 	}
 
-	if (boot_cpu_data.cpuid_level < CPUID_MWAIT_LEAF)
+	if (cpuid_info.std.max_lvl < CPUID_MWAIT_LEAF)
 		return -ENODEV;
 
 	cpuid(CPUID_MWAIT_LEAF, &eax, &ebx, &ecx, &mwait_substates);

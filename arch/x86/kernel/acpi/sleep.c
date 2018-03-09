@@ -79,7 +79,7 @@ int x86_acpi_suspend_lowlevel(void)
 #endif /* !CONFIG_64BIT */
 
 	header->pmode_cr0 = read_cr0();
-	if (__this_cpu_read(cpu_info.cpuid_level) >= 0) {
+	if (cpuid_info.std.max_lvl >= 0) {
 		header->pmode_cr4 = __read_cr4();
 		header->pmode_behavior |= (1 << WAKEUP_BEHAVIOR_RESTORE_CR4);
 	}

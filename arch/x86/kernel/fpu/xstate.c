@@ -736,7 +736,7 @@ void __init fpu__init_system_xstate(void)
 		return;
 	}
 
-	if (boot_cpu_data.cpuid_level < XSTATE_CPUID) {
+	if (cpuid_info.std.max_lvl < XSTATE_CPUID) {
 		WARN_ON_FPU(1);
 		return;
 	}
