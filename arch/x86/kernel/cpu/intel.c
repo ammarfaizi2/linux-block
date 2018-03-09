@@ -15,6 +15,7 @@
 #include <asm/msr.h>
 #include <asm/bugs.h>
 #include <asm/cpu.h>
+#include <asm/processor.h>
 #include <asm/intel-family.h>
 #include <asm/microcode_intel.h>
 #include <asm/hwcap2.h>
@@ -166,7 +167,8 @@ static void early_init_intel(struct cpuinfo_x86 *c)
 	if (c->x86 > 6 || (c->x86 == 6 && c->x86_model >= 0xd)) {
 		if (msr_clear_bit(MSR_IA32_MISC_ENABLE,
 				  MSR_IA32_MISC_ENABLE_LIMIT_CPUID_BIT) > 0) {
-			c->cpuid_level = cpuid_eax(0);
+			cpuid_read_all_leafs();
+			c->cpuid_level = cpuid_info.std.max_lvl;
 			get_cpu_cap(c);
 		}
 	}

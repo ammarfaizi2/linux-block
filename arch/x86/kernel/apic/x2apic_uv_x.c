@@ -212,8 +212,7 @@ static void set_x2apic_bits(void)
 	unsigned int eax, ebx, ecx, edx, sub_index;
 	unsigned int sid_shift;
 
-	cpuid(0, &eax, &ebx, &ecx, &edx);
-	if (eax < 0xb) {
+	if (cpuid_info.std.max_lvl < 0xb) {
 		pr_info("UV: CPU does not have CPUID.11\n");
 		return;
 	}

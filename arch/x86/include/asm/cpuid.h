@@ -13,16 +13,6 @@ enum cpuid_regs_idx {
 	CPUID_EDX,
 };
 
-struct cpuid_range_std {
-} __packed;
-
-/**
- * Main CPUID structure containing all CPUID functions.
- */
-struct cpuid_leafs_info {
-        struct cpuid_range_std std;
-};
-
 #ifdef CONFIG_X86_32
 extern int have_cpuid_p(void);
 #else
@@ -131,6 +121,18 @@ static inline unsigned int cpuid_edx(unsigned int op)
 
 	return edx;
 }
+
+struct cpuid_range_std {
+	/* Function 0 */
+	u32 max_lvl;
+	u32 vendor0, vendor1, vendor2;
+} __packed;
+
+struct cpuid_leafs_info {
+        struct cpuid_range_std std;
+};
+
+extern struct cpuid_leafs_info cpuid_info;
 
 void cpuid_read_all_leafs(void);
 #endif /* _ASM_X86_CPUID_H */

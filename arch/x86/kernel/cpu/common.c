@@ -274,7 +274,8 @@ static void squash_the_stupid_serial_number(struct cpuinfo_x86 *c)
 	clear_cpu_cap(c, X86_FEATURE_PN);
 
 	/* Disabling the serial number may affect the cpuid level */
-	c->cpuid_level = cpuid_eax(0);
+	cpuid_read_leaf(0);
+	c->cpuid_level = cpuid_info.std.max_lvl;
 }
 
 static int __init x86_serial_nr_setup(char *s)
@@ -1763,7 +1764,7 @@ void microcode_check(void)
 	perf_check_microcode();
 
 	/* Reload CPUID max function as it might've changed. */
-	info.cpuid_level = cpuid_eax(0);
+	info.cpuid_level = cpuid_info.std.max_lvl;
 
 	/*
 	 * Copy all capability leafs to pick up the synthetic ones so that
