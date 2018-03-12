@@ -691,7 +691,7 @@ out:
 
 static void get_cpu_vendor(struct cpuinfo_x86 *c)
 {
-	char *v = c->x86_vendor_id;
+	char *v = x86_vendor_id;
 	int i;
 
 	for (i = 0; i < X86_VENDOR_NUM; i++) {
@@ -715,16 +715,15 @@ static void get_cpu_vendor(struct cpuinfo_x86 *c)
 	this_cpu = &default_cpu;
 }
 
+static void get_vendor_name(void)
+{
+	*(unsigned int *)&x86_vendor_id[0] = cpuid_info.std.vendor0;
+	*(unsigned int *)&x86_vendor_id[8] = cpuid_info.std.vendor1;
+	*(unsigned int *)&x86_vendor_id[4] = cpuid_info.std.vendor2;
+}
+
 void cpu_detect(struct cpuinfo_x86 *c)
 {
-	u32 dummy;
-
-	/* Get vendor name */
-	cpuid(0x00000000, &dummy,
-	      (unsigned int *)&c->x86_vendor_id[0],
-	      (unsigned int *)&c->x86_vendor_id[8],
-	      (unsigned int *)&c->x86_vendor_id[4]);
-
 	c->x86 = 4;
 	/* Intel-defined flags: level 1 */
 	if (cpuid_info.std.max_lvl >= 1) {
@@ -892,9 +891,9 @@ static void identify_cpu_without_cpuid(struct cpuinfo_x86 *c)
 
 	for (i = 0; i < X86_VENDOR_NUM; i++)
 		if (cpu_devs[i] && cpu_devs[i]->c_identify) {
-			c->x86_vendor_id[0] = 0;
+			x86_vendor_id[0] = 0;
 			cpu_devs[i]->c_identify(c);
-			if (c->x86_vendor_id[0]) {
+			if (x86_vendor_id[0]) {
 				get_cpu_vendor(c);
 				break;
 			}
@@ -964,6 +963,7 @@ static void __init early_identify_cpu(struct cpuinfo_x86 *c)
 	/* cyrix could have cpuid enabled via c_identify()*/
 	if (have_cpuid_p()) {
 		cpuid_read_all_leafs();
+		get_vendor_name();
 		cpu_detect(c);
 		get_cpu_vendor(c);
 		get_cpu_cap(c);
@@ -1189,7 +1189,6 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 	c->x86_cache_size = 0;
 	c->x86_vendor = X86_VENDOR_UNKNOWN;
 	c->x86_model = c->x86_stepping = 0;	/* So far unknown... */
-	c->x86_vendor_id[0] = '\0'; /* Unset */
 	c->x86_model_id[0] = '\0';  /* Unset */
 	c->x86_max_cores = 1;
 	c->x86_coreid_bits = 0;
@@ -1367,7 +1366,7 @@ void print_cpu_info(struct cpuinfo_x86 *c)
 		vendor = this_cpu->c_vendor;
 	} else {
 		if (cpuid_info.std.max_lvl >= 0)
-			vendor = c->x86_vendor_id;
+			vendor = x86_vendor_id;
 	}
 
 	if (vendor && !strstr(c->x86_model_id, vendor))

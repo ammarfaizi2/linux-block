@@ -415,7 +415,7 @@ static void cyrix_identify(struct cpuinfo_x86 *c)
 	if (c->x86 == 4 && test_cyrix_52div()) {
 		unsigned char dir0, dir1;
 
-		strcpy(c->x86_vendor_id, "CyrixInstead");
+		strcpy(x86_vendor_id, "CyrixInstead");
 		c->x86_vendor = X86_VENDOR_CYRIX;
 
 		/* Actually enable cpuid on the older cyrix */

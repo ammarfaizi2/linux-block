@@ -40,8 +40,6 @@
 #define X86_STEPPING	new_cpu_data+CPUINFO_x86_stepping
 #define X86_HARD_MATH	new_cpu_data+CPUINFO_hard_math
 #define X86_CAPABILITY	new_cpu_data+CPUINFO_x86_capability
-#define X86_VENDOR_ID	new_cpu_data+CPUINFO_x86_vendor_id
-
 
 #define SIZEOF_PTREGS 17*4
 
@@ -315,9 +313,6 @@ ENTRY(startup_32_smp)
 	xorl %eax,%eax			# call CPUID with 0 -> return vendor ID
 	cpuid
 	movl %eax,cpuid_level		# save CPUID level
-	movl %ebx,X86_VENDOR_ID		# lo 4 chars
-	movl %edx,X86_VENDOR_ID+4	# next 4 chars
-	movl %ecx,X86_VENDOR_ID+8	# last 4 chars
 
 	orl %eax,%eax			# do we have processor info as well?
 	je .Lis486

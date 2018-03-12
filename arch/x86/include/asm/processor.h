@@ -82,12 +82,13 @@ extern u16 __read_mostly tlb_lld_2m[NR_INFO];
 extern u16 __read_mostly tlb_lld_4m[NR_INFO];
 extern u16 __read_mostly tlb_lld_1g[NR_INFO];
 
+extern char x86_vendor_id[16];
+
 /*
  *  CPU type and hardware bug flags. Kept separately for each CPU.
  *  Members of this structure are referenced in head_32.S, so think twice
  *  before touching them. [mj]
  */
-
 struct cpuinfo_x86 {
 	__u8			x86;		/* CPU family */
 	__u8			x86_vendor;	/* CPU vendor */
@@ -105,7 +106,6 @@ struct cpuinfo_x86 {
 	/* Max extended CPUID function supported: */
 	__u32			extended_cpuid_level;
 	__u32			x86_capability[NCAPINTS + NBUGINTS];
-	char			x86_vendor_id[16];
 	char			x86_model_id[64];
 	/* in KB - valid for CPUS which support this call: */
 	unsigned int		x86_cache_size;

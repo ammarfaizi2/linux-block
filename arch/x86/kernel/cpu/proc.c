@@ -67,7 +67,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		   "model\t\t: %u\n"
 		   "model name\t: %s\n",
 		   cpu,
-		   c->x86_vendor_id[0] ? c->x86_vendor_id : "unknown",
+		   x86_vendor_id[0] ? x86_vendor_id : "unknown",
 		   c->x86,
 		   c->x86_model,
 		   c->x86_model_id[0] ? c->x86_model_id : "unknown");

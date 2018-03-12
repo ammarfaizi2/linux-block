@@ -161,6 +161,7 @@ static struct resource bss_resource = {
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
 };
 
+char x86_vendor_id[16] __ro_after_init;
 
 #ifdef CONFIG_X86_32
 /* cpu data as detected by the assembly code in head_32.S */
