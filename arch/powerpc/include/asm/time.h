@@ -31,6 +31,7 @@ extern void to_tm(int tim, struct rtc_time * tm);
 extern void tick_broadcast_ipi_handler(void);
 
 extern void generic_calibrate_decr(void);
+extern void hdec_interrupt(struct pt_regs *regs);
 
 /* Some sane defaults: 125 MHz timebase, 1GHz processor */
 extern unsigned long ppc_proc_freq;
@@ -204,6 +205,7 @@ struct cpu_usage {
 DECLARE_PER_CPU(struct cpu_usage, cpu_usage_array);
 
 extern void secondary_cpu_time_init(void);
+extern void __init time_init(void);
 
 DECLARE_PER_CPU(u64, decrementers_next_tb);
 

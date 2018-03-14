@@ -41,6 +41,7 @@
 #include <asm/pgtable.h>
 #include <asm/mmu.h>
 #include <asm/mmu_context.h>
+#include <asm/plpar_wrappers.h>
 #include <asm/cputable.h>
 #include <asm/rtas.h>
 #include <asm/sstep.h>
@@ -59,12 +60,6 @@
 #ifdef CONFIG_PPC64
 #include <asm/hvcall.h>
 #include <asm/paca.h>
-#endif
-
-#if defined(CONFIG_PPC_SPLPAR)
-#include <asm/plpar_wrappers.h>
-#else
-static inline long plapr_set_ciabr(unsigned long ciabr) {return 0; };
 #endif
 
 #include "nonstdio.h"
@@ -328,7 +323,7 @@ static void write_ciabr(unsigned long ciabr)
 		mtspr(SPRN_CIABR, ciabr);
 		return;
 	}
-	plapr_set_ciabr(ciabr);
+	plpar_set_ciabr(ciabr);
 }
 
 /**
@@ -1273,6 +1268,16 @@ static long check_bp_loc(unsigned long addr)
 	return 1;
 }
 
+/* Force enable xmon if not already enabled */
+static inline void force_enable_xmon(void)
+{
+	/* Enable xmon hooks if needed */
+	if (!xmon_on) {
+		printf("xmon: Enabling debugger hooks\n");
+		xmon_on = 1;
+	}
+}
+
 static char *breakpoint_help_string =
     "Breakpoint command usage:\n"
     "b                show breakpoints\n"
@@ -1315,6 +1320,8 @@ bpt_cmds(void)
 			dabr.address &= ~HW_BRK_TYPE_DABR;
 			dabr.enabled = mode | BP_DABR;
 		}
+
+		force_enable_xmon();
 		break;
 
 	case 'i':	/* bi - hardware instr breakpoint */
@@ -1335,6 +1342,7 @@ bpt_cmds(void)
 		if (bp != NULL) {
 			bp->enabled |= BP_CIABR;
 			iabr = bp;
+			force_enable_xmon();
 		}
 		break;
 #endif
@@ -1399,8 +1407,10 @@ bpt_cmds(void)
 		if (!check_bp_loc(a))
 			break;
 		bp = new_breakpoint(a);
-		if (bp != NULL)
+		if (bp != NULL) {
 			bp->enabled |= BP_TRAP;
+			force_enable_xmon();
+		}
 		break;
 	}
 }
@@ -3649,11 +3659,35 @@ device_initcall(setup_xmon_sysrq);
 #endif /* CONFIG_MAGIC_SYSRQ */
 
 #ifdef CONFIG_DEBUG_FS
+static void clear_all_bpt(void)
+{
+	int i;
+
+	/* clear/unpatch all breakpoints */
+	remove_bpts();
+	remove_cpu_bpts();
+
+	/* Disable all breakpoints */
+	for (i = 0; i < NBPTS; ++i)
+		bpts[i].enabled = 0;
+
+	/* Clear any data or iabr breakpoints */
+	if (iabr || dabr.enabled) {
+		iabr = NULL;
+		dabr.enabled = 0;
+	}
+
+	printf("xmon: All breakpoints cleared\n");
+}
+
 static int xmon_dbgfs_set(void *data, u64 val)
 {
 	xmon_on = !!val;
 	xmon_init(xmon_on);
 
+	/* make sure all breakpoints removed when disabling */
+	if (!xmon_on)
+		clear_all_bpt();
 	return 0;
 }
 
