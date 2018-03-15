@@ -1196,7 +1196,6 @@ int compat_ptrace_request(struct task_struct *child, compat_long_t request,
 			  compat_ulong_t addr, compat_ulong_t data)
 {
 	compat_ulong_t __user *datap = compat_ptr(data);
-	compat_sigset_t set32;
 	compat_ulong_t word;
 	sigset_t new_set;
 	siginfo_t siginfo;
