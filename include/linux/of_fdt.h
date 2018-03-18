@@ -69,8 +69,8 @@ extern unsigned long of_get_flat_dt_root(void);
 extern int of_get_flat_dt_size(void);
 extern uint32_t of_get_flat_dt_phandle(unsigned long node);
 
-extern int early_init_dt_scan_chosen(unsigned long node, const char *uname,
-				     int depth, void *data);
+extern int early_init_dt_scan_chosen(unsigned long node, char *cmdline);
+
 extern int early_init_dt_scan_memory(unsigned long node, const char *uname,
 				     int depth, void *data);
 extern int early_init_dt_scan_chosen_stdout(void);

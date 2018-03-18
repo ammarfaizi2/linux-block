@@ -400,9 +400,11 @@ static int __init early_init_dt_scan_chosen_ppc(unsigned long node,
 {
 	const unsigned long *lprop; /* All these set by kernel, so no need to convert endian */
 
-	/* Use common scan routine to determine if this is the chosen node */
-	if (early_init_dt_scan_chosen(node, uname, depth, data) == 0)
+	if (depth != 1 || !data ||
+	    (strcmp(uname, "chosen") != 0 && strcmp(uname, "chosen@0") != 0))
 		return 0;
+
+	early_init_dt_scan_chosen(node, data);
 
 #ifdef CONFIG_PPC64
 	/* check if iommu is forced on or off */
