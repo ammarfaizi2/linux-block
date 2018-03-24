@@ -1860,6 +1860,7 @@ static void init_cgroup_housekeeping(struct cgroup *cgrp)
 	cgrp->dom_cgrp = cgrp;
 	cgrp->max_descendants = INT_MAX;
 	cgrp->max_depth = INT_MAX;
+	INIT_LIST_HEAD(&cgrp->rstat_css_list);
 	prev_cputime_init(&cgrp->prev_cputime);
 
 	for_each_subsys(ss, ssid)
@@ -4630,6 +4631,11 @@ static void css_release_work_fn(struct work_struct *work)
 
 	if (ss) {
 		/* css release path */
+		if (!list_empty(&css->rstat_css_node)) {
+			cgroup_rstat_flush(cgrp);
+			list_del_rcu(&css->rstat_css_node);
+		}
+
 		cgroup_idr_replace(&ss->css_idr, NULL, css->id);
 		if (ss->css_released)
 			ss->css_released(css);
@@ -4690,6 +4696,7 @@ static void init_and_link_css(struct cgroup_subsys_state *css,
 	css->id = -1;
 	INIT_LIST_HEAD(&css->sibling);
 	INIT_LIST_HEAD(&css->children);
+	INIT_LIST_HEAD(&css->rstat_css_node);
 	css->serial_nr = css_serial_nr_next++;
 	atomic_set(&css->online_cnt, 0);
 
@@ -4697,6 +4704,9 @@ static void init_and_link_css(struct cgroup_subsys_state *css,
 		css->parent = cgroup_css(cgroup_parent(cgrp), ss);
 		css_get(css->parent);
 	}
+
+	if (cgroup_on_dfl(cgrp) && ss->css_rstat_flush)
+		list_add_rcu(&css->rstat_css_node, &cgrp->rstat_css_list);
 
 	BUG_ON(cgroup_css(cgrp, ss));
 }
@@ -4799,6 +4809,7 @@ static struct cgroup_subsys_state *css_create(struct cgroup *cgrp,
 err_list_del:
 	list_del_rcu(&css->sibling);
 err_free_css:
+	list_del_rcu(&css->rstat_css_node);
 	call_rcu(&css->rcu_head, css_free_rcu_fn);
 	return ERR_PTR(err);
 }
