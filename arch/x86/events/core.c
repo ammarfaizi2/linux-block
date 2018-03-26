@@ -990,7 +990,7 @@ static int collect_events(struct cpu_hw_events *cpuc, struct perf_event *leader,
 	if (!dogrp)
 		return n;
 
-	list_for_each_entry(event, &leader->sibling_list, group_entry) {
+	for_each_sibling_event(event, leader) {
 		if (!is_x86_event(event) ||
 		    event->state <= PERF_EVENT_STATE_OFF)
 			continue;
@@ -1156,16 +1156,13 @@ int x86_perf_event_set_period(struct perf_event *event)
 
 	per_cpu(pmc_prev_left[idx], smp_processor_id()) = left;
 
-	if (!(hwc->flags & PERF_X86_EVENT_AUTO_RELOAD) ||
-	    local64_read(&hwc->prev_count) != (u64)-left) {
-		/*
-		 * The hw event starts counting from this event offset,
-		 * mark it to be able to extra future deltas:
-		 */
-		local64_set(&hwc->prev_count, (u64)-left);
+	/*
+	 * The hw event starts counting from this event offset,
+	 * mark it to be able to extra future deltas:
+	 */
+	local64_set(&hwc->prev_count, (u64)-left);
 
-		wrmsrl(hwc->event_base, (u64)(-left) & x86_pmu.cntval_mask);
-	}
+	wrmsrl(hwc->event_base, (u64)(-left) & x86_pmu.cntval_mask);
 
 	/*
 	 * Due to erratum on certan cpu we need
@@ -1884,6 +1881,8 @@ early_initcall(init_hw_perf_events);
 
 static inline void x86_pmu_read(struct perf_event *event)
 {
+	if (x86_pmu.read)
+		return x86_pmu.read(event);
 	x86_perf_event_update(event);
 }
 
