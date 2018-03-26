@@ -273,7 +273,9 @@ static void __print_mce(struct mce *m)
 static void print_mce(struct mce *m)
 {
 	__print_mce(m);
-	pr_emerg_ratelimited(HW_ERR "Run the above through 'mcelog --ascii'\n");
+
+	if (m->cpuvendor != X86_VENDOR_AMD)
+		pr_emerg_ratelimited(HW_ERR "Run the above through 'mcelog --ascii'\n");
 }
 
 #define PANIC_TIMEOUT 5 /* 5 seconds */
@@ -443,6 +445,20 @@ static inline void mce_gather_info(struct mce *m, struct pt_regs *regs)
 		/* Use accurate RIP reporting if available. */
 		if (mca_cfg.rip_msr)
 			m->ip = mce_rdmsrl(mca_cfg.rip_msr);
+	}
+
+	/*
+	 * Error handlers should save the values in MCA_ADDR, MCA_MISC0, and
+	 * MCA_SYND even if MCA_STATUS[AddrV], MCA_STATUS[MiscV], and
+	 * MCA_STATUS[SyndV] are zero.
+	 */
+	if (m->cpuvendor == X86_VENDOR_AMD) {
+		u64 status = MCI_STATUS_ADDRV | MCI_STATUS_MISCV;
+
+		if (mce_flags.smca)
+			status |= MCI_STATUS_SYNDV;
+
+		m->status |= status;
 	}
 }
 
@@ -1516,7 +1532,7 @@ static int __mcheck_cpu_cap_init(void)
 		mca_cfg.rip_msr = MSR_IA32_MCG_EIP;
 
 	if (cap & MCG_SER_P)
-		mca_cfg.ser = true;
+		mca_cfg.ser = 1;
 
 	return 0;
 }
@@ -1824,12 +1840,12 @@ void mcheck_cpu_init(struct cpuinfo_x86 *c)
 		return;
 
 	if (__mcheck_cpu_cap_init() < 0 || __mcheck_cpu_apply_quirks(c) < 0) {
-		mca_cfg.disabled = true;
+		mca_cfg.disabled = 1;
 		return;
 	}
 
 	if (mce_gen_pool_init()) {
-		mca_cfg.disabled = true;
+		mca_cfg.disabled = 1;
 		pr_emerg("Couldn't allocate MCE records pool!\n");
 		return;
 	}
@@ -1907,11 +1923,11 @@ static int __init mcheck_enable(char *str)
 	if (*str == '=')
 		str++;
 	if (!strcmp(str, "off"))
-		cfg->disabled = true;
+		cfg->disabled = 1;
 	else if (!strcmp(str, "no_cmci"))
 		cfg->cmci_disabled = true;
 	else if (!strcmp(str, "no_lmce"))
-		cfg->lmce_disabled = true;
+		cfg->lmce_disabled = 1;
 	else if (!strcmp(str, "dont_log_ce"))
 		cfg->dont_log_ce = true;
 	else if (!strcmp(str, "ignore_ce"))
@@ -1919,9 +1935,9 @@ static int __init mcheck_enable(char *str)
 	else if (!strcmp(str, "bootlog") || !strcmp(str, "nobootlog"))
 		cfg->bootlog = (str[0] == 'b');
 	else if (!strcmp(str, "bios_cmci_threshold"))
-		cfg->bios_cmci_threshold = true;
+		cfg->bios_cmci_threshold = 1;
 	else if (!strcmp(str, "recovery"))
-		cfg->recovery = true;
+		cfg->recovery = 1;
 	else if (isdigit(str[0])) {
 		if (get_option(&str, &cfg->tolerant) == 2)
 			get_option(&str, &(cfg->monarch_timeout));
@@ -2403,7 +2419,7 @@ device_initcall_sync(mcheck_init_device);
  */
 static int __init mcheck_disable(char *str)
 {
-	mca_cfg.disabled = true;
+	mca_cfg.disabled = 1;
 	return 1;
 }
 __setup("nomce", mcheck_disable);
