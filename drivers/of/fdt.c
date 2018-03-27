@@ -1081,18 +1081,16 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 
 int __init early_init_dt_scan_chosen(unsigned long node, char *cmdline)
 {
-	int l;
-	const char *p;
+	if (node > 0) {
+		int l;
+		const char *p;
+		early_init_dt_check_for_initrd(node);
 
-	if (node < 0)
-		return -ENODEV;
-
-	early_init_dt_check_for_initrd(node);
-
-	/* Retrieve command line */
-	p = of_get_flat_dt_prop(node, "bootargs", &l);
-	if (p != NULL && l > 0)
-		strlcpy(cmdline, p, min((int)l, COMMAND_LINE_SIZE));
+		/* Retrieve command line */
+		p = of_get_flat_dt_prop(node, "bootargs", &l);
+		if (p != NULL && l > 0)
+			strlcpy(cmdline, p, min((int)l, COMMAND_LINE_SIZE));
+	}
 
 	/*
 	 * CONFIG_CMDLINE is meant to be a default in case nothing else
