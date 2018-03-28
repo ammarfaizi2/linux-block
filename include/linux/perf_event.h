@@ -536,6 +536,10 @@ struct pmu_event_list {
 	struct list_head	list;
 };
 
+#define for_each_sibling_event(sibling, event)			\
+	if ((event)->group_leader == (event))			\
+		list_for_each_entry((sibling), &(event)->sibling_list, sibling_list)
+
 /**
  * struct perf_event - performance event kernel representation:
  */
@@ -549,16 +553,16 @@ struct perf_event {
 	struct list_head		event_entry;
 
 	/*
-	 * XXX: group_entry and sibling_list should be mutually exclusive;
-	 * either you're a sibling on a group, or you're the group leader.
-	 * Rework the code to always use the same list element.
-	 *
 	 * Locked for modification by both ctx->mutex and ctx->lock; holding
 	 * either sufficies for read.
 	 */
-	struct list_head		group_entry;
 	struct list_head		sibling_list;
-
+	struct list_head		active_list;
+	/*
+	 * Node on the pinned or flexible tree located at the event context;
+	 */
+	struct rb_node			group_node;
+	u64				group_index;
 	/*
 	 * We need storage to track the entries in perf_pmu_migrate_context; we
 	 * cannot use the event_entry because of RCU and we want to keep the
@@ -690,6 +694,12 @@ struct perf_event {
 #endif /* CONFIG_PERF_EVENTS */
 };
 
+
+struct perf_event_groups {
+	struct rb_root	tree;
+	u64		index;
+};
+
 /**
  * struct perf_event_context - event context structure
  *
@@ -710,9 +720,13 @@ struct perf_event_context {
 	struct mutex			mutex;
 
 	struct list_head		active_ctx_list;
-	struct list_head		pinned_groups;
-	struct list_head		flexible_groups;
+	struct perf_event_groups	pinned_groups;
+	struct perf_event_groups	flexible_groups;
 	struct list_head		event_list;
+
+	struct list_head		pinned_active;
+	struct list_head		flexible_active;
+
 	int				nr_events;
 	int				nr_active;
 	int				is_active;
