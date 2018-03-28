@@ -1,0 +1,13 @@
+s390
+
+include "fences.cat"
+include "cos.cat"
+
+(* Atomic *)
+(* empty rmw & (fre;coe) as atom *)
+
+(* TSO with multicopy atomicity *)
+let po-ghb = ([R] ; po ; [M]) | ([M] ; po ; [W]) | po-loc
+acyclic po-ghb | fr | rf | co as sc
+
+(* Fences are somehow handled implicitly, at least for SB+mb... *)
