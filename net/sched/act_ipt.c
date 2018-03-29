@@ -80,9 +80,12 @@ static void ipt_destroy_target(struct xt_entry_target *t)
 static void tcf_ipt_release(struct tc_action *a)
 {
 	struct tcf_ipt *ipt = to_ipt(a);
-	ipt_destroy_target(ipt->tcfi_t);
+
+	if (ipt->tcfi_t) {
+		ipt_destroy_target(ipt->tcfi_t);
+		kfree(ipt->tcfi_t);
+	}
 	kfree(ipt->tcfi_tname);
-	kfree(ipt->tcfi_t);
 }
 
 static const struct nla_policy ipt_policy[TCA_IPT_MAX + 1] = {
@@ -187,7 +190,7 @@ err2:
 	kfree(tname);
 err1:
 	if (ret == ACT_P_CREATED)
-		tcf_idr_cleanup(*a, est);
+		tcf_idr_release(*a, bind);
 	return err;
 }
 
@@ -349,6 +352,7 @@ static struct pernet_operations ipt_net_ops = {
 	.exit_batch = ipt_exit_net,
 	.id   = &ipt_net_id,
 	.size = sizeof(struct tc_action_net),
+	.async = true,
 };
 
 static int tcf_xt_walker(struct net *net, struct sk_buff *skb,
@@ -399,6 +403,7 @@ static struct pernet_operations xt_net_ops = {
 	.exit_batch = xt_exit_net,
 	.id   = &xt_net_id,
 	.size = sizeof(struct tc_action_net),
+	.async = true,
 };
 
 MODULE_AUTHOR("Jamal Hadi Salim(2002-13)");

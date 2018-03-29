@@ -103,7 +103,8 @@ static void tcf_sample_cleanup(struct tc_action *a)
 
 	psample_group = rtnl_dereference(s->psample_group);
 	RCU_INIT_POINTER(s->psample_group, NULL);
-	psample_group_put(psample_group);
+	if (psample_group)
+		psample_group_put(psample_group);
 }
 
 static bool tcf_sample_dev_ok_push(struct net_device *dev)
@@ -248,6 +249,7 @@ static struct pernet_operations sample_net_ops = {
 	.exit_batch = sample_exit_net,
 	.id   = &sample_net_id,
 	.size = sizeof(struct tc_action_net),
+	.async = true,
 };
 
 static int __init sample_init_module(void)

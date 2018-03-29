@@ -1,6 +1,6 @@
 /*
  * drivers/net/ethernet/mellanox/mlxsw/spectrum.c
- * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2015-2018 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2015-2017 Jiri Pirko <jiri@mellanox.com>
  * Copyright (c) 2015 Ido Schimmel <idosch@mellanox.com>
  * Copyright (c) 2015 Elad Raz <eladr@mellanox.com>
@@ -75,8 +75,8 @@
 #include "../mlxfw/mlxfw.h"
 
 #define MLXSW_FWREV_MAJOR 13
-#define MLXSW_FWREV_MINOR 1530
-#define MLXSW_FWREV_SUBMINOR 152
+#define MLXSW_FWREV_MINOR 1620
+#define MLXSW_FWREV_SUBMINOR 192
 #define MLXSW_FWREV_MINOR_TO_BRANCH(minor) ((minor) / 100)
 
 #define MLXSW_SP_FW_FILENAME \
@@ -1040,6 +1040,16 @@ mlxsw_sp_port_get_hw_xstats(struct net_device *dev,
 		xstats->tail_drop[i] =
 			mlxsw_reg_ppcnt_tc_no_buffer_discard_uc_get(ppcnt_pl);
 	}
+
+	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
+		err = mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_PRIO_CNT,
+						  i, ppcnt_pl);
+		if (err)
+			continue;
+
+		xstats->tx_packets[i] = mlxsw_reg_ppcnt_tx_frames_get(ppcnt_pl);
+		xstats->tx_bytes[i] = mlxsw_reg_ppcnt_tx_octets_get(ppcnt_pl);
+	}
 }
 
 static void update_stats_cache(struct work_struct *work)
@@ -1139,6 +1149,7 @@ mlxsw_sp_port_vlan_create(struct mlxsw_sp_port *mlxsw_sp_port, u16 vid)
 	}
 
 	mlxsw_sp_port_vlan->mlxsw_sp_port = mlxsw_sp_port;
+	mlxsw_sp_port_vlan->ref_count = 1;
 	mlxsw_sp_port_vlan->vid = vid;
 	list_add(&mlxsw_sp_port_vlan->list, &mlxsw_sp_port->vlans_list);
 
@@ -1166,8 +1177,10 @@ mlxsw_sp_port_vlan_get(struct mlxsw_sp_port *mlxsw_sp_port, u16 vid)
 	struct mlxsw_sp_port_vlan *mlxsw_sp_port_vlan;
 
 	mlxsw_sp_port_vlan = mlxsw_sp_port_vlan_find_by_vid(mlxsw_sp_port, vid);
-	if (mlxsw_sp_port_vlan)
+	if (mlxsw_sp_port_vlan) {
+		mlxsw_sp_port_vlan->ref_count++;
 		return mlxsw_sp_port_vlan;
+	}
 
 	return mlxsw_sp_port_vlan_create(mlxsw_sp_port, vid);
 }
@@ -1175,6 +1188,9 @@ mlxsw_sp_port_vlan_get(struct mlxsw_sp_port *mlxsw_sp_port, u16 vid)
 void mlxsw_sp_port_vlan_put(struct mlxsw_sp_port_vlan *mlxsw_sp_port_vlan)
 {
 	struct mlxsw_sp_fid *fid = mlxsw_sp_port_vlan->fid;
+
+	if (--mlxsw_sp_port_vlan->ref_count != 0)
+		return;
 
 	if (mlxsw_sp_port_vlan->bridge_port)
 		mlxsw_sp_port_vlan_bridge_leave(mlxsw_sp_port_vlan);
@@ -1258,7 +1274,6 @@ mlxsw_sp_port_add_cls_matchall_mirror(struct mlxsw_sp_port *mlxsw_sp_port,
 				      bool ingress)
 {
 	enum mlxsw_sp_span_type span_type;
-	struct mlxsw_sp_port *to_port;
 	struct net_device *to_dev;
 
 	to_dev = tcf_mirred_dev(a);
@@ -1267,17 +1282,10 @@ mlxsw_sp_port_add_cls_matchall_mirror(struct mlxsw_sp_port *mlxsw_sp_port,
 		return -EINVAL;
 	}
 
-	if (!mlxsw_sp_port_dev_check(to_dev)) {
-		netdev_err(mlxsw_sp_port->dev, "Cannot mirror to a non-spectrum port");
-		return -EOPNOTSUPP;
-	}
-	to_port = netdev_priv(to_dev);
-
-	mirror->to_local_port = to_port->local_port;
 	mirror->ingress = ingress;
 	span_type = ingress ? MLXSW_SP_SPAN_INGRESS : MLXSW_SP_SPAN_EGRESS;
-	return mlxsw_sp_span_mirror_add(mlxsw_sp_port, to_port, span_type,
-					true);
+	return mlxsw_sp_span_mirror_add(mlxsw_sp_port, to_dev, span_type,
+					true, &mirror->span_id);
 }
 
 static void
@@ -1288,7 +1296,7 @@ mlxsw_sp_port_del_cls_matchall_mirror(struct mlxsw_sp_port *mlxsw_sp_port,
 
 	span_type = mirror->ingress ?
 			MLXSW_SP_SPAN_INGRESS : MLXSW_SP_SPAN_EGRESS;
-	mlxsw_sp_span_mirror_del(mlxsw_sp_port, mirror->to_local_port,
+	mlxsw_sp_span_mirror_del(mlxsw_sp_port, mirror->span_id,
 				 span_type, true);
 }
 
@@ -2382,7 +2390,7 @@ static int mlxsw_sp_port_get_link_ksettings(struct net_device *dev,
 	int err;
 
 	autoneg = mlxsw_sp_port->link.autoneg;
-	mlxsw_reg_ptys_eth_pack(ptys_pl, mlxsw_sp_port->local_port, 0);
+	mlxsw_reg_ptys_eth_pack(ptys_pl, mlxsw_sp_port->local_port, 0, false);
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
 	if (err)
 		return err;
@@ -2416,7 +2424,7 @@ mlxsw_sp_port_set_link_ksettings(struct net_device *dev,
 	bool autoneg;
 	int err;
 
-	mlxsw_reg_ptys_eth_pack(ptys_pl, mlxsw_sp_port->local_port, 0);
+	mlxsw_reg_ptys_eth_pack(ptys_pl, mlxsw_sp_port->local_port, 0, false);
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
 	if (err)
 		return err;
@@ -2434,7 +2442,7 @@ mlxsw_sp_port_set_link_ksettings(struct net_device *dev,
 	}
 
 	mlxsw_reg_ptys_eth_pack(ptys_pl, mlxsw_sp_port->local_port,
-				eth_proto_new);
+				eth_proto_new, autoneg);
 	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
 	if (err)
 		return err;
@@ -2645,7 +2653,7 @@ mlxsw_sp_port_speed_by_width_set(struct mlxsw_sp_port *mlxsw_sp_port, u8 width)
 
 	eth_proto_admin = mlxsw_sp_to_ptys_upper_speed(upper_speed);
 	mlxsw_reg_ptys_eth_pack(ptys_pl, mlxsw_sp_port->local_port,
-				eth_proto_admin);
+				eth_proto_admin, mlxsw_sp_port->link.autoneg);
 	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
 }
 
@@ -3675,26 +3683,30 @@ static int mlxsw_sp_init(struct mlxsw_core *mlxsw_core,
 		goto err_afa_init;
 	}
 
+	err = mlxsw_sp_span_init(mlxsw_sp);
+	if (err) {
+		dev_err(mlxsw_sp->bus_info->dev, "Failed to init span system\n");
+		goto err_span_init;
+	}
+
+	/* Initialize router after SPAN is initialized, so that the FIB and
+	 * neighbor event handlers can issue SPAN respin.
+	 */
 	err = mlxsw_sp_router_init(mlxsw_sp);
 	if (err) {
 		dev_err(mlxsw_sp->bus_info->dev, "Failed to initialize router\n");
 		goto err_router_init;
 	}
 
-	/* Initialize netdevice notifier after router is initialized, so that
-	 * the event handler can use router structures.
+	/* Initialize netdevice notifier after router and SPAN is initialized,
+	 * so that the event handler can use router structures and call SPAN
+	 * respin.
 	 */
 	mlxsw_sp->netdevice_nb.notifier_call = mlxsw_sp_netdevice_event;
 	err = register_netdevice_notifier(&mlxsw_sp->netdevice_nb);
 	if (err) {
 		dev_err(mlxsw_sp->bus_info->dev, "Failed to register netdev notifier\n");
 		goto err_netdev_notifier;
-	}
-
-	err = mlxsw_sp_span_init(mlxsw_sp);
-	if (err) {
-		dev_err(mlxsw_sp->bus_info->dev, "Failed to init span system\n");
-		goto err_span_init;
 	}
 
 	err = mlxsw_sp_acl_init(mlxsw_sp);
@@ -3722,12 +3734,12 @@ err_ports_create:
 err_dpipe_init:
 	mlxsw_sp_acl_fini(mlxsw_sp);
 err_acl_init:
-	mlxsw_sp_span_fini(mlxsw_sp);
-err_span_init:
 	unregister_netdevice_notifier(&mlxsw_sp->netdevice_nb);
 err_netdev_notifier:
 	mlxsw_sp_router_fini(mlxsw_sp);
 err_router_init:
+	mlxsw_sp_span_fini(mlxsw_sp);
+err_span_init:
 	mlxsw_sp_afa_fini(mlxsw_sp);
 err_afa_init:
 	mlxsw_sp_counter_pool_fini(mlxsw_sp);
@@ -3753,9 +3765,9 @@ static void mlxsw_sp_fini(struct mlxsw_core *mlxsw_core)
 	mlxsw_sp_ports_remove(mlxsw_sp);
 	mlxsw_sp_dpipe_fini(mlxsw_sp);
 	mlxsw_sp_acl_fini(mlxsw_sp);
-	mlxsw_sp_span_fini(mlxsw_sp);
 	unregister_netdevice_notifier(&mlxsw_sp->netdevice_nb);
 	mlxsw_sp_router_fini(mlxsw_sp);
+	mlxsw_sp_span_fini(mlxsw_sp);
 	mlxsw_sp_afa_fini(mlxsw_sp);
 	mlxsw_sp_counter_pool_fini(mlxsw_sp);
 	mlxsw_sp_switchdev_fini(mlxsw_sp);
@@ -3767,12 +3779,8 @@ static void mlxsw_sp_fini(struct mlxsw_core *mlxsw_core)
 }
 
 static const struct mlxsw_config_profile mlxsw_sp_config_profile = {
-	.used_max_vepa_channels		= 1,
-	.max_vepa_channels		= 0,
 	.used_max_mid			= 1,
 	.max_mid			= MLXSW_SP_MID_MAX,
-	.used_max_pgt			= 1,
-	.max_pgt			= 0,
 	.used_flood_tables		= 1,
 	.used_flood_mode		= 1,
 	.flood_mode			= 3,
@@ -3810,13 +3818,12 @@ static struct devlink_resource_ops mlxsw_sp_resource_kvd_linear_ops = {
 	.occ_get = mlxsw_sp_resource_kvd_linear_occ_get,
 };
 
-static struct devlink_resource_size_params mlxsw_sp_kvd_size_params;
-static struct devlink_resource_size_params mlxsw_sp_linear_size_params;
-static struct devlink_resource_size_params mlxsw_sp_hash_single_size_params;
-static struct devlink_resource_size_params mlxsw_sp_hash_double_size_params;
-
 static void
-mlxsw_sp_resource_size_params_prepare(struct mlxsw_core *mlxsw_core)
+mlxsw_sp_resource_size_params_prepare(struct mlxsw_core *mlxsw_core,
+				      struct devlink_resource_size_params *kvd_size_params,
+				      struct devlink_resource_size_params *linear_size_params,
+				      struct devlink_resource_size_params *hash_double_size_params,
+				      struct devlink_resource_size_params *hash_single_size_params)
 {
 	u32 single_size_min = MLXSW_CORE_RES_GET(mlxsw_core,
 						 KVD_SINGLE_MIN_SIZE);
@@ -3825,37 +3832,35 @@ mlxsw_sp_resource_size_params_prepare(struct mlxsw_core *mlxsw_core)
 	u32 kvd_size = MLXSW_CORE_RES_GET(mlxsw_core, KVD_SIZE);
 	u32 linear_size_min = 0;
 
-	/* KVD top resource */
-	mlxsw_sp_kvd_size_params.size_min = kvd_size;
-	mlxsw_sp_kvd_size_params.size_max = kvd_size;
-	mlxsw_sp_kvd_size_params.size_granularity = MLXSW_SP_KVD_GRANULARITY;
-	mlxsw_sp_kvd_size_params.unit = DEVLINK_RESOURCE_UNIT_ENTRY;
-
-	/* Linear part init */
-	mlxsw_sp_linear_size_params.size_min = linear_size_min;
-	mlxsw_sp_linear_size_params.size_max = kvd_size - single_size_min -
-					       double_size_min;
-	mlxsw_sp_linear_size_params.size_granularity = MLXSW_SP_KVD_GRANULARITY;
-	mlxsw_sp_linear_size_params.unit = DEVLINK_RESOURCE_UNIT_ENTRY;
-
-	/* Hash double part init */
-	mlxsw_sp_hash_double_size_params.size_min = double_size_min;
-	mlxsw_sp_hash_double_size_params.size_max = kvd_size - single_size_min -
-						    linear_size_min;
-	mlxsw_sp_hash_double_size_params.size_granularity = MLXSW_SP_KVD_GRANULARITY;
-	mlxsw_sp_hash_double_size_params.unit = DEVLINK_RESOURCE_UNIT_ENTRY;
-
-	/* Hash single part init */
-	mlxsw_sp_hash_single_size_params.size_min = single_size_min;
-	mlxsw_sp_hash_single_size_params.size_max = kvd_size - double_size_min -
-						    linear_size_min;
-	mlxsw_sp_hash_single_size_params.size_granularity = MLXSW_SP_KVD_GRANULARITY;
-	mlxsw_sp_hash_single_size_params.unit = DEVLINK_RESOURCE_UNIT_ENTRY;
+	devlink_resource_size_params_init(kvd_size_params, kvd_size, kvd_size,
+					  MLXSW_SP_KVD_GRANULARITY,
+					  DEVLINK_RESOURCE_UNIT_ENTRY);
+	devlink_resource_size_params_init(linear_size_params, linear_size_min,
+					  kvd_size - single_size_min -
+					  double_size_min,
+					  MLXSW_SP_KVD_GRANULARITY,
+					  DEVLINK_RESOURCE_UNIT_ENTRY);
+	devlink_resource_size_params_init(hash_double_size_params,
+					  double_size_min,
+					  kvd_size - single_size_min -
+					  linear_size_min,
+					  MLXSW_SP_KVD_GRANULARITY,
+					  DEVLINK_RESOURCE_UNIT_ENTRY);
+	devlink_resource_size_params_init(hash_single_size_params,
+					  single_size_min,
+					  kvd_size - double_size_min -
+					  linear_size_min,
+					  MLXSW_SP_KVD_GRANULARITY,
+					  DEVLINK_RESOURCE_UNIT_ENTRY);
 }
 
 static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 {
 	struct devlink *devlink = priv_to_devlink(mlxsw_core);
+	struct devlink_resource_size_params hash_single_size_params;
+	struct devlink_resource_size_params hash_double_size_params;
+	struct devlink_resource_size_params linear_size_params;
+	struct devlink_resource_size_params kvd_size_params;
 	u32 kvd_size, single_size, double_size, linear_size;
 	const struct mlxsw_config_profile *profile;
 	int err;
@@ -3864,23 +3869,26 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 	if (!MLXSW_CORE_RES_VALID(mlxsw_core, KVD_SIZE))
 		return -EIO;
 
-	mlxsw_sp_resource_size_params_prepare(mlxsw_core);
+	mlxsw_sp_resource_size_params_prepare(mlxsw_core, &kvd_size_params,
+					      &linear_size_params,
+					      &hash_double_size_params,
+					      &hash_single_size_params);
+
 	kvd_size = MLXSW_CORE_RES_GET(mlxsw_core, KVD_SIZE);
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD,
-					true, kvd_size,
-					MLXSW_SP_RESOURCE_KVD,
+					kvd_size, MLXSW_SP_RESOURCE_KVD,
 					DEVLINK_RESOURCE_ID_PARENT_TOP,
-					&mlxsw_sp_kvd_size_params,
+					&kvd_size_params,
 					NULL);
 	if (err)
 		return err;
 
 	linear_size = profile->kvd_linear_size;
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD_LINEAR,
-					false, linear_size,
+					linear_size,
 					MLXSW_SP_RESOURCE_KVD_LINEAR,
 					MLXSW_SP_RESOURCE_KVD,
-					&mlxsw_sp_linear_size_params,
+					&linear_size_params,
 					&mlxsw_sp_resource_kvd_linear_ops);
 	if (err)
 		return err;
@@ -3895,20 +3903,20 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 		       profile->kvd_hash_single_parts;
 	double_size = rounddown(double_size, profile->kvd_hash_granularity);
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD_HASH_DOUBLE,
-					false, double_size,
+					double_size,
 					MLXSW_SP_RESOURCE_KVD_HASH_DOUBLE,
 					MLXSW_SP_RESOURCE_KVD,
-					&mlxsw_sp_hash_double_size_params,
+					&hash_double_size_params,
 					NULL);
 	if (err)
 		return err;
 
 	single_size = kvd_size - double_size - linear_size;
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD_HASH_SINGLE,
-					false, single_size,
+					single_size,
 					MLXSW_SP_RESOURCE_KVD_HASH_SINGLE,
 					MLXSW_SP_RESOURCE_KVD,
-					&mlxsw_sp_hash_single_size_params,
+					&hash_single_size_params,
 					NULL);
 	if (err)
 		return err;
@@ -4639,10 +4647,18 @@ static int mlxsw_sp_netdevice_event(struct notifier_block *nb,
 				    unsigned long event, void *ptr)
 {
 	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct mlxsw_sp_span_entry *span_entry;
 	struct mlxsw_sp *mlxsw_sp;
 	int err = 0;
 
 	mlxsw_sp = container_of(nb, struct mlxsw_sp, netdevice_nb);
+	if (event == NETDEV_UNREGISTER) {
+		span_entry = mlxsw_sp_span_entry_find_by_port(mlxsw_sp, dev);
+		if (span_entry)
+			mlxsw_sp_span_entry_invalidate(mlxsw_sp, span_entry);
+	}
+	mlxsw_sp_span_respin(mlxsw_sp);
+
 	if (mlxsw_sp_netdev_is_ipip_ol(mlxsw_sp, dev))
 		err = mlxsw_sp_netdevice_ipip_ol_event(mlxsw_sp, dev,
 						       event, ptr);

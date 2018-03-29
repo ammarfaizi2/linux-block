@@ -253,9 +253,8 @@ static void mv88e6xxx_g1_irq_unmask(struct irq_data *d)
 	chip->g1_irq.masked &= ~(1 << n);
 }
 
-static irqreturn_t mv88e6xxx_g1_irq_thread_fn(int irq, void *dev_id)
+static irqreturn_t mv88e6xxx_g1_irq_thread_work(struct mv88e6xxx_chip *chip)
 {
-	struct mv88e6xxx_chip *chip = dev_id;
 	unsigned int nhandled = 0;
 	unsigned int sub_irq;
 	unsigned int n;
@@ -278,6 +277,13 @@ static irqreturn_t mv88e6xxx_g1_irq_thread_fn(int irq, void *dev_id)
 	}
 out:
 	return (nhandled > 0 ? IRQ_HANDLED : IRQ_NONE);
+}
+
+static irqreturn_t mv88e6xxx_g1_irq_thread_fn(int irq, void *dev_id)
+{
+	struct mv88e6xxx_chip *chip = dev_id;
+
+	return mv88e6xxx_g1_irq_thread_work(chip);
 }
 
 static void mv88e6xxx_g1_irq_bus_lock(struct irq_data *d)
@@ -335,7 +341,7 @@ static const struct irq_domain_ops mv88e6xxx_g1_irq_domain_ops = {
 	.xlate	= irq_domain_xlate_twocell,
 };
 
-static void mv88e6xxx_g1_irq_free(struct mv88e6xxx_chip *chip)
+static void mv88e6xxx_g1_irq_free_common(struct mv88e6xxx_chip *chip)
 {
 	int irq, virq;
 	u16 mask;
@@ -343,8 +349,6 @@ static void mv88e6xxx_g1_irq_free(struct mv88e6xxx_chip *chip)
 	mv88e6xxx_g1_read(chip, MV88E6XXX_G1_CTL1, &mask);
 	mask &= ~GENMASK(chip->g1_irq.nirqs, 0);
 	mv88e6xxx_g1_write(chip, MV88E6XXX_G1_CTL1, mask);
-
-	free_irq(chip->irq, chip);
 
 	for (irq = 0; irq < chip->g1_irq.nirqs; irq++) {
 		virq = irq_find_mapping(chip->g1_irq.domain, irq);
@@ -354,7 +358,14 @@ static void mv88e6xxx_g1_irq_free(struct mv88e6xxx_chip *chip)
 	irq_domain_remove(chip->g1_irq.domain);
 }
 
-static int mv88e6xxx_g1_irq_setup(struct mv88e6xxx_chip *chip)
+static void mv88e6xxx_g1_irq_free(struct mv88e6xxx_chip *chip)
+{
+	mv88e6xxx_g1_irq_free_common(chip);
+
+	free_irq(chip->irq, chip);
+}
+
+static int mv88e6xxx_g1_irq_setup_common(struct mv88e6xxx_chip *chip)
 {
 	int err, irq, virq;
 	u16 reg, mask;
@@ -387,13 +398,6 @@ static int mv88e6xxx_g1_irq_setup(struct mv88e6xxx_chip *chip)
 	if (err)
 		goto out_disable;
 
-	err = request_threaded_irq(chip->irq, NULL,
-				   mv88e6xxx_g1_irq_thread_fn,
-				   IRQF_ONESHOT | IRQF_TRIGGER_FALLING,
-				   dev_name(chip->dev), chip);
-	if (err)
-		goto out_disable;
-
 	return 0;
 
 out_disable:
@@ -409,6 +413,64 @@ out_mapping:
 	irq_domain_remove(chip->g1_irq.domain);
 
 	return err;
+}
+
+static int mv88e6xxx_g1_irq_setup(struct mv88e6xxx_chip *chip)
+{
+	int err;
+
+	err = mv88e6xxx_g1_irq_setup_common(chip);
+	if (err)
+		return err;
+
+	err = request_threaded_irq(chip->irq, NULL,
+				   mv88e6xxx_g1_irq_thread_fn,
+				   IRQF_ONESHOT,
+				   dev_name(chip->dev), chip);
+	if (err)
+		mv88e6xxx_g1_irq_free_common(chip);
+
+	return err;
+}
+
+static void mv88e6xxx_irq_poll(struct kthread_work *work)
+{
+	struct mv88e6xxx_chip *chip = container_of(work,
+						   struct mv88e6xxx_chip,
+						   irq_poll_work.work);
+	mv88e6xxx_g1_irq_thread_work(chip);
+
+	kthread_queue_delayed_work(chip->kworker, &chip->irq_poll_work,
+				   msecs_to_jiffies(100));
+}
+
+static int mv88e6xxx_irq_poll_setup(struct mv88e6xxx_chip *chip)
+{
+	int err;
+
+	err = mv88e6xxx_g1_irq_setup_common(chip);
+	if (err)
+		return err;
+
+	kthread_init_delayed_work(&chip->irq_poll_work,
+				  mv88e6xxx_irq_poll);
+
+	chip->kworker = kthread_create_worker(0, dev_name(chip->dev));
+	if (IS_ERR(chip->kworker))
+		return PTR_ERR(chip->kworker);
+
+	kthread_queue_delayed_work(chip->kworker, &chip->irq_poll_work,
+				   msecs_to_jiffies(100));
+
+	return 0;
+}
+
+static void mv88e6xxx_irq_poll_free(struct mv88e6xxx_chip *chip)
+{
+	mv88e6xxx_g1_irq_free_common(chip);
+
+	kthread_cancel_delayed_work_sync(&chip->irq_poll_work);
+	kthread_destroy_worker(chip->kworker);
 }
 
 int mv88e6xxx_wait(struct mv88e6xxx_chip *chip, int addr, int reg, u16 mask)
@@ -606,7 +668,7 @@ static uint64_t _mv88e6xxx_get_ethtool_stat(struct mv88e6xxx_chip *chip,
 			return UINT64_MAX;
 
 		low = reg;
-		if (s->sizeof_stat == 4) {
+		if (s->size == 4) {
 			err = mv88e6xxx_port_read(chip, port, s->reg + 1, &reg);
 			if (err)
 				return UINT64_MAX;
@@ -619,7 +681,7 @@ static uint64_t _mv88e6xxx_get_ethtool_stat(struct mv88e6xxx_chip *chip,
 	case STATS_TYPE_BANK0:
 		reg |= s->reg | histogram;
 		mv88e6xxx_g1_stats_read(chip, reg, &low);
-		if (s->sizeof_stat == 8)
+		if (s->size == 8)
 			mv88e6xxx_g1_stats_read(chip, reg + 1, &high);
 		break;
 	default:
@@ -629,8 +691,8 @@ static uint64_t _mv88e6xxx_get_ethtool_stat(struct mv88e6xxx_chip *chip,
 	return value;
 }
 
-static void mv88e6xxx_stats_get_strings(struct mv88e6xxx_chip *chip,
-					uint8_t *data, int types)
+static int mv88e6xxx_stats_get_strings(struct mv88e6xxx_chip *chip,
+				       uint8_t *data, int types)
 {
 	struct mv88e6xxx_hw_stat *stat;
 	int i, j;
@@ -643,29 +705,41 @@ static void mv88e6xxx_stats_get_strings(struct mv88e6xxx_chip *chip,
 			j++;
 		}
 	}
+
+	return j;
 }
 
-static void mv88e6095_stats_get_strings(struct mv88e6xxx_chip *chip,
-					uint8_t *data)
+static int mv88e6095_stats_get_strings(struct mv88e6xxx_chip *chip,
+				       uint8_t *data)
 {
-	mv88e6xxx_stats_get_strings(chip, data,
-				    STATS_TYPE_BANK0 | STATS_TYPE_PORT);
+	return mv88e6xxx_stats_get_strings(chip, data,
+					   STATS_TYPE_BANK0 | STATS_TYPE_PORT);
 }
 
-static void mv88e6320_stats_get_strings(struct mv88e6xxx_chip *chip,
-					uint8_t *data)
+static int mv88e6320_stats_get_strings(struct mv88e6xxx_chip *chip,
+				       uint8_t *data)
 {
-	mv88e6xxx_stats_get_strings(chip, data,
-				    STATS_TYPE_BANK0 | STATS_TYPE_BANK1);
+	return mv88e6xxx_stats_get_strings(chip, data,
+					   STATS_TYPE_BANK0 | STATS_TYPE_BANK1);
 }
 
 static void mv88e6xxx_get_strings(struct dsa_switch *ds, int port,
 				  uint8_t *data)
 {
 	struct mv88e6xxx_chip *chip = ds->priv;
+	int count = 0;
+
+	mutex_lock(&chip->reg_lock);
 
 	if (chip->info->ops->stats_get_strings)
-		chip->info->ops->stats_get_strings(chip, data);
+		count = chip->info->ops->stats_get_strings(chip, data);
+
+	if (chip->info->ops->serdes_get_strings) {
+		data += count * ETH_GSTRING_LEN;
+		chip->info->ops->serdes_get_strings(chip, port, data);
+	}
+
+	mutex_unlock(&chip->reg_lock);
 }
 
 static int mv88e6xxx_stats_get_sset_count(struct mv88e6xxx_chip *chip,
@@ -694,19 +768,34 @@ static int mv88e6320_stats_get_sset_count(struct mv88e6xxx_chip *chip)
 					      STATS_TYPE_BANK1);
 }
 
-static int mv88e6xxx_get_sset_count(struct dsa_switch *ds)
+static int mv88e6xxx_get_sset_count(struct dsa_switch *ds, int port)
 {
 	struct mv88e6xxx_chip *chip = ds->priv;
+	int serdes_count = 0;
+	int count = 0;
 
+	mutex_lock(&chip->reg_lock);
 	if (chip->info->ops->stats_get_sset_count)
-		return chip->info->ops->stats_get_sset_count(chip);
+		count = chip->info->ops->stats_get_sset_count(chip);
+	if (count < 0)
+		goto out;
 
-	return 0;
+	if (chip->info->ops->serdes_get_sset_count)
+		serdes_count = chip->info->ops->serdes_get_sset_count(chip,
+								      port);
+	if (serdes_count < 0)
+		count = serdes_count;
+	else
+		count += serdes_count;
+out:
+	mutex_unlock(&chip->reg_lock);
+
+	return count;
 }
 
-static void mv88e6xxx_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
-				      uint64_t *data, int types,
-				      u16 bank1_select, u16 histogram)
+static int mv88e6xxx_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
+				     uint64_t *data, int types,
+				     u16 bank1_select, u16 histogram)
 {
 	struct mv88e6xxx_hw_stat *stat;
 	int i, j;
@@ -723,18 +812,19 @@ static void mv88e6xxx_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
 			j++;
 		}
 	}
+	return j;
 }
 
-static void mv88e6095_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
-				      uint64_t *data)
+static int mv88e6095_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
+				     uint64_t *data)
 {
 	return mv88e6xxx_stats_get_stats(chip, port, data,
 					 STATS_TYPE_BANK0 | STATS_TYPE_PORT,
 					 0, MV88E6XXX_G1_STATS_OP_HIST_RX_TX);
 }
 
-static void mv88e6320_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
-				      uint64_t *data)
+static int mv88e6320_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
+				     uint64_t *data)
 {
 	return mv88e6xxx_stats_get_stats(chip, port, data,
 					 STATS_TYPE_BANK0 | STATS_TYPE_BANK1,
@@ -742,8 +832,8 @@ static void mv88e6320_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
 					 MV88E6XXX_G1_STATS_OP_HIST_RX_TX);
 }
 
-static void mv88e6390_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
-				      uint64_t *data)
+static int mv88e6390_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
+				     uint64_t *data)
 {
 	return mv88e6xxx_stats_get_stats(chip, port, data,
 					 STATS_TYPE_BANK0 | STATS_TYPE_BANK1,
@@ -754,8 +844,17 @@ static void mv88e6390_stats_get_stats(struct mv88e6xxx_chip *chip, int port,
 static void mv88e6xxx_get_stats(struct mv88e6xxx_chip *chip, int port,
 				uint64_t *data)
 {
+	int count = 0;
+
 	if (chip->info->ops->stats_get_stats)
-		chip->info->ops->stats_get_stats(chip, port, data);
+		count = chip->info->ops->stats_get_stats(chip, port, data);
+
+	if (chip->info->ops->serdes_get_stats) {
+		data += count;
+		mutex_lock(&chip->reg_lock);
+		chip->info->ops->serdes_get_stats(chip, port, data);
+		mutex_unlock(&chip->reg_lock);
+	}
 }
 
 static void mv88e6xxx_get_ethtool_stats(struct dsa_switch *ds, int port,
@@ -2196,12 +2295,19 @@ static int mv88e6xxx_mdio_register(struct mv88e6xxx_chip *chip,
 	bus->write = mv88e6xxx_mdio_write;
 	bus->parent = chip->dev;
 
+	if (!external) {
+		err = mv88e6xxx_g2_irq_mdio_setup(chip, bus);
+		if (err)
+			return err;
+	}
+
 	if (np)
 		err = of_mdiobus_register(bus, np);
 	else
 		err = mdiobus_register(bus);
 	if (err) {
 		dev_err(chip->dev, "Cannot register MDIO bus (%d)\n", err);
+		mv88e6xxx_g2_irq_mdio_free(chip, bus);
 		return err;
 	}
 
@@ -2227,6 +2333,9 @@ static void mv88e6xxx_mdios_unregister(struct mv88e6xxx_chip *chip)
 
 	list_for_each_entry(mdio_bus, &chip->mdios, list) {
 		bus = mdio_bus->bus;
+
+		if (!mdio_bus->external)
+			mv88e6xxx_g2_irq_mdio_free(chip, bus);
 
 		mdiobus_unregister(bus);
 	}
@@ -3130,6 +3239,9 @@ static const struct mv88e6xxx_ops mv88e6352_ops = {
 	.serdes_power = mv88e6352_serdes_power,
 	.gpio_ops = &mv88e6352_gpio_ops,
 	.avb_ops = &mv88e6352_avb_ops,
+	.serdes_get_sset_count = mv88e6352_serdes_get_sset_count,
+	.serdes_get_strings = mv88e6352_serdes_get_strings,
+	.serdes_get_stats = mv88e6352_serdes_get_stats,
 };
 
 static const struct mv88e6xxx_ops mv88e6390_ops = {
@@ -3219,6 +3331,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6085",
 		.num_databases = 4096,
 		.num_ports = 10,
+		.num_internal_phys = 5,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3239,6 +3352,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6095/88E6095F",
 		.num_databases = 256,
 		.num_ports = 11,
+		.num_internal_phys = 0,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3257,6 +3371,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6097/88E6097F",
 		.num_databases = 4096,
 		.num_ports = 11,
+		.num_internal_phys = 8,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3277,6 +3392,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6123",
 		.num_databases = 4096,
 		.num_ports = 3,
+		.num_internal_phys = 5,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3297,6 +3413,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6131",
 		.num_databases = 256,
 		.num_ports = 8,
+		.num_internal_phys = 0,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3312,9 +3429,10 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 	[MV88E6141] = {
 		.prod_num = MV88E6XXX_PORT_SWITCH_ID_PROD_6141,
 		.family = MV88E6XXX_FAMILY_6341,
-		.name = "Marvell 88E6341",
+		.name = "Marvell 88E6141",
 		.num_databases = 4096,
 		.num_ports = 6,
+		.num_internal_phys = 5,
 		.num_gpio = 11,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
@@ -3322,6 +3440,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.global2_addr = 0x1c,
 		.age_time_coeff = 3750,
 		.atu_move_port_mask = 0x1f,
+		.g1_irqs = 9,
 		.g2_irqs = 10,
 		.pvt = true,
 		.multi_chip = true,
@@ -3335,6 +3454,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6161",
 		.num_databases = 4096,
 		.num_ports = 6,
+		.num_internal_phys = 5,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3355,6 +3475,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6165",
 		.num_databases = 4096,
 		.num_ports = 6,
+		.num_internal_phys = 0,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3375,6 +3496,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6171",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3395,6 +3517,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6172",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.num_gpio = 15,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
@@ -3416,6 +3539,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6175",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3436,6 +3560,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6176",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.num_gpio = 15,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
@@ -3457,6 +3582,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6185",
 		.num_databases = 256,
 		.num_ports = 10,
+		.num_internal_phys = 0,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3475,6 +3601,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6190",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
+		.num_internal_phys = 11,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -3496,6 +3623,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6190X",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
+		.num_internal_phys = 11,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -3517,6 +3645,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6191",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
+		.num_internal_phys = 11,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
 		.global1_addr = 0x1b,
@@ -3538,6 +3667,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6240",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.num_gpio = 15,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
@@ -3560,6 +3690,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6290",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
+		.num_internal_phys = 11,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -3582,6 +3713,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6320",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.num_gpio = 15,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
@@ -3589,6 +3721,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.global2_addr = 0x1c,
 		.age_time_coeff = 15000,
 		.g1_irqs = 8,
+		.g2_irqs = 10,
 		.atu_move_port_mask = 0xf,
 		.pvt = true,
 		.multi_chip = true,
@@ -3603,6 +3736,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6321",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.num_gpio = 15,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
@@ -3610,6 +3744,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.global2_addr = 0x1c,
 		.age_time_coeff = 15000,
 		.g1_irqs = 8,
+		.g2_irqs = 10,
 		.atu_move_port_mask = 0xf,
 		.multi_chip = true,
 		.tag_protocol = DSA_TAG_PROTO_EDSA,
@@ -3622,6 +3757,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.family = MV88E6XXX_FAMILY_6341,
 		.name = "Marvell 88E6341",
 		.num_databases = 4096,
+		.num_internal_phys = 5,
 		.num_ports = 6,
 		.num_gpio = 11,
 		.max_vid = 4095,
@@ -3630,6 +3766,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.global2_addr = 0x1c,
 		.age_time_coeff = 3750,
 		.atu_move_port_mask = 0x1f,
+		.g1_irqs = 9,
 		.g2_irqs = 10,
 		.pvt = true,
 		.multi_chip = true,
@@ -3644,6 +3781,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6350",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3664,6 +3802,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6351",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
 		.global1_addr = 0x1b,
@@ -3684,6 +3823,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6352",
 		.num_databases = 4096,
 		.num_ports = 7,
+		.num_internal_phys = 5,
 		.num_gpio = 15,
 		.max_vid = 4095,
 		.port_base_addr = 0x10,
@@ -3705,6 +3845,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6390",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
+		.num_internal_phys = 11,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -3726,6 +3867,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6390X",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
+		.num_internal_phys = 11,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -4034,32 +4176,33 @@ static int mv88e6xxx_probe(struct mdio_device *mdiodev)
 		goto out;
 	}
 
-	if (chip->irq > 0) {
-		/* Has to be performed before the MDIO bus is created,
-		 * because the PHYs will link there interrupts to these
-		 * interrupt controllers
-		 */
-		mutex_lock(&chip->reg_lock);
+	/* Has to be performed before the MDIO bus is created, because
+	 * the PHYs will link their interrupts to these interrupt
+	 * controllers
+	 */
+	mutex_lock(&chip->reg_lock);
+	if (chip->irq > 0)
 		err = mv88e6xxx_g1_irq_setup(chip);
-		mutex_unlock(&chip->reg_lock);
+	else
+		err = mv88e6xxx_irq_poll_setup(chip);
+	mutex_unlock(&chip->reg_lock);
 
+	if (err)
+		goto out;
+
+	if (chip->info->g2_irqs > 0) {
+		err = mv88e6xxx_g2_irq_setup(chip);
 		if (err)
-			goto out;
-
-		if (chip->info->g2_irqs > 0) {
-			err = mv88e6xxx_g2_irq_setup(chip);
-			if (err)
-				goto out_g1_irq;
-		}
-
-		err = mv88e6xxx_g1_atu_prob_irq_setup(chip);
-		if (err)
-			goto out_g2_irq;
-
-		err = mv88e6xxx_g1_vtu_prob_irq_setup(chip);
-		if (err)
-			goto out_g1_atu_prob_irq;
+			goto out_g1_irq;
 	}
+
+	err = mv88e6xxx_g1_atu_prob_irq_setup(chip);
+	if (err)
+		goto out_g2_irq;
+
+	err = mv88e6xxx_g1_vtu_prob_irq_setup(chip);
+	if (err)
+		goto out_g1_atu_prob_irq;
 
 	err = mv88e6xxx_mdios_register(chip, np);
 	if (err)
@@ -4074,20 +4217,19 @@ static int mv88e6xxx_probe(struct mdio_device *mdiodev)
 out_mdio:
 	mv88e6xxx_mdios_unregister(chip);
 out_g1_vtu_prob_irq:
-	if (chip->irq > 0)
-		mv88e6xxx_g1_vtu_prob_irq_free(chip);
+	mv88e6xxx_g1_vtu_prob_irq_free(chip);
 out_g1_atu_prob_irq:
-	if (chip->irq > 0)
-		mv88e6xxx_g1_atu_prob_irq_free(chip);
+	mv88e6xxx_g1_atu_prob_irq_free(chip);
 out_g2_irq:
-	if (chip->info->g2_irqs > 0 && chip->irq > 0)
+	if (chip->info->g2_irqs > 0)
 		mv88e6xxx_g2_irq_free(chip);
 out_g1_irq:
-	if (chip->irq > 0) {
-		mutex_lock(&chip->reg_lock);
+	mutex_lock(&chip->reg_lock);
+	if (chip->irq > 0)
 		mv88e6xxx_g1_irq_free(chip);
-		mutex_unlock(&chip->reg_lock);
-	}
+	else
+		mv88e6xxx_irq_poll_free(chip);
+	mutex_unlock(&chip->reg_lock);
 out:
 	return err;
 }
@@ -4106,15 +4248,18 @@ static void mv88e6xxx_remove(struct mdio_device *mdiodev)
 	mv88e6xxx_unregister_switch(chip);
 	mv88e6xxx_mdios_unregister(chip);
 
-	if (chip->irq > 0) {
-		mv88e6xxx_g1_vtu_prob_irq_free(chip);
-		mv88e6xxx_g1_atu_prob_irq_free(chip);
-		if (chip->info->g2_irqs > 0)
-			mv88e6xxx_g2_irq_free(chip);
-		mutex_lock(&chip->reg_lock);
+	mv88e6xxx_g1_vtu_prob_irq_free(chip);
+	mv88e6xxx_g1_atu_prob_irq_free(chip);
+
+	if (chip->info->g2_irqs > 0)
+		mv88e6xxx_g2_irq_free(chip);
+
+	mutex_lock(&chip->reg_lock);
+	if (chip->irq > 0)
 		mv88e6xxx_g1_irq_free(chip);
-		mutex_unlock(&chip->reg_lock);
-	}
+	else
+		mv88e6xxx_irq_poll_free(chip);
+	mutex_unlock(&chip->reg_lock);
 }
 
 static const struct of_device_id mv88e6xxx_of_match[] = {

@@ -364,7 +364,7 @@ static void phylink_get_fixed_state(struct phylink *pl, struct phylink_link_stat
 }
 
 /* Flow control is resolved according to our and the link partners
- * advertisments using the following drawn from the 802.3 specs:
+ * advertisements using the following drawn from the 802.3 specs:
  *  Local device  Link partner
  *  Pause AsymDir Pause AsymDir Result
  *    1     X       1     X     TX+RX
@@ -679,12 +679,11 @@ static int phylink_bringup_phy(struct phylink *pl, struct phy_device *phy)
 
 	mutex_lock(&phy->lock);
 	mutex_lock(&pl->state_mutex);
-	pl->netdev->phydev = phy;
 	pl->phydev = phy;
 	linkmode_copy(pl->supported, supported);
 	linkmode_copy(pl->link_config.advertising, config.advertising);
 
-	/* Restrict the phy advertisment according to the MAC support. */
+	/* Restrict the phy advertisement according to the MAC support. */
 	ethtool_convert_link_mode_to_legacy_u32(&advertising, config.advertising);
 	phy->advertising = advertising;
 	mutex_unlock(&pl->state_mutex);
@@ -817,7 +816,6 @@ void phylink_disconnect_phy(struct phylink *pl)
 	if (phy) {
 		mutex_lock(&phy->lock);
 		mutex_lock(&pl->state_mutex);
-		pl->netdev->phydev = NULL;
 		pl->phydev = NULL;
 		mutex_unlock(&pl->state_mutex);
 		mutex_unlock(&phy->lock);
@@ -889,7 +887,7 @@ void phylink_start(struct phylink *pl)
 
 	/* Apply the link configuration to the MAC when starting. This allows
 	 * a fixed-link to start with the correct parameters, and also
-	 * ensures that we set the appropriate advertisment for Serdes links.
+	 * ensures that we set the appropriate advertisement for Serdes links.
 	 */
 	phylink_resolve_flow(pl, &pl->link_config);
 	phylink_mac_config(pl, &pl->link_config);
@@ -1076,7 +1074,7 @@ int phylink_ethtool_ksettings_set(struct phylink *pl,
 
 	config = pl->link_config;
 
-	/* Mask out unsupported advertisments */
+	/* Mask out unsupported advertisements */
 	linkmode_and(config.advertising, kset->link_modes.advertising,
 		     pl->supported);
 
@@ -1121,7 +1119,7 @@ int phylink_ethtool_ksettings_set(struct phylink *pl,
 	if (phylink_validate(pl, pl->supported, &config))
 		return -EINVAL;
 
-	/* If autonegotiation is enabled, we must have an advertisment */
+	/* If autonegotiation is enabled, we must have an advertisement */
 	if (config.an_enabled && phylink_is_empty_linkmode(config.advertising))
 		return -EINVAL;
 
@@ -1584,31 +1582,36 @@ static int phylink_sfp_module_insert(void *upstream,
 	bool changed;
 	u8 port;
 
-	sfp_parse_support(pl->sfp_bus, id, support);
-	port = sfp_parse_port(pl->sfp_bus, id, support);
-	iface = sfp_parse_interface(pl->sfp_bus, id);
-
 	ASSERT_RTNL();
 
-	switch (iface) {
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_1000BASEX:
-	case PHY_INTERFACE_MODE_2500BASEX:
-	case PHY_INTERFACE_MODE_10GKR:
-		break;
-	default:
-		return -EINVAL;
-	}
+	sfp_parse_support(pl->sfp_bus, id, support);
+	port = sfp_parse_port(pl->sfp_bus, id, support);
 
 	memset(&config, 0, sizeof(config));
 	linkmode_copy(config.advertising, support);
-	config.interface = iface;
+	config.interface = PHY_INTERFACE_MODE_NA;
 	config.speed = SPEED_UNKNOWN;
 	config.duplex = DUPLEX_UNKNOWN;
 	config.pause = MLO_PAUSE_AN;
 	config.an_enabled = pl->link_config.an_enabled;
 
 	/* Ignore errors if we're expecting a PHY to attach later */
+	ret = phylink_validate(pl, support, &config);
+	if (ret) {
+		netdev_err(pl->netdev, "validation with support %*pb failed: %d\n",
+			   __ETHTOOL_LINK_MODE_MASK_NBITS, support, ret);
+		return ret;
+	}
+
+	iface = sfp_select_interface(pl->sfp_bus, id, config.advertising);
+	if (iface == PHY_INTERFACE_MODE_NA) {
+		netdev_err(pl->netdev,
+			   "selection of interface failed, advertisement %*pb\n",
+			   __ETHTOOL_LINK_MODE_MASK_NBITS, config.advertising);
+		return -EINVAL;
+	}
+
+	config.interface = iface;
 	ret = phylink_validate(pl, support, &config);
 	if (ret) {
 		netdev_err(pl->netdev, "validation of %s/%s with support %*pb failed: %d\n",

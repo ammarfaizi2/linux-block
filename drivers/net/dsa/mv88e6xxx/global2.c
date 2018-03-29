@@ -1090,7 +1090,7 @@ int mv88e6xxx_g2_irq_setup(struct mv88e6xxx_chip *chip)
 
 	err = request_threaded_irq(chip->device_irq, NULL,
 				   mv88e6xxx_g2_irq_thread_fn,
-				   IRQF_ONESHOT, "mv88e6xxx-g1", chip);
+				   IRQF_ONESHOT, "mv88e6xxx-g2", chip);
 	if (err)
 		goto out;
 
@@ -1105,6 +1105,38 @@ out:
 	irq_domain_remove(chip->g2_irq.domain);
 
 	return err;
+}
+
+int mv88e6xxx_g2_irq_mdio_setup(struct mv88e6xxx_chip *chip,
+				struct mii_bus *bus)
+{
+	int phy, irq, err, err_phy;
+
+	for (phy = 0; phy < chip->info->num_internal_phys; phy++) {
+		irq = irq_find_mapping(chip->g2_irq.domain, phy);
+		if (irq < 0) {
+			err = irq;
+			goto out;
+		}
+		bus->irq[chip->info->port_base_addr + phy] = irq;
+	}
+	return 0;
+out:
+	err_phy = phy;
+
+	for (phy = 0; phy < err_phy; phy++)
+		irq_dispose_mapping(bus->irq[phy]);
+
+	return err;
+}
+
+void mv88e6xxx_g2_irq_mdio_free(struct mv88e6xxx_chip *chip,
+				struct mii_bus *bus)
+{
+	int phy;
+
+	for (phy = 0; phy < chip->info->num_internal_phys; phy++)
+		irq_dispose_mapping(bus->irq[phy]);
 }
 
 int mv88e6xxx_g2_setup(struct mv88e6xxx_chip *chip)

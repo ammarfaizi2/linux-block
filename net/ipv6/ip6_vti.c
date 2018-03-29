@@ -645,7 +645,7 @@ static void vti6_link_config(struct ip6_tnl *t)
 			      (IPV6_ADDR_MULTICAST | IPV6_ADDR_LINKLOCAL));
 		struct rt6_info *rt = rt6_lookup(t->net,
 						 &p->raddr, &p->laddr,
-						 p->link, strict);
+						 p->link, NULL, strict);
 
 		if (rt)
 			tdev = rt->dst.dev;
@@ -1148,6 +1148,7 @@ static struct pernet_operations vti6_net_ops = {
 	.exit_batch = vti6_exit_batch_net,
 	.id   = &vti6_net_id,
 	.size = sizeof(struct vti6_net),
+	.async = true,
 };
 
 static struct xfrm6_protocol vti_esp6_protocol __read_mostly = {

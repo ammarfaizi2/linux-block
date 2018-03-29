@@ -12,6 +12,7 @@
 #define __BCM_SYSPORT_H
 
 #include <linux/if_vlan.h>
+#include <linux/net_dim.h>
 
 /* Receive/transmit descriptor format */
 #define DESC_ADDR_HI_STATUS_LEN	0x00
@@ -695,6 +696,16 @@ struct bcm_sysport_hw_params {
 	unsigned int	num_rx_desc_words;
 };
 
+struct bcm_sysport_net_dim {
+	u16			use_dim;
+	u16			event_ctr;
+	unsigned long		packets;
+	unsigned long		bytes;
+	u32			coal_usecs;
+	u32			coal_pkts;
+	struct net_dim		dim;
+};
+
 /* Software view of the TX ring */
 struct bcm_sysport_tx_ring {
 	spinlock_t	lock;		/* Ring lock for tx reclaim/xmit */
@@ -706,12 +717,13 @@ struct bcm_sysport_tx_ring {
 	unsigned int	desc_count;	/* Number of descriptors */
 	unsigned int	curr_desc;	/* Current descriptor */
 	unsigned int	c_index;	/* Last consumer index */
-	unsigned int	p_index;	/* Current producer index */
+	unsigned int	clean_index;	/* Current clean index */
 	struct bcm_sysport_cb *cbs;	/* Transmit control blocks */
 	struct dma_desc	*desc_cpu;	/* CPU view of the descriptor */
 	struct bcm_sysport_priv *priv;	/* private context backpointer */
 	unsigned long	packets;	/* packets statistics */
 	unsigned long	bytes;		/* bytes statistics */
+	struct bcm_sysport_net_dim dim;	/* Net DIM context */
 	unsigned int	switch_queue;	/* switch port queue number */
 	unsigned int	switch_port;	/* switch port queue number */
 	bool		inspect;	/* inspect switch port and queue */
@@ -742,6 +754,8 @@ struct bcm_sysport_priv {
 	unsigned int		num_rx_bds;
 	unsigned int		rx_read_ptr;
 	unsigned int		rx_c_index;
+
+	struct bcm_sysport_net_dim	dim;
 
 	/* PHY device */
 	struct device_node	*phy_dn;

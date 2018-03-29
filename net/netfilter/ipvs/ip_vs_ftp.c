@@ -260,7 +260,7 @@ static int ip_vs_ftp_out(struct ip_vs_app *app, struct ip_vs_conn *cp,
 		buf_len = strlen(buf);
 
 		ct = nf_ct_get(skb, &ctinfo);
-		if (ct && (ct->status & IPS_NAT_MASK)) {
+		if (ct) {
 			bool mangled;
 
 			/* If mangling fails this function will return 0
@@ -479,6 +479,7 @@ static void __ip_vs_ftp_exit(struct net *net)
 static struct pernet_operations ip_vs_ftp_ops = {
 	.init = __ip_vs_ftp_init,
 	.exit = __ip_vs_ftp_exit,
+	.async = true,
 };
 
 static int __init ip_vs_ftp_init(void)

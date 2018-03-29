@@ -44,6 +44,7 @@
 #define MVPP2_RX_ATTR_FIFO_SIZE_REG(port)	(0x20 + 4 * (port))
 #define MVPP2_RX_MIN_PKT_SIZE_REG		0x60
 #define MVPP2_RX_FIFO_INIT_REG			0x64
+#define MVPP22_TX_FIFO_THRESH_REG(port)		(0x8840 + 4 * (port))
 #define MVPP22_TX_FIFO_SIZE_REG(port)		(0x8860 + 4 * (port))
 
 /* RX DMA Top Registers */
@@ -64,6 +65,10 @@
 #define     MVPP2_RXQ_PACKET_OFFSET_OFFS	28
 #define     MVPP2_RXQ_PACKET_OFFSET_MASK	0x70000000
 #define     MVPP2_RXQ_DISABLE_MASK		BIT(31)
+
+/* Top Registers */
+#define MVPP2_MH_REG(port)			(0x5040 + 4 * (port))
+#define MVPP2_DSA_EXTENDED			BIT(5)
 
 /* Parser Registers */
 #define MVPP2_PRS_INIT_LOOKUP_REG		0x1000
@@ -254,6 +259,7 @@
 #define MVPP2_BM_BPPI_READ_PTR_REG(pool)	(0x6100 + ((pool) * 4))
 #define MVPP2_BM_BPPI_PTRS_NUM_REG(pool)	(0x6140 + ((pool) * 4))
 #define     MVPP2_BM_BPPI_PTR_NUM_MASK		0x7ff
+#define MVPP22_BM_POOL_PTRS_NUM_MASK		0xfff8
 #define     MVPP2_BM_BPPI_PREFETCH_FULL_MASK	BIT(16)
 #define MVPP2_BM_POOL_CTRL_REG(pool)		(0x6200 + ((pool) * 4))
 #define     MVPP2_BM_START_MASK			BIT(0)
@@ -473,6 +479,7 @@
 #define MVPP2_ETH_TYPE_LEN		2
 #define MVPP2_PPPOE_HDR_SIZE		8
 #define MVPP2_VLAN_TAG_LEN		4
+#define MVPP2_VLAN_TAG_EDSA_LEN		8
 
 /* Lbtd 802.3 type */
 #define MVPP2_IP_LBDT_TYPE		0xfffa
@@ -536,6 +543,11 @@
 /* TX FIFO constants */
 #define MVPP22_TX_FIFO_DATA_SIZE_10KB		0xa
 #define MVPP22_TX_FIFO_DATA_SIZE_3KB		0x3
+#define MVPP2_TX_FIFO_THRESHOLD_MIN		256
+#define MVPP2_TX_FIFO_THRESHOLD_10KB	\
+	(MVPP22_TX_FIFO_DATA_SIZE_10KB * 1024 - MVPP2_TX_FIFO_THRESHOLD_MIN)
+#define MVPP2_TX_FIFO_THRESHOLD_3KB	\
+	(MVPP22_TX_FIFO_DATA_SIZE_3KB * 1024 - MVPP2_TX_FIFO_THRESHOLD_MIN)
 
 /* RX buffer constants */
 #define MVPP2_SKB_SHINFO_SIZE \
@@ -589,6 +601,9 @@ enum mvpp2_tag_type {
 #define MVPP2_PRS_TCAM_PROTO_MASK	0xff
 #define MVPP2_PRS_TCAM_PROTO_MASK_L	0x3f
 #define MVPP2_PRS_DBL_VLANS_MAX		100
+#define MVPP2_PRS_CAST_MASK		BIT(0)
+#define MVPP2_PRS_MCAST_VAL		BIT(0)
+#define MVPP2_PRS_UCAST_VAL		0x0
 
 /* Tcam structure:
  * - lookup ID - 4 bits
@@ -609,34 +624,80 @@ enum mvpp2_tag_type {
 #define MVPP2_PRS_TCAM_LU_BYTE			20
 #define MVPP2_PRS_TCAM_EN_OFFS(offs)		((offs) + 2)
 #define MVPP2_PRS_TCAM_INV_WORD			5
+
+#define MVPP2_PRS_VID_TCAM_BYTE         2
+
+/* TCAM range for unicast and multicast filtering. We have 25 entries per port,
+ * with 4 dedicated to UC filtering and the rest to multicast filtering.
+ * Additionnally we reserve one entry for the broadcast address, and one for
+ * each port's own address.
+ */
+#define MVPP2_PRS_MAC_UC_MC_FILT_MAX	25
+#define MVPP2_PRS_MAC_RANGE_SIZE	80
+
+/* Number of entries per port dedicated to UC and MC filtering */
+#define MVPP2_PRS_MAC_UC_FILT_MAX	4
+#define MVPP2_PRS_MAC_MC_FILT_MAX	(MVPP2_PRS_MAC_UC_MC_FILT_MAX - \
+					 MVPP2_PRS_MAC_UC_FILT_MAX)
+
+/* There is a TCAM range reserved for VLAN filtering entries, range size is 33
+ * 10 VLAN ID filter entries per port
+ * 1 default VLAN filter entry per port
+ * It is assumed that there are 3 ports for filter, not including loopback port
+ */
+#define MVPP2_PRS_VLAN_FILT_MAX		11
+#define MVPP2_PRS_VLAN_FILT_RANGE_SIZE	33
+
+#define MVPP2_PRS_VLAN_FILT_MAX_ENTRY   (MVPP2_PRS_VLAN_FILT_MAX - 2)
+#define MVPP2_PRS_VLAN_FILT_DFLT_ENTRY  (MVPP2_PRS_VLAN_FILT_MAX - 1)
+
 /* Tcam entries ID */
 #define MVPP2_PE_DROP_ALL		0
 #define MVPP2_PE_FIRST_FREE_TID		1
-#define MVPP2_PE_LAST_FREE_TID		(MVPP2_PRS_TCAM_SRAM_SIZE - 31)
+
+/* MAC filtering range */
+#define MVPP2_PE_MAC_RANGE_END		(MVPP2_PE_VID_FILT_RANGE_START - 1)
+#define MVPP2_PE_MAC_RANGE_START	(MVPP2_PE_MAC_RANGE_END - \
+						MVPP2_PRS_MAC_RANGE_SIZE + 1)
+/* VLAN filtering range */
+#define MVPP2_PE_VID_FILT_RANGE_END     (MVPP2_PRS_TCAM_SRAM_SIZE - 31)
+#define MVPP2_PE_VID_FILT_RANGE_START   (MVPP2_PE_VID_FILT_RANGE_END - \
+					 MVPP2_PRS_VLAN_FILT_RANGE_SIZE + 1)
+#define MVPP2_PE_LAST_FREE_TID          (MVPP2_PE_VID_FILT_RANGE_START - 1)
 #define MVPP2_PE_IP6_EXT_PROTO_UN	(MVPP2_PRS_TCAM_SRAM_SIZE - 30)
-#define MVPP2_PE_MAC_MC_IP6		(MVPP2_PRS_TCAM_SRAM_SIZE - 29)
-#define MVPP2_PE_IP6_ADDR_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 28)
-#define MVPP2_PE_IP4_ADDR_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 27)
-#define MVPP2_PE_LAST_DEFAULT_FLOW	(MVPP2_PRS_TCAM_SRAM_SIZE - 26)
-#define MVPP2_PE_FIRST_DEFAULT_FLOW	(MVPP2_PRS_TCAM_SRAM_SIZE - 19)
-#define MVPP2_PE_EDSA_TAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 18)
-#define MVPP2_PE_EDSA_UNTAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 17)
-#define MVPP2_PE_DSA_TAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 16)
-#define MVPP2_PE_DSA_UNTAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 15)
-#define MVPP2_PE_ETYPE_EDSA_TAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 14)
-#define MVPP2_PE_ETYPE_EDSA_UNTAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 13)
-#define MVPP2_PE_ETYPE_DSA_TAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 12)
-#define MVPP2_PE_ETYPE_DSA_UNTAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 11)
-#define MVPP2_PE_MH_DEFAULT		(MVPP2_PRS_TCAM_SRAM_SIZE - 10)
-#define MVPP2_PE_DSA_DEFAULT		(MVPP2_PRS_TCAM_SRAM_SIZE - 9)
-#define MVPP2_PE_IP6_PROTO_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 8)
-#define MVPP2_PE_IP4_PROTO_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 7)
-#define MVPP2_PE_ETH_TYPE_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 6)
-#define MVPP2_PE_VLAN_DBL		(MVPP2_PRS_TCAM_SRAM_SIZE - 5)
-#define MVPP2_PE_VLAN_NONE		(MVPP2_PRS_TCAM_SRAM_SIZE - 4)
-#define MVPP2_PE_MAC_MC_ALL		(MVPP2_PRS_TCAM_SRAM_SIZE - 3)
-#define MVPP2_PE_MAC_PROMISCUOUS	(MVPP2_PRS_TCAM_SRAM_SIZE - 2)
+#define MVPP2_PE_IP6_ADDR_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 29)
+#define MVPP2_PE_IP4_ADDR_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 28)
+#define MVPP2_PE_LAST_DEFAULT_FLOW	(MVPP2_PRS_TCAM_SRAM_SIZE - 27)
+#define MVPP2_PE_FIRST_DEFAULT_FLOW	(MVPP2_PRS_TCAM_SRAM_SIZE - 22)
+#define MVPP2_PE_EDSA_TAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 21)
+#define MVPP2_PE_EDSA_UNTAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 20)
+#define MVPP2_PE_DSA_TAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 19)
+#define MVPP2_PE_DSA_UNTAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 18)
+#define MVPP2_PE_ETYPE_EDSA_TAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 17)
+#define MVPP2_PE_ETYPE_EDSA_UNTAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 16)
+#define MVPP2_PE_ETYPE_DSA_TAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 15)
+#define MVPP2_PE_ETYPE_DSA_UNTAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 14)
+#define MVPP2_PE_MH_DEFAULT		(MVPP2_PRS_TCAM_SRAM_SIZE - 13)
+#define MVPP2_PE_DSA_DEFAULT		(MVPP2_PRS_TCAM_SRAM_SIZE - 12)
+#define MVPP2_PE_IP6_PROTO_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 11)
+#define MVPP2_PE_IP4_PROTO_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 10)
+#define MVPP2_PE_ETH_TYPE_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 9)
+#define MVPP2_PE_VID_FLTR_DEFAULT	(MVPP2_PRS_TCAM_SRAM_SIZE - 8)
+#define MVPP2_PE_VID_EDSA_FLTR_DEFAULT	(MVPP2_PRS_TCAM_SRAM_SIZE - 7)
+#define MVPP2_PE_VLAN_DBL		(MVPP2_PRS_TCAM_SRAM_SIZE - 6)
+#define MVPP2_PE_VLAN_NONE		(MVPP2_PRS_TCAM_SRAM_SIZE - 5)
+/* reserved */
+#define MVPP2_PE_MAC_MC_PROMISCUOUS	(MVPP2_PRS_TCAM_SRAM_SIZE - 3)
+#define MVPP2_PE_MAC_UC_PROMISCUOUS	(MVPP2_PRS_TCAM_SRAM_SIZE - 2)
 #define MVPP2_PE_MAC_NON_PROMISCUOUS	(MVPP2_PRS_TCAM_SRAM_SIZE - 1)
+
+#define MVPP2_PRS_VID_PORT_FIRST(port)	(MVPP2_PE_VID_FILT_RANGE_START + \
+					 ((port) * MVPP2_PRS_VLAN_FILT_MAX))
+#define MVPP2_PRS_VID_PORT_LAST(port)	(MVPP2_PRS_VID_PORT_FIRST(port) \
+					 + MVPP2_PRS_VLAN_FILT_MAX_ENTRY)
+/* Index of default vid filter for given port */
+#define MVPP2_PRS_VID_PORT_DFLT(port)	(MVPP2_PRS_VID_PORT_FIRST(port) \
+					 + MVPP2_PRS_VLAN_FILT_DFLT_ENTRY)
 
 /* Sram structure
  * The fields are represented by MVPP2_PRS_TCAM_DATA_REG(3)->(0).
@@ -725,6 +786,7 @@ enum mvpp2_tag_type {
 #define MVPP2_PRS_IPV6_EXT_AH_L4_AI_BIT		BIT(4)
 #define MVPP2_PRS_SINGLE_VLAN_AI		0
 #define MVPP2_PRS_DBL_VLAN_AI_BIT		BIT(7)
+#define MVPP2_PRS_EDSA_VID_AI_BIT		BIT(0)
 
 /* DSA/EDSA type */
 #define MVPP2_PRS_TAGGED		true
@@ -747,12 +809,19 @@ enum mvpp2_prs_lookup {
 	MVPP2_PRS_LU_MAC,
 	MVPP2_PRS_LU_DSA,
 	MVPP2_PRS_LU_VLAN,
+	MVPP2_PRS_LU_VID,
 	MVPP2_PRS_LU_L2,
 	MVPP2_PRS_LU_PPPOE,
 	MVPP2_PRS_LU_IP4,
 	MVPP2_PRS_LU_IP6,
 	MVPP2_PRS_LU_FLOWS,
 	MVPP2_PRS_LU_LAST,
+};
+
+/* L2 cast enum */
+enum mvpp2_prs_l2_cast {
+	MVPP2_PRS_L2_UNI_CAST,
+	MVPP2_PRS_L2_MULTI_CAST,
 };
 
 /* L3 cast enum */
@@ -772,23 +841,26 @@ enum mvpp2_prs_l3_cast {
 #define MVPP22_RSS_TABLE_ENTRIES	32
 
 /* BM constants */
-#define MVPP2_BM_POOLS_NUM		8
+#define MVPP2_BM_JUMBO_BUF_NUM		512
 #define MVPP2_BM_LONG_BUF_NUM		1024
 #define MVPP2_BM_SHORT_BUF_NUM		2048
 #define MVPP2_BM_POOL_SIZE_MAX		(16*1024 - MVPP2_BM_POOL_PTR_ALIGN/4)
 #define MVPP2_BM_POOL_PTR_ALIGN		128
-#define MVPP2_BM_SWF_LONG_POOL(port)	((port > 2) ? 2 : port)
-#define MVPP2_BM_SWF_SHORT_POOL		3
 
 /* BM cookie (32 bits) definition */
 #define MVPP2_BM_COOKIE_POOL_OFFS	8
 #define MVPP2_BM_COOKIE_CPU_OFFS	24
 
+#define MVPP2_BM_SHORT_FRAME_SIZE		512
+#define MVPP2_BM_LONG_FRAME_SIZE		2048
+#define MVPP2_BM_JUMBO_FRAME_SIZE		10240
 /* BM short pool packet size
  * These value assure that for SWF the total number
  * of bytes allocated for each buffer will be 512
  */
-#define MVPP2_BM_SHORT_PKT_SIZE		MVPP2_RX_MAX_PKT_SIZE(512)
+#define MVPP2_BM_SHORT_PKT_SIZE	MVPP2_RX_MAX_PKT_SIZE(MVPP2_BM_SHORT_FRAME_SIZE)
+#define MVPP2_BM_LONG_PKT_SIZE	MVPP2_RX_MAX_PKT_SIZE(MVPP2_BM_LONG_FRAME_SIZE)
+#define MVPP2_BM_JUMBO_PKT_SIZE	MVPP2_RX_MAX_PKT_SIZE(MVPP2_BM_JUMBO_FRAME_SIZE)
 
 #define MVPP21_ADDR_SPACE_SZ		0
 #define MVPP22_ADDR_SPACE_SZ		SZ_64K
@@ -796,11 +868,17 @@ enum mvpp2_prs_l3_cast {
 #define MVPP2_MAX_THREADS		8
 #define MVPP2_MAX_QVECS			MVPP2_MAX_THREADS
 
-enum mvpp2_bm_type {
-	MVPP2_BM_FREE,
-	MVPP2_BM_SWF_LONG,
-	MVPP2_BM_SWF_SHORT
+enum mvpp2_bm_pool_log_num {
+	MVPP2_BM_SHORT,
+	MVPP2_BM_LONG,
+	MVPP2_BM_JUMBO,
+	MVPP2_BM_POOLS_NUM
 };
+
+static struct {
+	int pkt_size;
+	int buf_num;
+} mvpp2_pools[MVPP2_BM_POOLS_NUM];
 
 /* GMAC MIB Counters register definitions */
 #define MVPP21_MIB_COUNTERS_OFFSET		0x1000
@@ -1230,7 +1308,6 @@ struct mvpp2_cls_lookup_entry {
 struct mvpp2_bm_pool {
 	/* Pool number in the range 0-7 */
 	int id;
-	enum mvpp2_bm_type type;
 
 	/* Buffer Pointers Pool External (BPPE) size */
 	int size;
@@ -1662,6 +1739,14 @@ static void mvpp2_prs_match_etype(struct mvpp2_prs_entry *pe, int offset,
 	mvpp2_prs_tcam_data_byte_set(pe, offset + 1, ethertype & 0xff, 0xff);
 }
 
+/* Set vid in tcam sw entry */
+static void mvpp2_prs_match_vid(struct mvpp2_prs_entry *pe, int offset,
+				unsigned short vid)
+{
+	mvpp2_prs_tcam_data_byte_set(pe, offset + 0, (vid & 0xf00) >> 8, 0xf);
+	mvpp2_prs_tcam_data_byte_set(pe, offset + 1, vid & 0xff, 0xff);
+}
+
 /* Set bits in sram sw entry */
 static void mvpp2_prs_sram_bits_set(struct mvpp2_prs_entry *pe, int bit_num,
 				    int val)
@@ -1914,78 +1999,43 @@ static void mvpp2_prs_mac_drop_all_set(struct mvpp2 *priv, int port, bool add)
 	mvpp2_prs_hw_write(priv, &pe);
 }
 
-/* Set port to promiscuous mode */
-static void mvpp2_prs_mac_promisc_set(struct mvpp2 *priv, int port, bool add)
+/* Set port to unicast or multicast promiscuous mode */
+static void mvpp2_prs_mac_promisc_set(struct mvpp2 *priv, int port,
+				      enum mvpp2_prs_l2_cast l2_cast, bool add)
 {
 	struct mvpp2_prs_entry pe;
+	unsigned char cast_match;
+	unsigned int ri;
+	int tid;
 
-	/* Promiscuous mode - Accept unknown packets */
-
-	if (priv->prs_shadow[MVPP2_PE_MAC_PROMISCUOUS].valid) {
-		/* Entry exist - update port only */
-		pe.index = MVPP2_PE_MAC_PROMISCUOUS;
-		mvpp2_prs_hw_read(priv, &pe);
+	if (l2_cast == MVPP2_PRS_L2_UNI_CAST) {
+		cast_match = MVPP2_PRS_UCAST_VAL;
+		tid = MVPP2_PE_MAC_UC_PROMISCUOUS;
+		ri = MVPP2_PRS_RI_L2_UCAST;
 	} else {
-		/* Entry doesn't exist - create new */
-		memset(&pe, 0, sizeof(pe));
-		mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_MAC);
-		pe.index = MVPP2_PE_MAC_PROMISCUOUS;
-
-		/* Continue - set next lookup */
-		mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_DSA);
-
-		/* Set result info bits */
-		mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_L2_UCAST,
-					 MVPP2_PRS_RI_L2_CAST_MASK);
-
-		/* Shift to ethertype */
-		mvpp2_prs_sram_shift_set(&pe, 2 * ETH_ALEN,
-					 MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
-
-		/* Mask all ports */
-		mvpp2_prs_tcam_port_map_set(&pe, 0);
-
-		/* Update shadow table */
-		mvpp2_prs_shadow_set(priv, pe.index, MVPP2_PRS_LU_MAC);
+		cast_match = MVPP2_PRS_MCAST_VAL;
+		tid = MVPP2_PE_MAC_MC_PROMISCUOUS;
+		ri = MVPP2_PRS_RI_L2_MCAST;
 	}
 
-	/* Update port mask */
-	mvpp2_prs_tcam_port_set(&pe, port, add);
-
-	mvpp2_prs_hw_write(priv, &pe);
-}
-
-/* Accept multicast */
-static void mvpp2_prs_mac_multi_set(struct mvpp2 *priv, int port, int index,
-				    bool add)
-{
-	struct mvpp2_prs_entry pe;
-	unsigned char da_mc;
-
-	/* Ethernet multicast address first byte is
-	 * 0x01 for IPv4 and 0x33 for IPv6
-	 */
-	da_mc = (index == MVPP2_PE_MAC_MC_ALL) ? 0x01 : 0x33;
-
-	if (priv->prs_shadow[index].valid) {
-		/* Entry exist - update port only */
-		pe.index = index;
+	/* promiscuous mode - Accept unknown unicast or multicast packets */
+	if (priv->prs_shadow[tid].valid) {
+		pe.index = tid;
 		mvpp2_prs_hw_read(priv, &pe);
 	} else {
-		/* Entry doesn't exist - create new */
 		memset(&pe, 0, sizeof(pe));
 		mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_MAC);
-		pe.index = index;
+		pe.index = tid;
 
 		/* Continue - set next lookup */
 		mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_DSA);
 
 		/* Set result info bits */
-		mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_L2_MCAST,
-					 MVPP2_PRS_RI_L2_CAST_MASK);
+		mvpp2_prs_sram_ri_update(&pe, ri, MVPP2_PRS_RI_L2_CAST_MASK);
 
-		/* Update tcam entry data first byte */
-		mvpp2_prs_tcam_data_byte_set(&pe, 0, da_mc, 0xff);
+		/* Match UC or MC addresses */
+		mvpp2_prs_tcam_data_byte_set(&pe, 0, cast_match,
+					     MVPP2_PRS_CAST_MASK);
 
 		/* Shift to ethertype */
 		mvpp2_prs_sram_shift_set(&pe, 2 * ETH_ALEN,
@@ -2029,24 +2079,30 @@ static void mvpp2_prs_dsa_tag_set(struct mvpp2 *priv, int port, bool add,
 		mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_DSA);
 		pe.index = tid;
 
-		/* Shift 4 bytes if DSA tag or 8 bytes in case of EDSA tag*/
-		mvpp2_prs_sram_shift_set(&pe, shift,
-					 MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
-
 		/* Update shadow table */
 		mvpp2_prs_shadow_set(priv, pe.index, MVPP2_PRS_LU_DSA);
 
 		if (tagged) {
 			/* Set tagged bit in DSA tag */
 			mvpp2_prs_tcam_data_byte_set(&pe, 0,
-						     MVPP2_PRS_TCAM_DSA_TAGGED_BIT,
-						     MVPP2_PRS_TCAM_DSA_TAGGED_BIT);
-			/* Clear all ai bits for next iteration */
-			mvpp2_prs_sram_ai_update(&pe, 0,
-						 MVPP2_PRS_SRAM_AI_MASK);
-			/* If packet is tagged continue check vlans */
-			mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_VLAN);
+					     MVPP2_PRS_TCAM_DSA_TAGGED_BIT,
+					     MVPP2_PRS_TCAM_DSA_TAGGED_BIT);
+
+			/* Set ai bits for next iteration */
+			if (extend)
+				mvpp2_prs_sram_ai_update(&pe, 1,
+							MVPP2_PRS_SRAM_AI_MASK);
+			else
+				mvpp2_prs_sram_ai_update(&pe, 0,
+							MVPP2_PRS_SRAM_AI_MASK);
+
+			/* If packet is tagged continue check vid filtering */
+			mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_VID);
 		} else {
+			/* Shift 4 bytes for DSA tag or 8 bytes for EDSA tag*/
+			mvpp2_prs_sram_shift_set(&pe, shift,
+					MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
+
 			/* Set result info bits to 'no vlans' */
 			mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_VLAN_NONE,
 						 MVPP2_PRS_RI_VLAN_MASK);
@@ -2231,10 +2287,9 @@ static int mvpp2_prs_vlan_add(struct mvpp2 *priv, unsigned short tpid, int ai,
 
 		mvpp2_prs_match_etype(pe, 0, tpid);
 
-		mvpp2_prs_sram_next_lu_set(pe, MVPP2_PRS_LU_L2);
-		/* Shift 4 bytes - skip 1 vlan tag */
-		mvpp2_prs_sram_shift_set(pe, MVPP2_VLAN_TAG_LEN,
-					 MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
+		/* VLAN tag detected, proceed with VID filtering */
+		mvpp2_prs_sram_next_lu_set(pe, MVPP2_PRS_LU_VID);
+
 		/* Clear all ai bits for next iteration */
 		mvpp2_prs_sram_ai_update(pe, 0, MVPP2_PRS_SRAM_AI_MASK);
 
@@ -2375,8 +2430,8 @@ static int mvpp2_prs_double_vlan_add(struct mvpp2 *priv, unsigned short tpid1,
 		mvpp2_prs_match_etype(pe, 4, tpid2);
 
 		mvpp2_prs_sram_next_lu_set(pe, MVPP2_PRS_LU_VLAN);
-		/* Shift 8 bytes - skip 2 vlan tags */
-		mvpp2_prs_sram_shift_set(pe, 2 * MVPP2_VLAN_TAG_LEN,
+		/* Shift 4 bytes - skip outer vlan tag */
+		mvpp2_prs_sram_shift_set(pe, MVPP2_VLAN_TAG_LEN,
 					 MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
 		mvpp2_prs_sram_ri_update(pe, MVPP2_PRS_RI_VLAN_DOUBLE,
 					 MVPP2_PRS_RI_VLAN_MASK);
@@ -2694,11 +2749,10 @@ static void mvpp2_prs_mac_init(struct mvpp2 *priv)
 	mvpp2_prs_shadow_set(priv, pe.index, MVPP2_PRS_LU_MAC);
 	mvpp2_prs_hw_write(priv, &pe);
 
-	/* place holders only - no ports */
+	/* Create dummy entries for drop all and promiscuous modes */
 	mvpp2_prs_mac_drop_all_set(priv, 0, false);
-	mvpp2_prs_mac_promisc_set(priv, 0, false);
-	mvpp2_prs_mac_multi_set(priv, 0, MVPP2_PE_MAC_MC_ALL, false);
-	mvpp2_prs_mac_multi_set(priv, 0, MVPP2_PE_MAC_MC_IP6, false);
+	mvpp2_prs_mac_promisc_set(priv, 0, MVPP2_PRS_L2_UNI_CAST, false);
+	mvpp2_prs_mac_promisc_set(priv, 0, MVPP2_PRS_L2_MULTI_CAST, false);
 }
 
 /* Set default entries for various types of dsa packets */
@@ -2752,6 +2806,62 @@ static void mvpp2_prs_dsa_init(struct mvpp2 *priv)
 	/* Unmask all ports */
 	mvpp2_prs_tcam_port_map_set(&pe, MVPP2_PRS_PORT_MASK);
 
+	mvpp2_prs_hw_write(priv, &pe);
+}
+
+/* Initialize parser entries for VID filtering */
+static void mvpp2_prs_vid_init(struct mvpp2 *priv)
+{
+	struct mvpp2_prs_entry pe;
+
+	memset(&pe, 0, sizeof(pe));
+
+	/* Set default vid entry */
+	pe.index = MVPP2_PE_VID_FLTR_DEFAULT;
+	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VID);
+
+	mvpp2_prs_tcam_ai_update(&pe, 0, MVPP2_PRS_EDSA_VID_AI_BIT);
+
+	/* Skip VLAN header - Set offset to 4 bytes */
+	mvpp2_prs_sram_shift_set(&pe, MVPP2_VLAN_TAG_LEN,
+				 MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
+
+	/* Clear all ai bits for next iteration */
+	mvpp2_prs_sram_ai_update(&pe, 0, MVPP2_PRS_SRAM_AI_MASK);
+
+	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
+
+	/* Unmask all ports */
+	mvpp2_prs_tcam_port_map_set(&pe, MVPP2_PRS_PORT_MASK);
+
+	/* Update shadow table and hw entry */
+	mvpp2_prs_shadow_set(priv, pe.index, MVPP2_PRS_LU_VID);
+	mvpp2_prs_hw_write(priv, &pe);
+
+	/* Set default vid entry for extended DSA*/
+	memset(&pe, 0, sizeof(pe));
+
+	/* Set default vid entry */
+	pe.index = MVPP2_PE_VID_EDSA_FLTR_DEFAULT;
+	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VID);
+
+	mvpp2_prs_tcam_ai_update(&pe, MVPP2_PRS_EDSA_VID_AI_BIT,
+				 MVPP2_PRS_EDSA_VID_AI_BIT);
+
+	/* Skip VLAN header - Set offset to 8 bytes */
+	mvpp2_prs_sram_shift_set(&pe, MVPP2_VLAN_TAG_EDSA_LEN,
+				 MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
+
+	/* Clear all ai bits for next iteration */
+	mvpp2_prs_sram_ai_update(&pe, 0, MVPP2_PRS_SRAM_AI_MASK);
+
+	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
+
+	/* Unmask all ports */
+	mvpp2_prs_tcam_port_map_set(&pe, MVPP2_PRS_PORT_MASK);
+
+	/* Update shadow table and hw entry */
+	mvpp2_prs_shadow_set(priv, pe.index, MVPP2_PRS_LU_VID);
 	mvpp2_prs_hw_write(priv, &pe);
 }
 
@@ -3023,7 +3133,8 @@ static int mvpp2_prs_vlan_init(struct platform_device *pdev, struct mvpp2 *priv)
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VLAN);
 	pe.index = MVPP2_PE_VLAN_DBL;
 
-	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
+	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_VID);
+
 	/* Clear ai for next iterations */
 	mvpp2_prs_sram_ai_update(&pe, 0, MVPP2_PRS_SRAM_AI_MASK);
 	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_VLAN_DOUBLE,
@@ -3386,6 +3497,192 @@ static int mvpp2_prs_ip6_init(struct mvpp2 *priv)
 	return 0;
 }
 
+/* Find tcam entry with matched pair <vid,port> */
+static int mvpp2_prs_vid_range_find(struct mvpp2 *priv, int pmap, u16 vid,
+				    u16 mask)
+{
+	unsigned char byte[2], enable[2];
+	struct mvpp2_prs_entry pe;
+	u16 rvid, rmask;
+	int tid;
+
+	/* Go through the all entries with MVPP2_PRS_LU_VID */
+	for (tid = MVPP2_PE_VID_FILT_RANGE_START;
+	     tid <= MVPP2_PE_VID_FILT_RANGE_END; tid++) {
+		if (!priv->prs_shadow[tid].valid ||
+		    priv->prs_shadow[tid].lu != MVPP2_PRS_LU_VID)
+			continue;
+
+		pe.index = tid;
+
+		mvpp2_prs_hw_read(priv, &pe);
+		mvpp2_prs_tcam_data_byte_get(&pe, 2, &byte[0], &enable[0]);
+		mvpp2_prs_tcam_data_byte_get(&pe, 3, &byte[1], &enable[1]);
+
+		rvid = ((byte[0] & 0xf) << 8) + byte[1];
+		rmask = ((enable[0] & 0xf) << 8) + enable[1];
+
+		if (rvid != vid || rmask != mask)
+			continue;
+
+		return tid;
+	}
+
+	return 0;
+}
+
+/* Write parser entry for VID filtering */
+static int mvpp2_prs_vid_entry_add(struct mvpp2_port *port, u16 vid)
+{
+	unsigned int vid_start = MVPP2_PE_VID_FILT_RANGE_START +
+				 port->id * MVPP2_PRS_VLAN_FILT_MAX;
+	unsigned int mask = 0xfff, reg_val, shift;
+	struct mvpp2 *priv = port->priv;
+	struct mvpp2_prs_entry pe;
+	int tid;
+
+	/* Scan TCAM and see if entry with this <vid,port> already exist */
+	tid = mvpp2_prs_vid_range_find(priv, (1 << port->id), vid, mask);
+
+	reg_val = mvpp2_read(priv, MVPP2_MH_REG(port->id));
+	if (reg_val & MVPP2_DSA_EXTENDED)
+		shift = MVPP2_VLAN_TAG_EDSA_LEN;
+	else
+		shift = MVPP2_VLAN_TAG_LEN;
+
+	/* No such entry */
+	if (!tid) {
+		memset(&pe, 0, sizeof(pe));
+
+		/* Go through all entries from first to last in vlan range */
+		tid = mvpp2_prs_tcam_first_free(priv, vid_start,
+						vid_start +
+						MVPP2_PRS_VLAN_FILT_MAX_ENTRY);
+
+		/* There isn't room for a new VID filter */
+		if (tid < 0)
+			return tid;
+
+		mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VID);
+		pe.index = tid;
+
+		/* Mask all ports */
+		mvpp2_prs_tcam_port_map_set(&pe, 0);
+	} else {
+		mvpp2_prs_hw_read(priv, &pe);
+	}
+
+	/* Enable the current port */
+	mvpp2_prs_tcam_port_set(&pe, port->id, true);
+
+	/* Continue - set next lookup */
+	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
+
+	/* Skip VLAN header - Set offset to 4 or 8 bytes */
+	mvpp2_prs_sram_shift_set(&pe, shift, MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
+
+	/* Set match on VID */
+	mvpp2_prs_match_vid(&pe, MVPP2_PRS_VID_TCAM_BYTE, vid);
+
+	/* Clear all ai bits for next iteration */
+	mvpp2_prs_sram_ai_update(&pe, 0, MVPP2_PRS_SRAM_AI_MASK);
+
+	/* Update shadow table */
+	mvpp2_prs_shadow_set(priv, pe.index, MVPP2_PRS_LU_VID);
+	mvpp2_prs_hw_write(priv, &pe);
+
+	return 0;
+}
+
+/* Write parser entry for VID filtering */
+static void mvpp2_prs_vid_entry_remove(struct mvpp2_port *port, u16 vid)
+{
+	struct mvpp2 *priv = port->priv;
+	int tid;
+
+	/* Scan TCAM and see if entry with this <vid,port> already exist */
+	tid = mvpp2_prs_vid_range_find(priv, (1 << port->id), vid, 0xfff);
+
+	/* No such entry */
+	if (tid)
+		return;
+
+	mvpp2_prs_hw_inv(priv, tid);
+	priv->prs_shadow[tid].valid = false;
+}
+
+/* Remove all existing VID filters on this port */
+static void mvpp2_prs_vid_remove_all(struct mvpp2_port *port)
+{
+	struct mvpp2 *priv = port->priv;
+	int tid;
+
+	for (tid = MVPP2_PRS_VID_PORT_FIRST(port->id);
+	     tid <= MVPP2_PRS_VID_PORT_LAST(port->id); tid++) {
+		if (priv->prs_shadow[tid].valid)
+			mvpp2_prs_vid_entry_remove(port, tid);
+	}
+}
+
+/* Remove VID filering entry for this port */
+static void mvpp2_prs_vid_disable_filtering(struct mvpp2_port *port)
+{
+	unsigned int tid = MVPP2_PRS_VID_PORT_DFLT(port->id);
+	struct mvpp2 *priv = port->priv;
+
+	/* Invalidate the guard entry */
+	mvpp2_prs_hw_inv(priv, tid);
+
+	priv->prs_shadow[tid].valid = false;
+}
+
+/* Add guard entry that drops packets when no VID is matched on this port */
+static void mvpp2_prs_vid_enable_filtering(struct mvpp2_port *port)
+{
+	unsigned int tid = MVPP2_PRS_VID_PORT_DFLT(port->id);
+	struct mvpp2 *priv = port->priv;
+	unsigned int reg_val, shift;
+	struct mvpp2_prs_entry pe;
+
+	if (priv->prs_shadow[tid].valid)
+		return;
+
+	memset(&pe, 0, sizeof(pe));
+
+	pe.index = tid;
+
+	reg_val = mvpp2_read(priv, MVPP2_MH_REG(port->id));
+	if (reg_val & MVPP2_DSA_EXTENDED)
+		shift = MVPP2_VLAN_TAG_EDSA_LEN;
+	else
+		shift = MVPP2_VLAN_TAG_LEN;
+
+	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VID);
+
+	/* Mask all ports */
+	mvpp2_prs_tcam_port_map_set(&pe, 0);
+
+	/* Update port mask */
+	mvpp2_prs_tcam_port_set(&pe, port->id, true);
+
+	/* Continue - set next lookup */
+	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
+
+	/* Skip VLAN header - Set offset to 4 or 8 bytes */
+	mvpp2_prs_sram_shift_set(&pe, shift, MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
+
+	/* Drop VLAN packets that don't belong to any VIDs on this port */
+	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_DROP_MASK,
+				 MVPP2_PRS_RI_DROP_MASK);
+
+	/* Clear all ai bits for next iteration */
+	mvpp2_prs_sram_ai_update(&pe, 0, MVPP2_PRS_SRAM_AI_MASK);
+
+	/* Update shadow table */
+	mvpp2_prs_shadow_set(priv, pe.index, MVPP2_PRS_LU_VID);
+	mvpp2_prs_hw_write(priv, &pe);
+}
+
 /* Parser default initialization */
 static int mvpp2_prs_default_init(struct platform_device *pdev,
 				  struct mvpp2 *priv)
@@ -3428,6 +3725,8 @@ static int mvpp2_prs_default_init(struct platform_device *pdev,
 	mvpp2_prs_mac_init(priv);
 
 	mvpp2_prs_dsa_init(priv);
+
+	mvpp2_prs_vid_init(priv);
 
 	err = mvpp2_prs_etype_init(priv);
 	if (err)
@@ -3485,8 +3784,8 @@ mvpp2_prs_mac_da_range_find(struct mvpp2 *priv, int pmap, const u8 *da,
 	mvpp2_prs_tcam_lu_set(pe, MVPP2_PRS_LU_MAC);
 
 	/* Go through the all entires with MVPP2_PRS_LU_MAC */
-	for (tid = MVPP2_PE_FIRST_FREE_TID;
-	     tid <= MVPP2_PE_LAST_FREE_TID; tid++) {
+	for (tid = MVPP2_PE_MAC_RANGE_START;
+	     tid <= MVPP2_PE_MAC_RANGE_END; tid++) {
 		unsigned int entry_pmap;
 
 		if (!priv->prs_shadow[tid].valid ||
@@ -3508,16 +3807,17 @@ mvpp2_prs_mac_da_range_find(struct mvpp2 *priv, int pmap, const u8 *da,
 }
 
 /* Update parser's mac da entry */
-static int mvpp2_prs_mac_da_accept(struct mvpp2 *priv, int port,
-				   const u8 *da, bool add)
+static int mvpp2_prs_mac_da_accept(struct mvpp2_port *port, const u8 *da,
+				   bool add)
 {
-	struct mvpp2_prs_entry *pe;
-	unsigned int pmap, len, ri;
 	unsigned char mask[ETH_ALEN] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	struct mvpp2 *priv = port->priv;
+	unsigned int pmap, len, ri;
+	struct mvpp2_prs_entry *pe;
 	int tid;
 
 	/* Scan TCAM and see if entry with this <MAC DA, port> already exist */
-	pe = mvpp2_prs_mac_da_range_find(priv, (1 << port), da, mask,
+	pe = mvpp2_prs_mac_da_range_find(priv, BIT(port->id), da, mask,
 					 MVPP2_PRS_UDF_MAC_DEF);
 
 	/* No such entry */
@@ -3526,18 +3826,10 @@ static int mvpp2_prs_mac_da_accept(struct mvpp2 *priv, int port,
 			return 0;
 
 		/* Create new TCAM entry */
-		/* Find first range mac entry*/
-		for (tid = MVPP2_PE_FIRST_FREE_TID;
-		     tid <= MVPP2_PE_LAST_FREE_TID; tid++)
-			if (priv->prs_shadow[tid].valid &&
-			    (priv->prs_shadow[tid].lu == MVPP2_PRS_LU_MAC) &&
-			    (priv->prs_shadow[tid].udf ==
-						       MVPP2_PRS_UDF_MAC_RANGE))
-				break;
-
 		/* Go through the all entries from first to last */
-		tid = mvpp2_prs_tcam_first_free(priv, MVPP2_PE_FIRST_FREE_TID,
-						tid - 1);
+		tid = mvpp2_prs_tcam_first_free(priv,
+						MVPP2_PE_MAC_RANGE_START,
+						MVPP2_PE_MAC_RANGE_END);
 		if (tid < 0)
 			return tid;
 
@@ -3552,7 +3844,7 @@ static int mvpp2_prs_mac_da_accept(struct mvpp2 *priv, int port,
 	}
 
 	/* Update port mask */
-	mvpp2_prs_tcam_port_set(pe, port, add);
+	mvpp2_prs_tcam_port_set(pe, port->id, add);
 
 	/* Invalidate the entry if no ports are left enabled */
 	pmap = mvpp2_prs_tcam_port_map_get(pe);
@@ -3576,12 +3868,16 @@ static int mvpp2_prs_mac_da_accept(struct mvpp2 *priv, int port,
 		mvpp2_prs_tcam_data_byte_set(pe, len, da[len], 0xff);
 
 	/* Set result info bits */
-	if (is_broadcast_ether_addr(da))
+	if (is_broadcast_ether_addr(da)) {
 		ri = MVPP2_PRS_RI_L2_BCAST;
-	else if (is_multicast_ether_addr(da))
+	} else if (is_multicast_ether_addr(da)) {
 		ri = MVPP2_PRS_RI_L2_MCAST;
-	else
-		ri = MVPP2_PRS_RI_L2_UCAST | MVPP2_PRS_RI_MAC_ME_MASK;
+	} else {
+		ri = MVPP2_PRS_RI_L2_UCAST;
+
+		if (ether_addr_equal(da, port->dev->dev_addr))
+			ri |= MVPP2_PRS_RI_MAC_ME_MASK;
+	}
 
 	mvpp2_prs_sram_ri_update(pe, ri, MVPP2_PRS_RI_L2_CAST_MASK |
 				 MVPP2_PRS_RI_MAC_ME_MASK);
@@ -3608,13 +3904,12 @@ static int mvpp2_prs_update_mac_da(struct net_device *dev, const u8 *da)
 	int err;
 
 	/* Remove old parser entry */
-	err = mvpp2_prs_mac_da_accept(port->priv, port->id, dev->dev_addr,
-				      false);
+	err = mvpp2_prs_mac_da_accept(port, dev->dev_addr, false);
 	if (err)
 		return err;
 
 	/* Add new parser entry */
-	err = mvpp2_prs_mac_da_accept(port->priv, port->id, da, true);
+	err = mvpp2_prs_mac_da_accept(port, da, true);
 	if (err)
 		return err;
 
@@ -3624,14 +3919,15 @@ static int mvpp2_prs_update_mac_da(struct net_device *dev, const u8 *da)
 	return 0;
 }
 
-/* Delete all port's multicast simple (not range) entries */
-static void mvpp2_prs_mcast_del_all(struct mvpp2 *priv, int port)
+static void mvpp2_prs_mac_del_all(struct mvpp2_port *port)
 {
+	struct mvpp2 *priv = port->priv;
 	struct mvpp2_prs_entry pe;
+	unsigned long pmap;
 	int index, tid;
 
-	for (tid = MVPP2_PE_FIRST_FREE_TID;
-	     tid <= MVPP2_PE_LAST_FREE_TID; tid++) {
+	for (tid = MVPP2_PE_MAC_RANGE_START;
+	     tid <= MVPP2_PE_MAC_RANGE_END; tid++) {
 		unsigned char da[ETH_ALEN], da_mask[ETH_ALEN];
 
 		if (!priv->prs_shadow[tid].valid ||
@@ -3639,18 +3935,29 @@ static void mvpp2_prs_mcast_del_all(struct mvpp2 *priv, int port)
 		    (priv->prs_shadow[tid].udf != MVPP2_PRS_UDF_MAC_DEF))
 			continue;
 
-		/* Only simple mac entries */
 		pe.index = tid;
 		mvpp2_prs_hw_read(priv, &pe);
+
+		pmap = mvpp2_prs_tcam_port_map_get(&pe);
+
+		/* We only want entries active on this port */
+		if (!test_bit(port->id, &pmap))
+			continue;
 
 		/* Read mac addr from entry */
 		for (index = 0; index < ETH_ALEN; index++)
 			mvpp2_prs_tcam_data_byte_get(&pe, index, &da[index],
 						     &da_mask[index]);
 
-		if (is_multicast_ether_addr(da) && !is_broadcast_ether_addr(da))
-			/* Delete this entry */
-			mvpp2_prs_mac_da_accept(priv, port, da, false);
+		/* Special cases : Don't remove broadcast and port's own
+		 * address
+		 */
+		if (is_broadcast_ether_addr(da) ||
+		    ether_addr_equal(da, port->dev->dev_addr))
+			continue;
+
+		/* Remove entry from TCAM */
+		mvpp2_prs_mac_da_accept(port, da, false);
 	}
 }
 
@@ -3901,7 +4208,6 @@ static int mvpp2_bm_pool_create(struct platform_device *pdev,
 	val |= MVPP2_BM_START_MASK;
 	mvpp2_write(priv, MVPP2_BM_POOL_CTRL_REG(bm_pool->id), val);
 
-	bm_pool->type = MVPP2_BM_FREE;
 	bm_pool->size = size;
 	bm_pool->pkt_size = 0;
 	bm_pool->buf_num = 0;
@@ -3954,11 +4260,17 @@ static void mvpp2_bm_bufs_get_addrs(struct device *dev, struct mvpp2 *priv,
 
 /* Free all buffers from the pool */
 static void mvpp2_bm_bufs_free(struct device *dev, struct mvpp2 *priv,
-			       struct mvpp2_bm_pool *bm_pool)
+			       struct mvpp2_bm_pool *bm_pool, int buf_num)
 {
 	int i;
 
-	for (i = 0; i < bm_pool->buf_num; i++) {
+	if (buf_num > bm_pool->buf_num) {
+		WARN(1, "Pool does not have so many bufs pool(%d) bufs(%d)\n",
+		     bm_pool->id, buf_num);
+		buf_num = bm_pool->buf_num;
+	}
+
+	for (i = 0; i < buf_num; i++) {
 		dma_addr_t buf_dma_addr;
 		phys_addr_t buf_phys_addr;
 		void *data;
@@ -3980,16 +4292,39 @@ static void mvpp2_bm_bufs_free(struct device *dev, struct mvpp2 *priv,
 	bm_pool->buf_num -= i;
 }
 
+/* Check number of buffers in BM pool */
+static int mvpp2_check_hw_buf_num(struct mvpp2 *priv, struct mvpp2_bm_pool *bm_pool)
+{
+	int buf_num = 0;
+
+	buf_num += mvpp2_read(priv, MVPP2_BM_POOL_PTRS_NUM_REG(bm_pool->id)) &
+				    MVPP22_BM_POOL_PTRS_NUM_MASK;
+	buf_num += mvpp2_read(priv, MVPP2_BM_BPPI_PTRS_NUM_REG(bm_pool->id)) &
+				    MVPP2_BM_BPPI_PTR_NUM_MASK;
+
+	/* HW has one buffer ready which is not reflected in the counters */
+	if (buf_num)
+		buf_num += 1;
+
+	return buf_num;
+}
+
 /* Cleanup pool */
 static int mvpp2_bm_pool_destroy(struct platform_device *pdev,
 				 struct mvpp2 *priv,
 				 struct mvpp2_bm_pool *bm_pool)
 {
+	int buf_num;
 	u32 val;
 
-	mvpp2_bm_bufs_free(&pdev->dev, priv, bm_pool);
-	if (bm_pool->buf_num) {
-		WARN(1, "cannot free all buffers in pool %d\n", bm_pool->id);
+	buf_num = mvpp2_check_hw_buf_num(priv, bm_pool);
+	mvpp2_bm_bufs_free(&pdev->dev, priv, bm_pool, buf_num);
+
+	/* Check buffer counters after free */
+	buf_num = mvpp2_check_hw_buf_num(priv, bm_pool);
+	if (buf_num) {
+		WARN(1, "cannot free all buffers in pool %d, buf_num left %d\n",
+		     bm_pool->id, bm_pool->buf_num);
 		return 0;
 	}
 
@@ -4049,6 +4384,21 @@ static int mvpp2_bm_init(struct platform_device *pdev, struct mvpp2 *priv)
 	if (err < 0)
 		return err;
 	return 0;
+}
+
+static void mvpp2_setup_bm_pool(void)
+{
+	/* Short pool */
+	mvpp2_pools[MVPP2_BM_SHORT].buf_num  = MVPP2_BM_SHORT_BUF_NUM;
+	mvpp2_pools[MVPP2_BM_SHORT].pkt_size = MVPP2_BM_SHORT_PKT_SIZE;
+
+	/* Long pool */
+	mvpp2_pools[MVPP2_BM_LONG].buf_num  = MVPP2_BM_LONG_BUF_NUM;
+	mvpp2_pools[MVPP2_BM_LONG].pkt_size = MVPP2_BM_LONG_PKT_SIZE;
+
+	/* Jumbo pool */
+	mvpp2_pools[MVPP2_BM_JUMBO].buf_num  = MVPP2_BM_JUMBO_BUF_NUM;
+	mvpp2_pools[MVPP2_BM_JUMBO].pkt_size = MVPP2_BM_JUMBO_PKT_SIZE;
 }
 
 /* Attach long pool to rxq */
@@ -4189,13 +4539,11 @@ static int mvpp2_bm_bufs_add(struct mvpp2_port *port,
 	bm_pool->buf_num += i;
 
 	netdev_dbg(port->dev,
-		   "%s pool %d: pkt_size=%4d, buf_size=%4d, total_size=%4d\n",
-		   bm_pool->type == MVPP2_BM_SWF_SHORT ? "short" : " long",
+		   "pool %d: pkt_size=%4d, buf_size=%4d, total_size=%4d\n",
 		   bm_pool->id, bm_pool->pkt_size, buf_size, total_size);
 
 	netdev_dbg(port->dev,
-		   "%s pool %d: %d of %d buffers added\n",
-		   bm_pool->type == MVPP2_BM_SWF_SHORT ? "short" : " long",
+		   "pool %d: %d of %d buffers added\n",
 		   bm_pool->id, i, buf_num);
 	return i;
 }
@@ -4204,25 +4552,20 @@ static int mvpp2_bm_bufs_add(struct mvpp2_port *port,
  * pool pointer on success
  */
 static struct mvpp2_bm_pool *
-mvpp2_bm_pool_use(struct mvpp2_port *port, int pool, enum mvpp2_bm_type type,
-		  int pkt_size)
+mvpp2_bm_pool_use(struct mvpp2_port *port, unsigned pool, int pkt_size)
 {
 	struct mvpp2_bm_pool *new_pool = &port->priv->bm_pools[pool];
 	int num;
 
-	if (new_pool->type != MVPP2_BM_FREE && new_pool->type != type) {
-		netdev_err(port->dev, "mixing pool types is forbidden\n");
+	if (pool >= MVPP2_BM_POOLS_NUM) {
+		netdev_err(port->dev, "Invalid pool %d\n", pool);
 		return NULL;
 	}
-
-	if (new_pool->type == MVPP2_BM_FREE)
-		new_pool->type = type;
 
 	/* Allocate buffers in case BM pool is used as long pool, but packet
 	 * size doesn't match MTU or BM pool hasn't being used yet
 	 */
-	if (((type == MVPP2_BM_SWF_LONG) && (pkt_size > new_pool->pkt_size)) ||
-	    (new_pool->pkt_size == 0)) {
+	if (new_pool->pkt_size == 0) {
 		int pkts_num;
 
 		/* Set default buffer number or free all the buffers in case
@@ -4230,12 +4573,10 @@ mvpp2_bm_pool_use(struct mvpp2_port *port, int pool, enum mvpp2_bm_type type,
 		 */
 		pkts_num = new_pool->buf_num;
 		if (pkts_num == 0)
-			pkts_num = type == MVPP2_BM_SWF_LONG ?
-				   MVPP2_BM_LONG_BUF_NUM :
-				   MVPP2_BM_SHORT_BUF_NUM;
+			pkts_num = mvpp2_pools[pool].buf_num;
 		else
 			mvpp2_bm_bufs_free(port->dev->dev.parent,
-					   port->priv, new_pool);
+					   port->priv, new_pool, pkts_num);
 
 		new_pool->pkt_size = pkt_size;
 		new_pool->frag_size =
@@ -4261,16 +4602,28 @@ mvpp2_bm_pool_use(struct mvpp2_port *port, int pool, enum mvpp2_bm_type type,
 static int mvpp2_swf_bm_pool_init(struct mvpp2_port *port)
 {
 	int rxq;
+	enum mvpp2_bm_pool_log_num long_log_pool, short_log_pool;
+
+	/* If port pkt_size is higher than 1518B:
+	 * HW Long pool - SW Jumbo pool, HW Short pool - SW Long pool
+	 * else: HW Long pool - SW Long pool, HW Short pool - SW Short pool
+	 */
+	if (port->pkt_size > MVPP2_BM_LONG_PKT_SIZE) {
+		long_log_pool = MVPP2_BM_JUMBO;
+		short_log_pool = MVPP2_BM_LONG;
+	} else {
+		long_log_pool = MVPP2_BM_LONG;
+		short_log_pool = MVPP2_BM_SHORT;
+	}
 
 	if (!port->pool_long) {
 		port->pool_long =
-		       mvpp2_bm_pool_use(port, MVPP2_BM_SWF_LONG_POOL(port->id),
-					 MVPP2_BM_SWF_LONG,
-					 port->pkt_size);
+			mvpp2_bm_pool_use(port, long_log_pool,
+					  mvpp2_pools[long_log_pool].pkt_size);
 		if (!port->pool_long)
 			return -ENOMEM;
 
-		port->pool_long->port_map |= (1 << port->id);
+		port->pool_long->port_map |= BIT(port->id);
 
 		for (rxq = 0; rxq < port->nrxqs; rxq++)
 			mvpp2_rxq_long_pool_set(port, rxq, port->pool_long->id);
@@ -4278,13 +4631,12 @@ static int mvpp2_swf_bm_pool_init(struct mvpp2_port *port)
 
 	if (!port->pool_short) {
 		port->pool_short =
-			mvpp2_bm_pool_use(port, MVPP2_BM_SWF_SHORT_POOL,
-					  MVPP2_BM_SWF_SHORT,
-					  MVPP2_BM_SHORT_PKT_SIZE);
+			mvpp2_bm_pool_use(port, short_log_pool,
+					  mvpp2_pools[short_log_pool].pkt_size);
 		if (!port->pool_short)
 			return -ENOMEM;
 
-		port->pool_short->port_map |= (1 << port->id);
+		port->pool_short->port_map |= BIT(port->id);
 
 		for (rxq = 0; rxq < port->nrxqs; rxq++)
 			mvpp2_rxq_short_pool_set(port, rxq,
@@ -4297,30 +4649,49 @@ static int mvpp2_swf_bm_pool_init(struct mvpp2_port *port)
 static int mvpp2_bm_update_mtu(struct net_device *dev, int mtu)
 {
 	struct mvpp2_port *port = netdev_priv(dev);
-	struct mvpp2_bm_pool *port_pool = port->pool_long;
-	int num, pkts_num = port_pool->buf_num;
+	enum mvpp2_bm_pool_log_num new_long_pool;
 	int pkt_size = MVPP2_RX_PKT_SIZE(mtu);
 
-	/* Update BM pool with new buffer size */
-	mvpp2_bm_bufs_free(dev->dev.parent, port->priv, port_pool);
-	if (port_pool->buf_num) {
-		WARN(1, "cannot free all buffers in pool %d\n", port_pool->id);
-		return -EIO;
+	/* If port MTU is higher than 1518B:
+	 * HW Long pool - SW Jumbo pool, HW Short pool - SW Long pool
+	 * else: HW Long pool - SW Long pool, HW Short pool - SW Short pool
+	 */
+	if (pkt_size > MVPP2_BM_LONG_PKT_SIZE)
+		new_long_pool = MVPP2_BM_JUMBO;
+	else
+		new_long_pool = MVPP2_BM_LONG;
+
+	if (new_long_pool != port->pool_long->id) {
+		/* Remove port from old short & long pool */
+		port->pool_long = mvpp2_bm_pool_use(port, port->pool_long->id,
+						    port->pool_long->pkt_size);
+		port->pool_long->port_map &= ~BIT(port->id);
+		port->pool_long = NULL;
+
+		port->pool_short = mvpp2_bm_pool_use(port, port->pool_short->id,
+						     port->pool_short->pkt_size);
+		port->pool_short->port_map &= ~BIT(port->id);
+		port->pool_short = NULL;
+
+		port->pkt_size =  pkt_size;
+
+		/* Add port to new short & long pool */
+		mvpp2_swf_bm_pool_init(port);
+
+		/* Update L4 checksum when jumbo enable/disable on port */
+		if (new_long_pool == MVPP2_BM_JUMBO && port->id != 0) {
+			dev->features &= ~(NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM);
+			dev->hw_features &= ~(NETIF_F_IP_CSUM |
+					      NETIF_F_IPV6_CSUM);
+		} else {
+			dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+			dev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+		}
 	}
 
-	port_pool->pkt_size = pkt_size;
-	port_pool->frag_size = SKB_DATA_ALIGN(MVPP2_RX_BUF_SIZE(pkt_size)) +
-		MVPP2_SKB_SHINFO_SIZE;
-	num = mvpp2_bm_bufs_add(port, port_pool, pkts_num);
-	if (num != pkts_num) {
-		WARN(1, "pool %d: %d of %d allocated\n",
-		     port_pool->id, num, pkts_num);
-		return -EIO;
-	}
-
-	mvpp2_bm_pool_bufsize_set(port->priv, port_pool,
-				  MVPP2_RX_BUF_SIZE(port_pool->pkt_size));
 	dev->mtu = mtu;
+	dev->wanted_features = dev->features;
+
 	netdev_update_features(dev);
 	return 0;
 }
@@ -7007,15 +7378,14 @@ static int mvpp2_open(struct net_device *dev)
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	int err;
 
-	err = mvpp2_prs_mac_da_accept(port->priv, port->id, mac_bcast, true);
+	err = mvpp2_prs_mac_da_accept(port, mac_bcast, true);
 	if (err) {
 		netdev_err(dev, "mvpp2_prs_mac_da_accept BC failed\n");
 		return err;
 	}
-	err = mvpp2_prs_mac_da_accept(port->priv, port->id,
-				      dev->dev_addr, true);
+	err = mvpp2_prs_mac_da_accept(port, dev->dev_addr, true);
 	if (err) {
-		netdev_err(dev, "mvpp2_prs_mac_da_accept MC failed\n");
+		netdev_err(dev, "mvpp2_prs_mac_da_accept own addr failed\n");
 		return err;
 	}
 	err = mvpp2_prs_tag_mode_set(port->priv, port->id, MVPP2_TAG_TYPE_MH);
@@ -7129,30 +7499,64 @@ static int mvpp2_stop(struct net_device *dev)
 	return 0;
 }
 
+static int mvpp2_prs_mac_da_accept_list(struct mvpp2_port *port,
+					struct netdev_hw_addr_list *list)
+{
+	struct netdev_hw_addr *ha;
+	int ret;
+
+	netdev_hw_addr_list_for_each(ha, list) {
+		ret = mvpp2_prs_mac_da_accept(port, ha->addr, true);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+static void mvpp2_set_rx_promisc(struct mvpp2_port *port, bool enable)
+{
+	if (!enable && (port->dev->features & NETIF_F_HW_VLAN_CTAG_FILTER))
+		mvpp2_prs_vid_enable_filtering(port);
+	else
+		mvpp2_prs_vid_disable_filtering(port);
+
+	mvpp2_prs_mac_promisc_set(port->priv, port->id,
+				  MVPP2_PRS_L2_UNI_CAST, enable);
+
+	mvpp2_prs_mac_promisc_set(port->priv, port->id,
+				  MVPP2_PRS_L2_MULTI_CAST, enable);
+}
+
 static void mvpp2_set_rx_mode(struct net_device *dev)
 {
 	struct mvpp2_port *port = netdev_priv(dev);
-	struct mvpp2 *priv = port->priv;
-	struct netdev_hw_addr *ha;
-	int id = port->id;
-	bool allmulti = dev->flags & IFF_ALLMULTI;
 
-retry:
-	mvpp2_prs_mac_promisc_set(priv, id, dev->flags & IFF_PROMISC);
-	mvpp2_prs_mac_multi_set(priv, id, MVPP2_PE_MAC_MC_ALL, allmulti);
-	mvpp2_prs_mac_multi_set(priv, id, MVPP2_PE_MAC_MC_IP6, allmulti);
+	/* Clear the whole UC and MC list */
+	mvpp2_prs_mac_del_all(port);
 
-	/* Remove all port->id's mcast enries */
-	mvpp2_prs_mcast_del_all(priv, id);
-
-	if (!allmulti) {
-		netdev_for_each_mc_addr(ha, dev) {
-			if (mvpp2_prs_mac_da_accept(priv, id, ha->addr, true)) {
-				allmulti = true;
-				goto retry;
-			}
-		}
+	if (dev->flags & IFF_PROMISC) {
+		mvpp2_set_rx_promisc(port, true);
+		return;
 	}
+
+	mvpp2_set_rx_promisc(port, false);
+
+	if (netdev_uc_count(dev) > MVPP2_PRS_MAC_UC_FILT_MAX ||
+	    mvpp2_prs_mac_da_accept_list(port, &dev->uc))
+		mvpp2_prs_mac_promisc_set(port->priv, port->id,
+					  MVPP2_PRS_L2_UNI_CAST, true);
+
+	if (dev->flags & IFF_ALLMULTI) {
+		mvpp2_prs_mac_promisc_set(port->priv, port->id,
+					  MVPP2_PRS_L2_MULTI_CAST, true);
+		return;
+	}
+
+	if (netdev_mc_count(dev) > MVPP2_PRS_MAC_MC_FILT_MAX ||
+	    mvpp2_prs_mac_da_accept_list(port, &dev->mc))
+		mvpp2_prs_mac_promisc_set(port->priv, port->id,
+					  MVPP2_PRS_L2_MULTI_CAST, true);
 }
 
 static int mvpp2_set_mac_address(struct net_device *dev, void *p)
@@ -7290,6 +7694,48 @@ static int mvpp2_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		mvpp2_link_event(dev);
 
 	return ret;
+}
+
+static int mvpp2_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
+{
+	struct mvpp2_port *port = netdev_priv(dev);
+	int ret;
+
+	ret = mvpp2_prs_vid_entry_add(port, vid);
+	if (ret)
+		netdev_err(dev, "rx-vlan-filter offloading cannot accept more than %d VIDs per port\n",
+			   MVPP2_PRS_VLAN_FILT_MAX - 1);
+	return ret;
+}
+
+static int mvpp2_vlan_rx_kill_vid(struct net_device *dev, __be16 proto, u16 vid)
+{
+	struct mvpp2_port *port = netdev_priv(dev);
+
+	mvpp2_prs_vid_entry_remove(port, vid);
+	return 0;
+}
+
+static int mvpp2_set_features(struct net_device *dev,
+			      netdev_features_t features)
+{
+	netdev_features_t changed = dev->features ^ features;
+	struct mvpp2_port *port = netdev_priv(dev);
+
+	if (changed & NETIF_F_HW_VLAN_CTAG_FILTER) {
+		if (features & NETIF_F_HW_VLAN_CTAG_FILTER) {
+			mvpp2_prs_vid_enable_filtering(port);
+		} else {
+			/* Invalidate all registered VID filters for this
+			 * port
+			 */
+			mvpp2_prs_vid_remove_all(port);
+
+			mvpp2_prs_vid_disable_filtering(port);
+		}
+	}
+
+	return 0;
 }
 
 /* Ethtool methods */
@@ -7433,6 +7879,9 @@ static const struct net_device_ops mvpp2_netdev_ops = {
 	.ndo_change_mtu		= mvpp2_change_mtu,
 	.ndo_get_stats64	= mvpp2_get_stats64,
 	.ndo_do_ioctl		= mvpp2_ioctl,
+	.ndo_vlan_rx_add_vid	= mvpp2_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= mvpp2_vlan_rx_kill_vid,
+	.ndo_set_features	= mvpp2_set_features,
 };
 
 static const struct ethtool_ops mvpp2_eth_tool_ops = {
@@ -7943,16 +8392,25 @@ static int mvpp2_port_probe(struct platform_device *pdev,
 		}
 	}
 
-	features = NETIF_F_SG | NETIF_F_IP_CSUM | NETIF_F_TSO;
+	features = NETIF_F_SG | NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
+		   NETIF_F_TSO;
 	dev->features = features | NETIF_F_RXCSUM;
-	dev->hw_features |= features | NETIF_F_RXCSUM | NETIF_F_GRO;
+	dev->hw_features |= features | NETIF_F_RXCSUM | NETIF_F_GRO |
+			    NETIF_F_HW_VLAN_CTAG_FILTER;
+
+	if (port->pool_long->id == MVPP2_BM_JUMBO && port->id != 0) {
+		dev->features &= ~(NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM);
+		dev->hw_features &= ~(NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM);
+	}
+
 	dev->vlan_features |= features;
 	dev->gso_max_segs = MVPP2_MAX_TSO_SEGS;
+	dev->priv_flags |= IFF_UNICAST_FLT;
 
-	/* MTU range: 68 - 9676 */
+	/* MTU range: 68 - 9704 */
 	dev->min_mtu = ETH_MIN_MTU;
-	/* 9676 == 9700 - 20 and rounding to 8 */
-	dev->max_mtu = 9676;
+	/* 9704 == 9728 - 20 and rounding to 8 */
+	dev->max_mtu = MVPP2_BM_JUMBO_PKT_SIZE;
 
 	err = register_netdev(dev);
 	if (err < 0) {
@@ -8083,14 +8541,25 @@ static void mvpp22_rx_fifo_init(struct mvpp2 *priv)
 	mvpp2_write(priv, MVPP2_RX_FIFO_INIT_REG, 0x1);
 }
 
-/* Initialize Tx FIFO's */
+/* Initialize Tx FIFO's: the total FIFO size is 19kB on PPv2.2 and 10G
+ * interfaces must have a Tx FIFO size of 10kB. As only port 0 can do 10G,
+ * configure its Tx FIFO size to 10kB and the others ports Tx FIFO size to 3kB.
+ */
 static void mvpp22_tx_fifo_init(struct mvpp2 *priv)
 {
-	int port;
+	int port, size, thrs;
 
-	for (port = 0; port < MVPP2_MAX_PORTS; port++)
-		mvpp2_write(priv, MVPP22_TX_FIFO_SIZE_REG(port),
-			    MVPP22_TX_FIFO_DATA_SIZE_3KB);
+	for (port = 0; port < MVPP2_MAX_PORTS; port++) {
+		if (port == 0) {
+			size = MVPP22_TX_FIFO_DATA_SIZE_10KB;
+			thrs = MVPP2_TX_FIFO_THRESHOLD_10KB;
+		} else {
+			size = MVPP22_TX_FIFO_DATA_SIZE_3KB;
+			thrs = MVPP2_TX_FIFO_THRESHOLD_3KB;
+		}
+		mvpp2_write(priv, MVPP22_TX_FIFO_SIZE_REG(port), size);
+		mvpp2_write(priv, MVPP22_TX_FIFO_THRESH_REG(port), thrs);
+	}
 }
 
 static void mvpp2_axi_init(struct mvpp2 *priv)
@@ -8283,6 +8752,8 @@ static int mvpp2_probe(struct platform_device *pdev)
 			 */
 			priv->sysctrl_base = NULL;
 	}
+
+	mvpp2_setup_bm_pool();
 
 	for (i = 0; i < MVPP2_MAX_THREADS; i++) {
 		u32 addr_space_sz;

@@ -122,7 +122,7 @@ bool mpls_pkt_too_big(const struct sk_buff *skb, unsigned int mtu)
 	if (skb->len <= mtu)
 		return false;
 
-	if (skb_is_gso(skb) && skb_gso_validate_mtu(skb, mtu))
+	if (skb_is_gso(skb) && skb_gso_validate_network_len(skb, mtu))
 		return false;
 
 	return true;
@@ -2488,6 +2488,7 @@ static void mpls_net_exit(struct net *net)
 static struct pernet_operations mpls_net_ops = {
 	.init = mpls_net_init,
 	.exit = mpls_net_exit,
+	.async = true,
 };
 
 static struct rtnl_af_ops mpls_af_ops __read_mostly = {

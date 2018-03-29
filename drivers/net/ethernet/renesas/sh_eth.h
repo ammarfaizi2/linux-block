@@ -118,8 +118,8 @@ enum {
 	TSU_FWSL0,
 	TSU_FWSL1,
 	TSU_FWSLC,
-	TSU_QTAG0,
-	TSU_QTAG1,
+	TSU_QTAG0,			/* Same as TSU_QTAGM0 */
+	TSU_QTAG1,			/* Same as TSU_QTAGM1 */
 	TSU_QTAGM0,
 	TSU_QTAGM1,
 	TSU_FWSR,
@@ -509,6 +509,7 @@ struct sh_eth_cpu_data {
 	unsigned rmiimode:1;	/* EtherC has RMIIMODE register */
 	unsigned rtrate:1;	/* EtherC has RTRATE register */
 	unsigned magic:1;	/* EtherC has ECMR.MPDE and ECSR.MPD */
+	unsigned dual_port:1;	/* Dual EtherC/E-DMAC */
 };
 
 struct sh_eth_private {
@@ -565,17 +566,6 @@ static inline void *sh_eth_tsu_get_offset(struct sh_eth_private *mdp,
 					  int enum_index)
 {
 	return mdp->tsu_addr + mdp->reg_offset[enum_index];
-}
-
-static inline void sh_eth_tsu_write(struct sh_eth_private *mdp, u32 data,
-				    int enum_index)
-{
-	iowrite32(data, mdp->tsu_addr + mdp->reg_offset[enum_index]);
-}
-
-static inline u32 sh_eth_tsu_read(struct sh_eth_private *mdp, int enum_index)
-{
-	return ioread32(mdp->tsu_addr + mdp->reg_offset[enum_index]);
 }
 
 #endif	/* #ifndef __SH_ETH_H__ */

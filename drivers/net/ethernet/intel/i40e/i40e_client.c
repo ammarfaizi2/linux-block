@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*******************************************************************************
  *
  * Intel Ethernet Controller XL710 Family Linux Driver
@@ -287,6 +288,17 @@ out:
 	return capable;
 }
 
+void i40e_client_update_msix_info(struct i40e_pf *pf)
+{
+	struct i40e_client_instance *cdev = pf->cinst;
+
+	if (!cdev || !cdev->client)
+		return;
+
+	cdev->lan_info.msix_count = pf->num_iwarp_msix;
+	cdev->lan_info.msix_entries = &pf->msix_entries[pf->iwarp_base_vector];
+}
+
 /**
  * i40e_client_add_instance - add a client instance struct to the instance list
  * @pf: pointer to the board struct
@@ -328,9 +340,6 @@ static void i40e_client_add_instance(struct i40e_pf *pf)
 		return;
 	}
 
-	cdev->lan_info.msix_count = pf->num_iwarp_msix;
-	cdev->lan_info.msix_entries = &pf->msix_entries[pf->iwarp_base_vector];
-
 	mac = list_first_entry(&cdev->lan_info.netdev->dev_addrs.list,
 			       struct netdev_hw_addr, list);
 	if (mac)
@@ -340,6 +349,8 @@ static void i40e_client_add_instance(struct i40e_pf *pf)
 
 	cdev->client = registered_client;
 	pf->cinst = cdev;
+
+	i40e_client_update_msix_info(pf);
 }
 
 /**

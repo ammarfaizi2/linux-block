@@ -270,6 +270,8 @@ static int mlxsw_sp_kvdl_part_init(struct mlxsw_sp *mlxsw_sp,
 	case MLXSW_SP_KVDL_PART_LARGE_CHUNKS:
 		resource_id = MLXSW_SP_RESOURCE_KVD_LINEAR_LARGE_CHUNKS;
 		break;
+	default:
+		return -EINVAL;
 	}
 
 	err = devlink_resource_size_get(devlink, resource_id, &resource_size);
@@ -278,7 +280,7 @@ static int mlxsw_sp_kvdl_part_init(struct mlxsw_sp *mlxsw_sp,
 		resource_size = info->end_index - info->start_index + 1;
 	}
 
-	nr_entries = resource_size / info->alloc_size;
+	nr_entries = div_u64(resource_size, info->alloc_size);
 	usage_size = BITS_TO_LONGS(nr_entries) * sizeof(unsigned long);
 	part = kzalloc(sizeof(*part) + usage_size, GFP_KERNEL);
 	if (!part)
@@ -366,7 +368,7 @@ u64 mlxsw_sp_kvdl_occ_get(const struct mlxsw_sp *mlxsw_sp)
 	return occ;
 }
 
-u64 mlxsw_sp_kvdl_single_occ_get(struct devlink *devlink)
+static u64 mlxsw_sp_kvdl_single_occ_get(struct devlink *devlink)
 {
 	struct mlxsw_core *mlxsw_core = devlink_priv(devlink);
 	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
@@ -379,7 +381,7 @@ u64 mlxsw_sp_kvdl_single_occ_get(struct devlink *devlink)
 	return mlxsw_sp_kvdl_part_occ(part);
 }
 
-u64 mlxsw_sp_kvdl_chunks_occ_get(struct devlink *devlink)
+static u64 mlxsw_sp_kvdl_chunks_occ_get(struct devlink *devlink)
 {
 	struct mlxsw_core *mlxsw_core = devlink_priv(devlink);
 	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
@@ -392,7 +394,7 @@ u64 mlxsw_sp_kvdl_chunks_occ_get(struct devlink *devlink)
 	return mlxsw_sp_kvdl_part_occ(part);
 }
 
-u64 mlxsw_sp_kvdl_large_chunks_occ_get(struct devlink *devlink)
+static u64 mlxsw_sp_kvdl_large_chunks_occ_get(struct devlink *devlink)
 {
 	struct mlxsw_core *mlxsw_core = devlink_priv(devlink);
 	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
@@ -457,7 +459,7 @@ int mlxsw_sp_kvdl_resources_register(struct devlink *devlink)
 
 	mlxsw_sp_kvdl_resource_size_params_prepare(devlink);
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD_LINEAR_SINGLES,
-					false, MLXSW_SP_KVDL_SINGLE_SIZE,
+					MLXSW_SP_KVDL_SINGLE_SIZE,
 					MLXSW_SP_RESOURCE_KVD_LINEAR_SINGLE,
 					MLXSW_SP_RESOURCE_KVD_LINEAR,
 					&mlxsw_sp_kvdl_single_size_params,
@@ -466,7 +468,7 @@ int mlxsw_sp_kvdl_resources_register(struct devlink *devlink)
 		return err;
 
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD_LINEAR_CHUNKS,
-					false, MLXSW_SP_KVDL_CHUNKS_SIZE,
+					MLXSW_SP_KVDL_CHUNKS_SIZE,
 					MLXSW_SP_RESOURCE_KVD_LINEAR_CHUNKS,
 					MLXSW_SP_RESOURCE_KVD_LINEAR,
 					&mlxsw_sp_kvdl_chunks_size_params,
@@ -475,7 +477,7 @@ int mlxsw_sp_kvdl_resources_register(struct devlink *devlink)
 		return err;
 
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD_LINEAR_LARGE_CHUNKS,
-					false, MLXSW_SP_KVDL_LARGE_CHUNKS_SIZE,
+					MLXSW_SP_KVDL_LARGE_CHUNKS_SIZE,
 					MLXSW_SP_RESOURCE_KVD_LINEAR_LARGE_CHUNKS,
 					MLXSW_SP_RESOURCE_KVD_LINEAR,
 					&mlxsw_sp_kvdl_large_chunks_size_params,

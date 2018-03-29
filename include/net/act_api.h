@@ -97,6 +97,7 @@ struct tc_action_ops {
 			const struct tc_action_ops *,
 			struct netlink_ext_ack *);
 	void	(*stats_update)(struct tc_action *, u64, u32, u64);
+	size_t  (*get_fill_size)(const struct tc_action *act);
 	struct net_device *(*get_dev)(const struct tc_action *a);
 };
 
@@ -148,7 +149,6 @@ bool tcf_idr_check(struct tc_action_net *tn, u32 index, struct tc_action **a,
 int tcf_idr_create(struct tc_action_net *tn, u32 index, struct nlattr *est,
 		   struct tc_action **a, const struct tc_action_ops *ops,
 		   int bind, bool cpustats);
-void tcf_idr_cleanup(struct tc_action *a, struct nlattr *est);
 void tcf_idr_insert(struct tc_action_net *tn, struct tc_action *a);
 
 int __tcf_idr_release(struct tc_action *a, bool bind, bool strict);
@@ -166,7 +166,8 @@ int tcf_action_exec(struct sk_buff *skb, struct tc_action **actions,
 		    int nr_actions, struct tcf_result *res);
 int tcf_action_init(struct net *net, struct tcf_proto *tp, struct nlattr *nla,
 		    struct nlattr *est, char *name, int ovr, int bind,
-		    struct list_head *actions, struct netlink_ext_ack *extack);
+		    struct list_head *actions, size_t *attr_size,
+		    struct netlink_ext_ack *extack);
 struct tc_action *tcf_action_init_1(struct net *net, struct tcf_proto *tp,
 				    struct nlattr *nla, struct nlattr *est,
 				    char *name, int ovr, int bind,

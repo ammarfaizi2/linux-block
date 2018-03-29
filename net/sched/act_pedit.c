@@ -176,7 +176,7 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 		p = to_pedit(*a);
 		keys = kmalloc(ksize, GFP_KERNEL);
 		if (keys == NULL) {
-			tcf_idr_cleanup(*a, est);
+			tcf_idr_release(*a, bind);
 			kfree(keys_ex);
 			return -ENOMEM;
 		}
@@ -465,6 +465,7 @@ static struct pernet_operations pedit_net_ops = {
 	.exit_batch = pedit_exit_net,
 	.id   = &pedit_net_id,
 	.size = sizeof(struct tc_action_net),
+	.async = true,
 };
 
 MODULE_AUTHOR("Jamal Hadi Salim(2002-4)");

@@ -70,6 +70,7 @@
 #include "spectrum_mr.h"
 #include "spectrum_mr_tcam.h"
 #include "spectrum_router.h"
+#include "spectrum_span.h"
 
 struct mlxsw_sp_fib;
 struct mlxsw_sp_vr;
@@ -2330,6 +2331,8 @@ static void mlxsw_sp_router_neigh_event_work(struct work_struct *work)
 	read_unlock_bh(&n->lock);
 
 	rtnl_lock();
+	mlxsw_sp_span_respin(mlxsw_sp);
+
 	entry_connected = nud_state & NUD_VALID && !dead;
 	neigh_entry = mlxsw_sp_neigh_entry_lookup(mlxsw_sp, n);
 	if (!entry_connected && !neigh_entry)
@@ -2427,7 +2430,8 @@ static int mlxsw_sp_router_netevent_event(struct notifier_block *nb,
 		mlxsw_core_schedule_work(&net_work->work);
 		mlxsw_sp_port_dev_put(mlxsw_sp_port);
 		break;
-	case NETEVENT_MULTIPATH_HASH_UPDATE:
+	case NETEVENT_IPV4_MPATH_HASH_UPDATE:
+	case NETEVENT_IPV6_MPATH_HASH_UPDATE:
 		net = ptr;
 
 		if (!net_eq(net, &init_net))
@@ -5589,6 +5593,8 @@ static void mlxsw_sp_router_fib4_event_work(struct work_struct *work)
 
 	/* Protect internal structures from changes */
 	rtnl_lock();
+	mlxsw_sp_span_respin(mlxsw_sp);
+
 	switch (fib_work->event) {
 	case FIB_EVENT_ENTRY_REPLACE: /* fall through */
 	case FIB_EVENT_ENTRY_APPEND: /* fall through */
@@ -5631,6 +5637,8 @@ static void mlxsw_sp_router_fib6_event_work(struct work_struct *work)
 	int err;
 
 	rtnl_lock();
+	mlxsw_sp_span_respin(mlxsw_sp);
+
 	switch (fib_work->event) {
 	case FIB_EVENT_ENTRY_REPLACE: /* fall through */
 	case FIB_EVENT_ENTRY_ADD:
@@ -7023,13 +7031,25 @@ static void mlxsw_sp_mp4_hash_init(char *recr2_pl)
 
 static void mlxsw_sp_mp6_hash_init(char *recr2_pl)
 {
+	bool only_l3 = !ip6_multipath_hash_policy(&init_net);
+
 	mlxsw_sp_mp_hash_header_set(recr2_pl,
 				    MLXSW_REG_RECR2_IPV6_EN_NOT_TCP_NOT_UDP);
 	mlxsw_sp_mp_hash_header_set(recr2_pl, MLXSW_REG_RECR2_IPV6_EN_TCP_UDP);
 	mlxsw_reg_recr2_ipv6_sip_enable(recr2_pl);
 	mlxsw_reg_recr2_ipv6_dip_enable(recr2_pl);
-	mlxsw_sp_mp_hash_field_set(recr2_pl, MLXSW_REG_RECR2_IPV6_FLOW_LABEL);
 	mlxsw_sp_mp_hash_field_set(recr2_pl, MLXSW_REG_RECR2_IPV6_NEXT_HEADER);
+	if (only_l3) {
+		mlxsw_sp_mp_hash_field_set(recr2_pl,
+					   MLXSW_REG_RECR2_IPV6_FLOW_LABEL);
+	} else {
+		mlxsw_sp_mp_hash_header_set(recr2_pl,
+					    MLXSW_REG_RECR2_TCP_UDP_EN_IPV6);
+		mlxsw_sp_mp_hash_field_set(recr2_pl,
+					   MLXSW_REG_RECR2_TCP_UDP_SPORT);
+		mlxsw_sp_mp_hash_field_set(recr2_pl,
+					   MLXSW_REG_RECR2_TCP_UDP_DPORT);
+	}
 }
 
 static int mlxsw_sp_mp_hash_init(struct mlxsw_sp *mlxsw_sp)

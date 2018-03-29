@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*******************************************************************************
  *
  * Intel Ethernet Controller XL710 Family Linux Virtual Function Driver
@@ -196,7 +197,7 @@ void i40evf_detect_recover_hung(struct i40e_vsi *vsi)
 			 */
 			smp_rmb();
 			tx_ring->tx_stats.prev_pkt_ctr =
-			  i40evf_get_tx_pending(tx_ring, false) ? packets : -1;
+			  i40evf_get_tx_pending(tx_ring, true) ? packets : -1;
 		}
 	}
 }

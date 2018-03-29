@@ -121,7 +121,7 @@ static int tcf_simp_init(struct net *net, struct nlattr *nla,
 		d = to_defact(*a);
 		ret = alloc_defdata(d, defdata);
 		if (ret < 0) {
-			tcf_idr_cleanup(*a, est);
+			tcf_idr_release(*a, bind);
 			return ret;
 		}
 		d->tcf_action = parm->action;
@@ -216,6 +216,7 @@ static struct pernet_operations simp_net_ops = {
 	.exit_batch = simp_exit_net,
 	.id   = &simp_net_id,
 	.size = sizeof(struct tc_action_net),
+	.async = true,
 };
 
 MODULE_AUTHOR("Jamal Hadi Salim(2005)");

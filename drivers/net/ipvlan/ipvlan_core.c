@@ -109,25 +109,33 @@ void ipvlan_ht_addr_del(struct ipvl_addr *addr)
 struct ipvl_addr *ipvlan_find_addr(const struct ipvl_dev *ipvlan,
 				   const void *iaddr, bool is_v6)
 {
-	struct ipvl_addr *addr;
+	struct ipvl_addr *addr, *ret = NULL;
 
-	list_for_each_entry(addr, &ipvlan->addrs, anode)
-		if (addr_equal(is_v6, addr, iaddr))
-			return addr;
-	return NULL;
+	rcu_read_lock();
+	list_for_each_entry_rcu(addr, &ipvlan->addrs, anode) {
+		if (addr_equal(is_v6, addr, iaddr)) {
+			ret = addr;
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return ret;
 }
 
 bool ipvlan_addr_busy(struct ipvl_port *port, void *iaddr, bool is_v6)
 {
 	struct ipvl_dev *ipvlan;
+	bool ret = false;
 
-	ASSERT_RTNL();
-
-	list_for_each_entry(ipvlan, &port->ipvlans, pnode) {
-		if (ipvlan_find_addr(ipvlan, iaddr, is_v6))
-			return true;
+	rcu_read_lock();
+	list_for_each_entry_rcu(ipvlan, &port->ipvlans, pnode) {
+		if (ipvlan_find_addr(ipvlan, iaddr, is_v6)) {
+			ret = true;
+			break;
+		}
 	}
-	return false;
+	rcu_read_unlock();
+	return ret;
 }
 
 static void *ipvlan_get_L3_hdr(struct ipvl_port *port, struct sk_buff *skb, int *type)
@@ -498,8 +506,8 @@ static int ipvlan_process_outbound(struct sk_buff *skb)
 
 	/* In this mode we dont care about multicast and broadcast traffic */
 	if (is_multicast_ether_addr(ethh->h_dest)) {
-		pr_warn_ratelimited("Dropped {multi|broad}cast of type= [%x]\n",
-				    ntohs(skb->protocol));
+		pr_debug_ratelimited("Dropped {multi|broad}cast of type=[%x]\n",
+				     ntohs(skb->protocol));
 		kfree_skb(skb);
 		goto out;
 	}
@@ -809,7 +817,8 @@ struct sk_buff *ipvlan_l3_rcv(struct net_device *dev, struct sk_buff *skb,
 		};
 
 		skb_dst_drop(skb);
-		dst = ip6_route_input_lookup(dev_net(sdev), sdev, &fl6, flags);
+		dst = ip6_route_input_lookup(dev_net(sdev), sdev, &fl6,
+					     skb, flags);
 		skb_dst_set(skb, dst);
 		break;
 	}

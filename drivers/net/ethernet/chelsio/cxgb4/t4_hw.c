@@ -487,7 +487,7 @@ static int t4_edc_err_read(struct adapter *adap, int idx)
  * t4_memory_rw_init - Get memory window relative offset, base, and size.
  * @adap: the adapter
  * @win: PCI-E Memory Window to use
- * @mtype: memory type: MEM_EDC0, MEM_EDC1 or MEM_MC
+ * @mtype: memory type: MEM_EDC0, MEM_EDC1, MEM_HMA or MEM_MC
  * @mem_off: memory relative offset with respect to @mtype.
  * @mem_base: configured memory base address.
  * @mem_aperture: configured memory window aperture.
@@ -4066,8 +4066,6 @@ int t4_link_l1cfg(struct adapter *adapter, unsigned int mbox,
 	unsigned int fw_mdi = FW_PORT_CAP32_MDI_V(FW_PORT_CAP32_MDI_AUTO);
 	fw_port_cap32_t fw_fc, cc_fec, fw_fec, rcap;
 
-	lc->link_ok = 0;
-
 	/* Convert driver coding of Pause Frame Flow Control settings into the
 	 * Firmware's API.
 	 */
@@ -6091,6 +6089,7 @@ unsigned int t4_get_tp_ch_map(struct adapter *adap, int pidx)
 
 	case CHELSIO_T6:
 		switch (nports) {
+		case 1:
 		case 2: return 1 << pidx;
 		}
 		break;
@@ -8600,6 +8599,25 @@ static int t4_get_flash_params(struct adapter *adap)
 
 		default:
 			dev_err(adap->pdev_dev, "Micron Flash Part has bad size, ID = %#x, Density code = %#x\n",
+				flashid, density);
+			return -EINVAL;
+		}
+		break;
+	}
+	case 0x9d: { /* ISSI -- Integrated Silicon Solution, Inc. */
+		/* This Density -> Size decoding table is taken from ISSI
+		 * Data Sheets.
+		 */
+		density = (flashid >> 16) & 0xff;
+		switch (density) {
+		case 0x16: /* 32 MB */
+			size = 1 << 25;
+			break;
+		case 0x17: /* 64MB */
+			size = 1 << 26;
+			break;
+		default:
+			dev_err(adap->pdev_dev, "ISSI Flash Part has bad size, ID = %#x, Density code = %#x\n",
 				flashid, density);
 			return -EINVAL;
 		}

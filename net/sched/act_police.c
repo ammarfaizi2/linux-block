@@ -196,7 +196,7 @@ failure:
 	qdisc_put_rtab(P_tab);
 	qdisc_put_rtab(R_tab);
 	if (ret == ACT_P_CREATED)
-		tcf_idr_cleanup(*a, est);
+		tcf_idr_release(*a, bind);
 	return err;
 }
 
@@ -347,6 +347,7 @@ static struct pernet_operations police_net_ops = {
 	.exit_batch = police_exit_net,
 	.id   = &police_net_id,
 	.size = sizeof(struct tc_action_net),
+	.async = true,
 };
 
 static int __init police_init_module(void)
