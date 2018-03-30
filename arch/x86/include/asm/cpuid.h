@@ -170,6 +170,17 @@ struct cpuid_range_std {
 
 	u32 lf5_edx;
 
+	 /* Function 6 */
+	u32	lf6_eax;
+
+	u32     dts_num_irqs    : 4,
+		__rsvd6        : 28;
+
+	u32     hcfc    : 1, __rsvd7   : 2, peb_pref   : 1,
+		__rsvd8 : 28;
+
+	u32     lf6_edx;
+
 } __packed;
 
 struct cpuid_leafs_info {

@@ -24,6 +24,7 @@ void cpuid_read_leaf(unsigned int l)
 	case 0x1:	p = (u32 *)&cpuid_info.std.fms;		break;
 	case 0x2:	p = (u32 *)&cpuid_info.std.tlb_cache;	break;
 	case 0x5:	p = (u32 *)&cpuid_info.std.lf5_eax;	break;
+	case 0x6:       p = (u32 *)&cpuid_info.std.lf6_eax;	break;
 
         default:
                 WARN_ON(1);
@@ -39,4 +40,5 @@ void cpuid_read_all_leafs(void)
 	cpuid_read_leaf(1);
 	cpuid_read_leaf(2);
 	cpuid_read_leaf(5);
+	cpuid_read_leaf(6);
 }

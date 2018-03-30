@@ -354,15 +354,14 @@ static int pkg_thermal_notify(u64 msr_val)
 static int pkg_temp_thermal_device_add(unsigned int cpu)
 {
 	int pkgid = topology_logical_package_id(cpu);
-	u32 tj_max, eax, ebx, ecx, edx;
 	struct pkg_device *pkgdev;
 	int thres_count, err;
+	u32 tj_max;
 
 	if (pkgid >= max_packages)
 		return -ENOMEM;
 
-	cpuid(6, &eax, &ebx, &ecx, &edx);
-	thres_count = ebx & 0x07;
+	thres_count = cpuid_info.std.dts_num_irqs;
 	if (!thres_count)
 		return -ENODEV;
 

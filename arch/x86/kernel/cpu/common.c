@@ -780,7 +780,7 @@ void get_cpu_cap(struct cpuinfo_x86 *c)
 
 	/* Thermal and Power Management Leaf: level 0x00000006 (eax) */
 	if (cpuid_info.std.max_lvl >= 0x00000006)
-		c->x86_capability[CPUID_6_EAX] = cpuid_eax(0x00000006);
+		c->x86_capability[CPUID_6_EAX] = cpuid_info.std.lf6_eax;
 
 	/* Additional Intel-defined flags: level 0x00000007 */
 	if (cpuid_info.std.max_lvl >= 0x00000007) {
