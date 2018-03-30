@@ -247,15 +247,7 @@ static bool __init xen_check_mwait(void)
 
 static bool __init xen_check_xsave(void)
 {
-	unsigned int cx, xsave_mask;
-
-	cx = cpuid_ecx(1);
-
-	xsave_mask = (1 << (X86_FEATURE_XSAVE % 32)) |
-		     (1 << (X86_FEATURE_OSXSAVE % 32));
-
-	/* Xen will set CR4.OSXSAVE if supported and not disabled by force */
-	return (cx & xsave_mask) == xsave_mask;
+	return cpuid_info.std.xsave && cpuid_info.std.osxsave;
 }
 
 static void __init xen_init_capabilities(void)
@@ -901,7 +893,7 @@ static u64 xen_read_msr_safe(unsigned int msr, int *err)
 	switch (msr) {
 	case MSR_IA32_APICBASE:
 #ifdef CONFIG_X86_X2APIC
-		if (!(cpuid_ecx(1) & (1 << (X86_FEATURE_X2APIC & 31))))
+		if (!cpuid_info.std.x2apic)
 #endif
 			val &= ~X2APIC_ENABLE;
 		break;

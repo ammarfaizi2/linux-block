@@ -1131,7 +1131,7 @@ static u32 vmx_preemption_cpu_tfms[] = {
 
 static inline bool cpu_has_broken_vmx_preemption_timer(void)
 {
-	u32 eax = cpuid_eax(0x00000001), i;
+	u32 eax = cpuid_info.std.fms, i;
 
 	/* Clear the reserved bits */
 	eax &= ~(0x3U << 14 | 0xfU << 28);

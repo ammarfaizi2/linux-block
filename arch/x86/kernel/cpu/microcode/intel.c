@@ -769,7 +769,7 @@ static int collect_cpu_info(int cpu_num, struct cpu_signature *csig)
 
 	memset(csig, 0, sizeof(*csig));
 
-	csig->sig = cpuid_eax(0x00000001);
+	csig->sig = cpuid_info.std.fms;
 
 	if ((c->x86_model >= 5) || (c->x86 > 6)) {
 		/* get processor flags from MSR 0x17 */

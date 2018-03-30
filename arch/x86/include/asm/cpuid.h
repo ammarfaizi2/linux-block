@@ -126,6 +126,36 @@ struct cpuid_range_std {
 	/* Function 0 */
 	u32 max_lvl;
 	u32 vendor0, vendor1, vendor2;
+
+	/* Function 1 */
+	u32	fms;
+	u32	brand_idx : 8, clfsh_lsz : 8, log_cpu_cnt : 8, in_apic_id  : 8;
+
+	/* ecx */
+	u32	sse3	  : 1, pclmulqdq : 1, dtes64	  : 1, monitor  : 1,
+		dscpl	  : 1, vmx	 : 1, smx	  : 1, eis      : 1,
+
+		tm2	  : 1, ssse3     : 1, cnxt_id	  : 1, sdbg     : 1,
+		fma	  : 1, cx16	 : 1, xptr	  : 1, pdcm     : 1,
+
+		__rsvd1	  : 1, pcid	 : 1, dca	  : 1, sse41    : 1,
+		sse42	  : 1, x2apic	 : 1, movbe	  : 1, popcnt   : 1,
+
+		tscdeadln : 1, aesni	 : 1, xsave	  : 1, osxsave  : 1,
+		avx	  : 1, f16c	 : 1, rdrand	  : 1, hypervsr : 1;
+
+	/* edx */
+	u32	fpu	  : 1, vme	 : 1, de	  : 1, pse	: 1,
+		tsc	  : 1, msr	 : 1, pae	  : 1, mce      : 1,
+
+		cx8	  : 1, apic	 : 1, __rsvd2	  : 1, sep	: 1,
+		mtrr	  : 1, pge	 : 1, mca	  : 1, cmov	: 1,
+
+		pat	  : 1, pse36	 : 1, psn	  : 1, clfsh	: 1,
+		__rsvd3	  : 1, ds	 : 1, acpi	  : 1, mmx	: 1,
+
+		fxsr	  : 1, sse	 : 1, sse2	  : 1, ss	: 1,
+		htt	  : 1, tm	 : 1,__rsvd4	  : 1, pbe	: 1;
 } __packed;
 
 struct cpuid_leafs_info {

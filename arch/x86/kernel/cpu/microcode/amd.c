@@ -445,7 +445,7 @@ static int collect_cpu_info_amd(int cpu, struct cpu_signature *csig)
 	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
 	struct ucode_patch *p;
 
-	csig->sig = cpuid_eax(0x00000001);
+	csig->sig = cpuid_info.std.fms;
 	csig->rev = c->microcode;
 
 	/*

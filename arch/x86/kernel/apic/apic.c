@@ -1843,17 +1843,19 @@ static int __init detect_init_APIC(void)
 
 static int __init apic_verify(void)
 {
-	u32 features, h, l;
+	u32 h, l;
 
 	/*
 	 * The APIC feature bit should now be enabled
-	 * in `cpuid'
+	 * in CPUID, rescan the leaf:
 	 */
-	features = cpuid_edx(1);
-	if (!(features & (1 << X86_FEATURE_APIC))) {
+	cpuid_read_leaf(1);
+
+	if (!cpuid_info.std.apic) {
 		pr_warning("Could not enable APIC!\n");
 		return -1;
 	}
+
 	set_cpu_cap(&boot_cpu_data, X86_FEATURE_APIC);
 	mp_lapic_addr = APIC_DEFAULT_PHYS_BASE;
 

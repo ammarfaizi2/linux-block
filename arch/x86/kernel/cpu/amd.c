@@ -681,7 +681,7 @@ static void init_amd_k8(struct cpuinfo_x86 *c)
 	u64 value;
 
 	/* On C+ stepping K8 rep microcode works well for copy/memset */
-	level = cpuid_eax(1);
+	level = cpuid_info.std.fms;
 	if ((level >= 0x0f48 && level < 0x0f50) || level >= 0x0f58)
 		set_cpu_cap(c, X86_FEATURE_REP_GOOD);
 

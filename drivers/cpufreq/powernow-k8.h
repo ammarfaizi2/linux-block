@@ -41,7 +41,6 @@ struct powernow_k8_data {
 };
 
 /* processor's cpuid instruction support */
-#define CPUID_PROCESSOR_SIGNATURE	1	/* function 1 */
 #define CPUID_XFAM			0x0ff00000	/* extended family */
 #define CPUID_XFAM_K8			0
 #define CPUID_XMOD			0x000f0000	/* extended model */

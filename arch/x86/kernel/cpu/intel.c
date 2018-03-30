@@ -286,16 +286,13 @@ static void early_init_intel(struct cpuinfo_x86 *c)
 	}
 
 	if (cpuid_info.std.max_lvl >= 1) {
-		u32 eax, ebx, ecx, edx;
-
-		cpuid(0x00000001, &eax, &ebx, &ecx, &edx);
 		/*
 		 * If HTT (EDX[28]) is set EBX[16:23] contain the number of
 		 * apicids which are reserved per package. Store the resulting
 		 * shift value for the package management code.
 		 */
-		if (edx & (1U << 28))
-			c->x86_coreid_bits = get_count_order((ebx >> 16) & 0xff);
+		if (cpuid_info.std.htt)
+			c->x86_coreid_bits = get_count_order(cpuid_info.std.log_cpu_cnt);
 	}
 
 	check_mpx_erratum(c);

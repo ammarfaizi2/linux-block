@@ -480,18 +480,13 @@ struct psb_mmu_driver *psb_mmu_driver_init(struct drm_device *dev,
 
 #if defined(CONFIG_X86)
 	if (boot_cpu_has(X86_FEATURE_CLFLUSH)) {
-		uint32_t tfms, misc, cap0, cap4, clflush_size;
-
 		/*
 		 * clflush size is determined at kernel setup for x86_64 but not
 		 * for i386. We have to do it here.
 		 */
-
-		cpuid(0x00000001, &tfms, &misc, &cap0, &cap4);
-		clflush_size = ((misc >> 8) & 0xff) * 8;
 		driver->has_clflush = 1;
 		driver->clflush_add =
-		    PAGE_SIZE * clflush_size / sizeof(uint32_t);
+		    PAGE_SIZE * cpuid_info.std.clfsh_lsz * 8 / sizeof(uint32_t);
 		driver->clflush_mask = driver->clflush_add - 1;
 		driver->clflush_mask = ~driver->clflush_mask;
 	}

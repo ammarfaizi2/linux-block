@@ -269,8 +269,7 @@ unsigned int speedstep_detect_processor(void)
 		if (c->x86_model != 2)
 			return 0;
 
-		ebx = cpuid_ebx(0x00000001);
-		ebx &= 0x000000FF;
+		ebx = cpuid_info.std.brand_idx;
 
 		pr_debug("ebx value is %x, x86_stepping is %x\n", ebx, c->x86_stepping);
 
@@ -324,9 +323,9 @@ unsigned int speedstep_detect_processor(void)
 
 	switch (c->x86_model) {
 	case 0x0B: /* Intel PIII [Tualatin] */
-		/* cpuid_ebx(1) is 0x04 for desktop PIII,
+		/* Brand index is 0x04 for desktop PIII,
 		 * 0x06 for mobile PIII-M */
-		ebx = cpuid_ebx(0x00000001);
+		ebx = cpuid_info.std.brand_idx;
 		pr_debug("ebx is %x\n", ebx);
 
 		ebx &= 0x000000FF;

@@ -247,7 +247,7 @@ static int __init save_microcode_in_initrd(void)
 		break;
 	case X86_VENDOR_AMD:
 		if (c->x86 >= 0x10)
-			ret = save_microcode_in_initrd_amd(cpuid_eax(1));
+			ret = save_microcode_in_initrd_amd(cpuid_info.std.fms);
 		break;
 	default:
 		break;

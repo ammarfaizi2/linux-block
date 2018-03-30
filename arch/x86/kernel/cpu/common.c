@@ -641,7 +641,6 @@ static void cpu_detect_tlb(struct cpuinfo_x86 *c)
 void detect_ht(struct cpuinfo_x86 *c)
 {
 #ifdef CONFIG_SMP
-	u32 eax, ebx, ecx, edx;
 	int index_msb, core_bits;
 	static bool printed;
 
@@ -654,9 +653,7 @@ void detect_ht(struct cpuinfo_x86 *c)
 	if (cpu_has(c, X86_FEATURE_XTOPOLOGY))
 		return;
 
-	cpuid(1, &eax, &ebx, &ecx, &edx);
-
-	smp_num_siblings = (ebx & 0xff0000) >> 16;
+	smp_num_siblings = cpuid_info.std.log_cpu_cnt;
 
 	if (smp_num_siblings == 1) {
 		pr_info_once("CPU0: Hyper-Threading is disabled\n");
@@ -727,15 +724,13 @@ void cpu_detect(struct cpuinfo_x86 *c)
 	c->x86 = 4;
 	/* Intel-defined flags: level 1 */
 	if (cpuid_info.std.max_lvl >= 1) {
-		u32 junk, tfms, cap0, misc;
 
-		cpuid(0x00000001, &tfms, &misc, &junk, &cap0);
-		c->x86		= x86_family(tfms);
-		c->x86_model	= x86_model(tfms);
-		c->x86_stepping	= x86_stepping(tfms);
+		c->x86		= x86_family(cpuid_info.std.fms);
+		c->x86_model	= x86_model(cpuid_info.std.fms);
+		c->x86_stepping	= x86_stepping(cpuid_info.std.fms);
 
-		if (cap0 & (1<<19)) {
-			c->x86_clflush_size = ((misc >> 8) & 0xff) * 8;
+		if (cpuid_info.std.clfsh) {
+			c->x86_clflush_size = cpuid_info.std.clfsh_lsz * 8;
 			c->x86_cache_alignment = c->x86_clflush_size;
 		}
 	}

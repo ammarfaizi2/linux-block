@@ -469,7 +469,7 @@ static void check_supported_cpu(void *_rc)
 
 	*rc = -ENODEV;
 
-	eax = cpuid_eax(CPUID_PROCESSOR_SIGNATURE);
+	eax = cpuid_info.std.fms;
 
 	if ((eax & CPUID_XFAM) == CPUID_XFAM_K8) {
 		if (((eax & CPUID_USE_XFAM_XMOD) != CPUID_USE_XFAM_XMOD) ||
@@ -676,7 +676,7 @@ static int find_psb_table(struct powernow_k8_data *data)
 		cpst = psb->num_tables;
 		if ((psb->cpuid == 0x00000fc0) ||
 		    (psb->cpuid == 0x00000fe0)) {
-			thiscpuid = cpuid_eax(CPUID_PROCESSOR_SIGNATURE);
+			thiscpuid = cpuid_info.std.fms;
 			if ((thiscpuid == 0x00000fc0) ||
 			    (thiscpuid == 0x00000fe0))
 				cpst = 1;

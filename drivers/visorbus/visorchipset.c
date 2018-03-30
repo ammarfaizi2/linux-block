@@ -1164,11 +1164,12 @@ static int unisys_vmcall(unsigned long tuple, unsigned long param)
 	unsigned long reg_ebx;
 	unsigned long reg_ecx;
 
+	if (!cpuid_info.std.hypervsr)
+		return -EPERM;
+
 	reg_ebx = param & 0xFFFFFFFF;
 	reg_ecx = param >> 32;
-	cpuid(0x00000001, &cpuid_eax, &cpuid_ebx, &cpuid_ecx, &cpuid_edx);
-	if (!(cpuid_ecx & 0x80000000))
-		return -EPERM;
+
 	__asm__ __volatile__(".byte 0x00f, 0x001, 0x0c1" : "=a"(result) :
 			     "a"(tuple), "b"(reg_ebx), "c"(reg_ecx));
 	if (result)

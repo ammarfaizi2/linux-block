@@ -27,8 +27,7 @@
 
 static inline int cpu_has_vmx(void)
 {
-	unsigned long ecx = cpuid_ecx(1);
-	return test_bit(5, &ecx); /* CPUID.1:ECX.VMX[bit 5] -> VT */
+	return cpuid_info.std.vmx;
 }
 
 

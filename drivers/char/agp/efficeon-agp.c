@@ -195,7 +195,6 @@ static int efficeon_create_gatt_table(struct agp_bridge_data *bridge)
 	int index;
 	const int pati    = EFFICEON_PATI;
 	const int present = EFFICEON_PRESENT;
-	const int clflush_chunk = ((cpuid_ebx(1) >> 8) & 0xff) << 3;
 	int num_entries, l1_pages;
 
 	num_entries = A_SIZE_LVL2(agp_bridge->current_size)->num_entries;
@@ -221,7 +220,7 @@ static int efficeon_create_gatt_table(struct agp_bridge_data *bridge)
 		}
 		SetPageReserved(virt_to_page((char *)page));
 
-		for (offset = 0; offset < PAGE_SIZE; offset += clflush_chunk)
+		for (offset = 0; offset < PAGE_SIZE; offset += cpuid_info.std.clfsh_lsz << 3)
 			clflush((char *)page+offset);
 
 		efficeon_private.l1_table[index] = page;
@@ -239,8 +238,7 @@ static int efficeon_insert_memory(struct agp_memory * mem, off_t pg_start, int t
 {
 	int i, count = mem->page_count, num_entries;
 	unsigned int *page, *last_page;
-	const int clflush_chunk = ((cpuid_ebx(1) >> 8) & 0xff) << 3;
-	const unsigned long clflush_mask = ~(clflush_chunk-1);
+	const unsigned long clflush_mask = ~((cpuid_info.std.clfsh_lsz << 3) - 1);
 
 	printk(KERN_DEBUG PFX "efficeon_insert_memory(%lx, %d)\n", pg_start, count);
 
