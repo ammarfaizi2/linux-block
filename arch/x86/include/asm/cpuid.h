@@ -160,6 +160,16 @@ struct cpuid_range_std {
 	/* Function 2 */
 	u32 tlb_cache[4];
 
+	/* Function 5 */
+	u32 lf5_eax, lf5_ebx;
+
+	/* ecx */
+	u32	monitor_mwait_enum : 1,
+		irq_mwait_break    : 1,
+		__rsvd5		   : 30;
+
+	u32 lf5_edx;
+
 } __packed;
 
 struct cpuid_leafs_info {

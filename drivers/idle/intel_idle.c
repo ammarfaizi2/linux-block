@@ -1114,7 +1114,6 @@ static const struct x86_cpu_id intel_idle_ids[] __initconst = {
  */
 static int __init intel_idle_probe(void)
 {
-	unsigned int eax, ebx, ecx;
 	const struct x86_cpu_id *id;
 
 	if (max_cstate == 0) {
@@ -1139,10 +1138,10 @@ static int __init intel_idle_probe(void)
 	if (cpuid_info.std.max_lvl < CPUID_MWAIT_LEAF)
 		return -ENODEV;
 
-	cpuid(CPUID_MWAIT_LEAF, &eax, &ebx, &ecx, &mwait_substates);
+	mwait_substates = cpuid_info.std.lf5_edx;
 
-	if (!(ecx & CPUID5_ECX_EXTENSIONS_SUPPORTED) ||
-	    !(ecx & CPUID5_ECX_INTERRUPT_BREAK) ||
+	if (!cpuid_info.std.monitor_mwait_enum ||
+	    !cpuid_info.std.irq_mwait_break ||
 	    !mwait_substates)
 			return -ENODEV;
 

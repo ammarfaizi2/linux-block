@@ -1530,7 +1530,7 @@ static bool wakeup_cpu0(void)
  */
 static inline void mwait_play_dead(void)
 {
-	unsigned int eax, ebx, ecx, edx;
+	unsigned int eax, edx;
 	unsigned int highest_cstate = 0;
 	unsigned int highest_subcstate = 0;
 	void *mwait_ptr;
@@ -1543,18 +1543,15 @@ static inline void mwait_play_dead(void)
 	if (cpuid_info.std.max_lvl < CPUID_MWAIT_LEAF)
 		return;
 
-	eax = CPUID_MWAIT_LEAF;
-	ecx = 0;
-	native_cpuid(&eax, &ebx, &ecx, &edx);
-
 	/*
 	 * eax will be 0 if EDX enumeration is not valid.
 	 * Initialized below to cstate, sub_cstate value when EDX is valid.
 	 */
-	if (!(ecx & CPUID5_ECX_EXTENSIONS_SUPPORTED)) {
+	if (!cpuid_info.std.monitor_mwait_enum) {
 		eax = 0;
 	} else {
-		edx >>= MWAIT_SUBSTATE_SIZE;
+		edx = cpuid_info.std.lf5_edx >> MWAIT_SUBSTATE_SIZE;
+
 		for (i = 0; i < 7 && edx; i++, edx >>= MWAIT_SUBSTATE_SIZE) {
 			if (edx & MWAIT_SUBSTATE_MASK) {
 				highest_cstate = i;

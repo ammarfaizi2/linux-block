@@ -72,17 +72,18 @@ static long acpi_processor_ffh_cstate_probe_cpu(void *_cx)
 {
 	struct acpi_processor_cx *cx = _cx;
 	long retval;
-	unsigned int eax, ebx, ecx, edx;
 	unsigned int edx_part;
 	unsigned int cstate_type; /* C-state type and not ACPI C-state type */
 	unsigned int num_cstate_subtype;
 
-	cpuid(CPUID_MWAIT_LEAF, &eax, &ebx, &ecx, &edx);
+	/* MWAIT extensions INTERRUPT_BREAK should be supported for C2/C3 */
+	if (!cpuid_info.std.monitor_mwait_enum ||
+	    !cpuid_info.std.irq_mwait_break)
+		return -1;
 
 	/* Check whether this particular cx_type (in CST) is supported or not */
-	cstate_type = ((cx->address >> MWAIT_SUBSTATE_SIZE) &
-			MWAIT_CSTATE_MASK) + 1;
-	edx_part = edx >> (cstate_type * MWAIT_SUBSTATE_SIZE);
+	cstate_type = ((cx->address >> MWAIT_SUBSTATE_SIZE) & MWAIT_CSTATE_MASK) + 1;
+	edx_part = cpuid_info.std.lf5_edx >> (cstate_type * MWAIT_SUBSTATE_SIZE);
 	num_cstate_subtype = edx_part & MWAIT_SUBSTATE_MASK;
 
 	retval = 0;
@@ -90,13 +91,6 @@ static long acpi_processor_ffh_cstate_probe_cpu(void *_cx)
 	if (num_cstate_subtype == 0) {
 		pr_warn(FW_BUG "ACPI MWAIT C-state 0x%x not supported by HW (0x%x)\n",
 				cx->address, edx_part);
-		retval = -1;
-		goto out;
-	}
-
-	/* mwait ecx extensions INTERRUPT_BREAK should be supported for C2/C3 */
-	if (!(ecx & CPUID5_ECX_EXTENSIONS_SUPPORTED) ||
-	    !(ecx & CPUID5_ECX_INTERRUPT_BREAK)) {
 		retval = -1;
 		goto out;
 	}

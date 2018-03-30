@@ -194,21 +194,19 @@ MODULE_PARM_DESC(window_size, "sliding window in number of clamping cycles\n"
 
 static void find_target_mwait(void)
 {
-	unsigned int eax, ebx, ecx, edx;
 	unsigned int highest_cstate = 0;
 	unsigned int highest_subcstate = 0;
+	u32 edx;
 	int i;
 
 	if (cpuid_info.std.max_lvl < CPUID_MWAIT_LEAF)
 		return;
 
-	cpuid(CPUID_MWAIT_LEAF, &eax, &ebx, &ecx, &edx);
-
-	if (!(ecx & CPUID5_ECX_EXTENSIONS_SUPPORTED) ||
-	    !(ecx & CPUID5_ECX_INTERRUPT_BREAK))
+	if (!cpuid_info.std.monitor_mwait_enum ||
+	    !cpuid_info.std.irq_mwait_break)
 		return;
 
-	edx >>= MWAIT_SUBSTATE_SIZE;
+	edx = cpuid_info.std.lf5_edx >> MWAIT_SUBSTATE_SIZE;
 	for (i = 0; i < 7 && edx; i++, edx >>= MWAIT_SUBSTATE_SIZE) {
 		if (edx & MWAIT_SUBSTATE_MASK) {
 			highest_cstate = i;
