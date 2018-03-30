@@ -712,15 +712,15 @@ unsigned int init_intel_cacheinfo(struct cpuinfo_x86 *c)
 	 */
 	if ((num_cache_leaves == 0 || c->x86 == 15) && cpuid_info.std.max_lvl > 1) {
 		/* supports eax=2  call */
-		int j;
-		unsigned int regs[4];
-		unsigned char *dp = (unsigned char *)regs;
 		int only_trace = 0;
+		u32 regs[4];
+		u8 *dp = (u8 *)regs;
+		int j;
 
 		if (num_cache_leaves != 0 && c->x86 == 15)
 			only_trace = 1;
 
-		cpuid(2, &regs[0], &regs[1], &regs[2], &regs[3]);
+		memcpy(regs, cpuid_info.std.tlb_cache, sizeof(regs));
 
 		/* If bit 31 is set, this is an unknown format */
 		for (j = 0 ; j < 3 ; j++)

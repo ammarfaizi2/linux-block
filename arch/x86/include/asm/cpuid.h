@@ -156,6 +156,10 @@ struct cpuid_range_std {
 
 		fxsr	  : 1, sse	 : 1, sse2	  : 1, ss	: 1,
 		htt	  : 1, tm	 : 1,__rsvd4	  : 1, pbe	: 1;
+
+	/* Function 2 */
+	u32 tlb_cache[4];
+
 } __packed;
 
 struct cpuid_leafs_info {

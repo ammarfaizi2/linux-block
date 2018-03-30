@@ -938,14 +938,15 @@ static void intel_tlb_lookup(const unsigned char desc)
 
 static void intel_detect_tlb(struct cpuinfo_x86 *c)
 {
+	u32 regs[4];
+	u8 *desc;
 	int j;
-	unsigned int regs[4];
-	unsigned char *desc = (unsigned char *)regs;
 
 	if (cpuid_info.std.max_lvl < 2)
 		return;
 
-	cpuid(2, &regs[0], &regs[1], &regs[2], &regs[3]);
+	memcpy(regs, cpuid_info.std.tlb_cache, sizeof(regs));
+	desc = (u8 *)regs;
 
 	/* If bit 31 is set, this is an unknown format */
 	for (j = 0 ; j < 3 ; j++)
