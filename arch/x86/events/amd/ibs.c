@@ -754,14 +754,12 @@ static __init void perf_event_ibs_init(void) { }
 static __init u32 __get_ibs_caps(void)
 {
 	u32 caps;
-	unsigned int max_level;
 
 	if (!boot_cpu_has(X86_FEATURE_IBS))
 		return 0;
 
 	/* check IBS cpuid feature flags */
-	max_level = cpuid_eax(0x80000000);
-	if (max_level < IBS_CPUID_FEATURES)
+	if (cpuid_info.ext.max_lvl < IBS_CPUID_FEATURES)
 		return IBS_CAPS_DEFAULT;
 
 	caps = cpuid_eax(IBS_CPUID_FEATURES);

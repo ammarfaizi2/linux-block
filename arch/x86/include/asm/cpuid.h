@@ -222,8 +222,16 @@ struct cpuid_range_std {
 
 } __packed;
 
+struct cpuid_range_ext {
+	/* Function 0x8000_0000 */
+	u32	max_lvl, vendor0, vendor1, vendor2;
+} __packed;
+
+
+
 struct cpuid_leafs_info {
         struct cpuid_range_std std;
+	struct cpuid_range_ext ext;
 };
 
 extern struct cpuid_leafs_info cpuid_info;

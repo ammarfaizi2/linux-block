@@ -183,7 +183,7 @@ static void init_centaur(struct cpuinfo_x86 *c)
 		if (c->x86_model >= 8)
 			set_cpu_cap(c, X86_FEATURE_3DNOW);
 		/* See if we can find out some more. */
-		if (cpuid_eax(0x80000000) >= 0x80000005) {
+		if (cpuid_info.ext.max_lvl >= 0x80000005) {
 			/* Yes, we can. */
 			cpuid(0x80000005, &aa, &bb, &cc, &dd);
 			/* Add L1 data and code cache sizes. */

@@ -705,7 +705,7 @@ void __init mtrr_bp_init(void)
 		 * Intel will implement it too when they extend the address
 		 * bus of the Xeon.
 		 */
-		if (cpuid_eax(0x80000000) >= 0x80000008) {
+		if (cpuid_info.ext.max_lvl >= 0x80000008) {
 			phys_addr = cpuid_eax(0x80000008) & 0xff;
 			/* CPUID workaround for Intel 0F33/0F34 CPU */
 			if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL &&
