@@ -593,7 +593,7 @@ success:
  */
 unsigned long native_calibrate_tsc(void)
 {
-	unsigned int eax_denominator, ebx_numerator, ecx_hz, edx;
+	unsigned int eax_denominator, ebx_numerator, ecx_hz;
 	unsigned int crystal_khz;
 
 	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL)
@@ -602,10 +602,9 @@ unsigned long native_calibrate_tsc(void)
 	if (cpuid_info.std.max_lvl < 0x15)
 		return 0;
 
-	eax_denominator = ebx_numerator = ecx_hz = edx = 0;
-
-	/* CPUID 15H TSC/Crystal ratio, plus optionally Crystal Hz */
-	cpuid(0x15, &eax_denominator, &ebx_numerator, &ecx_hz, &edx);
+	eax_denominator = cpuid_info.std.tsc_ratio_denom;
+	ebx_numerator	= cpuid_info.std.tsc_ratio_num;
+	ecx_hz		= cpuid_info.std.clock_nom_freq;
 
 	if (ebx_numerator == 0 || eax_denominator == 0)
 		return 0;

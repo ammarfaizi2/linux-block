@@ -194,12 +194,8 @@ static int __init pt_pmu_hw_init(void)
 	 * as per SDM
 	 */
 	if (cpuid_info.std.max_lvl >= CPUID_TSC_LEAF) {
-		u32 eax, ebx, ecx, edx;
-
-		cpuid(CPUID_TSC_LEAF, &eax, &ebx, &ecx, &edx);
-
-		pt_pmu.tsc_art_num = ebx;
-		pt_pmu.tsc_art_den = eax;
+		pt_pmu.tsc_art_num = cpuid_info.std.tsc_ratio_num;
+		pt_pmu.tsc_art_den = cpuid_info.std.tsc_ratio_denom;
 	}
 
 	/* model-specific quirks */

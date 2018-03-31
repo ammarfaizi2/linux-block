@@ -202,6 +202,9 @@ struct cpuid_range_std {
 
 	u32	lf7_edx;
 
+	/* Function 0x15 */
+	u32	tsc_ratio_denom, tsc_ratio_num, clock_nom_freq, lfx15_edx;
+
 } __packed;
 
 struct cpuid_leafs_info {
