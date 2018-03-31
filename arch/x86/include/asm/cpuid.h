@@ -205,6 +205,21 @@ struct cpuid_range_std {
 	/* Function 0x15 */
 	u32	tsc_ratio_denom, tsc_ratio_num, clock_nom_freq, lfx15_edx;
 
+	/* Function 0x16 */
+	union {
+		struct {
+			u32	base_freq : 16,
+				__rsvd13  : 16;
+		};
+		u32 all;
+	} lfx16_eax;
+
+	u32	max_freq  : 16,
+		__rsvd14  : 16;
+	u32	bus_freq  : 16,
+		__rsvd15  : 16;
+	u32	lfx16_edx;
+
 } __packed;
 
 struct cpuid_leafs_info {
