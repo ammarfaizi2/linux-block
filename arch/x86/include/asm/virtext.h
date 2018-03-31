@@ -88,7 +88,7 @@ static inline int cpu_has_svm(const char **msg)
 		return 0;
 	}
 
-	if (boot_cpu_data.extended_cpuid_level < SVM_CPUID_FUNC) {
+	if (cpuid_info.ext.max_lvl < SVM_CPUID_FUNC) {
 		if (msg)
 			*msg = "can't execute cpuid_8000000a";
 		return 0;

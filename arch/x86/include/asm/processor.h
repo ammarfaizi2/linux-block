@@ -103,8 +103,6 @@ struct cpuinfo_x86 {
 	/* CPUID returned core id bits: */
 	__u8			x86_coreid_bits;
 	__u8			cu_id;
-	/* Max extended CPUID function supported: */
-	__u32			extended_cpuid_level;
 	__u32			x86_capability[NCAPINTS + NBUGINTS];
 	char			x86_model_id[64];
 	/* in KB - valid for CPUS which support this call: */

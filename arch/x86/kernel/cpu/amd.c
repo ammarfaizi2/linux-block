@@ -471,7 +471,7 @@ static void early_init_amd_mc(struct cpuinfo_x86 *c)
 	unsigned bits, ecx;
 
 	/* Multi core CPU? */
-	if (c->extended_cpuid_level < 0x80000008)
+	if (cpuid_info.ext.max_lvl < 0x80000008)
 		return;
 
 	ecx = cpuid_ecx(0x80000008);
@@ -840,7 +840,7 @@ static void init_amd(struct cpuinfo_x86 *c)
 	cpu_detect_cache_sizes(c);
 
 	/* Multi core CPU? */
-	if (c->extended_cpuid_level >= 0x80000008) {
+	if (cpuid_info.ext.max_lvl >= 0x80000008) {
 		amd_detect_cmp(c);
 		srat_detect_node(c);
 	}
@@ -925,7 +925,7 @@ static void cpu_detect_tlb_amd(struct cpuinfo_x86 *c)
 	if (c->x86 < 0xf)
 		return;
 
-	if (c->extended_cpuid_level < 0x80000006)
+	if (cpuid_info.ext.max_lvl < 0x80000006)
 		return;
 
 	cpuid(0x80000006, &eax, &ebx, &ecx, &edx);

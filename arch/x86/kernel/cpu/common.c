@@ -435,7 +435,7 @@ static void filter_cpuid_features(struct cpuinfo_x86 *c, bool warn)
 		 * signs here...
 		 */
 		if (!((s32)df->level < 0 ?
-		     (u32)df->level > (u32)c->extended_cpuid_level :
+		     (u32)df->level > cpuid_info.ext.max_lvl :
 		     (s32)df->level > (s32)cpuid_info.std.max_lvl))
 			continue;
 
@@ -551,7 +551,7 @@ static void get_model_name(struct cpuinfo_x86 *c)
 	unsigned int *v;
 	char *p, *q, *s;
 
-	if (c->extended_cpuid_level < 0x80000004)
+	if (cpuid_info.ext.max_lvl < 0x80000004)
 		return;
 
 	v = (unsigned int *)c->x86_model_id;
@@ -581,7 +581,7 @@ void cpu_detect_cache_sizes(struct cpuinfo_x86 *c)
 {
 	unsigned int n, dummy, ebx, ecx, edx, l2size;
 
-	n = c->extended_cpuid_level;
+	n = cpuid_info.ext.max_lvl;
 
 	if (n >= 0x80000005) {
 		cpuid(0x80000005, &dummy, &ebx, &ecx, &edx);
@@ -825,26 +825,22 @@ void get_cpu_cap(struct cpuinfo_x86 *c)
 	}
 
 	/* AMD-defined flags: level 0x80000001 */
-	eax = cpuid_eax(0x80000000);
-	c->extended_cpuid_level = eax;
 
-	if ((eax & 0xffff0000) == 0x80000000) {
-		if (eax >= 0x80000001) {
-			cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
+	if (cpuid_info.ext.max_lvl >= 0x80000001) {
+		cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
 
-			c->x86_capability[CPUID_8000_0001_ECX] = ecx;
-			c->x86_capability[CPUID_8000_0001_EDX] = edx;
-		}
+		c->x86_capability[CPUID_8000_0001_ECX] = ecx;
+		c->x86_capability[CPUID_8000_0001_EDX] = edx;
 	}
 
-	if (c->extended_cpuid_level >= 0x80000007) {
+	if (cpuid_info.ext.max_lvl >= 0x80000007) {
 		cpuid(0x80000007, &eax, &ebx, &ecx, &edx);
 
 		c->x86_capability[CPUID_8000_0007_EBX] = ebx;
 		c->x86_power = edx;
 	}
 
-	if (c->extended_cpuid_level >= 0x80000008) {
+	if (cpuid_info.ext.max_lvl >= 0x80000008) {
 		cpuid(0x80000008, &eax, &ebx, &ecx, &edx);
 
 		c->x86_virt_bits = (eax >> 8) & 0xff;
@@ -856,7 +852,7 @@ void get_cpu_cap(struct cpuinfo_x86 *c)
 		c->x86_phys_bits = 36;
 #endif
 
-	if (c->extended_cpuid_level >= 0x8000000a)
+	if (cpuid_info.ext.max_lvl >= 0x8000000a)
 		c->x86_capability[CPUID_8000_000A_EDX] = cpuid_edx(0x8000000a);
 
 	init_scattered_cpuid_features(c);
@@ -953,7 +949,6 @@ static void __init early_identify_cpu(struct cpuinfo_x86 *c)
 	c->x86_cache_alignment = c->x86_clflush_size;
 
 	memset(&c->x86_capability, 0, sizeof c->x86_capability);
-	c->extended_cpuid_level = 0;
 
 	/* cyrix could have cpuid enabled via c_identify()*/
 	if (have_cpuid_p()) {
@@ -1079,8 +1074,6 @@ static void detect_null_seg_behavior(struct cpuinfo_x86 *c)
 
 static void generic_identify(struct cpuinfo_x86 *c)
 {
-	c->extended_cpuid_level = 0;
-
 	if (!have_cpuid_p())
 		identify_cpu_without_cpuid(c);
 

@@ -642,7 +642,7 @@ void init_amd_cacheinfo(struct cpuinfo_x86 *c)
 
 	if (boot_cpu_has(X86_FEATURE_TOPOEXT)) {
 		num_cache_leaves = find_num_cache_leaves(c);
-	} else if (c->extended_cpuid_level >= 0x80000006) {
+	} else if (cpuid_info.ext.max_lvl >= 0x80000006) {
 		if (cpuid_edx(0x80000006) & 0xf000)
 			num_cache_leaves = 4;
 		else
