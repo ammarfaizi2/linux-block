@@ -1274,8 +1274,6 @@ static void bxt_idle_state_table_update(void)
 static void sklh_idle_state_table_update(void)
 {
 	unsigned long long msr;
-	unsigned int eax, ebx, ecx, edx;
-
 
 	/* if PC10 disabled via cmdline intel_idle.max_cstate=7 or shallower */
 	if (max_cstate <= 7)
@@ -1291,16 +1289,12 @@ static void sklh_idle_state_table_update(void)
 	if ((msr & 0xF) != 8)
 		return;
 
-	ecx = 0;
-	cpuid(7, &eax, &ebx, &ecx, &edx);
-
-	/* if SGX is present */
-	if (ebx & (1 << 2)) {
+	if (cpuid_info.std.sgx) {
 
 		rdmsrl(MSR_IA32_FEATURE_CONTROL, msr);
 
 		/* if SGX is enabled */
-		if (msr & (1 << 18))
+		if (msr & BIT(18))
 			return;
 	}
 

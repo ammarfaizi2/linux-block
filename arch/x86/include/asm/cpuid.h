@@ -181,6 +181,27 @@ struct cpuid_range_std {
 
 	u32     lf6_edx;
 
+	/* Function 7 */
+	u32	max_7_subleaf;
+
+	u32	fsgsbase : 1, tsc_adjust : 1, sgx	: 1, bmi1	: 1,
+		hle	 : 1, avx2	 : 1, fdp_ex	: 1, smep	: 1,
+
+		bmi2	 : 1, erms	 : 1, invpcid	: 1, rtm	: 1,
+		rdtm	 : 1, fpu_cs_ds	 : 1, mpx	: 1, rdta	: 1,
+
+		avx512f	 : 1, avx512dq   : 1, rdseed	: 1, adx	: 1,
+		smap	 : 1, avx512ifma : 1, __rsvd9   : 1, clflushopt : 1,
+
+		clwb	 : 1, intelpt	 : 1, avx512pf	: 1, avx512er	: 1,
+		avx512cd : 1, sha	 : 1, avx512bw	: 1, avx512vl	: 1;
+
+	u32 prefetchwt1  : 1, avx512_vbmi : 1, umip	: 1, pku	: 1,
+		ospke	 : 1, __rsvd10	 : 12, mawau	: 5, rdpid	: 1,
+		__rsvd11 : 7, sgx_lc	 : 1, __rsvd12	: 1;
+
+	u32	lf7_edx;
+
 } __packed;
 
 struct cpuid_leafs_info {
