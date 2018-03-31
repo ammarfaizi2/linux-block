@@ -4,8 +4,14 @@
 
 #define H_PTE_INDEX_SIZE  8
 #define H_PMD_INDEX_SIZE  10
-#define H_PUD_INDEX_SIZE  7
+#define H_PUD_INDEX_SIZE  10
 #define H_PGD_INDEX_SIZE  8
+
+/*
+ * Each context is 512TB size. SLB miss for first context/default context
+ * is handled in the hotpath.
+ */
+#define MAX_EA_BITS_PER_CONTEXT		49
 
 /*
  * 64k aligned address free up few of the lower bits of RPN for us
@@ -15,6 +21,13 @@
 #define H_PAGE_4K_PFN	_RPAGE_RPN1 /* PFN is for a single 4k page */
 #define H_PAGE_BUSY	_RPAGE_RPN44     /* software: PTE & hash are busy */
 #define H_PAGE_HASHPTE	_RPAGE_RPN43	/* PTE has associated HPTE */
+
+/* memory key bits. */
+#define H_PTE_PKEY_BIT0	_RPAGE_RSV1
+#define H_PTE_PKEY_BIT1	_RPAGE_RSV2
+#define H_PTE_PKEY_BIT2	_RPAGE_RSV3
+#define H_PTE_PKEY_BIT3	_RPAGE_RSV4
+#define H_PTE_PKEY_BIT4	_RPAGE_RSV5
 
 /*
  * We need to differentiate between explicit huge page and THP huge
