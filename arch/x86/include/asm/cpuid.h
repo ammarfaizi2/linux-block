@@ -225,6 +225,36 @@ struct cpuid_range_std {
 struct cpuid_range_ext {
 	/* Function 0x8000_0000 */
 	u32	max_lvl, vendor0, vendor1, vendor2;
+
+	/* Function 0x8000_0001 */
+	union {
+		struct {
+			u32	stepping  : 4, base_model : 4, base_family : 4, __rsvd0 : 4,
+				ext_model : 4, ext_family : 8,			__rsvd1 : 4;
+		};
+		u32 all;
+	} lf1_eax;
+
+	u32	__rsvd2 : 28,
+		pkgtype : 4;
+
+	u32	lahfsahf    : 1, cmplegacy	: 1, svm	 : 1, ext_apic_space	: 1,
+		alt_mov_cr8 : 1, abm		: 1, sse4a	 : 1, mis_align_sse	: 1,
+		_3dnow_pref : 1, osvw		: 1, ibs	 : 1, xop		: 1,
+		skinit	    : 1, wdt		: 1, __rsvd3	 : 1, lwp		: 1,
+		fma4	    : 1, tce		: 1, __rsvd4	 : 4,
+		topoext     : 1, perf_ctr_ext	: 1, __rsvd5	 : 2,
+		data_bp_ext : 1, perf_tsc	: 1, perf_ctr_l3 : 1, mwait_ext		: 1,
+		__rsvd6: 2;
+
+	u32	fpu	  : 1, vme	: 1, de		: 1, pse	: 1,
+		tsc	  : 1, msr	: 1, pae	: 1, mce	: 1,
+		cmpxchg8b : 1, apic	: 1, __rsvd7	: 1, syscallret	: 1,
+		mtrr	  : 1, pge	: 1, mca	: 1, cmov	: 1,
+		pat	  : 1, pse36	: 1, __rsvd8	: 2,
+		nx	  : 1, __rsvd9	: 1, mmxext	: 1, mmx	: 1,
+		fxsr	  : 1, ffxsr	: 1, page1gb	: 1, rdtscp	: 1,
+		__rsvd10  : 1, lm	: 1, _3dnowext	: 1, _3dnow	: 1;
 } __packed;
 
 

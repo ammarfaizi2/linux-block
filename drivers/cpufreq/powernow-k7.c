@@ -453,7 +453,7 @@ static int powernow_decode_bios(int maxfid, int startvid)
 	unsigned int etuple;
 	unsigned int ret;
 
-	etuple = cpuid_eax(0x80000001);
+	etuple = cpuid_info.ext.lf1_eax.all;
 
 	for (i = 0xC0000; i < 0xffff0 ; i += 16) {
 
