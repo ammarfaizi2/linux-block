@@ -83,6 +83,7 @@ extern u16 __read_mostly tlb_lld_4m[NR_INFO];
 extern u16 __read_mostly tlb_lld_1g[NR_INFO];
 
 extern char x86_vendor_id[16];
+extern char x86_model_id[64];
 
 /*
  *  CPU type and hardware bug flags. Kept separately for each CPU.
@@ -104,7 +105,6 @@ struct cpuinfo_x86 {
 	__u8			x86_coreid_bits;
 	__u8			cu_id;
 	__u32			x86_capability[NCAPINTS + NBUGINTS];
-	char			x86_model_id[64];
 	/* in KB - valid for CPUS which support this call: */
 	unsigned int		x86_cache_size;
 	int			x86_cache_alignment;	/* In bytes */

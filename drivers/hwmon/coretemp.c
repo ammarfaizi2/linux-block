@@ -262,7 +262,7 @@ static int adjust_tjmax(struct cpuinfo_x86 *c, u32 id, struct device *dev)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(tjmax_table); i++) {
-		if (strstr(c->x86_model_id, tjmax_table[i].id))
+		if (strstr(x86_model_id, tjmax_table[i].id))
 			return tjmax_table[i].tjmax;
 	}
 

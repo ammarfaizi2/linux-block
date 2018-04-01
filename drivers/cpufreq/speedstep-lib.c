@@ -311,7 +311,7 @@ unsigned int speedstep_detect_processor(void)
 			 * string
 			 */
 			if ((ebx == 0x0e) ||
-				(strstr(c->x86_model_id,
+				(strstr(x86_model_id,
 				    "Mobile Intel(R) Pentium(R) 4") != NULL))
 				return SPEEDSTEP_CPU_P4M;
 			break;

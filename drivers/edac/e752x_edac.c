@@ -1211,14 +1211,13 @@ fail:
  */
 static void e752x_init_sysbus_parity_mask(struct e752x_pvt *pvt)
 {
-	char *cpu_id = cpu_data(0).x86_model_id;
 	struct pci_dev *dev = pvt->dev_d0f1;
 	int enable = 1;
 
 	/* Allow module parameter override, else see if CPU supports parity */
 	if (sysbus_parity != -1) {
 		enable = sysbus_parity;
-	} else if (cpu_id[0] && !strstr(cpu_id, "Xeon")) {
+	} else if (x86_model_id[0] && !strstr(x86_model_id, "Xeon")) {
 		e752x_printk(KERN_INFO, "System Bus Parity not "
 			     "supported by CPU, disabling\n");
 		enable = 0;

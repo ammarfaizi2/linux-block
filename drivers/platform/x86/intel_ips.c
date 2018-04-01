@@ -1381,11 +1381,11 @@ static struct ips_mcp_limits *ips_detect_cpu(struct ips_driver *ips)
 	else
 		ips->turbo_toggle_allowed = false;
 
-	if (strstr(boot_cpu_data.x86_model_id, "CPU       M"))
+	if (strstr(x86_model_id, "CPU       M"))
 		limits = &ips_sv_limits;
-	else if (strstr(boot_cpu_data.x86_model_id, "CPU       L"))
+	else if (strstr(x86_model_id, "CPU       L"))
 		limits = &ips_lv_limits;
-	else if (strstr(boot_cpu_data.x86_model_id, "CPU       U"))
+	else if (strstr(x86_model_id, "CPU       U"))
 		limits = &ips_ulv_limits;
 	else {
 		dev_info(ips->dev, "No CPUID match found.\n");

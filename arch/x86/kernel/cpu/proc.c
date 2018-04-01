@@ -70,7 +70,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		   x86_vendor_id[0] ? x86_vendor_id : "unknown",
 		   c->x86,
 		   c->x86_model,
-		   c->x86_model_id[0] ? c->x86_model_id : "unknown");
+		   x86_model_id[0] ? x86_model_id : "unknown");
 
 	if (c->x86_stepping || cpuid_info.std.max_lvl >= 0)
 		seq_printf(m, "stepping\t: %d\n", c->x86_stepping);

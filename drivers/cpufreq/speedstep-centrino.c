@@ -238,21 +238,21 @@ static int centrino_cpu_init_table(struct cpufreq_policy *policy)
 	for(model = models; model->cpu_id != NULL; model++)
 		if (centrino_verify_cpu_id(cpu, model->cpu_id) &&
 		    (model->model_name == NULL ||
-		     strcmp(cpu->x86_model_id, model->model_name) == 0))
+		     strcmp(x86_model_id, model->model_name) == 0))
 			break;
 
 	if (model->cpu_id == NULL) {
 		/* No match at all */
 		pr_debug("no support for CPU model \"%s\": "
 		       "send /proc/cpuinfo to " MAINTAINER "\n",
-		       cpu->x86_model_id);
+		       x86_model_id);
 		return -ENOENT;
 	}
 
 	if (model->op_points == NULL) {
 		/* Matched a non-match */
 		pr_debug("no table support for CPU model \"%s\"\n",
-		       cpu->x86_model_id);
+		       x86_model_id);
 		pr_debug("try using the acpi-cpufreq driver\n");
 		return -ENOENT;
 	}

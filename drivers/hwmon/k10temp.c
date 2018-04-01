@@ -270,7 +270,7 @@ static int k10temp_probe(struct pci_dev *pdev,
 		const struct tctl_offset *entry = &tctl_offset_table[i];
 
 		if (boot_cpu_data.x86 == entry->model &&
-		    strstr(boot_cpu_data.x86_model_id, entry->id)) {
+		    strstr(x86_model_id, entry->id)) {
 			data->temp_offset = entry->offset;
 			break;
 		}

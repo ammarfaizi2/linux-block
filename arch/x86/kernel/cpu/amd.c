@@ -698,8 +698,8 @@ static void init_amd_k8(struct cpuinfo_x86 *c)
 		}
 	}
 
-	if (!c->x86_model_id[0])
-		strcpy(c->x86_model_id, "Hammer");
+	if (!x86_model_id[0])
+		strcpy(x86_model_id, "Hammer");
 
 #ifdef CONFIG_SMP
 	/*

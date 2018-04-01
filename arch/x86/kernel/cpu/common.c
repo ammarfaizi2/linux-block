@@ -85,9 +85,9 @@ static void default_init(struct cpuinfo_x86 *c)
 	if (!cpu_has(c, X86_FEATURE_CPUID)) {
 		/* No cpuid. It must be an ancient CPU */
 		if (c->x86 == 4)
-			strcpy(c->x86_model_id, "486");
+			strcpy(x86_model_id, "486");
 		else if (c->x86 == 3)
-			strcpy(c->x86_model_id, "386");
+			strcpy(x86_model_id, "386");
 	}
 #endif
 }
@@ -546,7 +546,7 @@ void switch_to_new_gdt(int cpu)
 
 static const struct cpu_dev *cpu_devs[X86_VENDOR_NUM] = {};
 
-static void get_model_name(struct cpuinfo_x86 *c)
+static void get_model_name(void)
 {
 	unsigned int *v;
 	char *p, *q, *s;
@@ -554,14 +554,14 @@ static void get_model_name(struct cpuinfo_x86 *c)
 	if (cpuid_info.ext.max_lvl < 0x80000004)
 		return;
 
-	v = (unsigned int *)c->x86_model_id;
+	v = (unsigned int *)x86_model_id;
 	cpuid(0x80000002, &v[0], &v[1], &v[2], &v[3]);
 	cpuid(0x80000003, &v[4], &v[5], &v[6], &v[7]);
 	cpuid(0x80000004, &v[8], &v[9], &v[10], &v[11]);
-	c->x86_model_id[48] = 0;
+	x86_model_id[48] = 0;
 
 	/* Trim whitespace */
-	p = q = s = &c->x86_model_id[0];
+	p = q = s = &x86_model_id[0];
 
 	while (*p == ' ')
 		p++;
@@ -954,6 +954,7 @@ static void __init early_identify_cpu(struct cpuinfo_x86 *c)
 	if (have_cpuid_p()) {
 		cpuid_read_all_leafs();
 		get_vendor_name();
+		get_model_name();
 		cpu_detect(c);
 		get_cpu_vendor(c);
 		get_cpu_cap(c);
@@ -1099,8 +1100,6 @@ static void generic_identify(struct cpuinfo_x86 *c)
 		c->phys_proc_id = c->initial_apicid;
 	}
 
-	get_model_name(c); /* Default name */
-
 	detect_nopl(c);
 
 	detect_null_seg_behavior(c);
@@ -1177,7 +1176,6 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 	c->x86_cache_size = 0;
 	c->x86_vendor = X86_VENDOR_UNKNOWN;
 	c->x86_model = c->x86_stepping = 0;	/* So far unknown... */
-	c->x86_model_id[0] = '\0';  /* Unset */
 	c->x86_max_cores = 1;
 	c->x86_coreid_bits = 0;
 	c->cu_id = 0xff;
@@ -1236,15 +1234,14 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 	filter_cpuid_features(c, true);
 
 	/* If the model name is still unset, do table lookup. */
-	if (!c->x86_model_id[0]) {
+	if (!x86_model_id[0]) {
 		const char *p;
 		p = table_lookup_model(c);
 		if (p)
-			strcpy(c->x86_model_id, p);
+			strcpy(x86_model_id, p);
 		else
 			/* Last resort... */
-			sprintf(c->x86_model_id, "%02x/%02x",
-				c->x86, c->x86_model);
+			sprintf(x86_model_id, "%02x/%02x", c->x86, c->x86_model);
 	}
 
 #ifdef CONFIG_X86_64
@@ -1357,11 +1354,11 @@ void print_cpu_info(struct cpuinfo_x86 *c)
 			vendor = x86_vendor_id;
 	}
 
-	if (vendor && !strstr(c->x86_model_id, vendor))
+	if (vendor && !strstr(x86_model_id, vendor))
 		pr_cont("%s ", vendor);
 
-	if (c->x86_model_id[0])
-		pr_cont("%s", c->x86_model_id);
+	if (x86_model_id[0])
+		pr_cont("%s", x86_model_id);
 	else
 		pr_cont("%d86", c->x86);
 

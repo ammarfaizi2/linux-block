@@ -191,7 +191,7 @@ static void early_init_cyrix(struct cpuinfo_x86 *c)
 static void init_cyrix(struct cpuinfo_x86 *c)
 {
 	unsigned char dir0, dir0_msn, dir0_lsn, dir1 = 0;
-	char *buf = c->x86_model_id;
+	char *buf = x86_model_id;
 	const char *p = NULL;
 
 	/*

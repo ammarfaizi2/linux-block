@@ -162,6 +162,8 @@ static struct resource bss_resource = {
 };
 
 char x86_vendor_id[16] __ro_after_init;
+char x86_model_id[64] __ro_after_init;
+EXPORT_SYMBOL_GPL(x86_model_id);
 
 #ifdef CONFIG_X86_32
 /* cpu data as detected by the assembly code in head_32.S */

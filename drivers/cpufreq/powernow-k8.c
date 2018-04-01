@@ -1220,7 +1220,7 @@ static int powernowk8_init(void)
 		return ret;
 
 	pr_info("Found %d %s (%d cpu cores) (" VERSION ")\n",
-		num_online_nodes(), boot_cpu_data.x86_model_id, supported_cpus);
+		num_online_nodes(), x86_model_id, supported_cpus);
 
 	return ret;
 }

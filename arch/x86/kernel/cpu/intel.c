@@ -745,8 +745,8 @@ static void init_intel(struct cpuinfo_x86 *c)
 			break;
 		}
 
-		if (p)
-			strcpy(c->x86_model_id, p);
+		if (p && !x86_model_id[0])
+			strcpy(x86_model_id, p);
 	}
 
 	if (c->x86 == 15)
