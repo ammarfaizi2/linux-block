@@ -307,6 +307,16 @@ struct workqueue_struct *memcg_kmem_cache_wq;
 
 #endif /* !CONFIG_SLOB */
 
+static unsigned long __memcg_tree_stat(struct mem_cgroup *memcg, int idx)
+{
+	long x = READ_ONCE(memcg->tree_stat[idx]);
+#ifdef CONFIG_SMP
+	if (x < 0)
+		x = 0;
+#endif
+	return x;
+}
+
 /**
  * mem_cgroup_css_from_page - css of the memcg associated with a page
  * @page: page of interest
@@ -1150,6 +1160,8 @@ void mem_cgroup_print_oom_info(struct mem_cgroup *memcg, struct task_struct *p)
 		K((u64)page_counter_read(&memcg->kmem)),
 		K((u64)memcg->kmem.limit), memcg->kmem.failcnt);
 
+	memcg_stat_flush(memcg);
+
 	for_each_mem_cgroup_tree(iter, memcg) {
 		pr_info("Memory cgroup stats for ");
 		pr_cont_cgroup_path(iter->css.cgroup);
@@ -1159,7 +1171,7 @@ void mem_cgroup_print_oom_info(struct mem_cgroup *memcg, struct task_struct *p)
 			if (memcg1_stats[i] == MEMCG_SWAP && !do_swap_account)
 				continue;
 			pr_cont(" %s:%luKB", memcg1_stat_names[i],
-				K(memcg_page_state(iter, memcg1_stats[i])));
+				K(__memcg_page_state(iter, memcg1_stats[i])));
 		}
 
 		for (i = 0; i < NR_LRU_LISTS; i++)
@@ -1812,16 +1824,9 @@ static int memcg_hotplug_cpu_dead(unsigned int cpu)
 	for_each_mem_cgroup(memcg) {
 		int i;
 
-		for (i = 0; i < MEMCG_NR_STAT; i++) {
+		for (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++) {
 			int nid;
 			long x;
-
-			x = this_cpu_xchg(memcg->stat_cpu->count[i], 0);
-			if (x)
-				atomic_long_add(x, &memcg->stat[i]);
-
-			if (i >= NR_VM_NODE_STAT_ITEMS)
-				continue;
 
 			for_each_node(nid) {
 				struct mem_cgroup_per_node *pn;
@@ -2656,32 +2661,16 @@ static int mem_cgroup_hierarchy_write(struct cgroup_subsys_state *css,
 	return retval;
 }
 
-static void tree_stat(struct mem_cgroup *memcg, unsigned long *stat)
-{
-	struct mem_cgroup *iter;
-	int i;
-
-	memset(stat, 0, sizeof(*stat) * MEMCG_NR_STAT);
-
-	for_each_mem_cgroup_tree(iter, memcg) {
-		for (i = 0; i < MEMCG_NR_STAT; i++)
-			stat[i] += memcg_page_state(iter, i);
-	}
-}
-
 static unsigned long mem_cgroup_usage(struct mem_cgroup *memcg, bool swap)
 {
 	unsigned long val = 0;
 
 	if (mem_cgroup_is_root(memcg)) {
-		struct mem_cgroup *iter;
-
-		for_each_mem_cgroup_tree(iter, memcg) {
-			val += memcg_page_state(iter, MEMCG_CACHE);
-			val += memcg_page_state(iter, MEMCG_RSS);
-			if (swap)
-				val += memcg_page_state(iter, MEMCG_SWAP);
-		}
+		memcg_stat_flush(memcg);
+		val += __memcg_tree_stat(memcg, MEMCG_CACHE);
+		val += __memcg_tree_stat(memcg, MEMCG_RSS);
+		if (swap)
+			val += __memcg_tree_stat(memcg, MEMCG_SWAP);
 	} else {
 		if (!swap)
 			val = page_counter_read(&memcg->memory);
@@ -3086,7 +3075,7 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 		if (memcg1_stats[i] == MEMCG_SWAP && !do_memsw_account())
 			continue;
 		seq_printf(m, "%s %lu\n", memcg1_stat_names[i],
-			   memcg_page_state(memcg, memcg1_stats[i]) *
+			   __memcg_page_state(memcg, memcg1_stats[i]) *
 			   PAGE_SIZE);
 	}
 
@@ -3111,14 +3100,11 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 			   (u64)memsw * PAGE_SIZE);
 
 	for (i = 0; i < ARRAY_SIZE(memcg1_stats); i++) {
-		unsigned long long val = 0;
-
 		if (memcg1_stats[i] == MEMCG_SWAP && !do_memsw_account())
 			continue;
-		for_each_mem_cgroup_tree(mi, memcg)
-			val += memcg_page_state(mi, memcg1_stats[i]) *
-			PAGE_SIZE;
-		seq_printf(m, "total_%s %llu\n", memcg1_stat_names[i], val);
+		seq_printf(m, "total_%s %llu\n", memcg1_stat_names[i],
+			   (u64)__memcg_tree_stat(memcg, memcg1_stats[i]) *
+			   PAGE_SIZE);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(memcg1_events); i++)
@@ -3592,10 +3578,16 @@ void mem_cgroup_wb_stats(struct bdi_writeback *wb, unsigned long *pfilepages,
 	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
 	struct mem_cgroup *parent;
 
-	*pdirty = memcg_page_state(memcg, NR_FILE_DIRTY);
+	/*
+	 * This function is called under a spinlock.  Use the irq-safe
+	 * version instead of memcg_stat_flush().
+	 */
+	cgroup_rstat_flush_irqsafe(memcg->css.cgroup);
+
+	*pdirty = __memcg_page_state(memcg, NR_FILE_DIRTY);
 
 	/* this should eventually include NR_UNSTABLE_NFS */
-	*pwriteback = memcg_page_state(memcg, NR_WRITEBACK);
+	*pwriteback = __memcg_page_state(memcg, NR_WRITEBACK);
 	*pfilepages = mem_cgroup_nr_lru_pages(memcg, (1 << LRU_INACTIVE_FILE) |
 						     (1 << LRU_ACTIVE_FILE));
 	*pheadroom = PAGE_COUNTER_MAX;
@@ -4309,6 +4301,23 @@ static void mem_cgroup_css_rstat_flush(struct cgroup_subsys_state *css, int cpu)
 	struct mem_cgroup_stat_cpu *statc = per_cpu_ptr(memcg->stat_cpu, cpu);
 	unsigned long v, delta;
 	int i;
+
+	for (i = 0; i < MEMCG_NR_STAT; i++) {
+		/* calculate the delta to propagate and add to local stat */
+		v = READ_ONCE(statc->count[i]);
+		delta = v - statc->last_count[i];
+		statc->last_count[i] = v;
+		memcg->stat[i] += delta;
+
+		/* transfer the pending stat into delta */
+		delta += memcg->pending_stat[i];
+		memcg->pending_stat[i] = 0;
+
+		/* propagate delta into tree stat and parent's pending */
+		memcg->tree_stat[i] += delta;
+		if (parent)
+			parent->pending_stat[i] += delta;
+	}
 
 	for (i = 0; i < MEMCG_NR_EVENTS; i++) {
 		/* calculate the delta to propagate and add to local stat */
@@ -5207,7 +5216,7 @@ static int memory_events_show(struct seq_file *m, void *v)
 static int memory_stat_show(struct seq_file *m, void *v)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(seq_css(m));
-	unsigned long stat[MEMCG_NR_STAT];
+	unsigned long *stat = memcg->tree_stat;
 	unsigned long long *events = memcg->tree_events;
 	int i;
 
@@ -5222,7 +5231,6 @@ static int memory_stat_show(struct seq_file *m, void *v)
 	 * Current memory state:
 	 */
 
-	tree_stat(memcg, stat);
 	cgroup_rstat_flush_hold(memcg->css.cgroup);
 
 	seq_printf(m, "anon %llu\n",

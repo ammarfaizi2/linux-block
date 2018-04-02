@@ -93,6 +93,7 @@ struct mem_cgroup_stat_cpu {
 	unsigned long targets[MEM_CGROUP_NTARGETS];
 
 	/* for cgroup rstat delta calculation */
+	unsigned long last_count[MEMCG_NR_STAT];
 	unsigned long last_events[MEMCG_NR_EVENTS];
 };
 
@@ -235,9 +236,12 @@ struct mem_cgroup {
 	unsigned long		move_lock_flags;
 
 	struct mem_cgroup_stat_cpu __percpu *stat_cpu;
-	atomic_long_t		stat[MEMCG_NR_STAT];
 
-	/* events is managed by cgroup rstat */
+	/* stat and events are managed by cgroup rstat */
+	long			stat[MEMCG_NR_STAT];		/* local */
+	long			tree_stat[MEMCG_NR_STAT];	/* subtree */
+	long			pending_stat[MEMCG_NR_STAT];	/* propagation */
+
 	unsigned long long	events[MEMCG_NR_EVENTS];	/* local */
 	unsigned long long	tree_events[MEMCG_NR_EVENTS];	/* subtree */
 	unsigned long long	pending_events[MEMCG_NR_EVENTS];/* propagation */
@@ -497,11 +501,32 @@ struct mem_cgroup *lock_page_memcg(struct page *page);
 void __unlock_page_memcg(struct mem_cgroup *memcg);
 void unlock_page_memcg(struct page *page);
 
-/* idx can be of type enum memcg_stat_item or node_stat_item */
-static inline unsigned long memcg_page_state(struct mem_cgroup *memcg,
-					     int idx)
+/**
+ * memcg_stat_flush - flush stat in a memcg's subtree
+ * @memcg: target memcg
+ *
+ * Flush cgroup_rstat statistics in @memcg's subtree.  This brings @memcg's
+ * statistics up-to-date.
+ */
+static inline void memcg_stat_flush(struct mem_cgroup *memcg)
 {
-	long x = atomic_long_read(&memcg->stat[idx]);
+	if (!memcg)
+		memcg = root_mem_cgroup;
+	cgroup_rstat_flush(memcg->css.cgroup);
+}
+
+/**
+ * __memcg_page_state - read page state counter without brininging it up-to-date
+ * @memcg: target memcg
+ * @idx: page state item to read
+ *
+ * Read a memcg page state counter.  @idx can be of type enum
+ * memcg_stat_item or node_stat_item.  The caller must haved flushed by
+ * calling memcg_stat_flush() to bring the counter up-to-date.
+ */
+static inline unsigned long __memcg_page_state(struct mem_cgroup *memcg, int idx)
+{
+	long x = READ_ONCE(memcg->stat[idx]);
 #ifdef CONFIG_SMP
 	if (x < 0)
 		x = 0;
@@ -509,21 +534,30 @@ static inline unsigned long memcg_page_state(struct mem_cgroup *memcg,
 	return x;
 }
 
+/**
+ * memcg_page_state - read page state counter after bringing it up-to-date
+ * @memcg: target memcg
+ * @idx: page state item to read
+ *
+ * __memcg_page_state() with implied flushing.  When reading multiple
+ * counters in sequence, flushing explicitly and using __memcg_page_state()
+ * is cheaper.
+ */
+static inline unsigned long memcg_page_state(struct mem_cgroup *memcg, int idx)
+{
+	memcg_stat_flush(memcg);
+	return __memcg_page_state(memcg, idx);
+}
+
 /* idx can be of type enum memcg_stat_item or node_stat_item */
 static inline void __mod_memcg_state(struct mem_cgroup *memcg,
 				     int idx, int val)
 {
-	long x;
-
 	if (mem_cgroup_disabled())
 		return;
 
-	x = val + __this_cpu_read(memcg->stat_cpu->count[idx]);
-	if (unlikely(abs(x) > MEMCG_CHARGE_BATCH)) {
-		atomic_long_add(x, &memcg->stat[idx]);
-		x = 0;
-	}
-	__this_cpu_write(memcg->stat_cpu->count[idx], x);
+	__this_cpu_add(memcg->stat_cpu->count[idx], val);
+	cgroup_rstat_updated(memcg->css.cgroup, smp_processor_id());
 }
 
 /* idx can be of type enum memcg_stat_item or node_stat_item */
@@ -895,8 +929,16 @@ static inline bool mem_cgroup_oom_synchronize(bool wait)
 	return false;
 }
 
-static inline unsigned long memcg_page_state(struct mem_cgroup *memcg,
-					     int idx)
+static inline void memcg_stat_flush(struct mem_cgroup *memcg)
+{
+}
+
+static inline unsigned long __memcg_page_state(struct mem_cgroup *memcg, int idx)
+{
+	return 0;
+}
+
+static inline unsigned long memcg_page_state(struct mem_cgroup *memcg, int idx)
 {
 	return 0;
 }

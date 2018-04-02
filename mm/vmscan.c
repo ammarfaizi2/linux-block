@@ -2738,13 +2738,15 @@ static void snapshot_refaults(struct mem_cgroup *root_memcg, pg_data_t *pgdat)
 {
 	struct mem_cgroup *memcg;
 
+	memcg_stat_flush(root_memcg);
+
 	memcg = mem_cgroup_iter(root_memcg, NULL, NULL);
 	do {
 		unsigned long refaults;
 		struct lruvec *lruvec;
 
 		if (memcg)
-			refaults = memcg_page_state(memcg, WORKINGSET_ACTIVATE);
+			refaults = __memcg_page_state(memcg, WORKINGSET_ACTIVATE);
 		else
 			refaults = node_page_state(pgdat, WORKINGSET_ACTIVATE);
 
