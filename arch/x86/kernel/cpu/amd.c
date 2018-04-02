@@ -526,12 +526,12 @@ static void bsp_init_amd(struct cpuinfo_x86 *c)
 	}
 
 	if (c->x86 == 0x15) {
-		unsigned long upperbit;
-		u32 cpuid, assoc;
-
-		cpuid	 = cpuid_edx(0x80000005);
-		assoc	 = cpuid >> 16 & 0xff;
-		upperbit = ((cpuid >> 24) << 10) / assoc;
+		/*
+		 * Compute the upper bit used for the selection of the cache
+		 * index.
+		 */
+		unsigned long upperbit = (cpuid_info.ext.l1icsz << 10) /
+					  cpuid_info.ext.l1icassoc;
 
 		va_align.mask	  = (upperbit - 1) & PAGE_MASK;
 		va_align.flags    = ALIGN_VA_32 | ALIGN_VA_64;
@@ -944,7 +944,7 @@ static void cpu_detect_tlb_amd(struct cpuinfo_x86 *c)
 
 	/* Handle DTLB 2M and 4M sizes, fall back to L1 if L2 is disabled */
 	if (!((eax >> 16) & mask))
-		tlb_lld_2m[ENTRIES] = (cpuid_eax(0x80000005) >> 16) & 0xff;
+		tlb_lld_2m[ENTRIES] = cpuid_info.ext.lf5_eax.l1dtlb24msz;
 	else
 		tlb_lld_2m[ENTRIES] = (eax >> 16) & mask;
 
@@ -957,8 +957,7 @@ static void cpu_detect_tlb_amd(struct cpuinfo_x86 *c)
 		if (c->x86 == 0x15 && c->x86_model <= 0x1f) {
 			tlb_lli_2m[ENTRIES] = 1024;
 		} else {
-			cpuid(0x80000005, &eax, &ebx, &ecx, &edx);
-			tlb_lli_2m[ENTRIES] = eax & 0xff;
+			tlb_lli_2m[ENTRIES] = cpuid_info.ext.lf5_eax.l1itlb24msz;
 		}
 	} else
 		tlb_lli_2m[ENTRIES] = eax & mask;

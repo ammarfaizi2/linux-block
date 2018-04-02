@@ -255,6 +255,18 @@ struct cpuid_range_ext {
 		nx	  : 1, __rsvd9	: 1, mmxext	: 1, mmx	: 1,
 		fxsr	  : 1, ffxsr	: 1, page1gb	: 1, rdtscp	: 1,
 		__rsvd10  : 1, lm	: 1, _3dnowext	: 1, _3dnow	: 1;
+
+	/* Function 0x8000_0005 */
+	union {
+		struct {
+			u32 l1itlb24msz : 8, l1itlb24mas: 8, l1dtlb24msz: 8, l1dtlb24mas: 8;
+		};
+		u32 all;
+	} lf5_eax;
+
+	u32	l1itlb4ksz : 8, l1itlb4kas : 8, l1dtlb4ksz : 8, l1dtlb4kas : 8;
+	u32	l1dclsz    : 8, l1dclntag  : 8, l1dcassoc  : 8, l1dcsz     : 8;
+	u32	l1iclsz    : 8, l1iclntag  : 8, l1icassoc  : 8, l1icsz     : 8;
 } __packed;
 
 

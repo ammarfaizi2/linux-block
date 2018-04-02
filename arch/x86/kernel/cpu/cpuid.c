@@ -34,6 +34,7 @@ void cpuid_read_leaf(unsigned int l)
 
 	case 0x80000000:	p = (u32 *)&cpuid_info.ext.max_lvl;		break;
 	case 0x80000001:	p = (u32 *)&cpuid_info.ext.lf1_eax;		break;
+	case 0x80000005:	p = (u32 *)&cpuid_info.ext.lf5_eax;		break;
 
         default:
                 WARN_ON(1);
@@ -56,4 +57,5 @@ void cpuid_read_all_leafs(void)
 
 	cpuid_read_leaf(0x80000000);
 	cpuid_read_leaf(0x80000001);
+	cpuid_read_leaf(0x80000005);
 }
