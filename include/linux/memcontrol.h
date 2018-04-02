@@ -54,6 +54,8 @@ enum memcg_event_item {
 	MEMCG_HIGH,
 	MEMCG_MAX,
 	MEMCG_OOM,
+	MEMCG_SWAP_MAX,
+	MEMCG_SWAP_FAIL,
 	MEMCG_NR_EVENTS,
 };
 
@@ -201,6 +203,9 @@ struct mem_cgroup {
 
 	/* handle for "memory.events" */
 	struct cgroup_file events_file;
+
+	/* handle for "memory.swap.events" */
+	struct cgroup_file swap_events_file;
 
 	/* protect arrays of thresholds */
 	struct mutex thresholds_lock;
