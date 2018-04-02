@@ -91,6 +91,9 @@ struct mem_cgroup_stat_cpu {
 	unsigned long events[MEMCG_NR_EVENTS];
 	unsigned long nr_page_events;
 	unsigned long targets[MEM_CGROUP_NTARGETS];
+
+	/* for cgroup rstat delta calculation */
+	unsigned long last_events[MEMCG_NR_EVENTS];
 };
 
 struct mem_cgroup_reclaim_iter {
@@ -233,7 +236,11 @@ struct mem_cgroup {
 
 	struct mem_cgroup_stat_cpu __percpu *stat_cpu;
 	atomic_long_t		stat[MEMCG_NR_STAT];
-	atomic_long_t		events[MEMCG_NR_EVENTS];
+
+	/* events is managed by cgroup rstat */
+	unsigned long long	events[MEMCG_NR_EVENTS];	/* local */
+	unsigned long long	tree_events[MEMCG_NR_EVENTS];	/* subtree */
+	unsigned long long	pending_events[MEMCG_NR_EVENTS];/* propagation */
 
 	unsigned long		socket_pressure;
 
@@ -649,17 +656,11 @@ unsigned long mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, int order,
 static inline void __count_memcg_events(struct mem_cgroup *memcg,
 					int idx, unsigned long count)
 {
-	unsigned long x;
-
 	if (mem_cgroup_disabled())
 		return;
 
-	x = count + __this_cpu_read(memcg->stat_cpu->events[idx]);
-	if (unlikely(x > MEMCG_CHARGE_BATCH)) {
-		atomic_long_add(x, &memcg->events[idx]);
-		x = 0;
-	}
-	__this_cpu_write(memcg->stat_cpu->events[idx], x);
+	__this_cpu_add(memcg->stat_cpu->events[idx], count);
+	cgroup_rstat_updated(memcg->css.cgroup, smp_processor_id());
 }
 
 static inline void count_memcg_events(struct mem_cgroup *memcg,

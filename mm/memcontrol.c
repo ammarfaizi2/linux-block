@@ -542,12 +542,6 @@ mem_cgroup_largest_soft_limit_node(struct mem_cgroup_tree_per_node *mctz)
 	return mz;
 }
 
-static unsigned long memcg_sum_events(struct mem_cgroup *memcg,
-				      int event)
-{
-	return atomic_long_read(&memcg->events[event]);
-}
-
 static void mem_cgroup_charge_statistics(struct mem_cgroup *memcg,
 					 struct page *page,
 					 bool compound, int nr_pages)
@@ -1838,14 +1832,6 @@ static int memcg_hotplug_cpu_dead(unsigned int cpu)
 					atomic_long_add(x, &pn->lruvec_stat[i]);
 			}
 		}
-
-		for (i = 0; i < MEMCG_NR_EVENTS; i++) {
-			long x;
-
-			x = this_cpu_xchg(memcg->stat_cpu->events[i], 0);
-			if (x)
-				atomic_long_add(x, &memcg->events[i]);
-		}
 	}
 
 	return 0;
@@ -2683,19 +2669,6 @@ static void tree_stat(struct mem_cgroup *memcg, unsigned long *stat)
 	}
 }
 
-static void tree_events(struct mem_cgroup *memcg, unsigned long *events)
-{
-	struct mem_cgroup *iter;
-	int i;
-
-	memset(events, 0, sizeof(*events) * MEMCG_NR_EVENTS);
-
-	for_each_mem_cgroup_tree(iter, memcg) {
-		for (i = 0; i < MEMCG_NR_EVENTS; i++)
-			events[i] += memcg_sum_events(iter, i);
-	}
-}
-
 static unsigned long mem_cgroup_usage(struct mem_cgroup *memcg, bool swap)
 {
 	unsigned long val = 0;
@@ -3107,6 +3080,8 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 	BUILD_BUG_ON(ARRAY_SIZE(memcg1_stat_names) != ARRAY_SIZE(memcg1_stats));
 	BUILD_BUG_ON(ARRAY_SIZE(mem_cgroup_lru_names) != NR_LRU_LISTS);
 
+	cgroup_rstat_flush_hold(memcg->css.cgroup);
+
 	for (i = 0; i < ARRAY_SIZE(memcg1_stats); i++) {
 		if (memcg1_stats[i] == MEMCG_SWAP && !do_memsw_account())
 			continue;
@@ -3116,8 +3091,8 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(memcg1_events); i++)
-		seq_printf(m, "%s %lu\n", memcg1_event_names[i],
-			   memcg_sum_events(memcg, memcg1_events[i]));
+		seq_printf(m, "%s %llu\n", memcg1_event_names[i],
+			   memcg->events[memcg1_events[i]]);
 
 	for (i = 0; i < NR_LRU_LISTS; i++)
 		seq_printf(m, "%s %lu\n", mem_cgroup_lru_names[i],
@@ -3146,13 +3121,9 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 		seq_printf(m, "total_%s %llu\n", memcg1_stat_names[i], val);
 	}
 
-	for (i = 0; i < ARRAY_SIZE(memcg1_events); i++) {
-		unsigned long long val = 0;
-
-		for_each_mem_cgroup_tree(mi, memcg)
-			val += memcg_sum_events(mi, memcg1_events[i]);
-		seq_printf(m, "total_%s %llu\n", memcg1_event_names[i], val);
-	}
+	for (i = 0; i < ARRAY_SIZE(memcg1_events); i++)
+		seq_printf(m, "total_%s %llu\n", memcg1_event_names[i],
+			   memcg->tree_events[memcg1_events[i]]);
 
 	for (i = 0; i < NR_LRU_LISTS; i++) {
 		unsigned long long val = 0;
@@ -3185,7 +3156,7 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 		seq_printf(m, "recent_scanned_file %lu\n", recent_scanned[1]);
 	}
 #endif
-
+	cgroup_rstat_flush_release();
 	return 0;
 }
 
@@ -3538,9 +3509,13 @@ static int mem_cgroup_oom_control_read(struct seq_file *sf, void *v)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(seq_css(sf));
 
+	cgroup_rstat_flush_hold(memcg->css.cgroup);
+
 	seq_printf(sf, "oom_kill_disable %d\n", memcg->oom_kill_disable);
 	seq_printf(sf, "under_oom %d\n", (bool)memcg->under_oom);
-	seq_printf(sf, "oom_kill %lu\n", memcg_sum_events(memcg, OOM_KILL));
+	seq_printf(sf, "oom_kill %llu\n", memcg->events[OOM_KILL]);
+
+	cgroup_rstat_flush_release();
 	return 0;
 }
 
@@ -4325,6 +4300,32 @@ static void mem_cgroup_css_reset(struct cgroup_subsys_state *css)
 	memcg->high = PAGE_COUNTER_MAX;
 	memcg->soft_limit = PAGE_COUNTER_MAX;
 	memcg_wb_domain_size_changed(memcg);
+}
+
+static void mem_cgroup_css_rstat_flush(struct cgroup_subsys_state *css, int cpu)
+{
+	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+	struct mem_cgroup *parent = parent_mem_cgroup(memcg);
+	struct mem_cgroup_stat_cpu *statc = per_cpu_ptr(memcg->stat_cpu, cpu);
+	unsigned long v, delta;
+	int i;
+
+	for (i = 0; i < MEMCG_NR_EVENTS; i++) {
+		/* calculate the delta to propagate and add to local stat */
+		v = READ_ONCE(statc->events[i]);
+		delta = v - statc->last_events[i];
+		statc->last_events[i] = v;
+		memcg->events[i] += delta;
+
+		/* transfer the pending stat into delta */
+		delta += memcg->pending_events[i];
+		memcg->pending_events[i] = 0;
+
+		/* propagate delta into tree stat and parent's pending */
+		memcg->tree_events[i] += delta;
+		if (parent)
+			parent->pending_events[i] += delta;
+	}
 }
 
 #ifdef CONFIG_MMU
@@ -5191,12 +5192,15 @@ static int memory_events_show(struct seq_file *m, void *v)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(seq_css(m));
 
-	seq_printf(m, "low %lu\n", memcg_sum_events(memcg, MEMCG_LOW));
-	seq_printf(m, "high %lu\n", memcg_sum_events(memcg, MEMCG_HIGH));
-	seq_printf(m, "max %lu\n", memcg_sum_events(memcg, MEMCG_MAX));
-	seq_printf(m, "oom %lu\n", memcg_sum_events(memcg, MEMCG_OOM));
-	seq_printf(m, "oom_kill %lu\n", memcg_sum_events(memcg, OOM_KILL));
+	cgroup_rstat_flush_hold(memcg->css.cgroup);
 
+	seq_printf(m, "low %llu\n", memcg->events[MEMCG_LOW]);
+	seq_printf(m, "high %llu\n", memcg->events[MEMCG_HIGH]);
+	seq_printf(m, "max %llu\n", memcg->events[MEMCG_MAX]);
+	seq_printf(m, "oom %llu\n", memcg->events[MEMCG_OOM]);
+	seq_printf(m, "oom_kill %llu\n", memcg->events[OOM_KILL]);
+
+	cgroup_rstat_flush_release();
 	return 0;
 }
 
@@ -5204,7 +5208,7 @@ static int memory_stat_show(struct seq_file *m, void *v)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(seq_css(m));
 	unsigned long stat[MEMCG_NR_STAT];
-	unsigned long events[MEMCG_NR_EVENTS];
+	unsigned long long *events = memcg->tree_events;
 	int i;
 
 	/*
@@ -5219,7 +5223,7 @@ static int memory_stat_show(struct seq_file *m, void *v)
 	 */
 
 	tree_stat(memcg, stat);
-	tree_events(memcg, events);
+	cgroup_rstat_flush_hold(memcg->css.cgroup);
 
 	seq_printf(m, "anon %llu\n",
 		   (u64)stat[MEMCG_RSS] * PAGE_SIZE);
@@ -5259,18 +5263,18 @@ static int memory_stat_show(struct seq_file *m, void *v)
 
 	/* Accumulated memory events */
 
-	seq_printf(m, "pgfault %lu\n", events[PGFAULT]);
-	seq_printf(m, "pgmajfault %lu\n", events[PGMAJFAULT]);
+	seq_printf(m, "pgfault %llu\n", events[PGFAULT]);
+	seq_printf(m, "pgmajfault %llu\n", events[PGMAJFAULT]);
 
-	seq_printf(m, "pgrefill %lu\n", events[PGREFILL]);
-	seq_printf(m, "pgscan %lu\n", events[PGSCAN_KSWAPD] +
+	seq_printf(m, "pgrefill %llu\n", events[PGREFILL]);
+	seq_printf(m, "pgscan %llu\n", events[PGSCAN_KSWAPD] +
 		   events[PGSCAN_DIRECT]);
-	seq_printf(m, "pgsteal %lu\n", events[PGSTEAL_KSWAPD] +
+	seq_printf(m, "pgsteal %llu\n", events[PGSTEAL_KSWAPD] +
 		   events[PGSTEAL_DIRECT]);
-	seq_printf(m, "pgactivate %lu\n", events[PGACTIVATE]);
-	seq_printf(m, "pgdeactivate %lu\n", events[PGDEACTIVATE]);
-	seq_printf(m, "pglazyfree %lu\n", events[PGLAZYFREE]);
-	seq_printf(m, "pglazyfreed %lu\n", events[PGLAZYFREED]);
+	seq_printf(m, "pgactivate %llu\n", events[PGACTIVATE]);
+	seq_printf(m, "pgdeactivate %llu\n", events[PGDEACTIVATE]);
+	seq_printf(m, "pglazyfree %llu\n", events[PGLAZYFREE]);
+	seq_printf(m, "pglazyfreed %llu\n", events[PGLAZYFREED]);
 
 	seq_printf(m, "workingset_refault %lu\n",
 		   stat[WORKINGSET_REFAULT]);
@@ -5279,6 +5283,7 @@ static int memory_stat_show(struct seq_file *m, void *v)
 	seq_printf(m, "workingset_nodereclaim %lu\n",
 		   stat[WORKINGSET_NODERECLAIM]);
 
+	cgroup_rstat_flush_release();
 	return 0;
 }
 
@@ -5327,6 +5332,7 @@ struct cgroup_subsys memory_cgrp_subsys = {
 	.css_released = mem_cgroup_css_released,
 	.css_free = mem_cgroup_css_free,
 	.css_reset = mem_cgroup_css_reset,
+	.css_rstat_flush = mem_cgroup_css_rstat_flush,
 	.can_attach = mem_cgroup_can_attach,
 	.cancel_attach = mem_cgroup_cancel_attach,
 	.post_attach = mem_cgroup_move_task,
