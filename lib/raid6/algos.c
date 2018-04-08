@@ -79,9 +79,6 @@ const struct raid6_calls * const raid6_algos[] = {
 	&raid6_vpermxor4,
 	&raid6_vpermxor8,
 #endif
-#if defined(CONFIG_TILEGX)
-	&raid6_tilegx8,
-#endif
 #if defined(CONFIG_S390)
 	&raid6_s390vx8,
 #endif

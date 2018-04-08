@@ -118,6 +118,7 @@ struct afs_call {
 	bool			ret_reply0;	/* T if should return reply[0] on success */
 	bool			upgrade;	/* T to request service upgrade */
 	u16			service_id;	/* Actual service ID (after upgrade) */
+	unsigned int		debug_id;	/* Trace ID */
 	u32			operation_ID;	/* operation ID for an incoming call */
 	u32			count;		/* count for use in unmarshalling */
 	__be32			tmp;		/* place to extract temporary data */
@@ -557,6 +558,13 @@ struct afs_fs_cursor {
 #define AFS_FS_CURSOR_CUR_ONLY	0x0010		/* Set if current server only (file lock held) */
 #define AFS_FS_CURSOR_NO_VSLEEP	0x0020		/* Set to prevent sleep on VBUSY, VOFFLINE, ... */
 };
+
+/*
+ * Cache auxiliary data.
+ */
+struct afs_vnode_cache_aux {
+	u64			data_version;
+} __packed;
 
 #include <trace/events/afs.h>
 
