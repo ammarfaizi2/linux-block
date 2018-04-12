@@ -849,10 +849,18 @@ static void mlx5e_deactivate_rq(struct mlx5e_rq *rq)
 
 static void mlx5e_close_rq(struct mlx5e_rq *rq)
 {
+	struct mlx5e_channel *c = rq->channel;
+	struct mlx5e_priv *priv = c->priv;
+	struct mlx5e_channel_stats *stats = &priv->channel_stats[c->ix];
+
 	cancel_work_sync(&rq->dim.work);
 	mlx5e_destroy_rq(rq);
 	mlx5e_free_rx_descs(rq);
 	mlx5e_free_rq(rq);
+
+	write_lock(&stats->lock);
+	mlx5e_u64_adder(&stats->rq, &rq->stats, sizeof(rq->stats));
+	write_unlock(&stats->lock);
 }
 
 static void mlx5e_free_xdpsq_db(struct mlx5e_xdpsq *sq)
@@ -1249,9 +1257,11 @@ static void mlx5e_deactivate_txqsq(struct mlx5e_txqsq *sq)
 	}
 }
 
-static void mlx5e_close_txqsq(struct mlx5e_txqsq *sq)
+static void mlx5e_close_txqsq(struct mlx5e_txqsq *sq, int tc)
 {
 	struct mlx5e_channel *c = sq->channel;
+	struct mlx5e_priv *priv = c->priv;
+	struct mlx5e_channel_stats *stats = &priv->channel_stats[c->ix];
 	struct mlx5_core_dev *mdev = c->mdev;
 	struct mlx5_rate_limit rl = {0};
 
@@ -1262,6 +1272,10 @@ static void mlx5e_close_txqsq(struct mlx5e_txqsq *sq)
 	}
 	mlx5e_free_txqsq_descs(sq);
 	mlx5e_free_txqsq(sq);
+
+	write_lock(&stats->lock);
+	mlx5e_u64_adder(&stats->sq[tc], &sq->stats, sizeof(sq->stats));
+	write_unlock(&stats->lock);
 }
 
 static int mlx5e_wait_for_sq_flush(struct mlx5e_txqsq *sq)
@@ -1655,11 +1669,13 @@ static int mlx5e_open_sqs(struct mlx5e_channel *c,
 			  struct mlx5e_params *params,
 			  struct mlx5e_channel_param *cparam)
 {
+	struct mlx5e_priv *priv = c->priv;
 	int err;
 	int tc;
 
 	for (tc = 0; tc < params->num_tc; tc++) {
-		int txq_ix = c->ix + tc * params->num_channels;
+		int txq_ix = c->ix + tc *
+				     priv->profile->max_nch(priv->mdev);
 
 		err = mlx5e_open_txqsq(c, c->priv->tisn[tc], txq_ix,
 				       params, &cparam->sq, &c->sq[tc]);
@@ -1671,7 +1687,7 @@ static int mlx5e_open_sqs(struct mlx5e_channel *c,
 
 err_close_sqs:
 	for (tc--; tc >= 0; tc--)
-		mlx5e_close_txqsq(&c->sq[tc]);
+		mlx5e_close_txqsq(&c->sq[tc], tc);
 
 	return err;
 }
@@ -1681,7 +1697,7 @@ static void mlx5e_close_sqs(struct mlx5e_channel *c)
 	int tc;
 
 	for (tc = 0; tc < c->num_tc; tc++)
-		mlx5e_close_txqsq(&c->sq[tc]);
+		mlx5e_close_txqsq(&c->sq[tc], tc);
 }
 
 static int mlx5e_set_sq_maxrate(struct net_device *dev,
@@ -1889,6 +1905,9 @@ static void mlx5e_deactivate_channel(struct mlx5e_channel *c)
 
 static void mlx5e_close_channel(struct mlx5e_channel *c)
 {
+	struct mlx5e_priv *priv = c->priv;
+	struct mlx5e_channel_stats *stats = &priv->channel_stats[c->ix];
+
 	mlx5e_close_rq(&c->rq);
 	if (c->xdp)
 		mlx5e_close_xdpsq(&c->rq.xdpsq);
@@ -1902,6 +1921,9 @@ static void mlx5e_close_channel(struct mlx5e_channel *c)
 	mlx5e_close_cq(&c->icosq.cq);
 	netif_napi_del(&c->napi);
 
+	write_lock(&stats->lock);
+	mlx5e_u64_adder(&stats->ch, &c->stats, sizeof(c->stats));
+	write_unlock(&stats->lock);
 	kfree(c);
 }
 
@@ -2627,7 +2649,7 @@ static void mlx5e_build_channels_tx_maps(struct mlx5e_priv *priv)
 	struct mlx5e_txqsq *sq;
 	int i, tc;
 
-	for (i = 0; i < priv->channels.num; i++)
+	for (i = 0; i < priv->profile->max_nch(priv->mdev); i++)
 		for (tc = 0; tc < priv->profile->max_tc; tc++)
 			priv->channel_tc2txq[i][tc] = i + tc * priv->channels.num;
 

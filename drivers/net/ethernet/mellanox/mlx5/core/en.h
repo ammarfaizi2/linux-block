@@ -583,6 +583,22 @@ struct mlx5e_channels {
 	struct mlx5e_params    params;
 };
 
+struct mlx5e_channel_stats {
+	struct mlx5e_ch_stats ch;
+	struct mlx5e_rq_stats rq;
+	struct mlx5e_sq_stats sq[MLX5E_MAX_NUM_TC];
+	/* sync rwlock lock for keeping stats of closed / refreshed objects */
+	rwlock_t              lock;
+};
+
+static inline void mlx5e_u64_adder(void *dst, void *src, size_t size)
+{
+	int i;
+
+	for (i = 0; i < size; i += sizeof(u64))
+		(*(u64 *)(dst + i)) += (*(u64 *)(src + i));
+}
+
 enum mlx5e_traffic_types {
 	MLX5E_TT_IPV4_TCP,
 	MLX5E_TT_IPV6_TCP,
@@ -785,6 +801,7 @@ struct mlx5e_priv {
 	struct mlx5_core_dev      *mdev;
 	struct net_device         *netdev;
 	struct mlx5e_stats         stats;
+	struct mlx5e_channel_stats channel_stats[MLX5E_MAX_NUM_CHANNELS];
 	struct hwtstamp_config     tstamp;
 	u16                        q_counter;
 	u16                        drop_rq_q_counter;

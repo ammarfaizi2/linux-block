@@ -105,62 +105,83 @@ static int mlx5e_grp_sw_fill_stats(struct mlx5e_priv *priv, u64 *data, int idx)
 static void mlx5e_grp_sw_update_stats(struct mlx5e_priv *priv)
 {
 	struct mlx5e_sw_stats temp, *s = &temp;
-	struct mlx5e_rq_stats *rq_stats;
-	struct mlx5e_sq_stats *sq_stats;
-	struct mlx5e_ch_stats *ch_stats;
+	struct mlx5e_rq_stats rq_stats, *priv_rq_stats;
+	struct mlx5e_sq_stats sq_stats, *priv_sq_stats;
+	struct mlx5e_ch_stats ch_stats, *priv_ch_stats;
 	int i, j;
 
 	memset(s, 0, sizeof(*s));
-	for (i = 0; i < priv->channels.num; i++) {
-		struct mlx5e_channel *c = priv->channels.c[i];
+	for (i = 0; i < priv->profile->max_nch(priv->mdev); i++) {
+		struct mlx5e_channel *c = i < priv->channels.num ?
+					  priv->channels.c[i] : NULL;
 
-		rq_stats = &c->rq.stats;
-		ch_stats = &c->stats;
+		priv_rq_stats = &priv->channel_stats[i].rq;
+		priv_ch_stats = &priv->channel_stats[i].ch;
 
-		s->rx_packets	+= rq_stats->packets;
-		s->rx_bytes	+= rq_stats->bytes;
-		s->rx_lro_packets += rq_stats->lro_packets;
-		s->rx_lro_bytes	+= rq_stats->lro_bytes;
-		s->rx_removed_vlan_packets += rq_stats->removed_vlan_packets;
-		s->rx_csum_none	+= rq_stats->csum_none;
-		s->rx_csum_complete += rq_stats->csum_complete;
-		s->rx_csum_unnecessary += rq_stats->csum_unnecessary;
-		s->rx_csum_unnecessary_inner += rq_stats->csum_unnecessary_inner;
-		s->rx_xdp_drop += rq_stats->xdp_drop;
-		s->rx_xdp_tx += rq_stats->xdp_tx;
-		s->rx_xdp_tx_full += rq_stats->xdp_tx_full;
-		s->rx_wqe_err   += rq_stats->wqe_err;
-		s->rx_mpwqe_filler += rq_stats->mpwqe_filler;
-		s->rx_buff_alloc_err += rq_stats->buff_alloc_err;
-		s->rx_cqe_compress_blks += rq_stats->cqe_compress_blks;
-		s->rx_cqe_compress_pkts += rq_stats->cqe_compress_pkts;
-		s->rx_page_reuse  += rq_stats->page_reuse;
-		s->rx_cache_reuse += rq_stats->cache_reuse;
-		s->rx_cache_full  += rq_stats->cache_full;
-		s->rx_cache_empty += rq_stats->cache_empty;
-		s->rx_cache_busy  += rq_stats->cache_busy;
-		s->rx_cache_waive += rq_stats->cache_waive;
-		s->ch_eq_rearm += ch_stats->eq_rearm;
+		read_lock(&priv->channel_stats[i].lock);
+		memcpy(&rq_stats, priv_rq_stats, sizeof(rq_stats));
+		memcpy(&ch_stats, priv_ch_stats, sizeof(ch_stats));
+		read_unlock(&priv->channel_stats[i].lock);
 
-		for (j = 0; j < priv->channels.params.num_tc; j++) {
-			sq_stats = &c->sq[j].stats;
+		if (c) {
+			mlx5e_u64_adder(&rq_stats, &c->rq.stats,
+					sizeof(rq_stats));
+			mlx5e_u64_adder(&ch_stats, &c->stats,
+					sizeof(ch_stats));
+		}
 
-			s->tx_packets		+= sq_stats->packets;
-			s->tx_bytes		+= sq_stats->bytes;
-			s->tx_tso_packets	+= sq_stats->tso_packets;
-			s->tx_tso_bytes		+= sq_stats->tso_bytes;
-			s->tx_tso_inner_packets	+= sq_stats->tso_inner_packets;
-			s->tx_tso_inner_bytes	+= sq_stats->tso_inner_bytes;
-			s->tx_added_vlan_packets += sq_stats->added_vlan_packets;
-			s->tx_queue_stopped	+= sq_stats->stopped;
-			s->tx_queue_wake	+= sq_stats->wake;
-			s->tx_queue_dropped	+= sq_stats->dropped;
-			s->tx_cqe_err		+= sq_stats->cqe_err;
-			s->tx_recover		+= sq_stats->recover;
-			s->tx_xmit_more		+= sq_stats->xmit_more;
-			s->tx_csum_partial_inner += sq_stats->csum_partial_inner;
-			s->tx_csum_none		+= sq_stats->csum_none;
-			s->tx_csum_partial	+= sq_stats->csum_partial;
+		s->rx_packets	+= rq_stats.packets;
+		s->rx_bytes	+= rq_stats.bytes;
+		s->rx_lro_packets += rq_stats.lro_packets;
+		s->rx_lro_bytes	+= rq_stats.lro_bytes;
+		s->rx_removed_vlan_packets += rq_stats.removed_vlan_packets;
+		s->rx_csum_none	+= rq_stats.csum_none;
+		s->rx_csum_complete += rq_stats.csum_complete;
+		s->rx_csum_unnecessary += rq_stats.csum_unnecessary;
+		s->rx_csum_unnecessary_inner += rq_stats.csum_unnecessary_inner;
+		s->rx_xdp_drop += rq_stats.xdp_drop;
+		s->rx_xdp_tx += rq_stats.xdp_tx;
+		s->rx_xdp_tx_full += rq_stats.xdp_tx_full;
+		s->rx_wqe_err   += rq_stats.wqe_err;
+		s->rx_mpwqe_filler += rq_stats.mpwqe_filler;
+		s->rx_buff_alloc_err += rq_stats.buff_alloc_err;
+		s->rx_cqe_compress_blks += rq_stats.cqe_compress_blks;
+		s->rx_cqe_compress_pkts += rq_stats.cqe_compress_pkts;
+		s->rx_page_reuse  += rq_stats.page_reuse;
+		s->rx_cache_reuse += rq_stats.cache_reuse;
+		s->rx_cache_full  += rq_stats.cache_full;
+		s->rx_cache_empty += rq_stats.cache_empty;
+		s->rx_cache_busy  += rq_stats.cache_busy;
+		s->rx_cache_waive += rq_stats.cache_waive;
+		s->ch_eq_rearm += ch_stats.eq_rearm;
+
+		for (j = 0; j < priv->profile->max_tc; j++) {
+			priv_sq_stats = &priv->channel_stats[i].sq[j];
+
+			read_lock(&priv->channel_stats[i].lock);
+			memcpy(&sq_stats, priv_sq_stats, sizeof(sq_stats));
+			read_unlock(&priv->channel_stats[i].lock);
+
+			if (c && j < priv->channels.params.num_tc)
+				mlx5e_u64_adder(&sq_stats, &c->sq[j].stats,
+						sizeof(sq_stats));
+
+			s->tx_packets		+= sq_stats.packets;
+			s->tx_bytes		+= sq_stats.bytes;
+			s->tx_tso_packets	+= sq_stats.tso_packets;
+			s->tx_tso_bytes		+= sq_stats.tso_bytes;
+			s->tx_tso_inner_packets	+= sq_stats.tso_inner_packets;
+			s->tx_tso_inner_bytes	+= sq_stats.tso_inner_bytes;
+			s->tx_added_vlan_packets += sq_stats.added_vlan_packets;
+			s->tx_queue_stopped	+= sq_stats.stopped;
+			s->tx_queue_wake	+= sq_stats.wake;
+			s->tx_queue_dropped	+= sq_stats.dropped;
+			s->tx_cqe_err		+= sq_stats.cqe_err;
+			s->tx_recover		+= sq_stats.recover;
+			s->tx_xmit_more		+= sq_stats.xmit_more;
+			s->tx_csum_partial_inner += sq_stats.csum_partial_inner;
+			s->tx_csum_none		+= sq_stats.csum_none;
+			s->tx_csum_partial	+= sq_stats.csum_partial;
 		}
 	}
 
@@ -1121,9 +1142,10 @@ static const struct counter_desc ch_stats_desc[] = {
 
 static int mlx5e_grp_channels_get_num_stats(struct mlx5e_priv *priv)
 {
-	return (NUM_RQ_STATS * priv->channels.num) +
-		(NUM_CH_STATS * priv->channels.num) +
-		(NUM_SQ_STATS * priv->channels.num * priv->channels.params.num_tc);
+	return (NUM_RQ_STATS * priv->profile->max_nch(priv->mdev)) +
+		(NUM_CH_STATS * priv->profile->max_nch(priv->mdev)) +
+		(NUM_SQ_STATS * priv->profile->max_nch(priv->mdev) *
+		 priv->profile->max_tc);
 }
 
 static int mlx5e_grp_channels_fill_strings(struct mlx5e_priv *priv, u8 *data,
@@ -1134,17 +1156,17 @@ static int mlx5e_grp_channels_fill_strings(struct mlx5e_priv *priv, u8 *data,
 	if (!test_bit(MLX5E_STATE_OPENED, &priv->state))
 		return idx;
 
-	for (i = 0; i < priv->channels.num; i++)
+	for (i = 0; i < priv->profile->max_nch(priv->mdev); i++)
 		for (j = 0; j < NUM_CH_STATS; j++)
 			sprintf(data + (idx++) * ETH_GSTRING_LEN,
 				ch_stats_desc[j].format, i);
 
-	for (i = 0; i < priv->channels.num; i++)
+	for (i = 0; i < priv->profile->max_nch(priv->mdev); i++)
 		for (j = 0; j < NUM_RQ_STATS; j++)
 			sprintf(data + (idx++) * ETH_GSTRING_LEN, rq_stats_desc[j].format, i);
 
-	for (tc = 0; tc < priv->channels.params.num_tc; tc++)
-		for (i = 0; i < priv->channels.num; i++)
+	for (tc = 0; tc < priv->profile->max_tc; tc++)
+		for (i = 0; i < priv->profile->max_nch(priv->mdev); i++)
 			for (j = 0; j < NUM_SQ_STATS; j++)
 				sprintf(data + (idx++) * ETH_GSTRING_LEN,
 					sq_stats_desc[j].format,
@@ -1157,29 +1179,71 @@ static int mlx5e_grp_channels_fill_stats(struct mlx5e_priv *priv, u64 *data,
 					 int idx)
 {
 	struct mlx5e_channels *channels = &priv->channels;
+	struct mlx5e_channel *c;
 	int i, j, tc;
 
 	if (!test_bit(MLX5E_STATE_OPENED, &priv->state))
 		return idx;
 
-	for (i = 0; i < channels->num; i++)
+	for (i = 0; i < priv->profile->max_nch(priv->mdev); i++) {
+		struct mlx5e_ch_stats ch_stats, *priv_ch_stats;
+
+		c = i < priv->channels.num ? channels->c[i] : NULL;
+		priv_ch_stats = &priv->channel_stats[i].ch;
+
+		read_lock(&priv->channel_stats[i].lock);
+		memcpy(&ch_stats, priv_ch_stats, sizeof(ch_stats));
+		read_unlock(&priv->channel_stats[i].lock);
+
+		if (c)
+			mlx5e_u64_adder(&ch_stats, &c->stats, sizeof(ch_stats));
+
 		for (j = 0; j < NUM_CH_STATS; j++)
 			data[idx++] =
-				MLX5E_READ_CTR64_CPU(&channels->c[i]->stats,
+				MLX5E_READ_CTR64_CPU(&ch_stats,
 						     ch_stats_desc, j);
+	}
 
-	for (i = 0; i < channels->num; i++)
+	for (i = 0; i < priv->profile->max_nch(priv->mdev); i++) {
+		struct mlx5e_rq_stats rq_stats, *priv_rq_stats;
+
+		c = i < priv->channels.num ? channels->c[i] : NULL;
+		priv_rq_stats = &priv->channel_stats[i].rq;
+
+		read_lock(&priv->channel_stats[i].lock);
+		memcpy(&rq_stats, priv_rq_stats, sizeof(rq_stats));
+		read_unlock(&priv->channel_stats[i].lock);
+
+		if (c)
+			mlx5e_u64_adder(&rq_stats, &c->rq.stats,
+					sizeof(rq_stats));
+
 		for (j = 0; j < NUM_RQ_STATS; j++)
 			data[idx++] =
-				MLX5E_READ_CTR64_CPU(&channels->c[i]->rq.stats,
+				MLX5E_READ_CTR64_CPU(&rq_stats,
 						     rq_stats_desc, j);
+	}
 
-	for (tc = 0; tc < priv->channels.params.num_tc; tc++)
-		for (i = 0; i < channels->num; i++)
+	for (tc = 0; tc < priv->profile->max_tc; tc++)
+		for (i = 0; i < priv->profile->max_nch(priv->mdev); i++) {
+			struct mlx5e_sq_stats sq_stats, *priv_sq_stats;
+
+			c = i < priv->channels.num ? channels->c[i] : NULL;
+			priv_sq_stats = &priv->channel_stats[i].sq[tc];
+
+			read_lock(&priv->channel_stats[i].lock);
+			memcpy(&sq_stats, priv_sq_stats, sizeof(sq_stats));
+			read_unlock(&priv->channel_stats[i].lock);
+
+			if (c && tc < priv->channels.params.num_tc)
+				mlx5e_u64_adder(&sq_stats, &c->sq[tc].stats,
+						sizeof(sq_stats));
+
 			for (j = 0; j < NUM_SQ_STATS; j++)
 				data[idx++] =
-					MLX5E_READ_CTR64_CPU(&channels->c[i]->sq[tc].stats,
+					MLX5E_READ_CTR64_CPU(&sq_stats,
 							     sq_stats_desc, j);
+		}
 
 	return idx;
 }
