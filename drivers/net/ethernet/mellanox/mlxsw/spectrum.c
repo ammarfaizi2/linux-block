@@ -3380,6 +3380,7 @@ static const struct mlxsw_listener mlxsw_sp_listener[] = {
 	MLXSW_SP_RXL_NO_MARK(ACL0, TRAP_TO_CPU, IP2ME, false),
 	/* Multicast Router Traps */
 	MLXSW_SP_RXL_MARK(IPV4_PIM, TRAP_TO_CPU, PIM, false),
+	MLXSW_SP_RXL_MARK(IPV6_PIM, TRAP_TO_CPU, PIM, false),
 	MLXSW_SP_RXL_MARK(RPF, TRAP_TO_CPU, RPF, false),
 	MLXSW_SP_RXL_MARK(ACL1, TRAP_TO_CPU, MULTICAST, false),
 	MLXSW_SP_RXL_MR_MARK(ACL2, TRAP_TO_CPU, MULTICAST, false),
@@ -3792,8 +3793,7 @@ static const struct mlxsw_config_profile mlxsw_sp_config_profile = {
 	.max_ib_mc			= 0,
 	.used_max_pkey			= 1,
 	.max_pkey			= 0,
-	.used_kvd_split_data		= 1,
-	.kvd_hash_granularity		= MLXSW_SP_KVD_GRANULARITY,
+	.used_kvd_sizes			= 1,
 	.kvd_hash_single_parts		= 59,
 	.kvd_hash_double_parts		= 41,
 	.kvd_linear_size		= MLXSW_SP_KVD_LINEAR_SIZE,
@@ -3803,19 +3803,6 @@ static const struct mlxsw_config_profile mlxsw_sp_config_profile = {
 			.type		= MLXSW_PORT_SWID_TYPE_ETH,
 		}
 	},
-	.resource_query_enable		= 1,
-};
-
-static u64 mlxsw_sp_resource_kvd_linear_occ_get(struct devlink *devlink)
-{
-	struct mlxsw_core *mlxsw_core = devlink_priv(devlink);
-	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
-
-	return mlxsw_sp_kvdl_occ_get(mlxsw_sp);
-}
-
-static struct devlink_resource_ops mlxsw_sp_resource_kvd_linear_ops = {
-	.occ_get = mlxsw_sp_resource_kvd_linear_occ_get,
 };
 
 static void
@@ -3878,8 +3865,7 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD,
 					kvd_size, MLXSW_SP_RESOURCE_KVD,
 					DEVLINK_RESOURCE_ID_PARENT_TOP,
-					&kvd_size_params,
-					NULL);
+					&kvd_size_params);
 	if (err)
 		return err;
 
@@ -3888,12 +3874,11 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 					linear_size,
 					MLXSW_SP_RESOURCE_KVD_LINEAR,
 					MLXSW_SP_RESOURCE_KVD,
-					&linear_size_params,
-					&mlxsw_sp_resource_kvd_linear_ops);
+					&linear_size_params);
 	if (err)
 		return err;
 
-	err = mlxsw_sp_kvdl_resources_register(devlink);
+	err = mlxsw_sp_kvdl_resources_register(mlxsw_core);
 	if  (err)
 		return err;
 
@@ -3901,13 +3886,12 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 	double_size *= profile->kvd_hash_double_parts;
 	double_size /= profile->kvd_hash_double_parts +
 		       profile->kvd_hash_single_parts;
-	double_size = rounddown(double_size, profile->kvd_hash_granularity);
+	double_size = rounddown(double_size, MLXSW_SP_KVD_GRANULARITY);
 	err = devlink_resource_register(devlink, MLXSW_SP_RESOURCE_NAME_KVD_HASH_DOUBLE,
 					double_size,
 					MLXSW_SP_RESOURCE_KVD_HASH_DOUBLE,
 					MLXSW_SP_RESOURCE_KVD,
-					&hash_double_size_params,
-					NULL);
+					&hash_double_size_params);
 	if (err)
 		return err;
 
@@ -3916,8 +3900,7 @@ static int mlxsw_sp_resources_register(struct mlxsw_core *mlxsw_core)
 					single_size,
 					MLXSW_SP_RESOURCE_KVD_HASH_SINGLE,
 					MLXSW_SP_RESOURCE_KVD,
-					&hash_single_size_params,
-					NULL);
+					&hash_single_size_params);
 	if (err)
 		return err;
 
@@ -3934,8 +3917,7 @@ static int mlxsw_sp_kvd_sizes_get(struct mlxsw_core *mlxsw_core,
 	int err;
 
 	if (!MLXSW_CORE_RES_VALID(mlxsw_core, KVD_SINGLE_MIN_SIZE) ||
-	    !MLXSW_CORE_RES_VALID(mlxsw_core, KVD_DOUBLE_MIN_SIZE) ||
-	    !profile->used_kvd_split_data)
+	    !MLXSW_CORE_RES_VALID(mlxsw_core, KVD_DOUBLE_MIN_SIZE))
 		return -EIO;
 
 	/* The hash part is what left of the kvd without the
@@ -3961,7 +3943,7 @@ static int mlxsw_sp_kvd_sizes_get(struct mlxsw_core *mlxsw_core,
 		double_size /= profile->kvd_hash_double_parts +
 			       profile->kvd_hash_single_parts;
 		*p_double_size = rounddown(double_size,
-					   profile->kvd_hash_granularity);
+					   MLXSW_SP_KVD_GRANULARITY);
 	}
 
 	err = devlink_resource_size_get(devlink,
@@ -4003,6 +3985,7 @@ static struct mlxsw_driver mlxsw_sp_driver = {
 	.kvd_sizes_get			= mlxsw_sp_kvd_sizes_get,
 	.txhdr_len			= MLXSW_TXHDR_LEN,
 	.profile			= &mlxsw_sp_config_profile,
+	.res_query_enabled		= true,
 };
 
 bool mlxsw_sp_port_dev_check(const struct net_device *dev)

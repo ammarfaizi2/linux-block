@@ -467,8 +467,7 @@ static void nfnl_overquota_report(struct net *net, struct nf_acct *nfacct)
 			  GFP_ATOMIC);
 }
 
-int nfnl_acct_overquota(struct net *net, const struct sk_buff *skb,
-			struct nf_acct *nfacct)
+int nfnl_acct_overquota(struct net *net, struct nf_acct *nfacct)
 {
 	u64 now;
 	u64 *quota;
@@ -515,7 +514,6 @@ static void __net_exit nfnl_acct_net_exit(struct net *net)
 static struct pernet_operations nfnl_acct_ops = {
         .init   = nfnl_acct_net_init,
         .exit   = nfnl_acct_net_exit,
-	.async	= true,
 };
 
 static int __init nfnl_acct_init(void)

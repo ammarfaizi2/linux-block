@@ -121,7 +121,7 @@ static int ping_v6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	ipc6.tclass = np->tclass;
 	fl6.flowlabel = ip6_make_flowinfo(ipc6.tclass, fl6.flowlabel);
 
-	dst = ip6_sk_dst_lookup_flow(sk, &fl6,  daddr);
+	dst = ip6_sk_dst_lookup_flow(sk, &fl6, daddr, false);
 	if (IS_ERR(dst))
 		return PTR_ERR(dst);
 	rt = (struct rt6_info *) dst;
@@ -240,7 +240,6 @@ static void __net_init ping_v6_proc_exit_net(struct net *net)
 static struct pernet_operations ping_v6_net_ops = {
 	.init = ping_v6_proc_init_net,
 	.exit = ping_v6_proc_exit_net,
-	.async = true,
 };
 #endif
 

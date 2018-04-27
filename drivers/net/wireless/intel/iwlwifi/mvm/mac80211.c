@@ -421,6 +421,7 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 	ieee80211_hw_set(hw, SUPPORTS_CLONED_SKBS);
 	ieee80211_hw_set(hw, SUPPORTS_AMSDU_IN_AMPDU);
 	ieee80211_hw_set(hw, NEEDS_UNIQUE_STA_ADDR);
+	ieee80211_hw_set(hw, DEAUTH_NEED_MGD_TX_PREP);
 
 	if (iwl_mvm_has_tlc_offload(mvm)) {
 		ieee80211_hw_set(hw, TX_AMPDU_SETUP_IN_HW);
@@ -659,6 +660,17 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 				      NL80211_EXT_FEATURE_BSS_PARENT_TSF);
 		wiphy_ext_feature_set(hw->wiphy,
 				      NL80211_EXT_FEATURE_SET_SCAN_DWELL);
+	}
+
+	if (iwl_mvm_is_oce_supported(mvm)) {
+		wiphy_ext_feature_set(hw->wiphy,
+			NL80211_EXT_FEATURE_ACCEPT_BCAST_PROBE_RESP);
+		wiphy_ext_feature_set(hw->wiphy,
+			NL80211_EXT_FEATURE_FILS_MAX_CHANNEL_TIME);
+		wiphy_ext_feature_set(hw->wiphy,
+			NL80211_EXT_FEATURE_OCE_PROBE_REQ_DEFERRAL_SUPPRESSION);
+		wiphy_ext_feature_set(hw->wiphy,
+			NL80211_EXT_FEATURE_OCE_PROBE_REQ_HIGH_TX_RATE);
 	}
 
 	mvm->rts_threshold = IEEE80211_MAX_RTS_THRESHOLD;
@@ -940,6 +952,16 @@ static int iwl_mvm_mac_ampdu_action(struct ieee80211_hw *hw,
 
 	switch (action) {
 	case IEEE80211_AMPDU_RX_START:
+		if (iwl_mvm_vif_from_mac80211(vif)->ap_sta_id ==
+				iwl_mvm_sta_from_mac80211(sta)->sta_id) {
+			struct iwl_mvm_vif *mvmvif;
+			u16 macid = iwl_mvm_vif_from_mac80211(vif)->id;
+			struct iwl_mvm_tcm_mac *mdata = &mvm->tcm.data[macid];
+
+			mdata->opened_rx_ba_sessions = true;
+			mvmvif = iwl_mvm_vif_from_mac80211(vif);
+			cancel_delayed_work(&mvmvif->uapsd_nonagg_detected_wk);
+		}
 		if (!iwl_enable_rx_ampdu(mvm->cfg)) {
 			ret = -EINVAL;
 			break;
@@ -1423,6 +1445,8 @@ static int iwl_mvm_mac_add_interface(struct ieee80211_hw *hw,
 		mvm->p2p_device_vif = vif;
 	}
 
+	iwl_mvm_tcm_add_vif(mvm, vif);
+
 	if (vif->type == NL80211_IFTYPE_MONITOR)
 		mvm->monitor_on = true;
 
@@ -1473,6 +1497,10 @@ static void iwl_mvm_mac_remove_interface(struct ieee80211_hw *hw,
 	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
 
 	iwl_mvm_prepare_mac_removal(mvm, vif);
+
+	if (!(vif->type == NL80211_IFTYPE_AP ||
+	      vif->type == NL80211_IFTYPE_ADHOC))
+		iwl_mvm_tcm_rm_vif(mvm, vif);
 
 	mutex_lock(&mvm->mutex);
 
@@ -2132,10 +2160,10 @@ static int iwl_mvm_start_ap_ibss(struct ieee80211_hw *hw,
 		 * Send the bcast station. At this stage the TBTT and DTIM time
 		 * events are added and applied to the scheduler
 		 */
-		iwl_mvm_send_add_bcast_sta(mvm, vif);
+		ret = iwl_mvm_send_add_bcast_sta(mvm, vif);
 		if (ret)
 			goto out_unbind;
-		iwl_mvm_add_mcast_sta(mvm, vif);
+		ret = iwl_mvm_add_mcast_sta(mvm, vif);
 		if (ret) {
 			iwl_mvm_send_rm_bcast_sta(mvm, vif);
 			goto out_unbind;
@@ -2523,6 +2551,16 @@ static void iwl_mvm_sta_pre_rcu_remove(struct ieee80211_hw *hw,
 static void iwl_mvm_check_uapsd(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 				const u8 *bssid)
 {
+	int i;
+
+	if (!test_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status)) {
+		struct iwl_mvm_tcm_mac *mdata;
+
+		mdata = &mvm->tcm.data[iwl_mvm_vif_from_mac80211(vif)->id];
+		ewma_rate_init(&mdata->uapsd_nonagg_detect.rate);
+		mdata->opened_rx_ba_sessions = false;
+	}
+
 	if (!(mvm->fw->ucode_capa.flags & IWL_UCODE_TLV_FLAGS_UAPSD_SUPPORT))
 		return;
 
@@ -2535,6 +2573,13 @@ static void iwl_mvm_check_uapsd(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 	    (iwlwifi_mod_params.uapsd_disable & IWL_DISABLE_UAPSD_BSS)) {
 		vif->driver_flags &= ~IEEE80211_VIF_SUPPORTS_UAPSD;
 		return;
+	}
+
+	for (i = 0; i < IWL_MVM_UAPSD_NOAGG_LIST_LEN; i++) {
+		if (ether_addr_equal(mvm->uapsd_noagg_bssids[i].addr, bssid)) {
+			vif->driver_flags &= ~IEEE80211_VIF_SUPPORTS_UAPSD;
+			return;
+		}
 	}
 
 	vif->driver_flags |= IEEE80211_VIF_SUPPORTS_UAPSD;
@@ -2803,9 +2848,6 @@ static void iwl_mvm_mac_mgd_prepare_tx(struct ieee80211_hw *hw,
 	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
 	u32 duration = IWL_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS;
 	u32 min_duration = IWL_MVM_TE_SESSION_PROTECTION_MIN_TIME_MS;
-
-	if (WARN_ON_ONCE(vif->bss_conf.assoc))
-		return;
 
 	/*
 	 * iwl_mvm_protect_session() reads directly from the device
@@ -3494,6 +3536,7 @@ static int __iwl_mvm_assign_vif_chanctx(struct iwl_mvm *mvm,
 		ret = 0;
 		goto out;
 	case NL80211_IFTYPE_STATION:
+		mvmvif->csa_bcn_pending = false;
 		break;
 	case NL80211_IFTYPE_MONITOR:
 		/* always disable PS when a monitor interface is active */
@@ -3537,7 +3580,7 @@ static int __iwl_mvm_assign_vif_chanctx(struct iwl_mvm *mvm,
 	}
 
 	if (switching_chanctx && vif->type == NL80211_IFTYPE_STATION) {
-		u32 duration = 2 * vif->bss_conf.beacon_int;
+		u32 duration = 3 * vif->bss_conf.beacon_int;
 
 		/* iwl_mvm_protect_session() reads directly from the
 		 * device (the system time), so make sure it is
@@ -3550,6 +3593,7 @@ static int __iwl_mvm_assign_vif_chanctx(struct iwl_mvm *mvm,
 		/* Protect the session to make sure we hear the first
 		 * beacon on the new channel.
 		 */
+		mvmvif->csa_bcn_pending = true;
 		iwl_mvm_protect_session(mvm, vif, duration, duration,
 					vif->bss_conf.beacon_int / 2,
 					true);
@@ -3988,6 +4032,7 @@ static int iwl_mvm_post_channel_switch(struct ieee80211_hw *hw,
 	if (vif->type == NL80211_IFTYPE_STATION) {
 		struct iwl_mvm_sta *mvmsta;
 
+		mvmvif->csa_bcn_pending = false;
 		mvmsta = iwl_mvm_sta_from_staid_protected(mvm,
 							  mvmvif->ap_sta_id);
 

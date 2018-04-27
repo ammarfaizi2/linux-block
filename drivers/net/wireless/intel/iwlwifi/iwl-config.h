@@ -151,6 +151,8 @@ enum iwl_nvm_type {
 #define	ANT_AC		(ANT_A | ANT_C)
 #define ANT_BC		(ANT_B | ANT_C)
 #define ANT_ABC		(ANT_A | ANT_B | ANT_C)
+#define MAX_ANT_NUM 3
+
 
 static inline u8 num_of_ant(u8 mask)
 {
@@ -333,8 +335,6 @@ struct iwl_pwr_tx_backoff {
  * @gen2: 22000 and on transport operation
  * @cdb: CDB support
  * @nvm_type: see &enum iwl_nvm_type
- * @tx_cmd_queue_size: size of the cmd queue. If zero, use the same value as
- *	the regular queues
  *
  * We enable the driver to be backward compatible wrt. hardware features.
  * API differences in uCode shouldn't be handled here but through TLVs
@@ -386,7 +386,6 @@ struct iwl_cfg {
 	    gen2:1,
 	    cdb:1,
 	    dbgc_supported:1;
-	u16 tx_cmd_queue_size;
 	u8 valid_tx_ant;
 	u8 valid_rx_ant;
 	u8 non_shared_ant;
@@ -398,6 +397,7 @@ struct iwl_cfg {
 	u8 ucode_api_max;
 	u8 ucode_api_min;
 	u32 min_umac_error_event_table;
+	u32 extra_phy_cfg_flags;
 };
 
 /*
@@ -477,6 +477,10 @@ extern const struct iwl_cfg iwl9460_2ac_cfg_soc;
 extern const struct iwl_cfg iwl9461_2ac_cfg_soc;
 extern const struct iwl_cfg iwl9462_2ac_cfg_soc;
 extern const struct iwl_cfg iwl9560_2ac_cfg_soc;
+extern const struct iwl_cfg iwl9460_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9461_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9462_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9560_2ac_cfg_shared_clk;
 extern const struct iwl_cfg iwl22000_2ac_cfg_hr;
 extern const struct iwl_cfg iwl22000_2ac_cfg_hr_cdb;
 extern const struct iwl_cfg iwl22000_2ac_cfg_jf;

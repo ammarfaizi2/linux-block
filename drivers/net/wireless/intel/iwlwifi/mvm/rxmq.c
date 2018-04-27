@@ -112,7 +112,7 @@ static inline int iwl_mvm_check_pn(struct iwl_mvm *mvm, struct sk_buff *skb,
 		return -1;
 
 	if (ieee80211_is_data_qos(hdr->frame_control))
-		tid = *ieee80211_get_qos_ctl(hdr) & IEEE80211_QOS_CTL_TID_MASK;
+		tid = ieee80211_get_tid(hdr);
 	else
 		tid = 0;
 
@@ -347,8 +347,7 @@ static bool iwl_mvm_is_dup(struct ieee80211_sta *sta, int queue,
 
 	if (ieee80211_is_data_qos(hdr->frame_control))
 		/* frame has qos control */
-		tid = *ieee80211_get_qos_ctl(hdr) &
-			IEEE80211_QOS_CTL_TID_MASK;
+		tid = ieee80211_get_tid(hdr);
 	else
 		tid = IWL_MAX_TID_COUNT;
 
@@ -628,7 +627,7 @@ static bool iwl_mvm_reorder(struct iwl_mvm *mvm,
 	bool amsdu = desc->mac_flags2 & IWL_RX_MPDU_MFLG2_AMSDU;
 	bool last_subframe =
 		desc->amsdu_info & IWL_RX_MPDU_AMSDU_LAST_SUBFRAME;
-	u8 tid = *ieee80211_get_qos_ctl(hdr) & IEEE80211_QOS_CTL_TID_MASK;
+	u8 tid = ieee80211_get_tid(hdr);
 	u8 sub_frame_idx = desc->amsdu_info &
 			   IWL_RX_MPDU_AMSDU_SUBFRAME_IDX_MASK;
 	struct iwl_mvm_reorder_buf_entry *entries;
@@ -831,6 +830,16 @@ out:
 	rcu_read_unlock();
 }
 
+static void iwl_mvm_flip_address(u8 *addr)
+{
+	int i;
+	u8 mac_addr[ETH_ALEN];
+
+	for (i = 0; i < ETH_ALEN; i++)
+		mac_addr[i] = addr[ETH_ALEN - i - 1];
+	ether_addr_copy(addr, mac_addr);
+}
+
 void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 			struct iwl_rx_cmd_buffer *rxb, int queue)
 {
@@ -931,6 +940,12 @@ void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 			       IWL_RX_MPDU_REORDER_BAID_MASK) >>
 			       IWL_RX_MPDU_REORDER_BAID_SHIFT);
 
+		if (!mvm->tcm.paused && len >= sizeof(*hdr) &&
+		    !is_multicast_ether_addr(hdr->addr1) &&
+		    ieee80211_is_data(hdr->frame_control) &&
+		    time_after(jiffies, mvm->tcm.ts + MVM_TCM_PERIOD))
+			schedule_delayed_work(&mvm->tcm.work, 0);
+
 		/*
 		 * We have tx blocked stations (with CS bit). If we heard
 		 * frames from a blocked station on a new channel we can
@@ -985,21 +1000,16 @@ void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 		 */
 		if ((desc->mac_flags2 & IWL_RX_MPDU_MFLG2_AMSDU) &&
 		    !WARN_ON(!ieee80211_is_data_qos(hdr->frame_control))) {
-			int i;
 			u8 *qc = ieee80211_get_qos_ctl(hdr);
-			u8 mac_addr[ETH_ALEN];
 
 			*qc &= ~IEEE80211_QOS_CTL_A_MSDU_PRESENT;
 
-			for (i = 0; i < ETH_ALEN; i++)
-				mac_addr[i] = hdr->addr3[ETH_ALEN - i - 1];
-			ether_addr_copy(hdr->addr3, mac_addr);
+			if (mvm->trans->cfg->device_family ==
+			    IWL_DEVICE_FAMILY_9000) {
+				iwl_mvm_flip_address(hdr->addr3);
 
-			if (ieee80211_has_a4(hdr->frame_control)) {
-				for (i = 0; i < ETH_ALEN; i++)
-					mac_addr[i] =
-						hdr->addr4[ETH_ALEN - i - 1];
-				ether_addr_copy(hdr->addr4, mac_addr);
+				if (ieee80211_has_a4(hdr->frame_control))
+					iwl_mvm_flip_address(hdr->addr4);
 			}
 		}
 		if (baid != IWL_RX_REORDER_DATA_INVALID_BAID) {

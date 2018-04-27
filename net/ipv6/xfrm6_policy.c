@@ -107,8 +107,6 @@ static int xfrm6_fill_dst(struct xfrm_dst *xdst, struct net_device *dev,
 	 * it was magically lost, so this code needs audit */
 	xdst->u.rt6.rt6i_flags = rt->rt6i_flags & (RTF_ANYCAST |
 						   RTF_LOCAL);
-	xdst->u.rt6.rt6i_metric = rt->rt6i_metric;
-	xdst->u.rt6.rt6i_node = rt->rt6i_node;
 	xdst->route_cookie = rt6_get_cookie(rt);
 	xdst->u.rt6.rt6i_gateway = rt->rt6i_gateway;
 	xdst->u.rt6.rt6i_dst = rt->rt6i_dst;
@@ -400,7 +398,6 @@ static void __net_exit xfrm6_net_exit(struct net *net)
 static struct pernet_operations xfrm6_net_ops = {
 	.init	= xfrm6_net_init,
 	.exit	= xfrm6_net_exit,
-	.async	= true,
 };
 
 int __init xfrm6_init(void)

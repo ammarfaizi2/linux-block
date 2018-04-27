@@ -1027,7 +1027,7 @@ bool dev_valid_name(const char *name)
 {
 	if (*name == '\0')
 		return false;
-	if (strlen(name) >= IFNAMSIZ)
+	if (strnlen(name, IFNAMSIZ) == IFNAMSIZ)
 		return false;
 	if (!strcmp(name, ".") || !strcmp(name, ".."))
 		return false;
@@ -1285,6 +1285,7 @@ int dev_set_alias(struct net_device *dev, const char *alias, size_t len)
 
 	return len;
 }
+EXPORT_SYMBOL(dev_set_alias);
 
 /**
  *	dev_get_alias - get ifalias of a device
@@ -1571,6 +1572,27 @@ static void dev_disable_gro_hw(struct net_device *dev)
 		netdev_WARN(dev, "failed to disable GRO_HW!\n");
 }
 
+const char *netdev_cmd_to_name(enum netdev_cmd cmd)
+{
+#define N(val) 						\
+	case NETDEV_##val:				\
+		return "NETDEV_" __stringify(val);
+	switch (cmd) {
+	N(UP) N(DOWN) N(REBOOT) N(CHANGE) N(REGISTER) N(UNREGISTER)
+	N(CHANGEMTU) N(CHANGEADDR) N(GOING_DOWN) N(CHANGENAME) N(FEAT_CHANGE)
+	N(BONDING_FAILOVER) N(PRE_UP) N(PRE_TYPE_CHANGE) N(POST_TYPE_CHANGE)
+	N(POST_INIT) N(RELEASE) N(NOTIFY_PEERS) N(JOIN) N(CHANGEUPPER)
+	N(RESEND_IGMP) N(PRECHANGEMTU) N(CHANGEINFODATA) N(BONDING_INFO)
+	N(PRECHANGEUPPER) N(CHANGELOWERSTATE) N(UDP_TUNNEL_PUSH_INFO)
+	N(UDP_TUNNEL_DROP_INFO) N(CHANGE_TX_QUEUE_LEN)
+	N(CVLAN_FILTER_PUSH_INFO) N(CVLAN_FILTER_DROP_INFO)
+	N(SVLAN_FILTER_PUSH_INFO) N(SVLAN_FILTER_DROP_INFO)
+	};
+#undef N
+	return "UNKNOWN_NETDEV_EVENT";
+}
+EXPORT_SYMBOL_GPL(netdev_cmd_to_name);
+
 static int call_netdevice_notifier(struct notifier_block *nb, unsigned long val,
 				   struct net_device *dev)
 {
@@ -1604,6 +1626,8 @@ int register_netdevice_notifier(struct notifier_block *nb)
 	struct net *net;
 	int err;
 
+	/* Close race with setup_net() and cleanup_net() */
+	down_write(&pernet_ops_rwsem);
 	rtnl_lock();
 	err = raw_notifier_chain_register(&netdev_chain, nb);
 	if (err)
@@ -1626,6 +1650,7 @@ int register_netdevice_notifier(struct notifier_block *nb)
 
 unlock:
 	rtnl_unlock();
+	up_write(&pernet_ops_rwsem);
 	return err;
 
 rollback:
@@ -1670,6 +1695,8 @@ int unregister_netdevice_notifier(struct notifier_block *nb)
 	struct net *net;
 	int err;
 
+	/* Close race with setup_net() and cleanup_net() */
+	down_write(&pernet_ops_rwsem);
 	rtnl_lock();
 	err = raw_notifier_chain_unregister(&netdev_chain, nb);
 	if (err)
@@ -1687,6 +1714,7 @@ int unregister_netdevice_notifier(struct notifier_block *nb)
 	}
 unlock:
 	rtnl_unlock();
+	up_write(&pernet_ops_rwsem);
 	return err;
 }
 EXPORT_SYMBOL(unregister_netdevice_notifier);
@@ -2735,7 +2763,7 @@ __be16 skb_network_protocol(struct sk_buff *skb, int *depth)
 		if (unlikely(!pskb_may_pull(skb, sizeof(struct ethhdr))))
 			return 0;
 
-		eth = (struct ethhdr *)skb_mac_header(skb);
+		eth = (struct ethhdr *)skb->data;
 		type = eth->h_proto;
 	}
 
@@ -2942,7 +2970,7 @@ netdev_features_t passthru_features_check(struct sk_buff *skb,
 }
 EXPORT_SYMBOL(passthru_features_check);
 
-static netdev_features_t dflt_features_check(const struct sk_buff *skb,
+static netdev_features_t dflt_features_check(struct sk_buff *skb,
 					     struct net_device *dev,
 					     netdev_features_t features)
 {
@@ -3969,9 +3997,9 @@ static u32 netif_receive_generic_xdp(struct sk_buff *skb,
 				     struct bpf_prog *xdp_prog)
 {
 	struct netdev_rx_queue *rxqueue;
+	void *orig_data, *orig_data_end;
 	u32 metalen, act = XDP_DROP;
 	struct xdp_buff xdp;
-	void *orig_data;
 	int hlen, off;
 	u32 mac_len;
 
@@ -4010,6 +4038,7 @@ static u32 netif_receive_generic_xdp(struct sk_buff *skb,
 	xdp.data_meta = xdp.data;
 	xdp.data_end = xdp.data + hlen;
 	xdp.data_hard_start = skb->data - skb_headroom(skb);
+	orig_data_end = xdp.data_end;
 	orig_data = xdp.data;
 
 	rxqueue = netif_get_rxqueue(skb);
@@ -4023,6 +4052,13 @@ static u32 netif_receive_generic_xdp(struct sk_buff *skb,
 	else if (off < 0)
 		__skb_push(skb, -off);
 	skb->mac_header += off;
+
+	/* check if bpf_xdp_adjust_tail was used. it can only "shrink"
+	 * pckt.
+	 */
+	off = orig_data_end - xdp.data_end;
+	if (off != 0)
+		skb_set_tail_pointer(skb, xdp.data_end - xdp.data);
 
 	switch (act) {
 	case XDP_REDIRECT:
@@ -7641,6 +7677,24 @@ sync_lower:
 			}
 		}
 
+		if (diff & NETIF_F_HW_VLAN_CTAG_FILTER) {
+			if (features & NETIF_F_HW_VLAN_CTAG_FILTER) {
+				dev->features = features;
+				err |= vlan_get_rx_ctag_filter_info(dev);
+			} else {
+				vlan_drop_rx_ctag_filter_info(dev);
+			}
+		}
+
+		if (diff & NETIF_F_HW_VLAN_STAG_FILTER) {
+			if (features & NETIF_F_HW_VLAN_STAG_FILTER) {
+				dev->features = features;
+				err |= vlan_get_rx_stag_filter_info(dev);
+			} else {
+				vlan_drop_rx_stag_filter_info(dev);
+			}
+		}
+
 		dev->features = features;
 	}
 
@@ -8077,7 +8131,6 @@ static void netdev_wait_allrefs(struct net_device *dev)
 			rcu_barrier();
 			rtnl_lock();
 
-			call_netdevice_notifiers(NETDEV_UNREGISTER_FINAL, dev);
 			if (test_bit(__LINK_STATE_LINKWATCH_PENDING,
 				     &dev->state)) {
 				/* We must not have linkwatch events
@@ -8148,10 +8201,6 @@ void netdev_run_todo(void)
 		struct net_device *dev
 			= list_first_entry(&list, struct net_device, todo_list);
 		list_del(&dev->todo_list);
-
-		rtnl_lock();
-		call_netdevice_notifiers(NETDEV_UNREGISTER_FINAL, dev);
-		__rtnl_unlock();
 
 		if (unlikely(dev->reg_state != NETREG_UNREGISTERING)) {
 			pr_err("network todo '%s' but state %d\n",
@@ -8594,7 +8643,6 @@ int dev_change_net_namespace(struct net_device *dev, struct net *net, const char
 	 */
 	call_netdevice_notifiers(NETDEV_UNREGISTER, dev);
 	rcu_barrier();
-	call_netdevice_notifiers(NETDEV_UNREGISTER_FINAL, dev);
 
 	new_nsid = peernet2id_alloc(dev_net(dev), net);
 	/* If there is an ifindex conflict assign a new one */
@@ -8870,7 +8918,6 @@ static void __net_exit netdev_exit(struct net *net)
 static struct pernet_operations __net_initdata netdev_net_ops = {
 	.init = netdev_init,
 	.exit = netdev_exit,
-	.async = true,
 };
 
 static void __net_exit default_device_exit(struct net *net)
@@ -8971,7 +9018,6 @@ static void __net_exit default_device_exit_batch(struct list_head *net_list)
 static struct pernet_operations __net_initdata default_device_ops = {
 	.exit = default_device_exit,
 	.exit_batch = default_device_exit_batch,
-	.async = true,
 };
 
 /*

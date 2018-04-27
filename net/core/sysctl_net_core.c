@@ -15,7 +15,6 @@
 #include <linux/vmalloc.h>
 #include <linux/init.h>
 #include <linux/slab.h>
-#include <linux/kmemleak.h>
 
 #include <net/ip.h>
 #include <net/sock.h>
@@ -584,7 +583,6 @@ static __net_exit void sysctl_core_net_exit(struct net *net)
 static __net_initdata struct pernet_operations sysctl_core_ops = {
 	.init = sysctl_core_net_init,
 	.exit = sysctl_core_net_exit,
-	.async = true,
 };
 
 static __init int sysctl_core_init(void)

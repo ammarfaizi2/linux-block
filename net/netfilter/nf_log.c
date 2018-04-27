@@ -549,7 +549,7 @@ static int __net_init nf_log_net_init(struct net *net)
 	int ret = -ENOMEM;
 
 #ifdef CONFIG_PROC_FS
-	if (!proc_create("nf_log", S_IRUGO,
+	if (!proc_create("nf_log", 0444,
 			 net->nf.proc_netfilter, &nflog_file_ops))
 		return ret;
 #endif
@@ -577,7 +577,6 @@ static void __net_exit nf_log_net_exit(struct net *net)
 static struct pernet_operations nf_log_net_ops = {
 	.init = nf_log_net_init,
 	.exit = nf_log_net_exit,
-	.async = true,
 };
 
 int __init netfilter_log_init(void)

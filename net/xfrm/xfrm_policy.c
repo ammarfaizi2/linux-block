@@ -51,7 +51,7 @@ static DEFINE_SPINLOCK(xfrm_policy_afinfo_lock);
 static struct xfrm_policy_afinfo const __rcu *xfrm_policy_afinfo[AF_INET6 + 1]
 						__read_mostly;
 
-static struct kmem_cache *xfrm_dst_cache __read_mostly;
+static struct kmem_cache *xfrm_dst_cache __ro_after_init;
 static __read_mostly seqcount_t xfrm_policy_hash_generation;
 
 static void xfrm_init_pmtu(struct xfrm_dst **bundle, int nr);
@@ -1743,7 +1743,7 @@ static void xfrm_pcpu_work_fn(struct work_struct *work)
 void xfrm_policy_cache_flush(void)
 {
 	struct xfrm_dst *old;
-	bool found = 0;
+	bool found = false;
 	int cpu;
 
 	might_sleep();
@@ -2895,8 +2895,6 @@ static int __net_init xfrm_policy_init(struct net *net)
 	INIT_LIST_HEAD(&net->xfrm.policy_all);
 	INIT_WORK(&net->xfrm.policy_hash_work, xfrm_hash_resize);
 	INIT_WORK(&net->xfrm.policy_hthresh.work, xfrm_hash_rebuild);
-	if (net_eq(net, &init_net))
-		xfrm_dev_init();
 	return 0;
 
 out_bydst:
@@ -2985,7 +2983,6 @@ static void __net_exit xfrm_net_exit(struct net *net)
 static struct pernet_operations __net_initdata xfrm_net_ops = {
 	.init = xfrm_net_init,
 	.exit = xfrm_net_exit,
-	.async = true,
 };
 
 void __init xfrm_init(void)
@@ -3000,6 +2997,7 @@ void __init xfrm_init(void)
 		INIT_WORK(&xfrm_pcpu_work[i], xfrm_pcpu_work_fn);
 
 	register_pernet_subsys(&xfrm_net_ops);
+	xfrm_dev_init();
 	seqcount_init(&xfrm_policy_hash_generation);
 	xfrm_input_init();
 }

@@ -340,7 +340,10 @@ static int efx_poll(struct napi_struct *napi, int budget)
 			efx_update_irq_mod(efx, channel);
 		}
 
-		efx_filter_rfs_expire(channel);
+#ifdef CONFIG_RFS_ACCEL
+		/* Perhaps expire some ARFS filters */
+		schedule_work(&channel->filter_work);
+#endif
 
 		/* There is no race here; although napi_disable() will
 		 * only wait for napi_complete(), this isn't a problem
@@ -470,6 +473,10 @@ efx_alloc_channel(struct efx_nic *efx, int i, struct efx_channel *old_channel)
 		tx_queue->channel = channel;
 	}
 
+#ifdef CONFIG_RFS_ACCEL
+	INIT_WORK(&channel->filter_work, efx_filter_rfs_expire);
+#endif
+
 	rx_queue = &channel->rx_queue;
 	rx_queue->efx = efx;
 	timer_setup(&rx_queue->slow_fill, efx_rx_slow_fill, 0);
@@ -512,6 +519,9 @@ efx_copy_channel(const struct efx_channel *old_channel)
 	rx_queue->buffer = NULL;
 	memset(&rx_queue->rxd, 0, sizeof(rx_queue->rxd));
 	timer_setup(&rx_queue->slow_fill, efx_rx_slow_fill, 0);
+#ifdef CONFIG_RFS_ACCEL
+	INIT_WORK(&channel->filter_work, efx_filter_rfs_expire);
+#endif
 
 	return channel;
 }
@@ -1541,6 +1551,38 @@ static int efx_probe_interrupts(struct efx_nic *efx)
 	return 0;
 }
 
+#if defined(CONFIG_SMP)
+static void efx_set_interrupt_affinity(struct efx_nic *efx)
+{
+	struct efx_channel *channel;
+	unsigned int cpu;
+
+	efx_for_each_channel(channel, efx) {
+		cpu = cpumask_local_spread(channel->channel,
+					   pcibus_to_node(efx->pci_dev->bus));
+		irq_set_affinity_hint(channel->irq, cpumask_of(cpu));
+	}
+}
+
+static void efx_clear_interrupt_affinity(struct efx_nic *efx)
+{
+	struct efx_channel *channel;
+
+	efx_for_each_channel(channel, efx)
+		irq_set_affinity_hint(channel->irq, NULL);
+}
+#else
+static void
+efx_set_interrupt_affinity(struct efx_nic *efx __attribute__ ((unused)))
+{
+}
+
+static void
+efx_clear_interrupt_affinity(struct efx_nic *efx __attribute__ ((unused)))
+{
+}
+#endif /* CONFIG_SMP */
+
 static int efx_soft_enable_interrupts(struct efx_nic *efx)
 {
 	struct efx_channel *channel, *end_channel;
@@ -1773,7 +1815,6 @@ static int efx_probe_filters(struct efx_nic *efx)
 {
 	int rc;
 
-	spin_lock_init(&efx->filter_lock);
 	init_rwsem(&efx->filter_sem);
 	mutex_lock(&efx->mac_lock);
 	down_write(&efx->filter_sem);
@@ -2648,6 +2689,7 @@ void efx_reset_down(struct efx_nic *efx, enum reset_type method)
 	efx_disable_interrupts(efx);
 
 	mutex_lock(&efx->mac_lock);
+	mutex_lock(&efx->rss_lock);
 	if (efx->port_initialized && method != RESET_TYPE_INVISIBLE &&
 	    method != RESET_TYPE_DATAPATH)
 		efx->phy_op->fini(efx);
@@ -2703,6 +2745,7 @@ int efx_reset_up(struct efx_nic *efx, enum reset_type method, bool ok)
 
 	if (efx->type->rx_restore_rss_contexts)
 		efx->type->rx_restore_rss_contexts(efx);
+	mutex_unlock(&efx->rss_lock);
 	down_read(&efx->filter_sem);
 	efx_restore_filters(efx);
 	up_read(&efx->filter_sem);
@@ -2721,6 +2764,7 @@ int efx_reset_up(struct efx_nic *efx, enum reset_type method, bool ok)
 fail:
 	efx->port_initialized = false;
 
+	mutex_unlock(&efx->rss_lock);
 	mutex_unlock(&efx->mac_lock);
 
 	return rc;
@@ -3007,11 +3051,15 @@ static int efx_init_struct(struct efx_nic *efx,
 	efx->rx_packet_ts_offset =
 		efx->type->rx_ts_offset - efx->type->rx_prefix_size;
 	INIT_LIST_HEAD(&efx->rss_context.list);
+	mutex_init(&efx->rss_lock);
 	spin_lock_init(&efx->stats_lock);
 	efx->vi_stride = EFX_DEFAULT_VI_STRIDE;
 	efx->num_mac_stats = MC_CMD_MAC_NSTATS;
 	BUILD_BUG_ON(MC_CMD_MAC_NSTATS - 1 != MC_CMD_MAC_GENERATION_END);
 	mutex_init(&efx->mac_lock);
+#ifdef CONFIG_RFS_ACCEL
+	mutex_init(&efx->rps_mutex);
+#endif
 	efx->phy_op = &efx_dummy_phy_operations;
 	efx->mdio.dev = net_dev;
 	INIT_WORK(&efx->mac_work, efx_mac_work);
@@ -3079,10 +3127,13 @@ void efx_update_sw_stats(struct efx_nic *efx, u64 *stats)
 /* RSS contexts.  We're using linked lists and crappy O(n) algorithms, because
  * (a) this is an infrequent control-plane operation and (b) n is small (max 64)
  */
-struct efx_rss_context *efx_alloc_rss_context_entry(struct list_head *head)
+struct efx_rss_context *efx_alloc_rss_context_entry(struct efx_nic *efx)
 {
+	struct list_head *head = &efx->rss_context.list;
 	struct efx_rss_context *ctx, *new;
 	u32 id = 1; /* Don't use zero, that refers to the master RSS context */
+
+	WARN_ON(!mutex_is_locked(&efx->rss_lock));
 
 	/* Search for first gap in the numbering */
 	list_for_each_entry(ctx, head, list) {
@@ -3109,9 +3160,12 @@ struct efx_rss_context *efx_alloc_rss_context_entry(struct list_head *head)
 	return new;
 }
 
-struct efx_rss_context *efx_find_rss_context_entry(u32 id, struct list_head *head)
+struct efx_rss_context *efx_find_rss_context_entry(struct efx_nic *efx, u32 id)
 {
+	struct list_head *head = &efx->rss_context.list;
 	struct efx_rss_context *ctx;
+
+	WARN_ON(!mutex_is_locked(&efx->rss_lock));
 
 	list_for_each_entry(ctx, head, list)
 		if (ctx->user_id == id)
@@ -3143,6 +3197,7 @@ static void efx_pci_remove_main(struct efx_nic *efx)
 	cancel_work_sync(&efx->reset_work);
 
 	efx_disable_interrupts(efx);
+	efx_clear_interrupt_affinity(efx);
 	efx_nic_fini_interrupt(efx);
 	efx_fini_port(efx);
 	efx->type->fini(efx);
@@ -3292,6 +3347,8 @@ static int efx_pci_probe_main(struct efx_nic *efx)
 	rc = efx_nic_init_interrupt(efx);
 	if (rc)
 		goto fail5;
+
+	efx_set_interrupt_affinity(efx);
 	rc = efx_enable_interrupts(efx);
 	if (rc)
 		goto fail6;
@@ -3299,6 +3356,7 @@ static int efx_pci_probe_main(struct efx_nic *efx)
 	return 0;
 
  fail6:
+	efx_clear_interrupt_affinity(efx);
 	efx_nic_fini_interrupt(efx);
  fail5:
 	efx_fini_port(efx);

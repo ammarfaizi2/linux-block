@@ -133,14 +133,11 @@ min_adv_mss - INTEGER
 
 IP Fragmentation:
 
-ipfrag_high_thresh - INTEGER
-	Maximum memory used to reassemble IP fragments. When
-	ipfrag_high_thresh bytes of memory is allocated for this purpose,
-	the fragment handler will toss packets until ipfrag_low_thresh
-	is reached. This also serves as a maximum limit to namespaces
-	different from the initial one.
+ipfrag_high_thresh - LONG INTEGER
+	Maximum memory used to reassemble IP fragments.
 
-ipfrag_low_thresh - INTEGER
+ipfrag_low_thresh - LONG INTEGER
+	(Obsolete since linux-4.17)
 	Maximum memory used to reassemble IP fragments before the kernel
 	begins to remove incomplete fragment queues to free up resources.
 	The kernel still accepts new fragments for defragmentation.
@@ -1393,26 +1390,26 @@ mld_qrv - INTEGER
 	Default: 2 (as specified by RFC3810 9.1)
 	Minimum: 1 (as specified by RFC6636 4.5)
 
-max_dst_opts_cnt - INTEGER
+max_dst_opts_number - INTEGER
 	Maximum number of non-padding TLVs allowed in a Destination
 	options extension header. If this value is less than zero
 	then unknown options are disallowed and the number of known
 	TLVs allowed is the absolute value of this number.
 	Default: 8
 
-max_hbh_opts_cnt - INTEGER
+max_hbh_opts_number - INTEGER
 	Maximum number of non-padding TLVs allowed in a Hop-by-Hop
 	options extension header. If this value is less than zero
 	then unknown options are disallowed and the number of known
 	TLVs allowed is the absolute value of this number.
 	Default: 8
 
-max dst_opts_len - INTEGER
+max_dst_opts_length - INTEGER
 	Maximum length allowed for a Destination options extension
 	header.
 	Default: INT_MAX (unlimited)
 
-max hbh_opts_len - INTEGER
+max_hbh_length - INTEGER
 	Maximum length allowed for a Hop-by-Hop options extension
 	header.
 	Default: INT_MAX (unlimited)
@@ -1703,7 +1700,9 @@ disable_ipv6 - BOOLEAN
 	interface and start Duplicate Address Detection, if necessary.
 
 	When this value is changed from 0 to 1 (IPv6 is being disabled),
-	it will dynamically delete all address on the given interface.
+	it will dynamically delete all addresses and routes on the given
+	interface. From now on it will not possible to add addresses/routes
+	to the selected interface.
 
 accept_dad - INTEGER
 	Whether to accept DAD (Duplicate Address Detection).

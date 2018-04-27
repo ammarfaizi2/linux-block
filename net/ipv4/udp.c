@@ -1658,6 +1658,19 @@ csum_copy_err:
 	goto try_again;
 }
 
+int udp_pre_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
+{
+	/* This check is replicated from __ip4_datagram_connect() and
+	 * intended to prevent BPF program called below from accessing bytes
+	 * that are out of the bound specified by user in addr_len.
+	 */
+	if (addr_len < sizeof(struct sockaddr_in))
+		return -EINVAL;
+
+	return BPF_CGROUP_RUN_PROG_INET4_CONNECT_LOCK(sk, uaddr);
+}
+EXPORT_SYMBOL(udp_pre_connect);
+
 int __udp_disconnect(struct sock *sk, int flags)
 {
 	struct inet_sock *inet = inet_sk(sk);
@@ -2530,6 +2543,7 @@ struct proto udp_prot = {
 	.name			= "UDP",
 	.owner			= THIS_MODULE,
 	.close			= udp_lib_close,
+	.pre_connect		= udp_pre_connect,
 	.connect		= ip4_datagram_connect,
 	.disconnect		= udp_disconnect,
 	.ioctl			= udp_ioctl,
@@ -2673,7 +2687,7 @@ int udp_proc_register(struct net *net, struct udp_seq_afinfo *afinfo)
 	afinfo->seq_ops.next		= udp_seq_next;
 	afinfo->seq_ops.stop		= udp_seq_stop;
 
-	p = proc_create_data(afinfo->name, S_IRUGO, net->proc_net,
+	p = proc_create_data(afinfo->name, 0444, net->proc_net,
 			     afinfo->seq_fops, afinfo);
 	if (!p)
 		rc = -ENOMEM;
@@ -2756,7 +2770,6 @@ static void __net_exit udp4_proc_exit_net(struct net *net)
 static struct pernet_operations udp4_net_ops = {
 	.init = udp4_proc_init_net,
 	.exit = udp4_proc_exit_net,
-	.async = true,
 };
 
 int __init udp4_proc_init(void)
@@ -2843,7 +2856,6 @@ static int __net_init udp_sysctl_init(struct net *net)
 
 static struct pernet_operations __net_initdata udp_sysctl_ops = {
 	.init	= udp_sysctl_init,
-	.async	= true,
 };
 
 void __init udp_init(void)

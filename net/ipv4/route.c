@@ -108,7 +108,6 @@
 #include <net/rtnetlink.h>
 #ifdef CONFIG_SYSCTL
 #include <linux/sysctl.h>
-#include <linux/kmemleak.h>
 #endif
 #include <net/secure_seq.h>
 #include <net/ip_tunnels.h>
@@ -379,12 +378,12 @@ static int __net_init ip_rt_do_proc_init(struct net *net)
 {
 	struct proc_dir_entry *pde;
 
-	pde = proc_create("rt_cache", S_IRUGO, net->proc_net,
+	pde = proc_create("rt_cache", 0444, net->proc_net,
 			  &rt_cache_seq_fops);
 	if (!pde)
 		goto err1;
 
-	pde = proc_create("rt_cache", S_IRUGO,
+	pde = proc_create("rt_cache", 0444,
 			  net->proc_net_stat, &rt_cpu_seq_fops);
 	if (!pde)
 		goto err2;
@@ -418,7 +417,6 @@ static void __net_exit ip_rt_do_proc_exit(struct net *net)
 static struct pernet_operations ip_rt_proc_ops __net_initdata =  {
 	.init = ip_rt_do_proc_init,
 	.exit = ip_rt_do_proc_exit,
-	.async = true,
 };
 
 static int __init ip_rt_proc_init(void)
@@ -2298,12 +2296,13 @@ struct rtable *ip_route_output_key_hash(struct net *net, struct flowi4 *fl4,
 					const struct sk_buff *skb)
 {
 	__u8 tos = RT_FL_TOS(fl4);
-	struct fib_result res;
+	struct fib_result res = {
+		.type		= RTN_UNSPEC,
+		.fi		= NULL,
+		.table		= NULL,
+		.tclassid	= 0,
+	};
 	struct rtable *rth;
-
-	res.tclassid	= 0;
-	res.fi		= NULL;
-	res.table	= NULL;
 
 	fl4->flowi4_iif = LOOPBACK_IFINDEX;
 	fl4->flowi4_tos = tos & IPTOS_RT_MASK;
@@ -3017,7 +3016,6 @@ static __net_exit void sysctl_route_net_exit(struct net *net)
 static __net_initdata struct pernet_operations sysctl_route_ops = {
 	.init = sysctl_route_net_init,
 	.exit = sysctl_route_net_exit,
-	.async = true,
 };
 #endif
 
@@ -3031,7 +3029,6 @@ static __net_init int rt_genid_init(struct net *net)
 
 static __net_initdata struct pernet_operations rt_genid_ops = {
 	.init = rt_genid_init,
-	.async = true,
 };
 
 static int __net_init ipv4_inetpeer_init(struct net *net)
@@ -3057,7 +3054,6 @@ static void __net_exit ipv4_inetpeer_exit(struct net *net)
 static __net_initdata struct pernet_operations ipv4_inetpeer_ops = {
 	.init	=	ipv4_inetpeer_init,
 	.exit	=	ipv4_inetpeer_exit,
-	.async	=	true,
 };
 
 #ifdef CONFIG_IP_ROUTE_CLASSID

@@ -269,7 +269,7 @@ static int kcm_proc_register(struct net *net, struct kcm_seq_muxinfo *muxinfo)
 	struct proc_dir_entry *p;
 	int rc = 0;
 
-	p = proc_create_data(muxinfo->name, S_IRUGO, net->proc_net,
+	p = proc_create_data(muxinfo->name, 0444, net->proc_net,
 			     muxinfo->seq_fops, muxinfo);
 	if (!p)
 		rc = -ENOMEM;
@@ -406,7 +406,7 @@ static int kcm_proc_init_net(struct net *net)
 {
 	int err;
 
-	if (!proc_create("kcm_stats", S_IRUGO, net->proc_net,
+	if (!proc_create("kcm_stats", 0444, net->proc_net,
 			 &kcm_stats_seq_fops)) {
 		err = -ENOMEM;
 		goto out_kcm_stats;
@@ -433,7 +433,6 @@ static void kcm_proc_exit_net(struct net *net)
 static struct pernet_operations kcm_net_ops = {
 	.init = kcm_proc_init_net,
 	.exit = kcm_proc_exit_net,
-	.async = true,
 };
 
 int __init kcm_proc_init(void)

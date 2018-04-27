@@ -781,8 +781,14 @@ static void ipgre_link_update(struct net_device *dev, bool set_mtu)
 		    tunnel->encap.type == TUNNEL_ENCAP_NONE) {
 			dev->features |= NETIF_F_GSO_SOFTWARE;
 			dev->hw_features |= NETIF_F_GSO_SOFTWARE;
+		} else {
+			dev->features &= ~NETIF_F_GSO_SOFTWARE;
+			dev->hw_features &= ~NETIF_F_GSO_SOFTWARE;
 		}
 		dev->features |= NETIF_F_LLTX;
+	} else {
+		dev->hw_features &= ~NETIF_F_GSO_SOFTWARE;
+		dev->features &= ~(NETIF_F_LLTX | NETIF_F_GSO_SOFTWARE);
 	}
 }
 
@@ -1044,7 +1050,6 @@ static struct pernet_operations ipgre_net_ops = {
 	.exit_batch = ipgre_exit_batch_net,
 	.id   = &ipgre_net_id,
 	.size = sizeof(struct ip_tunnel_net),
-	.async = true,
 };
 
 static int ipgre_tunnel_validate(struct nlattr *tb[], struct nlattr *data[],
@@ -1628,7 +1633,6 @@ static struct pernet_operations ipgre_tap_net_ops = {
 	.exit_batch = ipgre_tap_exit_batch_net,
 	.id   = &gre_tap_net_id,
 	.size = sizeof(struct ip_tunnel_net),
-	.async = true,
 };
 
 static int __net_init erspan_init_net(struct net *net)
@@ -1647,7 +1651,6 @@ static struct pernet_operations erspan_net_ops = {
 	.exit_batch = erspan_exit_batch_net,
 	.id   = &erspan_net_id,
 	.size = sizeof(struct ip_tunnel_net),
-	.async = true,
 };
 
 static int __init ipgre_init(void)

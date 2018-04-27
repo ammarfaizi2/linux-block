@@ -321,6 +321,7 @@ mt76x2_sta_ps(struct mt76_dev *mdev, struct ieee80211_sta *sta, bool ps)
 	struct mt76x2_dev *dev = container_of(mdev, struct mt76x2_dev, mt76);
 	int idx = msta->wcid.idx;
 
+	mt76_stop_tx_queues(&dev->mt76, sta, true);
 	mt76x2_mac_wcid_set_drop(dev, idx, ps);
 }
 
@@ -335,6 +336,17 @@ mt76x2_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	struct mt76_wcid *wcid;
 	int idx = key->keyidx;
 	int ret;
+
+	/* fall back to sw encryption for unsupported ciphers */
+	switch (key->cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
+	case WLAN_CIPHER_SUITE_WEP104:
+	case WLAN_CIPHER_SUITE_TKIP:
+	case WLAN_CIPHER_SUITE_CCMP:
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	/*
 	 * The hardware does not support per-STA RX GTK, fall back

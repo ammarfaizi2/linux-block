@@ -51,19 +51,27 @@ ctnl_timeout_parse_policy(void *timeouts,
 			  const struct nf_conntrack_l4proto *l4proto,
 			  struct net *net, const struct nlattr *attr)
 {
+	struct nlattr **tb;
 	int ret = 0;
 
-	if (likely(l4proto->ctnl_timeout.nlattr_to_obj)) {
-		struct nlattr *tb[l4proto->ctnl_timeout.nlattr_max+1];
+	if (!l4proto->ctnl_timeout.nlattr_to_obj)
+		return 0;
 
-		ret = nla_parse_nested(tb, l4proto->ctnl_timeout.nlattr_max,
-				       attr, l4proto->ctnl_timeout.nla_policy,
-				       NULL);
-		if (ret < 0)
-			return ret;
+	tb = kcalloc(l4proto->ctnl_timeout.nlattr_max + 1, sizeof(*tb),
+		     GFP_KERNEL);
 
-		ret = l4proto->ctnl_timeout.nlattr_to_obj(tb, net, timeouts);
-	}
+	if (!tb)
+		return -ENOMEM;
+
+	ret = nla_parse_nested(tb, l4proto->ctnl_timeout.nlattr_max, attr,
+			       l4proto->ctnl_timeout.nla_policy, NULL);
+	if (ret < 0)
+		goto err;
+
+	ret = l4proto->ctnl_timeout.nlattr_to_obj(tb, net, timeouts);
+
+err:
+	kfree(tb);
 	return ret;
 }
 
@@ -586,7 +594,6 @@ static void __net_exit cttimeout_net_exit(struct net *net)
 static struct pernet_operations cttimeout_ops = {
 	.init	= cttimeout_net_init,
 	.exit	= cttimeout_net_exit,
-	.async	= true,
 };
 
 static int __init cttimeout_init(void)

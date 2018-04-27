@@ -171,8 +171,10 @@ static int tcf_dump_walker(struct tcf_idrinfo *idrinfo, struct sk_buff *skb,
 			continue;
 
 		nest = nla_nest_start(skb, n_i);
-		if (!nest)
+		if (!nest) {
+			index--;
 			goto nla_put_failure;
+		}
 		err = tcf_action_dump_1(skb, p, 0, 0);
 		if (err < 0) {
 			index--;
@@ -1533,7 +1535,6 @@ static struct pernet_operations tcf_action_net_ops = {
 	.exit = tcf_action_net_exit,
 	.id = &tcf_action_net_id,
 	.size = sizeof(struct tcf_action_net),
-	.async = true,
 };
 
 static int __init tc_action_init(void)

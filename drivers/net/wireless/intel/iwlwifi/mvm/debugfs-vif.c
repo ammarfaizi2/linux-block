@@ -269,6 +269,8 @@ static ssize_t iwl_dbgfs_mac_params_read(struct file *file,
 			 mvmvif->id, mvmvif->color);
 	pos += scnprintf(buf+pos, bufsz-pos, "bssid: %pM\n",
 			 vif->bss_conf.bssid);
+	pos += scnprintf(buf+pos, bufsz-pos, "Load: %d\n",
+			 mvm->tcm.result.load[mvmvif->id]);
 	pos += scnprintf(buf+pos, bufsz-pos, "QoS:\n");
 	for (i = 0; i < ARRAY_SIZE(mvmvif->queue_params); i++)
 		pos += scnprintf(buf+pos, bufsz-pos,
@@ -1276,7 +1278,6 @@ static ssize_t iwl_dbgfs_low_latency_write(struct ieee80211_vif *vif, char *buf,
 {
 	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
 	struct iwl_mvm *mvm = mvmvif->mvm;
-	bool prev;
 	u8 value;
 	int ret;
 
@@ -1287,9 +1288,7 @@ static ssize_t iwl_dbgfs_low_latency_write(struct ieee80211_vif *vif, char *buf,
 		return -EINVAL;
 
 	mutex_lock(&mvm->mutex);
-	prev = iwl_mvm_vif_low_latency(mvmvif);
-	mvmvif->low_latency_dbgfs = value;
-	iwl_mvm_update_low_latency(mvm, vif, prev);
+	iwl_mvm_update_low_latency(mvm, vif, value, LOW_LATENCY_DEBUGFS);
 	mutex_unlock(&mvm->mutex);
 
 	return count;
@@ -1306,9 +1305,9 @@ static ssize_t iwl_dbgfs_low_latency_read(struct file *file,
 
 	len = scnprintf(buf, sizeof(buf) - 1,
 			"traffic=%d\ndbgfs=%d\nvcmd=%d\n",
-			mvmvif->low_latency_traffic,
-			mvmvif->low_latency_dbgfs,
-			mvmvif->low_latency_vcmd);
+			!!(mvmvif->low_latency & LOW_LATENCY_TRAFFIC),
+			!!(mvmvif->low_latency & LOW_LATENCY_DEBUGFS),
+			!!(mvmvif->low_latency & LOW_LATENCY_VCMD));
 	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
 }
 

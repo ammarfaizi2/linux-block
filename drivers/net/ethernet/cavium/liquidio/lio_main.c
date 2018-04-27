@@ -1635,28 +1635,6 @@ static int octeon_pci_os_setup(struct octeon_device *oct)
 }
 
 /**
- * \brief Check Tx queue state for a given network buffer
- * @param lio per-network private data
- * @param skb network buffer
- */
-static inline int check_txq_state(struct lio *lio, struct sk_buff *skb)
-{
-	int q, iq;
-
-	q = skb->queue_mapping;
-	iq = lio->linfo.txpciq[(q % lio->oct_dev->num_iqs)].s.q_no;
-
-	if (octnet_iq_is_full(lio->oct_dev, iq))
-		return 0;
-
-	if (__netif_subqueue_stopped(lio->netdev, q)) {
-		INCR_INSTRQUEUE_PKT_COUNT(lio->oct_dev, iq, tx_restart, 1);
-		netif_wake_subqueue(lio->netdev, q);
-	}
-	return 1;
-}
-
-/**
  * \brief Unmap and free network buffer
  * @param buf buffer
  */
@@ -1672,8 +1650,6 @@ static void free_netbuf(void *buf)
 
 	dma_unmap_single(&lio->oct_dev->pci_dev->dev, finfo->dptr, skb->len,
 			 DMA_TO_DEVICE);
-
-	check_txq_state(lio, skb);
 
 	tx_buffer_free(skb);
 }
@@ -1714,8 +1690,6 @@ static void free_netsgbuf(void *buf)
 	spin_lock(&lio->glist_lock[iq]);
 	list_add_tail(&g->list, &lio->glist[iq]);
 	spin_unlock(&lio->glist_lock[iq]);
-
-	check_txq_state(lio, skb);     /* mq support: sub-queue state check */
 
 	tx_buffer_free(skb);
 }
@@ -1762,8 +1736,6 @@ static void free_netsgbuf_with_resp(void *buf)
 	spin_unlock(&lio->glist_lock[iq]);
 
 	/* Don't free the skb yet */
-
-	check_txq_state(lio, skb);
 }
 
 /**
@@ -2112,16 +2084,6 @@ static int liquidio_stop(struct net_device *netdev)
 	struct octeon_device *oct = lio->oct_dev;
 	struct napi_struct *napi, *n;
 
-	if (oct->props[lio->ifidx].napi_enabled) {
-		list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
-			napi_disable(napi);
-
-		oct->props[lio->ifidx].napi_enabled = 0;
-
-		if (OCTEON_CN23XX_PF(oct))
-			oct->droq[0]->ops.poll_mode = 0;
-	}
-
 	ifstate_reset(lio, LIO_IFSTATE_RUNNING);
 
 	netif_tx_disable(netdev);
@@ -2145,6 +2107,21 @@ static int liquidio_stop(struct net_device *netdev)
 	if (lio->ptp_clock) {
 		ptp_clock_unregister(lio->ptp_clock);
 		lio->ptp_clock = NULL;
+	}
+
+	/* Wait for any pending Rx descriptors */
+	if (lio_wait_for_clean_oq(oct))
+		netif_info(lio, rx_err, lio->netdev,
+			   "Proceeding with stop interface after partial RX desc processing\n");
+
+	if (oct->props[lio->ifidx].napi_enabled == 1) {
+		list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
+			napi_disable(napi);
+
+		oct->props[lio->ifidx].napi_enabled = 0;
+
+		if (OCTEON_CN23XX_PF(oct))
+			oct->droq[0]->ops.poll_mode = 0;
 	}
 
 	dev_info(&oct->pci_dev->dev, "%s interface is stopped\n", netdev->name);
@@ -2608,6 +2585,7 @@ static int liquidio_xmit(struct sk_buff *skb, struct net_device *netdev)
 		if (dma_mapping_error(&oct->pci_dev->dev, dptr)) {
 			dev_err(&oct->pci_dev->dev, "%s DMA mapping error 1\n",
 				__func__);
+			stats->tx_dmamap_fail++;
 			return NETDEV_TX_BUSY;
 		}
 
@@ -2647,6 +2625,7 @@ static int liquidio_xmit(struct sk_buff *skb, struct net_device *netdev)
 		if (dma_mapping_error(&oct->pci_dev->dev, g->sg[0].ptr[0])) {
 			dev_err(&oct->pci_dev->dev, "%s DMA mapping error 2\n",
 				__func__);
+			stats->tx_dmamap_fail++;
 			return NETDEV_TX_BUSY;
 		}
 		add_sg_size(&g->sg[0], (skb->len - skb->data_len), 0);
@@ -3347,6 +3326,31 @@ static const struct switchdev_ops lio_pf_switchdev_ops = {
 	.switchdev_port_attr_get = lio_pf_switchdev_attr_get,
 };
 
+static int liquidio_get_vf_stats(struct net_device *netdev, int vfidx,
+				 struct ifla_vf_stats *vf_stats)
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct oct_vf_stats stats;
+	int ret;
+
+	if (vfidx < 0 || vfidx >= oct->sriov_info.num_vfs_alloced)
+		return -EINVAL;
+
+	memset(&stats, 0, sizeof(struct oct_vf_stats));
+	ret = cn23xx_get_vf_stats(oct, vfidx, &stats);
+	if (!ret) {
+		vf_stats->rx_packets = stats.rx_packets;
+		vf_stats->tx_packets = stats.tx_packets;
+		vf_stats->rx_bytes = stats.rx_bytes;
+		vf_stats->tx_bytes = stats.tx_bytes;
+		vf_stats->broadcast = stats.broadcast;
+		vf_stats->multicast = stats.multicast;
+	}
+
+	return ret;
+}
+
 static const struct net_device_ops lionetdevops = {
 	.ndo_open		= liquidio_open,
 	.ndo_stop		= liquidio_stop,
@@ -3369,6 +3373,7 @@ static const struct net_device_ops lionetdevops = {
 	.ndo_get_vf_config	= liquidio_get_vf_config,
 	.ndo_set_vf_trust	= liquidio_set_vf_trust,
 	.ndo_set_vf_link_state  = liquidio_set_vf_link_state,
+	.ndo_get_vf_stats	= liquidio_get_vf_stats,
 };
 
 /** \brief Entry point for the liquidio module

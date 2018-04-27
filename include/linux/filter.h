@@ -30,6 +30,7 @@ struct sock;
 struct seccomp_data;
 struct bpf_prog_aux;
 struct xdp_rxq_info;
+struct xdp_buff;
 
 /* ArgX, context and stack frame pointer register positions. Note,
  * Arg1, Arg2, Arg3, etc are used as argument mappings of function
@@ -372,7 +373,7 @@ struct xdp_rxq_info;
 
 #define BPF_LDST_BYTES(insn)					\
 	({							\
-		const int __size = bpf_size_to_bytes(BPF_SIZE(insn->code)); \
+		const int __size = bpf_size_to_bytes(BPF_SIZE((insn)->code)); \
 		WARN_ON(__size < 0);				\
 		__size;						\
 	})
@@ -469,6 +470,7 @@ struct bpf_prog {
 				is_func:1,	/* program is a bpf function */
 				kprobe_override:1; /* Do we override a kprobe? */
 	enum bpf_prog_type	type;		/* Type of BPF program */
+	enum bpf_attach_type	expected_attach_type; /* For some prog types */
 	u32			len;		/* Number of filter blocks */
 	u32			jited_len;	/* Size of jited insns in bytes */
 	u8			tag[BPF_TAG_SIZE];
@@ -499,14 +501,6 @@ struct bpf_skb_data_end {
 	void *data_end;
 };
 
-struct xdp_buff {
-	void *data;
-	void *data_end;
-	void *data_meta;
-	void *data_hard_start;
-	struct xdp_rxq_info *rxq;
-};
-
 struct sk_msg_buff {
 	void *data;
 	void *data_end;
@@ -521,6 +515,8 @@ struct sk_msg_buff {
 	__u32 key;
 	__u32 flags;
 	struct bpf_map *map;
+	struct sk_buff *skb;
+	struct list_head list;
 };
 
 /* Compute the linear packet data range [data, data_end) which
@@ -769,21 +765,6 @@ int xdp_do_redirect(struct net_device *dev,
 		    struct bpf_prog *prog);
 void xdp_do_flush_map(void);
 
-/* Drivers not supporting XDP metadata can use this helper, which
- * rejects any room expansion for metadata as a result.
- */
-static __always_inline void
-xdp_set_data_meta_invalid(struct xdp_buff *xdp)
-{
-	xdp->data_meta = xdp->data + 1;
-}
-
-static __always_inline bool
-xdp_data_meta_unsupported(const struct xdp_buff *xdp)
-{
-	return unlikely(xdp->data_meta > xdp->data);
-}
-
 void bpf_warn_invalid_xdp_action(u32 act);
 
 struct sock *do_sk_redirect_map(struct sk_buff *skb);
@@ -1017,6 +998,16 @@ static inline int bpf_tell_extensions(void)
 {
 	return SKF_AD_MAX;
 }
+
+struct bpf_sock_addr_kern {
+	struct sock *sk;
+	struct sockaddr *uaddr;
+	/* Temporary "register" to make indirect stores to nested structures
+	 * defined above. We need three registers to make such a store, but
+	 * only two (src and dst) are available at convert_ctx_access time
+	 */
+	u64 tmp_reg;
+};
 
 struct bpf_sock_ops_kern {
 	struct	sock *sk;

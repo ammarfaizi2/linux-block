@@ -72,7 +72,7 @@ MODULE_AUTHOR("Urs Thuermann <urs.thuermann@volkswagen.de>, "
 MODULE_ALIAS_NETPROTO(PF_CAN);
 
 static int stats_timer __read_mostly = 1;
-module_param(stats_timer, int, S_IRUGO);
+module_param(stats_timer, int, 0444);
 MODULE_PARM_DESC(stats_timer, "enable timer for statistics (default:on)");
 
 static struct kmem_cache *rcv_cache __read_mostly;
@@ -954,7 +954,6 @@ static struct notifier_block can_netdev_notifier __read_mostly = {
 static struct pernet_operations can_pernet_ops __read_mostly = {
 	.init = can_pernet_init,
 	.exit = can_pernet_exit,
-	.async = true,
 };
 
 static __init int can_init(void)

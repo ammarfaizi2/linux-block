@@ -905,7 +905,10 @@ set_rcvbuf:
 	case SO_RCVLOWAT:
 		if (val < 0)
 			val = INT_MAX;
-		sk->sk_rcvlowat = val ? : 1;
+		if (sock->ops->set_rcvlowat)
+			ret = sock->ops->set_rcvlowat(sk, val);
+		else
+			sk->sk_rcvlowat = val ? : 1;
 		break;
 
 	case SO_RCVTIMEO:
@@ -3175,7 +3178,6 @@ static void __net_exit sock_inuse_exit_net(struct net *net)
 static struct pernet_operations net_inuse_ops = {
 	.init = sock_inuse_init_net,
 	.exit = sock_inuse_exit_net,
-	.async = true,
 };
 
 static __init int net_inuse_init(void)
@@ -3455,7 +3457,7 @@ static const struct file_operations proto_seq_fops = {
 
 static __net_init int proto_init_net(struct net *net)
 {
-	if (!proc_create("protocols", S_IRUGO, net->proc_net, &proto_seq_fops))
+	if (!proc_create("protocols", 0444, net->proc_net, &proto_seq_fops))
 		return -ENOMEM;
 
 	return 0;
@@ -3470,7 +3472,6 @@ static __net_exit void proto_exit_net(struct net *net)
 static __net_initdata struct pernet_operations proto_net_ops = {
 	.init = proto_init_net,
 	.exit = proto_exit_net,
-	.async = true,
 };
 
 static int __init proto_init(void)

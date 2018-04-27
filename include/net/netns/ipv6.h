@@ -60,7 +60,8 @@ struct netns_ipv6 {
 #endif
 	struct xt_table		*ip6table_nat;
 #endif
-	struct rt6_info         *ip6_null_entry;
+	struct fib6_info	*fib6_null_entry;
+	struct rt6_info		*ip6_null_entry;
 	struct rt6_statistics   *rt6_stats;
 	struct timer_list       ip6_fib_timer;
 	struct hlist_head       *fib_table_hash;
@@ -96,6 +97,8 @@ struct netns_ipv6 {
 	atomic_t		fib6_sernum;
 	struct seg6_pernet_data *seg6_data;
 	struct fib_notifier_ops	*notifier_ops;
+	struct fib_notifier_ops	*ip6mr_notifier_ops;
+	unsigned int ipmr_seq; /* protected by rtnl_mutex */
 	struct {
 		struct hlist_head head;
 		spinlock_t	lock;

@@ -335,11 +335,13 @@ static struct ip6_tnl *ip6gre_tunnel_locate(struct net *net,
 	if (t || !create)
 		return t;
 
-	if (parms->name[0])
+	if (parms->name[0]) {
+		if (!dev_valid_name(parms->name))
+			return NULL;
 		strlcpy(name, parms->name, IFNAMSIZ);
-	else
+	} else {
 		strcpy(name, "ip6gre%d");
-
+	}
 	dev = alloc_netdev(sizeof(*t), name, NET_NAME_UNKNOWN,
 			   ip6gre_tunnel_setup);
 	if (!dev)
@@ -1528,7 +1530,6 @@ static struct pernet_operations ip6gre_net_ops = {
 	.exit_batch = ip6gre_exit_batch_net,
 	.id   = &ip6gre_net_id,
 	.size = sizeof(struct ip6gre_net),
-	.async = true,
 };
 
 static int ip6gre_tunnel_validate(struct nlattr *tb[], struct nlattr *data[],
@@ -1763,7 +1764,6 @@ static int ip6erspan_tap_init(struct net_device *dev)
 		dev->mtu -= 8;
 
 	dev->priv_flags |= IFF_LIVE_ADDR_CHANGE;
-	tunnel = netdev_priv(dev);
 	ip6gre_tnl_link_config(tunnel, 1);
 
 	return 0;

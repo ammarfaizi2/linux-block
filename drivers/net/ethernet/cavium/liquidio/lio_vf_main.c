@@ -954,29 +954,6 @@ static int octeon_pci_os_setup(struct octeon_device *oct)
 }
 
 /**
- * \brief Check Tx queue state for a given network buffer
- * @param lio per-network private data
- * @param skb network buffer
- */
-static int check_txq_state(struct lio *lio, struct sk_buff *skb)
-{
-	int q, iq;
-
-	q = skb->queue_mapping;
-	iq = lio->linfo.txpciq[q % lio->oct_dev->num_iqs].s.q_no;
-
-	if (octnet_iq_is_full(lio->oct_dev, iq))
-		return 0;
-
-	if (__netif_subqueue_stopped(lio->netdev, q)) {
-		INCR_INSTRQUEUE_PKT_COUNT(lio->oct_dev, iq, tx_restart, 1);
-		netif_wake_subqueue(lio->netdev, q);
-	}
-
-	return 1;
-}
-
-/**
  * \brief Unmap and free network buffer
  * @param buf buffer
  */
@@ -992,8 +969,6 @@ static void free_netbuf(void *buf)
 
 	dma_unmap_single(&lio->oct_dev->pci_dev->dev, finfo->dptr, skb->len,
 			 DMA_TO_DEVICE);
-
-	check_txq_state(lio, skb);
 
 	tx_buffer_free(skb);
 }
@@ -1035,8 +1010,6 @@ static void free_netsgbuf(void *buf)
 	spin_lock(&lio->glist_lock[iq]);
 	list_add_tail(&g->list, &lio->glist[iq]);
 	spin_unlock(&lio->glist_lock[iq]);
-
-	check_txq_state(lio, skb); /* mq support: sub-queue state check */
 
 	tx_buffer_free(skb);
 }
@@ -1083,8 +1056,6 @@ static void free_netsgbuf_with_resp(void *buf)
 	spin_unlock(&lio->glist_lock[iq]);
 
 	/* Don't free the skb yet */
-
-	check_txq_state(lio, skb);
 }
 
 /**
@@ -1167,15 +1138,6 @@ static int liquidio_stop(struct net_device *netdev)
 	/* tell Octeon to stop forwarding packets to host */
 	send_rx_ctrl_cmd(lio, 0);
 
-	if (oct->props[lio->ifidx].napi_enabled) {
-		list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
-			napi_disable(napi);
-
-		oct->props[lio->ifidx].napi_enabled = 0;
-
-		oct->droq[0]->ops.poll_mode = 0;
-	}
-
 	netif_info(lio, ifdown, lio->netdev, "Stopping interface!\n");
 	/* Inform that netif carrier is down */
 	lio->intf_open = 0;
@@ -1187,6 +1149,20 @@ static int liquidio_stop(struct net_device *netdev)
 	ifstate_reset(lio, LIO_IFSTATE_RUNNING);
 
 	stop_txqs(netdev);
+
+	/* Wait for any pending Rx descriptors */
+	if (lio_wait_for_clean_oq(oct))
+		netif_info(lio, rx_err, lio->netdev,
+			   "Proceeding with stop interface after partial RX desc processing\n");
+
+	if (oct->props[lio->ifidx].napi_enabled == 1) {
+		list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
+			napi_disable(napi);
+
+		oct->props[lio->ifidx].napi_enabled = 0;
+
+		oct->droq[0]->ops.poll_mode = 0;
+	}
 
 	dev_info(&oct->pci_dev->dev, "%s interface is stopped\n", netdev->name);
 

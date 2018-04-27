@@ -75,7 +75,7 @@
 #define MLXSW_SP_RESOURCE_NAME_KVD_LINEAR_LARGE_CHUNKS "large_chunks"
 
 enum mlxsw_sp_resource_id {
-	MLXSW_SP_RESOURCE_KVD,
+	MLXSW_SP_RESOURCE_KVD = 1,
 	MLXSW_SP_RESOURCE_KVD_LINEAR,
 	MLXSW_SP_RESOURCE_KVD_HASH_SINGLE,
 	MLXSW_SP_RESOURCE_KVD_HASH_DOUBLE,
@@ -442,8 +442,7 @@ void mlxsw_sp_kvdl_free(struct mlxsw_sp *mlxsw_sp, int entry_index);
 int mlxsw_sp_kvdl_alloc_size_query(struct mlxsw_sp *mlxsw_sp,
 				   unsigned int entry_count,
 				   unsigned int *p_alloc_size);
-u64 mlxsw_sp_kvdl_occ_get(const struct mlxsw_sp *mlxsw_sp);
-int mlxsw_sp_kvdl_resources_register(struct devlink *devlink);
+int mlxsw_sp_kvdl_resources_register(struct mlxsw_core *mlxsw_core);
 
 struct mlxsw_sp_acl_rule_info {
 	unsigned int priority;

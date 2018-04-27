@@ -1140,7 +1140,7 @@ static const struct file_operations raw_seq_fops = {
 
 static __net_init int raw_init_net(struct net *net)
 {
-	if (!proc_create("raw", S_IRUGO, net->proc_net, &raw_seq_fops))
+	if (!proc_create("raw", 0444, net->proc_net, &raw_seq_fops))
 		return -ENOMEM;
 
 	return 0;
@@ -1154,7 +1154,6 @@ static __net_exit void raw_exit_net(struct net *net)
 static __net_initdata struct pernet_operations raw_net_ops = {
 	.init = raw_init_net,
 	.exit = raw_exit_net,
-	.async = true,
 };
 
 int __init raw_proc_init(void)

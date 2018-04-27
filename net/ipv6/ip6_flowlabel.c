@@ -844,7 +844,7 @@ static const struct file_operations ip6fl_seq_fops = {
 
 static int __net_init ip6_flowlabel_proc_init(struct net *net)
 {
-	if (!proc_create("ip6_flowlabel", S_IRUGO, net->proc_net,
+	if (!proc_create("ip6_flowlabel", 0444, net->proc_net,
 			 &ip6fl_seq_fops))
 		return -ENOMEM;
 	return 0;
@@ -873,7 +873,6 @@ static void __net_exit ip6_flowlabel_net_exit(struct net *net)
 static struct pernet_operations ip6_flowlabel_net_ops = {
 	.init = ip6_flowlabel_proc_init,
 	.exit = ip6_flowlabel_net_exit,
-	.async = true,
 };
 
 int ip6_flowlabel_init(void)

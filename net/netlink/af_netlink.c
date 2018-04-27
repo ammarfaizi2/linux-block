@@ -253,7 +253,6 @@ static struct pernet_operations netlink_tap_net_ops = {
 	.exit = netlink_tap_exit_net,
 	.id   = &netlink_tap_net_id,
 	.size = sizeof(struct netlink_tap_net),
-	.async = true,
 };
 
 static bool netlink_filter_tap(const struct sk_buff *skb)
@@ -1086,6 +1085,9 @@ static int netlink_connect(struct socket *sock, struct sockaddr *addr,
 	if (addr->sa_family != AF_NETLINK)
 		return -EINVAL;
 
+	if (alen < sizeof(struct sockaddr_nl))
+		return -EINVAL;
+
 	if ((nladdr->nl_groups || nladdr->nl_pid) &&
 	    !netlink_allowed(sock, NL_CFG_F_NONROOT_SEND))
 		return -EPERM;
@@ -1842,6 +1844,8 @@ static int netlink_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 
 	if (msg->msg_namelen) {
 		err = -EINVAL;
+		if (msg->msg_namelen < sizeof(struct sockaddr_nl))
+			goto out;
 		if (addr->nl_family != AF_NETLINK)
 			goto out;
 		dst_portid = addr->nl_pid;
@@ -2726,7 +2730,6 @@ static void __init netlink_add_usersock_entry(void)
 static struct pernet_operations __net_initdata netlink_net_ops = {
 	.init = netlink_net_init,
 	.exit = netlink_net_exit,
-	.async = true,
 };
 
 static inline u32 netlink_hash(const void *data, u32 len, u32 seed)

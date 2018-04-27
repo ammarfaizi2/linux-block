@@ -37,6 +37,7 @@
 #include <linux/kfifo.h>
 #include <linux/scatterlist.h>
 #include <linux/module.h>
+#include <linux/backing-dev.h>
 #include <net/tcp.h>
 #include <scsi/scsi_cmnd.h>
 #include <scsi/scsi_device.h>
@@ -948,12 +949,19 @@ static umode_t iscsi_sw_tcp_attr_is_visible(int param_type, int param)
 
 static int iscsi_sw_tcp_slave_alloc(struct scsi_device *sdev)
 {
-	set_bit(QUEUE_FLAG_BIDI, &sdev->request_queue->queue_flags);
+	blk_queue_flag_set(QUEUE_FLAG_BIDI, sdev->request_queue);
 	return 0;
 }
 
 static int iscsi_sw_tcp_slave_configure(struct scsi_device *sdev)
 {
+	struct iscsi_sw_tcp_host *tcp_sw_host = iscsi_host_priv(sdev->host);
+	struct iscsi_session *session = tcp_sw_host->session;
+	struct iscsi_conn *conn = session->leadconn;
+
+	if (conn->datadgst_en)
+		sdev->request_queue->backing_dev_info->capabilities
+			|= BDI_CAP_STABLE_WRITES;
 	blk_queue_bounce_limit(sdev->request_queue, BLK_BOUNCE_ANY);
 	blk_queue_dma_alignment(sdev->request_queue, 0);
 	return 0;

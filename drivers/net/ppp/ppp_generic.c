@@ -970,7 +970,6 @@ static struct pernet_operations ppp_net_ops = {
 	.exit = ppp_exit_net,
 	.id   = &ppp_net_id,
 	.size = sizeof(struct ppp_net),
-	.async = true,
 };
 
 static int ppp_unit_register(struct ppp *ppp, int unit, bool ifname_is_set)
@@ -1687,7 +1686,7 @@ ppp_push(struct ppp *ppp)
 
 #ifdef CONFIG_PPP_MULTILINK
 static bool mp_protocol_compress __read_mostly = true;
-module_param(mp_protocol_compress, bool, S_IRUGO | S_IWUSR);
+module_param(mp_protocol_compress, bool, 0644);
 MODULE_PARM_DESC(mp_protocol_compress,
 		 "compress protocol id in multilink fragments");
 

@@ -250,11 +250,13 @@ static struct ip_tunnel *ipip6_tunnel_locate(struct net *net,
 	if (!create)
 		goto failed;
 
-	if (parms->name[0])
+	if (parms->name[0]) {
+		if (!dev_valid_name(parms->name))
+			goto failed;
 		strlcpy(name, parms->name, IFNAMSIZ);
-	else
+	} else {
 		strcpy(name, "sit%d");
-
+	}
 	dev = alloc_netdev(sizeof(*t), name, NET_NAME_UNKNOWN,
 			   ipip6_tunnel_setup);
 	if (!dev)
@@ -1888,7 +1890,6 @@ static struct pernet_operations sit_net_ops = {
 	.exit_batch = sit_exit_batch_net,
 	.id   = &sit_net_id,
 	.size = sizeof(struct sit_net),
-	.async = true,
 };
 
 static void __exit sit_cleanup(void)

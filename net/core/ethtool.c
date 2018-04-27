@@ -22,6 +22,7 @@
 #include <linux/bitops.h>
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
+#include <linux/sfp.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/sched/signal.h>
@@ -107,6 +108,7 @@ static const char netdev_features_strings[NETDEV_FEATURE_COUNT][ETH_GSTRING_LEN]
 	[NETIF_F_HW_ESP_BIT] =		 "esp-hw-offload",
 	[NETIF_F_HW_ESP_TX_CSUM_BIT] =	 "esp-tx-csum-hw-offload",
 	[NETIF_F_RX_UDP_TUNNEL_PORT_BIT] =	 "rx-udp_tunnel-port-offload",
+	[NETIF_F_HW_TLS_RECORD_BIT] =	"tls-hw-record",
 };
 
 static const char
@@ -121,6 +123,7 @@ tunable_strings[__ETHTOOL_TUNABLE_COUNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_ID_UNSPEC]     = "Unspec",
 	[ETHTOOL_RX_COPYBREAK]	= "rx-copybreak",
 	[ETHTOOL_TX_COPYBREAK]	= "tx-copybreak",
+	[ETHTOOL_PFC_PREVENTION_TOUT] = "pfc-prevention-tout",
 };
 
 static const char
@@ -2244,6 +2247,9 @@ static int __ethtool_get_module_info(struct net_device *dev,
 	const struct ethtool_ops *ops = dev->ethtool_ops;
 	struct phy_device *phydev = dev->phydev;
 
+	if (dev->sfp_bus)
+		return sfp_get_module_info(dev->sfp_bus, modinfo);
+
 	if (phydev && phydev->drv && phydev->drv->module_info)
 		return phydev->drv->module_info(phydev, modinfo);
 
@@ -2278,6 +2284,9 @@ static int __ethtool_get_module_eeprom(struct net_device *dev,
 	const struct ethtool_ops *ops = dev->ethtool_ops;
 	struct phy_device *phydev = dev->phydev;
 
+	if (dev->sfp_bus)
+		return sfp_get_module_eeprom(dev->sfp_bus, ee, data);
+
 	if (phydev && phydev->drv && phydev->drv->module_eeprom)
 		return phydev->drv->module_eeprom(phydev, ee, data);
 
@@ -2309,6 +2318,11 @@ static int ethtool_tunable_valid(const struct ethtool_tunable *tuna)
 	case ETHTOOL_TX_COPYBREAK:
 		if (tuna->len != sizeof(u32) ||
 		    tuna->type_id != ETHTOOL_TUNABLE_U32)
+			return -EINVAL;
+		break;
+	case ETHTOOL_PFC_PREVENTION_TOUT:
+		if (tuna->len != sizeof(u16) ||
+		    tuna->type_id != ETHTOOL_TUNABLE_U16)
 			return -EINVAL;
 		break;
 	default:

@@ -1177,7 +1177,7 @@ static struct ping_seq_afinfo ping_v4_seq_afinfo = {
 int ping_proc_register(struct net *net, struct ping_seq_afinfo *afinfo)
 {
 	struct proc_dir_entry *p;
-	p = proc_create_data(afinfo->name, S_IRUGO, net->proc_net,
+	p = proc_create_data(afinfo->name, 0444, net->proc_net,
 			     afinfo->seq_fops, afinfo);
 	if (!p)
 		return -ENOMEM;
@@ -1204,7 +1204,6 @@ static void __net_exit ping_v4_proc_exit_net(struct net *net)
 static struct pernet_operations ping_v4_net_ops = {
 	.init = ping_v4_proc_init_net,
 	.exit = ping_v4_proc_exit_net,
-	.async = true,
 };
 
 int __init ping_proc_init(void)

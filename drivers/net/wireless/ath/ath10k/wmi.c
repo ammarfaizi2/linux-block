@@ -4484,6 +4484,12 @@ void ath10k_wmi_event_pdev_tpc_config(struct ath10k *ar, struct sk_buff *skb)
 
 	num_tx_chain = __le32_to_cpu(ev->num_tx_chain);
 
+	if (num_tx_chain > WMI_TPC_TX_N_CHAIN) {
+		ath10k_warn(ar, "number of tx chain is %d greater than TPC configured tx chain %d\n",
+			    num_tx_chain, WMI_TPC_TX_N_CHAIN);
+		return;
+	}
+
 	ath10k_wmi_tpc_config_get_rate_code(rate_code, pream_table,
 					    num_tx_chain);
 
@@ -5280,7 +5286,7 @@ void ath10k_wmi_event_service_available(struct ath10k *ar, struct sk_buff *skb)
 
 	ret = ath10k_wmi_pull_svc_avail(ar, skb, &arg);
 	if (ret) {
-		ath10k_warn(ar, "failed to parse servive available event: %d\n",
+		ath10k_warn(ar, "failed to parse service available event: %d\n",
 			    ret);
 	}
 

@@ -140,7 +140,6 @@ static int rsi_find_bulk_in_and_out_endpoints(struct usb_interface *interface,
 			buffer_size = endpoint->wMaxPacketSize;
 			dev->bulkout_endpoint_addr[bout_found] =
 				endpoint->bEndpointAddress;
-			buffer_size = endpoint->wMaxPacketSize;
 			dev->bulkout_size[bout_found] = buffer_size;
 			bout_found++;
 		}
@@ -687,6 +686,13 @@ static int rsi_reset_card(struct rsi_hw *adapter)
 	 * and any pending dma transfers to rf in device to finish.
 	 */
 	msleep(100);
+
+	if (rsi_usb_master_reg_write(adapter, SWBL_REGOUT,
+				     RSI_FW_WDT_DISABLE_REQ,
+				     RSI_COMMON_REG_SIZE) < 0) {
+		rsi_dbg(ERR_ZONE, "Disabling firmware watchdog timer failed\n");
+		goto fail;
+	}
 
 	ret = usb_ulp_read_write(adapter, RSI_WATCH_DOG_TIMER_1,
 				 RSI_ULP_WRITE_2, 32);

@@ -614,7 +614,7 @@ static int rsi_mac80211_config(struct ieee80211_hw *hw,
 
 	/* Power save parameters */
 	if (changed & IEEE80211_CONF_CHANGE_PS) {
-		struct ieee80211_vif *vif;
+		struct ieee80211_vif *vif, *sta_vif = NULL;
 		unsigned long flags;
 		int i, set_ps = 1;
 
@@ -628,13 +628,17 @@ static int rsi_mac80211_config(struct ieee80211_hw *hw,
 				set_ps = 0;
 				break;
 			}
+			if ((vif->type == NL80211_IFTYPE_STATION ||
+			     vif->type == NL80211_IFTYPE_P2P_CLIENT) &&
+			    (!sta_vif || vif->bss_conf.assoc))
+				sta_vif = vif;
 		}
-		if (set_ps) {
+		if (set_ps && sta_vif) {
 			spin_lock_irqsave(&adapter->ps_lock, flags);
 			if (conf->flags & IEEE80211_CONF_PS)
-				rsi_enable_ps(adapter, vif);
+				rsi_enable_ps(adapter, sta_vif);
 			else
-				rsi_disable_ps(adapter, vif);
+				rsi_disable_ps(adapter, sta_vif);
 			spin_unlock_irqrestore(&adapter->ps_lock, flags);
 		}
 	}
@@ -737,7 +741,8 @@ static void rsi_mac80211_bss_info_changed(struct ieee80211_hw *hw,
 				      bss_conf->bssid,
 				      bss_conf->qos,
 				      bss_conf->aid,
-				      NULL, 0, vif);
+				      NULL, 0,
+				      bss_conf->assoc_capability, vif);
 		adapter->ps_info.dtim_interval_duration = bss->dtim_period;
 		adapter->ps_info.listen_interval = conf->listen_interval;
 
@@ -914,6 +919,17 @@ static int rsi_hal_key_config(struct ieee80211_hw *hw,
 				key->cipher,
 				sta_id,
 				vif);
+	if (status)
+		return status;
+
+	if (vif->type == NL80211_IFTYPE_STATION && key->key &&
+	    (key->cipher == WLAN_CIPHER_SUITE_WEP104 ||
+	     key->cipher == WLAN_CIPHER_SUITE_WEP40)) {
+		if (!rsi_send_block_unblock_frame(adapter->priv, false))
+			adapter->priv->hw_data_qs_blocked = false;
+	}
+
+	return 0;
 }
 
 /**
@@ -1391,7 +1407,7 @@ static int rsi_mac80211_sta_add(struct ieee80211_hw *hw,
 			rsi_dbg(INFO_ZONE, "Indicate bss status to device\n");
 			rsi_inform_bss_status(common, RSI_OPMODE_AP, 1,
 					      sta->addr, sta->wme, sta->aid,
-					      sta, sta_idx, vif);
+					      sta, sta_idx, 0, vif);
 
 			if (common->key) {
 				struct ieee80211_key_conf *key = common->key;
@@ -1469,7 +1485,7 @@ static int rsi_mac80211_sta_remove(struct ieee80211_hw *hw,
 				rsi_inform_bss_status(common, RSI_OPMODE_AP, 0,
 						      sta->addr, sta->wme,
 						      sta->aid, sta, sta_idx,
-						      vif);
+						      0, vif);
 				rsta->sta = NULL;
 				rsta->sta_id = -1;
 				for (cnt = 0; cnt < IEEE80211_NUM_TIDS; cnt++)
@@ -1939,9 +1955,8 @@ int rsi_mac80211_attach(struct rsi_common *common)
 	hw->uapsd_queues = RSI_IEEE80211_UAPSD_QUEUES;
 	hw->uapsd_max_sp_len = IEEE80211_WMM_IE_STA_QOSINFO_SP_ALL;
 
-	hw->max_tx_aggregation_subframes = 6;
-	rsi_register_rates_channels(adapter, NL80211_BAND_2GHZ);
-	rsi_register_rates_channels(adapter, NL80211_BAND_5GHZ);
+	hw->max_tx_aggregation_subframes = RSI_MAX_TX_AGGR_FRMS;
+	hw->max_rx_aggregation_subframes = RSI_MAX_RX_AGGR_FRMS;
 	hw->rate_control_algorithm = "AARF";
 
 	SET_IEEE80211_PERM_ADDR(hw, common->mac_addr);
@@ -1962,10 +1977,15 @@ int rsi_mac80211_attach(struct rsi_common *common)
 
 	wiphy->available_antennas_rx = 1;
 	wiphy->available_antennas_tx = 1;
+
+	rsi_register_rates_channels(adapter, NL80211_BAND_2GHZ);
 	wiphy->bands[NL80211_BAND_2GHZ] =
 		&adapter->sbands[NL80211_BAND_2GHZ];
-	wiphy->bands[NL80211_BAND_5GHZ] =
-		&adapter->sbands[NL80211_BAND_5GHZ];
+	if (common->num_supp_bands > 1) {
+		rsi_register_rates_channels(adapter, NL80211_BAND_5GHZ);
+		wiphy->bands[NL80211_BAND_5GHZ] =
+			&adapter->sbands[NL80211_BAND_5GHZ];
+	}
 
 	/* AP Parameters */
 	wiphy->max_ap_assoc_sta = rsi_max_ap_stas[common->oper_mode - 1];
@@ -1990,6 +2010,9 @@ int rsi_mac80211_attach(struct rsi_common *common)
 	hw->max_listen_interval = 10;
 	wiphy->iface_combinations = rsi_iface_combinations;
 	wiphy->n_iface_combinations = ARRAY_SIZE(rsi_iface_combinations);
+
+	if (common->coex_mode > 1)
+		wiphy->flags |= WIPHY_FLAG_PS_ON_BY_DEFAULT;
 
 	status = ieee80211_register_hw(hw);
 	if (status)
