@@ -1096,7 +1096,8 @@ static int rcu_is_cpu_rrupt_from_idle(void)
 static void rcu_gpnum_ovf(struct rcu_node *rnp, struct rcu_data *rdp)
 {
 	raw_lockdep_assert_held_rcu_node(rnp);
-	if (ULONG_CMP_LT(READ_ONCE(rdp->gpnum) + ULONG_MAX / 4, rnp->gpnum))
+	if (ULONG_CMP_LT(rcu_seq_current(&rdp->gp_seq) + ULONG_MAX / 4,
+			 rnp->gp_seq))
 		WRITE_ONCE(rdp->gpwrap, true);
 	if (ULONG_CMP_LT(rdp->rcu_iw_gpnum + ULONG_MAX / 4, rnp->gpnum))
 		rdp->rcu_iw_gpnum = rnp->gpnum + ULONG_MAX / 4;
