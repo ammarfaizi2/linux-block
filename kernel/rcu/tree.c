@@ -1358,16 +1358,6 @@ static void print_other_cpu_stall(struct rcu_state *rsp, unsigned long gp_seq)
 	if (rcu_cpu_stall_suppress)
 		return;
 
-	/* Only let one CPU complain about others per time interval. */
-
-	raw_spin_lock_irqsave_rcu_node(rnp, flags);
-	delta = jiffies - READ_ONCE(rsp->jiffies_stall);
-	if (delta < RCU_STALL_RAT_DELAY || !rcu_gp_in_progress(rsp)) {
-		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-		return;
-	}
-	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-
 	/*
 	 * OK, time to rat on our buddy...
 	 * See Documentation/RCU/stallwarn.txt for info on how to debug
