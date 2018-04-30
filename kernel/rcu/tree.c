@@ -2084,22 +2084,8 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
 	 */
 	rcu_for_each_node_breadth_first(rsp, rnp) {
 		raw_spin_lock_irq_rcu_node(rnp);
-#ifdef CONFIG_PREEMPT_RCU
-		if (WARN_ON_ONCE(rcu_preempt_blocked_readers_cgp(rnp))) {
-			int i;
-			struct task_struct *t;
-
-			pr_info("%s: grp: %d-%d level: %d ->gp_tasks %p ->exp_tasks %p &->blkd_tasks: %p offset: %u\n", __func__, rnp->grplo, rnp->grphi, rnp->level, rnp->gp_tasks, rnp->exp_tasks, &rnp->blkd_tasks, (unsigned int)offsetof(typeof(*rnp), blkd_tasks));
-			pr_cont("\t->blkd_tasks");
-			i = 0;
-			list_for_each_entry(t, &rnp->blkd_tasks, rcu_node_entry) {
-				pr_cont(" %p", t);
-				if (++i >= 10)
-					break;
-			}
-			pr_cont("\n");
-		}
-#endif /* #ifdef CONFIG_PREEMPT_RCU */
+		if (WARN_ON_ONCE(rcu_preempt_blocked_readers_cgp(rnp)))
+			dump_blkd_tasks(rnp, 10);
 		WARN_ON_ONCE(rnp->qsmask);
 		WRITE_ONCE(rnp->completed, rsp->gpnum);
 		rdp = this_cpu_ptr(rsp->rda);
@@ -2309,6 +2295,7 @@ rcu_report_qs_rnp(unsigned long mask, struct rcu_state *rsp,
 			raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 			return;
 		}
+		rnp->completedqs = rnp->gpnum;
 		mask = rnp->grpmask;
 		if (rnp->parent == NULL) {
 
@@ -3936,6 +3923,7 @@ static void __init rcu_init_one(struct rcu_state *rsp)
 						   &rcu_fqs_class[i], fqs[i]);
 			rnp->gpnum = rsp->gpnum;
 			rnp->completed = rsp->completed;
+			rnp->completedqs = rsp->completed;
 			rnp->qsmask = 0;
 			rnp->qsmaskinit = 0;
 			rnp->grplo = j * cpustride;
