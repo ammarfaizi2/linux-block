@@ -750,7 +750,7 @@ TRACE_EVENT(rcu_barrier,
 
 #else /* #ifdef CONFIG_RCU_TRACE */
 
-#define trace_rcu_grace_period(rcuname, gpnum, gpevent) do { } while (0)
+#define trace_rcu_grace_period(rcuname, gp_seq, gpevent) do { } while (0)
 #define trace_rcu_future_grace_period(rcuname, gp_seq, c, \
 				      level, grplo, grphi, event) \
 				      do { } while (0)
