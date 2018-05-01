@@ -1620,6 +1620,11 @@ static bool rcu_start_this_gp(struct rcu_node *rnp, struct rcu_data *rdp,
 unlock_out:
 	if (rnp != rnp_root)
 		raw_spin_unlock_rcu_node(rnp_root);
+	/* Push furthest requested GP to leaf node and rcu_data structure. */
+	if (ULONG_CMP_GE(rnp_root->gp_seq_needed, c)) {
+		rnp->gp_seq_needed = c;
+		rdp->gp_seq_needed = c;
+	}
 	return ret;
 }
 
