@@ -1088,7 +1088,7 @@ static int rcu_is_cpu_rrupt_from_idle(void)
 /*
  * We are reporting a quiescent state on behalf of some other CPU, so
  * it is our responsibility to check for and handle potential overflow
- * of the rcu_node ->gpnum counter with respect to the rcu_data counters.
+ * of the rcu_node ->gp_seq counter with respect to the rcu_data counters.
  * After all, the CPU might be in deep idle state, and thus executing no
  * code whatsoever.
  */
