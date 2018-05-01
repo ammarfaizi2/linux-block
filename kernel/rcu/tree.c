@@ -1552,9 +1552,8 @@ void rcu_cpu_stall_reset(void)
 static void trace_rcu_this_gp(struct rcu_node *rnp, struct rcu_data *rdp,
 			      unsigned long c, const char *s)
 {
-	trace_rcu_future_grace_period(rdp->rsp->name, rnp->gpnum,
-				      rnp->completed, c, rnp->level,
-				      rnp->grplo, rnp->grphi, s);
+	trace_rcu_future_grace_period(rdp->rsp->name, rnp->gp_seq, c,
+				      rnp->level, rnp->grplo, rnp->grphi, s);
 }
 
 /*
