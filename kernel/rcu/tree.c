@@ -3182,7 +3182,7 @@ unsigned long get_state_synchronize_sched(void)
 {
 	/*
 	 * Any prior manipulation of RCU-protected data must happen
-	 * before the load from ->gpnum.
+	 * before the load from ->gp_seq.
 	 */
 	smp_mb();  /* ^^^ */
 	return rcu_seq_snap(&rcu_sched_state.gp_seq);
