@@ -2201,7 +2201,7 @@ static void rcu_report_qs_rsp(struct rcu_state *rsp, unsigned long flags)
  * must be represented by the same rcu_node structure (which need not be a
  * leaf rcu_node structure, though it often will be).  The gps parameter
  * is the grace-period snapshot, which means that the quiescent states
- * are valid only if rnp->gpnum is equal to gps.  That structure's lock
+ * are valid only if rnp->gp_seq is equal to gps.  That structure's lock
  * must be held upon entry, and it is released before return.
  */
 static void
