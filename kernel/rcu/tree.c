@@ -1713,20 +1713,18 @@ static void rcu_accelerate_cbs_unlocked(struct rcu_state *rsp,
 					struct rcu_data *rdp)
 {
 	unsigned long c;
-	unsigned long flags;
 	bool needwake;
 
-	local_irq_save(flags);
+	lockdep_assert_irqs_disabled();
 	c = rcu_seq_snap(&rsp->gp_seq);
 	if (!rdp->gpwrap && ULONG_CMP_GE(rdp->gp_seq_needed, c)) {
 		/* Old request still live, so mark recent callbacks. */
 		(void)rcu_segcblist_accelerate(&rdp->cblist, c);
-		local_irq_restore(flags);
 		return;
 	}
 	raw_spin_lock_rcu_node(rnp); /* irqs already disabled. */
 	needwake = rcu_accelerate_cbs(rsp, rnp, rdp);
-	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
+	raw_spin_unlock_rcu_node(rnp); /* irqs remain disabled. */
 	if (needwake)
 		rcu_gp_kthread_wake(rsp);
 }
@@ -2785,10 +2783,9 @@ __rcu_process_callbacks(struct rcu_state *rsp)
 	if (!rcu_gp_in_progress(rsp) &&
 	    rcu_segcblist_is_enabled(&rdp->cblist)) {
 		local_irq_save(flags);
-		if (rcu_segcblist_restempty(&rdp->cblist, RCU_NEXT_READY_TAIL))
-			local_irq_restore(flags);
-		else
+		if (!rcu_segcblist_restempty(&rdp->cblist, RCU_NEXT_READY_TAIL))
 			rcu_accelerate_cbs_unlocked(rsp, rnp, rdp);
+		local_irq_restore(flags);
 	}
 
 	rcu_check_gp_start_stall(rsp, rnp, rdp);
