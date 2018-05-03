@@ -2639,17 +2639,6 @@ static void force_qs_rnp(struct rcu_state *rsp, int (*f)(struct rcu_data *rsp))
 				/* rcu_initiate_boost() releases rnp->lock */
 				continue;
 			}
-			if (rnp->parent &&
-			    (rnp->parent->qsmask & rnp->grpmask)) {
-				/*
-				 * Race between grace-period
-				 * initialization and task exiting RCU
-				 * read-side critical section: Report.
-				 */
-				rcu_report_unblock_qs_rnp(rsp, rnp, flags);
-				/* rcu_report_unblock_qs_rnp() rlses ->lock */
-				continue;
-			}
 			raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 			continue;
 		}
