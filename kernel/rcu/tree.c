@@ -1879,7 +1879,6 @@ static bool rcu_gp_init(struct rcu_state *rsp)
 	 * will handle subsequent offline CPUs.
 	 */
 	rcu_for_each_leaf_node(rsp, rnp) {
-		rcu_gp_slow(rsp, gp_preinit_delay);
 		raw_spin_lock_irq_rcu_node(rnp);
 		if (rnp->qsmaskinit == rnp->qsmaskinitnext &&
 		    !rnp->wait_blkd_tasks) {
@@ -1921,6 +1920,7 @@ static bool rcu_gp_init(struct rcu_state *rsp)
 
 		raw_spin_unlock_irq_rcu_node(rnp);
 	}
+	rcu_gp_slow(rsp, gp_preinit_delay); /* Races with CPU hotplug. */
 
 	/*
 	 * Set the quiescent-state-needed bits in all the rcu_node
