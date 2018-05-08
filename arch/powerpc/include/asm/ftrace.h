@@ -48,9 +48,6 @@
 #else /* !__ASSEMBLY__ */
 extern void _mcount(void);
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-# define FTRACE_ADDR ((unsigned long)ftrace_caller)
-# define FTRACE_REGS_ADDR FTRACE_ADDR
 static inline unsigned long ftrace_call_adjust(unsigned long addr)
 {
        /* reloction of mcount call site is the same as the address */
@@ -60,16 +57,15 @@ static inline unsigned long ftrace_call_adjust(unsigned long addr)
 struct dyn_arch_ftrace {
 	struct module *mod;
 };
-#endif /*  CONFIG_DYNAMIC_FTRACE */
 #endif /* __ASSEMBLY__ */
 
 #ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
 #define ARCH_SUPPORTS_FTRACE_OPS 1
 #endif
-#endif
+#endif /* CONFIG_FUNCTION_TRACER */
 
-#if defined(CONFIG_FTRACE_SYSCALLS) && !defined(__ASSEMBLY__)
-#ifdef PPC64_ELF_ABI_v1
+#ifndef __ASSEMBLY__
+#if defined(CONFIG_FTRACE_SYSCALLS) && defined(PPC64_ELF_ABI_v1)
 #define ARCH_HAS_SYSCALL_MATCH_SYM_NAME
 static inline bool arch_syscall_match_sym_name(const char *sym, const char *name)
 {
@@ -81,7 +77,24 @@ static inline bool arch_syscall_match_sym_name(const char *sym, const char *name
 	 */
 	return !strcmp(sym + 4, name + 3);
 }
-#endif
-#endif /* CONFIG_FTRACE_SYSCALLS && !__ASSEMBLY__ */
+#endif /* CONFIG_FTRACE_SYSCALLS && PPC64_ELF_ABI_v1 */
+
+#ifdef CONFIG_PPC64
+#include <asm/paca.h>
+
+static inline void this_cpu_disable_ftrace(void)
+{
+	get_paca()->ftrace_enabled = 0;
+}
+
+static inline void this_cpu_enable_ftrace(void)
+{
+	get_paca()->ftrace_enabled = 1;
+}
+#else /* CONFIG_PPC64 */
+static inline void this_cpu_disable_ftrace(void) { }
+static inline void this_cpu_enable_ftrace(void) { }
+#endif /* CONFIG_PPC64 */
+#endif /* !__ASSEMBLY__ */
 
 #endif /* _ASM_POWERPC_FTRACE */
