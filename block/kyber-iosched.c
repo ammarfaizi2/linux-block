@@ -433,17 +433,23 @@ static void rq_clear_domain_token(struct kyber_queue_data *kqd,
 	}
 }
 
-static void kyber_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
+static int kyber_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
 {
+	struct kyber_queue_data *kqd = data->q->elevator->elevator_data;
+
+	if (op_is_sync(op))
+		return 0;
+
 	/*
 	 * We use the scheduler tags as per-hardware queue queueing tokens.
 	 * Async requests can be limited at this stage.
 	 */
-	if (!op_is_sync(op)) {
-		struct kyber_queue_data *kqd = data->q->elevator->elevator_data;
-
+	if (data->shallow_depth != kqd->async_depth) {
 		data->shallow_depth = kqd->async_depth;
+		return data->shallow_depth;
 	}
+
+	return 0;
 }
 
 static void kyber_prepare_request(struct request *rq, struct bio *bio)

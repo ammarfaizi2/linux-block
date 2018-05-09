@@ -533,19 +533,20 @@ static void bfq_update_depths(struct bfq_data *bfqd, struct sbitmap_queue *bt)
  * Limit depths of async I/O and sync writes so as to counter both
  * problems.
  */
-static void bfq_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
+static int bfq_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
 {
 	struct blk_mq_tags *tags = blk_mq_tags_from_data(data);
 	struct bfq_data *bfqd = data->q->elevator->elevator_data;
 	struct sbitmap_queue *bt;
+	int old_depth;
 
 	if (op_is_sync(op) && !op_is_write(op))
-		return;
+		return 0;
 
 	if (data->flags & BLK_MQ_REQ_RESERVED) {
 		if (unlikely(!tags->nr_reserved_tags)) {
 			WARN_ON_ONCE(1);
-			return;
+			return 0;
 		}
 		bt = &tags->breserved_tags;
 	} else
@@ -554,12 +555,18 @@ static void bfq_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
 	if (unlikely(bfqd->sb_shift != bt->sb.shift))
 		bfq_update_depths(bfqd, bt);
 
+	old_depth = data->shallow_depth;
 	data->shallow_depth =
 		bfqd->word_depths[!!bfqd->wr_busy_queues][op_is_sync(op)];
 
 	bfq_log(bfqd, "[%s] wr_busy %d sync %d depth %u",
 			__func__, bfqd->wr_busy_queues, op_is_sync(op),
 			data->shallow_depth);
+
+	if (old_depth != data->shallow_depth)
+		return data->shallow_depth;
+
+	return 0;
 }
 
 static struct bfq_queue *
