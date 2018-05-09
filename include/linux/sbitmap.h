@@ -164,6 +164,17 @@ static inline void sbitmap_free(struct sbitmap *sb)
 void sbitmap_resize(struct sbitmap *sb, unsigned int depth);
 
 /**
+ * sbitmap_queue_shallow_depth() - Inform sbitmap about shallow depth changes
+ * @sbq: Bitmap queue in question
+ * @depth: Shallow depth limit
+ *
+ * Due to how sbitmap does batched wakes, if a user of sbitmap updates the
+ * shallow depth, then we might need to update our batched wake counts.
+ *
+ */
+void sbitmap_queue_shallow_depth(struct sbitmap_queue *sbq, unsigned int depth);
+
+/**
  * sbitmap_get() - Try to allocate a free bit from a &struct sbitmap.
  * @sb: Bitmap to allocate from.
  * @alloc_hint: Hint for where to start searching for a free bit.

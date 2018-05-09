@@ -327,7 +327,8 @@ int sbitmap_queue_init_node(struct sbitmap_queue *sbq, unsigned int depth,
 }
 EXPORT_SYMBOL_GPL(sbitmap_queue_init_node);
 
-void sbitmap_queue_resize(struct sbitmap_queue *sbq, unsigned int depth)
+static void sbitmap_queue_update_batch_wake(struct sbitmap_queue *sbq,
+					    unsigned int depth)
 {
 	unsigned int wake_batch = sbq_calc_wake_batch(depth);
 	int i;
@@ -342,6 +343,11 @@ void sbitmap_queue_resize(struct sbitmap_queue *sbq, unsigned int depth)
 		for (i = 0; i < SBQ_WAIT_QUEUES; i++)
 			atomic_set(&sbq->ws[i].wait_cnt, 1);
 	}
+}
+
+void sbitmap_queue_resize(struct sbitmap_queue *sbq, unsigned int depth)
+{
+	sbitmap_queue_update_batch_wake(sbq, depth);
 	sbitmap_resize(&sbq->sb, depth);
 }
 EXPORT_SYMBOL_GPL(sbitmap_queue_resize);
@@ -402,6 +408,17 @@ int __sbitmap_queue_get_shallow(struct sbitmap_queue *sbq,
 	return nr;
 }
 EXPORT_SYMBOL_GPL(__sbitmap_queue_get_shallow);
+
+/*
+ * User has limited the shallow depth to 'depth', update batch wake counts
+ * if depth is smaller than the sbitmap_queue depth
+ */
+void sbitmap_queue_shallow_depth(struct sbitmap_queue *sbq, unsigned int depth)
+{
+	if (depth < sbq->sb.depth)
+		sbitmap_queue_update_batch_wake(sbq, depth);
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_shallow_depth);
 
 static struct sbq_wait_state *sbq_wake_ptr(struct sbitmap_queue *sbq)
 {
