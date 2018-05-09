@@ -5,6 +5,9 @@
 #include "blk-mq.h"
 #include "blk-mq-tag.h"
 
+void blk_mq_sched_limit_depth(struct elevator_queue *e,
+			      struct blk_mq_alloc_data *data, unsigned int op);
+
 void blk_mq_sched_free_hctx_data(struct request_queue *q,
 				 void (*exit)(struct blk_mq_hw_ctx *));
 

@@ -357,13 +357,7 @@ static struct request *blk_mq_get_request(struct request_queue *q,
 
 	if (e) {
 		data->flags |= BLK_MQ_REQ_INTERNAL;
-
-		/*
-		 * Flush requests are special and go directly to the
-		 * dispatch list.
-		 */
-		if (!op_is_flush(op) && e->type->ops.mq.limit_depth)
-			e->type->ops.mq.limit_depth(op, data);
+		blk_mq_sched_limit_depth(e, data, op);
 	}
 
 	tag = blk_mq_get_tag(data);

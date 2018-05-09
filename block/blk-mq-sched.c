@@ -16,6 +16,32 @@
 #include "blk-mq-tag.h"
 #include "blk-wbt.h"
 
+void blk_mq_sched_limit_depth(struct elevator_queue *e,
+			      struct blk_mq_alloc_data *data, unsigned int op)
+{
+	struct blk_mq_tags *tags = blk_mq_tags_from_data(data);
+	struct sbitmap_queue *bt;
+	int ret;
+
+	/*
+	 * Flush requests are special and go directly to the
+	 * dispatch list.
+	 */
+	if (op_is_flush(op) || !e->type->ops.mq.limit_depth)
+		return;
+
+	ret = e->type->ops.mq.limit_depth(op, data);
+	if (!ret)
+		return;
+
+	if (data->flags & BLK_MQ_REQ_RESERVED)
+		bt = &tags->breserved_tags;
+	else
+		bt = &tags->bitmap_tags;
+
+	sbitmap_queue_shallow_depth(bt, ret);
+}
+
 void blk_mq_sched_free_hctx_data(struct request_queue *q,
 				 void (*exit)(struct blk_mq_hw_ctx *))
 {
