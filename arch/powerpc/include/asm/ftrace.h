@@ -91,7 +91,8 @@ static inline bool arch_syscall_match_sym_name(const char *sym, const char *name
 		(!strncmp(sym, "ppc32_", 6) && !strcmp(sym + 6, name + 4)) ||
 		(!strncmp(sym, "ppc64_", 6) && !strcmp(sym + 6, name + 4));
 }
-#endif /* CONFIG_FTRACE_SYSCALLS && PPC64_ELF_ABI_v1 */
+#endif /* PPC64_ELF_ABI_v1 */
+#endif /* CONFIG_FTRACE_SYSCALLS */
 
 #ifdef CONFIG_PPC64
 #include <asm/paca.h>
