@@ -322,6 +322,7 @@
 			};
 
 			uart0_gpio14: uart0_gpio14 {
+				pinctrl-use-default;
 				brcm,pins = <14 15>;
 				brcm,function = <BCM2835_FSEL_ALT0>;
 			};
@@ -354,6 +355,7 @@
 			};
 
 			uart1_gpio14: uart1_gpio14 {
+				pinctrl-use-default;
 				brcm,pins = <14 15>;
 				brcm,function = <BCM2835_FSEL_ALT5>;
 			};
