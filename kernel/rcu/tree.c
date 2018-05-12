@@ -1585,6 +1585,8 @@ static bool rcu_start_this_gp(struct rcu_node *rnp, struct rcu_data *rdp,
 			goto unlock_out;
 		}
 		rnp_root->gp_seq_needed = c;
+		if (rcu_seq_state(rcu_seq_current(&rnp->gp_seq)))
+			goto unlock_out;
 		if (rnp_root != rnp && rnp_root->parent != NULL)
 			raw_spin_unlock_rcu_node(rnp_root);
 		if (!rnp_root->parent)
