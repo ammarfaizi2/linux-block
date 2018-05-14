@@ -120,11 +120,9 @@ void rcu_bh_qs(void)
  */
 void rcu_check_callbacks(int user)
 {
-	if (user) {
+	if (user)
 		rcu_sched_qs();
-		rcu_bh_qs();
-		rcu_note_voluntary_context_switch(current);
-	} else if (!in_softirq())
+	if (user || !in_softirq())
 		rcu_bh_qs();
 }
 
