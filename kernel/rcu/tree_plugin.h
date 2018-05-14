@@ -91,8 +91,7 @@ static void __init rcu_bootup_announce_oddness(void)
 		pr_info("\tBoot-time adjustment of leaf fanout to %d.\n",
 			rcu_fanout_leaf);
 	if (nr_cpu_ids != NR_CPUS)
-		pr_info("\tRCU restricting CPUs from %s=%d to %s=%u.\n",
-			"NR_CPUS", NR_CPUS, "nr_cpu_ids", nr_cpu_ids);
+		pr_info("\tRCU restricting CPUs from NR_CPUS=%d to nr_cpu_ids=%u.\n", NR_CPUS, nr_cpu_ids);
 #ifdef CONFIG_RCU_BOOST
 	pr_info("\tRCU priority boosting: priority %d delay %d ms.\n",
 		kthread_prio, CONFIG_RCU_BOOST_DELAY);
