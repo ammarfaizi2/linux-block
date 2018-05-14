@@ -1774,10 +1774,12 @@ static bool __note_gp_changes(struct rcu_state *rsp, struct rcu_node *rnp,
 
 	/* Handle the ends of any preceding grace periods first. */
 	if (rcu_seq_completed_gp(rdp->gp_seq, rnp->gp_seq) ||
-	    unlikely(READ_ONCE(rdp->gpwrap)))
+	    unlikely(READ_ONCE(rdp->gpwrap))) {
 		ret = rcu_advance_cbs(rsp, rnp, rdp); /* Advance callbacks. */
-	else
+		trace_rcu_grace_period(rsp->name, rdp->gp_seq, TPS("cpuend"));
+	} else {
 		ret = rcu_accelerate_cbs(rsp, rnp, rdp); /* Recent callbacks. */
+	}
 
 	/* Now handle the beginnings of any new-to-this-CPU grace periods. */
 	if (rcu_seq_new_gp(rdp->gp_seq, rnp->gp_seq) ||
