@@ -2738,14 +2738,14 @@ rcu_check_gp_start_stall(struct rcu_state *rsp, struct rcu_node *rnp,
 	}
 	/* Hold onto the leaf lock to make others see warned==1. */
 
-	raw_spin_lock_irqsave_rcu_node(rnp_root, flags);
+	raw_spin_lock_rcu_node(rnp_root); /* irqs already disabled. */
 	j = jiffies;
 	if (rcu_gp_in_progress(rsp) ||
 	    ULONG_CMP_GE(rnp_root->gp_seq, rnp_root->gp_seq_needed) ||
 	    time_before(j, rsp->gp_req_activity + HZ) ||
 	    time_before(j, rsp->gp_activity + HZ) ||
 	    atomic_xchg(&warned, 1)) {
-		raw_spin_unlock_irqrestore_rcu_node(rnp_root, flags);
+		raw_spin_unlock_rcu_node(rnp_root); /* irqs remain disabled. */
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 		return;
 	}
@@ -2756,7 +2756,7 @@ rcu_check_gp_start_stall(struct rcu_state *rsp, struct rcu_node *rnp,
 		 rsp->gp_flags, rsp->name,
 		 rsp->gp_kthread ? rsp->gp_kthread->state : 0x1ffffL);
 	WARN_ON(1);
-	raw_spin_unlock_irqrestore_rcu_node(rnp_root, flags);
+	raw_spin_unlock_rcu_node(rnp_root);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 }
 
