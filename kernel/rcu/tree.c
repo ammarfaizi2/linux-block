@@ -1881,6 +1881,7 @@ static bool rcu_gp_init(struct rcu_state *rsp)
 	 * for subsequent online CPUs, and that quiescent-state forcing
 	 * will handle subsequent offline CPUs.
 	 */
+	rsp->gp_state = RCU_GP_ONOFF;
 	rcu_for_each_leaf_node(rsp, rnp) {
 		raw_spin_lock_irq_rcu_node(rnp);
 		if (rnp->qsmaskinit == rnp->qsmaskinitnext &&
@@ -1937,6 +1938,7 @@ static bool rcu_gp_init(struct rcu_state *rsp)
 	 * The grace period cannot complete until the initialization
 	 * process finishes, because this kthread handles both.
 	 */
+	rsp->gp_state = RCU_GP_INIT;
 	rcu_for_each_node_breadth_first(rsp, rnp) {
 		rcu_gp_slow(rsp, gp_init_delay);
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
