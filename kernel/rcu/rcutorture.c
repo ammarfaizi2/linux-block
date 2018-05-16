@@ -1138,8 +1138,6 @@ static void rcu_torture_timer(struct timer_list *unused)
 	}
 	__this_cpu_inc(rcu_torture_count[pipe_count]);
 	completed = rcutorture_seq_diff(completed, started);
-	if (completed > ULONG_MAX >> 1)
-		completed = 0; /* Not all gp_seq have full range. */
 	if (completed > RCU_TORTURE_PIPE_LEN) {
 		/* Should not happen, but... */
 		completed = RCU_TORTURE_PIPE_LEN;
@@ -1216,8 +1214,6 @@ rcu_torture_reader(void *arg)
 		}
 		__this_cpu_inc(rcu_torture_count[pipe_count]);
 		completed = rcutorture_seq_diff(completed, started);
-		if (completed > ULONG_MAX >> 1)
-			completed = 0; /* Not all gp_seq have full range. */
 		if (completed > RCU_TORTURE_PIPE_LEN) {
 			/* Should not happen, but... */
 			completed = RCU_TORTURE_PIPE_LEN;
