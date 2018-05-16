@@ -25,6 +25,7 @@ config RISCV
 	select HAVE_DMA_API_DEBUG
 	select HAVE_DMA_CONTIGUOUS
 	select HAVE_GENERIC_DMA_COHERENT
+	select ARCH_32BIT_OFF_T if !64BIT
 	select IRQ_DOMAIN
 	select NO_BOOTMEM
 	select RISCV_ISA_A if SMP
