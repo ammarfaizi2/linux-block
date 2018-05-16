@@ -31,7 +31,7 @@
 #include <asm/unistd.h>
 
 static long
-__do_compat_cache_op(unsigned long start, unsigned long end)
+__do_a32_cache_op(unsigned long start, unsigned long end)
 {
 	long ret;
 
@@ -53,7 +53,7 @@ __do_compat_cache_op(unsigned long start, unsigned long end)
 }
 
 static inline long
-do_compat_cache_op(unsigned long start, unsigned long end, int flags)
+do_a32_cache_op(unsigned long start, unsigned long end, int flags)
 {
 	if (end < start || flags)
 		return -EINVAL;
@@ -61,12 +61,12 @@ do_compat_cache_op(unsigned long start, unsigned long end, int flags)
 	if (!access_ok(VERIFY_READ, (const void __user *)start, end - start))
 		return -EFAULT;
 
-	return __do_compat_cache_op(start, end);
+	return __do_a32_cache_op(start, end);
 }
 /*
  * Handle all unrecognised system calls.
  */
-long compat_arm_syscall(struct pt_regs *regs)
+long a32_arm_syscall(struct pt_regs *regs)
 {
 	unsigned int no = regs->regs[7];
 	void __user *addr;
@@ -87,7 +87,7 @@ long compat_arm_syscall(struct pt_regs *regs)
 	 * the specified region).
 	 */
 	case __ARM_NR_compat_cacheflush:
-		return do_compat_cache_op(regs->regs[0], regs->regs[1], regs->regs[2]);
+		return do_a32_cache_op(regs->regs[0], regs->regs[1], regs->regs[2]);
 
 	case __ARM_NR_compat_set_tls:
 		current->thread.uw.tp_value = regs->regs[0];
@@ -113,7 +113,7 @@ long compat_arm_syscall(struct pt_regs *regs)
 	}
 
 	addr  = (void __user *)instruction_pointer(regs) -
-		(compat_thumb_mode(regs) ? 2 : 4);
+		(a32_thumb_mode(regs) ? 2 : 4);
 
 	arm64_notify_die("Oops - bad compat syscall(2)", regs,
 			 SIGILL, ILL_ILLTRP, addr, no);
