@@ -143,7 +143,7 @@ asmlinkage long sys_ni_syscall(const struct pt_regs *);
 #undef __SYSCALL
 #define __SYSCALL(nr, sym)	[nr] = (syscall_fn_t)__arm64_##sym,
 
-const syscall_fn_t compat_sys_call_table[__NR_compat_syscalls] = {
+const syscall_fn_t a32_sys_call_table[__NR_compat_syscalls] = {
 	[0 ... __NR_compat_syscalls - 1] = (syscall_fn_t)sys_ni_syscall,
 #include <asm/unistd32.h>
 };
