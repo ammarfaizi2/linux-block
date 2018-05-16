@@ -1012,13 +1012,14 @@ void __init hash__early_init_mmu(void)
 	 */
 	__pte_frag_nr = H_PTE_FRAG_NR;
 	__pte_frag_size_shift = H_PTE_FRAG_SIZE_SHIFT;
+	__pmd_frag_nr = H_PMD_FRAG_NR;
+	__pmd_frag_size_shift = H_PMD_FRAG_SIZE_SHIFT;
 
 	__pte_index_size = H_PTE_INDEX_SIZE;
 	__pmd_index_size = H_PMD_INDEX_SIZE;
 	__pud_index_size = H_PUD_INDEX_SIZE;
 	__pgd_index_size = H_PGD_INDEX_SIZE;
 	__pud_cache_index = H_PUD_CACHE_INDEX;
-	__pmd_cache_index = H_PMD_CACHE_INDEX;
 	__pte_table_size = H_PTE_TABLE_SIZE;
 	__pmd_table_size = H_PMD_TABLE_SIZE;
 	__pud_table_size = H_PUD_TABLE_SIZE;

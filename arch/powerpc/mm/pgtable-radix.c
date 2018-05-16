@@ -617,7 +617,6 @@ void __init radix__early_init_mmu(void)
 	__pud_index_size = RADIX_PUD_INDEX_SIZE;
 	__pgd_index_size = RADIX_PGD_INDEX_SIZE;
 	__pud_cache_index = RADIX_PUD_INDEX_SIZE;
-	__pmd_cache_index = RADIX_PMD_INDEX_SIZE;
 	__pte_table_size = RADIX_PTE_TABLE_SIZE;
 	__pmd_table_size = RADIX_PMD_TABLE_SIZE;
 	__pud_table_size = RADIX_PUD_TABLE_SIZE;
@@ -640,6 +639,8 @@ void __init radix__early_init_mmu(void)
 #endif
 	__pte_frag_nr = RADIX_PTE_FRAG_NR;
 	__pte_frag_size_shift = RADIX_PTE_FRAG_SIZE_SHIFT;
+	__pmd_frag_nr = RADIX_PMD_FRAG_NR;
+	__pmd_frag_size_shift = RADIX_PMD_FRAG_SIZE_SHIFT;
 
 	if (!firmware_has_feature(FW_FEATURE_LPAR)) {
 		radix_init_native();
@@ -975,7 +976,7 @@ unsigned long radix__pmd_hugepage_update(struct mm_struct *mm, unsigned long add
 
 #ifdef CONFIG_DEBUG_VM
 	WARN_ON(!radix__pmd_trans_huge(*pmdp) && !pmd_devmap(*pmdp));
-	assert_spin_locked(&mm->page_table_lock);
+	assert_spin_locked(pmd_lockptr(mm, pmdp));
 #endif
 
 	old = radix__pte_update(mm, addr, (pte_t *)pmdp, clr, set, 1);
