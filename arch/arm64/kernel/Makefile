@@ -64,6 +64,7 @@ obj-$(CONFIG_ARM64_SSBD)		+= ssbd.o
 obj-$(CONFIG_ARM64_PTR_AUTH)		+= pointer_auth.o
 
 obj-y					+= vdso/ probes/
+obj-$(CONFIG_ARM64_ILP32)		+= vdso-ilp32/
 head-y					:= head.o
 extra-y					+= $(head-y) vmlinux.lds
 
