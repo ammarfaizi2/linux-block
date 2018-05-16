@@ -26,6 +26,7 @@
 #include <linux/sched/task_stack.h>
 
 #include <asm-generic/compat.h>
+#include <asm/is_compat.h>
 
 #define COMPAT_USER_HZ		100
 #ifdef __AARCH64EB__
@@ -207,23 +208,6 @@ struct compat_shmid64_ds {
 	compat_ulong_t __unused4;
 	compat_ulong_t __unused5;
 };
-
-static inline int is_compat_task(void)
-{
-	return test_thread_flag(TIF_32BIT);
-}
-
-static inline int is_compat_thread(struct thread_info *thread)
-{
-	return test_ti_thread_flag(thread, TIF_32BIT);
-}
-
-#else /* !CONFIG_COMPAT */
-
-static inline int is_compat_thread(struct thread_info *thread)
-{
-	return 0;
-}
 
 #endif /* CONFIG_COMPAT */
 #endif /* __KERNEL__ */
