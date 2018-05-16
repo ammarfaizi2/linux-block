@@ -313,7 +313,7 @@ static int call_undef_hook(struct pt_regs *regs)
 	if (!user_mode(regs))
 		return 1;
 
-	if (compat_thumb_mode(regs)) {
+	if (a32_thumb_mode(regs)) {
 		/* 16-bit Thumb instruction */
 		__le16 instr_le;
 		if (get_user(instr_le, (__le16 __user *)pc))
