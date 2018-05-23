@@ -1290,7 +1290,7 @@ void srcu_torture_stats_print(struct srcu_struct *sp, char *tt, char *tf)
 
 		c0 = l0 - u0;
 		c1 = l1 - u1;
-		pr_cont(" %d(%ld,%ld %p)",
+		pr_cont(" %d(%ld,%ld %1p)",
 			cpu, c0, c1, rcu_segcblist_head(&sdp->srcu_cblist));
 		s0 += c0;
 		s1 += c1;
