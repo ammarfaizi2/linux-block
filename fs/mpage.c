@@ -146,7 +146,7 @@ static struct bio *
 do_mpage_readpage(struct bio *bio, struct page *page, unsigned nr_pages,
 		sector_t *last_block_in_bio, struct buffer_head *map_bh,
 		unsigned long *first_logical_block, get_block_t get_block,
-		gfp_t gfp)
+		gfp_t gfp, bool is_readahead)
 {
 	struct inode *inode = page->mapping->host;
 	const unsigned blkbits = inode->i_blkbits;
@@ -161,6 +161,7 @@ do_mpage_readpage(struct bio *bio, struct page *page, unsigned nr_pages,
 	struct block_device *bdev = NULL;
 	int length;
 	int fully_mapped = 1;
+	int op_flags = is_readahead ? REQ_RAHEAD : 0;
 	unsigned nblocks;
 	unsigned relative_block;
 
@@ -274,7 +275,7 @@ do_mpage_readpage(struct bio *bio, struct page *page, unsigned nr_pages,
 	 * This page will go to BIO.  Do we need to send this BIO off first?
 	 */
 	if (bio && (*last_block_in_bio != blocks[0] - 1))
-		bio = mpage_bio_submit(REQ_OP_READ, 0, bio);
+		bio = mpage_bio_submit(REQ_OP_READ, op_flags, bio);
 
 alloc_new:
 	if (bio == NULL) {
@@ -291,7 +292,7 @@ alloc_new:
 
 	length = first_hole << blkbits;
 	if (bio_add_page(bio, page, length, 0) < length) {
-		bio = mpage_bio_submit(REQ_OP_READ, 0, bio);
+		bio = mpage_bio_submit(REQ_OP_READ, op_flags, bio);
 		goto alloc_new;
 	}
 
@@ -299,7 +300,7 @@ alloc_new:
 	nblocks = map_bh->b_size >> blkbits;
 	if ((buffer_boundary(map_bh) && relative_block == nblocks) ||
 	    (first_hole != blocks_per_page))
-		bio = mpage_bio_submit(REQ_OP_READ, 0, bio);
+		bio = mpage_bio_submit(REQ_OP_READ, op_flags, bio);
 	else
 		*last_block_in_bio = blocks[blocks_per_page - 1];
 out:
@@ -307,7 +308,7 @@ out:
 
 confused:
 	if (bio)
-		bio = mpage_bio_submit(REQ_OP_READ, 0, bio);
+		bio = mpage_bio_submit(REQ_OP_READ, op_flags, bio);
 	if (!PageUptodate(page))
 	        block_read_full_page(page, get_block);
 	else
@@ -384,13 +385,13 @@ mpage_readpages(struct address_space *mapping, struct list_head *pages,
 					nr_pages - page_idx,
 					&last_block_in_bio, &map_bh,
 					&first_logical_block,
-					get_block, gfp);
+					get_block, gfp, true);
 		}
 		put_page(page);
 	}
 	BUG_ON(!list_empty(pages));
 	if (bio)
-		mpage_bio_submit(REQ_OP_READ, 0, bio);
+		mpage_bio_submit(REQ_OP_READ, REQ_RAHEAD, bio);
 	return 0;
 }
 EXPORT_SYMBOL(mpage_readpages);
@@ -409,7 +410,7 @@ int mpage_readpage(struct page *page, get_block_t get_block)
 	map_bh.b_state = 0;
 	map_bh.b_size = 0;
 	bio = do_mpage_readpage(bio, page, 1, &last_block_in_bio,
-			&map_bh, &first_logical_block, get_block, gfp);
+			&map_bh, &first_logical_block, get_block, gfp, false);
 	if (bio)
 		mpage_bio_submit(REQ_OP_READ, 0, bio);
 	return 0;
