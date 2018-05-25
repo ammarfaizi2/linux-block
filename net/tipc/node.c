@@ -195,6 +195,27 @@ int tipc_node_get_mtu(struct net *net, u32 addr, u32 sel)
 	return mtu;
 }
 
+bool tipc_node_get_id(struct net *net, u32 addr, u8 *id)
+{
+	u8 *own_id = tipc_own_id(net);
+	struct tipc_node *n;
+
+	if (!own_id)
+		return true;
+
+	if (addr == tipc_own_addr(net)) {
+		memcpy(id, own_id, TIPC_NODEID_LEN);
+		return true;
+	}
+	n = tipc_node_find(net, addr);
+	if (!n)
+		return false;
+
+	memcpy(id, &n->peer_id, TIPC_NODEID_LEN);
+	tipc_node_put(n);
+	return true;
+}
+
 u16 tipc_node_get_capabilities(struct net *net, u32 addr)
 {
 	struct tipc_node *n;
@@ -1956,6 +1977,7 @@ out:
 int tipc_nl_node_get_link(struct sk_buff *skb, struct genl_info *info)
 {
 	struct net *net = genl_info_net(info);
+	struct nlattr *attrs[TIPC_NLA_LINK_MAX + 1];
 	struct tipc_nl_msg msg;
 	char *name;
 	int err;
@@ -1963,9 +1985,19 @@ int tipc_nl_node_get_link(struct sk_buff *skb, struct genl_info *info)
 	msg.portid = info->snd_portid;
 	msg.seq = info->snd_seq;
 
-	if (!info->attrs[TIPC_NLA_LINK_NAME])
+	if (!info->attrs[TIPC_NLA_LINK])
 		return -EINVAL;
-	name = nla_data(info->attrs[TIPC_NLA_LINK_NAME]);
+
+	err = nla_parse_nested(attrs, TIPC_NLA_LINK_MAX,
+			       info->attrs[TIPC_NLA_LINK],
+			       tipc_nl_link_policy, info->extack);
+	if (err)
+		return err;
+
+	if (!attrs[TIPC_NLA_LINK_NAME])
+		return -EINVAL;
+
+	name = nla_data(attrs[TIPC_NLA_LINK_NAME]);
 
 	msg.skb = nlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!msg.skb)
@@ -2250,7 +2282,7 @@ int tipc_nl_node_dump_monitor(struct sk_buff *skb, struct netlink_callback *cb)
 
 	rtnl_lock();
 	for (bearer_id = prev_bearer; bearer_id < MAX_BEARERS; bearer_id++) {
-		err = __tipc_nl_add_monitor(net, &msg, prev_bearer);
+		err = __tipc_nl_add_monitor(net, &msg, bearer_id);
 		if (err)
 			break;
 	}

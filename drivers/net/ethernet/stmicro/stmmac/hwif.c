@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "stmmac.h"
+#include "stmmac_ptp.h"
 
 static u32 stmmac_get_id(struct stmmac_priv *priv, u32 id_reg)
 {
@@ -72,11 +73,13 @@ static const struct stmmac_hwif_entry {
 	bool gmac;
 	bool gmac4;
 	u32 min_id;
+	const struct stmmac_regs_off regs;
 	const void *desc;
 	const void *dma;
 	const void *mac;
 	const void *hwtimestamp;
 	const void *mode;
+	const void *tc;
 	int (*setup)(struct stmmac_priv *priv);
 	int (*quirks)(struct stmmac_priv *priv);
 } stmmac_hw[] = {
@@ -85,66 +88,96 @@ static const struct stmmac_hwif_entry {
 		.gmac = false,
 		.gmac4 = false,
 		.min_id = 0,
+		.regs = {
+			.ptp_off = PTP_GMAC3_X_OFFSET,
+			.mmc_off = MMC_GMAC3_X_OFFSET,
+		},
 		.desc = NULL,
 		.dma = &dwmac100_dma_ops,
 		.mac = &dwmac100_ops,
 		.hwtimestamp = &stmmac_ptp,
 		.mode = NULL,
+		.tc = NULL,
 		.setup = dwmac100_setup,
 		.quirks = stmmac_dwmac1_quirks,
 	}, {
 		.gmac = true,
 		.gmac4 = false,
 		.min_id = 0,
+		.regs = {
+			.ptp_off = PTP_GMAC3_X_OFFSET,
+			.mmc_off = MMC_GMAC3_X_OFFSET,
+		},
 		.desc = NULL,
 		.dma = &dwmac1000_dma_ops,
 		.mac = &dwmac1000_ops,
 		.hwtimestamp = &stmmac_ptp,
 		.mode = NULL,
+		.tc = NULL,
 		.setup = dwmac1000_setup,
 		.quirks = stmmac_dwmac1_quirks,
 	}, {
 		.gmac = false,
 		.gmac4 = true,
 		.min_id = 0,
+		.regs = {
+			.ptp_off = PTP_GMAC4_OFFSET,
+			.mmc_off = MMC_GMAC4_OFFSET,
+		},
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac4_dma_ops,
 		.mac = &dwmac4_ops,
 		.hwtimestamp = &stmmac_ptp,
 		.mode = NULL,
+		.tc = NULL,
 		.setup = dwmac4_setup,
 		.quirks = stmmac_dwmac4_quirks,
 	}, {
 		.gmac = false,
 		.gmac4 = true,
 		.min_id = DWMAC_CORE_4_00,
+		.regs = {
+			.ptp_off = PTP_GMAC4_OFFSET,
+			.mmc_off = MMC_GMAC4_OFFSET,
+		},
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac4_dma_ops,
 		.mac = &dwmac410_ops,
 		.hwtimestamp = &stmmac_ptp,
 		.mode = &dwmac4_ring_mode_ops,
+		.tc = NULL,
 		.setup = dwmac4_setup,
 		.quirks = NULL,
 	}, {
 		.gmac = false,
 		.gmac4 = true,
 		.min_id = DWMAC_CORE_4_10,
+		.regs = {
+			.ptp_off = PTP_GMAC4_OFFSET,
+			.mmc_off = MMC_GMAC4_OFFSET,
+		},
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac410_dma_ops,
 		.mac = &dwmac410_ops,
 		.hwtimestamp = &stmmac_ptp,
 		.mode = &dwmac4_ring_mode_ops,
+		.tc = NULL,
 		.setup = dwmac4_setup,
 		.quirks = NULL,
 	}, {
 		.gmac = false,
 		.gmac4 = true,
 		.min_id = DWMAC_CORE_5_10,
+		.regs = {
+			.ptp_off = PTP_GMAC4_OFFSET,
+			.mmc_off = MMC_GMAC4_OFFSET,
+		},
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac410_dma_ops,
 		.mac = &dwmac510_ops,
 		.hwtimestamp = &stmmac_ptp,
 		.mode = &dwmac4_ring_mode_ops,
+		.tc = &dwmac510_tc_ops,
 		.setup = dwmac4_setup,
 		.quirks = NULL,
 	}
@@ -156,27 +189,35 @@ int stmmac_hwif_init(struct stmmac_priv *priv)
 	bool needs_gmac = priv->plat->has_gmac;
 	const struct stmmac_hwif_entry *entry;
 	struct mac_device_info *mac;
+	bool needs_setup = true;
 	int i, ret;
 	u32 id;
 
 	if (needs_gmac) {
 		id = stmmac_get_id(priv, GMAC_VERSION);
-	} else {
+	} else if (needs_gmac4) {
 		id = stmmac_get_id(priv, GMAC4_VERSION);
+	} else {
+		id = 0;
 	}
 
 	/* Save ID for later use */
 	priv->synopsys_id = id;
 
+	/* Lets assume some safe values first */
+	priv->ptpaddr = priv->ioaddr +
+		(needs_gmac4 ? PTP_GMAC4_OFFSET : PTP_GMAC3_X_OFFSET);
+	priv->mmcaddr = priv->ioaddr +
+		(needs_gmac4 ? MMC_GMAC4_OFFSET : MMC_GMAC3_X_OFFSET);
+
 	/* Check for HW specific setup first */
 	if (priv->plat->setup) {
-		priv->hw = priv->plat->setup(priv);
-		if (!priv->hw)
-			return -ENOMEM;
-		return 0;
+		mac = priv->plat->setup(priv);
+		needs_setup = false;
+	} else {
+		mac = devm_kzalloc(priv->device, sizeof(*mac), GFP_KERNEL);
 	}
 
-	mac = devm_kzalloc(priv->device, sizeof(*mac), GFP_KERNEL);
 	if (!mac)
 		return -ENOMEM;
 
@@ -188,21 +229,28 @@ int stmmac_hwif_init(struct stmmac_priv *priv)
 			continue;
 		if (needs_gmac4 ^ entry->gmac4)
 			continue;
-		if (id < entry->min_id)
+		/* Use synopsys_id var because some setups can override this */
+		if (priv->synopsys_id < entry->min_id)
 			continue;
 
-		mac->desc = entry->desc;
-		mac->dma = entry->dma;
-		mac->mac = entry->mac;
-		mac->ptp = entry->hwtimestamp;
-		mac->mode = entry->mode;
+		/* Only use generic HW helpers if needed */
+		mac->desc = mac->desc ? : entry->desc;
+		mac->dma = mac->dma ? : entry->dma;
+		mac->mac = mac->mac ? : entry->mac;
+		mac->ptp = mac->ptp ? : entry->hwtimestamp;
+		mac->mode = mac->mode ? : entry->mode;
+		mac->tc = mac->tc ? : entry->tc;
 
 		priv->hw = mac;
+		priv->ptpaddr = priv->ioaddr + entry->regs.ptp_off;
+		priv->mmcaddr = priv->ioaddr + entry->regs.mmc_off;
 
 		/* Entry found */
-		ret = entry->setup(priv);
-		if (ret)
-			return ret;
+		if (needs_setup) {
+			ret = entry->setup(priv);
+			if (ret)
+				return ret;
+		}
 
 		/* Run quirks, if needed */
 		if (entry->quirks) {

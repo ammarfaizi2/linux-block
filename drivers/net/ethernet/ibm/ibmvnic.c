@@ -192,6 +192,7 @@ static int alloc_long_term_buff(struct ibmvnic_adapter *adapter,
 	if (adapter->fw_done_rc) {
 		dev_err(dev, "Couldn't map long term buffer,rc = %d\n",
 			adapter->fw_done_rc);
+		dma_free_coherent(dev, ltb->size, ltb->buff, ltb->addr);
 		return -1;
 	}
 	return 0;
@@ -1128,7 +1129,7 @@ static void clean_rx_pools(struct ibmvnic_adapter *adapter)
 	if (!adapter->rx_pool)
 		return;
 
-	rx_scrqs = be32_to_cpu(adapter->login_rsp_buf->num_rxadd_subcrqs);
+	rx_scrqs = adapter->num_active_rx_pools;
 	rx_entries = adapter->req_rx_add_entries_per_subcrq;
 
 	/* Free any remaining skbs in the rx buffer pools */
@@ -1177,7 +1178,7 @@ static void clean_tx_pools(struct ibmvnic_adapter *adapter)
 	if (!adapter->tx_pool || !adapter->tso_pool)
 		return;
 
-	tx_scrqs = be32_to_cpu(adapter->login_rsp_buf->num_txsubm_subcrqs);
+	tx_scrqs = adapter->num_active_tx_pools;
 
 	/* Free any remaining skbs in the tx buffer pools */
 	for (i = 0; i < tx_scrqs; i++) {
@@ -1821,9 +1822,8 @@ static int do_reset(struct ibmvnic_adapter *adapter,
 			if (rc)
 				return rc;
 		}
+		ibmvnic_disable_irqs(adapter);
 	}
-
-	ibmvnic_disable_irqs(adapter);
 	adapter->state = VNIC_CLOSED;
 
 	if (reset_state == VNIC_CLOSED)
@@ -4586,14 +4586,6 @@ static int ibmvnic_init(struct ibmvnic_adapter *adapter)
 		release_crq_queue(adapter);
 	}
 
-	rc = init_stats_buffers(adapter);
-	if (rc)
-		return rc;
-
-	rc = init_stats_token(adapter);
-	if (rc)
-		return rc;
-
 	return rc;
 }
 
@@ -4662,13 +4654,21 @@ static int ibmvnic_probe(struct vio_dev *dev, const struct vio_device_id *id)
 			goto ibmvnic_init_fail;
 	} while (rc == EAGAIN);
 
+	rc = init_stats_buffers(adapter);
+	if (rc)
+		goto ibmvnic_init_fail;
+
+	rc = init_stats_token(adapter);
+	if (rc)
+		goto ibmvnic_stats_fail;
+
 	netdev->mtu = adapter->req_mtu - ETH_HLEN;
 	netdev->min_mtu = adapter->min_mtu - ETH_HLEN;
 	netdev->max_mtu = adapter->max_mtu - ETH_HLEN;
 
 	rc = device_create_file(&dev->dev, &dev_attr_failover);
 	if (rc)
-		goto ibmvnic_init_fail;
+		goto ibmvnic_dev_file_err;
 
 	netif_carrier_off(netdev);
 	rc = register_netdev(netdev);
@@ -4686,6 +4686,12 @@ static int ibmvnic_probe(struct vio_dev *dev, const struct vio_device_id *id)
 
 ibmvnic_register_fail:
 	device_remove_file(&dev->dev, &dev_attr_failover);
+
+ibmvnic_dev_file_err:
+	release_stats_token(adapter);
+
+ibmvnic_stats_fail:
+	release_stats_buffers(adapter);
 
 ibmvnic_init_fail:
 	release_sub_crqs(adapter, 1);

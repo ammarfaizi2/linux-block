@@ -268,6 +268,27 @@ mt76_check_sband(struct mt76_dev *dev, int band)
 	dev->hw->wiphy->bands[band] = NULL;
 }
 
+struct mt76_dev *
+mt76_alloc_device(unsigned int size, const struct ieee80211_ops *ops)
+{
+	struct ieee80211_hw *hw;
+	struct mt76_dev *dev;
+
+	hw = ieee80211_alloc_hw(size, ops);
+	if (!hw)
+		return NULL;
+
+	dev = hw->priv;
+	dev->hw = hw;
+	spin_lock_init(&dev->rx_lock);
+	spin_lock_init(&dev->lock);
+	spin_lock_init(&dev->cc_lock);
+	init_waitqueue_head(&dev->tx_wait);
+
+	return dev;
+}
+EXPORT_SYMBOL_GPL(mt76_alloc_device);
+
 int mt76_register_device(struct mt76_dev *dev, bool vht,
 			 struct ieee80211_rate *rates, int n_rates)
 {
@@ -277,8 +298,6 @@ int mt76_register_device(struct mt76_dev *dev, bool vht,
 
 	dev_set_drvdata(dev->dev, dev);
 
-	spin_lock_init(&dev->lock);
-	spin_lock_init(&dev->cc_lock);
 	INIT_LIST_HEAD(&dev->txwi_cache);
 
 	SET_IEEE80211_DEV(hw, dev->dev);
@@ -359,12 +378,32 @@ void mt76_rx(struct mt76_dev *dev, enum mt76_rxq_id q, struct sk_buff *skb)
 }
 EXPORT_SYMBOL_GPL(mt76_rx);
 
+static bool mt76_has_tx_pending(struct mt76_dev *dev)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(dev->q_tx); i++) {
+		if (dev->q_tx[i].queued)
+			return true;
+	}
+
+	return false;
+}
+
 void mt76_set_channel(struct mt76_dev *dev)
 {
 	struct ieee80211_hw *hw = dev->hw;
 	struct cfg80211_chan_def *chandef = &hw->conf.chandef;
 	struct mt76_channel_state *state;
 	bool offchannel = hw->conf.flags & IEEE80211_CONF_OFFCHANNEL;
+	int timeout = HZ / 5;
+
+	if (offchannel)
+		set_bit(MT76_OFFCHANNEL, &dev->state);
+	else
+		clear_bit(MT76_OFFCHANNEL, &dev->state);
+
+	wait_event_timeout(dev->tx_wait, !mt76_has_tx_pending(dev), timeout);
 
 	if (dev->drv->update_survey)
 		dev->drv->update_survey(dev);
@@ -561,6 +600,7 @@ void mt76_rx_complete(struct mt76_dev *dev, struct sk_buff_head *frames,
 	if (queue >= 0)
 	    napi = &dev->napi[queue];
 
+	spin_lock(&dev->rx_lock);
 	while ((skb = __skb_dequeue(frames)) != NULL) {
 		if (mt76_check_ccmp_pn(skb)) {
 			dev_kfree_skb(skb);
@@ -570,6 +610,7 @@ void mt76_rx_complete(struct mt76_dev *dev, struct sk_buff_head *frames,
 		sta = mt76_rx_convert(skb);
 		ieee80211_rx_napi(dev->hw, sta, skb, napi);
 	}
+	spin_unlock(&dev->rx_lock);
 }
 
 void mt76_rx_poll_complete(struct mt76_dev *dev, enum mt76_rxq_id q)

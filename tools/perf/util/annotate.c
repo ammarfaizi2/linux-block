@@ -46,6 +46,7 @@
 struct annotation_options annotation__default_options = {
 	.use_offset     = true,
 	.jump_arrows    = true,
+	.offset_level	= ANNOTATION__OFFSET_JUMP_TARGETS,
 };
 
 const char 	*disassembler_style;
@@ -1261,6 +1262,9 @@ annotation_line__print(struct annotation_line *al, struct symbol *sym, u64 start
 			if (sample->percent > max_percent)
 				max_percent = sample->percent;
 		}
+
+		if (al->samples_nr > nr_percent)
+			nr_percent = al->samples_nr;
 
 		if (max_percent < min_pcnt)
 			return -1;
@@ -2512,7 +2516,8 @@ static void __annotation_line__write(struct annotation_line *al, struct annotati
 		if (!notes->options->use_offset) {
 			printed = scnprintf(bf, sizeof(bf), "%" PRIx64 ": ", addr);
 		} else {
-			if (al->jump_sources) {
+			if (al->jump_sources &&
+			    notes->options->offset_level >= ANNOTATION__OFFSET_JUMP_TARGETS) {
 				if (notes->options->show_nr_jumps) {
 					int prev;
 					printed = scnprintf(bf, sizeof(bf), "%*d ",
@@ -2523,9 +2528,14 @@ static void __annotation_line__write(struct annotation_line *al, struct annotati
 					obj__printf(obj, bf);
 					obj__set_color(obj, prev);
 				}
-
+print_addr:
 				printed = scnprintf(bf, sizeof(bf), "%*" PRIx64 ": ",
 						    notes->widths.target, addr);
+			} else if (ins__is_call(&disasm_line(al)->ins) &&
+				   notes->options->offset_level >= ANNOTATION__OFFSET_CALL) {
+				goto print_addr;
+			} else if (notes->options->offset_level == ANNOTATION__MAX_OFFSET_LEVEL) {
+				goto print_addr;
 			} else {
 				printed = scnprintf(bf, sizeof(bf), "%-*s  ",
 						    notes->widths.addr, " ");
@@ -2642,10 +2652,11 @@ int __annotation__scnprintf_samples_period(struct annotation *notes,
  */
 static struct annotation_config {
 	const char *name;
-	bool *value;
+	void *value;
 } annotation__configs[] = {
 	ANNOTATION__CFG(hide_src_code),
 	ANNOTATION__CFG(jump_arrows),
+	ANNOTATION__CFG(offset_level),
 	ANNOTATION__CFG(show_linenr),
 	ANNOTATION__CFG(show_nr_jumps),
 	ANNOTATION__CFG(show_nr_samples),
@@ -2677,8 +2688,16 @@ static int annotation__config(const char *var, const char *value,
 
 	if (cfg == NULL)
 		pr_debug("%s variable unknown, ignoring...", var);
-	else
-		*cfg->value = perf_config_bool(name, value);
+	else if (strcmp(var, "annotate.offset_level") == 0) {
+		perf_config_int(cfg->value, name, value);
+
+		if (*(int *)cfg->value > ANNOTATION__MAX_OFFSET_LEVEL)
+			*(int *)cfg->value = ANNOTATION__MAX_OFFSET_LEVEL;
+		else if (*(int *)cfg->value < ANNOTATION__MIN_OFFSET_LEVEL)
+			*(int *)cfg->value = ANNOTATION__MIN_OFFSET_LEVEL;
+	} else {
+		*(bool *)cfg->value = perf_config_bool(name, value);
+	}
 	return 0;
 }
 
