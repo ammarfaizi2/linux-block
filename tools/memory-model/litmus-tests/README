@@ -38,7 +38,7 @@ IRIW+poonceonces+OnceOnce.litmus
 ISA2+pooncelock+pooncelock+pombonce.litmus
 	Tests whether the ordering provided by a lock-protected S
 	litmus test is visible to an external process whose accesses are
-	separated by smp_mb().	This addition of an external process to
+	separated by smp_mb().  This addition of an external process to
 	S is otherwise known as ISA2.
 
 ISA2+poonceonces.litmus
@@ -236,8 +236,10 @@ The full string is thus:
 This string can be given to the "norm7" and "classify7" tools to
 produce the name:
 
-$ norm7 -bell linux-kernel.bell Rfi Once PodRR Once Fre Once Rfi Once PodRR Once Fre Once | sed -e 's/:.*//g'
-SB+rfionceonce-poonceonces
+	$ norm7 -bell linux-kernel.bell \
+		Rfi Once PodRR Once Fre Once Rfi Once PodRR Once Fre Once | \
+	  sed -e 's/:.*//g'
+	SB+rfionceonce-poonceonces
 
 Adding the ".litmus" suffix: SB+rfionceonce-poonceonces.litmus
 
@@ -280,9 +282,10 @@ PosWW: Program-order same variable, write followed by write.
 Rfe: Read-from external.  The current process read a variable written
 	by the previous process.  Example: The MP (message passing) test.
 Rfi: Read-from internal.  The current process wrote a variable and then
-	immediately read the value back from it.  For the purposes of
-	naming, Rfi acts identically to PosWR.	However, there are subtle
-	but very real differences between them in other contexts.
+	immediately read the value back from it.  For the purposes
+	of litmus-test code generation, Rfi acts identically to PosWR.
+	However, they differ for purposes of naming, and they also result
+	in different "exists" clauses.
 	Example:  ???
 Wse: Write same external.  The current process wrote to a variable that
 	was also written to by the previous process.  Example:  ???
@@ -292,4 +295,4 @@ Wsi: Write same internal.  The current process wrote to a variable and
 Please note that the above is a partial list.  To see the full list of
 descriptors, execute the following command:
 
-$ diyone7 -bell linux-kernel.bell -show edges
+	$ diyone7 -bell linux-kernel.bell -show edges
