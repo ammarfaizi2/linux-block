@@ -743,7 +743,9 @@ static int do_dentry_open(struct file *f,
 	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
 
 	if (unlikely(f->f_flags & O_PATH)) {
-		f->f_mode = FMODE_PATH;
+		f->f_mode |= FMODE_PATH;
+		if (f->f_flags & O_CLONE_MOUNT)
+			f->f_mode |= FMODE_NEED_UNMOUNT;
 		f->f_op = &empty_fops;
 		goto done;
 	}
@@ -969,8 +971,11 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
 		 * If we have O_PATH in the open flag. Then we
 		 * cannot have anything other than the below set of flags
 		 */
-		flags &= O_DIRECTORY | O_NOFOLLOW | O_PATH;
+		flags &= (O_DIRECTORY | O_NOFOLLOW | O_PATH |
+			  O_CLONE_MOUNT | O_NON_RECURSIVE);
 		acc_mode = 0;
+	} else if (flags & (O_CLONE_MOUNT | O_NON_RECURSIVE)) {
+		return -EINVAL;
 	}
 
 	op->open_flag = flags;

@@ -3454,13 +3454,29 @@ out:
 
 static int do_o_path(struct nameidata *nd, unsigned flags, struct file *file)
 {
-	struct path path;
-	int error = path_lookupat(nd, flags, &path);
-	if (!error) {
-		audit_inode(nd->name, path.dentry, 0);
-		error = vfs_open(&path, file, current_cred());
+	struct path path, tmp;
+	int error;
+
+	error = path_lookupat(nd, flags, &path);
+	if (error)
+		return error;
+
+	if (file->f_flags & O_CLONE_MOUNT) {
+		error = copy_mount_for_o_path(
+			&path, &tmp, !(file->f_flags & O_NON_RECURSIVE));
 		path_put(&path);
+		if (error < 0)
+			return error;
+		path = tmp;
 	}
+
+	audit_inode(nd->name, path.dentry, 0);
+	error = vfs_open(&path, file, current_cred());
+	if (error < 0 &&
+	    (flags & O_CLONE_MOUNT) &&
+	    !(file->f_mode & FMODE_NEED_UNMOUNT))
+		__detach_mounts(path.dentry);
+	path_put(&path);
 	return error;
 }
 

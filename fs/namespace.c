@@ -2219,6 +2219,50 @@ out:
 	return err;
 }
 
+/*
+ * Copy the mount or mount subtree at the specified path for
+ * open(O_PATH|O_CLONE_MOUNT).
+ */
+int copy_mount_for_o_path(struct path *from, struct path *to, bool recurse)
+{
+	struct mountpoint *mp;
+	struct mount *mnt = NULL, *f = real_mount(from->mnt);
+	int ret;
+
+	mp = lock_mount(from);
+	if (IS_ERR(mp))
+		return PTR_ERR(mp);
+
+	ret = -EINVAL;
+	if (IS_MNT_UNBINDABLE(f))
+		goto out_unlock;
+
+	if (!check_mnt(f) && from->dentry->d_op != &ns_dentry_operations)
+		goto out_unlock;
+
+	if (!recurse && has_locked_children(f, from->dentry))
+		goto out_unlock;
+
+	if (recurse)
+		mnt = copy_tree(f, from->dentry, CL_COPY_MNT_NS_FILE);
+	else
+		mnt = clone_mnt(f, from->dentry, 0);
+	if (IS_ERR(mnt)) {
+		ret = PTR_ERR(mnt);
+		goto out_unlock;
+	}
+
+	mnt->mnt.mnt_flags &= ~MNT_LOCKED;
+
+	to->mnt = &mnt->mnt;
+	to->dentry = dget(from->dentry);
+	ret = 0;
+
+out_unlock:
+	unlock_mount(mp);
+	return ret;
+}
+
 static int change_mount_flags(struct vfsmount *mnt, int ms_flags)
 {
 	int error = 0;
