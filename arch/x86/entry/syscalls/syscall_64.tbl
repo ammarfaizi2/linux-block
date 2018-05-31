@@ -344,6 +344,7 @@
 333	common	io_pgetevents		__x64_sys_io_pgetevents
 334	common	fsopen			__x64_sys_fsopen
 335	common	fsmount			__x64_sys_fsmount
+336	common	fspick			__x64_sys_fspick
 337	common	move_mount		__x64_sys_move_mount
 
 #

@@ -900,6 +900,7 @@ asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags,
 			   void *reserved3, void *reserved4, void *reserved5);
 asmlinkage long sys_fsmount(int fs_fd, unsigned int flags, unsigned int msflags,
 			    void *reserved4, void *reserved5);
+asmlinkage long sys_fspick(int dfd, const char __user *path, unsigned int at_flags);
 asmlinkage long sys_move_mount(int from_dfd, const char __user *from_path,
 			       int to_dfd, const char __user *to_path,
 			       unsigned int ms_flags);
