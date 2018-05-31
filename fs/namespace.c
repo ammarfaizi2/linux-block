@@ -1793,6 +1793,21 @@ struct vfsmount *collect_mounts(const struct path *path)
 	return &tree->mnt;
 }
 
+void umount_on_fput(struct vfsmount *mnt)
+{
+	namespace_lock();
+	lock_mount_hash();
+	if (!real_mount(mnt)->mnt_ns) {
+		umount_tree(real_mount(mnt), UMOUNT_SYNC);
+		unlock_mount_hash();
+		namespace_unlock();
+	} else {
+		unlock_mount_hash();
+		namespace_unlock();
+		mntput(mnt);
+	}
+}
+
 void drop_collected_mounts(struct vfsmount *mnt)
 {
 	namespace_lock();
