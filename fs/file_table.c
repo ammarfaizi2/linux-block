@@ -200,6 +200,9 @@ static void __fput(struct file *file)
 	eventpoll_release(file);
 	locks_remove_file(file);
 
+	if (unlikely(file->f_mode & FMODE_NEED_UNMOUNT))
+		drop_collected_mounts(mnt);
+
 	ima_file_free(file);
 	if (unlikely(file->f_flags & FASYNC)) {
 		if (file->f_op->fasync)
