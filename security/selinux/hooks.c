@@ -274,11 +274,10 @@ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dent
  * Try reloading inode security labels that have been marked as invalid.  The
  * @may_sleep parameter indicates when sleeping and thus reloading labels is
  * allowed; when set to false, returns -ECHILD when the label is
- * invalid.  The @opt_dentry parameter should be set to a dentry of the inode;
- * when no dentry is available, set it to NULL instead.
+ * invalid.  The @dentry parameter should be set to a dentry of the inode.
  */
 static int __inode_security_revalidate(struct inode *inode,
-				       struct dentry *opt_dentry,
+				       struct dentry *dentry,
 				       bool may_sleep)
 {
 	struct inode_security_struct *isec = inode->i_security;
@@ -295,7 +294,7 @@ static int __inode_security_revalidate(struct inode *inode,
 		 * @opt_dentry is NULL and no dentry for this inode can be
 		 * found; in that case, continue using the old label.
 		 */
-		inode_doinit_with_dentry(inode, opt_dentry);
+		inode_doinit_with_dentry(inode, dentry);
 	}
 	return 0;
 }
@@ -1568,8 +1567,15 @@ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dent
 			/* Called from d_instantiate or d_splice_alias. */
 			dentry = dget(opt_dentry);
 		} else {
-			/* Called from selinux_complete_init, try to find a dentry. */
+			/*
+			 * Called from selinux_complete_init, try to find a dentry.
+			 * Some filesystems really want a connected one, so try
+			 * that first.  We could split SECURITY_FS_USE_XATTR in
+			 * two, depending upon that...
+			 */
 			dentry = d_find_alias(inode);
+			if (!dentry)
+				dentry = d_find_any_alias(inode);
 		}
 		if (!dentry) {
 			/*
@@ -1674,14 +1680,19 @@ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dent
 		if ((sbsec->flags & SE_SBGENFS) && !S_ISLNK(inode->i_mode)) {
 			/* We must have a dentry to determine the label on
 			 * procfs inodes */
-			if (opt_dentry)
+			if (opt_dentry) {
 				/* Called from d_instantiate or
 				 * d_splice_alias. */
 				dentry = dget(opt_dentry);
-			else
+			} else {
 				/* Called from selinux_complete_init, try to
-				 * find a dentry. */
+				 * find a dentry.  Some filesystems really want
+				 * a connected one, so try that first.
+				 */
 				dentry = d_find_alias(inode);
+				if (!dentry)
+					dentry = d_find_any_alias(inode);
+			}
 			/*
 			 * This can be hit on boot when a file is accessed
 			 * before the policy is loaded.  When we load policy we
