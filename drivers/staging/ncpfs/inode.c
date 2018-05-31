@@ -101,7 +101,8 @@ static void destroy_inodecache(void)
 	kmem_cache_destroy(ncp_inode_cachep);
 }
 
-static int ncp_remount(struct super_block *sb, int *flags, char* data)
+static int ncp_remount(struct super_block *sb, int *flags,
+		       char *data, size_t data_size)
 {
 	sync_filesystem(sb);
 	*flags |= SB_NODIRATIME;
@@ -466,7 +467,8 @@ err:
 	return ret;
 }
 
-static int ncp_fill_super(struct super_block *sb, void *raw_data, int silent)
+static int ncp_fill_super(struct super_block *sb,
+			  void *raw_data, size_t data_size, int silent)
 {
 	struct ncp_mount_data_kernel data;
 	struct ncp_server *server;
@@ -1023,9 +1025,9 @@ out:
 }
 
 static struct dentry *ncp_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data)
+	int flags, const char *dev_name, void *data, size_t data_size)
 {
-	return mount_nodev(fs_type, flags, data, ncp_fill_super);
+	return mount_nodev(fs_type, flags, data, data_size, ncp_fill_super);
 }
 
 static struct file_system_type ncp_fs_type = {

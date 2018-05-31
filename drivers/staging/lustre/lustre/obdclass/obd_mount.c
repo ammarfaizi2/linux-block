@@ -1112,7 +1112,8 @@ invalid:
  * and this is where we start setting things up.
  * @param data Mount options (e.g. -o flock,abort_recov)
  */
-static int lustre_fill_super(struct super_block *sb, void *lmd2_data, int silent)
+static int lustre_fill_super(struct super_block *sb,
+			     void *lmd2_data, size_t data_size, int silent)
 {
 	struct lustre_mount_data *lmd;
 	struct lustre_sb_info *lsi;
@@ -1207,9 +1208,9 @@ EXPORT_SYMBOL(lustre_register_super_ops);
 
 /***************** FS registration ******************/
 static struct dentry *lustre_mount(struct file_system_type *fs_type, int flags,
-				   const char *devname, void *data)
+				   const char *devname, void *data, size_t data_size)
 {
-	return mount_nodev(fs_type, flags, data, lustre_fill_super);
+	return mount_nodev(fs_type, flags, data, data_size, lustre_fill_super);
 }
 
 static void lustre_kill_super(struct super_block *sb)
