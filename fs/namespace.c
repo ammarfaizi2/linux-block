@@ -2389,48 +2389,51 @@ static inline int tree_contains_unbindable(struct mount *mnt)
 	return 0;
 }
 
-static int do_move_mount(struct path *path, const char *old_name)
+static int do_move_mount(struct path *old_path, struct path *new_path)
 {
-	struct path old_path, parent_path;
+	struct path parent_path = {.mnt = NULL, .dentry = NULL};
 	struct mount *p;
 	struct mount *old;
 	struct mountpoint *mp;
 	int err;
-	if (!old_name || !*old_name)
-		return -EINVAL;
-	err = kern_path(old_name, LOOKUP_FOLLOW, &old_path);
-	if (err)
-		return err;
+	bool attached;
 
-	mp = lock_mount(path);
+	mp = lock_mount(new_path);
 	err = PTR_ERR(mp);
 	if (IS_ERR(mp))
 		goto out;
 
-	old = real_mount(old_path.mnt);
-	p = real_mount(path->mnt);
+	old = real_mount(old_path->mnt);
+	p = real_mount(new_path->mnt);
 
 	err = -EINVAL;
-	if (!check_mnt(p) || !check_mnt(old))
+	/* The mountpoint must be in our namespace. */
+	if (!check_mnt(p))
+		goto out1;
+	/* The thing moved should be either ours or completely unattached. */
+	if (old->mnt_ns && !check_mnt(old))
+		goto out1;
+
+	attached = mnt_has_parent(old);
+	/* We need to allow open(O_PATH|O_CLONE_MOUNT) or fsmount() followed by
+	 * move_mount(), but mustn't allow "/" to be moved.
+	 */
+	if (old->mnt_ns && !attached)
 		goto out1;
 
 	if (old->mnt.mnt_flags & MNT_LOCKED)
 		goto out1;
 
-	err = -EINVAL;
-	if (old_path.dentry != old_path.mnt->mnt_root)
+	if (old_path->dentry != old_path->mnt->mnt_root)
 		goto out1;
 
-	if (!mnt_has_parent(old))
-		goto out1;
-
-	if (d_is_dir(path->dentry) !=
-	      d_is_dir(old_path.dentry))
+	if (d_is_dir(new_path->dentry) !=
+	    d_is_dir(old_path->dentry))
 		goto out1;
 	/*
 	 * Don't move a mount residing in a shared parent.
 	 */
-	if (IS_MNT_SHARED(old->mnt_parent))
+	if (attached && IS_MNT_SHARED(old->mnt_parent))
 		goto out1;
 	/*
 	 * Don't move a mount tree containing unbindable mounts to a destination
@@ -2443,7 +2446,8 @@ static int do_move_mount(struct path *path, const char *old_name)
 		if (p == old)
 			goto out1;
 
-	err = attach_recursive_mnt(old, real_mount(path->mnt), mp, &parent_path);
+	err = attach_recursive_mnt(old, real_mount(new_path->mnt), mp,
+				   attached ? &parent_path : NULL);
 	if (err)
 		goto out1;
 
@@ -2455,6 +2459,22 @@ out1:
 out:
 	if (!err)
 		path_put(&parent_path);
+	return err;
+}
+
+static int do_move_mount_old(struct path *path, const char *old_name)
+{
+	struct path old_path;
+	int err;
+
+	if (!old_name || !*old_name)
+		return -EINVAL;
+
+	err = kern_path(old_name, LOOKUP_FOLLOW, &old_path);
+	if (err)
+		return err;
+
+	err = do_move_mount(&old_path, path);
 	path_put(&old_path);
 	return err;
 }
@@ -2897,7 +2917,7 @@ long do_mount(const char *dev_name, const char __user *dir_name,
 	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
 		retval = do_change_type(&path, flags);
 	else if (flags & MS_MOVE)
-		retval = do_move_mount(&path, dev_name);
+		retval = do_move_mount_old(&path, dev_name);
 	else
 		retval = do_new_mount(&path, type_page, sb_flags, mnt_flags,
 				      dev_name, data_page, data_size);
@@ -3365,6 +3385,64 @@ err_unlock:
 	mutex_unlock(&fc->uapi_mutex);
 err_fsfd:
 	fdput(f);
+	return ret;
+}
+
+/*
+ * Move a mount from one place to another.  In combination with
+ * fsopen()/fsmount() this is used to install a new mount and in combination
+ * with open(O_PATH|O_CLONE_MOUNT[|O_NON_RECURSIVE]) it can be used to copy a
+ * mount subtree.
+ *
+ * Note the flags value is a combination of MOVE_MOUNT_* flags.
+ */
+SYSCALL_DEFINE5(move_mount,
+		int, from_dfd, const char *, from_pathname,
+		int, to_dfd, const char *, to_pathname,
+		unsigned int, flags)
+{
+	struct path from_path, to_path;
+	unsigned int lflags;
+	int ret = 0;
+
+	if (!may_mount())
+		return -EPERM;
+
+	if (flags & ~MOVE_MOUNT__MASK)
+		return -EINVAL;
+
+	/* If someone gives a pathname, they aren't permitted to move
+	 * from an fd that requires unmount as we can't get at the flag
+	 * to clear it afterwards.
+	 */
+	lflags = 0;
+	if (flags & MOVE_MOUNT_F_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
+	if (flags & MOVE_MOUNT_F_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
+	if (flags & MOVE_MOUNT_F_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
+
+	ret = user_path_at(from_dfd, from_pathname, lflags, &from_path);
+	if (ret < 0)
+		return ret;
+
+	lflags = 0;
+	if (flags & MOVE_MOUNT_T_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
+	if (flags & MOVE_MOUNT_T_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
+	if (flags & MOVE_MOUNT_T_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
+
+	ret = user_path_at(to_dfd, to_pathname, lflags, &to_path);
+	if (ret < 0)
+		goto out_from;
+
+	ret = security_move_mount(&from_path, &to_path);
+	if (ret < 0)
+		goto out_to;
+
+	ret = do_move_mount(&from_path, &to_path);
+
+out_to:
+	path_put(&to_path);
+out_from:
+	path_put(&from_path);
 	return ret;
 }
 
