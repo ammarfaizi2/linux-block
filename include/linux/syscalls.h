@@ -898,6 +898,8 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
 			  unsigned mask, struct statx __user *buffer);
 asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags,
 			   void *reserved3, void *reserved4, void *reserved5);
+asmlinkage long sys_fsmount(int fs_fd, unsigned int flags, unsigned int msflags,
+			    void *reserved4, void *reserved5);
 
 
 /*
