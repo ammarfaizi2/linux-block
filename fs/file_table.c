@@ -225,7 +225,10 @@ static void __fput(struct file *file)
 	file->f_inode = NULL;
 	file_free(file);
 	dput(dentry);
-	mntput(mnt);
+	if (unlikely(file->f_mode & FMODE_NEED_UNMOUNT))
+		drop_collected_mounts(mnt);
+	else
+		mntput(mnt);
 }
 
 static LLIST_HEAD(delayed_fput_list);
