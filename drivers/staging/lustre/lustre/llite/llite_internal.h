@@ -810,7 +810,7 @@ int ll_iocontrol(struct inode *inode, struct file *file,
 		 unsigned int cmd, unsigned long arg);
 int ll_flush_ctx(struct inode *inode);
 void ll_umount_begin(struct super_block *sb);
-int ll_remount_fs(struct super_block *sb, int *flags, char *data);
+int ll_remount_fs(struct super_block *sb, int *flags, char *data, size_t data_size);
 int ll_show_options(struct seq_file *seq, struct dentry *dentry);
 void ll_dirty_page_discard_warn(struct page *page, int ioret);
 int ll_prep_inode(struct inode **inode, struct ptlrpc_request *req,

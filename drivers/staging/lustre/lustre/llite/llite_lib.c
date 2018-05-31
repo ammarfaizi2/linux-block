@@ -2039,7 +2039,8 @@ void ll_umount_begin(struct super_block *sb)
 	schedule();
 }
 
-int ll_remount_fs(struct super_block *sb, int *flags, char *data)
+int ll_remount_fs(struct super_block *sb, int *flags,
+		  char *data, size_t data_size)
 {
 	struct ll_sb_info *sbi = ll_s2sbi(sb);
 	char *profilenm = get_profile_name(sb);
