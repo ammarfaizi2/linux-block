@@ -64,18 +64,12 @@ static atomic_t afs_count_active_inodes;
 
 enum {
 	afs_no_opt,
-	afs_opt_cell,
 	afs_opt_dyn,
-	afs_opt_rwpath,
-	afs_opt_vol,
 	afs_opt_autocell,
 };
 
 static const match_table_t afs_options_list = {
-	{ afs_opt_cell,		"cell=%s"	},
 	{ afs_opt_dyn,		"dyn"		},
-	{ afs_opt_rwpath,	"rwpath"	},
-	{ afs_opt_vol,		"vol=%s"	},
 	{ afs_opt_autocell,	"autocell"	},
 	{ afs_no_opt,		NULL		},
 };
@@ -194,37 +188,13 @@ static int afs_show_options(struct seq_file *m, struct dentry *root)
 static int afs_parse_option(struct fs_context *fc, char *opt, size_t len)
 {
 	struct afs_fs_context *ctx = fc->fs_private;
-	struct afs_cell *cell;
 	substring_t args[MAX_OPT_ARGS];
-	int token, size;
+	int token;
 
 	_enter("%s", opt);
 
 	token = match_token(opt, afs_options_list, args);
 	switch (token) {
-	case afs_opt_cell:
-		size = args[0].to - args[0].from;
-		if (size <= 0)
-			return -EINVAL;
-		if (size > AFS_MAXCELLNAME)
-			return -ENAMETOOLONG;
-
-		rcu_read_lock();
-		cell = afs_lookup_cell_rcu(ctx->net, args[0].from, size);
-		rcu_read_unlock();
-		if (IS_ERR(cell))
-			return PTR_ERR(cell);
-		afs_put_cell(ctx->net, ctx->cell);
-		ctx->cell = cell;
-		break;
-
-	case afs_opt_rwpath:
-		ctx->rwpath = true;
-		break;
-
-	case afs_opt_vol:
-		return -EINVAL; /* Not required for automount */
-
 	case afs_opt_autocell:
 		ctx->autocell = true;
 		break;
@@ -248,8 +218,8 @@ static int afs_parse_option(struct fs_context *fc, char *opt, size_t len)
  *
  * This can be one of the following:
  *	"%[cell:]volume[.]"		R/W volume
- *	"#[cell:]volume[.]"		R/O or R/W volume (rwpath=0),
- *					 or R/W (rwpath=1) volume
+ *	"#[cell:]volume[.]"		R/O or R/W volume (R/O parent),
+ *					 or R/W (R/W parent) volume
  *	"%[cell:]volume.readonly"	R/O volume
  *	"#[cell:]volume.readonly"	R/O volume
  *	"%[cell:]volume.backup"		Backup volume
@@ -280,9 +250,7 @@ static int afs_parse_source(struct fs_context *fc, char *name)
 	}
 
 	/* determine the type of volume we're looking for */
-	ctx->type = AFSVL_ROVOL;
-	ctx->force = false;
-	if (ctx->rwpath || name[0] == '%') {
+	if (name[0] == '%') {
 		ctx->type = AFSVL_RWVOL;
 		ctx->force = true;
 	}
@@ -603,9 +571,6 @@ static int afs_init_fs_context(struct fs_context *fc, struct dentry *reference)
 	struct afs_fs_context *ctx;
 	struct afs_super_info *src_as;
 	struct afs_cell *cell;
-
-	if (current->nsproxy->net_ns != &init_net)
-		return -EINVAL;
 
 	ctx = kzalloc(sizeof(struct afs_fs_context), GFP_KERNEL);
 	if (!ctx)
