@@ -437,3 +437,4 @@ COND_SYSCALL(setuid16);
 COND_SYSCALL(sys_fsopen);
 COND_SYSCALL(sys_fsmount);
 COND_SYSCALL(sys_fspick);
+COND_SYSCALL(sys_move_mount);

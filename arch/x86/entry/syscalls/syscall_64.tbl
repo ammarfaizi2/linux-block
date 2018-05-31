@@ -345,6 +345,7 @@
 334	common	fsopen			__x64_sys_fsopen
 335	common	fsmount			__x64_sys_fsmount
 336	common	fspick			__x64_sys_fspick
+337	common	move_mount		__x64_sys_move_mount
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact
