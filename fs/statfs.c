@@ -9,6 +9,7 @@
 #include <linux/security.h>
 #include <linux/uaccess.h>
 #include <linux/compat.h>
+#include <linux/fsinfo.h>
 #include "internal.h"
 
 static int flags_by_mnt(int mnt_flags)
@@ -384,3 +385,472 @@ COMPAT_SYSCALL_DEFINE2(ustat, unsigned, dev, struct compat_ustat __user *, u)
 	return 0;
 }
 #endif
+
+/*
+ * Get basic filesystem stats from statfs.
+ */
+static int fsinfo_generic_statfs(struct dentry *dentry,
+				 struct fsinfo_statfs *p)
+{
+	struct super_block *sb;
+	struct kstatfs buf;
+	int ret;
+
+	ret = statfs_by_dentry(dentry, &buf);
+	if (ret < 0)
+		return ret;
+
+	sb = dentry->d_sb;
+	p->f_blocks	= buf.f_blocks;
+	p->f_bfree	= buf.f_bfree;
+	p->f_bavail	= buf.f_bavail;
+	p->f_files	= buf.f_files;
+	p->f_ffree	= buf.f_ffree;
+	p->f_favail	= buf.f_ffree;
+	p->f_bsize	= buf.f_bsize;
+	p->f_frsize	= buf.f_frsize;
+	return sizeof(*p);
+}
+
+static int fsinfo_generic_ids(struct dentry *dentry,
+			      struct fsinfo_ids *p)
+{
+	struct super_block *sb;
+	struct kstatfs buf;
+	int ret;
+
+	ret = statfs_by_dentry(dentry, &buf);
+	if (ret < 0)
+		return ret;
+
+	sb = dentry->d_sb;
+	p->f_fstype	= sb->s_magic;
+	p->f_dev_major	= MAJOR(sb->s_dev);
+	p->f_dev_minor	= MINOR(sb->s_dev);
+	p->f_flags	= ST_VALID | flags_by_sb(sb->s_flags);
+
+	memcpy(&p->f_fsid, &buf.f_fsid, sizeof(p->f_fsid));
+	strcpy(p->f_fs_name, dentry->d_sb->s_type->name);
+	return sizeof(*p);
+}
+
+static int fsinfo_generic_limits(struct dentry *dentry,
+				 struct fsinfo_limits *lim)
+{
+	struct super_block *sb = dentry->d_sb;
+
+	lim->max_file_size = sb->s_maxbytes;
+	lim->max_hard_links = sb->s_max_links;
+	lim->max_uid = UINT_MAX;
+	lim->max_gid = UINT_MAX;
+	lim->max_projid = UINT_MAX;
+	lim->max_filename_len = NAME_MAX;
+	lim->max_symlink_len = PAGE_SIZE;
+	lim->max_xattr_name_len = XATTR_NAME_MAX;
+	lim->max_xattr_body_len = XATTR_SIZE_MAX;
+	lim->max_dev_major = 0xffffff;
+	lim->max_dev_minor = 0xff;
+	return sizeof(*lim);
+}
+
+static int fsinfo_generic_supports(struct dentry *dentry,
+				   struct fsinfo_supports *c)
+{
+	struct super_block *sb = dentry->d_sb;
+
+	c->stx_mask = STATX_BASIC_STATS;
+	if (sb->s_d_op && sb->s_d_op->d_automount)
+		c->stx_attributes |= STATX_ATTR_AUTOMOUNT;
+	return sizeof(*c);
+}
+
+static int fsinfo_generic_capabilities(struct dentry *dentry,
+				       struct fsinfo_capabilities *c)
+{
+	struct super_block *sb = dentry->d_sb;
+
+	if (sb->s_mtd)
+		fsinfo_set_cap(c, fsinfo_cap_is_flash_fs);
+	else if (sb->s_bdev)
+		fsinfo_set_cap(c, fsinfo_cap_is_block_fs);
+
+	if (sb->s_quota_types & QTYPE_MASK_USR)
+		fsinfo_set_cap(c, fsinfo_cap_user_quotas);
+	if (sb->s_quota_types & QTYPE_MASK_GRP)
+		fsinfo_set_cap(c, fsinfo_cap_group_quotas);
+	if (sb->s_quota_types & QTYPE_MASK_PRJ)
+		fsinfo_set_cap(c, fsinfo_cap_project_quotas);
+	if (sb->s_d_op && sb->s_d_op->d_automount)
+		fsinfo_set_cap(c, fsinfo_cap_automounts);
+	if (sb->s_id[0])
+		fsinfo_set_cap(c, fsinfo_cap_volume_id);
+
+	fsinfo_set_cap(c, fsinfo_cap_has_atime);
+	fsinfo_set_cap(c, fsinfo_cap_has_ctime);
+	fsinfo_set_cap(c, fsinfo_cap_has_mtime);
+	return sizeof(*c);
+}
+
+static int fsinfo_generic_timestamp_info(struct dentry *dentry,
+					 struct fsinfo_timestamp_info *ts)
+{
+	struct super_block *sb = dentry->d_sb;
+
+	/* If unset, assume 1s granularity */
+	u16 mantissa = 1;
+	s8 exponent = 0;
+
+	ts->minimum_timestamp = S64_MIN;
+	ts->maximum_timestamp = S64_MAX;
+	if (sb->s_time_gran < 1000000000) {
+		if (sb->s_time_gran < 1000)
+			exponent = -9;
+		else if (sb->s_time_gran < 1000000)
+			exponent = -6;
+		else
+			exponent = -3;
+	}
+#define set_gran(x)				\
+	do {					\
+		ts->x##_mantissa = mantissa;	\
+		ts->x##_exponent = exponent;	\
+	} while (0)
+	set_gran(atime_gran);
+	set_gran(btime_gran);
+	set_gran(ctime_gran);
+	set_gran(mtime_gran);
+	return sizeof(*ts);
+}
+
+static int fsinfo_generic_volume_uuid(struct dentry *dentry,
+				      struct fsinfo_volume_uuid *vu)
+{
+	struct super_block *sb = dentry->d_sb;
+
+	memcpy(vu, &sb->s_uuid, sizeof(*vu));
+	return sizeof(*vu);
+}
+
+static int fsinfo_generic_volume_id(struct dentry *dentry, char *buf)
+{
+	struct super_block *sb = dentry->d_sb;
+	size_t len = strlen(sb->s_id);
+
+	if (buf)
+		memcpy(buf, sb->s_id, len + 1);
+	return len;
+}
+
+static int fsinfo_generic_name_encoding(struct dentry *dentry, char *buf)
+{
+	static const char encoding[] = "utf8";
+
+	if (buf)
+		memcpy(buf, encoding, sizeof(encoding) - 1);
+	return sizeof(encoding) - 1;
+}
+
+static int fsinfo_generic_io_size(struct dentry *dentry,
+				  struct fsinfo_io_size *c)
+{
+	struct super_block *sb = dentry->d_sb;
+	struct kstatfs buf;
+	int ret;
+
+	if (sb->s_op->statfs == simple_statfs) {
+		c->block_size = PAGE_SIZE;
+		c->max_single_read_size = 0;
+		c->max_single_write_size = 0;
+		c->best_read_size = PAGE_SIZE;
+		c->best_write_size = PAGE_SIZE;
+	} else {
+		ret = statfs_by_dentry(dentry, &buf);
+		if (ret < 0)
+			return ret;
+		c->block_size = buf.f_bsize;
+		c->max_single_read_size = buf.f_bsize;
+		c->max_single_write_size = buf.f_bsize;
+		c->best_read_size = PAGE_SIZE;
+		c->best_write_size = PAGE_SIZE;
+	}
+	return sizeof(*c);
+}
+
+/*
+ * Implement some queries generically from stuff in the superblock.
+ */
+int generic_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
+{
+#define _gen(X) fsinfo_attr_##X: return fsinfo_generic_##X(dentry, params->buffer)
+
+	switch (params->request) {
+	case _gen(statfs);
+	case _gen(ids);
+	case _gen(limits);
+	case _gen(supports);
+	case _gen(capabilities);
+	case _gen(timestamp_info);
+	case _gen(volume_uuid);
+	case _gen(volume_id);
+	case _gen(name_encoding);
+	case _gen(io_size);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+EXPORT_SYMBOL(generic_fsinfo);
+
+/*
+ * Retrieve the filesystem info.  We make some stuff up if the operation is not
+ * supported.
+ */
+int vfs_fsinfo(const struct path *path, struct fsinfo_kparams *params)
+{
+	struct dentry *dentry = path->dentry;
+	int (*get_fsinfo)(struct dentry *, struct fsinfo_kparams *);
+	int ret;
+
+	if (params->request == fsinfo_attr_fsinfo) {
+		struct fsinfo_fsinfo *info = params->buffer;
+
+		info->max_attr	= fsinfo_attr__nr;
+		info->max_cap	= fsinfo_cap__nr;
+		return sizeof(*info);
+	}
+
+	get_fsinfo = dentry->d_sb->s_op->get_fsinfo;
+	if (!get_fsinfo) {
+		if (!dentry->d_sb->s_op->statfs)
+			return -EOPNOTSUPP;
+		get_fsinfo = generic_fsinfo;
+	}
+
+	ret = security_sb_statfs(dentry);
+	if (ret)
+		return ret;
+
+	ret = get_fsinfo(dentry, params);
+	if (ret < 0)
+		return ret;
+
+	if (params->request == fsinfo_attr_ids &&
+	    params->buffer) {
+		struct fsinfo_ids *p = params->buffer;
+
+		p->f_flags |= flags_by_mnt(path->mnt->mnt_flags);
+	}
+	return ret;
+}
+
+static int vfs_fsinfo_path(int dfd, const char __user *filename,
+			   struct fsinfo_kparams *params)
+{
+	struct path path;
+	unsigned lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
+	int ret = -EINVAL;
+
+	if ((params->at_flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT |
+				 AT_EMPTY_PATH)) != 0)
+		return -EINVAL;
+
+	if (params->at_flags & AT_SYMLINK_NOFOLLOW)
+		lookup_flags &= ~LOOKUP_FOLLOW;
+	if (params->at_flags & AT_NO_AUTOMOUNT)
+		lookup_flags &= ~LOOKUP_AUTOMOUNT;
+	if (params->at_flags & AT_EMPTY_PATH)
+		lookup_flags |= LOOKUP_EMPTY;
+
+retry:
+	ret = user_path_at(dfd, filename, lookup_flags, &path);
+	if (ret)
+		goto out;
+
+	ret = vfs_fsinfo(&path, params);
+	path_put(&path);
+	if (retry_estale(ret, lookup_flags)) {
+		lookup_flags |= LOOKUP_REVAL;
+		goto retry;
+	}
+out:
+	return ret;
+}
+
+static int vfs_fsinfo_fd(unsigned int fd, struct fsinfo_kparams *params)
+{
+	struct fd f = fdget_raw(fd);
+	int ret = -EBADF;
+
+	if (f.file) {
+		ret = vfs_fsinfo(&f.file->f_path, params);
+		fdput(f);
+	}
+	return ret;
+}
+
+/*
+ * Return buffer information by requestable attribute.
+ *
+ * STRUCT indicates a fixed-size structure with only one instance.
+ * STRUCT_N indicates a fixed-size structure that may have multiple instances.
+ * STRING indicates a string with only one instance.
+ * STRING_N indicates a string that may have multiple instances.
+ * STRUCT_ARRAY indicates an array of fixed-size structs with only one instance.
+ * STRUCT_ARRAY_N as above that may have multiple instances.
+ *
+ * If an entry is marked STRUCT, STRUCT_N or STRUCT_NM then if no buffer is
+ * supplied to sys_fsinfo(), sys_fsinfo() will handle returning the buffer size
+ * without calling vfs_fsinfo() and the filesystem.
+ *
+ * No struct may have more than 252 bytes (ie. 0x3f * 4)
+ */
+#define FSINFO_STRING(N)	 [fsinfo_attr_##N] = 0x0000
+#define FSINFO_STRUCT(N)	 [fsinfo_attr_##N] = sizeof(struct fsinfo_##N)
+#define FSINFO_STRING_N(N)	 [fsinfo_attr_##N] = 0x4000
+#define FSINFO_STRUCT_N(N)	 [fsinfo_attr_##N] = 0x4000 | sizeof(struct fsinfo_##N)
+#define FSINFO_STRUCT_NM(N)	 [fsinfo_attr_##N] = 0x8000 | sizeof(struct fsinfo_##N)
+static const u16 fsinfo_buffer_sizes[fsinfo_attr__nr] = {
+	FSINFO_STRUCT		(statfs),
+	FSINFO_STRUCT		(fsinfo),
+	FSINFO_STRUCT		(ids),
+	FSINFO_STRUCT		(limits),
+	FSINFO_STRUCT		(capabilities),
+	FSINFO_STRUCT		(supports),
+	FSINFO_STRUCT		(timestamp_info),
+	FSINFO_STRING		(volume_id),
+	FSINFO_STRUCT		(volume_uuid),
+	FSINFO_STRING		(volume_name),
+	FSINFO_STRING		(cell_name),
+	FSINFO_STRING		(domain_name),
+	FSINFO_STRING		(realm_name),
+	FSINFO_STRING_N		(server_name),
+	FSINFO_STRUCT_NM	(server_address),
+	FSINFO_STRING_N		(parameter),
+	FSINFO_STRING_N		(source),
+	FSINFO_STRING		(name_encoding),
+	FSINFO_STRING		(name_codepage),
+	FSINFO_STRUCT		(io_size),
+};
+
+/**
+ * sys_fsinfo - System call to get filesystem information
+ * @dfd: Base directory to pathwalk from or fd referring to filesystem.
+ * @filename: Filesystem to query or NULL.
+ * @_params: Parameters to define request (or NULL for enhanced statfs).
+ * @_buffer: Result buffer.
+ * @buf_size: Size of result buffer.
+ *
+ * Get information on a filesystem.  The filesystem attribute to be queried is
+ * indicated by @_params->request, and some of the attributes can have multiple
+ * values, indexed by @_params->Nth and @_params->Mth.  If @_params is NULL,
+ * then the 0th fsinfo_attr_statfs attribute is queried.  If an attribute does
+ * not exist, EOPNOTSUPP is returned; if the Nth,Mth value does not exist,
+ * ENODATA is returned.
+ *
+ * On success, the size of the attribute's value is returned.  If @buf_size is
+ * 0 or @_buffer is NULL, only the size is returned.  If the size of the value
+ * is larger than @buf_size, it will be truncated by the copy.  If the size of
+ * the value is smaller than @buf_size then the excess buffer space will be
+ * cleared.  The full size of the value will be returned, irrespective of how
+ * much data is actually placed in the buffer.
+ */
+SYSCALL_DEFINE5(fsinfo,
+		int, dfd, const char __user *, filename,
+		struct fsinfo_params __user *, _params,
+		void __user *, _buffer, size_t, buf_size)
+{
+	struct fsinfo_params user_params;
+	struct fsinfo_kparams params;
+	size_t size;
+	int ret;
+
+	if (_params) {
+		if (copy_from_user(&user_params, _params, sizeof(user_params)))
+			return -EFAULT;
+		if (user_params.__reserved[0] ||
+		    user_params.__reserved[1] ||
+		    user_params.__reserved[2] ||
+		    user_params.__reserved[3] ||
+		    user_params.__reserved[4] ||
+		    user_params.__reserved[5])
+			return -EINVAL;
+		if (user_params.request >= fsinfo_attr__nr)
+			return -EOPNOTSUPP;
+		params.at_flags = user_params.at_flags;
+		params.request = user_params.request;
+		params.Nth = user_params.Nth;
+		params.Mth = user_params.Mth;
+	} else {
+		params.at_flags = 0;
+		params.request = fsinfo_attr_statfs;
+		params.Nth = 0;
+		params.Mth = 0;
+	}
+
+	if (!_buffer || !buf_size) {
+		buf_size = 0;
+		_buffer = NULL;
+	}
+
+	/* Allocate an appropriately-sized buffer.  We will truncate the
+	 * contents when we write the contents back to userspace.
+	 */
+	size = fsinfo_buffer_sizes[params.request];
+	switch (size & 0xc000) {
+	case 0x0000:
+		if (params.Nth != 0)
+			return -ENODATA;
+		/* Fall through */
+	case 0x4000:
+		if (params.Mth != 0)
+			return -ENODATA;
+		/* Fall through */
+	case 0x8000:
+		break;
+	case 0xc000:
+		return -ENOBUFS;
+	}
+
+	size &= ~0xc000;
+	if (size == 0) {
+		size = 4096; /* String */
+	} else {
+		if (buf_size == 0)
+			return size; /* We know how big the buffer should be */
+
+		/* Clear any part of the buffer that we won't fill. */
+		if (buf_size > size &&
+		    clear_user(_buffer, buf_size) != 0)
+			return -EFAULT;
+	}
+
+	if (buf_size > 0) {
+		params.buf_size = size;
+		params.buffer = kzalloc(size, GFP_KERNEL);
+		if (!params.buffer)
+			return -ENOMEM;
+	} else {
+		params.buf_size = 0;
+		params.buffer = NULL;
+	}
+
+	if (filename)
+		ret = vfs_fsinfo_path(dfd, filename, &params);
+	else
+		ret = vfs_fsinfo_fd(dfd, &params);
+	if (ret < 0)
+		goto error;
+
+	if (ret == 0) {
+		ret = -ENODATA;
+		goto error;
+	}
+
+	if (buf_size > ret)
+		buf_size = ret;
+
+	if (copy_to_user(_buffer, params.buffer, buf_size))
+		ret = -EFAULT;
+error:
+	kfree(params.buffer);
+	return ret;
+}

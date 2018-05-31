@@ -401,4 +401,5 @@
 387	i386	fsmount			sys_fsmount			__ia32_sys_fsmount
 388	i386	fspick			sys_fspick			__ia32_sys_fspick
 389	i386	move_mount		sys_move_mount			__ia32_sys_move_mount
+390	i386	fsinfo			sys_fsinfo			__ia32_sys_fsinfo
 391	i386	open_tree		sys_open_tree			__ia32_sys_open_tree
