@@ -434,4 +434,5 @@ COND_SYSCALL(setreuid16);
 COND_SYSCALL(setuid16);
 
 /* fd-based mount */
+COND_SYSCALL(sys_fsopen);
 COND_SYSCALL(sys_move_mount);
