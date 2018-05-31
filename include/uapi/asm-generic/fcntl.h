@@ -6,7 +6,7 @@
 
 /*
  * FMODE_EXEC is 0x20
- * FMODE_NONOTIFY is 0x4000000
+ * FMODE_NONOTIFY is 0x80000000 (020000000000)
  * These cannot be used by userspace O_* until internal and external open
  * flags are split.
  * -Eric Paris
@@ -87,6 +87,14 @@
 
 #ifndef __O_TMPFILE
 #define __O_TMPFILE	020000000
+#endif
+
+#ifndef O_CLONE_MOUNT
+#define O_CLONE_MOUNT	040000000	/* Used with O_PATH to clone the mount subtree at path */
+#endif
+
+#ifndef O_NON_RECURSIVE
+#define O_NON_RECURSIVE	0100000000	/* Used with O_CLONE_MOUNT to only clone one mount */
 #endif
 
 /* a horrid kludge trying to make sure that this will fail on old kernels */
