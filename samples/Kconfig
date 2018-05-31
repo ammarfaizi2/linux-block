@@ -148,7 +148,6 @@ config SAMPLE_VFIO_MDEV_MBOCHS
 
 config SAMPLE_STATX
 	bool "Build example extended-stat using code"
-	depends on BROKEN
 	help
 	  Build example userspace program to use the new extended-stat syscall.
 
