@@ -226,7 +226,7 @@ static void __fput(struct file *file)
 	file_free(file);
 	dput(dentry);
 	if (unlikely(file->f_mode & FMODE_NEED_UNMOUNT))
-		drop_collected_mounts(mnt);
+		umount_on_fput(mnt);
 	else
 		mntput(mnt);
 }
