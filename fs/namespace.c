@@ -1793,12 +1793,26 @@ struct vfsmount *collect_mounts(const struct path *path)
 	return &tree->mnt;
 }
 
+void umount_on_fput(struct vfsmount *mnt)
+{
+	namespace_lock();
+	lock_mount_hash();
+	if (!real_mount(mnt)->mnt_ns) {
+		umount_tree(real_mount(mnt), UMOUNT_SYNC);
+		unlock_mount_hash();
+		namespace_unlock();
+	} else {
+		unlock_mount_hash();
+		namespace_unlock();
+		mntput(mnt);
+	}
+}
+
 void drop_collected_mounts(struct vfsmount *mnt)
 {
 	namespace_lock();
 	lock_mount_hash();
-	if (!real_mount(mnt)->mnt_ns)
-		umount_tree(real_mount(mnt), UMOUNT_SYNC);
+	umount_tree(real_mount(mnt), UMOUNT_SYNC);
 	unlock_mount_hash();
 	namespace_unlock();
 }
@@ -2153,6 +2167,30 @@ static bool has_locked_children(struct mount *mnt, struct dentry *dentry)
 	return false;
 }
 
+static struct mount *__do_loopback(struct path *old_path, int recurse)
+{
+	struct mount *mnt = ERR_PTR(-EINVAL), *old = real_mount(old_path->mnt);
+
+	if (IS_MNT_UNBINDABLE(old))
+		return mnt;
+
+	if (!check_mnt(old) && old_path->dentry->d_op != &ns_dentry_operations)
+		return mnt;
+
+	if (!recurse && has_locked_children(old, old_path->dentry))
+		return mnt;
+
+	if (recurse)
+		mnt = copy_tree(old, old_path->dentry, CL_COPY_MNT_NS_FILE);
+	else
+		mnt = clone_mnt(old, old_path->dentry, 0);
+
+	if (!IS_ERR(mnt))
+		mnt->mnt.mnt_flags &= ~MNT_LOCKED;
+
+	return mnt;
+}
+
 /*
  * do loopback mount.
  */
@@ -2160,7 +2198,7 @@ static int do_loopback(struct path *path, const char *old_name,
 				int recurse)
 {
 	struct path old_path;
-	struct mount *mnt = NULL, *old, *parent;
+	struct mount *mnt = NULL, *parent;
 	struct mountpoint *mp;
 	int err;
 	if (!old_name || !*old_name)
@@ -2174,37 +2212,20 @@ static int do_loopback(struct path *path, const char *old_name,
 		goto out;
 
 	mp = lock_mount(path);
-	err = PTR_ERR(mp);
-	if (IS_ERR(mp))
+	if (IS_ERR(mp)) {
+		err = PTR_ERR(mp);
 		goto out;
+	}
 
-	old = real_mount(old_path.mnt);
 	parent = real_mount(path->mnt);
-
-	err = -EINVAL;
-	if (IS_MNT_UNBINDABLE(old))
-		goto out2;
-
 	if (!check_mnt(parent))
 		goto out2;
 
-	if (!check_mnt(old) && old_path.dentry->d_op != &ns_dentry_operations)
-		goto out2;
-
-	if (!recurse && has_locked_children(old, old_path.dentry))
-		goto out2;
-
-	if (recurse)
-		mnt = copy_tree(old, old_path.dentry, CL_COPY_MNT_NS_FILE);
-	else
-		mnt = clone_mnt(old, old_path.dentry, 0);
-
+	mnt = __do_loopback(&old_path, recurse);
 	if (IS_ERR(mnt)) {
 		err = PTR_ERR(mnt);
 		goto out2;
 	}
-
-	mnt->mnt.mnt_flags &= ~MNT_LOCKED;
 
 	err = graft_tree(mnt, parent, mp);
 	if (err) {
@@ -2223,44 +2244,16 @@ out:
  * Copy the mount or mount subtree at the specified path for
  * open(O_PATH|O_CLONE_MOUNT).
  */
-int copy_mount_for_o_path(struct path *from, struct path *to, bool recurse)
+int copy_mount_for_o_path(struct path *path, bool recurse)
 {
-	struct mountpoint *mp;
-	struct mount *mnt = NULL, *f = real_mount(from->mnt);
-	int ret;
-
-	mp = lock_mount(from);
-	if (IS_ERR(mp))
-		return PTR_ERR(mp);
-
-	ret = -EINVAL;
-	if (IS_MNT_UNBINDABLE(f))
-		goto out_unlock;
-
-	if (!check_mnt(f) && from->dentry->d_op != &ns_dentry_operations)
-		goto out_unlock;
-
-	if (!recurse && has_locked_children(f, from->dentry))
-		goto out_unlock;
-
-	if (recurse)
-		mnt = copy_tree(f, from->dentry, CL_COPY_MNT_NS_FILE);
-	else
-		mnt = clone_mnt(f, from->dentry, 0);
+	struct mount *mnt = __do_loopback(path, recurse);
 	if (IS_ERR(mnt)) {
-		ret = PTR_ERR(mnt);
-		goto out_unlock;
+		path_put(path);
+		return PTR_ERR(mnt);
 	}
-
-	mnt->mnt.mnt_flags &= ~MNT_LOCKED;
-
-	to->mnt = &mnt->mnt;
-	to->dentry = dget(from->dentry);
-	ret = 0;
-
-out_unlock:
-	unlock_mount(mp);
-	return ret;
+	mntput(path->mnt);
+	path->mnt = &mnt->mnt;
+	return 0;
 }
 
 static int change_mount_flags(struct vfsmount *mnt, int ms_flags)
@@ -2398,11 +2391,12 @@ static inline int tree_contains_unbindable(struct mount *mnt)
 
 static int do_move_mount(struct path *old_path, struct path *new_path)
 {
-	struct path parent_path;
+	struct path parent_path = {.mnt = NULL, .dentry = NULL};
 	struct mount *p;
 	struct mount *old;
 	struct mountpoint *mp;
 	int err;
+	bool attached;
 
 	mp = lock_mount(new_path);
 	err = PTR_ERR(mp);
@@ -2420,10 +2414,11 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	if (old->mnt_ns && !check_mnt(old))
 		goto out1;
 
+	attached = mnt_has_parent(old);
 	/* We need to allow open(O_PATH|O_CLONE_MOUNT) or fsmount() followed by
 	 * move_mount(), but mustn't allow "/" to be moved.
 	 */
-	if (old->mnt_ns && !mnt_has_parent(old))
+	if (old->mnt_ns && !attached)
 		goto out1;
 
 	if (old->mnt.mnt_flags & MNT_LOCKED)
@@ -2438,7 +2433,7 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	/*
 	 * Don't move a mount residing in a shared parent.
 	 */
-	if (IS_MNT_SHARED(old->mnt_parent))
+	if (attached && IS_MNT_SHARED(old->mnt_parent))
 		goto out1;
 	/*
 	 * Don't move a mount tree containing unbindable mounts to a destination
@@ -2452,7 +2447,7 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 			goto out1;
 
 	err = attach_recursive_mnt(old, real_mount(new_path->mnt), mp,
-				   &parent_path);
+				   attached ? &parent_path : NULL);
 	if (err)
 		goto out1;
 

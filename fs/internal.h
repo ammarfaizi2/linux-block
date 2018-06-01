@@ -75,7 +75,7 @@ extern struct vfsmount *lookup_mnt(const struct path *);
 extern int finish_automount(struct vfsmount *, struct path *);
 
 extern int sb_prepare_remount_readonly(struct super_block *);
-extern int copy_mount_for_o_path(struct path *, struct path *, bool);
+extern int copy_mount_for_o_path(struct path *, bool);
 
 extern void __init mnt_init(void);
 
@@ -85,6 +85,8 @@ extern int mnt_want_write_file_path(struct file *);
 extern void __mnt_drop_write(struct vfsmount *);
 extern void __mnt_drop_write_file(struct file *);
 extern void mnt_drop_write_file_path(struct file *);
+
+extern void umount_on_fput(struct vfsmount *);
 
 /*
  * fs_struct.c
