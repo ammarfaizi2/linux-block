@@ -18,5 +18,19 @@
 #define P_PID		1
 #define P_PGID		2
 
+/* Commands to pass to pidctl() */
+enum pidcmd {
+	PIDCMD_QUERY_PID   = 0, /* Get pid in target pid namespace */
+	PIDCMD_QUERY_PIDNS = 1, /* Determine relationship between pid namespaces */
+	PIDCMD_GET_PIDFD   = 2, /* Get pidfd for a process */
+};
+
+/* Return values of PIDCMD_QUERY_PIDNS */
+enum pidcmd_query_pidns {
+	PIDNS_UNRELATED          = 0, /* The pid namespaces are unrelated */
+	PIDNS_EQUAL              = 1, /* The pid namespaces are equal */
+	PIDNS_SOURCE_IS_ANCESTOR = 2, /* Source pid namespace is ancestor of target pid namespace */
+	PIDNS_TARGET_IS_ANCESTOR = 3, /* Target pid namespace is ancestor of source pid namespace */
+};
 
 #endif /* _UAPI_LINUX_WAIT_H */

@@ -429,6 +429,31 @@ static struct ns_common *pidns_get_parent(struct ns_common *ns)
 	return &get_pid_ns(pid_ns)->ns;
 }
 
+/**
+ * pidnscmp - Determine if @ancestor is ancestor of @descendant
+ * @ancestor:   pidns suspected to be the ancestor of @descendant
+ * @descendant: pidns suspected to be the descendant of @ancestor
+ *
+ * Returns -1 if @ancestor is not an ancestor of @descendant,
+ * 0 if @ancestor is the same pidns as @descendant, 1 if @ancestor
+ * is an ancestor of @descendant.
+ */
+int pidnscmp(struct pid_namespace *ancestor, struct pid_namespace *descendant)
+{
+	if (ancestor == descendant)
+		return 0;
+
+	for (;;) {
+		if (!descendant)
+			return -1;
+		if (descendant == ancestor)
+			break;
+		descendant = descendant->parent;
+	}
+
+	return 1;
+}
+
 static struct user_namespace *pidns_owner(struct ns_common *ns)
 {
 	return to_pid_ns(ns)->user_ns;

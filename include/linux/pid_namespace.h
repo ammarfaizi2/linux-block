@@ -64,6 +64,8 @@ extern struct pid_namespace *copy_pid_ns(unsigned long flags,
 extern void zap_pid_ns_processes(struct pid_namespace *pid_ns);
 extern int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd);
 extern void put_pid_ns(struct pid_namespace *ns);
+extern int pidnscmp(struct pid_namespace *ancestor,
+		    struct pid_namespace *descendant);
 
 #else /* !CONFIG_PID_NS */
 #include <linux/err.h>
@@ -91,6 +93,12 @@ static inline void zap_pid_ns_processes(struct pid_namespace *ns)
 }
 
 static inline int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
+{
+	return 0;
+}
+
+static inline int pidnscmp(struct pid_namespace *ancestor,
+			   struct pid_namespace *descendant)
 {
 	return 0;
 }
