@@ -1840,6 +1840,21 @@ struct vfsmount *collect_mounts(const struct path *path)
 	return &tree->mnt;
 }
 
+void umount_on_fput(struct vfsmount *mnt)
+{
+	namespace_lock();
+	lock_mount_hash();
+	if (!real_mount(mnt)->mnt_ns) {
+		umount_tree(real_mount(mnt), UMOUNT_SYNC);
+		unlock_mount_hash();
+		namespace_unlock();
+	} else {
+		unlock_mount_hash();
+		namespace_unlock();
+		mntput(mnt);
+	}
+}
+
 void drop_collected_mounts(struct vfsmount *mnt)
 {
 	namespace_lock();
@@ -2389,6 +2404,7 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	struct mount *old;
 	struct mountpoint *mp;
 	int err;
+	bool attached;
 
 	mp = lock_mount(new_path);
 	err = PTR_ERR(mp);
@@ -2399,10 +2415,19 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	p = real_mount(new_path->mnt);
 
 	err = -EINVAL;
-	if (!check_mnt(p) || !check_mnt(old))
+	/* The mountpoint must be in our namespace. */
+	if (!check_mnt(p))
+		goto out1;
+	/* The thing moved should be either ours or completely unattached. */
+	if (old->mnt_ns && !check_mnt(old))
 		goto out1;
 
-	if (!mnt_has_parent(old))
+	attached = mnt_has_parent(old);
+	/*
+	 * We need to allow open(O_PATH|O_CLONE_MOUNT) followed by
+	 * move_mount(), but mustn't allow "/" to be moved.
+	 */
+	if (old->mnt_ns && !attached)
 		goto out1;
 
 	if (old->mnt.mnt_flags & MNT_LOCKED)
@@ -2417,7 +2442,7 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	/*
 	 * Don't move a mount residing in a shared parent.
 	 */
-	if (IS_MNT_SHARED(old->mnt_parent))
+	if (attached && IS_MNT_SHARED(old->mnt_parent))
 		goto out1;
 	/*
 	 * Don't move a mount tree containing unbindable mounts to a destination
@@ -2431,7 +2456,7 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 			goto out1;
 
 	err = attach_recursive_mnt(old, real_mount(new_path->mnt), mp,
-				   &parent_path);
+				   attached ? &parent_path : NULL);
 	if (err)
 		goto out1;
 
@@ -3115,6 +3140,8 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 
 /*
  * Move a mount from one place to another.
+ * In combination with open(O_PATH|O_CLONE_MOUNT[|O_NON_RECURSIVE]) it can be
+ * used to copy a mount subtree.
  *
  * Note the flags value is a combination of MOVE_MOUNT_* flags.
  */
