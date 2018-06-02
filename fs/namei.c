@@ -1438,10 +1438,8 @@ static int path_parent_directory(struct path *path)
 static int follow_dotdot(struct nameidata *nd)
 {
 	while(1) {
-		if (nd->path.dentry == nd->root.dentry &&
-		    nd->path.mnt == nd->root.mnt) {
+		if (path_equal(&nd->path, &nd->root))
 			break;
-		}
 		if (nd->path.dentry != nd->path.mnt->mnt_root) {
 			int ret = path_parent_directory(&nd->path);
 			if (ret)
@@ -3852,11 +3850,11 @@ int vfs_rmdir(struct inode *dir, struct dentry *dentry)
 	if (error)
 		goto out;
 
-	shrink_dcache_parent(dentry);
 	error = dir->i_op->rmdir(dir, dentry);
 	if (error)
 		goto out;
 
+	shrink_dcache_parent(dentry);
 	dentry->d_inode->i_flags |= S_DEAD;
 	dont_mount(dentry);
 	detach_mounts(dentry);
@@ -4439,8 +4437,6 @@ int vfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		    old_dir->i_nlink >= max_links)
 			goto out;
 	}
-	if (is_dir && !(flags & RENAME_EXCHANGE) && target)
-		shrink_dcache_parent(new_dentry);
 	if (!is_dir) {
 		error = try_break_deleg(source, delegated_inode);
 		if (error)
@@ -4457,8 +4453,10 @@ int vfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		goto out;
 
 	if (!(flags & RENAME_EXCHANGE) && target) {
-		if (is_dir)
+		if (is_dir) {
+			shrink_dcache_parent(new_dentry);
 			target->i_flags |= S_DEAD;
+		}
 		dont_mount(new_dentry);
 		detach_mounts(new_dentry);
 	}

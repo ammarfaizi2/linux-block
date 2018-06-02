@@ -341,8 +341,8 @@ int afs_cell_init(struct afs_net *net, const char *rootcell)
 
 	/* install the new cell */
 	write_seqlock(&net->cells_lock);
-	old_root = net->ws_cell;
-	net->ws_cell = new_root;
+	old_root = rcu_access_pointer(net->ws_cell);
+	rcu_assign_pointer(net->ws_cell, new_root);
 	write_sequnlock(&net->cells_lock);
 
 	afs_put_cell(net, old_root);
@@ -528,7 +528,7 @@ static int afs_activate_cell(struct afs_net *net, struct afs_cell *cell)
 					     NULL, 0,
 					     cell, 0, true);
 #endif
-	ret = afs_proc_cell_setup(net, cell);
+	ret = afs_proc_cell_setup(cell);
 	if (ret < 0)
 		return ret;
 	spin_lock(&net->proc_cells_lock);
@@ -544,7 +544,7 @@ static void afs_deactivate_cell(struct afs_net *net, struct afs_cell *cell)
 {
 	_enter("%s", cell->name);
 
-	afs_proc_cell_remove(net, cell);
+	afs_proc_cell_remove(cell);
 
 	spin_lock(&net->proc_cells_lock);
 	list_del_init(&cell->proc_link);
@@ -755,8 +755,8 @@ void afs_cell_purge(struct afs_net *net)
 	_enter("");
 
 	write_seqlock(&net->cells_lock);
-	ws = net->ws_cell;
-	net->ws_cell = NULL;
+	ws = rcu_access_pointer(net->ws_cell);
+	RCU_INIT_POINTER(net->ws_cell, NULL);
 	write_sequnlock(&net->cells_lock);
 	afs_put_cell(net, ws);
 
