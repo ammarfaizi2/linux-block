@@ -1084,3 +1084,36 @@ int radix__has_transparent_hugepage(void)
 	return 0;
 }
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+
+void radix__ptep_set_access_flags(struct vm_area_struct *vma, pte_t *ptep,
+				  pte_t entry, unsigned long address, int psize)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	unsigned long set = pte_val(entry) & (_PAGE_DIRTY | _PAGE_ACCESSED |
+					      _PAGE_RW | _PAGE_EXEC);
+	/*
+	 * To avoid NMMU hang while relaxing access, we need mark
+	 * the pte invalid in between.
+	 */
+	if (cpu_has_feature(CPU_FTR_POWER9_DD1) ||
+	    atomic_read(&mm->context.copros) > 0) {
+		unsigned long old_pte, new_pte;
+
+		old_pte = __radix_pte_update(ptep, ~0, 0);
+		/*
+		 * new value of pte
+		 */
+		new_pte = old_pte | set;
+		radix__flush_tlb_page_psize(mm, address, psize);
+		__radix_pte_update(ptep, 0, new_pte);
+	} else {
+		__radix_pte_update(ptep, 0, set);
+		/*
+		 * Book3S does not require a TLB flush when relaxing access
+		 * restrictions when the address space is not attached to a
+		 * NMMU, because the core MMU will reload the pte after taking
+		 * an access fault, which is defined by the architectue.
+		 */
+	}
+	/* See ptesync comment in radix__set_pte_at */
+}

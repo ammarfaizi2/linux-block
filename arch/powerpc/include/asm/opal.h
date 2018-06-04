@@ -294,6 +294,7 @@ int opal_set_power_shift_ratio(u32 handle, int token, u32 psr);
 int opal_sensor_group_clear(u32 group_hndl, int token);
 
 s64 opal_signal_system_reset(s32 cpu);
+s64 opal_quiesce(u64 shutdown_type, s32 cpu);
 
 /* Internal functions */
 extern int early_init_dt_scan_opal(unsigned long node, const char *uname,
@@ -327,7 +328,7 @@ extern int opal_get_sensor_data(u32 sensor_hndl, u32 *sensor_data);
 extern int opal_get_sensor_data_u64(u32 sensor_hndl, u64 *sensor_data);
 
 struct rtc_time;
-extern unsigned long opal_get_boot_time(void);
+extern time64_t opal_get_boot_time(void);
 extern void opal_nvram_init(void);
 extern void opal_flash_update_init(void);
 extern void opal_flash_update_print_message(void);

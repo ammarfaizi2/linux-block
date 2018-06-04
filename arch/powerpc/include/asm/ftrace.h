@@ -65,7 +65,7 @@ struct dyn_arch_ftrace {
 #endif /* CONFIG_FUNCTION_TRACER */
 
 #ifndef __ASSEMBLY__
-#if defined(CONFIG_FTRACE_SYSCALLS)
+#ifdef CONFIG_FTRACE_SYSCALLS
 /*
  * Some syscall entry functions on powerpc start with "ppc_" (fork and clone,
  * for instance) or ppc32_/ppc64_. We should also match the sys_ variant with

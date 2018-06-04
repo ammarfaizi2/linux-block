@@ -1172,6 +1172,10 @@ static int cpu_cmd(void)
 	/* try to switch to cpu specified */
 	if (!cpumask_test_cpu(cpu, &cpus_in_xmon)) {
 		printf("cpu 0x%lx isn't in xmon\n", cpu);
+#ifdef CONFIG_PPC64
+		printf("backtrace of paca[0x%lx].saved_r1 (possibly stale):\n", cpu);
+		xmon_show_stack(paca_ptrs[cpu]->saved_r1, 0, 0);
+#endif
 		return 0;
 	}
 	xmon_taken = 0;
@@ -1637,7 +1641,7 @@ static void excprint(struct pt_regs *fp)
 
 	printf("  current = 0x%px\n", current);
 #ifdef CONFIG_PPC64
-	printf("  paca    = 0x%px\t softe: %d\t irq_happened: 0x%02x\n",
+	printf("  paca    = 0x%px\t irqmask: 0x%02x\t irq_happened: 0x%02x\n",
 	       local_paca, local_paca->irq_soft_mask, local_paca->irq_happened);
 #endif
 	if (current) {
@@ -3173,7 +3177,7 @@ skipbl(void)
 }
 
 #define N_PTREGS	44
-static char *regnames[N_PTREGS] = {
+static const char *regnames[N_PTREGS] = {
 	"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
 	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	"r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
@@ -3208,18 +3212,17 @@ scanhex(unsigned long *vp)
 			regname[i] = c;
 		}
 		regname[i] = 0;
-		for (i = 0; i < N_PTREGS; ++i) {
-			if (strcmp(regnames[i], regname) == 0) {
-				if (xmon_regs == NULL) {
-					printf("regs not available\n");
-					return 0;
-				}
-				*vp = ((unsigned long *)xmon_regs)[i];
-				return 1;
-			}
+		i = match_string(regnames, N_PTREGS, regname);
+		if (i < 0) {
+			printf("invalid register name '%%%s'\n", regname);
+			return 0;
 		}
-		printf("invalid register name '%%%s'\n", regname);
-		return 0;
+		if (xmon_regs == NULL) {
+			printf("regs not available\n");
+			return 0;
+		}
+		*vp = ((unsigned long *)xmon_regs)[i];
+		return 1;
 	}
 
 	/* skip leading "0x" if any */
