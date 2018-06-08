@@ -102,7 +102,7 @@ static struct file *cxl_getfile(const char *name,
 	path.mnt = mntget(cxl_vfs_mount);
 	d_instantiate(path.dentry, inode);
 
-	file = alloc_file(&path, OPEN_FMODE(flags), fops);
+	file = alloc_file(&path, OPEN_FMODE(flags) | FMODE_OPENED, fops);
 	if (IS_ERR(file)) {
 		path_put(&path);
 		goto err_fs;

@@ -102,7 +102,7 @@ struct file *anon_inode_getfile(const char *name,
 
 	d_instantiate(path.dentry, anon_inode_inode);
 
-	file = alloc_file(&path, OPEN_FMODE(flags), fops);
+	file = alloc_file(&path, OPEN_FMODE(flags) | FMODE_OPENED, fops);
 	if (IS_ERR(file))
 		goto err_dput;
 	file->f_mapping = anon_inode_inode->i_mapping;

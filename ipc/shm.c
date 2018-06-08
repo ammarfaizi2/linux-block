@@ -1449,7 +1449,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
 		goto out_nattch;
 	}
 
-	file = alloc_file(&path, f_mode,
+	file = alloc_file(&path, f_mode | FMODE_OPENED,
 			  is_file_hugepages(shp->shm_file) ?
 				&shm_file_operations_huge :
 				&shm_file_operations);

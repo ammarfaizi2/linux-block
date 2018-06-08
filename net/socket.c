@@ -411,7 +411,7 @@ struct file *sock_alloc_file(struct socket *sock, int flags, const char *dname)
 
 	d_instantiate(path.dentry, SOCK_INODE(sock));
 
-	file = alloc_file(&path, FMODE_READ | FMODE_WRITE,
+	file = alloc_file(&path, FMODE_READ | FMODE_WRITE | FMODE_OPENED,
 		  &socket_file_ops);
 	if (IS_ERR(file)) {
 		/* drop dentry, keep inode for a bit */

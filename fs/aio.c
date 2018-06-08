@@ -234,7 +234,8 @@ static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
 	path.mnt = mntget(aio_mnt);
 
 	d_instantiate(path.dentry, inode);
-	file = alloc_file(&path, FMODE_READ | FMODE_WRITE, &aio_ring_fops);
+	file = alloc_file(&path, FMODE_READ | FMODE_WRITE | FMODE_OPENED,
+			  &aio_ring_fops);
 	if (IS_ERR(file)) {
 		path_put(&path);
 		return file;

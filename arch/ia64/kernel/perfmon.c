@@ -2684,6 +2684,7 @@ pfm_context_create(pfm_context_t *ctx, void *arg, int count, struct pt_regs *reg
 	 * initialize soft PMU state
 	 */
 	pfm_reset_pmu_state(ctx);
+	filp->f_mode |= FMODE_OPENED;
 
 	fd_install(fd, filp);
 

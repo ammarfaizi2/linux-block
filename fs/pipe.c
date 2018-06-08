@@ -775,6 +775,8 @@ int create_pipe_files(struct file **res, int flags)
 		goto err_file;
 	}
 
+	res[0]->f_mode |= FMODE_OPENED;
+	f->f_mode |= FMODE_OPENED;
 	path_get(&path);
 	res[0]->private_data = inode->i_pipe;
 	res[0]->f_flags = O_RDONLY | (flags & O_NONBLOCK);

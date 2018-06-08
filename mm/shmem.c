@@ -3942,7 +3942,7 @@ static struct file *__shmem_file_setup(struct vfsmount *mnt, const char *name, l
 	if (IS_ERR(res))
 		goto put_path;
 
-	res = alloc_file(&path, FMODE_WRITE | FMODE_READ,
+	res = alloc_file(&path, FMODE_WRITE | FMODE_READ | FMODE_OPENED,
 		  &shmem_file_operations);
 	if (IS_ERR(res))
 		goto put_path;
