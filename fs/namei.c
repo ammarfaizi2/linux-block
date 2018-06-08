@@ -3061,6 +3061,8 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
 		 * permission here.
 		 */
 		int acc_mode = op->acc_mode;
+		if (file->f_mode & FMODE_OPENED)
+			*opened |= FILE_OPENED;
 		if (*opened & FILE_CREATED) {
 			WARN_ON(!(open_flag & O_CREAT));
 			fsnotify_create(dir, dentry);
@@ -3480,9 +3482,11 @@ static int do_tmpfile(struct nameidata *nd, unsigned flags,
 	if (error)
 		goto out2;
 	file->f_path.mnt = path.mnt;
-	error = finish_open(file, child, NULL, opened);
+	error = finish_open(file, child, NULL);
 	if (error)
 		goto out2;
+	if (file->f_mode & FMODE_OPENED)
+		*opened |= FILE_OPENED;
 	error = open_check_o_direct(file);
 	if (error)
 		fput(file);

@@ -852,19 +852,13 @@ cleanup_file:
  * Returns zero on success or -errno if the open failed.
  */
 int finish_open(struct file *file, struct dentry *dentry,
-		int (*open)(struct inode *, struct file *),
-		int *opened)
+		int (*open)(struct inode *, struct file *))
 {
-	int error;
-	BUG_ON(*opened & FILE_OPENED); /* once it's opened, it's opened */
+	BUG_ON(file->f_mode & FMODE_OPENED); /* once it's opened, it's opened */
 
 	file->f_path.dentry = dentry;
-	error = do_dentry_open(file, d_backing_inode(dentry), open,
+	return do_dentry_open(file, d_backing_inode(dentry), open,
 			       current_cred());
-	if (!error)
-		*opened |= FILE_OPENED;
-
-	return error;
 }
 EXPORT_SYMBOL(finish_open);
 
