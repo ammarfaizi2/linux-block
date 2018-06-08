@@ -3061,8 +3061,6 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
 		 * permission here.
 		 */
 		int acc_mode = op->acc_mode;
-		if (file->f_mode & FMODE_OPENED)
-			*opened |= FILE_OPENED;
 		if (*opened & FILE_CREATED) {
 			WARN_ON(!(open_flag & O_CREAT));
 			fsnotify_create(dir, dentry);
@@ -3397,11 +3395,10 @@ finish_open_created:
 	error = may_open(&nd->path, acc_mode, open_flag);
 	if (error)
 		goto out;
-	BUG_ON(*opened & FILE_OPENED); /* once it's opened, it's opened */
+	BUG_ON(file->f_mode & FMODE_OPENED); /* once it's opened, it's opened */
 	error = vfs_open(&nd->path, file, current_cred());
 	if (error)
 		goto out;
-	*opened |= FILE_OPENED;
 opened:
 	error = open_check_o_direct(file);
 	if (!error)
@@ -3483,8 +3480,6 @@ static int do_tmpfile(struct nameidata *nd, unsigned flags,
 	error = finish_open(file, child, NULL);
 	if (error)
 		goto out2;
-	if (file->f_mode & FMODE_OPENED)
-		*opened |= FILE_OPENED;
 	error = open_check_o_direct(file);
 out2:
 	mnt_drop_write(path.mnt);
@@ -3526,8 +3521,6 @@ static struct file *path_openat(struct nameidata *nd,
 
 	if (unlikely(file->f_flags & O_PATH)) {
 		error = do_o_path(nd, flags, file);
-		if (!error)
-			opened |= FILE_OPENED;
 		goto out2;
 	}
 
@@ -3548,12 +3541,12 @@ static struct file *path_openat(struct nameidata *nd,
 	terminate_walk(nd);
 out2:
 	if (likely(!error)) {
-		if (likely(opened & FILE_OPENED))
+		if (likely(file->f_mode & FMODE_OPENED))
 			return file;
 		WARN_ON(1);
 		error = -EINVAL;
 	}
-	if (opened & FILE_OPENED)
+	if (file->f_mode & FMODE_OPENED)
 		fput(file);
 	else
 		put_filp(file);
