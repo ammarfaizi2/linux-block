@@ -2425,6 +2425,120 @@ struct xdp_md {
 	__u32 rx_queue_index;  /* rxq->queue_index  */
 };
 
+enum {
+	XDP_DATA_META_HASH = 0,
+	XDP_DATA_META_MARK,
+	XDP_DATA_META_VLAN,
+	XDP_DATA_META_CSUM_COMPLETE,
+
+	XDP_DATA_META_MAX,
+};
+
+struct xdp_md_hash {
+	__u32 hash;
+	__u8  type;
+} __attribute__((aligned(4)));
+
+struct xdp_md_mark {
+	__u32 mark;
+} __attribute__((aligned(4)));
+
+struct xdp_md_vlan {
+	__u16 vlan;
+} __attribute__((aligned(4)));
+
+struct xdp_md_csum {
+	__u16 csum;
+} __attribute__((aligned(4)));
+
+static const __u16 xdp_md_size[XDP_DATA_META_MAX] = {
+	sizeof(struct xdp_md_hash), /* XDP_DATA_META_HASH */
+	sizeof(struct xdp_md_mark), /* XDP_DATA_META_MARK */
+	sizeof(struct xdp_md_vlan), /* XDP_DATA_META_VLAN */
+	sizeof(struct xdp_md_csum), /* XDP_DATA_META_CSUM_COMPLETE */
+};
+
+struct xdp_md_info {
+	__u16 present:1;
+	__u16 offset:15; /* offset from data_meta in xdp_md buffer */
+};
+
+/* XDP meta data offsets info array
+ * present bit describes if a meta data is or will be present in xdp_md buff
+ * offset describes where a meta data is or should be placed in xdp_md buff
+ *
+ * Kernel builds this array using xdp_md_info_build helper on demand.
+ * User space builds it statically in the xdp program.
+ */
+typedef struct xdp_md_info xdp_md_info_arr[XDP_DATA_META_MAX];
+
+static __always_inline __u8
+xdp_data_meta_present(xdp_md_info_arr mdi, int meta_data)
+{
+	return mdi[meta_data].present;
+}
+
+static __always_inline void
+xdp_data_meta_set_hash(xdp_md_info_arr mdi, void *data_meta, __u32 hash, __u8 htype)
+{
+	struct xdp_md_hash *hash_md;
+
+	hash_md = (struct xdp_md_hash *)((char*)data_meta + mdi[XDP_DATA_META_HASH].offset);
+	hash_md->hash = hash;
+	hash_md->type = htype;
+}
+
+static __always_inline struct xdp_md_hash *
+xdp_data_meta_get_hash(xdp_md_info_arr mdi, void *data_meta)
+{
+	return (struct xdp_md_hash *)((char*)data_meta + mdi[XDP_DATA_META_HASH].offset);
+}
+
+static __always_inline void
+xdp_data_meta_set_mark(xdp_md_info_arr mdi, void *data_meta, __u32 mark)
+{
+	struct xdp_md_mark *mark_md;
+
+	mark_md = (struct xdp_md_mark *)((char*)data_meta + mdi[XDP_DATA_META_MARK].offset);
+	mark_md->mark = mark;
+}
+
+static __always_inline struct xdp_md_mark *
+xdp_data_meta_get_mark(xdp_md_info_arr mdi, void *data_meta)
+{
+	return (struct xdp_md_mark *)((char*)data_meta + mdi[XDP_DATA_META_MARK].offset);
+}
+
+static __always_inline void
+xdp_data_meta_set_vlan(xdp_md_info_arr mdi, void *data_meta, __u16 vlan_tci)
+{
+	struct xdp_md_vlan *vlan_md;
+
+	vlan_md = (struct xdp_md_vlan *)((char*)data_meta + mdi[XDP_DATA_META_VLAN].offset);
+	vlan_md->vlan = vlan_tci;
+}
+
+static __always_inline struct xdp_md_vlan *
+xdp_data_meta_get_vlan(xdp_md_info_arr mdi, void *data_meta)
+{
+	return (struct xdp_md_vlan *)((char*)data_meta + mdi[XDP_DATA_META_VLAN].offset);
+}
+
+static __always_inline void
+xdp_data_meta_set_csum_complete(xdp_md_info_arr mdi, void *data_meta, __u16 csum)
+{
+	struct xdp_md_csum *csum_md;
+
+	csum_md = (struct xdp_md_csum *)((char*)data_meta + mdi[XDP_DATA_META_CSUM_COMPLETE].offset);
+	csum_md->csum = csum;
+}
+
+static __always_inline struct xdp_md_csum *
+xdp_data_meta_get_csum_complete(xdp_md_info_arr mdi, void *data_meta)
+{
+	return (struct xdp_md_csum *)((char*)data_meta + mdi[XDP_DATA_META_CSUM_COMPLETE].offset);
+}
+
 enum sk_action {
 	SK_DROP = 0,
 	SK_PASS,

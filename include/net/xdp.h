@@ -147,6 +147,12 @@ xdp_set_data_meta_invalid(struct xdp_buff *xdp)
 	xdp->data_meta = xdp->data + 1;
 }
 
+static __always_inline void
+xdp_reset_data_meta(struct xdp_buff *xdp)
+{
+	xdp->data_meta = xdp->data_hard_start;
+}
+
 static __always_inline bool
 xdp_data_meta_unsupported(const struct xdp_buff *xdp)
 {

@@ -4,6 +4,7 @@
 
 #include <linux/types.h>
 #include <linux/netlink.h>
+#include <linux/bpf.h>
 
 /* This struct should be in sync with struct rtnl_link_stats64 */
 struct rtnl_link_stats {
@@ -928,13 +929,16 @@ enum {
 					 XDP_FLAGS_HW_MODE)
 
 /* TODO : add new netlink xdp u64 meta_flags
- * for meta data only
+ * for meta data only & build according XDP_DATA_META_* enums
  */
-#define XDP_FLAGS_META_HASH		(1U << 16)
-#define XDP_FLAGS_META_MARK		(1U << 17)
-#define XDP_FLAGS_META_VLAN		(1U << 18)
-#define XDP_FLAGS_META_CSUM_COMPLETE	(1U << 19)
-#define XDP_FLAGS_META_ALL		(XDP_FLAGS_META_HASH      | \
+
+#define XDP_FLAGS_META_SHIFT            (16)
+#define XDP_FLAG_META(FLAG)             ((1U << XDP_DATA_META_##FLAG) << XDP_FLAGS_META_SHIFT)
+#define XDP_FLAGS_META_HASH             XDP_FLAG_META(HASH)
+#define XDP_FLAGS_META_MARK             XDP_FLAG_META(MARK)
+#define XDP_FLAGS_META_VLAN             XDP_FLAG_META(VLAN)
+#define XDP_FLAGS_META_CSUM_COMPLETE    XDP_FLAG_META(CSUM_COMPLETE)
+#define XDP_FLAGS_META_ALL              (XDP_FLAGS_META_HASH      | \
 					 XDP_FLAGS_META_MARK      | \
 					 XDP_FLAGS_META_VLAN      | \
 					 XDP_FLAGS_META_CSUM_COMPLETE)

@@ -7780,6 +7780,25 @@ static bool __dev_xdp_meta_supported(struct net_device *dev,
 	return ((xdp.meta_flags & meta_flags) == meta_flags);
 }
 
+static void xdp_md_info_build(xdp_md_info_arr mdi, u32 xdp_flags_meta)
+{
+	u16 offset = 0;
+	int i;
+
+	for (i = 0; i < XDP_DATA_META_MAX; i++) {
+		u32 meta_data_flag = BIT(i) << XDP_FLAGS_META_SHIFT;
+
+		if (!(meta_data_flag & xdp_flags_meta)) {
+			mdi[i].present = 0;
+			continue;
+		}
+
+		mdi[i].present = 1;
+		mdi[i].offset = offset;
+		offset += xdp_md_size[i];
+	}
+}
+
 static int dev_xdp_install(struct net_device *dev, bpf_op_t bpf_op,
 			   struct netlink_ext_ack *extack, u32 flags,
 			   struct bpf_prog *prog)
@@ -7794,6 +7813,8 @@ static int dev_xdp_install(struct net_device *dev, bpf_op_t bpf_op,
 	xdp.extack = extack;
 	xdp.flags = flags;
 	xdp.prog = prog;
+
+	xdp_md_info_build(xdp.md_info, flags & XDP_FLAGS_META_ALL);
 
 	return bpf_op(dev, &xdp);
 }
