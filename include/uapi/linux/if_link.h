@@ -926,8 +926,22 @@ enum {
 #define XDP_FLAGS_MODES			(XDP_FLAGS_SKB_MODE | \
 					 XDP_FLAGS_DRV_MODE | \
 					 XDP_FLAGS_HW_MODE)
+
+/* TODO : add new netlink xdp u64 meta_flags
+ * for meta data only
+ */
+#define XDP_FLAGS_META_HASH		(1U << 16)
+#define XDP_FLAGS_META_MARK		(1U << 17)
+#define XDP_FLAGS_META_VLAN		(1U << 18)
+#define XDP_FLAGS_META_CSUM_COMPLETE	(1U << 19)
+#define XDP_FLAGS_META_ALL		(XDP_FLAGS_META_HASH      | \
+					 XDP_FLAGS_META_MARK      | \
+					 XDP_FLAGS_META_VLAN      | \
+					 XDP_FLAGS_META_CSUM_COMPLETE)
+
 #define XDP_FLAGS_MASK			(XDP_FLAGS_UPDATE_IF_NOEXIST | \
-					 XDP_FLAGS_MODES)
+					 XDP_FLAGS_MODES             | \
+					 XDP_FLAGS_META_ALL)
 
 /* These are stored into IFLA_XDP_ATTACHED on dump. */
 enum {

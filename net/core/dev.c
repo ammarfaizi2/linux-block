@@ -7765,6 +7765,21 @@ u32 __dev_xdp_query(struct net_device *dev, bpf_op_t bpf_op,
 	return xdp.prog_id;
 }
 
+static bool __dev_xdp_meta_supported(struct net_device *dev,
+				     bpf_op_t bpf_op, u32 meta_flags)
+{
+	struct netdev_bpf xdp = {};
+
+	 /* Backward compatible, all devices support no meta_flags */
+	if (!meta_flags)
+		return true;
+
+	xdp.command = XDP_QUERY_META_FLAGS;
+	bpf_op(dev, &xdp);
+
+	return ((xdp.meta_flags & meta_flags) == meta_flags);
+}
+
 static int dev_xdp_install(struct net_device *dev, bpf_op_t bpf_op,
 			   struct netlink_ext_ack *extack, u32 flags,
 			   struct bpf_prog *prog)
@@ -7842,12 +7857,18 @@ int dev_change_xdp_fd(struct net_device *dev, struct netlink_ext_ack *extack,
 		bpf_chk = generic_xdp_install;
 
 	if (fd >= 0) {
+		u32 meta_flags = (flags & XDP_FLAGS_META_ALL);
+
 		if (__dev_xdp_query(dev, bpf_chk, XDP_QUERY_PROG) ||
 		    __dev_xdp_query(dev, bpf_chk, XDP_QUERY_PROG_HW))
 			return -EEXIST;
+
 		if ((flags & XDP_FLAGS_UPDATE_IF_NOEXIST) &&
 		    __dev_xdp_query(dev, bpf_op, query))
 			return -EBUSY;
+
+		if (!__dev_xdp_meta_supported(dev, bpf_op, meta_flags))
+			return -EINVAL;
 
 		prog = bpf_prog_get_type_dev(fd, BPF_PROG_TYPE_XDP,
 					     bpf_op == ops->ndo_bpf);

@@ -856,6 +856,10 @@ enum bpf_netdev_command {
 	XDP_SETUP_PROG_HW,
 	XDP_QUERY_PROG,
 	XDP_QUERY_PROG_HW,
+	/* Query Supported XDP_FLAGS_META_*, Called before new XDP program setup
+	 * and only if meta_flags were requested by the user to validate if the
+	 * device supports the requested flags, if not program setup will fail */
+	XDP_QUERY_META_FLAGS,
 	/* BPF program for offload callbacks, invoked at program load time. */
 	BPF_OFFLOAD_VERIFIER_PREP,
 	BPF_OFFLOAD_TRANSLATE,
@@ -884,6 +888,11 @@ struct netdev_bpf {
 			u32 prog_id;
 			/* flags with which program was installed */
 			u32 prog_flags;
+		};
+		/* XDP_QUERY_META_FLAGS */
+		struct {
+			/* TODO u64 */
+			u32 meta_flags;
 		};
 		/* BPF_OFFLOAD_VERIFIER_PREP */
 		struct {
