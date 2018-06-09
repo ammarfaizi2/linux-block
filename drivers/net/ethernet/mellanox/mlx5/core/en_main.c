@@ -99,7 +99,7 @@ bool mlx5e_check_fragmented_striding_rq_cap(struct mlx5_core_dev *mdev)
 static u32 mlx5e_rx_get_linear_frag_sz(struct mlx5e_params *params)
 {
 	u16 hw_mtu = MLX5E_SW2HW_MTU(params, params->sw_mtu);
-	u16 linear_rq_headroom = params->xdp_prog ?
+	u16 linear_rq_headroom = params->xdp.prog ?
 		XDP_PACKET_HEADROOM : MLX5_RX_HEADROOM;
 	u32 frag_sz;
 
@@ -107,7 +107,7 @@ static u32 mlx5e_rx_get_linear_frag_sz(struct mlx5e_params *params)
 
 	frag_sz = MLX5_SKB_FRAG_SZ(linear_rq_headroom + hw_mtu);
 
-	if (params->xdp_prog && frag_sz < PAGE_SIZE)
+	if (params->xdp.prog && frag_sz < PAGE_SIZE)
 		frag_sz = PAGE_SIZE;
 
 	return frag_sz;
@@ -177,7 +177,7 @@ static u8 mlx5e_mpwqe_get_log_num_strides(struct mlx5_core_dev *mdev,
 static u16 mlx5e_get_rq_headroom(struct mlx5_core_dev *mdev,
 				 struct mlx5e_params *params)
 {
-	u16 linear_rq_headroom = params->xdp_prog ?
+	u16 linear_rq_headroom = params->xdp.prog ?
 		XDP_PACKET_HEADROOM : MLX5_RX_HEADROOM;
 	bool is_linear_skb;
 
@@ -212,7 +212,7 @@ bool mlx5e_striding_rq_possible(struct mlx5_core_dev *mdev,
 {
 	return mlx5e_check_fragmented_striding_rq_cap(mdev) &&
 		!MLX5_IPSEC_DEV(mdev) &&
-		!(params->xdp_prog && !mlx5e_rx_mpwqe_is_linear_skb(mdev, params));
+		!(params->xdp.prog && !mlx5e_rx_mpwqe_is_linear_skb(mdev, params));
 }
 
 void mlx5e_set_rq_type(struct mlx5_core_dev *mdev, struct mlx5e_params *params)
@@ -493,11 +493,12 @@ static int mlx5e_alloc_rq(struct mlx5e_channel *c,
 	rq->ix      = c->ix;
 	rq->mdev    = mdev;
 	rq->stats   = &c->priv->channel_stats[c->ix].rq;
+	rq->xdp     = params->xdp;
 
-	rq->xdp_prog = params->xdp_prog ? bpf_prog_inc(params->xdp_prog) : NULL;
-	if (IS_ERR(rq->xdp_prog)) {
-		err = PTR_ERR(rq->xdp_prog);
-		rq->xdp_prog = NULL;
+	rq->xdp.prog = params->xdp.prog ? bpf_prog_inc(params->xdp.prog) : NULL;
+	if (IS_ERR(rq->xdp.prog)) {
+		err = PTR_ERR(rq->xdp.prog);
+		rq->xdp.prog = NULL;
 		goto err_rq_wq_destroy;
 	}
 
@@ -505,7 +506,7 @@ static int mlx5e_alloc_rq(struct mlx5e_channel *c,
 	if (err < 0)
 		goto err_rq_wq_destroy;
 
-	rq->buff.map_dir = rq->xdp_prog ? DMA_BIDIRECTIONAL : DMA_FROM_DEVICE;
+	rq->buff.map_dir = rq->xdp.prog ? DMA_BIDIRECTIONAL : DMA_FROM_DEVICE;
 	rq->buff.headroom = mlx5e_get_rq_headroom(mdev, params);
 	pool_size = 1 << params->log_rq_mtu_frames;
 
@@ -683,8 +684,8 @@ err_free:
 	}
 
 err_rq_wq_destroy:
-	if (rq->xdp_prog)
-		bpf_prog_put(rq->xdp_prog);
+	if (rq->xdp.prog)
+		bpf_prog_put(rq->xdp.prog);
 	xdp_rxq_info_unreg(&rq->xdp_rxq);
 	if (rq->page_pool)
 		page_pool_destroy(rq->page_pool);
@@ -697,8 +698,8 @@ static void mlx5e_free_rq(struct mlx5e_rq *rq)
 {
 	int i;
 
-	if (rq->xdp_prog)
-		bpf_prog_put(rq->xdp_prog);
+	if (rq->xdp.prog)
+		bpf_prog_put(rq->xdp.prog);
 
 	xdp_rxq_info_unreg(&rq->xdp_rxq);
 	if (rq->page_pool)
@@ -1921,7 +1922,7 @@ static int mlx5e_open_channel(struct mlx5e_priv *priv, int ix,
 	c->netdev   = priv->netdev;
 	c->mkey_be  = cpu_to_be32(priv->mdev->mlx5e_res.mkey.key);
 	c->num_tc   = params->num_tc;
-	c->xdp      = !!params->xdp_prog;
+	c->xdp      = !!params->xdp.prog;
 	c->stats    = &priv->channel_stats[ix].ch;
 
 	mlx5_vector2eqn(priv->mdev, ix, &eqn, &irq);
@@ -3738,7 +3739,7 @@ int mlx5e_change_mtu(struct net_device *netdev, int new_mtu,
 	new_channels.params = *params;
 	new_channels.params.sw_mtu = new_mtu;
 
-	if (params->xdp_prog &&
+	if (params->xdp.prog &&
 	    !mlx5e_rx_is_linear_skb(priv->mdev, &new_channels.params)) {
 		netdev_err(netdev, "MTU(%d) > %d is not allowed while XDP enabled\n",
 			   new_mtu, MLX5E_XDP_MAX_MTU);
@@ -4186,7 +4187,7 @@ static void mlx5e_tx_timeout(struct net_device *dev)
 	queue_work(priv->wq, &priv->tx_timeout_work);
 }
 
-static int mlx5e_xdp_allowed(struct mlx5e_priv *priv, struct bpf_prog *prog)
+static int mlx5e_xdp_allowed(struct mlx5e_priv *priv, struct mlx5e_xdp_prog_info *xdp)
 {
 	struct net_device *netdev = priv->netdev;
 	struct mlx5e_channels new_channels = {};
@@ -4202,7 +4203,7 @@ static int mlx5e_xdp_allowed(struct mlx5e_priv *priv, struct bpf_prog *prog)
 	}
 
 	new_channels.params = priv->channels.params;
-	new_channels.params.xdp_prog = prog;
+	new_channels.params.xdp = *xdp;
 
 	if (!mlx5e_rx_is_linear_skb(priv->mdev, &new_channels.params)) {
 		netdev_warn(netdev, "XDP is not allowed with MTU(%d) > %d\n",
@@ -4213,10 +4214,10 @@ static int mlx5e_xdp_allowed(struct mlx5e_priv *priv, struct bpf_prog *prog)
 	return 0;
 }
 
-static int mlx5e_xdp_set(struct net_device *netdev, struct bpf_prog *prog)
+static int mlx5e_xdp_set(struct net_device *netdev, struct mlx5e_xdp_prog_info *xdp)
 {
 	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct bpf_prog *old_prog;
+	struct bpf_prog *old_prog, *prog = xdp->prog;
 	bool reset, was_opened;
 	int err = 0;
 	int i;
@@ -4224,14 +4225,14 @@ static int mlx5e_xdp_set(struct net_device *netdev, struct bpf_prog *prog)
 	mutex_lock(&priv->state_lock);
 
 	if (prog) {
-		err = mlx5e_xdp_allowed(priv, prog);
+		err = mlx5e_xdp_allowed(priv, xdp);
 		if (err)
 			goto unlock;
 	}
 
 	was_opened = test_bit(MLX5E_STATE_OPENED, &priv->state);
 	/* no need for full reset when exchanging programs */
-	reset = (!priv->channels.params.xdp_prog || !prog);
+	reset = (!priv->channels.params.xdp.prog || !prog);
 
 	if (was_opened && reset)
 		mlx5e_close_locked(netdev);
@@ -4249,9 +4250,11 @@ static int mlx5e_xdp_set(struct net_device *netdev, struct bpf_prog *prog)
 	/* exchange programs, extra prog reference we got from caller
 	 * as long as we don't fail from this point onwards.
 	 */
-	old_prog = xchg(&priv->channels.params.xdp_prog, prog);
+	old_prog = xchg(&priv->channels.params.xdp.prog, prog);
 	if (old_prog)
 		bpf_prog_put(old_prog);
+
+	priv->channels.params.xdp = *xdp;
 
 	if (reset) /* change RQ type according to priv->xdp_prog */
 		mlx5e_set_rq_type(priv->mdev, &priv->channels.params);
@@ -4272,7 +4275,8 @@ static int mlx5e_xdp_set(struct net_device *netdev, struct bpf_prog *prog)
 		napi_synchronize(&c->napi);
 		/* prevent mlx5e_poll_rx_cq from accessing rq->xdp_prog */
 
-		old_prog = xchg(&c->rq.xdp_prog, prog);
+		old_prog = xchg(&c->rq.xdp.prog, prog);
+		c->rq.xdp = *xdp;
 
 		set_bit(MLX5E_RQ_STATE_ENABLED, &c->rq.state);
 		/* napi_schedule in case we have missed anything */
@@ -4294,7 +4298,7 @@ static u32 mlx5e_xdp_query(struct net_device *dev)
 	u32 prog_id = 0;
 
 	mutex_lock(&priv->state_lock);
-	xdp_prog = priv->channels.params.xdp_prog;
+	xdp_prog = priv->channels.params.xdp.prog;
 	if (xdp_prog)
 		prog_id = xdp_prog->aux->id;
 	mutex_unlock(&priv->state_lock);
@@ -4304,9 +4308,15 @@ static u32 mlx5e_xdp_query(struct net_device *dev)
 
 static int mlx5e_xdp(struct net_device *dev, struct netdev_bpf *xdp)
 {
+	struct mlx5e_xdp_prog_info xdp_info;
+
 	switch (xdp->command) {
 	case XDP_SETUP_PROG:
-		return mlx5e_xdp_set(dev, xdp->prog);
+		xdp_info.prog  = xdp->prog;
+		xdp_info.flags = xdp->flags;
+		memcpy(xdp_info.md_info, xdp->md_info, sizeof(xdp->md_info));
+
+		return mlx5e_xdp_set(dev, &xdp_info);
 	case XDP_QUERY_PROG:
 		xdp->prog_id = mlx5e_xdp_query(dev);
 		return 0;

@@ -225,6 +225,12 @@ enum mlx5e_priv_flag {
 #define MLX5E_MAX_BW_ALLOC 100 /* Max percentage of BW allocation */
 #endif
 
+struct mlx5e_xdp_prog_info {
+	struct bpf_prog      *prog;
+	u32                   flags;
+	xdp_md_info_arr       md_info;
+};
+
 struct mlx5e_params {
 	u8  log_sq_size;
 	u8  rq_wq_type;
@@ -246,7 +252,7 @@ struct mlx5e_params {
 	bool tx_dim_enabled;
 	u32 lro_timeout;
 	u32 pflags;
-	struct bpf_prog *xdp_prog;
+	struct mlx5e_xdp_prog_info xdp;
 	unsigned int sw_mtu;
 	int hard_mtu;
 };
@@ -562,7 +568,8 @@ struct mlx5e_rq {
 	struct net_dim         dim; /* Dynamic Interrupt Moderation */
 
 	/* XDP */
-	struct bpf_prog       *xdp_prog;
+	struct mlx5e_xdp_prog_info  xdp;
+	unsigned int           hw_mtu;
 	struct mlx5e_xdpsq     xdpsq;
 	DECLARE_BITMAP(flags, 8);
 	struct page_pool      *page_pool;
