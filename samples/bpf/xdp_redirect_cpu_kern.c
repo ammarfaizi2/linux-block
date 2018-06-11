@@ -565,6 +565,53 @@ int  xdp_prognum5_lb_hash_ip_pairs(struct xdp_md *ctx)
 	return bpf_redirect_map(&cpu_map, cpu_dest, 0);
 }
 
+#ifdef XDP_MD_BTF
+/* xdp_md_btf.h is normally generated via bpftool */
+#include "xdp_md_btf.h"
+
+SEC("xdp_cpu_map6_md_hash_separate")
+int  xdp_prognum6_md_hash_separate(struct xdp_md *ctx)
+{
+	struct xdp_md_desc *md = (void *)(long)ctx->data_meta;
+	void *data_end  = (void *)(long)ctx->data_end;
+	void *data      = (void *)(long)ctx->data;
+	struct datarec *rec;
+	u32 cpu_dest = 0;
+	u32 cpu_idx = 0;
+	u32 *cpu_lookup;
+	u32 key = 0;
+	u32 *cpu_max;
+
+	cpu_max = bpf_map_lookup_elem(&cpus_count, &key);
+	if (!cpu_max)
+		return XDP_ABORTED;
+
+	/* Count RX packet in map */
+	rec = bpf_map_lookup_elem(&rx_cnt, &key);
+	if (!rec)
+		return XDP_ABORTED;
+	rec->processed++;
+
+	if (md + 1 > data)
+		return XDP_ABORTED;
+
+	cpu_idx = reciprocal_scale(md->hash32, *cpu_max);
+
+	cpu_lookup = bpf_map_lookup_elem(&cpus_available, &cpu_idx);
+	if (!cpu_lookup)
+		return XDP_ABORTED;
+	cpu_dest = *cpu_lookup;
+
+	if (cpu_dest >= MAX_CPUS) {
+		rec->issue++;
+		return XDP_ABORTED;
+	}
+
+	return bpf_redirect_map(&cpu_map, cpu_dest, 0);
+}
+
+#endif
+
 char _license[] SEC("license") = "GPL";
 
 /*** Trace point code ***/
