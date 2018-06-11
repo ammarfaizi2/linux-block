@@ -386,6 +386,73 @@ int  xdp_prognum3_proto_separate(struct xdp_md *ctx)
 	return bpf_redirect_map(&cpu_map, cpu_dest, 0);
 }
 
+#if 0
+xdp_md_info_arr mdi = {
+	[XDP_DATA_META_HASH] = {.offset = 0, .present = 1},
+	[XDP_DATA_META_VLAN] = {.offset = sizeof(struct xdp_md_hash), .present = 1},
+};
+#endif
+
+SEC("xdp_cpu_map4_hash_separate")
+int  xdp_prognum4_hash_separate(struct xdp_md *ctx)
+{
+	void *data_meta = (void *)(long)ctx->data_meta;
+	void *data_end  = (void *)(long)ctx->data_end;
+	void *data      = (void *)(long)ctx->data;
+	struct xdp_md_hash *hash;
+	struct xdp_md_vlan *vlan;
+	struct datarec *rec;
+	u32 cpu_dest = 0;
+	u32 cpu_idx = 0;
+	u32 *cpu_lookup;
+	u32 key = 0;
+
+	/* Count RX packet in map */
+	rec = bpf_map_lookup_elem(&rx_cnt, &key);
+	if (!rec)
+		return XDP_ABORTED;
+	rec->processed++;
+
+	/* for some reason this code fails to be verified */
+#if 0
+	hash = xdp_data_meta_get_hash(mdi, data_meta);
+	if (hash + 1 > data)
+		return XDP_ABORTED;
+
+	vlan = xdp_data_meta_get_vlan(mdi, data_meta);
+	if (vlan + 1 > data)
+		return XDP_ABORTED;
+#endif
+
+	/* Work around for the above code */
+	hash = data_meta; /* since we know hash will appear first */
+        if (hash + 1 > data)
+		return XDP_ABORTED;
+
+#if 0
+	// Just for testing
+	/* We know that vlan will appear after the hash */
+	vlan = (void *)((char *)data_meta + sizeof(*hash));
+	if (vlan + 1 > data) {
+		return XDP_ABORTED;
+	}
+#endif
+
+	cpu_idx = reciprocal_scale(hash->hash, MAX_CPUS);
+
+	cpu_lookup = bpf_map_lookup_elem(&cpus_available, &cpu_idx);
+	if (!cpu_lookup)
+		return XDP_ABORTED;
+	cpu_dest = *cpu_lookup;
+
+	if (cpu_dest >= MAX_CPUS) {
+		rec->issue++;
+		return XDP_ABORTED;
+	}
+
+	return bpf_redirect_map(&cpu_map, cpu_dest, 0);
+}
+
 SEC("xdp_cpu_map4_ddos_filter_pktgen")
 int  xdp_prognum4_ddos_filter_pktgen(struct xdp_md *ctx)
 {

@@ -679,6 +679,14 @@ int main(int argc, char **argv)
 		return EXIT_FAIL_OPTION;
 	}
 
+	/*
+	 * prog_num 4 requires xdp meta data hash
+	 * Vlan is not required but added just for testing..
+	 */
+	if (prog_num == 4)
+		xdp_flags |= XDP_FLAGS_META_HASH | XDP_FLAGS_META_VLAN;
+
+
 	/* Remove XDP program when program is interrupted or killed */
 	signal(SIGINT, int_exit);
 	signal(SIGTERM, int_exit);
