@@ -5,6 +5,7 @@
 #define __MLX5_DEVLINK_H__
 
 #include <net/devlink.h>
+#include <linux/mlx5/driver.h>
 
 int mlx5_devlink_register(struct devlink *devlink, struct device *dev);
 void mlx5_devlink_unregister(struct devlink *devlink);
