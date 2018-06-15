@@ -50,6 +50,11 @@ extern int __block_write_begin_int(struct page *page, loff_t pos, unsigned len,
 extern void __init chrdev_init(void);
 
 /*
+ * fs_context.c
+ */
+extern const struct fs_context_operations legacy_fs_context_ops;
+
+/*
  * namei.c
  */
 extern int filename_lookup(int dfd, struct filename *name, unsigned flags,
@@ -101,7 +106,8 @@ extern struct file *get_empty_filp(void);
 /*
  * super.c
  */
-extern int do_remount_sb(struct super_block *, int, void *, size_t, int);
+extern int do_remount_sb(struct super_block *, int, void *, size_t, int,
+			 struct fs_context *);
 extern bool trylock_super(struct super_block *sb);
 extern struct dentry *mount_fs(struct file_system_type *,
 			       int, const char *, void *, size_t);
