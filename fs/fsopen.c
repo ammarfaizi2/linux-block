@@ -144,6 +144,54 @@ wrong_phase:
 	goto err_unlock;
 }
 
+/*
+ * Allow the user to read back any error, warning or informational messages.
+ */
+static ssize_t fscontext_read(struct file *file,
+			      char __user *_buf, size_t len, loff_t *pos)
+{
+	struct fs_context *fc = file->private_data;
+	struct fc_log *log = fc->log;
+	unsigned int logsize = ARRAY_SIZE(log->buffer);
+	ssize_t ret;
+	char *p;
+	bool need_free;
+	int index, n;
+
+	ret = mutex_lock_interruptible(&fc->uapi_mutex);
+	if (ret < 0)
+		return ret;
+
+	ret = -ENODATA;
+	if (log->head != log->tail) {
+		index = log->tail & (logsize - 1);
+		p = log->buffer[index];
+		need_free = log->need_free & (1 << index);
+		log->buffer[index] = NULL;
+		log->need_free &= ~(1 << index);
+		log->tail++;
+		ret = 0;
+	}
+
+	mutex_unlock(&fc->uapi_mutex);
+	if (ret < 0)
+		return ret;
+
+	ret = -EMSGSIZE;
+	n = strlen(p);
+	if (n > len)
+		goto err_free;
+	ret = -EFAULT;
+	if (copy_to_user(_buf, p, n) != 0)
+		goto err_free;
+	ret = n;
+
+err_free:
+	if (need_free)
+		kfree(p);
+	return ret;
+}
+
 static int fscontext_release(struct inode *inode, struct file *file)
 {
 	struct fs_context *fc = file->private_data;
@@ -156,6 +204,7 @@ static int fscontext_release(struct inode *inode, struct file *file)
 }
 
 const struct file_operations fscontext_fs_fops = {
+	.read		= fscontext_read,
 	.write		= fscontext_write,
 	.release	= fscontext_release,
 	.llseek		= no_llseek,
@@ -187,6 +236,7 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	struct file_system_type *fs_type;
 	struct fs_context *fc;
 	const char *fs_name;
+	int ret;
 
 	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
@@ -208,8 +258,19 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	if (IS_ERR(fc))
 		return PTR_ERR(fc);
 
+	ret = -ENOMEM;
+	fc->log = kzalloc(sizeof(*fc->log), GFP_KERNEL);
+	if (!fc->log)
+		goto err_fc;
+	refcount_set(&fc->log->usage, 1);
+	fc->log->owner = fs_type->owner;
+
 	fc->phase = FS_CONTEXT_CREATE_PARAMS;
 	return fsopen_create_fd(fc, flags & FSOPEN_CLOEXEC ? O_CLOEXEC : 0);
+
+err_fc:
+	put_fs_context(fc);
+	return ret;
 }
 
 /*
@@ -252,9 +313,18 @@ SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags
 
 	fc->phase = FS_CONTEXT_RECONF_PARAMS;
 
+	ret = -ENOMEM;
+	fc->log = kzalloc(sizeof(*fc->log), GFP_KERNEL);
+	if (!fc->log)
+		goto err_fc;
+	refcount_set(&fc->log->usage, 1);
+	fc->log->owner = fc->fs_type->owner;
+
 	path_put(&target);
 	return fsopen_create_fd(fc, flags & FSPICK_CLOEXEC ? O_CLOEXEC : 0);
 
+err_fc:
+	put_fs_context(fc);
 err_path:
 	path_put(&target);
 err:
