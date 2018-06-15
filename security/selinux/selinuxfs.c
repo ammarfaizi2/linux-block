@@ -1890,7 +1890,8 @@ static struct dentry *sel_make_dir(struct dentry *dir, const char *name,
 
 #define NULL_FILE_NAME "null"
 
-static int sel_fill_super(struct super_block *sb, void *data, int silent)
+static int sel_fill_super(struct super_block *sb, void *data, size_t data_size,
+			  int silent)
 {
 	struct selinux_fs_info *fsi;
 	int ret;
@@ -2005,9 +2006,10 @@ err:
 }
 
 static struct dentry *sel_mount(struct file_system_type *fs_type,
-		      int flags, const char *dev_name, void *data)
+				int flags, const char *dev_name,
+				void *data, size_t data_size)
 {
-	return mount_single(fs_type, flags, data, sel_fill_super);
+	return mount_single(fs_type, flags, data, data_size, sel_fill_super);
 }
 
 static void sel_kill_sb(struct super_block *sb)
