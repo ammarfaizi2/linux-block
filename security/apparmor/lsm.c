@@ -591,7 +591,8 @@ static int apparmor_sb_mountpoint(struct fs_context *fc, struct path *mountpoint
 }
 
 static int apparmor_sb_mount(const char *dev_name, const struct path *path,
-			     const char *type, unsigned long flags, void *data)
+			     const char *type, unsigned long flags,
+			     void *data, size_t data_size)
 {
 	struct aa_label *label;
 	int error = 0;

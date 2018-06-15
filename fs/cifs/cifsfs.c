@@ -572,7 +572,8 @@ static int cifs_show_stats(struct seq_file *s, struct dentry *root)
 }
 #endif
 
-static int cifs_remount(struct super_block *sb, int *flags, char *data)
+static int cifs_remount(struct super_block *sb, int *flags,
+			char *data, size_t data_size)
 {
 	sync_filesystem(sb);
 	*flags |= SB_NODIRATIME;
@@ -675,7 +676,7 @@ static int cifs_set_super(struct super_block *sb, void *data)
 
 static struct dentry *
 cifs_do_mount(struct file_system_type *fs_type,
-	      int flags, const char *dev_name, void *data)
+	      int flags, const char *dev_name, void *data, size_t data_size)
 {
 	int rc;
 	struct super_block *sb;
