@@ -1527,8 +1527,6 @@ union security_list_options {
 	void (*sb_free_security)(struct super_block *sb);
 	int (*sb_copy_data)(char *orig, size_t orig_size, char *copy);
 	int (*sb_remount)(struct super_block *sb, void *data, size_t data_size);
-	int (*sb_kern_mount)(struct super_block *sb, int flags,
-			     void *data, size_t data_size);
 	int (*sb_show_options)(struct seq_file *m, struct super_block *sb);
 	int (*sb_statfs)(struct dentry *dentry);
 	int (*sb_mount)(const char *dev_name, const struct path *path,
@@ -1877,7 +1875,6 @@ struct security_hook_heads {
 	struct hlist_head sb_free_security;
 	struct hlist_head sb_copy_data;
 	struct hlist_head sb_remount;
-	struct hlist_head sb_kern_mount;
 	struct hlist_head sb_show_options;
 	struct hlist_head sb_statfs;
 	struct hlist_head sb_mount;

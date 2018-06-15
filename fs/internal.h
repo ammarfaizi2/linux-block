@@ -102,8 +102,6 @@ extern struct file *get_empty_filp(void);
 extern int do_remount_sb(struct super_block *, int, void *, size_t, int,
 			 struct fs_context *);
 extern bool trylock_super(struct super_block *sb);
-extern struct dentry *mount_fs(struct file_system_type *,
-			       int, const char *, void *, size_t);
 extern struct super_block *user_get_super(dev_t);
 
 /*
