@@ -273,7 +273,7 @@ static inline void proc_tty_init(void) {}
 extern struct proc_dir_entry proc_root;
 
 extern void proc_self_init(void);
-extern int proc_remount(struct super_block *, int *, char *, size_t);
+extern int proc_reconfigure(struct super_block *, struct fs_context *);
 
 /*
  * task_[no]mmu.c
