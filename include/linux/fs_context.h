@@ -14,6 +14,7 @@
 
 #include <linux/kernel.h>
 #include <linux/errno.h>
+#include <linux/mutex.h>
 
 struct cred;
 struct dentry;
@@ -87,6 +88,7 @@ struct fs_parameter {
  */
 struct fs_context {
 	const struct fs_context_operations *ops;
+	struct mutex		uapi_mutex;	/* Userspace access mutex */
 	struct file_system_type	*fs_type;
 	void			*fs_private;	/* The filesystem's context */
 	struct dentry		*root;		/* The root and superblock */
@@ -142,6 +144,8 @@ extern int vfs_get_super(struct fs_context *fc,
 			 enum vfs_get_super_keying keying,
 			 int (*fill_super)(struct super_block *sb,
 					   struct fs_context *fc));
+
+extern const struct file_operations fscontext_fops;
 
 #define logfc(FC, FMT, ...) pr_notice(FMT, ## __VA_ARGS__)
 
