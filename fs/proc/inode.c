@@ -127,7 +127,7 @@ const struct super_operations proc_sops = {
 	.drop_inode	= generic_delete_inode,
 	.evict_inode	= proc_evict_inode,
 	.statfs		= simple_statfs,
-	.remount_fs	= proc_remount,
+	.reconfigure	= proc_reconfigure,
 	.show_options	= proc_show_options,
 };
 
