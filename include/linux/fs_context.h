@@ -115,4 +115,6 @@ extern int vfs_get_super(struct fs_context *fc,
 			 int (*fill_super)(struct super_block *sb,
 					   struct fs_context *fc));
 
+extern const struct file_operations fscontext_fops;
+
 #endif /* _LINUX_FS_CONTEXT_H */
