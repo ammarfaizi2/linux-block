@@ -349,6 +349,8 @@ typedef int __bitwise __kernel_rwf_t;
  */
 #define FSOPEN_CLOEXEC		0x00000001
 
+#define FSMOUNT_CLOEXEC		0x00000001
+
 /*
  * The type of fsconfig() call made.
  */
