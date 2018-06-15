@@ -386,7 +386,8 @@ static void update_ptmx_mode(struct pts_fs_info *fsi)
 	}
 }
 
-static int devpts_remount(struct super_block *sb, int *flags, char *data)
+static int devpts_remount(struct super_block *sb, int *flags,
+			  char *data, size_t data_size)
 {
 	int err;
 	struct pts_fs_info *fsi = DEVPTS_SB(sb);
@@ -447,7 +448,8 @@ static void *new_pts_fs_info(struct super_block *sb)
 }
 
 static int
-devpts_fill_super(struct super_block *s, void *data, int silent)
+devpts_fill_super(struct super_block *s, void *data, size_t data_size,
+		  int silent)
 {
 	struct inode *inode;
 	int error;
@@ -504,9 +506,9 @@ fail:
  *     instance are independent of the PTYs in other devpts instances.
  */
 static struct dentry *devpts_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data)
+	int flags, const char *dev_name, void *data, size_t data_size)
 {
-	return mount_nodev(fs_type, flags, data, devpts_fill_super);
+	return mount_nodev(fs_type, flags, data, data_size, devpts_fill_super);
 }
 
 static void devpts_kill_sb(struct super_block *sb)

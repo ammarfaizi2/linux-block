@@ -245,7 +245,8 @@ static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
 }
 
 static struct dentry *aio_mount(struct file_system_type *fs_type,
-				int flags, const char *dev_name, void *data)
+				int flags, const char *dev_name,
+				void *data, size_t data_size)
 {
 	static const struct dentry_operations ops = {
 		.d_dname	= simple_dname,
