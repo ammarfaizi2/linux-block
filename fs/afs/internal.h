@@ -240,7 +240,7 @@ struct afs_net {
 	atomic_t		cells_outstanding;
 	seqlock_t		cells_lock;
 
-	spinlock_t		proc_cells_lock;
+	struct mutex		proc_cells_lock;
 	struct list_head	proc_cells;
 
 	/* Known servers.  Theoretically each fileserver can only be in one
@@ -264,6 +264,7 @@ struct afs_net {
 	struct mutex		lock_manager_mutex;
 
 	/* Misc */
+	struct super_block	*dynroot_sb;	/* Dynamic root mount superblock */
 	struct proc_dir_entry	*proc_afs;	/* /proc/net/afs directory */
 	struct afs_sysnames	*sysnames;
 	rwlock_t		sysnames_lock;
@@ -406,16 +407,27 @@ struct afs_server {
 	rwlock_t		fs_lock;	/* access lock */
 
 	/* callback promise management */
-	struct list_head	cb_interests;	/* List of superblocks using this server */
+	struct hlist_head	cb_volumes;	/* List of volume interests on this server */
 	unsigned		cb_s_break;	/* Break-everything counter. */
 	rwlock_t		cb_break_lock;	/* Volume finding lock */
+};
+
+/*
+ * Volume collation in the server's callback interest list.
+ */
+struct afs_vol_interest {
+	struct hlist_node	srv_link;	/* Link in server->cb_volumes */
+	struct hlist_head	cb_interests;	/* List of callback interests on the server */
+	afs_volid_t		vid;		/* Volume ID to match */
+	unsigned int		usage;
 };
 
 /*
  * Interest by a superblock on a server.
  */
 struct afs_cb_interest {
-	struct list_head	cb_link;	/* Link in server->cb_interests */
+	struct hlist_node	cb_vlink;	/* Link in vol_interest->cb_interests */
+	struct afs_vol_interest	*vol_interest;
 	struct afs_server	*server;	/* Server on which this interest resides */
 	struct super_block	*sb;		/* Superblock on which inodes reside */
 	afs_volid_t		vid;		/* Volume ID to match */
@@ -722,6 +734,10 @@ extern const struct inode_operations afs_dynroot_inode_operations;
 extern const struct dentry_operations afs_dynroot_dentry_operations;
 
 extern struct inode *afs_try_auto_mntpt(struct dentry *, struct inode *);
+extern int afs_dynroot_mkdir(struct afs_net *, struct afs_cell *);
+extern void afs_dynroot_rmdir(struct afs_net *, struct afs_cell *);
+extern int afs_dynroot_populate(struct super_block *);
+extern void afs_dynroot_depopulate(struct super_block *);
 
 /*
  * file.c
