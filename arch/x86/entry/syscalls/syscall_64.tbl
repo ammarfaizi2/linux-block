@@ -342,6 +342,7 @@
 331	common	pkey_free		__x64_sys_pkey_free
 332	common	statx			__x64_sys_statx
 333	common	io_pgetevents		__x64_sys_io_pgetevents
+334	common	fsopen			__x64_sys_fsopen
 337	common	move_mount		__x64_sys_move_mount
 339	common	open_tree		__x64_sys_open_tree
 
