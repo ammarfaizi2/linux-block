@@ -209,6 +209,17 @@ struct file *alloc_file_pseudo(struct inode *inode, struct vfsmount *mnt,
 }
 EXPORT_SYMBOL(alloc_file_pseudo);
 
+struct file *alloc_file_clone(struct file *base, fmode_t mode,
+				const struct file_operations *fops)
+{
+	struct file *f = alloc_file(&base->f_path, mode | FMODE_OPENED, fops);
+	if (!IS_ERR(f)) {
+		path_get(&f->f_path);
+		f->f_mapping = base->f_mapping;
+	}
+	return f;
+}
+
 /* the real guts of fput() - releasing the last reference to file
  */
 static void __fput(struct file *file)
