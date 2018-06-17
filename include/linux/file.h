@@ -23,6 +23,8 @@ extern struct file *alloc_file(const struct path *, fmode_t mode,
 	const struct file_operations *fop);
 extern struct file *alloc_file_pseudo(struct inode *, struct vfsmount *,
 	const char *, fmode_t, const struct file_operations *);
+extern struct file *alloc_file_clone(struct file *, fmode_t,
+	const struct file_operations *);
 
 static inline void fput_light(struct file *file, int fput_needed)
 {
