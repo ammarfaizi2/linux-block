@@ -7,9 +7,6 @@
  * Licensed under GPLv2 or later.
  */
 
-#include <linux/of.h>
-#include <linux/of_platform.h>
-
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/system_misc.h>
@@ -18,7 +15,6 @@
 
 static void __init sama5_dt_device_init(void)
 {
-	of_platform_default_populate(NULL, NULL, NULL);
 	sama5_pm_init();
 }
 
@@ -47,7 +43,6 @@ MACHINE_END
 
 static void __init sama5d2_init(void)
 {
-	of_platform_default_populate(NULL, NULL, NULL);
 	sama5d2_pm_init();
 }
 

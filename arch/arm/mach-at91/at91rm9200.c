@@ -8,17 +8,12 @@
  * Licensed under GPLv2 or later.
  */
 
-#include <linux/of.h>
-#include <linux/of_platform.h>
-
 #include <asm/mach/arch.h>
 
 #include "generic.h"
 
 static void __init at91rm9200_dt_device_init(void)
 {
-	of_platform_default_populate(NULL, NULL, NULL);
-
 	at91rm9200_pm_init();
 }
 
