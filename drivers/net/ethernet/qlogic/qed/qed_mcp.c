@@ -1514,9 +1514,10 @@ void qed_mcp_read_ufp_config(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 	}
 
 	qed_mcp_get_shmem_func(p_hwfn, p_ptt, &shmem_info, MCP_PF_ID(p_hwfn));
-	val = (port_cfg & OEM_CFG_FUNC_TC_MASK) >> OEM_CFG_FUNC_TC_OFFSET;
+	val = (shmem_info.oem_cfg_func & OEM_CFG_FUNC_TC_MASK) >>
+		OEM_CFG_FUNC_TC_OFFSET;
 	p_hwfn->ufp_info.tc = (u8)val;
-	val = (port_cfg & OEM_CFG_FUNC_HOST_PRI_CTRL_MASK) >>
+	val = (shmem_info.oem_cfg_func & OEM_CFG_FUNC_HOST_PRI_CTRL_MASK) >>
 		OEM_CFG_FUNC_HOST_PRI_CTRL_OFFSET;
 	if (val == OEM_CFG_FUNC_HOST_PRI_CTRL_VNIC) {
 		p_hwfn->ufp_info.pri_type = QED_UFP_PRI_VNIC;
@@ -1622,6 +1623,8 @@ int qed_mcp_handle_events(struct qed_hwfn *p_hwfn,
 		case MFW_DRV_MSG_S_TAG_UPDATE:
 			qed_mcp_update_stag(p_hwfn, p_ptt);
 			break;
+		case MFW_DRV_MSG_GET_TLV_REQ:
+			qed_mfw_tlv_req(p_hwfn);
 			break;
 		default:
 			DP_INFO(p_hwfn, "Unimplemented MFW message %d\n", i);
@@ -2575,9 +2578,9 @@ int qed_mcp_nvm_info_populate(struct qed_hwfn *p_hwfn)
 		goto err0;
 	}
 
-	nvm_info->image_att = kmalloc(nvm_info->num_images *
-				      sizeof(struct bist_nvm_image_att),
-				      GFP_KERNEL);
+	nvm_info->image_att = kmalloc_array(nvm_info->num_images,
+					    sizeof(struct bist_nvm_image_att),
+					    GFP_KERNEL);
 	if (!nvm_info->image_att) {
 		rc = -ENOMEM;
 		goto err0;

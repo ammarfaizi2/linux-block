@@ -158,7 +158,16 @@ static void ixgbe_ipsec_stop_data(struct ixgbe_adapter *adapter)
 	reg |= IXGBE_SECRXCTRL_RX_DIS;
 	IXGBE_WRITE_REG(hw, IXGBE_SECRXCTRL, reg);
 
-	IXGBE_WRITE_FLUSH(hw);
+	/* If both Tx and Rx are ready there are no packets
+	 * that we need to flush so the loopback configuration
+	 * below is not necessary.
+	 */
+	t_rdy = IXGBE_READ_REG(hw, IXGBE_SECTXSTAT) &
+		IXGBE_SECTXSTAT_SECTX_RDY;
+	r_rdy = IXGBE_READ_REG(hw, IXGBE_SECRXSTAT) &
+		IXGBE_SECRXSTAT_SECRX_RDY;
+	if (t_rdy && r_rdy)
+		return;
 
 	/* If the tx fifo doesn't have link, but still has data,
 	 * we can't clear the tx sec block.  Set the MAC loopback
@@ -185,7 +194,7 @@ static void ixgbe_ipsec_stop_data(struct ixgbe_adapter *adapter)
 			IXGBE_SECTXSTAT_SECTX_RDY;
 		r_rdy = IXGBE_READ_REG(hw, IXGBE_SECRXSTAT) &
 			IXGBE_SECRXSTAT_SECRX_RDY;
-	} while (!t_rdy && !r_rdy && limit--);
+	} while (!(t_rdy && r_rdy) && limit--);
 
 	/* undo loopback if we played with it earlier */
 	if (!link) {
@@ -445,6 +454,89 @@ static int ixgbe_ipsec_parse_proto_keys(struct xfrm_state *xs,
 }
 
 /**
+ * ixgbe_ipsec_check_mgmt_ip - make sure there is no clash with mgmt IP filters
+ * @xs: pointer to transformer state struct
+ **/
+static int ixgbe_ipsec_check_mgmt_ip(struct xfrm_state *xs)
+{
+	struct net_device *dev = xs->xso.dev;
+	struct ixgbe_adapter *adapter = netdev_priv(dev);
+	struct ixgbe_hw *hw = &adapter->hw;
+	u32 mfval, manc, reg;
+	int num_filters = 4;
+	bool manc_ipv4;
+	u32 bmcipval;
+	int i, j;
+
+#define MANC_EN_IPV4_FILTER      BIT(24)
+#define MFVAL_IPV4_FILTER_SHIFT  16
+#define MFVAL_IPV6_FILTER_SHIFT  24
+#define MIPAF_ARR(_m, _n)        (IXGBE_MIPAF + ((_m) * 0x10) + ((_n) * 4))
+
+#define IXGBE_BMCIP(_n)          (0x5050 + ((_n) * 4))
+#define IXGBE_BMCIPVAL           0x5060
+#define BMCIP_V4                 0x2
+#define BMCIP_V6                 0x3
+#define BMCIP_MASK               0x3
+
+	manc = IXGBE_READ_REG(hw, IXGBE_MANC);
+	manc_ipv4 = !!(manc & MANC_EN_IPV4_FILTER);
+	mfval = IXGBE_READ_REG(hw, IXGBE_MFVAL);
+	bmcipval = IXGBE_READ_REG(hw, IXGBE_BMCIPVAL);
+
+	if (xs->props.family == AF_INET) {
+		/* are there any IPv4 filters to check? */
+		if (manc_ipv4) {
+			/* the 4 ipv4 filters are all in MIPAF(3, i) */
+			for (i = 0; i < num_filters; i++) {
+				if (!(mfval & BIT(MFVAL_IPV4_FILTER_SHIFT + i)))
+					continue;
+
+				reg = IXGBE_READ_REG(hw, MIPAF_ARR(3, i));
+				if (reg == xs->id.daddr.a4)
+					return 1;
+			}
+		}
+
+		if ((bmcipval & BMCIP_MASK) == BMCIP_V4) {
+			reg = IXGBE_READ_REG(hw, IXGBE_BMCIP(3));
+			if (reg == xs->id.daddr.a4)
+				return 1;
+		}
+
+	} else {
+		/* if there are ipv4 filters, they are in the last ipv6 slot */
+		if (manc_ipv4)
+			num_filters = 3;
+
+		for (i = 0; i < num_filters; i++) {
+			if (!(mfval & BIT(MFVAL_IPV6_FILTER_SHIFT + i)))
+				continue;
+
+			for (j = 0; j < 4; j++) {
+				reg = IXGBE_READ_REG(hw, MIPAF_ARR(i, j));
+				if (reg != xs->id.daddr.a6[j])
+					break;
+			}
+			if (j == 4)   /* did we match all 4 words? */
+				return 1;
+		}
+
+		if ((bmcipval & BMCIP_MASK) == BMCIP_V6) {
+			for (j = 0; j < 4; j++) {
+				reg = IXGBE_READ_REG(hw, IXGBE_BMCIP(j));
+				if (reg != xs->id.daddr.a6[j])
+					break;
+			}
+			if (j == 4)   /* did we match all 4 words? */
+				return 1;
+		}
+	}
+
+	return 0;
+}
+
+/**
  * ixgbe_ipsec_add_sa - program device with a security association
  * @xs: pointer to transformer state struct
  **/
@@ -462,6 +554,11 @@ static int ixgbe_ipsec_add_sa(struct xfrm_state *xs)
 	if (xs->id.proto != IPPROTO_ESP && xs->id.proto != IPPROTO_AH) {
 		netdev_err(dev, "Unsupported protocol 0x%04x for ipsec offload\n",
 			   xs->id.proto);
+		return -EINVAL;
+	}
+
+	if (ixgbe_ipsec_check_mgmt_ip(xs)) {
+		netdev_err(dev, "IPsec IP addr clash with mgmt filters\n");
 		return -EINVAL;
 	}
 
@@ -575,7 +672,7 @@ static int ixgbe_ipsec_add_sa(struct xfrm_state *xs)
 
 		/* hash the new entry for faster search in Rx path */
 		hash_add_rcu(ipsec->rx_sa_list, &ipsec->rx_tbl[sa_idx].hlist,
-			     (__force u64)rsa.xs->id.spi);
+			     (__force u32)rsa.xs->id.spi);
 	} else {
 		struct tx_sa tsa;
 
@@ -878,10 +975,22 @@ void ixgbe_ipsec_rx(struct ixgbe_ring *rx_ring,
  **/
 void ixgbe_init_ipsec_offload(struct ixgbe_adapter *adapter)
 {
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_ipsec *ipsec;
+	u32 t_dis, r_dis;
 	size_t size;
 
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+	if (hw->mac.type == ixgbe_mac_82598EB)
+		return;
+
+	/* If there is no support for either Tx or Rx offload
+	 * we should not be advertising support for IPsec.
+	 */
+	t_dis = IXGBE_READ_REG(hw, IXGBE_SECTXSTAT) &
+		IXGBE_SECTXSTAT_SECTX_OFF_DIS;
+	r_dis = IXGBE_READ_REG(hw, IXGBE_SECRXSTAT) &
+		IXGBE_SECRXSTAT_SECRX_OFF_DIS;
+	if (t_dis || r_dis)
 		return;
 
 	ipsec = kzalloc(sizeof(*ipsec), GFP_KERNEL);
@@ -912,13 +1021,6 @@ void ixgbe_init_ipsec_offload(struct ixgbe_adapter *adapter)
 	ixgbe_ipsec_clear_hw_tables(adapter);
 
 	adapter->netdev->xfrmdev_ops = &ixgbe_xfrmdev_ops;
-
-#define IXGBE_ESP_FEATURES	(NETIF_F_HW_ESP | \
-				 NETIF_F_HW_ESP_TX_CSUM | \
-				 NETIF_F_GSO_ESP)
-
-	adapter->netdev->features |= IXGBE_ESP_FEATURES;
-	adapter->netdev->hw_enc_features |= IXGBE_ESP_FEATURES;
 
 	return;
 

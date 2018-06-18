@@ -63,13 +63,19 @@
 #include <net/lwtunnel.h>
 #include <net/ip_tunnels.h>
 #include <net/l3mdev.h>
-#include <trace/events/fib6.h>
-
+#include <net/ip.h>
 #include <linux/uaccess.h>
 
 #ifdef CONFIG_SYSCTL
 #include <linux/sysctl.h>
 #endif
+
+static int ip6_rt_type_to_error(u8 fib6_type);
+
+#define CREATE_TRACE_POINTS
+#include <trace/events/fib6.h>
+EXPORT_TRACEPOINT_SYMBOL_GPL(fib6_table_lookup);
+#undef CREATE_TRACE_POINTS
 
 enum rt6_nud_state {
 	RT6_NUD_FAIL_HARD = -3,
@@ -1975,7 +1981,7 @@ out:
 	} else {
 		keys->addrs.v6addrs.src = key_iph->saddr;
 		keys->addrs.v6addrs.dst = key_iph->daddr;
-		keys->tags.flow_label = ip6_flowinfo(key_iph);
+		keys->tags.flow_label = ip6_flowlabel(key_iph);
 		keys->basic.ip_proto = key_iph->nexthdr;
 	}
 }
@@ -1996,7 +2002,7 @@ u32 rt6_multipath_hash(const struct net *net, const struct flowi6 *fl6,
 		} else {
 			hash_keys.addrs.v6addrs.src = fl6->saddr;
 			hash_keys.addrs.v6addrs.dst = fl6->daddr;
-			hash_keys.tags.flow_label = (__force u32)fl6->flowlabel;
+			hash_keys.tags.flow_label = (__force u32)flowi6_get_flowlabel(fl6);
 			hash_keys.basic.ip_proto = fl6->flowi6_proto;
 		}
 		break;
@@ -2301,9 +2307,6 @@ static void __ip6_rt_update_pmtu(struct dst_entry *dst, const struct sock *sk,
 	const struct in6_addr *daddr, *saddr;
 	struct rt6_info *rt6 = (struct rt6_info *)dst;
 
-	if (rt6->rt6i_flags & RTF_LOCAL)
-		return;
-
 	if (dst_metric_locked(dst, RTAX_MTU))
 		return;
 
@@ -2601,6 +2604,54 @@ out:
 	mtu = min_t(unsigned int, mtu, IP6_MAX_MTU);
 
 	return mtu - lwtunnel_headroom(dst->lwtstate, mtu);
+}
+
+/* MTU selection:
+ * 1. mtu on route is locked - use it
+ * 2. mtu from nexthop exception
+ * 3. mtu from egress device
+ *
+ * based on ip6_dst_mtu_forward and exception logic of
+ * rt6_find_cached_rt; called with rcu_read_lock
+ */
+u32 ip6_mtu_from_fib6(struct fib6_info *f6i, struct in6_addr *daddr,
+		      struct in6_addr *saddr)
+{
+	struct rt6_exception_bucket *bucket;
+	struct rt6_exception *rt6_ex;
+	struct in6_addr *src_key;
+	struct inet6_dev *idev;
+	u32 mtu = 0;
+
+	if (unlikely(fib6_metric_locked(f6i, RTAX_MTU))) {
+		mtu = f6i->fib6_pmtu;
+		if (mtu)
+			goto out;
+	}
+
+	src_key = NULL;
+#ifdef CONFIG_IPV6_SUBTREES
+	if (f6i->fib6_src.plen)
+		src_key = saddr;
+#endif
+
+	bucket = rcu_dereference(f6i->rt6i_exception_bucket);
+	rt6_ex = __rt6_find_exception_rcu(&bucket, daddr, src_key);
+	if (rt6_ex && !rt6_check_expired(rt6_ex->rt6i))
+		mtu = dst_metric_raw(&rt6_ex->rt6i->dst, RTAX_MTU);
+
+	if (likely(!mtu)) {
+		struct net_device *dev = fib6_info_nh_dev(f6i);
+
+		mtu = IPV6_MIN_MTU;
+		idev = __in6_dev_get(dev);
+		if (idev && idev->cnf.mtu6 > mtu)
+			mtu = idev->cnf.mtu6;
+	}
+
+	mtu = min_t(unsigned int, mtu, IP6_MAX_MTU);
+out:
+	return mtu - lwtunnel_headroom(fib6_info_nh_lwt(f6i), mtu);
 }
 
 struct dst_entry *icmp6_dst_alloc(struct net_device *dev,
@@ -3791,7 +3842,7 @@ static struct fib6_info *rt6_multipath_first_sibling(const struct fib6_info *rt)
 			lockdep_is_held(&rt->fib6_table->tb6_lock));
 	while (iter) {
 		if (iter->fib6_metric == rt->fib6_metric &&
-		    rt6_qualify_for_ecmp(iter))
+		    iter->fib6_nsiblings)
 			return iter;
 		iter = rcu_dereference_protected(iter->fib6_next,
 				lockdep_is_held(&rt->fib6_table->tb6_lock));
@@ -4083,6 +4134,9 @@ static const struct nla_policy rtm_ipv6_policy[RTA_MAX+1] = {
 	[RTA_UID]		= { .type = NLA_U32 },
 	[RTA_MARK]		= { .type = NLA_U32 },
 	[RTA_TABLE]		= { .type = NLA_U32 },
+	[RTA_IP_PROTO]		= { .type = NLA_U8 },
+	[RTA_SPORT]		= { .type = NLA_U16 },
+	[RTA_DPORT]		= { .type = NLA_U16 },
 };
 
 static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
@@ -4355,13 +4409,17 @@ static int ip6_route_multipath_add(struct fib6_config *cfg,
 
 	err_nh = NULL;
 	list_for_each_entry(nh, &rt6_nh_list, next) {
-		rt_last = nh->fib6_info;
 		err = __ip6_ins_rt(nh->fib6_info, info, extack);
 		fib6_info_release(nh->fib6_info);
 
-		/* save reference to first route for notification */
-		if (!rt_notif && !err)
-			rt_notif = nh->fib6_info;
+		if (!err) {
+			/* save reference to last route successfully inserted */
+			rt_last = nh->fib6_info;
+
+			/* save reference to first route for notification */
+			if (!rt_notif)
+				rt_notif = nh->fib6_info;
+		}
 
 		/* nh->fib6_info is used or freed at this point, reset to NULL*/
 		nh->fib6_info = NULL;
@@ -4381,6 +4439,7 @@ static int ip6_route_multipath_add(struct fib6_config *cfg,
 		 */
 		cfg->fc_nlinfo.nlh->nlmsg_flags &= ~(NLM_F_EXCL |
 						     NLM_F_REPLACE);
+		cfg->fc_nlinfo.nlh->nlmsg_flags |= NLM_F_APPEND;
 		nhn++;
 	}
 
@@ -4794,6 +4853,19 @@ static int inet6_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 	else
 		fl6.flowi6_uid = iif ? INVALID_UID : current_uid();
 
+	if (tb[RTA_SPORT])
+		fl6.fl6_sport = nla_get_be16(tb[RTA_SPORT]);
+
+	if (tb[RTA_DPORT])
+		fl6.fl6_dport = nla_get_be16(tb[RTA_DPORT]);
+
+	if (tb[RTA_IP_PROTO]) {
+		err = rtm_getroute_parse_ip_proto(tb[RTA_IP_PROTO],
+						  &fl6.flowi6_proto, extack);
+		if (err)
+			goto errout;
+	}
+
 	if (iif) {
 		struct net_device *dev;
 		int flags = 0;
@@ -4938,14 +5010,6 @@ static int ip6_route_dev_notify(struct notifier_block *this,
  */
 
 #ifdef CONFIG_PROC_FS
-
-static const struct file_operations ipv6_route_proc_fops = {
-	.open		= ipv6_route_open,
-	.read		= seq_read,
-	.llseek		= seq_lseek,
-	.release	= seq_release_net,
-};
-
 static int rt6_stats_seq_show(struct seq_file *seq, void *v)
 {
 	struct net *net = (struct net *)seq->private;
@@ -4960,18 +5024,6 @@ static int rt6_stats_seq_show(struct seq_file *seq, void *v)
 
 	return 0;
 }
-
-static int rt6_stats_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open_net(inode, file, rt6_stats_seq_show);
-}
-
-static const struct file_operations rt6_stats_seq_fops = {
-	.open	 = rt6_stats_seq_open,
-	.read	 = seq_read,
-	.llseek	 = seq_lseek,
-	.release = single_release_net,
-};
 #endif	/* CONFIG_PROC_FS */
 
 #ifdef CONFIG_SYSCTL
@@ -5185,8 +5237,10 @@ static void __net_exit ip6_route_net_exit(struct net *net)
 static int __net_init ip6_route_net_init_late(struct net *net)
 {
 #ifdef CONFIG_PROC_FS
-	proc_create("ipv6_route", 0, net->proc_net, &ipv6_route_proc_fops);
-	proc_create("rt6_stats", 0444, net->proc_net, &rt6_stats_seq_fops);
+	proc_create_net("ipv6_route", 0, net->proc_net, &ipv6_route_seq_ops,
+			sizeof(struct ipv6_route_iter));
+	proc_create_net_single("rt6_stats", 0444, net->proc_net,
+			rt6_stats_seq_show, NULL);
 #endif
 	return 0;
 }

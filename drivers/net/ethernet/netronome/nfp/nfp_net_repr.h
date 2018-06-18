@@ -76,6 +76,7 @@ struct nfp_repr_pcpu_stats {
  * @port:	Port of representor
  * @app:	APP handle
  * @stats:	Statistic of packets hitting CPU
+ * @app_priv:	Pointer for APP data
  */
 struct nfp_repr {
 	struct net_device *netdev;
@@ -83,6 +84,7 @@ struct nfp_repr {
 	struct nfp_port *port;
 	struct nfp_app *app;
 	struct nfp_repr_pcpu_stats __percpu *stats;
+	void *app_priv;
 };
 
 /**
@@ -124,11 +126,17 @@ int nfp_repr_init(struct nfp_app *app, struct net_device *netdev,
 		  u32 cmsg_port_id, struct nfp_port *port,
 		  struct net_device *pf_netdev);
 void nfp_repr_free(struct net_device *netdev);
-struct net_device *nfp_repr_alloc(struct nfp_app *app);
+struct net_device *
+nfp_repr_alloc_mqs(struct nfp_app *app, unsigned int txqs, unsigned int rxqs);
+void nfp_repr_clean_and_free(struct nfp_repr *repr);
 void nfp_reprs_clean_and_free(struct nfp_app *app, struct nfp_reprs *reprs);
 void nfp_reprs_clean_and_free_by_type(struct nfp_app *app,
 				      enum nfp_repr_type type);
 struct nfp_reprs *nfp_reprs_alloc(unsigned int num_reprs);
 int nfp_reprs_resync_phys_ports(struct nfp_app *app);
 
+static inline struct net_device *nfp_repr_alloc(struct nfp_app *app)
+{
+	return nfp_repr_alloc_mqs(app, 1, 1);
+}
 #endif /* NFP_NET_REPR_H */

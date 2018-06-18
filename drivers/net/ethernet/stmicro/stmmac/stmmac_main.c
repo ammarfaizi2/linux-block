@@ -381,7 +381,6 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 {
 	struct net_device *ndev = priv->dev;
 	int interface = priv->plat->interface;
-	unsigned long flags;
 	bool ret = false;
 
 	if ((interface != PHY_INTERFACE_MODE_MII) &&
@@ -408,7 +407,7 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 			 * changed).
 			 * In that case the driver disable own timers.
 			 */
-			spin_lock_irqsave(&priv->lock, flags);
+			mutex_lock(&priv->lock);
 			if (priv->eee_active) {
 				netdev_dbg(priv->dev, "disable EEE\n");
 				del_timer_sync(&priv->eee_ctrl_timer);
@@ -416,11 +415,11 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 						tx_lpi_timer);
 			}
 			priv->eee_active = 0;
-			spin_unlock_irqrestore(&priv->lock, flags);
+			mutex_unlock(&priv->lock);
 			goto out;
 		}
 		/* Activate the EEE and start timers */
-		spin_lock_irqsave(&priv->lock, flags);
+		mutex_lock(&priv->lock);
 		if (!priv->eee_active) {
 			priv->eee_active = 1;
 			timer_setup(&priv->eee_ctrl_timer,
@@ -435,7 +434,7 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 		stmmac_set_eee_pls(priv, priv->hw, ndev->phydev->link);
 
 		ret = true;
-		spin_unlock_irqrestore(&priv->lock, flags);
+		mutex_unlock(&priv->lock);
 
 		netdev_dbg(priv->dev, "Energy-Efficient Ethernet initialized\n");
 	}
@@ -722,6 +721,10 @@ static int stmmac_hwtstamp_ioctl(struct net_device *dev, struct ifreq *ifr)
 				priv->plat->has_gmac4, &sec_inc);
 		temp = div_u64(1000000000ULL, sec_inc);
 
+		/* Store sub second increment and flags for later use */
+		priv->sub_second_inc = sec_inc;
+		priv->systime_flags = value;
+
 		/* calculate default added value:
 		 * formula is :
 		 * addend = (2^32)/freq_div_ratio;
@@ -811,13 +814,12 @@ static void stmmac_adjust_link(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct phy_device *phydev = dev->phydev;
-	unsigned long flags;
 	bool new_state = false;
 
 	if (!phydev)
 		return;
 
-	spin_lock_irqsave(&priv->lock, flags);
+	mutex_lock(&priv->lock);
 
 	if (phydev->link) {
 		u32 ctrl = readl(priv->ioaddr + MAC_CTRL_REG);
@@ -876,7 +878,7 @@ static void stmmac_adjust_link(struct net_device *dev)
 	if (new_state && netif_msg_link(priv))
 		phy_print_status(phydev);
 
-	spin_unlock_irqrestore(&priv->lock, flags);
+	mutex_unlock(&priv->lock);
 
 	if (phydev->is_pseudo_fixed_link)
 		/* Stop PHY layer to call the hook to adjust the link in case
@@ -3180,17 +3182,22 @@ dma_map_err:
 
 static void stmmac_rx_vlan(struct net_device *dev, struct sk_buff *skb)
 {
-	struct ethhdr *ehdr;
+	struct vlan_ethhdr *veth;
+	__be16 vlan_proto;
 	u16 vlanid;
 
-	if ((dev->features & NETIF_F_HW_VLAN_CTAG_RX) ==
-	    NETIF_F_HW_VLAN_CTAG_RX &&
-	    !__vlan_get_tag(skb, &vlanid)) {
+	veth = (struct vlan_ethhdr *)skb->data;
+	vlan_proto = veth->h_vlan_proto;
+
+	if ((vlan_proto == htons(ETH_P_8021Q) &&
+	     dev->features & NETIF_F_HW_VLAN_CTAG_RX) ||
+	    (vlan_proto == htons(ETH_P_8021AD) &&
+	     dev->features & NETIF_F_HW_VLAN_STAG_RX)) {
 		/* pop the vlan tag */
-		ehdr = (struct ethhdr *)skb->data;
-		memmove(skb->data + VLAN_HLEN, ehdr, ETH_ALEN * 2);
+		vlanid = ntohs(veth->h_vlan_TCI);
+		memmove(skb->data + VLAN_HLEN, veth, ETH_ALEN * 2);
 		skb_pull(skb, VLAN_HLEN);
-		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlanid);
+		__vlan_hwaccel_put_tag(skb, vlan_proto, vlanid);
 	}
 }
 
@@ -4128,6 +4135,13 @@ static int stmmac_hw_init(struct stmmac_priv *priv)
 	if (priv->dma_cap.tsoen)
 		dev_info(priv->device, "TSO supported\n");
 
+	/* Run HW quirks, if any */
+	if (priv->hwif_quirks) {
+		ret = priv->hwif_quirks(priv);
+		if (ret)
+			return ret;
+	}
+
 	return 0;
 }
 
@@ -4233,7 +4247,7 @@ int stmmac_dvr_probe(struct device *device,
 	ndev->watchdog_timeo = msecs_to_jiffies(watchdog);
 #ifdef STMMAC_VLAN_TAG_USED
 	/* Both mac100 and gmac support receive VLAN tag detection */
-	ndev->features |= NETIF_F_HW_VLAN_CTAG_RX;
+	ndev->features |= NETIF_F_HW_VLAN_CTAG_RX | NETIF_F_HW_VLAN_STAG_RX;
 #endif
 	priv->msg_enable = netif_msg_init(debug, default_msg_level);
 
@@ -4275,7 +4289,7 @@ int stmmac_dvr_probe(struct device *device,
 			       (8 * priv->plat->rx_queues_to_use));
 	}
 
-	spin_lock_init(&priv->lock);
+	mutex_init(&priv->lock);
 
 	/* If a specific clk_csr value is passed from the platform
 	 * this means that the CSR Clock Range selection cannot be
@@ -4359,6 +4373,7 @@ int stmmac_dvr_remove(struct device *dev)
 	    priv->hw->pcs != STMMAC_PCS_RTBI)
 		stmmac_mdio_unregister(ndev);
 	destroy_workqueue(priv->wq);
+	mutex_destroy(&priv->lock);
 	free_netdev(ndev);
 
 	return 0;
@@ -4376,7 +4391,6 @@ int stmmac_suspend(struct device *dev)
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	unsigned long flags;
 
 	if (!ndev || !netif_running(ndev))
 		return 0;
@@ -4384,7 +4398,7 @@ int stmmac_suspend(struct device *dev)
 	if (ndev->phydev)
 		phy_stop(ndev->phydev);
 
-	spin_lock_irqsave(&priv->lock, flags);
+	mutex_lock(&priv->lock);
 
 	netif_device_detach(ndev);
 	stmmac_stop_all_queues(priv);
@@ -4405,7 +4419,7 @@ int stmmac_suspend(struct device *dev)
 		clk_disable(priv->plat->pclk);
 		clk_disable(priv->plat->stmmac_clk);
 	}
-	spin_unlock_irqrestore(&priv->lock, flags);
+	mutex_unlock(&priv->lock);
 
 	priv->oldlink = false;
 	priv->speed = SPEED_UNKNOWN;
@@ -4450,7 +4464,6 @@ int stmmac_resume(struct device *dev)
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	unsigned long flags;
 
 	if (!netif_running(ndev))
 		return 0;
@@ -4462,9 +4475,9 @@ int stmmac_resume(struct device *dev)
 	 * from another devices (e.g. serial console).
 	 */
 	if (device_may_wakeup(priv->device)) {
-		spin_lock_irqsave(&priv->lock, flags);
+		mutex_lock(&priv->lock);
 		stmmac_pmt(priv, priv->hw, 0);
-		spin_unlock_irqrestore(&priv->lock, flags);
+		mutex_unlock(&priv->lock);
 		priv->irq_wake = 0;
 	} else {
 		pinctrl_pm_select_default_state(priv->device);
@@ -4478,7 +4491,7 @@ int stmmac_resume(struct device *dev)
 
 	netif_device_attach(ndev);
 
-	spin_lock_irqsave(&priv->lock, flags);
+	mutex_lock(&priv->lock);
 
 	stmmac_reset_queues_param(priv);
 
@@ -4492,7 +4505,7 @@ int stmmac_resume(struct device *dev)
 
 	stmmac_start_all_queues(priv);
 
-	spin_unlock_irqrestore(&priv->lock, flags);
+	mutex_unlock(&priv->lock);
 
 	if (ndev->phydev)
 		phy_start(ndev->phydev);

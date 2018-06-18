@@ -8,8 +8,6 @@
  *
  *  Initial restrictions:
  *    - support for alternate links postponed
- *    - partial support for non-blocking sockets only
- *    - support for urgent data postponed
  *
  *  Copyright IBM Corp. 2016, 2018
  *
@@ -1275,8 +1273,7 @@ static __poll_t smc_accept_poll(struct sock *parent)
 	return mask;
 }
 
-static __poll_t smc_poll(struct file *file, struct socket *sock,
-			     poll_table *wait)
+static __poll_t smc_poll_mask(struct socket *sock, __poll_t events)
 {
 	struct sock *sk = sock->sk;
 	__poll_t mask = 0;
@@ -1292,7 +1289,7 @@ static __poll_t smc_poll(struct file *file, struct socket *sock,
 	if ((sk->sk_state == SMC_INIT) || smc->use_fallback) {
 		/* delegate to CLC child sock */
 		release_sock(sk);
-		mask = smc->clcsock->ops->poll(file, smc->clcsock, wait);
+		mask = smc->clcsock->ops->poll_mask(smc->clcsock, events);
 		lock_sock(sk);
 		sk->sk_err = smc->clcsock->sk->sk_err;
 		if (sk->sk_err) {
@@ -1310,11 +1307,6 @@ static __poll_t smc_poll(struct file *file, struct socket *sock,
 			}
 		}
 	} else {
-		if (sk->sk_state != SMC_CLOSED) {
-			release_sock(sk);
-			sock_poll_wait(file, sk_sleep(sk), wait);
-			lock_sock(sk);
-		}
 		if (sk->sk_err)
 			mask |= EPOLLERR;
 		if ((sk->sk_shutdown == SHUTDOWN_MASK) ||
@@ -1338,6 +1330,8 @@ static __poll_t smc_poll(struct file *file, struct socket *sock,
 			if (sk->sk_state == SMC_APPCLOSEWAIT1)
 				mask |= EPOLLIN;
 		}
+		if (smc->conn.urg_state == SMC_URG_VALID)
+			mask |= EPOLLPRI;
 
 	}
 	release_sock(sk);
@@ -1420,7 +1414,7 @@ static int smc_setsockopt(struct socket *sock, int level, int optname,
 		return rc;
 
 	if (optlen < sizeof(int))
-		return rc;
+		return -EINVAL;
 	get_user(val, (int __user *)optval);
 
 	lock_sock(sk);
@@ -1477,10 +1471,13 @@ static int smc_getsockopt(struct socket *sock, int level, int optname,
 static int smc_ioctl(struct socket *sock, unsigned int cmd,
 		     unsigned long arg)
 {
+	union smc_host_cursor cons, urg;
+	struct smc_connection *conn;
 	struct smc_sock *smc;
 	int answ;
 
 	smc = smc_sk(sock->sk);
+	conn = &smc->conn;
 	if (smc->use_fallback) {
 		if (!smc->clcsock)
 			return -EBADF;
@@ -1490,20 +1487,49 @@ static int smc_ioctl(struct socket *sock, unsigned int cmd,
 	case SIOCINQ: /* same as FIONREAD */
 		if (smc->sk.sk_state == SMC_LISTEN)
 			return -EINVAL;
-		answ = atomic_read(&smc->conn.bytes_to_rcv);
+		if (smc->sk.sk_state == SMC_INIT ||
+		    smc->sk.sk_state == SMC_CLOSED)
+			answ = 0;
+		else
+			answ = atomic_read(&smc->conn.bytes_to_rcv);
 		break;
 	case SIOCOUTQ:
 		/* output queue size (not send + not acked) */
 		if (smc->sk.sk_state == SMC_LISTEN)
 			return -EINVAL;
-		answ = smc->conn.sndbuf_desc->len -
+		if (smc->sk.sk_state == SMC_INIT ||
+		    smc->sk.sk_state == SMC_CLOSED)
+			answ = 0;
+		else
+			answ = smc->conn.sndbuf_desc->len -
 					atomic_read(&smc->conn.sndbuf_space);
 		break;
 	case SIOCOUTQNSD:
 		/* output queue size (not send only) */
 		if (smc->sk.sk_state == SMC_LISTEN)
 			return -EINVAL;
-		answ = smc_tx_prepared_sends(&smc->conn);
+		if (smc->sk.sk_state == SMC_INIT ||
+		    smc->sk.sk_state == SMC_CLOSED)
+			answ = 0;
+		else
+			answ = smc_tx_prepared_sends(&smc->conn);
+		break;
+	case SIOCATMARK:
+		if (smc->sk.sk_state == SMC_LISTEN)
+			return -EINVAL;
+		if (smc->sk.sk_state == SMC_INIT ||
+		    smc->sk.sk_state == SMC_CLOSED) {
+			answ = 0;
+		} else {
+			smc_curs_write(&cons,
+			       smc_curs_read(&conn->local_tx_ctrl.cons, conn),
+				       conn);
+			smc_curs_write(&urg,
+				       smc_curs_read(&conn->urg_curs, conn),
+				       conn);
+			answ = smc_curs_diff(conn->rmb_desc->len,
+					     &cons, &urg) == 1;
+		}
 		break;
 	default:
 		return -ENOIOCTLCMD;
@@ -1593,7 +1619,7 @@ static const struct proto_ops smc_sock_ops = {
 	.socketpair	= sock_no_socketpair,
 	.accept		= smc_accept,
 	.getname	= smc_getname,
-	.poll		= smc_poll,
+	.poll_mask	= smc_poll_mask,
 	.ioctl		= smc_ioctl,
 	.listen		= smc_listen,
 	.shutdown	= smc_shutdown,

@@ -814,26 +814,26 @@ static int qed_alloc_qm_data(struct qed_hwfn *p_hwfn)
 	if (rc)
 		goto alloc_err;
 
-	qm_info->qm_pq_params = kzalloc(sizeof(*qm_info->qm_pq_params) *
-					qed_init_qm_get_num_pqs(p_hwfn),
+	qm_info->qm_pq_params = kcalloc(qed_init_qm_get_num_pqs(p_hwfn),
+					sizeof(*qm_info->qm_pq_params),
 					GFP_KERNEL);
 	if (!qm_info->qm_pq_params)
 		goto alloc_err;
 
-	qm_info->qm_vport_params = kzalloc(sizeof(*qm_info->qm_vport_params) *
-					   qed_init_qm_get_num_vports(p_hwfn),
+	qm_info->qm_vport_params = kcalloc(qed_init_qm_get_num_vports(p_hwfn),
+					   sizeof(*qm_info->qm_vport_params),
 					   GFP_KERNEL);
 	if (!qm_info->qm_vport_params)
 		goto alloc_err;
 
-	qm_info->qm_port_params = kzalloc(sizeof(*qm_info->qm_port_params) *
-					  p_hwfn->cdev->num_ports_in_engine,
+	qm_info->qm_port_params = kcalloc(p_hwfn->cdev->num_ports_in_engine,
+					  sizeof(*qm_info->qm_port_params),
 					  GFP_KERNEL);
 	if (!qm_info->qm_port_params)
 		goto alloc_err;
 
-	qm_info->wfq_data = kzalloc(sizeof(*qm_info->wfq_data) *
-				    qed_init_qm_get_num_vports(p_hwfn),
+	qm_info->wfq_data = kcalloc(qed_init_qm_get_num_vports(p_hwfn),
+				    sizeof(*qm_info->wfq_data),
 				    GFP_KERNEL);
 	if (!qm_info->wfq_data)
 		goto alloc_err;
@@ -1098,7 +1098,7 @@ int qed_final_cleanup(struct qed_hwfn *p_hwfn,
 	}
 
 	DP_VERBOSE(p_hwfn, QED_MSG_IOV,
-		   "Sending final cleanup for PFVF[%d] [Command %08x\n]",
+		   "Sending final cleanup for PFVF[%d] [Command %08x]\n",
 		   id, command);
 
 	qed_wr(p_hwfn, p_ptt, XSDM_REG_OPERATION_GEN, command);
@@ -2792,7 +2792,7 @@ static void qed_hw_info_port_num_bb(struct qed_hwfn *p_hwfn,
 {
 	u32 port_mode;
 
-	port_mode = qed_rd(p_hwfn, p_ptt, CNIG_REG_NW_PORT_MODE_BB_B0);
+	port_mode = qed_rd(p_hwfn, p_ptt, CNIG_REG_NW_PORT_MODE_BB);
 
 	if (port_mode < 3) {
 		p_hwfn->cdev->num_ports_in_engine = 1;

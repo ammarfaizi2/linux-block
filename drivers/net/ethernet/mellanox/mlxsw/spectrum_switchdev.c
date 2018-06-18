@@ -1018,8 +1018,10 @@ mlxsw_sp_port_vlan_bridge_join(struct mlxsw_sp_port_vlan *mlxsw_sp_port_vlan,
 	int err;
 
 	/* No need to continue if only VLAN flags were changed */
-	if (mlxsw_sp_port_vlan->bridge_port)
+	if (mlxsw_sp_port_vlan->bridge_port) {
+		mlxsw_sp_port_vlan_put(mlxsw_sp_port_vlan);
 		return 0;
+	}
 
 	err = mlxsw_sp_port_vlan_fid_join(mlxsw_sp_port_vlan, bridge_port);
 	if (err)
@@ -1143,6 +1145,9 @@ static int mlxsw_sp_port_vlans_add(struct mlxsw_sp_port *mlxsw_sp_port,
 	struct net_device *orig_dev = vlan->obj.orig_dev;
 	struct mlxsw_sp_bridge_port *bridge_port;
 	u16 vid;
+
+	if (netif_is_bridge_master(orig_dev))
+		return -EOPNOTSUPP;
 
 	if (switchdev_trans_ph_prepare(trans))
 		return 0;
@@ -1694,7 +1699,7 @@ static int mlxsw_sp_port_obj_add(struct net_device *dev,
 		vlan = SWITCHDEV_OBJ_PORT_VLAN(obj);
 		err = mlxsw_sp_port_vlans_add(mlxsw_sp_port, vlan, trans);
 
-		if (switchdev_trans_ph_commit(trans)) {
+		if (switchdev_trans_ph_prepare(trans)) {
 			/* The event is emitted before the changes are actually
 			 * applied to the bridge. Therefore schedule the respin
 			 * call for later, so that the respin logic sees the
@@ -1740,6 +1745,9 @@ static int mlxsw_sp_port_vlans_del(struct mlxsw_sp_port *mlxsw_sp_port,
 	struct net_device *orig_dev = vlan->obj.orig_dev;
 	struct mlxsw_sp_bridge_port *bridge_port;
 	u16 vid;
+
+	if (netif_is_bridge_master(orig_dev))
+		return -EOPNOTSUPP;
 
 	bridge_port = mlxsw_sp_bridge_port_find(mlxsw_sp->bridge, orig_dev);
 	if (WARN_ON(!bridge_port))
@@ -1850,7 +1858,7 @@ static int mlxsw_sp_port_obj_del(struct net_device *dev,
 		break;
 	}
 
-	mlxsw_sp_span_respin(mlxsw_sp_port->mlxsw_sp);
+	mlxsw_sp_span_respin_schedule(mlxsw_sp_port->mlxsw_sp);
 
 	return err;
 }

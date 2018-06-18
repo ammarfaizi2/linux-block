@@ -66,12 +66,6 @@ static inline bool rt6_need_strict(const struct in6_addr *daddr)
 		(IPV6_ADDR_MULTICAST | IPV6_ADDR_LINKLOCAL | IPV6_ADDR_LOOPBACK);
 }
 
-static inline bool rt6_qualify_for_ecmp(const struct fib6_info *f6i)
-{
-	return (f6i->fib6_flags & (RTF_GATEWAY|RTF_ADDRCONF|RTF_DYNAMIC)) ==
-	       RTF_GATEWAY;
-}
-
 void ip6_route_input(struct sk_buff *skb);
 struct dst_entry *ip6_route_input_lookup(struct net *net,
 					 struct net_device *dev,
@@ -299,6 +293,9 @@ static inline unsigned int ip6_dst_mtu_forward(const struct dst_entry *dst)
 
 	return mtu;
 }
+
+u32 ip6_mtu_from_fib6(struct fib6_info *f6i, struct in6_addr *daddr,
+		      struct in6_addr *saddr);
 
 struct neighbour *ip6_neigh_lookup(const struct in6_addr *gw,
 				   struct net_device *dev, struct sk_buff *skb,

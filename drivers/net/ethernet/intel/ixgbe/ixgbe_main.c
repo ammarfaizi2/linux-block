@@ -245,9 +245,6 @@ static void ixgbe_check_minimum_link(struct ixgbe_adapter *adapter,
 				     int expected_gts)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	int max_gts = 0;
-	enum pci_bus_speed speed = PCI_SPEED_UNKNOWN;
-	enum pcie_link_width width = PCIE_LNK_WIDTH_UNKNOWN;
 	struct pci_dev *pdev;
 
 	/* Some devices are not connected over PCIe and thus do not negotiate
@@ -263,49 +260,7 @@ static void ixgbe_check_minimum_link(struct ixgbe_adapter *adapter,
 	else
 		pdev = adapter->pdev;
 
-	if (pcie_get_minimum_link(pdev, &speed, &width) ||
-	    speed == PCI_SPEED_UNKNOWN || width == PCIE_LNK_WIDTH_UNKNOWN) {
-		e_dev_warn("Unable to determine PCI Express bandwidth.\n");
-		return;
-	}
-
-	switch (speed) {
-	case PCIE_SPEED_2_5GT:
-		/* 8b/10b encoding reduces max throughput by 20% */
-		max_gts = 2 * width;
-		break;
-	case PCIE_SPEED_5_0GT:
-		/* 8b/10b encoding reduces max throughput by 20% */
-		max_gts = 4 * width;
-		break;
-	case PCIE_SPEED_8_0GT:
-		/* 128b/130b encoding reduces throughput by less than 2% */
-		max_gts = 8 * width;
-		break;
-	default:
-		e_dev_warn("Unable to determine PCI Express bandwidth.\n");
-		return;
-	}
-
-	e_dev_info("PCI Express bandwidth of %dGT/s available\n",
-		   max_gts);
-	e_dev_info("(Speed:%s, Width: x%d, Encoding Loss:%s)\n",
-		   (speed == PCIE_SPEED_8_0GT ? "8.0GT/s" :
-		    speed == PCIE_SPEED_5_0GT ? "5.0GT/s" :
-		    speed == PCIE_SPEED_2_5GT ? "2.5GT/s" :
-		    "Unknown"),
-		   width,
-		   (speed == PCIE_SPEED_2_5GT ? "20%" :
-		    speed == PCIE_SPEED_5_0GT ? "20%" :
-		    speed == PCIE_SPEED_8_0GT ? "<2%" :
-		    "Unknown"));
-
-	if (max_gts < expected_gts) {
-		e_dev_warn("This is not sufficient for optimal performance of this card.\n");
-		e_dev_warn("For optimal performance, at least %dGT/s of bandwidth is required.\n",
-			expected_gts);
-		e_dev_warn("A slot with more lanes and/or higher speed is suggested.\n");
-	}
+	pcie_print_link_status(pdev);
 }
 
 static void ixgbe_service_event_schedule(struct ixgbe_adapter *adapter)
@@ -6079,8 +6034,8 @@ static int ixgbe_sw_init(struct ixgbe_adapter *adapter,
 	for (i = 1; i < IXGBE_MAX_LINK_HANDLE; i++)
 		adapter->jump_tables[i] = NULL;
 
-	adapter->mac_table = kzalloc(sizeof(struct ixgbe_mac_addr) *
-				     hw->mac.num_rar_entries,
+	adapter->mac_table = kcalloc(hw->mac.num_rar_entries,
+				     sizeof(struct ixgbe_mac_addr),
 				     GFP_ATOMIC);
 	if (!adapter->mac_table)
 		return -ENOMEM;
@@ -6162,6 +6117,7 @@ static int ixgbe_sw_init(struct ixgbe_adapter *adapter,
 #ifdef CONFIG_IXGBE_DCB
 	ixgbe_init_dcb(adapter);
 #endif
+	ixgbe_init_ipsec_offload(adapter);
 
 	/* default flow control settings */
 	hw->fc.requested_mode = ixgbe_fc_full;
@@ -7621,17 +7577,19 @@ static void ixgbe_reset_subtask(struct ixgbe_adapter *adapter)
 	if (!test_and_clear_bit(__IXGBE_RESET_REQUESTED, &adapter->state))
 		return;
 
+	rtnl_lock();
 	/* If we're already down, removing or resetting, just bail */
 	if (test_bit(__IXGBE_DOWN, &adapter->state) ||
 	    test_bit(__IXGBE_REMOVING, &adapter->state) ||
-	    test_bit(__IXGBE_RESETTING, &adapter->state))
+	    test_bit(__IXGBE_RESETTING, &adapter->state)) {
+		rtnl_unlock();
 		return;
+	}
 
 	ixgbe_dump(adapter);
 	netdev_err(adapter->netdev, "Reset adapter\n");
 	adapter->tx_timeout_count++;
 
-	rtnl_lock();
 	ixgbe_reinit_locked(adapter);
 	rtnl_unlock();
 }
@@ -8865,14 +8823,6 @@ int ixgbe_setup_tc(struct net_device *dev, u8 tc)
 	} else {
 		netdev_reset_tc(dev);
 
-		/* To support macvlan offload we have to use num_tc to
-		 * restrict the queues that can be used by the device.
-		 * By doing this we can avoid reporting a false number of
-		 * queues.
-		 */
-		if (!tc && adapter->num_rx_pools > 1)
-			netdev_set_num_tc(dev, 1);
-
 		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
 			adapter->hw.fc.requested_mode = adapter->last_lfc_mode;
 
@@ -9049,7 +8999,6 @@ static int parse_tc_actions(struct ixgbe_adapter *adapter,
 {
 	const struct tc_action *a;
 	LIST_HEAD(actions);
-	int err;
 
 	if (!tcf_exts_has_actions(exts))
 		return -EINVAL;
@@ -9070,11 +9019,11 @@ static int parse_tc_actions(struct ixgbe_adapter *adapter,
 
 			if (!dev)
 				return -EINVAL;
-			err = handle_redirect_action(adapter, dev->ifindex, queue,
-						     action);
-			if (err == 0)
-				return err;
+			return handle_redirect_action(adapter, dev->ifindex,
+						      queue, action);
 		}
+
+		return -EINVAL;
 	}
 
 	return -EINVAL;
@@ -9948,7 +9897,7 @@ ixgbe_features_check(struct sk_buff *skb, struct net_device *dev,
 	 * the TSO, so it's the exception.
 	 */
 	if (skb->encapsulation && !(features & NETIF_F_TSO_MANGLEID)) {
-#ifdef CONFIG_XFRM
+#ifdef CONFIG_XFRM_OFFLOAD
 		if (!skb->sp)
 #endif
 			features &= ~NETIF_F_TSO;
@@ -10022,14 +9971,28 @@ static int ixgbe_xdp(struct net_device *dev, struct netdev_bpf *xdp)
 	}
 }
 
-static int ixgbe_xdp_xmit(struct net_device *dev, struct xdp_frame *xdpf)
+static void ixgbe_xdp_ring_update_tail(struct ixgbe_ring *ring)
+{
+	/* Force memory writes to complete before letting h/w know there
+	 * are new descriptors to fetch.
+	 */
+	wmb();
+	writel(ring->next_to_use, ring->tail);
+}
+
+static int ixgbe_xdp_xmit(struct net_device *dev, int n,
+			  struct xdp_frame **frames, u32 flags)
 {
 	struct ixgbe_adapter *adapter = netdev_priv(dev);
 	struct ixgbe_ring *ring;
-	int err;
+	int drops = 0;
+	int i;
 
 	if (unlikely(test_bit(__IXGBE_DOWN, &adapter->state)))
 		return -ENETDOWN;
+
+	if (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
+		return -EINVAL;
 
 	/* During program transitions its possible adapter->xdp_prog is assigned
 	 * but ring has not been configured yet. In this case simply abort xmit.
@@ -10038,35 +10001,21 @@ static int ixgbe_xdp_xmit(struct net_device *dev, struct xdp_frame *xdpf)
 	if (unlikely(!ring))
 		return -ENXIO;
 
-	err = ixgbe_xmit_xdp_ring(adapter, xdpf);
-	if (err != IXGBE_XDP_TX)
-		return -ENOSPC;
+	for (i = 0; i < n; i++) {
+		struct xdp_frame *xdpf = frames[i];
+		int err;
 
-	return 0;
-}
+		err = ixgbe_xmit_xdp_ring(adapter, xdpf);
+		if (err != IXGBE_XDP_TX) {
+			xdp_return_frame_rx_napi(xdpf);
+			drops++;
+		}
+	}
 
-static void ixgbe_xdp_flush(struct net_device *dev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct ixgbe_ring *ring;
+	if (unlikely(flags & XDP_XMIT_FLUSH))
+		ixgbe_xdp_ring_update_tail(ring);
 
-	/* Its possible the device went down between xdp xmit and flush so
-	 * we need to ensure device is still up.
-	 */
-	if (unlikely(test_bit(__IXGBE_DOWN, &adapter->state)))
-		return;
-
-	ring = adapter->xdp_prog ? adapter->xdp_ring[smp_processor_id()] : NULL;
-	if (unlikely(!ring))
-		return;
-
-	/* Force memory writes to complete before letting h/w know there
-	 * are new descriptors to fetch.
-	 */
-	wmb();
-	writel(ring->next_to_use, ring->tail);
-
-	return;
+	return n - drops;
 }
 
 static const struct net_device_ops ixgbe_netdev_ops = {
@@ -10116,7 +10065,6 @@ static const struct net_device_ops ixgbe_netdev_ops = {
 	.ndo_features_check	= ixgbe_features_check,
 	.ndo_bpf		= ixgbe_xdp,
 	.ndo_xdp_xmit		= ixgbe_xdp_xmit,
-	.ndo_xdp_flush		= ixgbe_xdp_flush,
 };
 
 /**
@@ -10482,6 +10430,14 @@ skip_sriov:
 	if (hw->mac.type >= ixgbe_mac_82599EB)
 		netdev->features |= NETIF_F_SCTP_CRC;
 
+#ifdef CONFIG_XFRM_OFFLOAD
+#define IXGBE_ESP_FEATURES	(NETIF_F_HW_ESP | \
+				 NETIF_F_HW_ESP_TX_CSUM | \
+				 NETIF_F_GSO_ESP)
+
+	if (adapter->ipsec)
+		netdev->features |= IXGBE_ESP_FEATURES;
+#endif
 	/* copy netdev features into list of user selectable features */
 	netdev->hw_features |= netdev->features |
 			       NETIF_F_HW_VLAN_CTAG_FILTER |
@@ -10544,8 +10500,6 @@ skip_sriov:
 					 NETIF_F_FCOE_MTU;
 	}
 #endif /* IXGBE_FCOE */
-	ixgbe_init_ipsec_offload(adapter);
-
 	if (adapter->flags2 & IXGBE_FLAG2_RSC_CAPABLE)
 		netdev->hw_features |= NETIF_F_LRO;
 	if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)

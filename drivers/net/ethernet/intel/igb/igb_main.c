@@ -2058,6 +2058,7 @@ int igb_up(struct igb_adapter *adapter)
 		igb_assign_vector(adapter->q_vector[0], 0);
 
 	/* Clear any pending interrupts. */
+	rd32(E1000_TSICR);
 	rd32(E1000_ICR);
 	igb_irq_enable(adapter);
 
@@ -3762,8 +3763,9 @@ static int igb_sw_init(struct igb_adapter *adapter)
 	/* Assume MSI-X interrupts, will be checked during IRQ allocation */
 	adapter->flags |= IGB_FLAG_HAS_MSIX;
 
-	adapter->mac_table = kzalloc(sizeof(struct igb_mac_addr) *
-				     hw->mac.rar_entry_count, GFP_ATOMIC);
+	adapter->mac_table = kcalloc(hw->mac.rar_entry_count,
+				     sizeof(struct igb_mac_addr),
+				     GFP_ATOMIC);
 	if (!adapter->mac_table)
 		return -ENOMEM;
 
@@ -3865,6 +3867,7 @@ static int __igb_open(struct net_device *netdev, bool resuming)
 		napi_enable(&(adapter->q_vector[i]->napi));
 
 	/* Clear any pending interrupts. */
+	rd32(E1000_TSICR);
 	rd32(E1000_ICR);
 
 	igb_irq_enable(adapter);
@@ -4053,11 +4056,6 @@ void igb_configure_tx_ring(struct igb_adapter *adapter,
 	u64 tdba = ring->dma;
 	int reg_idx = ring->reg_idx;
 
-	/* disable the queue */
-	wr32(E1000_TXDCTL(reg_idx), 0);
-	wrfl();
-	mdelay(10);
-
 	wr32(E1000_TDLEN(reg_idx),
 	     ring->count * sizeof(union e1000_adv_tx_desc));
 	wr32(E1000_TDBAL(reg_idx),
@@ -4088,7 +4086,15 @@ void igb_configure_tx_ring(struct igb_adapter *adapter,
  **/
 static void igb_configure_tx(struct igb_adapter *adapter)
 {
+	struct e1000_hw *hw = &adapter->hw;
 	int i;
+
+	/* disable the queues */
+	for (i = 0; i < adapter->num_tx_queues; i++)
+		wr32(E1000_TXDCTL(adapter->tx_ring[i]->reg_idx), 0);
+
+	wrfl();
+	usleep_range(10000, 20000);
 
 	for (i = 0; i < adapter->num_tx_queues; i++)
 		igb_configure_tx_ring(adapter, adapter->tx_ring[i]);
@@ -4747,7 +4753,7 @@ static int igb_write_mc_addr_list(struct net_device *netdev)
 		return 0;
 	}
 
-	mta_list = kzalloc(netdev_mc_count(netdev) * 6, GFP_ATOMIC);
+	mta_list = kcalloc(netdev_mc_count(netdev), 6, GFP_ATOMIC);
 	if (!mta_list)
 		return -ENOMEM;
 

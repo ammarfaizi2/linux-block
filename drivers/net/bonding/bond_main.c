@@ -1107,7 +1107,8 @@ static void bond_compute_features(struct bonding *bond)
 
 done:
 	bond_dev->vlan_features = vlan_features;
-	bond_dev->hw_enc_features = enc_features | NETIF_F_GSO_ENCAP_ALL;
+	bond_dev->hw_enc_features = enc_features | NETIF_F_GSO_ENCAP_ALL |
+				    NETIF_F_GSO_UDP_L4;
 	bond_dev->gso_max_segs = gso_max_segs;
 	netif_set_gso_max_size(bond_dev, gso_max_size);
 
@@ -1217,12 +1218,37 @@ static enum netdev_lag_tx_type bond_lag_tx_type(struct bonding *bond)
 	}
 }
 
+static enum netdev_lag_hash bond_lag_hash_type(struct bonding *bond,
+					       enum netdev_lag_tx_type type)
+{
+	if (type != NETDEV_LAG_TX_TYPE_HASH)
+		return NETDEV_LAG_HASH_NONE;
+
+	switch (bond->params.xmit_policy) {
+	case BOND_XMIT_POLICY_LAYER2:
+		return NETDEV_LAG_HASH_L2;
+	case BOND_XMIT_POLICY_LAYER34:
+		return NETDEV_LAG_HASH_L34;
+	case BOND_XMIT_POLICY_LAYER23:
+		return NETDEV_LAG_HASH_L23;
+	case BOND_XMIT_POLICY_ENCAP23:
+		return NETDEV_LAG_HASH_E23;
+	case BOND_XMIT_POLICY_ENCAP34:
+		return NETDEV_LAG_HASH_E34;
+	default:
+		return NETDEV_LAG_HASH_UNKNOWN;
+	}
+}
+
 static int bond_master_upper_dev_link(struct bonding *bond, struct slave *slave,
 				      struct netlink_ext_ack *extack)
 {
 	struct netdev_lag_upper_info lag_upper_info;
+	enum netdev_lag_tx_type type;
 
-	lag_upper_info.tx_type = bond_lag_tx_type(bond);
+	type = bond_lag_tx_type(bond);
+	lag_upper_info.tx_type = type;
+	lag_upper_info.hash_type = bond_lag_hash_type(bond, type);
 
 	return netdev_master_upper_dev_link(slave->dev, bond->dev, slave,
 					    &lag_upper_info, extack);
@@ -2392,7 +2418,7 @@ struct bond_vlan_tag *bond_verify_device_path(struct net_device *start_dev,
 	struct list_head  *iter;
 
 	if (start_dev == end_dev) {
-		tags = kzalloc(sizeof(*tags) * (level + 1), GFP_ATOMIC);
+		tags = kcalloc(level + 1, sizeof(*tags), GFP_ATOMIC);
 		if (!tags)
 			return ERR_PTR(-ENOMEM);
 		tags[level].vlan_proto = VLAN_N_VID;
@@ -4268,7 +4294,7 @@ void bond_setup(struct net_device *bond_dev)
 				NETIF_F_HW_VLAN_CTAG_RX |
 				NETIF_F_HW_VLAN_CTAG_FILTER;
 
-	bond_dev->hw_features |= NETIF_F_GSO_ENCAP_ALL;
+	bond_dev->hw_features |= NETIF_F_GSO_ENCAP_ALL | NETIF_F_GSO_UDP_L4;
 	bond_dev->features |= bond_dev->hw_features;
 }
 

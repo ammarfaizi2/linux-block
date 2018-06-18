@@ -694,12 +694,12 @@ static void *alloc_ring(struct device *dev, size_t nelem, size_t elem_size,
 {
 	size_t len = nelem * elem_size + stat_size;
 	void *s = NULL;
-	void *p = dma_alloc_coherent(dev, len, phys, GFP_KERNEL);
+	void *p = dma_zalloc_coherent(dev, len, phys, GFP_KERNEL);
 
 	if (!p)
 		return NULL;
 	if (sw_size) {
-		s = kzalloc_node(nelem * sw_size, GFP_KERNEL, node);
+		s = kcalloc_node(sw_size, nelem, GFP_KERNEL, node);
 
 		if (!s) {
 			dma_free_coherent(dev, len, p, *phys);
@@ -708,7 +708,6 @@ static void *alloc_ring(struct device *dev, size_t nelem, size_t elem_size,
 	}
 	if (metadata)
 		*(void **)metadata = s;
-	memset(p, 0, len);
 	return p;
 }
 
