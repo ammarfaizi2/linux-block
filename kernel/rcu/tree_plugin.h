@@ -519,19 +519,6 @@ rcu_preempt_deferred_qs_irqrestore(struct task_struct *t, unsigned long flags)
 		}
 	}
 
-	/* Hardware IRQ handlers cannot block, complain if they get here. */
-	if (in_irq() || in_serving_softirq()) {
-		lockdep_rcu_suspicious(__FILE__, __LINE__,
-				       "rcu_read_unlock() from irq or softirq with blocking in critical section!!!\n");
-		pr_alert("->rcu_read_unlock_special: %#x (b: %d, enq: %d nq: %d)\n",
-			 t->rcu_read_unlock_special.s,
-			 t->rcu_read_unlock_special.b.blocked,
-			 t->rcu_read_unlock_special.b.exp_need_qs,
-			 t->rcu_read_unlock_special.b.need_qs);
-		local_irq_restore(flags);
-		return;
-	}
-
 	/* Clean up if blocked during RCU read-side critical section. */
 	if (special.b.blocked) {
 		t->rcu_read_unlock_special.b.blocked = false;
