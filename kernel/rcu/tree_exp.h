@@ -262,6 +262,7 @@ static void rcu_report_exp_cpu_mult(struct rcu_state *rsp, struct rcu_node *rnp,
 static void rcu_report_exp_rdp(struct rcu_state *rsp, struct rcu_data *rdp,
 			       bool wake)
 {
+	WRITE_ONCE(rdp->deferred_qs, false);
 	rcu_report_exp_cpu_mult(rsp, rdp->mynode, rdp->grpmask, wake);
 }
 
@@ -748,7 +749,9 @@ static void sync_rcu_exp_handler(void *info)
 	 * Within an RCU read-side critical section, request that the next
 	 * rcu_read_unlock() report.  Unless this RCU read-side critical
 	 * section has already blocked, in which case it is already set
-	 * up for the expedited grace period to wait on it.
+	 * up for the expedited grace period to wait on it.  The end of
+	 * the RCU read-side critical section will handle any needed
+	 * quiescent-state deferral.
 	 */
 	if (t->rcu_read_lock_nesting > 0 &&
 	    !t->rcu_read_unlock_special.b.blocked) {
@@ -757,14 +760,34 @@ static void sync_rcu_exp_handler(void *info)
 	}
 
 	/*
-	 * We are either exiting an RCU read-side critical section (negative
-	 * values of t->rcu_read_lock_nesting) or are not in one at all
-	 * (zero value of t->rcu_read_lock_nesting).  Or we are in an RCU
-	 * read-side critical section that blocked before this expedited
-	 * grace period started.  Either way, we can immediately report
-	 * the quiescent state.
+	 * We are either exiting an RCU read-side critical section
+	 * (negative values of t->rcu_read_lock_nesting) or are not in
+	 * one at all (zero value of t->rcu_read_lock_nesting).  Or we
+	 * are in an RCU read-side critical section that blocked before
+	 * this expedited grace period started.  If preemption or softirq
+	 * is disabled, we must defer reporting the quiescent state, so
+	 * ask the scheduler to help us do that by executing an otherwise
+	 * unnecessary context switch.
 	 */
 	rdp = this_cpu_ptr(rsp->rda);
+	if ((preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK)) &&
+	    t->rcu_read_lock_nesting <= 0 &&
+	    !rcu_dynticks_curr_cpu_in_eqs()) {
+		rdp->deferred_qs = true;
+		resched_cpu(rdp->cpu);
+		return;
+	}
+
+	/*
+	 * We get here if we are in an RCU read-side critical section
+	 * that has already blocked (in which case the current task is
+	 * queued somewhere and is therefore blocking the grace period),
+	 * if we are exiting or outside of an RCU read-side critical
+	 * section with everything enabled, or if the CPU is idle from
+	 * an RCU perspective.
+	 *
+	 * Either way, we can immediately report the quiescent state.
+	 */
 	rcu_report_exp_rdp(rsp, rdp, true);
 }
 
