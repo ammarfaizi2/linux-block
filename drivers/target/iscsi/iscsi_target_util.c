@@ -1249,8 +1249,7 @@ static int iscsit_do_rx_data(
 		return -1;
 
 	memset(&msg, 0, sizeof(struct msghdr));
-	iov_iter_kvec(&msg.msg_iter, READ | ITER_KVEC,
-		      count->iov, count->iov_count, data);
+	iov_iter_kvec(&msg.msg_iter, READ, count->iov, count->iov_count, data);
 
 	while (msg_data_left(&msg)) {
 		rx_loop = sock_recvmsg(conn->sock, &msg, MSG_WAITALL);
@@ -1306,8 +1305,7 @@ int tx_data(
 
 	memset(&msg, 0, sizeof(struct msghdr));
 
-	iov_iter_kvec(&msg.msg_iter, WRITE | ITER_KVEC,
-		      iov, iov_count, data);
+	iov_iter_kvec(&msg.msg_iter, WRITE, iov, iov_count, data);
 
 	while (msg_data_left(&msg)) {
 		int tx_loop = sock_sendmsg(conn->sock, &msg);

@@ -1269,7 +1269,7 @@ static int fuse_get_user_pages(struct fuse_req *req, struct iov_iter *ii,
 	ssize_t ret = 0;
 
 	/* Special case for kernel I/O: can copy directly into the buffer */
-	if (ii->type & ITER_KVEC) {
+	if (iov_iter_type(ii) == ITER_KVEC) {
 		unsigned long user_addr = fuse_get_user_addr(ii);
 		size_t frag_size = fuse_get_frag_size(ii, *nbytesp);
 
