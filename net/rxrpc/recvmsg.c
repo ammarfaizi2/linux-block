@@ -629,7 +629,7 @@ int rxrpc_kernel_recv_data(struct socket *sock, struct rxrpc_call *call,
 	size_t offset = 0;
 	int ret;
 
-	_enter("{%d,%s},%zu,%d",
+	_enter("{%d,%s},%llu,%d",
 	       call->debug_id, rxrpc_call_states[call->state],
 	       iov_iter_count(iter), want_more);
 
@@ -678,7 +678,7 @@ out:
 	if (_service)
 		*_service = call->service_id;
 	mutex_unlock(&call->user_mutex);
-	_leave(" = %d [%zu,%d]", ret, iov_iter_count(iter), *_abort);
+	_leave(" = %d [%llu,%d]", ret, iov_iter_count(iter), *_abort);
 	return ret;
 
 short_data:

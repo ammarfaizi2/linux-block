@@ -13,7 +13,7 @@
 	size_t left;					\
 	size_t wanted = n;				\
 	__p = i->iov;					\
-	__v.iov_len = min(n, __p->iov_len - skip);	\
+	__v.iov_len = min_t(size_t, n, __p->iov_len - skip);	\
 	if (likely(__v.iov_len)) {			\
 		__v.iov_base = __p->iov_base + skip;	\
 		left = (STEP);				\
@@ -40,7 +40,7 @@
 #define iterate_kvec(i, n, __v, __p, skip, STEP) {	\
 	size_t wanted = n;				\
 	__p = i->kvec;					\
-	__v.iov_len = min(n, __p->iov_len - skip);	\
+	__v.iov_len = min_t(size_t, n, __p->iov_len - skip);	\
 	if (likely(__v.iov_len)) {			\
 		__v.iov_base = __p->iov_base + skip;	\
 		(void)(STEP);				\
@@ -74,7 +74,7 @@
 
 #define iterate_all_kinds(i, n, v, I, B, K) {			\
 	if (likely(n)) {					\
-		size_t skip = i->iov_offset;			\
+		loff_t skip = i->iov_offset;			\
 		switch (iov_iter_type(i)) {			\
 		case ITER_BVEC: {				\
 			struct bio_vec v;			\
@@ -105,7 +105,7 @@
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
 	if (i->count) {						\
-		size_t skip = i->iov_offset;			\
+		loff_t skip = i->iov_offset;			\
 		switch (iov_iter_type(i)) {			\
 		case ITER_BVEC: {				\
 			const struct bio_vec *bvec = i->bvec;	\
@@ -358,7 +358,7 @@ static bool sanity(const struct iov_iter *i)
 	}
 	return true;
 Bad:
-	printk(KERN_ERR "idx = %d, offset = %zd\n", i->idx, i->iov_offset);
+	printk(KERN_ERR "idx = %d, offset = %lld\n", i->idx, i->iov_offset);
 	printk(KERN_ERR "curbuf = %d, nrbufs = %d, buffers = %d\n",
 			pipe->curbuf, pipe->nrbufs, pipe->buffers);
 	for (idx = 0; idx < pipe->buffers; idx++)
@@ -1036,10 +1036,10 @@ size_t iov_iter_single_seg_count(const struct iov_iter *i)
 	case ITER_PIPE:
 		return i->count;	// it is a silly place, anyway
 	case ITER_BVEC:
-		return min(i->count, i->bvec->bv_len - i->iov_offset);
+		return min_t(size_t, i->count, i->bvec->bv_len - i->iov_offset);
 	case ITER_KVEC:
 	case ITER_IOVEC:
-		return min(i->count, i->iov->iov_len - i->iov_offset);
+		return min_t(size_t, i->count, i->iov->iov_len - i->iov_offset);
 	}
 	BUG();
 }

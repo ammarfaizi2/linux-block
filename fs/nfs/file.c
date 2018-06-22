@@ -159,7 +159,7 @@ nfs_file_read(struct kiocb *iocb, struct iov_iter *to)
 	if (iocb->ki_flags & IOCB_DIRECT)
 		return nfs_file_direct_read(iocb, to);
 
-	dprintk("NFS: read(%pD2, %zu@%lu)\n",
+	dprintk("NFS: read(%pD2, %llu@%lu)\n",
 		iocb->ki_filp,
 		iov_iter_count(to), (unsigned long) iocb->ki_pos);
 
@@ -608,7 +608,7 @@ ssize_t nfs_file_write(struct kiocb *iocb, struct iov_iter *from)
 	if (iocb->ki_flags & IOCB_DIRECT)
 		return nfs_file_direct_write(iocb, from);
 
-	dprintk("NFS: write(%pD2, %zu@%Ld)\n",
+	dprintk("NFS: write(%pD2, %llu@%Ld)\n",
 		file, iov_iter_count(from), (long long) iocb->ki_pos);
 
 	if (IS_SWAPFILE(inode))

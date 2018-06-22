@@ -384,7 +384,7 @@ v9fs_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 	struct p9_fid *fid = iocb->ki_filp->private_data;
 	int ret, err = 0;
 
-	p9_debug(P9_DEBUG_VFS, "count %zu offset %lld\n",
+	p9_debug(P9_DEBUG_VFS, "count %llu offset %lld\n",
 		 iov_iter_count(to), iocb->ki_pos);
 
 	ret = p9_client_read(fid, iocb->ki_pos, to, &err);

@@ -31,7 +31,7 @@ enum iter_type {
 struct iov_iter {
 	enum iter_type iter_type:8;
 	u8 iter_dir;
-	size_t iov_offset;
+	loff_t iov_offset;
 	size_t count;
 	union {
 		const struct iovec *iov;
@@ -89,7 +89,7 @@ static inline struct iovec iov_iter_iovec(const struct iov_iter *iter)
 {
 	return (struct iovec) {
 		.iov_base = iter->iov->iov_base + iter->iov_offset,
-		.iov_len = min(iter->count,
+		.iov_len = min_t(size_t, iter->count,
 			       iter->iov->iov_len - iter->iov_offset),
 	};
 }
@@ -219,7 +219,7 @@ int iov_iter_npages(const struct iov_iter *i, int maxpages);
 
 const void *dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags);
 
-static inline size_t iov_iter_count(const struct iov_iter *i)
+static inline loff_t iov_iter_count(const struct iov_iter *i)
 {
 	return i->count;
 }
