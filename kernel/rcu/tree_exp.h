@@ -262,6 +262,7 @@ static void rcu_report_exp_cpu_mult(struct rcu_state *rsp, struct rcu_node *rnp,
 static void rcu_report_exp_rdp(struct rcu_state *rsp, struct rcu_data *rdp,
 			       bool wake)
 {
+	WRITE_ONCE(rdp->deferred_qs, false);
 	rcu_report_exp_cpu_mult(rsp, rdp->mynode, rdp->grpmask, wake);
 }
 
@@ -769,13 +770,24 @@ static void sync_rcu_exp_handler(void *info)
 	 * unnecessary context switch.
 	 */
 	rdp = this_cpu_ptr(rsp->rda);
-	if (preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK)) {
-		t->rcu_read_unlock_special.b.exp_need_qs = true;
+	if ((preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK)) &&
+	    t->rcu_read_lock_nesting <= 0 &&
+	    !rcu_dynticks_curr_cpu_in_eqs()) {
+		rdp->deferred_qs = true;
 		resched_cpu(rdp->cpu);
 		return;
 	}
 
-	/* Otherwise, we can immediately report the quiescent state.  */
+	/*
+	 * We get here if we are in an RCU read-side critical section
+	 * that has already blocked (in which case the current task is
+	 * queued somewhere and is therefore blocking the grace period),
+	 * if we are exiting or outside of an RCU read-side critical
+	 * section with everything enabled, or if the CPU is idle from
+	 * an RCU perspective.
+	 *
+	 * Either way, we can immediately report the quiescent state.
+	 */
 	rcu_report_exp_rdp(rsp, rdp, true);
 }
 

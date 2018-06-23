@@ -489,30 +489,31 @@ rcu_preempt_deferred_qs_irqrestore(struct task_struct *t, unsigned long flags)
 	 * t->rcu_read_unlock_special cannot change.
 	 */
 	special = t->rcu_read_unlock_special;
-	if (!special.s) {
+	rdp = this_cpu_ptr(rcu_state_p->rda);
+	if (!special.s && !rdp->deferred_qs) {
 		local_irq_restore(flags);
 		return;
 	}
-	if (special.b.need_qs) {
+	if (special.b.need_qs || rdp->deferred_qs) {
 		rcu_preempt_qs();
 		t->rcu_read_unlock_special.b.need_qs = false;
-		if (!t->rcu_read_unlock_special.s) {
+		if (!t->rcu_read_unlock_special.s && !rdp->deferred_qs) {
 			local_irq_restore(flags);
 			return;
 		}
 	}
 
 	/*
-	 * Respond to a request for an expedited grace period, but only if
-	 * we were not preempted, meaning that we were running on the same
-	 * CPU throughout.  If we were preempted, the exp_need_qs flag
-	 * would have been cleared at the time of the first preemption,
-	 * and the quiescent state would be reported when we were dequeued.
+	 * Respond to a request by an expedited grace period for a
+	 * quiescent state from this CPU.  Note that requests from
+	 * tasks are handled when removing the task from the
+	 * blocked-tasks list below.
 	 */
-	if (special.b.exp_need_qs) {
+	if (special.b.exp_need_qs || rdp->deferred_qs) {
 		t->rcu_read_unlock_special.b.exp_need_qs = false;
-		rdp = this_cpu_ptr(rcu_state_p->rda);
-		rcu_report_exp_rdp(rcu_state_p, rdp, true);
+		rdp->deferred_qs = false;
+		if (READ_ONCE(rdp->mynode->expmask) & rdp->grpmask)
+			rcu_report_exp_rdp(rcu_state_p, rdp, true);
 		if (!t->rcu_read_unlock_special.s) {
 			local_irq_restore(flags);
 			return;
@@ -600,7 +601,8 @@ rcu_preempt_deferred_qs_irqrestore(struct task_struct *t, unsigned long flags)
  */
 static bool rcu_preempt_need_deferred_qs(struct task_struct *t)
 {
-	return READ_ONCE(t->rcu_read_unlock_special.s) &&
+	return (this_cpu_ptr(&rcu_preempt_data)->deferred_qs ||
+		READ_ONCE(t->rcu_read_unlock_special.s)) &&
 	       !t->rcu_read_lock_nesting;
 }
 
@@ -641,6 +643,7 @@ static void rcu_read_unlock_special(struct task_struct *t)
 	if ((preempt_bh_were_disabled || irqs_were_disabled) &&
 	    t->rcu_read_unlock_special.b.blocked) {
 		/* Need to defer quiescent state until everything is enabled. */
+		this_cpu_ptr(&rcu_preempt_data)->deferred_qs = true;
 		raise_softirq_irqoff(RCU_SOFTIRQ);
 		local_irq_restore(flags);
 		return;
