@@ -494,7 +494,7 @@ rcu_preempt_deferred_qs_irqrestore(struct task_struct *t, unsigned long flags)
 		local_irq_restore(flags);
 		return;
 	}
-	if (special.b.need_qs || rdp->deferred_qs) {
+	if (special.b.need_qs) {
 		rcu_preempt_qs();
 		t->rcu_read_unlock_special.b.need_qs = false;
 		if (!t->rcu_read_unlock_special.s && !rdp->deferred_qs) {
@@ -512,8 +512,7 @@ rcu_preempt_deferred_qs_irqrestore(struct task_struct *t, unsigned long flags)
 	if (special.b.exp_need_qs || rdp->deferred_qs) {
 		t->rcu_read_unlock_special.b.exp_need_qs = false;
 		rdp->deferred_qs = false;
-		if (READ_ONCE(rdp->mynode->expmask) & rdp->grpmask)
-			rcu_report_exp_rdp(rcu_state_p, rdp, true);
+		rcu_report_exp_rdp(rcu_state_p, rdp, true);
 		if (!t->rcu_read_unlock_special.s) {
 			local_irq_restore(flags);
 			return;
