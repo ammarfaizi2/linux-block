@@ -643,7 +643,6 @@ static void rcu_read_unlock_special(struct task_struct *t)
 	if ((preempt_bh_were_disabled || irqs_were_disabled) &&
 	    t->rcu_read_unlock_special.b.blocked) {
 		/* Need to defer quiescent state until everything is enabled. */
-		this_cpu_ptr(&rcu_preempt_data)->deferred_qs = true;
 		raise_softirq_irqoff(RCU_SOFTIRQ);
 		local_irq_restore(flags);
 		return;
