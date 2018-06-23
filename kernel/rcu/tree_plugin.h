@@ -784,7 +784,7 @@ static void rcu_preempt_check_callbacks(void)
 	struct rcu_state *rsp = &rcu_preempt_state;
 	struct task_struct *t = current;
 
-	if (t->rcu_read_lock_nesting ||
+	if (t->rcu_read_lock_nesting > 0 ||
 	    (preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK))) {
 		/* No QS, force context switch if deferred. */
 		if (rcu_preempt_need_deferred_qs(t))
@@ -792,7 +792,7 @@ static void rcu_preempt_check_callbacks(void)
 	} else if (rcu_preempt_need_deferred_qs(t)) {
 		rcu_preempt_deferred_qs(t); /* Report deferred QS. */
 		return;
-	} else {
+	} else if (!t->rcu_read_lock_nesting) {
 		rcu_preempt_qs(); /* Report immediate QS. */
 		return;
 	}
