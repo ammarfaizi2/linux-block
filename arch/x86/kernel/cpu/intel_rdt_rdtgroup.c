@@ -1131,43 +1131,6 @@ static void cdp_disable_all(void)
 		cdpl2_disable();
 }
 
-static int parse_rdtgroupfs_options(char *data)
-{
-	char *token, *o = data;
-	int ret = 0;
-
-	while ((token = strsep(&o, ",")) != NULL) {
-		if (!*token) {
-			ret = -EINVAL;
-			goto out;
-		}
-
-		if (!strcmp(token, "cdp")) {
-			ret = cdpl3_enable();
-			if (ret)
-				goto out;
-		} else if (!strcmp(token, "cdpl2")) {
-			ret = cdpl2_enable();
-			if (ret)
-				goto out;
-		} else if (!strcmp(token, "mba_MBps")) {
-			ret = set_mba_sc(true);
-			if (ret)
-				goto out;
-		} else {
-			ret = -EINVAL;
-			goto out;
-		}
-	}
-
-	return 0;
-
-out:
-	pr_err("Invalid mount option \"%s\"\n", token);
-
-	return ret;
-}
-
 /*
  * We don't allow rdtgroup directories to be created anywhere
  * except the root directory. Thus when looking for the rdtgroup
@@ -1236,13 +1199,27 @@ static int mkdir_mondata_all(struct kernfs_node *parent_kn,
 			     struct rdtgroup *prgrp,
 			     struct kernfs_node **mon_data_kn);
 
-static struct dentry *rdt_mount(struct file_system_type *fs_type,
-				int flags, const char *unused_dev_name,
-				void *data, size_t data_size)
+static int rdt_enable_ctx(struct rdt_fs_context *ctx)
 {
+	int ret = 0;
+
+	if (ctx->enable_cdpl2)
+		ret = cdpl2_enable();
+
+	if (!ret && ctx->enable_cdpl3)
+		ret = cdpl3_enable();
+
+	if (!ret && ctx->enable_mba_mbps)
+		ret = set_mba_sc(true);
+
+	return ret;
+}
+
+static int rdt_get_tree(struct fs_context *fc)
+{
+	struct rdt_fs_context *ctx = rdt_fc2context(fc);
 	struct rdt_domain *dom;
 	struct rdt_resource *r;
-	struct dentry *dentry;
 	int ret;
 
 	cpus_read_lock();
@@ -1251,53 +1228,42 @@ static struct dentry *rdt_mount(struct file_system_type *fs_type,
 	 * resctrl file system can only be mounted once.
 	 */
 	if (static_branch_unlikely(&rdt_enable_key)) {
-		dentry = ERR_PTR(-EBUSY);
+		ret = -EBUSY;
 		goto out;
 	}
 
-	ret = parse_rdtgroupfs_options(data);
-	if (ret) {
-		dentry = ERR_PTR(ret);
+	ret = rdt_enable_ctx(ctx);
+	if (ret < 0)
 		goto out_cdp;
-	}
 
 	closid_init();
 
 	ret = rdtgroup_create_info_dir(rdtgroup_default.kn);
-	if (ret) {
-		dentry = ERR_PTR(ret);
-		goto out_cdp;
-	}
+	if (ret < 0)
+		goto out_mba;
 
 	if (rdt_mon_capable) {
 		ret = mongroup_create_dir(rdtgroup_default.kn,
 					  NULL, "mon_groups",
 					  &kn_mongrp);
-		if (ret) {
-			dentry = ERR_PTR(ret);
+		if (ret < 0)
 			goto out_info;
-		}
 		kernfs_get(kn_mongrp);
 
 		ret = mkdir_mondata_all(rdtgroup_default.kn,
 					&rdtgroup_default, &kn_mondata);
-		if (ret) {
-			dentry = ERR_PTR(ret);
+		if (ret < 0)
 			goto out_mongrp;
-		}
 		kernfs_get(kn_mondata);
 		rdtgroup_default.mon.mon_data_kn = kn_mondata;
 	}
 
 	ret = rdt_pseudo_lock_init();
-	if (ret) {
-		dentry = ERR_PTR(ret);
+	if (ret)
 		goto out_mondata;
-	}
 
-	dentry = kernfs_mount(fs_type, flags, rdt_root,
-			      RDTGROUP_SUPER_MAGIC, NULL);
-	if (IS_ERR(dentry))
+	ret = kernfs_get_tree(fc);
+	if (ret < 0)
 		goto out_psl;
 
 	if (rdt_alloc_capable)
@@ -1326,14 +1292,65 @@ out_mongrp:
 		kernfs_remove(kn_mongrp);
 out_info:
 	kernfs_remove(kn_info);
+out_mba:
+	if (ctx->enable_mba_mbps)
+		set_mba_sc(false);
 out_cdp:
 	cdp_disable_all();
 out:
 	rdt_last_cmd_clear();
 	mutex_unlock(&rdtgroup_mutex);
 	cpus_read_unlock();
+	return ret;
+}
 
-	return dentry;
+static int rdt_parse_option(struct fs_context *fc, char *opt, size_t len)
+{
+	struct rdt_fs_context *ctx = rdt_fc2context(fc);
+
+	if (strcmp(opt, "cdp") == 0) {
+		ctx->enable_cdpl3 = true;
+		return 0;
+	}
+	if (strcmp(opt, "cdpl2") == 0) {
+		ctx->enable_cdpl2 = true;
+		return 0;
+	}
+	if (strcmp(opt, "mba_MBps") == 0) {
+		ctx->enable_mba_mbps = true;
+		return 0;
+	}
+
+	return -EINVAL;
+}
+
+static void rdt_fs_context_free(struct fs_context *fc)
+{
+	struct rdt_fs_context *ctx = rdt_fc2context(fc);
+
+	kernfs_free_fs_context(fc);
+	kfree(ctx);
+}
+
+static const struct fs_context_operations rdt_fs_context_ops = {
+	.free		= rdt_fs_context_free,
+	.parse_option	= rdt_parse_option,
+	.get_tree	= rdt_get_tree,
+};
+
+static int rdt_init_fs_context(struct fs_context *fc, struct dentry *reference)
+{
+	struct rdt_fs_context *ctx;
+
+	ctx = kzalloc(sizeof(struct rdt_fs_context), GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
+
+	ctx->kfc.root = rdt_root;
+	ctx->kfc.magic = RDTGROUP_SUPER_MAGIC;
+	fc->fs_private = &ctx->kfc;
+	fc->ops = &rdt_fs_context_ops;
+	return 0;
 }
 
 static int reset_all_ctrls(struct rdt_resource *r)
@@ -1500,9 +1517,9 @@ static void rdt_kill_sb(struct super_block *sb)
 }
 
 static struct file_system_type rdt_fs_type = {
-	.name    = "resctrl",
-	.mount   = rdt_mount,
-	.kill_sb = rdt_kill_sb,
+	.name			= "resctrl",
+	.init_fs_context	= rdt_init_fs_context,
+	.kill_sb		= rdt_kill_sb,
 };
 
 static int mon_addfile(struct kernfs_node *parent_kn, const char *name,
