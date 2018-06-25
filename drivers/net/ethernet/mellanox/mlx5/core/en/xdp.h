@@ -41,7 +41,7 @@
 
 int mlx5e_xdp_max_mtu(struct mlx5e_params *params);
 bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
-		      void *va, u16 *rx_headroom, u32 *len);
+		      void *va, u16 *rx_headroom, u32 *len, struct mlx5_cqe64 *cqe);
 bool mlx5e_poll_xdpsq_cq(struct mlx5e_cq *cq, struct mlx5e_rq *rq);
 void mlx5e_free_xdpsq_descs(struct mlx5e_xdpsq *sq, struct mlx5e_rq *rq);
 void mlx5e_set_xmit_fp(struct mlx5e_xdpsq *sq, bool is_mpw);
