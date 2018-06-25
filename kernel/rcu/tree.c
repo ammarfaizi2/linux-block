@@ -774,6 +774,7 @@ void rcu_user_enter(void)
 
 /**
  * rcu_nmi_exit_common - inform RCU of exit from NMI context
+ * @irq: Is this call from rcu_irq_exit?
  *
  * If we are returning from the outermost NMI handler that interrupted an
  * RCU-idle period, update rdtp->dynticks and rdtp->dynticks_nmi_nesting
@@ -933,6 +934,7 @@ void rcu_user_exit(void)
 
 /**
  * rcu_nmi_enter_common - inform RCU of entry to NMI context
+ * @irq: Is this call from rcu_irq_enter?
  *
  * If the CPU was idle from RCU's viewpoint, update rdtp->dynticks and
  * rdtp->dynticks_nmi_nesting to let the RCU grace-period handling know
