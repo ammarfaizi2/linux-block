@@ -50,6 +50,29 @@ mlx5e_xmit_xdp_buff(struct mlx5e_xdpsq *sq, struct mlx5e_dma_info *di,
 	return mlx5e_xmit_xdp_frame(sq, &xdpi);
 }
 
+static void
+mlx5e_xdp_fill_data_meta(xdp_md_info_arr mdi,  void *data_meta, struct mlx5_cqe64 *cqe)
+{
+	if (xdp_data_meta_present(mdi, XDP_DATA_META_HASH))
+	{
+		u8 cht = cqe->rss_hash_type;
+		int ht = (cht & CQE_RSS_HTYPE_L4) ? PKT_HASH_TYPE_L4 :
+			 (cht & CQE_RSS_HTYPE_IP) ? PKT_HASH_TYPE_L3 :
+						    PKT_HASH_TYPE_NONE;
+		u32 hash = be32_to_cpu(cqe->rss_hash_result);
+
+		xdp_data_meta_set_hash(mdi, data_meta, hash, ht);
+	}
+
+	if (xdp_data_meta_present(mdi, XDP_DATA_META_VLAN))
+	{
+		u16 vlan = (!!cqe_has_vlan(cqe) * VLAN_TAG_PRESENT) |
+			   be16_to_cpu(cqe->vlan_info);
+
+		xdp_data_meta_set_vlan(mdi, data_meta, vlan);
+	}
+}
+
 /* returns true if packet was consumed by xdp */
 bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
 		      void *va, u16 *rx_headroom, u32 *len, struct mlx5_cqe64 *cqe)
@@ -63,10 +86,15 @@ bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
 		return false;
 
 	xdp.data = va + *rx_headroom;
-	xdp_set_data_meta_invalid(&xdp);
 	xdp.data_end = xdp.data + *len;
 	xdp.data_hard_start = va;
 	xdp.rxq = &rq->xdp_rxq;
+
+	if (rq->xdp.flags & XDP_FLAGS_META_ALL) {
+		xdp_reset_data_meta(&xdp);
+		mlx5e_xdp_fill_data_meta(rq->xdp.md_info, xdp.data_meta, cqe);
+	} else
+		xdp_set_data_meta_invalid(&xdp);
 
 	act = bpf_prog_run_xdp(prog, &xdp);
 	switch (act) {
