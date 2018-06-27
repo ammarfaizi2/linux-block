@@ -406,6 +406,11 @@ int  xdp_prognum4_hash_separate(struct xdp_md *ctx)
 	u32 cpu_idx = 0;
 	u32 *cpu_lookup;
 	u32 key = 0;
+	u32 *cpu_max;
+
+	cpu_max = bpf_map_lookup_elem(&cpus_count, &key);
+	if (!cpu_max)
+		return XDP_ABORTED;
 
 	/* Count RX packet in map */
 	rec = bpf_map_lookup_elem(&rx_cnt, &key);
@@ -438,7 +443,7 @@ int  xdp_prognum4_hash_separate(struct xdp_md *ctx)
 	}
 #endif
 
-	cpu_idx = reciprocal_scale(hash->hash, MAX_CPUS);
+	cpu_idx = reciprocal_scale(hash->hash, *cpu_max);
 
 	cpu_lookup = bpf_map_lookup_elem(&cpus_available, &cpu_idx);
 	if (!cpu_lookup)
