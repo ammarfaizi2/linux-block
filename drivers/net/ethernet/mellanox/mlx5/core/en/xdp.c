@@ -92,6 +92,12 @@ bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
 
 	if (rq->xdp.flags & XDP_FLAGS_META_ALL) {
 		xdp_reset_data_meta(&xdp);
+		/* FIXME: Need to know total size, to adjust data_meta
+		 * to give room for filling data_meta.
+		 *
+		 * Quick hack, just take 32 bytes
+		 */
+		xdp.data_meta -= 32;
 		mlx5e_xdp_fill_data_meta(rq->xdp.md_info, xdp.data_meta, cqe);
 	} else
 		xdp_set_data_meta_invalid(&xdp);
