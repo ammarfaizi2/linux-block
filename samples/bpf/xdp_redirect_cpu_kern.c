@@ -650,6 +650,9 @@ int xdp_redirect_collect_stat(struct xdp_redirect_ctx *ctx)
 		return 0;
 	rec->dropped += 1;
 
+	if (err)
+		return 1; /* Allow further debugging via perf record */
+
 	return 0; /* Indicate event was filtered (no further processing)*/
 	/*
 	 * Returning 1 here would allow e.g. a perf-record tracepoint
