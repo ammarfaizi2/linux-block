@@ -2442,7 +2442,12 @@ the resulting RCU-preempt quiescent state until the end of that
 interrupts-disabled region.
 This deferred reporting means that the scheduler's runqueue and
 priority-inheritance locks cannot be held while reporting an RCU-preempt
-quiescent state, which lifts the earlier restriction.
+quiescent state, which lifts the earlier restriction, at least from
+a deadlock perspective.
+Unfortunately, real-time systems using RCU priority boosting may
+need this restriction to remain in effect because deferred
+quiescent-state reporting also defers deboosting, which in turn
+degrades real-time latencies.
 
 <h3><a name="Tracing and RCU">Tracing and RCU</a></h3>
 
