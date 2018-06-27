@@ -736,54 +736,70 @@ EXPORT_SYMBOL_GPL(synchronize_sched_expedited);
  */
 static void sync_rcu_exp_handler(void *info)
 {
-	struct rcu_data *rdp;
+	unsigned long flags;
 	struct rcu_state *rsp = info;
+	struct rcu_data *rdp = this_cpu_ptr(rsp->rda);
+	struct rcu_node *rnp = rdp->mynode;
 	struct task_struct *t = current;
 
 	/*
-	 * Within an RCU read-side critical section, request that the next
-	 * rcu_read_unlock() report.  Unless this RCU read-side critical
-	 * section has already blocked, in which case it is already set
-	 * up for the expedited grace period to wait on it.  The end of
-	 * the RCU read-side critical section will handle any needed
-	 * quiescent-state deferral.
+	 * First, the common case of not being in an RCU read-side
+	 * critical section.  If also enabled or idle, immediately
+	 * report the quiescent state, otherwise defer.
 	 */
-	if (t->rcu_read_lock_nesting > 0 &&
-	    !t->rcu_read_unlock_special.b.blocked) {
-		t->rcu_read_unlock_special.b.exp_need_qs = true;
+	if (!t->rcu_read_lock_nesting) {
+		if (!(preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK)) ||
+		    rcu_dynticks_curr_cpu_in_eqs()) {
+			rcu_report_exp_rdp(rsp, rdp, true);
+		} else {
+			rdp->deferred_qs = true;
+			resched_cpu(rdp->cpu);
+		}
 		return;
 	}
 
 	/*
-	 * We are either exiting an RCU read-side critical section
-	 * (negative values of t->rcu_read_lock_nesting) or are not in
-	 * one at all (zero value of t->rcu_read_lock_nesting).  Or we
-	 * are in an RCU read-side critical section that blocked before
-	 * this expedited grace period started.  If preemption or softirq
-	 * is disabled, we must defer reporting the quiescent state, so
-	 * ask the scheduler to help us do that by executing an otherwise
-	 * unnecessary context switch.
+	 * Second, the less-common case of being in an RCU read-side
+	 * critical section.  In this case we can count on a future
+	 * rcu_read_unlock().  However, this rcu_read_unlock() might
+	 * execute on some other CPU, but in that case there will be
+	 * a future context switch.  Either way, if the expedited
+	 * grace period is still waiting on this CPU, set ->deferred_qs
+	 * so that the eventual quiescent state will be reported.
+	 * Note that there is a large group of race conditions that
+	 * can have caused this quiescent state to already have been
+	 * reported, so we really do need to check ->expmask.
 	 */
-	rdp = this_cpu_ptr(rsp->rda);
-	if ((preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK)) &&
-	    t->rcu_read_lock_nesting <= 0 &&
-	    !rcu_dynticks_curr_cpu_in_eqs()) {
-		rdp->deferred_qs = true;
-		resched_cpu(rdp->cpu);
-		return;
+	if (t->rcu_read_lock_nesting > 0) {
+		raw_spin_lock_irqsave_rcu_node(rnp, flags);
+		if (rnp->expmask & rdp->grpmask)
+			rdp->deferred_qs = true;
+		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	}
 
 	/*
-	 * We get here if we are in an RCU read-side critical section
-	 * that has already blocked (in which case the current task is
-	 * queued somewhere and is therefore blocking the grace period),
-	 * if we are exiting or outside of an RCU read-side critical
-	 * section with everything enabled, or if the CPU is idle from
-	 * an RCU perspective.
+	 * The final and least likely case is where the interrupted
+	 * code was just about to or just finished exiting the RCU-preempt
+	 * read-side critical section, and no, we can't tell which.
+	 * So either way, set ->deferred_qs to flag later code that
+	 * a quiescent state is required.
 	 *
-	 * Either way, we can immediately report the quiescent state.
+	 * If the CPU is fully enabled (or if some buggy RCU-preempt
+	 * read-side critical section is being used from idle), just
+	 * invoke rcu_preempt_defer_qs() to immediately report the
+	 * quiescent state.  We cannot use rcu_read_unlock_special()
+	 * because we are in an interrupt handler, which will cause that
+	 * function to take an early exit without doing anything.
+	 *
+	 * Otherwise, use resched_cpu() to force a context switch after
+	 * the CPU enables everything.
 	 */
-	rcu_report_exp_rdp(rsp, rdp, true);
+	rdp->deferred_qs = true;
+	if (!(preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK)) ||
+	    WARN_ON_ONCE(rcu_dynticks_curr_cpu_in_eqs()))
+		rcu_preempt_deferred_qs(t);
+	else
+		resched_cpu(rdp->cpu);
 }
 
 /**
