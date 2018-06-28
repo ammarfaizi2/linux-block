@@ -541,6 +541,7 @@ struct mlx5_core_health {
 	unsigned long			flags;
 	struct work_struct		work;
 	struct delayed_work		recover_work;
+	u32				vsc_addr;
 };
 
 struct mlx5_qp_table {

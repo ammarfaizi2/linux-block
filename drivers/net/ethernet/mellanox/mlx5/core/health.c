@@ -38,6 +38,7 @@
 #include <linux/mlx5/driver.h>
 #include <linux/mlx5/cmd.h>
 #include "mlx5_core.h"
+#include "lib/pci_vsc.h"
 
 enum {
 	MLX5_HEALTH_POLL_INTERVAL	= 2 * HZ,
@@ -388,6 +389,7 @@ int mlx5_health_init(struct mlx5_core_dev *dev)
 	spin_lock_init(&health->wq_lock);
 	INIT_WORK(&health->work, health_care);
 	INIT_DELAYED_WORK(&health->recover_work, health_recover);
+	mlx5_vsc_init(dev);
 
 	return 0;
 }
