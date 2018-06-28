@@ -30,6 +30,7 @@
 #include "debug.h"
 #include "hif.h"
 #include "htc.h"
+#include "mac.h"
 #include "targaddrs.h"
 #include "trace.h"
 #include "sdio.h"
@@ -505,11 +506,11 @@ static int ath10k_sdio_mbox_alloc_pkt_bundle(struct ath10k *ar,
 
 	*bndl_cnt = FIELD_GET(ATH10K_HTC_FLAG_BUNDLE_MASK, htc_hdr->flags);
 
-	if (*bndl_cnt > HTC_HOST_MAX_MSG_PER_BUNDLE) {
+	if (*bndl_cnt > HTC_HOST_MAX_MSG_PER_RX_BUNDLE) {
 		ath10k_warn(ar,
 			    "HTC bundle length %u exceeds maximum %u\n",
 			    le16_to_cpu(htc_hdr->len),
-			    HTC_HOST_MAX_MSG_PER_BUNDLE);
+			    HTC_HOST_MAX_MSG_PER_RX_BUNDLE);
 		return -ENOMEM;
 	}
 
@@ -1341,6 +1342,8 @@ static void ath10k_sdio_irq_handler(struct sdio_func *func)
 		if (ret)
 			break;
 	} while (time_before(jiffies, timeout) && !done);
+
+	ath10k_mac_tx_push_pending(ar);
 
 	sdio_claim_host(ar_sdio->func);
 
