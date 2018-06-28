@@ -159,7 +159,44 @@ static void cpu_map_kthread_stop(struct work_struct *work)
 	kthread_stop(rcpu->kthread);
 }
 
-static struct sk_buff *cpu_map_build_skb(struct bpf_cpu_map_entry *rcpu,
+// HACK: Just define the xdp_md_info here
+//
+// The issue is that on this remote CPU, we don't have access to the
+// xdp_md_info_arr, and it is actually hard to provide, as it is
+xdp_md_info_arr _mdi = {
+	[XDP_DATA_META_HASH] = {.offset = 0, .present = 1},
+	[XDP_DATA_META_VLAN] = {.offset = sizeof(struct xdp_md_hash), .present = 1},
+};
+
+//static
+noinline /* make it easier to identify in perf report */
+void meta_populate_skb(struct sk_buff *skb, struct xdp_frame *xdpf,
+			      xdp_md_info_arr mdi)
+{
+	void *data_meta;
+
+	if (!xdpf->metasize)
+		return;
+
+	data_meta = xdpf->data - xdpf->metasize;
+
+	if (mdi[XDP_DATA_META_HASH].present) {
+		struct xdp_md_hash *h = xdp_data_meta_get_hash(mdi, data_meta);
+
+		skb_set_hash(skb, h->hash, h->type);
+	}
+
+	if (mdi[XDP_DATA_META_VLAN].present) {
+		struct xdp_md_vlan *v = xdp_data_meta_get_vlan(mdi, data_meta);
+
+		// HOW TO SET VLAN ID correctly ??
+		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), v->vlan);
+	}
+}
+
+//static
+noinline /* make it easier to identify in perf report */
+struct sk_buff *cpu_map_build_skb(struct bpf_cpu_map_entry *rcpu,
 					 struct xdp_frame *xdpf)
 {
 	unsigned int frame_size;
@@ -193,8 +230,10 @@ static struct sk_buff *cpu_map_build_skb(struct bpf_cpu_map_entry *rcpu,
 
 	skb_reserve(skb, xdpf->headroom);
 	__skb_put(skb, xdpf->len);
-	if (xdpf->metasize)
+	if (xdpf->metasize) {
+		meta_populate_skb(skb, xdpf, _mdi);
 		skb_metadata_set(skb, xdpf->metasize);
+	}
 
 	/* Essential SKB info: protocol and skb->dev */
 	skb->protocol = eth_type_trans(skb, xdpf->dev_rx);
@@ -203,6 +242,9 @@ static struct sk_buff *cpu_map_build_skb(struct bpf_cpu_map_entry *rcpu,
 	 * - HW checksum info		(skb->ip_summed)
 	 * - HW RX hash			(skb_set_hash)
 	 * - RX ring dev queue index	(skb_record_rx_queue)
+	 *
+	 * TODO: pull this info from data_meta area, based on Saeeds patch
+	 *   See meta_populate_skb()
 	 */
 
 	return skb;
