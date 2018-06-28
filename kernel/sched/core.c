@@ -3127,16 +3127,18 @@ static void sched_tick_remote(struct work_struct *work)
 		u64 delta;
 
 		rq_lock_irq(rq, &rf);
-		update_rq_clock(rq);
 		curr = rq->curr;
-		delta = rq_clock_task(rq) - curr->se.exec_start;
+		if (!is_idle_task(curr)) {
+			update_rq_clock(rq);
+			delta = rq_clock_task(rq) - curr->se.exec_start;
 
-		/*
-		 * Make sure the next tick runs within a reasonable
-		 * amount of time.
-		 */
-		WARN_ON_ONCE(delta > (u64)NSEC_PER_SEC * 3);
-		curr->sched_class->task_tick(rq, curr, 0);
+			/*
+			 * Make sure the next tick runs within a reasonable
+			 * amount of time.
+			 */
+			WARN_ON_ONCE(delta > (u64)NSEC_PER_SEC * 3);
+			curr->sched_class->task_tick(rq, curr, 0);
+		}
 		rq_unlock_irq(rq, &rf);
 	}
 
