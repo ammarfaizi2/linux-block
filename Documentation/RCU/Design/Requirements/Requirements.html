@@ -2859,7 +2859,7 @@ The other four flavors are listed below, with requirements for each
 described in a separate section.
 
 <ol>
-<li>	<a href="#Bottom-Half Flavor">Bottom-Half Flavor</a>
+<li>	<a href="#Bottom-Half Flavor">Bottom-Half Flavor (Historical)</a>
 <li>	<a href="#Sched Flavor">Sched Flavor</a>
 <li>	<a href="#Sleepable RCU">Sleepable RCU</a>
 <li>	<a href="#Tasks RCU">Tasks RCU</a>
@@ -2867,7 +2867,16 @@ described in a separate section.
 	Waiting for Multiple Grace Periods</a>
 </ol>
 
-<h3><a name="Bottom-Half Flavor">Bottom-Half Flavor</a></h3>
+<h3><a name="Bottom-Half Flavor">Bottom-Half Flavor (Historical)</a></h3>
+
+<p>
+The RCU-bh flavor of RCU has since been expressed in terms of
+the other RCU flavors as part of a consolidation of the three
+flavors into a single flavor.
+The read-side API remains, and continues to disable softirq and to
+be accounted for by lockdep.
+Much of the material in this section is therefore strictly historical
+in nature.
 
 <p>
 The softirq-disable (AKA &ldquo;bottom-half&rdquo;,
@@ -2927,6 +2936,9 @@ includes
 <tt>call_rcu_bh()</tt>,
 <tt>rcu_barrier_bh()</tt>, and
 <tt>rcu_read_lock_bh_held()</tt>.
+However, the update-side APIs are now simple wrappers for other RCU
+flavors, namely RCU-sched in CONFIG_PREEMPT=n kernels and RCU-preempt
+otherwise.
 
 <h3><a name="Sched Flavor">Sched Flavor</a></h3>
 
