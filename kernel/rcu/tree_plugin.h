@@ -626,7 +626,8 @@ static void rcu_preempt_deferred_qs(struct task_struct *t)
 static void rcu_read_unlock_special(struct task_struct *t)
 {
 	unsigned long flags;
-	bool preempt_bh_were_disabled = !!(preempt_count() & ~HARDIRQ_MASK);
+	bool preempt_bh_were_disabled =
+			!!(preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK));
 	bool irqs_were_disabled;
 
 	/* NMI handlers cannot block and cannot safely manipulate state. */
