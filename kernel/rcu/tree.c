@@ -108,9 +108,9 @@ struct rcu_state rcu_state = { \
 }
 
 #ifdef CONFIG_PREEMPT_RCU
-RCU_STATE_INITIALIZER(rcu_sched, 's', call_rcu);
-#else
 RCU_STATE_INITIALIZER(rcu_preempt, 'p', call_rcu);
+#else
+RCU_STATE_INITIALIZER(rcu_sched, 's', call_rcu);
 #endif
 
 static struct rcu_state *const rcu_state_p = &rcu_state;
