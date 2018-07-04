@@ -2858,7 +2858,7 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func, int cpu, bool lazy)
 {
 	unsigned long flags;
 	struct rcu_data *rdp;
-	struct rcu_state *rsp = &rcu_state;
+	struct rcu_state __maybe_unused *rsp = &rcu_state;
 
 	/* Misaligned rcu_head! */
 	WARN_ON_ONCE((unsigned long)head & (sizeof(void *) - 1));
