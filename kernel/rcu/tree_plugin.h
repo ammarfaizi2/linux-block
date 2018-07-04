@@ -996,7 +996,7 @@ static void rcu_preempt_deferred_qs(struct task_struct *t) { }
  * Because preemptible RCU does not exist, we never have to check for
  * tasks blocked within RCU read-side critical sections.
  */
-static void rcu_print_detail_task_stall(struct rcu_state *rsp)
+static void rcu_print_detail_task_stall(void)
 {
 }
 
