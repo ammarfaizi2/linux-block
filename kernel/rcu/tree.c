@@ -2213,7 +2213,7 @@ static void rcu_report_qs_rnp(unsigned long mask, struct rcu_node *rnp,
 {
 	unsigned long oldmask = 0;
 	struct rcu_node *rnp_c;
-	struct rcu_state *rsp = &rcu_state;
+	struct rcu_state __maybe_unused *rsp = &rcu_state;
 
 	raw_lockdep_assert_held_rcu_node(rnp);
 
