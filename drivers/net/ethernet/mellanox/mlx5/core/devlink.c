@@ -126,12 +126,214 @@ static int mlx5_devlink_query_tx_overflow_sense(struct mlx5_core_dev *mdev,
 	return 0;
 }
 
+static const char *const action_to_str[] = {
+	[MLX5_DEVLINK_CONGESTION_ACTION_DISABLED] = "disabled",
+	[MLX5_DEVLINK_CONGESTION_ACTION_DROP] = "drop",
+	[MLX5_DEVLINK_CONGESTION_ACTION_MARK] = "mark"
+};
+
+static const char *mlx5_devlink_congestion_action_to_str(int action)
+{
+	if (action > MLX5_DEVLINK_CONGESTION_ACTION_MAX) {
+		WARN_ON(1);
+		return ERR_PTR(-EINVAL);
+	}
+
+	return action_to_str[action];
+}
+
+static int mlx5_devlink_str_to_congestion_action(const char *str, u8 *action)
+{
+	int i;
+
+	for (i = 0; i <= MLX5_DEVLINK_CONGESTION_ACTION_MAX; i++) {
+		if (!strcmp(str, action_to_str[i])) {
+			*action = i;
+			return 0;
+		}
+	}
+
+	return -EINVAL;
+}
+
+static int mlx5_devlink_set_congestion_action(struct devlink *devlink, u32 id,
+					      struct devlink_param_gset_ctx *ctx,
+					      struct netlink_ext_ack *extack)
+{
+	struct mlx5_core_dev *dev = devlink_priv(devlink);
+	u8 max = MLX5_DEVLINK_CONGESTION_ACTION_MAX;
+	u8 congestion_action;
+	u8 sense;
+	int err;
+
+	if (!MLX5_CAP_MCAM_FEATURE(dev, mark_tx_action_cqe) &&
+	    !MLX5_CAP_MCAM_FEATURE(dev, mark_tx_action_cnp))
+		max = MLX5_DEVLINK_CONGESTION_ACTION_MARK - 1;
+
+	err = mlx5_devlink_str_to_congestion_action(ctx->val.vstr,
+						    &congestion_action);
+	if (err)
+		return err;
+
+	if (congestion_action > max) {
+		NL_SET_ERR_MSG(extack, "Requested congestion action is not supported on current device/FW");
+		return -EINVAL;
+	}
+
+	err = mlx5_devlink_query_tx_overflow_sense(dev, &sense);
+	if (err)
+		return err;
+
+	if (congestion_action == MLX5_DEVLINK_CONGESTION_ACTION_DISABLED &&
+	    sense != MLX5_DEVLINK_CONGESTION_MODE_AGGRESSIVE) {
+		NL_SET_ERR_MSG(extack, "Congestion action \"disabled\" is allowed only while mode is configured to aggressive");
+		return -EINVAL;
+	}
+
+	return mlx5_devlink_set_tx_lossy_overflow(dev, congestion_action);
+}
+
+static int mlx5_devlink_get_congestion_action(struct devlink *devlink, u32 id,
+					      struct devlink_param_gset_ctx *ctx)
+{
+	struct mlx5_core_dev *dev = devlink_priv(devlink);
+	u8 congestion_action;
+	const char *val;
+	int err;
+
+	err = mlx5_devlink_query_tx_lossy_overflow(dev, &congestion_action);
+	if (err)
+		return err;
+
+	val = mlx5_devlink_congestion_action_to_str(congestion_action);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
+
+	devlink_param_value_str_fill(&ctx->val, val);
+	return 0;
+}
+
+static const char *const mode_to_str[] = {
+	[MLX5_DEVLINK_CONGESTION_MODE_AGGRESSIVE] = "aggressive",
+	[MLX5_DEVLINK_CONGESTION_MODE_DYNAMIC_ADJUSTMENT] = "dynamic"
+};
+
+static const char *mlx5_devlink_congestion_mode_to_str(int mode)
+{
+	if (mode > MLX5_DEVLINK_CONGESTION_MODE_MAX) {
+		WARN_ON(1);
+		return ERR_PTR(-EINVAL);
+	}
+
+	return mode_to_str[mode];
+}
+
+static int mlx5_devlink_str_to_congestion_mode(const char *str, u8 *mode)
+{
+	int i;
+
+	for (i = 0; i <= MLX5_DEVLINK_CONGESTION_MODE_MAX; i++) {
+		if (!strcmp(str, mode_to_str[i])) {
+			*mode = i;
+			return 0;
+		}
+	}
+
+	return -EINVAL;
+}
+
+static int mlx5_devlink_set_congestion_mode(struct devlink *devlink, u32 id,
+					    struct devlink_param_gset_ctx *ctx,
+					    struct netlink_ext_ack *extack)
+{
+	struct mlx5_core_dev *dev = devlink_priv(devlink);
+	u8 tx_lossy_overflow, congestion_mode;
+	int err;
+
+	err = mlx5_devlink_str_to_congestion_mode(ctx->val.vstr,
+						  &congestion_mode);
+	if (err)
+		return err;
+
+	err = mlx5_devlink_query_tx_lossy_overflow(dev, &tx_lossy_overflow);
+	if (err)
+		return err;
+
+	if (congestion_mode != MLX5_DEVLINK_CONGESTION_MODE_AGGRESSIVE &&
+	    tx_lossy_overflow == MLX5_DEVLINK_CONGESTION_ACTION_DISABLED) {
+		NL_SET_ERR_MSG(extack, "Congestion mode must be aggressive while congestion action is configured to \"disabled\"");
+		return -EINVAL;
+	}
+
+	return mlx5_devlink_set_tx_overflow_sense(dev, congestion_mode);
+}
+
+static int mlx5_devlink_get_congestion_mode(struct devlink *devlink, u32 id,
+					    struct devlink_param_gset_ctx *ctx)
+{
+	struct mlx5_core_dev *dev = devlink_priv(devlink);
+	u8 congestion_mode;
+	const char *val;
+	int err;
+
+	err = mlx5_devlink_query_tx_overflow_sense(dev, &congestion_mode);
+	if (err)
+		return err;
+
+	val = mlx5_devlink_congestion_mode_to_str(congestion_mode);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
+
+	devlink_param_value_str_fill(&ctx->val, val);
+	return 0;
+}
+
+enum mlx5_devlink_param_id {
+	MLX5_DEVLINK_PARAM_ID_BASE = DEVLINK_PARAM_GENERIC_ID_MAX,
+	MLX5_DEVLINK_PARAM_ID_CONGESTION_ACTION,
+	MLX5_DEVLINK_PARAM_ID_CONGESTION_MODE,
+};
+
+static const struct devlink_param mlx5_devlink_params[] = {
+	DEVLINK_PARAM_DRIVER(MLX5_DEVLINK_PARAM_ID_CONGESTION_ACTION,
+			     "congestion_action",
+			     DEVLINK_PARAM_TYPE_STRING,
+			     BIT(DEVLINK_PARAM_CMODE_RUNTIME),
+			     mlx5_devlink_get_congestion_action,
+			     mlx5_devlink_set_congestion_action, NULL),
+	DEVLINK_PARAM_DRIVER(MLX5_DEVLINK_PARAM_ID_CONGESTION_MODE,
+			     "congestion_mode",
+			     DEVLINK_PARAM_TYPE_STRING,
+			     BIT(DEVLINK_PARAM_CMODE_RUNTIME),
+			     mlx5_devlink_get_congestion_mode,
+			     mlx5_devlink_set_congestion_mode, NULL),
+};
+
 int mlx5_devlink_register(struct devlink *devlink, struct device *dev)
 {
-	return devlink_register(devlink, dev);
+	int err;
+
+	err = devlink_register(devlink, dev);
+	if (err)
+		return err;
+
+	err = devlink_params_register(devlink, mlx5_devlink_params,
+				      ARRAY_SIZE(mlx5_devlink_params));
+	if (err) {
+		dev_err(dev, "devlink_params_register failed\n");
+		goto unregister;
+	}
+
+	return 0;
+
+unregister:
+	devlink_unregister(devlink);
+	return err;
 }
 
 void mlx5_devlink_unregister(struct devlink *devlink)
 {
+	devlink_params_unregister(devlink, mlx5_devlink_params,
+				  ARRAY_SIZE(mlx5_devlink_params));
 	devlink_unregister(devlink);
 }
