@@ -647,10 +647,10 @@ static void rcu_eqs_enter(bool user)
 		do_nocb_deferred_wakeup(rdp);
 	}
 	rcu_prepare_for_idle();
+	rcu_preempt_deferred_qs(current);
 	WRITE_ONCE(rdtp->dynticks_nesting, 0); /* Avoid irq-access tearing. */
 	rcu_dynticks_eqs_enter();
 	rcu_dynticks_task_enter();
-	rcu_preempt_deferred_qs(current);
 }
 
 /**
