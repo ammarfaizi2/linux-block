@@ -55,7 +55,7 @@ void rcu_barrier(void)
 {
 	wait_rcu_gp(call_rcu);
 }
-EXPORT_SYMBOL(rcu_barrier_sched);
+EXPORT_SYMBOL(rcu_barrier);
 
 /* Record an rcu quiescent state.  */
 void rcu_qs(void)
