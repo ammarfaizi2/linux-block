@@ -1401,7 +1401,8 @@ rcu_torture_reader(void *arg)
 			if (!timer_pending(&t))
 				mod_timer(&t, jiffies + 1);
 		}
-		if (!rcu_torture_one_read(&rand))
+		if (!rcu_torture_one_read(&rand) ||
+		    !(torture_random(&rand) & 0xffe))
 			schedule_timeout_interruptible(HZ);
 		stutter_wait("rcu_torture_reader");
 	} while (!torture_must_stop());
