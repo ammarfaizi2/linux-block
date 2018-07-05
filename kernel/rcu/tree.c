@@ -2453,14 +2453,13 @@ static void rcu_do_batch(struct rcu_data *rdp)
 	struct rcu_head *rhp;
 	struct rcu_cblist rcl = RCU_CBLIST_INITIALIZER(rcl);
 	long bl, count;
-	struct rcu_state *rsp = &rcu_state;
 
 	/* If no callbacks are ready, just return. */
 	if (!rcu_segcblist_ready_cbs(&rdp->cblist)) {
-		trace_rcu_batch_start(rsp->name,
+		trace_rcu_batch_start(rcu_state.name,
 				      rcu_segcblist_n_lazy_cbs(&rdp->cblist),
 				      rcu_segcblist_n_cbs(&rdp->cblist), 0);
-		trace_rcu_batch_end(rsp->name, 0,
+		trace_rcu_batch_end(rcu_state.name, 0,
 				    !rcu_segcblist_empty(&rdp->cblist),
 				    need_resched(), is_idle_task(current),
 				    rcu_is_callbacks_kthread());
@@ -2475,7 +2474,8 @@ static void rcu_do_batch(struct rcu_data *rdp)
 	local_irq_save(flags);
 	WARN_ON_ONCE(cpu_is_offline(smp_processor_id()));
 	bl = rdp->blimit;
-	trace_rcu_batch_start(rsp->name, rcu_segcblist_n_lazy_cbs(&rdp->cblist),
+	trace_rcu_batch_start(rcu_state.name,
+			      rcu_segcblist_n_lazy_cbs(&rdp->cblist),
 			      rcu_segcblist_n_cbs(&rdp->cblist), bl);
 	rcu_segcblist_extract_done_cbs(&rdp->cblist, &rcl);
 	local_irq_restore(flags);
@@ -2484,7 +2484,7 @@ static void rcu_do_batch(struct rcu_data *rdp)
 	rhp = rcu_cblist_dequeue(&rcl);
 	for (; rhp; rhp = rcu_cblist_dequeue(&rcl)) {
 		debug_rcu_head_unqueue(rhp);
-		if (__rcu_reclaim(rsp->name, rhp))
+		if (__rcu_reclaim(rcu_state.name, rhp))
 			rcu_cblist_dequeued_lazy(&rcl);
 		/*
 		 * Stop only if limit reached and CPU has something to do.
@@ -2498,7 +2498,7 @@ static void rcu_do_batch(struct rcu_data *rdp)
 
 	local_irq_save(flags);
 	count = -rcl.len;
-	trace_rcu_batch_end(rsp->name, count, !!rcl.head, need_resched(),
+	trace_rcu_batch_end(rcu_state.name, count, !!rcl.head, need_resched(),
 			    is_idle_task(current), rcu_is_callbacks_kthread());
 
 	/* Update counts and requeue any remaining callbacks. */
@@ -2514,7 +2514,7 @@ static void rcu_do_batch(struct rcu_data *rdp)
 	/* Reset ->qlen_last_fqs_check trigger if enough CBs have drained. */
 	if (count == 0 && rdp->qlen_last_fqs_check != 0) {
 		rdp->qlen_last_fqs_check = 0;
-		rdp->n_force_qs_snap = rsp->n_force_qs;
+		rdp->n_force_qs_snap = rcu_state.n_force_qs;
 	} else if (count < rdp->qlen_last_fqs_check - qhimark)
 		rdp->qlen_last_fqs_check = count;
 
