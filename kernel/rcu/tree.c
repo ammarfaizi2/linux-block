@@ -2746,11 +2746,9 @@ static __latent_entropy void rcu_process_callbacks(struct softirq_action *unused
  */
 static void invoke_rcu_callbacks(struct rcu_data *rdp)
 {
-	struct rcu_state *rsp = &rcu_state;
-
 	if (unlikely(!READ_ONCE(rcu_scheduler_fully_active)))
 		return;
-	if (likely(!rsp->boost)) {
+	if (likely(!rcu_state.boost)) {
 		rcu_do_batch(rdp);
 		return;
 	}
@@ -2826,7 +2824,6 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func, int cpu, bool lazy)
 {
 	unsigned long flags;
 	struct rcu_data *rdp;
-	struct rcu_state __maybe_unused *rsp = &rcu_state;
 
 	/* Misaligned rcu_head! */
 	WARN_ON_ONCE((unsigned long)head & (sizeof(void *) - 1));
@@ -2875,11 +2872,12 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func, int cpu, bool lazy)
 		rcu_idle_count_callbacks_posted();
 
 	if (__is_kfree_rcu_offset((unsigned long)func))
-		trace_rcu_kfree_callback(rsp->name, head, (unsigned long)func,
+		trace_rcu_kfree_callback(rcu_state.name, head,
+					 (unsigned long)func,
 					 rcu_segcblist_n_lazy_cbs(&rdp->cblist),
 					 rcu_segcblist_n_cbs(&rdp->cblist));
 	else
-		trace_rcu_callback(rsp->name, head,
+		trace_rcu_callback(rcu_state.name, head,
 				   rcu_segcblist_n_lazy_cbs(&rdp->cblist),
 				   rcu_segcblist_n_cbs(&rdp->cblist));
 
