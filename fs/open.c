@@ -52,7 +52,7 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	}
 
 	/* Remove suid, sgid, and file capabilities on truncate too */
-	ret = dentry_needs_remove_privs(dentry);
+	ret = file_needs_remove_privs(filp);
 	if (ret < 0)
 		return ret;
 	if (ret)

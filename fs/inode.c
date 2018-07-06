@@ -1741,9 +1741,9 @@ EXPORT_SYMBOL(touch_atime);
  *	if suid or (sgid and xgrp)
  *		remove privs
  */
-int should_remove_suid(struct dentry *dentry)
+int should_remove_suid(struct file *file)
 {
-	umode_t mode = d_inode(dentry)->i_mode;
+	umode_t mode = file->f_inode->i_mode;
 	int kill = 0;
 
 	/* suid always must be killed */
@@ -1769,17 +1769,17 @@ EXPORT_SYMBOL(should_remove_suid);
  * response to write or truncate. Return 0 if nothing has to be changed.
  * Negative value on error (change should be denied).
  */
-int dentry_needs_remove_privs(struct dentry *dentry)
+int file_needs_remove_privs(struct file *file)
 {
-	struct inode *inode = d_inode(dentry);
+	struct inode *inode = file->f_inode;
 	int mask = 0;
 	int ret;
 
 	if (IS_NOSEC(inode))
 		return 0;
 
-	mask = should_remove_suid(dentry);
-	ret = security_inode_need_killpriv(dentry);
+	mask = should_remove_suid(file);
+	ret = security_inode_need_killpriv(file->f_path.dentry);
 	if (ret < 0)
 		return ret;
 	if (ret)
@@ -1814,7 +1814,7 @@ int file_remove_privs(struct file *file)
 	if (IS_NOSEC(inode))
 		return 0;
 
-	kill = dentry_needs_remove_privs(dentry);
+	kill = file_needs_remove_privs(file);
 	if (kill < 0)
 		return kill;
 	if (kill)
