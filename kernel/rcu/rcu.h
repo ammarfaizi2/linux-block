@@ -176,8 +176,9 @@ static inline unsigned long rcu_seq_diff(unsigned long new, unsigned long old)
 
 /*
  * debug_rcu_head_queue()/debug_rcu_head_unqueue() are used internally
- * by call_rcu() and rcu callback execution, and are therefore not part of the
- * RCU API. Leaving in rcupdate.h because they are used by all RCU flavors.
+ * by call_rcu() and rcu callback execution, and are therefore not part
+ * of the RCU API. These are in rcupdate.h because they are used by all
+ * RCU implementations.
  */
 
 #ifdef CONFIG_DEBUG_OBJECTS_RCU_HEAD
@@ -328,7 +329,7 @@ static inline void rcu_init_levelspread(int *levelspread, const int *levelcnt)
 	}
 }
 
-/* Returns first leaf rcu_node of the specified RCU flavor. */
+/* Returns a pointer to the first leaf rcu_node structure. */
 #define rcu_first_leaf_node() (rcu_state.level[rcu_num_lvls - 1])
 
 /* Is this rcu_node a leaf? */
