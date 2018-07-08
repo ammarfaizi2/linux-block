@@ -369,12 +369,11 @@ static void rcu_momentary_dyntick_idle(void)
 }
 
 /*
- * Register a quiescent state for all RCU flavors.  If there is an
+ * Register an urgently needed quiescent state.  If there is an
  * emergency, invoke rcu_momentary_dyntick_idle() to do a heavy-weight
- * dyntick-idle quiescent state visible to other CPUs (but only for those
- * RCU flavors in desperate need of a quiescent state, which will normally
- * be none of them).  Either way, do a lightweight quiescent state for
- * all RCU flavors.
+ * dyntick-idle quiescent state visible to other CPUs, which will in
+ * some cases serve for expedited as well as normal grace periods.
+ * Either way, register a lightweight quiescent state.
  *
  * The barrier() calls are redundant in the common case when this is
  * called externally, but just in case this is called from within this
@@ -982,11 +981,7 @@ void rcu_request_urgent_qs_task(struct task_struct *t)
  * Disable preemption to avoid false positives that could otherwise
  * happen due to the current CPU number being sampled, this task being
  * preempted, its old CPU being taken offline, resuming on some other CPU,
- * then determining that its old CPU is now offline.  Because there are
- * multiple flavors of RCU, and because this function can be called in the
- * midst of updating the flavors while a given CPU coming online or going
- * offline, it is necessary to check all flavors.  If any of the flavors
- * believe that given CPU is online, it is considered to be online.
+ * then determining that its old CPU is now offline.
  *
  * Disable checking if in an NMI handler because we cannot safely
  * report errors from NMI handlers anyway.  In addition, it is OK to use
@@ -1596,11 +1591,10 @@ static bool rcu_future_gp_cleanup(struct rcu_node *rnp)
 }
 
 /*
- * Awaken the grace-period kthread for the specified flavor of RCU.
- * Don't do a self-awaken, and don't bother awakening when there is
- * nothing for the grace-period kthread to do (as in several CPUs
- * raced to awaken, and we lost), and finally don't try to awaken
- * a kthread that has not yet been created.
+ * Awaken the grace-period kthread.  Don't do a self-awaken, and don't
+ * bother awakening when there is nothing for the grace-period kthread
+ * to do (as in several CPUs raced to awaken, and we lost), and finally
+ * don't try to awaken a kthread that has not yet been created.
  */
 static void rcu_gp_kthread_wake(void)
 {
@@ -3424,7 +3418,7 @@ void rcu_report_dead(unsigned int cpu)
 	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 	struct rcu_node *rnp = rdp->mynode;  /* Outgoing CPU's rdp & rnp. */
 
-	/* QS for any half-done expedited RCU-sched GP. */
+	/* QS for any half-done expedited grace period. */
 	preempt_disable();
 	rcu_report_exp_rdp(this_cpu_ptr(&rcu_data));
 	preempt_enable();
@@ -3513,7 +3507,7 @@ static int rcu_pm_notify(struct notifier_block *self,
 }
 
 /*
- * Spawn the kthreads that handle each RCU flavor's grace periods.
+ * Spawn the kthreads that handle RCU's grace periods.
  */
 static int __init rcu_spawn_gp_kthread(void)
 {
