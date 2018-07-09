@@ -368,6 +368,19 @@ static void rcu_momentary_dyntick_idle(void)
 	rcu_preempt_deferred_qs(current);
 }
 
+/**
+ * rcu_is_cpu_rrupt_from_idle - see if idle or immediately interrupted from idle
+ *
+ * If the current CPU is idle or running at a first-level (not nested)
+ * interrupt from idle, return true.  The caller must have at least
+ * disabled preemption.
+ */
+static int rcu_is_cpu_rrupt_from_idle(void)
+{
+	return __this_cpu_read(rcu_dynticks.dynticks_nesting) <= 0 &&
+	       __this_cpu_read(rcu_dynticks.dynticks_nmi_nesting) <= 1;
+}
+
 /*
  * Register an urgently needed quiescent state.  If there is an
  * emergency, invoke rcu_momentary_dyntick_idle() to do a heavy-weight
@@ -2499,7 +2512,7 @@ void rcu_check_callbacks(int user)
 	/* The load-acquire pairs with the store-release setting to true. */
 	if (smp_load_acquire(this_cpu_ptr(&rcu_dynticks.rcu_urgent_qs))) {
 		/* Idle and userspace execution already are quiescent states. */
-		if (!is_idle_task(current) && !user) {
+		if (!rcu_is_cpu_rrupt_from_idle() && !user) {
 			set_tsk_need_resched(current);
 			set_preempt_need_resched();
 		}

@@ -761,19 +761,6 @@ EXPORT_SYMBOL_GPL(synchronize_rcu_expedited);
 
 #else /* #ifdef CONFIG_PREEMPT_RCU */
 
-/**
- * rcu_is_cpu_rrupt_from_idle - see if idle or immediately interrupted from idle
- *
- * If the current CPU is idle or running at a first-level (not nested)
- * interrupt from idle, return true.  The caller must have at least
- * disabled preemption.
- */
-static int rcu_is_cpu_rrupt_from_idle(void)
-{
-	return __this_cpu_read(rcu_dynticks.dynticks_nesting) <= 0 &&
-	       __this_cpu_read(rcu_dynticks.dynticks_nmi_nesting) <= 1;
-}
-
 /* Invoked on each online non-idle CPU for expedited quiescent state. */
 static void sync_sched_exp_handler(void *unused)
 {
