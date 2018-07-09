@@ -550,7 +550,7 @@ void rcutorture_get_gp_data(enum rcutorture_type test_type, int *flags,
 EXPORT_SYMBOL_GPL(rcutorture_get_gp_data);
 
 /*
- * Return the root node of the specified rcu_state structure.
+ * Return the root node of the rcu_state structure.
  */
 static struct rcu_node *rcu_get_root(void)
 {
@@ -2099,13 +2099,13 @@ static int __noreturn rcu_gp_kthread(void *unused)
 }
 
 /*
- * Report a full set of quiescent states to the specified rcu_state data
- * structure.  Invoke rcu_gp_kthread_wake() to awaken the grace-period
- * kthread if another grace period is required.  Whether we wake
- * the grace-period kthread or it awakens itself for the next round
- * of quiescent-state forcing, that kthread will clean up after the
- * just-completed grace period.  Note that the caller must hold rnp->lock,
- * which is released before return.
+ * Report a full set of quiescent states to the rcu_state data structure.
+ * Invoke rcu_gp_kthread_wake() to awaken the grace-period kthread if
+ * another grace period is required.  Whether we wake the grace-period
+ * kthread or it awakens itself for the next round of quiescent-state
+ * forcing, that kthread will clean up after the just-completed grace
+ * period.  Note that the caller must hold rnp->lock, which is released
+ * before return.
  */
 static void rcu_report_qs_rsp(unsigned long flags)
 	__releases(rcu_get_root()->lock)
@@ -2192,7 +2192,7 @@ static void rcu_report_qs_rnp(unsigned long mask, struct rcu_node *rnp,
 /*
  * Record a quiescent state for all tasks that were previously queued
  * on the specified rcu_node structure and that were blocking the current
- * RCU grace period.  The caller must hold the specified rnp->lock with
+ * RCU grace period.  The caller must hold the corresponding rnp->lock with
  * irqs disabled, and this lock is released upon return, but irqs remain
  * disabled.
  */
@@ -2692,11 +2692,11 @@ static __latent_entropy void rcu_process_callbacks(struct softirq_action *unused
 }
 
 /*
- * Schedule RCU callback invocation.  If the specified type of RCU
- * does not support RCU priority boosting, just do a direct call,
- * otherwise wake up the per-CPU kernel kthread.  Note that because we
- * are running on the current CPU with softirqs disabled, the
- * rcu_cpu_kthread_task cannot disappear out from under us.
+ * Schedule RCU callback invocation.  If the running implementation of RCU
+ * does not support RCU priority boosting, just do a direct call, otherwise
+ * wake up the per-CPU kernel kthread.  Note that because we are running
+ * on the current CPU with softirqs disabled, the rcu_cpu_kthread_task
+ * cannot disappear out from under us.
  */
 static void invoke_rcu_callbacks(struct rcu_data *rdp)
 {
@@ -2937,11 +2937,10 @@ EXPORT_SYMBOL_GPL(cond_synchronize_rcu);
 
 /*
  * Check to see if there is any immediate RCU-related work to be done by
- * the current CPU, for the specified type of RCU, returning 1 if so and
- * zero otherwise.  The checks are in order of increasing expense: checks
- * that can be carried out against CPU-local state are performed first.
- * However, we must check for CPU stalls first, else we might not get
- * a chance.
+ * the current CPU, returning 1 if so and zero otherwise.  The checks are
+ * in order of increasing expense: checks that can be carried out against
+ * CPU-local state are performed first.  However, we must check for CPU
+ * stalls first, else we might not get a chance.
  */
 static int rcu_pending(void)
 {
@@ -3048,10 +3047,7 @@ static void rcu_barrier_func(void *unused)
 	}
 }
 
-/*
- * Orchestrate the specified type of RCU barrier, waiting for all
- * RCU callbacks of the specified type to complete.
- */
+/* Orchestrate an RCU barrier, waiting for all RCU callbacks to complete.  */
 static void _rcu_barrier(void)
 {
 	int cpu;
@@ -3523,7 +3519,7 @@ void rcu_scheduler_starting(void)
 }
 
 /*
- * Helper function for rcu_init() that initializes one rcu_state structure.
+ * Helper function for rcu_init() that initializes the rcu_state structure.
  */
 static void __init rcu_init_one(void)
 {
@@ -3685,7 +3681,7 @@ static void __init rcu_init_geometry(void)
 
 /*
  * Dump out the structure of the rcu_node combining tree associated
- * with the rcu_state structure referenced by rsp.
+ * with the rcu_state structure.
  */
 static void __init rcu_dump_rcu_node_tree(void)
 {
