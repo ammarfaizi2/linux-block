@@ -174,7 +174,7 @@ struct file *alloc_file(const struct path *path, fmode_t mode,
 	if ((mode & FMODE_WRITE) &&
 	     likely(fop->write || fop->write_iter))
 		mode |= FMODE_CAN_WRITE;
-	file->f_mode = mode;
+	file->f_mode = mode | FMODE_OPENED;
 	file->f_op = fop;
 	if ((mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
 		i_readcount_inc(path->dentry->d_inode);
