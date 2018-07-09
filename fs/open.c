@@ -812,6 +812,10 @@ static int do_dentry_open(struct file *f,
 	return 0;
 
 cleanup_all:
+	if (unlikely(error > 0)) {
+		WARN_ON(1);
+		error = -EINVAL;
+	}
 	fops_put(f->f_op);
 	if (f->f_mode & FMODE_WRITER) {
 		put_write_access(inode);
