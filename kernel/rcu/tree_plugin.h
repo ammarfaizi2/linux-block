@@ -778,6 +778,9 @@ static void rcu_flavor_check_callbacks(int user)
 {
 	struct task_struct *t = current;
 
+	if (user || rcu_is_cpu_rrupt_from_idle()) {
+		rcu_note_voluntary_context_switch(current);
+	}
 	if (t->rcu_read_lock_nesting > 0 ||
 	    (preempt_count() & (PREEMPT_MASK | SOFTIRQ_MASK))) {
 		/* No QS, force context switch if deferred. */
@@ -1051,7 +1054,6 @@ static void rcu_flavor_check_callbacks(int user)
 		 */
 
 		rcu_qs();
-		rcu_note_voluntary_context_switch(current);
 	}
 }
 
