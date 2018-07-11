@@ -55,6 +55,8 @@ void cond_synchronize_rcu(unsigned long oldstate);
 
 void rcu_idle_enter(void);
 void rcu_idle_exit(void);
+void rcu_kvm_enter(void);
+void rcu_kvm_exit(void);
 void rcu_irq_enter(void);
 void rcu_irq_exit(void);
 void rcu_irq_enter_irqson(void);

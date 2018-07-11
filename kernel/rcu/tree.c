@@ -583,6 +583,24 @@ void rcu_idle_enter(void)
 	rcu_eqs_enter(false);
 }
 
+/**
+ * rcu_kvm_enter - inform RCU that current CPU is entering a guest OS
+ *
+ * Enter guest-OS mode, in other words, -leave- the mode in which RCU
+ * read-side critical sections can occur.  (Though RCU read-side critical
+ * sections can occur in irq handlers from guest OSes, a possibility
+ * handled by irq_enter() and irq_exit().)
+ *
+ * If you add or remove a call to rcu_kvm_enter(), be sure to test with
+ * CONFIG_RCU_EQS_DEBUG=y.
+ */
+void rcu_kvm_enter(void)
+{
+	lockdep_assert_irqs_disabled();
+	rcu_eqs_enter(true);
+}
+EXPORT_SYMBOL_GPL(rcu_kvm_enter);
+
 #ifdef CONFIG_NO_HZ_FULL
 /**
  * rcu_user_enter - inform RCU that we are resuming userspace.
@@ -746,6 +764,22 @@ void rcu_idle_exit(void)
 	rcu_eqs_exit(false);
 	local_irq_restore(flags);
 }
+
+/**
+ * rcu_kvm_exit - inform RCU that current CPU is leaving a guest OS
+ *
+ * Exit guest-OS mode, in other words, -enter- the mode in which RCU
+ * read-side critical sections can occur.
+ *
+ * If you add or remove a call to rcu_kvm_exit(), be sure to test with
+ * CONFIG_RCU_EQS_DEBUG=y.
+ */
+void rcu_kvm_exit(void)
+{
+	lockdep_assert_irqs_disabled();
+	rcu_eqs_exit(true);
+}
+EXPORT_SYMBOL_GPL(rcu_kvm_exit);
 
 #ifdef CONFIG_NO_HZ_FULL
 /**

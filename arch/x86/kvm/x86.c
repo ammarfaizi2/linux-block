@@ -7458,7 +7458,9 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
 		vcpu->arch.switch_db_regs &= ~KVM_DEBUGREG_RELOAD;
 	}
 
+	rcu_kvm_enter();
 	kvm_x86_ops->run(vcpu);
+	rcu_kvm_exit();
 
 	/*
 	 * Do this here before restoring debug registers on the host.  And
