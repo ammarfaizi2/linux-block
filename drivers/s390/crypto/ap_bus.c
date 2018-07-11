@@ -794,7 +794,7 @@ static ssize_t ap_domain_store(struct bus_type *bus,
 	return count;
 }
 
-static BUS_ATTR(ap_domain, 0644, ap_domain_show, ap_domain_store);
+static BUS_ATTR_RW(ap_domain);
 
 static ssize_t ap_control_domain_mask_show(struct bus_type *bus, char *buf)
 {
@@ -809,8 +809,7 @@ static ssize_t ap_control_domain_mask_show(struct bus_type *bus, char *buf)
 			ap_configuration->adm[6], ap_configuration->adm[7]);
 }
 
-static BUS_ATTR(ap_control_domain_mask, 0444,
-		ap_control_domain_mask_show, NULL);
+static BUS_ATTR_RO(ap_control_domain_mask);
 
 static ssize_t ap_usage_domain_mask_show(struct bus_type *bus, char *buf)
 {
@@ -825,13 +824,7 @@ static ssize_t ap_usage_domain_mask_show(struct bus_type *bus, char *buf)
 			ap_configuration->aqm[6], ap_configuration->aqm[7]);
 }
 
-static BUS_ATTR(ap_usage_domain_mask, 0444,
-		ap_usage_domain_mask_show, NULL);
-
-static ssize_t ap_config_time_show(struct bus_type *bus, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n", ap_config_time);
-}
+static BUS_ATTR_RO(ap_usage_domain_mask);
 
 static ssize_t ap_interrupts_show(struct bus_type *bus, char *buf)
 {
@@ -839,10 +832,15 @@ static ssize_t ap_interrupts_show(struct bus_type *bus, char *buf)
 			ap_using_interrupts() ? 1 : 0);
 }
 
-static BUS_ATTR(ap_interrupts, 0444, ap_interrupts_show, NULL);
+static BUS_ATTR_RO(ap_interrupts);
 
-static ssize_t ap_config_time_store(struct bus_type *bus,
-				    const char *buf, size_t count)
+static ssize_t config_time_show(struct bus_type *bus, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", ap_config_time);
+}
+
+static ssize_t config_time_store(struct bus_type *bus, const char *buf,
+				 size_t count)
 {
 	int time;
 
@@ -853,15 +851,15 @@ static ssize_t ap_config_time_store(struct bus_type *bus,
 	return count;
 }
 
-static BUS_ATTR(config_time, 0644, ap_config_time_show, ap_config_time_store);
+static BUS_ATTR_RW(config_time);
 
-static ssize_t ap_poll_thread_show(struct bus_type *bus, char *buf)
+static ssize_t poll_thread_show(struct bus_type *bus, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%d\n", ap_poll_kthread ? 1 : 0);
 }
 
-static ssize_t ap_poll_thread_store(struct bus_type *bus,
-				    const char *buf, size_t count)
+static ssize_t poll_thread_store(struct bus_type *bus, const char *buf,
+				 size_t count)
 {
 	int flag, rc;
 
@@ -876,7 +874,7 @@ static ssize_t ap_poll_thread_store(struct bus_type *bus,
 	return count;
 }
 
-static BUS_ATTR(poll_thread, 0644, ap_poll_thread_show, ap_poll_thread_store);
+static BUS_ATTR_RW(poll_thread);
 
 static ssize_t poll_timeout_show(struct bus_type *bus, char *buf)
 {
@@ -905,7 +903,7 @@ static ssize_t poll_timeout_store(struct bus_type *bus, const char *buf,
 	return count;
 }
 
-static BUS_ATTR(poll_timeout, 0644, poll_timeout_show, poll_timeout_store);
+static BUS_ATTR_RW(poll_timeout);
 
 static ssize_t ap_max_domain_id_show(struct bus_type *bus, char *buf)
 {
@@ -918,7 +916,7 @@ static ssize_t ap_max_domain_id_show(struct bus_type *bus, char *buf)
 	return snprintf(buf, PAGE_SIZE, "%d\n", max_domain_id);
 }
 
-static BUS_ATTR(ap_max_domain_id, 0444, ap_max_domain_id_show, NULL);
+static BUS_ATTR_RO(ap_max_domain_id);
 
 static struct bus_attribute *const ap_bus_attrs[] = {
 	&bus_attr_ap_domain,
