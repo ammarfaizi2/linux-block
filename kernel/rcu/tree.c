@@ -1026,13 +1026,12 @@ static int rcu_implicit_dynticks_qs(struct rcu_data *rdp)
 	jtsq = jiffies_till_sched_qs;
 	ruqp = per_cpu_ptr(&rcu_dynticks.rcu_urgent_qs, rdp->cpu);
 	if (time_after(jiffies, rcu_state.gp_start + jtsq) &&
-	    READ_ONCE(rdp->rcu_qs_ctr_snap) != per_cpu(rcu_dynticks.rcu_qs_ctr, rdp->cpu) &&
 	    rcu_seq_current(&rdp->gp_seq) == rnp->gp_seq && !rdp->gpwrap) {
 		trace_rcu_fqs(rcu_state.name, rdp->gp_seq, rdp->cpu, TPS("rqc"));
 		rcu_gpnum_ovf(rnp, rdp);
 		return 1;
 	} else if (time_after(jiffies, rcu_state.gp_start + jtsq)) {
-		/* Load rcu_qs_ctr before store to rcu_urgent_qs. */
+		/* Load gp_seq before store to rcu_urgent_qs. */
 		smp_store_release(ruqp, true);
 	}
 
@@ -1668,7 +1667,6 @@ static bool __note_gp_changes(struct rcu_node *rnp, struct rcu_data *rdp)
 		trace_rcu_grace_period(rcu_state.name, rnp->gp_seq, TPS("cpustart"));
 		need_gp = !!(rnp->qsmask & rdp->grpmask);
 		rdp->cpu_no_qs.b.norm = need_gp;
-		rdp->rcu_qs_ctr_snap = __this_cpu_read(rcu_dynticks.rcu_qs_ctr);
 		rdp->core_needs_qs = need_gp;
 		zero_cpu_stall_ticks(rdp);
 	}
@@ -2229,7 +2227,6 @@ rcu_report_qs_rdp(int cpu, struct rcu_data *rdp)
 		 * within the current grace period.
 		 */
 		rdp->cpu_no_qs.b.norm = true;	/* need qs for new gp. */
-		rdp->rcu_qs_ctr_snap = __this_cpu_read(rcu_dynticks.rcu_qs_ctr);
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 		return;
 	}
@@ -3210,7 +3207,6 @@ int rcutree_prepare_cpu(unsigned int cpu)
 	rdp->gp_seq = rnp->gp_seq;
 	rdp->gp_seq_needed = rnp->gp_seq;
 	rdp->cpu_no_qs.b.norm = true;
-	rdp->rcu_qs_ctr_snap = per_cpu(rcu_dynticks.rcu_qs_ctr, cpu);
 	rdp->core_needs_qs = false;
 	rdp->rcu_iw_pending = false;
 	rdp->rcu_iw_gp_seq = rnp->gp_seq - 1;
