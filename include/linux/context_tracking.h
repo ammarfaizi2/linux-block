@@ -118,12 +118,12 @@ static inline void guest_enter_irqoff(void)
 	 * one time slice). Lets treat guest mode as quiescent state, just like
 	 * we do with user-mode execution.
 	 */
-	if (!context_tracking_cpu_is_enabled())
-		rcu_virt_note_context_switch(smp_processor_id());
+	rcu_kvm_enter();
 }
 
 static inline void guest_exit_irqoff(void)
 {
+	rcu_kvm_exit();
 	if (context_tracking_is_enabled())
 		__context_tracking_exit(CONTEXT_GUEST);
 
@@ -143,12 +143,13 @@ static inline void guest_enter_irqoff(void)
 	 */
 	vtime_account_system(current);
 	current->flags |= PF_VCPU;
-	rcu_virt_note_context_switch(smp_processor_id());
+	rcu_kvm_enter();
 }
 
 static inline void guest_exit_irqoff(void)
 {
 	/* Flush the guest cputime we spent on the guest */
+	rcu_kvm_exit();
 	vtime_account_system(current);
 	current->flags &= ~PF_VCPU;
 }

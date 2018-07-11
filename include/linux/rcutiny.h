@@ -81,7 +81,6 @@ static inline int rcu_needs_cpu(u64 basemono, u64 *nextevt)
  * Take advantage of the fact that there is only one CPU, which
  * allows us to ignore virtualization-based context switches.
  */
-static inline void rcu_virt_note_context_switch(int cpu) { }
 static inline void rcu_cpu_stall_reset(void) { }
 static inline void rcu_idle_enter(void) { }
 static inline void rcu_idle_exit(void) { }
