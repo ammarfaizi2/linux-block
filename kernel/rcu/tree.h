@@ -222,7 +222,7 @@ struct rcu_data {
 					/* Grace period that needs help */
 					/*  from cond_resched(). */
 
-	/* 5) _rcu_barrier(), OOM callbacks, and expediting. */
+	/* 5) rcu_barrier(), OOM callbacks, and expediting. */
 	struct rcu_head barrier_head;
 #ifdef CONFIG_RCU_FAST_NO_HZ
 	struct rcu_head oom_head;
@@ -331,7 +331,7 @@ struct rcu_state {
 	atomic_t barrier_cpu_count;		/* # CPUs waiting on. */
 	struct completion barrier_completion;	/* Wake at barrier end. */
 	unsigned long barrier_sequence;		/* ++ at start and end of */
-						/*  _rcu_barrier(). */
+						/*  rcu_barrier(). */
 	/* End of fields guarded by barrier_mutex. */
 
 	struct mutex exp_mutex;			/* Serialize expedited GP. */
