@@ -23,6 +23,7 @@
  */
 
 #include <linux/gcd.h>
+#include <linux/component.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include "radeon.h"
@@ -248,6 +249,7 @@ static void radeon_audio_enable(struct radeon_device *rdev,
 	struct drm_encoder *encoder;
 	struct radeon_encoder *radeon_encoder;
 	struct radeon_encoder_atom_dig *dig;
+	struct drm_audio_component *acomp = rdev->audio.component;
 	int pin_count = 0;
 
 	if (!pin)
@@ -269,6 +271,10 @@ static void radeon_audio_enable(struct radeon_device *rdev,
 
 	if (rdev->audio.funcs->enable)
 		rdev->audio.funcs->enable(rdev, pin, enable_mask);
+
+	if (acomp && acomp->audio_ops && acomp->audio_ops->pin_eld_notify)
+		acomp->audio_ops->pin_eld_notify(acomp->audio_ops->audio_ptr,
+						 pin->id, -1);
 }
 
 static void radeon_audio_interface_init(struct radeon_device *rdev)
@@ -291,6 +297,71 @@ static void radeon_audio_interface_init(struct radeon_device *rdev)
 		rdev->audio.dp_funcs = 0;
 	}
 }
+
+static int radeon_audio_component_get_eld(struct device *kdev, int port,
+					  int pipe, bool *enabled,
+					  unsigned char *buf, int max_bytes)
+{
+	struct drm_device *dev = dev_get_drvdata(kdev);
+	struct drm_encoder *encoder;
+	struct radeon_encoder *radeon_encoder;
+	struct radeon_encoder_atom_dig *dig;
+	struct drm_connector *connector;
+	int ret = 0;
+
+	*enabled = false;
+	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
+		if (!radeon_encoder_is_digital(encoder))
+			continue;
+		radeon_encoder = to_radeon_encoder(encoder);
+		dig = radeon_encoder->enc_priv;
+		if (!dig->pin || dig->pin->id != port)
+			continue;
+		connector = radeon_get_connector_for_encoder(encoder);
+		if (connector) {
+			*enabled = true;
+			ret = drm_eld_size(connector->eld);
+			memcpy(buf, connector->eld, min(max_bytes, ret));
+			break;
+		}
+	}
+
+	return ret;
+}
+
+static const struct drm_audio_component_ops radeon_audio_component_ops = {
+	.get_eld = radeon_audio_component_get_eld,
+};
+
+static int radeon_audio_component_bind(struct device *kdev,
+				       struct device *hda_kdev, void *data)
+{
+	struct drm_device *dev = dev_get_drvdata(kdev);
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_audio_component *acomp = data;
+
+	acomp->ops = &radeon_audio_component_ops;
+	acomp->dev = kdev;
+	rdev->audio.component = acomp;
+	return 0;
+}
+
+static void radeon_audio_component_unbind(struct device *kdev,
+					  struct device *hda_kdev, void *data)
+{
+	struct drm_device *dev = dev_get_drvdata(kdev);
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_audio_component *acomp = data;
+
+	acomp->ops = NULL;
+	acomp->dev = NULL;
+	rdev->audio.component = NULL;
+}
+
+static const struct component_ops radeon_audio_component_bind_ops = {
+	.bind	= radeon_audio_component_bind,
+	.unbind	= radeon_audio_component_unbind,
+};
 
 static int radeon_audio_chipset_supported(struct radeon_device *rdev)
 {
@@ -337,6 +408,9 @@ int radeon_audio_init(struct radeon_device *rdev)
 	/* disable audio.  it will be set up later */
 	for (i = 0; i < rdev->audio.num_pins; i++)
 		radeon_audio_enable(rdev, &rdev->audio.pin[i], 0);
+
+	if (!component_add(rdev->dev, &radeon_audio_component_bind_ops))
+		rdev->audio.component_registered = true;
 
 	return 0;
 }
@@ -490,6 +564,11 @@ void radeon_audio_fini(struct radeon_device *rdev)
 		radeon_audio_enable(rdev, &rdev->audio.pin[i], 0);
 
 	rdev->audio.enabled = false;
+
+	if (rdev->audio.component_registered) {
+		component_del(rdev->dev, &radeon_audio_component_bind_ops);
+		rdev->audio.component_registered = false;
+	}
 }
 
 static void radeon_audio_set_dto(struct drm_encoder *encoder, unsigned int clock)
