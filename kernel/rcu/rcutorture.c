@@ -1189,11 +1189,11 @@ rcutorture_extend_mask(int oldmask, struct torture_random_state *trsp)
 {
 	int mask = rcutorture_extend_mask_max();
 	unsigned long randmask1 = torture_random(trsp) >> 8;
-	unsigned long randmask2 = randmask1 >> 1;
+	unsigned long randmask2 = randmask1 >> 3;
 
 	WARN_ON_ONCE(mask >> RCUTORTURE_RDR_SHIFT);
-	/* Half the time lots of bits, half the time only one bit. */
-	if (randmask1 & 0x1)
+	/* Most of the time lots of bits, half the time only one bit. */
+	if (!(randmask1 & 0x7))
 		mask = mask & randmask2;
 	else
 		mask = mask & (1 << (randmask2 % RCUTORTURE_RDR_NBITS));
@@ -1222,7 +1222,9 @@ static void rcutorture_loop_extend(int *readstate,
 	WARN_ON_ONCE(!*readstate); /* -Existing- RCU read-side critsect! */
 	if (!((mask - 1) & mask))
 		return;  /* Current RCU reader not extendable. */
-	i = (torture_random(trsp) >> 3) & RCUTORTURE_RDR_MAX_LOOPS;
+	/* Bias towards larger numbers of loops. */
+	i = (torture_random(trsp) >> 3);
+	i = ((i | (i >> 3)) & RCUTORTURE_RDR_MAX_LOOPS) + 1;
 	while (i--) {
 		mask = rcutorture_extend_mask(*readstate, trsp);
 		rcutorture_one_extend(readstate, mask, trsp);
