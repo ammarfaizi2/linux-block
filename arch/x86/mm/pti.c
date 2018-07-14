@@ -483,6 +483,41 @@ void pti_set_kernel_image_nonglobal(void)
 	set_memory_nonglobal(start, (end - start) >> PAGE_SHIFT);
 }
 
+static void __init setup_irq_stack(unsigned int cpu)
+{
+#if defined(CONFIG_X86_64) && defined(CONFIG_VMAP_STACK)
+	/*
+	 * Earlier in boot, we have irq_stack_ptr pointing to the percpu area.
+	 * Replace it with a remapped copy that is protected by guard pages.
+	 *
+	 * This is only enabled when CONFIG_VMAP_STACK is on because,
+	 * just like vmapped thread stacks, it is incompatible with KASAN.
+	 */
+
+	int i;
+	struct page *pages[IRQ_STACK_SIZE / PAGE_SIZE];
+	char *stack = (char *)&per_cpu(irq_stack_backing_store, cpu);
+	char *va;
+
+	for (i = 0; i < IRQ_STACK_SIZE / PAGE_SIZE; i++) {
+		phys_addr_t pa = per_cpu_ptr_to_phys(stack + (i << PAGE_SHIFT));
+		pages[i] = pfn_to_page(pa >> PAGE_SHIFT);
+	}
+
+	va = vmap(pages, IRQ_STACK_SIZE / PAGE_SIZE, GFP_KERNEL, PAGE_KERNEL);
+	if (WARN_ON(!va)) {
+		/*
+		 * The system will be functional if we just use the original
+		 * percpu mapping instead of the vmapped copy with guard
+		 * pages.
+		 */
+		return;
+	}
+
+	per_cpu(irq_stack_ptr, cpu) = (char *)va + IRQ_STACK_SIZE;
+#endif
+}
+
 /*
  * Initialize kernel page table isolation
  */
@@ -501,4 +536,15 @@ void __init pti_init(void)
 	pti_clone_entry_text();
 	pti_setup_espfix64();
 	pti_setup_vsyscall();
+
+	{
+		/*
+		 * XXX: Find this a better home.  It should be after
+		 * vmalloc_init() but before we start using interrupts
+		 * for real.
+		 */
+		unsigned int cpu;
+		for_each_possible_cpu(cpu)
+			setup_irq_stack(cpu);
+	}
 }

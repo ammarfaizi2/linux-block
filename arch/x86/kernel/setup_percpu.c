@@ -243,6 +243,7 @@ void __init setup_per_cpu_areas(void)
 			early_per_cpu_map(x86_cpu_to_logical_apicid, cpu);
 #endif
 #ifdef CONFIG_X86_64
+		/* This is temporary -- we will replace this in trap_init(). */
 		per_cpu(irq_stack_ptr, cpu) =
 			(unsigned long)&per_cpu(irq_stack_backing_store, cpu) +
 			offsetofend(struct irq_stack, stack);
