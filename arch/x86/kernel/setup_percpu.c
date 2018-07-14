@@ -245,9 +245,8 @@ void __init setup_per_cpu_areas(void)
 			early_per_cpu_map(x86_cpu_to_logical_apicid, cpu);
 #endif
 #ifdef CONFIG_X86_64
-		per_cpu(hardirq_stack_ptr, cpu) =
-			per_cpu(irq_stack_union.irq_stack, cpu) +
-			IRQ_STACK_SIZE;
+		per_cpu(hardirq_stack_ptr, cpu) = (struct irq_stack *)
+			per_cpu_ptr(&irq_stack_backing_store, cpu) + 1;
 #endif
 #ifdef CONFIG_NUMA
 		per_cpu(x86_cpu_to_node_map, cpu) =

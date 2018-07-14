@@ -23,6 +23,8 @@
 #include <asm/io_apic.h>
 #include <asm/apic.h>
 
+DEFINE_PER_CPU_PAGE_ALIGNED(struct irq_stack, irq_stack_backing_store) __visible;
+
 int sysctl_panic_on_stackoverflow;
 
 /*
