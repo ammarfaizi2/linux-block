@@ -44,6 +44,7 @@ static const char *region_cr_space_str = "cr-space";
 
 struct mlx5_fw_crdump {
 	u32			size;
+	bool			snapshot_enable;
 	struct devlink_region	*region_crspace;
 };
 
@@ -123,6 +124,27 @@ int mlx5_crdump_collect(struct mlx5_core_dev *dev)
 unlock:
 	mlx5_vsc_gw_unlock(dev);
 	return ret;
+}
+
+bool mlx5_crdump_is_snapshot_enabled(struct mlx5_core_dev *dev)
+{
+	struct mlx5_priv *priv = &dev->priv;
+
+	if (mlx5_crdump_enbaled(dev))
+		return priv->health.crdump->snapshot_enable;
+
+	return false;
+}
+
+int mlx5_crdump_set_snapshot_enabled(struct mlx5_core_dev *dev, bool value)
+{
+	struct mlx5_priv *priv = &dev->priv;
+
+	if (!mlx5_crdump_enbaled(dev))
+		return -ENODEV;
+
+	priv->health.crdump->snapshot_enable = value;
+	return 0;
 }
 
 int mlx5_crdump_init(struct mlx5_core_dev *dev)

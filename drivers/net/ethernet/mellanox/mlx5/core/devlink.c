@@ -2,6 +2,7 @@
 /* Copyright (c) 2018, Mellanox Technologies inc. All rights reserved. */
 
 #include <devlink.h>
+#include "lib/mlx5.h"
 
 enum {
 	MLX5_DEVLINK_MPEGC_FIELD_SELECT_TX_OVERFLOW_DROP_EN = BIT(0),
@@ -288,6 +289,24 @@ static int mlx5_devlink_get_congestion_mode(struct devlink *devlink, u32 id,
 	return 0;
 }
 
+static int mlx5_devlink_get_crdump_snapshot(struct devlink *devlink, u32 id,
+					    struct devlink_param_gset_ctx *ctx)
+{
+	struct mlx5_core_dev *dev = devlink_priv(devlink);
+
+	ctx->val.vbool = mlx5_crdump_is_snapshot_enabled(dev);
+	return 0;
+}
+
+static int mlx5_devlink_set_crdump_snapshot(struct devlink *devlink, u32 id,
+					    struct devlink_param_gset_ctx *ctx,
+					    struct netlink_ext_ack *extack)
+{
+	struct mlx5_core_dev *dev = devlink_priv(devlink);
+
+	return mlx5_crdump_set_snapshot_enabled(dev, ctx->val.vbool);
+}
+
 enum mlx5_devlink_param_id {
 	MLX5_DEVLINK_PARAM_ID_BASE = DEVLINK_PARAM_GENERIC_ID_MAX,
 	MLX5_DEVLINK_PARAM_ID_CONGESTION_ACTION,
@@ -295,6 +314,11 @@ enum mlx5_devlink_param_id {
 };
 
 static const struct devlink_param mlx5_devlink_params[] = {
+	DEVLINK_PARAM_GENERIC(REGION_SNAPSHOT,
+			      BIT(DEVLINK_PARAM_CMODE_RUNTIME) |
+			      BIT(DEVLINK_PARAM_CMODE_DRIVERINIT),
+			      mlx5_devlink_get_crdump_snapshot,
+			      mlx5_devlink_set_crdump_snapshot, NULL),
 	DEVLINK_PARAM_DRIVER(MLX5_DEVLINK_PARAM_ID_CONGESTION_ACTION,
 			     "congestion_action",
 			     DEVLINK_PARAM_TYPE_STRING,
@@ -308,6 +332,29 @@ static const struct devlink_param mlx5_devlink_params[] = {
 			     mlx5_devlink_get_congestion_mode,
 			     mlx5_devlink_set_congestion_mode, NULL),
 };
+
+static void mlx5_devlink_set_init_value(struct devlink *devlink, u32 param_id,
+					union devlink_param_value init_val)
+{
+	struct mlx5_core_dev *dev = devlink_priv(devlink);
+	int err;
+
+	err = devlink_param_driverinit_value_set(devlink, param_id, init_val);
+	if (err)
+		dev_warn(&dev->pdev->dev,
+			 "devlink set parameter %u value failed (err = %d)",
+			 param_id, err);
+}
+
+static void mlx5_devlink_set_params_init_values(struct devlink *devlink)
+{
+	union devlink_param_value value;
+
+	value.vbool = false;
+	mlx5_devlink_set_init_value(devlink,
+				    DEVLINK_PARAM_GENERIC_ID_REGION_SNAPSHOT,
+				    value);
+}
 
 int mlx5_devlink_register(struct devlink *devlink, struct device *dev)
 {
@@ -323,6 +370,8 @@ int mlx5_devlink_register(struct devlink *devlink, struct device *dev)
 		dev_err(dev, "devlink_params_register failed\n");
 		goto unregister;
 	}
+
+	mlx5_devlink_set_params_init_values(devlink);
 
 	return 0;
 
