@@ -57,7 +57,9 @@ empty rmw & (fre ; coe) as atomic
 
 (* Preserved Program Order *)
 let dep = addr | data
-let rwdep = (dep | ctrl) ; [W]
+let volatile = [Once] | [Release] | [Acquire] (* No unmarked accesses. *)
+let ctrl-volatile = ctrl ; (po ; volatile)*
+let rwdep = (dep | ctrl-volatile) ; [W]
 let overwrite = co | fr
 let to-w = rwdep | (overwrite & int)
 let to-r = addr | (dep ; rfi)
