@@ -390,6 +390,7 @@ int mlx5_health_init(struct mlx5_core_dev *dev)
 	INIT_WORK(&health->work, health_care);
 	INIT_DELAYED_WORK(&health->recover_work, health_recover);
 	mlx5_vsc_init(dev);
+	health->crdump = NULL;
 
 	return 0;
 }
