@@ -3014,7 +3014,8 @@ devlink_param_value_get_from_info(const struct devlink_param *param,
 		if (nla_len(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]) >
 		    DEVLINK_PARAM_MAX_STRING_VALUE)
 			return -EINVAL;
-		value->vstr = nla_data(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]);
+		strcpy(value->vstr,
+		       nla_data(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]));
 		break;
 	case DEVLINK_PARAM_TYPE_BOOL:
 		value->vbool = info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA] ?
