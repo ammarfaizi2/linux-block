@@ -85,3 +85,234 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	fc->phase = FS_CONTEXT_CREATE_PARAMS;
 	return fscontext_create_fd(fc, flags & FSOPEN_CLOEXEC ? O_CLOEXEC : 0);
 }
+
+/*
+ * Check the state and apply the configuration.  Note that this function is
+ * allowed to 'steal' the value by setting *_value to NULL before returning.
+ */
+static int vfs_fsconfig(struct fs_context *fc, enum fsconfig_command cmd,
+			char *key, void **_value, long aux)
+{
+	void *value = *_value;
+	int ret;
+
+	/* We need to reinitialise the context if we have reconfiguration
+	 * pending after creation or a previous reconfiguration.
+	 */
+	if (fc->phase == FS_CONTEXT_AWAITING_RECONF) {
+		if (fc->fs_type->init_fs_context) {
+			ret = fc->fs_type->init_fs_context(fc, fc->root);
+			if (ret < 0) {
+				fc->phase = FS_CONTEXT_FAILED;
+				return ret;
+			}
+		} else {
+			/* Leave legacy context ops in place */
+		}
+
+		/* Do the security check last because ->init_fs_context may
+		 * change the namespace subscriptions.
+		 */
+		ret = security_fs_context_alloc(fc, fc->root);
+		if (ret < 0) {
+			fc->phase = FS_CONTEXT_FAILED;
+			return ret;
+		}
+
+		fc->phase = FS_CONTEXT_RECONF_PARAMS;
+	}
+
+	ret = -EINVAL;
+	switch (cmd) {
+	case fsconfig_set_string:
+		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
+		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
+			return -EBUSY;
+		if (strcmp(key, "source") == 0)
+			return vfs_set_fs_source(fc, value, strlen(value));
+		/* Fall through */
+
+	case fsconfig_set_flag:
+	case fsconfig_set_binary:
+		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
+		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
+			return -EBUSY;
+		return vfs_parse_fs_option(fc, key, value, aux);
+
+	case fsconfig_set_path:
+	case fsconfig_set_path_empty:
+	case fsconfig_set_fd:
+		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
+		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
+			return -EBUSY;
+		BUG(); // TODO
+
+	case fsconfig_cmd_create:
+		if (fc->phase != FS_CONTEXT_CREATE_PARAMS)
+			return -EBUSY;
+		fc->phase = FS_CONTEXT_CREATING;
+		ret = vfs_get_tree(fc);
+		if (ret == 0)
+			fc->phase = FS_CONTEXT_AWAITING_MOUNT;
+		else
+			fc->phase = FS_CONTEXT_FAILED;
+		return ret;
+
+	default:
+		return -EOPNOTSUPP;
+	}
+
+	return ret;
+}
+
+/**
+ * sys_fsconfig - Set parameters and trigger actions on a context
+ * @fd: The filesystem context to act upon
+ * @cmd: The action to take
+ * @_key: Where appropriate, the parameter key to set
+ * @_value: Where appropriate, the parameter value to set
+ * @aux: Additional information for the value
+ *
+ * This system call is used to set parameters on a context, including
+ * superblock settings, data source and security labelling.
+ *
+ * Actions include triggering the creation of a superblock and the
+ * reconfiguration of the superblock attached to the specified context.
+ *
+ * When setting a parameter, @cmd indicates the type of value being proposed
+ * and @_key indicates the parameter to be altered.
+ *
+ * @_value and @aux are used to specify the value, should a value be required:
+ *
+ * (*) fsconfig_set_flag: No value is specified.  The parameter must be boolean
+ *     in nature.  The key may be prefixed with "no" to invert the
+ *     setting. @_value must be NULL and @aux must be 0.
+ *
+ * (*) fsconfig_set_string: A string value is specified.  The parameter can be
+ *     expecting boolean, integer, string or take a path.  A conversion to an
+ *     appropriate type will be attempted (which may include looking up as a
+ *     path).  @_value points to a NUL-terminated string and @aux must be 0.
+ *
+ * (*) fsconfig_set_binary: A binary blob is specified.  @_value points to the
+ *     blob and @aux indicates its size.  The parameter must be expecting a
+ *     blob.
+ *
+ * (*) fsconfig_set_path: A non-empty path is specified.  The parameter must be
+ *     expecting a path object.  @_value points to a NUL-terminated string that
+ *     is the path and @aux is a file descriptor at which to start a relative
+ *     lookup or AT_FDCWD.
+ *
+ * (*) fsconfig_set_path_empty: As fsconfig_set_path, but with AT_EMPTY_PATH
+ *     implied.
+ *
+ * (*) fsconfig_set_fd: An open file descriptor is specified.  @_value must be
+ *     NULL and @aux indicates the file descriptor.
+ */
+SYSCALL_DEFINE5(fsconfig,
+		int, fd,
+		unsigned int, cmd,
+		const char __user *, _key,
+		const void __user *, _value,
+		int, aux)
+{
+	struct fs_context *fc;
+	struct fd f;
+	void *value = NULL;
+	char *key = NULL;
+	int ret;
+
+	if (fd < 0)
+		return -EINVAL;
+
+	switch (cmd) {
+	case fsconfig_set_flag:
+		if (!_key || _value || aux)
+			return -EINVAL;
+		break;
+	case fsconfig_set_string:
+		if (!_key || !_value || aux)
+			return -EINVAL;
+		break;
+	case fsconfig_set_binary:
+		if (!_key || !_value || aux <= 0 || aux > 1024 * 1024)
+			return -EINVAL;
+		break;
+	case fsconfig_set_path:
+	case fsconfig_set_path_empty:
+		if (!_key || !_value || (aux != AT_FDCWD && aux < 0))
+			return -EINVAL;
+		break;
+	case fsconfig_set_fd:
+		if (!_key || _value || aux < 0)
+			return -EINVAL;
+		break;
+	case fsconfig_cmd_create:
+	case fsconfig_cmd_reconfigure:
+		if (_key || _value || aux)
+			return -EINVAL;
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+
+	f = fdget(fd);
+	if (!f.file)
+		return -EBADF;
+	ret = -EINVAL;
+	if (f.file->f_op != &fscontext_fops)
+		goto out_f;
+
+	fc = f.file->private_data;
+
+	if (_key) {
+		key = strndup_user(_key, 256);
+		if (IS_ERR(key)) {
+			ret = PTR_ERR(key);
+			goto out_f;
+		}
+	}
+
+	switch (cmd) {
+	case fsconfig_set_string:
+		value = strndup_user(_value, 256);
+		if (IS_ERR(value)) {
+			ret = PTR_ERR(value);
+			goto out_key;
+		}
+		break;
+	case fsconfig_set_binary:
+		value = memdup_user_nul(_value, aux);
+		if (IS_ERR(value)) {
+			ret = PTR_ERR(value);
+			goto out_key;
+		}
+		break;
+	case fsconfig_set_path:
+	case fsconfig_set_path_empty:
+	case fsconfig_set_fd:
+		ret = -EOPNOTSUPP;
+		goto out_key;
+	default:
+		break;
+	}
+
+	ret = mutex_lock_interruptible(&fc->uapi_mutex);
+	if (ret == 0) {
+		ret = vfs_fsconfig(fc, cmd, key, &value, aux);
+		mutex_unlock(&fc->uapi_mutex);
+	}
+
+	switch (cmd) {
+	case fsconfig_set_string:
+	case fsconfig_set_binary:
+		kfree(value);
+		/* Fall through */
+	default:
+		break;
+	}
+out_key:
+	kfree(key);
+out_f:
+	fdput(f);
+	return ret;
+}

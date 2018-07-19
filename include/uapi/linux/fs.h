@@ -349,4 +349,18 @@ typedef int __bitwise __kernel_rwf_t;
  */
 #define FSOPEN_CLOEXEC		0x00000001
 
+/*
+ * The type of fsconfig() call made.
+ */
+enum fsconfig_command {
+	fsconfig_set_flag,		/* Set parameter, supplying no value */
+	fsconfig_set_string,		/* Set parameter, supplying a string value */
+	fsconfig_set_binary,		/* Set parameter, supplying a binary blob value */
+	fsconfig_set_path,		/* Set parameter, supplying an object by path */
+	fsconfig_set_path_empty,	/* Set parameter, supplying an object by (empty) path */
+	fsconfig_set_fd,		/* Set parameter, supplying an object by fd */
+	fsconfig_cmd_create,		/* Invoke superblock creation */
+	fsconfig_cmd_reconfigure,	/* Invoke superblock reconfiguration */
+};
+
 #endif /* _UAPI_LINUX_FS_H */
