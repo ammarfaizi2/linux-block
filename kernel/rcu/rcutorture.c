@@ -585,11 +585,6 @@ static void srcu_torture_synchronize_expedited(void)
 	synchronize_srcu_expedited(srcu_ctlp);
 }
 
-static int srcu_stall_dur(void)
-{
-	return 5 * HZ;
-}
-
 static struct rcu_torture_ops srcu_ops = {
 	.ttype		= SRCU_FLAVOR,
 	.init		= rcu_sync_torture_init,
@@ -603,7 +598,6 @@ static struct rcu_torture_ops srcu_ops = {
 	.call		= srcu_torture_call,
 	.cb_barrier	= srcu_torture_barrier,
 	.stats		= srcu_torture_stats,
-	.stall_dur	= srcu_stall_dur,
 	.irq_capable	= 1,
 	.name		= "srcu"
 };
@@ -641,7 +635,6 @@ static struct rcu_torture_ops srcud_ops = {
 	.call		= srcu_torture_call,
 	.cb_barrier	= srcu_torture_barrier,
 	.stats		= srcu_torture_stats,
-	.stall_dur	= srcu_stall_dur,
 	.irq_capable	= 1,
 	.name		= "srcud"
 };
