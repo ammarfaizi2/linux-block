@@ -341,7 +341,7 @@ rcu_read_delay(struct torture_random_state *rrsp, struct rt_read_seg * rtrsp)
 	unsigned long started;
 	unsigned long completed;
 	const unsigned long shortdelay_us = 200;
-	const unsigned long longdelay_ms = 300;
+	unsigned long longdelay_ms = 300;
 	unsigned long long ts;
 
 	/* We want a short delay sometimes to make a reader delay the grace
@@ -351,6 +351,8 @@ rcu_read_delay(struct torture_random_state *rrsp, struct rt_read_seg * rtrsp)
 	if (!(torture_random(rrsp) % (nrealreaders * 2000 * longdelay_ms))) {
 		started = cur_ops->get_gp_seq();
 		ts = rcu_trace_clock_local();
+		if (preempt_count() & (SOFTIRQ_MASK | HARDIRQ_MASK))
+			longdelay_ms = 5; /* Avoid triggering BH limits. */
 		mdelay(longdelay_ms);
 		rtrsp->rt_delay_ms = longdelay_ms;
 		completed = cur_ops->get_gp_seq();
