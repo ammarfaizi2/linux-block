@@ -209,6 +209,7 @@ static inline int arch_within_stack_frames(const void * const stack,
 
 #ifdef CONFIG_X86_64
 # define cpu_current_top_of_stack (cpu_tss_rw + TSS_sp1)
+# define rsp_scratch (cpu_tss_rw + TSS_sp2)
 #endif
 
 #endif
